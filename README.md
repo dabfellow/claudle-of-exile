@@ -39,4 +39,9 @@ tests/       vitest specs for the engine and platform layer
 docs/        design notes
 ```
 
-See [docs/DESIGN.md](docs/DESIGN.md) for how the pieces fit together.
+## Docs
+
+- [docs/GDD.md](docs/GDD.md) — game design direction and roadmap for the polish pass
+- [docs/DESIGN.md](docs/DESIGN.md) — how the code fits together
+- [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) — setting up Google/Discord login with Supabase
+- [docs/ART_PROMPTS.md](docs/ART_PROMPTS.md) — prompts for generating the game's art
