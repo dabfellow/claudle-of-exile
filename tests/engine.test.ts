@@ -16,7 +16,7 @@ import { startSkillAction } from '../src/engine/skills';
 import { newGame, tick } from '../src/engine/state';
 import { armourReduction, deriveStats } from '../src/engine/stats';
 import type { Item } from '../src/engine/types';
-import { levelForXp, xpForLevel } from '../src/engine/xp';
+import { charLevelForXp, charXpForLevel, levelForXp, xpForLevel } from '../src/engine/xp';
 import { zoneDef } from '../src/data/zones';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
@@ -28,6 +28,12 @@ describe('xp curve', () => {
     expect(xpForLevel(99)).toBe(13034431);
     expect(levelForXp(82)).toBe(1);
     expect(levelForXp(83)).toBe(2);
+  });
+
+  it('character level uses its own longer curve', () => {
+    expect(charXpForLevel(2)).toBe(136);
+    expect(charLevelForXp(charXpForLevel(15))).toBe(15);
+    expect(charXpForLevel(100)).toBeGreaterThan(30_000_000);
   });
 });
 
@@ -238,7 +244,7 @@ describe('passive tree', () => {
 
   it('only allocates adjacent nodes and blocks orphaning refunds', () => {
     const s = newGame(1);
-    s.skills.combat = xpForLevel(10);
+    s.skills.combat = charXpForLevel(10);
     expect(allocateReason(s, 'str_2_0')).toMatch(/connect/);
     expect(allocate(s, ctx(), 'str_1_0')).toBeNull();
     expect(allocate(s, ctx(), 'str_2_0')).toBeNull();
@@ -249,10 +255,12 @@ describe('passive tree', () => {
 
   it('feeds stats into derived character stats', () => {
     const s = newGame(1);
-    s.skills.combat = xpForLevel(5);
-    const before = deriveStats(s).maxLife;
-    allocate(s, ctx(), 'str_1_0'); // +10 life
-    expect(deriveStats(s).maxLife).toBe(before + 10);
+    s.skills.combat = charXpForLevel(5);
+    const before = deriveStats(s);
+    allocate(s, ctx(), 'str_1_0'); // +10 Strength
+    const after = deriveStats(s);
+    expect(after.attributes.str).toBe(before.attributes.str + 10);
+    expect(after.maxLife).toBe(before.maxLife + 5); // 2 Strength = 1 life
   });
 });
 
@@ -274,8 +282,18 @@ describe('equipment', () => {
     const s = newGame(1);
     const sabre = createItem(s, 'mithril_sabre', 40, 'normal', seeded(1));
     s.inventory.push(sabre);
-    expect(equip(s, ctx(), sabre.uid)).toMatch(/Requires/);
-    s.skills.combat = xpForLevel(40);
+    expect(equip(s, ctx(), sabre.uid)).toMatch(/Requires level 34/);
+    s.skills.combat = charXpForLevel(40);
+    // a fresh Warrior (20 Str / 12 Dex) can't meet a sabre's 38/38
+    expect(equip(s, ctx(), sabre.uid)).toMatch(/Requires 38 (Strength|Dexterity)/);
+    const ring = createItem(s, 'iron_ring', 40, 'rare', seeded(2));
+    ring.prefixes = [];
+    ring.suffixes = [
+      { affixId: 'strength', tier: 5, values: [40] },
+      { affixId: 'dexterity', tier: 5, values: [40] },
+    ];
+    s.inventory.push(ring);
+    expect(equip(s, ctx(), ring.uid)).toBeNull();
     expect(equip(s, ctx(), sabre.uid)).toBeNull();
     expect(s.equipment.weapon?.uid).toBe(sabre.uid);
     expect(s.inventory.some((i) => i.baseId === 'rusted_sword')).toBe(true);
@@ -300,7 +318,7 @@ describe('save', () => {
     const loaded = deserialize(JSON.stringify(s));
     expect(loaded.lifetime.kills).toBe(0);
     expect(loaded.settings.autoSalvage.normal).toBe(false);
-    expect(loaded.version).toBe(2);
+    expect(loaded.version).toBe(3);
     expect(loaded.character.name).toBe('Exile');
     expect(loaded.tutorial.done).toBe(true);
   });

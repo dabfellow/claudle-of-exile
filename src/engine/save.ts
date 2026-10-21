@@ -18,6 +18,10 @@ const MIGRATIONS: Record<number, Migration> = {
     // the single tree start was split into class starts, so old allocations may be disconnected
     raw.passives = [];
   },
+  2: (raw) => {
+    // mana and attributes arrived
+    raw.mana ??= 30;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

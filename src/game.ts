@@ -11,7 +11,7 @@ import { newGame, tick } from './engine/state';
 import { tutorialPage, withTutorial } from './engine/tutorial';
 import { LocalAccounts, type Account, type AccountProvider, type AuthProviderId } from './platform/accounts';
 import { LocalSaveStore, type CharacterSummary, type SaveStore } from './platform/saves';
-import type { GameEvent, GameState } from './engine/types';
+import type { GameEvent, GameState, SkillId } from './engine/types';
 
 export interface FeedEntry {
   id: number;
@@ -44,6 +44,8 @@ class GameStore {
   feed: FeedEntry[] = [];
   toasts: Toast[] = [];
   offline: OfflineSummary | null = null;
+  /** recent xp gains, for the xp/hour readout */
+  xpLog: { at: number; skill: SkillId; amount: number }[] = [];
   readonly accounts: AccountProvider = new LocalAccounts(localStorage);
   private saves: SaveStore | null = null;
   private listeners = new Set<() => void>();
@@ -154,6 +156,7 @@ class GameStore {
   private begin(s: GameState) {
     this.state = s;
     this.feed = [];
+    this.xpLog = [];
     this.offline = null;
     this.screen = 'game';
     this.startLoop();
@@ -203,6 +206,15 @@ class GameStore {
   replace(s: GameState) {
     this.begin(s);
     this.save();
+  }
+
+  /** XP per hour for a skill over the last 10 minutes of play this session. */
+  xpPerHour(skill: SkillId): number {
+    const since = Date.now() - 10 * 60_000;
+    const recent = this.xpLog.filter((x) => x.skill === skill && x.at >= since);
+    if (!recent.length) return 0;
+    const span = Math.max(60_000, Date.now() - recent[0].at);
+    return (recent.reduce((a, x) => a + x.amount, 0) / span) * 3600_000;
   }
 
   /** Tell the tutorial which page the player opened. */
@@ -271,9 +283,15 @@ class GameStore {
       case 'kill':
         if (e.boss) this.addFeed(`Defeated ${e.name}!`, 'good');
         break;
-      case 'death':
-        this.addFeed('You were slain. Returned to the hideout.', 'bad');
-        this.pushToast('You died — back to the hideout', 'bad');
+      case 'death': {
+        const lost = e.xpLost > 0 ? ` Lost ${Math.round(e.xpLost).toLocaleString()} XP.` : '';
+        this.addFeed(`You were slain. Returned to the hideout.${lost}`, 'bad');
+        this.pushToast(`You died${lost ? ` — lost ${Math.round(e.xpLost).toLocaleString()} XP` : ''}`, 'bad');
+        break;
+      }
+      case 'xp':
+        this.xpLog.push({ at: Date.now(), skill: e.skill, amount: e.amount });
+        if (this.xpLog.length > 4000) this.xpLog = this.xpLog.slice(-2000);
         break;
       case 'zoneUnlocked': {
         const z = ZONES.find((x) => x.id === e.zoneId);

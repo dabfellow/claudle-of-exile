@@ -13,6 +13,7 @@ npm install
 npm run dev      # http://localhost:5173
 npm test         # engine unit tests (vitest)
 npm run build    # typecheck + production build into dist/
+npm run sim      # headless balance sim (see docs/BALANCE.md)
 ```
 
 In dev builds the store is exposed as `window.game` for poking at state from the browser console.
@@ -43,5 +44,6 @@ docs/        design notes
 
 - [docs/GDD.md](docs/GDD.md) — game design direction and roadmap for the polish pass
 - [docs/DESIGN.md](docs/DESIGN.md) — how the code fits together
+- [docs/BALANCE.md](docs/BALANCE.md) — pacing knobs, the balance sim, and baseline results
 - [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) — setting up Google/Discord login with Supabase
 - [docs/ART_PROMPTS.md](docs/ART_PROMPTS.md) — prompts for generating the game's art

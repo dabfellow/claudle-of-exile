@@ -170,11 +170,12 @@ function Arena() {
           <div>
             <div className="fighter-name">{s.character.name}</div>
             <div className="muted" style={{ fontSize: 12 }}>
-              Combat Lv {d.combatLevel} · {d.dps.toFixed(1)} DPS
+              Level {d.combatLevel} · {d.dps.toFixed(1)} DPS
             </div>
           </div>
         </div>
         <ProgressBar value={s.life / d.maxLife} size="lg" color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} ghost />
+        <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} color="linear-gradient(90deg, var(--mana), var(--mana-2))" label={`${fmt(s.mana)} / ${fmt(d.maxMana)}`} />
         <ProgressBar value={mon ? c.attackTimer / playerInterval : 0} color="var(--accent)" />
         <div className="buffs">
           {c.buffs

@@ -6,7 +6,7 @@ import { nextUpgradeCost, stationLevel, upgradeStation } from '../../engine/hide
 import { pointsLeft } from '../../engine/passives';
 import { deriveStats } from '../../engine/stats';
 import { SKILL_IDS } from '../../engine/types';
-import { levelForXp, levelProgress } from '../../engine/xp';
+import { levelOf, progressOf } from '../../engine/xp';
 import { game, useGame } from '../../game';
 import { Cost, fmt, ProgressBar } from '../components/common';
 import { Icon } from '../components/Icon';
@@ -129,10 +129,10 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
                 <b>{SKILLS[id].name}</b>
                 <span className="spacer" />
                 <span className="level-num" style={{ fontSize: 20 }}>
-                  {levelForXp(s.skills[id])}
+                  {levelOf(id, s.skills[id])}
                 </span>
               </div>
-              <ProgressBar value={levelProgress(s.skills[id])} color={SKILLS[id].color} />
+              <ProgressBar value={progressOf(id, s.skills[id])} color={SKILLS[id].color} />
             </button>
           ))}
         </div>

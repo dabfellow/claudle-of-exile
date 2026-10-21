@@ -111,6 +111,28 @@ export const BASES: BaseDef[] = [
 
 const BY_ID: Record<string, BaseDef> = Object.fromEntries(BASES.map((b) => [b.id, b]));
 
+export type Attribute = 'str' | 'dex' | 'int';
+
+/** Which attributes each weapon base asks for (armour pieces follow their str/dex tags). */
+const WEAPON_ATTRS: Record<string, Attribute[]> = {
+  rusted_sword: ['str', 'dex'],
+  whittled_dagger: ['dex'],
+  driftwood_wand: ['int'],
+  iron_blade: ['str', 'dex'],
+  glinting_dagger: ['dex'],
+  war_axe: ['str'],
+  steel_broadsword: ['str', 'dex'],
+  mithril_sabre: ['dex', 'str'],
+};
+
+/** Attribute requirements to equip a base. Single-attribute items ask for more of one stat. */
+export function attributeReq(b: BaseDef): Partial<Record<Attribute, number>> {
+  const attrs: Attribute[] =
+    WEAPON_ATTRS[b.id] ?? (b.tags.includes('str_armour') ? ['str'] : b.tags.includes('dex_armour') ? ['dex'] : []);
+  const each = attrs.length === 1 ? Math.floor(6 + 1.6 * b.reqLevel) : Math.floor(4 + 1.0 * b.reqLevel);
+  return Object.fromEntries(attrs.map((a) => [a, each]));
+}
+
 export function baseDef(id: string): BaseDef {
   const b = BY_ID[id];
   if (!b) throw new Error(`Unknown base ${id}`);

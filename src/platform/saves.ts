@@ -1,7 +1,8 @@
 import type { ClassId } from '../data/classes';
 import { deserialize, SAVE_KEY, serialize } from '../engine/save';
 import { SKILL_IDS, type GameState } from '../engine/types';
-import { levelForXp } from '../engine/xp';
+import { characterLevel } from '../engine/character';
+import { levelOf } from '../engine/xp';
 
 export interface CharacterSummary {
   id: string;
@@ -26,8 +27,8 @@ export function summarize(s: GameState): CharacterSummary {
     id: s.character.id,
     name: s.character.name,
     classId: s.character.classId,
-    combatLevel: levelForXp(s.skills.combat),
-    totalLevel: SKILL_IDS.reduce((a, k) => a + levelForXp(s.skills[k]), 0),
+    combatLevel: characterLevel(s),
+    totalLevel: SKILL_IDS.filter((k) => k !== 'combat').reduce((a, k) => a + levelOf(k, s.skills[k]), 0),
     createdAt: s.character.createdAt,
     lastPlayed: s.lastSaved,
   };

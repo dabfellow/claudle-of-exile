@@ -57,11 +57,27 @@ function StatSheet({ s }: { s: GameState }) {
           <span>DPS</span>
         </div>
         <div className="big-stat">
-          <b>{d.attacksPerSec.toFixed(2)}</b>
-          <span>Attacks / sec</span>
+          <b style={{ color: 'var(--mana-2)' }}>{fmt(d.maxMana)}</b>
+          <span>Max Mana</span>
+        </div>
+      </div>
+      <div className="big-stats">
+        <div className="big-stat" title="+1 Life per 2 Strength, +1% Physical Damage per 5">
+          <b style={{ color: '#e07a6a' }}>{d.attributes.str}</b>
+          <span>Strength</span>
+        </div>
+        <div className="big-stat" title="+2 Accuracy per Dexterity, +1% Evasion per 5">
+          <b style={{ color: '#7fd08a' }}>{d.attributes.dex}</b>
+          <span>Dexterity</span>
+        </div>
+        <div className="big-stat" title="+1 Mana per 2 Intelligence, +1% Elemental Damage per 5">
+          <b style={{ color: '#7fa6f0' }}>{d.attributes.int}</b>
+          <span>Intelligence</span>
         </div>
       </div>
       <dl className="stat-sheet" style={{ margin: 0 }}>
+        <FragmentStat label="Attacks per Second" value={d.attacksPerSec.toFixed(2)} />
+        <FragmentStat label="Accuracy" value={fmt(d.accuracy)} />
         {hit.map(([type, [lo, hi]]) => (
           <FragmentStat key={type} label={`${type === 'phys' ? 'Physical' : type === 'light' ? 'Lightning' : type[0].toUpperCase() + type.slice(1)} Damage`} value={`${lo}–${hi}`} color={`var(--${type})`} />
         ))}
@@ -70,6 +86,7 @@ function StatSheet({ s }: { s: GameState }) {
         <FragmentStat label="Armour" value={fmt(d.armour)} />
         <FragmentStat label="Evasion" value={fmt(d.evasion)} />
         <FragmentStat label="Life Regen" value={`${d.lifeRegen.toFixed(1)}/s`} />
+        <FragmentStat label="Mana Regen" value={`${d.manaRegen.toFixed(1)}/s`} />
         {d.leechPct > 0 && <FragmentStat label="Life Leech" value={`${d.leechPct}%`} />}
         <FragmentStat label="Fire Resistance" value={`${d.res.fire}%`} color="var(--fire)" />
         <FragmentStat label="Cold Resistance" value={`${d.res.cold}%`} color="var(--cold)" />

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { game, useGame } from '../game';
 import { QuestTracker } from './components/QuestTracker';
-import { Feed, OfflineModal, Sidebar, Toasts, TopBar, useFlaskHotkeys, usePage, type Page } from './Layout';
+import { Feed, OfflineModal, Sidebar, Toasts, TopBar, useFlaskHotkeys, usePage, XpBar, type Page } from './Layout';
 import { BenchPage } from './pages/BenchPage';
 import { CombatPage } from './pages/CombatPage';
 import { EquipmentPage } from './pages/EquipmentPage';
@@ -51,6 +51,7 @@ function GameScreen() {
         <Content key={page} page={page} go={go} />
       </main>
       <Feed />
+      <XpBar />
       <QuestTracker floating />
       <OfflineModal />
       <IntroModal />

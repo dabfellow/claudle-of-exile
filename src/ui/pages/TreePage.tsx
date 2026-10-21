@@ -34,6 +34,13 @@ const STAT_TEXT: Partial<Record<StatKey, (v: number) => string>> = {
   flaskCharges: (v) => `${v}% increased Flask Charges gained`,
   skillSpeed: (v) => `${v}% increased Gathering and Crafting Speed`,
   skillXp: (v) => `${v}% increased Skill Experience`,
+  str: (v) => `+${v} to Strength`,
+  dex: (v) => `+${v} to Dexterity`,
+  int: (v) => `+${v} to Intelligence`,
+  allAttr: (v) => `+${v} to all Attributes`,
+  mana: (v) => `+${v} to maximum Mana`,
+  manaRegenPct: (v) => `${v}% increased Mana Regeneration Rate`,
+  accuracy: (v) => `+${v} to Accuracy Rating`,
 };
 
 export function nodeLines(n: PassiveNode): string[] {

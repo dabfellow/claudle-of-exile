@@ -1,6 +1,7 @@
 import { flaskDef } from '../data/flasks';
 import { ALCH_DOUBLE, ALCH_SPEED, FORGE_ILVL, FORGE_SPEED } from '../data/hideout';
 import { actionDef, type SkillAction } from '../data/skills';
+import { ZONES } from '../data/zones';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { inventoryFull } from './hideout';
@@ -8,17 +9,17 @@ import { createItem, newUid } from './items';
 import { chance } from './rng';
 import type { Derived } from './stats';
 import type { GameState, SkillId } from './types';
-import { levelForXp } from './xp';
+import { levelOf } from './xp';
 
 export function skillLevel(s: GameState, skill: SkillId): number {
-  return levelForXp(s.skills[skill]);
+  return levelOf(skill, s.skills[skill]);
 }
 
 export function grantXp(s: GameState, ctx: Ctx, skill: SkillId, amount: number): void {
-  const before = levelForXp(s.skills[skill]);
+  const before = levelOf(skill, s.skills[skill]);
   s.skills[skill] += amount;
   ctx.emit({ t: 'xp', skill, amount });
-  const after = levelForXp(s.skills[skill]);
+  const after = levelOf(skill, s.skills[skill]);
   if (after > before) ctx.emit({ t: 'levelup', skill, level: after });
 }
 
@@ -29,8 +30,13 @@ export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): numb
   return a.intervalMs / (1 + speed / 100);
 }
 
+/** Smithed gear can't out-level the campaign: capped at the top level of your furthest unlocked area. */
+export function smithIlvlCap(s: GameState): number {
+  return Math.max(...ZONES.filter((z) => s.unlockedZones.includes(z.id)).map((z) => z.levelRange[1]));
+}
+
 export function smithIlvl(s: GameState): number {
-  return skillLevel(s, 'smithing') + FORGE_ILVL[(s.hideout.forge ?? 1) - 1];
+  return Math.min(smithIlvlCap(s), skillLevel(s, 'smithing') + FORGE_ILVL[(s.hideout.forge ?? 1) - 1]);
 }
 
 export function actionBlocker(s: GameState, a: SkillAction): string | null {

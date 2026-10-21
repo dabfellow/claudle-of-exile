@@ -6,7 +6,7 @@ import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { actionBlocker, actionIntervalMs, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
-import { levelProgress, xpForLevel } from '../../engine/xp';
+import { progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
 import { Cost, fmt, MatIcon, ProgressBar } from '../components/common';
 import { Icon, Orb, Swatch } from '../components/Icon';
@@ -130,7 +130,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
   const def = SKILLS[skill];
   const level = skillLevel(s, skill);
   const xp = s.skills[skill];
-  const next = xpForLevel(level + 1);
+  const next = xpToReach(skill, level + 1);
   const actions = actionsFor(skill);
   const [filter, setFilter] = useState<'all' | 'available'>('all');
   const shown = filter === 'all' ? actions : actions.filter((a) => a.level <= level);
@@ -153,7 +153,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
               {fmt(xp)} / {fmt(next)} xp
             </span>
           </div>
-          <ProgressBar value={levelProgress(xp)} color={def.color} size="md" smooth />
+          <ProgressBar value={progressOf(skill, xp)} color={def.color} size="md" smooth />
         </div>
       </div>
       {skill === 'smithing' && (

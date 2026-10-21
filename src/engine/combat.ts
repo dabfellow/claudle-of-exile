@@ -7,6 +7,7 @@ import {
   BOSS_SLAM_MULT,
   monsterDamage,
   monsterLife,
+  MONSTER_SPEED_SCALE,
   ZONES,
   zoneDef,
   type MonsterDef,
@@ -14,8 +15,9 @@ import {
 import type { Ctx } from './context';
 import { rollLoot } from './loot';
 import { chance, pick, rInt } from './rng';
+import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './character';
 import { grantXp } from './skills';
-import { armourReduction, deriveStats, evadeChance, PLAYER_HIT_CHANCE, type Derived } from './stats';
+import { armourReduction, deriveStats, evadeChance, hitChance, type Derived } from './stats';
 import type { DamageType, GameState, InstillCondition, MonsterInstance } from './types';
 
 export const SPAWN_DELAY_MS = 900;
@@ -35,6 +37,11 @@ export function retreat(s: GameState): void {
   s.action = null;
 }
 
+/** Base character xp for a kill, before the level-difference multiplier. */
+export function monsterXp(mon: MonsterInstance): number {
+  return Math.round((5 + mon.level * 3) * (mon.isBoss ? 10 : 1));
+}
+
 export function makeMonster(def: MonsterDef, boss: boolean): MonsterInstance {
   const life = Math.round(monsterLife(def.level) * (def.lifeMult ?? 1) * (boss ? BOSS_LIFE_MULT : 1));
   return {
@@ -45,7 +52,7 @@ export function makeMonster(def: MonsterDef, boss: boolean): MonsterInstance {
     life,
     damage: Math.round(monsterDamage(def.level) * (def.dmgMult ?? 1) * (boss ? BOSS_DMG_MULT : 1)),
     dmgType: def.dmgType,
-    attackMs: def.attackMs,
+    attackMs: Math.round(def.attackMs * MONSTER_SPEED_SCALE),
     attackTimer: 0,
     isBoss: boss,
     slamTimer: boss ? BOSS_SLAM_EVERY_MS * 0.6 : 0,
@@ -92,7 +99,10 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
   const c = s.combat;
   c.buffs = c.buffs.filter((b) => b.flaskId !== f.flaskId);
   c.buffs.push({ flaskId: f.flaskId, remainingMs: def.durationMs });
-  if (def.heal) c.heals.push({ perMs: (def.heal * effect) / def.durationMs, remainingMs: def.durationMs });
+  if (def.heal) {
+    const resource = def.kind === 'mana' ? 'mana' : 'life';
+    c.heals.push({ resource, perMs: (def.heal * effect) / def.durationMs, remainingMs: def.durationMs });
+  }
   ctx.emit({ t: 'flask', slot, flaskId: f.flaskId, auto });
   return null;
 }
@@ -121,7 +131,7 @@ function onKill(s: GameState, ctx: Ctx, d: Derived): void {
   const zone = zoneDef(c.zoneId);
   ctx.emit({ t: 'kill', name: mon.name, boss: mon.isBoss });
   s.lifetime.kills += 1;
-  grantXp(s, ctx, 'combat', mon.level * 4 * (mon.isBoss ? 8 : 1) + 2);
+  grantXp(s, ctx, 'combat', monsterXp(mon) * xpLevelMultiplier(characterLevel(s), mon.level));
   gainCharges(s, mon.isBoss ? 8 : 1, d);
   rollLoot(s, ctx, mon, zone, d);
 
@@ -142,7 +152,7 @@ function onKill(s: GameState, ctx: Ctx, d: Derived): void {
 
 function playerAttack(s: GameState, ctx: Ctx, d: Derived): void {
   const mon = s.combat!.monster!;
-  if (!chance(ctx.rng, PLAYER_HIT_CHANCE)) {
+  if (!chance(ctx.rng, hitChance(d.accuracy, mon.level))) {
     ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: 'phys', evaded: true });
     return;
   }
@@ -181,7 +191,8 @@ function die(s: GameState, ctx: Ctx, d: Derived): void {
   s.lifetime.deaths += 1;
   // losing to a boss sends it back into hiding so the zone can be farmed again
   if (s.combat?.monster?.isBoss) s.zoneKills[s.combat.zoneId] = 0;
-  ctx.emit({ t: 'death' });
+  const xpLost = applyDeathPenalty(s);
+  ctx.emit({ t: 'death', xpLost });
   s.life = Math.max(1, Math.round(d.maxLife * DEATH_LIFE_FRACTION));
   retreat(s);
 }
@@ -199,11 +210,13 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   if (c.buffs.length !== before) buffsChanged = true;
   for (const h of c.heals) {
     const t = Math.min(dt, h.remainingMs);
-    s.life += h.perMs * t;
+    if (h.resource === 'mana') s.mana += h.perMs * t;
+    else s.life += h.perMs * t;
     h.remainingMs -= dt;
   }
   c.heals = c.heals.filter((h) => h.remainingMs > 0);
   s.life = Math.min(d.maxLife, s.life + (d.lifeRegen * dt) / 1000);
+  s.mana = Math.min(d.maxMana, s.mana + (d.manaRegen * dt) / 1000);
 
   // instilled flasks
   if (s.life < d.maxLife * 0.5) triggerInstilled(s, ctx, 'lowLife');

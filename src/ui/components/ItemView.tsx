@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { baseDef, uniqueDef } from '../../data/bases';
+import { attributeReq, baseDef, uniqueDef } from '../../data/bases';
+import { characterLevel } from '../../engine/character';
 import { slotsFor } from '../../engine/equipment';
 import { describeMod, itemName, tierLabel, tierRangeText } from '../../engine/items';
 import { deriveStats, type Derived } from '../../engine/stats';
@@ -115,9 +116,7 @@ export function ItemTip({ item, state, compare = true }: { item: Item; state?: G
             Evasion Rating: <b>{base.evasion}</b>
           </div>
         ) : null}
-        <div className="muted" style={{ fontSize: 11 }}>
-          Requires Combat Level {base.reqLevel}
-        </div>
+        <Requirements item={item} state={state} />
         {implicits.length > 0 && <div className="sep" />}
         {implicits.map((i) => (
           <div key={i.text} className="mod">
@@ -153,6 +152,30 @@ export function ItemTip({ item, state, compare = true }: { item: Item; state?: G
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+const ATTR_LABEL = { str: 'Str', dex: 'Dex', int: 'Int' } as const;
+
+function Requirements({ item, state }: { item: Item; state?: GameState }) {
+  const base = baseDef(item.baseId);
+  const req = attributeReq(base);
+  const lvl = state ? characterLevel(state) : Infinity;
+  const have = state ? deriveStats(state, []).attributes : null;
+  const parts: { text: string; ok: boolean }[] = [{ text: `Level ${base.reqLevel}`, ok: lvl >= base.reqLevel }];
+  for (const [a, n] of Object.entries(req) as [keyof typeof ATTR_LABEL, number][]) {
+    parts.push({ text: `${n} ${ATTR_LABEL[a]}`, ok: !have || have[a] >= n });
+  }
+  return (
+    <div className="muted" style={{ fontSize: 11 }}>
+      Requires{' '}
+      {parts.map((p, i) => (
+        <span key={p.text} className={p.ok ? '' : 'bad'}>
+          {i > 0 ? ', ' : ''}
+          {p.text}
+        </span>
+      ))}
     </div>
   );
 }

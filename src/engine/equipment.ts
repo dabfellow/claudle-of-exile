@@ -1,17 +1,24 @@
-import { baseDef } from '../data/bases';
+import { attributeReq, baseDef } from '../data/bases';
 import type { Ctx } from './context';
 import { inventoryFull } from './hideout';
+import { deriveStats } from './stats';
 import type { EquipSlot, GameState, Item } from './types';
-import { levelForXp } from './xp';
+import { characterLevel } from './character';
 
 export function slotsFor(item: Item): EquipSlot[] {
   const slot = baseDef(item.baseId).slot;
   return slot === 'ring' ? ['ring1', 'ring2'] : [slot];
 }
 
+const ATTR_NAME = { str: 'Strength', dex: 'Dexterity', int: 'Intelligence' };
+
 export function equipReason(s: GameState, item: Item): string | null {
-  const req = baseDef(item.baseId).reqLevel;
-  if (levelForXp(s.skills.combat) < req) return `Requires Combat level ${req}`;
+  const base = baseDef(item.baseId);
+  if (characterLevel(s) < base.reqLevel) return `Requires level ${base.reqLevel}`;
+  const have = deriveStats(s, []).attributes;
+  for (const [attr, need] of Object.entries(attributeReq(base)) as [keyof typeof have, number][]) {
+    if (have[attr] < need) return `Requires ${need} ${ATTR_NAME[attr]}`;
+  }
   return null;
 }
 

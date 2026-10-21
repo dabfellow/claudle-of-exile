@@ -29,8 +29,8 @@ const REGIONS: RegionSpec[] = [
   {
     key: 'str',
     angle: -90,
-    smallName: ['Vitality', 'Hardened Hide', 'Might', 'Recovery'],
-    small: [{ life: 10 }, { armourPct: 8 }, { physPct: 8 }, { lifeRegen: 1 }],
+    smallName: ['Strength', 'Hardened Hide', 'Might', 'Vitality'],
+    small: [{ str: 10 }, { armourPct: 8 }, { physPct: 8 }, { life: 10 }],
     notables: [
       { name: 'Iron Skin', stats: { armourPct: 25, armour: 40 } },
       { name: 'Brutal Force', stats: { physPct: 25, critMulti: 10 } },
@@ -45,8 +45,8 @@ const REGIONS: RegionSpec[] = [
   {
     key: 'dex',
     angle: 30,
-    smallName: ['Swiftness', 'Evasion', 'Keen Eye', 'Lethality'],
-    small: [{ attackSpeedPct: 3 }, { evasionPct: 8 }, { critChancePct: 10 }, { critMulti: 6 }],
+    smallName: ['Dexterity', 'Swiftness', 'Evasion', 'Keen Eye'],
+    small: [{ dex: 10 }, { attackSpeedPct: 3 }, { evasionPct: 8 }, { critChancePct: 10 }],
     notables: [
       { name: 'Fleetfoot', stats: { evasionPct: 25, attackSpeedPct: 4 } },
       { name: 'Precision', stats: { critChancePct: 30, critMulti: 12 } },
@@ -61,8 +61,8 @@ const REGIONS: RegionSpec[] = [
   {
     key: 'int',
     angle: 150,
-    smallName: ['Elemental Focus', 'Distillation', 'Warding', 'Craftsmanship'],
-    small: [{ elemPct: 8 }, { flaskEffect: 4 }, { allRes: 4 }, { skillSpeed: 3, skillXp: 2 }],
+    smallName: ['Intelligence', 'Elemental Focus', 'Distillation', 'Arcane Flow'],
+    small: [{ int: 10 }, { elemPct: 8 }, { flaskEffect: 4 }, { mana: 12, manaRegenPct: 8 }],
     notables: [
       { name: 'Elementalist', stats: { elemPct: 25, allRes: 6 } },
       { name: 'Master Distiller', stats: { flaskEffect: 15, flaskCharges: 20 } },
@@ -77,9 +77,9 @@ const REGIONS: RegionSpec[] = [
 ];
 
 const BRIDGES: { between: ['str' | 'dex' | 'int', 'str' | 'dex' | 'int']; angle: number; name: string; stats: StatMap }[] = [
-  { between: ['str', 'dex'], angle: -30, name: 'Duelist', stats: { life: 8, attackSpeedPct: 2 } },
-  { between: ['dex', 'int'], angle: 90, name: 'Spellblade', stats: { evasionPct: 6, elemPct: 6 } },
-  { between: ['int', 'str'], angle: 210, name: 'Templar', stats: { lifeRegen: 1, allRes: 3 } },
+  { between: ['str', 'dex'], angle: -30, name: 'Duelist', stats: { str: 5, dex: 5, life: 8 } },
+  { between: ['dex', 'int'], angle: 90, name: 'Spellblade', stats: { dex: 5, int: 5, elemPct: 6 } },
+  { between: ['int', 'str'], angle: 210, name: 'Templar', stats: { int: 5, str: 5, allRes: 3 } },
 ];
 
 const START_NAME = { str: 'Warrior', dex: 'Ranger', int: 'Mage' };

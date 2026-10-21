@@ -14,6 +14,8 @@ export interface ClassDef {
   tagline: string;
   desc: string;
   kit: Partial<Record<EquipSlot, string>>;
+  /** starting Strength / Dexterity / Intelligence */
+  baseAttributes: { str: number; dex: number; int: number };
   bonus: Partial<Record<StatKey, number>>;
   bonusText: string[];
 }
@@ -30,6 +32,7 @@ export const CLASSES: ClassDef[] = [
     tagline: 'Outlast everything.',
     desc: 'A brawler who wears heavy plate and wins by simply refusing to fall. The most forgiving start for idle play.',
     kit: { weapon: 'rusted_sword', body: 'plate_vest', helmet: 'iron_hat' },
+    baseAttributes: { str: 20, dex: 12, int: 10 },
     bonus: { life: 20, armourPct: 10 },
     bonusText: ['+20 to maximum Life', '10% increased Armour'],
   },
@@ -44,6 +47,7 @@ export const CLASSES: ClassDef[] = [
     tagline: 'Strike first, never get hit.',
     desc: 'Quick blades and quicker feet. Evades blows and stacks attack speed and critical strikes.',
     kit: { weapon: 'whittled_dagger', body: 'shabby_jerkin', boots: 'leather_boots' },
+    baseAttributes: { str: 12, dex: 20, int: 10 },
     bonus: { attackSpeedPct: 6, evasionPct: 10 },
     bonusText: ['6% increased Attack Speed', '10% increased Evasion Rating'],
   },
@@ -58,6 +62,7 @@ export const CLASSES: ClassDef[] = [
     tagline: 'Bend the elements and the brew.',
     desc: 'Channels lightning through a wand and gets the most out of flasks. Fragile early, explosive later.',
     kit: { weapon: 'driftwood_wand', body: 'shabby_jerkin', amulet: 'coral_amulet' },
+    baseAttributes: { str: 10, dex: 12, int: 20 },
     bonus: { elemPct: 15, flaskEffect: 10 },
     bonusText: ['15% increased Elemental Damage', '10% increased Flask Effect'],
   },

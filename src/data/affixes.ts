@@ -105,6 +105,11 @@ export const AFFIXES: AffixDef[] = [
     tiers: single([[10, 18], [19, 28], [29, 40], [41, 54], [55, 70], [71, 90]]),
   },
   {
+    id: 'flat_mana', kind: 'prefix', group: 'flat_mana', label: 'Beryl', text: '+{0} to maximum Mana',
+    stats: ['mana'], weights: { ring: 100, amulet: 100, helmet: 60, belt: 40, weapon: 30 },
+    tiers: single([[10, 19], [20, 29], [30, 39], [40, 54], [55, 69], [70, 89]]),
+  },
+  {
     id: 'flask_effect', kind: 'prefix', group: 'flask_effect', label: "Alchemist's", text: '{0}% increased Flask Effect',
     stats: ['flaskEffect'], weights: { belt: 80 },
     tiers: single([[4, 7], [8, 11], [12, 15], [16, 20], [21, 25], [26, 30]]),
@@ -175,6 +180,36 @@ export const AFFIXES: AffixDef[] = [
     id: 'flask_charges', kind: 'suffix', group: 'flask_charges', label: 'of Refilling', text: '{0}% increased Flask Charges gained',
     stats: ['flaskCharges'], weights: { belt: 100 },
     tiers: single([[10, 15], [16, 22], [23, 30], [31, 38], [39, 46], [47, 55]]),
+  },
+  {
+    id: 'strength', kind: 'suffix', group: 'strength', label: 'of the Brute', text: '+{0} to Strength',
+    stats: ['str'], weights: { str_armour: 80, belt: 100, amulet: 80, ring: 80, gloves: 40, weapon: 40 },
+    tiers: single([[5, 9], [10, 15], [16, 21], [22, 27], [28, 34], [35, 42]]),
+  },
+  {
+    id: 'dexterity', kind: 'suffix', group: 'dexterity', label: 'of the Fox', text: '+{0} to Dexterity',
+    stats: ['dex'], weights: { dex_armour: 80, amulet: 80, ring: 80, gloves: 60, boots: 40, weapon: 40 },
+    tiers: single([[5, 9], [10, 15], [16, 21], [22, 27], [28, 34], [35, 42]]),
+  },
+  {
+    id: 'intelligence', kind: 'suffix', group: 'intelligence', label: 'of the Prodigy', text: '+{0} to Intelligence',
+    stats: ['int'], weights: { amulet: 80, ring: 80, helmet: 60, weapon: 40 },
+    tiers: single([[5, 9], [10, 15], [16, 21], [22, 27], [28, 34], [35, 42]]),
+  },
+  {
+    id: 'all_attributes', kind: 'suffix', group: 'all_attributes', label: 'of the Sky', text: '+{0} to all Attributes',
+    stats: ['allAttr'], weights: { amulet: 50 },
+    tiers: single([[3, 5], [6, 8], [9, 11], [12, 14], [15, 17], [18, 20]]),
+  },
+  {
+    id: 'mana_regen', kind: 'suffix', group: 'mana_regen', label: 'of Excitement', text: '{0}% increased Mana Regeneration Rate',
+    stats: ['manaRegenPct'], weights: { ring: 80, amulet: 80, weapon: 50, helmet: 40 },
+    tiers: single([[10, 19], [20, 29], [30, 39], [40, 49], [50, 59], [60, 69]]),
+  },
+  {
+    id: 'accuracy', kind: 'suffix', group: 'accuracy', label: 'of Calm', text: '+{0} to Accuracy Rating',
+    stats: ['accuracy'], weights: { weapon: 60, gloves: 60, ring: 40, helmet: 30 },
+    tiers: single([[5, 15], [16, 40], [41, 80], [81, 130], [131, 200], [201, 300]]),
   },
 
   // ---------- unique-only ----------

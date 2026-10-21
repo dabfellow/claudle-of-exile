@@ -2,11 +2,11 @@ import { classDef } from '../data/classes';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import type { Ctx } from './context';
 import type { GameState } from './types';
-import { levelForXp } from './xp';
+import { characterLevel } from './character';
 
-/** Two points at level 1, one more per Combat level. */
+/** Two points at level 1, one more per character level. */
 export function totalPoints(s: GameState): number {
-  return levelForXp(s.skills.combat) + 1;
+  return characterLevel(s) + 1;
 }
 
 export function pointsLeft(s: GameState): number {

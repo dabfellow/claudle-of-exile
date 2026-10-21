@@ -7,7 +7,7 @@ import type { Ctx } from './context';
 import { createItem, itemName, newUid, sellValue } from './items';
 import { pick, rInt, type Rng } from './rng';
 import type { GameState, Rarity, VendorOffer } from './types';
-import { levelForXp } from './xp';
+import { characterLevel } from './character';
 
 export function stationLevel(s: GameState, id: StationId): number {
   return s.hideout[id] ?? 1;
@@ -43,7 +43,7 @@ export function upgradeStation(s: GameState, ctx: Ctx, id: StationId): string | 
 export function refreshVendor(s: GameState, rng: Rng): void {
   const lvl = stationLevel(s, 'vendor');
   const slots = VENDOR_SLOTS[lvl - 1];
-  const ilvl = Math.max(2, levelForXp(s.skills.combat) + 2);
+  const ilvl = Math.max(2, characterLevel(s) + 2);
   const stock: VendorOffer[] = [];
   let id = 1;
   const currencyPool = lvl >= 4 ? ['transmute', 'augment', 'alteration', 'regal', 'chaos', 'scour', 'regret'] : ['transmute', 'augment', 'alteration', 'scour', 'regret'];

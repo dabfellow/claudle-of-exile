@@ -3,12 +3,12 @@ import type { InstillCondition, StatKey } from '../engine/types';
 export interface FlaskDef {
   id: string;
   name: string;
-  kind: 'life' | 'utility';
+  kind: 'life' | 'mana' | 'utility';
   color: string;
   maxCharges: number;
   chargesPerUse: number;
   durationMs: number;
-  /** life flasks: total life recovered over the duration */
+  /** life/mana flasks: total recovered over the duration */
   heal?: number;
   /** utility flasks: stats granted while active */
   buff?: Partial<Record<StatKey, number>>;
@@ -28,6 +28,14 @@ export const FLASKS: FlaskDef[] = [
   {
     id: 'life_grand', name: 'Grand Life Flask', kind: 'life', color: '#d6453d',
     maxCharges: 30, chargesPerUse: 10, durationMs: 1200, heal: 520, desc: 'Recovers 520 Life over 1.2s', price: 600,
+  },
+  {
+    id: 'mana_small', name: 'Small Mana Flask', kind: 'mana', color: '#3d6fd6',
+    maxCharges: 24, chargesPerUse: 6, durationMs: 3000, heal: 50, desc: 'Recovers 50 Mana over 3s', price: 30,
+  },
+  {
+    id: 'mana_medium', name: 'Medium Mana Flask', kind: 'mana', color: '#3d6fd6',
+    maxCharges: 30, chargesPerUse: 6, durationMs: 3000, heal: 140, desc: 'Recovers 140 Mana over 3s', price: 150,
   },
   {
     id: 'granite', name: 'Granite Flask', kind: 'utility', color: '#9b8e7e',

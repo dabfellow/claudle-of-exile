@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { classDef } from '../data/classes';
 import { materialDef } from '../data/materials';
 import { actionDef, SKILLS } from '../data/skills';
@@ -8,8 +8,10 @@ import { pointsLeft } from '../engine/passives';
 import { actionIntervalMs, stopAction } from '../engine/skills';
 import { deriveStats } from '../engine/stats';
 import type { GameState, SkillId } from '../engine/types';
-import { levelForXp, levelProgress } from '../engine/xp';
-import { game, useGame } from '../game';
+import { characterLevel } from '../engine/character';
+import { levelOf, progressOf, xpToReach } from '../engine/xp';
+import type { GameEvent } from '../engine/types';
+import { game, useGame, useGameEvent } from '../game';
 import { fmt, fmtTime, MatIcon, ProgressBar } from './components/common';
 import { Icon } from './components/Icon';
 import { QuestTracker } from './components/QuestTracker';
@@ -98,14 +100,14 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
         <div className="nav-group" key={g.label}>
           <div className="nav-label">{g.label}</div>
           {g.items.map((it) => {
-            const lvl = it.skill ? levelForXp(s.skills[it.skill]) : null;
+            const lvl = it.skill ? levelOf(it.skill, s.skills[it.skill]) : null;
             const isActive = it.skill && it.skill === active;
             const color = it.skill ? SKILLS[it.skill].color : 'var(--muted)';
             return (
               <button key={it.page} data-tut={`nav-${it.page}`} className={`nav-item ${page === it.page ? 'active' : ''}`} onClick={() => go(it.page)}>
                 <span className="nav-icon">
                   <Icon name={it.icon} size={16} color={isActive ? color : undefined} />
-                  {isActive && it.skill && <Ring value={levelProgress(s.skills[it.skill])} color={color} />}
+                  {isActive && it.skill && <Ring value={progressOf(it.skill, s.skills[it.skill])} color={color} />}
                 </span>
                 <span className="nav-name">{it.label}</span>
                 {isActive && <span className="nav-active-dot" />}
@@ -123,7 +125,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="char-foot-name">{s.character.name}</div>
             <div className="dim" style={{ fontSize: 11 }}>
-              Lv {levelForXp(s.skills.combat)} {classDef(s.character.classId).name}
+              Lv {characterLevel(s)} {classDef(s.character.classId).name}
             </div>
           </div>
           <button className="btn ghost sm" title="Switch character" onClick={() => game.exit()}>
@@ -196,8 +198,13 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
           </button>
         )}
       </div>
-      <div className="topbar-life" title="Life">
-        <ProgressBar value={s.life / d.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" size="md" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} />
+      <div className="topbar-life">
+        <span title="Life">
+          <ProgressBar value={s.life / d.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" size="md" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} />
+        </span>
+        <span title={`Mana ${fmt(s.mana)} / ${fmt(d.maxMana)}`}>
+          <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} color="linear-gradient(90deg, var(--mana), var(--mana-2))" className="thin" />
+        </span>
       </div>
       <div className="currency-strip">
         {STRIP.map((id) => (
@@ -209,6 +216,62 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
         ))}
       </div>
     </header>
+  );
+}
+
+/** The always-on character XP bar, plus a slim bar for whatever skill is training. */
+export function XpBar() {
+  const s = useGame();
+  const lvl = characterLevel(s);
+  const xp = s.skills.combat;
+  const floor = xpToReach('combat', lvl);
+  const next = xpToReach('combat', lvl + 1);
+  const pct = progressOf('combat', xp);
+  const rate = game.xpPerHour('combat');
+  const training = s.action?.kind === 'skill' ? actionDef(s.action.actionId).skill : null;
+  const [pops, setPops] = useState<{ id: number; text: string; x: number }[]>([]);
+  const [pulse, setPulse] = useState(0);
+  const [levelUp, setLevelUp] = useState(0);
+
+  const onEvent = useCallback((e: GameEvent) => {
+    if (e.t === 'xp' && e.skill === 'combat' && e.amount >= 1) {
+      const id = Math.random();
+      setPops((p) => [...p.slice(-4), { id, text: `+${Math.round(e.amount)} XP`, x: 20 + Math.random() * 60 }]);
+      setPulse((n) => n + 1);
+      setTimeout(() => setPops((p) => p.filter((x) => x.id !== id)), 1200);
+    }
+    if (e.t === 'levelup' && e.skill === 'combat') setLevelUp((n) => n + 1);
+  }, []);
+  useGameEvent(onEvent);
+
+  return (
+    <footer className="xpbar">
+      {levelUp > 0 && <div key={levelUp} className="xp-levelup" />}
+      <span className="xp-level">Level {lvl}</span>
+      <div className={`xp-track ${pulse ? (pulse % 2 ? 'gain-a' : 'gain-b') : ''}`} title={`${fmt(xp - floor)} / ${fmt(next - floor)} XP to level ${lvl + 1}`}>
+        <div className="xp-fill" style={{ width: `${pct * 100}%` }} />
+        <div className="xp-ticks" />
+        <div className="xp-label">
+          {(pct * 100).toFixed(1)}% · {fmt(xp - floor)} / {fmt(next - floor)} XP
+        </div>
+      </div>
+      {pops.map((p) => (
+        <span key={p.id} className="xp-pop" style={{ left: `${p.x}%` }}>
+          {p.text}
+        </span>
+      ))}
+      <span className="xp-rate">{rate > 0 ? `${fmt(rate)} XP/h` : 'idle'}</span>
+      {training && (
+        <div className="xp-skill" title={`${SKILLS[training].name} ${(progressOf(training, s.skills[training]) * 100).toFixed(1)}%`}>
+          <Icon name={training} size={14} color={SKILLS[training].color} />
+          <span>
+            {SKILLS[training].name} {levelOf(training, s.skills[training])}
+          </span>
+          <ProgressBar value={progressOf(training, s.skills[training])} color={SKILLS[training].color} />
+          <span className="num">{fmt(game.xpPerHour(training))}/h</span>
+        </div>
+      )}
+    </footer>
   );
 }
 

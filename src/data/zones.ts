@@ -34,10 +34,11 @@ export const ZONES: ZoneDef[] = [
     id: 'mudflats', name: 'The Mud Flats', tier: 1, levelRange: [1, 6], color: '#7a8c5a',
     desc: 'Brackish shallows where the drowned refuse to rest.',
     monsters: [
-      m('rat', 'Drowned Rat', 1, 'phys', 1600, 0.8, 0.8),
-      m('crab', 'Mud Crab', 2, 'phys', 2200, 1.3, 0.9),
-      m('zombie', 'Waterlogged Corpse', 3, 'phys', 2400, 1.2, 1.1),
-      m('wisp', 'Bog Wisp', 3, 'light', 1800, 0.8, 1),
+      // the tutorial zone: soft enough that a fresh character can idle the trash
+      m('rat', 'Drowned Rat', 1, 'phys', 1600, 0.7, 0.55),
+      m('crab', 'Mud Crab', 2, 'phys', 2200, 1.1, 0.6),
+      m('zombie', 'Waterlogged Corpse', 3, 'phys', 2400, 1, 0.7),
+      m('wisp', 'Bog Wisp', 3, 'light', 1800, 0.7, 0.6),
     ],
     boss: m('gorger', 'Bloated Gorger', 5, 'phys', 2600, 1, 1),
     bossEvery: 15,
@@ -104,12 +105,16 @@ export function zoneDef(id: string): ZoneDef {
 }
 
 export function monsterLife(level: number): number {
-  return Math.round(15 + 6 * Math.pow(level, 1.4));
+  return Math.round((15 + 6 * Math.pow(level, 1.4)) * MONSTER_LIFE_SCALE);
 }
 
 export function monsterDamage(level: number): number {
   return Math.round(1 + 1.0 * Math.pow(level, 1.15));
 }
+
+/** global pacing knobs for monsters */
+export const MONSTER_LIFE_SCALE = 1.8;
+export const MONSTER_SPEED_SCALE = 1.6;
 
 export const BOSS_LIFE_MULT = 5;
 export const BOSS_DMG_MULT = 1.25;

@@ -11,7 +11,7 @@ export interface SkillDef {
 }
 
 export const SKILLS: Record<SkillId, SkillDef> = {
-  combat: { id: 'combat', name: 'Combat', group: 'combat', color: '#e05a4f', verb: 'Fighting', desc: 'Raises base Life and grants passive points.' },
+  combat: { id: 'combat', name: 'Character', group: 'combat', color: '#e0a640', verb: 'Fighting', desc: 'Your character level: raises Life and Mana and grants passive points.' },
   mining: { id: 'mining', name: 'Mining', group: 'gathering', color: '#c8743f', verb: 'Mining', desc: 'Dig ore and gems for Smithing.' },
   woodcutting: { id: 'woodcutting', name: 'Woodcutting', group: 'gathering', color: '#6fae4a', verb: 'Chopping', desc: 'Fell trees for hafts, frames and flask stoppers.' },
   harvesting: { id: 'harvesting', name: 'Harvesting', group: 'gathering', color: '#d9b84a', verb: 'Harvesting', desc: 'Gather herbs for Alchemy.' },
@@ -100,6 +100,7 @@ const SMITHING: SkillAction[] = BASES.map((b) => ({
 
 const ALCHEMY: SkillAction[] = [
   { id: 'brew_life_small', skill: 'alchemy', name: 'Small Life Flask', level: 1, intervalMs: 4000, xp: 12, inputs: { sunpetal: 5, ash_log: 2 }, flaskId: 'life_small', color: '#d6453d' },
+  { id: 'brew_mana_small', skill: 'alchemy', name: 'Small Mana Flask', level: 4, intervalMs: 4000, xp: 14, inputs: { sunpetal: 4, ash_log: 3 }, flaskId: 'mana_small', color: '#3d6fd6' },
   { id: 'orb_transmute', skill: 'alchemy', name: 'Orb of Transmutation', level: 1, intervalMs: 3500, xp: 10, inputs: { arcane_dust: 3, sunpetal: 2 }, outputs: { transmute: 1 }, color: '#7fb2ff' },
   { id: 'orb_augment', skill: 'alchemy', name: 'Orb of Augmentation', level: 6, intervalMs: 3500, xp: 14, inputs: { arcane_dust: 4, sunpetal: 3 }, outputs: { augment: 1 }, color: '#5f8de0' },
   { id: 'orb_alteration', skill: 'alchemy', name: 'Orb of Alteration', level: 10, intervalMs: 3500, xp: 18, inputs: { arcane_dust: 5, frostleaf: 2 }, outputs: { alteration: 1 }, color: '#9fd2ff' },
@@ -114,7 +115,13 @@ const ALCHEMY: SkillAction[] = [
   { id: 'orb_alchemy', skill: 'alchemy', name: 'Orb of Alchemy', level: 40, intervalMs: 6000, xp: 90, inputs: { arcane_dust: 25, voidbloom: 2 }, outputs: { alchemy: 1 }, color: '#f0c14b' },
 ];
 
-export const ACTIONS: SkillAction[] = [...GATHERING, ...SMITHING, ...ALCHEMY];
+/** Global pacing knob for gathering/production xp (values above are authored at 1×). */
+export const SKILL_XP_SCALE = 0.3;
+
+export const ACTIONS: SkillAction[] = [...GATHERING, ...SMITHING, ...ALCHEMY].map((a) => ({
+  ...a,
+  xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
+}));
 
 const BY_ID: Record<string, SkillAction> = Object.fromEntries(ACTIONS.map((a) => [a.id, a]));
 

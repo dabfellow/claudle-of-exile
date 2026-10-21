@@ -9,6 +9,12 @@ import { chance, pick, pickWeighted, rInt } from './rng';
 import type { Derived } from './stats';
 import type { GameState, Item, MonsterInstance, Rarity } from './types';
 
+/** drop-rate knobs (per kill) */
+export const CURRENCY_DROP_CHANCE = 0.045;
+export const ITEM_DROP_CHANCE = 0.06;
+export const UNIQUE_CHANCE = 0.0005;
+export const BOSS_UNIQUE_CHANCE = 0.06;
+
 export function rollRarity(rng: Ctx['rng'], itemRarity: number, boss: boolean): Rarity {
   const r = 1 + itemRarity / 100;
   const weights: Record<Rarity, number> = {
@@ -39,14 +45,14 @@ export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: Zon
   const { rng } = ctx;
   const boss = mon.isBoss;
 
-  const gold = rInt(rng, mon.level, mon.level * 3) * (boss ? 12 : 1);
+  const gold = rInt(rng, 1, Math.max(1, Math.round(mon.level / 3))) * (boss ? 15 : 1);
   addBank(s, 'gold', gold);
 
   // currency
   const pool = CURRENCIES.filter((c) => c.dropWeight > 0 && c.minTier <= zone.tier);
-  const rolls = boss ? 3 : 1;
+  const rolls = boss ? 2 : 1;
   for (let i = 0; i < rolls; i++) {
-    if (!boss && !chance(rng, 0.2 * (1 + d.itemRarity / 300))) continue;
+    if (!boss && !chance(rng, CURRENCY_DROP_CHANCE * (1 + d.itemRarity / 300))) continue;
     const c = pickWeighted(rng, pool, (x) => x.dropWeight * (1 + 0.3 * (zone.tier - x.minTier)))!;
     addBank(s, c.id, 1);
     ctx.emit({ t: 'loot', currencyId: c.id, qty: 1 });
@@ -54,14 +60,14 @@ export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: Zon
 
   // items
   const ilvl = mon.level + MAP_ILVL[stationLevel(s, 'map_device') - 1];
-  const count = boss ? 2 : chance(rng, 0.15) ? 1 : 0;
+  const count = boss ? 1 + (chance(rng, 0.5) ? 1 : 0) : chance(rng, ITEM_DROP_CHANCE) ? 1 : 0;
   for (let i = 0; i < count; i++) {
     const base = pick(rng, droppableBases(ilvl));
     placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, d.itemRarity, boss), rng));
   }
 
   // uniques
-  const uniqueChance = boss ? 0.2 : 0.002;
+  const uniqueChance = boss ? BOSS_UNIQUE_CHANCE : UNIQUE_CHANCE;
   if (zone.uniques.length && chance(rng, uniqueChance * (1 + d.itemRarity / 100))) {
     placeItem(s, ctx, createUnique(s, pick(rng, zone.uniques), ilvl));
   }

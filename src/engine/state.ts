@@ -9,7 +9,7 @@ import { skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -37,7 +37,8 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     flaskSlots: Array(FLASK_SLOTS).fill(null),
     flaskStash: [],
     action: null,
-    life: 50,
+    life: 60,
+    mana: 30,
     combat: null,
     zoneKills: {},
     unlockedZones: ['mudflats'],
@@ -73,8 +74,10 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
       if (combatStep(s, ctx, step, d)) d = deriveStats(s);
     } else {
       s.life = Math.min(d.maxLife, s.life + d.maxLife * TOWN_REGEN * (step / 1000));
+      s.mana = Math.min(d.maxMana, s.mana + d.maxMana * TOWN_REGEN * (step / 1000));
     }
   }
   if (s.life > d.maxLife) s.life = d.maxLife;
+  if (s.mana > d.maxMana) s.mana = d.maxMana;
   vendorTick(s, ctx.rng);
 }

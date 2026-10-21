@@ -80,7 +80,15 @@ export type StatKey =
   | 'skillSpeed'
   | 'skillXp'
   | 'flaskEffect'
-  | 'flaskCharges';
+  | 'flaskCharges'
+  | 'str'
+  | 'dex'
+  | 'int'
+  | 'allAttr'
+  | 'accuracy'
+  | 'mana'
+  | 'manaPct'
+  | 'manaRegenPct';
 
 export type Stats = Record<StatKey, number>;
 
@@ -137,6 +145,7 @@ export interface Buff {
 }
 
 export interface HealOverTime {
+  resource: 'life' | 'mana';
   perMs: number;
   remainingMs: number;
 }
@@ -206,6 +215,7 @@ export interface GameState {
   flaskStash: FlaskInstance[];
   action: Action;
   life: number;
+  mana: number;
   combat: CombatRuntime | null;
   zoneKills: Record<string, number>;
   unlockedZones: string[];
@@ -223,7 +233,7 @@ export type GameEvent =
   | { t: 'hit'; target: 'player' | 'monster'; amount: number; crit?: boolean; dmgType: DamageType; evaded?: boolean }
   | { t: 'kill'; name: string; boss: boolean }
   | { t: 'spawn'; name: string; boss: boolean }
-  | { t: 'death' }
+  | { t: 'death'; xpLost: number }
   | { t: 'loot'; item?: Item; currencyId?: string; qty?: number; salvaged?: boolean }
   | { t: 'levelup'; skill: SkillId; level: number }
   | { t: 'xp'; skill: SkillId; amount: number }

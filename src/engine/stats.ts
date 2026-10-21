@@ -5,7 +5,7 @@ import { flaskDef } from '../data/flasks';
 import { MAP_RARITY } from '../data/hideout';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import type { Buff, DamageType, GameState, Item, StatKey, Stats } from './types';
-import { levelForXp } from './xp';
+import { characterLevel } from './character';
 
 const STAT_KEYS: StatKey[] = [
   'life', 'lifePct', 'lifeMore', 'lifeRegen', 'lifeRegenPct', 'lifeLeech',
@@ -14,6 +14,7 @@ const STAT_KEYS: StatKey[] = [
   'armour', 'armourPct', 'armourMore', 'evasion', 'evasionPct',
   'fireRes', 'coldRes', 'lightRes', 'allRes',
   'itemRarity', 'skillSpeed', 'skillXp', 'flaskEffect', 'flaskCharges',
+  'str', 'dex', 'int', 'allAttr', 'accuracy', 'mana', 'manaPct', 'manaRegenPct',
 ];
 
 export function emptyStats(): Stats {
@@ -46,11 +47,21 @@ export function passiveStats(ids: string[]): Stats {
   return st;
 }
 
+export interface Attributes {
+  str: number;
+  dex: number;
+  int: number;
+}
+
 export interface Derived {
   raw: Stats;
   combatLevel: number;
+  attributes: Attributes;
+  accuracy: number;
   maxLife: number;
   lifeRegen: number;
+  maxMana: number;
+  manaRegen: number;
   armour: number;
   evasion: number;
   hit: Record<DamageType, [number, number]>;
@@ -70,7 +81,18 @@ export interface Derived {
 
 export const RES_CAP = 75;
 /** everyone regenerates this % of max life per second */
-export const BASE_REGEN_PCT = 2;
+export const BASE_REGEN_PCT = 0.5;
+/** % of max mana regenerated per second before modifiers */
+export const BASE_MANA_REGEN_PCT = 1.75;
+/** global pacing knob: scales every player attack rate */
+export const PLAYER_SPEED_SCALE = 0.65;
+
+/** What each attribute point grants (shown in tooltips too). */
+export const ATTRIBUTE_EFFECTS = {
+  str: { lifePer: 0.5, physPctPer: 0.2 },
+  dex: { accuracyPer: 2, evasionPctPer: 0.2 },
+  int: { manaPer: 0.5, elemPctPer: 0.2 },
+};
 
 /** Raw stat totals from gear, passives, hideout and active flask buffs. */
 export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): Stats {
@@ -85,7 +107,9 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
     addStats(st, itemStats(item));
   }
   addStats(st, passiveStats(s.passives));
-  addStats(st, classDef(s.character.classId).bonus);
+  const cls = classDef(s.character.classId);
+  addStats(st, cls.baseAttributes);
+  addStats(st, cls.bonus);
   st.itemRarity += MAP_RARITY[(s.hideout.map_device ?? 1) - 1] ?? 0;
 
   const flaskMult = 1 + st.flaskEffect / 100;
@@ -98,26 +122,41 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
 
 export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   const raw = rawStats(s, buffs);
-  const combatLevel = levelForXp(s.skills.combat);
+  const combatLevel = characterLevel(s);
   const weapon = s.equipment.weapon ? baseDef(s.equipment.weapon.baseId) : null;
+
+  const attributes: Attributes = {
+    str: Math.round(raw.str + raw.allAttr),
+    dex: Math.round(raw.dex + raw.allAttr),
+    int: Math.round(raw.int + raw.allAttr),
+  };
+  const A = ATTRIBUTE_EFFECTS;
 
   const maxLife = Math.max(
     1,
-    Math.round((60 + 12 * (combatLevel - 1) + raw.life) * (1 + raw.lifePct / 100) * (1 + raw.lifeMore / 100)),
+    Math.round(
+      (60 + 12 * (combatLevel - 1) + raw.life + attributes.str * A.str.lifePer) * (1 + raw.lifePct / 100) * (1 + raw.lifeMore / 100),
+    ),
+  );
+  const maxMana = Math.max(
+    0,
+    Math.round((30 + 6 * (combatLevel - 1) + raw.mana + attributes.int * A.int.manaPer) * (1 + raw.manaPct / 100)),
   );
   const armour = Math.round(raw.armour * (1 + raw.armourPct / 100) * (1 + raw.armourMore / 100));
-  const evasion = Math.round(raw.evasion * (1 + raw.evasionPct / 100));
+  const evasion = Math.round(raw.evasion * (1 + (raw.evasionPct + attributes.dex * A.dex.evasionPctPer) / 100));
+  const accuracy = Math.round(2 * combatLevel + raw.accuracy + attributes.dex * A.dex.accuracyPer);
 
   const wPhys = weapon?.phys ?? [2, 5];
-  const physMult = 1 + raw.physPct / 100;
-  const elemMult = 1 + raw.elemPct / 100;
+  const physMult = 1 + (raw.physPct + attributes.str * A.str.physPctPer) / 100;
+  const elemMult = 1 + (raw.elemPct + attributes.int * A.int.elemPctPer) / 100;
   const hit: Record<DamageType, [number, number]> = {
     phys: [Math.round((wPhys[0] + raw.physMin) * physMult), Math.round((wPhys[1] + raw.physMax) * physMult)],
     fire: [Math.round(raw.fireMin * elemMult), Math.round(raw.fireMax * elemMult)],
     cold: [Math.round(raw.coldMin * elemMult), Math.round(raw.coldMax * elemMult)],
     light: [Math.round(raw.lightMin * elemMult), Math.round(raw.lightMax * elemMult)],
   };
-  const attacksPerSec = (weapon?.aps ?? 1.2) * (1 + raw.attackSpeedPct / 100) * (1 + raw.attackSpeedMore / 100);
+  const attacksPerSec =
+    (weapon?.aps ?? 1.2) * (1 + raw.attackSpeedPct / 100) * (1 + raw.attackSpeedMore / 100) * PLAYER_SPEED_SCALE;
   const critChance = Math.min(95, (weapon?.crit ?? 5) * (1 + raw.critChancePct / 100));
   const critMulti = 150 + raw.critMulti;
   const cap = (v: number) => Math.min(RES_CAP, v + raw.allRes);
@@ -127,8 +166,12 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   return {
     raw,
     combatLevel,
+    attributes,
+    accuracy,
     maxLife,
     lifeRegen: raw.lifeRegen + (maxLife * (BASE_REGEN_PCT + raw.lifeRegenPct)) / 100,
+    maxMana,
+    manaRegen: ((maxMana * BASE_MANA_REGEN_PCT) / 100) * (1 + raw.manaRegenPct / 100),
     armour,
     evasion,
     hit,
@@ -143,7 +186,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     flaskEffect: raw.flaskEffect,
     flaskCharges: raw.flaskCharges,
     avgHit,
-    dps: avgHit * attacksPerSec * critFactor * 0.95,
+    dps: avgHit * attacksPerSec * critFactor * hitChance(accuracy, combatLevel),
   };
 }
 
@@ -159,4 +202,13 @@ export function evadeChance(evasion: number, monsterLevel: number): number {
   return Math.min(0.75, evasion / (evasion + accuracy * 2.5));
 }
 
-export const PLAYER_HIT_CHANCE = 0.95;
+export function monsterEvasion(level: number): number {
+  return 30 + level * 12;
+}
+
+/** PoE-style chance to hit a monster of the given level, clamped to 60–95%. */
+export function hitChance(accuracy: number, monsterLevel: number): number {
+  const eva = monsterEvasion(monsterLevel);
+  const raw = (1.25 * accuracy) / (accuracy + Math.pow(eva * 0.2, 0.9));
+  return Math.min(0.95, Math.max(0.6, raw));
+}

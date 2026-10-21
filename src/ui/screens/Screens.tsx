@@ -182,6 +182,17 @@ export function CharacterCreate() {
             <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>
               {c.desc}
             </p>
+            <div className="class-attrs">
+              <span title="Strength">
+                <b style={{ color: '#e07a6a' }}>{c.baseAttributes.str}</b> Str
+              </span>
+              <span title="Dexterity">
+                <b style={{ color: '#7fd08a' }}>{c.baseAttributes.dex}</b> Dex
+              </span>
+              <span title="Intelligence">
+                <b style={{ color: '#7fa6f0' }}>{c.baseAttributes.int}</b> Int
+              </span>
+            </div>
             <div className="class-section">
               <div className="section-label">Class bonus</div>
               {c.bonusText.map((b) => (
