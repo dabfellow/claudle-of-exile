@@ -4,18 +4,8 @@ import { baseDef } from '../data/bases';
 import { flaskDef } from '../data/flasks';
 import { MAP_RARITY } from '../data/hideout';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
-import type { Buff, DamageType, GameState, Item, StatKey, Stats } from './types';
+import { STAT_KEYS, type Buff, type DamageType, type GameState, type Item, type StatKey, type Stats } from './types';
 import { characterLevel } from './character';
-
-const STAT_KEYS: StatKey[] = [
-  'life', 'lifePct', 'lifeMore', 'lifeRegen', 'lifeRegenPct', 'lifeLeech',
-  'physMin', 'physMax', 'physPct', 'fireMin', 'fireMax', 'coldMin', 'coldMax', 'lightMin', 'lightMax', 'elemPct',
-  'attackSpeedPct', 'attackSpeedMore', 'critChancePct', 'critMulti',
-  'armour', 'armourPct', 'armourMore', 'evasion', 'evasionPct',
-  'fireRes', 'coldRes', 'lightRes', 'allRes',
-  'itemRarity', 'skillSpeed', 'skillXp', 'flaskEffect', 'flaskCharges',
-  'str', 'dex', 'int', 'allAttr', 'accuracy', 'mana', 'manaPct', 'manaRegenPct', 'castSpeedPct',
-];
 
 export function emptyStats(): Stats {
   return Object.fromEntries(STAT_KEYS.map((k) => [k, 0])) as Stats;
@@ -38,11 +28,17 @@ export function itemStats(item: Item): Partial<Record<StatKey, number>> {
   return out;
 }
 
-export function passiveStats(ids: string[]): Stats {
+/** Stats from allocated character-tree nodes, including chosen mastery bonuses. */
+export function passiveStats(ids: string[], masteries: Record<string, number> = {}): Stats {
   const st = emptyStats();
   for (const id of ids) {
     const n = PASSIVE_BY_ID[id];
-    if (n) addStats(st, n.stats);
+    if (!n) continue;
+    addStats(st, n.stats);
+    if (n.kind === 'mastery') {
+      const opt = n.options?.[masteries[id] ?? -1];
+      if (opt) addStats(st, opt.stats);
+    }
   }
   return st;
 }
@@ -68,6 +64,8 @@ export interface Derived {
   /** increased-damage multipliers, for spells and skills that don't use weapon hits */
   physMult: number;
   elemMult: number;
+  /** per-type multipliers (elemental includes the element's own %) */
+  typeMult: Record<DamageType, number>;
   attacksPerSec: number;
   critChance: number;
   critMulti: number;
@@ -109,7 +107,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
     }
     addStats(st, itemStats(item));
   }
-  addStats(st, passiveStats(s.passives));
+  addStats(st, passiveStats(s.passives, s.masteries));
   const cls = classDef(s.character.classId);
   addStats(st, cls.baseAttributes);
   addStats(st, cls.bonus);
@@ -143,26 +141,38 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
       (60 + 12 * (combatLevel - 1) + raw.life + attributes.str * A.str.lifePer) * (1 + raw.lifePct / 100) * (1 + raw.lifeMore / 100),
     ),
   );
-  const maxMana = Math.max(
-    0,
-    Math.round((30 + 6 * (combatLevel - 1) + raw.mana + attributes.int * A.int.manaPer) * (1 + raw.manaPct / 100)),
-  );
-  const armour = Math.round(raw.armour * (1 + raw.armourPct / 100) * (1 + raw.armourMore / 100));
-  const evasion = Math.round(raw.evasion * (1 + (raw.evasionPct + attributes.dex * A.dex.evasionPctPer) / 100));
+  // Blood Pact: no mana at all
+  const maxMana = raw.bloodPact
+    ? 0
+    : Math.max(0, Math.round((30 + 6 * (combatLevel - 1) + raw.mana + attributes.int * A.int.manaPer) * (1 + raw.manaPct / 100)));
+  let armour = Math.round(raw.armour * (1 + raw.armourPct / 100) * (1 + raw.armourMore / 100));
+  let evasion = Math.round(raw.evasion * (1 + (raw.evasionPct + attributes.dex * A.dex.evasionPctPer) / 100));
+  if (raw.bastion) {
+    armour += evasion;
+    evasion = 0;
+  }
   const accuracy = Math.round(2 * combatLevel + raw.accuracy + attributes.dex * A.dex.accuracyPer);
 
   const wPhys = weapon?.phys ?? [2, 5];
   const physMult = 1 + (raw.physPct + attributes.str * A.str.physPctPer) / 100;
-  const elemMult = 1 + (raw.elemPct + attributes.int * A.int.elemPctPer) / 100;
+  const elemBase = raw.elemPct + attributes.int * A.int.elemPctPer;
+  const elemMult = 1 + elemBase / 100;
+  const typeMult: Record<DamageType, number> = {
+    phys: physMult,
+    fire: 1 + (elemBase + raw.firePct) / 100,
+    cold: 1 + (elemBase + raw.coldPct) / 100,
+    light: 1 + (elemBase + raw.lightPct) / 100,
+  };
   const hit: Record<DamageType, [number, number]> = {
     phys: [Math.round((wPhys[0] + raw.physMin) * physMult), Math.round((wPhys[1] + raw.physMax) * physMult)],
-    fire: [Math.round(raw.fireMin * elemMult), Math.round(raw.fireMax * elemMult)],
-    cold: [Math.round(raw.coldMin * elemMult), Math.round(raw.coldMax * elemMult)],
-    light: [Math.round(raw.lightMin * elemMult), Math.round(raw.lightMax * elemMult)],
+    fire: [Math.round(raw.fireMin * typeMult.fire), Math.round(raw.fireMax * typeMult.fire)],
+    cold: [Math.round(raw.coldMin * typeMult.cold), Math.round(raw.coldMax * typeMult.cold)],
+    light: [Math.round(raw.lightMin * typeMult.light), Math.round(raw.lightMax * typeMult.light)],
   };
   const attacksPerSec =
     (weapon?.aps ?? 1.2) * (1 + raw.attackSpeedPct / 100) * (1 + raw.attackSpeedMore / 100) * PLAYER_SPEED_SCALE;
-  const critChance = Math.min(95, (weapon?.crit ?? 5) * (1 + raw.critChancePct / 100));
+  // Steady Hand: always hit, never crit
+  const critChance = raw.steadyHand ? 0 : Math.min(95, (weapon?.crit ?? 5) * (1 + raw.critChancePct / 100));
   const critMulti = 150 + raw.critMulti;
   const cap = (v: number) => Math.min(RES_CAP, v + raw.allRes);
   const avgHit = Object.values(hit).reduce((a, [lo, hi]) => a + (lo + hi) / 2, 0);
@@ -176,12 +186,13 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     maxLife,
     lifeRegen: raw.lifeRegen + (maxLife * (BASE_REGEN_PCT + raw.lifeRegenPct)) / 100,
     maxMana,
-    manaRegen: ((maxMana * BASE_MANA_REGEN_PCT) / 100) * (1 + raw.manaRegenPct / 100),
+    manaRegen: maxMana ? ((maxMana * BASE_MANA_REGEN_PCT) / 100) * (1 + raw.manaRegenPct / 100) + raw.manaRegenFlat : 0,
     armour,
     evasion,
     hit,
     physMult,
     elemMult,
+    typeMult,
     attacksPerSec,
     critChance,
     critMulti,
@@ -193,7 +204,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     flaskEffect: raw.flaskEffect,
     flaskCharges: raw.flaskCharges,
     avgHit,
-    dps: avgHit * attacksPerSec * critFactor * hitChance(accuracy, combatLevel),
+    dps: avgHit * attacksPerSec * critFactor * (raw.steadyHand ? 1 : hitChance(accuracy, combatLevel)),
   };
 }
 

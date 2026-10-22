@@ -32,7 +32,8 @@ function addMod(f: FlaskInstance, rng: Rng): boolean {
   return true;
 }
 
-function rerollMagic(f: FlaskInstance, rng: Rng): void {
+/** Make a flask magic with fresh modifiers. */
+export function rerollMagic(f: FlaskInstance, rng: Rng): void {
   f.prefixes = [];
   f.suffixes = [];
   addMod(f, rng);

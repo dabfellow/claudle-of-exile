@@ -77,15 +77,18 @@ function spendPassives(s: GameState, ctx: Ctx) {
     let pick: string | null = null;
     let bestGain = -Infinity;
     for (const n of PASSIVE_NODES) {
-      if (allocateReason(s, n.id)) continue;
-      const gain = score(deriveStats({ ...s, passives: [...s.passives, n.id] }, [])) - base;
+      // keystones are build-defining trade-offs the simple scorer can't judge, so the bot skips them
+      if (n.kind === 'keystone' || allocateReason(s, n.id)) continue;
+      // masteries: the bot always takes the first option
+      const masteries = n.kind === 'mastery' ? { ...s.masteries, [n.id]: 0 } : s.masteries;
+      const gain = score(deriveStats({ ...s, passives: [...s.passives, n.id], masteries }, [])) - base;
       if (gain > bestGain) {
         bestGain = gain;
         pick = n.id;
       }
     }
-    if (!pick) return;
-    allocate(s, ctx, pick);
+    if (!pick || bestGain < 0) return;
+    if (allocate(s, ctx, pick, 0)) return;
   }
 }
 
@@ -154,6 +157,12 @@ function runClass(classId: ClassId): Result {
     tick(s, ctx, 1000);
   }
   const d = deriveStats(s, []);
+  if (flag('debug')) {
+    console.log(`  [${classId}] passives:`, s.passives.join(', '));
+    console.log(`  [${classId}] masteries:`, JSON.stringify(s.masteries));
+    console.log(`  [${classId}] bar:`, s.skillBar.map((g) => g && `${g.gemId}:${g.level}[${g.supports.filter(Boolean).map((x) => x!.supportId).join('+')}]`).join(' | '));
+    console.log(`  [${classId}] life ${d.maxLife} armour ${d.armour} res ${JSON.stringify(d.res)} dps ${d.dps.toFixed(0)}`);
+  }
   res.finalLevel = characterLevel(s);
   res.bank = s.bank;
   res.bestDps = d.dps;

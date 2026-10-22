@@ -3495,3 +3495,78 @@ img.art {
     display: none;
   }
 }
+
+/* ============ passive trees (v2) ============ */
+.tree-wrap {
+  height: min(74vh, 820px);
+}
+
+.tree-node.match circle.body,
+.tree-node.match polygon.body,
+.tree-node.match rect.body {
+  stroke: #fff !important;
+  stroke-width: 4 !important;
+}
+
+.tree-search {
+  min-width: 260px;
+}
+
+.tree-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tree-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tree-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 4px 16px;
+  font-size: 12.5px;
+}
+
+.mastery-tip .mod.chosen {
+  color: var(--accent-2);
+}
+
+.mastery-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: var(--r);
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.mastery-option:hover:not(:disabled) {
+  border-color: var(--accent);
+  box-shadow: 0 0 14px rgba(210, 166, 89, 0.25);
+}
+
+.mastery-option.chosen {
+  border-color: var(--accent);
+  color: var(--accent-2);
+}
+
+.mastery-option:disabled {
+  cursor: default;
+}
+
+.mastery-mark {
+  color: var(--accent);
+  font-size: 16px;
+}

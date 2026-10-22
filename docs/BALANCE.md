@@ -58,6 +58,11 @@ Notes for the Phase 8 balance pass:
 - **Idle ≈ active** where the starting guard skill's "when an enemy winds up" rule answers boss slams — intended (a good tactics setup wins), but bosses need more than one mechanic so setups matter more.
 - The bot never re-arranges skills or uses dropped skill gems; it only fills support sockets.
 
+## Phase 4 — trees (2026-10-21)
+- Existing characters had their passive points refunded (save v6) because the tree was rebuilt.
+- The bot skips keystones (its scorer can't judge trade-offs like Blood Pact) and takes the first mastery option.
+- **Drop luck dominates single runs.** Seed 7 left a Warrior on 17 DPS with 58 deaths at the second boss; seeds 3, 11 and 21 killed it in 28–37 minutes with no deaths. Always compare several seeds (`--seed N`) before tuning. Use `--debug` to print the bot's tree, skills and stats.
+
 ## Known gaps (fixed by later phases)
 - The five current zones span levels 1–45; Phase 8 restructures them into Act 1 (≈ levels 1–15) and later acts.
 - Bot gear scoring is crude, so DPS varies a lot with drop luck (e.g. one Warrior run ended on 30 DPS).

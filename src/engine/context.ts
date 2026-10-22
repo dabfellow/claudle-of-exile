@@ -7,6 +7,8 @@ export interface Ctx {
   emit(e: GameEvent): void;
   /** wall-clock time in ms (Date.now() in the app, fixed in tests) */
   now: number;
+  /** true while simulating time spent away */
+  offline?: boolean;
 }
 
 export function makeCtx(rng: Rng, now = 0, sink: GameEvent[] = []): Ctx & { events: GameEvent[] } {

@@ -231,20 +231,26 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
   const isAttack = def.tags.includes('attack');
   let actionMs: number;
   if (isAttack) {
-    actionMs = ((1000 / d.attacksPerSec) * (def.speedMult ?? 1)) / (1 + mods.attackSpeed / 100);
+    const dexSkill = def.id === 'twin_strike' || def.id === 'lacerate' ? d.raw.dexSkillSpeed : 0;
+    actionMs = ((1000 / d.attacksPerSec) * (def.speedMult ?? 1)) / (1 + (mods.attackSpeed + dexSkill) / 100);
   } else {
     actionMs = (def.castMs ?? 800) / PLAYER_SPEED_SCALE / (1 + (d.raw.castSpeedPct + mods.castSpeed) / 100);
   }
   // mana cost grows a little with gem level, like PoE
-  const manaCost = Math.round(def.manaCost * (1 + 0.04 * (level - 1)) * mods.manaMult);
+  const r = d.raw;
+  const manaCost = Math.round(
+    def.manaCost * (1 + 0.04 * (level - 1)) * mods.manaMult * (1 - r.manaCostReduction / 100) * (r.arcaneRecursion ? 1.5 : 1),
+  );
+  const isGuard = def.role === 'guard';
+  const cooldownSpeed = 1 + (r.cooldownRecovery + (isGuard ? r.guardCooldown : 0) + (r.arcaneRecursion ? 40 : 0)) / 100;
   return {
     def,
     level,
     mods,
-    manaCost,
-    cooldownMs: def.cooldownMs,
+    manaCost: Math.max(0, manaCost),
+    cooldownMs: def.cooldownMs / cooldownSpeed,
     actionMs,
-    durationMult: 1 + mods.durationPct / 100,
+    durationMult: (1 + mods.durationPct / 100) * (1 + (r.skillDuration + (isGuard ? r.guardDuration : 0)) / 100),
   };
 }
 
@@ -273,7 +279,7 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
     elem = (['fire', 'cold', 'light'] as const).reduce((a, t) => a + ((d.hit[t][0] + d.hit[t][1]) / 2) * pct, 0);
   } else {
     const [lo, hi] = spellBaseAt(def, level);
-    elem = ((lo + hi) / 2) * d.elemMult;
+    elem = ((lo + hi) / 2) * d.typeMult[def.effect.type ?? 'fire'];
   }
   if (mods.noElemental) elem = 0;
   const extra = mods.extras.reduce((a, x) => a + x.pct, 0) / 100;

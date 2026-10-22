@@ -47,50 +47,27 @@ export type Tag =
   | 'dex_armour'
   | 'jewellery';
 
-export type StatKey =
-  | 'life'
-  | 'lifePct'
-  | 'lifeMore'
-  | 'lifeRegen'
-  | 'lifeRegenPct'
-  | 'lifeLeech'
-  | 'physMin'
-  | 'physMax'
-  | 'physPct'
-  | 'fireMin'
-  | 'fireMax'
-  | 'coldMin'
-  | 'coldMax'
-  | 'lightMin'
-  | 'lightMax'
-  | 'elemPct'
-  | 'attackSpeedPct'
-  | 'attackSpeedMore'
-  | 'critChancePct'
-  | 'critMulti'
-  | 'armour'
-  | 'armourPct'
-  | 'armourMore'
-  | 'evasion'
-  | 'evasionPct'
-  | 'fireRes'
-  | 'coldRes'
-  | 'lightRes'
-  | 'allRes'
-  | 'itemRarity'
-  | 'skillSpeed'
-  | 'skillXp'
-  | 'flaskEffect'
-  | 'flaskCharges'
-  | 'str'
-  | 'dex'
-  | 'int'
-  | 'allAttr'
-  | 'accuracy'
-  | 'mana'
-  | 'manaPct'
-  | 'manaRegenPct'
-  | 'castSpeedPct';
+/** Every stat a character can have. Add new ones here; Stats and the stat engine pick them up. */
+export const STAT_KEYS = [
+  'life', 'lifePct', 'lifeMore', 'lifeRegen', 'lifeRegenPct', 'lifeLeech', 'physMin', 'physMax', 'physPct',
+  'fireMin', 'fireMax', 'coldMin', 'coldMax', 'lightMin', 'lightMax', 'elemPct', 'attackSpeedPct',
+  'attackSpeedMore', 'critChancePct', 'critMulti', 'armour', 'armourPct', 'armourMore', 'evasion',
+  'evasionPct', 'fireRes', 'coldRes', 'lightRes', 'allRes', 'itemRarity', 'skillSpeed', 'skillXp',
+  'flaskEffect', 'flaskCharges', 'str', 'dex', 'int', 'allAttr', 'accuracy', 'mana', 'manaPct',
+  'manaRegenPct', 'castSpeedPct', 'firePct', 'coldPct', 'lightPct', 'bleedPct', 'poisonPct', 'ignitePct',
+  'ailmentPct', 'ailmentDuration', 'bleedDuration', 'poisonDuration', 'igniteDuration', 'bleedDurationFlat',
+  'poisonDurationFlat', 'skillDuration', 'guardDuration', 'cooldownRecovery', 'guardCooldown',
+  'manaCostReduction', 'stunChance', 'stunDuration', 'stunnedVuln', 'shieldEffect', 'extraChains',
+  'extraBlocks', 'spellCritPct', 'spellCritMulti', 'lightCrit', 'chainMore', 'repeatMore', 'meleePct',
+  'dexSkillSpeed', 'buffMore', 'buffDurationFlat', 'warCryHeal', 'smokeExtra', 'afterGuardDamage',
+  'guardArmourPct', 'lowLifeDamage', 'critFullLife', 'critLeech', 'overkillHeal', 'highLifeElem',
+  'physAsLight', 'bleedBossMore', 'bleedVuln', 'multiAilmentVuln', 'poisonWeaken', 'igniteSpread',
+  'chillOnHit', 'slamReduction', 'armourVsElem', 'elemTakenReduction', 'blockHeal', 'evadeHeal',
+  'evadeSpeed', 'manaRegenFlat', 'lifeFlaskRecovery', 'manaFlaskRecovery', 'utilityFlaskDuration',
+  'bloodPact', 'windDancer', 'mindOverFlesh', 'steadyHand', 'arcaneRecursion', 'bastion',
+] as const;
+
+export type StatKey = (typeof STAT_KEYS)[number];
 
 export type Stats = Record<StatKey, number>;
 
@@ -170,6 +147,8 @@ export interface MonsterInstance {
   frozenMs: number;
   /** armour broken: takes more damage while > 0 */
   vulnMs: number;
+  /** chilled: attacks slowed while > 0 */
+  chillMs: number;
   /** pack members are scaled down; xp and loot scale with them */
   scale: number;
   /** damage-over-time accumulated since the last report */
@@ -238,6 +217,8 @@ export interface CombatRuntime {
   retaliate: boolean;
   ambush: boolean;
   flurryStacks: number;
+  /** Phantom mastery: next hit after a guard is stronger */
+  empowered: boolean;
 }
 
 export type Action =
@@ -308,6 +289,12 @@ export interface GameState {
   zoneKills: Record<string, number>;
   unlockedZones: string[];
   passives: string[];
+  /** chosen bonus (0–2) for each allocated mastery */
+  masteries: Record<string, number>;
+  /** allocated skilling-tree nodes */
+  skillPassives: string[];
+  /** Greenhouse keystone: the harvesting action that keeps ticking in the background */
+  greenhouse: { actionId: string; progress: number } | null;
   hideout: Record<string, number>;
   vendor: { stock: VendorOffer[]; refreshAt: number };
   settings: Settings;

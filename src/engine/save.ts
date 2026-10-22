@@ -47,10 +47,18 @@ const MIGRATIONS: Record<number, Migration> = {
     s.flaskSlots?.forEach(upgrade);
     s.flaskStash?.forEach(upgrade);
   },
+  5: (raw) => {
+    // the character tree was rebuilt (new node ids, masteries) and a skilling tree added:
+    // every passive point is refunded so it can be spent on the new tree
+    raw.passives = [];
+    raw.masteries = {};
+    raw.skillPassives ??= [];
+    raw.greenhouse ??= null;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
-const MERGE_KEYS = new Set(['skills', 'hideout', 'settings', 'lifetime', 'vendor', 'tutorial']);
+const MERGE_KEYS = new Set(['skills', 'hideout', 'settings', 'lifetime', 'vendor', 'tutorial', 'masteries']);
 
 export function serialize(s: GameState): string {
   return JSON.stringify(s);

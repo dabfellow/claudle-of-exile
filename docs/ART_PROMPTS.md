@@ -1,6 +1,6 @@
 # Art prompt pack (ChatGPT image generation)
 
-Generate these in ChatGPT, download the PNGs, and drop them into the folders listed (create them under `public/art/`). Use the exact file names so I can wire them up without guessing. Start with **Priority 1**; the rest can come later.
+Generate these in ChatGPT, download the PNGs, and drop them into the folders listed under **`src/assets/art/`** (e.g. `src/assets/art/portraits/trader.png`). Use the exact file names so I can wire them up without guessing. Start with **Priority 1**; the rest can come later.
 
 ## How to keep everything consistent
 
@@ -23,7 +23,7 @@ no watermarks, no UI frames. Keep this exact style for every image I ask for in 
 
 ## Priority 1 — Trader, guide, classes
 
-Folder: `public/art/portraits/` — 1024×1024, square portrait, chest-up, dark vignette background.
+Folder: `src/assets/art/portraits/` — 1024×1024, square portrait, chest-up, dark vignette background.
 
 | File | Prompt (after the style block) |
 |---|---|
@@ -35,7 +35,7 @@ Folder: `public/art/portraits/` — 1024×1024, square portrait, chest-up, dark 
 
 ## Priority 2 — Hideout stations
 
-Folder: `public/art/stations/` — 1024×1024, object illustration on a dark cave-floor background, three-quarter view.
+Folder: `src/assets/art/stations/` — 1024×1024, object illustration on a dark cave-floor background, three-quarter view.
 
 | File | Prompt |
 |---|---|
@@ -48,7 +48,7 @@ Folder: `public/art/stations/` — 1024×1024, object illustration on a dark cav
 
 ## Priority 3 — Act 1 zone banners
 
-Folder: `public/art/zones/` — **wide 1792×1024** (ask for landscape), environment only, no characters.
+Folder: `src/assets/art/zones/` — **wide 1792×1024** (ask for landscape), environment only, no characters.
 
 | File | Prompt |
 |---|---|
@@ -60,7 +60,7 @@ Folder: `public/art/zones/` — **wide 1792×1024** (ask for landscape), environ
 
 ## Priority 4 — Currency orbs
 
-Folder: `public/art/currency/` — 1024×1024, **transparent background**, a single glowing orb/object centred, like an inventory icon.
+Folder: `src/assets/art/currency/` — 1024×1024, **transparent background**, a single glowing orb/object centred, like an inventory icon.
 
 Ask for each as: *"An inventory icon of {description}, centred, transparent background."*
 
@@ -81,19 +81,19 @@ Ask for each as: *"An inventory icon of {description}, centred, transparent back
 
 ## Priority 5 — Materials
 
-Folder: `public/art/materials/` — same icon style, transparent background.
+Folder: `src/assets/art/materials/` — same icon style, transparent background.
 
 `copper_ore.png` (chunk of copper ore), `iron_ore.png`, `mithril_ore.png` (pale cyan metallic ore), `rough_gem.png` (uncut magenta gem), `ash_log.png`, `oak_log.png`, `yew_log.png` (dark red-brown log), `sunpetal.png` (yellow flower), `frostleaf.png` (icy blue leaf), `emberroot.png` (glowing orange root), `voidbloom.png` (purple flower with dark core), `arcane_dust.png` (small pile of glittering lavender dust), `gold.png` (small stack of gold coins).
 
 ## Priority 5b — Flasks
 
-Folder: `public/art/flasks/` — same icon style, transparent background, a single glass flask.
+Folder: `src/assets/art/flasks/` — same icon style, transparent background, a single glass flask.
 
 `life_small.png` small round flask of glowing red liquid · `life_medium.png` larger red flask · `life_grand.png` tall ornate red flask · `mana_small.png` small flask of glowing blue liquid · `mana_medium.png` larger blue flask · `granite.png` stone-grey flask with rock texture · `quicksilver.png` flask of swirling liquid silver · `diamond.png` crystal-clear flask with sparkles · `ruby.png` deep-red gem-like flask.
 
 ## Priority 6 — Monsters (Act 1)
 
-Folder: `public/art/monsters/` — 1024×1024, creature portrait, dark background.
+Folder: `src/assets/art/monsters/` — 1024×1024, creature portrait, dark background.
 
 `rat.png` drowned rat, bloated and dripping · `crab.png` large mud-caked crab · `zombie.png` waterlogged corpse rising from mud · `wisp.png` crackling yellow bog wisp · `gorger.png` **boss**: huge bloated swamp creature with a gaping maw.
 

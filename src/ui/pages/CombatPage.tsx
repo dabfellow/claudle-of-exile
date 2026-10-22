@@ -21,6 +21,8 @@ const DMG_COLOR: Record<DamageType, string> = {
   cold: 'var(--cold)',
   light: 'var(--light)',
 };
+/** buffs that come from tree effects rather than a skill gem */
+const EXTRA_BUFFS: Record<string, string> = { guard_armour: 'Guard Armour', evade_speed: 'Evasive' };
 const DMG_NAME: Record<DamageType, string> = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' };
 
 interface Floater {
@@ -134,7 +136,7 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
         {c.ambush && <span className="status good">Ambush ready</span>}
         {c.flurryStacks > 0 && <span className="status">Flurry ×{c.flurryStacks}</span>}
         {c.buffs.map((b) => {
-          const name = b.source === 'flask' ? flaskDef(b.id).name.replace(' Flask', '') : activeGemDef(b.id).name;
+          const name = b.source === 'flask' ? flaskDef(b.id).name.replace(' Flask', '') : (EXTRA_BUFFS[b.id] ?? activeGemDef(b.id).name);
           const color = b.source === 'flask' ? flaskDef(b.id).color : 'var(--accent)';
           return (
             <span key={`${b.source}-${b.id}`} className="buff" style={{ ['--flask' as string]: color }}>

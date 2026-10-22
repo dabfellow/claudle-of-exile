@@ -245,25 +245,18 @@ export function PinDock() {
   );
 }
 
-/** A picture from public/art if it exists, otherwise the fallback (styled placeholder). */
-const missingArt = new Set<string>();
+/** Every image in src/assets/art, found at build time, keyed by its path inside that folder. */
+const ART_FILES: Record<string, string> = Object.fromEntries(
+  Object.entries(import.meta.glob('../../assets/art/**/*.{png,jpg,jpeg,webp}', { eager: true, query: '?url', import: 'default' })).map(
+    ([path, url]) => [path.replace('../../assets/art/', ''), url as string],
+  ),
+);
+
+/** A picture from src/assets/art if it exists, otherwise the fallback (styled placeholder). */
 export function Art({ src, alt, fallback, className, size }: { src: string; alt: string; fallback: ReactNode; className?: string; size?: number }) {
-  const [failed, setFailed] = useState(missingArt.has(src));
-  if (failed) return <>{fallback}</>;
-  return (
-    <img
-      className={`art ${className ?? ''}`}
-      src={`/art/${src}`}
-      alt={alt}
-      width={size}
-      height={size}
-      draggable={false}
-      onError={() => {
-        missingArt.add(src);
-        setFailed(true);
-      }}
-    />
-  );
+  const url = ART_FILES[src];
+  if (!url) return <>{fallback}</>;
+  return <img className={`art ${className ?? ''}`} src={url} alt={alt} width={size} height={size} draggable={false} />;
 }
 
 /** Briefly true after `key` changes — used to retrigger CSS animations. */

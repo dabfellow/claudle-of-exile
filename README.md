@@ -47,5 +47,6 @@ docs/        design notes
 - [docs/GDD.md](docs/GDD.md) — game design direction and roadmap for the polish pass
 - [docs/DESIGN.md](docs/DESIGN.md) — how the code fits together
 - [docs/BALANCE.md](docs/BALANCE.md) — pacing knobs, the balance sim, and baseline results
+- [docs/TREES.md](docs/TREES.md) — the character and skilling trees, masteries and keystones
 - [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) — setting up Google/Discord login with Supabase
 - [docs/ART_PROMPTS.md](docs/ART_PROMPTS.md) — prompts for generating the game's art

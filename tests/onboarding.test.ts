@@ -42,9 +42,9 @@ describe('classes', () => {
       const raw = deriveStats(s).raw;
       for (const [k, v] of Object.entries(c.bonus)) expect(raw[k as keyof typeof raw]).toBeGreaterThanOrEqual(v!);
       s.skills.combat = 1e5; // well past the levels needed for the first nodes
-      const own = `${c.region}_1_1`;
+      const own = `${c.region}_hub`;
       const other = CLASSES.find((o) => o.id !== c.id)!;
-      expect(allocateReason(s, `${other.region}_1_1`)).toMatch(/connect/);
+      expect(allocateReason(s, `${other.region}_hub`)).toMatch(/connect/);
       expect(allocate(s, makeCtx(seeded(1)), own)).toBeNull();
     }
   });

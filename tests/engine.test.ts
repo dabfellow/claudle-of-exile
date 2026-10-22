@@ -248,19 +248,19 @@ describe('passive tree', () => {
   it('only allocates adjacent nodes and blocks orphaning refunds', () => {
     const s = newGame(1);
     s.skills.combat = charXpForLevel(10);
-    expect(allocateReason(s, 'str_2_0')).toMatch(/connect/);
-    expect(allocate(s, ctx(), 'str_1_0')).toBeNull();
-    expect(allocate(s, ctx(), 'str_2_0')).toBeNull();
+    expect(allocateReason(s, 'iron_skin_s1')).toMatch(/connect/);
+    expect(allocate(s, ctx(), 'str_hub')).toBeNull();
+    expect(allocate(s, ctx(), 'iron_skin_s1')).toBeNull();
     s.bank.regret = 1;
-    expect(refundReason(s, 'str_1_0')).toMatch(/disconnect/);
-    expect(refundReason(s, 'str_2_0')).toBeNull();
+    expect(refundReason(s, 'str_hub')).toMatch(/disconnect/);
+    expect(refundReason(s, 'iron_skin_s1')).toBeNull();
   });
 
   it('feeds stats into derived character stats', () => {
     const s = newGame(1);
     s.skills.combat = charXpForLevel(5);
     const before = deriveStats(s);
-    allocate(s, ctx(), 'str_1_0'); // +10 Strength
+    allocate(s, ctx(), 'str_hub'); // +10 Strength
     const after = deriveStats(s);
     expect(after.attributes.str).toBe(before.attributes.str + 10);
     expect(after.maxLife).toBe(before.maxLife + 5); // 2 Strength = 1 life

@@ -8,11 +8,11 @@ import { combatStep } from './combat';
 import { refreshVendor, vendorTick } from './hideout';
 import { createItem } from './items';
 import { seeded } from './rng';
-import { skillStep } from './skills';
+import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -49,6 +49,9 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     zoneKills: {},
     unlockedZones: ['mudflats'],
     passives: [],
+    masteries: {},
+    skillPassives: [],
+    greenhouse: null,
     hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1 },
     vendor: { stock: [], refreshAt: 0 },
     settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false },
@@ -84,6 +87,7 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
     remaining -= step;
     s.clock += step;
     if (s.action?.kind === 'skill') skillStep(s, ctx, step, d);
+    greenhouseStep(s, ctx, step, d);
     if (s.combat) {
       if (combatStep(s, ctx, step, d)) d = deriveStats(s);
     } else {

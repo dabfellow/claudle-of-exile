@@ -1,0 +1,190 @@
+import type { SkillId } from '../engine/types';
+
+/**
+ * The skilling tree (docs/TREES.md §2): a shared core and one branch per gathering/production
+ * skill. Points come from total skill level; deeper nodes need a level in that skill.
+ */
+export type SkillTreeStat =
+  | 'skillSpeed'
+  | 'skillXp'
+  | 'inputSave'
+  | 'offlineSpeed'
+  | 'miningSpeed'
+  | 'gemChance'
+  | 'doubleOre'
+  | 'motherlode'
+  | 'woodcuttingSpeed'
+  | 'birdsNest'
+  | 'doubleLogs'
+  | 'heartwood'
+  | 'harvestingSpeed'
+  | 'doubleHerbs'
+  | 'rareBlooms'
+  | 'greenhouse'
+  | 'smithingSpeed'
+  | 'smithIlvl'
+  | 'smithMagic'
+  | 'grandmaster'
+  | 'alchemySpeed'
+  | 'dustSaver'
+  | 'qualityBrews'
+  | 'transmuter';
+
+export type SkillTreeStats = Partial<Record<SkillTreeStat, number>>;
+
+export interface SkillTreeNode {
+  id: string;
+  name: string;
+  kind: 'core' | 'small' | 'notable' | 'keystone';
+  branch: 'core' | Exclude<SkillId, 'combat'>;
+  x: number;
+  y: number;
+  stats: SkillTreeStats;
+  desc: string;
+  req?: { skill: Exclude<SkillId, 'combat'>; level: number };
+  links: string[];
+}
+
+interface BranchSpec {
+  skill: Exclude<SkillId, 'combat'>;
+  angle: number;
+  small: { name: string; stats: SkillTreeStats; desc: string };
+  notables: [
+    { name: string; stats: SkillTreeStats; desc: string },
+    { name: string; stats: SkillTreeStats; desc: string },
+  ];
+  keystone: { name: string; stats: SkillTreeStats; desc: string };
+}
+
+const BRANCHES: BranchSpec[] = [
+  {
+    skill: 'mining',
+    angle: -90,
+    small: { name: 'Prospector', stats: { miningSpeed: 5 }, desc: '5% faster Mining' },
+    notables: [
+      { name: 'Gem Finder', stats: { gemChance: 100 }, desc: 'Rough Gem chance from mining is doubled' },
+      { name: 'Rich Veins', stats: { doubleOre: 10 }, desc: '10% chance to mine double ore' },
+    ],
+    keystone: { name: 'Motherlode', stats: { motherlode: 1 }, desc: 'Ore yields are doubled. Mining is 30% slower' },
+  },
+  {
+    skill: 'woodcutting',
+    angle: -18,
+    small: { name: 'Lumberjack', stats: { woodcuttingSpeed: 5 }, desc: '5% faster Woodcutting' },
+    notables: [
+      { name: "Bird's Nest", stats: { birdsNest: 3 }, desc: '3% chance to find a herb while chopping' },
+      { name: 'Clean Cuts', stats: { doubleLogs: 10 }, desc: '10% chance for double logs' },
+    ],
+    keystone: { name: 'Heartwood', stats: { heartwood: 1 }, desc: 'Logs also yield Arcane Dust. Woodcutting XP is 20% lower' },
+  },
+  {
+    skill: 'harvesting',
+    angle: 54,
+    small: { name: 'Green Thumb', stats: { harvestingSpeed: 5 }, desc: '5% faster Harvesting' },
+    notables: [
+      { name: 'Bountiful', stats: { doubleHerbs: 10 }, desc: '10% chance for double herbs' },
+      { name: 'Rare Blooms', stats: { rareBlooms: 5 }, desc: '5% chance to also find a herb of the next tier' },
+    ],
+    keystone: { name: 'Greenhouse', stats: { greenhouse: 20 }, desc: 'Your last harvest keeps growing at 20% speed while you do something else' },
+  },
+  {
+    skill: 'smithing',
+    angle: 126,
+    small: { name: 'Hammerhand', stats: { smithingSpeed: 5 }, desc: '5% faster Smithing' },
+    notables: [
+      { name: 'Fine Steel', stats: { smithIlvl: 2 }, desc: '+2 item level on smithed bases (still capped by campaign progress)' },
+      { name: 'Masterwork', stats: { smithMagic: 10 }, desc: '10% chance a smithed base comes out Magic' },
+    ],
+    keystone: { name: 'Grandmaster Smith', stats: { grandmaster: 1 }, desc: 'Smithed bases are always Magic. Smithing is 25% slower' },
+  },
+  {
+    skill: 'alchemy',
+    angle: 198,
+    small: { name: 'Distillation', stats: { alchemySpeed: 5 }, desc: '5% faster Alchemy' },
+    notables: [
+      { name: 'Dust Saver', stats: { dustSaver: 10 }, desc: '10% chance to use no Arcane Dust' },
+      { name: 'Quality Brews', stats: { qualityBrews: 25 }, desc: 'Brewed flasks have a 25% chance to be Magic' },
+    ],
+    keystone: { name: 'Transmuter', stats: { transmuter: 10 }, desc: 'Orbs you craft have a 10% chance to come out one tier higher. Alchemy is 20% slower' },
+  },
+];
+
+function polar(r: number, deg: number): { x: number; y: number } {
+  const a = (deg * Math.PI) / 180;
+  return { x: Math.round(r * Math.cos(a)), y: Math.round(r * Math.sin(a)) };
+}
+
+export const SKILL_TREE_START = 'skill_core';
+
+function build(): SkillTreeNode[] {
+  const nodes: Record<string, SkillTreeNode> = {};
+  const add = (n: Omit<SkillTreeNode, 'links'>) => (nodes[n.id] = { ...n, links: [] });
+  const link = (a: string, b: string) => {
+    if (!nodes[a].links.includes(b)) nodes[a].links.push(b);
+    if (!nodes[b].links.includes(a)) nodes[b].links.push(a);
+  };
+
+  add({ id: SKILL_TREE_START, name: 'Craftsman', kind: 'core', branch: 'core', x: 0, y: 0, stats: {}, desc: 'Every skilling path starts here' });
+
+  // core ring: alternating Industrious / Studious
+  const ring: string[] = [];
+  for (let i = 0; i < 6; i++) {
+    const id = `core_${i}`;
+    const industrious = i % 2 === 0;
+    add({
+      id,
+      name: industrious ? 'Industrious' : 'Studious',
+      kind: 'small',
+      branch: 'core',
+      ...polar(85, -90 + i * 60),
+      stats: industrious ? { skillSpeed: 3 } : { skillXp: 3 },
+      desc: industrious ? '3% faster gathering and production' : '3% increased skill XP',
+    });
+    link(SKILL_TREE_START, id);
+    ring.push(id);
+  }
+  ring.forEach((id, i) => link(id, ring[(i + 1) % ring.length]));
+
+  const ringAt = (angle: number) =>
+    ring.reduce((best, id) => {
+      const n = nodes[id];
+      const bn = nodes[best];
+      const target = polar(85, angle);
+      const dist = (p: { x: number; y: number }) => (p.x - target.x) ** 2 + (p.y - target.y) ** 2;
+      return dist(n) < dist(bn) ? id : best;
+    }, ring[0]);
+
+  add({ id: 'core_steady', name: 'Steady Hands', kind: 'notable', branch: 'core', ...polar(150, 90), stats: { inputSave: 5 }, desc: '5% chance for production not to consume its inputs' });
+  link('core_steady', ringAt(90));
+  add({ id: 'core_overtime', name: 'Overtime', kind: 'notable', branch: 'core', ...polar(150, 234), stats: { offlineSpeed: 10 }, desc: 'Skilling while offline is 10% faster' });
+  link('core_overtime', ringAt(234));
+
+  for (const b of BRANCHES) {
+    const smalls = [0, 1, 2].map((i) => {
+      const id = `${b.skill}_s${i}`;
+      add({ id, name: b.small.name, kind: 'small', branch: b.skill, ...polar(175 + i * 50, b.angle), stats: b.small.stats, desc: b.small.desc });
+      return id;
+    });
+    link(ringAt(b.angle), smalls[0]);
+    link(smalls[0], smalls[1]);
+    link(smalls[1], smalls[2]);
+    const n1 = `${b.skill}_n0`;
+    const n2 = `${b.skill}_n1`;
+    add({ id: n1, ...b.notables[0], kind: 'notable', branch: b.skill, ...polar(330, b.angle - 9), req: { skill: b.skill, level: 15 } });
+    add({ id: n2, ...b.notables[1], kind: 'notable', branch: b.skill, ...polar(330, b.angle + 9), req: { skill: b.skill, level: 30 } });
+    link(smalls[2], n1);
+    link(smalls[2], n2);
+    const ks = `${b.skill}_ks`;
+    add({ id: ks, ...b.keystone, kind: 'keystone', branch: b.skill, ...polar(420, b.angle), req: { skill: b.skill, level: 50 } });
+    link(n1, ks);
+    link(n2, ks);
+  }
+  return Object.values(nodes);
+}
+
+export const SKILL_TREE_NODES: SkillTreeNode[] = build();
+export const SKILL_TREE_BY_ID: Record<string, SkillTreeNode> = Object.fromEntries(SKILL_TREE_NODES.map((n) => [n.id, n]));
+
+/** Tiers used by Rare Blooms (next herb) and Transmuter (next orb). */
+export const HERB_TIERS = ['sunpetal', 'frostleaf', 'emberroot', 'voidbloom'];
+export const ORB_TIERS = ['transmute', 'augment', 'alteration', 'scour', 'regret', 'alchemy'];

@@ -24,6 +24,7 @@ export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offl
   const bankBefore = { ...s.bank };
   const quiet: Ctx = withTutorial({
     ...ctx,
+    offline: true,
     emit(e: GameEvent) {
       if (e.t === 'xp') sum.xp[e.skill] = (sum.xp[e.skill] ?? 0) + e.amount;
       else if (e.t === 'levelup') sum.levels[e.skill] = e.level;

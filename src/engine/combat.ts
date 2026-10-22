@@ -54,6 +54,7 @@ function newRuntime(zoneId: string): CombatRuntime {
     retaliate: false,
     ambush: false,
     flurryStacks: 0,
+    empowered: false,
   };
 }
 
@@ -107,6 +108,7 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     stunMs: 0,
     frozenMs: 0,
     vulnMs: 0,
+    chillMs: 0,
     scale,
     dotAcc: 0,
     dotTimer: 0,
@@ -163,13 +165,16 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
   if (f.charges < st.chargesPerUse) return 'Not enough charges';
   const d = deriveStats(s);
   f.charges -= st.chargesPerUse;
-  const effect = (1 + d.flaskEffect / 100) * st.effectMult;
+  const kind = st.def.kind;
+  const recovery = 1 + (kind === 'life' ? d.raw.lifeFlaskRecovery : kind === 'mana' ? d.raw.manaFlaskRecovery : 0) / 100;
+  const effect = (1 + d.flaskEffect / 100) * st.effectMult * recovery;
+  const duration = st.durationMs * (kind === 'utility' ? 1 + d.raw.utilityFlaskDuration / 100 : 1);
   const c = s.combat;
   c.buffs = c.buffs.filter((b) => !(b.source === 'flask' && b.id === f.flaskId));
-  c.buffs.push({ id: f.flaskId, source: 'flask', remainingMs: st.durationMs, durationMs: st.durationMs, mult: st.effectMult });
+  c.buffs.push({ id: f.flaskId, source: 'flask', remainingMs: duration, durationMs: duration, mult: st.effectMult });
   if (st.def.heal) {
-    const resource = st.def.kind === 'mana' ? 'mana' : 'life';
-    c.heals.push({ resource, perMs: (st.def.heal * effect) / st.durationMs, remainingMs: st.durationMs });
+    const resource = kind === 'mana' ? 'mana' : 'life';
+    c.heals.push({ resource, perMs: (st.def.heal * effect) / duration, remainingMs: duration });
   }
   ctx.emit({ t: 'flask', slot, flaskId: f.flaskId, auto });
   return null;
@@ -259,8 +264,13 @@ export function queueSkill(s: GameState, slot: number): string | null {
   return null;
 }
 
-function ready(s: GameState, slot: number, nums: SkillNumbers): boolean {
-  return s.combat!.cooldowns[slot] <= 0 && s.mana >= nums.manaCost;
+/** Blood Pact pays skill costs with life instead of mana. */
+function canPay(s: GameState, d: Derived, cost: number): boolean {
+  return d.raw.bloodPact ? s.life > cost : s.mana >= cost;
+}
+
+function ready(s: GameState, d: Derived, slot: number, nums: SkillNumbers): boolean {
+  return s.combat!.cooldowns[slot] <= 0 && canPay(s, d, nums.manaCost);
 }
 
 /** Pick what to do next: a queued manual cast, else the first slot whose rule passes, else a default attack. */
@@ -271,14 +281,14 @@ export function chooseSkill(s: GameState, d: Derived): { slot: number; nums: Ski
     const gem = s.skillBar[slot];
     const nums = skillNumbers(d, gem);
     c.queued = null;
-    if (gem && ready(s, slot, nums)) return { slot, nums, manual: true };
+    if (gem && ready(s, d, slot, nums)) return { slot, nums, manual: true };
   }
   const rc = ruleContext(s, d);
   for (let i = 0; i < s.skillBar.length; i++) {
     const gem = s.skillBar[i];
     if (!gem) continue;
     const nums = skillNumbers(d, gem);
-    if (!ready(s, i, nums)) continue;
+    if (!ready(s, d, i, nums)) continue;
     if (ruleAllows(gem.rule, rc, skillIsActive(c, gem.gemId))) return { slot: i, nums, manual: false };
   }
   return { slot: -1, nums: skillNumbers(d, null), manual: false };
@@ -296,8 +306,9 @@ function moreDamageFromBuffs(c: CombatRuntime): number {
 function rollHit(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance): { byType: ByType; crit: boolean } | null {
   const c = s.combat!;
   const { def, mods, level } = nums;
+  const r = d.raw;
   const isAttack = def.tags.includes('attack');
-  if (isAttack && !c.ambush && !chance(ctx.rng, hitChance(d.accuracy, mon.level))) return null;
+  if (isAttack && !c.ambush && !r.steadyHand && !chance(ctx.rng, hitChance(d.accuracy, mon.level))) return null;
 
   const byType: ByType = { phys: 0, fire: 0, cold: 0, light: 0 };
   if (isAttack) {
@@ -309,28 +320,39 @@ function rollHit(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: Mo
   } else {
     const [lo, hi] = spellBaseAt(def, level);
     const type = def.effect.type ?? 'fire';
-    byType[type] += rInt(ctx.rng, lo, hi) * (type === 'phys' ? d.physMult : d.elemMult);
+    byType[type] += rInt(ctx.rng, lo, hi) * d.typeMult[type];
   }
 
+  if (def.tags.includes('melee')) byType.phys *= 1 + r.meleePct / 100;
   if (mods.noElemental) byType.fire = byType.cold = byType.light = 0;
   const total = DAMAGE_TYPES.reduce((a, t) => a + byType[t], 0);
   for (const x of mods.extras) byType[x.type] += (total * x.pct) / 100;
+  if (r.physAsLight) byType.light += (byType.phys * r.physAsLight) / 100;
   byType.phys *= 1 + mods.morePhys / 100;
-  for (const t of ['fire', 'cold', 'light'] as const) byType[t] *= 1 + mods.moreElem / 100;
-  const more = (1 + mods.moreDamage / 100) * (1 + moreDamageFromBuffs(c) / 100);
+  const highLife = s.life > d.maxLife * 0.8 ? r.highLifeElem : 0;
+  for (const t of ['fire', 'cold', 'light'] as const) byType[t] *= (1 + mods.moreElem / 100) * (1 + highLife / 100);
+  let more = (1 + mods.moreDamage / 100) * (1 + moreDamageFromBuffs(c) / 100);
+  if (r.buffMore && c.buffs.some((b) => b.source === 'skill')) more *= 1 + r.buffMore / 100;
+  if (c.empowered) {
+    more *= 1 + r.afterGuardDamage / 100;
+    c.empowered = false;
+  }
+  if (mon.life < mon.maxLife * 0.3) more *= 1 + r.lowLifeDamage / 100;
   for (const t of DAMAGE_TYPES) byType[t] *= more;
 
+  const spellType = def.effect.type;
   let critChance = isAttack
     ? d.critChance * (1 + mods.critChance / 100)
-    : (def.effect.crit ?? 5) * (1 + (d.raw.critChancePct + mods.critChance) / 100);
-  critChance = Math.min(95, critChance);
+    : (def.effect.crit ?? 5) * (1 + (r.critChancePct + r.spellCritPct + (spellType === 'light' ? r.lightCrit : 0) + mods.critChance) / 100);
+  critChance = r.steadyHand ? 0 : Math.min(95, critChance);
   let crit = chance(ctx.rng, critChance / 100);
   if (isAttack && c.ambush) {
-    crit = true;
+    crit = !r.steadyHand;
     c.ambush = false;
   }
   if (crit) {
-    const multi = (d.critMulti + mods.critMulti) / 100;
+    let multi = (d.critMulti + mods.critMulti + (isAttack ? 0 : r.spellCritMulti)) / 100;
+    if (mon.life >= mon.maxLife) multi *= 1 + r.critFullLife / 100;
     for (const t of DAMAGE_TYPES) byType[t] *= multi;
   }
   return { byType, crit };
@@ -362,10 +384,17 @@ function hitMonster(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon:
     if (t !== 'phys') amt *= 1 - mon.res[t] / 100;
     dealt += amt;
   }
+  const r = d.raw;
   if (mon.vulnMs > 0) dealt *= 1.15;
   if (mods.specials.has('shatter') && mon.stunMs > 0) dealt *= 1.3;
+  if (mon.stunMs > 0) dealt *= 1 + r.stunnedVuln / 100;
+  if (mon.dots.some((x) => x.kind === 'bleed')) dealt *= 1 + r.bleedVuln / 100;
+  if (new Set(mon.dots.map((x) => x.kind)).size >= 2) dealt *= 1 + r.multiAilmentVuln / 100;
   dealt = Math.max(1, Math.round(dealt));
   mon.life -= dealt;
+  if (crit && r.critLeech) s.life = Math.min(d.maxLife, s.life + (dealt * r.critLeech) / 100);
+  if (mon.life < 0 && r.overkillHeal) s.life = Math.min(d.maxLife, s.life + (-mon.life * r.overkillHeal) / 100);
+  if (byType.cold > 0 && r.chillOnHit) mon.chillMs = 3000;
   ctx.emit({ t: 'hit', target: 'monster', amount: dealt, crit, dmgType: mainType(byType), monsterUid: mon.uid });
 
   // leech
@@ -383,16 +412,23 @@ function hitMonster(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon:
   if (manaLeech > 0) s.mana = Math.min(d.maxMana, s.mana + (dealt * manaLeech) / 100);
 
   // stun / armour break
-  if (e.stunChance && chance(ctx.rng, e.stunChance)) mon.stunMs = Math.max(mon.stunMs, mon.isBoss ? 400 : 1000);
+  const stunChance = (e.stunChance ?? 0) + r.stunChance / 100;
+  if (stunChance > 0 && chance(ctx.rng, stunChance)) {
+    mon.stunMs = Math.max(mon.stunMs, (mon.isBoss ? 400 : 1000) * (1 + r.stunDuration / 100));
+  }
   if (mods.specials.has('shatter')) mon.vulnMs = 4000;
 
   // ailments
   if (e.ailment) {
     const a = e.ailment;
+    const kindPct = a.kind === 'bleed' ? r.bleedPct : a.kind === 'poison' ? r.poisonPct : r.ignitePct;
+    const kindDur = a.kind === 'bleed' ? r.bleedDuration : a.kind === 'poison' ? r.poisonDuration : r.igniteDuration;
+    const flatDur = a.kind === 'bleed' ? r.bleedDurationFlat : a.kind === 'poison' ? r.poisonDurationFlat : 0;
+    const bossBleed = a.kind === 'bleed' && mon.isBoss ? 1 + r.bleedBossMore / 100 : 1;
     const dot: Dot = {
       kind: a.kind,
-      dps: (dealt * a.pctPerSec) / 100,
-      remainingMs: a.durationMs * nums.durationMult,
+      dps: ((dealt * a.pctPerSec) / 100) * (1 + (kindPct + r.ailmentPct) / 100) * bossBleed,
+      remainingMs: a.durationMs * nums.durationMult * (1 + (r.ailmentDuration + kindDur) / 100) + flatDur,
       dealt: 0,
       gemId: def.id,
       burst: mods.specials.has('hemorrhage') ? 0.5 : undefined,
@@ -410,27 +446,37 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   const c = s.combat!;
   const { def, mods, level } = nums;
   const e = def.effect;
+  const r = d.raw;
   c.using = def.id;
-  s.mana -= nums.manaCost;
+  if (r.bloodPact) s.life -= nums.manaCost;
+  else s.mana -= nums.manaCost;
   if (slot >= 0 && def.cooldownMs) c.cooldowns[slot] = def.cooldownMs;
   if (slot >= 0) ctx.emit({ t: 'skill', slot, gemId: def.id, manual });
 
   // utility effects
   if (e.blocks) {
-    c.blocks = Math.max(c.blocks, e.blocks);
+    c.blocks = Math.max(c.blocks, e.blocks + r.extraBlocks);
     c.retaliate = mods.specials.has('retaliate');
   }
   if (e.evadeMs) {
-    c.evadeMs = e.evadeMs * nums.durationMult;
+    c.evadeMs = e.evadeMs * nums.durationMult + (def.id === 'smoke_step' ? r.smokeExtra : 0);
     if (mods.specials.has('ambush')) c.ambush = true;
   }
   if (e.shieldPct) {
-    c.shield = (d.maxLife * e.shieldPct * (1 + 0.03 * (level - 1))) / 100;
+    c.shield = (d.maxLife * e.shieldPct * (1 + 0.03 * (level - 1)) * (1 + r.shieldEffect / 100)) / 100;
     c.shieldMax = c.shield;
     c.glacial = mods.specials.has('glacial');
   }
+  if (def.role === 'guard') {
+    if (r.afterGuardDamage) c.empowered = true;
+    if (r.guardArmourPct) {
+      c.buffs = c.buffs.filter((b) => b.id !== 'guard_armour');
+      c.buffs.push({ id: 'guard_armour', source: 'skill', remainingMs: 3000, durationMs: 3000, stats: { armourPct: r.guardArmourPct } });
+    }
+  }
+  if (def.id === 'war_cry' && r.warCryHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.warCryHeal) / 100);
   if (e.buff) {
-    const dur = e.buff.durationMs * nums.durationMult;
+    const dur = e.buff.durationMs * nums.durationMult + (def.role === 'buff' ? r.buffDurationFlat : 0);
     c.buffs = c.buffs.filter((b) => !(b.source === 'skill' && b.id === def.id));
     c.buffs.push({
       id: def.id,
@@ -463,7 +509,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   const hitsPerPass = (e.hits ?? 1) + (def.id === 'twin_strike' && mods.specials.has('flurry') ? 1 : 0);
 
   for (let pass = 0; pass < passes; pass++) {
-    const passMult = pass === 0 ? 1 : mods.repeatDamage / 100;
+    const passMult = pass === 0 ? 1 : (mods.repeatDamage / 100) * (1 + r.repeatMore / 100);
     for (let h = 0; h < hitsPerPass; h++) {
       const alive = aliveMonsters(c);
       if (!alive.length) return;
@@ -471,7 +517,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       let targets: MonsterInstance[];
       if (e.targets === 'all') targets = alive;
       else {
-        const chains = (e.targets === 'chain' ? (e.chains ?? 0) : 0) + mods.chains;
+        const chains = (e.targets === 'chain' ? (e.chains ?? 0) + r.extraChains : 0) + mods.chains;
         targets = alive.slice(0, 1 + chains);
       }
       const roll = rollHit(s, ctx, d, nums, target);
@@ -480,7 +526,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         continue;
       }
       targets.forEach((m, i) => {
-        const chainMult = mods.specials.has('overload') ? 1 + 0.2 * i : 1;
+        const chainMult = 1 + ((mods.specials.has('overload') ? 20 : 0) + r.chainMore) / 100 * i;
         hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * chainMult);
       });
     }
@@ -504,6 +550,8 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   const spreading = mon.dots.filter((x) => x.kind === 'poison' && x.spreads && x.remainingMs > 0);
   const next = aliveMonsters(c)[0];
   if (spreading.length && next) for (const p of spreading) next.dots.push({ ...p, dealt: 0 });
+  const ignite = mon.dots.find((x) => x.kind === 'ignite' && x.remainingMs > 0);
+  if (d.raw.igniteSpread && ignite && next) applyDot(next, { ...ignite, dealt: 0 });
 
   if (mon.isBoss) {
     s.lifetime.bossKills += 1;
@@ -553,24 +601,45 @@ function counterAttack(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance)
   if (roll) hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, 2);
 }
 
+function onEvade(s: GameState, d: Derived): void {
+  const c = s.combat!;
+  const r = d.raw;
+  if (r.evadeHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.evadeHeal) / 100);
+  if (r.evadeSpeed) {
+    c.buffs = c.buffs.filter((b) => b.id !== 'evade_speed');
+    c.buffs.push({ id: 'evade_speed', source: 'skill', remainingMs: 4000, durationMs: 4000, stats: { attackSpeedPct: r.evadeSpeed } });
+  }
+}
+
 function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: number, type: DamageType, isSlam: boolean): void {
   const c = s.combat!;
+  const r = d.raw;
+  if (mon.dots.some((x) => x.kind === 'poison')) raw *= 1 - r.poisonWeaken / 100;
+  if (isSlam) raw *= 1 - r.slamReduction / 100;
   if (c.evadeMs > 0) {
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, evaded: true, monsterUid: mon.uid });
+    onEvade(s, d);
     return;
   }
   if (c.blocks > 0) {
     c.blocks -= 1;
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
+    if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
     if (c.retaliate) counterAttack(s, ctx, d, mon);
     return;
   }
-  // heavy wind-ups can't be evaded by Evasion Rating — answer them with a guard, an interrupt or a flask
-  if (!isSlam && chance(ctx.rng, evadeChance(d.evasion, mon.level))) {
+  // heavy wind-ups can't be evaded by Evasion Rating (unless Wind Dancer) — guard, interrupt or drink
+  if ((!isSlam || r.windDancer) && chance(ctx.rng, evadeChance(d.evasion, mon.level))) {
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, evaded: true, monsterUid: mon.uid });
+    onEvade(s, d);
     return;
   }
-  let dmg = mitigate(d, raw, type);
+  let dmg: number;
+  if (type !== 'phys' && r.armourVsElem) {
+    const p = r.armourVsElem / 100;
+    dmg = Math.round(mitigate(d, raw * (1 - p), type) + mitigate(d, raw * p, 'phys'));
+  } else dmg = mitigate(d, raw, type);
+  if (type !== 'phys') dmg = Math.max(1, Math.round(dmg * (1 - r.elemTakenReduction / 100)));
   let absorbed = 0;
   if (c.shield > 0) {
     absorbed = Math.min(c.shield, dmg);
@@ -580,6 +649,11 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
       mon.frozenMs = 2000;
       c.glacial = false;
     }
+  }
+  if (r.mindOverFlesh && s.mana > 0) {
+    const fromMana = Math.min(s.mana, (dmg * r.mindOverFlesh) / 100);
+    s.mana -= fromMana;
+    dmg = Math.round(dmg - fromMana);
   }
   s.life -= dmg;
   ctx.emit({ t: 'hit', target: 'player', amount: dmg, dmgType: type, absorbed: absorbed || undefined, monsterUid: mon.uid });
@@ -616,6 +690,7 @@ function tickDots(s: GameState, ctx: Ctx, dt: number): void {
 
 function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt: number): void {
   mon.vulnMs = Math.max(0, mon.vulnMs - dt);
+  mon.chillMs = Math.max(0, mon.chillMs - dt);
   if (mon.frozenMs > 0) {
     mon.frozenMs -= dt;
     return;
@@ -642,7 +717,7 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
       return;
     }
   }
-  mon.attackTimer += dt;
+  mon.attackTimer += mon.chillMs > 0 ? dt * (1 - d.raw.chillOnHit / 100) : dt;
   if (mon.attackTimer >= mon.attackMs) {
     mon.attackTimer -= mon.attackMs;
     takeHit(s, ctx, d, mon, mon.damage * (0.85 + ctx.rng.next() * 0.3), mon.dmgType, false);
