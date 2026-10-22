@@ -5,7 +5,8 @@ import { ZONES } from '../data/zones';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { inventoryFull } from './hideout';
-import { createItem, newUid } from './items';
+import { newFlask } from './flasks';
+import { createItem } from './items';
 import { chance } from './rng';
 import type { Derived } from './stats';
 import type { GameState, SkillId } from './types';
@@ -85,7 +86,9 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   }
   if (a.flaskId) {
     for (let i = 0; i < mult; i++) {
-      s.flaskStash.push({ uid: newUid(s), flaskId: a.flaskId, charges: flaskDef(a.flaskId).maxCharges, instill: null });
+      const f = newFlask(s, a.flaskId, skillLevel(s, 'alchemy'));
+      f.charges = flaskDef(a.flaskId).maxCharges;
+      s.flaskStash.push(f);
     }
     outputs[a.flaskId] = mult;
   }

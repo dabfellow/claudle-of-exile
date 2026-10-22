@@ -3,11 +3,13 @@ import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
 import { BOSS_SLAM_CAST_MS, BOSS_SLAM_MULT, zoneDef } from '../../data/zones';
 import { aliveMonsters, mitigate, queueSkill, retreat, useFlask } from '../../engine/combat';
+import { flaskStats } from '../../engine/flasks';
 import { skillNumbers } from '../../engine/gems';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
 import type { DamageType, GameEvent, GameState, MonsterInstance } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
 import { fmt, ProgressBar, Tooltip } from '../components/common';
+import { FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, ruleText } from '../components/GemView';
 import { Icon } from '../components/Icon';
 import type { Page } from '../Layout';
@@ -239,36 +241,25 @@ function FlaskBelt({ s }: { s: GameState }) {
               <span className="flask-key">{i + 1}</span>
             </div>
           );
-        const def = flaskDef(f.flaskId);
+        const st = flaskStats(f);
         const buff = s.combat?.buffs.find((b) => b.source === 'flask' && b.id === f.flaskId);
-        const ready = f.charges >= def.chargesPerUse;
+        const ready = f.charges >= st.chargesPerUse;
         return (
-          <Tooltip
-            key={i}
-            content={
-              <div className="tip">
-                <div className="tip-title">{def.name}</div>
-                <div className="muted">{def.desc}</div>
-                <div style={{ marginTop: 4 }}>
-                  {Math.floor(f.charges)}/{def.maxCharges} charges · uses {def.chargesPerUse}
-                </div>
-                {f.instill && <div style={{ color: '#ffb36b' }}>Instilled: auto-use ({f.instill})</div>}
-              </div>
-            }
-          >
+          <Tooltip key={i} content={<FlaskTip f={f} />}>
             <button
               data-tut={`flask-${i}`}
-              className={`flask ${ready && inCombat ? 'ready' : ''} ${buff ? 'active' : ''}`}
-              style={{ ['--flask' as string]: def.color }}
+              className={`flask ${ready && inCombat ? 'ready' : ''} ${buff ? 'active' : ''} ${f.rarity === 'magic' ? 'magic' : ''}`}
+              style={{ ['--flask' as string]: st.def.color }}
               disabled={!inCombat || !ready}
-              onClick={() => game.act((st, ctx) => useFlask(st, ctx, i))}
+              onClick={() => game.act((st2, ctx) => useFlask(st2, ctx, i))}
+              onContextMenu={(e) => (e.preventDefault(), pinFlask(f))}
             >
-              <div className="flask-liquid" style={{ height: `${(f.charges / def.maxCharges) * 100}%` }} />
+              <div className="flask-liquid" style={{ height: `${(f.charges / st.maxCharges) * 100}%` }} />
               {buff && <div className="flask-timer" style={{ width: `${(buff.remainingMs / buff.durationMs) * 100}%` }} />}
               <span className="flask-key">{i + 1}</span>
               {f.instill && <span className="flask-auto">AUTO</span>}
               <span className="flask-charges">
-                {Math.floor(f.charges)}/{def.maxCharges}
+                {Math.floor(f.charges)}/{st.maxCharges}
               </span>
             </button>
           </Tooltip>

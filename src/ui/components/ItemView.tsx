@@ -1,30 +1,14 @@
-import { useEffect, useState } from 'react';
 import { attributeReq, baseDef, uniqueDef } from '../../data/bases';
 import { characterLevel } from '../../engine/character';
 import { slotsFor } from '../../engine/equipment';
 import { describeMod, itemName, tierLabel, tierRangeText } from '../../engine/items';
+import { game } from '../../game';
 import { deriveStats, type Derived } from '../../engine/stats';
 import type { EquipSlot, GameState, Item, RolledMod } from '../../engine/types';
 import { Icon } from './Icon';
-import { Tooltip } from './common';
+import { togglePin, Tooltip, useAltKey } from './common';
 
 const RARITY_LABEL = { normal: 'Normal', magic: 'Magic', rare: 'Rare', unique: 'Unique' };
-
-function useAltKey(): boolean {
-  const [alt, setAlt] = useState(false);
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => e.key === 'Alt' && (e.preventDefault(), setAlt(true));
-    const up = (e: KeyboardEvent) => e.key === 'Alt' && setAlt(false);
-    window.addEventListener('keydown', down);
-    window.addEventListener('keyup', up);
-    window.addEventListener('blur', () => setAlt(false));
-    return () => {
-      window.removeEventListener('keydown', down);
-      window.removeEventListener('keyup', up);
-    };
-  }, []);
-  return alt;
-}
 
 function ModLine({ mod, detail }: { mod: RolledMod; detail: boolean }) {
   return (
@@ -79,7 +63,7 @@ export function upgradeScore(s: GameState, item: Item): number {
   return get('DPS') * 2 + get('Max Life') + get('Armour') * 0.1 + get('Evasion') * 0.1 + (get('Fire Res') + get('Cold Res') + get('Lightning Res')) * 0.6;
 }
 
-export function ItemTip({ item, state, compare = true }: { item: Item; state?: GameState; compare?: boolean }) {
+export function ItemTip({ item, state, compare = true, pinned = false }: { item: Item; state?: GameState; compare?: boolean; pinned?: boolean }) {
   const alt = useAltKey();
   const base = baseDef(item.baseId);
   const unique = item.uniqueId ? uniqueDef(item.uniqueId) : null;
@@ -146,9 +130,9 @@ export function ItemTip({ item, state, compare = true }: { item: Item; state?: G
             </div>
           </>
         )}
-        {item.rarity !== 'normal' && item.rarity !== 'unique' && !alt && (
-          <div className="dim" style={{ fontSize: 10.5, marginTop: 4 }}>
-            Hold Alt for modifier tiers
+        {!pinned && (
+          <div className="tip-hint">
+            {item.rarity !== 'normal' && item.rarity !== 'unique' && !alt ? 'Alt: tiers & keep open · ' : alt ? 'Alt held: staying open · ' : ''}Right-click: pin
           </div>
         )}
       </div>
@@ -225,10 +209,9 @@ export function ItemCell({
         style={style}
         onClick={onClick}
         onContextMenu={(e) => {
-          if (onContextMenu) {
-            e.preventDefault();
-            onContextMenu();
-          }
+          e.preventDefault();
+          if (onContextMenu) onContextMenu();
+          else pinItem(item);
         }}
       >
         <ItemIcon item={item} />
@@ -237,4 +220,13 @@ export function ItemCell({
       </button>
     </Tooltip>
   );
+}
+
+/** Right-click any item to pin its tooltip to the compare dock. */
+export function pinItem(item: Item): void {
+  togglePin({
+    key: `item-${item.uid}`,
+    title: itemName(item),
+    render: () => <ItemTip item={item} state={game.state} pinned />,
+  });
 }

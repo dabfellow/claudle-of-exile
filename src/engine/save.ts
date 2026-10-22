@@ -1,6 +1,6 @@
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
-import type { GameState } from './types';
+import type { FlaskInstance, GameState } from './types';
 
 export const SAVE_KEY = 'claudle-of-exile-save';
 
@@ -32,6 +32,20 @@ const MIGRATIONS: Record<number, Migration> = {
     if (!s.skillBar.some(Boolean)) giveStarterGems(s);
     if (s.action?.kind === 'combat') s.action = null;
     s.combat = null;
+  },
+  4: (raw) => {
+    // flasks became items with rarity, modifiers and an enchantment slot
+    const s = raw as unknown as GameState;
+    const upgrade = (f: FlaskInstance | null) => {
+      if (!f) return;
+      f.rarity ??= 'normal';
+      f.ilvl ??= 1;
+      f.prefixes ??= [];
+      f.suffixes ??= [];
+      f.instill ??= null;
+    };
+    s.flaskSlots?.forEach(upgrade);
+    s.flaskStash?.forEach(upgrade);
   },
 };
 

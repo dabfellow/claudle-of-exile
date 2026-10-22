@@ -85,6 +85,12 @@ Folder: `public/art/materials/` — same icon style, transparent background.
 
 `copper_ore.png` (chunk of copper ore), `iron_ore.png`, `mithril_ore.png` (pale cyan metallic ore), `rough_gem.png` (uncut magenta gem), `ash_log.png`, `oak_log.png`, `yew_log.png` (dark red-brown log), `sunpetal.png` (yellow flower), `frostleaf.png` (icy blue leaf), `emberroot.png` (glowing orange root), `voidbloom.png` (purple flower with dark core), `arcane_dust.png` (small pile of glittering lavender dust), `gold.png` (small stack of gold coins).
 
+## Priority 5b — Flasks
+
+Folder: `public/art/flasks/` — same icon style, transparent background, a single glass flask.
+
+`life_small.png` small round flask of glowing red liquid · `life_medium.png` larger red flask · `life_grand.png` tall ornate red flask · `mana_small.png` small flask of glowing blue liquid · `mana_medium.png` larger blue flask · `granite.png` stone-grey flask with rock texture · `quicksilver.png` flask of swirling liquid silver · `diamond.png` crystal-clear flask with sparkles · `ruby.png` deep-red gem-like flask.
+
 ## Priority 6 — Monsters (Act 1)
 
 Folder: `public/art/monsters/` — 1024×1024, creature portrait, dark background.

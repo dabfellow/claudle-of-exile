@@ -119,7 +119,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
   for (const b of buffs) {
     if (b.source === 'flask') {
       const def = flaskDef(b.id);
-      if (def.buff) addStats(st, def.buff, flaskMult);
+      if (def.buff) addStats(st, def.buff, flaskMult * (b.mult ?? 1));
     } else if (b.stats) addStats(st, b.stats);
   }
   return st;

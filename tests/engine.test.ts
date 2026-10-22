@@ -4,7 +4,8 @@ import { BASES } from '../src/data/bases';
 import { PASSIVE_BY_ID, PASSIVE_NODES } from '../src/data/passiveTree';
 import { makeCtx } from '../src/engine/context';
 import { applyOrb, benchCraft, ORBS } from '../src/engine/crafting';
-import { combatStep, makeMonster, mitigate, startCombat, useFlask, instillFlask } from '../src/engine/combat';
+import { combatStep, makeMonster, mitigate, startCombat, useFlask } from '../src/engine/combat';
+import { enchantFlask } from '../src/engine/flasks';
 import { equip } from '../src/engine/equipment';
 import { upgradeStation, inventoryCapacity } from '../src/engine/hideout';
 import { addRandomMod, allMods, createItem, eligibleAffixes, maxAffixes } from '../src/engine/items';
@@ -202,7 +203,7 @@ describe('combat', () => {
     const s = newGame(1);
     const c = ctx();
     s.bank.instill = 1;
-    expect(instillFlask(s, c, 0, 'lowLife')).toBeNull();
+    expect(enchantFlask(s, c, s.flaskSlots[0]!.uid, 'lowLife')).toBeNull();
     startCombat(s, c, 'mudflats');
     const d = deriveStats(s);
     s.life = d.maxLife;

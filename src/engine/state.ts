@@ -1,6 +1,7 @@
 import { classDef, type ClassId } from '../data/classes';
 import { flaskDef, FLASK_SLOTS } from '../data/flasks';
 import { SKILL_BAR_SLOTS } from '../data/gems';
+import { newFlask } from './flasks';
 import { createSkillGem } from './gems';
 import type { Ctx } from './context';
 import { combatStep } from './combat';
@@ -11,7 +12,7 @@ import { skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -60,7 +61,9 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     s.equipment[slot as EquipSlot] = createItem(s, baseId, 1, 'normal', rng);
   }
   for (const slot of [0, 1]) {
-    s.flaskSlots[slot] = { uid: s.nextUid++, flaskId: 'life_small', charges: flaskDef('life_small').maxCharges, instill: null };
+    const f = newFlask(s, 'life_small');
+    f.charges = flaskDef('life_small').maxCharges;
+    s.flaskSlots[slot] = f;
   }
   giveStarterGems(s);
   refreshVendor(s, rng);

@@ -117,10 +117,21 @@ export interface Item {
 
 export type InstillCondition = 'lowLife' | 'fullCharges' | 'bossCast';
 
+export interface FlaskMod {
+  affixId: string;
+  value: number;
+}
+
 export interface FlaskInstance {
   uid: number;
   flaskId: string;
   charges: number;
+  /** flasks are normal or magic (1 prefix + 1 suffix) */
+  rarity: 'normal' | 'magic';
+  ilvl: number;
+  prefixes: FlaskMod[];
+  suffixes: FlaskMod[];
+  /** enchantment from an Instilling Orb: use automatically on this condition */
   instill: InstillCondition | null;
 }
 
@@ -178,6 +189,8 @@ export interface Buff {
   moreDamage?: number;
   /** % of max life regenerated per second */
   regenPct?: number;
+  /** flask buffs: the flask's own effect multiplier */
+  mult?: number;
 }
 
 export interface SupportGemInstance {
@@ -234,9 +247,11 @@ export type Action =
 
 export interface VendorOffer {
   id: number;
-  kind: 'item' | 'flask' | 'currency';
+  kind: 'item' | 'flask' | 'currency' | 'gem' | 'support';
   item?: Item;
-  flaskId?: string;
+  flask?: FlaskInstance;
+  gemId?: string;
+  supportId?: string;
   currencyId?: string;
   qty?: number;
   price: number;
@@ -321,7 +336,7 @@ export type GameEvent =
   | { t: 'kill'; name: string; boss: boolean }
   | { t: 'spawn'; name: string; boss: boolean }
   | { t: 'death'; xpLost: number }
-  | { t: 'loot'; item?: Item; currencyId?: string; qty?: number; salvaged?: boolean; gemId?: string; supportId?: string }
+  | { t: 'loot'; item?: Item; currencyId?: string; qty?: number; salvaged?: boolean; gemId?: string; supportId?: string; flask?: FlaskInstance }
   | { t: 'levelup'; skill: SkillId; level: number }
   | { t: 'xp'; skill: SkillId; amount: number }
   | { t: 'produce'; skill: SkillId; outputs: Record<string, number> }

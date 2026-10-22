@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import { baseDef } from '../../data/bases';
-import { flaskDef, INSTILL_CONDITIONS } from '../../data/flasks';
-import { equipFlask, instillFlask, unequipFlask } from '../../engine/combat';
-import { salvage } from '../../engine/crafting';
-import { equip, equipReason, unequip } from '../../engine/equipment';
-import { inventoryCapacity } from '../../engine/hideout';
-import { deriveStats } from '../../engine/stats';
-import type { EquipSlot, FlaskInstance, GameState, InstillCondition, Item, Rarity } from '../../engine/types';
+import { INSTILL_CONDITIONS } from '../../data/flasks';
+import { currencyDef } from '../../data/materials';
+import { monsterDamage } from '../../data/zones';
+import { equipFlask, unequipFlask } from '../../engine/combat';
+import { unequip } from '../../engine/equipment';
+import { applyFlaskOrb, enchantFlask, findFlask, flaskEffectText, flaskName, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
+import { armourReduction, deriveStats, evadeChance, hitChance, RES_CAP, type Derived } from '../../engine/stats';
+import type { EquipSlot, FlaskInstance, GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { fmt, Tooltip } from '../components/common';
-import { Icon, Orb } from '../components/Icon';
-import { ItemCell, upgradeScore } from '../components/ItemView';
+import { fmt, MatIcon, ProgressBar, Tooltip } from '../components/common';
+import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
+import { Icon } from '../components/Icon';
+import { Inventory } from '../components/Inventory';
+import { ItemCell } from '../components/ItemView';
 
 const SLOT_LABEL: Record<EquipSlot, string> = {
   weapon: 'Weapon',
@@ -25,16 +27,23 @@ const SLOT_LABEL: Record<EquipSlot, string> = {
   ring2: 'Ring',
 };
 
+const DMG_NAME = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' } as const;
+
 function PaperDoll({ s }: { s: GameState }) {
   return (
-    <div className="paperdoll">
+    <div className="doll">
       {(Object.keys(SLOT_LABEL) as EquipSlot[]).map((slot) => {
         const item = s.equipment[slot];
-        return item ? (
-          <ItemCell key={slot} item={item} state={s} style={{ gridArea: slot }} onClick={() => game.act((st) => unequip(st, slot))} />
-        ) : (
-          <div key={slot} className="cell empty-slot" style={{ gridArea: slot }} title={SLOT_LABEL[slot]}>
-            <Icon name={slot.startsWith('ring') ? 'ring' : slot} size={22} color="var(--dim)" />
+        return (
+          <div key={slot} className="doll-slot" style={{ gridArea: slot }}>
+            {item ? (
+              <ItemCell item={item} state={s} onClick={() => game.act((st) => unequip(st, slot))} />
+            ) : (
+              <div className="cell empty-slot" title={SLOT_LABEL[slot]}>
+                <Icon name={slot.startsWith('ring') ? 'ring' : slot} size={26} color="var(--dim)" />
+              </div>
+            )}
+            <span className="doll-label">{SLOT_LABEL[slot]}</span>
           </div>
         );
       })}
@@ -42,273 +51,246 @@ function PaperDoll({ s }: { s: GameState }) {
   );
 }
 
-function StatSheet({ s }: { s: GameState }) {
-  const d = deriveStats(s, []);
-  const hit = Object.entries(d.hit).filter(([, [, hi]]) => hi > 0);
-  return (
-    <div className="grid" style={{ gap: 14 }}>
-      <div className="big-stats">
-        <div className="big-stat">
-          <b style={{ color: 'var(--life-2)' }}>{fmt(d.maxLife)}</b>
-          <span>Max Life</span>
-        </div>
-        <div className="big-stat">
-          <b style={{ color: 'var(--accent-2)' }}>{d.dps.toFixed(1)}</b>
-          <span>DPS</span>
-        </div>
-        <div className="big-stat">
-          <b style={{ color: 'var(--mana-2)' }}>{fmt(d.maxMana)}</b>
-          <span>Max Mana</span>
-        </div>
-      </div>
-      <div className="big-stats">
-        <div className="big-stat" title="+1 Life per 2 Strength, +1% Physical Damage per 5">
-          <b style={{ color: '#e07a6a' }}>{d.attributes.str}</b>
-          <span>Strength</span>
-        </div>
-        <div className="big-stat" title="+2 Accuracy per Dexterity, +1% Evasion per 5">
-          <b style={{ color: '#7fd08a' }}>{d.attributes.dex}</b>
-          <span>Dexterity</span>
-        </div>
-        <div className="big-stat" title="+1 Mana per 2 Intelligence, +1% Elemental Damage per 5">
-          <b style={{ color: '#7fa6f0' }}>{d.attributes.int}</b>
-          <span>Intelligence</span>
-        </div>
-      </div>
-      <dl className="stat-sheet" style={{ margin: 0 }}>
-        <FragmentStat label="Attacks per Second" value={d.attacksPerSec.toFixed(2)} />
-        <FragmentStat label="Accuracy" value={fmt(d.accuracy)} />
-        {hit.map(([type, [lo, hi]]) => (
-          <FragmentStat key={type} label={`${type === 'phys' ? 'Physical' : type === 'light' ? 'Lightning' : type[0].toUpperCase() + type.slice(1)} Damage`} value={`${lo}–${hi}`} color={`var(--${type})`} />
-        ))}
-        <FragmentStat label="Critical Chance" value={`${d.critChance.toFixed(1)}%`} />
-        <FragmentStat label="Critical Multiplier" value={`${d.critMulti}%`} />
-        <FragmentStat label="Armour" value={fmt(d.armour)} />
-        <FragmentStat label="Evasion" value={fmt(d.evasion)} />
-        <FragmentStat label="Life Regen" value={`${d.lifeRegen.toFixed(1)}/s`} />
-        <FragmentStat label="Mana Regen" value={`${d.manaRegen.toFixed(1)}/s`} />
-        {d.leechPct > 0 && <FragmentStat label="Life Leech" value={`${d.leechPct}%`} />}
-        <FragmentStat label="Fire Resistance" value={`${d.res.fire}%`} color="var(--fire)" />
-        <FragmentStat label="Cold Resistance" value={`${d.res.cold}%`} color="var(--cold)" />
-        <FragmentStat label="Lightning Resistance" value={`${d.res.light}%`} color="var(--light)" />
-        <FragmentStat label="Item Rarity" value={`+${d.itemRarity}%`} />
-        <FragmentStat label="Gathering/Crafting Speed" value={`+${d.skillSpeed}%`} />
-        <FragmentStat label="Skill XP" value={`+${d.skillXp}%`} />
-        {d.flaskEffect > 0 && <FragmentStat label="Flask Effect" value={`+${d.flaskEffect}%`} />}
-        {d.flaskCharges > 0 && <FragmentStat label="Flask Charges" value={`+${d.flaskCharges}%`} />}
-      </dl>
-    </div>
-  );
-}
-
-function FragmentStat({ label, value, color }: { label: string; value: string; color?: string }) {
+function Row({ label, value, hint, color }: { label: string; value: string; hint?: string; color?: string }) {
   return (
     <>
-      <dt>{label}</dt>
+      <dt title={hint}>{label}</dt>
       <dd style={{ color }}>{value}</dd>
     </>
   );
 }
 
-type SortKey = 'recent' | 'rarity' | 'slot' | 'upgrade';
-const RARITY_ORDER: Record<Rarity, number> = { unique: 0, rare: 1, magic: 2, normal: 3 };
-
-export function sortItems(s: GameState, items: Item[], key: SortKey): Item[] {
-  const list = [...items];
-  if (key === 'recent') return list.reverse();
-  if (key === 'rarity') return list.sort((a, b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || b.ilvl - a.ilvl);
-  if (key === 'slot') return list.sort((a, b) => baseDef(a.baseId).slot.localeCompare(baseDef(b.baseId).slot));
-  return list.sort((a, b) => upgradeScore(s, b) - upgradeScore(s, a));
+function Offense({ d }: { d: Derived }) {
+  const lvl = d.combatLevel;
+  return (
+    <div className="card stat-panel">
+      <div className="card-title">
+        <Icon name="combat" size={16} color="var(--accent-2)" /> Offence
+      </div>
+      <div className="big-stat wide">
+        <b style={{ color: 'var(--accent-2)' }}>{d.dps.toFixed(1)}</b>
+        <span>Default Attack DPS</span>
+      </div>
+      <dl className="stat-sheet">
+        {Object.entries(d.hit)
+          .filter(([, [, hi]]) => hi > 0)
+          .map(([t, [lo, hi]]) => (
+            <Row key={t} label={`${DMG_NAME[t as keyof typeof DMG_NAME]} damage`} value={`${lo}–${hi}`} color={`var(--${t})`} />
+          ))}
+        <Row label="Attacks per second" value={d.attacksPerSec.toFixed(2)} />
+        <Row label="Accuracy" value={fmt(d.accuracy)} hint="+2 per Dexterity and per level" />
+        <Row label={`Hit chance vs level ${lvl}`} value={`${Math.round(hitChance(d.accuracy, lvl) * 100)}%`} />
+        <Row label="Critical chance" value={`${d.critChance.toFixed(1)}%`} />
+        <Row label="Critical multiplier" value={`${d.critMulti}%`} />
+        <Row label="Physical damage" value={`+${Math.round((d.physMult - 1) * 100)}%`} hint="Increased physical damage, including Strength" />
+        <Row label="Elemental damage" value={`+${Math.round((d.elemMult - 1) * 100)}%`} hint="Increased elemental damage, including Intelligence" />
+        {d.leechPct > 0 && <Row label="Life leech" value={`${d.leechPct}%`} />}
+        <Row label="Mana" value={fmt(d.maxMana)} color="var(--mana-2)" />
+        <Row label="Mana regeneration" value={`${d.manaRegen.toFixed(1)}/s`} />
+      </dl>
+    </div>
+  );
 }
 
-export function Inventory({ s, onPick, selected }: { s: GameState; onPick?: (item: Item) => void; selected?: number | null }) {
-  const [sort, setSort] = useState<SortKey>('recent');
-  const [salvageMode, setSalvageMode] = useState(false);
-  const [marked, setMarked] = useState<Set<number>>(new Set());
-  const items = sortItems(s, s.inventory, sort);
-  const cap = inventoryCapacity(s);
-
-  const click = (item: Item) => {
-    if (salvageMode) {
-      const next = new Set(marked);
-      next.has(item.uid) ? next.delete(item.uid) : next.add(item.uid);
-      setMarked(next);
-    } else if (onPick) onPick(item);
-    else {
-      const reason = equipReason(s, item);
-      game.act((st, ctx) => reason ?? equip(st, ctx, item.uid));
-    }
-  };
-
+function ResBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="card">
+    <div className="res-row">
+      <span>{label}</span>
+      <ProgressBar value={Math.max(0, value) / RES_CAP} color={color} label={`${value}%`} className={value >= RES_CAP ? 'capped' : ''} />
+    </div>
+  );
+}
+
+function Defense({ d }: { d: Derived }) {
+  const lvl = d.combatLevel;
+  const typicalHit = monsterDamage(lvl);
+  return (
+    <div className="card stat-panel">
       <div className="card-title">
-        Inventory
-        <span className="muted num" style={{ fontFamily: 'var(--font)', fontSize: 12 }}>
-          {s.inventory.length}/{cap}
-        </span>
-        <span className="grow" />
-        <div className="tabs">
-          {(['recent', 'rarity', 'slot', 'upgrade'] as SortKey[]).map((k) => (
-            <button key={k} className={`tab ${sort === k ? 'active' : ''}`} onClick={() => setSort(k)}>
-              {k[0].toUpperCase() + k.slice(1)}
-            </button>
-          ))}
-        </div>
+        <Icon name="equipment" size={16} color="var(--life-2)" /> Defence
       </div>
-      <div className="row wrap" style={{ marginBottom: 10 }}>
-        {!salvageMode ? (
-          <>
-            <span className="dim" style={{ fontSize: 12 }}>
-              {onPick ? 'Click an item to select it.' : 'Click to equip · ▲ marks upgrades.'}
-            </span>
-            <span className="spacer" />
-            <button className="btn sm" onClick={() => setSalvageMode(true)} disabled={!s.inventory.length}>
-              Salvage…
-            </button>
-          </>
-        ) : (
-          <>
-            <span className="warn" style={{ fontSize: 12 }}>
-              Select items to salvage into Arcane Dust
-            </span>
-            <span className="spacer" />
-            <button className="btn sm" onClick={() => setMarked(new Set(s.inventory.filter((i) => i.rarity === 'normal').map((i) => i.uid)))}>
-              All normal
-            </button>
-            <button className="btn sm" onClick={() => setMarked(new Set(s.inventory.filter((i) => i.rarity === 'normal' || i.rarity === 'magic').map((i) => i.uid)))}>
-              Normal + magic
-            </button>
-            <button
-              className="btn sm danger"
-              disabled={!marked.size}
-              onClick={() => {
-                game.act((st, ctx) => salvage(st, ctx, [...marked]));
-                setMarked(new Set());
-                setSalvageMode(false);
-              }}
-            >
-              Salvage {marked.size}
-            </button>
-            <button
-              className="btn sm ghost"
-              onClick={() => {
-                setSalvageMode(false);
-                setMarked(new Set());
-              }}
-            >
-              Cancel
-            </button>
-          </>
+      <div className="big-stat wide">
+        <b style={{ color: 'var(--life-2)' }}>{fmt(d.maxLife)}</b>
+        <span>Maximum Life</span>
+      </div>
+      <dl className="stat-sheet">
+        <Row label="Life regeneration" value={`${d.lifeRegen.toFixed(1)}/s`} />
+        <Row label="Armour" value={fmt(d.armour)} />
+        <Row
+          label={`Physical reduction vs a level ${lvl} hit`}
+          value={`${Math.round(armourReduction(d.armour, typicalHit) * 100)}%`}
+          hint="Armour is better against many small hits than one big one"
+        />
+        <Row label="Evasion rating" value={fmt(d.evasion)} />
+        <Row label={`Evade chance vs level ${lvl}`} value={`${Math.round(evadeChance(d.evasion, lvl) * 100)}%`} hint="Boss wind-ups can't be evaded" />
+      </dl>
+      <div className="section-label" style={{ marginTop: 12 }}>
+        Resistances (cap {RES_CAP}%)
+      </div>
+      <ResBar label="Fire" value={d.res.fire} color="var(--fire)" />
+      <ResBar label="Cold" value={d.res.cold} color="var(--cold)" />
+      <ResBar label="Lightning" value={d.res.light} color="var(--light)" />
+    </div>
+  );
+}
+
+function CenterColumn({ s, d }: { s: GameState; d: Derived }) {
+  return (
+    <div className="card doll-card">
+      <PaperDoll s={s} />
+      <div className="attr-strip">
+        <span title="+1 Life per 2, +1% physical damage per 5">
+          <b style={{ color: '#e07a6a' }}>{d.attributes.str}</b> Strength
+        </span>
+        <span title="+2 Accuracy per point, +1% evasion per 5">
+          <b style={{ color: '#7fd08a' }}>{d.attributes.dex}</b> Dexterity
+        </span>
+        <span title="+1 Mana per 2, +1% elemental damage per 5">
+          <b style={{ color: '#7fa6f0' }}>{d.attributes.int}</b> Intelligence
+        </span>
+      </div>
+      <div className="util-strip">
+        <span>
+          Item rarity <b>+{d.itemRarity}%</b>
+        </span>
+        <span>
+          Skill speed <b>+{d.skillSpeed}%</b>
+        </span>
+        <span>
+          Skill XP <b>+{d.skillXp}%</b>
+        </span>
+        {d.flaskEffect > 0 && (
+          <span>
+            Flask effect <b>+{d.flaskEffect}%</b>
+          </span>
+        )}
+        {d.flaskCharges > 0 && (
+          <span>
+            Flask charges <b>+{d.flaskCharges}%</b>
+          </span>
         )}
       </div>
-      {items.length === 0 ? (
-        <div className="dim" style={{ padding: 20, textAlign: 'center' }}>
-          Empty. Smith bases or go fight for loot.
+    </div>
+  );
+}
+
+function FlaskCard({ f, selected, onClick, slot }: { f: FlaskInstance | null; selected: boolean; onClick: () => void; slot?: number }) {
+  if (!f)
+    return (
+      <button className={`flask-card empty ${selected ? 'selected' : ''}`} onClick={onClick}>
+        {slot !== undefined && <span className="slot-key">{slot + 1}</span>}
+        <span className="dim">Empty</span>
+      </button>
+    );
+  return (
+    <Tooltip content={<FlaskTip f={f} />}>
+      <button
+        className={`flask-card ${f.rarity} ${selected ? 'selected' : ''}`}
+        onClick={onClick}
+        onContextMenu={(e) => (e.preventDefault(), pinFlask(f))}
+      >
+        {slot !== undefined && <span className="slot-key">{slot + 1}</span>}
+        <FlaskIcon f={f} size={38} />
+        <span className="flask-card-text">
+          <b className={f.rarity === 'magic' ? 'magic-text' : ''}>{flaskName(f)}</b>
+          <span className="dim">{flaskEffectText(f)}</span>
+          {f.instill && <span className="enchant-tag">Enchanted · auto</span>}
+        </span>
+      </button>
+    </Tooltip>
+  );
+}
+
+function FlaskWorkbench({ s, f }: { s: GameState; f: FlaskInstance }) {
+  const slotIndex = s.flaskSlots.findIndex((x) => x?.uid === f.uid);
+  const instills = s.bank.instill ?? 0;
+  return (
+    <div className="flask-bench">
+      <FlaskTip f={f} pinned />
+      <div className="grid" style={{ gap: 10, alignContent: 'start' }}>
+        <div>
+          <div className="section-label">Craft</div>
+          <div className="row wrap">
+            {FLASK_ORBS.map((orb) => {
+              const reason = flaskOrbReason(s, orb, f);
+              return (
+                <button key={orb} className="btn sm" disabled={!!reason} title={reason ?? currencyDef(orb).desc} onClick={() => game.act((st, ctx) => applyFlaskOrb(st, ctx, orb, f.uid))}>
+                  <MatIcon id={orb} size={13} /> {currencyDef(orb).short} <span className="dim">×{s.bank[orb] ?? 0}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      ) : (
-        <div className="inv-grid">
-          {items.map((item) => (
-            <ItemCell
-              key={item.uid}
-              item={item}
-              state={s}
-              selected={selected === item.uid || (salvageMode && marked.has(item.uid))}
-              showUpgrade={!onPick}
-              onClick={() => click(item)}
-            />
-          ))}
+        <div>
+          <div className="section-label">
+            Enchant with an Instilling Orb <span className="dim">({instills} owned)</span>
+          </div>
+          <div className="row wrap">
+            {INSTILL_CONDITIONS.map((c) => (
+              <button
+                key={c.id}
+                className={`btn sm ${f.instill === c.id ? 'active' : ''}`}
+                disabled={instills < 1 || f.instill === c.id}
+                title={instills < 1 ? 'Instilling Orbs drop in deeper areas' : c.desc}
+                onClick={() => game.act((st, ctx) => enchantFlask(st, ctx, f.uid, c.id))}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          <div className="dim" style={{ fontSize: 11, marginTop: 4 }}>
+            An enchanted flask drinks itself in combat when its condition is met. Enchanting again replaces it.
+          </div>
         </div>
-      )}
+        <div>
+          <div className="section-label">Belt</div>
+          {slotIndex >= 0 ? (
+            <button className="btn sm" onClick={() => game.act((st) => unequipFlask(st, slotIndex))}>
+              Take off belt (slot {slotIndex + 1})
+            </button>
+          ) : (
+            <div className="row wrap">
+              {s.flaskSlots.map((x, i) => (
+                <button key={i} className="btn sm" onClick={() => game.act((st) => equipFlask(st, f.uid, i))}>
+                  {x ? `Swap into ${i + 1}` : `Put in slot ${i + 1}`}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
 function FlaskRack({ s }: { s: GameState }) {
-  const [pickSlot, setPickSlot] = useState<number | null>(null);
-  const grouped = new Map<string, FlaskInstance[]>();
-  for (const f of s.flaskStash) grouped.set(f.flaskId, [...(grouped.get(f.flaskId) ?? []), f]);
-  const instills = s.bank.instill ?? 0;
-
+  const [sel, setSel] = useState<number | null>(s.flaskSlots[0]?.uid ?? null);
+  const f = sel !== null ? findFlask(s, sel) : undefined;
   return (
     <div className="card">
       <div className="card-title">
-        Flask Rack
+        Flasks
         <span className="grow" />
-        <span className="chip">
-          <Orb color="#ff9f5a" size={13} /> {instills} Instilling
+        <span className="muted" style={{ fontFamily: 'var(--font)', fontSize: 12 }}>
+          Flasks drop from monsters and are brewed with Alchemy
         </span>
       </div>
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 8 }}>
-        {s.flaskSlots.map((f, i) => {
-          const def = f ? flaskDef(f.flaskId) : null;
-          return (
-            <div key={i} className="mat" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6, borderColor: pickSlot === i ? 'var(--accent)' : undefined }}>
-              <div className="row">
-                <span className="nav-badge">{i + 1}</span>
-                {def ? (
-                  <>
-                    <Orb color={def.color} size={14} />
-                    <b style={{ fontSize: 12.5 }}>{def.name}</b>
-                  </>
-                ) : (
-                  <span className="dim">Empty</span>
-                )}
-              </div>
-              {def && <span className="dim" style={{ fontSize: 11 }}>{def.desc}</span>}
-              <div className="row wrap">
-                <button className="btn sm" onClick={() => setPickSlot(pickSlot === i ? null : i)}>
-                  {f ? 'Swap' : 'Equip'}
-                </button>
-                {f && (
-                  <button className="btn sm ghost" onClick={() => game.act((st) => unequipFlask(st, i))}>
-                    Remove
-                  </button>
-                )}
-              </div>
-              {f && (
-                <select
-                  value={f.instill ?? ''}
-                  onChange={(e) => {
-                    const v = (e.target.value || null) as InstillCondition | null;
-                    if (v && !confirm('Spend an Instilling Orb on this flask?')) return;
-                    game.act((st, ctx) => instillFlask(st, ctx, i, v));
-                  }}
-                  disabled={!f.instill && instills < 1}
-                  style={{ background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 6px', fontSize: 11.5 }}
-                  title={instills < 1 && !f.instill ? 'Instilling Orbs drop in deeper zones' : 'Auto-use condition'}
-                >
-                  <option value="">Manual use</option>
-                  {INSTILL_CONDITIONS.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      Auto: {c.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          );
-        })}
+      <div className="flask-slots">
+        {s.flaskSlots.map((x, i) => (
+          <FlaskCard key={i} slot={i} f={x} selected={!!x && x.uid === sel} onClick={() => x && setSel(x.uid)} />
+        ))}
       </div>
-      {pickSlot !== null && (
-        <div style={{ marginTop: 12 }}>
-          <div className="section-label">Choose a flask for slot {pickSlot + 1}</div>
-          {grouped.size === 0 && <div className="dim">No spare flasks. Brew them with Alchemy or buy them from the Trader.</div>}
-          <div className="row wrap">
-            {[...grouped.entries()].map(([id, list]) => (
-              <Tooltip key={id} content={<div className="tip">{flaskDef(id).desc}</div>}>
-                <button
-                  className="btn"
-                  onClick={() => {
-                    game.act((st) => equipFlask(st, list[0].uid, pickSlot));
-                    setPickSlot(null);
-                  }}
-                >
-                  <Orb color={flaskDef(id).color} size={13} /> {flaskDef(id).name} ×{list.length}
-                </button>
-              </Tooltip>
-            ))}
-          </div>
+      {f && <FlaskWorkbench s={s} f={f} />}
+      <div className="section-label" style={{ marginTop: 14 }}>
+        Spare flasks ({s.flaskStash.length})
+      </div>
+      {s.flaskStash.length === 0 ? (
+        <div className="dim">No spare flasks.</div>
+      ) : (
+        <div className="flask-stash">
+          {s.flaskStash.map((x) => (
+            <FlaskCard key={x.uid} f={x} selected={x.uid === sel} onClick={() => setSel(x.uid)} />
+          ))}
         </div>
       )}
     </div>
@@ -317,23 +299,19 @@ function FlaskRack({ s }: { s: GameState }) {
 
 export function EquipmentPage() {
   const s = useGame();
+  const d = deriveStats(s, []);
   return (
-    <div className="page">
+    <div className="page wide">
       <div className="page-head">
         <div className="grow">
           <h1>Equipment</h1>
-          <p>Click gear to unequip. Hover inventory items to compare against what you're wearing.</p>
+          <p>Click gear to take it off. Hover inventory items to compare; right-click any item to pin it.</p>
         </div>
       </div>
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', alignItems: 'start' }}>
-        <div className="card">
-          <div className="card-title">Gear</div>
-          <PaperDoll s={s} />
-        </div>
-        <div className="card">
-          <div className="card-title">Character</div>
-          <StatSheet s={s} />
-        </div>
+      <div className="equip-layout">
+        <Offense d={d} />
+        <CenterColumn s={s} d={d} />
+        <Defense d={d} />
       </div>
       <FlaskRack s={s} />
       <Inventory s={s} />

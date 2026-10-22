@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { game, useGame } from '../game';
+import { PinDock } from './components/common';
 import { QuestTracker } from './components/QuestTracker';
 import { Feed, OfflineModal, Sidebar, Toasts, TopBar, useFlaskHotkeys, usePage, XpBar, type Page } from './Layout';
 import { BenchPage } from './pages/BenchPage';
@@ -9,7 +10,9 @@ import { SkillGemsPage } from './pages/SkillGemsPage';
 import { EquipmentPage } from './pages/EquipmentPage';
 import { HideoutPage } from './pages/HideoutPage';
 import { SkillPage } from './pages/SkillPage';
-import { SettingsPage, StashPage, VendorPage } from './pages/TownPages';
+import { SettingsPage } from './pages/SettingsPage';
+import { StashPage } from './pages/StashPage';
+import { TraderPage } from './pages/TraderPage';
 import { TreePage } from './pages/TreePage';
 import { CharacterCreate, CharacterSelect, IntroModal, TitleScreen } from './screens/Screens';
 
@@ -30,9 +33,9 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
     case 'bench':
       return <BenchPage />;
     case 'stash':
-      return <StashPage />;
+      return <StashPage go={go} />;
     case 'vendor':
-      return <VendorPage />;
+      return <TraderPage />;
     case 'settings':
       return <SettingsPage />;
     default:
@@ -58,6 +61,7 @@ function GameScreen() {
       </main>
       <Feed />
       <XpBar />
+      <PinDock />
       <QuestTracker floating />
       <OfflineModal />
       <IntroModal />

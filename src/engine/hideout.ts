@@ -1,10 +1,12 @@
 import { BASES } from '../data/bases';
-import { FLASKS, flaskDef } from '../data/flasks';
+import { ACTIVE_GEMS, activeGemDef, SUPPORT_GEMS, supportGemDef } from '../data/gems';
 import { STASH_CAPACITY, stationDef, VENDOR_REFRESH_MS, VENDOR_SLOTS, type StationId } from '../data/hideout';
 import { currencyDef } from '../data/materials';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
-import { createItem, itemName, newUid, sellValue } from './items';
+import { flaskName, flaskValue, rollFlask } from './flasks';
+import { createSkillGem, createSupportGem } from './gems';
+import { createItem, itemName, sellValue } from './items';
 import { pick, rInt, type Rng } from './rng';
 import type { GameState, Rarity, VendorOffer } from './types';
 import { characterLevel } from './character';
@@ -49,19 +51,23 @@ export function refreshVendor(s: GameState, rng: Rng): void {
   const currencyPool = lvl >= 4 ? ['transmute', 'augment', 'alteration', 'regal', 'chaos', 'scour', 'regret'] : ['transmute', 'augment', 'alteration', 'scour', 'regret'];
   for (let i = 0; i < slots; i++) {
     const roll = rng.next();
-    if (roll < 0.55) {
-      const bases = BASES.filter((b) => b.reqLevel <= ilvl);
-      const base = pick(rng, bases);
+    if (roll < 0.45) {
+      const base = pick(rng, BASES.filter((b) => b.reqLevel <= ilvl));
       let rarity: Rarity = 'normal';
       const r2 = rng.next();
       if (lvl >= 3 && r2 < 0.2) rarity = 'rare';
       else if (lvl >= 2 && r2 < 0.55) rarity = 'magic';
       const item = createItem(s, base.id, ilvl, rarity, rng);
       stock.push({ id: id++, kind: 'item', item, price: sellValue(item) * 4 });
-    } else if (roll < 0.75) {
-      const options = FLASKS.filter((f) => f.price <= 120 + ilvl * 15);
-      const f = pick(rng, options);
-      stock.push({ id: id++, kind: 'flask', flaskId: f.id, price: f.price });
+    } else if (roll < 0.62) {
+      const flask = rollFlask(s, ilvl, rng);
+      stock.push({ id: id++, kind: 'flask', flask, price: flaskValue(flask) * 4 });
+    } else if (roll < 0.72) {
+      const gem = pick(rng, ACTIVE_GEMS);
+      stock.push({ id: id++, kind: 'gem', gemId: gem.id, price: 120 + ilvl * 10 });
+    } else if (roll < 0.82) {
+      const sup = pick(rng, SUPPORT_GEMS.filter((g) => !g.signatureFor || lvl >= 3));
+      stock.push({ id: id++, kind: 'support', supportId: sup.id, price: (sup.signatureFor ? 260 : 90) + ilvl * 8 });
     } else {
       const c = currencyDef(pick(rng, currencyPool));
       const qty = c.value >= 30 ? 1 : rInt(rng, 2, 5);
@@ -71,8 +77,29 @@ export function refreshVendor(s: GameState, rng: Rng): void {
   s.vendor = { stock, refreshAt: s.clock + VENDOR_REFRESH_MS };
 }
 
+/** Gold to restock the trader early. */
+export function rerollCost(s: GameState): number {
+  return 20 + characterLevel(s) * 6;
+}
+
+export function rerollVendor(s: GameState, ctx: Ctx): string | null {
+  const cost = rerollCost(s);
+  if (!canAfford(s, { gold: cost })) return 'Not enough gold';
+  payCost(s, { gold: cost });
+  refreshVendor(s, ctx.rng);
+  return null;
+}
+
 export function vendorTick(s: GameState, rng: Rng): void {
   if (s.clock >= s.vendor.refreshAt) refreshVendor(s, rng);
+}
+
+export function offerName(o: VendorOffer): string {
+  if (o.item) return itemName(o.item);
+  if (o.flask) return flaskName(o.flask);
+  if (o.gemId) return activeGemDef(o.gemId).name;
+  if (o.supportId) return supportGemDef(o.supportId).name;
+  return `${o.qty ?? 1}× ${currencyDef(o.currencyId!).name}`;
 }
 
 export function buyOffer(s: GameState, ctx: Ctx, offerId: number): string | null {
@@ -81,17 +108,12 @@ export function buyOffer(s: GameState, ctx: Ctx, offerId: number): string | null
   if (!canAfford(s, { gold: offer.price })) return 'Not enough gold';
   if (offer.kind === 'item' && inventoryFull(s)) return 'Inventory full';
   payCost(s, { gold: offer.price });
-  if (offer.kind === 'item' && offer.item) {
-    s.inventory.push(offer.item);
-    ctx.emit({ t: 'info', text: `Bought ${itemName(offer.item)}`, tone: 'good' });
-  } else if (offer.kind === 'flask' && offer.flaskId) {
-    const f = flaskDef(offer.flaskId);
-    s.flaskStash.push({ uid: newUid(s), flaskId: f.id, charges: f.maxCharges, instill: null });
-    ctx.emit({ t: 'info', text: `Bought ${f.name}`, tone: 'good' });
-  } else if (offer.currencyId) {
-    addBank(s, offer.currencyId, offer.qty ?? 1);
-    ctx.emit({ t: 'info', text: `Bought ${offer.qty}× ${currencyDef(offer.currencyId).name}`, tone: 'good' });
-  }
+  if (offer.item) s.inventory.push(offer.item);
+  else if (offer.flask) s.flaskStash.push(offer.flask);
+  else if (offer.gemId) s.gems.push(createSkillGem(s, offer.gemId));
+  else if (offer.supportId) s.supportGems.push(createSupportGem(s, offer.supportId));
+  else if (offer.currencyId) addBank(s, offer.currencyId, offer.qty ?? 1);
+  ctx.emit({ t: 'info', text: `Bought ${offerName(offer)}`, tone: 'good' });
   s.vendor.stock = s.vendor.stock.filter((o) => o.id !== offerId);
   return null;
 }

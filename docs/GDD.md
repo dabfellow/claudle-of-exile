@@ -211,7 +211,7 @@ Each phase ends with something playable and reviewed with you before the next.
 
 1. **Numbers & foundations** — pacing rework, attributes, mana, character level, balance sim. ✅ *Done — see [BALANCE.md](BALANCE.md).*
 2. **Combat 2.0** — skill gems, supports, skill bar, tactics rules, new Combat tab, Campaign tab, sidebar tabs, always-on XP bar. ✅ *Done.*
-3. **Items & UI** — flask items + enchants, pinned/Alt tooltips, equipment layout, stash rework, trader rework.
+3. **Items & UI** — flask items + enchants, pinned/Alt tooltips, equipment layout, stash rework, trader rework. ✅ *Done — art drops in automatically from `public/art/` when added.*
 4. **Trees** — character tree redesign (node list first), skilling tree.
 5. **Economy** — drop tables, crafting gating, act-tied gathering, achievements → bench recipes.
 6. **Accounts** — Supabase login and cloud saves (as soon as you finish the setup guide; can happen in parallel).

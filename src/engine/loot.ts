@@ -1,5 +1,6 @@
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
 import { MAP_ILVL } from '../data/hideout';
+import { rollFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { CURRENCIES } from '../data/materials';
 import type { ZoneDef } from '../data/zones';
@@ -17,6 +18,8 @@ export const ITEM_DROP_CHANCE = 0.06;
 export const UNIQUE_CHANCE = 0.0005;
 export const BOSS_UNIQUE_CHANCE = 0.06;
 export const GEM_DROP_CHANCE = 0.012;
+export const FLASK_DROP_CHANCE = 0.01;
+export const BOSS_FLASK_CHANCE = 0.25;
 export const BOSS_GEM_CHANCE = 0.35;
 
 /** 40% skill gem, 60% support gem. */
@@ -81,6 +84,13 @@ export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: Zon
   for (let i = 0; i < count; i++) {
     const base = pick(rng, droppableBases(ilvl));
     placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, d.itemRarity, boss), rng));
+  }
+
+  // flasks
+  if (chance(rng, boss ? BOSS_FLASK_CHANCE : FLASK_DROP_CHANCE * mon.scale)) {
+    const flask = rollFlask(s, ilvl, rng);
+    s.flaskStash.push(flask);
+    ctx.emit({ t: 'loot', flask });
   }
 
   // skill and support gems

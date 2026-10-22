@@ -1,4 +1,3 @@
-import { flaskDef } from '../data/flasks';
 import { SKILL_BAR_SLOTS, type TacticRule } from '../data/gems';
 import {
   BOSS_ADDS,
@@ -16,6 +15,7 @@ import {
 } from '../data/zones';
 import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './character';
 import type { Ctx } from './context';
+import { flaskStats } from './flasks';
 import { grantGemXp, skillNumbers, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
 import { rollLoot } from './loot';
@@ -159,17 +159,17 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
   const f = s.flaskSlots[slot];
   if (!f) return 'Empty slot';
   if (!s.combat) return 'Only usable in combat';
-  const def = flaskDef(f.flaskId);
-  if (f.charges < def.chargesPerUse) return 'Not enough charges';
+  const st = flaskStats(f);
+  if (f.charges < st.chargesPerUse) return 'Not enough charges';
   const d = deriveStats(s);
-  f.charges -= def.chargesPerUse;
-  const effect = 1 + d.flaskEffect / 100;
+  f.charges -= st.chargesPerUse;
+  const effect = (1 + d.flaskEffect / 100) * st.effectMult;
   const c = s.combat;
   c.buffs = c.buffs.filter((b) => !(b.source === 'flask' && b.id === f.flaskId));
-  c.buffs.push({ id: f.flaskId, source: 'flask', remainingMs: def.durationMs, durationMs: def.durationMs });
-  if (def.heal) {
-    const resource = def.kind === 'mana' ? 'mana' : 'life';
-    c.heals.push({ resource, perMs: (def.heal * effect) / def.durationMs, remainingMs: def.durationMs });
+  c.buffs.push({ id: f.flaskId, source: 'flask', remainingMs: st.durationMs, durationMs: st.durationMs, mult: st.effectMult });
+  if (st.def.heal) {
+    const resource = st.def.kind === 'mana' ? 'mana' : 'life';
+    c.heals.push({ resource, perMs: (st.def.heal * effect) / st.durationMs, remainingMs: st.durationMs });
   }
   ctx.emit({ t: 'flask', slot, flaskId: f.flaskId, auto });
   return null;
@@ -186,8 +186,8 @@ function triggerInstilled(s: GameState, ctx: Ctx, cond: InstillCondition): void 
 function gainCharges(s: GameState, amount: number, d: Derived): void {
   for (const f of s.flaskSlots) {
     if (!f) continue;
-    const max = flaskDef(f.flaskId).maxCharges;
-    f.charges = Math.min(max, f.charges + amount * (1 + d.flaskCharges / 100));
+    const st = flaskStats(f);
+    f.charges = Math.min(st.maxCharges, f.charges + amount * (1 + d.flaskCharges / 100) * st.gainMult);
   }
 }
 
@@ -680,7 +680,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   if (s.life < d.maxLife * 0.5) triggerInstilled(s, ctx, 'lowLife');
   for (let i = 0; i < s.flaskSlots.length; i++) {
     const f = s.flaskSlots[i];
-    if (f?.instill === 'fullCharges' && f.charges >= flaskDef(f.flaskId).maxCharges && !flaskActive(s, f.flaskId)) {
+    if (f?.instill === 'fullCharges' && f.charges >= flaskStats(f).maxCharges && !flaskActive(s, f.flaskId)) {
       useFlask(s, ctx, i, true);
     }
   }
@@ -734,18 +734,4 @@ export function unequipFlask(s: GameState, slot: number): void {
   if (!f) return;
   s.flaskStash.push(f);
   s.flaskSlots[slot] = null;
-}
-
-export function instillFlask(s: GameState, ctx: Ctx, slot: number, cond: InstillCondition | null): string | null {
-  const f = s.flaskSlots[slot];
-  if (!f) return 'Empty slot';
-  if (cond === null) {
-    f.instill = null;
-    return null;
-  }
-  if ((s.bank.instill ?? 0) < 1) return 'You need an Instilling Orb';
-  s.bank.instill -= 1;
-  f.instill = cond;
-  ctx.emit({ t: 'info', text: `${flaskDef(f.flaskId).name} instilled`, tone: 'good' });
-  return null;
 }

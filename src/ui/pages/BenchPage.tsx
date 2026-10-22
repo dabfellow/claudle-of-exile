@@ -10,7 +10,7 @@ import { game, useGame } from '../../game';
 import { Cost, Tooltip } from '../components/common';
 import { Orb } from '../components/Icon';
 import { ItemCell, ItemTip } from '../components/ItemView';
-import { Inventory } from './EquipmentPage';
+import { Inventory } from '../components/Inventory';
 
 const ORB_ORDER = ['transmute', 'augment', 'alteration', 'regal', 'alchemy', 'chaos', 'exalted', 'annul', 'scour', 'divine'];
 
