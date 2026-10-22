@@ -242,13 +242,52 @@ export interface ArtEntry {
   key: string;
   group: ArtGroup;
   name: string;
-  /** the full line to paste after the style block */
+  /** what the picture shows */
+  desc: string;
+  /** the subject line for a single image (desc wrapped in the group's template) */
   prompt: string;
 }
 
 function entry(group: ArtGroup, id: string, name: string, desc: string): ArtEntry {
   const tpl = ART_GROUPS[group].template;
-  return { key: `${group}/${id}`, group, name, prompt: tpl ? tpl(desc) : desc };
+  return { key: `${group}/${id}`, group, name, desc, prompt: tpl ? tpl(desc) : desc };
+}
+
+/** The look every image shares; opens every copy-paste prompt. */
+export const ART_STYLE =
+  'Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): ' +
+  'painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights ' +
+  'and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. ' +
+  'No text, no letters, no logos, no watermarks, no UI frames.';
+
+/** Small icons are generated nine at a time on a 3×3 sprite sheet, then sliced apart by `npm run art`. */
+export const SHEET_GRID = 3;
+export const SHEET_GROUPS: Partial<Record<ArtGroup, string>> = {
+  currency: 'Each icon is a single glowing currency orb.',
+  materials: 'Each icon is a single crafting material.',
+  flasks: 'Each icon is a single glass flask, standing upright.',
+  items: 'Each icon is a single item, laid flat or upright like a Diablo inventory icon.',
+  uniques: 'Each icon is an ornate legendary version of the item with a faint orange magical glow.',
+  gems: 'Each icon is a faceted cut gemstone with a glowing symbol inside it.',
+};
+
+export interface ArtSheet {
+  /** file name without extension, e.g. `currency_1` */
+  id: string;
+  group: ArtGroup;
+  /** fills the grid left to right, top to bottom */
+  entries: ArtEntry[];
+}
+
+/** Sprite sheets for the icon groups, nine entries each, in manifest order. */
+export function artSheets(manifest = artManifest()): ArtSheet[] {
+  const per = SHEET_GRID * SHEET_GRID;
+  const out: ArtSheet[] = [];
+  for (const group of Object.keys(SHEET_GROUPS) as ArtGroup[]) {
+    const list = manifest.filter((e) => e.group === group);
+    for (let i = 0; i < list.length; i += per) out.push({ id: `${group}_${i / per + 1}`, group, entries: list.slice(i, i + per) });
+  }
+  return out;
 }
 
 export function artManifest(): ArtEntry[] {
