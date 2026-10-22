@@ -185,7 +185,7 @@ Goal: drops feel good, crafting gives precision, and passive grinding is an opti
 
 | Act | Status at launch | Notes |
 |---|---|---|
-| 1 | Fully polished | Current zones reworked, more areas, a proper act boss |
+| 1 | Fully polished | *The Drowned Coast*: Mud Flats → Brine Caves → Ashen Woods → Blackreed Marsh → Sunken Crypt → Ship Graveyard → Storm Cliffs → Drowned Sanctum (act boss Ysolde). The old Molten Forge and Celestial Spire themes are kept for later acts |
 | 2–6 | Locked, "coming soon" | Each adds areas, gathering tiers, item tiers, skills |
 | Maps | Locked | Endgame unlocks after Act 6 |
 
@@ -215,8 +215,8 @@ Each phase ends with something playable and reviewed with you before the next.
 4. **Trees** — character tree redesign (node list first), skilling tree. ✅ *Done — see [TREES.md](TREES.md).*
 5. **Economy** — drop tables, crafting gating, act-tied gathering, achievements → bench recipes. ✅ *Done — tables in `data/drops.ts`, 26 achievements in `data/achievements.ts`.*
 6. **Accounts** — Supabase login and cloud saves (as soon as you finish the setup guide; can happen in parallel).
-7. **Art pass** — drop in generated assets, final visual polish.
-8. **Act 1 content & balance** — areas, boss, tuning against the pacing targets, launch checklist.
+7. **Art pass** — drop in generated assets, final visual polish. 🔧 *Pipeline done: every slot (portraits, scenes, stations, zones, monsters, currency, materials, flasks, items, uniques, gems — 169 images) shows art when present; `npm run art` imports/resizes and reports coverage. Waiting on generated images.*
+8. **Act 1 content & balance** — areas, boss, tuning against the pacing targets, launch checklist. ✅ *Done — Act 1 is 8 areas (levels 1–25) ending in Ysolde, the Drowned Queen; bosses gain mechanics (slam, nova, summon, enrage, ward) as the act goes on; sim puts Act 1 at 6–10 h for every class. Remaining launch work: [LAUNCH.md](LAUNCH.md).*
 
 Post-launch: Acts 2–6, maps, ascendancies, loot filters, story.
 

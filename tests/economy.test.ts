@@ -108,7 +108,9 @@ describe('save v7', () => {
     const s = deserialize(JSON.stringify(old));
     expect(s.version).toBe(SAVE_VERSION);
     expect(s.achievements).toEqual([]);
-    expect(s.bossesDefeated.sort()).toEqual(['ashwood', 'mudflats']);
+    // migration 7 then maps the old Sunken Crypt (third area) onto Act 1's fifth
+    expect(s.unlockedZones).toEqual(['mudflats', 'brinecaves', 'ashwood', 'blackreed', 'crypt']);
+    expect(s.bossesDefeated).toEqual(['mudflats', 'brinecaves', 'ashwood', 'blackreed']);
     expect(s.lifetime.salvaged).toBe(0);
     expect(s.lifetime.kills).toBe(5);
   });

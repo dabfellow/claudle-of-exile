@@ -14,14 +14,14 @@ Dashboards change their wording now and then; if a button name doesn't match exa
 2. **New project** → name it `claudle-of-exile`, set a database password (save it in a password manager), pick the region closest to you.
 3. Wait for it to finish provisioning (~2 min).
 4. Open **Project Settings → API** (or **Data API / API Keys**) and note:
-   - **Project URL** — looks like `https://abcdefghijkl.supabase.co`
-   - **anon public key** (newer dashboards call it the **publishable key**)
-   - Your **project ref** is the `abcdefghijkl` part of the URL.
+   - **Project URL** — https://ckclesfzzvfkcrsyvogs.supabase.co
+   - **anon public key** sb_publishable_x53UGpOIRbEQbXK7bpndEg_lcannJWi
+   - Your **project ref** is the `ckclesfzzvfkcrsyvogs` part of the URL.
 
 Your **callback URL** for steps 2 and 3 is:
 
 ```
-https://<project-ref>.supabase.co/auth/v1/callback
+https://ckclesfzzvfkcrsyvogs.supabase.co/auth/v1/callback
 ```
 
 ---
@@ -38,7 +38,7 @@ https://<project-ref>.supabase.co/auth/v1/callback
    - Application type: **Web application**, name: `Supabase`.
    - **Authorized JavaScript origins:** `http://localhost:5173` (add your real site URL later).
    - **Authorized redirect URIs:** your Supabase callback URL from step 1.
-   - Create, then copy the **Client ID** and **Client secret**.
+   - Create, then copy the **Client ID** 281290751952-f2pcon2vvbsqnh5tdivgj2bfhbghfd8a.apps.googleusercontent.com and **Client secret**. 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
 4. In Supabase: **Authentication → Sign In / Providers → Google** → enable, paste the Client ID and Client secret → **Save**.
 
 ---
@@ -47,8 +47,8 @@ https://<project-ref>.supabase.co/auth/v1/callback
 
 1. Go to https://discord.com/developers/applications → **New Application** → name it `Claudle of Exile`.
 2. **OAuth2** in the left menu:
-   - Copy the **Client ID**.
-   - **Reset Secret** → copy the **Client Secret** (it's only shown once).
+   - Copy the **Client ID** 1562621453126471690
+   - **Reset Secret** → copy the **Client Secret** qrGU4lrf_lQkN80QC9OFy-fKV1T2kUfF
    - **Redirects → Add Redirect:** your Supabase callback URL → **Save Changes**.
 3. Optional: under **General Information**, add an app icon — players see it on the Discord consent screen.
 4. In Supabase: **Authentication → Sign In / Providers → Discord** → enable, paste the Client ID and Client Secret → **Save**.

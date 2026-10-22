@@ -8,7 +8,7 @@ import { deriveStats } from '../../engine/stats';
 import { SKILL_IDS } from '../../engine/types';
 import { levelOf, progressOf } from '../../engine/xp';
 import { game, useGame } from '../../game';
-import { Cost, fmt, ProgressBar } from '../components/common';
+import { Cost, fmt, ProgressBar, Art, artUrl, sceneStyle } from '../components/common';
 import { Icon } from '../components/Icon';
 import type { Page } from '../Layout';
 
@@ -48,7 +48,7 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
 
   return (
     <div className="page">
-      <div className="card hideout-scene">
+      <div className="card hideout-scene" style={sceneStyle('scenes/hideout')}>
         <Embers />
         <div className="page-head" style={{ position: 'relative', marginBottom: 20 }}>
           <div className="grow">
@@ -76,11 +76,14 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
             const cost = nextUpgradeCost(s, st.id);
             const affordable = cost ? canAfford(s, cost) : false;
             return (
-              <div key={st.id} className="card station" style={{ ['--station' as string]: st.color }} onClick={() => go(st.page as Page)}>
+              <div key={st.id} className={`card station ${artUrl(`stations/${st.id}`) ? 'has-art' : ''}`} style={{ ['--station' as string]: st.color }} onClick={() => go(st.page as Page)}>
+                <Art src={`stations/${st.id}`} alt={st.name} className="station-art" fallback={null} />
                 <div className="row" style={{ gap: 12 }}>
-                  <div className="station-icon">
-                    <Icon name={STATION_ICON[st.id]} size={26} color={st.color} />
-                  </div>
+                  {!artUrl(`stations/${st.id}`) && (
+                    <div className="station-icon">
+                      <Icon name={STATION_ICON[st.id]} size={26} color={st.color} />
+                    </div>
+                  )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700 }}>{st.name}</div>
                     <div className="pips" style={{ marginTop: 5 }}>

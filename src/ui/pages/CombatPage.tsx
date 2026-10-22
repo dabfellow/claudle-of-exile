@@ -1,14 +1,14 @@
 import { useCallback, useState } from 'react';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
-import { BOSS_SLAM_CAST_MS, BOSS_SLAM_MULT, zoneDef } from '../../data/zones';
+import { BOSS_NOVA_MULT, BOSS_SLAM_CAST_MS, BOSS_SLAM_MULT, MECHANIC_INFO, zoneDef } from '../../data/zones';
 import { aliveMonsters, mitigate, queueSkill, retreat, useFlask } from '../../engine/combat';
 import { flaskStats } from '../../engine/flasks';
 import { skillNumbers } from '../../engine/gems';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
 import type { DamageType, GameEvent, GameState, MonsterInstance } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
-import { fmt, ProgressBar, Tooltip } from '../components/common';
+import { fmt, ProgressBar, Tooltip, Art, artUrl } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, ruleText } from '../components/GemView';
 import { Icon } from '../components/Icon';
@@ -111,7 +111,7 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
       <Floaters list={fx.floaters.filter((f) => f.owner === 'player')} />
       <div className="fighter-head">
         <div className="portrait">
-          <Icon name="combat" size={28} color="var(--accent-2)" />
+          <Art src={`portraits/class_${s.character.classId}`} alt={s.character.name} cover fallback={<Icon name="combat" size={28} color="var(--accent-2)" />} />
         </div>
         <div>
           <div className="fighter-name">{s.character.name}</div>
@@ -157,7 +157,7 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
       <Floaters list={fx.floaters.filter((f) => f.owner === m.uid)} />
       <div className="fighter-head">
         <div className="portrait small" style={{ borderColor: m.isBoss ? 'var(--life)' : undefined }}>
-          <Icon name="skull" size={20} color={m.isBoss ? 'var(--life-2)' : DMG_COLOR[m.dmgType]} />
+          <Art src={`monsters/${m.defId}`} alt={m.name} cover fallback={<Icon name="skull" size={20} color={m.isBoss ? 'var(--life-2)' : DMG_COLOR[m.dmgType]} />} />
         </div>
         <div style={{ minWidth: 0 }}>
           <div className="fighter-name small">{m.name}</div>
@@ -168,15 +168,21 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
         {target && <span className="target-pip" title="Current target" />}
       </div>
       <ProgressBar value={Math.max(0, m.life) / m.maxLife} size="md" color="linear-gradient(90deg, #8e2a22, #d4473b)" label={`${fmt(Math.max(0, m.life))} / ${fmt(m.maxLife)}`} ghost />
+      {m.wardMax > 0 && <ProgressBar size="md" color="linear-gradient(90deg, #5a3ab8, #a488ef)" value={m.ward / m.wardMax} label={`Ward ${fmt(m.ward)} · ${Math.ceil(m.wardMs / 1000)}s`} />}
       {m.casting >= 0 ? (
         <>
-          <ProgressBar className="cast-bar" value={1 - m.casting / BOSS_SLAM_CAST_MS} />
-          <div className="cast-warning">⚠ Heavy blow incoming — guard, interrupt or drink!</div>
+          <ProgressBar className="cast-bar" value={1 - m.casting / m.castTotal} />
+          <div className="cast-warning">
+            {m.castKind === 'nova'
+              ? `⚠ ${DMG_NAME[m.novaType]} nova incoming — blocks won't stop it!`
+              : '⚠ Heavy blow incoming — guard, interrupt or drink!'}
+          </div>
         </>
       ) : (
         <ProgressBar value={m.attackTimer / m.attackMs} color="#7a5a5a" className="thin" />
       )}
       <div className="status-row">
+        {m.enraged && <span className="status bad">Enraged</span>}
         {m.stunMs > 0 && <span className="status">Stunned</span>}
         {m.frozenMs > 0 && <span className="status cold">Frozen</span>}
         {m.vulnMs > 0 && <span className="status">Armour broken</span>}
@@ -289,6 +295,7 @@ function Matchup({ s, d }: { s: GameState; d: Derived }) {
   const evade = evadeChance(d.evasion, target.level);
   const perHit = mitigate(d, target.damage, target.dmgType);
   const slam = target.isBoss ? mitigate(d, target.damage * BOSS_SLAM_MULT, target.dmgType) : 0;
+  const nova = target.isBoss ? mitigate(d, target.damage * BOSS_NOVA_MULT, target.novaType) : 0;
   const theirDps = (perHit * (1 - evade)) / (target.attackMs / 1000);
   const yourDefence = target.dmgType === 'phys' ? `${fmt(d.armour)} armour` : `${d.res[target.dmgType]}% resist`;
   return (
@@ -314,6 +321,20 @@ function Matchup({ s, d }: { s: GameState; d: Derived }) {
           <b className={slam >= s.life ? 'bad' : ''}>{fmt(slam)}</b>. Evasion Rating can't dodge it — use a guard skill, War Cry or a flask.
         </div>
       )}
+      {target.isBoss && target.mechanics.includes('nova') && (
+        <div className="matchup-note">
+          <b>Nova:</b> a {DMG_NAME[target.novaType].toLowerCase()} blast for about{' '}
+          <b className={nova >= s.life ? 'bad' : ''}>{fmt(nova)}</b>. Blocks don't stop it — resistances, shields, evades or an interrupt do.
+        </div>
+      )}
+      {target.isBoss &&
+        target.mechanics
+          .filter((k) => k !== 'slam' && k !== 'nova')
+          .map((k) => (
+            <div key={k} className="matchup-note">
+              <b>{MECHANIC_INFO[k].name}:</b> {MECHANIC_INFO[k].tip}
+            </div>
+          ))}
     </div>
   );
 }
@@ -353,6 +374,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
 
   const zone = zoneDef(c.zoneId);
   const alive = aliveMonsters(c);
+  const zoneArt = artUrl(`zones/${zone.id}`);
   return (
     <div className="page">
       <div className="page-head">
@@ -370,7 +392,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         </button>
       </div>
 
-      <div className="card arena2" style={{ ['--zone' as string]: zone.color }}>
+      <div className={`card arena2 ${zoneArt ? 'has-art' : ''}`} style={{ ['--zone' as string]: zone.color, ['--zone-art' as string]: zoneArt ? `url(${zoneArt})` : undefined }}>
         <PlayerCard s={s} d={d} fx={fx} />
         <div className="vs">vs</div>
         <div className={`pack pack-${Math.max(1, c.monsters.length)}`}>

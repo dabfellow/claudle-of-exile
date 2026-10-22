@@ -29,6 +29,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'boss_1', name: 'Giant Slayer', desc: 'Defeat a boss', category: 'combat', target: 1, progress: (s) => L(s).bossKills, reward: { regal: 1 } },
   { id: 'boss_10', name: 'Boss Hunter', desc: 'Defeat 10 bosses', category: 'combat', target: 10, progress: (s) => L(s).bossKills },
   {
+    id: 'act_1', name: 'The Tide Turns', desc: 'Defeat Ysolde, the Drowned Queen, and complete Act 1', category: 'combat',
+    target: 1, progress: (s) => (s.bossesDefeated.includes('sanctum') ? 1 : 0), reward: { divine: 1, regal: 2 },
+  },
+  {
     id: 'conqueror', name: 'Conqueror of the Coast', desc: "Defeat every area's boss", category: 'combat',
     target: ZONES.length, progress: (s) => s.bossesDefeated.length, reward: { exalted: 1 },
   },

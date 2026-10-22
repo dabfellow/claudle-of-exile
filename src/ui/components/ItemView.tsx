@@ -6,7 +6,7 @@ import { game } from '../../game';
 import { deriveStats, type Derived } from '../../engine/stats';
 import type { EquipSlot, GameState, Item, RolledMod } from '../../engine/types';
 import { Icon } from './Icon';
-import { togglePin, Tooltip, useAltKey } from './common';
+import { togglePin, Tooltip, useAltKey, Art, artUrl } from './common';
 
 const RARITY_LABEL = { normal: 'Normal', magic: 'Magic', rare: 'Rare', unique: 'Unique' };
 
@@ -179,7 +179,9 @@ function FragmentRow({ d }: { d: StatDelta }) {
 
 export function ItemIcon({ item, size = 26 }: { item: Item; size?: number }) {
   const slot = baseDef(item.baseId).slot;
-  return <Icon name={slot} size={size} color="var(--rar)" stroke={1.6} />;
+  const fallback = <Icon name={slot} size={size} color="var(--rar)" stroke={1.6} />;
+  const key = item.uniqueId && artUrl(`uniques/${item.uniqueId}`) ? `uniques/${item.uniqueId}` : `items/${item.baseId}`;
+  return <Art src={key} alt={baseDef(item.baseId).name} size={Math.round(size * 1.45)} fallback={fallback} />;
 }
 
 export function ItemCell({

@@ -15,14 +15,16 @@ The bot pushes the furthest zone it's levelled for (area min level ≤ char leve
 | Knob | Where | Current |
 |---|---|---|
 | Character XP curve | `engine/xp.ts` `CHAR_CURVE` | `36·(L−1)³ + 100·(L−1)` to 100 |
-| Kill XP | `engine/combat.ts` `monsterXp` | `(5 + 3·level) × 10 for bosses`, × level-difference multiplier |
+| Kill XP | `engine/combat.ts` `monsterXp`, `KILL_XP_SCALE` | `(5 + 3·level) × 10 for bosses × 0.8`, × level-difference multiplier |
 | Death penalty | `engine/character.ts` | 5% of xp toward next level |
 | Player attack speed | `engine/stats.ts` `PLAYER_SPEED_SCALE` | 0.65 |
 | Monster life / attack interval | `data/zones.ts` | ×1.8 / ×1.6 |
 | Base life regen | `engine/stats.ts` `BASE_REGEN_PCT` | 0.5%/s |
 | Skill XP | `data/skills.ts` `SKILL_XP_SCALE` | 0.3 |
 | Drops | `data/drops.ts` `DROP_TABLES` | per area tier: currency 4.5→5.5%, items 6→7%, rare share 4→12%, unique 0.05→0.1%; chaos from tier 2, exalted/divine from tier 3, instill from tier 4 |
-| Boss drops | `data/drops.ts` `BOSS_TABLES` | first kill guarantees the tier reward (2 transmute → 1 exalted), then 10% per kill (`repeatChance`); 2–4 extra currency rolls |
+| Boss drops | `data/drops.ts` `BOSS_TABLES` | first kill guarantees the tier reward (2 transmute → 1 exalted), then `repeatChance` per kill (10% tiers 1–3, 6% tier 4, 1.5% tier 5); 2–3 extra currency rolls |
+| Boss mechanics | `data/zones.ts` `BOSS_*` | slam ×2.5 every 9 s (2.2 s wind-up); nova ×1.8 every 13 s (2.6 s wind-up, ignores blocks); summon up to 2 adds every 16 s; enrage below 35% (+50% attack speed, +30% damage); ward 12% of life at 66%/33%, heals 10% if not broken within 8 s |
+| Spell added damage | `engine/gems.ts` `SPELL_ADDED_EFFECTIVENESS` | spells add your flat fire/cold/lightning damage at 70% |
 | Gathering/recipe gating | `data/skills.ts` `area` | higher nodes and recipes need their area unlocked |
 | Bench recipes | `data/hideout.ts` `BENCH_CRAFTS` | bench level + an achievement for everything past life/resists |
 | Gold | `engine/loot.ts` | 1…level/3 per kill (×15 boss) |
@@ -70,6 +72,26 @@ Notes for the Phase 8 balance pass:
 - With bosses guaranteeing their reward on every kill, a tier-3 farm made ~115 chaos in 8h (bosses every 25 kills). Guarantees are now first-kill only (then 10%), giving 39–84 chaos and 46–72 alchemy per 8h depending on how deep the bot got.
 - Rare currency (regal and up) never comes from skilling: `COMBAT_ONLY_CURRENCY`. Alchemy still makes transmute/alteration/scour/regret/alchemy orbs, but its recipes unlock with the matching area.
 
-## Known gaps (fixed by later phases)
-- The five current zones span levels 1–45; Phase 8 restructures them into Act 1 (≈ levels 1–15) and later acts.
+## Phase 8 — Act 1 (2026-10-22, 14h, seeds 1–3)
+
+Act 1 is 8 areas, levels 1–25. Time to beat the act boss (Ysolde):
+
+| | Warrior | Ranger | Mage |
+|---|---|---|---|
+| Active, seed 1 | 6h32 | 9h27 | 6h41 |
+| Active, seed 2 | 8h48 | 7h09 | 6h14 |
+| Active, seed 3 | 6h21 | 6h44 | 8h40 |
+| Idle (no manual flasks), seed 1 | 11h14 | 12h41 | 6h04 |
+
+All active runs land in the 6–10 h target. Idle melee is slower and dies a lot (Ranger: 204 deaths), which is intended. Idle Mage matches active because Frost Ward's guard rule already answers the wind-ups.
+
+What changed to get there:
+- **Mage parity.** Spells now add your flat elemental damage (gear, wand implicit) at 70% (`SPELL_ADDED_EFFECTIVENESS`). Before this, Mage finished Act 1 in 11 h or not at all.
+- **Kill XP × 0.8** (`KILL_XP_SCALE`). Without it Warrior and Ranger finished in 4.5–6 h.
+- **Act-boss farming.** The first 16 h run gave 49–115 exalts. Now 6–21 per 14 h: adds killed in boss fights don't count toward the next boss, boss repeat chance is 6% at tier 4 and 1.5% at tier 5, and the trash exalt weight is lower (0.15 / 0.25 / 0.35 at tiers 3–5).
+- The bot now scores gear by its best skill's damage (`skillSummary`), not weapon DPS, so it gears casters sensibly.
+
+Chaos runs at 85–155 per 14 h, mostly from farming the Sanctum after the act is done. This is fine as a pre-Act-2 endgame. Revisit it when Act 2 lands.
+
+## Known gaps
 - Bot gear scoring is crude, so DPS varies a lot with drop luck (e.g. one Warrior run ended on 30 DPS).

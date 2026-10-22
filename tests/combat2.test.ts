@@ -189,7 +189,7 @@ describe('combat 2.0', () => {
       const b = makeMonster(zoneDef('mudflats').boss, true, 99);
       b.life = b.maxLife = 1e6;
       b.attackMs = 1e9;
-      b.slamTimer = 0;
+      b.timers.slam = 0;
       return b;
     };
     const guarded = arena(['iron_guard'], [boss()]);
@@ -206,7 +206,7 @@ describe('combat 2.0', () => {
     const b = makeMonster(zoneDef('mudflats').boss, true, 99);
     b.life = b.maxLife = 1e6;
     b.attackMs = 1e9;
-    b.slamTimer = 0;
+    b.timers.slam = 0;
     const { s, c } = arena(['war_cry'], [b]);
     run(s, c, 2600);
     expect(c.events.some((e) => e.t === 'interrupt')).toBe(true);

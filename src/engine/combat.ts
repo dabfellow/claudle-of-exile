@@ -6,17 +6,30 @@ import {
   BOSS_SLAM_CAST_MS,
   BOSS_SLAM_EVERY_MS,
   BOSS_SLAM_MULT,
+  BOSS_ENRAGE_AT,
+  BOSS_ENRAGE_DMG,
+  BOSS_ENRAGE_SPEED,
+  BOSS_NOVA_CAST_MS,
+  BOSS_NOVA_EVERY_MS,
+  BOSS_NOVA_MULT,
+  BOSS_SUMMON_COUNT,
+  BOSS_SUMMON_EVERY_MS,
+  BOSS_WARD_AT,
+  BOSS_WARD_HEAL,
+  BOSS_WARD_MS,
+  BOSS_WARD_PCT,
   monsterDamage,
   monsterLife,
   MONSTER_SPEED_SCALE,
-  ZONES,
+  nextZone,
   zoneDef,
+  type BossMechanic,
   type MonsterDef,
 } from '../data/zones';
 import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './character';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
-import { grantGemXp, skillNumbers, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
+import { grantGemXp, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
 import { rollLoot } from './loot';
 import { chance, pick, rInt } from './rng';
@@ -74,9 +87,12 @@ export function retreat(s: GameState): void {
 
 // ---------- monsters ----------
 
+/** Global kill-xp knob: Act 1 is paced to take 6–10 hours (docs/BALANCE.md). */
+export const KILL_XP_SCALE = 0.8;
+
 /** Base character xp for a kill, before the level-difference multiplier. */
 export function monsterXp(mon: MonsterInstance): number {
-  return Math.round((5 + mon.level * 3) * (mon.isBoss ? 10 : 1) * mon.scale);
+  return Math.round((5 + mon.level * 3) * (mon.isBoss ? 10 : 1) * mon.scale * KILL_XP_SCALE);
 }
 
 const RESIST_BY_TYPE: Record<DamageType, Partial<MonsterInstance['res']>> = {
@@ -89,6 +105,7 @@ const RESIST_BY_TYPE: Record<DamageType, Partial<MonsterInstance['res']>> = {
 export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1): MonsterInstance {
   const life = Math.round(monsterLife(def.level) * (def.lifeMult ?? 1) * (boss ? BOSS_LIFE_MULT : 1) * scale);
   const dmgScale = scale < 1 ? PACK_DMG_SCALE : 1;
+  const mechanics: BossMechanic[] = boss ? (def.mechanics ?? ['slam']) : [];
   return {
     uid,
     defId: def.id,
@@ -101,8 +118,18 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     attackMs: Math.round(def.attackMs * MONSTER_SPEED_SCALE),
     attackTimer: 0,
     isBoss: boss,
-    slamTimer: boss ? BOSS_SLAM_EVERY_MS * 0.6 : 0,
+    mechanics,
+    // offset the first casts so a boss doesn't open with everything at once
+    timers: boss ? { slam: BOSS_SLAM_EVERY_MS * 0.6, nova: BOSS_NOVA_EVERY_MS * 0.8, summon: BOSS_SUMMON_EVERY_MS * 0.7 } : {},
+    novaType: def.novaType ?? def.dmgType,
     casting: -1,
+    castKind: null,
+    castTotal: 1,
+    enraged: false,
+    ward: 0,
+    wardMax: 0,
+    wardMs: 0,
+    wardsUsed: 0,
     res: { fire: 0, cold: 0, light: 0, ...RESIST_BY_TYPE[def.dmgType] },
     dots: [],
     stunMs: 0,
@@ -322,6 +349,10 @@ function rollHit(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: Mo
     const [lo, hi] = spellBaseAt(def, level);
     const type = def.effect.type ?? 'fire';
     byType[type] += rInt(ctx.rng, lo, hi) * d.typeMult[type];
+    for (const t of ['fire', 'cold', 'light'] as const) {
+      const [alo, ahi] = d.hit[t];
+      if (ahi > 0) byType[t] += rInt(ctx.rng, alo, ahi) * SPELL_ADDED_EFFECTIVENESS;
+    }
   }
 
   if (def.tags.includes('melee')) byType.phys *= 1 + r.meleePct / 100;
@@ -374,6 +405,16 @@ function applyDot(mon: MonsterInstance, dot: Dot): void {
   else if (dot.dps >= existing.dps) Object.assign(existing, dot);
 }
 
+/** Take life from a monster, through its ward first. */
+function damageMonster(mon: MonsterInstance, amount: number): void {
+  if (mon.ward > 0) {
+    const absorbed = Math.min(mon.ward, amount);
+    mon.ward -= absorbed;
+    amount -= absorbed;
+  }
+  mon.life -= amount;
+}
+
 /** Apply a rolled hit to one monster, with its resistances and the skill's on-hit effects. */
 function hitMonster(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance, byType: ByType, crit: boolean, factor: number): number {
   const c = s.combat!;
@@ -392,7 +433,7 @@ function hitMonster(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon:
   if (mon.dots.some((x) => x.kind === 'bleed')) dealt *= 1 + r.bleedVuln / 100;
   if (new Set(mon.dots.map((x) => x.kind)).size >= 2) dealt *= 1 + r.multiAilmentVuln / 100;
   dealt = Math.max(1, Math.round(dealt));
-  mon.life -= dealt;
+  damageMonster(mon, dealt);
   if (crit && r.critLeech) s.life = Math.min(d.maxLife, s.life + (dealt * r.critLeech) / 100);
   if (mon.life < 0 && r.overkillHeal) s.life = Math.min(d.maxLife, s.life + (-mon.life * r.overkillHeal) / 100);
   if (byType.cold > 0 && r.chillOnHit) mon.chillMs = 3000;
@@ -492,8 +533,9 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (e.interrupts) {
     for (const m of aliveMonsters(c)) {
       if (m.casting < 0) continue;
+      if (m.castKind) m.timers[m.castKind] = m.castKind === 'nova' ? BOSS_NOVA_EVERY_MS : BOSS_SLAM_EVERY_MS;
       m.casting = -1;
-      m.slamTimer = BOSS_SLAM_EVERY_MS;
+      m.castKind = null;
       if (mods.specials.has('rally')) m.stunMs = Math.max(m.stunMs, 1000);
       ctx.emit({ t: 'interrupt', name: m.name });
     }
@@ -556,14 +598,18 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
 
   if (mon.isBoss) {
     s.lifetime.bossKills += 1;
-    if (!s.bossesDefeated.includes(zone.id)) s.bossesDefeated.push(zone.id);
     s.zoneKills[zone.id] = 0;
-    const nextZone = ZONES.find((z) => z.tier === zone.tier + 1);
-    if (nextZone && !s.unlockedZones.includes(nextZone.id)) {
-      s.unlockedZones.push(nextZone.id);
-      ctx.emit({ t: 'zoneUnlocked', zoneId: nextZone.id });
+    if (!s.bossesDefeated.includes(zone.id)) {
+      s.bossesDefeated.push(zone.id);
+      if (zone.actBoss) ctx.emit({ t: 'actComplete', act: zone.act });
     }
-  } else {
+    const next = nextZone(zone.id);
+    if (next && !s.unlockedZones.includes(next.id)) {
+      s.unlockedZones.push(next.id);
+      ctx.emit({ t: 'zoneUnlocked', zoneId: next.id });
+    }
+  } else if (!c.monsters.some((m) => m.isBoss)) {
+    // adds in a boss fight don't count toward the next boss
     s.zoneKills[zone.id] = (s.zoneKills[zone.id] ?? 0) + 1;
   }
 }
@@ -613,17 +659,19 @@ function onEvade(s: GameState, d: Derived): void {
   }
 }
 
-function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: number, type: DamageType, isSlam: boolean): void {
+/** 'slam' and 'nova' are telegraphed boss casts: Evasion Rating can't dodge either, and blocks don't stop a nova. */
+function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: number, type: DamageType, kind: 'hit' | 'slam' | 'nova'): void {
   const c = s.combat!;
   const r = d.raw;
+  const isCast = kind !== 'hit';
   if (mon.dots.some((x) => x.kind === 'poison')) raw *= 1 - r.poisonWeaken / 100;
-  if (isSlam) raw *= 1 - r.slamReduction / 100;
+  if (kind === 'slam') raw *= 1 - r.slamReduction / 100;
   if (c.evadeMs > 0) {
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, evaded: true, monsterUid: mon.uid });
     onEvade(s, d);
     return;
   }
-  if (c.blocks > 0) {
+  if (c.blocks > 0 && kind !== 'nova') {
     c.blocks -= 1;
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
     if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
@@ -631,7 +679,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     return;
   }
   // heavy wind-ups can't be evaded by Evasion Rating (unless Wind Dancer) — guard, interrupt or drink
-  if ((!isSlam || r.windDancer) && chance(ctx.rng, evadeChance(d.evasion, mon.level))) {
+  if ((!isCast || r.windDancer) && chance(ctx.rng, evadeChance(d.evasion, mon.level))) {
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, evaded: true, monsterUid: mon.uid });
     onEvade(s, d);
     return;
@@ -669,13 +717,13 @@ function tickDots(s: GameState, ctx: Ctx, dt: number): void {
     for (const dot of m.dots) {
       const t = Math.min(dt, dot.remainingMs);
       const dmg = (dot.dps * t) / 1000;
-      m.life -= dmg;
+      damageMonster(m, dmg);
       m.dotAcc += dmg;
       dot.dealt += dmg;
       dot.remainingMs -= dt;
       if (dot.remainingMs <= 0 && dot.burst) {
         const burst = dot.dealt * dot.burst;
-        m.life -= burst;
+        damageMonster(m, burst);
         ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(burst), crit: true, dmgType: 'phys', monsterUid: m.uid });
       }
     }
@@ -693,6 +741,7 @@ function tickDots(s: GameState, ctx: Ctx, dt: number): void {
 function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt: number): void {
   mon.vulnMs = Math.max(0, mon.vulnMs - dt);
   mon.chillMs = Math.max(0, mon.chillMs - dt);
+  if (mon.isBoss) bossPhases(s, ctx, mon, dt);
   if (mon.frozenMs > 0) {
     mon.frozenMs -= dt;
     return;
@@ -701,29 +750,91 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
     mon.stunMs -= dt;
     return;
   }
-  if (mon.isBoss) {
-    if (mon.casting >= 0) {
-      mon.casting -= dt;
-      if (mon.casting <= 0) {
-        mon.casting = -1;
-        mon.slamTimer = BOSS_SLAM_EVERY_MS;
-        takeHit(s, ctx, d, mon, mon.damage * BOSS_SLAM_MULT, mon.dmgType, true);
-      }
-      return;
-    }
-    mon.slamTimer -= dt;
-    if (mon.slamTimer <= 0) {
-      mon.casting = BOSS_SLAM_CAST_MS;
-      ctx.emit({ t: 'bossCast', name: mon.name });
-      triggerInstilled(s, ctx, 'bossCast');
-      return;
-    }
-  }
-  mon.attackTimer += mon.chillMs > 0 ? dt * (1 - d.raw.chillOnHit / 100) : dt;
+  if (mon.isBoss && bossCasts(s, ctx, d, mon, dt)) return;
+  const speed = mon.enraged ? BOSS_ENRAGE_SPEED : 1;
+  mon.attackTimer += (mon.chillMs > 0 ? dt * (1 - d.raw.chillOnHit / 100) : dt) * speed;
   if (mon.attackTimer >= mon.attackMs) {
     mon.attackTimer -= mon.attackMs;
-    takeHit(s, ctx, d, mon, mon.damage * (0.85 + ctx.rng.next() * 0.3), mon.dmgType, false);
+    const enrage = mon.enraged ? BOSS_ENRAGE_DMG : 1;
+    takeHit(s, ctx, d, mon, mon.damage * enrage * (0.85 + ctx.rng.next() * 0.3), mon.dmgType, 'hit');
   }
+}
+
+/** Life-threshold boss mechanics (enrage, ward) and timed adds. These run even while the boss is stunned. */
+function bossPhases(s: GameState, ctx: Ctx, mon: MonsterInstance, dt: number): void {
+  const has = (k: BossMechanic) => mon.mechanics.includes(k);
+  const lifeFrac = mon.life / mon.maxLife;
+  if (has('enrage') && !mon.enraged && lifeFrac <= BOSS_ENRAGE_AT) {
+    mon.enraged = true;
+    ctx.emit({ t: 'bossPhase', name: mon.name, text: 'flies into a rage!' });
+  }
+  if (has('ward')) {
+    if (mon.wardMax === 0 && mon.wardsUsed < BOSS_WARD_AT.length && lifeFrac <= BOSS_WARD_AT[mon.wardsUsed]) {
+      mon.wardsUsed += 1;
+      mon.ward = mon.wardMax = mon.maxLife * BOSS_WARD_PCT;
+      mon.wardMs = BOSS_WARD_MS;
+      ctx.emit({ t: 'bossPhase', name: mon.name, text: 'raises a ward — break it quickly!' });
+    } else if (mon.wardMax > 0) {
+      mon.wardMs -= dt;
+      if (mon.ward <= 0) {
+        mon.wardMax = 0;
+        ctx.emit({ t: 'bossPhase', name: mon.name, text: 'loses its ward' });
+      } else if (mon.wardMs <= 0) {
+        mon.life = Math.min(mon.maxLife, mon.life + mon.maxLife * BOSS_WARD_HEAL);
+        mon.ward = mon.wardMax = 0;
+        ctx.emit({ t: 'bossPhase', name: mon.name, text: 'drinks in its ward and recovers!' });
+      }
+    }
+  }
+  if (has('summon')) {
+    mon.timers.summon = (mon.timers.summon ?? BOSS_SUMMON_EVERY_MS) - dt;
+    if (mon.timers.summon <= 0) {
+      mon.timers.summon = BOSS_SUMMON_EVERY_MS;
+      const c = s.combat!;
+      const adds = aliveMonsters(c).filter((x) => !x.isBoss).length;
+      const zone = zoneDef(c.zoneId);
+      const fresh: MonsterInstance[] = [];
+      for (let i = adds; i < BOSS_SUMMON_COUNT; i++) fresh.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE));
+      if (fresh.length) {
+        // new adds stand in front of the boss, so single-target skills have to chew through them
+        c.monsters.splice(c.monsters.indexOf(mon), 0, ...fresh);
+        ctx.emit({ t: 'bossPhase', name: mon.name, text: `calls for aid (+${fresh.length})` });
+      }
+    }
+  }
+}
+
+/** Wind-ups: slam and nova. Returns true while the boss is busy casting. */
+function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt: number): boolean {
+  if (mon.casting >= 0) {
+    mon.casting -= dt;
+    if (mon.casting <= 0) {
+      const kind = mon.castKind ?? 'slam';
+      mon.casting = -1;
+      mon.castKind = null;
+      if (kind === 'nova') {
+        mon.timers.nova = BOSS_NOVA_EVERY_MS;
+        takeHit(s, ctx, d, mon, mon.damage * BOSS_NOVA_MULT, mon.novaType, 'nova');
+      } else {
+        mon.timers.slam = BOSS_SLAM_EVERY_MS;
+        takeHit(s, ctx, d, mon, mon.damage * BOSS_SLAM_MULT, mon.dmgType, 'slam');
+      }
+    }
+    return true;
+  }
+  for (const kind of ['slam', 'nova'] as const) {
+    if (!mon.mechanics.includes(kind)) continue;
+    const left = (mon.timers[kind] ?? 0) - dt;
+    mon.timers[kind] = left;
+    if (left <= 0) {
+      mon.castKind = kind;
+      mon.casting = mon.castTotal = kind === 'nova' ? BOSS_NOVA_CAST_MS : BOSS_SLAM_CAST_MS;
+      ctx.emit({ t: 'bossCast', name: mon.name, kind });
+      triggerInstilled(s, ctx, 'bossCast');
+      return true;
+    }
+  }
+  return false;
 }
 
 /** Advance combat by dt ms. Returns true when active buffs may have changed (stats need recomputing). */

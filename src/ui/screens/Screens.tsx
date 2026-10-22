@@ -1,3 +1,4 @@
+import { Art, sceneStyle } from '../components/common';
 import { useState } from 'react';
 import { CLASSES, classDef, type ClassId } from '../../data/classes';
 import { baseDef } from '../../data/bases';
@@ -19,14 +20,14 @@ export function Crest({ classId, size = 56 }: { classId: ClassId; size?: number 
   const c = classDef(classId);
   return (
     <span className="crest" style={{ width: size, height: size, ['--class' as string]: c.color }}>
-      <Icon name={c.icon} size={size * 0.5} color={c.color} stroke={1.8} />
+      <Art src={`portraits/class_${classId}`} alt={c.name} cover fallback={<Icon name={c.icon} size={size * 0.5} color={c.color} stroke={1.8} />} />
     </span>
   );
 }
 
 function ScreenShell({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
   return (
-    <div className="screen">
+    <div className="screen" style={sceneStyle('scenes/title')}>
       <Embers />
       <div className={`screen-inner ${wide ? 'wide' : ''}`}>
         <div className="screen-brand">
@@ -217,7 +218,7 @@ export function CharacterCreate() {
       <div className="class-grid">
         {CLASSES.map((c) => (
           <button key={c.id} className={`card class-card ${classId === c.id ? 'chosen' : ''}`} style={{ ['--class' as string]: c.color }} onClick={() => setClassId(c.id)}>
-            <Crest classId={c.id} size={64} />
+            <Art src={`portraits/class_${c.id}`} alt={c.name} className="class-art" fallback={<Crest classId={c.id} size={64} />} />
             <div className="class-name">{c.name}</div>
             <div className="class-attr">{c.attribute}</div>
             <div className="class-tag">{c.tagline}</div>

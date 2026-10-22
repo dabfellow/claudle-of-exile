@@ -1873,8 +1873,8 @@ h3 {
 }
 
 .quest-portrait {
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -2597,6 +2597,30 @@ g.tut-hint circle.body {
   color: rgba(255, 255, 255, 0.7);
 }
 
+.area.act-boss {
+  border-color: color-mix(in srgb, var(--life-2) 45%, var(--line));
+}
+
+.area.act-boss .area-tier {
+  color: #ffb08a;
+}
+
+.chip.mechanic {
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: help;
+}
+
+.chip.mechanic.nova { color: #9fd2ff; }
+.chip.mechanic.summon { color: #c9b27a; }
+.chip.mechanic.enrage { color: #ff8a7a; }
+.chip.mechanic.ward { color: #c4a8ff; }
+
+.act-complete {
+  border-color: var(--good);
+  background: color-mix(in srgb, var(--good) 8%, var(--panel));
+}
+
 .area-facts {
   display: flex;
   flex-direction: column;
@@ -2759,6 +2783,59 @@ g.tut-hint circle.body {
 img.art {
   display: block;
   object-fit: cover;
+}
+img.art.cover {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+img.art.mat-art {
+  display: inline-block;
+  vertical-align: middle;
+  object-fit: contain;
+}
+.portrait,
+.crest,
+.station-icon,
+.quest-portrait {
+  overflow: hidden;
+}
+.gem-icon.has-art {
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+.gem-icon.has-art img.art {
+  object-fit: contain;
+}
+.arena2.has-art {
+  background-image: linear-gradient(180deg, rgba(10, 11, 14, 0.55), rgba(10, 11, 14, 0.88)), var(--zone-art);
+  background-size: cover;
+  background-position: center;
+}
+.hideout-scene[style*='--scene-art'] {
+  /* full-width hero at the top, fading into the stations below */
+  background-color: #121419;
+  background-image: linear-gradient(180deg, rgba(14, 15, 19, 0.2) 0, rgba(14, 15, 19, 0.55) 40%, #121419 min(62vw, 720px)), var(--scene-art);
+  background-size: 100% 100%, 100% auto;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+.hideout-scene[style*='--scene-art'] .page-head {
+  min-height: clamp(140px, 22vw, 300px);
+  align-items: flex-end;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+}
+.screen[style*='--scene-art'] {
+  background-image: linear-gradient(180deg, rgba(8, 9, 12, 0.35), rgba(8, 9, 12, 0.9)), var(--scene-art);
+  background-size: cover;
+  background-position: center;
+}
+.area-banner.has-art {
+  background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.7)), var(--scene-art);
+  background-size: cover;
+  background-position: center;
+  height: 96px;
 }
 
 @media (max-width: 1200px) {
@@ -3617,4 +3694,41 @@ img.art {
 }
 .unique-name {
   color: var(--unique, #c8803a);
+}
+
+/* portrait art: keep faces in frame when cropped into small shapes */
+.crest img.art,
+.portrait img.art,
+.quest-portrait img.art {
+  object-position: 50% 22%;
+}
+.class-card img.class-art {
+  width: calc(100% + 32px);
+  margin: -16px -16px 4px;
+  height: 220px;
+  object-fit: cover;
+  object-position: 50% 20%;
+  border-radius: inherit;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent);
+  mask-image: linear-gradient(180deg, #000 70%, transparent);
+}
+
+/* station cards with art: picture header that fades into the card */
+.station.has-art {
+  overflow: hidden;
+}
+.station img.station-art {
+  width: calc(100% + 2 * var(--s-4));
+  margin: calc(-1 * var(--s-4)) calc(-1 * var(--s-4)) -28px;
+  height: 170px;
+  object-fit: cover;
+  object-position: 50% 45%;
+  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
+  mask-image: linear-gradient(180deg, #000 60%, transparent);
+  transition: transform 0.4s var(--ease);
+}
+.station.has-art:hover img.station-art {
+  transform: scale(1.04);
 }

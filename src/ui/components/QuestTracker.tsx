@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { GUIDE_NAME, TUTORIAL_STEPS } from '../../data/tutorial';
 import { currentStep, skipTutorial } from '../../engine/tutorial';
 import { game, useGame } from '../../game';
-import { ProgressBar } from './common';
+import { ProgressBar, Art } from './common';
 import { Icon } from './Icon';
 
 /** Pulses every element whose data-tut id the current step wants highlighted. */
@@ -33,7 +33,7 @@ export function QuestTracker({ floating }: { floating?: boolean }) {
     <div className={`quest ${floating ? 'floating' : ''}`} key={index}>
       <div className="row" style={{ gap: 10 }}>
         <span className="quest-portrait">
-          <Icon name="map" size={16} color="var(--accent-2)" />
+          <Art src="portraits/brannoc" alt={GUIDE_NAME} cover fallback={<Icon name="map" size={16} color="var(--accent-2)" />} />
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="quest-step">

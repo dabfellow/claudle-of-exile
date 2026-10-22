@@ -1,5 +1,6 @@
 import type { ClassId } from '../data/classes';
 import type { TacticRule } from '../data/gems';
+import type { BossMechanic } from '../data/zones';
 
 export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'smithing' | 'alchemy';
 export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy'];
@@ -137,10 +138,21 @@ export interface MonsterInstance {
   attackMs: number;
   attackTimer: number;
   isBoss: boolean;
-  /** boss slam: ms until next cast starts */
-  slamTimer: number;
+  /** boss mechanics and their timers (ms until the next use) */
+  mechanics: BossMechanic[];
+  timers: Partial<Record<BossMechanic, number>>;
+  novaType: DamageType;
   /** remaining cast time in ms, or -1 when not casting */
   casting: number;
+  /** what is being wound up, and its full cast time */
+  castKind: 'slam' | 'nova' | null;
+  castTotal: number;
+  enraged: boolean;
+  /** boss barrier: absorbs damage; heals the boss if still up when wardMs runs out */
+  ward: number;
+  wardMax: number;
+  wardMs: number;
+  wardsUsed: number;
   res: { fire: number; cold: number; light: number };
   dots: Dot[];
   stunMs: number;
@@ -346,6 +358,8 @@ export type GameEvent =
   | { t: 'tutorialStep'; step: number; done: boolean }
   | { t: 'achievement'; id: string }
   | { t: 'flask'; slot: number; flaskId: string; auto: boolean }
-  | { t: 'bossCast'; name: string }
+  | { t: 'bossCast'; name: string; kind: 'slam' | 'nova' }
+  | { t: 'bossPhase'; name: string; text: string }
+  | { t: 'actComplete'; act: number }
   | { t: 'zoneUnlocked'; zoneId: string }
   | { t: 'info'; text: string; tone?: 'warn' | 'good' };

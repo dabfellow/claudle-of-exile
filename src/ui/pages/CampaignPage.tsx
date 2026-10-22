@@ -2,23 +2,14 @@ import { uniqueDef } from '../../data/bases';
 import { bossTable, dropTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
 import { useState } from 'react';
-import { ZONES, type ZoneDef } from '../../data/zones';
+import { ACTS, MECHANIC_INFO, zonesInAct, type ZoneDef } from '../../data/zones';
 import { characterLevel } from '../../engine/character';
 import { bossIsNext, startCombat } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { MatIcon, ProgressBar } from '../components/common';
+import { MatIcon, ProgressBar, artUrl, sceneStyle } from '../components/common';
 import { Icon } from '../components/Icon';
 import type { Page } from '../Layout';
-
-const ACTS = [
-  { n: 1, name: 'The Drowned Coast', zones: ZONES.map((z) => z.id) },
-  { n: 2, name: 'The Burning Steppe', zones: [] as string[] },
-  { n: 3, name: 'The City of Saints', zones: [] },
-  { n: 4, name: 'The Hollow Peaks', zones: [] },
-  { n: 5, name: 'The Sunless Sea', zones: [] },
-  { n: 6, name: 'The Shattered Throne', zones: [] },
-];
 
 /** How risky an area looks for your current level. */
 function danger(s: GameState, z: ZoneDef): { label: string; cls: string } {
@@ -59,16 +50,32 @@ function DropPreview({ z }: { z: ZoneDef }) {
   );
 }
 
+/** The boss's mechanics, each with how to answer it. */
+function BossMechanics({ z }: { z: ZoneDef }) {
+  return (
+    <div className="row wrap" style={{ gap: 4 }}>
+      {(z.boss.mechanics ?? ['slam']).map((k) => (
+        <span key={k} className={`chip mechanic ${k}`} title={MECHANIC_INFO[k].tip}>
+          {MECHANIC_INFO[k].name}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => void }) {
   const unlocked = s.unlockedZones.includes(z.id);
   const here = s.combat?.zoneId === z.id;
   const kills = s.zoneKills[z.id] ?? 0;
   const risk = danger(s, z);
+  const n = zonesInAct(z.act).indexOf(z) + 1;
+  const beaten = s.bossesDefeated.includes(z.id);
   return (
-    <div className={`card area ${here ? 'current' : ''} ${unlocked ? '' : 'locked'}`} style={{ ['--zone' as string]: z.color }}>
-      <div className="area-banner">
-        <span className="area-tier">Area {z.tier}</span>
+    <div className={`card area ${here ? 'current' : ''} ${unlocked ? '' : 'locked'} ${z.actBoss ? 'act-boss' : ''}`} style={{ ['--zone' as string]: z.color }}>
+      <div className={`area-banner ${artUrl(`zones/${z.id}`) ? 'has-art' : ''}`} style={sceneStyle(`zones/${z.id}`)}>
+        <span className="area-tier">{z.actBoss ? 'Act boss' : `Area ${n}`}</span>
         {here && <span className="chip good">You are here</span>}
+        {beaten && !here && <span className="chip">Cleared</span>}
       </div>
       <div className="row">
         <h3 style={{ fontSize: 17 }}>{z.name}</h3>
@@ -87,12 +94,13 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
               <Icon name="skull" size={12} /> Packs of {z.packSize[0]}–{z.packSize[1]}
             </span>
             <span>
-              <Icon name="target" size={12} /> Boss: {z.boss.name} (Lv {z.boss.level})
+              <Icon name="target" size={12} /> {z.actBoss ? 'Act boss' : 'Boss'}: {z.boss.name} (Lv {z.boss.level})
             </span>
             <span className={risk.cls}>
               <Icon name="bolt" size={12} /> {risk.label} for your level
             </span>
           </div>
+          <BossMechanics z={z} />
           <DropPreview z={z} />
           <ProgressBar value={Math.min(1, kills / z.bossEvery)} color={bossIsNext(s, z.id) ? 'var(--life-2)' : z.color} />
           <div className="dim" style={{ fontSize: 11 }}>
@@ -118,6 +126,9 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const [act, setAct] = useState(1);
   const current = ACTS.find((a) => a.n === act)!;
+  const zones = zonesInAct(act);
+  const cleared = zones.filter((z) => s.bossesDefeated.includes(z.id)).length;
+  const done = zones.length > 0 && cleared === zones.length;
   return (
     <div className="page">
       <div className="page-head">
@@ -130,7 +141,7 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
         {ACTS.map((a) => (
           <button key={a.n} className={`tab ${act === a.n ? 'active' : ''}`} onClick={() => setAct(a.n)}>
             Act {a.n}
-            {a.zones.length === 0 && ' 🔒'}
+            {!a.open && ' 🔒'}
           </button>
         ))}
         <button className="tab" disabled title="Unlocks after Act 6">
@@ -141,8 +152,23 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
         <h2 style={{ fontSize: 20 }}>
           Act {current.n}: {current.name}
         </h2>
+        <span className="spacer" />
+        {zones.length > 0 && (
+          <span className="dim" style={{ fontSize: 12.5 }}>
+            {cleared}/{zones.length} bosses defeated
+          </span>
+        )}
       </div>
-      {current.zones.length === 0 ? (
+      {zones.length > 0 && <ProgressBar value={cleared / zones.length} color={done ? 'var(--good)' : undefined} />}
+      {done && (
+        <div className="card act-complete">
+          <h3>Act {current.n} complete</h3>
+          <p className="muted" style={{ margin: 0 }}>
+            The Drowned Queen has fallen. Act {current.n + 1} arrives in a future update — until then, farm the coast for better gear, push your skills and fill your stash.
+          </p>
+        </div>
+      )}
+      {!current.open || zones.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: 40 }}>
           <Icon name="map" size={36} color="var(--dim)" />
           <h3 style={{ marginTop: 10 }}>Coming soon</h3>
@@ -150,8 +176,8 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
         </div>
       ) : (
         <div className="area-grid">
-          {current.zones.map((id) => (
-            <AreaCard key={id} s={s} z={ZONES.find((z) => z.id === id)!} go={go} />
+          {zones.map((z) => (
+            <AreaCard key={z.id} s={s} z={z} go={go} />
           ))}
         </div>
       )}

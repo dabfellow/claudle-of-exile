@@ -355,7 +355,10 @@ class GameStore {
         this.log(`Interrupted ${e.name}!`, 'good');
         break;
       case 'bossCast':
-        this.log(`${e.name} winds up a heavy blow`, 'warn');
+        this.log(`${e.name} winds up ${e.kind === 'nova' ? 'a nova' : 'a heavy blow'}`, 'warn');
+        break;
+      case 'bossPhase':
+        this.log(`${e.name} ${e.text}`, 'warn');
         break;
       case 'flask':
         this.log(`${e.auto ? 'Auto-used' : 'Drank'} ${flaskDef(e.flaskId).name}`, 'info');
@@ -410,7 +413,11 @@ class GameStore {
         break;
       }
       case 'bossCast':
-        this.addFeed(`${e.name} winds up a heavy blow!`, 'warn');
+        this.addFeed(`${e.name} winds up ${e.kind === 'nova' ? 'a nova' : 'a heavy blow'}!`, 'warn');
+        break;
+      case 'actComplete':
+        this.addFeed(`Act ${e.act} complete! More of the world opens in a future update.`, 'good');
+        this.pushToast(`Act ${e.act} complete!`, 'good');
         break;
       case 'tutorialStep': {
         const step = TUTORIAL_STEPS[e.step];

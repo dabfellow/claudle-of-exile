@@ -48,6 +48,8 @@ export function fmtTime(ms: number): string {
 /** A material/currency glyph. */
 export function MatIcon({ id, size = 14 }: { id: string; size?: number }) {
   const def = materialDef(id);
+  const art = artUrl(`${isCurrency(id) ? 'currency' : 'materials'}/${id}`);
+  if (art) return <img className="art mat-art" src={art} alt={def.name} width={size + 4} height={size + 4} draggable={false} />;
   if (isCurrency(id) || id === 'gold') return <Orb color={def.color} size={size} />;
   return <Swatch color={def.color} size={size * 0.8} />;
 }
@@ -245,18 +247,30 @@ export function PinDock() {
   );
 }
 
-/** Every image in src/assets/art, found at build time, keyed by its path inside that folder. */
-const ART_FILES: Record<string, string> = Object.fromEntries(
-  Object.entries(import.meta.glob('../../assets/art/**/*.{png,jpg,jpeg,webp}', { eager: true, query: '?url', import: 'default' })).map(
-    ([path, url]) => [path.replace('../../assets/art/', ''), url as string],
-  ),
-);
+/** Every image in src/assets/art, found at build time, keyed by its path without extension (`currency/chaos`). */
+const ART_FILES: Record<string, string> = {};
+for (const [path, url] of Object.entries(import.meta.glob('../../assets/art/**/*.{png,jpg,jpeg,webp}', { eager: true, query: '?url', import: 'default' }))) {
+  const key = path.replace('../../assets/art/', '').replace(/\.[a-z]+$/, '');
+  // the optimised .webp from `npm run art` wins over a raw drop-in
+  if (!ART_FILES[key] || path.endsWith('.webp')) ART_FILES[key] = url as string;
+}
+
+/** URL of a piece of art, or undefined if it hasn't been added yet. */
+export function artUrl(key: string): string | undefined {
+  return ART_FILES[key.replace(/\.[a-z]+$/, '')];
+}
+
+/** Background style for a scene/backdrop, or nothing when the art isn't there yet. */
+export function sceneStyle(key: string): CSSProperties | undefined {
+  const url = artUrl(key);
+  return url ? ({ ['--scene-art' as string]: `url(${url})` } as CSSProperties) : undefined;
+}
 
 /** A picture from src/assets/art if it exists, otherwise the fallback (styled placeholder). */
-export function Art({ src, alt, fallback, className, size }: { src: string; alt: string; fallback: ReactNode; className?: string; size?: number }) {
-  const url = ART_FILES[src];
+export function Art({ src, alt, fallback, className, size, cover }: { src: string; alt: string; fallback: ReactNode; className?: string; size?: number; cover?: boolean }) {
+  const url = artUrl(src);
   if (!url) return <>{fallback}</>;
-  return <img className={`art ${className ?? ''}`} src={url} alt={alt} width={size} height={size} draggable={false} />;
+  return <img className={`art ${cover ? 'cover' : ''} ${className ?? ''}`} src={url} alt={alt} width={cover ? undefined : size} height={cover ? undefined : size} draggable={false} />;
 }
 
 /** Briefly true after `key` changes — used to retrigger CSS animations. */

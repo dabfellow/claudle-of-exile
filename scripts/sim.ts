@@ -14,7 +14,7 @@ import { startCombat, useFlask } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
 import { salvage } from '../src/engine/crafting';
 import { equip, equipReason, slotsFor } from '../src/engine/equipment';
-import { socketSupport, supportReason, syncSockets } from '../src/engine/gems';
+import { skillSummary, socketSupport, supportReason, syncSockets } from '../src/engine/gems';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { newGame, tick } from '../src/engine/state';
@@ -39,18 +39,21 @@ const fmt = (ms: number | undefined) => {
   return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`;
 };
 
-/** How much the bot values a character's stats. */
-function score(d: Derived): number {
-  return d.dps * 3 + d.maxLife + d.armour * 0.15 + d.evasion * 0.15 + (d.res.fire + d.res.cold + d.res.light) * 1.5 + d.lifeRegen * 5;
+/** How much the bot values a character's stats: its best damage skill's output, life and defences. */
+function score(s: GameState, d: Derived): number {
+  const skillDps = Math.max(d.dps, ...s.skillBar.map((g) => (g ? skillSummary(d, g).perSecond : 0)));
+  return skillDps * 3 + d.maxLife + d.armour * 0.15 + d.evasion * 0.15 + (d.res.fire + d.res.cold + d.res.light) * 1.5 + d.lifeRegen * 5;
 }
+
+const scoreOf = (s: GameState) => score(s, deriveStats(s, []));
 
 function upgradeGear(s: GameState, ctx: Ctx) {
   for (const item of [...s.inventory]) {
     if (equipReason(s, item)) continue;
-    const base = score(deriveStats(s, []));
+    const base = scoreOf(s);
     let best: { slot: ReturnType<typeof slotsFor>[number]; gain: number } | null = null;
     for (const slot of slotsFor(item)) {
-      const gain = score(deriveStats({ ...s, equipment: { ...s.equipment, [slot]: item } }, [])) - base;
+      const gain = scoreOf({ ...s, equipment: { ...s.equipment, [slot]: item } }) - base;
       if (gain > 1 && (!best || gain > best.gain)) best = { slot, gain };
     }
     if (best) equip(s, ctx, item.uid, best.slot);
@@ -73,7 +76,7 @@ function socketGems(s: GameState) {
 
 function spendPassives(s: GameState, ctx: Ctx) {
   for (;;) {
-    const base = score(deriveStats(s, []));
+    const base = scoreOf(s);
     let pick: string | null = null;
     let bestGain = -Infinity;
     for (const n of PASSIVE_NODES) {
@@ -81,7 +84,7 @@ function spendPassives(s: GameState, ctx: Ctx) {
       if (n.kind === 'keystone' || allocateReason(s, n.id)) continue;
       // masteries: the bot always takes the first option
       const masteries = n.kind === 'mastery' ? { ...s.masteries, [n.id]: 0 } : s.masteries;
-      const gain = score(deriveStats({ ...s, passives: [...s.passives, n.id], masteries }, [])) - base;
+      const gain = scoreOf({ ...s, passives: [...s.passives, n.id], masteries }) - base;
       if (gain > bestGain) {
         bestGain = gain;
         pick = n.id;
@@ -141,7 +144,7 @@ function runClass(classId: ClassId): Result {
     // like a sensible player: push the furthest unlocked zone you're roughly levelled for;
     // after 3 deaths in a row, farm the one below for 20 minutes
     const lvl = characterLevel(s);
-    const unlocked = ZONES.filter((z) => s.unlockedZones.includes(z.id) && (z.tier === 1 || z.levelRange[0] <= lvl + 1));
+    const unlocked = ZONES.filter((z) => s.unlockedZones.includes(z.id) && (z === ZONES[0] || z.levelRange[0] <= lvl + 1));
     const top = unlocked[unlocked.length - 1];
     const target = now < retreatUntil && unlocked.length > 1 ? unlocked[unlocked.length - 2] : top;
     if (!s.action || (s.combat && s.combat.zoneId !== target.id && !s.combat.monsters.length)) startCombat(s, ctx, target.id);
@@ -201,15 +204,15 @@ const results = classes.map((c) => {
   return r;
 });
 
-const LEVELS = [2, 5, 10, 15, 20, 25, 30, 35, 40];
+const LEVELS = [2, 5, 10, 15, 20, 22, 25, 30];
 const pad = (s: string, n = 12) => s.padEnd(n);
 console.log('\nTime to character level');
 console.log(pad('level', 8) + results.map((r) => pad(r.classId)).join(''));
 for (const l of LEVELS) console.log(pad(String(l), 8) + results.map((r) => pad(fmt(r.levels[l]))).join(''));
 
 console.log('\nTime to first boss kill');
-console.log(pad('zone', 22) + results.map((r) => pad(r.classId)).join(''));
-for (const z of ZONES) console.log(pad(`${z.name} (${zoneDef(z.id).boss.level})`, 22) + results.map((r) => pad(fmt(r.bosses[z.id]))).join(''));
+console.log(pad('zone', 30) + results.map((r) => pad(r.classId)).join(''));
+for (const z of ZONES) console.log(pad(`${z.name} (${zoneDef(z.id).boss.level})`, 30) + results.map((r) => pad(fmt(r.bosses[z.id]))).join(''));
 
 console.log('\nAfter the run');
 const row = (label: string, f: (r: Result) => string) => console.log(pad(label, 22) + results.map((r) => pad(f(r))).join(''));
@@ -227,4 +230,6 @@ console.log(pad('level', 8) + ['mining', 'woodcutting', 'harvesting'].map((x) =>
 const paces = (['mining', 'woodcutting', 'harvesting'] as SkillId[]).map((sk) => skillPace(sk, SKILL_TARGETS));
 for (const l of SKILL_TARGETS) console.log(pad(String(l), 8) + paces.map((p) => pad(fmt(p[l]), 14)).join(''));
 
-console.log('\nGDD targets: Act 1 done in ~1 day (6–10h active), level 100 and 99 skills in months.\n');
+const actBoss = ZONES.find((z) => z.actBoss)!;
+console.log(`\nAct 1 complete (${actBoss.boss.name}): ` + results.map((r) => `${r.classId} ${fmt(r.bosses[actBoss.id])}`).join(' · '));
+console.log('GDD targets: Act 1 done in ~1 day (6–10h active), level 100 and 99 skills in months.\n');

@@ -259,6 +259,9 @@ export function weaponPctAt(def: ActiveGemDef, level: number): number {
   return (def.effect.weaponPct ?? 100) + 3 * (level - 1);
 }
 
+/** Spells also deal your flat added elemental damage (gear, wand implicits) at this effectiveness. */
+export const SPELL_ADDED_EFFECTIVENESS = 0.7;
+
 export function spellBaseAt(def: ActiveGemDef, level: number): [number, number] {
   const [lo, hi] = def.effect.base ?? [0, 0];
   const f = 1 + 0.16 * (level - 1);
@@ -280,6 +283,7 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
   } else {
     const [lo, hi] = spellBaseAt(def, level);
     elem = ((lo + hi) / 2) * d.typeMult[def.effect.type ?? 'fire'];
+    elem += (['fire', 'cold', 'light'] as const).reduce((a, t) => a + ((d.hit[t][0] + d.hit[t][1]) / 2) * SPELL_ADDED_EFFECTIVENESS, 0);
   }
   if (mods.noElemental) elem = 0;
   const extra = mods.extras.reduce((a, x) => a + x.pct, 0) / 100;

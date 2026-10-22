@@ -2,7 +2,7 @@ import { activeGemDef, ACTIVE_GEMS, DEFAULT_ATTACK, RULE_LABELS, supportGemDef, 
 import { gemLevelReq, gemProgress, skillSummary, supportSlots } from '../../engine/gems';
 import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
-import { fmt, ProgressBar } from './common';
+import { fmt, ProgressBar, artUrl } from './common';
 
 const ATTR_COLOR = { str: '#d0574a', dex: '#5fbf6a', int: '#5f8de0' } as const;
 const ROLE_LABEL: Record<string, string> = {
@@ -20,8 +20,15 @@ export function attrColor(attr: keyof typeof ATTR_COLOR): string {
 }
 
 /** A faceted gem glyph tinted by attribute, with the skill's initials. */
-export function GemIcon({ def, size = 40, support = false, dim = false }: { def: { name: string; attr: 'str' | 'dex' | 'int' }; size?: number; support?: boolean; dim?: boolean }) {
+export function GemIcon({ def, size = 40, support = false, dim = false }: { def: { id?: string; name: string; attr: 'str' | 'dex' | 'int' }; size?: number; support?: boolean; dim?: boolean }) {
   const color = ATTR_COLOR[def.attr];
+  const art = def.id ? artUrl(`gems/${def.id}`) : undefined;
+  if (art)
+    return (
+      <span className={`gem-icon has-art ${support ? 'support' : ''} ${dim ? 'dim' : ''}`} style={{ width: size, height: size, ['--gem' as string]: color }}>
+        <img className="art" src={art} alt={def.name} width={size} height={size} draggable={false} />
+      </span>
+    );
   const initials = def.name
     .split(/\s+/)
     .map((w) => w[0])
