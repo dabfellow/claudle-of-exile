@@ -3,7 +3,7 @@ import { classDef } from '../data/classes';
 import { materialDef } from '../data/materials';
 import { actionDef, SKILLS } from '../data/skills';
 import { zoneDef } from '../data/zones';
-import { retreat, useFlask } from '../engine/combat';
+import { queueSkill, retreat, useFlask } from '../engine/combat';
 import { pointsLeft } from '../engine/passives';
 import { actionIntervalMs, stopAction } from '../engine/skills';
 import { deriveStats } from '../engine/stats';
@@ -11,8 +11,13 @@ import type { GameState, SkillId } from '../engine/types';
 import { characterLevel } from '../engine/character';
 import { levelOf, progressOf, xpToReach } from '../engine/xp';
 import type { GameEvent } from '../engine/types';
-import { game, useGame, useGameEvent } from '../game';
-import { fmt, fmtTime, MatIcon, ProgressBar } from './components/common';
+import { game, useGame, useGameEvent, type LootLine } from '../game';
+import { activeGemDef, supportGemDef } from '../data/gems';
+import { itemName } from '../engine/items';
+import { GemIcon } from './components/GemView';
+import { ItemIcon, ItemTip } from './components/ItemView';
+import { SKILL_KEYS } from './pages/SkillGemsPage';
+import { fmt, fmtTime, MatIcon, ProgressBar, Tooltip } from './components/common';
 import { Icon } from './components/Icon';
 import { QuestTracker } from './components/QuestTracker';
 import { Crest } from './screens/Screens';
@@ -20,6 +25,8 @@ import { Crest } from './screens/Screens';
 export type Page =
   | 'hideout'
   | 'combat'
+  | 'campaign'
+  | 'skills'
   | 'tree'
   | 'equipment'
   | 'bench'
@@ -47,7 +54,9 @@ const NAV: { label: string; items: NavEntry[] }[] = [
   {
     label: 'Character',
     items: [
+      { page: 'campaign', label: 'Campaign', icon: 'map' },
       { page: 'combat', label: 'Combat', icon: 'combat', skill: 'combat' },
+      { page: 'skills', label: 'Skills', icon: 'bolt' },
       { page: 'equipment', label: 'Equipment', icon: 'equipment' },
       { page: 'tree', label: 'Passive Tree', icon: 'tree' },
       { page: 'bench', label: 'Crafting Bench', icon: 'bench' },
@@ -165,10 +174,13 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
     target = a.skill;
   } else if (s.action?.kind === 'combat' && s.combat) {
     const z = zoneDef(s.combat.zoneId);
-    const mon = s.combat.monster;
+    const pack = s.combat.monsters;
+    const alive = pack.filter((m) => m.life > 0);
+    const total = pack.reduce((a, m) => a + m.maxLife, 0);
+    const left = alive.reduce((a, m) => a + Math.max(0, m.life), 0);
     title = `Fighting in ${z.name}`;
-    sub = mon ? `${mon.name} · ${fmt(Math.max(0, mon.life))}/${fmt(mon.maxLife)}` : 'Searching…';
-    progress = mon ? 1 - Math.max(0, mon.life) / mon.maxLife : 0;
+    sub = alive.length ? (alive.length === 1 ? alive[0].name : `${alive.length} enemies`) : 'Searching…';
+    progress = total ? 1 - left / total : 0;
     color = 'var(--life)';
     target = 'combat';
   }
@@ -283,21 +295,102 @@ function ago(at: number, now: number): string {
   return m < 60 ? `${m}m ago` : `${Math.round(m / 60)}h ago`;
 }
 
+type FeedTab = 'activity' | 'combat' | 'loot';
+
+function LootRow({ l }: { l: LootLine }) {
+  const s = game.state;
+  if (l.item) {
+    return (
+      <Tooltip content={<ItemTip item={l.item} state={s} />}>
+        <li className={`feed-item loot rar-${l.item.rarity} ${l.item.rarity}`} style={{ opacity: l.salvaged ? 0.5 : 1 }}>
+          <ItemIcon item={l.item} size={14} />
+          <span style={{ color: 'var(--rar)' }}>{itemName(l.item)}</span>
+          {l.salvaged && <span className="dim"> · salvaged</span>}
+        </li>
+      </Tooltip>
+    );
+  }
+  if (l.gemId) {
+    const def = activeGemDef(l.gemId);
+    return (
+      <li className="feed-item loot magic">
+        <GemIcon def={def} size={16} /> {def.name} <span className="dim">· skill gem</span>
+      </li>
+    );
+  }
+  if (l.supportId) {
+    const def = supportGemDef(l.supportId);
+    return (
+      <li className="feed-item loot magic">
+        <GemIcon def={def} size={14} support /> {def.name} <span className="dim">· support</span>
+      </li>
+    );
+  }
+  return (
+    <li className="feed-item loot">
+      <MatIcon id={l.currencyId!} size={13} /> <span style={{ color: 'var(--currency)' }}>{materialDef(l.currencyId!).name}</span>
+    </li>
+  );
+}
+
 export function Feed() {
   useGame();
+  const [tab, setTab] = useState<FeedTab>(() => {
+    try {
+      return (localStorage.getItem('coe-feed-tab') as FeedTab) || 'activity';
+    } catch {
+      return 'activity';
+    }
+  });
+  const pick = (t: FeedTab) => {
+    setTab(t);
+    try {
+      localStorage.setItem('coe-feed-tab', t);
+    } catch {
+      /* ignore */
+    }
+  };
   const now = Date.now();
   return (
     <aside className="feed">
       <QuestTracker />
-      <div className="feed-head">Activity</div>
-      <ul className="feed-list">
-        {game.feed.length === 0 && <li className="dim" style={{ padding: 10, fontSize: 12 }}>Level-ups, notable drops and events appear here.</li>}
-        {game.feed.map((f, i) => (
-          <li key={f.id} className={`feed-item ${f.tone}`} style={{ opacity: Math.max(0.35, 1 - i * 0.04) }}>
-            {f.text}
-            <time>{ago(f.at, now)}</time>
-          </li>
+      <div className="feed-tabs">
+        {(['activity', 'combat', 'loot'] as FeedTab[]).map((t) => (
+          <button key={t} className={`feed-tab ${tab === t ? 'active' : ''}`} onClick={() => pick(t)}>
+            {t === 'activity' ? 'Activity' : t === 'combat' ? 'Combat log' : 'Loot'}
+          </button>
         ))}
+      </div>
+      <ul className="feed-list">
+        {tab === 'activity' && (
+          <>
+            {game.feed.length === 0 && <li className="dim feed-empty">Level-ups, notable drops and events appear here.</li>}
+            {game.feed.map((f, i) => (
+              <li key={f.id} className={`feed-item ${f.tone}`} style={{ opacity: Math.max(0.35, 1 - i * 0.04) }}>
+                {f.text}
+                <time>{ago(f.at, now)}</time>
+              </li>
+            ))}
+          </>
+        )}
+        {tab === 'combat' && (
+          <>
+            {game.combatLog.length === 0 && <li className="dim feed-empty">Kills, boss wind-ups, interrupts and flasks appear here.</li>}
+            {game.combatLog.map((l, i) => (
+              <li key={l.id} className={`feed-item compact ${l.tone}`} style={{ opacity: Math.max(0.4, 1 - i * 0.02) }}>
+                {l.text}
+              </li>
+            ))}
+          </>
+        )}
+        {tab === 'loot' && (
+          <>
+            {game.lootLog.length === 0 && <li className="dim feed-empty">Everything you pick up appears here.</li>}
+            {game.lootLog.map((l) => (
+              <LootRow key={l.id} l={l} />
+            ))}
+          </>
+        )}
       </ul>
     </aside>
   );
@@ -379,16 +472,24 @@ export function OfflineModal() {
 }
 
 /** Number keys 1-5 drink flasks while in combat. */
+/** Keys 1–5 drink flasks and Q–Y cast skill-bar slots while in combat. */
 export function useFlaskHotkeys() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const t = e.target;
+      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return;
+      if (e.ctrlKey || e.metaKey || e.altKey || !game.state.combat) return;
       const n = Number(e.key);
-      if (n >= 1 && n <= 5 && game.state.combat) {
-        const f = game.state.flaskSlots[n - 1];
-        if (!f) return;
+      if (n >= 1 && n <= 5) {
+        if (!game.state.flaskSlots[n - 1]) return;
         const err = game.act((s, ctx) => useFlask(s, ctx, n - 1));
         if (!err) e.preventDefault();
+        return;
+      }
+      const slot = SKILL_KEYS.indexOf(e.key.toUpperCase());
+      if (slot >= 0 && game.state.skillBar[slot]) {
+        game.act((s) => queueSkill(s, slot));
+        e.preventDefault();
       }
     };
     window.addEventListener('keydown', onKey);

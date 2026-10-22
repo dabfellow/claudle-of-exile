@@ -18,6 +18,8 @@ export interface ClassDef {
   baseAttributes: { str: number; dex: number; int: number };
   bonus: Partial<Record<StatKey, number>>;
   bonusText: string[];
+  /** skill gems on the bar at the start */
+  starterGems: string[];
 }
 
 export const CLASSES: ClassDef[] = [
@@ -35,6 +37,7 @@ export const CLASSES: ClassDef[] = [
     baseAttributes: { str: 20, dex: 12, int: 10 },
     bonus: { life: 20, armourPct: 10 },
     bonusText: ['+20 to maximum Life', '10% increased Armour'],
+    starterGems: ['heavy_strike', 'iron_guard'],
   },
   {
     id: 'ranger',
@@ -50,6 +53,7 @@ export const CLASSES: ClassDef[] = [
     baseAttributes: { str: 12, dex: 20, int: 10 },
     bonus: { attackSpeedPct: 6, evasionPct: 10 },
     bonusText: ['6% increased Attack Speed', '10% increased Evasion Rating'],
+    starterGems: ['twin_strike', 'smoke_step'],
   },
   {
     id: 'mage',
@@ -65,6 +69,7 @@ export const CLASSES: ClassDef[] = [
     baseAttributes: { str: 10, dex: 12, int: 20 },
     bonus: { elemPct: 15, flaskEffect: 10 },
     bonusText: ['15% increased Elemental Damage', '10% increased Flask Effect'],
+    starterGems: ['spark', 'frost_ward'],
   },
 ];
 

@@ -1,48 +1,17 @@
 import { useCallback, useState } from 'react';
 import { flaskDef } from '../../data/flasks';
-import { materialDef } from '../../data/materials';
-import { BOSS_SLAM_CAST_MS, ZONES, zoneDef } from '../../data/zones';
-import { bossIsNext, retreat, startCombat, useFlask } from '../../engine/combat';
-import { itemName } from '../../engine/items';
-import { deriveStats } from '../../engine/stats';
-import type { DamageType, GameEvent, Item } from '../../engine/types';
+import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
+import { BOSS_SLAM_CAST_MS, BOSS_SLAM_MULT, zoneDef } from '../../data/zones';
+import { aliveMonsters, mitigate, queueSkill, retreat, useFlask } from '../../engine/combat';
+import { skillNumbers } from '../../engine/gems';
+import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
+import type { DamageType, GameEvent, GameState, MonsterInstance } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
-import { fmt, MatIcon, ProgressBar, Tooltip } from '../components/common';
+import { fmt, ProgressBar, Tooltip } from '../components/common';
+import { GemIcon, GemTip, ruleText } from '../components/GemView';
 import { Icon } from '../components/Icon';
-import { ItemIcon, ItemTip } from '../components/ItemView';
-
-interface LootLine {
-  id: number;
-  item?: Item;
-  currencyId?: string;
-  salvaged?: boolean;
-}
-
-// kept at module level so the log survives page switches
-let lootLog: LootLine[] = [];
-let combatLog: { id: number; text: string; cls: string }[] = [];
-let nextId = 1;
-game.onGameEvent((e) => {
-  if (e.t === 'loot' && (e.item || e.currencyId) && game.state.combat) {
-    lootLog = [{ id: nextId++, item: e.item, currencyId: e.currencyId, salvaged: e.salvaged }, ...lootLog].slice(0, 30);
-  } else if (e.t === 'kill') {
-    combatLog = [{ id: nextId++, text: `Slew ${e.name}`, cls: e.boss ? 'good' : '' }, ...combatLog].slice(0, 12);
-  } else if (e.t === 'spawn' && e.boss) {
-    combatLog = [{ id: nextId++, text: `${e.name} appears!`, cls: 'warn' }, ...combatLog].slice(0, 12);
-  } else if (e.t === 'flask') {
-    combatLog = [{ id: nextId++, text: `${e.auto ? 'Auto-used' : 'Drank'} ${flaskDef(e.flaskId).name}`, cls: 'dim' }, ...combatLog].slice(0, 12);
-  } else if (e.t === 'death') {
-    combatLog = [{ id: nextId++, text: 'You were slain', cls: 'bad' }, ...combatLog].slice(0, 12);
-  }
-});
-
-interface Floater {
-  id: number;
-  text: string;
-  cls: string;
-  x: number;
-  color: string;
-}
+import type { Page } from '../Layout';
+import { SKILL_KEYS } from './SkillGemsPage';
 
 const DMG_COLOR: Record<DamageType, string> = {
   phys: 'var(--phys)',
@@ -50,17 +19,69 @@ const DMG_COLOR: Record<DamageType, string> = {
   cold: 'var(--cold)',
   light: 'var(--light)',
 };
+const DMG_NAME: Record<DamageType, string> = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' };
 
-function useFloaters() {
-  const [list, setList] = useState<Floater[]>([]);
-  const add = useCallback((f: Omit<Floater, 'id' | 'x'>) => {
-    const id = nextId++;
-    const x = 30 + Math.random() * 40;
-    setList((l) => [...l.slice(-8), { ...f, id, x }]);
-    setTimeout(() => setList((l) => l.filter((y) => y.id !== id)), 950);
-  }, []);
-  return [list, add] as const;
+interface Floater {
+  id: number;
+  owner: number | 'player';
+  text: string;
+  cls: string;
+  x: number;
+  color: string;
 }
+
+let floaterId = 1;
+
+/** Floating numbers and hit-shake counters for every card, driven by combat events. */
+function useCombatFx() {
+  const [floaters, setFloaters] = useState<Floater[]>([]);
+  const [shakes, setShakes] = useState<Record<string, number>>({});
+  const [crits, setCrits] = useState<Record<string, number>>({});
+  const [usedSlot, setUsedSlot] = useState<{ slot: number; n: number } | null>(null);
+
+  const add = useCallback((f: Omit<Floater, 'id' | 'x'>) => {
+    const id = floaterId++;
+    setFloaters((l) => [...l.slice(-24), { ...f, id, x: 25 + Math.random() * 50 }]);
+    setTimeout(() => setFloaters((l) => l.filter((y) => y.id !== id)), 950);
+  }, []);
+
+  const onEvent = useCallback(
+    (e: GameEvent) => {
+      const bump = (set: typeof setShakes, key: string) => set((m) => ({ ...m, [key]: (m[key] ?? 0) + 1 }));
+      if (e.t === 'skill') setUsedSlot((u) => ({ slot: e.slot, n: (u?.n ?? 0) + 1 }));
+      if (e.t !== 'hit') return;
+      if (e.target === 'monster') {
+        const owner = e.monsterUid ?? 0;
+        if (e.evaded) add({ owner, text: 'miss', cls: 'miss', color: '' });
+        else {
+          add({
+            owner,
+            text: fmt(e.amount),
+            cls: e.crit ? 'crit' : e.dot ? 'dot' : '',
+            color: e.crit ? '' : e.dot ? 'var(--life-2)' : DMG_COLOR[e.dmgType],
+          });
+          if (!e.dot) bump(setShakes, String(owner));
+          if (e.crit) bump(setCrits, String(owner));
+        }
+      } else if (e.evaded) add({ owner: 'player', text: 'evade', cls: 'miss', color: '' });
+      else if (e.blocked) add({ owner: 'player', text: 'block', cls: 'block', color: '' });
+      else {
+        add({
+          owner: 'player',
+          text: `-${fmt(e.amount)}${e.absorbed ? ` (${fmt(e.absorbed)} absorbed)` : ''}`,
+          cls: '',
+          color: e.dmgType === 'phys' ? 'var(--life-2)' : DMG_COLOR[e.dmgType],
+        });
+        bump(setShakes, 'player');
+      }
+    },
+    [add],
+  );
+  useGameEvent(onEvent);
+  return { floaters, shakes, crits, usedSlot };
+}
+
+type Fx = ReturnType<typeof useCombatFx>;
 
 function Floaters({ list }: { list: Floater[] }) {
   return (
@@ -74,8 +95,140 @@ function Floaters({ list }: { list: Floater[] }) {
   );
 }
 
-function FlaskBelt() {
-  const s = useGame();
+const shakeClass = (n?: number) => (n ? (n % 2 ? 'shake-a' : 'shake-b') : '');
+const critClass = (n?: number) => (n ? (n % 2 ? 'crit-a' : 'crit-b') : '');
+
+function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
+  const c = s.combat!;
+  const using = c.using ? (c.using === DEFAULT_ATTACK.id ? DEFAULT_ATTACK : activeGemDef(c.using)) : null;
+  const progress = aliveMonsters(c).length ? 1 - Math.max(0, c.actionMs) / c.actionTotal : 0;
+  return (
+    <div className={`fighter player ${shakeClass(fx.shakes.player)}`}>
+      <Floaters list={fx.floaters.filter((f) => f.owner === 'player')} />
+      <div className="fighter-head">
+        <div className="portrait">
+          <Icon name="combat" size={28} color="var(--accent-2)" />
+        </div>
+        <div>
+          <div className="fighter-name">{s.character.name}</div>
+          <div className="muted" style={{ fontSize: 12 }}>
+            Level {d.combatLevel} · {d.dps.toFixed(1)} DPS
+          </div>
+        </div>
+      </div>
+      <div className="life-stack">
+        <ProgressBar value={s.life / d.maxLife} size="lg" color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} ghost />
+        {c.shield > 0 && <div className="shield-bar" style={{ width: `${Math.min(1, c.shield / d.maxLife) * 100}%` }} title={`Shield ${fmt(c.shield)}`} />}
+      </div>
+      <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} color="linear-gradient(90deg, var(--mana), var(--mana-2))" label={`${fmt(s.mana)} / ${fmt(d.maxMana)}`} />
+      <div className="action-line">
+        <span className="dim">{using ? using.name : 'Waiting'}</span>
+        <ProgressBar value={progress} color={using ? 'var(--accent)' : 'var(--line-2)'} />
+      </div>
+      <div className="status-row">
+        {c.blocks > 0 && <span className="status good">Block ×{c.blocks}</span>}
+        {c.evadeMs > 0 && <span className="status good">Evading {(c.evadeMs / 1000).toFixed(1)}s</span>}
+        {c.shield > 0 && <span className="status cold">Shield {fmt(c.shield)}</span>}
+        {c.ambush && <span className="status good">Ambush ready</span>}
+        {c.flurryStacks > 0 && <span className="status">Flurry ×{c.flurryStacks}</span>}
+        {c.buffs.map((b) => {
+          const name = b.source === 'flask' ? flaskDef(b.id).name.replace(' Flask', '') : activeGemDef(b.id).name;
+          const color = b.source === 'flask' ? flaskDef(b.id).color : 'var(--accent)';
+          return (
+            <span key={`${b.source}-${b.id}`} className="buff" style={{ ['--flask' as string]: color }}>
+              {name} {(b.remainingMs / 1000).toFixed(1)}s
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; fx: Fx }) {
+  const key = String(m.uid);
+  const poison = m.dots.filter((x) => x.kind === 'poison').length;
+  return (
+    <div className={`fighter monster ${m.isBoss ? 'boss' : ''} ${target ? 'targeted' : ''} ${shakeClass(fx.shakes[key])} ${critClass(fx.crits[key])}`}>
+      <Floaters list={fx.floaters.filter((f) => f.owner === m.uid)} />
+      <div className="fighter-head">
+        <div className="portrait small" style={{ borderColor: m.isBoss ? 'var(--life)' : undefined }}>
+          <Icon name="skull" size={20} color={m.isBoss ? 'var(--life-2)' : DMG_COLOR[m.dmgType]} />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div className="fighter-name small">{m.name}</div>
+          <div className="muted" style={{ fontSize: 11 }}>
+            {m.isBoss ? 'Boss · ' : ''}Lv {m.level} · {DMG_NAME[m.dmgType]}
+          </div>
+        </div>
+        {target && <span className="target-pip" title="Current target" />}
+      </div>
+      <ProgressBar value={Math.max(0, m.life) / m.maxLife} size="md" color="linear-gradient(90deg, #8e2a22, #d4473b)" label={`${fmt(Math.max(0, m.life))} / ${fmt(m.maxLife)}`} ghost />
+      {m.casting >= 0 ? (
+        <>
+          <ProgressBar className="cast-bar" value={1 - m.casting / BOSS_SLAM_CAST_MS} />
+          <div className="cast-warning">⚠ Heavy blow incoming — guard, interrupt or drink!</div>
+        </>
+      ) : (
+        <ProgressBar value={m.attackTimer / m.attackMs} color="#7a5a5a" className="thin" />
+      )}
+      <div className="status-row">
+        {m.stunMs > 0 && <span className="status">Stunned</span>}
+        {m.frozenMs > 0 && <span className="status cold">Frozen</span>}
+        {m.vulnMs > 0 && <span className="status">Armour broken</span>}
+        {m.dots.some((x) => x.kind === 'bleed') && <span className="status bad">Bleeding</span>}
+        {poison > 0 && <span className="status poison">Poison ×{poison}</span>}
+        {m.dots.some((x) => x.kind === 'ignite') && <span className="status fire">Ignited</span>}
+      </div>
+    </div>
+  );
+}
+
+export function SkillBar({ s, d, fx }: { s: GameState; d: Derived; fx?: Fx }) {
+  const c = s.combat;
+  return (
+    <div className="skill-bar">
+      {s.skillBar.map((gem, i) => {
+        if (!gem)
+          return (
+            <div key={i} className="skill-btn empty">
+              <span className="slot-key">{SKILL_KEYS[i]}</span>
+            </div>
+          );
+        const def = activeGemDef(gem.gemId);
+        const nums = skillNumbers(d, gem);
+        const cd = c?.cooldowns[i] ?? 0;
+        const cdPct = nums.cooldownMs ? cd / nums.cooldownMs : 0;
+        const noMana = s.mana < nums.manaCost;
+        const flashed = fx?.usedSlot?.slot === i ? fx.usedSlot.n : 0;
+        return (
+          <Tooltip key={i} content={<GemTip gem={gem} state={s} />}>
+            <button
+              className={`skill-btn ${noMana ? 'nomana' : ''} ${c?.queued === i ? 'queued' : ''} ${flashed ? (flashed % 2 ? 'used-a' : 'used-b') : ''}`}
+              style={{ ['--cd' as string]: `${cdPct * 360}deg` }}
+              disabled={!c}
+              onClick={() => game.act((st) => queueSkill(st, i))}
+            >
+              <span className="slot-key">{SKILL_KEYS[i]}</span>
+              <span className="skill-gem">
+                <GemIcon def={def} size={38} dim={cd > 0 || noMana} />
+                {cd > 0 && <span className="cd-sweep" />}
+                {cd > 0 && <span className="cd-text">{(cd / 1000).toFixed(1)}</span>}
+              </span>
+              <span className="skill-name">{def.name}</span>
+              <span className="skill-meta">
+                {nums.manaCost > 0 ? <span style={{ color: 'var(--mana-2)' }}>{nums.manaCost} mana</span> : <span className="dim">free</span>}
+              </span>
+              <span className="skill-rule">{ruleText(gem.rule)}</span>
+            </button>
+          </Tooltip>
+        );
+      })}
+    </div>
+  );
+}
+
+function FlaskBelt({ s }: { s: GameState }) {
   const inCombat = !!s.combat;
   return (
     <div className="flask-belt">
@@ -87,7 +240,7 @@ function FlaskBelt() {
             </div>
           );
         const def = flaskDef(f.flaskId);
-        const buff = s.combat?.buffs.find((b) => b.flaskId === f.flaskId);
+        const buff = s.combat?.buffs.find((b) => b.source === 'flask' && b.id === f.flaskId);
         const ready = f.charges >= def.chargesPerUse;
         return (
           <Tooltip
@@ -111,7 +264,7 @@ function FlaskBelt() {
               onClick={() => game.act((st, ctx) => useFlask(st, ctx, i))}
             >
               <div className="flask-liquid" style={{ height: `${(f.charges / def.maxCharges) * 100}%` }} />
-              {buff && <div className="flask-timer" style={{ width: `${(buff.remainingMs / def.durationMs) * 100}%` }} />}
+              {buff && <div className="flask-timer" style={{ width: `${(buff.remainingMs / buff.durationMs) * 100}%` }} />}
               <span className="flask-key">{i + 1}</span>
               {f.instill && <span className="flask-auto">AUTO</span>}
               <span className="flask-charges">
@@ -125,229 +278,147 @@ function FlaskBelt() {
   );
 }
 
-function Arena() {
-  const s = useGame();
-  const c = s.combat!;
-  const d = deriveStats(s);
-  const mon = c.monster;
-  const zone = zoneDef(c.zoneId);
-  const [pFloat, addP] = useFloaters();
-  const [mFloat, addM] = useFloaters();
-  const [shakeKey, setShake] = useState(0);
-  const [critKey, setCrit] = useState(0);
-  const [hurtKey, setHurt] = useState(0);
-
-  const onEvent = useCallback(
-    (e: GameEvent) => {
-      if (e.t !== 'hit') return;
-      if (e.target === 'monster') {
-        if (e.evaded) addM({ text: 'miss', cls: 'miss', color: '' });
-        else {
-          addM({ text: fmt(e.amount), cls: e.crit ? 'crit' : '', color: e.crit ? '' : DMG_COLOR[e.dmgType] });
-          setShake((k) => k + 1);
-          if (e.crit) setCrit((k) => k + 1);
-        }
-      } else if (e.evaded) addP({ text: 'evade', cls: 'miss', color: '' });
-      else {
-        addP({ text: `-${fmt(e.amount)}`, cls: '', color: e.dmgType === 'phys' ? 'var(--life-2)' : DMG_COLOR[e.dmgType] });
-        setHurt((k) => k + 1);
-      }
-    },
-    [addM, addP],
-  );
-  useGameEvent(onEvent);
-
-  const playerInterval = 1000 / d.attacksPerSec;
-
+function StatRow({ label, you, them, good }: { label: string; you: string; them: string; good?: boolean | null }) {
   return (
-    <div className="card arena" style={{ ['--zone' as string]: zone.color }}>
-      <div className={`fighter ${hurtKey ? (hurtKey % 2 ? 'shake-a' : 'shake-b') : ''}`}>
-        <Floaters list={pFloat} />
-        <div className="fighter-head">
-          <div className="portrait">
-            <Icon name="combat" size={28} color="var(--accent-2)" />
-          </div>
-          <div>
-            <div className="fighter-name">{s.character.name}</div>
-            <div className="muted" style={{ fontSize: 12 }}>
-              Level {d.combatLevel} · {d.dps.toFixed(1)} DPS
-            </div>
-          </div>
-        </div>
-        <ProgressBar value={s.life / d.maxLife} size="lg" color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} ghost />
-        <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} color="linear-gradient(90deg, var(--mana), var(--mana-2))" label={`${fmt(s.mana)} / ${fmt(d.maxMana)}`} />
-        <ProgressBar value={mon ? c.attackTimer / playerInterval : 0} color="var(--accent)" />
-        <div className="buffs">
-          {c.buffs
-            .filter((b) => flaskDef(b.flaskId).kind === 'utility')
-            .map((b) => (
-              <span key={b.flaskId} className="buff" style={{ ['--flask' as string]: flaskDef(b.flaskId).color }}>
-                {flaskDef(b.flaskId).name.replace(' Flask', '')} {(b.remainingMs / 1000).toFixed(1)}s
-              </span>
-            ))}
-        </div>
-      </div>
+    <>
+      <span className="muted">{label}</span>
+      <span className={good === true ? 'good' : good === false ? 'bad' : ''}>{you}</span>
+      <span>{them}</span>
+    </>
+  );
+}
 
-      <div className="vs">vs</div>
-
-      {mon ? (
-        <div
-          className={`fighter ${mon.isBoss ? 'boss' : ''} ${shakeKey ? (shakeKey % 2 ? 'shake-a' : 'shake-b') : ''} ${critKey ? (critKey % 2 ? 'crit-a' : 'crit-b') : ''}`}
-        >
-          <Floaters list={mFloat} />
-          <div className="fighter-head">
-            <div className="portrait" style={{ borderColor: mon.isBoss ? 'var(--life)' : undefined }}>
-              <Icon name="skull" size={28} color={mon.isBoss ? 'var(--life-2)' : DMG_COLOR[mon.dmgType]} />
-            </div>
-            <div>
-              <div className="fighter-name">{mon.name}</div>
-              <div className="muted" style={{ fontSize: 12 }}>
-                {mon.isBoss ? 'Boss · ' : ''}Level {mon.level} · {mon.dmgType === 'phys' ? 'Physical' : mon.dmgType === 'light' ? 'Lightning' : mon.dmgType[0].toUpperCase() + mon.dmgType.slice(1)}
-              </div>
-            </div>
-          </div>
-          <ProgressBar value={mon.life / mon.maxLife} size="lg" color="linear-gradient(90deg, #8e2a22, #d4473b)" label={`${fmt(Math.max(0, mon.life))} / ${fmt(mon.maxLife)}`} ghost />
-          {mon.casting >= 0 ? (
-            <>
-              <ProgressBar className="cast-bar" value={1 - mon.casting / BOSS_SLAM_CAST_MS} />
-              <div className="cast-warning">⚠ Winding up a heavy blow — drink a flask!</div>
-            </>
-          ) : (
-            <ProgressBar value={mon.attackTimer / mon.attackMs} color="#7a5a5a" />
-          )}
-        </div>
-      ) : (
-        <div className="fighter" style={{ alignItems: 'center', justifyContent: 'center' }}>
-          <span className="muted">Searching for monsters…</span>
+/** Side-by-side numbers: how you match up against your current target. */
+function Matchup({ s, d }: { s: GameState; d: Derived }) {
+  const target = s.combat ? aliveMonsters(s.combat)[0] : undefined;
+  if (!target) return <div className="dim">No enemy in sight.</div>;
+  const hit = hitChance(d.accuracy, target.level);
+  const evade = evadeChance(d.evasion, target.level);
+  const perHit = mitigate(d, target.damage, target.dmgType);
+  const slam = target.isBoss ? mitigate(d, target.damage * BOSS_SLAM_MULT, target.dmgType) : 0;
+  const theirDps = (perHit * (1 - evade)) / (target.attackMs / 1000);
+  const yourDefence = target.dmgType === 'phys' ? `${fmt(d.armour)} armour` : `${d.res[target.dmgType]}% resist`;
+  return (
+    <div className="matchup">
+      <span />
+      <span className="matchup-head">You</span>
+      <span className="matchup-head">{target.name}</span>
+      <StatRow
+        label="Level"
+        you={String(d.combatLevel)}
+        them={String(target.level)}
+        good={d.combatLevel >= target.level ? true : target.level - d.combatLevel > 3 ? false : null}
+      />
+      <StatRow label="Life" you={fmt(d.maxLife)} them={`${fmt(Math.max(0, target.life))} / ${fmt(target.maxLife)}`} />
+      <StatRow label="Damage / sec" you={d.dps.toFixed(1)} them={theirDps.toFixed(1)} good={d.dps > theirDps * 1.5} />
+      <StatRow label="Chance to hit" you={`${Math.round(hit * 100)}%`} them={`${Math.round((1 - evade) * 100)}%`} />
+      <StatRow label="Their hit on you" you={yourDefence} them={`${fmt(perHit)} ${DMG_NAME[target.dmgType].toLowerCase()}`} good={perHit < d.maxLife * 0.1} />
+      <StatRow label="Their resistances" you="" them={`${target.res.fire}/${target.res.cold}/${target.res.light}% F/C/L`} />
+      <StatRow label="Attack interval" you={`${(1 / d.attacksPerSec).toFixed(2)}s`} them={`${(target.attackMs / 1000).toFixed(2)}s`} />
+      {target.isBoss && (
+        <div className="matchup-note">
+          <b>Heavy blow:</b> winds up for {(BOSS_SLAM_CAST_MS / 1000).toFixed(1)}s, then hits for about{' '}
+          <b className={slam >= s.life ? 'bad' : ''}>{fmt(slam)}</b>. Evasion Rating can't dodge it — use a guard skill, War Cry or a flask.
         </div>
       )}
     </div>
   );
 }
 
-export function CombatPage() {
+export function CombatPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const d = deriveStats(s);
   const c = s.combat;
+  const fx = useCombatFx();
 
+  if (!c) {
+    return (
+      <div className="page">
+        <div className="page-head">
+          <div className="grow">
+            <h1>Combat</h1>
+            <p>You're not fighting right now.</p>
+          </div>
+        </div>
+        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+          <Icon name="map" size={40} color="var(--accent)" />
+          <h2 style={{ marginTop: 10 }}>Pick an area in the Campaign</h2>
+          <p className="muted">
+            Max Life {fmt(d.maxLife)} · {d.dps.toFixed(1)} DPS · {fmt(d.armour)} Armour · {fmt(d.evasion)} Evasion
+          </p>
+          <button className="btn primary" data-tut="open-campaign" onClick={() => go('campaign')}>
+            Open Campaign
+          </button>
+        </div>
+        <div className="card">
+          <div className="card-title">Skill bar</div>
+          <SkillBar s={s} d={d} fx={fx} />
+        </div>
+      </div>
+    );
+  }
+
+  const zone = zoneDef(c.zoneId);
+  const alive = aliveMonsters(c);
   return (
     <div className="page">
       <div className="page-head">
         <div className="grow">
-          <h1>Combat</h1>
-          <p>Fights run on their own. Drink flasks (keys 1–5) to survive bosses and clear faster.</p>
-        </div>
-        {c && (
-          <button className="btn danger" onClick={() => game.act((st) => retreat(st))}>
-            Retreat to Hideout
-          </button>
-        )}
-      </div>
-
-      <div className="zone-list">
-        {ZONES.map((z) => {
-          const unlocked = s.unlockedZones.includes(z.id);
-          const current = c?.zoneId === z.id;
-          const kills = s.zoneKills[z.id] ?? 0;
-          return (
-            <button
-              key={z.id}
-              data-tut={`zone-${z.id}`}
-              className={`zone ${current ? 'current' : ''}`}
-              style={{ ['--zone' as string]: z.color }}
-              disabled={!unlocked}
-              onClick={() => !current && game.act((st, ctx) => startCombat(st, ctx, z.id))}
-            >
-              <div className="row">
-                <span className="zone-name">{z.name}</span>
-                <span className="spacer" />
-                <span className="nav-badge">
-                  {z.levelRange[0]}–{z.levelRange[1]}
-                </span>
-              </div>
-              <div className="muted" style={{ fontSize: 11.5, margin: '4px 0 8px' }}>
-                {unlocked ? z.desc : `Defeat the previous zone's boss to unlock`}
-              </div>
-              {unlocked && (
-                <>
-                  <ProgressBar value={Math.min(1, kills / z.bossEvery)} color={bossIsNext(s, z.id) ? 'var(--life-2)' : z.color} />
-                  <div className="dim" style={{ fontSize: 10.5, marginTop: 4 }}>
-                    {bossIsNext(s, z.id) ? `Boss: ${z.boss.name}` : `${kills}/${z.bossEvery} until ${z.boss.name}`}
-                  </div>
-                </>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {c ? (
-        <>
-          <Arena />
-          <div className="card">
-            <div className="card-title">
-              Flasks
-              <span className="grow" />
-              <span className="muted" style={{ fontFamily: 'var(--font)', fontSize: 12 }}>
-                Charges refill on kills · {d.flaskCharges > 0 ? `+${d.flaskCharges}% charges` : 'press 1–5'}
-              </span>
-            </div>
-            <FlaskBelt />
-          </div>
-        </>
-      ) : (
-        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-          <Icon name="map" size={40} color="var(--accent)" />
-          <h2 style={{ marginTop: 10 }}>Choose a zone</h2>
-          <p className="muted">
-            Max Life {fmt(d.maxLife)} · {d.dps.toFixed(1)} DPS · {fmt(d.armour)} Armour · {fmt(d.evasion)} Evasion
+          <h1>{zone.name}</h1>
+          <p>
+            Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {s.zoneKills[zone.id] ?? 0}/{zone.bossEvery} until {zone.boss.name}
           </p>
         </div>
-      )}
+        <button className="btn" onClick={() => go('campaign')}>
+          Change area
+        </button>
+        <button className="btn danger" onClick={() => game.act((st) => retreat(st))}>
+          Retreat to Hideout
+        </button>
+      </div>
 
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+      <div className="card arena2" style={{ ['--zone' as string]: zone.color }}>
+        <PlayerCard s={s} d={d} fx={fx} />
+        <div className="vs">vs</div>
+        <div className={`pack pack-${Math.max(1, c.monsters.length)}`}>
+          {c.monsters.length === 0 && <div className="fighter searching">Searching for monsters…</div>}
+          {c.monsters.map((m) =>
+            m.life > 0 ? (
+              <MonsterCard key={m.uid} m={m} target={m === alive[0]} fx={fx} />
+            ) : (
+              <div key={m.uid} className="fighter dead">
+                ✕ {m.name}
+              </div>
+            ),
+          )}
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-title">
+          Skills
+          <span className="grow" />
+          <button className="btn sm ghost" onClick={() => go('skills')}>
+            Edit skills & rules
+          </button>
+        </div>
+        <SkillBar s={s} d={d} fx={fx} />
+      </div>
+
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', alignItems: 'start' }}>
         <div className="card">
-          <div className="card-title">Loot</div>
-          <div className="loot-list">
-            {lootLog.length === 0 && <span className="dim">Nothing yet.</span>}
-            {lootLog.map((l) =>
-              l.item ? (
-                <Tooltip key={l.id} content={<ItemTip item={l.item} state={s} />}>
-                  <div className={`loot-row rar-${l.item.rarity} ${l.item.rarity}`} style={{ opacity: l.salvaged ? 0.5 : 1 }}>
-                    <ItemIcon item={l.item} size={16} />
-                    <span style={{ color: 'var(--rar)' }}>{itemName(l.item)}</span>
-                    {l.salvaged && <span className="dim">(salvaged)</span>}
-                  </div>
-                </Tooltip>
-              ) : (
-                <div key={l.id} className="loot-row">
-                  <MatIcon id={l.currencyId!} size={14} />
-                  <span style={{ color: 'var(--currency)' }}>{materialDef(l.currencyId!).name}</span>
-                </div>
-              ),
-            )}
+          <div className="card-title">
+            Flasks
+            <span className="grow" />
+            <span className="muted" style={{ fontFamily: 'var(--font)', fontSize: 12 }}>
+              keys 1–5 · refill on kills
+            </span>
           </div>
+          <FlaskBelt s={s} />
         </div>
         <div className="card">
-          <div className="card-title">Combat Log</div>
-          <div className="combat-log">
-            {combatLog.map((l) => (
-              <div key={l.id} className={l.cls}>
-                {l.text}
-              </div>
-            ))}
-          </div>
-          <div className="row wrap" style={{ marginTop: 12, gap: 14, fontSize: 12 }}>
-            <span className="muted">
-              Kills <b className="num">{fmt(s.lifetime.kills)}</b>
-            </span>
-            <span className="muted">
-              Bosses <b className="num">{s.lifetime.bossKills}</b>
-            </span>
-            <span className="muted">
-              Deaths <b className="num">{s.lifetime.deaths}</b>
-            </span>
-          </div>
+          <div className="card-title">Matchup</div>
+          <Matchup s={s} d={d} />
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ import { startCombat, useFlask } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
 import { salvage } from '../src/engine/crafting';
 import { equip, equipReason, slotsFor } from '../src/engine/equipment';
+import { socketSupport, supportReason, syncSockets } from '../src/engine/gems';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { newGame, tick } from '../src/engine/state';
@@ -55,6 +56,19 @@ function upgradeGear(s: GameState, ctx: Ctx) {
     if (best) equip(s, ctx, item.uid, best.slot);
   }
   if (s.inventory.length > 25) salvage(s, ctx, s.inventory.map((i: Item) => i.uid));
+}
+
+/** Fill empty support sockets with any loose support that fits. */
+function socketGems(s: GameState) {
+  for (const gem of s.skillBar) {
+    if (!gem) continue;
+    syncSockets(gem);
+    gem.supports.forEach((sup, i) => {
+      if (sup) return;
+      const fit = s.supportGems.find((x) => !supportReason(gem, x.supportId));
+      if (fit) socketSupport(s, gem.uid, fit.uid, i);
+    });
+  }
 }
 
 function spendPassives(s: GameState, ctx: Ctx) {
@@ -119,6 +133,7 @@ function runClass(classId: ClassId): Result {
     if (now % 60_000 === 0) {
       upgradeGear(s, ctx);
       spendPassives(s, ctx);
+      socketGems(s);
     }
     // like a sensible player: push the furthest unlocked zone you're roughly levelled for;
     // after 3 deaths in a row, farm the one below for 20 minutes
@@ -126,12 +141,12 @@ function runClass(classId: ClassId): Result {
     const unlocked = ZONES.filter((z) => s.unlockedZones.includes(z.id) && (z.tier === 1 || z.levelRange[0] <= lvl + 1));
     const top = unlocked[unlocked.length - 1];
     const target = now < retreatUntil && unlocked.length > 1 ? unlocked[unlocked.length - 2] : top;
-    if (!s.action || (s.combat && s.combat.zoneId !== target.id && !s.combat.monster)) startCombat(s, ctx, target.id);
+    if (!s.action || (s.combat && s.combat.zoneId !== target.id && !s.combat.monsters.length)) startCombat(s, ctx, target.id);
     if (!IDLE && s.combat) {
       const d = deriveStats(s);
-      const casting = (s.combat.monster?.casting ?? -1) >= 0;
+      const casting = s.combat.monsters.some((m) => m.casting >= 0 && m.life > 0);
       s.flaskSlots.forEach((f, i) => {
-        if (!f || s.combat?.buffs.some((b) => b.flaskId === f.flaskId)) return;
+        if (!f || s.combat?.buffs.some((b) => b.source === 'flask' && b.id === f.flaskId)) return;
         const lifeFlask = f.flaskId.startsWith('life');
         if ((lifeFlask && s.life < d.maxLife * 0.55) || (!lifeFlask && casting)) useFlask(s, ctx, i);
       });

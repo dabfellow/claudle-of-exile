@@ -1,4 +1,5 @@
-import { newGame, SAVE_VERSION } from './state';
+import { SKILL_BAR_SLOTS } from '../data/gems';
+import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { GameState } from './types';
 
 export const SAVE_KEY = 'claudle-of-exile-save';
@@ -21,6 +22,16 @@ const MIGRATIONS: Record<number, Migration> = {
   2: (raw) => {
     // mana and attributes arrived
     raw.mana ??= 30;
+  },
+  3: (raw) => {
+    // skill gems arrived; the combat runtime changed shape, so leave any fight in progress
+    const s = raw as unknown as GameState;
+    s.skillBar ??= Array(SKILL_BAR_SLOTS).fill(null);
+    s.gems ??= [];
+    s.supportGems ??= [];
+    if (!s.skillBar.some(Boolean)) giveStarterGems(s);
+    if (s.action?.kind === 'combat') s.action = null;
+    s.combat = null;
   },
 };
 

@@ -22,6 +22,8 @@ export interface ZoneDef {
   boss: MonsterDef;
   /** kills needed before the boss appears */
   bossEvery: number;
+  /** monsters per pack (bosses come with BOSS_ADDS adds) */
+  packSize: [number, number];
   uniques: string[];
 }
 
@@ -42,6 +44,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: m('gorger', 'Bloated Gorger', 5, 'phys', 2600, 1, 1),
     bossEvery: 15,
+    packSize: [1, 3],
     uniques: ['miners_lament', 'bloodthirst', 'windstep'],
   },
   {
@@ -55,6 +58,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: m('pyre', 'Pyre-Mother Ulva', 15, 'fire', 2400, 1, 1),
     bossEvery: 20,
+    packSize: [2, 4],
     uniques: ['emberheart', 'alchemists_band', 'bloodthirst'],
   },
   {
@@ -68,6 +72,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: m('tidecaller', 'Tidecaller Morvane', 24, 'cold', 2400, 1, 1),
     bossEvery: 25,
+    packSize: [2, 4],
     uniques: ['iron_bulwark', 'windstep', 'alchemists_band'],
   },
   {
@@ -81,6 +86,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: m('anvilheart', 'Anvilheart, the Unquenched', 34, 'fire', 2400, 1, 1),
     bossEvery: 25,
+    packSize: [2, 5],
     uniques: ['titans_girth', 'iron_bulwark', 'emberheart'],
   },
   {
@@ -94,6 +100,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: m('eclipse', 'The Eclipse Sovereign', 45, 'light', 2200, 1, 1),
     bossEvery: 30,
+    packSize: [3, 5],
     uniques: ['starforged_edge', 'titans_girth', 'miners_lament'],
   },
 ];
@@ -117,6 +124,7 @@ export const MONSTER_LIFE_SCALE = 1.8;
 export const MONSTER_SPEED_SCALE = 1.6;
 
 export const BOSS_LIFE_MULT = 5;
+export const BOSS_ADDS = 2;
 export const BOSS_DMG_MULT = 1.25;
 export const BOSS_SLAM_MULT = 2.5;
 export const BOSS_SLAM_EVERY_MS = 9000;

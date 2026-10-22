@@ -65,7 +65,7 @@ describe('tutorial', () => {
     expect(s.tutorial.step).toBe(0);
     tutorialPage(s, c, 'mining');
     expect(s.tutorial.step).toBe(0);
-    tutorialPage(s, c, 'combat');
+    tutorialPage(s, c, 'campaign');
     expect(s.tutorial.step).toBe(1);
     run(s, [{ t: 'combatStart', zoneId: 'mudflats' }]);
     expect(currentStep(s)?.id).toBe('slay');

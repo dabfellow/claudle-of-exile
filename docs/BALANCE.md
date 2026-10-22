@@ -41,8 +41,23 @@ Gathering (best node): level 30 ≈ 2h45, 60 ≈ 28h, 99 ≈ 53 days of continuo
 
 Fresh characters idle the Mud Flats trash to the boss in ~3 minutes (all classes) and die to the boss without flasks — intentional.
 
+## Phase 2 — Combat 2.0 (2026-10-21, seed 7, 12h, active bot)
+
+| | Warrior | Ranger | Mage |
+|---|---|---|---|
+| Level 10 | 2h03 | 2h12 | 3h03 |
+| Level 15 | 4h00 | 4h12 | 6h51 |
+| Level after 12h | 22 | 24 | 17 |
+| Boss 3 (Sunken Crypt) | 4h02 | 4h15 | 6h56 |
+| Gold | 37.5k | 44.3k | 19.2k |
+
+New knobs: pack member scaling (`PACK_LIFE_SCALE` 0.6 / `PACK_DMG_SCALE` 0.65, xp and loot scale with it), `BOSS_ADDS` 2, gem drops (1.2% per kill, 35% per boss), base mana regen 4%/s, gem level curve `60·(L−1)^2.8` with level requirement `1 + 3·(L−1)`.
+
+Notes for the Phase 8 balance pass:
+- **Mage trails** by ~5 levels at 12h (lower life; spell scaling only from Intelligence and elemental %). A Spark base-damage bump didn't close it.
+- **Idle ≈ active** where the starting guard skill's "when an enemy winds up" rule answers boss slams — intended (a good tactics setup wins), but bosses need more than one mechanic so setups matter more.
+- The bot never re-arranges skills or uses dropped skill gems; it only fills support sockets.
+
 ## Known gaps (fixed by later phases)
-- **Idle ≈ active** for Warrior/Mage: without skills, tactics and boss mechanics there's little for active play to add. Combat 2.0 addresses this.
-- **Mana has no use yet** — skills arrive in Combat 2.0.
 - The five current zones span levels 1–45; Phase 8 restructures them into Act 1 (≈ levels 1–15) and later acts.
 - Bot gear scoring is crude, so DPS varies a lot with drop luck (e.g. one Warrior run ended on 30 DPS).

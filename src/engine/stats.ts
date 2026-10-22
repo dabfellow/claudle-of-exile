@@ -14,7 +14,7 @@ const STAT_KEYS: StatKey[] = [
   'armour', 'armourPct', 'armourMore', 'evasion', 'evasionPct',
   'fireRes', 'coldRes', 'lightRes', 'allRes',
   'itemRarity', 'skillSpeed', 'skillXp', 'flaskEffect', 'flaskCharges',
-  'str', 'dex', 'int', 'allAttr', 'accuracy', 'mana', 'manaPct', 'manaRegenPct',
+  'str', 'dex', 'int', 'allAttr', 'accuracy', 'mana', 'manaPct', 'manaRegenPct', 'castSpeedPct',
 ];
 
 export function emptyStats(): Stats {
@@ -65,6 +65,9 @@ export interface Derived {
   armour: number;
   evasion: number;
   hit: Record<DamageType, [number, number]>;
+  /** increased-damage multipliers, for spells and skills that don't use weapon hits */
+  physMult: number;
+  elemMult: number;
   attacksPerSec: number;
   critChance: number;
   critMulti: number;
@@ -83,7 +86,7 @@ export const RES_CAP = 75;
 /** everyone regenerates this % of max life per second */
 export const BASE_REGEN_PCT = 0.5;
 /** % of max mana regenerated per second before modifiers */
-export const BASE_MANA_REGEN_PCT = 1.75;
+export const BASE_MANA_REGEN_PCT = 4;
 /** global pacing knob: scales every player attack rate */
 export const PLAYER_SPEED_SCALE = 0.65;
 
@@ -114,8 +117,10 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
 
   const flaskMult = 1 + st.flaskEffect / 100;
   for (const b of buffs) {
-    const def = flaskDef(b.flaskId);
-    if (def.buff) addStats(st, def.buff, flaskMult);
+    if (b.source === 'flask') {
+      const def = flaskDef(b.id);
+      if (def.buff) addStats(st, def.buff, flaskMult);
+    } else if (b.stats) addStats(st, b.stats);
   }
   return st;
 }
@@ -175,6 +180,8 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     armour,
     evasion,
     hit,
+    physMult,
+    elemMult,
     attacksPerSec,
     critChance,
     critMulti,

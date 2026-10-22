@@ -1,4 +1,5 @@
 import type { ClassId } from '../data/classes';
+import type { TacticRule } from '../data/gems';
 
 export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'smithing' | 'alchemy';
 export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy'];
@@ -88,7 +89,8 @@ export type StatKey =
   | 'accuracy'
   | 'mana'
   | 'manaPct'
-  | 'manaRegenPct';
+  | 'manaRegenPct'
+  | 'castSpeedPct';
 
 export type Stats = Record<StatKey, number>;
 
@@ -122,7 +124,21 @@ export interface FlaskInstance {
   instill: InstillCondition | null;
 }
 
+export interface Dot {
+  kind: 'bleed' | 'poison' | 'ignite' | 'burn';
+  dps: number;
+  remainingMs: number;
+  /** damage dealt so far (Hemorrhage bursts for part of it) */
+  dealt: number;
+  burst?: number;
+  /** which skill applied it */
+  gemId: string;
+  /** Virulence: spreads to another enemy on death */
+  spreads?: boolean;
+}
+
 export interface MonsterInstance {
+  uid: number;
   defId: string;
   name: string;
   level: number;
@@ -137,11 +153,47 @@ export interface MonsterInstance {
   slamTimer: number;
   /** remaining cast time in ms, or -1 when not casting */
   casting: number;
+  res: { fire: number; cold: number; light: number };
+  dots: Dot[];
+  stunMs: number;
+  frozenMs: number;
+  /** armour broken: takes more damage while > 0 */
+  vulnMs: number;
+  /** pack members are scaled down; xp and loot scale with them */
+  scale: number;
+  /** damage-over-time accumulated since the last report */
+  dotAcc: number;
+  dotTimer: number;
+  /** kill already processed */
+  dead: boolean;
 }
 
 export interface Buff {
-  flaskId: string;
+  /** flask id or skill gem id */
+  id: string;
+  source: 'flask' | 'skill';
   remainingMs: number;
+  durationMs: number;
+  stats?: Partial<Record<StatKey, number>>;
+  moreDamage?: number;
+  /** % of max life regenerated per second */
+  regenPct?: number;
+}
+
+export interface SupportGemInstance {
+  uid: number;
+  supportId: string;
+}
+
+export interface SkillGemInstance {
+  uid: number;
+  gemId: string;
+  level: number;
+  xp: number;
+  supports: (SupportGemInstance | null)[];
+  /** extra support sockets from Orbs of Expansion */
+  extraSlots: number;
+  rule: TacticRule;
 }
 
 export interface HealOverTime {
@@ -152,11 +204,27 @@ export interface HealOverTime {
 
 export interface CombatRuntime {
   zoneId: string;
-  monster: MonsterInstance | null;
+  monsters: MonsterInstance[];
   spawnMs: number;
-  attackTimer: number;
+  /** time until the player's next action, and how long the current one takes */
+  actionMs: number;
+  actionTotal: number;
+  /** gem id of the skill being used right now (for the UI) */
+  using: string | null;
+  cooldowns: number[];
+  /** skill-bar slot the player asked to cast manually */
+  queued: number | null;
   buffs: Buff[];
   heals: HealOverTime[];
+  shield: number;
+  shieldMax: number;
+  blocks: number;
+  evadeMs: number;
+  /** signature support state */
+  glacial: boolean;
+  retaliate: boolean;
+  ambush: boolean;
+  flurryStacks: number;
 }
 
 export type Action =
@@ -212,6 +280,11 @@ export interface GameState {
   inventory: Item[];
   equipment: Partial<Record<EquipSlot, Item>>;
   flaskSlots: (FlaskInstance | null)[];
+  skillBar: (SkillGemInstance | null)[];
+  /** skill gems not on the bar */
+  gems: SkillGemInstance[];
+  /** loose support gems */
+  supportGems: SupportGemInstance[];
   flaskStash: FlaskInstance[];
   action: Action;
   life: number;
@@ -230,11 +303,25 @@ export interface GameState {
 }
 
 export type GameEvent =
-  | { t: 'hit'; target: 'player' | 'monster'; amount: number; crit?: boolean; dmgType: DamageType; evaded?: boolean }
+  | {
+      t: 'hit';
+      target: 'player' | 'monster';
+      amount: number;
+      crit?: boolean;
+      dmgType: DamageType;
+      evaded?: boolean;
+      blocked?: boolean;
+      absorbed?: number;
+      monsterUid?: number;
+      dot?: boolean;
+    }
+  | { t: 'skill'; slot: number; gemId: string; manual: boolean }
+  | { t: 'interrupt'; name: string }
+  | { t: 'gemLevel'; gemId: string; level: number }
   | { t: 'kill'; name: string; boss: boolean }
   | { t: 'spawn'; name: string; boss: boolean }
   | { t: 'death'; xpLost: number }
-  | { t: 'loot'; item?: Item; currencyId?: string; qty?: number; salvaged?: boolean }
+  | { t: 'loot'; item?: Item; currencyId?: string; qty?: number; salvaged?: boolean; gemId?: string; supportId?: string }
   | { t: 'levelup'; skill: SkillId; level: number }
   | { t: 'xp'; skill: SkillId; amount: number }
   | { t: 'produce'; skill: SkillId; outputs: Record<string, number> }

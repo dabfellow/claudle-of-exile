@@ -25,10 +25,14 @@ The engine never talks to the UI directly. It calls `ctx.emit(event)` (`GameEven
 
 ## Combat
 
-- Player stats come from one function, `deriveStats` (gear + passives + class bonus + hideout + active flask buffs).
-- Armour reduces physical hits (PoE formula, capped at 90%); evasion gives a chance to avoid hits; resistances cap at 75%.
-- Flasks are manual by design and refill on kills. Instilling Orbs let a flask fire on a condition, which is how full automation is earned.
-- Bosses spawn after a kill count and telegraph a heavy hit. Dying to a boss resets its counter so a zone can't soft-lock.
+- Player stats come from one function, `deriveStats` (gear + passives + class bonus + attributes + hideout + active flask/skill buffs).
+- Fights are against **packs** of 1–5 monsters (bosses bring adds). Pack members are scaled down; their xp and loot scale with them.
+- **Skills** (`data/gems.ts`, `engine/gems.ts`): six skill-bar slots, each holding a skill gem with its own support sockets. Gems level from character xp and have per-level numbers; `skillNumbers` folds in supports (mana cost, action time, more damage, repeats, chains, specials).
+- **Each action** the engine picks: a manually queued slot (Q–Y) → otherwise the first slot, top to bottom, whose **tactics rule** passes and that's off cooldown and affordable → otherwise a free Default Attack (`chooseSkill`).
+- Hits roll per damage type, apply supports, crits and monster resistances; ailments (bleed, poison, ignite) tick as damage over time. Guards (block, evade, absorb shield) and War Cry (interrupt) answer boss wind-ups, which Evasion Rating can't dodge.
+- Armour reduces physical hits (PoE formula, capped at 90%); evasion gives a chance to avoid normal hits; resistances cap at 75%.
+- Flasks are manual by design and refill on kills. Instilling Orbs let a flask fire on a condition.
+- Bosses spawn after a kill count and telegraph a heavy hit. Dying to a boss resets its counter so an area can't soft-lock.
 
 ## Characters, accounts and saves
 

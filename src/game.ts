@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore } from 'react';
+import { flaskDef } from './data/flasks';
 import { SKILLS } from './data/skills';
 import { ZONES } from './data/zones';
 import type { Ctx } from './engine/context';
@@ -11,13 +12,31 @@ import { newGame, tick } from './engine/state';
 import { tutorialPage, withTutorial } from './engine/tutorial';
 import { LocalAccounts, type Account, type AccountProvider, type AuthProviderId } from './platform/accounts';
 import { LocalSaveStore, type CharacterSummary, type SaveStore } from './platform/saves';
-import type { GameEvent, GameState, SkillId } from './engine/types';
+import type { GameEvent, GameState, Item, SkillId } from './engine/types';
+import { activeGemDef, supportGemDef } from './data/gems';
 
 export interface FeedEntry {
   id: number;
   at: number;
   text: string;
   tone: 'info' | 'good' | 'warn' | 'bad' | 'magic' | 'rare' | 'unique' | 'level';
+}
+
+export interface LogLine {
+  id: number;
+  at: number;
+  text: string;
+  tone: FeedEntry['tone'];
+}
+
+export interface LootLine {
+  id: number;
+  at: number;
+  item?: Item;
+  currencyId?: string;
+  gemId?: string;
+  supportId?: string;
+  salvaged?: boolean;
 }
 
 export interface Toast {
@@ -42,6 +61,9 @@ class GameStore {
   showIntro = false;
   rev = 0;
   feed: FeedEntry[] = [];
+  /** right-sidebar tabs: what happened in fights, and what dropped */
+  combatLog: LogLine[] = [];
+  lootLog: LootLine[] = [];
   toasts: Toast[] = [];
   offline: OfflineSummary | null = null;
   /** recent xp gains, for the xp/hour readout */
@@ -157,6 +179,8 @@ class GameStore {
     this.state = s;
     this.feed = [];
     this.xpLog = [];
+    this.combatLog = [];
+    this.lootLog = [];
     this.offline = null;
     this.screen = 'game';
     this.startLoop();
@@ -265,8 +289,49 @@ class GameStore {
     this.feed = [{ id: this.nextId++, at: Date.now(), text, tone }, ...this.feed].slice(0, 40);
   }
 
+  private log(text: string, tone: FeedEntry['tone'] = 'info') {
+    this.combatLog = [{ id: this.nextId++, at: Date.now(), text, tone }, ...this.combatLog].slice(0, 60);
+  }
+
   private onEvent(e: GameEvent) {
     this.eventListeners.forEach((l) => l(e));
+    // sidebar logs
+    switch (e.t) {
+      case 'kill':
+        this.log(`Slew ${e.name}`, e.boss ? 'good' : 'info');
+        break;
+      case 'spawn':
+        this.log(e.boss ? `${e.name} appears!` : `Encountered ${e.name}`, e.boss ? 'warn' : 'info');
+        break;
+      case 'skill':
+        if (e.manual) this.log(`You cast ${activeGemDef(e.gemId).name}`, 'magic');
+        break;
+      case 'interrupt':
+        this.log(`Interrupted ${e.name}!`, 'good');
+        break;
+      case 'bossCast':
+        this.log(`${e.name} winds up a heavy blow`, 'warn');
+        break;
+      case 'flask':
+        this.log(`${e.auto ? 'Auto-used' : 'Drank'} ${flaskDef(e.flaskId).name}`, 'info');
+        break;
+      case 'death':
+        this.log('You were slain', 'bad');
+        break;
+      case 'gemLevel':
+        this.addFeed(`${activeGemDef(e.gemId).name} reached gem level ${e.level}`, 'level');
+        break;
+      case 'loot':
+        if (e.item || e.currencyId || e.gemId || e.supportId) {
+          this.lootLog = [
+            { id: this.nextId++, at: Date.now(), item: e.item, currencyId: e.currencyId, gemId: e.gemId, supportId: e.supportId, salvaged: e.salvaged },
+            ...this.lootLog,
+          ].slice(0, 80);
+        }
+        if (e.gemId) this.addFeed(`Found skill gem: ${activeGemDef(e.gemId).name}`, 'magic');
+        if (e.supportId) this.addFeed(`Found support gem: ${supportGemDef(e.supportId).name}`, 'magic');
+        break;
+    }
     switch (e.t) {
       case 'levelup':
         this.addFeed(`${SKILLS[e.skill].name} reached level ${e.level}`, 'level');

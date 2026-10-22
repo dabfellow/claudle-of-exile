@@ -1,5 +1,7 @@
 import { classDef, type ClassId } from '../data/classes';
 import { flaskDef, FLASK_SLOTS } from '../data/flasks';
+import { SKILL_BAR_SLOTS } from '../data/gems';
+import { createSkillGem } from './gems';
 import type { Ctx } from './context';
 import { combatStep } from './combat';
 import { refreshVendor, vendorTick } from './hideout';
@@ -9,7 +11,7 @@ import { skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -36,6 +38,9 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     equipment: {},
     flaskSlots: Array(FLASK_SLOTS).fill(null),
     flaskStash: [],
+    skillBar: Array(SKILL_BAR_SLOTS).fill(null),
+    gems: [],
+    supportGems: [],
     action: null,
     life: 60,
     mana: 30,
@@ -57,8 +62,14 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
   for (const slot of [0, 1]) {
     s.flaskSlots[slot] = { uid: s.nextUid++, flaskId: 'life_small', charges: flaskDef('life_small').maxCharges, instill: null };
   }
+  giveStarterGems(s);
   refreshVendor(s, rng);
   return s;
+}
+
+/** Put the class's starting skills on the bar. */
+export function giveStarterGems(s: GameState): void {
+  classDef(s.character.classId).starterGems.forEach((id, i) => (s.skillBar[i] = createSkillGem(s, id)));
 }
 
 /** Advance the simulation by dtMs using fixed sub-steps. */

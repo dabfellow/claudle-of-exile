@@ -13,7 +13,7 @@ import { allocate, allocateReason, refundReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { deserialize, exportSave, importSave, serialize } from '../src/engine/save';
 import { startSkillAction } from '../src/engine/skills';
-import { newGame, tick } from '../src/engine/state';
+import { newGame, SAVE_VERSION, tick } from '../src/engine/state';
 import { armourReduction, deriveStats } from '../src/engine/stats';
 import type { Item } from '../src/engine/types';
 import { charLevelForXp, charXpForLevel, levelForXp, xpForLevel } from '../src/engine/xp';
@@ -173,7 +173,7 @@ describe('combat', () => {
     const s = newGame(1);
     const c = ctx();
     startCombat(s, c, 'mudflats');
-    s.combat!.monster = makeMonster({ ...zoneDef('mudflats').boss, level: 80 }, true);
+    s.combat!.monsters = [makeMonster({ ...zoneDef('mudflats').boss, level: 80 }, true)];
     s.life = 1;
     for (let i = 0; i < 200 && s.combat; i++) combatStep(s, c, 50, deriveStats(s));
     expect(s.combat).toBeNull();
@@ -189,9 +189,11 @@ describe('combat', () => {
     const max = f.charges;
     expect(useFlask(s, c, 0)).toBeNull();
     expect(f.charges).toBe(max - 7);
-    s.combat!.monster = makeMonster(zoneDef('mudflats').monsters[0], false);
-    s.combat!.monster.life = 1;
-    s.combat!.attackTimer = 10_000;
+    const rat = makeMonster(zoneDef('mudflats').monsters[0], false);
+    rat.life = 1;
+    s.combat!.monsters = [rat];
+    s.combat!.actionMs = 0;
+    s.skillBar = s.skillBar.map(() => null); // default attack only, so the hit can't be a guard skill
     combatStep(s, c, 50, deriveStats(s));
     expect(f.charges).toBe(max - 6);
   });
@@ -318,7 +320,7 @@ describe('save', () => {
     const loaded = deserialize(JSON.stringify(s));
     expect(loaded.lifetime.kills).toBe(0);
     expect(loaded.settings.autoSalvage.normal).toBe(false);
-    expect(loaded.version).toBe(3);
+    expect(loaded.version).toBe(SAVE_VERSION);
     expect(loaded.character.name).toBe('Exile');
     expect(loaded.tutorial.done).toBe(true);
   });

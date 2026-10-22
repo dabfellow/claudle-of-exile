@@ -3,7 +3,9 @@ import { game, useGame } from '../game';
 import { QuestTracker } from './components/QuestTracker';
 import { Feed, OfflineModal, Sidebar, Toasts, TopBar, useFlaskHotkeys, usePage, XpBar, type Page } from './Layout';
 import { BenchPage } from './pages/BenchPage';
+import { CampaignPage } from './pages/CampaignPage';
 import { CombatPage } from './pages/CombatPage';
+import { SkillGemsPage } from './pages/SkillGemsPage';
 import { EquipmentPage } from './pages/EquipmentPage';
 import { HideoutPage } from './pages/HideoutPage';
 import { SkillPage } from './pages/SkillPage';
@@ -16,7 +18,11 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
     case 'hideout':
       return <HideoutPage go={go} />;
     case 'combat':
-      return <CombatPage />;
+      return <CombatPage go={go} />;
+    case 'campaign':
+      return <CampaignPage go={go} />;
+    case 'skills':
+      return <SkillGemsPage />;
     case 'tree':
       return <TreePage />;
     case 'equipment':
