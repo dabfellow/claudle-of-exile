@@ -1818,6 +1818,43 @@ h3 {
   text-overflow: ellipsis;
 }
 
+.account-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.account-badge .provider {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
+.sync {
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+}
+
+.sync.synced { color: #b8f0b8; border-color: #2e5a2e; }
+.sync.saving { color: var(--accent-2); border-color: #6b5226; }
+.sync.offline { color: #ffd28e; border-color: #6b5226; }
+
+.guest-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: linear-gradient(180deg, rgba(210, 166, 89, 0.08), transparent), var(--panel);
+}
+
+.guest-banner > div {
+  flex: 1;
+}
+
 /* ============ tutorial ============ */
 .quest {
   margin: 10px;

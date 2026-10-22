@@ -7,6 +7,7 @@ import { exportSave, importSave } from '../../engine/save';
 import { newGame } from '../../engine/state';
 import type { Rarity } from '../../engine/types';
 import { game, useGame } from '../../game';
+import { AccountBadge } from '../screens/Screens';
 import { fmt, fmtTime, MatIcon, Tooltip } from '../components/common';
 import { Orb } from '../components/Icon';
 import { ItemCell, ItemTip } from '../components/ItemView';
@@ -183,6 +184,22 @@ export function SettingsPage() {
         <div className="grow">
           <h1>Settings</h1>
         </div>
+      </div>
+      <div className="card">
+        <div className="card-title">Account</div>
+        <div className="row wrap">
+          <AccountBadge />
+          <span className="spacer" />
+          <button className="btn sm" onClick={() => game.signOut()}>
+            {game.account?.provider === 'guest' ? 'Back to title' : 'Sign out'}
+          </button>
+        </div>
+        {game.account?.provider === 'guest' && (
+          <p className="dim" style={{ fontSize: 12, marginBottom: 0 }}>
+            Playing as a guest: progress is saved in this browser only. Sign in with Google or Discord from the title screen to save to the cloud — you can
+            bring your guest characters with you.
+          </p>
+        )}
       </div>
       <div className="card">
         <div className="card-title">Loot filter</div>

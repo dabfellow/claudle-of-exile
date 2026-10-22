@@ -18,6 +18,8 @@ npm run sim      # headless balance sim (see docs/BALANCE.md)
 
 In dev builds the store is exposed as `window.game` for poking at state from the browser console.
 
+Online accounts (Google/Discord + cloud saves) need a `.env.local` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` — see [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md). Without it the game runs guest-only.
+
 ## What's in the game
 
 - **Characters**: guest accounts, multiple characters per account, Warrior / Ranger / Mage classes, a guided 10-step tutorial.

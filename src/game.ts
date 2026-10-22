@@ -10,8 +10,10 @@ import type { ClassId } from './data/classes';
 import { TUTORIAL_STEPS } from './data/tutorial';
 import { newGame, tick } from './engine/state';
 import { tutorialPage, withTutorial } from './engine/tutorial';
-import { LocalAccounts, type Account, type AccountProvider, type AuthProviderId } from './platform/accounts';
-import { LocalSaveStore, type CharacterSummary, type SaveStore } from './platform/saves';
+import { AppAccounts, type Account, type AuthProviderId } from './platform/accounts';
+import { getSupabase } from './platform/supabase';
+import { supabaseCharacters } from './platform/supabaseTable';
+import { CloudSaveStore, LocalSaveStore, moveCharacters, type CharacterSummary, type SaveStore, type SyncStatus } from './platform/saves';
 import type { GameEvent, GameState, Item, SkillId } from './engine/types';
 import { activeGemDef, supportGemDef } from './data/gems';
 
@@ -68,8 +70,12 @@ class GameStore {
   offline: OfflineSummary | null = null;
   /** recent xp gains, for the xp/hour readout */
   xpLog: { at: number; skill: SkillId; amount: number }[] = [];
-  readonly accounts: AccountProvider = new LocalAccounts(localStorage);
+  readonly accounts = new AppAccounts(localStorage, getSupabase());
   private saves: SaveStore | null = null;
+  /** cloud sync state while signed in with Google/Discord */
+  sync: SyncStatus | null = null;
+  /** characters saved as a guest on this browser, offered for moving to a signed-in account */
+  guestCharacters: CharacterSummary[] = [];
   private listeners = new Set<() => void>();
   private eventListeners = new Set<(e: GameEvent) => void>();
   private nextId = 1;
@@ -90,15 +96,23 @@ class GameStore {
   // ---------- account & characters ----------
 
   async boot() {
-    this.account = this.accounts.current();
+    try {
+      this.account = await this.accounts.init();
+    } catch (err) {
+      this.account = null;
+      this.pushToast(err instanceof Error ? err.message : 'Sign-in failed', 'bad');
+    }
     if (this.account) await this.openAccount(this.account);
     else this.setScreen('title');
   }
 
+  /** Guests start right away; Google/Discord redirect to the provider and come back to boot(). */
   async signIn(provider: AuthProviderId) {
     try {
-      this.account = await this.accounts.signIn(provider);
-      await this.openAccount(this.account);
+      const account = await this.accounts.signIn(provider);
+      if (!account) return; // redirecting
+      this.account = account;
+      await this.openAccount(account);
     } catch (err) {
       this.pushToast(err instanceof Error ? err.message : 'Sign-in failed', 'warn');
     }
@@ -107,13 +121,42 @@ class GameStore {
   async signOut() {
     await this.exit();
     await this.accounts.signOut();
+    this.account = null;
+    this.saves = null;
+    this.sync = null;
+    this.characters = [];
     this.setScreen('title');
   }
 
   private async openAccount(account: Account) {
-    this.saves = new LocalSaveStore(localStorage, account.id);
+    const supabase = getSupabase();
+    if (account.provider !== 'guest' && supabase) {
+      const cloud = new CloudSaveStore(supabaseCharacters(supabase), new LocalSaveStore(localStorage, `cloud-${account.id}`, false));
+      cloud.onStatus = (st) => {
+        this.sync = st;
+        this.notify();
+      };
+      this.sync = cloud.status;
+      this.saves = cloud;
+      const guest = this.accounts.guestAccount();
+      this.guestCharacters = guest ? await new LocalSaveStore(localStorage, guest.id, false).list() : [];
+    } else {
+      this.saves = new LocalSaveStore(localStorage, account.id);
+      this.sync = null;
+      this.guestCharacters = [];
+    }
     await this.refreshCharacters();
-    this.setScreen(this.characters.length ? 'select' : 'create');
+    this.setScreen(this.characters.length || this.guestCharacters.length ? 'select' : 'create');
+  }
+
+  /** Move this browser's guest characters onto the signed-in account. */
+  async adoptGuestCharacters() {
+    const guest = this.accounts.guestAccount();
+    if (!guest || !this.saves || this.account?.provider === 'guest') return;
+    const moved = await moveCharacters(new LocalSaveStore(localStorage, guest.id, false), this.saves, this.characters.map((c) => c.name));
+    this.guestCharacters = [];
+    await this.refreshCharacters();
+    this.pushToast(`Moved ${moved} character${moved === 1 ? '' : 's'} to your account`, 'good');
   }
 
   async refreshCharacters() {

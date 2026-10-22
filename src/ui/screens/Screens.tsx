@@ -42,6 +42,13 @@ function ScreenShell({ children, wide }: { children: React.ReactNode; wide?: boo
 }
 
 export function TitleScreen() {
+  useGame();
+  const [pending, setPending] = useState<string | null>(null);
+  const online = game.accounts.isAvailable('google');
+  const oauth = (provider: 'google' | 'discord') => {
+    setPending(provider);
+    void game.signIn(provider).finally(() => setPending(null));
+  };
   return (
     <ScreenShell>
       <div className="card title-card">
@@ -52,21 +59,36 @@ export function TitleScreen() {
           Play as Guest
         </button>
         <div className="divider">
-          <span>or sign in to sync across devices</span>
+          <span>or sign in to save to the cloud and play anywhere</span>
         </div>
-        <button className="btn lg" disabled title="Coming soon">
-          <span className="provider g">G</span> Sign in with Google
-          <span className="soon">soon</span>
+        <button className="btn lg" disabled={!online || !!pending} onClick={() => oauth('google')}>
+          <span className="provider g">G</span> {pending === 'google' ? 'Opening Google…' : 'Sign in with Google'}
+          {!online && <span className="soon">offline</span>}
         </button>
-        <button className="btn lg" disabled title="Coming soon">
-          <span className="provider d">D</span> Sign in with Discord
-          <span className="soon">soon</span>
+        <button className="btn lg" disabled={!online || !!pending} onClick={() => oauth('discord')}>
+          <span className="provider d">D</span> {pending === 'discord' ? 'Opening Discord…' : 'Sign in with Discord'}
+          {!online && <span className="soon">offline</span>}
         </button>
         <p className="dim" style={{ fontSize: 11.5, margin: 0, textAlign: 'center' }}>
-          Guest progress is saved in this browser. You'll be able to link it to an account later.
+          Guest progress stays in this browser. Sign in later and you can move your guest characters to your account.
         </p>
       </div>
     </ScreenShell>
+  );
+}
+
+const SYNC_LABEL = { synced: 'Saved to cloud', saving: 'Saving…', offline: 'Offline — saving locally' } as const;
+
+export function AccountBadge() {
+  useGame();
+  const a = game.account;
+  if (!a) return null;
+  return (
+    <span className="account-badge" title={a.email ?? a.displayName}>
+      {a.provider !== 'guest' && <span className={`provider ${a.provider === 'google' ? 'g' : 'd'}`}>{a.provider === 'google' ? 'G' : 'D'}</span>}
+      <span>{a.displayName}</span>
+      {game.sync && <span className={`sync ${game.sync}`}>{SYNC_LABEL[game.sync]}</span>}
+    </span>
   );
 }
 
@@ -125,14 +147,34 @@ export function CharacterSelect() {
   return (
     <ScreenShell>
       <div className="grid" style={{ gap: 12 }}>
-        <div className="row">
+        <div className="row wrap">
           <h2 style={{ fontSize: 20 }}>Choose your exile</h2>
           <span className="spacer" />
-          <span className="dim" style={{ fontSize: 12 }}>{game.account?.displayName}</span>
+          <AccountBadge />
           <button className="btn ghost sm" onClick={() => game.signOut()}>
-            Title
+            {game.account?.provider === 'guest' ? 'Title' : 'Sign out'}
           </button>
         </div>
+        {game.guestCharacters.length > 0 && (
+          <div className="card guest-banner">
+            <div>
+              <b>
+                {game.guestCharacters.length} guest character{game.guestCharacters.length === 1 ? '' : 's'} on this browser
+              </b>
+              <div className="dim" style={{ fontSize: 12 }}>
+                {game.guestCharacters.map((c) => c.name).join(', ')} — move them to your account to keep them in the cloud.
+              </div>
+            </div>
+            <button className="btn primary sm" onClick={() => game.adoptGuestCharacters()}>
+              Move to my account
+            </button>
+          </div>
+        )}
+        {game.characters.length === 0 && game.guestCharacters.length > 0 && (
+          <div className="dim" style={{ textAlign: 'center', fontSize: 12.5 }}>
+            No characters on this account yet.
+          </div>
+        )}
         {game.characters.map((c) => (
           <CharacterCard key={c.id} c={c} />
         ))}

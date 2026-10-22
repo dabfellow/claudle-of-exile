@@ -36,8 +36,9 @@ The engine never talks to the UI directly. It calls `ctx.emit(event)` (`GameEven
 
 ## Characters, accounts and saves
 
-- `platform/accounts.ts` defines `AccountProvider`; only `LocalAccounts` (guest) exists today. Google/Discord sign-in (via Supabase or Firebase) should implement the same interface.
-- `platform/saves.ts` defines an async `SaveStore`; `LocalSaveStore` keeps an index of character summaries plus one key per character. A cloud store would implement the same interface.
+- `platform/accounts.ts`: `AppAccounts` handles guests (browser storage) and Google/Discord through Supabase OAuth (PKCE redirect back to the site). Keys come from `.env.local` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`); without them the game is guest-only.
+- `platform/saves.ts`: an async `SaveStore`. `LocalSaveStore` keeps an index of character summaries plus one key per character. `CloudSaveStore` writes to the Supabase `characters` table (row-level security: players only see their own rows) and keeps a local copy, so offline play never loses progress; whichever copy is newer wins on load.
+- When a signed-in player has guest characters on the same browser, character select offers to move them to the account (`moveCharacters`).
 - Saves are versioned (`SAVE_VERSION`) with a migration per version in `engine/save.ts`. The pre-character single save is imported automatically as a Warrior named "Exile".
 
 ## Tutorial
