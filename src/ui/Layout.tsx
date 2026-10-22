@@ -32,6 +32,7 @@ export type Page =
   | 'bench'
   | 'stash'
   | 'vendor'
+  | 'achievements'
   | 'settings'
   | SkillId;
 
@@ -49,6 +50,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
       { page: 'hideout', label: 'Hideout', icon: 'home' },
       { page: 'vendor', label: "Trader's Stall", icon: 'vendor' },
       { page: 'stash', label: 'Stash', icon: 'stash' },
+      { page: 'achievements', label: 'Achievements', icon: 'trophy' },
     ],
   },
   {
@@ -123,6 +125,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
                 {lvl !== null && <span className="nav-badge">{lvl}</span>}
                 {it.page === 'tree' && points > 0 && <span className="nav-badge hot">+{points}</span>}
                 {it.page === 'stash' && <span className="nav-badge">{s.inventory.length}</span>}
+                {it.page === 'achievements' && <span className="nav-badge">{s.achievements.length}</span>}
               </button>
             );
           })}

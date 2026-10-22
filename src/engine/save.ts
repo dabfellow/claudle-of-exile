@@ -1,4 +1,5 @@
 import { SKILL_BAR_SLOTS } from '../data/gems';
+import { ZONES, zoneDef } from '../data/zones';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { FlaskInstance, GameState } from './types';
 
@@ -54,6 +55,12 @@ const MIGRATIONS: Record<number, Migration> = {
     raw.masteries = {};
     raw.skillPassives ??= [];
     raw.greenhouse ??= null;
+  },
+  6: (raw) => {
+    // achievements arrived; bosses already beaten are inferred from the areas they unlocked
+    const s = raw as unknown as GameState;
+    s.achievements ??= [];
+    s.bossesDefeated ??= ZONES.filter((z) => s.unlockedZones.some((u) => zoneDef(u).tier === z.tier + 1)).map((z) => z.id);
   },
 };
 

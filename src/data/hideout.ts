@@ -64,8 +64,8 @@ export const STATIONS: StationDef[] = [
     levels: [
       { cost: {}, effect: 'Apply currency, salvage items' },
       { cost: { gold: 300, arcane_dust: 40 }, effect: 'Bench crafts: Life & Resistances' },
-      { cost: { gold: 1500, arcane_dust: 120, rough_gem: 6 }, effect: 'Bench crafts: Attack Speed, Physical Damage, Armour/Evasion' },
-      { cost: { gold: 5000, arcane_dust: 300, rough_gem: 15 }, effect: 'Bench crafts: Critical Strikes, Rarity, Elemental Damage' },
+      { cost: { gold: 1500, arcane_dust: 120, rough_gem: 6 }, effect: 'More bench recipes (each also needs its achievement)' },
+      { cost: { gold: 5000, arcane_dust: 300, rough_gem: 15 }, effect: 'Top-tier bench recipes (each also needs its achievement)' },
     ],
   },
   {
@@ -97,6 +97,8 @@ export const VENDOR_REFRESH_MS = 10 * 60 * 1000;
 export interface BenchCraft {
   id: string;
   benchLevel: number;
+  /** achievement that unlocks this recipe (on top of the bench level) */
+  achievement?: string;
   affixId: string;
   /** tier index of the affix to craft */
   tier: number;
@@ -108,12 +110,19 @@ export const BENCH_CRAFTS: BenchCraft[] = [
   { id: 'bc_fire', benchLevel: 2, affixId: 'fire_res', tier: 1, cost: { gold: 50, arcane_dust: 6 } },
   { id: 'bc_cold', benchLevel: 2, affixId: 'cold_res', tier: 1, cost: { gold: 50, arcane_dust: 6 } },
   { id: 'bc_light', benchLevel: 2, affixId: 'light_res', tier: 1, cost: { gold: 50, arcane_dust: 6 } },
-  { id: 'bc_speed', benchLevel: 3, affixId: 'attack_speed', tier: 2, cost: { gold: 200, arcane_dust: 20 } },
-  { id: 'bc_phys', benchLevel: 3, affixId: 'added_phys', tier: 2, cost: { gold: 200, arcane_dust: 20 } },
-  { id: 'bc_armour', benchLevel: 3, affixId: 'inc_armour', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
-  { id: 'bc_evasion', benchLevel: 3, affixId: 'inc_evasion', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
-  { id: 'bc_crit', benchLevel: 4, affixId: 'crit_chance', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
-  { id: 'bc_multi', benchLevel: 4, affixId: 'crit_multi', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
-  { id: 'bc_rarity', benchLevel: 4, affixId: 'item_rarity', tier: 2, cost: { gold: 400, arcane_dust: 35 } },
-  { id: 'bc_elem', benchLevel: 4, affixId: 'inc_elem', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
+  { id: 'bc_mana', benchLevel: 2, achievement: 'salvager_50', affixId: 'flat_mana', tier: 1, cost: { gold: 60, arcane_dust: 8 } },
+  { id: 'bc_speed', benchLevel: 3, achievement: 'slayer_1000', affixId: 'attack_speed', tier: 2, cost: { gold: 200, arcane_dust: 20 } },
+  { id: 'bc_phys', benchLevel: 3, achievement: 'boss_10', affixId: 'added_phys', tier: 2, cost: { gold: 200, arcane_dust: 20 } },
+  { id: 'bc_armour', benchLevel: 3, achievement: 'crafter_25', affixId: 'inc_armour', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
+  { id: 'bc_evasion', benchLevel: 3, achievement: 'crafter_25', affixId: 'inc_evasion', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
+  { id: 'bc_flask_charges', benchLevel: 3, achievement: 'flask_100', affixId: 'flask_charges', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
+  { id: 'bc_skill_speed', benchLevel: 3, achievement: 'total_50', affixId: 'skill_speed', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
+  { id: 'bc_str', benchLevel: 3, achievement: 'smith_100', affixId: 'strength', tier: 2, cost: { gold: 120, arcane_dust: 12 } },
+  { id: 'bc_dex', benchLevel: 3, achievement: 'smith_100', affixId: 'dexterity', tier: 2, cost: { gold: 120, arcane_dust: 12 } },
+  { id: 'bc_int', benchLevel: 3, achievement: 'smith_100', affixId: 'intelligence', tier: 2, cost: { gold: 120, arcane_dust: 12 } },
+  { id: 'bc_accuracy', benchLevel: 3, achievement: 'level_25', affixId: 'accuracy', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
+  { id: 'bc_crit', benchLevel: 4, achievement: 'crafter_250', affixId: 'crit_chance', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
+  { id: 'bc_multi', benchLevel: 4, achievement: 'crafter_250', affixId: 'crit_multi', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
+  { id: 'bc_rarity', benchLevel: 4, achievement: 'unique_find', affixId: 'item_rarity', tier: 2, cost: { gold: 400, arcane_dust: 35 } },
+  { id: 'bc_elem', benchLevel: 4, achievement: 'bench_10', affixId: 'inc_elem', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
 ];

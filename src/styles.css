@@ -3570,3 +3570,51 @@ img.art {
   color: var(--accent);
   font-size: 16px;
 }
+
+/* ---------- achievements ---------- */
+.achievement {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+.achievement.done {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 8%, var(--panel)), var(--panel));
+}
+.achievement-badge {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  flex: none;
+}
+.achievement.done .achievement-badge {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.achievement-name {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.achievement-rewards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11.5px;
+}
+.bench-locked {
+  opacity: 0.6;
+}
+.area-drops {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11.5px;
+}
+.unique-name {
+  color: var(--unique, #c8803a);
+}

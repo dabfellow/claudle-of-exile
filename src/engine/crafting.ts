@@ -1,5 +1,6 @@
 import { affixDef } from '../data/affixes';
 import { baseDef } from '../data/bases';
+import { ACHIEVEMENT_BY_ID } from '../data/achievements';
 import { BENCH_CRAFTS } from '../data/hideout';
 import type { Ctx } from './context';
 import { addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, salvageValue, spawnWeight } from './items';
@@ -113,6 +114,7 @@ export function benchCraftReason(s: GameState, craftId: string, uid: number): st
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
   if ((s.hideout.bench ?? 1) < craft.benchLevel) return `Requires Crafting Bench level ${craft.benchLevel}`;
+  if (craft.achievement && !s.achievements.includes(craft.achievement)) return `Unlock with achievement: ${ACHIEVEMENT_BY_ID[craft.achievement].name}`;
   if (item.rarity === 'unique') return 'Cannot modify unique items';
   if (item.rarity === 'normal') return 'Item must be Magic or Rare';
   if (allMods(item).some((m) => m.crafted)) return 'Item already has a crafted modifier';
@@ -134,6 +136,7 @@ export function benchCraft(s: GameState, ctx: Ctx, craftId: string, uid: number)
   payCost(s, craft.cost);
   const values = affix.tiers[craft.tier].ranges.map(([lo, hi]) => rInt(ctx.rng, lo, hi));
   (affix.kind === 'prefix' ? item.prefixes : item.suffixes).push({ affixId: affix.id, tier: craft.tier, values, crafted: true });
+  s.lifetime.benchCrafts += 1;
   ctx.emit({ t: 'craft', text: `Bench craft on ${itemName(item)}`, uid });
   return null;
 }
@@ -148,6 +151,7 @@ export function salvage(s: GameState, ctx: Ctx, uids: number[]): number {
   });
   if (dust > 0) {
     s.bank.arcane_dust = (s.bank.arcane_dust ?? 0) + dust;
+    s.lifetime.salvaged += uids.length;
     ctx.emit({ t: 'info', text: `Salvaged ${uids.length} item(s) for ${dust} Arcane Dust`, tone: 'good' });
   }
   return dust;

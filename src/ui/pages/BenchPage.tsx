@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { affixDef } from '../../data/affixes';
+import { ACHIEVEMENT_BY_ID } from '../../data/achievements';
 import { BENCH_CRAFTS } from '../../data/hideout';
+import { achievementProgress } from '../../engine/achievements';
 import { currencyDef } from '../../data/materials';
 import { applyOrb, benchCraft, benchCraftReason, findItem, orbReason, salvage } from '../../engine/crafting';
 import { stationLevel } from '../../engine/hideout';
 import { affixRangeText, itemName, salvageValue } from '../../engine/items';
 import type { EquipSlot, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Cost, Tooltip } from '../components/common';
+import { Cost, fmt, ProgressBar, Tooltip } from '../components/common';
 import { Orb } from '../components/Icon';
 import { ItemCell, ItemTip } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
@@ -140,6 +142,24 @@ export function BenchPage() {
                 const a = affixDef(b.affixId);
                 const preview = affixRangeText(a.id, b.tier);
                 const reason = item ? benchCraftReason(s, b.id, item.uid) : 'Select an item';
+                if (b.achievement && !s.achievements.includes(b.achievement)) {
+                  const ach = ACHIEVEMENT_BY_ID[b.achievement];
+                  const p = achievementProgress(s, b.achievement);
+                  return (
+                    <div key={b.id} className="mat bench-locked" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                      <span className="mod crafted" style={{ fontSize: 12.5 }}>
+                        {preview}
+                      </span>
+                      <span className="dim" style={{ fontSize: 11 }}>
+                        Locked — {ach.name}: {ach.desc}
+                      </span>
+                      <ProgressBar value={p.value / p.target} color="var(--accent)" />
+                      <span className="dim" style={{ fontSize: 10.5 }}>
+                        {fmt(p.value)} / {fmt(p.target)}
+                      </span>
+                    </div>
+                  );
+                }
                 return (
                   <div key={b.id} className="mat" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
                     <span className="mod crafted" style={{ fontSize: 12.5 }}>

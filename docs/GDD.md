@@ -213,7 +213,7 @@ Each phase ends with something playable and reviewed with you before the next.
 2. **Combat 2.0** — skill gems, supports, skill bar, tactics rules, new Combat tab, Campaign tab, sidebar tabs, always-on XP bar. ✅ *Done.*
 3. **Items & UI** — flask items + enchants, pinned/Alt tooltips, equipment layout, stash rework, trader rework. ✅ *Done — art drops in automatically from `src/assets/art/` when added.*
 4. **Trees** — character tree redesign (node list first), skilling tree. ✅ *Done — see [TREES.md](TREES.md).*
-5. **Economy** — drop tables, crafting gating, act-tied gathering, achievements → bench recipes.
+5. **Economy** — drop tables, crafting gating, act-tied gathering, achievements → bench recipes. ✅ *Done — tables in `data/drops.ts`, 26 achievements in `data/achievements.ts`.*
 6. **Accounts** — Supabase login and cloud saves (as soon as you finish the setup guide; can happen in parallel).
 7. **Art pass** — drop in generated assets, final visual polish.
 8. **Act 1 content & balance** — areas, boss, tuning against the pacing targets, launch checklist.

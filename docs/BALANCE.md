@@ -21,7 +21,10 @@ The bot pushes the furthest zone it's levelled for (area min level ≤ char leve
 | Monster life / attack interval | `data/zones.ts` | ×1.8 / ×1.6 |
 | Base life regen | `engine/stats.ts` `BASE_REGEN_PCT` | 0.5%/s |
 | Skill XP | `data/skills.ts` `SKILL_XP_SCALE` | 0.3 |
-| Drops | `engine/loot.ts` | currency 4.5%, items 6%, unique 0.05% (boss 6%) per kill |
+| Drops | `data/drops.ts` `DROP_TABLES` | per area tier: currency 4.5→5.5%, items 6→7%, rare share 4→12%, unique 0.05→0.1%; chaos from tier 2, exalted/divine from tier 3, instill from tier 4 |
+| Boss drops | `data/drops.ts` `BOSS_TABLES` | first kill guarantees the tier reward (2 transmute → 1 exalted), then 10% per kill (`repeatChance`); 2–4 extra currency rolls |
+| Gathering/recipe gating | `data/skills.ts` `area` | higher nodes and recipes need their area unlocked |
+| Bench recipes | `data/hideout.ts` `BENCH_CRAFTS` | bench level + an achievement for everything past life/resists |
 | Gold | `engine/loot.ts` | 1…level/3 per kill (×15 boss) |
 | Smith item level | `engine/skills.ts` `smithIlvlCap` | capped at furthest unlocked area's max level |
 
@@ -62,6 +65,10 @@ Notes for the Phase 8 balance pass:
 - Existing characters had their passive points refunded (save v6) because the tree was rebuilt.
 - The bot skips keystones (its scorer can't judge trade-offs like Blood Pact) and takes the first mastery option.
 - **Drop luck dominates single runs.** Seed 7 left a Warrior on 17 DPS with 58 deaths at the second boss; seeds 3, 11 and 21 killed it in 28–37 minutes with no deaths. Always compare several seeds (`--seed N`) before tuning. Use `--debug` to print the bot's tree, skills and stats.
+
+## Phase 5 — economy (2026-10-21, warrior, 8h, seeds 1–2)
+- With bosses guaranteeing their reward on every kill, a tier-3 farm made ~115 chaos in 8h (bosses every 25 kills). Guarantees are now first-kill only (then 10%), giving 39–84 chaos and 46–72 alchemy per 8h depending on how deep the bot got.
+- Rare currency (regal and up) never comes from skilling: `COMBAT_ONLY_CURRENCY`. Alchemy still makes transmute/alteration/scour/regret/alchemy orbs, but its recipes unlock with the matching area.
 
 ## Known gaps (fixed by later phases)
 - The five current zones span levels 1–45; Phase 8 restructures them into Act 1 (≈ levels 1–15) and later acts.

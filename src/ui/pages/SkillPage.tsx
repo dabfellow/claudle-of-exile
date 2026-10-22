@@ -3,6 +3,7 @@ import { baseDef } from '../../data/bases';
 import { flaskDef } from '../../data/flasks';
 import { materialDef } from '../../data/materials';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
+import { zoneDef } from '../../data/zones';
 import { actionBlocker, actionIntervalMs, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
@@ -61,7 +62,8 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
   const s = useGame();
   const d = deriveStats(s);
   const running = s.action?.kind === 'skill' && s.action.actionId === a.id;
-  const locked = level < a.level;
+  const areaLocked = !!a.area && !s.unlockedZones.includes(a.area);
+  const locked = level < a.level || areaLocked;
   const interval = actionIntervalMs(s, a, d);
   const blocker = actionBlocker(s, a);
   const [pops, setPops] = useState<{ id: number; text: string }[]>([]);
@@ -100,7 +102,7 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
         <div style={{ minWidth: 0 }}>
           <div className="action-name">{a.name}</div>
           <div className="action-meta">
-            <span>{locked ? `Requires level ${a.level}` : `Lv ${a.level}`}</span>
+            <span>{areaLocked ? `Reach ${zoneDef(a.area!).name}` : level < a.level ? `Requires level ${a.level}` : `Lv ${a.level}`}</span>
             <span>
               <Icon name="clock" size={11} /> {(interval / 1000).toFixed(1)}s
             </span>

@@ -1,3 +1,5 @@
+import { ACHIEVEMENT_BY_ID } from './data/achievements';
+import { BENCH_CRAFTS } from './data/hideout';
 import { useEffect, useSyncExternalStore } from 'react';
 import { flaskDef } from './data/flasks';
 import { SKILLS } from './data/skills';
@@ -414,6 +416,14 @@ class GameStore {
         const step = TUTORIAL_STEPS[e.step];
         this.addFeed(`Quest complete: ${step.title}${step.rewardText ? ` — ${step.rewardText}` : ''}`, 'good');
         this.pushToast(e.done ? 'Tutorial complete! The wilds are yours.' : `Quest complete: ${step.title}`, 'good');
+        break;
+      }
+      case 'achievement': {
+        const a = ACHIEVEMENT_BY_ID[e.id];
+        const recipes = BENCH_CRAFTS.filter((b) => b.achievement === e.id).length;
+        const extra = recipes ? ` — ${recipes} bench recipe${recipes > 1 ? 's' : ''} unlocked` : '';
+        this.addFeed(`Achievement: ${a.name}${extra}`, 'good');
+        this.pushToast(`Achievement unlocked: ${a.name}`, 'good');
         break;
       }
       case 'info':

@@ -4,6 +4,7 @@ import { SKILL_BAR_SLOTS } from '../data/gems';
 import { newFlask } from './flasks';
 import { createSkillGem } from './gems';
 import type { Ctx } from './context';
+import { checkAchievements } from './achievements';
 import { combatStep } from './combat';
 import { refreshVendor, vendorTick } from './hideout';
 import { createItem } from './items';
@@ -12,7 +13,7 @@ import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -51,11 +52,16 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     passives: [],
     masteries: {},
     skillPassives: [],
+    achievements: [],
+    bossesDefeated: [],
     greenhouse: null,
     hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1 },
     vendor: { stock: [], refreshAt: 0 },
     settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false },
-    lifetime: { kills: 0, bossKills: 0, deaths: 0, itemsLooted: 0, orbsUsed: 0 },
+    lifetime: {
+      kills: 0, bossKills: 0, deaths: 0, itemsLooted: 0, orbsUsed: 0, salvaged: 0, flasksDrunk: 0,
+      flasksBrewed: 0, itemsSmithed: 0, gathered: 0, benchCrafts: 0, raresFound: 0, uniquesFound: 0,
+    },
     clock: 0,
     lastSaved: Date.now(),
   };
@@ -98,4 +104,5 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
   if (s.life > d.maxLife) s.life = d.maxLife;
   if (s.mana > d.maxMana) s.mana = d.maxMana;
   vendorTick(s, ctx.rng);
+  checkAchievements(s, ctx);
 }

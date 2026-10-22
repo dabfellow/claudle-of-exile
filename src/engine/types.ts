@@ -249,6 +249,14 @@ export interface Lifetime {
   deaths: number;
   itemsLooted: number;
   orbsUsed: number;
+  salvaged: number;
+  flasksDrunk: number;
+  flasksBrewed: number;
+  itemsSmithed: number;
+  gathered: number;
+  benchCrafts: number;
+  raresFound: number;
+  uniquesFound: number;
 }
 
 export interface CharacterInfo {
@@ -293,6 +301,10 @@ export interface GameState {
   masteries: Record<string, number>;
   /** allocated skilling-tree nodes */
   skillPassives: string[];
+  /** completed achievement ids */
+  achievements: string[];
+  /** areas whose boss has been killed at least once */
+  bossesDefeated: string[];
   /** Greenhouse keystone: the harvesting action that keeps ticking in the background */
   greenhouse: { actionId: string; progress: number } | null;
   hideout: Record<string, number>;
@@ -332,6 +344,7 @@ export type GameEvent =
   | { t: 'allocate'; nodeId: string }
   | { t: 'combatStart'; zoneId: string }
   | { t: 'tutorialStep'; step: number; done: boolean }
+  | { t: 'achievement'; id: string }
   | { t: 'flask'; slot: number; flaskId: string; auto: boolean }
   | { t: 'bossCast'; name: string }
   | { t: 'zoneUnlocked'; zoneId: string }

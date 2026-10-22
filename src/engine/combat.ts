@@ -176,6 +176,7 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
     const resource = kind === 'mana' ? 'mana' : 'life';
     c.heals.push({ resource, perMs: (st.def.heal * effect) / duration, remainingMs: duration });
   }
+  s.lifetime.flasksDrunk += 1;
   ctx.emit({ t: 'flask', slot, flaskId: f.flaskId, auto });
   return null;
 }
@@ -555,6 +556,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
 
   if (mon.isBoss) {
     s.lifetime.bossKills += 1;
+    if (!s.bossesDefeated.includes(zone.id)) s.bossesDefeated.push(zone.id);
     s.zoneKills[zone.id] = 0;
     const nextZone = ZONES.find((z) => z.tier === zone.tier + 1);
     if (nextZone && !s.unlockedZones.includes(nextZone.id)) {

@@ -25,6 +25,7 @@ const PATHS: Record<string, string> = {
   minus: 'M5 12h14',
   target: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 11.5v1',
   bolt: 'M13 3 5 13h6l-1 8 8-10h-6l1-8Z',
+  trophy: 'M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H5c0 3 1.5 4.5 3 5M16 6h3c0 3-1.5 4.5-3 5M12 13v4M8.5 20h7M10 17h4v3h-4z',
   clock: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16ZM12 8v4l3 2',
   // item slots
   weapon: 'M5 19 16 8M16 8l2-4 2 2-4 2M7 15l2 2M4 20l1.5-1.5',

@@ -3,6 +3,7 @@ import { game, useGame } from '../game';
 import { PinDock } from './components/common';
 import { QuestTracker } from './components/QuestTracker';
 import { Feed, OfflineModal, Sidebar, Toasts, TopBar, useFlaskHotkeys, usePage, XpBar, type Page } from './Layout';
+import { AchievementsPage } from './pages/AchievementsPage';
 import { BenchPage } from './pages/BenchPage';
 import { CampaignPage } from './pages/CampaignPage';
 import { CombatPage } from './pages/CombatPage';
@@ -36,6 +37,8 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
       return <StashPage go={go} />;
     case 'vendor':
       return <TraderPage />;
+    case 'achievements':
+      return <AchievementsPage />;
     case 'settings':
       return <SettingsPage />;
     default:

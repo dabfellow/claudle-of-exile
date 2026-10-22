@@ -2,7 +2,7 @@ import { flaskDef } from '../data/flasks';
 import { ALCH_DOUBLE, ALCH_SPEED, FORGE_ILVL, FORGE_SPEED } from '../data/hideout';
 import { HERB_TIERS, ORB_TIERS } from '../data/skillTree';
 import { actionDef, type SkillAction } from '../data/skills';
-import { ZONES } from '../data/zones';
+import { ZONES, zoneDef } from '../data/zones';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { newFlask, rerollMagic } from './flasks';
@@ -53,6 +53,7 @@ export function smithIlvl(s: GameState): number {
 }
 
 export function actionBlocker(s: GameState, a: SkillAction): string | null {
+  if (a.area && !s.unlockedZones.includes(a.area)) return `Reach ${zoneDef(a.area).name} to unlock`;
   if (skillLevel(s, a.skill) < a.level) return `Requires ${a.skill} level ${a.level}`;
   if (a.inputs && !canAfford(s, a.inputs)) return 'Missing materials';
   if (a.baseId && inventoryFull(s)) return 'Inventory full';
@@ -111,6 +112,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
     const tier = ORB_TIERS.indexOf(id);
     const outId = tier >= 0 && tier < ORB_TIERS.length - 1 && t.transmuter && chance(ctx.rng, t.transmuter / 100) ? ORB_TIERS[tier + 1] : id;
     give(s, outputs, outId, qty);
+    if (a.skill === 'mining' || a.skill === 'woodcutting' || a.skill === 'harvesting') s.lifetime.gathered += qty;
     if (a.skill === 'woodcutting' && t.heartwood) give(s, outputs, 'arcane_dust', qty);
     const herb = HERB_TIERS.indexOf(id);
     if (herb >= 0 && herb < HERB_TIERS.length - 1 && t.rareBlooms && chance(ctx.rng, t.rareBlooms / 100)) give(s, outputs, HERB_TIERS[herb + 1], 1);
@@ -125,9 +127,11 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
     const magic = t.grandmaster || (t.smithMagic && chance(ctx.rng, t.smithMagic / 100));
     const item = createItem(s, a.baseId, smithIlvl(s), magic ? 'magic' : 'normal', ctx.rng);
     s.inventory.push(item);
+    s.lifetime.itemsSmithed += 1;
     ctx.emit({ t: 'loot', item });
   }
   if (a.flaskId) {
+    s.lifetime.flasksBrewed += mult;
     for (let i = 0; i < mult; i++) {
       const f = newFlask(s, a.flaskId, skillLevel(s, 'alchemy'));
       if (t.qualityBrews && chance(ctx.rng, t.qualityBrews / 100)) {

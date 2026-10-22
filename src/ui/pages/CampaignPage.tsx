@@ -1,10 +1,13 @@
+import { uniqueDef } from '../../data/bases';
+import { bossTable, dropTable } from '../../data/drops';
+import { materialDef } from '../../data/materials';
 import { useState } from 'react';
 import { ZONES, type ZoneDef } from '../../data/zones';
 import { characterLevel } from '../../engine/character';
 import { bossIsNext, startCombat } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { ProgressBar } from '../components/common';
+import { MatIcon, ProgressBar } from '../components/common';
 import { Icon } from '../components/Icon';
 import type { Page } from '../Layout';
 
@@ -24,6 +27,36 @@ function danger(s: GameState, z: ZoneDef): { label: string; cls: string } {
   if (gap <= 0) return { label: 'Fair', cls: '' };
   if (gap <= 4) return { label: 'Risky', cls: 'warn' };
   return { label: 'Deadly', cls: 'bad' };
+}
+
+/** The rarest orbs an area can drop, its uniques, and what its boss always gives. */
+function DropPreview({ z }: { z: ZoneDef }) {
+  const table = dropTable(z.tier);
+  const boss = bossTable(z.tier);
+  const orbs = Object.entries(table.currency)
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 4)
+    .map(([id]) => id);
+  return (
+    <div className="area-drops">
+      <span className="dim">Notable drops</span>
+      <div className="row wrap" style={{ gap: 6 }}>
+        {orbs.map((id) => (
+          <span key={id} className="io-item" title={materialDef(id).name}>
+            <MatIcon id={id} /> {materialDef(id).name}
+          </span>
+        ))}
+        {z.uniques.map((id) => (
+          <span key={id} className="io-item unique-name" title="Unique item">
+            {uniqueDef(id).name}
+          </span>
+        ))}
+      </div>
+      <span className="dim">
+        First boss kill: {boss.guaranteed.map((g) => `${g.qty}× ${materialDef(g.id).name}`).join(', ')} (then {Math.round(boss.repeatChance * 100)}% per kill)
+      </span>
+    </div>
+  );
 }
 
 function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => void }) {
@@ -60,6 +93,7 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
               <Icon name="bolt" size={12} /> {risk.label} for your level
             </span>
           </div>
+          <DropPreview z={z} />
           <ProgressBar value={Math.min(1, kills / z.bossEvery)} color={bossIsNext(s, z.id) ? 'var(--life-2)' : z.color} />
           <div className="dim" style={{ fontSize: 11 }}>
             {bossIsNext(s, z.id) ? `${z.boss.name} awaits` : `${kills}/${z.bossEvery} kills until the boss`}
