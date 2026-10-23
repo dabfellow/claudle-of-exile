@@ -1,5 +1,6 @@
 import type { SkillId } from '../engine/types';
 import { BASES, type BaseDef } from './bases';
+import type { GemAttr } from './gems';
 
 export interface SkillDef {
   id: SkillId;
@@ -17,6 +18,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   harvesting: { id: 'harvesting', name: 'Harvesting', group: 'gathering', color: '#d9b84a', verb: 'Harvesting', desc: 'Gather herbs for Alchemy.' },
   smithing: { id: 'smithing', name: 'Smithing', group: 'production', color: '#b8b8c8', verb: 'Smithing', desc: 'Forge equipment bases. Higher level → higher item level.' },
   alchemy: { id: 'alchemy', name: 'Alchemy', group: 'production', color: '#9b6dde', verb: 'Brewing', desc: 'Brew flasks and transmute dust into orbs.' },
+  gemcutting: { id: 'gemcutting', name: 'Gemcutting', group: 'production', color: '#4fc1a6', verb: 'Cutting', desc: 'Cut rough gems into skill and support gems.' },
 };
 
 export interface SkillAction {
@@ -33,6 +35,8 @@ export interface SkillAction {
   baseId?: string;
   /** alchemy: produces a flask */
   flaskId?: string;
+  /** gemcutting: produces a random gem of this kind (and attribute) */
+  gem?: { kind: 'skill' | 'support' | 'signature'; attr?: GemAttr };
   color: string;
   /** campaign area that must be unlocked first */
   area?: string;
@@ -117,10 +121,21 @@ const ALCHEMY: SkillAction[] = [
   { id: 'orb_alchemy', skill: 'alchemy', name: 'Orb of Alchemy', level: 40, intervalMs: 6000, xp: 90, inputs: { arcane_dust: 25, voidbloom: 2 }, outputs: { alchemy: 1 }, color: '#f0c14b', area: 'shipgrave' },
 ];
 
+const GEMCUTTING: SkillAction[] = [
+  { id: 'cut_skill_str', skill: 'gemcutting', name: 'Ruby Skill Gem', level: 1, intervalMs: 6000, xp: 20, inputs: { rough_gem: 1, arcane_dust: 6 }, gem: { kind: 'skill', attr: 'str' }, color: '#d0574a' },
+  { id: 'cut_skill_dex', skill: 'gemcutting', name: 'Emerald Skill Gem', level: 1, intervalMs: 6000, xp: 20, inputs: { rough_gem: 1, arcane_dust: 6 }, gem: { kind: 'skill', attr: 'dex' }, color: '#5fbf6a' },
+  { id: 'cut_skill_int', skill: 'gemcutting', name: 'Sapphire Skill Gem', level: 1, intervalMs: 6000, xp: 20, inputs: { rough_gem: 1, arcane_dust: 6 }, gem: { kind: 'skill', attr: 'int' }, color: '#6fa8ff' },
+  { id: 'cut_support_str', skill: 'gemcutting', name: 'Ruby Support Gem', level: 10, intervalMs: 7000, xp: 40, inputs: { rough_gem: 2, arcane_dust: 10, frostleaf: 2 }, gem: { kind: 'support', attr: 'str' }, color: '#d0574a', area: 'ashwood' },
+  { id: 'cut_support_dex', skill: 'gemcutting', name: 'Emerald Support Gem', level: 10, intervalMs: 7000, xp: 40, inputs: { rough_gem: 2, arcane_dust: 10, frostleaf: 2 }, gem: { kind: 'support', attr: 'dex' }, color: '#5fbf6a', area: 'ashwood' },
+  { id: 'cut_support_int', skill: 'gemcutting', name: 'Sapphire Support Gem', level: 10, intervalMs: 7000, xp: 40, inputs: { rough_gem: 2, arcane_dust: 10, frostleaf: 2 }, gem: { kind: 'support', attr: 'int' }, color: '#6fa8ff', area: 'ashwood' },
+  { id: 'cut_signature', skill: 'gemcutting', name: 'Signature Support Gem', level: 25, intervalMs: 9000, xp: 75, inputs: { rough_gem: 4, arcane_dust: 20, emberroot: 3 }, gem: { kind: 'signature' }, color: '#e0a640', area: 'crypt' },
+  { id: 'cut_expansion', skill: 'gemcutting', name: 'Orb of Expansion', level: 45, intervalMs: 12000, xp: 120, inputs: { rough_gem: 8, arcane_dust: 40, voidbloom: 4 }, outputs: { expansion: 1 }, color: '#c08bff', area: 'stormcliffs' },
+];
+
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-export const ACTIONS: SkillAction[] = [...GATHERING, ...SMITHING, ...ALCHEMY].map((a) => ({
+export const ACTIONS: SkillAction[] = [...GATHERING, ...SMITHING, ...ALCHEMY, ...GEMCUTTING].map((a) => ({
   ...a,
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
 }));

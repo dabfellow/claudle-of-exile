@@ -17,7 +17,7 @@ export interface AchievementDef {
   reward?: Record<string, number>;
 }
 
-const SKILLING = ['mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy'] as const;
+const SKILLING = ['mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy', 'gemcutting'] as const;
 const totalSkillLevel = (s: GameState) => SKILLING.reduce((a, k) => a + levelOf(k, s.skills[k]), 0);
 const L = (s: GameState) => s.lifetime;
 

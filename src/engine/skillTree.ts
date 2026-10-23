@@ -4,7 +4,7 @@ import { connectedWithout, treeAllocateReason } from './passives';
 import type { GameState } from './types';
 import { levelOf } from './xp';
 
-const SKILLING = ['mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy'] as const;
+const SKILLING = ['mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy', 'gemcutting'] as const;
 
 /** 1 point per 5 total gathering/production levels (everyone starts with 1). */
 export function skillTreePoints(s: GameState): number {

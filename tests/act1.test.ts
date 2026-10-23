@@ -60,7 +60,7 @@ describe('Act 1 layout', () => {
   });
 
   it('every gated action, unique and monster id points at real data', () => {
-    for (const a of ['mining', 'woodcutting', 'harvesting', 'alchemy'] as const)
+    for (const a of ['mining', 'woodcutting', 'harvesting', 'alchemy', 'gemcutting'] as const)
       for (const x of actionsFor(a)) if (x.area) expect(() => zoneDef(x.area!)).not.toThrow();
     for (const z of ZONES) for (const u of z.uniques) expect(uniqueDef(u)).toBeTruthy();
     const ids = ZONES.flatMap((z) => [...z.monsters, z.boss].map((m) => m.id));

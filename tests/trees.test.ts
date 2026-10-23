@@ -142,7 +142,8 @@ describe('skilling tree', () => {
     const s = newGame(1);
     expect(skillTreePoints(s)).toBe(1);
     s.skills.mining = xpForLevel(30);
-    expect(skillTreePoints(s)).toBe(6);
+    // 30 mining + 1 in each of the other five skills = 35
+    expect(skillTreePoints(s)).toBe(7);
     for (const id of ['core_0', 'mining_s0', 'mining_s1', 'mining_s2', 'mining_n1']) expect(allocateSkillNode(s, ctx(), id)).toBeNull();
     expect(skillNodeReason(s, 'mining_ks')).toMatch(/level 50/);
     expect(SKILL_TREE_NODES.length).toBeGreaterThanOrEqual(30);

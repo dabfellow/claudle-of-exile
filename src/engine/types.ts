@@ -2,8 +2,8 @@ import type { ClassId } from '../data/classes';
 import type { TacticRule } from '../data/gems';
 import type { BossMechanic } from '../data/zones';
 
-export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'smithing' | 'alchemy';
-export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy'];
+export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'smithing' | 'alchemy' | 'gemcutting';
+export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy', 'gemcutting'];
 
 export type Rarity = 'normal' | 'magic' | 'rare' | 'unique';
 export const RARITIES: Rarity[] = ['normal', 'magic', 'rare', 'unique'];

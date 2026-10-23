@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { baseDef } from '../../data/bases';
 import { flaskDef } from '../../data/flasks';
+import { ACTIVE_GEMS, SUPPORT_GEMS } from '../../data/gems';
 import { materialDef } from '../../data/materials';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { zoneDef } from '../../data/zones';
@@ -10,6 +11,7 @@ import type { GameEvent, SkillId } from '../../engine/types';
 import { progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
 import { Cost, fmt, MatIcon, ProgressBar } from '../components/common';
+import { GemIcon } from '../components/GemView';
 import { Icon, Orb, Swatch } from '../components/Icon';
 
 const START_LABEL: Record<SkillId, string> = {
@@ -19,14 +21,26 @@ const START_LABEL: Record<SkillId, string> = {
   harvesting: 'Harvest',
   smithing: 'Smith',
   alchemy: 'Brew',
+  gemcutting: 'Cut',
 };
 
+const ATTR_NAME = { str: 'Strength', dex: 'Dexterity', int: 'Intelligence' } as const;
+
 function outputName(id: string): string {
+  const gem = ACTIVE_GEMS.find((g) => g.id === id) ?? SUPPORT_GEMS.find((g) => g.id === id);
+  if (gem) return gem.name;
   try {
     return materialDef(id).name;
   } catch {
     return flaskDef(id).name;
   }
+}
+
+/** What a gemcutting recipe can produce, e.g. "random Strength support (1 of 4)". */
+function gemOutputText(gem: NonNullable<SkillAction['gem']>): string {
+  if (gem.kind === 'signature') return 'Signature support for a skill you own';
+  const pool = gem.kind === 'skill' ? ACTIVE_GEMS.filter((g) => g.attr === gem.attr) : SUPPORT_GEMS.filter((g) => !g.signatureFor && g.attr === gem.attr);
+  return `Random ${ATTR_NAME[gem.attr!]} ${gem.kind} gem (1 of ${pool.length})`;
 }
 
 function OutputChips({ a }: { a: SkillAction }) {
@@ -46,6 +60,11 @@ function OutputChips({ a }: { a: SkillAction }) {
       {a.flaskId && (
         <span className="io-item">
           <Orb color={flaskDef(a.flaskId).color} size={11} /> {flaskDef(a.flaskId).name}
+        </span>
+      )}
+      {a.gem && (
+        <span className="io-item">
+          <Icon name="gemcutting" size={12} color={a.color} /> {gemOutputText(a.gem)}
         </span>
       )}
       {a.bonus?.map((b) => (
@@ -93,6 +112,10 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
         <div className="action-art">
           {a.baseId ? (
             <Icon name={baseDef(a.baseId).slot} size={24} color={a.color} />
+          ) : a.gem?.attr ? (
+            <GemIcon def={{ name: a.name, attr: a.gem.attr }} size={28} support={a.gem.kind === 'support'} />
+          ) : a.gem ? (
+            <Icon name="gemcutting" size={24} color={a.color} />
           ) : a.flaskId || a.outputs?.transmute !== undefined || a.skill === 'alchemy' ? (
             <Orb color={a.color} size={24} glow={running} />
           ) : (
@@ -164,6 +187,11 @@ export function SkillPage({ skill }: { skill: SkillId }) {
         </div>
       )}
       {skill === 'alchemy' && <div className="muted">Salvage unwanted items at the Crafting Bench for Arcane Dust, then transmute it into orbs here.</div>}
+      {skill === 'gemcutting' && (
+        <div className="muted">
+          Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b style={{ color: 'var(--accent-2)' }}>{fmt(s.bank.rough_gem ?? 0)}</b> Rough Gems.
+        </div>
+      )}
       {actions.length > 8 && (
         <div className="tabs" style={{ alignSelf: 'flex-start' }}>
           <button className={`tab ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>

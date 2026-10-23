@@ -1,4 +1,5 @@
 import { flaskDef } from '../data/flasks';
+import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
 import { ALCH_DOUBLE, ALCH_SPEED, FORGE_ILVL, FORGE_SPEED } from '../data/hideout';
 import { HERB_TIERS, ORB_TIERS } from '../data/skillTree';
 import { actionDef, type SkillAction } from '../data/skills';
@@ -6,6 +7,7 @@ import { ZONES, zoneDef } from '../data/zones';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { newFlask, rerollMagic } from './flasks';
+import { createSkillGem, createSupportGem } from './gems';
 import { inventoryFull } from './hideout';
 import { createItem } from './items';
 import { chance, pick } from './rng';
@@ -93,6 +95,28 @@ function inputsToPay(a: SkillAction, t: TreeStats, ctx: Ctx): Record<string, num
   return cost;
 }
 
+/** Gemcutting: a random gem of the recipe's kind. Signature supports favour skills you own. */
+function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, number>): void {
+  const { kind, attr } = a.gem!;
+  if (kind === 'skill') {
+    const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => !attr || g.attr === attr));
+    s.gems.push(createSkillGem(s, def.id));
+    outputs[def.id] = 1;
+    ctx.emit({ t: 'loot', gemId: def.id });
+    return;
+  }
+  let pool = SUPPORT_GEMS.filter((g) => (kind === 'signature' ? !!g.signatureFor : !g.signatureFor && (!attr || g.attr === attr)));
+  if (kind === 'signature') {
+    const owned = new Set([...s.skillBar, ...s.gems].filter(Boolean).map((g) => g!.gemId));
+    const mine = pool.filter((g) => owned.has(g.signatureFor!));
+    if (mine.length) pool = mine;
+  }
+  const def = pick(ctx.rng, pool);
+  s.supportGems.push(createSupportGem(s, def.id));
+  outputs[def.id] = 1;
+  ctx.emit({ t: 'loot', supportId: def.id });
+}
+
 function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   const t = skillTreeStats(s);
   payCost(s, inputsToPay(a, t, ctx));
@@ -143,6 +167,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
     }
     outputs[a.flaskId] = mult;
   }
+  if (a.gem) cutGem(s, ctx, a, outputs);
   ctx.emit({ t: 'produce', skill: a.skill, outputs });
   const heartwoodXp = a.skill === 'woodcutting' && t.heartwood ? 0.8 : 1;
   grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0)) / 100) * heartwoodXp);

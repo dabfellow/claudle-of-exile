@@ -10,6 +10,7 @@ const PATHS: Record<string, string> = {
   harvesting: 'M12 21V11M12 11c0-4 3-7 7-7 0 4-3 7-7 7ZM12 14c0-3-2.5-5.5-6-5.5 0 3.5 2.5 5.5 6 5.5Z',
   smithing: 'M4 10h11l-1 3H8l-1 3M7 16h7M9 16v4M14 16v4M6 20h11M15 10c2 0 4-1 5-3M4 10V7h6v3',
   alchemy: 'M9 3h6M10 3v6L5 18a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3M7.5 14h9',
+  gemcutting: 'M7 4h10l4 5-9 11L3 9l4-5ZM3 9h18M9.5 4 8 9l4 11 4-11-1.5-5',
   equipment: 'M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z',
   bench: 'M3 10h18M5 10v10M19 10v10M8 10V6h8v4M10 14h4',
   stash: 'M4 8h16v12H4zM4 8l2-4h12l2 4M10 12h4',

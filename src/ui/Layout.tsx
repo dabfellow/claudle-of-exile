@@ -77,6 +77,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
     items: [
       { page: 'smithing', label: 'Smithing', icon: 'smithing', skill: 'smithing' },
       { page: 'alchemy', label: 'Alchemy', icon: 'alchemy', skill: 'alchemy' },
+      { page: 'gemcutting', label: 'Gemcutting', icon: 'gemcutting', skill: 'gemcutting' },
     ],
   },
 ];
@@ -450,6 +451,13 @@ export function OfflineModal() {
               <Icon name="stash" size={16} />
               Items found <span className="spacer" />
               <b className="num">{sum.items}</b>
+            </div>
+          )}
+          {sum.gems > 0 && (
+            <div className="row">
+              <Icon name="gemcutting" size={16} />
+              Gems cut <span className="spacer" />
+              <b className="num">{sum.gems}</b>
             </div>
           )}
           {mats.length > 0 && (
