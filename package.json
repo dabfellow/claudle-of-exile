@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sim": "vite-node scripts/sim.ts",
-    "art": "vite-node scripts/art.ts"
+    "art": "vite-node scripts/art.ts",
+    "deploy": "npm run build && cf deploy"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
@@ -18,12 +19,14 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^2.0.0-beta.v.4",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
+    "cf": "^1.0.0-beta.21",
     "sharp": "^0.33.5",
     "typescript": "~5.6.3",
-    "vite": "^5.4.10",
-    "vitest": "^2.1.4"
+    "vite": "^7.3.7",
+    "vitest": "^3.2.7"
   }
 }

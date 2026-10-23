@@ -6,3 +6,6 @@ dist
 # local secrets (Supabase keys etc.)
 .env*.local
 .env
+
+.cloudflare/
+.wrangler/
