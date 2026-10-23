@@ -105,7 +105,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
   return (
     <nav className="sidebar">
       <div className="brand">
-        <span className="brand-title">Claudle of Exile</span>
+        <span className="brand-title">Path of Idle</span>
         <span className="brand-sub">an idle exile's tale</span>
       </div>
       {NAV.map((g) => (

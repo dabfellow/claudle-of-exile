@@ -11,7 +11,7 @@ Dashboards change their wording now and then; if a button name doesn't match exa
 ## 1. Create the Supabase project
 
 1. Go to https://supabase.com and sign up (GitHub login is easiest).
-2. **New project** → name it `claudle-of-exile`, set a database password (save it in a password manager), pick the region closest to you.
+2. **New project** → name it `path-of-idle`, set a database password (save it in a password manager), pick the region closest to you.
 3. Wait for it to finish provisioning (~2 min).
 4. Open **Project Settings → API** (or **Data API / API Keys**) and note:
    - **Project URL** — https://ckclesfzzvfkcrsyvogs.supabase.co
@@ -28,10 +28,10 @@ https://ckclesfzzvfkcrsyvogs.supabase.co/auth/v1/callback
 
 ## 2. Google login
 
-1. Go to https://console.cloud.google.com and create a new project called `Claudle of Exile`.
+1. Go to https://console.cloud.google.com and create a new project called `Path of Idle`.
 2. **APIs & Services → OAuth consent screen** (may be called **Google Auth Platform → Branding**):
    - User type: **External**.
-   - App name: `Claudle of Exile`, support email: your email, developer contact: your email.
+   - App name: `Path of Idle`, support email: your email, developer contact: your email.
    - Scopes: the defaults (`openid`, `email`, `profile`) are all we need.
    - While in **Testing** mode only the test users you add can sign in — add your own Google account under **Test users**. Publish the app later when you launch.
 3. **APIs & Services → Credentials → Create credentials → OAuth client ID**:
@@ -45,7 +45,7 @@ https://ckclesfzzvfkcrsyvogs.supabase.co/auth/v1/callback
 
 ## 3. Discord login
 
-1. Go to https://discord.com/developers/applications → **New Application** → name it `Claudle of Exile`.
+1. Go to https://discord.com/developers/applications → **New Application** → name it `Path of Idle`.
 2. **OAuth2** in the left menu:
    - Copy the **Client ID** 1562621453126471690
    - **Reset Secret** → copy the **Client Secret** qrGU4lrf_lQkN80QC9OFy-fKV1T2kUfF

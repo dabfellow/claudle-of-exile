@@ -127,7 +127,8 @@ export class AppAccounts implements AccountProvider {
     this.storage.setItem(MODE_KEY, 'cloud');
     const { error } = await this.supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: window.location.origin },
+      // return to the game's own folder (/path-of-idle/ on the live site), not the site hub
+      options: { redirectTo: window.location.origin + window.location.pathname },
     });
     if (error) {
       this.storage.removeItem(MODE_KEY);

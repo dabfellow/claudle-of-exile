@@ -32,7 +32,7 @@ function ScreenShell({ children, wide }: { children: React.ReactNode; wide?: boo
       <div className={`screen-inner ${wide ? 'wide' : ''}`}>
         <div className="screen-brand">
           <span className="brand-title" style={{ fontSize: 40 }}>
-            Claudle of Exile
+            Path of Idle
           </span>
           <span className="brand-sub">an idle exile's tale</span>
         </div>

@@ -255,7 +255,7 @@ function entry(group: ArtGroup, id: string, name: string, desc: string): ArtEntr
 
 /** The look every image shares; opens every copy-paste prompt. */
 export const ART_STYLE =
-  'Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): ' +
+  'Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): ' +
   'painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights ' +
   'and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. ' +
   'No text, no letters, no logos, no watermarks, no UI frames.';

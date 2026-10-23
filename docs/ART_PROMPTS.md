@@ -19,7 +19,7 @@ Tips: generating several images in the same ChatGPT conversation keeps the style
 ### `trader.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024 square, chest-up portrait, dark vignette background.
 
@@ -29,7 +29,7 @@ Subject: A wandering merchant in his fifties, weathered face, sly half-smile, ho
 ### `brannoc.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024 square, chest-up portrait, dark vignette background.
 
@@ -39,7 +39,7 @@ Subject: "Old Brannoc", a hunched elderly survivor with a scarred face and a gre
 ### `class_warrior.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024 square, chest-up portrait, dark vignette background.
 
@@ -49,7 +49,7 @@ Subject: A battle-worn warrior in dented iron plate, rusted sword over the shoul
 ### `class_ranger.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024 square, chest-up portrait, dark vignette background.
 
@@ -59,7 +59,7 @@ Subject: A lean ranger in dark leather armour and a green hood, twin daggers, al
 ### `class_mage.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024 square, chest-up portrait, dark vignette background.
 
@@ -73,7 +73,7 @@ Subject: A young mage in a worn blue robe holding a crooked driftwood wand crack
 ### `title.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: Wide landscape 1792×1024, environment only, no characters, darker towards the bottom so text stays readable.
 
@@ -83,7 +83,7 @@ Subject: A grim storm-lashed coastline at night, a lone figure-sized gap of fire
 ### `hideout.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: Wide landscape 1792×1024, environment only, no characters, darker towards the bottom so text stays readable.
 
@@ -97,7 +97,7 @@ Subject: Inside a large seaside cliff cave turned into a camp: rough stone walls
 ### `map_device.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, single object on a dark cave-floor background, three-quarter view.
 
@@ -107,7 +107,7 @@ Subject: An ancient stone ring device with glowing purple runes and a swirling p
 ### `stash.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, single object on a dark cave-floor background, three-quarter view.
 
@@ -117,7 +117,7 @@ Subject: A heavy iron-banded wooden chest overflowing with gold coins, glowing o
 ### `forge.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, single object on a dark cave-floor background, three-quarter view.
 
@@ -127,7 +127,7 @@ Subject: A dwarven stone forge with glowing coals, an anvil, hammer and tongs, s
 ### `alchemy_table.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, single object on a dark cave-floor background, three-quarter view.
 
@@ -137,7 +137,7 @@ Subject: A cluttered alchemy table with bubbling glass flasks in red, blue and p
 ### `bench.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, single object on a dark cave-floor background, three-quarter view.
 
@@ -147,7 +147,7 @@ Subject: A sturdy crafting workbench with clamps, a jeweller's loupe, scattered 
 ### `vendor.png` ✅
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, single object on a dark cave-floor background, three-quarter view.
 
@@ -161,7 +161,7 @@ Subject: A small merchant stall made of crates and a patched canvas awning, lant
 ### `mudflats.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: Wide landscape 1792×1024, environment only, no characters.
 
@@ -171,7 +171,7 @@ Subject: Grey tidal mud flats at dusk, broken shipwreck ribs, pools of dark wate
 ### `brinecaves.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: Wide landscape 1792×1024, environment only, no characters.
 
@@ -181,7 +181,7 @@ Subject: Dripping sea caves lit by pale green bioluminescence, tide pools, salt 
 ### `ashwood.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: Wide landscape 1792×1024, environment only, no characters.
 
@@ -191,7 +191,7 @@ Subject: A burned forest still smouldering, black trunks, glowing embers in the 
 ### `blackreed.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: Wide landscape 1792×1024, environment only, no characters.
 
@@ -201,7 +201,7 @@ Subject: A dark marsh of towering black reeds, still green water, fog, a crooked
 ### `crypt.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: Wide landscape 1792×1024, environment only, no characters.
 
@@ -211,7 +211,7 @@ Subject: A flooded underground crypt, ankle-deep cold water, stone sarcophagi, p
 ### `shipgrave.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: Wide landscape 1792×1024, environment only, no characters.
 
@@ -221,7 +221,7 @@ Subject: A grey bay choked with rotting shipwrecks piled on each other, broken m
 ### `stormcliffs.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: Wide landscape 1792×1024, environment only, no characters.
 
@@ -231,7 +231,7 @@ Subject: Sheer black sea cliffs in a violent storm, lightning striking the rocks
 ### `sanctum.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: Wide landscape 1792×1024, environment only, no characters.
 
@@ -245,7 +245,7 @@ Subject: A sunken cathedral underwater, broken stained glass, coral growing over
 ### `rat.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -255,7 +255,7 @@ Subject: a drowned rat, bloated and dripping, glowing pale eyes
 ### `crab.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -265,7 +265,7 @@ Subject: a large mud-caked crab with a cracked shell and one oversized claw
 ### `zombie.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -275,7 +275,7 @@ Subject: a waterlogged corpse rising from the mud, seaweed in its hair
 ### `wisp.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -285,7 +285,7 @@ Subject: a crackling yellow bog wisp, a ball of lightning with a faint face
 ### `gorger.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -295,7 +295,7 @@ Subject: BOSS — a huge bloated swamp creature with a gaping toothy maw and bar
 ### `crawler.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -305,7 +305,7 @@ Subject: a pale eyeless cave crawler, a many-legged insect with slick wet plates
 ### `brinebat.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -315,7 +315,7 @@ Subject: a salt-encrusted bat with torn wings and needle teeth
 ### `sailor.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -325,7 +325,7 @@ Subject: a drowned sailor in a rotting striped shirt, rope still around his neck
 ### `siren.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -335,7 +335,7 @@ Subject: a gaunt salt siren with grey scaled skin and frost on her lips, mouth o
 ### `harrow.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -345,7 +345,7 @@ Subject: BOSS — "Captain Harrow", a drowned ship captain in a ragged tricorn a
 ### `cinderhound.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -355,7 +355,7 @@ Subject: a skeletal hound wreathed in embers, smoke pouring from its jaws
 ### `treant.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -365,7 +365,7 @@ Subject: a charred walking tree, cracks in its bark glowing orange
 ### `harpy.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -375,7 +375,7 @@ Subject: a ragged harpy with ash-grey feathers and burning eyes
 ### `emberkin.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -385,7 +385,7 @@ Subject: a small hunched fire shaman with a bone mask and a smoking staff
 ### `pyre.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -395,7 +395,7 @@ Subject: BOSS — "Pyre-Mother Ulva", a towering witch of living flame crowned w
 ### `lurker.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -405,7 +405,7 @@ Subject: a hulking bog lurker covered in moss and mud, only its yellow eyes and 
 ### `stalker.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -415,7 +415,7 @@ Subject: a thin reed stalker, a lanky humanoid woven from black reeds with a bon
 ### `toad.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -425,7 +425,7 @@ Subject: a huge sickly plague toad with frost-blue boils and a dripping tongue
 ### `fenwitch.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -435,7 +435,7 @@ Subject: a fen witch with a crown of reeds and crackling lightning in her hands
 ### `sedge.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -445,7 +445,7 @@ Subject: BOSS — "Old Mother Sedge", an ancient hag grown into the marsh, roots
 ### `ghoul.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -455,7 +455,7 @@ Subject: a gaunt crypt ghoul with long claws, pale wet skin
 ### `frostwraith.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -465,7 +465,7 @@ Subject: a hooded frost wraith, icy mist trailing from its empty robes
 ### `skeleton.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -475,7 +475,7 @@ Subject: a skeletal warden in rusted tomb armour holding a halberd
 ### `lich.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -485,7 +485,7 @@ Subject: a drowned lich in waterlogged robes, a glowing blue phylactery at its c
 ### `tidecaller.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -495,7 +495,7 @@ Subject: BOSS — "Tidecaller Morvane", a corrupted sea priestess with a coral c
 ### `brute.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -505,7 +505,7 @@ Subject: a hulking barnacle-covered brute with an anchor for a weapon
 ### `gunner.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -515,7 +515,7 @@ Subject: a drowned ship gunner holding a smoking hand cannon, burning fuse in hi
 ### `gulls.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -525,7 +525,7 @@ Subject: a screaming swarm of scraggy black-eyed gulls
 ### `wreckshaman.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -535,7 +535,7 @@ Subject: a wreck shaman wearing a ship figurehead as a mask, lightning arcing fr
 ### `vosk.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -545,7 +545,7 @@ Subject: BOSS — "Admiral Vosk", a bloated drowned admiral in a waterlogged nav
 ### `ravager.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -555,7 +555,7 @@ Subject: a cliff ravager, a lean grey beast with hooked claws for climbing rock
 ### `galeborn.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -565,7 +565,7 @@ Subject: a galeborn spirit, a humanoid made of whirling wind and lightning
 ### `rockback.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -575,7 +575,7 @@ Subject: a giant crab with a boulder grown into its shell
 ### `stormcaller.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -585,7 +585,7 @@ Subject: a storm caller in a soaked hooded robe, holding a staff that crackles w
 ### `skarra.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -595,7 +595,7 @@ Subject: BOSS — "Skarra, Queen of Gales", a huge harpy queen with storm-grey w
 ### `zealot.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -605,7 +605,7 @@ Subject: a tidebound zealot in a drowned monk habit, chains and frost around his
 ### `eel.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -615,7 +615,7 @@ Subject: an abyssal eel, long and black with glowing blue electric markings
 ### `coralgolem.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -625,7 +625,7 @@ Subject: a coral golem, a lumbering figure of pink and white coral with a glowin
 ### `priest.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -635,7 +635,7 @@ Subject: a sanctum priest with a cracked mitre and a frozen censer
 ### `ysolde.png`
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: 1024×1024, creature portrait, head and shoulders, dark background.
 
@@ -651,7 +651,7 @@ Subject: BOSS — "Ysolde, the Drowned Queen", a regal drowned queen with pale b
 Contains: Orb of Transmutation, Orb of Augmentation, Orb of Alteration, Regal Orb, Orb of Alchemy, Orb of Scouring, Chaos Orb, Orb of Annulment, Exalted Orb
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single glowing currency orb.
 
@@ -672,7 +672,7 @@ Fill the cells left to right, top to bottom:
 Contains: Divine Orb, Orb of Regret, Orb of Expansion, Instilling Orb
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single glowing currency orb.
 
@@ -693,7 +693,7 @@ Leave cells 5–9 completely empty.
 Contains: Gold, Copper Ore, Iron Ore, Mithril Ore, Rough Gem, Ash Log, Oak Log, Yew Log, Sunpetal
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single crafting material.
 
@@ -714,7 +714,7 @@ Fill the cells left to right, top to bottom:
 Contains: Frostleaf, Emberroot, Voidbloom, Arcane Dust
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single crafting material.
 
@@ -735,7 +735,7 @@ Leave cells 5–9 completely empty.
 Contains: Small Life Flask, Medium Life Flask, Grand Life Flask, Small Mana Flask, Medium Mana Flask, Granite Flask, Quicksilver Flask, Diamond Flask, Ruby Flask
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single glass flask, standing upright.
 
@@ -760,7 +760,7 @@ Fill the cells left to right, top to bottom:
 Contains: Rusted Sword, Whittled Dagger, Driftwood Wand, Iron Blade, Glinting Dagger, Bearded War Axe, Steel Broadsword, Mithril Sabre, Splintered Shield
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, laid flat or upright like a Diablo inventory icon.
 
@@ -781,7 +781,7 @@ Fill the cells left to right, top to bottom:
 Contains: Goathide Buckler, Iron Kite Shield, Mithril Tower Shield, Iron Hat, Leather Cap, Soldier Helmet, Hunter Hood, Mithril Great Helm, Shadow Mask
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, laid flat or upright like a Diablo inventory icon.
 
@@ -802,7 +802,7 @@ Fill the cells left to right, top to bottom:
 Contains: Plate Vest, Shabby Jerkin, Chainmail Hauberk, Scale Leather, Mithril Plate, Assassin's Garb, Iron Gauntlets, Rawhide Gloves, Steel Gauntlets
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, laid flat or upright like a Diablo inventory icon.
 
@@ -823,7 +823,7 @@ Fill the cells left to right, top to bottom:
 Contains: Stealth Gloves, Iron Greaves, Leather Boots, Steel Greaves, Shagreen Boots, Chain Belt, Leather Belt, Heavy Belt, Coral Amulet
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, laid flat or upright like a Diablo inventory icon.
 
@@ -844,7 +844,7 @@ Fill the cells left to right, top to bottom:
 Contains: Amber Amulet, Jade Amulet, Onyx Amulet, Iron Ring, Ruby Ring, Sapphire Ring, Topaz Ring, Diamond Ring
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, laid flat or upright like a Diablo inventory icon.
 
@@ -869,7 +869,7 @@ Leave cell 9 completely empty.
 Contains: Miner's Lament, Bloodthirst, Emberheart, Windstep, Alchemist's Band, The Iron Bulwark, Starforged Edge, Titan's Girth
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is an ornate legendary version of the item with a faint orange magical glow.
 
@@ -894,7 +894,7 @@ Leave cell 9 completely empty.
 Contains: Heavy Strike, Ground Slam, Iron Guard, War Cry, Twin Strike, Poison Dart, Smoke Step, Lacerate, Spark
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a faceted cut gemstone with a glowing symbol inside it.
 
@@ -915,7 +915,7 @@ Fill the cells left to right, top to bottom:
 Contains: Fireball, Frost Ward, Arcane Siphon, Shattering Blow (support), Aftershock (support), Retaliation (support), Rallying Roar (support), Flurry (support), Virulence (support)
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a faceted cut gemstone with a glowing symbol inside it.
 
@@ -936,7 +936,7 @@ Fill the cells left to right, top to bottom:
 Contains: Ambush (support), Hemorrhage (support), Overload (support), Inferno (support), Glacial Shell (support), Soul Tap (support), Added Fire (support), Added Cold (support), Added Lightning (support)
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a faceted cut gemstone with a glowing symbol inside it.
 
@@ -957,7 +957,7 @@ Fill the cells left to right, top to bottom:
 Contains: Brutality (support), Elemental Focus (support), Faster Attacks (support), Faster Casts (support), Efficiency (support), Critical Strikes (support), Life Leech (support), Mana Leech (support), Multistrike (support)
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a faceted cut gemstone with a glowing symbol inside it.
 
@@ -978,7 +978,7 @@ Fill the cells left to right, top to bottom:
 Contains: Spell Echo (support), Chain (support), Lingering (support)
 
 ```text
-Dark-fantasy game art for a browser game called "Claudle of Exile" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
+Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. No text, no letters, no logos, no watermarks, no UI frames.
 
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a faceted cut gemstone with a glowing symbol inside it.
 

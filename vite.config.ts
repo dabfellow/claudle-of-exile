@@ -6,6 +6,9 @@ export default defineConfig(({ mode }) => ({
   // the Cloudflare plugin builds for Workers; tests run plain Node, so leave it out there
   plugins: [react(), ...(mode === 'test' ? [] : [cloudflare()])],
   build: {
+    // the game lives at dabfellow.party/path-of-idle/ (the site root is the project hub), so its
+    // files sit in that folder; unknown paths like /path-of-idle/ fall back to index.html
+    assetsDir: 'path-of-idle/assets',
     rollupOptions: {
       output: {
         // libraries change rarely: separate files stay cached across game updates and load in parallel

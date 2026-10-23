@@ -3,6 +3,7 @@ import { ZONES } from '../data/zones';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { FlaskInstance, GameState } from './types';
 
+// kept from the game's old name: changing it would orphan every existing save
 export const SAVE_KEY = 'claudle-of-exile-save';
 
 type Migration = (raw: Record<string, unknown>) => void;

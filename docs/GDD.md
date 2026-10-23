@@ -1,4 +1,4 @@
-# Claudle of Exile — Game Design Direction (v0.2 draft)
+# Path of Idle — Game Design Direction (v0.2 draft)
 
 > Status: **working draft for the polish pass.** Nothing built so far is final. This doc turns the 2026-10-21 feedback into concrete proposals. Items marked **[Decide]** need your call before we build them.
 

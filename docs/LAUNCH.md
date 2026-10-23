@@ -1,6 +1,6 @@
 # Launch checklist — Act 1
 
-What has to be true before Claudle of Exile goes public with Act 1. ✅ done · 🔧 in progress · ⬜ to do · **[You]** needs you.
+What has to be true before Path of Idle goes public with Act 1. ✅ done · 🔧 in progress · ⬜ to do · **[You]** needs you.
 
 ## Content
 - ✅ Act 1, *The Drowned Coast*: 8 areas, levels 1–25, each boss unlocks the next ([zones.ts](../src/data/zones.ts)).
@@ -30,7 +30,7 @@ What has to be true before Claudle of Exile goes public with Act 1. ✅ done · 
 - ✅ `npm test` (92 tests) and `npm run build` pass.
 - ⬜ The bundle is 641 kB (188 kB gzipped), over Vite's 500 kB warning. Split the Supabase client and large pages with dynamic `import()`.
 - ⬜ Error reporting (e.g. Sentry) so you hear about crashes from players.
-- ⬜ **[You]** Hosting: pick a static host (Vercel, Netlify, Cloudflare Pages), set `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, and point a domain at it.
+- ✅ Hosting: live on Cloudflare Workers at [dabfellow.party/path-of-idle](https://dabfellow.party/path-of-idle/). The site root is the project hub (`../dabfellow-hub`). `npm run deploy` builds and publishes; Supabase keys come from `.env.local` at build time. Sign-in redirect URL to allow: `https://dabfellow.party/path-of-idle/`.
 - ✅ Dev-only tools (`window.game`) are left out of production builds.
 
 ## Before announcing

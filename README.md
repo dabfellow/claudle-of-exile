@@ -1,4 +1,4 @@
-# Claudle of Exile
+# Path of Idle
 
 A browser idle ARPG: Melvor Idle-style skilling and offline progress, crossed with Path of Exile-style loot, random affixes and orb crafting.
 

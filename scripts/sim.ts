@@ -195,7 +195,7 @@ function skillPace(skill: SkillId, targets: number[]): Record<number, number> {
 
 // ---------- report ----------
 
-console.log(`\nClaudle of Exile balance sim — ${HOURS}h per class, ${IDLE ? 'IDLE (no manual flasks)' : 'ACTIVE (bot drinks flasks)'}, seed ${SEED}\n`);
+console.log(`\nPath of Idle balance sim — ${HOURS}h per class, ${IDLE ? 'IDLE (no manual flasks)' : 'ACTIVE (bot drinks flasks)'}, seed ${SEED}\n`);
 const classes = CLASSES.filter((c) => !ONLY || c.id === ONLY);
 const results = classes.map((c) => {
   const started = Date.now();
