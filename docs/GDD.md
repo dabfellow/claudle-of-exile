@@ -127,6 +127,8 @@ Added Fire · Added Cold · Added Lightning · Brutality (more physical, no elem
 
 Keeping them separate means skilling never costs combat power and vice versa.
 
+Proposed: life skills become the crafting economy (Fossils, Essences, Resin, bulk orbs, idle "Craft until…"). See [SKILLING_REWORK.md](SKILLING_REWORK.md).
+
 The character tree needs a full redesign:
 - Small nodes = attributes and simple stats; notables = themed clusters; keystones = rule-changers.
 - Each class starts in its attribute region; hybrids live between regions.

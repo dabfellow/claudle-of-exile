@@ -160,6 +160,8 @@ Shared by theme — see `MASTERIES` in `src/data/passiveTree.ts` for the 37 them
 
 ## 2. Skilling tree
 
+> Proposed changes to six notables: see [SKILLING_REWORK.md](SKILLING_REWORK.md) §7.
+
 ### Shape
 A smaller tree: a shared **core** in the middle with **5 branches**, one per skill. Some nodes need a minimum skill level. Each branch ends in a **keystone** that changes how the skill works.
 
