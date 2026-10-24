@@ -132,7 +132,12 @@ export function createUnique(s: GameState, uniqueId: string, ilvl: number): Item
 
 export function describeMod(mod: RolledMod): string {
   const a = affixDef(mod.affixId);
-  return a.text.replace(/\{(\d)\}/g, (_, i) => String(mod.values[Number(i)]));
+  // uniques can carry negative values: "+-3 to X" → "-3 to X", "-50% increased" → "50% reduced"
+  return a.text
+    .replace(/\{(\d)\}/g, (_, i) => String(mod.values[Number(i)]))
+    .replace(/\+-/g, '-')
+    .replace(/-(\d+)% increased/g, '$1% reduced')
+    .replace(/-(\d+)% more/g, '$1% less');
 }
 
 /** Modifier text with its tier's value ranges, e.g. "+(11–20) to maximum Life". */

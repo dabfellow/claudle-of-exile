@@ -240,6 +240,12 @@ export function CharacterCreate() {
               </span>
             </div>
             <div className="class-section">
+              <div className="section-label">Class mechanic</div>
+              <div className="mod" style={{ fontSize: 'var(--fs-sm)' }}>
+                {c.mechanicText}
+              </div>
+            </div>
+            <div className="class-section">
               <div className="section-label">Class bonus</div>
               {c.bonusText.map((b) => (
                 <div key={b} className="mod" style={{ fontSize: 'var(--fs-sm)' }}>

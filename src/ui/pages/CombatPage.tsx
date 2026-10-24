@@ -2,13 +2,16 @@ import { useCallback, useState } from 'react';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
 import { BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, zoneDef } from '../../data/zones';
-import { aliveMonsters, mitigate, queueSkill, retreat, useFlask } from '../../engine/combat';
+import { CELLS, COLUMNS, GROUND, groundFor, inReach, MAX_ROW, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT } from '../../engine/battlefield';
+import { aliveMonsters, bossIsNext, currentMovement, mitigate, queueSkill, retreat, setMovement, useFlask } from '../../engine/combat';
 import { flaskStats } from '../../engine/flasks';
 import { skillNumbers } from '../../engine/gems';
+import { meterLabel, meterMax, mechanicOf } from '../../engine/mechanics';
+import { classDef } from '../../data/classes';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
-import type { DamageType, GameEvent, GameState, MonsterInstance } from '../../engine/types';
+import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, MonsterInstance } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
-import { anyArtUrl, Art, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
+import { anyArtUrl, Art, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, ruleText } from '../components/GemView';
 import type { Page } from '../Layout';
@@ -23,6 +26,7 @@ const DMG_COLOR: Record<DamageType, string> = {
 /** buffs that come from tree effects rather than a skill gem */
 const EXTRA_BUFFS: Record<string, string> = { guard_armour: 'Guard Armour', evade_speed: 'Evasive' };
 const DMG_NAME: Record<DamageType, string> = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' };
+const GROUND_STATUS: Record<GroundKind, string> = { burning: 'fire', chilled: 'cold', shocked: 'bad', caustic: 'poison' };
 
 interface Floater {
   id: number;
@@ -41,6 +45,7 @@ function useCombatFx() {
   const [shakes, setShakes] = useState<Record<string, number>>({});
   const [crits, setCrits] = useState<Record<string, number>>({});
   const [usedSlot, setUsedSlot] = useState<{ slot: number; n: number } | null>(null);
+  const [area, setArea] = useState<{ cells: number[]; n: number } | null>(null);
 
   const add = useCallback((f: Omit<Floater, 'id' | 'x'>) => {
     const id = floaterId++;
@@ -52,6 +57,7 @@ function useCombatFx() {
     (e: GameEvent) => {
       const bump = (set: typeof setShakes, key: string) => set((m) => ({ ...m, [key]: (m[key] ?? 0) + 1 }));
       if (e.t === 'skill') setUsedSlot((u) => ({ slot: e.slot, n: (u?.n ?? 0) + 1 }));
+      if (e.t === 'area') setArea((a) => ({ cells: e.cells, n: (a?.n ?? 0) + 1 }));
       if (e.t !== 'hit') return;
       if (e.target === 'monster') {
         const owner = e.monsterUid ?? 0;
@@ -59,8 +65,8 @@ function useCombatFx() {
         else {
           add({
             owner,
-            text: fmt(e.amount),
-            cls: e.crit ? 'crit' : e.dot ? 'dot' : '',
+            text: e.mega ? `MEGA ${fmt(e.amount)}` : fmt(e.amount),
+            cls: e.mega ? 'crit mega' : e.crit ? 'crit' : e.dot ? 'dot' : '',
             color: e.crit ? '' : e.dot ? 'var(--life-2)' : DMG_COLOR[e.dmgType],
           });
           if (!e.dot) bump(setShakes, String(owner));
@@ -81,7 +87,7 @@ function useCombatFx() {
     [add],
   );
   useGameEvent(onEvent);
-  return { floaters, shakes, crits, usedSlot };
+  return { floaters, shakes, crits, usedSlot, area };
 }
 
 type Fx = ReturnType<typeof useCombatFx>;
@@ -100,6 +106,24 @@ function Floaters({ list }: { list: Floater[] }) {
 
 const shakeClass = (n?: number) => (n ? (n % 2 ? 'shake-a' : 'shake-b') : '');
 const critClass = (n?: number) => (n ? (n % 2 ? 'crit-a' : 'crit-b') : '');
+
+/** The class mechanic's meter (Rage, Momentum, Malice, Fervor) or its current effect (Mana is Power, Riposte). */
+function MechanicMeter({ s, d, c }: { s: GameState; d: Derived; c: CombatRuntime }) {
+  const cls = classDef(s.character.classId);
+  const max = meterMax(mechanicOf(s), d.raw);
+  const label = meterLabel(s, d);
+  return (
+    <Tooltip content={<div className="tip">{cls.mechanicText}</div>}>
+      {max > 0 ? (
+        <ProgressBar value={Math.min(1, (c.mech ?? 0) / max)} color={cls.color} label={label} />
+      ) : (
+        <div className="mechanic-line" style={{ color: cls.color }}>
+          {label}
+        </div>
+      )}
+    </Tooltip>
+  );
+}
 
 function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
   const c = s.combat!;
@@ -127,6 +151,7 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
         {c.shield > 0 && <div className="shield-bar" style={{ width: `${Math.min(1, c.shield / d.maxLife) * 100}%` }} title={`Shield ${fmt(c.shield)}`} />}
       </div>
       <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} color="linear-gradient(90deg, var(--mana), var(--mana-2))" label={`${fmt(s.mana)} / ${fmt(d.maxMana)}`} />
+      <MechanicMeter s={s} d={d} c={c} />
       <div className="action-line">
         <span className="dim">{using ? using.name : 'Waiting'}</span>
         <span className="dim">{using ? `${(c.actionTotal / 1000).toFixed(1)}s ${using.tags.includes('attack') ? 'attack' : 'cast'}` : ''}</span>
@@ -136,7 +161,18 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
         {c.blocks > 0 && <span className="status good">Block ×{c.blocks}</span>}
         {c.evadeMs > 0 && <span className="status good">Evading {(c.evadeMs / 1000).toFixed(1)}s</span>}
         {c.shield > 0 && <span className="status cold">Shield {fmt(c.shield)}</span>}
-        {c.ambush && <span className="status good">Ambush ready</span>}
+        {c.ambush && <span className="status good">Mega Crit ready</span>}
+        {c.ground
+          .filter((g) => g.cell === PLAYER_SPOT)
+          .map((g) => (
+            <span key={g.kind} className={`status ${GROUND_STATUS[g.kind]}`} title={`${GROUND[g.kind].desc} Run or Flee to step out of it twice as fast.`}>
+              {GROUND[g.kind].name} {(g.remainingMs / 1000).toFixed(1)}s
+            </span>
+          ))}
+        {c.overheatMs > 0 && <span className="status bad">Overheated {(c.overheatMs / 1000).toFixed(1)}s</span>}
+        {d.raw.eternalHunger > 0 && aliveMonsters(c).length > 0 && (
+          <span className={`status ${c.hungerMs < 2000 ? 'bad' : 'good'}`}>Hunger {(Math.max(0, c.hungerMs) / 1000).toFixed(1)}s</span>
+        )}
         {c.flurryStacks > 0 && <span className="status">Flurry ×{c.flurryStacks}</span>}
         {c.buffs.map((b) => {
           const name = b.source === 'flask' ? flaskDef(b.id).name.replace(' Flask', '') : (EXTRA_BUFFS[b.id] ?? activeGemDef(b.id).name);
@@ -199,6 +235,110 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
         {poison > 0 && <span className="status poison">Poison ×{poison}</span>}
         {m.dots.some((x) => x.kind === 'ignite') && <span className="status fire">Ignited</span>}
       </div>
+    </div>
+  );
+}
+
+/** A monster as it stands on the battlefield: just enough to read the fight at a glance. Hover for the full card. */
+function MonsterToken({ m, target, fx }: { m: MonsterInstance; target: boolean; fx: Fx }) {
+  const key = String(m.uid);
+  const pips: [string, string][] = [];
+  if (m.stunMs > 0) pips.push(['Stunned', 'var(--text)']);
+  if (m.frozenMs > 0 || m.chillMs > 0) pips.push([m.frozenMs > 0 ? 'Frozen' : 'Chilled', 'var(--cold)']);
+  if (m.dots.some((x) => x.kind === 'bleed')) pips.push(['Bleeding', 'var(--life-2)']);
+  if (m.dots.some((x) => x.kind === 'poison')) pips.push(['Poisoned', 'var(--poison)']);
+  if (m.dots.some((x) => x.kind === 'ignite')) pips.push(['Ignited', 'var(--fire)']);
+  if (m.enraged) pips.push(['Enraged', 'var(--danger)']);
+  return (
+    <Tooltip content={<MonsterCard m={m} target={target} fx={fx} />}>
+      <div className={`bf-token ${m.isBoss ? 'boss' : ''} ${target ? 'targeted' : ''} ${m.casting >= 0 ? 'casting' : ''} ${shakeClass(fx.shakes[key])} ${critClass(fx.crits[key])}`}>
+        <Floaters list={fx.floaters.filter((f) => f.owner === m.uid)} />
+        <div className="bf-token-head">
+          <div className="portrait tiny">
+            <Art src={`monsters/${m.defId}`} alt={m.name} cover fallback={<GameIcon name="skull" size={14} color={m.isBoss ? 'var(--life-2)' : DMG_COLOR[m.dmgType]} />} />
+          </div>
+          <span className="bf-token-name">{m.name}</span>
+          {target && <span className="target-pip" title="Current target" />}
+        </div>
+        <ProgressBar value={Math.max(0, m.life) / m.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" />
+        {m.wardMax > 0 && <ProgressBar color="var(--ward)" value={m.ward / m.wardMax} className="thin" />}
+        {m.casting >= 0 ? (
+          <ProgressBar className="cast-bar thin" value={1 - m.casting / m.castTotal} />
+        ) : inReach(m) ? (
+          <ProgressBar value={m.attackTimer / m.attackMs} color="var(--dim)" className="thin" />
+        ) : (
+          <span className="bf-approach">closing in…</span>
+        )}
+        {pips.length > 0 && (
+          <div className="bf-pips">
+            {pips.map(([name, color]) => (
+              <span key={name} className="bf-pip" style={{ background: color }} title={name} />
+            ))}
+          </div>
+        )}
+      </div>
+    </Tooltip>
+  );
+}
+
+/** The 3-4-3 field in front of the player: the left column is the front rank, waves walk in from the right. */
+function Battlefield({ c, fx }: { c: CombatRuntime; fx: Fx }) {
+  const alive = aliveMonsters(c);
+  const byCell = new Map(alive.map((m) => [m.cell, m]));
+  return (
+    <div className="battlefield">
+      {CELLS.map((cell, i) => {
+        const m = byCell.get(i);
+        const ground = c.ground.find((g) => g.cell === i);
+        const flash = fx.area?.cells.includes(i) ? (fx.area.n % 2 ? 'flash-a' : 'flash-b') : '';
+        return (
+          <div
+            key={i}
+            className={`bf-cell ${cell.col === 0 ? 'front' : ''} ${ground ? `ground-${ground.kind}` : ''} ${flash}`}
+            style={{ left: `${(cell.col / COLUMNS) * 100}%`, top: `${(cell.row / (MAX_ROW + 2)) * 100}%` }}
+            title={ground ? `${GROUND[ground.kind].name} (${(ground.remainingMs / 1000).toFixed(1)}s): ${GROUND[ground.kind].desc}` : undefined}
+          >
+            {m && <MonsterToken key={m.uid} m={m} target={m === alive[0]} fx={fx} />}
+          </div>
+        );
+      })}
+      {!alive.length && <div className="bf-empty">Searching for monsters…</div>}
+    </div>
+  );
+}
+
+/** Flee / creep / walk / run, and what the field will do next. */
+function MovementBar({ s }: { s: GameState }) {
+  const c = s.combat!;
+  const zone = zoneDef(c.zoneId);
+  const mv = currentMovement(s);
+  const pace = MOVEMENT[mv];
+  const alive = aliveMonsters(c).length;
+  const status = c.monsters.some((m) => m.isBoss)
+    ? 'Boss fight: no new waves'
+    : mv === 'flee'
+      ? alive
+        ? 'Shaking them off…'
+        : 'Holding back: no new waves'
+      : bossIsNext(s, zone.id)
+        ? `${zone.boss.name} waits for the field to clear`
+        : alive >= pace.maxField
+          ? 'Field full: the next wave waits'
+          : `Next wave in ${(c.spawnMs / pace.spawnRate / 1000).toFixed(1)}s`;
+  return (
+    <div className="bf-bar">
+      <Tabs
+        compact
+        value={s.settings.movement}
+        onChange={(id) => game.act((st) => setMovement(st, id))}
+        tabs={MOVEMENT_ORDER.map((id) => ({ id, label: MOVEMENT[id].name, title: MOVEMENT[id].desc }))}
+      />
+      {c.fleeing && <span className="status bad">Auto-fleeing</span>}
+      <span className="dim bf-status">{status}</span>
+      <span className="grow" />
+      <label className="bf-auto" title="Below 35% life, flee until you're back above 90%, then resume your pace">
+        <input type="checkbox" checked={s.settings.autoFlee} onChange={(e) => game.act((st) => void (st.settings.autoFlee = e.target.checked))} /> Auto-flee
+      </label>
     </div>
   );
 }
@@ -328,6 +468,11 @@ function Matchup({ s, d }: { s: GameState; d: Derived }) {
         you={`Default Attack ${(d.attackMs / 1000).toFixed(2)}s`}
         them={`${target.attackName} ${(target.attackMs / 1000).toFixed(2)}s ${target.attackKind === 'spell' ? 'cast' : 'attack'}`}
       />
+      {target.attackGround && (
+        <div className="matchup-note">
+          <b>{target.attackName}:</b> leaves {GROUND[groundFor(target.dmgType)].name.toLowerCase()} under you for a few seconds. Run or Flee to step out of it faster.
+        </div>
+      )}
       {target.isBoss && (
         <div className="matchup-note">
           <b>{target.casts.slam.name}:</b> a heavy blow that winds up for {(target.casts.slam.ms / 1000).toFixed(1)}s, then hits for about{' '}
@@ -386,6 +531,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
 
   const zone = zoneDef(c.zoneId);
   const alive = aliveMonsters(c);
+  const boss = alive.find((m) => m.isBoss);
   const zoneArt = anyArtUrl(`zones/${zone.id}`);
   return (
     <div className="page">
@@ -407,19 +553,14 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
       </PageHeader>
 
       <div className={`card arena2 ${zoneArt ? 'has-art' : ''}`} style={{ ['--zone' as string]: zone.color, ['--zone-art' as string]: zoneArt ? `url(${zoneArt})` : undefined }}>
-        <PlayerCard s={s} d={d} fx={fx} />
-        <div className="vs">vs</div>
-        <div className={`pack pack-${Math.max(1, c.monsters.length)}`}>
-          {c.monsters.length === 0 && <div className="fighter searching">Searching for monsters…</div>}
-          {c.monsters.map((m) =>
-            m.life > 0 ? (
-              <MonsterCard key={m.uid} m={m} target={m === alive[0]} fx={fx} />
-            ) : (
-              <div key={m.uid} className="fighter dead">
-                ✕ {m.name}
-              </div>
-            ),
-          )}
+        <div className="arena-side">
+          <PlayerCard s={s} d={d} fx={fx} />
+          {alive[0] && <MonsterCard key={alive[0].uid} m={alive[0]} target fx={fx} />}
+          {boss && boss !== alive[0] && <MonsterCard key={boss.uid} m={boss} target={false} fx={fx} />}
+        </div>
+        <div className="bf-wrap">
+          <MovementBar s={s} />
+          <Battlefield c={c} fx={fx} />
         </div>
       </div>
 

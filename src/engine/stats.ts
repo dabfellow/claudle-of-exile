@@ -7,6 +7,7 @@ import { MAP_RARITY } from '../data/hideout';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { STAT_KEYS, type Buff, type DamageType, type GameState, type Item, type StatKey, type Stats } from './types';
 import { characterLevel } from './character';
+import { MEGA_CRIT_MULTI, mechanicStats } from './mechanics';
 
 export function emptyStats(): Stats {
   return Object.fromEntries(STAT_KEYS.map((k) => [k, 0])) as Stats;
@@ -125,6 +126,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
   const cls = classDef(s.character.classId);
   addStats(st, cls.baseAttributes);
   addStats(st, cls.bonus);
+  addStats(st, mechanicStats(s, st));
   st.itemRarity += MAP_RARITY[(s.hideout.map_device ?? 1) - 1] ?? 0;
 
   const flaskMult = 1 + st.flaskEffect / 100;
@@ -149,7 +151,8 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   };
   const A = ATTRIBUTE_EFFECTS;
 
-  const maxLife = Math.max(
+  // Knife's Edge: life is capped at 1
+  const maxLife = raw.knifesEdge ? 1 : Math.max(
     1,
     Math.round(
       (60 + 12 * (combatLevel - 1) + raw.life + attributes.str * A.str.lifePer) * (1 + raw.lifePct / 100) * (1 + raw.lifeMore / 100),
@@ -192,7 +195,8 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   const critMulti = 150 + raw.critMulti;
   const cap = (v: number) => Math.min(RES_CAP, v + raw.allRes);
   const avgHit = Object.values(hit).reduce((a, [lo, hi]) => a + (lo + hi) / 2, 0);
-  const critFactor = 1 + (critChance / 100) * (critMulti / 100 - 1);
+  // Knife's Edge: every hit is a Mega Crit
+  const critFactor = raw.knifesEdge ? MEGA_CRIT_MULTI : 1 + (critChance / 100) * (critMulti / 100 - 1);
 
   return {
     raw,
@@ -225,7 +229,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     flaskEffect: raw.flaskEffect,
     flaskCharges: raw.flaskCharges,
     avgHit,
-    dps: ((avgHit * 1000) / attackMs) * critFactor * (raw.steadyHand ? 1 : hitChance(accuracy, combatLevel)),
+    dps: ((avgHit * 1000) / attackMs) * critFactor * (raw.steadyHand || raw.knifesEdge ? 1 : hitChance(accuracy, combatLevel)),
   };
 }
 

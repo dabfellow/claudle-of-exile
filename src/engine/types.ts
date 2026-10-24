@@ -69,6 +69,15 @@ export const STAT_KEYS = [
   'evadeSpeed', 'manaRegenFlat', 'lifeFlaskRecovery', 'manaFlaskRecovery', 'utilityFlaskDuration',
   'bloodPact', 'windDancer', 'mindOverFlesh', 'steadyHand', 'arcaneRecursion', 'bastion', 'energyShield',
   'energyShieldPct', 'esRechargePct',
+  // class mechanic knobs (docs/CLASSES.md): only the class with that mechanic uses them
+  'rageMax', 'rageEffect', 'rageDecay', 'rageRegen', 'rageOnHitTaken', 'endlessFury',
+  'ripostePct', 'riposteCooldown', 'riposteHeal', 'riposteCrit', 'riposteBleed', 'perfectForm',
+  'momentumMax', 'momentumEffect', 'momentumRetain', 'momentumEvasion', 'perpetualMotion',
+  'maliceMax', 'coupPct', 'maliceCritKeep', 'coupAilment', 'maliceOnHitTaken', 'thousandCuts',
+  'manaPower', 'manaPowerFull', 'manaPowerEs', 'allOrNothing',
+  'fervorPct', 'novaPct', 'novaHeal', 'novaEs', 'saintsSacrifice',
+  // forbidden keystones
+  'overclock', 'knifesEdge', 'eternalHunger',
 ] as const;
 
 export type StatKey = (typeof STAT_KEYS)[number];
@@ -176,6 +185,23 @@ export interface MonsterInstance {
   dotTimer: number;
   /** kill already processed */
   dead: boolean;
+  /** where it stands on the battlefield (engine/battlefield.ts), ms until its next step forward, and how long a step takes */
+  cell: number;
+  stepMs: number;
+  moveMs: number;
+  /** its basic spell leaves hazardous ground under the player */
+  attackGround: boolean;
+}
+
+export type GroundKind = 'burning' | 'chilled' | 'shocked' | 'caustic';
+
+/** A hazard on a battlefield cell (the player's, hurting monsters) or under the player (cell -1, a monster's). */
+export interface Ground {
+  cell: number;
+  kind: GroundKind;
+  dps: number;
+  remainingMs: number;
+  durationMs: number;
 }
 
 export interface Buff {
@@ -241,6 +267,27 @@ export interface CombatRuntime {
   flurryStacks: number;
   /** Phantom mastery: next hit after a guard is stronger */
   empowered: boolean;
+  /** auto-flee has taken over the player's pace, and ms until fleeing loses the next monster */
+  fleeing: boolean;
+  shakeMs: number;
+  /** hazards on the field and under the player; ground damage to the player is reported once a second */
+  ground: Ground[];
+  groundAcc: number;
+  groundTimer: number;
+  /** class mechanic meter: Rage, Momentum or Malice stacks, or Fervor % (engine/mechanics.ts) */
+  mech: number;
+  /** Martyr: incoming damage that filled the current Fervor */
+  mechDamage: number;
+  /** Riposte cooldown, and whether the hit being rolled is a riposte */
+  riposteMs: number;
+  riposting: boolean;
+  /** Mana is Power: how full mana was when the current skill started */
+  manaFrac: number;
+  /** Overclock: time spent running hot, and time left locked up */
+  heatMs: number;
+  overheatMs: number;
+  /** Eternal Hunger: time left before you starve */
+  hungerMs: number;
 }
 
 export type Action =
@@ -260,9 +307,15 @@ export interface VendorOffer {
   price: number;
 }
 
+/** how fast the player pushes through an area: sets how often new waves arrive */
+export type Movement = 'flee' | 'slow' | 'walk' | 'run';
+
 export interface Settings {
   autoSalvage: Record<Rarity, boolean>;
   reducedMotion: boolean;
+  movement: Movement;
+  /** flee on low life, then resume the chosen pace once healed */
+  autoFlee: boolean;
 }
 
 export interface Lifetime {
@@ -346,6 +399,8 @@ export type GameEvent =
       target: 'player' | 'monster';
       amount: number;
       crit?: boolean;
+      /** a Mega Crit: flat 400%, ignores crit multiplier */
+      mega?: boolean;
       dmgType: DamageType;
       evaded?: boolean;
       blocked?: boolean;
@@ -357,6 +412,7 @@ export type GameEvent =
     }
   | { t: 'skill'; slot: number; gemId: string; manual: boolean }
   | { t: 'interrupt'; name: string }
+  | { t: 'area'; gemId: string; cells: number[] }
   | { t: 'gemLevel'; gemId: string; level: number }
   | { t: 'kill'; name: string; boss: boolean }
   | { t: 'spawn'; name: string; boss: boolean }

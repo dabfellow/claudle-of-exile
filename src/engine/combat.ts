@@ -25,6 +25,31 @@ import {
   type BossMechanic,
   type MonsterDef,
 } from '../data/zones';
+import {
+  advanceMonsters,
+  AUTO_FLEE_AT,
+  AUTO_FLEE_RESUME,
+  BOSS_CELL,
+  cellCol,
+  FLEE_SHAKE_MS,
+  FRONT_CELL,
+  freeCell,
+  inReach,
+  MONSTER_STEP_MS,
+  MOVEMENT,
+  areaCells,
+  chainFrom,
+  CHILLED_GROUND_SLOW,
+  GROUND,
+  groundFor,
+  knockBack,
+  layGround,
+  neighbors,
+  PLAYER_SPOT,
+  SHOCKED_GROUND_TAKEN,
+  STEP_OUT_RATE,
+  type AreaShape,
+} from './battlefield';
 import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './character';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
@@ -33,8 +58,25 @@ import { newUid } from './items';
 import { rollLoot } from './loot';
 import { chance, pick, rInt } from './rng';
 import { grantXp } from './skills';
+import {
+  coupMulti,
+  ensureMechanicFields,
+  fervorThreshold,
+  gainMeter,
+  HUNGER_MS,
+  manaFraction,
+  manaPowerMore,
+  mechanicOf,
+  MEGA_CRIT_MULTI,
+  meterFull,
+  OVERCLOCK_HEAT_MS,
+  OVERHEAT_MS,
+  RAGE_DECAY_PER_S,
+  rageMore,
+  RIPOSTE_COOLDOWN_MS,
+} from './mechanics';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
-import type { CombatRuntime, DamageType, Dot, GameState, InstillCondition, MonsterInstance } from './types';
+import type { CombatRuntime, DamageType, Dot, GameState, Ground, InstillCondition, MonsterInstance, Movement } from './types';
 
 export const SPAWN_DELAY_MS = 900;
 export const DEATH_LIFE_FRACTION = 0.25;
@@ -68,6 +110,19 @@ function newRuntime(zoneId: string): CombatRuntime {
     ambush: false,
     flurryStacks: 0,
     empowered: false,
+    fleeing: false,
+    shakeMs: FLEE_SHAKE_MS,
+    mech: 0,
+    mechDamage: 0,
+    riposteMs: 0,
+    riposting: false,
+    manaFrac: 1,
+    heatMs: 0,
+    overheatMs: 0,
+    hungerMs: HUNGER_MS,
+    ground: [],
+    groundAcc: 0,
+    groundTimer: 0,
   };
 }
 
@@ -83,6 +138,17 @@ export function startCombat(s: GameState, ctx: Ctx, zoneId: string): string | nu
 export function retreat(s: GameState): void {
   s.combat = null;
   s.action = null;
+}
+
+/** Picking a pace by hand also takes back control from auto-flee. */
+export function setMovement(s: GameState, movement: Movement): void {
+  s.settings.movement = movement;
+  if (s.combat) s.combat.fleeing = false;
+}
+
+/** The pace in effect: the player's choice, unless auto-flee has taken over. */
+export function currentMovement(s: GameState): Movement {
+  return s.combat?.fleeing ? 'flee' : (s.settings.movement ?? 'walk');
 }
 
 // ---------- monsters ----------
@@ -143,6 +209,10 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     dotAcc: 0,
     dotTimer: 0,
     dead: false,
+    cell: boss ? BOSS_CELL : FRONT_CELL,
+    stepMs: def.moveMs ?? MONSTER_STEP_MS,
+    moveMs: def.moveMs ?? MONSTER_STEP_MS,
+    attackGround: !!def.basic.ground,
   };
 }
 
@@ -150,31 +220,102 @@ export function bossIsNext(s: GameState, zoneId: string): boolean {
   return (s.zoneKills[zoneId] ?? 0) >= zoneDef(zoneId).bossEvery;
 }
 
+/** Living monsters, front rank first: the first one is the current target. */
 export function aliveMonsters(c: CombatRuntime): MonsterInstance[] {
-  return c.monsters.filter((m) => m.life > 0);
+  return c.monsters.filter((m) => m.life > 0).sort((a, b) => cellCol(a.cell) - cellCol(b.cell));
 }
 
-function spawnPack(s: GameState, ctx: Ctx): void {
+/** A boss you've never beaten has to be fought in person: offline, it stays in hiding and you keep farming trash. */
+function bossCanSpawn(s: GameState, ctx: Ctx, zoneId: string): boolean {
+  return bossIsNext(s, zoneId) && !(ctx.offline && !s.bossesDefeated.includes(zoneId));
+}
+
+/** Put fresh monsters on the field, each in a free cell. Ones with no room stay away. */
+function place(s: GameState, ctx: Ctx, fresh: MonsterInstance[], from: 'back' | 'front'): MonsterInstance[] {
+  const c = s.combat!;
+  const placed: MonsterInstance[] = [];
+  for (const m of fresh) {
+    const cell = m.isBoss ? BOSS_CELL : freeCell(c.monsters, ctx.rng, from);
+    if (cell < 0) break;
+    m.cell = cell;
+    c.monsters.push(m);
+    placed.push(m);
+  }
+  return placed;
+}
+
+/** A wave walks in from the far edge: a pack of trash, or the boss with its adds. */
+function spawnWave(s: GameState, ctx: Ctx): void {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
-  // a boss you've never beaten has to be fought in person: offline, it stays in hiding and you keep farming trash
-  const unbeatenOffline = !!ctx.offline && !s.bossesDefeated.includes(zone.id);
-  const boss = bossIsNext(s, zone.id) && !unbeatenOffline;
-  if (bossIsNext(s, zone.id) && unbeatenOffline) ctx.emit({ t: 'bossWaiting', name: zone.boss.name });
+  const boss = bossCanSpawn(s, ctx, zone.id);
+  if (bossIsNext(s, zone.id) && !boss) ctx.emit({ t: 'bossWaiting', name: zone.boss.name });
   const pack: MonsterInstance[] = [];
   if (boss) {
-    for (let i = 0; i < BOSS_ADDS; i++) pack.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE));
     pack.push(makeMonster(zone.boss, true, newUid(s)));
+    for (let i = 0; i < BOSS_ADDS; i++) pack.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE));
   } else {
     const [lo, hi] = zone.packSize;
     const n = rInt(ctx.rng, lo, hi);
     const scale = n > 1 ? PACK_LIFE_SCALE : 1;
-    for (let i = 0; i < n; i++) pack.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), scale));
+    const room = MOVEMENT[currentMovement(s)].maxField - aliveMonsters(c).length;
+    for (let i = 0; i < Math.min(n, room); i++) pack.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), scale));
   }
-  c.monsters = pack;
-  const lead = pack[pack.length - 1];
-  ctx.emit({ t: 'spawn', name: boss ? lead.name : pack.length > 1 ? `${pack.length} monsters` : lead.name, boss });
+  // the boss's adds rush to the front rank to shield it; trash walks in from the far edge
+  const placed = place(s, ctx, pack, boss ? 'front' : 'back');
+  if (!placed.length) return;
+  const lead = placed[0];
+  ctx.emit({ t: 'spawn', name: boss ? lead.name : placed.length > 1 ? `${placed.length} monsters` : lead.name, boss });
   if (boss) triggerInstilled(s, ctx, 'bossCast');
+}
+
+/**
+ * New waves arrive on the zone's timer, scaled by how fast the player is moving -- even mid-fight, so a slow
+ * kill means fighting two packs at once. A wave that's due waits while the field is as full as the pace allows.
+ * An empty field fills quickly unless the player is fleeing. The boss waits for the field to clear,
+ * and no trash arrives while it's alive.
+ */
+function advanceSpawns(s: GameState, ctx: Ctx, dt: number): void {
+  const c = s.combat!;
+  const zone = zoneDef(c.zoneId);
+  if (c.monsters.some((m) => m.isBoss && m.life > 0)) return;
+  const alive = aliveMonsters(c).length;
+  if (bossCanSpawn(s, ctx, zone.id) && alive) return;
+  const pace = MOVEMENT[currentMovement(s)];
+  if (!alive) c.spawnMs = Math.min(c.spawnMs, SPAWN_DELAY_MS);
+  c.spawnMs = Math.max(0, c.spawnMs - dt * pace.spawnRate);
+  if (c.spawnMs > 0 || alive >= pace.maxField) return;
+  c.spawnMs = zone.spawnEveryMs;
+  spawnWave(s, ctx);
+}
+
+/** Fleeing outpaces the field: every so often the monster furthest behind loses track of you. Bosses keep up. */
+function shakeOff(s: GameState, ctx: Ctx, dt: number): void {
+  const c = s.combat!;
+  if (currentMovement(s) !== 'flee') {
+    c.shakeMs = FLEE_SHAKE_MS;
+    return;
+  }
+  c.shakeMs -= dt;
+  if (c.shakeMs > 0) return;
+  c.shakeMs = FLEE_SHAKE_MS;
+  const far = aliveMonsters(c).filter((m) => !m.isBoss).at(-1);
+  if (!far) return;
+  c.monsters = c.monsters.filter((m) => m !== far);
+  ctx.emit({ t: 'info', text: `Left ${far.name} behind` });
+}
+
+/** Auto-flee: on low life, back off until healed, then go back to the chosen pace. */
+function autoFlee(s: GameState, ctx: Ctx, d: Derived): void {
+  const c = s.combat!;
+  if (!s.settings.autoFlee) c.fleeing = false;
+  else if (!c.fleeing && s.life < d.maxLife * AUTO_FLEE_AT && c.monsters.length) {
+    c.fleeing = true;
+    ctx.emit({ t: 'info', text: 'Badly hurt: fleeing until you recover' });
+  } else if (c.fleeing && s.life >= d.maxLife * AUTO_FLEE_RESUME) {
+    c.fleeing = false;
+    ctx.emit({ t: 'info', text: `Recovered: back to ${MOVEMENT[s.settings.movement ?? 'walk'].name.toLowerCase()}ing` });
+  }
 }
 
 /** Damage a monster hit does to the player after mitigation. */
@@ -239,6 +380,7 @@ export interface RuleContext {
   targetLifePct: number;
   casting: boolean;
   boss: boolean;
+  meterFull: boolean;
 }
 
 export function ruleContext(s: GameState, d: Derived): RuleContext {
@@ -251,6 +393,7 @@ export function ruleContext(s: GameState, d: Derived): RuleContext {
     targetLifePct: target ? (target.life / target.maxLife) * 100 : 0,
     casting: alive.some((m) => m.casting >= 0),
     boss: alive.some((m) => m.isBoss),
+    meterFull: meterFull(s, d),
   };
 }
 
@@ -285,6 +428,8 @@ export function ruleAllows(rule: TacticRule, rc: RuleContext, active: boolean): 
       return !active;
     case 'bossOnly':
       return rc.boss;
+    case 'meterFull':
+      return rc.meterFull;
   }
 }
 
@@ -300,6 +445,7 @@ export function queueSkill(s: GameState, slot: number): string | null {
 
 /** Blood Pact pays skill costs with life instead of mana. */
 function canPay(s: GameState, d: Derived, cost: number): boolean {
+  if (d.raw.overclock) return true;
   return d.raw.bloodPact ? s.life > cost : s.mana >= cost;
 }
 
@@ -337,12 +483,12 @@ function moreDamageFromBuffs(c: CombatRuntime): number {
 }
 
 /** Roll one hit of a skill. Returns null for a missed attack. */
-function rollHit(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance): { byType: ByType; crit: boolean } | null {
+function rollHit(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance): { byType: ByType; crit: boolean; mega: boolean } | null {
   const c = s.combat!;
   const { def, mods, level } = nums;
   const r = d.raw;
   const isAttack = def.tags.includes('attack');
-  if (isAttack && !c.ambush && !r.steadyHand && !chance(ctx.rng, hitChance(d.accuracy, mon.level))) return null;
+  if (isAttack && !c.ambush && !r.steadyHand && !r.knifesEdge && !chance(ctx.rng, hitChance(d.accuracy, mon.level))) return null;
 
   const byType: ByType = { phys: 0, fire: 0, cold: 0, light: 0 };
   if (isAttack) {
@@ -381,24 +527,45 @@ function rollHit(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: Mo
     c.empowered = false;
   }
   if (mon.life < mon.maxLife * 0.3) more *= 1 + r.lowLifeDamage / 100;
+  if (isAttack) more *= 1 + rageMore(s, d) / 100;
+  if (def.tags.includes('spell')) more *= 1 + manaPowerMore(s, d, c.manaFrac) / 100;
   for (const t of DAMAGE_TYPES) byType[t] *= more;
 
   const spellType = def.effect.type;
   let critChance = isAttack
     ? d.critChance * (1 + mods.critChance / 100)
     : (def.effect.crit ?? 5) * (1 + (r.critChancePct + r.spellCritPct + (spellType === 'light' ? r.lightCrit : 0) + mods.critChance) / 100);
+  if (c.riposting) critChance *= 1 + r.riposteCrit / 100;
   critChance = r.steadyHand ? 0 : Math.min(95, critChance);
-  let crit = chance(ctx.rng, critChance / 100);
+
+  // Mega Crits: a flat 400% that ignores crit multiplier, only from Knife's Edge, Ambush and Coup de Grâce
+  const malice = mechanicOf(s) === 'malice';
+  let megaMulti = r.knifesEdge ? MEGA_CRIT_MULTI : 0;
   if (isAttack && c.ambush) {
-    crit = !r.steadyHand;
+    megaMulti = Math.max(megaMulti, MEGA_CRIT_MULTI);
     c.ambush = false;
+  }
+  if (malice && meterFull(s, d)) {
+    megaMulti = Math.max(megaMulti, coupMulti(d));
+    c.mech = 0;
+    ctx.emit({ t: 'info', text: 'Coup de Grâce!', tone: 'good' });
+  }
+  if (megaMulti) {
+    for (const t of DAMAGE_TYPES) byType[t] *= megaMulti;
+    return { byType, crit: true, mega: true };
+  }
+  const crit = chance(ctx.rng, critChance / 100);
+  if (malice) {
+    // a normal crit empties the meter (unless a passive says otherwise); every other hit fills it
+    if (!crit || r.thousandCuts) gainMeter(s, d, 1);
+    else c.mech = Math.min(c.mech, r.maliceCritKeep);
   }
   if (crit) {
     let multi = (d.critMulti + mods.critMulti + (isAttack ? 0 : r.spellCritMulti)) / 100;
     if (mon.life >= mon.maxLife) multi *= 1 + r.critFullLife / 100;
     for (const t of DAMAGE_TYPES) byType[t] *= multi;
   }
-  return { byType, crit };
+  return { byType, crit, mega: false };
 }
 
 function mainType(byType: ByType): DamageType {
@@ -427,7 +594,7 @@ function damageMonster(mon: MonsterInstance, amount: number): void {
 }
 
 /** Apply a rolled hit to one monster, with its resistances and the skill's on-hit effects. */
-function hitMonster(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance, byType: ByType, crit: boolean, factor: number): number {
+function hitMonster(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance, byType: ByType, crit: boolean, factor: number, mega = false): number {
   const c = s.combat!;
   const { def, mods } = nums;
   const e = def.effect;
@@ -448,7 +615,8 @@ function hitMonster(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon:
   if (crit && r.critLeech) s.life = Math.min(d.maxLife, s.life + (dealt * r.critLeech) / 100);
   if (mon.life < 0 && r.overkillHeal) s.life = Math.min(d.maxLife, s.life + (-mon.life * r.overkillHeal) / 100);
   if (byType.cold > 0 && r.chillOnHit) mon.chillMs = 3000;
-  ctx.emit({ t: 'hit', target: 'monster', amount: dealt, crit, dmgType: mainType(byType), monsterUid: mon.uid });
+  ctx.emit({ t: 'hit', target: 'monster', amount: dealt, crit, mega: mega || undefined, dmgType: mainType(byType), monsterUid: mon.uid });
+  if (mechanicOf(s) === 'rage') gainMeter(s, d, 1);
 
   // leech
   const lifeLeech = d.leechPct + mods.lifeLeech + (e.leechLife ?? 0);
@@ -489,9 +657,10 @@ function hitMonster(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon:
     };
     applyDot(mon, dot);
     if (a.kind === 'ignite' && mods.specials.has('inferno')) {
-      for (const other of aliveMonsters(c)) if (other !== mon) applyDot(other, { ...dot });
+      const near = new Set(neighbors(mon.cell));
+      for (const other of aliveMonsters(c)) if (other !== mon && near.has(other.cell)) applyDot(other, { ...dot });
     }
-  } else if (r.bleedOnHit && def.tags.includes('attack') && chance(ctx.rng, r.bleedOnHit / 100)) {
+  } else if ((c.riposting && r.riposteBleed) || (r.bleedOnHit && def.tags.includes('attack') && chance(ctx.rng, r.bleedOnHit / 100))) {
     // axes: any attack can open a wound (20% of the hit per second for 4s)
     applyDot(mon, {
       kind: 'bleed',
@@ -510,9 +679,15 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   const e = def.effect;
   const r = d.raw;
   c.using = def.id;
-  if (r.bloodPact) s.life -= nums.manaCost;
-  else s.mana -= nums.manaCost;
-  if (slot >= 0 && def.cooldownMs) c.cooldowns[slot] = def.cooldownMs;
+  c.manaFrac = manaFraction(s, d);
+  // Overclock: no costs, no cooldowns
+  if (!r.overclock) {
+    if (r.bloodPact) s.life -= nums.manaCost;
+    else s.mana -= nums.manaCost;
+    if (slot >= 0 && def.cooldownMs) c.cooldowns[slot] = def.cooldownMs;
+  }
+  if (mechanicOf(s) === 'momentum' && def.tags.includes('attack')) gainMeter(s, d, def.id === 'twin_strike' ? 2 : 1);
+  if (mechanicOf(s) === 'rage' && def.id === 'war_cry') gainMeter(s, d, 10);
   if (slot >= 0) ctx.emit({ t: 'skill', slot, gemId: def.id, manual });
 
   // utility effects
@@ -550,6 +725,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       regenPct: mods.specials.has('rally') ? 2 : undefined,
     });
   }
+  if (e.knockback && knockBack(c.monsters)) ctx.emit({ t: 'area', gemId: def.id, cells: areaCells('rank', 1) });
   if (e.interrupts) {
     for (const m of aliveMonsters(c)) {
       if (m.casting < 0) continue;
@@ -570,6 +746,10 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   let passes = 1 + mods.repeats;
   if (mods.specials.has('aftershock') && chance(ctx.rng, 0.35)) passes += 1;
   const hitsPerPass = (e.hits ?? 1) + (def.id === 'twin_strike' && mods.specials.has('flurry') ? 1 : 0);
+  const shape = skillArea(nums);
+  // Inferno's blast scorches the ground around the target
+  const ground = mods.specials.has('inferno') ? { kind: 'burning' as const, pctPerSec: 25, durationMs: 3000, area: 'splash' as const } : e.ground;
+  let grounded = false;
 
   for (let pass = 0; pass < passes; pass++) {
     const passMult = pass === 0 ? 1 : (mods.repeatDamage / 100) * (1 + r.repeatMore / 100);
@@ -578,10 +758,16 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       if (!alive.length) return;
       const target = alive[0];
       let targets: MonsterInstance[];
-      if (e.targets === 'all') targets = alive;
-      else {
+      let chained = false;
+      if (shape !== 'target') {
+        const cells = new Set(areaCells(shape, target.cell));
+        targets = [target, ...alive.filter((m) => m !== target && cells.has(m.cell))];
+        if (pass === 0 && h === 0) ctx.emit({ t: 'area', gemId: def.id, cells: [...cells] });
+      } else {
         const chains = (e.targets === 'chain' ? (e.chains ?? 0) + r.extraChains : 0) + mods.chains;
-        targets = alive.slice(0, 1 + chains);
+        targets = chainFrom(target, alive, chains);
+        chained = targets.length > 1;
+        if (chained && pass === 0 && h === 0) ctx.emit({ t: 'area', gemId: def.id, cells: targets.map((m) => m.cell) });
       }
       const roll = rollHit(s, ctx, d, nums, target);
       if (!roll) {
@@ -589,11 +775,23 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         continue;
       }
       targets.forEach((m, i) => {
-        const chainMult = 1 + ((mods.specials.has('overload') ? 20 : 0) + r.chainMore) / 100 * i;
-        hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * chainMult);
+        const chainMult = chained ? 1 + ((mods.specials.has('overload') ? 20 : 0) + r.chainMore) / 100 * i : 1;
+        const dealt = hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * chainMult, roll.mega);
+        if (ground && !grounded && m === target) {
+          grounded = true;
+          const dps = (dealt * ground.pctPerSec) / 100;
+          for (const cell of areaCells(ground.area ?? 'target', target.cell)) layGround(c.ground, cell, ground.kind, dps, ground.durationMs * nums.durationMult);
+        }
       });
     }
   }
+}
+
+/** Where a skill's hit lands on the battlefield: Pierce turns any projectile into a lane; 'all' means the whole field. */
+export function skillArea(nums: SkillNumbers): AreaShape {
+  const e = nums.def.effect;
+  if (nums.mods.specials.has('pierce')) return 'line';
+  return e.area ?? (e.targets === 'all' ? 'field' : 'target');
 }
 
 // ---------- kills & death ----------
@@ -602,6 +800,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
   ctx.emit({ t: 'kill', name: mon.name, boss: mon.isBoss });
+  c.hungerMs = HUNGER_MS;
   s.lifetime.kills += 1;
   const xp = monsterXp(mon) * xpLevelMultiplier(characterLevel(s), mon.level);
   grantXp(s, ctx, 'combat', xp);
@@ -634,7 +833,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   }
 }
 
-/** Resolve deaths after damage; when the whole pack is down, start the respawn timer. */
+/** Resolve deaths after damage and clear the bodies off the field, freeing their cells. */
 function reapDead(s: GameState, ctx: Ctx, d: Derived): void {
   const c = s.combat;
   if (!c) return;
@@ -644,11 +843,9 @@ function reapDead(s: GameState, ctx: Ctx, d: Derived): void {
       onMonsterDeath(s, ctx, d, m);
     }
   }
-  if (c.monsters.length && c.monsters.every((m) => m.dead)) {
-    c.monsters = [];
-    c.spawnMs = SPAWN_DELAY_MS;
-    c.using = null;
-  }
+  if (!c.monsters.some((m) => m.dead)) return;
+  c.monsters = c.monsters.filter((m) => !m.dead);
+  if (!c.monsters.length) c.using = null;
 }
 
 function die(s: GameState, ctx: Ctx, d: Derived): void {
@@ -667,7 +864,42 @@ function die(s: GameState, ctx: Ctx, d: Derived): void {
 function counterAttack(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): void {
   const nums = skillNumbers(d, null);
   const roll = rollHit(s, ctx, d, nums, mon);
-  if (roll) hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, 2);
+  if (roll) hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, 2, roll.mega);
+}
+
+/** Duelist: blocking or evading a hit answers with a weapon strike. */
+function riposte(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): void {
+  const c = s.combat!;
+  const r = d.raw;
+  if (mechanicOf(s) !== 'riposte' || mon.life <= 0 || (c.riposteMs > 0 && !r.perfectForm)) return;
+  c.riposteMs = RIPOSTE_COOLDOWN_MS / (1 + r.riposteCooldown / 100);
+  const nums = skillNumbers(d, null);
+  c.riposting = true;
+  const roll = rollHit(s, ctx, d, nums, mon);
+  if (roll) hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, (1 + r.ripostePct / 100) * (r.perfectForm ? 0.5 : 1), roll.mega);
+  c.riposting = false;
+  if (r.riposteHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.riposteHeal) / 100);
+}
+
+/** Templar: incoming damage (before mitigation) fills Fervor; full Fervor releases a holy nova. */
+function martyrFill(s: GameState, ctx: Ctx, d: Derived, raw: number): void {
+  const c = s.combat!;
+  if (mechanicOf(s) !== 'martyr') return;
+  c.mechDamage += raw;
+  c.mech = Math.min(100, c.mech + (raw / fervorThreshold(d)) * 100);
+  if (c.mech < 100) return;
+  const r = d.raw;
+  const dmg = c.mechDamage * 0.5 * (1 + r.novaPct / 100);
+  c.mech = 0;
+  c.mechDamage = 0;
+  if (!r.saintsSacrifice) s.life = Math.min(d.maxLife, s.life + d.maxLife * 0.2 * (1 + r.novaHeal / 100));
+  if (r.novaEs) s.es = Math.min(d.maxEs, s.es + (d.maxEs * r.novaEs) / 100);
+  ctx.emit({ t: 'info', text: 'Fervor releases a holy nova!', tone: 'good' });
+  for (const m of aliveMonsters(c)) {
+    const amount = Math.max(1, Math.round(dmg * (1 - m.res.light / 100)));
+    damageMonster(m, amount);
+    ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'light', monsterUid: m.uid });
+  }
 }
 
 function onEvade(s: GameState, d: Derived): void {
@@ -687,9 +919,11 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   const isCast = kind !== 'hit';
   if (mon.dots.some((x) => x.kind === 'poison')) raw *= 1 - r.poisonWeaken / 100;
   if (kind === 'slam') raw *= 1 - r.slamReduction / 100;
+  if (underPlayer(c, 'shocked')) raw *= SHOCKED_GROUND_TAKEN;
   if (c.evadeMs > 0) {
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, evaded: true, monsterUid: mon.uid });
     onEvade(s, d);
+    riposte(s, ctx, d, mon);
     return;
   }
   if (c.blocks > 0 && kind !== 'nova') {
@@ -697,20 +931,32 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
     if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
     if (c.retaliate) counterAttack(s, ctx, d, mon);
+    martyrFill(s, ctx, d, raw);
+    riposte(s, ctx, d, mon);
     return;
   }
   // staves: a flat chance to block, capped at 75%
   if (r.blockChance > 0 && kind !== 'nova' && chance(ctx.rng, Math.min(75, r.blockChance) / 100)) {
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
     if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
+    martyrFill(s, ctx, d, raw);
+    riposte(s, ctx, d, mon);
     return;
   }
   // heavy wind-ups can't be evaded by Evasion Rating (unless Wind Dancer) — guard, interrupt or drink
   if ((!isCast || r.windDancer) && chance(ctx.rng, evadeChance(d.evasion, mon.level))) {
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, evaded: true, monsterUid: mon.uid });
     onEvade(s, d);
+    riposte(s, ctx, d, mon);
     return;
   }
+  // the hit lands
+  const mech = mechanicOf(s);
+  if (mech === 'momentum') {
+    if (!r.perpetualMotion) c.mech -= Math.ceil(c.mech * 0.5 * (1 - Math.min(100, r.momentumRetain) / 100));
+  } else if (mech === 'rage') gainMeter(s, d, r.rageOnHitTaken);
+  else if (mech === 'malice') gainMeter(s, d, r.maliceOnHitTaken);
+  martyrFill(s, ctx, d, raw);
   let dmg: number;
   if (type !== 'phys' && r.armourVsElem) {
     const p = r.armourVsElem / 100;
@@ -742,6 +988,61 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   }
   s.life -= dmg;
   ctx.emit({ t: 'hit', target: 'player', amount: dmg, dmgType: type, absorbed: absorbed || undefined, es: Math.round(toEs) || undefined, monsterUid: mon.uid });
+}
+
+// ---------- ground ----------
+
+/** monster ground: damage per second as a fraction of the monster's hit, and how long it lasts */
+export const MONSTER_GROUND_DPS = 0.08;
+export const MONSTER_GROUND_MS = 3000;
+export const BOSS_NOVA_GROUND_DPS = 0.12;
+export const BOSS_NOVA_GROUND_MS = 4000;
+
+function underPlayer(c: CombatRuntime, kind: Ground['kind']): boolean {
+  return c.ground.some((g) => g.cell === PLAYER_SPOT && g.kind === kind);
+}
+
+/**
+ * Hazards burn whatever stands on them. The player's ground hurts monsters on its cells (through their
+ * resistances; chilled ground chills, shocked ground breaks armour). Monster ground sits under the player,
+ * hurting through resistances and energy shield; running or fleeing steps out of it faster.
+ */
+function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
+  const c = s.combat!;
+  if (!c.ground.length) return;
+  const outPace = currentMovement(s) === 'run' || currentMovement(s) === 'flee' ? STEP_OUT_RATE : 1;
+  for (const g of c.ground) {
+    const t = Math.min(dt, g.remainingMs);
+    const type = GROUND[g.kind].type;
+    if (g.cell === PLAYER_SPOT) {
+      let dmg = (g.dps * t) / 1000;
+      if (type !== 'phys') dmg *= (1 - d.res[type] / 100) * (1 - d.raw.elemTakenReduction / 100);
+      const toEs = Math.min(s.es, dmg);
+      s.es -= toEs;
+      s.life -= dmg - toEs;
+      c.groundAcc += dmg;
+      g.remainingMs -= dt * outPace;
+      continue;
+    }
+    for (const m of aliveMonsters(c)) {
+      if (m.cell !== g.cell) continue;
+      const dmg = ((g.dps * t) / 1000) * (type === 'phys' ? 1 : 1 - m.res[type] / 100);
+      damageMonster(m, dmg);
+      m.dotAcc += dmg;
+      if (g.kind === 'chilled') m.chillMs = Math.max(m.chillMs, 500);
+      if (g.kind === 'shocked') m.vulnMs = Math.max(m.vulnMs, 500);
+    }
+    g.remainingMs -= dt;
+  }
+  c.ground = c.ground.filter((g) => g.remainingMs > 0);
+  // report ground damage to the player in once-a-second chunks, like damage over time on monsters
+  c.groundTimer += dt;
+  if (c.groundTimer >= 1000) {
+    const g = c.ground.find((x) => x.cell === PLAYER_SPOT);
+    if (c.groundAcc >= 1) ctx.emit({ t: 'hit', target: 'player', amount: Math.round(c.groundAcc), dmgType: g ? GROUND[g.kind].type : 'fire', dot: true });
+    c.groundAcc = 0;
+    c.groundTimer = 0;
+  }
 }
 
 // ---------- the step ----------
@@ -786,12 +1087,19 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
     return;
   }
   if (mon.isBoss && bossCasts(s, ctx, d, mon, dt)) return;
-  const speed = mon.enraged ? BOSS_ENRAGE_SPEED : 1;
+  const speed = (mon.enraged ? BOSS_ENRAGE_SPEED : 1) * (d.raw.overclock ? 1.6 : 1);
   mon.attackTimer += (mon.chillMs > 0 ? dt * (1 - d.raw.chillOnHit / 100) : dt) * speed;
   if (mon.attackTimer >= mon.attackMs) {
+    // a melee monster still walking up holds its swing until it reaches the front rank
+    if (!inReach(mon)) {
+      mon.attackTimer = mon.attackMs;
+      return;
+    }
     mon.attackTimer -= mon.attackMs;
     const enrage = mon.enraged ? BOSS_ENRAGE_DMG : 1;
     takeHit(s, ctx, d, mon, mon.damage * enrage * (0.85 + ctx.rng.next() * 0.3), mon.dmgType, 'hit');
+    // some casters' spells splash hazardous ground at the player's feet
+    if (mon.attackGround) layGround(s.combat!.ground, PLAYER_SPOT, groundFor(mon.dmgType), mon.damage * MONSTER_GROUND_DPS, MONSTER_GROUND_MS);
   }
 }
 
@@ -830,11 +1138,9 @@ function bossPhases(s: GameState, ctx: Ctx, mon: MonsterInstance, dt: number): v
       const zone = zoneDef(c.zoneId);
       const fresh: MonsterInstance[] = [];
       for (let i = adds; i < BOSS_SUMMON_COUNT; i++) fresh.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE));
-      if (fresh.length) {
-        // new adds stand in front of the boss, so single-target skills have to chew through them
-        c.monsters.splice(c.monsters.indexOf(mon), 0, ...fresh);
-        ctx.emit({ t: 'bossPhase', name: mon.name, text: `calls for aid (+${fresh.length})` });
-      }
+      // new adds take the front rank, so single-target skills have to chew through them
+      const placed = place(s, ctx, fresh, 'front');
+      if (placed.length) ctx.emit({ t: 'bossPhase', name: mon.name, text: `calls for aid (+${placed.length})` });
     }
   }
 }
@@ -850,6 +1156,8 @@ function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt:
       if (kind === 'nova') {
         mon.timers.nova = BOSS_NOVA_EVERY_MS;
         takeHit(s, ctx, d, mon, mon.damage * BOSS_NOVA_MULT, mon.novaType, 'nova');
+        // the blast leaves the ground under the player burning, frozen or charged
+        layGround(s.combat!.ground, PLAYER_SPOT, groundFor(mon.novaType), mon.damage * BOSS_NOVA_GROUND_DPS, BOSS_NOVA_GROUND_MS);
       } else {
         mon.timers.slam = BOSS_SLAM_EVERY_MS;
         takeHit(s, ctx, d, mon, mon.damage * BOSS_SLAM_MULT, mon.dmgType, 'slam');
@@ -887,6 +1195,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   }
   for (let i = 0; i < c.cooldowns.length; i++) c.cooldowns[i] = Math.max(0, c.cooldowns[i] - dt);
   c.evadeMs = Math.max(0, c.evadeMs - dt);
+  if (classMechanicsStep(s, ctx, d, dt)) return true;
 
   for (const h of c.heals) {
     const t = Math.min(dt, h.remainingMs);
@@ -910,19 +1219,20 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
     }
   }
 
-  if (!c.monsters.length) {
-    c.spawnMs -= dt;
-    if (c.spawnMs <= 0) spawnPack(s, ctx);
-    return expired.length > 0;
-  }
+  autoFlee(s, ctx, d);
+  advanceSpawns(s, ctx, dt);
+  shakeOff(s, ctx, dt);
+  if (!c.monsters.length) return expired.length > 0;
 
   // damage over time
   tickDots(s, ctx, dt);
+  tickGround(s, ctx, d, dt);
   reapDead(s, ctx, d);
   if (!s.combat || !c.monsters.length) return true;
 
-  // the player's turn
-  c.actionMs -= dt;
+  // the player's turn (an overheated Overclock sits it out)
+  if (c.overheatMs > 0) c.overheatMs -= dt;
+  else c.actionMs -= underPlayer(c, 'chilled') ? dt * CHILLED_GROUND_SLOW : dt;
   if (c.actionMs <= 0) {
     const choice = chooseSkill(s, d);
     performSkill(s, ctx, d, choice.slot, choice.nums, choice.manual);
@@ -934,13 +1244,51 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   }
 
   // the monsters' turn
+  advanceMonsters(c.monsters, dt, new Set(c.ground.filter((g) => g.cell >= 0).map((g) => g.cell)));
   for (const m of aliveMonsters(c)) {
     monsterTurn(s, ctx, d, m, dt);
     if (s.life <= 0) break;
   }
   reapDead(s, ctx, d);
+  // Eternal Hunger: you can't die while it's fed
+  if (s.life <= 0 && s.combat && d.raw.eternalHunger && c.hungerMs > 0) s.life = 1;
   if (s.life <= 0 && s.combat) die(s, ctx, d);
   return true;
+}
+
+/** Meter upkeep, Overclock heat and Eternal Hunger. Returns true if the player died. */
+function classMechanicsStep(s: GameState, ctx: Ctx, d: Derived, dt: number): boolean {
+  const c = s.combat!;
+  ensureMechanicFields(c);
+  const r = d.raw;
+  const fighting = aliveMonsters(c).length > 0;
+  c.riposteMs = Math.max(0, c.riposteMs - dt);
+  const mech = mechanicOf(s);
+  if (mech === 'rage' && !fighting && !r.endlessFury) c.mech = Math.max(0, c.mech - (RAGE_DECAY_PER_S * (1 - Math.min(100, r.rageDecay) / 100) * dt) / 1000);
+  if (mech === 'momentum' && r.perpetualMotion) c.mech = Math.max(0, c.mech - dt / 1000);
+
+  if (r.overclock && fighting && c.overheatMs <= 0) {
+    c.heatMs += dt;
+    if (c.heatMs >= OVERCLOCK_HEAT_MS) {
+      c.heatMs = 0;
+      c.overheatMs = OVERHEAT_MS;
+      ctx.emit({ t: 'info', text: 'Overheated! You lock up for 2s.', tone: 'warn' });
+    }
+  }
+
+  if (r.eternalHunger) {
+    if (!fighting) c.hungerMs = HUNGER_MS;
+    else {
+      c.hungerMs -= dt;
+      if (c.hungerMs <= 0) {
+        ctx.emit({ t: 'info', text: 'Your Hunger starves, and takes you with it.', tone: 'warn' });
+        s.life = 0;
+        die(s, ctx, d);
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 // ---------- flask management ----------

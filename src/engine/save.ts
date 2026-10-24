@@ -89,6 +89,34 @@ const MIGRATIONS: Record<number, Migration> = {
     s.es ??= 0;
     if (s.combat) s.combat.esDelayMs ??= 0;
   },
+  10: (raw) => {
+    // the character tree grew to six class sectors with new node ids: refund every point
+    raw.passives = [];
+    raw.masteries = {};
+  },
+  11: (raw) => {
+    // monsters took their places on a battlefield; ones in a fight in progress have no cell yet
+    const s = raw as unknown as GameState;
+    if (!s.combat) return;
+    s.combat.fleeing ??= false;
+    s.combat.shakeMs ??= 0;
+    for (const m of s.combat.monsters) {
+      m.cell ??= 1;
+      m.stepMs ??= 0;
+    }
+  },
+  12: (raw) => {
+    // skills and monsters started using the battlefield: ground hazards, walking speeds
+    const s = raw as unknown as GameState;
+    if (!s.combat) return;
+    s.combat.ground ??= [];
+    s.combat.groundAcc ??= 0;
+    s.combat.groundTimer ??= 0;
+    for (const m of s.combat.monsters) {
+      m.moveMs ??= 1100;
+      m.attackGround ??= false;
+    }
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

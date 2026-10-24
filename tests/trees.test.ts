@@ -26,30 +26,65 @@ function take(s: GameState, ids: string[], choice = 0) {
   }
 }
 
-const path = (cluster: string) => [`${cluster}_s1`, `${cluster}_s2`, `${cluster}_s3`, `${cluster}_n`];
+/** Shortest allocatable path from a class start to `target` (never through other starts or masteries). */
+function route(start: string, target: string): string[] {
+  const prev: Record<string, string> = { [start]: '' };
+  const q = [start];
+  while (q.length) {
+    const cur = q.shift()!;
+    if (cur === target) break;
+    for (const l of PASSIVE_BY_ID[cur].links) {
+      const k = PASSIVE_BY_ID[l].kind;
+      if (l in prev || k === 'start' || (k === 'mastery' && l !== target)) continue;
+      prev[l] = cur;
+      q.push(l);
+    }
+  }
+  const out: string[] = [];
+  for (let id = target; id !== start; id = prev[id]) out.unshift(id);
+  return out;
+}
 
 describe('character tree shape', () => {
   it('matches the agreed layout', () => {
     const count = (k: string) => PASSIVE_NODES.filter((n) => n.kind === k).length;
-    expect(count('keystone')).toBe(9);
-    expect(count('notable')).toBe(24);
-    expect(count('mastery')).toBe(24);
-    expect(count('start')).toBe(3);
-    expect(PASSIVE_NODES.length).toBeGreaterThanOrEqual(140);
+    expect(count('start')).toBe(6);
+    expect(count('keystone')).toBe(21);
+    expect(count('notable')).toBe(168);
+    expect(count('mastery')).toBe(78);
+    expect(PASSIVE_NODES.length).toBeGreaterThanOrEqual(850);
     for (const n of PASSIVE_NODES.filter((x) => x.kind === 'mastery')) {
       expect(n.options).toHaveLength(3);
       expect(n.links).toHaveLength(1);
       expect(PASSIVE_BY_ID[n.links[0]].kind).toBe('notable');
     }
+    // nothing sits on top of anything else
+    let closest = Infinity;
+    for (const a of PASSIVE_NODES) for (const b of PASSIVE_NODES) if (a !== b) closest = Math.min(closest, Math.hypot(a.x - b.x, a.y - b.y));
+    expect(closest).toBeGreaterThan(30);
   });
 
-  it('hybrid zones are reachable from either neighbouring region', () => {
+  it('every class has a mechanic wheel next to its start and a mechanic keystone', () => {
+    for (const mech of ['rage', 'riposte', 'momentum', 'malice', 'manaPower', 'martyr']) {
+      const nodes = PASSIVE_NODES.filter((n) => n.mechanic === mech);
+      expect(nodes.filter((n) => n.kind === 'notable')).toHaveLength(5);
+      expect(nodes.filter((n) => n.kind === 'keystone')).toHaveLength(1);
+    }
     const w = newGame(1, { name: 'w', classId: 'warrior' });
-    take(w, ['str_hub', ...path('brute_force'), 'duelist_gate']);
+    const toRage = route('class_str', 'rage_n1');
+    expect(toRage.length).toBeLessThanOrEqual(8);
+    take(w, toRage);
+    expect(deriveStats(w, []).raw.rageEffect).toBeGreaterThan(0);
+  });
+
+  it('neighbouring classes can path into each other and everyone reaches the centre quickly', () => {
+    const w = newGame(1, { name: 'w', classId: 'warrior' });
+    take(w, route('class_str', 'duelists_edge_n'));
     const r = newGame(1, { name: 'r', classId: 'ranger' });
-    take(r, ['dex_hub', ...path('fleetfoot'), 'duelist_gate']);
-    expect(w.passives).toContain('duelist_gate');
-    expect(r.passives).toContain('duelist_gate');
+    take(r, route('class_dex', 'duelists_edge_n'));
+    expect(w.passives).toContain('duelists_edge_n');
+    expect(r.passives).toContain('duelists_edge_n');
+    expect(route('class_int', 'crossing_n0').length).toBeLessThanOrEqual(8);
   });
 });
 
@@ -58,7 +93,7 @@ describe('masteries', () => {
     const s = newGame(1);
     s.skills.combat = charXpForLevel(80);
     expect(allocateReason(s, 'iron_skin_m')).toMatch(/connect/);
-    take(s, ['str_hub', ...path('iron_skin')]);
+    take(s, route('class_str', 'iron_skin_n'));
     expect(allocate(s, ctx(), 'iron_skin_m')).toMatch(/Choose/);
     const before = deriveStats(s, []).raw.armourPct;
     expect(allocate(s, ctx(), 'iron_skin_m', 0)).toBeNull();
@@ -70,6 +105,21 @@ describe('masteries', () => {
     // the notable can't be refunded while its mastery depends on it
     expect(refundReason(s, 'iron_skin_n')).toMatch(/disconnect/);
   });
+});
+
+describe('forbidden keystones', () => {
+  const ids = ['forbidden_overclock', 'forbidden_knifes_edge', 'forbidden_eternal_hunger'];
+
+  it('sit an equal distance apart and can be reached', () => {
+    const [a, b, c] = ids.map((id) => PASSIVE_BY_ID[id]);
+    const ab = Math.hypot(a.x - b.x, a.y - b.y);
+    expect(Math.abs(ab - Math.hypot(b.x - c.x, b.y - c.y))).toBeLessThan(3);
+    expect(Math.abs(ab - Math.hypot(c.x - a.x, c.y - a.y))).toBeLessThan(3);
+    const s = newGame(1, { name: 'r', classId: 'ranger' });
+    take(s, route('class_dex', 'forbidden_overclock'));
+    expect(s.passives).toContain('forbidden_overclock');
+  });
+
 });
 
 describe('keystones', () => {
@@ -88,7 +138,7 @@ describe('keystones', () => {
 
   it('Blood Pact removes mana and pays skills with life', () => {
     const s = newGame(1);
-    take(s, ['str_hub', ...path('heart_of_stone'), 'str_road1', ...path('warlord'), 'str_ks1']);
+    take(s, route('class_str', 'str_ks1'));
     expect(deriveStats(s, []).maxMana).toBe(0);
     const c = arena(s);
     let paidWithLife = false;

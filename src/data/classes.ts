@@ -1,12 +1,17 @@
 import type { EquipSlot, StatKey } from '../engine/types';
+import type { ClassRegion, Mechanic } from './passiveTree';
 
-export type ClassId = 'warrior' | 'ranger' | 'mage';
+export type ClassId = 'warrior' | 'ranger' | 'mage' | 'duelist' | 'templar' | 'shadow';
 
 export interface ClassDef {
   id: ClassId;
   name: string;
-  attribute: 'Strength' | 'Dexterity' | 'Intelligence';
-  region: 'str' | 'dex' | 'int';
+  attribute: string;
+  region: ClassRegion;
+  /** the class's own combat mechanic (docs/CLASSES.md) */
+  mechanic: Mechanic;
+  /** one line for the class card and the combat meter */
+  mechanicText: string;
   /** passive tree node the class starts from */
   startNode: string;
   color: string;
@@ -28,6 +33,8 @@ export const CLASSES: ClassDef[] = [
     name: 'Warrior',
     attribute: 'Strength',
     region: 'str',
+    mechanic: 'rage',
+    mechanicText: 'Rage: each hit you deal grants 1 Rage (max 20). Each Rage is 1% more attack damage and 2% increased Armour. Decays between packs.',
     startNode: 'class_str',
     color: '#d0574a',
     icon: 'combat',
@@ -44,6 +51,8 @@ export const CLASSES: ClassDef[] = [
     name: 'Ranger',
     attribute: 'Dexterity',
     region: 'dex',
+    mechanic: 'momentum',
+    mechanicText: 'Momentum: each attack grants 1 Momentum (max 10), 3% increased Attack Speed each. Taking a hit halves it.',
     startNode: 'class_dex',
     color: '#5fbf6a',
     icon: 'target',
@@ -60,6 +69,8 @@ export const CLASSES: ClassDef[] = [
     name: 'Mage',
     attribute: 'Intelligence',
     region: 'int',
+    mechanic: 'manaPower',
+    mechanicText: 'Mana is Power: spells deal up to 30% more damage the fuller your mana is.',
     startNode: 'class_int',
     color: '#5f8de0',
     icon: 'bolt',
@@ -70,6 +81,60 @@ export const CLASSES: ClassDef[] = [
     bonus: { elemPct: 15, flaskEffect: 10 },
     bonusText: ['15% increased Elemental Damage', '10% increased Flask Effect'],
     starterGems: ['spark', 'frost_ward'],
+  },
+  {
+    id: 'duelist',
+    name: 'Duelist',
+    attribute: 'Strength & Dexterity',
+    region: 'duelist',
+    mechanic: 'riposte',
+    mechanicText: 'Riposte: when you block or evade a hit, counter-attack for 100% weapon damage (at most once per 0.5s).',
+    startNode: 'class_strdex',
+    color: '#d39a4a',
+    icon: 'weapon',
+    tagline: 'Answer every blow.',
+    desc: 'A sword fighter who wears both plate and leather and turns every parried blow into a counter-attack.',
+    kit: { weapon: 'rusted_sword', body: 'shabby_jerkin', helmet: 'iron_hat' },
+    baseAttributes: { str: 17, dex: 17, int: 8 },
+    bonus: { evasionPct: 10, blockChance: 5 },
+    bonusText: ['10% increased Evasion Rating', '5% chance to Block hits'],
+    starterGems: ['twin_strike', 'iron_guard'],
+  },
+  {
+    id: 'templar',
+    name: 'Templar',
+    attribute: 'Strength & Intelligence',
+    region: 'templar',
+    mechanic: 'martyr',
+    mechanicText: 'Martyr: hits you take fill Fervor. When full, a holy nova heals 20% of your Life and strikes every enemy with lightning.',
+    startNode: 'class_strint',
+    color: '#c98fd6',
+    icon: 'heart',
+    tagline: 'Every wound is a prayer.',
+    desc: 'A holy warrior in plate who gets stronger the harder the fight. Bosses fill Fervor fastest.',
+    kit: { weapon: 'oak_club', body: 'plate_vest', helmet: 'linen_hood' },
+    baseAttributes: { str: 17, dex: 8, int: 17 },
+    bonus: { elemPct: 15, allRes: 8 },
+    bonusText: ['15% increased Elemental Damage', '+8% to all Elemental Resistances'],
+    starterGems: ['heavy_strike', 'frost_ward'],
+  },
+  {
+    id: 'shadow',
+    name: 'Shadow',
+    attribute: 'Dexterity & Intelligence',
+    region: 'shadow',
+    mechanic: 'malice',
+    mechanicText: 'Malice: every non-critical hit adds 1 Malice (max 15). At full, your next hit is a Coup de Grâce: a Mega Crit. A normal crit empties the meter.',
+    startNode: 'class_dexint',
+    color: '#5fb8b0',
+    icon: 'skull',
+    tagline: 'Patience, then the knife.',
+    desc: 'A poisoner who waits for the perfect moment. Build for low crit to land Coup de Grâce often, or high crit for steady damage.',
+    kit: { weapon: 'whittled_dagger', body: 'shabby_jerkin', helmet: 'linen_hood' },
+    baseAttributes: { str: 8, dex: 17, int: 17 },
+    bonus: { ailmentPct: 20, evasionPct: 10 },
+    bonusText: ['20% increased damage with ailments', '10% increased Evasion Rating'],
+    starterGems: ['poison_dart', 'spark'],
   },
 ];
 

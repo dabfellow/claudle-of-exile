@@ -1,8 +1,8 @@
 # New Content Pass — Classes, Skills, Uniques
 
-> **Superseded (2026-10-24):** the class list below is replaced by [CLASSES.md](CLASSES.md).
-> Skills and uniques here were built around those old classes — redo them once the class
-> mechanics, Energy Shield, weapon families and hybrid armour have landed.
+> **Superseded (2026-10-24):** the class list below is replaced by [CLASSES.md](CLASSES.md),
+> the skills by [NEW_SKILLS.md](NEW_SKILLS.md), and the uniques by [NEW_UNIQUES.md](NEW_UNIQUES.md).
+> Nothing below is current.
 
 Draft design list. Everything is written against what's already in the code:
 stat keys from `engine/types.ts`, bases from `data/bases.ts`, affix ids from `data/affixes.ts`.

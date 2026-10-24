@@ -13,11 +13,11 @@ Every class is one chain:
 |---|---|---|---|---|
 | Warrior | Str | Armour | Mace, Axe | **Rage** |
 | Ranger | Dex | Evasion | Bow, Dagger | **Momentum** |
-| Mage | Int | Energy Shield | Wand, Staff | **Arcane Charges** |
+| Mage | Int | Energy Shield | Wand, Staff | **Mana is Power** |
 | Duelist | Str/Dex | Armour/Evasion | Sword, Axe | **Riposte** |
-| Templar | Str/Int | Armour/ES | Sceptre, Mace | **Zeal** |
-| Shadow | Dex/Int | Evasion/ES | Dagger, Wand | **Exploit** |
-| Exile | All | Any | Any | **Versatility** |
+| Templar | Str/Int | Armour/ES | Sceptre, Mace | **Martyr** |
+| Shadow | Dex/Int | Evasion/ES | Dagger, Wand | **Malice** |
+| Exile | — | — | — | *Challenge class: none* |
 
 ---
 
@@ -56,16 +56,18 @@ Every class is one chain:
 - Class bonus: +6% Attack Speed, +10% Evasion (unchanged).
 - Bend later: "Momentum isn't lost on hit, decays instead", "at 10 Momentum your attacks are crits".
 
-## Mage — Arcane Charges
+## Mage — Mana is Power
 *"Bend the elements and the brew."* Start 10 / 12 / 20.
 
-**Arcane Charges:** each spell cast grants 1 charge (max 5). At 5, your **next spell costs no mana
-and deals 50% more damage**, consuming all charges.
+**Mana is Power:** spells deal **up to 30% more damage the fuller your mana** — 30% at full,
+0% at empty, linear in between (checked before the cast's cost is paid).
 
-- Every 6th cast is a big one — good rhythm, solves early mana pain.
-- Hooks: tactics rule "Only at full charges" (**NEW** `RuleCondition`) lets Fireball be saved for the empowered cast.
+- The core tension is spend vs. save: cheap spam drains the bonus, a full tank hits hard.
+- Makes mana stats (max mana, regen, mana flasks, Mana Leech, Efficiency) count as damage stats.
+- Hooks: existing `manaAbove` tactics rule becomes a real choice ("only cast Fireball above 80% mana").
+  Mind over Flesh (keystone) is a deliberate trade — taking hits on mana lowers your damage.
 - Class bonus: +15% Elemental Damage, +10% Flask Effect (unchanged).
-- Bend later: "max charges +2", "empowered spells also restore 10% ES".
+- Bend later: "bonus is 50% but caps at 90% mana", "bonus also applies to ES recharge", "counts ES instead of mana".
 
 ## Duelist — Riposte
 *"Answer every blow."* Start 17 / 17 / 8. Starts in the Duelist zone (Str/Dex).
@@ -79,56 +81,71 @@ and deals 50% more damage**, consuming all charges.
 - Class bonus: +10% Evasion, +5% chance to Block attacks (**NEW** `blockChance` stat, small passive block).
 - Starter gems: Twin Strike, Iron Guard.
 
-## Templar — Zeal
-*"Faith is a shield."* Start 17 / 8 / 17. Starts in the Templar zone (Int/Str).
+## Templar — Martyr
+*"Every wound is a prayer."* Start 17 / 8 / 17. Starts in the Templar zone (Int/Str).
 
-**Zeal:** **25% of mana you spend is restored as Energy Shield** (as Life if you have no ES).
+**Martyr:** hits you take fill **Fervor** (full at damage equal to 60% of your max Life + ES).
+When full it releases a **holy nova**: heals 20% of max Life and deals lightning damage to every enemy
+equal to 50% of the damage that filled it.
 
-- Casting more = more defence. Makes the Armour/ES hybrid self-sustaining; pairs with Zealot cluster.
-- Hooks: big-cost skills (War Cry, Fireball) become defensive; Efficiency is a trade-off, not a free pick.
+- Fervor fills from incoming damage **before mitigation**, so Armour/ES keep you alive without
+  slowing the nova — the tank hybrid gets to stack defence with no penalty.
+- Harder fights fire it more often; trash you outgear barely fills it. Bosses are where it shines.
+- Hooks: Iron Guard's blocked hit still counts toward Fervor. Ground Slam packs fill it fast.
 - Class bonus: +15% Elemental Damage, +8% all Resistances.
 - Starter gems: Heavy Strike, Frost Ward.
+- Bend later: "nova also applies Frost Ward", "Fervor full at 40%", "nova damage scales with Armour".
 
-## Shadow — Exploit
-*"Find the crack, then the heart."* Start 8 / 17 / 17. Starts in the Shadow zone (Dex/Int).
+## Shadow — Malice
+*"Patience, then the knife."* Start 8 / 17 / 17. Starts in the Shadow zone (Dex/Int).
 
-**Exploit:** you deal **8% more damage for each different ailment or debuff** on the target
-(bleed, poison, ignite, chill, stun, broken armour) — max 5 (40%).
+**Malice:** every **non-critical** hit adds 1 Malice (meter of 15). At full, your next hit is a
+**Coup de Grâce: a guaranteed crit for 400% damage**, and the meter empties.
+A **normal crit empties the meter immediately**.
 
-- Rewards mixing skills and elements instead of spamming one — fragile but highest ceiling.
-- Hooks: Poison Dart + Fireball + Spark already cover poison/ignite/chill. Lacerate adds bleed.
-- Class bonus: +20% Ailment Damage, +15% Critical Strike Chance.
+- Two real build paths, and that's the point:
+  - **Low crit** → the meter fills reliably → a Coup de Grâce every ~15 hits.
+  - **High crit** → constant normal crits, meter rarely fills → steady damage, no spikes.
+  - The awkward middle (crits often enough to keep resetting) is the trap the player learns to avoid.
+- Multi-hit skills (Twin Strike, Frost Needle-style) fill it fastest; Steady Hand (no crits) +
+  Malice is a natural keystone combo — every hit fills it.
+- Meter shows on the combat page; tactics rule "Only with Malice full" (**NEW** `RuleCondition`) lets a
+  big skill like Fireball be saved for the Coup de Grâce.
+- Class bonus: +20% Ailment Damage, +10% Evasion.
 - Starter gems: Poison Dart, Spark.
+- Bend later: "crits remove only 5 Malice", "Coup de Grâce also spreads ailments", "meter of 10, Coup de Grâce 250%".
 
-## Exile — Versatility
-*"Washed ashore with nothing. Can become anything."* Start 14 / 14 / 14. Starts at the **tree centre**,
-with short paths into all three regions.
+## Exile — Challenge class
+*"Washed ashore with nothing."* Start **10 / 10 / 10**.
 
-**Versatility:** using a **different skill than your last one** grants 1 stack (max 5, lasts 6s):
-**4% more damage and 3% increased skill speed** each. Using the same skill twice in a row loses 1.
+**No mechanic. No class bonus. No defence lean.** At creation you **pick any of the six class start
+nodes** and begin there.
 
-- Rewards filling the whole 6-slot bar with a real rotation — ties the class to the tactics system.
-- Weakest start (no defence lean), strongest late: free to path anywhere on the tree.
-- Class bonus: +5 to all Attributes, +10% Item Rarity.
-- Starter gems: Default Attack-style pick — player chooses 1 main + 1 guard from any attribute at creation (**NEW** UI).
-- Unlock: available from the start, or unlocked by beating Act 1 (open question).
+- Starts with a Rusted Sword and the two starter gems of whichever start node you chose — nothing else.
+- Purely a challenge: every bit of power comes from the tree, gear and gems.
+- Rewards: an Exile crest/badge on the character, a few achievements (e.g. "Clear Act 1 as an Exile",
+  "Kill Ysolde as an Exile with no unique equipped"). No gameplay rewards, so it stays a flex.
+- Unlock: after any character clears Act 1 (so new players don't pick it by accident).
 
 ---
 
 ## Engine work
 
-- `ClassDef` gains `mechanic: 'rage' | 'momentum' | 'charges' | 'riposte' | 'zeal' | 'exploit' | 'versatility'`.
-- `CombatRuntime` gains a `classResource: { stacks: number; max: number; expiresAt?: number }`.
-- One hook per mechanic in `combat.ts`: on hit dealt (Rage), on attack/on hit taken (Momentum), on
-  spell cast (Charges), on block/evade (Riposte), on mana spent (Zeal), damage calc (Exploit), on skill use (Versatility).
-- Stat keys for the knobs (`rageMax`, `rageDecay`, `momentumMax`, …) so passives and uniques can tune them.
-- New start nodes: `class_strdex`, `class_strint`, `class_dexint`, `class_centre` in `passiveTree.ts`.
+**Built (2026-10-24):** Duelist, Templar and Shadow are playable; all six mechanics run in combat (`src/engine/mechanics.ts` + hooks in `combat.ts`), with a meter on the combat page and a "When your class meter is full" tactic. Coup de Grâce is a Mega Crit (flat 400%, ignores crit multiplier). Exile (start-node picker, unlock) is not built yet.
+
+
+- `ClassDef` gains `mechanic: 'rage' | 'momentum' | 'manaPower' | 'riposte' | 'martyr' | 'malice' | null` (Exile is `null`).
+- `CombatRuntime` gains a `classResource: { stacks: number; max: number; expiresAt?: number }` (Rage, Momentum, Fervor, Malice).
+- One hook per mechanic in `combat.ts`: on hit dealt (Rage), on attack/on hit taken (Momentum), spell
+  damage calc (Mana is Power), on block/evade (Riposte), on hit taken (Martyr), on hit dealt/crit roll (Malice).
+- Stat keys for the knobs (`rageMax`, `rageDecay`, `momentumMax`, `maliceMax`, `fervorPct`, …) so passives and uniques can tune them.
+- New start nodes: `class_strdex`, `class_strint`, `class_dexint` in `passiveTree.ts`. Exile reuses any of the six.
+- Exile creation UI: start-node picker; unlock flag on the account after an Act 1 clear.
 - `npm run sim -- --class <id>` for all 7; Act 1 target stays 6–10h per class.
 - Class portraits/crests for the 4 new classes (`ART_PROMPTS.md`).
 
 ## Open questions
 
-- Exile: free from the start, or an Act 1 unlock?
 - Do mechanics carry into ascendancies (each ascendancy twists its class mechanic), or do
   ascendancies add something separate?
 - Starter kits for the hybrids wait on the weapon-family and hybrid-armour work.

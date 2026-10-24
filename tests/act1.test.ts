@@ -3,7 +3,7 @@ import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
 import { actionsFor } from '../src/data/skills';
 import { uniqueDef } from '../src/data/bases';
 import { BOSS_WARD_PCT, nextZone, ZONES, zoneDef, zonesInAct, type MonsterDef } from '../src/data/zones';
-import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
+import { aliveMonsters, combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
 import { seeded } from '../src/engine/rng';
@@ -25,6 +25,8 @@ function arena(gems: string[], pack: MonsterInstance[], zoneId = 'mudflats') {
   const c = ctx();
   startCombat(s, c, zoneId);
   s.combat!.monsters = pack;
+  // a hand-built pack fights alone: no new waves walk in
+  s.combat!.spawnMs = 1e12;
   s.combat!.actionMs = gems.length ? 0 : 1e12;
   s.life = deriveStats(s).maxLife;
   return { s, c };
@@ -101,7 +103,7 @@ describe('boss mechanics', () => {
     b.timers.summon = 0;
     const { s, c } = arena([], [b], 'sanctum');
     run(s, c, 100);
-    const alive = s.combat!.monsters.filter((m) => m.life > 0);
+    const alive = aliveMonsters(s.combat!);
     expect(alive).toHaveLength(3);
     expect(alive.at(-1)!.isBoss).toBe(true);
   });
@@ -173,7 +175,7 @@ describe('offline progress and bosses', () => {
     const s = strong();
     const c = ctx();
     startCombat(s, c, 'mudflats');
-    const sum = simulateOffline(s, c, 2 * 3600_000);
+    const sum = simulateOffline(s, c, 30 * 60_000);
     expect(sum.kills).toBeGreaterThan(zoneDef('mudflats').bossEvery);
     expect(s.bossesDefeated).toEqual([]);
     expect(s.unlockedZones).toEqual(['mudflats']);
@@ -186,7 +188,7 @@ describe('offline progress and bosses', () => {
     const c = ctx();
     startCombat(s, c, 'mudflats');
     const before = s.lifetime.bossKills;
-    const sum = simulateOffline(s, c, 2 * 3600_000);
+    const sum = simulateOffline(s, c, 30 * 60_000);
     expect(s.lifetime.bossKills).toBeGreaterThan(before);
     expect(sum.bossWaiting).toBeNull();
   });

@@ -262,18 +262,19 @@ describe('passive tree', () => {
     // other class starts can't be walked through, but every other node must be reachable via bridges
     const skip = (id: string) => PASSIVE_BY_ID[id].kind === 'start';
     while (q.length) for (const l of PASSIVE_BY_ID[q.pop()!].links) if (!seen.has(l) && !skip(l)) (seen.add(l), q.push(l));
-    expect(seen.size).toBe(PASSIVE_NODES.length - 2);
+    expect(seen.size).toBe(PASSIVE_NODES.length - (PASSIVE_NODES.filter((n) => n.kind === 'start').length - 1));
   });
 
   it('only allocates adjacent nodes and blocks orphaning refunds', () => {
     const s = newGame(1);
     s.skills.combat = charXpForLevel(10);
-    expect(allocateReason(s, 'iron_skin_s1')).toMatch(/connect/);
+    const next = PASSIVE_BY_ID.str_hub.links.find((l) => l !== 'class_str')!;
+    expect(allocateReason(s, next)).toMatch(/connect/);
     expect(allocate(s, ctx(), 'str_hub')).toBeNull();
-    expect(allocate(s, ctx(), 'iron_skin_s1')).toBeNull();
+    expect(allocate(s, ctx(), next)).toBeNull();
     s.bank.regret = 1;
     expect(refundReason(s, 'str_hub')).toMatch(/disconnect/);
-    expect(refundReason(s, 'iron_skin_s1')).toBeNull();
+    expect(refundReason(s, next)).toBeNull();
   });
 
   it('feeds stats into derived character stats', () => {

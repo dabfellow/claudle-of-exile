@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react';
-import { PASSIVE_BY_ID, PASSIVE_NODES, REGION_NAMES, type PassiveNode, type TreeRegion } from '../../data/passiveTree';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { CLASS_SECTORS, MECHANIC_INFO, PASSIVE_BY_ID, PASSIVE_NODES, REGION_NAMES, type PassiveNode, type TreeRegion } from '../../data/passiveTree';
 import { SKILL_TREE_BY_ID, SKILL_TREE_NODES, SKILL_TREE_START, type SkillTreeNode } from '../../data/skillTree';
 import { SKILLS } from '../../data/skills';
 import { describeStats } from '../../data/statText';
@@ -8,7 +9,7 @@ import { allocateSkillNode, refundSkillNode, refundSkillNodeReason, skillNodeRea
 import { deriveStats, passiveStats, type Derived } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { PageHeader, Tabs, Tooltip } from '../components/common';
+import { PageHeader, Tabs } from '../components/common';
 
 const REGION_COLOR: Record<TreeRegion, string> = {
   str: '#d0574a',
@@ -17,6 +18,8 @@ const REGION_COLOR: Record<TreeRegion, string> = {
   duelist: '#d39a4a',
   shadow: '#5fb8b0',
   templar: '#c98fd6',
+  center: '#c9b37a',
+  forbidden: '#ff3d6e',
 };
 
 const BRANCH_COLOR: Record<string, string> = {
@@ -37,10 +40,23 @@ interface CanvasNode {
   links: string[];
 }
 
+interface CanvasLabel {
+  text: string;
+  x: number;
+  y: number;
+  color: string;
+  size?: number;
+}
+
+type View = { x: number; y: number; k: number };
+
 function TreeCanvas<N extends CanvasNode>({
   nodes,
   byId,
   size,
+  version,
+  focus,
+  maxZoom = 2.6,
   isOn,
   canTake,
   matches,
@@ -48,36 +64,113 @@ function TreeCanvas<N extends CanvasNode>({
   tip,
   onClick,
   labels,
+  names,
   tutId,
 }: {
   nodes: N[];
   byId: Record<string, N>;
   size: number;
+  /** changes whenever anything drawn changes; the node layer is only rebuilt then */
+  version: string;
+  /** where the view opens and what "Home" returns to */
+  focus?: View;
+  maxZoom?: number;
   isOn: (id: string) => boolean;
   canTake: (id: string) => boolean;
   matches: Set<string> | null;
   renderNode: (n: N, on: boolean, can: boolean) => ReactNode;
   tip: (n: N) => ReactNode;
   onClick: (n: N) => void;
-  labels?: { text: string; x: number; y: number; color: string }[];
+  labels?: CanvasLabel[];
+  /** labels that only show once zoomed in (node names) */
+  names?: CanvasLabel[];
   /** tutorial highlight id for a node, if any */
   tutId?: (id: string) => string | undefined;
 }) {
-  const [view, setView] = useState({ x: 0, y: 0, k: 1 });
+  const home = focus ?? { x: 0, y: 0, k: 1 };
+  const [view, setView] = useState<View>(home);
+  const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
   const drag = useRef<{ x: number; y: number; vx: number; vy: number; moved: boolean; unit: number } | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
-  const links = useMemo(() => {
-    const out: [N, N][] = [];
-    for (const n of nodes) for (const l of n.links) if (n.id < l) out.push([n, byId[l]]);
-    return out;
-  }, [nodes, byId]);
-  const zoom = (f: number) => setView((v) => ({ ...v, k: Math.min(2.6, Math.max(0.4, v.k * f)) }));
+  const clickRef = useRef(onClick);
+  clickRef.current = onClick;
+  const clamp = (k: number) => Math.min(maxZoom, Math.max(0.8, k));
 
+  /** zoom by `f`, keeping the point under the cursor (or the centre) still */
+  const zoomAt = (f: number, clientX?: number, clientY?: number) =>
+    setView((v) => {
+      const k = clamp(v.k * f);
+      const r = wrap.current?.getBoundingClientRect();
+      if (!r || clientX === undefined || clientY === undefined) return { ...v, k };
+      const unit = size / Math.min(r.width, r.height);
+      const cx = (clientX - r.left - r.width / 2) * unit;
+      const cy = (clientY - r.top - r.height / 2) * unit;
+      return { k, x: v.x + cx / k - cx / v.k, y: v.y + cy / k - cy / v.k };
+    });
+
+  // a native listener so the wheel zooms the tree instead of scrolling the page
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  });
+
+  const layer = useMemo(() => {
+    const links: [N, N][] = [];
+    for (const n of nodes) for (const l of n.links) if (n.id < l) links.push([n, byId[l]]);
+    return (
+      <>
+        {links.map(([a, b]) => {
+          const on = isOn(a.id) && isOn(b.id);
+          const can = !on && ((isOn(a.id) && canTake(b.id)) || (isOn(b.id) && canTake(a.id)));
+          return <line key={`${a.id}-${b.id}`} className={`tree-link ${on ? 'on' : can ? 'can' : ''}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
+        })}
+        {nodes.map((n) => {
+          const on = isOn(n.id);
+          const can = canTake(n.id);
+          const dim = matches && !matches.has(n.id);
+          return (
+            <g
+              key={n.id}
+              data-tut={tutId?.(n.id)}
+              className={`tree-node ${on ? 'on' : ''} ${can ? 'can' : ''} ${matches?.has(n.id) ? 'match' : ''}`}
+              transform={`translate(${n.x} ${n.y})`}
+              style={{ opacity: dim ? 0.25 : 1 }}
+              onMouseMove={(e) => setHover({ id: n.id, x: e.clientX, y: e.clientY })}
+              onMouseLeave={() => setHover((h) => (h?.id === n.id ? null : h))}
+              onClick={() => !drag.current?.moved && clickRef.current(n)}
+            >
+              {renderNode(n, on, can)}
+            </g>
+          );
+        })}
+      </>
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `version` stands in for everything drawn
+  }, [version, nodes, byId]);
+
+  const showNames = view.k >= maxZoom * 0.55;
+  const nameLayer = useMemo(
+    () =>
+      showNames &&
+      names?.map((l) => (
+        <text key={`${l.text}@${l.x},${l.y}`} className="tree-name" x={l.x} y={l.y} textAnchor="middle" fill={l.color} fontSize={l.size ?? 15}>
+          {l.text}
+        </text>
+      )),
+    [showNames, names],
+  );
+
+  const hovered = hover && byId[hover.id];
   return (
     <div
       className="tree-wrap"
       ref={wrap}
-      onWheel={(e) => zoom(e.deltaY < 0 ? 1.12 : 0.89)}
       onPointerDown={(e) => {
         const r = wrap.current!.getBoundingClientRect();
         drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, unit: size / Math.min(r.width, r.height) };
@@ -88,57 +181,66 @@ function TreeCanvas<N extends CanvasNode>({
         const dx = e.clientX - dr.x;
         const dy = e.clientY - dr.y;
         if (Math.abs(dx) + Math.abs(dy) > 4) dr.moved = true;
-        if (dr.moved) setView((v) => ({ ...v, x: dr.vx + (dx * dr.unit) / v.k, y: dr.vy + (dy * dr.unit) / v.k }));
+        if (dr.moved) {
+          setHover(null);
+          setView((v) => ({ ...v, x: dr.vx + (dx * dr.unit) / v.k, y: dr.vy + (dy * dr.unit) / v.k }));
+        }
       }}
       onPointerUp={() => setTimeout(() => (drag.current = null), 0)}
-      onPointerLeave={() => (drag.current = null)}
+      onPointerLeave={() => {
+        drag.current = null;
+        setHover(null);
+      }}
     >
       <svg viewBox={`${-size / 2} ${-size / 2} ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
         <g transform={`scale(${view.k}) translate(${view.x} ${view.y})`}>
           {labels?.map((l) => (
-            <text key={l.text} x={l.x} y={l.y} textAnchor="middle" fill={l.color} opacity={0.5} fontFamily="Cinzel, serif" fontSize={24} letterSpacing={5}>
+            <text key={l.text} x={l.x} y={l.y} textAnchor="middle" dominantBaseline="middle" fill={l.color} opacity={0.5} fontFamily="Cinzel, serif" fontSize={l.size ?? 24} letterSpacing={5}>
               {l.text}
             </text>
           ))}
-          {links.map(([a, b]) => {
-            const on = isOn(a.id) && isOn(b.id);
-            const can = !on && ((isOn(a.id) && canTake(b.id)) || (isOn(b.id) && canTake(a.id)));
-            return <line key={`${a.id}-${b.id}`} className={`tree-link ${on ? 'on' : can ? 'can' : ''}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
-          })}
-          {nodes.map((n) => {
-            const on = isOn(n.id);
-            const can = canTake(n.id);
-            const dim = matches && !matches.has(n.id);
-            return (
-              <Tooltip svg key={n.id} content={tip(n)}>
-                <g
-                  data-tut={tutId?.(n.id)}
-                  className={`tree-node ${on ? 'on' : ''} ${can ? 'can' : ''} ${matches?.has(n.id) ? 'match' : ''}`}
-                  transform={`translate(${n.x} ${n.y})`}
-                  style={{ opacity: dim ? 0.25 : 1 }}
-                  onClick={() => !drag.current?.moved && onClick(n)}
-                >
-                  {renderNode(n, on, can)}
-                </g>
-              </Tooltip>
-            );
-          })}
+          {layer}
+          {nameLayer}
         </g>
       </svg>
+      {hovered &&
+        createPortal(
+          <div className="tooltip-layer" style={tipPosition(hover.x, hover.y)}>
+            {tip(hovered)}
+          </div>,
+          document.body,
+        )}
       <div className="tree-controls">
-        <button className="btn sm" onClick={() => zoom(1.2)}>
+        <button className="btn sm" onClick={() => zoomAt(1.25)}>
           +
         </button>
-        <button className="btn sm" onClick={() => zoom(1 / 1.2)}>
+        <button className="btn sm" onClick={() => zoomAt(1 / 1.25)}>
           −
         </button>
+        {focus && (
+          <button className="btn sm" onClick={() => setView(home)}>
+            Home
+          </button>
+        )}
         <button className="btn sm" onClick={() => setView({ x: 0, y: 0, k: 1 })}>
-          Reset
+          {focus ? 'Whole tree' : 'Reset'}
         </button>
       </div>
       <div className="tree-legend">Drag to pan · scroll to zoom · click to allocate</div>
     </div>
   );
+}
+
+/** keep the tooltip on screen: flip left of the cursor in the right half, up in the bottom half */
+function tipPosition(x: number, y: number): CSSProperties {
+  const right = x > window.innerWidth / 2;
+  const bottom = y > window.innerHeight * 0.6;
+  return {
+    left: right ? undefined : x + 16,
+    right: right ? window.innerWidth - x + 12 : undefined,
+    top: bottom ? undefined : y + 16,
+    bottom: bottom ? window.innerHeight - y + 12 : undefined,
+  };
 }
 
 // ---------- shapes ----------
@@ -150,7 +252,19 @@ function hexPoints(r: number): string {
   }).join(' ');
 }
 
-function NodeShape({ kind, color, on, can, mine = true }: { kind: string; color: string; on: boolean; can: boolean; mine?: boolean }) {
+function NodeShape(props: { kind: string; color: string; on: boolean; can: boolean; mine?: boolean; mech?: boolean }) {
+  const r = { keystone: 30, notable: 22, mastery: 0, start: 0, core: 0, travel: 12, small: 15 }[props.kind] ?? 15;
+  // class-mechanic nodes wear a dashed ring in their class colour
+  if (!props.mech || !r) return <BaseShape {...props} />;
+  return (
+    <>
+      <circle r={r} fill="none" stroke={props.color} strokeWidth={2.5} strokeDasharray="5 4" opacity={props.on ? 1 : 0.75} />
+      <BaseShape {...props} />
+    </>
+  );
+}
+
+function BaseShape({ kind, color, on, can, mine = true }: { kind: string; color: string; on: boolean; can: boolean; mine?: boolean }) {
   const stroke = on ? 'var(--accent-2)' : can ? '#b89a62' : '#4a5060';
   const fill = on ? `color-mix(in srgb, ${color} 55%, #2a2010)` : '#1c1f28';
   const style = { fill, stroke, strokeWidth: 3, ['--region' as string]: color };
@@ -209,6 +323,11 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
           {n.kind} · {REGION_NAMES[n.region]}
         </span>
       </div>
+      {n.mechanic && (
+        <div className="small" style={{ color: REGION_COLOR[n.region], marginBottom: 4 }}>
+          {MECHANIC_INFO[n.mechanic].cls} mechanic · only affects characters with {MECHANIC_INFO[n.mechanic].name}
+        </div>
+      )}
       {n.kind === 'mastery' ? (
         <div className="mastery-tip">
           {n.options!.map((o, i) => (
@@ -326,11 +445,25 @@ function searchMatches(query: string, nodes: { id: string; name: string; text: s
   return new Set(nodes.filter((n) => n.name.toLowerCase().includes(q) || n.text.some((t) => t.toLowerCase().includes(q))).map((n) => n.id));
 }
 
-const CHAR_LABELS = [
-  { text: 'STRENGTH', x: 0, y: -745, color: REGION_COLOR.str },
-  { text: 'DEXTERITY', x: 610, y: 400, color: REGION_COLOR.dex },
-  { text: 'INTELLIGENCE', x: -610, y: 400, color: REGION_COLOR.int },
+const CHAR_TREE_SIZE = 4400;
+const CHAR_TREE_ZOOM = 5;
+
+const CHAR_LABELS: CanvasLabel[] = [
+  ...CLASS_SECTORS.map((c) => {
+    const a = (c.angle * Math.PI) / 180;
+    return { text: c.name.toUpperCase(), x: Math.round(2120 * Math.cos(a)), y: Math.round(2120 * Math.sin(a)), color: REGION_COLOR[c.key], size: 64 };
+  }),
+  { text: 'CROSSING', x: 0, y: 0, color: REGION_COLOR.center, size: 30 },
 ];
+
+/** names under notables, keystones and class starts once zoomed in */
+const CHAR_NAMES: CanvasLabel[] = PASSIVE_NODES.filter((n) => n.kind === 'notable' || n.kind === 'keystone' || n.kind === 'start').map((n) => ({
+  text: n.name,
+  x: n.x,
+  y: n.y + (n.kind === 'keystone' ? 50 : n.kind === 'start' ? 44 : 36),
+  color: n.kind === 'keystone' ? 'var(--unique)' : n.kind === 'start' ? REGION_COLOR[n.region] : 'var(--accent-2)',
+  size: n.kind === 'notable' ? 14 : 18,
+}));
 
 function CharacterTree({ s }: { s: GameState }) {
   const [query, setQuery] = useState('');
@@ -366,12 +499,16 @@ function CharacterTree({ s }: { s: GameState }) {
       <TreeCanvas
         nodes={PASSIVE_NODES}
         byId={PASSIVE_BY_ID}
-        size={1640}
+        size={CHAR_TREE_SIZE}
+        maxZoom={CHAR_TREE_ZOOM}
+        version={`${myStart}|${s.passives.join(',')}|${pointsLeft(s)}|${query}`}
+        focus={{ x: -PASSIVE_BY_ID[myStart].x, y: -PASSIVE_BY_ID[myStart].y, k: 3 }}
+        names={CHAR_NAMES}
         isOn={isOn}
         canTake={canTake}
         matches={matches}
         labels={CHAR_LABELS}
-        renderNode={(n, on, can) => <NodeShape kind={n.kind} color={REGION_COLOR[n.region]} on={on} can={can} mine={n.id === myStart} />}
+        renderNode={(n, on, can) => <NodeShape kind={n.kind} color={REGION_COLOR[n.region]} on={on} can={can} mine={n.id === myStart} mech={!!n.mechanic} />}
         tip={(n) => <CharacterNodeTip s={s} n={n} />}
         onClick={click}
         tutId={(id) => (s.passives.length === 0 && canTake(id) ? 'tree-start' : undefined)}
@@ -400,6 +537,13 @@ function CharacterTree({ s }: { s: GameState }) {
             <rect x="-10" y="-10" width="20" height="20" rx="4" transform="rotate(45)" fill="#1c1f28" stroke="#4a5060" strokeWidth="3" />
           </svg>
           Keystone
+        </span>
+        <span>
+          <svg width="22" height="22" viewBox="-14 -14 28 28">
+            <circle r="12" fill="none" stroke="var(--accent-2)" strokeWidth="2" strokeDasharray="4 3" />
+            <circle r="7" fill="#1c1f28" stroke="#4a5060" strokeWidth="2.5" />
+          </svg>
+          Class mechanic (Rage, Momentum, …)
         </span>
       </div>
       <div className="card">
@@ -475,6 +619,7 @@ function SkillingTree({ s }: { s: GameState }) {
         nodes={SKILL_TREE_NODES}
         byId={SKILL_TREE_BY_ID}
         size={1100}
+        version={`${s.skillPassives.join(',')}|${skillPointsLeft(s)}|${JSON.stringify(s.skills)}`}
         isOn={isOn}
         canTake={canTake}
         matches={null}

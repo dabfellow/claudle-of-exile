@@ -33,6 +33,8 @@ function arena(gems: string[], pack: MonsterInstance[], classId: 'warrior' | 'ra
   const c = ctx();
   startCombat(s, c, 'mudflats');
   s.combat!.monsters = pack;
+  // a hand-built pack fights alone: no new waves walk in
+  s.combat!.spawnMs = 1e12;
   s.life = deriveStats(s).maxLife;
   s.mana = deriveStats(s).maxMana;
   return { s, c };
@@ -246,12 +248,14 @@ describe('combat 2.0', () => {
     const c = ctx();
     startCombat(s, c, 'mudflats');
     tick(s, c, 1000);
+    // the first wave can lose a member to the opening hit before we look
+    const killed = s.zoneKills.mudflats ?? 0;
     const n = s.combat!.monsters.length;
     expect(n).toBeGreaterThanOrEqual(1);
-    expect(n).toBeLessThanOrEqual(3);
+    expect(n + killed).toBeLessThanOrEqual(3);
     for (const m of s.combat!.monsters) m.life = 0;
     tick(s, c, 50);
-    expect(s.zoneKills.mudflats).toBe(n);
+    expect(s.zoneKills.mudflats).toBe(killed + n);
     expect(aliveMonsters(s.combat!)).toHaveLength(0);
   });
 

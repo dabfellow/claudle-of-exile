@@ -344,6 +344,259 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'flask_charges', values: [30] },
     ],
   },
+
+  // ---------- class-mechanic uniques (docs/NEW_UNIQUES.md) ----------
+  // skill tweaks marked ★ in the doc wait for the new skills to exist
+  {
+    id: 'tavern_brawler', name: 'Tavern Brawler', baseId: 'oak_club', flavour: 'Last one standing buys the round.',
+    mods: [
+      { affixId: 'added_phys', values: [3, 7] },
+      { affixId: 'attack_speed', values: [8] },
+      { affixId: 'u_rage_max', values: [5] },
+    ],
+  },
+  {
+    id: 'thornquill', name: 'Thornquill', baseId: 'ash_longbow', flavour: "Plucked from something that didn't want to give it up.",
+    mods: [
+      { affixId: 'added_phys', values: [6, 15] },
+      { affixId: 'attack_speed', values: [12] },
+      { affixId: 'u_momentum_max', values: [4] },
+    ],
+  },
+  {
+    id: 'wellspring', name: 'Wellspring', baseId: 'gnarled_staff', flavour: 'Draw deep; the well remembers.',
+    mods: [
+      { affixId: 'flat_mana', values: [40] },
+      { affixId: 'mana_regen', values: [40] },
+      { affixId: 'u_mana_power_full', values: [10] },
+    ],
+  },
+  {
+    id: 'rebuttal', name: 'Rebuttal', baseId: 'iron_blade', flavour: 'Every argument has an answer.',
+    mods: [
+      { affixId: 'added_phys', values: [4, 9] },
+      { affixId: 'u_riposte_pct', values: [40] },
+      { affixId: 'u_riposte_cooldown', values: [25] },
+    ],
+  },
+  {
+    id: 'ninth_psalm', name: 'The Ninth Psalm', baseId: 'crystal_sceptre', flavour: 'The eight before it were mercy.',
+    mods: [
+      { affixId: 'added_light', values: [4, 22] },
+      { affixId: 'u_nova_pct', values: [50] },
+      { affixId: 'u_fervor_pct', values: [20] },
+    ],
+  },
+  {
+    id: 'last_breath', name: 'Last Breath', baseId: 'shadow_kris', flavour: 'Spend it wisely.',
+    mods: [
+      { affixId: 'added_phys', values: [8, 20] },
+      { affixId: 'u_malice_max', values: [-3] },
+      { affixId: 'u_coup_pct', values: [60] },
+    ],
+  },
+  {
+    id: 'second_guess', name: 'The Second Guess', baseId: 'buckler', flavour: 'Doubt is a shield, if you hold it right.',
+    mods: [
+      { affixId: 'inc_evasion', values: [40] },
+      { affixId: 'u_block', values: [8] },
+      { affixId: 'u_riposte_heal', values: [2] },
+    ],
+  },
+  {
+    id: 'bellwether', name: 'Bellwether', baseId: 'kite_shield', flavour: 'It rings before the storm, and after.',
+    mods: [
+      { affixId: 'flat_life', values: [50] },
+      { affixId: 'all_res', values: [10] },
+      { affixId: 'u_block', values: [8] },
+      { affixId: 'u_fervor_pct', values: [25] },
+    ],
+  },
+  {
+    id: 'old_grudge', name: 'The Old Grudge', baseId: 'tower_shield', flavour: 'Forgive nothing. Forget nothing.',
+    mods: [
+      { affixId: 'u_armour_more', values: [25] },
+      { affixId: 'flat_life', values: [70] },
+      { affixId: 'u_rage_on_hit_taken', values: [2] },
+      { affixId: 'u_rage_regen', values: [0.1] },
+    ],
+  },
+  {
+    id: 'castaways_kerchief', name: "Castaway's Kerchief", baseId: 'linen_hood', flavour: 'All you came ashore with.',
+    mods: [
+      { affixId: 'all_attributes', values: [8] },
+      { affixId: 'item_rarity', values: [15] },
+      { affixId: 'life_regen', values: [2] },
+    ],
+  },
+  {
+    id: 'lookouts_hood', name: "Lookout's Hood", baseId: 'hunter_hood', flavour: 'First to see it, first to move.',
+    mods: [
+      { affixId: 'flat_life', values: [40] },
+      { affixId: 'accuracy', values: [120] },
+      { affixId: 'light_res', values: [25] },
+      { affixId: 'u_momentum_retain', values: [30] },
+    ],
+  },
+  {
+    id: 'mask_of_the_patient', name: 'Mask of the Patient', baseId: 'duskweave_cowl', flavour: 'It does not blink. It waits.',
+    mods: [
+      { affixId: 'inc_es', values: [40] },
+      { affixId: 'inc_evasion', values: [40] },
+      { affixId: 'crit_chance', values: [-50] },
+      { affixId: 'u_malice_on_hit_taken', values: [2] },
+    ],
+  },
+  {
+    id: 'stormhide', name: 'Stormhide', baseId: 'studded_brigandine', flavour: 'Tanned from something that bit back.',
+    mods: [
+      { affixId: 'flat_life', values: [35] },
+      { affixId: 'inc_armour', values: [40] },
+      { affixId: 'inc_evasion', values: [40] },
+      { affixId: 'u_riposte_bleed', values: [1] },
+    ],
+  },
+  {
+    id: 'robe_of_still_waters', name: 'Robe of Still Waters', baseId: 'silken_vestment', flavour: 'Calm water runs the deepest.',
+    mods: [
+      { affixId: 'inc_es', values: [50] },
+      { affixId: 'mana_regen', values: [30] },
+      { affixId: 'es_recharge', values: [30] },
+    ],
+  },
+  {
+    id: 'penitents_plate', name: "Penitent's Plate", baseId: 'templar_plate', flavour: 'Every dent a confession.',
+    mods: [
+      { affixId: 'flat_life', values: [50] },
+      { affixId: 'inc_es', values: [40] },
+      { affixId: 'all_res', values: [12] },
+      { affixId: 'u_nova_es', values: [10] },
+    ],
+  },
+  {
+    id: 'quickfingers', name: 'Quickfingers', baseId: 'rawhide_gloves', flavour: 'Faster than the eye, faster than the knife.',
+    mods: [
+      { affixId: 'added_phys', values: [1, 4] },
+      { affixId: 'attack_speed', values: [10] },
+      { affixId: 'dexterity', values: [10] },
+      { affixId: 'u_momentum_effect', values: [20] },
+    ],
+  },
+  {
+    id: 'needleworkers_wraps', name: "Needleworker's Wraps", baseId: 'wayfarer_wraps', flavour: 'A thousand stitches, one cut.',
+    mods: [
+      { affixId: 'u_cast_speed', values: [10] },
+      { affixId: 'u_poison_pct', values: [20] },
+      { affixId: 'u_coup_ailment', values: [1] },
+    ],
+  },
+  {
+    id: 'knuckledusters', name: 'Knuckledusters', baseId: 'steel_gauntlets', flavour: 'The knuckles do the talking.',
+    mods: [
+      { affixId: 'flat_armour', values: [60] },
+      { affixId: 'attack_speed', values: [10] },
+      { affixId: 'u_rage_effect', values: [25] },
+    ],
+  },
+  {
+    id: 'slippers_of_the_tide', name: 'Slippers of the Tide', baseId: 'wool_shoes', flavour: 'Soft steps, full tides.',
+    mods: [
+      { affixId: 'flat_mana', values: [25] },
+      { affixId: 'inc_es', values: [30] },
+      { affixId: 'cold_res', values: [20] },
+      { affixId: 'u_mana_power', values: [5] },
+    ],
+  },
+  {
+    id: 'sidestep', name: 'Sidestep', baseId: 'studded_boots', flavour: 'Not there. Then right there.',
+    mods: [
+      { affixId: 'flat_life', values: [30] },
+      { affixId: 'inc_evasion', values: [40] },
+      { affixId: 'u_block', values: [5] },
+      { affixId: 'u_riposte_crit', values: [50] },
+    ],
+  },
+  {
+    id: 'windchaser', name: 'Windchaser', baseId: 'shagreen_boots', flavour: "The wind doesn't stop to fight.",
+    mods: [
+      { affixId: 'inc_evasion', values: [60] },
+      { affixId: 'light_res', values: [30] },
+      { affixId: 'u_momentum_max', values: [3] },
+      { affixId: 'u_momentum_evasion', values: [3] },
+    ],
+  },
+  {
+    id: 'fishermans_knot', name: "Fisherman's Knot", baseId: 'chain_belt', flavour: 'Tied tight against the tide.',
+    mods: [
+      { affixId: 'flat_life', values: [15] },
+      { affixId: 'flask_charges', values: [25] },
+      { affixId: 'item_rarity', values: [10] },
+    ],
+  },
+  {
+    id: 'herbalists_sash', name: "Herbalist's Sash", baseId: 'leather_belt', flavour: "Pockets full of tomorrow's cures.",
+    mods: [
+      { affixId: 'u_life_flask_recovery', values: [30] },
+      { affixId: 'skill_speed', values: [10] },
+      { affixId: 'skill_xp', values: [10] },
+    ],
+  },
+  {
+    id: 'brawlers_buckle', name: "Brawler's Buckle", baseId: 'heavy_belt', flavour: 'Still swinging at closing time.',
+    mods: [
+      { affixId: 'flat_life', values: [60] },
+      { affixId: 'strength', values: [20] },
+      { affixId: 'u_rage_decay', values: [50] },
+    ],
+  },
+  {
+    id: 'ember_of_faith', name: 'Ember of Faith', baseId: 'amber_amulet', flavour: 'A spark kept close to the heart.',
+    mods: [
+      { affixId: 'added_fire', values: [3, 7] },
+      { affixId: 'fire_res', values: [25] },
+      { affixId: 'u_nova_heal', values: [30] },
+    ],
+  },
+  {
+    id: 'gulls_eye', name: "Gull's Eye", baseId: 'jade_amulet', flavour: 'It sees the glint from miles away.',
+    mods: [
+      { affixId: 'accuracy', values: [80] },
+      { affixId: 'crit_chance', values: [20] },
+      { affixId: 'item_rarity', values: [15] },
+    ],
+  },
+  {
+    id: 'hollow_locket', name: 'The Hollow Locket', baseId: 'onyx_amulet', flavour: 'Something was kept in here. Something hungry.',
+    mods: [
+      { affixId: 'crit_multi', values: [25] },
+      { affixId: 'dexterity', values: [15] },
+      { affixId: 'u_malice_crit_keep', values: [5] },
+    ],
+  },
+  {
+    id: 'barnacle_band', name: 'Barnacle Band', baseId: 'iron_ring', flavour: 'It clung on. So will you.',
+    mods: [
+      { affixId: 'flat_armour', values: [25] },
+      { affixId: 'life_regen', values: [2] },
+      { affixId: 'cold_res', values: [15] },
+    ],
+  },
+  {
+    id: 'brimming_band', name: 'Brimming Band', baseId: 'sapphire_ring', flavour: 'Full to the brim, never spilling.',
+    mods: [
+      { affixId: 'flat_mana', values: [30] },
+      { affixId: 'mana_regen', values: [25] },
+      { affixId: 'u_mana_power', values: [5] },
+    ],
+  },
+  {
+    id: 'twin_oaths', name: 'Twin Oaths', baseId: 'diamond_ring', flavour: 'Sworn twice, broken never.',
+    mods: [
+      { affixId: 'dexterity', values: [15] },
+      { affixId: 'u_riposte_pct', values: [25] },
+      { affixId: 'u_riposte_cooldown', values: [30] },
+    ],
+  },
 ];
 
 export function uniqueDef(id: string): UniqueDef {

@@ -15,6 +15,8 @@ export interface MonsterSkill {
   name: string;
   kind: 'attack' | 'spell';
   ms: number;
+  /** leaves hazardous ground of the monster's damage type under the player */
+  ground?: boolean;
 }
 
 /** A monster's basic attack or spell takes this long unless it says otherwise. */
@@ -30,6 +32,8 @@ export interface MonsterDef {
   dmgMult?: number;
   /** what it does whenever it isn't winding up something bigger */
   basic: MonsterSkill;
+  /** ms to cross one battlefield column (melee only; default MONSTER_STEP_MS) */
+  moveMs?: number;
   /** bosses only */
   mechanics?: BossMechanic[];
   /** bosses: the telegraphed casts; ms is the wind-up */
@@ -54,8 +58,10 @@ export interface ZoneDef {
   actBoss?: boolean;
   /** kills needed before the boss appears */
   bossEvery: number;
-  /** monsters per pack (bosses come with BOSS_ADDS adds) */
+  /** monsters per wave (bosses come with BOSS_ADDS adds) */
   packSize: [number, number];
+  /** ms between waves walking in at a walking pace, even while you're still fighting the last one */
+  spawnEveryMs: number;
   uniques: string[];
 }
 
@@ -75,7 +81,10 @@ export const ACTS: ActDef[] = [
 ];
 
 const atk = (name: string, ms = MONSTER_BASE_ATTACK_MS): MonsterSkill => ({ name, kind: 'attack', ms });
-const spell = (name: string, ms = MONSTER_BASE_ATTACK_MS): MonsterSkill => ({ name, kind: 'spell', ms });
+const spell = (name: string, ms = MONSTER_BASE_ATTACK_MS, ground?: boolean): MonsterSkill => ({ name, kind: 'spell', ms, ground });
+/** quick and slow walkers: how fast they close in on the battlefield */
+const fast = (def: MonsterDef): MonsterDef => ({ ...def, moveMs: 600 });
+const slow = (def: MonsterDef): MonsterDef => ({ ...def, moveMs: 1800 });
 
 const m = (id: string, name: string, level: number, dmgType: DamageType, basic: MonsterSkill, lifeMult = 1, dmgMult = 1): MonsterDef => ({
   id, name, level, dmgType, basic, lifeMult, dmgMult,
@@ -97,43 +106,46 @@ export const ZONES: ZoneDef[] = [
     desc: 'Brackish shallows where the drowned refuse to rest.',
     monsters: [
       // the tutorial zone: soft enough that a fresh character can idle the trash
-      m('rat', 'Drowned Rat', 1, 'phys', atk('Bite', 2600), 0.7, 0.55),
-      m('crab', 'Mud Crab', 2, 'phys', atk('Pinch', 3500), 1.1, 0.6),
-      m('zombie', 'Waterlogged Corpse', 3, 'phys', atk('Sodden Grasp', 3800), 1, 0.7),
+      fast(m('rat', 'Drowned Rat', 1, 'phys', atk('Bite', 2600), 0.7, 0.55)),
+      slow(m('crab', 'Mud Crab', 2, 'phys', atk('Pinch', 3500), 1.1, 0.6)),
+      slow(m('zombie', 'Waterlogged Corpse', 3, 'phys', atk('Sodden Grasp', 3800), 1, 0.7)),
       m('wisp', 'Bog Wisp', 3, 'light', spell('Static Spark', 2900), 0.7, 0.6),
     ],
     boss: boss(m('gorger', 'Bloated Gorger', 5, 'phys', atk('Gnaw', 4200)), ['slam'], { slam: atk('Belly Flop', 4200) }),
     bossEvery: 15,
     packSize: [1, 3],
-    uniques: ['miners_lament', 'bloodthirst', 'windstep'],
+    spawnEveryMs: 18000,
+    uniques: ['miners_lament', 'bloodthirst', 'windstep', 'tavern_brawler', 'castaways_kerchief', 'quickfingers'],
   },
   {
     id: 'brinecaves', name: 'The Brine Caves', act: 1, tier: 1, levelRange: [4, 7], color: '#4f8a8b',
     desc: 'Sea caves where the tide leaves behind things that should have stayed under.',
     monsters: [
       m('crawler', 'Cave Crawler', 4, 'phys', atk('Mandible Snap', 3200), 1, 0.8),
-      m('brinebat', 'Brine Bat', 5, 'phys', atk('Bite', 2100), 0.6, 0.6),
+      fast(m('brinebat', 'Brine Bat', 5, 'phys', atk('Bite', 2100), 0.6, 0.6)),
       m('sailor', 'Drowned Sailor', 6, 'phys', atk('Cutlass Slash', 3500), 1.1, 0.9),
       m('siren', 'Salt Siren', 7, 'cold', spell('Frost Song', 3000), 0.8, 0.9),
     ],
     boss: boss(m('harrow', 'Captain Harrow', 8, 'phys', atk('Hook Slash', 4000)), ['slam', 'summon'], { slam: atk('Anchor Drop', 3800) }),
     bossEvery: 18,
     packSize: [1, 3],
-    uniques: ['windstep', 'bloodthirst'],
+    spawnEveryMs: 15000,
+    uniques: ['windstep', 'bloodthirst', 'wellspring', 'slippers_of_the_tide', 'fishermans_knot', 'barnacle_band'],
   },
   {
     id: 'ashwood', name: 'Ashen Woods', act: 1, tier: 2, levelRange: [7, 10], color: '#9a6a4a',
     desc: 'A forest that burned once and never stopped smouldering.',
     monsters: [
-      m('cinderhound', 'Cinderhound', 7, 'fire', atk('Burning Bite', 2400), 0.9, 0.9),
-      m('treant', 'Charred Treant', 8, 'phys', atk('Branch Slam', 4200), 1.5, 1.2),
-      m('harpy', 'Ash Harpy', 9, 'phys', atk('Talon Rake', 2200), 0.8, 0.9),
-      m('emberkin', 'Emberkin Shaman', 10, 'fire', spell('Firebolt', 3200), 0.9, 1.15),
+      fast(m('cinderhound', 'Cinderhound', 7, 'fire', atk('Burning Bite', 2400), 0.9, 0.9)),
+      slow(m('treant', 'Charred Treant', 8, 'phys', atk('Branch Slam', 4200), 1.5, 1.2)),
+      fast(m('harpy', 'Ash Harpy', 9, 'phys', atk('Talon Rake', 2200), 0.8, 0.9)),
+      m('emberkin', 'Emberkin Shaman', 10, 'fire', spell('Firebolt', 3200, true), 0.9, 1.15),
     ],
     boss: boss(m('pyre', 'Pyre-Mother Ulva', 11, 'fire', spell('Ember Lash', 3800)), ['slam', 'nova'], { slam: atk('Burning Bough', 3800), nova: spell('Pyre Burst', 4400) }),
     bossEvery: 20,
     packSize: [2, 4],
-    uniques: ['emberheart', 'alchemists_band'],
+    spawnEveryMs: 14000,
+    uniques: ['emberheart', 'alchemists_band', 'rebuttal', 'second_guess'],
   },
   {
     id: 'blackreed', name: 'Blackreed Marsh', act: 1, tier: 2, levelRange: [10, 13], color: '#5d6b3a',
@@ -142,12 +154,13 @@ export const ZONES: ZoneDef[] = [
       m('lurker', 'Bog Lurker', 10, 'phys', atk('Drag Under', 3700), 1.3, 1.05),
       m('stalker', 'Reed Stalker', 11, 'phys', atk('Reed Spear', 2400), 0.85, 0.95),
       m('toad', 'Plague Toad', 12, 'cold', atk('Chill Spit', 3400), 1, 1),
-      m('fenwitch', 'Fen Witch', 13, 'light', spell('Marsh Lightning', 3200), 0.9, 1.15),
+      m('fenwitch', 'Fen Witch', 13, 'light', spell('Marsh Lightning', 3200, true), 0.9, 1.15),
     ],
     boss: boss(m('sedge', 'Old Mother Sedge', 14, 'light', spell('Hex Bolt', 3800)), ['slam', 'summon', 'enrage'], { slam: atk('Root Crush', 3600) }),
     bossEvery: 20,
     packSize: [2, 4],
-    uniques: ['alchemists_band', 'miners_lament'],
+    spawnEveryMs: 13000,
+    uniques: ['alchemists_band', 'miners_lament', 'stormhide', 'brimming_band', 'ember_of_faith', 'gulls_eye'],
   },
   {
     id: 'crypt', name: 'The Sunken Crypt', act: 1, tier: 3, levelRange: [13, 16], color: '#5a7a9a',
@@ -156,12 +169,13 @@ export const ZONES: ZoneDef[] = [
       m('ghoul', 'Crypt Ghoul', 13, 'phys', atk('Claw', 2700), 1, 1),
       m('frostwraith', 'Frost Wraith', 14, 'cold', spell('Frost Touch', 3000), 0.85, 1.1),
       m('skeleton', 'Skeletal Warden', 15, 'phys', atk('Halberd Sweep', 3700), 1.4, 1.1),
-      m('lich', 'Drowned Lich', 16, 'cold', spell('Ice Spear', 3800), 1, 1.25),
+      m('lich', 'Drowned Lich', 16, 'cold', spell('Ice Spear', 3800, true), 1, 1.25),
     ],
     boss: boss(m('tidecaller', 'Tidecaller Morvane', 17, 'cold', spell('Tide Bolt', 3800)), ['slam', 'nova', 'ward'], { slam: atk('Crashing Wave', 3600), nova: spell('Frost Tide', 4200) }),
     bossEvery: 22,
     packSize: [2, 4],
-    uniques: ['iron_bulwark', 'windstep'],
+    spawnEveryMs: 12000,
+    uniques: ['iron_bulwark', 'windstep', 'needleworkers_wraps', 'sidestep', 'herbalists_sash'],
   },
   {
     id: 'shipgrave', name: 'The Ship Graveyard', act: 1, tier: 3, levelRange: [16, 19], color: '#7d6a55',
@@ -175,7 +189,8 @@ export const ZONES: ZoneDef[] = [
     boss: boss(m('vosk', 'Admiral Vosk', 20, 'phys', atk('Sabre Cut', 3800)), ['slam', 'nova', 'enrage'], { slam: atk('Keelhaul Strike', 3400), nova: spell('Cannon Barrage', 4000), novaType: 'fire' }),
     bossEvery: 24,
     packSize: [2, 5],
-    uniques: ['iron_bulwark', 'emberheart'],
+    spawnEveryMs: 11000,
+    uniques: ['iron_bulwark', 'emberheart', 'thornquill', 'bellwether', 'lookouts_hood', 'robe_of_still_waters'],
   },
   {
     id: 'stormcliffs', name: 'The Storm Cliffs', act: 1, tier: 4, levelRange: [19, 22], color: '#6a7fa8',
@@ -184,12 +199,13 @@ export const ZONES: ZoneDef[] = [
       m('ravager', 'Cliff Ravager', 19, 'phys', atk('Rend', 2700), 1, 1.05),
       m('galeborn', 'Galeborn', 20, 'light', spell('Gale Bolt', 2400), 0.8, 1),
       m('rockback', 'Rockback Crab', 21, 'phys', atk('Shell Crush', 4200), 1.6, 1.1),
-      m('stormcaller', 'Storm Caller', 22, 'light', spell('Call Lightning', 3400), 1, 1.25),
+      m('stormcaller', 'Storm Caller', 22, 'light', spell('Call Lightning', 3400, true), 1, 1.25),
     ],
     boss: boss(m('skarra', 'Skarra, Queen of Gales', 23, 'light', atk('Gale Talons', 3500)), ['slam', 'nova', 'summon', 'enrage'], { slam: atk('Thunder Dive', 3200), nova: spell('Storm Burst', 3800) }),
     bossEvery: 25,
     packSize: [3, 5],
-    uniques: ['titans_girth', 'miners_lament'],
+    spawnEveryMs: 10000,
+    uniques: ['titans_girth', 'miners_lament', 'knuckledusters', 'windchaser'],
   },
   {
     id: 'sanctum', name: 'The Drowned Sanctum', act: 1, tier: 5, levelRange: [22, 24], color: '#3f6f8f',
@@ -204,7 +220,8 @@ export const ZONES: ZoneDef[] = [
     actBoss: true,
     bossEvery: 25,
     packSize: [3, 5],
-    uniques: ['titans_girth', 'iron_bulwark', 'emberheart'],
+    spawnEveryMs: 10000,
+    uniques: ['titans_girth', 'iron_bulwark', 'emberheart', 'ninth_psalm', 'mask_of_the_patient', 'penitents_plate', 'hollow_locket', 'twin_oaths'],
   },
 ];
 

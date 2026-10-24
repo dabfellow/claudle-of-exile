@@ -1,4 +1,5 @@
-import type { DamageType, StatKey } from '../engine/types';
+import type { AreaShape } from '../engine/battlefield';
+import type { DamageType, GroundKind, StatKey } from '../engine/types';
 
 export type GemAttr = 'str' | 'dex' | 'int';
 export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'dot' | 'sustain';
@@ -14,9 +15,15 @@ export interface SkillEffect {
   type?: DamageType;
   /** hits per use (Twin Strike) */
   hits?: number;
-  /** 'single' hits the target, 'all' the whole pack, 'chain' the target plus N others */
+  /** 'single' hits the target, 'all' the whole pack, 'chain' the target plus N others (each hop to the nearest) */
   targets?: 'single' | 'all' | 'chain';
   chains?: number;
+  /** where on the battlefield the hit lands around the target (engine/battlefield.ts); overrides targets */
+  area?: AreaShape;
+  /** leaves hazardous ground on cells it hits: damage per second as % of the hit on the target */
+  ground?: { kind: GroundKind; pctPerSec: number; durationMs: number; area?: AreaShape };
+  /** shoves the front rank back a column */
+  knockback?: boolean;
   /** base crit chance for spells */
   crit?: number;
   stunChance?: number;
@@ -64,7 +71,8 @@ export type RuleCondition =
   | 'enemiesAtLeast'
   | 'targetLifeAbove'
   | 'notActive'
-  | 'bossOnly';
+  | 'bossOnly'
+  | 'meterFull';
 
 export interface TacticRule {
   when: RuleCondition;
@@ -81,6 +89,7 @@ export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; 
   targetLifeAbove: { label: 'When target life above', unit: '%', defaultValue: 50 },
   notActive: { label: 'When its effect is not active' },
   bossOnly: { label: 'Only against bosses' },
+  meterFull: { label: 'When your class meter is full (Rage, Malice…)' },
 };
 
 const A = (d: ActiveGemDef) => d;
@@ -97,8 +106,8 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'ground_slam', name: 'Ground Slam', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area'],
     manaCost: 8, cooldownMs: 0, timeMs: 3600, color: '#b0643a',
-    effect: { weaponPct: 95, targets: 'all', stunChance: 0.1 },
-    desc: 'Slam the ground, hitting every enemy in the pack.',
+    effect: { weaponPct: 95, area: 'splash', stunChance: 0.1 },
+    desc: 'Slam the ground, hitting the target and every enemy around it.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
   }),
   A({
@@ -111,8 +120,8 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'war_cry', name: 'War Cry', attr: 'str', role: 'buff', tags: ['buff', 'duration'],
     manaCost: 14, cooldownMs: 12000, timeMs: 1200, color: '#e0a640',
-    effect: { interrupts: true, buff: { durationMs: 6000, moreDamage: 20 } },
-    desc: "Interrupts enemy wind-ups and grants 20% more damage for 6s.",
+    effect: { interrupts: true, knockback: true, buff: { durationMs: 6000, moreDamage: 20 } },
+    desc: 'Interrupts enemy wind-ups, shoves the front rank back a step, and grants 20% more damage for 6s.',
     defaultRule: { when: 'enemyCasting' },
   }),
 
@@ -151,7 +160,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     id: 'spark', name: 'Spark', attr: 'int', role: 'main', tags: ['spell', 'projectile', 'chain'],
     manaCost: 5, cooldownMs: 0, timeMs: 2400, color: '#6fc8ff',
     effect: { base: [4, 16], type: 'light', targets: 'chain', chains: 2, crit: 6 },
-    desc: 'Crackling bolts that chain to 2 more enemies.',
+    desc: 'Crackling bolts that chain to the 2 nearest enemies.',
     defaultRule: { when: 'always' },
   }),
   A({
@@ -224,10 +233,10 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'rallying_roar', name: 'Rallying Roar', attr: 'str', fits: [], signatureFor: 'war_cry', mods: { special: 'rally', durationPct: 50 }, desc: '50% longer buff; regenerate 2% of life per second while it lasts; interrupts also stun.' }),
   S({ id: 'flurry', name: 'Flurry', attr: 'dex', fits: [], signatureFor: 'twin_strike', mods: { special: 'flurry' }, desc: 'Adds a third strike. Each consecutive use grants 6% more attack speed (max 30%).' }),
   S({ id: 'virulence', name: 'Virulence', attr: 'dex', fits: [], signatureFor: 'poison_dart', mods: { special: 'virulence' }, desc: 'When a poisoned enemy dies, its poisons spread to another enemy.' }),
-  S({ id: 'ambush', name: 'Ambush', attr: 'dex', fits: [], signatureFor: 'smoke_step', mods: { special: 'ambush' }, desc: 'Your next attack after Smoke Step is a guaranteed critical strike.' }),
+  S({ id: 'ambush', name: 'Ambush', attr: 'dex', fits: [], signatureFor: 'smoke_step', mods: { special: 'ambush' }, desc: 'Your next attack after Smoke Step is a Mega Crit (400% damage, ignores critical multiplier).' }),
   S({ id: 'hemorrhage', name: 'Hemorrhage', attr: 'dex', fits: [], signatureFor: 'lacerate', mods: { special: 'hemorrhage' }, desc: 'When the bleed expires it bursts for 50% of the damage it dealt.' }),
   S({ id: 'overload', name: 'Overload', attr: 'int', fits: [], signatureFor: 'spark', mods: { special: 'overload', chains: 1 }, desc: 'Chains 1 more time; each chain deals 20% more damage.' }),
-  S({ id: 'inferno', name: 'Inferno', attr: 'int', fits: [], signatureFor: 'fireball', mods: { special: 'inferno' }, desc: 'Ignites spread to the whole pack.' }),
+  S({ id: 'inferno', name: 'Inferno', attr: 'int', fits: [], signatureFor: 'fireball', mods: { special: 'inferno' }, desc: 'Ignites spread to enemies next to the target, and the blast leaves burning ground around it for 3s.' }),
   S({ id: 'glacial_shell', name: 'Glacial Shell', attr: 'int', fits: [], signatureFor: 'frost_ward', mods: { special: 'glacial' }, desc: 'When the shield breaks, the attacker is frozen for 2s.' }),
   S({ id: 'soul_tap', name: 'Soul Tap', attr: 'int', fits: [], signatureFor: 'arcane_siphon', mods: { special: 'soultap' }, desc: 'Life drained beyond your maximum becomes a shield.' }),
 
@@ -245,6 +254,7 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'mana_leech', name: 'Mana Leech', attr: 'int', fits: ['attack', 'spell'], mods: { manaLeech: 3, manaMult: 1.1 }, desc: '3% of damage leeched as mana.' }),
   S({ id: 'multistrike', name: 'Multistrike', attr: 'str', fits: ['melee'], mods: { repeats: 1, repeatDamage: 75, manaMult: 1.4 }, desc: 'Melee attacks repeat once more at 75% damage.' }),
   S({ id: 'spell_echo', name: 'Spell Echo', attr: 'int', fits: ['spell'], mods: { repeats: 1, repeatDamage: 75, manaMult: 1.4 }, desc: 'Spells repeat once more at 75% damage.' }),
+  S({ id: 'pierce', name: 'Pierce', attr: 'dex', fits: ['projectile'], mods: { special: 'pierce', moreDamage: -15, manaMult: 1.25 }, desc: "Projectiles pass through, hitting every enemy in the target's lane front to back; 15% less damage." }),
   S({ id: 'chain', name: 'Chain', attr: 'dex', fits: ['projectile', 'chain'], mods: { chains: 1, moreDamage: -10, manaMult: 1.3 }, desc: 'Hits chain to 1 more enemy; 10% less damage.' }),
   S({ id: 'lingering', name: 'Lingering', attr: 'int', fits: ['duration'], mods: { durationPct: 50, manaMult: 1.2 }, desc: 'Effects and ailments last 50% longer.' }),
 ];

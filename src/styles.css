@@ -1679,9 +1679,20 @@ h3 {
   white-space: nowrap;
 }
 
+.mechanic-line {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
 .floater.crit {
   font-size: 24px;
   color: var(--accent-2);
+}
+
+.floater.crit.mega {
+  font-size: 30px;
+  color: #ff3d6e;
+  text-shadow: 0 0 8px rgba(255, 61, 110, 0.7);
 }
 
 .floater.miss {
@@ -2969,7 +2980,7 @@ g.tut-hint circle.body {
 /* ============ combat 2.0 ============ */
 .arena2 {
   display: grid;
-  grid-template-columns: minmax(260px, 340px) auto minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
   gap: var(--s-4);
   align-items: start;
   padding: var(--s-5);
@@ -2980,6 +2991,191 @@ g.tut-hint circle.body {
 
 .arena2 .vs {
   align-self: center;
+}
+
+/* ---- battlefield: a 3-4-3 honeycomb, front rank on the left ---- */
+.arena-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.bf-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.bf-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.bf-status {
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.bf-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.battlefield {
+  position: relative;
+  height: clamp(340px, 46vw, 460px);
+}
+
+.bf-cell {
+  position: absolute;
+  width: calc(100% / 3);
+  height: 25%;
+  padding: 4px;
+  display: grid;
+}
+
+/* the hex floor tile under each cell */
+.bf-cell::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.55)),
+    color-mix(in srgb, var(--zone, var(--line-2)) 40%, transparent);
+}
+
+/* the front rank: melee range */
+.bf-cell.front::before {
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)), color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* ground hazards tint the tile; a skill's area flashes the tiles it covers */
+.bf-cell[class*='ground-']::before {
+  animation: ground-pulse 1.6s ease-in-out infinite;
+}
+.bf-cell.ground-burning::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--fire) 55%, transparent), color-mix(in srgb, var(--fire) 20%, rgba(0, 0, 0, 0.5))); }
+.bf-cell.ground-chilled::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--cold) 50%, transparent), color-mix(in srgb, var(--cold) 18%, rgba(0, 0, 0, 0.5))); }
+.bf-cell.ground-shocked::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--light) 50%, transparent), color-mix(in srgb, var(--light) 18%, rgba(0, 0, 0, 0.5))); }
+.bf-cell.ground-caustic::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--poison) 50%, transparent), color-mix(in srgb, var(--poison) 18%, rgba(0, 0, 0, 0.5))); }
+
+.bf-cell.flash-a::after,
+.bf-cell.flash-b::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  z-index: 2;
+  pointer-events: none;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  background: color-mix(in srgb, var(--accent-2) 55%, transparent);
+  opacity: 0;
+}
+.bf-cell.flash-a::after { animation: area-flash 0.45s ease-out; }
+.bf-cell.flash-b::after { animation: area-flash-b 0.45s ease-out; }
+
+@keyframes area-flash {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+@keyframes area-flash-b {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+@keyframes ground-pulse {
+  50% { filter: brightness(1.35); }
+}
+
+.bf-token {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  height: 100%;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--line);
+  animation: fade-in 0.3s;
+}
+
+.bf-token.targeted {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+}
+
+.bf-token.boss {
+  border-color: color-mix(in srgb, var(--danger) 60%, var(--line));
+  box-shadow: 0 0 24px color-mix(in srgb, var(--danger) 20%, transparent);
+}
+
+.bf-token.casting {
+  border-color: var(--life-2);
+  animation: pulse 0.6s infinite;
+}
+
+.bf-token-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bf-token-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.portrait.tiny {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.bf-token .target-pip {
+  margin-left: 0;
+  width: 8px;
+  height: 8px;
+  flex: none;
+}
+
+.bf-approach {
+  font-size: 10px;
+  color: var(--dim);
+  font-style: italic;
+}
+
+.bf-pips {
+  display: flex;
+  gap: 3px;
+}
+
+.bf-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.bf-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--dim);
+  font-size: var(--fs-sm);
 }
 
 .pack {
@@ -4525,6 +4721,14 @@ img.art.mat-art {
 
 .tree-search {
   min-width: 260px;
+}
+
+.tree-name {
+  font-family: Cinzel, serif;
+  paint-order: stroke;
+  stroke: var(--bg-2);
+  stroke-width: 4px;
+  pointer-events: none;
 }
 
 .tree-key {

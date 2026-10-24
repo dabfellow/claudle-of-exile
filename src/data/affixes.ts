@@ -244,7 +244,43 @@ export const AFFIXES: AffixDef[] = [
     id: 'u_regen_pct', kind: 'suffix', group: 'u_regen_pct', label: '', text: 'Regenerate {0}% of Life per second', uniqueOnly: true,
     stats: ['lifeRegenPct'], weights: {}, tiers: [],
   },
+  U('u_block', 'suffix', '{0}% chance to Block hits', 'blockChance'),
+  U('u_cast_speed', 'suffix', '{0}% increased Cast Speed', 'castSpeedPct'),
+  U('u_poison_pct', 'suffix', '{0}% increased Poison Damage', 'poisonPct'),
+  U('u_life_flask_recovery', 'suffix', '{0}% increased Life Flask Recovery', 'lifeFlaskRecovery'),
+
+  // class-mechanic knobs (docs/CLASSES.md): only the class with that mechanic uses them
+  U('u_rage_max', 'prefix', '+{0} to maximum Rage', 'rageMax'),
+  U('u_rage_effect', 'prefix', '{0}% increased effect of Rage', 'rageEffect'),
+  U('u_rage_decay', 'suffix', 'Rage decays {0}% slower', 'rageDecay'),
+  U('u_rage_regen', 'suffix', 'Regenerate {0}% of Life per second per Rage', 'rageRegen'),
+  U('u_rage_on_hit_taken', 'suffix', 'Gain {0} Rage when you are hit', 'rageOnHitTaken'),
+  U('u_riposte_pct', 'prefix', '{0}% increased Riposte damage', 'ripostePct'),
+  U('u_riposte_cooldown', 'suffix', '{0}% faster Riposte recovery', 'riposteCooldown'),
+  U('u_riposte_heal', 'suffix', 'Ripostes restore {0}% of Life', 'riposteHeal'),
+  U('u_riposte_crit', 'suffix', '{0}% increased Critical Strike Chance with Ripostes', 'riposteCrit'),
+  U('u_riposte_bleed', 'suffix', 'Ripostes always cause Bleeding', 'riposteBleed'),
+  U('u_momentum_max', 'prefix', '+{0} to maximum Momentum', 'momentumMax'),
+  U('u_momentum_effect', 'prefix', '{0}% increased effect of Momentum', 'momentumEffect'),
+  U('u_momentum_retain', 'suffix', 'Taking a hit removes {0}% less Momentum', 'momentumRetain'),
+  U('u_momentum_evasion', 'suffix', '{0}% increased Evasion Rating per Momentum', 'momentumEvasion'),
+  U('u_malice_max', 'prefix', '+{0} to Malice meter size', 'maliceMax'),
+  U('u_coup_pct', 'prefix', '{0}% increased Coup de Grâce damage', 'coupPct'),
+  U('u_malice_crit_keep', 'suffix', 'Critical strikes leave {0} Malice instead of emptying the meter', 'maliceCritKeep'),
+  U('u_coup_ailment', 'suffix', 'Coup de Grâce also Poisons and Ignites', 'coupAilment'),
+  U('u_malice_on_hit_taken', 'suffix', 'Gain {0} Malice when you are hit', 'maliceOnHitTaken'),
+  U('u_mana_power', 'prefix', '+{0}% to the Mana is Power bonus', 'manaPower'),
+  U('u_mana_power_full', 'suffix', 'Mana within {0}% of full counts as full for Mana is Power', 'manaPowerFull'),
+  U('u_fervor_pct', 'suffix', '{0}% faster Fervor', 'fervorPct'),
+  U('u_nova_pct', 'prefix', '{0}% increased holy nova damage', 'novaPct'),
+  U('u_nova_heal', 'suffix', '{0}% increased holy nova healing', 'novaHeal'),
+  U('u_nova_es', 'suffix', 'The holy nova restores {0}% of Energy Shield', 'novaEs'),
 ];
+
+/** A unique-only mod that sets a single stat. */
+function U(id: string, kind: AffixDef['kind'], text: string, stat: StatKey): AffixDef {
+  return { id, kind, group: id, label: '', text, uniqueOnly: true, stats: [stat], weights: {}, tiers: [] };
+}
 
 const BY_ID: Record<string, AffixDef> = Object.fromEntries(AFFIXES.map((a) => [a.id, a]));
 
