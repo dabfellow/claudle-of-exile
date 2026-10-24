@@ -4,7 +4,7 @@ import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
 import { flaskName } from '../../engine/flasks';
 import type { GameState } from '../../engine/types';
 import { useGame } from '../../game';
-import { Art, fmt, Tooltip } from '../components/common';
+import { Art, CurrencyAmount, EmptyState, fmt, PageHeader, Tabs, Tooltip, type TabDef } from '../components/common';
 import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
 import { Orb, Swatch } from '../components/Icon';
@@ -38,7 +38,7 @@ function CurrencySlot({ s, id }: { s: GameState; id: string }) {
             {def.name}
           </div>
           <div>{def.desc}</div>
-          <div className="dim" style={{ marginTop: 4, fontSize: 11 }}>
+          <div className="dim small" style={{ marginTop: 4 }}>
             Worth about {def.value} gold to the trader
           </div>
         </div>
@@ -62,7 +62,7 @@ function MaterialTile({ s, id }: { s: GameState; id: string }) {
         <div className="tip">
           <div className="tip-title">{def.name}</div>
           {def.desc && <div className="muted">{def.desc}</div>}
-          <div className="dim" style={{ fontSize: 11 }}>
+          <div className="dim small">
             {def.value} gold each at the trader
           </div>
         </div>
@@ -80,7 +80,7 @@ function MaterialTile({ s, id }: { s: GameState; id: string }) {
 export function StashPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const [tab, setTab] = useState<Tab>('currency');
-  const tabs: { id: Tab; label: string; count?: number }[] = [
+  const tabs: TabDef<Tab>[] = [
     { id: 'currency', label: 'Currency' },
     { id: 'materials', label: 'Materials' },
     { id: 'items', label: 'Items', count: s.inventory.length },
@@ -89,23 +89,10 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
   ];
   return (
     <div className="page">
-      <div className="page-head">
-        <div className="grow">
-          <h1>Stash</h1>
-          <p>Everything you've gathered, brewed and looted.</p>
-        </div>
-        <span className="chip">
-          <Orb color={materialDef('gold').color} size={14} /> {fmt(s.bank.gold ?? 0)} gold
-        </span>
-      </div>
-      <div className="stash-tabs">
-        {tabs.map((t) => (
-          <button key={t.id} className={`stash-tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
-            {t.label}
-            {t.count !== undefined && <span className="nav-badge">{t.count}</span>}
-          </button>
-        ))}
-      </div>
+      <PageHeader title="Stash" actions={<CurrencyAmount id="gold" amount={s.bank.gold ?? 0} label="gold" />}>
+        Everything you've gathered, brewed and looted.
+      </PageHeader>
+      <Tabs tabs={tabs} value={tab} onChange={setTab} />
 
       {tab === 'currency' && (
         <div className="card stash-panel">
@@ -163,7 +150,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
             ))}
           </div>
           <div className="section-label">Spare skill gems ({s.gems.length})</div>
-          {s.gems.length === 0 && <div className="dim">None.</div>}
+          {s.gems.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, especially bosses.</EmptyState>}
           <div className="gem-bag">
             {s.gems.map((g) => (
               <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
@@ -177,7 +164,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
             ))}
           </div>
           <div className="section-label">Support gems ({s.supportGems.length})</div>
-          {s.supportGems.length === 0 && <div className="dim">None.</div>}
+          {s.supportGems.length === 0 && <EmptyState small>No loose support gems. Cut them with Gemcutting or find them on monsters.</EmptyState>}
           <div className="gem-bag">
             {s.supportGems.map((g) => (
               <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
@@ -194,7 +181,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
       {tab === 'flasks' && (
         <div className="card stash-panel">
           <div className="row">
-            <span className="dim" style={{ fontSize: 12 }}>
+            <span className="dim small">
               Spare flasks. Equip, craft and enchant them on the Equipment page.
             </span>
             <span className="spacer" />
@@ -202,7 +189,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
               Open flask rack
             </button>
           </div>
-          {s.flaskStash.length === 0 && <div className="dim">No spare flasks.</div>}
+          {s.flaskStash.length === 0 && <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>}
           <div className="gem-bag">
             {s.flaskStash.map((f) => (
               <Tooltip key={f.uid} content={<FlaskTip f={f} />}>

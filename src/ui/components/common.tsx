@@ -31,6 +31,79 @@ export function ProgressBar({
   );
 }
 
+// ---------- Ashen Codex building blocks (docs/DESIGN_SYSTEM.md) ----------
+
+/** The title block every page starts with. */
+export function PageHeader({ title, kicker, children, actions }: { title: ReactNode; kicker?: ReactNode; children?: ReactNode; actions?: ReactNode }) {
+  return (
+    <div className="page-head">
+      <div className="grow">
+        {kicker && <span className="page-kicker">{kicker}</span>}
+        <h1>{title}</h1>
+        {children && <p>{children}</p>}
+      </div>
+      {actions && <div className="page-actions">{actions}</div>}
+    </div>
+  );
+}
+
+export interface TabDef<T extends string> {
+  id: T;
+  label: ReactNode;
+  count?: number;
+  /** highlight the count (e.g. unspent points) */
+  hot?: boolean;
+  disabled?: boolean;
+  title?: string;
+}
+
+/** One tab style everywhere; `compact` is the small segmented variant for sorts and filters. */
+export function Tabs<T extends string>({ tabs, value, onChange, compact }: { tabs: TabDef<T>[]; value: T; onChange: (id: T) => void; compact?: boolean }) {
+  return (
+    <div className={`tabs ${compact ? 'compact' : ''}`} role="tablist">
+      {tabs.map((t) => (
+        <button key={t.id} role="tab" aria-selected={value === t.id} className={`tab ${value === t.id ? 'active' : ''}`} disabled={t.disabled} title={t.title} onClick={() => onChange(t.id)}>
+          {t.label}
+          {t.count !== undefined && <span className={`nav-badge ${t.hot ? 'hot' : ''}`}>{t.hot ? `+${t.count}` : t.count}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export type Tone = 'neutral' | 'gold' | 'success' | 'danger' | 'warn' | 'locked';
+
+/** Status pill: Active, Locked, Complete, Missing materials… */
+export function Badge({ tone = 'neutral', live, children, title }: { tone?: Tone; live?: boolean; children: ReactNode; title?: string }) {
+  return (
+    <span className={`badge ${tone} ${live ? 'live' : ''}`} title={title}>
+      {children}
+    </span>
+  );
+}
+
+export function EmptyState({ icon, title, children, action, small }: { icon?: ReactNode; title?: ReactNode; children?: ReactNode; action?: ReactNode; small?: boolean }) {
+  return (
+    <div className={`empty ${small ? 'sm' : ''}`}>
+      {icon}
+      {title && <div className="empty-title">{title}</div>}
+      {children && <p>{children}</p>}
+      {action && <div style={{ marginTop: 'var(--s-2)' }}>{action}</div>}
+    </div>
+  );
+}
+
+/** A currency/material amount: icon, tabular number, optional name. */
+export function CurrencyAmount({ id, amount, label }: { id: string; amount: number; label?: ReactNode }) {
+  return (
+    <span className="chip" title={materialDef(id).name}>
+      <MatIcon id={id} size={14} />
+      <b>{fmt(amount)}</b>
+      {label !== undefined && <span className="dim">{label}</span>}
+    </span>
+  );
+}
+
 export function fmt(n: number): string {
   if (n >= 1e6) return `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)}M`;
   if (n >= 1e4) return `${(n / 1e3).toFixed(n >= 1e5 ? 0 : 1)}k`;

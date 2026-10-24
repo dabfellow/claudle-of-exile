@@ -35,7 +35,7 @@ export function FlaskTip({ f, pinned = false }: { f: FlaskInstance; pinned?: boo
         <div>{flaskName(f)}</div>
       </div>
       <div className="item-tip-body">
-        <div className="muted" style={{ fontSize: 11 }}>
+        <div className="muted small">
           {f.rarity === 'magic' ? 'Magic' : 'Normal'} {st.def.kind} flask · Item Level {f.ilvl}
         </div>
         <div>{flaskEffectText(f)}</div>

@@ -8,7 +8,7 @@ import { applyFlaskOrb, enchantFlask, findFlask, flaskEffectText, flaskName, fla
 import { armourReduction, deriveStats, evadeChance, hitChance, RES_CAP, type Derived } from '../../engine/stats';
 import type { EquipSlot, FlaskInstance, GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { fmt, MatIcon, ProgressBar, Tooltip } from '../components/common';
+import { EmptyState, fmt, MatIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
 import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
 import { Icon } from '../components/Icon';
 import { Inventory } from '../components/Inventory';
@@ -35,12 +35,12 @@ function PaperDoll({ s }: { s: GameState }) {
       {(Object.keys(SLOT_LABEL) as EquipSlot[]).map((slot) => {
         const item = s.equipment[slot];
         return (
-          <div key={slot} className="doll-slot" style={{ gridArea: slot }}>
+          <div key={slot} className={`doll-slot ${item ? 'filled' : ''}`} style={{ gridArea: slot }}>
             {item ? (
               <ItemCell item={item} state={s} onClick={() => game.act((st) => unequip(st, slot))} />
             ) : (
-              <div className="cell empty-slot" title={SLOT_LABEL[slot]}>
-                <Icon name={slot.startsWith('ring') ? 'ring' : slot} size={26} color="var(--dim)" />
+              <div className="cell empty-slot" title={`${SLOT_LABEL[slot]} (empty)`}>
+                <Icon name={slot.startsWith('ring') ? 'ring' : slot} size={26} color="var(--line-2)" />
               </div>
             )}
             <span className="doll-label">{SLOT_LABEL[slot]}</span>
@@ -140,13 +140,13 @@ function CenterColumn({ s, d }: { s: GameState; d: Derived }) {
       <PaperDoll s={s} />
       <div className="attr-strip">
         <span title="+1 Life per 2, +1% physical damage per 5">
-          <b style={{ color: '#e07a6a' }}>{d.attributes.str}</b> Strength
+          <b style={{ color: 'var(--str)' }}>{d.attributes.str}</b> Strength
         </span>
         <span title="+2 Accuracy per point, +1% evasion per 5">
-          <b style={{ color: '#7fd08a' }}>{d.attributes.dex}</b> Dexterity
+          <b style={{ color: 'var(--dex)' }}>{d.attributes.dex}</b> Dexterity
         </span>
         <span title="+1 Mana per 2, +1% elemental damage per 5">
-          <b style={{ color: '#7fa6f0' }}>{d.attributes.int}</b> Intelligence
+          <b style={{ color: 'var(--int)' }}>{d.attributes.int}</b> Intelligence
         </span>
       </div>
       <div className="util-strip">
@@ -238,7 +238,7 @@ function FlaskWorkbench({ s, f }: { s: GameState; f: FlaskInstance }) {
               </button>
             ))}
           </div>
-          <div className="dim" style={{ fontSize: 11, marginTop: 4 }}>
+          <div className="dim small" style={{ marginTop: 4 }}>
             An enchanted flask drinks itself in combat when its condition is met. Enchanting again replaces it.
           </div>
         </div>
@@ -271,7 +271,7 @@ function FlaskRack({ s }: { s: GameState }) {
       <div className="card-title">
         Flasks
         <span className="grow" />
-        <span className="muted" style={{ fontFamily: 'var(--font)', fontSize: 12 }}>
+        <span className="card-hint">
           Flasks drop from monsters and are brewed with Alchemy
         </span>
       </div>
@@ -285,7 +285,7 @@ function FlaskRack({ s }: { s: GameState }) {
         Spare flasks ({s.flaskStash.length})
       </div>
       {s.flaskStash.length === 0 ? (
-        <div className="dim">No spare flasks.</div>
+        <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>
       ) : (
         <div className="flask-stash">
           {s.flaskStash.map((x) => (
@@ -302,12 +302,7 @@ export function EquipmentPage() {
   const d = deriveStats(s, []);
   return (
     <div className="page wide">
-      <div className="page-head">
-        <div className="grow">
-          <h1>Equipment</h1>
-          <p>Click gear to take it off. Hover inventory items to compare; right-click any item to pin it.</p>
-        </div>
-      </div>
+      <PageHeader title="Equipment">Click gear to take it off. Hover inventory items to compare; right-click any item to pin it.</PageHeader>
       <div className="equip-layout">
         <Offense d={d} />
         <CenterColumn s={s} d={d} />

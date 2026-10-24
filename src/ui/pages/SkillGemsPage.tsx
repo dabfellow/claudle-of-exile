@@ -14,7 +14,7 @@ import {
 } from '../../engine/gems';
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { ProgressBar, Tooltip } from '../components/common';
+import { EmptyState, PageHeader, ProgressBar, Tooltip } from '../components/common';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
 import { Icon } from '../components/Icon';
 
@@ -109,7 +109,7 @@ function SlotRow({
         <div className="row" style={{ gap: 8 }}>
           <b>{def.name}</b>
           <span className="nav-badge">Lv {gem.level}</span>
-          <span className="dim" style={{ fontSize: 11 }}>{def.role}</span>
+          <span className="dim small">{def.role}</span>
         </div>
         <ProgressBar value={gemProgress(gem)} color="var(--gem)" className="thin" />
         <div className="sockets">
@@ -186,20 +186,19 @@ export function SkillGemsPage() {
 
   return (
     <div className="page">
-      <div className="page-head">
-        <div className="grow">
-          <h1>Skills</h1>
-          <p>
-            Your character uses the <b>first</b> skill, top to bottom, whose rule passes and that it can afford — otherwise a free Default Attack. Press{' '}
-            <b>Q–Y</b> in combat to cast a slot manually.
-          </p>
-        </div>
-        {(pickedGem !== null || pickedSupport !== null) && (
-          <button className="btn" onClick={clear}>
-            Cancel selection
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="Skills"
+        actions={
+          (pickedGem !== null || pickedSupport !== null) && (
+            <button className="btn" onClick={clear}>
+              Cancel selection
+            </button>
+          )
+        }
+      >
+        Your character uses the <b>first</b> skill, top to bottom, whose rule passes and that it can afford — otherwise a free Default Attack. Press <b>Q–Y</b> in
+        combat to cast a slot manually.
+      </PageHeader>
 
       <div className="grid" style={{ gap: 10 }}>
         {Array.from({ length: SKILL_BAR_SLOTS }, (_, i) => (
@@ -212,11 +211,11 @@ export function SkillGemsPage() {
           <div className="card-title">
             Skill gems
             <span className="grow" />
-            <span className="dim" style={{ fontFamily: 'var(--font)', fontSize: 12 }}>
+            <span className="card-hint">
               Click one, then a slot above
             </span>
           </div>
-          {s.gems.length === 0 && <div className="dim">No spare skill gems. They drop from monsters, especially bosses.</div>}
+          {s.gems.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, especially bosses.</EmptyState>}
           <div className="gem-bag">
             {s.gems.map((g) => (
               <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
@@ -235,11 +234,11 @@ export function SkillGemsPage() {
           <div className="card-title">
             Support gems
             <span className="grow" />
-            <span className="dim" style={{ fontFamily: 'var(--font)', fontSize: 12 }}>
+            <span className="card-hint">
               Click one, then a glowing socket
             </span>
           </div>
-          {s.supportGems.length === 0 && <div className="dim">No loose support gems yet.</div>}
+          {s.supportGems.length === 0 && <EmptyState small>No loose support gems yet.</EmptyState>}
           <div className="gem-bag">
             {s.supportGems.map((g) => {
               const def = supportGemDef(g.supportId);

@@ -6,7 +6,7 @@ import { buyOffer, inventoryCapacity, offerName, rerollCost, rerollVendor, sellI
 import { sellValue } from '../../engine/items';
 import type { GameState, Rarity, VendorOffer } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Art, fmt, fmtTime, MatIcon, Tooltip } from '../components/common';
+import { Art, EmptyState, fmt, fmtTime, MatIcon, Tabs, Tooltip } from '../components/common';
 import { FlaskIcon, FlaskTip } from '../components/FlaskView';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
 import { Icon, Orb } from '../components/Icon';
@@ -60,6 +60,14 @@ function offerTip(s: GameState, o: VendorOffer) {
   );
 }
 
+/** Rarity tint for the offer card (items by rarity, gems blue, orbs currency-gold). */
+function rarityClass(o: VendorOffer): string {
+  if (o.item) return `rar-${o.item.rarity}`;
+  if (o.flask) return o.flask.rarity === 'magic' ? 'rar-magic' : 'rar-normal';
+  if (o.gemId || o.supportId) return 'rar-gem';
+  return 'rar-currency';
+}
+
 function nameClass(o: VendorOffer): string {
   if (o.item) return `rarity-${o.item.rarity}`;
   if (o.flask?.rarity === 'magic' || o.gemId || o.supportId) return 'magic-text';
@@ -72,9 +80,9 @@ function BuyTab({ s }: { s: GameState }) {
   const cost = rerollCost(s);
   return (
     <>
-      <div className="row wrap">
-        <span className="muted" style={{ fontSize: 12.5 }}>
-          New stock in <b>{fmtTime(Math.max(0, s.vendor.refreshAt - s.clock))}</b>
+      <div className="shop-bar">
+        <span className="muted small">
+          New stock in <b className="num">{fmtTime(Math.max(0, s.vendor.refreshAt - s.clock))}</b>
         </span>
         <span className="spacer" />
         <button className="btn sm" disabled={gold < cost} onClick={() => game.act((st, ctx) => rerollVendor(st, ctx))}>
@@ -82,8 +90,10 @@ function BuyTab({ s }: { s: GameState }) {
         </button>
       </div>
       {s.vendor.stock.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: 30 }}>
-          <div className="muted">"Sold out. Come back when the tide brings more."</div>
+        <div className="card">
+          <EmptyState icon={<Icon name="vendor" size={32} color="var(--dim)" />} title="Sold out">
+            “Come back when the tide brings more.”
+          </EmptyState>
         </div>
       ) : (
         <div className="offer-grid">
@@ -92,22 +102,29 @@ function BuyTab({ s }: { s: GameState }) {
             const full = o.kind === 'item' && s.inventory.length >= inventoryCapacity(s);
             return (
               <Tooltip key={o.id} content={offerTip(s, o)}>
-                <div className={`card offer-card ${afford ? '' : 'poor'}`}>
-                  <div className="offer-art">
-                    <OfferIcon o={o} />
+                <div className={`card offer-card ${rarityClass(o)} ${afford ? '' : 'poor'}`}>
+                  <div className="offer-top">
+                    <div className="offer-art">
+                      <OfferIcon o={o} />
+                    </div>
+                    <div className="offer-text">
+                      <span className="offer-kind">{o.item ? `${o.item.rarity[0].toUpperCase()}${o.item.rarity.slice(1)} ${KIND_LABEL[o.kind].toLowerCase()}` : KIND_LABEL[o.kind]}</span>
+                      <b className={nameClass(o)}>{offerName(o)}</b>
+                    </div>
                   </div>
-                  <div className="offer-text">
-                    <span className="dim offer-kind">{KIND_LABEL[o.kind]}</span>
-                    <b className={nameClass(o)}>{offerName(o)}</b>
+                  <div className="offer-foot">
+                    <span className={`price ${afford ? '' : 'short'}`}>
+                      <MatIcon id="gold" size={14} /> {fmt(o.price)}
+                    </span>
+                    <button
+                      className={`btn sm ${afford && !full ? 'primary' : ''}`}
+                      disabled={!afford || full}
+                      title={full ? 'Inventory full' : afford ? '' : 'Not enough gold'}
+                      onClick={() => game.act((st, ctx) => buyOffer(st, ctx, o.id))}
+                    >
+                      {full ? 'Inventory full' : afford ? 'Buy' : 'Too costly'}
+                    </button>
                   </div>
-                  <button
-                    className={`btn sm ${afford && !full ? 'primary' : ''}`}
-                    disabled={!afford || full}
-                    title={full ? 'Inventory full' : afford ? '' : 'Not enough gold'}
-                    onClick={() => game.act((st, ctx) => buyOffer(st, ctx, o.id))}
-                  >
-                    <MatIcon id="gold" size={12} /> {fmt(o.price)}
-                  </button>
                 </div>
               </Tooltip>
             );
@@ -138,9 +155,7 @@ function SellTab({ s }: { s: GameState }) {
         <div className="card-title">
           Items
           <span className="grow" />
-          <span className="muted" style={{ fontFamily: 'var(--font)', fontSize: 12 }}>
-            Click items to select them
-          </span>
+          <span className="card-hint">Click items to select them</span>
         </div>
         <div className="row wrap" style={{ marginBottom: 10 }}>
           {(['normal', 'magic', 'rare'] as Rarity[]).map((r) => {
@@ -169,11 +184,13 @@ function SellTab({ s }: { s: GameState }) {
           </button>
         </div>
         {s.inventory.length === 0 ? (
-          <div className="dim">Nothing to sell.</div>
+          <EmptyState small title="Nothing to sell">
+            Items you loot or smith appear here.
+          </EmptyState>
         ) : (
           <ItemGrid s={s} items={[...s.inventory].reverse()} capacity={0} selected={(i) => picked.has(i.uid)} onClick={(i) => toggle(picked, i.uid, setPicked)} />
         )}
-        <div className="dim" style={{ fontSize: 11, marginTop: 10 }}>
+        <div className="dim small" style={{ marginTop: 10 }}>
           Sell filters and auto-sell rules are planned for a later update.
         </div>
       </div>
@@ -212,14 +229,20 @@ function SellTab({ s }: { s: GameState }) {
 
       <div className="card">
         <div className="card-title">Materials</div>
-        {mats.length === 0 && <div className="dim">Nothing to sell.</div>}
+        {mats.length === 0 && (
+          <EmptyState small title="No materials">
+            Gather or loot materials to sell them here.
+          </EmptyState>
+        )}
         <div className="material-grid">
           {mats.map((m) => (
             <div key={m.id} className="material-tile sell">
               <Art src={`materials/${m.id}.png`} alt={m.name} size={34} fallback={<MatIcon id={m.id} size={20} />} />
               <span className="material-name">
                 {m.name}
-                <span className="dim"> · {m.value}g</span>
+                <span className="price" style={{ fontSize: 'var(--fs-xs)', marginLeft: 6 }}>
+                  {m.value}g
+                </span>
               </span>
               <b className="num">{fmt(s.bank[m.id] ?? 0)}</b>
               <div className="row" style={{ gridColumn: '1 / -1', justifyContent: 'flex-end' }}>
@@ -245,36 +268,32 @@ export function TraderPage() {
   const lvl = stationLevel(s, 'vendor');
   return (
     <div className="page">
-      <div className="card trader-hero">
-        <div className="trader-portrait">
-          <Art src="portraits/trader.png" alt={TRADER_NAME} className="portrait-img" fallback={<Icon name="vendor" size={54} color="var(--accent-2)" />} />
+      <div className="card npc-panel">
+        <div className="npc-portrait">
+          <Art src="portraits/trader.png" alt={TRADER_NAME} className="portrait-img" fallback={<Icon name="vendor" size={56} color="var(--accent-2)" />} />
         </div>
-        <div className="trader-text">
-          <span className="section-label" style={{ margin: 0 }}>
-            Trader's Stall · level {lvl}
-          </span>
+        <div className="npc-text">
+          <span className="page-kicker">Trader's Stall · level {lvl}</span>
           <h1>{TRADER_NAME}</h1>
-          <p className="trader-quote">“{greeting}”</p>
+          <p className="npc-quote">“{greeting}”</p>
         </div>
-        <div className="trader-gold">
-          <span className="dim" style={{ fontSize: 11 }}>
-            Your gold
-          </span>
-          <b>
+        <div className="npc-aside">
+          <span className="label">Your gold</span>
+          <span className="gold-amount">
             <MatIcon id="gold" size={18} /> {fmt(s.bank.gold ?? 0)}
-          </b>
+          </span>
         </div>
       </div>
-      <div className="stash-tabs">
-        <button className={`stash-tab ${tab === 'buy' ? 'active' : ''}`} onClick={() => setTab('buy')}>
-          Buy <span className="nav-badge">{s.vendor.stock.length}</span>
-        </button>
-        <button className={`stash-tab ${tab === 'sell' ? 'active' : ''}`} onClick={() => setTab('sell')}>
-          Sell
-        </button>
-      </div>
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'buy', label: 'Buy', count: s.vendor.stock.length },
+          { id: 'sell', label: 'Sell', count: s.inventory.length },
+        ]}
+      />
       {tab === 'buy' ? <BuyTab s={s} /> : <SellTab s={s} />}
-      <div className="dim" style={{ fontSize: 11 }}>
+      <div className="dim small">
         Prices in {materialDef('gold').name.toLowerCase()}. Upgrade the stall in your hideout for more and better stock.
       </div>
     </div>

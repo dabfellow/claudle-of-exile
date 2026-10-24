@@ -8,7 +8,7 @@ import { skillNumbers } from '../../engine/gems';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
 import type { DamageType, GameEvent, GameState, MonsterInstance } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
-import { fmt, ProgressBar, Tooltip, Art, artUrl } from '../components/common';
+import { Art, artUrl, EmptyState, fmt, PageHeader, ProgressBar, Tooltip } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, ruleText } from '../components/GemView';
 import { Icon } from '../components/Icon';
@@ -161,14 +161,14 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
         </div>
         <div style={{ minWidth: 0 }}>
           <div className="fighter-name small">{m.name}</div>
-          <div className="muted" style={{ fontSize: 11 }}>
+          <div className="muted small">
             {m.isBoss ? 'Boss · ' : ''}Lv {m.level} · {DMG_NAME[m.dmgType]}
           </div>
         </div>
         {target && <span className="target-pip" title="Current target" />}
       </div>
-      <ProgressBar value={Math.max(0, m.life) / m.maxLife} size="md" color="linear-gradient(90deg, #8e2a22, #d4473b)" label={`${fmt(Math.max(0, m.life))} / ${fmt(m.maxLife)}`} ghost />
-      {m.wardMax > 0 && <ProgressBar size="md" color="linear-gradient(90deg, #5a3ab8, #a488ef)" value={m.ward / m.wardMax} label={`Ward ${fmt(m.ward)} · ${Math.ceil(m.wardMs / 1000)}s`} />}
+      <ProgressBar value={Math.max(0, m.life) / m.maxLife} size="md" color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(Math.max(0, m.life))} / ${fmt(m.maxLife)}`} ghost />
+      {m.wardMax > 0 && <ProgressBar size="md" color="var(--ward)" value={m.ward / m.wardMax} label={`Ward ${fmt(m.ward)} · ${Math.ceil(m.wardMs / 1000)}s`} />}
       {m.casting >= 0 ? (
         <>
           <ProgressBar className="cast-bar" value={1 - m.casting / m.castTotal} />
@@ -179,7 +179,7 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
           </div>
         </>
       ) : (
-        <ProgressBar value={m.attackTimer / m.attackMs} color="#7a5a5a" className="thin" />
+        <ProgressBar value={m.attackTimer / m.attackMs} color="var(--dim)" className="thin" />
       )}
       <div className="status-row">
         {m.enraged && <span className="status bad">Enraged</span>}
@@ -348,21 +348,19 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
   if (!c) {
     return (
       <div className="page">
-        <div className="page-head">
-          <div className="grow">
-            <h1>Combat</h1>
-            <p>You're not fighting right now.</p>
-          </div>
-        </div>
-        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-          <Icon name="map" size={40} color="var(--accent)" />
-          <h2 style={{ marginTop: 10 }}>Pick an area in the Campaign</h2>
-          <p className="muted">
+        <PageHeader title="Combat">You're not fighting right now.</PageHeader>
+        <div className="card">
+          <EmptyState
+            icon={<Icon name="map" size={36} color="var(--accent)" />}
+            title="Pick an area in the Campaign"
+            action={
+              <button className="btn primary" data-tut="open-campaign" onClick={() => go('campaign')}>
+                Open Campaign
+              </button>
+            }
+          >
             Max Life {fmt(d.maxLife)} · {d.dps.toFixed(1)} DPS · {fmt(d.armour)} Armour · {fmt(d.evasion)} Evasion
-          </p>
-          <button className="btn primary" data-tut="open-campaign" onClick={() => go('campaign')}>
-            Open Campaign
-          </button>
+          </EmptyState>
         </div>
         <div className="card">
           <div className="card-title">Skill bar</div>
@@ -377,20 +375,22 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
   const zoneArt = artUrl(`zones/${zone.id}`);
   return (
     <div className="page">
-      <div className="page-head">
-        <div className="grow">
-          <h1>{zone.name}</h1>
-          <p>
-            Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {s.zoneKills[zone.id] ?? 0}/{zone.bossEvery} until {zone.boss.name}
-          </p>
-        </div>
-        <button className="btn" onClick={() => go('campaign')}>
-          Change area
-        </button>
-        <button className="btn danger" onClick={() => game.act((st) => retreat(st))}>
-          Retreat to Hideout
-        </button>
-      </div>
+      <PageHeader
+        title={zone.name}
+        kicker="Fighting"
+        actions={
+          <>
+            <button className="btn" onClick={() => go('campaign')}>
+              Change area
+            </button>
+            <button className="btn danger" onClick={() => game.act((st) => retreat(st))}>
+              Retreat to Hideout
+            </button>
+          </>
+        }
+      >
+        Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {s.zoneKills[zone.id] ?? 0}/{zone.bossEvery} until {zone.boss.name}
+      </PageHeader>
 
       <div className={`card arena2 ${zoneArt ? 'has-art' : ''}`} style={{ ['--zone' as string]: zone.color, ['--zone-art' as string]: zoneArt ? `url(${zoneArt})` : undefined }}>
         <PlayerCard s={s} d={d} fx={fx} />
@@ -425,7 +425,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
           <div className="card-title">
             Flasks
             <span className="grow" />
-            <span className="muted" style={{ fontFamily: 'var(--font)', fontSize: 12 }}>
+            <span className="card-hint">
               keys 1–5 · refill on kills
             </span>
           </div>

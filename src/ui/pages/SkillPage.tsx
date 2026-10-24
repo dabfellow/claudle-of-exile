@@ -8,9 +8,9 @@ import { zoneDef } from '../../data/zones';
 import { actionBlocker, actionIntervalMs, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
-import { progressOf, xpToReach } from '../../engine/xp';
+import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
-import { Cost, fmt, MatIcon, ProgressBar } from '../components/common';
+import { Badge, Cost, fmt, MatIcon, ProgressBar, Tabs } from '../components/common';
 import { GemIcon } from '../components/GemView';
 import { Icon, Orb, Swatch } from '../components/Icon';
 
@@ -101,6 +101,18 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
   );
   useGameEvent(onEvent);
 
+  const status = running ? (
+    <Badge tone="success" live>
+      Active
+    </Badge>
+  ) : areaLocked ? (
+    <Badge tone="locked">Locked</Badge>
+  ) : level < a.level ? (
+    <Badge tone="locked">Lv {a.level}</Badge>
+  ) : blocker ? (
+    <Badge tone="danger">{blocker === 'Missing materials' ? 'Missing materials' : 'Unavailable'}</Badge>
+  ) : null;
+
   return (
     <div data-tut={`action-${a.id}`} className={`card action-card ${running ? 'running' : ''} ${locked ? 'locked' : ''}`}>
       {pops.map((p) => (
@@ -125,88 +137,131 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
         <div style={{ minWidth: 0 }}>
           <div className="action-name">{a.name}</div>
           <div className="action-meta">
-            <span>{areaLocked ? `Reach ${zoneDef(a.area!).name}` : level < a.level ? `Requires level ${a.level}` : `Lv ${a.level}`}</span>
+            <span>{areaLocked ? `Reach ${zoneDef(a.area!).name}` : level < a.level ? `Requires level ${a.level}` : `Level ${a.level}`}</span>
             <span>
-              <Icon name="clock" size={11} /> {(interval / 1000).toFixed(1)}s
+              <Icon name="clock" size={12} /> {(interval / 1000).toFixed(1)}s
             </span>
-            <span>{a.xp} xp</span>
+            <span>{a.xp} XP</span>
           </div>
         </div>
+        {status && <span className="action-status">{status}</span>}
       </div>
-      {a.inputs && <Cost cost={a.inputs} have={s.bank} />}
-      <OutputChips a={a} />
-      {running && s.action?.kind === 'skill' && <ProgressBar value={s.action.progress / interval} color={SKILLS[a.skill].color} />}
-      {!locked &&
-        (running ? (
-          <button className="btn" onClick={() => game.act((st) => stopAction(st))}>
-            Stop
-          </button>
-        ) : (
-          <button className="btn primary" disabled={!!blocker} title={blocker ?? ''} onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, a.id))}>
-            {blocker === 'Missing materials' ? 'Missing materials' : START_LABEL[a.skill]}
-          </button>
-        ))}
+      <div className="action-io">
+        {a.inputs && (
+          <div>
+            <span className="io-label">Uses</span>
+            <Cost cost={a.inputs} have={s.bank} />
+          </div>
+        )}
+        <div>
+          <span className="io-label">Makes</span>
+          <OutputChips a={a} />
+        </div>
+      </div>
+      {!locked && (
+        <div className="action-foot">
+          {running && s.action?.kind === 'skill' && <ProgressBar value={s.action.progress / interval} color="var(--success)" />}
+          {running ? (
+            <button className="btn" onClick={() => game.act((st) => stopAction(st))}>
+              Stop
+            </button>
+          ) : (
+            <button className="btn primary" disabled={!!blocker} title={blocker ?? ''} onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, a.id))}>
+              {blocker === 'Missing materials' ? 'Missing materials' : START_LABEL[a.skill]}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The XP header every gathering and production skill page shares. */
+function SkillHeader({ skill }: { skill: SkillId }) {
+  const s = useGame();
+  const def = SKILLS[skill];
+  const level = skillLevel(s, skill);
+  const xp = s.skills[skill];
+  const next = xpToReach(skill, level + 1);
+  const maxed = level >= maxLevelOf(skill);
+  const rate = game.xpPerHour(skill);
+  return (
+    <div className="card skill-hero" style={{ ['--skill' as string]: def.color }}>
+      <div className="skill-hero-icon">
+        <Icon name={skill} size={32} color={def.color} />
+      </div>
+      <div className="skill-hero-text" style={{ minWidth: 0 }}>
+        <span className="page-kicker">{def.group === 'gathering' ? 'Gathering skill' : 'Production skill'}</span>
+        <h1>{def.name}</h1>
+        <p>{def.desc}</p>
+      </div>
+      <div className="xp">
+        <div className="row">
+          <span className="level-num">
+            <small>Level</small>
+            {level}
+          </span>
+          <span className="spacer" />
+          {rate > 0 && <Badge tone="success">{fmt(rate)} XP/h</Badge>}
+        </div>
+        <ProgressBar value={maxed ? 1 : progressOf(skill, xp)} color={def.color} size="md" smooth />
+        <div className="xp-meta num">
+          <span>{fmt(xp)} XP total</span>
+          <span className="spacer" />
+          <span>{maxed ? 'Max level' : `${fmt(next - xp)} XP to level ${level + 1}`}</span>
+        </div>
+      </div>
     </div>
   );
 }
 
 export function SkillPage({ skill }: { skill: SkillId }) {
   const s = useGame();
-  const def = SKILLS[skill];
   const level = skillLevel(s, skill);
-  const xp = s.skills[skill];
-  const next = xpToReach(skill, level + 1);
   const actions = actionsFor(skill);
   const [filter, setFilter] = useState<'all' | 'available'>('all');
   const shown = filter === 'all' ? actions : actions.filter((a) => a.level <= level);
+  const unlocked = actions.filter((a) => a.level <= level).length;
 
   return (
     <div className="page">
-      <div className="card skill-hero">
-        <div className="skill-hero-icon" style={{ borderColor: def.color }}>
-          <Icon name={skill} size={32} color={def.color} />
-        </div>
-        <div>
-          <h1 style={{ fontSize: 'var(--fs-xl)' }}>{def.name}</h1>
-          <div className="muted">{def.desc}</div>
-        </div>
-        <div className="xp">
-          <div className="row">
-            <span className="level-num">{level}</span>
-            <span className="spacer" />
-            <span className="muted num">
-              {fmt(xp)} / {fmt(next)} xp
-            </span>
-          </div>
-          <ProgressBar value={progressOf(skill, xp)} color={def.color} size="md" smooth />
-        </div>
-      </div>
+      <SkillHeader skill={skill} />
       {skill === 'smithing' && (
-        <div className="muted">
-          Smithed bases are item level <b style={{ color: 'var(--accent-2)' }}>{smithIlvl(s)}</b> — higher item level unlocks better modifier tiers when crafting.
+        <div className="callout skill-note">
+          Smithed bases are item level <b>{smithIlvl(s)}</b> — higher item level unlocks better modifier tiers when crafting.
         </div>
       )}
-      {skill === 'alchemy' && <div className="muted">Salvage unwanted items at the Crafting Bench for Arcane Dust, then transmute it into orbs here.</div>}
+      {skill === 'alchemy' && <div className="callout skill-note">Salvage unwanted items at the Crafting Bench for Arcane Dust, then transmute it into orbs here.</div>}
       {skill === 'gemcutting' && (
-        <div className="muted">
-          Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b style={{ color: 'var(--accent-2)' }}>{fmt(s.bank.rough_gem ?? 0)}</b> Rough Gems.
+        <div className="callout skill-note">
+          Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b>{fmt(s.bank.rough_gem ?? 0)}</b> Rough Gems.
         </div>
       )}
-      {actions.length > 8 && (
-        <div className="tabs" style={{ alignSelf: 'flex-start' }}>
-          <button className={`tab ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
-            All
-          </button>
-          <button className={`tab ${filter === 'available' ? 'active' : ''}`} onClick={() => setFilter('available')}>
-            Unlocked
-          </button>
+      <section>
+        <div className="section-head">
+          <h3>Activities</h3>
+          <span className="dim small">
+            {unlocked} of {actions.length} unlocked
+          </span>
+          <span className="spacer" />
+          {actions.length > 8 && (
+            <Tabs
+              compact
+              value={filter}
+              onChange={setFilter}
+              tabs={[
+                { id: 'all', label: 'All' },
+                { id: 'available', label: 'Unlocked' },
+              ]}
+            />
+          )}
         </div>
-      )}
-      <div className="grid cards">
-        {shown.map((a) => (
-          <ActionCard key={a.id} a={a} level={level} />
-        ))}
-      </div>
+        <div className="card-grid">
+          {shown.map((a) => (
+            <ActionCard key={a.id} a={a} level={level} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { achievementProgress } from '../../engine/achievements';
 import { affixRangeText } from '../../engine/items';
 import type { GameState } from '../../engine/types';
 import { useGame } from '../../game';
-import { fmt, MatIcon, ProgressBar } from '../components/common';
+import { Badge, fmt, MatIcon, PageHeader, ProgressBar } from '../components/common';
 import { Icon } from '../components/Icon';
 
 const CATEGORIES = Object.keys(CATEGORY_NAMES) as AchievementCategory[];
@@ -16,30 +16,42 @@ function benchUnlocks(id: string) {
   return BENCH_CRAFTS.filter((b) => b.achievement === id);
 }
 
+/** Circular badge: a progress ring while in progress, a filled gold medal once complete. */
+function Medallion({ pct, done }: { pct: number; done: boolean }) {
+  const c = 2 * Math.PI * 23;
+  return (
+    <span className="medallion" aria-hidden>
+      {!done && (
+        <svg className="ring" viewBox="0 0 50 50">
+          <circle cx="25" cy="25" r="23" fill="none" stroke="var(--accent)" strokeWidth="2" strokeDasharray={`${c * pct} ${c}`} strokeLinecap="round" />
+        </svg>
+      )}
+      <Icon name={done ? 'trophy' : 'target'} size={20} />
+    </span>
+  );
+}
+
 function AchievementCard({ s, a }: { s: GameState; a: AchievementDef }) {
   const p = achievementProgress(s, a.id);
   const recipes = benchUnlocks(a.id);
+  const pct = Math.min(1, p.value / p.target);
   return (
     <div className={`card achievement ${p.done ? 'done' : ''}`}>
-      <div className="row" style={{ gap: 10 }}>
-        <span className="achievement-badge">
-          <Icon name={p.done ? 'target' : 'clock'} size={16} />
-        </span>
-        <div className="grow" style={{ minWidth: 0 }}>
+      <Medallion pct={pct} done={p.done} />
+      <div className="row" style={{ alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div className="achievement-name">{a.name}</div>
-          <div className="dim" style={{ fontSize: 12 }}>
-            {a.desc}
-          </div>
+          <div className="achievement-desc">{a.desc}</div>
         </div>
-        {p.done && <span className="chip good">Done</span>}
+        {p.done && <Badge tone="gold">Complete</Badge>}
       </div>
       {!p.done && (
-        <>
-          <ProgressBar value={p.value / p.target} color="var(--accent)" />
-          <div className="dim" style={{ fontSize: 11 }}>
+        <div className="achievement-progress num">
+          <ProgressBar value={pct} />
+          <span>
             {fmt(p.value)} / {fmt(p.target)}
-          </div>
-        </>
+          </span>
+        </div>
       )}
       {(a.reward || recipes.length > 0) && (
         <div className="achievement-rewards">
@@ -49,7 +61,7 @@ function AchievementCard({ s, a }: { s: GameState; a: AchievementDef }) {
             </span>
           ))}
           {recipes.map((b) => (
-            <span key={b.id} className="mod crafted" title={`Crafting Bench level ${b.benchLevel} recipe`}>
+            <span key={b.id} className="io-item mod crafted" title={`Crafting Bench level ${b.benchLevel} recipe`}>
               Bench: {affixRangeText(affixDef(b.affixId).id, b.tier)}
             </span>
           ))}
@@ -64,29 +76,29 @@ export function AchievementsPage() {
   const done = s.achievements.length;
   return (
     <div className="page">
-      <div className="page-head">
-        <div className="grow">
-          <h1>Achievements</h1>
-          <p>Milestones across combat, crafting and skilling. Many teach the Crafting Bench a new recipe.</p>
-        </div>
-        <span className="chip">
-          {done} / {ACHIEVEMENTS.length} complete
-        </span>
-      </div>
+      <PageHeader
+        title="Achievements"
+        actions={
+          <Badge tone={done === ACHIEVEMENTS.length ? 'gold' : 'neutral'}>
+            {done} / {ACHIEVEMENTS.length} complete
+          </Badge>
+        }
+      >
+        Milestones across combat, crafting and skilling. Many teach the Crafting Bench a new recipe.
+      </PageHeader>
       {CATEGORIES.map((c) => {
         const list = ACHIEVEMENTS.filter((a) => a.category === c);
         const n = list.filter((a) => s.achievements.includes(a.id)).length;
         return (
-          <section key={c} style={{ marginBottom: 22 }}>
-            <div className="row" style={{ marginBottom: 8 }}>
-              <h3 style={{ fontSize: 15 }}>{CATEGORY_NAMES[c]}</h3>
-              <span className="spacer" />
-              <span className="dim" style={{ fontSize: 12 }}>
+          <section key={c} className="ach-section">
+            <div className="section-head">
+              <h3>{CATEGORY_NAMES[c]}</h3>
+              <ProgressBar value={n / list.length} color={n === list.length ? 'var(--accent)' : 'var(--accent-2)'} />
+              <span className="dim small num">
                 {n}/{list.length}
               </span>
             </div>
-            <ProgressBar value={n / list.length} color="var(--accent-2)" />
-            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10, marginTop: 10 }}>
+            <div className="card-grid ach-grid">
               {list.map((a) => (
                 <AchievementCard key={a.id} s={s} a={a} />
               ))}

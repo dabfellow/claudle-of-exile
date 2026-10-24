@@ -70,8 +70,11 @@ export function TitleScreen() {
           <span className="provider d">D</span> {pending === 'discord' ? 'Opening Discord…' : 'Sign in with Discord'}
           {!online && <span className="soon">offline</span>}
         </button>
-        <p className="dim" style={{ fontSize: 11.5, margin: 0, textAlign: 'center' }}>
+        <p className="dim" style={{ fontSize: 'var(--fs-xs)', margin: 0, textAlign: 'center' }}>
           Guest progress stays in this browser. Sign in later and you can move your guest characters to your account.
+        </p>
+        <p className="dim" style={{ fontSize: 'var(--fs-xs)', margin: 0, textAlign: 'center' }}>
+          Signing in shares your name, email and avatar from Google or Discord, and stores your character saves. No ads, no tracking.
         </p>
       </div>
     </ScreenShell>
@@ -103,10 +106,10 @@ function CharacterCard({ c }: { c: CharacterSummary }) {
         <Crest classId={c.classId} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="char-name">{c.name}</div>
-          <div className="muted" style={{ fontSize: 12.5 }}>
+          <div className="muted" style={{ fontSize: 'var(--fs-sm)' }}>
             Level {c.combatLevel} {cls.name} · Total level {c.totalLevel}
           </div>
-          <div className="dim" style={{ fontSize: 11.5 }}>Last played {ago(c.lastPlayed)}</div>
+          <div className="dim small">Last played {ago(c.lastPlayed)}</div>
         </div>
         {!confirming && (
           <>
@@ -121,7 +124,7 @@ function CharacterCard({ c }: { c: CharacterSummary }) {
       </div>
       {confirming && (
         <div className="row wrap" style={{ marginTop: 12 }}>
-          <span className="warn" style={{ fontSize: 12.5 }}>
+          <span className="warn" style={{ fontSize: 'var(--fs-sm)' }}>
             Type <b>{c.name}</b> to delete forever:
           </span>
           <input className="input" value={typed} onChange={(e) => setTyped(e.target.value)} autoFocus style={{ flex: 1, minWidth: 120 }} />
@@ -172,7 +175,7 @@ export function CharacterSelect() {
           </div>
         )}
         {game.characters.length === 0 && game.guestCharacters.length > 0 && (
-          <div className="dim" style={{ textAlign: 'center', fontSize: 12.5 }}>
+          <div className="dim" style={{ textAlign: 'center', fontSize: 'var(--fs-sm)' }}>
             No characters on this account yet.
           </div>
         )}
@@ -222,24 +225,24 @@ export function CharacterCreate() {
             <div className="class-name">{c.name}</div>
             <div className="class-attr">{c.attribute}</div>
             <div className="class-tag">{c.tagline}</div>
-            <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>
+            <p className="muted" style={{ fontSize: 'var(--fs-sm)', margin: 0 }}>
               {c.desc}
             </p>
             <div className="class-attrs">
               <span title="Strength">
-                <b style={{ color: '#e07a6a' }}>{c.baseAttributes.str}</b> Str
+                <b style={{ color: 'var(--str)' }}>{c.baseAttributes.str}</b> Str
               </span>
               <span title="Dexterity">
-                <b style={{ color: '#7fd08a' }}>{c.baseAttributes.dex}</b> Dex
+                <b style={{ color: 'var(--dex)' }}>{c.baseAttributes.dex}</b> Dex
               </span>
               <span title="Intelligence">
-                <b style={{ color: '#7fa6f0' }}>{c.baseAttributes.int}</b> Int
+                <b style={{ color: 'var(--int)' }}>{c.baseAttributes.int}</b> Int
               </span>
             </div>
             <div className="class-section">
               <div className="section-label">Class bonus</div>
               {c.bonusText.map((b) => (
-                <div key={b} className="mod" style={{ fontSize: 12.5 }}>
+                <div key={b} className="mod" style={{ fontSize: 'var(--fs-sm)' }}>
                   {b}
                 </div>
               ))}
@@ -269,7 +272,7 @@ export function CharacterCreate() {
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && valid && game.create(trimmed, classId)}
           />
-          <div className={error ? 'warn' : 'dim'} style={{ fontSize: 11.5, marginTop: 4, minHeight: 16 }}>
+          <div className={error ? 'warn' : 'dim'} style={{ fontSize: 'var(--fs-xs)', marginTop: 4, minHeight: 16 }}>
             {error ?? 'This is the name the world will forget.'}
           </div>
         </div>

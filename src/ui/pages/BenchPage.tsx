@@ -9,8 +9,8 @@ import { stationLevel } from '../../engine/hideout';
 import { affixRangeText, itemName, salvageValue } from '../../engine/items';
 import type { EquipSlot, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Cost, fmt, ProgressBar, Tooltip } from '../components/common';
-import { Orb } from '../components/Icon';
+import { Badge, Cost, EmptyState, fmt, PageHeader, ProgressBar, Tooltip } from '../components/common';
+import { Icon, Orb } from '../components/Icon';
 import { ItemCell, ItemTip } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
 
@@ -45,13 +45,9 @@ export function BenchPage() {
 
   return (
     <div className="page">
-      <div className="page-head">
-        <div className="grow">
-          <h1>Crafting Bench</h1>
-          <p>Select an item, then spend orbs to reshape its modifiers. Item level caps which modifier tiers can roll.</p>
-        </div>
-        <span className="chip">Bench level {benchLvl}</span>
-      </div>
+      <PageHeader title="Crafting Bench" actions={<Badge tone="gold">Bench level {benchLvl}</Badge>}>
+        Select an item, then spend orbs to reshape its modifiers. Item level caps which modifier tiers can roll.
+      </PageHeader>
 
       <div className="bench-layout">
         <div className="card bench-item">
@@ -73,11 +69,9 @@ export function BenchPage() {
               )}
             </>
           ) : (
-            <div className="dim" style={{ padding: '40px 10px', textAlign: 'center' }}>
-              No item selected.
-              <br />
+            <EmptyState icon={<Icon name="bench" size={32} color="var(--dim)" />} title="No item selected">
               Pick one from your gear or inventory below.
-            </div>
+            </EmptyState>
           )}
           {history.length > 0 && (
             <div style={{ width: '100%' }}>
@@ -125,19 +119,23 @@ export function BenchPage() {
                 );
               })}
             </div>
-            {item && <div className="dim" style={{ fontSize: 11.5, marginTop: 10 }}>Tip: hover an item and hold Alt to see modifier tiers.</div>}
+            {item && <div className="dim small" style={{ marginTop: 10 }}>Tip: hover an item and hold Alt to see modifier tiers.</div>}
           </div>
 
           <div className="card">
             <div className="card-title">
               Bench Crafts
               <span className="grow" />
-              <span className="muted" style={{ fontFamily: 'var(--font)', fontSize: 12 }}>
+              <span className="card-hint">
                 One crafted modifier per item
               </span>
             </div>
-            {benchLvl < 2 && <div className="dim">Upgrade the Crafting Bench in your Hideout to unlock crafted modifiers.</div>}
-            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 8 }}>
+            {benchLvl < 2 && (
+              <EmptyState small icon={<Icon name="lock" size={24} color="var(--dim)" />}>
+                Upgrade the Crafting Bench in your Hideout to unlock crafted modifiers.
+              </EmptyState>
+            )}
+            <div className="card-grid" style={{ ['--card-min' as string]: '230px', gap: 8 }}>
               {BENCH_CRAFTS.filter((b) => b.benchLevel <= benchLvl).map((b) => {
                 const a = affixDef(b.affixId);
                 const preview = affixRangeText(a.id, b.tier);
@@ -147,14 +145,15 @@ export function BenchPage() {
                   const p = achievementProgress(s, b.achievement);
                   return (
                     <div key={b.id} className="mat bench-locked" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                      <span className="mod crafted" style={{ fontSize: 12.5 }}>
-                        {preview}
-                      </span>
-                      <span className="dim" style={{ fontSize: 11 }}>
-                        Locked — {ach.name}: {ach.desc}
+                      <span className="mod crafted small">{preview}</span>
+                      <span className="row" style={{ gap: 6 }}>
+                        <Badge tone="locked">Locked</Badge>
+                        <span className="dim small">
+                          {ach.name}: {ach.desc}
+                        </span>
                       </span>
                       <ProgressBar value={p.value / p.target} color="var(--accent)" />
-                      <span className="dim" style={{ fontSize: 10.5 }}>
+                      <span className="dim small num">
                         {fmt(p.value)} / {fmt(p.target)}
                       </span>
                     </div>
@@ -162,12 +161,8 @@ export function BenchPage() {
                 }
                 return (
                   <div key={b.id} className="mat" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                    <span className="mod crafted" style={{ fontSize: 12.5 }}>
-                      {preview}
-                    </span>
-                    <span className="dim" style={{ fontSize: 10.5 }}>
-                      {a.kind}
-                    </span>
+                    <span className="mod crafted small">{preview}</span>
+                    <span className="dim small">{a.kind}</span>
                     <Cost cost={b.cost} have={s.bank} />
                     <button className="btn sm" disabled={!!reason} title={reason ?? ''} onClick={() => craft(b.id)}>
                       {reason && item ? reason : 'Craft'}

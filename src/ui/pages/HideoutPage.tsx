@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { STATIONS, type StationId } from '../../data/hideout';
-import { SKILLS } from '../../data/skills';
+import { actionDef, SKILLS } from '../../data/skills';
 import { canAfford } from '../../engine/bank';
 import { nextUpgradeCost, stationLevel, upgradeStation } from '../../engine/hideout';
 import { pointsLeft } from '../../engine/passives';
@@ -8,7 +8,7 @@ import { deriveStats } from '../../engine/stats';
 import { SKILL_IDS } from '../../engine/types';
 import { levelOf, progressOf } from '../../engine/xp';
 import { game, useGame } from '../../game';
-import { Cost, fmt, ProgressBar, Art, artUrl, sceneStyle } from '../components/common';
+import { Art, artUrl, Badge, Cost, fmt, PageHeader, ProgressBar, sceneStyle } from '../components/common';
 import { Icon } from '../components/Icon';
 import type { Page } from '../Layout';
 
@@ -46,75 +46,87 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
   const d = deriveStats(s, []);
   const points = pointsLeft(s);
 
+  const training = s.action?.kind === 'skill' ? actionDef(s.action.actionId).skill : s.action?.kind === 'combat' ? 'combat' : null;
+
   return (
     <div className="page">
       <div className="card hideout-scene" style={sceneStyle('scenes/hideout')}>
         <Embers />
-        <div className="page-head" style={{ position: 'relative', marginBottom: 20 }}>
-          <div className="grow">
-            <h1>Your Hideout</h1>
-            <p>A quiet cave above the Mud Flats. Every station you upgrade makes the next expedition easier.</p>
-          </div>
-          <div className="row wrap">
-            <span className="chip">
-              <Icon name="heart" size={13} color="var(--life-2)" /> {fmt(d.maxLife)} life
-            </span>
-            <span className="chip">
-              <Icon name="bolt" size={13} color="var(--accent-2)" /> {d.dps.toFixed(1)} dps
-            </span>
-            {points > 0 && (
-              <button className="btn sm primary" onClick={() => go('tree')}>
-                {points} passive point{points > 1 ? 's' : ''} to spend
-              </button>
-            )}
-          </div>
+        <div style={{ position: 'relative', marginBottom: 'var(--s-5)' }}>
+          <PageHeader
+            title="Your Hideout"
+            actions={
+              <>
+                <span className="chip">
+                  <Icon name="heart" size={14} color="var(--life-2)" /> <b>{fmt(d.maxLife)}</b> <span className="dim">life</span>
+                </span>
+                <span className="chip">
+                  <Icon name="bolt" size={14} color="var(--accent-2)" /> <b>{d.dps.toFixed(1)}</b> <span className="dim">dps</span>
+                </span>
+                {points > 0 && (
+                  <button className="btn sm primary" onClick={() => go('tree')}>
+                    {points} passive point{points > 1 ? 's' : ''} to spend
+                  </button>
+                )}
+              </>
+            }
+          >
+            A quiet cave above the Mud Flats. Every station you upgrade makes the next expedition easier.
+          </PageHeader>
         </div>
 
-        <div className="stations">
+        <div className="card-grid stations">
           {STATIONS.map((st) => {
             const lvl = stationLevel(s, st.id);
             const cost = nextUpgradeCost(s, st.id);
             const affordable = cost ? canAfford(s, cost) : false;
+            const hasArt = !!artUrl(`stations/${st.id}`);
             return (
-              <div key={st.id} className={`card station ${artUrl(`stations/${st.id}`) ? 'has-art' : ''}`} style={{ ['--station' as string]: st.color }} onClick={() => go(st.page as Page)}>
+              <div key={st.id} className={`card station ${hasArt ? 'has-art' : ''}`} style={{ ['--station' as string]: st.color }} onClick={() => go(st.page as Page)}>
                 <Art src={`stations/${st.id}`} alt={st.name} className="station-art" fallback={null} />
-                <div className="row" style={{ gap: 12 }}>
-                  {!artUrl(`stations/${st.id}`) && (
+                <div className="station-head">
+                  {!hasArt && (
                     <div className="station-icon">
-                      <Icon name={STATION_ICON[st.id]} size={26} color={st.color} />
+                      <Icon name={STATION_ICON[st.id]} size={24} color={st.color} />
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700 }}>{st.name}</div>
-                    <div className="pips" style={{ marginTop: 5 }}>
-                      {st.levels.map((_, i) => (
-                        <span key={i} className={`pip ${i < lvl ? 'on' : ''}`} />
-                      ))}
+                    <div className="station-name">{st.name}</div>
+                    <div className="row" style={{ marginTop: 5 }}>
+                      <div className="pips">
+                        {st.levels.map((_, i) => (
+                          <span key={i} className={`pip ${i < lvl ? 'on' : ''}`} />
+                        ))}
+                      </div>
+                      <span className="dim small num">
+                        Level {lvl}/{st.levels.length}
+                      </span>
                     </div>
                   </div>
+                  {!cost && <Badge tone="gold">Max</Badge>}
                 </div>
-                <div className="muted" style={{ fontSize: 12.5 }}>
-                  {st.desc}
-                </div>
-                <div style={{ fontSize: 12.5 }}>
-                  <span className="dim">Now: </span>
-                  {st.levels[lvl - 1].effect}
+                <p className="station-desc">{st.desc}</p>
+                <div className="benefits">
+                  <div className="benefit">
+                    <span>Now</span>
+                    <span>{st.levels[lvl - 1].effect}</span>
+                  </div>
+                  {cost && (
+                    <div className="benefit next">
+                      <span>Next</span>
+                      <span>{st.levels[lvl].effect}</span>
+                    </div>
+                  )}
                 </div>
                 {cost ? (
-                  <div className="grid" style={{ gap: 6 }} onClick={(e) => e.stopPropagation()}>
-                    <div style={{ fontSize: 12.5 }}>
-                      <span className="dim">Next: </span>
-                      <span className="good">{st.levels[lvl].effect}</span>
-                    </div>
+                  <div className="station-upgrade" onClick={(e) => e.stopPropagation()}>
                     <Cost cost={cost} have={s.bank} />
-                    <button className={`btn sm ${affordable ? 'primary' : ''}`} disabled={!affordable} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id))}>
-                      Upgrade to level {lvl + 1}
+                    <button className={`btn sm block ${affordable ? 'primary' : ''}`} disabled={!affordable} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id))}>
+                      {affordable ? `Upgrade to level ${lvl + 1}` : 'Not enough materials'}
                     </button>
                   </div>
                 ) : (
-                  <div className="good" style={{ fontSize: 12.5 }}>
-                    Fully upgraded
-                  </div>
+                  <div className="station-upgrade good small">Fully upgraded</div>
                 )}
               </div>
             );
@@ -124,16 +136,14 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
 
       <div className="card">
         <div className="card-title">Skills</div>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10 }}>
+        <div className="card-grid" style={{ ['--card-min' as string]: '170px' }}>
           {SKILL_IDS.map((id) => (
-            <button key={id} className="mat" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', gap: 6 }} onClick={() => go(id)}>
+            <button key={id} className={`skill-tile ${training === id ? 'running' : ''}`} onClick={() => go(id)}>
               <div className="row">
                 <Icon name={id} size={16} color={SKILLS[id].color} />
                 <b>{SKILLS[id].name}</b>
                 <span className="spacer" />
-                <span className="level-num" style={{ fontSize: 20 }}>
-                  {levelOf(id, s.skills[id])}
-                </span>
+                <span className="level-num">{levelOf(id, s.skills[id])}</span>
               </div>
               <ProgressBar value={progressOf(id, s.skills[id])} color={SKILLS[id].color} />
             </button>

@@ -57,7 +57,7 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
         <GemIcon def={def} size={30} />
         <div>
           <div className="tip-title" style={{ margin: 0 }}>{def.name}</div>
-          <div className="dim" style={{ fontSize: 11 }}>
+          <div className="dim small">
             {ROLE_LABEL[def.role]} · {def.tags.join(', ')}
             {gem ? ` · Level ${gem.level}` : ''}
           </div>
@@ -91,17 +91,17 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
       {gem && (
         <>
           <div className="sep" />
-          <div className="dim" style={{ fontSize: 11 }}>
+          <div className="dim small">
             Rule: <span style={{ color: 'var(--text)' }}>{ruleText(gem.rule)}</span>
           </div>
-          <div className="dim" style={{ fontSize: 11 }}>
+          <div className="dim small">
             Supports: {gem.supports.filter(Boolean).length}/{supportSlots(gem)}
             {gem.supports.filter(Boolean).map((x) => ` · ${supportGemDef(x!.supportId).name}`)}
           </div>
           {gem.level < 20 && (
             <div style={{ marginTop: 6 }}>
               <ProgressBar value={gemProgress(gem)} color="var(--gem)" />
-              <div className="dim" style={{ fontSize: 10.5, marginTop: 2 }}>
+              <div className="dim" style={{ fontSize: 'var(--fs-xs)', marginTop: 2 }}>
                 Next level needs character level {gemLevelReq(gem.level + 1)}
               </div>
             </div>
@@ -123,13 +123,13 @@ export function SupportTip({ supportId }: { supportId: string }) {
         <GemIcon def={def} size={28} support />
         <div>
           <div className="tip-title" style={{ margin: 0 }}>{def.name}</div>
-          <div className="dim" style={{ fontSize: 11 }}>{def.signatureFor ? 'Signature support' : 'Support gem'}</div>
+          <div className="dim small">{def.signatureFor ? 'Signature support' : 'Support gem'}</div>
         </div>
       </div>
       <div style={{ margin: '6px 0' }}>{def.desc}</div>
-      <div className="dim" style={{ fontSize: 11 }}>{fitsNames}</div>
+      <div className="dim small">{fitsNames}</div>
       {def.mods.manaMult && def.mods.manaMult !== 1 && (
-        <div className="dim" style={{ fontSize: 11 }}>
+        <div className="dim small">
           Mana cost ×{def.mods.manaMult.toFixed(2)}
         </div>
       )}

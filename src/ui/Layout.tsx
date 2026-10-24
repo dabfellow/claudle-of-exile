@@ -9,7 +9,7 @@ import { actionIntervalMs, stopAction } from '../engine/skills';
 import { deriveStats } from '../engine/stats';
 import type { GameState, SkillId } from '../engine/types';
 import { characterLevel } from '../engine/character';
-import { levelOf, progressOf, xpToReach } from '../engine/xp';
+import { levelOf, maxLevelOf, progressOf, xpToReach } from '../engine/xp';
 import type { GameEvent } from '../engine/types';
 import { game, useGame, useGameEvent, type LootLine } from '../game';
 import { activeGemDef, supportGemDef } from '../data/gems';
@@ -17,7 +17,7 @@ import { itemName } from '../engine/items';
 import { GemIcon } from './components/GemView';
 import { ItemIcon, ItemTip } from './components/ItemView';
 import { SKILL_KEYS } from './pages/SkillGemsPage';
-import { fmt, fmtTime, MatIcon, ProgressBar, Tooltip } from './components/common';
+import { CurrencyAmount, fmt, fmtTime, MatIcon, ProgressBar, Tooltip } from './components/common';
 import { Icon } from './components/Icon';
 import { QuestTracker } from './components/QuestTracker';
 import { Crest } from './screens/Screens';
@@ -137,7 +137,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
           <Crest classId={s.character.classId} size={34} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="char-foot-name">{s.character.name}</div>
-            <div className="dim" style={{ fontSize: 11 }}>
+            <div className="dim small">
               Lv {characterLevel(s)} {classDef(s.character.classId).name}
             </div>
           </div>
@@ -191,7 +191,7 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
 
   return (
     <header className="topbar">
-      <div className="activity" onClick={() => go(target)} style={{ cursor: 'pointer' }}>
+      <div className={`activity ${s.action ? 'on' : ''}`} role="button" tabIndex={0} onClick={() => go(target)} onKeyDown={(e) => e.key === 'Enter' && go(target)}>
         <span className="nav-icon" style={{ width: 36, height: 36 }}>
           <Icon name={target === 'hideout' ? 'home' : target} size={18} color={color} />
         </span>
@@ -224,11 +224,7 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
       </div>
       <div className="currency-strip">
         {STRIP.map((id) => (
-          <span className="chip" key={id} title={materialDef(id).name}>
-            <MatIcon id={id} size={14} />
-            {fmt(s.bank[id] ?? 0)}
-            <span className="dim">{id === 'gold' ? 'gold' : materialDef(id).name.split(' ')[0]}</span>
-          </span>
+          <CurrencyAmount key={id} id={id} amount={s.bank[id] ?? 0} label={id === 'gold' ? 'gold' : materialDef(id).name.split(' ')[0]} />
         ))}
       </div>
     </header>
@@ -413,70 +409,138 @@ export function Toasts() {
   );
 }
 
+/** "12 hours", "1 hour 20 minutes", "5 minutes" */
+function awayLabel(ms: number): string {
+  const m = Math.floor(ms / 60_000);
+  const h = Math.floor(m / 60);
+  const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  if (h === 0) return plural(m, 'minute');
+  return m % 60 ? `${plural(h, 'hour')} ${plural(m % 60, 'minute')}` : plural(h, 'hour');
+}
+
 export function OfflineModal() {
   useGame();
   const sum = game.offline;
   if (!sum) return null;
-  const mats = Object.entries(sum.materials).filter(([, n]) => n > 0);
+  const xp = Object.entries(sum.xp).filter(([, n]) => (n ?? 0) > 0) as [SkillId, number][];
+  // gold first, then everything else gained; materials spent crafting aren't spoils
+  const mats = Object.entries(sum.materials)
+    .filter(([, n]) => n > 0)
+    .sort(([a], [b]) => (a === 'gold' ? -1 : b === 'gold' ? 1 : 0));
+  const fought = sum.kills > 0 || sum.died;
+  const spoils = mats.length > 0 || sum.items > 0 || sum.gems > 0;
   return (
     <div className="modal-backdrop" onClick={() => game.dismissOffline()}>
-      <div className="card modal" onClick={(e) => e.stopPropagation()}>
-        <div className="card-title">
-          <Icon name="clock" size={18} color="var(--accent)" />
-          While you were away
-          <span className="grow" />
-          <span className="muted" style={{ fontFamily: 'var(--font)', fontSize: 13 }}>
-            {fmtTime(sum.ms)}
-          </span>
+      <div className="card modal away" onClick={(e) => e.stopPropagation()}>
+        <div className="away-head">
+          <div className="away-kicker">The Exile Returns</div>
+          <h2>While You Were Away</h2>
+          <div className="muted">{awayLabel(sum.ms)} of adventure</div>
         </div>
-        <div className="grid" style={{ gap: 10 }}>
-          {Object.entries(sum.xp).map(([sk, xp]) => (
-            <div key={sk} className="row">
-              <Icon name={sk} size={16} color={SKILLS[sk as SkillId].color} />
-              <b>{SKILLS[sk as SkillId].name}</b>
-              <span className="spacer" />
-              <span className="good num">+{fmt(xp ?? 0)} xp</span>
-              {sum.levels[sk as SkillId] && <span className="nav-badge hot">Lv {sum.levels[sk as SkillId]}</span>}
+
+        {xp.map(([sk, gained]) => {
+          const total = game.state.skills[sk] ?? 0;
+          const lvl = levelOf(sk, total);
+          const pct = progressOf(sk, total);
+          const maxed = lvl >= maxLevelOf(sk);
+          return (
+            <div key={sk} className="away-xp">
+              <div className="row">
+                <b>{sk === 'combat' ? 'Experience Gained' : `${SKILLS[sk].name} Experience`}</b>
+                <span className="spacer" />
+                <b className="good num">+{fmt(gained)} XP</b>
+              </div>
+              <div className="away-track">
+                <div className="away-fill" style={{ width: `${pct * 100}%`, background: sk === 'combat' ? undefined : SKILLS[sk].color }} />
+              </div>
+              <div className="row away-sub">
+                <span>
+                  Level {lvl}
+                  {sum.levels[sk] && <span className="good"> — level up!</span>}
+                </span>
+                <span className="spacer" />
+                <span>{maxed ? 'Max level' : `${Math.floor(pct * 100)}% to Level ${lvl + 1}`}</span>
+              </div>
             </div>
-          ))}
-          {sum.kills > 0 && (
+          );
+        })}
+
+        {fought && (
+          <div className="away-stats">
+            <div className="away-stat">
+              <Icon name="combat" size={18} color="var(--accent)" />
+              <b className="num">{fmt(sum.kills)}</b>
+              <span>Monsters Slain</span>
+            </div>
+            <div className="away-stat">
+              <Icon name="skull" size={18} color="var(--bad)" />
+              <b className="num">{sum.died ? 1 : 0}</b>
+              <span>Deaths</span>
+            </div>
+          </div>
+        )}
+
+        {spoils && (
+          <>
+            <div className="away-divider" />
+            <div className="away-section">{fought ? 'Spoils of Battle' : 'Spoils'}</div>
+            <div className="away-spoils">
+              {mats.map(([id, n]) => (
+                <div key={id} className="away-spoil">
+                  <MatIcon id={id} size={18} />
+                  <b className="num">+{fmt(n)}</b>
+                  <span>{materialDef(id).name}</span>
+                </div>
+              ))}
+              {sum.items > 0 && (
+                <div className="away-spoil">
+                  <Icon name="stash" size={20} color="var(--accent)" />
+                  <b className="num">{sum.items}</b>
+                  <span>Items Found</span>
+                </div>
+              )}
+              {sum.gems > 0 && (
+                <div className="away-spoil">
+                  <Icon name="gemcutting" size={20} color="var(--magic)" />
+                  <b className="num">{sum.gems}</b>
+                  <span>Gems Found</span>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {sum.died && (
+          <div className="away-alert bad">
             <div className="row">
               <Icon name="skull" size={16} />
-              Monsters slain <span className="spacer" />
-              <b className="num">{sum.kills}</b>
+              <b>Slain in Combat</b>
             </div>
-          )}
-          {sum.items > 0 && (
+            <p>Your journey ended in death. You have returned to the hideout.</p>
+          </div>
+        )}
+        {sum.stoppedReason && (
+          <div className="away-alert warn">
             <div className="row">
-              <Icon name="stash" size={16} />
-              Items found <span className="spacer" />
-              <b className="num">{sum.items}</b>
+              <Icon name="clock" size={16} />
+              <b>Work Halted</b>
             </div>
-          )}
-          {sum.gems > 0 && (
+            <p>{sum.stoppedReason}</p>
+          </div>
+        )}
+        {sum.bossWaiting && (
+          <div className="away-alert warn">
             <div className="row">
-              <Icon name="gemcutting" size={16} />
-              Gems cut <span className="spacer" />
-              <b className="num">{sum.gems}</b>
+              <Icon name="forge" size={16} />
+              <b>An Unfinished Battle</b>
             </div>
-          )}
-          {mats.length > 0 && (
-            <div className="io">
-              {mats.map(([id, n]) => (
-                <span key={id} className="io-item">
-                  <MatIcon id={id} size={12} />+{fmt(n)} {materialDef(id).name}
-                </span>
-              ))}
-            </div>
-          )}
-          {sum.died && <div className="bad">You were slain and returned to the hideout.</div>}
-          {sum.stoppedReason && <div className="warn">{sum.stoppedReason}</div>}
-        </div>
-        <div className="row" style={{ marginTop: 16, justifyContent: 'flex-end' }}>
-          <button className="btn primary" onClick={() => game.dismissOffline()}>
-            Continue
-          </button>
-        </div>
+            <p>{sum.bossWaiting} awaits. This foe must be challenged in person.</p>
+          </div>
+        )}
+
+        <button className="btn primary away-continue" onClick={() => game.dismissOffline()}>
+          Continue Adventure →
+        </button>
       </div>
     </div>
   );

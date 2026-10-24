@@ -8,7 +8,7 @@ import { allocateSkillNode, refundSkillNode, refundSkillNodeReason, skillNodeRea
 import { deriveStats, passiveStats, type Derived } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Tooltip } from '../components/common';
+import { PageHeader, Tabs, Tooltip } from '../components/common';
 
 const REGION_COLOR: Record<TreeRegion, string> = {
   str: '#d0574a',
@@ -205,7 +205,7 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
     <div className="tip" style={{ minWidth: 240, maxWidth: 320 }}>
       <div className="tip-title" style={{ color: n.kind === 'keystone' ? 'var(--unique)' : n.kind === 'notable' || n.kind === 'mastery' ? 'var(--accent-2)' : 'var(--text)' }}>
         {n.name}
-        <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 11 }}>
+        <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 'var(--fs-xs)' }}>
           {n.kind} · {REGION_NAMES[n.region]}
         </span>
       </div>
@@ -217,7 +217,7 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
               {o.label}
             </div>
           ))}
-          <div className="dim" style={{ fontSize: 11, marginTop: 4 }}>
+          <div className="dim" style={{ fontSize: 'var(--fs-xs)', marginTop: 4 }}>
             {allocated ? 'Click to change your pick (1 Orb of Regret) or refund.' : 'Click to choose one bonus.'}
           </div>
         </div>
@@ -231,7 +231,7 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
           <StatDeltas before={before} after={after} />
         </>
       )}
-      <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 11.5 }}>
+      <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
         {n.kind === 'mastery' && !allocated && !reason
           ? 'Click to pick a bonus'
           : (reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to allocate'))}
@@ -280,7 +280,7 @@ function MasteryPicker({ s, n, onClose }: { s: GameState; n: PassiveNode; onClos
             ×
           </button>
         </div>
-        <p className="muted" style={{ marginTop: 0, fontSize: 12.5 }}>
+        <p className="muted" style={{ marginTop: 0, fontSize: 'var(--fs-sm)' }}>
           {allocated ? `Changing your pick costs 1 Orb of Regret (you have ${regret}).` : 'Pick one bonus. You can change it later for an Orb of Regret.'}
         </p>
         <div className="grid" style={{ gap: 8 }}>
@@ -430,17 +430,17 @@ function SkillNodeTip({ s, n }: { s: GameState; n: SkillTreeNode }) {
     <div className="tip" style={{ minWidth: 220 }}>
       <div className="tip-title" style={{ color: n.kind === 'keystone' ? 'var(--unique)' : n.kind === 'notable' ? 'var(--accent-2)' : 'var(--text)' }}>
         {n.name}
-        <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 11 }}>
+        <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 'var(--fs-xs)' }}>
           {n.kind} · {n.branch === 'core' ? 'Core' : SKILLS[n.branch].name}
         </span>
       </div>
       <div className="mod">{n.desc}</div>
       {n.req && (
-        <div className="dim" style={{ fontSize: 11 }}>
+        <div className="dim small">
           Requires {SKILLS[n.req.skill].name} level {n.req.level}
         </div>
       )}
-      <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 11.5 }}>
+      <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
         {reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to learn')}
       </div>
     </div>
@@ -495,24 +495,17 @@ export function TreePage() {
   const [tab, setTab] = useState<'character' | 'skilling'>('character');
   return (
     <div className="page wide">
-      <div className="page-head">
-        <div className="grow">
-          <h1>Passive Trees</h1>
-          <p>
-            {tab === 'character'
-              ? 'Character tree: combat power. Points from character levels.'
-              : 'Skilling tree: gathering and production. Points from total skill levels.'}
-          </p>
-        </div>
-      </div>
-      <div className="stash-tabs">
-        <button className={`stash-tab ${tab === 'character' ? 'active' : ''}`} onClick={() => setTab('character')}>
-          Character {pointsLeft(s) > 0 && <span className="nav-badge hot">+{pointsLeft(s)}</span>}
-        </button>
-        <button className={`stash-tab ${tab === 'skilling' ? 'active' : ''}`} onClick={() => setTab('skilling')}>
-          Skilling {skillPointsLeft(s) > 0 && <span className="nav-badge hot">+{skillPointsLeft(s)}</span>}
-        </button>
-      </div>
+      <PageHeader title="Passive Trees">
+        {tab === 'character' ? 'Character tree: combat power. Points from character levels.' : 'Skilling tree: gathering and production. Points from total skill levels.'}
+      </PageHeader>
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'character', label: 'Character', count: pointsLeft(s) > 0 ? pointsLeft(s) : undefined, hot: true },
+          { id: 'skilling', label: 'Skilling', count: skillPointsLeft(s) > 0 ? skillPointsLeft(s) : undefined, hot: true },
+        ]}
+      />
       {tab === 'character' ? <CharacterTree s={s} /> : <SkillingTree s={s} />}
     </div>
   );

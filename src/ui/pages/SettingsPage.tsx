@@ -3,7 +3,7 @@ import { exportSave, importSave } from '../../engine/save';
 import { newGame } from '../../engine/state';
 import type { Rarity } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { fmt } from '../components/common';
+import { fmt, PageHeader } from '../components/common';
 import { AccountBadge } from '../screens/Screens';
 
 export function SettingsPage() {
@@ -12,11 +12,7 @@ export function SettingsPage() {
   const [exported, setExported] = useState('');
   return (
     <div className="page">
-      <div className="page-head">
-        <div className="grow">
-          <h1>Settings</h1>
-        </div>
-      </div>
+      <PageHeader title="Settings" />
       <div className="card">
         <div className="card-title">Account</div>
         <div className="row wrap">
@@ -27,11 +23,27 @@ export function SettingsPage() {
           </button>
         </div>
         {game.account?.provider === 'guest' && (
-          <p className="dim" style={{ fontSize: 12, marginBottom: 0 }}>
+          <p className="dim small" style={{ marginBottom: 0 }}>
             Playing as a guest: progress is saved in this browser only. Sign in with Google or Discord from the title screen to save to the cloud — you can
             bring your guest characters with you.
           </p>
         )}
+      </div>
+      <div className="card">
+        <div className="card-title">About</div>
+        <p className="muted" style={{ marginTop: 0 }}>
+          <b>Act 1: The Drowned Coast</b> is the whole game for now: eight areas from the Mud Flats to the Drowned Sanctum, ending with Ysolde, the
+          Drowned Queen. Expect roughly a day of play to finish it.
+        </p>
+        <p className="muted">
+          <b>Coming next:</b> Acts 2–6, each with new areas, gathering tiers, items and skills; then maps for the endgame, ascendancy classes, loot
+          filters and the story. Your characters carry over.
+        </p>
+        <p className="dim small" style={{ marginBottom: 0 }}>
+          <b>Privacy:</b> guest saves stay in this browser. If you sign in with Google or Discord, they share your name, email and avatar with our
+          sign-in service (Supabase), and we store your character saves there so you can play anywhere. That's all: no ads, no analytics, no
+          tracking. Signing out keeps your cloud saves.
+        </p>
       </div>
       <div className="card">
         <div className="card-title">Loot filter</div>
@@ -90,11 +102,11 @@ export function SettingsPage() {
             Reset character
           </button>
         </div>
-        {exported && <textarea readOnly value={exported} rows={3} style={textareaStyle} onFocus={(e) => e.target.select()} />}
+        {exported && <textarea className="input textarea" readOnly value={exported} rows={3} onFocus={(e) => e.target.select()} />}
         <div className="section-label" style={{ marginTop: 16 }}>
           Import
         </div>
-        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} placeholder="Paste an exported save" style={textareaStyle} />
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} placeholder="Paste an exported save" className="input textarea" />
         <button
           className="btn"
           disabled={!text.trim()}
@@ -135,15 +147,3 @@ export function SettingsPage() {
     </div>
   );
 }
-
-const textareaStyle: React.CSSProperties = {
-  width: '100%',
-  marginTop: 10,
-  background: 'var(--bg-2)',
-  color: 'var(--text)',
-  border: '1px solid var(--line)',
-  borderRadius: 8,
-  padding: 8,
-  fontFamily: 'monospace',
-  fontSize: 11,
-};

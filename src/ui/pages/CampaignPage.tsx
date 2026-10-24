@@ -7,7 +7,7 @@ import { characterLevel } from '../../engine/character';
 import { bossIsNext, startCombat } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { MatIcon, ProgressBar, artUrl, sceneStyle } from '../components/common';
+import { artUrl, Badge, EmptyState, MatIcon, PageHeader, ProgressBar, sceneStyle, Tabs } from '../components/common';
 import { Icon } from '../components/Icon';
 import type { Page } from '../Layout';
 
@@ -74,17 +74,26 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
     <div className={`card area ${here ? 'current' : ''} ${unlocked ? '' : 'locked'} ${z.actBoss ? 'act-boss' : ''}`} style={{ ['--zone' as string]: z.color }}>
       <div className={`area-banner ${artUrl(`zones/${z.id}`) ? 'has-art' : ''}`} style={sceneStyle(`zones/${z.id}`)}>
         <span className="area-tier">{z.actBoss ? 'Act boss' : `Area ${n}`}</span>
-        {here && <span className="chip good">You are here</span>}
-        {beaten && !here && <span className="chip">Cleared</span>}
+        {here && (
+          <Badge tone="success" live>
+            You are here
+          </Badge>
+        )}
+        {beaten && !here && <Badge tone="gold">Cleared</Badge>}
+        {!unlocked && (
+          <Badge tone="locked">
+            <Icon name="lock" size={11} /> Locked
+          </Badge>
+        )}
       </div>
       <div className="row">
-        <h3 style={{ fontSize: 17 }}>{z.name}</h3>
+        <h3>{z.name}</h3>
         <span className="spacer" />
         <span className="nav-badge">
           Lv {z.levelRange[0]}–{z.levelRange[1]}
         </span>
       </div>
-      <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>
+      <p className="muted small" style={{ margin: 0 }}>
         {unlocked ? z.desc : 'Defeat the previous area’s boss to unlock.'}
       </p>
       {unlocked && (
@@ -103,7 +112,7 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
           <BossMechanics z={z} />
           <DropPreview z={z} />
           <ProgressBar value={Math.min(1, kills / z.bossEvery)} color={bossIsNext(s, z.id) ? 'var(--life-2)' : z.color} />
-          <div className="dim" style={{ fontSize: 11 }}>
+          <div className="dim small">
             {bossIsNext(s, z.id) ? `${z.boss.name} awaits` : `${kills}/${z.bossEvery} kills until the boss`}
           </div>
           <button
@@ -131,35 +140,26 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
   const done = zones.length > 0 && cleared === zones.length;
   return (
     <div className="page">
-      <div className="page-head">
-        <div className="grow">
-          <h1>Campaign</h1>
-          <p>Choose where to fight. Each area's boss unlocks the next one.</p>
-        </div>
-      </div>
-      <div className="tabs" style={{ alignSelf: 'flex-start', flexWrap: 'wrap' }}>
-        {ACTS.map((a) => (
-          <button key={a.n} className={`tab ${act === a.n ? 'active' : ''}`} onClick={() => setAct(a.n)}>
-            Act {a.n}
-            {!a.open && ' 🔒'}
-          </button>
-        ))}
-        <button className="tab" disabled title="Unlocks after Act 6">
-          Maps 🔒
-        </button>
-      </div>
-      <div className="row">
-        <h2 style={{ fontSize: 20 }}>
+      <PageHeader title="Campaign">Choose where to fight. Each area's boss unlocks the next one.</PageHeader>
+      <Tabs
+        value={String(act)}
+        onChange={(id) => id !== 'maps' && setAct(Number(id))}
+        tabs={[
+          ...ACTS.map((a) => ({ id: String(a.n), label: a.open ? `Act ${a.n}` : <>Act {a.n} <Icon name="lock" size={12} /></> })),
+          { id: 'maps', label: <>Maps <Icon name="lock" size={12} /></>, disabled: true, title: 'Unlocks after Act 6' },
+        ]}
+      />
+      <div className="section-head" style={{ margin: 0 }}>
+        <h2>
           Act {current.n}: {current.name}
         </h2>
-        <span className="spacer" />
+        {zones.length > 0 && <ProgressBar value={cleared / zones.length} color={done ? 'var(--success)' : undefined} />}
         {zones.length > 0 && (
-          <span className="dim" style={{ fontSize: 12.5 }}>
+          <span className="dim small num">
             {cleared}/{zones.length} bosses defeated
           </span>
         )}
       </div>
-      {zones.length > 0 && <ProgressBar value={cleared / zones.length} color={done ? 'var(--good)' : undefined} />}
       {done && (
         <div className="card act-complete">
           <h3>Act {current.n} complete</h3>
@@ -169,10 +169,10 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
         </div>
       )}
       {!current.open || zones.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-          <Icon name="map" size={36} color="var(--dim)" />
-          <h3 style={{ marginTop: 10 }}>Coming soon</h3>
-          <p className="muted">This act isn't open yet. Finish Act {current.n - 1} when it arrives.</p>
+        <div className="card">
+          <EmptyState icon={<Icon name="lock" size={32} color="var(--dim)" />} title="Coming soon">
+            This act isn't open yet. Finish Act {current.n - 1} when it arrives.
+          </EmptyState>
         </div>
       ) : (
         <div className="area-grid">

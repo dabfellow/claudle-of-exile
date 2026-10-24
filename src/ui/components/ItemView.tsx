@@ -77,7 +77,7 @@ export function ItemTip({ item, state, compare = true, pinned = false }: { item:
         {(item.rarity === 'rare' || item.rarity === 'unique') && <div>{base.name}</div>}
       </div>
       <div className="item-tip-body">
-        <div className="muted" style={{ fontSize: 11 }}>
+        <div className="muted small">
           {RARITY_LABEL[item.rarity]} {base.slot} · Item Level {item.ilvl}
         </div>
         {base.phys && (
@@ -152,7 +152,7 @@ function Requirements({ item, state }: { item: Item; state?: GameState }) {
     parts.push({ text: `${n} ${ATTR_LABEL[a]}`, ok: !have || have[a] >= n });
   }
   return (
-    <div className="muted" style={{ fontSize: 11 }}>
+    <div className="muted small">
       Requires{' '}
       {parts.map((p, i) => (
         <span key={p.text} className={p.ok ? '' : 'bad'}>
