@@ -2,26 +2,32 @@ import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { describeFlaskMod, flaskEffectText, flaskName, flaskStats } from '../../engine/flasks';
 import type { FlaskInstance } from '../../engine/types';
 import { game } from '../../game';
-import { Art, togglePin } from './common';
+import { artUrl, togglePin } from './common';
+import { packArtUrl } from '../assets';
 
-/** A flask bottle: liquid level shows charges. */
+/** A flask bottle: liquid level shows charges. With art, the art sits behind a charge meter. */
 export function FlaskIcon({ f, size = 34 }: { f: FlaskInstance; size?: number }) {
   const st = flaskStats(f);
   const fill = st.maxCharges ? Math.min(1, f.charges / st.maxCharges) : 0;
-  return (
-    <Art
-      src={`flasks/${f.flaskId}.png`}
-      alt={st.def.name}
-      size={size}
-      fallback={
-        <span className="flask-icon" style={{ width: size * 0.62, height: size, ['--flask' as string]: st.def.color }}>
-          <span className="flask-icon-neck" />
-          <span className="flask-icon-body">
-            <span className="flask-icon-liquid" style={{ height: `${fill * 100}%` }} />
-          </span>
+  const key = `flasks/${f.flaskId}`;
+  const own = artUrl(key);
+  const art = own ?? packArtUrl(key);
+  if (art)
+    return (
+      <span className="flask-art" style={{ width: size, height: size, ['--flask' as string]: st.def.color }}>
+        <img className={`art ${!own ? 'pack-art' : ''}`} src={art} alt={st.def.name} width={size} height={size} loading="lazy" decoding="async" draggable={false} />
+        <span className="flask-art-meter">
+          <span className="flask-art-fill" style={{ height: `${fill * 100}%` }} />
         </span>
-      }
-    />
+      </span>
+    );
+  return (
+    <span className="flask-icon" style={{ width: size * 0.62, height: size, ['--flask' as string]: st.def.color }}>
+      <span className="flask-icon-neck" />
+      <span className="flask-icon-body">
+        <span className="flask-icon-liquid" style={{ height: `${fill * 100}%` }} />
+      </span>
+    </span>
   );
 }
 

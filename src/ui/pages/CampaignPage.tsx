@@ -7,7 +7,7 @@ import { characterLevel } from '../../engine/character';
 import { bossIsNext, startCombat } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { artUrl, Badge, EmptyState, GameIcon, MatIcon, PageHeader, ProgressBar, sceneStyle, Tabs } from '../components/common';
+import { anyArtUrl, Badge, EmptyState, GameIcon, MatIcon, PageHeader, ProgressBar, sceneStyle, Tabs } from '../components/common';
 import type { Page } from '../Layout';
 
 /** How risky an area looks for your current level. */
@@ -71,7 +71,7 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
   const beaten = s.bossesDefeated.includes(z.id);
   return (
     <div className={`card area ${here ? 'current' : ''} ${unlocked ? '' : 'locked'} ${z.actBoss ? 'act-boss' : ''}`} style={{ ['--zone' as string]: z.color }}>
-      <div className={`area-banner ${artUrl(`zones/${z.id}`) ? 'has-art' : ''}`} style={sceneStyle(`zones/${z.id}`)}>
+      <div className={`area-banner ${anyArtUrl(`zones/${z.id}`) ? 'has-art' : ''}`} style={sceneStyle(`zones/${z.id}`)}>
         <span className="area-tier">{z.actBoss ? 'Act boss' : `Area ${n}`}</span>
         {here && (
           <Badge tone="success" live>

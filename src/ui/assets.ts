@@ -40,6 +40,123 @@ export const ITEM_ART: Record<string, string> = {
   // belts
   chain_belt: new URL('../assets/items/armor/set-07-belt.png', import.meta.url).href,
   heavy_belt: new URL('../assets/items/armor/set-63-belt.png', import.meta.url).href,
+  // weapons and shields (Catalone dark fantasy pack, same 64px look as the gear sets)
+  iron_blade: new URL('../assets/items/weapons/catalone-w7-014.png', import.meta.url).href,
+  glinting_dagger: new URL('../assets/items/weapons/catalone-w5-004.png', import.meta.url).href,
+  war_axe: new URL('../assets/items/weapons/catalone-w3-015.png', import.meta.url).href,
+  steel_broadsword: new URL('../assets/items/weapons/catalone-w1-002.png', import.meta.url).href,
+  mithril_sabre: new URL('../assets/items/weapons/catalone-w3-007.png', import.meta.url).href,
+  buckler: new URL('../assets/items/armor/catalone-s10-004.png', import.meta.url).href,
+  // first-pass stand-ins, looser matches
+  rusted_sword: new URL('../assets/items/weapons/catalone-w4-002.png', import.meta.url).href,
+  whittled_dagger: new URL('../assets/items/weapons/dagger.png', import.meta.url).href,
+  driftwood_wand: new URL('../assets/items/weapons/codespree-stick.png', import.meta.url).href,
+  plank_shield: new URL('../assets/ui/decorations/shield-round-wood.png', import.meta.url).href,
+  kite_shield: new URL('../assets/items/armor/catalone-s4-009.png', import.meta.url).href,
+  tower_shield: new URL('../assets/items/armor/catalone-s8-005.png', import.meta.url).href,
+  leather_belt: new URL('../assets/items/armor/set-75-helmet.png', import.meta.url).href, // set 75's "helmet" is a belt
+  // jewellery: no ring/amulet pack yet, so loose stones and trinkets stand in
+  coral_amulet: new URL('../assets/items/jewelry/codespree-carrageen-moss.png', import.meta.url).href,
+  amber_amulet: new URL('../assets/items/jewelry/craft32-glue.png', import.meta.url).href,
+  jade_amulet: new URL('../assets/items/currency/gem-green.png', import.meta.url).href,
+  onyx_amulet: new URL('../assets/items/jewelry/codespree-thorn-dragon-egg.png', import.meta.url).href,
+  iron_ring: new URL('../assets/items/jewelry/softline-ring.png', import.meta.url).href,
+  ruby_ring: new URL('../assets/items/currency/gem-red.png', import.meta.url).href,
+  sapphire_ring: new URL('../assets/items/jewelry/woshi-crystal.png', import.meta.url).href,
+  topaz_ring: new URL('../assets/items/jewelry/codespree-badge.png', import.meta.url).href,
+  diamond_ring: new URL('../assets/items/jewelry/ring.png', import.meta.url).href,
+};
+
+/** Uniques with their own pack art; the rest show their base's art. */
+export const UNIQUE_ART: Record<string, string> = {
+  bloodthirst: new URL('../assets/items/weapons/catalone-w2-008.png', import.meta.url).href,
+  miners_lament: new URL('../assets/items/armor/set-55-helmet.png', import.meta.url).href,
+  emberheart: new URL('../assets/items/armor/set-10-body.png', import.meta.url).href,
+  windstep: new URL('../assets/items/armor/set-04-legs.png', import.meta.url).href,
+  alchemists_band: new URL('../assets/items/jewelry/codespree-vial-slug-gel.png', import.meta.url).href,
+  iron_bulwark: new URL('../assets/items/armor/catalone-s9-005.png', import.meta.url).href,
+  starforged_edge: new URL('../assets/items/weapons/catalone-w9-010.png', import.meta.url).href,
+  titans_girth: new URL('../assets/items/armor/set-63-belt.png', import.meta.url).href, // same as its Heavy Belt base
+};
+
+/** Materials. Mining drops use Woshi, logs and dust use CodeSpree (both pixel art); herbs are first-pass stand-ins. */
+export const MATERIAL_ART: Record<string, string> = {
+  gold: new URL('../assets/items/materials/woshi-gold_coin.png', import.meta.url).href,
+  copper_ore: new URL('../assets/items/materials/woshi-copper_ore.png', import.meta.url).href,
+  iron_ore: new URL('../assets/items/materials/codespree-hematite.png', import.meta.url).href,
+  mithril_ore: new URL('../assets/items/materials/woshi-iron_ore.png', import.meta.url).href, // Woshi's "iron" ore has silver flecks
+  rough_gem: new URL('../assets/items/materials/woshi-gem.png', import.meta.url).href,
+  ash_log: new URL('../assets/items/materials/codespree-willow-log.png', import.meta.url).href,
+  oak_log: new URL('../assets/items/materials/codespree-cedar-log.png', import.meta.url).href,
+  yew_log: new URL('../assets/items/materials/codespree-red-pine-log.png', import.meta.url).href,
+  sunpetal: new URL('../assets/items/materials/codespree-fritillaria.png', import.meta.url).href,
+  frostleaf: new URL('../assets/items/materials/remedies-sage-bundle.png', import.meta.url).href,
+  emberroot: new URL('../assets/items/materials/codespree-heartroot.png', import.meta.url).href,
+  voidbloom: new URL('../assets/items/materials/codespree-rose.png', import.meta.url).href,
+  arcane_dust: new URL('../assets/items/materials/codespree-character-powder.png', import.meta.url).href,
+};
+
+/** Currency orbs: mostly SanguineNite round icons, a few loose stand-ins. */
+export const CURRENCY_ART: Record<string, string> = {
+  transmute: new URL('../assets/items/currency/sn-aether-comet.png', import.meta.url).href,
+  augment: new URL('../assets/items/currency/sn-light-beam.png', import.meta.url).href,
+  alteration: new URL('../assets/items/currency/sn-tornado.png', import.meta.url).href,
+  regal: new URL('../assets/items/currency/sn-revival.png', import.meta.url).href,
+  alchemy: new URL('../assets/items/currency/remedies-honey-vinegar-tonic.png', import.meta.url).href,
+  scour: new URL('../assets/items/currency/craft32-stone.png', import.meta.url).href,
+  chaos: new URL('../assets/items/currency/codespree-copper-disk.png', import.meta.url).href,
+  annul: new URL('../assets/items/currency/craft32-shell.png', import.meta.url).href,
+  exalted: new URL('../assets/items/currency/sn-blessed-orb.png', import.meta.url).href,
+  divine: new URL('../assets/items/currency/sn-holy-flare.png', import.meta.url).href,
+  regret: new URL('../assets/items/currency/sn-verdant-cycle.png', import.meta.url).href,
+  expansion: new URL('../assets/items/currency/sn-void-lance.png', import.meta.url).href,
+  instill: new URL('../assets/items/currency/sn-fire-barrier.png', import.meta.url).href,
+};
+
+/** Skill gems → SanguineNite skill/element icons, drawn inside the attribute-coloured gem. */
+export const GEM_ART: Record<string, string> = {
+  // active
+  ground_slam: new URL('../assets/icons/gems/sn-earth-spike.png', import.meta.url).href,
+  war_cry: new URL('../assets/icons/gems/sn-berserk.png', import.meta.url).href,
+  smoke_step: new URL('../assets/icons/gems/sn-jade-dash.png', import.meta.url).href,
+  spark: new URL('../assets/icons/gems/sn-shock-ball.png', import.meta.url).href,
+  fireball: new URL('../assets/icons/gems/sn-firebolt.png', import.meta.url).href,
+  frost_ward: new URL('../assets/icons/gems/sn-frozen.png', import.meta.url).href,
+  arcane_siphon: new URL('../assets/icons/gems/sn-consuming-dark.png', import.meta.url).href,
+  // support
+  glacial_shell: new URL('../assets/icons/gems/sn-glacial-eruption.png', import.meta.url).href,
+  added_fire: new URL('../assets/icons/gems/sn-ember-might.png', import.meta.url).href,
+  added_cold: new URL('../assets/icons/gems/sn-ice-spikes.png', import.meta.url).href,
+  added_lightning: new URL('../assets/icons/gems/sn-electrify.png', import.meta.url).href,
+  elemental_focus: new URL('../assets/icons/gems/sn-frostflame-confluence.png', import.meta.url).href,
+  life_leech: new URL('../assets/icons/gems/sn-crimson-pulse.png', import.meta.url).href,
+  // first-pass stand-ins, looser matches
+  heavy_strike: new URL('../assets/icons/gems/sn-dragons-might.png', import.meta.url).href,
+  iron_guard: new URL('../assets/icons/gems/sn-cyclone-ward.png', import.meta.url).href,
+  twin_strike: new URL('../assets/icons/gems/sn-lancer.png', import.meta.url).href,
+  poison_dart: new URL('../assets/icons/gems/sn-blight-smite.png', import.meta.url).href,
+  lacerate: new URL('../assets/icons/gems/sn-crimson-vortex.png', import.meta.url).href,
+  shattering_blow: new URL('../assets/icons/gems/sn-harbinger.png', import.meta.url).href,
+  aftershock: new URL('../assets/icons/gems/sn-meteor-collide.png', import.meta.url).href,
+  retaliation: new URL('../assets/icons/gems/sn-crimson-bind.png', import.meta.url).href,
+  rallying_roar: new URL('../assets/icons/gems/sn-lycan-fury.png', import.meta.url).href,
+  flurry: new URL('../assets/icons/gems/sn-gale-force.png', import.meta.url).href,
+  virulence: new URL('../assets/icons/gems/sn-nature-heal.png', import.meta.url).href,
+  ambush: new URL('../assets/icons/gems/sn-dead-facade.png', import.meta.url).href,
+  hemorrhage: new URL('../assets/icons/gems/sn-burning-blood.png', import.meta.url).href,
+  overload: new URL('../assets/icons/gems/sn-dark-bolt.png', import.meta.url).href,
+  inferno: new URL('../assets/icons/gems/sn-infernal-vision.png', import.meta.url).href,
+  soul_tap: new URL('../assets/icons/gems/sn-arcane-renewal.png', import.meta.url).href,
+  brutality: new URL('../assets/icons/gems/sn-conjure-demon.png', import.meta.url).href,
+  faster_attacks: new URL('../assets/icons/gems/sn-arcane-arrows.png', import.meta.url).href,
+  faster_casts: new URL('../assets/icons/gems/sn-shooting-stars.png', import.meta.url).href,
+  efficiency: new URL('../assets/icons/gems/sn-verdant-meditation.png', import.meta.url).href,
+  critical_strikes: new URL('../assets/icons/gems/sn-woodland-archer.png', import.meta.url).href,
+  mana_leech: new URL('../assets/icons/gems/sn-aether-spring.png', import.meta.url).href,
+  multistrike: new URL('../assets/icons/gems/sn-dualstar.png', import.meta.url).href,
+  spell_echo: new URL('../assets/icons/gems/sn-warp.png', import.meta.url).href,
+  chain: new URL('../assets/icons/gems/sn-skeletal-lightning.png', import.meta.url).href,
+  lingering: new URL('../assets/icons/gems/sn-phantom-aura.png', import.meta.url).href,
 };
 
 /** game-icons.net silhouettes, keyed like the stroke icons in components/Icon.tsx so either can stand in. */
@@ -79,8 +196,124 @@ export const KIBYRA: Record<string, string> = {
   stall: new URL('../assets/icons/navigation/market.png', import.meta.url).href,
 };
 
+/** Flasks (Woshi potions). FlaskIcon overlays the live charge meter on these. */
+export const FLASK_ART: Record<string, string> = {
+  life_small: new URL('../assets/items/flasks/woshi-potion_health.png', import.meta.url).href,
+  mana_small: new URL('../assets/items/flasks/woshi-potion_mana.png', import.meta.url).href,
+  // first-pass stand-ins from other packs
+  life_medium: new URL('../assets/items/consumables/potion-red.png', import.meta.url).href,
+  life_grand: new URL('../assets/items/consumables/potion-red-shelf.png', import.meta.url).href,
+  mana_medium: new URL('../assets/items/consumables/potion-blue.png', import.meta.url).href,
+  granite: new URL('../assets/ui/decorations/bottle-grey.png', import.meta.url).href,
+  quicksilver: new URL('../assets/items/flasks/codespree-vial-mercury.png', import.meta.url).href,
+  diamond: new URL('../assets/items/flasks/codespree-glass-vial.png', import.meta.url).href,
+  ruby: new URL('../assets/items/flasks/remedies-willow-bark-decoction.png', import.meta.url).href,
+};
+
+/** Monsters: CodeSpree beings and Craftpix avatars (64px pixel art), free_sample portraits (painted JPG). */
+export const MONSTER_ART: Record<string, string> = {
+  rat: new URL('../assets/monsters/codespree-mouse.png', import.meta.url).href,
+  crab: new URL('../assets/monsters/codespree-crab.png', import.meta.url).href,
+  brinebat: new URL('../assets/monsters/codespree-bat.png', import.meta.url).href,
+  gulls: new URL('../assets/monsters/codespree-gull.png', import.meta.url).href,
+  toad: new URL('../assets/monsters/codespree-niptoad.png', import.meta.url).href,
+  galeborn: new URL('../assets/monsters/codespree-gust.png', import.meta.url).href,
+  lurker: new URL('../assets/monsters/codespree-sasquatch.png', import.meta.url).href,
+  eel: new URL('../assets/monsters/codespree-electric-eel.png', import.meta.url).href,
+  rockback: new URL('../assets/monsters/codespree-geograb.png', import.meta.url).href,
+  crawler: new URL('../assets/monsters/codespree-white-cave-spider.png', import.meta.url).href,
+  wisp: new URL('../assets/monsters/codespree-rhunst.png', import.meta.url).href,
+  ravager: new URL('../assets/monsters/freesample-p19.jpg', import.meta.url).href,
+  skeleton: new URL('../assets/monsters/freesample-mobiszon999.jpg', import.meta.url).href,
+  frostwraith: new URL('../assets/monsters/freesample-op36.jpg', import.meta.url).href,
+  lich: new URL('../assets/monsters/freesample-kociotrup.jpg', import.meta.url).href,
+  treant: new URL('../assets/monsters/craftpix-con15.png', import.meta.url).href,
+  cinderhound: new URL('../assets/monsters/craftpix-con21.png', import.meta.url).href,
+  harpy: new URL('../assets/monsters/craftpix-con32.png', import.meta.url).href,
+  siren: new URL('../assets/monsters/craftpix-con41.png', import.meta.url).href,
+  // first-pass stand-ins, looser matches
+  zombie: new URL('../assets/monsters/freesample-op53.jpg', import.meta.url).href,
+  gorger: new URL('../assets/monsters/codespree-toad.png', import.meta.url).href,
+  sailor: new URL('../assets/monsters/freesample-a10.jpg', import.meta.url).href,
+  harrow: new URL('../assets/monsters/freesample-ik52.jpg', import.meta.url).href,
+  emberkin: new URL('../assets/monsters/craftpix-con10.png', import.meta.url).href,
+  pyre: new URL('../assets/monsters/craftpix-con25.png', import.meta.url).href,
+  stalker: new URL('../assets/monsters/craftpix-con11.png', import.meta.url).href,
+  fenwitch: new URL('../assets/monsters/craftpix-con2.png', import.meta.url).href,
+  sedge: new URL('../assets/monsters/craftpix-con16.png', import.meta.url).href,
+  ghoul: new URL('../assets/monsters/freesample-a61.jpg', import.meta.url).href,
+  tidecaller: new URL('../assets/monsters/freesample-moooob27.jpg', import.meta.url).href,
+  brute: new URL('../assets/monsters/freesample-a43.jpg', import.meta.url).href,
+  gunner: new URL('../assets/monsters/craftpix-con9.png', import.meta.url).href,
+  wreckshaman: new URL('../assets/monsters/craftpix-con19.png', import.meta.url).href,
+  vosk: new URL('../assets/monsters/craftpix-con4.png', import.meta.url).href,
+  stormcaller: new URL('../assets/monsters/craftpix-con3.png', import.meta.url).href,
+  skarra: new URL('../assets/monsters/codespree-gray-parrot.png', import.meta.url).href,
+  zealot: new URL('../assets/monsters/freesample-mobeK1S.jpg', import.meta.url).href,
+  coralgolem: new URL('../assets/monsters/craftpix-con13.png', import.meta.url).href,
+  priest: new URL('../assets/monsters/craftpix-con39.png', import.meta.url).href,
+  ysolde: new URL('../assets/monsters/freesample-a66.jpg', import.meta.url).href,
+};
+
+/** Class, guide and trader portraits (Craftpix avatars, one free_sample painting). */
+export const PORTRAIT_ART: Record<string, string> = {
+  class_warrior: new URL('../assets/portraits/craftpix-con1.png', import.meta.url).href,
+  class_ranger: new URL('../assets/portraits/craftpix-con6.png', import.meta.url).href,
+  class_mage: new URL('../assets/portraits/craftpix-con12.png', import.meta.url).href,
+  trader: new URL('../assets/portraits/craftpix-con33.png', import.meta.url).href,
+  brannoc: new URL('../assets/portraits/freesample-a32.jpg', import.meta.url).href,
+};
+
+/** Hideout stations: Kibyra framed icons, shown in the station's icon badge (not the big art banner). */
+export const STATION_ART: Record<string, string> = {
+  map_device: new URL('../assets/icons/navigation/portal.png', import.meta.url).href,
+  stash: new URL('../assets/icons/navigation/chest-open.png', import.meta.url).href,
+  forge: new URL('../assets/icons/navigation/smithy.png', import.meta.url).href,
+  alchemy_table: new URL('../assets/items/consumables/potion-green-shelf.png', import.meta.url).href,
+  bench: new URL('../assets/ui/decorations/sign-hammer.png', import.meta.url).href,
+  vendor: new URL('../assets/icons/navigation/market.png', import.meta.url).href,
+};
+
+/** Area banners: the only painted landscapes on hand are GegX's forest and tavern, reused as first-pass mood pieces. */
+export const ZONE_ART: Record<string, string> = {
+  mudflats: new URL('../assets/zones/gegx-forest-day.webp', import.meta.url).href,
+  brinecaves: new URL('../assets/scenes/gegx-tavern-night.webp', import.meta.url).href,
+  ashwood: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
+  blackreed: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
+  crypt: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
+  shipgrave: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
+  stormcliffs: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
+  sanctum: new URL('../assets/zones/gegx-tavern-day.webp', import.meta.url).href,
+};
+
+export const SCENE_ART: Record<string, string> = {
+  title: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
+  hideout: new URL('../assets/scenes/gegx-tavern-night.webp', import.meta.url).href,
+};
+
+const PACK_ART: Record<string, Record<string, string>> = {
+  items: ITEM_ART,
+  uniques: UNIQUE_ART,
+  materials: MATERIAL_ART,
+  currency: CURRENCY_ART,
+  gems: GEM_ART,
+  flasks: FLASK_ART,
+  monsters: MONSTER_ART,
+  portraits: PORTRAIT_ART,
+  stations: STATION_ART,
+  zones: ZONE_ART,
+  scenes: SCENE_ART,
+};
+
+/** Small pixel sprites shown much larger than their 64px: scaled with hard edges instead of blur. */
+export function packArtIsPixel(key: string): boolean {
+  const group = key.split('/')[0];
+  const url = packArtUrl(key);
+  return (group === 'monsters' || group === 'portraits' || group === 'stations') && !!url && !/\.jpe?g($|\?)/.test(url);
+}
+
 /** Pack art for an art key (`items/iron_hat`), or undefined. */
 export function packArtUrl(key: string): string | undefined {
   const [group, id] = key.replace(/\.[a-z]+$/, '').split('/');
-  return group === 'items' ? ITEM_ART[id] : undefined;
+  return PACK_ART[group]?.[id];
 }

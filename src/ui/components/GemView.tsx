@@ -3,6 +3,7 @@ import { gemLevelReq, gemProgress, skillSummary, supportSlots } from '../../engi
 import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { fmt, ProgressBar, artUrl } from './common';
+import { packArtUrl } from '../assets';
 
 const ATTR_COLOR = { str: '#d0574a', dex: '#5fbf6a', int: '#5f8de0' } as const;
 const ROLE_LABEL: Record<string, string> = {
@@ -27,6 +28,14 @@ export function GemIcon({ def, size = 40, support = false, dim = false }: { def:
     return (
       <span className={`gem-icon has-art ${support ? 'support' : ''} ${dim ? 'dim' : ''}`} style={{ width: size, height: size, ['--gem' as string]: color }}>
         <img className="art" src={art} alt={def.name} width={size} height={size} draggable={false} />
+      </span>
+    );
+  // pack icons sit inside the coloured gem, so the attribute colour still shows as a rim
+  const pack = def.id ? packArtUrl(`gems/${def.id}`) : undefined;
+  if (pack)
+    return (
+      <span className={`gem-icon pack-art ${support ? 'support' : ''} ${dim ? 'dim' : ''}`} style={{ width: size, height: size, ['--gem' as string]: color }}>
+        <img className="art" src={pack} alt={def.name} width={Math.round(size * 0.72)} height={Math.round(size * 0.72)} draggable={false} />
       </span>
     );
   const initials = def.name

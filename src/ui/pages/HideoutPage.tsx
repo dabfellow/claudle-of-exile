@@ -82,11 +82,11 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
             const hasArt = !!artUrl(`stations/${st.id}`);
             return (
               <div key={st.id} className={`card station ${hasArt ? 'has-art' : ''}`} style={{ ['--station' as string]: st.color }} onClick={() => go(st.page as Page)}>
-                <Art src={`stations/${st.id}`} alt={st.name} className="station-art" fallback={null} />
+                {hasArt && <Art src={`stations/${st.id}`} alt={st.name} className="station-art" fallback={null} />}
                 <div className="station-head">
                   {!hasArt && (
                     <div className="station-icon">
-                      <GameIcon name={STATION_ICON[st.id]} size={24} color={st.color} />
+                      <Art src={`stations/${st.id}`} alt={st.name} size={40} fallback={<GameIcon name={STATION_ICON[st.id]} size={24} color={st.color} />} />
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>

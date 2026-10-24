@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { isCurrency, materialDef } from '../../data/materials';
-import { GAME_ICONS, KIBYRA, packArtUrl } from '../assets';
+import { GAME_ICONS, KIBYRA, packArtIsPixel, packArtUrl } from '../assets';
 import { Icon, Orb, Swatch } from './Icon';
 
 export function ProgressBar({
@@ -122,7 +122,8 @@ export function fmtTime(ms: number): string {
 /** A material/currency glyph. */
 export function MatIcon({ id, size = 14 }: { id: string; size?: number }) {
   const def = materialDef(id);
-  const art = artUrl(`${isCurrency(id) ? 'currency' : 'materials'}/${id}`);
+  const key = `${isCurrency(id) ? 'currency' : 'materials'}/${id}`;
+  const art = artUrl(key) ?? packArtUrl(key);
   if (art) return <img className="art mat-art" src={art} alt={def.name} width={size + 4} height={size + 4} draggable={false} />;
   if (isCurrency(id) || id === 'gold') return <Orb color={def.color} size={size} />;
   return <Swatch color={def.color} size={size * 0.8} />;
@@ -334,9 +335,14 @@ export function artUrl(key: string): string | undefined {
   return ART_FILES[key.replace(/\.[a-z]+$/, '')];
 }
 
+/** Generated art if it exists, otherwise asset-pack art (src/ui/assets.ts). */
+export function anyArtUrl(key: string): string | undefined {
+  return artUrl(key) ?? packArtUrl(key);
+}
+
 /** Background style for a scene/backdrop, or nothing when the art isn't there yet. */
 export function sceneStyle(key: string): CSSProperties | undefined {
-  const url = artUrl(key);
+  const url = anyArtUrl(key);
   return url ? ({ ['--scene-art' as string]: `url(${url})` } as CSSProperties) : undefined;
 }
 
@@ -347,7 +353,7 @@ export function Art({ src, alt, fallback, className, size, cover }: { src: strin
   if (!url) return <>{fallback}</>;
   return (
     <img
-      className={`art ${cover ? 'cover' : ''} ${!own ? 'pack-art' : ''} ${className ?? ''}`}
+      className={`art ${cover ? 'cover' : ''} ${!own ? 'pack-art' : ''} ${!own && packArtIsPixel(src) ? 'crisp' : ''} ${className ?? ''}`}
       src={url}
       alt={alt}
       width={cover ? undefined : size}

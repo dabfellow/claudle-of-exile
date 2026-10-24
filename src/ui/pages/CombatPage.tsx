@@ -8,7 +8,7 @@ import { skillNumbers } from '../../engine/gems';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
 import type { DamageType, GameEvent, GameState, MonsterInstance } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
-import { Art, artUrl, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
+import { anyArtUrl, Art, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, ruleText } from '../components/GemView';
 import type { Page } from '../Layout';
@@ -383,7 +383,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
 
   const zone = zoneDef(c.zoneId);
   const alive = aliveMonsters(c);
-  const zoneArt = artUrl(`zones/${zone.id}`);
+  const zoneArt = anyArtUrl(`zones/${zone.id}`);
   return (
     <div className="page">
       <PageHeader

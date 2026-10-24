@@ -3494,6 +3494,16 @@ img.art.pack-art {
   width: 86%;
   height: 86%;
 }
+/* 64px pixel monsters/portraits blown up to frame size */
+img.art.crisp {
+  image-rendering: pixelated;
+}
+/* frames smaller than the sprite shrink it; smooth scaling keeps detail there */
+.portrait img.art.crisp,
+.crest img.art.crisp,
+.quest-portrait img.art.crisp {
+  image-rendering: auto;
+}
 /* Kibyra pixel art, only ever at whole-number scales */
 img.art.pixel-art {
   display: inline-block;
@@ -3527,6 +3537,10 @@ img.art.mat-art {
 }
 .gem-icon.has-art img.art {
   object-fit: contain;
+}
+.gem-icon.pack-art img.art {
+  object-fit: contain;
+  border-radius: 50%;
 }
 .arena2.has-art {
   background-image: linear-gradient(180deg, color-mix(in srgb, var(--bg) 55%, transparent), color-mix(in srgb, var(--bg) 88%, transparent)), var(--zone-art);
@@ -3896,6 +3910,36 @@ img.art.mat-art {
 }
 
 .flask-icon-liquid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--flask) 80%, white 20%), color-mix(in srgb, var(--flask) 70%, black));
+  transition: height 0.3s var(--ease);
+}
+
+/* flask art with the live charge level as a thin bar on its right edge */
+.flask-art {
+  position: relative;
+  display: inline-block;
+  flex: none;
+}
+.flask-art img.art {
+  width: 100%;
+  height: 100%;
+}
+.flask-art-meter {
+  position: absolute;
+  right: 0;
+  top: 12%;
+  bottom: 12%;
+  width: max(3px, 9%);
+  border-radius: 2px;
+  background: rgb(0 0 0 / 0.55);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--flask) 40%, var(--line-2));
+  overflow: hidden;
+}
+.flask-art-fill {
   position: absolute;
   left: 0;
   right: 0;
