@@ -10,7 +10,7 @@ import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
-import { Badge, fmt, MatIcon, ProgressBar, Tabs } from '../components/common';
+import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar, Tabs } from '../components/common';
 import { GemIcon } from '../components/GemView';
 import { Icon, Orb, Swatch } from '../components/Icon';
 
@@ -70,7 +70,7 @@ function OutputRows({ a }: { a: SkillAction }) {
       )}
       {a.gem && (
         <li>
-          <Icon name="gemcutting" size={13} color={a.color} />
+          <GameIcon name="gemcutting" size={13} color={a.color} />
           <span className="ing-name">{gemOutputText(a.gem)}</span>
           <span className="ing-qty num">×1</span>
         </li>
@@ -126,13 +126,13 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
       <div className="action-top">
         <div className="action-art">
           {locked ? (
-            <Icon name="lock" size={20} color="var(--dim)" />
+            <GameIcon name="lock" size={20} color="var(--dim)" />
           ) : a.baseId ? (
-            <Icon name={baseDef(a.baseId).slot} size={24} color={a.color} />
+            <Art src={`items/${a.baseId}`} alt={baseDef(a.baseId).name} size={44} fallback={<Icon name={baseDef(a.baseId).slot} size={24} color={a.color} />} />
           ) : a.gem?.attr ? (
             <GemIcon def={{ name: a.name, attr: a.gem.attr }} size={28} support={a.gem.kind === 'support'} />
           ) : a.gem ? (
-            <Icon name="gemcutting" size={24} color={a.color} />
+            <GameIcon name="gemcutting" size={24} color={a.color} />
           ) : a.flaskId || a.outputs?.transmute !== undefined || a.skill === 'alchemy' ? (
             <Orb color={a.color} size={24} glow={running} />
           ) : (
@@ -160,7 +160,7 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
       <div className="action-meta">
         <span title="Required level">Lv {a.level}</span>
         <span title="Time per action">
-          <Icon name="clock" size={12} /> {(interval / 1000).toFixed(1)}s
+          <GameIcon name="clock" size={12} /> {(interval / 1000).toFixed(1)}s
         </span>
         <span title="Experience per action">{a.xp} XP</span>
       </div>
@@ -181,7 +181,7 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
         {locked ? (
           <>
             <div className="lock-note">
-              <Icon name="lock" size={12} /> {lockText}
+              <GameIcon name="lock" size={12} /> {lockText}
               {!areaLocked && <span className="num"> (you're {level})</span>}
             </div>
             <button className="btn block" disabled>
@@ -242,7 +242,7 @@ function SkillHeader({ skill }: { skill: SkillId }) {
   return (
     <div className="card skill-hero" style={{ ['--skill' as string]: def.color }}>
       <div className="skill-hero-icon">
-        <Icon name={skill} size={32} color={def.color} />
+        <GameIcon name={skill} size={32} color={def.color} />
       </div>
       <div className="skill-hero-text" style={{ minWidth: 0 }}>
         <span className="page-kicker">{def.group === 'gathering' ? 'Gathering skill' : 'Production skill'}</span>

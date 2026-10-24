@@ -8,10 +8,9 @@ import { skillNumbers } from '../../engine/gems';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
 import type { DamageType, GameEvent, GameState, MonsterInstance } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
-import { Art, artUrl, EmptyState, fmt, PageHeader, ProgressBar, Tooltip } from '../components/common';
+import { Art, artUrl, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, ruleText } from '../components/GemView';
-import { Icon } from '../components/Icon';
 import type { Page } from '../Layout';
 import { SKILL_KEYS } from './SkillGemsPage';
 
@@ -111,7 +110,7 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
       <Floaters list={fx.floaters.filter((f) => f.owner === 'player')} />
       <div className="fighter-head">
         <div className="portrait">
-          <Art src={`portraits/class_${s.character.classId}`} alt={s.character.name} cover fallback={<Icon name="combat" size={28} color="var(--accent-2)" />} />
+          <Art src={`portraits/class_${s.character.classId}`} alt={s.character.name} cover fallback={<GameIcon name="combat" size={28} color="var(--accent-2)" />} />
         </div>
         <div>
           <div className="fighter-name">{s.character.name}</div>
@@ -157,7 +156,7 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
       <Floaters list={fx.floaters.filter((f) => f.owner === m.uid)} />
       <div className="fighter-head">
         <div className="portrait small" style={{ borderColor: m.isBoss ? 'var(--life)' : undefined }}>
-          <Art src={`monsters/${m.defId}`} alt={m.name} cover fallback={<Icon name="skull" size={20} color={m.isBoss ? 'var(--life-2)' : DMG_COLOR[m.dmgType]} />} />
+          <Art src={`monsters/${m.defId}`} alt={m.name} cover fallback={<GameIcon name="skull" size={20} color={m.isBoss ? 'var(--life-2)' : DMG_COLOR[m.dmgType]} />} />
         </div>
         <div style={{ minWidth: 0 }}>
           <div className="fighter-name small">{m.name}</div>
@@ -351,7 +350,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         <PageHeader title="Combat">You're not fighting right now.</PageHeader>
         <div className="card">
           <EmptyState
-            icon={<Icon name="map" size={36} color="var(--accent)" />}
+            icon={<GameIcon name="map" size={36} color="var(--accent)" />}
             title="Pick an area in the Campaign"
             action={
               <button className="btn primary" data-tut="open-campaign" onClick={() => go('campaign')}>

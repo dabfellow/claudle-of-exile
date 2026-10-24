@@ -7,8 +7,7 @@ import { characterLevel } from '../../engine/character';
 import { bossIsNext, startCombat } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { artUrl, Badge, EmptyState, MatIcon, PageHeader, ProgressBar, sceneStyle, Tabs } from '../components/common';
-import { Icon } from '../components/Icon';
+import { artUrl, Badge, EmptyState, GameIcon, MatIcon, PageHeader, ProgressBar, sceneStyle, Tabs } from '../components/common';
 import type { Page } from '../Layout';
 
 /** How risky an area looks for your current level. */
@@ -82,7 +81,7 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
         {beaten && !here && <Badge tone="gold">Cleared</Badge>}
         {!unlocked && (
           <Badge tone="locked">
-            <Icon name="lock" size={11} /> Locked
+            <GameIcon name="lock" size={11} /> Locked
           </Badge>
         )}
       </div>
@@ -100,13 +99,13 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
         <>
           <div className="area-facts">
             <span>
-              <Icon name="skull" size={12} /> Packs of {z.packSize[0]}–{z.packSize[1]}
+              <GameIcon name="skull" size={12} /> Packs of {z.packSize[0]}–{z.packSize[1]}
             </span>
             <span>
-              <Icon name="target" size={12} /> {z.actBoss ? 'Act boss' : 'Boss'}: {z.boss.name} (Lv {z.boss.level})
+              <GameIcon name="target" size={12} /> {z.actBoss ? 'Act boss' : 'Boss'}: {z.boss.name} (Lv {z.boss.level})
             </span>
             <span className={risk.cls}>
-              <Icon name="bolt" size={12} /> {risk.label} for your level
+              <GameIcon name="bolt" size={12} /> {risk.label} for your level
             </span>
           </div>
           <BossMechanics z={z} />
@@ -145,8 +144,8 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
         value={String(act)}
         onChange={(id) => id !== 'maps' && setAct(Number(id))}
         tabs={[
-          ...ACTS.map((a) => ({ id: String(a.n), label: a.open ? `Act ${a.n}` : <>Act {a.n} <Icon name="lock" size={12} /></> })),
-          { id: 'maps', label: <>Maps <Icon name="lock" size={12} /></>, disabled: true, title: 'Unlocks after Act 6' },
+          ...ACTS.map((a) => ({ id: String(a.n), label: a.open ? `Act ${a.n}` : <>Act {a.n} <GameIcon name="lock" size={12} /></> })),
+          { id: 'maps', label: <>Maps <GameIcon name="lock" size={12} /></>, disabled: true, title: 'Unlocks after Act 6' },
         ]}
       />
       <div className="section-head" style={{ margin: 0 }}>
@@ -170,7 +169,7 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
       )}
       {!current.open || zones.length === 0 ? (
         <div className="card">
-          <EmptyState icon={<Icon name="lock" size={32} color="var(--dim)" />} title="Coming soon">
+          <EmptyState icon={<GameIcon name="lock" size={32} color="var(--dim)" />} title="Coming soon">
             This act isn't open yet. Finish Act {current.n - 1} when it arrives.
           </EmptyState>
         </div>

@@ -6,10 +6,10 @@ import { buyOffer, inventoryCapacity, offerName, rerollCost, rerollVendor, sellI
 import { sellValue } from '../../engine/items';
 import type { GameState, Rarity, VendorOffer } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Art, EmptyState, fmt, fmtTime, MatIcon, Tabs, Tooltip } from '../components/common';
+import { Art, EmptyState, fmt, fmtTime, GameIcon, MatIcon, PixelArt, Tabs, Tooltip } from '../components/common';
 import { FlaskIcon, FlaskTip } from '../components/FlaskView';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
-import { Icon, Orb } from '../components/Icon';
+import { Orb } from '../components/Icon';
 import { ItemGrid } from '../components/Inventory';
 import { ItemIcon, ItemTip } from '../components/ItemView';
 
@@ -86,12 +86,12 @@ function BuyTab({ s }: { s: GameState }) {
         </span>
         <span className="spacer" />
         <button className="btn sm" disabled={gold < cost} onClick={() => game.act((st, ctx) => rerollVendor(st, ctx))}>
-          <Icon name="clock" size={12} /> Restock now · {fmt(cost)} gold
+          <GameIcon name="clock" size={12} /> Restock now · {fmt(cost)} gold
         </button>
       </div>
       {s.vendor.stock.length === 0 ? (
         <div className="card">
-          <EmptyState icon={<Icon name="vendor" size={32} color="var(--dim)" />} title="Sold out">
+          <EmptyState icon={<PixelArt name="stall" alt="" scale={2} />} title="Sold out">
             “Come back when the tide brings more.”
           </EmptyState>
         </div>
@@ -270,7 +270,7 @@ export function TraderPage() {
     <div className="page">
       <div className="card npc-panel">
         <div className="npc-portrait">
-          <Art src="portraits/trader.png" alt={TRADER_NAME} className="portrait-img" fallback={<Icon name="vendor" size={56} color="var(--accent-2)" />} />
+          <Art src="portraits/trader.png" alt={TRADER_NAME} className="portrait-img" fallback={<GameIcon name="vendor" size={56} color="var(--accent-2)" />} />
         </div>
         <div className="npc-text">
           <span className="page-kicker">Trader's Stall · level {lvl}</span>
@@ -280,7 +280,7 @@ export function TraderPage() {
         <div className="npc-aside">
           <span className="label">Your gold</span>
           <span className="gold-amount">
-            <MatIcon id="gold" size={18} /> {fmt(s.bank.gold ?? 0)}
+            <PixelArt name="purse" alt="" /> {fmt(s.bank.gold ?? 0)}
           </span>
         </div>
       </div>

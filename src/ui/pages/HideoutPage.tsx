@@ -8,8 +8,7 @@ import { deriveStats } from '../../engine/stats';
 import { SKILL_IDS } from '../../engine/types';
 import { levelOf, progressOf } from '../../engine/xp';
 import { game, useGame } from '../../game';
-import { Art, artUrl, Badge, Cost, fmt, PageHeader, ProgressBar, sceneStyle } from '../components/common';
-import { Icon } from '../components/Icon';
+import { Art, artUrl, Badge, Cost, fmt, GameIcon, PageHeader, ProgressBar, sceneStyle } from '../components/common';
 import type { Page } from '../Layout';
 
 const STATION_ICON: Record<StationId, string> = {
@@ -58,10 +57,10 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
             actions={
               <>
                 <span className="chip">
-                  <Icon name="heart" size={14} color="var(--life-2)" /> <b>{fmt(d.maxLife)}</b> <span className="dim">life</span>
+                  <GameIcon name="heart" size={14} color="var(--life-2)" /> <b>{fmt(d.maxLife)}</b> <span className="dim">life</span>
                 </span>
                 <span className="chip">
-                  <Icon name="bolt" size={14} color="var(--accent-2)" /> <b>{d.dps.toFixed(1)}</b> <span className="dim">dps</span>
+                  <GameIcon name="bolt" size={14} color="var(--accent-2)" /> <b>{d.dps.toFixed(1)}</b> <span className="dim">dps</span>
                 </span>
                 {points > 0 && (
                   <button className="btn sm primary" onClick={() => go('tree')}>
@@ -87,7 +86,7 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
                 <div className="station-head">
                   {!hasArt && (
                     <div className="station-icon">
-                      <Icon name={STATION_ICON[st.id]} size={24} color={st.color} />
+                      <GameIcon name={STATION_ICON[st.id]} size={24} color={st.color} />
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -140,7 +139,7 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
           {SKILL_IDS.map((id) => (
             <button key={id} className={`skill-tile ${training === id ? 'running' : ''}`} onClick={() => go(id)}>
               <div className="row">
-                <Icon name={id} size={16} color={SKILLS[id].color} />
+                <GameIcon name={id} size={16} color={SKILLS[id].color} />
                 <b>{SKILLS[id].name}</b>
                 <span className="spacer" />
                 <span className="level-num">{levelOf(id, s.skills[id])}</span>

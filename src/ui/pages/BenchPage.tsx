@@ -9,8 +9,8 @@ import { stationLevel } from '../../engine/hideout';
 import { affixRangeText, itemName, salvageValue } from '../../engine/items';
 import type { EquipSlot, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Badge, Cost, EmptyState, fmt, PageHeader, ProgressBar, Tooltip } from '../components/common';
-import { Icon, Orb } from '../components/Icon';
+import { Badge, Cost, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
+import { Orb } from '../components/Icon';
 import { ItemCell, ItemTip } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
 
@@ -69,7 +69,7 @@ export function BenchPage() {
               )}
             </>
           ) : (
-            <EmptyState icon={<Icon name="bench" size={32} color="var(--dim)" />} title="No item selected">
+            <EmptyState icon={<GameIcon name="bench" size={32} color="var(--dim)" />} title="No item selected">
               Pick one from your gear or inventory below.
             </EmptyState>
           )}
@@ -131,7 +131,7 @@ export function BenchPage() {
               </span>
             </div>
             {benchLvl < 2 && (
-              <EmptyState small icon={<Icon name="lock" size={24} color="var(--dim)" />}>
+              <EmptyState small icon={<GameIcon name="lock" size={24} color="var(--dim)" />}>
                 Upgrade the Crafting Bench in your Hideout to unlock crafted modifiers.
               </EmptyState>
             )}

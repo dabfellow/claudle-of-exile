@@ -17,8 +17,7 @@ import { itemName } from '../engine/items';
 import { GemIcon } from './components/GemView';
 import { ItemIcon, ItemTip } from './components/ItemView';
 import { SKILL_KEYS } from './pages/SkillGemsPage';
-import { CurrencyAmount, fmt, fmtTime, MatIcon, ProgressBar, Tooltip } from './components/common';
-import { Icon } from './components/Icon';
+import { CurrencyAmount, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tooltip } from './components/common';
 import { QuestTracker } from './components/QuestTracker';
 import { Crest } from './screens/Screens';
 
@@ -58,7 +57,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
     items: [
       { page: 'campaign', label: 'Campaign', icon: 'map' },
       { page: 'combat', label: 'Combat', icon: 'combat', skill: 'combat' },
-      { page: 'skills', label: 'Skills', icon: 'bolt' },
+      { page: 'skills', label: 'Skills', icon: 'gems' },
       { page: 'equipment', label: 'Equipment', icon: 'equipment' },
       { page: 'tree', label: 'Passive Tree', icon: 'tree' },
       { page: 'bench', label: 'Crafting Bench', icon: 'bench' },
@@ -118,7 +117,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
             return (
               <button key={it.page} data-tut={`nav-${it.page}`} className={`nav-item ${page === it.page ? 'active' : ''}`} onClick={() => go(it.page)}>
                 <span className="nav-icon">
-                  <Icon name={it.icon} size={16} color={isActive ? color : undefined} />
+                  <GameIcon name={it.icon} size={16} color={isActive ? color : undefined} />
                   {isActive && it.skill && <Ring value={progressOf(it.skill, s.skills[it.skill])} color={color} />}
                 </span>
                 <span className="nav-name">{it.label}</span>
@@ -147,7 +146,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
         </div>
         <button className={`nav-item ${page === 'settings' ? 'active' : ''}`} onClick={() => go('settings')}>
           <span className="nav-icon">
-            <Icon name="settings" size={16} />
+            <GameIcon name="settings" size={16} />
           </span>
           <span className="nav-name">Settings</span>
         </button>
@@ -193,7 +192,7 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
     <header className="topbar">
       <div className={`activity ${s.action ? 'on' : ''}`} role="button" tabIndex={0} onClick={() => go(target)} onKeyDown={(e) => e.key === 'Enter' && go(target)}>
         <span className="nav-icon" style={{ width: 36, height: 36 }}>
-          <Icon name={target === 'hideout' ? 'home' : target} size={18} color={color} />
+          <GameIcon name={target === 'hideout' ? 'home' : target} size={18} color={color} />
         </span>
         <div className="activity-text">
           <div className="activity-title">
@@ -275,7 +274,7 @@ export function XpBar() {
       <span className="xp-rate">{rate > 0 ? `${fmt(rate)} XP/h` : 'idle'}</span>
       {training && (
         <div className="xp-skill" title={`${SKILLS[training].name} ${(progressOf(training, s.skills[training]) * 100).toFixed(1)}%`}>
-          <Icon name={training} size={14} color={SKILLS[training].color} />
+          <GameIcon name={training} size={14} color={SKILLS[training].color} />
           <span>
             {SKILLS[training].name} {levelOf(training, s.skills[training])}
           </span>
@@ -468,12 +467,12 @@ export function OfflineModal() {
         {fought && (
           <div className="away-stats">
             <div className="away-stat">
-              <Icon name="combat" size={18} color="var(--accent)" />
+              <GameIcon name="combat" size={18} color="var(--accent)" />
               <b className="num">{fmt(sum.kills)}</b>
               <span>Monsters Slain</span>
             </div>
             <div className="away-stat">
-              <Icon name="skull" size={18} color="var(--bad)" />
+              <GameIcon name="skull" size={18} color="var(--bad)" />
               <b className="num">{sum.died ? 1 : 0}</b>
               <span>Deaths</span>
             </div>
@@ -494,14 +493,14 @@ export function OfflineModal() {
               ))}
               {sum.items > 0 && (
                 <div className="away-spoil">
-                  <Icon name="stash" size={20} color="var(--accent)" />
+                  <GameIcon name="stash" size={20} color="var(--accent)" />
                   <b className="num">{sum.items}</b>
                   <span>Items Found</span>
                 </div>
               )}
               {sum.gems > 0 && (
                 <div className="away-spoil">
-                  <Icon name="gemcutting" size={20} color="var(--magic)" />
+                  <GameIcon name="gemcutting" size={20} color="var(--magic)" />
                   <b className="num">{sum.gems}</b>
                   <span>Gems Found</span>
                 </div>
@@ -513,7 +512,7 @@ export function OfflineModal() {
         {sum.died && (
           <div className="away-alert bad">
             <div className="row">
-              <Icon name="skull" size={16} />
+              <GameIcon name="skull" size={16} />
               <b>Slain in Combat</b>
             </div>
             <p>Your journey ended in death. You have returned to the hideout.</p>
@@ -522,7 +521,7 @@ export function OfflineModal() {
         {sum.stoppedReason && (
           <div className="away-alert warn">
             <div className="row">
-              <Icon name="clock" size={16} />
+              <GameIcon name="clock" size={16} />
               <b>Work Halted</b>
             </div>
             <p>{sum.stoppedReason}</p>
@@ -531,7 +530,7 @@ export function OfflineModal() {
         {sum.bossWaiting && (
           <div className="away-alert warn">
             <div className="row">
-              <Icon name="forge" size={16} />
+              <GameIcon name="forge" size={16} />
               <b>An Unfinished Battle</b>
             </div>
             <p>{sum.bossWaiting} awaits. This foe must be challenged in person.</p>

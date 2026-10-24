@@ -8,7 +8,7 @@ import { applyFlaskOrb, enchantFlask, findFlask, flaskEffectText, flaskName, fla
 import { armourReduction, deriveStats, evadeChance, hitChance, RES_CAP, type Derived } from '../../engine/stats';
 import type { EquipSlot, FlaskInstance, GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { EmptyState, fmt, MatIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
+import { EmptyState, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
 import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
 import { Icon } from '../components/Icon';
 import { Inventory } from '../components/Inventory';
@@ -65,7 +65,7 @@ function Offense({ d }: { d: Derived }) {
   return (
     <div className="card stat-panel">
       <div className="card-title">
-        <Icon name="combat" size={16} color="var(--accent-2)" /> Offence
+        <GameIcon name="combat" size={16} color="var(--accent-2)" /> Offence
       </div>
       <div className="big-stat wide">
         <b style={{ color: 'var(--accent-2)' }}>{d.dps.toFixed(1)}</b>
@@ -107,7 +107,7 @@ function Defense({ d }: { d: Derived }) {
   return (
     <div className="card stat-panel">
       <div className="card-title">
-        <Icon name="equipment" size={16} color="var(--life-2)" /> Defence
+        <GameIcon name="equipment" size={16} color="var(--life-2)" /> Defence
       </div>
       <div className="big-stat wide">
         <b style={{ color: 'var(--life-2)' }}>{fmt(d.maxLife)}</b>

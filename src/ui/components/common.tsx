@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { isCurrency, materialDef } from '../../data/materials';
-import { Orb, Swatch } from './Icon';
+import { GAME_ICONS, KIBYRA, packArtUrl } from '../assets';
+import { Icon, Orb, Swatch } from './Icon';
 
 export function ProgressBar({
   value,
@@ -339,11 +340,35 @@ export function sceneStyle(key: string): CSSProperties | undefined {
   return url ? ({ ['--scene-art' as string]: `url(${url})` } as CSSProperties) : undefined;
 }
 
-/** A picture from src/assets/art if it exists, otherwise the fallback (styled placeholder). */
+/** A picture from src/assets/art if it exists, then asset-pack art (src/ui/assets.ts), otherwise the fallback (styled placeholder). */
 export function Art({ src, alt, fallback, className, size, cover }: { src: string; alt: string; fallback: ReactNode; className?: string; size?: number; cover?: boolean }) {
-  const url = artUrl(src);
+  const own = artUrl(src);
+  const url = own ?? packArtUrl(src);
   if (!url) return <>{fallback}</>;
-  return <img className={`art ${cover ? 'cover' : ''} ${className ?? ''}`} src={url} alt={alt} width={cover ? undefined : size} height={cover ? undefined : size} draggable={false} />;
+  return (
+    <img
+      className={`art ${cover ? 'cover' : ''} ${!own ? 'pack-art' : ''} ${className ?? ''}`}
+      src={url}
+      alt={alt}
+      width={cover ? undefined : size}
+      height={cover ? undefined : size}
+      loading="lazy"
+      decoding="async"
+      draggable={false}
+    />
+  );
+}
+
+/** A game-icons.net silhouette tinted like the stroke icons, or the stroke icon when there's no silhouette for `name`. */
+export function GameIcon({ name, size = 18, color = 'currentColor', style }: { name: string; size?: number; color?: string; style?: CSSProperties }) {
+  const url = GAME_ICONS[name];
+  if (!url) return <Icon name={name} size={size} color={color} style={style} />;
+  return <span className="game-icon" aria-hidden style={{ width: size, height: size, background: color, ['--icon' as string]: `url(${url})`, ...style }} />;
+}
+
+/** One of the few Kibyra pixel-art touches, drawn crisp at its native 32px (or 2×). */
+export function PixelArt({ name, alt, scale = 1 }: { name: keyof typeof KIBYRA; alt: string; scale?: 1 | 2 }) {
+  return <img className="art pixel-art" src={KIBYRA[name]} alt={alt} width={32 * scale} height={32 * scale} loading="lazy" draggable={false} />;
 }
 
 /** Briefly true after `key` changes — used to retrigger CSS animations. */

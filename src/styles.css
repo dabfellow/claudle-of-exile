@@ -3466,6 +3466,39 @@ img.art.cover {
   height: 100%;
   border-radius: inherit;
 }
+/* asset-pack item art: 64px painted sprites, kept whole and centred so every slot reads the same */
+img.art.pack-art {
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.55));
+}
+/* the sprites carry their own margin, so they fill the slot rather than sitting at icon size */
+.offer-art img.art.pack-art {
+  width: 50px;
+  height: 50px;
+}
+.action-art img.art.pack-art {
+  width: 44px;
+  height: 44px;
+}
+.cell img.art.pack-art {
+  width: 86%;
+  height: 86%;
+}
+/* Kibyra pixel art, only ever at whole-number scales */
+img.art.pixel-art {
+  display: inline-block;
+  image-rendering: pixelated;
+  object-fit: contain;
+  vertical-align: middle;
+}
+/* game-icons.net silhouettes, tinted with background like the stroke icons' stroke */
+.game-icon {
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+}
 img.art.mat-art {
   display: inline-block;
   vertical-align: middle;

@@ -6,8 +6,7 @@ import { achievementProgress } from '../../engine/achievements';
 import { affixRangeText } from '../../engine/items';
 import type { GameState } from '../../engine/types';
 import { useGame } from '../../game';
-import { Badge, fmt, MatIcon, PageHeader, ProgressBar } from '../components/common';
-import { Icon } from '../components/Icon';
+import { Badge, fmt, GameIcon, MatIcon, PageHeader, ProgressBar } from '../components/common';
 
 const CATEGORIES = Object.keys(CATEGORY_NAMES) as AchievementCategory[];
 
@@ -26,7 +25,7 @@ function Medallion({ pct, done }: { pct: number; done: boolean }) {
           <circle cx="25" cy="25" r="23" fill="none" stroke="var(--accent)" strokeWidth="2" strokeDasharray={`${c * pct} ${c}`} strokeLinecap="round" />
         </svg>
       )}
-      <Icon name={done ? 'trophy' : 'target'} size={20} />
+      <GameIcon name={done ? 'trophy' : 'target'} size={20} />
     </span>
   );
 }
