@@ -1,7 +1,7 @@
 # Art prompt pack (ChatGPT image generation)
 
 > Generated from `src/data/artManifest.ts` by `npm run art -- --docs`. Edit prompts there, not here.
-> 0/187 images in the game when this was generated. Sections marked ✅ are done.
+> 0/288 images in the game when this was generated. Sections marked ✅ are done.
 
 ## How to use
 
@@ -812,7 +812,7 @@ Leave cells 5–9 completely empty.
 
 ---
 
-## Priority 4 — Materials (13 icons on 2 sheets)
+## Priority 4 — Materials (32 icons on 4 sheets)
 
 ### `materials_1.png`
 
@@ -839,7 +839,7 @@ Fill the cells left to right, top to bottom:
 
 ### `materials_2.png`
 
-Contains: Frostleaf, Emberroot, Voidbloom, Arcane Dust
+Contains: Frostleaf, Emberroot, Voidbloom, Arcane Dust, Scorched Fossil, Frigid Fossil, Metallic Fossil, Dense Fossil, Serrated Fossil
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -853,7 +853,54 @@ Fill the cells left to right, top to bottom:
 2. a short twisted brown root, its broken ends glowing orange like coals
 3. a single dark purple flower with a black centre and a short dark stem
 4. a small heap of fine lavender-coloured powder
-Leave cells 5–9 completely empty.
+5. Scorched Fossil
+6. Frigid Fossil
+7. Metallic Fossil
+8. Dense Fossil
+9. Serrated Fossil
+```
+
+### `materials_3.png`
+
+Contains: Lesser Essence of Vitality, Lesser Essence of Embers, Lesser Essence of Frost, Lesser Essence of Storm, Greater Essence of Vitality, Greater Essence of Embers, Greater Essence of Frost, Greater Essence of Storm, Greater Essence of Haste
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single crafting material.
+
+Fill the cells left to right, top to bottom:
+1. Lesser Essence of Vitality
+2. Lesser Essence of Embers
+3. Lesser Essence of Frost
+4. Lesser Essence of Storm
+5. Greater Essence of Vitality
+6. Greater Essence of Embers
+7. Greater Essence of Frost
+8. Greater Essence of Storm
+9. Greater Essence of Haste
+```
+
+### `materials_4.png`
+
+Contains: Ash Resin, Oak Resin, Augmentation Shard, Transmutation Shard, Alteration Shard
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single crafting material.
+
+Fill the cells left to right, top to bottom:
+1. Ash Resin
+2. Oak Resin
+3. Augmentation Shard
+4. Transmutation Shard
+5. Alteration Shard
+Leave cells 6–9 completely empty.
 ```
 
 ---
@@ -885,11 +932,11 @@ Fill the cells left to right, top to bottom:
 
 ---
 
-## Priority 5 — Item bases (44 icons on 5 sheets)
+## Priority 5 — Item bases (95 icons on 11 sheets)
 
 ### `items_1.png`
 
-Contains: Rusted Sword, Whittled Dagger, Driftwood Wand, Iron Blade, Glinting Dagger, Bearded War Axe, Steel Broadsword, Mithril Sabre, Splintered Shield
+Contains: Rusted Sword, Iron Blade, Steel Broadsword, Mithril Sabre, Whittled Dagger, Glinting Dagger, Shadow Kris, Rusty Hatchet, Bearded War Axe
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -900,19 +947,19 @@ Format: one square 1024×1024 sprite sheet with a transparent background, divide
 
 Fill the cells left to right, top to bottom:
 1. a short sword with a rusty brown blade, small nicks along the edge, and a plain leather-wrapped grip
-2. a short iron dagger with a rough hand-carved wooden handle
-3. a short crooked wand of pale grey driftwood, with a small blue spark at its tip
-4. a plain straight iron longsword with a simple cross guard and a leather grip
-5. a polished steel dagger with a bright blade and a black leather grip
-6. a one-handed war axe with a dark iron head shaped like a beard and a wooden handle
-7. a wide straight steel sword with a brass cross guard and a brown leather grip
-8. a curved sabre with a pale silver-blue blade and a simple silver hand guard
-9. a square shield made of four rough wooden planks held together with iron nails, one corner split
+2. a plain straight iron longsword with a simple cross guard and a leather grip
+3. a wide straight steel sword with a brass cross guard and a brown leather grip
+4. a curved sabre with a pale silver-blue blade and a simple silver hand guard
+5. a short iron dagger with a rough hand-carved wooden handle
+6. a polished steel dagger with a bright blade and a black leather grip
+7. a dagger with a wavy black steel blade and a purple-wrapped grip
+8. a small one-handed hatchet with a rusty iron head and a short wooden handle
+9. a one-handed war axe with a dark iron head shaped like a beard and a wooden handle
 ```
 
 ### `items_2.png`
 
-Contains: Goathide Buckler, Iron Kite Shield, Mithril Tower Shield, Iron Hat, Leather Cap, Soldier Helmet, Hunter Hood, Mithril Great Helm, Shadow Mask
+Contains: Reaver Axe, Oak Club, Spiked Mace, Iron War Hammer, Short Bow, Ash Longbow, Yew Recurve, Bone Sceptre, Crystal Sceptre
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -922,20 +969,20 @@ Avoid, unless the subject below asks for it: extra props or clutter, candles, gl
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, upright or on a diagonal, like a classic RPG inventory icon.
 
 Fill the cells left to right, top to bottom:
-1. a small round wooden shield covered in tan hide, with an iron rim
-2. a tall grey iron shield, rounded at the top and pointed at the bottom, plain with no emblem
-3. a tall rectangular shield of pale silver-blue metal with a raised rim
-4. a simple round iron cap with a few dents
-5. a worn brown leather cap with stitched seams
-6. a steel helmet with a straight nose guard
-7. a dark green cloth hood with a short cape
-8. a full closed helmet of pale silver-blue metal with a narrow eye slit
-9. a black cloth face mask covering the lower face, with a thin silver edge
+1. a large one-handed axe with a crescent dark steel blade and a red-wrapped handle
+2. a thick knobbly oak club, wider at the striking end, with a leather thong at the grip
+3. an iron mace with a round flanged head studded with short spikes
+4. a heavy iron war hammer with a square head and a long iron-banded handle
+5. a small curved wooden bow with a plain string and a leather grip
+6. a tall pale ash longbow with a cloth-wrapped grip
+7. a dark yew recurve bow with curled tips and a brass-capped grip
+8. a short sceptre carved from pale bone, topped with a small skull
+9. a silver sceptre topped with a glowing pale blue crystal
 ```
 
 ### `items_3.png`
 
-Contains: Plate Vest, Shabby Jerkin, Chainmail Hauberk, Scale Leather, Mithril Plate, Assassin's Garb, Iron Gauntlets, Rawhide Gloves, Steel Gauntlets
+Contains: Driftwood Wand, Coral Wand, Void Wand, Gnarled Staff, Storm Staff, Splintered Shield, Goathide Buckler, Iron Kite Shield, Mithril Tower Shield
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -945,20 +992,20 @@ Avoid, unless the subject below asks for it: extra props or clutter, candles, gl
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, upright or on a diagonal, like a classic RPG inventory icon.
 
 Fill the cells left to right, top to bottom:
-1. a dented grey iron breastplate with leather straps
-2. a sleeveless brown leather vest with patches and uneven stitching
-3. a long-sleeved shirt of grey iron chain links
-4. a brown leather vest covered in small overlapping iron scales
-5. a clean breastplate of pale silver-blue metal
-6. a fitted black leather coat with a high collar and plain silver buckles
-7. a pair of grey iron gauntlets with jointed fingers
-8. a pair of rough tan rawhide gloves
-9. a pair of polished steel gauntlets with jointed fingers
+1. a short crooked wand of pale grey driftwood, with a small blue spark at its tip
+2. a short wand of branching pink coral with a pearl at its tip
+3. a black wand of twisted metal with a swirling purple light at its tip
+4. a tall gnarled wooden staff with a knot of roots at the top
+5. a tall dark iron staff topped with a cage holding a crackling blue spark
+6. a square shield made of four rough wooden planks held together with iron nails, one corner split
+7. a small round wooden shield covered in tan hide, with an iron rim
+8. a tall grey iron shield, rounded at the top and pointed at the bottom, plain with no emblem
+9. a tall rectangular shield of pale silver-blue metal with a raised rim
 ```
 
 ### `items_4.png`
 
-Contains: Stealth Gloves, Iron Greaves, Leather Boots, Steel Greaves, Shagreen Boots, Chain Belt, Leather Belt, Heavy Belt, Coral Amulet
+Contains: Driftwood Spirit Shield, Runic Ward, Iron Hat, Leather Cap, Soldier Helmet, Hunter Hood, Mithril Great Helm, Shadow Mask, Riveted Coif
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -968,20 +1015,20 @@ Avoid, unless the subject below asks for it: extra props or clutter, candles, gl
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, upright or on a diagonal, like a classic RPG inventory icon.
 
 Fill the cells left to right, top to bottom:
-1. a pair of thin, close-fitting black leather gloves
-2. a pair of grey iron armoured boots
-3. a pair of worn brown leather boots
-4. a pair of polished steel armoured boots
-5. a pair of soft grey leather boots with a fine pebbled texture
-6. a belt made of grey iron chain links with a simple hook clasp
-7. a plain brown leather belt with a brass buckle
-8. a thick dark leather belt with rows of iron studs and an iron buckle
-9. a necklace on a thin cord with a small polished red coral pendant
+1. a small round shield of grey bleached driftwood with a pale blue spiral painted on its face
+2. a narrow kite shield of dark blue-black wood inlaid with thin glowing blue runes along the rim
+3. a simple round iron cap with a few dents
+4. a worn brown leather cap with stitched seams
+5. a steel helmet with a straight nose guard
+6. a dark green cloth hood with a short cape
+7. a full closed helmet of pale silver-blue metal with a narrow eye slit
+8. a black cloth face mask covering the lower face, with a thin silver edge
+9. a brown leather hood reinforced with rows of small iron rivets
 ```
 
 ### `items_5.png`
 
-Contains: Amber Amulet, Jade Amulet, Onyx Amulet, Iron Ring, Ruby Ring, Sapphire Ring, Topaz Ring, Diamond Ring
+Contains: Wyrmscale Helm, Linen Hood, Conjurer Hat, Arcanist's Cowl, Chaplain's Helm, Templar Crown, Wayfarer's Hood, Duskweave Cowl, Plate Vest
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -991,24 +1038,159 @@ Avoid, unless the subject below asks for it: extra props or clutter, candles, gl
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, upright or on a diagonal, like a classic RPG inventory icon.
 
 Fill the cells left to right, top to bottom:
-1. a necklace on a thin gold chain with a small oval amber pendant
-2. a necklace on a thin cord with a small carved green jade pendant
-3. a necklace on a thin silver chain with a small black onyx pendant
-4. a plain dark iron ring
-5. a gold ring with one small red ruby
-6. a silver ring with one small blue sapphire
-7. a gold ring with one small yellow topaz
-8. a white-gold ring with one small clear diamond
-Leave cell 9 completely empty.
+1. a dark iron helmet covered in overlapping red-edged scales
+2. a plain off-white linen hood
+3. a tall pointed dark blue cloth hat with a wide brim
+4. a deep purple hood trimmed with gold thread, a small violet gem at the brow
+5. a rounded gold-trimmed helmet with a white cloth veil at the back
+6. a gilded closed helmet with small golden wings at the sides
+7. a dark green travelling hood with a leather brim
+8. a deep purple cowl with a dark metal face guard
+9. a dented grey iron breastplate with leather straps
+```
+
+### `items_6.png`
+
+Contains: Shabby Jerkin, Chainmail Hauberk, Scale Leather, Mithril Plate, Assassin's Garb, Studded Brigandine, Wyrmscale Hauberk, Simple Robe, Silken Vestment
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, upright or on a diagonal, like a classic RPG inventory icon.
+
+Fill the cells left to right, top to bottom:
+1. a sleeveless brown leather vest with patches and uneven stitching
+2. a long-sleeved shirt of grey iron chain links
+3. a brown leather vest covered in small overlapping iron scales
+4. a clean breastplate of pale silver-blue metal
+5. a fitted black leather coat with a high collar and plain silver buckles
+6. a brown leather coat studded with iron rivets, with small iron shoulder plates
+7. a dark coat of overlapping iron scales with red cloth showing at the seams
+8. a plain undyed cloth robe tied with a rope belt
+9. a long dark blue silk robe with a gold-trimmed collar
+```
+
+### `items_7.png`
+
+Contains: Arcanist's Robe, Chaplain's Tabard, Templar Plate, Wayfarer's Coat, Duskweave Raiment, Iron Gauntlets, Rawhide Gloves, Steel Gauntlets, Stealth Gloves
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, upright or on a diagonal, like a classic RPG inventory icon.
+
+Fill the cells left to right, top to bottom:
+1. a long deep purple robe with gold embroidery and a violet gem clasp
+2. a white cloth tabard with gold trim worn over light mail
+3. an ornate gilded breastplate with a white sun emblem
+4. a dark leather travelling coat with a green cloth mantle
+5. a fitted purple and black coat embroidered with faint violet runes
+6. a pair of grey iron gauntlets with jointed fingers
+7. a pair of rough tan rawhide gloves
+8. a pair of polished steel gauntlets with jointed fingers
+9. a pair of thin, close-fitting black leather gloves
+```
+
+### `items_8.png`
+
+Contains: Studded Bracers, Wyrmscale Gauntlets, Wool Gloves, Silk Gloves, Chaplain's Gloves, Templar Gauntlets, Wayfarer's Wraps, Duskweave Gloves, Iron Greaves
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, upright or on a diagonal, like a classic RPG inventory icon.
+
+Fill the cells left to right, top to bottom:
+1. a pair of brown leather gloves with iron-studded cuffs
+2. a pair of dark scaled gauntlets with red leather lining
+3. a pair of plain brown wool gloves
+4. a pair of long purple silk gloves with gold cuffs
+5. a pair of white cloth gloves with gold-plated knuckles
+6. a pair of gilded gauntlets with jointed fingers
+7. a pair of dark leather hand wraps with green cloth bands
+8. a pair of slim purple gloves with dark metal cuffs
+9. a pair of grey iron armoured boots
+```
+
+### `items_9.png`
+
+Contains: Leather Boots, Steel Greaves, Shagreen Boots, Studded Boots, Wyrmscale Boots, Wool Shoes, Silk Slippers, Chaplain's Boots, Templar Sabatons
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, upright or on a diagonal, like a classic RPG inventory icon.
+
+Fill the cells left to right, top to bottom:
+1. a pair of worn brown leather boots
+2. a pair of polished steel armoured boots
+3. a pair of soft grey leather boots with a fine pebbled texture
+4. a pair of brown leather boots with iron studs over the shins
+5. a pair of dark scaled boots with red leather trim
+6. a pair of soft undyed wool shoes
+7. a pair of dark blue silk slippers with gold stitching
+8. a pair of white cloth boots with gold-plated shins
+9. a pair of gilded armoured boots
+```
+
+### `items_10.png`
+
+Contains: Wayfarer's Boots, Duskweave Boots, Chain Belt, Leather Belt, Heavy Belt, Coral Amulet, Amber Amulet, Jade Amulet, Onyx Amulet
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, upright or on a diagonal, like a classic RPG inventory icon.
+
+Fill the cells left to right, top to bottom:
+1. a pair of worn dark leather travelling boots
+2. a pair of soft purple boots with dark metal trim
+3. a belt made of grey iron chain links with a simple hook clasp
+4. a plain brown leather belt with a brass buckle
+5. a thick dark leather belt with rows of iron studs and an iron buckle
+6. a necklace on a thin cord with a small polished red coral pendant
+7. a necklace on a thin gold chain with a small oval amber pendant
+8. a necklace on a thin cord with a small carved green jade pendant
+9. a necklace on a thin silver chain with a small black onyx pendant
+```
+
+### `items_11.png`
+
+Contains: Iron Ring, Ruby Ring, Sapphire Ring, Topaz Ring, Diamond Ring
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single item, upright or on a diagonal, like a classic RPG inventory icon.
+
+Fill the cells left to right, top to bottom:
+1. a plain dark iron ring
+2. a gold ring with one small red ruby
+3. a silver ring with one small blue sapphire
+4. a gold ring with one small yellow topaz
+5. a white-gold ring with one small clear diamond
+Leave cells 6–9 completely empty.
 ```
 
 ---
 
-## Priority 5 — Unique items (8 icons on 1 sheet)
+## Priority 5 — Unique items (38 icons on 5 sheets)
 
 ### `uniques_1.png`
 
-Contains: Miner's Lament, Bloodthirst, Emberheart, Windstep, Alchemist's Band, The Iron Bulwark, Starforged Edge, Titan's Girth
+Contains: Miner's Lament, Bloodthirst, Emberheart, Windstep, Alchemist's Band, The Iron Bulwark, Starforged Edge, Titan's Girth, Tavern Brawler
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -1026,12 +1208,98 @@ Fill the cells left to right, top to bottom:
 6. a very large, thick iron kite shield covered in rows of big rivets, scratched and dented from use
 7. a curved sabre with a dark blue-black blade speckled with tiny white dots like stars, and a silver guard
 8. a huge thick leather belt with iron studs and a buckle made from a small horned skull
-Leave cell 9 completely empty.
+9. Tavern Brawler
+```
+
+### `uniques_2.png`
+
+Contains: Thornquill, Wellspring, Rebuttal, The Ninth Psalm, Last Breath, The Second Guess, Bellwether, The Old Grudge, Castaway's Kerchief
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single rare item: well made and distinctive, but not overdecorated.
+
+Fill the cells left to right, top to bottom:
+1. Thornquill
+2. Wellspring
+3. Rebuttal
+4. The Ninth Psalm
+5. Last Breath
+6. The Second Guess
+7. Bellwether
+8. The Old Grudge
+9. Castaway's Kerchief
+```
+
+### `uniques_3.png`
+
+Contains: Lookout's Hood, Mask of the Patient, Stormhide, Robe of Still Waters, Penitent's Plate, Quickfingers, Needleworker's Wraps, Knuckledusters, Slippers of the Tide
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single rare item: well made and distinctive, but not overdecorated.
+
+Fill the cells left to right, top to bottom:
+1. Lookout's Hood
+2. Mask of the Patient
+3. Stormhide
+4. Robe of Still Waters
+5. Penitent's Plate
+6. Quickfingers
+7. Needleworker's Wraps
+8. Knuckledusters
+9. Slippers of the Tide
+```
+
+### `uniques_4.png`
+
+Contains: Sidestep, Windchaser, Fisherman's Knot, Herbalist's Sash, Brawler's Buckle, Ember of Faith, Gull's Eye, The Hollow Locket, Barnacle Band
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single rare item: well made and distinctive, but not overdecorated.
+
+Fill the cells left to right, top to bottom:
+1. Sidestep
+2. Windchaser
+3. Fisherman's Knot
+4. Herbalist's Sash
+5. Brawler's Buckle
+6. Ember of Faith
+7. Gull's Eye
+8. The Hollow Locket
+9. Barnacle Band
+```
+
+### `uniques_5.png`
+
+Contains: Brimming Band, Twin Oaths
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single rare item: well made and distinctive, but not overdecorated.
+
+Fill the cells left to right, top to bottom:
+1. Brimming Band
+2. Twin Oaths
+Leave cells 3–9 completely empty.
 ```
 
 ---
 
-## Priority 6 — Skill gems (39 icons on 5 sheets)
+## Priority 6 — Skill gems (40 icons on 5 sheets)
 
 ### `gems_1.png`
 
@@ -1127,7 +1395,7 @@ Fill the cells left to right, top to bottom:
 
 ### `gems_5.png`
 
-Contains: Spell Echo (support), Chain (support), Lingering (support)
+Contains: Spell Echo (support), Pierce (support), Chain (support), Lingering (support)
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -1139,6 +1407,7 @@ Format: one square 1024×1024 sprite sheet with a transparent background, divide
 Fill the cells left to right, top to bottom:
 1. a small flat hexagonal blue gemstone with a plain pale dot in the centre
 2. a small flat hexagonal green gemstone with a plain pale dot in the centre
-3. a small flat hexagonal blue gemstone with a plain pale dot in the centre
-Leave cells 4–9 completely empty.
+3. a small flat hexagonal green gemstone with a plain pale dot in the centre
+4. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+Leave cells 5–9 completely empty.
 ```

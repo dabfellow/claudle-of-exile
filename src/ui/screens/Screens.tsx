@@ -1,7 +1,8 @@
 import { Art, sceneStyle } from '../components/common';
 import { useState } from 'react';
-import { CLASSES, classDef, type ClassId } from '../../data/classes';
+import { CLASSES, classDef, startClass, type ClassId } from '../../data/classes';
 import { baseDef } from '../../data/bases';
+import { activeGemDef } from '../../data/gems';
 import { GUIDE_NAME } from '../../data/tutorial';
 import { game, useGame } from '../../game';
 import type { CharacterSummary } from '../../platform/saves';
@@ -195,6 +196,7 @@ const NAME_RE = /^[A-Za-z][A-Za-z '-]{1,15}$/;
 export function CharacterCreate() {
   useGame();
   const [classId, setClassId] = useState<ClassId>('warrior');
+  const [exileStart, setExileStart] = useState('class_str');
   const [name, setName] = useState('');
   const trimmed = name.trim();
   const error = !trimmed
@@ -206,6 +208,7 @@ export function CharacterCreate() {
         : null;
   const valid = !!trimmed && !error;
   const cls = classDef(classId);
+  const begin = () => game.create(trimmed, classId, classId === 'exile' ? exileStart : undefined);
 
   return (
     <ScreenShell wide>
@@ -219,12 +222,25 @@ export function CharacterCreate() {
         )}
       </div>
       <div className="class-grid">
-        {CLASSES.map((c) => (
-          <button key={c.id} className={`card class-card ${classId === c.id ? 'chosen' : ''}`} style={{ ['--class' as string]: c.color }} onClick={() => setClassId(c.id)}>
+        {CLASSES.map((c) => {
+          const locked = c.challenge && !game.exileUnlocked;
+          return (
+          <button
+            key={c.id}
+            className={`card class-card ${classId === c.id ? 'chosen' : ''} ${locked ? 'locked' : ''}`}
+            style={{ ['--class' as string]: c.color }}
+            disabled={locked}
+            onClick={() => setClassId(c.id)}
+          >
             <Art src={`portraits/class_${c.id}`} alt={c.name} className="class-art" fallback={<Crest classId={c.id} size={64} />} />
             <div className="class-name">{c.name}</div>
-            <div className="class-attr">{c.attribute}</div>
+            <div className="class-attr">{c.challenge ? 'Challenge class' : c.attribute}</div>
             <div className="class-tag">{c.tagline}</div>
+            {locked && (
+              <div className="warn" style={{ fontSize: 'var(--fs-sm)' }}>
+                <Icon name="lock" size={12} /> Clear Act 1 with any character to unlock
+              </div>
+            )}
             <p className="muted" style={{ fontSize: 'var(--fs-sm)', margin: 0 }}>
               {c.desc}
             </p>
@@ -247,11 +263,17 @@ export function CharacterCreate() {
             </div>
             <div className="class-section">
               <div className="section-label">Class bonus</div>
-              {c.bonusText.map((b) => (
-                <div key={b} className="mod" style={{ fontSize: 'var(--fs-sm)' }}>
-                  {b}
+              {c.bonusText.length ? (
+                c.bonusText.map((b) => (
+                  <div key={b} className="mod" style={{ fontSize: 'var(--fs-sm)' }}>
+                    {b}
+                  </div>
+                ))
+              ) : (
+                <div className="dim" style={{ fontSize: 'var(--fs-sm)' }}>
+                  None
                 </div>
-              ))}
+              )}
             </div>
             <div className="class-section">
               <div className="section-label">Starting gear</div>
@@ -264,8 +286,31 @@ export function CharacterCreate() {
               </div>
             </div>
           </button>
-        ))}
+          );
+        })}
       </div>
+      {classId === 'exile' && (
+        <div className="card">
+          <div className="section-label" style={{ marginBottom: 8 }}>
+            Start on the passive tree as
+          </div>
+          <div className="row wrap" style={{ gap: 8 }}>
+            {CLASSES.filter((c) => !c.challenge).map((c) => (
+              <button
+                key={c.id}
+                className={`btn sm ${exileStart === c.startNode ? 'primary' : ''}`}
+                title={`Starter gems: ${c.starterGems.map((g) => activeGemDef(g).name).join(', ')}`}
+                onClick={() => setExileStart(c.startNode)}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+          <div className="dim small" style={{ marginTop: 6 }}>
+            You begin at the {startClass('exile', exileStart).name}'s tree start with their two starter gems. Nothing else carries over.
+          </div>
+        </div>
+      )}
       <div className="card create-bar" style={{ ['--class' as string]: cls.color }}>
         <Crest classId={classId} size={44} />
         <div style={{ flex: 1, minWidth: 200 }}>
@@ -276,13 +321,13 @@ export function CharacterCreate() {
             maxLength={16}
             autoFocus
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && valid && game.create(trimmed, classId)}
+            onKeyDown={(e) => e.key === 'Enter' && valid && begin()}
           />
           <div className={error ? 'warn' : 'dim'} style={{ fontSize: 'var(--fs-xs)', marginTop: 4, minHeight: 16 }}>
             {error ?? 'This is the name the world will forget.'}
           </div>
         </div>
-        <button className="btn primary lg" disabled={!valid} onClick={() => game.create(trimmed, classId)}>
+        <button className="btn primary lg" disabled={!valid} onClick={begin}>
           Begin
         </button>
       </div>

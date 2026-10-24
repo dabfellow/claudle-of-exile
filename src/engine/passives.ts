@@ -14,7 +14,7 @@ export function pointsLeft(s: GameState): number {
 }
 
 export function startNode(s: GameState): string {
-  return classDef(s.character.classId).startNode;
+  return s.character.startNode ?? classDef(s.character.classId).startNode;
 }
 
 type Links = Record<string, { links: string[] }>;

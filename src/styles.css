@@ -2459,6 +2459,13 @@ input[type='checkbox'] {
   transform: translateY(-3px);
 }
 
+.class-card.locked,
+.class-card.locked:hover {
+  opacity: 0.45;
+  transform: none;
+  cursor: not-allowed;
+}
+
 .class-card.chosen {
   opacity: 1;
   border-color: var(--class);

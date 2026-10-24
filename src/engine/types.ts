@@ -349,12 +349,16 @@ export interface Lifetime {
   benchCrafts: number;
   raresFound: number;
   uniquesFound: number;
+  /** Exile achievement: Ysolde kills with no unique equipped */
+  exileBareKills?: number;
 }
 
 export interface CharacterInfo {
   id: string;
   name: string;
   classId: ClassId;
+  /** Exile only: the passive tree start node picked at creation */
+  startNode?: string;
   createdAt: number;
 }
 

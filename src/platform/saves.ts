@@ -8,6 +8,8 @@ export interface CharacterSummary {
   id: string;
   name: string;
   classId: ClassId;
+  /** unlocks the Exile for the whole account */
+  act1Cleared?: boolean;
   combatLevel: number;
   totalLevel: number;
   createdAt: number;
@@ -27,6 +29,7 @@ export function summarize(s: GameState): CharacterSummary {
     id: s.character.id,
     name: s.character.name,
     classId: s.character.classId,
+    act1Cleared: s.bossesDefeated.includes('sanctum'),
     combatLevel: characterLevel(s),
     totalLevel: SKILL_IDS.filter((k) => k !== 'combat').reduce((a, k) => a + levelOf(k, s.skills[k]), 0),
     createdAt: s.character.createdAt,

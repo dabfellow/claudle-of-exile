@@ -1,15 +1,17 @@
 import type { EquipSlot, StatKey } from '../engine/types';
 import type { ClassRegion, Mechanic } from './passiveTree';
 
-export type ClassId = 'warrior' | 'ranger' | 'mage' | 'duelist' | 'templar' | 'shadow';
+export type ClassId = 'warrior' | 'ranger' | 'mage' | 'duelist' | 'templar' | 'shadow' | 'exile';
 
 export interface ClassDef {
   id: ClassId;
   name: string;
   attribute: string;
   region: ClassRegion;
-  /** the class's own combat mechanic (docs/CLASSES.md) */
-  mechanic: Mechanic;
+  /** the class's own combat mechanic (docs/CLASSES.md); the Exile has none */
+  mechanic: Mechanic | null;
+  /** challenge class: picks any start node, unlocked by an Act 1 clear */
+  challenge?: boolean;
   /** one line for the class card and the combat meter */
   mechanicText: string;
   /** passive tree node the class starts from */
@@ -136,8 +138,33 @@ export const CLASSES: ClassDef[] = [
     bonusText: ['20% increased damage with ailments', '10% increased Evasion Rating'],
     starterGems: ['poison_dart', 'spark'],
   },
+  {
+    id: 'exile',
+    name: 'Exile',
+    attribute: 'None',
+    region: 'str',
+    mechanic: null,
+    mechanicText: 'No class mechanic.',
+    startNode: 'class_str',
+    color: '#a39a8a',
+    icon: 'name',
+    tagline: 'Washed ashore with nothing.',
+    desc: "A challenge class. No mechanic, no class bonus, no armour. Start from any class's spot on the tree with only a Rusted Sword and that class's starter gems.",
+    kit: { weapon: 'rusted_sword' },
+    baseAttributes: { str: 10, dex: 10, int: 10 },
+    bonus: {},
+    bonusText: [],
+    starterGems: [],
+    challenge: true,
+  },
 ];
 
 export function classDef(id: ClassId): ClassDef {
   return CLASSES.find((c) => c.id === id) ?? CLASSES[0];
+}
+
+/** The class whose tree start an Exile picked (or the class itself for everyone else). */
+export function startClass(id: ClassId, startNode?: string): ClassDef {
+  if (id !== 'exile') return classDef(id);
+  return CLASSES.find((c) => !c.challenge && c.startNode === startNode) ?? CLASSES[0];
 }

@@ -70,7 +70,7 @@ export const WEAPON_FAMILIES: Record<WeaponFamily, FamilyDef> = {
     },
   },
   bow: {
-    name: 'Bow', attrs: ['dex'],
+    name: 'Bow', attrs: ['dex'], twoHanded: true,
     implicits: (l) => {
       const v = 15 + Math.floor(l / 2);
       return [{ stat: 'projectilePct', value: v, text: `${v}% increased Projectile Damage` }];
@@ -157,9 +157,9 @@ export const BASES: BaseDef[] = [
   W('spiked_mace', 'Spiked Mace', 'mace', 12, [12, 26], 0, 5),
   W('war_hammer', 'Iron War Hammer', 'mace', 26, [24, 48], -5, 5),
 
-  W('short_bow', 'Short Bow', 'bow', 1, [3, 10], 20, 6),
-  W('ash_longbow', 'Ash Longbow', 'bow', 16, [10, 30], 10, 6),
-  W('yew_recurve', 'Yew Recurve', 'bow', 30, [18, 50], 15, 7),
+  W('short_bow', 'Short Bow', 'bow', 1, [4, 13], 20, 6),
+  W('ash_longbow', 'Ash Longbow', 'bow', 16, [13, 39], 10, 6),
+  W('yew_recurve', 'Yew Recurve', 'bow', 30, [23, 65], 15, 7),
 
   W('bone_sceptre', 'Bone Sceptre', 'sceptre', 6, [5, 12], 10, 6),
   W('crystal_sceptre', 'Crystal Sceptre', 'sceptre', 24, [14, 30], 10, 6),
@@ -175,6 +175,8 @@ export const BASES: BaseDef[] = [
   A('buckler', 'Goathide Buckler', 'offhand', 8, 'dex', 30),
   A('kite_shield', 'Iron Kite Shield', 'offhand', 16, 'str', 70),
   A('tower_shield', 'Mithril Tower Shield', 'offhand', 32, 'str', 170),
+  A('spirit_shield', 'Driftwood Spirit Shield', 'offhand', 6, 'int', 12),
+  A('runic_ward', 'Runic Ward', 'offhand', 22, 'int', 36),
 
   A('iron_hat', 'Iron Hat', 'helmet', 1, 'str', 10),
   A('leather_cap', 'Leather Cap', 'helmet', 1, 'dex', 10),

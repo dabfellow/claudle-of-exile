@@ -241,6 +241,8 @@ const ITEM_DESC: Record<string, string> = {
   buckler: 'a small round wooden shield covered in tan hide, with an iron rim',
   kite_shield: 'a tall grey iron shield, rounded at the top and pointed at the bottom, plain with no emblem',
   tower_shield: 'a tall rectangular shield of pale silver-blue metal with a raised rim',
+  spirit_shield: 'a small round shield of grey bleached driftwood with a pale blue spiral painted on its face',
+  runic_ward: 'a narrow kite shield of dark blue-black wood inlaid with thin glowing blue runes along the rim',
   iron_hat: 'a simple round iron cap with a few dents',
   leather_cap: 'a worn brown leather cap with stitched seams',
   soldier_helm: 'a steel helmet with a straight nose guard',

@@ -131,7 +131,9 @@ nodes** and begin there.
 
 ## Engine work
 
-**Built (2026-10-24):** Duelist, Templar and Shadow are playable; all six mechanics run in combat (`src/engine/mechanics.ts` + hooks in `combat.ts`), with a meter on the combat page and a "When your class meter is full" tactic. Coup de Grâce is a Mega Crit (flat 400%, ignores crit multiplier). Exile (start-node picker, unlock) is not built yet.
+**Built (2026-10-24):** Duelist, Templar and Shadow are playable; all six mechanics run in combat (`src/engine/mechanics.ts` + hooks in `combat.ts`), with a meter on the combat page and a "When your class meter is full" tactic. Coup de Grâce is a Mega Crit (flat 400%, ignores crit multiplier).
+
+**Exile built (2026-10-24):** `classId: 'exile'`, `mechanic: null`, no bonus, 10/10/10, Rusted Sword only. The creation screen picks one of the six tree starts (`character.startNode`); the Exile gets that class's two starter gems (`startClass()` in `classes.ts`). Locked until any character on the account has beaten Ysolde (`CharacterSummary.act1Cleared`; an existing character that cleared Act 1 counts once it's been saved again). Achievements: *Nothing to Lose* (clear Act 1 as an Exile) and *Nothing But Will* (beat Ysolde as an Exile with no unique equipped). No crest art yet; the card shows the icon.
 
 
 - `ClassDef` gains `mechanic: 'rage' | 'momentum' | 'manaPower' | 'riposte' | 'martyr' | 'malice' | null` (Exile is `null`).

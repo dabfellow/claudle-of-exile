@@ -1,4 +1,4 @@
-import { classDef, type ClassId } from '../data/classes';
+import { classDef, startClass, type ClassId } from '../data/classes';
 import { flaskDef, FLASK_SLOTS } from '../data/flasks';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { newFlask } from './flasks';
@@ -22,6 +22,8 @@ export const TOWN_REGEN = 0.25;
 export interface NewCharacter {
   name: string;
   classId: ClassId;
+  /** Exile only: which class's tree start to begin from */
+  startNode?: string;
   id?: string;
 }
 
@@ -32,7 +34,13 @@ export function newCharacterId(): string {
 export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', classId: 'warrior' }): GameState {
   const s: GameState = {
     version: SAVE_VERSION,
-    character: { id: who.id ?? newCharacterId(), name: who.name, classId: who.classId, createdAt: Date.now() },
+    character: {
+      id: who.id ?? newCharacterId(),
+      name: who.name,
+      classId: who.classId,
+      ...(who.classId === 'exile' && { startNode: startClass('exile', who.startNode).startNode }),
+      createdAt: Date.now(),
+    },
     tutorial: { step: 0, progress: 0, done: false, skipped: false },
     nextUid: 1,
     skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, smithing: 0, alchemy: 0, gemcutting: 0 },
@@ -82,9 +90,9 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
   return s;
 }
 
-/** Put the class's starting skills on the bar. */
+/** Put the class's starting skills on the bar (an Exile gets those of the start it picked). */
 export function giveStarterGems(s: GameState): void {
-  classDef(s.character.classId).starterGems.forEach((id, i) => (s.skillBar[i] = createSkillGem(s, id)));
+  startClass(s.character.classId, s.character.startNode).starterGems.forEach((id, i) => (s.skillBar[i] = createSkillGem(s, id)));
 }
 
 /** Advance the simulation by dtMs using fixed sub-steps. */

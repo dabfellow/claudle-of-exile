@@ -818,6 +818,9 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   if (mon.isBoss) {
     s.lifetime.bossKills += 1;
     s.zoneKills[zone.id] = 0;
+    if (zone.actBoss && s.character.classId === 'exile' && !Object.values(s.equipment).some((it) => it?.rarity === 'unique')) {
+      s.lifetime.exileBareKills = (s.lifetime.exileBareKills ?? 0) + 1;
+    }
     if (!s.bossesDefeated.includes(zone.id)) {
       s.bossesDefeated.push(zone.id);
       if (zone.actBoss) ctx.emit({ t: 'actComplete', act: zone.act });

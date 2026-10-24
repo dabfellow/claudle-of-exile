@@ -87,6 +87,19 @@ export const ITEM_ART: Record<string, string> = {
   spiked_mace: new URL('../assets/items/weapons/mace.png', import.meta.url).href,
   short_bow: new URL('../assets/items/weapons/bow.png', import.meta.url).href,
   gnarled_staff: new URL('../assets/items/weapons/spear.png', import.meta.url).href, // closest thing to a staff
+  // recoloured copies of the pieces above, so each base in a family looks different (tint-*.png)
+  oak_club: new URL('../assets/items/weapons/tint-oak-club.png', import.meta.url).href,
+  rusty_hatchet: new URL('../assets/items/weapons/rusty-hatchet.png', import.meta.url).href,
+  war_hammer: new URL('../assets/items/weapons/tint-war-hammer.png', import.meta.url).href,
+  ash_longbow: new URL('../assets/items/weapons/tint-ash-longbow.png', import.meta.url).href,
+  yew_recurve: new URL('../assets/items/weapons/tint-yew-recurve.png', import.meta.url).href,
+  bone_sceptre: new URL('../assets/items/weapons/tint-bone-sceptre.png', import.meta.url).href,
+  crystal_sceptre: new URL('../assets/items/weapons/tint-crystal-sceptre.png', import.meta.url).href,
+  coral_wand: new URL('../assets/items/weapons/tint-coral-wand.png', import.meta.url).href,
+  void_wand: new URL('../assets/items/weapons/tint-void-wand.png', import.meta.url).href,
+  storm_staff: new URL('../assets/items/weapons/tint-storm-staff.png', import.meta.url).href,
+  spirit_shield: new URL('../assets/items/armor/tint-spirit-shield.png', import.meta.url).href,
+  runic_ward: new URL('../assets/items/armor/tint-runic-ward.png', import.meta.url).href,
   // first-pass stand-ins, looser matches
   rusted_sword: new URL('../assets/items/weapons/catalone-w4-002.png', import.meta.url).href,
   whittled_dagger: new URL('../assets/items/weapons/dagger.png', import.meta.url).href,

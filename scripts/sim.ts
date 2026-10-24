@@ -5,6 +5,7 @@
  *   npm run sim                  # all classes, 24h, active-flask bot
  *   npm run sim -- --hours 8 --idle --class mage
  */
+import { baseDef } from '../src/data/bases';
 import { CLASSES, type ClassId } from '../src/data/classes';
 import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { actionsFor } from '../src/data/skills';
@@ -53,7 +54,11 @@ function upgradeGear(s: GameState, ctx: Ctx) {
     const base = scoreOf(s);
     let best: { slot: ReturnType<typeof slotsFor>[number]; gain: number } | null = null;
     for (const slot of slotsFor(item)) {
-      const gain = scoreOf({ ...s, equipment: { ...s.equipment, [slot]: item } }) - base;
+      // score the swap the way equip() makes it: two-handers and offhands push each other out
+      const equipment = { ...s.equipment, [slot]: item };
+      if (slot === 'weapon' && baseDef(item.baseId).twoHanded) delete equipment.offhand;
+      if (slot === 'offhand' && s.equipment.weapon && baseDef(s.equipment.weapon.baseId).twoHanded) delete equipment.weapon;
+      const gain = scoreOf({ ...s, equipment }) - base;
       if (gain > 1 && (!best || gain > best.gain)) best = { slot, gain };
     }
     if (best) equip(s, ctx, item.uid, best.slot);
@@ -164,6 +169,7 @@ function runClass(classId: ClassId): Result {
     console.log(`  [${classId}] passives:`, s.passives.join(', '));
     console.log(`  [${classId}] masteries:`, JSON.stringify(s.masteries));
     console.log(`  [${classId}] bar:`, s.skillBar.map((g) => g && `${g.gemId}:${g.level}[${g.supports.filter(Boolean).map((x) => x!.supportId).join('+')}]`).join(' | '));
+    console.log(`  [${classId}] gear:`, Object.entries(s.equipment).map(([k, i]) => `${k}=${i?.baseId}`).join(' '));
     console.log(`  [${classId}] life ${d.maxLife} armour ${d.armour} res ${JSON.stringify(d.res)} dps ${d.dps.toFixed(0)}`);
   }
   res.finalLevel = characterLevel(s);

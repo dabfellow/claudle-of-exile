@@ -33,6 +33,14 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     target: 1, progress: (s) => (s.bossesDefeated.includes('sanctum') ? 1 : 0), reward: { divine: 1, regal: 2 },
   },
   {
+    id: 'exile_act_1', name: 'Nothing to Lose', desc: 'Complete Act 1 as an Exile', category: 'combat',
+    target: 1, progress: (s) => (s.character.classId === 'exile' && s.bossesDefeated.includes('sanctum') ? 1 : 0),
+  },
+  {
+    id: 'exile_bare', name: 'Nothing But Will', desc: 'Defeat Ysolde as an Exile with no unique equipped', category: 'combat',
+    target: 1, progress: (s) => L(s).exileBareKills ?? 0,
+  },
+  {
     id: 'conqueror', name: 'Conqueror of the Coast', desc: "Defeat every area's boss", category: 'combat',
     target: ZONES.length, progress: (s) => s.bossesDefeated.length, reward: { exalted: 1 },
   },

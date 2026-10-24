@@ -17,7 +17,7 @@ export const HUNGER_MS = 5000;
 export const OVERCLOCK_HEAT_MS = 8000;
 export const OVERHEAT_MS = 2000;
 
-export function mechanicOf(s: GameState): Mechanic {
+export function mechanicOf(s: GameState): Mechanic | null {
   return classDef(s.character.classId).mechanic;
 }
 
@@ -34,7 +34,7 @@ export function ensureMechanicFields(c: CombatRuntime): void {
 }
 
 /** the meter's cap, or 0 for mechanics without one */
-export function meterMax(mech: Mechanic, r: Partial<Stats>): number {
+export function meterMax(mech: Mechanic | null, r: Partial<Stats>): number {
   const v = (k: StatKey) => r[k] ?? 0;
   switch (mech) {
     case 'rage':
@@ -130,5 +130,7 @@ export function meterLabel(s: GameState, d: Derived): string {
       return `Mana is Power · ${manaPowerMore(s, d, manaFraction(s, d)).toFixed(0)}% more spell damage`;
     case 'riposte':
       return c && c.riposteMs > 0 && !d.raw.perfectForm ? 'Riposte recovering' : 'Riposte ready';
+    case null:
+      return '';
   }
 }

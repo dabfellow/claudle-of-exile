@@ -5,7 +5,8 @@ import { zoneDef } from '../src/data/zones';
 import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
-import { meterMax } from '../src/engine/mechanics';
+import { mechanicOf, meterMax } from '../src/engine/mechanics';
+import { startNode } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
@@ -38,10 +39,36 @@ function run(s: GameState, ctx: ReturnType<typeof makeCtx>, ms: number, until?: 
 const hits = (events: GameEvent[]) => events.filter((e): e is Extract<GameEvent, { t: 'hit' }> => e.t === 'hit' && e.target === 'monster' && !e.dot && !e.evaded);
 
 describe('classes', () => {
-  it('there are six, each with its own mechanic and tree start', () => {
-    expect(CLASSES.map((c) => c.id).sort()).toEqual(['duelist', 'mage', 'ranger', 'shadow', 'templar', 'warrior']);
-    expect(new Set(CLASSES.map((c) => c.mechanic)).size).toBe(6);
-    expect(new Set(CLASSES.map((c) => c.startNode)).size).toBe(6);
+  it('there are six, each with its own mechanic and tree start, plus the Exile', () => {
+    const six = CLASSES.filter((c) => !c.challenge);
+    expect(six.map((c) => c.id).sort()).toEqual(['duelist', 'mage', 'ranger', 'shadow', 'templar', 'warrior']);
+    expect(new Set(six.map((c) => c.mechanic)).size).toBe(6);
+    expect(new Set(six.map((c) => c.startNode)).size).toBe(6);
+    expect(CLASSES.find((c) => c.id === 'exile')?.mechanic).toBeNull();
+  });
+
+  it('an Exile starts at the picked tree start with that class’s gems, a Rusted Sword and nothing else', () => {
+    const s = newGame(1, { name: 't', classId: 'exile', startNode: 'class_dexint' });
+    expect(startNode(s)).toBe('class_dexint');
+    expect(s.skillBar.filter(Boolean).map((g) => g!.gemId)).toEqual(['poison_dart', 'spark']);
+    expect(Object.keys(s.equipment)).toEqual(['weapon']);
+    expect(s.equipment.weapon?.baseId).toBe('rusted_sword');
+    const d = deriveStats(s);
+    expect([d.raw.str, d.raw.dex, d.raw.int]).toEqual([10, 10, 10]);
+    expect(meterMax(mechanicOf(s), d.raw)).toBe(0);
+  });
+
+  it('an Exile with no start picked falls back to the Warrior start', () => {
+    const s = newGame(1, { name: 't', classId: 'exile' });
+    expect(startNode(s)).toBe('class_str');
+    expect(newGame(1, { name: 't', classId: 'warrior', startNode: 'class_int' }).character.startNode).toBeUndefined();
+  });
+
+  it('an Exile fights normally with no meter', () => {
+    const { s, ctx, dummy } = arena('exile');
+    run(s, ctx, 5000);
+    expect(dummy.life).toBeLessThan(dummy.maxLife);
+    expect(s.combat?.mech ?? 0).toBe(0);
   });
 });
 

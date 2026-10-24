@@ -23,8 +23,8 @@ describe('weapon families', () => {
     for (const f of Object.keys(WEAPON_FAMILIES) as WeaponFamily[]) expect(families.has(f), f).toBe(true);
   });
 
-  it('only staves are two-handed', () => {
-    for (const b of BASES.filter((x) => x.slot === 'weapon')) expect(!!b.twoHanded, b.id).toBe(b.family === 'staff');
+  it('only staves and bows are two-handed', () => {
+    for (const b of BASES.filter((x) => x.slot === 'weapon')) expect(!!b.twoHanded, b.id).toBe(b.family === 'staff' || b.family === 'bow');
   });
 
   it('bows make attacks ranged; wands add spell damage', () => {

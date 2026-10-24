@@ -175,8 +175,13 @@ class GameStore {
     return this.characters.some((c) => c.name.toLowerCase() === name.trim().toLowerCase());
   }
 
-  async create(name: string, classId: ClassId) {
-    const s = newGame(Date.now(), { name: name.trim(), classId });
+  /** The Exile unlocks once any character on the account has cleared Act 1. */
+  get exileUnlocked(): boolean {
+    return this.characters.some((c) => c.act1Cleared);
+  }
+
+  async create(name: string, classId: ClassId, startNode?: string) {
+    const s = newGame(Date.now(), { name: name.trim(), classId, startNode });
     await this.saves?.save(s);
     try {
       localStorage.removeItem('coe-page'); // new characters start in the hideout
