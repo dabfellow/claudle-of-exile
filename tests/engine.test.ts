@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { affixDef } from '../src/data/affixes';
-import { BASES } from '../src/data/bases';
+import { attributeReq, BASES, baseDef } from '../src/data/bases';
 import { PASSIVE_BY_ID, PASSIVE_NODES } from '../src/data/passiveTree';
 import { makeCtx } from '../src/engine/context';
 import { applyOrb, benchCraft, ORBS } from '../src/engine/crafting';
@@ -65,6 +65,26 @@ describe('affix rolling', () => {
     const ids = [...eligibleAffixes(boots, 'prefix'), ...eligibleAffixes(boots, 'suffix')].map((a) => a.id);
     expect(ids).not.toContain('inc_phys');
     expect(ids).not.toContain('attack_speed');
+  });
+});
+
+describe('hybrid armour bases', () => {
+  it('carry both defences, both attribute requirements and both mod pools', () => {
+    const coif = baseDef('riveted_coif');
+    expect([coif.armour, coif.evasion, coif.energyShield]).toEqual([17, 17, undefined]);
+    expect(attributeReq(coif)).toEqual({ str: 12, dex: 12 });
+
+    const templar = baseDef('templar_plate');
+    expect([templar.armour, templar.evasion, templar.energyShield]).toEqual([114, undefined, 57]);
+    expect(attributeReq(templar)).toEqual({ str: 28, int: 28 });
+
+    const dusk = baseDef('duskweave_boots');
+    expect([dusk.armour, dusk.evasion, dusk.energyShield]).toEqual([undefined, 39, 20]);
+    const boots: Item = { uid: 1, baseId: 'duskweave_boots', ilvl: 40, rarity: 'rare', name: null, prefixes: [], suffixes: [] };
+    const pool = [...eligibleAffixes(boots, 'prefix'), ...eligibleAffixes(boots, 'suffix')];
+    const stats = new Set(pool.flatMap((a) => a.stats));
+    expect(stats.has('evasion') && stats.has('energyShield')).toBe(true);
+    expect(stats.has('armour')).toBe(false);
   });
 });
 

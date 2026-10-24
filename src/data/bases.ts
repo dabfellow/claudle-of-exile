@@ -19,48 +19,157 @@ export interface BaseDef {
   crit?: number;
   armour?: number;
   evasion?: number;
+  energyShield?: number;
   implicits?: Implicit[];
+  /** weapons: which family it belongs to (sets its attributes and built-in mod) */
+  family?: WeaponFamily;
+  /** takes the offhand slot too */
+  twoHanded?: boolean;
 }
 
-const W = (id: string, name: string, reqLevel: number, phys: [number, number], speed: number, crit: number): BaseDef => ({
-  id, name, slot: 'weapon', reqLevel, tags: ['weapon'], phys, speed, crit,
+export type WeaponFamily = 'mace' | 'axe' | 'sword' | 'dagger' | 'bow' | 'sceptre' | 'wand' | 'staff';
+
+export type Attribute = 'str' | 'dex' | 'int';
+
+interface FamilyDef {
+  name: string;
+  attrs: Attribute[];
+  /** the built-in mod, scaled by the base's level */
+  implicits: (lvl: number) => Implicit[];
+  twoHanded?: boolean;
+}
+
+/** Each weapon family asks for the same attributes and carries one built-in mod that defines it. */
+export const WEAPON_FAMILIES: Record<WeaponFamily, FamilyDef> = {
+  mace: {
+    name: 'Mace', attrs: ['str'],
+    implicits: (l) => {
+      const v = 10 + Math.floor(l / 4);
+      return [{ stat: 'stunChance', value: v, text: `+${v}% chance to Stun on hit` }];
+    },
+  },
+  axe: {
+    name: 'Axe', attrs: ['str', 'dex'],
+    implicits: (l) => {
+      const v = 20 + Math.floor(l / 2);
+      return [{ stat: 'bleedOnHit', value: v, text: `Attacks have ${v}% chance to cause Bleeding` }];
+    },
+  },
+  sword: {
+    name: 'Sword', attrs: ['str', 'dex'],
+    implicits: (l) => {
+      const v = 30 + 4 * l;
+      return [{ stat: 'accuracy', value: v, text: `+${v} to Accuracy Rating` }];
+    },
+  },
+  dagger: {
+    name: 'Dagger', attrs: ['dex', 'int'],
+    implicits: (l) => {
+      const v = 20 + Math.floor(l / 2);
+      return [{ stat: 'critChancePct', value: v, text: `${v}% increased Critical Strike Chance` }];
+    },
+  },
+  bow: {
+    name: 'Bow', attrs: ['dex'],
+    implicits: (l) => {
+      const v = 15 + Math.floor(l / 2);
+      return [{ stat: 'projectilePct', value: v, text: `${v}% increased Projectile Damage` }];
+    },
+  },
+  sceptre: {
+    name: 'Sceptre', attrs: ['str', 'int'],
+    implicits: (l) => {
+      const v = 15 + Math.floor(l / 2);
+      return [{ stat: 'elemPct', value: v, text: `${v}% increased Elemental Damage` }];
+    },
+  },
+  wand: {
+    name: 'Wand', attrs: ['int'],
+    implicits: (l) => {
+      const v = 30 + l;
+      return [{ stat: 'spellPct', value: v, text: `${v}% increased Spell Damage` }];
+    },
+  },
+  staff: {
+    name: 'Staff', attrs: ['int'], twoHanded: true,
+    implicits: (l) => {
+      const v = 60 + 2 * l;
+      const b = 8 + Math.floor(l / 5);
+      return [
+        { stat: 'spellPct', value: v, text: `${v}% increased Spell Damage` },
+        { stat: 'blockChance', value: b, text: `${b}% chance to Block hits` },
+      ];
+    },
+  },
+};
+
+const W = (id: string, name: string, family: WeaponFamily, reqLevel: number, phys: [number, number], speed: number, crit: number): BaseDef => ({
+  id, name, slot: 'weapon', reqLevel, tags: ['weapon'], phys, speed, crit, family,
+  implicits: WEAPON_FAMILIES[family].implicits(reqLevel),
+  ...(WEAPON_FAMILIES[family].twoHanded ? { twoHanded: true } : {}),
 });
+
+type ArmourType = 'str' | 'dex' | 'int' | 'str_dex' | 'str_int' | 'dex_int';
 
 const A = (
   id: string,
   name: string,
   slot: 'helmet' | 'body' | 'gloves' | 'boots' | 'offhand',
   reqLevel: number,
-  type: 'str' | 'dex',
+  type: ArmourType,
   value: number,
-): BaseDef => ({
-  id,
-  name,
-  slot,
-  reqLevel,
-  tags: [slot === 'offhand' ? 'shield' : slot, 'armour', type === 'str' ? 'str_armour' : 'dex_armour'],
-  ...(type === 'str' ? { armour: value } : { evasion: value }),
-});
+): BaseDef => {
+  const attrs = type.split('_') as Attribute[];
+  // hybrids carry `value` of armour/evasion each (roughly 60% of a pure base of the same level), and
+  // half of it as energy shield, since pure int bases carry about half the number of the others
+  const es = attrs.length > 1 ? Math.round(value / 2) : value;
+  return {
+    id,
+    name,
+    slot,
+    reqLevel,
+    tags: [slot === 'offhand' ? 'shield' : slot, 'armour', ...attrs.map((a) => `${a}_armour` as const)],
+    ...(attrs.includes('str') ? { armour: value } : {}),
+    ...(attrs.includes('dex') ? { evasion: value } : {}),
+    ...(attrs.includes('int') ? { energyShield: es } : {}),
+  };
+};
 
 const J = (id: string, name: string, slot: 'belt' | 'amulet' | 'ring', reqLevel: number, implicits: Implicit[]): BaseDef => ({
   id, name, slot, reqLevel, tags: slot === 'belt' ? ['belt'] : [slot, 'jewellery'], implicits,
 });
 
 export const BASES: BaseDef[] = [
-  W('rusted_sword', 'Rusted Sword', 1, [4, 10], 20, 5),
-  W('whittled_dagger', 'Whittled Dagger', 1, [3, 9], 35, 7),
-  {
-    ...W('driftwood_wand', 'Driftwood Wand', 1, [1, 4], 15, 6),
-    implicits: [
-      { stat: 'lightMin', value: 1, text: 'Adds 1 to 9 Lightning Damage' },
-      { stat: 'lightMax', value: 9, text: '' },
-    ],
-  },
-  W('iron_blade', 'Iron Blade', 8, [7, 16], 20, 5),
-  W('glinting_dagger', 'Glinting Dagger', 14, [6, 24], 25, 8),
-  W('war_axe', 'Bearded War Axe', 18, [16, 34], 0, 5),
-  W('steel_broadsword', 'Steel Broadsword', 24, [17, 36], 15, 5),
-  W('mithril_sabre', 'Mithril Sabre', 34, [26, 52], 30, 6),
+  W('rusted_sword', 'Rusted Sword', 'sword', 1, [4, 10], 20, 5),
+  W('iron_blade', 'Iron Blade', 'sword', 8, [7, 16], 20, 5),
+  W('steel_broadsword', 'Steel Broadsword', 'sword', 24, [17, 36], 15, 5),
+  W('mithril_sabre', 'Mithril Sabre', 'sword', 34, [26, 52], 30, 6),
+
+  W('whittled_dagger', 'Whittled Dagger', 'dagger', 1, [3, 9], 35, 7),
+  W('glinting_dagger', 'Glinting Dagger', 'dagger', 14, [6, 24], 25, 8),
+  W('shadow_kris', 'Shadow Kris', 'dagger', 28, [12, 40], 30, 9),
+
+  W('rusty_hatchet', 'Rusty Hatchet', 'axe', 1, [5, 11], 5, 5),
+  W('war_axe', 'Bearded War Axe', 'axe', 18, [16, 34], 0, 5),
+  W('reaver_axe', 'Reaver Axe', 'axe', 32, [28, 56], 5, 5),
+
+  W('oak_club', 'Oak Club', 'mace', 1, [5, 12], 0, 5),
+  W('spiked_mace', 'Spiked Mace', 'mace', 12, [12, 26], 0, 5),
+  W('war_hammer', 'Iron War Hammer', 'mace', 26, [24, 48], -5, 5),
+
+  W('short_bow', 'Short Bow', 'bow', 1, [3, 10], 20, 6),
+  W('ash_longbow', 'Ash Longbow', 'bow', 16, [10, 30], 10, 6),
+  W('yew_recurve', 'Yew Recurve', 'bow', 30, [18, 50], 15, 7),
+
+  W('bone_sceptre', 'Bone Sceptre', 'sceptre', 6, [5, 12], 10, 6),
+  W('crystal_sceptre', 'Crystal Sceptre', 'sceptre', 24, [14, 30], 10, 6),
+
+  W('driftwood_wand', 'Driftwood Wand', 'wand', 1, [1, 4], 15, 6),
+  W('coral_wand', 'Coral Wand', 'wand', 14, [4, 10], 15, 7),
+  W('void_wand', 'Void Wand', 'wand', 30, [8, 18], 15, 7),
+
+  W('gnarled_staff', 'Gnarled Staff', 'staff', 4, [6, 14], 0, 6),
+  W('storm_staff', 'Storm Staff', 'staff', 28, [18, 40], 0, 7),
 
   A('plank_shield', 'Splintered Shield', 'offhand', 1, 'str', 14),
   A('buckler', 'Goathide Buckler', 'offhand', 8, 'dex', 30),
@@ -73,6 +182,15 @@ export const BASES: BaseDef[] = [
   A('hunter_hood', 'Hunter Hood', 'helmet', 16, 'dex', 48),
   A('great_helm', 'Mithril Great Helm', 'helmet', 32, 'str', 115),
   A('shadow_mask', 'Shadow Mask', 'helmet', 32, 'dex', 115),
+  A('riveted_coif', 'Riveted Coif', 'helmet', 8, 'str_dex', 17),
+  A('wyrmscale_helm', 'Wyrmscale Helm', 'helmet', 24, 'str_dex', 49),
+  A('linen_hood', 'Linen Hood', 'helmet', 1, 'int', 6),
+  A('conjurer_hat', 'Conjurer Hat', 'helmet', 16, 'int', 24),
+  A('arcanist_cowl', "Arcanist's Cowl", 'helmet', 32, 'int', 55),
+  A('chaplain_helm', "Chaplain's Helm", 'helmet', 8, 'str_int', 17),
+  A('templar_crown', 'Templar Crown', 'helmet', 24, 'str_int', 49),
+  A('wayfarer_hood', "Wayfarer's Hood", 'helmet', 8, 'dex_int', 17),
+  A('duskweave_cowl', 'Duskweave Cowl', 'helmet', 24, 'dex_int', 49),
 
   A('plate_vest', 'Plate Vest', 'body', 1, 'str', 22),
   A('shabby_jerkin', 'Shabby Jerkin', 'body', 1, 'dex', 22),
@@ -80,16 +198,41 @@ export const BASES: BaseDef[] = [
   A('scale_leather', 'Scale Leather', 'body', 16, 'dex', 110),
   A('mithril_plate', 'Mithril Plate', 'body', 32, 'str', 270),
   A('assassin_garb', "Assassin's Garb", 'body', 32, 'dex', 270),
+  A('studded_brigandine', 'Studded Brigandine', 'body', 8, 'str_dex', 38),
+  A('wyrmscale_hauberk', 'Wyrmscale Hauberk', 'body', 24, 'str_dex', 114),
+  A('simple_robe', 'Simple Robe', 'body', 1, 'int', 12),
+  A('silken_vestment', 'Silken Vestment', 'body', 16, 'int', 50),
+  A('arcanist_robe', "Arcanist's Robe", 'body', 32, 'int', 115),
+  A('chaplain_tabard', "Chaplain's Tabard", 'body', 8, 'str_int', 38),
+  A('templar_plate', 'Templar Plate', 'body', 24, 'str_int', 114),
+  A('wayfarer_coat', "Wayfarer's Coat", 'body', 8, 'dex_int', 38),
+  A('duskweave_raiment', 'Duskweave Raiment', 'body', 24, 'dex_int', 114),
 
   A('iron_gauntlets', 'Iron Gauntlets', 'gloves', 1, 'str', 8),
   A('rawhide_gloves', 'Rawhide Gloves', 'gloves', 1, 'dex', 8),
   A('steel_gauntlets', 'Steel Gauntlets', 'gloves', 20, 'str', 45),
   A('stealth_gloves', 'Stealth Gloves', 'gloves', 20, 'dex', 45),
+  A('studded_bracers', 'Studded Bracers', 'gloves', 12, 'str_dex', 18),
+  A('wyrmscale_gauntlets', 'Wyrmscale Gauntlets', 'gloves', 30, 'str_dex', 39),
+  A('wool_gloves', 'Wool Gloves', 'gloves', 1, 'int', 5),
+  A('silk_gloves', 'Silk Gloves', 'gloves', 20, 'int', 22),
+  A('chaplain_gloves', "Chaplain's Gloves", 'gloves', 12, 'str_int', 18),
+  A('templar_gauntlets', 'Templar Gauntlets', 'gloves', 30, 'str_int', 39),
+  A('wayfarer_wraps', "Wayfarer's Wraps", 'gloves', 12, 'dex_int', 18),
+  A('duskweave_gloves', 'Duskweave Gloves', 'gloves', 30, 'dex_int', 39),
 
   A('iron_greaves', 'Iron Greaves', 'boots', 1, 'str', 8),
   A('leather_boots', 'Leather Boots', 'boots', 1, 'dex', 8),
   A('steel_greaves', 'Steel Greaves', 'boots', 20, 'str', 45),
   A('shagreen_boots', 'Shagreen Boots', 'boots', 20, 'dex', 45),
+  A('studded_boots', 'Studded Boots', 'boots', 12, 'str_dex', 18),
+  A('wyrmscale_boots', 'Wyrmscale Boots', 'boots', 30, 'str_dex', 39),
+  A('wool_shoes', 'Wool Shoes', 'boots', 1, 'int', 5),
+  A('silk_slippers', 'Silk Slippers', 'boots', 20, 'int', 22),
+  A('chaplain_boots', "Chaplain's Boots", 'boots', 12, 'str_int', 18),
+  A('templar_sabatons', 'Templar Sabatons', 'boots', 30, 'str_int', 39),
+  A('wayfarer_boots', "Wayfarer's Boots", 'boots', 12, 'dex_int', 18),
+  A('duskweave_boots', 'Duskweave Boots', 'boots', 30, 'dex_int', 39),
 
   J('chain_belt', 'Chain Belt', 'belt', 1, [{ stat: 'life', value: 12, text: '+12 to maximum Life' }]),
   J('leather_belt', 'Leather Belt', 'belt', 12, [{ stat: 'life', value: 30, text: '+30 to maximum Life' }]),
@@ -112,24 +255,12 @@ export const BASES: BaseDef[] = [
 
 const BY_ID: Record<string, BaseDef> = Object.fromEntries(BASES.map((b) => [b.id, b]));
 
-export type Attribute = 'str' | 'dex' | 'int';
-
-/** Which attributes each weapon base asks for (armour pieces follow their str/dex tags). */
-const WEAPON_ATTRS: Record<string, Attribute[]> = {
-  rusted_sword: ['str', 'dex'],
-  whittled_dagger: ['dex'],
-  driftwood_wand: ['int'],
-  iron_blade: ['str', 'dex'],
-  glinting_dagger: ['dex'],
-  war_axe: ['str'],
-  steel_broadsword: ['str', 'dex'],
-  mithril_sabre: ['dex', 'str'],
-};
-
-/** Attribute requirements to equip a base. Single-attribute items ask for more of one stat. */
+/** Attribute requirements to equip a base. Weapons follow their family; armour pieces follow their
+ * str/dex/int tags (hybrids ask for both). Single-attribute items ask for more of one stat. */
 export function attributeReq(b: BaseDef): Partial<Record<Attribute, number>> {
-  const attrs: Attribute[] =
-    WEAPON_ATTRS[b.id] ?? (b.tags.includes('str_armour') ? ['str'] : b.tags.includes('dex_armour') ? ['dex'] : []);
+  const attrs: Attribute[] = b.family
+    ? WEAPON_FAMILIES[b.family].attrs
+    : (['str', 'dex', 'int'] as const).filter((a) => b.tags.includes(`${a}_armour`));
   const each = attrs.length === 1 ? Math.floor(6 + 1.6 * b.reqLevel) : Math.floor(4 + 1.0 * b.reqLevel);
   return Object.fromEntries(attrs.map((a) => [a, each]));
 }

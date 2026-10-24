@@ -71,7 +71,7 @@ function useCombatFx() {
       else {
         add({
           owner: 'player',
-          text: `-${fmt(e.amount)}${e.absorbed ? ` (${fmt(e.absorbed)} absorbed)` : ''}`,
+          text: `${e.amount || !e.es ? `-${fmt(e.amount)}${e.es ? ` (${fmt(e.es)} ES)` : ''}` : `-${fmt(e.es)} ES`}${e.absorbed ? ` (${fmt(e.absorbed)} absorbed)` : ''}`,
           cls: '',
           color: e.dmgType === 'phys' ? 'var(--life-2)' : DMG_COLOR[e.dmgType],
         });
@@ -119,6 +119,9 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
           </div>
         </div>
       </div>
+      {d.maxEs > 0 && (
+        <ProgressBar value={s.es / d.maxEs} color="linear-gradient(90deg, var(--es), var(--es-2))" label={`${fmt(s.es)} / ${fmt(d.maxEs)} ES`} />
+      )}
       <div className="life-stack">
         <ProgressBar value={s.life / d.maxLife} size="lg" color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} ghost />
         {c.shield > 0 && <div className="shield-bar" style={{ width: `${Math.min(1, c.shield / d.maxLife) * 100}%` }} title={`Shield ${fmt(c.shield)}`} />}
@@ -315,10 +318,10 @@ function Matchup({ s, d }: { s: GameState; d: Derived }) {
         them={String(target.level)}
         good={d.combatLevel >= target.level ? true : target.level - d.combatLevel > 3 ? false : null}
       />
-      <StatRow label="Life" you={fmt(d.maxLife)} them={`${fmt(Math.max(0, target.life))} / ${fmt(target.maxLife)}`} />
+      <StatRow label="Life" you={d.maxEs ? `${fmt(d.maxLife)} + ${fmt(d.maxEs)} ES` : fmt(d.maxLife)} them={`${fmt(Math.max(0, target.life))} / ${fmt(target.maxLife)}`} />
       <StatRow label="Damage / sec" you={d.dps.toFixed(1)} them={theirDps.toFixed(1)} good={d.dps > theirDps * 1.5} />
       <StatRow label="Chance to hit" you={`${Math.round(hit * 100)}%`} them={`${Math.round((1 - evade) * 100)}%`} />
-      <StatRow label="Their hit on you" you={yourDefence} them={`${fmt(perHit)} ${DMG_NAME[target.dmgType].toLowerCase()}`} good={perHit < d.maxLife * 0.1} />
+      <StatRow label="Their hit on you" you={yourDefence} them={`${fmt(perHit)} ${DMG_NAME[target.dmgType].toLowerCase()}`} good={perHit < (d.maxLife + d.maxEs) * 0.1} />
       <StatRow label="Their resistances" you="" them={`${target.res.fire}/${target.res.cold}/${target.res.light}% F/C/L`} />
       <StatRow
         label="Attack / cast time"
@@ -370,7 +373,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
               </button>
             }
           >
-            Max Life {fmt(d.maxLife)} · {d.dps.toFixed(1)} DPS · {fmt(d.armour)} Armour · {fmt(d.evasion)} Evasion
+            Max Life {fmt(d.maxLife)}{d.maxEs ? ` + ${fmt(d.maxEs)} ES` : ''} · {d.dps.toFixed(1)} DPS · {fmt(d.armour)} Armour · {fmt(d.evasion)} Evasion
           </EmptyState>
         </div>
         <div className="card">

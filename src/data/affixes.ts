@@ -105,6 +105,16 @@ export const AFFIXES: AffixDef[] = [
     tiers: single([[10, 18], [19, 28], [29, 40], [41, 54], [55, 70], [71, 90]]),
   },
   {
+    id: 'flat_es', kind: 'prefix', group: 'flat_es', label: 'Shimmering', text: '+{0} to maximum Energy Shield',
+    stats: ['energyShield'], weights: { int_armour: 100, amulet: 40, ring: 30, belt: 20 },
+    tiers: single([[4, 8], [9, 16], [17, 26], [27, 38], [39, 52], [53, 70]]),
+  },
+  {
+    id: 'inc_es', kind: 'prefix', group: 'inc_es', label: 'Glowing', text: '{0}% increased Energy Shield',
+    stats: ['energyShieldPct'], weights: { int_armour: 100 },
+    tiers: single([[10, 18], [19, 28], [29, 40], [41, 54], [55, 70], [71, 90]]),
+  },
+  {
     id: 'flat_mana', kind: 'prefix', group: 'flat_mana', label: 'Beryl', text: '+{0} to maximum Mana',
     stats: ['mana'], weights: { ring: 100, amulet: 100, helmet: 60, belt: 40, weapon: 30 },
     tiers: single([[10, 19], [20, 29], [30, 39], [40, 54], [55, 69], [70, 89]]),
@@ -193,8 +203,13 @@ export const AFFIXES: AffixDef[] = [
   },
   {
     id: 'intelligence', kind: 'suffix', group: 'intelligence', label: 'of the Prodigy', text: '+{0} to Intelligence',
-    stats: ['int'], weights: { amulet: 80, ring: 80, helmet: 60, weapon: 40 },
+    stats: ['int'], weights: { int_armour: 80, amulet: 80, ring: 80, helmet: 60, weapon: 40 },
     tiers: single([[5, 9], [10, 15], [16, 21], [22, 27], [28, 34], [35, 42]]),
+  },
+  {
+    id: 'es_recharge', kind: 'suffix', group: 'es_recharge', label: 'of Renewal', text: '{0}% faster Energy Shield Recharge',
+    stats: ['esRechargePct'], weights: { int_armour: 40, amulet: 40, belt: 40 },
+    tiers: single([[8, 12], [13, 18], [19, 25], [26, 33], [34, 42], [43, 52]]),
   },
   {
     id: 'all_attributes', kind: 'suffix', group: 'all_attributes', label: 'of the Sky', text: '+{0} to all Attributes',

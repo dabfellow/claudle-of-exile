@@ -214,6 +214,11 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
         )}
       </div>
       <div className="topbar-life">
+        {d.maxEs > 0 && (
+          <span title={`Energy Shield ${fmt(s.es)} / ${fmt(d.maxEs)}`}>
+            <ProgressBar value={s.es / d.maxEs} color="linear-gradient(90deg, var(--es), var(--es-2))" className="thin" />
+          </span>
+        )}
         <span title="Life">
           <ProgressBar value={s.life / d.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" size="md" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} />
         </span>

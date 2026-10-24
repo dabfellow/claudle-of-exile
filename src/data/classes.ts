@@ -65,7 +65,7 @@ export const CLASSES: ClassDef[] = [
     icon: 'bolt',
     tagline: 'Bend the elements and the brew.',
     desc: 'Channels lightning through a wand and gets the most out of flasks. Fragile early, explosive later.',
-    kit: { weapon: 'driftwood_wand', body: 'shabby_jerkin', amulet: 'coral_amulet' },
+    kit: { weapon: 'driftwood_wand', body: 'simple_robe', amulet: 'coral_amulet' },
     baseAttributes: { str: 10, dex: 12, int: 20 },
     bonus: { elemPct: 15, flaskEffect: 10 },
     bonusText: ['15% increased Elemental Damage', '10% increased Flask Effect'],

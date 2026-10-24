@@ -46,6 +46,7 @@ export type Tag =
   | 'armour'
   | 'str_armour'
   | 'dex_armour'
+  | 'int_armour'
   | 'jewellery';
 
 /** Every stat a character can have. Add new ones here; Stats and the stat engine pick them up. */
@@ -60,12 +61,14 @@ export const STAT_KEYS = [
   'poisonDurationFlat', 'skillDuration', 'guardDuration', 'cooldownRecovery', 'guardCooldown',
   'manaCostReduction', 'stunChance', 'stunDuration', 'stunnedVuln', 'shieldEffect', 'extraChains',
   'extraBlocks', 'spellCritPct', 'spellCritMulti', 'lightCrit', 'chainMore', 'repeatMore', 'meleePct',
+  'spellPct', 'projectilePct', 'bleedOnHit', 'blockChance',
   'dexSkillSpeed', 'buffMore', 'buffDurationFlat', 'warCryHeal', 'smokeExtra', 'afterGuardDamage',
   'guardArmourPct', 'lowLifeDamage', 'critFullLife', 'critLeech', 'overkillHeal', 'highLifeElem',
   'physAsLight', 'bleedBossMore', 'bleedVuln', 'multiAilmentVuln', 'poisonWeaken', 'igniteSpread',
   'chillOnHit', 'slamReduction', 'armourVsElem', 'elemTakenReduction', 'blockHeal', 'evadeHeal',
   'evadeSpeed', 'manaRegenFlat', 'lifeFlaskRecovery', 'manaFlaskRecovery', 'utilityFlaskDuration',
-  'bloodPact', 'windDancer', 'mindOverFlesh', 'steadyHand', 'arcaneRecursion', 'bastion',
+  'bloodPact', 'windDancer', 'mindOverFlesh', 'steadyHand', 'arcaneRecursion', 'bastion', 'energyShield',
+  'energyShieldPct', 'esRechargePct',
 ] as const;
 
 export type StatKey = (typeof STAT_KEYS)[number];
@@ -227,6 +230,8 @@ export interface CombatRuntime {
   heals: HealOverTime[];
   shield: number;
   shieldMax: number;
+  /** ms until energy shield starts recharging (reset by every hit taken) */
+  esDelayMs: number;
   blocks: number;
   evadeMs: number;
   /** signature support state */
@@ -310,6 +315,8 @@ export interface GameState {
   action: Action;
   life: number;
   mana: number;
+  /** energy shield: soaks damage before life and recharges once you stop being hit */
+  es: number;
   combat: CombatRuntime | null;
   zoneKills: Record<string, number>;
   unlockedZones: string[];
@@ -343,6 +350,8 @@ export type GameEvent =
       evaded?: boolean;
       blocked?: boolean;
       absorbed?: number;
+      /** taken by energy shield instead of life */
+      es?: number;
       monsterUid?: number;
       dot?: boolean;
     }

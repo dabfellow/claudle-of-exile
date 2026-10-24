@@ -204,6 +204,32 @@ describe('combat 2.0', () => {
     expect(open.s.life).toBeLessThan(life);
   });
 
+  it('energy shield takes hits before life and recharges after a pause', () => {
+    const hitter = dummy(1e6, 20);
+    hitter.attackMs = 300;
+    const { s, c } = arena([], [hitter], 'mage');
+    s.equipment.body = { uid: 9999, baseId: 'arcanist_robe', ilvl: 32, rarity: 'normal', name: null, prefixes: [], suffixes: [] };
+    const d = deriveStats(s);
+    expect(d.maxEs).toBeGreaterThan(115);
+    s.life = d.maxLife;
+    s.es = d.maxEs;
+    run(s, c, 1500);
+    const hits = c.events.filter((e) => e.t === 'hit' && e.target === 'player' && !e.evaded);
+    expect(hits.length).toBeGreaterThan(0);
+    expect(hits.some((e) => e.t === 'hit' && e.es)).toBe(true);
+    expect(s.es).toBeLessThan(d.maxEs);
+
+    // no more hits: nothing comes back during the delay, then it recharges
+    const quiet = dummy();
+    s.combat!.monsters = [quiet];
+    s.es = 0;
+    s.combat!.esDelayMs = 2000;
+    run(s, c, 1500);
+    expect(s.es).toBe(0);
+    run(s, c, 1500);
+    expect(s.es).toBeGreaterThan(0);
+  });
+
   it('War Cry interrupts a wind-up', () => {
     const b = makeMonster(zoneDef('mudflats').boss, true, 99);
     b.life = b.maxLife = 1e6;

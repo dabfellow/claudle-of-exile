@@ -1,7 +1,7 @@
 import { monsterDamage } from '../../data/zones';
 import { unequipFlask } from '../../engine/combat';
 import { unequip } from '../../engine/equipment';
-import { armourReduction, deriveStats, evadeChance, hitChance, RES_CAP, type Derived } from '../../engine/stats';
+import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, RES_CAP, type Derived } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { fmt, GameIcon, PageHeader, ProgressBar } from '../components/common';
@@ -74,8 +74,21 @@ function Defense({ d }: { d: Derived }) {
         <b style={{ color: 'var(--life-2)' }}>{fmt(d.maxLife)}</b>
         <span>Maximum Life</span>
       </div>
+      {d.maxEs > 0 && (
+        <div className="big-stat wide">
+          <b style={{ color: 'var(--es-2)' }}>{fmt(d.maxEs)}</b>
+          <span>Energy Shield</span>
+        </div>
+      )}
       <dl className="stat-sheet">
         <Row label="Life regeneration" value={`${d.lifeRegen.toFixed(1)}/s`} />
+        {d.maxEs > 0 && (
+          <Row
+            label="Energy shield recharge"
+            value={`${d.esRecharge.toFixed(1)}/s`}
+            hint={`Takes hits before life. Starts recharging ${ES_RECHARGE_DELAY_MS / 1000}s after you were last hit`}
+          />
+        )}
         <Row label="Armour" value={fmt(d.armour)} />
         <Row
           label={`Physical reduction vs a level ${lvl} hit`}
@@ -111,7 +124,7 @@ function CenterColumn({ s, d }: { s: GameState; d: Derived }) {
         <span title="+2 Accuracy per point, +1% evasion per 5">
           <b style={{ color: 'var(--dex)' }}>{d.attributes.dex}</b> Dexterity
         </span>
-        <span title="+1 Mana per 2, +1% elemental damage per 5">
+        <span title="+1 Mana per 2, +1% elemental damage and +1% energy shield per 5">
           <b style={{ color: 'var(--int)' }}>{d.attributes.int}</b> Intelligence
         </span>
       </div>

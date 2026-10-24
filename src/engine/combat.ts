@@ -33,7 +33,7 @@ import { newUid } from './items';
 import { rollLoot } from './loot';
 import { chance, pick, rInt } from './rng';
 import { grantXp } from './skills';
-import { armourReduction, deriveStats, evadeChance, hitChance, type Derived } from './stats';
+import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
 import type { CombatRuntime, DamageType, Dot, GameState, InstillCondition, MonsterInstance } from './types';
 
 export const SPAWN_DELAY_MS = 900;
@@ -60,6 +60,7 @@ function newRuntime(zoneId: string): CombatRuntime {
     heals: [],
     shield: 0,
     shieldMax: 0,
+    esDelayMs: 0,
     blocks: 0,
     evadeMs: 0,
     glacial: false,
@@ -360,7 +361,12 @@ function rollHit(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: Mo
     }
   }
 
-  if (def.tags.includes('melee')) byType.phys *= 1 + r.meleePct / 100;
+  // a bow turns every attack into a ranged projectile
+  const projectile = def.tags.includes('projectile') || (isAttack && d.ranged);
+  if (def.tags.includes('melee') && !(isAttack && d.ranged)) byType.phys *= 1 + r.meleePct / 100;
+  let inc = projectile ? r.projectilePct : 0;
+  if (def.tags.includes('spell')) inc += r.spellPct;
+  if (inc) for (const t of DAMAGE_TYPES) byType[t] *= 1 + inc / 100;
   if (mods.noElemental) byType.fire = byType.cold = byType.light = 0;
   const total = DAMAGE_TYPES.reduce((a, t) => a + byType[t], 0);
   for (const x of mods.extras) byType[x.type] += (total * x.pct) / 100;
@@ -485,6 +491,15 @@ function hitMonster(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon:
     if (a.kind === 'ignite' && mods.specials.has('inferno')) {
       for (const other of aliveMonsters(c)) if (other !== mon) applyDot(other, { ...dot });
     }
+  } else if (r.bleedOnHit && def.tags.includes('attack') && chance(ctx.rng, r.bleedOnHit / 100)) {
+    // axes: any attack can open a wound (20% of the hit per second for 4s)
+    applyDot(mon, {
+      kind: 'bleed',
+      dps: ((dealt * 20) / 100) * (1 + (r.bleedPct + r.ailmentPct) / 100) * (mon.isBoss ? 1 + r.bleedBossMore / 100 : 1),
+      remainingMs: 4000 * (1 + (r.ailmentDuration + r.bleedDuration) / 100) + r.bleedDurationFlat,
+      dealt: 0,
+      gemId: def.id,
+    });
   }
   return dealt;
 }
@@ -643,6 +658,7 @@ function die(s: GameState, ctx: Ctx, d: Derived): void {
   const xpLost = applyDeathPenalty(s);
   ctx.emit({ t: 'death', xpLost });
   s.life = Math.max(1, Math.round(d.maxLife * DEATH_LIFE_FRACTION));
+  s.es = 0;
   retreat(s);
 }
 
@@ -683,6 +699,12 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     if (c.retaliate) counterAttack(s, ctx, d, mon);
     return;
   }
+  // staves: a flat chance to block, capped at 75%
+  if (r.blockChance > 0 && kind !== 'nova' && chance(ctx.rng, Math.min(75, r.blockChance) / 100)) {
+    ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
+    if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
+    return;
+  }
   // heavy wind-ups can't be evaded by Evasion Rating (unless Wind Dancer) — guard, interrupt or drink
   if ((!isCast || r.windDancer) && chance(ctx.rng, evadeChance(d.evasion, mon.level))) {
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, evaded: true, monsterUid: mon.uid });
@@ -705,13 +727,21 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
       c.glacial = false;
     }
   }
+  // energy shield soaks what's left after mitigation, and any hit that lands delays its recharge
+  c.esDelayMs = ES_RECHARGE_DELAY_MS;
+  let toEs = 0;
+  if (s.es > 0 && dmg > 0) {
+    toEs = Math.min(s.es, dmg);
+    s.es -= toEs;
+    dmg -= toEs;
+  }
   if (r.mindOverFlesh && s.mana > 0) {
     const fromMana = Math.min(s.mana, (dmg * r.mindOverFlesh) / 100);
     s.mana -= fromMana;
     dmg = Math.round(dmg - fromMana);
   }
   s.life -= dmg;
-  ctx.emit({ t: 'hit', target: 'player', amount: dmg, dmgType: type, absorbed: absorbed || undefined, monsterUid: mon.uid });
+  ctx.emit({ t: 'hit', target: 'player', amount: dmg, dmgType: type, absorbed: absorbed || undefined, es: Math.round(toEs) || undefined, monsterUid: mon.uid });
 }
 
 // ---------- the step ----------
@@ -868,6 +898,8 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   const regenPct = c.buffs.reduce((a, b) => a + (b.regenPct ?? 0), 0);
   s.life = Math.min(d.maxLife, s.life + ((d.lifeRegen + (d.maxLife * regenPct) / 100) * dt) / 1000);
   s.mana = Math.min(d.maxMana, s.mana + (d.manaRegen * dt) / 1000);
+  c.esDelayMs = Math.max(0, c.esDelayMs - dt);
+  if (c.esDelayMs <= 0) s.es = Math.min(d.maxEs, s.es + (d.esRecharge * dt) / 1000);
 
   // instilled flasks
   if (s.life < d.maxLife * 0.5) triggerInstilled(s, ctx, 'lowLife');

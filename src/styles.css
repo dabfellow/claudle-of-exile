@@ -46,6 +46,8 @@
   --life-2: #d0675b;
   --mana: #35589f;
   --mana-2: #6f93e0;
+  --es: #4f9cbb;
+  --es-2: #bfe7f2;
   --ward: #8f7ad6;
   --poison: #9fc26a;
   --phys: #d8d2c4;
@@ -3053,9 +3055,9 @@ g.tut-hint circle.body {
 
 .action-line {
   display: grid;
-  grid-template-columns: 96px 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
+  gap: 2px 8px;
   font-size: var(--fs-xs);
 }
 

@@ -83,6 +83,12 @@ const MIGRATIONS: Record<number, Migration> = {
     if (s.action?.kind === 'combat') s.action = null;
     s.combat = null;
   },
+  9: (raw) => {
+    // energy shield arrived; a fight in progress has no recharge timer yet
+    const s = raw as unknown as GameState;
+    s.es ??= 0;
+    if (s.combat) s.combat.esDelayMs ??= 0;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

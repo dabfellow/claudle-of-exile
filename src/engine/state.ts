@@ -13,7 +13,7 @@ import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -46,6 +46,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     action: null,
     life: 60,
     mana: 30,
+    es: 0,
     combat: null,
     zoneKills: {},
     unlockedZones: ['mudflats'],
@@ -99,10 +100,12 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
     } else {
       s.life = Math.min(d.maxLife, s.life + d.maxLife * TOWN_REGEN * (step / 1000));
       s.mana = Math.min(d.maxMana, s.mana + d.maxMana * TOWN_REGEN * (step / 1000));
+      s.es = Math.min(d.maxEs, s.es + d.maxEs * TOWN_REGEN * (step / 1000));
     }
   }
   if (s.life > d.maxLife) s.life = d.maxLife;
   if (s.mana > d.maxMana) s.mana = d.maxMana;
+  if (s.es > d.maxEs) s.es = d.maxEs;
   vendorTick(s, ctx.rng);
   checkAchievements(s, ctx);
 }

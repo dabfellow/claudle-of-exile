@@ -59,6 +59,9 @@ export interface Derived {
   lifeRegen: number;
   maxMana: number;
   manaRegen: number;
+  maxEs: number;
+  /** energy shield recharged per second once recharge has started */
+  esRecharge: number;
   armour: number;
   evasion: number;
   hit: Record<DamageType, [number, number]>;
@@ -73,6 +76,8 @@ export interface Derived {
   castSpeed: number;
   /** how long the default attack takes, ms */
   attackMs: number;
+  /** wielding a bow: every attack is a ranged projectile, never melee */
+  ranged: boolean;
   critChance: number;
   critMulti: number;
   res: { fire: number; cold: number; light: number };
@@ -91,12 +96,16 @@ export const RES_CAP = 75;
 export const BASE_REGEN_PCT = 0.5;
 /** % of max mana regenerated per second before modifiers */
 export const BASE_MANA_REGEN_PCT = 4;
+/** % of max energy shield recharged per second before modifiers */
+export const ES_RECHARGE_PCT = 20;
+/** energy shield starts recharging after this long without being hit */
+export const ES_RECHARGE_DELAY_MS = 2000;
 
 /** What each attribute point grants (shown in tooltips too). */
 export const ATTRIBUTE_EFFECTS = {
   str: { lifePer: 0.5, physPctPer: 0.2 },
   dex: { accuracyPer: 2, evasionPctPer: 0.2 },
-  int: { manaPer: 0.5, elemPctPer: 0.2 },
+  int: { manaPer: 0.5, elemPctPer: 0.2, esPctPer: 0.2 },
 };
 
 /** Raw stat totals from gear, passives, hideout and active flask buffs. */
@@ -108,6 +117,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
     if (base.slot !== 'weapon') {
       st.armour += base.armour ?? 0;
       st.evasion += base.evasion ?? 0;
+      st.energyShield += base.energyShield ?? 0;
     }
     addStats(st, itemStats(item));
   }
@@ -149,6 +159,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   const maxMana = raw.bloodPact
     ? 0
     : Math.max(0, Math.round((30 + 6 * (combatLevel - 1) + raw.mana + attributes.int * A.int.manaPer) * (1 + raw.manaPct / 100)));
+  const maxEs = Math.round(raw.energyShield * (1 + (raw.energyShieldPct + attributes.int * A.int.esPctPer) / 100));
   let armour = Math.round(raw.armour * (1 + raw.armourPct / 100) * (1 + raw.armourMore / 100));
   let evasion = Math.round(raw.evasion * (1 + (raw.evasionPct + attributes.dex * A.dex.evasionPctPer) / 100));
   if (raw.bastion) {
@@ -192,6 +203,8 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     lifeRegen: raw.lifeRegen + (maxLife * (BASE_REGEN_PCT + raw.lifeRegenPct)) / 100,
     maxMana,
     manaRegen: maxMana ? ((maxMana * BASE_MANA_REGEN_PCT) / 100) * (1 + raw.manaRegenPct / 100) + raw.manaRegenFlat : 0,
+    maxEs,
+    esRecharge: ((maxEs * ES_RECHARGE_PCT) / 100) * (1 + raw.esRechargePct / 100),
     armour,
     evasion,
     hit,
@@ -201,6 +214,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     attackSpeed,
     castSpeed,
     attackMs,
+    ranged: weapon?.family === 'bow',
     critChance,
     critMulti,
     res: { fire: cap(raw.fireRes), cold: cap(raw.coldRes), light: cap(raw.lightRes) },

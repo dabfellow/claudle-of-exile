@@ -243,6 +243,7 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
 const SUMMARY: [string, (d: Derived) => number, (n: number) => string][] = [
   ['Life', (d) => d.maxLife, (n) => n.toFixed(0)],
   ['Mana', (d) => d.maxMana, (n) => n.toFixed(0)],
+  ['Energy Shield', (d) => d.maxEs, (n) => n.toFixed(0)],
   ['DPS', (d) => d.dps, (n) => n.toFixed(1)],
   ['Armour', (d) => d.armour, (n) => n.toFixed(0)],
   ['Evasion', (d) => d.evasion, (n) => n.toFixed(0)],

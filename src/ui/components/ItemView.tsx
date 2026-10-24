@@ -1,4 +1,4 @@
-import { attributeReq, baseDef, uniqueDef } from '../../data/bases';
+import { attributeReq, baseDef, uniqueDef, WEAPON_FAMILIES } from '../../data/bases';
 import { BASE_ATTACK_MS } from '../../data/gems';
 import { characterLevel } from '../../engine/character';
 import { slotsFor } from '../../engine/equipment';
@@ -44,6 +44,7 @@ export function compareItem(s: GameState, item: Item): { slot: EquipSlot; deltas
     ['Max Life', (d) => d.maxLife],
     ['Armour', (d) => d.armour],
     ['Evasion', (d) => d.evasion],
+    ['Energy Shield', (d) => d.maxEs],
     ['Fire Res', (d) => d.res.fire],
     ['Cold Res', (d) => d.res.cold],
     ['Lightning Res', (d) => d.res.light],
@@ -62,7 +63,7 @@ export function upgradeScore(s: GameState, item: Item): number {
   const c = compareItem(s, item);
   if (!c) return 0;
   const get = (l: string) => c.deltas.find((d) => d.label === l)?.value ?? 0;
-  return get('DPS') * 2 + get('Max Life') + get('Armour') * 0.1 + get('Evasion') * 0.1 + (get('Fire Res') + get('Cold Res') + get('Lightning Res')) * 0.6;
+  return get('DPS') * 2 + get('Max Life') + get('Energy Shield') * 0.8 + get('Armour') * 0.1 + get('Evasion') * 0.1 + (get('Fire Res') + get('Cold Res') + get('Lightning Res')) * 0.6;
 }
 
 export function ItemTip({ item, state, compare = true, pinned = false }: { item: Item; state?: GameState; compare?: boolean; pinned?: boolean }) {
@@ -80,7 +81,7 @@ export function ItemTip({ item, state, compare = true, pinned = false }: { item:
       </div>
       <div className="item-tip-body">
         <div className="muted small">
-          {RARITY_LABEL[item.rarity]} {base.slot} · Item Level {item.ilvl}
+          {RARITY_LABEL[item.rarity]} {base.family ? `${base.twoHanded ? 'two-handed ' : ''}${WEAPON_FAMILIES[base.family].name.toLowerCase()}` : base.slot} · Item Level {item.ilvl}
         </div>
         {base.phys && (
           <>
@@ -101,6 +102,11 @@ export function ItemTip({ item, state, compare = true, pinned = false }: { item:
         {base.evasion ? (
           <div>
             Evasion Rating: <b>{base.evasion}</b>
+          </div>
+        ) : null}
+        {base.energyShield ? (
+          <div>
+            Energy Shield: <b>{base.energyShield}</b>
           </div>
         ) : null}
         <Requirements item={item} state={state} />

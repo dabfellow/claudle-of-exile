@@ -27,13 +27,23 @@ export function equip(s: GameState, ctx: Ctx, uid: number, slot?: EquipSlot): st
   const idx = s.inventory.findIndex((i) => i.uid === uid);
   if (idx < 0) return 'Item not in inventory';
   const item = s.inventory[idx];
+  const base = baseDef(item.baseId);
   const reason = equipReason(s, item);
   if (reason) return reason;
   const options = slotsFor(item);
   const target = slot && options.includes(slot) ? slot : (options.find((o) => !s.equipment[o]) ?? options[0]);
+  // two-handers and offhands push each other out
+  const mainHand = s.equipment.weapon ? baseDef(s.equipment.weapon.baseId) : null;
+  const clash: EquipSlot | null =
+    target === 'weapon' && base.twoHanded && s.equipment.offhand ? 'offhand' : target === 'offhand' && mainHand?.twoHanded ? 'weapon' : null;
+  if (clash && s.equipment[target] && inventoryFull(s)) return 'Inventory full';
   s.inventory.splice(idx, 1);
   const prev = s.equipment[target];
   if (prev) s.inventory.splice(idx, 0, prev);
+  if (clash) {
+    s.inventory.push(s.equipment[clash]!);
+    delete s.equipment[clash];
+  }
   s.equipment[target] = item;
   ctx.emit({ t: 'equip', uid });
   return null;
