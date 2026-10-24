@@ -437,6 +437,10 @@ class GameStore {
         this.addFeed(e.text, e.tone ?? 'info');
         if (e.tone === 'warn') this.pushToast(e.text, 'warn');
         break;
+      case 'craftDone':
+        this.addFeed(e.text, 'good');
+        this.pushToast(e.text, 'good');
+        break;
     }
   }
 }

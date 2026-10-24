@@ -1,5 +1,6 @@
 import type { SkillId } from '../engine/types';
 import { BASES, type BaseDef } from './bases';
+import { SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB } from './craftMats';
 import type { GemAttr } from './gems';
 
 export interface SkillDef {
@@ -40,6 +41,11 @@ export interface SkillAction {
   color: string;
   /** campaign area that must be unlocked first */
   area?: string;
+  /** chance each action gives its `outputs` at all (alternate nodes trade base material for secondaries) */
+  outputChance?: number;
+  /** batch recipe: makes this many at once; `batchOf` is the single recipe it scales */
+  batch?: number;
+  batchOf?: string;
 }
 
 const gather = (
@@ -54,21 +60,51 @@ const gather = (
   bonus?: SkillAction['bonus'],
 ): SkillAction => ({ id, skill, name, level, intervalMs, xp, outputs: { [output]: 1 }, bonus, color });
 
+const ALT_YIELD = 0.5;
+
 const GATHERING: SkillAction[] = [
   gather('mining', 'mine_copper', 'Copper Vein', 1, 3000, 7, 'copper_ore', '#c8743f', [{ id: 'rough_gem', chance: 0.02, qty: 1 }]),
-  { ...gather('mining', 'mine_iron', 'Iron Vein', 15, 3500, 18, 'iron_ore', '#9aa3ad', [{ id: 'rough_gem', chance: 0.03, qty: 1 }]), area: 'ashwood' },
+  { ...gather('mining', 'mine_scorched', 'Scorched Seam', 5, 3500, 9, 'copper_ore', '#e2603f', [{ id: 'scorched_fossil', chance: 0.08, qty: 1 }]), outputChance: ALT_YIELD },
+  { ...gather('mining', 'mine_frigid', 'Frigid Seam', 9, 3500, 11, 'copper_ore', '#7fc8f8', [{ id: 'frigid_fossil', chance: 0.08, qty: 1 }]), outputChance: ALT_YIELD },
+  { ...gather('mining', 'mine_iron', 'Iron Vein', 15, 3500, 18, 'iron_ore', '#9aa3ad', [{ id: 'rough_gem', chance: 0.03, qty: 1 }, { id: 'dense_fossil', chance: 0.03, qty: 1 }]), area: 'ashwood' },
+  { ...gather('mining', 'mine_storm', 'Storm-struck Vein', 17, 4000, 20, 'iron_ore', '#f2d14c', [{ id: 'metallic_fossil', chance: 0.08, qty: 1 }]), outputChance: ALT_YIELD, area: 'ashwood' },
+  { ...gather('mining', 'mine_jagged', 'Jagged Vein', 19, 4000, 22, 'iron_ore', '#c9c9d3', [{ id: 'serrated_fossil', chance: 0.08, qty: 1 }]), outputChance: ALT_YIELD, area: 'ashwood' },
   { ...gather('mining', 'mine_gem', 'Glimmering Geode', 22, 5000, 30, 'rough_gem', '#d0569b'), area: 'crypt' },
   { ...gather('mining', 'mine_mithril', 'Mithril Vein', 30, 4000, 38, 'mithril_ore', '#6fc3d8', [{ id: 'rough_gem', chance: 0.05, qty: 1 }]), area: 'shipgrave' },
 
-  gather('woodcutting', 'cut_ash', 'Ash Tree', 1, 3000, 7, 'ash_log', '#b89a72'),
-  { ...gather('woodcutting', 'cut_oak', 'Oak Tree', 15, 3500, 18, 'oak_log', '#8a6338'), area: 'ashwood' },
+  gather('woodcutting', 'cut_ash', 'Ash Tree', 1, 3000, 7, 'ash_log', '#b89a72', [{ id: 'ash_resin', chance: 0.03, qty: 1 }]),
+  { ...gather('woodcutting', 'cut_ley', 'Ley-touched Ash', 8, 3500, 10, 'ash_log', '#b9a7ff', [{ id: 'arcane_dust', chance: 1, qty: 1 }, { id: 'ash_resin', chance: 0.04, qty: 1 }]), outputChance: ALT_YIELD },
+  { ...gather('woodcutting', 'cut_oak', 'Oak Tree', 15, 3500, 18, 'oak_log', '#8a6338', [{ id: 'oak_resin', chance: 0.03, qty: 1 }]), area: 'ashwood' },
+  { ...gather('woodcutting', 'cut_weeping', 'Weeping Oak', 18, 4000, 21, 'oak_log', '#b07a2c', [{ id: 'oak_resin', chance: 0.1, qty: 1 }]), outputChance: ALT_YIELD, area: 'ashwood' },
   { ...gather('woodcutting', 'cut_yew', 'Yew Tree', 30, 4000, 38, 'yew_log', '#6b3d2c'), area: 'shipgrave' },
 
-  gather('harvesting', 'herb_sun', 'Sunpetal Patch', 1, 3000, 7, 'sunpetal', '#f2c94c'),
-  { ...gather('harvesting', 'herb_frost', 'Frostleaf Thicket', 12, 3500, 16, 'frostleaf', '#7fc8f8'), area: 'ashwood' },
+  gather('harvesting', 'herb_sun', 'Sunpetal Patch', 1, 3000, 7, 'sunpetal', '#f2c94c', [{ id: 'essence_vitality_1', chance: 0.06, qty: 1 }]),
+  {
+    ...gather('harvesting', 'herb_emberbloom', 'Emberbloom Bed', 6, 3500, 9, 'sunpetal', '#ff8a4a', [
+      { id: 'essence_embers_1', chance: 0.06, qty: 1 },
+      { id: 'essence_storm_1', chance: 0.06, qty: 1 },
+    ]),
+    outputChance: ALT_YIELD,
+  },
+  {
+    ...gather('harvesting', 'herb_frost', 'Frostleaf Thicket', 12, 3500, 16, 'frostleaf', '#7fc8f8', [
+      { id: 'essence_frost_2', chance: 0.05, qty: 1 },
+      { id: 'essence_vitality_2', chance: 0.02, qty: 1 },
+    ]),
+    area: 'ashwood',
+  },
+  {
+    ...gather('harvesting', 'herb_windreed', 'Windreed Marsh', 16, 4000, 19, 'frostleaf', '#a8d8b0', [
+      { id: 'essence_embers_2', chance: 0.05, qty: 1 },
+      { id: 'essence_storm_2', chance: 0.05, qty: 1 },
+      { id: 'essence_haste_2', chance: 0.02, qty: 1 },
+    ]),
+    outputChance: ALT_YIELD,
+    area: 'ashwood',
+  },
   { ...gather('harvesting', 'herb_ember', 'Emberroot Bed', 25, 4000, 32, 'emberroot', '#e2603f'), area: 'crypt' },
   { ...gather('harvesting', 'herb_void', 'Voidbloom Grove', 40, 5000, 55, 'voidbloom', '#9b6dde'), area: 'stormcliffs' },
-];
+].map((a) => ({ ...a, bonus: [...(a.bonus ?? []), { id: SHARD_FOR[a.skill]!, chance: SHARD_CHANCE, qty: 1 }] }));
 
 function smithInputs(b: BaseDef): Record<string, number> {
   const tier = b.reqLevel < 10 ? 0 : b.reqLevel < 22 ? 1 : 2;
@@ -121,6 +157,34 @@ const ALCHEMY: SkillAction[] = [
   { id: 'orb_alchemy', skill: 'alchemy', name: 'Orb of Alchemy', level: 40, intervalMs: 6000, xp: 90, inputs: { arcane_dust: 25, voidbloom: 2 }, outputs: { alchemy: 1 }, color: '#f0c14b', area: 'shipgrave' },
 ];
 
+const FUSING: SkillAction[] = Object.entries(SHARD_ORB).map(([shard, orb]) => ({
+  id: `fuse_${shard}`,
+  skill: 'alchemy' as const,
+  name: `Fuse ${orb === 'augment' ? 'Augmentation' : orb === 'transmute' ? 'Transmutation' : 'Alteration'} Shards`,
+  level: 1,
+  intervalMs: 1000,
+  xp: 2,
+  inputs: { [shard]: SHARDS_PER_ORB },
+  outputs: { [orb]: 1 },
+  color: '#9fb8e0',
+}));
+
+/** ×10 orb recipes: 15% cheaper per orb, for long idle sessions. */
+export const BATCH_SIZE = 10;
+export const BATCH_INPUT_MULT = 8.5;
+
+const BATCHES: SkillAction[] = ALCHEMY.filter((a) => a.outputs && !a.flaskId).map((a) => ({
+  ...a,
+  id: `${a.id}_x${BATCH_SIZE}`,
+  name: `${a.name} ×${BATCH_SIZE}`,
+  intervalMs: a.intervalMs * BATCH_SIZE,
+  xp: a.xp * BATCH_SIZE,
+  inputs: Object.fromEntries(Object.entries(a.inputs!).map(([id, n]) => [id, Math.ceil(n * BATCH_INPUT_MULT)])),
+  outputs: Object.fromEntries(Object.entries(a.outputs!).map(([id, n]) => [id, n * BATCH_SIZE])),
+  batch: BATCH_SIZE,
+  batchOf: a.id,
+}));
+
 const GEMCUTTING: SkillAction[] = [
   { id: 'cut_skill_str', skill: 'gemcutting', name: 'Ruby Skill Gem', level: 1, intervalMs: 6000, xp: 20, inputs: { rough_gem: 1, arcane_dust: 6 }, gem: { kind: 'skill', attr: 'str' }, color: '#d0574a' },
   { id: 'cut_skill_dex', skill: 'gemcutting', name: 'Emerald Skill Gem', level: 1, intervalMs: 6000, xp: 20, inputs: { rough_gem: 1, arcane_dust: 6 }, gem: { kind: 'skill', attr: 'dex' }, color: '#5fbf6a' },
@@ -135,7 +199,7 @@ const GEMCUTTING: SkillAction[] = [
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-export const ACTIONS: SkillAction[] = [...GATHERING, ...SMITHING, ...ALCHEMY, ...GEMCUTTING].map((a) => ({
+export const ACTIONS: SkillAction[] = [...GATHERING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING].map((a) => ({
   ...a,
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
 }));

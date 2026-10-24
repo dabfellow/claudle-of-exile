@@ -4,6 +4,7 @@ import { inventoryFull } from './hideout';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState, Item } from './types';
 import { characterLevel } from './character';
+import { isCraftLocked } from './crafting';
 
 export function slotsFor(item: Item): EquipSlot[] {
   const slot = baseDef(item.baseId).slot;
@@ -26,6 +27,7 @@ export function equipReason(s: GameState, item: Item): string | null {
 export function equip(s: GameState, ctx: Ctx, uid: number, slot?: EquipSlot): string | null {
   const idx = s.inventory.findIndex((i) => i.uid === uid);
   if (idx < 0) return 'Item not in inventory';
+  if (isCraftLocked(s, uid)) return 'Being crafted';
   const item = s.inventory[idx];
   const base = baseDef(item.baseId);
   const reason = equipReason(s, item);

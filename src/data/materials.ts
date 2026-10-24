@@ -1,4 +1,6 @@
-export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'currency' | 'gold';
+import { CRAFT_MATERIALS } from './craftMats';
+
+export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'currency' | 'gold';
 
 export interface MaterialDef {
   id: string;
@@ -29,6 +31,8 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'voidbloom', name: 'Voidbloom', kind: 'herb', color: '#9b6dde', value: 20 },
 
   { id: 'arcane_dust', name: 'Arcane Dust', kind: 'dust', color: '#b9a7ff', value: 3, desc: 'Salvaged from items. Used in Alchemy.' },
+
+  ...CRAFT_MATERIALS,
 ];
 
 export interface CurrencyDef extends MaterialDef {

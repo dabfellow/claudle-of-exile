@@ -1157,6 +1157,41 @@ h3 {
   font-size: var(--fs-sm);
 }
 
+/* smithing catalyst slot and bench Craft until… panel */
+.catalyst-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+.catalyst-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.catalyst-row label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+}
+.catalyst-row select.input {
+  width: 100%;
+  min-width: 0;
+  font-size: var(--fs-sm);
+}
+.fossil-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.fossil-chips .btn.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
 /* activity / recipe cards: one layout for every gathering and production skill.
    Order: what it is → status → produces → requires → action; meta sits under the title. */
 .action-grid {

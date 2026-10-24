@@ -1,6 +1,6 @@
 # Skilling Rework — life skills as the crafting economy
 
-Goes with [GDD.md](GDD.md) §5 and [TREES.md](TREES.md) §2. **Proposal, not built yet.**
+Goes with [GDD.md](GDD.md) §5 and [TREES.md](TREES.md) §2. **The Lv 1–20 band is built**; later bands are placeholders.
 
 Right now every life skill works the same way: pick the highest node or recipe you've unlocked, wait. Gathering
 gives one plain material, Smithing makes plain normal bases, Alchemy makes a few low orbs. Nothing you gather

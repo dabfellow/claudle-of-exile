@@ -93,6 +93,8 @@ export const MAP_RARITY = [0, 10, 20, 35];
 export const MAP_ILVL = [0, 0, 0, 1];
 export const VENDOR_SLOTS = [6, 8, 10, 12];
 export const VENDOR_REFRESH_MS = 10 * 60 * 1000;
+/** Craft until…: time per orb or Essence spent. */
+export const CRAFT_STEP_MS = 1500;
 
 export interface BenchCraft {
   id: string;

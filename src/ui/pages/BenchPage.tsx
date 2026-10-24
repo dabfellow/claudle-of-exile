@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { affixDef } from '../../data/affixes';
 import { ACHIEVEMENT_BY_ID } from '../../data/achievements';
+import { ESSENCES, FOSSILS, fossilDef } from '../../data/craftMats';
 import { BENCH_CRAFTS } from '../../data/hideout';
 import { achievementProgress } from '../../engine/achievements';
 import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { currencyDef } from '../../data/materials';
 import { equipFlask, unequipFlask } from '../../engine/combat';
-import { applyOrb, benchCraft, benchCraftReason, findItem, orbReason, salvage } from '../../engine/crafting';
+import { applyEssence, applyOrb, benchCraft, benchCraftReason, essenceReason, findItem, FOSSIL_ORBS, orbReason, salvage } from '../../engine/crafting';
 import { applyFlaskOrb, enchantFlask, findFlask, flaskName, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
 import { stationLevel } from '../../engine/hideout';
 import { affixRangeText, itemName, salvageValue } from '../../engine/items';
 import type { FlaskInstance, GameState, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { Badge, Cost, EmptyState, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
+import { CraftUntilCard } from '../components/CraftUntilCard';
 import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
 import { Orb } from '../components/Icon';
 import { ItemTip } from '../components/ItemView';
@@ -97,6 +99,7 @@ export function BenchPage() {
   const [flaskUid, setFlaskUid] = useState<number | null>(null);
   const [flash, setFlash] = useState(0);
   const [history, setHistory] = useState<{ id: number; text: string; name: string; rarity: Item['rarity'] }[]>([]);
+  const [fossil, setFossil] = useState<string | null>(null);
   const item = uid !== null ? findItem(s, uid) : undefined;
   const benchLvl = stationLevel(s, 'bench');
   const flask = flaskUid !== null ? findFlask(s, flaskUid) : undefined;
@@ -109,12 +112,25 @@ export function BenchPage() {
     setUid(null);
   };
 
+  const fossilFor = (orbId: string) => (fossil && FOSSIL_ORBS.has(orbId) ? fossil : null);
   const use = (orbId: string) => {
     if (!item) return;
-    const err = game.act((st, ctx) => applyOrb(st, ctx, orbId, item.uid));
+    const f = fossilFor(orbId);
+    const err = game.act((st, ctx) => applyOrb(st, ctx, orbId, item.uid, f));
     if (!err) {
-      setFlash((f) => f + 1);
-      setHistory((h) => [{ id: Date.now() + Math.random(), text: currencyDef(orbId).name, name: itemName(item), rarity: item.rarity }, ...h].slice(0, 12));
+      setFlash((n) => n + 1);
+      const text = f ? `${currencyDef(orbId).name} + ${fossilDef(f)!.name}` : currencyDef(orbId).name;
+      setHistory((h) => [{ id: Date.now() + Math.random(), text, name: itemName(item), rarity: item.rarity }, ...h].slice(0, 12));
+      if (f && (s.bank[f] ?? 0) <= 1) setFossil(null);
+    }
+  };
+
+  const essence = (id: string) => {
+    if (!item) return;
+    const err = game.act((st, ctx) => applyEssence(st, ctx, id, item.uid));
+    if (!err) {
+      setFlash((n) => n + 1);
+      setHistory((h) => [{ id: Date.now() + Math.random(), text: ESSENCES.find((e) => e.id === id)!.name, name: itemName(item), rarity: item.rarity }, ...h].slice(0, 12));
     }
   };
 
@@ -185,7 +201,7 @@ export function BenchPage() {
               {ORB_ORDER.map((id) => {
                 const c = currencyDef(id);
                 const n = s.bank[id] ?? 0;
-                const reason = item ? orbReason(s, id, item.uid) : 'Select an item';
+                const reason = item ? orbReason(s, id, item.uid, fossilFor(id)) : 'Select an item';
                 return (
                   <Tooltip
                     key={id}
@@ -210,8 +226,45 @@ export function BenchPage() {
                 );
               })}
             </div>
+            {FOSSILS.some((f) => s.bank[f.id]) && (
+              <div className="fossil-chips">
+                <span className="dim small">Fossil:</span>
+                {FOSSILS.filter((f) => s.bank[f.id]).map((f) => (
+                  <button
+                    key={f.id}
+                    className={`btn sm ${fossil === f.id ? 'selected' : ''}`}
+                    title={`${f.desc}. Used up with the next orb that rolls modifiers.`}
+                    onClick={() => setFossil(fossil === f.id ? null : f.id)}
+                  >
+                    <MatIcon id={f.id} size={12} /> {f.name.replace(' Fossil', '')} <span className="dim">×{s.bank[f.id]}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {item && <div className="dim small" style={{ marginTop: 10 }}>Tip: hover an item and hold Alt to see modifier tiers.</div>}
           </div>
+
+          {ESSENCES.some((e) => s.bank[e.id]) && (
+            <div className="card">
+              <div className="card-title">
+                Essences
+                <span className="grow" />
+                <span className="card-hint">Makes the item Magic with this modifier guaranteed</span>
+              </div>
+              <div className="fossil-chips" style={{ marginTop: 0 }}>
+                {ESSENCES.filter((e) => s.bank[e.id]).map((e) => {
+                  const reason = item ? essenceReason(s, e.id, item.uid) : 'Select an item';
+                  return (
+                    <button key={e.id} className="btn sm" disabled={!!reason} title={reason ?? affixRangeText(e.affixId, e.tier)} onClick={() => essence(e.id)}>
+                      <MatIcon id={e.id} size={12} /> {e.name} <span className="dim">×{s.bank[e.id]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <CraftUntilCard s={s} item={item} />
 
           <div className="card">
             <div className="card-title">

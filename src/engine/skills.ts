@@ -1,19 +1,21 @@
+import { affixDef } from '../data/affixes';
+import { essenceDef, fossilDef, modBias, resinDef } from '../data/craftMats';
 import { flaskDef } from '../data/flasks';
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
 import { ALCH_DOUBLE, ALCH_SPEED, FORGE_ILVL, FORGE_SPEED } from '../data/hideout';
 import { HERB_TIERS, ORB_TIERS } from '../data/skillTree';
 import { actionDef, type SkillAction } from '../data/skills';
 import { ZONES, zoneDef } from '../data/zones';
-import { addBank, canAfford, payCost } from './bank';
+import { addBank, canAfford, hasItem, payCost } from './bank';
 import type { Ctx } from './context';
 import { newFlask, rerollMagic } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { inventoryFull } from './hideout';
-import { createItem } from './items';
+import { allMods, createItem, salvageValue } from './items';
 import { chance, pick } from './rng';
 import { skillTreeStats, type TreeStats } from './skillTree';
 import type { Derived } from './stats';
-import type { GameState, SkillId } from './types';
+import type { GameState, Item, SkillId, SmithCatalyst } from './types';
 import { levelOf } from './xp';
 
 export function skillLevel(s: GameState, skill: SkillId): number {
@@ -49,9 +51,21 @@ export function smithIlvlCap(s: GameState): number {
   return Math.max(...ZONES.filter((z) => s.unlockedZones.includes(z.id)).map((z) => z.levelRange[1]));
 }
 
-export function smithIlvl(s: GameState): number {
-  const bonus = FORGE_ILVL[(s.hideout.forge ?? 1) - 1] + (skillTreeStats(s).smithIlvl ?? 0);
+/** Item level of a smithed base; `resin` is the bonus from a Resin in the catalyst slot. */
+export function smithIlvl(s: GameState, resin = 0): number {
+  const bonus = FORGE_ILVL[(s.hideout.forge ?? 1) - 1] + resin;
   return Math.min(smithIlvlCap(s), skillLevel(s, 'smithing') + bonus);
+}
+
+/** Item levels the selected Resin would add (0 when none is selected or you're out). */
+export function resinBonus(s: GameState): number {
+  const id = s.smithCatalyst.resin;
+  if (!id || !hasItem(s, id, 1)) return 0;
+  return resinDef(id)!.ilvl + (skillTreeStats(s).resinIlvl ?? 0);
+}
+
+export function setSmithCatalyst(s: GameState, patch: Partial<SmithCatalyst>): void {
+  s.smithCatalyst = { ...s.smithCatalyst, ...patch };
 }
 
 export function actionBlocker(s: GameState, a: SkillAction): string | null {
@@ -86,13 +100,62 @@ function give(s: GameState, outputs: Record<string, number>, id: string, n: numb
   outputs[id] = (outputs[id] ?? 0) + n;
 }
 
-/** Inputs to pay, after Steady Hands and Dust Saver. */
+/** Bulk Brewer: batch recipes cost this many times the single recipe instead of BATCH_INPUT_MULT. */
+export const BULK_BREWER_MULT = 7.5;
+
+/** Inputs to pay, after Steady Hands and Bulk Brewer. */
 function inputsToPay(a: SkillAction, t: TreeStats, ctx: Ctx): Record<string, number> {
   if (!a.inputs) return {};
   if (t.inputSave && chance(ctx.rng, t.inputSave / 100)) return {};
-  const cost = { ...a.inputs };
-  if (cost.arcane_dust && t.dustSaver && chance(ctx.rng, t.dustSaver / 100)) delete cost.arcane_dust;
-  return cost;
+  if (a.batchOf && t.bulkBrewer) {
+    const single = actionDef(a.batchOf).inputs!;
+    return Object.fromEntries(Object.entries(single).map(([id, n]) => [id, Math.ceil(n * BULK_BREWER_MULT)]));
+  }
+  return { ...a.inputs };
+}
+
+/** A catalyst you selected ran out: clear it and keep smithing without it. */
+function catalystRanOut(s: GameState, ctx: Ctx, slot: 'fossil' | 'resin'): void {
+  const id = s.smithCatalyst[slot]!;
+  s.smithCatalyst = { ...s.smithCatalyst, [slot]: null };
+  ctx.emit({ t: 'info', text: `Out of ${slot === 'fossil' ? fossilDef(id)?.name : resinDef(id)?.name}: smithing without it` });
+}
+
+/** Smithing: the base, steered by the catalyst slot. Repeat-until stops the action on a hit. */
+function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats): void {
+  if (s.smithCatalyst.resin && !hasItem(s, s.smithCatalyst.resin, 1)) catalystRanOut(s, ctx, 'resin');
+  if (s.smithCatalyst.fossil && !hasItem(s, s.smithCatalyst.fossil, 1)) catalystRanOut(s, ctx, 'fossil');
+  const cat = s.smithCatalyst;
+  const resin = resinBonus(s);
+  if (cat.resin) s.bank[cat.resin] -= 1;
+  const magic = t.grandmaster || (t.smithMagic && chance(ctx.rng, t.smithMagic / 100));
+  // the Fossil only matters (and is only used up) when the base comes out Magic
+  const fossil = magic ? cat.fossil : null;
+  const item = createItem(s, a.baseId!, smithIlvl(s, resin), magic ? 'magic' : 'normal', ctx.rng, fossil ? modBias(fossil) : undefined);
+  if (fossil && !(t.steadyTemper && chance(ctx.rng, t.steadyTemper / 100))) s.bank[fossil] -= 1;
+  s.lifetime.itemsSmithed += 1;
+
+  const repeating = cat.until && !!cat.fossil;
+  if (repeating && fossil && fossilHit(item, fossil)) {
+    s.inventory.push(item);
+    ctx.emit({ t: 'loot', item });
+    ctx.emit({ t: 'info', text: `${a.name} rolled a ${fossilDef(fossil)!.name} modifier. Stopped.`, tone: 'good' });
+    s.action = null;
+    return;
+  }
+  if (repeating && cat.salvageMisses) {
+    addBank(s, 'arcane_dust', salvageValue(item));
+    s.lifetime.salvaged += 1;
+    return;
+  }
+  s.inventory.push(item);
+  ctx.emit({ t: 'loot', item });
+}
+
+/** Did a Fossil-steered roll land one of the Fossil's favoured modifiers? */
+export function fossilHit(item: Item, fossilId: string): boolean {
+  const more = fossilDef(fossilId)!.more;
+  return allMods(item).some((m) => more.includes(affixDef(m.affixId).group));
 }
 
 /** Gemcutting: a random gem of the recipe's kind. Signature supports favour skills you own. */
@@ -124,14 +187,11 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   const double = a.skill === 'alchemy' && chance(ctx.rng, ALCH_DOUBLE[(s.hideout.alchemy_table ?? 1) - 1]);
   const mult = double ? 2 : 1;
 
-  for (const [id, n] of Object.entries(a.outputs ?? {})) {
+  // alternate nodes trade some of their base material for a better secondary
+  const yields = a.outputChance === undefined || chance(ctx.rng, a.outputChance);
+  for (const [id, n] of Object.entries(yields ? (a.outputs ?? {}) : {})) {
     let qty = n * mult;
-    if (a.skill === 'mining' && id.endsWith('_ore')) {
-      if (t.motherlode) qty *= 2;
-      if (t.doubleOre && chance(ctx.rng, t.doubleOre / 100)) qty *= 2;
-    }
-    if (a.skill === 'woodcutting' && t.doubleLogs && chance(ctx.rng, t.doubleLogs / 100)) qty *= 2;
-    if (a.skill === 'harvesting' && t.doubleHerbs && chance(ctx.rng, t.doubleHerbs / 100)) qty *= 2;
+    if (a.skill === 'mining' && id.endsWith('_ore') && t.motherlode) qty *= 2;
     // Transmuter: crafted orbs sometimes come out one tier higher
     const tier = ORB_TIERS.indexOf(id);
     const outId = tier >= 0 && tier < ORB_TIERS.length - 1 && t.transmuter && chance(ctx.rng, t.transmuter / 100) ? ORB_TIERS[tier + 1] : id;
@@ -142,18 +202,14 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
     if (herb >= 0 && herb < HERB_TIERS.length - 1 && t.rareBlooms && chance(ctx.rng, t.rareBlooms / 100)) give(s, outputs, HERB_TIERS[herb + 1], 1);
   }
   for (const b of a.bonus ?? []) {
-    const gemBoost = b.id === 'rough_gem' ? 1 + (t.gemChance ?? 0) / 100 : 1;
-    if (chance(ctx.rng, b.chance * gemBoost)) give(s, outputs, b.id, b.qty);
+    const boost = b.id === 'rough_gem' ? t.gemChance : fossilDef(b.id) ? t.fossilChance : resinDef(b.id) ? t.resinChance : 0;
+    if (!chance(ctx.rng, b.chance * (1 + (boost ?? 0) / 100))) continue;
+    const upgrade = essenceDef(b.id)?.upgrade;
+    give(s, outputs, upgrade && t.distiller && chance(ctx.rng, t.distiller / 100) ? upgrade : b.id, b.qty);
   }
   if (a.skill === 'woodcutting' && t.birdsNest && chance(ctx.rng, t.birdsNest / 100)) give(s, outputs, pick(ctx.rng, HERB_TIERS.slice(0, 2)), 1);
 
-  if (a.baseId) {
-    const magic = t.grandmaster || (t.smithMagic && chance(ctx.rng, t.smithMagic / 100));
-    const item = createItem(s, a.baseId, smithIlvl(s), magic ? 'magic' : 'normal', ctx.rng);
-    s.inventory.push(item);
-    s.lifetime.itemsSmithed += 1;
-    ctx.emit({ t: 'loot', item });
-  }
+  if (a.baseId) smithBase(s, ctx, a, t);
   if (a.flaskId) {
     s.lifetime.flasksBrewed += mult;
     for (let i = 0; i < mult; i++) {

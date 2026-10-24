@@ -24,6 +24,9 @@ const MATERIAL_GROUPS: { label: string; kinds: string[] }[] = [
   { label: 'Ores & Gems', kinds: ['ore', 'gem'] },
   { label: 'Logs', kinds: ['log'] },
   { label: 'Herbs', kinds: ['herb'] },
+  { label: 'Fossils', kinds: ['fossil'] },
+  { label: 'Essences', kinds: ['essence'] },
+  { label: 'Resin & Shards', kinds: ['resin', 'shard'] },
   { label: 'Other', kinds: ['dust'] },
 ];
 

@@ -1,3 +1,4 @@
+import { BOSS_CRAFT_MAT, ESSENCES, FOSSILS } from '../data/craftMats';
 import { bossTable, dropTable, type RarityWeights } from '../data/drops';
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
 import { MAP_ILVL } from '../data/hideout';
@@ -80,6 +81,11 @@ export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: Zon
     if (chance(rng, boss.flaskChance)) dropFlask(s, ctx, ilvl);
     if (chance(rng, boss.gemChance)) dropGem(s, ctx);
     if (zone.uniques.length && chance(rng, boss.uniqueChance * (1 + d.itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, zone.uniques), ilvl));
+    if (chance(rng, BOSS_CRAFT_MAT.chance)) {
+      // Greater Essences only from the later Act 1 areas
+      const essences = ESSENCES.filter((e) => e.tier === 0 || zone.levelRange[0] >= 12);
+      giveCurrency(pick(rng, [...FOSSILS, ...essences]).id, rInt(rng, ...BOSS_CRAFT_MAT.qty));
+    }
     return;
   }
 

@@ -1,11 +1,12 @@
 import { useCallback, useState } from 'react';
 import { baseDef } from '../../data/bases';
+import { FOSSILS, fossilDef, RESINS } from '../../data/craftMats';
 import { flaskDef } from '../../data/flasks';
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../../data/gems';
 import { materialDef } from '../../data/materials';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { zoneDef } from '../../data/zones';
-import { actionBlocker, actionIntervalMs, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
+import { actionBlocker, actionIntervalMs, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
@@ -51,7 +52,7 @@ function OutputRows({ a }: { a: SkillAction }) {
         <li key={id}>
           <MatIcon id={id} size={12} />
           <span className="ing-name">{materialDef(id).name}</span>
-          <span className="ing-qty num">×{n}</span>
+          <span className="ing-qty num">{a.outputChance !== undefined ? `${Math.round(a.outputChance * 100)}% chance` : `×${n}`}</span>
         </li>
       ))}
       {a.baseId && (
@@ -210,6 +211,57 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
   );
 }
 
+/** Smithing catalyst slot: a Fossil steers Magic bases, Resin raises item level, repeat until a hit. */
+function CatalystPanel() {
+  const s = useGame();
+  const cat = s.smithCatalyst;
+  const set = (patch: Partial<typeof cat>) => game.act((st) => setSmithCatalyst(st, patch));
+  const owned = (id: string) => fmt(s.bank[id] ?? 0);
+  return (
+    <div className="card catalyst-panel">
+      <div className="card-title">
+        Catalyst
+        <span className="grow" />
+        <span className="card-hint">Used on every smith</span>
+      </div>
+      <div className="catalyst-row">
+        <label>
+          <span className="dim small">Fossil (used only when the base comes out Magic)</span>
+          <select className="input" value={cat.fossil ?? ''} onChange={(e) => set({ fossil: e.target.value || null })}>
+            <option value="">None</option>
+            {FOSSILS.map((f) => (
+              <option key={f.id} value={f.id} disabled={!s.bank[f.id]}>
+                {f.name} ({owned(f.id)}) — {f.desc}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span className="dim small">Resin (raises item level, capped by campaign progress)</span>
+          <select className="input" value={cat.resin ?? ''} onChange={(e) => set({ resin: e.target.value || null })}>
+            <option value="">None</option>
+            {RESINS.map((r) => (
+              <option key={r.id} value={r.id} disabled={!s.bank[r.id]}>
+                {r.name} +{r.ilvl} ({owned(r.id)})
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="catalyst-row">
+        <label className="check">
+          <input type="checkbox" checked={cat.until} disabled={!cat.fossil} onChange={(e) => set({ until: e.target.checked })} />
+          Repeat until a Magic base rolls a {cat.fossil ? fossilDef(cat.fossil)!.name : 'Fossil'} modifier
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={cat.salvageMisses} disabled={!cat.fossil || !cat.until} onChange={(e) => set({ salvageMisses: e.target.checked })} />
+          Salvage the misses
+        </label>
+      </div>
+    </div>
+  );
+}
+
 /** Ingredient rows: owned / required, muted green when you have enough, muted red when short. */
 function Ingredients({ cost, have }: { cost: Record<string, number>; have: Record<string, number> }) {
   return (
@@ -282,9 +334,10 @@ export function SkillPage({ skill }: { skill: SkillId }) {
       <SkillHeader skill={skill} />
       {skill === 'smithing' && (
         <div className="callout skill-note">
-          Smithed bases are item level <b>{smithIlvl(s)}</b> — higher item level unlocks better modifier tiers when crafting.
+          Smithed bases are item level <b>{smithIlvl(s, resinBonus(s))}</b> — higher item level unlocks better modifier tiers when crafting.
         </div>
       )}
+      {skill === 'smithing' && <CatalystPanel />}
       {skill === 'alchemy' && <div className="callout skill-note">Salvage unwanted items at the Crafting Bench for Arcane Dust, then transmute it into orbs here.</div>}
       {skill === 'gemcutting' && (
         <div className="callout skill-note">

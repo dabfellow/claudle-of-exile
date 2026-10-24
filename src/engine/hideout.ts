@@ -10,6 +10,7 @@ import { createItem, itemName, sellValue } from './items';
 import { pick, rInt, type Rng } from './rng';
 import type { GameState, Rarity, VendorOffer } from './types';
 import { characterLevel } from './character';
+import { isCraftLocked } from './crafting';
 
 export function stationLevel(s: GameState, id: StationId): number {
   return s.hideout[id] ?? 1;
@@ -121,14 +122,16 @@ export function buyOffer(s: GameState, ctx: Ctx, offerId: number): string | null
 export function sellItems(s: GameState, ctx: Ctx, uids: number[]): number {
   const set = new Set(uids);
   let gold = 0;
+  let n = 0;
   s.inventory = s.inventory.filter((i) => {
-    if (!set.has(i.uid)) return true;
+    if (!set.has(i.uid) || isCraftLocked(s, i.uid)) return true;
     gold += sellValue(i);
+    n++;
     return false;
   });
   if (gold) {
     addBank(s, 'gold', gold);
-    ctx.emit({ t: 'info', text: `Sold ${uids.length} item(s) for ${gold} gold`, tone: 'good' });
+    ctx.emit({ t: 'info', text: `Sold ${n} item(s) for ${gold} gold`, tone: 'good' });
   }
   return gold;
 }

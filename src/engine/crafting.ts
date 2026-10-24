@@ -1,16 +1,18 @@
 import { affixDef } from '../data/affixes';
 import { baseDef } from '../data/bases';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements';
+import { essenceDef, fossilDef, modBias } from '../data/craftMats';
 import { BENCH_CRAFTS } from '../data/hideout';
 import type { Ctx } from './context';
-import { addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, salvageValue, spawnWeight } from './items';
+import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, salvageValue, spawnWeight, type ModBias } from './items';
 import { rInt, type Rng } from './rng';
 import { canAfford, hasItem, payCost } from './bank';
 import type { GameState, Item } from './types';
 
 export interface OrbDef {
   canApply(item: Item): string | null;
-  apply(item: Item, rng: Rng): void;
+  /** `bias` comes from a Fossil; only orbs that roll new modifiers use it (FOSSIL_ORBS) */
+  apply(item: Item, rng: Rng, bias?: ModBias): void;
 }
 
 const notUnique = (item: Item) => (item.rarity === 'unique' ? 'Cannot modify unique items' : null);
@@ -18,44 +20,44 @@ const notUnique = (item: Item) => (item.rarity === 'unique' ? 'Cannot modify uni
 export const ORBS: Record<string, OrbDef> = {
   transmute: {
     canApply: (i) => notUnique(i) ?? (i.rarity !== 'normal' ? 'Item must be Normal' : null),
-    apply: (i, rng) => {
+    apply: (i, rng, bias) => {
       i.rarity = 'magic';
-      rerollMods(i, rng);
+      rerollMods(i, rng, bias);
     },
   },
   augment: {
     canApply: (i) => notUnique(i) ?? (i.rarity !== 'magic' ? 'Item must be Magic' : !openKinds(i).length ? 'No room for another modifier' : null),
-    apply: (i, rng) => {
-      addRandomMod(i, rng);
+    apply: (i, rng, bias) => {
+      addRandomMod(i, rng, bias);
     },
   },
   alteration: {
     canApply: (i) => notUnique(i) ?? (i.rarity !== 'magic' ? 'Item must be Magic' : null),
-    apply: (i, rng) => rerollMods(i, rng),
+    apply: (i, rng, bias) => rerollMods(i, rng, bias),
   },
   regal: {
     canApply: (i) => notUnique(i) ?? (i.rarity !== 'magic' ? 'Item must be Magic' : null),
-    apply: (i, rng) => {
+    apply: (i, rng, bias) => {
       i.rarity = 'rare';
       i.name = rareName(i, rng);
-      addRandomMod(i, rng);
+      addRandomMod(i, rng, bias);
     },
   },
   alchemy: {
     canApply: (i) => notUnique(i) ?? (i.rarity !== 'normal' ? 'Item must be Normal' : null),
-    apply: (i, rng) => {
+    apply: (i, rng, bias) => {
       i.rarity = 'rare';
-      rerollMods(i, rng);
+      rerollMods(i, rng, bias);
     },
   },
   chaos: {
     canApply: (i) => notUnique(i) ?? (i.rarity !== 'rare' ? 'Item must be Rare' : null),
-    apply: (i, rng) => rerollMods(i, rng),
+    apply: (i, rng, bias) => rerollMods(i, rng, bias),
   },
   exalted: {
     canApply: (i) => notUnique(i) ?? (i.rarity !== 'rare' ? 'Item must be Rare' : !openKinds(i).length ? 'No room for another modifier' : null),
-    apply: (i, rng) => {
-      addRandomMod(i, rng);
+    apply: (i, rng, bias) => {
+      addRandomMod(i, rng, bias);
     },
   },
   annul: {
@@ -87,25 +89,71 @@ export const ORBS: Record<string, OrbDef> = {
   },
 };
 
+/** Orbs that roll new modifiers, and so can be paired with a Fossil. */
+export const FOSSIL_ORBS = new Set(['transmute', 'augment', 'alteration', 'regal', 'alchemy', 'chaos', 'exalted']);
+
+/** The item a Craft until… activity is working on can't be salvaged, sold or equipped. */
+export function isCraftLocked(s: GameState, uid: number): boolean {
+  return s.action?.kind === 'craft' && s.action.uid === uid;
+}
+
 export function findItem(s: GameState, uid: number): Item | undefined {
   return s.inventory.find((i) => i.uid === uid) ?? Object.values(s.equipment).find((i) => i?.uid === uid);
 }
 
-export function orbReason(s: GameState, orbId: string, uid: number): string | null {
+export function orbReason(s: GameState, orbId: string, uid: number, fossilId?: string | null): string | null {
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
   if (!hasItem(s, orbId, 1)) return 'You have none';
+  if (fossilId) {
+    if (!fossilDef(fossilId)) return 'Unknown fossil';
+    if (!FOSSIL_ORBS.has(orbId)) return "Fossils don't work with this orb";
+    if (!hasItem(s, fossilId, 1)) return 'Out of that fossil';
+  }
   return ORBS[orbId].canApply(item);
 }
 
-export function applyOrb(s: GameState, ctx: Ctx, orbId: string, uid: number): string | null {
-  const reason = orbReason(s, orbId, uid);
+export function applyOrb(s: GameState, ctx: Ctx, orbId: string, uid: number, fossilId?: string | null): string | null {
+  const reason = orbReason(s, orbId, uid, fossilId);
   if (reason) return reason;
   const item = findItem(s, uid)!;
-  ORBS[orbId].apply(item, ctx.rng);
+  ORBS[orbId].apply(item, ctx.rng, fossilId ? modBias(fossilId) : undefined);
   s.bank[orbId] -= 1;
+  if (fossilId) s.bank[fossilId] -= 1;
   s.lifetime.orbsUsed += 1;
   ctx.emit({ t: 'craft', text: `${orbId} → ${itemName(item)}`, uid, orbId });
+  return null;
+}
+
+export function essenceReason(s: GameState, essenceId: string, uid: number): string | null {
+  const ess = essenceDef(essenceId);
+  const item = findItem(s, uid);
+  if (!ess) return 'Unknown essence';
+  if (!item) return 'Select an item';
+  if (!hasItem(s, essenceId, 1)) return 'You have none';
+  if (item.rarity === 'unique') return 'Cannot modify unique items';
+  if (item.rarity !== 'normal' && item.rarity !== 'magic') return 'Item must be Normal or Magic';
+  const affix = affixDef(ess.affixId);
+  if (spawnWeight(affix, baseDef(item.baseId)) === 0) return 'Cannot roll on this item type';
+  if (item.ilvl < affix.tiers[ess.tier].ilvl) return `Requires item level ${affix.tiers[ess.tier].ilvl}`;
+  return null;
+}
+
+/** Makes the item Magic with the essence's modifier guaranteed; the other slot rolls as usual. */
+export function applyEssence(s: GameState, ctx: Ctx, essenceId: string, uid: number): string | null {
+  const reason = essenceReason(s, essenceId, uid);
+  if (reason) return reason;
+  const ess = essenceDef(essenceId)!;
+  const item = findItem(s, uid)!;
+  item.rarity = 'magic';
+  item.name = null;
+  item.prefixes = [];
+  item.suffixes = [];
+  addFixedMod(item, ess.affixId, ess.tier, ctx.rng);
+  if (ctx.rng.next() < 0.5) addRandomMod(item, ctx.rng);
+  s.bank[essenceId] -= 1;
+  s.lifetime.orbsUsed += 1;
+  ctx.emit({ t: 'craft', text: `${ess.name} → ${itemName(item)}`, uid });
   return null;
 }
 
@@ -143,16 +191,18 @@ export function benchCraft(s: GameState, ctx: Ctx, craftId: string, uid: number)
 
 export function salvage(s: GameState, ctx: Ctx, uids: number[]): number {
   let dust = 0;
+  let n = 0;
   const set = new Set(uids);
   s.inventory = s.inventory.filter((i) => {
-    if (!set.has(i.uid)) return true;
+    if (!set.has(i.uid) || isCraftLocked(s, i.uid)) return true;
     dust += salvageValue(i);
+    n++;
     return false;
   });
   if (dust > 0) {
     s.bank.arcane_dust = (s.bank.arcane_dust ?? 0) + dust;
-    s.lifetime.salvaged += uids.length;
-    ctx.emit({ t: 'info', text: `Salvaged ${uids.length} item(s) for ${dust} Arcane Dust`, tone: 'good' });
+    s.lifetime.salvaged += n;
+    ctx.emit({ t: 'info', text: `Salvaged ${n} item(s) for ${dust} Arcane Dust`, tone: 'good' });
   }
   return dust;
 }

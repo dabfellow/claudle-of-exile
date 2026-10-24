@@ -290,10 +290,27 @@ export interface CombatRuntime {
   hungerMs: number;
 }
 
+/** What a Craft until… activity spends each step: an orb (optionally with a Fossil) or an Essence. */
+export type CraftMethod = { orb: string; fossil?: string | null } | { essence: string };
+
+/** When a Craft until… activity stops. `minTier` is an affix tier index (higher is better). */
+export type StopRule = { kind: 'has'; affixId: string; minTier?: number } | { kind: 'twoOf'; affixIds: string[] };
+
 export type Action =
   | { kind: 'skill'; actionId: string; progress: number }
   | { kind: 'combat'; zoneId: string }
+  | { kind: 'craft'; uid: number; method: CraftMethod; rule: StopRule; progress: number; steps: number }
   | null;
+
+/** Smithing catalyst slot: a Fossil biases the roll of a Magic base, Resin raises item level. */
+export interface SmithCatalyst {
+  fossil: string | null;
+  resin: string | null;
+  /** keep smithing until a Magic base rolls one of the Fossil's modifiers */
+  until: boolean;
+  /** while repeating, salvage the bases that miss */
+  salvageMisses: boolean;
+}
 
 export interface VendorOffer {
   id: number;
@@ -384,6 +401,7 @@ export interface GameState {
   bossesDefeated: string[];
   /** Greenhouse keystone: the harvesting action that keeps ticking in the background */
   greenhouse: { actionId: string; progress: number } | null;
+  smithCatalyst: SmithCatalyst;
   hideout: Record<string, number>;
   vendor: { stock: VendorOffer[]; refreshAt: number };
   settings: Settings;
@@ -422,6 +440,7 @@ export type GameEvent =
   | { t: 'xp'; skill: SkillId; amount: number }
   | { t: 'produce'; skill: SkillId; outputs: Record<string, number> }
   | { t: 'craft'; text: string; uid: number; orbId?: string }
+  | { t: 'craftDone'; text: string; uid: number }
   | { t: 'equip'; uid: number }
   | { t: 'allocate'; nodeId: string }
   | { t: 'combatStart'; zoneId: string }

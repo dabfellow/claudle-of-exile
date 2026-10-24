@@ -9,6 +9,7 @@ import { combatStep } from './combat';
 import { refreshVendor, vendorTick } from './hideout';
 import { createItem } from './items';
 import { seeded } from './rng';
+import { craftStep } from './craftUntil';
 import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState } from './types';
@@ -56,6 +57,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     achievements: [],
     bossesDefeated: [],
     greenhouse: null,
+    smithCatalyst: { fossil: null, resin: null, until: false, salvageMisses: false },
     hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1 },
     vendor: { stock: [], refreshAt: 0 },
     settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false, movement: 'walk', autoFlee: true },
@@ -94,6 +96,7 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
     remaining -= step;
     s.clock += step;
     if (s.action?.kind === 'skill') skillStep(s, ctx, step, d);
+    if (s.action?.kind === 'craft') craftStep(s, ctx, step);
     greenhouseStep(s, ctx, step, d);
     if (s.combat) {
       if (combatStep(s, ctx, step, d)) d = deriveStats(s);

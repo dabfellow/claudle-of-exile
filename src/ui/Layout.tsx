@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { classDef } from '../data/classes';
+import { CRAFT_STEP_MS } from '../data/hideout';
 import { materialDef } from '../data/materials';
 import { actionDef, SKILLS } from '../data/skills';
 import { zoneDef } from '../data/zones';
 import { queueSkill, retreat, useFlask } from '../engine/combat';
+import { findItem } from '../engine/crafting';
+import { methodName } from '../engine/craftUntil';
 import { pointsLeft } from '../engine/passives';
 import { actionIntervalMs, stopAction } from '../engine/skills';
 import { deriveStats } from '../engine/stats';
@@ -175,6 +178,13 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
     progress = s.action.progress / interval;
     color = sk.color;
     target = a.skill;
+  } else if (s.action?.kind === 'craft') {
+    const item = findItem(s, s.action.uid);
+    title = `Crafting: ${item ? itemName(item) : 'item'}`;
+    sub = `${methodName(s.action.method)} · ${s.action.steps} step${s.action.steps === 1 ? '' : 's'}`;
+    progress = s.action.progress / CRAFT_STEP_MS;
+    color = 'var(--currency)';
+    target = 'bench';
   } else if (s.action?.kind === 'combat' && s.combat) {
     const z = zoneDef(s.combat.zoneId);
     const pack = s.combat.monsters;
@@ -539,6 +549,15 @@ export function OfflineModal() {
               <b>An Unfinished Battle</b>
             </div>
             <p>{sum.bossWaiting} awaits. This foe must be challenged in person.</p>
+          </div>
+        )}
+        {sum.crafted && (
+          <div className="away-alert">
+            <div className="row">
+              <GameIcon name="bench" size={16} />
+              <b>Craft Complete</b>
+            </div>
+            <p>{sum.crafted}</p>
           </div>
         )}
 

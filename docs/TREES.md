@@ -160,7 +160,7 @@ Shared by theme — see `MASTERIES` in `src/data/passiveTree.ts` for the 37 them
 
 ## 2. Skilling tree
 
-> Proposed changes to six notables: see [SKILLING_REWORK.md](SKILLING_REWORK.md) §7.
+> Six notables were swapped to work with the crafting materials from [SKILLING_REWORK.md](SKILLING_REWORK.md) §7.
 
 ### Shape
 A smaller tree: a shared **core** in the middle with **5 branches**, one per skill. Some nodes need a minimum skill level. Each branch ends in a **keystone** that changes how the skill works.
@@ -169,16 +169,17 @@ A smaller tree: a shared **core** in the middle with **5 branches**, one per ski
 | Node | Effect |
 |---|---|
 | Industrious (×3) | 3% faster gathering and production |
-| Studious (×3) | 3% increased skill XP |
+| Studious (×2) | 3% increased skill XP |
+| Overtime | Offline skilling 10% faster |
 | **Steady Hands** (notable) | 5% chance for production not to consume inputs |
-| **Overtime** (notable) | Offline skilling 10% faster |
+| **Patient Crafter** (notable) | Craft until… has a 10% chance each step not to use the orb |
 
 ### Mining
 | Node | Effect | Requires |
 |---|---|---|
 | Prospector (×3) | 5% faster Mining | — |
 | **Gem Finder** | Rough Gem chance doubled | Mining 15 |
-| **Rich Veins** | 10% chance for double ore | Mining 30 |
+| **Fossil Hunter** | 50% increased chance to find Fossils | Mining 30 |
 | **Motherlode** (keystone) | Ore drops are doubled. Mining is 30% slower | Mining 50 |
 
 ### Woodcutting
@@ -186,14 +187,14 @@ A smaller tree: a shared **core** in the middle with **5 branches**, one per ski
 |---|---|---|
 | Lumberjack (×3) | 5% faster Woodcutting | — |
 | **Bird's Nest** | 3% chance to find a random herb | Woodcutting 15 |
-| **Clean Cuts** | 10% chance for double logs | Woodcutting 30 |
+| **Sap Tapper** | 50% increased chance to find Resin; Resin gives +1 extra item level | Woodcutting 30 |
 | **Heartwood** (keystone) | Logs also yield Arcane Dust. Woodcutting XP −20% | Woodcutting 50 |
 
 ### Harvesting
 | Node | Effect | Requires |
 |---|---|---|
 | Green Thumb (×3) | 5% faster Harvesting | — |
-| **Bountiful** | 10% chance for double herbs | Harvesting 15 |
+| **Distiller** | Lesser Essences you find have a 10% chance to be Greater | Harvesting 15 |
 | **Rare Blooms** | Small chance for a higher-tier herb | Harvesting 30 |
 | **Greenhouse** (keystone) | Harvesting keeps ticking at 20% speed while you do another skill or fight | Harvesting 50 |
 
@@ -201,7 +202,7 @@ A smaller tree: a shared **core** in the middle with **5 branches**, one per ski
 | Node | Effect | Requires |
 |---|---|---|
 | Hammerhand (×3) | 5% faster Smithing | — |
-| **Fine Steel** | +2 item level on smithed bases (still capped by campaign progress) | Smithing 15 |
+| **Steady Temper** | 20% chance a smithing Fossil is not consumed | Smithing 15 |
 | **Masterwork** | 10% chance a smithed base comes out Magic | Smithing 30 |
 | **Grandmaster Smith** (keystone) | Smithed bases are always Magic. Smithing is 25% slower | Smithing 50 |
 
@@ -209,7 +210,7 @@ A smaller tree: a shared **core** in the middle with **5 branches**, one per ski
 | Node | Effect | Requires |
 |---|---|---|
 | Distillation (×3) | 5% faster Alchemy | — |
-| **Dust Saver** | 10% chance to use no Arcane Dust | Alchemy 15 |
+| **Bulk Brewer** | Batch recipes cost 25% less per orb instead of 15% | Alchemy 15 |
 | **Quality Brews** | Brewed flasks have a 25% chance to be Magic | Alchemy 30 |
 | **Transmuter** (keystone) | Orbs you craft have a 10% chance to come out one tier higher. Alchemy is 20% slower | Alchemy 50 |
 

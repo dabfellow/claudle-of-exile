@@ -18,12 +18,14 @@ export interface OfflineSummary {
   stoppedReason: string | null;
   /** a boss you haven't beaten yet was ready, but new bosses can't be fought offline */
   bossWaiting: string | null;
+  /** Craft until… finished while you were away */
+  crafted: string | null;
 }
 
 /** Run the simulation for time spent away, collecting a summary instead of live events. */
 export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): OfflineSummary {
   const ms = Math.min(elapsedMs, MAX_OFFLINE_MS);
-  const sum: OfflineSummary = { ms, xp: {}, levels: {}, materials: {}, items: 0, gems: 0, kills: 0, died: false, stoppedReason: null, bossWaiting: null };
+  const sum: OfflineSummary = { ms, xp: {}, levels: {}, materials: {}, items: 0, gems: 0, kills: 0, died: false, stoppedReason: null, bossWaiting: null, crafted: null };
   const bankBefore = { ...s.bank };
   const quiet: Ctx = withTutorial({
     ...ctx,
@@ -36,6 +38,7 @@ export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offl
       else if (e.t === 'kill') sum.kills++;
       else if (e.t === 'death') sum.died = true;
       else if (e.t === 'bossWaiting') sum.bossWaiting = e.name;
+      else if (e.t === 'craftDone') sum.crafted = e.text;
       else if (e.t === 'info' && e.tone === 'warn') sum.stoppedReason = e.text;
     },
   }, () => s);

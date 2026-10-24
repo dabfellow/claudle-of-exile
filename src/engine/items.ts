@@ -15,11 +15,14 @@ export function modCount(item: Item): number {
   return item.prefixes.length + item.suffixes.length;
 }
 
-export function spawnWeight(affix: AffixDef, base: BaseDef): number {
+/** Spawn-weight multipliers by affix group, e.g. from a Fossil (0 blocks a group). */
+export type ModBias = Record<string, number>;
+
+export function spawnWeight(affix: AffixDef, base: BaseDef, bias?: ModBias): number {
   if (affix.uniqueOnly) return 0;
   let w = 0;
   for (const t of base.tags) w = Math.max(w, affix.weights[t] ?? 0);
-  return w;
+  return w * (bias?.[affix.group] ?? 1);
 }
 
 function rollValues(affix: AffixDef, tier: number, rng: Rng): number[] {
@@ -27,29 +30,29 @@ function rollValues(affix: AffixDef, tier: number, rng: Rng): number[] {
 }
 
 /** Affixes that could still roll on this item for the given kind. */
-export function eligibleAffixes(item: Item, kind: 'prefix' | 'suffix'): AffixDef[] {
+export function eligibleAffixes(item: Item, kind: 'prefix' | 'suffix', bias?: ModBias): AffixDef[] {
   const base = baseDef(item.baseId);
   const used = new Set([...item.prefixes, ...item.suffixes].map((m) => affixDef(m.affixId).group));
   return AFFIXES.filter(
-    (a) => a.kind === kind && !used.has(a.group) && spawnWeight(a, base) > 0 && a.tiers.length > 0 && a.tiers[0].ilvl <= item.ilvl,
+    (a) => a.kind === kind && !used.has(a.group) && spawnWeight(a, base, bias) > 0 && a.tiers.length > 0 && a.tiers[0].ilvl <= item.ilvl,
   );
 }
 
-export function openKinds(item: Item): ('prefix' | 'suffix')[] {
+export function openKinds(item: Item, bias?: ModBias): ('prefix' | 'suffix')[] {
   const max = maxAffixes(item.rarity);
   const kinds: ('prefix' | 'suffix')[] = [];
-  if (item.prefixes.length < max && eligibleAffixes(item, 'prefix').length) kinds.push('prefix');
-  if (item.suffixes.length < max && eligibleAffixes(item, 'suffix').length) kinds.push('suffix');
+  if (item.prefixes.length < max && eligibleAffixes(item, 'prefix', bias).length) kinds.push('prefix');
+  if (item.suffixes.length < max && eligibleAffixes(item, 'suffix', bias).length) kinds.push('suffix');
   return kinds;
 }
 
 /** Adds one random modifier. Returns false if there's no room. */
-export function addRandomMod(item: Item, rng: Rng): boolean {
-  const kinds = openKinds(item);
+export function addRandomMod(item: Item, rng: Rng, bias?: ModBias): boolean {
+  const kinds = openKinds(item, bias);
   if (!kinds.length) return false;
   const kind = pick(rng, kinds);
   const base = baseDef(item.baseId);
-  const affix = pickWeighted(rng, eligibleAffixes(item, kind), (a) => spawnWeight(a, base));
+  const affix = pickWeighted(rng, eligibleAffixes(item, kind, bias), (a) => spawnWeight(a, base, bias));
   if (!affix) return false;
   const tiers = affix.tiers.map((t, i) => ({ t, i })).filter((x) => x.t.ilvl <= item.ilvl);
   // higher tiers are rarer: each step up is ~70% as likely as the one below
@@ -57,6 +60,12 @@ export function addRandomMod(item: Item, rng: Rng): boolean {
   const mod: RolledMod = { affixId: affix.id, tier: chosen.i, values: rollValues(affix, chosen.i, rng) };
   (kind === 'prefix' ? item.prefixes : item.suffixes).push(mod);
   return true;
+}
+
+/** Adds a specific modifier at a fixed tier (Essences). */
+export function addFixedMod(item: Item, affixId: string, tier: number, rng: Rng): void {
+  const affix = affixDef(affixId);
+  (affix.kind === 'prefix' ? item.prefixes : item.suffixes).push({ affixId, tier, values: rollValues(affix, tier, rng) });
 }
 
 function rareModCount(rng: Rng): number {
@@ -95,24 +104,24 @@ export function itemName(item: Item): string {
 }
 
 /** Replace all mods on an item for its current rarity. */
-export function rerollMods(item: Item, rng: Rng): void {
+export function rerollMods(item: Item, rng: Rng, bias?: ModBias): void {
   item.prefixes = [];
   item.suffixes = [];
   if (item.rarity === 'magic') {
-    addRandomMod(item, rng);
-    if (rng.next() < 0.5) addRandomMod(item, rng);
+    addRandomMod(item, rng, bias);
+    if (rng.next() < 0.5) addRandomMod(item, rng, bias);
   } else if (item.rarity === 'rare') {
     const n = rareModCount(rng);
-    for (let i = 0; i < n; i++) addRandomMod(item, rng);
+    for (let i = 0; i < n; i++) addRandomMod(item, rng, bias);
     item.name = rareName(item, rng);
   }
 }
 
-export function createItem(s: GameState, baseId: string, ilvl: number, rarity: Rarity, rng: Rng): Item {
+export function createItem(s: GameState, baseId: string, ilvl: number, rarity: Rarity, rng: Rng, bias?: ModBias): Item {
   // random uniques are created via createUnique; a bare 'unique' request rolls a rare instead
   const r: Rarity = rarity === 'unique' ? 'rare' : rarity;
   const item: Item = { uid: newUid(s), baseId, ilvl, rarity: r, name: null, prefixes: [], suffixes: [] };
-  rerollMods(item, rng);
+  rerollMods(item, rng, bias);
   return item;
 }
 

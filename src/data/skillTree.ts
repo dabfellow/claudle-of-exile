@@ -9,24 +9,26 @@ export type SkillTreeStat =
   | 'skillXp'
   | 'inputSave'
   | 'offlineSpeed'
+  | 'patientCrafter'
   | 'miningSpeed'
   | 'gemChance'
-  | 'doubleOre'
+  | 'fossilChance'
   | 'motherlode'
   | 'woodcuttingSpeed'
   | 'birdsNest'
-  | 'doubleLogs'
+  | 'resinChance'
+  | 'resinIlvl'
   | 'heartwood'
   | 'harvestingSpeed'
-  | 'doubleHerbs'
+  | 'distiller'
   | 'rareBlooms'
   | 'greenhouse'
   | 'smithingSpeed'
-  | 'smithIlvl'
+  | 'steadyTemper'
   | 'smithMagic'
   | 'grandmaster'
   | 'alchemySpeed'
-  | 'dustSaver'
+  | 'bulkBrewer'
   | 'qualityBrews'
   | 'transmuter';
 
@@ -63,7 +65,7 @@ const BRANCHES: BranchSpec[] = [
     small: { name: 'Prospector', stats: { miningSpeed: 5 }, desc: '5% faster Mining' },
     notables: [
       { name: 'Gem Finder', stats: { gemChance: 100 }, desc: 'Rough Gem chance from mining is doubled' },
-      { name: 'Rich Veins', stats: { doubleOre: 10 }, desc: '10% chance to mine double ore' },
+      { name: 'Fossil Hunter', stats: { fossilChance: 50 }, desc: '50% increased chance to find Fossils' },
     ],
     keystone: { name: 'Motherlode', stats: { motherlode: 1 }, desc: 'Ore yields are doubled. Mining is 30% slower' },
   },
@@ -73,7 +75,7 @@ const BRANCHES: BranchSpec[] = [
     small: { name: 'Lumberjack', stats: { woodcuttingSpeed: 5 }, desc: '5% faster Woodcutting' },
     notables: [
       { name: "Bird's Nest", stats: { birdsNest: 3 }, desc: '3% chance to find a herb while chopping' },
-      { name: 'Clean Cuts', stats: { doubleLogs: 10 }, desc: '10% chance for double logs' },
+      { name: 'Sap Tapper', stats: { resinChance: 50, resinIlvl: 1 }, desc: '50% increased chance to find Resin. Resin gives +1 extra item level' },
     ],
     keystone: { name: 'Heartwood', stats: { heartwood: 1 }, desc: 'Logs also yield Arcane Dust. Woodcutting XP is 20% lower' },
   },
@@ -82,7 +84,7 @@ const BRANCHES: BranchSpec[] = [
     angle: 54,
     small: { name: 'Green Thumb', stats: { harvestingSpeed: 5 }, desc: '5% faster Harvesting' },
     notables: [
-      { name: 'Bountiful', stats: { doubleHerbs: 10 }, desc: '10% chance for double herbs' },
+      { name: 'Distiller', stats: { distiller: 10 }, desc: 'Lesser Essences you find have a 10% chance to be Greater' },
       { name: 'Rare Blooms', stats: { rareBlooms: 5 }, desc: '5% chance to also find a herb of the next tier' },
     ],
     keystone: { name: 'Greenhouse', stats: { greenhouse: 20 }, desc: 'Your last harvest keeps growing at 20% speed while you do something else' },
@@ -92,7 +94,7 @@ const BRANCHES: BranchSpec[] = [
     angle: 126,
     small: { name: 'Hammerhand', stats: { smithingSpeed: 5 }, desc: '5% faster Smithing' },
     notables: [
-      { name: 'Fine Steel', stats: { smithIlvl: 2 }, desc: '+2 item level on smithed bases (still capped by campaign progress)' },
+      { name: 'Steady Temper', stats: { steadyTemper: 20 }, desc: '20% chance a smithing Fossil is not consumed' },
       { name: 'Masterwork', stats: { smithMagic: 10 }, desc: '10% chance a smithed base comes out Magic' },
     ],
     keystone: { name: 'Grandmaster Smith', stats: { grandmaster: 1 }, desc: 'Smithed bases are always Magic. Smithing is 25% slower' },
@@ -102,7 +104,7 @@ const BRANCHES: BranchSpec[] = [
     angle: 198,
     small: { name: 'Distillation', stats: { alchemySpeed: 5 }, desc: '5% faster Alchemy' },
     notables: [
-      { name: 'Dust Saver', stats: { dustSaver: 10 }, desc: '10% chance to use no Arcane Dust' },
+      { name: 'Bulk Brewer', stats: { bulkBrewer: 1 }, desc: 'Batch recipes cost 25% less per orb instead of 15%' },
       { name: 'Quality Brews', stats: { qualityBrews: 25 }, desc: 'Brewed flasks have a 25% chance to be Magic' },
     ],
     keystone: { name: 'Transmuter', stats: { transmuter: 10 }, desc: 'Orbs you craft have a 10% chance to come out one tier higher. Alchemy is 20% slower' },
@@ -126,20 +128,18 @@ function build(): SkillTreeNode[] {
 
   add({ id: SKILL_TREE_START, name: 'Craftsman', kind: 'core', branch: 'core', x: 0, y: 0, stats: {}, desc: 'Every skilling path starts here' });
 
-  // core ring: alternating Industrious / Studious
+  // core ring: alternating Industrious / Studious, with Overtime at the bottom
   const ring: string[] = [];
   for (let i = 0; i < 6; i++) {
     const id = `core_${i}`;
     const industrious = i % 2 === 0;
-    add({
-      id,
-      name: industrious ? 'Industrious' : 'Studious',
-      kind: 'small',
-      branch: 'core',
-      ...polar(85, -90 + i * 60),
-      stats: industrious ? { skillSpeed: 3 } : { skillXp: 3 },
-      desc: industrious ? '3% faster gathering and production' : '3% increased skill XP',
-    });
+    const small =
+      i === 3
+        ? { name: 'Overtime', stats: { offlineSpeed: 10 }, desc: 'Skilling while offline is 10% faster' }
+        : industrious
+          ? { name: 'Industrious', stats: { skillSpeed: 3 }, desc: '3% faster gathering and production' }
+          : { name: 'Studious', stats: { skillXp: 3 }, desc: '3% increased skill XP' };
+    add({ id, ...small, kind: 'small', branch: 'core', ...polar(85, -90 + i * 60) });
     link(SKILL_TREE_START, id);
     ring.push(id);
   }
@@ -156,7 +156,7 @@ function build(): SkillTreeNode[] {
 
   add({ id: 'core_steady', name: 'Steady Hands', kind: 'notable', branch: 'core', ...polar(150, 90), stats: { inputSave: 5 }, desc: '5% chance for production not to consume its inputs' });
   link('core_steady', ringAt(90));
-  add({ id: 'core_overtime', name: 'Overtime', kind: 'notable', branch: 'core', ...polar(150, 234), stats: { offlineSpeed: 10 }, desc: 'Skilling while offline is 10% faster' });
+  add({ id: 'core_overtime', name: 'Patient Crafter', kind: 'notable', branch: 'core', ...polar(150, 234), stats: { patientCrafter: 10 }, desc: 'Craft until… has a 10% chance each step not to use the orb' });
   link('core_overtime', ringAt(234));
 
   for (const b of BRANCHES) {
