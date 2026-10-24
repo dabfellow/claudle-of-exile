@@ -10,7 +10,7 @@ import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
-import { Badge, Cost, fmt, MatIcon, ProgressBar, Tabs } from '../components/common';
+import { Badge, fmt, MatIcon, ProgressBar, Tabs } from '../components/common';
 import { GemIcon } from '../components/GemView';
 import { Icon, Orb, Swatch } from '../components/Icon';
 
@@ -43,37 +43,46 @@ function gemOutputText(gem: NonNullable<SkillAction['gem']>): string {
   return `Random ${ATTR_NAME[gem.attr!]} ${gem.kind} gem (1 of ${pool.length})`;
 }
 
-function OutputChips({ a }: { a: SkillAction }) {
+/** What an activity produces, as rows that line up with the ingredient list. */
+function OutputRows({ a }: { a: SkillAction }) {
   return (
-    <div className="io">
+    <ul className="ingredients outputs">
       {Object.entries(a.outputs ?? {}).map(([id, n]) => (
-        <span key={id} className="io-item">
+        <li key={id}>
           <MatIcon id={id} size={12} />
-          {n} {materialDef(id).name}
-        </span>
+          <span className="ing-name">{materialDef(id).name}</span>
+          <span className="ing-qty num">×{n}</span>
+        </li>
       ))}
       {a.baseId && (
-        <span className="io-item">
-          <Icon name={baseDef(a.baseId).slot} size={12} /> {baseDef(a.baseId).name}
-        </span>
+        <li>
+          <Icon name={baseDef(a.baseId).slot} size={13} />
+          <span className="ing-name">{baseDef(a.baseId).name}</span>
+          <span className="ing-qty num">×1</span>
+        </li>
       )}
       {a.flaskId && (
-        <span className="io-item">
-          <Orb color={flaskDef(a.flaskId).color} size={11} /> {flaskDef(a.flaskId).name}
-        </span>
+        <li>
+          <Orb color={flaskDef(a.flaskId).color} size={11} />
+          <span className="ing-name">{flaskDef(a.flaskId).name}</span>
+          <span className="ing-qty num">×1</span>
+        </li>
       )}
       {a.gem && (
-        <span className="io-item">
-          <Icon name="gemcutting" size={12} color={a.color} /> {gemOutputText(a.gem)}
-        </span>
+        <li>
+          <Icon name="gemcutting" size={13} color={a.color} />
+          <span className="ing-name">{gemOutputText(a.gem)}</span>
+          <span className="ing-qty num">×1</span>
+        </li>
       )}
       {a.bonus?.map((b) => (
-        <span key={b.id} className="io-item dim">
+        <li key={b.id} className="bonus">
           <MatIcon id={b.id} size={12} />
-          {Math.round(b.chance * 100)}% {materialDef(b.id).name}
-        </span>
+          <span className="ing-name">{materialDef(b.id).name}</span>
+          <span className="ing-qty num">{Math.round(b.chance * 100)}% chance</span>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -101,20 +110,14 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
   );
   useGameEvent(onEvent);
 
-  const status = running ? (
-    <Badge tone="success" live>
-      Active
-    </Badge>
-  ) : areaLocked ? (
-    <Badge tone="locked">Locked</Badge>
-  ) : level < a.level ? (
-    <Badge tone="locked">Lv {a.level}</Badge>
-  ) : blocker ? (
-    <Badge tone="danger">{blocker === 'Missing materials' ? 'Missing materials' : 'Unavailable'}</Badge>
-  ) : null;
+  const missing = blocker === 'Missing materials';
+  const lockText = areaLocked ? `Reach ${zoneDef(a.area!).name} to unlock` : `Unlocks at ${SKILLS[a.skill].name} level ${a.level}`;
 
   return (
-    <div data-tut={`action-${a.id}`} className={`card action-card ${running ? 'running' : ''} ${locked ? 'locked' : ''}`}>
+    <div
+      data-tut={`action-${a.id}`}
+      className={`card action-card ${a.inputs ? 'recipe' : 'gather'} ${running ? 'running' : ''} ${locked ? 'locked' : ''} ${missing ? 'missing' : ''}`}
+    >
       {pops.map((p) => (
         <span key={p.id} className="pop">
           {p.text} · +{Math.round(a.xp * (1 + d.skillXp / 100))}xp
@@ -122,7 +125,9 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
       ))}
       <div className="action-top">
         <div className="action-art">
-          {a.baseId ? (
+          {locked ? (
+            <Icon name="lock" size={20} color="var(--dim)" />
+          ) : a.baseId ? (
             <Icon name={baseDef(a.baseId).slot} size={24} color={a.color} />
           ) : a.gem?.attr ? (
             <GemIcon def={{ name: a.name, attr: a.gem.attr }} size={28} support={a.gem.kind === 'support'} />
@@ -134,45 +139,94 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
             <Swatch color={a.color} size={20} />
           )}
         </div>
-        <div style={{ minWidth: 0 }}>
-          <div className="action-name">{a.name}</div>
-          <div className="action-meta">
-            <span>{areaLocked ? `Reach ${zoneDef(a.area!).name}` : level < a.level ? `Requires level ${a.level}` : `Level ${a.level}`}</span>
-            <span>
-              <Icon name="clock" size={12} /> {(interval / 1000).toFixed(1)}s
-            </span>
-            <span>{a.xp} XP</span>
+        <div className="action-title">
+          <div className="action-name" title={a.name}>
+            {a.name}
           </div>
-        </div>
-        {status && <span className="action-status">{status}</span>}
-      </div>
-      <div className="action-io">
-        {a.inputs && (
-          <div>
-            <span className="io-label">Uses</span>
-            <Cost cost={a.inputs} have={s.bank} />
-          </div>
-        )}
-        <div>
-          <span className="io-label">Makes</span>
-          <OutputChips a={a} />
-        </div>
-      </div>
-      {!locked && (
-        <div className="action-foot">
-          {running && s.action?.kind === 'skill' && <ProgressBar value={s.action.progress / interval} color="var(--success)" />}
-          {running ? (
-            <button className="btn" onClick={() => game.act((st) => stopAction(st))}>
-              Stop
-            </button>
-          ) : (
-            <button className="btn primary" disabled={!!blocker} title={blocker ?? ''} onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, a.id))}>
-              {blocker === 'Missing materials' ? 'Missing materials' : START_LABEL[a.skill]}
-            </button>
+          {(running || locked) && (
+            <div className="action-status">
+              {running ? (
+                <Badge tone="success" live>
+                  Active
+                </Badge>
+              ) : (
+                <Badge tone="locked">Locked</Badge>
+              )}
+            </div>
           )}
         </div>
+      </div>
+
+      <div className="action-meta">
+        <span title="Required level">Lv {a.level}</span>
+        <span title="Time per action">
+          <Icon name="clock" size={12} /> {(interval / 1000).toFixed(1)}s
+        </span>
+        <span title="Experience per action">{a.xp} XP</span>
+      </div>
+
+      <div className="action-section">
+        <div className="io-label">Produces</div>
+        <OutputRows a={a} />
+      </div>
+
+      {a.inputs && (
+        <div className="action-section">
+          <div className="io-label">Requires</div>
+          <Ingredients cost={a.inputs} have={s.bank} />
+        </div>
       )}
+
+      <div className="action-foot">
+        {locked ? (
+          <>
+            <div className="lock-note">
+              <Icon name="lock" size={12} /> {lockText}
+              {!areaLocked && <span className="num"> (you're {level})</span>}
+            </div>
+            <button className="btn block" disabled>
+              Locked
+            </button>
+          </>
+        ) : running ? (
+          <>
+            {s.action?.kind === 'skill' && <ProgressBar value={s.action.progress / interval} color="var(--success)" size="md" />}
+            <button className="btn block" onClick={() => game.act((st) => stopAction(st))}>
+              Stop
+            </button>
+          </>
+        ) : (
+          <button
+            className={`btn block ${blocker ? '' : 'primary'}`}
+            disabled={!!blocker}
+            title={blocker ?? ''}
+            onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, a.id))}
+          >
+            {blocker ?? START_LABEL[a.skill]}
+          </button>
+        )}
+      </div>
     </div>
+  );
+}
+
+/** Ingredient rows: owned / required, muted green when you have enough, muted red when short. */
+function Ingredients({ cost, have }: { cost: Record<string, number>; have: Record<string, number> }) {
+  return (
+    <ul className="ingredients">
+      {Object.entries(cost).map(([id, n]) => {
+        const owned = have[id] ?? 0;
+        return (
+          <li key={id} className={owned >= n ? 'ok' : 'short'}>
+            <MatIcon id={id} size={12} />
+            <span className="ing-name">{materialDef(id).name}</span>
+            <span className="ing-qty num">
+              <b>{fmt(owned)}</b> / {fmt(n)}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -221,7 +275,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
   const actions = actionsFor(skill);
   const [filter, setFilter] = useState<'all' | 'available'>('all');
   const shown = filter === 'all' ? actions : actions.filter((a) => a.level <= level);
-  const unlocked = actions.filter((a) => a.level <= level).length;
+  const unlocked = actions.filter((a) => a.level <= level && (!a.area || s.unlockedZones.includes(a.area))).length;
 
   return (
     <div className="page">
@@ -256,7 +310,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
             />
           )}
         </div>
-        <div className="card-grid">
+        <div className={`card-grid action-grid ${actions.some((a) => a.inputs) ? 'recipes' : 'gathering'}`}>
           {shown.map((a) => (
             <ActionCard key={a.id} a={a} level={level} />
           ))}
