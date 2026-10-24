@@ -422,7 +422,7 @@ class GameStore {
       case 'tutorialStep': {
         const step = TUTORIAL_STEPS[e.step];
         this.addFeed(`Quest complete: ${step.title}${step.rewardText ? ` — ${step.rewardText}` : ''}`, 'good');
-        this.pushToast(e.done ? 'Tutorial complete! The wilds are yours.' : `Quest complete: ${step.title}`, 'good');
+        this.pushToast(e.done ? 'Tutorial complete! Follow the coast — the Drowned Queen waits at its end.' : `Quest complete: ${step.title}`, 'good');
         break;
       }
       case 'achievement': {

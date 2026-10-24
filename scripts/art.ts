@@ -179,7 +179,7 @@ function docs() {
   lines.push('3. Small icons come as **sprite sheets**: one image holds 9 icons in a 3×3 grid. Save it as the sheet name (e.g. `currency_1.png`) and `npm run art` cuts it into 9 icons.');
   lines.push('4. Run `npm run art`. It resizes everything to `.webp`, deletes the originals and tells you what is next.');
   lines.push('');
-  lines.push('Tips: generating several images in the same ChatGPT conversation keeps the style consistent. If a sheet comes back with icons touching or crossing the cells, ask *"same sheet, but with more space around each icon"*. If the background isn\'t transparent, ask *"make the background transparent"*. You can still make any icon on its own: name it after the item (e.g. `chaos.png`) and it imports like any other image. Check the current OpenAI terms on image usage before a commercial release.');
+  lines.push('Tips: generating several images in the same ChatGPT conversation keeps the style consistent. If a sheet comes back with icons touching or crossing the cells, ask *"same sheet, but with more space around each icon"*. If the background isn\'t transparent, ask *"make the background transparent"*. If it comes back busy, shiny or glowing, reply *"simpler: same subject, remove the extra objects, glow and effects, softer lighting"*. You can still make any icon on its own: name it after the item (e.g. `chaos.png`) and it imports like any other image. Check the current OpenAI terms on image usage before a commercial release.');
 
   const groups = Object.entries(ART_GROUPS).sort((a, b) => a[1].priority - b[1].priority) as [ArtGroup, (typeof ART_GROUPS)[ArtGroup]][];
   for (const [g, def] of groups) {

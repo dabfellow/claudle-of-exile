@@ -22,12 +22,13 @@ Online accounts (Google/Discord + cloud saves) need a `.env.local` with `VITE_SU
 
 ## What's in the game
 
-- **Characters**: guest accounts, multiple characters per account, Warrior / Ranger / Mage classes, a guided 10-step tutorial.
-- **Skills**: Mining, Woodcutting, Harvesting, Smithing (item level scales with skill), Alchemy (flasks and orbs).
-- **Items**: normal / magic / rare / unique, ~30 affixes with item-level-gated tiers, PoE-style tooltips (hold Alt for tiers).
-- **Crafting bench**: 10 orbs, salvage, and one crafted modifier per item.
-- **Combat**: automatic attacks, manual flasks (keys 1–5), boss wind-ups, Instilling Orbs to automate flasks later.
-- **Passive tree**, **hideout** stations with upgrades, **vendor**, offline catch-up (up to 12h), export/import saves.
+- **Act 1, The Drowned Coast**: 8 areas (levels 1–25) ending in the act boss, Ysolde, the Drowned Queen. Bosses stack mechanics as the act goes on: slam, nova, summon, enrage, ward. Acts 2–6 and Maps are shown as coming soon.
+- **Characters**: guest play or Google/Discord sign-in with cloud saves, several characters per account, Warrior / Ranger / Mage, a guided 10-step tutorial.
+- **Combat**: 12 skill gems plus signature and general supports on a 6-slot bar, tactics rules that cast for you, packs of 1–5, flasks with their own affixes and enchantments.
+- **Trees**: a character tree with masteries and keystones, and a separate skilling tree.
+- **Skills**: Mining, Woodcutting, Harvesting (better nodes unlock with areas), Smithing (item level capped by campaign progress), Alchemy (flasks and orbs).
+- **Items & crafting**: normal / magic / rare / unique, item-level-gated affix tiers, Alt for advanced tooltips, click to pin; orbs, salvage and bench crafts unlocked by achievements.
+- **Hideout** stations with upgrades, a trader, PoE-style stash tabs, 27 achievements, offline catch-up (up to 12 h; bosses you haven't beaten wait for you), export/import saves.
 
 ## Project layout
 
@@ -47,6 +48,7 @@ docs/        design notes
 - [docs/GDD.md](docs/GDD.md) — game design direction and roadmap for the polish pass
 - [docs/DESIGN.md](docs/DESIGN.md) — how the code fits together
 - [docs/BALANCE.md](docs/BALANCE.md) — pacing knobs, the balance sim, and baseline results
+- [docs/LAUNCH.md](docs/LAUNCH.md) — what is left before launch
 - [docs/TREES.md](docs/TREES.md) — the character and skilling trees, masteries and keystones
 - [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) — setting up Google/Discord login with Supabase
 - [docs/ART_PROMPTS.md](docs/ART_PROMPTS.md) — prompts for generating the game's art

@@ -2,6 +2,9 @@
  * Every picture the game can show, with the prompt used to generate it.
  * Single source of truth for `npm run art` (import + resize) and docs/ART_PROMPTS.md.
  * Keys are paths inside src/assets/art without an extension, e.g. `currency/chaos`.
+ *
+ * Prompt rule of thumb: say exactly what is in the picture (shape, material, colour, wear, how many)
+ * and nothing else. Vague prompts get filled with AI clutter: candles, runes, glow, sparks, fog.
  */
 import { BASES, UNIQUES } from './bases';
 import { ACTIVE_GEMS, SUPPORT_GEMS } from './gems';
@@ -24,17 +27,32 @@ export interface ArtGroupDef {
 }
 
 export const ART_GROUPS: Record<ArtGroup, ArtGroupDef> = {
-  portraits: { title: 'Portraits — trader, guide, classes', priority: 1, size: [384, 384], format: '1024×1024 square, chest-up portrait, dark vignette background.' },
-  scenes: { title: 'Scenes — title screen and hideout backdrop', priority: 1, size: [1600, 914], format: 'Wide landscape 1792×1024, environment only, no characters, darker towards the bottom so text stays readable.' },
-  stations: { title: 'Hideout stations', priority: 2, size: [480, 480], format: '1024×1024, single object on a dark cave-floor background, three-quarter view.' },
-  zones: { title: 'Area banners', priority: 2, size: [1200, 686], format: 'Wide landscape 1792×1024, environment only, no characters.' },
-  monsters: { title: 'Monsters', priority: 3, size: [256, 256], format: '1024×1024, creature portrait, head and shoulders, dark background.' },
+  portraits: {
+    title: 'Portraits — trader, guide, classes', priority: 1, size: [384, 384],
+    format: '1024×1024 square. One person, chest-up, facing slightly to the side, centred. Plain dark grey-brown background with no objects or scenery.',
+  },
+  scenes: {
+    title: 'Scenes — title screen and hideout backdrop', priority: 1, size: [1600, 914],
+    format: 'Wide landscape 1792×1024. Environment only, no people. A few large, simple shapes with plenty of empty space. The bottom third is dark and plain so text can sit on it.',
+  },
+  stations: {
+    title: 'Hideout stations', priority: 2, size: [480, 480],
+    format: '1024×1024 square. One object, three-quarter view from slightly above, centred, filling about two thirds of the frame. Plain dark stone floor and a plain dark background. No other furniture or props.',
+  },
+  zones: {
+    title: 'Area banners', priority: 2, size: [1200, 686],
+    format: 'Wide landscape 1792×1024. Environment only, no people or creatures. A clear foreground, middle ground and background, with a few large simple shapes.',
+  },
+  monsters: {
+    title: 'Monsters', priority: 3, size: [256, 256],
+    format: '1024×1024 square. One creature, head and shoulders, facing the viewer, centred. Plain dark background with no scenery.',
+  },
   currency: {
     title: 'Currency orbs', priority: 3, size: [160, 160], format: '1024×1024, transparent background, one object centred like an inventory icon.',
     template: (d) => `An inventory icon of ${d}, centred, transparent background.`,
   },
   materials: {
-    title: 'Materials', priority: 4, size: [128, 128], format: '1024×1024, transparent background, inventory icon.',
+    title: 'Materials', priority: 4, size: [128, 128], format: '1024×1024, transparent background, one object centred like an inventory icon.',
     template: (d) => `An inventory icon of ${d}, centred, transparent background.`,
   },
   flasks: {
@@ -42,200 +60,223 @@ export const ART_GROUPS: Record<ArtGroup, ArtGroupDef> = {
     template: (d) => `An inventory icon of ${d}, upright, centred, transparent background.`,
   },
   items: {
-    title: 'Item bases', priority: 5, size: [160, 160], format: '1024×1024, transparent background, a single item laid flat or upright like a Diablo inventory icon.',
+    title: 'Item bases', priority: 5, size: [160, 160], format: '1024×1024, transparent background, a single item, upright or diagonal, like a classic RPG inventory icon.',
     template: (d) => `An inventory icon of ${d}, centred, transparent background.`,
   },
   uniques: {
-    title: 'Unique items', priority: 5, size: [160, 160], format: '1024×1024, transparent background, an ornate legendary version of the item with a faint orange glow.',
-    template: (d) => `An inventory icon of a legendary ${d}, faint orange magical glow, centred, transparent background.`,
+    title: 'Unique items', priority: 5, size: [160, 160], format: '1024×1024, transparent background, a single item that looks rare and well made but not overdecorated.',
+    template: (d) => `An inventory icon of ${d}, centred, transparent background.`,
   },
   gems: {
-    title: 'Skill gems', priority: 6, size: [128, 128], format: '1024×1024, transparent background, a cut gemstone with a glowing symbol inside it.',
-    template: (d) => `An inventory icon of a faceted ${d}, centred, transparent background.`,
+    title: 'Skill gems', priority: 6, size: [128, 128], format: '1024×1024, transparent background, a single cut gemstone.',
+    template: (d) => `An inventory icon of ${d}, centred, transparent background.`,
   },
 };
 
 const FIXED: Record<string, string> = {
-  'portraits/trader': 'A wandering merchant in his fifties, weathered face, sly half-smile, hooded travel cloak covered in pouches, a lantern hanging beside him, coins and trinkets on a crate in front of him, cave hideout in the background.',
-  'portraits/brannoc': '"Old Brannoc", a hunched elderly survivor with a scarred face and a grey braided beard, wrapped in a patched fur cloak, sitting by a small fire in a seaside cliff cave, kind but tired eyes.',
-  'portraits/class_warrior': 'A battle-worn warrior in dented iron plate, rusted sword over the shoulder, red cloth tabard, determined stare, stormy shoreline behind.',
-  'portraits/class_ranger': 'A lean ranger in dark leather armour and a green hood, twin daggers, alert and poised, misty marsh reeds behind.',
-  'portraits/class_mage': 'A young mage in a worn blue robe holding a crooked driftwood wand crackling with blue lightning, intense eyes lit by the spark, ruined stone archway behind.',
-  'scenes/title': 'A grim storm-lashed coastline at night, a lone figure-sized gap of firelight in a cliff cave above the tide, shipwrecks in the surf, distant ruined towers, rain and embers in the air.',
-  'scenes/hideout': 'Inside a large seaside cliff cave turned into a camp: rough stone walls, a central fire pit, hanging lanterns, crates and furs, a glimpse of the night sea through the cave mouth.',
+  'portraits/trader':
+    'A merchant in his fifties with a short grey beard, a lined, tanned face and a small knowing smile. He wears a hooded brown wool travel cloak, hood down, with two leather pouches on a strap across his chest. One hand holds up a single gold coin.',
+  'portraits/brannoc':
+    'An old man in his seventies with a long grey beard in one braid, a pale scar across his left cheek and tired, kind eyes. He wears a patched grey fur cloak over a plain brown tunic. His shoulders are hunched.',
+  'portraits/class_warrior':
+    'A broad-shouldered warrior in his thirties with short dark hair and a stubbled jaw. He wears dented grey iron plate armour over a faded red cloth tabard. A plain rusted sword rests on his right shoulder. Serious, steady expression.',
+  'portraits/class_ranger':
+    'A lean ranger in her twenties with a narrow face and sharp eyes, a dark green cloth hood up over her hair. She wears close-fitting dark brown leather armour. One short dagger is held low in her right hand.',
+  'portraits/class_mage':
+    'A young mage in his early twenties with messy black hair and a thin face. He wears a worn, faded blue wool robe with a rope belt. In his right hand he holds a short crooked wand of pale driftwood, with a single small blue spark at its tip.',
+  'scenes/title':
+    'A rocky coastline at night under heavy dark clouds. Tall black cliffs on the right; one small cave opening in the cliff face shows warm orange firelight. Two broken shipwrecks lie in grey surf in the middle distance. Cold blue moonlight on the water. Light rain.',
+  'scenes/hideout':
+    'Inside a large sea cave used as a camp. Rough grey stone walls and a sandy floor. One stone-ringed fire pit in the centre gives warm light. A few wooden crates and rolled furs against the left wall. The cave mouth on the right opens onto a dark night sea.',
 };
 
 const STATION_DESC: Record<string, string> = {
-  map_device: 'An ancient stone ring device with glowing purple runes and a swirling portal in its centre, set into a cave floor.',
-  stash: 'A heavy iron-banded wooden chest overflowing with gold coins, glowing orbs and gear, padlock hanging open.',
-  forge: 'A dwarven stone forge with glowing coals, an anvil, hammer and tongs, sparks flying.',
-  alchemy_table: 'A cluttered alchemy table with bubbling glass flasks in red, blue and purple, herbs drying overhead, a small brazier underneath.',
-  bench: "A sturdy crafting workbench with clamps, a jeweller's loupe, scattered gemstones and a few glowing currency orbs.",
-  vendor: 'A small merchant stall made of crates and a patched canvas awning, lanterns, goods hanging from hooks.',
+  map_device:
+    'A waist-high ring of rough grey standing stones, about three metres across, set in a circle. Simple carved lines on the stones. In the middle, a flat stone disc with a faint purple light rising from it.',
+  stash:
+    'A large wooden chest with dark iron bands and corner plates. The lid is open, showing a heap of gold coins inside. An open iron padlock hangs from the latch.',
+  forge:
+    'A blacksmith forge of rough grey stone bricks with a chimney hood above. Orange coals in the hearth. An iron anvil on a tree-stump block stands in front, with a hammer resting on it.',
+  alchemy_table:
+    'A heavy wooden table with three glass flasks on it: one red, one blue, one green, each half full. A brass mortar and pestle and a small stack of old books sit beside them.',
+  bench:
+    'A sturdy wooden workbench with an iron vice bolted to one end. On top: a few hand tools, a small brass magnifying loupe, and three uncut gemstones.',
+  vendor:
+    'A small market stall built from wooden crates, with a patched tan canvas awning on two poles. One lantern hangs from the front pole. A few cloth bags and a coiled rope sit on the counter.',
 };
 
 const ZONE_DESC: Record<string, string> = {
-  mudflats: 'Grey tidal mud flats at dusk, broken shipwreck ribs, pools of dark water, drowned corpses half-buried, distant cliffs.',
-  brinecaves: 'Dripping sea caves lit by pale green bioluminescence, tide pools, salt crusted rock, a wrecked rowing boat.',
-  ashwood: 'A burned forest still smouldering, black trunks, glowing embers in the undergrowth, orange haze.',
-  blackreed: 'A dark marsh of towering black reeds, still green water, fog, a crooked hut on stilts in the distance.',
-  crypt: 'A flooded underground crypt, ankle-deep cold water, stone sarcophagi, pale blue light through cracks.',
-  shipgrave: 'A grey bay choked with rotting shipwrecks piled on each other, broken masts, gulls, a stormy sky.',
-  stormcliffs: 'Sheer black sea cliffs in a violent storm, lightning striking the rocks, crashing waves far below.',
-  sanctum: 'A sunken cathedral underwater, broken stained glass, coral growing over pews, a throne of shells at the far end, shafts of blue light.',
+  mudflats:
+    'Flat grey tidal mud at dusk stretching to the horizon. The curved black wooden ribs of one old shipwreck stick up from the mud in the foreground. Shallow pools reflect a dull orange sky. Dark cliffs far away on the left.',
+  brinecaves:
+    'A wide sea cave with wet dark rock walls. Shallow tide pools on the floor with a soft green light coming from algae in the water. One broken wooden rowing boat lies on its side near the front.',
+  ashwood:
+    'A burned forest. Straight black tree trunks with no leaves stand in grey ash. A few patches of orange embers glow on the ground. Hazy brown-orange sky behind.',
+  blackreed:
+    'A marsh of tall dark reeds, taller than a person, around still green water. Low mist over the water. One small wooden hut on stilts stands in the distance.',
+  crypt:
+    'An underground stone crypt with a low arched ceiling. Shallow still water covers the floor. Two rows of plain stone coffins line the walls. Pale blue light comes through a crack in the ceiling at the far end.',
+  shipgrave:
+    'A grey bay full of old wrecked wooden ships lying on their sides, broken masts leaning at angles. Low grey storm clouds. Calm grey water.',
+  stormcliffs:
+    'Tall black sea cliffs seen from the side, with white waves breaking at their base far below. Dark storm clouds; one thin bolt of lightning in the distance.',
+  sanctum:
+    'The inside of a sunken stone cathedral underwater. Tall pillars, rows of broken wooden pews with pink coral growing on them. A plain stone throne at the far end. Rays of blue light come down from above.',
 };
 
 const MONSTER_DESC: Record<string, string> = {
-  rat: 'a drowned rat, bloated and dripping, glowing pale eyes',
-  crab: 'a large mud-caked crab with a cracked shell and one oversized claw',
-  zombie: 'a waterlogged corpse rising from the mud, seaweed in its hair',
-  wisp: 'a crackling yellow bog wisp, a ball of lightning with a faint face',
-  gorger: 'BOSS — a huge bloated swamp creature with a gaping toothy maw and barnacled skin',
-  crawler: 'a pale eyeless cave crawler, a many-legged insect with slick wet plates',
-  brinebat: 'a salt-encrusted bat with torn wings and needle teeth',
-  sailor: 'a drowned sailor in a rotting striped shirt, rope still around his neck',
-  siren: 'a gaunt salt siren with grey scaled skin and frost on her lips, mouth open in a song',
-  harrow: 'BOSS — "Captain Harrow", a drowned ship captain in a ragged tricorn and greatcoat, a lantern of green fire on his belt',
-  cinderhound: 'a skeletal hound wreathed in embers, smoke pouring from its jaws',
-  treant: 'a charred walking tree, cracks in its bark glowing orange',
-  harpy: 'a ragged harpy with ash-grey feathers and burning eyes',
-  emberkin: 'a small hunched fire shaman with a bone mask and a smoking staff',
-  pyre: 'BOSS — "Pyre-Mother Ulva", a towering witch of living flame crowned with burning antlers',
-  lurker: 'a hulking bog lurker covered in moss and mud, only its yellow eyes and jaws visible',
-  stalker: 'a thin reed stalker, a lanky humanoid woven from black reeds with a bone spear',
-  toad: 'a huge sickly plague toad with frost-blue boils and a dripping tongue',
-  fenwitch: 'a fen witch with a crown of reeds and crackling lightning in her hands',
-  sedge: 'BOSS — "Old Mother Sedge", an ancient hag grown into the marsh, roots for legs, lightning in her eyes',
-  ghoul: 'a gaunt crypt ghoul with long claws, pale wet skin',
-  frostwraith: 'a hooded frost wraith, icy mist trailing from its empty robes',
-  skeleton: 'a skeletal warden in rusted tomb armour holding a halberd',
-  lich: 'a drowned lich in waterlogged robes, a glowing blue phylactery at its chest',
-  tidecaller: 'BOSS — "Tidecaller Morvane", a corrupted sea priestess with a coral crown, water swirling around her',
-  brute: 'a hulking barnacle-covered brute with an anchor for a weapon',
-  gunner: 'a drowned ship gunner holding a smoking hand cannon, burning fuse in his teeth',
-  gulls: 'a screaming swarm of scraggy black-eyed gulls',
-  wreckshaman: 'a wreck shaman wearing a ship figurehead as a mask, lightning arcing from a driftwood staff',
-  vosk: 'BOSS — "Admiral Vosk", a bloated drowned admiral in a waterlogged naval coat covered in medals, flintlock and cutlass',
-  ravager: 'a cliff ravager, a lean grey beast with hooked claws for climbing rock',
-  galeborn: 'a galeborn spirit, a humanoid made of whirling wind and lightning',
-  rockback: 'a giant crab with a boulder grown into its shell',
-  stormcaller: 'a storm caller in a soaked hooded robe, holding a staff that crackles with lightning',
-  skarra: 'BOSS — "Skarra, Queen of Gales", a huge harpy queen with storm-grey wings and a crown of lightning',
-  zealot: 'a tidebound zealot in a drowned monk habit, chains and frost around his fists',
-  eel: 'an abyssal eel, long and black with glowing blue electric markings',
-  coralgolem: 'a coral golem, a lumbering figure of pink and white coral with a glowing core',
-  priest: 'a sanctum priest with a cracked mitre and a frozen censer',
-  ysolde: 'BOSS — "Ysolde, the Drowned Queen", a regal drowned queen with pale blue skin, a crown of shells and pearls, hair floating as if underwater, lightning in her hands',
+  rat: 'a large wet grey rat with matted fur, bare pink tail, small pale milky eyes',
+  crab: 'a big brown crab covered in dried grey mud, a crack across its shell, one claw much bigger than the other',
+  zombie: 'a drowned man with grey-green swollen skin, wet tangled hair with strands of seaweed, torn grey shirt, blank white eyes',
+  wisp: 'a floating ball of pale yellow light the size of a head, with two dark hollow eyes and a small open mouth',
+  gorger: 'a boss: a huge fat swamp creature like a giant toad, grey-green skin with patches of barnacles, a very wide mouth full of uneven teeth',
+  crawler: 'a pale white cave insect the size of a dog, no eyes, a long body made of shiny wet plates, many thin legs',
+  brinebat: 'a large grey bat with white salt crust on its fur, ragged holes in its wings, small sharp teeth',
+  sailor: 'a drowned sailor with grey skin, a faded red-and-white striped shirt, a frayed rope tied around his neck',
+  siren: 'a thin woman with grey scaly skin on her cheeks and neck, long wet dark hair, white frost on her lips, mouth open as if singing',
+  harrow:
+    'a boss: "Captain Harrow", a drowned ship captain with grey skin, a torn black tricorn hat, a long tattered navy greatcoat, and a small lantern of green flame hanging from his belt',
+  cinderhound: 'a skeletal dog with black scorched bones, small orange embers in its eye sockets, grey smoke rising from its jaws',
+  treant: 'a walking burned tree with a rough face in its trunk, black bark with orange-lit cracks',
+  harpy: 'a thin woman-bird creature with ash-grey feathers, bare grey arms ending in claws, bright orange eyes',
+  emberkin: 'a small hunched goblin-like figure in a white animal-skull mask, holding a wooden staff with smoke drifting from its tip',
+  pyre: 'a boss: "Pyre-Mother Ulva", a tall gaunt witch with ash-grey skin and long black hair, wearing burnt deer antlers on her head with small flames at their tips',
+  lurker: 'a huge hunched beast covered in thick green moss and dripping mud, only its yellow eyes and big jaw showing clearly',
+  stalker: 'a tall thin humanoid made of bundled black reeds, a long face with no features except two pale eye-holes',
+  toad: 'a huge fat toad with sickly yellow-green skin, pale blue lumps on its back, a long tongue hanging out',
+  fenwitch: 'an old woman with a crown of dry reeds and a muddy green shawl, a small blue spark between her raised fingers',
+  sedge: 'a boss: "Old Mother Sedge", a very old wrinkled woman whose lower body is a mass of tree roots, long grey hair, eyes glowing pale blue',
+  ghoul: 'a hairless grey humanoid with pale wet skin, sunken black eyes, long thin fingers with dark claws',
+  frostwraith: 'an empty hooded grey robe floating in the air, with white frost on the cloth and only darkness inside the hood',
+  skeleton: 'a skeleton in rusted iron armour and a dented helmet, holding a long halberd upright',
+  lich: 'a skeletal figure in soaked dark robes, with a small glowing blue crystal hanging on a chain at its chest',
+  tidecaller: 'a boss: "Tidecaller Morvane", a pale woman in sea-green robes with a crown of white and red coral, a ring of water circling around her',
+  brute: 'a huge muscular man with grey skin covered in barnacles, carrying a rusty ship anchor over one shoulder',
+  gunner: 'a drowned sailor with grey skin and a wet bandana, holding a short black hand cannon, a lit fuse between his teeth',
+  gulls: 'a tight group of five scruffy grey-and-black seagulls, beaks open, screaming',
+  wreckshaman: 'a figure wearing a carved wooden ship figurehead as a mask, holding a crooked driftwood staff with a small blue spark at the top',
+  vosk: 'a boss: "Admiral Vosk", a fat drowned admiral with grey skin, a wet dark blue naval coat with tarnished gold buttons and medals, holding a cutlass',
+  ravager: 'a lean grey wolf-like beast with long hooked front claws and a flat head, built for climbing rock',
+  galeborn: 'a humanoid figure made of pale grey swirling wind, with two small bright blue eyes',
+  rockback: 'a giant crab with a large grey boulder growing out of its shell',
+  stormcaller: 'a man in a soaked dark grey hooded robe holding a tall wooden staff, a small blue spark at its tip',
+  skarra: 'a boss: "Skarra, Queen of Gales", a large harpy queen with storm-grey wings, a fierce face, and a simple crown of jagged iron',
+  zealot: 'a bald monk in a wet brown robe, iron chains wrapped around his fists, white frost on the chains',
+  eel: 'a long black eel with a wide mouth of small teeth and thin bright blue stripes along its body',
+  coralgolem: 'a big slow giant built of pink and white coral, a round glowing pale blue stone in the middle of its chest',
+  priest: 'a pale old priest in faded white robes, a cracked tall mitre hat, holding a metal censer covered in frost',
+  ysolde:
+    'a boss: "Ysolde, the Drowned Queen", a tall regal woman with pale blue skin, long dark hair floating as if underwater, a crown of white shells and pearls, a calm cold expression',
 };
 
 const CURRENCY_DESC: Record<string, string> = {
-  transmute: 'a small pale-blue glass orb with a swirling inner light',
-  augment: 'a deep blue orb with a silver plus-shaped rune',
-  alteration: 'a light-blue orb wrapped in a thin bronze spiral',
-  regal: 'a gold orb with a tiny crown etched on it',
-  alchemy: 'a golden orb filled with bubbling liquid',
-  scour: 'a matte white-grey stone orb with a hole through the middle',
-  chaos: 'a dark gold orb with a chaotic swirling sigil',
-  annul: 'a cracked pure-white orb leaking faint light',
-  exalted: 'a radiant pale-gold orb with small wings',
-  divine: 'a cream-white orb glowing with holy light rays',
-  regret: 'a muted green orb with a faint backwards-spiral rune',
-  expansion: 'a violet orb with three small sockets around its rim',
-  instill: 'a glowing orange orb with liquid fire swirling inside',
+  transmute: 'a small smooth pale-blue glass marble with a lighter blue centre',
+  augment: 'a smooth deep-blue glass orb with a small silver cross shape set into its front',
+  alteration: 'a light-blue glass orb with a thin copper wire wrapped around it in a spiral',
+  regal: 'a polished gold metal orb with a small crown engraved on its front',
+  alchemy: 'a clear glass orb half filled with golden liquid',
+  scour: 'a rough matte grey stone ball with a round hole straight through the middle',
+  chaos: 'a dark gold metal orb with a jagged, irregular pattern engraved over its surface',
+  annul: 'a smooth white porcelain orb with a single thin crack across it',
+  exalted: 'a pale gold metal orb with two small metal wings on its sides',
+  divine: 'a cream-white stone orb with a simple four-pointed star engraved on its front',
+  regret: 'a dull green glass orb with a dark green spiral line on its surface',
+  expansion: 'a violet glass orb with three small round empty metal sockets set around its middle',
+  instill: 'a clear glass orb filled with swirling orange liquid',
 };
 
 const MATERIAL_DESC: Record<string, string> = {
-  gold: 'a small stack of old gold coins',
-  copper_ore: 'a chunk of raw copper ore',
-  iron_ore: 'a chunk of dark grey iron ore',
-  mithril_ore: 'a chunk of pale cyan metallic mithril ore',
-  rough_gem: 'an uncut magenta gemstone',
-  ash_log: 'a pale ash wood log',
-  oak_log: 'a sturdy brown oak log',
-  yew_log: 'a dark red-brown yew log',
-  sunpetal: 'a bright yellow sunpetal flower',
-  frostleaf: 'an icy blue frosted leaf',
-  emberroot: 'a gnarled root glowing orange at the tips',
-  voidbloom: 'a purple flower with a black void-like centre',
-  arcane_dust: 'a small pile of glittering lavender dust',
+  gold: 'a small stack of five worn gold coins',
+  copper_ore: 'a fist-sized lump of grey rock with bright orange-copper streaks',
+  iron_ore: 'a fist-sized lump of dark grey rock with rusty red-brown streaks',
+  mithril_ore: 'a fist-sized lump of grey rock with pale silver-blue metallic streaks',
+  rough_gem: 'a rough, uncut pink-purple crystal, cloudy and uneven',
+  ash_log: 'a short cut log with pale grey bark and a light cream cut end showing tree rings',
+  oak_log: 'a short cut log with rough dark brown bark and a tan cut end showing tree rings',
+  yew_log: 'a short cut log with thin reddish bark and a deep red-orange cut end showing tree rings',
+  sunpetal: 'a single yellow flower with five wide petals and a short green stem',
+  frostleaf: 'a single pale blue leaf with white frost along its edges',
+  emberroot: 'a short twisted brown root, its broken ends glowing orange like coals',
+  voidbloom: 'a single dark purple flower with a black centre and a short dark stem',
+  arcane_dust: 'a small heap of fine lavender-coloured powder',
 };
 
 const FLASK_DESC: Record<string, string> = {
-  life_small: 'a small round flask of glowing red liquid',
-  life_medium: 'a larger round flask of glowing red liquid',
-  life_grand: 'a tall ornate flask of glowing red liquid with brass fittings',
-  mana_small: 'a small flask of glowing blue liquid',
-  mana_medium: 'a larger flask of glowing blue liquid',
-  granite: 'a stone-grey flask with a rock texture',
-  quicksilver: 'a flask of swirling liquid silver',
-  diamond: 'a crystal-clear flask full of sparkles',
-  ruby: 'a deep-red faceted gem-like flask',
+  life_small: 'a small round glass bottle with a cork, full of red liquid',
+  life_medium: 'a medium round glass bottle with a cork, full of red liquid',
+  life_grand: 'a tall glass bottle with a brass neck and cork, full of red liquid',
+  mana_small: 'a small round glass bottle with a cork, full of blue liquid',
+  mana_medium: 'a medium round glass bottle with a cork, full of blue liquid',
+  granite: 'a squat bottle carved from grey stone, with a stone stopper',
+  quicksilver: 'a slim glass bottle with a cork, full of shiny liquid silver',
+  diamond: 'a clear cut-glass bottle with flat faces like a gem, with a glass stopper',
+  ruby: 'a bottle of dark red cut glass with flat faces like a gem, with a gold stopper',
 };
 
 const ITEM_DESC: Record<string, string> = {
-  rusted_sword: 'a rusted, notched short sword',
-  whittled_dagger: 'a crude whittled wooden-handled dagger',
-  driftwood_wand: 'a crooked driftwood wand with a sparking tip',
-  iron_blade: 'a plain iron longsword',
-  glinting_dagger: 'a polished steel dagger that glints',
-  war_axe: 'a heavy bearded war axe',
-  steel_broadsword: 'a broad steel sword with a leather grip',
-  mithril_sabre: 'a curved pale-blue mithril sabre',
-  plank_shield: 'a splintered wooden plank shield',
-  buckler: 'a small round goathide buckler',
-  kite_shield: 'an iron kite shield',
-  tower_shield: 'a tall pale-blue mithril tower shield',
-  iron_hat: 'a simple dented iron cap',
-  leather_cap: 'a worn leather cap',
-  soldier_helm: 'a steel soldier helmet with a nose guard',
-  hunter_hood: 'a dark green hunter hood',
-  great_helm: 'a heavy mithril great helm with a visor',
-  shadow_mask: 'a black cloth mask with silver trim',
-  plate_vest: 'a battered iron plate vest',
-  shabby_jerkin: 'a shabby patched leather jerkin',
-  chainmail: 'a chainmail hauberk',
-  scale_leather: 'scale-reinforced leather armour',
-  mithril_plate: 'a gleaming mithril breastplate',
-  assassin_garb: "a sleek black assassin's coat",
-  iron_gauntlets: 'a pair of iron gauntlets',
-  rawhide_gloves: 'a pair of rawhide gloves',
-  steel_gauntlets: 'a pair of polished steel gauntlets',
-  stealth_gloves: 'a pair of thin black leather gloves',
-  iron_greaves: 'a pair of iron greaves',
-  leather_boots: 'a pair of worn leather boots',
-  steel_greaves: 'a pair of steel greaves',
-  shagreen_boots: 'a pair of supple grey shagreen boots',
-  chain_belt: 'a belt made of iron chain links',
-  leather_belt: 'a plain leather belt with a brass buckle',
-  heavy_belt: 'a thick heavy belt with iron studs',
-  coral_amulet: 'an amulet with a red coral pendant',
-  amber_amulet: 'an amulet with an amber pendant',
-  jade_amulet: 'an amulet with a jade pendant',
-  onyx_amulet: 'an amulet with a black onyx pendant',
-  iron_ring: 'a plain iron ring',
-  ruby_ring: 'a gold ring set with a ruby',
-  sapphire_ring: 'a silver ring set with a sapphire',
-  topaz_ring: 'a gold ring set with a yellow topaz',
-  diamond_ring: 'a platinum ring set with a diamond',
+  rusted_sword: 'a short sword with a rusty brown blade, small nicks along the edge, and a plain leather-wrapped grip',
+  whittled_dagger: 'a short iron dagger with a rough hand-carved wooden handle',
+  driftwood_wand: 'a short crooked wand of pale grey driftwood, with a small blue spark at its tip',
+  iron_blade: 'a plain straight iron longsword with a simple cross guard and a leather grip',
+  glinting_dagger: 'a polished steel dagger with a bright blade and a black leather grip',
+  war_axe: 'a one-handed war axe with a dark iron head shaped like a beard and a wooden handle',
+  steel_broadsword: 'a wide straight steel sword with a brass cross guard and a brown leather grip',
+  mithril_sabre: 'a curved sabre with a pale silver-blue blade and a simple silver hand guard',
+  plank_shield: 'a square shield made of four rough wooden planks held together with iron nails, one corner split',
+  buckler: 'a small round wooden shield covered in tan hide, with an iron rim',
+  kite_shield: 'a tall grey iron shield, rounded at the top and pointed at the bottom, plain with no emblem',
+  tower_shield: 'a tall rectangular shield of pale silver-blue metal with a raised rim',
+  iron_hat: 'a simple round iron cap with a few dents',
+  leather_cap: 'a worn brown leather cap with stitched seams',
+  soldier_helm: 'a steel helmet with a straight nose guard',
+  hunter_hood: 'a dark green cloth hood with a short cape',
+  great_helm: 'a full closed helmet of pale silver-blue metal with a narrow eye slit',
+  shadow_mask: 'a black cloth face mask covering the lower face, with a thin silver edge',
+  plate_vest: 'a dented grey iron breastplate with leather straps',
+  shabby_jerkin: 'a sleeveless brown leather vest with patches and uneven stitching',
+  chainmail: 'a long-sleeved shirt of grey iron chain links',
+  scale_leather: 'a brown leather vest covered in small overlapping iron scales',
+  mithril_plate: 'a clean breastplate of pale silver-blue metal',
+  assassin_garb: 'a fitted black leather coat with a high collar and plain silver buckles',
+  iron_gauntlets: 'a pair of grey iron gauntlets with jointed fingers',
+  rawhide_gloves: 'a pair of rough tan rawhide gloves',
+  steel_gauntlets: 'a pair of polished steel gauntlets with jointed fingers',
+  stealth_gloves: 'a pair of thin, close-fitting black leather gloves',
+  iron_greaves: 'a pair of grey iron armoured boots',
+  leather_boots: 'a pair of worn brown leather boots',
+  steel_greaves: 'a pair of polished steel armoured boots',
+  shagreen_boots: 'a pair of soft grey leather boots with a fine pebbled texture',
+  chain_belt: 'a belt made of grey iron chain links with a simple hook clasp',
+  leather_belt: 'a plain brown leather belt with a brass buckle',
+  heavy_belt: 'a thick dark leather belt with rows of iron studs and an iron buckle',
+  coral_amulet: 'a necklace on a thin cord with a small polished red coral pendant',
+  amber_amulet: 'a necklace on a thin gold chain with a small oval amber pendant',
+  jade_amulet: 'a necklace on a thin cord with a small carved green jade pendant',
+  onyx_amulet: 'a necklace on a thin silver chain with a small black onyx pendant',
+  iron_ring: 'a plain dark iron ring',
+  ruby_ring: 'a gold ring with one small red ruby',
+  sapphire_ring: 'a silver ring with one small blue sapphire',
+  topaz_ring: 'a gold ring with one small yellow topaz',
+  diamond_ring: 'a white-gold ring with one small clear diamond',
 };
 
 const UNIQUE_DESC: Record<string, string> = {
-  miners_lament: "iron miner's helmet with a cracked lantern, called Miner's Lament",
-  bloodthirst: 'rusted sword dripping blood, called Bloodthirst',
-  emberheart: 'iron breastplate with a glowing ember set in the chest, called Emberheart',
-  windstep: 'pair of leather boots with swirling wind around them, called Windstep',
-  alchemists_band: "iron ring set with a tiny bubbling vial, called Alchemist's Band",
-  iron_bulwark: 'massive riveted iron kite shield, called The Iron Bulwark',
-  starforged_edge: 'mithril sabre with stars glittering in the blade, called Starforged Edge',
-  titans_girth: "enormous studded belt with a giant's skull buckle, called Titan's Girth",
+  miners_lament: "an old iron miner's helmet with a small brass lantern on the front, its glass cracked",
+  bloodthirst: 'a rusty short sword with dark red blood running down the blade, a red cloth wrapped around the grip',
+  emberheart: 'a grey iron breastplate with one round orange glowing coal set in the centre of the chest',
+  windstep: 'a pair of light brown leather boots with small white feathers tied at the ankles',
+  alchemists_band: 'a thick iron ring with a tiny glass vial of green liquid set into it in place of a stone',
+  iron_bulwark: 'a very large, thick iron kite shield covered in rows of big rivets, scratched and dented from use',
+  starforged_edge: 'a curved sabre with a dark blue-black blade speckled with tiny white dots like stars, and a silver guard',
+  titans_girth: 'a huge thick leather belt with iron studs and a buckle made from a small horned skull',
 };
 
-const ATTR_GEM = { str: 'red ruby', dex: 'green emerald', int: 'blue sapphire' } as const;
+const ATTR_GEM = { str: 'red', dex: 'green', int: 'blue' } as const;
 
 const GEM_SYMBOL: Record<string, string> = {
-  heavy_strike: 'a hammer', ground_slam: 'a cracked ground shockwave', iron_guard: 'a shield', war_cry: 'a roaring mouth',
-  twin_strike: 'two crossed blades', poison_dart: 'a green dart', smoke_step: 'a puff of smoke', lacerate: 'claw slashes',
-  spark: 'a lightning spark', fireball: 'a fireball', frost_ward: 'a snowflake', arcane_siphon: 'a swirling vortex',
+  heavy_strike: 'a hammer', ground_slam: 'a cracked line', iron_guard: 'a shield', war_cry: 'an open mouth',
+  twin_strike: 'two crossed blades', poison_dart: 'a dart', smoke_step: 'a puff cloud', lacerate: 'three claw marks',
+  spark: 'a zigzag lightning bolt', fireball: 'a flame', frost_ward: 'a snowflake', arcane_siphon: 'a spiral',
 };
 
 export interface ArtEntry {
@@ -255,20 +296,22 @@ function entry(group: ArtGroup, id: string, name: string, desc: string): ArtEntr
 
 /** The look every image shares; opens every copy-paste prompt. */
 export const ART_STYLE =
-  'Dark-fantasy game art for a browser game called "Path of Idle" (inspired by Path of Exile and Diablo): ' +
-  'painterly digital illustration, grim and moody, desaturated earthy palette with warm candle and ember highlights ' +
-  'and gold #d2a659 accents, strong rim lighting, high detail but readable at small sizes. ' +
-  'No text, no letters, no logos, no watermarks, no UI frames.';
+  'Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. ' +
+  'Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. ' +
+  'Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. ' +
+  'Show only what is described below, nothing extra.\n\n' +
+  'Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, ' +
+  'lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.';
 
 /** Small icons are generated nine at a time on a 3×3 sprite sheet, then sliced apart by `npm run art`. */
 export const SHEET_GRID = 3;
 export const SHEET_GROUPS: Partial<Record<ArtGroup, string>> = {
-  currency: 'Each icon is a single glowing currency orb.',
+  currency: 'Each icon is a single small orb, about the size of a plum.',
   materials: 'Each icon is a single crafting material.',
-  flasks: 'Each icon is a single glass flask, standing upright.',
-  items: 'Each icon is a single item, laid flat or upright like a Diablo inventory icon.',
-  uniques: 'Each icon is an ornate legendary version of the item with a faint orange magical glow.',
-  gems: 'Each icon is a faceted cut gemstone with a glowing symbol inside it.',
+  flasks: 'Each icon is a single bottle, standing upright, seen from the front.',
+  items: 'Each icon is a single item, upright or on a diagonal, like a classic RPG inventory icon.',
+  uniques: 'Each icon is a single rare item: well made and distinctive, but not overdecorated.',
+  gems: 'Each icon is a single cut gemstone, seen from the front, with a simple flat symbol inside it.',
 };
 
 export interface ArtSheet {
@@ -305,8 +348,8 @@ export function artManifest(): ArtEntry[] {
   for (const f of FLASKS) out.push(entry('flasks', f.id, f.name, FLASK_DESC[f.id] ?? f.name));
   for (const b of BASES) out.push(entry('items', b.id, b.name, ITEM_DESC[b.id] ?? b.name));
   for (const u of UNIQUES) out.push(entry('uniques', u.id, u.name, UNIQUE_DESC[u.id] ?? u.name));
-  for (const g of ACTIVE_GEMS) out.push(entry('gems', g.id, g.name, `${ATTR_GEM[g.attr]} gem with ${GEM_SYMBOL[g.id] ?? 'a glowing rune'} glowing inside`));
+  for (const g of ACTIVE_GEMS) out.push(entry('gems', g.id, g.name, `a rounded ${ATTR_GEM[g.attr]} gemstone with a simple pale symbol of ${GEM_SYMBOL[g.id] ?? 'a dot'} inside`));
   for (const g of SUPPORT_GEMS)
-    out.push(entry('gems', g.id, `${g.name} (support)`, `small ${ATTR_GEM[g.attr]} support gem, hexagonal cut, with a faint glowing rune for "${g.name}" inside`));
+    out.push(entry('gems', g.id, `${g.name} (support)`, `a small flat hexagonal ${ATTR_GEM[g.attr]} gemstone with a plain pale dot in the centre`));
   return out;
 }

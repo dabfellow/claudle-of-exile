@@ -15,7 +15,7 @@ What has to be true before Path of Idle goes public with Act 1. ✅ done · 🔧
 - ✅ Mage matches the other classes (spells now use flat added elemental damage at 70%).
 - ✅ Act-boss farming no longer floods exalts. Adds killed in boss fights don't count toward the next boss.
 - ⬜ **[You]** Play one character of each class through Act 1 by hand. The sim bot never re-arranges skills or uses keystones, so human pacing will differ. Note anything that feels slow or unfair.
-- ⬜ Offline progress: check a 12 h catch-up in a late area doesn't skip past content you couldn't clear by hand.
+- ✅ Offline progress can't skip content: a boss you haven't beaten never spawns while you're away (the catch-up screen says it's waiting). Bosses you've already beaten can be farmed offline.
 
 ## Art (Phase 7)
 - 🔧 **[You]** Generate the 187 images in [ART_PROMPTS.md](ART_PROMPTS.md), drop them in `src/assets/art/`, then run `npm run art`. 18 are done (portraits, scenes, stations). The 8 Act 1 area banners and 45 monsters are the most visible.
@@ -27,13 +27,13 @@ What has to be true before Path of Idle goes public with Act 1. ✅ done · 🔧
 - ⬜ Test cloud save sync between two browsers on the live site.
 
 ## Tech
-- ✅ `npm test` (92 tests) and `npm run build` pass.
-- ⬜ The bundle is 641 kB (188 kB gzipped), over Vite's 500 kB warning. Split the Supabase client and large pages with dynamic `import()`.
-- ⬜ Error reporting (e.g. Sentry) so you hear about crashes from players.
+- ✅ `npm test` (94 tests) and `npm run build` pass.
+- ✅ Bundle split: game code 274 kB (85 kB gzipped), with React and Supabase in their own long-cached files. No size warning.
+- ⬜ **[You]** Error reporting (e.g. Sentry) so you hear about crashes from players. Needs an account; I can wire it in once you have a DSN.
 - ✅ Hosting: live on Cloudflare Workers at [dabfellow.party/path-of-idle](https://dabfellow.party/path-of-idle/). The site root is the project hub (`../dabfellow-hub`). `npm run deploy` builds and publishes; Supabase keys come from `.env.local` at build time. Sign-in redirect URL to allow: `https://dabfellow.party/path-of-idle/`.
 - ✅ Dev-only tools (`window.game`) are left out of production builds.
 
 ## Before announcing
-- ⬜ Title screen and tutorial text read cleanly; no "prototype" wording left.
-- ⬜ A short "what's in Act 1 / what's coming" note for players (the Act 2–6 tabs already say "coming soon").
-- ⬜ Privacy note for accounts (what's stored: character saves, login provider id).
+- ✅ Title screen, tutorial and README text checked; the tutorial's last toast now points players on to the Drowned Queen.
+- ✅ Settings → About: what's in Act 1, what's coming, and a privacy note. The title screen has a one-line version next to the sign-in buttons.
+- ⬜ **[You]** A contact address (email or Discord) for support and account-deletion requests, to add to the privacy note.

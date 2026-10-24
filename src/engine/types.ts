@@ -361,5 +361,6 @@ export type GameEvent =
   | { t: 'bossCast'; name: string; kind: 'slam' | 'nova' }
   | { t: 'bossPhase'; name: string; text: string }
   | { t: 'actComplete'; act: number }
+  | { t: 'bossWaiting'; name: string }
   | { t: 'zoneUnlocked'; zoneId: string }
   | { t: 'info'; text: string; tone?: 'warn' | 'good' };

@@ -154,7 +154,10 @@ export function aliveMonsters(c: CombatRuntime): MonsterInstance[] {
 function spawnPack(s: GameState, ctx: Ctx): void {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
-  const boss = bossIsNext(s, zone.id);
+  // a boss you've never beaten has to be fought in person: offline, it stays in hiding and you keep farming trash
+  const unbeatenOffline = !!ctx.offline && !s.bossesDefeated.includes(zone.id);
+  const boss = bossIsNext(s, zone.id) && !unbeatenOffline;
+  if (bossIsNext(s, zone.id) && unbeatenOffline) ctx.emit({ t: 'bossWaiting', name: zone.boss.name });
   const pack: MonsterInstance[] = [];
   if (boss) {
     for (let i = 0; i < BOSS_ADDS; i++) pack.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE));

@@ -7,6 +7,7 @@ import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
 import { seeded } from '../src/engine/rng';
+import { simulateOffline } from '../src/engine/offline';
 import { deserialize, serialize } from '../src/engine/save';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
@@ -157,5 +158,36 @@ describe('save v8', () => {
     expect(s.zoneKills).toEqual({ crypt: 3 });
     expect(s.action).toBeNull();
     expect(s.combat).toBeNull();
+  });
+});
+
+describe('offline progress and bosses', () => {
+  const strong = () => {
+    const s = newGame(1, { name: 'T', classId: 'warrior' });
+    s.tutorial.done = true;
+    s.skills.combat = charXpForLevel(30);
+    return s;
+  };
+
+  it("never fights a boss you haven't beaten, so it can't unlock areas while you're away", () => {
+    const s = strong();
+    const c = ctx();
+    startCombat(s, c, 'mudflats');
+    const sum = simulateOffline(s, c, 2 * 3600_000);
+    expect(sum.kills).toBeGreaterThan(zoneDef('mudflats').bossEvery);
+    expect(s.bossesDefeated).toEqual([]);
+    expect(s.unlockedZones).toEqual(['mudflats']);
+    expect(sum.bossWaiting).toBe(zoneDef('mudflats').boss.name);
+  });
+
+  it('farms bosses you have already beaten', () => {
+    const s = strong();
+    s.bossesDefeated = ['mudflats'];
+    const c = ctx();
+    startCombat(s, c, 'mudflats');
+    const before = s.lifetime.bossKills;
+    const sum = simulateOffline(s, c, 2 * 3600_000);
+    expect(s.lifetime.bossKills).toBeGreaterThan(before);
+    expect(sum.bossWaiting).toBeNull();
   });
 });
