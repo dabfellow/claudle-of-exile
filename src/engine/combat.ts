@@ -3,13 +3,13 @@ import {
   BOSS_ADDS,
   BOSS_DMG_MULT,
   BOSS_LIFE_MULT,
-  BOSS_SLAM_CAST_MS,
+  BOSS_SLAM_DEFAULT,
   BOSS_SLAM_EVERY_MS,
   BOSS_SLAM_MULT,
   BOSS_ENRAGE_AT,
   BOSS_ENRAGE_DMG,
   BOSS_ENRAGE_SPEED,
-  BOSS_NOVA_CAST_MS,
+  BOSS_NOVA_DEFAULT,
   BOSS_NOVA_EVERY_MS,
   BOSS_NOVA_MULT,
   BOSS_SUMMON_COUNT,
@@ -20,7 +20,6 @@ import {
   BOSS_WARD_PCT,
   monsterDamage,
   monsterLife,
-  MONSTER_SPEED_SCALE,
   nextZone,
   zoneDef,
   type BossMechanic,
@@ -115,7 +114,9 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     life,
     damage: Math.round(monsterDamage(def.level) * (def.dmgMult ?? 1) * (boss ? BOSS_DMG_MULT : 1) * dmgScale),
     dmgType: def.dmgType,
-    attackMs: Math.round(def.attackMs * MONSTER_SPEED_SCALE),
+    attackName: def.basic.name,
+    attackKind: def.basic.kind,
+    attackMs: def.basic.ms,
     attackTimer: 0,
     isBoss: boss,
     mechanics,
@@ -125,6 +126,7 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     casting: -1,
     castKind: null,
     castTotal: 1,
+    casts: { slam: def.slam ?? BOSS_SLAM_DEFAULT, nova: def.nova ?? BOSS_NOVA_DEFAULT },
     enraged: false,
     ward: 0,
     wardMax: 0,
@@ -831,8 +833,8 @@ function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt:
     mon.timers[kind] = left;
     if (left <= 0) {
       mon.castKind = kind;
-      mon.casting = mon.castTotal = kind === 'nova' ? BOSS_NOVA_CAST_MS : BOSS_SLAM_CAST_MS;
-      ctx.emit({ t: 'bossCast', name: mon.name, kind });
+      mon.casting = mon.castTotal = mon.casts[kind].ms;
+      ctx.emit({ t: 'bossCast', name: mon.name, kind, skill: mon.casts[kind].name });
       triggerInstilled(s, ctx, 'bossCast');
       return true;
     }

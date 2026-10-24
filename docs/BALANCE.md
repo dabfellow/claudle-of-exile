@@ -17,13 +17,14 @@ The bot pushes the furthest zone it's levelled for (area min level ≤ char leve
 | Character XP curve | `engine/xp.ts` `CHAR_CURVE` | `36·(L−1)³ + 100·(L−1)` to 100 |
 | Kill XP | `engine/combat.ts` `monsterXp`, `KILL_XP_SCALE` | `(5 + 3·level) × 10 for bosses × 0.8`, × level-difference multiplier |
 | Death penalty | `engine/character.ts` | 5% of xp toward next level |
-| Player attack speed | `engine/stats.ts` `PLAYER_SPEED_SCALE` | 0.65 |
-| Monster life / attack interval | `data/zones.ts` | ×1.8 / ×1.6 |
+| Player action times | `data/gems.ts` `timeMs`, `BASE_ATTACK_MS` | default attack 3 s; each skill has its own attack or cast time (Heavy Strike 3.9 s, Twin Strike 2.7 s, Spark 2.4 s, Fireball 3.6 s, guards 0.75–1.2 s). Weapons add attack speed (`data/bases.ts` `speed`, 0–35%); attack and cast speed shorten them |
+| Monster life | `data/zones.ts` `MONSTER_LIFE_SCALE` | ×0.85 (was ×1.8 when actions were ~2× quicker) |
+| Monster action times | `data/zones.ts` `basic`, `slam`, `nova` | every monster has a named basic attack or spell (1.9–4.2 s, default 3 s); each boss has its own slam and nova wind-ups (3.2–4.4 s) |
 | Base life regen | `engine/stats.ts` `BASE_REGEN_PCT` | 0.5%/s |
 | Skill XP | `data/skills.ts` `SKILL_XP_SCALE` | 0.3 |
 | Drops | `data/drops.ts` `DROP_TABLES` | per area tier: currency 4.5→5.5%, items 6→7%, rare share 4→12%, unique 0.05→0.1%; chaos from tier 2, exalted/divine from tier 3, instill from tier 4 |
 | Boss drops | `data/drops.ts` `BOSS_TABLES` | first kill guarantees the tier reward (2 transmute → 1 exalted), then `repeatChance` per kill (10% tiers 1–3, 6% tier 4, 1.5% tier 5); 2–3 extra currency rolls |
-| Boss mechanics | `data/zones.ts` `BOSS_*` | slam ×2.5 every 9 s (2.2 s wind-up); nova ×1.8 every 13 s (2.6 s wind-up, ignores blocks); summon up to 2 adds every 16 s; enrage below 35% (+50% attack speed, +30% damage); ward 12% of life at 66%/33%, heals 10% if not broken within 8 s |
+| Boss mechanics | `data/zones.ts` `BOSS_*` | slam ×2.5 every 9 s; nova ×1.8 every 13 s (ignores blocks); wind-ups are per boss; summon up to 2 adds every 16 s; enrage below 35% (+50% attack speed, +30% damage); ward 12% of life at 66%/33%, heals 10% if not broken within 8 s |
 | Spell added damage | `engine/gems.ts` `SPELL_ADDED_EFFECTIVENESS` | spells add your flat fire/cold/lightning damage at 70% |
 | Gathering/recipe gating | `data/skills.ts` `area` | higher nodes and recipes need their area unlocked |
 | Bench recipes | `data/hideout.ts` `BENCH_CRAFTS` | bench level + an achievement for everything past life/resists |
@@ -92,6 +93,17 @@ What changed to get there:
 - The bot now scores gear by its best skill's damage (`skillSummary`), not weapon DPS, so it gears casters sensibly.
 
 Chaos runs at 85–155 per 14 h, mostly from farming the Sanctum after the act is done. This is fine as a pre-Act-2 endgame. Revisit it when Act 2 lands.
+
+## Action times (2026-10-23, 14h, seed 1)
+
+Every skill and monster now has its own attack or cast time (default attack 3 s), replacing one shared weapon-speed interval. Player actions got ~2.1× slower, so monster life went from ×1.8 to ×0.85. Boss wind-ups are longer (3.2–4.4 s) so a guard rule still lands mid-attack.
+
+| Act 1 boss (Ysolde) | Warrior | Ranger | Mage |
+|---|---|---|---|
+| Before | 6h32 | 9h27 | 6h41 |
+| After | 9h13 | 8h44 | 8h19 |
+
+All in the 6–10 h target and closer together; Ranger no longer trails. Only one seed so far — check seeds 2–3 before tuning further.
 
 ## Known gaps
 - Bot gear scoring is crude, so DPS varies a lot with drop luck (e.g. one Warrior run ended on 30 DPS).

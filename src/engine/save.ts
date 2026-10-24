@@ -77,6 +77,12 @@ const MIGRATIONS: Record<number, Migration> = {
     if (s.action?.kind === 'combat') s.action = null;
     s.combat = null;
   },
+  8: (raw) => {
+    // skills and monsters got their own attack and cast times; monsters in a fight in progress lack them
+    const s = raw as unknown as GameState;
+    if (s.action?.kind === 'combat') s.action = null;
+    s.combat = null;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

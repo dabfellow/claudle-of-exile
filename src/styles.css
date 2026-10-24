@@ -3059,6 +3059,16 @@ g.tut-hint circle.body {
   font-size: var(--fs-xs);
 }
 
+.action-line > :first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-line > :last-child {
+  grid-column: 1 / -1;
+}
+
 .status-row {
   display: flex;
   flex-wrap: wrap;

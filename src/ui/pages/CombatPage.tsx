@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
-import { BOSS_NOVA_MULT, BOSS_SLAM_CAST_MS, BOSS_SLAM_MULT, MECHANIC_INFO, zoneDef } from '../../data/zones';
+import { BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, zoneDef } from '../../data/zones';
 import { aliveMonsters, mitigate, queueSkill, retreat, useFlask } from '../../engine/combat';
 import { flaskStats } from '../../engine/flasks';
 import { skillNumbers } from '../../engine/gems';
@@ -126,6 +126,7 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
       <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} color="linear-gradient(90deg, var(--mana), var(--mana-2))" label={`${fmt(s.mana)} / ${fmt(d.maxMana)}`} />
       <div className="action-line">
         <span className="dim">{using ? using.name : 'Waiting'}</span>
+        <span className="dim">{using ? `${(c.actionTotal / 1000).toFixed(1)}s ${using.tags.includes('attack') ? 'attack' : 'cast'}` : ''}</span>
         <ProgressBar value={progress} color={using ? 'var(--accent)' : 'var(--line-2)'} />
       </div>
       <div className="status-row">
@@ -173,12 +174,18 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
           <ProgressBar className="cast-bar" value={1 - m.casting / m.castTotal} />
           <div className="cast-warning">
             {m.castKind === 'nova'
-              ? `⚠ ${DMG_NAME[m.novaType]} nova incoming — blocks won't stop it!`
-              : '⚠ Heavy blow incoming — guard, interrupt or drink!'}
+              ? `⚠ ${m.casts.nova.name}: ${DMG_NAME[m.novaType].toLowerCase()} nova incoming — blocks won't stop it!`
+              : `⚠ ${m.casts.slam.name}: heavy blow incoming — guard, interrupt or drink!`}
           </div>
         </>
       ) : (
-        <ProgressBar value={m.attackTimer / m.attackMs} color="var(--dim)" className="thin" />
+        <div className="action-line">
+          <span className="dim">{m.attackName}</span>
+          <span className="dim">
+            {(m.attackMs / 1000).toFixed(1)}s {m.attackKind === 'spell' ? 'cast' : 'attack'}
+          </span>
+          <ProgressBar value={m.attackTimer / m.attackMs} color="var(--dim)" className="thin" />
+        </div>
       )}
       <div className="status-row">
         {m.enraged && <span className="status bad">Enraged</span>}
@@ -313,16 +320,21 @@ function Matchup({ s, d }: { s: GameState; d: Derived }) {
       <StatRow label="Chance to hit" you={`${Math.round(hit * 100)}%`} them={`${Math.round((1 - evade) * 100)}%`} />
       <StatRow label="Their hit on you" you={yourDefence} them={`${fmt(perHit)} ${DMG_NAME[target.dmgType].toLowerCase()}`} good={perHit < d.maxLife * 0.1} />
       <StatRow label="Their resistances" you="" them={`${target.res.fire}/${target.res.cold}/${target.res.light}% F/C/L`} />
-      <StatRow label="Attack interval" you={`${(1 / d.attacksPerSec).toFixed(2)}s`} them={`${(target.attackMs / 1000).toFixed(2)}s`} />
+      <StatRow
+        label="Attack / cast time"
+        you={`Default Attack ${(d.attackMs / 1000).toFixed(2)}s`}
+        them={`${target.attackName} ${(target.attackMs / 1000).toFixed(2)}s ${target.attackKind === 'spell' ? 'cast' : 'attack'}`}
+      />
       {target.isBoss && (
         <div className="matchup-note">
-          <b>Heavy blow:</b> winds up for {(BOSS_SLAM_CAST_MS / 1000).toFixed(1)}s, then hits for about{' '}
+          <b>{target.casts.slam.name}:</b> a heavy blow that winds up for {(target.casts.slam.ms / 1000).toFixed(1)}s, then hits for about{' '}
           <b className={slam >= s.life ? 'bad' : ''}>{fmt(slam)}</b>. Evasion Rating can't dodge it — use a guard skill, War Cry or a flask.
         </div>
       )}
       {target.isBoss && target.mechanics.includes('nova') && (
         <div className="matchup-note">
-          <b>Nova:</b> a {DMG_NAME[target.novaType].toLowerCase()} blast for about{' '}
+          <b>{target.casts.nova.name}:</b> a {DMG_NAME[target.novaType].toLowerCase()} nova that winds up for{' '}
+          {(target.casts.nova.ms / 1000).toFixed(1)}s, then hits for about{' '}
           <b className={nova >= s.life ? 'bad' : ''}>{fmt(nova)}</b>. Blocks don't stop it — resistances, shields, evades or an interrupt do.
         </div>
       )}

@@ -13,7 +13,7 @@ import {
 import { characterLevel } from './character';
 import type { Ctx } from './context';
 import { newUid } from './items';
-import { PLAYER_SPEED_SCALE, type Derived } from './stats';
+import type { Derived } from './stats';
 import type { GameState, SkillGemInstance, SupportGemInstance } from './types';
 
 // ---------- levels ----------
@@ -229,13 +229,10 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
   const level = gem?.level ?? 1;
   const mods = combineMods((gem?.supports ?? []).filter(Boolean).map((x) => supportGemDef(x!.supportId).mods));
   const isAttack = def.tags.includes('attack');
-  let actionMs: number;
-  if (isAttack) {
-    const dexSkill = def.id === 'twin_strike' || def.id === 'lacerate' ? d.raw.dexSkillSpeed : 0;
-    actionMs = ((1000 / d.attacksPerSec) * (def.speedMult ?? 1)) / (1 + (mods.attackSpeed + dexSkill) / 100);
-  } else {
-    actionMs = (def.castMs ?? 800) / PLAYER_SPEED_SCALE / (1 + (d.raw.castSpeedPct + mods.castSpeed) / 100);
-  }
+  // each skill has its own base attack or cast time; attack speed or cast speed shortens it
+  const dexSkill = def.id === 'twin_strike' || def.id === 'lacerate' ? d.raw.dexSkillSpeed : 0;
+  const speed = isAttack ? d.attackSpeed * (1 + (mods.attackSpeed + dexSkill) / 100) : d.castSpeed * (1 + mods.castSpeed / 100);
+  const actionMs = def.timeMs / speed;
   // mana cost grows a little with gem level, like PoE
   const r = d.raw;
   const manaCost = Math.round(

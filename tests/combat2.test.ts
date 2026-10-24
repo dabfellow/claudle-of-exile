@@ -192,13 +192,15 @@ describe('combat 2.0', () => {
       b.timers.slam = 0;
       return b;
     };
+    // run just past this boss's own wind-up
+    const windUp = boss().casts.slam.ms + 400;
     const guarded = arena(['iron_guard'], [boss()]);
-    run(guarded.s, guarded.c, 2600);
+    run(guarded.s, guarded.c, windUp);
     expect(guarded.c.events.some((e) => e.t === 'hit' && e.target === 'player' && e.blocked)).toBe(true);
 
     const open = arena([], [boss()]);
     const life = open.s.life;
-    run(open.s, open.c, 2600);
+    run(open.s, open.c, windUp);
     expect(open.s.life).toBeLessThan(life);
   });
 

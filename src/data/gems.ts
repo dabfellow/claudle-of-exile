@@ -44,10 +44,11 @@ export interface ActiveGemDef {
   tags: GemTag[];
   manaCost: number;
   cooldownMs: number;
-  /** spells and utility: time to use, ms. Attacks use attack speed × speedMult */
-  castMs?: number;
-  /** attacks: multiplier on attack time (Heavy Strike is slower) */
-  speedMult?: number;
+  /**
+   * Base time to use the skill, ms. Attacks: attack time, sped up by weapon and attack speed.
+   * Spells and utility: cast time, sped up by cast speed.
+   */
+  timeMs: number;
   effect: SkillEffect;
   desc: string;
   color: string;
@@ -88,28 +89,28 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   // ---------- Strength ----------
   A({
     id: 'heavy_strike', name: 'Heavy Strike', attr: 'str', role: 'main', tags: ['attack', 'melee'],
-    manaCost: 4, cooldownMs: 0, speedMult: 1.3, color: '#d0574a',
+    manaCost: 4, cooldownMs: 0, timeMs: 3900, color: '#d0574a',
     effect: { weaponPct: 185, targets: 'single', stunChance: 0.25 },
     desc: 'A slow, crushing blow. 25% chance to stun.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'ground_slam', name: 'Ground Slam', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area'],
-    manaCost: 8, cooldownMs: 0, speedMult: 1.2, color: '#b0643a',
+    manaCost: 8, cooldownMs: 0, timeMs: 3600, color: '#b0643a',
     effect: { weaponPct: 95, targets: 'all', stunChance: 0.1 },
     desc: 'Slam the ground, hitting every enemy in the pack.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
   }),
   A({
     id: 'iron_guard', name: 'Iron Guard', attr: 'str', role: 'guard', tags: ['guard', 'duration'],
-    manaCost: 10, cooldownMs: 7000, castMs: 300, color: '#9b8e7e',
+    manaCost: 10, cooldownMs: 7000, timeMs: 900, color: '#9b8e7e',
     effect: { blocks: 1, buff: { durationMs: 3000, stats: { armourPct: 60 } } },
     desc: 'Block the next hit completely and gain 60% increased Armour for 3s.',
     defaultRule: { when: 'enemyCasting' },
   }),
   A({
     id: 'war_cry', name: 'War Cry', attr: 'str', role: 'buff', tags: ['buff', 'duration'],
-    manaCost: 14, cooldownMs: 12000, castMs: 400, color: '#e0a640',
+    manaCost: 14, cooldownMs: 12000, timeMs: 1200, color: '#e0a640',
     effect: { interrupts: true, buff: { durationMs: 6000, moreDamage: 20 } },
     desc: "Interrupts enemy wind-ups and grants 20% more damage for 6s.",
     defaultRule: { when: 'enemyCasting' },
@@ -118,28 +119,28 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   // ---------- Dexterity ----------
   A({
     id: 'twin_strike', name: 'Twin Strike', attr: 'dex', role: 'main', tags: ['attack', 'melee'],
-    manaCost: 4, cooldownMs: 0, speedMult: 1, color: '#5fbf6a',
+    manaCost: 4, cooldownMs: 0, timeMs: 2700, color: '#5fbf6a',
     effect: { weaponPct: 62, hits: 2, targets: 'single' },
     desc: 'Strike twice in quick succession.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'poison_dart', name: 'Poison Dart', attr: 'dex', role: 'curse', tags: ['attack', 'projectile', 'dot', 'duration'],
-    manaCost: 6, cooldownMs: 0, speedMult: 1, color: '#7bc04a',
+    manaCost: 6, cooldownMs: 0, timeMs: 2400, color: '#7bc04a',
     effect: { weaponPct: 55, targets: 'single', ailment: { kind: 'poison', pctPerSec: 30, durationMs: 4000 } },
     desc: 'A dart that poisons. Poison stacks.',
     defaultRule: { when: 'targetLifeAbove', value: 40 },
   }),
   A({
     id: 'smoke_step', name: 'Smoke Step', attr: 'dex', role: 'guard', tags: ['guard', 'duration'],
-    manaCost: 10, cooldownMs: 8000, castMs: 250, color: '#8a8f9a',
+    manaCost: 10, cooldownMs: 8000, timeMs: 750, color: '#8a8f9a',
     effect: { evadeMs: 2000 },
     desc: 'Vanish in smoke: evade every hit for 2s.',
     defaultRule: { when: 'enemyCasting' },
   }),
   A({
     id: 'lacerate', name: 'Lacerate', attr: 'dex', role: 'burst', tags: ['attack', 'melee', 'dot', 'duration'],
-    manaCost: 10, cooldownMs: 6000, speedMult: 1.1, color: '#c0392b',
+    manaCost: 10, cooldownMs: 6000, timeMs: 3300, color: '#c0392b',
     effect: { weaponPct: 130, targets: 'single', ailment: { kind: 'bleed', pctPerSec: 60, durationMs: 4000 } },
     desc: 'A deep cut that bleeds heavily.',
     defaultRule: { when: 'targetLifeAbove', value: 50 },
@@ -148,28 +149,28 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   // ---------- Intelligence ----------
   A({
     id: 'spark', name: 'Spark', attr: 'int', role: 'main', tags: ['spell', 'projectile', 'chain'],
-    manaCost: 5, cooldownMs: 0, castMs: 800, color: '#6fc8ff',
+    manaCost: 5, cooldownMs: 0, timeMs: 2400, color: '#6fc8ff',
     effect: { base: [4, 16], type: 'light', targets: 'chain', chains: 2, crit: 6 },
     desc: 'Crackling bolts that chain to 2 more enemies.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'fireball', name: 'Fireball', attr: 'int', role: 'burst', tags: ['spell', 'projectile', 'dot', 'duration'],
-    manaCost: 12, cooldownMs: 4000, castMs: 1100, color: '#ff7a45',
+    manaCost: 12, cooldownMs: 4000, timeMs: 3600, color: '#ff7a45',
     effect: { base: [12, 20], type: 'fire', targets: 'single', crit: 6, ailment: { kind: 'ignite', pctPerSec: 40, durationMs: 3000 } },
     desc: 'A heavy fire bolt that ignites.',
     defaultRule: { when: 'manaAbove', value: 30 },
   }),
   A({
     id: 'frost_ward', name: 'Frost Ward', attr: 'int', role: 'guard', tags: ['spell', 'guard', 'duration'],
-    manaCost: 12, cooldownMs: 10000, castMs: 400, color: '#bfe3ff',
+    manaCost: 12, cooldownMs: 10000, timeMs: 1200, color: '#bfe3ff',
     effect: { shieldPct: 30, buff: { durationMs: 5000 } },
     desc: 'An ice shield absorbing damage equal to 30% of your life for 5s.',
     defaultRule: { when: 'enemyCasting' },
   }),
   A({
     id: 'arcane_siphon', name: 'Arcane Siphon', attr: 'int', role: 'sustain', tags: ['spell', 'sustain'],
-    manaCost: 0, cooldownMs: 5000, castMs: 900, color: '#9b6dde',
+    manaCost: 0, cooldownMs: 5000, timeMs: 2700, color: '#9b6dde',
     effect: { base: [6, 10], type: 'cold', targets: 'single', crit: 5, leechLife: 25, leechMana: 40 },
     desc: 'Drain the target, returning life and mana. Costs no mana.',
     defaultRule: { when: 'lifeBelow', value: 60 },
@@ -264,10 +265,13 @@ export const SKILL_BAR_SLOTS = 6;
 export const MAX_GEM_LEVEL = 20;
 export const MAX_SUPPORT_SLOTS = 5;
 
+/** Every character's default attack takes this long before weapon and attack speed. */
+export const BASE_ATTACK_MS = 3000;
+
 /** The attack you fall back to when no skill is ready. */
 export const DEFAULT_ATTACK: ActiveGemDef = {
   id: 'default_attack', name: 'Default Attack', attr: 'str', role: 'main', tags: ['attack'],
-  manaCost: 0, cooldownMs: 0, speedMult: 1, color: '#9a968c',
+  manaCost: 0, cooldownMs: 0, timeMs: BASE_ATTACK_MS, color: '#9a968c',
   effect: { weaponPct: 100, targets: 'single' },
   desc: 'A plain weapon swing. Free.',
   defaultRule: { when: 'always' },

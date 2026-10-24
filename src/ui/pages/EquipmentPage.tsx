@@ -36,7 +36,9 @@ function Offense({ d }: { d: Derived }) {
           .map(([t, [lo, hi]]) => (
             <Row key={t} label={`${DMG_NAME[t as keyof typeof DMG_NAME]} damage`} value={`${lo}–${hi}`} color={`var(--${t})`} />
           ))}
-        <Row label="Attacks per second" value={d.attacksPerSec.toFixed(2)} />
+        <Row label="Default attack time" value={`${(d.attackMs / 1000).toFixed(2)}s`} hint="3s base, shortened by your weapon and attack speed" />
+        <Row label="Attack speed" value={`+${Math.round((d.attackSpeed - 1) * 100)}%`} hint="Every attack skill has its own base time; this speeds them all up" />
+        <Row label="Cast speed" value={`+${Math.round((d.castSpeed - 1) * 100)}%`} hint="Every spell and utility skill has its own base time; this speeds them all up" />
         <Row label="Accuracy" value={fmt(d.accuracy)} hint="+2 per Dexterity and per level" />
         <Row label={`Hit chance vs level ${lvl}`} value={`${Math.round(hitChance(d.accuracy, lvl) * 100)}%`} />
         <Row label="Critical chance" value={`${d.critChance.toFixed(1)}%`} />

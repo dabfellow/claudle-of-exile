@@ -1,5 +1,6 @@
 import { affixDef } from '../data/affixes';
 import { classDef } from '../data/classes';
+import { BASE_ATTACK_MS } from '../data/gems';
 import { baseDef } from '../data/bases';
 import { flaskDef } from '../data/flasks';
 import { MAP_RARITY } from '../data/hideout';
@@ -66,7 +67,12 @@ export interface Derived {
   elemMult: number;
   /** per-type multipliers (elemental includes the element's own %) */
   typeMult: Record<DamageType, number>;
-  attacksPerSec: number;
+  /** multiplier on every attack's speed (weapon, increased and more attack speed) */
+  attackSpeed: number;
+  /** multiplier on every spell and utility skill's speed */
+  castSpeed: number;
+  /** how long the default attack takes, ms */
+  attackMs: number;
   critChance: number;
   critMulti: number;
   res: { fire: number; cold: number; light: number };
@@ -85,8 +91,6 @@ export const RES_CAP = 75;
 export const BASE_REGEN_PCT = 0.5;
 /** % of max mana regenerated per second before modifiers */
 export const BASE_MANA_REGEN_PCT = 4;
-/** global pacing knob: scales every player attack rate */
-export const PLAYER_SPEED_SCALE = 0.65;
 
 /** What each attribute point grants (shown in tooltips too). */
 export const ATTRIBUTE_EFFECTS = {
@@ -169,8 +173,9 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     cold: [Math.round(raw.coldMin * typeMult.cold), Math.round(raw.coldMax * typeMult.cold)],
     light: [Math.round(raw.lightMin * typeMult.light), Math.round(raw.lightMax * typeMult.light)],
   };
-  const attacksPerSec =
-    (weapon?.aps ?? 1.2) * (1 + raw.attackSpeedPct / 100) * (1 + raw.attackSpeedMore / 100) * PLAYER_SPEED_SCALE;
+  const attackSpeed = (1 + (weapon?.speed ?? 0) / 100) * (1 + raw.attackSpeedPct / 100) * (1 + raw.attackSpeedMore / 100);
+  const castSpeed = 1 + raw.castSpeedPct / 100;
+  const attackMs = BASE_ATTACK_MS / attackSpeed;
   // Steady Hand: always hit, never crit
   const critChance = raw.steadyHand ? 0 : Math.min(95, (weapon?.crit ?? 5) * (1 + raw.critChancePct / 100));
   const critMulti = 150 + raw.critMulti;
@@ -193,7 +198,9 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     physMult,
     elemMult,
     typeMult,
-    attacksPerSec,
+    attackSpeed,
+    castSpeed,
+    attackMs,
     critChance,
     critMulti,
     res: { fire: cap(raw.fireRes), cold: cap(raw.coldRes), light: cap(raw.lightRes) },
@@ -204,7 +211,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     flaskEffect: raw.flaskEffect,
     flaskCharges: raw.flaskCharges,
     avgHit,
-    dps: avgHit * attacksPerSec * critFactor * (raw.steadyHand ? 1 : hitChance(accuracy, combatLevel)),
+    dps: ((avgHit * 1000) / attackMs) * critFactor * (raw.steadyHand ? 1 : hitChance(accuracy, combatLevel)),
   };
 }
 

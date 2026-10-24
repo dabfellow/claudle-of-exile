@@ -81,7 +81,7 @@ describe('boss mechanics', () => {
     b.timers.nova = 0;
     const { s, c } = arena(['iron_guard'], [b], 'sanctum');
     const life = s.life;
-    run(s, c, 3000);
+    run(s, c, b.casts.nova.ms + 400);
     expect(c.events.some((e) => e.t === 'bossCast' && e.kind === 'nova')).toBe(true);
     expect(c.events.some((e) => e.t === 'hit' && e.target === 'player' && e.blocked)).toBe(false);
     expect(s.life).toBeLessThan(life);

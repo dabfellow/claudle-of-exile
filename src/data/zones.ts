@@ -10,6 +10,16 @@ import type { DamageType } from '../engine/types';
  */
 export type BossMechanic = 'slam' | 'nova' | 'summon' | 'enrage' | 'ward';
 
+/** One thing a monster does: its name, whether it's an attack or a spell, and its attack or cast time in ms. */
+export interface MonsterSkill {
+  name: string;
+  kind: 'attack' | 'spell';
+  ms: number;
+}
+
+/** A monster's basic attack or spell takes this long unless it says otherwise. */
+export const MONSTER_BASE_ATTACK_MS = 3000;
+
 export interface MonsterDef {
   id: string;
   name: string;
@@ -18,9 +28,13 @@ export interface MonsterDef {
   /** multipliers on the level-based stat curve */
   lifeMult?: number;
   dmgMult?: number;
-  attackMs: number;
+  /** what it does whenever it isn't winding up something bigger */
+  basic: MonsterSkill;
   /** bosses only */
   mechanics?: BossMechanic[];
+  /** bosses: the telegraphed casts; ms is the wind-up */
+  slam?: MonsterSkill;
+  nova?: MonsterSkill;
   /** element of the nova mechanic (defaults to the boss's damage type) */
   novaType?: DamageType;
 }
@@ -60,11 +74,20 @@ export const ACTS: ActDef[] = [
   { n: 6, name: 'The Shattered Throne', open: false },
 ];
 
-const m = (id: string, name: string, level: number, dmgType: DamageType, attackMs: number, lifeMult = 1, dmgMult = 1): MonsterDef => ({
-  id, name, level, dmgType, attackMs, lifeMult, dmgMult,
+const atk = (name: string, ms = MONSTER_BASE_ATTACK_MS): MonsterSkill => ({ name, kind: 'attack', ms });
+const spell = (name: string, ms = MONSTER_BASE_ATTACK_MS): MonsterSkill => ({ name, kind: 'spell', ms });
+
+const m = (id: string, name: string, level: number, dmgType: DamageType, basic: MonsterSkill, lifeMult = 1, dmgMult = 1): MonsterDef => ({
+  id, name, level, dmgType, basic, lifeMult, dmgMult,
 });
 
-const boss = (def: MonsterDef, mechanics: BossMechanic[], novaType?: DamageType): MonsterDef => ({ ...def, mechanics, novaType });
+interface BossCasts {
+  slam: MonsterSkill;
+  nova?: MonsterSkill;
+  novaType?: DamageType;
+}
+
+const boss = (def: MonsterDef, mechanics: BossMechanic[], casts: BossCasts): MonsterDef => ({ ...def, mechanics, ...casts });
 
 /** Areas in campaign order: each boss unlocks the next area. */
 export const ZONES: ZoneDef[] = [
@@ -74,12 +97,12 @@ export const ZONES: ZoneDef[] = [
     desc: 'Brackish shallows where the drowned refuse to rest.',
     monsters: [
       // the tutorial zone: soft enough that a fresh character can idle the trash
-      m('rat', 'Drowned Rat', 1, 'phys', 1600, 0.7, 0.55),
-      m('crab', 'Mud Crab', 2, 'phys', 2200, 1.1, 0.6),
-      m('zombie', 'Waterlogged Corpse', 3, 'phys', 2400, 1, 0.7),
-      m('wisp', 'Bog Wisp', 3, 'light', 1800, 0.7, 0.6),
+      m('rat', 'Drowned Rat', 1, 'phys', atk('Bite', 2600), 0.7, 0.55),
+      m('crab', 'Mud Crab', 2, 'phys', atk('Pinch', 3500), 1.1, 0.6),
+      m('zombie', 'Waterlogged Corpse', 3, 'phys', atk('Sodden Grasp', 3800), 1, 0.7),
+      m('wisp', 'Bog Wisp', 3, 'light', spell('Static Spark', 2900), 0.7, 0.6),
     ],
-    boss: boss(m('gorger', 'Bloated Gorger', 5, 'phys', 2600), ['slam']),
+    boss: boss(m('gorger', 'Bloated Gorger', 5, 'phys', atk('Gnaw', 4200)), ['slam'], { slam: atk('Belly Flop', 4200) }),
     bossEvery: 15,
     packSize: [1, 3],
     uniques: ['miners_lament', 'bloodthirst', 'windstep'],
@@ -88,12 +111,12 @@ export const ZONES: ZoneDef[] = [
     id: 'brinecaves', name: 'The Brine Caves', act: 1, tier: 1, levelRange: [4, 7], color: '#4f8a8b',
     desc: 'Sea caves where the tide leaves behind things that should have stayed under.',
     monsters: [
-      m('crawler', 'Cave Crawler', 4, 'phys', 2000, 1, 0.8),
-      m('brinebat', 'Brine Bat', 5, 'phys', 1300, 0.6, 0.6),
-      m('sailor', 'Drowned Sailor', 6, 'phys', 2200, 1.1, 0.9),
-      m('siren', 'Salt Siren', 7, 'cold', 1900, 0.8, 0.9),
+      m('crawler', 'Cave Crawler', 4, 'phys', atk('Mandible Snap', 3200), 1, 0.8),
+      m('brinebat', 'Brine Bat', 5, 'phys', atk('Bite', 2100), 0.6, 0.6),
+      m('sailor', 'Drowned Sailor', 6, 'phys', atk('Cutlass Slash', 3500), 1.1, 0.9),
+      m('siren', 'Salt Siren', 7, 'cold', spell('Frost Song', 3000), 0.8, 0.9),
     ],
-    boss: boss(m('harrow', 'Captain Harrow', 8, 'phys', 2500), ['slam', 'summon']),
+    boss: boss(m('harrow', 'Captain Harrow', 8, 'phys', atk('Hook Slash', 4000)), ['slam', 'summon'], { slam: atk('Anchor Drop', 3800) }),
     bossEvery: 18,
     packSize: [1, 3],
     uniques: ['windstep', 'bloodthirst'],
@@ -102,12 +125,12 @@ export const ZONES: ZoneDef[] = [
     id: 'ashwood', name: 'Ashen Woods', act: 1, tier: 2, levelRange: [7, 10], color: '#9a6a4a',
     desc: 'A forest that burned once and never stopped smouldering.',
     monsters: [
-      m('cinderhound', 'Cinderhound', 7, 'fire', 1500, 0.9, 0.9),
-      m('treant', 'Charred Treant', 8, 'phys', 2600, 1.5, 1.2),
-      m('harpy', 'Ash Harpy', 9, 'phys', 1400, 0.8, 0.9),
-      m('emberkin', 'Emberkin Shaman', 10, 'fire', 2000, 0.9, 1.15),
+      m('cinderhound', 'Cinderhound', 7, 'fire', atk('Burning Bite', 2400), 0.9, 0.9),
+      m('treant', 'Charred Treant', 8, 'phys', atk('Branch Slam', 4200), 1.5, 1.2),
+      m('harpy', 'Ash Harpy', 9, 'phys', atk('Talon Rake', 2200), 0.8, 0.9),
+      m('emberkin', 'Emberkin Shaman', 10, 'fire', spell('Firebolt', 3200), 0.9, 1.15),
     ],
-    boss: boss(m('pyre', 'Pyre-Mother Ulva', 11, 'fire', 2400), ['slam', 'nova']),
+    boss: boss(m('pyre', 'Pyre-Mother Ulva', 11, 'fire', spell('Ember Lash', 3800)), ['slam', 'nova'], { slam: atk('Burning Bough', 3800), nova: spell('Pyre Burst', 4400) }),
     bossEvery: 20,
     packSize: [2, 4],
     uniques: ['emberheart', 'alchemists_band'],
@@ -116,12 +139,12 @@ export const ZONES: ZoneDef[] = [
     id: 'blackreed', name: 'Blackreed Marsh', act: 1, tier: 2, levelRange: [10, 13], color: '#5d6b3a',
     desc: 'Reeds taller than a man, and something moving through them.',
     monsters: [
-      m('lurker', 'Bog Lurker', 10, 'phys', 2300, 1.3, 1.05),
-      m('stalker', 'Reed Stalker', 11, 'phys', 1500, 0.85, 0.95),
-      m('toad', 'Plague Toad', 12, 'cold', 2100, 1, 1),
-      m('fenwitch', 'Fen Witch', 13, 'light', 2000, 0.9, 1.15),
+      m('lurker', 'Bog Lurker', 10, 'phys', atk('Drag Under', 3700), 1.3, 1.05),
+      m('stalker', 'Reed Stalker', 11, 'phys', atk('Reed Spear', 2400), 0.85, 0.95),
+      m('toad', 'Plague Toad', 12, 'cold', atk('Chill Spit', 3400), 1, 1),
+      m('fenwitch', 'Fen Witch', 13, 'light', spell('Marsh Lightning', 3200), 0.9, 1.15),
     ],
-    boss: boss(m('sedge', 'Old Mother Sedge', 14, 'light', 2400), ['slam', 'summon', 'enrage']),
+    boss: boss(m('sedge', 'Old Mother Sedge', 14, 'light', spell('Hex Bolt', 3800)), ['slam', 'summon', 'enrage'], { slam: atk('Root Crush', 3600) }),
     bossEvery: 20,
     packSize: [2, 4],
     uniques: ['alchemists_band', 'miners_lament'],
@@ -130,12 +153,12 @@ export const ZONES: ZoneDef[] = [
     id: 'crypt', name: 'The Sunken Crypt', act: 1, tier: 3, levelRange: [13, 16], color: '#5a7a9a',
     desc: 'Flooded catacombs, cold as the hands that built them.',
     monsters: [
-      m('ghoul', 'Crypt Ghoul', 13, 'phys', 1700, 1, 1),
-      m('frostwraith', 'Frost Wraith', 14, 'cold', 1900, 0.85, 1.1),
-      m('skeleton', 'Skeletal Warden', 15, 'phys', 2300, 1.4, 1.1),
-      m('lich', 'Drowned Lich', 16, 'cold', 2400, 1, 1.25),
+      m('ghoul', 'Crypt Ghoul', 13, 'phys', atk('Claw', 2700), 1, 1),
+      m('frostwraith', 'Frost Wraith', 14, 'cold', spell('Frost Touch', 3000), 0.85, 1.1),
+      m('skeleton', 'Skeletal Warden', 15, 'phys', atk('Halberd Sweep', 3700), 1.4, 1.1),
+      m('lich', 'Drowned Lich', 16, 'cold', spell('Ice Spear', 3800), 1, 1.25),
     ],
-    boss: boss(m('tidecaller', 'Tidecaller Morvane', 17, 'cold', 2400), ['slam', 'nova', 'ward']),
+    boss: boss(m('tidecaller', 'Tidecaller Morvane', 17, 'cold', spell('Tide Bolt', 3800)), ['slam', 'nova', 'ward'], { slam: atk('Crashing Wave', 3600), nova: spell('Frost Tide', 4200) }),
     bossEvery: 22,
     packSize: [2, 4],
     uniques: ['iron_bulwark', 'windstep'],
@@ -144,12 +167,12 @@ export const ZONES: ZoneDef[] = [
     id: 'shipgrave', name: 'The Ship Graveyard', act: 1, tier: 3, levelRange: [16, 19], color: '#7d6a55',
     desc: 'A bay choked with wrecks, and the crews who never left them.',
     monsters: [
-      m('brute', 'Barnacle Brute', 16, 'phys', 2600, 1.5, 1.2),
-      m('gunner', 'Drowned Gunner', 17, 'fire', 2100, 0.9, 1.15),
-      m('gulls', 'Gull Swarm', 18, 'phys', 1200, 0.7, 0.75),
-      m('wreckshaman', 'Wreck Shaman', 19, 'light', 2000, 0.95, 1.15),
+      m('brute', 'Barnacle Brute', 16, 'phys', atk('Barnacle Fist', 4200), 1.5, 1.2),
+      m('gunner', 'Drowned Gunner', 17, 'fire', atk('Fire Musket', 3400), 0.9, 1.15),
+      m('gulls', 'Gull Swarm', 18, 'phys', atk('Peck Flurry', 1900), 0.7, 0.75),
+      m('wreckshaman', 'Wreck Shaman', 19, 'light', spell('Storm Hex', 3200), 0.95, 1.15),
     ],
-    boss: boss(m('vosk', 'Admiral Vosk', 20, 'phys', 2400), ['slam', 'nova', 'enrage'], 'fire'),
+    boss: boss(m('vosk', 'Admiral Vosk', 20, 'phys', atk('Sabre Cut', 3800)), ['slam', 'nova', 'enrage'], { slam: atk('Keelhaul Strike', 3400), nova: spell('Cannon Barrage', 4000), novaType: 'fire' }),
     bossEvery: 24,
     packSize: [2, 5],
     uniques: ['iron_bulwark', 'emberheart'],
@@ -158,12 +181,12 @@ export const ZONES: ZoneDef[] = [
     id: 'stormcliffs', name: 'The Storm Cliffs', act: 1, tier: 4, levelRange: [19, 22], color: '#6a7fa8',
     desc: 'Sheer black cliffs where the lightning never stops.',
     monsters: [
-      m('ravager', 'Cliff Ravager', 19, 'phys', 1700, 1, 1.05),
-      m('galeborn', 'Galeborn', 20, 'light', 1500, 0.8, 1),
-      m('rockback', 'Rockback Crab', 21, 'phys', 2600, 1.6, 1.1),
-      m('stormcaller', 'Storm Caller', 22, 'light', 2100, 1, 1.25),
+      m('ravager', 'Cliff Ravager', 19, 'phys', atk('Rend', 2700), 1, 1.05),
+      m('galeborn', 'Galeborn', 20, 'light', spell('Gale Bolt', 2400), 0.8, 1),
+      m('rockback', 'Rockback Crab', 21, 'phys', atk('Shell Crush', 4200), 1.6, 1.1),
+      m('stormcaller', 'Storm Caller', 22, 'light', spell('Call Lightning', 3400), 1, 1.25),
     ],
-    boss: boss(m('skarra', 'Skarra, Queen of Gales', 23, 'light', 2200), ['slam', 'nova', 'summon', 'enrage']),
+    boss: boss(m('skarra', 'Skarra, Queen of Gales', 23, 'light', atk('Gale Talons', 3500)), ['slam', 'nova', 'summon', 'enrage'], { slam: atk('Thunder Dive', 3200), nova: spell('Storm Burst', 3800) }),
     bossEvery: 25,
     packSize: [3, 5],
     uniques: ['titans_girth', 'miners_lament'],
@@ -172,12 +195,12 @@ export const ZONES: ZoneDef[] = [
     id: 'sanctum', name: 'The Drowned Sanctum', act: 1, tier: 5, levelRange: [22, 24], color: '#3f6f8f',
     desc: 'The cathedral the sea swallowed whole. Its queen still holds court.',
     monsters: [
-      m('zealot', 'Tidebound Zealot', 22, 'cold', 1800, 1, 1.05),
-      m('eel', 'Abyssal Eel', 23, 'light', 1400, 0.8, 1),
-      m('coralgolem', 'Coral Golem', 24, 'phys', 2600, 1.6, 1.2),
-      m('priest', 'Sanctum Priest', 24, 'cold', 2200, 1, 1.25),
+      m('zealot', 'Tidebound Zealot', 22, 'cold', atk('Frost Censer', 2900), 1, 1.05),
+      m('eel', 'Abyssal Eel', 23, 'light', atk('Shock Bite', 2200), 0.8, 1),
+      m('coralgolem', 'Coral Golem', 24, 'phys', atk('Coral Fist', 4200), 1.6, 1.2),
+      m('priest', 'Sanctum Priest', 24, 'cold', spell('Ice Litany', 3500), 1, 1.25),
     ],
-    boss: boss(m('ysolde', 'Ysolde, the Drowned Queen', 25, 'cold', 2200, 1.5, 1.05), ['slam', 'nova', 'summon', 'enrage', 'ward'], 'light'),
+    boss: boss(m('ysolde', 'Ysolde, the Drowned Queen', 25, 'cold', atk('Drowned Sceptre', 3500), 1.5, 1.05), ['slam', 'nova', 'summon', 'enrage', 'ward'], { slam: atk('Abyssal Crush', 3200), nova: spell('Tempest of the Deep', 3800), novaType: 'light' }),
     actBoss: true,
     bossEvery: 25,
     packSize: [3, 5],
@@ -209,20 +232,20 @@ export function monsterDamage(level: number): number {
   return Math.round(1 + 1.0 * Math.pow(level, 1.15));
 }
 
-/** global pacing knobs for monsters */
-export const MONSTER_LIFE_SCALE = 1.8;
-export const MONSTER_SPEED_SCALE = 1.6;
+/** global pacing knob for monsters */
+export const MONSTER_LIFE_SCALE = 0.85;
 
 export const BOSS_LIFE_MULT = 5;
 export const BOSS_ADDS = 2;
 export const BOSS_DMG_MULT = 1.25;
 export const BOSS_SLAM_MULT = 2.5;
 export const BOSS_SLAM_EVERY_MS = 9000;
-export const BOSS_SLAM_CAST_MS = 2200;
 /** nova: telegraphed elemental blast that ignores blocks */
 export const BOSS_NOVA_MULT = 1.8;
 export const BOSS_NOVA_EVERY_MS = 13000;
-export const BOSS_NOVA_CAST_MS = 2600;
+/** wind-ups for a boss whose data doesn't name its own */
+export const BOSS_SLAM_DEFAULT: MonsterSkill = { name: 'Heavy Blow', kind: 'attack', ms: 3600 };
+export const BOSS_NOVA_DEFAULT: MonsterSkill = { name: 'Nova', kind: 'spell', ms: 4000 };
 /** summon: tops the pack back up to this many adds */
 export const BOSS_SUMMON_EVERY_MS = 16000;
 export const BOSS_SUMMON_COUNT = 2;

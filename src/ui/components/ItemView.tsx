@@ -1,4 +1,5 @@
 import { attributeReq, baseDef, uniqueDef } from '../../data/bases';
+import { BASE_ATTACK_MS } from '../../data/gems';
 import { characterLevel } from '../../engine/character';
 import { slotsFor } from '../../engine/equipment';
 import { describeMod, itemName, tierLabel, tierRangeText } from '../../engine/items';
@@ -86,7 +87,8 @@ export function ItemTip({ item, state, compare = true, pinned = false }: { item:
               Physical Damage: <b>{base.phys[0]}–{base.phys[1]}</b>
             </div>
             <div>
-              Attacks per Second: <b>{base.aps?.toFixed(2)}</b> · Crit: <b>{base.crit}%</b>
+              Attack Time: <b>{(BASE_ATTACK_MS / (1 + (base.speed ?? 0) / 100) / 1000).toFixed(2)}s</b>
+              {base.speed ? <span className="dim"> (+{base.speed}% speed)</span> : null} · Crit: <b>{base.crit}%</b>
             </div>
           </>
         )}

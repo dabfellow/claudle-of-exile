@@ -14,15 +14,16 @@ export interface BaseDef {
   reqLevel: number;
   tags: Tag[];
   phys?: [number, number];
-  aps?: number;
+  /** weapons: % attack speed the weapon adds to every attack (light blades are quicker than axes) */
+  speed?: number;
   crit?: number;
   armour?: number;
   evasion?: number;
   implicits?: Implicit[];
 }
 
-const W = (id: string, name: string, reqLevel: number, phys: [number, number], aps: number, crit: number): BaseDef => ({
-  id, name, slot: 'weapon', reqLevel, tags: ['weapon'], phys, aps, crit,
+const W = (id: string, name: string, reqLevel: number, phys: [number, number], speed: number, crit: number): BaseDef => ({
+  id, name, slot: 'weapon', reqLevel, tags: ['weapon'], phys, speed, crit,
 });
 
 const A = (
@@ -46,20 +47,20 @@ const J = (id: string, name: string, slot: 'belt' | 'amulet' | 'ring', reqLevel:
 });
 
 export const BASES: BaseDef[] = [
-  W('rusted_sword', 'Rusted Sword', 1, [4, 10], 1.45, 5),
-  W('whittled_dagger', 'Whittled Dagger', 1, [3, 9], 1.6, 7),
+  W('rusted_sword', 'Rusted Sword', 1, [4, 10], 20, 5),
+  W('whittled_dagger', 'Whittled Dagger', 1, [3, 9], 35, 7),
   {
-    ...W('driftwood_wand', 'Driftwood Wand', 1, [1, 4], 1.4, 6),
+    ...W('driftwood_wand', 'Driftwood Wand', 1, [1, 4], 15, 6),
     implicits: [
       { stat: 'lightMin', value: 1, text: 'Adds 1 to 9 Lightning Damage' },
       { stat: 'lightMax', value: 9, text: '' },
     ],
   },
-  W('iron_blade', 'Iron Blade', 8, [7, 16], 1.45, 5),
-  W('glinting_dagger', 'Glinting Dagger', 14, [6, 24], 1.5, 8),
-  W('war_axe', 'Bearded War Axe', 18, [16, 34], 1.2, 5),
-  W('steel_broadsword', 'Steel Broadsword', 24, [17, 36], 1.4, 5),
-  W('mithril_sabre', 'Mithril Sabre', 34, [26, 52], 1.55, 6),
+  W('iron_blade', 'Iron Blade', 8, [7, 16], 20, 5),
+  W('glinting_dagger', 'Glinting Dagger', 14, [6, 24], 25, 8),
+  W('war_axe', 'Bearded War Axe', 18, [16, 34], 0, 5),
+  W('steel_broadsword', 'Steel Broadsword', 24, [17, 36], 15, 5),
+  W('mithril_sabre', 'Mithril Sabre', 34, [26, 52], 30, 6),
 
   A('plank_shield', 'Splintered Shield', 'offhand', 1, 'str', 14),
   A('buckler', 'Goathide Buckler', 'offhand', 8, 'dex', 30),
