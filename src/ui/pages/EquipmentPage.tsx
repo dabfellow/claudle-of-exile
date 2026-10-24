@@ -1,55 +1,14 @@
-import { useState } from 'react';
-import { INSTILL_CONDITIONS } from '../../data/flasks';
-import { currencyDef } from '../../data/materials';
 import { monsterDamage } from '../../data/zones';
-import { equipFlask, unequipFlask } from '../../engine/combat';
+import { unequipFlask } from '../../engine/combat';
 import { unequip } from '../../engine/equipment';
-import { applyFlaskOrb, enchantFlask, findFlask, flaskEffectText, flaskName, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
 import { armourReduction, deriveStats, evadeChance, hitChance, RES_CAP, type Derived } from '../../engine/stats';
-import type { EquipSlot, FlaskInstance, GameState } from '../../engine/types';
+import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { EmptyState, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
-import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
-import { Icon } from '../components/Icon';
+import { fmt, GameIcon, PageHeader, ProgressBar } from '../components/common';
 import { Inventory } from '../components/Inventory';
-import { ItemCell } from '../components/ItemView';
-
-const SLOT_LABEL: Record<EquipSlot, string> = {
-  weapon: 'Weapon',
-  offhand: 'Off-hand',
-  helmet: 'Helmet',
-  body: 'Body Armour',
-  gloves: 'Gloves',
-  boots: 'Boots',
-  belt: 'Belt',
-  amulet: 'Amulet',
-  ring1: 'Ring',
-  ring2: 'Ring',
-};
+import { PaperDoll } from '../components/PaperDoll';
 
 const DMG_NAME = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' } as const;
-
-function PaperDoll({ s }: { s: GameState }) {
-  return (
-    <div className="doll">
-      {(Object.keys(SLOT_LABEL) as EquipSlot[]).map((slot) => {
-        const item = s.equipment[slot];
-        return (
-          <div key={slot} className={`doll-slot ${item ? 'filled' : ''}`} style={{ gridArea: slot }}>
-            {item ? (
-              <ItemCell item={item} state={s} onClick={() => game.act((st) => unequip(st, slot))} />
-            ) : (
-              <div className="cell empty-slot" title={`${SLOT_LABEL[slot]} (empty)`}>
-                <Icon name={slot.startsWith('ring') ? 'ring' : slot} size={26} color="var(--line-2)" />
-              </div>
-            )}
-            <span className="doll-label">{SLOT_LABEL[slot]}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 function Row({ label, value, hint, color }: { label: string; value: string; hint?: string; color?: string }) {
   return (
@@ -137,7 +96,12 @@ function Defense({ d }: { d: Derived }) {
 function CenterColumn({ s, d }: { s: GameState; d: Derived }) {
   return (
     <div className="card doll-card">
-      <PaperDoll s={s} />
+      <PaperDoll
+        s={s}
+        onItem={(slot) => game.act((st) => unequip(st, slot))}
+        onFlask={(i) => game.act((st) => unequipFlask(st, i))}
+        emptyFlaskTitle="Equip flasks at the Crafting Bench"
+      />
       <div className="attr-strip">
         <span title="+1 Life per 2, +1% physical damage per 5">
           <b style={{ color: 'var(--str)' }}>{d.attributes.str}</b> Strength
@@ -174,141 +138,17 @@ function CenterColumn({ s, d }: { s: GameState; d: Derived }) {
   );
 }
 
-function FlaskCard({ f, selected, onClick, slot }: { f: FlaskInstance | null; selected: boolean; onClick: () => void; slot?: number }) {
-  if (!f)
-    return (
-      <button className={`flask-card empty ${selected ? 'selected' : ''}`} onClick={onClick}>
-        {slot !== undefined && <span className="slot-key">{slot + 1}</span>}
-        <span className="dim">Empty</span>
-      </button>
-    );
-  return (
-    <Tooltip content={<FlaskTip f={f} />}>
-      <button
-        className={`flask-card ${f.rarity} ${selected ? 'selected' : ''}`}
-        onClick={onClick}
-        onContextMenu={(e) => (e.preventDefault(), pinFlask(f))}
-      >
-        {slot !== undefined && <span className="slot-key">{slot + 1}</span>}
-        <FlaskIcon f={f} size={38} />
-        <span className="flask-card-text">
-          <b className={f.rarity === 'magic' ? 'magic-text' : ''}>{flaskName(f)}</b>
-          <span className="dim">{flaskEffectText(f)}</span>
-          {f.instill && <span className="enchant-tag">Enchanted · auto</span>}
-        </span>
-      </button>
-    </Tooltip>
-  );
-}
-
-function FlaskWorkbench({ s, f }: { s: GameState; f: FlaskInstance }) {
-  const slotIndex = s.flaskSlots.findIndex((x) => x?.uid === f.uid);
-  const instills = s.bank.instill ?? 0;
-  return (
-    <div className="flask-bench">
-      <FlaskTip f={f} pinned />
-      <div className="grid" style={{ gap: 10, alignContent: 'start' }}>
-        <div>
-          <div className="section-label">Craft</div>
-          <div className="row wrap">
-            {FLASK_ORBS.map((orb) => {
-              const reason = flaskOrbReason(s, orb, f);
-              return (
-                <button key={orb} className="btn sm" disabled={!!reason} title={reason ?? currencyDef(orb).desc} onClick={() => game.act((st, ctx) => applyFlaskOrb(st, ctx, orb, f.uid))}>
-                  <MatIcon id={orb} size={13} /> {currencyDef(orb).short} <span className="dim">×{s.bank[orb] ?? 0}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div>
-          <div className="section-label">
-            Enchant with an Instilling Orb <span className="dim">({instills} owned)</span>
-          </div>
-          <div className="row wrap">
-            {INSTILL_CONDITIONS.map((c) => (
-              <button
-                key={c.id}
-                className={`btn sm ${f.instill === c.id ? 'active' : ''}`}
-                disabled={instills < 1 || f.instill === c.id}
-                title={instills < 1 ? 'Instilling Orbs drop in deeper areas' : c.desc}
-                onClick={() => game.act((st, ctx) => enchantFlask(st, ctx, f.uid, c.id))}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-          <div className="dim small" style={{ marginTop: 4 }}>
-            An enchanted flask drinks itself in combat when its condition is met. Enchanting again replaces it.
-          </div>
-        </div>
-        <div>
-          <div className="section-label">Belt</div>
-          {slotIndex >= 0 ? (
-            <button className="btn sm" onClick={() => game.act((st) => unequipFlask(st, slotIndex))}>
-              Take off belt (slot {slotIndex + 1})
-            </button>
-          ) : (
-            <div className="row wrap">
-              {s.flaskSlots.map((x, i) => (
-                <button key={i} className="btn sm" onClick={() => game.act((st) => equipFlask(st, f.uid, i))}>
-                  {x ? `Swap into ${i + 1}` : `Put in slot ${i + 1}`}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FlaskRack({ s }: { s: GameState }) {
-  const [sel, setSel] = useState<number | null>(s.flaskSlots[0]?.uid ?? null);
-  const f = sel !== null ? findFlask(s, sel) : undefined;
-  return (
-    <div className="card">
-      <div className="card-title">
-        Flasks
-        <span className="grow" />
-        <span className="card-hint">
-          Flasks drop from monsters and are brewed with Alchemy
-        </span>
-      </div>
-      <div className="flask-slots">
-        {s.flaskSlots.map((x, i) => (
-          <FlaskCard key={i} slot={i} f={x} selected={!!x && x.uid === sel} onClick={() => x && setSel(x.uid)} />
-        ))}
-      </div>
-      {f && <FlaskWorkbench s={s} f={f} />}
-      <div className="section-label" style={{ marginTop: 14 }}>
-        Spare flasks ({s.flaskStash.length})
-      </div>
-      {s.flaskStash.length === 0 ? (
-        <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>
-      ) : (
-        <div className="flask-stash">
-          {s.flaskStash.map((x) => (
-            <FlaskCard key={x.uid} f={x} selected={x.uid === sel} onClick={() => setSel(x.uid)} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function EquipmentPage() {
   const s = useGame();
   const d = deriveStats(s, []);
   return (
     <div className="page wide">
-      <PageHeader title="Equipment">Click gear to take it off. Hover inventory items to compare; right-click any item to pin it.</PageHeader>
+      <PageHeader title="Equipment">Click gear or a flask to take it off. Hover inventory items to compare; right-click any item to pin it.</PageHeader>
       <div className="equip-layout">
         <Offense d={d} />
         <CenterColumn s={s} d={d} />
         <Defense d={d} />
       </div>
-      <FlaskRack s={s} />
       <Inventory s={s} />
     </div>
   );

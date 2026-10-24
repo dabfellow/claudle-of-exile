@@ -182,11 +182,11 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
         <div className="card stash-panel">
           <div className="row">
             <span className="dim small">
-              Spare flasks. Equip, craft and enchant them on the Equipment page.
+              Spare flasks. Equip, craft and enchant them at the Crafting Bench.
             </span>
             <span className="spacer" />
-            <button className="btn sm" onClick={() => go('equipment')}>
-              Open flask rack
+            <button className="btn sm" onClick={() => go('bench')}>
+              Open Crafting Bench
             </button>
           </div>
           {s.flaskStash.length === 0 && <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>}

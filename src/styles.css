@@ -3643,6 +3643,45 @@ img.art.mat-art {
   height: 32px;
 }
 
+/* the five belt flasks, as wide as the doll above them */
+.doll-flasks {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  width: calc(4 * 78px + 3 * 12px);
+  max-width: 100%;
+}
+
+.doll-flasks .flask-cell {
+  position: relative;
+  aspect-ratio: 3 / 4;
+}
+
+.doll-flasks .cell.empty-slot {
+  cursor: default;
+  background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(255, 255, 255, 0.02) 6px 12px), var(--bg-2);
+}
+
+.flask-key {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--dim);
+}
+
+.flask-enchanted {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--enchant);
+  box-shadow: 0 0 6px var(--enchant);
+}
+
 .doll-label {
   position: absolute;
   left: 0;
@@ -4144,6 +4183,9 @@ img.art.mat-art {
   .doll {
     grid-template-columns: repeat(4, 60px);
     grid-template-rows: repeat(4, 60px);
+  }
+  .doll-flasks {
+    width: calc(4 * 60px + 3 * 12px);
   }
   .npc-panel {
     grid-template-columns: 80px minmax(0, 1fr);

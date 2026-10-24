@@ -3,27 +3,111 @@ import { affixDef } from '../../data/affixes';
 import { ACHIEVEMENT_BY_ID } from '../../data/achievements';
 import { BENCH_CRAFTS } from '../../data/hideout';
 import { achievementProgress } from '../../engine/achievements';
+import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { currencyDef } from '../../data/materials';
+import { equipFlask, unequipFlask } from '../../engine/combat';
 import { applyOrb, benchCraft, benchCraftReason, findItem, orbReason, salvage } from '../../engine/crafting';
+import { applyFlaskOrb, enchantFlask, findFlask, flaskName, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
 import { stationLevel } from '../../engine/hideout';
 import { affixRangeText, itemName, salvageValue } from '../../engine/items';
-import type { EquipSlot, Item } from '../../engine/types';
+import type { FlaskInstance, GameState, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Badge, Cost, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
+import { Badge, Cost, EmptyState, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
+import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
 import { Orb } from '../components/Icon';
-import { ItemCell, ItemTip } from '../components/ItemView';
+import { ItemTip } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
+import { PaperDoll } from '../components/PaperDoll';
 
 const ORB_ORDER = ['transmute', 'augment', 'alteration', 'regal', 'alchemy', 'chaos', 'exalted', 'annul', 'scour', 'divine'];
+
+/** Orbs, enchanting and belt slots for the selected flask. */
+function FlaskCraft({ s, f, onCraft }: { s: GameState; f: FlaskInstance; onCraft: () => void }) {
+  const slotIndex = s.flaskSlots.findIndex((x) => x?.uid === f.uid);
+  const instills = s.bank.instill ?? 0;
+  const run = (err: string | null) => {
+    if (!err) onCraft();
+  };
+  return (
+    <div className="card">
+      <div className="card-title">
+        Flask crafting
+        <span className="grow" />
+        <span className="card-hint">Flasks drop from monsters and are brewed with Alchemy</span>
+      </div>
+      <div className="grid" style={{ gap: 14 }}>
+        <div>
+          <div className="section-label">Craft</div>
+          <div className="row wrap">
+            {FLASK_ORBS.map((orb) => {
+              const reason = flaskOrbReason(s, orb, f);
+              return (
+                <button key={orb} className="btn sm" disabled={!!reason} title={reason ?? currencyDef(orb).desc} onClick={() => run(game.act((st, ctx) => applyFlaskOrb(st, ctx, orb, f.uid)))}>
+                  <MatIcon id={orb} size={13} /> {currencyDef(orb).short} <span className="dim">×{s.bank[orb] ?? 0}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div>
+          <div className="section-label">
+            Enchant with an Instilling Orb <span className="dim">({instills} owned)</span>
+          </div>
+          <div className="row wrap">
+            {INSTILL_CONDITIONS.map((c) => (
+              <button
+                key={c.id}
+                className={`btn sm ${f.instill === c.id ? 'active' : ''}`}
+                disabled={instills < 1 || f.instill === c.id}
+                title={instills < 1 ? 'Instilling Orbs drop in deeper areas' : c.desc}
+                onClick={() => run(game.act((st, ctx) => enchantFlask(st, ctx, f.uid, c.id)))}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          <div className="dim small" style={{ marginTop: 4 }}>
+            An enchanted flask drinks itself in combat when its condition is met. Enchanting again replaces it.
+          </div>
+        </div>
+        <div>
+          <div className="section-label">Belt</div>
+          {slotIndex >= 0 ? (
+            <button className="btn sm" onClick={() => game.act((st) => unequipFlask(st, slotIndex))}>
+              Take off belt (slot {slotIndex + 1})
+            </button>
+          ) : (
+            <div className="row wrap">
+              {s.flaskSlots.map((x, i) => (
+                <button key={i} className="btn sm" onClick={() => game.act((st) => equipFlask(st, f.uid, i))}>
+                  {x ? `Swap into ${i + 1}` : `Put in slot ${i + 1}`}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function BenchPage() {
   const s = useGame();
   const [uid, setUid] = useState<number | null>(null);
+  const [flaskUid, setFlaskUid] = useState<number | null>(null);
   const [flash, setFlash] = useState(0);
   const [history, setHistory] = useState<{ id: number; text: string; name: string; rarity: Item['rarity'] }[]>([]);
   const item = uid !== null ? findItem(s, uid) : undefined;
   const benchLvl = stationLevel(s, 'bench');
-  const equipped = Object.entries(s.equipment) as [EquipSlot, Item][];
+  const flask = flaskUid !== null ? findFlask(s, flaskUid) : undefined;
+  const pickItem = (id: number) => {
+    setUid(id);
+    setFlaskUid(null);
+  };
+  const pickFlask = (id: number) => {
+    setFlaskUid(id);
+    setUid(null);
+  };
 
   const use = (orbId: string) => {
     if (!item) return;
@@ -46,7 +130,7 @@ export function BenchPage() {
   return (
     <div className="page">
       <PageHeader title="Crafting Bench" actions={<Badge tone="gold">Bench level {benchLvl}</Badge>}>
-        Select an item, then spend orbs to reshape its modifiers. Item level caps which modifier tiers can roll.
+        Select gear or a flask, then spend orbs to reshape its modifiers. Item level caps which modifier tiers can roll.
       </PageHeader>
 
       <div className="bench-layout">
@@ -68,9 +152,13 @@ export function BenchPage() {
                 </button>
               )}
             </>
+          ) : flask ? (
+            <div key={flash} className={flash ? 'shimmer' : ''} style={{ width: '100%' }}>
+              <FlaskTip f={flask} pinned />
+            </div>
           ) : (
-            <EmptyState icon={<GameIcon name="bench" size={32} color="var(--dim)" />} title="No item selected">
-              Pick one from your gear or inventory below.
+            <EmptyState icon={<GameIcon name="bench" size={32} color="var(--dim)" />} title="Nothing selected">
+              Pick gear, a flask or an inventory item below.
             </EmptyState>
           )}
           {history.length > 0 && (
@@ -87,6 +175,9 @@ export function BenchPage() {
           )}
         </div>
 
+        {flask ? (
+          <FlaskCraft s={s} f={flask} onCraft={() => setFlash((n) => n + 1)} />
+        ) : (
         <div className="grid" style={{ gap: 16 }}>
           <div className="card">
             <div className="card-title">Currency</div>
@@ -173,19 +264,38 @@ export function BenchPage() {
             </div>
           </div>
         </div>
+        )}
       </div>
 
-      {equipped.length > 0 && (
+      <div className="card doll-card">
+        <PaperDoll
+          s={s}
+          selected={uid ?? flaskUid}
+          onItem={(_, it) => pickItem(it.uid)}
+          onFlask={(_, f) => pickFlask(f.uid)}
+          emptyFlaskTitle="Select a spare flask to put it on your belt"
+        />
+      </div>
+      {s.flaskStash.length > 0 && (
         <div className="card">
-          <div className="card-title">Equipped</div>
-          <div className="inv-grid">
-            {equipped.map(([slot, it]) => (
-              <ItemCell key={slot} item={it} state={s} selected={uid === it.uid} onClick={() => setUid(it.uid)} />
+          <div className="card-title">Spare flasks ({s.flaskStash.length})</div>
+          <div className="gem-bag">
+            {s.flaskStash.map((f) => (
+              <Tooltip key={f.uid} content={<FlaskTip f={f} />}>
+                <button
+                  className={`gem-card ${flaskUid === f.uid ? 'selected' : ''}`}
+                  onClick={() => pickFlask(f.uid)}
+                  onContextMenu={(e) => (e.preventDefault(), pinFlask(f))}
+                >
+                  <FlaskIcon f={f} size={28} />
+                  <b className={f.rarity === 'magic' ? 'magic-text' : ''}>{flaskName(f)}</b>
+                </button>
+              </Tooltip>
             ))}
           </div>
         </div>
       )}
-      <Inventory s={s} onPick={(it) => setUid(it.uid)} selected={uid} />
+      <Inventory s={s} onPick={(it) => pickItem(it.uid)} selected={uid} />
     </div>
   );
 }
