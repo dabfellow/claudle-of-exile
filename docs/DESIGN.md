@@ -38,6 +38,13 @@ The engine never talks to the UI directly. It calls `ctx.emit(event)` (`GameEven
 - Flasks are manual by design and refill on kills. Instilling Orbs let a flask fire on a condition.
 - Bosses spawn after a kill count and telegraph a heavy hit. Dying to a boss resets its counter so an area can't soft-lock.
 
+## Acts
+
+- Areas are listed in campaign order in `data/zones.ts`; each boss unlocks the next area (`nextZone`), across act boundaries too.
+- An act is playable when `actOpen(n)`: it is `open`, or it is a `preview` act and `ACT_PREVIEW.enabled` (dev builds, vitest, the sim). Production builds never see preview acts.
+- Opening an act needs no save migration: on load, `unlockReachedZones` unlocks the area after any boss already beaten.
+- Achievements with an `act` stay hidden until that act is open. See [ACT2.md](ACT2.md).
+
 ## Characters, accounts and saves
 
 - `platform/accounts.ts`: `AppAccounts` handles guests (browser storage) and Google/Discord through Supabase OAuth (PKCE redirect back to the site). Keys come from `.env.local` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`); without them the game is guest-only.

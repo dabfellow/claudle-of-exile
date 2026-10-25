@@ -22,7 +22,8 @@ Online accounts (Google/Discord + cloud saves) need a `.env.local` with `VITE_SU
 
 ## What's in the game
 
-- **Act 1, The Drowned Coast**: 8 areas (levels 1–25) ending in the act boss, Ysolde, the Drowned Queen. Bosses stack mechanics as the act goes on: slam, nova, summon, enrage, ward. Acts 2–6 and Maps are shown as coming soon.
+- **Act 1, The Drowned Coast**: 8 areas (levels 1–25) ending in the act boss, Ysolde, the Drowned Queen. Bosses stack mechanics as the act goes on: slam, nova, summon, enrage, ward. Acts 3–6 and Maps are shown as coming soon.
+- **Act 2, The Burning Steppe** (preview: dev builds only, see [docs/ACT2.md](docs/ACT2.md)): 8 areas (levels 24–33) ending in Azhar, the Fallen Sun, and a sixth boss mechanic, Scorched earth.
 - **Characters**: guest play or Google/Discord sign-in with cloud saves, several characters per account, Warrior / Ranger / Mage, a guided 10-step tutorial.
 - **Combat**: 12 skill gems plus signature and general supports on a 6-slot bar, tactics rules that cast for you, packs of 1–5, flasks with their own affixes and enchantments.
 - **Trees**: a character tree with masteries and keystones, and a separate skilling tree.
@@ -48,6 +49,7 @@ docs/        design notes
 - [docs/GDD.md](docs/GDD.md) — game design direction and roadmap for the polish pass
 - [docs/DESIGN.md](docs/DESIGN.md) — how the code fits together
 - [docs/BALANCE.md](docs/BALANCE.md) — pacing knobs, the balance sim, and baseline results
+- [docs/ACT2.md](docs/ACT2.md) — Act 2 areas, bosses, uniques, and how a preview act is released
 - [docs/LAUNCH.md](docs/LAUNCH.md) — what is left before launch
 - [docs/TREES.md](docs/TREES.md) — the character and skilling trees, masteries and keystones
 - [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) — setting up Google/Discord login with Supabase
