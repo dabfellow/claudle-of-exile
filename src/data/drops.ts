@@ -103,5 +103,5 @@ export function bossTable(tier: number): BossTable {
   return BOSS_TABLES[tier] ?? BOSS_TABLES[5];
 }
 
-/** Orbs that never come from crafting — only from monsters. */
-export const COMBAT_ONLY_CURRENCY = ['regal', 'chaos', 'annul', 'exalted', 'divine', 'expansion', 'instill'];
+/** Orbs that never come from skilling — only from monsters (Gemcutting 45 cuts Orbs of Expansion, so they're not listed). */
+export const COMBAT_ONLY_CURRENCY = ['regal', 'chaos', 'annul', 'exalted', 'divine', 'instill'];

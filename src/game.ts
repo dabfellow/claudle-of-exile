@@ -13,7 +13,7 @@ import { TUTORIAL_STEPS } from './data/tutorial';
 import { newGame, tick } from './engine/state';
 import { tutorialPage, withTutorial } from './engine/tutorial';
 import { AppAccounts, type Account, type AuthProviderId } from './platform/accounts';
-import { setErrorUser } from './platform/errors';
+import { reportError, setErrorUser } from './platform/errors';
 import { checkAdmin } from './platform/feedback';
 import { getSupabase } from './platform/supabase';
 import { supabaseCharacters } from './platform/supabaseTable';
@@ -88,6 +88,8 @@ class GameStore {
   private lastFrame = 0;
   private lastNotify = 0;
   private lastSave = 0;
+  /** a failing save is reported once per session, not on every autosave */
+  private saveErrorReported = false;
   private loop: ReturnType<typeof setInterval> | null = null;
   private baseCtx: Ctx;
   readonly ctx: Ctx;
@@ -283,8 +285,11 @@ class GameStore {
     if (this.screen !== 'game' || !this.saves) return;
     this.lastSave = performance.now();
     this.state.lastSaved = Date.now();
-    this.saves.save(this.state).catch(() => {
-      /* storage full or blocked: keep playing */
+    this.saves.save(this.state).catch((err) => {
+      // storage full or blocked: keep playing
+      if (this.saveErrorReported) return;
+      this.saveErrorReported = true;
+      reportError(err, { where: 'save' });
     });
   }
 

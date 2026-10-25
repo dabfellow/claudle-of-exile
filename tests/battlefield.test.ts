@@ -225,4 +225,18 @@ describe('skills on the battlefield', () => {
     for (let t = 0; t < 3000 && cellCol(rat.cell) > 0; t += 50) combatStep(s, c, 50, deriveStats(s));
     expect(rat.cell).toBe(0);
   });
+
+  it('ground under the player kills even when the last monster dies on the same tick', () => {
+    const { s, c } = idler();
+    const rat = makeMonster(zoneDef('mudflats').monsters[0], false, 1);
+    rat.life = 0.001;
+    rat.dots = [{ kind: 'bleed', dps: 100, remainingMs: 1000, durationMs: 1000, dealt: 0, gemId: 'x' }];
+    s.combat!.monsters = [rat];
+    s.combat!.ground = [{ cell: PLAYER_SPOT, kind: 'burning', dps: 1e6, remainingMs: 1000, durationMs: 1000 }];
+    s.es = 0;
+    const deaths = s.lifetime.deaths;
+    combatStep(s, c, 50, deriveStats(s));
+    expect(s.lifetime.deaths).toBe(deaths + 1);
+    expect(s.combat).toBeNull();
+  });
 });

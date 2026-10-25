@@ -1367,7 +1367,8 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   tickDots(s, ctx, dt);
   tickGround(s, ctx, d, dt);
   reapDead(s, ctx, d);
-  if (!s.combat || !c.monsters.length) return true;
+  // burning ground can finish you off even as the last monster falls
+  if (checkDeath(s, ctx, d) || !c.monsters.length) return true;
 
   // the player's turn (an overheated Overclock sits it out)
   if (c.overheatMs > 0) c.overheatMs -= dt;
@@ -1389,9 +1390,20 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
     if (s.life <= 0) break;
   }
   reapDead(s, ctx, d);
-  // Eternal Hunger: you can't die while it's fed
-  if (s.life <= 0 && s.combat && d.raw.eternalHunger && c.hungerMs > 0) s.life = 1;
-  if (s.life <= 0 && s.combat) die(s, ctx, d);
+  checkDeath(s, ctx, d);
+  return true;
+}
+
+/** Die if life ran out (Eternal Hunger: not while it's fed). Returns true when the fight is over. */
+function checkDeath(s: GameState, ctx: Ctx, d: Derived): boolean {
+  const c = s.combat;
+  if (!c) return true;
+  if (s.life > 0) return false;
+  if (d.raw.eternalHunger && c.hungerMs > 0) {
+    s.life = 1;
+    return false;
+  }
+  die(s, ctx, d);
   return true;
 }
 

@@ -376,19 +376,3 @@ export function GameIcon({ name, size = 18, color = 'currentColor', style }: { n
 export function PixelArt({ name, alt, scale = 1 }: { name: keyof typeof KIBYRA; alt: string; scale?: 1 | 2 }) {
   return <img className="art pixel-art" src={KIBYRA[name]} alt={alt} width={32 * scale} height={32 * scale} loading="lazy" draggable={false} />;
 }
-
-/** Briefly true after `key` changes — used to retrigger CSS animations. */
-export function usePulse(key: unknown, ms = 300): boolean {
-  const [on, setOn] = useState(false);
-  const first = useRef(true);
-  useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
-    setOn(true);
-    const t = setTimeout(() => setOn(false), ms);
-    return () => clearTimeout(t);
-  }, [key, ms]);
-  return on;
-}

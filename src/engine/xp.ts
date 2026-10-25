@@ -66,9 +66,7 @@ export function maxLevelOf(skill: SkillId): number {
 export const MAX_LEVEL = SKILL_CURVE.max;
 export const xpForLevel = (lvl: number) => xpToReach('mining', lvl);
 export const levelForXp = (xp: number) => levelOf('mining', xp);
-export const levelProgress = (xp: number) => progressOf('mining', xp);
 
 // Character level shorthands.
-export const MAX_CHAR_LEVEL = CHAR_CURVE.max;
 export const charXpForLevel = (lvl: number) => xpToReach('combat', lvl);
 export const charLevelForXp = (xp: number) => levelOf('combat', xp);

@@ -3,6 +3,7 @@ import { deserialize, SAVE_KEY, serialize } from '../engine/save';
 import { SKILL_IDS, type GameState } from '../engine/types';
 import { characterLevel } from '../engine/character';
 import { levelOf } from '../engine/xp';
+import { reportError } from './errors';
 
 export interface CharacterSummary {
   id: string;
@@ -77,7 +78,7 @@ export class LocalSaveStore implements SaveStore {
       this.writeSync(s);
       this.storage.removeItem(SAVE_KEY);
     } catch (err) {
-      console.error('Could not import legacy save', err);
+      reportError(err, { where: 'importLegacy' });
     }
   }
 

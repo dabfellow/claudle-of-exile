@@ -6,7 +6,6 @@ export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'smit
 export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy', 'gemcutting'];
 
 export type Rarity = 'normal' | 'magic' | 'rare' | 'unique';
-export const RARITIES: Rarity[] = ['normal', 'magic', 'rare', 'unique'];
 
 export type ItemSlotType =
   | 'weapon'
@@ -20,18 +19,6 @@ export type ItemSlotType =
   | 'ring';
 
 export type EquipSlot = Exclude<ItemSlotType, 'ring'> | 'ring1' | 'ring2';
-export const EQUIP_SLOTS: EquipSlot[] = [
-  'weapon',
-  'offhand',
-  'helmet',
-  'body',
-  'gloves',
-  'boots',
-  'belt',
-  'amulet',
-  'ring1',
-  'ring2',
-];
 
 export type Tag =
   | 'weapon'

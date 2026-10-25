@@ -16,10 +16,6 @@ const ROLE_LABEL: Record<string, string> = {
   sustain: 'Sustain',
 };
 
-export function attrColor(attr: keyof typeof ATTR_COLOR): string {
-  return ATTR_COLOR[attr];
-}
-
 /** A faceted gem glyph tinted by attribute, with the skill's initials. */
 export function GemIcon({ def, size = 40, support = false, dim = false }: { def: { id?: string; name: string; attr: 'str' | 'dex' | 'int' }; size?: number; support?: boolean; dim?: boolean }) {
   const color = ATTR_COLOR[def.attr];

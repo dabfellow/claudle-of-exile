@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ACHIEVEMENTS } from '../src/data/achievements';
-import { bossTable, dropTable } from '../src/data/drops';
+import { bossTable, COMBAT_ONLY_CURRENCY, dropTable } from '../src/data/drops';
 import { BENCH_CRAFTS } from '../src/data/hideout';
-import { actionDef } from '../src/data/skills';
+import { ACTIONS, actionDef } from '../src/data/skills';
 import { ZONES, zoneDef } from '../src/data/zones';
 import { checkAchievements } from '../src/engine/achievements';
 import { makeMonster } from '../src/engine/combat';
@@ -29,6 +29,13 @@ describe('drop tables', () => {
     expect(dropTable(4).currency.instill).toBeGreaterThan(0);
     // deeper areas roll more rares
     expect(dropTable(5).rarity.rare).toBeGreaterThan(dropTable(1).rarity.rare);
+  });
+
+  it('no skilling action makes combat-only orbs', () => {
+    for (const a of ACTIONS) {
+      const made = [...Object.keys(a.outputs ?? {}), ...(a.bonus ?? []).map((b) => b.id)];
+      for (const id of COMBAT_ONLY_CURRENCY) expect(made, `${a.id} makes ${id}`).not.toContain(id);
+    }
   });
 
   it('every area tier has tables', () => {
