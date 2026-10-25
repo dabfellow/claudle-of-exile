@@ -17,6 +17,7 @@ import { salvage } from '../src/engine/crafting';
 import { equip, equipReason, slotsFor } from '../src/engine/equipment';
 import { skillSummary, socketSupport, supportReason, syncSockets } from '../src/engine/gems';
 import { buyOffer, rerollCost, rerollVendor } from '../src/engine/hideout';
+import { pickUp } from '../src/engine/storage';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { newGame, tick } from '../src/engine/state';
@@ -88,6 +89,9 @@ function shop(s: GameState, ctx: Ctx) {
 const scoreOf = (s: GameState) => score(s, deriveStats(s, []));
 
 function upgradeGear(s: GameState, ctx: Ctx) {
+  // the bot picks up everything; it salvages the bag down below
+  pickUp(s, ctx, 'ground', s.ground.map((i: Item) => i.uid));
+  pickUp(s, ctx, 'offlineHaul', s.offlineHaul.map((i: Item) => i.uid));
   for (const item of [...s.inventory]) {
     if (equipReason(s, item)) continue;
     const base = scoreOf(s);

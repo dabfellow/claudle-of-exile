@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { activeGemDef, supportGemDef } from '../../data/gems';
 import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
 import { flaskName, flaskValue, sellFlasks } from '../../engine/flasks';
-import { buyOffer, inventoryCapacity, offerName, rerollCost, rerollVendor, sellItems, sellMaterial, stationLevel } from '../../engine/hideout';
+import { buyOffer, offerName, rerollCost, rerollVendor, sellItems, sellMaterial, stationLevel } from '../../engine/hideout';
 import { sellValue } from '../../engine/items';
 import type { GameState, Rarity, VendorOffer } from '../../engine/types';
 import { game, useGame } from '../../game';
@@ -10,17 +10,11 @@ import { Art, EmptyState, fmt, fmtTime, GameIcon, MatIcon, PixelArt, Tabs, Toolt
 import { FlaskIcon, FlaskTip } from '../components/FlaskView';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
 import { Orb } from '../components/Icon';
-import { ItemGrid } from '../components/Inventory';
+import { ItemTiles } from '../components/Inventory';
+import { bagFull, stashedItems } from '../../engine/storage';
 import { ItemIcon, ItemTip } from '../components/ItemView';
 
 const TRADER_NAME = 'Varro the Peddler';
-const GREETINGS = [
-  "Everything's for sale. Including advice — that costs extra.",
-  "Found it in a dead man's pack. He won't be needing it.",
-  'Coin first, questions never.',
-  "You look like someone who's about to make a bad decision. Buy something.",
-  'Fresh from the shipwrecks. Mostly dry.',
-];
 
 const KIND_LABEL: Record<VendorOffer['kind'], string> = {
   item: 'Equipment',
@@ -88,6 +82,7 @@ function BuyTab({ s }: { s: GameState }) {
         <button className="btn sm" disabled={gold < cost} onClick={() => game.act((st, ctx) => rerollVendor(st, ctx))}>
           <GameIcon name="clock" size={12} /> Restock now · {fmt(cost)} gold
         </button>
+        {(s.vendor.rerolls ?? 0) > 0 && <span className="dim small">Price doubles each restock until the next free one</span>}
       </div>
       {s.vendor.stock.length === 0 ? (
         <div className="card">
@@ -99,7 +94,7 @@ function BuyTab({ s }: { s: GameState }) {
         <div className="offer-grid">
           {s.vendor.stock.map((o) => {
             const afford = gold >= o.price;
-            const full = o.kind === 'item' && s.inventory.length >= inventoryCapacity(s);
+            const full = o.kind === 'item' && bagFull(s);
             return (
               <Tooltip key={o.id} content={offerTip(s, o)}>
                 <div className={`card offer-card ${rarityClass(o)} ${afford ? '' : 'poor'}`}>
@@ -138,15 +133,17 @@ function BuyTab({ s }: { s: GameState }) {
 function SellTab({ s }: { s: GameState }) {
   const [picked, setPicked] = useState<Set<number>>(new Set());
   const [flasks, setFlasks] = useState<Set<number>>(new Set());
+  const [withStash, setWithStash] = useState(false);
+  const pool = withStash ? [...s.inventory, ...stashedItems(s)] : s.inventory;
   const toggle = (set: Set<number>, uid: number, apply: (n: Set<number>) => void) => {
     const n = new Set(set);
     if (n.has(uid)) n.delete(uid);
     else n.add(uid);
     apply(n);
   };
-  const pickedGold = s.inventory.filter((i) => picked.has(i.uid)).reduce((a, i) => a + sellValue(i), 0);
+  const pickedGold = pool.filter((i) => picked.has(i.uid)).reduce((a, i) => a + sellValue(i), 0);
   const flaskGold = s.flaskStash.filter((f) => flasks.has(f.uid)).reduce((a, f) => a + flaskValue(f), 0);
-  const byRarity = (r: Rarity) => s.inventory.filter((i) => i.rarity === r);
+  const byRarity = (r: Rarity) => pool.filter((i) => i.rarity === r);
   const mats = MATERIALS.filter((m) => m.kind !== 'gold' && (s.bank[m.id] ?? 0) > 0);
 
   return (
@@ -155,7 +152,17 @@ function SellTab({ s }: { s: GameState }) {
         <div className="card-title">
           Items
           <span className="grow" />
-          <span className="card-hint">Click items to select them</span>
+          <label className="row small" style={{ gap: 6, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={withStash}
+              onChange={(e) => {
+                setWithStash(e.target.checked);
+                setPicked(new Set());
+              }}
+            />
+            Show stash too
+          </label>
         </div>
         <div className="row wrap" style={{ marginBottom: 10 }}>
           {(['normal', 'magic', 'rare'] as Rarity[]).map((r) => {
@@ -183,12 +190,12 @@ function SellTab({ s }: { s: GameState }) {
             Sell {picked.size} for {fmt(pickedGold)} gold
           </button>
         </div>
-        {s.inventory.length === 0 ? (
+        {pool.length === 0 ? (
           <EmptyState small title="Nothing to sell">
-            Items you loot or smith appear here.
+            {withStash ? 'Your bag and stash have no gear.' : 'Your bag is empty. Tick "Show stash too" to sell stashed gear.'}
           </EmptyState>
         ) : (
-          <ItemGrid s={s} items={[...s.inventory].reverse()} capacity={0} selected={(i) => picked.has(i.uid)} onClick={(i) => toggle(picked, i.uid, setPicked)} />
+          <ItemTiles s={s} items={[...pool].reverse()} selected={(i) => picked.has(i.uid)} onClick={(i) => toggle(picked, i.uid, setPicked)} />
         )}
         <div className="dim small" style={{ marginTop: 10 }}>
           Sell filters and auto-sell rules are planned for a later update.
@@ -264,7 +271,6 @@ function SellTab({ s }: { s: GameState }) {
 export function TraderPage() {
   const s = useGame();
   const [tab, setTab] = useState<'buy' | 'sell'>('buy');
-  const greeting = GREETINGS[Math.floor(s.vendor.refreshAt / 60000) % GREETINGS.length];
   const lvl = stationLevel(s, 'vendor');
   return (
     <div className="page">
@@ -275,12 +281,11 @@ export function TraderPage() {
         <div className="npc-text">
           <span className="page-kicker">Trader's Stall · level {lvl}</span>
           <h1>{TRADER_NAME}</h1>
-          <p className="npc-quote">“{greeting}”</p>
         </div>
         <div className="npc-aside">
           <span className="label">Your gold</span>
           <span className="gold-amount">
-            <PixelArt name="purse" alt="" /> {fmt(s.bank.gold ?? 0)}
+            <MatIcon id="gold" size={22} /> {fmt(s.bank.gold ?? 0)}
           </span>
         </div>
       </div>

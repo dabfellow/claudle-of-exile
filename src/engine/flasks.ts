@@ -166,6 +166,35 @@ export function flaskValue(f: FlaskInstance): number {
   return Math.round(base * (f.rarity === 'magic' ? 1.8 : 1) + (f.instill ? 60 : 0));
 }
 
+/** Spare flasks kept per kind; the least valuable past this is sold. */
+export const FLASK_STASH_CAP = 10;
+
+/** Sell the least valuable spares of any kind over the cap. Returns the gold. */
+export function trimFlaskStash(s: GameState): number {
+  const byKind = new Map<string, FlaskInstance[]>();
+  for (const f of s.flaskStash) byKind.set(f.flaskId, [...(byKind.get(f.flaskId) ?? []), f]);
+  const sold = new Set<number>();
+  for (const list of byKind.values()) {
+    if (list.length <= FLASK_STASH_CAP) continue;
+    for (const f of [...list].sort((a, b) => flaskValue(a) - flaskValue(b)).slice(0, list.length - FLASK_STASH_CAP)) sold.add(f.uid);
+  }
+  if (!sold.size) return 0;
+  let gold = 0;
+  s.flaskStash = s.flaskStash.filter((f) => {
+    if (!sold.has(f.uid)) return true;
+    gold += flaskValue(f);
+    return false;
+  });
+  s.bank.gold = (s.bank.gold ?? 0) + gold;
+  return gold;
+}
+
+/** Add a spare flask, selling the worst of its kind if that puts it over the cap. */
+export function stashFlask(s: GameState, f: FlaskInstance): void {
+  s.flaskStash.push(f);
+  trimFlaskStash(s);
+}
+
 export function sellFlasks(s: GameState, ctx: Ctx, uids: number[]): number {
   const set = new Set(uids);
   let gold = 0;

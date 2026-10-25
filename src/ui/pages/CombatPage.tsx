@@ -14,6 +14,7 @@ import { game, useGame, useGameEvent } from '../../game';
 import { anyArtUrl, Art, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, ruleText } from '../components/GemView';
+import { LootPile } from '../components/GroundLoot';
 import type { Page } from '../Layout';
 import { SKILL_KEYS } from './SkillGemsPage';
 
@@ -521,6 +522,8 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
             Max Life {fmt(d.maxLife)}{d.maxEs ? ` + ${fmt(d.maxEs)} ES` : ''} · {d.dps.toFixed(1)} DPS · {fmt(d.armour)} Armour · {fmt(d.evasion)} Evasion
           </EmptyState>
         </div>
+        {s.offlineHaul.length > 0 && <LootPile s={s} pile="offlineHaul" />}
+        {s.ground.length > 0 && <LootPile s={s} pile="ground" />}
         <div className="card">
           <div className="card-title">Skill bar</div>
           <SkillBar s={s} d={d} fx={fx} />
@@ -564,6 +567,9 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
           <Battlefield c={c} fx={fx} />
         </div>
       </div>
+
+      {s.offlineHaul.length > 0 && <LootPile s={s} pile="offlineHaul" />}
+      <LootPile s={s} pile="ground" />
 
       <div className="card">
         <div className="card-title">

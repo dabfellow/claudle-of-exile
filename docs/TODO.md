@@ -16,7 +16,16 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
   - Art for 8 areas, 40 monsters, 6 uniques (prompts in `artManifest.ts`; banners are stand-ins).
   - Then `open: true` on Act 2, Settings → About text, deploy.
 
+### Town feedback (your walkthrough, 2026-10-25)
+- [ ] Gems: far too many drop. Move them to a gem vendor that unlocks better gems as it levels.
+  - Needs design with you: how the vendor levels, what happens to gem drops and gems already owned.
+- [ ] More skills to train (Hideout skill list feels thin).
+- [ ] Side feed (Activity / Combat log / Loot): you're lukewarm on it; revisit later.
+- [ ] Achievements page look: later pass.
+- Art (parked with the other art): trader portrait is too cartoony; materials need more icons.
+
 ## Ideas / later
+- Sim bot now picks up all its loot every minute; balance sims weren't re-run after the stash split.
 Parked 2026-10-24 until more of the game is built: testing, sim balancing and art.
 - Test cloud save sync between two browsers on the live site.
 - Class balance doesn't need to be exact. Sim notes in [BALANCE.md](BALANCE.md) for when it's picked back up:
@@ -38,6 +47,8 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Ground loot (50, FIFO, Combat page), bag (60), stash pages (3×80, more for gold, Stash station discounts), offline haul (200), item tiles everywhere, trader "show stash too", bench picks from bag + stash, save migration ([STASH.md](STASH.md)) — done 2026-10-25
+- [x] Town pass 1: top bar has a centred character plate (crest, name, level, class, life/ES/mana) and a smaller activity box; Hideout title centred as "Hideout", life/DPS chips gone; station cards show the current effect, one "next level" line and cost + Upgrade (description moved to hover); Character level is its own banner above the trade skills; trader quote removed, gold shown with the coin; paid restock doubles in price until the free restock; spare flasks capped at 10 per kind (worst sold, also trimmed on load) — done 2026-10-25
 - [x] Act 2 framework: 8 areas, Scorched earth boss mechanic, drop tiers 6–7, 6 new uniques, preview gating, unlock-on-load for old saves ([ACT2.md](ACT2.md)) — done 2026-10-25
 - [x] Zones for Last Breath, The Old Grudge, Brawler's Buckle and Starforged Edge (Act 2) — done 2026-10-25
 - [x] Re-ran the sim since every skill got a cooldown (36 h, seeds 1–2; BALANCE.md) — done 2026-10-25

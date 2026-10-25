@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { makeCtx } from '../src/engine/context';
 import { startCombat, useFlask } from '../src/engine/combat';
-import { applyFlaskOrb, enchantFlask, flaskName, flaskStats, newFlask, rollFlask } from '../src/engine/flasks';
+import { applyFlaskOrb, enchantFlask, FLASK_STASH_CAP, flaskName, flaskStats, newFlask, rollFlask, stashFlask } from '../src/engine/flasks';
+import { rerollCost, rerollVendor } from '../src/engine/hideout';
 import { seeded } from '../src/engine/rng';
 import { deserialize } from '../src/engine/save';
 import { newGame, SAVE_VERSION } from '../src/engine/state';
@@ -9,6 +10,32 @@ import { newGame, SAVE_VERSION } from '../src/engine/state';
 const ctx = (seed = 1) => makeCtx(seeded(seed));
 
 describe('flask items', () => {
+  it('keeps at most 10 spares of a kind, selling the least valuable', () => {
+    const s = newGame(1);
+    s.bank.gold = 0;
+    for (let i = 0; i < FLASK_STASH_CAP; i++) stashFlask(s, newFlask(s, 'life_small', 1));
+    const magic = newFlask(s, 'life_small', 1);
+    magic.rarity = 'magic';
+    stashFlask(s, magic);
+    stashFlask(s, newFlask(s, 'mana_small', 1));
+    expect(s.flaskStash.filter((f) => f.flaskId === 'life_small')).toHaveLength(FLASK_STASH_CAP);
+    expect(s.flaskStash).toContain(magic);
+    expect(s.flaskStash.filter((f) => f.flaskId === 'mana_small')).toHaveLength(1);
+    expect(s.bank.gold).toBeGreaterThan(0);
+  });
+
+  it('paid trader restocks double in price until the free one', () => {
+    const s = newGame(1);
+    const c = ctx();
+    s.bank.gold = 100_000;
+    const base = rerollCost(s);
+    const at = s.vendor.refreshAt;
+    expect(rerollVendor(s, c)).toBeNull();
+    expect(rerollVendor(s, c)).toBeNull();
+    expect(rerollCost(s)).toBe(base * 4);
+    expect(s.vendor.refreshAt).toBe(at);
+  });
+
   it('magic flask modifiers change charges and recovery', () => {
     const s = newGame(1);
     const f = newFlask(s, 'life_small', 30);

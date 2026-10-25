@@ -1,4 +1,5 @@
 import { affixDef } from '../data/affixes';
+import { stashedItems, takeOwned } from './storage';
 import { baseDef } from '../data/bases';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements';
 import { essenceDef, fossilDef, modBias } from '../data/craftMats';
@@ -98,7 +99,7 @@ export function isCraftLocked(s: GameState, uid: number): boolean {
 }
 
 export function findItem(s: GameState, uid: number): Item | undefined {
-  return s.inventory.find((i) => i.uid === uid) ?? Object.values(s.equipment).find((i) => i?.uid === uid);
+  return s.inventory.find((i) => i.uid === uid) ?? Object.values(s.equipment).find((i) => i?.uid === uid) ?? stashedItems(s).find((i) => i.uid === uid);
 }
 
 export function orbReason(s: GameState, orbId: string, uid: number, fossilId?: string | null): string | null {
@@ -190,15 +191,9 @@ export function benchCraft(s: GameState, ctx: Ctx, craftId: string, uid: number)
 }
 
 export function salvage(s: GameState, ctx: Ctx, uids: number[]): number {
-  let dust = 0;
-  let n = 0;
-  const set = new Set(uids);
-  s.inventory = s.inventory.filter((i) => {
-    if (!set.has(i.uid) || isCraftLocked(s, i.uid)) return true;
-    dust += salvageValue(i);
-    n++;
-    return false;
-  });
+  const gone = takeOwned(s, uids);
+  const dust = gone.reduce((a, i) => a + salvageValue(i), 0);
+  const n = gone.length;
   if (dust > 0) {
     s.bank.arcane_dust = (s.bank.arcane_dust ?? 0) + dust;
     s.lifetime.salvaged += n;

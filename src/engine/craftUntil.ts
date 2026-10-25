@@ -42,7 +42,7 @@ export function ruleText(rule: StopRule): string {
 
 export function craftUntilReason(s: GameState, uid: number, method: CraftMethod, rule: StopRule): string | null {
   const item = findItem(s, uid);
-  if (!item || !s.inventory.includes(item)) return 'Pick an item from your inventory';
+  if (!item || Object.values(s.equipment).includes(item)) return 'Pick an item from your inventory or stash';
   if (rule.kind === 'twoOf' && rule.affixIds.length < 2) return 'Pick at least two modifiers';
   if (ruleMet(item, rule)) return 'Already matches';
   return stepReason(s, uid, method);

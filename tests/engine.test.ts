@@ -7,7 +7,8 @@ import { applyOrb, benchCraft, ORBS } from '../src/engine/crafting';
 import { combatStep, makeMonster, mitigate, startCombat, useFlask } from '../src/engine/combat';
 import { enchantFlask } from '../src/engine/flasks';
 import { equip } from '../src/engine/equipment';
-import { upgradeStation, inventoryCapacity } from '../src/engine/hideout';
+import { upgradeStation } from '../src/engine/hideout';
+import { stashPagePrice } from '../src/engine/storage';
 import { addRandomMod, allMods, createItem, eligibleAffixes, maxAffixes } from '../src/engine/items';
 import { simulateOffline } from '../src/engine/offline';
 import { allocate, allocateReason, refundReason } from '../src/engine/passives';
@@ -289,7 +290,7 @@ describe('passive tree', () => {
 });
 
 describe('hideout', () => {
-  it('upgrades consume materials and raise capacity', () => {
+  it('upgrades consume materials and make stash pages cheaper', () => {
     const s = newGame(1);
     const c = ctx();
     expect(upgradeStation(s, c, 'stash')).toMatch(/materials/);
@@ -297,7 +298,7 @@ describe('hideout', () => {
     s.bank.ash_log = 50;
     expect(upgradeStation(s, c, 'stash')).toBeNull();
     expect(s.bank.ash_log).toBe(10);
-    expect(inventoryCapacity(s)).toBe(60);
+    expect(stashPagePrice(s)).toBe(900);
   });
 });
 

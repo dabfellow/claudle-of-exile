@@ -2,12 +2,13 @@ import { BOSS_CRAFT_MAT, ESSENCES, FOSSILS } from '../data/craftMats';
 import { bossTable, dropTable, type RarityWeights } from '../data/drops';
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
 import { MAP_ILVL } from '../data/hideout';
-import { rollFlask } from './flasks';
+import { rollFlask, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import type { ZoneDef } from '../data/zones';
 import { addBank } from './bank';
 import type { Ctx } from './context';
-import { inventoryCapacity, stationLevel } from './hideout';
+import { stationLevel } from './hideout';
+import { dropItem } from './storage';
 import { createItem, createUnique, droppableBases, salvageValue } from './items';
 import { chance, pick, pickWeighted, rInt } from './rng';
 import type { Derived } from './stats';
@@ -47,11 +48,7 @@ function placeItem(s: GameState, ctx: Ctx, item: Item): void {
     ctx.emit({ t: 'loot', item, salvaged: true });
     return;
   }
-  if (s.inventory.length >= inventoryCapacity(s)) {
-    ctx.emit({ t: 'info', text: 'Inventory full — loot left on the ground', tone: 'warn' });
-    return;
-  }
-  s.inventory.push(item);
+  dropItem(s, ctx, item);
   s.lifetime.itemsLooted += 1;
   ctx.emit({ t: 'loot', item });
 }
@@ -101,6 +98,6 @@ export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: Zon
 
 function dropFlask(s: GameState, ctx: Ctx, ilvl: number): void {
   const flask = rollFlask(s, ilvl, ctx.rng);
-  s.flaskStash.push(flask);
+  stashFlask(s, flask);
   ctx.emit({ t: 'loot', flask });
 }

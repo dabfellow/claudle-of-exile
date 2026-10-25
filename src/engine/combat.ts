@@ -1,4 +1,5 @@
 import { SKILL_BAR_SLOTS, type TacticRule } from '../data/gems';
+import { clearGround } from './storage';
 import {
   actOpen,
   BOSS_ADDS,
@@ -138,12 +139,14 @@ export function startCombat(s: GameState, ctx: Ctx, zoneId: string): string | nu
   if (!actOpen(zoneDef(zoneId).act)) return "This act isn't open yet";
   s.action = { kind: 'combat', zoneId };
   s.combat = newRuntime(zoneId);
+  clearGround(s);
   ctx.emit({ t: 'info', text: `Entered ${zoneDef(zoneId).name}` });
   ctx.emit({ t: 'combatStart', zoneId });
   return null;
 }
 
 export function retreat(s: GameState): void {
+  clearGround(s);
   s.combat = null;
   s.action = null;
 }

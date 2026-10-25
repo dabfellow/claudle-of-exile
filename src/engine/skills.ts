@@ -8,9 +8,9 @@ import { actionDef, type SkillAction } from '../data/skills';
 import { actOpen, ZONES, zoneDef } from '../data/zones';
 import { addBank, canAfford, hasItem, payCost } from './bank';
 import type { Ctx } from './context';
-import { newFlask, rerollMagic } from './flasks';
+import { newFlask, rerollMagic, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
-import { inventoryFull } from './hideout';
+import { bagFull } from './storage';
 import { allMods, createItem, salvageValue } from './items';
 import { chance, pick } from './rng';
 import { skillTreeStats, type TreeStats } from './skillTree';
@@ -72,7 +72,7 @@ export function actionBlocker(s: GameState, a: SkillAction): string | null {
   if (a.area && !s.unlockedZones.includes(a.area)) return `Reach ${zoneDef(a.area).name} to unlock`;
   if (skillLevel(s, a.skill) < a.level) return `Requires ${a.skill} level ${a.level}`;
   if (a.inputs && !canAfford(s, a.inputs)) return 'Missing materials';
-  if (a.baseId && inventoryFull(s)) return 'Inventory full';
+  if (a.baseId && bagFull(s)) return 'Inventory full';
   return null;
 }
 
@@ -219,7 +219,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
         rerollMagic(f, ctx.rng);
       }
       f.charges = flaskDef(a.flaskId).maxCharges;
-      s.flaskStash.push(f);
+      stashFlask(s, f);
     }
     outputs[a.flaskId] = mult;
   }

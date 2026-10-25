@@ -1,6 +1,6 @@
 import { attributeReq, baseDef } from '../data/bases';
 import type { Ctx } from './context';
-import { inventoryFull } from './hideout';
+import { bagFull } from './storage';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState, Item } from './types';
 import { characterLevel } from './character';
@@ -38,7 +38,7 @@ export function equip(s: GameState, ctx: Ctx, uid: number, slot?: EquipSlot): st
   const mainHand = s.equipment.weapon ? baseDef(s.equipment.weapon.baseId) : null;
   const clash: EquipSlot | null =
     target === 'weapon' && base.twoHanded && s.equipment.offhand ? 'offhand' : target === 'offhand' && mainHand?.twoHanded ? 'weapon' : null;
-  if (clash && s.equipment[target] && inventoryFull(s)) return 'Inventory full';
+  if (clash && s.equipment[target] && bagFull(s)) return 'Inventory full';
   s.inventory.splice(idx, 1);
   const prev = s.equipment[target];
   if (prev) s.inventory.splice(idx, 0, prev);
@@ -54,7 +54,7 @@ export function equip(s: GameState, ctx: Ctx, uid: number, slot?: EquipSlot): st
 export function unequip(s: GameState, slot: EquipSlot): string | null {
   const item = s.equipment[slot];
   if (!item) return null;
-  if (inventoryFull(s)) return 'Inventory full';
+  if (bagFull(s)) return 'Inventory full';
   delete s.equipment[slot];
   s.inventory.push(item);
   return null;

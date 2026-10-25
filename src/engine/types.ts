@@ -381,7 +381,14 @@ export interface GameState {
   nextUid: number;
   skills: Record<SkillId, number>;
   bank: Record<string, number>;
+  /** the bag you carry (BAG_SIZE) */
   inventory: Item[];
+  /** fresh drops waiting to be picked up, oldest first; cleared on leaving or changing area */
+  ground: Item[];
+  /** drops while you were away, oldest first; kept until emptied */
+  offlineHaul: Item[];
+  /** stash pages of gear, STASH_PAGE_SIZE each */
+  stash: Item[][];
   equipment: Partial<Record<EquipSlot, Item>>;
   flaskSlots: (FlaskInstance | null)[];
   skillBar: (SkillGemInstance | null)[];
@@ -411,7 +418,8 @@ export interface GameState {
   greenhouse: { actionId: string; progress: number } | null;
   smithCatalyst: SmithCatalyst;
   hideout: Record<string, number>;
-  vendor: { stock: VendorOffer[]; refreshAt: number };
+  /** `rerolls`: paid restocks since the last free one (raises the price) */
+  vendor: { stock: VendorOffer[]; refreshAt: number; rerolls?: number };
   settings: Settings;
   lifetime: Lifetime;
   /** total game time simulated, ms */

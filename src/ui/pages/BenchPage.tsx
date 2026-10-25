@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { stashedItems } from '../../engine/storage';
 import { affixDef } from '../../data/affixes';
 import { ACHIEVEMENT_BY_ID } from '../../data/achievements';
 import { ESSENCES, FOSSILS, fossilDef } from '../../data/craftMats';
@@ -156,7 +157,7 @@ export function BenchPage() {
               <div key={flash} className={flash ? 'shimmer' : ''} style={{ width: '100%' }}>
                 <ItemTip item={item} state={s} />
               </div>
-              {s.inventory.some((i) => i.uid === item.uid) && (
+              {!Object.values(s.equipment).some((i) => i?.uid === item.uid) && (
                 <button
                   className="btn sm danger"
                   onClick={() => {
@@ -174,7 +175,7 @@ export function BenchPage() {
             </div>
           ) : (
             <EmptyState icon={<GameIcon name="bench" size={32} color="var(--dim)" />} title="Nothing selected">
-              Pick gear, a flask or an inventory item below.
+              Pick gear, a flask, or an item from your bag or stash below.
             </EmptyState>
           )}
           {history.length > 0 && (
@@ -348,7 +349,7 @@ export function BenchPage() {
           </div>
         </div>
       )}
-      <Inventory s={s} onPick={(it) => pickItem(it.uid)} selected={uid} />
+      <Inventory s={s} title="Bag & stash" items={[...stashedItems(s), ...s.inventory]} cap={null} onPick={(it) => pickItem(it.uid)} selected={uid} />
     </div>
   );
 }

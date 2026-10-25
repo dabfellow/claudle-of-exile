@@ -128,7 +128,8 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
                 {isActive && <span className="nav-active-dot" />}
                 {lvl !== null && <span className="nav-badge">{lvl}</span>}
                 {it.page === 'tree' && points > 0 && <span className="nav-badge hot">+{points}</span>}
-                {it.page === 'stash' && <span className="nav-badge">{s.inventory.length}</span>}
+                {it.page === 'stash' && <span className="nav-badge" title="Items in your bag">{s.inventory.length}</span>}
+                {it.page === 'combat' && s.ground.length + s.offlineHaul.length > 0 && <span className="nav-badge loot" title="Loot waiting to be picked up">{s.ground.length + s.offlineHaul.length}</span>}
                 {it.page === 'achievements' && <span className="nav-badge">{s.achievements.length}</span>}
               </button>
             );
@@ -232,18 +233,29 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
           </button>
         )}
       </div>
-      <div className="topbar-life">
-        {d.maxEs > 0 && (
-          <span title={`Energy Shield ${fmt(s.es)} / ${fmt(d.maxEs)}`}>
-            <ProgressBar value={s.es / d.maxEs} color="linear-gradient(90deg, var(--es), var(--es-2))" className="thin" />
-          </span>
-        )}
-        <span title="Life">
-          <ProgressBar value={s.life / d.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" size="md" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} />
-        </span>
-        <span title={`Mana ${fmt(s.mana)} / ${fmt(d.maxMana)}`}>
-          <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} color="linear-gradient(90deg, var(--mana), var(--mana-2))" className="thin" />
-        </span>
+      <div className="char-plate">
+        <Crest classId={s.character.classId} size={38} />
+        <div className="char-plate-body">
+          <div className="char-plate-name">
+            <b>{s.character.name}</b>
+            <span className="dim">
+              Lv {characterLevel(s)} {classDef(s.character.classId).name}
+            </span>
+          </div>
+          <div className="topbar-life">
+            {d.maxEs > 0 && (
+              <span title={`Energy Shield ${fmt(s.es)} / ${fmt(d.maxEs)}`}>
+                <ProgressBar value={s.es / d.maxEs} color="linear-gradient(90deg, var(--es), var(--es-2))" className="thin" />
+              </span>
+            )}
+            <span title="Life">
+              <ProgressBar value={s.life / d.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" size="md" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} />
+            </span>
+            <span title={`Mana ${fmt(s.mana)} / ${fmt(d.maxMana)}`}>
+              <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} color="linear-gradient(90deg, var(--mana), var(--mana-2))" className="thin" />
+            </span>
+          </div>
+        </div>
       </div>
       <div className="currency-strip">
         {STRIP.map((id) => (
@@ -520,6 +532,7 @@ export function OfflineModal() {
                   <GameIcon name="stash" size={20} color="var(--accent)" />
                   <b className="num">{sum.items}</b>
                   <span>Items Found</span>
+                  <span className="dim small">waiting on the Combat page</span>
                 </div>
               )}
               {sum.gems > 0 && (

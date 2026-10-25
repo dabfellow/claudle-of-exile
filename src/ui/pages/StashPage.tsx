@@ -2,16 +2,19 @@ import { useState } from 'react';
 import { activeGemDef, supportGemDef } from '../../data/gems';
 import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
 import { flaskName } from '../../engine/flasks';
+import { STASH_PAGE_SIZE } from '../../data/hideout';
+import { buyStashPage, stashedItems, stashItems, stashPagePrice, takeFromStash } from '../../engine/storage';
+import { game } from '../../game';
 import type { GameState } from '../../engine/types';
 import { useGame } from '../../game';
-import { Art, CurrencyAmount, EmptyState, fmt, PageHeader, Tabs, Tooltip, type TabDef } from '../components/common';
+import { Art, CurrencyAmount, EmptyState, fmt, MatIcon, PageHeader, Tabs, Tooltip, type TabDef } from '../components/common';
 import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
 import { Orb, Swatch } from '../components/Icon';
-import { Inventory } from '../components/Inventory';
+import { Inventory, ItemTiles, sortItems, SortTabs, type SortKey } from '../components/Inventory';
 import type { Page } from '../Layout';
 
-type Tab = 'currency' | 'materials' | 'items' | 'gems' | 'flasks';
+type Tab = 'gear' | 'currency' | 'materials' | 'gems' | 'flasks';
 
 /** The currency tab has a fixed place for every orb, like a real stash tab. */
 const CURRENCY_LAYOUT: { label: string; ids: string[] }[] = [
@@ -82,11 +85,13 @@ function MaterialTile({ s, id }: { s: GameState; id: string }) {
 
 export function StashPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
-  const [tab, setTab] = useState<Tab>('currency');
+  const [tab, setTab] = useState<Tab>('gear');
+  const [page, setPage] = useState(0);
+  const here = Math.min(page, s.stash.length - 1);
   const tabs: TabDef<Tab>[] = [
+    { id: 'gear', label: 'Gear', count: stashedItems(s).length },
     { id: 'currency', label: 'Currency' },
     { id: 'materials', label: 'Materials' },
-    { id: 'items', label: 'Items', count: s.inventory.length },
     { id: 'gems', label: 'Gems', count: s.gems.length + s.supportGems.length },
     { id: 'flasks', label: 'Flasks', count: s.flaskStash.length },
   ];
@@ -95,7 +100,19 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
       <PageHeader title="Stash" actions={<CurrencyAmount id="gold" amount={s.bank.gold ?? 0} label="gold" />}>
         Everything you've gathered, brewed and looted.
       </PageHeader>
+      <Inventory
+        s={s}
+        onPick={(i) => game.act((st, ctx) => void stashItems(st, ctx, [i.uid], here))}
+        hint={`Click an item to move it to stash page ${here + 1}.`}
+        actions={
+          <button className="btn sm" disabled={!s.inventory.length} onClick={() => game.act((st, ctx) => void stashItems(st, ctx, st.inventory.map((i) => i.uid), here))}>
+            Stash all
+          </button>
+        }
+      />
       <Tabs tabs={tabs} value={tab} onChange={setTab} />
+
+      {tab === 'gear' && <GearPages s={s} page={here} setPage={setPage} />}
 
       {tab === 'currency' && (
         <div className="card stash-panel">
@@ -127,7 +144,6 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
         </div>
       )}
 
-      {tab === 'items' && <Inventory s={s} title="Items" />}
 
       {tab === 'gems' && (
         <div className="card stash-panel">
@@ -205,6 +221,47 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** The stash's gear pages: pick a page, click an item to take it back to the bag. */
+function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: (n: number) => void }) {
+  const [sort, setSort] = useState<SortKey>('recent');
+  const price = stashPagePrice(s);
+  const items = s.stash[page] ?? [];
+  return (
+    <div className="card stash-panel">
+      <div className="card-title">
+        <div className="stash-pages">
+          {s.stash.map((p, i) => (
+            <button key={i} className={`stash-page-tab ${i === page ? 'active' : ''}`} onClick={() => setPage(i)} title={`${p.length}/${STASH_PAGE_SIZE}`}>
+              {i + 1}
+              {p.length >= STASH_PAGE_SIZE && <span className="bad"> ●</span>}
+            </button>
+          ))}
+          <button
+            className="stash-page-tab buy"
+            disabled={(s.bank.gold ?? 0) < price}
+            title={`Buy stash page ${s.stash.length + 1}`}
+            onClick={() => game.act((st, ctx) => buyStashPage(st, ctx))}
+          >
+            + <MatIcon id="gold" size={12} /> {fmt(price)}
+          </button>
+        </div>
+        <span className="grow" />
+        <SortTabs value={sort} onChange={setSort} />
+      </div>
+      <div className="row" style={{ marginBottom: 10 }}>
+        <span className="dim small">
+          Page {page + 1} · <span className="num">{items.length}/{STASH_PAGE_SIZE}</span> · click an item to take it to your bag
+        </span>
+        <span className="spacer" />
+        <button className="btn sm" disabled={!items.length} onClick={() => game.act((st, ctx) => void takeFromStash(st, ctx, (st.stash[page] ?? []).map((i) => i.uid)))}>
+          Take all
+        </button>
+      </div>
+      <ItemTiles s={s} items={sortItems(s, items, sort)} showUpgrade onClick={(i) => game.act((st, ctx) => void takeFromStash(st, ctx, [i.uid]))} empty="This page is empty. Click items in your bag to stash them here." />
     </div>
   );
 }

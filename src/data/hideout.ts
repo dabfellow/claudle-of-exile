@@ -30,12 +30,12 @@ export const STATIONS: StationDef[] = [
   },
   {
     id: 'stash', name: 'Stash', page: 'stash', color: '#c9a227',
-    desc: 'Your hoard. Upgrades add room for items.',
+    desc: 'Your hoard. Upgrades make new stash pages cheaper.',
     levels: [
-      { cost: {}, effect: '40 inventory slots' },
-      { cost: { gold: 200, ash_log: 40 }, effect: '60 inventory slots' },
-      { cost: { gold: 800, oak_log: 60, iron_ore: 30 }, effect: '90 inventory slots' },
-      { cost: { gold: 3000, yew_log: 80, mithril_ore: 40 }, effect: '130 inventory slots' },
+      { cost: {}, effect: 'Full price stash pages' },
+      { cost: { gold: 200, ash_log: 40 }, effect: 'Stash pages 10% cheaper' },
+      { cost: { gold: 800, oak_log: 60, iron_ore: 30 }, effect: 'Stash pages 20% cheaper' },
+      { cost: { gold: 3000, yew_log: 80, mithril_ore: 40 }, effect: 'Stash pages 35% cheaper' },
     ],
   },
   {
@@ -84,7 +84,17 @@ export function stationDef(id: StationId): StationDef {
   return STATIONS.find((s) => s.id === id)!;
 }
 
-export const STASH_CAPACITY = [40, 60, 90, 130];
+/** Gear storage: see docs/STASH.md. */
+export const BAG_SIZE = 60;
+export const GROUND_CAP = 50;
+export const OFFLINE_HAUL_CAP = 200;
+export const STASH_PAGE_SIZE = 80;
+export const STASH_START_PAGES = 3;
+/** Gold for the first bought page; each later one costs PAGE_GROWTH times more. */
+export const STASH_PAGE_PRICE = 1000;
+export const STASH_PAGE_GROWTH = 2.5;
+/** % off stash pages per Stash station level */
+export const STASH_DISCOUNT = [0, 10, 20, 35];
 export const FORGE_ILVL = [0, 3, 6, 10];
 export const FORGE_SPEED = [0, 5, 10, 20];
 export const ALCH_DOUBLE = [0, 0.1, 0.2, 0.3];

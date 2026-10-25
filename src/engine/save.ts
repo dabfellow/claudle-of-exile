@@ -1,5 +1,7 @@
 import { SKILL_BAR_SLOTS } from '../data/gems';
+import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
 import { nextZone, ZONES } from '../data/zones';
+import { trimFlaskStash } from './flasks';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { FlaskInstance, GameState } from './types';
 
@@ -117,6 +119,21 @@ const MIGRATIONS: Record<number, Migration> = {
       m.attackGround ??= false;
     }
   },
+  13: (raw) => {
+    // gear split into ground, bag (60) and stash pages (3 × 80): overflow from the old big inventory moves to the stash
+    const s = raw as unknown as GameState;
+    const items = s.inventory ?? [];
+    s.inventory = items.slice(0, BAG_SIZE);
+    s.stash = Array.from({ length: STASH_START_PAGES }, () => []);
+    let page = 0;
+    for (const item of items.slice(BAG_SIZE)) {
+      while (page < s.stash.length && s.stash[page].length >= STASH_PAGE_SIZE) page++;
+      if (page < s.stash.length) s.stash[page].push(item);
+      else s.inventory.push(item); // over capacity, but nothing is lost
+    }
+    s.ground = [];
+    s.offlineHaul = [];
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
@@ -142,6 +159,7 @@ export function deserialize(json: string): GameState {
   }
   const s = raw as unknown as GameState;
   unlockReachedZones(s);
+  trimFlaskStash(s);
   return s;
 }
 

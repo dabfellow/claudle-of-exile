@@ -1,4 +1,5 @@
 import { classDef, startClass, type ClassId } from '../data/classes';
+import { STASH_START_PAGES } from '../data/hideout';
 import { flaskDef, FLASK_SLOTS } from '../data/flasks';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { newFlask } from './flasks';
@@ -14,7 +15,7 @@ import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -46,6 +47,9 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, smithing: 0, alchemy: 0, gemcutting: 0 },
     bank: { gold: 25, transmute: 3, augment: 2, arcane_dust: 6 },
     inventory: [],
+    ground: [],
+    offlineHaul: [],
+    stash: Array.from({ length: STASH_START_PAGES }, () => []),
     equipment: {},
     flaskSlots: Array(FLASK_SLOTS).fill(null),
     flaskStash: [],

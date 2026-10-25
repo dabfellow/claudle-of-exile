@@ -1,27 +1,19 @@
 import { BASES } from '../data/bases';
 import { ACTIVE_GEMS, activeGemDef, SUPPORT_GEMS, supportGemDef } from '../data/gems';
-import { STASH_CAPACITY, stationDef, VENDOR_REFRESH_MS, VENDOR_SLOTS, type StationId } from '../data/hideout';
+import { stationDef, VENDOR_REFRESH_MS, VENDOR_SLOTS, type StationId } from '../data/hideout';
 import { currencyDef } from '../data/materials';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
-import { flaskName, flaskValue, rollFlask } from './flasks';
+import { flaskName, flaskValue, rollFlask, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { createItem, itemName, sellValue } from './items';
 import { pick, rInt, type Rng } from './rng';
 import type { GameState, Rarity, VendorOffer } from './types';
 import { characterLevel } from './character';
-import { isCraftLocked } from './crafting';
+import { bagFull, takeOwned } from './storage';
 
 export function stationLevel(s: GameState, id: StationId): number {
   return s.hideout[id] ?? 1;
-}
-
-export function inventoryCapacity(s: GameState): number {
-  return STASH_CAPACITY[stationLevel(s, 'stash') - 1];
-}
-
-export function inventoryFull(s: GameState): boolean {
-  return s.inventory.length >= inventoryCapacity(s);
 }
 
 export function nextUpgradeCost(s: GameState, id: StationId): Record<string, number> | null {
@@ -78,16 +70,20 @@ export function refreshVendor(s: GameState, rng: Rng): void {
   s.vendor = { stock, refreshAt: s.clock + VENDOR_REFRESH_MS };
 }
 
-/** Gold to restock the trader early. */
+/** Gold to restock the trader early; doubles with each paid restock until the next free one. */
 export function rerollCost(s: GameState): number {
-  return 20 + characterLevel(s) * 6;
+  return (20 + characterLevel(s) * 6) * 2 ** (s.vendor.rerolls ?? 0);
 }
 
+/** A paid restock keeps the free-restock timer, so the price only resets when it comes round. */
 export function rerollVendor(s: GameState, ctx: Ctx): string | null {
   const cost = rerollCost(s);
   if (!canAfford(s, { gold: cost })) return 'Not enough gold';
   payCost(s, { gold: cost });
+  const { refreshAt, rerolls = 0 } = s.vendor;
   refreshVendor(s, ctx.rng);
+  s.vendor.refreshAt = refreshAt;
+  s.vendor.rerolls = rerolls + 1;
   return null;
 }
 
@@ -107,10 +103,10 @@ export function buyOffer(s: GameState, ctx: Ctx, offerId: number): string | null
   const offer = s.vendor.stock.find((o) => o.id === offerId);
   if (!offer) return 'Sold out';
   if (!canAfford(s, { gold: offer.price })) return 'Not enough gold';
-  if (offer.kind === 'item' && inventoryFull(s)) return 'Inventory full';
+  if (offer.kind === 'item' && bagFull(s)) return 'Inventory full';
   payCost(s, { gold: offer.price });
   if (offer.item) s.inventory.push(offer.item);
-  else if (offer.flask) s.flaskStash.push(offer.flask);
+  else if (offer.flask) stashFlask(s, offer.flask);
   else if (offer.gemId) s.gems.push(createSkillGem(s, offer.gemId));
   else if (offer.supportId) s.supportGems.push(createSupportGem(s, offer.supportId));
   else if (offer.currencyId) addBank(s, offer.currencyId, offer.qty ?? 1);
@@ -120,15 +116,9 @@ export function buyOffer(s: GameState, ctx: Ctx, offerId: number): string | null
 }
 
 export function sellItems(s: GameState, ctx: Ctx, uids: number[]): number {
-  const set = new Set(uids);
-  let gold = 0;
-  let n = 0;
-  s.inventory = s.inventory.filter((i) => {
-    if (!set.has(i.uid) || isCraftLocked(s, i.uid)) return true;
-    gold += sellValue(i);
-    n++;
-    return false;
-  });
+  const sold = takeOwned(s, uids);
+  const gold = sold.reduce((a, i) => a + sellValue(i), 0);
+  const n = sold.length;
   if (gold) {
     addBank(s, 'gold', gold);
     ctx.emit({ t: 'info', text: `Sold ${n} item(s) for ${gold} gold`, tone: 'good' });
