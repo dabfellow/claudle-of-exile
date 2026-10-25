@@ -766,7 +766,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (!r.overclock) {
     if (r.bloodPact) s.life -= nums.manaCost;
     else s.mana -= nums.manaCost;
-    if (slot >= 0 && def.cooldownMs) c.cooldowns[slot] = def.cooldownMs;
+    if (slot >= 0 && nums.cooldownMs) c.cooldowns[slot] = nums.cooldownMs;
   }
   if (mechanicOf(s) === 'rage' && def.id === 'war_cry') gainMeter(s, d, 10);
   if (slot >= 0) ctx.emit({ t: 'skill', slot, gemId: def.id, manual });

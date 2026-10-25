@@ -22,6 +22,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
   - Bot ends runs with 16–90k unspent gold and hoarded orbs; teaching it to craft would cut drop-luck noise.
 - Revisit Sanctum chaos farming (85–155 per 14 h) when Act 2 lands.
 - Art: no image generation for now. [ART_PROMPTS.md](ART_PROMPTS.md) is ready if that changes; then a final visual pass (area cards, combat screen, phone widths) and replacing the 106 stand-in slots in [ASSET_MAPPING.md](ASSET_MAPPING.md).
+- Sim not re-run since every skill got a cooldown (2026-10-24); expect lower DPS across classes.
 - Chill now always slows attacks 15% (was 0% without `chillOnHit`); watch whether chilled ground is too strong.
 - Clarity cuts every skill's mana cost, not just spells; split out a spell-only stat if that matters.
 - Ascendancy classes — and decide whether they twist the class mechanic or add something separate.
@@ -33,6 +34,8 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 2–6 and Maps.
 
 ## Done
+- [x] Fix: "faster Cooldowns", guard cooldown and Arcane Recursion now shorten cooldowns in fights (combat used the base value) — done 2026-10-25
+- [x] Every skill has a cooldown: main 2–3 s, area 4–5 s, Poison Dart 4 s; damage not rebalanced (your call) — done 2026-10-24
 - [x] Combat screen pass: soft ground spots replace the stretched hex tiles, compact field tokens, one labelled "Active target" card, ES/mana/mechanic bars tall enough for their labels — done 2026-10-24
 - [x] Hideout layout pass: stations capped at 3 columns (3×2), two-column skill cards with icon, level, XP bar and exact-XP tooltip — done 2026-10-24
 - [x] SPF record fixed (`v=spf1 include:_spf.mx.cloudflare.net ~all`); Email Routing status is "ready" — done 2026-10-24

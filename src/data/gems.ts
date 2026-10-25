@@ -108,14 +108,14 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   // ---------- Strength ----------
   A({
     id: 'heavy_strike', name: 'Heavy Strike', attr: 'str', role: 'main', tags: ['attack', 'melee'],
-    manaCost: 4, cooldownMs: 0, timeMs: 3900, color: '#d0574a',
+    manaCost: 4, cooldownMs: 3000, timeMs: 3900, color: '#d0574a',
     effect: { weaponPct: 185, targets: 'single', stunChance: 0.25 },
     desc: 'A slow, crushing blow. 25% chance to stun.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'ground_slam', name: 'Ground Slam', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area'],
-    manaCost: 8, cooldownMs: 0, timeMs: 3600, color: '#b0643a',
+    manaCost: 8, cooldownMs: 5000, timeMs: 3600, color: '#b0643a',
     effect: { weaponPct: 95, area: 'splash', stunChance: 0.1 },
     desc: 'Slam the ground, hitting the target and every enemy around it.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
@@ -136,7 +136,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   }),
   A({
     id: 'pummel', name: 'Pummel', attr: 'str', role: 'main', tags: ['attack', 'melee'],
-    manaCost: 5, cooldownMs: 0, timeMs: 3300, color: '#c46a4a',
+    manaCost: 5, cooldownMs: 2500, timeMs: 3300, color: '#c46a4a',
     effect: { weaponPct: 50, hits: 3, targets: 'single' },
     desc: 'Three quick blows to the same target.',
     defaultRule: { when: 'always' },
@@ -157,14 +157,14 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   }),
   A({
     id: 'judgement_hammer', name: 'Judgement Hammer', attr: 'str', role: 'main', tags: ['attack', 'melee'],
-    manaCost: 6, cooldownMs: 0, timeMs: 3900, color: '#e8d25a',
+    manaCost: 6, cooldownMs: 3000, timeMs: 3900, color: '#e8d25a',
     effect: { weaponPct: 150, targets: 'single', stunChance: 0.2, convert: { type: 'light', pct: 40 } },
     desc: 'A crushing blow that crackles with storm. 40% of physical damage is converted to lightning; 20% chance to stun.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'infernal_blow', name: 'Infernal Blow', attr: 'str', role: 'main', tags: ['attack', 'melee', 'dot', 'duration'],
-    manaCost: 6, cooldownMs: 0, timeMs: 3600, color: '#ff6a3a',
+    manaCost: 6, cooldownMs: 3000, timeMs: 3600, color: '#ff6a3a',
     effect: { weaponPct: 120, targets: 'single', ailment: { kind: 'ignite', pctPerSec: 25, durationMs: 3000 } },
     desc: 'A burning strike that sets the target alight.',
     defaultRule: { when: 'always' },
@@ -173,14 +173,14 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   // ---------- Dexterity ----------
   A({
     id: 'twin_strike', name: 'Twin Strike', attr: 'dex', role: 'main', tags: ['attack', 'melee'],
-    manaCost: 4, cooldownMs: 0, timeMs: 2700, color: '#5fbf6a',
+    manaCost: 4, cooldownMs: 2000, timeMs: 2700, color: '#5fbf6a',
     effect: { weaponPct: 62, hits: 2, targets: 'single' },
     desc: 'Strike twice in quick succession.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'poison_dart', name: 'Poison Dart', attr: 'dex', role: 'curse', tags: ['attack', 'projectile', 'dot', 'duration'],
-    manaCost: 6, cooldownMs: 0, timeMs: 2400, color: '#7bc04a',
+    manaCost: 6, cooldownMs: 4000, timeMs: 2400, color: '#7bc04a',
     effect: { weaponPct: 55, targets: 'single', ailment: { kind: 'poison', pctPerSec: 30, durationMs: 4000 } },
     desc: 'A dart that poisons. Poison stacks.',
     defaultRule: { when: 'targetLifeAbove', value: 40 },
@@ -201,21 +201,21 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   }),
   A({
     id: 'barrage', name: 'Barrage', attr: 'dex', role: 'main', tags: ['attack', 'projectile'],
-    manaCost: 5, cooldownMs: 0, timeMs: 2700, color: '#8fd26a',
+    manaCost: 5, cooldownMs: 2500, timeMs: 2700, color: '#8fd26a',
     effect: { weaponPct: 30, hits: 4, targets: 'single' },
     desc: 'Loose a rapid volley of four arrows at one target.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'rain_of_arrows', name: 'Rain of Arrows', attr: 'dex', role: 'area', tags: ['attack', 'projectile', 'area'],
-    manaCost: 8, cooldownMs: 0, timeMs: 3300, color: '#6aa84f',
+    manaCost: 8, cooldownMs: 5000, timeMs: 3300, color: '#6aa84f',
     effect: { weaponPct: 70, targets: 'all' },
     desc: 'Arrows fall across the whole pack.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
   }),
   A({
     id: 'feint', name: 'Feint', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'duration'],
-    manaCost: 5, cooldownMs: 0, timeMs: 2400, color: '#9fc7a0',
+    manaCost: 5, cooldownMs: 2000, timeMs: 2400, color: '#9fc7a0',
     effect: { weaponPct: 90, targets: 'single', buff: { durationMs: 3000, stats: { evasionPct: 40 } } },
     desc: 'A false strike that leaves you hard to hit: 40% increased Evasion Rating for 3s.',
     defaultRule: { when: 'always' },
@@ -229,7 +229,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   }),
   A({
     id: 'ice_shot', name: 'Ice Shot', attr: 'dex', role: 'main', tags: ['attack', 'projectile'],
-    manaCost: 5, cooldownMs: 0, timeMs: 2700, color: '#8fd8e8',
+    manaCost: 5, cooldownMs: 2500, timeMs: 2700, color: '#8fd8e8',
     effect: { weaponPct: 100, targets: 'single', convert: { type: 'cold', pct: 50 }, chillMs: 3000 },
     desc: 'A frozen arrow that chills the target. 50% of physical damage is converted to cold.',
     defaultRule: { when: 'always' },
@@ -238,7 +238,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   // ---------- Intelligence ----------
   A({
     id: 'spark', name: 'Spark', attr: 'int', role: 'main', tags: ['spell', 'projectile', 'chain'],
-    manaCost: 5, cooldownMs: 0, timeMs: 2400, color: '#6fc8ff',
+    manaCost: 5, cooldownMs: 2000, timeMs: 2400, color: '#6fc8ff',
     effect: { base: [4, 16], type: 'light', targets: 'chain', chains: 2, crit: 6 },
     desc: 'Crackling bolts that chain to the 2 nearest enemies.',
     defaultRule: { when: 'always' },
@@ -280,7 +280,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   }),
   A({
     id: 'shock_nova', name: 'Shock Nova', attr: 'int', role: 'area', tags: ['spell', 'area'],
-    manaCost: 9, cooldownMs: 0, timeMs: 3000, color: '#a0c8ff',
+    manaCost: 9, cooldownMs: 4000, timeMs: 3000, color: '#a0c8ff',
     effect: { base: [5, 11], type: 'light', targets: 'all', crit: 5 },
     desc: 'A burst of lightning that strikes every enemy.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
@@ -294,7 +294,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   }),
   A({
     id: 'frost_needle', name: 'Frost Needle', attr: 'int', role: 'main', tags: ['spell', 'projectile'],
-    manaCost: 5, cooldownMs: 0, timeMs: 2400, color: '#c0e8ff',
+    manaCost: 5, cooldownMs: 2000, timeMs: 2400, color: '#c0e8ff',
     effect: { base: [2, 5], type: 'cold', hits: 3, targets: 'single', crit: 4 },
     desc: 'Three needles of ice in quick succession.',
     defaultRule: { when: 'always' },

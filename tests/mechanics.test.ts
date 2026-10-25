@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ClassId } from '../src/data/classes';
 import { CLASSES } from '../src/data/classes';
+import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { zoneDef } from '../src/data/zones';
 import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
@@ -136,6 +137,7 @@ describe('class mechanics', () => {
 
   it('Malice fills on non-crits and lands a Coup de Grâce Mega Crit when full', () => {
     const { s, ctx } = arena('shadow', 'heavy_strike', ['duelist_ks']); // Steady Hand: never crit, so every hit fills
+    s.skillBar[0] = null; // Default Attack only, so every hit is compared like for like
     run(s, ctx, 200_000, () => hits(ctx.events).some((e) => e.mega));
     const all = hits(ctx.events);
     const mega = all.find((e) => e.mega);
@@ -172,6 +174,17 @@ describe('forbidden keystones', () => {
     const avg = (e: GameEvent[]) => hits(e).reduce((a, x) => a + x.amount, 0) / hits(e).length;
     expect(avg(multi.ctx.events)).toBeCloseTo(avg(edge.ctx.events), -1);
     expect(base.s.passives).not.toContain('forbidden_knifes_edge');
+  });
+
+  it('faster Cooldowns shortens the cooldown a skill starts in a fight', () => {
+    const fast = PASSIVE_NODES.find((n) => n.kind !== 'keystone' && (n.stats?.cooldownRecovery ?? 0) > 0)!;
+    const used = (passives: string[]) => {
+      const { s, ctx } = arena('warrior', 'heavy_strike', passives);
+      run(s, ctx, 20_000, () => s.combat!.cooldowns[0] > 0);
+      return s.combat!.cooldowns[0];
+    };
+    expect(fast).toBeTruthy();
+    expect(used([fast.id])).toBeLessThan(used([]));
   });
 
   it('Overclock: no cooldowns or mana costs, but you overheat and stop acting', () => {
