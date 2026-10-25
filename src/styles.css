@@ -1428,22 +1428,35 @@ h3 {
   font-size: var(--fs-sm);
 }
 
-/* skill summary tiles (Hideout) */
+/* skill summary tiles (Hideout): two columns, Character spans the top row */
+.skill-grid {
+  display: grid;
+  gap: var(--s-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .skill-tile {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
   border-radius: var(--r);
   border: 1px solid var(--line);
   background: var(--bg-2);
+  color: inherit;
+  font: inherit;
   cursor: pointer;
   text-align: left;
-  transition: border-color var(--dur-fast), background var(--dur-fast);
+  transition: transform var(--dur) var(--ease), border-color var(--dur-fast), background var(--dur-fast);
+}
+
+.skill-tile.wide {
+  grid-column: 1 / -1;
 }
 
 .skill-tile:hover {
-  border-color: var(--line-2);
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--skill, var(--line-2)) 55%, var(--line));
   background: var(--panel-2);
 }
 
@@ -1451,8 +1464,48 @@ h3 {
   border-color: var(--success);
 }
 
+.skill-tile-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r);
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: color-mix(in srgb, var(--skill) 12%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--skill) 40%, transparent);
+}
+
+.skill-tile-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.skill-tile-name {
+  font-size: var(--fs-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .skill-tile .level-num {
-  font-size: var(--fs-lg);
+  font-size: 22px;
+}
+
+.skill-tile-bar.bar {
+  height: 10px;
+  background: var(--bg);
+}
+
+.skill-tile-meta {
+  line-height: 1;
+}
+
+@media (max-width: 560px) {
+  .skill-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* ============ hideout ============ */
@@ -1483,15 +1536,18 @@ h3 {
 }
 
 .stations {
+  /* at most three columns (a 3×2 grid for six stations), fewer when narrow */
+  --cols: 3;
   --card-min: 240px;
   position: relative;
+  grid-template-columns: repeat(auto-fill, minmax(max(min(100%, var(--card-min)), calc((100% - (var(--cols) - 1) * var(--s-3)) / var(--cols))), 1fr));
 }
 
 .station {
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   background: var(--panel);
   transition: transform var(--dur) var(--ease), border-color var(--dur);
 }
@@ -1527,6 +1583,8 @@ h3 {
   font-size: var(--fs-sm);
   color: var(--muted);
   margin: 0;
+  /* two lines reserved so the NOW/NEXT boxes line up across a row */
+  min-height: 2lh;
 }
 
 .benefits {
@@ -3088,19 +3146,18 @@ g.tut-hint circle.body {
   display: grid;
 }
 
-/* the hex floor tile under each cell */
+/* a soft spot on the ground under each cell, so the zone art shows through */
 .bf-cell::before {
   content: '';
   position: absolute;
-  inset: 4px;
-  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
-  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.55)),
-    color-mix(in srgb, var(--zone, var(--line-2)) 40%, transparent);
+  inset: 14% 10%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.12) 65%, transparent);
 }
 
-/* the front rank: melee range */
+/* the front rank: melee range, a faint warm glow */
 .bf-cell.front::before {
-  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)), color-mix(in srgb, var(--accent) 45%, transparent);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 16%, rgba(0, 0, 0, 0.3)), color-mix(in srgb, var(--accent) 6%, transparent) 65%, transparent);
 }
 
 /* ground hazards tint the tile; a skill's area flashes the tiles it covers */
@@ -3116,11 +3173,11 @@ g.tut-hint circle.body {
 .bf-cell.flash-b::after {
   content: '';
   position: absolute;
-  inset: 4px;
+  inset: 14% 10%;
   z-index: 2;
   pointer-events: none;
-  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
-  background: color-mix(in srgb, var(--accent-2) 55%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent-2) 60%, transparent), transparent);
   opacity: 0;
 }
 .bf-cell.flash-a::after { animation: area-flash 0.45s ease-out; }
@@ -3145,17 +3202,21 @@ g.tut-hint circle.body {
   flex-direction: column;
   justify-content: center;
   gap: 4px;
+  align-self: center;
+  justify-self: center;
+  width: min(100%, 200px);
   min-width: 0;
-  height: 100%;
   padding: 6px 8px;
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
   border: 1px solid var(--line);
+  backdrop-filter: blur(2px);
   animation: fade-in 0.3s;
 }
 
 .bf-token.targeted {
-  border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent), 0 0 16px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .bf-token.boss {
@@ -3241,6 +3302,20 @@ g.tut-hint circle.body {
 
 .fighter.targeted {
   border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+}
+
+/* the one monster you're hitting, mirrored from the field */
+.target-slot {
+  display: grid;
+  gap: 6px;
+}
+
+.target-label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
 }
 
 .fighter.searching,

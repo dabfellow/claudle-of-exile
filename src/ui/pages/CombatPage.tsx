@@ -115,7 +115,7 @@ function MechanicMeter({ s, d, c }: { s: GameState; d: Derived; c: CombatRuntime
   return (
     <Tooltip content={<div className="tip">{cls.mechanicText}</div>}>
       {max > 0 ? (
-        <ProgressBar value={Math.min(1, (c.mech ?? 0) / max)} color={cls.color} label={label} />
+        <ProgressBar value={Math.min(1, (c.mech ?? 0) / max)} size="md" color={cls.color} label={label} />
       ) : (
         <div className="mechanic-line" style={{ color: cls.color }}>
           {label}
@@ -144,13 +144,13 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
         </div>
       </div>
       {d.maxEs > 0 && (
-        <ProgressBar value={s.es / d.maxEs} color="linear-gradient(90deg, var(--es), var(--es-2))" label={`${fmt(s.es)} / ${fmt(d.maxEs)} ES`} />
+        <ProgressBar value={s.es / d.maxEs} size="md" color="linear-gradient(90deg, var(--es), var(--es-2))" label={`${fmt(s.es)} / ${fmt(d.maxEs)} ES`} />
       )}
       <div className="life-stack">
         <ProgressBar value={s.life / d.maxLife} size="lg" color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} ghost />
         {c.shield > 0 && <div className="shield-bar" style={{ width: `${Math.min(1, c.shield / d.maxLife) * 100}%` }} title={`Shield ${fmt(c.shield)}`} />}
       </div>
-      <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} color="linear-gradient(90deg, var(--mana), var(--mana-2))" label={`${fmt(s.mana)} / ${fmt(d.maxMana)}`} />
+      <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} size="md" color="linear-gradient(90deg, var(--mana), var(--mana-2))" label={`${fmt(s.mana)} / ${fmt(d.maxMana)}`} />
       {mechanicOf(s) && <MechanicMeter s={s} d={d} c={c} />}
       <div className="action-line">
         <span className="dim">{using ? using.name : 'Waiting'}</span>
@@ -531,7 +531,6 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
 
   const zone = zoneDef(c.zoneId);
   const alive = aliveMonsters(c);
-  const boss = alive.find((m) => m.isBoss);
   const zoneArt = anyArtUrl(`zones/${zone.id}`);
   return (
     <div className="page">
@@ -555,8 +554,10 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
       <div className={`card arena2 ${zoneArt ? 'has-art' : ''}`} style={{ ['--zone' as string]: zone.color, ['--zone-art' as string]: zoneArt ? `url(${zoneArt})` : undefined }}>
         <div className="arena-side">
           <PlayerCard s={s} d={d} fx={fx} />
-          {alive[0] && <MonsterCard key={alive[0].uid} m={alive[0]} target fx={fx} />}
-          {boss && boss !== alive[0] && <MonsterCard key={boss.uid} m={boss} target={false} fx={fx} />}
+          <div className="target-slot">
+            <div className="target-label">Active target</div>
+            {alive[0] ? <MonsterCard key={alive[0].uid} m={alive[0]} target fx={fx} /> : <div className="fighter monster searching">Searching for monsters…</div>}
+          </div>
         </div>
         <div className="bf-wrap">
           <MovementBar s={s} />

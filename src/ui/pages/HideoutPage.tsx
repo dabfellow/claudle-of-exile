@@ -6,9 +6,9 @@ import { nextUpgradeCost, stationLevel, upgradeStation } from '../../engine/hide
 import { pointsLeft } from '../../engine/passives';
 import { deriveStats } from '../../engine/stats';
 import { SKILL_IDS } from '../../engine/types';
-import { levelOf, progressOf } from '../../engine/xp';
+import { levelOf, maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
-import { Art, artUrl, Badge, Cost, fmt, GameIcon, PageHeader, ProgressBar, sceneStyle } from '../components/common';
+import { Art, artUrl, Badge, Cost, fmt, GameIcon, PageHeader, ProgressBar, sceneStyle, Tooltip } from '../components/common';
 import type { Page } from '../Layout';
 
 const STATION_ICON: Record<StationId, string> = {
@@ -135,18 +135,55 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
 
       <div className="card">
         <div className="card-title">Skills</div>
-        <div className="card-grid" style={{ ['--card-min' as string]: '170px' }}>
-          {SKILL_IDS.map((id) => (
-            <button key={id} className={`skill-tile ${training === id ? 'running' : ''}`} onClick={() => go(id)}>
-              <div className="row">
-                <GameIcon name={id} size={16} color={SKILLS[id].color} />
-                <b>{SKILLS[id].name}</b>
-                <span className="spacer" />
-                <span className="level-num">{levelOf(id, s.skills[id])}</span>
-              </div>
-              <ProgressBar value={progressOf(id, s.skills[id])} color={SKILLS[id].color} />
-            </button>
-          ))}
+        <div className="skill-grid">
+          {SKILL_IDS.map((id) => {
+            const xp = s.skills[id];
+            const lvl = levelOf(id, xp);
+            const maxed = lvl >= maxLevelOf(id);
+            const floor = xpToReach(id, lvl);
+            const span = xpToReach(id, lvl + 1) - floor;
+            const into = Math.floor(xp - floor);
+            const progress = progressOf(id, xp);
+            return (
+              <Tooltip
+                key={id}
+                content={
+                  <div className="tip">
+                    <div className="tip-title">{SKILLS[id].name}</div>
+                    {maxed ? (
+                      <div className="num">{fmt(Math.floor(xp))} XP · max level</div>
+                    ) : (
+                      <>
+                        <div className="num">
+                          {fmt(into)} / {fmt(span)} XP to level {lvl + 1}
+                        </div>
+                        <div className="dim small num">{fmt(Math.floor(xp))} total XP</div>
+                      </>
+                    )}
+                  </div>
+                }
+              >
+                <button className={`skill-tile ${id === 'combat' ? 'wide' : ''} ${training === id ? 'running' : ''}`} style={{ ['--skill' as string]: SKILLS[id].color }} onClick={() => go(id)}>
+                  <span className="skill-tile-icon">
+                    <GameIcon name={id} size={20} color={SKILLS[id].color} />
+                  </span>
+                  <span className="skill-tile-body">
+                    <span className="row">
+                      <b className="skill-tile-name">{SKILLS[id].name}</b>
+                      {training === id && <Badge tone="success" live>Training</Badge>}
+                      <span className="spacer" />
+                      <span className="level-num">
+                        <small>Lv</small>
+                        {lvl}
+                      </span>
+                    </span>
+                    <ProgressBar value={progress} color={SKILLS[id].color} smooth className="skill-tile-bar" />
+                    <span className="skill-tile-meta dim small num">{maxed ? 'Max level' : `${Math.floor(progress * 100)}% to level ${lvl + 1}`}</span>
+                  </span>
+                </button>
+              </Tooltip>
+            );
+          })}
         </div>
       </div>
     </div>
