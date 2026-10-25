@@ -8,8 +8,9 @@ see it until `open: true` is set on Act 2 in `ACTS`.
 
 You asked for "lvl 17–25". Act 1 monsters already run to level 25, and the sim's characters beat Ysolde at
 **character level ~21** (seed 1, 2026-10-25). So 17–25 is read as the *character* levels Act 2 covers. Areas are
-set to monster levels **24–33** so characters come out at about 25–27, the way Act 1 has monsters a few levels
-above you.
+set to monster levels **24–33**, a few levels above you, the way Act 1 is. **Sim result: characters actually come out at L30**
+(BALANCE.md → "Act 2 preview"), because Act 2 hands out levels quickly and rarely kills. Slowing it down (more monster
+life or less kill XP for Act 2) is the next call; see the levers there.
 
 If you meant monster levels, change the `levelRange` and monster levels in the Act 2 block of `zones.ts`; nothing
 else depends on the numbers.

@@ -9,9 +9,12 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - [ ] **[You]** Send a test mail to support@dabfellow.party from a non-Gmail address and check it lands in Gmail.
 - [ ] **[You]** Rotate the Google and Discord OAuth client secrets: they were in `docs/AUTH_SETUP.md` in git history (private repo); now redacted.
 
-### Uniques — [NEW_UNIQUES.md](NEW_UNIQUES.md)
-- [ ] Zones for Last Breath, The Old Grudge, Brawler's Buckle (lvl 26+) — wait for Act 2.
-- [ ] Starforged Edge (lvl 34) stays an Act 2 unique; the Sanctum gets no Act 1 unique (decided 2026-10-24).
+### Act 2: The Burning Steppe — [ACT2.md](ACT2.md)
+- [ ] Release Act 2. The framework is built and playable in dev only (preview).
+  - **[You]** Confirm the level band: areas are monster level 24–33, and the sim's characters leave at L30 (you said 17–25).
+  - Slow it down: 6–16 h after Ysolde with almost no deaths (BALANCE.md → "Act 2 preview").
+  - Art for 8 areas, 40 monsters, 6 uniques (prompts in `artManifest.ts`; banners are stand-ins).
+  - Then `open: true` on Act 2, Settings → About text, deploy.
 
 ## Ideas / later
 Parked 2026-10-24 until more of the game is built: testing, sim balancing and art.
@@ -22,7 +25,8 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
   - Bot ends runs with 16–90k unspent gold and hoarded orbs; teaching it to craft would cut drop-luck noise.
 - Revisit Sanctum chaos farming (85–155 per 14 h) when Act 2 lands.
 - Art: no image generation for now. [ART_PROMPTS.md](ART_PROMPTS.md) is ready if that changes; then a final visual pass (area cards, combat screen, phone widths) and replacing the 106 stand-in slots in [ASSET_MAPPING.md](ASSET_MAPPING.md).
-- Sim not re-run since every skill got a cooldown (2026-10-24); expect lower DPS across classes.
+- Bot only enters an area within a level of its minimum, so the sim can't tell whether players could push Act 2 earlier.
+- Skilling band Lv 20–40 for Act 2 (Mithril / Yew / Emberroot) isn't built; gathering nodes stop at the Storm Cliffs.
 - Chill now always slows attacks 15% (was 0% without `chillOnHit`); watch whether chilled ground is too strong.
 - Clarity cuts every skill's mana cost, not just spells; split out a spell-only stat if that matters.
 - Ascendancy classes — and decide whether they twist the class mechanic or add something separate.
@@ -31,9 +35,13 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Mastery per action (Melvor-style), once higher skilling bands exist.
 - Loot / sell filter rules (post-launch, GDD §7).
 - Cosmetics shop (never pay-to-win).
-- Acts 2–6 and Maps.
+- Acts 3–6 and Maps.
 
 ## Done
+- [x] Act 2 framework: 8 areas, Scorched earth boss mechanic, drop tiers 6–7, 6 new uniques, preview gating, unlock-on-load for old saves ([ACT2.md](ACT2.md)) — done 2026-10-25
+- [x] Zones for Last Breath, The Old Grudge, Brawler's Buckle and Starforged Edge (Act 2) — done 2026-10-25
+- [x] Re-ran the sim since every skill got a cooldown (36 h, seeds 1–2; BALANCE.md) — done 2026-10-25
+- [x] Code tightening: burning ground now kills on the tick the last monster dies; save errors reach Sentry; dead exports removed; "Conqueror of the Coast" no longer counts later acts — done 2026-10-25
 - [x] Fix: "faster Cooldowns", guard cooldown and Arcane Recursion now shorten cooldowns in fights (combat used the base value) — done 2026-10-25
 - [x] Every skill has a cooldown: main 2–3 s, area 4–5 s, Poison Dart 4 s; damage not rebalanced (your call) — done 2026-10-24
 - [x] Combat screen pass: soft ground spots replace the stretched hex tiles, compact field tokens, one labelled "Active target" card, ES/mana/mechanic bars tall enough for their labels — done 2026-10-24

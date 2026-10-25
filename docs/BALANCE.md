@@ -134,3 +134,24 @@ by 1%+ and restocks when it has spare gold. That gave 2 more clears out of 21, b
 
 ## Known gaps
 - Bot gear scoring is better but DPS still swings with drop luck. The bot doesn't craft or use the orbs it hoards.
+
+## Act 2 preview (2026-10-25, 36h, seeds 1–2, active bot)
+
+First runs since every skill got a cooldown, and the first with Act 2. "L" = character level when the boss fell.
+The bot only enters an area once it's within a level of the area's minimum, so it reaches every boss at the same
+level; times are what vary.
+
+| | Warrior | Ranger | Mage | Duelist | Templar | Shadow | Exile |
+|---|---|---|---|---|---|---|---|
+| Ysolde (L21), s1 / s2 | 20h30 / 16h27 | 13h48 / 10h51 | 7h18 / 12h55 | 10h10 / 8h47 | 8h16 / 9h02 | 14h24 / 11h59 | 10h18 / 18h40 |
+| Azhar (L30), s1 / s2 | — / 32h35 | 24h10 / 20h58 | 13h33 / 29h08 | 16h40 / 16h25 | 16h34 / 18h29 | 24h30 / 24h46 | 20h32 / — |
+| Deaths over 36 h, s1 / s2 | 0 / 0 | 0 / 0 | 0 / 0 | 15 / 0 | 0 / 0 | 1 / 0 | 0 / 1 |
+
+- **Act 2 is short and soft.** It takes 6–16 h after Ysolde (GDD: 3–7 days for a later act) and the bot almost
+  never dies. Characters come out at L30, not the ~25 you asked for.
+- With cooldowns on every skill, Act 1 still lands in 7–21 h. Warrior is slowest (16–20 h, 48–68 DPS).
+- Chaos piles up: 114–571 per 36 h. The Act 2 tier 6–7 trash tables are the main source. Revisit with the
+  Sanctum note.
+
+Levers, cheapest first: `MONSTER_LIFE_SCALE` / per-monster `lifeMult` for Act 2 only, a higher `bossEvery`, or
+lower Act 2 kill XP (an act-level XP scale), so the act takes longer per level instead of handing out levels.
