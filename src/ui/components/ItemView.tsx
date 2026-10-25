@@ -1,8 +1,11 @@
+import { affixDef } from '../../data/affixes';
 import { attributeReq, baseDef, uniqueDef, WEAPON_FAMILIES } from '../../data/bases';
+import { MECHANIC_INFO } from '../../data/passiveTree';
 import { BASE_ATTACK_MS } from '../../data/gems';
 import { characterLevel } from '../../engine/character';
 import { slotsFor } from '../../engine/equipment';
 import { describeMod, itemName, tierLabel, tierRangeText } from '../../engine/items';
+import { mechanicOf, STAT_MECHANIC } from '../../engine/mechanics';
 import { game } from '../../game';
 import { deriveStats, type Derived } from '../../engine/stats';
 import type { EquipSlot, GameState, Item, RolledMod } from '../../engine/types';
@@ -12,11 +15,15 @@ import { packArtUrl } from '../assets';
 
 const RARITY_LABEL = { normal: 'Normal', magic: 'Magic', rare: 'Rare', unique: 'Unique' };
 
-function ModLine({ mod, detail }: { mod: RolledMod; detail: boolean }) {
+function ModLine({ mod, detail, state }: { mod: RolledMod; detail: boolean; state?: GameState }) {
+  // class-mechanic knobs do nothing on other classes
+  const mech = affixDef(mod.affixId).stats.map((k) => STAT_MECHANIC[k]).find(Boolean);
+  const inactive = !!mech && !!state && mechanicOf(state) !== mech;
   return (
-    <div className={`mod ${mod.crafted ? 'crafted' : ''}`}>
+    <div className={`mod ${mod.crafted ? 'crafted' : ''} ${inactive ? 'inactive' : ''}`}>
       {describeMod(mod)}
       {mod.crafted && <span className="mod-tier">(crafted)</span>}
+      {inactive && <span className="mod-tier">({MECHANIC_INFO[mech].name} — {MECHANIC_INFO[mech].cls} only)</span>}
       {detail && mod.tier >= 0 && (
         <span className="mod-tier">
           {tierLabel(mod)} · {tierRangeText(mod)}
@@ -118,10 +125,10 @@ export function ItemTip({ item, state, compare = true, pinned = false }: { item:
         ))}
         {(item.prefixes.length > 0 || item.suffixes.length > 0) && <div className="sep" />}
         {item.prefixes.map((m, i) => (
-          <ModLine key={`p${i}`} mod={m} detail={alt} />
+          <ModLine key={`p${i}`} mod={m} detail={alt} state={state} />
         ))}
         {item.suffixes.map((m, i) => (
-          <ModLine key={`s${i}`} mod={m} detail={alt} />
+          <ModLine key={`s${i}`} mod={m} detail={alt} state={state} />
         ))}
         {unique && (
           <>

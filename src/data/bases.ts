@@ -355,6 +355,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'added_phys', values: [3, 7] },
       { affixId: 'attack_speed', values: [8] },
       { affixId: 'u_rage_max', values: [5] },
+      { affixId: 'u_pummel_hits', values: [1] },
     ],
   },
   {
@@ -363,6 +364,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'added_phys', values: [6, 15] },
       { affixId: 'attack_speed', values: [12] },
       { affixId: 'u_momentum_max', values: [4] },
+      { affixId: 'u_barrage_arrows', values: [1] },
     ],
   },
   {
@@ -379,6 +381,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'added_phys', values: [4, 9] },
       { affixId: 'u_riposte_pct', values: [40] },
       { affixId: 'u_riposte_cooldown', values: [25] },
+      { affixId: 'u_parry_blocks', values: [1] },
     ],
   },
   {
@@ -387,6 +390,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'added_light', values: [4, 22] },
       { affixId: 'u_nova_pct', values: [50] },
       { affixId: 'u_fervor_pct', values: [20] },
+      { affixId: 'u_hammer_convert', values: [60] },
     ],
   },
   {
@@ -464,6 +468,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'inc_es', values: [50] },
       { affixId: 'mana_regen', values: [30] },
       { affixId: 'es_recharge', values: [30] },
+      { affixId: 'u_meditate_es', values: [20] },
     ],
   },
   {
@@ -557,6 +562,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'added_fire', values: [3, 7] },
       { affixId: 'fire_res', values: [25] },
       { affixId: 'u_nova_heal', values: [30] },
+      { affixId: 'u_infernal_spread', values: [1] },
     ],
   },
   {

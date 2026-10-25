@@ -150,4 +150,7 @@ nodes** and begin there.
 
 - Do mechanics carry into ascendancies (each ascendancy twists its class mechanic), or do
   ascendancies add something separate?
-- Starter kits for the hybrids wait on the weapon-family and hybrid-armour work.
+- ~~Starter kits for the hybrids wait on the weapon-family and hybrid-armour work.~~ Checked 2026-10-24:
+  hybrid armour bases start at level 8, so a level-1 kit can't use them. Each hybrid kit already has a weapon
+  from its family and one level-1 piece for each half of its defence (Duelist: iron hat + jerkin; Templar:
+  plate vest + linen hood; Shadow: jerkin + linen hood), so they stay as they are.

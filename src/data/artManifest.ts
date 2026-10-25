@@ -84,6 +84,14 @@ const FIXED: Record<string, string> = {
     'A lean ranger in her twenties with a narrow face and sharp eyes, a dark green cloth hood up over her hair. She wears close-fitting dark brown leather armour. One short dagger is held low in her right hand.',
   'portraits/class_mage':
     'A young mage in his early twenties with messy black hair and a thin face. He wears a worn, faded blue wool robe with a rope belt. In his right hand he holds a short crooked wand of pale driftwood, with a single small blue spark at its tip.',
+  'portraits/class_duelist':
+    'A confident duelist in his late twenties with short brown hair tied back and a thin moustache. He wears a brown leather jerkin with a single dented iron pauldron on his left shoulder. A plain straight sword is held point-down in front of him, both hands on the hilt. A slight, challenging smile.',
+  'portraits/class_templar':
+    'A stern templar in her forties with close-cropped grey hair and a strong jaw. She wears grey iron plate armour under a cream linen surcoat with a plain dark red stripe down the middle. A heavy wooden club with an iron-banded head rests against her shoulder. Calm, unflinching expression.',
+  'portraits/class_shadow':
+    'A quiet shadow in his twenties with a pale, narrow face and dark hair half-hidden under a black cloth hood. A dark grey scarf covers his mouth and nose; only his watchful eyes show. He wears close-fitting dark leather. A slim curved dagger is held low in his left hand.',
+  'portraits/class_exile':
+    'A castaway of unclear age, soaked and sunburnt, with tangled salt-crusted hair and a short rough beard. Torn, faded grey linen shirt, bare forearms, a length of frayed rope tied around the waist as a belt. He grips a short rusted sword. Tired but determined eyes.',
   'scenes/title':
     'A rocky coastline at night under heavy dark clouds. Tall black cliffs on the right; one small cave opening in the cliff face shows warm orange firelight. Two broken shipwrecks lie in grey surf in the middle distance. Cold blue moonlight on the water. Light rain.',
   'scenes/hideout':
@@ -328,6 +336,11 @@ const GEM_SYMBOL: Record<string, string> = {
   heavy_strike: 'a hammer', ground_slam: 'a cracked line', iron_guard: 'a shield', war_cry: 'an open mouth',
   twin_strike: 'two crossed blades', poison_dart: 'a dart', smoke_step: 'a puff cloud', lacerate: 'three claw marks',
   spark: 'a zigzag lightning bolt', fireball: 'a flame', frost_ward: 'a snowflake', arcane_siphon: 'a spiral',
+  pummel: 'a clenched fist', berserk: 'a pair of crossed axes', parry: 'a sword held sideways', judgement_hammer: 'a hammer with a lightning bolt',
+  infernal_blow: 'a fist inside a flame', barrage: 'three parallel arrows', rain_of_arrows: 'arrows pointing down',
+  feint: 'a curved arrow turning back', backstab: 'a dagger pointing down', ice_shot: 'an arrow with a snowflake tip',
+  glacial_lance: 'a long ice spear', meditate: 'a closed eye', shock_nova: 'a ring of short lightning bolts',
+  consecrate: 'a sun over a flat line', frost_needle: 'three thin needles',
 };
 
 export interface ArtEntry {

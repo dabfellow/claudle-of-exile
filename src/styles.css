@@ -2008,6 +2008,10 @@ h3 {
   color: var(--crafted);
 }
 
+.mod.inactive {
+  color: var(--dim);
+}
+
 .mod-tier {
   color: var(--dim);
   font-size: var(--fs-xs);
@@ -4964,4 +4968,103 @@ img.art.mat-art {
 }
 .station.has-art:hover img.station-art {
   transform: scale(1.04);
+}
+
+/* ---------- feedback, reviews & admin ---------- */
+
+.stars {
+  display: inline-flex;
+  gap: 2px;
+  line-height: 1;
+}
+
+.star {
+  color: var(--line-2);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: default;
+}
+
+button.star {
+  cursor: pointer;
+}
+
+.star.on {
+  color: var(--accent);
+}
+
+.admin-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--s-3, 12px);
+}
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--s-3, 12px);
+  margin: var(--s-3, 12px) 0;
+}
+
+.admin-stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.admin-stat-value {
+  font-size: 1.6em;
+  font-weight: 700;
+  color: var(--accent-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-stat-label {
+  color: var(--muted);
+}
+
+.admin-bars {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-bar-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-bar-label {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-bar-track {
+  height: 10px;
+  background: var(--panel-2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.admin-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.admin-bar-n {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 8px 0;
 }

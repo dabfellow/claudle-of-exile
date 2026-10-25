@@ -16,10 +16,11 @@ import type { Ctx } from '../src/engine/context';
 import { salvage } from '../src/engine/crafting';
 import { equip, equipReason, slotsFor } from '../src/engine/equipment';
 import { skillSummary, socketSupport, supportReason, syncSockets } from '../src/engine/gems';
+import { buyOffer, rerollCost, rerollVendor } from '../src/engine/hideout';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { newGame, tick } from '../src/engine/state';
-import { deriveStats, type Derived } from '../src/engine/stats';
+import { deriveStats, hitChance, type Derived } from '../src/engine/stats';
 import type { GameEvent, GameState, Item, SkillId } from '../src/engine/types';
 import { levelOf, xpToReach } from '../src/engine/xp';
 
@@ -40,10 +41,48 @@ const fmt = (ms: number | undefined) => {
   return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`;
 };
 
-/** How much the bot values a character's stats: its best damage skill's output, life and defences. */
+/**
+ * How much the bot values a character's stats: its best damage skill's output (attacks scaled by the
+ * chance to hit monsters of its level), life, energy shield and defences.
+ */
 function score(s: GameState, d: Derived): number {
-  const skillDps = Math.max(d.dps, ...s.skillBar.map((g) => (g ? skillSummary(d, g).perSecond : 0)));
-  return skillDps * 3 + d.maxLife + d.armour * 0.15 + d.evasion * 0.15 + (d.res.fire + d.res.cold + d.res.light) * 1.5 + d.lifeRegen * 5;
+  const hit = hitChance(d.accuracy, d.combatLevel);
+  const skillDps = Math.max(
+    d.dps,
+    ...s.skillBar.map((g) => {
+      if (!g) return 0;
+      const sum = skillSummary(d, g);
+      return sum.perSecond * (sum.nums.def.tags.includes('attack') ? hit : 1);
+    }),
+  );
+  return (
+    skillDps * 3 + d.maxLife + d.maxEs * 0.8 + d.armour * 0.15 + d.evasion * 0.15 + (d.res.fire + d.res.cold + d.res.light) * 1.5 + d.lifeRegen * 5
+  );
+}
+
+/** Score after putting `item` in its best slot, the way equip() would. */
+function scoreWith(s: GameState, item: Item): number {
+  let best = -Infinity;
+  for (const slot of slotsFor(item)) {
+    // two-handers and offhands push each other out
+    const equipment = { ...s.equipment, [slot]: item };
+    if (slot === 'weapon' && baseDef(item.baseId).twoHanded) delete equipment.offhand;
+    if (slot === 'offhand' && s.equipment.weapon && baseDef(s.equipment.weapon.baseId).twoHanded) delete equipment.weapon;
+    best = Math.max(best, scoreOf({ ...s, equipment }));
+  }
+  return best;
+}
+
+/** Spend gold at the trader: buy any gear that's an upgrade; with spare gold and nothing worth buying, restock. */
+function shop(s: GameState, ctx: Ctx) {
+  const base = scoreOf(s);
+  let bought = false;
+  for (const offer of [...s.vendor.stock]) {
+    if (offer.kind !== 'item' || !offer.item || offer.price > (s.bank.gold ?? 0) || equipReason(s, offer.item)) continue;
+    // worth it if it beats what's worn by a clear margin (~1% of the current score)
+    if (scoreWith(s, offer.item) - base > Math.max(5, base * 0.01) && !buyOffer(s, ctx, offer.id)) bought = true;
+  }
+  if (!bought && (s.bank.gold ?? 0) > rerollCost(s) * 20) rerollVendor(s, ctx);
 }
 
 const scoreOf = (s: GameState) => score(s, deriveStats(s, []));
@@ -142,6 +181,7 @@ function runClass(classId: ClassId): Result {
   const end = HOURS * 3600_000;
   for (now = 0; now < end; now += 1000) {
     if (now % 60_000 === 0) {
+      if (now % 600_000 === 0) shop(s, ctx);
       upgradeGear(s, ctx);
       spendPassives(s, ctx);
       socketGems(s);

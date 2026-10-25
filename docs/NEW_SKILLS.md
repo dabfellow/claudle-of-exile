@@ -4,6 +4,15 @@ Goes with [CLASSES.md](CLASSES.md). Gems stay **shared**: nothing here is class-
 text mentions a class mechanic. Each skill does something generically useful that one mechanic
 happens to love — so a Warrior *can* run Frost Needle, it just won't fill Rage like Pummel does.
 
+**Status (2026-10-24): built.** All 15 actives and signatures are in `data/gems.ts`, with the effects in
+`engine/combat.ts` and tests in `tests/newskills.test.ts`. Where the build differs from the text below:
+- **Clarity** lowers the mana cost of *every* skill for 4s (it reuses `manaCostReduction`), not only spells.
+- **Permafrost** freezes bosses for 0.6s instead of 1.5s, like stuns are shorter on bosses.
+- **Chill** now always slows monster attacks by 15% (plus any `chillOnHit` from passives, capped at 60%).
+  Before this, chill only slowed attacks if you had `chillOnHit`, so chilled ground did nothing to attack speed.
+- **Momentum** counts attack hits (each enemy struck), like Rage. Twin Strike still gives 2.
+- **Gem icons** are prompts in `ART_PROMPTS.md`; until they're drawn the gems show their initials.
+
 **15 new actives, 5 per attribute** (the pool goes from 4 → 9 per attribute), each with a
 signature support, matching the existing pattern. Numbers are at gem level 1, in the current
 `ActiveGemDef` format (`timeMs` = attack time for attacks, cast time for spells).

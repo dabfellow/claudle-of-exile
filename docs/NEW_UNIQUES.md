@@ -5,9 +5,13 @@ Goes with [CLASSES.md](CLASSES.md) and [NEW_SKILLS.md](NEW_SKILLS.md). Built on 
 These are **added to** the existing 8 uniques (38 total).
 
 **Status (2026-10-24):** implemented in `data/bases.ts` (`UNIQUES`), `data/affixes.ts` (`U(...)` unique-only
-affixes) and zone drop lists in `data/zones.ts`, **without the ★ skill tweaks**. Last Breath, The Old Grudge
+affixes) and zone drop lists in `data/zones.ts`, **including the ★ skill tweaks**. Last Breath, The Old Grudge
 and Brawler's Buckle (lvl 26+) have no zone yet, like Starforged Edge; they wait for Act 2.
-Mechanic mods are inert until the class mechanics read their stats in `combat.ts`.
+- The ★ "skill modifier" mods are stat keys that only one skill reads (`pummelHits`, `barrageArrows`,
+  `parryBlocks`, `hammerConvert`, `meditateEs`, `infernalSpread`), each with a `u_*` affix.
+- Every class-mechanic stat on these uniques is now read by `combat.ts` / `mechanics.ts`. `coupAilment`
+  (Needleworker's Wraps) was the one that did nothing; Coup de Grâce now poisons (30%/s, 4s) and ignites (40%/s, 3s).
+- Item tooltips grey out mechanic mods on other classes ("Rage — Warrior only"), using `STAT_MECHANIC` in `mechanics.ts`.
 
 **Rules used**
 - All low level: highest is 32 (bases top out at 34), most are 1–24.

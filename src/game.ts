@@ -13,6 +13,8 @@ import { TUTORIAL_STEPS } from './data/tutorial';
 import { newGame, tick } from './engine/state';
 import { tutorialPage, withTutorial } from './engine/tutorial';
 import { AppAccounts, type Account, type AuthProviderId } from './platform/accounts';
+import { setErrorUser } from './platform/errors';
+import { checkAdmin } from './platform/feedback';
 import { getSupabase } from './platform/supabase';
 import { supabaseCharacters } from './platform/supabaseTable';
 import { CloudSaveStore, LocalSaveStore, moveCharacters, type CharacterSummary, type SaveStore, type SyncStatus } from './platform/saves';
@@ -60,6 +62,8 @@ class GameStore {
   state: GameState;
   screen: Screen = 'boot';
   account: Account | null = null;
+  /** listed in the `admins` table: sees the Admin page */
+  isAdmin = false;
   characters: CharacterSummary[] = [];
   /** true right after creating a character, until the intro is dismissed */
   showIntro = false;
@@ -124,6 +128,8 @@ class GameStore {
     await this.exit();
     await this.accounts.signOut();
     this.account = null;
+    this.isAdmin = false;
+    setErrorUser(null);
     this.saves = null;
     this.sync = null;
     this.characters = [];
@@ -132,7 +138,13 @@ class GameStore {
 
   private async openAccount(account: Account) {
     const supabase = getSupabase();
+    setErrorUser(account.id);
+    this.isAdmin = false;
     if (account.provider !== 'guest' && supabase) {
+      void checkAdmin().then((yes) => {
+        this.isAdmin = yes && this.account?.id === account.id;
+        this.notify();
+      });
       const cloud = new CloudSaveStore(supabaseCharacters(supabase), new LocalSaveStore(localStorage, `cloud-${account.id}`, false));
       cloud.onStatus = (st) => {
         this.sync = st;

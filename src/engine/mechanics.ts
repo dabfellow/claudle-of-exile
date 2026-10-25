@@ -17,6 +17,16 @@ export const HUNGER_MS = 5000;
 export const OVERCLOCK_HEAT_MS = 8000;
 export const OVERHEAT_MS = 2000;
 
+/** Which mechanic each knob belongs to: on any other class the stat does nothing (tooltips grey it out). */
+export const STAT_MECHANIC: Partial<Record<StatKey, Mechanic>> = {
+  rageMax: 'rage', rageEffect: 'rage', rageDecay: 'rage', rageRegen: 'rage', rageOnHitTaken: 'rage', endlessFury: 'rage',
+  ripostePct: 'riposte', riposteCooldown: 'riposte', riposteHeal: 'riposte', riposteCrit: 'riposte', riposteBleed: 'riposte', perfectForm: 'riposte',
+  momentumMax: 'momentum', momentumEffect: 'momentum', momentumRetain: 'momentum', momentumEvasion: 'momentum', perpetualMotion: 'momentum',
+  maliceMax: 'malice', coupPct: 'malice', maliceCritKeep: 'malice', coupAilment: 'malice', maliceOnHitTaken: 'malice', thousandCuts: 'malice',
+  manaPower: 'manaPower', manaPowerFull: 'manaPower', manaPowerEs: 'manaPower', allOrNothing: 'manaPower',
+  fervorPct: 'martyr', novaPct: 'martyr', novaHeal: 'martyr', novaEs: 'martyr', saintsSacrifice: 'martyr',
+};
+
 export function mechanicOf(s: GameState): Mechanic | null {
   return classDef(s.character.classId).mechanic;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { game, useGame } from '../game';
 import { PinDock } from './components/common';
 import { QuestTracker } from './components/QuestTracker';
@@ -16,6 +16,9 @@ import { StashPage } from './pages/StashPage';
 import { TraderPage } from './pages/TraderPage';
 import { TreePage } from './pages/TreePage';
 import { CharacterCreate, CharacterSelect, IntroModal, TitleScreen } from './screens/Screens';
+
+// admins only: kept out of the main bundle
+const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
 
 function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
   switch (page) {
@@ -41,6 +44,14 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
       return <AchievementsPage />;
     case 'settings':
       return <SettingsPage />;
+    case 'admin':
+      return game.isAdmin ? (
+        <Suspense fallback={<p className="dim">Loading…</p>}>
+          <AdminPage />
+        </Suspense>
+      ) : (
+        <SettingsPage />
+      );
     default:
       return <SkillPage key={page} skill={page} />;
   }

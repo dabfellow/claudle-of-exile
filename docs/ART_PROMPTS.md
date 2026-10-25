@@ -1,7 +1,7 @@
 # Art prompt pack (ChatGPT image generation)
 
 > Generated from `src/data/artManifest.ts` by `npm run art -- --docs`. Edit prompts there, not here.
-> 0/288 images in the game when this was generated. Sections marked ✅ are done.
+> 0/322 images in the game when this was generated. Sections marked ✅ are done.
 
 ## How to use
 
@@ -14,7 +14,7 @@ Tips: generating several images in the same ChatGPT conversation keeps the style
 
 ---
 
-## Priority 1 — Portraits — trader, guide, classes (5)
+## Priority 1 — Portraits — trader, guide, classes (9)
 
 ### `trader.png`
 
@@ -74,6 +74,54 @@ Avoid, unless the subject below asks for it: extra props or clutter, candles, gl
 Format: 1024×1024 square. One person, chest-up, facing slightly to the side, centred. Plain dark grey-brown background with no objects or scenery.
 
 Subject: A young mage in his early twenties with messy black hair and a thin face. He wears a worn, faded blue wool robe with a rope belt. In his right hand he holds a short crooked wand of pale driftwood, with a single small blue spark at its tip.
+```
+
+### `class_duelist.png`
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: 1024×1024 square. One person, chest-up, facing slightly to the side, centred. Plain dark grey-brown background with no objects or scenery.
+
+Subject: A confident duelist in his late twenties with short brown hair tied back and a thin moustache. He wears a brown leather jerkin with a single dented iron pauldron on his left shoulder. A plain straight sword is held point-down in front of him, both hands on the hilt. A slight, challenging smile.
+```
+
+### `class_templar.png`
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: 1024×1024 square. One person, chest-up, facing slightly to the side, centred. Plain dark grey-brown background with no objects or scenery.
+
+Subject: A stern templar in her forties with close-cropped grey hair and a strong jaw. She wears grey iron plate armour under a cream linen surcoat with a plain dark red stripe down the middle. A heavy wooden club with an iron-banded head rests against her shoulder. Calm, unflinching expression.
+```
+
+### `class_shadow.png`
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: 1024×1024 square. One person, chest-up, facing slightly to the side, centred. Plain dark grey-brown background with no objects or scenery.
+
+Subject: A quiet shadow in his twenties with a pale, narrow face and dark hair half-hidden under a black cloth hood. A dark grey scarf covers his mouth and nose; only his watchful eyes show. He wears close-fitting dark leather. A slim curved dagger is held low in his left hand.
+```
+
+### `class_exile.png`
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: 1024×1024 square. One person, chest-up, facing slightly to the side, centred. Plain dark grey-brown background with no objects or scenery.
+
+Subject: A castaway of unclear age, soaked and sunburnt, with tangled salt-crusted hair and a short rough beard. Torn, faded grey linen shirt, bare forearms, a length of frayed rope tied around the waist as a belt. He grips a short rusted sword. Tired but determined eyes.
 ```
 
 ---
@@ -1299,11 +1347,11 @@ Leave cells 3–9 completely empty.
 
 ---
 
-## Priority 6 — Skill gems (40 icons on 5 sheets)
+## Priority 6 — Skill gems (70 icons on 8 sheets)
 
 ### `gems_1.png`
 
-Contains: Heavy Strike, Ground Slam, Iron Guard, War Cry, Twin Strike, Poison Dart, Smoke Step, Lacerate, Spark
+Contains: Heavy Strike, Ground Slam, Iron Guard, War Cry, Pummel, Berserk, Parry, Judgement Hammer, Infernal Blow
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -1317,16 +1365,16 @@ Fill the cells left to right, top to bottom:
 2. a rounded red gemstone with a simple pale symbol of a cracked line inside
 3. a rounded red gemstone with a simple pale symbol of a shield inside
 4. a rounded red gemstone with a simple pale symbol of an open mouth inside
-5. a rounded green gemstone with a simple pale symbol of two crossed blades inside
-6. a rounded green gemstone with a simple pale symbol of a dart inside
-7. a rounded green gemstone with a simple pale symbol of a puff cloud inside
-8. a rounded green gemstone with a simple pale symbol of three claw marks inside
-9. a rounded blue gemstone with a simple pale symbol of a zigzag lightning bolt inside
+5. a rounded red gemstone with a simple pale symbol of a clenched fist inside
+6. a rounded red gemstone with a simple pale symbol of a pair of crossed axes inside
+7. a rounded red gemstone with a simple pale symbol of a sword held sideways inside
+8. a rounded red gemstone with a simple pale symbol of a hammer with a lightning bolt inside
+9. a rounded red gemstone with a simple pale symbol of a fist inside a flame inside
 ```
 
 ### `gems_2.png`
 
-Contains: Fireball, Frost Ward, Arcane Siphon, Shattering Blow (support), Aftershock (support), Retaliation (support), Rallying Roar (support), Flurry (support), Virulence (support)
+Contains: Twin Strike, Poison Dart, Smoke Step, Lacerate, Barrage, Rain of Arrows, Feint, Backstab, Ice Shot
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -1336,20 +1384,89 @@ Avoid, unless the subject below asks for it: extra props or clutter, candles, gl
 Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single cut gemstone, seen from the front, with a simple flat symbol inside it.
 
 Fill the cells left to right, top to bottom:
-1. a rounded blue gemstone with a simple pale symbol of a flame inside
-2. a rounded blue gemstone with a simple pale symbol of a snowflake inside
-3. a rounded blue gemstone with a simple pale symbol of a spiral inside
-4. a small flat hexagonal red gemstone with a plain pale dot in the centre
-5. a small flat hexagonal red gemstone with a plain pale dot in the centre
-6. a small flat hexagonal red gemstone with a plain pale dot in the centre
-7. a small flat hexagonal red gemstone with a plain pale dot in the centre
-8. a small flat hexagonal green gemstone with a plain pale dot in the centre
-9. a small flat hexagonal green gemstone with a plain pale dot in the centre
+1. a rounded green gemstone with a simple pale symbol of two crossed blades inside
+2. a rounded green gemstone with a simple pale symbol of a dart inside
+3. a rounded green gemstone with a simple pale symbol of a puff cloud inside
+4. a rounded green gemstone with a simple pale symbol of three claw marks inside
+5. a rounded green gemstone with a simple pale symbol of three parallel arrows inside
+6. a rounded green gemstone with a simple pale symbol of arrows pointing down inside
+7. a rounded green gemstone with a simple pale symbol of a curved arrow turning back inside
+8. a rounded green gemstone with a simple pale symbol of a dagger pointing down inside
+9. a rounded green gemstone with a simple pale symbol of an arrow with a snowflake tip inside
 ```
 
 ### `gems_3.png`
 
-Contains: Ambush (support), Hemorrhage (support), Overload (support), Inferno (support), Glacial Shell (support), Soul Tap (support), Added Fire (support), Added Cold (support), Added Lightning (support)
+Contains: Spark, Fireball, Frost Ward, Arcane Siphon, Glacial Lance, Meditate, Shock Nova, Consecrate, Frost Needle
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single cut gemstone, seen from the front, with a simple flat symbol inside it.
+
+Fill the cells left to right, top to bottom:
+1. a rounded blue gemstone with a simple pale symbol of a zigzag lightning bolt inside
+2. a rounded blue gemstone with a simple pale symbol of a flame inside
+3. a rounded blue gemstone with a simple pale symbol of a snowflake inside
+4. a rounded blue gemstone with a simple pale symbol of a spiral inside
+5. a rounded blue gemstone with a simple pale symbol of a long ice spear inside
+6. a rounded blue gemstone with a simple pale symbol of a closed eye inside
+7. a rounded blue gemstone with a simple pale symbol of a ring of short lightning bolts inside
+8. a rounded blue gemstone with a simple pale symbol of a sun over a flat line inside
+9. a rounded blue gemstone with a simple pale symbol of three thin needles inside
+```
+
+### `gems_4.png`
+
+Contains: Shattering Blow (support), Aftershock (support), Retaliation (support), Rallying Roar (support), Flurry (support), Virulence (support), Ambush (support), Hemorrhage (support), Overload (support)
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single cut gemstone, seen from the front, with a simple flat symbol inside it.
+
+Fill the cells left to right, top to bottom:
+1. a small flat hexagonal red gemstone with a plain pale dot in the centre
+2. a small flat hexagonal red gemstone with a plain pale dot in the centre
+3. a small flat hexagonal red gemstone with a plain pale dot in the centre
+4. a small flat hexagonal red gemstone with a plain pale dot in the centre
+5. a small flat hexagonal green gemstone with a plain pale dot in the centre
+6. a small flat hexagonal green gemstone with a plain pale dot in the centre
+7. a small flat hexagonal green gemstone with a plain pale dot in the centre
+8. a small flat hexagonal green gemstone with a plain pale dot in the centre
+9. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+```
+
+### `gems_5.png`
+
+Contains: Inferno (support), Glacial Shell (support), Soul Tap (support), Tenderise (support), Blood Frenzy (support), Counterweight (support), Verdict (support), Pyre (support), Volley Fire (support)
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single cut gemstone, seen from the front, with a simple flat symbol inside it.
+
+Fill the cells left to right, top to bottom:
+1. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+2. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+3. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+4. a small flat hexagonal red gemstone with a plain pale dot in the centre
+5. a small flat hexagonal red gemstone with a plain pale dot in the centre
+6. a small flat hexagonal red gemstone with a plain pale dot in the centre
+7. a small flat hexagonal red gemstone with a plain pale dot in the centre
+8. a small flat hexagonal red gemstone with a plain pale dot in the centre
+9. a small flat hexagonal green gemstone with a plain pale dot in the centre
+```
+
+### `gems_6.png`
+
+Contains: Hailstorm (support), Misdirection (support), Twist the Knife (support), Splinter (support), Permafrost (support), Clarity (support), Static Field (support), Holy Ground (support), Shatterpoint (support)
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -1361,18 +1478,41 @@ Format: one square 1024×1024 sprite sheet with a transparent background, divide
 Fill the cells left to right, top to bottom:
 1. a small flat hexagonal green gemstone with a plain pale dot in the centre
 2. a small flat hexagonal green gemstone with a plain pale dot in the centre
-3. a small flat hexagonal blue gemstone with a plain pale dot in the centre
-4. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+3. a small flat hexagonal green gemstone with a plain pale dot in the centre
+4. a small flat hexagonal green gemstone with a plain pale dot in the centre
 5. a small flat hexagonal blue gemstone with a plain pale dot in the centre
 6. a small flat hexagonal blue gemstone with a plain pale dot in the centre
-7. a small flat hexagonal red gemstone with a plain pale dot in the centre
-8. a small flat hexagonal green gemstone with a plain pale dot in the centre
+7. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+8. a small flat hexagonal blue gemstone with a plain pale dot in the centre
 9. a small flat hexagonal blue gemstone with a plain pale dot in the centre
 ```
 
-### `gems_4.png`
+### `gems_7.png`
 
-Contains: Brutality (support), Elemental Focus (support), Faster Attacks (support), Faster Casts (support), Efficiency (support), Critical Strikes (support), Life Leech (support), Mana Leech (support), Multistrike (support)
+Contains: Added Fire (support), Added Cold (support), Added Lightning (support), Brutality (support), Elemental Focus (support), Faster Attacks (support), Faster Casts (support), Efficiency (support), Critical Strikes (support)
+
+```text
+Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
+
+Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
+
+Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single cut gemstone, seen from the front, with a simple flat symbol inside it.
+
+Fill the cells left to right, top to bottom:
+1. a small flat hexagonal red gemstone with a plain pale dot in the centre
+2. a small flat hexagonal green gemstone with a plain pale dot in the centre
+3. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+4. a small flat hexagonal red gemstone with a plain pale dot in the centre
+5. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+6. a small flat hexagonal green gemstone with a plain pale dot in the centre
+7. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+8. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+9. a small flat hexagonal green gemstone with a plain pale dot in the centre
+```
+
+### `gems_8.png`
+
+Contains: Life Leech (support), Mana Leech (support), Multistrike (support), Spell Echo (support), Pierce (support), Chain (support), Lingering (support)
 
 ```text
 Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
@@ -1384,30 +1524,10 @@ Format: one square 1024×1024 sprite sheet with a transparent background, divide
 Fill the cells left to right, top to bottom:
 1. a small flat hexagonal red gemstone with a plain pale dot in the centre
 2. a small flat hexagonal blue gemstone with a plain pale dot in the centre
-3. a small flat hexagonal green gemstone with a plain pale dot in the centre
+3. a small flat hexagonal red gemstone with a plain pale dot in the centre
 4. a small flat hexagonal blue gemstone with a plain pale dot in the centre
-5. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+5. a small flat hexagonal green gemstone with a plain pale dot in the centre
 6. a small flat hexagonal green gemstone with a plain pale dot in the centre
-7. a small flat hexagonal red gemstone with a plain pale dot in the centre
-8. a small flat hexagonal blue gemstone with a plain pale dot in the centre
-9. a small flat hexagonal red gemstone with a plain pale dot in the centre
-```
-
-### `gems_5.png`
-
-Contains: Spell Echo (support), Pierce (support), Chain (support), Lingering (support)
-
-```text
-Style: hand-painted fantasy game art, like the art in a classic early-2000s PC role-playing game. Simple, solid shapes with a clear silhouette. Soft, even light from the upper left, with gentle shadows. Muted, natural colours: browns, greys, dull greens and blues, with a few warmer accents. Matte surfaces, visible brush strokes, moderate detail. Show only what is described below, nothing extra.
-
-Avoid, unless the subject below asks for it: extra props or clutter, candles, glowing runes or symbols, magic effects, sparks, embers, floating particles, smoke, fog, lens flare, glow or bloom, HDR, heavy contrast, over-sharpening, ornate filigree, text, letters, logos, watermarks, borders or frames.
-
-Format: one square 1024×1024 sprite sheet with a transparent background, divided into an invisible 3×3 grid of equal square cells. Put exactly one inventory icon in each cell, centred, with clear empty space around it — nothing touches or crosses a cell edge. No grid lines, borders, numbers or labels. All icons share the same lighting and style. Each icon is a single cut gemstone, seen from the front, with a simple flat symbol inside it.
-
-Fill the cells left to right, top to bottom:
-1. a small flat hexagonal blue gemstone with a plain pale dot in the centre
-2. a small flat hexagonal green gemstone with a plain pale dot in the centre
-3. a small flat hexagonal green gemstone with a plain pale dot in the centre
-4. a small flat hexagonal blue gemstone with a plain pale dot in the centre
-Leave cells 5–9 completely empty.
+7. a small flat hexagonal blue gemstone with a plain pale dot in the centre
+Leave cells 8–9 completely empty.
 ```

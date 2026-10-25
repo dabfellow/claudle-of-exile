@@ -36,6 +36,7 @@ export type Page =
   | 'vendor'
   | 'achievements'
   | 'settings'
+  | 'admin'
   | SkillId;
 
 interface NavEntry {
@@ -153,6 +154,14 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
           </span>
           <span className="nav-name">Settings</span>
         </button>
+        {game.isAdmin && (
+          <button className={`nav-item ${page === 'admin' ? 'active' : ''}`} onClick={() => go('admin')}>
+            <span className="nav-icon">
+              <GameIcon name="lock" size={16} />
+            </span>
+            <span className="nav-name">Admin</span>
+          </button>
+        )}
       </div>
     </nav>
   );

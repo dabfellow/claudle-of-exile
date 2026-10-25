@@ -34,8 +34,16 @@ export interface SkillEffect {
   evadeMs?: number;
   /** guard: absorb shield as % of max life */
   shieldPct?: number;
-  /** guard/buff: timed stats and more-damage */
-  buff?: { durationMs: number; stats?: Partial<Record<StatKey, number>>; moreDamage?: number };
+  /** guard/buff: timed stats and more-damage; regenPct is % of max life per second (negative drains, never below 1 life) */
+  buff?: { durationMs: number; stats?: Partial<Record<StatKey, number>>; moreDamage?: number; regenPct?: number };
+  /** attacks: this % of physical damage is converted to another type (and scales with that type's increases) */
+  convert?: { type: DamageType; pct: number };
+  /** % more damage against enemies with an ailment (bleed, poison, ignite, chill or freeze) */
+  moreVsAiling?: number;
+  /** chills enemies hit for this long, slowing their attacks */
+  chillMs?: number;
+  /** restores this % of maximum mana on use */
+  restoreManaPct?: number;
   /** War Cry: cancels a boss wind-up */
   interrupts?: boolean;
   /** Arcane Siphon: % of damage returned as life / mana */
@@ -68,6 +76,7 @@ export type RuleCondition =
   | 'enemyCasting'
   | 'lifeBelow'
   | 'manaAbove'
+  | 'manaBelow'
   | 'enemiesAtLeast'
   | 'targetLifeAbove'
   | 'notActive'
@@ -85,6 +94,7 @@ export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; 
   enemyCasting: { label: 'When an enemy winds up' },
   lifeBelow: { label: 'When life below', unit: '%', defaultValue: 50 },
   manaAbove: { label: 'When mana above', unit: '%', defaultValue: 40 },
+  manaBelow: { label: 'When mana below', unit: '%', defaultValue: 30 },
   enemiesAtLeast: { label: 'When enemies at least', unit: '', defaultValue: 3 },
   targetLifeAbove: { label: 'When target life above', unit: '%', defaultValue: 50 },
   notActive: { label: 'When its effect is not active' },
@@ -124,6 +134,41 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     desc: 'Interrupts enemy wind-ups, shoves the front rank back a step, and grants 20% more damage for 6s.',
     defaultRule: { when: 'enemyCasting' },
   }),
+  A({
+    id: 'pummel', name: 'Pummel', attr: 'str', role: 'main', tags: ['attack', 'melee'],
+    manaCost: 5, cooldownMs: 0, timeMs: 3300, color: '#c46a4a',
+    effect: { weaponPct: 50, hits: 3, targets: 'single' },
+    desc: 'Three quick blows to the same target.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'berserk', name: 'Berserk', attr: 'str', role: 'buff', tags: ['buff', 'duration'],
+    manaCost: 10, cooldownMs: 12000, timeMs: 600, color: '#e0503a',
+    effect: { buff: { durationMs: 6000, stats: { attackSpeedPct: 30 }, regenPct: -1 } },
+    desc: '30% increased Attack Speed for 6s, but lose 1% of your life per second.',
+    defaultRule: { when: 'bossOnly' },
+  }),
+  A({
+    id: 'parry', name: 'Parry', attr: 'str', role: 'guard', tags: ['guard', 'duration'],
+    manaCost: 6, cooldownMs: 6000, timeMs: 600, color: '#b8a68a',
+    effect: { blocks: 2 },
+    desc: 'Turn aside the next two hits.',
+    defaultRule: { when: 'enemyCasting' },
+  }),
+  A({
+    id: 'judgement_hammer', name: 'Judgement Hammer', attr: 'str', role: 'main', tags: ['attack', 'melee'],
+    manaCost: 6, cooldownMs: 0, timeMs: 3900, color: '#e8d25a',
+    effect: { weaponPct: 150, targets: 'single', stunChance: 0.2, convert: { type: 'light', pct: 40 } },
+    desc: 'A crushing blow that crackles with storm. 40% of physical damage is converted to lightning; 20% chance to stun.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'infernal_blow', name: 'Infernal Blow', attr: 'str', role: 'main', tags: ['attack', 'melee', 'dot', 'duration'],
+    manaCost: 6, cooldownMs: 0, timeMs: 3600, color: '#ff6a3a',
+    effect: { weaponPct: 120, targets: 'single', ailment: { kind: 'ignite', pctPerSec: 25, durationMs: 3000 } },
+    desc: 'A burning strike that sets the target alight.',
+    defaultRule: { when: 'always' },
+  }),
 
   // ---------- Dexterity ----------
   A({
@@ -154,6 +199,41 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     desc: 'A deep cut that bleeds heavily.',
     defaultRule: { when: 'targetLifeAbove', value: 50 },
   }),
+  A({
+    id: 'barrage', name: 'Barrage', attr: 'dex', role: 'main', tags: ['attack', 'projectile'],
+    manaCost: 5, cooldownMs: 0, timeMs: 2700, color: '#8fd26a',
+    effect: { weaponPct: 30, hits: 4, targets: 'single' },
+    desc: 'Loose a rapid volley of four arrows at one target.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'rain_of_arrows', name: 'Rain of Arrows', attr: 'dex', role: 'area', tags: ['attack', 'projectile', 'area'],
+    manaCost: 8, cooldownMs: 0, timeMs: 3300, color: '#6aa84f',
+    effect: { weaponPct: 70, targets: 'all' },
+    desc: 'Arrows fall across the whole pack.',
+    defaultRule: { when: 'enemiesAtLeast', value: 3 },
+  }),
+  A({
+    id: 'feint', name: 'Feint', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'duration'],
+    manaCost: 5, cooldownMs: 0, timeMs: 2400, color: '#9fc7a0',
+    effect: { weaponPct: 90, targets: 'single', buff: { durationMs: 3000, stats: { evasionPct: 40 } } },
+    desc: 'A false strike that leaves you hard to hit: 40% increased Evasion Rating for 3s.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'backstab', name: 'Backstab', attr: 'dex', role: 'burst', tags: ['attack', 'melee'],
+    manaCost: 10, cooldownMs: 5000, timeMs: 3000, color: '#5a8a5a',
+    effect: { weaponPct: 240, targets: 'single', moreVsAiling: 50 },
+    desc: 'A brutal strike, deadliest on a weakened foe: 50% more damage against enemies with an ailment.',
+    defaultRule: { when: 'targetLifeAbove', value: 30 },
+  }),
+  A({
+    id: 'ice_shot', name: 'Ice Shot', attr: 'dex', role: 'main', tags: ['attack', 'projectile'],
+    manaCost: 5, cooldownMs: 0, timeMs: 2700, color: '#8fd8e8',
+    effect: { weaponPct: 100, targets: 'single', convert: { type: 'cold', pct: 50 }, chillMs: 3000 },
+    desc: 'A frozen arrow that chills the target. 50% of physical damage is converted to cold.',
+    defaultRule: { when: 'always' },
+  }),
 
   // ---------- Intelligence ----------
   A({
@@ -183,6 +263,41 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     effect: { base: [6, 10], type: 'cold', targets: 'single', crit: 5, leechLife: 25, leechMana: 40 },
     desc: 'Drain the target, returning life and mana. Costs no mana.',
     defaultRule: { when: 'lifeBelow', value: 60 },
+  }),
+  A({
+    id: 'glacial_lance', name: 'Glacial Lance', attr: 'int', role: 'burst', tags: ['spell', 'projectile'],
+    manaCost: 22, cooldownMs: 3000, timeMs: 3600, color: '#9fd8ff',
+    effect: { base: [24, 38], type: 'cold', targets: 'single', crit: 6, chillMs: 3000 },
+    desc: 'A spear of ice that chills. Expensive, devastating.',
+    defaultRule: { when: 'manaAbove', value: 80 },
+  }),
+  A({
+    id: 'meditate', name: 'Meditate', attr: 'int', role: 'sustain', tags: ['spell', 'sustain'],
+    manaCost: 0, cooldownMs: 15000, timeMs: 1500, color: '#7f9fe0',
+    effect: { restoreManaPct: 30 },
+    desc: 'Still the mind; refill the well. Restores 30% of your mana.',
+    defaultRule: { when: 'manaBelow', value: 30 },
+  }),
+  A({
+    id: 'shock_nova', name: 'Shock Nova', attr: 'int', role: 'area', tags: ['spell', 'area'],
+    manaCost: 9, cooldownMs: 0, timeMs: 3000, color: '#a0c8ff',
+    effect: { base: [5, 11], type: 'light', targets: 'all', crit: 5 },
+    desc: 'A burst of lightning that strikes every enemy.',
+    defaultRule: { when: 'enemiesAtLeast', value: 3 },
+  }),
+  A({
+    id: 'consecrate', name: 'Consecrate', attr: 'int', role: 'sustain', tags: ['spell', 'area', 'duration'],
+    manaCost: 10, cooldownMs: 6000, timeMs: 1500, color: '#f0c070',
+    effect: { base: [5, 9], type: 'fire', targets: 'all', buff: { durationMs: 4000, regenPct: 2 } },
+    desc: 'Hallow the ground: burn the pack, and regenerate 2% of your life per second for 4s.',
+    defaultRule: { when: 'lifeBelow', value: 70 },
+  }),
+  A({
+    id: 'frost_needle', name: 'Frost Needle', attr: 'int', role: 'main', tags: ['spell', 'projectile'],
+    manaCost: 5, cooldownMs: 0, timeMs: 2400, color: '#c0e8ff',
+    effect: { base: [2, 5], type: 'cold', hits: 3, targets: 'single', crit: 4 },
+    desc: 'Three needles of ice in quick succession.',
+    defaultRule: { when: 'always' },
   }),
 ];
 
@@ -239,6 +354,21 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'inferno', name: 'Inferno', attr: 'int', fits: [], signatureFor: 'fireball', mods: { special: 'inferno' }, desc: 'Ignites spread to enemies next to the target, and the blast leaves burning ground around it for 3s.' }),
   S({ id: 'glacial_shell', name: 'Glacial Shell', attr: 'int', fits: [], signatureFor: 'frost_ward', mods: { special: 'glacial' }, desc: 'When the shield breaks, the attacker is frozen for 2s.' }),
   S({ id: 'soul_tap', name: 'Soul Tap', attr: 'int', fits: [], signatureFor: 'arcane_siphon', mods: { special: 'soultap' }, desc: 'Life drained beyond your maximum becomes a shield.' }),
+  S({ id: 'tenderise', name: 'Tenderise', attr: 'str', fits: [], signatureFor: 'pummel', mods: { special: 'tenderise' }, desc: 'Each blow on the same target deals 10% more damage than the last.' }),
+  S({ id: 'blood_frenzy', name: 'Blood Frenzy', attr: 'str', fits: [], signatureFor: 'berserk', mods: { special: 'bloodfrenzy' }, desc: 'Kills during Berserk extend it by 1s (up to 12s).' }),
+  S({ id: 'counterweight', name: 'Counterweight', attr: 'str', fits: [], signatureFor: 'parry', mods: { special: 'counterweight' }, desc: 'Each hit Parry blocks grants 15% more damage on your next attack (up to 30%).' }),
+  S({ id: 'verdict', name: 'Verdict', attr: 'str', fits: [], signatureFor: 'judgement_hammer', mods: { special: 'verdict' }, desc: 'Hits on stunned enemies arc to 2 other enemies for 50% damage.' }),
+  S({ id: 'pyre', name: 'Pyre', attr: 'str', fits: [], signatureFor: 'infernal_blow', mods: { special: 'pyre' }, desc: 'When an enemy it ignited dies, it explodes for 10% of its maximum life as fire damage to the pack.' }),
+  S({ id: 'volley_fire', name: 'Volley Fire', attr: 'dex', fits: [], signatureFor: 'barrage', mods: { special: 'volley' }, desc: 'Adds a 5th arrow; the last arrow of each volley always hits.' }),
+  S({ id: 'hailstorm', name: 'Hailstorm', attr: 'dex', fits: [], signatureFor: 'rain_of_arrows', mods: { special: 'hailstorm' }, desc: '30% chance to rain a second volley.' }),
+  S({ id: 'misdirection', name: 'Misdirection', attr: 'dex', fits: [], signatureFor: 'feint', mods: { special: 'misdirection' }, desc: 'After you evade a hit, your next Feint deals 100% more damage.' }),
+  S({ id: 'twist_the_knife', name: 'Twist the Knife', attr: 'dex', fits: [], signatureFor: 'backstab', mods: { special: 'twist' }, desc: 'Backstab refreshes the duration of every ailment on the target.' }),
+  S({ id: 'splinter', name: 'Splinter', attr: 'dex', fits: [], signatureFor: 'ice_shot', mods: { special: 'splinter' }, desc: 'Hitting a chilled enemy shatters shards into 2 others for 40% damage.' }),
+  S({ id: 'permafrost', name: 'Permafrost', attr: 'int', fits: [], signatureFor: 'glacial_lance', mods: { special: 'permafrost' }, desc: 'If the target is already chilled, it is frozen for 1.5s (0.6s for bosses).' }),
+  S({ id: 'clarity', name: 'Clarity', attr: 'int', fits: [], signatureFor: 'meditate', mods: { special: 'clarity' }, desc: 'For 4s after Meditate, skills cost 30% less mana.' }),
+  S({ id: 'static_field', name: 'Static Field', attr: 'int', fits: [], signatureFor: 'shock_nova', mods: { special: 'staticfield' }, desc: 'Enemies hit take 10% increased lightning damage for 4s.' }),
+  S({ id: 'holy_ground', name: 'Holy Ground', attr: 'int', fits: [], signatureFor: 'consecrate', mods: { special: 'holyground' }, desc: 'The regeneration also restores 1% of maximum Energy Shield per second.' }),
+  S({ id: 'shatterpoint', name: 'Shatterpoint', attr: 'int', fits: [], signatureFor: 'frost_needle', mods: { special: 'shatterpoint' }, desc: 'Critical strikes chill; hits against chilled enemies deal 15% more damage.' }),
 
   // general
   S({ id: 'added_fire', name: 'Added Fire', attr: 'str', fits: ['attack', 'spell'], mods: { extra: { type: 'fire', pct: 25 }, manaMult: 1.2 }, desc: 'Gain 25% of the hit as extra fire damage.' }),

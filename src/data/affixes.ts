@@ -275,6 +275,14 @@ export const AFFIXES: AffixDef[] = [
   U('u_nova_pct', 'prefix', '{0}% increased holy nova damage', 'novaPct'),
   U('u_nova_heal', 'suffix', '{0}% increased holy nova healing', 'novaHeal'),
   U('u_nova_es', 'suffix', 'The holy nova restores {0}% of Energy Shield', 'novaEs'),
+
+  // skill modifiers (docs/NEW_UNIQUES.md ★): each tweaks one named skill gem
+  U('u_pummel_hits', 'suffix', 'Pummel strikes {0} additional time', 'pummelHits'),
+  U('u_barrage_arrows', 'suffix', 'Barrage fires {0} additional arrow', 'barrageArrows'),
+  U('u_parry_blocks', 'suffix', 'Parry blocks {0} additional hit', 'parryBlocks'),
+  U('u_hammer_convert', 'suffix', 'Judgement Hammer converts an additional {0}% of physical damage to lightning', 'hammerConvert'),
+  U('u_meditate_es', 'suffix', 'Meditate also restores {0}% of Energy Shield', 'meditateEs'),
+  U('u_infernal_spread', 'suffix', "Infernal Blow's ignites spread to {0} other enemy", 'infernalSpread'),
 ];
 
 /** A unique-only mod that sets a single stat. */

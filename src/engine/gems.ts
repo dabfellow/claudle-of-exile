@@ -277,6 +277,11 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
     const pct = weaponPctAt(def, level) / 100;
     phys = ((d.hit.phys[0] + d.hit.phys[1]) / 2) * pct;
     elem = (['fire', 'cold', 'light'] as const).reduce((a, t) => a + ((d.hit[t][0] + d.hit[t][1]) / 2) * pct, 0);
+    if (e.convert) {
+      const moved = phys * (Math.min(100, e.convert.pct + (def.id === 'judgement_hammer' ? d.raw.hammerConvert : 0)) / 100);
+      phys -= moved;
+      elem += (moved / d.physMult) * d.typeMult[e.convert.type];
+    }
   } else {
     const [lo, hi] = spellBaseAt(def, level);
     elem = ((lo + hi) / 2) * d.typeMult[def.effect.type ?? 'fire'];
@@ -290,7 +295,8 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
   let hit = (phys + elem) * (1 + mods.moreDamage / 100);
   const critChance = def.tags.includes('attack') ? d.critChance : (e.crit ?? 5) * (1 + (d.raw.critChancePct + mods.critChance) / 100);
   hit *= 1 + (Math.min(95, critChance) / 100) * ((d.critMulti + mods.critMulti) / 100 - 1);
-  const hits = (e.hits ?? 1) * (1 + (mods.repeats * mods.repeatDamage) / 100);
+  const extraHits = (def.id === 'pummel' ? d.raw.pummelHits : 0) + (def.id === 'barrage' ? d.raw.barrageArrows + (mods.specials.has('volley') ? 1 : 0) : 0);
+  const hits = ((e.hits ?? 1) + extraHits) * (1 + (mods.repeats * mods.repeatDamage) / 100);
   const ailment = e.ailment ? (e.ailment.pctPerSec / 100) * (e.ailment.durationMs / 1000) * nums.durationMult : 0;
   const perUse = hit * hits * (1 + ailment);
   const time = Math.max(nums.actionMs, nums.cooldownMs);

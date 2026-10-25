@@ -76,6 +76,8 @@ export const STAT_KEYS = [
   'maliceMax', 'coupPct', 'maliceCritKeep', 'coupAilment', 'maliceOnHitTaken', 'thousandCuts',
   'manaPower', 'manaPowerFull', 'manaPowerEs', 'allOrNothing',
   'fervorPct', 'novaPct', 'novaHeal', 'novaEs', 'saintsSacrifice',
+  // skill modifiers on uniques (docs/NEW_UNIQUES.md ★): tweak one named skill
+  'pummelHits', 'barrageArrows', 'parryBlocks', 'hammerConvert', 'meditateEs', 'infernalSpread',
   // forbidden keystones
   'overclock', 'knifesEdge', 'eternalHunger',
 ] as const;
@@ -136,6 +138,10 @@ export interface Dot {
   gemId: string;
   /** Virulence: spreads to another enemy on death */
   spreads?: boolean;
+  /** full duration, for effects that refresh it (Twist the Knife) */
+  durationMs?: number;
+  /** Pyre: the enemy explodes when it dies while this ignite burns */
+  pyre?: boolean;
 }
 
 export interface MonsterInstance {
@@ -178,6 +184,8 @@ export interface MonsterInstance {
   vulnMs: number;
   /** chilled: attacks slowed while > 0 */
   chillMs: number;
+  /** Static Field: takes more lightning damage while > 0 */
+  shockMs?: number;
   /** pack members are scaled down; xp and loot scale with them */
   scale: number;
   /** damage-over-time accumulated since the last report */
@@ -212,8 +220,12 @@ export interface Buff {
   durationMs: number;
   stats?: Partial<Record<StatKey, number>>;
   moreDamage?: number;
-  /** % of max life regenerated per second */
+  /** % of max life regenerated per second (negative drains, never below 1 life) */
   regenPct?: number;
+  /** % of max energy shield restored per second */
+  esRegenPct?: number;
+  /** Blood Frenzy: kills extend the buff, up to this long */
+  extendMaxMs?: number;
   /** flask buffs: the flask's own effect multiplier */
   mult?: number;
 }
@@ -267,6 +279,11 @@ export interface CombatRuntime {
   flurryStacks: number;
   /** Phantom mastery: next hit after a guard is stronger */
   empowered: boolean;
+  /** Counterweight: Parry with its signature is up, and % more damage stored for the next attack */
+  counterweight?: boolean;
+  counterweightMore?: number;
+  /** Misdirection: a hit was evaded since the last Feint */
+  misdirect?: boolean;
   /** auto-flee has taken over the player's pace, and ms until fleeing loses the next monster */
   fleeing: boolean;
   shakeMs: number;

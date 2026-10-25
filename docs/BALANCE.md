@@ -105,5 +105,32 @@ Every skill and monster now has its own attack or cast time (default attack 3 s)
 
 All in the 6–10 h target and closer together; Ranger no longer trails. Only one seed so far — check seeds 2–3 before tuning further.
 
+## All 7 classes, seeds 1–3 (2026-10-24, 14h, active bot)
+
+Time to beat Ysolde. "—" = not beaten in 14 h. Three builds: the last commit; with the 15 new skills
+(the bot still only uses its starter gems); and the new skills plus the improved bot.
+
+| | Warrior | Ranger | Mage | Duelist | Templar | Shadow | Exile |
+|---|---|---|---|---|---|---|---|
+| Last commit, s1 / s2 / s3 | — / 12h42 / 13h38 | 11h10 / 10h13 / 6h37 | 8h36 / 8h05 / 7h40 | 13h17 / 10h16 / 9h23 | 8h18 / 8h33 / 9h40 | 7h36 / 10h47 / 8h47 | — / 12h15 / — |
+| New skills | — / 11h09 / — | 10h25 / 13h15 / 11h26 | 5h06 / 7h22 / — | — / 8h20 / 6h56 | 7h35 / 9h53 / 9h46 | 7h43 / 9h30 / 10h41 | 11h33 / — / — |
+| New skills + bot | — / 12h43 / — | 6h37 / 10h23 / 11h09 | 7h18 / 12h55 / 6h03 | 10h11 / 9h33 / 12h17 | 8h46 / 8h29 / 9h05 | 9h24 / 8h25 / 11h31 | 10h26 / — / — |
+
+Clears out of 21: 15 / 15 / 17.
+
+- **Drop luck still dominates.** The same class can differ by 4–6 h between seeds in every build. Adding
+  15 gems also changes the gem drop pool, so the random stream differs from the last commit and runs aren't
+  directly comparable.
+- **Templar, Shadow and Mage** sit in the 6–10 h target on most seeds. **Ranger and Duelist** run 10–13 h
+  on some seeds.
+- **Warrior trails badly**: it beat Ysolde on 1 of 3 seeds per build, with 33–54 DPS at 14 h against
+  50–100 for the others. Heavy Strike's 3.9 s attack time with starter gear looks like the cause. Not tuned yet.
+- The Exile clearing at all is fine (it's a challenge class).
+
+**Bot changes** (`scripts/sim.ts`): gear is scored with Energy Shield (×0.8) and with attack skills scaled by
+the chance to hit monsters of the bot's level. Every 10 min the bot buys trader gear that beats what it wears
+by 1%+ and restocks when it has spare gold. That gave 2 more clears out of 21, but runs still end with
+16–90k unspent gold: early trader stock is mostly normal and magic items that are rarely upgrades.
+
 ## Known gaps
-- Bot gear scoring is crude, so DPS varies a lot with drop luck (e.g. one Warrior run ended on 30 DPS).
+- Bot gear scoring is better but DPS still swings with drop luck. The bot doesn't craft or use the orbs it hoards.

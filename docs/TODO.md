@@ -5,39 +5,25 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 ## Open
 
 ### Launch (Act 1) — see [LAUNCH.md](LAUNCH.md)
-- [ ] **[You]** Play one character of each class through Act 1 by hand and note anything slow or unfair.
-- [ ] **[You]** Generate the remaining images in [ART_PROMPTS.md](ART_PROMPTS.md) (18 of 187 done), then `npm run art`. Area banners and monsters first.
-- [ ] Final visual pass once art is in: area cards, combat screen, phone widths.
-- [ ] **[You]** Finish Supabase setup ([AUTH_SETUP.md](AUTH_SETUP.md) checklist) and swap localhost URLs for `https://dabfellow.party/path-of-idle/`.
-- [ ] Test cloud save sync between two browsers on the live site.
-- [ ] **[You]** Get an error-reporting DSN (e.g. Sentry); then wire it in.
-- [ ] **[You]** Pick a support contact (email or Discord) and add it to the privacy note.
-- [ ] Decide on an Act 1 unique for the Sanctum, or keep Starforged Edge (lvl 34) for Act 2.
-
-### New skills — [NEW_SKILLS.md](NEW_SKILLS.md)
-- [ ] Build the 15 new actives (5 per attribute) with their signature supports in `gems.ts`.
-  - [ ] New effect fields: `convert`, enemy `debuff`, `flaskCharge`.
+- [ ] **[You]** Run the SQL in [ADMIN_SETUP.md](ADMIN_SETUP.md) and add yourself to `admins`; then check the Admin page with real data.
+- [ ] **[You]** Send a test mail to support@dabfellow.party from a non-Gmail address and check it lands in Gmail.
+- [ ] **[You]** Rotate the Google and Discord OAuth client secrets: they were in `docs/AUTH_SETUP.md` in git history (private repo); now redacted.
 
 ### Uniques — [NEW_UNIQUES.md](NEW_UNIQUES.md)
-- [ ] Add the "skill modifier" mod type and the ★ skill tweaks on uniques.
-- [ ] Check every class-mechanic stat on uniques is actually read in `combat.ts` / `mechanics.ts`.
 - [ ] Zones for Last Breath, The Old Grudge, Brawler's Buckle (lvl 26+) — wait for Act 2.
-
-### Classes — [CLASSES.md](CLASSES.md)
-- [ ] Run `npm run sim -- --class <id>` for all 7 classes; Act 1 target 6–10 h each.
-- [ ] Portrait/crest prompts for the 4 new classes in `ART_PROMPTS.md`.
-- [ ] Starter kits for the hybrid classes.
-
-### Balance — [BALANCE.md](BALANCE.md)
-- [ ] Re-check action-time numbers on seeds 2–3 (only seed 1 run so far).
-- [ ] Improve bot gear scoring (DPS swings a lot with drop luck).
-- [ ] Revisit Sanctum chaos farming (85–155 per 14 h) when Act 2 lands.
-
-### Art stand-ins — [ASSET_MAPPING.md](ASSET_MAPPING.md)
-- [ ] Replace the 106 placeholder slots, starting with the "Weakest stand-ins" list.
-- [ ] Find licences for Catalone, CodeSpree, SanguineNite and free_sample packs (or replace that art).
+- [ ] Starforged Edge (lvl 34) stays an Act 2 unique; the Sanctum gets no Act 1 unique (decided 2026-10-24).
 
 ## Ideas / later
+Parked 2026-10-24 until more of the game is built: testing, sim balancing and art.
+- Test cloud save sync between two browsers on the live site.
+- Class balance doesn't need to be exact. Sim notes in [BALANCE.md](BALANCE.md) for when it's picked back up:
+  - Warrior missed Act 1 in 14 h on 2 of 3 seeds (33–54 DPS vs 50–100 for others).
+  - Ranger and Duelist ran 10–13 h on some seeds.
+  - Bot ends runs with 16–90k unspent gold and hoarded orbs; teaching it to craft would cut drop-luck noise.
+- Revisit Sanctum chaos farming (85–155 per 14 h) when Act 2 lands.
+- Art: no image generation for now. [ART_PROMPTS.md](ART_PROMPTS.md) is ready if that changes; then a final visual pass (area cards, combat screen, phone widths) and replacing the 106 stand-in slots in [ASSET_MAPPING.md](ASSET_MAPPING.md).
+- Chill now always slows attacks 15% (was 0% without `chillOnHit`); watch whether chilled ground is too strong.
+- Clarity cuts every skill's mana cost, not just spells; split out a spell-only stat if that matters.
 - Ascendancy classes — and decide whether they twist the class mechanic or add something separate.
 - Skilling bands above Lv 20 (Act 2+), including Chaos / Regal recipes — [SKILLING_REWORK.md](SKILLING_REWORK.md).
 - Gemcutting "Prisms" as its force material.
@@ -47,3 +33,17 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - Acts 2–6 and Maps.
 
 ## Done
+- [x] SPF record fixed (`v=spf1 include:_spf.mx.cloudflare.net ~all`); Email Routing status is "ready" — done 2026-10-24
+- [x] Sentry project `path-of-idle` (errors only), DSN in `.env.local`, deployed; test error PATH-OF-IDLE-1 received — done 2026-10-24
+- [x] Admin page (stats, feedback inbox, reviews, Sentry errors link), Settings feedback + star review, Sentry wiring — done 2026-10-24
+- [x] Support contact: support@dabfellow.party (Cloudflare Email Routing → Gmail) in the privacy note — done 2026-10-24
+- [x] Art pack licences: all art was bought, no further checking needed (you) — done 2026-10-24
+- [x] Play one character of each class through Act 1 by hand (you: it's fine) — done 2026-10-24
+- [x] Supabase setup and live-domain URLs (you) — done 2026-10-24
+- [x] Build the 15 new actives and their signature supports ([NEW_SKILLS.md](NEW_SKILLS.md)): `convert`, `moreVsAiling`, `chillMs`, `restoreManaPct`, `manaBelow` rule, Momentum per hit — done 2026-10-24
+- [x] "Skill modifier" mods and the ★ tweaks on uniques; tooltips grey out other classes' mechanic mods — done 2026-10-24
+- [x] Check every class-mechanic stat on uniques is read (`coupAilment` wasn't; now is) — done 2026-10-24
+- [x] Sim all 7 classes on seeds 1–3 (also covers the action-time recheck) — done 2026-10-24
+- [x] Portrait prompts for Duelist, Templar, Shadow and Exile in `ART_PROMPTS.md` — done 2026-10-24
+- [x] Starter kits for the hybrid classes: checked, current kits kept (hybrid bases start at lvl 8) — done 2026-10-24
+- [x] Improve bot gear scoring: ES and hit chance counted, buys trader upgrades — done 2026-10-24

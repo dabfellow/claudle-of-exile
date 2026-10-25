@@ -4,6 +4,7 @@ import { newGame } from '../../engine/state';
 import type { Rarity } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { fmt, PageHeader } from '../components/common';
+import { FeedbackCard } from '../components/FeedbackCard';
 import { AccountBadge } from '../screens/Screens';
 
 export function SettingsPage() {
@@ -42,9 +43,15 @@ export function SettingsPage() {
         <p className="dim small" style={{ marginBottom: 0 }}>
           <b>Privacy:</b> guest saves stay in this browser. If you sign in with Google or Discord, they share your name, email and avatar with our
           sign-in service (Supabase), and we store your character saves there so you can play anywhere. That's all: no ads, no analytics, no
-          tracking. Signing out keeps your cloud saves.
+          tracking. Signing out keeps your cloud saves. Feedback and reviews you send are stored there too, and if the game crashes, an error
+          report (what went wrong, your browser and game version, never your name or email) goes to our error tracker, Sentry.
+        </p>
+        <p className="dim small" style={{ marginBottom: 0 }}>
+          <b>Support:</b> questions, or want your account and saves deleted? Email{' '}
+          <a href="mailto:support@dabfellow.party">support@dabfellow.party</a>.
         </p>
       </div>
+      <FeedbackCard />
       <div className="card">
         <div className="card-title">Loot filter</div>
         <p className="muted" style={{ marginTop: 0 }}>
