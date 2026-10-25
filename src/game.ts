@@ -3,7 +3,7 @@ import { BENCH_CRAFTS } from './data/hideout';
 import { useEffect, useSyncExternalStore } from 'react';
 import { flaskDef } from './data/flasks';
 import { SKILLS } from './data/skills';
-import { ZONES } from './data/zones';
+import { ACTS, actOpen, ZONES } from './data/zones';
 import type { Ctx } from './engine/context';
 import { itemName } from './engine/items';
 import { MIN_OFFLINE_MS, simulateOffline, type OfflineSummary } from './engine/offline';
@@ -437,10 +437,15 @@ class GameStore {
       case 'bossCast':
         this.addFeed(`${e.name} winds up ${e.skill}!`, 'warn');
         break;
-      case 'actComplete':
-        this.addFeed(`Act ${e.act} complete! More of the world opens in a future update.`, 'good');
+      case 'actComplete': {
+        const next = ACTS.find((a) => a.n === e.act + 1);
+        this.addFeed(
+          next && actOpen(next.n) ? `Act ${e.act} complete! Act ${next.n}, ${next.name}, is open.` : `Act ${e.act} complete! More of the world opens in a future update.`,
+          'good',
+        );
         this.pushToast(`Act ${e.act} complete!`, 'good');
         break;
+      }
       case 'tutorialStep': {
         const step = TUTORIAL_STEPS[e.step];
         this.addFeed(`Quest complete: ${step.title}${step.rewardText ? ` — ${step.rewardText}` : ''}`, 'good');

@@ -1,5 +1,5 @@
 import { SKILL_BAR_SLOTS } from '../data/gems';
-import { ZONES } from '../data/zones';
+import { nextZone, ZONES } from '../data/zones';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { FlaskInstance, GameState } from './types';
 
@@ -140,7 +140,20 @@ export function deserialize(json: string): GameState {
     if (raw[k] === undefined) raw[k] = val;
     else if (MERGE_KEYS.has(k)) raw[k] = { ...(val as object), ...(raw[k] as object) };
   }
-  return raw as unknown as GameState;
+  const s = raw as unknown as GameState;
+  unlockReachedZones(s);
+  return s;
+}
+
+/**
+ * A boss beaten before the area after it existed (a new act opening) unlocks that area on load.
+ * Not a versioned migration: acts open without the save format changing.
+ */
+export function unlockReachedZones(s: GameState): void {
+  for (const id of s.bossesDefeated) {
+    const next = nextZone(id);
+    if (next && !s.unlockedZones.includes(next.id)) s.unlockedZones.push(next.id);
+  }
 }
 
 export function exportSave(s: GameState): string {

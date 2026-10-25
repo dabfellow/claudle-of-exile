@@ -2,7 +2,7 @@ import { characterLevel } from '../engine/character';
 import type { GameState } from '../engine/types';
 import { levelOf } from '../engine/xp';
 import { PASSIVE_BY_ID } from './passiveTree';
-import { ZONES } from './zones';
+import { actOpen, zonesInAct } from './zones';
 
 export type AchievementCategory = 'combat' | 'crafting' | 'flasks' | 'skilling' | 'character';
 
@@ -15,13 +15,16 @@ export interface AchievementDef {
   progress: (s: GameState) => number;
   /** currency/material rewards; bench recipe unlocks are listed on the recipes themselves */
   reward?: Record<string, number>;
+  /** belongs to this act: hidden until the act is open */
+  act?: number;
 }
 
 const SKILLING = ['mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy', 'gemcutting'] as const;
 const totalSkillLevel = (s: GameState) => SKILLING.reduce((a, k) => a + levelOf(k, s.skills[k]), 0);
 const L = (s: GameState) => s.lifetime;
+const bossesBeatenIn = (s: GameState, act: number) => zonesInAct(act).filter((z) => s.bossesDefeated.includes(z.id)).length;
 
-export const ACHIEVEMENTS: AchievementDef[] = [
+const ALL: AchievementDef[] = [
   // ---------- combat ----------
   { id: 'slayer_100', name: 'Cull the Drowned', desc: 'Slay 100 monsters', category: 'combat', target: 100, progress: (s) => L(s).kills, reward: { gold: 100 } },
   { id: 'slayer_1000', name: 'Thousand Cuts', desc: 'Slay 1,000 monsters', category: 'combat', target: 1000, progress: (s) => L(s).kills },
@@ -41,8 +44,16 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     target: 1, progress: (s) => L(s).exileBareKills ?? 0,
   },
   {
-    id: 'conqueror', name: 'Conqueror of the Coast', desc: "Defeat every area's boss", category: 'combat',
-    target: ZONES.length, progress: (s) => s.bossesDefeated.length, reward: { exalted: 1 },
+    id: 'conqueror', name: 'Conqueror of the Coast', desc: "Defeat every Act 1 area's boss", category: 'combat',
+    target: zonesInAct(1).length, progress: (s) => bossesBeatenIn(s, 1), reward: { exalted: 1 },
+  },
+  {
+    id: 'act_2', name: 'Sunset', desc: 'Defeat Azhar, the Fallen Sun, and complete Act 2', category: 'combat', act: 2,
+    target: 1, progress: (s) => (s.bossesDefeated.includes('burningthrone') ? 1 : 0), reward: { divine: 2, exalted: 1 },
+  },
+  {
+    id: 'conqueror_2', name: 'Lord of the Steppe', desc: "Defeat every Act 2 area's boss", category: 'combat', act: 2,
+    target: zonesInAct(2).length, progress: (s) => bossesBeatenIn(s, 2), reward: { exalted: 1 },
   },
   {
     id: 'deathless', name: 'Untouchable', desc: 'Reach level 10 without dying', category: 'combat',
@@ -83,7 +94,11 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'full_bar', name: 'Arsenal', desc: 'Fill all 6 skill bar slots', category: 'character', target: 6, progress: (s) => s.skillBar.filter(Boolean).length, reward: { expansion: 1 } },
 ];
 
-export const ACHIEVEMENT_BY_ID: Record<string, AchievementDef> = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
+/** Achievements in play: those of acts that are not out yet stay hidden. */
+export const ACHIEVEMENTS: AchievementDef[] = ALL.filter((a) => !a.act || actOpen(a.act));
+
+/** Every achievement, open or not, so one earned in a preview build still has a name. */
+export const ACHIEVEMENT_BY_ID: Record<string, AchievementDef> = Object.fromEntries(ALL.map((a) => [a.id, a]));
 
 export const CATEGORY_NAMES: Record<AchievementCategory, string> = {
   combat: 'Combat',

@@ -130,6 +130,23 @@ const ZONE_DESC: Record<string, string> = {
     'Tall black sea cliffs seen from the side, with white waves breaking at their base far below. Dark storm clouds; one thin bolt of lightning in the distance.',
   sanctum:
     'The inside of a sunken stone cathedral underwater. Tall pillars, rows of broken wooden pews with pink coral growing on them. A plain stone throne at the far end. Rays of blue light come down from above.',
+  // Act 2
+  cinderroad:
+    'A dirt road winding over low hills of burned yellow grass. Thin lines of smoke rise from the stubble. A broken wooden cart lies on its side by the road. Hazy orange sky.',
+  saltflats:
+    'A flat white salt plain stretching to the horizon under a pale hot sky. The ground is cracked into hexagon shapes. Heat shimmer blurs the far distance.',
+  blackgrass:
+    'A sea of very tall black grass under a dusky red sky. A slow line of red fire burns through the grass in the middle distance, with dark smoke.',
+  caravan:
+    'A square walled caravanserai of tan mud brick with an arched gateway, seen from outside. Torn cloth awnings, empty wooden carts and a dry stone well in the courtyard.',
+  kurgans:
+    'Rolling grey-green steppe covered in round grassy burial mounds, one in front with a dark stone doorway in its side. Overcast sky, cold light.',
+  plateau:
+    'A high bare flat-topped plateau of brown rock under huge dark storm clouds. Several bolts of lightning strike the plain in the distance.',
+  pyretemple:
+    'The inside of a red stone temple with tall square pillars. A large stone bowl of fire burns at the far end. Smoke drifts under the ceiling.',
+  burningthrone:
+    'The top of a high bare hill at night. A huge glowing orange orb, like a small sun, rests in a crater on the summit, lighting the scorched ground around it.',
 };
 
 const MONSTER_DESC: Record<string, string> = {
@@ -175,6 +192,47 @@ const MONSTER_DESC: Record<string, string> = {
   priest: 'a pale old priest in faded white robes, a cracked tall mitre hat, holding a metal censer covered in frost',
   ysolde:
     'a boss: "Ysolde, the Drowned Queen", a tall regal woman with pale blue skin, long dark hair floating as if underwater, a crown of white shells and pearls, a calm cold expression',
+  // Act 2
+  ashjackal: 'a thin grey jackal with patches of burned fur, ash on its back, glowing orange eyes',
+  outrider: 'a steppe horseman in a padded brown coat and fur hat on a small shaggy horse, holding a long lance',
+  vulture: 'a large bald vulture with black feathers singed at the tips and small embers in its wings',
+  firesprite: 'a small flickering figure made of orange flame and burning grass stalks, about knee high',
+  khorun: 'a boss: "Khorun the Outrider", a scarred nomad warlord on a black horse, a curved sabre raised, a red horsetail banner on his back',
+  saltcrawler: 'a big pale crab-like creature crusted with white salt crystals, slow and heavy',
+  mirage: 'a faint see-through human figure made of shimmering heat haze, with bright white eyes',
+  dustdevil: 'a small whirlwind of sand and dust with a rough face in the swirl',
+  saltwitch: 'a thin old woman with white salt-crusted skin and hair, wrapped in pale rags, frost on her fingers',
+  glass: 'a boss: "Sister Glass, the Mirage", a tall woman whose body is made of cracked mirror glass, reflecting bright light',
+  grasscat: 'a lean black big cat with a long body, hard to see in tall dark grass, yellow eyes',
+  firebrand: 'a big hound with dark red fur and a burning brand mark on its side, smoke from its mouth',
+  burnwalker: 'a tall charred human figure, black skin cracked with glowing orange lines, smoke rising from it',
+  grassseer: 'a nomad shaman in a coat of woven grass, holding a smoking bundle of herbs, face painted red',
+  ashmane: 'a boss: "Ashmane, the Sun Lion", a huge lion with a mane of flickering fire and ash-grey fur',
+  raider: 'a bandit in a dusty turban and leather armour with a curved scimitar',
+  lancer: 'a heavy cavalryman in scale armour with a pointed helmet, holding a long lance',
+  bonecamel: 'a walking camel skeleton with dried skin stretched over its bones and a broken saddle',
+  hexmerchant: 'a gaunt merchant in rich faded robes, his hands full of cold pale coins, frost on his beard',
+  tamsin: 'a boss: "Bey Tamsin, the Bandit Khan", a tall bandit chief in a long red coat with two scimitars and a gold-trimmed helmet',
+  barrowwight: 'a pale ghost of an ancient warrior in a bronze helmet, frost trailing behind it',
+  horseskel: 'a skeleton horse with old bronze barding hanging off its ribs, blue light in its eye sockets',
+  moundguard: 'a large undead warrior in bronze scale armour with a bronze axe, dirt falling from it',
+  moundpriest: 'an undead priest in a tall felt hat with dangling bronze charms, a cold blue glow in its hands',
+  horselord: 'a boss: "The Horse-Lord in the Mound", a huge undead king in bronze and gold riding a skeletal horse, a long lance',
+  thunderhawk: 'a large hawk with dark blue feathers and small sparks of lightning crackling along its wings',
+  rhino: 'a huge grey rhino with thick armour-like plates of hide and a broken horn',
+  stormrider: 'a nomad rider in dark grey on a pale horse, holding a lance crackling with blue lightning',
+  skyshaman: 'an old shaman in a coat of grey feathers holding a drum, blue lightning around his raised hand',
+  qara: 'a boss: "Qara, Rider of the Storm", a fierce woman on a winged grey horse, a glaive crackling with lightning',
+  ashmonk: 'a bald monk in a grey robe covered in ash, his palms glowing orange like hot coals',
+  dervish: 'a spinning dancer in red robes with two curved blades, trailing flames',
+  pyregolem: 'a large golem built from stacked red stones with fire burning in the gaps',
+  acolyte: 'a young cultist in red and orange robes and a bronze mask, holding a staff topped with fire',
+  ozar: 'a boss: "High Flamekeeper Ozar", an old high priest in tall red and gold robes, a crown of flames, a burning staff',
+  sunguard: 'a guard in scorched golden armour with a halberd, the metal glowing faintly with heat',
+  wyrmling: 'a small dragon the size of a horse with black scales and glowing orange cracks, smoke from its nose',
+  ashseer: 'a blind seer with a cloth over her eyes and ash-grey robes, small lightning sparks around her',
+  sunpriest: 'a priest in white and gold robes with a golden sun disc behind his head, a beam of fire in his hand',
+  azhar: 'a boss: "Azhar, the Fallen Sun", a giant fiery bird-like creature with wings of flame and golden talons, too bright to look at',
 };
 
 const CURRENCY_DESC: Record<string, string> = {
@@ -328,6 +386,12 @@ const UNIQUE_DESC: Record<string, string> = {
   iron_bulwark: 'a very large, thick iron kite shield covered in rows of big rivets, scratched and dented from use',
   starforged_edge: 'a curved sabre with a dark blue-black blade speckled with tiny white dots like stars, and a silver guard',
   titans_girth: 'a huge thick leather belt with iron studs and a buckle made from a small horned skull',
+  sunmane_pelt: 'a scale-armour coat with a thick lion mane of orange-red fur around the shoulders',
+  mirage_veil: 'a dark hooded cowl with a thin veil of shimmering see-through silk over the face opening',
+  khans_tithe: 'a heavy gold ring set with a square diamond, a tiny coin stamped into each side of the band',
+  kurgan_crown: 'an ancient bronze helmet-crown with small horse heads around the rim, green with age',
+  stormrider_greaves: 'a pair of scale boots with grey feathers at the top and a thin blue lightning line down each side',
+  pyre_heart: 'a black onyx pendant shaped like a heart with a small flame burning inside it',
 };
 
 const ATTR_GEM = { str: 'red', dex: 'green', int: 'blue' } as const;

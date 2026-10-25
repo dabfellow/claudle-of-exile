@@ -7,8 +7,9 @@ import type { DamageType } from '../engine/types';
  * - summon: calls adds every so often — area skills matter
  * - enrage: below 35% life it attacks faster and harder — burst and flasks matter
  * - ward: at 66% and 33% life it raises a barrier that heals it if not broken in time — burst matters
+ * - scorch: every so often it sets the ground under you ablaze (frozen, charged) — resistances and pace matter
  */
-export type BossMechanic = 'slam' | 'nova' | 'summon' | 'enrage' | 'ward';
+export type BossMechanic = 'slam' | 'nova' | 'summon' | 'enrage' | 'ward' | 'scorch';
 
 /** One thing a monster does: its name, whether it's an attack or a spell, and its attack or cast time in ms. */
 export interface MonsterSkill {
@@ -39,7 +40,7 @@ export interface MonsterDef {
   /** bosses: the telegraphed casts; ms is the wind-up */
   slam?: MonsterSkill;
   nova?: MonsterSkill;
-  /** element of the nova mechanic (defaults to the boss's damage type) */
+  /** element of the nova and scorch mechanics (defaults to the boss's damage type) */
   novaType?: DamageType;
 }
 
@@ -68,17 +69,36 @@ export interface ZoneDef {
 export interface ActDef {
   n: number;
   name: string;
+  /** live for everyone */
   open: boolean;
+  /** built but not released: playable in dev builds, tests and the sim (see ACT_PREVIEW) */
+  preview?: boolean;
+  /** shown on the Campaign page once the act boss falls */
+  outro?: string;
 }
 
 export const ACTS: ActDef[] = [
-  { n: 1, name: 'The Drowned Coast', open: true },
-  { n: 2, name: 'The Burning Steppe', open: false },
+  {
+    n: 1, name: 'The Drowned Coast', open: true,
+    outro: 'The Drowned Queen has fallen. The road inland climbs onto the steppe, where the grass has been burning for a hundred years.',
+  },
+  {
+    n: 2, name: 'The Burning Steppe', open: false, preview: true,
+    outro: 'The fallen sun goes dark at last. Far to the south, the bells of a city of saints are ringing.',
+  },
   { n: 3, name: 'The City of Saints', open: false },
   { n: 4, name: 'The Hollow Peaks', open: false },
   { n: 5, name: 'The Sunless Sea', open: false },
   { n: 6, name: 'The Shattered Throne', open: false },
 ];
+
+/** Preview acts are playable when this is on: dev builds, tests and the sim, never production. */
+export const ACT_PREVIEW = { enabled: !!import.meta.env?.DEV };
+
+export function actOpen(n: number): boolean {
+  const a = ACTS.find((x) => x.n === n);
+  return !!a && (a.open || (!!a.preview && ACT_PREVIEW.enabled));
+}
 
 const atk = (name: string, ms = MONSTER_BASE_ATTACK_MS): MonsterSkill => ({ name, kind: 'attack', ms });
 const spell = (name: string, ms = MONSTER_BASE_ATTACK_MS, ground?: boolean): MonsterSkill => ({ name, kind: 'spell', ms, ground });
@@ -223,6 +243,131 @@ export const ZONES: ZoneDef[] = [
     spawnEveryMs: 10000,
     uniques: ['titans_girth', 'iron_bulwark', 'emberheart', 'ninth_psalm', 'mask_of_the_patient', 'penitents_plate', 'hollow_locket', 'twin_oaths'],
   },
+
+  // ---------------- Act 2: The Burning Steppe (docs/ACT2.md) ----------------
+  // Characters arrive around level 21 and leave around 25–27. Areas climb one level each, so the
+  // drop tiers (5 → 7) and boss mechanics (3 → 6) carry the sense of going deeper.
+  {
+    id: 'cinderroad', name: 'The Cinder Road', act: 2, tier: 5, levelRange: [24, 26], color: '#a0603a',
+    desc: 'The old trade road inland, its grass burned to stubble and still smoking.',
+    monsters: [
+      fast(m('ashjackal', 'Ash Jackal', 24, 'phys', atk('Snapping Bite', 2200), 0.75, 0.85)),
+      m('outrider', 'Steppe Outrider', 25, 'phys', atk('Lance Charge', 3600), 1.2, 1.1),
+      fast(m('vulture', 'Scorched Vulture', 25, 'fire', atk('Burning Talons', 2500), 0.8, 0.9)),
+      m('firesprite', 'Grass-Fire Sprite', 26, 'fire', spell('Flicker', 2800, true), 0.7, 1.1),
+    ],
+    boss: boss(m('khorun', 'Khorun the Outrider', 26, 'phys', atk('Sabre Sweep', 3600)), ['slam', 'summon', 'scorch'], { slam: atk('Trampling Charge', 3600), novaType: 'fire' }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 10000,
+    uniques: ['brawlers_buckle', 'titans_girth', 'sunmane_pelt'],
+  },
+  {
+    id: 'saltflats', name: 'The Saltpan Flats', act: 2, tier: 5, levelRange: [25, 27], color: '#b8b09a',
+    desc: 'A dead white sea of salt, shimmering with heat and things that are not there.',
+    monsters: [
+      slow(m('saltcrawler', 'Salt Crawler', 25, 'phys', atk('Crusted Pincer', 3800), 1.4, 1.1)),
+      m('mirage', 'Mirage Stalker', 26, 'light', spell('Glare Bolt', 2600), 0.8, 1.05),
+      fast(m('dustdevil', 'Dust Devil', 26, 'phys', atk('Scouring Wind', 2000), 0.7, 0.8)),
+      m('saltwitch', 'Salt Witch', 27, 'cold', spell('Salt Frost', 3400, true), 1, 1.2),
+    ],
+    boss: boss(m('glass', 'Sister Glass, the Mirage', 27, 'light', spell('Refracted Ray', 3600)), ['slam', 'nova', 'ward'], { slam: atk('Shattering Mirror', 3400), nova: spell('Blinding Flare', 4000) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 10000,
+    uniques: ['last_breath', 'mirage_veil', 'windchaser'],
+  },
+  {
+    id: 'blackgrass', name: 'The Blackgrass Sea', act: 2, tier: 6, levelRange: [26, 28], color: '#5a5a3a',
+    desc: 'Grass taller than a rider, black from root to tip, burning in slow red lines.',
+    monsters: [
+      fast(m('grasscat', 'Blackgrass Stalker', 26, 'phys', atk('Pounce', 2300), 0.85, 1)),
+      fast(m('firebrand', 'Firebrand Hound', 27, 'fire', atk('Searing Bite', 2600), 0.9, 1)),
+      slow(m('burnwalker', 'Burnt Walker', 27, 'fire', atk('Smouldering Fist', 4000), 1.5, 1.15)),
+      m('grassseer', 'Grass Seer', 28, 'fire', spell('Wildfire', 3300, true), 0.95, 1.2),
+    ],
+    boss: boss(m('ashmane', 'Ashmane, the Sun Lion', 28, 'fire', atk('Burning Maul', 3400)), ['slam', 'enrage', 'scorch'], { slam: atk('Pride Leap', 3400) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 10000,
+    uniques: ['sunmane_pelt', 'emberheart', 'knuckledusters'],
+  },
+  {
+    id: 'caravan', name: "Caravan's End", act: 2, tier: 6, levelRange: [27, 29], color: '#b08a5a',
+    desc: 'A walled caravanserai where the last caravan stopped and never left.',
+    monsters: [
+      m('raider', 'Khanate Raider', 27, 'phys', atk('Scimitar Slash', 2700), 1, 1),
+      m('lancer', 'Khanate Lancer', 28, 'phys', atk('Couched Lance', 3400), 1.1, 1.1),
+      slow(m('bonecamel', 'Bone Camel', 28, 'phys', atk('Stamping Hooves', 4200), 1.6, 1.15)),
+      m('hexmerchant', 'Cursed Merchant', 29, 'cold', spell('Cold Coin', 3200), 0.95, 1.15),
+    ],
+    boss: boss(m('tamsin', 'Bey Tamsin, the Bandit Khan', 29, 'phys', atk('Twin Scimitars', 3200)), ['slam', 'summon', 'enrage', 'scorch'], { slam: atk("Khan's Judgement", 3400), novaType: 'fire' }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 10000,
+    uniques: ['old_grudge', 'khans_tithe', 'twin_oaths'],
+  },
+  {
+    id: 'kurgans', name: 'The Kurgan Fields', act: 2, tier: 6, levelRange: [28, 30], color: '#6f7a8a',
+    desc: 'Grave mounds to the horizon, each one a chieftain buried with his horses.',
+    monsters: [
+      m('barrowwight', 'Barrow Wight', 28, 'cold', spell('Grave Chill', 3000), 0.85, 1.1),
+      fast(m('horseskel', 'Skeletal Steed', 29, 'phys', atk('Trample', 2400), 0.9, 0.95)),
+      slow(m('moundguard', 'Mound Guardian', 29, 'phys', atk('Bronze Axe', 3800), 1.5, 1.15)),
+      m('moundpriest', 'Kurgan Priest', 30, 'cold', spell('Frost Dirge', 3600, true), 1, 1.25),
+    ],
+    boss: boss(m('horselord', 'The Horse-Lord in the Mound', 30, 'cold', atk('Grave Lance', 3600)), ['slam', 'nova', 'summon', 'ward'], { slam: atk('Rising from the Barrow', 3400), nova: spell('Winter of the Dead', 4000) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 10000,
+    uniques: ['kurgan_crown', 'hollow_locket', 'iron_bulwark'],
+  },
+  {
+    id: 'plateau', name: 'The Thunder Plateau', act: 2, tier: 7, levelRange: [29, 31], color: '#6a78a0',
+    desc: 'A high bare tableland where the storms of the steppe come to break.',
+    monsters: [
+      fast(m('thunderhawk', 'Thunderhawk', 29, 'light', atk('Charged Dive', 2200), 0.75, 0.95)),
+      slow(m('rhino', 'Ironhide Rhino', 30, 'phys', atk('Gore', 4200), 1.7, 1.2)),
+      m('stormrider', 'Storm Rider', 30, 'light', atk('Crackling Lance', 3000), 1, 1.05),
+      m('skyshaman', 'Sky Shaman', 31, 'light', spell('Chain Thunder', 3400, true), 1, 1.25),
+    ],
+    boss: boss(m('qara', 'Qara, Rider of the Storm', 31, 'light', atk('Thunder Glaive', 3400)), ['slam', 'nova', 'enrage', 'scorch'], { slam: atk('Lightning Charge', 3200), nova: spell('Skyfall', 3800) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9500,
+    uniques: ['stormrider_greaves', 'stormhide', 'windchaser'],
+  },
+  {
+    id: 'pyretemple', name: 'The Pyre Temple', act: 2, tier: 7, levelRange: [30, 32], color: '#c0502a',
+    desc: 'A temple of red stone where the fire cult tends the flame that burns the steppe.',
+    monsters: [
+      m('ashmonk', 'Ash Monk', 30, 'fire', atk('Cinder Palm', 2600), 0.95, 1.05),
+      fast(m('dervish', 'Flame Dervish', 31, 'fire', atk('Whirling Blades', 2000), 0.8, 0.85)),
+      slow(m('pyregolem', 'Pyre Golem', 32, 'fire', atk('Molten Slam', 4200), 1.7, 1.25)),
+      m('acolyte', 'Flamekeeper Acolyte', 32, 'fire', spell('Pillar of Flame', 3500, true), 1, 1.3),
+    ],
+    boss: boss(m('ozar', 'High Flamekeeper Ozar', 32, 'fire', spell('Sacred Fire', 3600)), ['slam', 'nova', 'summon', 'ward', 'scorch'], { slam: atk('Brand of the Flame', 3200), nova: spell('Temple Inferno', 3800) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9500,
+    uniques: ['pyre_heart', 'ember_of_faith', 'ninth_psalm'],
+  },
+  {
+    id: 'burningthrone', name: 'The Burning Throne', act: 2, tier: 7, levelRange: [31, 32], color: '#e0702a',
+    desc: 'On the highest hill of the steppe the fallen sun still burns, and something sits inside it.',
+    monsters: [
+      m('sunguard', 'Sunscorched Guard', 31, 'fire', atk('Gilded Halberd', 3600), 1.3, 1.15),
+      m('wyrmling', 'Cinder Wyrmling', 32, 'fire', atk('Ember Breath', 2600), 0.9, 1.05),
+      m('ashseer', 'Ash Seer', 32, 'light', spell('Heat Lightning', 3200, true), 1, 1.2),
+      m('sunpriest', 'Priest of the Fallen Sun', 32, 'fire', spell('Solar Lance', 3600), 1, 1.25),
+    ],
+    boss: boss(m('azhar', 'Azhar, the Fallen Sun', 33, 'phys', atk('Sunfire Talons', 3400), 1.5, 1.05), ['slam', 'nova', 'summon', 'enrage', 'ward', 'scorch'], { slam: atk('Solar Crash', 3200), nova: spell('Corona', 3800), novaType: 'fire' }),
+    actBoss: true,
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9500,
+    uniques: ['starforged_edge', 'pyre_heart', 'kurgan_crown', 'khans_tithe', 'mirage_veil', 'stormrider_greaves', 'old_grudge', 'last_breath'],
+  },
 ];
 
 export function zoneDef(id: string): ZoneDef {
@@ -234,7 +379,12 @@ export function zoneDef(id: string): ZoneDef {
 /** The area the given area's boss unlocks, if there is one and its act is open. */
 export function nextZone(id: string): ZoneDef | undefined {
   const next = ZONES[ZONES.findIndex((z) => z.id === id) + 1];
-  return next && ACTS.find((a) => a.n === next.act)?.open ? next : undefined;
+  return next && actOpen(next.act) ? next : undefined;
+}
+
+/** The act boss's area for an act. */
+export function actBossZone(act: number): ZoneDef | undefined {
+  return ZONES.find((z) => z.act === act && z.actBoss);
 }
 
 export function zonesInAct(act: number): ZoneDef[] {
@@ -275,6 +425,10 @@ export const BOSS_WARD_AT = [0.66, 0.33];
 export const BOSS_WARD_PCT = 0.12;
 export const BOSS_WARD_MS = 8000;
 export const BOSS_WARD_HEAL = 0.1;
+/** scorch: ground under the player, as a fraction of the boss's hit per second, and how long it lasts */
+export const BOSS_SCORCH_EVERY_MS = 11000;
+export const BOSS_SCORCH_DPS = 0.2;
+export const BOSS_SCORCH_MS = 6000;
 
 /** What each mechanic is called on screen, and how to answer it. */
 export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> = {
@@ -283,4 +437,5 @@ export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> 
   summon: { name: 'Summons', tip: 'Calls more adds during the fight. Area skills keep them down.' },
   enrage: { name: 'Enrage', tip: 'Below 35% life it attacks 50% faster for 30% more damage. Burst it down or drink.' },
   ward: { name: 'Ward', tip: 'At 66% and 33% life it raises a barrier. Break it within 8 s or the boss heals 10%.' },
+  scorch: { name: 'Scorched earth', tip: 'Every 11 s it sets the ground under you ablaze (or frozen, or charged) for 6 s. Resist its element, or Run to step out sooner.' },
 };

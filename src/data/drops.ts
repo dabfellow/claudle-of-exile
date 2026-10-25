@@ -84,6 +84,25 @@ export const DROP_TABLES: Record<number, DropTable> = {
     flaskChance: 0.012,
     uniqueChance: 0.001,
   },
+  // Act 2 (zones.ts: 5, 5, 6, 6, 6, 7, 7, 7)
+  6: {
+    currencyChance: 0.055,
+    currency: { ...BASIC, regal: 9, alchemy: 9, chaos: 7, annul: 1.8, exalted: 0.4, divine: 0.8, expansion: 0.8, instill: 1.8 },
+    itemChance: 0.07,
+    rarity: { normal: 52, magic: 34, rare: 14 },
+    gemChance: 0.016,
+    flaskChance: 0.013,
+    uniqueChance: 0.0011,
+  },
+  7: {
+    currencyChance: 0.06,
+    currency: { ...BASIC, regal: 10, alchemy: 10, chaos: 8, annul: 2, exalted: 0.45, divine: 0.9, expansion: 0.9, instill: 2 },
+    itemChance: 0.075,
+    rarity: { normal: 50, magic: 34, rare: 16 },
+    gemChance: 0.017,
+    flaskChance: 0.013,
+    uniqueChance: 0.0012,
+  },
 };
 
 /** Boss rewards by area tier: deeper bosses guarantee better currency. */
@@ -93,14 +112,16 @@ export const BOSS_TABLES: Record<number, BossTable> = {
   3: { currencyRolls: 3, guaranteed: [{ id: 'chaos', qty: 1 }], repeatChance: 0.1, items: [2, 2], rarity: { normal: 0, magic: 60, rare: 40 }, gemChance: 0.4, flaskChance: 0.25, uniqueChance: 0.08 },
   4: { currencyRolls: 3, guaranteed: [{ id: 'chaos', qty: 2 }], repeatChance: 0.06, items: [2, 3], rarity: { normal: 0, magic: 55, rare: 45 }, gemChance: 0.4, flaskChance: 0.3, uniqueChance: 0.09 },
   5: { currencyRolls: 3, guaranteed: [{ id: 'exalted', qty: 1 }], repeatChance: 0.015, items: [2, 3], rarity: { normal: 0, magic: 50, rare: 50 }, gemChance: 0.45, flaskChance: 0.3, uniqueChance: 0.1 },
+  6: { currencyRolls: 3, guaranteed: [{ id: 'chaos', qty: 3 }], repeatChance: 0.04, items: [2, 3], rarity: { normal: 0, magic: 45, rare: 55 }, gemChance: 0.45, flaskChance: 0.3, uniqueChance: 0.11 },
+  7: { currencyRolls: 4, guaranteed: [{ id: 'exalted', qty: 1 }, { id: 'divine', qty: 1 }], repeatChance: 0.015, items: [3, 3], rarity: { normal: 0, magic: 40, rare: 60 }, gemChance: 0.5, flaskChance: 0.3, uniqueChance: 0.12 },
 };
 
 export function dropTable(tier: number): DropTable {
-  return DROP_TABLES[tier] ?? DROP_TABLES[5];
+  return DROP_TABLES[tier] ?? DROP_TABLES[7];
 }
 
 export function bossTable(tier: number): BossTable {
-  return BOSS_TABLES[tier] ?? BOSS_TABLES[5];
+  return BOSS_TABLES[tier] ?? BOSS_TABLES[7];
 }
 
 /** Orbs that never come from skilling — only from monsters (Gemcutting 45 cuts Orbs of Expansion, so they're not listed). */

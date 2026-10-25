@@ -1,5 +1,6 @@
 import { SKILL_BAR_SLOTS, type TacticRule } from '../data/gems';
 import {
+  actOpen,
   BOSS_ADDS,
   BOSS_DMG_MULT,
   BOSS_LIFE_MULT,
@@ -12,6 +13,9 @@ import {
   BOSS_NOVA_DEFAULT,
   BOSS_NOVA_EVERY_MS,
   BOSS_NOVA_MULT,
+  BOSS_SCORCH_DPS,
+  BOSS_SCORCH_EVERY_MS,
+  BOSS_SCORCH_MS,
   BOSS_SUMMON_COUNT,
   BOSS_SUMMON_EVERY_MS,
   BOSS_WARD_AT,
@@ -130,6 +134,8 @@ function newRuntime(zoneId: string): CombatRuntime {
 
 export function startCombat(s: GameState, ctx: Ctx, zoneId: string): string | null {
   if (!s.unlockedZones.includes(zoneId)) return 'Zone is locked';
+  // a save carried over from a preview build can hold areas of an act that isn't out yet
+  if (!actOpen(zoneDef(zoneId).act)) return "This act isn't open yet";
   s.action = { kind: 'combat', zoneId };
   s.combat = newRuntime(zoneId);
   ctx.emit({ t: 'info', text: `Entered ${zoneDef(zoneId).name}` });
@@ -190,7 +196,9 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     isBoss: boss,
     mechanics,
     // offset the first casts so a boss doesn't open with everything at once
-    timers: boss ? { slam: BOSS_SLAM_EVERY_MS * 0.6, nova: BOSS_NOVA_EVERY_MS * 0.8, summon: BOSS_SUMMON_EVERY_MS * 0.7 } : {},
+    timers: boss
+      ? { slam: BOSS_SLAM_EVERY_MS * 0.6, nova: BOSS_NOVA_EVERY_MS * 0.8, summon: BOSS_SUMMON_EVERY_MS * 0.7, scorch: BOSS_SCORCH_EVERY_MS * 0.5 }
+      : {},
     novaType: def.novaType ?? def.dmgType,
     casting: -1,
     castKind: null,
@@ -946,7 +954,8 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   if (mon.isBoss) {
     s.lifetime.bossKills += 1;
     s.zoneKills[zone.id] = 0;
-    if (zone.actBoss && s.character.classId === 'exile' && !Object.values(s.equipment).some((it) => it?.rarity === 'unique')) {
+    // Nothing But Will: Ysolde with no unique equipped
+    if (zone.id === 'sanctum' && s.character.classId === 'exile' && !Object.values(s.equipment).some((it) => it?.rarity === 'unique')) {
       s.lifetime.exileBareKills = (s.lifetime.exileBareKills ?? 0) + 1;
     }
     if (!s.bossesDefeated.includes(zone.id)) {
@@ -1276,6 +1285,15 @@ function bossPhases(s: GameState, ctx: Ctx, mon: MonsterInstance, dt: number): v
       // new adds take the front rank, so single-target skills have to chew through them
       const placed = place(s, ctx, fresh, 'front');
       if (placed.length) ctx.emit({ t: 'bossPhase', name: mon.name, text: `calls for aid (+${placed.length})` });
+    }
+  }
+  if (has('scorch')) {
+    mon.timers.scorch = (mon.timers.scorch ?? BOSS_SCORCH_EVERY_MS) - dt;
+    if (mon.timers.scorch <= 0) {
+      mon.timers.scorch = BOSS_SCORCH_EVERY_MS;
+      const kind = groundFor(mon.novaType);
+      layGround(s.combat!.ground, PLAYER_SPOT, kind, mon.damage * BOSS_SCORCH_DPS, BOSS_SCORCH_MS);
+      ctx.emit({ t: 'bossPhase', name: mon.name, text: `scorches the earth: ${GROUND[kind].name.toLowerCase()} under you!` });
     }
   }
 }

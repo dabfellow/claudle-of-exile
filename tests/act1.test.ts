@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
 import { actionsFor } from '../src/data/skills';
 import { uniqueDef } from '../src/data/bases';
-import { BOSS_WARD_PCT, nextZone, ZONES, zoneDef, zonesInAct, type MonsterDef } from '../src/data/zones';
+import { ACT_PREVIEW, BOSS_WARD_PCT, nextZone, ZONES, zoneDef, zonesInAct, type MonsterDef } from '../src/data/zones';
 import { aliveMonsters, combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
@@ -49,17 +49,23 @@ describe('Act 1 layout', () => {
     const act = zonesInAct(1);
     expect(act).toHaveLength(8);
     expect(act.at(-1)!.actBoss).toBe(true);
-    expect(ZONES.filter((z) => z.actBoss)).toHaveLength(1);
+    for (const n of new Set(ZONES.map((z) => z.act))) expect(zonesInAct(n).filter((z) => z.actBoss)).toHaveLength(1);
     for (let i = 1; i < act.length; i++) {
       expect(act[i].levelRange[0]).toBeGreaterThanOrEqual(act[i - 1].levelRange[0]);
       expect(act[i].boss.level).toBeGreaterThan(act[i - 1].boss.level);
     }
   });
 
-  it('each boss unlocks the next area, and the act boss unlocks nothing yet', () => {
+  it('each boss unlocks the next area, and the act boss opens Act 2 only once it is out', () => {
     const act = zonesInAct(1);
     for (let i = 0; i < act.length - 1; i++) expect(nextZone(act[i].id)?.id).toBe(act[i + 1].id);
-    expect(nextZone('sanctum')).toBeUndefined();
+    expect(nextZone('sanctum')?.id).toBe('cinderroad');
+    ACT_PREVIEW.enabled = false;
+    try {
+      expect(nextZone('sanctum')).toBeUndefined();
+    } finally {
+      ACT_PREVIEW.enabled = true;
+    }
   });
 
   it('every gated action, unique and monster id points at real data', () => {

@@ -605,6 +605,60 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_riposte_cooldown', values: [30] },
     ],
   },
+
+  // ---------- Act 2 (docs/ACT2.md) ----------
+  {
+    id: 'sunmane_pelt', name: 'Sunmane Pelt', baseId: 'wyrmscale_hauberk', flavour: 'Still warm.',
+    mods: [
+      { affixId: 'flat_life', values: [70] },
+      { affixId: 'inc_armour', values: [50] },
+      { affixId: 'fire_res', values: [40] },
+      { affixId: 'u_rage_on_hit_taken', values: [1] },
+    ],
+  },
+  {
+    id: 'mirage_veil', name: 'Mirage Veil', baseId: 'duskweave_cowl', flavour: 'What it hides was never there.',
+    mods: [
+      { affixId: 'inc_evasion', values: [60] },
+      { affixId: 'flat_es', values: [35] },
+      { affixId: 'all_res', values: [10] },
+      { affixId: 'u_malice_on_hit_taken', values: [1] },
+    ],
+  },
+  {
+    id: 'khans_tithe', name: "Khan's Tithe", baseId: 'diamond_ring', flavour: 'Every road pays.',
+    mods: [
+      { affixId: 'added_phys', values: [5, 11] },
+      { affixId: 'crit_chance', values: [20] },
+      { affixId: 'item_rarity', values: [25] },
+    ],
+  },
+  {
+    id: 'kurgan_crown', name: 'The Kurgan Crown', baseId: 'templar_crown', flavour: 'The dead keep their kings.',
+    mods: [
+      { affixId: 'flat_life', values: [50] },
+      { affixId: 'flat_es', values: [30] },
+      { affixId: 'cold_res', values: [40] },
+      { affixId: 'u_fervor_pct', values: [20] },
+    ],
+  },
+  {
+    id: 'stormrider_greaves', name: 'Stormrider Greaves', baseId: 'wyrmscale_boots', flavour: 'Ride ahead of the thunder.',
+    mods: [
+      { affixId: 'flat_evasion', values: [110] },
+      { affixId: 'light_res', values: [40] },
+      { affixId: 'u_momentum_effect', values: [20] },
+      { affixId: 'u_momentum_retain', values: [25] },
+    ],
+  },
+  {
+    id: 'pyre_heart', name: 'Heart of the Pyre', baseId: 'onyx_amulet', flavour: 'It beats.',
+    mods: [
+      { affixId: 'added_fire', values: [10, 20] },
+      { affixId: 'inc_elem', values: [25] },
+      { affixId: 'u_cast_speed', values: [10] },
+    ],
+  },
 ];
 
 export function uniqueDef(id: string): UniqueDef {

@@ -3616,10 +3616,14 @@ g.tut-hint circle.body {
 .chip.mechanic.summon { color: var(--currency); }
 .chip.mechanic.enrage { color: var(--bad); }
 .chip.mechanic.ward { color: var(--ward); }
+.chip.mechanic.scorch { color: var(--fire); }
 
 .act-complete {
   border-color: var(--good);
   background: color-mix(in srgb, var(--good) 8%, var(--panel));
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
 }
 
 .area-facts {

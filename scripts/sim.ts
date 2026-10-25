@@ -9,7 +9,7 @@ import { baseDef } from '../src/data/bases';
 import { CLASSES, type ClassId } from '../src/data/classes';
 import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { actionsFor } from '../src/data/skills';
-import { ZONES, zoneDef } from '../src/data/zones';
+import { ACTS, actBossZone, actOpen, ZONES } from '../src/data/zones';
 import { characterLevel } from '../src/engine/character';
 import { startCombat, useFlask } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
@@ -143,6 +143,8 @@ interface Result {
   classId: ClassId;
   levels: Record<number, number>;
   bosses: Record<string, number>;
+  /** character level when each boss first fell */
+  bossLevels: Record<string, number>;
   deaths: number;
   kills: number;
   finalLevel: number;
@@ -155,7 +157,7 @@ function runClass(classId: ClassId): Result {
   const s = newGame(SEED, { name: 'Bot', classId });
   s.tutorial.done = true;
   let now = 0;
-  const res: Result = { classId, levels: {}, bosses: {}, deaths: 0, kills: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0 };
+  const res: Result = { classId, levels: {}, bosses: {}, bossLevels: {}, deaths: 0, kills: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0 };
   const deathStreak: Record<string, number> = {};
   let retreatUntil = 0;
   const ctx: Ctx = {
@@ -167,7 +169,10 @@ function runClass(classId: ClassId): Result {
         res.kills++;
         const zone = s.combat?.zoneId;
         if (zone) deathStreak[zone] = 0;
-        if (e.boss && zone && res.bosses[zone] === undefined) res.bosses[zone] = now;
+        if (e.boss && zone && res.bosses[zone] === undefined) {
+          res.bosses[zone] = now;
+          res.bossLevels[zone] = characterLevel(s);
+        }
       }
       if (e.t === 'death') {
         res.deaths++;
@@ -250,15 +255,18 @@ const results = classes.map((c) => {
   return r;
 });
 
-const LEVELS = [2, 5, 10, 15, 20, 22, 25, 30];
+const LEVELS = [2, 5, 10, 15, 20, 22, 25, 28, 30];
 const pad = (s: string, n = 12) => s.padEnd(n);
 console.log('\nTime to character level');
 console.log(pad('level', 8) + results.map((r) => pad(r.classId)).join(''));
 for (const l of LEVELS) console.log(pad(String(l), 8) + results.map((r) => pad(fmt(r.levels[l]))).join(''));
 
-console.log('\nTime to first boss kill');
+console.log('\nTime to first boss kill (character level then)');
 console.log(pad('zone', 30) + results.map((r) => pad(r.classId)).join(''));
-for (const z of ZONES) console.log(pad(`${z.name} (${zoneDef(z.id).boss.level})`, 30) + results.map((r) => pad(fmt(r.bosses[z.id]))).join(''));
+for (const z of ZONES) {
+  if (!actOpen(z.act)) continue;
+  console.log(pad(`${z.name} (${z.boss.level})`, 30) + results.map((r) => pad(r.bosses[z.id] === undefined ? '—' : `${fmt(r.bosses[z.id])} L${r.bossLevels[z.id]}`)).join(''));
+}
 
 console.log('\nAfter the run');
 const row = (label: string, f: (r: Result) => string) => console.log(pad(label, 22) + results.map((r) => pad(f(r))).join(''));
@@ -276,6 +284,11 @@ console.log(pad('level', 8) + ['mining', 'woodcutting', 'harvesting'].map((x) =>
 const paces = (['mining', 'woodcutting', 'harvesting'] as SkillId[]).map((sk) => skillPace(sk, SKILL_TARGETS));
 for (const l of SKILL_TARGETS) console.log(pad(String(l), 8) + paces.map((p) => pad(fmt(p[l]), 14)).join(''));
 
-const actBoss = ZONES.find((z) => z.actBoss)!;
-console.log(`\nAct 1 complete (${actBoss.boss.name}): ` + results.map((r) => `${r.classId} ${fmt(r.bosses[actBoss.id])}`).join(' · '));
-console.log('GDD targets: Act 1 done in ~1 day (6–10h active), level 100 and 99 skills in months.\n');
+console.log('');
+for (const act of ACTS.filter((a) => actOpen(a.n))) {
+  const z = actBossZone(act.n);
+  if (!z) continue;
+  const at = (r: Result) => (r.bosses[z.id] === undefined ? '—' : `${fmt(r.bosses[z.id])} (L${r.bossLevels[z.id]})`);
+  console.log(`Act ${act.n} complete (${z.boss.name}): ` + results.map((r) => `${r.classId} ${at(r)}`).join(' · '));
+}
+console.log('GDD targets: Act 1 done in ~1 day (6–10h active), each later act 3–7 days; level 100 and 99 skills in months.\n');

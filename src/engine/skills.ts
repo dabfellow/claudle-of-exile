@@ -5,7 +5,7 @@ import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
 import { ALCH_DOUBLE, ALCH_SPEED, FORGE_ILVL, FORGE_SPEED } from '../data/hideout';
 import { HERB_TIERS, ORB_TIERS } from '../data/skillTree';
 import { actionDef, type SkillAction } from '../data/skills';
-import { ZONES, zoneDef } from '../data/zones';
+import { actOpen, ZONES, zoneDef } from '../data/zones';
 import { addBank, canAfford, hasItem, payCost } from './bank';
 import type { Ctx } from './context';
 import { newFlask, rerollMagic } from './flasks';
@@ -48,7 +48,7 @@ export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): numb
 
 /** Smithed gear can't out-level the campaign: capped at the top level of your furthest unlocked area. */
 export function smithIlvlCap(s: GameState): number {
-  return Math.max(...ZONES.filter((z) => s.unlockedZones.includes(z.id)).map((z) => z.levelRange[1]));
+  return Math.max(...ZONES.filter((z) => s.unlockedZones.includes(z.id) && actOpen(z.act)).map((z) => z.levelRange[1]));
 }
 
 /** Item level of a smithed base; `resin` is the bonus from a Resin in the catalyst slot. */

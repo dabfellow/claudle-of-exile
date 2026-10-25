@@ -2,7 +2,7 @@ import { uniqueDef } from '../../data/bases';
 import { bossTable, dropTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
 import { useState } from 'react';
-import { ACTS, MECHANIC_INFO, zonesInAct, type ZoneDef } from '../../data/zones';
+import { actOpen, ACTS, MECHANIC_INFO, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
 import { characterLevel } from '../../engine/character';
 import { bossIsNext, startCombat } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
@@ -130,13 +130,21 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
   );
 }
 
+/** The act you're fighting in, else the furthest act you've reached. */
+function currentAct(s: GameState): number {
+  if (s.combat) return zoneDef(s.combat.zoneId).act;
+  return Math.max(1, ...ZONES.filter((z) => s.unlockedZones.includes(z.id) && actOpen(z.act)).map((z) => z.act));
+}
+
 export function CampaignPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
-  const [act, setAct] = useState(1);
+  const [act, setAct] = useState(() => currentAct(s));
   const current = ACTS.find((a) => a.n === act)!;
+  const open = actOpen(act);
   const zones = zonesInAct(act);
   const cleared = zones.filter((z) => s.bossesDefeated.includes(z.id)).length;
   const done = zones.length > 0 && cleared === zones.length;
+  const next = ACTS.find((a) => a.n === act + 1);
   return (
     <div className="page">
       <PageHeader title="Campaign">Choose where to fight. Each area's boss unlocks the next one.</PageHeader>
@@ -144,7 +152,11 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
         value={String(act)}
         onChange={(id) => id !== 'maps' && setAct(Number(id))}
         tabs={[
-          ...ACTS.map((a) => ({ id: String(a.n), label: a.open ? `Act ${a.n}` : <>Act {a.n} <GameIcon name="lock" size={12} /></> })),
+          ...ACTS.map((a) => ({
+            id: String(a.n),
+            label: actOpen(a.n) ? `Act ${a.n}` : <>Act {a.n} <GameIcon name="lock" size={12} /></>,
+            title: !a.open && actOpen(a.n) ? 'Preview: not released yet' : undefined,
+          })),
           { id: 'maps', label: <>Maps <GameIcon name="lock" size={12} /></>, disabled: true, title: 'Unlocks after Act 6' },
         ]}
       />
@@ -152,6 +164,7 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
         <h2>
           Act {current.n}: {current.name}
         </h2>
+        {open && !current.open && <Badge tone="locked">Preview</Badge>}
         {zones.length > 0 && <ProgressBar value={cleared / zones.length} color={done ? 'var(--success)' : undefined} />}
         {zones.length > 0 && (
           <span className="dim small num">
@@ -163,11 +176,19 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
         <div className="card act-complete">
           <h3>Act {current.n} complete</h3>
           <p className="muted" style={{ margin: 0 }}>
-            The Drowned Queen has fallen. Act {current.n + 1} arrives in a future update — until then, farm the coast for better gear, push your skills and fill your stash.
+            {current.outro}{' '}
+            {next && actOpen(next.n)
+              ? `Act ${next.n}, ${next.name}, is open.`
+              : `Act ${current.n + 1} arrives in a future update — until then, farm these areas for better gear, push your skills and fill your stash.`}
           </p>
+          {next && actOpen(next.n) && (
+            <button className="btn primary" style={{ alignSelf: 'flex-start' }} onClick={() => setAct(next.n)}>
+              On to Act {next.n}
+            </button>
+          )}
         </div>
       )}
-      {!current.open || zones.length === 0 ? (
+      {!open || zones.length === 0 ? (
         <div className="card">
           <EmptyState icon={<GameIcon name="lock" size={32} color="var(--dim)" />} title="Coming soon">
             This act isn't open yet. Finish Act {current.n - 1} when it arrives.

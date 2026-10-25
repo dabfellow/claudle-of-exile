@@ -337,6 +337,15 @@ export const ZONE_ART: Record<string, string> = {
   shipgrave: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
   stormcliffs: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
   sanctum: new URL('../assets/zones/gegx-tavern-day.webp', import.meta.url).href,
+  // Act 2: the same few landscapes again until it gets its own art
+  cinderroad: new URL('../assets/zones/gegx-forest-day.webp', import.meta.url).href,
+  saltflats: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
+  blackgrass: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
+  caravan: new URL('../assets/zones/gegx-tavern-day.webp', import.meta.url).href,
+  kurgans: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
+  plateau: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
+  pyretemple: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
+  burningthrone: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
 };
 
 export const SCENE_ART: Record<string, string> = {
