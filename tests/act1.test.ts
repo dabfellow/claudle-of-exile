@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { activeGemDef } from '../src/data/gems';
 import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
 import { actionsFor } from '../src/data/skills';
 import { uniqueDef } from '../src/data/bases';
@@ -20,7 +21,7 @@ function arena(gems: string[], pack: MonsterInstance[], zoneId = 'mudflats') {
   const s = newGame(1, { name: 'T', classId: 'warrior' });
   s.skills.combat = charXpForLevel(20);
   s.skillBar = s.skillBar.map(() => null);
-  gems.forEach((id, i) => (s.skillBar[i] = createSkillGem(s, id)));
+  gems.forEach((id, i) => (s.skillBar[i] = { ...createSkillGem(s, id), rule: { ...activeGemDef(id).defaultRule } }));
   s.unlockedZones = ZONES.map((z) => z.id);
   const c = ctx();
   startCombat(s, c, zoneId);

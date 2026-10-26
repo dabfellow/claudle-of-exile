@@ -16,7 +16,7 @@ import {
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { EmptyState, PageHeader, ProgressBar, Tooltip } from '../components/common';
-import { GemIcon, GemTip, SupportTip } from '../components/GemView';
+import { GemIcon, GemTip, ruleText, SupportTip } from '../components/GemView';
 import { Icon } from '../components/Icon';
 
 export const SKILL_KEYS = ['Q', 'W', 'E', 'R', 'T', 'Y'];
@@ -72,6 +72,7 @@ function GemFilters({
 
 function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGemInstance }) {
   const meta = RULE_LABELS[gem.rule.when];
+  const suggested = activeGemDef(gem.gemId).defaultRule;
   return (
     <div className="rule-editor">
       <select
@@ -101,6 +102,11 @@ function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGe
           />
           <span className="dim">{meta.unit}</span>
         </span>
+      )}
+      {gem.rule.when === 'manual' && suggested.when !== 'manual' && (
+        <button className="btn sm ghost" title="Automate this skill with its suggested rule" onClick={() => game.act((st) => setRule(st, slot, { ...suggested }))}>
+          Suggested: {ruleText(suggested)}
+        </button>
       )}
       {s.combat?.queued === slot && <span className="chip">queued</span>}
     </div>

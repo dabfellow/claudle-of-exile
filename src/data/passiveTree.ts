@@ -533,7 +533,7 @@ const FORBIDDEN: (KeystoneSpec & { id: string; angle: number })[] = [
   {
     id: 'forbidden_overclock', angle: 0, name: 'Overclock',
     stats: { overclock: 1 },
-    desc: 'Your skills have no cooldowns and cost nothing. Every 8 seconds of fighting you overheat and can’t act for 2 seconds.',
+    desc: 'Your skills cost nothing and their cooldowns drop to the 0.1 s minimum. Every 8 seconds of fighting you overheat and can’t act for 2 seconds.',
   },
   {
     id: 'forbidden_knifes_edge', angle: 120, name: "Knife's Edge",

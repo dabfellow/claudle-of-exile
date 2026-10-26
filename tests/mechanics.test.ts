@@ -5,7 +5,7 @@ import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { zoneDef } from '../src/data/zones';
 import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
-import { createSkillGem } from '../src/engine/gems';
+import { createSkillGem, MIN_COOLDOWN_MS } from '../src/engine/gems';
 import { mechanicOf, meterMax } from '../src/engine/mechanics';
 import { startNode } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
@@ -202,13 +202,13 @@ describe('forbidden keystones', () => {
     expect(used([fast.id])).toBeLessThan(used([]));
   });
 
-  it('Overclock: no cooldowns or mana costs, but you overheat and stop acting', () => {
+  it('Overclock: no mana costs and minimum cooldowns, but you overheat and stop acting', () => {
     const { s, ctx } = arena('warrior', 'war_cry', ['forbidden_overclock']);
     s.mana = 0;
     run(s, ctx, 7000);
     const cries = ctx.events.filter((e) => e.t === 'skill' && e.gemId === 'war_cry').length;
     expect(cries).toBeGreaterThan(3);
-    expect(s.combat!.cooldowns[0]).toBe(0);
+    expect(s.combat!.cooldowns[0]).toBeLessThanOrEqual(MIN_COOLDOWN_MS);
     run(s, ctx, 2000, () => s.combat!.overheatMs > 0);
     expect(s.combat!.overheatMs).toBeGreaterThan(0);
     const seen = ctx.events.length;

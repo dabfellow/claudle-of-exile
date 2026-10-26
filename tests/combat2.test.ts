@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { activeGemDef } from '../src/data/gems';
 import { zoneDef } from '../src/data/zones';
 import { aliveMonsters, chooseSkill, combatStep, makeMonster, queueSkill, ruleAllows, ruleContext, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
@@ -7,6 +8,7 @@ import {
   createSupportGem,
   gemLevelReq,
   gemXpForLevel,
+  MIN_COOLDOWN_MS,
   grantGemXp,
   placeOnBar,
   removeFromBar,
@@ -29,7 +31,8 @@ function arena(gems: string[], pack: MonsterInstance[], classId: 'warrior' | 'ra
   const s = newGame(1, { name: 'T', classId });
   s.skills.combat = charXpForLevel(20);
   s.skillBar = s.skillBar.map(() => null);
-  gems.forEach((id, i) => (s.skillBar[i] = createSkillGem(s, id)));
+  // gems start Manual only; these fights want each skill on its suggested rule
+  gems.forEach((id, i) => (s.skillBar[i] = { ...createSkillGem(s, id), rule: { ...activeGemDef(id).defaultRule } }));
   const c = ctx();
   startCombat(s, c, 'mudflats');
   s.combat!.monsters = pack;
@@ -112,6 +115,13 @@ describe('skill gems', () => {
 });
 
 describe('tactics', () => {
+  it('new skill gems start Manual only', () => {
+    const s = newGame(1, { name: 'T', classId: 'warrior' });
+    expect(createSkillGem(s, 'heavy_strike').rule).toEqual({ when: 'manual' });
+    expect(s.skillBar.filter(Boolean).every((g) => g!.rule.when === 'manual')).toBe(true);
+  });
+
+
   it('rules read the fight', () => {
     const { s } = arena(['heavy_strike'], [dummy(), dummy(), dummy()]);
     const rc = ruleContext(s, deriveStats(s));
@@ -159,6 +169,35 @@ describe('combat 2.0', () => {
     const { s, c } = arena(['spark'], [dummy(), dummy(), dummy()], 'mage');
     run(s, c, 2000);
     expect(s.combat!.monsters.every((m) => m.life < m.maxLife)).toBe(true);
+  });
+
+  it('instant spells fire without using the turn: Spark, then straight into an attack', () => {
+    const { s, c } = arena(['spark'], [dummy()], 'mage');
+    expect(activeGemDef('spark').timeMs).toBe(0);
+    s.combat!.actionMs = 0;
+    s.combat!.monsters[0].cell = 0; // already in reach
+    combatStep(s, c, 50, deriveStats(s));
+    expect(s.combat!.cooldowns[0]).toBeGreaterThan(0);
+    expect(s.combat!.using).toBe('default_attack');
+    expect(s.combat!.actionMs).toBeGreaterThan(0);
+  });
+
+  it('no cooldown ever goes below the 0.1 s minimum', () => {
+    const { s } = arena(['spark', 'heavy_strike'], [dummy()], 'mage');
+    const d = deriveStats(s);
+    d.raw.cooldownRecovery = 1e6;
+    expect(skillNumbers(d, s.skillBar[0]).cooldownMs).toBe(MIN_COOLDOWN_MS);
+    d.raw.cooldownRecovery = -100; // a zero or negative recovery speed must not make it 0 or negative either
+    expect(skillNumbers(d, s.skillBar[0]).cooldownMs).toBeGreaterThanOrEqual(MIN_COOLDOWN_MS);
+    d.raw.cooldownRecovery = 0;
+    d.raw.overclock = 1;
+    expect(skillNumbers(d, s.skillBar[0]).cooldownMs).toBe(MIN_COOLDOWN_MS);
+    expect(skillNumbers(d, s.skillBar[1]).cooldownMs).toBe(MIN_COOLDOWN_MS);
+  });
+
+  it('big wind-up spells keep a cast time', () => {
+    expect(activeGemDef('fireball').timeMs).toBeGreaterThan(0);
+    expect(activeGemDef('glacial_lance').timeMs).toBeGreaterThan(0);
   });
 
   it('skills spend mana', () => {

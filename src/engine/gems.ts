@@ -60,9 +60,9 @@ export function gemProgress(gem: SkillGemInstance): number {
 
 // ---------- creation & sockets ----------
 
+/** New gems are Manual only: nothing casts itself until you give it a rule (its suggested one is a click away). */
 export function createSkillGem(s: GameState, gemId: string, level = 1): SkillGemInstance {
-  const def = activeGemDef(gemId);
-  return { uid: newUid(s), gemId, level, xp: gemXpForLevel(level), supports: [null], extraSlots: 0, rule: { ...def.defaultRule } };
+  return { uid: newUid(s), gemId, level, xp: gemXpForLevel(level), supports: [null], extraSlots: 0, rule: { when: 'manual' } };
 }
 
 export function createSupportGem(s: GameState, supportId: string): SupportGemInstance {
@@ -232,7 +232,8 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
   // each skill has its own base attack or cast time; attack speed or cast speed shortens it
   const dexSkill = def.id === 'twin_strike' || def.id === 'lacerate' ? d.raw.dexSkillSpeed : 0;
   const speed = isAttack ? d.attackSpeed * (1 + (mods.attackSpeed + dexSkill) / 100) : d.castSpeed * (1 + mods.castSpeed / 100);
-  const actionMs = def.timeMs / speed;
+  // instant skills take no time; Overclock cuts cooldowns to the minimum, so there they take half a second instead
+  const actionMs = def.timeMs ? def.timeMs / speed : d.raw.overclock ? OVERCLOCK_INSTANT_MS : 0;
   // mana cost grows a little with gem level, like PoE
   const r = d.raw;
   const manaCost = Math.round(
@@ -245,11 +246,18 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
     level,
     mods,
     manaCost: Math.max(0, manaCost),
-    cooldownMs: def.cooldownMs / cooldownSpeed,
+    // nothing — stats, keystones, resets — ever takes a cooldown below the minimum
+    cooldownMs: r.overclock ? MIN_COOLDOWN_MS : Math.max(MIN_COOLDOWN_MS, def.cooldownMs / cooldownSpeed),
     actionMs,
     durationMult: (1 + mods.durationPct / 100) * (1 + (r.skillDuration + (isGuard ? r.guardDuration : 0)) / 100),
   };
 }
+
+/** The shortest cooldown any skill can ever have, ms. Skills without a cooldown of their own get this too. */
+export const MIN_COOLDOWN_MS = 100;
+
+/** How long an instant skill takes under Overclock, whose cooldowns are only the minimum. */
+export const OVERCLOCK_INSTANT_MS = 500;
 
 /** Scaling of a gem's own numbers with its level. */
 export function weaponPctAt(def: ActiveGemDef, level: number): number {

@@ -7,6 +7,7 @@
  */
 import { baseDef } from '../src/data/bases';
 import { CLASSES, type ClassId } from '../src/data/classes';
+import { activeGemDef } from '../src/data/gems';
 import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { actionsFor } from '../src/data/skills';
 import { ACTS, actBossZone, actOpen, ZONES } from '../src/data/zones';
@@ -109,10 +110,11 @@ function upgradeGear(s: GameState, ctx: Ctx) {
   if (s.inventory.length > 25) salvage(s, ctx, s.inventory.map((i: Item) => i.uid));
 }
 
-/** Fill empty support sockets with any loose support that fits. */
+/** Fill empty support sockets with any loose support that fits, and automate skills with their suggested rule. */
 function socketGems(s: GameState) {
   for (const gem of s.skillBar) {
     if (!gem) continue;
+    if (gem.rule.when === 'manual') gem.rule = { ...activeGemDef(gem.gemId).defaultRule };
     syncSockets(gem);
     gem.supports.forEach((sup, i) => {
       if (sup) return;

@@ -5,7 +5,7 @@ import { BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, zoneDef } from '../../da
 import { CELLS, COLUMNS, GROUND, groundFor, inReach, MAX_ROW, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT } from '../../engine/battlefield';
 import { aliveMonsters, bossIsNext, currentMovement, mitigate, queueSkill, retreat, setMovement, useFlask } from '../../engine/combat';
 import { flaskStats } from '../../engine/flasks';
-import { skillNumbers } from '../../engine/gems';
+import { MIN_COOLDOWN_MS, skillNumbers } from '../../engine/gems';
 import { meterLabel, meterMax, mechanicOf } from '../../engine/mechanics';
 import { classDef } from '../../data/classes';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
@@ -357,7 +357,8 @@ export function SkillBar({ s, d, fx }: { s: GameState; d: Derived; fx?: Fx }) {
           );
         const def = activeGemDef(gem.gemId);
         const nums = skillNumbers(d, gem);
-        const cd = c?.cooldowns[i] ?? 0;
+        // every skill has at least the 0.1 s minimum cooldown; only show real ones
+        const cd = nums.cooldownMs > MIN_COOLDOWN_MS ? (c?.cooldowns[i] ?? 0) : 0;
         const cdPct = nums.cooldownMs ? cd / nums.cooldownMs : 0;
         const noMana = s.mana < nums.manaCost;
         const flashed = fx?.usedSlot?.slot === i ? fx.usedSlot.n : 0;

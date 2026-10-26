@@ -17,7 +17,7 @@ The bot pushes the furthest zone it's levelled for (area min level ≤ char leve
 | Character XP curve | `engine/xp.ts` `CHAR_CURVE` | `36·(L−1)³ + 100·(L−1)` to 100 |
 | Kill XP | `engine/combat.ts` `monsterXp`, `KILL_XP_SCALE` | `(5 + 3·level) × 10 for bosses × 0.8`, × level-difference multiplier |
 | Death penalty | `engine/character.ts` | 5% of xp toward next level |
-| Player action times | `data/gems.ts` `timeMs`, `BASE_ATTACK_MS` | default attack 3 s; each skill has its own attack or cast time (Heavy Strike 3.9 s, Twin Strike 2.7 s, Spark 2.4 s, Fireball 3.6 s, guards 0.75–1.2 s). Weapons add attack speed (`data/bases.ts` `speed`, 0–35%); attack and cast speed shorten them |
+| Player action times | `data/gems.ts` `timeMs`, `BASE_ATTACK_MS` | default attack 3 s; each skill has its own attack or cast time (Heavy Strike 3.9 s, Twin Strike 2.7 s, Fireball 3.6 s, guards 0.75–1.2 s). Most spells are instant (`timeMs: 0`) and limited by their cooldown, so they don't use up the turn; only big wind-ups (Fireball, Glacial Lance) have a cast time. Under Overclock instant skills take 0.5 s (`OVERCLOCK_INSTANT_MS`). No cooldown can ever drop below 0.1 s (`MIN_COOLDOWN_MS` in `engine/gems.ts`): not through cooldown recovery, Arcane Recursion or Overclock, whose cooldowns sit at that minimum. Weapons add attack speed (`data/bases.ts` `speed`, 0–35%); attack and cast speed shorten them |
 | Monster life | `data/zones.ts` `MONSTER_LIFE_SCALE` | ×0.85 (was ×1.8 when actions were ~2× quicker) |
 | Monster action times | `data/zones.ts` `basic`, `slam`, `nova` | every monster has a named basic attack or spell (1.9–4.2 s, default 3 s); each boss has its own slam and nova wind-ups (3.2–4.4 s) |
 | Base life regen | `engine/stats.ts` `BASE_REGEN_PCT` | 0.5%/s |

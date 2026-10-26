@@ -58,7 +58,7 @@ import {
 import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './character';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
-import { grantGemXp, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
+import { grantGemXp, MIN_COOLDOWN_MS, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
 import { rollLoot } from './loot';
 import { chance, pick, rInt } from './rng';
@@ -793,12 +793,12 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   const r = d.raw;
   c.using = def.id;
   c.manaFrac = manaFraction(s, d);
-  // Overclock: no costs, no cooldowns
+  // Overclock: no costs, and cooldowns at the minimum
   if (!r.overclock) {
     if (r.bloodPact) s.life -= nums.manaCost;
     else s.mana -= nums.manaCost;
-    if (slot >= 0 && nums.cooldownMs) c.cooldowns[slot] = nums.cooldownMs;
   }
+  if (slot >= 0) c.cooldowns[slot] = Math.max(MIN_COOLDOWN_MS, nums.cooldownMs);
   if (mechanicOf(s) === 'rage' && def.id === 'war_cry') gainMeter(s, d, 10);
   if (slot >= 0) ctx.emit({ t: 'skill', slot, gemId: def.id, manual });
 
@@ -1416,13 +1416,19 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   if (c.overheatMs > 0) c.overheatMs -= dt;
   else c.actionMs -= underPlayer(c, 'chilled') ? dt * CHILLED_GROUND_SLOW : dt;
   if (c.actionMs <= 0) {
-    const choice = chooseSkill(s, d);
-    performSkill(s, ctx, d, choice.slot, choice.nums, choice.manual);
-    const time = choice.nums.actionMs / (1 + 0.06 * c.flurryStacks);
-    c.actionTotal = time;
-    c.actionMs = Math.max(c.actionMs + time, time * 0.5);
-    reapDead(s, ctx, d);
-    if (!s.combat || !c.monsters.length) return true;
+    // instant skills don't use up the turn: fire them and choose again. Each goes on cooldown,
+    // so this ends on a skill that takes time (at worst the Default Attack); the cap is a safety net
+    for (let n = 0; n < 8; n++) {
+      const choice = chooseSkill(s, d);
+      performSkill(s, ctx, d, choice.slot, choice.nums, choice.manual);
+      reapDead(s, ctx, d);
+      if (!s.combat || !c.monsters.length) return true;
+      if (choice.nums.actionMs <= 0) continue;
+      const time = choice.nums.actionMs / (1 + 0.06 * c.flurryStacks);
+      c.actionTotal = time;
+      c.actionMs = Math.max(c.actionMs + time, time * 0.5);
+      break;
+    }
   }
 
   // the monsters' turn

@@ -62,12 +62,14 @@ export interface ActiveGemDef {
   cooldownMs: number;
   /**
    * Base time to use the skill, ms. Attacks: attack time, sped up by weapon and attack speed.
-   * Spells and utility: cast time, sped up by cast speed.
+   * Spells and utility: cast time, sped up by cast speed. 0 = instant: most spells are instant
+   * and limited by their cooldown; only big wind-up spells (Fireball, Glacial Lance) have a cast time.
    */
   timeMs: number;
   effect: SkillEffect;
   desc: string;
   color: string;
+  /** the suggested automation rule, offered in the rule editor (gems themselves start Manual only) */
   defaultRule: TacticRule;
 }
 
@@ -239,7 +241,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   // ---------- Intelligence ----------
   A({
     id: 'spark', name: 'Spark', attr: 'int', role: 'main', tags: ['spell', 'projectile', 'chain'],
-    manaCost: 5, cooldownMs: 2000, timeMs: 2400, color: '#6fc8ff',
+    manaCost: 5, cooldownMs: 2000, timeMs: 0, color: '#6fc8ff',
     effect: { base: [4, 16], type: 'light', targets: 'chain', chains: 2, crit: 6 },
     desc: 'Crackling bolts that chain to the 2 nearest enemies.',
     defaultRule: { when: 'always' },
@@ -253,14 +255,14 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   }),
   A({
     id: 'frost_ward', name: 'Frost Ward', attr: 'int', role: 'guard', tags: ['spell', 'guard', 'duration'],
-    manaCost: 12, cooldownMs: 10000, timeMs: 1200, color: '#bfe3ff',
+    manaCost: 12, cooldownMs: 10000, timeMs: 0, color: '#bfe3ff',
     effect: { shieldPct: 30, buff: { durationMs: 5000 } },
     desc: 'An ice shield absorbing damage equal to 30% of your life for 5s.',
     defaultRule: { when: 'enemyCasting' },
   }),
   A({
     id: 'arcane_siphon', name: 'Arcane Siphon', attr: 'int', role: 'sustain', tags: ['spell', 'sustain'],
-    manaCost: 0, cooldownMs: 5000, timeMs: 2700, color: '#9b6dde',
+    manaCost: 0, cooldownMs: 5000, timeMs: 0, color: '#9b6dde',
     effect: { base: [6, 10], type: 'cold', targets: 'single', crit: 5, leechLife: 25, leechMana: 40 },
     desc: 'Drain the target, returning life and mana. Costs no mana.',
     defaultRule: { when: 'lifeBelow', value: 60 },
@@ -274,28 +276,28 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   }),
   A({
     id: 'meditate', name: 'Meditate', attr: 'int', role: 'sustain', tags: ['spell', 'sustain'],
-    manaCost: 0, cooldownMs: 15000, timeMs: 1500, color: '#7f9fe0',
+    manaCost: 0, cooldownMs: 15000, timeMs: 0, color: '#7f9fe0',
     effect: { restoreManaPct: 30 },
     desc: 'Still the mind; refill the well. Restores 30% of your mana.',
     defaultRule: { when: 'manaBelow', value: 30 },
   }),
   A({
     id: 'shock_nova', name: 'Shock Nova', attr: 'int', role: 'area', tags: ['spell', 'area'],
-    manaCost: 9, cooldownMs: 4000, timeMs: 3000, color: '#a0c8ff',
+    manaCost: 9, cooldownMs: 4000, timeMs: 0, color: '#a0c8ff',
     effect: { base: [5, 11], type: 'light', targets: 'all', crit: 5 },
     desc: 'A burst of lightning that strikes every enemy.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
   }),
   A({
     id: 'consecrate', name: 'Consecrate', attr: 'int', role: 'sustain', tags: ['spell', 'area', 'duration'],
-    manaCost: 10, cooldownMs: 6000, timeMs: 1500, color: '#f0c070',
+    manaCost: 10, cooldownMs: 6000, timeMs: 0, color: '#f0c070',
     effect: { base: [5, 9], type: 'fire', targets: 'all', buff: { durationMs: 4000, regenPct: 2 } },
     desc: 'Hallow the ground: burn the pack, and regenerate 2% of your life per second for 4s.',
     defaultRule: { when: 'lifeBelow', value: 70 },
   }),
   A({
     id: 'frost_needle', name: 'Frost Needle', attr: 'int', role: 'main', tags: ['spell', 'projectile'],
-    manaCost: 5, cooldownMs: 2000, timeMs: 2400, color: '#c0e8ff',
+    manaCost: 5, cooldownMs: 2000, timeMs: 0, color: '#c0e8ff',
     effect: { base: [2, 5], type: 'cold', hits: 3, targets: 'single', crit: 4 },
     desc: 'Three needles of ice in quick succession.',
     defaultRule: { when: 'always' },

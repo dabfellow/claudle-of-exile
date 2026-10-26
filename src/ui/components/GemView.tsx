@@ -91,14 +91,14 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
             <span style={{ color: 'var(--mana-2)' }}>{nums.manaCost}</span>
           </>
         )}
-        {nums.cooldownMs > 0 && (
+        {def.cooldownMs > 0 && (
           <>
             <span className="muted">Cooldown</span>
             <span>{(nums.cooldownMs / 1000).toFixed(1)}s</span>
           </>
         )}
         <span className="muted">{def.tags.includes('attack') ? 'Attack time' : 'Cast time'}</span>
-        <span>{(nums.actionMs / 1000).toFixed(2)}s</span>
+        <span>{nums.actionMs > 0 ? `${(nums.actionMs / 1000).toFixed(2)}s` : 'Instant'}</span>
         {sum.perUse > 0 && (
           <>
             <span className="muted">Damage per use</span>
