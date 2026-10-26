@@ -13,6 +13,7 @@ import {
 } from '../../data/gems';
 import {
   expandSockets,
+  gemAttrReason,
   gemProgress,
   placeOnBar,
   removeFromBar,
@@ -24,6 +25,7 @@ import {
   syncSockets,
   unsocketSupport,
 } from '../../engine/gems';
+import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { EmptyState, PageHeader, ProgressBar, Tooltip } from '../components/common';
@@ -336,6 +338,7 @@ export function SkillGemsPage() {
     setPickedGem(null);
     setPickedSupport(null);
   };
+  const attrs = deriveStats(s, []).attributes;
   const has = (name: string, search: string) => name.toLowerCase().includes(search.trim().toLowerCase());
   const byName = (a: string, b: string) => activeGemDef(a).name.localeCompare(activeGemDef(b).name);
   const gems = s.gems
@@ -411,7 +414,10 @@ export function SkillGemsPage() {
           <div className="gem-bag">
             {gems.map((g) => (
               <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
-                <button className={`gem-card ${pickedGem === g.uid ? 'selected' : ''}`} onClick={() => (setPickedSupport(null), setPickedGem(pickedGem === g.uid ? null : g.uid))}>
+                <button
+                  className={`gem-card ${pickedGem === g.uid ? 'selected' : ''} ${gemAttrReason(attrs, g) ? 'nofit' : ''}`}
+                  onClick={() => (setPickedSupport(null), setPickedGem(pickedGem === g.uid ? null : g.uid))}
+                >
                   <GemIcon def={activeGemDef(g.gemId)} size={34} />
                   <span>
                     <b>{activeGemDef(g.gemId).name}</b>

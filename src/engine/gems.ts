@@ -6,6 +6,7 @@ import {
   SKILL_BAR_SLOTS,
   supportGemDef,
   type ActiveGemDef,
+  type GemAttr,
   type SupportGemDef,
   type SupportMods,
   type TacticRule,
@@ -13,7 +14,7 @@ import {
 import { characterLevel } from './character';
 import type { Ctx } from './context';
 import { newUid } from './items';
-import type { Derived } from './stats';
+import { deriveStats, type Attributes, type Derived } from './stats';
 import type { GameState, SkillGemInstance, SupportGemInstance } from './types';
 
 // ---------- levels ----------
@@ -28,23 +29,45 @@ export function gemLevelReq(level: number): number {
   return 1 + (level - 1) * 3;
 }
 
+export const GEM_ATTR_NAME: Record<GemAttr, string> = { str: 'Strength', dex: 'Dexterity', int: 'Intelligence' };
+
+/**
+ * A skill gem needs its own attribute, more as it levels: 8 at gem level 1, 44 at 5, 89 at 10, 116 at 13.
+ * That sits between a main attribute (~5 a level) and an off one (~1–2.5 a level), so every class can use any
+ * gem early, but an off-attribute skill stops levelling unless the build invests in that attribute.
+ */
+export const GEM_ATTR_PER_LEVEL = 3;
+
+export function gemAttrReq(level: number): number {
+  return Math.floor(8 + GEM_ATTR_PER_LEVEL * (gemLevelReq(level) - 1));
+}
+
+/** Why you can't use this gem at its current level, or null. */
+export function gemAttrReason(attrs: Attributes, gem: SkillGemInstance, level = gem.level): string | null {
+  const attr = activeGemDef(gem.gemId).attr;
+  const need = gemAttrReq(level);
+  return attrs[attr] < need ? `Requires ${need} ${GEM_ATTR_NAME[attr]}` : null;
+}
+
 export function supportSlots(gem: SkillGemInstance): number {
   return Math.min(MAX_SUPPORT_SLOTS, Math.min(4, 1 + Math.floor(gem.level / 5)) + gem.extraSlots);
 }
 
 /** Gems on the skill bar share the character's xp. Levels stall until the character catches up. */
-export function grantGemXp(s: GameState, ctx: Ctx, amount: number): void {
+export function grantGemXp(s: GameState, ctx: Ctx, amount: number, attrs: Attributes = deriveStats(s, []).attributes): void {
   const charLvl = characterLevel(s);
+  // a level waits for both the character level and the attribute it needs
+  const canReach = (gem: SkillGemInstance, level: number) => charLvl >= gemLevelReq(level) && !gemAttrReason(attrs, gem, level);
   for (const gem of s.skillBar) {
     if (!gem || gem.level >= MAX_GEM_LEVEL) continue;
     const next = gem.level + 1;
     const cap = gemXpForLevel(next);
-    if (charLvl < gemLevelReq(next)) {
+    if (!canReach(gem, next)) {
       gem.xp = Math.min(cap, gem.xp + amount);
       continue;
     }
     gem.xp += amount;
-    while (gem.level < MAX_GEM_LEVEL && gem.xp >= gemXpForLevel(gem.level + 1) && charLvl >= gemLevelReq(gem.level + 1)) {
+    while (gem.level < MAX_GEM_LEVEL && gem.xp >= gemXpForLevel(gem.level + 1) && canReach(gem, gem.level + 1)) {
       gem.level += 1;
       ctx.emit({ t: 'gemLevel', gemId: gem.gemId, level: gem.level });
     }
@@ -106,6 +129,8 @@ export function placeOnBar(s: GameState, gemUid: number, slot: number): string |
   }
   const fromBag = s.gems.findIndex((g) => g.uid === gemUid);
   if (fromBag < 0) return 'Gem not found';
+  const reason = gemAttrReason(deriveStats(s, []).attributes, s.gems[fromBag]);
+  if (reason) return reason;
   const [gem] = s.gems.splice(fromBag, 1);
   const current = s.skillBar[slot];
   if (current) s.gems.push(current);
@@ -259,9 +284,15 @@ export const MIN_COOLDOWN_MS = 100;
 /** How long an instant skill takes under Overclock, whose cooldowns are only the minimum. */
 export const OVERCLOCK_INSTANT_MS = 500;
 
+/**
+ * Attack gems add this much weapon damage % per level. It's high enough that gem level matters,
+ * so an off-attribute attack stuck at a low level (see gemAttrReq) falls well behind.
+ */
+export const ATTACK_PCT_PER_LEVEL = 8;
+
 /** Scaling of a gem's own numbers with its level. */
 export function weaponPctAt(def: ActiveGemDef, level: number): number {
-  return (def.effect.weaponPct ?? 100) + 3 * (level - 1);
+  return (def.effect.weaponPct ?? 100) + ATTACK_PCT_PER_LEVEL * (level - 1);
 }
 
 /** Spells also deal your flat added elemental damage (gear, wand implicits) at this effectiveness. */

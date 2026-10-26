@@ -1,5 +1,5 @@
 import { activeGemDef, ACTIVE_GEMS, DEFAULT_ATTACK, RULE_LABELS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
-import { gemLevelReq, gemProgress, skillSummary, supportSlots } from '../../engine/gems';
+import { GEM_ATTR_NAME, gemAttrReq, gemLevelReq, gemProgress, skillSummary, supportSlots } from '../../engine/gems';
 import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { fmt, ProgressBar } from './common';
@@ -67,6 +67,21 @@ export function ruleText(rule: TacticRule): string {
   return r.unit !== undefined ? `${r.label} ${rule.value ?? r.defaultValue}${r.unit}` : r.label;
 }
 
+/** "Requires 44 Dexterity (you have 30)", and a warning when the next level is out of reach. */
+function GemRequirement({ have, attr, level }: { have: number; attr: ActiveGemDef['attr']; level: number }) {
+  const need = gemAttrReq(level);
+  const next = gemAttrReq(level + 1);
+  return (
+    <div className="small" style={{ marginBottom: 6 }}>
+      <span className={have >= need ? 'muted' : 'bad'}>
+        Requires {need} {GEM_ATTR_NAME[attr]} (you have {have})
+      </span>
+      {have >= need && have < next && <div className="warn">Stops levelling: level {level + 1} needs {next}</div>}
+      {have < need && <div className="bad">Can't be used until you have {need}</div>}
+    </div>
+  );
+}
+
 export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | null; state: GameState; def?: ActiveGemDef }) {
   const def = given ?? (gem ? activeGemDef(gem.gemId) : DEFAULT_ATTACK);
   const d = deriveStats(state, []);
@@ -85,6 +100,7 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
         </div>
       </div>
       <div style={{ margin: '6px 0' }}>{def.desc}</div>
+      {gem && <GemRequirement have={d.attributes[def.attr]} attr={def.attr} level={gem.level} />}
       <div className="delta-list">
         {nums.manaCost > 0 && (
           <>

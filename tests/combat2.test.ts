@@ -6,6 +6,7 @@ import { makeCtx } from '../src/engine/context';
 import {
   createSkillGem,
   createSupportGem,
+  gemAttrReq,
   gemLevelReq,
   gemXpForLevel,
   MIN_COOLDOWN_MS,
@@ -68,9 +69,22 @@ describe('skill gems', () => {
     expect(gem.level).toBe(1);
     expect(gem.xp).toBe(gemXpForLevel(2));
     s.skills.combat = charXpForLevel(gemLevelReq(10));
-    grantGemXp(s, ctx(), gemXpForLevel(10));
+    grantGemXp(s, ctx(), gemXpForLevel(10), { str: 999, dex: 999, int: 999 });
     expect(gem.level).toBe(10);
     expect(supportSlots(gem)).toBe(3);
+  });
+
+  it('skill gems need their attribute: they stop levelling short of it and stay off the bar', () => {
+    const s = newGame(1, { name: 'T', classId: 'warrior' });
+    const strike = s.skillBar[0]!; // Heavy Strike, a Strength gem
+    s.skills.combat = charXpForLevel(gemLevelReq(10));
+    grantGemXp(s, ctx(), gemXpForLevel(10), { str: gemAttrReq(4), dex: 0, int: 0 });
+    expect(strike.level).toBe(4);
+    expect(gemAttrReq(1)).toBeLessThanOrEqual(8); // every class can use any level-1 gem
+    const lacerate = createSkillGem(s, 'lacerate', 10);
+    s.gems.push(lacerate);
+    expect(placeOnBar(s, lacerate.uid, 2)).toMatch(/Requires \d+ Dexterity/);
+    expect(s.skillBar[2]).toBeNull();
   });
 
   it('supports only fit matching skills, signatures only their own', () => {

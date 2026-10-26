@@ -16,7 +16,7 @@ import { equipFlask, flaskRecoveryAmount, startCombat, useFlask } from '../src/e
 import type { Ctx } from '../src/engine/context';
 import { applyOrb, orbReason, salvage } from '../src/engine/crafting';
 import { equip, equipReason, slotsFor } from '../src/engine/equipment';
-import { placeOnBar, removeFromBar, skillNumbers, skillSummary, socketSupport, supportReason, syncSockets, unsocketSupport } from '../src/engine/gems';
+import { gemAttrReason, placeOnBar, removeFromBar, skillNumbers, skillSummary, socketSupport, supportReason, syncSockets, unsocketSupport } from '../src/engine/gems';
 import { flaskDef } from '../src/data/flasks';
 import { buyOffer, rerollCost, rerollVendor } from '../src/engine/hideout';
 import { pickUp } from '../src/engine/storage';
@@ -122,9 +122,10 @@ const DAMAGE_ROLES = new Set(['main', 'burst', 'area']);
  */
 function manageSkills(s: GameState) {
   const d = deriveStats(s, []);
-  // the best copy of each gem it owns: highest level wins
+  // the best copy of each gem it owns and meets the attribute for: highest level wins
   const owned = new Map<string, SkillGemInstance>();
   for (const g of [...s.skillBar.filter((x): x is SkillGemInstance => !!x), ...s.gems]) {
+    if (gemAttrReason(d.attributes, g)) continue;
     const have = owned.get(g.gemId);
     if (!have || g.level > have.level) owned.set(g.gemId, g);
   }
@@ -136,7 +137,11 @@ function manageSkills(s: GameState) {
   const damage = all.filter((g) => DAMAGE_ROLES.has(role(g)) && bare(g) > 0).sort((a, b) => bare(b) - bare(a)).slice(0, 3);
   // casters keep a mana skill when their damage costs mana
   const sustain = damage.some((g) => !activeGemDef(g.gemId).tags.includes('attack')) ? pick('sustain') : undefined;
-  const want = [pick('guard'), pick('buff'), sustain, ...damage].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
+  // instant damage skills don't use up the turn, so any free slot gets the strongest of them on top
+  const instant = all
+    .filter((g) => DAMAGE_ROLES.has(role(g)) && activeGemDef(g.gemId).timeMs === 0 && !damage.includes(g) && bare(g) > 0)
+    .sort((a, b) => bare(b) - bare(a));
+  const want = [pick('guard'), pick('buff'), sustain, ...damage, ...instant].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
 
   // put the bar together: anything leaving takes no supports with it
   const keep = new Set(want.map((g) => g.uid));
@@ -332,6 +337,7 @@ function runClass(classId: ClassId): Result {
     console.log(`  [${classId}] masteries:`, JSON.stringify(s.masteries));
     console.log(`  [${classId}] bar:`, s.skillBar.map((g) => g && `${g.gemId}:${g.level}[${g.supports.filter(Boolean).map((x) => x!.supportId).join('+')}]`).join(' | '));
     console.log(`  [${classId}] gear:`, Object.entries(s.equipment).map(([k, i]) => `${k}=${i?.baseId}`).join(' '));
+    console.log(`  [${classId}] attributes ${JSON.stringify(d.attributes)}`);
     console.log(`  [${classId}] life ${d.maxLife} armour ${d.armour} res ${JSON.stringify(d.res)} dps ${d.dps.toFixed(0)}`);
   }
   res.finalLevel = characterLevel(s);

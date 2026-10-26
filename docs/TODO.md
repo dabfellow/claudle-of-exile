@@ -32,6 +32,7 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - [ ] Skill bar auto setup (rules and priority) needs a big overhaul. Needs design with you: more priority control, maybe more.
 - [ ] Support gems limited to some skill types (e.g. only Warcries): not built yet, beyond the current attack/spell/melee fits.
 - [ ] Attack mana costs: with a mana flask the bot is short of mana 0–5% of fight time (Exile 10%), so costs look fine; only matters if you play without a mana flask.
+- [ ] Make enemies tougher so Act 1 takes ~6–10 h with the smarter bot (in progress 2026-10-26: gem requirements and 8% attack scaling shipped first; enemy tuning next).
 - [ ] **[You]** Pacing: with the smarter bot every class finishes Act 1 in 2.4–4.8 h (target 6–10 h active) and Act 2 in 4.5–7.7 h ([BALANCE.md](BALANCE.md) → "Smarter bot"). Decide how much slower you want it before Act 2 releases.
   - Every class ends on Lacerate + Backstab: burst attacks that lost their cooldowns. Give them a cooldown back, or raise their mana costs?
 - [ ] Auto-crafting needs real design work later (you: "way later").
@@ -48,7 +49,6 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - Quivers don't exist yet; when added they go in the off hand (bows are two-handed today, so that needs a rule).
 - Uniques with "% increased Mana Regeneration" (Wellspring, …) now only scale flat mana regen; give them some flat regen if they feel dead.
 Parked 2026-10-24 until more of the game is built: testing, sim balancing and art.
-- Test cloud save sync between two browsers on the live site.
 - Class balance doesn't need to be exact. Sim notes in [BALANCE.md](BALANCE.md) for when it's picked back up:
   - Warrior missed Act 1 in 14 h on 2 of 3 seeds (33–54 DPS vs 50–100 for others).
   - Ranger and Duelist ran 10–13 h on some seeds.
@@ -68,6 +68,8 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Skill gems need their own attribute (8 at gem level 1, 44 at 5, 89 at 10, 116 at 13): short of it a gem stops levelling, can't go on the bar, and stops firing; tooltip shows it. Attack gems gain +8% weapon damage per level (was 3%) so a capped off-class attack falls behind. Bot respects requirements and slots instant spells into spare slots — done 2026-10-26
+- [x] Cloud save sync between two browsers on the live site (you: works fine) — done 2026-10-26
 - [x] Smarter sim bot: rebuilds its skill bar from owned gems, best supports, flask belt, mana/utility flask use, crafts worn gear; reports orbs used, out-of-mana time and the final bar. Re-ran all 7 classes (12 h, seed 1) against the old bot ([BALANCE.md](BALANCE.md)) — done 2026-10-26
 - [x] Cleanup: off-hand picker compares against the off hand; duplicate `.page.wide` rule removed; offline-boss tests get a 20 s timeout; two dead exports removed; sim gear-swap logic shared — done 2026-10-26
 - [x] Tutorial: skills-are-manual wording, Life Flask then a new Mana Flask step, Mine 9 ore so the cheapest smith (gloves/boots) is reachable, bench wording; save v16 keeps mid-tutorial players on their step. Combat: "Next area" buttons once the area's boss is down. Skill rules: while target is / isn't affected by Bleed, Poison, Ignite, Stun, Freeze, Chill, Shock or Broken armour. Sidebar: Hideout alone on top; Combat, Stash, Campaign, Trader, Equipment, Bench, Skills, Passive Tree; Achievements in its own Progress group at the bottom — done 2026-10-26
