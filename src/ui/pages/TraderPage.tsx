@@ -69,6 +69,42 @@ function nameClass(o: VendorOffer): string {
   return '';
 }
 
+/** The stall's shelves, top to bottom; each offer kind sits on one. */
+const SHELVES: { label: string; kinds: VendorOffer['kind'][] }[] = [
+  { label: 'Arms & armour', kinds: ['item'] },
+  { label: 'Gems', kinds: ['gem', 'support'] },
+  { label: 'Flasks & orbs', kinds: ['flask', 'currency'] },
+];
+
+function OfferCard({ s, o, gold }: { s: GameState; o: VendorOffer; gold: number }) {
+  const afford = gold >= o.price;
+  const full = o.kind === 'item' && bagFull(s);
+  return (
+    <Tooltip content={offerTip(s, o)}>
+      <div className={`offer-card ${rarityClass(o)} ${afford ? '' : 'poor'}`}>
+        <div className="offer-art">
+          <OfferIcon o={o} />
+        </div>
+        <div className="offer-text">
+          <b className={nameClass(o)}>{offerName(o)}</b>
+          <span className="offer-kind">{o.item ? `${o.item.rarity[0].toUpperCase()}${o.item.rarity.slice(1)} ${KIND_LABEL[o.kind].toLowerCase()}` : KIND_LABEL[o.kind]}</span>
+        </div>
+        <span className={`price-tag ${afford ? '' : 'short'}`}>
+          <MatIcon id="gold" size={14} /> {fmt(o.price)}
+        </span>
+        <button
+          className={`btn sm ${afford && !full ? 'primary' : ''}`}
+          disabled={!afford || full}
+          title={full ? 'Inventory full' : afford ? '' : 'Not enough gold'}
+          onClick={() => game.act((st, ctx) => buyOffer(st, ctx, o.id))}
+        >
+          {full ? 'Bag full' : afford ? 'Buy' : 'Too costly'}
+        </button>
+      </div>
+    </Tooltip>
+  );
+}
+
 function BuyTab({ s }: { s: GameState }) {
   const gold = s.bank.gold ?? 0;
   const cost = rerollCost(s);
@@ -91,37 +127,19 @@ function BuyTab({ s }: { s: GameState }) {
           </EmptyState>
         </div>
       ) : (
-        <div className="offer-grid">
-          {s.vendor.stock.map((o) => {
-            const afford = gold >= o.price;
-            const full = o.kind === 'item' && bagFull(s);
+        <div className="stall">
+          {SHELVES.map((shelf) => {
+            const goods = s.vendor.stock.filter((o) => shelf.kinds.includes(o.kind));
+            if (!goods.length) return null;
             return (
-              <Tooltip key={o.id} content={offerTip(s, o)}>
-                <div className={`card offer-card ${rarityClass(o)} ${afford ? '' : 'poor'}`}>
-                  <div className="offer-top">
-                    <div className="offer-art">
-                      <OfferIcon o={o} />
-                    </div>
-                    <div className="offer-text">
-                      <span className="offer-kind">{o.item ? `${o.item.rarity[0].toUpperCase()}${o.item.rarity.slice(1)} ${KIND_LABEL[o.kind].toLowerCase()}` : KIND_LABEL[o.kind]}</span>
-                      <b className={nameClass(o)}>{offerName(o)}</b>
-                    </div>
-                  </div>
-                  <div className="offer-foot">
-                    <span className={`price ${afford ? '' : 'short'}`}>
-                      <MatIcon id="gold" size={14} /> {fmt(o.price)}
-                    </span>
-                    <button
-                      className={`btn sm ${afford && !full ? 'primary' : ''}`}
-                      disabled={!afford || full}
-                      title={full ? 'Inventory full' : afford ? '' : 'Not enough gold'}
-                      onClick={() => game.act((st, ctx) => buyOffer(st, ctx, o.id))}
-                    >
-                      {full ? 'Inventory full' : afford ? 'Buy' : 'Too costly'}
-                    </button>
-                  </div>
+              <section key={shelf.label} className="shelf">
+                <div className="shelf-label">{shelf.label}</div>
+                <div className="shelf-goods">
+                  {goods.map((o) => (
+                    <OfferCard key={o.id} s={s} o={o} gold={gold} />
+                  ))}
                 </div>
-              </Tooltip>
+              </section>
             );
           })}
         </div>
@@ -274,7 +292,8 @@ export function TraderPage() {
   const lvl = stationLevel(s, 'vendor');
   return (
     <div className="page">
-      <div className="card npc-panel">
+      <div className="card npc-panel shopfront">
+        <div className="awning" aria-hidden />
         <div className="npc-portrait">
           <Art src="portraits/trader.png" alt={TRADER_NAME} className="portrait-img" fallback={<GameIcon name="vendor" size={56} color="var(--accent-2)" />} />
         </div>

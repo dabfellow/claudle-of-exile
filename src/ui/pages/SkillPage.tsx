@@ -312,6 +312,32 @@ function SkillHeader({ skill }: { skill: SkillId }) {
   );
 }
 
+interface Tier {
+  key: string;
+  label: string;
+  actions: SkillAction[];
+}
+
+/**
+ * Activities split into tiers: gathering by the material a node mainly gives (Copper, Iron, …),
+ * production by bands of ten levels.
+ */
+function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
+  const tiers: Tier[] = [];
+  for (const a of actions) {
+    const out = a.outputs ? Object.keys(a.outputs)[0] : undefined;
+    const band = Math.floor(a.level / 10) * 10;
+    const key = SKILLS[skill].group === 'gathering' && out ? out : `band-${band}`;
+    let t = tiers.find((x) => x.key === key);
+    if (!t) {
+      t = { key, label: key.startsWith('band-') ? `Tier ${band / 10 + 1}` : materialDef(out!).name, actions: [] };
+      tiers.push(t);
+    }
+    t.actions.push(a);
+  }
+  return tiers;
+}
+
 export function SkillPage({ skill }: { skill: SkillId }) {
   const s = useGame();
   const level = skillLevel(s, skill);
@@ -366,10 +392,29 @@ export function SkillPage({ skill }: { skill: SkillId }) {
             {allOpen ? 'Collapse all' : 'Expand all'}
           </button>
         </div>
-        <div className="action-grid">
-          {shown.map((a) => (
-            <ActionCard key={a.id} a={a} level={level} open={open.has(a.id)} onToggle={() => toggle(a.id)} />
-          ))}
+        <div className="tier-list">
+          {tiersOf(skill, shown).map((t) => {
+            const lo = Math.min(...t.actions.map((a) => a.level));
+            const hi = Math.max(...t.actions.map((a) => a.level));
+            const got = t.actions.filter(isUnlocked).length;
+            return (
+              <div key={t.key} className={`tier-group ${got ? '' : 'locked'}`}>
+                <div className="tier-head">
+                  <span className="tier-name">{t.label}</span>
+                  <span className="tier-range">{lo === hi ? `Lv ${lo}` : `Lv ${lo}–${hi}`}</span>
+                  <span className="tier-rule" />
+                  <span className="dim small num">
+                    {got}/{t.actions.length} unlocked
+                  </span>
+                </div>
+                <div className="action-grid">
+                  {t.actions.map((a) => (
+                    <ActionCard key={a.id} a={a} level={level} open={open.has(a.id)} onToggle={() => toggle(a.id)} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>

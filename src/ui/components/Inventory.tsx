@@ -65,6 +65,10 @@ export function ItemTile({
   );
 }
 
+/**
+ * Items as a grid of tiles. With `slots`, the grid always has that many cells (empty ones padded in),
+ * so a page looks the same at 3 items as at 30 and never grows.
+ */
 export function ItemTiles({
   s,
   items,
@@ -73,6 +77,7 @@ export function ItemTiles({
   marked,
   showUpgrade,
   empty,
+  slots,
 }: {
   s: GameState;
   items: Item[];
@@ -81,12 +86,33 @@ export function ItemTiles({
   marked?: (item: Item) => boolean;
   showUpgrade?: boolean;
   empty?: ReactNode;
+  slots?: number;
 }) {
-  if (!items.length) return <div className="item-tiles-empty dim small">{empty ?? 'Nothing here.'}</div>;
+  if (!items.length && !slots) return <div className="item-tiles-empty dim small">{empty ?? 'Nothing here.'}</div>;
+  const pad = slots ? Math.max(0, slots - items.length) : 0;
   return (
-    <div className="item-tiles">
+    <div className={`item-tiles ${slots ? `fixed slots-${slots}` : ''}`}>
       {items.map((item) => (
         <ItemTile key={item.uid} item={item} s={s} selected={selected?.(item)} marked={marked?.(item)} showUpgrade={showUpgrade} onClick={() => onClick?.(item)} />
+      ))}
+      {Array.from({ length: pad }, (_, i) => (
+        <span key={`empty-${i}`} className="item-tile empty" />
+      ))}
+    </div>
+  );
+}
+
+/** Bag pages hold 30 each: two for the 60-slot bag. */
+export const BAG_PAGE = 30;
+
+export function PageTabs({ count, page, setPage, fill }: { count: number; page: number; setPage: (n: number) => void; fill?: (i: number) => string }) {
+  if (count < 2) return null;
+  return (
+    <div className="stash-pages">
+      {Array.from({ length: count }, (_, i) => (
+        <button key={i} className={`stash-page-tab ${i === page ? 'active' : ''}`} onClick={() => setPage(i)} title={fill?.(i)}>
+          {i + 1}
+        </button>
       ))}
     </div>
   );
@@ -128,11 +154,15 @@ export function Inventory({
   actions?: ReactNode;
 }) {
   const [sort, setSort] = useState<SortKey>('recent');
+  const [page, setPage] = useState(0);
   const [salvageMode, setSalvageMode] = useState(false);
   const [marked, setMarked] = useState<Set<number>>(new Set());
   /** clicks so far on a rarity button: 1 selects them all, the next salvages (uniques ask once more) */
   const [armed, setArmed] = useState<{ rarity: Rarity; clicks: number } | null>(null);
   const sorted = sortItems(s, items, sort);
+  const pages = Math.max(1, Math.ceil((cap ?? 0) / BAG_PAGE), Math.ceil(items.length / BAG_PAGE));
+  const shownPage = Math.min(page, pages - 1);
+  const pageItems = sorted.slice(shownPage * BAG_PAGE, (shownPage + 1) * BAG_PAGE);
   const markedUniques = items.some((i) => marked.has(i.uid) && i.rarity === 'unique');
   const [confirmMarked, setConfirmMarked] = useState(false);
 
@@ -186,6 +216,12 @@ export function Inventory({
             {items.length}/{cap}
           </span>
         )}
+        <PageTabs
+          count={pages}
+          page={shownPage}
+          setPage={setPage}
+          fill={(i) => `${Math.max(0, Math.min(BAG_PAGE, items.length - i * BAG_PAGE))}/${BAG_PAGE}`}
+        />
         <span className="grow" />
         <SortTabs value={sort} onChange={setSort} />
       </div>
@@ -235,12 +271,13 @@ export function Inventory({
       </div>
       <ItemTiles
         s={s}
-        items={sorted}
+        items={pageItems}
+        slots={BAG_PAGE}
         showUpgrade={!onPick && !salvageMode}
         selected={(item) => selected === item.uid || (salvageMode && marked.has(item.uid))}
         onClick={click}
-        empty="Your bag is empty. Pick up loot from the ground in combat."
       />
+      {!items.length && <div className="dim small item-tiles-note">Your bag is empty. Pick up loot from the ground in combat.</div>}
     </div>
   );
 }

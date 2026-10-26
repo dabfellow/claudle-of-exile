@@ -1,27 +1,38 @@
 import { UPCOMING_SKILLS } from '../../data/skills';
-import { Badge, PageHeader } from '../components/common';
+import { Badge } from '../components/common';
 import { Icon } from '../components/Icon';
 
 /** Skills that are planned but not built: a teaser list (docs/SKILLING_REWORK.md §8). */
 export function UpcomingSkillsPage() {
   return (
     <div className="page">
-      <PageHeader kicker="Skilling" title="Coming soon">
-        More skills are on the way. None of these can be trained yet.
-      </PageHeader>
+      <div className="card upcoming-hero">
+        <div className="upcoming-hero-icons" aria-hidden>
+          {UPCOMING_SKILLS.map((u) => (
+            <span key={u.name} style={{ ['--skill' as string]: u.color }}>
+              <Icon name={u.icon} size={26} color={u.color} />
+            </span>
+          ))}
+        </div>
+        <span className="page-kicker">Skilling</span>
+        <h1>Coming soon</h1>
+        <p>
+          {UPCOMING_SKILLS.length} more skills are on the workbench. None of them can be trained yet.
+        </p>
+      </div>
       <div className="upcoming-grid">
         {UPCOMING_SKILLS.map((u) => (
           <div key={u.name} className="card upcoming-card" style={{ ['--skill' as string]: u.color }}>
             <div className="upcoming-icon">
-              <Icon name={u.icon} size={22} color={u.color} />
+              <Icon name={u.icon} size={34} color={u.color} />
             </div>
             <div className="upcoming-text">
-              <div className="row">
-                <b>{u.name}</b>
-                <Badge tone="locked">Coming soon</Badge>
-              </div>
-              <span className="dim small">{u.theme}</span>
+              <b className="upcoming-name">{u.name}</b>
+              <span className="upcoming-theme">{u.theme}</span>
               <p>{u.desc}</p>
+            </div>
+            <div className="upcoming-foot">
+              <Badge tone="locked">In the works</Badge>
             </div>
           </div>
         ))}

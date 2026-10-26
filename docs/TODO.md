@@ -36,7 +36,12 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - [ ] Auto-crafting needs real design work later (you: "way later").
 - Inventory look is with the other session; the Equipment and Bench bag views should improve with it.
 
+### UI feedback (your walkthrough #2, 2026-10-25) — you test at 1440p and 4K
+- **[You]** Icons: gathering nodes (Copper Vein, Scorched Seam …) and currency need art; you'll go through icons yourself.
+- Campaign: needs real area art (already above). Map Device: work in progress.
+
 ## Ideas / later
+- At 1440p/4K pages stop at 1280px wide (`.page` max-width), leaving wide empty margins; consider a wider cap on big screens. Also `.page.wide` is defined twice in `styles.css` (1440px, then 1320px wins).
 - The act1 offline-boss test takes ~3 s alone and can brush vitest's 5 s timeout when the whole suite runs at once.
 - The sim (`scripts/sim.ts`) doesn't smith or cut gems, so the Smithing/Gemcutting cost change isn't reflected in balance runs.
 - Smithing has 95 recipes in one list; group by slot (weapons, armour, jewellery) if it still feels long.
@@ -65,6 +70,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] UI pass 3 (your walkthrough #2): Hideout "where to get it" flies out beside the cost panel; belt art fits the belt strip; bag is 2 fixed pages of 30 (Stash, Equipment, Bench) and stash pages are a fixed 80-slot grid, so nothing grows; combat has ringed monster tiles, Matchup in place of Active target, one skills + flasks bar with ground loot under it; Bench and Stash flasks in Life / Mana / Granite / Quicksilver / Diamond / Ruby tabs; Skills page gem lists full width with search, Str/Dex/Int, type and sort filters (supports: "Fits my skills"); Trader's Stall as a shop (awning, shelves by kind, price tags); skilling activities split into tiers (gathering by ore/log/herb, production by 10-level bands); new Coming soon screen — done 2026-10-25
 - [x] Town pass 2: Character banner moved into the Hideout hero; station upgrade cost hidden behind a hover chip (have/need per material, right-click to lock, hover or right-click a material for where to get it, click a source to go there); next unlock shown on each Hideout skill tile; bars with numbers are tall enough to read (top bar, combat, resistances); bag salvage has All normal/magic/rare/unique (click once to select, again to salvage; uniques ask a third time); currency pills no longer slide under the character plate on narrower screens — done 2026-10-25
 - [x] Single-target attacks lost their cooldowns (mana is their limit, PoE-style); guards, buffs, spells and area skills keep theirs and act before attacks on the bar — done 2026-10-25
 - [x] Skilling pass 2: Smithing ×3 materials and 10 s+ per base; Gemcutting is one Skill Gem and one Support Gem recipe from the whole pool, 20–30 s and pricier; Harvesting shown as Foraging; one Skilling sidebar group with a gathering/production line; compact click-to-expand activity cards; Fishing added as a permanent "coming soon" skill with catches and a skilling-tree branch that does nothing; Coming soon page for the five planned skills ([SKILLING_REWORK.md](SKILLING_REWORK.md) §8) — done 2026-10-25

@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { activeGemDef, supportGemDef } from '../../data/gems';
 import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
-import { flaskName } from '../../engine/flasks';
 import { STASH_PAGE_SIZE } from '../../data/hideout';
 import { buyStashPage, stashedItems, stashItems, stashPagePrice, takeFromStash } from '../../engine/storage';
 import { game } from '../../game';
 import type { GameState } from '../../engine/types';
 import { useGame } from '../../game';
 import { Art, CurrencyAmount, EmptyState, fmt, MatIcon, PageHeader, Tabs, Tooltip, type TabDef } from '../components/common';
-import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
+import { FlaskShelf } from '../components/FlaskView';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
 import { Orb, Swatch } from '../components/Icon';
 import { Inventory, ItemTiles, sortItems, SortTabs, type SortKey } from '../components/Inventory';
@@ -215,16 +214,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
             </button>
           </div>
           {s.flaskStash.length === 0 && <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>}
-          <div className="gem-bag">
-            {s.flaskStash.map((f) => (
-              <Tooltip key={f.uid} content={<FlaskTip f={f} />}>
-                <div className="gem-card" onContextMenu={(e) => (e.preventDefault(), pinFlask(f))}>
-                  <FlaskIcon f={f} size={30} />
-                  <b className={f.rarity === 'magic' ? 'magic-text' : ''}>{flaskName(f)}</b>
-                </div>
-              </Tooltip>
-            ))}
-          </div>
+          <FlaskShelf flasks={s.flaskStash} />
         </div>
       )}
     </div>
@@ -267,7 +257,7 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
           Take all
         </button>
       </div>
-      <ItemTiles s={s} items={sortItems(s, items, sort)} showUpgrade onClick={(i) => openItemMenu(i.uid)} empty="This page is empty. Use Stash all, or click a bag item and Send to stash." />
+      <ItemTiles s={s} items={sortItems(s, items, sort)} slots={STASH_PAGE_SIZE} showUpgrade onClick={(i) => openItemMenu(i.uid)} />
     </div>
   );
 }

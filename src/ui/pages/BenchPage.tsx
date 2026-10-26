@@ -9,14 +9,14 @@ import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { currencyDef } from '../../data/materials';
 import { equipFlask, unequipFlask } from '../../engine/combat';
 import { applyEssence, applyOrb, benchCraft, benchCraftReason, essenceReason, findItem, FOSSIL_ORBS, orbReason, salvage } from '../../engine/crafting';
-import { applyFlaskOrb, enchantFlask, findFlask, flaskName, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
+import { applyFlaskOrb, enchantFlask, findFlask, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
 import { stationLevel } from '../../engine/hideout';
 import { affixRangeText, itemName, salvageValue } from '../../engine/items';
 import type { FlaskInstance, GameState, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { Badge, Cost, EmptyState, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
 import { CraftUntilCard } from '../components/CraftUntilCard';
-import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
+import { FlaskShelf, FlaskTip } from '../components/FlaskView';
 import { ItemTip } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
 import { PaperDoll } from '../components/PaperDoll';
@@ -332,20 +332,7 @@ export function BenchPage() {
       {s.flaskStash.length > 0 && (
         <div className="card">
           <div className="card-title">Spare flasks ({s.flaskStash.length})</div>
-          <div className="gem-bag">
-            {s.flaskStash.map((f) => (
-              <Tooltip key={f.uid} content={<FlaskTip f={f} />}>
-                <button
-                  className={`gem-card ${flaskUid === f.uid ? 'selected' : ''}`}
-                  onClick={() => pickFlask(f.uid)}
-                  onContextMenu={(e) => (e.preventDefault(), pinFlask(f))}
-                >
-                  <FlaskIcon f={f} size={28} />
-                  <b className={f.rarity === 'magic' ? 'magic-text' : ''}>{flaskName(f)}</b>
-                </button>
-              </Tooltip>
-            ))}
-          </div>
+          <FlaskShelf flasks={s.flaskStash} selected={flaskUid} onPick={(f) => pickFlask(f.uid)} />
         </div>
       )}
       <Inventory s={s} title="Bag & stash" items={[...stashedItems(s), ...s.inventory]} cap={null} onPick={(it) => pickItem(it.uid)} selected={uid} />

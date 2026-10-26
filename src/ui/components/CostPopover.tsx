@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ESSENCES, FOSSILS } from '../../data/craftMats';
 import { materialDef } from '../../data/materials';
 import { ACTIONS, SKILLS } from '../../data/skills';
@@ -46,7 +46,9 @@ export function CostPopover({ cost, have, go }: { cost: Record<string, number>; 
   const [locked, setLocked] = useState(false);
   const [hoverMat, setHoverMat] = useState<string | null>(null);
   const [lockedMat, setLockedMat] = useState<string | null>(null);
+  const [flip, setFlip] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!locked) return;
@@ -60,9 +62,16 @@ export function CostPopover({ cost, have, go }: { cost: Record<string, number>; 
     return () => window.removeEventListener('pointerdown', away);
   }, [locked]);
 
+  const open = hover || locked;
+
+  // the sources fly out to the right of the panel, or to the left when there's no room
+  useLayoutEffect(() => {
+    const r = panelRef.current?.getBoundingClientRect();
+    if (r) setFlip(r.right + 320 > window.innerWidth);
+  }, [open]);
+
   const entries = Object.entries(cost);
   const missing = entries.filter(([id, n]) => (have[id] ?? 0) < n).length;
-  const open = hover || locked;
   const shownMat = lockedMat ?? hoverMat;
 
   return (
@@ -86,7 +95,7 @@ export function CostPopover({ cost, have, go }: { cost: Record<string, number>; 
         <span className="cost-chip-caret">▾</span>
       </span>
       {open && (
-        <div className="cost-panel" role="dialog">
+        <div ref={panelRef} className={`cost-panel ${flip ? 'flip' : ''}`} role="dialog">
           <div className="cost-panel-head">
             <span>Upgrade cost</span>
             <span className="dim">{locked ? 'locked · right-click to close' : 'right-click to lock'}</span>
@@ -116,13 +125,16 @@ export function CostPopover({ cost, have, go }: { cost: Record<string, number>; 
                 </div>
                 {shownMat === id && (
                   <div className="cost-sources">
-                    {materialSources(id).map((src) => (
-                      <button key={src.label} className="cost-source" onClick={() => go(src.page)}>
-                        <span>{src.label}</span>
-                        {src.detail && <span className="dim">{src.detail}</span>}
-                        <span className="cost-source-go">→</span>
-                      </button>
-                    ))}
+                    <div className="cost-sources-box">
+                      <div className="cost-sources-head">Where to get {materialDef(id).name}</div>
+                      {materialSources(id).map((src) => (
+                        <button key={src.label} className="cost-source" onClick={() => go(src.page)}>
+                          <span>{src.label}</span>
+                          {src.detail && <span className="dim">{src.detail}</span>}
+                          <span className="cost-source-go">→</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { activeGemDef, RULE_LABELS, SKILL_BAR_SLOTS, SUPPORT_GEMS, supportGemDef, type RuleCondition } from '../../data/gems';
+import { useState, type ReactNode } from 'react';
+import { activeGemDef, RULE_LABELS, SKILL_BAR_SLOTS, SUPPORT_GEMS, supportGemDef, type ActiveGemDef, type GemAttr, type RuleCondition } from '../../data/gems';
 import {
   expandSockets,
   gemProgress,
@@ -20,6 +20,55 @@ import { GemIcon, GemTip, SupportTip } from '../components/GemView';
 import { Icon } from '../components/Icon';
 
 export const SKILL_KEYS = ['Q', 'W', 'E', 'R', 'T', 'Y'];
+
+type GemKind = 'all' | 'attack' | 'spell' | 'area' | 'utility';
+const GEM_KINDS: { id: GemKind; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'attack', label: 'Attacks' },
+  { id: 'spell', label: 'Spells' },
+  { id: 'area', label: 'Area' },
+  { id: 'utility', label: 'Guards & buffs' },
+];
+const ATTRS: { id: GemAttr; label: string }[] = [
+  { id: 'str', label: 'Str' },
+  { id: 'dex', label: 'Dex' },
+  { id: 'int', label: 'Int' },
+];
+
+function kindMatches(def: ActiveGemDef, kind: GemKind): boolean {
+  if (kind === 'all') return true;
+  if (kind === 'utility') return def.role === 'guard' || def.role === 'buff' || def.role === 'curse' || def.role === 'sustain';
+  return def.tags.includes(kind);
+}
+
+/** Search box and attribute chips, plus whatever else a gem list filters by. */
+function GemFilters({
+  search,
+  setSearch,
+  attr,
+  setAttr,
+  children,
+}: {
+  search: string;
+  setSearch: (v: string) => void;
+  attr: GemAttr | null;
+  setAttr: (a: GemAttr | null) => void;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="gem-filters">
+      <input className="input gem-search" placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} />
+      <div className="gem-chips">
+        {ATTRS.map((a) => (
+          <button key={a.id} className={`gem-chip attr-${a.id} ${attr === a.id ? 'active' : ''}`} onClick={() => setAttr(attr === a.id ? null : a.id)}>
+            {a.label}
+          </button>
+        ))}
+      </div>
+      {children}
+    </div>
+  );
+}
 
 function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGemInstance }) {
   const meta = RULE_LABELS[gem.rule.when];
@@ -246,10 +295,32 @@ export function SkillGemsPage() {
   const s = useGame();
   const [pickedGem, setPickedGem] = useState<number | null>(null);
   const [pickedSupport, setPickedSupport] = useState<number | null>(null);
+  const [gemSearch, setGemSearch] = useState('');
+  const [gemAttr, setGemAttr] = useState<GemAttr | null>(null);
+  const [gemKind, setGemKind] = useState<GemKind>('all');
+  const [gemSort, setGemSort] = useState<'level' | 'name'>('level');
+  const [supSearch, setSupSearch] = useState('');
+  const [supAttr, setSupAttr] = useState<GemAttr | null>(null);
+  const [supFits, setSupFits] = useState(false);
   const clear = () => {
     setPickedGem(null);
     setPickedSupport(null);
   };
+  const has = (name: string, search: string) => name.toLowerCase().includes(search.trim().toLowerCase());
+  const byName = (a: string, b: string) => activeGemDef(a).name.localeCompare(activeGemDef(b).name);
+  const gems = s.gems
+    .filter((g) => {
+      const def = activeGemDef(g.gemId);
+      return kindMatches(def, gemKind) && (!gemAttr || def.attr === gemAttr) && has(def.name, gemSearch);
+    })
+    .sort((a, b) => (gemSort === 'level' ? b.level - a.level || byName(a.gemId, b.gemId) : byName(a.gemId, b.gemId) || b.level - a.level));
+  const fitsBar = (supportId: string) => s.skillBar.some((b) => b && !supportReason(b, supportId));
+  const supports = s.supportGems
+    .filter((g) => {
+      const def = supportGemDef(g.supportId);
+      return (!supAttr || def.attr === supAttr) && (!supFits || fitsBar(g.supportId)) && has(def.name, supSearch);
+    })
+    .sort((a, b) => supportGemDef(a.supportId).name.localeCompare(supportGemDef(b.supportId).name));
 
   return (
     <div className="page">
@@ -274,18 +345,41 @@ export function SkillGemsPage() {
         ))}
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', alignItems: 'start' }}>
+      <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)', alignItems: 'start' }}>
         <div className="card">
           <div className="card-title">
             Skill gems
+            <span className="muted num small">
+              {gems.length}/{s.gems.length}
+            </span>
             <span className="grow" />
             <span className="card-hint">
               Click one, then a slot above
             </span>
           </div>
+          {s.gems.length > 0 && (
+            <GemFilters search={gemSearch} setSearch={setGemSearch} attr={gemAttr} setAttr={setGemAttr}>
+              <div className="gem-chips">
+                {GEM_KINDS.map((k) => (
+                  <button key={k.id} className={`gem-chip ${gemKind === k.id ? 'active' : ''}`} onClick={() => setGemKind(k.id)}>
+                    {k.label}
+                  </button>
+                ))}
+              </div>
+              <div className="gem-chips">
+                <button className={`gem-chip ${gemSort === 'level' ? 'active' : ''}`} onClick={() => setGemSort('level')}>
+                  By level
+                </button>
+                <button className={`gem-chip ${gemSort === 'name' ? 'active' : ''}`} onClick={() => setGemSort('name')}>
+                  A–Z
+                </button>
+              </div>
+            </GemFilters>
+          )}
           {s.gems.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, especially bosses.</EmptyState>}
+          {s.gems.length > 0 && gems.length === 0 && <div className="dim small">No gems match these filters.</div>}
           <div className="gem-bag">
-            {s.gems.map((g) => (
+            {gems.map((g) => (
               <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
                 <button className={`gem-card ${pickedGem === g.uid ? 'selected' : ''}`} onClick={() => (setPickedSupport(null), setPickedGem(pickedGem === g.uid ? null : g.uid))}>
                   <GemIcon def={activeGemDef(g.gemId)} size={34} />
@@ -301,16 +395,29 @@ export function SkillGemsPage() {
         <div className="card">
           <div className="card-title">
             Support gems
+            <span className="muted num small">
+              {supports.length}/{s.supportGems.length}
+            </span>
             <span className="grow" />
             <span className="card-hint">
               Click one, then a glowing socket
             </span>
           </div>
+          {s.supportGems.length > 0 && (
+            <GemFilters search={supSearch} setSearch={setSupSearch} attr={supAttr} setAttr={setSupAttr}>
+              <div className="gem-chips">
+                <button className={`gem-chip ${supFits ? 'active' : ''}`} onClick={() => setSupFits(!supFits)} title="Only supports that fit a skill on your bar">
+                  Fits my skills
+                </button>
+              </div>
+            </GemFilters>
+          )}
           {s.supportGems.length === 0 && <EmptyState small>No loose support gems yet.</EmptyState>}
+          {s.supportGems.length > 0 && supports.length === 0 && <div className="dim small">No supports match these filters.</div>}
           <div className="gem-bag">
-            {s.supportGems.map((g) => {
+            {supports.map((g) => {
               const def = supportGemDef(g.supportId);
-              const fitsAny = s.skillBar.some((b) => b && !supportReason(b, g.supportId));
+              const fitsAny = fitsBar(g.supportId);
               return (
                 <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
                   <button

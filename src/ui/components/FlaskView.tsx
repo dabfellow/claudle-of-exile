@@ -1,8 +1,9 @@
-import { INSTILL_CONDITIONS } from '../../data/flasks';
+import { useState } from 'react';
+import { FLASKS, flaskDef, INSTILL_CONDITIONS } from '../../data/flasks';
 import { describeFlaskMod, flaskEffectText, flaskName, flaskStats } from '../../engine/flasks';
 import type { FlaskInstance } from '../../engine/types';
 import { game } from '../../game';
-import { artUrl, togglePin } from './common';
+import { artUrl, Tabs, togglePin, Tooltip } from './common';
 import { packArtUrl } from '../assets';
 
 /** A flask bottle: liquid level shows charges. With art, the art sits behind a charge meter. */
@@ -68,4 +69,43 @@ export function FlaskTip({ f, pinned = false }: { f: FlaskInstance; pinned?: boo
 
 export function pinFlask(f: FlaskInstance): void {
   togglePin({ key: `flask-${f.uid}`, title: flaskName(f), render: () => <FlaskTip f={game.state.flaskSlots.find((x) => x?.uid === f.uid) ?? game.state.flaskStash.find((x) => x.uid === f.uid) ?? f} pinned /> });
+}
+
+/** Life and Mana flasks group by kind; each utility flask (Granite, Ruby, …) is its own group. */
+function shelfKey(f: FlaskInstance): string {
+  const def = flaskDef(f.flaskId);
+  return def.kind === 'utility' ? def.id : def.kind;
+}
+
+const SHELF_ORDER: { id: string; label: string }[] = [
+  { id: 'life', label: 'Life' },
+  { id: 'mana', label: 'Mana' },
+  ...FLASKS.filter((d) => d.kind === 'utility').map((d) => ({ id: d.id, label: d.name.replace(' Flask', '') })),
+];
+
+/** Spare flasks behind one tab per kind, so a full rack isn't one long jumble. */
+export function FlaskShelf({ flasks, selected, onPick }: { flasks: FlaskInstance[]; selected?: number | null; onPick?: (f: FlaskInstance) => void }) {
+  const groups = SHELF_ORDER.map((g) => ({ ...g, list: flasks.filter((f) => shelfKey(f) === g.id) })).filter((g) => g.list.length);
+  const [tab, setTab] = useState<string | null>(null);
+  const shown = groups.find((g) => g.id === tab) ?? groups[0];
+  if (!shown) return null;
+  return (
+    <div className="flask-shelf">
+      <Tabs compact value={shown.id} onChange={setTab} tabs={groups.map((g) => ({ id: g.id, label: g.label, count: g.list.length }))} />
+      <div className="gem-bag">
+        {shown.list.map((f) => (
+          <Tooltip key={f.uid} content={<FlaskTip f={f} />}>
+            <button
+              className={`gem-card ${selected === f.uid ? 'selected' : ''} ${onPick ? '' : 'static'}`}
+              onClick={onPick ? () => onPick(f) : undefined}
+              onContextMenu={(e) => (e.preventDefault(), pinFlask(f))}
+            >
+              <FlaskIcon f={f} size={30} />
+              <b className={f.rarity === 'magic' ? 'magic-text' : ''}>{flaskName(f)}</b>
+            </button>
+          </Tooltip>
+        ))}
+      </div>
+    </div>
+  );
 }

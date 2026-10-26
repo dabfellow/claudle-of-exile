@@ -295,7 +295,7 @@ function Battlefield({ c, fx }: { c: CombatRuntime; fx: Fx }) {
         return (
           <div
             key={i}
-            className={`bf-cell ${cell.col === 0 ? 'front' : ''} ${ground ? `ground-${ground.kind}` : ''} ${flash}`}
+            className={`bf-cell ${cell.col === 0 ? 'front' : ''} ${m ? 'occupied' : ''} ${m && m === alive[0] ? 'target' : ''} ${m?.isBoss ? 'boss' : ''} ${ground ? `ground-${ground.kind}` : ''} ${flash}`}
             style={{ left: `${(cell.col / COLUMNS) * 100}%`, top: `${(cell.row / (MAX_ROW + 2)) * 100}%` }}
             title={ground ? `${GROUND[ground.kind].name} (${(ground.remainingMs / 1000).toFixed(1)}s): ${GROUND[ground.kind].desc}` : undefined}
           >
@@ -533,7 +533,6 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
   }
 
   const zone = zoneDef(c.zoneId);
-  const alive = aliveMonsters(c);
   const zoneArt = anyArtUrl(`zones/${zone.id}`);
   return (
     <div className="page">
@@ -557,9 +556,9 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
       <div className={`card arena2 ${zoneArt ? 'has-art' : ''}`} style={{ ['--zone' as string]: zone.color, ['--zone-art' as string]: zoneArt ? `url(${zoneArt})` : undefined }}>
         <div className="arena-side">
           <PlayerCard s={s} d={d} fx={fx} />
-          <div className="target-slot">
-            <div className="target-label">Active target</div>
-            {alive[0] ? <MonsterCard key={alive[0].uid} m={alive[0]} target fx={fx} /> : <div className="fighter monster searching">Searching for monsters…</div>}
+          <div className="matchup-card">
+            <div className="target-label">Matchup</div>
+            <Matchup s={s} d={d} />
           </div>
         </div>
         <div className="bf-wrap">
@@ -568,36 +567,26 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         </div>
       </div>
 
-      {s.offlineHaul.length > 0 && <LootPile s={s} pile="offlineHaul" />}
-      <LootPile s={s} pile="ground" />
-
-      <div className="card">
-        <div className="card-title">
-          Skills
-          <span className="grow" />
-          <button className="btn sm ghost" onClick={() => go('skills')}>
-            Edit skills & rules
-          </button>
+      <div className="card action-bar">
+        <div className="action-bar-group">
+          <div className="action-bar-label">
+            Skills
+            <button className="btn sm ghost" onClick={() => go('skills')}>
+              Edit skills & rules
+            </button>
+          </div>
+          <SkillBar s={s} d={d} fx={fx} />
         </div>
-        <SkillBar s={s} d={d} fx={fx} />
-      </div>
-
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', alignItems: 'start' }}>
-        <div className="card">
-          <div className="card-title">
-            Flasks
-            <span className="grow" />
-            <span className="card-hint">
-              keys 1–5 · refill on kills
-            </span>
+        <div className="action-bar-group flasks">
+          <div className="action-bar-label">
+            Flasks <span className="card-hint">keys 1–5 · refill on kills</span>
           </div>
           <FlaskBelt s={s} />
         </div>
-        <div className="card">
-          <div className="card-title">Matchup</div>
-          <Matchup s={s} d={d} />
-        </div>
       </div>
+
+      {s.offlineHaul.length > 0 && <LootPile s={s} pile="offlineHaul" />}
+      <LootPile s={s} pile="ground" />
     </div>
   );
 }
