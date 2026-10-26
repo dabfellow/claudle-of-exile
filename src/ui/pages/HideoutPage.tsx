@@ -1,26 +1,30 @@
-import { useMemo } from 'react';
-import { STATIONS, type StationId } from '../../data/hideout';
-import { actionDef, actionsFor, SKILLS, type SkillAction } from '../../data/skills';
+import { useMemo, useState } from 'react';
+import { STATIONS } from '../../data/hideout';
+import { SKILLS } from '../../data/skills';
 import { canAfford } from '../../engine/bank';
 import { nextUpgradeCost, stationLevel, upgradeStation } from '../../engine/hideout';
 import { pointsLeft } from '../../engine/passives';
-import { SKILL_IDS, type SkillId } from '../../engine/types';
+import { SKILL_IDS } from '../../engine/types';
 import { levelOf, maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
-import { Art, artUrl, Badge, fmt, GameIcon, ProgressBar, sceneStyle, Tooltip } from '../components/common';
+import { Art, artUrl, Badge, fmt, GameIcon, ProgressBar, sceneStyle, Tabs, Tooltip } from '../components/common';
 import type { Page } from '../Layout';
 import { CostPopover } from '../components/CostPopover';
-import { Crest } from '../screens/Screens';
-import { classDef } from '../../data/classes';
+import { CharacterBanner, HideoutLedger, HideoutRows, HideoutScene, nextUnlock, STATION_ICON, trainingNow } from './HideoutLayouts';
 
-const STATION_ICON: Record<StationId, string> = {
-  map_device: 'map',
-  stash: 'stash',
-  forge: 'forge',
-  alchemy_table: 'alchemy',
-  bench: 'bench',
-  vendor: 'vendor',
-};
+/** While you pick a Hideout layout: the current cards, and three alternatives. */
+type HideoutLayout = 'cards' | 'rows' | 'ledger' | 'scene';
+const LAYOUT_KEY = 'coe-hideout-layout';
+
+function savedLayout(): HideoutLayout {
+  try {
+    const v = localStorage.getItem(LAYOUT_KEY);
+    if (v === 'rows' || v === 'ledger' || v === 'scene') return v;
+  } catch {
+    // private window or blocked storage: fall back to the current layout
+  }
+  return 'cards';
+}
 
 export function Embers() {
   const embers = useMemo(
@@ -43,13 +47,44 @@ export function Embers() {
 }
 
 export function HideoutPage({ go }: { go: (p: Page) => void }) {
-  const s = useGame();
-  const points = pointsLeft(s);
-
-  const training = s.action?.kind === 'skill' ? actionDef(s.action.actionId).skill : s.action?.kind === 'combat' ? 'combat' : null;
-
+  const [layout, setLayout] = useState<HideoutLayout>(savedLayout);
+  const pick = (l: HideoutLayout) => {
+    setLayout(l);
+    try {
+      localStorage.setItem(LAYOUT_KEY, l);
+    } catch {
+      // not remembered, still switches
+    }
+  };
   return (
     <div className="page">
+      <div className="hx-switch">
+        <span className="dim small">Layout preview</span>
+        <Tabs
+          compact
+          value={layout}
+          onChange={pick}
+          tabs={[
+            { id: 'cards', label: 'Current' },
+            { id: 'rows', label: 'A · Rows' },
+            { id: 'ledger', label: 'B · Ledger' },
+            { id: 'scene', label: 'C · Scene' },
+          ]}
+        />
+      </div>
+      {layout === 'rows' ? <HideoutRows go={go} /> : layout === 'ledger' ? <HideoutLedger go={go} /> : layout === 'scene' ? <HideoutScene go={go} /> : <HideoutCards go={go} />}
+    </div>
+  );
+}
+
+/** The current layout: the scene with station cards, then skill tiles. */
+function HideoutCards({ go }: { go: (p: Page) => void }) {
+  const s = useGame();
+  const points = pointsLeft(s);
+  const training = trainingNow(s);
+
+  return (
+    <>
       <div className="card hideout-scene" style={sceneStyle('scenes/hideout')}>
         <Embers />
         <div className="hideout-head">
@@ -177,42 +212,6 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
           })}
         </div>
       </div>
-    </div>
-  );
-}
-
-/** The lowest-level action this skill hasn't reached yet. */
-function nextUnlock(skill: SkillId, lvl: number): SkillAction | null {
-  return actionsFor(skill)
-    .filter((a) => !a.soon && !a.batchOf && a.level > lvl)
-    .sort((a, b) => a.level - b.level)[0] ?? null;
-}
-
-/** The character's own level, set apart from the trade skills. */
-function CharacterBanner({ training, onClick }: { training: boolean; onClick: () => void }) {
-  const s = useGame();
-  const xp = s.skills.combat;
-  const lvl = levelOf('combat', xp);
-  const floor = xpToReach('combat', lvl);
-  const span = xpToReach('combat', lvl + 1) - floor;
-  const progress = progressOf('combat', xp);
-  const c = classDef(s.character.classId);
-  return (
-    <button className={`card char-banner ${training ? 'running' : ''}`} style={{ ['--class' as string]: c.color }} onClick={onClick}>
-      <Crest classId={s.character.classId} size={72} />
-      <span className="char-banner-body">
-        <span className="char-banner-kicker">{c.name}</span>
-        <span className="char-banner-name">{s.character.name}</span>
-        <ProgressBar value={progress} color="linear-gradient(90deg, var(--accent), var(--accent-2))" smooth size="md" label={`${fmt(Math.floor(xp - floor))} / ${fmt(span)} XP`} />
-        <span className="dim small num">
-          {Math.floor(progress * 100)}% to level {lvl + 1}
-          {training && ' · fighting now'}
-        </span>
-      </span>
-      <span className="char-banner-level">
-        <small>Level</small>
-        <b className="num">{lvl}</b>
-      </span>
-    </button>
+    </>
   );
 }

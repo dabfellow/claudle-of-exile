@@ -6528,3 +6528,514 @@ button.star {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ============ Hideout layout previews (A rows · B ledger · C scene) ============ */
+.hx-switch {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.hx-a,
+.hx-b,
+.hx-c {
+  display: grid;
+  gap: var(--s-5);
+}
+
+.hx-a section {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.hx-section-head .tier-name {
+  font-size: var(--fs-lg);
+}
+
+/* character strip + passive points on one line */
+.hx-top {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+.hx-top .char-banner {
+  flex: 1;
+}
+
+.char-banner.compact {
+  gap: var(--s-4);
+  padding: 10px var(--s-4);
+}
+
+.char-banner.compact .char-banner-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto auto minmax(200px, 1fr);
+  align-items: center;
+  gap: 4px 14px;
+}
+
+.char-banner.compact .char-banner-kicker,
+.char-banner.compact .char-banner-name {
+  white-space: nowrap;
+}
+
+.char-banner.compact .char-banner-level b {
+  font-size: 26px;
+}
+
+/* A: compact rows, three to a line on wide screens */
+.hx-grid {
+  display: grid;
+  gap: var(--s-2);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  align-items: start;
+}
+
+.hx-row {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.hx-row.ready {
+  border-color: color-mix(in srgb, var(--success) 45%, var(--line));
+}
+
+.hx-row .action-art {
+  background: radial-gradient(circle, color-mix(in srgb, var(--station, var(--skill)) 22%, transparent), transparent 70%), var(--bg-2);
+}
+
+.hx-lvl {
+  margin-left: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--dim);
+}
+
+.hx-row .action-meta {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.hx-row-cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.hx-open {
+  justify-self: start;
+}
+
+.hx-skill {
+  cursor: pointer;
+}
+
+.action-toggle.as-row {
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  cursor: inherit;
+}
+
+.hx-skill-lvl {
+  font-family: var(--font);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--skill);
+  padding-right: 4px;
+}
+
+.hx-thin {
+  height: 4px;
+}
+
+/* have / need material chips */
+.hx-haveneed {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.hx-mat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.hx-mat.ok {
+  color: var(--good);
+}
+
+.hx-mat.short {
+  color: var(--bad);
+}
+
+/* B: one ledger table */
+.hx-ledger {
+  padding: 4px 0;
+  display: grid;
+}
+
+.hx-ledger-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.1fr) 120px minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 1.3fr) 96px;
+  align-items: center;
+  gap: 14px;
+  padding: 10px var(--s-4);
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.hx-ledger-row:hover:not(.head) {
+  background: color-mix(in srgb, var(--station) 7%, transparent);
+}
+
+.hx-ledger-row.head {
+  border-top: 0;
+  cursor: default;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.hx-ledger-row.ready {
+  box-shadow: inset 3px 0 0 var(--success);
+}
+
+.hx-ledger-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hx-ledger-icon {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  border: 1px solid color-mix(in srgb, var(--station) 40%, var(--line));
+  background: radial-gradient(circle, color-mix(in srgb, var(--station) 20%, transparent), transparent 70%), var(--bg-2);
+}
+
+.hx-ledger-level {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hx-ledger-level b {
+  font-family: var(--font);
+  font-size: var(--fs-lg);
+}
+
+.hx-ledger-act {
+  justify-self: end;
+}
+
+/* B: skill dials */
+.hx-dials-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4) var(--s-6);
+}
+
+.hx-dial-group {
+  display: grid;
+  gap: 8px;
+}
+
+.hx-dials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hx-dial {
+  position: relative;
+  width: 112px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: var(--r);
+  border: 1px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hx-dial:hover {
+  border-color: var(--line-2);
+  background: var(--bg-2);
+}
+
+.hx-dial.running {
+  border-color: var(--success);
+}
+
+.hx-dial-ring {
+  width: 64px;
+  height: 64px;
+}
+
+.hx-dial-track {
+  fill: var(--bg-2);
+  stroke: var(--line);
+  stroke-width: 5;
+}
+
+.hx-dial-fill {
+  fill: none;
+  stroke: var(--skill);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.hx-dial-center {
+  position: absolute;
+  top: 8px;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  line-height: 1;
+}
+
+.hx-dial-center b {
+  font-family: var(--font);
+  font-size: var(--fs-md);
+}
+
+.hx-dial-name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.hx-dial-next {
+  font-size: var(--fs-2xs);
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* C: stations as markers on the scene, details on the side */
+.hx-scene {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--s-4);
+  padding: var(--s-4);
+  min-height: 620px;
+}
+
+.hx-scene.hideout-scene[style*="--scene-art"] {
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--bg) 10%, transparent), color-mix(in srgb, var(--bg) 45%, transparent)), var(--scene-art);
+  background-size: cover;
+  background-position: center;
+}
+
+.hx-scene-field {
+  position: relative;
+  min-height: 580px;
+}
+
+.hx-scene-char {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  width: min(100%, 640px);
+  z-index: 2;
+}
+
+.hx-scene-char .char-banner {
+  width: 100%;
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.hx-spot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.hx-spot-icon {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--station) 60%, transparent);
+  background: radial-gradient(circle, color-mix(in srgb, var(--station) 30%, var(--panel)), color-mix(in srgb, var(--bg) 85%, transparent) 72%);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--bg) 50%, transparent), 0 8px 18px rgba(0, 0, 0, 0.55);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur);
+}
+
+.hx-spot:hover .hx-spot-icon,
+.hx-spot.active .hx-spot-icon {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--station) 45%, transparent), 0 0 26px color-mix(in srgb, var(--station) 55%, transparent);
+}
+
+.hx-spot-lvl {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  background: var(--panel);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.hx-spot-name {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-shadow: 0 1px 4px #000;
+  white-space: nowrap;
+}
+
+.hx-spot.active .hx-spot-name {
+  color: var(--accent-2);
+}
+
+.hx-spot-up {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  color: var(--good);
+  font-weight: 800;
+  text-shadow: 0 1px 4px #000;
+}
+
+.hx-panel {
+  align-self: stretch;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: var(--s-4);
+  border-radius: var(--r-lg);
+  border: 1px solid color-mix(in srgb, var(--station) 35%, var(--line));
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.hx-panel p {
+  margin: 0;
+}
+
+.hx-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hx-panel-name {
+  font-family: var(--font);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.hx-panel .io-label {
+  margin-top: 6px;
+}
+
+.hx-panel-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* C: skills as chips under the scene */
+.hx-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hx-chip {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 10px;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hx-chip:hover {
+  border-color: var(--line-2);
+}
+
+.hx-chip.running {
+  border-color: var(--success);
+}
+
+.hx-chip-name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.hx-chip b {
+  font-family: var(--font);
+  color: var(--skill);
+}
+
+.hx-chip-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--skill);
+}
+
+@container (max-width: 1100px) {
+  .hx-ledger-row {
+    grid-template-columns: minmax(150px, 1fr) 100px minmax(0, 1.4fr) 96px;
+  }
+  .hx-ledger-row > :nth-child(4),
+  .hx-ledger-row > :nth-child(5) {
+    display: none;
+  }
+  .hx-scene {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

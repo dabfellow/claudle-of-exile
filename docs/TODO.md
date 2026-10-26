@@ -36,6 +36,7 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - Inventory look is with the other session; the Equipment and Bench bag views should improve with it.
 
 ### UI feedback (your walkthrough #2, 2026-10-25) — you test at 1440p and 4K
+- [ ] **[You]** Pick a Hideout layout: Current, A · Rows, B · Ledger or C · Scene (switcher at the top of the Hideout). Then the others and the switcher come out, and the winner's style can carry to other card pages.
 - **[You]** Icons: gathering nodes (Copper Vein, Scorched Seam …) and currency need art; you'll go through icons yourself.
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
