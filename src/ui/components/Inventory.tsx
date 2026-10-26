@@ -2,12 +2,12 @@ import { useState, type ReactNode } from 'react';
 import { baseDef } from '../../data/bases';
 import { BAG_SIZE } from '../../data/hideout';
 import { salvage } from '../../engine/crafting';
-import { equip, equipReason } from '../../engine/equipment';
 import { itemName } from '../../engine/items';
 import type { GameState, Item, Rarity } from '../../engine/types';
 import { game } from '../../game';
 import { Tooltip } from './common';
 import { ItemIcon, ItemTip, pinItem, upgradeScore } from './ItemView';
+import { openItemMenu } from './ItemMenu';
 
 export type SortKey = 'recent' | 'rarity' | 'slot' | 'upgrade';
 const RARITY_ORDER: Record<Rarity, number> = { unique: 0, rare: 1, magic: 2, normal: 3 };
@@ -130,7 +130,40 @@ export function Inventory({
   const [sort, setSort] = useState<SortKey>('recent');
   const [salvageMode, setSalvageMode] = useState(false);
   const [marked, setMarked] = useState<Set<number>>(new Set());
+  /** clicks so far on a rarity button: 1 selects them all, the next salvages (uniques ask once more) */
+  const [armed, setArmed] = useState<{ rarity: Rarity; clicks: number } | null>(null);
   const sorted = sortItems(s, items, sort);
+  const markedUniques = items.some((i) => marked.has(i.uid) && i.rarity === 'unique');
+  const [confirmMarked, setConfirmMarked] = useState(false);
+
+  const done = () => {
+    setMarked(new Set());
+    setArmed(null);
+    setConfirmMarked(false);
+    setSalvageMode(false);
+  };
+  const salvageNow = (uids: number[]) => {
+    game.act((st, ctx) => salvage(st, ctx, uids));
+    done();
+  };
+  const clickRarity = (r: Rarity) => {
+    const list = items.filter((i) => i.rarity === r).map((i) => i.uid);
+    const clicks = armed?.rarity === r ? armed.clicks + 1 : 1;
+    if (clicks === 1) {
+      setMarked(new Set(list));
+      setArmed({ rarity: r, clicks });
+      setConfirmMarked(false);
+    } else if (r === 'unique' && clicks === 2) setArmed({ rarity: r, clicks });
+    else salvageNow(list);
+  };
+  const rarityLabel = (r: Rarity) => {
+    const n = items.filter((i) => i.rarity === r).length;
+    const name = r[0].toUpperCase() + r.slice(1);
+    if (armed?.rarity !== r) return `All ${r} (${n})`;
+    if (r === 'unique' && armed.clicks === 1) return `Salvage ${n} unique?`;
+    if (r === 'unique') return 'Sure? Click to salvage';
+    return `Salvage ${n} ${name.toLowerCase()}`;
+  };
 
   const click = (item: Item) => {
     if (salvageMode) {
@@ -138,13 +171,11 @@ export function Inventory({
       if (next.has(item.uid)) next.delete(item.uid);
       else next.add(item.uid);
       setMarked(next);
+      setArmed(null);
+      setConfirmMarked(false);
     } else if (onPick) onPick(item);
-    else {
-      const reason = equipReason(s, item);
-      game.act((st, ctx) => reason ?? equip(st, ctx, item.uid));
-    }
+    else openItemMenu(item.uid);
   };
-  const markWhere = (f: (i: Item) => boolean) => setMarked(new Set(items.filter(f).map((i) => i.uid)));
 
   return (
     <div className="card">
@@ -162,7 +193,7 @@ export function Inventory({
         {!salvageMode ? (
           <>
             <span className="dim" style={{ fontSize: 12 }}>
-              {hint ?? (onPick ? 'Click an item to select it.' : 'Click to equip · ▲ upgrade · right-click to pin')}
+              {hint ?? (onPick ? 'Click an item to select it.' : 'Click an item for Equip, Stash, Salvage · ▲ upgrade · right-click to pin')}
             </span>
             <span className="spacer" />
             {actions}
@@ -173,33 +204,30 @@ export function Inventory({
         ) : (
           <>
             <span className="warn" style={{ fontSize: 12 }}>
-              Select items to salvage into Arcane Dust
+              Click items, or a rarity twice, to salvage into Arcane Dust
             </span>
             <span className="spacer" />
-            <button className="btn sm" onClick={() => markWhere((i) => i.rarity === 'normal')}>
-              All normal
-            </button>
-            <button className="btn sm" onClick={() => markWhere((i) => i.rarity === 'normal' || i.rarity === 'magic')}>
-              Normal + magic
-            </button>
+            {(['normal', 'magic', 'rare', 'unique'] as Rarity[]).map((r) => (
+              <button
+                key={r}
+                className={`btn sm salvage-rarity rar-${r} ${armed?.rarity === r ? 'armed' : ''}`}
+                disabled={!items.some((i) => i.rarity === r)}
+                onClick={() => clickRarity(r)}
+              >
+                {rarityLabel(r)}
+              </button>
+            ))}
             <button
               className="btn sm danger"
               disabled={!marked.size}
               onClick={() => {
-                game.act((st, ctx) => salvage(st, ctx, [...marked]));
-                setMarked(new Set());
-                setSalvageMode(false);
+                if (markedUniques && !confirmMarked) setConfirmMarked(true);
+                else salvageNow([...marked]);
               }}
             >
-              Salvage {marked.size}
+              {markedUniques && confirmMarked ? 'Includes uniques. Sure?' : `Salvage ${marked.size} selected`}
             </button>
-            <button
-              className="btn sm ghost"
-              onClick={() => {
-                setSalvageMode(false);
-                setMarked(new Set());
-              }}
-            >
+            <button className="btn sm ghost" onClick={done}>
               Cancel
             </button>
           </>

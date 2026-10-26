@@ -4,6 +4,7 @@ import type { GameState } from '../../engine/types';
 import { game } from '../../game';
 import { ItemTiles } from './Inventory';
 import { upgradeScore } from './ItemView';
+import { openItemMenu } from './ItemMenu';
 
 const PILES: Record<Pile, { title: string; cap: number; hint: string; empty: string }> = {
   ground: {
@@ -54,7 +55,7 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
           </button>
         )}
       </div>
-      <ItemTiles s={s} items={items} showUpgrade onClick={(i) => take([i.uid])} empty={info.empty} />
+      <ItemTiles s={s} items={items} showUpgrade onClick={(i) => openItemMenu(i.uid)} empty={info.empty} />
     </div>
   );
 }

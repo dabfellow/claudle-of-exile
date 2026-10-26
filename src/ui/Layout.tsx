@@ -28,6 +28,7 @@ export type Page =
   | 'hideout'
   | 'combat'
   | 'campaign'
+  | 'maps'
   | 'skills'
   | 'tree'
   | 'equipment'
@@ -37,6 +38,7 @@ export type Page =
   | 'achievements'
   | 'settings'
   | 'admin'
+  | 'upcoming'
   | SkillId;
 
 interface NavEntry {
@@ -44,6 +46,8 @@ interface NavEntry {
   label: string;
   icon: string;
   skill?: SkillId;
+  /** draw a thin line above this entry (gathering → production) */
+  divider?: boolean;
 }
 
 const NAV: { label: string; items: NavEntry[] }[] = [
@@ -59,7 +63,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
   {
     label: 'Character',
     items: [
-      { page: 'campaign', label: 'Campaign', icon: 'map' },
+      { page: 'campaign', label: 'Campaign', icon: 'campaign' },
       { page: 'combat', label: 'Combat', icon: 'combat', skill: 'combat' },
       { page: 'skills', label: 'Skills', icon: 'gems' },
       { page: 'equipment', label: 'Equipment', icon: 'equipment' },
@@ -68,19 +72,20 @@ const NAV: { label: string; items: NavEntry[] }[] = [
     ],
   },
   {
-    label: 'Gathering',
+    label: 'Maps',
+    items: [{ page: 'maps', label: 'Map Device', icon: 'map' }],
+  },
+  {
+    label: 'Skilling',
     items: [
       { page: 'mining', label: 'Mining', icon: 'mining', skill: 'mining' },
       { page: 'woodcutting', label: 'Woodcutting', icon: 'woodcutting', skill: 'woodcutting' },
-      { page: 'harvesting', label: 'Harvesting', icon: 'harvesting', skill: 'harvesting' },
-    ],
-  },
-  {
-    label: 'Production',
-    items: [
-      { page: 'smithing', label: 'Smithing', icon: 'smithing', skill: 'smithing' },
+      { page: 'harvesting', label: 'Foraging', icon: 'harvesting', skill: 'harvesting' },
+      { page: 'fishing', label: 'Fishing', icon: 'fishing', skill: 'fishing' },
+      { page: 'smithing', label: 'Smithing', icon: 'smithing', skill: 'smithing', divider: true },
       { page: 'alchemy', label: 'Alchemy', icon: 'alchemy', skill: 'alchemy' },
       { page: 'gemcutting', label: 'Gemcutting', icon: 'gemcutting', skill: 'gemcutting' },
+      { page: 'upcoming', label: 'Coming soon', icon: 'lock', divider: true },
     ],
   },
 ];
@@ -119,14 +124,14 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
             const isActive = it.skill && it.skill === active;
             const color = it.skill ? SKILLS[it.skill].color : 'var(--muted)';
             return (
-              <button key={it.page} data-tut={`nav-${it.page}`} className={`nav-item ${page === it.page ? 'active' : ''}`} onClick={() => go(it.page)}>
+              <button key={it.page} data-tut={`nav-${it.page}`} className={`nav-item ${page === it.page ? 'active' : ''} ${it.divider ? 'divided' : ''}`} onClick={() => go(it.page)}>
                 <span className="nav-icon">
                   <GameIcon name={it.icon} size={16} color={isActive ? color : undefined} />
                   {isActive && it.skill && <Ring value={progressOf(it.skill, s.skills[it.skill])} color={color} />}
                 </span>
                 <span className="nav-name">{it.label}</span>
                 {isActive && <span className="nav-active-dot" />}
-                {lvl !== null && <span className="nav-badge">{lvl}</span>}
+                {it.skill && SKILLS[it.skill].soon ? <span className="nav-badge">Soon</span> : lvl !== null && <span className="nav-badge">{lvl}</span>}
                 {it.page === 'tree' && points > 0 && <span className="nav-badge hot">+{points}</span>}
                 {it.page === 'stash' && <span className="nav-badge" title="Items in your bag">{s.inventory.length}</span>}
                 {it.page === 'combat' && s.ground.length + s.offlineHaul.length > 0 && <span className="nav-badge loot" title="Loot waiting to be picked up">{s.ground.length + s.offlineHaul.length}</span>}

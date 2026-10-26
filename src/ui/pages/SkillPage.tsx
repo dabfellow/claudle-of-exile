@@ -11,21 +11,19 @@ import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
-import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar, Tabs } from '../components/common';
-import { GemIcon } from '../components/GemView';
+import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/common';
 import { Icon, Orb, Swatch } from '../components/Icon';
 
 const START_LABEL: Record<SkillId, string> = {
   combat: 'Fight',
   mining: 'Mine',
   woodcutting: 'Chop',
-  harvesting: 'Harvest',
+  harvesting: 'Forage',
   smithing: 'Smith',
   alchemy: 'Brew',
   gemcutting: 'Cut',
+  fishing: 'Fish',
 };
-
-const ATTR_NAME = { str: 'Strength', dex: 'Dexterity', int: 'Intelligence' } as const;
 
 function outputName(id: string): string {
   const gem = ACTIVE_GEMS.find((g) => g.id === id) ?? SUPPORT_GEMS.find((g) => g.id === id);
@@ -37,11 +35,11 @@ function outputName(id: string): string {
   }
 }
 
-/** What a gemcutting recipe can produce, e.g. "random Strength support (1 of 4)". */
+/** What a gemcutting recipe can produce, e.g. "Random support gem (1 of 24)". */
 function gemOutputText(gem: NonNullable<SkillAction['gem']>): string {
   if (gem.kind === 'signature') return 'Signature support for a skill you own';
-  const pool = gem.kind === 'skill' ? ACTIVE_GEMS.filter((g) => g.attr === gem.attr) : SUPPORT_GEMS.filter((g) => !g.signatureFor && g.attr === gem.attr);
-  return `Random ${ATTR_NAME[gem.attr!]} ${gem.kind} gem (1 of ${pool.length})`;
+  const pool = gem.kind === 'skill' ? ACTIVE_GEMS : SUPPORT_GEMS.filter((g) => !g.signatureFor);
+  return `Random ${gem.kind} gem (1 of ${pool.length})`;
 }
 
 /** What an activity produces, as rows that line up with the ingredient list. */
@@ -80,19 +78,31 @@ function OutputRows({ a }: { a: SkillAction }) {
         <li key={b.id} className="bonus">
           <MatIcon id={b.id} size={12} />
           <span className="ing-name">{materialDef(b.id).name}</span>
-          <span className="ing-qty num">{Math.round(b.chance * 100)}% chance</span>
+          <span className="ing-qty num">{b.chance < 0.01 ? `${+(b.chance * 100).toFixed(1)}%` : `${Math.round(b.chance * 100)}%`} chance</span>
         </li>
       ))}
     </ul>
   );
 }
 
-function ActionCard({ a, level }: { a: SkillAction; level: number }) {
+function ActionArt({ a, locked, running }: { a: SkillAction; locked: boolean; running: boolean }) {
+  if (locked) return <GameIcon name="lock" size={16} color="var(--dim)" />;
+  if (a.baseId) return <Art src={`items/${a.baseId}`} alt={baseDef(a.baseId).name} size={32} fallback={<Icon name={baseDef(a.baseId).slot} size={20} color={a.color} />} />;
+  if (a.gem) return <GameIcon name="gemcutting" size={20} color={a.color} />;
+  if (a.flaskId || a.skill === 'alchemy') return <Orb color={a.color} size={18} glow={running} />;
+  return <Swatch color={a.color} size={16} />;
+}
+
+/**
+ * One activity, Melvor-style: a compact row (art, name, level · time · XP, start button) that
+ * expands on click to show what it drops and what it needs.
+ */
+function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: number; open: boolean; onToggle: () => void }) {
   const s = useGame();
   const d = deriveStats(s);
   const running = s.action?.kind === 'skill' && s.action.actionId === a.id;
   const areaLocked = !!a.area && !s.unlockedZones.includes(a.area);
-  const locked = level < a.level || areaLocked;
+  const locked = !!a.soon || level < a.level || areaLocked;
   const interval = actionIntervalMs(s, a, d);
   const blocker = actionBlocker(s, a);
   const [pops, setPops] = useState<{ id: number; text: string }[]>([]);
@@ -112,101 +122,80 @@ function ActionCard({ a, level }: { a: SkillAction; level: number }) {
   useGameEvent(onEvent);
 
   const missing = blocker === 'Missing materials';
-  const lockText = areaLocked ? `Reach ${zoneDef(a.area!).name} to unlock` : `Unlocks at ${SKILLS[a.skill].name} level ${a.level}`;
+  const lockText = a.soon ? 'Coming soon' : areaLocked ? `Reach ${zoneDef(a.area!).name}` : `Lv ${a.level}`;
 
   return (
     <div
       data-tut={`action-${a.id}`}
-      className={`card action-card ${a.inputs ? 'recipe' : 'gather'} ${running ? 'running' : ''} ${locked ? 'locked' : ''} ${missing ? 'missing' : ''}`}
+      className={`card action-card ${running ? 'running' : ''} ${locked ? 'locked' : ''} ${missing ? 'missing' : ''} ${open ? 'open' : ''}`}
     >
       {pops.map((p) => (
         <span key={p.id} className="pop">
           {p.text} · +{Math.round(a.xp * (1 + d.skillXp / 100))}xp
         </span>
       ))}
-      <div className="action-top">
-        <div className="action-art">
-          {locked ? (
-            <GameIcon name="lock" size={20} color="var(--dim)" />
-          ) : a.baseId ? (
-            <Art src={`items/${a.baseId}`} alt={baseDef(a.baseId).name} size={44} fallback={<Icon name={baseDef(a.baseId).slot} size={24} color={a.color} />} />
-          ) : a.gem?.attr ? (
-            <GemIcon def={{ name: a.name, attr: a.gem.attr }} size={28} support={a.gem.kind === 'support'} />
-          ) : a.gem ? (
-            <GameIcon name="gemcutting" size={24} color={a.color} />
-          ) : a.flaskId || a.outputs?.transmute !== undefined || a.skill === 'alchemy' ? (
-            <Orb color={a.color} size={24} glow={running} />
-          ) : (
-            <Swatch color={a.color} size={20} />
-          )}
-        </div>
-        <div className="action-title">
-          <div className="action-name" title={a.name}>
-            {a.name}
-          </div>
-          {(running || locked) && (
-            <div className="action-status">
-              {running ? (
-                <Badge tone="success" live>
-                  Active
-                </Badge>
+      <div className="action-head">
+        <button className="action-toggle" onClick={onToggle} aria-expanded={open} title={open ? 'Hide details' : 'Show drops and costs'}>
+          <span className="action-art">
+            <ActionArt a={a} locked={locked} running={running} />
+          </span>
+          <span className="action-title">
+            <span className="action-name">{a.name}</span>
+            <span className="action-meta num">
+              {locked ? (
+                <span className="lock-note">{lockText}</span>
               ) : (
-                <Badge tone="locked">Locked</Badge>
+                <>
+                  <span title="Required level">Lv {a.level}</span>
+                  <span title="Time per action">{(interval / 1000).toFixed(1)}s</span>
+                  <span title="Experience per action">{a.xp} XP</span>
+                </>
               )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="action-meta">
-        <span title="Required level">Lv {a.level}</span>
-        <span title="Time per action">
-          <GameIcon name="clock" size={12} /> {(interval / 1000).toFixed(1)}s
-        </span>
-        <span title="Experience per action">{a.xp} XP</span>
-      </div>
-
-      <div className="action-section">
-        <div className="io-label">Produces</div>
-        <OutputRows a={a} />
-      </div>
-
-      {a.inputs && (
-        <div className="action-section">
-          <div className="io-label">Requires</div>
-          <Ingredients cost={a.inputs} have={s.bank} />
-        </div>
-      )}
-
-      <div className="action-foot">
-        {locked ? (
-          <>
-            <div className="lock-note">
-              <GameIcon name="lock" size={12} /> {lockText}
-              {!areaLocked && <span className="num"> (you're {level})</span>}
-            </div>
-            <button className="btn block" disabled>
-              Locked
-            </button>
-          </>
-        ) : running ? (
-          <>
-            {s.action?.kind === 'skill' && <ProgressBar value={s.action.progress / interval} color="var(--success)" size="md" />}
-            <button className="btn block" onClick={() => game.act((st) => stopAction(st))}>
-              Stop
-            </button>
-          </>
+            </span>
+          </span>
+          <span className="action-chevron" aria-hidden>
+            ▸
+          </span>
+        </button>
+        {locked ? null : running ? (
+          <button className="btn sm" onClick={() => game.act((st) => stopAction(st))}>
+            Stop
+          </button>
         ) : (
           <button
-            className={`btn block ${blocker ? '' : 'primary'}`}
+            className={`btn sm ${blocker ? '' : 'primary'}`}
             disabled={!!blocker}
             title={blocker ?? ''}
             onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, a.id))}
           >
-            {blocker ?? START_LABEL[a.skill]}
+            {missing ? 'Missing' : blocker ? 'Full' : START_LABEL[a.skill]}
           </button>
         )}
       </div>
+      {running && s.action?.kind === 'skill' && <ProgressBar value={s.action.progress / interval} color="var(--success)" className="action-progress" />}
+
+      {open && (
+        <div className="action-body">
+          {locked && (
+            <div className="action-meta num">
+              <span>Lv {a.level}</span>
+              <span>{(interval / 1000).toFixed(1)}s</span>
+              <span>{a.xp} XP</span>
+              {!a.soon && !areaLocked && <span>(you're {level})</span>}
+            </div>
+          )}
+          <div className="action-section">
+            <div className="io-label">Produces</div>
+            <OutputRows a={a} />
+          </div>
+          {a.inputs && (
+            <div className="action-section">
+              <div className="io-label">Requires</div>
+              <Ingredients cost={a.inputs} have={s.bank} />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -282,7 +271,7 @@ function Ingredients({ cost, have }: { cost: Record<string, number>; have: Recor
   );
 }
 
-/** The XP header every gathering and production skill page shares. */
+/** The XP header every skilling page shares. */
 function SkillHeader({ skill }: { skill: SkillId }) {
   const s = useGame();
   const def = SKILLS[skill];
@@ -297,8 +286,10 @@ function SkillHeader({ skill }: { skill: SkillId }) {
         <GameIcon name={skill} size={32} color={def.color} />
       </div>
       <div className="skill-hero-text" style={{ minWidth: 0 }}>
-        <span className="page-kicker">{def.group === 'gathering' ? 'Gathering skill' : 'Production skill'}</span>
-        <h1>{def.name}</h1>
+        <span className="page-kicker">Skilling</span>
+        <h1>
+          {def.name} {def.soon && <Badge tone="locked">Coming soon</Badge>}
+        </h1>
         <p>{def.desc}</p>
       </div>
       <div className="xp">
@@ -325,9 +316,19 @@ export function SkillPage({ skill }: { skill: SkillId }) {
   const s = useGame();
   const level = skillLevel(s, skill);
   const actions = actionsFor(skill);
-  const [filter, setFilter] = useState<'all' | 'available'>('all');
-  const shown = filter === 'all' ? actions : actions.filter((a) => a.level <= level);
-  const unlocked = actions.filter((a) => a.level <= level && (!a.area || s.unlockedZones.includes(a.area))).length;
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const [onlyUnlocked, setOnlyUnlocked] = useState(false);
+  const isUnlocked = (a: SkillAction) => !a.soon && a.level <= level && (!a.area || s.unlockedZones.includes(a.area));
+  const shown = onlyUnlocked ? actions.filter(isUnlocked) : actions;
+  const unlocked = actions.filter(isUnlocked).length;
+  const allOpen = shown.length > 0 && shown.every((a) => open.has(a.id));
+  const toggle = (id: string) =>
+    setOpen((o) => {
+      const n = new Set(o);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
 
   return (
     <div className="page">
@@ -344,6 +345,11 @@ export function SkillPage({ skill }: { skill: SkillId }) {
           Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b>{fmt(s.bank.rough_gem ?? 0)}</b> Rough Gems.
         </div>
       )}
+      {skill === 'fishing' && (
+        <div className="callout skill-note">
+          Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.
+        </div>
+      )}
       <section>
         <div className="section-head">
           <h3>Activities</h3>
@@ -352,20 +358,17 @@ export function SkillPage({ skill }: { skill: SkillId }) {
           </span>
           <span className="spacer" />
           {actions.length > 8 && (
-            <Tabs
-              compact
-              value={filter}
-              onChange={setFilter}
-              tabs={[
-                { id: 'all', label: 'All' },
-                { id: 'available', label: 'Unlocked' },
-              ]}
-            />
+            <button className="btn sm ghost" onClick={() => setOnlyUnlocked((v) => !v)}>
+              {onlyUnlocked ? 'Show all' : 'Unlocked only'}
+            </button>
           )}
+          <button className="btn sm ghost" onClick={() => setOpen(allOpen ? new Set() : new Set(shown.map((a) => a.id)))}>
+            {allOpen ? 'Collapse all' : 'Expand all'}
+          </button>
         </div>
-        <div className={`card-grid action-grid ${actions.some((a) => a.inputs) ? 'recipes' : 'gathering'}`}>
+        <div className="action-grid">
           {shown.map((a) => (
-            <ActionCard key={a.id} a={a} level={level} />
+            <ActionCard key={a.id} a={a} level={level} open={open.has(a.id)} onToggle={() => toggle(a.id)} />
           ))}
         </div>
       </section>

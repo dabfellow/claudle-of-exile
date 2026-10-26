@@ -4,7 +4,7 @@ import { flaskDef } from '../data/flasks';
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
 import { ALCH_DOUBLE, ALCH_SPEED, FORGE_ILVL, FORGE_SPEED } from '../data/hideout';
 import { HERB_TIERS, ORB_TIERS } from '../data/skillTree';
-import { actionDef, type SkillAction } from '../data/skills';
+import { actionDef, SKILLS, type SkillAction } from '../data/skills';
 import { actOpen, ZONES, zoneDef } from '../data/zones';
 import { addBank, canAfford, hasItem, payCost } from './bank';
 import type { Ctx } from './context';
@@ -69,8 +69,9 @@ export function setSmithCatalyst(s: GameState, patch: Partial<SmithCatalyst>): v
 }
 
 export function actionBlocker(s: GameState, a: SkillAction): string | null {
+  if (a.soon) return 'Coming soon';
   if (a.area && !s.unlockedZones.includes(a.area)) return `Reach ${zoneDef(a.area).name} to unlock`;
-  if (skillLevel(s, a.skill) < a.level) return `Requires ${a.skill} level ${a.level}`;
+  if (skillLevel(s, a.skill) < a.level) return `Requires ${SKILLS[a.skill].name} level ${a.level}`;
   if (a.inputs && !canAfford(s, a.inputs)) return 'Missing materials';
   if (a.baseId && bagFull(s)) return 'Inventory full';
   return null;
@@ -85,7 +86,7 @@ export function startSkillAction(s: GameState, ctx: Ctx, actionId: string): stri
   }
   s.combat = null;
   s.action = { kind: 'skill', actionId, progress: 0 };
-  // Greenhouse remembers the last harvest so it can keep growing in the background
+  // Greenhouse remembers the last Foraging spot so it can keep growing in the background
   if (a.skill === 'harvesting') s.greenhouse = { actionId, progress: 0 };
   return null;
 }
@@ -160,15 +161,15 @@ export function fossilHit(item: Item, fossilId: string): boolean {
 
 /** Gemcutting: a random gem of the recipe's kind. Signature supports favour skills you own. */
 function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, number>): void {
-  const { kind, attr } = a.gem!;
+  const { kind } = a.gem!;
   if (kind === 'skill') {
-    const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => !attr || g.attr === attr));
+    const def = pick(ctx.rng, ACTIVE_GEMS);
     s.gems.push(createSkillGem(s, def.id));
     outputs[def.id] = 1;
     ctx.emit({ t: 'loot', gemId: def.id });
     return;
   }
-  let pool = SUPPORT_GEMS.filter((g) => (kind === 'signature' ? !!g.signatureFor : !g.signatureFor && (!attr || g.attr === attr)));
+  let pool = SUPPORT_GEMS.filter((g) => (kind === 'signature' ? !!g.signatureFor : !g.signatureFor));
   if (kind === 'signature') {
     const owned = new Set([...s.skillBar, ...s.gems].filter(Boolean).map((g) => g!.gemId));
     const mine = pool.filter((g) => owned.has(g.signatureFor!));
@@ -248,7 +249,7 @@ export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
   }
 }
 
-/** Greenhouse keystone: the last harvest keeps growing slowly while you do anything else. */
+/** Greenhouse keystone: the last Foraging spot keeps growing slowly while you do anything else. */
 export function greenhouseStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void {
   const g = s.greenhouse;
   const pct = skillTreeStats(s).greenhouse ?? 0;

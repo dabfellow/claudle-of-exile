@@ -1,9 +1,11 @@
+import { SKILLS } from '../data/skills';
 import { SKILL_TREE_BY_ID, SKILL_TREE_START, type SkillTreeStat } from '../data/skillTree';
 import type { Ctx } from './context';
 import { connectedWithout, treeAllocateReason } from './passives';
 import type { GameState } from './types';
 import { levelOf } from './xp';
 
+// Fishing is left out: it is always level 1 and would only nudge the point count
 const SKILLING = ['mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy', 'gemcutting'] as const;
 
 /** 1 point per 5 total gathering/production levels (everyone starts with 1). */
@@ -20,7 +22,7 @@ export function skillNodeReason(s: GameState, id: string): string | null {
   const node = SKILL_TREE_BY_ID[id];
   if (!node) return 'Invalid node';
   if (node.req && levelOf(node.req.skill, s.skills[node.req.skill]) < node.req.level) {
-    return `Requires ${node.req.skill[0].toUpperCase() + node.req.skill.slice(1)} level ${node.req.level}`;
+    return `Requires ${SKILLS[node.req.skill].name} level ${node.req.level}`;
   }
   return treeAllocateReason(SKILL_TREE_BY_ID, s.skillPassives, SKILL_TREE_START, id, skillPointsLeft(s));
 }

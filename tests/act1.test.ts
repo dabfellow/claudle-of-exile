@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
 import { actionsFor } from '../src/data/skills';
 import { uniqueDef } from '../src/data/bases';
-import { ACT_PREVIEW, BOSS_WARD_PCT, nextZone, ZONES, zoneDef, zonesInAct, type MonsterDef } from '../src/data/zones';
+import { ACT_PREVIEW, BOSS_WARD_PCT, nextZones, ZONES, zoneDef, zonesInAct, type MonsterDef } from '../src/data/zones';
 import { aliveMonsters, combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
@@ -58,11 +58,11 @@ describe('Act 1 layout', () => {
 
   it('each boss unlocks the next area, and the act boss opens Act 2 only once it is out', () => {
     const act = zonesInAct(1);
-    for (let i = 0; i < act.length - 1; i++) expect(nextZone(act[i].id)?.id).toBe(act[i + 1].id);
-    expect(nextZone('sanctum')?.id).toBe('cinderroad');
+    for (let i = 0; i < act.length - 1; i++) expect(nextZones(act[i].id)[0]?.id).toBe(act[i + 1].id);
+    expect(nextZones('sanctum')[0]?.id).toBe('cinderroad');
     ACT_PREVIEW.enabled = false;
     try {
-      expect(nextZone('sanctum')).toBeUndefined();
+      expect(nextZones('sanctum')).toEqual([]);
     } finally {
       ACT_PREVIEW.enabled = true;
     }

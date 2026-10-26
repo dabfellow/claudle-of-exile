@@ -1,7 +1,12 @@
+import { classDef } from '../data/classes';
 import { SKILL_BAR_SLOTS } from '../data/gems';
+import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
-import { nextZone, ZONES } from '../data/zones';
+import { hasAction } from '../data/skills';
+import { ZONES } from '../data/zones';
 import { trimFlaskStash } from './flasks';
+import { connectedWithout } from './passives';
+import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { FlaskInstance, GameState } from './types';
 
@@ -134,6 +139,17 @@ const MIGRATIONS: Record<number, Migration> = {
     s.ground = [];
     s.offlineHaul = [];
   },
+  14: (raw) => {
+    // class-mechanic clusters moved out to the tree's rim and generic clusters took their place:
+    // keep the allocation if it still hangs together, otherwise refund every point
+    const s = raw as unknown as GameState;
+    const start = s.character?.startNode ?? classDef(s.character?.classId ?? 'warrior').startNode;
+    const known = (s.passives ?? []).every((id) => PASSIVE_BY_ID[id]);
+    if (!known || !connectedWithout(s.passives ?? [], '', start)) {
+      s.passives = [];
+      s.masteries = {};
+    }
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
@@ -160,6 +176,7 @@ export function deserialize(json: string): GameState {
   const s = raw as unknown as GameState;
   unlockReachedZones(s);
   trimFlaskStash(s);
+  dropRemovedActions(s);
   return s;
 }
 
@@ -168,10 +185,13 @@ export function deserialize(json: string): GameState {
  * Not a versioned migration: acts open without the save format changing.
  */
 export function unlockReachedZones(s: GameState): void {
-  for (const id of s.bossesDefeated) {
-    const next = nextZone(id);
-    if (next && !s.unlockedZones.includes(next.id)) s.unlockedZones.push(next.id);
-  }
+  openReachedZones(s);
+}
+
+/** A skilling recipe that was removed or renamed (e.g. the per-attribute gem cuts) stops instead of crashing the load. */
+export function dropRemovedActions(s: GameState): void {
+  if (s.action?.kind === 'skill' && !hasAction(s.action.actionId)) s.action = null;
+  if (s.greenhouse && !hasAction(s.greenhouse.actionId)) s.greenhouse = null;
 }
 
 export function exportSave(s: GameState): string {

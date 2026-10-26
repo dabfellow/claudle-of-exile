@@ -1,6 +1,6 @@
 import { CRAFT_MATERIALS } from './craftMats';
 
-export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'currency' | 'gold';
+export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'currency' | 'gold' | 'fish';
 
 export interface MaterialDef {
   id: string;
@@ -29,6 +29,16 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'frostleaf', name: 'Frostleaf', kind: 'herb', color: '#7fc8f8', value: 5 },
   { id: 'emberroot', name: 'Emberroot', kind: 'herb', color: '#e2603f', value: 10 },
   { id: 'voidbloom', name: 'Voidbloom', kind: 'herb', color: '#9b6dde', value: 20 },
+
+  // Fishing is coming soon: nothing can catch these yet
+  { id: 'mudskipper', name: 'Mudskipper', kind: 'fish', color: '#8a7b5a', value: 2 },
+  { id: 'blind_brinefish', name: 'Blind Brinefish', kind: 'fish', color: '#5f8f9e', value: 5 },
+  { id: 'reed_eel', name: 'Reed Eel', kind: 'fish', color: '#3f6a4a', value: 9 },
+  { id: 'drowned_grouper', name: 'Drowned Grouper', kind: 'fish', color: '#3d5f8a', value: 14 },
+  { id: 'thunder_marlin', name: 'Thunder Marlin', kind: 'fish', color: '#f2d14c', value: 25 },
+  { id: 'soggy_boot', name: 'Soggy Boot', kind: 'fish', color: '#6b5a44', value: 0, desc: 'Still better than your current boots.' },
+  { id: 'message_bottle', name: 'Message in a Bottle', kind: 'fish', color: '#9fd2c8', value: 10, desc: '"Fishing soon." The note is very old.' },
+  { id: 'tasalio_scale', name: "Tasalio's Scale", kind: 'fish', color: '#4fc1e8', value: 500, desc: 'The god of water is watching. He is not impressed.' },
 
   { id: 'arcane_dust', name: 'Arcane Dust', kind: 'dust', color: '#b9a7ff', value: 3, desc: 'Salvaged from items. Used in Alchemy.' },
 

@@ -79,6 +79,7 @@ export interface Derived {
   attackMs: number;
   /** wielding a bow: every attack is a ranged projectile, never melee */
   ranged: boolean;
+  dualWield: boolean;
   critChance: number;
   critMulti: number;
   res: { fire: number; cold: number; light: number };
@@ -93,10 +94,7 @@ export interface Derived {
 }
 
 export const RES_CAP = 75;
-/** everyone regenerates this % of max life per second */
-export const BASE_REGEN_PCT = 0.5;
-/** % of max mana regenerated per second before modifiers */
-export const BASE_MANA_REGEN_PCT = 4;
+/** In a fight nobody regenerates by default: life and mana come back from flasks, gear and passives. */
 /** % of max energy shield recharged per second before modifiers */
 export const ES_RECHARGE_PCT = 20;
 /** energy shield starts recharging after this long without being hit */
@@ -143,6 +141,11 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   const raw = rawStats(s, buffs);
   const combatLevel = characterLevel(s);
   const weapon = s.equipment.weapon ? baseDef(s.equipment.weapon.baseId) : null;
+  const offWeapon = s.equipment.offhand && baseDef(s.equipment.offhand.baseId).slot === 'weapon' ? baseDef(s.equipment.offhand.baseId) : null;
+  const dualWield = !!(weapon && offWeapon);
+  // dual wielding alternates hands, so base damage and crit are the average of the two
+  const both = <T,>(pick: (w: NonNullable<typeof weapon>) => T, avg: (a: T, b: T) => T, fallback: T): T =>
+    weapon ? (offWeapon ? avg(pick(weapon), pick(offWeapon)) : pick(weapon)) : fallback;
 
   const attributes: Attributes = {
     str: Math.round(raw.str + raw.allAttr),
@@ -171,7 +174,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   }
   const accuracy = Math.round(2 * combatLevel + raw.accuracy + attributes.dex * A.dex.accuracyPer);
 
-  const wPhys = weapon?.phys ?? [2, 5];
+  const wPhys = both<[number, number]>((w) => w.phys ?? [2, 5], (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], [2, 5]);
   const physMult = 1 + (raw.physPct + attributes.str * A.str.physPctPer) / 100;
   const elemBase = raw.elemPct + attributes.int * A.int.elemPctPer;
   const elemMult = 1 + elemBase / 100;
@@ -187,11 +190,12 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     cold: [Math.round(raw.coldMin * typeMult.cold), Math.round(raw.coldMax * typeMult.cold)],
     light: [Math.round(raw.lightMin * typeMult.light), Math.round(raw.lightMax * typeMult.light)],
   };
+  // dual wielding swings at the main hand's speed
   const attackSpeed = (1 + (weapon?.speed ?? 0) / 100) * (1 + raw.attackSpeedPct / 100) * (1 + raw.attackSpeedMore / 100);
   const castSpeed = 1 + raw.castSpeedPct / 100;
   const attackMs = BASE_ATTACK_MS / attackSpeed;
   // Steady Hand: always hit, never crit
-  const critChance = raw.steadyHand ? 0 : Math.min(95, (weapon?.crit ?? 5) * (1 + raw.critChancePct / 100));
+  const critChance = raw.steadyHand ? 0 : Math.min(95, both((w) => w.crit ?? 5, (a, b) => (a + b) / 2, 5) * (1 + raw.critChancePct / 100));
   const critMulti = 150 + raw.critMulti;
   const cap = (v: number) => Math.min(RES_CAP, v + raw.allRes);
   const avgHit = Object.values(hit).reduce((a, [lo, hi]) => a + (lo + hi) / 2, 0);
@@ -204,9 +208,10 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     attributes,
     accuracy,
     maxLife,
-    lifeRegen: raw.lifeRegen + (maxLife * (BASE_REGEN_PCT + raw.lifeRegenPct)) / 100,
+    lifeRegen: raw.lifeRegen + (maxLife * raw.lifeRegenPct) / 100,
     maxMana,
-    manaRegen: maxMana ? ((maxMana * BASE_MANA_REGEN_PCT) / 100) * (1 + raw.manaRegenPct / 100) + raw.manaRegenFlat : 0,
+    // as in PoE, increased regeneration rate scales every regeneration source
+    manaRegen: maxMana ? raw.manaRegenFlat * (1 + raw.manaRegenPct / 100) : 0,
     maxEs,
     esRecharge: ((maxEs * ES_RECHARGE_PCT) / 100) * (1 + raw.esRechargePct / 100),
     armour,
@@ -219,6 +224,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     castSpeed,
     attackMs,
     ranged: weapon?.family === 'bow',
+    dualWield,
     critChance,
     critMulti,
     res: { fire: cap(raw.fireRes), cold: cap(raw.coldRes), light: cap(raw.lightRes) },

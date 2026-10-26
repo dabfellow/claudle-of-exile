@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PASSIVE_BY_ID, PASSIVE_NODES } from '../src/data/passiveTree';
+import { PASSIVE_BY_ID, PASSIVE_NODES, RIM_RADIUS } from '../src/data/passiveTree';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { actionDef } from '../src/data/skills';
 import { zoneDef } from '../src/data/zones';
@@ -50,8 +50,8 @@ describe('character tree shape', () => {
     const count = (k: string) => PASSIVE_NODES.filter((n) => n.kind === k).length;
     expect(count('start')).toBe(6);
     expect(count('keystone')).toBe(21);
-    expect(count('notable')).toBe(168);
-    expect(count('mastery')).toBe(78);
+    expect(count('notable')).toBe(198);
+    expect(count('mastery')).toBe(90);
     expect(PASSIVE_NODES.length).toBeGreaterThanOrEqual(850);
     for (const n of PASSIVE_NODES.filter((x) => x.kind === 'mastery')) {
       expect(n.options).toHaveLength(3);
@@ -64,15 +64,18 @@ describe('character tree shape', () => {
     expect(closest).toBeGreaterThan(30);
   });
 
-  it('every class has a mechanic wheel next to its start and a mechanic keystone', () => {
+  it('keeps every class mechanic out on the rim, reached through its own sector', () => {
     for (const mech of ['rage', 'riposte', 'momentum', 'malice', 'manaPower', 'martyr']) {
       const nodes = PASSIVE_NODES.filter((n) => n.mechanic === mech);
       expect(nodes.filter((n) => n.kind === 'notable')).toHaveLength(5);
       expect(nodes.filter((n) => n.kind === 'keystone')).toHaveLength(1);
+      for (const n of nodes) expect(Math.hypot(n.x, n.y)).toBeGreaterThan(RIM_RADIUS - 150);
     }
+    // nothing in the main circle is tied to a class mechanic
+    expect(PASSIVE_NODES.filter((n) => n.mechanic && Math.hypot(n.x, n.y) < 2000)).toHaveLength(0);
     const w = newGame(1, { name: 'w', classId: 'warrior' });
     const toRage = route('class_str', 'rage_n1');
-    expect(toRage.length).toBeLessThanOrEqual(8);
+    expect(toRage.every((id) => ['str', 'center'].includes(PASSIVE_BY_ID[id].region))).toBe(true);
     take(w, toRage);
     expect(deriveStats(w, []).raw.rageEffect).toBeGreaterThan(0);
   });

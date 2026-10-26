@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { ESSENCES, FOSSILS } from '../../data/craftMats';
-import { CRAFT_STEP_MS } from '../../data/hideout';
+import { AUTO_CRAFT_BENCH_LEVEL, CRAFT_STEP_MS } from '../../data/hideout';
 import { findItem } from '../../engine/crafting';
+import { stationLevel } from '../../engine/hideout';
 import { affixName, craftUntilReason, methodName, ruleText, startCraftUntil } from '../../engine/craftUntil';
 import { eligibleAffixes, itemName } from '../../engine/items';
 import { stopAction } from '../../engine/skills';
 import type { CraftMethod, GameState, Item, StopRule } from '../../engine/types';
 import { game } from '../../game';
-import { fmt, ProgressBar } from './common';
+import { EmptyState, fmt, GameIcon, ProgressBar } from './common';
 
 /** Every modifier that could roll on this item's base at its item level, ignoring what it has now. */
 function rollableAffixes(item: Item) {
@@ -15,7 +16,7 @@ function rollableAffixes(item: Item) {
   return [...eligibleAffixes(blank, 'prefix'), ...eligibleAffixes(blank, 'suffix')];
 }
 
-/** Craft until…: spend orbs or Essences on an inventory item until a stop rule matches (runs offline too). */
+/** Auto-crafting: spend orbs or Essences on an inventory item until a stop rule matches (runs offline too). */
 export function CraftUntilCard({ s, item }: { s: GameState; item: Item | undefined }) {
   const [method, setMethod] = useState<'alteration' | 'chaos' | 'essence'>('alteration');
   const [fossil, setFossil] = useState('');
@@ -29,7 +30,7 @@ export function CraftUntilCard({ s, item }: { s: GameState; item: Item | undefin
     const target = findItem(s, run.uid);
     return (
       <div className="card">
-        <div className="card-title">Craft until…</div>
+        <div className="card-title">Auto-crafting</div>
         <p className="small">
           <b>{target ? itemName(target) : 'Item'}</b> · {methodName(run.method)} · stop at {ruleText(run.rule)}
         </p>
@@ -43,6 +44,17 @@ export function CraftUntilCard({ s, item }: { s: GameState; item: Item | undefin
             Stop
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (stationLevel(s, 'bench') < AUTO_CRAFT_BENCH_LEVEL) {
+    return (
+      <div className="card">
+        <div className="card-title">Auto-crafting</div>
+        <EmptyState small icon={<GameIcon name="lock" size={24} color="var(--dim)" />}>
+          Upgrade the Crafting Bench to level {AUTO_CRAFT_BENCH_LEVEL} to spend orbs automatically until a modifier rolls, even while you're away.
+        </EmptyState>
       </div>
     );
   }
@@ -63,7 +75,7 @@ export function CraftUntilCard({ s, item }: { s: GameState; item: Item | undefin
   return (
     <div className="card">
       <div className="card-title">
-        Craft until…
+        Auto-crafting
         <span className="grow" />
         <span className="card-hint">One step every {CRAFT_STEP_MS / 1000}s, offline too</span>
       </div>

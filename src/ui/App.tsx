@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import { game, useGame } from '../game';
 import { PinDock } from './components/common';
+import { ItemMenuHost } from './components/ItemMenu';
 import { QuestTracker } from './components/QuestTracker';
 import { Feed, OfflineModal, Sidebar, Toasts, TopBar, useFlaskHotkeys, usePage, XpBar, type Page } from './Layout';
 import { AchievementsPage } from './pages/AchievementsPage';
@@ -10,6 +11,8 @@ import { CombatPage } from './pages/CombatPage';
 import { SkillGemsPage } from './pages/SkillGemsPage';
 import { EquipmentPage } from './pages/EquipmentPage';
 import { HideoutPage } from './pages/HideoutPage';
+import { MapDevicePage } from './pages/MapDevicePage';
+import { UpcomingSkillsPage } from './pages/UpcomingSkillsPage';
 import { SkillPage } from './pages/SkillPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { StashPage } from './pages/StashPage';
@@ -28,6 +31,10 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
       return <CombatPage go={go} />;
     case 'campaign':
       return <CampaignPage go={go} />;
+    case 'maps':
+      return <MapDevicePage go={go} />;
+    case 'upcoming':
+      return <UpcomingSkillsPage />;
     case 'skills':
       return <SkillGemsPage />;
     case 'tree':
@@ -76,6 +83,7 @@ function GameScreen() {
       <Feed />
       <XpBar />
       <PinDock />
+      <ItemMenuHost />
       <QuestTracker floating />
       <OfflineModal />
       <IntroModal />

@@ -19,7 +19,7 @@ export interface StationDef {
 
 export const STATIONS: StationDef[] = [
   {
-    id: 'map_device', name: 'Map Device', page: 'combat', color: '#8a7ad8',
+    id: 'map_device', name: 'Map Device', page: 'maps', color: '#8a7ad8',
     desc: 'Opens portals to the wilds. Upgrades attune it to richer loot.',
     levels: [
       { cost: {}, effect: 'Open portals to unlocked zones' },
@@ -66,6 +66,7 @@ export const STATIONS: StationDef[] = [
       { cost: { gold: 300, arcane_dust: 40 }, effect: 'Bench crafts: Life & Resistances' },
       { cost: { gold: 1500, arcane_dust: 120, rough_gem: 6 }, effect: 'More bench recipes (each also needs its achievement)' },
       { cost: { gold: 5000, arcane_dust: 300, rough_gem: 15 }, effect: 'Top-tier bench recipes (each also needs its achievement)' },
+      { cost: { gold: 15000, arcane_dust: 800, rough_gem: 40 }, effect: 'Auto-crafting: spend orbs until a modifier rolls, even offline' },
     ],
   },
   {
@@ -103,7 +104,8 @@ export const MAP_RARITY = [0, 10, 20, 35];
 export const MAP_ILVL = [0, 0, 0, 1];
 export const VENDOR_SLOTS = [6, 8, 10, 12];
 export const VENDOR_REFRESH_MS = 10 * 60 * 1000;
-/** Craft until…: time per orb or Essence spent. */
+/** Auto-crafting: time per orb or Essence spent. */
+export const AUTO_CRAFT_BENCH_LEVEL = 5;
 export const CRAFT_STEP_MS = 1500;
 
 export interface BenchCraft {

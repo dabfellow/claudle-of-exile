@@ -35,7 +35,7 @@ function OfferIcon({ o }: { o: VendorOffer }) {
   if (o.gemId) return <GemIcon def={activeGemDef(o.gemId)} size={40} />;
   if (o.supportId) return <GemIcon def={supportGemDef(o.supportId)} size={36} support />;
   const def = currencyDef(o.currencyId!);
-  return <Art src={`currency/${def.id}.png`} alt={def.name} size={44} fallback={<Orb color={def.color} size={34} glow />} />;
+  return <Orb color={def.color} size={34} glow />;
 }
 
 function offerTip(s: GameState, o: VendorOffer) {

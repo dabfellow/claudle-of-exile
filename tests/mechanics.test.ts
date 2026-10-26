@@ -176,10 +176,25 @@ describe('forbidden keystones', () => {
     expect(base.s.passives).not.toContain('forbidden_knifes_edge');
   });
 
+  it('an attack with no cooldown on top of the bar still lets a buff below it fire, and falls back to a default attack once mana runs out', () => {
+    const { s, ctx } = arena('warrior', 'heavy_strike');
+    s.skillBar[1] = createSkillGem(s, 'war_cry');
+    s.skillBar[1].rule = { when: 'always' };
+    run(s, ctx, 60_000);
+    const used = (id: string) => ctx.events.filter((e) => e.t === 'skill' && e.gemId === id).length;
+    expect(used('war_cry')).toBeGreaterThan(0);
+    expect(used('heavy_strike')).toBeGreaterThan(1);
+    // the buff went first even though the attack sits above it
+    expect(ctx.events.find((e) => e.t === 'skill' && e.gemId !== 'default_attack')).toMatchObject({ gemId: 'war_cry' });
+    // no regen in a fight: once the mana is gone it's free default attacks (which emit no skill event)
+    expect(used('heavy_strike')).toBeLessThan(deriveStats(s).maxMana);
+    expect(hits(ctx.events).length).toBeGreaterThan(used('heavy_strike') + used('war_cry'));
+  });
+
   it('faster Cooldowns shortens the cooldown a skill starts in a fight', () => {
     const fast = PASSIVE_NODES.find((n) => n.kind !== 'keystone' && (n.stats?.cooldownRecovery ?? 0) > 0)!;
     const used = (passives: string[]) => {
-      const { s, ctx } = arena('warrior', 'heavy_strike', passives);
+      const { s, ctx } = arena('warrior', 'ground_slam', passives);
       run(s, ctx, 20_000, () => s.combat!.cooldowns[0] > 0);
       return s.combat!.cooldowns[0];
     };

@@ -38,7 +38,7 @@ Total: 829 unique artworks out of 1,939 files. The first pass also reused unused
 
 ## Earlier audit findings
 
-- **Catalone Part 1** (jewellery, amulets, potions, relics) is not on disk; only Part 2 (weapons and shields) was downloaded. The 9 rings and amulets use loose gems and trinkets until it is.
+- **Catalone Part 1** (jewellery, amulets, potions, relics) is not on disk; only Part 2 (weapons and shields) was downloaded. The 9 rings and amulets now use tinted game-icons.net necklaces and rings (2026-10-25).
 - **Softline** glyphs are flat white UI symbols; only the plain ring is used (iron ring).
 - **Missing licences:** Catalone, CodeSpree, SanguineNite and free_sample came without licence files (see `src/assets/CREDITS.md`).
 
@@ -193,20 +193,20 @@ Custom art wanted most: the 8 area banners and 2 scenes (no fitting landscapes e
 | `items/chain_belt` | `gear sets/set-07-belt.png` | close | `src/assets/items/armor/set-07-belt.png` | gear set, integrated before these packs |
 | `items/leather_belt` | `gear sets/set-75-helmet.png` | close | `src/assets/items/armor/set-75-helmet.png` | gear set 75's 'helmet' file is a leather belt with a gold buckle |
 | `items/heavy_belt` | `gear sets/set-63-belt.png` | close | `src/assets/items/armor/set-63-belt.png` | gear set, integrated before these packs |
-| `items/coral_amulet` | `CodeSpree rpg-items-all/carrageen moss.png` | placeholder | `src/assets/items/jewelry/codespree-carrageen-moss.png` | red coral-like seaweed; no cord |
-| `items/amber_amulet` | `32 Medieval Crafting Icons 64x64/glue_01.png` | placeholder | `src/assets/items/jewelry/craft32-glue.png` | amber-coloured block; no chain |
-| `items/jade_amulet` | `Kibyra UI pack (already in repo): items/currency/gem-green.png` | placeholder | `src/assets/items/currency/gem-green.png` | loose green gem |
-| `items/onyx_amulet` | `CodeSpree rpg-items-all/thorn dragon egg.png` | placeholder | `src/assets/items/jewelry/codespree-thorn-dragon-egg.png` | dark egg-shaped stone |
-| `items/iron_ring` | `Kibyra UI pack (already in repo): items/jewelry/softline-ring.png` | placeholder | `src/assets/items/jewelry/softline-ring.png` | flat white ring glyph |
-| `items/ruby_ring` | `Kibyra UI pack (already in repo): items/currency/gem-red.png` | placeholder | `src/assets/items/currency/gem-red.png` | loose red gem |
-| `items/sapphire_ring` | `Woshi 64/crystal.png` | placeholder | `src/assets/items/jewelry/woshi-crystal.png` | loose blue crystal |
-| `items/topaz_ring` | `CodeSpree rpg-items-all/badge.png` | placeholder | `src/assets/items/jewelry/codespree-badge.png` | loose orange-red gem |
-| `items/diamond_ring` | `Kibyra UI pack (already in repo): items/jewelry/ring.png` | close | `src/assets/items/jewelry/ring.png` | Kibyra gold ring with a clear stone |
+| `items/coral_amulet` | `game-icons.net gem-pendant.svg` | close | `src/assets/items/jewelry/gi-gem-pendant.svg` | silhouette tinted coral |
+| `items/amber_amulet` | `game-icons.net intricate-necklace.svg` | close | `src/assets/items/jewelry/gi-intricate-necklace.svg` | silhouette tinted amber |
+| `items/jade_amulet` | `game-icons.net emerald-necklace.svg` | close | `src/assets/items/jewelry/gi-emerald-necklace.svg` | silhouette tinted jade green |
+| `items/onyx_amulet` | `game-icons.net gem-necklace.svg` | close | `src/assets/items/jewelry/gi-gem-necklace.svg` | silhouette tinted onyx grey-violet |
+| `items/iron_ring` | `game-icons.net ring.svg` | close | `src/assets/items/jewelry/gi-ring.svg` | silhouette tinted iron grey |
+| `items/ruby_ring` | `game-icons.net fire-ring.svg` | close | `src/assets/items/jewelry/gi-fire-ring.svg` | silhouette tinted ruby red |
+| `items/sapphire_ring` | `game-icons.net frozen-ring.svg` | close | `src/assets/items/jewelry/gi-frozen-ring.svg` | silhouette tinted sapphire blue |
+| `items/topaz_ring` | `game-icons.net big-frozen-ring.svg` | close | `src/assets/items/jewelry/gi-big-frozen-ring.svg` | silhouette tinted topaz yellow |
+| `items/diamond_ring` | `game-icons.net power-ring.svg` | close | `src/assets/items/jewelry/gi-power-ring.svg` | silhouette tinted pale diamond |
 | `uniques/miners_lament` | `gear sets/set-55-helmet.png` | placeholder | `src/assets/items/armor/set-55-helmet.png` | plain iron helmet; no lantern |
 | `uniques/bloodthirst` | `Catalone weapon_split/2_part_008.png` | close | `src/assets/items/weapons/catalone-w2-008.png` | short sword with a red streak down the blade |
 | `uniques/emberheart` | `gear sets/set-10-body.png` | close | `src/assets/items/armor/set-10-body.png` | gold breastplate with an orange stone in the chest |
 | `uniques/windstep` | `gear sets/set-04-legs.png` | placeholder | `src/assets/items/armor/set-04-legs.png` | brown fur-trimmed boots; no feathers |
-| `uniques/alchemists_band` | `CodeSpree rpg-items-all/vial slug gel.png` | placeholder | `src/assets/items/jewelry/codespree-vial-slug-gel.png` | vial of green gel; no ring |
+| `uniques/alchemists_band` | `game-icons.net swirl-ring.svg` | close | `src/assets/items/jewelry/gi-swirl-ring.svg` | silhouette tinted green |
 | `uniques/iron_bulwark` | `Catalone shield_split/9_part_005.png` | placeholder | `src/assets/items/armor/catalone-s9-005.png` | studded iron kite with red gem |
 | `uniques/starforged_edge` | `Catalone weapon_split/9_part_010.png` | placeholder | `src/assets/items/weapons/catalone-w9-010.png` | dark straight blade with violet vein |
 | `uniques/titans_girth` | `gear sets/set-63-belt.png` | placeholder | `src/assets/items/armor/set-63-belt.png` | same art as its Heavy Belt base |

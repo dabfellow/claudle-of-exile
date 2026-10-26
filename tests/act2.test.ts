@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
 import { uniqueDef } from '../src/data/bases';
 import { BOSS_TABLES, bossTable, DROP_TABLES, dropTable } from '../src/data/drops';
-import { ACT_PREVIEW, actBossZone, actOpen, BOSS_SCORCH_EVERY_MS, BOSS_SCORCH_MS, nextZone, ZONES, zoneDef, zonesInAct } from '../src/data/zones';
+import { ACT_PREVIEW, actBossZone, actOpen, BOSS_SCORCH_EVERY_MS, BOSS_SCORCH_MS, nextZones, ZONES, zoneDef, zonesInAct } from '../src/data/zones';
 import { PLAYER_SPOT } from '../src/engine/battlefield';
 import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
@@ -45,8 +45,8 @@ describe('Act 2 layout', () => {
 
   it('chains area to area, and the act boss unlocks nothing yet', () => {
     const act = zonesInAct(2);
-    for (let i = 0; i < act.length - 1; i++) expect(nextZone(act[i].id)?.id).toBe(act[i + 1].id);
-    expect(nextZone(act.at(-1)!.id)).toBeUndefined();
+    for (let i = 0; i < act.length - 1; i++) expect(nextZones(act[i].id)[0]?.id).toBe(act[i + 1].id);
+    expect(nextZones(act.at(-1)!.id)).toEqual([]);
   });
 
   it('every boss has three to six mechanics, rising to all six', () => {

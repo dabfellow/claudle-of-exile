@@ -64,6 +64,12 @@ export interface ZoneDef {
   /** ms between waves walking in at a walking pace, even while you're still fighting the last one */
   spawnEveryMs: number;
   uniques: string[];
+  /**
+   * What opens this area. `after`: areas whose boss opens the road here, any one of them will do
+   * (defaults to the area before it in ZONES; [] for none). `bosses`: also needs this many of this act's
+   * bosses beaten. So one boss can open five areas at once, and a later area can wait for any three of them.
+   */
+  requires?: { after?: string[]; bosses?: number };
 }
 
 export interface ActDef {
@@ -376,10 +382,19 @@ export function zoneDef(id: string): ZoneDef {
   return z;
 }
 
-/** The area the given area's boss unlocks, if there is one and its act is open. */
-export function nextZone(id: string): ZoneDef | undefined {
-  const next = ZONES[ZONES.findIndex((z) => z.id === id) + 1];
-  return next && actOpen(next.act) ? next : undefined;
+/** The areas whose boss opens the road to this one. */
+export function roadsInto(z: ZoneDef): string[] {
+  return z.requires?.after ?? [ZONES[ZONES.indexOf(z) - 1]?.id].filter((x): x is string => !!x);
+}
+
+/** How many of its act's bosses an area needs beaten first. */
+export function bossesNeeded(z: ZoneDef): number {
+  return z.requires?.bosses ?? 0;
+}
+
+/** The areas the given area's boss leads to (only those whose act is open), ignoring boss-count gates. */
+export function nextZones(id: string): ZoneDef[] {
+  return ZONES.filter((z) => roadsInto(z).includes(id) && actOpen(z.act));
 }
 
 /** The act boss's area for an act. */

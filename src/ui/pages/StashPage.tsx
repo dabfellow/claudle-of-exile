@@ -12,7 +12,9 @@ import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
 import { Orb, Swatch } from '../components/Icon';
 import { Inventory, ItemTiles, sortItems, SortTabs, type SortKey } from '../components/Inventory';
+import { PaperDoll } from '../components/PaperDoll';
 import type { Page } from '../Layout';
+import { openItemMenu } from '../components/ItemMenu';
 
 type Tab = 'gear' | 'currency' | 'materials' | 'gems' | 'flasks';
 
@@ -51,7 +53,7 @@ function CurrencySlot({ s, id }: { s: GameState; id: string }) {
       }
     >
       <div className={`currency-slot ${n > 0 ? '' : 'none'}`} style={{ ['--orb' as string]: def.color }}>
-        <Art src={`currency/${id}.png`} alt={def.name} size={52} fallback={<Orb color={def.color} size={40} glow={n > 0} />} />
+        <Orb color={def.color} size={40} glow={n > 0} />
         <span className="currency-count num">{fmt(n)}</span>
         <span className="currency-name">{def.short}</span>
       </div>
@@ -100,16 +102,20 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
       <PageHeader title="Stash" actions={<CurrencyAmount id="gold" amount={s.bank.gold ?? 0} label="gold" />}>
         Everything you've gathered, brewed and looted.
       </PageHeader>
-      <Inventory
-        s={s}
-        onPick={(i) => game.act((st, ctx) => void stashItems(st, ctx, [i.uid], here))}
-        hint={`Click an item to move it to stash page ${here + 1}.`}
-        actions={
-          <button className="btn sm" disabled={!s.inventory.length} onClick={() => game.act((st, ctx) => void stashItems(st, ctx, st.inventory.map((i) => i.uid), here))}>
-            Stash all
-          </button>
-        }
-      />
+      <div className="stash-top">
+        <div className="card doll-card">
+          <PaperDoll s={s} onItem={(_, it) => openItemMenu(it.uid)} onFlask={() => undefined} emptyFlaskTitle="Equip flasks at the Crafting Bench" />
+        </div>
+        <Inventory
+          s={s}
+          hint="Click an item for Equip, Stash, Salvage. Stash all fills the page below."
+          actions={
+            <button className="btn sm" disabled={!s.inventory.length} onClick={() => game.act((st, ctx) => void stashItems(st, ctx, st.inventory.map((i) => i.uid), here))}>
+              Stash all
+            </button>
+          }
+        />
+      </div>
       <Tabs tabs={tabs} value={tab} onChange={setTab} />
 
       {tab === 'gear' && <GearPages s={s} page={here} setPage={setPage} />}
@@ -254,14 +260,14 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
       </div>
       <div className="row" style={{ marginBottom: 10 }}>
         <span className="dim small">
-          Page {page + 1} · <span className="num">{items.length}/{STASH_PAGE_SIZE}</span> · click an item to take it to your bag
+          Page {page + 1} · <span className="num">{items.length}/{STASH_PAGE_SIZE}</span> · click an item for Equip, To bag, Salvage
         </span>
         <span className="spacer" />
         <button className="btn sm" disabled={!items.length} onClick={() => game.act((st, ctx) => void takeFromStash(st, ctx, (st.stash[page] ?? []).map((i) => i.uid)))}>
           Take all
         </button>
       </div>
-      <ItemTiles s={s} items={sortItems(s, items, sort)} showUpgrade onClick={(i) => game.act((st, ctx) => void takeFromStash(st, ctx, [i.uid]))} empty="This page is empty. Click items in your bag to stash them here." />
+      <ItemTiles s={s} items={sortItems(s, items, sort)} showUpgrade onClick={(i) => openItemMenu(i.uid)} empty="This page is empty. Use Stash all, or click a bag item and Send to stash." />
     </div>
   );
 }

@@ -1,12 +1,16 @@
 import { monsterDamage } from '../../data/zones';
 import { unequipFlask } from '../../engine/combat';
-import { unequip } from '../../engine/equipment';
+import { useState } from 'react';
+import { equip, equipReason, slotsFor } from '../../engine/equipment';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, RES_CAP, type Derived } from '../../engine/stats';
-import type { GameState } from '../../engine/types';
+import type { EquipSlot, GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { fmt, GameIcon, PageHeader, ProgressBar } from '../components/common';
+import { Icon } from '../components/Icon';
+import { ItemCell } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
-import { PaperDoll } from '../components/PaperDoll';
+import { PaperDoll, SLOT_LABEL } from '../components/PaperDoll';
+import { openItemMenu } from '../components/ItemMenu';
 
 const DMG_NAME = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' } as const;
 
@@ -28,26 +32,40 @@ function Offense({ d }: { d: Derived }) {
       </div>
       <div className="big-stat wide">
         <b style={{ color: 'var(--accent-2)' }}>{d.dps.toFixed(1)}</b>
-        <span>Default Attack DPS</span>
+        <span>Default Attack DPS{d.dualWield ? ' · dual wielding' : ''}</span>
       </div>
       <dl className="stat-sheet">
-        {Object.entries(d.hit)
-          .filter(([, [, hi]]) => hi > 0)
-          .map(([t, [lo, hi]]) => (
-            <Row key={t} label={`${DMG_NAME[t as keyof typeof DMG_NAME]} damage`} value={`${lo}–${hi}`} color={`var(--${t})`} />
+        <div className="stat-group-label">Damage per hit</div>
+        {(Object.keys(DMG_NAME) as (keyof typeof DMG_NAME)[])
+          .filter((t) => t === 'phys' || d.hit[t][1] > 0)
+          .map((t) => (
+            <Row key={t} label={DMG_NAME[t]} value={`${d.hit[t][0]}–${d.hit[t][1]}`} color={`var(--${t})`} />
           ))}
+      </dl>
+      <dl className="stat-sheet grouped">
+        <div className="stat-group-label">Speed and accuracy</div>
         <Row label="Default attack time" value={`${(d.attackMs / 1000).toFixed(2)}s`} hint="3s base, shortened by your weapon and attack speed" />
-        <Row label="Attack speed" value={`+${Math.round((d.attackSpeed - 1) * 100)}%`} hint="Every attack skill has its own base time; this speeds them all up" />
-        <Row label="Cast speed" value={`+${Math.round((d.castSpeed - 1) * 100)}%`} hint="Every spell and utility skill has its own base time; this speeds them all up" />
+        <Row
+          label="Attack speed"
+          value={`×${d.attackSpeed.toFixed(2)}`}
+          hint={`Divides every attack's base time (×1.50 makes a 3s attack take 2s). Cooldowns aren't affected${d.dualWield ? '. Dual wielding uses the main hand' : ''}`}
+        />
+        <Row label="Cast speed" value={`×${d.castSpeed.toFixed(2)}`} hint="Divides every spell and utility skill's base time. Cooldowns aren't affected" />
         <Row label="Accuracy" value={fmt(d.accuracy)} hint="+2 per Dexterity and per level" />
         <Row label={`Hit chance vs level ${lvl}`} value={`${Math.round(hitChance(d.accuracy, lvl) * 100)}%`} />
+      </dl>
+      <dl className="stat-sheet grouped">
+        <div className="stat-group-label">Critical strikes and scaling</div>
         <Row label="Critical chance" value={`${d.critChance.toFixed(1)}%`} />
         <Row label="Critical multiplier" value={`${d.critMulti}%`} />
         <Row label="Physical damage" value={`+${Math.round((d.physMult - 1) * 100)}%`} hint="Increased physical damage, including Strength" />
         <Row label="Elemental damage" value={`+${Math.round((d.elemMult - 1) * 100)}%`} hint="Increased elemental damage, including Intelligence" />
         {d.leechPct > 0 && <Row label="Life leech" value={`${d.leechPct}%`} />}
-        <Row label="Mana" value={fmt(d.maxMana)} color="var(--mana-2)" />
-        <Row label="Mana regeneration" value={`${d.manaRegen.toFixed(1)}/s`} />
+      </dl>
+      <dl className="stat-sheet grouped">
+        <div className="stat-group-label">Mana</div>
+        <Row label="Maximum mana" value={fmt(d.maxMana)} color="var(--mana-2)" />
+        <Row label="Mana regeneration" value={`${d.manaRegen.toFixed(1)}/s`} hint="No natural regeneration: it comes from gear and passives. Mana flasks do the rest" />
       </dl>
     </div>
   );
@@ -81,7 +99,7 @@ function Defense({ d }: { d: Derived }) {
         </div>
       )}
       <dl className="stat-sheet">
-        <Row label="Life regeneration" value={`${d.lifeRegen.toFixed(1)}/s`} />
+        <Row label="Life regeneration" value={`${d.lifeRegen.toFixed(1)}/s`} hint="No natural regeneration: it comes from gear and passives. Life flasks do the rest" />
         {d.maxEs > 0 && (
           <Row
             label="Energy shield recharge"
@@ -108,15 +126,54 @@ function Defense({ d }: { d: Derived }) {
   );
 }
 
+/** Bag items that can go in one empty slot: how you pick the off hand for dual wielding, or a particular ring finger. */
+function SlotPicker({ s, slot, onDone }: { s: GameState; slot: EquipSlot; onDone: () => void }) {
+  const fits = s.inventory.filter((i) => slotsFor(i).includes(slot));
+  return (
+    <div className="slot-picker">
+      <div className="row" style={{ gap: 8 }}>
+        <b className="small">{SLOT_LABEL[slot]}</b>
+        <span className="dim small">{slot === 'offhand' ? 'Shields, or a one-handed weapon to dual wield' : 'From your bag'}</span>
+        <span className="grow" />
+        <button className="btn sm ghost" title="Close" onClick={onDone}>
+          <Icon name="close" size={12} />
+        </button>
+      </div>
+      {fits.length === 0 && <div className="dim small">Nothing in your bag fits here.</div>}
+      <div className="slot-picker-list">
+        {fits.map((item) => {
+          const reason = equipReason(s, item);
+          return (
+            <span key={item.uid} className={reason ? 'unusable' : ''} title={reason ?? undefined}>
+              <ItemCell
+                item={item}
+                state={s}
+                onClick={() => {
+                  if (reason) return;
+                  game.act((st, ctx) => equip(st, ctx, item.uid, slot));
+                  onDone();
+                }}
+              />
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function CenterColumn({ s, d }: { s: GameState; d: Derived }) {
+  const [picking, setPicking] = useState<EquipSlot | null>(null);
   return (
     <div className="card doll-card">
       <PaperDoll
         s={s}
-        onItem={(slot) => game.act((st) => unequip(st, slot))}
+        onItem={(_, it) => openItemMenu(it.uid)}
+        onEmpty={(slot) => setPicking(picking === slot ? null : slot)}
         onFlask={(i) => game.act((st) => unequipFlask(st, i))}
         emptyFlaskTitle="Equip flasks at the Crafting Bench"
       />
+      {picking && !s.equipment[picking] && <SlotPicker s={s} slot={picking} onDone={() => setPicking(null)} />}
       <div className="attr-strip">
         <span title="+1 Life per 2, +1% physical damage per 5">
           <b style={{ color: 'var(--str)' }}>{d.attributes.str}</b> Strength
@@ -158,7 +215,10 @@ export function EquipmentPage() {
   const d = deriveStats(s, []);
   return (
     <div className="page wide">
-      <PageHeader title="Equipment">Click gear or a flask to take it off. Hover inventory items to compare; right-click any item to pin it.</PageHeader>
+      <PageHeader title="Equipment">
+        Click gear for its menu, a flask to take it off, or an empty slot to fill it from your bag (that's how you dual wield). Hover inventory items to compare; right-click
+        any item to pin it.
+      </PageHeader>
       <div className="equip-layout">
         <Offense d={d} />
         <CenterColumn s={s} d={d} />

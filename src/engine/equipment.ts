@@ -6,9 +6,24 @@ import type { EquipSlot, GameState, Item } from './types';
 import { characterLevel } from './character';
 import { isCraftLocked } from './crafting';
 
+export const RING_SLOTS: EquipSlot[] = ['ring1', 'ring2', 'ring3', 'ring4'];
+
+/** Where an item can go. Shields only fit the off-hand; one-handed weapons fit either hand. */
 export function slotsFor(item: Item): EquipSlot[] {
-  const slot = baseDef(item.baseId).slot;
-  return slot === 'ring' ? ['ring1', 'ring2'] : [slot];
+  const base = baseDef(item.baseId);
+  if (base.slot === 'ring') return RING_SLOTS;
+  if (base.slot === 'weapon' && !base.twoHanded) return ['weapon', 'offhand'];
+  return [base.slot];
+}
+
+/**
+ * Where a plain click puts an item: rings fill the first free finger, weapons always go to the main hand
+ * (dual wielding is a deliberate choice of the off-hand slot).
+ */
+export function defaultSlot(s: GameState, item: Item): EquipSlot {
+  const options = slotsFor(item);
+  if (baseDef(item.baseId).slot === 'weapon') return 'weapon';
+  return options.find((o) => !s.equipment[o]) ?? options[0];
 }
 
 const ATTR_NAME = { str: 'Strength', dex: 'Dexterity', int: 'Intelligence' };
@@ -33,9 +48,9 @@ export function equip(s: GameState, ctx: Ctx, uid: number, slot?: EquipSlot): st
   const reason = equipReason(s, item);
   if (reason) return reason;
   const options = slotsFor(item);
-  const target = slot && options.includes(slot) ? slot : (options.find((o) => !s.equipment[o]) ?? options[0]);
-  // two-handers and offhands push each other out
   const mainHand = s.equipment.weapon ? baseDef(s.equipment.weapon.baseId) : null;
+  const target = slot && options.includes(slot) ? slot : defaultSlot(s, item);
+  // two-handers and offhands push each other out
   const clash: EquipSlot | null =
     target === 'weapon' && base.twoHanded && s.equipment.offhand ? 'offhand' : target === 'offhand' && mainHand?.twoHanded ? 'weapon' : null;
   if (clash && s.equipment[target] && bagFull(s)) return 'Inventory full';

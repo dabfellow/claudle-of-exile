@@ -1,7 +1,6 @@
 import type { SkillId } from '../engine/types';
 import { BASES, type BaseDef } from './bases';
 import { SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB } from './craftMats';
-import type { GemAttr } from './gems';
 
 export interface SkillDef {
   id: SkillId;
@@ -10,17 +9,30 @@ export interface SkillDef {
   color: string;
   verb: string;
   desc: string;
+  /** shown but not trainable yet (Fishing: always coming soon) */
+  soon?: boolean;
 }
 
 export const SKILLS: Record<SkillId, SkillDef> = {
   combat: { id: 'combat', name: 'Character', group: 'combat', color: '#e0a640', verb: 'Fighting', desc: 'Your character level: raises Life and Mana and grants passive points.' },
   mining: { id: 'mining', name: 'Mining', group: 'gathering', color: '#c8743f', verb: 'Mining', desc: 'Dig ore and gems for Smithing.' },
   woodcutting: { id: 'woodcutting', name: 'Woodcutting', group: 'gathering', color: '#6fae4a', verb: 'Chopping', desc: 'Fell trees for hafts, frames and flask stoppers.' },
-  harvesting: { id: 'harvesting', name: 'Harvesting', group: 'gathering', color: '#d9b84a', verb: 'Harvesting', desc: 'Gather herbs for Alchemy.' },
+  // id kept as `harvesting` so saves, tree nodes and the Greenhouse don't need migrating
+  harvesting: { id: 'harvesting', name: 'Foraging', group: 'gathering', color: '#d9b84a', verb: 'Foraging', desc: 'Pick herbs off the ground for Alchemy.' },
   smithing: { id: 'smithing', name: 'Smithing', group: 'production', color: '#b8b8c8', verb: 'Smithing', desc: 'Forge equipment bases. Higher level → higher item level.' },
   alchemy: { id: 'alchemy', name: 'Alchemy', group: 'production', color: '#9b6dde', verb: 'Brewing', desc: 'Brew flasks and transmute dust into orbs.' },
   gemcutting: { id: 'gemcutting', name: 'Gemcutting', group: 'production', color: '#4fc1a6', verb: 'Cutting', desc: 'Cut rough gems into skill and support gems.' },
+  fishing: { id: 'fishing', name: 'Fishing', group: 'gathering', color: '#4fa3d9', verb: 'Fishing', desc: 'Cast a line into the waters of Wraeclast.', soon: true },
 };
+
+/** Planned skills shown on the Coming soon page; none exist in the engine yet. */
+export const UPCOMING_SKILLS: { name: string; theme: string; icon: string; color: string; desc: string }[] = [
+  { name: 'Thieving', theme: 'Heist', icon: 'stash', color: '#c9a35a', desc: "Pickpocket townsfolk and rogues for gold, Rogue's Markers and the odd orb." },
+  { name: 'Archaeology', theme: 'Expedition', icon: 'mining', color: '#b0784a', desc: 'Dig sites in every area for Artifacts to trade for currency.' },
+  { name: 'Cartography', theme: 'Maps', icon: 'map', color: '#8a7ad8', desc: 'Draw and upgrade maps for the Map Device.' },
+  { name: 'Fletching', theme: 'Quivers', icon: 'woodcutting', color: '#7fae6a', desc: 'Turn logs into shafts and shafts into quivers.' },
+  { name: 'Rune-carving', theme: 'Runes', icon: 'gemcutting', color: '#6fa8ff', desc: 'Carve runes that enchant your gear.' },
+];
 
 export interface SkillAction {
   id: string;
@@ -36,8 +48,8 @@ export interface SkillAction {
   baseId?: string;
   /** alchemy: produces a flask */
   flaskId?: string;
-  /** gemcutting: produces a random gem of this kind (and attribute) */
-  gem?: { kind: 'skill' | 'support' | 'signature'; attr?: GemAttr };
+  /** gemcutting: produces a random gem of this kind */
+  gem?: { kind: 'skill' | 'support' | 'signature' };
   color: string;
   /** campaign area that must be unlocked first */
   area?: string;
@@ -46,6 +58,8 @@ export interface SkillAction {
   /** batch recipe: makes this many at once; `batchOf` is the single recipe it scales */
   batch?: number;
   batchOf?: string;
+  /** listed but can never be started (every Fishing spot) */
+  soon?: boolean;
 }
 
 const gather = (
@@ -106,6 +120,15 @@ const GATHERING: SkillAction[] = [
   { ...gather('harvesting', 'herb_void', 'Voidbloom Grove', 40, 5000, 55, 'voidbloom', '#9b6dde'), area: 'stormcliffs' },
 ].map((a) => ({ ...a, bonus: [...(a.bonus ?? []), { id: SHARD_FOR[a.skill]!, chance: SHARD_CHANCE, qty: 1 }] }));
 
+/** Fishing is coming soon. It has always been coming soon. */
+const FISHING: SkillAction[] = [
+  { ...gather('fishing', 'fish_mudflat', 'Mudflat Shallows', 1, 3000, 7, 'mudskipper', '#8a7b5a', [{ id: 'soggy_boot', chance: 0.05, qty: 1 }]), soon: true },
+  { ...gather('fishing', 'fish_brine', 'Brinecave Pool', 10, 3500, 14, 'blind_brinefish', '#5f8f9e', [{ id: 'soggy_boot', chance: 0.05, qty: 1 }]), soon: true },
+  { ...gather('fishing', 'fish_reed', 'Blackreed Creek', 20, 4000, 22, 'reed_eel', '#3f6a4a', [{ id: 'message_bottle', chance: 0.02, qty: 1 }]), soon: true },
+  { ...gather('fishing', 'fish_wreck', 'Shipgrave Wreck', 30, 4000, 34, 'drowned_grouper', '#3d5f8a', [{ id: 'message_bottle', chance: 0.03, qty: 1 }]), soon: true },
+  { ...gather('fishing', 'fish_storm', 'Stormcliff Surf', 40, 5000, 50, 'thunder_marlin', '#f2d14c', [{ id: 'tasalio_scale', chance: 0.001, qty: 1 }]), soon: true },
+];
+
 function smithInputs(b: BaseDef): Record<string, number> {
   const tier = b.reqLevel < 10 ? 0 : b.reqLevel < 22 ? 1 : 2;
   const ore = ['copper_ore', 'iron_ore', 'mithril_ore'][tier];
@@ -122,19 +145,25 @@ function smithInputs(b: BaseDef): Record<string, number> {
     ring: [2, 0],
   };
   const [o, l] = size[b.slot];
-  const inputs: Record<string, number> = { [ore]: o + tier * 2 };
-  if (l > 0) inputs[log] = l + tier;
+  const inputs: Record<string, number> = { [ore]: (o + tier * 2) * SMITH_COST_MULT };
+  if (l > 0) inputs[log] = (l + tier) * SMITH_COST_MULT;
   if (b.slot === 'amulet' || b.slot === 'ring') inputs.rough_gem = 1 + tier;
   return inputs;
 }
+
+/**
+ * Smithing is a slow, costly way to get a base: a weapon is ~45 s of mining and chopping plus
+ * a 10 s forge, so drops stay the main source and smithing is for targeting a specific base.
+ */
+const SMITH_COST_MULT = 3;
 
 const SMITHING: SkillAction[] = BASES.map((b) => ({
   id: `smith_${b.id}`,
   skill: 'smithing' as const,
   name: b.name,
   level: Math.max(1, b.reqLevel),
-  intervalMs: 4000 + b.reqLevel * 40,
-  xp: 12 + b.reqLevel * 3,
+  intervalMs: 10000 + b.reqLevel * 100,
+  xp: 24 + b.reqLevel * 6,
   inputs: smithInputs(b),
   baseId: b.id,
   color: '#b8b8c8',
@@ -185,21 +214,18 @@ const BATCHES: SkillAction[] = ALCHEMY.filter((a) => a.outputs && !a.flaskId).ma
   batchOf: a.id,
 }));
 
+/** Cut gems are a slow, costly pick from the whole pool: drops and the trader stay the main source. */
 const GEMCUTTING: SkillAction[] = [
-  { id: 'cut_skill_str', skill: 'gemcutting', name: 'Ruby Skill Gem', level: 1, intervalMs: 6000, xp: 20, inputs: { rough_gem: 1, arcane_dust: 6 }, gem: { kind: 'skill', attr: 'str' }, color: '#d0574a' },
-  { id: 'cut_skill_dex', skill: 'gemcutting', name: 'Emerald Skill Gem', level: 1, intervalMs: 6000, xp: 20, inputs: { rough_gem: 1, arcane_dust: 6 }, gem: { kind: 'skill', attr: 'dex' }, color: '#5fbf6a' },
-  { id: 'cut_skill_int', skill: 'gemcutting', name: 'Sapphire Skill Gem', level: 1, intervalMs: 6000, xp: 20, inputs: { rough_gem: 1, arcane_dust: 6 }, gem: { kind: 'skill', attr: 'int' }, color: '#6fa8ff' },
-  { id: 'cut_support_str', skill: 'gemcutting', name: 'Ruby Support Gem', level: 10, intervalMs: 7000, xp: 40, inputs: { rough_gem: 2, arcane_dust: 10, frostleaf: 2 }, gem: { kind: 'support', attr: 'str' }, color: '#d0574a', area: 'ashwood' },
-  { id: 'cut_support_dex', skill: 'gemcutting', name: 'Emerald Support Gem', level: 10, intervalMs: 7000, xp: 40, inputs: { rough_gem: 2, arcane_dust: 10, frostleaf: 2 }, gem: { kind: 'support', attr: 'dex' }, color: '#5fbf6a', area: 'ashwood' },
-  { id: 'cut_support_int', skill: 'gemcutting', name: 'Sapphire Support Gem', level: 10, intervalMs: 7000, xp: 40, inputs: { rough_gem: 2, arcane_dust: 10, frostleaf: 2 }, gem: { kind: 'support', attr: 'int' }, color: '#6fa8ff', area: 'ashwood' },
-  { id: 'cut_signature', skill: 'gemcutting', name: 'Signature Support Gem', level: 25, intervalMs: 9000, xp: 75, inputs: { rough_gem: 4, arcane_dust: 20, emberroot: 3 }, gem: { kind: 'signature' }, color: '#e0a640', area: 'crypt' },
-  { id: 'cut_expansion', skill: 'gemcutting', name: 'Orb of Expansion', level: 45, intervalMs: 12000, xp: 120, inputs: { rough_gem: 8, arcane_dust: 40, voidbloom: 4 }, outputs: { expansion: 1 }, color: '#c08bff', area: 'stormcliffs' },
+  { id: 'cut_skill', skill: 'gemcutting', name: 'Skill Gem', level: 1, intervalMs: 20000, xp: 50, inputs: { rough_gem: 3, arcane_dust: 30 }, gem: { kind: 'skill' }, color: '#6fa8ff' },
+  { id: 'cut_support', skill: 'gemcutting', name: 'Support Gem', level: 10, intervalMs: 25000, xp: 90, inputs: { rough_gem: 4, arcane_dust: 40, frostleaf: 4 }, gem: { kind: 'support' }, color: '#5fbf6a', area: 'ashwood' },
+  { id: 'cut_signature', skill: 'gemcutting', name: 'Signature Support Gem', level: 25, intervalMs: 30000, xp: 160, inputs: { rough_gem: 6, arcane_dust: 60, emberroot: 5 }, gem: { kind: 'signature' }, color: '#e0a640', area: 'crypt' },
+  { id: 'cut_expansion', skill: 'gemcutting', name: 'Orb of Expansion', level: 45, intervalMs: 30000, xp: 250, inputs: { rough_gem: 8, arcane_dust: 40, voidbloom: 4 }, outputs: { expansion: 1 }, color: '#c08bff', area: 'stormcliffs' },
 ];
 
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-export const ACTIONS: SkillAction[] = [...GATHERING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING].map((a) => ({
+export const ACTIONS: SkillAction[] = [...GATHERING, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING].map((a) => ({
   ...a,
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
 }));
@@ -210,6 +236,10 @@ export function actionDef(id: string): SkillAction {
   const a = BY_ID[id];
   if (!a) throw new Error(`Unknown action ${id}`);
   return a;
+}
+
+export function hasAction(id: string): boolean {
+  return id in BY_ID;
 }
 
 export function actionsFor(skill: SkillId): SkillAction[] {

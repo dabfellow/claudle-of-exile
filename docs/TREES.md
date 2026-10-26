@@ -23,9 +23,9 @@ Two separate trees with separate points (GDD §5):
 ```
 - **~900 nodes**: 6 class starts, 342 smalls, 168 notables, 78 masteries, 18 keystones, ~290 travel nodes.
 - Each class owns a **60° sector**. Every sector uses the same slot layout, rotated (`SLOTS` in `passiveTree.ts`):
-  - **Mechanic wheel** right outside the start (5 smalls, 3 notables, mastery) and a **deep mechanic fork** further out, ending in a **mechanic keystone** on the rim. ⚙ in the tables below.
+  - **The rim (2026-10-25):** the class-mechanic wheel and fork (⚙ in the tables below) and the mechanic keystone sit on an outer ring past the keystones (`RIM_RADIUS`), reached only by a road out of the class's own sector. Their old spots (the wheel by the start, slot I; the deep fork, slot G) hold general clusters now (e.g. Warrior: Warpath, Ironclad), so the main circle has no mechanic-only nodes. The ⚙ tables below still list the mechanic clusters; the new general ones are in `passiveTree.ts`.
   - **11 themed clusters** in three bands: two short *lines* (3 smalls → notable) by the start, *wheels* (5 smalls, 3 notables around a mastery) and *forks* (entry → two arms, 2 notables) further out.
-  - **3 keystones** on the rim: two general, one mechanic.
+  - **3 keystones**: two general at the edge of the main circle, the mechanic one out on the rim.
 - **Travel nodes** (+10 to the class attribute, +5/+5 in hybrid sectors) fill every path, roughly one per 80 units.
 - **Bridges** link each sector to its neighbours at three radii, so any class can path anywhere.
 - **Exile's Crossing**: a ring at the centre (+3 all attributes, 6 all-round notables) that every start reaches in ~7 points.

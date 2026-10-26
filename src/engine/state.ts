@@ -15,7 +15,7 @@ import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -44,7 +44,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     },
     tutorial: { step: 0, progress: 0, done: false, skipped: false },
     nextUid: 1,
-    skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, smithing: 0, alchemy: 0, gemcutting: 0 },
+    skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, smithing: 0, alchemy: 0, gemcutting: 0, fishing: 0 },
     bank: { gold: 25, transmute: 3, augment: 2, arcane_dust: 6 },
     inventory: [],
     ground: [],
@@ -84,11 +84,12 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
   for (const [slot, baseId] of Object.entries(classDef(who.classId).kit)) {
     s.equipment[slot as EquipSlot] = createItem(s, baseId, 1, 'normal', rng);
   }
-  for (const slot of [0, 1]) {
-    const f = newFlask(s, 'life_small');
-    f.charges = flaskDef('life_small').maxCharges;
+  // a life and a mana flask: nobody regenerates in a fight, so these are all the recovery you start with
+  ['life_small', 'mana_small'].forEach((id, slot) => {
+    const f = newFlask(s, id);
+    f.charges = flaskDef(id).maxCharges;
     s.flaskSlots[slot] = f;
-  }
+  });
   giveStarterGems(s);
   refreshVendor(s, rng);
   return s;

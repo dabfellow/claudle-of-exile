@@ -24,7 +24,7 @@ export function ProgressBar({
 }) {
   const pct = `${Math.max(0, Math.min(1, value)) * 100}%`;
   return (
-    <div className={`bar ${size ?? ''} ${className}`}>
+    <div className={`bar ${size ?? ''} ${label !== undefined ? 'labelled' : ''} ${className}`}>
       {ghost && <div className="bar-ghost" style={{ width: pct }} />}
       <div className={`bar-fill ${smooth ? 'smooth' : ''}`} style={{ width: pct, background: color }} />
       {label !== undefined && <div className="bar-label">{label}</div>}
@@ -120,12 +120,15 @@ export function fmtTime(ms: number): string {
 }
 
 /** A material/currency glyph. */
+const ORB_KINDS = new Set(['fossil', 'essence', 'resin', 'shard']);
+
 export function MatIcon({ id, size = 14 }: { id: string; size?: number }) {
   const def = materialDef(id);
-  const key = `${isCurrency(id) ? 'currency' : 'materials'}/${id}`;
+  // orbs and crafting materials are flat coloured orbs; only gathered materials get pictures
+  if (isCurrency(id) || id === 'gold' || ORB_KINDS.has(def.kind)) return <Orb color={def.color} size={size} />;
+  const key = `materials/${id}`;
   const art = artUrl(key) ?? packArtUrl(key);
   if (art) return <img className="art mat-art" src={art} alt={def.name} width={size + 4} height={size + 4} draggable={false} />;
-  if (isCurrency(id) || id === 'gold') return <Orb color={def.color} size={size} />;
   return <Swatch color={def.color} size={size * 0.8} />;
 }
 

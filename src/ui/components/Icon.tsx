@@ -8,6 +8,7 @@ const PATHS: Record<string, string> = {
   mining: 'M4 20 14 10M14 10l-2-2c3-3 6-4 9-3-1 3-1.5 5-3.5 7l-1.5-.5M12 8c-2-1-5-1-7 0 1.5.5 3 1.5 4 3',
   woodcutting: 'M5 20 15 10M13 6l5 5 2-2c0-3-2-5-5-5l-2 2ZM13 6l-1.5 1.5M18 11l-1.5 1.5',
   harvesting: 'M12 21V11M12 11c0-4 3-7 7-7 0 4-3 7-7 7ZM12 14c0-3-2.5-5.5-6-5.5 0 3.5 2.5 5.5 6 5.5Z',
+  fishing: 'M15 3v10a4 4 0 0 1-8 0v-2l-2 2M15 3l2 2M15 3 4 21',
   smithing: 'M4 10h11l-1 3H8l-1 3M7 16h7M9 16v4M14 16v4M6 20h11M15 10c2 0 4-1 5-3M4 10V7h6v3',
   alchemy: 'M9 3h6M10 3v6L5 18a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3M7.5 14h9',
   gemcutting: 'M7 4h10l4 5-9 11L3 9l4-5ZM3 9h18M9.5 4 8 9l4 11 4-11-1.5-5',
@@ -69,7 +70,8 @@ export function Orb({ color, size = 18, glow = false }: { color: string; size?: 
       style={{
         width: size,
         height: size,
-        background: `radial-gradient(circle at 35% 30%, #fff 0%, ${color} 35%, color-mix(in srgb, ${color} 45%, #000) 100%)`,
+        background: color,
+        borderColor: `color-mix(in srgb, ${color} 45%, #000)`,
         ['--glow' as string]: glow ? color : 'transparent',
       }}
     />

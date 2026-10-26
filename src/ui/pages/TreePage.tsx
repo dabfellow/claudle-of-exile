@@ -7,7 +7,7 @@ import { describeStats } from '../../data/statText';
 import { allocate, allocateReason, changeMastery, pointsLeft, refund, refundReason, startNode, totalPoints } from '../../engine/passives';
 import { allocateSkillNode, refundSkillNode, refundSkillNodeReason, skillNodeReason, skillPointsLeft, skillTreePoints } from '../../engine/skillTree';
 import { deriveStats, passiveStats, type Derived } from '../../engine/stats';
-import type { GameState } from '../../engine/types';
+import type { GameState, SkillId } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { PageHeader, Tabs } from '../components/common';
 
@@ -27,6 +27,7 @@ const BRANCH_COLOR: Record<string, string> = {
   mining: '#c8743f',
   woodcutting: '#6fae4a',
   harvesting: '#d9b84a',
+  fishing: '#4fa3d9',
   smithing: '#b8b8c8',
   alchemy: '#9b6dde',
 };
@@ -254,11 +255,12 @@ function hexPoints(r: number): string {
 
 function NodeShape(props: { kind: string; color: string; on: boolean; can: boolean; mine?: boolean; mech?: boolean }) {
   const r = { keystone: 30, notable: 22, mastery: 0, start: 0, core: 0, travel: 12, small: 15 }[props.kind] ?? 15;
-  // class-mechanic nodes wear a dashed ring in their class colour
+  // class-mechanic nodes out on the rim glow in their class colour, so the long road out reads as worth it
   if (!props.mech || !r) return <BaseShape {...props} />;
   return (
     <>
-      <circle r={r} fill="none" stroke={props.color} strokeWidth={2.5} strokeDasharray="5 4" opacity={props.on ? 1 : 0.75} />
+      <circle className="mech-glow" r={r * 2.1} style={{ ['--region' as string]: props.color }} />
+      <circle r={r} fill="none" stroke={props.color} strokeWidth={3} opacity={props.on ? 1 : 0.85} />
       <BaseShape {...props} />
     </>
   );
@@ -445,7 +447,7 @@ function searchMatches(query: string, nodes: { id: string; name: string; text: s
   return new Set(nodes.filter((n) => n.name.toLowerCase().includes(q) || n.text.some((t) => t.toLowerCase().includes(q))).map((n) => n.id));
 }
 
-const CHAR_TREE_SIZE = 4400;
+const CHAR_TREE_SIZE = 5700;
 const CHAR_TREE_ZOOM = 5;
 
 const CHAR_LABELS: CanvasLabel[] = [
@@ -592,13 +594,13 @@ function SkillNodeTip({ s, n }: { s: GameState; n: SkillTreeNode }) {
   );
 }
 
-const SKILL_LABELS = [
-  { text: 'MINING', x: 0, y: -480, color: BRANCH_COLOR.mining },
-  { text: 'WOODCUTTING', x: 470, y: -150, color: BRANCH_COLOR.woodcutting },
-  { text: 'HARVESTING', x: 290, y: 430, color: BRANCH_COLOR.harvesting },
-  { text: 'SMITHING', x: -290, y: 430, color: BRANCH_COLOR.smithing },
-  { text: 'ALCHEMY', x: -470, y: -150, color: BRANCH_COLOR.alchemy },
-];
+/** Branch names just past each keystone. */
+const SKILL_LABELS = SKILL_TREE_NODES.filter((n) => n.kind === 'keystone' && n.branch !== 'core').map((n) => ({
+  text: (SKILLS[n.branch as SkillId].name + (SKILLS[n.branch as SkillId].soon ? ' (soon)' : '')).toUpperCase(),
+  x: Math.round(n.x * 1.16),
+  y: Math.round(n.y * 1.16),
+  color: BRANCH_COLOR[n.branch],
+}));
 
 function SkillingTree({ s }: { s: GameState }) {
   const allocated = new Set(s.skillPassives);
@@ -612,7 +614,7 @@ function SkillingTree({ s }: { s: GameState }) {
         </span>
         <span className="chip">{s.bank.regret ?? 0} Orbs of Regret</span>
         <span className="dim" style={{ fontSize: 12 }}>
-          1 point per 5 total levels in Mining, Woodcutting, Harvesting, Smithing and Alchemy.
+          1 point per 5 total levels in Mining, Woodcutting, Foraging, Smithing, Alchemy and Gemcutting.
         </span>
       </div>
       <TreeCanvas

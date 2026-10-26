@@ -1,4 +1,4 @@
-import { SKILL_BAR_SLOTS, type TacticRule } from '../data/gems';
+import { activeGemDef, SKILL_BAR_SLOTS, type TacticRule } from '../data/gems';
 import { clearGround } from './storage';
 import {
   actOpen,
@@ -25,7 +25,6 @@ import {
   BOSS_WARD_PCT,
   monsterDamage,
   monsterLife,
-  nextZone,
   zoneDef,
   type BossMechanic,
   type MonsterDef,
@@ -34,6 +33,7 @@ import {
   advanceMonsters,
   AUTO_FLEE_AT,
   AUTO_FLEE_RESUME,
+  FLEE_BREATHER_REGEN,
   BOSS_CELL,
   cellCol,
   FLEE_SHAKE_MS,
@@ -81,7 +81,8 @@ import {
   RIPOSTE_COOLDOWN_MS,
 } from './mechanics';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
-import type { CombatRuntime, DamageType, Dot, GameState, Ground, InstillCondition, MonsterInstance, Movement } from './types';
+import { openReachedZones } from './progress';
+import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, InstillCondition, MonsterInstance, Movement } from './types';
 
 export const SPAWN_DELAY_MS = 900;
 export const DEATH_LIFE_FRACTION = 0.25;
@@ -344,6 +345,20 @@ export function flaskActive(s: GameState, flaskId: string): boolean {
   return !!s.combat?.buffs.some((b) => b.source === 'flask' && b.id === flaskId);
 }
 
+/** Multiplier on what a flask recovers or grants: its own mods, flask effect and life/mana flask recovery. */
+function flaskPotency(d: Derived, f: FlaskInstance): number {
+  const st = flaskStats(f);
+  const kind = st.def.kind;
+  const recovery = 1 + (kind === 'life' ? d.raw.lifeFlaskRecovery : kind === 'mana' ? d.raw.manaFlaskRecovery : 0) / 100;
+  return (1 + d.flaskEffect / 100) * st.effectMult * recovery;
+}
+
+/** Life or mana one drink recovers for this character, or 0 for a utility flask. */
+export function flaskRecoveryAmount(d: Derived, f: FlaskInstance): number {
+  const heal = flaskStats(f).def.heal;
+  return heal ? Math.round(heal * flaskPotency(d, f)) : 0;
+}
+
 export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): string | null {
   const f = s.flaskSlots[slot];
   if (!f) return 'Empty slot';
@@ -353,8 +368,7 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
   const d = deriveStats(s);
   f.charges -= st.chargesPerUse;
   const kind = st.def.kind;
-  const recovery = 1 + (kind === 'life' ? d.raw.lifeFlaskRecovery : kind === 'mana' ? d.raw.manaFlaskRecovery : 0) / 100;
-  const effect = (1 + d.flaskEffect / 100) * st.effectMult * recovery;
+  const effect = flaskPotency(d, f);
   const duration = st.durationMs * (kind === 'utility' ? 1 + d.raw.utilityFlaskDuration / 100 : 1);
   const c = s.combat;
   c.buffs = c.buffs.filter((b) => !(b.source === 'flask' && b.id === f.flaskId));
@@ -468,7 +482,11 @@ function ready(s: GameState, d: Derived, slot: number, nums: SkillNumbers): bool
   return s.combat!.cooldowns[slot] <= 0 && canPay(s, d, nums.manaCost);
 }
 
-/** Pick what to do next: a queued manual cast, else the first slot whose rule passes, else a default attack. */
+/**
+ * Pick what to do next: a queued manual cast; else the first skill with a cooldown (guards, buffs, spells, area
+ * skills) whose rule passes; else the first cooldown-free attack whose rule passes and that you can pay for;
+ * else a free default attack. Attacks without cooldowns would otherwise crowd out everything below them.
+ */
 export function chooseSkill(s: GameState, d: Derived): { slot: number; nums: SkillNumbers; manual: boolean } {
   const c = s.combat!;
   if (c.queued !== null) {
@@ -479,12 +497,14 @@ export function chooseSkill(s: GameState, d: Derived): { slot: number; nums: Ski
     if (gem && ready(s, d, slot, nums)) return { slot, nums, manual: true };
   }
   const rc = ruleContext(s, d);
-  for (let i = 0; i < s.skillBar.length; i++) {
-    const gem = s.skillBar[i];
-    if (!gem) continue;
-    const nums = skillNumbers(d, gem);
-    if (!ready(s, d, i, nums)) continue;
-    if (ruleAllows(gem.rule, rc, skillIsActive(c, gem.gemId))) return { slot: i, nums, manual: false };
+  for (const withCooldown of [true, false]) {
+    for (let i = 0; i < s.skillBar.length; i++) {
+      const gem = s.skillBar[i];
+      if (!gem || (activeGemDef(gem.gemId).cooldownMs > 0) !== withCooldown) continue;
+      const nums = skillNumbers(d, gem);
+      if (!ready(s, d, i, nums)) continue;
+      if (ruleAllows(gem.rule, rc, skillIsActive(c, gem.gemId))) return { slot: i, nums, manual: false };
+    }
   }
   return { slot: -1, nums: skillNumbers(d, null), manual: false };
 }
@@ -965,11 +985,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
       s.bossesDefeated.push(zone.id);
       if (zone.actBoss) ctx.emit({ t: 'actComplete', act: zone.act });
     }
-    const next = nextZone(zone.id);
-    if (next && !s.unlockedZones.includes(next.id)) {
-      s.unlockedZones.push(next.id);
-      ctx.emit({ t: 'zoneUnlocked', zoneId: next.id });
-    }
+    for (const next of openReachedZones(s)) ctx.emit({ t: 'zoneUnlocked', zoneId: next.id });
   } else if (!c.monsters.some((m) => m.isBoss)) {
     // adds in a boss fight don't count toward the next boss
     s.zoneKills[zone.id] = (s.zoneKills[zone.id] ?? 0) + 1;
@@ -1367,6 +1383,11 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   const esRegenPct = c.buffs.reduce((a, b) => a + (b.esRegenPct ?? 0), 0);
   if (esRegenPct) s.es = Math.min(d.maxEs, s.es + (d.maxEs * esRegenPct * dt) / 100000);
   s.mana = Math.min(d.maxMana, s.mana + (d.manaRegen * dt) / 1000);
+  // there's no natural regen in a fight, so a flight that has shaken off every monster is a breather
+  if (c.fleeing && !c.monsters.length) {
+    s.life = Math.min(d.maxLife, s.life + (d.maxLife * FLEE_BREATHER_REGEN * dt) / 1000);
+    s.mana = Math.min(d.maxMana, s.mana + (d.maxMana * FLEE_BREATHER_REGEN * dt) / 1000);
+  }
   c.esDelayMs = Math.max(0, c.esDelayMs - dt);
   if (c.esDelayMs <= 0) s.es = Math.min(d.maxEs, s.es + (d.esRecharge * dt) / 1000);
 

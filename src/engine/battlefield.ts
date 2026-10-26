@@ -36,6 +36,8 @@ export const FLEE_SHAKE_MS = 1500;
 /** auto-flee kicks in below this fraction of life and walks on again above the second */
 export const AUTO_FLEE_AT = 0.35;
 export const AUTO_FLEE_RESUME = 0.9;
+/** fraction of max life and mana recovered per second once fleeing has shaken off every monster */
+export const FLEE_BREATHER_REGEN = 0.1;
 export const MOVEMENT_ORDER: Movement[] = ['flee', 'slow', 'walk', 'run'];
 
 export const cellCol = (i: number): number => CELLS[i]?.col ?? 0;

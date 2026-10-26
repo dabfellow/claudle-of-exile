@@ -17,7 +17,6 @@ import { game, useGame } from '../../game';
 import { Badge, Cost, EmptyState, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
 import { CraftUntilCard } from '../components/CraftUntilCard';
 import { FlaskIcon, FlaskTip, pinFlask } from '../components/FlaskView';
-import { Orb } from '../components/Icon';
 import { ItemTip } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
 import { PaperDoll } from '../components/PaperDoll';
@@ -217,7 +216,7 @@ export function BenchPage() {
                     }
                   >
                     <button data-tut={`orb-${id}`} className="orb-btn" style={{ ['--orb' as string]: c.color }} disabled={!!reason} onClick={() => use(id)}>
-                      <Orb color={c.color} size={26} glow={!reason} />
+                      <MatIcon id={id} size={26} />
                       <span>
                         <div className="name">{c.short}</div>
                         <div className="count num">×{n}</div>

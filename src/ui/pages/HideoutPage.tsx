@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
 import { STATIONS, type StationId } from '../../data/hideout';
-import { actionDef, SKILLS } from '../../data/skills';
+import { actionDef, actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { canAfford } from '../../engine/bank';
 import { nextUpgradeCost, stationLevel, upgradeStation } from '../../engine/hideout';
 import { pointsLeft } from '../../engine/passives';
-import { SKILL_IDS } from '../../engine/types';
+import { SKILL_IDS, type SkillId } from '../../engine/types';
 import { levelOf, maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
-import { Art, artUrl, Badge, Cost, fmt, GameIcon, ProgressBar, sceneStyle, Tooltip } from '../components/common';
+import { Art, artUrl, Badge, fmt, GameIcon, ProgressBar, sceneStyle, Tooltip } from '../components/common';
 import type { Page } from '../Layout';
+import { CostPopover } from '../components/CostPopover';
 import { Crest } from '../screens/Screens';
 import { classDef } from '../../data/classes';
 
@@ -52,6 +53,7 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
       <div className="card hideout-scene" style={sceneStyle('scenes/hideout')}>
         <Embers />
         <div className="hideout-head">
+          <CharacterBanner training={training === 'combat'} onClick={() => go('combat')} />
           <h1>Hideout</h1>
           <p>A quiet cave above the Mud Flats. Every station you upgrade makes the next expedition easier.</p>
           {points > 0 && (
@@ -104,7 +106,7 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
                 )}
                 {cost && (
                   <div className="station-upgrade" onClick={(e) => e.stopPropagation()}>
-                    <Cost cost={cost} have={s.bank} />
+                    <CostPopover cost={cost} have={s.bank} go={go} />
                     <button className={`btn sm ${affordable ? 'primary' : ''}`} disabled={!affordable} title={affordable ? '' : 'Not enough materials'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id))}>
                       Upgrade
                     </button>
@@ -115,8 +117,6 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
           })}
         </div>
       </div>
-
-      <CharacterBanner training={training === 'combat'} onClick={() => go('combat')} />
 
       <div className="card">
         <div className="card-title">Skills</div>
@@ -129,6 +129,7 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
             const span = xpToReach(id, lvl + 1) - floor;
             const into = Math.floor(xp - floor);
             const progress = progressOf(id, xp);
+            const next = nextUnlock(id, lvl);
             return (
               <Tooltip
                 key={id}
@@ -164,6 +165,11 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
                     </span>
                     <ProgressBar value={progress} color={SKILLS[id].color} smooth className="skill-tile-bar" />
                     <span className="skill-tile-meta dim small num">{maxed ? 'Max level' : `${Math.floor(progress * 100)}% to level ${lvl + 1}`}</span>
+                    {next && (
+                      <span className="skill-tile-next small">
+                        Next unlock <b>{next.name}</b> at <b className="num">Lv {next.level}</b>
+                      </span>
+                    )}
                   </span>
                 </button>
               </Tooltip>
@@ -173,6 +179,13 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
       </div>
     </div>
   );
+}
+
+/** The lowest-level action this skill hasn't reached yet. */
+function nextUnlock(skill: SkillId, lvl: number): SkillAction | null {
+  return actionsFor(skill)
+    .filter((a) => !a.soon && !a.batchOf && a.level > lvl)
+    .sort((a, b) => a.level - b.level)[0] ?? null;
 }
 
 /** The character's own level, set apart from the trade skills. */

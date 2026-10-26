@@ -2,8 +2,8 @@ import { activeGemDef, ACTIVE_GEMS, DEFAULT_ATTACK, RULE_LABELS, supportGemDef, 
 import { gemLevelReq, gemProgress, skillSummary, supportSlots } from '../../engine/gems';
 import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
-import { fmt, ProgressBar, artUrl } from './common';
-import { packArtUrl } from '../assets';
+import { fmt, ProgressBar } from './common';
+import { GEM_GLYPHS } from '../assets';
 
 const ATTR_COLOR = { str: '#d0574a', dex: '#5fbf6a', int: '#5f8de0' } as const;
 const ROLE_LABEL: Record<string, string> = {
@@ -16,32 +16,47 @@ const ROLE_LABEL: Record<string, string> = {
   sustain: 'Sustain',
 };
 
-/** A faceted gem glyph tinted by attribute, with the skill's initials. */
-export function GemIcon({ def, size = 40, support = false, dim = false }: { def: { id?: string; name: string; attr: 'str' | 'dex' | 'int' }; size?: number; support?: boolean; dim?: boolean }) {
-  const color = ATTR_COLOR[def.attr];
-  const art = def.id ? artUrl(`gems/${def.id}`) : undefined;
-  if (art)
-    return (
-      <span className={`gem-icon has-art ${support ? 'support' : ''} ${dim ? 'dim' : ''}`} style={{ width: size, height: size, ['--gem' as string]: color }}>
-        <img className="art" src={art} alt={def.name} width={size} height={size} draggable={false} />
-      </span>
-    );
-  // pack icons sit inside the coloured gem, so the attribute colour still shows as a rim
-  const pack = def.id ? packArtUrl(`gems/${def.id}`) : undefined;
-  if (pack)
-    return (
-      <span className={`gem-icon pack-art ${support ? 'support' : ''} ${dim ? 'dim' : ''}`} style={{ width: size, height: size, ['--gem' as string]: color }}>
-        <img className="art" src={pack} alt={def.name} width={Math.round(size * 0.72)} height={Math.round(size * 0.72)} draggable={false} />
-      </span>
-    );
+/**
+ * A flat gem with a thin rim and a plain silhouette: skill gems are tall hexagons, supports twelve-sided.
+ * Signature supports show their skill's glyph.
+ */
+export function GemIcon({
+  def,
+  size = 40,
+  support = false,
+  dim = false,
+}: {
+  def: { id?: string; name: string; attr: 'str' | 'dex' | 'int'; signatureFor?: string };
+  size?: number;
+  support?: boolean;
+  dim?: boolean;
+}) {
+  const glyph = GEM_GLYPHS[def.signatureFor ?? def.id ?? ''] ?? (def.id ? GEM_GLYPHS[def.id] : undefined);
   const initials = def.name
     .split(/\s+/)
     .map((w) => w[0])
     .join('')
     .slice(0, 2);
   return (
-    <span className={`gem-icon ${support ? 'support' : ''} ${dim ? 'dim' : ''}`} style={{ width: size, height: size, ['--gem' as string]: color, fontSize: size * 0.32 }}>
-      {initials}
+    <span
+      className={`gem-icon ${support ? 'support' : ''} ${dim ? 'dim' : ''}`}
+      title={def.name}
+      style={{
+        width: support ? size : Math.round(size * 0.84),
+        height: size,
+        ['--gem' as string]: ATTR_COLOR[def.attr],
+        ['--rim' as string]: `${Math.min(6, Math.max(1.5, size * 0.055))}px`,
+      }}
+    >
+      <span className="gem-face">
+        {glyph ? (
+          <span className="gem-glyph" style={{ ['--icon' as string]: `url(${glyph})` }} />
+        ) : (
+          <span className="gem-initials" style={{ fontSize: size * 0.32 }}>
+            {initials}
+          </span>
+        )}
+      </span>
     </span>
   );
 }

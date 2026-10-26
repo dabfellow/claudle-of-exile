@@ -2,8 +2,8 @@ import type { StatKey } from '../engine/types';
 
 /**
  * The character tree (docs/TREES.md): six class sectors around a shared centre, PoE-style.
- * Every sector uses the same slot layout (rotated): a class-mechanic wheel next to the start,
- * themed clusters in three bands, a deep mechanic cluster, and three keystones on the rim.
+ * Every sector uses the same slot layout (rotated): themed clusters in three bands and two keystones,
+ * then a road out to the rim where the class-mechanic clusters and mechanic keystone sit.
  * Neighbouring sectors are cross-linked so any class can path anywhere.
  */
 export type PassiveKind = 'start' | 'small' | 'travel' | 'notable' | 'mastery' | 'keystone';
@@ -101,23 +101,29 @@ interface KeystoneSpec {
   desc: string;
 }
 
-type SlotId = 'I' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'J' | 'K' | 'L' | 'M';
+type SlotId = 'I' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'J' | 'K' | 'L' | 'M' | 'R1' | 'R2';
+
+/** the outer ring where every class keeps its mechanic clusters and mechanic keystone */
+export const RIM_RADIUS = 2420;
 
 /** polar position (radius, degrees off the sector's centre line; + is clockwise) and shape */
 const SLOTS: Record<SlotId, { shape: Shape; r: number; a: number }> = {
-  I: { shape: 'wheel', r: 700, a: 0 }, // class mechanic, next to the start
+  I: { shape: 'wheel', r: 700, a: 0 }, // next to the start
   A: { shape: 'line', r: 600, a: -19 },
   B: { shape: 'line', r: 600, a: 19 },
   C: { shape: 'wheel', r: 1000, a: -17 },
   D: { shape: 'fork', r: 1010, a: 0 },
   E: { shape: 'wheel', r: 1000, a: 17 },
   F: { shape: 'fork', r: 1330, a: -20 },
-  G: { shape: 'fork', r: 1350, a: 0 }, // deep class mechanic
+  G: { shape: 'fork', r: 1350, a: 0 }, // gateway to the rim
   H: { shape: 'fork', r: 1330, a: 20 },
   J: { shape: 'line', r: 1620, a: -10 },
   K: { shape: 'line', r: 1620, a: 10 },
   L: { shape: 'wheel', r: 1690, a: -22 },
   M: { shape: 'wheel', r: 1690, a: 22 },
+  // the class mechanic, out on the rim past the keystones: only reachable through this sector
+  R1: { shape: 'wheel', r: RIM_RADIUS, a: -9 },
+  R2: { shape: 'fork', r: RIM_RADIUS, a: 9 },
 };
 const NOTABLES_PER_SHAPE: Record<Shape, number> = { line: 1, fork: 2, wheel: 3 };
 
@@ -129,7 +135,7 @@ const PATHS: [End, End][] = [
   ['C.right', 'D.entry'], ['E.left', 'D.entry'],
   ['C.out', 'F.entry'], ['D.left', 'G.entry'], ['E.out', 'H.entry'],
   ['F.left', 'L.entry'], ['F.right', 'J.entry'], ['H.left', 'K.entry'], ['H.right', 'M.entry'],
-  ['G.left', 'ksm'], ['J.out', 'ks0'], ['L.right', 'ks0'], ['K.out', 'ks1'], ['M.left', 'ks1'],
+  ['G.left', 'R1.entry'], ['R1.right', 'R2.entry'], ['R1.out', 'ksm'], ['R2.left', 'ksm'], ['J.out', 'ks0'], ['L.right', 'ks0'], ['K.out', 'ks1'], ['M.left', 'ks1'],
 ];
 /** paths from one sector to the next one clockwise */
 const BRIDGES: [End, End][] = [['B.out', 'A.out'], ['E.right', 'C.left'], ['M.right', 'L.left']];
@@ -148,7 +154,18 @@ interface SectorSpec {
 }
 
 const c = (id: string, mastery: MasteryTheme, small: [string, StatMap], ...notables: [string, StatMap][]): ClusterSpec => ({ id, mastery, small, notables });
-const mech = (mechanic: Mechanic, cl: ClusterSpec): ClusterSpec => ({ ...cl, mechanic });
+/** rim clusters are a long walk from anywhere, so their numbers are half again as big */
+const RIM_BONUS = 1.5;
+const richer = (stats: StatMap): StatMap =>
+  Object.fromEntries(
+    Object.entries(stats).map(([k, v = 0]) => [k, Number.isInteger(v) ? Math.round(v * RIM_BONUS) : Math.round(v * RIM_BONUS * 100) / 100]),
+  );
+const mech = (mechanic: Mechanic, cl: ClusterSpec): ClusterSpec => ({
+  ...cl,
+  mechanic,
+  small: [cl.small[0], richer(cl.small[1])],
+  notables: cl.notables.map(([name, stats]) => [name, richer(stats)]),
+});
 
 const SECTORS: SectorSpec[] = [
   {
@@ -158,7 +175,11 @@ const SECTORS: SectorSpec[] = [
     start: 'class_str',
     travel: { str: 10 },
     clusters: {
-      I: mech('rage', c('rage', 'rage', ['Fury', { rageEffect: 5, physPct: 4 }],
+      I: c('warpath', 'melee', ['Warpath', { meleePct: 5, life: 4 }],
+        ['Battle-Hardened', { lifePct: 6, armourPct: 15 }],
+        ['Cleaving Blows', { meleePct: 15, stunChance: 5 }],
+        ['Second Wind', { lifeFlaskRecovery: 20, life: 15 }]),
+      R1: mech('rage', c('rage', 'rage', ['Fury', { rageEffect: 5, physPct: 4 }],
         ['Seething', { rageMax: 5, physPct: 10 }],
         ['Blood Boil', { rageRegen: 0.1, life: 15 }],
         ['Unquenched', { rageDecay: 50, armourPct: 15 }])),
@@ -178,7 +199,10 @@ const SECTORS: SectorSpec[] = [
       F: c('butcher', 'bleed', ['Laceration', { bleedPct: 10 }],
         ['Butcher', { bleedPct: 30, bleedDuration: 20 }],
         ['Rend', { bleedOnHit: 15, bleedVuln: 5 }]),
-      G: mech('rage', c('wrath', 'rage', ['Wrath', { rageEffect: 6, life: 5 }],
+      G: c('ironclad', 'armour', ['Ironclad', { armour: 20, life: 4 }],
+        ['Ironclad', { armourPct: 25, slamReduction: 6 }],
+        ['Grit', { lifePct: 6, allRes: 4 }]),
+      R2: mech('rage', c('wrath', 'rage', ['Wrath', { rageEffect: 6, life: 5 }],
         ['Bloodrage', { rageOnHitTaken: 1, lifePct: 6 }],
         ["Berserker's Toll", { rageMax: 10, rageEffect: 10 }])),
       H: c('juggernaut', 'life', ['Juggernaut', { life: 6, lifeRegen: 0.5 }],
@@ -208,7 +232,11 @@ const SECTORS: SectorSpec[] = [
     start: 'class_strdex',
     travel: { str: 5, dex: 5 },
     clusters: {
-      I: mech('riposte', c('riposte', 'riposte', ['Riposte', { ripostePct: 8, accuracy: 15 }],
+      I: c('footwork', 'strdex', ['Footwork', { accuracy: 15, evasionPct: 4 }],
+        ['Blade Dancer', { attackSpeedPct: 6, physPct: 10 }],
+        ['Fencing Form', { accuracy: 60, critChancePct: 15 }],
+        ['Steady Stance', { blockChance: 3, armourPct: 10 }]),
+      R1: mech('riposte', c('riposte', 'riposte', ['Riposte', { ripostePct: 8, accuracy: 15 }],
         ['Counterpoint', { ripostePct: 30, blockChance: 2 }],
         ['Parry and Thrust', { riposteCooldown: 25, evasionPct: 10 }],
         ['Measured Reply', { riposteHeal: 2, armourPct: 10 }])),
@@ -228,7 +256,10 @@ const SECTORS: SectorSpec[] = [
       F: c('brawler', 'armour', ['Scrapper', { armourPct: 6, evasionPct: 6 }],
         ['Scrapper', { armourPct: 20, evasionPct: 20 }],
         ['Dirty Fighting', { stunChance: 10, afterGuardDamage: 15 }]),
-      G: mech('riposte', c('retort', 'riposte', ['Retort', { ripostePct: 10, life: 4 }],
+      G: c('tempo', 'speed', ['Tempo', { attackSpeedPct: 2 }],
+        ['Flurry of Blows', { attackSpeedPct: 8, meleePct: 8 }],
+        ['Killer Instinct', { critMulti: 15, lowLifeDamage: 10 }]),
+      R2: mech('riposte', c('retort', 'riposte', ['Retort', { ripostePct: 10, life: 4 }],
         ["Fencer's Instinct", { riposteCrit: 30, critMulti: 10 }],
         ['Bloody Answer', { riposteBleed: 1, bleedPct: 15 }])),
       H: c('showman', 'crit', ['Showmanship', { critChancePct: 8 }],
@@ -259,7 +290,11 @@ const SECTORS: SectorSpec[] = [
     start: 'class_dex',
     travel: { dex: 10 },
     clusters: {
-      I: mech('momentum', c('momentum', 'momentum', ['Momentum', { momentumEffect: 5, attackSpeedPct: 1 }],
+      I: c('fletching', 'projectile', ['Fletching', { projectilePct: 5 }],
+        ['Deadeye', { projectilePct: 20, accuracy: 40 }],
+        ['Quick Draw', { attackSpeedPct: 6, projectilePct: 6 }],
+        ["Hunter's Mark", { critChancePct: 20, critMulti: 10 }]),
+      R1: mech('momentum', c('momentum', 'momentum', ['Momentum', { momentumEffect: 5, attackSpeedPct: 1 }],
         ['Second Wind', { momentumMax: 3, evasionPct: 10 }],
         ['Sure-Footed', { momentumRetain: 25, accuracy: 30 }],
         ['Gathering Storm', { momentumEffect: 20, critChancePct: 10 }])),
@@ -279,7 +314,10 @@ const SECTORS: SectorSpec[] = [
       F: c('phantom', 'cooldown', ['Quickness', { cooldownRecovery: 4 }],
         ['Phantom', { guardDuration: 30, cooldownRecovery: 10 }],
         ['Vanishing Act', { smokeExtra: 500, afterGuardDamage: 15 }]),
-      G: mech('momentum', c('slipstream', 'momentum', ['Slipstream', { momentumEffect: 6, evasionPct: 4 }],
+      G: c('fleet', 'evasion', ['Fleet', { evasionPct: 8 }],
+        ['Wind Runner', { evasionPct: 25, evadeSpeed: 4 }],
+        ['Light Step', { evadeHeal: 2, dex: 10 }]),
+      R2: mech('momentum', c('slipstream', 'momentum', ['Slipstream', { momentumEffect: 6, evasionPct: 4 }],
         ['Wind at Your Back', { momentumMax: 5, attackSpeedPct: 3 }],
         ['Untouchable', { momentumEvasion: 2, evasionPct: 10 }])),
       H: c('marksman', 'projectile', ['Marksman', { projectilePct: 8 }],
@@ -309,7 +347,11 @@ const SECTORS: SectorSpec[] = [
     start: 'class_dexint',
     travel: { dex: 5, int: 5 },
     clusters: {
-      I: mech('malice', c('malice', 'malice', ['Malice', { coupPct: 6, ailmentPct: 4 }],
+      I: c('killing_intent', 'crit', ['Killing Intent', { critChancePct: 6 }],
+        ["Assassin's Mark", { critChancePct: 25, critFullLife: 15 }],
+        ['Cruel Edge', { critMulti: 15 }],
+        ['Opportunist', { lowLifeDamage: 15, accuracy: 40 }]),
+      R1: mech('malice', c('malice', 'malice', ['Malice', { coupPct: 6, ailmentPct: 4 }],
         ['Patience', { maliceMax: -3, evasionPct: 10 }],
         ['Twist the Knife', { coupPct: 40, critMulti: 5 }],
         ['Spite', { maliceCritKeep: 5, critChancePct: 10 }])),
@@ -329,7 +371,10 @@ const SECTORS: SectorSpec[] = [
       F: c('trickery', 'es', ['Trickery', { evasionPct: 5, energyShieldPct: 5 }],
         ['Shadow Veil', { evasionPct: 20, energyShieldPct: 20 }],
         ['Mirage', { esRechargePct: 25, evadeHeal: 1 }]),
-      G: mech('malice', c('ill_intent', 'malice', ['Ill Intent', { coupPct: 8, poisonPct: 4 }],
+      G: c('venom', 'poison', ['Venom', { poisonPct: 6 }],
+        ['Toxic Strikes', { poisonPct: 25, poisonDurationFlat: 500 }],
+        ['Debilitate', { poisonWeaken: 5, ailmentPct: 10 }]),
+      R2: mech('malice', c('ill_intent', 'malice', ['Ill Intent', { coupPct: 8, poisonPct: 4 }],
         ['Opportunist', { coupAilment: 1, poisonPct: 10 }],
         ['Grudge', { maliceOnHitTaken: 1, evasionPct: 10 }])),
       H: c('infuser', 'ailment', ['Cruelty', { ailmentPct: 8 }],
@@ -360,7 +405,11 @@ const SECTORS: SectorSpec[] = [
     start: 'class_int',
     travel: { int: 10 },
     clusters: {
-      I: mech('manaPower', c('mana_is_power', 'manaPower', ['Reservoir', { manaPower: 2, mana: 8 }],
+      I: c('arcana', 'spell', ['Arcana', { spellPct: 5 }],
+        ['Spellweaver', { spellPct: 20, castSpeedPct: 4 }],
+        ['Quickened Mind', { castSpeedPct: 8 }],
+        ['Focused Will', { spellCritMulti: 15, mana: 15 }]),
+      R1: mech('manaPower', c('mana_is_power', 'manaPower', ['Reservoir', { manaPower: 2, mana: 8 }],
         ['Wellspring', { manaPower: 5, manaPct: 15 }],
         ['Brimming', { manaPowerFull: 10, manaRegenPct: 10 }],
         ['Overflow', { manaPower: 3, manaRegenPct: 30 }])),
@@ -380,7 +429,10 @@ const SECTORS: SectorSpec[] = [
       F: c('distiller', 'flask', ['Distillation', { flaskEffect: 5 }],
         ['Master Distiller', { flaskEffect: 15, flaskCharges: 20 }],
         ['Potent Brews', { lifeFlaskRecovery: 20, manaFlaskRecovery: 20 }]),
-      G: mech('manaPower', c('deep_reserves', 'manaPower', ['Deep Reserves', { mana: 10, manaRegenPct: 6 }],
+      G: c('aegis', 'es', ['Aegis', { energyShieldPct: 6 }],
+        ['Arcane Aegis', { energyShieldPct: 25, esRechargePct: 15 }],
+        ['Warding Runes', { energyShield: 30, allRes: 4 }]),
+      R2: mech('manaPower', c('deep_reserves', 'manaPower', ['Deep Reserves', { mana: 10, manaRegenPct: 6 }],
         ['Font of Power', { manaPower: 8, mana: 20 }],
         ['Soul Battery', { manaPowerEs: 1, energyShieldPct: 15 }])),
       H: c('eldritch', 'es', ['Eldritch Ward', { energyShieldPct: 8 }],
@@ -410,7 +462,11 @@ const SECTORS: SectorSpec[] = [
     start: 'class_strint',
     travel: { int: 5, str: 5 },
     clusters: {
-      I: mech('martyr', c('martyr', 'martyr', ['Penitence', { novaPct: 8, life: 4 }],
+      I: c('devotion', 'elemental', ['Devotion', { elemPct: 5 }],
+        ['Divine Fury', { elemPct: 20, firePct: 5 }],
+        ['Sanctified', { allRes: 6, lifePct: 4 }],
+        ['Zeal of Faith', { castSpeedPct: 4, elemPct: 8 }]),
+      R1: mech('martyr', c('martyr', 'martyr', ['Penitence', { novaPct: 8, life: 4 }],
         ['Devotion', { fervorPct: 15, allRes: 5 }],
         ['Holy Light', { novaHeal: 10, lifeRegen: 1 }],
         ['Divine Wrath', { novaPct: 40, elemPct: 5 }])),
@@ -430,7 +486,10 @@ const SECTORS: SectorSpec[] = [
       F: c('crusader', 'melee', ['Crusade', { meleePct: 5, elemPct: 4 }],
         ['Crusader', { physAsLight: 6, meleePct: 15 }],
         ['Hammer of Faith', { stunChance: 10, stunnedVuln: 8 }]),
-      G: mech('martyr', c('penance', 'martyr', ['Penance', { fervorPct: 5, armourPct: 4 }],
+      G: c('faith', 'resist', ['Faith', { allRes: 2, armourPct: 4 }],
+        ['Bastion of Faith', { allRes: 8, elemTakenReduction: 4 }],
+        ['Light of Grace', { lifeRegen: 3, lifePct: 5 }]),
+      R2: mech('martyr', c('penance', 'martyr', ['Penance', { fervorPct: 5, armourPct: 4 }],
         ['Sanctified Wounds', { fervorPct: 15, armourPct: 15 }],
         ['Radiance', { novaEs: 20, energyShieldPct: 10 }])),
       H: c('purity', 'resist', ['Purity', { allRes: 3 }],
@@ -601,13 +660,13 @@ function build(): PassiveNode[] {
       const got = cluster(sec.key, sec.clusters[slot], def.shape, def.r, sec.angle + def.a, -Math.sign(def.a) || 1);
       for (const [port, id] of Object.entries(got)) p[`${slot}.${port}`] = id;
     }
-    const KS_AT = { ks0: [1930, -12], ks1: [1930, 12], ksm: [1990, 0] } as const;
+    const KS_AT = { ks0: [1930, -12], ks1: [1930, 12], ksm: [RIM_RADIUS + 210, 0] } as const;
     for (const k of ['ks0', 'ks1', 'ksm'] as const) {
       const ks = sec.keystones[k];
       const id = sec.keystoneIds?.[k] ?? `${sec.key}_${k}`;
       add({
         id, name: ks.name, kind: 'keystone', region: sec.key, ...polar(KS_AT[k][0], sec.angle + KS_AT[k][1]),
-        stats: ks.stats, desc: ks.desc, mechanic: k === 'ksm' ? sec.clusters.I.mechanic : undefined,
+        stats: ks.stats, desc: ks.desc, mechanic: k === 'ksm' ? sec.clusters.R1.mechanic : undefined,
       });
       p[k] = id;
     }

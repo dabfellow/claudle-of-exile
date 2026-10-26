@@ -3,7 +3,7 @@ import { attributeReq, baseDef, uniqueDef, WEAPON_FAMILIES } from '../../data/ba
 import { MECHANIC_INFO } from '../../data/passiveTree';
 import { BASE_ATTACK_MS } from '../../data/gems';
 import { characterLevel } from '../../engine/character';
-import { slotsFor } from '../../engine/equipment';
+import { defaultSlot } from '../../engine/equipment';
 import { describeMod, itemName, tierLabel, tierRangeText } from '../../engine/items';
 import { mechanicOf, STAT_MECHANIC } from '../../engine/mechanics';
 import { game } from '../../game';
@@ -40,10 +40,9 @@ export interface StatDelta {
 }
 
 /** What changes if `item` replaces what's in its slot. */
-export function compareItem(s: GameState, item: Item): { slot: EquipSlot; deltas: StatDelta[] } | null {
+export function compareItem(s: GameState, item: Item, into?: EquipSlot): { slot: EquipSlot; deltas: StatDelta[] } | null {
   if (Object.values(s.equipment).some((e) => e?.uid === item.uid)) return null;
-  const options = slotsFor(item);
-  const slot = options.find((o) => !s.equipment[o]) ?? options[0];
+  const slot = into ?? defaultSlot(s, item);
   const before = deriveStats(s, []);
   const after = deriveStats({ ...s, equipment: { ...s.equipment, [slot]: item } }, []);
   const rows: [string, (d: Derived) => number, ((n: number) => string)?][] = [

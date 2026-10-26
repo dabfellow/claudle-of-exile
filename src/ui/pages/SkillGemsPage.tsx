@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { activeGemDef, RULE_LABELS, SKILL_BAR_SLOTS, supportGemDef, type RuleCondition } from '../../data/gems';
+import { activeGemDef, RULE_LABELS, SKILL_BAR_SLOTS, SUPPORT_GEMS, supportGemDef, type RuleCondition } from '../../data/gems';
 import {
   expandSockets,
   gemProgress,
@@ -7,6 +7,7 @@ import {
   removeFromBar,
   setRule,
   socketSupport,
+  supportFits,
   supportReason,
   supportSlots,
   syncSockets,
@@ -57,6 +58,66 @@ function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGe
   );
 }
 
+/** Opened from an empty socket: the loose supports that fit this skill, then the ones that would if you had them. */
+function SocketPicker({ s, gem, index, onDone }: { s: GameState; gem: SkillGemInstance; index: number; onDone: () => void }) {
+  const act = activeGemDef(gem.gemId);
+  const owned = s.supportGems.filter((g) => !supportReason(gem, g.supportId));
+  // one entry per kind, even when several copies are in the bag
+  const ownedKinds = [...new Map(owned.map((g) => [g.supportId, g])).values()];
+  const missing = SUPPORT_GEMS.filter((d) => supportFits(d, act) && !s.supportGems.some((g) => g.supportId === d.id) && !gem.supports.some((x) => x?.supportId === d.id));
+  return (
+    <div className="socket-picker" onClick={(e) => e.stopPropagation()}>
+      <div className="row" style={{ gap: 8 }}>
+        <b className="small">Supports for {act.name}</b>
+        <span className="grow" />
+        <button className="btn sm ghost" title="Close" onClick={onDone}>
+          <Icon name="close" size={12} />
+        </button>
+      </div>
+      {ownedKinds.length === 0 && <div className="dim small">None of your loose support gems fit this skill.</div>}
+      <div className="socket-picker-list">
+        {ownedKinds.map((g) => {
+          const def = supportGemDef(g.supportId);
+          return (
+            <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
+              <button
+                className="gem-card"
+                onClick={() => {
+                  game.act((st) => socketSupport(st, gem.uid, g.uid, index));
+                  onDone();
+                }}
+              >
+                <GemIcon def={def} size={28} support />
+                <span>
+                  <b>{def.name}</b>
+                  {def.signatureFor && <span className="dim"> · signature</span>}
+                </span>
+              </button>
+            </Tooltip>
+          );
+        })}
+      </div>
+      {missing.length > 0 && (
+        <>
+          <div className="dim small" style={{ marginTop: 8 }}>
+            Also fits, not found yet
+          </div>
+          <div className="socket-picker-list">
+            {missing.map((def) => (
+              <Tooltip key={def.id} content={<SupportTip supportId={def.id} />}>
+                <span className="gem-card missing">
+                  <GemIcon def={def} size={22} support dim />
+                  <span className="dim">{def.name}</span>
+                </span>
+              </Tooltip>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function SlotRow({
   s,
   slot,
@@ -72,6 +133,7 @@ function SlotRow({
 }) {
   const gem = s.skillBar[slot];
   const key = SKILL_KEYS[slot];
+  const [openSocket, setOpenSocket] = useState<number | null>(null);
   if (!gem) {
     return (
       <div
@@ -136,13 +198,15 @@ function SlotRow({
             ) : (
               <button
                 key={i}
-                className={`socket ${canDrop ? 'target' : ''}`}
-                disabled={!canDrop}
-                title={pickedDef ? (fitReason ?? 'Socket here') : 'Pick a support gem below'}
+                className={`socket ${canDrop ? 'target' : ''} ${openSocket === i ? 'open' : ''}`}
+                disabled={!!pickedDef && !canDrop}
+                title={pickedDef ? (fitReason ?? 'Socket here') : 'Show the supports that fit'}
                 onClick={(e) => {
                   e.stopPropagation();
-                  game.act((st) => socketSupport(st, gem.uid, pickedSupport!, i));
-                  onPlaced();
+                  if (canDrop) {
+                    game.act((st) => socketSupport(st, gem.uid, pickedSupport!, i));
+                    onPlaced();
+                  } else setOpenSocket(openSocket === i ? null : i);
                 }}
               >
                 <span className="socket-hole" />
@@ -156,6 +220,9 @@ function SlotRow({
             </button>
           )}
         </div>
+        {openSocket !== null && !gem.supports[openSocket] && (
+          <SocketPicker s={s} gem={gem} index={openSocket} onDone={() => setOpenSocket(null)} />
+        )}
       </div>
       <div onClick={(e) => e.stopPropagation()}>
         <RuleEditor s={s} slot={slot} gem={gem} />
@@ -196,8 +263,9 @@ export function SkillGemsPage() {
           )
         }
       >
-        Your character uses the <b>first</b> skill, top to bottom, whose rule passes and that it can afford — otherwise a free Default Attack. Press <b>Q–Y</b> in
-        combat to cast a slot manually.
+        Skills with a cooldown (guards, buffs, spells, area attacks) go first, top to bottom, when their rule passes. Then your first attack whose rule passes and
+        that you have the mana for; attacks have no cooldown, so mana is their limit. Otherwise a free Default Attack. Press <b>Q–Y</b> in combat to cast a slot
+        manually.
       </PageHeader>
 
       <div className="grid" style={{ gap: 10 }}>

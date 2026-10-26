@@ -30,7 +30,11 @@ export type SkillTreeStat =
   | 'alchemySpeed'
   | 'bulkBrewer'
   | 'qualityBrews'
-  | 'transmuter';
+  | 'transmuter'
+  | 'fishingSpeed'
+  | 'fishTreasure'
+  | 'biggerFish'
+  | 'theBigOne';
 
 export type SkillTreeStats = Partial<Record<SkillTreeStat, number>>;
 
@@ -71,7 +75,7 @@ const BRANCHES: BranchSpec[] = [
   },
   {
     skill: 'woodcutting',
-    angle: -18,
+    angle: -30,
     small: { name: 'Lumberjack', stats: { woodcuttingSpeed: 5 }, desc: '5% faster Woodcutting' },
     notables: [
       { name: "Bird's Nest", stats: { birdsNest: 3 }, desc: '3% chance to find a herb while chopping' },
@@ -81,17 +85,28 @@ const BRANCHES: BranchSpec[] = [
   },
   {
     skill: 'harvesting',
-    angle: 54,
-    small: { name: 'Green Thumb', stats: { harvestingSpeed: 5 }, desc: '5% faster Harvesting' },
+    angle: 30,
+    small: { name: 'Green Thumb', stats: { harvestingSpeed: 5 }, desc: '5% faster Foraging' },
     notables: [
       { name: 'Distiller', stats: { distiller: 10 }, desc: 'Lesser Essences you find have a 10% chance to be Greater' },
       { name: 'Rare Blooms', stats: { rareBlooms: 5 }, desc: '5% chance to also find a herb of the next tier' },
     ],
-    keystone: { name: 'Greenhouse', stats: { greenhouse: 20 }, desc: 'Your last harvest keeps growing at 20% speed while you do something else' },
+    keystone: { name: 'Greenhouse', stats: { greenhouse: 20 }, desc: 'Your last Foraging spot keeps growing at 20% speed while you do something else' },
+  },
+  {
+    // Fishing is coming soon: these stats are summed like any other and read by nothing
+    skill: 'fishing',
+    angle: 90,
+    small: { name: 'Patient Angler', stats: { fishingSpeed: 5 }, desc: '5% faster Fishing' },
+    notables: [
+      { name: 'Lucky Lure', stats: { fishTreasure: 25 }, desc: '25% increased chance to reel in treasure' },
+      { name: 'Bigger Fish', stats: { biggerFish: 10 }, desc: 'Fish you catch are 10% bigger. Nobody will believe you' },
+    ],
+    keystone: { name: 'The One That Got Away', stats: { theBigOne: 1 }, desc: 'Every catch is a Thunder Marlin. Fishing is 1000% slower' },
   },
   {
     skill: 'smithing',
-    angle: 126,
+    angle: 150,
     small: { name: 'Hammerhand', stats: { smithingSpeed: 5 }, desc: '5% faster Smithing' },
     notables: [
       { name: 'Steady Temper', stats: { steadyTemper: 20 }, desc: '20% chance a smithing Fossil is not consumed' },
@@ -101,7 +116,7 @@ const BRANCHES: BranchSpec[] = [
   },
   {
     skill: 'alchemy',
-    angle: 198,
+    angle: 210,
     small: { name: 'Distillation', stats: { alchemySpeed: 5 }, desc: '5% faster Alchemy' },
     notables: [
       { name: 'Bulk Brewer', stats: { bulkBrewer: 1 }, desc: 'Batch recipes cost 25% less per orb instead of 15%' },
@@ -154,9 +169,9 @@ function build(): SkillTreeNode[] {
       return dist(n) < dist(bn) ? id : best;
     }, ring[0]);
 
-  add({ id: 'core_steady', name: 'Steady Hands', kind: 'notable', branch: 'core', ...polar(150, 90), stats: { inputSave: 5 }, desc: '5% chance for production not to consume its inputs' });
+  add({ id: 'core_steady', name: 'Steady Hands', kind: 'notable', branch: 'core', ...polar(150, 120), stats: { inputSave: 5 }, desc: '5% chance for production not to consume its inputs' });
   link('core_steady', ringAt(90));
-  add({ id: 'core_overtime', name: 'Patient Crafter', kind: 'notable', branch: 'core', ...polar(150, 234), stats: { patientCrafter: 10 }, desc: 'Craft until… has a 10% chance each step not to use the orb' });
+  add({ id: 'core_overtime', name: 'Patient Crafter', kind: 'notable', branch: 'core', ...polar(150, 240), stats: { patientCrafter: 10 }, desc: 'Auto-crafting has a 10% chance each step not to use the orb' });
   link('core_overtime', ringAt(234));
 
   for (const b of BRANCHES) {

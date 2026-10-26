@@ -211,6 +211,24 @@ Overtime's offline speed moves onto the core ring as a small instead of being cu
 
 ---
 
+## 8. Pass 2 (2026-10-25)
+
+- **Harvesting is shown as Foraging** (you pick herbs off the ground; nothing is farmed). The internal id stays `harvesting`, so saves, tree nodes and the Greenhouse are untouched.
+- **Smithing is a slow, costly way to target a base**, not a base printer: ore and logs ×3 (`SMITH_COST_MULT`), 10 s + 0.1 s per required level, XP ×2 per action. A weapon is ~45 s of gathering plus a 10 s forge.
+- **Gemcutting picks from the whole pool**: one Skill Gem recipe (any of the active gems) and one Support Gem recipe (any general support) instead of three per attribute. 20–30 s each, 3–6 Rough Gems and 30–60 Dust. A save mid-cut on a removed recipe loads with the action stopped.
+- **One Skilling group** in the sidebar, gathering above a thin line, production below. Skill pages say "Skilling" instead of "Gathering skill" / "Production skill".
+- **Compact activity cards** (Melvor-style): a row with art, name, level · time · XP and a start button; click to expand drops and costs. "Expand all" on each page.
+- **Fishing: coming soon, forever.** A real skill id with five spots, catches (Soggy Boot, Message in a Bottle, Tasalio's Scale…) and a skilling-tree branch whose stats are summed and read by nothing. Every spot is blocked with "Coming soon"; its level never counts toward tree points.
+
+### More skills: candidates from Melvor
+Not built; pick with you. Ordered by how well they fit:
+- **Thieving → Heist.** Pickpocket townsfolk and rogues for gold, Rogue's Markers and the odd currency. Easy fit: a gathering skill with no inputs.
+- **Archaeology → Expedition.** Dig sites per area for Artifacts that trade for currency or logbook-style rewards.
+- **Cartography → Maps.** Draw and upgrade maps for the Map Device once maps are built.
+- **Fletching → Quivers.** Shafts from logs into quivers (quivers don't exist yet).
+- **Runecrafting → Rune-carving.** Carve runes that enchant gear (would overlap Essences).
+- Skipped: Cooking, Firemaking, Farming, Summoning, Agility, Astrology, Township (no PoE hook, or overlap with flasks and the trees).
+
 ## Open questions
 
 - **Mastery per action** (Melvor-style). Parked. Worth another look once the higher bands land and there's more to master.

@@ -32,7 +32,7 @@ export function summarize(s: GameState): CharacterSummary {
     classId: s.character.classId,
     act1Cleared: s.bossesDefeated.includes('sanctum'),
     combatLevel: characterLevel(s),
-    totalLevel: SKILL_IDS.filter((k) => k !== 'combat').reduce((a, k) => a + levelOf(k, s.skills[k]), 0),
+    totalLevel: SKILL_IDS.filter((k) => k !== 'combat' && k !== 'fishing').reduce((a, k) => a + levelOf(k, s.skills[k]), 0),
     createdAt: s.character.createdAt,
     lastPlayed: s.lastSaved,
   };

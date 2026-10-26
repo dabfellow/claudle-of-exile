@@ -2,12 +2,14 @@ import { uniqueDef } from '../../data/bases';
 import { bossTable, dropTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
 import { useState } from 'react';
-import { actOpen, ACTS, MECHANIC_INFO, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
+import { ACT_REGIONS, actRegion, CONTINENT_SIZE, regionPath, regionViewBox, ZONE_POS } from '../../data/continent';
+import { actOpen, ACTS, bossesNeeded, MECHANIC_INFO, roadsInto, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
+import { zoneLockText } from '../../engine/progress';
 import { characterLevel } from '../../engine/character';
 import { bossIsNext, startCombat } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { anyArtUrl, Badge, EmptyState, GameIcon, MatIcon, PageHeader, ProgressBar, sceneStyle, Tabs } from '../components/common';
+import { anyArtUrl, Badge, EmptyState, GameIcon, MatIcon, PageHeader, ProgressBar, sceneStyle } from '../components/common';
 import type { Page } from '../Layout';
 
 /** How risky an area looks for your current level. */
@@ -93,7 +95,7 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
         </span>
       </div>
       <p className="muted small" style={{ margin: 0 }}>
-        {unlocked ? z.desc : 'Defeat the previous area’s boss to unlock.'}
+        {unlocked ? z.desc : zoneLockText(s, z)}
       </p>
       {unlocked && (
         <>
@@ -136,30 +138,132 @@ function currentAct(s: GameState): number {
   return Math.max(1, ...ZONES.filter((z) => s.unlockedZones.includes(z.id) && actOpen(z.act)).map((z) => z.act));
 }
 
+/** The area to show first in an act: where you're fighting, else the furthest one you've opened. */
+function defaultZone(s: GameState, act: number): string {
+  const zones = zonesInAct(act);
+  if (s.combat && zoneDef(s.combat.zoneId).act === act) return s.combat.zoneId;
+  return [...zones].reverse().find((z) => s.unlockedZones.includes(z.id))?.id ?? zones[0]?.id ?? '';
+}
+
+
+function zoneState(s: GameState, z: ZoneDef): 'current' | 'cleared' | 'open' | 'locked' {
+  if (s.combat?.zoneId === z.id) return 'current';
+  if (s.bossesDefeated.includes(z.id)) return 'cleared';
+  return s.unlockedZones.includes(z.id) ? 'open' : 'locked';
+}
+
+/** The whole continent: one region per act. Open acts can be picked. */
+function ContinentMap({ s, act, onPick }: { s: GameState; act: number; onPick: (n: number) => void }) {
+  const hereZone = s.combat ? ZONE_POS[s.combat.zoneId] : undefined;
+  return (
+    <svg className="continent" viewBox={`0 0 ${CONTINENT_SIZE.w} ${CONTINENT_SIZE.h}`} role="img" aria-label="Map of the continent">
+      <defs>
+        <pattern id="sea-waves" width="40" height="18" patternUnits="userSpaceOnUse">
+          <path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="var(--line)" strokeWidth="1" opacity="0.5" />
+        </pattern>
+      </defs>
+      <rect className="continent-sea" width={CONTINENT_SIZE.w} height={CONTINENT_SIZE.h} />
+      <rect width={CONTINENT_SIZE.w} height={CONTINENT_SIZE.h} fill="url(#sea-waves)" />
+      {ACT_REGIONS.map((r) => {
+        const a = ACTS.find((x) => x.n === r.act)!;
+        const open = actOpen(r.act);
+        return (
+          <g
+            key={r.act}
+            className={`continent-region ${open ? 'open' : 'locked'} ${r.act === act ? 'selected' : ''}`}
+            onClick={() => open && onPick(r.act)}
+            role={open ? 'button' : undefined}
+          >
+            <title>{open ? `Act ${a.n}: ${a.name}` : `Act ${a.n}: ${a.name} (not open yet)`}</title>
+            <path d={regionPath(r)} />
+            <text x={r.label[0]} y={r.label[1] - 14} className="continent-act">
+              ACT {a.n}
+            </text>
+            <text x={r.label[0]} y={r.label[1] + 6} className="continent-name">
+              {open ? a.name : '???'}
+            </text>
+          </g>
+        );
+      })}
+      {ZONES.filter((z) => actOpen(z.act) && ZONE_POS[z.id]).map((z) => {
+        const [x, y] = ZONE_POS[z.id];
+        return <circle key={z.id} className={`continent-dot ${zoneState(s, z)}`} cx={x} cy={y} r={4} />;
+      })}
+      {hereZone && <circle className="continent-here" cx={hereZone[0]} cy={hereZone[1]} r={9} />}
+    </svg>
+  );
+}
+
+/** One act up close: its areas as linked points, opened in order by their bosses. */
+function ActMap({ s, act, selected, onSelect }: { s: GameState; act: number; selected: string; onSelect: (id: string) => void }) {
+  const region = actRegion(act);
+  if (!region) return null;
+  const zones = zonesInAct(act).filter((z) => ZONE_POS[z.id]);
+  return (
+    <svg className="act-map" viewBox={regionViewBox(region)} role="img" aria-label={`Areas of Act ${act}`}>
+      <rect className="continent-sea" x={-100} y={-100} width={CONTINENT_SIZE.w + 200} height={CONTINENT_SIZE.h + 200} />
+      {ACT_REGIONS.map((r) => (
+        <path key={r.act} d={regionPath(r)} className={`act-map-region ${r.act === act ? 'this' : ''}`} />
+      ))}
+      {zones.flatMap((z) =>
+        roadsInto(z)
+          .filter((from) => ZONE_POS[from])
+          .map((from) => {
+            const [x1, y1] = ZONE_POS[from];
+            const [x2, y2] = ZONE_POS[z.id];
+            return <line key={`${from}-${z.id}`} className={`act-road ${s.unlockedZones.includes(z.id) ? 'walked' : ''}`} x1={x1} y1={y1} x2={x2} y2={y2} />;
+          }),
+      )}
+      {zones.map((z) => {
+        const [x, y] = ZONE_POS[z.id];
+        return (
+          <g
+            key={z.id}
+            className={`act-node ${zoneState(s, z)} ${z.id === selected ? 'selected' : ''}`}
+            transform={`translate(${x} ${y})`}
+            onClick={() => onSelect(z.id)}
+            role="button"
+            style={{ ['--zone' as string]: z.color }}
+          >
+            <title>{s.unlockedZones.includes(z.id) ? z.name : `${z.name}: ${zoneLockText(s, z)}`}</title>
+            <circle className="act-node-ring" r={z.actBoss ? 13 : 11} />
+            <circle className="act-node-core" r={z.actBoss ? 8 : 6.5} />
+            {bossesNeeded(z) > 0 && (
+              <text y={3.5} className="act-node-gate">
+                {bossesNeeded(z)}
+              </text>
+            )}
+            <text y={z.actBoss ? 25 : 22} className="act-node-name">
+              {z.name.replace(/^The /, '')}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 export function CampaignPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const [act, setAct] = useState(() => currentAct(s));
+  const [zoneId, setZoneId] = useState(() => defaultZone(s, currentAct(s)));
+  const pickAct = (n: number) => {
+    setAct(n);
+    setZoneId(defaultZone(s, n));
+  };
   const current = ACTS.find((a) => a.n === act)!;
   const open = actOpen(act);
   const zones = zonesInAct(act);
   const cleared = zones.filter((z) => s.bossesDefeated.includes(z.id)).length;
   const done = zones.length > 0 && cleared === zones.length;
   const next = ACTS.find((a) => a.n === act + 1);
+  const zone = zones.find((z) => z.id === zoneId);
   return (
     <div className="page">
-      <PageHeader title="Campaign">Choose where to fight. Each area's boss unlocks the next one.</PageHeader>
-      <Tabs
-        value={String(act)}
-        onChange={(id) => id !== 'maps' && setAct(Number(id))}
-        tabs={[
-          ...ACTS.map((a) => ({
-            id: String(a.n),
-            label: actOpen(a.n) ? `Act ${a.n}` : <>Act {a.n} <GameIcon name="lock" size={12} /></>,
-            title: !a.open && actOpen(a.n) ? 'Preview: not released yet' : undefined,
-          })),
-          { id: 'maps', label: <>Maps <GameIcon name="lock" size={12} /></>, disabled: true, title: 'Unlocks after Act 6' },
-        ]}
-      />
+      <PageHeader title="Campaign">Pick an act on the map, then an area. Each boss opens the road to the next.</PageHeader>
+      <div className="card continent-card">
+        <ContinentMap s={s} act={act} onPick={pickAct} />
+      </div>
       <div className="section-head" style={{ margin: 0 }}>
         <h2>
           Act {current.n}: {current.name}
@@ -182,7 +286,7 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
               : `Act ${current.n + 1} arrives in a future update — until then, farm these areas for better gear, push your skills and fill your stash.`}
           </p>
           {next && actOpen(next.n) && (
-            <button className="btn primary" style={{ alignSelf: 'flex-start' }} onClick={() => setAct(next.n)}>
+            <button className="btn primary" style={{ alignSelf: 'flex-start' }} onClick={() => pickAct(next.n)}>
               On to Act {next.n}
             </button>
           )}
@@ -195,10 +299,11 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
           </EmptyState>
         </div>
       ) : (
-        <div className="area-grid">
-          {zones.map((z) => (
-            <AreaCard key={z.id} s={s} z={z} go={go} />
-          ))}
+        <div className="act-layout">
+          <div className="card act-map-card">
+            <ActMap s={s} act={act} selected={zoneId} onSelect={setZoneId} />
+          </div>
+          {zone && <AreaCard s={s} z={zone} go={go} />}
         </div>
       )}
     </div>

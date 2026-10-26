@@ -222,6 +222,11 @@ export const AFFIXES: AffixDef[] = [
     tiers: single([[10, 19], [20, 29], [30, 39], [40, 49], [50, 59], [60, 69]]),
   },
   {
+    id: 'mana_regen_flat', kind: 'suffix', group: 'mana_regen_flat', label: 'of Clarity', text: 'Regenerate {0} Mana per second',
+    stats: ['manaRegenFlat'], weights: { ring: 80, amulet: 80, helmet: 40, weapon: 40, belt: 30 },
+    tiers: single([[1, 2], [2, 3], [3, 5], [5, 7], [7, 10], [10, 14]]),
+  },
+  {
     id: 'accuracy', kind: 'suffix', group: 'accuracy', label: 'of Calm', text: '+{0} to Accuracy Rating',
     stats: ['accuracy'], weights: { weapon: 60, gloves: 60, ring: 40, helmet: 30 },
     tiers: single([[5, 15], [16, 40], [41, 80], [81, 130], [131, 200], [201, 300]]),

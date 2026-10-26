@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { AUTO_CRAFT_BENCH_LEVEL } from '../src/data/hideout';
 import { affixDef } from '../src/data/affixes';
 import { BASES } from '../src/data/bases';
 import { modBias } from '../src/data/craftMats';
@@ -94,9 +95,23 @@ describe('essences', () => {
   });
 });
 
-describe('craft until', () => {
-  it('spends orbs until the rule matches, then stops', () => {
+/** a character whose Crafting Bench can auto-craft */
+function crafter() {
+  const s = player();
+  s.hideout.bench = AUTO_CRAFT_BENCH_LEVEL;
+  return s;
+}
+
+describe('auto-crafting', () => {
+  it('needs Crafting Bench level 5', () => {
     const s = player();
+    const item = ring(s, 20, 'magic');
+    s.bank.alteration = 10;
+    expect(startCraftUntil(s, ctx(1), item.uid, { orb: 'alteration' }, { kind: 'has', affixId: 'fire_res' })).toMatch(/Bench level 5/);
+  });
+
+  it('spends orbs until the rule matches, then stops', () => {
+    const s = crafter();
     const item = ring(s, 20, 'magic');
     s.bank.alteration = 2000;
     const c = ctx(3);
@@ -108,7 +123,7 @@ describe('craft until', () => {
   });
 
   it('stops when the orbs run out', () => {
-    const s = player();
+    const s = crafter();
     const item = ring(s, 20, 'magic');
     s.bank.alteration = 3;
     const c = ctx(1);
@@ -120,7 +135,7 @@ describe('craft until', () => {
   });
 
   it('keeps going offline and reports the result', () => {
-    const s = player();
+    const s = crafter();
     const item = ring(s, 20, 'magic');
     s.bank.alteration = 2000;
     s.bank.scorched_fossil = 2000;
@@ -132,7 +147,7 @@ describe('craft until', () => {
   });
 
   it('locks the item while it works', () => {
-    const s = player();
+    const s = crafter();
     const item = ring(s, 20, 'magic');
     s.bank.alteration = 10;
     const c = ctx(1);
@@ -144,7 +159,7 @@ describe('craft until', () => {
   });
 
   it('Patient Crafter sometimes keeps the orb', () => {
-    const s = player();
+    const s = crafter();
     s.skillPassives = ['core_overtime'];
     const item = ring(s, 20, 'magic');
     s.bank.alteration = 200;

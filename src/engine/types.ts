@@ -2,8 +2,8 @@ import type { ClassId } from '../data/classes';
 import type { TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
 
-export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'smithing' | 'alchemy' | 'gemcutting';
-export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy', 'gemcutting'];
+export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'smithing' | 'alchemy' | 'gemcutting' | 'fishing';
+export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy', 'gemcutting', 'fishing'];
 
 export type Rarity = 'normal' | 'magic' | 'rare' | 'unique';
 
@@ -18,7 +18,8 @@ export type ItemSlotType =
   | 'amulet'
   | 'ring';
 
-export type EquipSlot = Exclude<ItemSlotType, 'ring'> | 'ring1' | 'ring2';
+/** Four ring fingers; a one-handed weapon can go in the off-hand to dual wield. */
+export type EquipSlot = Exclude<ItemSlotType, 'ring'> | 'ring1' | 'ring2' | 'ring3' | 'ring4';
 
 export type Tag =
   | 'weapon'
@@ -414,7 +415,7 @@ export interface GameState {
   achievements: string[];
   /** areas whose boss has been killed at least once */
   bossesDefeated: string[];
-  /** Greenhouse keystone: the harvesting action that keeps ticking in the background */
+  /** Greenhouse keystone: the Foraging action that keeps ticking in the background */
   greenhouse: { actionId: string; progress: number } | null;
   smithCatalyst: SmithCatalyst;
   hideout: Record<string, number>;

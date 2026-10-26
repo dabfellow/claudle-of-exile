@@ -1,6 +1,7 @@
 import { affixDef } from '../data/affixes';
 import { essenceDef, fossilDef } from '../data/craftMats';
-import { CRAFT_STEP_MS } from '../data/hideout';
+import { AUTO_CRAFT_BENCH_LEVEL, CRAFT_STEP_MS } from '../data/hideout';
+import { stationLevel } from './hideout';
 import { currencyDef } from '../data/materials';
 import type { Ctx } from './context';
 import { applyEssence, applyOrb, essenceReason, findItem, orbReason } from './crafting';
@@ -10,8 +11,8 @@ import { skillTreeStats } from './skillTree';
 import type { CraftMethod, GameState, Item, StopRule } from './types';
 
 /**
- * Craft until… (docs/SKILLING_REWORK.md §4): an idle activity at the Crafting Bench that spends one orb or
- * Essence per step on an inventory item until a stop rule matches or the materials run out.
+ * Auto-crafting, formerly "Craft until…" (docs/SKILLING_REWORK.md §4): an idle activity at the Crafting Bench
+ * (level 5) that spends one orb or Essence per step on an inventory item until a stop rule matches or the materials run out.
  */
 export function ruleMet(item: Item, rule: StopRule): boolean {
   const mods = allMods(item);
@@ -41,6 +42,7 @@ export function ruleText(rule: StopRule): string {
 }
 
 export function craftUntilReason(s: GameState, uid: number, method: CraftMethod, rule: StopRule): string | null {
+  if (stationLevel(s, 'bench') < AUTO_CRAFT_BENCH_LEVEL) return `Needs Crafting Bench level ${AUTO_CRAFT_BENCH_LEVEL}`;
   const item = findItem(s, uid);
   if (!item || Object.values(s.equipment).includes(item)) return 'Pick an item from your inventory or stash';
   if (rule.kind === 'twoOf' && rule.affixIds.length < 2) return 'Pick at least two modifiers';
