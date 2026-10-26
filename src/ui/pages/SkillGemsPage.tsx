@@ -1,5 +1,16 @@
 import { useState, type ReactNode } from 'react';
-import { activeGemDef, RULE_LABELS, SKILL_BAR_SLOTS, SUPPORT_GEMS, supportGemDef, type ActiveGemDef, type GemAttr, type RuleCondition } from '../../data/gems';
+import {
+  activeGemDef,
+  RULE_LABELS,
+  SKILL_BAR_SLOTS,
+  SUPPORT_GEMS,
+  supportGemDef,
+  TARGET_STATUSES,
+  type ActiveGemDef,
+  type GemAttr,
+  type RuleCondition,
+  type TargetStatus,
+} from '../../data/gems';
 import {
   expandSockets,
   gemProgress,
@@ -80,7 +91,7 @@ function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGe
         value={gem.rule.when}
         onChange={(e) => {
           const when = e.target.value as RuleCondition;
-          game.act((st) => setRule(st, slot, { when, value: RULE_LABELS[when].defaultValue }));
+          game.act((st) => setRule(st, slot, { when, value: RULE_LABELS[when].defaultValue, status: RULE_LABELS[when].status ? 'bleeding' : undefined }));
         }}
       >
         {(Object.keys(RULE_LABELS) as RuleCondition[]).map((k) => (
@@ -89,6 +100,19 @@ function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGe
           </option>
         ))}
       </select>
+      {meta.status && (
+        <select
+          className="input"
+          value={gem.rule.status ?? 'bleeding'}
+          onChange={(e) => game.act((st) => setRule(st, slot, { when: gem.rule.when, status: e.target.value as TargetStatus }))}
+        >
+          {TARGET_STATUSES.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.label}
+            </option>
+          ))}
+        </select>
+      )}
       {meta.unit !== undefined && (
         <span className="row" style={{ gap: 4 }}>
           <input

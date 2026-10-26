@@ -1,4 +1,4 @@
-import { activeGemDef, ACTIVE_GEMS, DEFAULT_ATTACK, RULE_LABELS, supportGemDef, type ActiveGemDef, type TacticRule } from '../../data/gems';
+import { activeGemDef, ACTIVE_GEMS, DEFAULT_ATTACK, RULE_LABELS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
 import { gemLevelReq, gemProgress, skillSummary, supportSlots } from '../../engine/gems';
 import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
@@ -63,6 +63,7 @@ export function GemIcon({
 
 export function ruleText(rule: TacticRule): string {
   const r = RULE_LABELS[rule.when];
+  if (r.status) return `${r.label} ${TARGET_STATUSES.find((x) => x.id === rule.status)?.label ?? '…'}`;
   return r.unit !== undefined ? `${r.label} ${rule.value ?? r.defaultValue}${r.unit}` : r.label;
 }
 

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { CLASSES } from '../src/data/classes';
+import { actionsFor } from '../src/data/skills';
 import { TUTORIAL_STEPS } from '../src/data/tutorial';
 import { makeCtx } from '../src/engine/context';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
-import { SAVE_KEY, serialize } from '../src/engine/save';
+import { deserialize, SAVE_KEY, serialize } from '../src/engine/save';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import { currentStep, skipTutorial, tutorialPage, withTutorial } from '../src/engine/tutorial';
@@ -99,6 +100,37 @@ describe('tutorial', () => {
     run(s, [{ t: 'kill', name: 'Bloated Gorger', boss: true }]);
     expect(s.tutorial.done).toBe(true);
     expect(s.bank.regal).toBe(1);
+  });
+
+  it('life flask, then mana flask: each step wants its own kind', () => {
+    const s = newGame(1);
+    s.tutorial.step = TUTORIAL_STEPS.findIndex((x) => x.id === 'flask');
+    run(s, [{ t: 'flask', slot: 1, flaskId: 'mana_small', auto: false }]);
+    expect(currentStep(s)?.id).toBe('flask');
+    run(s, [{ t: 'flask', slot: 0, flaskId: 'life_small', auto: false }]);
+    expect(currentStep(s)?.id).toBe('mana_flask');
+    run(s, [{ t: 'flask', slot: 0, flaskId: 'life_small', auto: false }]);
+    expect(currentStep(s)?.id).toBe('mana_flask');
+    run(s, [{ t: 'flask', slot: 1, flaskId: 'mana_small', auto: false }]);
+    expect(currentStep(s)?.id).toBe('mine');
+  });
+
+  it('the tutorial gives enough to smith the cheapest item', () => {
+    const mine = TUTORIAL_STEPS.find((x) => x.id === 'mine')!;
+    const inputs = actionsFor('smithing')
+      .filter((a) => !a.inputs!.rough_gem && a.level <= 1)
+      .map((a) => a.inputs!);
+    expect(inputs.some((i) => (i.copper_ore ?? 0) <= mine.target && (i.ash_log ?? 0) <= (mine.reward.ash_log ?? 0))).toBe(true);
+  });
+
+  it('saves mid-tutorial keep their step when the Mana Flask step is added', () => {
+    const s = newGame(1);
+    s.tutorial.step = 4; // the old Mine step
+    const old = JSON.parse(serialize(s));
+    old.version = 15;
+    expect(currentStep(deserialize(JSON.stringify(old)))?.id).toBe('mine');
+    old.tutorial.step = 3; // the flask step stays put
+    expect(currentStep(deserialize(JSON.stringify(old)))?.id).toBe('flask');
   });
 
   it('can be skipped', () => {

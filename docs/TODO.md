@@ -71,6 +71,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Tutorial: skills-are-manual wording, Life Flask then a new Mana Flask step, Mine 9 ore so the cheapest smith (gloves/boots) is reachable, bench wording; save v16 keeps mid-tutorial players on their step. Combat: "Next area" buttons once the area's boss is down. Skill rules: while target is / isn't affected by Bleed, Poison, Ignite, Stun, Freeze, Chill, Shock or Broken armour. Sidebar: Hideout alone on top; Combat, Stash, Campaign, Trader, Equipment, Bench, Skills, Passive Tree; Achievements in its own Progress group at the bottom — done 2026-10-26
 - [x] Hard 0.1 s minimum on every cooldown (`MIN_COOLDOWN_MS`), including Overclock (now "cooldowns drop to the 0.1 s minimum") — done 2026-10-25
 - [x] Most spells are instant with their cooldown as the only limit (Spark, Frost Needle, Frost Ward, Arcane Siphon, Meditate, Shock Nova, Consecrate); Fireball and Glacial Lance keep their wind-up. Mage 6 h sim, seed 7: level 16 and 4,686 kills (was 14 and 3,375) — done 2026-10-25
 - [x] Skill gems start on Manual only (nothing auto-casts by default); the rule editor offers each gem's suggested rule as one click; the sim bot and tests apply the suggested rules; existing saves keep their rules — done 2026-10-25

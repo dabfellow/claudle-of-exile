@@ -1,4 +1,7 @@
 import type { GameEvent } from '../engine/types';
+import { flaskDef } from './flasks';
+
+const drank = (e: GameEvent, kind: 'life' | 'mana') => (e.t === 'flask' && !e.auto && flaskDef(e.flaskId).kind === kind ? 1 : 0);
 
 export interface TutorialStep {
   id: string;
@@ -45,7 +48,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'slay',
     title: 'Blood in the Water',
-    npc: "You fight on your own — your skills fire by themselves, top of the bar first. Watch your life and mana. Kill a few.",
+    npc: "Your Default Attack swings on its own. Your skills wait for you: click one or press Q–Y, or give it a rule on the Skills page and it'll fire by itself. Kill a few.",
     objective: 'Slay monsters',
     target: 3,
     highlight: [],
@@ -56,20 +59,31 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'flask',
     title: 'Drink Up',
-    npc: 'Hurt? That flask on your belt refills as you kill. Click it — or press 1 — before you need it, not after.',
-    objective: 'Drink a flask during combat',
+    npc: 'Hurt? The red flask on your belt is Life, and it refills as you kill. Click it — or press 1 — before you need it, not after.',
+    objective: 'Drink your Life Flask during combat',
     target: 1,
     highlight: ['flask-0', 'nav-combat'],
-    match: (e) => (e.t === 'flask' && !e.auto ? 1 : 0),
+    match: (e) => drank(e, 'life'),
     reward: { transmute: 1 },
     rewardText: 'Orb of Transmutation',
   },
   {
+    id: 'mana_flask',
+    title: 'Mind the Well',
+    npc: "Nobody gets mana back in a fight. Your skills drink it, and the blue flask pours it back. Use a skill, then drink — or press 2.",
+    objective: 'Drink your Mana Flask during combat',
+    target: 1,
+    highlight: ['flask-1', 'nav-combat'],
+    match: (e) => drank(e, 'mana'),
+    reward: { gold: 30 },
+    rewardText: '30 gold',
+  },
+  {
     id: 'mine',
     title: 'Honest Work',
-    npc: "Fighting's not the only way to get strong. There's copper in the cliffs. Bring me some ore — I'll throw in the wood.",
+    npc: "Fighting's not the only way to get strong. There's copper in the cliffs, and the anvil is hungry. Bring me nine ore — I'll throw in the wood.",
     objective: 'Mine Copper Ore',
-    target: 5,
+    target: 9,
     highlight: ['nav-mining', 'action-mine_copper'],
     match: (e) => (e.t === 'produce' && e.skill === 'mining' ? (e.outputs.copper_ore ?? 0) : 0),
     reward: { ash_log: 6 },
@@ -78,7 +92,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'smith',
     title: 'Forge Something',
-    npc: 'Ore and wood make gear. Hammer out anything at all — the better your Smithing, the better the item level.',
+    npc: 'Ore and wood make gear. Gloves or boots are cheapest — 9 ore, 3 logs, about ten seconds at the anvil. The better your Smithing, the better the item level.',
     objective: 'Smith any item',
     target: 1,
     highlight: ['nav-smithing'],
@@ -89,7 +103,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'transmute',
     title: 'A Touch of Magic',
-    npc: "Plain gear is boring. Take it to the Crafting Bench and rub a Transmutation orb on it. Don't ask me how that works.",
+    npc: "Plain gear is boring. At the Crafting Bench, pick it from your bag and rub a Transmutation orb on it. Don't ask me how that works.",
     objective: 'Use an Orb of Transmutation',
     target: 1,
     highlight: ['nav-bench', 'orb-transmute'],

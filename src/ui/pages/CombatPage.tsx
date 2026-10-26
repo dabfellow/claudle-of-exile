@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
-import { BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, zoneDef } from '../../data/zones';
+import { BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, nextZones, zoneDef } from '../../data/zones';
 import { CELLS, COLUMNS, GROUND, groundFor, inReach, MAX_ROW, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT } from '../../engine/battlefield';
-import { aliveMonsters, bossIsNext, currentMovement, mitigate, queueSkill, retreat, setMovement, useFlask } from '../../engine/combat';
+import { aliveMonsters, bossIsNext, currentMovement, mitigate, queueSkill, retreat, setMovement, startCombat, useFlask } from '../../engine/combat';
 import { flaskStats } from '../../engine/flasks';
 import { MIN_COOLDOWN_MS, skillNumbers } from '../../engine/gems';
 import { meterLabel, meterMax, mechanicOf } from '../../engine/mechanics';
@@ -535,6 +535,8 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
 
   const zone = zoneDef(c.zoneId);
   const zoneArt = anyArtUrl(`zones/${zone.id}`);
+  // once this area's boss is down, offer the areas it opened
+  const nexts = s.bossesDefeated.includes(zone.id) ? nextZones(zone.id).filter((z) => s.unlockedZones.includes(z.id)) : [];
   return (
     <div className="page">
       <PageHeader
@@ -542,6 +544,11 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         kicker="Fighting"
         actions={
           <>
+            {nexts.map((z) => (
+              <button key={z.id} className="btn primary" title={`Area level ${z.levelRange[0]}–${z.levelRange[1]}`} onClick={() => game.act((st, ctx) => startCombat(st, ctx, z.id))}>
+                Next area: {z.name} →
+              </button>
+            ))}
             <button className="btn" onClick={() => go('campaign')}>
               Change area
             </button>

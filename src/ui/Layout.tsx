@@ -51,24 +51,22 @@ interface NavEntry {
 }
 
 const NAV: { label: string; items: NavEntry[] }[] = [
+  // Hideout on its own at the top, then the pages you use most, in the order you use them
   {
-    label: 'Town',
-    items: [
-      { page: 'hideout', label: 'Hideout', icon: 'home' },
-      { page: 'vendor', label: "Trader's Stall", icon: 'vendor' },
-      { page: 'stash', label: 'Stash', icon: 'stash' },
-      { page: 'achievements', label: 'Achievements', icon: 'trophy' },
-    ],
+    label: '',
+    items: [{ page: 'hideout', label: 'Hideout', icon: 'home' }],
   },
   {
     label: 'Character',
     items: [
-      { page: 'campaign', label: 'Campaign', icon: 'campaign' },
       { page: 'combat', label: 'Combat', icon: 'combat', skill: 'combat' },
-      { page: 'skills', label: 'Skills', icon: 'gems' },
+      { page: 'stash', label: 'Stash', icon: 'stash' },
+      { page: 'campaign', label: 'Campaign', icon: 'campaign' },
+      { page: 'vendor', label: "Trader's Stall", icon: 'vendor' },
       { page: 'equipment', label: 'Equipment', icon: 'equipment' },
-      { page: 'tree', label: 'Passive Tree', icon: 'tree' },
       { page: 'bench', label: 'Crafting Bench', icon: 'bench' },
+      { page: 'skills', label: 'Skills', icon: 'gems' },
+      { page: 'tree', label: 'Passive Tree', icon: 'tree' },
     ],
   },
   {
@@ -87,6 +85,10 @@ const NAV: { label: string; items: NavEntry[] }[] = [
       { page: 'gemcutting', label: 'Gemcutting', icon: 'gemcutting', skill: 'gemcutting' },
       { page: 'upcoming', label: 'Coming soon', icon: 'lock', divider: true },
     ],
+  },
+  {
+    label: 'Progress',
+    items: [{ page: 'achievements', label: 'Achievements', icon: 'trophy' }],
   },
 ];
 
@@ -117,8 +119,8 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
         <span className="brand-sub">an idle exile's tale</span>
       </div>
       {NAV.map((g) => (
-        <div className="nav-group" key={g.label}>
-          <div className="nav-label">{g.label}</div>
+        <div className={`nav-group ${g.label ? '' : 'unlabelled'}`} key={g.label || 'top'}>
+          {g.label && <div className="nav-label">{g.label}</div>}
           {g.items.map((it) => {
             const lvl = it.skill ? levelOf(it.skill, s.skills[it.skill]) : null;
             const isActive = it.skill && it.skill === active;

@@ -150,6 +150,11 @@ const MIGRATIONS: Record<number, Migration> = {
       s.masteries = {};
     }
   },
+  // the tutorial gained a Mana Flask step after the Life Flask one (index 3): later steps move down one
+  15: (raw) => {
+    const tut = raw.tutorial as { step: number; done?: boolean } | undefined;
+    if (tut && !tut.done && tut.step >= 4) tut.step += 1;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

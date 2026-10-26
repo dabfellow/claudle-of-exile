@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ClassId } from '../src/data/classes';
-import { ACTIVE_GEMS, SUPPORT_GEMS, activeGemDef } from '../src/data/gems';
+import { ACTIVE_GEMS, SUPPORT_GEMS, activeGemDef, type TargetStatus } from '../src/data/gems';
 import { zoneDef } from '../src/data/zones';
 import { combatStep, makeMonster, ruleAllows, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
@@ -141,9 +141,15 @@ describe('new skill gems', () => {
     run(s, ctx, 3000, () => ctx.events.some((e) => e.t === 'skill'));
     expect(s.mana).toBeGreaterThanOrEqual(max * 0.3 - 1);
     expect(activeGemDef('meditate').defaultRule.when).toBe('manaBelow');
-    const rc = { lifePct: 100, manaPct: 20, enemies: 1, targetLifePct: 100, casting: false, boss: false, meterFull: false };
+    const rc = { lifePct: 100, manaPct: 20, enemies: 1, targetLifePct: 100, casting: false, boss: false, meterFull: false, targetStatus: new Set<TargetStatus>() };
     expect(ruleAllows({ when: 'manaBelow', value: 30 }, rc, false)).toBe(true);
     expect(ruleAllows({ when: 'manaBelow', value: 30 }, { ...rc, manaPct: 50 }, false)).toBe(false);
+    // target status rules
+    const bleeding = { ...rc, targetStatus: new Set<TargetStatus>(['bleeding']) };
+    expect(ruleAllows({ when: 'targetHas', status: 'bleeding' }, bleeding, false)).toBe(true);
+    expect(ruleAllows({ when: 'targetHas', status: 'poisoned' }, bleeding, false)).toBe(false);
+    expect(ruleAllows({ when: 'targetLacks', status: 'bleeding' }, bleeding, false)).toBe(false);
+    expect(ruleAllows({ when: 'targetLacks', status: 'poisoned' }, bleeding, false)).toBe(true);
   });
 
   it('Berserk speeds attacks and drains life, but never kills by itself', () => {

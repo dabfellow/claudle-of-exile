@@ -1,4 +1,4 @@
-import { activeGemDef, SKILL_BAR_SLOTS, type TacticRule } from '../data/gems';
+import { activeGemDef, SKILL_BAR_SLOTS, type TacticRule, type TargetStatus } from '../data/gems';
 import { clearGround } from './storage';
 import {
   actOpen,
@@ -408,6 +408,22 @@ export interface RuleContext {
   casting: boolean;
   boss: boolean;
   meterFull: boolean;
+  targetStatus: Set<TargetStatus>;
+}
+
+/** Every status a monster has right now, as skill rules see it. */
+export function monsterStatuses(m: MonsterInstance | undefined): Set<TargetStatus> {
+  const out = new Set<TargetStatus>();
+  if (!m) return out;
+  if (m.dots.some((x) => x.kind === 'bleed')) out.add('bleeding');
+  if (m.dots.some((x) => x.kind === 'poison')) out.add('poisoned');
+  if (m.dots.some((x) => x.kind === 'ignite' || x.kind === 'burn')) out.add('ignited');
+  if (m.stunMs > 0) out.add('stunned');
+  if (m.frozenMs > 0) out.add('frozen');
+  if (m.chillMs > 0) out.add('chilled');
+  if ((m.shockMs ?? 0) > 0) out.add('shocked');
+  if (m.vulnMs > 0) out.add('armourBroken');
+  return out;
 }
 
 export function ruleContext(s: GameState, d: Derived): RuleContext {
@@ -421,6 +437,7 @@ export function ruleContext(s: GameState, d: Derived): RuleContext {
     casting: alive.some((m) => m.casting >= 0),
     boss: alive.some((m) => m.isBoss),
     meterFull: meterFull(s, d),
+    targetStatus: monsterStatuses(target),
   };
 }
 
@@ -459,6 +476,10 @@ export function ruleAllows(rule: TacticRule, rc: RuleContext, active: boolean): 
       return rc.boss;
     case 'meterFull':
       return rc.meterFull;
+    case 'targetHas':
+      return !!rule.status && rc.targetStatus.has(rule.status);
+    case 'targetLacks':
+      return !rule.status || !rc.targetStatus.has(rule.status);
   }
 }
 

@@ -84,14 +84,32 @@ export type RuleCondition =
   | 'targetLifeAbove'
   | 'notActive'
   | 'bossOnly'
-  | 'meterFull';
+  | 'meterFull'
+  | 'targetHas'
+  | 'targetLacks';
+
+/** What a rule can check on the current target. */
+export type TargetStatus = 'bleeding' | 'poisoned' | 'ignited' | 'stunned' | 'frozen' | 'chilled' | 'shocked' | 'armourBroken';
+
+export const TARGET_STATUSES: { id: TargetStatus; label: string }[] = [
+  { id: 'bleeding', label: 'Bleed' },
+  { id: 'poisoned', label: 'Poison' },
+  { id: 'ignited', label: 'Ignite' },
+  { id: 'stunned', label: 'Stun' },
+  { id: 'frozen', label: 'Freeze' },
+  { id: 'chilled', label: 'Chill' },
+  { id: 'shocked', label: 'Shock' },
+  { id: 'armourBroken', label: 'Broken armour' },
+];
 
 export interface TacticRule {
   when: RuleCondition;
   value?: number;
+  /** for targetHas / targetLacks */
+  status?: TargetStatus;
 }
 
-export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; defaultValue?: number }> = {
+export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; defaultValue?: number; status?: boolean }> = {
   always: { label: 'Whenever ready' },
   manual: { label: 'Manual only' },
   enemyCasting: { label: 'When an enemy winds up' },
@@ -103,6 +121,8 @@ export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; 
   notActive: { label: 'When its effect is not active' },
   bossOnly: { label: 'Only against bosses' },
   meterFull: { label: 'When your class meter is full (Rage, Malice…)' },
+  targetHas: { label: 'While target is affected by', status: true },
+  targetLacks: { label: "While target isn't affected by", status: true },
 };
 
 const A = (d: ActiveGemDef) => d;

@@ -230,6 +230,11 @@ h3 {
   padding: var(--s-2) var(--s-2) 2px;
 }
 
+/* the Hideout sits alone above the first group, with a small gap under it */
+.nav-group.unlabelled {
+  padding-bottom: var(--s-1);
+}
+
 .nav-label {
   font-size: var(--fs-xs);
   font-weight: 600;
