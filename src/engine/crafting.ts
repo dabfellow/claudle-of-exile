@@ -3,7 +3,7 @@ import { stashedItems, takeOwned } from './storage';
 import { baseDef } from '../data/bases';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements';
 import { essenceDef, fossilDef, modBias } from '../data/craftMats';
-import { BENCH_CRAFTS } from '../data/hideout';
+import { BENCH_BUILT_LEVEL, BENCH_CRAFTS } from '../data/hideout';
 import type { Ctx } from './context';
 import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, salvageValue, spawnWeight, type ModBias } from './items';
 import { rInt, type Rng } from './rng';
@@ -190,7 +190,18 @@ export function benchCraft(s: GameState, ctx: Ctx, craftId: string, uid: number)
   return null;
 }
 
+/** Orbs work anywhere; salvaging and bench crafts need the Crafting Bench built (its first upgrade). */
+export function benchBuilt(s: GameState): boolean {
+  return (s.hideout.bench ?? 1) >= BENCH_BUILT_LEVEL;
+}
+
+export const BENCH_UNBUILT = 'Build the Crafting Bench in your Hideout to salvage';
+
 export function salvage(s: GameState, ctx: Ctx, uids: number[]): number {
+  if (!benchBuilt(s)) {
+    ctx.emit({ t: 'info', text: BENCH_UNBUILT, tone: 'warn' });
+    return 0;
+  }
   const gone = takeOwned(s, uids);
   const dust = gone.reduce((a, i) => a + salvageValue(i), 0);
   const n = gone.length;

@@ -3,23 +3,26 @@ import { affixDef } from '../src/data/affixes';
 import { attributeReq, BASES, baseDef } from '../src/data/bases';
 import { PASSIVE_BY_ID, PASSIVE_NODES } from '../src/data/passiveTree';
 import { makeCtx } from '../src/engine/context';
-import { applyOrb, benchCraft, ORBS } from '../src/engine/crafting';
+import { applyOrb, benchCraft, ORBS, salvage } from '../src/engine/crafting';
 import { combatStep, makeMonster, mitigate, startCombat, useFlask } from '../src/engine/combat';
 import { enchantFlask } from '../src/engine/flasks';
 import { equip } from '../src/engine/equipment';
-import { upgradeStation } from '../src/engine/hideout';
+import { refreshVendor, stationLockReason, upgradeStation } from '../src/engine/hideout';
+import { gemReqLevel } from '../src/data/gems';
+import { createSkillGem, placeOnBar } from '../src/engine/gems';
 import { stashPagePrice } from '../src/engine/storage';
-import { addRandomMod, allMods, createItem, eligibleAffixes, maxAffixes } from '../src/engine/items';
+import { addRandomMod, allMods, createItem, eligibleAffixes, maxAffixes, sellValue } from '../src/engine/items';
 import { simulateOffline } from '../src/engine/offline';
 import { allocate, allocateReason, refundReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { deserialize, exportSave, importSave, serialize } from '../src/engine/save';
-import { startSkillAction } from '../src/engine/skills';
+import { actionBlocker, startSkillAction } from '../src/engine/skills';
 import { newGame, SAVE_VERSION, tick } from '../src/engine/state';
 import { armourReduction, deriveStats } from '../src/engine/stats';
 import type { Item } from '../src/engine/types';
 import { charLevelForXp, charXpForLevel, levelForXp, xpForLevel } from '../src/engine/xp';
 import { zoneDef } from '../src/data/zones';
+import { actionsFor } from '../src/data/skills';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
 
@@ -290,15 +293,84 @@ describe('passive tree', () => {
 });
 
 describe('hideout', () => {
-  it('upgrades consume materials and make stash pages cheaper', () => {
+  it('upgrades consume materials; a Stash upgrade adds a free page that does not raise the page price', () => {
     const s = newGame(1);
     const c = ctx();
     expect(upgradeStation(s, c, 'stash')).toMatch(/materials/);
-    s.bank.gold = 500;
-    s.bank.ash_log = 50;
+    const price = stashPagePrice(s);
+    const pages = s.stash.length;
+    s.bank.gold = 2500;
+    s.bank.ash_log = 350;
+    s.bank.copper_ore = 150;
     expect(upgradeStation(s, c, 'stash')).toBeNull();
-    expect(s.bank.ash_log).toBe(10);
-    expect(stashPagePrice(s)).toBe(900);
+    expect(s.bank.ash_log).toBe(50);
+    expect(s.stash.length).toBe(pages + 1);
+    expect(stashPagePrice(s)).toBe(price);
+  });
+
+  it('the Map Device stays locked until Act 6, and production stations gate recipe tiers', () => {
+    const s = newGame(1);
+    const c = ctx();
+    expect(stationLockReason(s, 'map_device')).toMatch(/Act 6/);
+    s.bank.gold = 1e6;
+    s.bank.rough_gem = 1e3;
+    expect(upgradeStation(s, c, 'map_device')).toMatch(/Act 6/);
+    s.skills.smithing = 1e9;
+    const ironBase = actionsFor('smithing').find((a) => a.baseId && baseDef(a.baseId).reqLevel >= 10 && baseDef(a.baseId).reqLevel < 22)!;
+    for (const id of Object.keys(ironBase.inputs!)) s.bank[id] = 1e4;
+    expect(actionBlocker(s, ironBase)).toMatch(/Forge level 2/);
+    s.hideout.forge = 2;
+    expect(actionBlocker(s, ironBase)).toBeNull();
+  });
+});
+
+describe('town and gems', () => {
+  it('stocks three shops with level-appropriate wares, priced well above their worth', () => {
+    const s = newGame(1);
+    s.skills.combat = charXpForLevel(8);
+    refreshVendor(s, seeded(3));
+    for (const shop of ['magic', 'armour', 'gems'] as const) expect(s.vendor.stock.filter((o) => o.shop === shop)).toHaveLength(4);
+    for (const o of s.vendor.stock) {
+      if (o.gemId) expect(gemReqLevel(o.gemId)).toBeLessThanOrEqual(8);
+      if (o.supportId) expect(gemReqLevel(o.supportId)).toBeLessThanOrEqual(8);
+      if (o.item) {
+        expect(o.item.rarity === 'magic' || o.item.rarity === 'rare').toBe(true);
+        expect(o.price).toBeGreaterThan(sellValue(o.item) * 4);
+      }
+      if (o.item && o.shop === 'magic') expect(['ring', 'amulet', 'belt', 'weapon']).toContain(baseDef(o.item.baseId).slot);
+    }
+  });
+
+  it('gems have level requirements: too low and they stay off the bar', () => {
+    const s = newGame(1);
+    const lace = createSkillGem(s, 'lacerate');
+    s.gems.push(lace);
+    expect(gemReqLevel('lacerate')).toBeGreaterThan(1);
+    expect(placeOnBar(s, lace.uid, 2)).toMatch(/Requires level/);
+  });
+
+  it('salvaging needs the Crafting Bench built; orbs work without it', () => {
+    const s = newGame(1);
+    s.hideout.bench = 1;
+    const c = ctx();
+    const item = createItem(s, 'rusted_sword', 5, 'normal', seeded(2));
+    s.inventory.push(item);
+    expect(salvage(s, c, [item.uid])).toBe(0);
+    expect(s.inventory).toContain(item);
+    s.bank.transmute = 1;
+    expect(applyOrb(s, c, 'transmute', item.uid)).toBeNull();
+  });
+
+  it('an old save gets fresh Town stock, its Stash pages, and keeps a working bench', () => {
+    const s = newGame(1);
+    const old = JSON.parse(serialize(s));
+    old.version = 16;
+    old.hideout = { ...old.hideout, stash: 3, bench: 1 };
+    old.vendor = { stock: [{ id: 1, kind: 'gem', gemId: 'spark', price: 10 }], refreshAt: 1e12 };
+    const loaded = deserialize(JSON.stringify(old));
+    expect(loaded.vendor.stock).toEqual([]);
+    expect(loaded.stash.length).toBe(s.stash.length + 2);
+    expect(loaded.hideout.bench).toBe(2);
   });
 });
 

@@ -17,8 +17,6 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
   - Then `open: true` on Act 2, Settings → About text, deploy.
 
 ### Town feedback (your walkthrough, 2026-10-25)
-- [ ] Gems: far too many drop. Move them to a gem vendor that unlocks better gems as it levels.
-  - Needs design with you: how the vendor levels, what happens to gem drops and gems already owned.
 - [ ] More skills to train (Hideout skill list feels thin).
   - Later: Thieving (Heist), Archaeology (Expedition), Cartography, Fletching, Rune-carving ([SKILLING_REWORK.md](SKILLING_REWORK.md) §8). You like all of them; they're listed on the in-game Coming soon page for now.
 - [ ] Side feed (Activity / Combat log / Loot): you're lukewarm on it; revisit later.
@@ -36,7 +34,7 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - Inventory look is with the other session; the Equipment and Bench bag views should improve with it.
 
 ### UI feedback (your walkthrough #2, 2026-10-25) — you test at 1440p and 4K
-- [ ] **[You]** Pick a Hideout layout: Current, A · Rows, B · Ledger or C · Scene (switcher at the top of the Hideout). Then the others and the switcher come out, and the winner's style can carry to other card pages.
+- [ ] **[You]** Check the Town: shop prices (~5k magic / ~12k rare at level 24), gem levels (`GEM_LEVELS` in `src/data/gems.ts`), shopkeeper names (Ilsa, Varro, the Gemwright).
 - **[You]** Icons: gathering nodes (Copper Vein, Scorched Seam …) and currency need art; you'll go through icons yourself.
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
@@ -68,6 +66,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Hideout layout B (stats, equipment, quick buttons; land here on load); Town with Magic, Armour and Gem shops; station upgrades unlock tiers with steep costs (Forge, Alchemy Table tiers; Stash pages; Bench built for salvage, auto-crafting last; Town Market stock/restock); Map Device locked until Act 6; gem level requirements and rare level-appropriate drops; save v17 ([TOWN.md](TOWN.md), [BALANCE.md](BALANCE.md)) — done 2026-10-26
 - [x] Act 1 called balanced (you, 2026-10-26): monsters life ×1.4 / damage ×1.15; most classes 3h40–6h, Warrior ~12h; class balance isn't a goal, finding what works is ([BALANCE.md](BALANCE.md)) — done 2026-10-26
 - [x] Skill gems need their own attribute (8 at gem level 1, 44 at 5, 89 at 10, 116 at 13): short of it a gem stops levelling, can't go on the bar, and stops firing; tooltip shows it. Attack gems gain +8% weapon damage per level (was 3%) so a capped off-class attack falls behind. Bot respects requirements and slots instant spells into spare slots — done 2026-10-26
 - [x] Cloud save sync between two browsers on the live site (you: works fine) — done 2026-10-26

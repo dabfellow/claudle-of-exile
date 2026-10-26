@@ -24,6 +24,7 @@ import { newGame, SAVE_VERSION, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameState, MonsterInstance } from '../src/engine/types';
 import { charXpForLevel } from '../src/engine/xp';
+import { veteran } from './helpers';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
 
@@ -88,7 +89,7 @@ describe('skill gems', () => {
   });
 
   it('supports only fit matching skills, signatures only their own', () => {
-    const s = newGame(1);
+    const s = veteran(newGame(1));
     const strike = s.skillBar[0]!;
     const guard = s.skillBar[1]!;
     expect(supportReason(strike, 'multistrike')).toBeNull();
@@ -103,7 +104,7 @@ describe('skill gems', () => {
   });
 
   it('supports raise mana cost and change numbers', () => {
-    const s = newGame(1);
+    const s = veteran(newGame(1));
     const strike = s.skillBar[0]!;
     const d = deriveStats(s);
     const before = skillNumbers(d, strike);
@@ -114,7 +115,7 @@ describe('skill gems', () => {
   });
 
   it('bar slots can be filled, swapped and emptied', () => {
-    const s = newGame(1);
+    const s = veteran(newGame(1));
     const extra = createSkillGem(s, 'war_cry');
     s.gems.push(extra);
     expect(placeOnBar(s, extra.uid, 2)).toBeNull();

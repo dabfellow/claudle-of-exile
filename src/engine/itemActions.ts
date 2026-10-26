@@ -1,6 +1,6 @@
 import { BAG_SIZE } from '../data/hideout';
 import type { Ctx } from './context';
-import { isCraftLocked, salvage } from './crafting';
+import { BENCH_UNBUILT, benchBuilt, isCraftLocked, salvage } from './crafting';
 import { equip, equipReason, unequip } from './equipment';
 import { bagFull, pickUp, stashItems, stashPageRoom, takeFromStash } from './storage';
 import type { EquipSlot, GameState, Item } from './types';
@@ -124,6 +124,7 @@ export function salvageReason(s: GameState, uid: number): string | null {
   if (!p) return 'Item not found';
   if (p.at === 'equipped') return 'Take it off first';
   if (isCraftLocked(s, uid)) return 'Being crafted';
+  if (!benchBuilt(s)) return BENCH_UNBUILT;
   return null;
 }
 

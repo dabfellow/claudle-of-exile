@@ -317,8 +317,12 @@ export interface SmithCatalyst {
   salvageMisses: boolean;
 }
 
+/** The three Town shops. */
+export type ShopId = 'magic' | 'armour' | 'gems';
+
 export interface VendorOffer {
   id: number;
+  shop: ShopId;
   kind: 'item' | 'flask' | 'currency' | 'gem' | 'support';
   item?: Item;
   flask?: FlaskInstance;

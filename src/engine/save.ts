@@ -155,6 +155,16 @@ const MIGRATIONS: Record<number, Migration> = {
     const tut = raw.tutorial as { step: number; done?: boolean } | undefined;
     if (tut && !tut.done && tut.step >= 4) tut.step += 1;
   },
+  // the Trader's Stall became the Town's three shops; Stash upgrades give pages; the Bench must be built
+  16: (raw) => {
+    raw.vendor = { stock: [], refreshAt: 0 }; // restocks on the next tick, shop by shop
+    const hideout = (raw.hideout ?? {}) as Record<string, number>;
+    const stash = raw.stash as unknown[][] | undefined;
+    if (stash) for (let i = 1; i < (hideout.stash ?? 1); i++) stash.push([]);
+    // the old level 1 bench already salvaged: count it as built so nobody loses that
+    if ((hideout.bench ?? 1) < 2) hideout.bench = 2;
+    raw.hideout = hideout;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

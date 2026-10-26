@@ -1,4 +1,4 @@
-import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP, STASH_DISCOUNT, STASH_PAGE_GROWTH, STASH_PAGE_PRICE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
+import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP, STASH_PAGE_GROWTH, STASH_PAGE_PRICE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { isCraftLocked } from './crafting';
@@ -80,11 +80,11 @@ export function stashedItems(s: GameState): Item[] {
   return s.stash.flat();
 }
 
-/** Gold for the next stash page, after the Stash station's discount. */
+/** Gold for the next stash page. Pages the Stash station gave you don't count toward the price. */
 export function stashPagePrice(s: GameState): number {
-  const bought = Math.max(0, s.stash.length - STASH_START_PAGES);
-  const discount = STASH_DISCOUNT[(s.hideout.stash ?? 1) - 1] ?? 0;
-  return Math.round((STASH_PAGE_PRICE * STASH_PAGE_GROWTH ** bought * (100 - discount)) / 100);
+  const free = (s.hideout.stash ?? 1) - 1;
+  const bought = Math.max(0, s.stash.length - STASH_START_PAGES - free);
+  return Math.round(STASH_PAGE_PRICE * STASH_PAGE_GROWTH ** bought);
 }
 
 export function buyStashPage(s: GameState, ctx: Ctx): string | null {

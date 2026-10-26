@@ -14,11 +14,11 @@ import { ACTS, actBossZone, actOpen, ZONES } from '../src/data/zones';
 import { characterLevel } from '../src/engine/character';
 import { equipFlask, flaskRecoveryAmount, startCombat, useFlask } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
-import { applyOrb, orbReason, salvage } from '../src/engine/crafting';
+import { applyOrb, benchBuilt, orbReason, salvage } from '../src/engine/crafting';
 import { equip, equipReason, slotsFor } from '../src/engine/equipment';
-import { gemAttrReason, placeOnBar, removeFromBar, skillNumbers, skillSummary, socketSupport, supportReason, syncSockets, unsocketSupport } from '../src/engine/gems';
+import { gemUseReason, placeOnBar, removeFromBar, skillNumbers, skillSummary, socketSupport, supportReason, syncSockets, unsocketSupport } from '../src/engine/gems';
 import { flaskDef } from '../src/data/flasks';
-import { buyOffer, rerollCost, rerollVendor } from '../src/engine/hideout';
+import { buyOffer, rerollCost, rerollVendor, sellItems } from '../src/engine/hideout';
 import { pickUp } from '../src/engine/storage';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
@@ -76,10 +76,19 @@ function scoreWith(s: GameState, item: Item): number {
   return Math.max(...slotsFor(item).map((slot) => scoreOf(wearing(s, item, slot))));
 }
 
-/** Spend gold at the trader: buy any gear that's an upgrade; with spare gold and nothing worth buying, restock. */
+/**
+ * Spend gold in Town: any gem it doesn't own yet (gems rarely drop now), and any gear that's an upgrade;
+ * with spare gold and nothing worth buying, restock.
+ */
 function shop(s: GameState, ctx: Ctx) {
   const base = scoreOf(s);
   let bought = false;
+  const owned = new Set([...s.skillBar, ...s.gems].filter(Boolean).map((g) => g!.gemId));
+  const ownedSupports = new Set(s.supportGems.map((g) => g.supportId));
+  for (const offer of [...s.vendor.stock]) {
+    const newGem = (offer.gemId && !owned.has(offer.gemId)) || (offer.supportId && !ownedSupports.has(offer.supportId));
+    if (newGem && offer.price * 2 <= (s.bank.gold ?? 0) && !buyOffer(s, ctx, offer.id)) bought = true;
+  }
   for (const offer of [...s.vendor.stock]) {
     if (offer.kind !== 'item' || !offer.item || offer.price > (s.bank.gold ?? 0) || equipReason(s, offer.item)) continue;
     // worth it if it beats what's worn by a clear margin (~1% of the current score)
@@ -104,7 +113,12 @@ function upgradeGear(s: GameState, ctx: Ctx) {
     }
     if (best) equip(s, ctx, item.uid, best.slot);
   }
-  if (s.inventory.length > 25) salvage(s, ctx, s.inventory.map((i: Item) => i.uid));
+  // salvage needs a built Crafting Bench, which the bot never gathers for: it sells the spares in Town instead
+  if (s.inventory.length > 25) {
+    const uids = s.inventory.map((i: Item) => i.uid);
+    if (benchBuilt(s)) salvage(s, ctx, uids);
+    else sellItems(s, ctx, uids);
+  }
 }
 
 /** A gem's damage per second as the bot judges it: attacks scaled by the chance to hit monsters of its level. */
@@ -125,7 +139,7 @@ function manageSkills(s: GameState) {
   // the best copy of each gem it owns and meets the attribute for: highest level wins
   const owned = new Map<string, SkillGemInstance>();
   for (const g of [...s.skillBar.filter((x): x is SkillGemInstance => !!x), ...s.gems]) {
-    if (gemAttrReason(d.attributes, g)) continue;
+    if (gemUseReason(d.combatLevel, d.attributes, g)) continue;
     const have = owned.get(g.gemId);
     if (!have || g.level > have.level) owned.set(g.gemId, g);
   }

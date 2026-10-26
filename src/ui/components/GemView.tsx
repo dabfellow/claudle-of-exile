@@ -1,4 +1,4 @@
-import { activeGemDef, ACTIVE_GEMS, DEFAULT_ATTACK, RULE_LABELS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
+import { activeGemDef, ACTIVE_GEMS, DEFAULT_ATTACK, gemReqLevel, RULE_LABELS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
 import { GEM_ATTR_NAME, gemAttrReq, gemLevelReq, gemProgress, skillSummary, supportSlots } from '../../engine/gems';
 import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
@@ -100,6 +100,9 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
         </div>
       </div>
       <div style={{ margin: '6px 0' }}>{def.desc}</div>
+      {def.id !== DEFAULT_ATTACK.id && (
+        <div className={`small ${d.combatLevel >= gemReqLevel(def.id) ? 'muted' : 'bad'}`}>Requires character level {gemReqLevel(def.id)}</div>
+      )}
       {gem && <GemRequirement have={d.attributes[def.attr]} attr={def.attr} level={gem.level} />}
       <div className="delta-list">
         {nums.manaCost > 0 && (
@@ -164,6 +167,7 @@ export function SupportTip({ supportId }: { supportId: string }) {
         </div>
       </div>
       <div style={{ margin: '6px 0' }}>{def.desc}</div>
+      <div className="dim small">Requires character level {gemReqLevel(def.id)}</div>
       <div className="dim small">{fitsNames}</div>
       {def.mods.manaMult && def.mods.manaMult !== 1 && (
         <div className="dim small">

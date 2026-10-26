@@ -1,8 +1,9 @@
 import { affixDef } from '../data/affixes';
 import { essenceDef, fossilDef, modBias, resinDef } from '../data/craftMats';
 import { flaskDef } from '../data/flasks';
-import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
-import { ALCH_DOUBLE, ALCH_SPEED, FORGE_ILVL, FORGE_SPEED } from '../data/hideout';
+import { ACTIVE_GEMS, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
+import { ALCH_DOUBLE, FORGE_ILVL } from '../data/hideout';
+import { baseDef } from '../data/bases';
 import { HERB_TIERS, ORB_TIERS } from '../data/skillTree';
 import { actionDef, SKILLS, type SkillAction } from '../data/skills';
 import { actOpen, ZONES, zoneDef } from '../data/zones';
@@ -16,6 +17,7 @@ import { chance, pick } from './rng';
 import { skillTreeStats, type TreeStats } from './skillTree';
 import type { Derived } from './stats';
 import type { GameState, Item, SkillId, SmithCatalyst } from './types';
+import { characterLevel } from './character';
 import { levelOf } from './xp';
 
 export function skillLevel(s: GameState, skill: SkillId): number {
@@ -41,8 +43,6 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
 export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): number {
   const t = skillTreeStats(s);
   let speed = d.skillSpeed + (t.skillSpeed ?? 0) + (t[`${a.skill}Speed` as keyof TreeStats] ?? 0);
-  if (a.skill === 'smithing') speed += FORGE_SPEED[(s.hideout.forge ?? 1) - 1];
-  if (a.skill === 'alchemy') speed += ALCH_SPEED[(s.hideout.alchemy_table ?? 1) - 1];
   return (a.intervalMs / (1 + speed / 100)) * keystoneSlow(a.skill, t);
 }
 
@@ -68,10 +68,22 @@ export function setSmithCatalyst(s: GameState, patch: Partial<SmithCatalyst>): v
   s.smithCatalyst = { ...s.smithCatalyst, ...patch };
 }
 
+/** The Forge or Alchemy Table level a production recipe needs; gathering only needs the skill level. */
+export function stationLevelFor(a: SkillAction): { station: 'forge' | 'alchemy_table'; level: number } | null {
+  if (a.baseId) {
+    const req = baseDef(a.baseId).reqLevel;
+    return { station: 'forge', level: req < 10 ? 1 : req < 22 ? 2 : 3 };
+  }
+  if (a.skill === 'alchemy') return { station: 'alchemy_table', level: a.level < 10 ? 1 : a.level < 20 ? 2 : 3 };
+  return null;
+}
+
 export function actionBlocker(s: GameState, a: SkillAction): string | null {
   if (a.soon) return 'Coming soon';
   if (a.area && !s.unlockedZones.includes(a.area)) return `Reach ${zoneDef(a.area).name} to unlock`;
   if (skillLevel(s, a.skill) < a.level) return `Requires ${SKILLS[a.skill].name} level ${a.level}`;
+  const st = stationLevelFor(a);
+  if (st && (s.hideout[st.station] ?? 1) < st.level) return `Needs ${st.station === 'forge' ? 'Forge' : 'Alchemy Table'} level ${st.level}`;
   if (a.inputs && !canAfford(s, a.inputs)) return 'Missing materials';
   if (a.baseId && bagFull(s)) return 'Inventory full';
   return null;
@@ -163,13 +175,15 @@ export function fossilHit(item: Item, fossilId: string): boolean {
 function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, number>): void {
   const { kind } = a.gem!;
   if (kind === 'skill') {
-    const def = pick(ctx.rng, ACTIVE_GEMS);
+    const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => gemReqLevel(g.id) <= characterLevel(s)));
     s.gems.push(createSkillGem(s, def.id));
     outputs[def.id] = 1;
     ctx.emit({ t: 'loot', gemId: def.id });
     return;
   }
-  let pool = SUPPORT_GEMS.filter((g) => (kind === 'signature' ? !!g.signatureFor : !g.signatureFor));
+  // only gems you're high enough level to use; signatures you can't use yet fall back to any you can
+  let pool = SUPPORT_GEMS.filter((g) => (kind === 'signature' ? !!g.signatureFor : !g.signatureFor) && gemReqLevel(g.id) <= characterLevel(s));
+  if (!pool.length) pool = SUPPORT_GEMS.filter((g) => !g.signatureFor && gemReqLevel(g.id) <= characterLevel(s));
   if (kind === 'signature') {
     const owned = new Set([...s.skillBar, ...s.gems].filter(Boolean).map((g) => g!.gemId));
     const mine = pool.filter((g) => owned.has(g.signatureFor!));

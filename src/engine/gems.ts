@@ -6,6 +6,7 @@ import {
   SKILL_BAR_SLOTS,
   supportGemDef,
   type ActiveGemDef,
+  gemReqLevel,
   type GemAttr,
   type SupportGemDef,
   type SupportMods,
@@ -40,6 +41,13 @@ export const GEM_ATTR_PER_LEVEL = 3;
 
 export function gemAttrReq(level: number): number {
   return Math.floor(8 + GEM_ATTR_PER_LEVEL * (gemLevelReq(level) - 1));
+}
+
+/** Why you can't use this skill gem right now (character level, then attribute), or null. */
+export function gemUseReason(charLevel: number, attrs: Attributes, gem: SkillGemInstance): string | null {
+  const need = gemReqLevel(gem.gemId);
+  if (charLevel < need) return `Requires level ${need}`;
+  return gemAttrReason(attrs, gem);
 }
 
 /** Why you can't use this gem at its current level, or null. */
@@ -129,7 +137,7 @@ export function placeOnBar(s: GameState, gemUid: number, slot: number): string |
   }
   const fromBag = s.gems.findIndex((g) => g.uid === gemUid);
   if (fromBag < 0) return 'Gem not found';
-  const reason = gemAttrReason(deriveStats(s, []).attributes, s.gems[fromBag]);
+  const reason = gemUseReason(characterLevel(s), deriveStats(s, []).attributes, s.gems[fromBag]);
   if (reason) return reason;
   const [gem] = s.gems.splice(fromBag, 1);
   const current = s.skillBar[slot];
@@ -154,6 +162,8 @@ export function socketSupport(s: GameState, gemUid: number, supportUid: number, 
   if (idx < 0) return 'Support not found';
   const reason = supportReason(gem, s.supportGems[idx].supportId);
   if (reason) return reason;
+  const need = gemReqLevel(s.supportGems[idx].supportId);
+  if (characterLevel(s) < need) return `Requires level ${need}`;
   const [sup] = s.supportGems.splice(idx, 1);
   const prev = gem.supports[socket];
   if (prev) s.supportGems.push(prev);
@@ -252,7 +262,11 @@ export interface SkillNumbers {
 export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNumbers {
   const def = gem ? activeGemDef(gem.gemId) : DEFAULT_ATTACK;
   const level = gem?.level ?? 1;
-  const mods = combineMods((gem?.supports ?? []).filter(Boolean).map((x) => supportGemDef(x!.supportId).mods));
+  const mods = combineMods(
+    (gem?.supports ?? [])
+      .filter((x) => x && gemReqLevel(x.supportId) <= d.combatLevel)
+      .map((x) => supportGemDef(x!.supportId).mods),
+  );
   const isAttack = def.tags.includes('attack');
   // each skill has its own base attack or cast time; attack speed or cast speed shortens it
   const dexSkill = def.id === 'twin_strike' || def.id === 'lacerate' ? d.raw.dexSkillSpeed : 0;

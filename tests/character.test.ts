@@ -11,6 +11,7 @@ import { deserialize, serialize } from '../src/engine/save';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import { charXpForLevel } from '../src/engine/xp';
+import { veteran } from './helpers';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
 
@@ -126,7 +127,7 @@ describe('area unlocks', () => {
 
 describe('item menu actions', () => {
   it('equips, stashes and salvages from wherever the item is', () => {
-    const s = newGame(1, { name: 'T', classId: 'warrior' });
+    const s = veteran(newGame(1, { name: 'T', classId: 'warrior' }));
     const c = ctx();
     const ring = createItem(s, 'iron_ring', 1, 'normal', seeded(4));
     s.ground.push(ring);

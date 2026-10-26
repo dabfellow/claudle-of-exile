@@ -1,19 +1,34 @@
-import { BASES } from '../data/bases';
-import { ACTIVE_GEMS, activeGemDef, SUPPORT_GEMS, supportGemDef } from '../data/gems';
-import { stationDef, VENDOR_REFRESH_MS, VENDOR_SLOTS, type StationId } from '../data/hideout';
+import { BASES, type BaseDef } from '../data/bases';
+import { ACTIVE_GEMS, activeGemDef, gemReqLevel, SUPPORT_GEMS, supportGemDef } from '../data/gems';
+import { SHOP_REFRESH_MIN, SHOP_SLOTS, stationDef, type StationId } from '../data/hideout';
 import { currencyDef } from '../data/materials';
+import { actBossZone } from '../data/zones';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { flaskName, flaskValue, rollFlask, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
-import { createItem, itemName, sellValue } from './items';
+import { addRandomMod, createItem, itemName, modCount, sellValue } from './items';
 import { pick, rInt, type Rng } from './rng';
-import type { GameState, Rarity, VendorOffer } from './types';
+import type { GameState, Item, Rarity, VendorOffer } from './types';
 import { characterLevel } from './character';
 import { bagFull, takeOwned } from './storage';
 
 export function stationLevel(s: GameState, id: StationId): number {
   return s.hideout[id] ?? 1;
+}
+
+/** Maps come after the campaign, PoE-style: the Map Device wakes once the last act's boss is beaten. */
+export const FINAL_ACT = 6;
+
+export function campaignComplete(s: GameState): boolean {
+  const z = actBossZone(FINAL_ACT);
+  return !!z && s.bossesDefeated.includes(z.id);
+}
+
+/** Why a station can't be used or upgraded yet, or null. */
+export function stationLockReason(s: GameState, id: StationId): string | null {
+  if (id === 'map_device' && !campaignComplete(s)) return `Unlocks once Act ${FINAL_ACT} is beaten`;
+  return null;
 }
 
 export function nextUpgradeCost(s: GameState, id: StationId): Record<string, number> | null {
@@ -23,6 +38,8 @@ export function nextUpgradeCost(s: GameState, id: StationId): Record<string, num
 }
 
 export function upgradeStation(s: GameState, ctx: Ctx, id: StationId): string | null {
+  const locked = stationLockReason(s, id);
+  if (locked) return locked;
   const cost = nextUpgradeCost(s, id);
   if (!cost) return 'Already at max level';
   if (!canAfford(s, cost)) return 'Not enough materials';
@@ -30,47 +47,86 @@ export function upgradeStation(s: GameState, ctx: Ctx, id: StationId): string | 
   s.hideout[id] = stationLevel(s, id) + 1;
   ctx.emit({ t: 'info', text: `${stationDef(id).name} upgraded to level ${s.hideout[id]}`, tone: 'good' });
   if (id === 'vendor') refreshVendor(s, ctx.rng);
+  if (id === 'stash') s.stash.push([]);
   return null;
 }
 
-// ---------- vendor ----------
+// ---------- Town shops ----------
+
+/** Caster weapons go to the Magic shop with the jewellery; every other weapon and all armour to the Armour shop. */
+const CASTER_FAMILIES = new Set(['wand', 'staff', 'sceptre']);
+const JEWELLERY = new Set(['ring', 'amulet', 'belt']);
+
+function magicBase(b: BaseDef): boolean {
+  return JEWELLERY.has(b.slot) || (!!b.family && CASTER_FAMILIES.has(b.family));
+}
+
+/**
+ * Shop gear is decent, crafted magic or rare gear at your level, priced well above its worth:
+ * the easy way to gear up, never the cheap one.
+ */
+export function shopItemPrice(item: Item): number {
+  const base = 60 + 8 * item.ilvl ** 1.5;
+  return Math.round(base * (item.rarity === 'rare' ? 12 : 5));
+}
+
+function shopItem(s: GameState, rng: Rng, lvl: number, bases: BaseDef[], ilvl: number): VendorOffer['item'] {
+  const base = pick(rng, bases);
+  const rarity: Rarity = lvl >= 2 && rng.next() < 0.35 ? 'rare' : 'magic';
+  const item = createItem(s, base.id, ilvl, rarity, rng);
+  // magic shop gear is never a bare one-mod roll
+  if (rarity === 'magic' && modCount(item) < 2) addRandomMod(item, rng);
+  return item;
+}
 
 export function refreshVendor(s: GameState, rng: Rng): void {
   const lvl = stationLevel(s, 'vendor');
-  const slots = VENDOR_SLOTS[lvl - 1];
-  const ilvl = Math.max(2, characterLevel(s) + 2);
+  const slots = SHOP_SLOTS[lvl - 1];
+  const charLvl = characterLevel(s);
+  // Town Market level 4 stocks a little above your level: better-rolled gear
+  const ilvl = Math.max(2, charLvl + (lvl >= 4 ? 3 : 0));
+  const usable = BASES.filter((b) => b.reqLevel <= Math.max(1, charLvl));
   const stock: VendorOffer[] = [];
   let id = 1;
-  const currencyPool = lvl >= 4 ? ['transmute', 'augment', 'alteration', 'regal', 'chaos', 'scour', 'regret'] : ['transmute', 'augment', 'alteration', 'scour', 'regret'];
+  const add = (o: Omit<VendorOffer, 'id'>) => stock.push({ ...o, id: id++ } as VendorOffer);
+
+  // Magic shop: caster weapons and jewellery, flasks, orbs
+  const currencyPool = lvl >= 3 ? ['transmute', 'augment', 'alteration', 'alchemy', 'regal', 'chaos', 'scour', 'regret'] : ['transmute', 'augment', 'alteration', 'scour', 'regret'];
   for (let i = 0; i < slots; i++) {
     const roll = rng.next();
     if (roll < 0.45) {
-      const base = pick(rng, BASES.filter((b) => b.reqLevel <= ilvl));
-      let rarity: Rarity = 'normal';
-      const r2 = rng.next();
-      if (lvl >= 3 && r2 < 0.2) rarity = 'rare';
-      else if (lvl >= 2 && r2 < 0.55) rarity = 'magic';
-      const item = createItem(s, base.id, ilvl, rarity, rng);
-      stock.push({ id: id++, kind: 'item', item, price: sellValue(item) * 4 });
-    } else if (roll < 0.62) {
+      const item = shopItem(s, rng, lvl, usable.filter(magicBase), ilvl)!;
+      add({ shop: 'magic', kind: 'item', item, price: shopItemPrice(item) });
+    } else if (roll < 0.7) {
       const flask = rollFlask(s, ilvl, rng);
-      stock.push({ id: id++, kind: 'flask', flask, price: flaskValue(flask) * 4 });
-    } else if (roll < 0.72) {
-      const gem = pick(rng, ACTIVE_GEMS);
-      stock.push({ id: id++, kind: 'gem', gemId: gem.id, price: 120 + ilvl * 10 });
-    } else if (roll < 0.82) {
-      const sup = pick(rng, SUPPORT_GEMS.filter((g) => !g.signatureFor || lvl >= 3));
-      stock.push({ id: id++, kind: 'support', supportId: sup.id, price: (sup.signatureFor ? 260 : 90) + ilvl * 8 });
+      add({ shop: 'magic', kind: 'flask', flask, price: flaskValue(flask) * 6 });
     } else {
       const c = currencyDef(pick(rng, currencyPool));
       const qty = c.value >= 30 ? 1 : rInt(rng, 2, 5);
-      stock.push({ id: id++, kind: 'currency', currencyId: c.id, qty, price: Math.round(c.value * qty * 3) });
+      add({ shop: 'magic', kind: 'currency', currencyId: c.id, qty, price: Math.round(c.value * qty * 4) });
     }
   }
-  s.vendor = { stock, refreshAt: s.clock + VENDOR_REFRESH_MS };
+  // Armour shop: every other weapon, shields and armour
+  for (let i = 0; i < slots; i++) {
+    const item = shopItem(s, rng, lvl, usable.filter((b) => !magicBase(b)), ilvl)!;
+    add({ shop: 'armour', kind: 'item', item, price: shopItemPrice(item) });
+  }
+  // Gem shop: skill and support gems you're high enough level to use; signatures from Town Market level 2
+  const skills = ACTIVE_GEMS.filter((g) => gemReqLevel(g.id) <= charLvl);
+  const supports = SUPPORT_GEMS.filter((g) => gemReqLevel(g.id) <= charLvl && (!g.signatureFor || lvl >= 2));
+  for (let i = 0; i < slots; i++) {
+    if (rng.next() < 0.55 || !supports.length) {
+      const g = pick(rng, skills);
+      add({ shop: 'gems', kind: 'gem', gemId: g.id, price: 150 + gemReqLevel(g.id) * 60 });
+    } else {
+      const g = pick(rng, supports);
+      add({ shop: 'gems', kind: 'support', supportId: g.id, price: (g.signatureFor ? 400 : 100) + gemReqLevel(g.id) * 50 });
+    }
+  }
+  s.vendor = { stock, refreshAt: s.clock + SHOP_REFRESH_MIN[lvl - 1] * 60_000 };
 }
 
-/** Gold to restock the trader early; doubles with each paid restock until the next free one. */
+/** Gold to restock every shop early; doubles with each paid restock until the next free one. */
 export function rerollCost(s: GameState): number {
   return (20 + characterLevel(s) * 6) * 2 ** (s.vendor.rerolls ?? 0);
 }

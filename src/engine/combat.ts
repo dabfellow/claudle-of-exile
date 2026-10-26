@@ -58,7 +58,7 @@ import {
 import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './character';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
-import { gemAttrReason, grantGemXp, MIN_COOLDOWN_MS, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
+import { gemUseReason, grantGemXp, MIN_COOLDOWN_MS, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
 import { rollLoot } from './loot';
 import { chance, pick, rInt } from './rng';
@@ -515,13 +515,13 @@ export function chooseSkill(s: GameState, d: Derived): { slot: number; nums: Ski
     const gem = s.skillBar[slot];
     const nums = skillNumbers(d, gem);
     c.queued = null;
-    if (gem && ready(s, d, slot, nums) && !gemAttrReason(d.attributes, gem)) return { slot, nums, manual: true };
+    if (gem && ready(s, d, slot, nums) && !gemUseReason(d.combatLevel, d.attributes, gem)) return { slot, nums, manual: true };
   }
   const rc = ruleContext(s, d);
   for (const withCooldown of [true, false]) {
     for (let i = 0; i < s.skillBar.length; i++) {
       const gem = s.skillBar[i];
-      if (!gem || (activeGemDef(gem.gemId).cooldownMs > 0) !== withCooldown || gemAttrReason(d.attributes, gem)) continue;
+      if (!gem || (activeGemDef(gem.gemId).cooldownMs > 0) !== withCooldown || gemUseReason(d.combatLevel, d.attributes, gem)) continue;
       const nums = skillNumbers(d, gem);
       if (!ready(s, d, i, nums)) continue;
       if (ruleAllows(gem.rule, rc, skillIsActive(c, gem.gemId))) return { slot: i, nums, manual: false };

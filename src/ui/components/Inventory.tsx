@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { baseDef } from '../../data/bases';
 import { BAG_SIZE } from '../../data/hideout';
-import { salvage } from '../../engine/crafting';
+import { BENCH_UNBUILT, benchBuilt, salvage } from '../../engine/crafting';
 import { itemName } from '../../engine/items';
 import type { GameState, Item, Rarity } from '../../engine/types';
 import { game } from '../../game';
@@ -233,7 +233,7 @@ export function Inventory({
             </span>
             <span className="spacer" />
             {actions}
-            <button className="btn sm" onClick={() => setSalvageMode(true)} disabled={!items.length}>
+            <button className="btn sm" onClick={() => setSalvageMode(true)} disabled={!items.length || !benchBuilt(s)} title={benchBuilt(s) ? '' : BENCH_UNBUILT}>
               Salvage…
             </button>
           </>

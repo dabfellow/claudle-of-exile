@@ -1671,80 +1671,6 @@ h3 {
   font-size: var(--fs-sm);
 }
 
-/* skill summary tiles (Hideout): two columns, Character spans the top row */
-.skill-grid {
-  display: grid;
-  gap: var(--s-3);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.skill-tile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: var(--r);
-  border: 1px solid var(--line);
-  background: var(--bg-2);
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  text-align: left;
-  transition: transform var(--dur) var(--ease), border-color var(--dur-fast), background var(--dur-fast);
-}
-
-.skill-tile.wide {
-  grid-column: 1 / -1;
-}
-
-.skill-tile:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--skill, var(--line-2)) 55%, var(--line));
-  background: var(--panel-2);
-}
-
-.skill-tile.running {
-  border-color: var(--success);
-}
-
-.skill-tile-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--r);
-  display: grid;
-  place-items: center;
-  flex: none;
-  background: color-mix(in srgb, var(--skill) 12%, var(--bg));
-  border: 1px solid color-mix(in srgb, var(--skill) 40%, transparent);
-}
-
-.skill-tile-body {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  gap: 6px;
-}
-
-.skill-tile-name {
-  font-size: var(--fs-md);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.skill-tile .level-num {
-  font-size: 22px;
-}
-
-.skill-tile-bar.bar {
-  height: 10px;
-  background: var(--bg);
-}
-
-.skill-tile-meta {
-  line-height: 1;
-}
-
 @media (max-width: 560px) {
   .skill-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -1857,133 +1783,6 @@ h3 {
   grid-template-columns: repeat(auto-fill, minmax(max(min(100%, var(--card-min)), calc((100% - (var(--cols) - 1) * var(--s-3)) / var(--cols))), 1fr));
 }
 
-.station {
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: var(--panel);
-  transition: transform var(--dur) var(--ease), border-color var(--dur);
-}
-
-.station:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--station, var(--line-2)) 55%, var(--line));
-}
-
-.station-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.station-name {
-  font-weight: 600;
-  font-size: var(--fs-md);
-}
-
-.station-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--r);
-  display: grid;
-  place-items: center;
-  flex: none;
-  background: color-mix(in srgb, var(--station) 12%, var(--bg-2));
-  border: 1px solid color-mix(in srgb, var(--station) 40%, transparent);
-}
-
-.station-lvl {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--station);
-  line-height: 1;
-}
-
-.station-lvl small {
-  font-size: var(--fs-xs);
-  color: var(--dim);
-  font-weight: 500;
-}
-
-.station .pips {
-  margin-top: 6px;
-}
-
-.station .pip {
-  flex: 1;
-}
-
-/* what the station does now, in plain words */
-.station-effect {
-  font-size: var(--fs-md);
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-/* the next level, one quiet line under it */
-.station-next {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: var(--fs-sm);
-  color: var(--good);
-  line-height: 1.35;
-}
-
-.station-next-tag {
-  flex: none;
-  font-size: var(--fs-2xs);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--dim);
-  padding: 1px 6px;
-  border-radius: var(--r-xs);
-  border: 1px solid var(--line-2);
-}
-
-.station-upgrade {
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.station.maxed .station-effect {
-  color: var(--accent-2);
-}
-
-/* centred page title over the hideout art */
-.hideout-head {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  text-align: center;
-  margin-bottom: var(--s-5);
-}
-
-.hideout-head h1 {
-  font-size: var(--fs-xl);
-  letter-spacing: 0.04em;
-}
-
-.hideout-head p {
-  margin: 0;
-  color: var(--muted);
-  max-width: 56ch;
-}
-
-.hideout-scene[style*='--scene-art'] .hideout-head {
-  min-height: clamp(140px, 22vw, 300px);
-  align-content: space-between;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
-}
-
 /* the character banner sits in the hero's sky, above the title */
 .hideout-head .char-banner {
   width: min(100%, 680px);
@@ -1993,181 +1792,8 @@ h3 {
   backdrop-filter: blur(4px);
 }
 
-/* upgrade cost: a chip that opens a panel on hover, locks on right-click */
-.cost-pop {
-  position: relative;
-}
-
-.cost-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--line-2);
-  background: var(--bg-2);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  cursor: help;
-  white-space: nowrap;
-}
-
-.cost-chip.ready {
-  color: var(--good);
-  border-color: color-mix(in srgb, var(--success) 45%, var(--line));
-}
-
-.cost-chip.short {
-  color: var(--bad);
-  border-color: color-mix(in srgb, var(--bad) 40%, var(--line));
-}
-
-.cost-chip-caret {
-  color: var(--dim);
-  font-size: 10px;
-}
-
-/* the card with an open cost panel draws above its neighbours */
-.station:has(.cost-pop.open) {
-  position: relative;
-  z-index: 5;
-}
-
-.cost-pop.open .cost-chip {
-  background: var(--panel-2);
-}
-
-/* opens upward so the bottom row of stations isn't clipped by the scene */
-.cost-panel {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + 6px);
-  z-index: 30;
-  width: 310px;
-  display: grid;
-  gap: 2px;
-  padding: 8px;
-  border-radius: var(--r);
-  border: 1px solid var(--line-2);
-  background: var(--panel);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-  cursor: default;
-}
-
-.cost-panel-head {
-  display: flex;
-  justify-content: space-between;
-  white-space: nowrap;
-  gap: 8px;
-  padding: 2px 6px 6px;
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.cost-panel-head .dim {
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.cost-row {
-  position: relative;
-  border-radius: var(--r-sm);
-}
-
-.cost-row.active {
-  background: var(--bg-2);
-}
-
-.cost-row-main {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto 14px;
-  align-items: center;
-  gap: 8px;
-  padding: 6px;
-  font-size: var(--fs-sm);
-  cursor: context-menu;
-}
-
-.cost-row-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* "where to get it" flies out beside the panel, level with its row; the padding
    is a hover bridge so the pointer can cross the gap without closing it */
-.cost-sources {
-  position: absolute;
-  top: -9px;
-  left: calc(100% + 8px);
-  z-index: 31;
-  padding-left: 8px;
-}
-
-.cost-panel.flip .cost-sources {
-  left: auto;
-  right: calc(100% + 8px);
-  padding-left: 0;
-  padding-right: 8px;
-}
-
-.cost-sources-box {
-  width: 290px;
-  display: grid;
-  gap: 4px;
-  padding: 8px;
-  border-radius: var(--r);
-  border: 1px solid var(--line-2);
-  background: var(--panel);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-}
-
-.cost-sources-head {
-  padding: 2px 4px 4px;
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--dim);
-}
-
-.cost-source {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 12px;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 8px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--text);
-  font: inherit;
-  font-size: var(--fs-xs);
-  text-align: left;
-  cursor: pointer;
-}
-
-.cost-source:hover {
-  border-color: var(--accent);
-}
-
-.cost-source-go {
-  color: var(--accent);
-}
-
-.skill-tile-next {
-  color: var(--muted);
-  line-height: 1.2;
-}
-
-.skill-tile-next b {
-  color: var(--skill);
-  font-weight: 600;
-}
-
 .pips {
   display: flex;
   gap: 4px;
@@ -5450,6 +5076,9 @@ img.art.mat-art {
 
 .stall {
   display: grid;
+  /* shelves side by side on wide screens: a shop holds only a few wares per shelf */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+  align-items: start;
   gap: var(--s-5);
   padding: var(--s-4) var(--s-5) var(--s-5);
   border-radius: var(--r-lg);
@@ -6117,24 +5746,6 @@ img.art.mat-art {
   mask-image: linear-gradient(180deg, #000 70%, transparent);
 }
 
-/* station cards with art: picture header that fades into the card */
-.station.has-art {
-  overflow: hidden;
-}
-.station img.station-art {
-  width: calc(100% + 2 * var(--s-4));
-  margin: calc(-1 * var(--s-4)) calc(-1 * var(--s-4)) -28px;
-  height: 170px;
-  object-fit: cover;
-  object-position: 50% 45%;
-  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
-  mask-image: linear-gradient(180deg, #000 60%, transparent);
-  transition: transform 0.4s var(--ease);
-}
-.station.has-art:hover img.station-art {
-  transform: scale(1.04);
-}
-
 /* ---------- feedback, reviews & admin ---------- */
 
 .stars {
@@ -6529,14 +6140,6 @@ button.star {
   }
 }
 
-/* ============ Hideout layout previews (A rows · B ledger · C scene) ============ */
-.hx-switch {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
 .hx-a,
 .hx-b,
 .hx-c {
@@ -6544,116 +6147,8 @@ button.star {
   gap: var(--s-5);
 }
 
-.hx-a section {
-  display: grid;
-  gap: var(--s-2);
-}
-
-.hx-section-head .tier-name {
-  font-size: var(--fs-lg);
-}
-
-/* character strip + passive points on one line */
-.hx-top {
-  display: flex;
-  align-items: center;
-  gap: var(--s-4);
-}
-
 .hx-top .char-banner {
   flex: 1;
-}
-
-.char-banner.compact {
-  gap: var(--s-4);
-  padding: 10px var(--s-4);
-}
-
-.char-banner.compact .char-banner-body {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: auto auto minmax(200px, 1fr);
-  align-items: center;
-  gap: 4px 14px;
-}
-
-.char-banner.compact .char-banner-kicker,
-.char-banner.compact .char-banner-name {
-  white-space: nowrap;
-}
-
-.char-banner.compact .char-banner-level b {
-  font-size: 26px;
-}
-
-/* A: compact rows, three to a line on wide screens */
-.hx-grid {
-  display: grid;
-  gap: var(--s-2);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  align-items: start;
-}
-
-.hx-row {
-  width: 100%;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-}
-
-.hx-row.ready {
-  border-color: color-mix(in srgb, var(--success) 45%, var(--line));
-}
-
-.hx-row .action-art {
-  background: radial-gradient(circle, color-mix(in srgb, var(--station, var(--skill)) 22%, transparent), transparent 70%), var(--bg-2);
-}
-
-.hx-lvl {
-  margin-left: 6px;
-  font-size: var(--fs-xs);
-  font-weight: 500;
-  color: var(--dim);
-}
-
-.hx-row .action-meta {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
-}
-
-.hx-row-cost {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.hx-open {
-  justify-self: start;
-}
-
-.hx-skill {
-  cursor: pointer;
-}
-
-.action-toggle.as-row {
-  grid-template-columns: 36px minmax(0, 1fr) auto;
-  cursor: inherit;
-}
-
-.hx-skill-lvl {
-  font-family: var(--font);
-  font-size: var(--fs-lg);
-  font-weight: 700;
-  color: var(--skill);
-  padding-right: 4px;
-}
-
-.hx-thin {
-  height: 4px;
 }
 
 /* have / need material chips */
@@ -6832,201 +6327,6 @@ button.star {
   line-height: 1.2;
 }
 
-/* C: stations as markers on the scene, details on the side */
-.hx-scene {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: var(--s-4);
-  padding: var(--s-4);
-  min-height: 620px;
-}
-
-.hx-scene.hideout-scene[style*="--scene-art"] {
-  background-image: linear-gradient(180deg, color-mix(in srgb, var(--bg) 10%, transparent), color-mix(in srgb, var(--bg) 45%, transparent)), var(--scene-art);
-  background-size: cover;
-  background-position: center;
-}
-
-.hx-scene-field {
-  position: relative;
-  min-height: 580px;
-}
-
-.hx-scene-char {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: grid;
-  justify-items: start;
-  gap: 8px;
-  width: min(100%, 640px);
-  z-index: 2;
-}
-
-.hx-scene-char .char-banner {
-  width: 100%;
-  background: color-mix(in srgb, var(--panel) 80%, transparent);
-  backdrop-filter: blur(4px);
-}
-
-.hx-spot {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: grid;
-  justify-items: center;
-  gap: 6px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
-}
-
-.hx-spot-icon {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 2px solid color-mix(in srgb, var(--station) 60%, transparent);
-  background: radial-gradient(circle, color-mix(in srgb, var(--station) 30%, var(--panel)), color-mix(in srgb, var(--bg) 85%, transparent) 72%);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--bg) 50%, transparent), 0 8px 18px rgba(0, 0, 0, 0.55);
-  transition: transform var(--dur) var(--ease), box-shadow var(--dur);
-}
-
-.hx-spot:hover .hx-spot-icon,
-.hx-spot.active .hx-spot-icon {
-  transform: scale(1.08);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--station) 45%, transparent), 0 0 26px color-mix(in srgb, var(--station) 55%, transparent);
-}
-
-.hx-spot-lvl {
-  position: absolute;
-  right: -6px;
-  bottom: -4px;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 5px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  border: 1px solid var(--line-2);
-  background: var(--panel);
-  font-size: var(--fs-xs);
-  font-weight: 700;
-}
-
-.hx-spot-name {
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--bg) 78%, transparent);
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  text-shadow: 0 1px 4px #000;
-  white-space: nowrap;
-}
-
-.hx-spot.active .hx-spot-name {
-  color: var(--accent-2);
-}
-
-.hx-spot-up {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  color: var(--good);
-  font-weight: 800;
-  text-shadow: 0 1px 4px #000;
-}
-
-.hx-panel {
-  align-self: stretch;
-  display: grid;
-  align-content: start;
-  gap: 8px;
-  padding: var(--s-4);
-  border-radius: var(--r-lg);
-  border: 1px solid color-mix(in srgb, var(--station) 35%, var(--line));
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
-  backdrop-filter: blur(6px);
-}
-
-.hx-panel p {
-  margin: 0;
-}
-
-.hx-panel-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.hx-panel-name {
-  font-family: var(--font);
-  font-size: var(--fs-lg);
-  font-weight: 700;
-}
-
-.hx-panel .io-label {
-  margin-top: 6px;
-}
-
-.hx-panel-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-/* C: skills as chips under the scene */
-.hx-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.hx-chip {
-  position: relative;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px 10px;
-  border-radius: var(--r);
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.hx-chip:hover {
-  border-color: var(--line-2);
-}
-
-.hx-chip.running {
-  border-color: var(--success);
-}
-
-.hx-chip-name {
-  font-size: var(--fs-sm);
-  font-weight: 600;
-}
-
-.hx-chip b {
-  font-family: var(--font);
-  color: var(--skill);
-}
-
-.hx-chip-bar {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 3px;
-  background: var(--skill);
-}
-
 @container (max-width: 1100px) {
   .hx-ledger-row {
     grid-template-columns: minmax(150px, 1fr) 100px minmax(0, 1.4fr) 96px;
@@ -7035,7 +6335,151 @@ button.star {
   .hx-ledger-row > :nth-child(5) {
     display: none;
   }
-  .hx-scene {
-    grid-template-columns: minmax(0, 1fr);
+}
+
+/* ============ Hideout (home) ============ */
+.hideout-hero {
+  display: grid;
+  justify-items: center;
+  padding: var(--s-5) var(--s-5) var(--s-4);
+}
+
+.hideout-hero.hideout-scene[style*="--scene-art"] {
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--bg) 25%, transparent), color-mix(in srgb, var(--bg) 70%, transparent)), var(--scene-art);
+  background-size: cover;
+  background-position: center 35%;
+  min-height: 190px;
+  align-content: end;
+}
+
+.hideout-hero .char-banner {
+  position: relative;
+  width: min(100%, 760px);
+  background: radial-gradient(420px 160px at 0% 50%, color-mix(in srgb, var(--class) 18%, transparent), transparent 70%), color-mix(in srgb, var(--panel) 84%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+/* character stats · worn gear · where to go, side by side */
+.home-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: stretch;
+}
+
+.home-card {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.home-stats {
+  display: grid;
+  gap: 2px;
+}
+
+.home-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 2px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  font-size: var(--fs-sm);
+}
+
+.home-stat:last-child {
+  border-bottom: 0;
+}
+
+.home-res {
+  display: inline-flex;
+  gap: 4px;
+  align-items: baseline;
+}
+
+/* worn gear: weapons and armour on top, jewellery under */
+.home-gear {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.home-gear-slot {
+  display: block;
+  aspect-ratio: 1;
+}
+
+.home-gear-slot .cell {
+  width: 100%;
+  height: 100%;
+}
+
+/* quick buttons to every page you use from home */
+.home-nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.home-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--panel-2), var(--bg-2));
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-fast), transform var(--dur-fast);
+}
+
+.home-nav-btn:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.home-nav-btn .nav-badge {
+  margin-left: auto;
+}
+
+/* stations: a locked one (the Map Device) is a single greyed line */
+.hx-ledger-row.locked {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.hx-ledger-locked {
+  grid-column: 2 / -1;
+}
+
+button.hx-mat {
+  padding: 1px 4px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: none;
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+button.hx-mat:hover {
+  border-color: var(--line-2);
+  background: var(--bg-2);
+}
+
+@container (max-width: 1100px) {
+  .home-top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .home-nav-card {
+    grid-column: 1 / -1;
+  }
+  .home-nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

@@ -62,7 +62,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
       { page: 'combat', label: 'Combat', icon: 'combat', skill: 'combat' },
       { page: 'stash', label: 'Stash', icon: 'stash' },
       { page: 'campaign', label: 'Campaign', icon: 'campaign' },
-      { page: 'vendor', label: "Trader's Stall", icon: 'vendor' },
+      { page: 'vendor', label: 'Town', icon: 'vendor' },
       { page: 'equipment', label: 'Equipment', icon: 'equipment' },
       { page: 'bench', label: 'Crafting Bench', icon: 'bench' },
       { page: 'skills', label: 'Skills', icon: 'gems' },
@@ -624,22 +624,9 @@ export function useFlaskHotkeys() {
   }, []);
 }
 
+/** The Hideout is home: every time a character loads, you start there. */
 export function usePage(): [Page, (p: Page) => void] {
-  const [page, setPage] = useState<Page>(() => {
-    try {
-      return (localStorage.getItem('coe-page') as Page) || 'hideout';
-    } catch {
-      return 'hideout';
-    }
-  });
-  const go = (p: Page) => {
-    setPage(p);
-    try {
-      localStorage.setItem('coe-page', p);
-    } catch {
-      /* ignore */
-    }
-  };
-  return [page, go];
+  const [page, setPage] = useState<Page>('hideout');
+  return [page, setPage];
 }
 

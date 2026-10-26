@@ -188,3 +188,17 @@ Skill gems now need their own attribute (8 at gem level 1 → 116 at level 13) a
 - Monster strength is a poor pacing lever on its own: fast classes kill in a hit or two, so their pace is set by spawn rate and kills per boss, while tougher monsters starve attackers of mana (Warrior/Ranger 20–38% of fight time unable to afford a skill).
 - Runs on one seed swing a lot (Ranger 10h15 → 4h08 between the two settings) because gem and item drops differ.
 - Lacerate and Backstab still sit on most bars, but off-class copies are capped at gem level 5–11. Mage and Templar pick low-level Lacerate/Backstab/Infernal Blow over their own Intelligence spells: only the instant Frost Needle makes their bars, so spells look weak against attacks.
+
+## Town, rare gems, gem level requirements (2026-10-26, 14h, seed 1, smarter bot)
+
+Gems drop ~20× less from monsters and 4× less from bosses, every gem has a character level (Lacerate 18, Backstab 16, …), and the bot buys gems it lacks from the Town's Gem shop. It can't build the Crafting Bench (it never gathers), so it sells spare gear instead of salvaging.
+
+| | Warrior | Ranger | Mage | Duelist | Templar | Shadow | Exile |
+|---|---|---|---|---|---|---|---|
+| Act 1 done | 5h18 | 5h31 | 3h14 | 7h15 | 3h24 | 4h48 | 9h23 |
+| Act 2 done | 6h56 | 7h31 | 5h09 | 10h01 | 5h24 | 6h58 | 12h46 |
+| gold at 14h | 774k | 755k | 894k | 403k | 1.07M | 770k | 212k |
+
+- Pace stays in the range you called balanced.
+- Selling everything floods the bot with gold (was 200–350k by 12h); real players who salvage will have less, but shop prices may need raising for sellers.
+- Lacerate still ends on most bars, bought from the Gem shop once characters reach level 18.

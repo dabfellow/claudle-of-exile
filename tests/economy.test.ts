@@ -16,6 +16,7 @@ import { actionBlocker } from '../src/engine/skills';
 import { newGame, SAVE_VERSION } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameEvent } from '../src/engine/types';
+import { veteran } from './helpers';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
 const fresh = () => newGame(1, { name: 'Eco', classId: 'warrior' });
@@ -96,7 +97,7 @@ describe('achievements', () => {
   });
 
   it('salvaging counts toward Scrapper', () => {
-    const s = fresh();
+    const s = veteran(fresh());
     const items = Array.from({ length: 3 }, (_, i) => createItem(s, 'rusted_sword', 5, 'normal', seeded(i)));
     s.inventory.push(...items);
     salvage(s, ctx(), items.map((i) => i.uid));

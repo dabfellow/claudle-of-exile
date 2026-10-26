@@ -12,10 +12,11 @@ import { seeded } from '../src/engine/rng';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameEvent, GameState } from '../src/engine/types';
+import { veteran } from './helpers';
 
 /** A character in a fight against one durable dummy that never attacks (unless told to). */
 function arena(classId: ClassId, gem = 'heavy_strike', passives: string[] = []) {
-  const s = newGame(1, { name: 't', classId });
+  const s = veteran(newGame(1, { name: 't', classId }));
   s.passives.push(...passives);
   s.skillBar = s.skillBar.map(() => null);
   s.skillBar[0] = createSkillGem(s, gem);
@@ -180,6 +181,7 @@ describe('forbidden keystones', () => {
     const { s, ctx } = arena('warrior', 'heavy_strike');
     s.skillBar[1] = createSkillGem(s, 'war_cry');
     s.skillBar[1].rule = { when: 'always' };
+    s.mana = 40; // a small pool so it runs dry inside the minute
     run(s, ctx, 60_000);
     const used = (id: string) => ctx.events.filter((e) => e.t === 'skill' && e.gemId === id).length;
     expect(used('war_cry')).toBeGreaterThan(0);

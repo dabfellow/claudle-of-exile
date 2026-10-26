@@ -1,12 +1,13 @@
 import { BOSS_CRAFT_MAT, ESSENCES, FOSSILS } from '../data/craftMats';
 import { bossTable, dropTable, type RarityWeights } from '../data/drops';
-import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
+import { ACTIVE_GEMS, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
 import { MAP_ILVL } from '../data/hideout';
 import { rollFlask, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import type { ZoneDef } from '../data/zones';
 import { addBank } from './bank';
 import type { Ctx } from './context';
+import { benchBuilt } from './crafting';
 import { stationLevel } from './hideout';
 import { dropItem } from './storage';
 import { createItem, createUnique, droppableBases, salvageValue } from './items';
@@ -15,13 +16,20 @@ import type { Derived } from './stats';
 import type { GameState, Item, MonsterInstance, Rarity } from './types';
 
 /** 40% skill gem, 60% support gem. */
-export function dropGem(s: GameState, ctx: Ctx): void {
+/**
+ * Gems are rare drops (the Town's Gem shop is the main source): these scale the drop tables' gem chances.
+ * A gem only drops if its level requirement is within the monster's level.
+ */
+export const GEM_DROP_SCALE = 0.05;
+export const BOSS_GEM_DROP_SCALE = 0.25;
+
+export function dropGem(s: GameState, ctx: Ctx, maxLevel: number): void {
   if (chance(ctx.rng, 0.4)) {
-    const def = pick(ctx.rng, ACTIVE_GEMS);
+    const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => gemReqLevel(g.id) <= maxLevel));
     s.gems.push(createSkillGem(s, def.id));
     ctx.emit({ t: 'loot', gemId: def.id });
   } else {
-    const def = pick(ctx.rng, SUPPORT_GEMS);
+    const def = pick(ctx.rng, SUPPORT_GEMS.filter((g) => gemReqLevel(g.id) <= maxLevel));
     s.supportGems.push(createSupportGem(s, def.id));
     ctx.emit({ t: 'loot', supportId: def.id });
   }
@@ -42,7 +50,7 @@ function rollCurrency(rng: Ctx['rng'], table: Record<string, number>): string {
 function placeItem(s: GameState, ctx: Ctx, item: Item): void {
   if (item.rarity === 'rare') s.lifetime.raresFound += 1;
   if (item.rarity === 'unique') s.lifetime.uniquesFound += 1;
-  if (item.rarity !== 'unique' && s.settings.autoSalvage[item.rarity]) {
+  if (item.rarity !== 'unique' && s.settings.autoSalvage[item.rarity] && benchBuilt(s)) {
     addBank(s, 'arcane_dust', salvageValue(item));
     s.lifetime.salvaged += 1;
     ctx.emit({ t: 'loot', item, salvaged: true });
@@ -76,7 +84,7 @@ export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: Zon
       placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, d.itemRarity, boss.rarity), rng));
     }
     if (chance(rng, boss.flaskChance)) dropFlask(s, ctx, ilvl);
-    if (chance(rng, boss.gemChance)) dropGem(s, ctx);
+    if (chance(rng, boss.gemChance * BOSS_GEM_DROP_SCALE)) dropGem(s, ctx, mon.level);
     if (zone.uniques.length && chance(rng, boss.uniqueChance * (1 + d.itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, zone.uniques), ilvl));
     if (chance(rng, BOSS_CRAFT_MAT.chance)) {
       // Greater Essences only from the later Act 1 areas
@@ -92,7 +100,7 @@ export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: Zon
     placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, d.itemRarity, table.rarity), rng));
   }
   if (chance(rng, table.flaskChance * mon.scale)) dropFlask(s, ctx, ilvl);
-  if (chance(rng, table.gemChance * mon.scale)) dropGem(s, ctx);
+  if (chance(rng, table.gemChance * mon.scale * GEM_DROP_SCALE)) dropGem(s, ctx, mon.level);
   if (zone.uniques.length && chance(rng, table.uniqueChance * (1 + d.itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, zone.uniques), ilvl));
 }
 

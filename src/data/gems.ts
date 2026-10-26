@@ -363,6 +363,33 @@ export interface SupportGemDef {
 
 const S = (d: SupportGemDef) => d;
 
+/**
+ * Character level each gem needs, PoE-style, so stronger skills and supports come later.
+ * A signature support needs its skill's level + 6. Anything missing here is level 1.
+ */
+const GEM_LEVELS: Record<string, number> = {
+  // skills
+  war_cry: 4, ice_shot: 4, frost_needle: 4,
+  pummel: 6, parry: 6, feint: 6, arcane_siphon: 6,
+  ground_slam: 8, rain_of_arrows: 8, shock_nova: 8,
+  barrage: 10, fireball: 10, infernal_blow: 10,
+  berserk: 12, consecrate: 12, meditate: 12,
+  judgement_hammer: 16, backstab: 16, glacial_lance: 16,
+  lacerate: 18,
+  // supports
+  faster_attacks: 4, faster_casts: 4, efficiency: 4,
+  brutality: 8, elemental_focus: 8, life_leech: 8, mana_leech: 8, pierce: 8,
+  critical_strikes: 12, chain: 12, lingering: 12,
+  multistrike: 18, spell_echo: 18,
+};
+
+/** Character level a skill or support gem needs to be used (and to drop, be cut or be sold to you). */
+export function gemReqLevel(id: string): number {
+  if (GEM_LEVELS[id]) return GEM_LEVELS[id];
+  const sig = SUPPORT_GEMS.find((g) => g.id === id)?.signatureFor;
+  return sig ? gemReqLevel(sig) + 6 : 1;
+}
+
 export const SUPPORT_GEMS: SupportGemDef[] = [
   // signature
   S({ id: 'shattering_blow', name: 'Shattering Blow', attr: 'str', fits: [], signatureFor: 'heavy_strike', mods: { special: 'shatter' }, desc: 'Stunned enemies take 30% more damage; hits break armour (+15% damage taken for 4s).' }),

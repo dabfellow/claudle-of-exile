@@ -9,6 +9,7 @@ import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameState } from '../src/engine/types';
 import { xpForLevel } from '../src/engine/xp';
+import { veteran } from './helpers';
 
 function cut(s: GameState, actionId: string, times: number, seed = 1) {
   const ctx = makeCtx(seeded(seed));
@@ -18,7 +19,8 @@ function cut(s: GameState, actionId: string, times: number, seed = 1) {
 }
 
 function gemcutter(level = 1): GameState {
-  const s = newGame(1, { name: 'T', classId: 'warrior' });
+  // level 30: cut gems are limited to ones your character level allows
+  const s = veteran(newGame(1, { name: 'T', classId: 'warrior' }));
   s.skills.gemcutting = xpForLevel(level);
   s.unlockedZones = ['mudflats', 'brinecaves', 'ashwood', 'blackreed', 'crypt', 'shipgrave', 'stormcliffs'];
   Object.assign(s.bank, { rough_gem: 100, arcane_dust: 1000, frostleaf: 100, emberroot: 100, voidbloom: 100 });

@@ -10,6 +10,7 @@ import { seeded } from '../src/engine/rng';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameEvent, GameState, MonsterInstance } from '../src/engine/types';
+import { veteran } from './helpers';
 
 const NEW = [
   'pummel', 'berserk', 'parry', 'judgement_hammer', 'infernal_blow',
@@ -19,7 +20,7 @@ const NEW = [
 
 /** One skill on the bar (optionally with its signature) against durable dummies that never attack unless told to. */
 function arena(gem: string, opts: { cls?: ClassId; signature?: boolean; pack?: number } = {}) {
-  const s = newGame(1, { name: 't', classId: opts.cls ?? 'warrior' });
+  const s = veteran(newGame(1, { name: 't', classId: opts.cls ?? 'warrior' }));
   s.skillBar = s.skillBar.map(() => null);
   const g = createSkillGem(s, gem);
   g.rule = { when: 'always' };

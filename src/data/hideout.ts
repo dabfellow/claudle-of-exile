@@ -30,53 +30,53 @@ export const STATIONS: StationDef[] = [
   },
   {
     id: 'stash', name: 'Stash', page: 'stash', color: '#c9a227',
-    desc: 'Your hoard. Upgrades make new stash pages cheaper.',
+    desc: 'Your hoard. Each upgrade carves out a free stash page.',
     levels: [
-      { cost: {}, effect: 'Full price stash pages' },
-      { cost: { gold: 200, ash_log: 40 }, effect: 'Stash pages 10% cheaper' },
-      { cost: { gold: 800, oak_log: 60, iron_ore: 30 }, effect: 'Stash pages 20% cheaper' },
-      { cost: { gold: 3000, yew_log: 80, mithril_ore: 40 }, effect: 'Stash pages 35% cheaper' },
+      { cost: {}, effect: '3 stash pages' },
+      { cost: { gold: 2000, ash_log: 300, copper_ore: 150 }, effect: '+1 free stash page' },
+      { cost: { gold: 10000, oak_log: 400, iron_ore: 250 }, effect: '+1 free stash page' },
+      { cost: { gold: 40000, yew_log: 400, mithril_ore: 250 }, effect: '+1 free stash page' },
     ],
   },
   {
     id: 'forge', name: 'Forge', page: 'smithing', color: '#d07a3a',
-    desc: 'Where bases are hammered out. Upgrades raise the item level of smithed gear.',
+    desc: 'Where bases are hammered out. Each upgrade opens the next tier of bases to smith.',
     levels: [
-      { cost: {}, effect: 'Smith bases at your Smithing level' },
-      { cost: { gold: 250, copper_ore: 60 }, effect: '+3 item level, +5% Smithing speed' },
-      { cost: { gold: 1200, iron_ore: 80, oak_log: 40 }, effect: '+6 item level, +10% Smithing speed' },
-      { cost: { gold: 4000, mithril_ore: 80, yew_log: 40 }, effect: '+10 item level, +20% Smithing speed' },
+      { cost: {}, effect: 'Smith copper-tier bases (level 1–9)' },
+      { cost: { gold: 3000, copper_ore: 500, ash_log: 250 }, effect: 'Smith iron-tier bases (level 10–21)' },
+      { cost: { gold: 15000, iron_ore: 700, oak_log: 350 }, effect: 'Smith mithril-tier bases (level 22+)' },
+      { cost: { gold: 60000, mithril_ore: 600, yew_log: 300, rough_gem: 25 }, effect: 'Masterwork: smithed bases +5 item level' },
     ],
   },
   {
     id: 'alchemy_table', name: 'Alchemy Table', page: 'alchemy', color: '#9b6dde',
-    desc: 'Bubbling retorts. Upgrades sometimes yield extra output.',
+    desc: 'Bubbling retorts. Each upgrade opens the next tier of recipes.',
     levels: [
-      { cost: {}, effect: 'Brew flasks and transmute dust' },
-      { cost: { gold: 250, sunpetal: 50 }, effect: '10% chance for double output' },
-      { cost: { gold: 1200, frostleaf: 60, rough_gem: 4 }, effect: '20% chance for double output' },
-      { cost: { gold: 4000, emberroot: 80, voidbloom: 20 }, effect: '30% chance for double output, +10% Alchemy speed' },
+      { cost: {}, effect: 'Brew recipes below Alchemy level 10' },
+      { cost: { gold: 3000, sunpetal: 400, ash_log: 150 }, effect: 'Brew recipes up to Alchemy level 19' },
+      { cost: { gold: 15000, frostleaf: 500, rough_gem: 10 }, effect: 'Brew every recipe' },
+      { cost: { gold: 60000, emberroot: 500, voidbloom: 100 }, effect: '20% chance of double output' },
     ],
   },
   {
     id: 'bench', name: 'Crafting Bench', page: 'bench', color: '#5fa8d3',
-    desc: 'Apply orbs, salvage, and add a crafted modifier of your choosing.',
+    desc: 'Orbs work on gear anywhere. Build the bench to salvage gear and add a crafted modifier of your choosing.',
     levels: [
-      { cost: {}, effect: 'Apply currency, salvage items' },
-      { cost: { gold: 300, arcane_dust: 40 }, effect: 'Bench crafts: Life & Resistances' },
-      { cost: { gold: 1500, arcane_dust: 120, rough_gem: 6 }, effect: 'More bench recipes (each also needs its achievement)' },
-      { cost: { gold: 5000, arcane_dust: 300, rough_gem: 15 }, effect: 'Top-tier bench recipes (each also needs its achievement)' },
-      { cost: { gold: 15000, arcane_dust: 800, rough_gem: 40 }, effect: 'Auto-crafting: spend orbs until a modifier rolls, even offline' },
+      { cost: {}, effect: 'Not built: use orbs on your gear' },
+      { cost: { gold: 1500, ash_log: 200, copper_ore: 200 }, effect: 'Built: salvage gear, Life & Resistance crafts' },
+      { cost: { gold: 8000, arcane_dust: 400, rough_gem: 10 }, effect: 'More bench recipes (each also needs its achievement)' },
+      { cost: { gold: 30000, arcane_dust: 1200, rough_gem: 25 }, effect: 'Top-tier bench recipes (each also needs its achievement)' },
+      { cost: { gold: 100000, arcane_dust: 3000, rough_gem: 60 }, effect: 'Auto-crafting: spend orbs until a modifier rolls, even offline' },
     ],
   },
   {
-    id: 'vendor', name: "Trader's Stall", page: 'vendor', color: '#6fae4a',
-    desc: 'A wandering merchant set up shop. Upgrades bring better wares.',
+    id: 'vendor', name: 'Town Market', page: 'vendor', color: '#6fae4a',
+    desc: 'Your standing with the town merchants. Upgrades bring more stock to every shop, restocked faster.',
     levels: [
-      { cost: {}, effect: '6 offers, refreshes every 10 min' },
-      { cost: { gold: 300 }, effect: '8 offers, magic items in stock' },
-      { cost: { gold: 1500, rough_gem: 5 }, effect: '10 offers, rare items in stock' },
-      { cost: { gold: 6000, rough_gem: 15 }, effect: '12 offers, rarer currency in stock' },
+      { cost: {}, effect: '4 wares per shop, restock every 10 min' },
+      { cost: { gold: 5000, oak_log: 100 }, effect: '5 per shop, every 8 min, rare gear' },
+      { cost: { gold: 20000, iron_ore: 200, rough_gem: 10 }, effect: '6 per shop, every 6 min, rarer currency' },
+      { cost: { gold: 80000, mithril_ore: 150, rough_gem: 30 }, effect: '8 per shop, every 4 min, better-rolled gear' },
     ],
   },
 ];
@@ -94,16 +94,16 @@ export const STASH_START_PAGES = 3;
 /** Gold for the first bought page; each later one costs PAGE_GROWTH times more. */
 export const STASH_PAGE_PRICE = 1000;
 export const STASH_PAGE_GROWTH = 2.5;
-/** % off stash pages per Stash station level */
-export const STASH_DISCOUNT = [0, 10, 20, 35];
-export const FORGE_ILVL = [0, 3, 6, 10];
-export const FORGE_SPEED = [0, 5, 10, 20];
-export const ALCH_DOUBLE = [0, 0.1, 0.2, 0.3];
-export const ALCH_SPEED = [0, 0, 0, 10];
+/** item levels the Forge adds to smithed bases, per level (Masterwork at the top) */
+export const FORGE_ILVL = [0, 0, 0, 5];
+export const ALCH_DOUBLE = [0, 0, 0, 0.2];
+/** the Crafting Bench level that counts as built (salvaging and bench crafts) */
+export const BENCH_BUILT_LEVEL = 2;
 export const MAP_RARITY = [0, 10, 20, 35];
 export const MAP_ILVL = [0, 0, 0, 1];
-export const VENDOR_SLOTS = [6, 8, 10, 12];
-export const VENDOR_REFRESH_MS = 10 * 60 * 1000;
+/** wares per Town shop, and minutes between free restocks, per Town Market level */
+export const SHOP_SLOTS = [4, 5, 6, 8];
+export const SHOP_REFRESH_MIN = [10, 8, 6, 4];
 /** Auto-crafting: time per orb or Essence spent. */
 export const AUTO_CRAFT_BENCH_LEVEL = 5;
 export const CRAFT_STEP_MS = 1500;

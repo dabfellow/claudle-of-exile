@@ -197,11 +197,6 @@ class GameStore {
   async create(name: string, classId: ClassId, startNode?: string) {
     const s = newGame(Date.now(), { name: name.trim(), classId, startNode });
     await this.saves?.save(s);
-    try {
-      localStorage.removeItem('coe-page'); // new characters start in the hideout
-    } catch {
-      /* ignore */
-    }
     this.showIntro = true;
     this.begin(s);
   }

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { activeGemDef, supportGemDef } from '../../data/gems';
-import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
+import { currencyDef, MATERIALS } from '../../data/materials';
 import { flaskName, flaskValue, sellFlasks } from '../../engine/flasks';
 import { buyOffer, offerName, rerollCost, rerollVendor, sellItems, sellMaterial, stationLevel } from '../../engine/hideout';
 import { sellValue } from '../../engine/items';
-import type { GameState, Rarity, VendorOffer } from '../../engine/types';
+import type { GameState, Rarity, ShopId, VendorOffer } from '../../engine/types';
+import { baseDef } from '../../data/bases';
 import { game, useGame } from '../../game';
 import { Art, EmptyState, fmt, fmtTime, GameIcon, MatIcon, PixelArt, Tabs, Tooltip } from '../components/common';
 import { FlaskIcon, FlaskTip } from '../components/FlaskView';
@@ -14,7 +15,46 @@ import { ItemTiles } from '../components/Inventory';
 import { bagFull, stashedItems } from '../../engine/storage';
 import { ItemIcon, ItemTip } from '../components/ItemView';
 
-const TRADER_NAME = 'Varro the Peddler';
+/** The three Town shops: who runs each one and how its wares are shelved. */
+const SHOPS: { id: ShopId; name: string; keeper: string; blurb: string; portrait?: string; icon: string; shelves: { label: string; match: (o: VendorOffer) => boolean }[] }[] = [
+  {
+    id: 'magic',
+    name: 'Magic shop',
+    keeper: 'Ilsa the Curio-seller',
+    blurb: 'Wands, staves, sceptres and jewellery, flasks and orbs.',
+    icon: 'gems',
+    shelves: [
+      { label: 'Wands, staves & sceptres', match: (o) => !!o.item && baseDef(o.item.baseId).slot === 'weapon' },
+      { label: 'Rings, amulets & belts', match: (o) => !!o.item && baseDef(o.item.baseId).slot !== 'weapon' },
+      { label: 'Flasks', match: (o) => o.kind === 'flask' },
+      { label: 'Orbs', match: (o) => o.kind === 'currency' },
+    ],
+  },
+  {
+    id: 'armour',
+    name: 'Armour shop',
+    keeper: 'Varro the Armourer',
+    blurb: 'Blades, bows, maces and shields; helmets, body armour, gloves and boots.',
+    portrait: 'portraits/trader.png',
+    icon: 'equipment',
+    shelves: [
+      { label: 'Weapons', match: (o) => !!o.item && baseDef(o.item.baseId).slot === 'weapon' },
+      { label: 'Shields & off hands', match: (o) => !!o.item && baseDef(o.item.baseId).slot === 'offhand' },
+      { label: 'Armour', match: (o) => !!o.item && !['weapon', 'offhand'].includes(baseDef(o.item.baseId).slot) },
+    ],
+  },
+  {
+    id: 'gems',
+    name: 'Gem shop',
+    keeper: 'The Gemwright',
+    blurb: 'Skill and support gems, as many as your level allows. Gems rarely drop, so this is where most come from.',
+    icon: 'gemcutting',
+    shelves: [
+      { label: 'Skill gems', match: (o) => o.kind === 'gem' },
+      { label: 'Support gems', match: (o) => o.kind === 'support' },
+    ],
+  },
+];
 
 const KIND_LABEL: Record<VendorOffer['kind'], string> = {
   item: 'Equipment',
@@ -69,13 +109,6 @@ function nameClass(o: VendorOffer): string {
   return '';
 }
 
-/** The stall's shelves, top to bottom; each offer kind sits on one. */
-const SHELVES: { label: string; kinds: VendorOffer['kind'][] }[] = [
-  { label: 'Arms & armour', kinds: ['item'] },
-  { label: 'Gems', kinds: ['gem', 'support'] },
-  { label: 'Flasks & orbs', kinds: ['flask', 'currency'] },
-];
-
 function OfferCard({ s, o, gold }: { s: GameState; o: VendorOffer; gold: number }) {
   const afford = gold >= o.price;
   const full = o.kind === 'item' && bagFull(s);
@@ -105,9 +138,10 @@ function OfferCard({ s, o, gold }: { s: GameState; o: VendorOffer; gold: number 
   );
 }
 
-function BuyTab({ s }: { s: GameState }) {
+function ShopTab({ s, shop }: { s: GameState; shop: (typeof SHOPS)[number] }) {
   const gold = s.bank.gold ?? 0;
   const cost = rerollCost(s);
+  const wares = s.vendor.stock.filter((o) => o.shop === shop.id);
   return (
     <>
       <div className="shop-bar">
@@ -116,11 +150,11 @@ function BuyTab({ s }: { s: GameState }) {
         </span>
         <span className="spacer" />
         <button className="btn sm" disabled={gold < cost} onClick={() => game.act((st, ctx) => rerollVendor(st, ctx))}>
-          <GameIcon name="clock" size={12} /> Restock now · {fmt(cost)} gold
+          <GameIcon name="clock" size={12} /> Restock every shop · {fmt(cost)} gold
         </button>
         {(s.vendor.rerolls ?? 0) > 0 && <span className="dim small">Price doubles each restock until the next free one</span>}
       </div>
-      {s.vendor.stock.length === 0 ? (
+      {wares.length === 0 ? (
         <div className="card">
           <EmptyState icon={<PixelArt name="stall" alt="" scale={2} />} title="Sold out">
             “Come back when the tide brings more.”
@@ -128,8 +162,8 @@ function BuyTab({ s }: { s: GameState }) {
         </div>
       ) : (
         <div className="stall">
-          {SHELVES.map((shelf) => {
-            const goods = s.vendor.stock.filter((o) => shelf.kinds.includes(o.kind));
+          {shop.shelves.map((shelf) => {
+            const goods = wares.filter(shelf.match);
             if (!goods.length) return null;
             return (
               <section key={shelf.label} className="shelf">
@@ -286,20 +320,27 @@ function SellTab({ s }: { s: GameState }) {
   );
 }
 
+/** The Town: three shops and a place to sell, with one shared restock timer (the Town Market station speeds it up). */
 export function TraderPage() {
   const s = useGame();
-  const [tab, setTab] = useState<'buy' | 'sell'>('buy');
+  const [tab, setTab] = useState<ShopId | 'sell'>('magic');
   const lvl = stationLevel(s, 'vendor');
+  const shop = SHOPS.find((x) => x.id === tab);
   return (
     <div className="page">
       <div className="card npc-panel shopfront">
         <div className="awning" aria-hidden />
         <div className="npc-portrait">
-          <Art src="portraits/trader.png" alt={TRADER_NAME} className="portrait-img" fallback={<GameIcon name="vendor" size={56} color="var(--accent-2)" />} />
+          {shop?.portrait ? (
+            <Art src={shop.portrait} alt={shop.keeper} className="portrait-img" fallback={<GameIcon name={shop.icon} size={56} color="var(--accent-2)" />} />
+          ) : (
+            <GameIcon name={shop?.icon ?? 'vendor'} size={56} color="var(--accent-2)" />
+          )}
         </div>
         <div className="npc-text">
-          <span className="page-kicker">Trader's Stall · level {lvl}</span>
-          <h1>{TRADER_NAME}</h1>
+          <span className="page-kicker">Town · Market level {lvl}</span>
+          <h1>{shop ? shop.name : 'Sell your wares'}</h1>
+          <div className="muted small">{shop ? `${shop.keeper}. ${shop.blurb}` : 'Any shop will buy gear, flasks and materials.'}</div>
         </div>
         <div className="npc-aside">
           <span className="label">Your gold</span>
@@ -312,14 +353,12 @@ export function TraderPage() {
         value={tab}
         onChange={setTab}
         tabs={[
-          { id: 'buy', label: 'Buy', count: s.vendor.stock.length },
-          { id: 'sell', label: 'Sell', count: s.inventory.length },
+          ...SHOPS.map((x) => ({ id: x.id, label: x.name, count: s.vendor.stock.filter((o) => o.shop === x.id).length })),
+          { id: 'sell' as const, label: 'Sell', count: s.inventory.length },
         ]}
       />
-      {tab === 'buy' ? <BuyTab s={s} /> : <SellTab s={s} />}
-      <div className="dim small">
-        Prices in {materialDef('gold').name.toLowerCase()}. Upgrade the stall in your hideout for more and better stock.
-      </div>
+      {shop ? <ShopTab s={s} shop={shop} /> : <SellTab s={s} />}
+      <div className="dim small">Prices in gold. Upgrade the Town Market in your Hideout for more stock in every shop and faster restocks.</div>
     </div>
   );
 }

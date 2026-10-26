@@ -8,7 +8,7 @@ import { achievementProgress } from '../../engine/achievements';
 import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { currencyDef } from '../../data/materials';
 import { equipFlask, unequipFlask } from '../../engine/combat';
-import { applyEssence, applyOrb, benchCraft, benchCraftReason, essenceReason, findItem, FOSSIL_ORBS, orbReason, salvage } from '../../engine/crafting';
+import { applyEssence, applyOrb, BENCH_UNBUILT, benchBuilt, benchCraft, benchCraftReason, essenceReason, findItem, FOSSIL_ORBS, orbReason, salvage } from '../../engine/crafting';
 import { applyFlaskOrb, enchantFlask, findFlask, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
 import { stationLevel } from '../../engine/hideout';
 import { affixRangeText, itemName, salvageValue } from '../../engine/items';
@@ -159,6 +159,8 @@ export function BenchPage() {
               {!Object.values(s.equipment).some((i) => i?.uid === item.uid) && (
                 <button
                   className="btn sm danger"
+                  disabled={!benchBuilt(s)}
+                  title={benchBuilt(s) ? '' : BENCH_UNBUILT}
                   onClick={() => {
                     game.act((st, ctx) => salvage(st, ctx, [item.uid]));
                     setUid(null);

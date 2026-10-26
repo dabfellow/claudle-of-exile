@@ -10,6 +10,7 @@ import { deserialize, serialize } from '../src/engine/save';
 import { newGame } from '../src/engine/state';
 import { buyStashPage, dropItem, pickUp, stashItems, stashPagePrice, takeFromStash } from '../src/engine/storage';
 import type { GameState, Item } from '../src/engine/types';
+import { veteran } from './helpers';
 
 const ctx = (offline = false) => ({ ...makeCtx(seeded(1)), offline });
 const sword = (s: GameState): Item => createItem(s, 'rusted_sword', 1, 'normal', seeded(s.nextUid));
@@ -63,7 +64,7 @@ describe('gear storage', () => {
   });
 
   it('sells and salvages from the stash too', () => {
-    const s = newGame(1);
+    const s = veteran(newGame(1));
     const a = sword(s);
     const b = sword(s);
     s.stash[2].push(a, b);

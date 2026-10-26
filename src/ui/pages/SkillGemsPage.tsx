@@ -13,7 +13,7 @@ import {
 } from '../../data/gems';
 import {
   expandSockets,
-  gemAttrReason,
+  gemUseReason,
   gemProgress,
   placeOnBar,
   removeFromBar,
@@ -338,7 +338,7 @@ export function SkillGemsPage() {
     setPickedGem(null);
     setPickedSupport(null);
   };
-  const attrs = deriveStats(s, []).attributes;
+  const d = deriveStats(s, []);
   const has = (name: string, search: string) => name.toLowerCase().includes(search.trim().toLowerCase());
   const byName = (a: string, b: string) => activeGemDef(a).name.localeCompare(activeGemDef(b).name);
   const gems = s.gems
@@ -415,7 +415,7 @@ export function SkillGemsPage() {
             {gems.map((g) => (
               <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
                 <button
-                  className={`gem-card ${pickedGem === g.uid ? 'selected' : ''} ${gemAttrReason(attrs, g) ? 'nofit' : ''}`}
+                  className={`gem-card ${pickedGem === g.uid ? 'selected' : ''} ${gemUseReason(d.combatLevel, d.attributes, g) ? 'nofit' : ''}`}
                   onClick={() => (setPickedSupport(null), setPickedGem(pickedGem === g.uid ? null : g.uid))}
                 >
                   <GemIcon def={activeGemDef(g.gemId)} size={34} />
