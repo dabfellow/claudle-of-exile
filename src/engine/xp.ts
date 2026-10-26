@@ -63,7 +63,6 @@ export function maxLevelOf(skill: SkillId): number {
 }
 
 // Gathering/production curve shorthands.
-export const MAX_LEVEL = SKILL_CURVE.max;
 export const xpForLevel = (lvl: number) => xpToReach('mining', lvl);
 export const levelForXp = (xp: number) => levelOf('mining', xp);
 

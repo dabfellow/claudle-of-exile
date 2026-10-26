@@ -11,10 +11,6 @@ export function bagFull(s: GameState): boolean {
   return s.inventory.length >= BAG_SIZE;
 }
 
-export function bagRoom(s: GameState): number {
-  return Math.max(0, BAG_SIZE - s.inventory.length);
-}
-
 /** A drop lands on the ground, or in the offline haul while you're away; the oldest falls off past the cap. */
 export function dropItem(s: GameState, ctx: Ctx, item: Item): void {
   const pile = ctx.offline ? s.offlineHaul : s.ground;

@@ -673,10 +673,6 @@ h3 {
   animation: page-in 0.25s var(--ease);
 }
 
-.page.wide {
-  max-width: 1440px;
-}
-
 .page-head {
   display: flex;
   align-items: flex-end;

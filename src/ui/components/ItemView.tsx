@@ -72,12 +72,25 @@ export function upgradeScore(s: GameState, item: Item): number {
   return get('DPS') * 2 + get('Max Life') + get('Energy Shield') * 0.8 + get('Armour') * 0.1 + get('Evasion') * 0.1 + (get('Fire Res') + get('Cold Res') + get('Lightning Res')) * 0.6;
 }
 
-export function ItemTip({ item, state, compare = true, pinned = false }: { item: Item; state?: GameState; compare?: boolean; pinned?: boolean }) {
+export function ItemTip({
+  item,
+  state,
+  compare = true,
+  pinned = false,
+  into,
+}: {
+  item: Item;
+  state?: GameState;
+  compare?: boolean;
+  pinned?: boolean;
+  /** compare against this slot instead of the one equip() would pick (the off-hand picker) */
+  into?: EquipSlot;
+}) {
   const alt = useAltKey();
   const base = baseDef(item.baseId);
   const unique = item.uniqueId ? uniqueDef(item.uniqueId) : null;
   const name = itemName(item);
-  const cmp = state && compare ? compareItem(state, item) : null;
+  const cmp = state && compare ? compareItem(state, item, into) : null;
   const implicits = (base.implicits ?? []).filter((i) => i.text);
   return (
     <div className={`tip item-tip rar-${item.rarity}`}>
@@ -209,6 +222,7 @@ export function ItemCell({
   onContextMenu,
   showUpgrade,
   style,
+  into,
 }: {
   item: Item;
   state?: GameState;
@@ -218,10 +232,11 @@ export function ItemCell({
   onContextMenu?: () => void;
   showUpgrade?: boolean;
   style?: React.CSSProperties;
+  into?: EquipSlot;
 }) {
   const better = showUpgrade && state ? upgradeScore(state, item) > 0.5 : false;
   return (
-    <Tooltip content={<ItemTip item={item} state={state} />}>
+    <Tooltip content={<ItemTip item={item} state={state} into={into} />}>
       <button
         className={`cell rar-${item.rarity} ${selected ? 'selected' : ''} ${marked ? 'marked' : ''}`}
         style={style}

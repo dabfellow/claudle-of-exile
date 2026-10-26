@@ -155,3 +155,22 @@ level; times are what vary.
 
 Levers, cheapest first: `MONSTER_LIFE_SCALE` / per-monster `lifeMult` for Act 2 only, a higher `bossEvery`, or
 lower Act 2 kill XP (an act-level XP scale), so the act takes longer per level instead of handing out levels.
+
+## Smarter bot (2026-10-26, 12h, seed 1, active bot)
+
+The bot now plays like a player who reads tooltips: it rebuilds its skill bar from every gem it owns (best guard and buff, a mana skill for casters, its three strongest damage skills on their suggested rules), sockets the support that adds the most damage, keeps its best life/mana/utility flasks on the belt, drinks mana when low and utility flasks against bosses, packs and wind-ups, and spends orbs on worn gear. Same build otherwise: instant spells, manual-by-default skills (the bot sets rules), 0.1 s cooldown floor.
+
+| class | old bot: Act 1 / Act 2 / level at 12h | new bot: Act 1 / Act 2 / level at 12h | new: deaths, out of mana |
+|---|---|---|---|
+| Warrior | — / — / 13 | 4h42 / 7h23 / 39 | 0, 0% |
+| Ranger | — / — / 20 | 2h58 / 5h19 / 41 | 4, 4% |
+| Mage | 4h08 / 7h37 / 36 | 2h30 / 4h27 / 41 | 0, 1% |
+| Duelist | 9h42 / — / 23 | 4h45 / 7h39 / 39 | 2, 5% |
+| Templar | 6h06 / 9h28 / 35 | 2h24 / 4h56 / 41 | 0, 0% |
+| Shadow | 6h17 / — / 29 | 3h48 / 7h10 / 39 | 2, 1% |
+| Exile | — / — / 17 | 4h32 / 7h42 / 39 | 10, 10% |
+
+- **Played well, Act 1 takes 2.4–4.8 h** against the 6–10 h active target, and Act 2 another 2–3 h (target 3–7 days). The old bot's slow classes were mostly the bot: it never changed its starter bar.
+- **Every class ends on Lacerate + Backstab** (plus Infernal Blow, Pummel or Barrage). Both are "burst" attacks that lost their cooldowns with the attack change, so they're the obvious over-performers. Gem drops are plentiful, so every class owns them early.
+- **Mana is fine with a mana flask**: 0–5% of fight time unable to afford a damage skill (Exile 10%). The old "Heavy Strike runs dry after 9 swings" worry only bites without a mana flask.
+- Orbs are still hoarded (300–460 Chaos) because the bot only crafts worn gear with the basic orbs.

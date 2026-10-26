@@ -170,7 +170,8 @@ describe('save v8', () => {
   });
 });
 
-describe('offline progress and bosses', () => {
+// 30 simulated minutes each: a few seconds of real time, which can brush the 5 s default when the suite runs in parallel
+describe('offline progress and bosses', { timeout: 20_000 }, () => {
   const strong = () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
     s.tutorial.done = true;

@@ -31,9 +31,9 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - [ ] **[You]** Gem artwork: gems now show plain silhouettes (`GEM_GLYPHS` in `src/ui/assets.ts`); pick which you like or what to replace.
 - [ ] Skill bar auto setup (rules and priority) needs a big overhaul. Needs design with you: more priority control, maybe more.
 - [ ] Support gems limited to some skill types (e.g. only Warcries): not built yet, beyond the current attack/spell/melee fits.
-- [ ] Re-tune attack mana costs now attacks have no cooldown (you start with ~36 mana and no regen: Heavy Strike at 4 mana runs dry after about 9 swings without a mana flask).
-- [ ] Re-run the sims after zero base regen: casters now live on mana flasks and flat regen; idle survival leans on flasks and the flee breather.
-  - Also covers instant spells: casters got about 40% faster in a short mage run; check whether Spark and Frost Needle cooldowns need raising.
+- [ ] Attack mana costs: with a mana flask the bot is short of mana 0–5% of fight time (Exile 10%), so costs look fine; only matters if you play without a mana flask.
+- [ ] **[You]** Pacing: with the smarter bot every class finishes Act 1 in 2.4–4.8 h (target 6–10 h active) and Act 2 in 4.5–7.7 h ([BALANCE.md](BALANCE.md) → "Smarter bot"). Decide how much slower you want it before Act 2 releases.
+  - Every class ends on Lacerate + Backstab: burst attacks that lost their cooldowns. Give them a cooldown back, or raise their mana costs?
 - [ ] Auto-crafting needs real design work later (you: "way later").
 - Inventory look is with the other session; the Equipment and Bench bag views should improve with it.
 
@@ -42,20 +42,17 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
-- At 1440p/4K pages stop at 1280px wide (`.page` max-width), leaving wide empty margins; consider a wider cap on big screens. Also `.page.wide` is defined twice in `styles.css` (1440px, then 1320px wins).
-- The act1 offline-boss test takes ~3 s alone and can brush vitest's 5 s timeout when the whole suite runs at once.
+- At 1440p/4K pages stop at 1280px wide (`.page` max-width), leaving wide empty margins; consider a wider cap on big screens (your call).
 - The sim (`scripts/sim.ts`) doesn't smith or cut gems, so the Smithing/Gemcutting cost change isn't reflected in balance runs.
 - Smithing has 95 recipes in one list; group by slot (weapons, armour, jewellery) if it still feels long.
 - Quivers don't exist yet; when added they go in the off hand (bows are two-handed today, so that needs a rule).
 - Uniques with "% increased Mana Regeneration" (Wellspring, …) now only scale flat mana regen; give them some flat regen if they feel dead.
-- The off-hand picker's tooltip compares against the main hand, not the off hand.
-- Sim bot now picks up all its loot every minute; balance sims weren't re-run after the stash split.
 Parked 2026-10-24 until more of the game is built: testing, sim balancing and art.
 - Test cloud save sync between two browsers on the live site.
 - Class balance doesn't need to be exact. Sim notes in [BALANCE.md](BALANCE.md) for when it's picked back up:
   - Warrior missed Act 1 in 14 h on 2 of 3 seeds (33–54 DPS vs 50–100 for others).
   - Ranger and Duelist ran 10–13 h on some seeds.
-  - Bot ends runs with 16–90k unspent gold and hoarded orbs; teaching it to craft would cut drop-luck noise.
+  - Bot now crafts worn gear with basic orbs but still ends with 200–350k gold and 300–460 Chaos.
 - Revisit Sanctum chaos farming (85–155 per 14 h) when Act 2 lands.
 - Art: no image generation for now. [ART_PROMPTS.md](ART_PROMPTS.md) is ready if that changes; then a final visual pass (area cards, combat screen, phone widths) and replacing the 106 stand-in slots in [ASSET_MAPPING.md](ASSET_MAPPING.md).
 - Bot only enters an area within a level of its minimum, so the sim can't tell whether players could push Act 2 earlier.
@@ -71,6 +68,8 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Smarter sim bot: rebuilds its skill bar from owned gems, best supports, flask belt, mana/utility flask use, crafts worn gear; reports orbs used, out-of-mana time and the final bar. Re-ran all 7 classes (12 h, seed 1) against the old bot ([BALANCE.md](BALANCE.md)) — done 2026-10-26
+- [x] Cleanup: off-hand picker compares against the off hand; duplicate `.page.wide` rule removed; offline-boss tests get a 20 s timeout; two dead exports removed; sim gear-swap logic shared — done 2026-10-26
 - [x] Tutorial: skills-are-manual wording, Life Flask then a new Mana Flask step, Mine 9 ore so the cheapest smith (gloves/boots) is reachable, bench wording; save v16 keeps mid-tutorial players on their step. Combat: "Next area" buttons once the area's boss is down. Skill rules: while target is / isn't affected by Bleed, Poison, Ignite, Stun, Freeze, Chill, Shock or Broken armour. Sidebar: Hideout alone on top; Combat, Stash, Campaign, Trader, Equipment, Bench, Skills, Passive Tree; Achievements in its own Progress group at the bottom — done 2026-10-26
 - [x] Hard 0.1 s minimum on every cooldown (`MIN_COOLDOWN_MS`), including Overclock (now "cooldowns drop to the 0.1 s minimum") — done 2026-10-25
 - [x] Most spells are instant with their cooldown as the only limit (Spark, Frost Needle, Frost Ward, Arcane Siphon, Meditate, Shock Nova, Consecrate); Fireball and Glacial Lance keep their wind-up. Mage 6 h sim, seed 7: level 16 and 4,686 kills (was 14 and 3,375) — done 2026-10-25

@@ -148,6 +148,7 @@ function SlotPicker({ s, slot, onDone }: { s: GameState; slot: EquipSlot; onDone
               <ItemCell
                 item={item}
                 state={s}
+                into={slot}
                 onClick={() => {
                   if (reason) return;
                   game.act((st, ctx) => equip(st, ctx, item.uid, slot));

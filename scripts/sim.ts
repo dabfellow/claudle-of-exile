@@ -12,18 +12,19 @@ import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { actionsFor } from '../src/data/skills';
 import { ACTS, actBossZone, actOpen, ZONES } from '../src/data/zones';
 import { characterLevel } from '../src/engine/character';
-import { startCombat, useFlask } from '../src/engine/combat';
+import { equipFlask, flaskRecoveryAmount, startCombat, useFlask } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
-import { salvage } from '../src/engine/crafting';
+import { applyOrb, orbReason, salvage } from '../src/engine/crafting';
 import { equip, equipReason, slotsFor } from '../src/engine/equipment';
-import { skillSummary, socketSupport, supportReason, syncSockets } from '../src/engine/gems';
+import { placeOnBar, removeFromBar, skillNumbers, skillSummary, socketSupport, supportReason, syncSockets, unsocketSupport } from '../src/engine/gems';
+import { flaskDef } from '../src/data/flasks';
 import { buyOffer, rerollCost, rerollVendor } from '../src/engine/hideout';
 import { pickUp } from '../src/engine/storage';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats, hitChance, type Derived } from '../src/engine/stats';
-import type { GameEvent, GameState, Item, SkillId } from '../src/engine/types';
+import type { FlaskInstance, GameEvent, GameState, Item, SkillGemInstance, SkillId } from '../src/engine/types';
 import { levelOf, xpToReach } from '../src/engine/xp';
 
 const args = process.argv.slice(2);
@@ -62,17 +63,17 @@ function score(s: GameState, d: Derived): number {
   );
 }
 
-/** Score after putting `item` in its best slot, the way equip() would. */
+/** The state with `item` worn in `slot`, the way equip() makes the swap: two-handers and off hands push each other out. */
+function wearing(s: GameState, item: Item, slot: ReturnType<typeof slotsFor>[number]): GameState {
+  const equipment = { ...s.equipment, [slot]: item };
+  if (slot === 'weapon' && baseDef(item.baseId).twoHanded) delete equipment.offhand;
+  if (slot === 'offhand' && s.equipment.weapon && baseDef(s.equipment.weapon.baseId).twoHanded) delete equipment.weapon;
+  return { ...s, equipment };
+}
+
+/** Score after putting `item` in its best slot. */
 function scoreWith(s: GameState, item: Item): number {
-  let best = -Infinity;
-  for (const slot of slotsFor(item)) {
-    // two-handers and offhands push each other out
-    const equipment = { ...s.equipment, [slot]: item };
-    if (slot === 'weapon' && baseDef(item.baseId).twoHanded) delete equipment.offhand;
-    if (slot === 'offhand' && s.equipment.weapon && baseDef(s.equipment.weapon.baseId).twoHanded) delete equipment.weapon;
-    best = Math.max(best, scoreOf({ ...s, equipment }));
-  }
-  return best;
+  return Math.max(...slotsFor(item).map((slot) => scoreOf(wearing(s, item, slot))));
 }
 
 /** Spend gold at the trader: buy any gear that's an upgrade; with spare gold and nothing worth buying, restock. */
@@ -98,11 +99,7 @@ function upgradeGear(s: GameState, ctx: Ctx) {
     const base = scoreOf(s);
     let best: { slot: ReturnType<typeof slotsFor>[number]; gain: number } | null = null;
     for (const slot of slotsFor(item)) {
-      // score the swap the way equip() makes it: two-handers and offhands push each other out
-      const equipment = { ...s.equipment, [slot]: item };
-      if (slot === 'weapon' && baseDef(item.baseId).twoHanded) delete equipment.offhand;
-      if (slot === 'offhand' && s.equipment.weapon && baseDef(s.equipment.weapon.baseId).twoHanded) delete equipment.weapon;
-      const gain = scoreOf({ ...s, equipment }) - base;
+      const gain = scoreOf(wearing(s, item, slot)) - base;
       if (gain > 1 && (!best || gain > best.gain)) best = { slot, gain };
     }
     if (best) equip(s, ctx, item.uid, best.slot);
@@ -110,17 +107,113 @@ function upgradeGear(s: GameState, ctx: Ctx) {
   if (s.inventory.length > 25) salvage(s, ctx, s.inventory.map((i: Item) => i.uid));
 }
 
-/** Fill empty support sockets with any loose support that fits, and automate skills with their suggested rule. */
-function socketGems(s: GameState) {
-  for (const gem of s.skillBar) {
-    if (!gem) continue;
-    if (gem.rule.when === 'manual') gem.rule = { ...activeGemDef(gem.gemId).defaultRule };
-    syncSockets(gem);
-    gem.supports.forEach((sup, i) => {
-      if (sup) return;
-      const fit = s.supportGems.find((x) => !supportReason(gem, x.supportId));
-      if (fit) socketSupport(s, gem.uid, fit.uid, i);
-    });
+/** A gem's damage per second as the bot judges it: attacks scaled by the chance to hit monsters of its level. */
+function gemDps(d: Derived, gem: SkillGemInstance): number {
+  const sum = skillSummary(d, gem);
+  return sum.perSecond * (sum.nums.def.tags.includes('attack') ? hitChance(d.accuracy, d.combatLevel) : 1);
+}
+
+const DAMAGE_ROLES = new Set(['main', 'burst', 'area']);
+
+/**
+ * Like a player who reads tooltips: the best guard and buff it owns, then its three strongest damage
+ * skills (judged bare, so a fresh drop isn't blinded by the old gem's supports), each on its suggested rule;
+ * then the strongest support in every socket, damage skills first.
+ */
+function manageSkills(s: GameState) {
+  const d = deriveStats(s, []);
+  // the best copy of each gem it owns: highest level wins
+  const owned = new Map<string, SkillGemInstance>();
+  for (const g of [...s.skillBar.filter((x): x is SkillGemInstance => !!x), ...s.gems]) {
+    const have = owned.get(g.gemId);
+    if (!have || g.level > have.level) owned.set(g.gemId, g);
+  }
+  const all = [...owned.values()];
+  const role = (g: SkillGemInstance) => activeGemDef(g.gemId).role;
+  const bare = (g: SkillGemInstance) => gemDps(d, { ...g, supports: g.supports.map(() => null) });
+  const byLevel = (a: SkillGemInstance, b: SkillGemInstance) => b.level - a.level;
+  const pick = (r: string) => all.filter((g) => role(g) === r).sort(byLevel)[0];
+  const damage = all.filter((g) => DAMAGE_ROLES.has(role(g)) && bare(g) > 0).sort((a, b) => bare(b) - bare(a)).slice(0, 3);
+  // casters keep a mana skill when their damage costs mana
+  const sustain = damage.some((g) => !activeGemDef(g.gemId).tags.includes('attack')) ? pick('sustain') : undefined;
+  const want = [pick('guard'), pick('buff'), sustain, ...damage].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
+
+  // put the bar together: anything leaving takes no supports with it
+  const keep = new Set(want.map((g) => g.uid));
+  s.skillBar.forEach((g, i) => {
+    if (!g || keep.has(g.uid)) return;
+    g.supports.forEach((_, k) => unsocketSupport(s, g.uid, k));
+    removeFromBar(s, i);
+  });
+  want.forEach((g, i) => {
+    if (s.skillBar[i]?.uid !== g.uid) placeOnBar(s, g.uid, i);
+  });
+
+  // re-socket from scratch: damage skills pick the support that adds the most, the rest take any that fits
+  const bar = s.skillBar.filter((x): x is SkillGemInstance => !!x);
+  for (const g of bar) {
+    if (g.rule.when === 'manual') g.rule = { ...activeGemDef(g.gemId).defaultRule };
+    syncSockets(g);
+    g.supports.forEach((_, k) => unsocketSupport(s, g.uid, k));
+  }
+  const order = [...bar].sort((a, b) => Number(DAMAGE_ROLES.has(role(b))) - Number(DAMAGE_ROLES.has(role(a))));
+  for (const g of order) {
+    for (let k = 0; k < g.supports.length; k++) {
+      const fits = s.supportGems.filter((x) => !supportReason(g, x.supportId));
+      if (!fits.length) break;
+      let best = fits[0];
+      if (DAMAGE_ROLES.has(role(g))) {
+        let bestDps = -Infinity;
+        for (const sup of fits) {
+          const trial = { ...g, supports: g.supports.map((x, j) => (j === k ? sup : x)) };
+          const v = gemDps(d, trial);
+          if (v > bestDps) {
+            bestDps = v;
+            best = sup;
+          }
+        }
+      }
+      socketSupport(s, g.uid, best.uid, k);
+    }
+  }
+}
+
+/** Belt: the strongest life and mana flask in slots 1–2, then Granite, Ruby and Quicksilver (attackers) or Diamond. */
+function manageFlasks(s: GameState) {
+  const d = deriveStats(s, []);
+  const pool = () => [...s.flaskSlots.filter((f): f is FlaskInstance => !!f), ...s.flaskStash];
+  const strongest = (kind: 'life' | 'mana') =>
+    pool()
+      .filter((f) => flaskDef(f.flaskId).kind === kind)
+      .sort((a, b) => flaskRecoveryAmount(d, b) - flaskRecoveryAmount(d, a))[0];
+  const attacker = s.skillBar.some((g) => g && DAMAGE_ROLES.has(activeGemDef(g.gemId).role) && activeGemDef(g.gemId).tags.includes('attack'));
+  const utility = ['granite', 'ruby', attacker ? 'quicksilver' : 'diamond', 'quicksilver', 'diamond'];
+  const want: (FlaskInstance | undefined)[] = [strongest('life'), strongest('mana')];
+  for (const id of utility) {
+    if (want.length >= s.flaskSlots.length) break;
+    const f = pool().find((x) => x.flaskId === id && !want.includes(x));
+    if (f && !want.some((w) => w?.flaskId === id)) want.push(f);
+  }
+  want.forEach((f, i) => {
+    if (f && s.flaskSlots[i]?.uid !== f.uid && s.flaskStash.includes(f)) equipFlask(s, f.uid, i);
+  });
+}
+
+/**
+ * Spend orbs on worn gear the obvious way: Alchemy (or Transmutation) on normal items, Augmentation then
+ * Regal on magic ones, Exalted on rares with a free affix. Good enough to stop the bot hoarding orbs.
+ */
+function craftGear(s: GameState, ctx: Ctx) {
+  for (const item of Object.values(s.equipment)) {
+    if (!item) continue;
+    const plan =
+      item.rarity === 'normal' ? ['alchemy', 'transmute'] : item.rarity === 'magic' ? ['augment', 'regal'] : item.rarity === 'rare' ? ['exalted'] : [];
+    for (const orb of plan) {
+      if (!orbReason(s, orb, item.uid)) {
+        applyOrb(s, ctx, orb, item.uid);
+        break;
+      }
+    }
   }
 }
 
@@ -157,13 +250,18 @@ interface Result {
   bank: Record<string, number>;
   bestDps: number;
   bestLife: number;
+  /** seconds fighting with damage skills on the bar, and how many of them it couldn't afford any */
+  fightSecs: number;
+  starvedSecs: number;
+  bar: string;
+  orbsUsed: number;
 }
 
 function runClass(classId: ClassId): Result {
   const s = newGame(SEED, { name: 'Bot', classId });
   s.tutorial.done = true;
   let now = 0;
-  const res: Result = { classId, levels: {}, bosses: {}, bossLevels: {}, deaths: 0, kills: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0 };
+  const res: Result = { classId, levels: {}, bosses: {}, bossLevels: {}, deaths: 0, kills: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, fightSecs: 0, starvedSecs: 0, bar: '', orbsUsed: 0 };
   const deathStreak: Record<string, number> = {};
   let retreatUntil = 0;
   const ctx: Ctx = {
@@ -194,8 +292,10 @@ function runClass(classId: ClassId): Result {
     if (now % 60_000 === 0) {
       if (now % 600_000 === 0) shop(s, ctx);
       upgradeGear(s, ctx);
+      if (now % 600_000 === 0) craftGear(s, ctx);
       spendPassives(s, ctx);
-      socketGems(s);
+      manageSkills(s);
+      manageFlasks(s);
     }
     // like a sensible player: push the furthest unlocked zone you're roughly levelled for;
     // after 3 deaths in a row, farm the one below for 20 minutes
@@ -204,14 +304,25 @@ function runClass(classId: ClassId): Result {
     const top = unlocked[unlocked.length - 1];
     const target = now < retreatUntil && unlocked.length > 1 ? unlocked[unlocked.length - 2] : top;
     if (!s.action || (s.combat && s.combat.zoneId !== target.id && !s.combat.monsters.length)) startCombat(s, ctx, target.id);
-    if (!IDLE && s.combat) {
+    if (s.combat) {
       const d = deriveStats(s);
-      const casting = s.combat.monsters.some((m) => m.casting >= 0 && m.life > 0);
-      s.flaskSlots.forEach((f, i) => {
-        if (!f || s.combat?.buffs.some((b) => b.source === 'flask' && b.id === f.flaskId)) return;
-        const lifeFlask = f.flaskId.startsWith('life');
-        if ((lifeFlask && s.life < d.maxLife * 0.55) || (!lifeFlask && casting)) useFlask(s, ctx, i);
-      });
+      const alive = s.combat.monsters.filter((m) => m.life > 0);
+      // out of mana: fighting, and short of every damage skill's cost
+      const costs = s.skillBar.filter((g) => g && DAMAGE_ROLES.has(activeGemDef(g.gemId).role)).map((g) => skillNumbers(d, g).manaCost);
+      if (alive.length && costs.length) {
+        res.fightSecs++;
+        if (s.mana < Math.min(...costs)) res.starvedSecs++;
+      }
+      if (!IDLE) {
+        const casting = alive.some((m) => m.casting >= 0);
+        const danger = casting || alive.some((m) => m.isBoss) || alive.length >= 4;
+        s.flaskSlots.forEach((f, i) => {
+          if (!f || s.combat?.buffs.some((b) => b.source === 'flask' && b.id === f.flaskId)) return;
+          const kind = flaskDef(f.flaskId).kind;
+          const low = (kind === 'life' && s.life < d.maxLife * 0.55) || (kind === 'mana' && (s.mana < d.maxMana * 0.35 || s.mana < Math.max(0, ...costs)));
+          if (low || (kind === 'utility' && danger)) useFlask(s, ctx, i);
+        });
+      }
     }
     tick(s, ctx, 1000);
   }
@@ -227,6 +338,8 @@ function runClass(classId: ClassId): Result {
   res.bank = s.bank;
   res.bestDps = d.dps;
   res.bestLife = d.maxLife;
+  res.bar = s.skillBar.map((g) => g && `${activeGemDef(g.gemId).name} ${g.level}`).filter(Boolean).join(', ');
+  res.orbsUsed = s.lifetime.orbsUsed;
   return res;
 }
 
@@ -283,6 +396,10 @@ row('dps / life', (r) => `${r.bestDps.toFixed(0)}/${r.bestLife}`);
 row('gold', (r) => String(r.bank.gold ?? 0));
 row('chaos / exalted', (r) => `${r.bank.chaos ?? 0}/${r.bank.exalted ?? 0}`);
 row('transmute / alch', (r) => `${r.bank.transmute ?? 0}/${r.bank.alchemy ?? 0}`);
+row('orbs used', (r) => String(r.orbsUsed));
+row('out of mana', (r) => (r.fightSecs ? `${Math.round((r.starvedSecs / r.fightSecs) * 100)}%` : '—'));
+console.log('\nSkill bar at the end');
+for (const r of results) console.log(`  ${pad(r.classId, 10)} ${r.bar}`);
 
 console.log('\nGathering pace (best node, no gear bonuses)');
 const SKILL_TARGETS = [15, 30, 45, 60, 75, 99];
