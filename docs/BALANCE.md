@@ -174,3 +174,17 @@ The bot now plays like a player who reads tooltips: it rebuilds its skill bar fr
 - **Every class ends on Lacerate + Backstab** (plus Infernal Blow, Pummel or Barrage). Both are "burst" attacks that lost their cooldowns with the attack change, so they're the obvious over-performers. Gem drops are plentiful, so every class owns them early.
 - **Mana is fine with a mana flask**: 0–5% of fight time unable to afford a damage skill (Exile 10%). The old "Heavy Strike runs dry after 9 swings" worry only bites without a mana flask.
 - Orbs are still hoarded (300–460 Chaos) because the bot only crafts worn gear with the basic orbs.
+
+## Gem requirements, 8% attack scaling, tougher monsters (2026-10-26, seed 1, smarter bot)
+
+Skill gems now need their own attribute (8 at gem level 1 → 116 at level 13) and attack gems gain +8% weapon damage per level (was 3%). Then monster life and damage were raised.
+
+| Act 1 done | Warrior | Ranger | Mage | Duelist | Templar | Shadow | Exile |
+|---|---|---|---|---|---|---|---|
+| gem reqs + 8%, monsters as before (12h) | 2h37 | 3h18 | 4h36 | 3h05 | 2h13 | 3h16 | 4h46 |
+| life ×2 (1.7), damage ×1.2 (14h) | 10h33 (33 deaths, 20% out of mana) | 10h15 (81 deaths, 38%) | 3h57 | 6h06 | 3h58 | 4h16 | 7h23 |
+| **life 1.4, damage ×1.15 (kept)** (14h) | 12h05 (26% out of mana) | 4h08 | 3h43 | 3h55 | 4h20 | 4h16 | 6h02 |
+
+- Monster strength is a poor pacing lever on its own: fast classes kill in a hit or two, so their pace is set by spawn rate and kills per boss, while tougher monsters starve attackers of mana (Warrior/Ranger 20–38% of fight time unable to afford a skill).
+- Runs on one seed swing a lot (Ranger 10h15 → 4h08 between the two settings) because gem and item drops differ.
+- Lacerate and Backstab still sit on most bars, but off-class copies are capped at gem level 5–11. Mage and Templar pick low-level Lacerate/Backstab/Infernal Blow over their own Intelligence spells: only the instant Frost Needle makes their bars, so spells look weak against attacks.

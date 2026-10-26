@@ -32,9 +32,6 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - [ ] Skill bar auto setup (rules and priority) needs a big overhaul. Needs design with you: more priority control, maybe more.
 - [ ] Support gems limited to some skill types (e.g. only Warcries): not built yet, beyond the current attack/spell/melee fits.
 - [ ] Attack mana costs: with a mana flask the bot is short of mana 0–5% of fight time (Exile 10%), so costs look fine; only matters if you play without a mana flask.
-- [ ] Make enemies tougher so Act 1 takes ~6–10 h with the smarter bot (in progress 2026-10-26: gem requirements and 8% attack scaling shipped first; enemy tuning next).
-- [ ] **[You]** Pacing: with the smarter bot every class finishes Act 1 in 2.4–4.8 h (target 6–10 h active) and Act 2 in 4.5–7.7 h ([BALANCE.md](BALANCE.md) → "Smarter bot"). Decide how much slower you want it before Act 2 releases.
-  - Every class ends on Lacerate + Backstab: burst attacks that lost their cooldowns. Give them a cooldown back, or raise their mana costs?
 - [ ] Auto-crafting needs real design work later (you: "way later").
 - Inventory look is with the other session; the Equipment and Bench bag views should improve with it.
 
@@ -43,6 +40,8 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Spells look weak against attacks: Mage and Templar take low-level Lacerate/Backstab over Spark, Fireball and Glacial Lance (sim, 2026-10-26).
+- Cooldowns for attacks so the best one isn't just spammed (you: later).
 - At 1440p/4K pages stop at 1280px wide (`.page` max-width), leaving wide empty margins; consider a wider cap on big screens (your call).
 - The sim (`scripts/sim.ts`) doesn't smith or cut gems, so the Smithing/Gemcutting cost change isn't reflected in balance runs.
 - Smithing has 95 recipes in one list; group by slot (weapons, armour, jewellery) if it still feels long.
@@ -68,6 +67,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Act 1 called balanced (you, 2026-10-26): monsters life ×1.4 / damage ×1.15; most classes 3h40–6h, Warrior ~12h; class balance isn't a goal, finding what works is ([BALANCE.md](BALANCE.md)) — done 2026-10-26
 - [x] Skill gems need their own attribute (8 at gem level 1, 44 at 5, 89 at 10, 116 at 13): short of it a gem stops levelling, can't go on the bar, and stops firing; tooltip shows it. Attack gems gain +8% weapon damage per level (was 3%) so a capped off-class attack falls behind. Bot respects requirements and slots instant spells into spare slots — done 2026-10-26
 - [x] Cloud save sync between two browsers on the live site (you: works fine) — done 2026-10-26
 - [x] Smarter sim bot: rebuilds its skill bar from owned gems, best supports, flask belt, mana/utility flask use, crafts worn gear; reports orbs used, out-of-mana time and the final bar. Re-ran all 7 classes (12 h, seed 1) against the old bot ([BALANCE.md](BALANCE.md)) — done 2026-10-26

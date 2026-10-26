@@ -411,11 +411,15 @@ export function monsterLife(level: number): number {
 }
 
 export function monsterDamage(level: number): number {
-  return Math.round(1 + 1.0 * Math.pow(level, 1.15));
+  return Math.round((1 + 1.0 * Math.pow(level, 1.15)) * MONSTER_DMG_SCALE);
 }
 
-/** global pacing knob for monsters */
-export const MONSTER_LIFE_SCALE = 0.85;
+/**
+ * Global pacing knobs for monsters. Raised 2026-10-26 (life 0.85 → 1.4, damage ×1.15) once the sim bot
+ * played its gems well and cleared Act 1 in 2–5 h against the 6–10 h target.
+ */
+export const MONSTER_LIFE_SCALE = 1.4;
+export const MONSTER_DMG_SCALE = 1.15;
 
 export const BOSS_LIFE_MULT = 5;
 export const BOSS_ADDS = 2;
