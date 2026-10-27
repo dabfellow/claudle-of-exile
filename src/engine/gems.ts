@@ -6,6 +6,7 @@ import {
   SKILL_BAR_SLOTS,
   supportGemDef,
   type ActiveGemDef,
+  gemAttrMult,
   gemReqLevel,
   type GemAttr,
   type SupportGemDef,
@@ -25,27 +26,36 @@ export function gemXpForLevel(level: number): number {
   return Math.floor(60 * Math.pow(level - 1, 2.8));
 }
 
-/** Character level a gem needs before it can reach `level`. */
-export function gemLevelReq(level: number): number {
-  return 1 + (level - 1) * 3;
+/** Character level every gem needs at the maximum gem level, whatever it needs at level 1. */
+export const GEM_MAX_LEVEL_REQ = 80;
+
+/**
+ * Character level a gem needs at a gem level: its own requirement at level 1 (`gemReqLevel`), rising
+ * evenly to 80 at level 20. A level 1 gem's level 10 needs 38; Lacerate (35) needs 56 at level 10.
+ */
+export function gemLevelReq(gemId: string, level: number): number {
+  const base = gemReqLevel(gemId);
+  return Math.round(base + ((GEM_MAX_LEVEL_REQ - base) * (Math.max(1, level) - 1)) / (MAX_GEM_LEVEL - 1));
 }
 
 export const GEM_ATTR_NAME: Record<GemAttr, string> = { str: 'Strength', dex: 'Dexterity', int: 'Intelligence' };
 
 /**
- * A skill gem needs its own attribute, more as it levels: 8 at gem level 1, 44 at 5, 89 at 10, 116 at 13.
- * That sits between a main attribute (~5 a level) and an off one (~1–2.5 a level), so every class can use any
- * gem early, but an off-attribute skill stops levelling unless the build invests in that attribute.
+ * A skill gem needs its own attribute, more as it levels: 8 at gem level 1, 119 at 10, 245 at 20 (3 per
+ * character level a level 1 gem needs there). That sits between a main attribute (~5 a level) and an off one
+ * (~1–2.5 a level), so every class can use any gem at level 1, but an off-attribute skill stops levelling
+ * unless the build invests in that attribute. `gemAttrMult` asks extra of the strongest gems.
  */
 export const GEM_ATTR_PER_LEVEL = 3;
 
-export function gemAttrReq(level: number): number {
-  return Math.floor(8 + GEM_ATTR_PER_LEVEL * (gemLevelReq(level) - 1));
+export function gemAttrReq(gemId: string, level: number): number {
+  const charLevel = 1 + ((GEM_MAX_LEVEL_REQ - 1) * (Math.max(1, level) - 1)) / (MAX_GEM_LEVEL - 1);
+  return Math.floor((8 + GEM_ATTR_PER_LEVEL * (charLevel - 1)) * gemAttrMult(gemId));
 }
 
 /** Why you can't use this skill gem right now (character level, then attribute), or null. */
 export function gemUseReason(charLevel: number, attrs: Attributes, gem: SkillGemInstance): string | null {
-  const need = gemReqLevel(gem.gemId);
+  const need = gemLevelReq(gem.gemId, gem.level);
   if (charLevel < need) return `Requires level ${need}`;
   return gemAttrReason(attrs, gem);
 }
@@ -53,8 +63,30 @@ export function gemUseReason(charLevel: number, attrs: Attributes, gem: SkillGem
 /** Why you can't use this gem at its current level, or null. */
 export function gemAttrReason(attrs: Attributes, gem: SkillGemInstance, level = gem.level): string | null {
   const attr = activeGemDef(gem.gemId).attr;
-  const need = gemAttrReq(level);
+  const need = gemAttrReq(gem.gemId, level);
   return attrs[attr] < need ? `Requires ${need} ${GEM_ATTR_NAME[attr]}` : null;
+}
+
+/**
+ * A save from before gem levels needed this much character level: gems above what the character can use
+ * drop back (they keep their xp and level up again as the character catches up), extra supports leave
+ * sockets that are gone, and supports that no longer fit go back to the bag.
+ */
+export function settleGems(s: GameState): void {
+  const charLvl = characterLevel(s);
+  for (const gem of [...s.skillBar, ...s.gems]) {
+    if (!gem) continue;
+    while (gem.level > 1 && gemLevelReq(gem.gemId, gem.level) > charLvl) gem.level -= 1;
+    const act = activeGemDef(gem.gemId);
+    const slots = supportSlots(gem);
+    gem.supports = gem.supports.map((sup, i) => {
+      if (!sup || (i < slots && supportFits(supportGemDef(sup.supportId), act))) return sup;
+      s.supportGems.push(sup);
+      return null;
+    });
+    gem.supports.length = Math.min(gem.supports.length, slots);
+    syncSockets(gem);
+  }
 }
 
 export function supportSlots(gem: SkillGemInstance): number {
@@ -65,13 +97,14 @@ export function supportSlots(gem: SkillGemInstance): number {
 export function grantGemXp(s: GameState, ctx: Ctx, amount: number, attrs: Attributes = deriveStats(s, []).attributes): void {
   const charLvl = characterLevel(s);
   // a level waits for both the character level and the attribute it needs
-  const canReach = (gem: SkillGemInstance, level: number) => charLvl >= gemLevelReq(level) && !gemAttrReason(attrs, gem, level);
+  const canReach = (gem: SkillGemInstance, level: number) => charLvl >= gemLevelReq(gem.gemId, level) && !gemAttrReason(attrs, gem, level);
   for (const gem of s.skillBar) {
     if (!gem || gem.level >= MAX_GEM_LEVEL) continue;
     const next = gem.level + 1;
     const cap = gemXpForLevel(next);
     if (!canReach(gem, next)) {
-      gem.xp = Math.min(cap, gem.xp + amount);
+      // banks up to the next level, but never takes away xp a gem already has (settleGems keeps it)
+      gem.xp = Math.max(gem.xp, Math.min(cap, gem.xp + amount));
       continue;
     }
     gem.xp += amount;
@@ -107,9 +140,10 @@ export function syncSockets(gem: SkillGemInstance): void {
   while (gem.supports.length < n) gem.supports.push(null);
 }
 
+/** A support fits a skill with any of its `fits` tags and every one of its `needs` tags; a signature only its own skill. */
 export function supportFits(support: SupportGemDef, active: ActiveGemDef): boolean {
   if (support.signatureFor) return support.signatureFor === active.id;
-  return support.fits.some((t) => active.tags.includes(t));
+  return support.fits.some((t) => active.tags.includes(t)) && (support.needs ?? []).every((t) => active.tags.includes(t));
 }
 
 export function supportReason(gem: SkillGemInstance, supportId: string): string | null {
@@ -299,14 +333,16 @@ export const MIN_COOLDOWN_MS = 100;
 export const OVERCLOCK_INSTANT_MS = 500;
 
 /**
- * Attack gems add this much weapon damage % per level. It's high enough that gem level matters,
- * so an off-attribute attack stuck at a low level (see gemAttrReq) falls well behind.
+ * Attack gems gain this % of their own base weapon damage per level (×2.14 at level 20). It scales the
+ * skill as a whole, so a 4-hit Barrage grows at the same rate as a 1-hit Heavy Strike; a flat bonus per
+ * hit made multi-hit skills run away. High enough that an off-attribute attack stuck at a low level
+ * (see gemAttrReq) falls well behind.
  */
-export const ATTACK_PCT_PER_LEVEL = 8;
+export const ATTACK_PCT_PER_LEVEL = 6;
 
 /** Scaling of a gem's own numbers with its level. */
 export function weaponPctAt(def: ActiveGemDef, level: number): number {
-  return (def.effect.weaponPct ?? 100) + ATTACK_PCT_PER_LEVEL * (level - 1);
+  return (def.effect.weaponPct ?? 100) * (1 + (ATTACK_PCT_PER_LEVEL / 100) * (level - 1));
 }
 
 /** Spells also deal your flat added elemental damage (gear, wand implicits) at this effectiveness. */

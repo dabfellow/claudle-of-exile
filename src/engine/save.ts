@@ -5,6 +5,7 @@ import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
 import { hasAction } from '../data/skills';
 import { ZONES } from '../data/zones';
 import { trimFlaskStash } from './flasks';
+import { settleGems } from './gems';
 import { connectedWithout } from './passives';
 import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
@@ -190,6 +191,7 @@ export function deserialize(json: string): GameState {
   }
   const s = raw as unknown as GameState;
   unlockReachedZones(s);
+  settleGems(s);
   trimFlaskStash(s);
   dropRemovedActions(s);
   return s;

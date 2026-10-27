@@ -202,3 +202,10 @@ Gems drop ~20× less from monsters and 4× less from bosses, every gem has a cha
 - Pace stays in the range you called balanced.
 - Selling everything floods the bot with gold (was 200–350k by 12h); real players who salvage will have less, but shop prices may need raising for sellers.
 - Lacerate still ends on most bars, bought from the Gem shop once characters reach level 18.
+
+## Skill pool pass (2026-10-27, not yet simmed)
+
+- **Gem scaling.** Attack gems gain +6% of their own base weapon damage per level (`ATTACK_PCT_PER_LEVEL`, ×2.14 at 20), replacing +8 percentage points per *hit*, which made multi-hit skills run away (Barrage was ~3× Heavy Strike at gem level 20). Spells still scale their base damage +16% a level.
+- **Requirements.** A gem needs its own character level at gem level 1 (`GEM_LEVELS`), rising evenly to 80 at gem level 20 (`gemLevelReq`); a level 1 gem needs 38 at gem level 10. Attributes go 8 → 120 → 245 at gem levels 1 / 10 / 20, ×1.3 for Lacerate and Backstab (`GEM_ATTR_MULTS`).
+- **Buffs** so later gems beat the ones they replace: Judgement Hammer 250% (was 150%), 4.2 s, 9 mana, 50% convert, 25% stun; Glacial Lance 42–62 (was 24–38), 5 s cooldown; Frost Needle 3×3–7, 6% crit; Barrage 4×40%; Pummel 3×55%; Feint 110%; Ice Shot 115%.
+- % weapon damage per second at gem level 1 / 10 / 20 (with ailments, before supports): Heavy Strike 47 / 73 / 102, Twin Strike 46 / 71 / 98, Barrage 59 / 91 / 127, Judgement Hammer 60 / 92 / 127, Backstab 80 / 123 / 171, Lacerate 134 / 206 / 287.

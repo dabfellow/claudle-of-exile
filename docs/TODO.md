@@ -33,17 +33,29 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - [ ] Auto-crafting needs real design work later (you: "way later").
 - Inventory look is with the other session; the Equipment and Bench bag views should improve with it.
 
+### Skill pool (your review, 2026-10-27)
+- [ ] New skill gems for character levels 20–40: nothing unlocks between 16 and Lacerate's 35 (you: paused for now).
+- [ ] Next round of skills and supports: more Dexterity and Intelligence buffs (both buffs today are Strength), and real curses (the old "curse" role on Poison Dart was removed).
+- [ ] Str/Dex mana: they should stay mana-hungry, but need a mana leech option (passive tree or support), costs paid with life, or uniques/mana regen to stack, on top of flasks.
+- [ ] Ailment overlays on the player while you're taking them: poison a green overlay, bleed a darker red, shock little blue lightning bolts, freeze a ~20% light blue tint over the whole thing.
+- [ ] Battlefield redesign (needs design with you):
+  - Replace waves with a spawn cooldown per tile, but keep monsters walking in from outside your view.
+  - Maybe: you in the middle of a ring of hexes, enemies coming from every side.
+  - Targeting: a targeting preference setting, or click a tile to target it.
+- [ ] Re-run the sim after the gem scaling and skill buffs below; multi-hit attackers (Barrage, Twin Strike, Pummel) lost damage at high gem levels.
+
 ### UI feedback (your walkthrough #2, 2026-10-25) — you test at 1440p and 4K
 - [ ] **[You]** Check the Town: shop prices (~5k magic / ~12k rare at level 24), gem levels (`GEM_LEVELS` in `src/data/gems.ts`), shopkeeper names (Ilsa, Varro, the Gemwright).
 - **[You]** Icons: gathering nodes (Copper Vein, Scorched Seam …) and currency need art; you'll go through icons yourself.
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Gear above level 34 can't drop until Act 3+; affix tiers stop at item level 45; smithing uses mithril for everything from level 22 up; new weapons and shields have placeholder icons ([GEAR.md](GEAR.md) → Known gaps).
 - Spells look weak against attacks: Mage and Templar take low-level Lacerate/Backstab over Spark, Fireball and Glacial Lance (sim, 2026-10-26).
 - Cooldowns for attacks so the best one isn't just spammed (you: later).
 - At 1440p/4K pages stop at 1280px wide (`.page` max-width), leaving wide empty margins; consider a wider cap on big screens (your call).
 - The sim (`scripts/sim.ts`) doesn't smith or cut gems, so the Smithing/Gemcutting cost change isn't reflected in balance runs.
-- Smithing has 95 recipes in one list; group by slot (weapons, armour, jewellery) if it still feels long.
+- Smithing has 315 recipes in one list since the gear dump (was 95); group by slot (weapons, armour, jewellery).
 - Quivers don't exist yet; when added they go in the off hand (bows are two-handed today, so that needs a rule).
 - Uniques with "% increased Mana Regeneration" (Wellspring, …) now only scale flat mana regen; give them some flat regen if they feel dead.
 Parked 2026-10-24 until more of the game is built: testing, sim balancing and art.
@@ -66,6 +78,9 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Skill pool pass: attack gems scale the whole skill per level (+6% of base each), not each hit; skills tagged `hit` (deals damage) and `cast` (has a cast time), so damage supports don't fit Frost Ward or Meditate, Faster Casts only fits Fireball and Glacial Lance, Lingering no longer fits Parry; gem level needs character level up to 80 at gem level 20 (attributes 8 → 245; Lacerate and Backstab ×1.3); loaded saves drop over-levelled gems back (xp kept) and unsocket supports that no longer fit; Judgement Hammer, Glacial Lance, Frost Needle, Barrage, Pummel, Feint and Ice Shot buffed; Poison Dart is a Main skill ([BALANCE.md](BALANCE.md)) — done 2026-10-27
+- [x] Gear dump, part 2: hybrid armour, first hybrid shields, and swords/axes/daggers/sceptres to level 60 (107 new, 315 total), bonus implicits on 40+, matching gear-set art ([GEAR.md](GEAR.md)) — done 2026-10-26
+- [x] Gear dump, part 1: pure str/dex/int bases to level 60 (113 new, 208 total): armour, shields, maces, bows, wands, staves, with progressively better base stats and a bonus implicit on everything 40+; new armour tiers use matching gear-set art ([GEAR.md](GEAR.md)) — done 2026-10-26
 - [x] Stash tabs no longer jump: every tab shares one panel as tall as the tallest (the Gear pages), so switching keeps the page height and scroll — done 2026-10-26
 - [x] Flasks equip without the Crafting Bench (player report): click a flask slot on the Equipment page to pick a spare or take one off; click a spare in Stash → Flasks to put it on your belt; Lacerate needs level 35; Hideout gear card is the Equipment paper doll — done 2026-10-26
 - [x] Hideout layout B (stats, equipment, quick buttons; land here on load); Town with Magic, Armour and Gem shops; station upgrades unlock tiers with steep costs (Forge, Alchemy Table tiers; Stash pages; Bench built for salvage, auto-crafting last; Town Market stock/restock); Map Device locked until Act 6; gem level requirements and rare level-appropriate drops; save v17 ([TOWN.md](TOWN.md), [BALANCE.md](BALANCE.md)) — done 2026-10-26

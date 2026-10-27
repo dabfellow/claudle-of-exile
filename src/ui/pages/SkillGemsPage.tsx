@@ -50,7 +50,7 @@ const ATTRS: { id: GemAttr; label: string }[] = [
 
 function kindMatches(def: ActiveGemDef, kind: GemKind): boolean {
   if (kind === 'all') return true;
-  if (kind === 'utility') return def.role === 'guard' || def.role === 'buff' || def.role === 'curse' || def.role === 'sustain';
+  if (kind === 'utility') return def.role === 'guard' || def.role === 'buff' || def.role === 'sustain';
   return def.tags.includes(kind);
 }
 

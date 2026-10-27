@@ -2,8 +2,13 @@ import type { AreaShape } from '../engine/battlefield';
 import type { DamageType, GroundKind, StatKey } from '../engine/types';
 
 export type GemAttr = 'str' | 'dex' | 'int';
-export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'dot' | 'sustain';
-export type SkillRole = 'main' | 'burst' | 'area' | 'guard' | 'buff' | 'curse' | 'sustain';
+/**
+ * What a skill does, which decides the supports that fit it. `hit`: it deals damage when used (damage
+ * supports need this, so they never fit a shield or a mana refill). `cast`: a spell with a cast time,
+ * the only kind Faster Casts speeds up. `duration`: something it does lasts, so Lingering stretches it.
+ */
+export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'dot' | 'sustain' | 'hit' | 'cast';
+export type SkillRole = 'main' | 'burst' | 'area' | 'guard' | 'buff' | 'sustain';
 
 /** What a skill does when it fires. Numbers are at gem level 1. */
 export interface SkillEffect {
@@ -130,14 +135,14 @@ const A = (d: ActiveGemDef) => d;
 export const ACTIVE_GEMS: ActiveGemDef[] = [
   // ---------- Strength ----------
   A({
-    id: 'heavy_strike', name: 'Heavy Strike', attr: 'str', role: 'main', tags: ['attack', 'melee'],
+    id: 'heavy_strike', name: 'Heavy Strike', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit'],
     manaCost: 4, cooldownMs: 0, timeMs: 3900, color: '#d0574a',
     effect: { weaponPct: 185, targets: 'single', stunChance: 0.25 },
     desc: 'A slow, crushing blow. 25% chance to stun.',
     defaultRule: { when: 'always' },
   }),
   A({
-    id: 'ground_slam', name: 'Ground Slam', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area'],
+    id: 'ground_slam', name: 'Ground Slam', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area', 'hit'],
     manaCost: 8, cooldownMs: 5000, timeMs: 3600, color: '#b0643a',
     effect: { weaponPct: 95, area: 'splash', stunChance: 0.1 },
     desc: 'Slam the ground, hitting the target and every enemy around it.',
@@ -158,9 +163,9 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     defaultRule: { when: 'enemyCasting' },
   }),
   A({
-    id: 'pummel', name: 'Pummel', attr: 'str', role: 'main', tags: ['attack', 'melee'],
+    id: 'pummel', name: 'Pummel', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit'],
     manaCost: 5, cooldownMs: 0, timeMs: 3300, color: '#c46a4a',
-    effect: { weaponPct: 50, hits: 3, targets: 'single' },
+    effect: { weaponPct: 55, hits: 3, targets: 'single' },
     desc: 'Three quick blows to the same target.',
     defaultRule: { when: 'always' },
   }),
@@ -172,21 +177,21 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     defaultRule: { when: 'bossOnly' },
   }),
   A({
-    id: 'parry', name: 'Parry', attr: 'str', role: 'guard', tags: ['guard', 'duration'],
+    id: 'parry', name: 'Parry', attr: 'str', role: 'guard', tags: ['guard'],
     manaCost: 6, cooldownMs: 6000, timeMs: 600, color: '#b8a68a',
     effect: { blocks: 2 },
     desc: 'Turn aside the next two hits.',
     defaultRule: { when: 'enemyCasting' },
   }),
   A({
-    id: 'judgement_hammer', name: 'Judgement Hammer', attr: 'str', role: 'main', tags: ['attack', 'melee'],
-    manaCost: 6, cooldownMs: 0, timeMs: 3900, color: '#e8d25a',
-    effect: { weaponPct: 150, targets: 'single', stunChance: 0.2, convert: { type: 'light', pct: 40 } },
-    desc: 'A crushing blow that crackles with storm. 40% of physical damage is converted to lightning; 20% chance to stun.',
+    id: 'judgement_hammer', name: 'Judgement Hammer', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit'],
+    manaCost: 9, cooldownMs: 0, timeMs: 4200, color: '#e8d25a',
+    effect: { weaponPct: 250, targets: 'single', stunChance: 0.25, convert: { type: 'light', pct: 50 } },
+    desc: 'A slow, thunderous blow. 50% of physical damage is converted to lightning; 25% chance to stun.',
     defaultRule: { when: 'always' },
   }),
   A({
-    id: 'infernal_blow', name: 'Infernal Blow', attr: 'str', role: 'main', tags: ['attack', 'melee', 'dot', 'duration'],
+    id: 'infernal_blow', name: 'Infernal Blow', attr: 'str', role: 'main', tags: ['attack', 'melee', 'dot', 'duration', 'hit'],
     manaCost: 6, cooldownMs: 0, timeMs: 3600, color: '#ff6a3a',
     effect: { weaponPct: 120, targets: 'single', ailment: { kind: 'ignite', pctPerSec: 25, durationMs: 3000 } },
     desc: 'A burning strike that sets the target alight.',
@@ -195,14 +200,14 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
 
   // ---------- Dexterity ----------
   A({
-    id: 'twin_strike', name: 'Twin Strike', attr: 'dex', role: 'main', tags: ['attack', 'melee'],
+    id: 'twin_strike', name: 'Twin Strike', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'hit'],
     manaCost: 4, cooldownMs: 0, timeMs: 2700, color: '#5fbf6a',
     effect: { weaponPct: 62, hits: 2, targets: 'single' },
     desc: 'Strike twice in quick succession.',
     defaultRule: { when: 'always' },
   }),
   A({
-    id: 'poison_dart', name: 'Poison Dart', attr: 'dex', role: 'curse', tags: ['attack', 'projectile', 'dot', 'duration'],
+    id: 'poison_dart', name: 'Poison Dart', attr: 'dex', role: 'main', tags: ['attack', 'projectile', 'dot', 'duration', 'hit'],
     manaCost: 6, cooldownMs: 0, timeMs: 2400, color: '#7bc04a',
     effect: { weaponPct: 55, targets: 'single', ailment: { kind: 'poison', pctPerSec: 30, durationMs: 4000 } },
     desc: 'A dart that poisons. Poison stacks.',
@@ -216,58 +221,58 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     defaultRule: { when: 'enemyCasting' },
   }),
   A({
-    id: 'lacerate', name: 'Lacerate', attr: 'dex', role: 'burst', tags: ['attack', 'melee', 'dot', 'duration'],
+    id: 'lacerate', name: 'Lacerate', attr: 'dex', role: 'burst', tags: ['attack', 'melee', 'dot', 'duration', 'hit'],
     manaCost: 10, cooldownMs: 0, timeMs: 3300, color: '#c0392b',
     effect: { weaponPct: 130, targets: 'single', ailment: { kind: 'bleed', pctPerSec: 60, durationMs: 4000 } },
     desc: 'A deep cut that bleeds heavily.',
     defaultRule: { when: 'targetLifeAbove', value: 50 },
   }),
   A({
-    id: 'barrage', name: 'Barrage', attr: 'dex', role: 'main', tags: ['attack', 'projectile'],
+    id: 'barrage', name: 'Barrage', attr: 'dex', role: 'main', tags: ['attack', 'projectile', 'hit'],
     manaCost: 5, cooldownMs: 0, timeMs: 2700, color: '#8fd26a',
-    effect: { weaponPct: 30, hits: 4, targets: 'single' },
+    effect: { weaponPct: 40, hits: 4, targets: 'single' },
     desc: 'Loose a rapid volley of four arrows at one target.',
     defaultRule: { when: 'always' },
   }),
   A({
-    id: 'rain_of_arrows', name: 'Rain of Arrows', attr: 'dex', role: 'area', tags: ['attack', 'projectile', 'area'],
+    id: 'rain_of_arrows', name: 'Rain of Arrows', attr: 'dex', role: 'area', tags: ['attack', 'projectile', 'area', 'hit'],
     manaCost: 8, cooldownMs: 5000, timeMs: 3300, color: '#6aa84f',
     effect: { weaponPct: 70, targets: 'all' },
     desc: 'Arrows fall across the whole pack.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
   }),
   A({
-    id: 'feint', name: 'Feint', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'duration'],
+    id: 'feint', name: 'Feint', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'duration', 'hit'],
     manaCost: 5, cooldownMs: 0, timeMs: 2400, color: '#9fc7a0',
-    effect: { weaponPct: 90, targets: 'single', buff: { durationMs: 3000, stats: { evasionPct: 40 } } },
+    effect: { weaponPct: 110, targets: 'single', buff: { durationMs: 3000, stats: { evasionPct: 40 } } },
     desc: 'A false strike that leaves you hard to hit: 40% increased Evasion Rating for 3s.',
     defaultRule: { when: 'always' },
   }),
   A({
-    id: 'backstab', name: 'Backstab', attr: 'dex', role: 'burst', tags: ['attack', 'melee'],
+    id: 'backstab', name: 'Backstab', attr: 'dex', role: 'burst', tags: ['attack', 'melee', 'hit'],
     manaCost: 10, cooldownMs: 0, timeMs: 3000, color: '#5a8a5a',
     effect: { weaponPct: 240, targets: 'single', moreVsAiling: 50 },
     desc: 'A brutal strike, deadliest on a weakened foe: 50% more damage against enemies with an ailment.',
     defaultRule: { when: 'targetLifeAbove', value: 30 },
   }),
   A({
-    id: 'ice_shot', name: 'Ice Shot', attr: 'dex', role: 'main', tags: ['attack', 'projectile'],
+    id: 'ice_shot', name: 'Ice Shot', attr: 'dex', role: 'main', tags: ['attack', 'projectile', 'duration', 'hit'],
     manaCost: 5, cooldownMs: 0, timeMs: 2700, color: '#8fd8e8',
-    effect: { weaponPct: 100, targets: 'single', convert: { type: 'cold', pct: 50 }, chillMs: 3000 },
+    effect: { weaponPct: 115, targets: 'single', convert: { type: 'cold', pct: 50 }, chillMs: 3000 },
     desc: 'A frozen arrow that chills the target. 50% of physical damage is converted to cold.',
     defaultRule: { when: 'always' },
   }),
 
   // ---------- Intelligence ----------
   A({
-    id: 'spark', name: 'Spark', attr: 'int', role: 'main', tags: ['spell', 'projectile', 'chain'],
+    id: 'spark', name: 'Spark', attr: 'int', role: 'main', tags: ['spell', 'projectile', 'chain', 'hit'],
     manaCost: 5, cooldownMs: 2000, timeMs: 0, color: '#6fc8ff',
     effect: { base: [4, 16], type: 'light', targets: 'chain', chains: 2, crit: 6 },
     desc: 'Crackling bolts that chain to the 2 nearest enemies.',
     defaultRule: { when: 'always' },
   }),
   A({
-    id: 'fireball', name: 'Fireball', attr: 'int', role: 'burst', tags: ['spell', 'projectile', 'dot', 'duration'],
+    id: 'fireball', name: 'Fireball', attr: 'int', role: 'burst', tags: ['spell', 'projectile', 'dot', 'duration', 'hit', 'cast'],
     manaCost: 12, cooldownMs: 4000, timeMs: 3600, color: '#ff7a45',
     effect: { base: [12, 20], type: 'fire', targets: 'single', crit: 6, ailment: { kind: 'ignite', pctPerSec: 40, durationMs: 3000 } },
     desc: 'A heavy fire bolt that ignites.',
@@ -281,17 +286,17 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     defaultRule: { when: 'enemyCasting' },
   }),
   A({
-    id: 'arcane_siphon', name: 'Arcane Siphon', attr: 'int', role: 'sustain', tags: ['spell', 'sustain'],
+    id: 'arcane_siphon', name: 'Arcane Siphon', attr: 'int', role: 'sustain', tags: ['spell', 'sustain', 'hit'],
     manaCost: 0, cooldownMs: 5000, timeMs: 0, color: '#9b6dde',
     effect: { base: [6, 10], type: 'cold', targets: 'single', crit: 5, leechLife: 25, leechMana: 40 },
     desc: 'Drain the target, returning life and mana. Costs no mana.',
     defaultRule: { when: 'lifeBelow', value: 60 },
   }),
   A({
-    id: 'glacial_lance', name: 'Glacial Lance', attr: 'int', role: 'burst', tags: ['spell', 'projectile'],
-    manaCost: 22, cooldownMs: 3000, timeMs: 3600, color: '#9fd8ff',
-    effect: { base: [24, 38], type: 'cold', targets: 'single', crit: 6, chillMs: 3000 },
-    desc: 'A spear of ice that chills. Expensive, devastating.',
+    id: 'glacial_lance', name: 'Glacial Lance', attr: 'int', role: 'burst', tags: ['spell', 'projectile', 'duration', 'hit', 'cast'],
+    manaCost: 22, cooldownMs: 5000, timeMs: 3600, color: '#9fd8ff',
+    effect: { base: [42, 62], type: 'cold', targets: 'single', crit: 7, chillMs: 3000 },
+    desc: 'A spear of ice that chills. Slow and expensive, devastating.',
     defaultRule: { when: 'manaAbove', value: 80 },
   }),
   A({
@@ -302,23 +307,23 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     defaultRule: { when: 'manaBelow', value: 30 },
   }),
   A({
-    id: 'shock_nova', name: 'Shock Nova', attr: 'int', role: 'area', tags: ['spell', 'area'],
+    id: 'shock_nova', name: 'Shock Nova', attr: 'int', role: 'area', tags: ['spell', 'area', 'hit'],
     manaCost: 9, cooldownMs: 4000, timeMs: 0, color: '#a0c8ff',
     effect: { base: [5, 11], type: 'light', targets: 'all', crit: 5 },
     desc: 'A burst of lightning that strikes every enemy.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
   }),
   A({
-    id: 'consecrate', name: 'Consecrate', attr: 'int', role: 'sustain', tags: ['spell', 'area', 'duration'],
+    id: 'consecrate', name: 'Consecrate', attr: 'int', role: 'sustain', tags: ['spell', 'area', 'duration', 'hit'],
     manaCost: 10, cooldownMs: 6000, timeMs: 0, color: '#f0c070',
     effect: { base: [5, 9], type: 'fire', targets: 'all', buff: { durationMs: 4000, regenPct: 2 } },
     desc: 'Hallow the ground: burn the pack, and regenerate 2% of your life per second for 4s.',
     defaultRule: { when: 'lifeBelow', value: 70 },
   }),
   A({
-    id: 'frost_needle', name: 'Frost Needle', attr: 'int', role: 'main', tags: ['spell', 'projectile'],
+    id: 'frost_needle', name: 'Frost Needle', attr: 'int', role: 'main', tags: ['spell', 'projectile', 'hit'],
     manaCost: 5, cooldownMs: 2000, timeMs: 0, color: '#c0e8ff',
-    effect: { base: [2, 5], type: 'cold', hits: 3, targets: 'single', crit: 4 },
+    effect: { base: [3, 7], type: 'cold', hits: 3, targets: 'single', crit: 6 },
     desc: 'Three needles of ice in quick succession.',
     defaultRule: { when: 'always' },
   }),
@@ -355,6 +360,8 @@ export interface SupportGemDef {
   attr: GemAttr;
   /** fits a skill if it has any of these tags (or it's the signature skill) */
   fits: GemTag[];
+  /** ...and all of these (Spell Echo: a spell that hits) */
+  needs?: GemTag[];
   /** signature supports only fit this one skill */
   signatureFor?: string;
   mods: SupportMods;
@@ -383,7 +390,20 @@ const GEM_LEVELS: Record<string, number> = {
   multistrike: 18, spell_echo: 18,
 };
 
-/** Character level a skill or support gem needs to be used (and to drop, be cut or be sold to you). */
+/**
+ * The strongest skills ask this many times the usual attribute at every gem level
+ * (engine/gems.ts `gemAttrReq`), so they need a build that commits to them.
+ */
+const GEM_ATTR_MULTS: Record<string, number> = {
+  lacerate: 1.3,
+  backstab: 1.3,
+};
+
+export function gemAttrMult(id: string): number {
+  return GEM_ATTR_MULTS[id] ?? 1;
+}
+
+/** Character level a skill or support gem needs at gem level 1 (and to drop, be cut or be sold to you). */
 export function gemReqLevel(id: string): number {
   if (GEM_LEVELS[id]) return GEM_LEVELS[id];
   const sig = SUPPORT_GEMS.find((g) => g.id === id)?.signatureFor;
@@ -421,19 +441,19 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'shatterpoint', name: 'Shatterpoint', attr: 'int', fits: [], signatureFor: 'frost_needle', mods: { special: 'shatterpoint' }, desc: 'Critical strikes chill; hits against chilled enemies deal 15% more damage.' }),
 
   // general
-  S({ id: 'added_fire', name: 'Added Fire', attr: 'str', fits: ['attack', 'spell'], mods: { extra: { type: 'fire', pct: 25 }, manaMult: 1.2 }, desc: 'Gain 25% of the hit as extra fire damage.' }),
-  S({ id: 'added_cold', name: 'Added Cold', attr: 'dex', fits: ['attack', 'spell'], mods: { extra: { type: 'cold', pct: 25 }, manaMult: 1.2 }, desc: 'Gain 25% of the hit as extra cold damage.' }),
-  S({ id: 'added_lightning', name: 'Added Lightning', attr: 'int', fits: ['attack', 'spell'], mods: { extra: { type: 'light', pct: 25 }, manaMult: 1.2 }, desc: 'Gain 25% of the hit as extra lightning damage.' }),
+  S({ id: 'added_fire', name: 'Added Fire', attr: 'str', fits: ['hit'], mods: { extra: { type: 'fire', pct: 25 }, manaMult: 1.2 }, desc: 'Gain 25% of the hit as extra fire damage.' }),
+  S({ id: 'added_cold', name: 'Added Cold', attr: 'dex', fits: ['hit'], mods: { extra: { type: 'cold', pct: 25 }, manaMult: 1.2 }, desc: 'Gain 25% of the hit as extra cold damage.' }),
+  S({ id: 'added_lightning', name: 'Added Lightning', attr: 'int', fits: ['hit'], mods: { extra: { type: 'light', pct: 25 }, manaMult: 1.2 }, desc: 'Gain 25% of the hit as extra lightning damage.' }),
   S({ id: 'brutality', name: 'Brutality', attr: 'str', fits: ['attack'], mods: { morePhys: 40, noElemental: true, manaMult: 1.3 }, desc: '40% more physical damage; deals no elemental damage.' }),
-  S({ id: 'elemental_focus', name: 'Elemental Focus', attr: 'int', fits: ['attack', 'spell'], mods: { moreElem: 35, manaMult: 1.3 }, desc: '35% more elemental damage.' }),
+  S({ id: 'elemental_focus', name: 'Elemental Focus', attr: 'int', fits: ['hit'], mods: { moreElem: 35, manaMult: 1.3 }, desc: '35% more elemental damage.' }),
   S({ id: 'faster_attacks', name: 'Faster Attacks', attr: 'dex', fits: ['attack'], mods: { attackSpeed: 25, manaMult: 1.15 }, desc: '25% more attack speed.' }),
-  S({ id: 'faster_casts', name: 'Faster Casts', attr: 'int', fits: ['spell'], mods: { castSpeed: 25, manaMult: 1.15 }, desc: '25% more cast speed.' }),
+  S({ id: 'faster_casts', name: 'Faster Casts', attr: 'int', fits: ['cast'], mods: { castSpeed: 25, manaMult: 1.15 }, desc: '25% more cast speed. Only fits spells with a cast time.' }),
   S({ id: 'efficiency', name: 'Efficiency', attr: 'int', fits: ['attack', 'spell', 'guard', 'buff'], mods: { manaMult: 0.6 }, desc: '40% less mana cost.' }),
-  S({ id: 'critical_strikes', name: 'Critical Strikes', attr: 'dex', fits: ['attack', 'spell'], mods: { critChance: 100, critMulti: 30, manaMult: 1.2 }, desc: '100% increased critical strike chance and +30% critical multiplier.' }),
-  S({ id: 'life_leech', name: 'Life Leech', attr: 'str', fits: ['attack', 'spell'], mods: { lifeLeech: 3, manaMult: 1.1 }, desc: '3% of damage leeched as life.' }),
-  S({ id: 'mana_leech', name: 'Mana Leech', attr: 'int', fits: ['attack', 'spell'], mods: { manaLeech: 3, manaMult: 1.1 }, desc: '3% of damage leeched as mana.' }),
-  S({ id: 'multistrike', name: 'Multistrike', attr: 'str', fits: ['melee'], mods: { repeats: 1, repeatDamage: 75, manaMult: 1.4 }, desc: 'Melee attacks repeat once more at 75% damage.' }),
-  S({ id: 'spell_echo', name: 'Spell Echo', attr: 'int', fits: ['spell'], mods: { repeats: 1, repeatDamage: 75, manaMult: 1.4 }, desc: 'Spells repeat once more at 75% damage.' }),
+  S({ id: 'critical_strikes', name: 'Critical Strikes', attr: 'dex', fits: ['hit'], mods: { critChance: 100, critMulti: 30, manaMult: 1.2 }, desc: '100% increased critical strike chance and +30% critical multiplier.' }),
+  S({ id: 'life_leech', name: 'Life Leech', attr: 'str', fits: ['hit'], mods: { lifeLeech: 3, manaMult: 1.1 }, desc: '3% of damage leeched as life.' }),
+  S({ id: 'mana_leech', name: 'Mana Leech', attr: 'int', fits: ['hit'], mods: { manaLeech: 3, manaMult: 1.1 }, desc: '3% of damage leeched as mana.' }),
+  S({ id: 'multistrike', name: 'Multistrike', attr: 'str', fits: ['melee'], mods: { repeats: 1, repeatDamage: 75, manaMult: 1.4 }, desc: "Repeats the attack's hits once more at 75% damage. Only the damage repeats: buffs and other effects happen once." }),
+  S({ id: 'spell_echo', name: 'Spell Echo', attr: 'int', fits: ['spell'], needs: ['hit'], mods: { repeats: 1, repeatDamage: 75, manaMult: 1.4 }, desc: "Repeats the spell's hits once more at 75% damage. Only the damage repeats: shields, buffs and other effects happen once." }),
   S({ id: 'pierce', name: 'Pierce', attr: 'dex', fits: ['projectile'], mods: { special: 'pierce', moreDamage: -15, manaMult: 1.25 }, desc: "Projectiles pass through, hitting every enemy in the target's lane front to back; 15% less damage." }),
   S({ id: 'chain', name: 'Chain', attr: 'dex', fits: ['projectile', 'chain'], mods: { chains: 1, moreDamage: -10, manaMult: 1.3 }, desc: 'Hits chain to 1 more enemy; 10% less damage.' }),
   S({ id: 'lingering', name: 'Lingering', attr: 'int', fits: ['duration'], mods: { durationPct: 50, manaMult: 1.2 }, desc: 'Effects and ailments last 50% longer.' }),
@@ -460,7 +480,7 @@ export const BASE_ATTACK_MS = 3000;
 
 /** The attack you fall back to when no skill is ready. */
 export const DEFAULT_ATTACK: ActiveGemDef = {
-  id: 'default_attack', name: 'Default Attack', attr: 'str', role: 'main', tags: ['attack'],
+  id: 'default_attack', name: 'Default Attack', attr: 'str', role: 'main', tags: ['attack', 'hit'],
   manaCost: 0, cooldownMs: 0, timeMs: BASE_ATTACK_MS, color: '#9a968c',
   effect: { weaponPct: 100, targets: 'single' },
   desc: 'A plain weapon swing. Free.',

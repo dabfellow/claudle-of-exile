@@ -69,7 +69,7 @@ describe('skill gems', () => {
     // a level 1 character can't level a gem past level 1, and xp stops banking at the next level
     expect(gem.level).toBe(1);
     expect(gem.xp).toBe(gemXpForLevel(2));
-    s.skills.combat = charXpForLevel(gemLevelReq(10));
+    s.skills.combat = charXpForLevel(gemLevelReq('heavy_strike', 10));
     grantGemXp(s, ctx(), gemXpForLevel(10), { str: 999, dex: 999, int: 999 });
     expect(gem.level).toBe(10);
     expect(supportSlots(gem)).toBe(3);
@@ -78,11 +78,11 @@ describe('skill gems', () => {
   it('skill gems need their attribute: they stop levelling short of it and stay off the bar', () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
     const strike = s.skillBar[0]!; // Heavy Strike, a Strength gem
-    s.skills.combat = charXpForLevel(gemLevelReq(10));
-    grantGemXp(s, ctx(), gemXpForLevel(10), { str: gemAttrReq(4), dex: 0, int: 0 });
+    s.skills.combat = charXpForLevel(gemLevelReq('heavy_strike', 10));
+    grantGemXp(s, ctx(), gemXpForLevel(10), { str: gemAttrReq('heavy_strike', 4), dex: 0, int: 0 });
     expect(strike.level).toBe(4);
-    expect(gemAttrReq(1)).toBeLessThanOrEqual(8); // every class can use any level-1 gem
-    veteran(s); // past Lacerate's level requirement, so only its Dexterity stops it
+    expect(gemAttrReq('heavy_strike', 1)).toBeLessThanOrEqual(8); // every class can use any level-1 gem
+    veteran(s, 60); // past a level 10 Lacerate's level requirement, so only its Dexterity stops it
     const lacerate = createSkillGem(s, 'lacerate', 10);
     s.gems.push(lacerate);
     expect(placeOnBar(s, lacerate.uid, 2)).toMatch(/Requires \d+ Dexterity/);

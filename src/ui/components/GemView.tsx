@@ -1,5 +1,5 @@
 import { activeGemDef, ACTIVE_GEMS, DEFAULT_ATTACK, gemReqLevel, RULE_LABELS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
-import { GEM_ATTR_NAME, gemAttrReq, gemLevelReq, gemProgress, skillSummary, supportSlots } from '../../engine/gems';
+import { GEM_ATTR_NAME, gemAttrReq, gemLevelReq, gemProgress, skillSummary, supportFits, supportSlots } from '../../engine/gems';
 import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { fmt, ProgressBar } from './common';
@@ -12,7 +12,6 @@ const ROLE_LABEL: Record<string, string> = {
   area: 'Area',
   guard: 'Guard',
   buff: 'Buff',
-  curse: 'Curse',
   sustain: 'Sustain',
 };
 
@@ -68,9 +67,10 @@ export function ruleText(rule: TacticRule): string {
 }
 
 /** "Requires 44 Dexterity (you have 30)", and a warning when the next level is out of reach. */
-function GemRequirement({ have, attr, level }: { have: number; attr: ActiveGemDef['attr']; level: number }) {
-  const need = gemAttrReq(level);
-  const next = gemAttrReq(level + 1);
+function GemRequirement({ have, def, level }: { have: number; def: ActiveGemDef; level: number }) {
+  const attr = def.attr;
+  const need = gemAttrReq(def.id, level);
+  const next = gemAttrReq(def.id, level + 1);
   return (
     <div className="small" style={{ marginBottom: 6 }}>
       <span className={have >= need ? 'muted' : 'bad'}>
@@ -100,10 +100,11 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
         </div>
       </div>
       <div style={{ margin: '6px 0' }}>{def.desc}</div>
-      {def.id !== DEFAULT_ATTACK.id && (
-        <div className={`small ${d.combatLevel >= gemReqLevel(def.id) ? 'muted' : 'bad'}`}>Requires character level {gemReqLevel(def.id)}</div>
-      )}
-      {gem && <GemRequirement have={d.attributes[def.attr]} attr={def.attr} level={gem.level} />}
+      {def.id !== DEFAULT_ATTACK.id && (() => {
+        const need = gem ? gemLevelReq(gem.gemId, gem.level) : gemReqLevel(def.id);
+        return <div className={`small ${d.combatLevel >= need ? 'muted' : 'bad'}`}>Requires character level {need}</div>;
+      })()}
+      {gem && <GemRequirement have={d.attributes[def.attr]} def={def} level={gem.level} />}
       <div className="delta-list">
         {nums.manaCost > 0 && (
           <>
@@ -142,7 +143,7 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
             <div style={{ marginTop: 6 }}>
               <ProgressBar value={gemProgress(gem)} color="var(--gem)" />
               <div className="dim" style={{ fontSize: 'var(--fs-xs)', marginTop: 2 }}>
-                Next level needs character level {gemLevelReq(gem.level + 1)}
+                Next level needs character level {gemLevelReq(gem.gemId, gem.level + 1)}
               </div>
             </div>
           )}
@@ -156,7 +157,7 @@ export function SupportTip({ supportId }: { supportId: string }) {
   const def = supportGemDef(supportId);
   const fitsNames = def.signatureFor
     ? `Signature: only fits ${activeGemDef(def.signatureFor).name}`
-    : `Fits: ${ACTIVE_GEMS.filter((a) => def.fits.some((t) => a.tags.includes(t))).map((a) => a.name).join(', ')}`;
+    : `Fits: ${ACTIVE_GEMS.filter((a) => supportFits(def, a)).map((a) => a.name).join(', ')}`;
   return (
     <div className="tip gem-tip" style={{ ['--gem' as string]: ATTR_COLOR[def.attr] }}>
       <div className="gem-tip-head">
