@@ -1,0 +1,73 @@
+# Gear bases
+
+All bases live in `src/data/bases.ts`: 315 in all. Every attribute type, pure and hybrid, now has a ladder to level 60 (added 2026-10-26).
+
+## Tier ladders (pure str / dex / int)
+
+| Slot | Levels |
+|---|---|
+| Helmet, body armour | 1, 8, 16, 24, 32, 40, 47, 54, 60 |
+| Gloves, boots | 1, 8, 20, 28, 36, 44, 52, 60 (staggered, so some slot upgrades every few levels) |
+| Shields | str 1, 8, 16, 24, 32, 40, 47, 54, 60 · dex 8, 16, 24, 32, 40, 47, 54, 60 · int 6, 14, 22, 32, 40, 47, 54, 60 |
+| Mace (str) | 1, 12, 19, 26, 33, 40, 47, 54, 60 |
+| Bow (dex) | 1, 8, 16, 23, 30, 37, 44, 52, 60 |
+| Wand (int) | 1, 7, 14, 22, 30, 37, 44, 52, 60 |
+| Staff (int) | 4, 16, 28, 38, 48, 60 |
+
+Each new armour tier is a named set with matching art (one whole gear set from the pack per tier):
+
+| | 8 | 24 / 28 | 40 / 36 | 47 / 44 | 54 / 52 | 60 |
+|---|---|---|---|---|---|---|
+| Str | Blackened | Knight | Warlord | Dreadsteel | Champion | Sunforged |
+| Dex | Woodsman | Wolfpelt | Bonehunter | Hawkfeather | Thornwarden | Manticore |
+| Int | Acolyte | Magus | Stargazer | Raven | Hierophant | Seraph |
+
+## Tier ladders (hybrids)
+
+| Slot | Levels |
+|---|---|
+| Helmet, body armour | 8, 16, 24, 32, 40, 47, 54, 60 |
+| Gloves, boots | 12, 20, 30, 37, 44, 52, 60 |
+| Shields (new; there were none) | 12, 24, 36, 44, 52, 60 |
+| Sword (str/dex) | 1, 8, 16, 24, 34, 41, 48, 54, 60 |
+| Axe (str/dex) | 1, 10, 18, 25, 32, 39, 46, 53, 60 |
+| Dagger (dex/int) | 1, 7, 14, 21, 28, 35, 43, 51, 60 |
+| Sceptre (str/int) | 6, 15, 24, 32, 40, 47, 54, 60 |
+
+| | 8 / 12 | 16 / 20 | 24 / 30 | 32 | 40 / 37 | 47 / 44 | 54 / 52 | 60 |
+|---|---|---|---|---|---|---|---|---|
+| Str/Dex | Studded | Ringmail | Wyrmscale | Lamellar | Gladiator | Corsair | Bladedancer | Dragonscale |
+| Str/Int | Chaplain | Crusader | Templar | Inquisitor | Paladin | Zealot | Hallowed | Archon |
+| Dex/Int | Wayfarer | Shade | Duskweave | Phantom | Nightshade | Wraith | Umbral | Voidwalker |
+
+(Level 32 sets are helmet and body only.) A hybrid carries 60% of a pure base's value in each of its two defences. When one of them is energy shield, the ES is half that value, as before.
+
+## Base stats
+
+- Armour, evasion and energy shield follow `k × (level + 6)^1.4`. `k` is set per slot so the old level-32 (or level-20 gloves/boots) bases sit on the curve. A level-60 piece has about 2.2× the level-32 value.
+- Weapon average damage grows as `(level + 10)^1.15` from each family's old top base. The family's min:max spread stays the same.
+- Numbers are hardcoded per base. The curve is only where they came from.
+
+## Bonus implicits (level 40+)
+
+Every base of level 40+ gets one built-in mod. Hybrid values are a bit lower than pure ones. It scales from its level-40 value to its level-60 value (`ARMOUR_BONUS` and `bonus` on `WEAPON_FAMILIES`). Weapons keep their family implicit and add this one on top.
+
+| | Helmet | Body | Gloves | Boots | Shield |
+|---|---|---|---|---|---|
+| Str | +25–45 Life | 5–9% inc Life | 8–16% inc Phys | 3–7 Life regen/s | +4–8% all res |
+| Dex | +80–160 Accuracy | 10–20% inc Evasion | 4–8% Attack Speed | +10–20 Dex | 10–20% inc Crit Chance |
+| Int | +20–40 Mana | 10–20% inc ES | 4–8% Cast Speed | 15–30% Mana regen | 8–16% inc Spell Damage |
+| Str/Dex | +20–35 Life | 4–7% inc Life | 3–6% Attack Speed | +60–120 Accuracy | 2–4% Block |
+| Str/Int | +15–30 Mana | +6–10% all res | 8–14% inc Elemental | 2–5 Life regen/s | 6–12% inc Spell Damage |
+| Dex/Int | 8–15% inc Crit Chance | 8–15% inc ES | +8–15% Crit Multi | 10–20% Mana regen | 3–6% Cast Speed |
+
+| Mace | Bow | Wand | Staff | Sword | Axe | Dagger | Sceptre |
+|---|---|---|---|---|---|---|---|
+| 10–20% inc Phys | +10–20% Crit Multi | 5–10% Cast Speed | +30–60 Mana | 4–8% Attack Speed | 15–30% inc Bleed | +10–20% Crit Multi | 10–20% inc Spell Damage |
+
+## Known gaps
+
+- Monsters stop at level 33, so bases above 34 can't drop until Act 3+ exists. Smithing (level = base level) and the Town Market (character level) can't reach them either.
+- Affix tiers stop at item level 45 (`ILVLS` in `affixes.ts`), so level 45–60 bases roll the same mods as level 45.
+- Smithing uses mithril for everything from level 22 up. A level-60 base costs the same as a level-24 one.
+- New weapons and shields use placeholder icons. The pack has no spare pieces for them.
