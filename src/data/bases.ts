@@ -117,10 +117,18 @@ export const WEAPON_FAMILIES: Record<WeaponFamily, FamilyDef> = {
   },
 };
 
+/** Which weapon mod pool each family rolls from: hybrid attack/caster families roll from both. */
+const WEAPON_ROLES: Record<WeaponFamily, Tag[]> = {
+  mace: ['attack_weapon'], axe: ['attack_weapon'], sword: ['attack_weapon'], bow: ['attack_weapon'],
+  dagger: ['attack_weapon', 'caster_weapon'], sceptre: ['attack_weapon', 'caster_weapon'],
+  wand: ['caster_weapon'], staff: ['caster_weapon'],
+};
+
 const W = (id: string, name: string, family: WeaponFamily, reqLevel: number, phys: [number, number], speed: number, crit: number): BaseDef => {
   const fam = WEAPON_FAMILIES[family];
   return {
-    id, name, slot: 'weapon', reqLevel, tags: ['weapon'], phys, speed, crit, family,
+    id, name, slot: 'weapon', reqLevel, phys, speed, crit, family,
+    tags: ['weapon', ...WEAPON_ROLES[family], ...fam.attrs.map((a) => `${a}_weapon` as const)],
     implicits: [...fam.implicits(reqLevel), ...(fam.bonus && reqLevel >= IMPLICIT_LEVEL ? [bonusImplicit(fam.bonus, reqLevel)] : [])],
     ...(fam.twoHanded ? { twoHanded: true } : {}),
   };
@@ -157,7 +165,12 @@ const A = (
     name,
     slot,
     reqLevel,
-    tags: [slot === 'offhand' ? 'shield' : slot, 'armour', ...attrs.map((a) => `${a}_armour` as const)],
+    tags: [
+      slot === 'offhand' ? 'shield' : slot,
+      'armour',
+      ...attrs.map((a) => `${a}_armour` as const),
+      ...(attrs.length > 1 ? [`${type}_armour` as Tag] : []),
+    ],
     ...(attrs.includes('str') ? { armour: value } : {}),
     ...(attrs.includes('dex') ? { evasion: value } : {}),
     ...(attrs.includes('int') ? { energyShield: es } : {}),

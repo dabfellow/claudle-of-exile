@@ -580,6 +580,9 @@ function rollHit(
     for (const t of ['fire', 'cold', 'light'] as const) {
       const [alo, ahi] = d.hit[t];
       if (ahi > 0) byType[t] += rInt(ctx.rng, alo, ahi) * SPELL_ADDED_EFFECTIVENESS;
+      // "Adds X to Y Damage to Spells" counts in full
+      const [slo, shi] = d.spellHit[t];
+      if (shi > 0) byType[t] += rInt(ctx.rng, slo, shi);
     }
   }
 
@@ -704,6 +707,9 @@ function makeAilment(d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealt
 /** Coup de Grace with Needleworker's Wraps: also poisons and ignites. */
 const COUP_POISON = { kind: 'poison', pctPerSec: 30, durationMs: 4000 } as const;
 const COUP_IGNITE = { kind: 'ignite', pctPerSec: 40, durationMs: 3000 } as const;
+/** "Hits have X% chance to Poison / Ignite" from gear */
+const GEAR_POISON = { kind: 'poison', pctPerSec: 20, durationMs: 4000 } as const;
+const GEAR_IGNITE = { kind: 'ignite', pctPerSec: 25, durationMs: 3000 } as const;
 
 /** Apply a rolled hit to one monster, with its resistances and the skill's on-hit effects. */
 function hitMonster(
@@ -722,12 +728,16 @@ function hitMonster(
   const { def, mods } = nums;
   const e = def.effect;
   let dealt = 0;
+  let physPart = 0;
   for (const t of DAMAGE_TYPES) {
     let amt = byType[t] * factor;
     if (t !== 'phys') amt *= 1 - mon.res[t] / 100;
     if (t === 'light' && (mon.shockMs ?? 0) > 0) amt *= 1.1;
     dealt += amt;
+    if (t === 'phys') physPart = amt;
   }
+  // the physical share of the hit, for physical vs elemental leech
+  const physShare = dealt > 0 ? physPart / dealt : 0;
   const r = d.raw;
   if (mon.vulnMs > 0) dealt *= 1.15;
   if (mods.specials.has('shatterpoint') && mon.chillMs > 0) dealt *= 1.15;
@@ -755,7 +765,7 @@ function hitMonster(
   if (mechanicOf(s) === 'momentum' && def.tags.includes('attack')) gainMeter(s, d, 1);
 
   // leech
-  const lifeLeech = d.leechPct + mods.lifeLeech + (e.leechLife ?? 0);
+  const lifeLeech = d.leechPct + mods.lifeLeech + (e.leechLife ?? 0) + r.physLeech * physShare + r.elemLeech * (1 - physShare);
   if (lifeLeech > 0) {
     const gain = (dealt * lifeLeech) / 100;
     const overflow = s.life + gain - d.maxLife;
@@ -804,6 +814,9 @@ function hitMonster(
       gemId: def.id,
     });
   }
+  // gear: a chance for any hit to poison, and for any hit with fire damage to ignite
+  if (r.poisonOnHit && chance(ctx.rng, r.poisonOnHit / 100)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_POISON));
+  if (r.igniteOnHit && byType.fire > 0 && chance(ctx.rng, r.igniteOnHit / 100)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_IGNITE));
   return dealt;
 }
 
@@ -968,7 +981,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   c.hungerMs = HUNGER_MS;
   s.lifetime.kills += 1;
   const xp = monsterXp(mon) * xpLevelMultiplier(characterLevel(s), mon.level);
-  grantXp(s, ctx, 'combat', xp);
+  grantXp(s, ctx, 'combat', xp * (1 + d.charXp / 100));
   grantGemXp(s, ctx, xp, d.attributes);
   gainCharges(s, mon.isBoss ? 8 : 1, d);
   rollLoot(s, ctx, mon, zone, d);
@@ -1119,6 +1132,14 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   }
   // staves: a flat chance to block, capped at 75%
   if (r.blockChance > 0 && kind !== 'nova' && chance(ctx.rng, Math.min(75, r.blockChance) / 100)) {
+    ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
+    if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
+    martyrFill(s, ctx, d, raw);
+    riposte(s, ctx, d, mon);
+    return;
+  }
+  // spell block: any monster spell, telegraphed novas included
+  if (r.spellBlock > 0 && (kind === 'nova' || (kind === 'hit' && mon.attackKind === 'spell')) && chance(ctx.rng, Math.min(75, r.spellBlock) / 100)) {
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
     if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
     martyrFill(s, ctx, d, raw);

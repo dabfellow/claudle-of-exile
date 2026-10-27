@@ -46,6 +46,9 @@ export function openKinds(item: Item, bias?: ModBias): ('prefix' | 'suffix')[] {
   return kinds;
 }
 
+/** How many of an affix's highest unlocked tiers can roll. */
+const TIER_WINDOW = 5;
+
 /** Adds one random modifier. Returns false if there's no room. */
 export function addRandomMod(item: Item, rng: Rng, bias?: ModBias): boolean {
   const kinds = openKinds(item, bias);
@@ -54,7 +57,8 @@ export function addRandomMod(item: Item, rng: Rng, bias?: ModBias): boolean {
   const base = baseDef(item.baseId);
   const affix = pickWeighted(rng, eligibleAffixes(item, kind, bias), (a) => spawnWeight(a, base, bias));
   if (!affix) return false;
-  const tiers = affix.tiers.map((t, i) => ({ t, i })).filter((x) => x.t.ilvl <= item.ilvl);
+  // only the top TIER_WINDOW tiers the item level allows can roll, so high-level items stop rolling starter tiers
+  const tiers = affix.tiers.map((t, i) => ({ t, i })).filter((x) => x.t.ilvl <= item.ilvl).slice(-TIER_WINDOW);
   // higher tiers are rarer: each step up is ~70% as likely as the one below
   const chosen = pickWeighted(rng, tiers, (x) => Math.pow(0.7, x.i))!;
   const mod: RolledMod = { affixId: affix.id, tier: chosen.i, values: rollValues(affix, chosen.i, rng) };

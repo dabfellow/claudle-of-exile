@@ -25,9 +25,38 @@ export function itemStats(item: Item): Partial<Record<StatKey, number>> {
   for (const imp of base.implicits ?? []) add(imp.stat, imp.value);
   for (const m of [...item.prefixes, ...item.suffixes]) {
     const a = affixDef(m.affixId);
-    a.stats.forEach((k, i) => add(k, m.values[i] ?? 0));
+    a.stats.forEach((k, i) => add(k, m.values[a.linked ? 0 : i] ?? 0));
   }
   return out;
+}
+
+/**
+ * Local mods (docs/GEAR.md): on an armour piece or shield, flat and % defence mods change only that
+ * piece's own armour, evasion and energy shield. On a weapon, flat and % physical damage change only
+ * that weapon's damage. Rings, amulets and belts have no local stats: everything there is global.
+ */
+const LOCAL_DEFENCE_KEYS: StatKey[] = ['armour', 'evasion', 'energyShield', 'localArmourPct', 'localEvasionPct', 'localEsPct'];
+const LOCAL_WEAPON_KEYS: StatKey[] = ['physMin', 'physMax', 'localPhysPct'];
+
+/** An armour piece's armour, evasion and energy shield after its local mods. */
+export function itemDefences(item: Item): { armour: number; evasion: number; energyShield: number } {
+  const base = baseDef(item.baseId);
+  const st = itemStats(item);
+  const local = (b: number | undefined, flat: StatKey, pct: StatKey) => Math.round(((b ?? 0) + (st[flat] ?? 0)) * (1 + (st[pct] ?? 0) / 100));
+  return {
+    armour: local(base.armour, 'armour', 'localArmourPct'),
+    evasion: local(base.evasion, 'evasion', 'localEvasionPct'),
+    energyShield: local(base.energyShield, 'energyShield', 'localEsPct'),
+  };
+}
+
+/** A weapon's physical damage after its local mods. */
+export function weaponPhys(item: Item): [number, number] {
+  const base = baseDef(item.baseId);
+  const st = itemStats(item);
+  const [lo, hi] = base.phys ?? [2, 5];
+  const mult = 1 + (st.localPhysPct ?? 0) / 100;
+  return [Math.round((lo + (st.physMin ?? 0)) * mult), Math.round((hi + (st.physMax ?? 0)) * mult)];
 }
 
 /** Stats from allocated character-tree nodes, including chosen mastery bonuses. */
@@ -66,6 +95,8 @@ export interface Derived {
   armour: number;
   evasion: number;
   hit: Record<DamageType, [number, number]>;
+  /** flat elemental damage added to spells only (full effectiveness) */
+  spellHit: Record<'fire' | 'cold' | 'light', [number, number]>;
   /** increased-damage multipliers, for spells and skills that don't use weapon hits */
   physMult: number;
   elemMult: number;
@@ -87,6 +118,7 @@ export interface Derived {
   itemRarity: number;
   skillSpeed: number;
   skillXp: number;
+  charXp: number;
   flaskEffect: number;
   flaskCharges: number;
   avgHit: number;
@@ -113,12 +145,18 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
   for (const item of Object.values(s.equipment)) {
     if (!item) continue;
     const base = baseDef(item.baseId);
-    if (base.slot !== 'weapon') {
-      st.armour += base.armour ?? 0;
-      st.evasion += base.evasion ?? 0;
-      st.energyShield += base.energyShield ?? 0;
+    const mods = itemStats(item);
+    if (base.tags.includes('armour')) {
+      const def = itemDefences(item);
+      st.armour += def.armour;
+      st.evasion += def.evasion;
+      st.energyShield += def.energyShield;
+      for (const k of LOCAL_DEFENCE_KEYS) delete mods[k];
+    } else if (base.slot === 'weapon') {
+      // counted in the weapon's own damage (weaponPhys)
+      for (const k of LOCAL_WEAPON_KEYS) delete mods[k];
     }
-    addStats(st, itemStats(item));
+    addStats(st, mods);
   }
   addStats(st, passiveStats(s.passives, s.masteries));
   const cls = classDef(s.character.classId);
@@ -140,8 +178,10 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
 export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   const raw = rawStats(s, buffs);
   const combatLevel = characterLevel(s);
-  const weapon = s.equipment.weapon ? baseDef(s.equipment.weapon.baseId) : null;
-  const offWeapon = s.equipment.offhand && baseDef(s.equipment.offhand.baseId).slot === 'weapon' ? baseDef(s.equipment.offhand.baseId) : null;
+  const weaponItem = s.equipment.weapon;
+  const offItem = s.equipment.offhand && baseDef(s.equipment.offhand.baseId).slot === 'weapon' ? s.equipment.offhand : null;
+  const weapon = weaponItem ? baseDef(weaponItem.baseId) : null;
+  const offWeapon = offItem ? baseDef(offItem.baseId) : null;
   const dualWield = !!(weapon && offWeapon);
   // dual wielding alternates hands, so base damage and crit are the average of the two
   const both = <T,>(pick: (w: NonNullable<typeof weapon>) => T, avg: (a: T, b: T) => T, fallback: T): T =>
@@ -165,7 +205,8 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   const maxMana = raw.bloodPact
     ? 0
     : Math.max(0, Math.round((30 + 6 * (combatLevel - 1) + raw.mana + attributes.int * A.int.manaPer) * (1 + raw.manaPct / 100)));
-  const maxEs = Math.round(raw.energyShield * (1 + (raw.energyShieldPct + attributes.int * A.int.esPctPer) / 100));
+  // mana gained as extra energy shield isn't scaled by increased energy shield
+  const maxEs = Math.round(raw.energyShield * (1 + (raw.energyShieldPct + attributes.int * A.int.esPctPer) / 100) + (maxMana * raw.manaAsEs) / 100);
   let armour = Math.round(raw.armour * (1 + raw.armourPct / 100) * (1 + raw.armourMore / 100));
   let evasion = Math.round(raw.evasion * (1 + (raw.evasionPct + attributes.dex * A.dex.evasionPctPer) / 100));
   if (raw.bastion) {
@@ -174,7 +215,9 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   }
   const accuracy = Math.round(2 * combatLevel + raw.accuracy + attributes.dex * A.dex.accuracyPer);
 
-  const wPhys = both<[number, number]>((w) => w.phys ?? [2, 5], (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], [2, 5]);
+  const mainPhys = weaponItem ? weaponPhys(weaponItem) : null;
+  const offPhys = offItem ? weaponPhys(offItem) : null;
+  const wPhys: [number, number] = mainPhys ? (offPhys ? [(mainPhys[0] + offPhys[0]) / 2, (mainPhys[1] + offPhys[1]) / 2] : mainPhys) : [2, 5];
   const physMult = 1 + (raw.physPct + attributes.str * A.str.physPctPer) / 100;
   const elemBase = raw.elemPct + attributes.int * A.int.elemPctPer;
   const elemMult = 1 + elemBase / 100;
@@ -189,6 +232,12 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     fire: [Math.round(raw.fireMin * typeMult.fire), Math.round(raw.fireMax * typeMult.fire)],
     cold: [Math.round(raw.coldMin * typeMult.cold), Math.round(raw.coldMax * typeMult.cold)],
     light: [Math.round(raw.lightMin * typeMult.light), Math.round(raw.lightMax * typeMult.light)],
+  };
+  // "Adds X to Y Damage to Spells": spells only, at full effectiveness
+  const spellHit: Record<'fire' | 'cold' | 'light', [number, number]> = {
+    fire: [Math.round(raw.spellFireMin * typeMult.fire), Math.round(raw.spellFireMax * typeMult.fire)],
+    cold: [Math.round(raw.spellColdMin * typeMult.cold), Math.round(raw.spellColdMax * typeMult.cold)],
+    light: [Math.round(raw.spellLightMin * typeMult.light), Math.round(raw.spellLightMax * typeMult.light)],
   };
   // dual wielding swings at the main hand's speed
   const attackSpeed = (1 + (weapon?.speed ?? 0) / 100) * (1 + raw.attackSpeedPct / 100) * (1 + raw.attackSpeedMore / 100);
@@ -217,6 +266,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     armour,
     evasion,
     hit,
+    spellHit,
     physMult,
     elemMult,
     typeMult,
@@ -232,6 +282,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     itemRarity: raw.itemRarity,
     skillSpeed: raw.skillSpeed,
     skillXp: raw.skillXp,
+    charXp: raw.charXp,
     flaskEffect: raw.flaskEffect,
     flaskCharges: raw.flaskCharges,
     avgHit,

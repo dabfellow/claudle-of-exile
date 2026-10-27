@@ -50,7 +50,10 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
-- Gear above level 34 can't drop until Act 3+; affix tiers stop at item level 45; smithing uses mithril for everything from level 22 up; new weapons and shields have placeholder icons ([GEAR.md](GEAR.md) → Known gaps).
+- Affix pool numbers are a vibe pass, not simmed: 30% leech, ~200% rarity per item, ~294% elemental at item level 80. Re-run the sim and look at sustain and drop rates ([GEAR.md](GEAR.md) → Affix pool).
+- Attack speed and crit chance on weapons are still global (PoE has them local); base implicits like a mace's % physical are global too.
+- Uniques with % defence mods (e.g. 40% increased Evasion on boots) became local, so they're weaker than before.
+- Gear above level 34 can't drop until Act 3+; smithing uses mithril for everything from level 22 up; new weapons and shields have placeholder icons ([GEAR.md](GEAR.md) → Known gaps).
 - Spells look weak against attacks: Mage and Templar take low-level Lacerate/Backstab over Spark, Fireball and Glacial Lance (sim, 2026-10-26).
 - Cooldowns for attacks so the best one isn't just spammed (you: later).
 - At 1440p/4K pages stop at 1280px wide (`.page` max-width), leaving wide empty margins; consider a wider cap on big screens (your call).
@@ -78,6 +81,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Affix pool pass: 9 tiers to item level 80 (top 5 roll); attack/caster weapon tags; local defences and weapon physical, global versions on jewellery only; caster mods (spell damage, flat spell damage at full effectiveness, cast speed, spell crit, element %, mana cost, mana as ES, spell block); hybrid defence mods; ailment mods on jewellery; physical/elemental leech 5–30%; PoE-style attributes; Item Rarity a prefix at 4×; character XP replaces skill XP; life regen halved; % elemental tripled; resistances less dominant on armour; shields only roll their own defences ([GEAR.md](GEAR.md) → Affix pool). Not tested, by request — done 2026-10-27
 - [x] Skill pool pass: attack gems scale the whole skill per level (+6% of base each), not each hit; skills tagged `hit` (deals damage) and `cast` (has a cast time), so damage supports don't fit Frost Ward or Meditate, Faster Casts only fits Fireball and Glacial Lance, Lingering no longer fits Parry; gem level needs character level up to 80 at gem level 20 (attributes 8 → 245; Lacerate and Backstab ×1.3); loaded saves drop over-levelled gems back (xp kept) and unsocket supports that no longer fit; Judgement Hammer, Glacial Lance, Frost Needle, Barrage, Pummel, Feint and Ice Shot buffed; Poison Dart is a Main skill ([BALANCE.md](BALANCE.md)) — done 2026-10-27
 - [x] Gear dump, part 2: hybrid armour, first hybrid shields, and swords/axes/daggers/sceptres to level 60 (107 new, 315 total), bonus implicits on 40+, matching gear-set art ([GEAR.md](GEAR.md)) — done 2026-10-26
 - [x] Gear dump, part 1: pure str/dex/int bases to level 60 (113 new, 208 total): armour, shields, maces, bows, wands, staves, with progressively better base stats and a bonus implicit on everything 40+; new armour tiers use matching gear-set art ([GEAR.md](GEAR.md)) — done 2026-10-26

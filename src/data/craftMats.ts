@@ -17,14 +17,18 @@ export interface FossilDef {
   desc: string;
 }
 
-const DEFENCES = ['flat_armour', 'inc_armour', 'flat_evasion', 'inc_evasion', 'flat_es', 'inc_es'];
+const DEFENCES = [
+  'flat_armour', 'inc_armour', 'inc_armour_global', 'flat_evasion', 'inc_evasion', 'inc_evasion_global', 'flat_es', 'inc_es', 'inc_es_global',
+  'inc_armour_evasion', 'inc_armour_es', 'inc_evasion_es', 'flat_armour_evasion', 'flat_armour_es', 'flat_evasion_es', 'es_and_mana',
+];
+const ADDED = ['added_phys', 'added_fire', 'added_cold', 'added_light', 'spell_fire', 'spell_cold', 'spell_light'];
 
 export const FOSSILS: FossilDef[] = [
-  { id: 'scorched_fossil', name: 'Scorched Fossil', color: '#e2603f', more: ['added_fire', 'fire_res'], mult: 5, block: ['added_cold', 'cold_res'], desc: 'More fire modifiers, no cold modifiers' },
-  { id: 'frigid_fossil', name: 'Frigid Fossil', color: '#7fc8f8', more: ['added_cold', 'cold_res'], mult: 5, block: ['added_fire', 'fire_res'], desc: 'More cold modifiers, no fire modifiers' },
-  { id: 'metallic_fossil', name: 'Metallic Fossil', color: '#f2d14c', more: ['added_light', 'light_res'], mult: 5, block: ['added_phys', 'inc_phys'], desc: 'More lightning modifiers, no physical modifiers' },
-  { id: 'dense_fossil', name: 'Dense Fossil', color: '#9b8e7e', more: DEFENCES, mult: 4, block: ['added_phys', 'added_fire', 'added_cold', 'added_light'], desc: 'More defence modifiers, no added damage' },
-  { id: 'serrated_fossil', name: 'Serrated Fossil', color: '#c9c9d3', more: ['added_phys', 'inc_phys', 'attack_speed', 'crit_chance', 'crit_multi'], mult: 3, block: DEFENCES, desc: 'More attack modifiers, no defence modifiers' },
+  { id: 'scorched_fossil', name: 'Scorched Fossil', color: '#e2603f', more: ['added_fire', 'spell_fire', 'inc_fire', 'fire_res'], mult: 5, block: ['added_cold', 'spell_cold', 'inc_cold', 'cold_res'], desc: 'More fire modifiers, no cold modifiers' },
+  { id: 'frigid_fossil', name: 'Frigid Fossil', color: '#7fc8f8', more: ['added_cold', 'spell_cold', 'inc_cold', 'cold_res'], mult: 5, block: ['added_fire', 'spell_fire', 'inc_fire', 'fire_res'], desc: 'More cold modifiers, no fire modifiers' },
+  { id: 'metallic_fossil', name: 'Metallic Fossil', color: '#f2d14c', more: ['added_light', 'spell_light', 'inc_light', 'light_res'], mult: 5, block: ['added_phys', 'inc_phys', 'inc_phys_global'], desc: 'More lightning modifiers, no physical modifiers' },
+  { id: 'dense_fossil', name: 'Dense Fossil', color: '#9b8e7e', more: DEFENCES, mult: 4, block: ADDED, desc: 'More defence modifiers, no added damage' },
+  { id: 'serrated_fossil', name: 'Serrated Fossil', color: '#c9c9d3', more: ['added_phys', 'inc_phys', 'inc_phys_global', 'attack_speed', 'crit_chance', 'crit_multi'], mult: 3, block: DEFENCES, desc: 'More attack modifiers, no defence modifiers' },
 ];
 
 export interface EssenceDef {

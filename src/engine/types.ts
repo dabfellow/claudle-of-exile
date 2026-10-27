@@ -23,6 +23,13 @@ export type EquipSlot = Exclude<ItemSlotType, 'ring'> | 'ring1' | 'ring2' | 'rin
 
 export type Tag =
   | 'weapon'
+  /** weapon sub-tags: which mod pool a weapon rolls from (daggers and sceptres have both) */
+  | 'attack_weapon'
+  | 'caster_weapon'
+  /** a weapon's attributes, for attribute mods */
+  | 'str_weapon'
+  | 'dex_weapon'
+  | 'int_weapon'
   | 'shield'
   | 'helmet'
   | 'body'
@@ -35,6 +42,10 @@ export type Tag =
   | 'str_armour'
   | 'dex_armour'
   | 'int_armour'
+  /** hybrid armour pieces also carry their pair tag, for hybrid defence mods */
+  | 'str_dex_armour'
+  | 'str_int_armour'
+  | 'dex_int_armour'
   | 'jewellery';
 
 /** Every stat a character can have. Add new ones here; Stats and the stat engine pick them up. */
@@ -57,6 +68,11 @@ export const STAT_KEYS = [
   'evadeSpeed', 'manaRegenFlat', 'lifeFlaskRecovery', 'manaFlaskRecovery', 'utilityFlaskDuration',
   'bloodPact', 'windDancer', 'mindOverFlesh', 'steadyHand', 'arcaneRecursion', 'bastion', 'energyShield',
   'energyShieldPct', 'esRechargePct',
+  // local mods (docs/GEAR.md): change only the item they're on
+  'localPhysPct', 'localArmourPct', 'localEvasionPct', 'localEsPct',
+  'physLeech', 'elemLeech', 'charXp', 'manaAsEs', 'spellBlock', 'poisonOnHit', 'igniteOnHit',
+  // flat damage added to spells at full effectiveness
+  'spellFireMin', 'spellFireMax', 'spellColdMin', 'spellColdMax', 'spellLightMin', 'spellLightMax',
   // class mechanic knobs (docs/CLASSES.md): only the class with that mechanic uses them
   'rageMax', 'rageEffect', 'rageDecay', 'rageRegen', 'rageOnHitTaken', 'endlessFury',
   'ripostePct', 'riposteCooldown', 'riposteHeal', 'riposteCrit', 'riposteBleed', 'perfectForm',

@@ -7,7 +7,7 @@ import { defaultSlot } from '../../engine/equipment';
 import { describeMod, itemName, tierLabel, tierRangeText } from '../../engine/items';
 import { mechanicOf, STAT_MECHANIC } from '../../engine/mechanics';
 import { game } from '../../game';
-import { deriveStats, type Derived } from '../../engine/stats';
+import { deriveStats, itemDefences, weaponPhys, type Derived } from '../../engine/stats';
 import type { EquipSlot, GameState, Item, RolledMod } from '../../engine/types';
 import { Icon } from './Icon';
 import { togglePin, Tooltip, useAltKey, Art, artUrl } from './common';
@@ -92,6 +92,10 @@ export function ItemTip({
   const name = itemName(item);
   const cmp = state && compare ? compareItem(state, item, into) : null;
   const implicits = (base.implicits ?? []).filter((i) => i.text);
+  // shown after local mods; magic-coloured when a mod changed them, as in PoE
+  const phys = base.phys ? weaponPhys(item) : null;
+  const def = itemDefences(item);
+  const aug = (now: number | undefined, was: number | undefined) => (now !== was ? 'mod' : undefined);
   return (
     <div className={`tip item-tip rar-${item.rarity}`}>
       <div className="item-tip-head">
@@ -102,10 +106,10 @@ export function ItemTip({
         <div className="muted small">
           {RARITY_LABEL[item.rarity]} {base.family ? `${base.twoHanded ? 'two-handed ' : ''}${WEAPON_FAMILIES[base.family].name.toLowerCase()}` : base.slot} · Item Level {item.ilvl}
         </div>
-        {base.phys && (
+        {base.phys && phys && (
           <>
             <div>
-              Physical Damage: <b>{base.phys[0]}–{base.phys[1]}</b>
+              Physical Damage: <b className={aug(phys[1], base.phys[1])}>{phys[0]}–{phys[1]}</b>
             </div>
             <div>
               Attack Time: <b>{(BASE_ATTACK_MS / (1 + (base.speed ?? 0) / 100) / 1000).toFixed(2)}s</b>
@@ -113,19 +117,19 @@ export function ItemTip({
             </div>
           </>
         )}
-        {base.armour ? (
+        {base.tags.includes('armour') && def.armour ? (
           <div>
-            Armour: <b>{base.armour}</b>
+            Armour: <b className={aug(def.armour, base.armour)}>{def.armour}</b>
           </div>
         ) : null}
-        {base.evasion ? (
+        {base.tags.includes('armour') && def.evasion ? (
           <div>
-            Evasion Rating: <b>{base.evasion}</b>
+            Evasion Rating: <b className={aug(def.evasion, base.evasion)}>{def.evasion}</b>
           </div>
         ) : null}
-        {base.energyShield ? (
+        {base.tags.includes('armour') && def.energyShield ? (
           <div>
-            Energy Shield: <b>{base.energyShield}</b>
+            Energy Shield: <b className={aug(def.energyShield, base.energyShield)}>{def.energyShield}</b>
           </div>
         ) : null}
         <Requirements item={item} state={state} />

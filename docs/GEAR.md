@@ -65,9 +65,29 @@ Every base of level 40+ gets one built-in mod. Hybrid values are a bit lower tha
 |---|---|---|---|---|---|---|---|
 | 10–20% inc Phys | +10–20% Crit Multi | 5–10% Cast Speed | +30–60 Mana | 4–8% Attack Speed | 15–30% inc Bleed | +10–20% Crit Multi | 10–20% inc Spell Damage |
 
+## Affix pool (2026-10-27)
+
+All rollable mods are in `src/data/affixes.ts`. Each has 9 tiers, unlocking at item levels 1, 8, 16, 25, 35, 45, 55, 68 and 80 (`ILVLS`). Only the top 5 tiers an item's level allows can roll (`TIER_WINDOW` in `items.ts`). Each step up is still ~70% as likely as the one below.
+
+**Tags decide the pool.** Weapons carry `attack_weapon` (mace, axe, sword, bow), `caster_weapon` (wand, staff) or both (dagger, sceptre), plus `str_weapon` / `dex_weapon` / `int_weapon`. Hybrid armour also carries its pair tag (`str_dex_armour` …).
+
+**Local vs global.**
+- On armour and shields, flat and % defence mods are local: they change only that piece's armour, evasion or energy shield (`itemDefences` in `stats.ts`). The tooltip shows the result in magic blue.
+- On weapons, flat and % physical damage are local (`weaponPhys`).
+- The "global" % defence and % physical mods roll only on rings, amulets and belts. Flat mods there (life, flat armour on belts, added damage on rings) are global too.
+- Base implicits (e.g. a mace's % physical) are still global.
+
+**Groups.**
+- Attack: local % physical, added physical/fire/cold/lightning, % elemental (3× the old numbers), attack speed, crit, accuracy.
+- Caster: % spell damage, "Adds X to Y Damage to Spells" (full effectiveness, unlike normal added damage's 70%), % fire/cold/lightning, cast speed, spell crit chance and multiplier, reduced mana cost, % mana, energy shield + mana, mana as extra energy shield, spell block, mana regen.
+- Defence: local and global armour/evasion/energy shield; hybrid % and flat mods (weight 150 on their hybrid bases, vs 100 for a single defence); resistances (weight 40 on armour, 80 on jewellery); reduced elemental damage taken (body, shield); life regen (half the old numbers, weight 60).
+- Leech: physical and elemental leech, 5% to 30% of that damage type, for attacks and spells.
+- Ailments (rings, amulets, belts only): % bleed/poison/ignite damage, % ailment damage, ailment duration, chance to bleed (attacks), poison (any hit) or ignite (hits with fire damage).
+- Attributes: armour and weapons roll only their own attribute, at weight 25. Jewellery rolls any.
+- Utility: Item Rarity is a prefix now, at 4× the old numbers. "% increased Experience gained" (character XP) replaced Skill Experience; the old `skill_xp` mod no longer rolls but still works on existing items and the Miner's Lament unique.
+
 ## Known gaps
 
 - Monsters stop at level 33, so bases above 34 can't drop until Act 3+ exists. Smithing (level = base level) and the Town Market (character level) can't reach them either.
-- Affix tiers stop at item level 45 (`ILVLS` in `affixes.ts`), so level 45–60 bases roll the same mods as level 45.
 - Smithing uses mithril for everything from level 22 up. A level-60 base costs the same as a level-24 one.
 - New weapons and shields use placeholder icons. The pack has no spare pieces for them.

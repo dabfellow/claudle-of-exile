@@ -9,7 +9,7 @@ import { settleGems } from './gems';
 import { connectedWithout } from './passives';
 import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
-import type { FlaskInstance, GameState } from './types';
+import type { FlaskInstance, GameState, Item } from './types';
 
 // kept from the game's old name: changing it would orphan every existing save
 export const SAVE_KEY = 'claudle-of-exile-save';
@@ -165,6 +165,20 @@ const MIGRATIONS: Record<number, Migration> = {
     // the old level 1 bench already salvaged: count it as built so nobody loses that
     if ((hideout.bench ?? 1) < 2) hideout.bench = 2;
     raw.hideout = hideout;
+  },
+  // the affix pool pass (docs/GEAR.md): Item Rarity became a prefix, so move it on existing items
+  17: (raw) => {
+    const s = raw as unknown as GameState;
+    const fix = (item: Item | undefined) => {
+      if (!item || item.uniqueId) return;
+      const moved = item.suffixes.filter((m) => m.affixId === 'item_rarity');
+      if (!moved.length) return;
+      item.suffixes = item.suffixes.filter((m) => m.affixId !== 'item_rarity');
+      item.prefixes.push(...moved);
+    };
+    for (const list of [s.inventory, s.ground, s.offlineHaul, ...(s.stash ?? [])]) list?.forEach(fix);
+    Object.values(s.equipment ?? {}).forEach(fix);
+    s.vendor?.stock?.forEach((o) => fix(o.item));
   },
 };
 
