@@ -6397,21 +6397,9 @@ button.star {
   align-items: baseline;
 }
 
-/* worn gear: weapons and armour on top, jewellery under */
-.home-gear {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.home-gear-slot {
-  display: block;
-  aspect-ratio: 1;
-}
-
-.home-gear-slot .cell {
-  width: 100%;
-  height: 100%;
+/* worn gear: the Equipment page's paper doll, centred */
+.home-doll {
+  justify-items: center;
 }
 
 /* quick buttons to every page you use from home */

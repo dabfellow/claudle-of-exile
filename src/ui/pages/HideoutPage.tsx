@@ -8,14 +8,12 @@ import { skillSummary } from '../../engine/gems';
 import { nextUpgradeCost, stationLevel, stationLockReason, upgradeStation } from '../../engine/hideout';
 import { pointsLeft } from '../../engine/passives';
 import { deriveStats } from '../../engine/stats';
-import { SKILL_IDS, type EquipSlot, type GameState, type SkillId } from '../../engine/types';
+import { SKILL_IDS, type GameState, type SkillId } from '../../engine/types';
 import { levelOf, maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
 import { Badge, fmt, GameIcon, MatIcon, ProgressBar, sceneStyle, Tooltip } from '../components/common';
-import { Icon } from '../components/Icon';
-import { ItemCell } from '../components/ItemView';
 import { materialSources } from '../components/materialSources';
-import { SLOT_LABEL } from '../components/PaperDoll';
+import { PaperDoll } from '../components/PaperDoll';
 import type { Page } from '../Layout';
 import { Crest } from '../screens/Screens';
 
@@ -177,28 +175,12 @@ function StatsCard({ go }: { go: (p: Page) => void }) {
 
 // ---------- gear ----------
 
-const GEAR_ORDER: EquipSlot[] = ['weapon', 'offhand', 'helmet', 'body', 'gloves', 'boots', 'belt', 'amulet', 'ring1', 'ring2', 'ring3', 'ring4'];
-
+/** The same paper doll as the Equipment page; any click opens that page. */
 function GearCard({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   return (
-    <HomeCard title="Equipment" onOpen={() => go('equipment')}>
-      <div className="home-gear">
-        {GEAR_ORDER.map((slot) => {
-          const item = s.equipment[slot];
-          return item ? (
-            <span key={slot} className="home-gear-slot">
-              <ItemCell item={item} state={s} onClick={() => go('equipment')} />
-            </span>
-          ) : (
-            <span key={slot} className="home-gear-slot">
-              <span className="cell empty-slot" title={`${SLOT_LABEL[slot]} (empty)`}>
-                <Icon name={slot.startsWith('ring') ? 'ring' : slot} size={20} color="var(--line-2)" />
-              </span>
-            </span>
-          );
-        })}
-      </div>
+    <HomeCard title="Equipment" onOpen={() => go('equipment')} className="home-doll">
+      <PaperDoll s={s} onItem={() => go('equipment')} onEmpty={() => go('equipment')} onFlask={() => go('equipment')} />
     </HomeCard>
   );
 }
