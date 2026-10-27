@@ -375,7 +375,7 @@ const GEM_LEVELS: Record<string, number> = {
   barrage: 10, fireball: 10, infernal_blow: 10,
   berserk: 12, consecrate: 12, meditate: 12,
   judgement_hammer: 16, backstab: 16, glacial_lance: 16,
-  lacerate: 18,
+  lacerate: 35,
   // supports
   faster_attacks: 4, faster_casts: 4, efficiency: 4,
   brutality: 8, elemental_focus: 8, life_leech: 8, mana_leech: 8, pierce: 8,

@@ -82,6 +82,7 @@ describe('skill gems', () => {
     grantGemXp(s, ctx(), gemXpForLevel(10), { str: gemAttrReq(4), dex: 0, int: 0 });
     expect(strike.level).toBe(4);
     expect(gemAttrReq(1)).toBeLessThanOrEqual(8); // every class can use any level-1 gem
+    veteran(s); // past Lacerate's level requirement, so only its Dexterity stops it
     const lacerate = createSkillGem(s, 'lacerate', 10);
     s.gems.push(lacerate);
     expect(placeOnBar(s, lacerate.uid, 2)).toMatch(/Requires \d+ Dexterity/);
@@ -229,6 +230,7 @@ describe('combat 2.0', () => {
 
   it('ailments deal damage over time', () => {
     const { s, c } = arena(['lacerate'], [dummy()], 'ranger');
+    veteran(s); // Lacerate is a late gem
     s.skillBar[0]!.rule = { when: 'always' };
     run(s, c, 1500);
     const mon = s.combat!.monsters[0];
