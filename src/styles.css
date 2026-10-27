@@ -4458,6 +4458,14 @@ img.art.mat-art {
   background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(255, 255, 255, 0.02) 6px 12px), var(--bg-2);
 }
 
+.doll-flasks .cell.empty-slot.clickable {
+  cursor: pointer;
+}
+
+.doll-flasks .cell.empty-slot.clickable:hover {
+  border-color: var(--accent);
+}
+
 .flask-key {
   position: absolute;
   top: 3px;
@@ -4898,6 +4906,22 @@ img.art.mat-art {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+/* all Stash tabs share one grid cell: the body keeps the tallest tab's height */
+.stash-views {
+  display: grid;
+}
+
+.stash-view {
+  grid-area: 1 / 1;
+  min-width: 0;
+  display: grid;
+}
+
+.stash-view.off {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .currency-row {

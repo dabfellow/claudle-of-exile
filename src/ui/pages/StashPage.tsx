@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { activeGemDef, supportGemDef } from '../../data/gems';
 import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
 import { STASH_PAGE_SIZE } from '../../data/hideout';
+import { wearFlask } from '../../engine/combat';
 import { buyStashPage, stashedItems, stashItems, stashPagePrice, takeFromStash } from '../../engine/storage';
 import { game } from '../../game';
 import type { GameState } from '../../engine/types';
@@ -69,9 +70,7 @@ function MaterialTile({ s, id }: { s: GameState; id: string }) {
         <div className="tip">
           <div className="tip-title">{def.name}</div>
           {def.desc && <div className="muted">{def.desc}</div>}
-          <div className="dim small">
-            {def.value} gold each at the trader
-          </div>
+          <div className="dim small">{def.value} gold each at the trader</div>
         </div>
       }
     >
@@ -103,7 +102,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
       </PageHeader>
       <div className="stash-top">
         <div className="card doll-card">
-          <PaperDoll s={s} onItem={(_, it) => openItemMenu(it.uid)} onFlask={() => undefined} emptyFlaskTitle="Equip flasks at the Crafting Bench" />
+          <PaperDoll s={s} onItem={(_, it) => openItemMenu(it.uid)} onFlask={() => setTab('flasks')} onEmptyFlask={() => setTab('flasks')} emptyFlaskTitle="Click to pick from your spare flasks" />
         </div>
         <Inventory
           s={s}
@@ -117,106 +116,117 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
       </div>
       <Tabs tabs={tabs} value={tab} onChange={setTab} />
 
-      {tab === 'gear' && <GearPages s={s} page={here} setPage={setPage} />}
+      {/* every tab sits in the same cell, so the panel is always as tall as the tallest and switching never jumps */}
+      <div className="stash-views">
+        <StashTab on={tab === 'gear'}>
+          <GearPages s={s} page={here} setPage={setPage} />
+        </StashTab>
 
-      {tab === 'currency' && (
-        <div className="card stash-panel">
-          {CURRENCY_LAYOUT.map((g) => (
-            <div key={g.label} className="currency-group">
-              <div className="section-label">{g.label}</div>
-              <div className="currency-row">
-                {g.ids.map((id) => (
-                  <CurrencySlot key={id} s={s} id={id} />
-                ))}
+        <StashTab on={tab === 'currency'}>
+          <div className="card stash-panel">
+            {CURRENCY_LAYOUT.map((g) => (
+              <div key={g.label} className="currency-group">
+                <div className="section-label">{g.label}</div>
+                <div className="currency-row">
+                  {g.ids.map((id) => (
+                    <CurrencySlot key={id} s={s} id={id} />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        </StashTab>
 
-      {tab === 'materials' && (
-        <div className="card stash-panel">
-          {MATERIAL_GROUPS.map((g) => (
-            <div key={g.label} className="currency-group">
-              <div className="section-label">{g.label}</div>
-              <div className="material-grid">
-                {MATERIALS.filter((m) => g.kinds.includes(m.kind)).map((m) => (
-                  <MaterialTile key={m.id} s={s} id={m.id} />
-                ))}
+        <StashTab on={tab === 'materials'}>
+          <div className="card stash-panel">
+            {MATERIAL_GROUPS.map((g) => (
+              <div key={g.label} className="currency-group">
+                <div className="section-label">{g.label}</div>
+                <div className="material-grid">
+                  {MATERIALS.filter((m) => g.kinds.includes(m.kind)).map((m) => (
+                    <MaterialTile key={m.id} s={s} id={m.id} />
+                  ))}
+                </div>
               </div>
+            ))}
+          </div>
+        </StashTab>
+
+        <StashTab on={tab === 'gems'}>
+          <div className="card stash-panel">
+            <div className="row">
+              <div className="section-label" style={{ margin: 0 }}>
+                On your skill bar
+              </div>
+              <span className="spacer" />
+              <button className="btn sm" onClick={() => go('skills')}>
+                Manage skills
+              </button>
             </div>
-          ))}
-        </div>
-      )}
-
-
-      {tab === 'gems' && (
-        <div className="card stash-panel">
-          <div className="row">
-            <div className="section-label" style={{ margin: 0 }}>
-              On your skill bar
+            <div className="gem-bag">
+              {s.skillBar.filter(Boolean).map((g) => (
+                <Tooltip key={g!.uid} content={<GemTip gem={g} state={s} />}>
+                  <div className="gem-card">
+                    <GemIcon def={activeGemDef(g!.gemId)} size={30} />
+                    <span>
+                      <b>{activeGemDef(g!.gemId).name}</b> <span className="dim">Lv {g!.level}</span>
+                    </span>
+                  </div>
+                </Tooltip>
+              ))}
             </div>
-            <span className="spacer" />
-            <button className="btn sm" onClick={() => go('skills')}>
-              Manage skills
-            </button>
+            <div className="section-label">Spare skill gems ({s.gems.length})</div>
+            {s.gems.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, especially bosses.</EmptyState>}
+            <div className="gem-bag">
+              {s.gems.map((g) => (
+                <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
+                  <div className="gem-card">
+                    <GemIcon def={activeGemDef(g.gemId)} size={30} />
+                    <span>
+                      <b>{activeGemDef(g.gemId).name}</b> <span className="dim">Lv {g.level}</span>
+                    </span>
+                  </div>
+                </Tooltip>
+              ))}
+            </div>
+            <div className="section-label">Support gems ({s.supportGems.length})</div>
+            {s.supportGems.length === 0 && <EmptyState small>No loose support gems. Cut them with Gemcutting or find them on monsters.</EmptyState>}
+            <div className="gem-bag">
+              {s.supportGems.map((g) => (
+                <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
+                  <div className="gem-card">
+                    <GemIcon def={supportGemDef(g.supportId)} size={26} support />
+                    <b>{supportGemDef(g.supportId).name}</b>
+                  </div>
+                </Tooltip>
+              ))}
+            </div>
           </div>
-          <div className="gem-bag">
-            {s.skillBar.filter(Boolean).map((g) => (
-              <Tooltip key={g!.uid} content={<GemTip gem={g} state={s} />}>
-                <div className="gem-card">
-                  <GemIcon def={activeGemDef(g!.gemId)} size={30} />
-                  <span>
-                    <b>{activeGemDef(g!.gemId).name}</b> <span className="dim">Lv {g!.level}</span>
-                  </span>
-                </div>
-              </Tooltip>
-            ))}
-          </div>
-          <div className="section-label">Spare skill gems ({s.gems.length})</div>
-          {s.gems.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, especially bosses.</EmptyState>}
-          <div className="gem-bag">
-            {s.gems.map((g) => (
-              <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
-                <div className="gem-card">
-                  <GemIcon def={activeGemDef(g.gemId)} size={30} />
-                  <span>
-                    <b>{activeGemDef(g.gemId).name}</b> <span className="dim">Lv {g.level}</span>
-                  </span>
-                </div>
-              </Tooltip>
-            ))}
-          </div>
-          <div className="section-label">Support gems ({s.supportGems.length})</div>
-          {s.supportGems.length === 0 && <EmptyState small>No loose support gems. Cut them with Gemcutting or find them on monsters.</EmptyState>}
-          <div className="gem-bag">
-            {s.supportGems.map((g) => (
-              <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
-                <div className="gem-card">
-                  <GemIcon def={supportGemDef(g.supportId)} size={26} support />
-                  <b>{supportGemDef(g.supportId).name}</b>
-                </div>
-              </Tooltip>
-            ))}
-          </div>
-        </div>
-      )}
+        </StashTab>
 
-      {tab === 'flasks' && (
-        <div className="card stash-panel">
-          <div className="row">
-            <span className="dim small">
-              Spare flasks. Equip, craft and enchant them at the Crafting Bench.
-            </span>
-            <span className="spacer" />
-            <button className="btn sm" onClick={() => go('bench')}>
-              Open Crafting Bench
-            </button>
+        <StashTab on={tab === 'flasks'}>
+          <div className="card stash-panel">
+            <div className="row">
+              <span className="dim small">Spare flasks. Click one to put it on your belt; craft and enchant them at the Crafting Bench.</span>
+              <span className="spacer" />
+              <button className="btn sm" onClick={() => go('bench')}>
+                Open Crafting Bench
+              </button>
+            </div>
+            {s.flaskStash.length === 0 && <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>}
+            <FlaskShelf flasks={s.flaskStash} onPick={(f) => game.act((st) => wearFlask(st, f.uid))} />
           </div>
-          {s.flaskStash.length === 0 && <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>}
-          <FlaskShelf flasks={s.flaskStash} />
-        </div>
-      )}
+        </StashTab>
+      </div>
+    </div>
+  );
+}
+
+/** One Stash tab. Hidden tabs keep their space (see .stash-views) but can't be seen, hovered or tabbed to. */
+function StashTab({ on, children }: { on: boolean; children: ReactNode }) {
+  return (
+    <div className={`stash-view ${on ? '' : 'off'}`} aria-hidden={!on}>
+      {children}
     </div>
   );
 }
@@ -236,12 +246,7 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
               {p.length >= STASH_PAGE_SIZE && <span className="bad"> ●</span>}
             </button>
           ))}
-          <button
-            className="stash-page-tab buy"
-            disabled={(s.bank.gold ?? 0) < price}
-            title={`Buy stash page ${s.stash.length + 1}`}
-            onClick={() => game.act((st, ctx) => buyStashPage(st, ctx))}
-          >
+          <button className="stash-page-tab buy" disabled={(s.bank.gold ?? 0) < price} title={`Buy stash page ${s.stash.length + 1}`} onClick={() => game.act((st, ctx) => buyStashPage(st, ctx))}>
             + <MatIcon id="gold" size={12} /> {fmt(price)}
           </button>
         </div>
@@ -250,10 +255,27 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
       </div>
       <div className="row" style={{ marginBottom: 10 }}>
         <span className="dim small">
-          Page {page + 1} · <span className="num">{items.length}/{STASH_PAGE_SIZE}</span> · click an item for Equip, To bag, Salvage
+          Page {page + 1} ·{' '}
+          <span className="num">
+            {items.length}/{STASH_PAGE_SIZE}
+          </span>{' '}
+          · click an item for Equip, To bag, Salvage
         </span>
         <span className="spacer" />
-        <button className="btn sm" disabled={!items.length} onClick={() => game.act((st, ctx) => void takeFromStash(st, ctx, (st.stash[page] ?? []).map((i) => i.uid)))}>
+        <button
+          className="btn sm"
+          disabled={!items.length}
+          onClick={() =>
+            game.act(
+              (st, ctx) =>
+                void takeFromStash(
+                  st,
+                  ctx,
+                  (st.stash[page] ?? []).map((i) => i.uid),
+                ),
+            )
+          }
+        >
           Take all
         </button>
       </div>

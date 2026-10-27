@@ -30,6 +30,7 @@ export function PaperDoll({
   onItem,
   onFlask,
   onEmpty,
+  onEmptyFlask,
   selected,
   emptyFlaskTitle,
 }: {
@@ -38,6 +39,8 @@ export function PaperDoll({
   /** clicking an empty gear slot */
   onEmpty?: (slot: EquipSlot) => void;
   onFlask: (slot: number, flask: FlaskInstance) => void;
+  /** clicking an empty flask slot */
+  onEmptyFlask?: (slot: number) => void;
   /** uid of the highlighted item or flask */
   selected?: number | null;
   emptyFlaskTitle?: string;
@@ -86,7 +89,12 @@ export function PaperDoll({
               </button>
             </Tooltip>
           ) : (
-            <div key={i} className="cell empty-slot flask-cell" title={emptyFlaskTitle ?? `Flask slot ${i + 1} (empty)`}>
+            <div
+              key={i}
+              className={`cell empty-slot flask-cell ${onEmptyFlask ? 'clickable' : ''}`}
+              title={emptyFlaskTitle ?? `Flask slot ${i + 1} (empty)`}
+              onClick={onEmptyFlask ? () => onEmptyFlask(i) : undefined}
+            >
               <span className="flask-key">{i + 1}</span>
             </div>
           ),

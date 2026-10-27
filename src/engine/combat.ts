@@ -1522,6 +1522,14 @@ export function equipFlask(s: GameState, uid: number, slot: number): void {
   s.flaskSlots[slot] = f;
 }
 
+/** Put a spare flask in the first empty belt slot. Returns why it couldn't, or null. */
+export function wearFlask(s: GameState, uid: number): string | null {
+  const slot = s.flaskSlots.findIndex((f) => !f);
+  if (slot < 0) return 'Your belt is full: swap a flask on the Equipment page';
+  equipFlask(s, uid, slot);
+  return null;
+}
+
 export function unequipFlask(s: GameState, slot: number): void {
   const f = s.flaskSlots[slot];
   if (!f) return;

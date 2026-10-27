@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeCtx } from '../src/engine/context';
-import { startCombat, useFlask } from '../src/engine/combat';
+import { startCombat, useFlask, wearFlask } from '../src/engine/combat';
 import { applyFlaskOrb, enchantFlask, FLASK_STASH_CAP, flaskName, flaskStats, newFlask, rollFlask, stashFlask } from '../src/engine/flasks';
 import { rerollCost, rerollVendor } from '../src/engine/hideout';
 import { seeded } from '../src/engine/rng';
@@ -34,6 +34,20 @@ describe('flask items', () => {
     expect(rerollVendor(s, c)).toBeNull();
     expect(rerollCost(s)).toBe(base * 4);
     expect(s.vendor.refreshAt).toBe(at);
+  });
+
+  it('a spare flask goes into the first empty belt slot, and says so when the belt is full', () => {
+    const s = newGame(1);
+    s.flaskSlots = s.flaskSlots.map((f, i) => (i === 1 ? null : f ?? newFlask(s, 'life_small', 1)));
+    const f = newFlask(s, 'granite', 30);
+    s.flaskStash.push(f);
+    expect(wearFlask(s, f.uid)).toBeNull();
+    expect(s.flaskSlots[1]).toBe(f);
+    expect(s.flaskStash).not.toContain(f);
+    const g = newFlask(s, 'granite', 30);
+    s.flaskStash.push(g);
+    expect(wearFlask(s, g.uid)).toMatch(/full/);
+    expect(s.flaskStash).toContain(g);
   });
 
   it('magic flask modifiers change charges and recovery', () => {

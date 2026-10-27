@@ -66,6 +66,8 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Stash tabs no longer jump: every tab shares one panel as tall as the tallest (the Gear pages), so switching keeps the page height and scroll — done 2026-10-26
+- [x] Flasks equip without the Crafting Bench (player report): click a flask slot on the Equipment page to pick a spare or take one off; click a spare in Stash → Flasks to put it on your belt; Lacerate needs level 35; Hideout gear card is the Equipment paper doll — done 2026-10-26
 - [x] Hideout layout B (stats, equipment, quick buttons; land here on load); Town with Magic, Armour and Gem shops; station upgrades unlock tiers with steep costs (Forge, Alchemy Table tiers; Stash pages; Bench built for salvage, auto-crafting last; Town Market stock/restock); Map Device locked until Act 6; gem level requirements and rare level-appropriate drops; save v17 ([TOWN.md](TOWN.md), [BALANCE.md](BALANCE.md)) — done 2026-10-26
 - [x] Act 1 called balanced (you, 2026-10-26): monsters life ×1.4 / damage ×1.15; most classes 3h40–6h, Warrior ~12h; class balance isn't a goal, finding what works is ([BALANCE.md](BALANCE.md)) — done 2026-10-26
 - [x] Skill gems need their own attribute (8 at gem level 1, 44 at 5, 89 at 10, 116 at 13): short of it a gem stops levelling, can't go on the bar, and stops firing; tooltip shows it. Attack gems gain +8% weapon damage per level (was 3%) so a capped off-class attack falls behind. Bot respects requirements and slots instant spells into spare slots — done 2026-10-26

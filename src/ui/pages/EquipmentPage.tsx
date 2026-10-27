@@ -1,5 +1,5 @@
 import { monsterDamage } from '../../data/zones';
-import { unequipFlask } from '../../engine/combat';
+import { equipFlask, unequipFlask } from '../../engine/combat';
 import { useState } from 'react';
 import { equip, equipReason, slotsFor } from '../../engine/equipment';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, RES_CAP, type Derived } from '../../engine/stats';
@@ -7,6 +7,7 @@ import type { EquipSlot, GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { fmt, GameIcon, PageHeader, ProgressBar } from '../components/common';
 import { Icon } from '../components/Icon';
+import { FlaskShelf } from '../components/FlaskView';
 import { ItemCell } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
 import { PaperDoll, SLOT_LABEL } from '../components/PaperDoll';
@@ -163,18 +164,49 @@ function SlotPicker({ s, slot, onDone }: { s: GameState; slot: EquipSlot; onDone
   );
 }
 
+/** Spare flasks to put in one belt slot, or take the one there off. */
+function FlaskPicker({ s, slot, onDone }: { s: GameState; slot: number; onDone: () => void }) {
+  const worn = s.flaskSlots[slot];
+  return (
+    <div className="slot-picker">
+      <div className="row" style={{ gap: 8 }}>
+        <b className="small">Flask slot {slot + 1}</b>
+        <span className="dim small">{worn ? 'Swap for a spare flask, or take it off' : 'From your spare flasks'}</span>
+        <span className="grow" />
+        {worn && (
+          <button className="btn sm" onClick={() => (game.act((st) => unequipFlask(st, slot)), onDone())}>
+            Take off
+          </button>
+        )}
+        <button className="btn sm ghost" title="Close" onClick={onDone}>
+          <Icon name="close" size={12} />
+        </button>
+      </div>
+      {s.flaskStash.length === 0 ? (
+        <div className="dim small">No spare flasks. Brew them with Alchemy, loot them or buy them in Town.</div>
+      ) : (
+        <FlaskShelf flasks={s.flaskStash} onPick={(f) => (game.act((st) => equipFlask(st, f.uid, slot)), onDone())} />
+      )}
+    </div>
+  );
+}
+
 function CenterColumn({ s, d }: { s: GameState; d: Derived }) {
   const [picking, setPicking] = useState<EquipSlot | null>(null);
+  const [flaskSlot, setFlaskSlot] = useState<number | null>(null);
+  const pickFlask = (i: number) => (setPicking(null), setFlaskSlot(flaskSlot === i ? null : i));
   return (
     <div className="card doll-card">
       <PaperDoll
         s={s}
         onItem={(_, it) => openItemMenu(it.uid)}
-        onEmpty={(slot) => setPicking(picking === slot ? null : slot)}
-        onFlask={(i) => game.act((st) => unequipFlask(st, i))}
-        emptyFlaskTitle="Equip flasks at the Crafting Bench"
+        onEmpty={(slot) => (setFlaskSlot(null), setPicking(picking === slot ? null : slot))}
+        onFlask={pickFlask}
+        onEmptyFlask={pickFlask}
+        emptyFlaskTitle="Click to choose a flask"
       />
       {picking && !s.equipment[picking] && <SlotPicker s={s} slot={picking} onDone={() => setPicking(null)} />}
+      {flaskSlot !== null && <FlaskPicker s={s} slot={flaskSlot} onDone={() => setFlaskSlot(null)} />}
       <div className="attr-strip">
         <span title="+1 Life per 2, +1% physical damage per 5">
           <b style={{ color: 'var(--str)' }}>{d.attributes.str}</b> Strength
@@ -217,7 +249,7 @@ export function EquipmentPage() {
   return (
     <div className="page wide">
       <PageHeader title="Equipment">
-        Click gear for its menu, a flask to take it off, or an empty slot to fill it from your bag (that's how you dual wield). Hover inventory items to compare; right-click
+        Click gear for its menu, a flask slot to swap or take off a flask, or an empty slot to fill it from your bag (that's how you dual wield). Hover inventory items to compare; right-click
         any item to pin it.
       </PageHeader>
       <div className="equip-layout">
