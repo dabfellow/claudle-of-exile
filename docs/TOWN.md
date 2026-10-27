@@ -14,7 +14,7 @@ Three shops share one restock timer and one paid "restock now". They sell **dece
 | Shop | Sells |
 |---|---|
 | Magic shop | Wands, staves and other caster weapons; rings, amulets, belts; flasks; currency orbs |
-| Armour shop | Other weapons, shields, and armour |
+| Weapon & Armour shop | Other weapons (swords, axes, daggers, bows, maces), shields, and armour |
 | Gem shop | Skill and support gems up to your level (gems are rare drops now) |
 
 The **Town Market** station (was Trader's Stall) gives every shop more stock and faster restocks.

@@ -32,7 +32,7 @@ const SHOPS: { id: ShopId; name: string; keeper: string; blurb: string; portrait
   },
   {
     id: 'armour',
-    name: 'Armour shop',
+    name: 'Weapon & Armour shop',
     keeper: 'Varro the Armourer',
     blurb: 'Blades, bows, maces and shields; helmets, body armour, gloves and boots.',
     portrait: 'portraits/trader.png',

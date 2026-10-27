@@ -53,7 +53,7 @@ export function upgradeStation(s: GameState, ctx: Ctx, id: StationId): string | 
 
 // ---------- Town shops ----------
 
-/** Caster weapons go to the Magic shop with the jewellery; every other weapon and all armour to the Armour shop. */
+/** Caster weapons go to the Magic shop with the jewellery; every other weapon and all armour to the Weapon & Armour shop. */
 const CASTER_FAMILIES = new Set(['wand', 'staff', 'sceptre']);
 const JEWELLERY = new Set(['ring', 'amulet', 'belt']);
 
@@ -106,7 +106,7 @@ export function refreshVendor(s: GameState, rng: Rng): void {
       add({ shop: 'magic', kind: 'currency', currencyId: c.id, qty, price: Math.round(c.value * qty * 4) });
     }
   }
-  // Armour shop: every other weapon, shields and armour
+  // Weapon & Armour shop: every other weapon, shields and armour
   for (let i = 0; i < slots; i++) {
     const item = shopItem(s, rng, lvl, usable.filter((b) => !magicBase(b)), ilvl)!;
     add({ shop: 'armour', kind: 'item', item, price: shopItemPrice(item) });

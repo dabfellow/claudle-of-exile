@@ -58,7 +58,8 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - Cooldowns for attacks so the best one isn't just spammed (you: later).
 - At 1440p/4K pages stop at 1280px wide (`.page` max-width), leaving wide empty margins; consider a wider cap on big screens (your call).
 - The sim (`scripts/sim.ts`) doesn't smith or cut gems, so the Smithing/Gemcutting cost change isn't reflected in balance runs.
-- Smithing has 315 recipes in one list since the gear dump (was 95); group by slot (weapons, armour, jewellery).
+- Campaign screen: move things around and give it art (you: "doesn't look terrible", 2026-10-27; art item is under Character feedback).
+- Bench orb bar: you want more things in the banner clickable later; fossils/essences live under Equipment for now.
 - Quivers don't exist yet; when added they go in the off hand (bows are two-handed today, so that needs a rule).
 - Uniques with "% increased Mana Regeneration" (Wellspring, …) now only scale flat mana regen; give them some flat regen if they feel dead.
 Parked 2026-10-24 until more of the game is built: testing, sim balancing and art.
@@ -81,6 +82,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] UI pass 4 (your walkthrough, 2026-10-27): Hideout gear click opens the item menu (take off, to stash, salvage); Combat out of a fight shows only "Pick an area" and life/DPS; "Armour shop" renamed Weapon & Armour shop (it always sold swords, axes, bows); Crafting Bench: orb bar pinned on top, selected item pinned on the left while you scroll, Equipment top right with Auto-crafting and Special crafting (fossils, essences) under it, Bench Crafts beside; Skills page shows the bar like combat (#1–#6 priority), click a skill for a popup with priority, trigger, supports, swap and remove; Smithing split into slot tabs (Weapons … Jewellery) with collapsible tiers, newest tier open — done 2026-10-27
 - [x] Affix pool pass: 9 tiers to item level 80 (top 5 roll); attack/caster weapon tags; local defences and weapon physical, global versions on jewellery only; caster mods (spell damage, flat spell damage at full effectiveness, cast speed, spell crit, element %, mana cost, mana as ES, spell block); hybrid defence mods; ailment mods on jewellery; physical/elemental leech 5–30%; PoE-style attributes; Item Rarity a prefix at 4×; character XP replaces skill XP; life regen halved; % elemental tripled; resistances less dominant on armour; shields only roll their own defences ([GEAR.md](GEAR.md) → Affix pool). Not tested, by request — done 2026-10-27
 - [x] Skill pool pass: attack gems scale the whole skill per level (+6% of base each), not each hit; skills tagged `hit` (deals damage) and `cast` (has a cast time), so damage supports don't fit Frost Ward or Meditate, Faster Casts only fits Fireball and Glacial Lance, Lingering no longer fits Parry; gem level needs character level up to 80 at gem level 20 (attributes 8 → 245; Lacerate and Backstab ×1.3); loaded saves drop over-levelled gems back (xp kept) and unsocket supports that no longer fit; Judgement Hammer, Glacial Lance, Frost Needle, Barrage, Pummel, Feint and Ice Shot buffed; Poison Dart is a Main skill ([BALANCE.md](BALANCE.md)) — done 2026-10-27
 - [x] Gear dump, part 2: hybrid armour, first hybrid shields, and swords/axes/daggers/sceptres to level 60 (107 new, 315 total), bonus implicits on 40+, matching gear-set art ([GEAR.md](GEAR.md)) — done 2026-10-26

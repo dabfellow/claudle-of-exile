@@ -15,6 +15,7 @@ import {
   expandSockets,
   gemUseReason,
   gemProgress,
+  skillNumbers,
   placeOnBar,
   removeFromBar,
   setRule,
@@ -199,125 +200,225 @@ function SocketPicker({ s, gem, index, onDone }: { s: GameState; gem: SkillGemIn
   );
 }
 
-function SlotRow({
-  s,
-  slot,
-  pickedGem,
-  pickedSupport,
-  onPlaced,
-}: {
-  s: GameState;
-  slot: number;
-  pickedGem: number | null;
-  pickedSupport: number | null;
-  onPlaced: () => void;
-}) {
+/** One slot of the bar, drawn like the combat skill bar: click to set it up, or to drop a picked gem in. */
+function SlotTile({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; slot: number; pickedGem: number | null; onOpen: () => void; onPlaced: () => void }) {
   const gem = s.skillBar[slot];
-  const key = SKILL_KEYS[slot];
-  const [openSocket, setOpenSocket] = useState<number | null>(null);
+  const click = () => {
+    if (pickedGem === null) return onOpen();
+    if (!game.act((st) => placeOnBar(st, pickedGem, slot))) onPlaced();
+  };
   if (!gem) {
     return (
-      <div
-        className={`card gem-slot empty ${pickedGem !== null ? 'target' : ''}`}
-        onClick={() => {
-          if (pickedGem === null) return;
-          game.act((st) => placeOnBar(st, pickedGem, slot));
-          onPlaced();
-        }}
-      >
-        <span className="slot-key">{key}</span>
-        <span className="dim">{pickedGem !== null ? 'Place the selected skill here' : 'Empty slot — pick a skill gem below'}</span>
-      </div>
+      <button className={`skill-btn empty setup ${pickedGem !== null ? 'target' : ''}`} onClick={click}>
+        <span className="slot-key">{SKILL_KEYS[slot]}</span>
+        <span className="skill-prio">#{slot + 1}</span>
+        <span className="dim small">{pickedGem !== null ? 'Place here' : 'Empty · click to add'}</span>
+      </button>
     );
   }
   syncSockets(gem);
   const def = activeGemDef(gem.gemId);
+  const nums = skillNumbers(deriveStats(s, []), gem);
+  return (
+    <Tooltip content={<GemTip gem={gem} state={s} />}>
+      <button className={`skill-btn setup ${pickedGem !== null ? 'target' : ''}`} onClick={click}>
+        <span className="slot-key">{SKILL_KEYS[slot]}</span>
+        <span className="skill-prio">#{slot + 1}</span>
+        <span className="skill-gem">
+          <GemIcon def={def} size={40} />
+        </span>
+        <span className="skill-name">{def.name}</span>
+        <span className="skill-meta">
+          Lv {gem.level} · {nums.manaCost > 0 ? <span style={{ color: 'var(--mana-2)' }}>{nums.manaCost} mana</span> : <span className="dim">free</span>}
+        </span>
+        <span className="skill-supports">
+          {Array.from({ length: supportSlots(gem) }, (_, i) => {
+            const sup = gem.supports[i];
+            return sup ? <GemIcon key={i} def={supportGemDef(sup.supportId)} size={16} support /> : <span key={i} className="socket-dot" />;
+          })}
+        </span>
+        <span className="skill-rule">{ruleText(gem.rule)}</span>
+      </button>
+    </Tooltip>
+  );
+}
+
+/** The support sockets of one skill: click a filled one to take it out, an empty one to see what fits. */
+function Sockets({ s, gem, pickedSupport, onPlaced }: { s: GameState; gem: SkillGemInstance; pickedSupport: number | null; onPlaced: () => void }) {
+  const [openSocket, setOpenSocket] = useState<number | null>(null);
   const sockets = supportSlots(gem);
   const pickedDef = pickedSupport !== null ? s.supportGems.find((x) => x.uid === pickedSupport) : null;
   const fitReason = pickedDef ? supportReason(gem, pickedDef.supportId) : null;
-
+  const canDrop = !!pickedDef && !fitReason;
+  const drop = (i: number) => {
+    game.act((st) => socketSupport(st, gem.uid, pickedSupport!, i));
+    onPlaced();
+  };
   return (
-    <div className={`card gem-slot ${pickedGem !== null ? 'target' : ''}`} onClick={() => {
-      if (pickedGem === null) return;
-      game.act((st) => placeOnBar(st, pickedGem, slot));
-      onPlaced();
-    }}>
-      <span className="slot-key">{key}</span>
-      <Tooltip content={<GemTip gem={gem} state={s} />}>
-        <span>
-          <GemIcon def={def} size={46} />
-        </span>
-      </Tooltip>
-      <div className="gem-slot-main">
-        <div className="row" style={{ gap: 8 }}>
-          <b>{def.name}</b>
-          <span className="nav-badge">Lv {gem.level}</span>
-          <span className="dim small">{def.role}</span>
-        </div>
-        <ProgressBar value={gemProgress(gem)} color="var(--gem)" className="thin" />
-        <div className="sockets">
-          {Array.from({ length: sockets }, (_, i) => {
-            const sup = gem.supports[i];
-            const canDrop = pickedDef && !fitReason;
-            return sup ? (
-              <Tooltip key={i} content={<SupportTip supportId={sup.supportId} />}>
-                <button
-                  className={`socket filled ${canDrop ? 'target' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (canDrop) {
-                      game.act((st) => socketSupport(st, gem.uid, pickedSupport!, i));
-                      onPlaced();
-                    } else game.act((st) => unsocketSupport(st, gem.uid, i));
-                  }}
-                  title="Click to remove"
-                >
-                  <GemIcon def={supportGemDef(sup.supportId)} size={24} support />
-                  <span>{supportGemDef(sup.supportId).name}</span>
-                </button>
-              </Tooltip>
-            ) : (
+    <>
+      <div className="sockets">
+        {Array.from({ length: sockets }, (_, i) => {
+          const sup = gem.supports[i];
+          return sup ? (
+            <Tooltip key={i} content={<SupportTip supportId={sup.supportId} />}>
               <button
-                key={i}
-                className={`socket ${canDrop ? 'target' : ''} ${openSocket === i ? 'open' : ''}`}
-                disabled={!!pickedDef && !canDrop}
-                title={pickedDef ? (fitReason ?? 'Socket here') : 'Show the supports that fit'}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (canDrop) {
-                    game.act((st) => socketSupport(st, gem.uid, pickedSupport!, i));
-                    onPlaced();
-                  } else setOpenSocket(openSocket === i ? null : i);
-                }}
+                className={`socket filled ${canDrop ? 'target' : ''}`}
+                onClick={() => (canDrop ? drop(i) : game.act((st) => unsocketSupport(st, gem.uid, i)))}
+                title={canDrop ? 'Swap in the picked support' : 'Click to remove'}
               >
-                <span className="socket-hole" />
-                <span className="dim">{pickedDef ? (fitReason ?? 'Socket here') : 'Empty socket'}</span>
+                <GemIcon def={supportGemDef(sup.supportId)} size={24} support />
+                <span>{supportGemDef(sup.supportId).name}</span>
               </button>
-            );
-          })}
-          {(s.bank.expansion ?? 0) > 0 && gem.extraSlots < 1 && (
-            <button className="btn sm" onClick={(e) => (e.stopPropagation(), game.act((st, ctx) => expandSockets(st, ctx, gem.uid)))}>
-              + Socket (Orb of Expansion)
+            </Tooltip>
+          ) : (
+            <button
+              key={i}
+              className={`socket ${canDrop ? 'target' : ''} ${openSocket === i ? 'open' : ''}`}
+              disabled={!!pickedDef && !canDrop}
+              title={pickedDef ? (fitReason ?? 'Socket here') : 'Show the supports that fit'}
+              onClick={() => (canDrop ? drop(i) : setOpenSocket(openSocket === i ? null : i))}
+            >
+              <span className="socket-hole" />
+              <span className="dim">{pickedDef ? (fitReason ?? 'Socket here') : 'Empty socket'}</span>
             </button>
-          )}
-        </div>
-        {openSocket !== null && !gem.supports[openSocket] && (
-          <SocketPicker s={s} gem={gem} index={openSocket} onDone={() => setOpenSocket(null)} />
+          );
+        })}
+        {(s.bank.expansion ?? 0) > 0 && gem.extraSlots < 1 && (
+          <button className="btn sm" onClick={() => game.act((st, ctx) => expandSockets(st, ctx, gem.uid))}>
+            + Socket (Orb of Expansion)
+          </button>
         )}
       </div>
-      <div onClick={(e) => e.stopPropagation()}>
-        <RuleEditor s={s} slot={slot} gem={gem} />
-        <div className="row" style={{ marginTop: 6, justifyContent: 'flex-end' }}>
-          <button className="btn sm ghost" disabled={slot === 0} title="Higher priority" onClick={() => game.act((st) => placeOnBar(st, gem.uid, slot - 1))}>
-            ↑
-          </button>
-          <button className="btn sm ghost" disabled={slot === SKILL_BAR_SLOTS - 1} title="Lower priority" onClick={() => game.act((st) => placeOnBar(st, gem.uid, slot + 1))}>
-            ↓
-          </button>
-          <button className="btn sm ghost" title="Remove from bar" onClick={() => game.act((st) => removeFromBar(st, slot))}>
+      {openSocket !== null && !gem.supports[openSocket] && <SocketPicker s={s} gem={gem} index={openSocket} onDone={() => setOpenSocket(null)} />}
+    </>
+  );
+}
+
+/** Set up one bar slot: its supports, when it fires, and its place in the priority order. */
+function SlotModal({
+  s,
+  slot,
+  setSlot,
+  pickedSupport,
+  onPlaced,
+  onClose,
+}: {
+  s: GameState;
+  slot: number;
+  setSlot: (n: number) => void;
+  pickedSupport: number | null;
+  onPlaced: () => void;
+  onClose: () => void;
+}) {
+  const gem = s.skillBar[slot];
+  const d = deriveStats(s, []);
+  const [choosing, setChoosing] = useState(!gem);
+  const usable = [...s.gems].sort((a, b) => b.level - a.level || activeGemDef(a.gemId).name.localeCompare(activeGemDef(b.gemId).name));
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="card modal slot-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="card-title">
+          <span className="slot-key">{SKILL_KEYS[slot]}</span>
+          {gem ? (
+            <>
+              <Tooltip content={<GemTip gem={gem} state={s} />}>
+                <span>
+                  <GemIcon def={activeGemDef(gem.gemId)} size={34} />
+                </span>
+              </Tooltip>
+              <span>
+                {activeGemDef(gem.gemId).name} <span className="nav-badge">Lv {gem.level}</span>
+              </span>
+            </>
+          ) : (
+            <span>Empty slot</span>
+          )}
+          <span className="grow" />
+          <button className="btn sm ghost" title="Close" onClick={onClose}>
             <Icon name="close" size={12} />
           </button>
         </div>
+        {gem && <ProgressBar value={gemProgress(gem)} color="var(--gem)" className="thin" />}
+
+        {gem && !choosing && (
+          <>
+            <div className="section-label">Priority</div>
+            <div className="prio-pick">
+              {Array.from({ length: SKILL_BAR_SLOTS }, (_, i) => (
+                <button
+                  key={i}
+                  className={`gem-chip ${i === slot ? 'active' : ''}`}
+                  title={i === slot ? 'Current slot' : s.skillBar[i] ? `Swap with ${activeGemDef(s.skillBar[i]!.gemId).name}` : 'Move here'}
+                  onClick={() => {
+                    if (i === slot) return;
+                    game.act((st) => placeOnBar(st, gem.uid, i));
+                    setSlot(i);
+                  }}
+                >
+                  #{i + 1} · {SKILL_KEYS[i]}
+                </button>
+              ))}
+            </div>
+            <div className="dim small">Cooldown skills run first, highest priority first; then the first attack whose trigger passes.</div>
+
+            <div className="section-label">Trigger</div>
+            <RuleEditor s={s} slot={slot} gem={gem} />
+
+            <div className="section-label">Supports</div>
+            <Sockets s={s} gem={gem} pickedSupport={pickedSupport} onPlaced={onPlaced} />
+
+            <div className="row" style={{ justifyContent: 'flex-end', gap: 6, marginTop: 4 }}>
+              <button className="btn sm" onClick={() => setChoosing(true)}>
+                Swap skill
+              </button>
+              <button
+                className="btn sm danger"
+                onClick={() => {
+                  game.act((st) => removeFromBar(st, slot));
+                  onClose();
+                }}
+              >
+                Remove from bar
+              </button>
+            </div>
+          </>
+        )}
+
+        {choosing && (
+          <>
+            <div className="section-label">{gem ? 'Swap for' : 'Put a skill gem here'}</div>
+            {usable.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, and the Town's Gem shop sells them.</EmptyState>}
+            <div className="gem-bag">
+              {usable.map((g) => {
+                const reason = gemUseReason(d.combatLevel, d.attributes, g);
+                return (
+                  <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
+                    <button
+                      className={`gem-card ${reason ? 'nofit' : ''}`}
+                      disabled={!!reason}
+                      onClick={() => {
+                        if (!game.act((st) => placeOnBar(st, g.uid, slot))) setChoosing(false);
+                      }}
+                    >
+                      <GemIcon def={activeGemDef(g.gemId)} size={30} />
+                      <span>
+                        <b>{activeGemDef(g.gemId).name}</b>
+                        <span className="dim"> Lv {g.level}</span>
+                      </span>
+                    </button>
+                  </Tooltip>
+                );
+              })}
+            </div>
+            {gem && (
+              <div className="row" style={{ justifyContent: 'flex-end' }}>
+                <button className="btn sm ghost" onClick={() => setChoosing(false)}>
+                  Back
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -334,6 +435,7 @@ export function SkillGemsPage() {
   const [supSearch, setSupSearch] = useState('');
   const [supAttr, setSupAttr] = useState<GemAttr | null>(null);
   const [supFits, setSupFits] = useState(false);
+  const [openSlot, setOpenSlot] = useState<number | null>(null);
   const clear = () => {
     setPickedGem(null);
     setPickedSupport(null);
@@ -367,16 +469,33 @@ export function SkillGemsPage() {
           )
         }
       >
-        Skills with a cooldown (guards, buffs, spells, area attacks) go first, top to bottom, when their rule passes. Then your first attack whose rule passes and
-        that you have the mana for; attacks have no cooldown, so mana is their limit. Otherwise a free Default Attack. Press <b>Q–Y</b> in combat to cast a slot
-        manually.
+        Your bar runs by priority, #1 first: skills with a cooldown (guards, buffs, spells, area attacks) fire when their trigger passes, then your first attack
+        whose trigger passes and that you have the mana for, otherwise a free Default Attack. Press <b>Q–Y</b> in combat to cast a slot manually.
       </PageHeader>
 
-      <div className="grid" style={{ gap: 10 }}>
-        {Array.from({ length: SKILL_BAR_SLOTS }, (_, i) => (
-          <SlotRow key={i} s={s} slot={i} pickedGem={pickedGem} pickedSupport={pickedSupport} onPlaced={clear} />
-        ))}
+      <div className="card">
+        <div className="card-title">
+          Skill bar
+          <span className="grow" />
+          <span className="card-hint">{pickedSupport !== null ? 'Click a skill to socket the picked support' : 'Click a skill to set its supports, trigger and priority'}</span>
+        </div>
+        <div className="skill-bar">
+          {Array.from({ length: SKILL_BAR_SLOTS }, (_, i) => (
+            <SlotTile key={i} s={s} slot={i} pickedGem={pickedGem} onOpen={() => setOpenSlot(i)} onPlaced={clear} />
+          ))}
+        </div>
       </div>
+      {openSlot !== null && (
+        <SlotModal
+          key={openSlot}
+          s={s}
+          slot={openSlot}
+          setSlot={setOpenSlot}
+          pickedSupport={pickedSupport}
+          onPlaced={clear}
+          onClose={() => setOpenSlot(null)}
+        />
+      )}
 
       <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)', alignItems: 'start' }}>
         <div className="card">
@@ -436,7 +555,7 @@ export function SkillGemsPage() {
             </span>
             <span className="grow" />
             <span className="card-hint">
-              Click one, then a glowing socket
+              Click one, then a skill on the bar
             </span>
           </div>
           {s.supportGems.length > 0 && (

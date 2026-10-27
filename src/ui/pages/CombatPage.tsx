@@ -525,10 +525,6 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         </div>
         {s.offlineHaul.length > 0 && <LootPile s={s} pile="offlineHaul" />}
         {s.ground.length > 0 && <LootPile s={s} pile="ground" />}
-        <div className="card">
-          <div className="card-title">Skill bar</div>
-          <SkillBar s={s} d={d} fx={fx} />
-        </div>
       </div>
     );
   }

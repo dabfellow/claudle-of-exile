@@ -143,201 +143,227 @@ export function BenchPage() {
     }
   };
 
+  const essences = ESSENCES.filter((e) => s.bank[e.id]);
+  const fossils = FOSSILS.filter((f) => s.bank[f.id]);
+
   return (
-    <div className="page">
+    <div className="page bench-page">
       <PageHeader title="Crafting Bench" actions={<Badge tone="gold">Bench level {benchLvl}</Badge>}>
         Select gear or a flask, then spend orbs to reshape its modifiers. Item level caps which modifier tiers can roll.
       </PageHeader>
 
-      <div className="bench-layout">
-        <div className="card bench-item">
-          {item ? (
-            <>
-              <div key={flash} className={flash ? 'shimmer' : ''} style={{ width: '100%' }}>
-                <ItemTip item={item} state={s} />
-              </div>
-              {!Object.values(s.equipment).some((i) => i?.uid === item.uid) && (
-                <button
-                  className="btn sm danger"
-                  disabled={!benchBuilt(s)}
-                  title={benchBuilt(s) ? '' : BENCH_UNBUILT}
-                  onClick={() => {
-                    game.act((st, ctx) => salvage(st, ctx, [item.uid]));
-                    setUid(null);
-                  }}
-                >
-                  Salvage for {salvageValue(item)} dust
-                </button>
-              )}
-            </>
-          ) : flask ? (
-            <div key={flash} className={flash ? 'shimmer' : ''} style={{ width: '100%' }}>
-              <FlaskTip f={flask} pinned />
-            </div>
-          ) : (
-            <EmptyState icon={<GameIcon name="bench" size={32} color="var(--dim)" />} title="Nothing selected">
-              Pick gear, a flask, or an item from your bag or stash below.
-            </EmptyState>
-          )}
-          {history.length > 0 && (
-            <div style={{ width: '100%' }}>
-              <div className="section-label">History</div>
-              <div className="combat-log" style={{ maxHeight: 120 }}>
-                {history.map((h) => (
-                  <div key={h.id}>
-                    {h.text} → <span style={{ color: `var(--${h.rarity})` }}>{h.name}</span>
+      {/* the orbs stay on screen while you scroll, like the selected item */}
+      <div className="card bench-orb-bar">
+        {ORB_ORDER.map((id) => {
+          const c = currencyDef(id);
+          const n = s.bank[id] ?? 0;
+          const f = fossilFor(id);
+          const reason = item ? orbReason(s, id, item.uid, f) : flask ? 'Flasks use the orbs under Flask crafting' : 'Select an item';
+          return (
+            <Tooltip
+              key={id}
+              content={
+                <div className="tip">
+                  <div className="tip-title" style={{ color: 'var(--currency)' }}>
+                    {c.name}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+                  <div>{c.desc}</div>
+                  {f && <div className="dim small">With {fossilDef(f)!.name}</div>}
+                  {reason && <div className="warn" style={{ marginTop: 4 }}>{reason}</div>}
+                </div>
+              }
+            >
+              <button data-tut={`orb-${id}`} className={`orb-btn ${f ? 'fossiled' : ''}`} style={{ ['--orb' as string]: c.color }} disabled={!!reason} onClick={() => use(id)}>
+                <MatIcon id={id} size={24} />
+                <span>
+                  <div className="name">{c.short}</div>
+                  <div className="count num">×{fmt(n)}</div>
+                </span>
+              </button>
+            </Tooltip>
+          );
+        })}
+      </div>
 
-        {flask ? (
-          <FlaskCraft s={s} f={flask} onCraft={() => setFlash((n) => n + 1)} />
-        ) : (
-        <div className="grid" style={{ gap: 16 }}>
-          <div className="card">
-            <div className="card-title">Currency</div>
-            <div className="orb-grid">
-              {ORB_ORDER.map((id) => {
-                const c = currencyDef(id);
-                const n = s.bank[id] ?? 0;
-                const reason = item ? orbReason(s, id, item.uid, fossilFor(id)) : 'Select an item';
-                return (
-                  <Tooltip
-                    key={id}
-                    content={
-                      <div className="tip">
-                        <div className="tip-title" style={{ color: 'var(--currency)' }}>
-                          {c.name}
-                        </div>
-                        <div>{c.desc}</div>
-                        {reason && <div className="warn" style={{ marginTop: 4 }}>{reason}</div>}
-                      </div>
-                    }
-                  >
-                    <button data-tut={`orb-${id}`} className="orb-btn" style={{ ['--orb' as string]: c.color }} disabled={!!reason} onClick={() => use(id)}>
-                      <MatIcon id={id} size={26} />
-                      <span>
-                        <div className="name">{c.short}</div>
-                        <div className="count num">×{n}</div>
-                      </span>
+      <div className="bench-layout">
+        {/* what you're crafting on stays pinned beside everything else */}
+        <aside className="bench-side">
+          <div className="card bench-item">
+            {item ? (
+              <>
+                <div key={flash} className={flash ? 'shimmer' : ''} style={{ width: '100%' }}>
+                  <ItemTip item={item} state={s} />
+                </div>
+                <div className="row" style={{ gap: 6 }}>
+                  {!Object.values(s.equipment).some((i) => i?.uid === item.uid) && (
+                    <button
+                      className="btn sm danger"
+                      disabled={!benchBuilt(s)}
+                      title={benchBuilt(s) ? '' : BENCH_UNBUILT}
+                      onClick={() => {
+                        game.act((st, ctx) => salvage(st, ctx, [item.uid]));
+                        setUid(null);
+                      }}
+                    >
+                      Salvage for {salvageValue(item)} dust
                     </button>
-                  </Tooltip>
-                );
-              })}
-            </div>
-            {FOSSILS.some((f) => s.bank[f.id]) && (
-              <div className="fossil-chips">
-                <span className="dim small">Fossil:</span>
-                {FOSSILS.filter((f) => s.bank[f.id]).map((f) => (
-                  <button
-                    key={f.id}
-                    className={`btn sm ${fossil === f.id ? 'selected' : ''}`}
-                    title={`${f.desc}. Used up with the next orb that rolls modifiers.`}
-                    onClick={() => setFossil(fossil === f.id ? null : f.id)}
-                  >
-                    <MatIcon id={f.id} size={12} /> {f.name.replace(' Fossil', '')} <span className="dim">×{s.bank[f.id]}</span>
+                  )}
+                  <button className="btn sm ghost" onClick={() => setUid(null)}>
+                    Deselect
                   </button>
-                ))}
-              </div>
-            )}
-            {item && <div className="dim small" style={{ marginTop: 10 }}>Tip: hover an item and hold Alt to see modifier tiers.</div>}
-          </div>
-
-          {ESSENCES.some((e) => s.bank[e.id]) && (
-            <div className="card">
-              <div className="card-title">
-                Essences
-                <span className="grow" />
-                <span className="card-hint">Makes the item Magic with this modifier guaranteed</span>
-              </div>
-              <div className="fossil-chips" style={{ marginTop: 0 }}>
-                {ESSENCES.filter((e) => s.bank[e.id]).map((e) => {
-                  const reason = item ? essenceReason(s, e.id, item.uid) : 'Select an item';
-                  return (
-                    <button key={e.id} className="btn sm" disabled={!!reason} title={reason ?? affixRangeText(e.affixId, e.tier)} onClick={() => essence(e.id)}>
-                      <MatIcon id={e.id} size={12} /> {e.name} <span className="dim">×{s.bank[e.id]}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <CraftUntilCard s={s} item={item} />
-
-          <div className="card">
-            <div className="card-title">
-              Bench Crafts
-              <span className="grow" />
-              <span className="card-hint">
-                One crafted modifier per item
-              </span>
-            </div>
-            {benchLvl < 2 && (
-              <EmptyState small icon={<GameIcon name="lock" size={24} color="var(--dim)" />}>
-                Upgrade the Crafting Bench in your Hideout to unlock crafted modifiers.
+                </div>
+                <div className="dim small">Hover the item and hold Alt to see modifier tiers.</div>
+              </>
+            ) : flask ? (
+              <>
+                <div key={flash} className={flash ? 'shimmer' : ''} style={{ width: '100%' }}>
+                  <FlaskTip f={flask} pinned />
+                </div>
+                <button className="btn sm ghost" onClick={() => setFlaskUid(null)}>
+                  Deselect
+                </button>
+              </>
+            ) : (
+              <EmptyState icon={<GameIcon name="bench" size={32} color="var(--dim)" />} title="Nothing selected">
+                Click your gear, a flask, or an item in your bag or stash. It stays here while you craft.
               </EmptyState>
             )}
-            <div className="card-grid" style={{ ['--card-min' as string]: '230px', gap: 8 }}>
-              {BENCH_CRAFTS.filter((b) => b.benchLevel <= benchLvl).map((b) => {
-                const a = affixDef(b.affixId);
-                const preview = affixRangeText(a.id, b.tier);
-                const reason = item ? benchCraftReason(s, b.id, item.uid) : 'Select an item';
-                if (b.achievement && !s.achievements.includes(b.achievement)) {
-                  const ach = ACHIEVEMENT_BY_ID[b.achievement];
-                  const p = achievementProgress(s, b.achievement);
-                  return (
-                    <div key={b.id} className="mat bench-locked" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                      <span className="mod crafted small">{preview}</span>
-                      <span className="row" style={{ gap: 6 }}>
-                        <Badge tone="locked">Locked</Badge>
-                        <span className="dim small">
-                          {ach.name}: {ach.desc}
-                        </span>
-                      </span>
-                      <ProgressBar value={p.value / p.target} color="var(--accent)" />
-                      <span className="dim small num">
-                        {fmt(p.value)} / {fmt(p.target)}
-                      </span>
+            {history.length > 0 && (
+              <div style={{ width: '100%' }}>
+                <div className="section-label">History</div>
+                <div className="combat-log" style={{ maxHeight: 120 }}>
+                  {history.map((h) => (
+                    <div key={h.id}>
+                      {h.text} → <span style={{ color: `var(--${h.rarity})` }}>{h.name}</span>
                     </div>
-                  );
-                }
-                return (
-                  <div key={b.id} className="mat" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                    <span className="mod crafted small">{preview}</span>
-                    <span className="dim small">{a.kind}</span>
-                    <Cost cost={b.cost} have={s.bank} />
-                    <button className="btn sm" disabled={!!reason} title={reason ?? ''} onClick={() => craft(b.id)}>
-                      {reason && item ? reason : 'Craft'}
-                    </button>
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          {flask && <FlaskCraft s={s} f={flask} onCraft={() => setFlash((n) => n + 1)} />}
+        </aside>
+
+        <div className="bench-main">
+          <div className="bench-upper">
+            <div className="bench-crafts-col">
+              <div className="card">
+                <div className="card-title">
+                  Bench Crafts
+                  <span className="grow" />
+                  <span className="card-hint">One crafted modifier per item</span>
+                </div>
+                {benchLvl < 2 && (
+                  <EmptyState small icon={<GameIcon name="lock" size={24} color="var(--dim)" />}>
+                    Upgrade the Crafting Bench in your Hideout to unlock crafted modifiers.
+                  </EmptyState>
+                )}
+                <div className="card-grid" style={{ ['--card-min' as string]: '200px', gap: 8 }}>
+                  {BENCH_CRAFTS.filter((b) => b.benchLevel <= benchLvl).map((b) => {
+                    const a = affixDef(b.affixId);
+                    const preview = affixRangeText(a.id, b.tier);
+                    const reason = item ? benchCraftReason(s, b.id, item.uid) : 'Select an item';
+                    if (b.achievement && !s.achievements.includes(b.achievement)) {
+                      const ach = ACHIEVEMENT_BY_ID[b.achievement];
+                      const p = achievementProgress(s, b.achievement);
+                      return (
+                        <div key={b.id} className="mat bench-locked" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                          <span className="mod crafted small">{preview}</span>
+                          <span className="row" style={{ gap: 6 }}>
+                            <Badge tone="locked">Locked</Badge>
+                            <span className="dim small">
+                              {ach.name}: {ach.desc}
+                            </span>
+                          </span>
+                          <ProgressBar value={p.value / p.target} color="var(--accent)" />
+                          <span className="dim small num">
+                            {fmt(p.value)} / {fmt(p.target)}
+                          </span>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={b.id} className="mat" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                        <span className="mod crafted small">{preview}</span>
+                        <span className="dim small">{a.kind}</span>
+                        <Cost cost={b.cost} have={s.bank} />
+                        <button className="btn sm" disabled={!!reason} title={reason ?? ''} onClick={() => craft(b.id)}>
+                          {reason && item ? reason : 'Craft'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="bench-doll-col">
+              <div className="card doll-card">
+                <div className="card-title" style={{ alignSelf: 'stretch' }}>
+                  Equipment
+                </div>
+                <PaperDoll
+                  s={s}
+                  selected={uid ?? flaskUid}
+                  onItem={(_, it) => pickItem(it.uid)}
+                  onFlask={(_, f) => pickFlask(f.uid)}
+                  emptyFlaskTitle="Select a spare flask to put it on your belt"
+                />
+              </div>
+
+              <CraftUntilCard s={s} item={item} />
+
+              {(fossils.length > 0 || essences.length > 0) && (
+                <div className="card">
+                  <div className="card-title">Special crafting</div>
+                  {fossils.length > 0 && (
+                    <>
+                      <div className="section-label">Fossils · pick one, then use an orb that rolls modifiers</div>
+                      <div className="fossil-chips" style={{ marginTop: 0 }}>
+                        {fossils.map((f) => (
+                          <button
+                            key={f.id}
+                            className={`btn sm ${fossil === f.id ? 'selected' : ''}`}
+                            title={`${f.desc}. Used up with the next orb that rolls modifiers.`}
+                            onClick={() => setFossil(fossil === f.id ? null : f.id)}
+                          >
+                            <MatIcon id={f.id} size={12} /> {f.name.replace(' Fossil', '')} <span className="dim">×{s.bank[f.id]}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  {essences.length > 0 && (
+                    <>
+                      <div className="section-label" style={{ marginTop: fossils.length ? 10 : 0 }}>
+                        Essences · makes the item Magic with this modifier guaranteed
+                      </div>
+                      <div className="fossil-chips" style={{ marginTop: 0 }}>
+                        {essences.map((e) => {
+                          const reason = item ? essenceReason(s, e.id, item.uid) : 'Select an item';
+                          return (
+                            <button key={e.id} className="btn sm" disabled={!!reason} title={reason ?? affixRangeText(e.affixId, e.tier)} onClick={() => essence(e.id)}>
+                              <MatIcon id={e.id} size={12} /> {e.name} <span className="dim">×{s.bank[e.id]}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-        </div>
-        )}
-      </div>
 
-      <div className="card doll-card">
-        <PaperDoll
-          s={s}
-          selected={uid ?? flaskUid}
-          onItem={(_, it) => pickItem(it.uid)}
-          onFlask={(_, f) => pickFlask(f.uid)}
-          emptyFlaskTitle="Select a spare flask to put it on your belt"
-        />
-      </div>
-      {s.flaskStash.length > 0 && (
-        <div className="card">
-          <div className="card-title">Spare flasks ({s.flaskStash.length})</div>
-          <FlaskShelf flasks={s.flaskStash} selected={flaskUid} onPick={(f) => pickFlask(f.uid)} />
+          {s.flaskStash.length > 0 && (
+            <div className="card">
+              <div className="card-title">Spare flasks ({s.flaskStash.length})</div>
+              <FlaskShelf flasks={s.flaskStash} selected={flaskUid} onPick={(f) => pickFlask(f.uid)} />
+            </div>
+          )}
+          <Inventory s={s} title="Bag & stash" items={[...stashedItems(s), ...s.inventory]} cap={null} onPick={(it) => pickItem(it.uid)} selected={uid} />
         </div>
-      )}
-      <Inventory s={s} title="Bag & stash" items={[...stashedItems(s), ...s.inventory]} cap={null} onPick={(it) => pickItem(it.uid)} selected={uid} />
+      </div>
     </div>
   );
 }

@@ -92,10 +92,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'smith',
     title: 'Forge Something',
-    npc: 'Ore and wood make gear. Gloves or boots are cheapest — 9 ore, 3 logs, about ten seconds at the anvil. The better your Smithing, the better the item level.',
+    npc: 'Ore and wood make gear. Gloves or boots (their own tabs on the Smithing page) are cheapest — 9 ore, 3 logs, about ten seconds at the anvil. The better your Smithing, the better the item level.',
     objective: 'Smith any item',
     target: 1,
-    highlight: ['nav-smithing'],
+    highlight: ['nav-smithing', 'smith-tab-gloves', 'smith-tab-boots'],
     match: (e) => (e.t === 'produce' && e.skill === 'smithing' ? 1 : 0),
     reward: { transmute: 1 },
     rewardText: 'Orb of Transmutation',

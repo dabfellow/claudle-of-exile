@@ -349,6 +349,37 @@ h3 {
   gap: var(--s-4);
 }
 
+.smith-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--s-4);
+}
+
+.tier-list.spaced .tier-group {
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+}
+
+.tier-list.spaced .tier-group.closed {
+  background: transparent;
+}
+
+.tier-head.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.tier-head.clickable:hover .tier-name {
+  color: var(--text);
+}
+
+.tier-chevron {
+  width: 12px;
+}
+
 .tier-group {
   display: grid;
   gap: var(--s-2);
@@ -2321,12 +2352,75 @@ h3 {
   color: var(--muted);
 }
 
-/* bench */
+/* bench: orbs pinned on top, the selected item pinned on the left, equipment top right */
+.bench-orb-bar {
+  position: sticky;
+  top: calc(-1 * var(--s-5));
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+  padding: var(--s-2);
+  overflow-x: auto;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.25);
+}
+
+.bench-orb-bar .orb-btn {
+  flex: 1 0 auto;
+  padding: 6px 8px;
+  gap: 6px;
+}
+
+.orb-btn.fossiled {
+  border-color: var(--accent);
+}
+
 .bench-layout {
   display: grid;
   grid-template-columns: minmax(280px, 340px) 1fr;
   gap: var(--s-4);
   align-items: start;
+}
+
+.bench-side {
+  position: sticky;
+  top: 64px;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.bench-main,
+.bench-doll-col,
+.bench-crafts-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+.bench-upper {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 420px;
+  gap: var(--s-4);
+  align-items: start;
+}
+
+@container (max-width: 980px) {
+  .bench-upper {
+    grid-template-columns: 1fr;
+  }
+  .bench-upper .bench-doll-col {
+    order: -1;
+  }
+}
+
+@container (max-width: 760px) {
+  .bench-side {
+    position: static;
+    max-height: none;
+  }
 }
 
 .bench-item {
@@ -3809,6 +3903,69 @@ g.tut-hint circle.body {
   border-style: dashed;
   opacity: 0.4;
   justify-content: center;
+}
+
+/* the Skills page draws the bar the same way, with a priority number, supports and a drop target */
+.skill-btn.setup {
+  min-height: 150px;
+}
+
+.skill-btn.setup.empty {
+  opacity: 0.6;
+}
+
+.skill-btn.target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  opacity: 1;
+}
+
+.skill-prio {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  font-size: var(--fs-2xs);
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.skill-supports {
+  display: flex;
+  gap: 3px;
+  min-height: 16px;
+  align-items: center;
+}
+
+.socket-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px dashed var(--line-2);
+}
+
+.slot-modal {
+  width: min(640px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slot-modal .card-title {
+  gap: 10px;
+}
+
+.slot-modal .slot-key {
+  position: static;
+}
+
+.slot-modal .rule-editor {
+  justify-content: flex-start;
+}
+
+.prio-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .skill-btn .slot-key {

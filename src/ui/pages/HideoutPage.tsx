@@ -12,6 +12,7 @@ import { SKILL_IDS, type GameState, type SkillId } from '../../engine/types';
 import { levelOf, maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
 import { Badge, fmt, GameIcon, MatIcon, ProgressBar, sceneStyle, Tooltip } from '../components/common';
+import { openItemMenu } from '../components/ItemMenu';
 import { materialSources } from '../components/materialSources';
 import { PaperDoll } from '../components/PaperDoll';
 import type { Page } from '../Layout';
@@ -175,12 +176,12 @@ function StatsCard({ go }: { go: (p: Page) => void }) {
 
 // ---------- gear ----------
 
-/** The same paper doll as the Equipment page; any click opens that page. */
+/** The same paper doll as the Equipment page; a worn item opens its menu, empty slots and flasks open that page. */
 function GearCard({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   return (
     <HomeCard title="Equipment" onOpen={() => go('equipment')} className="home-doll">
-      <PaperDoll s={s} onItem={() => go('equipment')} onEmpty={() => go('equipment')} onFlask={() => go('equipment')} />
+      <PaperDoll s={s} onItem={(_, it) => openItemMenu(it.uid)} onEmpty={() => go('equipment')} onFlask={() => go('equipment')} />
     </HomeCard>
   );
 }

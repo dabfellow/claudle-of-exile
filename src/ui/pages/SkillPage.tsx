@@ -312,6 +312,22 @@ function SkillHeader({ skill }: { skill: SkillId }) {
   );
 }
 
+/** Smithing makes hundreds of bases, so it splits them into tabs by slot first. */
+const SMITH_TABS: { id: string; label: string; slots: string[] }[] = [
+  { id: 'weapon', label: 'Weapons', slots: ['weapon'] },
+  { id: 'offhand', label: 'Off hands', slots: ['offhand'] },
+  { id: 'helmet', label: 'Helmets', slots: ['helmet'] },
+  { id: 'body', label: 'Body armour', slots: ['body'] },
+  { id: 'gloves', label: 'Gloves', slots: ['gloves'] },
+  { id: 'boots', label: 'Boots', slots: ['boots'] },
+  { id: 'jewellery', label: 'Jewellery', slots: ['belt', 'amulet', 'ring'] },
+];
+
+function smithTab(a: SkillAction): string {
+  const slot = a.baseId ? baseDef(a.baseId).slot : '';
+  return SMITH_TABS.find((x) => x.slots.includes(slot))?.id ?? 'weapon';
+}
+
 interface Tier {
   key: string;
   label: string;
@@ -344,8 +360,25 @@ export function SkillPage({ skill }: { skill: SkillId }) {
   const actions = actionsFor(skill);
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [onlyUnlocked, setOnlyUnlocked] = useState(false);
+  const [tab, setTab] = useState(SMITH_TABS[0].id);
+  // tier groups the player opened or closed; untouched ones follow tierOpenByDefault
+  const [tierToggled, setTierToggled] = useState<Set<string>>(new Set());
   const isUnlocked = (a: SkillAction) => !a.soon && a.level <= level && (!a.area || s.unlockedZones.includes(a.area));
-  const shown = onlyUnlocked ? actions.filter(isUnlocked) : actions;
+  const tabbed = skill === 'smithing';
+  const inTab = tabbed ? actions.filter((a) => smithTab(a) === tab) : actions;
+  const shown = onlyUnlocked ? inTab.filter(isUnlocked) : inTab;
+  const tiers = tiersOf(skill, shown);
+  // smithing opens only the newest tier you can make; other skills open everything
+  const newest = [...tiers].reverse().find((x) => x.actions.some(isUnlocked))?.key ?? tiers[0]?.key;
+  const tierOpen = (key: string) => (tabbed ? key === newest : true) !== tierToggled.has(`${tab}:${key}`);
+  const toggleTier = (key: string) =>
+    setTierToggled((o) => {
+      const n = new Set(o);
+      const k = `${tab}:${key}`;
+      if (n.has(k)) n.delete(k);
+      else n.add(k);
+      return n;
+    });
   const unlocked = actions.filter(isUnlocked).length;
   const allOpen = shown.length > 0 && shown.every((a) => open.has(a.id));
   const toggle = (id: string) =>
@@ -380,10 +413,10 @@ export function SkillPage({ skill }: { skill: SkillId }) {
         <div className="section-head">
           <h3>Activities</h3>
           <span className="dim small">
-            {unlocked} of {actions.length} unlocked
+            {unlocked} of {actions.length} unlocked{tabbed && ' · click a tier to open or close it'}
           </span>
           <span className="spacer" />
-          {actions.length > 8 && (
+          {inTab.length > 8 && (
             <button className="btn sm ghost" onClick={() => setOnlyUnlocked((v) => !v)}>
               {onlyUnlocked ? 'Show all' : 'Unlocked only'}
             </button>
@@ -392,14 +425,35 @@ export function SkillPage({ skill }: { skill: SkillId }) {
             {allOpen ? 'Collapse all' : 'Expand all'}
           </button>
         </div>
-        <div className="tier-list">
-          {tiersOf(skill, shown).map((t) => {
+        {tabbed && (
+          <div className="smith-tabs">
+            {SMITH_TABS.map((x) => {
+              const list = actions.filter((a) => smithTab(a) === x.id);
+              return (
+                <button key={x.id} data-tut={`smith-tab-${x.id}`} className={`gem-chip ${tab === x.id ? 'active' : ''}`} onClick={() => setTab(x.id)}>
+                  {x.label}{' '}
+                  <span className="dim num">
+                    {list.filter(isUnlocked).length}/{list.length}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <div className={`tier-list ${tabbed ? 'spaced' : ''}`}>
+          {tiers.map((t) => {
             const lo = Math.min(...t.actions.map((a) => a.level));
             const hi = Math.max(...t.actions.map((a) => a.level));
             const got = t.actions.filter(isUnlocked).length;
+            const isOpen = tierOpen(t.key);
             return (
-              <div key={t.key} className={`tier-group ${got ? '' : 'locked'}`}>
-                <div className="tier-head">
+              <div key={t.key} className={`tier-group ${got ? '' : 'locked'} ${isOpen ? '' : 'closed'}`}>
+                <div
+                  className={`tier-head ${tabbed ? 'clickable' : ''}`}
+                  onClick={tabbed ? () => toggleTier(t.key) : undefined}
+                  title={tabbed ? (isOpen ? 'Hide this tier' : 'Show this tier') : undefined}
+                >
+                  {tabbed && <span className="action-chevron tier-chevron">{isOpen ? '▾' : '▸'}</span>}
                   <span className="tier-name">{t.label}</span>
                   <span className="tier-range">{lo === hi ? `Lv ${lo}` : `Lv ${lo}–${hi}`}</span>
                   <span className="tier-rule" />
@@ -407,11 +461,13 @@ export function SkillPage({ skill }: { skill: SkillId }) {
                     {got}/{t.actions.length} unlocked
                   </span>
                 </div>
-                <div className="action-grid">
-                  {t.actions.map((a) => (
-                    <ActionCard key={a.id} a={a} level={level} open={open.has(a.id)} onToggle={() => toggle(a.id)} />
-                  ))}
-                </div>
+                {isOpen && (
+                  <div className="action-grid">
+                    {t.actions.map((a) => (
+                      <ActionCard key={a.id} a={a} level={level} open={open.has(a.id)} onToggle={() => toggle(a.id)} />
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
