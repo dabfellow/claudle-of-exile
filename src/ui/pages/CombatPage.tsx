@@ -2,14 +2,27 @@ import { useCallback, useState } from 'react';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
 import { BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, nextZones, zoneDef } from '../../data/zones';
-import { CELLS, COLUMNS, GROUND, groundFor, inReach, MAX_ROW, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT } from '../../engine/battlefield';
-import { aliveMonsters, bossIsNext, currentMovement, mitigate, queueSkill, retreat, setMovement, startCombat, useFlask } from '../../engine/combat';
+import { CELLS, cellRing, GROUND, groundFor, inReach, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT, RINGS } from '../../engine/battlefield';
+import {
+  aliveMonsters,
+  bossIsNext,
+  currentMovement,
+  focusTarget,
+  lockTarget,
+  mitigate,
+  nextArrivalMs,
+  queueSkill,
+  retreat,
+  setMovement,
+  startCombat,
+  useFlask,
+} from '../../engine/combat';
 import { flaskStats } from '../../engine/flasks';
-import { MIN_COOLDOWN_MS, skillNumbers } from '../../engine/gems';
+import { gemUseReason, MIN_COOLDOWN_MS, skillNumbers } from '../../engine/gems';
 import { meterLabel, meterMax, mechanicOf } from '../../engine/mechanics';
 import { classDef } from '../../data/classes';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
-import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, MonsterInstance } from '../../engine/types';
+import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, MonsterInstance, TargetOrder, TargetPriority } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
 import { anyArtUrl, Art, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
@@ -47,6 +60,7 @@ function useCombatFx() {
   const [crits, setCrits] = useState<Record<string, number>>({});
   const [usedSlot, setUsedSlot] = useState<{ slot: number; n: number } | null>(null);
   const [area, setArea] = useState<{ cells: number[]; n: number } | null>(null);
+  const [lunge, setLunge] = useState(0);
 
   const add = useCallback((f: Omit<Floater, 'id' | 'x'>) => {
     const id = floaterId++;
@@ -59,6 +73,7 @@ function useCombatFx() {
       const bump = (set: typeof setShakes, key: string) => set((m) => ({ ...m, [key]: (m[key] ?? 0) + 1 }));
       if (e.t === 'skill') setUsedSlot((u) => ({ slot: e.slot, n: (u?.n ?? 0) + 1 }));
       if (e.t === 'area') setArea((a) => ({ cells: e.cells, n: (a?.n ?? 0) + 1 }));
+      if (e.t === 'closeIn') setLunge((n) => n + 1);
       if (e.t !== 'hit') return;
       if (e.target === 'monster') {
         const owner = e.monsterUid ?? 0;
@@ -88,7 +103,7 @@ function useCombatFx() {
     [add],
   );
   useGameEvent(onEvent);
-  return { floaters, shakes, crits, usedSlot, area };
+  return { floaters, shakes, crits, usedSlot, area, lunge };
 }
 
 type Fx = ReturnType<typeof useCombatFx>;
@@ -129,6 +144,7 @@ function MechanicMeter({ s, d, c }: { s: GameState; d: Derived; c: CombatRuntime
 function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
   const c = s.combat!;
   const using = c.using ? (c.using === DEFAULT_ATTACK.id ? DEFAULT_ATTACK : activeGemDef(c.using)) : null;
+  const closing = c.closingUid !== undefined ? c.monsters.find((m) => m.uid === c.closingUid) : undefined;
   const progress = aliveMonsters(c).length ? 1 - Math.max(0, c.actionMs) / c.actionTotal : 0;
   return (
     <div className={`fighter player ${shakeClass(fx.shakes.player)}`}>
@@ -154,9 +170,9 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
       <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} size="md" color="linear-gradient(90deg, var(--mana), var(--mana-2))" label={`${fmt(s.mana)} / ${fmt(d.maxMana)}`} />
       {mechanicOf(s) && <MechanicMeter s={s} d={d} c={c} />}
       <div className="action-line">
-        <span className="dim">{using ? using.name : 'Waiting'}</span>
+        <span className="dim">{using ? using.name : closing ? `Closing in on ${closing.name}` : 'Waiting'}</span>
         <span className="dim">{using ? `${(c.actionTotal / 1000).toFixed(1)}s ${using.tags.includes('attack') ? 'attack' : 'cast'}` : ''}</span>
-        <ProgressBar value={progress} color={using ? 'var(--accent)' : 'var(--line-2)'} />
+        <ProgressBar value={progress} color={using || closing ? 'var(--accent)' : 'var(--line-2)'} />
       </div>
       <div className="status-row">
         {c.blocks > 0 && <span className="status good">Block ×{c.blocks}</span>}
@@ -241,7 +257,7 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
 }
 
 /** A monster as it stands on the battlefield: just enough to read the fight at a glance. Hover for the full card. */
-function MonsterToken({ m, target, fx }: { m: MonsterInstance; target: boolean; fx: Fx }) {
+function MonsterToken({ m, target, locked, fx }: { m: MonsterInstance; target: boolean; locked: boolean; fx: Fx }) {
   const key = String(m.uid);
   const pips: [string, string][] = [];
   if (m.stunMs > 0) pips.push(['Stunned', 'var(--text)']);
@@ -252,14 +268,15 @@ function MonsterToken({ m, target, fx }: { m: MonsterInstance; target: boolean; 
   if (m.enraged) pips.push(['Enraged', 'var(--danger)']);
   return (
     <Tooltip content={<MonsterCard m={m} target={target} fx={fx} />}>
-      <div className={`bf-token ${m.isBoss ? 'boss' : ''} ${target ? 'targeted' : ''} ${m.casting >= 0 ? 'casting' : ''} ${shakeClass(fx.shakes[key])} ${critClass(fx.crits[key])}`}>
+      <div className={`bf-token ${m.isBoss ? 'boss' : ''} ${target ? 'targeted' : ''} ${locked ? 'locked' : ''} ${m.casting >= 0 ? 'casting' : ''} ${shakeClass(fx.shakes[key])} ${critClass(fx.crits[key])}`}>
         <Floaters list={fx.floaters.filter((f) => f.owner === m.uid)} />
         <div className="bf-token-head">
           <div className="portrait tiny">
             <Art src={`monsters/${m.defId}`} alt={m.name} cover fallback={<GameIcon name="skull" size={14} color={m.isBoss ? 'var(--life-2)' : DMG_COLOR[m.dmgType]} />} />
           </div>
           <span className="bf-token-name">{m.name}</span>
-          {target && <span className="target-pip" title="Current target" />}
+          {m.attackKind === 'spell' && !m.isBoss && <span className="bf-ranged" title="Ranged: stops a few rings out and casts from there" />}
+          {target && <span className="target-pip" title={locked ? 'Your chosen target (click to release)' : 'Current target'} />}
         </div>
         <ProgressBar value={Math.max(0, m.life) / m.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" />
         {m.wardMax > 0 && <ProgressBar color="var(--ward)" value={m.ward / m.wardMax} className="thin" />}
@@ -268,7 +285,7 @@ function MonsterToken({ m, target, fx }: { m: MonsterInstance; target: boolean; 
         ) : inReach(m) ? (
           <ProgressBar value={m.attackTimer / m.attackMs} color="var(--dim)" className="thin" />
         ) : (
-          <span className="bf-approach">closing in…</span>
+          <span className="bf-approach">walking in…</span>
         )}
         {pips.length > 0 && (
           <div className="bf-pips">
@@ -282,12 +299,34 @@ function MonsterToken({ m, target, fx }: { m: MonsterInstance; target: boolean; 
   );
 }
 
-/** The 3-4-3 field in front of the player: the left column is the front rank, waves walk in from the right. */
-function Battlefield({ c, fx }: { c: CombatRuntime; fx: Fx }) {
+/**
+ * Field geometry in hex units (engine/battlefield.ts): pointy-top hexes √3 wide and 2 tall, the player at (0, 0).
+ * The field spans ±4.5 hexes across and from 7 above the player to 1 below.
+ */
+const HEX_W = Math.sqrt(3);
+const FIELD_W = HEX_W * (2 * RINGS + 1);
+const FIELD_TOP = -1.5 * RINGS - 1;
+const FIELD_H = 1 - FIELD_TOP;
+const pctX = (x: number) => ((x + FIELD_W / 2) / FIELD_W) * 100;
+const pctY = (y: number) => ((y - FIELD_TOP) / FIELD_H) * 100;
+const hexBox = (x: number, y: number) => ({
+  left: `${pctX(x - HEX_W / 2)}%`,
+  top: `${pctY(y - 1)}%`,
+  width: `${(HEX_W / FIELD_W) * 100}%`,
+  height: `${(2 / FIELD_H) * 100}%`,
+});
+
+/**
+ * The half-ring of hexes around the player, who stands on the bottom edge. Monsters are drawn on their own layer,
+ * keyed by monster, so a step is a slide from one hex to the next and an arrival walks in from beyond the edge.
+ * Click a monster to make it your target.
+ */
+function Battlefield({ s, c, fx }: { s: GameState; c: CombatRuntime; fx: Fx }) {
   const alive = aliveMonsters(c);
   const byCell = new Map(alive.map((m) => [m.cell, m]));
+  const focus = focusTarget(s);
   return (
-    <div className="battlefield">
+    <div className="battlefield" style={{ aspectRatio: `${FIELD_W} / ${FIELD_H}` }}>
       {CELLS.map((cell, i) => {
         const m = byCell.get(i);
         const ground = c.ground.find((g) => g.cell === i);
@@ -295,11 +334,36 @@ function Battlefield({ c, fx }: { c: CombatRuntime; fx: Fx }) {
         return (
           <div
             key={i}
-            className={`bf-cell ${cell.col === 0 ? 'front' : ''} ${m ? 'occupied' : ''} ${m && m === alive[0] ? 'target' : ''} ${m?.isBoss ? 'boss' : ''} ${ground ? `ground-${ground.kind}` : ''} ${flash}`}
-            style={{ left: `${(cell.col / COLUMNS) * 100}%`, top: `${(cell.row / (MAX_ROW + 2)) * 100}%` }}
+            className={`bf-cell ring-${cell.ring} ${m ? 'occupied' : ''} ${m && m === focus ? 'target' : ''} ${m?.isBoss ? 'boss' : ''} ${ground ? `ground-${ground.kind}` : ''} ${flash}`}
+            style={hexBox(cell.x, cell.y)}
             title={ground ? `${GROUND[ground.kind].name} (${(ground.remainingMs / 1000).toFixed(1)}s): ${GROUND[ground.kind].desc}` : undefined}
+          />
+        );
+      })}
+      <div className={`bf-cell bf-player-cell ${shakeClass(fx.shakes.player)} ${fx.lunge ? (fx.lunge % 2 ? 'lunge-a' : 'lunge-b') : ''}`} style={hexBox(0, 0)}>
+        <div className="portrait">
+          <Art src={`portraits/class_${s.character.classId}`} alt={s.character.name} cover fallback={<GameIcon name="combat" size={22} color="var(--accent-2)" />} />
+        </div>
+      </div>
+      {alive.map((m) => {
+        const cell = CELLS[m.cell];
+        // walk in from beyond the edge, straight out from the player
+        const len = Math.hypot(cell.x, cell.y) || 1;
+        return (
+          <div
+            key={m.uid}
+            className={`bf-unit ${m.isBoss ? 'boss' : ''}`}
+            style={{
+              left: `${pctX(cell.x)}%`,
+              top: `${pctY(cell.y)}%`,
+              width: `${(HEX_W / FIELD_W) * 100 * (m.isBoss ? 1.15 : 0.92)}%`,
+              transitionDuration: `${m.uid === c.closingUid ? 350 : Math.min(800, m.moveMs * 0.7)}ms`,
+              ['--dx' as string]: `${(cell.x / len) * 60}px`,
+              ['--dy' as string]: `${(cell.y / len) * 60}px`,
+            }}
+            onClick={() => game.act((st) => lockTarget(st, m.uid))}
           >
-            {m && <MonsterToken key={m.uid} m={m} target={m === alive[0]} fx={fx} />}
+            <MonsterToken m={m} target={m === focus} locked={m.uid === c.lockedUid} fx={fx} />
           </div>
         );
       })}
@@ -308,24 +372,59 @@ function Battlefield({ c, fx }: { c: CombatRuntime; fx: Fx }) {
   );
 }
 
-/** Flee / creep / walk / run, and what the field will do next. */
+/** Narrow screens: the field doesn't fit, so sum it up instead. */
+function FieldSummary({ s, c }: { s: GameState; c: CombatRuntime }) {
+  const alive = aliveMonsters(c);
+  const focus = focusTarget(s);
+  const close = alive.filter((m) => cellRing(m.cell) === 1).length;
+  return (
+    <div className="bf-summary">
+      <div>
+        <b>{alive.length}</b> on the field · <b>{close}</b> in melee range
+      </div>
+      {focus && (
+        <div className="bf-summary-target">
+          <span>
+            {focus.name} <span className="dim">· ring {cellRing(focus.cell)}</span>
+          </span>
+          <ProgressBar value={Math.max(0, focus.life) / focus.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(Math.max(0, focus.life))} / ${fmt(focus.maxLife)}`} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const PRIORITIES: { id: TargetPriority; label: string }[] = [
+  { id: 'none', label: 'Anything' },
+  { id: 'boss', label: 'Bosses first' },
+  { id: 'ranged', label: 'Ranged first' },
+  { id: 'ailing', label: 'Ailing first' },
+];
+const ORDERS: { id: TargetOrder; label: string }[] = [
+  { id: 'closest', label: 'Closest' },
+  { id: 'farthest', label: 'Farthest' },
+  { id: 'lowest', label: 'Lowest life' },
+  { id: 'highest', label: 'Highest life' },
+];
+
+/** Flee / creep / walk / run, what the field will do next, and who your skills go for. */
 function MovementBar({ s }: { s: GameState }) {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
   const mv = currentMovement(s);
-  const pace = MOVEMENT[mv];
-  const alive = aliveMonsters(c).length;
+  const next = nextArrivalMs(s);
   const status = c.monsters.some((m) => m.isBoss)
-    ? 'Boss fight: no new waves'
+    ? 'Boss fight: nothing else arrives'
     : mv === 'flee'
-      ? alive
+      ? aliveMonsters(c).length
         ? 'Shaking them off…'
-        : 'Holding back: no new waves'
+        : 'Holding back: nothing arrives'
       : bossIsNext(s, zone.id)
         ? `${zone.boss.name} waits for the field to clear`
-        : alive >= pace.maxField
-          ? 'Field full: the next wave waits'
-          : `Next wave in ${(c.spawnMs / pace.spawnRate / 1000).toFixed(1)}s`;
+        : next === null
+          ? 'Field full: the next monster waits'
+          : `Next monster in ${(next / 1000).toFixed(1)}s`;
+  const targeting = s.settings.targeting;
   return (
     <div className="bf-bar">
       <Tabs
@@ -337,6 +436,23 @@ function MovementBar({ s }: { s: GameState }) {
       {c.fleeing && <span className="status bad">Auto-fleeing</span>}
       <span className="dim bf-status">{status}</span>
       <span className="grow" />
+      <label className="bf-target" title="Who your skills go for. Click a monster on the field to pick it yourself.">
+        Target
+        <select className="input sm" value={targeting.priority} onChange={(e) => game.act((st) => void (st.settings.targeting = { ...st.settings.targeting, priority: e.target.value as TargetPriority }))}>
+          {PRIORITIES.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+        <select className="input sm" value={targeting.order} onChange={(e) => game.act((st) => void (st.settings.targeting = { ...st.settings.targeting, order: e.target.value as TargetOrder }))}>
+          {ORDERS.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </label>
       <label className="bf-auto" title="Below 35% life, flee until you're back above 90%, then resume your pace">
         <input type="checkbox" checked={s.settings.autoFlee} onChange={(e) => game.act((st) => void (st.settings.autoFlee = e.target.checked))} /> Auto-flee
       </label>
@@ -361,18 +477,19 @@ export function SkillBar({ s, d, fx }: { s: GameState; d: Derived; fx?: Fx }) {
         const cd = nums.cooldownMs > MIN_COOLDOWN_MS ? (c?.cooldowns[i] ?? 0) : 0;
         const cdPct = nums.cooldownMs ? cd / nums.cooldownMs : 0;
         const noMana = s.mana < nums.manaCost;
+        const unusable = gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily);
         const flashed = fx?.usedSlot?.slot === i ? fx.usedSlot.n : 0;
         return (
           <Tooltip key={i} content={<GemTip gem={gem} state={s} />}>
             <button
-              className={`skill-btn ${noMana ? 'nomana' : ''} ${c?.queued === i ? 'queued' : ''} ${flashed ? (flashed % 2 ? 'used-a' : 'used-b') : ''}`}
+              className={`skill-btn ${noMana ? 'nomana' : ''} ${unusable ? 'unusable' : ''} ${c?.queued === i ? 'queued' : ''} ${flashed ? (flashed % 2 ? 'used-a' : 'used-b') : ''}`}
               style={{ ['--cd' as string]: `${cdPct * 360}deg` }}
               disabled={!c}
               onClick={() => game.act((st) => queueSkill(st, i))}
             >
               <span className="slot-key">{SKILL_KEYS[i]}</span>
               <span className="skill-gem">
-                <GemIcon def={def} size={38} dim={cd > 0 || noMana} />
+                <GemIcon def={def} size={38} dim={cd > 0 || noMana || !!unusable} />
                 {cd > 0 && <span className="cd-sweep" />}
                 {cd > 0 && <span className="cd-text">{(cd / 1000).toFixed(1)}</span>}
               </span>
@@ -380,7 +497,7 @@ export function SkillBar({ s, d, fx }: { s: GameState; d: Derived; fx?: Fx }) {
               <span className="skill-meta">
                 {nums.manaCost > 0 ? <span style={{ color: 'var(--mana-2)' }}>{nums.manaCost} mana</span> : <span className="dim">free</span>}
               </span>
-              <span className="skill-rule">{ruleText(gem.rule)}</span>
+              <span className="skill-rule">{unusable ?? ruleText(gem.rule)}</span>
             </button>
           </Tooltip>
         );
@@ -440,7 +557,7 @@ function StatRow({ label, you, them, good }: { label: string; you: string; them:
 
 /** Side-by-side numbers: how you match up against your current target. */
 function Matchup({ s, d }: { s: GameState; d: Derived }) {
-  const target = s.combat ? aliveMonsters(s.combat)[0] : undefined;
+  const target = focusTarget(s);
   if (!target) return <div className="dim">No enemy in sight.</div>;
   const hit = hitChance(d.accuracy, target.level);
   const evade = evadeChance(d.evasion, target.level);
@@ -567,7 +684,8 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         </div>
         <div className="bf-wrap">
           <MovementBar s={s} />
-          <Battlefield c={c} fx={fx} />
+          <Battlefield s={s} c={c} fx={fx} />
+          <FieldSummary s={s} c={c} />
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import type { AreaShape } from '../engine/battlefield';
+import type { WeaponFamily } from './bases';
 import type { DamageType, GroundKind, StatKey } from '../engine/types';
 
 export type GemAttr = 'str' | 'dex' | 'int';
@@ -25,9 +26,11 @@ export interface SkillEffect {
   chains?: number;
   /** where on the battlefield the hit lands around the target (engine/battlefield.ts); overrides targets */
   area?: AreaShape;
+  /** size of a splash (steps around the target) or nova (rings around you) */
+  radius?: number;
   /** leaves hazardous ground on cells it hits: damage per second as % of the hit on the target */
   ground?: { kind: GroundKind; pctPerSec: number; durationMs: number; area?: AreaShape };
-  /** shoves the front rank back a column */
+  /** shoves melee range back a ring */
   knockback?: boolean;
   /** base crit chance for spells */
   crit?: number;
@@ -72,11 +75,24 @@ export interface ActiveGemDef {
    */
   timeMs: number;
   effect: SkillEffect;
+  /** how many rings out it reaches: default melee attacks 1, everything else the whole field */
+  range?: number;
+  /** the main-hand weapons it can be used with; any weapon when left out */
+  weapons?: WeaponFamily[];
   desc: string;
   color: string;
   /** the suggested automation rule, offered in the rule editor (gems themselves start Manual only) */
   defaultRule: TacticRule;
 }
+
+/** Weapon families by what they're good for (docs/BATTLEFIELD.md §7). */
+const SLAM_WEAPONS: WeaponFamily[] = ['mace', 'axe', 'sceptre', 'staff'];
+const STRIKE_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'dagger', 'mace', 'sceptre'];
+const HEAVY_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'mace', 'sceptre', 'staff'];
+const BOW: WeaponFamily[] = ['bow'];
+/** spells deal more damage from a wand, staff, dagger or sceptre (they still work with anything) */
+export const CASTER_WEAPONS: WeaponFamily[] = ['wand', 'staff', 'dagger', 'sceptre'];
+export const CASTER_WEAPON_MORE = 20;
 
 export type RuleCondition =
   | 'always'
@@ -137,15 +153,15 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'heavy_strike', name: 'Heavy Strike', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit'],
     manaCost: 4, cooldownMs: 0, timeMs: 3900, color: '#d0574a',
-    effect: { weaponPct: 185, targets: 'single', stunChance: 0.25 },
+    effect: { weaponPct: 185, targets: 'single', stunChance: 0.25 }, weapons: HEAVY_WEAPONS,
     desc: 'A slow, crushing blow. 25% chance to stun.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'ground_slam', name: 'Ground Slam', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area', 'hit'],
     manaCost: 8, cooldownMs: 5000, timeMs: 3600, color: '#b0643a',
-    effect: { weaponPct: 95, area: 'splash', stunChance: 0.1 },
-    desc: 'Slam the ground, hitting the target and every enemy around it.',
+    effect: { weaponPct: 95, area: 'arc', stunChance: 0.1 }, weapons: SLAM_WEAPONS,
+    desc: 'Slam the ground, hitting the target and the enemies either side of it.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
   }),
   A({
@@ -159,13 +175,13 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     id: 'war_cry', name: 'War Cry', attr: 'str', role: 'buff', tags: ['buff', 'duration'],
     manaCost: 14, cooldownMs: 12000, timeMs: 1200, color: '#e0a640',
     effect: { interrupts: true, knockback: true, buff: { durationMs: 6000, moreDamage: 20 } },
-    desc: 'Interrupts enemy wind-ups, shoves the front rank back a step, and grants 20% more damage for 6s.',
+    desc: 'Interrupts enemy wind-ups, shoves enemies in melee range back a ring, and grants 20% more damage for 6s.',
     defaultRule: { when: 'enemyCasting' },
   }),
   A({
     id: 'pummel', name: 'Pummel', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit'],
     manaCost: 5, cooldownMs: 0, timeMs: 3300, color: '#c46a4a',
-    effect: { weaponPct: 55, hits: 3, targets: 'single' },
+    effect: { weaponPct: 55, hits: 3, targets: 'single' }, weapons: SLAM_WEAPONS,
     desc: 'Three quick blows to the same target.',
     defaultRule: { when: 'always' },
   }),
@@ -186,14 +202,14 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'judgement_hammer', name: 'Judgement Hammer', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit'],
     manaCost: 9, cooldownMs: 0, timeMs: 4200, color: '#e8d25a',
-    effect: { weaponPct: 250, targets: 'single', stunChance: 0.25, convert: { type: 'light', pct: 50 } },
+    effect: { weaponPct: 250, targets: 'single', stunChance: 0.25, convert: { type: 'light', pct: 50 } }, weapons: SLAM_WEAPONS,
     desc: 'A slow, thunderous blow. 50% of physical damage is converted to lightning; 25% chance to stun.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'infernal_blow', name: 'Infernal Blow', attr: 'str', role: 'main', tags: ['attack', 'melee', 'dot', 'duration', 'hit'],
     manaCost: 6, cooldownMs: 0, timeMs: 3600, color: '#ff6a3a',
-    effect: { weaponPct: 120, targets: 'single', ailment: { kind: 'ignite', pctPerSec: 25, durationMs: 3000 } },
+    effect: { weaponPct: 120, targets: 'single', ailment: { kind: 'ignite', pctPerSec: 25, durationMs: 3000 } }, weapons: SLAM_WEAPONS,
     desc: 'A burning strike that sets the target alight.',
     defaultRule: { when: 'always' },
   }),
@@ -202,15 +218,15 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'twin_strike', name: 'Twin Strike', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'hit'],
     manaCost: 4, cooldownMs: 0, timeMs: 2700, color: '#5fbf6a',
-    effect: { weaponPct: 62, hits: 2, targets: 'single' },
+    effect: { weaponPct: 62, hits: 2, targets: 'single' }, weapons: STRIKE_WEAPONS,
     desc: 'Strike twice in quick succession.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'poison_dart', name: 'Poison Dart', attr: 'dex', role: 'main', tags: ['attack', 'projectile', 'dot', 'duration', 'hit'],
     manaCost: 6, cooldownMs: 0, timeMs: 2400, color: '#7bc04a',
-    effect: { weaponPct: 55, targets: 'single', ailment: { kind: 'poison', pctPerSec: 30, durationMs: 4000 } },
-    desc: 'A dart that poisons. Poison stacks.',
+    effect: { weaponPct: 55, targets: 'single', ailment: { kind: 'poison', pctPerSec: 30, durationMs: 4000 } }, range: 3,
+    desc: 'A thrown dart (3 rings, any weapon) that poisons. Poison stacks.',
     defaultRule: { when: 'targetLifeAbove', value: 40 },
   }),
   A({
@@ -223,42 +239,42 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'lacerate', name: 'Lacerate', attr: 'dex', role: 'burst', tags: ['attack', 'melee', 'dot', 'duration', 'hit'],
     manaCost: 10, cooldownMs: 0, timeMs: 3300, color: '#c0392b',
-    effect: { weaponPct: 130, targets: 'single', ailment: { kind: 'bleed', pctPerSec: 60, durationMs: 4000 } },
-    desc: 'A deep cut that bleeds heavily.',
+    effect: { weaponPct: 130, targets: 'single', ailment: { kind: 'bleed', pctPerSec: 60, durationMs: 4000 } }, range: 2, weapons: ['sword', 'axe'],
+    desc: 'A reaching sweep (2 rings) and a deep cut that bleeds heavily.',
     defaultRule: { when: 'targetLifeAbove', value: 50 },
   }),
   A({
     id: 'barrage', name: 'Barrage', attr: 'dex', role: 'main', tags: ['attack', 'projectile', 'hit'],
     manaCost: 5, cooldownMs: 0, timeMs: 2700, color: '#8fd26a',
-    effect: { weaponPct: 40, hits: 4, targets: 'single' },
+    effect: { weaponPct: 40, hits: 4, targets: 'single' }, weapons: BOW,
     desc: 'Loose a rapid volley of four arrows at one target.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'rain_of_arrows', name: 'Rain of Arrows', attr: 'dex', role: 'area', tags: ['attack', 'projectile', 'area', 'hit'],
     manaCost: 8, cooldownMs: 5000, timeMs: 3300, color: '#6aa84f',
-    effect: { weaponPct: 70, targets: 'all' },
-    desc: 'Arrows fall across the whole pack.',
+    effect: { weaponPct: 70, area: 'splash', radius: 2 }, weapons: BOW,
+    desc: 'Arrows rain on the target and everything within 2 steps of it.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
   }),
   A({
     id: 'feint', name: 'Feint', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'duration', 'hit'],
     manaCost: 5, cooldownMs: 0, timeMs: 2400, color: '#9fc7a0',
-    effect: { weaponPct: 110, targets: 'single', buff: { durationMs: 3000, stats: { evasionPct: 40 } } },
+    effect: { weaponPct: 110, targets: 'single', buff: { durationMs: 3000, stats: { evasionPct: 40 } } }, weapons: STRIKE_WEAPONS,
     desc: 'A false strike that leaves you hard to hit: 40% increased Evasion Rating for 3s.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'backstab', name: 'Backstab', attr: 'dex', role: 'burst', tags: ['attack', 'melee', 'hit'],
     manaCost: 10, cooldownMs: 0, timeMs: 3000, color: '#5a8a5a',
-    effect: { weaponPct: 240, targets: 'single', moreVsAiling: 50 },
+    effect: { weaponPct: 240, targets: 'single', moreVsAiling: 50 }, weapons: ['dagger', 'sword'],
     desc: 'A brutal strike, deadliest on a weakened foe: 50% more damage against enemies with an ailment.',
     defaultRule: { when: 'targetLifeAbove', value: 30 },
   }),
   A({
     id: 'ice_shot', name: 'Ice Shot', attr: 'dex', role: 'main', tags: ['attack', 'projectile', 'duration', 'hit'],
     manaCost: 5, cooldownMs: 0, timeMs: 2700, color: '#8fd8e8',
-    effect: { weaponPct: 115, targets: 'single', convert: { type: 'cold', pct: 50 }, chillMs: 3000 },
+    effect: { weaponPct: 115, targets: 'single', convert: { type: 'cold', pct: 50 }, chillMs: 3000 }, weapons: BOW,
     desc: 'A frozen arrow that chills the target. 50% of physical damage is converted to cold.',
     defaultRule: { when: 'always' },
   }),
@@ -309,15 +325,15 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'shock_nova', name: 'Shock Nova', attr: 'int', role: 'area', tags: ['spell', 'area', 'hit'],
     manaCost: 9, cooldownMs: 4000, timeMs: 0, color: '#a0c8ff',
-    effect: { base: [5, 11], type: 'light', targets: 'all', crit: 5 },
-    desc: 'A burst of lightning that strikes every enemy.',
+    effect: { base: [5, 11], type: 'light', area: 'nova', radius: 2, crit: 5 }, range: 2,
+    desc: 'A burst of lightning that strikes every enemy within 2 rings of you.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
   }),
   A({
     id: 'consecrate', name: 'Consecrate', attr: 'int', role: 'sustain', tags: ['spell', 'area', 'duration', 'hit'],
     manaCost: 10, cooldownMs: 6000, timeMs: 0, color: '#f0c070',
-    effect: { base: [5, 9], type: 'fire', targets: 'all', buff: { durationMs: 4000, regenPct: 2 } },
-    desc: 'Hallow the ground: burn the pack, and regenerate 2% of your life per second for 4s.',
+    effect: { base: [5, 9], type: 'fire', area: 'nova', radius: 2, buff: { durationMs: 4000, regenPct: 2 } }, range: 2,
+    desc: 'Hallow the ground: burn every enemy within 2 rings of you, and regenerate 2% of your life per second for 4s.',
     defaultRule: { when: 'lifeBelow', value: 70 },
   }),
   A({

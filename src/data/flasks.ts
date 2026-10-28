@@ -46,8 +46,8 @@ export const FLASKS: FlaskDef[] = [
   },
   {
     id: 'quicksilver', name: 'Quicksilver Flask', kind: 'utility', color: '#c9d3dc',
-    maxCharges: 40, chargesPerUse: 20, durationMs: 5000, buff: { attackSpeedPct: 30 },
-    desc: '30% increased Attack Speed for 5s', price: 260, dropLevel: 14,
+    maxCharges: 40, chargesPerUse: 20, durationMs: 5000, buff: { attackSpeedPct: 30, moveSpeedPct: 40 },
+    desc: '30% increased Attack Speed and 40% increased Movement Speed for 5s', price: 260, dropLevel: 14,
   },
   {
     id: 'diamond', name: 'Diamond Flask', kind: 'utility', color: '#bfe3ff',

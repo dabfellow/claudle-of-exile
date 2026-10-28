@@ -1,5 +1,8 @@
-import { activeGemDef, ACTIVE_GEMS, DEFAULT_ATTACK, gemReqLevel, RULE_LABELS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
-import { GEM_ATTR_NAME, gemAttrReq, gemLevelReq, gemProgress, skillSummary, supportFits, supportSlots } from '../../engine/gems';
+import { activeGemDef, ACTIVE_GEMS, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, gemReqLevel, RULE_LABELS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
+import { WEAPON_FAMILIES } from '../../data/bases';
+import { RINGS } from '../../engine/battlefield';
+import { skillRange } from '../../engine/combat';
+import { GEM_ATTR_NAME, gemAttrReq, gemLevelReq, gemProgress, gemWeaponReason, skillSummary, supportFits, supportSlots } from '../../engine/gems';
 import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { fmt, ProgressBar } from './common';
@@ -105,6 +108,16 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
         return <div className={`small ${d.combatLevel >= need ? 'muted' : 'bad'}`}>Requires character level {need}</div>;
       })()}
       {gem && <GemRequirement have={d.attributes[def.attr]} def={def} level={gem.level} />}
+      {def.weapons && (
+        <div className={`small ${gemWeaponReason(def.id, d.weaponFamily) ? 'bad' : 'muted'}`}>
+          Main hand: {def.weapons.map((f) => WEAPON_FAMILIES[f].name).join(', ')}
+        </div>
+      )}
+      {def.tags.includes('spell') && (def.effect.weaponPct || def.effect.base) && (
+        <div className="small muted">
+          {CASTER_WEAPON_MORE}% more damage with a {CASTER_WEAPONS.map((f) => WEAPON_FAMILIES[f].name.toLowerCase()).join(', ')}
+        </div>
+      )}
       <div className="delta-list">
         {nums.manaCost > 0 && (
           <>
@@ -116,6 +129,12 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
           <>
             <span className="muted">Cooldown</span>
             <span>{(nums.cooldownMs / 1000).toFixed(1)}s</span>
+          </>
+        )}
+        {(def.effect.weaponPct || def.effect.base) && (
+          <>
+            <span className="muted">Reach</span>
+            <span>{rangeText(skillRange(d, def))}</span>
           </>
         )}
         <span className="muted">{def.tags.includes('attack') ? 'Attack time' : 'Cast time'}</span>
@@ -151,6 +170,11 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
       )}
     </div>
   );
+}
+
+/** A skill's reach in battlefield rings, in words. */
+export function rangeText(range: number): string {
+  return range >= RINGS ? 'Whole field' : range === 1 ? 'Melee (ring 1)' : `${range} rings`;
 }
 
 export function SupportTip({ supportId }: { supportId: string }) {

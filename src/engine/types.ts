@@ -51,7 +51,7 @@ export type Tag =
 /** Every stat a character can have. Add new ones here; Stats and the stat engine pick them up. */
 export const STAT_KEYS = [
   'life', 'lifePct', 'lifeMore', 'lifeRegen', 'lifeRegenPct', 'lifeLeech', 'physMin', 'physMax', 'physPct',
-  'fireMin', 'fireMax', 'coldMin', 'coldMax', 'lightMin', 'lightMax', 'elemPct', 'attackSpeedPct',
+  'fireMin', 'fireMax', 'coldMin', 'coldMax', 'lightMin', 'lightMax', 'elemPct', 'attackSpeedPct', 'moveSpeedPct',
   'attackSpeedMore', 'critChancePct', 'critMulti', 'armour', 'armourPct', 'armourMore', 'evasion',
   'evasionPct', 'fireRes', 'coldRes', 'lightRes', 'allRes', 'itemRarity', 'skillSpeed', 'skillXp',
   'flaskEffect', 'flaskCharges', 'str', 'dex', 'int', 'allAttr', 'accuracy', 'mana', 'manaPct',
@@ -259,7 +259,14 @@ export interface HealOverTime {
 export interface CombatRuntime {
   zoneId: string;
   monsters: MonsterInstance[];
+  /** ms before the gates open: the pause while you search for monsters (tests hold it high to stop spawns) */
   spawnMs: number;
+  /** ms until each edge gate (battlefield EDGE_CELLS) sends its next monster */
+  gates?: number[];
+  /** the monster the player clicked to focus, the one the last skill went for, and the one being closed in on */
+  lockedUid?: number;
+  targetUid?: number;
+  closingUid?: number;
   /** time until the player's next action, and how long the current one takes */
   actionMs: number;
   actionTotal: number;
@@ -349,8 +356,16 @@ export interface VendorOffer {
   price: number;
 }
 
-/** how fast the player pushes through an area: sets how often new waves arrive */
+/** how fast the player pushes through an area: sets how often new monsters arrive */
 export type Movement = 'flee' | 'slow' | 'walk' | 'run';
+
+/** Which monster skills go for: a priority group first, then an order inside it (nearest breaks ties). */
+export type TargetPriority = 'none' | 'boss' | 'ranged' | 'ailing';
+export type TargetOrder = 'closest' | 'farthest' | 'lowest' | 'highest';
+export interface Targeting {
+  priority: TargetPriority;
+  order: TargetOrder;
+}
 
 export interface Settings {
   autoSalvage: Record<Rarity, boolean>;
@@ -358,6 +373,7 @@ export interface Settings {
   movement: Movement;
   /** flee on low life, then resume the chosen pace once healed */
   autoFlee: boolean;
+  targeting: Targeting;
 }
 
 export interface Lifetime {
@@ -468,6 +484,7 @@ export type GameEvent =
   | { t: 'skill'; slot: number; gemId: string; manual: boolean }
   | { t: 'interrupt'; name: string }
   | { t: 'area'; gemId: string; cells: number[] }
+  | { t: 'closeIn'; monsterUid: number }
   | { t: 'gemLevel'; gemId: string; level: number }
   | { t: 'kill'; name: string; boss: boolean }
   | { t: 'spawn'; name: string; boss: boolean }

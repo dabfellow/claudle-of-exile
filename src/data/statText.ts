@@ -17,6 +17,7 @@ const TEXT: Partial<Record<StatKey, (v: number) => string>> = {
   physMax: flat('to maximum Physical Damage with attacks'),
   elemPct: pct('increased Elemental Damage'),
   attackSpeedPct: pct('increased Attack Speed'),
+  moveSpeedPct: pct('increased Movement Speed'),
   attackSpeedMore: signed('more Attack Speed', 'less Attack Speed'),
   critChancePct: pct('increased Critical Strike Chance'),
   critMulti: (v) => `+${v}% to Critical Strike Multiplier`,

@@ -139,7 +139,7 @@ function manageSkills(s: GameState) {
   // the best copy of each gem it owns and meets the attribute for: highest level wins
   const owned = new Map<string, SkillGemInstance>();
   for (const g of [...s.skillBar.filter((x): x is SkillGemInstance => !!x), ...s.gems]) {
-    if (gemUseReason(d.combatLevel, d.attributes, g)) continue;
+    if (gemUseReason(d.combatLevel, d.attributes, g, d.weaponFamily)) continue;
     const have = owned.get(g.gemId);
     if (!have || g.level > have.level) owned.set(g.gemId, g);
   }

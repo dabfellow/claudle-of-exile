@@ -24,7 +24,7 @@ import { newGame, SAVE_VERSION, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameState, MonsterInstance } from '../src/engine/types';
 import { charXpForLevel } from '../src/engine/xp';
-import { veteran } from './helpers';
+import { veteran, armFor } from './helpers';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
 
@@ -35,6 +35,7 @@ function arena(gems: string[], pack: MonsterInstance[], classId: 'warrior' | 'ra
   s.skillBar = s.skillBar.map(() => null);
   // gems start Manual only; these fights want each skill on its suggested rule
   gems.forEach((id, i) => (s.skillBar[i] = { ...createSkillGem(s, id), rule: { ...activeGemDef(id).defaultRule } }));
+  gems.forEach((id) => armFor(s, id));
   const c = ctx();
   startCombat(s, c, 'mudflats');
   s.combat!.monsters = pack;

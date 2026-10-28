@@ -38,10 +38,10 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - [ ] Next round of skills and supports: more Dexterity and Intelligence buffs (both buffs today are Strength), and real curses (the old "curse" role on Poison Dart was removed).
 - [ ] Str/Dex mana: they should stay mana-hungry, but need a mana leech option (passive tree or support), costs paid with life, or uniques/mana regen to stack, on top of flasks.
 - [ ] Ailment overlays on the player while you're taking them: poison a green overlay, bleed a darker red, shock little blue lightning bolts, freeze a ~20% light blue tint over the whole thing.
-- [ ] Battlefield redesign (needs design with you):
-  - Replace waves with a spawn cooldown per tile, but keep monsters walking in from outside your view.
-  - Maybe: you in the middle of a ring of hexes, enemies coming from every side.
-  - Targeting: a targeting preference setting, or click a tile to target it.
+- [ ] Battlefield follow-ups ([BATTLEFIELD.md](BATTLEFIELD.md) → As built):
+  - Sim rerun on the new field; expect melee to need a buff (closing-in time and movement speed are the first knobs).
+  - Zone side weighting for the gates (`spawnSides`).
+  - **[You]** Play it and say how the field feels (size, token readability, walk speed).
 - [ ] Re-run the sim after the gem scaling and skill buffs below; multi-hit attackers (Barrage, Twin Strike, Pummel) lost damage at high gem levels.
 
 ### UI feedback (your walkthrough #2, 2026-10-25) — you test at 1440p and 4K
@@ -82,6 +82,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Battlefield redesign ([BATTLEFIELD.md](BATTLEFIELD.md)): 34-hex half-ring with you on the bottom edge, 4 rings; every edge hex is a spawn gate; monsters slide between hexes and walk in from past the edge; casters stop at ring 3; skill ranges (melee 1, Lacerate 2, Poison Dart 3, bows/spells whole field) with closing in on monsters out of reach (faster with movement speed; Quicksilver gives 40%); arc / beam / nova area shapes; targeting setting (priority + order) and click-to-target; weapon restrictions on attack skills, spells 20% stronger with a caster weapon; phone-width summary; save v19 restarts fights in progress. Not simmed — done 2026-10-27
 - [x] UI pass 4 (your walkthrough, 2026-10-27): Hideout gear click opens the item menu (take off, to stash, salvage); Combat out of a fight shows only "Pick an area" and life/DPS; "Armour shop" renamed Weapon & Armour shop (it always sold swords, axes, bows); Crafting Bench: orb bar pinned on top, selected item pinned on the left while you scroll, Equipment top right with Auto-crafting and Special crafting (fossils, essences) under it, Bench Crafts beside; Skills page shows the bar like combat (#1–#6 priority), click a skill for a popup with priority, trigger, supports, swap and remove; Smithing split into slot tabs (Weapons … Jewellery) with collapsible tiers, newest tier open — done 2026-10-27
 - [x] Affix pool pass: 9 tiers to item level 80 (top 5 roll); attack/caster weapon tags; local defences and weapon physical, global versions on jewellery only; caster mods (spell damage, flat spell damage at full effectiveness, cast speed, spell crit, element %, mana cost, mana as ES, spell block); hybrid defence mods; ailment mods on jewellery; physical/elemental leech 5–30%; PoE-style attributes; Item Rarity a prefix at 4×; character XP replaces skill XP; life regen halved; % elemental tripled; resistances less dominant on armour; shields only roll their own defences ([GEAR.md](GEAR.md) → Affix pool). Not tested, by request — done 2026-10-27
 - [x] Skill pool pass: attack gems scale the whole skill per level (+6% of base each), not each hit; skills tagged `hit` (deals damage) and `cast` (has a cast time), so damage supports don't fit Frost Ward or Meditate, Faster Casts only fits Fireball and Glacial Lance, Lingering no longer fits Parry; gem level needs character level up to 80 at gem level 20 (attributes 8 → 245; Lacerate and Backstab ×1.3); loaded saves drop over-levelled gems back (xp kept) and unsocket supports that no longer fit; Judgement Hammer, Glacial Lance, Frost Needle, Barrage, Pummel, Feint and Ice Shot buffed; Poison Dart is a Main skill ([BALANCE.md](BALANCE.md)) — done 2026-10-27

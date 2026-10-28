@@ -12,7 +12,7 @@ import { seeded } from '../src/engine/rng';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameEvent, GameState } from '../src/engine/types';
-import { veteran } from './helpers';
+import { veteran, armFor } from './helpers';
 
 /** A character in a fight against one durable dummy that never attacks (unless told to). */
 function arena(classId: ClassId, gem = 'heavy_strike', passives: string[] = []) {
@@ -20,6 +20,7 @@ function arena(classId: ClassId, gem = 'heavy_strike', passives: string[] = []) 
   s.passives.push(...passives);
   s.skillBar = s.skillBar.map(() => null);
   s.skillBar[0] = createSkillGem(s, gem);
+  armFor(s, gem);
   s.skillBar[0].rule = { when: 'always' };
   s.settings.autoFlee = false;
   const ctx = makeCtx(seeded(7));
@@ -137,19 +138,21 @@ describe('class mechanics', () => {
   });
 
   it('Malice fills on non-crits and lands a Coup de Grâce Mega Crit when full', () => {
-    const { s, ctx } = arena('shadow', 'heavy_strike', ['duelist_ks']); // Steady Hand: never crit, so every hit fills
+    const { s, ctx } = arena('shadow', 'twin_strike', ['duelist_ks']); // Steady Hand: never crit, so every hit fills
     s.skillBar[0] = null; // Default Attack only, so every hit is compared like for like
     run(s, ctx, 200_000, () => hits(ctx.events).some((e) => e.mega));
     const all = hits(ctx.events);
     const mega = all.find((e) => e.mega);
     expect(mega).toBeTruthy();
     const normal = all.filter((e) => !e.mega).map((e) => e.amount);
-    expect(mega!.amount).toBeGreaterThan(Math.max(...normal) * 2);
+    // 400% on its own roll: well above an average hit, whatever the two rolls were
+    expect(mega!.amount).toBeGreaterThan((normal.reduce((x, y) => x + y, 0) / normal.length) * 1.5);
   });
 
   it('the "class meter full" tactic waits for a full meter', () => {
     const { s, ctx } = arena('warrior', 'heavy_strike');
     s.skillBar[1] = createSkillGem(s, 'ground_slam');
+    armFor(s, 'ground_slam');
     s.skillBar[1].rule = { when: 'meterFull' };
     s.skillBar[0] = null;
     run(s, ctx, 2000);

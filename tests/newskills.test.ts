@@ -10,7 +10,7 @@ import { seeded } from '../src/engine/rng';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameEvent, GameState, MonsterInstance } from '../src/engine/types';
-import { veteran } from './helpers';
+import { veteran, armFor } from './helpers';
 
 const NEW = [
   'pummel', 'berserk', 'parry', 'judgement_hammer', 'infernal_blow',
@@ -26,6 +26,7 @@ function arena(gem: string, opts: { cls?: ClassId; signature?: boolean; pack?: n
   g.rule = { when: 'always' };
   if (opts.signature) g.supports[0] = createSupportGem(s, SUPPORT_GEMS.find((x) => x.signatureFor === gem)!.id);
   s.skillBar[0] = g;
+  armFor(s, gem);
   s.settings.autoFlee = false;
   const ctx = makeCtx(seeded(7));
   startCombat(s, ctx, 'mudflats');

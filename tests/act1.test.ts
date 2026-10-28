@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { FRONT_CELL } from '../src/engine/battlefield';
+import { armFor } from './helpers';
 import { activeGemDef } from '../src/data/gems';
 import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
 import { actionsFor } from '../src/data/skills';
@@ -22,6 +24,7 @@ function arena(gems: string[], pack: MonsterInstance[], zoneId = 'mudflats') {
   s.skills.combat = charXpForLevel(20);
   s.skillBar = s.skillBar.map(() => null);
   gems.forEach((id, i) => (s.skillBar[i] = { ...createSkillGem(s, id), rule: { ...activeGemDef(id).defaultRule } }));
+  gems.forEach((id) => armFor(s, id));
   s.unlockedZones = ZONES.map((z) => z.id);
   const c = ctx();
   startCombat(s, c, zoneId);
@@ -131,6 +134,7 @@ describe('boss mechanics', () => {
   it('killing the act boss completes the act and earns the achievement', () => {
     const { s, c } = arena(['heavy_strike'], [makeMonster(zoneDef('sanctum').boss, true, 99)], 'sanctum');
     s.combat!.monsters[0].life = 1;
+    s.combat!.monsters[0].cell = FRONT_CELL; // in melee range, so the first swing lands before any ward goes up
     run(s, c, 3000);
     expect(s.bossesDefeated).toContain('sanctum');
     expect(c.events.some((e) => e.t === 'actComplete' && e.act === 1)).toBe(true);

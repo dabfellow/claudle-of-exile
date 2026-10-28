@@ -13,6 +13,7 @@ import {
   type SupportMods,
   type TacticRule,
 } from '../data/gems';
+import { WEAPON_FAMILIES, type WeaponFamily } from '../data/bases';
 import { characterLevel } from './character';
 import type { Ctx } from './context';
 import { newUid } from './items';
@@ -54,10 +55,22 @@ export function gemAttrReq(gemId: string, level: number): number {
 }
 
 /** Why you can't use this skill gem right now (character level, then attribute), or null. */
-export function gemUseReason(charLevel: number, attrs: Attributes, gem: SkillGemInstance): string | null {
+/**
+ * Why this gem can't be used right now, or null. Pass the main hand's weapon family to check the gem's
+ * weapon too (leave it out to only check level and attributes, e.g. when placing it on the bar).
+ */
+export function gemUseReason(charLevel: number, attrs: Attributes, gem: SkillGemInstance, family?: WeaponFamily | null): string | null {
   const need = gemLevelReq(gem.gemId, gem.level);
   if (charLevel < need) return `Requires level ${need}`;
-  return gemAttrReason(attrs, gem);
+  return gemAttrReason(attrs, gem) ?? (family === undefined ? null : gemWeaponReason(gem.gemId, family));
+}
+
+/** Why the weapon in your main hand can't use this skill, or null. */
+export function gemWeaponReason(gemId: string, family: WeaponFamily | null): string | null {
+  const need = activeGemDef(gemId).weapons;
+  if (!need || (family && need.includes(family))) return null;
+  const names = need.map((f) => WEAPON_FAMILIES[f].name);
+  return `Needs a ${names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names.at(-1)}` : names[0]}`;
 }
 
 /** Why you can't use this gem at its current level, or null. */

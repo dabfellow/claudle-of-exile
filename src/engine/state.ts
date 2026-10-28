@@ -15,7 +15,7 @@ import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -72,7 +72,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     smithCatalyst: { fossil: null, resin: null, until: false, salvageMisses: false },
     hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1 },
     vendor: { stock: [], refreshAt: 0 },
-    settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false, movement: 'walk', autoFlee: true },
+    settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false, movement: 'walk', autoFlee: true, targeting: { priority: 'none', order: 'closest' } },
     lifetime: {
       kills: 0, bossKills: 0, deaths: 0, itemsLooted: 0, orbsUsed: 0, salvaged: 0, flasksDrunk: 0,
       flasksBrewed: 0, itemsSmithed: 0, gathered: 0, benchCrafts: 0, raresFound: 0, uniquesFound: 0,

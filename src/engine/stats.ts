@@ -1,7 +1,7 @@
 import { affixDef } from '../data/affixes';
 import { classDef } from '../data/classes';
 import { BASE_ATTACK_MS } from '../data/gems';
-import { baseDef } from '../data/bases';
+import { baseDef, type WeaponFamily } from '../data/bases';
 import { flaskDef } from '../data/flasks';
 import { MAP_RARITY } from '../data/hideout';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
@@ -110,6 +110,8 @@ export interface Derived {
   attackMs: number;
   /** wielding a bow: every attack is a ranged projectile, never melee */
   ranged: boolean;
+  /** the main hand's weapon family (skills can need one), or null bare-handed */
+  weaponFamily: WeaponFamily | null;
   dualWield: boolean;
   critChance: number;
   critMulti: number;
@@ -274,6 +276,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     castSpeed,
     attackMs,
     ranged: weapon?.family === 'bow',
+    weaponFamily: weapon?.family ?? null,
     dualWield,
     critChance,
     critMulti,

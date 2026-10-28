@@ -3460,7 +3460,7 @@ g.tut-hint circle.body {
 /* ============ combat 2.0 ============ */
 .arena2 {
   display: grid;
-  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
   gap: var(--s-4);
   align-items: start;
   padding: var(--s-5);
@@ -3473,7 +3473,7 @@ g.tut-hint circle.body {
   align-self: center;
 }
 
-/* ---- battlefield: a 3-4-3 honeycomb, front rank on the left ---- */
+/* ---- battlefield: a half-ring of hexes, the player on the bottom edge (docs/BATTLEFIELD.md) ---- */
 .arena-side {
   display: flex;
   flex-direction: column;
@@ -3500,7 +3500,8 @@ g.tut-hint circle.body {
   font-variant-numeric: tabular-nums;
 }
 
-.bf-auto {
+.bf-auto,
+.bf-target {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -3509,69 +3510,70 @@ g.tut-hint circle.body {
   cursor: pointer;
 }
 
+.input.sm {
+  padding: 3px 6px;
+  font-size: var(--fs-sm);
+}
+
 .battlefield {
   position: relative;
-  height: clamp(340px, 46vw, 460px);
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
 }
 
 .bf-cell {
   position: absolute;
-  width: calc(100% / 3);
-  height: 25%;
-  padding: 4px;
   display: grid;
+  place-items: center;
 }
 
-/* a soft spot on the ground under each cell, so the zone art shows through */
+/* every hex is a dark tile with a hairline gap, so the zone art shows between them */
 .bf-cell::before {
   content: '';
   position: absolute;
-  inset: 14% 10%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.12) 65%, transparent);
+  inset: 2.5%;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: rgba(0, 0, 0, 0.3);
+  transition: background 0.2s;
 }
 
-/* the front rank: melee range, a faint warm glow */
-.bf-cell.front::before {
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 16%, rgba(0, 0, 0, 0.3)), color-mix(in srgb, var(--accent) 6%, transparent) 65%, transparent);
+/* rings fade outward; ring 1 (melee range) has a warm edge, the outer edge (where monsters walk in) is darkest */
+.bf-cell.ring-1::before {
+  background: color-mix(in srgb, var(--accent) 14%, rgba(0, 0, 0, 0.36));
 }
+.bf-cell.ring-2::before { background: rgba(0, 0, 0, 0.32); }
+.bf-cell.ring-3::before { background: rgba(0, 0, 0, 0.28); }
+.bf-cell.ring-4::before { background: rgba(0, 0, 0, 0.42); }
 
-/* a tile with a monster on it: a ringed, lit spot so you can read where the pack stands */
 .bf-cell.occupied::before {
-  inset: 8% 6%;
-  border: 2px solid color-mix(in srgb, var(--danger) 45%, transparent);
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--danger) 22%, rgba(0, 0, 0, 0.45)), rgba(0, 0, 0, 0.3) 70%, transparent);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--danger) 25%, transparent);
+  background: color-mix(in srgb, var(--danger) 18%, rgba(0, 0, 0, 0.42));
 }
-
 .bf-cell.occupied.target::before {
-  border-color: color-mix(in srgb, var(--accent) 80%, transparent);
-  box-shadow: 0 0 22px color-mix(in srgb, var(--accent) 40%, transparent);
+  background: color-mix(in srgb, var(--accent) 30%, rgba(0, 0, 0, 0.4));
 }
-
 .bf-cell.occupied.boss::before {
-  border-width: 3px;
-  border-color: color-mix(in srgb, var(--life-2) 75%, transparent);
+  background: color-mix(in srgb, var(--life-2) 30%, rgba(0, 0, 0, 0.45));
 }
 
 /* ground hazards tint the tile; a skill's area flashes the tiles it covers */
 .bf-cell[class*='ground-']::before {
   animation: ground-pulse 1.6s ease-in-out infinite;
 }
-.bf-cell.ground-burning::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--fire) 55%, transparent), color-mix(in srgb, var(--fire) 20%, rgba(0, 0, 0, 0.5))); }
-.bf-cell.ground-chilled::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--cold) 50%, transparent), color-mix(in srgb, var(--cold) 18%, rgba(0, 0, 0, 0.5))); }
-.bf-cell.ground-shocked::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--light) 50%, transparent), color-mix(in srgb, var(--light) 18%, rgba(0, 0, 0, 0.5))); }
-.bf-cell.ground-caustic::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--poison) 50%, transparent), color-mix(in srgb, var(--poison) 18%, rgba(0, 0, 0, 0.5))); }
+.bf-cell.ground-burning::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--fire) 55%, transparent), color-mix(in srgb, var(--fire) 22%, rgba(0, 0, 0, 0.5))); }
+.bf-cell.ground-chilled::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--cold) 50%, transparent), color-mix(in srgb, var(--cold) 20%, rgba(0, 0, 0, 0.5))); }
+.bf-cell.ground-shocked::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--light) 50%, transparent), color-mix(in srgb, var(--light) 20%, rgba(0, 0, 0, 0.5))); }
+.bf-cell.ground-caustic::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--poison) 50%, transparent), color-mix(in srgb, var(--poison) 20%, rgba(0, 0, 0, 0.5))); }
 
 .bf-cell.flash-a::after,
 .bf-cell.flash-b::after {
   content: '';
   position: absolute;
-  inset: 14% 10%;
-  z-index: 2;
+  inset: 2.5%;
+  z-index: 3;
   pointer-events: none;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent-2) 60%, transparent), transparent);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent-2) 65%, transparent), color-mix(in srgb, var(--accent-2) 20%, transparent));
   opacity: 0;
 }
 .bf-cell.flash-a::after { animation: area-flash 0.45s ease-out; }
@@ -3589,28 +3591,70 @@ g.tut-hint circle.body {
   50% { filter: brightness(1.35); }
 }
 
+/* the player's own hex on the bottom edge */
+.bf-player-cell::before {
+  background: color-mix(in srgb, var(--accent) 35%, rgba(0, 0, 0, 0.45));
+}
+.bf-player-cell .portrait {
+  position: relative;
+  width: 46%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.bf-player-cell.lunge-a .portrait { animation: lunge 0.35s ease-out; }
+.bf-player-cell.lunge-b .portrait { animation: lunge-b 0.35s ease-out; }
+@keyframes lunge {
+  40% { transform: translateY(-14%) scale(1.12); }
+}
+@keyframes lunge-b {
+  40% { transform: translateY(-14%) scale(1.12); }
+}
+
+/* a monster stands on the hex centre; stepping slides it to the next hex, arriving walks it in from past the edge */
+.bf-unit {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  transition-property: left, top;
+  transition-timing-function: ease-in-out;
+  cursor: pointer;
+  animation: bf-walk-in 0.7s ease-out;
+}
+.bf-unit.boss {
+  z-index: 4;
+}
+@keyframes bf-walk-in {
+  from {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));
+    opacity: 0;
+  }
+}
+
 .bf-token {
   position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
-  align-self: center;
-  justify-self: center;
-  width: min(100%, 200px);
+  gap: 3px;
   min-width: 0;
-  padding: 6px 8px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 5px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.65);
   border: 1px solid var(--line);
   backdrop-filter: blur(2px);
-  animation: fade-in 0.3s;
 }
 
 .bf-token.targeted {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent), 0 0 16px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.bf-token.locked {
+  border-width: 2px;
+  border-style: dashed;
 }
 
 .bf-token.boss {
@@ -3626,14 +3670,14 @@ g.tut-hint circle.body {
 .bf-token-head {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 
 .bf-token-name {
   flex: 1;
   min-width: 0;
-  font-size: var(--fs-xs);
+  font-size: 10px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -3641,22 +3685,33 @@ g.tut-hint circle.body {
 }
 
 .portrait.tiny {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  flex: none;
 }
 
 .bf-token .target-pip {
   margin-left: 0;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   flex: none;
 }
 
+/* ranged monsters wear a small blue dot */
+.bf-ranged {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--mana-2);
+}
+
 .bf-approach {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--dim);
   font-style: italic;
+  white-space: nowrap;
 }
 
 .bf-pips {
@@ -3665,18 +3720,54 @@ g.tut-hint circle.body {
 }
 
 .bf-pip {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
 }
 
 .bf-empty {
   position: absolute;
-  inset: 0;
+  inset: 0 0 30% 0;
   display: grid;
   place-items: center;
   color: var(--dim);
   font-size: var(--fs-sm);
+}
+
+/* the field needs the width: below this the player card and matchup sit side by side under it */
+@media (max-width: 1700px) {
+  .arena2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .arena2 .bf-wrap {
+    order: -1;
+  }
+  .arena-side {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    align-items: start;
+  }
+}
+
+/* narrow screens get a summary instead of the field */
+.bf-summary {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  font-size: var(--fs-sm);
+}
+.bf-summary-target {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+@media (max-width: 700px) {
+  .battlefield {
+    display: none;
+  }
+  .bf-summary {
+    display: flex;
+  }
 }
 
 .pack {
@@ -3980,6 +4071,10 @@ g.tut-hint circle.body {
 .skill-btn.queued {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent);
+}
+
+.skill-btn.unusable .skill-rule {
+  color: var(--danger);
 }
 
 .skill-btn.nomana .skill-meta {

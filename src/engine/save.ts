@@ -180,6 +180,14 @@ const MIGRATIONS: Record<number, Migration> = {
     Object.values(s.equipment ?? {}).forEach(fix);
     s.vendor?.stock?.forEach((o) => fix(o.item));
   },
+  18: (raw) => {
+    // the battlefield became a half-ring of hexes (docs/BATTLEFIELD.md): old cells mean nothing now, so the fight restarts
+    const s = raw as unknown as GameState;
+    if (!s.combat) return;
+    s.combat.monsters = [];
+    s.combat.ground = [];
+    s.combat.gates = undefined;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

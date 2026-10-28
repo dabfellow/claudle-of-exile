@@ -1,4 +1,4 @@
-import { activeGemDef, SKILL_BAR_SLOTS, type TacticRule, type TargetStatus } from '../data/gems';
+import { activeGemDef, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type TacticRule, type TargetStatus } from '../data/gems';
 import { clearGround } from './storage';
 import {
   actOpen,
@@ -35,11 +35,18 @@ import {
   AUTO_FLEE_RESUME,
   FLEE_BREATHER_REGEN,
   BOSS_CELL,
-  cellCol,
+  BOSS_ENTRY,
+  cellDistance,
+  cellRing,
+  EDGE_CELLS,
   FLEE_SHAKE_MS,
   FRONT_CELL,
-  freeCell,
+  freeEdge,
+  freeNear,
   inReach,
+  pullCloser,
+  reachable,
+  RINGS,
   MONSTER_STEP_MS,
   MOVEMENT,
   areaCells,
@@ -82,9 +89,13 @@ import {
 } from './mechanics';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
 import { openReachedZones } from './progress';
-import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, InstillCondition, MonsterInstance, Movement } from './types';
+import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, InstillCondition, MonsterInstance, Movement, TargetPriority, Targeting } from './types';
 
 export const SPAWN_DELAY_MS = 900;
+/** closing in on a monster out of reach takes this long, shortened by movement speed */
+export const CLOSE_IN_MS = 500;
+/** with nothing in reach and no way in, the player waits this long before looking again */
+const IDLE_MS = 250;
 export const DEATH_LIFE_FRACTION = 0.25;
 /** each monster in a pack of 2+ is weaker; xp and loot scale with it */
 export const PACK_LIFE_SCALE = 0.6;
@@ -140,6 +151,8 @@ export function startCombat(s: GameState, ctx: Ctx, zoneId: string): string | nu
   if (!actOpen(zoneDef(zoneId).act)) return "This act isn't open yet";
   s.action = { kind: 'combat', zoneId };
   s.combat = newRuntime(zoneId);
+  // gates start part-way through their timers, so they don't all open together
+  s.combat.gates = EDGE_CELLS.map(() => gateTimer(ctx, zoneId) * ctx.rng.next());
   clearGround(s);
   ctx.emit({ t: 'info', text: `Entered ${zoneDef(zoneId).name}` });
   ctx.emit({ t: 'combatStart', zoneId });
@@ -234,9 +247,9 @@ export function bossIsNext(s: GameState, zoneId: string): boolean {
   return (s.zoneKills[zoneId] ?? 0) >= zoneDef(zoneId).bossEvery;
 }
 
-/** Living monsters, front rank first: the first one is the current target. */
+/** Living monsters, nearest first. */
 export function aliveMonsters(c: CombatRuntime): MonsterInstance[] {
-  return c.monsters.filter((m) => m.life > 0).sort((a, b) => cellCol(a.cell) - cellCol(b.cell));
+  return c.monsters.filter((m) => m.life > 0).sort((a, b) => cellRing(a.cell) - cellRing(b.cell) || a.uid - b.uid);
 }
 
 /** A boss you've never beaten has to be fought in person: offline, it stays in hiding and you keep farming trash. */
@@ -244,63 +257,91 @@ function bossCanSpawn(s: GameState, ctx: Ctx, zoneId: string): boolean {
   return bossIsNext(s, zoneId) && !(ctx.offline && !s.bossesDefeated.includes(zoneId));
 }
 
-/** Put fresh monsters on the field, each in a free cell. Ones with no room stay away. */
-function place(s: GameState, ctx: Ctx, fresh: MonsterInstance[], from: 'back' | 'front'): MonsterInstance[] {
-  const c = s.combat!;
-  const placed: MonsterInstance[] = [];
-  for (const m of fresh) {
-    const cell = m.isBoss ? BOSS_CELL : freeCell(c.monsters, ctx.rng, from);
-    if (cell < 0) break;
-    m.cell = cell;
-    c.monsters.push(m);
-    placed.push(m);
-  }
-  return placed;
+/** Each gate's next timer: the zone's pace spread over every gate, so monsters arrive about as often as one wave timer sent them. */
+function gateTimer(ctx: Ctx, zoneId: string): number {
+  return zoneDef(zoneId).spawnEveryMs * EDGE_CELLS.length * (0.6 + 0.8 * ctx.rng.next());
 }
 
-/** A wave walks in from the far edge: a pack of trash, or the boss with its adds. */
-function spawnWave(s: GameState, ctx: Ctx): void {
+/** A pack walks in through a gate: the first monster at the gate, the rest at the free gates nearest it. */
+function spawnPack(s: GameState, ctx: Ctx, gate: number): void {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
-  const boss = bossCanSpawn(s, ctx, zone.id);
-  if (bossIsNext(s, zone.id) && !boss) ctx.emit({ t: 'bossWaiting', name: zone.boss.name });
-  const pack: MonsterInstance[] = [];
-  if (boss) {
-    pack.push(makeMonster(zone.boss, true, newUid(s)));
-    for (let i = 0; i < BOSS_ADDS; i++) pack.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE));
-  } else {
-    const [lo, hi] = zone.packSize;
-    const n = rInt(ctx.rng, lo, hi);
-    const scale = n > 1 ? PACK_LIFE_SCALE : 1;
-    const room = MOVEMENT[currentMovement(s)].maxField - aliveMonsters(c).length;
-    for (let i = 0; i < Math.min(n, room); i++) pack.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), scale));
+  if (bossIsNext(s, zone.id)) ctx.emit({ t: 'bossWaiting', name: zone.boss.name });
+  const [lo, hi] = zone.packSize;
+  const n = rInt(ctx.rng, lo, hi);
+  const scale = n > 1 ? PACK_LIFE_SCALE : 1;
+  const room = MOVEMENT[currentMovement(s)].maxField - aliveMonsters(c).length;
+  const others = freeEdge(c.monsters)
+    .filter((i) => i !== gate)
+    .sort((a, b) => cellDistance(a, gate) - cellDistance(b, gate));
+  const cells = [gate, ...others].slice(0, Math.min(n, room));
+  for (const cell of cells) {
+    const m = makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), scale);
+    m.cell = cell;
+    c.monsters.push(m);
   }
-  // the boss's adds rush to the front rank to shield it; trash walks in from the far edge
-  const placed = place(s, ctx, pack, boss ? 'front' : 'back');
-  if (!placed.length) return;
-  const lead = placed[0];
-  ctx.emit({ t: 'spawn', name: boss ? lead.name : placed.length > 1 ? `${placed.length} monsters` : lead.name, boss });
-  if (boss) triggerInstilled(s, ctx, 'bossCast');
+  if (cells.length) ctx.emit({ t: 'spawn', name: cells.length > 1 ? `${cells.length} monsters` : c.monsters[c.monsters.length - 1].name, boss: false });
+}
+
+/** The boss walks in through the top gate with its adds at its side. */
+function spawnBoss(s: GameState, ctx: Ctx): void {
+  const c = s.combat!;
+  const zone = zoneDef(c.zoneId);
+  const boss = makeMonster(zone.boss, true, newUid(s));
+  boss.cell = BOSS_ENTRY;
+  c.monsters.push(boss);
+  const near = freeNear(c.monsters, BOSS_ENTRY, ctx.rng);
+  for (let i = 0; i < BOSS_ADDS && i < near.length; i++) {
+    const m = makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE);
+    m.cell = near[i];
+    c.monsters.push(m);
+  }
+  ctx.emit({ t: 'spawn', name: boss.name, boss: true });
+  triggerInstilled(s, ctx, 'bossCast');
 }
 
 /**
- * New waves arrive on the zone's timer, scaled by how fast the player is moving -- even mid-fight, so a slow
- * kill means fighting two packs at once. A wave that's due waits while the field is as full as the pace allows.
- * An empty field fills quickly unless the player is fleeing. The boss waits for the field to clear,
- * and no trash arrives while it's alive.
+ * Every edge hex is a gate with its own timer, sped up by how fast the player is moving -- even mid-fight, so a slow
+ * kill means more monsters walking in. A gate that's due waits while it's blocked or the field is as full as the pace
+ * allows. An empty field fills after a short search unless the player is fleeing. The boss waits for the field to
+ * clear, and nothing else arrives while it's alive.
  */
 function advanceSpawns(s: GameState, ctx: Ctx, dt: number): void {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
   if (c.monsters.some((m) => m.isBoss && m.life > 0)) return;
   const alive = aliveMonsters(c).length;
-  if (bossCanSpawn(s, ctx, zone.id) && alive) return;
+  const boss = bossCanSpawn(s, ctx, zone.id);
+  if (boss && alive) return;
   const pace = MOVEMENT[currentMovement(s)];
-  if (!alive) c.spawnMs = Math.min(c.spawnMs, SPAWN_DELAY_MS);
-  c.spawnMs = Math.max(0, c.spawnMs - dt * pace.spawnRate);
-  if (c.spawnMs > 0 || alive >= pace.maxField) return;
-  c.spawnMs = zone.spawnEveryMs;
-  spawnWave(s, ctx);
+  if (!alive && c.spawnMs <= 0) c.spawnMs = SPAWN_DELAY_MS;
+  if (c.spawnMs > 0) {
+    c.spawnMs = Math.max(0, c.spawnMs - dt * pace.spawnRate);
+    if (c.spawnMs > 0 || alive) return;
+    // the search is over: the first monsters walk in straight away
+    if (boss) spawnBoss(s, ctx);
+    else spawnPack(s, ctx, pick(ctx.rng, freeEdge(c.monsters)));
+    return;
+  }
+  c.gates ??= EDGE_CELLS.map(() => gateTimer(ctx, zone.id) * ctx.rng.next());
+  const gates = c.gates;
+  EDGE_CELLS.forEach((cell, k) => {
+    gates[k] = Math.max(0, gates[k] - dt * pace.spawnRate);
+    if (gates[k] > 0 || aliveMonsters(c).length >= pace.maxField) return;
+    if (c.monsters.some((m) => m.cell === cell && m.life > 0)) return;
+    gates[k] = gateTimer(ctx, zone.id);
+    spawnPack(s, ctx, cell);
+  });
+}
+
+/** Ms until the next monster walks in, for the movement bar (null while nothing can arrive). */
+export function nextArrivalMs(s: GameState): number | null {
+  const c = s.combat;
+  if (!c) return null;
+  const pace = MOVEMENT[currentMovement(s)];
+  if (!pace.spawnRate || aliveMonsters(c).length >= pace.maxField) return null;
+  if (c.spawnMs > 0 || !c.gates) return c.spawnMs / pace.spawnRate;
+  return Math.min(...c.gates) / pace.spawnRate;
 }
 
 /** Fleeing outpaces the field: every so often the monster furthest behind loses track of you. Bosses keep up. */
@@ -398,6 +439,79 @@ function gainCharges(s: GameState, amount: number, d: Derived): void {
   }
 }
 
+// ---------- targeting ----------
+
+const DEFAULT_TARGETING: Targeting = { priority: 'none', order: 'closest' };
+
+function inPriority(p: TargetPriority, m: MonsterInstance): boolean {
+  if (p === 'boss') return m.isBoss;
+  if (p === 'ranged') return m.attackKind === 'spell';
+  if (p === 'ailing') return hasAilment(m);
+  return false;
+}
+
+/** Every living monster in the order skills want them: a clicked monster first, then the priority group, then the order; nearest breaks ties. */
+export function targetOrder(s: GameState): MonsterInstance[] {
+  const c = s.combat;
+  if (!c) return [];
+  const t = s.settings.targeting ?? DEFAULT_TARGETING;
+  const group = (m: MonsterInstance) => (m.uid === c.lockedUid ? 0 : inPriority(t.priority, m) ? 1 : 2);
+  const key = (m: MonsterInstance) =>
+    t.order === 'farthest' ? -cellRing(m.cell) : t.order === 'lowest' ? m.life : t.order === 'highest' ? -m.life : cellRing(m.cell);
+  return aliveMonsters(c).sort((a, b) => group(a) - group(b) || key(a) - key(b) || cellRing(a.cell) - cellRing(b.cell) || a.uid - b.uid);
+}
+
+/** The monster the fight is about: the one your last skill went for, else the first in targeting order. */
+export function focusTarget(s: GameState): MonsterInstance | undefined {
+  const c = s.combat;
+  if (!c) return undefined;
+  return c.monsters.find((m) => m.uid === c.targetUid && m.life > 0) ?? targetOrder(s)[0];
+}
+
+/** Click a monster to focus it until it dies; click it again to let the targeting setting choose. */
+export function lockTarget(s: GameState, uid: number): void {
+  if (!s.combat) return;
+  s.combat.lockedUid = s.combat.lockedUid === uid ? undefined : uid;
+}
+
+/** How many rings out a skill reaches: its own range, else melee attacks 1 (bows and a wand's basic attack shoot) and the rest the whole field. */
+export function skillRange(d: Derived, def: ActiveGemDef): number {
+  if (def.range) return def.range;
+  if (!def.tags.includes('attack') || def.tags.includes('projectile') || d.ranged) return RINGS;
+  if (def.id === DEFAULT_ATTACK.id && d.weaponFamily === 'wand') return RINGS;
+  return 1;
+}
+
+/**
+ * Who a skill goes for: the first monster in targeting order that's in range or that you can close in on (a clear
+ * way in). Area skills aim at whoever in range puts the most monsters under the hit, within the same priority.
+ * Null when nothing can be reached.
+ */
+export function skillTarget(s: GameState, d: Derived, nums: SkillNumbers): { mon: MonsterInstance; closeIn: boolean } | null {
+  const c = s.combat!;
+  const range = skillRange(d, nums.def);
+  const order = targetOrder(s);
+  const fits = (m: MonsterInstance) => cellRing(m.cell) <= range;
+  const first = order.find((m) => fits(m) || (range < RINGS && reachable(c.monsters, m, range)));
+  if (!first) return null;
+  if (!fits(first)) return { mon: first, closeIn: true };
+  const shape = skillArea(nums);
+  if (first.uid === c.lockedUid || (shape !== 'splash' && shape !== 'arc')) return { mon: first, closeIn: false };
+  const t = s.settings.targeting ?? DEFAULT_TARGETING;
+  const same = order.filter((m) => fits(m) && inPriority(t.priority, m) === inPriority(t.priority, first));
+  const under = (m: MonsterInstance) => {
+    const cells = new Set(areaCells(shape, m.cell, nums.def.effect.radius));
+    return order.filter((o) => cells.has(o.cell)).length;
+  };
+  let best = first;
+  let most = under(first);
+  for (const m of same) {
+    const n = under(m);
+    if (n > most) [best, most] = [m, n];
+  }
+  return { mon: best, closeIn: false };
+}
+
 // ---------- tactics ----------
 
 export interface RuleContext {
@@ -428,7 +542,7 @@ export function monsterStatuses(m: MonsterInstance | undefined): Set<TargetStatu
 
 export function ruleContext(s: GameState, d: Derived): RuleContext {
   const alive = s.combat ? aliveMonsters(s.combat) : [];
-  const target = alive[0];
+  const target = focusTarget(s);
   return {
     lifePct: (s.life / d.maxLife) * 100,
     manaPct: d.maxMana ? (s.mana / d.maxMana) * 100 : 0,
@@ -447,7 +561,7 @@ export function skillIsActive(c: CombatRuntime, gemId: string): boolean {
   if ((gemId === 'iron_guard' || gemId === 'parry') && c.blocks > 0) return true;
   if (gemId === 'smoke_step' && c.evadeMs > 0) return true;
   if (gemId === 'frost_ward' && c.shield > 0) return true;
-  const target = aliveMonsters(c)[0];
+  const target = c.monsters.find((m) => m.uid === c.targetUid && m.life > 0) ?? aliveMonsters(c)[0];
   return !!target?.dots.some((x) => x.gemId === gemId);
 }
 
@@ -503,31 +617,77 @@ function ready(s: GameState, d: Derived, slot: number, nums: SkillNumbers): bool
   return s.combat!.cooldowns[slot] <= 0 && canPay(s, d, nums.manaCost);
 }
 
+export interface SkillChoice {
+  slot: number;
+  nums: SkillNumbers;
+  manual: boolean;
+  /** who it goes for; none for a guard or buff, or when there's nothing to do */
+  target?: MonsterInstance;
+  /** the target is out of reach: run at it instead of using the skill */
+  closeIn?: boolean;
+}
+
+/** Damage skills need someone in reach; guards, buffs and sustain skills (Consecrate's heal) go off regardless. */
+function needsTarget(def: ActiveGemDef): boolean {
+  return !!(def.effect.weaponPct || def.effect.base) && def.role !== 'guard' && def.role !== 'buff' && def.role !== 'sustain';
+}
+
 /**
  * Pick what to do next: a queued manual cast; else the first skill with a cooldown (guards, buffs, spells, area
  * skills) whose rule passes; else the first cooldown-free attack whose rule passes and that you can pay for;
  * else a free default attack. Attacks without cooldowns would otherwise crowd out everything below them.
+ * A damage skill only counts with a target in range. When none has one, the first that could reach a monster
+ * by closing in comes back with `closeIn`; with nothing reachable at all, slot -1 and no target means wait.
  */
-export function chooseSkill(s: GameState, d: Derived): { slot: number; nums: SkillNumbers; manual: boolean } {
+export function chooseSkill(s: GameState, d: Derived): SkillChoice {
   const c = s.combat!;
+  const later: { approach?: SkillChoice } = {};
+  const consider = (slot: number, nums: SkillNumbers, manual: boolean): SkillChoice | null => {
+    const aim = skillTarget(s, d, nums);
+    if (!needsTarget(nums.def)) return { slot, nums, manual, target: aim && !aim.closeIn ? aim.mon : undefined };
+    if (!aim) return null;
+    const choice = { slot, nums, manual, target: aim.mon, closeIn: aim.closeIn };
+    if (!aim.closeIn) return choice;
+    later.approach ??= choice;
+    return null;
+  };
   if (c.queued !== null) {
     const slot = c.queued;
     const gem = s.skillBar[slot];
     const nums = skillNumbers(d, gem);
     c.queued = null;
-    if (gem && ready(s, d, slot, nums) && !gemUseReason(d.combatLevel, d.attributes, gem)) return { slot, nums, manual: true };
+    if (gem && ready(s, d, slot, nums) && !gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) {
+      const got = consider(slot, nums, true);
+      if (got) return got;
+      // out of reach: keep it queued while you close in
+      if (later.approach) c.queued = slot;
+    }
   }
   const rc = ruleContext(s, d);
   for (const withCooldown of [true, false]) {
     for (let i = 0; i < s.skillBar.length; i++) {
       const gem = s.skillBar[i];
-      if (!gem || (activeGemDef(gem.gemId).cooldownMs > 0) !== withCooldown || gemUseReason(d.combatLevel, d.attributes, gem)) continue;
+      if (!gem || (activeGemDef(gem.gemId).cooldownMs > 0) !== withCooldown || gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) continue;
       const nums = skillNumbers(d, gem);
-      if (!ready(s, d, i, nums)) continue;
-      if (ruleAllows(gem.rule, rc, skillIsActive(c, gem.gemId))) return { slot: i, nums, manual: false };
+      if (!ready(s, d, i, nums) || !ruleAllows(gem.rule, rc, skillIsActive(c, gem.gemId))) continue;
+      const got = consider(i, nums, false);
+      if (got) return got;
     }
   }
-  return { slot: -1, nums: skillNumbers(d, null), manual: false };
+  const basic = skillNumbers(d, null);
+  return consider(-1, basic, false) ?? later.approach ?? { slot: -1, nums: basic, manual: false };
+}
+
+/** Run at a monster out of reach: it ends up a ring closer. Movement speed makes it quicker. */
+function closeIn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): void {
+  const c = s.combat!;
+  pullCloser(c.monsters, mon);
+  c.using = null;
+  c.closingUid = c.targetUid = mon.uid;
+  const time = CLOSE_IN_MS / (1 + d.raw.moveSpeedPct / 100);
+  c.actionTotal = time;
+  c.actionMs = Math.max(c.actionMs + time, time * 0.5);
+  ctx.emit({ t: 'closeIn', monsterUid: mon.uid });
 }
 
 // ---------- damage ----------
@@ -617,6 +777,7 @@ function rollHit(
   }
   if (isAttack) more *= 1 + rageMore(s, d) / 100;
   if (def.tags.includes('spell')) more *= 1 + manaPowerMore(s, d, c.manaFrac) / 100;
+  if (def.tags.includes('spell') && d.weaponFamily && CASTER_WEAPONS.includes(d.weaponFamily)) more *= 1 + CASTER_WEAPON_MORE / 100;
   for (const t of DAMAGE_TYPES) byType[t] *= more;
 
   const spellType = def.effect.type;
@@ -820,12 +981,13 @@ function hitMonster(
   return dealt;
 }
 
-function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillNumbers, manual: boolean): void {
+function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillNumbers, manual: boolean, aimed?: MonsterInstance): void {
   const c = s.combat!;
   const { def, mods, level } = nums;
   const e = def.effect;
   const r = d.raw;
   c.using = def.id;
+  c.closingUid = undefined;
   c.manaFrac = manaFraction(s, d);
   // Overclock: no costs, and cooldowns at the minimum
   if (!r.overclock) {
@@ -882,7 +1044,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       extendMaxMs: mods.specials.has('bloodfrenzy') ? 12000 : undefined,
     });
   }
-  if (e.knockback && knockBack(c.monsters)) ctx.emit({ t: 'area', gemId: def.id, cells: areaCells('rank', 1) });
+  if (e.knockback && knockBack(c.monsters)) ctx.emit({ t: 'area', gemId: def.id, cells: areaCells('nova', 0, 1) });
   if (e.interrupts) {
     for (const m of aliveMonsters(c)) {
       if (m.casting < 0) continue;
@@ -916,17 +1078,23 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   // Inferno's blast scorches the ground around the target
   const ground = mods.specials.has('inferno') ? { kind: 'burning' as const, pctPerSec: 25, durationMs: 3000, area: 'splash' as const } : e.ground;
   let grounded = false;
+  let target = aimed;
 
   for (let pass = 0; pass < passes; pass++) {
     const passMult = pass === 0 ? 1 : (mods.repeatDamage / 100) * (1 + r.repeatMore / 100);
     for (let h = 0; h < hitsPerPass; h++) {
+      // the target died mid-skill: the next one in reach takes the rest
+      if (!target || target.life <= 0) {
+        const aim = skillTarget(s, d, nums);
+        if (!aim || aim.closeIn) return;
+        target = aim.mon;
+      }
+      c.targetUid = target.uid;
       const alive = aliveMonsters(c);
-      if (!alive.length) return;
-      const target = alive[0];
       let targets: MonsterInstance[];
       let chained = false;
       if (shape !== 'target') {
-        const cells = new Set(areaCells(shape, target.cell));
+        const cells = new Set(areaCells(shape, target.cell, e.radius));
         targets = [target, ...alive.filter((m) => m !== target && cells.has(m.cell))];
         if (pass === 0 && h === 0) ctx.emit({ t: 'area', gemId: def.id, cells: [...cells] });
       } else {
@@ -945,13 +1113,14 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: 'phys', evaded: true, monsterUid: target.uid });
         continue;
       }
+      const aim = target;
       targets.forEach((m, i) => {
         const chainMult = chained ? 1 + ((mods.specials.has('overload') ? 20 : 0) + r.chainMore) / 100 * i : 1;
         const dealt = hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * chainMult * tender, roll.mega, roll.coup);
-        if (ground && !grounded && m === target) {
+        if (ground && !grounded && m === aim) {
           grounded = true;
           const dps = (dealt * ground.pctPerSec) / 100;
-          for (const cell of areaCells(ground.area ?? 'target', target.cell)) layGround(c.ground, cell, ground.kind, dps, ground.durationMs * nums.durationMult);
+          for (const cell of areaCells(ground.area ?? 'target', aim.cell)) layGround(c.ground, cell, ground.kind, dps, ground.durationMs * nums.durationMult);
         }
       });
       // Verdict arcs off stunned targets, Splinter shatters off chilled ones
@@ -965,10 +1134,10 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   }
 }
 
-/** Where a skill's hit lands on the battlefield: Pierce turns any projectile into a lane; 'all' means the whole field. */
+/** Where a skill's hit lands on the battlefield: Pierce turns any projectile into a beam to the edge; 'all' means the whole field. */
 export function skillArea(nums: SkillNumbers): AreaShape {
   const e = nums.def.effect;
-  if (nums.mods.specials.has('pierce')) return 'line';
+  if (nums.mods.specials.has('pierce')) return 'beam';
   return e.area ?? (e.targets === 'all' ? 'field' : 'target');
 }
 
@@ -1343,8 +1512,14 @@ function bossPhases(s: GameState, ctx: Ctx, mon: MonsterInstance, dt: number): v
       const zone = zoneDef(c.zoneId);
       const fresh: MonsterInstance[] = [];
       for (let i = adds; i < BOSS_SUMMON_COUNT; i++) fresh.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE));
-      // new adds take the front rank, so single-target skills have to chew through them
-      const placed = place(s, ctx, fresh, 'front');
+      // new adds appear at the boss's side, in front of it where there's room, to shield it
+      const behind = (i: number) => Number(cellRing(i) > cellRing(mon.cell));
+      const near = freeNear(c.monsters, mon.cell, ctx.rng).sort((a, b) => behind(a) - behind(b));
+      const placed = fresh.slice(0, near.length);
+      placed.forEach((m, i) => {
+        m.cell = near[i];
+        c.monsters.push(m);
+      });
       if (placed.length) ctx.emit({ t: 'bossPhase', name: mon.name, text: `calls for aid (+${placed.length})` });
     }
   }
@@ -1462,7 +1637,19 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
     // so this ends on a skill that takes time (at worst the Default Attack); the cap is a safety net
     for (let n = 0; n < 8; n++) {
       const choice = chooseSkill(s, d);
-      performSkill(s, ctx, d, choice.slot, choice.nums, choice.manual);
+      if (choice.closeIn) {
+        closeIn(s, ctx, d, choice.target!);
+        break;
+      }
+      if (choice.slot < 0 && !choice.target) {
+        // nothing in reach and no way in: wait for the field to change
+        c.using = null;
+        c.closingUid = undefined;
+        c.actionTotal = IDLE_MS;
+        c.actionMs = Math.max(c.actionMs + IDLE_MS, IDLE_MS * 0.5);
+        break;
+      }
+      performSkill(s, ctx, d, choice.slot, choice.nums, choice.manual, choice.target);
       reapDead(s, ctx, d);
       if (!s.combat || !c.monsters.length) return true;
       if (choice.nums.actionMs <= 0) continue;
