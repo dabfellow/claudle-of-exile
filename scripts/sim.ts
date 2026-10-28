@@ -376,7 +376,7 @@ function runClass(classId: ClassId): Result {
     console.log(`  [${classId}] bar:`, s.skillBar.map((g) => g && `${g.gemId}:${g.level}[${g.supports.filter(Boolean).map((x) => x!.supportId).join('+')}]`).join(' | '));
     console.log(`  [${classId}] gear:`, Object.entries(s.equipment).map(([k, i]) => `${k}=${i?.baseId}`).join(' '));
     console.log(`  [${classId}] attributes ${JSON.stringify(d.attributes)}`);
-    console.log(`  [${classId}] skills:`, s.skillBar.map((g) => g && `${g.gemId} ${skillSummary(d, g).perSecond.toFixed(1)}/s`).filter(Boolean).join(' | '), `hit ${hitChance(d.accuracy, d.combatLevel).toFixed(2)} acc ${d.accuracy} evasion ${d.evasion} block ${d.blockChance}`);
+    console.log(`  [${classId}] skills:`, s.skillBar.map((g) => g && `${g.gemId} ${skillSummary(d, g).perSecond.toFixed(1)}/s`).filter(Boolean).join(' | '), `hit ${hitChance(d.accuracy, d.combatLevel).toFixed(2)} acc ${d.accuracy} evasion ${d.evasion}`);
     console.log(`  [${classId}] life ${d.maxLife} armour ${d.armour} res ${JSON.stringify(d.res)} dps ${d.dps.toFixed(0)}`);
   }
   res.finalLevel = characterLevel(s);
