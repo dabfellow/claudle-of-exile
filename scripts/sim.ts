@@ -37,6 +37,7 @@ const HOURS = Number(opt('hours', '24'));
 const IDLE = flag('idle');
 const ONLY = opt('class', '');
 const SEED = Number(opt('seed', '7'));
+const TRACE = flag('trace');
 
 const fmt = (ms: number | undefined) => {
   if (ms === undefined) return '—';
@@ -53,7 +54,8 @@ function score(s: GameState, d: Derived): number {
   const skillDps = Math.max(
     d.dps,
     ...s.skillBar.map((g) => {
-      if (!g) return 0;
+      // a skill the weapon can't use is worth nothing, so the bot won't swap to a weapon that turns its bar off
+      if (!g || gemUseReason(d.combatLevel, d.attributes, g, d.weaponFamily)) return 0;
       const sum = skillSummary(d, g);
       return sum.perSecond * (sum.nums.def.tags.includes('attack') ? hit : 1);
     }),
@@ -282,16 +284,27 @@ function runClass(classId: ClassId): Result {
   let now = 0;
   const res: Result = { classId, levels: {}, bosses: {}, bossLevels: {}, deaths: 0, kills: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, fightSecs: 0, starvedSecs: 0, bar: '', orbsUsed: 0 };
   const deathStreak: Record<string, number> = {};
+  const tally: Record<string, number> = {};
   let retreatUntil = 0;
   const ctx: Ctx = {
     rng: seeded(SEED * 31 + classId.length),
     now: 0,
     emit(e: GameEvent) {
+      if (TRACE) {
+        const key = e.t === 'hit' ? `hit-${e.target}` : e.t === 'death' ? `death${s.combat?.monsters.some((m) => m.isBoss && m.life > 0) ? '-boss' : ''}` : e.t;
+        tally[key] = (tally[key] ?? 0) + 1;
+        if (e.t === 'hit' && e.target === 'player' && !e.evaded && !e.blocked) {
+          const src = e.monsterUid !== undefined ? s.combat?.monsters.find((m) => m.uid === e.monsterUid) : undefined;
+          const k = `taken ${src ? src.name : '?'}`;
+          tally[k] = (tally[k] ?? 0) + e.amount;
+        }
+      }
       if (e.t === 'levelup' && e.skill === 'combat') res.levels[e.level] ??= now;
       if (e.t === 'kill') {
         res.kills++;
         const zone = s.combat?.zoneId;
-        if (zone) deathStreak[zone] = 0;
+        // only beating the boss counts as getting past a wall: a boss fight's adds dying doesn't
+        if (zone && e.boss) deathStreak[zone] = 0;
         if (e.boss && zone && res.bosses[zone] === undefined) {
           res.bosses[zone] = now;
           res.bossLevels[zone] = characterLevel(s);
@@ -301,7 +314,10 @@ function runClass(classId: ClassId): Result {
         res.deaths++;
         const zone = s.combat?.zoneId ?? '';
         deathStreak[zone] = (deathStreak[zone] ?? 0) + 1;
-        if (deathStreak[zone] >= 3) retreatUntil = now + 20 * 60_000;
+        if (deathStreak[zone] >= 3) {
+          retreatUntil = now + 20 * 60_000;
+          deathStreak[zone] = 0;
+        }
       }
     },
   };
@@ -317,7 +333,7 @@ function runClass(classId: ClassId): Result {
       manageFlasks(s);
     }
     // like a sensible player: push the furthest unlocked zone you're roughly levelled for;
-    // after 3 deaths in a row, farm the one below for 20 minutes
+    // after 3 deaths without beating the zone's boss, farm the one below for 20 minutes
     const lvl = characterLevel(s);
     const unlocked = ZONES.filter((z) => s.unlockedZones.includes(z.id) && (z === ZONES[0] || z.levelRange[0] <= lvl + 1));
     const top = unlocked[unlocked.length - 1];
@@ -344,6 +360,14 @@ function runClass(classId: ClassId): Result {
       }
     }
     tick(s, ctx, 1000);
+    if (TRACE && now % 3600_000 === 0 && now) {
+      console.log('   ', Object.entries(tally).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${Math.round(v)}`).join(' · '));
+      for (const k in tally) delete tally[k];
+    }
+    if (TRACE && now % 600_000 === 0) {
+      const c = s.combat;
+      console.log(`  ${fmt(now)} L${characterLevel(s)} ${c?.zoneId ?? '-'} kills ${res.kills} deaths ${res.deaths} gold ${s.bank.gold ?? 0} life ${Math.round(s.life)} mons ${c?.monsters.filter((m) => m.life > 0).map((m) => `${m.cell}`).join(',') ?? ''}`);
+    }
   }
   const d = deriveStats(s, []);
   if (flag('debug')) {
@@ -352,6 +376,7 @@ function runClass(classId: ClassId): Result {
     console.log(`  [${classId}] bar:`, s.skillBar.map((g) => g && `${g.gemId}:${g.level}[${g.supports.filter(Boolean).map((x) => x!.supportId).join('+')}]`).join(' | '));
     console.log(`  [${classId}] gear:`, Object.entries(s.equipment).map(([k, i]) => `${k}=${i?.baseId}`).join(' '));
     console.log(`  [${classId}] attributes ${JSON.stringify(d.attributes)}`);
+    console.log(`  [${classId}] skills:`, s.skillBar.map((g) => g && `${g.gemId} ${skillSummary(d, g).perSecond.toFixed(1)}/s`).filter(Boolean).join(' | '), `hit ${hitChance(d.accuracy, d.combatLevel).toFixed(2)} acc ${d.accuracy} evasion ${d.evasion} block ${d.blockChance}`);
     console.log(`  [${classId}] life ${d.maxLife} armour ${d.armour} res ${JSON.stringify(d.res)} dps ${d.dps.toFixed(0)}`);
   }
   res.finalLevel = characterLevel(s);
