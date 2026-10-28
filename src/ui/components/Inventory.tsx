@@ -25,7 +25,7 @@ function slotLabel(item: Item): string {
   return slot === 'body' ? 'Body armour' : slot[0].toUpperCase() + slot.slice(1);
 }
 
-/** One item as a tile: icon, name in its rarity colour, slot and item level, ▲ when it beats what's worn. */
+/** One item as a tile: icon, base name in its rarity colour (uniques keep their own name), slot and item level, ▲ when it beats what's worn. */
 export function ItemTile({
   item,
   s,
@@ -56,7 +56,9 @@ export function ItemTile({
           <ItemIcon item={item} size={34} />
         </span>
         {better && <span className="item-tile-up" title="Upgrade">▲</span>}
-        <span className={`item-tile-name rarity-${item.rarity}`}>{itemName(item)}</span>
+        <span className={`item-tile-name rarity-${item.rarity}`}>
+          {item.rarity === 'unique' ? itemName(item) : baseDef(item.baseId).name}
+        </span>
         <span className="item-tile-meta">
           {slotLabel(item)} · i{item.ilvl}
         </span>
