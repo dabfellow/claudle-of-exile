@@ -5,9 +5,9 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 ## Open
 
 ### Launch (Act 1) — see [LAUNCH.md](LAUNCH.md)
-- [ ] **[You]** Run the SQL in [ADMIN_SETUP.md](ADMIN_SETUP.md) and add yourself to `admins`; then check the Admin page with real data.
-- [ ] **[You]** Send a test mail to support@dabfellow.party from a non-Gmail address and check it lands in Gmail.
-- [ ] **[You]** Rotate the Google and Discord OAuth client secrets: they were in `docs/AUTH_SETUP.md` in git history (private repo); now redacted.
+- [ ] Demo mode and email login: new players get an unsaved demo, email + password joins Google and Discord, and browsers with guest characters keep them ([AUTH_SETUP.md](AUTH_SETUP.md)).
+  - **[You]** In Supabase: turn on the Email provider, turn Confirm email off for now, check the live URL is in Redirect URLs.
+  - Then test on the live site: sign up, log in, password reset, and demo carryover through email, Google and Discord.
 
 ### Act 2: The Burning Steppe — [ACT2.md](ACT2.md)
 - [ ] Release Act 2. The framework is built and playable in dev only (preview).
@@ -40,6 +40,7 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - [ ] Ailment overlays on the player while you're taking them: poison a green overlay, bleed a darker red, shock little blue lightning bolts, freeze a ~20% light blue tint over the whole thing.
 - [ ] Battlefield follow-ups ([BATTLEFIELD.md](BATTLEFIELD.md) → As built):
   - Sim rerun on the new field; expect melee to need a buff (closing-in time and movement speed are the first knobs).
+    - 2026-10-28: first run was skewed by sim-bot bugs (now fixed: unusable-skill scoring, never retreating from a walled boss). Clean rerun (new vs old code, seeds 1–2, 14h) still to do; early signs: Mage/Templar faster, a sword-only Duelist's Twin Strike ~⅓ of dual-wield.
   - Zone side weighting for the gates (`spawnSides`).
   - **[You]** Play it and say how the field feels (size, token readability, walk speed).
 - [ ] Re-run the sim after the gem scaling and skill buffs below; multi-hit attackers (Barrage, Twin Strike, Pummel) lost damage at high gem levels.
@@ -50,6 +51,7 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Custom SMTP for Supabase, so Confirm email can go back on and password resets aren't held to the built-in mailer's few emails an hour.
 - Affix pool numbers are a vibe pass, not simmed: 30% leech, ~200% rarity per item, ~294% elemental at item level 80. Re-run the sim and look at sustain and drop rates ([GEAR.md](GEAR.md) → Affix pool).
 - Attack speed and crit chance on weapons are still global (PoE has them local); base implicits like a mace's % physical are global too.
 - Uniques with % defence mods (e.g. 40% increased Evasion on boots) became local, so they're weaker than before.
@@ -82,6 +84,9 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Support mail tested: mail to support@dabfellow.party lands in Gmail (you) — done 2026-10-30
+- [x] Admin setup: SQL from [ADMIN_SETUP.md](ADMIN_SETUP.md) run, you're in `admins`, Admin page checked with real data (you) — done 2026-10-30
+- [x] Rotated the Google and Discord OAuth client secrets (the old ones in git history are dead); both logins tested on the live site, old Google secret deleted (you) — done 2026-10-30
 - [x] Battlefield redesign ([BATTLEFIELD.md](BATTLEFIELD.md)): 34-hex half-ring with you on the bottom edge, 4 rings; every edge hex is a spawn gate; monsters slide between hexes and walk in from past the edge; casters stop at ring 3; skill ranges (melee 1, Lacerate 2, Poison Dart 3, bows/spells whole field) with closing in on monsters out of reach (faster with movement speed; Quicksilver gives 40%); arc / beam / nova area shapes; targeting setting (priority + order) and click-to-target; weapon restrictions on attack skills, spells 20% stronger with a caster weapon; phone-width summary; save v19 restarts fights in progress. Not simmed — done 2026-10-27
 - [x] UI pass 4 (your walkthrough, 2026-10-27): Hideout gear click opens the item menu (take off, to stash, salvage); Combat out of a fight shows only "Pick an area" and life/DPS; "Armour shop" renamed Weapon & Armour shop (it always sold swords, axes, bows); Crafting Bench: orb bar pinned on top, selected item pinned on the left while you scroll, Equipment top right with Auto-crafting and Special crafting (fossils, essences) under it, Bench Crafts beside; Skills page shows the bar like combat (#1–#6 priority), click a skill for a popup with priority, trigger, supports, swap and remove; Smithing split into slot tabs (Weapons … Jewellery) with collapsible tiers, newest tier open — done 2026-10-27
 - [x] Affix pool pass: 9 tiers to item level 80 (top 5 roll); attack/caster weapon tags; local defences and weapon physical, global versions on jewellery only; caster mods (spell damage, flat spell damage at full effectiveness, cast speed, spell crit, element %, mana cost, mana as ES, spell block); hybrid defence mods; ailment mods on jewellery; physical/elemental leech 5–30%; PoE-style attributes; Item Rarity a prefix at 4×; character XP replaces skill XP; life regen halved; % elemental tripled; resistances less dominant on armour; shields only roll their own defences ([GEAR.md](GEAR.md) → Affix pool). Not tested, by request — done 2026-10-27

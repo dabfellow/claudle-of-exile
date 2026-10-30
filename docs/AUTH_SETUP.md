@@ -59,7 +59,14 @@ https://ckclesfzzvfkcrsyvogs.supabase.co/auth/v1/callback
 
 **Authentication → URL Configuration:**
 - **Site URL:** `http://localhost:5173` for now (change to the real domain at launch).
-- **Redirect URLs:** add `http://localhost:5173/**` (and later `https://your-domain/**`).
+- **Redirect URLs:** add `http://localhost:5173/**` (and later `https://your-domain/**`). The `/**` also covers the password reset link (`?recovery=1`).
+
+### Email and password
+
+**Authentication → Sign In / Providers → Email:**
+- Turn the provider on.
+- Turn **Confirm email** off for now. Supabase's built-in mailer only sends a few emails an hour, so a group signing up together could get stuck. With it off, unverified addresses can sign up, and a mistyped address can't reset its password.
+- Turn it back on once custom SMTP is set up; the game handles both ("check your email" when no session comes back).
 
 ---
 

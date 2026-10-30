@@ -5,6 +5,8 @@ import { baseDef } from '../../data/bases';
 import { activeGemDef } from '../../data/gems';
 import { GUIDE_NAME } from '../../data/tutorial';
 import { game, useGame } from '../../game';
+import { isCloudAccount, type AuthProviderId } from '../../platform/accounts';
+import { errorText } from '../../platform/feedback';
 import type { CharacterSummary } from '../../platform/saves';
 import { Icon } from '../components/Icon';
 import { Embers } from '../pages/HideoutPage';
@@ -43,54 +45,238 @@ function ScreenShell({ children, wide }: { children: React.ReactNode; wide?: boo
   );
 }
 
+const MIN_PASSWORD = 8;
+
+/** Email and password fields plus Google and Discord; the title screen and a running demo share it. */
+function AccountForm({ startOn = 'login' }: { startOn?: 'login' | 'create' }) {
+  const [mode, setMode] = useState<'login' | 'create' | 'reset'>(startOn);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const online = game.accounts.isAvailable('email');
+
+  const pick = (m: typeof mode) => {
+    setMode(m);
+    setError(null);
+    setNotice(null);
+  };
+  const oauth = (provider: 'google' | 'discord') => {
+    setBusy(provider);
+    void game.signIn(provider).finally(() => setBusy(null));
+  };
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setNotice(null);
+    setBusy('email');
+    try {
+      if (mode === 'login') await game.signInWithEmail(email.trim(), password);
+      else if (mode === 'reset') {
+        await game.accounts.sendPasswordReset(email.trim());
+        setNotice('If that address has an account, a reset link is on its way.');
+      } else if (!(await game.signUpWithEmail(name.trim(), email.trim(), password))) {
+        setNotice('Check your email: open the link there to finish creating your account.');
+      }
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <>
+      <form className="account-form" onSubmit={submit}>
+        {mode === 'create' && (
+          <input className="input lg" placeholder="Player name" autoComplete="nickname" required maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
+        )}
+        <input className="input lg" type="email" placeholder="Email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        {mode !== 'reset' && (
+          <input
+            className="input lg"
+            type="password"
+            placeholder="Password"
+            autoComplete={mode === 'create' ? 'new-password' : 'current-password'}
+            required
+            minLength={mode === 'create' ? MIN_PASSWORD : undefined}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        )}
+        {error && <div className="warn small">{error}</div>}
+        {notice && <div className="good small">{notice}</div>}
+        <button className="btn lg" type="submit" disabled={!online || !!busy}>
+          {busy === 'email' ? 'One moment…' : mode === 'login' ? 'Log in' : mode === 'create' ? 'Create account' : 'Send reset link'}
+          {!online && <span className="soon">offline</span>}
+        </button>
+        <div className="account-form-links">
+          {mode !== 'login' && (
+            <button type="button" className="link-btn" onClick={() => pick('login')}>
+              Have an account? Log in
+            </button>
+          )}
+          {mode !== 'create' && (
+            <button type="button" className="link-btn" onClick={() => pick('create')}>
+              Create an account
+            </button>
+          )}
+          {mode === 'login' && (
+            <button type="button" className="link-btn" onClick={() => pick('reset')}>
+              Forgot password?
+            </button>
+          )}
+        </div>
+      </form>
+      <div className="divider">
+        <span>or continue with</span>
+      </div>
+      <button className="btn lg" disabled={!online || !!busy} onClick={() => oauth('google')}>
+        <span className="provider g">G</span> {busy === 'google' ? 'Opening Google…' : 'Sign in with Google'}
+        {!online && <span className="soon">offline</span>}
+      </button>
+      <button className="btn lg" disabled={!online || !!busy} onClick={() => oauth('discord')}>
+        <span className="provider d">D</span> {busy === 'discord' ? 'Opening Discord…' : 'Sign in with Discord'}
+        {!online && <span className="soon">offline</span>}
+      </button>
+    </>
+  );
+}
+
 export function TitleScreen() {
   useGame();
-  const [pending, setPending] = useState<string | null>(null);
-  const online = game.accounts.isAvailable('google');
-  const oauth = (provider: 'google' | 'discord') => {
-    setPending(provider);
-    void game.signIn(provider).finally(() => setPending(null));
-  };
   return (
     <ScreenShell>
       <div className="card title-card">
         <p className="muted" style={{ margin: 0, textAlign: 'center' }}>
           Gather, forge and fight your way up from the Mud Flats. Progress continues while you're away.
         </p>
-        <button className="btn primary lg" onClick={() => game.signIn('guest')}>
-          Play as Guest
+        <button className="btn primary lg" onClick={() => game.signIn(game.hasGuest ? 'guest' : 'demo')}>
+          {game.hasGuest ? 'Continue as Guest' : 'Try the demo'}
         </button>
         <div className="divider">
-          <span>or sign in to save to the cloud and play anywhere</span>
+          <span>or use an account to save your progress and play anywhere</span>
         </div>
-        <button className="btn lg" disabled={!online || !!pending} onClick={() => oauth('google')}>
-          <span className="provider g">G</span> {pending === 'google' ? 'Opening Google…' : 'Sign in with Google'}
-          {!online && <span className="soon">offline</span>}
-        </button>
-        <button className="btn lg" disabled={!online || !!pending} onClick={() => oauth('discord')}>
-          <span className="provider d">D</span> {pending === 'discord' ? 'Opening Discord…' : 'Sign in with Discord'}
-          {!online && <span className="soon">offline</span>}
-        </button>
+        <AccountForm />
         <p className="dim" style={{ fontSize: 'var(--fs-xs)', margin: 0, textAlign: 'center' }}>
-          Guest progress stays in this browser. Sign in later and you can move your guest characters to your account.
+          {game.hasGuest
+            ? 'Guest progress stays in this browser. Make an account and you can move your guest characters to it.'
+            : "The demo isn't saved: it ends when you close or refresh the tab. Make an account during it to keep your character."}
         </p>
         <p className="dim" style={{ fontSize: 'var(--fs-xs)', margin: 0, textAlign: 'center' }}>
-          Signing in shares your name, email and avatar from Google or Discord, and stores your character saves. No ads, no tracking.
+          An account stores your email and character saves; Google or Discord also share your name and avatar. No ads, no tracking.
         </p>
       </div>
     </ScreenShell>
   );
 }
 
+/** Reminds a demo player that nothing is kept, and offers the way to keep it. */
+export function DemoBanner() {
+  useGame();
+  if (game.account?.provider !== 'demo') return null;
+  return (
+    <div className="card guest-banner demo-banner">
+      <div>
+        <b>Demo</b>
+        <span className="dim small"> · your progress is lost when you close or refresh this tab.</span>
+      </div>
+      <button className="btn primary sm" onClick={() => game.setAccountForm(true)}>
+        Create account
+      </button>
+    </div>
+  );
+}
+
+export function AccountModal() {
+  useGame();
+  if (!game.showAccountForm) return null;
+  return (
+    <div className="modal-backdrop" onClick={() => game.setAccountForm(false)}>
+      <div className="card modal title-card" onClick={(e) => e.stopPropagation()}>
+        <h2 style={{ fontSize: 20 }}>Keep your character</h2>
+        <p className="muted" style={{ margin: 0 }}>
+          Make an account and {game.state.character.name} comes with you.
+        </p>
+        <AccountForm startOn="create" />
+        <button className="btn ghost sm" onClick={() => game.setAccountForm(false)}>
+          Back to the demo
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Shown after following a password reset link. */
+export function NewPasswordModal() {
+  useGame();
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  if (!game.showNewPassword) return null;
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      await game.updatePassword(password);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="modal-backdrop">
+      <form className="card modal title-card" onSubmit={submit}>
+        <h2 style={{ fontSize: 20 }}>Choose a new password</h2>
+        <input
+          className="input lg"
+          type="password"
+          placeholder="New password"
+          autoComplete="new-password"
+          required
+          minLength={MIN_PASSWORD}
+          autoFocus
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {error && <div className="warn small">{error}</div>}
+        <button className="btn primary lg" type="submit" disabled={busy}>
+          Save password
+        </button>
+        <button className="btn ghost sm" type="button" onClick={() => game.dismissNewPassword()}>
+          Not now
+        </button>
+      </form>
+    </div>
+  );
+}
+
+/** Back to the title; a demo ends here, so it asks first. */
+export function leaveAccount() {
+  if (game.account?.provider === 'demo' && !confirm('Leave the demo? Your character will be lost.')) return;
+  void game.signOut();
+}
+
 const SYNC_LABEL = { synced: 'Saved to cloud', saving: 'Saving…', offline: 'Offline — saving locally' } as const;
+
+const PROVIDER_MARK: Partial<Record<AuthProviderId, { cls: string; letter: string }>> = {
+  google: { cls: 'g', letter: 'G' },
+  discord: { cls: 'd', letter: 'D' },
+  email: { cls: 'e', letter: '@' },
+};
 
 export function AccountBadge() {
   useGame();
   const a = game.account;
   if (!a) return null;
+  const mark = PROVIDER_MARK[a.provider];
   return (
     <span className="account-badge" title={a.email ?? a.displayName}>
-      {a.provider !== 'guest' && <span className={`provider ${a.provider === 'google' ? 'g' : 'd'}`}>{a.provider === 'google' ? 'G' : 'D'}</span>}
+      {mark && <span className={`provider ${mark.cls}`}>{mark.letter}</span>}
       <span>{a.displayName}</span>
       {game.sync && <span className={`sync ${game.sync}`}>{SYNC_LABEL[game.sync]}</span>}
     </span>
@@ -156,8 +342,8 @@ export function CharacterSelect() {
           <h2 style={{ fontSize: 20 }}>Choose your exile</h2>
           <span className="spacer" />
           <AccountBadge />
-          <button className="btn ghost sm" onClick={() => game.signOut()}>
-            {game.account?.provider === 'guest' ? 'Title' : 'Sign out'}
+          <button className="btn ghost sm" onClick={leaveAccount}>
+            {isCloudAccount(game.account) ? 'Sign out' : 'Title'}
           </button>
         </div>
         {game.guestCharacters.length > 0 && (

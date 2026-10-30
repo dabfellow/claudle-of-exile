@@ -116,7 +116,7 @@ function Overview({ stats }: { stats: AdminStats | null }) {
           <Bars rows={levels} />
         </div>
       </div>
-      <p className="dim small">Signed-in players only: guest saves never leave the browser.</p>
+      <p className="dim small">Accounts only: demos aren't saved, and older guest saves stay in the browser.</p>
     </>
   );
 }

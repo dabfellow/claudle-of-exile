@@ -6,8 +6,8 @@ After that, an **Admin** entry appears at the bottom of the sidebar when you're 
 What it gives you:
 
 - **Overview**: accounts, players, characters, active today / this week, Act 1 clears, characters by class and level, average review.
-  Signed-in players only; guest saves never leave the browser.
-- **Feedback**: bug reports and ideas players send from **Settings → Feedback** (guests too). Filter New / Read / Resolved, and mark them as you go.
+  Accounts only: demos aren't saved, and older guest saves never leave the browser.
+- **Feedback**: bug reports and ideas players send from **Settings → Feedback** (demo players and guests too). Filter New / Read / Resolved, and mark them as you go.
   Each note carries the game version, class, level and area, but no name or email.
 - **Reviews**: 1–5 stars and an optional comment, one per signed-in account (sending again updates it).
 - **Errors**: crashes go to Sentry, which groups them, counts them and tracks resolved / ignored. The tab links there.
