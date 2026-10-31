@@ -86,7 +86,7 @@ describe('achievements', () => {
 
   it('bench recipes need their achievement', () => {
     const s = fresh();
-    s.hideout.bench = 4;
+    s.account.hideout.bench = 4;
     s.bank.gold = 1e6;
     s.bank.arcane_dust = 1e6;
     const item = createItem(s, 'rusted_sword', 30, 'magic', seeded(3));

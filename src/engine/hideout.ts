@@ -15,7 +15,7 @@ import { characterLevel } from './character';
 import { bagFull, takeOwned } from './storage';
 
 export function stationLevel(s: GameState, id: StationId): number {
-  return s.hideout[id] ?? 1;
+  return s.account.hideout[id] ?? 1;
 }
 
 /** Maps come after the campaign, PoE-style: the Map Device wakes once the last act's boss is beaten. */
@@ -24,6 +24,13 @@ export const FINAL_ACT = 6;
 export function campaignComplete(s: GameState): boolean {
   const z = actBossZone(FINAL_ACT);
   return !!z && s.bossesDefeated.includes(z.id);
+}
+
+/** Finishing the campaign with any character opens the Exile for the whole account. */
+export function checkExileUnlock(s: GameState, ctx: Ctx): void {
+  if (s.account.exileUnlocked || !campaignComplete(s)) return;
+  s.account.exileUnlocked = true;
+  ctx.emit({ t: 'info', text: 'Campaign complete: the Exile can now be created', tone: 'good' });
 }
 
 /** Why a station can't be used or upgraded yet, or null. */
@@ -45,11 +52,12 @@ export function upgradeStation(s: GameState, ctx: Ctx, id: StationId): string | 
   if (!cost) return 'Already at max level';
   if (!canAfford(s, cost)) return 'Not enough materials';
   payCost(s, cost);
-  s.hideout[id] = stationLevel(s, id) + 1;
-  grantUnlocks(s, stationDef(id).levels[s.hideout[id] - 1].grants);
-  ctx.emit({ t: 'info', text: `${stationDef(id).name} upgraded to level ${s.hideout[id]}`, tone: 'good' });
+  const lvl = stationLevel(s, id) + 1;
+  s.account.hideout[id] = lvl;
+  grantUnlocks(s, stationDef(id).levels[lvl - 1].grants);
+  ctx.emit({ t: 'info', text: `${stationDef(id).name} upgraded to level ${lvl}`, tone: 'good' });
   if (id === 'vendor') refreshVendor(s, ctx.rng);
-  if (id === 'stash') s.stash.push([]);
+  if (id === 'stash') s.account.stash.push([]);
   return null;
 }
 

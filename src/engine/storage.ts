@@ -1,11 +1,12 @@
 import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP, STASH_PAGE_GROWTH, STASH_PAGE_PRICE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
+import { claimItem } from './account';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { isCraftLocked } from './crafting';
 import { salvageValue } from './items';
 import type { GameState, Item } from './types';
 
-// Gear lives in four places: the ground, the bag (`inventory`), stash pages and equipment. See docs/design/TOWN.md.
+// Gear lives in four places: the ground, the bag (`inventory`), the account's stash pages and equipment. See docs/design/TOWN.md.
 
 export function bagFull(s: GameState): boolean {
   return s.inventory.length >= BAG_SIZE;
@@ -40,19 +41,19 @@ export function pickUp(s: GameState, ctx: Ctx, pile: Pile, uids: number[]): numb
 }
 
 export function stashPageRoom(s: GameState, page: number): number {
-  return Math.max(0, STASH_PAGE_SIZE - (s.stash[page]?.length ?? STASH_PAGE_SIZE));
+  return Math.max(0, STASH_PAGE_SIZE - (s.account.stash[page]?.length ?? STASH_PAGE_SIZE));
 }
 
 /** Move bag items into a stash page (the given one first, then any page with room). Returns how many moved. */
 export function stashItems(s: GameState, ctx: Ctx, uids: number[], page = 0): number {
   const want = new Set(uids);
-  const order = [page, ...s.stash.map((_, i) => i).filter((i) => i !== page)];
+  const order = [page, ...s.account.stash.map((_, i) => i).filter((i) => i !== page)];
   let n = 0;
   s.inventory = s.inventory.filter((i) => {
     if (!want.has(i.uid) || isCraftLocked(s, i.uid)) return true;
     const target = order.find((p) => stashPageRoom(s, p) > 0);
     if (target === undefined) return true;
-    s.stash[target].push(i);
+    s.account.stash[target].push(claimItem(s.account, i));
     n++;
     return false;
   });
@@ -64,26 +65,38 @@ export function stashItems(s: GameState, ctx: Ctx, uids: number[], page = 0): nu
 export function takeFromStash(s: GameState, ctx: Ctx, uids: number[]): number {
   const want = new Set(uids);
   let n = 0;
-  s.stash = s.stash.map((page) =>
-    page.filter((i) => {
-      if (!want.has(i.uid) || bagFull(s)) return true;
-      s.inventory.push(i);
-      n++;
-      return false;
-    }),
-  );
+  const keep = (i: Item) => {
+    if (!want.has(i.uid) || bagFull(s)) return true;
+    s.inventory.push(i);
+    n++;
+    return false;
+  };
+  s.account.stash = s.account.stash.map((page) => page.filter(keep));
+  s.account.overflow = s.account.overflow.filter(keep);
   if (n < want.size) ctx.emit({ t: 'info', text: 'Inventory full', tone: 'warn' });
   return n;
 }
 
 export function stashedItems(s: GameState): Item[] {
-  return s.stash.flat();
+  return [...s.account.stash.flat(), ...s.account.overflow];
+}
+
+/** Move overflow into stash pages with room. Returns how many moved. */
+export function settleOverflow(s: GameState): number {
+  const a = s.account;
+  const before = a.overflow.length;
+  a.overflow = a.overflow.filter((i) => {
+    const page = a.stash.find((p) => p.length < STASH_PAGE_SIZE);
+    page?.push(i);
+    return !page;
+  });
+  return before - a.overflow.length;
 }
 
 /** Gold for the next stash page. Pages the Stash station gave you don't count toward the price. */
 export function stashPagePrice(s: GameState): number {
-  const free = (s.hideout.stash ?? 1) - 1;
-  const bought = Math.max(0, s.stash.length - STASH_START_PAGES - free);
+  const free = (s.account.hideout.stash ?? 1) - 1;
+  const bought = Math.max(0, s.account.stash.length - STASH_START_PAGES - free);
   return Math.round(STASH_PAGE_PRICE * STASH_PAGE_GROWTH ** bought);
 }
 
@@ -91,8 +104,8 @@ export function buyStashPage(s: GameState, ctx: Ctx): string | null {
   const price = stashPagePrice(s);
   if (!canAfford(s, { gold: price })) return 'Not enough gold';
   payCost(s, { gold: price });
-  s.stash.push([]);
-  ctx.emit({ t: 'info', text: `Stash page ${s.stash.length} bought`, tone: 'good' });
+  s.account.stash.push([]);
+  ctx.emit({ t: 'info', text: `Stash page ${s.account.stash.length} bought`, tone: 'good' });
   return null;
 }
 
@@ -106,7 +119,8 @@ export function takeOwned(s: GameState, uids: number[]): Item[] {
     return false;
   };
   s.inventory = s.inventory.filter(keep);
-  s.stash = s.stash.map((page) => page.filter(keep));
+  s.account.stash = s.account.stash.map((page) => page.filter(keep));
+  s.account.overflow = s.account.overflow.filter(keep);
   return out;
 }
 

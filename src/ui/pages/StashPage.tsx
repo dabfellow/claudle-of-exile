@@ -3,7 +3,7 @@ import { activeGemDef, supportGemDef } from '../../data/gems';
 import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
 import { STASH_PAGE_SIZE } from '../../data/hideout';
 import { wearFlask } from '../../engine/combat';
-import { buyStashPage, stashedItems, stashItems, stashPagePrice, takeFromStash } from '../../engine/storage';
+import { buyStashPage, settleOverflow, stashedItems, stashItems, stashPagePrice, stashPageRoom, takeFromStash } from '../../engine/storage';
 import { game } from '../../game';
 import type { GameState } from '../../engine/types';
 import { useGame } from '../../game';
@@ -87,7 +87,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const [tab, setTab] = useState<Tab>('gear');
   const [page, setPage] = useState(0);
-  const here = Math.min(page, s.stash.length - 1);
+  const here = Math.min(page, s.account.stash.length - 1);
   const tabs: TabDef<Tab>[] = [
     { id: 'gear', label: 'Gear', count: stashedItems(s).length },
     { id: 'currency', label: 'Currency' },
@@ -98,7 +98,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
   return (
     <div className="page">
       <PageHeader title="Stash" actions={<CurrencyAmount id="gold" amount={s.bank.gold ?? 0} label="gold" />}>
-        Everything you've gathered, brewed and looted.
+        Gear pages are shared by all your characters. Currency, materials, gems and flasks stay with this character.
       </PageHeader>
       <div className="stash-top">
         <div className="card doll-card">
@@ -119,6 +119,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
       {/* every tab sits in the same cell, so the panel is always as tall as the tallest and switching never jumps */}
       <div className="stash-views">
         <StashTab on={tab === 'gear'}>
+          <Overflow s={s} />
           <GearPages s={s} page={here} setPage={setPage} />
         </StashTab>
 
@@ -231,22 +232,45 @@ function StashTab({ on, children }: { on: boolean; children: ReactNode }) {
   );
 }
 
+/** Items that didn't fit when characters' stashes were merged. Nothing here is lost: take it out or move it in as room appears. */
+function Overflow({ s }: { s: GameState }) {
+  const items = s.account.overflow;
+  if (!items.length) return null;
+  const room = s.account.stash.some((_, i) => stashPageRoom(s, i) > 0);
+  return (
+    <div className="card stash-panel" style={{ marginBottom: 12 }}>
+      <div className="row" style={{ marginBottom: 10 }}>
+        <div>
+          <b className="warn">Stash overflow · {items.length}</b>
+          <div className="dim small">These didn't fit when your characters' stashes were merged. They're safe here, and nothing new can be added.</div>
+        </div>
+        <span className="spacer" />
+        <button className="btn sm" disabled={!room} title={room ? undefined : 'Your stash pages are full'} onClick={() => game.act((st) => void settleOverflow(st))}>
+          Move to stash pages
+        </button>
+      </div>
+      <ItemTiles s={s} items={items} slots={items.length} showUpgrade onClick={(i) => openItemMenu(i.uid)} />
+    </div>
+  );
+}
+
 /** The stash's gear pages: pick a page, click an item to take it back to the bag. */
 function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: (n: number) => void }) {
   const [sort, setSort] = useState<SortKey>('recent');
   const price = stashPagePrice(s);
-  const items = s.stash[page] ?? [];
+  const pages = s.account.stash;
+  const items = pages[page] ?? [];
   return (
     <div className="card stash-panel">
       <div className="card-title">
         <div className="stash-pages">
-          {s.stash.map((p, i) => (
+          {pages.map((p, i) => (
             <button key={i} className={`stash-page-tab ${i === page ? 'active' : ''}`} onClick={() => setPage(i)} title={`${p.length}/${STASH_PAGE_SIZE}`}>
               {i + 1}
               {p.length >= STASH_PAGE_SIZE && <span className="bad"> ●</span>}
             </button>
           ))}
-          <button className="stash-page-tab buy" disabled={(s.bank.gold ?? 0) < price} title={`Buy stash page ${s.stash.length + 1}`} onClick={() => game.act((st, ctx) => buyStashPage(st, ctx))}>
+          <button className="stash-page-tab buy" disabled={(s.bank.gold ?? 0) < price} title={`Buy stash page ${pages.length + 1}`} onClick={() => game.act((st, ctx) => buyStashPage(st, ctx))}>
             + <MatIcon id="gold" size={12} /> {fmt(price)}
           </button>
         </div>
@@ -271,7 +295,7 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
                 void takeFromStash(
                   st,
                   ctx,
-                  (st.stash[page] ?? []).map((i) => i.uid),
+                  (st.account.stash[page] ?? []).map((i) => i.uid),
                 ),
             )
           }

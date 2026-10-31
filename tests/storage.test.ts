@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { settleCharacter } from '../src/engine/account';
 import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP, STASH_PAGE_SIZE } from '../src/data/hideout';
 import { retreat, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
@@ -54,11 +55,11 @@ describe('gear storage', () => {
 
   it('moves gear between bag and stash pages, spilling to the next page', () => {
     const s = newGame(1);
-    for (let i = 0; i < STASH_PAGE_SIZE; i++) s.stash[0].push(sword(s));
+    for (let i = 0; i < STASH_PAGE_SIZE; i++) s.account.stash[0].push(sword(s));
     const a = sword(s);
     s.inventory.push(a);
     expect(stashItems(s, ctx(), [a.uid], 0)).toBe(1);
-    expect(s.stash[1]).toContain(a);
+    expect(s.account.stash[1]).toContain(a);
     expect(takeFromStash(s, ctx(), [a.uid])).toBe(1);
     expect(s.inventory).toContain(a);
   });
@@ -67,10 +68,10 @@ describe('gear storage', () => {
     const s = veteran(newGame(1));
     const a = sword(s);
     const b = sword(s);
-    s.stash[2].push(a, b);
+    s.account.stash[2].push(a, b);
     expect(sellItems(s, ctx(), [a.uid])).toBeGreaterThan(0);
     expect(salvage(s, ctx(), [b.uid])).toBeGreaterThan(0);
-    expect(s.stash[2]).toHaveLength(0);
+    expect(s.account.stash[2]).toHaveLength(0);
   });
 
   it('stash pages cost more each time', () => {
@@ -78,7 +79,7 @@ describe('gear storage', () => {
     s.bank.gold = 10_000;
     expect(stashPagePrice(s)).toBe(1000);
     expect(buyStashPage(s, ctx())).toBeNull();
-    expect(s.stash).toHaveLength(4);
+    expect(s.account.stash).toHaveLength(4);
     expect(stashPagePrice(s)).toBe(2500);
   });
 
@@ -91,8 +92,9 @@ describe('gear storage', () => {
     delete raw.ground;
     delete raw.offlineHaul;
     const loaded = deserialize(JSON.stringify(raw));
+    settleCharacter(loaded, loaded.account);
     expect(loaded.inventory).toHaveLength(BAG_SIZE);
-    expect(loaded.stash[0]).toHaveLength(40);
-    expect(loaded.stash).toHaveLength(3);
+    expect(loaded.account.stash[0]).toHaveLength(40);
+    expect(loaded.account.stash).toHaveLength(3);
   });
 });

@@ -165,7 +165,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
   addStats(st, cls.baseAttributes);
   addStats(st, cls.bonus);
   addStats(st, mechanicStats(s, st));
-  st.itemRarity += MAP_RARITY[(s.hideout.map_device ?? 1) - 1] ?? 0;
+  st.itemRarity += MAP_RARITY[(s.account.hideout.map_device ?? 1) - 1] ?? 0;
 
   const flaskMult = 1 + st.flaskEffect / 100;
   for (const b of buffs) {

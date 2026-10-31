@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { freshAccount } from '../src/engine/account';
 import { newGame } from '../src/engine/state';
+import type { AccountState } from '../src/engine/types';
 import { CloudSaveStore, LocalSaveStore, moveCharacters, type CharacterRow, type CharacterTable } from '../src/platform/saves';
 
 class MemoryStorage implements Storage {
@@ -55,7 +57,7 @@ class MemoryTable implements CharacterTable {
 const store = () => {
   const table = new MemoryTable();
   const cache = new LocalSaveStore(new MemoryStorage(), 'cloud-u1', false);
-  return { table, cache, cloud: new CloudSaveStore(table, cache) };
+  return { table, cache, cloud: new CloudSaveStore(table, cache, 'u1') };
 };
 
 describe('cloud saves', () => {
@@ -112,6 +114,44 @@ describe('cloud saves', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(table.upserts).toBe(2);
     expect((table.rows.get(s.character.id)?.save as { bank: { gold: number } }).bank.gold).toBe(2);
+  });
+
+  it('keeps the account in a reserved row that never shows up as a character', async () => {
+    const { table, cloud } = store();
+    await cloud.save(newGame(1, { name: 'Ann', classId: 'mage' }));
+    const a = freshAccount();
+    a.hideout.forge = 3;
+    await cloud.saveAccount(a);
+    expect(table.rows.size).toBe(2);
+    expect((await cloud.list()).map((c) => c.name)).toEqual(['Ann']);
+    expect((await cloud.loadAccount())?.hideout.forge).toBe(3);
+  });
+
+  it('takes the newer account from another device, keeping every unlock, and pushes a newer local one up', async () => {
+    const { table, cache, cloud } = store();
+    const a = freshAccount();
+    a.rev = 1;
+    await cloud.saveAccount(a);
+    const row = [...table.rows.values()][0];
+    const elsewhere = structuredClone(a);
+    elsewhere.rev = 2;
+    elsewhere.stash[0] = [];
+    elsewhere.hideout.bench = 3;
+    row.save = JSON.parse(JSON.stringify(elsewhere));
+    a.hideout.forge = 4;
+    await cache.saveAccount(a);
+    const loaded = await cloud.loadAccount();
+    expect(loaded?.rev).toBe(2);
+    expect(loaded?.hideout).toMatchObject({ bench: 3, forge: 4 });
+
+    table.down = true;
+    loaded!.rev = 3;
+    await cloud.saveAccount(loaded!);
+    expect(cloud.status).toBe('offline');
+    table.down = false;
+    await cloud.loadAccount();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(([...table.rows.values()][0].save as AccountState).rev).toBe(3);
   });
 
   it('moves guest characters onto an account, keeping names unique', async () => {

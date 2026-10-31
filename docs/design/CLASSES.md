@@ -137,7 +137,7 @@ nodes** and begin there.
 
 **Built (2026-10-24):** Duelist, Templar and Shadow are playable; all six mechanics run in combat (`src/engine/mechanics.ts` + hooks in `combat.ts`), with a meter on the combat page and a "When your class meter is full" tactic. Coup de Grâce is a Mega Crit (flat 400%, ignores crit multiplier).
 
-**Exile built (2026-10-24):** `classId: 'exile'`, `mechanic: null`, no bonus, 10/10/10, Rusted Sword only. The creation screen picks one of the six tree starts (`character.startNode`); the Exile gets that class's two starter gems (`startClass()` in `classes.ts`). Locked until any character on the account has beaten Ysolde (`CharacterSummary.act1Cleared`; an existing character that cleared Act 1 counts once it's been saved again). Achievements: *Nothing to Lose* (clear Act 1 as an Exile) and *Nothing But Will* (beat Ysolde as an Exile with no unique equipped). No crest art yet; the card shows the icon.
+**Exile built (2026-10-24):** `classId: 'exile'`, `mechanic: null`, no bonus, 10/10/10, Rusted Sword only. The creation screen picks one of the six tree starts (`character.startNode`); the Exile gets that class's two starter gems (`startClass()` in `classes.ts`). Locked until a character on the account finishes the campaign (`AccountState.exileUnlocked`). Accounts that had already cleared Act 1, or had an Exile, when the account layer arrived keep the unlock. Achievements: *Nothing to Lose* (clear Act 1 as an Exile) and *Nothing But Will* (beat Ysolde as an Exile with no unique equipped). No crest art yet; the card shows the icon.
 
 
 - `ClassDef` gains `mechanic: 'rage' | 'momentum' | 'manaPower' | 'riposte' | 'martyr' | 'malice' | null` (Exile is `null`).
@@ -146,7 +146,7 @@ nodes** and begin there.
   damage calc (Mana is Power), on block/evade (Riposte), on hit taken (Martyr), on hit dealt/crit roll (Malice).
 - Stat keys for the knobs (`rageMax`, `rageDecay`, `momentumMax`, `maliceMax`, `fervorPct`, …) so passives and uniques can tune them.
 - New start nodes: `class_strdex`, `class_strint`, `class_dexint` in `passiveTree.ts`. Exile reuses any of the six.
-- Exile creation UI: start-node picker; unlock flag on the account after an Act 1 clear.
+- Exile creation UI: start-node picker; unlock flag on the account after a campaign clear.
 - `npm run sim -- --class <id>` for all 7; pacing targets are in [GDD.md](GDD.md) §2.
 - Class portraits/crests for the 4 new classes.
 

@@ -1,4 +1,5 @@
 import { classDef } from '../data/classes';
+import { bundleCharacter } from './account';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
@@ -9,12 +10,15 @@ import { settleGems } from './gems';
 import { connectedWithout } from './passives';
 import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
-import type { FlaskInstance, GameState, Item } from './types';
+import type { AccountTransfer, FlaskInstance, GameState, Item } from './types';
 
 // kept from the game's old name: changing it would orphan every existing save
 export const SAVE_KEY = 'claudle-of-exile-save';
 
 type Migration = (raw: Record<string, unknown>) => void;
+
+/** Saves before version 21 kept the stash on the character. */
+type OldSave = GameState & { stash: Item[][] };
 
 /** MIGRATIONS[n] upgrades a save from version n to n + 1. */
 const MIGRATIONS: Record<number, Migration> = {
@@ -127,7 +131,7 @@ const MIGRATIONS: Record<number, Migration> = {
   },
   13: (raw) => {
     // gear split into ground, bag (60) and stash pages (3 × 80): overflow from the old big inventory moves to the stash
-    const s = raw as unknown as GameState;
+    const s = raw as unknown as OldSave;
     const items = s.inventory ?? [];
     s.inventory = items.slice(0, BAG_SIZE);
     s.stash = Array.from({ length: STASH_START_PAGES }, () => []);
@@ -168,7 +172,7 @@ const MIGRATIONS: Record<number, Migration> = {
   },
   // the affix pool pass (docs/design/GEAR.md): Item Rarity became a prefix, so move it on existing items
   17: (raw) => {
-    const s = raw as unknown as GameState;
+    const s = raw as unknown as OldSave;
     const fix = (item: Item | undefined) => {
       if (!item || item.uniqueId) return;
       const moved = item.suffixes.filter((m) => m.affixId === 'item_rarity');
@@ -198,15 +202,36 @@ const MIGRATIONS: Record<number, Migration> = {
       delete gem.rule;
     }
   },
+  20: (raw) => {
+    // the hideout, unlocks and stash moved up to the account: they wait here until the character is settled onto it.
+    // Anyone who earned the Exile under the old rule (Act 1) keeps it.
+    const s = raw as unknown as OldSave & { hideout?: Record<string, number>; automation?: AccountTransfer['automation'] };
+    s.unmerged = {
+      hideout: s.hideout,
+      automation: s.automation,
+      stash: s.stash,
+      exileUnlocked: s.character?.classId === 'exile' || !!s.bossesDefeated?.includes('sanctum'),
+    };
+    delete raw.hideout;
+    delete raw.automation;
+    delete raw.stash;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
-const MERGE_KEYS = new Set(['skills', 'hideout', 'settings', 'lifetime', 'vendor', 'tutorial', 'masteries', 'automation']);
+const MERGE_KEYS = new Set(['skills', 'settings', 'lifetime', 'vendor', 'tutorial', 'masteries']);
 
+/** One character, without the account: that's saved on its own. */
 export function serialize(s: GameState): string {
-  return JSON.stringify(s);
+  return JSON.stringify({ ...s, account: undefined });
 }
 
+/** A character with the account folded in, to carry it to another account. */
+export function serializeBundle(s: GameState): string {
+  return JSON.stringify(bundleCharacter(s));
+}
+
+/** Loads a character with an empty account: the caller attaches the real one. */
 export function deserialize(json: string): GameState {
   const raw = JSON.parse(json) as Record<string, unknown>;
   let v = typeof raw.version === 'number' ? raw.version : 0;
@@ -244,7 +269,7 @@ export function dropRemovedActions(s: GameState): void {
 }
 
 export function exportSave(s: GameState): string {
-  const bytes = new TextEncoder().encode(serialize(s));
+  const bytes = new TextEncoder().encode(serializeBundle(s));
   let bin = '';
   bytes.forEach((b) => (bin += String.fromCharCode(b)));
   return btoa(bin);

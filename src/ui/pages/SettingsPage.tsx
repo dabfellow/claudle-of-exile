@@ -112,7 +112,7 @@ export function SettingsPage() {
             className="btn danger"
             onClick={() => {
               const c = s.character;
-              if (confirm(`Reset ${c.name} back to level 1? This cannot be undone.`)) game.replace(newGame(Date.now(), { id: c.id, name: c.name, classId: c.classId }));
+              if (confirm(`Reset ${c.name} back to level 1? The Hideout and shared stash stay. This cannot be undone.`)) game.replace(newGame(Date.now(), { id: c.id, name: c.name, classId: c.classId, startNode: c.startNode }, s.account));
             }}
           >
             Reset character

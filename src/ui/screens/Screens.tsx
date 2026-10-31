@@ -333,6 +333,18 @@ function CharacterCard({ c }: { c: CharacterSummary }) {
   );
 }
 
+/** What every character on the account shares. */
+function AccountSummary() {
+  const a = game.realm;
+  const items = a.stash.flat().length;
+  return (
+    <div className="dim small" style={{ textAlign: 'center' }}>
+      Shared by all your characters: Hideout, {a.automation.offlineHours} hour offline cap, {a.stash.length} stash pages ({items} items)
+      {a.overflow.length > 0 && <span className="warn"> · {a.overflow.length} in stash overflow</span>}
+    </div>
+  );
+}
+
 export function CharacterSelect() {
   useGame();
   return (
@@ -369,6 +381,7 @@ export function CharacterSelect() {
         {game.characters.map((c) => (
           <CharacterCard key={c.id} c={c} />
         ))}
+        {game.characters.length > 0 && <AccountSummary />}
         <button className="btn lg new-char" onClick={() => game.setScreen('create')}>
           <Icon name="plus" size={16} /> New Character
         </button>
@@ -424,7 +437,7 @@ export function CharacterCreate() {
             <div className="class-tag">{c.tagline}</div>
             {locked && (
               <div className="warn" style={{ fontSize: 'var(--fs-sm)' }}>
-                <Icon name="lock" size={12} /> Clear Act 1 with any character to unlock
+                <Icon name="lock" size={12} /> Finish the campaign with another character to unlock
               </div>
             )}
             <p className="muted" style={{ fontSize: 'var(--fs-sm)', margin: 0 }}>
@@ -493,7 +506,7 @@ export function CharacterCreate() {
             ))}
           </div>
           <div className="dim small" style={{ marginTop: 6 }}>
-            You begin at the {startClass('exile', exileStart).name}'s tree start with their two starter gems. Nothing else carries over.
+            You begin at the {startClass('exile', exileStart).name}'s tree start with their two starter gems. Your character's skills start fresh; the Hideout and stash stay shared.
           </div>
         </div>
       )}

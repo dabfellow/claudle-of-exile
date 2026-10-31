@@ -139,7 +139,7 @@ describe('item menu actions', () => {
     // worn gear straight into the stash
     expect(moveToStash(s, c, ring.uid)).toBeNull();
     expect(s.equipment.ring1).toBeUndefined();
-    expect(s.stash[0].some((i) => i.uid === ring.uid)).toBe(true);
+    expect(s.account.stash[0].some((i) => i.uid === ring.uid)).toBe(true);
     // salvage from the floor
     const junk = createItem(s, 'iron_ring', 1, 'normal', seeded(99));
     s.ground.push(junk);

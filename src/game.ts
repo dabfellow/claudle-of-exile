@@ -6,11 +6,12 @@ import { SKILLS } from './data/skills';
 import { ACTS, actOpen, ZONES } from './data/zones';
 import type { Ctx } from './engine/context';
 import { itemName } from './engine/items';
+import { freshAccount, settleCharacter } from './engine/account';
 import { MIN_OFFLINE_MS, simulateOffline, type OfflineSummary } from './engine/offline';
 import { mathRng } from './engine/rng';
 import type { ClassId } from './data/classes';
 import { TUTORIAL_STEPS } from './data/tutorial';
-import { serialize } from './engine/save';
+import { serializeBundle } from './engine/save';
 import { newGame, tick } from './engine/state';
 import { tutorialPage, withTutorial } from './engine/tutorial';
 import { AppAccounts, isCloudAccount, type Account, type AuthProviderId } from './platform/accounts';
@@ -30,7 +31,7 @@ import {
   type SaveStore,
   type SyncStatus,
 } from './platform/saves';
-import type { GameEvent, GameState, Item, SkillId } from './engine/types';
+import type { AccountState, GameEvent, GameState, Item, SkillId } from './engine/types';
 import { activeGemDef, supportGemDef } from './data/gems';
 
 export interface FeedEntry {
@@ -90,6 +91,10 @@ class GameStore {
   xpLog: { at: number; skill: SkillId; amount: number }[] = [];
   readonly accounts = new AppAccounts(localStorage, getSupabase());
   private saves: SaveStore | null = null;
+  /** the shared hideout, stash and unlocks; every character played on this account holds this same object */
+  realm: AccountState = freshAccount();
+  /** the account as last written, to tell when it has changed */
+  private savedRealm = '';
   /** cloud sync state while signed in */
   sync: SyncStatus | null = null;
   /** characters saved as a guest on this browser, offered for moving to a signed-in account */
@@ -117,6 +122,7 @@ class GameStore {
     this.baseCtx = { rng: mathRng, now: Date.now(), emit: (e) => this.onEvent(e) };
     this.ctx = withTutorial(this.baseCtx, () => this.state);
     window.addEventListener('beforeunload', () => this.save());
+    window.addEventListener('storage', (e) => this.onOtherTab(e));
   }
 
   // ---------- account & characters ----------
@@ -202,7 +208,7 @@ class GameStore {
   private stashDemo() {
     if (this.account?.provider !== 'demo' || this.screen !== 'game') return;
     this.state.lastSaved = Date.now();
-    localStorage.setItem(DEMO_PENDING_KEY, serialize(this.state));
+    localStorage.setItem(DEMO_PENDING_KEY, serializeBundle(this.state));
   }
 
   private async switchTo(account: Account) {
@@ -238,7 +244,7 @@ class GameStore {
         this.isAdmin = yes && this.account?.id === account.id;
         this.notify();
       });
-      const cloud = new CloudSaveStore(supabaseCharacters(supabase), new LocalSaveStore(localStorage, `cloud-${account.id}`, false));
+      const cloud = new CloudSaveStore(supabaseCharacters(supabase), new LocalSaveStore(localStorage, `cloud-${account.id}`, false), account.id);
       cloud.onStatus = (st) => {
         this.sync = st;
         this.notify();
@@ -249,7 +255,7 @@ class GameStore {
       this.guestCharacters = guest ? await new LocalSaveStore(localStorage, guest.id, false).list() : [];
       const adopted = await this.adoptPendingDemo();
       if (adopted) {
-        await this.refreshCharacters();
+        await this.openRealm();
         await this.enter(adopted);
         return;
       }
@@ -258,8 +264,65 @@ class GameStore {
       this.sync = null;
       this.guestCharacters = [];
     }
-    await this.refreshCharacters();
+    await this.openRealm();
     this.setScreen(this.characters.length || this.guestCharacters.length ? 'select' : 'create');
+  }
+
+  /** Load the shared account and fold in any character that hasn't handed its hideout and stash over yet. */
+  private async openRealm() {
+    const saves = this.saves!;
+    this.adoptRealm((await saves.loadAccount()) ?? freshAccount());
+    await this.refreshCharacters();
+    let merged = 0;
+    for (const c of this.characters) {
+      if (c.settled) continue;
+      const s = await saves.load(c.id);
+      if (!s) continue;
+      if (settleCharacter(s, this.realm)) {
+        merged++;
+        // the account first: if the character's save fails, it is marked absorbed and simply settles again
+        this.realm.rev += 1;
+        await saves.saveAccount(this.realm);
+      }
+      await saves.save(s);
+    }
+    this.markRealmSaved();
+    await this.refreshCharacters();
+    if (merged) {
+      const spilled = this.realm.overflow.length;
+      this.pushToast(spilled ? `Your characters now share a stash: ${spilled} item${spilled === 1 ? '' : 's'} waiting in its overflow` : 'Your characters now share a hideout and stash', 'good');
+    }
+  }
+
+  private adoptRealm(a: AccountState) {
+    this.realm = a;
+    this.markRealmSaved();
+  }
+
+  private realmJson(): string {
+    return JSON.stringify({ ...this.realm, rev: 0 });
+  }
+
+  private markRealmSaved() {
+    this.savedRealm = this.realmJson();
+  }
+
+  /** Written whenever it changes, not with every autosave, so an idle tab can't overwrite newer stash changes. */
+  private saveRealm() {
+    if (!this.saves || this.realmJson() === this.savedRealm) return;
+    this.realm.rev += 1;
+    this.markRealmSaved();
+    this.saves.saveAccount(this.realm).catch((err) => reportError(err, { where: 'saveAccount' }));
+  }
+
+  /** Another tab changed the shared account: use its copy. */
+  private onOtherTab(e: StorageEvent) {
+    if (!e.newValue || !e.key?.endsWith('-account-standard') || !this.saves) return;
+    const theirs = JSON.parse(e.newValue) as AccountState;
+    if (theirs.id !== this.realm.id || theirs.rev <= this.realm.rev) return;
+    Object.assign(this.realm, theirs);
+    this.markRealmSaved();
+    this.notify();
   }
 
   /** Bring the demo stashed at sign-up onto this account. */
@@ -284,7 +347,7 @@ class GameStore {
     if (!guest || !this.saves || !isCloudAccount(this.account)) return;
     const moved = await moveCharacters(new LocalSaveStore(localStorage, guest.id, false), this.saves, this.characters.map((c) => c.name));
     this.guestCharacters = [];
-    await this.refreshCharacters();
+    await this.openRealm();
     this.pushToast(`Moved ${moved} character${moved === 1 ? '' : 's'} to your account`, 'good');
   }
 
@@ -302,13 +365,13 @@ class GameStore {
     return this.characters.some((c) => c.name.toLowerCase() === name.trim().toLowerCase());
   }
 
-  /** The Exile unlocks once any character on the account has cleared Act 1. */
+  /** The Exile unlocks once any character on the account has finished the campaign. */
   get exileUnlocked(): boolean {
-    return this.characters.some((c) => c.act1Cleared);
+    return this.realm.exileUnlocked;
   }
 
   async create(name: string, classId: ClassId, startNode?: string) {
-    const s = newGame(Date.now(), { name: name.trim(), classId, startNode });
+    const s = newGame(Date.now(), { name: name.trim(), classId, startNode }, this.realm);
     await this.saves?.save(s);
     this.showIntro = true;
     this.begin(s);
@@ -320,6 +383,10 @@ class GameStore {
       this.pushToast('That character could not be loaded', 'bad');
       return;
     }
+    // another device may have changed the account since it was opened
+    const latest = await this.saves?.loadAccount();
+    if (latest && latest.rev > this.realm.rev) this.adoptRealm(latest);
+    this.attach(s);
     this.begin(s);
     const away = Date.now() - s.lastSaved;
     if (away >= MIN_OFFLINE_MS) this.runOffline(away);
@@ -329,6 +396,11 @@ class GameStore {
     await this.saves?.remove(id);
     await this.refreshCharacters();
     if (!this.characters.length) this.setScreen('create');
+  }
+
+  private attach(s: GameState) {
+    s.account = this.realm;
+    settleCharacter(s, this.realm);
   }
 
   /** Save and leave the current character for the select screen. */
@@ -399,10 +471,12 @@ class GameStore {
       this.saveErrorReported = true;
       reportError(err, { where: 'save' });
     });
+    this.saveRealm();
   }
 
   /** Swap in a different state for the current session (import / reset). */
   replace(s: GameState) {
+    this.attach(s);
     this.begin(s);
     this.save();
   }
@@ -441,6 +515,8 @@ class GameStore {
   act<T>(fn: (s: GameState, ctx: Ctx) => T): T {
     const result = fn(this.state, this.ctx);
     if (typeof result === 'string' && result) this.pushToast(result, 'warn');
+    // the stash and the bag have to be written together, or a crash could lose or copy an item
+    if (this.screen === 'game' && this.realmJson() !== this.savedRealm) this.save();
     this.notify();
     return result;
   }

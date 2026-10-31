@@ -1,10 +1,16 @@
 # Town, hideout and stash
 
-**Design reset (2026-10-30), not built yet:**
-- Hideout stations, reactive rule unlocks and the offline cap are shared by the account. Challenge modes each keep their own.
+**Design reset (2026-10-30):**
+- Hideout stations, reactive rule unlocks and the offline cap are shared by the account. Challenge modes will each keep their own.
 - The offline cap starts at 8 hours, and a hideout upgrade raises it to 24 over time.
-- High-level stations cost rare materials and give lasting bonuses, so upgrades run for months.
-- A shared stash lets characters pass items to each other. Challenge modes each keep their own stash.
+- High-level stations cost rare materials and give lasting bonuses, so upgrades run for months. *(Not built yet.)*
+- A shared stash lets characters pass items to each other. Challenge modes will each keep their own stash.
+
+**As built (Milestone 3):** `AccountState` (`engine/account.ts`) holds the hideout, automation unlocks, gear stash pages, overflow and Exile unlock.
+It's saved apart from characters and attached as `s.account`. Gear pages are shared; currency, materials, gems, flasks, the bag and Town stock stay per character.
+Items take an account uid when they first enter the stash, because each character numbers its own items from 1.
+Old saves hand their hideout and stash over one character at a time (`settleCharacter`), taking the highest of each station and unlock. Pages anyone bought are kept, and items that don't fit wait in an overflow that can be emptied but not added to.
+`Realm` is where challenge modes will plug in: each will be a separate `AccountState` under its own key.
 
 ## Hideout, Town and station upgrades
 

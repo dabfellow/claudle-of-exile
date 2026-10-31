@@ -11,7 +11,7 @@ import { charXpForLevel } from '../src/engine/xp';
  */
 export function veteran(s: GameState, level = 40): GameState {
   s.skills.combat = charXpForLevel(level);
-  s.hideout.bench = Math.max(2, s.hideout.bench ?? 1);
+  s.account.hideout.bench = Math.max(2, s.account.hideout.bench ?? 1);
   return s;
 }
 

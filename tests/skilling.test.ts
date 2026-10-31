@@ -98,7 +98,7 @@ describe('essences', () => {
 /** a character whose Crafting Bench can auto-craft */
 function crafter() {
   const s = player();
-  s.hideout.bench = AUTO_CRAFT_BENCH_LEVEL;
+  s.account.hideout.bench = AUTO_CRAFT_BENCH_LEVEL;
   return s;
 }
 

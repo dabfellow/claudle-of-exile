@@ -12,7 +12,7 @@ export function ruleUnlockLevel(unlock: RuleUnlock): number {
 /** Why a rule can't be used yet, or null. */
 export function ruleLockReason(s: GameState, when: RuleCondition): string | null {
   const unlock = RULE_LABELS[when].unlock;
-  if (!unlock || s.automation.rules.includes(unlock)) return null;
+  if (!unlock || s.account.automation.rules.includes(unlock)) return null;
   return `${RULE_UNLOCK_NAMES[unlock]}: War Table level ${ruleUnlockLevel(unlock)}`;
 }
 
@@ -22,22 +22,22 @@ export function rulesPass(s: GameState, rules: TacticRule[], allows: (rule: Tact
 }
 
 export function ruleSlots(s: GameState): number {
-  return s.automation.ruleSlots;
+  return s.account.automation.ruleSlots;
 }
 
 /** Answering a wind-up is what lets a boss be left to your rules. */
 export function bossesOffline(s: GameState): boolean {
-  return s.automation.rules.includes('windups');
+  return s.account.automation.rules.includes('windups');
 }
 
 export function offlineCapMs(s: GameState): number {
-  return s.automation.offlineHours * 60 * 60 * 1000;
+  return s.account.automation.offlineHours * 60 * 60 * 1000;
 }
 
 /** A station level's unlocks. They only ever add up. */
 export function grantUnlocks(s: GameState, grant: StationGrant | undefined): void {
   if (!grant) return;
-  const a = s.automation;
+  const a = s.account.automation;
   a.rules = [...new Set([...a.rules, ...(grant.rules ?? [])])];
   a.ruleSlots = Math.max(a.ruleSlots, grant.ruleSlots ?? 0);
   a.offlineHours = Math.max(a.offlineHours, grant.offlineHours ?? 0);

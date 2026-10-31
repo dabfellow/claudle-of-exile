@@ -1,6 +1,9 @@
 import type { User } from '@supabase/supabase-js';
 import { describe, expect, it } from 'vitest';
-import { SAVE_KEY, serialize } from '../src/engine/save';
+import { freshAccount, settleCharacter } from '../src/engine/account';
+import { createItem } from '../src/engine/items';
+import { seeded } from '../src/engine/rng';
+import { SAVE_KEY, serialize, serializeBundle } from '../src/engine/save';
 import { newGame } from '../src/engine/state';
 import { AppAccounts, isCloudAccount, toAccount } from '../src/platform/accounts';
 import { adoptDemo, hasGuestProgress, LocalSaveStore, MemorySaveStore } from '../src/platform/saves';
@@ -100,6 +103,20 @@ describe('adopting a demo', () => {
     const id = await adoptDemo(serialize(s), account);
     expect(id).toBe(s.character.id);
     expect((await account.load(id))?.lifetime.kills).toBe(42);
+  });
+
+  it('brings the demo hideout and stash along with the character', async () => {
+    const account = new MemorySaveStore();
+    const s = newGame(1, { name: 'Ann', classId: 'mage' });
+    s.account.hideout.bench = 3;
+    s.account.stash[1].push(createItem(s, 'rusted_sword', 1, 'normal', seeded(1)));
+    const id = await adoptDemo(serializeBundle(s), account);
+    const adopted = (await account.load(id))!;
+    const mine = freshAccount();
+    expect((await account.list())[0].settled).toBe(false);
+    expect(settleCharacter(adopted, mine)).toBe(true);
+    expect(mine.hideout.bench).toBe(3);
+    expect(mine.stash[1]).toHaveLength(1);
   });
 
   it('renames on a clash so the existing character survives', async () => {

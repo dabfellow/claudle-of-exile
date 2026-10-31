@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { settleCharacter } from '../src/engine/account';
 import { affixDef } from '../src/data/affixes';
 import { attributeReq, BASES, baseDef } from '../src/data/bases';
 import { PASSIVE_BY_ID, PASSIVE_NODES } from '../src/data/passiveTree';
@@ -141,7 +142,7 @@ describe('currency', () => {
     const { s, item } = fresh('magic');
     item.prefixes = [];
     item.suffixes = [];
-    s.hideout.bench = 2;
+    s.account.hideout.bench = 2;
     s.bank.gold = 1000;
     s.bank.arcane_dust = 100;
     expect(benchCraft(s, ctx(), 'bc_life', item.uid)).toMatch(/Cannot be crafted|room/);
@@ -298,13 +299,13 @@ describe('hideout', () => {
     const c = ctx();
     expect(upgradeStation(s, c, 'stash')).toMatch(/materials/);
     const price = stashPagePrice(s);
-    const pages = s.stash.length;
+    const pages = s.account.stash.length;
     s.bank.gold = 2500;
     s.bank.ash_log = 350;
     s.bank.copper_ore = 150;
     expect(upgradeStation(s, c, 'stash')).toBeNull();
     expect(s.bank.ash_log).toBe(50);
-    expect(s.stash.length).toBe(pages + 1);
+    expect(s.account.stash.length).toBe(pages + 1);
     expect(stashPagePrice(s)).toBe(price);
   });
 
@@ -319,7 +320,7 @@ describe('hideout', () => {
     const ironBase = actionsFor('smithing').find((a) => a.baseId && baseDef(a.baseId).reqLevel >= 10 && baseDef(a.baseId).reqLevel < 22)!;
     for (const id of Object.keys(ironBase.inputs!)) s.bank[id] = 1e4;
     expect(actionBlocker(s, ironBase)).toMatch(/Forge level 2/);
-    s.hideout.forge = 2;
+    s.account.hideout.forge = 2;
     expect(actionBlocker(s, ironBase)).toBeNull();
   });
 });
@@ -351,7 +352,7 @@ describe('town and gems', () => {
 
   it('salvaging needs the Crafting Bench built; orbs work without it', () => {
     const s = newGame(1);
-    s.hideout.bench = 1;
+    s.account.hideout.bench = 1;
     const c = ctx();
     const item = createItem(s, 'rusted_sword', 5, 'normal', seeded(2));
     s.inventory.push(item);
@@ -365,12 +366,14 @@ describe('town and gems', () => {
     const s = newGame(1);
     const old = JSON.parse(serialize(s));
     old.version = 16;
-    old.hideout = { ...old.hideout, stash: 3, bench: 1 };
+    old.hideout = { ...s.account.hideout, stash: 3, bench: 1 };
+    old.stash = [[], [], []];
     old.vendor = { stock: [{ id: 1, kind: 'gem', gemId: 'spark', price: 10 }], refreshAt: 1e12 };
     const loaded = deserialize(JSON.stringify(old));
     expect(loaded.vendor.stock).toEqual([]);
-    expect(loaded.stash.length).toBe(s.stash.length + 2);
-    expect(loaded.hideout.bench).toBe(2);
+    settleCharacter(loaded, loaded.account);
+    expect(loaded.account.stash.length).toBe(s.account.stash.length + 2);
+    expect(loaded.account.hideout.bench).toBe(2);
   });
 });
 
@@ -401,8 +404,10 @@ describe('save', () => {
   it('round-trips and survives export/import', () => {
     const s = newGame(1);
     s.bank.chaos = 3;
-    expect(deserialize(serialize(s))).toEqual(s);
-    expect(importSave(exportSave(s))).toEqual(s);
+    // the account travels separately in a save, and folded in with an export
+    const { account: _, ...character } = s;
+    expect(deserialize(serialize(s))).toMatchObject(character);
+    expect(importSave(exportSave(s))).toMatchObject(character);
   });
 
   it('migrates a version 0 save with missing fields', () => {

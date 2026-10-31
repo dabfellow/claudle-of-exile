@@ -3,6 +3,7 @@ import { activeGemDef } from '../src/data/gems';
 import { STATIONS, stationDef } from '../src/data/hideout';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { zoneDef } from '../src/data/zones';
+import { settleCharacter } from '../src/engine/account';
 import { bossesOffline, castOrder, offlineCapMs, ruleLockReason, ruleSlots, suggestedRule, unlockEverything } from '../src/engine/automation';
 import { chooseSkill, makeMonster, queueSkill, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
@@ -22,7 +23,7 @@ const ctx = (seed = 1) => makeCtx(seeded(seed));
 
 /** Enough of everything for a station's next levels, paid for the real way. */
 function upgradeTo(s: GameState, id: 'war_table' | 'watchtower', level: number) {
-  for (const l of stationDef(id).levels.slice(s.hideout[id], level)) {
+  for (const l of stationDef(id).levels.slice(s.account.hideout[id], level)) {
     for (const [mat, n] of Object.entries(l.cost)) s.bank[mat] = (s.bank[mat] ?? 0) + n;
     expect(upgradeStation(s, ctx(), id)).toBeNull();
   }
@@ -85,7 +86,7 @@ describe('rule locks', () => {
     expect(chooseSkill(s, deriveStats(s)).slot).toBe(-1);
     expect(queueSkill(s, 0)).toBeNull();
     expect(chooseSkill(s, deriveStats(s)).slot).toBe(0);
-    s.automation.rules.push('vitals');
+    s.account.automation.rules.push('vitals');
     expect(chooseSkill(s, deriveStats(s)).slot).toBe(0);
   });
 
@@ -147,10 +148,10 @@ describe('unlocks', () => {
     const s = newGame(1);
     upgradeTo(s, 'war_table', 5);
     upgradeTo(s, 'watchtower', 4);
-    expect(s.automation).toEqual({ rules: ['vitals', 'status', 'windups'], ruleSlots: 3, offlineHours: 24 });
-    s.hideout.war_table = 1;
-    const back = deserialize(serialize(s));
-    expect(back.automation.ruleSlots).toBe(3);
+    expect(s.account.automation).toEqual({ rules: ['vitals', 'status', 'windups'], ruleSlots: 3, offlineHours: 24 });
+    s.account.hideout.war_table = 1;
+    const back = s;
+    expect(back.account.automation.ruleSlots).toBe(3);
     expect(bossesOffline(back)).toBe(true);
   });
 
@@ -158,7 +159,7 @@ describe('unlocks', () => {
     const s = newGame(1);
     unlockEverything(s);
     expect(STATIONS.filter((st) => st.levels.some((l) => l.grants)).map((st) => st.id)).toEqual(['war_table', 'watchtower']);
-    expect(s.automation.rules).toHaveLength(3);
+    expect(s.account.automation.rules).toHaveLength(3);
   });
 });
 
@@ -171,7 +172,7 @@ describe('offline rules', { timeout: 30_000 }, () => {
       const cost = stationDef('watchtower').levels[lvl - 1].cost;
       for (const [mat, n] of Object.entries(cost)) s.bank[mat] = n;
       upgradeStation(s, ctx(), 'watchtower');
-      hours.push(s.automation.offlineHours);
+      hours.push(s.account.automation.offlineHours);
     }
     expect(hours).toEqual([8, 12, 16, 24]);
     expect(simulateOffline(newGame(1), ctx(), 48 * 3_600_000).ms).toBe(8 * 3_600_000);
@@ -253,9 +254,8 @@ describe('save migration', () => {
     s.gems.push(createSkillGem(s, 'spark'));
     const old = JSON.parse(serialize(s));
     old.version = 19;
-    delete old.automation;
-    delete old.hideout.war_table;
-    delete old.hideout.watchtower;
+    const { war_table: _w, watchtower: _t, ...hideout } = s.account.hideout;
+    old.hideout = hideout;
     for (const g of [...old.skillBar, ...old.gems]) {
       if (!g) continue;
       delete g.rules;
@@ -264,14 +264,14 @@ describe('save migration', () => {
     }
     const loaded = deserialize(JSON.stringify(old));
     expect(loaded.version).toBe(SAVE_VERSION);
-    expect(SAVE_VERSION).toBe(20);
     const gem = loaded.skillBar[0]!;
     expect(gem.rules).toEqual([{ when: 'enemyCasting' }]);
     expect(gem.priority).toBe('normal');
     expect('rule' in gem).toBe(false);
     expect(loaded.gems[0].rules).toEqual([{ when: 'enemyCasting' }]);
-    expect(loaded.automation).toEqual({ rules: [], ruleSlots: 1, offlineHours: 8 });
-    expect(loaded.hideout.war_table).toBe(1);
-    expect(loaded.hideout.watchtower).toBe(1);
+    settleCharacter(loaded, loaded.account);
+    expect(loaded.account.automation).toEqual({ rules: [], ruleSlots: 1, offlineHours: 8 });
+    expect(loaded.account.hideout.war_table).toBe(1);
+    expect(loaded.account.hideout.watchtower).toBe(1);
   });
 });

@@ -162,7 +162,7 @@ export function benchCraftReason(s: GameState, craftId: string, uid: number): st
   const craft = BENCH_CRAFTS.find((c) => c.id === craftId)!;
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
-  if ((s.hideout.bench ?? 1) < craft.benchLevel) return `Requires Crafting Bench level ${craft.benchLevel}`;
+  if ((s.account.hideout.bench ?? 1) < craft.benchLevel) return `Requires Crafting Bench level ${craft.benchLevel}`;
   if (craft.achievement && !s.achievements.includes(craft.achievement)) return `Unlock with achievement: ${ACHIEVEMENT_BY_ID[craft.achievement].name}`;
   if (item.rarity === 'unique') return 'Cannot modify unique items';
   if (item.rarity === 'normal') return 'Item must be Magic or Rare';
@@ -192,7 +192,7 @@ export function benchCraft(s: GameState, ctx: Ctx, craftId: string, uid: number)
 
 /** Orbs work anywhere; salvaging and bench crafts need the Crafting Bench built (its first upgrade). */
 export function benchBuilt(s: GameState): boolean {
-  return (s.hideout.bench ?? 1) >= BENCH_BUILT_LEVEL;
+  return (s.account.hideout.bench ?? 1) >= BENCH_BUILT_LEVEL;
 }
 
 export const BENCH_UNBUILT = 'Build the Crafting Bench in your Hideout to salvage';

@@ -1,21 +1,21 @@
 import { classDef, startClass, type ClassId } from '../data/classes';
-import { STASH_START_PAGES } from '../data/hideout';
 import { flaskDef, FLASK_SLOTS } from '../data/flasks';
+import { freshAccount } from './account';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { newFlask } from './flasks';
 import { createSkillGem } from './gems';
 import type { Ctx } from './context';
 import { checkAchievements } from './achievements';
 import { combatStep } from './combat';
-import { refreshVendor, vendorTick } from './hideout';
+import { checkExileUnlock, refreshVendor, vendorTick } from './hideout';
 import { createItem } from './items';
 import { seeded } from './rng';
 import { craftStep } from './craftUntil';
 import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
-import type { EquipSlot, GameState } from './types';
+import type { AccountState, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 20;
+export const SAVE_VERSION = 21;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -32,9 +32,10 @@ export function newCharacterId(): string {
   return `c${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 }
 
-export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', classId: 'warrior' }): GameState {
+export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', classId: 'warrior' }, account: AccountState = freshAccount()): GameState {
   const s: GameState = {
     version: SAVE_VERSION,
+    account,
     character: {
       id: who.id ?? newCharacterId(),
       name: who.name,
@@ -49,7 +50,6 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     inventory: [],
     ground: [],
     offlineHaul: [],
-    stash: Array.from({ length: STASH_START_PAGES }, () => []),
     equipment: {},
     flaskSlots: Array(FLASK_SLOTS).fill(null),
     flaskStash: [],
@@ -70,8 +70,6 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     bossesDefeated: [],
     greenhouse: null,
     smithCatalyst: { fossil: null, resin: null, until: false, salvageMisses: false },
-    hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, watchtower: 1 },
-    automation: { rules: [], ruleSlots: 1, offlineHours: 8 },
     vendor: { stock: [], refreshAt: 0 },
     settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false, movement: 'walk', autoFlee: true, targeting: { priority: 'none', order: 'closest' } },
     lifetime: {
@@ -125,4 +123,5 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
   if (s.es > d.maxEs) s.es = d.maxEs;
   vendorTick(s, ctx.rng);
   checkAchievements(s, ctx);
+  checkExileUnlock(s, ctx);
 }

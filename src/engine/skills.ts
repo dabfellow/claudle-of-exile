@@ -53,7 +53,7 @@ export function smithIlvlCap(s: GameState): number {
 
 /** Item level of a smithed base; `resin` is the bonus from a Resin in the catalyst slot. */
 export function smithIlvl(s: GameState, resin = 0): number {
-  const bonus = FORGE_ILVL[(s.hideout.forge ?? 1) - 1] + resin;
+  const bonus = FORGE_ILVL[(s.account.hideout.forge ?? 1) - 1] + resin;
   return Math.min(smithIlvlCap(s), skillLevel(s, 'smithing') + bonus);
 }
 
@@ -83,7 +83,7 @@ export function actionBlocker(s: GameState, a: SkillAction): string | null {
   if (a.area && !s.unlockedZones.includes(a.area)) return `Reach ${zoneDef(a.area).name} to unlock`;
   if (skillLevel(s, a.skill) < a.level) return `Requires ${SKILLS[a.skill].name} level ${a.level}`;
   const st = stationLevelFor(a);
-  if (st && (s.hideout[st.station] ?? 1) < st.level) return `Needs ${st.station === 'forge' ? 'Forge' : 'Alchemy Table'} level ${st.level}`;
+  if (st && (s.account.hideout[st.station] ?? 1) < st.level) return `Needs ${st.station === 'forge' ? 'Forge' : 'Alchemy Table'} level ${st.level}`;
   if (a.inputs && !canAfford(s, a.inputs)) return 'Missing materials';
   if (a.baseId && bagFull(s)) return 'Inventory full';
   return null;
@@ -199,7 +199,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   const t = skillTreeStats(s);
   payCost(s, inputsToPay(a, t, ctx));
   const outputs: Record<string, number> = {};
-  const double = a.skill === 'alchemy' && chance(ctx.rng, ALCH_DOUBLE[(s.hideout.alchemy_table ?? 1) - 1]);
+  const double = a.skill === 'alchemy' && chance(ctx.rng, ALCH_DOUBLE[(s.account.hideout.alchemy_table ?? 1) - 1]);
   const mult = double ? 2 : 1;
 
   // alternate nodes trade some of their base material for a better secondary

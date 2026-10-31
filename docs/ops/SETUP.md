@@ -101,6 +101,9 @@ create index characters_user_id_idx on public.characters (user_id);
 
 ---
 
+The shared account (hideout, unlocks, stash) needs no extra table: each player has one reserved row in `characters`, with
+an id starting `account:` and `class_id = 'account'`. Admin stats that count `characters` should leave those rows out.
+
 ### 6. Give the game its keys
 
 In the project folder, create a file named **`.env.local`** (next to `package.json`):

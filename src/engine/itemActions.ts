@@ -1,4 +1,5 @@
 import { BAG_SIZE } from '../data/hideout';
+import { claimItem } from './account';
 import type { Ctx } from './context';
 import { BENCH_UNBUILT, benchBuilt, isCraftLocked, salvage } from './crafting';
 import { equip, equipReason, unequip } from './equipment';
@@ -7,10 +8,10 @@ import type { EquipSlot, GameState, Item } from './types';
 
 /**
  * The click menu on any item (Equip · To bag · To stash · Salvage), wherever the item is:
- * on the ground, in the offline haul, the bag, a stash page, or worn.
+ * on the ground, in the offline haul, the bag, a stash page, the stash overflow, or worn.
  */
 export type ItemPlace =
-  | { at: 'ground' | 'offlineHaul' | 'bag'; item: Item }
+  | { at: 'ground' | 'offlineHaul' | 'bag' | 'overflow'; item: Item }
   | { at: 'stash'; page: number; item: Item }
   | { at: 'equipped'; slot: EquipSlot; item: Item };
 
@@ -21,10 +22,13 @@ export function locateItem(s: GameState, uid: number): ItemPlace | null {
   }
   const bag = s.inventory.find((i) => i.uid === uid);
   if (bag) return { at: 'bag', item: bag };
-  for (let page = 0; page < s.stash.length; page++) {
-    const item = s.stash[page].find((i) => i.uid === uid);
+  const { stash, overflow } = s.account;
+  for (let page = 0; page < stash.length; page++) {
+    const item = stash[page].find((i) => i.uid === uid);
     if (item) return { at: 'stash', page, item };
   }
+  const spilled = overflow.find((i) => i.uid === uid);
+  if (spilled) return { at: 'overflow', item: spilled };
   for (const [slot, item] of Object.entries(s.equipment) as [EquipSlot, Item | undefined][]) {
     if (item?.uid === uid) return { at: 'equipped', slot, item };
   }
@@ -36,11 +40,19 @@ function lift(s: GameState, p: ItemPlace): void {
   const uid = p.item.uid;
   if (p.at === 'ground' || p.at === 'offlineHaul') s[p.at] = s[p.at].filter((i) => i.uid !== uid);
   else if (p.at === 'bag') s.inventory = s.inventory.filter((i) => i.uid !== uid);
-  else if (p.at === 'stash') s.stash[p.page] = s.stash[p.page].filter((i) => i.uid !== uid);
+  else if (p.at === 'stash') s.account.stash[p.page] = s.account.stash[p.page].filter((i) => i.uid !== uid);
+  else if (p.at === 'overflow') s.account.overflow = s.account.overflow.filter((i) => i.uid !== uid);
+}
+
+/** Put an item back where another one came from. */
+function putBack(s: GameState, p: ItemPlace, item: Item): void {
+  if (p.at === 'stash') s.account.stash[p.page].push(claimItem(s.account, item));
+  else if (p.at === 'overflow') s.account.overflow.push(claimItem(s.account, item));
+  else if (p.at === 'ground' || p.at === 'offlineHaul') s[p.at].push(item);
 }
 
 function firstStashPageWithRoom(s: GameState): number {
-  return s.stash.findIndex((_, i) => stashPageRoom(s, i) > 0);
+  return s.account.stash.findIndex((_, i) => stashPageRoom(s, i) > 0);
 }
 
 export function equipFromReason(s: GameState, uid: number): string | null {
@@ -65,16 +77,13 @@ export function equipFrom(s: GameState, ctx: Ctx, uid: number, slot?: EquipSlot)
   if (err) {
     if (p.at !== 'bag') {
       s.inventory = s.inventory.filter((i) => i.uid !== uid);
-      if (p.at === 'stash') s.stash[p.page].push(p.item);
-      else s[p.at].push(p.item);
+      putBack(s, p, p.item);
     }
     return err;
   }
   // equip() puts what it replaced at the end of the bag; past the bag's size, that goes where the new item came from
   while (p.at !== 'bag' && s.inventory.length > BAG_SIZE) {
-    const back = s.inventory.pop()!;
-    if (p.at === 'stash') s.stash[p.page].push(back);
-    else s[p.at].push(back);
+    putBack(s, p, s.inventory.pop()!);
   }
   return null;
 }
@@ -91,7 +100,7 @@ export function moveToBag(s: GameState, ctx: Ctx, uid: number): string | null {
   if (reason) return reason;
   const p = locateItem(s, uid)!;
   if (p.at === 'ground' || p.at === 'offlineHaul') pickUp(s, ctx, p.at, [uid]);
-  else if (p.at === 'stash') takeFromStash(s, ctx, [uid]);
+  else if (p.at === 'stash' || p.at === 'overflow') takeFromStash(s, ctx, [uid]);
   else if (p.at === 'equipped') return unequip(s, p.slot);
   return null;
 }
@@ -115,7 +124,7 @@ export function moveToStash(s: GameState, ctx: Ctx, uid: number, page = 0): stri
   const target = stashPageRoom(s, page) > 0 ? page : firstStashPageWithRoom(s);
   if (p.at === 'equipped') delete s.equipment[p.slot];
   else lift(s, p);
-  s.stash[target].push(p.item);
+  s.account.stash[target].push(claimItem(s.account, p.item));
   return null;
 }
 

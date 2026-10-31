@@ -334,6 +334,9 @@ function StationRow({ st, go }: { st: StationDef; go: (p: Page) => void }) {
 function StationLedger({ go }: { go: (p: Page) => void }) {
   return (
     <div className="card hx-ledger">
+      <div className="dim small" style={{ padding: '0 0 8px' }}>
+        Stations and their unlocks are shared by all your characters.
+      </div>
       <div className="hx-ledger-row head">
         <span>Station</span>
         <span>Level</span>

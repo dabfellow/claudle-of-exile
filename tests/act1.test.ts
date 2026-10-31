@@ -201,7 +201,7 @@ describe('offline progress and bosses', { timeout: 20_000 }, () => {
   it('farms bosses you have already beaten', () => {
     const s = strong();
     s.bossesDefeated = ['mudflats'];
-    s.automation.rules.push('windups');
+    s.account.automation.rules.push('windups');
     const c = ctx();
     startCombat(s, c, 'mudflats');
     const before = s.lifetime.bossKills;

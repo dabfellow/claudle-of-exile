@@ -1,6 +1,7 @@
 import type { ClassId } from '../data/classes';
+import { absorbAccount, freshAccount, reconcileAccounts } from '../engine/account';
 import { deserialize, SAVE_KEY, serialize } from '../engine/save';
-import { SKILL_IDS, type GameState } from '../engine/types';
+import { SKILL_IDS, type AccountState, type GameState } from '../engine/types';
 import { characterLevel } from '../engine/character';
 import { levelOf } from '../engine/xp';
 import { reportError } from './errors';
@@ -9,8 +10,9 @@ export interface CharacterSummary {
   id: string;
   name: string;
   classId: ClassId;
-  /** unlocks the Exile for the whole account */
   act1Cleared?: boolean;
+  /** this character has nothing left to hand over to the account */
+  settled?: boolean;
   combatLevel: number;
   totalLevel: number;
   createdAt: number;
@@ -23,6 +25,10 @@ export interface SaveStore {
   load(id: string): Promise<GameState | null>;
   save(s: GameState): Promise<void>;
   remove(id: string): Promise<void>;
+  /** The shared account, or null if none has been saved yet. */
+  loadAccount(): Promise<AccountState | null>;
+  saveAccount(a: AccountState): Promise<void>;
+  removeAccount(): Promise<void>;
 }
 
 export function summarize(s: GameState): CharacterSummary {
@@ -31,6 +37,7 @@ export function summarize(s: GameState): CharacterSummary {
     name: s.character.name,
     classId: s.character.classId,
     act1Cleared: s.bossesDefeated.includes('sanctum'),
+    settled: !s.unmerged,
     combatLevel: characterLevel(s),
     totalLevel: SKILL_IDS.filter((k) => k !== 'combat' && k !== 'fishing').reduce((a, k) => a + levelOf(k, s.skills[k]), 0),
     createdAt: s.character.createdAt,
@@ -55,6 +62,11 @@ export class LocalSaveStore implements SaveStore {
 
   private charKey(id: string) {
     return `coe-${this.accountId}-char-${id}`;
+  }
+
+  /** One key per realm, so a challenge mode's account will sit beside this one. */
+  get accountKey() {
+    return `coe-${this.accountId}-account-standard`;
   }
 
   private readIndex(): CharacterSummary[] {
@@ -108,6 +120,21 @@ export class LocalSaveStore implements SaveStore {
     this.storage.removeItem(this.charKey(id));
     this.writeIndex(this.readIndex().filter((c) => c.id !== id));
   }
+
+  async loadAccount(): Promise<AccountState | null> {
+    const raw = this.storage.getItem(this.accountKey);
+    return raw ? (JSON.parse(raw) as AccountState) : null;
+  }
+
+  /** Synchronous like save(), so an item never leaves the stash without reaching the bag. */
+  saveAccount(a: AccountState): Promise<void> {
+    this.storage.setItem(this.accountKey, JSON.stringify(a));
+    return Promise.resolve();
+  }
+
+  async removeAccount(): Promise<void> {
+    this.storage.removeItem(this.accountKey);
+  }
 }
 
 /** Whether this browser holds guest progress, including the pre-characters single save. */
@@ -119,6 +146,7 @@ export async function hasGuestProgress(storage: Storage, guestId: string | undef
 /** A demo's characters: held in memory only, so they end with the tab. */
 export class MemorySaveStore implements SaveStore {
   private chars = new Map<string, { summary: CharacterSummary; raw: string }>();
+  private account: string | null = null;
 
   async list(): Promise<CharacterSummary[]> {
     return [...this.chars.values()].map((c) => c.summary).sort((a, b) => b.lastPlayed - a.lastPlayed);
@@ -136,6 +164,18 @@ export class MemorySaveStore implements SaveStore {
   async remove(id: string): Promise<void> {
     this.chars.delete(id);
   }
+
+  async loadAccount(): Promise<AccountState | null> {
+    return this.account ? (JSON.parse(this.account) as AccountState) : null;
+  }
+
+  async saveAccount(a: AccountState): Promise<void> {
+    this.account = JSON.stringify(a);
+  }
+
+  async removeAccount(): Promise<void> {
+    this.account = null;
+  }
 }
 
 // ---------- cloud ----------
@@ -149,6 +189,13 @@ export interface CharacterRow {
   save: unknown;
   updated_at?: string;
 }
+
+/**
+ * The account shares the `characters` table as one reserved row per player, so it works with no database change.
+ * Ids are unique across all players, hence the user id.
+ */
+export const ACCOUNT_ROW_PREFIX = 'account:';
+const ACCOUNT_CLASS = 'account';
 
 /** The handful of table operations the cloud store needs (Supabase in the app, in-memory in tests). */
 export interface CharacterTable {
@@ -168,12 +215,17 @@ export class CloudSaveStore implements SaveStore {
   status: SyncStatus = 'synced';
   onStatus?: (s: SyncStatus) => void;
   private inFlight = new Map<string, Promise<void>>();
-  private queued = new Map<string, GameState>();
+  private queued = new Map<string, () => CharacterRow>();
 
   constructor(
     private table: CharacterTable,
     private cache: LocalSaveStore,
+    private userId: string,
   ) {}
+
+  private get accountRow() {
+    return `${ACCOUNT_ROW_PREFIX}standard:${this.userId}`;
+  }
 
   private setStatus(s: SyncStatus) {
     if (this.status === s) return;
@@ -185,7 +237,7 @@ export class CloudSaveStore implements SaveStore {
     const local = await this.cache.list();
     let remote: CharacterSummary[] = [];
     try {
-      remote = (await this.table.list()).map((r) => r.summary);
+      remote = (await this.table.list()).filter((r) => !r.id.startsWith(ACCOUNT_ROW_PREFIX)).map((r) => r.summary);
       this.setStatus('synced');
     } catch {
       this.setStatus('offline');
@@ -220,22 +272,25 @@ export class CloudSaveStore implements SaveStore {
   /** Writes the local copy immediately, then uploads; overlapping saves collapse into one. */
   save(s: GameState): Promise<void> {
     void this.cache.save(s);
-    const id = s.character.id;
+    return this.upload(s.character.id, () => ({
+      id: s.character.id,
+      name: s.character.name,
+      class_id: s.character.classId,
+      summary: summarize(s),
+      save: JSON.parse(serialize(s)),
+      updated_at: new Date(s.lastSaved).toISOString(),
+    }));
+  }
+
+  private upload(id: string, row: () => CharacterRow): Promise<void> {
     if (this.inFlight.has(id)) {
-      this.queued.set(id, s);
+      this.queued.set(id, row);
       return this.inFlight.get(id)!;
     }
-    const run = async (state: GameState): Promise<void> => {
+    const run = async (make: () => CharacterRow): Promise<void> => {
       this.setStatus('saving');
       try {
-        await this.table.upsert({
-          id,
-          name: state.character.name,
-          class_id: state.character.classId,
-          summary: summarize(state),
-          save: JSON.parse(serialize(state)),
-          updated_at: new Date(state.lastSaved).toISOString(),
-        });
+        await this.table.upsert(make());
         this.setStatus('synced');
       } catch {
         this.setStatus('offline');
@@ -244,7 +299,7 @@ export class CloudSaveStore implements SaveStore {
       this.queued.delete(id);
       if (next) await run(next);
     };
-    const p = run(s).finally(() => this.inFlight.delete(id));
+    const p = run(row).finally(() => this.inFlight.delete(id));
     this.inFlight.set(id, p);
     return p;
   }
@@ -252,6 +307,46 @@ export class CloudSaveStore implements SaveStore {
   async remove(id: string): Promise<void> {
     await this.cache.remove(id);
     await this.table.remove(id);
+  }
+
+  /** Same rule as a character, except that the newer copy also takes every unlock from the older one. */
+  async loadAccount(): Promise<AccountState | null> {
+    const local = await this.cache.loadAccount();
+    let remote: AccountState | null = null;
+    try {
+      const row = await this.table.get(this.accountRow);
+      remote = row ? (row.save as AccountState) : null;
+      this.setStatus('synced');
+    } catch {
+      this.setStatus('offline');
+    }
+    if (remote && (!local || remote.rev >= local.rev)) {
+      const merged = local ? reconcileAccounts(remote, local) : remote;
+      await this.cache.saveAccount(merged);
+      return merged;
+    }
+    if (!local) return null;
+    const merged = remote ? reconcileAccounts(local, remote) : local;
+    void this.saveAccount(merged);
+    return merged;
+  }
+
+  saveAccount(a: AccountState): Promise<void> {
+    void this.cache.saveAccount(a);
+    const id = this.accountRow;
+    return this.upload(id, () => ({
+      id,
+      name: 'Account',
+      class_id: ACCOUNT_CLASS,
+      summary: { id, name: 'Account', classId: 'warrior', combatLevel: 0, totalLevel: 0, createdAt: 0, lastPlayed: 0 },
+      save: JSON.parse(JSON.stringify(a)),
+      updated_at: new Date().toISOString(),
+    }));
+  }
+
+  async removeAccount(): Promise<void> {
+    await this.cache.removeAccount();
+    await this.table.remove(this.accountRow);
   }
 }
 
@@ -269,6 +364,18 @@ export async function adoptDemo(raw: string, to: SaveStore): Promise<string> {
 
 /** Move every character from one store to another (guest → account). Returns how many moved. */
 export async function moveCharacters(from: SaveStore, to: SaveStore, takenNames: string[]): Promise<number> {
+  // the old account's stash and unlocks come along; its id stops a retry counting them twice
+  const incoming = await from.loadAccount();
+  if (incoming) {
+    const target = (await to.loadAccount()) ?? freshAccount();
+    if (!target.absorbed.includes(incoming.id)) {
+      absorbAccount(target, incoming);
+      target.absorbed.push(incoming.id);
+      target.rev += 1;
+      await to.saveAccount(target);
+    }
+    await from.removeAccount();
+  }
   const taken = new Set(takenNames.map((n) => n.toLowerCase()));
   let moved = 0;
   for (const c of await from.list()) {

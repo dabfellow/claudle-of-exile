@@ -413,18 +413,47 @@ export interface TutorialState {
   skipped: boolean;
 }
 
-/**
- * What this character has earned for automation. One-way: nothing ever takes these back, and nothing but this
- * block is read for them, so the account layer can lift it out of the character whole.
- */
+/** What the account has earned for automation. One-way: nothing ever takes these back. */
 export interface AutomationUnlocks {
   rules: RuleUnlock[];
   ruleSlots: number;
   offlineHours: number;
 }
 
+/**
+ * Which set of hideout, stash and unlocks a character belongs to. Challenge modes (Hardcore, Classic) will each be a
+ * realm of their own, with their own AccountState, so they start fresh.
+ */
+export type Realm = 'standard';
+
+/** What every character in a realm shares. Saved on its own, never inside a character. See engine/account.ts. */
+export interface AccountState {
+  id: string;
+  realm: Realm;
+  /** goes up with every save, so the newest copy can be told from an older one */
+  rev: number;
+  hideout: Record<string, number>;
+  automation: AutomationUnlocks;
+  /** stash pages of gear, STASH_PAGE_SIZE each */
+  stash: Item[][];
+  /** items that didn't fit when stashes were merged: they can only be taken out */
+  overflow: Item[];
+  /** the next account uid: see ACCOUNT_UID_BASE */
+  nextUid: number;
+  exileUnlocked: boolean;
+  /** characters and accounts already folded in, so none counts twice */
+  absorbed: string[];
+}
+
+/** Account data arriving from elsewhere: a pre-account save, a demo, an import. */
+export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'exileUnlocked'>>;
+
 export interface GameState {
   version: number;
+  /** the shared account block; a running game holds the live one, and saves leave it out */
+  account: AccountState;
+  /** account data this character still has to hand over (see settleCharacter) */
+  unmerged?: AccountTransfer;
   character: CharacterInfo;
   tutorial: TutorialState;
   nextUid: number;
@@ -436,11 +465,8 @@ export interface GameState {
   ground: Item[];
   /** drops while you were away, oldest first; kept until emptied */
   offlineHaul: Item[];
-  /** stash pages of gear, STASH_PAGE_SIZE each */
-  stash: Item[][];
   equipment: Partial<Record<EquipSlot, Item>>;
   flaskSlots: (FlaskInstance | null)[];
-  automation: AutomationUnlocks;
   skillBar: (SkillGemInstance | null)[];
   /** skill gems not on the bar */
   gems: SkillGemInstance[];
@@ -467,7 +493,6 @@ export interface GameState {
   /** Greenhouse keystone: the Foraging action that keeps ticking in the background */
   greenhouse: { actionId: string; progress: number } | null;
   smithCatalyst: SmithCatalyst;
-  hideout: Record<string, number>;
   /** `rerolls`: paid restocks since the last free one (raises the price) */
   vendor: { stock: VendorOffer[]; refreshAt: number; rerolls?: number };
   settings: Settings;
