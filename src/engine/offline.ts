@@ -58,6 +58,8 @@ export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offl
     },
   }, () => s);
   clearBossFight(s);
+  // a press from before you left doesn't get to spend Life past what rules would
+  if (s.combat) s.combat.queued = null;
   // a greenhouse keeps growing after combat stops or a job runs out
   while (left > 0 && (s.action || s.greenhouse)) {
     const chunk = Math.min(1000, left);

@@ -409,6 +409,9 @@ const UNIQUE_DESC: Record<string, string> = {
 const ATTR_GEM = { str: 'red', dex: 'green', int: 'blue' } as const;
 
 const GEM_SYMBOL: Record<string, string> = {
+  flagellate: 'a knotted whip', scourge: 'a barbed lash in an arc', blood_rite: 'a chalice with a drop', blood_ward: 'a shield with a drop',
+  gash: 'a single slash mark', barbed_arrow: 'a hooked arrowhead', stigmata: 'a hand with a wound', blood_lance: 'a spear of droplets',
+  burnt_offering: 'a heart in a flame', transfusion: 'two drops joined by a line',
   heavy_strike: 'a hammer', ground_slam: 'a cracked line', iron_guard: 'a shield', war_cry: 'an open mouth',
   twin_strike: 'two crossed blades', poison_dart: 'a dart', smoke_step: 'a puff cloud', lacerate: 'three claw marks',
   spark: 'a zigzag lightning bolt', fireball: 'a flame', frost_ward: 'a snowflake', arcane_siphon: 'a spiral',

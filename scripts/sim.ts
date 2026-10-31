@@ -19,7 +19,7 @@ import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { actionsFor, type SkillAction } from '../src/data/skills';
 import { ACTS, actBossZone, actOpen, ZONES, zoneDef, type ZoneDef } from '../src/data/zones';
 import { characterLevel } from '../src/engine/character';
-import { equipFlask, flaskRecoveryAmount, lockTarget, queueSkill, startCombat, useFlask } from '../src/engine/combat';
+import { canSpendLife, equipFlask, flaskRecoveryAmount, lockTarget, queueSkill, startCombat, useFlask } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
 import { applyOrb, benchBuilt, orbReason, salvage } from '../src/engine/crafting';
 import { equip, equipReason, slotsFor } from '../src/engine/equipment';
@@ -224,19 +224,21 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   // the strongest movement skill always comes along: it's the way out of Scorched earth
   const mover = strongest.find((g) => tagged(g, 'movement'));
   const damage = [...new Set([...(mover ? [mover] : []), ...strongest])].slice(0, 3);
-  // casters keep a mana skill when their damage costs mana
+  // casters keep a mana skill when their damage costs mana (Transfusion is none: it comes for bleeders below)
   const caster = damage.some((g) => !tagged(g, 'attack'));
-  const sustain = caster ? pick('sustain') : undefined;
+  const sustain = caster ? all.filter((g) => role(g) === 'sustain' && !activeGemDef(g.gemId).effect.consumeBleed).sort(byLevel)[0] : undefined;
+  const bleeder = damage.some((g) => tagged(g, 'bleed'));
+  const transfusion = bleeder ? all.find((g) => activeGemDef(g.gemId).effect.consumeBleed) : undefined;
   // a buff the build can use (spell buffs do nothing for attackers), and the curse that suits its damage
   const buff = all.filter((g) => role(g) === 'buff' && (caster || !tagged(g, 'spell'))).sort((a, b) => Number(tagged(b, 'spell')) - Number(tagged(a, 'spell')) || byLevel(a, b))[0];
-  const curse = all.find((g) => g.gemId === (caster ? 'elemental_weakness' : 'vulnerability')) ?? pick('curse');
+  const curse = all.find((g) => g.gemId === (bleeder ? 'stigmata' : caster ? 'elemental_weakness' : 'vulnerability')) ?? all.find((g) => g.gemId === (caster ? 'elemental_weakness' : 'vulnerability')) ?? pick('curse');
   // instant damage skills don't use up the turn, so any free slot gets the strongest of them on top
   const instant = all
     .filter((g) => DAMAGE_ROLES.has(role(g)) && activeGemDef(g.gemId).timeMs === 0 && !damage.includes(g) && bare(g) > 0)
     .sort((a, b) => bare(b) - bare(a));
   const scorch = ruleLockReason(s, 'onGround') ? undefined : scorchGround(zoneId);
   const groundGuard = scorch && all.filter((g) => role(g) === 'guard').sort(byLevel)[1];
-  const want = [pick('guard'), buff, sustain, ...damage, curse, groundGuard, ...instant].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
+  const want = [pick('guard'), buff, sustain, ...damage, transfusion, curse, groundGuard, ...instant].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
 
   // put the bar together: anything leaving takes no supports with it
   const keep = new Set(want.map((g) => g.uid));
@@ -429,7 +431,8 @@ function hands(s: GameState, ctx: Ctx, d: Derived) {
     if (step >= 0) queueSkill(s, step);
   }
   if (casting) {
-    const guard = s.skillBar.findIndex((g, i) => g && activeGemDef(g.gemId).role === 'guard' && !s.combat!.cooldowns[i]);
+    // a hand on the button can spend past the reserve, but this one doesn't: a Blood Ward at low Life costs more than it saves
+    const guard = s.skillBar.findIndex((g, i) => g && activeGemDef(g.gemId).role === 'guard' && !s.combat!.cooldowns[i] && canSpendLife(s, d, skillNumbers(d, g).lifeCost, false));
     if (guard >= 0) queueSkill(s, guard);
   }
 }

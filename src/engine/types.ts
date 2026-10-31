@@ -228,6 +228,10 @@ export interface Curse {
   spreads?: boolean;
   /** Wither Will: killing this enemy heals you */
   withers?: boolean;
+  /** Stigmata: % increased damage taken from bleeding */
+  bleedTaken?: number;
+  /** Weeping Wounds: your hits on this enemy cause Bleeding */
+  weeping?: boolean;
 }
 
 export type GroundKind = 'burning' | 'chilled' | 'shocked' | 'caustic';
@@ -316,6 +320,8 @@ export interface CombatRuntime {
   evadeMs: number;
   /** signature support state */
   glacial: boolean;
+  /** Barbed Ward: what the shield hits back for when it breaks */
+  barbedWard?: number;
   retaliate: boolean;
   ambush: boolean;
   flurryStacks: number;

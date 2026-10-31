@@ -159,7 +159,7 @@ export function syncSockets(gem: SkillGemInstance): void {
 /** A support fits a skill with any of its `fits` tags and every one of its `needs` tags; a signature only its own skill. */
 export function supportFits(support: SupportGemDef, active: ActiveGemDef): boolean {
   if (support.signatureFor) return support.signatureFor === active.id;
-  return support.fits.some((t) => active.tags.includes(t)) && (support.needs ?? []).every((t) => active.tags.includes(t));
+  return support.fits.some((t) => active.tags.includes(t)) && (support.needs ?? []).every((t) => active.tags.includes(t)) && !support.not?.some((t) => active.tags.includes(t));
 }
 
 export function supportReason(gem: SkillGemInstance, supportId: string): string | null {
@@ -296,6 +296,8 @@ export interface CombinedMods {
   durationPct: number;
   cooldownPct: number;
   curseEffect: number;
+  lowLifeMore: number;
+  moreBleed: number;
   specials: Set<string>;
 }
 
@@ -303,7 +305,7 @@ export function combineMods(list: SupportMods[]): CombinedMods {
   const out: CombinedMods = {
     moreDamage: 0, morePhys: 0, moreElem: 0, noElemental: false, extras: [], attackSpeed: 0, castSpeed: 0,
     manaMult: 1, critChance: 0, critMulti: 0, lifeLeech: 0, manaLeech: 0, repeats: 0, repeatDamage: 100,
-    chains: 0, durationPct: 0, cooldownPct: 0, curseEffect: 0, specials: new Set(),
+    chains: 0, durationPct: 0, cooldownPct: 0, curseEffect: 0, lowLifeMore: 0, moreBleed: 0, specials: new Set(),
   };
   for (const m of list) {
     out.moreDamage += m.moreDamage ?? 0;
@@ -324,6 +326,8 @@ export function combineMods(list: SupportMods[]): CombinedMods {
     out.durationPct += m.durationPct ?? 0;
     out.cooldownPct += m.cooldownPct ?? 0;
     out.curseEffect += m.curseEffect ?? 0;
+    out.lowLifeMore += m.lowLifeMore ?? 0;
+    out.moreBleed += m.moreBleed ?? 0;
     if (m.special) out.specials.add(m.special);
   }
   return out;
@@ -334,6 +338,8 @@ export interface SkillNumbers {
   level: number;
   mods: CombinedMods;
   manaCost: number;
+  /** life spent on each use, past energy shield */
+  lifeCost: number;
   cooldownMs: number;
   actionMs: number;
   durationMult: number;
@@ -356,22 +362,35 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
   const actionMs = def.timeMs ? def.timeMs / speed : d.raw.overclock ? OVERCLOCK_INSTANT_MS : 0;
   // mana cost grows a little with gem level, like PoE
   const r = d.raw;
-  const manaCost = Math.round(
+  const paidInMana = Math.round(
     def.manaCost * (1 + 0.04 * (level - 1)) * mods.manaMult * (1 - r.manaCostReduction / 100) * (r.arcaneRecursion ? 1.5 : 1),
   );
+  // supports raise a Life cost as they raise a mana cost; Blood Price turns the mana cost into Life
+  const bloodPrice = mods.specials.has('bloodprice');
+  const lifeCost = Math.round((d.maxLife * (def.effect.lifePct ?? 0) * mods.manaMult) / 100) + (bloodPrice ? Math.max(0, paidInMana) * BLOOD_PRICE_LIFE_PER_MANA : 0);
   const isGuard = def.role === 'guard';
   const cooldownSpeed = 1 + (r.cooldownRecovery + (isGuard ? r.guardCooldown : 0) + (r.arcaneRecursion ? 40 : 0)) / 100;
   return {
     def,
     level,
     mods,
-    manaCost: Math.max(0, manaCost),
+    manaCost: bloodPrice ? 0 : Math.max(0, paidInMana),
+    lifeCost,
     // nothing — stats, keystones, resets — ever takes a cooldown below the minimum
     cooldownMs: r.overclock ? MIN_COOLDOWN_MS : Math.max(MIN_COOLDOWN_MS, (def.cooldownMs * (1 - mods.cooldownPct / 100)) / cooldownSpeed),
     actionMs,
     durationMult: (1 + mods.durationPct / 100) * (1 + (r.skillDuration + (isGuard ? r.guardDuration : 0)) / 100),
   };
 }
+
+/** Life Blood Price spends for each point of the mana cost it replaces. */
+export const BLOOD_PRICE_LIFE_PER_MANA = 2;
+
+/**
+ * Rules won't spend Life that would leave you below this % of maximum Life, so a Life skill can be left running:
+ * it's above AUTO_FLEE_AT, so paying never sets off a flight by itself. Your own press can go lower, down to 1 Life.
+ */
+export const LIFE_RESERVE_PCT = 40;
 
 /** The shortest cooldown any skill can ever have, ms. Skills without a cooldown of their own get this too. */
 export const MIN_COOLDOWN_MS = 100;
@@ -420,7 +439,7 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
     }
   } else {
     const [lo, hi] = spellBaseAt(def, level);
-    elem = ((lo + hi) / 2) * d.typeMult[def.effect.type ?? 'fire'];
+    elem = ((lo + hi) / 2 + (nums.lifeCost * (e.lifeToDamage ?? 0)) / 100) * d.typeMult[def.effect.type ?? 'fire'];
     elem += (['fire', 'cold', 'light'] as const).reduce((a, t) => a + ((d.hit[t][0] + d.hit[t][1]) / 2) * SPELL_ADDED_EFFECTIVENESS, 0);
   }
   if (mods.noElemental) elem = 0;

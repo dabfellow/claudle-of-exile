@@ -14,7 +14,7 @@ no save migration was needed. The Gem shop stocks your furthest act's gems at 3�
 |---|---|---|
 | 1 | Everything up to level 12 | Everything up to level 18, plus those skills' signatures |
 | 2 | Riders and raiders (below), plus Judgement Hammer, Backstab and Glacial Lance | Below, plus those three skills' signatures |
-| 3 | Lacerate (level 35) | Hemorrhage |
+| 3 | Zealots and blood (below), plus Lacerate (level 35) | Below, plus Hemorrhage |
 
 ### Act 2: Riders and raiders
 
@@ -40,6 +40,39 @@ Status rule **Curse** and the free **When its effect is not active**.
 
 **General supports:** Surefoot (22, ground does nothing for 3s after you move), Fresh Horses (24, 25% shorter cooldown),
 Trample (24, 30% more damage), Wide Hex (26, curse lands on the whole field), Deep Hex (28, 30% more curse effect).
+
+### Act 3: Zealots and blood
+
+Built 2026-10-31. **Blood skills** spend a share of maximum Life instead of mana, past energy shield. Supports' cost
+multipliers raise the Life cost as they raise a mana cost, and Efficiency lowers it. **Bleed skills** open a bleed; as ever
+only the strongest bleed on a target counts.
+
+| Skill | Attr | Role | Lvl | Does | Signature (lvl +6) |
+|---|---|---|---|---|---|
+| Flagellate | str | main | 32 | 230%, 3% Life | Absolution: 6% life leech |
+| Scourge | str | area | 34 | 110% arc, bleeds, 4% Life, 5s | Flay: breaks armour |
+| Blood Rite | str | buff | 34 | 15% Life: 25% more damage for 8s, 16s | Blood Oath: 3% leech while it lasts |
+| Blood Ward | str | guard | 36 | 10% Life: shield of 40% Life for 5s, 10s | Barbed Ward: breaking hits back for twice the Life spent |
+| Gash | dex | main | 32 | 100%, bleeds | Gnawing Wound: 30% more against bleeding |
+| Barbed Arrow | dex (bow) | main | 32 | 105%, bleeds | Blood Trail: bleed jumps on death |
+| Stigmata | dex | curse | 36 | 40% increased bleed damage taken | Weeping Wounds: your hits on the cursed bleed |
+| Blood Lance | int | burst | 34 | 34–50 physical, bleeds, 6% Life, 4s | Arterial Spray: bleed spreads to neighbours |
+| Burnt Offering | int | area | 36 | 14–22 fire nova plus the Life spent, 10% Life, 6s | Ashes to Ashes: 50% more Life burned |
+| Transfusion | int | sustain | 38 | Cashes in the target's bleed; 30% back as Life, at most 25% of Life, 8s | Pale Communion: returns mana too |
+
+**General supports:** Serrated Edge (32, any attack bleeds, 10% less damage), Blood Price (32, mana cost paid with twice as
+much Life, 15% more damage; not for blood skills), Deep Wounds (34, 40% more bleed damage), Tithe (34, a third of the Life
+spent flows back over 4s), Desperate Faith (36, 40% more damage below half Life).
+
+**Left running:** a rule never spends Life that would leave you under 40% (`LIFE_RESERVE_PCT`), so a blood skill can't bleed
+you out and paying can't set off auto-flee at 35%. When the reserve is reached the skill waits and the turn falls through to
+the next skill or the Default Attack. Your own press can go on down to 1 Life, and never kills you. Offline drops any press
+left in the queue. The Vitals rule **When life above** holds Life higher, and is how a Desperate Faith build keeps itself
+just under half: the skill stops once you're there. No save migration: every new field is optional.
+
+**Art:** these use existing icons as glyphs, so several repeat: Gash, Deep Wounds and Serrated Edge share the bleed drop,
+Blood Price shares Flagellate's pierced heart, Tithe shares Transfusion's heal. Wanted from an asset pack, not generated: a
+whip or lash, a chalice, a hand with a wound, a hooked arrowhead. `GEM_SYMBOL` in `artManifest.ts` lists the symbols.
 
 ## New Skills — built around the class mechanics
 
