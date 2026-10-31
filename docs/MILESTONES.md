@@ -11,8 +11,8 @@ Last updated 2026-10-31.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 5 are built and merged into `main`, but nothing since Act 2 opened has been
-deployed. The live site is still the old build. Act 2's skills, ground rules, Thieving, art and music are merged into `main` too, unpushed.
+**Where we are:** Milestones 1, 2, 3, the Act 2 pieces and music are live as 0.2.4 (deployed 2026-10-31). The real-account
+test and player heads-up were skipped, so do both now. Act 2 pacing is still to do.
 
 **In order:**
 
@@ -20,9 +20,8 @@ deployed. The live site is still the old build. Act 2's skills, ground rules, Th
    make Scorched earth dangerous enough that ground rules matter.
 2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
-3. **[You]** Decide when to deploy. Milestones 1, 2 and 3 go live together, so post a heads-up first. Live players
-   lose 12 h offline (now 8 h), and lose offline boss fights and wind-up rules until they earn them. Act 1 also gets
-   slower.
+3. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
+   they earn them, and Act 1 got slower.
 4. **[You]** Answer the 6 questions in [ASCENDANCIES.md](design/ASCENDANCIES.md). Milestone 6 needs them.
 5. **[You]** Answer the 8 questions in [HARD_BOSSES.md](design/HARD_BOSSES.md). This can wait until Milestone 9.
 6. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
@@ -34,9 +33,9 @@ deployed. The live site is still the old build. Act 2's skills, ground rules, Th
 
 | # | Milestone | Status | Waiting on |
 |---|---|---|---|
-| 1 | Automation and offline rules | Built, not live | Deploy |
-| 2 | Measure the pacing | **Done**, not live | Deploy |
-| 3 | Account layer | Built, not live | Real-account test, deploy |
+| 1 | Automation and offline rules | **Done**, live | – |
+| 2 | Measure the pacing | **Done**, live | – |
+| 3 | Account layer | Live, not tested on real accounts | Real-account test |
 | 4 | Act recipe and Act 2 | **In progress**: pieces merged | Pacing and Act 1 cold check |
 | 5 | Maps preview | Built, dev only | You playing it |
 | 6 | Act 3 and ascendancies | Drafted | Milestone 4, your answers |
@@ -51,7 +50,7 @@ deployed. The live site is still the old build. Act 2's skills, ground rules, Th
 - [x] Rule overhaul: per-skill rules, High/Normal/Low priority, and rule slots that unlock.
 - [x] Simple rules free, reactive rules unlocked through the War Table.
 - [x] Offline combat stops on death; offline cap starts at 8 h, and the Watchtower raises it toward 24 h.
-- [ ] Deploy (ships with Milestones 2 and 3).
+- [x] Deploy — done 2026-10-31
 - **Done:** a fresh character can't idle bosses until it has earned reactive rules, and all of this plays on the live
   site.
 - Merged 2026-10-30, save v20.
@@ -66,7 +65,8 @@ deployed. The live site is still the old build. Act 2's skills, ground rules, Th
 ### 3. Account layer
 - [x] Hideout, rule unlocks and offline cap shared by the account; skill levels per character; shared gear stash.
 - [x] Exile unlocked by finishing the campaign.
-- [ ] Test on a real account, then deploy.
+- [x] Deploy — done 2026-10-31
+- [ ] Test on a real account.
 - [ ] Leave the reserved `account` rows out of the Admin stats query ([SETUP.md](ops/SETUP.md)).
 - **Done:** a second character starts with the account's unlocks, its own skills and access to the shared stash.
 - Merged 2026-10-31, save v21.
