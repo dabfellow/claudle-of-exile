@@ -1,4 +1,4 @@
-import { STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
+import { STASH_PAGE_SIZE, STASH_START_PAGES, stationDef } from '../data/hideout';
 import type { AccountState, AccountTransfer, AutomationUnlocks, GameState, Item } from './types';
 
 /**
@@ -44,6 +44,23 @@ function pagesBought(hideout: Record<string, number>, pages: number): number {
   return Math.max(0, pages - STASH_START_PAGES - ((hideout.stash ?? 1) - 1));
 }
 
+/**
+ * A level added in the middle of the War Table moves the ones above it, and accounts carry no version, so a stored
+ * level can be out of step with what it taught. Unlocks are one-way and don't move: the table stands at least at the
+ * highest level whose unlocks you hold, with everything below it taught. Safe to run on any copy, any number of times.
+ */
+export function alignWarTable(a: AccountState): void {
+  const levels = stationDef('war_table').levels;
+  const u = a.automation;
+  const held = levels.map((l) => !!l.grants && (l.grants.rules ?? []).every((r) => u.rules.includes(r)) && u.ruleSlots >= (l.grants.ruleSlots ?? 0));
+  const top = held.lastIndexOf(true) + 1;
+  if (top > (a.hideout.war_table ?? 1)) a.hideout.war_table = top;
+  for (const l of levels.slice(0, top)) {
+    u.rules = [...new Set([...u.rules, ...(l.grants?.rules ?? [])])];
+    u.ruleSlots = Math.max(u.ruleSlots, l.grants?.ruleSlots ?? 0);
+  }
+}
+
 /** The highest of each station and unlock. */
 function mergeUnlocks(a: AccountState, from: AccountTransfer): void {
   for (const [id, lvl] of Object.entries(from.hideout ?? {})) a.hideout[id] = Math.max(a.hideout[id] ?? 1, lvl);
@@ -56,6 +73,7 @@ function mergeUnlocks(a: AccountState, from: AccountTransfer): void {
     };
   }
   a.exileUnlocked ||= !!from.exileUnlocked;
+  alignWarTable(a);
 }
 
 /** Fold another stash and set of unlocks into this account. Items that don't fit wait in the overflow. */

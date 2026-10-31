@@ -6,7 +6,7 @@ import { SKILLS } from './data/skills';
 import { ACTS, actOpen, ZONES } from './data/zones';
 import type { Ctx } from './engine/context';
 import { itemName } from './engine/items';
-import { freshAccount, settleCharacter } from './engine/account';
+import { alignWarTable, freshAccount, settleCharacter } from './engine/account';
 import { MIN_OFFLINE_MS, simulateOffline, type OfflineSummary } from './engine/offline';
 import { mathRng } from './engine/rng';
 import type { ClassId } from './data/classes';
@@ -302,6 +302,7 @@ class GameStore {
   }
 
   private adoptRealm(a: AccountState) {
+    alignWarTable(a);
     this.realm = a;
     this.markRealmSaved();
   }

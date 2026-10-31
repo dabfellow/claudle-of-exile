@@ -4,7 +4,7 @@ import { STATIONS, stationDef } from '../src/data/hideout';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { zoneDef } from '../src/data/zones';
 import { settleCharacter } from '../src/engine/account';
-import { bossesOffline, castOrder, offlineCapMs, ruleLockReason, ruleSlots, suggestedRule, unlockEverything } from '../src/engine/automation';
+import { bossesOffline, castOrder, offlineCapMs, ruleLockReason, ruleSlots, ruleUnlockLevel, suggestedRule, unlockEverything } from '../src/engine/automation';
 import { chooseSkill, makeMonster, queueSkill, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem, removeRule, setPriority, setRule } from '../src/engine/gems';
@@ -60,10 +60,10 @@ describe('rule locks', () => {
     for (const when of ['always', 'manual', 'bossOnly', 'enemiesAtLeast', 'notActive', 'manaAbove', 'targetLifeAbove', 'meterFull'] as const) {
       expect(ruleLockReason(s, when)).toBeNull();
     }
-    for (const when of ['lifeBelow', 'manaBelow', 'targetHas', 'targetLacks', 'enemyCasting'] as const) {
+    for (const when of ['lifeBelow', 'manaBelow', 'targetHas', 'targetLacks', 'onGround', 'enemyCasting'] as const) {
       expect(ruleLockReason(s, when)).toMatch(/War Table/);
     }
-    expect(setRule(s, 0, 0, { when: 'enemyCasting' })).toMatch(/War Table level 4/);
+    expect(setRule(s, 0, 0, { when: 'enemyCasting' })).toMatch(`War Table level ${ruleUnlockLevel('windups')}`);
     expect(s.skillBar[0]!.rules).toEqual([{ when: 'manual' }]);
     expect(setRule(s, 0, 0, { when: 'always' })).toBeNull();
   });
@@ -146,9 +146,9 @@ describe('cast order', () => {
 describe('unlocks', () => {
   it('are one-way, and the highest grant holds', () => {
     const s = newGame(1);
-    upgradeTo(s, 'war_table', 5);
+    upgradeTo(s, 'war_table', stationDef('war_table').levels.length);
     upgradeTo(s, 'watchtower', 4);
-    expect(s.account.automation).toEqual({ rules: ['vitals', 'status', 'windups'], ruleSlots: 3, offlineHours: 24 });
+    expect(s.account.automation).toEqual({ rules: ['vitals', 'status', 'ground', 'windups'], ruleSlots: 3, offlineHours: 24 });
     s.account.hideout.war_table = 1;
     const back = s;
     expect(back.account.automation.ruleSlots).toBe(3);
@@ -159,7 +159,7 @@ describe('unlocks', () => {
     const s = newGame(1);
     unlockEverything(s);
     expect(STATIONS.filter((st) => st.levels.some((l) => l.grants)).map((st) => st.id)).toEqual(['war_table', 'watchtower']);
-    expect(s.account.automation.rules).toHaveLength(3);
+    expect(s.account.automation.rules).toHaveLength(4);
   });
 });
 
@@ -222,7 +222,7 @@ describe('offline rules', { timeout: 30_000 }, () => {
     const won = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some((seed) => {
       const s = strong();
       s.settings.autoBoss = true;
-      upgradeTo(s, 'war_table', 4);
+      upgradeTo(s, 'war_table', ruleUnlockLevel('windups'));
       const c = ctx(seed);
       startCombat(s, c, 'mudflats');
       simulateOffline(s, c, 30 * 60_000);

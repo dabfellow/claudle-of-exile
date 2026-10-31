@@ -184,7 +184,7 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
         {c.ground
           .filter((g) => g.cell === PLAYER_SPOT)
           .map((g) => (
-            <span key={g.kind} className={`status ${GROUND_STATUS[g.kind]}`} title={`${GROUND[g.kind].desc} Run or Flee to step out of it twice as fast.`}>
+            <span key={g.kind} className={`status ${GROUND_STATUS[g.kind]}`} title={`${GROUND[g.kind].desc} A guard steps you out of it at once; Run or Flee, twice as fast.`}>
               {GROUND[g.kind].name} {(g.remainingMs / 1000).toFixed(1)}s
             </span>
           ))}

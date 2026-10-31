@@ -177,6 +177,16 @@ export function layGround(ground: Ground[], cell: number, kind: GroundKind, dps:
   }
 }
 
+/** The kinds of hazard under the player right now. */
+export function groundUnderPlayer(ground: Ground[]): Set<GroundKind> {
+  return new Set(ground.filter((g) => g.cell === PLAYER_SPOT).map((g) => g.kind));
+}
+
+/** Leave whatever is under the player behind. The player's own ground, out on the cells, stays. */
+export function stepOutOfGround(ground: Ground[]): Ground[] {
+  return ground.filter((g) => g.cell !== PLAYER_SPOT);
+}
+
 function occupied(monsters: MonsterInstance[]): Set<number> {
   return new Set(monsters.filter((m) => m.life > 0 && !m.dead).map((m) => m.cell));
 }
