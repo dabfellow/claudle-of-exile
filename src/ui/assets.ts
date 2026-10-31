@@ -270,6 +270,13 @@ export const UNIQUE_ART: Record<string, string> = {
   iron_bulwark: new URL('../assets/items/armor/catalone-s9-005.png', import.meta.url).href,
   starforged_edge: new URL('../assets/items/weapons/catalone-w9-010.png', import.meta.url).href,
   titans_girth: new URL('../assets/items/armor/set-63-belt.png', import.meta.url).href, // same as its Heavy Belt base
+  // Act 2
+  sunmane_pelt: new URL('../assets/items/armor/set-52-body.png', import.meta.url).href,
+  mirage_veil: new URL('../assets/items/armor/set-45-helmet.png', import.meta.url).href,
+  khans_tithe: new URL('../assets/items/jewelry/gi-diamond-ring.svg', import.meta.url).href,
+  kurgan_crown: new URL('../assets/items/armor/set-58-helmet.png', import.meta.url).href,
+  stormrider_greaves: new URL('../assets/items/armor/set-37-legs.png', import.meta.url).href,
+  pyre_heart: new URL('../assets/items/jewelry/gi-heart-necklace.svg', import.meta.url).href,
 };
 
 /** Materials. Mining drops use Woshi, logs and dust use CodeSpree (both pixel art); herbs are first-pass stand-ins. */
@@ -452,6 +459,48 @@ export const MONSTER_ART: Record<string, string> = {
   coralgolem: new URL('../assets/monsters/craftpix-con13.png', import.meta.url).href,
   priest: new URL('../assets/monsters/craftpix-con39.png', import.meta.url).href,
   ysolde: new URL('../assets/monsters/freesample-a66.jpg', import.meta.url).href,
+  // Act 2, by area. Keyed by monster id: a renamed or replaced monster only needs its line changed.
+  // tint-<id> files are recolours of a pack piece (recipes in docs/design/ASSET_MAPPING.md)
+  ashjackal: new URL('../assets/monsters/codespree-hyena.png', import.meta.url).href,
+  outrider: new URL('../assets/monsters/craftpix-con20.png', import.meta.url).href,
+  vulture: new URL('../assets/monsters/tint-vulture.png', import.meta.url).href,
+  firesprite: new URL('../assets/monsters/craftpix-con26.png', import.meta.url).href,
+  khorun: new URL('../assets/monsters/freesample-moooob28.jpg', import.meta.url).href,
+  saltcrawler: new URL('../assets/monsters/tint-saltcrawler.png', import.meta.url).href,
+  mirage: new URL('../assets/monsters/tint-mirage.png', import.meta.url).href,
+  dustdevil: new URL('../assets/monsters/tint-dustdevil.png', import.meta.url).href,
+  saltwitch: new URL('../assets/monsters/tint-saltwitch.png', import.meta.url).href,
+  glass: new URL('../assets/monsters/tint-glass.jpg', import.meta.url).href,
+  grasscat: new URL('../assets/monsters/tint-grasscat.png', import.meta.url).href,
+  firebrand: new URL('../assets/monsters/craftpix-con27.png', import.meta.url).href,
+  burnwalker: new URL('../assets/monsters/freesample-spalenie.jpg', import.meta.url).href,
+  grassseer: new URL('../assets/monsters/freesample-a24.jpg', import.meta.url).href,
+  ashmane: new URL('../assets/monsters/tint-ashmane.jpg', import.meta.url).href,
+  raider: new URL('../assets/monsters/tint-raider.png', import.meta.url).href,
+  lancer: new URL('../assets/monsters/craftpix-con7.png', import.meta.url).href,
+  bonecamel: new URL('../assets/monsters/tint-bonecamel.png', import.meta.url).href,
+  hexmerchant: new URL('../assets/monsters/tint-hexmerchant.png', import.meta.url).href,
+  tamsin: new URL('../assets/monsters/craftpix-con24.png', import.meta.url).href,
+  barrowwight: new URL('../assets/monsters/tint-barrowwight.png', import.meta.url).href,
+  horseskel: new URL('../assets/monsters/tint-horseskel.png', import.meta.url).href,
+  moundguard: new URL('../assets/monsters/craftpix-con23.png', import.meta.url).href,
+  moundpriest: new URL('../assets/monsters/tint-moundpriest.jpg', import.meta.url).href,
+  horselord: new URL('../assets/monsters/tint-horselord.jpg', import.meta.url).href,
+  thunderhawk: new URL('../assets/monsters/tint-thunderhawk.png', import.meta.url).href,
+  rhino: new URL('../assets/monsters/tint-rhino.png', import.meta.url).href,
+  stormrider: new URL('../assets/monsters/craftpix-con38.png', import.meta.url).href,
+  skyshaman: new URL('../assets/monsters/tint-skyshaman.png', import.meta.url).href,
+  qara: new URL('../assets/monsters/tint-qara.jpg', import.meta.url).href,
+  ashmonk: new URL('../assets/monsters/tint-ashmonk.jpg', import.meta.url).href,
+  dervish: new URL('../assets/monsters/codespree-pyrogust.png', import.meta.url).href,
+  pyregolem: new URL('../assets/monsters/tint-pyregolem.png', import.meta.url).href,
+  acolyte: new URL('../assets/monsters/craftpix-con37.png', import.meta.url).href,
+  ozar: new URL('../assets/monsters/craftpix-con30.png', import.meta.url).href,
+  sunguard: new URL('../assets/monsters/tint-sunguard.jpg', import.meta.url).href,
+  wyrmling: new URL('../assets/monsters/craftpix-con29.png', import.meta.url).href,
+  ashseer: new URL('../assets/monsters/tint-ashseer.jpg', import.meta.url).href,
+  sunpriest: new URL('../assets/monsters/tint-sunpriest.jpg', import.meta.url).href,
+  azhar: new URL('../assets/monsters/tint-azhar.png', import.meta.url).href,
 };
 
 /** Class, guide and trader portraits (Craftpix avatars, one free_sample painting). */
