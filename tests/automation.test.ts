@@ -148,7 +148,7 @@ describe('unlocks', () => {
     const s = newGame(1);
     upgradeTo(s, 'war_table', stationDef('war_table').levels.length);
     upgradeTo(s, 'watchtower', 4);
-    expect(s.account.automation).toEqual({ rules: ['vitals', 'status', 'ground', 'windups'], ruleSlots: 3, offlineHours: 24 });
+    expect(s.account.automation).toEqual({ rules: ['vitals', 'status', 'ground', 'windups', 'aim'], ruleSlots: 3, offlineHours: 24 });
     s.account.hideout.war_table = 1;
     const back = s;
     expect(back.account.automation.ruleSlots).toBe(3);
@@ -159,7 +159,7 @@ describe('unlocks', () => {
     const s = newGame(1);
     unlockEverything(s);
     expect(STATIONS.filter((st) => st.levels.some((l) => l.grants)).map((st) => st.id)).toEqual(['war_table', 'watchtower']);
-    expect(s.account.automation.rules).toHaveLength(4);
+    expect(s.account.automation.rules).toHaveLength(5);
   });
 });
 

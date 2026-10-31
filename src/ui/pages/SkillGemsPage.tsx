@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import {
   activeGemDef,
   RULE_LABELS,
+  SKILL_AIMS,
   SKILL_BAR_SLOTS,
   SKILL_PRIORITIES,
   SUPPORT_GEMS,
@@ -10,11 +11,12 @@ import {
   type ActiveGemDef,
   type GemAttr,
   type RuleCondition,
+  type SkillAim,
   type TacticRule,
   type TargetStatus,
 } from '../../data/gems';
 import { gemArrived } from '../../engine/progress';
-import { castOrder, GROUND_IN_PLAY, ruleLockReason, ruleSlots, suggestedRule } from '../../engine/automation';
+import { aimLockReason, castOrder, GROUND_IN_PLAY, ruleLockReason, ruleSlots, suggestedRule } from '../../engine/automation';
 import { GROUND } from '../../engine/battlefield';
 import type { GroundKind } from '../../engine/types';
 import {
@@ -25,6 +27,7 @@ import {
   placeOnBar,
   removeFromBar,
   removeRule,
+  setAim,
   setPriority,
   setRule,
   socketSupport,
@@ -97,7 +100,7 @@ function RuleSlot({ s, slot, index, rule, extra }: { s: GameState; slot: number;
   const meta = RULE_LABELS[rule.when];
   const locked = ruleLockReason(s, rule.when);
   const options = (Object.keys(RULE_LABELS) as RuleCondition[]).filter((k) => !extra || (k !== 'always' && k !== 'manual'));
-  const set = (next: TacticRule) => game.act((st) => setRule(st, slot, index, next));
+  const set = (next: TacticRule) => game.act((st) => setRule(st, slot, index, { ...next, aim: rule.aim }));
   return (
     <div className="rule-editor">
       <select
@@ -158,6 +161,32 @@ function RuleSlot({ s, slot, index, rule, extra }: { s: GameState; slot: number;
   );
 }
 
+/** Where the skill's rules send it. Guards and buffs don't hit anyone, so they have no aim. */
+function RuleAim({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGemInstance }) {
+  const { weaponPct, base } = activeGemDef(gem.gemId).effect;
+  if (!weaponPct && !base) return null;
+  const locked = aimLockReason(s);
+  return (
+    <div className="rule-editor">
+      <span className="dim small">Aim at</span>
+      <select
+        className="input"
+        value={gem.rules.find((r) => r.aim)?.aim ?? ''}
+        disabled={!!locked}
+        onChange={(e) => game.act((st) => setAim(st, slot, (e.target.value || undefined) as SkillAim | undefined))}
+      >
+        <option value="">The usual target</option>
+        {SKILL_AIMS.map((x) => (
+          <option key={x.id} value={x.id}>
+            {x.label}
+          </option>
+        ))}
+      </select>
+      {locked && <span className="chip bad">{locked}</span>}
+    </div>
+  );
+}
+
 function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGemInstance }) {
   const suggested = suggestedRule(s, activeGemDef(gem.gemId));
   const manual = gem.rules[0].when === 'manual';
@@ -170,6 +199,7 @@ function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGe
           <RuleSlot s={s} slot={slot} index={i} rule={rule} extra={i > 0} />
         </div>
       ))}
+      <RuleAim s={s} slot={slot} gem={gem} />
       <div className="rule-editor">
         {canAdd && (
           <button className="btn sm" title="Fire only when this rule passes too" onClick={() => game.act((st) => setRule(st, slot, gem.rules.length, { when: 'bossOnly' }))}>

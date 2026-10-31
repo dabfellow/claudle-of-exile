@@ -3702,6 +3702,15 @@ g.tut-hint circle.body {
   border-style: dashed;
 }
 
+.bf-token.martyr {
+  border-color: var(--accent-2);
+  border-style: dashed;
+}
+
+.bf-token.chained {
+  box-shadow: 0 0 0 2px var(--ward);
+}
+
 .bf-token.boss {
   border-color: color-mix(in srgb, var(--danger) 60%, var(--line));
   box-shadow: 0 0 24px color-mix(in srgb, var(--danger) 20%, transparent);
@@ -4278,6 +4287,7 @@ g.tut-hint circle.body {
 .chip.mechanic.enrage { color: var(--bad); }
 .chip.mechanic.ward { color: var(--ward); }
 .chip.mechanic.scorch { color: var(--fire); }
+.chip.mechanic.martyrs { color: var(--accent-2); }
 
 .act-complete {
   border-color: var(--good);

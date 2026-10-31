@@ -149,16 +149,24 @@ export interface TacticRule {
   status?: TargetStatus;
   /** for onGround */
   ground?: GroundKind;
+  /** where this rule sends the skill, ahead of the bar's targeting; the first rule that sets one decides */
+  aim?: SkillAim;
 }
 
+/** What a rule can aim a skill at. Later moments (a weak point, a choir add) each add their own. */
+export type SkillAim = 'martyrs';
+
+export const SKILL_AIMS: { id: SkillAim; label: string }[] = [{ id: 'martyrs', label: 'Chained martyrs' }];
+
 /** Reactive rules come in groups, each unlocked at the War Table. Rules outside a group are simple and free. */
-export type RuleUnlock = 'vitals' | 'status' | 'ground' | 'windups';
+export type RuleUnlock = 'vitals' | 'status' | 'ground' | 'windups' | 'aim';
 
 export const RULE_UNLOCK_NAMES: Record<RuleUnlock, string> = {
   vitals: 'Vitals rules',
   status: 'Status rules',
   ground: 'Ground rules',
   windups: 'Wind-up rules',
+  aim: 'Aim rules',
 };
 
 export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; defaultValue?: number; status?: boolean; ground?: boolean; unlock?: RuleUnlock }> = {

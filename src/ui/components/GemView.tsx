@@ -1,4 +1,4 @@
-import { activeGemDef, ACTIVE_GEMS, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, gemReqLevel, RULE_LABELS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
+import { activeGemDef, ACTIVE_GEMS, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, gemReqLevel, RULE_LABELS, SKILL_AIMS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
 import { WEAPON_FAMILIES } from '../../data/bases';
 import { GROUND, RINGS } from '../../engine/battlefield';
 import { ruleLockReason } from '../../engine/automation';
@@ -67,7 +67,8 @@ export function GemIcon({
 
 /** A skill's rules read as one trigger. */
 export function rulesText(rules: TacticRule[]): string {
-  return rules.map(ruleText).join(' and ');
+  const aim = SKILL_AIMS.find((x) => rules.some((r) => r.aim === x.id));
+  return rules.map(ruleText).join(' and ') + (aim ? `, at ${aim.label.toLowerCase()}` : '');
 }
 
 /** The same, for a skill tile: a skill held back by a locked rule says so. */

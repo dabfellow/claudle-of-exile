@@ -27,7 +27,7 @@ export const ACT_REGIONS: ActRegion[] = [
   {
     act: 3, // the City of Saints: far to the south
     points: [[470, 560], [580, 470], [760, 440], [830, 520], [760, 600], [600, 610]],
-    label: [660, 540],
+    label: [700, 525],
   },
   {
     act: 4, // the Hollow Peaks: the northern range
@@ -66,6 +66,17 @@ export const ZONE_POS: Record<string, [number, number]> = {
   plateau: [370, 440],
   pyretemple: [450, 500],
   burningthrone: [540, 470],
+  // Act 3 goes in through the gate and winds round the city to the High Altar at its heart
+  pilgrimgate: [575, 520],
+  almsquarter: [630, 490],
+  scourgeyard: [680, 485],
+  reliquary: [750, 462],
+  bellfoundry: [795, 515],
+  inquisition: [750, 560],
+  penitentstair: [695, 572],
+  choirloft: [620, 595],
+  saintswalk: [580, 565],
+  highaltar: [640, 540],
 };
 
 export function actRegion(act: number): ActRegion | undefined {

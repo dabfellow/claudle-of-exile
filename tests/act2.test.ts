@@ -52,10 +52,10 @@ describe('Act 2 layout', () => {
     expect(act.at(-1)!.boss.level).toBeGreaterThan(zoneDef('sanctum').boss.level);
   });
 
-  it('chains area to area, and the act boss unlocks nothing yet', () => {
+  it('chains area to area, and the act boss opens Act 3', () => {
     const act = zonesInAct(2);
     for (let i = 0; i < act.length - 1; i++) expect(nextZones(act[i].id)[0]?.id).toBe(act[i + 1].id);
-    expect(nextZones(act.at(-1)!.id)).toEqual([]);
+    expect(nextZones(act.at(-1)!.id)[0]?.id).toBe('pilgrimgate');
   });
 
   it('every boss has three to six mechanics, rising to all six', () => {
@@ -106,8 +106,9 @@ describe('scorch', () => {
 describe('opening an act', () => {
   it('is live for everyone, and a preview act stays hidden outside previews', () => {
     expect(actOpen(1)).toBe(true);
-    expect(actOpen(3)).toBe(false);
+    expect(actOpen(4)).toBe(false);
     ACT_PREVIEW.enabled = false;
+    expect(actOpen(3)).toBe(false);
     expect(actOpen(2)).toBe(true);
     closeAct2();
     expect(actOpen(2)).toBe(false);

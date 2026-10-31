@@ -1,4 +1,4 @@
-import { CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type TacticRule, type TargetStatus } from '../data/gems';
+import { CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
 import { groundAtRisk, groundOnDeath } from './storage';
 import {
   actOpen,
@@ -11,6 +11,8 @@ import {
   BOSS_ENRAGE_AT,
   BOSS_ENRAGE_DMG,
   BOSS_ENRAGE_SPEED,
+  BOSS_MARTYR_AT,
+  BOSS_MARTYR_COUNT,
   BOSS_NOVA_DEFAULT,
   BOSS_NOVA_EVERY_MS,
   BOSS_NOVA_MULT,
@@ -23,6 +25,7 @@ import {
   BOSS_WARD_HEAL,
   BOSS_WARD_MS,
   BOSS_WARD_PCT,
+  MARTYR,
   monsterDamage,
   monsterLife,
   zoneDef,
@@ -65,7 +68,7 @@ import {
   type AreaShape,
 } from './battlefield';
 import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './character';
-import { bossesOffline, castOrder, rulesPass } from './automation';
+import { bossLeftToRules, castOrder, rulesPass, skillAim } from './automation';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
 import { gemUseReason, grantGemXp, MIN_COOLDOWN_MS, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
@@ -247,6 +250,7 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     stepMs: def.moveMs ?? MONSTER_STEP_MS,
     moveMs: def.moveMs ?? MONSTER_STEP_MS,
     attackGround: !!def.basic.ground,
+    chained: mechanics.includes('martyrs') || undefined,
   };
 }
 
@@ -270,15 +274,15 @@ export function challengeBoss(s: GameState): void {
   if (s.combat && bossIsNext(s, s.combat.zoneId)) s.combat.challenged = true;
 }
 
-/** Until wind-up rules are earned a boss has to be fought in person: offline, it stays in hiding and you keep farming trash. */
+/** Until your rules can handle it a boss has to be fought in person: offline, it stays in hiding and you keep farming trash. */
 function bossCanSpawn(s: GameState, ctx: Ctx, zoneId: string): boolean {
-  return bossCalled(s, zoneId) && (!ctx.offline || bossesOffline(s));
+  return bossCalled(s, zoneId) && (!ctx.offline || bossLeftToRules(s, zoneDef(zoneId)));
 }
 
-/** Leaving mid boss fight without wind-up rules: the boss and its adds go back into hiding, ready for your return. */
+/** Leaving mid boss fight when your rules can't handle it: the boss and its adds go back into hiding, ready for your return. */
 export function clearBossFight(s: GameState): void {
   const c = s.combat;
-  if (!c || !c.monsters.some((m) => m.isBoss) || bossesOffline(s)) return;
+  if (!c || !c.monsters.some((m) => m.isBoss) || bossLeftToRules(s, zoneDef(c.zoneId))) return;
   c.monsters = [];
   c.using = null;
 }
@@ -388,7 +392,7 @@ function shakeOff(s: GameState, ctx: Ctx, dt: number): void {
   c.shakeMs -= dt;
   if (c.shakeMs > 0) return;
   c.shakeMs = FLEE_SHAKE_MS;
-  const far = aliveMonsters(c).filter((m) => !m.isBoss).at(-1);
+  const far = aliveMonsters(c).filter((m) => !m.isBoss && !m.martyr).at(-1);
   if (!far) return;
   c.monsters = c.monsters.filter((m) => m !== far);
   ctx.emit({ t: 'info', text: `Left ${far.name} behind` });
@@ -485,15 +489,26 @@ function inPriority(p: TargetPriority, m: MonsterInstance): boolean {
   return false;
 }
 
-/** Every living monster in the order skills want them: a clicked monster first, then the priority group, then the order; nearest breaks ties. */
-export function targetOrder(s: GameState): MonsterInstance[] {
+/** Whether a rule's aim picks this monster out. */
+function inAim(aim: SkillAim | undefined, m: MonsterInstance): boolean {
+  return aim === 'martyrs' && !!m.martyr;
+}
+
+/**
+ * Every living monster in the order skills want them: a clicked monster first, then what the skill's rule aims at, then
+ * the priority group, then the order; nearest breaks ties. Martyrs are nobody's target unless clicked or aimed at, and a
+ * chained boss comes last, so the adds in the way of a martyr get cleared.
+ */
+export function targetOrder(s: GameState, aim?: SkillAim): MonsterInstance[] {
   const c = s.combat;
   if (!c) return [];
   const t = s.settings.targeting ?? DEFAULT_TARGETING;
-  const group = (m: MonsterInstance) => (m.uid === c.lockedUid ? 0 : inPriority(t.priority, m) ? 1 : 2);
+  const group = (m: MonsterInstance) => (m.uid === c.lockedUid ? 0 : m.chained ? 4 : inAim(aim, m) ? 1 : inPriority(t.priority, m) ? 2 : 3);
   const key = (m: MonsterInstance) =>
     t.order === 'farthest' ? -cellRing(m.cell) : t.order === 'lowest' ? m.life : t.order === 'highest' ? -m.life : cellRing(m.cell);
-  return aliveMonsters(c).sort((a, b) => group(a) - group(b) || key(a) - key(b) || cellRing(a.cell) - cellRing(b.cell) || a.uid - b.uid);
+  return aliveMonsters(c)
+    .filter((m) => !m.martyr || m.uid === c.lockedUid || inAim(aim, m))
+    .sort((a, b) => group(a) - group(b) || key(a) - key(b) || cellRing(a.cell) - cellRing(b.cell) || a.uid - b.uid);
 }
 
 /** The monster the fight is about: the one your last skill went for, else the first in targeting order. */
@@ -522,16 +537,17 @@ export function skillRange(d: Derived, def: ActiveGemDef): number {
  * way in). Area skills aim at whoever in range puts the most monsters under the hit, within the same priority.
  * Null when nothing can be reached.
  */
-export function skillTarget(s: GameState, d: Derived, nums: SkillNumbers): { mon: MonsterInstance; closeIn: boolean } | null {
+export function skillTarget(s: GameState, d: Derived, nums: SkillNumbers, aim?: SkillAim): { mon: MonsterInstance; closeIn: boolean } | null {
   const c = s.combat!;
   const range = skillRange(d, nums.def);
-  const order = targetOrder(s);
-  const fits = (m: MonsterInstance) => cellRing(m.cell) <= range;
+  const order = targetOrder(s, aim);
+  // the chains hold a martyr in reach of any skill: adds and a summoning boss could otherwise wall melee off from it
+  const fits = (m: MonsterInstance) => cellRing(m.cell) <= range || !!m.martyr;
   const first = order.find((m) => fits(m) || (range < RINGS && reachable(c.monsters, m, range)));
   if (!first) return null;
   if (!fits(first)) return { mon: first, closeIn: true };
   const shape = skillArea(nums);
-  if (first.uid === c.lockedUid || (shape !== 'splash' && shape !== 'arc')) return { mon: first, closeIn: false };
+  if (first.uid === c.lockedUid || inAim(aim, first) || (shape !== 'splash' && shape !== 'arc')) return { mon: first, closeIn: false };
   const t = s.settings.targeting ?? DEFAULT_TARGETING;
   const same = order.filter((m) => fits(m) && inPriority(t.priority, m) === inPriority(t.priority, first));
   const under = (m: MonsterInstance) => {
@@ -579,7 +595,7 @@ export function monsterStatuses(m: MonsterInstance | undefined): Set<TargetStatu
 }
 
 export function ruleContext(s: GameState, d: Derived): RuleContext {
-  const alive = s.combat ? aliveMonsters(s.combat) : [];
+  const alive = s.combat ? aliveMonsters(s.combat).filter((m) => !m.martyr) : [];
   const target = focusTarget(s);
   return {
     lifePct: (s.life / d.maxLife) * 100,
@@ -666,6 +682,8 @@ export interface SkillChoice {
   target?: MonsterInstance;
   /** the target is out of reach: run at it instead of using the skill */
   closeIn?: boolean;
+  /** where the skill's rules send it */
+  aim?: SkillAim;
 }
 
 /** Damage skills need someone in reach; guards, buffs and sustain skills (Consecrate's heal) go off regardless. */
@@ -683,11 +701,13 @@ export function chooseSkill(s: GameState, d: Derived): SkillChoice {
   const c = s.combat!;
   const later: { approach?: SkillChoice } = {};
   const consider = (slot: number, nums: SkillNumbers, manual: boolean): SkillChoice | null => {
-    const aim = skillTarget(s, d, nums);
-    if (!needsTarget(nums.def)) return { slot, nums, manual, target: aim && !aim.closeIn ? aim.mon : undefined };
-    if (!aim) return null;
-    const choice = { slot, nums, manual, target: aim.mon, closeIn: aim.closeIn };
-    if (!aim.closeIn) return choice;
+    const gem = s.skillBar[slot];
+    const aim = gem ? skillAim(s, gem) : undefined;
+    const found = skillTarget(s, d, nums, aim);
+    if (!needsTarget(nums.def)) return { slot, nums, manual, target: found && !found.closeIn ? found.mon : undefined, aim };
+    if (!found) return null;
+    const choice = { slot, nums, manual, target: found.mon, closeIn: found.closeIn, aim };
+    if (!found.closeIn) return choice;
     later.approach ??= choice;
     return null;
   };
@@ -872,8 +892,14 @@ function applyDot(mon: MonsterInstance, dot: Dot): void {
   else if (dot.dps >= existing.dps) Object.assign(existing, dot);
 }
 
+/** A chained boss takes nothing; a martyr takes nothing but a blow aimed at it, so ailments, ground and novas pass it by. */
+function shielded(mon: MonsterInstance): boolean {
+  return !!mon.chained || !!mon.martyr;
+}
+
 /** Take life from a monster, through its ward first. */
-function damageMonster(mon: MonsterInstance, amount: number): void {
+function damageMonster(mon: MonsterInstance, amount: number, direct = false): void {
+  if (mon.chained || (mon.martyr && !direct)) return;
   if (mon.ward > 0) {
     const absorbed = Math.min(mon.ward, amount);
     mon.ward -= absorbed;
@@ -927,6 +953,10 @@ function hitMonster(
   const c = s.combat!;
   const { def, mods } = nums;
   const e = def.effect;
+  if (mon.chained) {
+    ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: 'phys', blocked: true, monsterUid: mon.uid });
+    return 0;
+  }
   let dealt = 0;
   let physPart = 0;
   for (const t of DAMAGE_TYPES) {
@@ -947,7 +977,7 @@ function hitMonster(
   if (mon.dots.some((x) => x.kind === 'bleed')) dealt *= 1 + r.bleedVuln / 100;
   if (new Set(mon.dots.map((x) => x.kind)).size >= 2) dealt *= 1 + r.multiAilmentVuln / 100;
   dealt = Math.max(1, Math.round(dealt));
-  damageMonster(mon, dealt);
+  damageMonster(mon, dealt, true);
   if (crit && r.critLeech) s.life = Math.min(d.maxLife, s.life + (dealt * r.critLeech) / 100);
   if (mon.life < 0 && r.overkillHeal) s.life = Math.min(d.maxLife, s.life + (-mon.life * r.overkillHeal) / 100);
   // Permafrost freezes what's already chilled, before this hit chills it again
@@ -1022,7 +1052,7 @@ function hitMonster(
   return dealt;
 }
 
-function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillNumbers, manual: boolean, aimed?: MonsterInstance): void {
+function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillNumbers, manual: boolean, aimed?: MonsterInstance, aimRule?: SkillAim): void {
   const c = s.combat!;
   const { def, mods, level } = nums;
   const e = def.effect;
@@ -1135,12 +1165,14 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
     for (let h = 0; h < hitsPerPass; h++) {
       // the target died mid-skill: the next one in reach takes the rest
       if (!target || target.life <= 0) {
-        const aim = skillTarget(s, d, nums);
+        const aim = skillTarget(s, d, nums, aimRule);
         if (!aim || aim.closeIn) return;
         target = aim.mon;
       }
       c.targetUid = target.uid;
-      const alive = aliveMonsters(c);
+      // a blast only reaches martyrs when it's aimed at one
+      const struck = target;
+      const alive = aliveMonsters(c).filter((m) => !m.martyr || struck.martyr);
       let targets: MonsterInstance[];
       let chained = false;
       if (shape !== 'target') {
@@ -1176,7 +1208,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       // Verdict arcs off stunned targets, Splinter shatters off chilled ones
       const arc = mods.specials.has('verdict') && stunned ? 0.5 : mods.specials.has('splinter') && chilled ? 0.4 : 0;
       if (arc) {
-        const others = chainFrom(target, aliveMonsters(c).filter((m) => !targets.includes(m)), 2).slice(1);
+        const others = chainFrom(target, aliveMonsters(c).filter((m) => !targets.includes(m) && !m.martyr), 2).slice(1);
         if (others.length && pass === 0) ctx.emit({ t: 'area', gemId: def.id, cells: others.map((m) => m.cell) });
         for (const m of others) hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * arc);
       }
@@ -1227,9 +1259,19 @@ export function skillArea(nums: SkillNumbers): AreaShape {
 
 // ---------- kills & death ----------
 
+/** The last martyr's death breaks the chains. Martyrs give no xp or loot: they're only the way to the boss. */
+function onMartyrDeath(c: CombatRuntime, ctx: Ctx, mon: MonsterInstance): void {
+  if (c.monsters.some((m) => m.martyr && m !== mon && m.life > 0)) return;
+  const boss = c.monsters.find((m) => m.isBoss && m.chained);
+  if (!boss) return;
+  boss.chained = undefined;
+  ctx.emit({ t: 'bossPhase', name: boss.name, text: 'loses its martyrs: strike now!' });
+}
+
 function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): void {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
+  if (mon.martyr) return onMartyrDeath(c, ctx, mon);
   ctx.emit({ t: 'kill', name: mon.name, boss: mon.isBoss });
   c.hungerMs = HUNGER_MS;
   s.lifetime.kills += 1;
@@ -1248,7 +1290,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   if (d.raw.igniteSpread && ignite && next) applyDot(next, { ...ignite, dealt: 0 });
   // Pyre: a burning corpse bursts over the pack
   if (ignite?.pyre) {
-    for (const m of aliveMonsters(c)) {
+    for (const m of aliveMonsters(c).filter((x) => !shielded(x))) {
       const amount = Math.max(1, Math.round(mon.maxLife * 0.1 * (1 - m.res.fire / 100)));
       damageMonster(m, amount);
       ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'fire', monsterUid: m.uid });
@@ -1266,6 +1308,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   }
 
   if (mon.isBoss) {
+    c.monsters = c.monsters.filter((m) => !m.martyr);
     s.lifetime.bossKills += 1;
     if (s.maps.run) s.maps.run.bossDown = true;
     s.zoneKills[zone.id] = 0;
@@ -1355,7 +1398,7 @@ function martyrFill(s: GameState, ctx: Ctx, d: Derived, raw: number): void {
   if (!r.saintsSacrifice) s.life = Math.min(d.maxLife, s.life + d.maxLife * 0.2 * (1 + r.novaHeal / 100));
   if (r.novaEs) s.es = Math.min(d.maxEs, s.es + (d.maxEs * r.novaEs) / 100);
   ctx.emit({ t: 'info', text: 'Fervor releases a holy nova!', tone: 'good' });
-  for (const m of aliveMonsters(c)) {
+  for (const m of aliveMonsters(c).filter((x) => !shielded(x))) {
     const amount = Math.max(1, Math.round(dmg * (1 - m.res.light / 100)));
     damageMonster(m, amount);
     ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'light', monsterUid: m.uid });
@@ -1510,7 +1553,7 @@ function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
       continue;
     }
     for (const m of aliveMonsters(c)) {
-      if (m.cell !== g.cell) continue;
+      if (m.cell !== g.cell || shielded(m)) continue;
       const dmg = ((g.dps * t) / 1000) * (type === 'phys' ? 1 : 1 - m.res[type] / 100);
       damageMonster(m, dmg);
       m.dotAcc += dmg;
@@ -1537,12 +1580,12 @@ function tickDots(s: GameState, ctx: Ctx, dt: number): void {
   for (const m of aliveMonsters(c)) {
     for (const dot of m.dots) {
       const t = Math.min(dt, dot.remainingMs);
-      const dmg = (dot.dps * t) / 1000;
+      const dmg = shielded(m) ? 0 : (dot.dps * t) / 1000;
       damageMonster(m, dmg);
       m.dotAcc += dmg;
       dot.dealt += dmg;
       dot.remainingMs -= dt;
-      if (dot.remainingMs <= 0 && dot.burst) {
+      if (dot.remainingMs <= 0 && dot.burst && dot.dealt > 0) {
         const burst = dot.dealt * dot.burst;
         damageMonster(m, burst);
         ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(burst), crit: true, dmgType: 'phys', monsterUid: m.uid });
@@ -1560,6 +1603,7 @@ function tickDots(s: GameState, ctx: Ctx, dt: number): void {
 }
 
 function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt: number): void {
+  if (mon.martyr) return;
   mon.vulnMs = Math.max(0, mon.vulnMs - dt);
   mon.chillMs = Math.max(0, mon.chillMs - dt);
   if (mon.shockMs) mon.shockMs = Math.max(0, mon.shockMs - dt);
@@ -1594,13 +1638,32 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
   }
 }
 
-/** Life-threshold boss mechanics (enrage, ward) and timed adds. These run even while the boss is stunned. */
+/** Fresh martyrs on the free hexes nearest the boss's place in the field, and the chains go back on. */
+function chainMartyrs(s: GameState, ctx: Ctx, boss: MonsterInstance): void {
+  const c = s.combat!;
+  const cells = freeNear(c.monsters, BOSS_CELL, ctx.rng).filter((i) => cellRing(i) >= 2).slice(0, BOSS_MARTYR_COUNT);
+  for (const cell of cells) {
+    const m = makeMonster({ ...MARTYR, level: boss.level }, false, newUid(s));
+    m.martyr = true;
+    m.damage = 0;
+    m.cell = cell;
+    c.monsters.push(m);
+  }
+  boss.chained = cells.length > 0 || undefined;
+  if (cells.length) ctx.emit({ t: 'bossPhase', name: boss.name, text: 'chains its martyrs: strike them down!' });
+}
+
+/** Life-threshold boss mechanics (enrage, ward, martyrs) and timed adds. These run even while the boss is stunned. */
 function bossPhases(s: GameState, ctx: Ctx, mon: MonsterInstance, dt: number): void {
   const has = (k: BossMechanic) => mon.mechanics.includes(k);
   const lifeFrac = mon.life / mon.maxLife;
   if (has('enrage') && !mon.enraged && lifeFrac <= BOSS_ENRAGE_AT) {
     mon.enraged = true;
     ctx.emit({ t: 'bossPhase', name: mon.name, text: 'flies into a rage!' });
+  }
+  if (has('martyrs') && (mon.martyrWaves ?? 0) < BOSS_MARTYR_AT.length && lifeFrac <= BOSS_MARTYR_AT[mon.martyrWaves ?? 0]) {
+    mon.martyrWaves = (mon.martyrWaves ?? 0) + 1;
+    chainMartyrs(s, ctx, mon);
   }
   if (has('ward')) {
     if (mon.wardMax === 0 && mon.wardsUsed < BOSS_WARD_AT.length && lifeFrac <= BOSS_WARD_AT[mon.wardsUsed]) {
@@ -1625,7 +1688,7 @@ function bossPhases(s: GameState, ctx: Ctx, mon: MonsterInstance, dt: number): v
     if (mon.timers.summon <= 0) {
       mon.timers.summon = BOSS_SUMMON_EVERY_MS;
       const c = s.combat!;
-      const adds = aliveMonsters(c).filter((x) => !x.isBoss).length;
+      const adds = aliveMonsters(c).filter((x) => !x.isBoss && !x.martyr).length;
       const zone = zoneDef(c.zoneId);
       const fresh: MonsterInstance[] = [];
       for (let i = adds; i < BOSS_SUMMON_COUNT; i++) fresh.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE));
@@ -1767,7 +1830,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
         c.actionMs = Math.max(c.actionMs + IDLE_MS, IDLE_MS * 0.5);
         break;
       }
-      performSkill(s, ctx, d, choice.slot, choice.nums, choice.manual, choice.target);
+      performSkill(s, ctx, d, choice.slot, choice.nums, choice.manual, choice.target, choice.aim);
       reapDead(s, ctx, d);
       if (!s.combat || !c.monsters.length) return true;
       if (choice.nums.actionMs <= 0) continue;

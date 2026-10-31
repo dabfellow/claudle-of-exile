@@ -8,8 +8,9 @@ import type { DamageType } from '../engine/types';
  * - enrage: below 35% life it attacks faster and harder — burst and flasks matter
  * - ward: at 66% and 33% life it raises a barrier that heals it if not broken in time — burst matters
  * - scorch: every so often it sets the ground under you ablaze (frozen, charged) — resistances and pace matter
+ * - martyrs: it can't be hurt while the martyrs chained to it live — aim at them, by hand or by rule
  */
-export type BossMechanic = 'slam' | 'nova' | 'summon' | 'enrage' | 'ward' | 'scorch';
+export type BossMechanic = 'slam' | 'nova' | 'summon' | 'enrage' | 'ward' | 'scorch' | 'martyrs';
 
 /** One thing a monster does: its name, whether it's an attack or a spell, and its attack or cast time in ms. */
 export interface MonsterSkill {
@@ -65,6 +66,8 @@ export interface ZoneDef {
   packSize: [number, number];
   /** ms between waves walking in at a walking pace, even while you're still fighting the last one */
   spawnEveryMs: number;
+  /** items here roll this many levels above the monster that dropped them */
+  ilvlBonus?: number;
   /** multiplier on kill xp here: offline trash outruns the journey in Act 1 without it (docs/design/BALANCE.md) */
   xpScale?: number;
   uniques: string[];
@@ -96,7 +99,10 @@ export const ACTS: ActDef[] = [
     n: 2, name: 'The Burning Steppe', open: true,
     outro: 'The fallen sun goes dark at last. Far to the south, the bells of a city of saints are ringing.',
   },
-  { n: 3, name: 'The City of Saints', open: false },
+  {
+    n: 3, name: 'The City of Saints', open: false, preview: true,
+    outro: 'The Hierarch falls, and for the first time in a thousand years the bells of the city stop. Far to the north, the Hollow Peaks are waiting.',
+  },
   { n: 4, name: 'The Hollow Peaks', open: false },
   { n: 5, name: 'The Sunless Sea', open: false },
   { n: 6, name: 'The Shattered Throne', open: false },
@@ -386,6 +392,161 @@ export const ZONES: ZoneDef[] = [
     spawnEveryMs: 9500,
     uniques: ['starforged_edge', 'pyre_heart', 'kurgan_crown', 'khans_tithe', 'mirage_veil', 'stormrider_greaves', 'old_grudge', 'last_breath'],
   },
+
+  // ---------------- Act 3: The City of Saints (docs/design/ACT3.md) ----------------
+  // A living city of human zealots: lightning is the check, on trash and in the bosses' novas and ground. Most bosses
+  // chain martyrs. Items here roll three levels above the monster, so the act's last kills reach bases of about level 45.
+  {
+    id: 'pilgrimgate', name: 'The Pilgrim Gate', act: 3, tier: 7, levelRange: [33, 34], color: '#b9a77a', ilvlBonus: 3,
+    desc: 'The great gate of the holy city, where pilgrims are searched and exiles are turned back.',
+    monsters: [
+      m('gatewarden', 'Gate Warden', 33, 'phys', atk('Halberd Thrust', 3400), 1.2, 1.1),
+      fast(m('pilgrimzealot', 'Pilgrim Zealot', 33, 'phys', atk('Knotted Cord', 2300), 0.8, 0.9)),
+      m('lampbearer', 'Lamp Bearer', 34, 'light', spell('Sanctified Spark', 2800), 0.8, 1.05),
+      m('tollinquisitor', 'Toll Inquisitor', 34, 'light', spell('Writ of Lightning', 3300, true), 1, 1.2),
+    ],
+    boss: boss(m('ansel', 'Warden-Captain Ansel', 34, 'phys', atk('Gate Halberd', 3400)), ['slam', 'nova', 'summon'], { slam: atk('Portcullis Drop', 3400), nova: spell('Bell of Judgement', 3900), novaType: 'light' }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9500,
+    uniques: ['pilgrims_road', 'old_grudge', 'stormhide'],
+  },
+  {
+    id: 'almsquarter', name: 'The Alms Quarter', act: 3, tier: 8, levelRange: [33, 35], color: '#a89a8a', ilvlBonus: 3,
+    desc: 'Crowded lanes of the poor, who give what little they have and watch for anyone who gives less.',
+    monsters: [
+      m('almscollector', 'Alms Collector', 33, 'phys', atk('Weighted Purse', 2600), 0.9, 1),
+      fast(m('streetzealot', 'Street Zealot', 34, 'phys', atk('Cobble Stone', 2300), 0.8, 0.9)),
+      m('lanternsister', 'Lantern Sister', 34, 'light', spell('Lantern Flash', 2900), 0.85, 1.1),
+      m('hedgepreacher', 'Hedge Preacher', 35, 'light', spell('Sermon of Sparks', 3400, true), 1, 1.2),
+    ],
+    boss: boss(m('ilse', 'Mother Almoner Ilse', 35, 'light', spell('Charity of Heaven', 3600)), ['slam', 'nova', 'martyrs'], { slam: atk('Alms Bowl', 3400), nova: spell('Last Offering', 3900) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9500,
+    uniques: ['chainbreaker', 'khans_tithe', 'hollow_locket'],
+  },
+  {
+    id: 'scourgeyard', name: 'The Scourging Yard', act: 3, tier: 8, levelRange: [34, 36], color: '#8a5a50', ilvlBonus: 3,
+    desc: 'A sanded yard behind the walls, where the faithful come every morning to bleed for their sins.',
+    monsters: [
+      fast(m('flagellant', 'Flagellant', 34, 'phys', atk('Barbed Scourge', 2200), 0.8, 0.95)),
+      m('yardmaster', 'Yard Master', 35, 'phys', atk('Iron Rod', 3600), 1.25, 1.1),
+      slow(m('penitentbrute', 'Penitent Bearer', 35, 'phys', atk('Stone of Sorrow', 4200), 1.6, 1.2)),
+      m('lashpriest', 'Lash Priest', 36, 'light', spell('Crackling Lash', 3200, true), 0.95, 1.2),
+    ],
+    boss: boss(m('cato', 'Brother Cato, the Flayed', 36, 'phys', atk('Hooked Scourge', 3200)), ['slam', 'enrage', 'martyrs'], { slam: atk('Blood Offering', 3300) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9500,
+    uniques: ['martyrs_shroud', 'last_breath', 'titans_girth'],
+  },
+  {
+    id: 'reliquary', name: 'The Reliquary Vaults', act: 3, tier: 8, levelRange: [35, 37], color: '#7a7a9a', ilvlBonus: 3,
+    desc: 'Cold vaults under the city, packed to the roof with the bones of the holy. Relic hunters dig here by torchlight.',
+    monsters: [
+      m('relichunter', 'Relic Hunter', 35, 'phys', atk('Grave Pick', 2800), 1, 1),
+      fast(m('vaultthief', 'Vault Thief', 36, 'phys', atk('Stolen Dagger', 2100), 0.75, 0.85)),
+      slow(m('vaultwarden', 'Vault Warden', 36, 'light', atk('Charged Mace', 3900), 1.5, 1.15)),
+      m('bonecantor', 'Bone Cantor', 37, 'cold', spell('Chill of the Crypt', 3400, true), 1, 1.2),
+    ],
+    boss: boss(m('odile', 'Odile of the Long Dig', 37, 'light', atk('Sainted Pickaxe', 3300)), ['slam', 'summon', 'martyrs'], { slam: atk('Collapse the Vault', 3300) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9500,
+    uniques: ['confession_hood', 'kurgan_crown', 'hollow_locket'],
+  },
+  {
+    id: 'bellfoundry', name: 'The Bell Foundry', act: 3, tier: 8, levelRange: [36, 38], color: '#a07a4a', ilvlBonus: 3,
+    desc: 'Where the city casts its bells in bronze and holy fire. Every bell here has rung for a death.',
+    monsters: [
+      m('bellcaster', 'Bellcaster', 36, 'fire', atk('Ladle of Bronze', 3000), 1, 1.05),
+      fast(m('clapperboy', 'Clapper Boy', 37, 'light', atk('Ringing Hammer', 2200), 0.75, 0.9)),
+      slow(m('bronzeguard', 'Bronze Guardsman', 37, 'phys', atk('Bell Mace', 4100), 1.6, 1.2)),
+      m('tollmaster', 'Tollmaster', 38, 'light', spell('Peal of Thunder', 3300, true), 1, 1.25),
+    ],
+    boss: boss(m('harl', 'Bellfounder Harl', 38, 'light', atk('Great Clapper', 3300)), ['slam', 'nova', 'scorch'], { slam: atk('Bronze Bell Drop', 3200), nova: spell('Death Knell', 3800) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9500,
+    uniques: ['saints_shard', 'pyre_heart', 'stormhide'],
+  },
+  {
+    id: 'inquisition', name: 'The Hall of Inquisition', act: 3, tier: 9, levelRange: [36, 38], color: '#6a5a7a', ilvlBonus: 3,
+    desc: 'Long quiet halls of ledgers and locked doors. Everyone here is guilty; it is only a matter of writing it down.',
+    monsters: [
+      m('inquisitor', 'Inquisitor', 36, 'light', spell('Lightning Verdict', 3000), 0.95, 1.15),
+      m('hallguard', 'Hall Guard', 37, 'phys', atk('Ranseur', 3400), 1.2, 1.1),
+      fast(m('informant', 'Informant', 37, 'phys', atk('Hidden Knife', 2100), 0.7, 0.85)),
+      m('confessor', 'Confessor', 38, 'light', spell('Words of Thunder', 3400, true), 1, 1.25),
+    ],
+    boss: boss(m('maren', 'Grand Inquisitor Maren', 38, 'light', spell('Sentence of Heaven', 3400)), ['slam', 'nova', 'ward', 'martyrs'], { slam: atk('Gavel of Iron', 3300), nova: spell('Final Judgement', 3700) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['confession_hood', 'halo_of_wrath', 'ninth_psalm'],
+  },
+  {
+    id: 'penitentstair', name: 'The Stair of Penitents', act: 3, tier: 9, levelRange: [37, 39], color: '#8a8a7a', ilvlBonus: 3,
+    desc: 'Nine thousand steps up to the high city, climbed on the knees, with lightning walking the rails.',
+    monsters: [
+      fast(m('stairrunner', 'Stair Runner', 37, 'phys', atk('Spiked Staff', 2200), 0.8, 0.9)),
+      slow(m('kneelingknight', 'Kneeling Knight', 38, 'light', atk('Thunder Mace', 3900), 1.6, 1.15)),
+      m('railpriest', 'Rail Priest', 38, 'light', spell('Walking Lightning', 3000), 0.9, 1.15),
+      m('sineater', 'Sin Eater', 39, 'cold', spell('Cold Absolution', 3400), 1, 1.2),
+    ],
+    boss: boss(m('unshriven', 'The Unshriven Knight', 39, 'light', atk('Oathsword', 3200)), ['slam', 'summon', 'enrage', 'martyrs'], { slam: atk('Crushing Vow', 3200) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['martyrs_shroud', 'chainbreaker', 'stormrider_greaves'],
+  },
+  {
+    id: 'choirloft', name: 'The Choir Loft', act: 3, tier: 9, levelRange: [38, 40], color: '#9a9ac0', ilvlBonus: 3,
+    desc: 'High galleries under the cathedral roof, where the singing never stops and the air tastes of storms.',
+    monsters: [
+      m('chorister', 'Chorister', 38, 'light', spell('High Note', 2600), 0.8, 1.05),
+      fast(m('censerboy', 'Censer Boy', 39, 'fire', atk('Swung Censer', 2300), 0.75, 0.95)),
+      m('loftguard', 'Loft Guard', 39, 'phys', atk('Partisan', 3400), 1.2, 1.1),
+      m('precentor', 'Precentor', 40, 'light', spell('Storm Canticle', 3400, true), 1, 1.3),
+    ],
+    boss: boss(m('liselle', 'Cantor Liselle, Voice of Wrath', 40, 'light', spell('Sung Lightning', 3300)), ['slam', 'nova', 'ward', 'scorch', 'martyrs'], { slam: atk('Rood Staff', 3200), nova: spell('Choir of Storms', 3700) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['saints_shard', 'halo_of_wrath', 'mirage_veil'],
+  },
+  {
+    id: 'saintswalk', name: "The Saints' Walk", act: 3, tier: 9, levelRange: [39, 41], color: '#c0b080', ilvlBonus: 3,
+    desc: 'An avenue of gilded statues in the high city. The guards here have never once been told they were wrong.',
+    monsters: [
+      m('templeguard', 'Temple Guard', 39, 'phys', atk('Gilded Spear', 3300), 1.2, 1.15),
+      m('crusader', 'Crusader', 40, 'light', atk('Smiting Blade', 2900), 1.05, 1.1),
+      slow(m('gildedknight', 'Gilded Colossus', 40, 'phys', atk('Golden Fist', 4200), 1.7, 1.25)),
+      m('lightbringer', 'Lightbringer', 41, 'light', spell('Holy Bolt', 3300, true), 1, 1.3),
+    ],
+    boss: boss(m('oren', 'Saint Oren the Living', 41, 'light', atk('Radiant Blade', 3100)), ['slam', 'nova', 'summon', 'enrage', 'martyrs'], { slam: atk('Hand of the Saint', 3100), nova: spell('Holy Wrath', 3600) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['pilgrims_road', 'halo_of_wrath', 'starforged_edge'],
+  },
+  {
+    id: 'highaltar', name: 'The High Altar', act: 3, tier: 9, levelRange: [40, 41], color: '#e0d8a0', ilvlBonus: 3,
+    desc: 'The heart of the cathedral, open to the sky. The storm over the altar has been praying back for a thousand years.',
+    monsters: [
+      m('altarguard', 'Altar Guard', 40, 'light', atk('Consecrated Glaive', 3400), 1.3, 1.15),
+      m('ascendedzealot', 'Ascended Zealot', 41, 'light', atk('Winged Blade', 2600), 0.9, 1.05),
+      m('hierophant', 'Hierophant', 41, 'light', spell('Skybreak', 3300, true), 1, 1.25),
+      m('sacristan', 'Sacristan', 41, 'phys', atk('Altar Knife', 2800), 1, 1.15),
+    ],
+    boss: boss(m('solenne', 'Hierarch Solenne, Voice of Heaven', 42, 'light', atk('Crozier of Storms', 3200), 1.5, 1.05), ['slam', 'nova', 'summon', 'enrage', 'ward', 'scorch', 'martyrs'], { slam: atk('Pillar of Heaven', 3100), nova: spell('Wrath of God', 3600) }),
+    actBoss: true,
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['halo_of_wrath', 'martyrs_shroud', 'pilgrims_road', 'saints_shard', 'confession_hood', 'chainbreaker', 'starforged_edge'],
+  },
 ];
 
 /** Areas off the campaign road (data/maps.ts): they can be fought in, but nothing that walks ZONES sees them. */
@@ -463,6 +624,11 @@ export const BOSS_WARD_HEAL = 0.1;
 export const BOSS_SCORCH_EVERY_MS = 11000;
 export const BOSS_SCORCH_DPS = 0.2;
 export const BOSS_SCORCH_MS = 6000;
+/** martyrs: chained as the fight opens and again at these life fractions; the boss can't be hurt while any of them lives */
+export const BOSS_MARTYR_AT = [1, 0.5];
+export const BOSS_MARTYR_COUNT = 2;
+/** A martyr fights at its boss's level on this fraction of a trash monster's life. It doesn't attack: it only has to die. */
+export const MARTYR: MonsterDef = { id: 'martyr', name: 'Chained Martyr', level: 1, dmgType: 'phys', basic: { name: 'Prays', kind: 'attack', ms: MONSTER_BASE_ATTACK_MS }, lifeMult: 0.5 };
 
 /** What each mechanic is called on screen, and how to answer it. */
 export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> = {
@@ -471,5 +637,6 @@ export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> 
   summon: { name: 'Summons', tip: 'Calls more adds during the fight. Area skills keep them down.' },
   enrage: { name: 'Enrage', tip: 'Below 35% life it attacks 50% faster for 30% more damage. Burst it down or drink.' },
   ward: { name: 'Ward', tip: 'At 66% and 33% life it raises a barrier. Break it within 8 s or the boss heals 10%.' },
+  martyrs: { name: 'Martyrs', tip: "It can't be hurt while the martyrs chained to it live, and it chains two more at half life. Only a blow aimed at a martyr lands: click one, or set a skill's rule to aim at martyrs (Aim rules, War Table)." },
   scorch: { name: 'Scorched earth', tip: 'Every 11 s it sets the ground under you ablaze (or frozen, or charged) for 6 s. Resist its element, Run to step out sooner, or put a guard on a Ground rule to step out at once.' },
 };

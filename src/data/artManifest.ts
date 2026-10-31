@@ -147,9 +147,21 @@ const ZONE_DESC: Record<string, string> = {
     'The inside of a red stone temple with tall square pillars. A large stone bowl of fire burns at the far end. Smoke drifts under the ceiling.',
   burningthrone:
     'The top of a high bare hill at night. A huge glowing orange orb, like a small sun, rests in a crater on the summit, lighting the scorched ground around it.',
+  // Act 3
+  pilgrimgate: 'A huge pale stone city gate with an iron portcullis, seen from the road outside. Rows of bronze bells hang above the arch. Bright overcast sky.',
+  almsquarter: 'A crowded lane of narrow whitewashed houses with washing lines and shuttered windows, wooden alms bowls set out on doorsteps. Soft morning light.',
+  scourgeyard: 'A walled yard of raked pale sand with wooden posts in rows and iron rings set into the stone walls. Dark stains in the sand. Cold dawn light.',
+  reliquary: 'A low stone vault lined floor to ceiling with niches of old bones and small gilded boxes, lit by a few candles. Blue shadows.',
+  bellfoundry: 'A dark brick workshop with a huge half-cast bronze bell in a sand pit, a furnace glowing behind it, chains and ladles on the walls.',
+  inquisition: 'A long stone hall lined with tall shelves of ledgers and a row of locked iron doors, cold light from high narrow windows.',
+  penitentstair: 'A vast pale stone stairway climbing up a hillside towards a distant city, iron rails along both sides, a storm gathering above.',
+  choirloft: 'A high wooden gallery under a vaulted cathedral roof, rows of empty choir stalls, stained glass lit by lightning outside.',
+  saintswalk: 'A wide paved avenue lined with tall gilded statues of robed saints, a white cathedral at the far end, golden evening light.',
+  highaltar: 'A great stone altar at the centre of a roofless cathedral, broken pillars all around, a huge storm cloud turning above with lightning striking down.',
 };
 
 const MONSTER_DESC: Record<string, string> = {
+  martyr: 'a thin barefoot pilgrim in white rags, kneeling, wrapped in heavy iron chains, eyes closed in prayer',
   rat: 'a large wet grey rat with matted fur, bare pink tail, small pale milky eyes',
   crab: 'a big brown crab covered in dried grey mud, a crack across its shell, one claw much bigger than the other',
   zombie: 'a drowned man with grey-green swollen skin, wet tangled hair with strands of seaweed, torn grey shirt, blank white eyes',

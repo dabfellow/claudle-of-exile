@@ -61,6 +61,66 @@ Total: 829 unique artworks out of 1,939 files. The first pass also reused unused
 
 Custom art wanted most: the 8 area banners and 2 scenes (no fitting landscapes exist in any pack), the 4 amulets (Catalone Part 1), and three herbs: sunpetal, emberroot, voidbloom.
 
+## Act 3 (added 2026-10-31)
+
+All 50 Act 3 monsters and bosses and the Chained Martyr have their own picture: 36 close, 15 loose. Every one is a `tint-<id>` recolour of a Craftpix or free_sample person, since the act is nearly all human and the packs hold few people. Craftpix's cartoon faces take a one-colour wash (`tint`), because a hue turn gives them green or purple skin; free_sample paintings can take a hue turn. The six uniques use unused gear-set pieces, and `gi-shard-necklace.svg` is a pale blue copy of `gi-gem-pendant.svg`.
+
+**Areas:** the 10 banners reuse GegX landscapes in `ZONE_ART` until the landscape pack arrives. Full briefs for them are in `ZONE_DESC` in `src/data/artManifest.ts`.
+
+| Game asset ID | Source file | Confidence | Final destination | Notes |
+|---|---|---|---|---|
+| `monsters/martyr` | `free_sample/a61.jpg` | close | `src/assets/monsters/tint-martyr.jpg` | gaunt bald figure, bleached; no chains in frame. Recolour: saturation 0.15, brightness 0.95 |
+| `monsters/gatewarden` | `Craftpix avatars Transperent/con1.png` | close | `src/assets/monsters/tint-gatewarden.png` | helmeted guard in pale gold; no halberd. Recolour: saturation 0.8, tint 215,205,170 |
+| `monsters/pilgrimzealot` | `Craftpix avatars Transperent/con3.png` | close | `src/assets/monsters/tint-pilgrimzealot.png` | hooded, wrapped face in dusty cloth. Recolour: tint 205,190,160 |
+| `monsters/lampbearer` | `Craftpix avatars Transperent/con6.png` | placeholder | `src/assets/monsters/tint-lampbearer.png` | yellow hood; no lamp. Recolour: tint 225,200,110 |
+| `monsters/tollinquisitor` | `Craftpix avatars Transperent/con12.png` | close | `src/assets/monsters/tint-tollinquisitor.png` | blue hood and face wrap. Recolour: tint 140,160,215 |
+| `monsters/ansel` | `free_sample/mobeK1S.jpg` | close | `src/assets/monsters/tint-ansel.jpg` | iron-faced captain in gold wash. Recolour: saturation 0.4, tint 220,200,150 |
+| `monsters/almscollector` | `Craftpix avatars Transperent/con20.png` | close | `src/assets/monsters/tint-almscollector.png` | padded hood, grey-tan; no purse. Recolour: tint 190,175,150 |
+| `monsters/streetzealot` | `Craftpix avatars Transperent/con9.png` | close | `src/assets/monsters/tint-streetzealot.png` | headband and mask, blue. Recolour: tint 150,170,225 |
+| `monsters/lanternsister` | `Craftpix avatars Transperent/con2.png` | close | `src/assets/monsters/tint-lanternsister.png` | hooded young woman, pale; no lantern. Recolour: saturation 0.5, brightness 1.1, tint 235,225,190 |
+| `monsters/hedgepreacher` | `free_sample/a32.jpg` | close | `src/assets/monsters/tint-hedgepreacher.jpg` | plain older man; no pulpit. Recolour: hue -20 |
+| `monsters/ilse` | `free_sample/a66.jpg` | close | `src/assets/monsters/tint-ilse.jpg` | pale stern woman; same face as the other saints. Recolour: saturation 0.3, brightness 1.1 |
+| `monsters/flagellant` | `free_sample/a10.jpg` | close | `src/assets/monsters/tint-flagellant.jpg` | bare-shouldered heavy man; no scourge. Recolour: hue 340, saturation 1.3 |
+| `monsters/yardmaster` | `free_sample/op53.jpg` | placeholder | `src/assets/monsters/tint-yardmaster.jpg` | scarred pale head. Recolour: hue 330, saturation 0.6 |
+| `monsters/penitentbrute` | `free_sample/a43.jpg` | placeholder | `src/assets/monsters/tint-penitentbrute.jpg` | heavy-browed brute, greyed; no stone. Recolour: saturation 0.5 |
+| `monsters/lashpriest` | `Craftpix avatars Transperent/con24.png` | close | `src/assets/monsters/tint-lashpriest.png` | high-collared pale priest, blue cloth. Recolour: tint 150,175,225 |
+| `monsters/cato` | `free_sample/ik52.jpg` | placeholder | `src/assets/monsters/tint-cato.jpg` | grey-skinned man reddened; no wounds. Recolour: hue 150, saturation 1.5 |
+| `monsters/relichunter` | `Craftpix avatars Transperent/con7.png` | close | `src/assets/monsters/tint-relichunter.png` | scale hood; no pick. Recolour: saturation 0.6, brightness 0.95 |
+| `monsters/vaultthief` | `Craftpix avatars Transperent/con3.png` | close | `src/assets/monsters/tint-vaultthief.png` | dark hood and wrapped face. Recolour: saturation 0.3, brightness 0.7 |
+| `monsters/vaultwarden` | `Craftpix avatars Transperent/con1.png` | close | `src/assets/monsters/tint-vaultwarden.png` | helmed guard, blue-green steel. Recolour: tint 150,190,190 |
+| `monsters/bonecantor` | `free_sample/op36.jpg` | close | `src/assets/monsters/tint-bonecantor.jpg` | hooded gaunt face, cold light. Recolour: hue 30, saturation 0.8 |
+| `monsters/odile` | `Craftpix avatars Transperent/con12.png` | placeholder | `src/assets/monsters/tint-odile.png` | hooded woman, dusty; no pickaxe. Recolour: tint 195,175,135 |
+| `monsters/bellcaster` | `Craftpix avatars Transperent/con4.png` | close | `src/assets/monsters/tint-bellcaster.png` | bearded smith in bronze tones. Recolour: tint 200,150,90 |
+| `monsters/clapperboy` | `Craftpix avatars Transperent/con9.png` | placeholder | `src/assets/monsters/tint-clapperboy.png` | masked youth, faded; no hammer. Recolour: tint 200,180,140 |
+| `monsters/bronzeguard` | `Craftpix avatars Transperent/con1.png` | close | `src/assets/monsters/tint-bronzeguard.png` | bronze helmet. Recolour: tint 205,150,80 |
+| `monsters/tollmaster` | `Craftpix avatars Transperent/con33.png` | close | `src/assets/monsters/tint-tollmaster.png` | bearded hooded man, blue cast. Recolour: tint 130,160,215 |
+| `monsters/harl` | `free_sample/a43.jpg` | placeholder | `src/assets/monsters/tint-harl.jpg` | huge brow in bronze wash; no bell. Recolour: tint 205,150,80 |
+| `monsters/inquisitor` | `Craftpix avatars Transperent/con24.png` | close | `src/assets/monsters/tint-inquisitor.png` | high collar, pale cruel face. Recolour: tint 170,165,185 |
+| `monsters/hallguard` | `Craftpix avatars Transperent/con7.png` | close | `src/assets/monsters/tint-hallguard.png` | scale hood, slate. Recolour: tint 150,165,190 |
+| `monsters/informant` | `Craftpix avatars Transperent/con3.png` | close | `src/assets/monsters/tint-informant.png` | hood and wrap, dark. Recolour: brightness 0.85, tint 120,120,145 |
+| `monsters/confessor` | `free_sample/op36.jpg` | close | `src/assets/monsters/tint-confessor.jpg` | hooded figure, blue-lit. Recolour: hue 180 |
+| `monsters/maren` | `free_sample/a66.jpg` | close | `src/assets/monsters/tint-maren.jpg` | stern woman in violet shade. Recolour: hue 240, saturation 0.7, brightness 0.9 |
+| `monsters/stairrunner` | `Craftpix avatars Transperent/con20.png` | close | `src/assets/monsters/tint-stairrunner.png` | padded hood, blue-grey. Recolour: tint 130,160,205 |
+| `monsters/kneelingknight` | `Craftpix avatars Transperent/con19.png` | close | `src/assets/monsters/tint-kneelingknight.png` | winged helm, steel-blue. Recolour: saturation 0.7, tint 190,200,230 |
+| `monsters/railpriest` | `Craftpix avatars Transperent/con39.png` | placeholder | `src/assets/monsters/tint-railpriest.png` | turbaned figure recoloured. Recolour: tint 150,185,215 |
+| `monsters/sineater` | `free_sample/op53.jpg` | placeholder | `src/assets/monsters/tint-sineater.jpg` | scarred head, cold tint. Recolour: hue 170, saturation 0.7 |
+| `monsters/unshriven` | `free_sample/moooob27.jpg` | placeholder | `src/assets/monsters/tint-unshriven.jpg` | grey face; no armour in frame. Recolour: saturation 0.2, brightness 0.8 |
+| `monsters/chorister` | `Craftpix avatars Transperent/con2.png` | close | `src/assets/monsters/tint-chorister.png` | young singer, blue. Recolour: tint 170,190,235 |
+| `monsters/censerboy` | `Craftpix avatars Transperent/con6.png` | placeholder | `src/assets/monsters/tint-censerboy.png` | red-orange hood; no censer. Recolour: tint 215,130,90 |
+| `monsters/loftguard` | `Craftpix avatars Transperent/con1.png` | close | `src/assets/monsters/tint-loftguard.png` | helmeted guard, violet-grey. Recolour: tint 170,160,200 |
+| `monsters/precentor` | `free_sample/a32.jpg` | close | `src/assets/monsters/tint-precentor.jpg` | older man in storm-blue light. Recolour: hue 200, saturation 1.2, brightness 1.1 |
+| `monsters/liselle` | `free_sample/a66.jpg` | close | `src/assets/monsters/tint-liselle.jpg` | stern woman with blue hair. Recolour: hue 180 |
+| `monsters/templeguard` | `Craftpix avatars Transperent/con7.png` | close | `src/assets/monsters/tint-templeguard.png` | gilded scale hood. Recolour: tint 235,205,120 |
+| `monsters/crusader` | `Craftpix avatars Transperent/con19.png` | close | `src/assets/monsters/tint-crusader.png` | pale gold winged helm. Recolour: tint 240,225,170 |
+| `monsters/gildedknight` | `free_sample/a10.jpg` | placeholder | `src/assets/monsters/tint-gildedknight.jpg` | broad man in gold wash, not a statue. Recolour: tint 230,190,90 |
+| `monsters/lightbringer` | `Craftpix avatars Transperent/con39.png` | placeholder | `src/assets/monsters/tint-lightbringer.png` | gold turbaned figure. Recolour: tint 235,215,130 |
+| `monsters/oren` | `free_sample/a32.jpg` | placeholder | `src/assets/monsters/tint-oren.jpg` | older man in gold wash. Recolour: tint 235,205,120 |
+| `monsters/altarguard` | `Craftpix avatars Transperent/con1.png` | close | `src/assets/monsters/tint-altarguard.png` | pale blue helm. Recolour: tint 170,190,240 |
+| `monsters/ascendedzealot` | `Craftpix avatars Transperent/con19.png` | close | `src/assets/monsters/tint-ascendedzealot.png` | bright winged helm. Recolour: brightness 1.3, tint 240,235,215 |
+| `monsters/hierophant` | `free_sample/a61.jpg` | placeholder | `src/assets/monsters/tint-hierophant.jpg` | bald head in blue light. Recolour: hue 190, saturation 2 |
+| `monsters/sacristan` | `Craftpix avatars Transperent/con33.png` | close | `src/assets/monsters/tint-sacristan.png` | grey-bearded hooded man. Recolour: saturation 0.3, brightness 0.9 |
+| `monsters/solenne` | `free_sample/a66.jpg` | close | `src/assets/monsters/tint-solenne.jpg` | pale gold woman; no crozier. Recolour: brightness 1.15, tint 230,215,160 |
+
 ## Act 2 (added 2026-10-30)
 
 All 40 Act 2 monsters and bosses now have their own picture, and no two share one. The six new uniques have their own art too. 27 of the monsters are close and 13 are loose, after a second pass on 2026-10-31 that looked through every creature and character sprite in the owned packs and replaced 11 of the original 21 loose matches. The table further down covers the first 187 slots; these are on top of it.

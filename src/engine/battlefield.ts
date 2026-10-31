@@ -228,6 +228,7 @@ export function inReach(m: MonsterInstance): boolean {
 
 /** Still on its way: melee to ring 1, casters to their range, bosses to the middle of the field. */
 function walking(m: MonsterInstance): boolean {
+  if (m.martyr) return false;
   return m.isBoss ? cellRing(m.cell) > BOSS_RING : !inReach(m);
 }
 
