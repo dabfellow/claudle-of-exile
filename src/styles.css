@@ -2662,6 +2662,53 @@ h3 {
   padding: 24px;
 }
 
+.title-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 460px) minmax(0, 420px);
+  justify-content: center;
+  align-items: start;
+  gap: 20px;
+}
+
+@media (max-width: 920px) {
+  .title-layout {
+    grid-template-columns: minmax(0, 460px);
+  }
+}
+
+.news-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.news-card h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.news-card h3 {
+  margin: 0;
+  font-size: var(--fs-sm, 14px);
+  color: var(--accent);
+}
+
+.news-card p {
+  margin: 2px 0 6px;
+  font-size: var(--fs-xs);
+}
+
+.news-card ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fs-sm, 14px);
+  color: var(--muted);
+}
+
 .btn.lg {
   padding: 11px 18px;
   font-size: var(--fs);

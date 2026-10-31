@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { CLASSES, classDef, startClass, type ClassId } from '../../data/classes';
 import { baseDef } from '../../data/bases';
 import { activeGemDef } from '../../data/gems';
+import { NEWS } from '../../data/news';
 import { GUIDE_NAME } from '../../data/tutorial';
 import { game, useGame } from '../../game';
 import { isCloudAccount, type AuthProviderId } from '../../platform/accounts';
@@ -148,28 +149,52 @@ function AccountForm({ startOn = 'login' }: { startOn?: 'login' | 'create' }) {
 export function TitleScreen() {
   useGame();
   return (
-    <ScreenShell>
-      <div className="card title-card">
-        <p className="muted" style={{ margin: 0, textAlign: 'center' }}>
-          Gather, forge and fight your way up from the Mud Flats. Progress continues while you're away.
-        </p>
-        <button className="btn primary lg" onClick={() => game.signIn(game.hasGuest ? 'guest' : 'demo')}>
-          {game.hasGuest ? 'Continue as Guest' : 'Try the demo'}
-        </button>
-        <div className="divider">
-          <span>or use an account to save your progress and play anywhere</span>
+    <ScreenShell wide>
+      <div className="title-layout">
+        <div className="card title-card">
+          <p className="muted" style={{ margin: 0, textAlign: 'center' }}>
+            Gather, forge and fight your way up from the Mud Flats. Progress continues while you're away.
+          </p>
+          <button className="btn primary lg" onClick={() => game.signIn(game.hasGuest ? 'guest' : 'demo')}>
+            {game.hasGuest ? 'Continue as Guest' : 'Try the demo'}
+          </button>
+          <div className="divider">
+            <span>or use an account to save your progress and play anywhere</span>
+          </div>
+          <AccountForm />
+          <p className="dim" style={{ fontSize: 'var(--fs-xs)', margin: 0, textAlign: 'center' }}>
+            {game.hasGuest
+              ? 'Guest progress stays in this browser. Make an account and you can move your guest characters to it.'
+              : "The demo isn't saved: it ends when you close or refresh the tab. Make an account during it to keep your character."}
+          </p>
+          <p className="dim" style={{ fontSize: 'var(--fs-xs)', margin: 0, textAlign: 'center' }}>
+            An account stores your email and character saves; Google or Discord also share your name and avatar. No ads, no tracking.
+          </p>
         </div>
-        <AccountForm />
-        <p className="dim" style={{ fontSize: 'var(--fs-xs)', margin: 0, textAlign: 'center' }}>
-          {game.hasGuest
-            ? 'Guest progress stays in this browser. Make an account and you can move your guest characters to it.'
-            : "The demo isn't saved: it ends when you close or refresh the tab. Make an account during it to keep your character."}
-        </p>
-        <p className="dim" style={{ fontSize: 'var(--fs-xs)', margin: 0, textAlign: 'center' }}>
-          An account stores your email and character saves; Google or Discord also share your name and avatar. No ads, no tracking.
-        </p>
+        <NewsCard />
       </div>
     </ScreenShell>
+  );
+}
+
+function NewsCard() {
+  return (
+    <section className="card news-card" aria-label="News">
+      <h2>News</h2>
+      {NEWS.map((n) => (
+        <article key={n.title}>
+          <h3>{n.title}</h3>
+          <p className="dim">
+            v{n.version} · {n.date}
+          </p>
+          <ul>
+            {n.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </article>
+      ))}
+    </section>
   );
 }
 

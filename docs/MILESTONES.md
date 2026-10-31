@@ -337,6 +337,8 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+
+- Add each release to `src/data/news.ts`, which feeds the title screen's News panel.
 - Music: older Safari can't play Ogg, and iPhones ignore page volume, so the slider may act as on/off there (mute still works). Neither tested. Act 3+ and maps past Act 2 reuse the Act 2 track. If this repo ever goes public, ask AlkaKrab first (`src/assets/CREDITS.md`).
 - Endless content: a post-Maps thing, not designed yet.
 - Sim pacing gaps: week 1 onward can't be tested until Act 3 exists; week 1 and month 1 predate the last drop cut; month 3 is two classes on one seed. Smithing, brewing, the bench and second rule slots aren't modelled ([BALANCE.md](design/BALANCE.md)).
