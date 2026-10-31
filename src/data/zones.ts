@@ -89,7 +89,7 @@ export const ACTS: ActDef[] = [
     outro: 'The Drowned Queen has fallen. The road inland climbs onto the steppe, where the grass has been burning for a hundred years.',
   },
   {
-    n: 2, name: 'The Burning Steppe', open: false, preview: true,
+    n: 2, name: 'The Burning Steppe', open: true,
     outro: 'The fallen sun goes dark at last. Far to the south, the bells of a city of saints are ringing.',
   },
   { n: 3, name: 'The City of Saints', open: false },

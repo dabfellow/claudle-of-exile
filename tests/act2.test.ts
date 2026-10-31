@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
 import { uniqueDef } from '../src/data/bases';
 import { BOSS_TABLES, bossTable, DROP_TABLES, dropTable } from '../src/data/drops';
-import { ACT_PREVIEW, actBossZone, actOpen, BOSS_SCORCH_EVERY_MS, BOSS_SCORCH_MS, nextZones, ZONES, zoneDef, zonesInAct } from '../src/data/zones';
+import { ACT_PREVIEW, ACTS, actBossZone, actOpen, BOSS_SCORCH_EVERY_MS, BOSS_SCORCH_MS, nextZones, ZONES, zoneDef, zonesInAct } from '../src/data/zones';
 import { PLAYER_SPOT } from '../src/engine/battlefield';
 import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
@@ -24,7 +24,16 @@ function act1Done() {
   return s;
 }
 
+/** Puts Act 2 back behind the preview gate, the way an unreleased act sits. */
+function closeAct2() {
+  ACTS[1].open = false;
+  ACTS[1].preview = true;
+  ACT_PREVIEW.enabled = false;
+}
+
 afterEach(() => {
+  ACTS[1].open = true;
+  ACTS[1].preview = false;
   ACT_PREVIEW.enabled = true;
 });
 
@@ -95,11 +104,12 @@ describe('scorch', () => {
 });
 
 describe('opening an act', () => {
-  it('is playable in previews, hidden otherwise', () => {
+  it('is live for everyone, and a preview act stays hidden outside previews', () => {
     expect(actOpen(1)).toBe(true);
-    expect(actOpen(2)).toBe(true);
     expect(actOpen(3)).toBe(false);
     ACT_PREVIEW.enabled = false;
+    expect(actOpen(2)).toBe(true);
+    closeAct2();
     expect(actOpen(2)).toBe(false);
   });
 
@@ -110,7 +120,7 @@ describe('opening an act', () => {
   });
 
   it("leaves those saves alone while the act isn't out, and won't travel there", () => {
-    ACT_PREVIEW.enabled = false;
+    closeAct2();
     const loaded = deserialize(serialize(act1Done()));
     expect(loaded.unlockedZones).not.toContain('cinderroad');
     // a save from a preview build that already holds the area

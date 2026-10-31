@@ -5,7 +5,7 @@ import { activeGemDef } from '../src/data/gems';
 import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
 import { actionsFor } from '../src/data/skills';
 import { uniqueDef } from '../src/data/bases';
-import { ACT_PREVIEW, BOSS_WARD_PCT, nextZones, ZONES, zoneDef, zonesInAct, type MonsterDef } from '../src/data/zones';
+import { ACT_PREVIEW, ACTS, BOSS_WARD_PCT, nextZones, ZONES, zoneDef, zonesInAct, type MonsterDef } from '../src/data/zones';
 import { aliveMonsters, combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
@@ -64,10 +64,14 @@ describe('Act 1 layout', () => {
     const act = zonesInAct(1);
     for (let i = 0; i < act.length - 1; i++) expect(nextZones(act[i].id)[0]?.id).toBe(act[i + 1].id);
     expect(nextZones('sanctum')[0]?.id).toBe('cinderroad');
+    ACTS[1].open = false;
+    ACTS[1].preview = true;
     ACT_PREVIEW.enabled = false;
     try {
       expect(nextZones('sanctum')).toEqual([]);
     } finally {
+      ACTS[1].open = true;
+      ACTS[1].preview = false;
       ACT_PREVIEW.enabled = true;
     }
   });

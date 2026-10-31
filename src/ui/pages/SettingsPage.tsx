@@ -33,11 +33,12 @@ export function SettingsPage() {
       <div className="card">
         <div className="card-title">About</div>
         <p className="muted" style={{ marginTop: 0 }}>
-          <b>Act 1: The Drowned Coast</b> is the whole game for now: eight areas from the Mud Flats to the Drowned Sanctum, ending with Ysolde, the
-          Drowned Queen. Expect roughly a day of play to finish it.
+          <b>Act 1: The Drowned Coast</b> has eight areas from the Mud Flats to the Drowned Sanctum, ending with Ysolde, the Drowned Queen. Expect
+          roughly a day of play to finish it. <b>Act 2: The Burning Steppe</b> has eight more, from the Cinder Road to the Burning Throne, ending with
+          Azhar, the Fallen Sun.
         </p>
         <p className="muted">
-          <b>Coming next:</b> Acts 2–6, each with new areas, gathering tiers, items and skills; then maps for the endgame, ascendancy classes, loot
+          <b>Coming next:</b> Acts 3–6, each with new areas, gathering tiers, items and skills; then maps for the endgame, ascendancy classes, loot
           filters and the story. Your characters carry over.
         </p>
         <p className="dim small" style={{ marginBottom: 0 }}>

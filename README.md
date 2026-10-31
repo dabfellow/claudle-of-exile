@@ -22,7 +22,8 @@ Online accounts (Google/Discord + cloud saves) need a `.env.local` with `VITE_SU
 
 ## What's in the game
 
-- **Act 1, The Drowned Coast**: 8 areas (levels 1–25) ending in the act boss, Ysolde, the Drowned Queen. Bosses stack mechanics as the act goes on: slam, nova, summon, enrage, ward. Acts 3–6 and Maps are shown as coming soon.
+- **Act 1, The Drowned Coast**: 8 areas (levels 1–25) ending in the act boss, Ysolde, the Drowned Queen. Bosses stack mechanics as the act goes on: slam, nova, summon, enrage, ward.
+- **Act 2, The Burning Steppe**: 8 more areas (monster levels 24–33) ending in Azhar, the Fallen Sun, with a new boss mechanic, Scorched earth. Acts 3–6 and Maps are shown as coming soon.
 - **Act 2, The Burning Steppe** (preview: dev builds only, see [docs/ACT2.md](docs/ACT2.md)): 8 areas (levels 24–33) ending in Azhar, the Fallen Sun, and a sixth boss mechanic, Scorched earth.
 - **Characters**: guest play or Google/Discord sign-in with cloud saves, several characters per account, Warrior / Ranger / Mage, a guided 10-step tutorial.
 - **Combat**: 12 skill gems plus signature and general supports on a 6-slot bar, tactics rules that cast for you, packs of 1–5, flasks with their own affixes and enchantments.
