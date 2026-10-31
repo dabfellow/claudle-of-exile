@@ -5,7 +5,9 @@ import { BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, nextZones, zoneDef } fro
 import { CELLS, cellRing, GROUND, groundFor, inReach, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT, RINGS } from '../../engine/battlefield';
 import {
   aliveMonsters,
+  bossCalled,
   bossIsNext,
+  challengeBoss,
   currentMovement,
   focusTarget,
   lockTarget,
@@ -419,7 +421,7 @@ function MovementBar({ s }: { s: GameState }) {
       ? aliveMonsters(c).length
         ? 'Shaking them off…'
         : 'Holding back: nothing arrives'
-      : bossIsNext(s, zone.id)
+      : bossCalled(s, zone.id)
         ? `${zone.boss.name} waits for the field to clear`
         : next === null
           ? 'Field full: the next monster waits'
@@ -455,6 +457,9 @@ function MovementBar({ s }: { s: GameState }) {
       </label>
       <label className="bf-auto" title="Below 35% life, flee until you're back above 90%, then resume your pace">
         <input type="checkbox" checked={s.settings.autoFlee} onChange={(e) => game.act((st) => void (st.settings.autoFlee = e.target.checked))} /> Auto-flee
+      </label>
+      <label className="bf-auto" title="A ready boss comes on its own, instead of waiting for you to challenge it">
+        <input type="checkbox" checked={s.settings.autoBoss} onChange={(e) => game.act((st) => void (st.settings.autoBoss = e.target.checked))} /> Auto-challenge
       </label>
     </div>
   );
@@ -650,6 +655,9 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
   const zoneArt = anyArtUrl(`zones/${zone.art ?? zone.id}`);
   // once this area's boss is down, offer the areas it opened
   const nexts = s.bossesDefeated.includes(zone.id) ? nextZones(zone.id).filter((z) => s.unlockedZones.includes(z.id)) : [];
+  const kills = s.zoneKills[zone.id] ?? 0;
+  const bossReady = bossIsNext(s, zone.id);
+  const bossComing = bossCalled(s, zone.id);
   return (
     <div className="page">
       <PageHeader
@@ -662,6 +670,17 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
                 Next area: {z.name} →
               </button>
             ))}
+            {!s.maps.run && !c.monsters.some((m) => m.isBoss) && (
+              <button
+                className="btn primary"
+                data-tut="challenge-boss"
+                disabled={!bossReady || bossComing}
+                title={bossReady ? `Fight ${zone.boss.name} once the field is clear` : `${zone.boss.name} comes out after ${zone.bossEvery} kills here`}
+                onClick={() => game.act((st) => challengeBoss(st))}
+              >
+                {!bossReady ? `Challenge boss (${kills}/${zone.bossEvery})` : bossComing ? `${zone.boss.name} is coming…` : `Challenge ${zone.boss.name}`}
+              </button>
+            )}
             <button className="btn" onClick={() => go('campaign')}>
               Change area
             </button>
@@ -671,7 +690,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
           </>
         }
       >
-        Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {s.maps.run ? `${s.maps.run.packsLeft}/${s.maps.run.packsTotal} packs left before ${zone.boss.name}` : `${s.zoneKills[zone.id] ?? 0}/${zone.bossEvery} until ${zone.boss.name}`}
+        Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {s.maps.run ? `${s.maps.run.packsLeft}/${s.maps.run.packsTotal} packs left before ${zone.boss.name}` : bossReady ? `${zone.boss.name} is ready to fight` : `${kills}/${zone.bossEvery} until ${zone.boss.name}`}
       </PageHeader>
 
       <div className={`card arena2 ${zoneArt ? 'has-art' : ''}`} style={{ ['--zone' as string]: zone.color, ['--zone-art' as string]: zoneArt ? `url(${zoneArt})` : undefined }}>

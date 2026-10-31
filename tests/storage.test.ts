@@ -9,7 +9,7 @@ import { createItem } from '../src/engine/items';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { newGame } from '../src/engine/state';
-import { buyStashPage, dropItem, pickUp, stashItems, stashPagePrice, takeFromStash } from '../src/engine/storage';
+import { buyStashPage, dropItem, groundAtRisk, groundOnDeath, pickUp, stashItems, stashPagePrice, takeFromStash } from '../src/engine/storage';
 import type { GameState, Item } from '../src/engine/types';
 import { veteran } from './helpers';
 
@@ -43,14 +43,30 @@ describe('gear storage', () => {
     expect(s.ground).toEqual([b]);
   });
 
-  it('the ground clears on entering an area or leaving combat', () => {
+  it('the ground stays when you enter an area or leave combat', () => {
     const s = newGame(1);
     s.ground.push(sword(s));
     startCombat(s, ctx(), 'mudflats');
-    expect(s.ground).toHaveLength(0);
-    s.ground.push(sword(s));
+    expect(s.ground).toHaveLength(1);
     retreat(s);
-    expect(s.ground).toHaveLength(0);
+    expect(s.ground).toHaveLength(1);
+  });
+
+  it('a second death loses what the first one left unclaimed, not newer drops', () => {
+    const s = newGame(1);
+    const old = sword(s);
+    const claimed = sword(s);
+    s.ground.push(old, claimed);
+    expect(groundOnDeath(s)).toBe(0);
+    expect(groundAtRisk(s)).toBe(2);
+    pickUp(s, ctx(), 'ground', [claimed.uid]);
+    const fresh = sword(s);
+    s.ground.push(fresh);
+    expect(groundAtRisk(s)).toBe(1);
+    expect(groundOnDeath(s)).toBe(1);
+    expect(s.ground).toEqual([fresh]);
+    expect(groundAtRisk(s)).toBe(1);
+    expect(s.inventory).toContain(claimed);
   });
 
   it('moves gear between bag and stash pages, spilling to the next page', () => {

@@ -202,6 +202,7 @@ describe('offline progress and bosses', { timeout: 20_000 }, () => {
     const s = strong();
     s.bossesDefeated = ['mudflats'];
     s.account.automation.rules.push('windups');
+    s.settings.autoBoss = true;
     const c = ctx();
     startCombat(s, c, 'mudflats');
     const before = s.lifetime.bossKills;

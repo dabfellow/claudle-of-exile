@@ -1,5 +1,9 @@
 # Project instructions
 
+## Version number
+
+The version in `package.json` shows under the title in the game's sidebar, so you can tell a refresh picked up the latest build. Bump the patch number (0.2.3 → 0.2.4, and in `package-lock.json`) in every commit that changes the game, and before every push or deploy.
+
 ## To-do tracking
 
 The running task list lives in [docs/TODO.md](docs/TODO.md).

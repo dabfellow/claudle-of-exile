@@ -71,7 +71,7 @@ Flasks, gems, currency and materials live in their own stores already; only gear
 - **Stash**: **3 pages of 80** to start; more pages bought with **gold**.
 - **Item display**: bigger tiles (icon, name in rarity colour, slot + item level, ▲ when it's an upgrade).
 - **Trader Sell**: sells from the bag; a "show stash too" toggle lists stashed gear as well.
-- **Ground clears on area change** (and when you leave combat), like leaving a PoE instance.
+- **Ground stays when you leave.** Changing area, retreating or starting a map keeps it, and it's on the Combat page in or out of a fight. Each death marks what's there; a second death loses whatever marked is still unclaimed. Drops after the first death are safe until the next one.
 - **Stash station** makes new stash pages **cheaper**: 0 / 10 / 20 / 35% off *(proposed)*.
 - **Page price escalates, no cap**: page 4 costs 1,000 gold, each later page ×2.5 *(proposed)*
   (1k, 2.5k, 6.25k, 15.6k…).
@@ -127,7 +127,7 @@ Picks items from equipment, inventory and stash (crafting shouldn't need shuffli
 ### Build notes
 
 - Engine: `src/engine/storage.ts`; tiles: `ItemTiles` in `src/ui/components/Inventory.tsx`; piles: `src/ui/components/GroundLoot.tsx`.
-- Leaving combat by starting a skill or craft doesn't clear the ground; it's shown on the idle Combat page until the next area or retreat.
+- Leaving combat by starting a skill or craft doesn't clear the ground; it's shown on the idle Combat page.
 - The offline haul also has "Salvage the rest".
 
 ### Build order (done)

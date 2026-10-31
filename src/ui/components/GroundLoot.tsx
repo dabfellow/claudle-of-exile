@@ -1,5 +1,5 @@
 import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP } from '../../data/hideout';
-import { pickUp, salvagePile, type Pile } from '../../engine/storage';
+import { groundAtRisk, pickUp, salvagePile, type Pile } from '../../engine/storage';
 import type { GameState } from '../../engine/types';
 import { game } from '../../game';
 import { ItemTiles } from './Inventory';
@@ -10,7 +10,7 @@ const PILES: Record<Pile, { title: string; cap: number; hint: string; empty: str
   ground: {
     title: 'On the ground',
     cap: GROUND_CAP,
-    hint: 'Newest first. Past 50, the oldest drop is lost. Leaving the area clears it.',
+    hint: 'Newest first. Past 50, the oldest drop is lost. Stays when you leave an area; die twice without picking it up and it is lost.',
     empty: 'Gear that drops shows up here for you to pick up.',
   },
   offlineHaul: {
@@ -28,6 +28,7 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
   const upgrades = items.filter((i) => upgradeScore(s, i) > 0.5);
   const take = (uids: number[]) => game.act((st, ctx) => void pickUp(st, ctx, pile, uids));
   const bagFull = s.inventory.length >= BAG_SIZE;
+  const atRisk = pile === 'ground' ? groundAtRisk(s) : 0;
   return (
     <div className="card">
       <div className="card-title">
@@ -42,6 +43,7 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
       </div>
       <div className="row wrap" style={{ marginBottom: 10 }}>
         <span className="dim small">{info.hint}</span>
+        {atRisk > 0 && <span className="bad small">{atRisk} lost if you die again</span>}
         <span className="spacer" />
         <button className="btn sm" disabled={!upgrades.length || bagFull} onClick={() => take(upgrades.map((i) => i.uid))}>
           Pick up upgrades ({upgrades.length})

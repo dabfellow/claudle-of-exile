@@ -88,6 +88,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Before the balance pass: Challenge boss button (a ready boss waits so an area can be farmed; Auto-challenge beside Auto-flee sends it in on its own, online and, with wind-up rules, offline); version number in the sidebar from 0.2.3; more gear on every tier (6–7.5% → 15–18% per kill), basic orbs doubled on tiers 1–2, starter drops (5 bases, 2 Transmutes, 2 Alterations over a new character's first 14 kills); the ground no longer clears on leaving an area or on one death: a second death loses what the first left unclaimed. Sim not rerun — done 2026-10-31
 - [x] Docs updated for the reset: GDD rewritten as the current design, built-system docs note what changes, art notes corrected — done 2026-10-30
 - [x] Design reset settled: finished game, pacing, core systems, act recipe, live game, roadmap ([DESIGN_RESET.md](DESIGN_RESET.md)) — done 2026-10-30
 - [x] Retired docs deleted (AI art prompts, the superseded new content pass) and `npm run art -- --docs` removed — done 2026-10-30

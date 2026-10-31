@@ -321,6 +321,7 @@ describe('combat 2.0', () => {
   it('bosses arrive with adds', () => {
     const s = newGame(1);
     const c = ctx();
+    s.settings.autoBoss = true;
     s.zoneKills.mudflats = 99;
     startCombat(s, c, 'mudflats');
     tick(s, c, 1000);

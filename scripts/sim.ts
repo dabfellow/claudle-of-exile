@@ -469,6 +469,7 @@ function bossTrial(snap: GameState, zoneId: string, seed: number): Record<string
       if (!v.byHand) grantUnlocks(s, { rules: ['vitals', 'status', 'windups'] });
       manageSkills(s);
       s.settings.autoFlee = v.flee;
+      s.settings.autoBoss = true;
       for (const f of s.flaskSlots) {
         if (!f) continue;
         f.instill = v.instill ? INSTILL_FOR[flaskDef(f.flaskId).kind] : null;
@@ -504,6 +505,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   const s = newGame(seed, { name: 'Bot', classId });
   s.tutorial.done = true;
   s.settings.autoFlee = FLEE;
+  s.settings.autoBoss = true;
   let now = 0;
   const res: Result = {
     classId, seed, profile, levels: {}, bosses: {}, bossLevels: {}, upgrades: {}, checkpoints: {}, trials: {}, deaths: 0, offlineDeaths: 0, kills: 0,

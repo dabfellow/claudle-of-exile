@@ -4,6 +4,8 @@
  * check changes with `npm run sim` (docs/design/BALANCE.md).
  */
 
+import type { ItemSlotType } from '../engine/types';
+
 export interface RarityWeights {
   normal: number;
   magic: number;
@@ -40,18 +42,18 @@ const BASIC = { transmute: 45, augment: 30, alteration: 25, scour: 6, regret: 6,
 /** Drop tables by area tier (zones.ts: Act 1 runs 1, 1, 2, 2, 3, 3, 4, 5 — the act boss's sanctum is tier 5). */
 export const DROP_TABLES: Record<number, DropTable> = {
   1: {
-    currencyChance: 0.045,
+    currencyChance: 0.09,
     currency: { ...BASIC, regal: 0 },
-    itemChance: 0.06,
+    itemChance: 0.15,
     rarity: { normal: 74, magic: 25.75, rare: 0.25 },
     gemChance: 0.012,
     flaskChance: 0.01,
     uniqueChance: 0.0005,
   },
   2: {
-    currencyChance: 0.045,
+    currencyChance: 0.09,
     currency: { ...BASIC, regal: 0.3, alchemy: 0.3, chaos: 2.5 },
-    itemChance: 0.06,
+    itemChance: 0.15,
     rarity: { normal: 72, magic: 27.5, rare: 0.5 },
     gemChance: 0.012,
     flaskChance: 0.01,
@@ -60,7 +62,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
   3: {
     currencyChance: 0.05,
     currency: { ...BASIC, regal: 7, alchemy: 6, chaos: 4, annul: 0.8, exalted: 0.15, divine: 0.3, expansion: 0.3 },
-    itemChance: 0.065,
+    itemChance: 0.16,
     rarity: { normal: 62, magic: 30, rare: 8 },
     gemChance: 0.013,
     flaskChance: 0.011,
@@ -69,7 +71,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
   4: {
     currencyChance: 0.05,
     currency: { ...BASIC, regal: 7, alchemy: 7, chaos: 5, annul: 1, exalted: 0.25, divine: 0.5, expansion: 0.5, instill: 1 },
-    itemChance: 0.065,
+    itemChance: 0.16,
     rarity: { normal: 58, magic: 32, rare: 10 },
     gemChance: 0.014,
     flaskChance: 0.012,
@@ -78,7 +80,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
   5: {
     currencyChance: 0.055,
     currency: { ...BASIC, regal: 8, alchemy: 8, chaos: 6, annul: 1.5, exalted: 0.35, divine: 0.7, expansion: 0.7, instill: 1.5 },
-    itemChance: 0.07,
+    itemChance: 0.17,
     rarity: { normal: 55, magic: 33, rare: 12 },
     gemChance: 0.015,
     flaskChance: 0.012,
@@ -88,7 +90,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
   6: {
     currencyChance: 0.055,
     currency: { ...BASIC, regal: 9, alchemy: 9, chaos: 7, annul: 1.8, exalted: 0.4, divine: 0.8, expansion: 0.8, instill: 1.8 },
-    itemChance: 0.07,
+    itemChance: 0.17,
     rarity: { normal: 52, magic: 34, rare: 14 },
     gemChance: 0.016,
     flaskChance: 0.013,
@@ -97,12 +99,28 @@ export const DROP_TABLES: Record<number, DropTable> = {
   7: {
     currencyChance: 0.06,
     currency: { ...BASIC, regal: 10, alchemy: 10, chaos: 8, annul: 2, exalted: 0.45, divine: 0.9, expansion: 0.9, instill: 2 },
-    itemChance: 0.075,
+    itemChance: 0.18,
     rarity: { normal: 50, magic: 34, rare: 16 },
     gemChance: 0.017,
     flaskChance: 0.013,
     uniqueChance: 0.0012,
   },
+};
+
+/**
+ * A new character's first kills, on top of the normal rolls, so the first area always hands out something to wear and
+ * something to craft it with before its boss. Keyed by lifetime kill number.
+ */
+export const STARTER_DROPS: Record<number, { slot: ItemSlotType } | { currency: string; qty: number }> = {
+  2: { slot: 'gloves' },
+  3: { currency: 'transmute', qty: 1 },
+  5: { slot: 'boots' },
+  6: { currency: 'alteration', qty: 1 },
+  8: { slot: 'body' },
+  9: { currency: 'transmute', qty: 1 },
+  11: { slot: 'weapon' },
+  12: { currency: 'alteration', qty: 1 },
+  14: { slot: 'helmet' },
 };
 
 /** Boss rewards by area tier: deeper bosses guarantee better currency. */

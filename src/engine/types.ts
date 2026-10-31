@@ -261,6 +261,8 @@ export interface HealOverTime {
 export interface CombatRuntime {
   zoneId: string;
   monsters: MonsterInstance[];
+  /** the player has sent for the boss; it comes once the field is clear */
+  challenged?: boolean;
   /** ms before the gates open: the pause while you search for monsters (tests hold it high to stop spawns) */
   spawnMs: number;
   /** ms until each edge gate (battlefield EDGE_CELLS) sends its next monster */
@@ -375,6 +377,8 @@ export interface Settings {
   movement: Movement;
   /** flee on low life, then resume the chosen pace once healed */
   autoFlee: boolean;
+  /** a ready boss comes on its own instead of waiting to be challenged */
+  autoBoss: boolean;
   targeting: Targeting;
 }
 
@@ -485,8 +489,10 @@ export interface GameState {
   bank: Record<string, number>;
   /** the bag you carry (BAG_SIZE) */
   inventory: Item[];
-  /** fresh drops waiting to be picked up, oldest first; cleared on leaving or changing area */
+  /** fresh drops waiting to be picked up, oldest first; kept when you leave an area */
   ground: Item[];
+  /** uids on the ground when you last died: dying again loses these */
+  groundMarked?: number[];
   /** drops while you were away, oldest first; kept until emptied */
   offlineHaul: Item[];
   equipment: Partial<Record<EquipSlot, Item>>;

@@ -252,6 +252,7 @@ describe('combat', () => {
   it('dying to a boss resets the boss counter', () => {
     const s = newGame(1);
     const c = ctx();
+    s.settings.autoBoss = true;
     s.zoneKills.mudflats = 15;
     startCombat(s, c, 'mudflats');
     s.life = 1;

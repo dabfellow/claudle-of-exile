@@ -73,7 +73,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     smithCatalyst: { fossil: null, resin: null, until: false, salvageMisses: false },
     maps: newMapState(),
     vendor: { stock: [], refreshAt: 0 },
-    settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false, movement: 'walk', autoFlee: true, targeting: { priority: 'none', order: 'closest' } },
+    settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false, movement: 'walk', autoFlee: true, autoBoss: false, targeting: { priority: 'none', order: 'closest' } },
     lifetime: {
       kills: 0, bossKills: 0, deaths: 0, itemsLooted: 0, orbsUsed: 0, salvaged: 0, flasksDrunk: 0,
       flasksBrewed: 0, itemsSmithed: 0, gathered: 0, benchCrafts: 0, raresFound: 0, uniquesFound: 0,

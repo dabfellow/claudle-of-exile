@@ -20,8 +20,19 @@ export function dropItem(s: GameState, ctx: Ctx, item: Item): void {
   if (pile.length > cap) pile.splice(0, pile.length - cap);
 }
 
-export function clearGround(s: GameState): void {
-  s.ground = [];
+/** A death marks everything on the ground; a second one loses whatever marked is still there. Returns how many were lost. */
+export function groundOnDeath(s: GameState): number {
+  const marked = new Set(s.groundMarked);
+  const before = s.ground.length;
+  s.ground = s.ground.filter((i) => !marked.has(i.uid));
+  s.groundMarked = s.ground.map((i) => i.uid);
+  return before - s.ground.length;
+}
+
+/** How many items on the ground the next death would lose. */
+export function groundAtRisk(s: GameState): number {
+  const marked = new Set(s.groundMarked);
+  return s.ground.filter((i) => marked.has(i.uid)).length;
 }
 
 export type Pile = 'ground' | 'offlineHaul';

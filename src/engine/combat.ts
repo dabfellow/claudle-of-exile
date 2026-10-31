@@ -1,5 +1,5 @@
 import { CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type TacticRule, type TargetStatus } from '../data/gems';
-import { clearGround } from './storage';
+import { groundAtRisk, groundOnDeath } from './storage';
 import {
   actOpen,
   BOSS_ADDS,
@@ -151,7 +151,6 @@ export function startCombat(s: GameState, ctx: Ctx, zoneId: string): string | nu
   if (!s.unlockedZones.includes(zoneId)) return 'Zone is locked';
   // a save carried over from a preview build can hold areas of an act that isn't out yet
   if (!actOpen(zoneDef(zoneId).act)) return "This act isn't open yet";
-  clearGround(s);
   enterZone(s, ctx, zoneId);
   return null;
 }
@@ -167,7 +166,6 @@ export function enterZone(s: GameState, ctx: Ctx, zoneId: string): void {
 }
 
 export function retreat(s: GameState): void {
-  clearGround(s);
   s.combat = null;
   s.action = null;
 }
@@ -260,9 +258,19 @@ export function aliveMonsters(c: CombatRuntime): MonsterInstance[] {
   return c.monsters.filter((m) => m.life > 0).sort((a, b) => cellRing(a.cell) - cellRing(b.cell) || a.uid - b.uid);
 }
 
+/** A ready boss waits to be challenged, so an area can be farmed for as long as you like. A map's boss always comes. */
+export function bossCalled(s: GameState, zoneId: string): boolean {
+  return bossIsNext(s, zoneId) && (s.maps.run?.zoneId === zoneId || s.settings.autoBoss || !!s.combat?.challenged);
+}
+
+/** Send for the boss: it comes once the field is clear. */
+export function challengeBoss(s: GameState): void {
+  if (s.combat && bossIsNext(s, s.combat.zoneId)) s.combat.challenged = true;
+}
+
 /** Until wind-up rules are earned a boss has to be fought in person: offline, it stays in hiding and you keep farming trash. */
 function bossCanSpawn(s: GameState, ctx: Ctx, zoneId: string): boolean {
-  return bossIsNext(s, zoneId) && (!ctx.offline || bossesOffline(s));
+  return bossCalled(s, zoneId) && (!ctx.offline || bossesOffline(s));
 }
 
 /** Leaving mid boss fight without wind-up rules: the boss and its adds go back into hiding, ready for your return. */
@@ -271,7 +279,6 @@ export function clearBossFight(s: GameState): void {
   if (!c || !c.monsters.some((m) => m.isBoss) || bossesOffline(s)) return;
   c.monsters = [];
   c.using = null;
-  clearGround(s);
 }
 
 /** Each gate's next timer: the zone's pace spread over every gate, so monsters arrive about as often as one wave timer sent them. */
@@ -307,6 +314,7 @@ function spawnBoss(s: GameState, ctx: Ctx): void {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
   const boss = makeMonster(zone.boss, true, newUid(s));
+  c.challenged = false;
   boss.cell = BOSS_ENTRY;
   c.monsters.push(boss);
   const near = freeNear(c.monsters, BOSS_ENTRY, ctx.rng);
@@ -1242,6 +1250,9 @@ function die(s: GameState, ctx: Ctx, d: Derived): void {
   ctx.emit({ t: 'death', xpLost });
   s.life = Math.max(1, Math.round(d.maxLife * DEATH_LIFE_FRACTION));
   s.es = 0;
+  const lost = groundOnDeath(s);
+  if (!ctx.offline && lost) ctx.emit({ t: 'info', text: `${lost} unclaimed ${lost === 1 ? 'item' : 'items'} lost on the ground`, tone: 'warn' });
+  else if (!ctx.offline && groundAtRisk(s)) ctx.emit({ t: 'info', text: 'Pick up your loot: die again and it is lost', tone: 'warn' });
   retreat(s);
 }
 

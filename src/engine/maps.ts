@@ -50,7 +50,6 @@ function enterMap(s: GameState, ctx: Ctx, tier: number, themeId: string): void {
 export function startMap(s: GameState, ctx: Ctx, tier: number, themeId: string): string | null {
   if (s.maps.run) return 'Already in a map';
   if (mapsHeld(s, tier, themeId) <= 0) return 'No maps of that kind';
-  s.ground = [];
   enterMap(s, ctx, tier, themeId);
   return null;
 }

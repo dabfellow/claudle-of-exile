@@ -23,6 +23,7 @@ import { SKILL_KEYS } from './pages/SkillGemsPage';
 import { CurrencyAmount, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tooltip } from './components/common';
 import { QuestTracker } from './components/QuestTracker';
 import { Crest } from './screens/Screens';
+import { APP_VERSION } from '../platform/errors';
 
 export type Page =
   | 'hideout'
@@ -117,6 +118,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
       <div className="brand">
         <span className="brand-title">Path of Idle</span>
         <span className="brand-sub">an idle exile's tale</span>
+        <span className="brand-version">v{APP_VERSION}</span>
       </div>
       {NAV.map((g) => (
         <div className={`nav-group ${g.label ? '' : 'unlabelled'}`} key={g.label || 'top'}>
@@ -579,7 +581,7 @@ export function OfflineModal() {
               <GameIcon name="forge" size={16} />
               <b>An Unfinished Battle</b>
             </div>
-            <p>{sum.bossWaiting} awaits. Bosses must be fought in person until the War Table teaches wind-up rules.</p>
+            <p>{sum.bossWaiting} awaits. Challenge it on the Combat page. Bosses can only be fought while you're away with Auto-challenge on and wind-up rules from the War Table.</p>
           </div>
         )}
         {sum.mapRuns > 0 && (

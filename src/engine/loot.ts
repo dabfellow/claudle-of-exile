@@ -1,5 +1,5 @@
 import { BOSS_CRAFT_MAT, ESSENCES, FOSSILS } from '../data/craftMats';
-import { bossTable, dropTable, type RarityWeights } from '../data/drops';
+import { bossTable, dropTable, STARTER_DROPS, type RarityWeights } from '../data/drops';
 import { ACTIVE_GEMS, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
 import { MAP_ILVL } from '../data/hideout';
 import { rollFlask, stashFlask } from './flasks';
@@ -93,6 +93,12 @@ export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: Zon
     }
     return;
   }
+
+  const starter = STARTER_DROPS[s.lifetime.kills];
+  if (starter && 'slot' in starter) {
+    const base = pick(rng, droppableBases(ilvl).filter((b) => b.slot === starter.slot));
+    placeItem(s, ctx, createItem(s, base.id, ilvl, 'normal', rng));
+  } else if (starter) giveCurrency(starter.currency, starter.qty);
 
   if (chance(rng, table.currencyChance * mon.scale * (1 + d.itemRarity / 300))) giveCurrency(rollCurrency(rng, table.currency));
   if (chance(rng, table.itemChance * mon.scale)) {

@@ -136,7 +136,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'boss',
     title: 'The Bloated Gorger',
-    npc: "Something big lurks in the flats. Kill enough of its brood and it'll come for you. When it winds up, your guard skill should answer — or drink.",
+    npc: "Something big lurks in the flats. Kill enough of its brood, then challenge it from the top of the Combat page. When it winds up, your guard skill should answer — or drink.",
     objective: 'Defeat the Bloated Gorger',
     target: 1,
     highlight: ['nav-campaign', 'zone-mudflats'],
