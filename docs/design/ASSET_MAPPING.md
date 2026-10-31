@@ -60,80 +60,89 @@ Custom art wanted most: the 8 area banners and 2 scenes (no fitting landscapes e
 
 ## Act 2 (added 2026-10-30)
 
-All 40 Act 2 monsters and bosses now have their own picture, and no two share one. The six new uniques have their own art too. 19 of the monsters are close and 21 are loose. The table further down covers the first 187 slots; these are on top of it.
+All 40 Act 2 monsters and bosses now have their own picture, and no two share one. The six new uniques have their own art too. 27 of the monsters are close and 13 are loose, after a second pass on 2026-10-31 that looked through every creature and character sprite in the owned packs and replaced 11 of the original 21 loose matches. The table further down covers the first 187 slots; these are on top of it.
 
-**To swap a monster:** change its line in `MONSTER_ART` in `src/ui/assets.ts`, which is keyed by monster id. `tests/art.test.ts` fails if any monster or boss has no art, so a renamed or new monster can't fall back to the skull unnoticed. Recolours are named `tint-<id>`; rename the file if the id changes.
+**To swap a monster:** change its line in `MONSTER_ART` in `src/ui/assets.ts`, which is keyed by monster id. `tests/art.test.ts` fails if any monster or boss has no art, so a renamed or new monster can't fall back to the skull unnoticed. Recolours are named `tint-<id>`; rename the file if the id changes. A few Act 2 monsters reuse art from Act 1 or a portrait, always recoloured (for example `khorun` is the trader's sprite and `tamsin` is `gunner`'s).
 
 **Recolours:** the packs have too few fitting pieces, so `tint-<id>` files are recoloured pack art, made with sharp's `modulate` (hue, saturation, brightness, lightness) and `tint` (RGB). Pixel art stays PNG and painted art stays JPG, so `packArtIsPixel` scales each one correctly.
 
-**Loose matches, replace first (21):**
+**Loose matches, replace first (13):**
 
-- `outrider`: armoured head only; no horse or lance
-- `khorun`: roaring horned warlord; no horse, reads as an ogre
-- `mirage`: floating shape with bright eyes, not a human figure
-- `saltwitch`: pale young woman, not old or thin
-- `glass`: cold, spectral face; no mirror glass
+- `outrider`: padded brown hood and face wrap; no horse or lance. CodeSpree's Equestion is the only horse in the packs, and it looks too comic for a rider
+- `glass`: silvered woman's portrait, no cracked mirror glass. Same face as `qara`
 - `grassseer`: red-faced horned figure; no grass coat
-- `ashmane`: no lion in any pack: snarling grey-maned beast with a warm wash
 - `lancer`: scale hood, no pointed helmet or lance
 - `bonecamel`: animal skull, not a camel
-- `tamsin`: red high collar, but reads as a vampire
-- `horseskel`: blue-lit beast skull, not a horse
-- `moundguard`: bare skeleton, no bronze armour or axe
+- `moundguard`: bronze-stained skeleton, no armour or axe
 - `moundpriest`: undead in a tall helm; no charms
 - `horselord`: large bronze-green skull; no crown or horse
 - `rhino`: no rhino in any pack: grey boar
-- `stormrider`: horned purple armoured head, no rider
+- `stormrider`: blue armoured rider's head; no horse or lance
 - `qara`: stern blue-haired woman; no horse or glaive
-- `ozar`: flaming skull, no robes
 - `ashseer`: grey hooded figure, mouth wrapped rather than eyes
 - `sunpriest`: gold wash over a stern face; no sun disc
-- `azhar`: golden-orange beaked head; no flame wings
 
-**Areas are unchanged.** The 8 Act 2 areas keep their reused GegX banners from `ZONE_ART`, so none shows its actual place. GegX is the only landscape pack on hand, and its licence file says it is AI-generated, which conflicts with the no-AI-art rule. That also applies to Act 1's banners and the two scenes. Proper banners need a hand-made landscape pack.
+**Areas are unchanged.** No owned pack has hand-made art for these places, so the 8 Act 2 areas keep their reused GegX banners from `ZONE_ART`, and none shows its actual place. GegX's licence file says it is AI-generated, which conflicts with the no-AI-art rule, so these go when the replacement landscape pack arrives, along with Act 1's banners and the two scenes.
+
+Checked on 2026-10-31: the only other backgrounds on disk are Screaming Brain's Seamless Sky Backgrounds (CC0 tiling sky textures with no ground, not in the repo) and Foozle's Void pack (space). Neither shows a place. The skies could sit behind a transparent landscape layer if the replacement pack needs one.
+
+What each area needs from the replacement pack (1200×686 banner, no people or creatures; full briefs are in `ZONE_DESC` in `src/data/artManifest.ts`):
+
+| Area id | Needs | Current GegX banner |
+|---|---|---|
+| `cinderroad` | dirt road over burned yellow grass hills, smoke, orange haze | forest day |
+| `saltflats` | flat white cracked salt plain, pale hot sky | forest fog |
+| `blackgrass` | very tall black grass, red dusk sky, a line of fire | forest night |
+| `caravan` | walled mud-brick caravanserai, arched gate, carts, dry well | tavern day |
+| `kurgans` | grey-green steppe with round burial mounds, stone doorway, overcast | forest parallax |
+| `plateau` | bare brown flat-topped plateau, storm clouds, lightning | forest fog |
+| `pyretemple` | red stone temple interior, square pillars, large fire bowl | tavern fog |
+| `burningthrone` | bare hilltop at night, huge glowing orb in a crater | forest night |
+
+`caravan` and `pyretemple` need man-made places, so a nature-only pack won't cover all eight.
 
 | Game asset ID | Source file | Confidence | Final destination | Notes |
 |---|---|---|---|---|
 | `monsters/ashjackal` | `CodeSpree rpg-beings-all/Hyena.png` | close | `src/assets/monsters/codespree-hyena.png` | hyena, grey-brown and mangy; no burns |
-| `monsters/outrider` | `Craftpix avatars Transperent/con20.png` | placeholder | `src/assets/monsters/craftpix-con20.png` | armoured head only; no horse or lance |
+| `monsters/outrider` | `Craftpix avatars Transperent/con20.png` | placeholder | `src/assets/monsters/craftpix-con20.png` | padded brown hood and face wrap; no horse or lance |
 | `monsters/vulture` | `Craftpix avatars Transperent/con32.png` | close | `src/assets/monsters/tint-vulture.png` | black crow head, not bald. Recolour: hue 30, saturation 1.6, brightness 1.15 |
 | `monsters/firesprite` | `Craftpix avatars Transperent/con26.png` | close | `src/assets/monsters/craftpix-con26.png` | small red imp, no grass |
-| `monsters/khorun` | `free_sample/moooob28.jpg` | placeholder | `src/assets/monsters/freesample-moooob28.jpg` | roaring horned warlord; no horse, reads as an ogre |
+| `monsters/khorun` | `Craftpix avatars Transperent/con33.png` | close | `src/assets/monsters/tint-khorun.png` | scowling red-bearded nomad in a fur hood; no horse or banner. Recolour: hue 330, saturation 0.75, brightness 0.6 |
 | `monsters/saltcrawler` | `CodeSpree rpg-beings-all/Angry crab.png` | close | `src/assets/monsters/tint-saltcrawler.png` | pale crab. Recolour: lightness 34, tint 235,225,200 |
-| `monsters/mirage` | `CodeSpree rpg-beings-all/Ling.png` | placeholder | `src/assets/monsters/tint-mirage.png` | floating shape with bright eyes, not a human figure. Recolour: hue -230, saturation 0.7, brightness 1.5 |
+| `monsters/mirage` | `Craftpix avatars Transperent/con40.png` | close | `src/assets/monsters/tint-mirage.png` | pale see-through humanoid; eyes are faint, not bright. Recolour: saturation 0.1, brightness 1.4, 75% opacity |
 | `monsters/dustdevil` | `CodeSpree rpg-beings-all/Electrogust.png` | close | `src/assets/monsters/tint-dustdevil.png` | sandy whirlwind with a face. Recolour: saturation 0.55, brightness 0.95 |
-| `monsters/saltwitch` | `Craftpix avatars Transperent/con5.png` | placeholder | `src/assets/monsters/tint-saltwitch.png` | pale young woman, not old or thin. Recolour: saturation 0.12, brightness 1.25 |
-| `monsters/glass` | `free_sample/p7.jpg` | placeholder | `src/assets/monsters/tint-glass.jpg` | cold, spectral face; no mirror glass. Recolour: hue -70, saturation 1.4, brightness 1.25 |
+| `monsters/saltwitch` | `Craftpix avatars Transperent/con12.png` | close | `src/assets/monsters/tint-saltwitch.png` | bleached hood, white hair and face wrap, same base as the mage portrait; no frost. Recolour: saturation 0.1, brightness 1.25 |
+| `monsters/glass` | `free_sample/a66.jpg` | placeholder | `src/assets/monsters/tint-glass.jpg` | silvered woman's portrait; no cracked glass, same face as `qara`. Recolour: saturation 0.1, brightness 1.15, linear 1.5/-50, tint 200,235,255 |
 | `monsters/grasscat` | `CodeSpree rpg-beings-all/Purple cat.png` | close | `src/assets/monsters/tint-grasscat.png` | small dark cat, not a big cat. Recolour: saturation 0.15, lightness -1 |
 | `monsters/firebrand` | `Craftpix avatars Transperent/con27.png` | close | `src/assets/monsters/craftpix-con27.png` | orange horned hound, no brand |
 | `monsters/burnwalker` | `free_sample/spalenie.jpg` | close | `src/assets/monsters/freesample-spalenie.jpg` | charred skull in flames; head only |
 | `monsters/grassseer` | `free_sample/a24.jpg` | placeholder | `src/assets/monsters/freesample-a24.jpg` | red-faced horned figure; no grass coat |
-| `monsters/ashmane` | `free_sample/a16.jpg` | placeholder | `src/assets/monsters/tint-ashmane.jpg` | no lion in any pack: snarling grey-maned beast with a warm wash. Recolour: hue 25, saturation 1.5, brightness 1.05 |
+| `monsters/ashmane` | `Craftpix avatars Transperent/con31.png` | close | `src/assets/monsters/tint-ashmane.png` | golden-orange lion-like head; mane is fur, not fire. Recolour: hue 15, saturation 1.9, brightness 1.35 |
 | `monsters/raider` | `Craftpix avatars Transperent/con3.png` | close | `src/assets/monsters/tint-raider.png` | tan hood and face wrap; no scimitar. Recolour: brightness 1.25, tint 205,165,105 |
 | `monsters/lancer` | `Craftpix avatars Transperent/con7.png` | placeholder | `src/assets/monsters/craftpix-con7.png` | scale hood, no pointed helmet or lance |
 | `monsters/bonecamel` | `Craftpix avatars Transperent/con21.png` | placeholder | `src/assets/monsters/tint-bonecamel.png` | animal skull, not a camel. Recolour: hue 10, saturation 1.5, brightness 0.85 |
 | `monsters/hexmerchant` | `Craftpix avatars Transperent/con39.png` | close | `src/assets/monsters/tint-hexmerchant.png` | turbaned pale man with a moustache; no coins. Recolour: hue 40, saturation 0.5, brightness 1.2 |
-| `monsters/tamsin` | `Craftpix avatars Transperent/con24.png` | placeholder | `src/assets/monsters/craftpix-con24.png` | red high collar, but reads as a vampire |
+| `monsters/tamsin` | `Craftpix avatars Transperent/con9.png` | close | `src/assets/monsters/tint-tamsin.png` | bandit in a red headband and face mask, same base as `gunner`; no coat or helmet. Recolour: saturation 1.7, brightness 0.75 |
 | `monsters/barrowwight` | `Craftpix avatars Transperent/con22.png` | close | `src/assets/monsters/tint-barrowwight.png` | hooded blue ghost; no bronze helmet. Recolour: hue 180, saturation 3, brightness 1.3 |
-| `monsters/horseskel` | `Craftpix avatars Transperent/con10.png` | placeholder | `src/assets/monsters/tint-horseskel.png` | blue-lit beast skull, not a horse. Recolour: hue 170, saturation 0.9, brightness 0.9 |
-| `monsters/moundguard` | `Craftpix avatars Transperent/con23.png` | placeholder | `src/assets/monsters/craftpix-con23.png` | bare skeleton, no bronze armour or axe |
+| `monsters/horseskel` | `CodeSpree rpg-beings-all/Equestion.png` | close | `src/assets/monsters/tint-horseskel.png` | whole horse with rib-like markings, pale blue; no barding. Recolour: hue 170, saturation 0.7, lightness 30 |
+| `monsters/moundguard` | `Craftpix avatars Transperent/con23.png` | placeholder | `src/assets/monsters/tint-moundguard.png` | bronze-stained skeleton, no armour or axe. Recolour: tint 205,150,80 |
 | `monsters/moundpriest` | `free_sample/mobiszon999.jpg` | placeholder | `src/assets/monsters/tint-moundpriest.jpg` | undead in a tall helm; no charms. Recolour: hue 160, saturation 0.9, brightness 0.95 |
 | `monsters/horselord` | `free_sample/kociotrup.jpg` | placeholder | `src/assets/monsters/tint-horselord.jpg` | large bronze-green skull; no crown or horse. Recolour: hue -250, saturation 1.6, brightness 0.95 |
 | `monsters/thunderhawk` | `CodeSpree rpg-beings-all/Pigeon.png` | close | `src/assets/monsters/tint-thunderhawk.png` | blue bird, but a pigeon shape. Recolour: lightness 6, tint 80,120,210 |
 | `monsters/rhino` | `CodeSpree rpg-beings-all/Wild boar.png` | placeholder | `src/assets/monsters/tint-rhino.png` | no rhino in any pack: grey boar. Recolour: saturation 0.25, lightness 32 |
-| `monsters/stormrider` | `Craftpix avatars Transperent/con38.png` | placeholder | `src/assets/monsters/craftpix-con38.png` | horned purple armoured head, no rider |
+| `monsters/stormrider` | `Craftpix avatars Transperent/con20.png` | placeholder | `src/assets/monsters/tint-stormrider.png` | blue-grey rider's head, same base as `outrider`; no horse or lance. Recolour: saturation 0.15, brightness 0.9, tint 150,175,235 |
 | `monsters/skyshaman` | `Craftpix avatars Transperent/con19.png` | close | `src/assets/monsters/tint-skyshaman.png` | blue winged helm with a lightning slash; no drum. Recolour: hue 190, saturation 1.2, brightness 1.05 |
 | `monsters/qara` | `free_sample/a66.jpg` | placeholder | `src/assets/monsters/tint-qara.jpg` | stern blue-haired woman; no horse or glaive. Recolour: hue 180, saturation 0.9, brightness 1.05 |
 | `monsters/ashmonk` | `free_sample/a61.jpg` | close | `src/assets/monsters/tint-ashmonk.jpg` | bald, ash-pale, stern; no robe in frame. Recolour: saturation 0.25, brightness 1.05 |
 | `monsters/dervish` | `CodeSpree rpg-beings-all/Pyrogust.png` | close | `src/assets/monsters/codespree-pyrogust.png` | spinning fire with teeth; no dancer or blades |
 | `monsters/pyregolem` | `Craftpix avatars Transperent/con25.png` | close | `src/assets/monsters/tint-pyregolem.png` | molten rock head in flames. Recolour: hue -15, saturation 1.3, brightness 0.9 |
 | `monsters/acolyte` | `Craftpix avatars Transperent/con37.png` | close | `src/assets/monsters/craftpix-con37.png` | orange horned mask-like face |
-| `monsters/ozar` | `Craftpix avatars Transperent/con30.png` | placeholder | `src/assets/monsters/craftpix-con30.png` | flaming skull, no robes |
+| `monsters/ozar` | `Craftpix avatars Transperent/con10.png` | close | `src/assets/monsters/tint-ozar.png` | tall pale mask with red-gold flames around it, same base as `emberkin`; no staff. Recolour: hue -30, saturation 2, brightness 0.95 |
 | `monsters/sunguard` | `free_sample/mobeK1S.jpg` | close | `src/assets/monsters/tint-sunguard.jpg` | bronze-gold helmed guard. Recolour: hue -170, saturation 1.5, brightness 1.15 |
 | `monsters/wyrmling` | `Craftpix avatars Transperent/con29.png` | close | `src/assets/monsters/craftpix-con29.png` | red fire-breathing dragon, not black |
 | `monsters/ashseer` | `free_sample/op36.jpg` | placeholder | `src/assets/monsters/tint-ashseer.jpg` | grey hooded figure, mouth wrapped rather than eyes. Recolour: saturation 0.25, brightness 1.15 |
 | `monsters/sunpriest` | `free_sample/moooob27.jpg` | placeholder | `src/assets/monsters/tint-sunpriest.jpg` | gold wash over a stern face; no sun disc. Recolour: tint 235,175,60 |
-| `monsters/azhar` | `Craftpix avatars Transperent/con14.png` | placeholder | `src/assets/monsters/tint-azhar.png` | golden-orange beaked head; no flame wings. Recolour: hue -25, saturation 1.6, brightness 1.1 |
+| `monsters/azhar` | `Craftpix avatars Transperent/con32.png` | close | `src/assets/monsters/tint-azhar.png` | fiery orange raptor's head; no full wings, same base as `vulture`. Recolour: linear 1.6/50, saturation 1.1, tint 255,120,30 |
 | `uniques/sunmane_pelt` | `gear sets/set-52-body.png` | close | `src/assets/items/armor/set-52-body.png` | fur-trimmed gold-brown coat; fur is not orange |
 | `uniques/mirage_veil` | `gear sets/set-45-helmet.png` | close | `src/assets/items/armor/set-45-helmet.png` | dark hood with a cloth across the face |
 | `uniques/khans_tithe` | `game-icons.net diamond-ring.svg` | close | `src/assets/items/jewelry/gi-diamond-ring.svg` | silhouette tinted gold |
