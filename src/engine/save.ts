@@ -235,7 +235,7 @@ const MIGRATIONS: Record<number, Migration> = {
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
-const MERGE_KEYS = new Set(['skills', 'settings', 'lifetime', 'vendor', 'tutorial', 'masteries']);
+const MERGE_KEYS = new Set(['skills', 'settings', 'lifetime', 'vendor', 'tutorial', 'masteries', 'smithCatalyst']);
 
 /** One character, without the account: that's saved on its own. */
 export function serialize(s: GameState): string {

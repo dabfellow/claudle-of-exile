@@ -9,10 +9,11 @@ import { actionDef, SKILLS, type SkillAction } from '../data/skills';
 import { actOpen, ZONES, zoneDef } from '../data/zones';
 import { addBank, canAfford, hasItem, payCost } from './bank';
 import type { Ctx } from './context';
+import { benchBuilt } from './crafting';
 import { newFlask, rerollMagic, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { markerBoost } from './heist';
-import { bagFull } from './storage';
+import { bagFull, dropItem } from './storage';
 import { allMods, createItem, salvageValue } from './items';
 import { gemArrived } from './progress';
 import { chance, pick } from './rng';
@@ -88,6 +89,12 @@ export function actionPlaceNeeded(s: GameState, a: SkillAction): string | null {
   return null;
 }
 
+/** Do new bases go straight to Arcane Dust right now? Needs the bench, like any other salvage. */
+function salvagesBases(s: GameState): boolean {
+  const cat = s.smithCatalyst;
+  return benchBuilt(s) && (cat.salvageAll || (cat.salvageFull && bagFull(s)));
+}
+
 export function actionBlocker(s: GameState, a: SkillAction): string | null {
   if (a.soon) return 'Coming soon';
   const place = actionPlaceNeeded(s, a);
@@ -96,7 +103,7 @@ export function actionBlocker(s: GameState, a: SkillAction): string | null {
   const st = stationLevelFor(a);
   if (st && (s.account.hideout[st.station] ?? 1) < st.level) return `Needs ${st.station === 'forge' ? 'Forge' : 'Alchemy Table'} level ${st.level}`;
   if (a.inputs && !canAfford(s, a.inputs)) return 'Missing materials';
-  if (a.baseId && bagFull(s)) return 'Inventory full';
+  if (a.baseId && bagFull(s) && !salvagesBases(s)) return 'Inventory full';
   return null;
 }
 
@@ -162,15 +169,19 @@ function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats): void {
 
   const repeating = cat.until && !!cat.fossil;
   if (repeating && fossil && fossilHit(item, fossil)) {
-    s.inventory.push(item);
+    // salvage toggles let a full bag get this far: the keeper waits on the ground instead
+    const full = bagFull(s);
+    if (full) dropItem(s, ctx, item);
+    else s.inventory.push(item);
     ctx.emit({ t: 'loot', item });
-    ctx.emit({ t: 'info', text: `${a.name} rolled a ${fossilDef(fossil)!.name} modifier. Stopped.`, tone: 'good' });
+    ctx.emit({ t: 'info', text: `${a.name} rolled a ${fossilDef(fossil)!.name} modifier. Stopped.${full ? ' Your bag is full, so it dropped on the ground.' : ''}`, tone: 'good' });
     s.action = null;
     return;
   }
-  if (repeating && cat.salvageMisses) {
+  if ((repeating && cat.salvageMisses) || salvagesBases(s)) {
     addBank(s, 'arcane_dust', salvageValue(item));
     s.lifetime.salvaged += 1;
+    ctx.emit({ t: 'loot', item, salvaged: true });
     return;
   }
   s.inventory.push(item);

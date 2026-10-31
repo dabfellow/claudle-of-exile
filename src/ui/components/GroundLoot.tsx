@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP } from '../../data/hideout';
+import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
 import { groundAtRisk, pickUp, salvagePile, type Pile } from '../../engine/storage';
 import type { GameState } from '../../engine/types';
 import { game } from '../../game';
@@ -29,6 +31,14 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
   const take = (uids: number[]) => game.act((st, ctx) => void pickUp(st, ctx, pile, uids));
   const bagFull = s.inventory.length >= BAG_SIZE;
   const atRisk = pile === 'ground' ? groundAtRisk(s) : 0;
+  const noBench = pile === 'ground' && !benchBuilt(s);
+  const hasUniques = items.some((i) => i.rarity === 'unique');
+  const [confirmUniques, setConfirmUniques] = useState(false);
+  const salvageAll = () => {
+    if (hasUniques && !confirmUniques) return setConfirmUniques(true);
+    setConfirmUniques(false);
+    game.act((st, ctx) => void salvagePile(st, ctx, pile));
+  };
   return (
     <div className="card">
       <div className="card-title">
@@ -51,11 +61,15 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
         <button className="btn sm primary" disabled={!items.length || bagFull} onClick={() => take(items.map((i) => i.uid))}>
           Pick up all
         </button>
-        {pile === 'offlineHaul' && (
-          <button className="btn sm ghost" disabled={!items.length} onClick={() => game.act((st, ctx) => void salvagePile(st, ctx, pile))}>
-            Salvage the rest
-          </button>
-        )}
+        <button
+          className="btn sm ghost"
+          disabled={!items.length || noBench}
+          title={noBench ? BENCH_UNBUILT : ''}
+          onClick={salvageAll}
+          onMouseLeave={() => setConfirmUniques(false)}
+        >
+          {hasUniques && confirmUniques ? 'Includes uniques. Sure?' : pile === 'ground' ? 'Salvage all' : 'Salvage the rest'}
+        </button>
       </div>
       <ItemTiles s={s} items={items} showUpgrade onClick={(i) => openItemMenu(i.uid)} empty={info.empty} />
     </div>

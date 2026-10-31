@@ -9,7 +9,7 @@ import { createItem } from '../src/engine/items';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { newGame } from '../src/engine/state';
-import { buyStashPage, dropItem, groundAtRisk, groundOnDeath, pickUp, stashItems, stashPagePrice, takeFromStash } from '../src/engine/storage';
+import { buyStashPage, dropItem, groundAtRisk, groundOnDeath, pickUp, salvagePile, stashItems, stashPagePrice, takeFromStash } from '../src/engine/storage';
 import type { GameState, Item } from '../src/engine/types';
 import { veteran } from './helpers';
 
@@ -31,6 +31,17 @@ describe('gear storage', () => {
     for (let i = 0; i < OFFLINE_HAUL_CAP + 3; i++) dropItem(s, ctx(true), sword(s));
     expect(s.offlineHaul).toHaveLength(OFFLINE_HAUL_CAP);
     expect(s.ground).toHaveLength(0);
+  });
+
+  it('salvages the whole ground pile into dust', () => {
+    const s = newGame(1);
+    s.ground.push(sword(s), sword(s));
+    s.bank.arcane_dust = 0;
+    expect(salvagePile(s, ctx(), 'ground')).toBeGreaterThan(0);
+    expect(s.ground).toHaveLength(0);
+    expect(groundAtRisk(s)).toBe(0);
+    expect(s.lifetime.salvaged).toBe(2);
+    expect(s.bank.arcane_dust).toBeGreaterThan(0);
   });
 
   it('picks up into the bag until it is full', () => {

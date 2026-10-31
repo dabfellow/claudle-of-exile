@@ -338,6 +338,7 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 
 ## Ideas / later
 
+- "Salvage the rest" on the offline haul works without the Crafting Bench, unlike every other salvage. Left as it was.
 - Add each release to `src/data/news.ts`, which feeds the title screen's News panel.
 - Music: older Safari can't play Ogg, and iPhones ignore page volume, so the slider may act as on/off there (mute still works). Neither tested. Act 3+ and maps past Act 2 reuse the Act 2 track. If this repo ever goes public, ask AlkaKrab first (`src/assets/CREDITS.md`).
 - Endless content: a post-Maps thing, not designed yet.
@@ -381,6 +382,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Smithing salvage toggles (player report): on the Catalyst panel, "when the bag is full" and "everything I smith" turn new bases into Arcane Dust so smithing doesn't stop at a full bag. Both need the Crafting Bench; a repeat-until hit is kept, on the ground if the bag is full. Salvage all on the ground pile, also bench-only; uniques ask once more. 0.2.8 — done 2026-10-31
 - [x] Before the balance pass: Challenge boss button (a ready boss waits so an area can be farmed; Auto-challenge beside Auto-flee sends it in on its own, online and, with wind-up rules, offline); version number in the sidebar from 0.2.3; more gear on every tier (6–7.5% → 15–18% per kill), basic orbs doubled on tiers 1–2, starter drops (5 bases, 2 Transmutes, 2 Alterations over a new character's first 14 kills); the ground no longer clears on leaving an area or on one death: a second death loses what the first left unclaimed ([TOWN.md](design/TOWN.md)). Sim not rerun. Merged, not deployed — done 2026-10-31
 - [x] Milestone 2: the sim reports game time per milestone; day 1 lands at 2–4 Act 1 stages on both play styles after tuning Act 1 XP, early drops and late station costs ([BALANCE.md](design/BALANCE.md)). Merged, not deployed — done 2026-10-31
 - [x] Gear bases extended to level 80: 113 new, 428 total ([GEAR.md](design/GEAR.md)). Not simmed — done 2026-10-30

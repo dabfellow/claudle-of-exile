@@ -8,6 +8,16 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.8',
+    date: '31 Oct 2026',
+    title: 'Smith without stopping',
+    items: [
+      'Smithing can now salvage new bases when your bag is full, instead of stopping.',
+      'Just levelling up? Tick Salvage everything I smith. Both toggles need the Crafting Bench.',
+      'The ground has a Salvage all button too.',
+    ],
+  },
+  {
     version: '0.2.6',
     date: '31 Oct 2026',
     title: 'The City of Saints',

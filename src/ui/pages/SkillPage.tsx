@@ -5,6 +5,7 @@ import { flaskDef } from '../../data/flasks';
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../../data/gems';
 import { materialDef } from '../../data/materials';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
+import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
 import { actionBlocker, actionIntervalMs, actionPlaceNeeded, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
@@ -251,6 +252,16 @@ function CatalystPanel() {
         <label className="check">
           <input type="checkbox" checked={cat.salvageMisses} disabled={!cat.fossil || !cat.until} onChange={(e) => set({ salvageMisses: e.target.checked })} />
           Salvage the misses
+        </label>
+      </div>
+      <div className="catalyst-row">
+        <label className="check" title={benchBuilt(s) ? 'Keeps smithing when your bag is full. Gear already in your bag stays.' : BENCH_UNBUILT}>
+          <input type="checkbox" checked={cat.salvageFull || cat.salvageAll} disabled={!benchBuilt(s) || cat.salvageAll} onChange={(e) => set({ salvageFull: e.target.checked })} />
+          Salvage new bases when the bag is full
+        </label>
+        <label className="check" title={benchBuilt(s) ? 'For levelling Smithing: every new base becomes Arcane Dust. A repeat-until hit is still kept.' : BENCH_UNBUILT}>
+          <input type="checkbox" checked={cat.salvageAll} disabled={!benchBuilt(s)} onChange={(e) => set({ salvageAll: e.target.checked })} />
+          Salvage everything I smith
         </label>
       </div>
     </div>

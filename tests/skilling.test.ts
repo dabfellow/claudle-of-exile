@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AUTO_CRAFT_BENCH_LEVEL } from '../src/data/hideout';
+import { AUTO_CRAFT_BENCH_LEVEL, BAG_SIZE, BENCH_BUILT_LEVEL } from '../src/data/hideout';
 import { affixDef } from '../src/data/affixes';
 import { BASES } from '../src/data/bases';
 import { modBias } from '../src/data/craftMats';
@@ -210,6 +210,66 @@ describe('smithing catalysts', () => {
     expect(s.inventory).toHaveLength(1);
     expect(fossilHit(s.inventory[0], 'scorched_fossil')).toBe(true);
   });
+
+  /** A character with the bench built, plenty of ore, and a full bag if asked. */
+  function smith(full = false): GameState {
+    const s = player();
+    s.account.hideout.bench = BENCH_BUILT_LEVEL;
+    s.bank = { ...s.bank, copper_ore: 10000, rough_gem: 10000 };
+    if (full) while (s.inventory.length < BAG_SIZE) ring(s);
+    return s;
+  }
+
+  it('stops at a full bag unless salvaging when full', () => {
+    const stops = smith(true);
+    expect(startSkillAction(stops, ctx(), 'smith_iron_ring')).toBe('Inventory full');
+
+    const s = smith(true);
+    setSmithCatalyst(s, { salvageFull: true });
+    run(s, 'smith_iron_ring', 3);
+    expect(s.action?.kind).toBe('skill');
+    expect(s.inventory).toHaveLength(BAG_SIZE);
+    expect(s.lifetime.salvaged).toBe(3);
+    expect(s.bank.arcane_dust).toBeGreaterThan(0);
+  });
+
+  it('salvaging when full keeps bases while the bag has room', () => {
+    const s = smith();
+    setSmithCatalyst(s, { salvageFull: true });
+    run(s, 'smith_iron_ring', 3);
+    expect(s.inventory).toHaveLength(3);
+    expect(s.lifetime.salvaged).toBe(0);
+  });
+
+  it('salvage everything still grants XP and keeps nothing', () => {
+    const s = smith();
+    setSmithCatalyst(s, { salvageAll: true });
+    run(s, 'smith_iron_ring', 3);
+    expect(s.inventory).toHaveLength(0);
+    expect(s.lifetime.salvaged).toBe(3);
+    expect(s.lifetime.itemsSmithed).toBe(3);
+    expect(s.skills.smithing).toBeGreaterThan(0);
+  });
+
+  it('salvage toggles need the bench', () => {
+    const s = smith(true);
+    s.account.hideout.bench = BENCH_BUILT_LEVEL - 1;
+    setSmithCatalyst(s, { salvageFull: true, salvageAll: true });
+    expect(startSkillAction(s, ctx(), 'smith_iron_ring')).toBe('Inventory full');
+  });
+
+  it('a repeat-until hit with a full bag waits on the ground', () => {
+    const s = smith(true);
+    s.skills.smithing = xpForLevel(20);
+    s.skillPassives = ['smithing_ks'];
+    s.bank.scorched_fossil = 1000;
+    setSmithCatalyst(s, { fossil: 'scorched_fossil', until: true, salvageFull: true });
+    run(s, 'smith_iron_ring', 500);
+    expect(s.action).toBeNull();
+    expect(s.inventory).toHaveLength(BAG_SIZE);
+    expect(s.ground).toHaveLength(1);
+    expect(fossilHit(s.ground[0], 'scorched_fossil')).toBe(true);
+  });
 });
 
 describe('gathering and alchemy', () => {
@@ -272,6 +332,13 @@ describe('save', () => {
     const s = player();
     const raw = JSON.parse(serialize(s));
     delete raw.smithCatalyst;
-    expect(deserialize(JSON.stringify(raw)).smithCatalyst).toEqual({ fossil: null, resin: null, until: false, salvageMisses: false });
+    expect(deserialize(JSON.stringify(raw)).smithCatalyst).toEqual({ fossil: null, resin: null, until: false, salvageMisses: false, salvageFull: false, salvageAll: false });
+  });
+
+  it('adds the salvage toggles to a saved catalyst slot', () => {
+    const s = player();
+    const raw = JSON.parse(serialize(s));
+    raw.smithCatalyst = { fossil: 'scorched_fossil', resin: null, until: true, salvageMisses: true };
+    expect(deserialize(JSON.stringify(raw)).smithCatalyst).toEqual({ fossil: 'scorched_fossil', resin: null, until: true, salvageMisses: true, salvageFull: false, salvageAll: false });
   });
 });

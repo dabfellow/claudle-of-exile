@@ -426,6 +426,10 @@ export interface SmithCatalyst {
   until: boolean;
   /** while repeating, salvage the bases that miss */
   salvageMisses: boolean;
+  /** with the bench built: salvage new bases instead of stopping when the bag is full */
+  salvageFull: boolean;
+  /** with the bench built: salvage every new base, for levelling Smithing */
+  salvageAll: boolean;
 }
 
 /** The three Town shops. */
