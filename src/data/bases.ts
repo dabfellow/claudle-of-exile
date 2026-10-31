@@ -35,11 +35,11 @@ export type Attribute = 'str' | 'dex' | 'int';
 /** Bases from this level up carry a bonus built-in mod (docs/design/GEAR.md). */
 export const IMPLICIT_LEVEL = 40;
 
-/** A bonus implicit's value at level 40 and at level 60. */
+/** A bonus implicit's value at level 40 and at level 60. It keeps climbing at that rate past 60. */
 type ImplicitRange = [stat: StatKey, lo: number, hi: number];
 
 function bonusImplicit([stat, lo, hi]: ImplicitRange, lvl: number): Implicit {
-  const value = Math.round(lo + ((hi - lo) * Math.min(1, (lvl - IMPLICIT_LEVEL) / 20)));
+  const value = Math.round(lo + ((hi - lo) * ((lvl - IMPLICIT_LEVEL) / 20)));
   return { stat, value, text: describeStat(stat, value) };
 }
 
@@ -192,6 +192,9 @@ export const BASES: BaseDef[] = [
   W('corsair_cutlass', 'Corsair Cutlass', 'sword', 48, [36, 71], 25, 6),
   W('bladedancer_sabre', 'Bladedancer Sabre', 'sword', 54, [40, 80], 30, 6),
   W('dragonfang_sword', 'Dragonfang Sword', 'sword', 60, [44, 89], 20, 7),
+  W('warbringer_sword', "Warbringer's Sword", 'sword', 66, [48, 98], 25, 7),
+  W('slayer_sabre', "Slayer's Sabre", 'sword', 73, [54, 108], 30, 7),
+  W('wyrmlord_sword', 'Wyrmlord Sword', 'sword', 80, [59, 119], 20, 8),
 
   W('whittled_dagger', 'Whittled Dagger', 'dagger', 1, [3, 9], 35, 7),
   W('skinning_knife', 'Skinning Knife', 'dagger', 7, [5, 16], 30, 7),
@@ -202,6 +205,9 @@ export const BASES: BaseDef[] = [
   W('wraith_blade', 'Wraith Blade', 'dagger', 43, [18, 59], 30, 9),
   W('umbral_dagger', 'Umbral Dagger', 'dagger', 51, [21, 69], 35, 9),
   W('voidfang_dagger', 'Voidfang Dagger', 'dagger', 60, [24, 81], 30, 10),
+  W('eclipse_dirk', 'Eclipse Dirk', 'dagger', 68, [27, 92], 30, 10),
+  W('abyssal_kris', 'Abyssal Kris', 'dagger', 74, [30, 100], 35, 10),
+  W('oblivion_fang', 'Oblivion Fang', 'dagger', 80, [32, 108], 30, 11),
 
   W('rusty_hatchet', 'Rusty Hatchet', 'axe', 1, [5, 11], 5, 5),
   W('felling_axe', 'Felling Axe', 'axe', 10, [12, 24], 0, 5),
@@ -212,6 +218,9 @@ export const BASES: BaseDef[] = [
   W('butcher_axe', 'Butcher Axe', 'axe', 46, [39, 78], 5, 5),
   W('ravager_axe', 'Ravager Axe', 'axe', 53, [45, 89], 5, 6),
   W('dragonbone_axe', 'Dragonbone Axe', 'axe', 60, [50, 101], 5, 6),
+  W('warbringer_axe', "Warbringer's Axe", 'axe', 67, [56, 113], 5, 6),
+  W('slayer_axe', "Slayer's Axe", 'axe', 74, [62, 125], 0, 6),
+  W('wyrmlord_greataxe', 'Wyrmlord Greataxe', 'axe', 80, [67, 135], 5, 7),
 
   W('oak_club', 'Oak Club', 'mace', 1, [5, 12], 0, 5),
   W('spiked_mace', 'Spiked Mace', 'mace', 12, [12, 26], 0, 5),
@@ -222,6 +231,9 @@ export const BASES: BaseDef[] = [
   W('dreadsteel_hammer', 'Dreadsteel Hammer', 'mace', 47, [41, 81], -5, 6),
   W('champion_flail', "Champion's Flail", 'mace', 54, [47, 93], 5, 6),
   W('sunforged_hammer', 'Sunforged Hammer', 'mace', 60, [52, 103], 0, 6),
+  W('colossus_maul', 'Colossus Maul', 'mace', 67, [58, 115], -5, 6),
+  W('titan_flail', 'Titan Flail', 'mace', 74, [64, 127], 5, 6),
+  W('godforged_hammer', 'Godforged Hammer', 'mace', 80, [69, 138], 0, 7),
 
   W('short_bow', 'Short Bow', 'bow', 1, [4, 13], 20, 6),
   W('hunting_bow', 'Hunting Bow', 'bow', 8, [9, 26], 15, 6),
@@ -232,6 +244,9 @@ export const BASES: BaseDef[] = [
   W('hawkfeather_bow', 'Hawkfeather Bow', 'bow', 44, [32, 92], 20, 7),
   W('thornwarden_longbow', 'Thornwarden Longbow', 'bow', 52, [38, 108], 10, 7),
   W('manticore_greatbow', 'Manticore Greatbow', 'bow', 60, [44, 124], 15, 8),
+  W('gryphon_longbow', 'Gryphon Longbow', 'bow', 68, [50, 140], 10, 8),
+  W('stagheart_bow', 'Stagheart Bow', 'bow', 74, [54, 153], 20, 8),
+  W('wildlord_greatbow', 'Wildlord Greatbow', 'bow', 80, [59, 166], 15, 9),
 
   W('bone_sceptre', 'Bone Sceptre', 'sceptre', 6, [5, 12], 10, 6),
   W('iron_sceptre', 'Iron Sceptre', 'sceptre', 15, [10, 21], 10, 6),
@@ -241,6 +256,9 @@ export const BASES: BaseDef[] = [
   W('zealot_sceptre', "Zealot's Sceptre", 'sceptre', 47, [25, 54], 10, 7),
   W('hallowed_sceptre', 'Hallowed Sceptre', 'sceptre', 54, [29, 62], 10, 7),
   W('archon_sceptre', 'Archon Sceptre', 'sceptre', 60, [32, 69], 10, 8),
+  W('exarch_sceptre', "Exarch's Sceptre", 'sceptre', 66, [35, 76], 10, 8),
+  W('sanctum_sceptre', 'Sanctum Sceptre', 'sceptre', 73, [39, 84], 10, 8),
+  W('empyrean_sceptre', 'Empyrean Sceptre', 'sceptre', 80, [43, 92], 10, 9),
 
   W('driftwood_wand', 'Driftwood Wand', 'wand', 1, [1, 4], 15, 6),
   W('bone_wand', 'Bone Wand', 'wand', 7, [3, 7], 15, 6),
@@ -251,6 +269,9 @@ export const BASES: BaseDef[] = [
   W('raven_wand', 'Raven Wand', 'wand', 44, [11, 25], 15, 7),
   W('hierophant_wand', "Hierophant's Wand", 'wand', 52, [13, 30], 15, 8),
   W('seraph_wand', 'Seraph Wand', 'wand', 60, [15, 34], 15, 8),
+  W('oracle_wand', 'Oracle Wand', 'wand', 68, [17, 39], 15, 8),
+  W('astral_wand', 'Astral Wand', 'wand', 74, [18, 42], 15, 8),
+  W('celestial_wand', 'Celestial Wand', 'wand', 80, [20, 45], 15, 9),
 
   W('gnarled_staff', 'Gnarled Staff', 'staff', 4, [6, 14], 0, 6),
   W('oak_quarterstaff', 'Oak Quarterstaff', 'staff', 16, [12, 26], 0, 6),
@@ -258,6 +279,8 @@ export const BASES: BaseDef[] = [
   W('stargazer_staff', 'Stargazer Staff', 'staff', 38, [24, 52], 0, 7),
   W('raven_staff', 'Raven Staff', 'staff', 48, [29, 65], 0, 7),
   W('seraph_staff', 'Seraph Staff', 'staff', 60, [36, 81], 0, 8),
+  W('astral_staff', 'Astral Staff', 'staff', 70, [42, 94], 0, 8),
+  W('celestial_staff', 'Celestial Staff', 'staff', 80, [48, 108], 0, 9),
 
   A('plank_shield', 'Splintered Shield', 'offhand', 1, 'str', 14),
   A('banded_shield', 'Banded Round Shield', 'offhand', 8, 'str', 42),
@@ -303,6 +326,25 @@ export const BASES: BaseDef[] = [
   A('wraith_shield', 'Wraith Shield', 'offhand', 44, 'dex_int', 150),
   A('umbral_ward', 'Umbral Ward', 'offhand', 52, 'dex_int', 185),
   A('voidwalker_ward', 'Voidwalker Ward', 'offhand', 60, 'dex_int', 220),
+  // tiers to level 80 (docs/design/GEAR.md): pure 67, 74, 80; hybrid 64, 72, 80
+  A('colossus_bulwark', 'Colossus Bulwark', 'offhand', 67, 'str', 425),
+  A('titan_aegis', 'Titan Aegis', 'offhand', 74, 'str', 485),
+  A('godforged_tower_shield', 'Godforged Tower Shield', 'offhand', 80, 'str', 535),
+  A('gryphon_targe', 'Gryphon Targe', 'offhand', 67, 'dex', 425),
+  A('stagheart_buckler', 'Stagheart Buckler', 'offhand', 74, 'dex', 485),
+  A('wildlord_targe', 'Wildlord Targe', 'offhand', 80, 'dex', 535),
+  A('oracle_ward', 'Oracle Ward', 'offhand', 67, 'int', 145),
+  A('astral_spirit_shield', 'Astral Spirit Shield', 'offhand', 74, 'int', 165),
+  A('celestial_ward', 'Celestial Ward', 'offhand', 80, 'int', 180),
+  A('warbringer_shield', "Warbringer's Shield", 'offhand', 64, 'str_dex', 240),
+  A('slayer_buckler', "Slayer's Buckler", 'offhand', 72, 'str_dex', 280),
+  A('wyrmlord_shield', 'Wyrmlord Shield', 'offhand', 80, 'str_dex', 320),
+  A('exarch_aegis', "Exarch's Aegis", 'offhand', 64, 'str_int', 240),
+  A('sanctum_shield', 'Sanctum Shield', 'offhand', 72, 'str_int', 280),
+  A('empyrean_aegis', 'Empyrean Aegis', 'offhand', 80, 'str_int', 320),
+  A('eclipse_ward', 'Eclipse Ward', 'offhand', 64, 'dex_int', 240),
+  A('abyssal_shield', 'Abyssal Shield', 'offhand', 72, 'dex_int', 280),
+  A('oblivion_ward', 'Oblivion Ward', 'offhand', 80, 'dex_int', 320),
 
   A('iron_hat', 'Iron Hat', 'helmet', 1, 'str', 10),
   A('leather_cap', 'Leather Cap', 'helmet', 1, 'dex', 10),
@@ -357,6 +399,25 @@ export const BASES: BaseDef[] = [
   A('wraith_hood', 'Wraith Hood', 'helmet', 47, 'dex_int', 110),
   A('umbral_mask', 'Umbral Mask', 'helmet', 54, 'dex_int', 130),
   A('voidwalker_cowl', 'Voidwalker Cowl', 'helmet', 60, 'dex_int', 150),
+  // tiers to level 80 (docs/design/GEAR.md): 67, 74, 80
+  A('colossus_helm', 'Colossus Helm', 'helmet', 67, 'str', 290),
+  A('titan_helm', 'Titan Helm', 'helmet', 74, 'str', 325),
+  A('godforged_helm', 'Godforged Helm', 'helmet', 80, 'str', 360),
+  A('gryphon_hood', 'Gryphon Hood', 'helmet', 67, 'dex', 290),
+  A('stagheart_mask', 'Stagheart Mask', 'helmet', 74, 'dex', 325),
+  A('wildlord_crown', 'Wildlord Crown', 'helmet', 80, 'dex', 360),
+  A('oracle_hood', 'Oracle Hood', 'helmet', 67, 'int', 140),
+  A('astral_hat', 'Astral Hat', 'helmet', 74, 'int', 155),
+  A('celestial_cowl', 'Celestial Cowl', 'helmet', 80, 'int', 175),
+  A('warbringer_helm', "Warbringer's Helm", 'helmet', 67, 'str_dex', 175),
+  A('slayer_helm', "Slayer's Helm", 'helmet', 74, 'str_dex', 195),
+  A('wyrmlord_helm', 'Wyrmlord Helm', 'helmet', 80, 'str_dex', 215),
+  A('exarch_helm', "Exarch's Helm", 'helmet', 67, 'str_int', 175),
+  A('sanctum_crown', 'Sanctum Crown', 'helmet', 74, 'str_int', 195),
+  A('empyrean_crown', 'Empyrean Crown', 'helmet', 80, 'str_int', 215),
+  A('eclipse_hood', 'Eclipse Hood', 'helmet', 67, 'dex_int', 175),
+  A('abyssal_cowl', 'Abyssal Cowl', 'helmet', 74, 'dex_int', 195),
+  A('oblivion_mask', 'Oblivion Mask', 'helmet', 80, 'dex_int', 215),
 
   A('plate_vest', 'Plate Vest', 'body', 1, 'str', 22),
   A('shabby_jerkin', 'Shabby Jerkin', 'body', 1, 'dex', 22),
@@ -409,6 +470,25 @@ export const BASES: BaseDef[] = [
   A('wraith_wrap', 'Wraith Wrap', 'body', 47, 'dex_int', 260),
   A('umbral_leathers', 'Umbral Leathers', 'body', 54, 'dex_int', 305),
   A('voidwalker_vestment', 'Voidwalker Vestment', 'body', 60, 'dex_int', 350),
+  // tiers to level 80 (docs/design/GEAR.md): 67, 74, 80
+  A('colossus_plate', 'Colossus Plate', 'body', 67, 'str', 675),
+  A('titan_plate', 'Titan Plate', 'body', 74, 'str', 765),
+  A('godforged_plate', 'Godforged Plate', 'body', 80, 'str', 845),
+  A('gryphon_hide', 'Gryphon Hide', 'body', 67, 'dex', 675),
+  A('stagheart_coat', 'Stagheart Coat', 'body', 74, 'dex', 765),
+  A('wildlord_garb', 'Wildlord Garb', 'body', 80, 'dex', 845),
+  A('oracle_robe', 'Oracle Robe', 'body', 67, 'int', 290),
+  A('astral_robe', 'Astral Robe', 'body', 74, 'int', 325),
+  A('celestial_raiment', 'Celestial Raiment', 'body', 80, 'int', 360),
+  A('warbringer_hauberk', "Warbringer's Hauberk", 'body', 67, 'str_dex', 405),
+  A('slayer_brigandine', "Slayer's Brigandine", 'body', 74, 'str_dex', 460),
+  A('wyrmlord_hauberk', 'Wyrmlord Hauberk', 'body', 80, 'str_dex', 505),
+  A('exarch_plate', "Exarch's Plate", 'body', 67, 'str_int', 405),
+  A('sanctum_hauberk', 'Sanctum Hauberk', 'body', 74, 'str_int', 460),
+  A('empyrean_regalia', 'Empyrean Regalia', 'body', 80, 'str_int', 505),
+  A('eclipse_garb', 'Eclipse Garb', 'body', 67, 'dex_int', 405),
+  A('abyssal_raiment', 'Abyssal Raiment', 'body', 74, 'dex_int', 460),
+  A('oblivion_vestment', 'Oblivion Vestment', 'body', 80, 'dex_int', 505),
 
   A('iron_gauntlets', 'Iron Gauntlets', 'gloves', 1, 'str', 8),
   A('rawhide_gloves', 'Rawhide Gloves', 'gloves', 1, 'dex', 8),
@@ -456,6 +536,25 @@ export const BASES: BaseDef[] = [
   A('wraith_wraps', 'Wraith Wraps', 'gloves', 44, 'dex_int', 67),
   A('umbral_gloves', 'Umbral Gloves', 'gloves', 52, 'dex_int', 83),
   A('voidwalker_gloves', 'Voidwalker Gloves', 'gloves', 60, 'dex_int', 99),
+  // tiers to level 80 (docs/design/GEAR.md): 64, 72, 80
+  A('colossus_gauntlets', 'Colossus Gauntlets', 'gloves', 64, 'str', 180),
+  A('titan_gauntlets', 'Titan Gauntlets', 'gloves', 72, 'str', 210),
+  A('godforged_gauntlets', 'Godforged Gauntlets', 'gloves', 80, 'str', 240),
+  A('gryphon_gloves', 'Gryphon Gloves', 'gloves', 64, 'dex', 180),
+  A('stagheart_gloves', 'Stagheart Gloves', 'gloves', 72, 'dex', 210),
+  A('wildlord_grips', 'Wildlord Grips', 'gloves', 80, 'dex', 240),
+  A('oracle_gloves', 'Oracle Gloves', 'gloves', 64, 'int', 88),
+  A('astral_gloves', 'Astral Gloves', 'gloves', 72, 'int', 100),
+  A('celestial_gloves', 'Celestial Gloves', 'gloves', 80, 'int', 115),
+  A('warbringer_gauntlets', "Warbringer's Gauntlets", 'gloves', 64, 'str_dex', 110),
+  A('slayer_gloves', "Slayer's Gloves", 'gloves', 72, 'str_dex', 125),
+  A('wyrmlord_gauntlets', 'Wyrmlord Gauntlets', 'gloves', 80, 'str_dex', 145),
+  A('exarch_gauntlets', "Exarch's Gauntlets", 'gloves', 64, 'str_int', 110),
+  A('sanctum_gloves', 'Sanctum Gloves', 'gloves', 72, 'str_int', 125),
+  A('empyrean_gauntlets', 'Empyrean Gauntlets', 'gloves', 80, 'str_int', 145),
+  A('eclipse_gloves', 'Eclipse Gloves', 'gloves', 64, 'dex_int', 110),
+  A('abyssal_wraps', 'Abyssal Wraps', 'gloves', 72, 'dex_int', 125),
+  A('oblivion_gloves', 'Oblivion Gloves', 'gloves', 80, 'dex_int', 145),
 
   A('iron_greaves', 'Iron Greaves', 'boots', 1, 'str', 8),
   A('leather_boots', 'Leather Boots', 'boots', 1, 'dex', 8),
@@ -502,6 +601,25 @@ export const BASES: BaseDef[] = [
   A('wraith_boots', 'Wraith Boots', 'boots', 44, 'dex_int', 67),
   A('umbral_boots', 'Umbral Boots', 'boots', 52, 'dex_int', 83),
   A('voidwalker_boots', 'Voidwalker Boots', 'boots', 60, 'dex_int', 99),
+  // tiers to level 80 (docs/design/GEAR.md): 64, 72, 80
+  A('colossus_greaves', 'Colossus Greaves', 'boots', 64, 'str', 180),
+  A('titan_sabatons', 'Titan Sabatons', 'boots', 72, 'str', 210),
+  A('godforged_greaves', 'Godforged Greaves', 'boots', 80, 'str', 240),
+  A('gryphon_boots', 'Gryphon Boots', 'boots', 64, 'dex', 180),
+  A('stagheart_boots', 'Stagheart Boots', 'boots', 72, 'dex', 210),
+  A('wildlord_boots', 'Wildlord Boots', 'boots', 80, 'dex', 240),
+  A('oracle_slippers', 'Oracle Slippers', 'boots', 64, 'int', 88),
+  A('astral_slippers', 'Astral Slippers', 'boots', 72, 'int', 100),
+  A('celestial_sandals', 'Celestial Sandals', 'boots', 80, 'int', 115),
+  A('warbringer_boots', "Warbringer's Boots", 'boots', 64, 'str_dex', 110),
+  A('slayer_boots', "Slayer's Boots", 'boots', 72, 'str_dex', 125),
+  A('wyrmlord_boots', 'Wyrmlord Boots', 'boots', 80, 'str_dex', 145),
+  A('exarch_greaves', "Exarch's Greaves", 'boots', 64, 'str_int', 110),
+  A('sanctum_boots', 'Sanctum Boots', 'boots', 72, 'str_int', 125),
+  A('empyrean_greaves', 'Empyrean Greaves', 'boots', 80, 'str_int', 145),
+  A('eclipse_boots', 'Eclipse Boots', 'boots', 64, 'dex_int', 110),
+  A('abyssal_boots', 'Abyssal Boots', 'boots', 72, 'dex_int', 125),
+  A('oblivion_boots', 'Oblivion Boots', 'boots', 80, 'dex_int', 145),
 
   J('chain_belt', 'Chain Belt', 'belt', 1, [{ stat: 'life', value: 12, text: '+12 to maximum Life' }]),
   J('leather_belt', 'Leather Belt', 'belt', 12, [{ stat: 'life', value: 30, text: '+30 to maximum Life' }]),
