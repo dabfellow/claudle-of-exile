@@ -23,5 +23,6 @@ Files are named after their pack: `catalone-`, `woshi-`, `codespree-`, `sn-`, `c
 - **quintino-\*.png**: RPG Weapons by quintino_pixels, exported from `RPG_Weapons.aseprite`. Free itch.io file, under the owner's assumption above; no licence file in the download. `armor/tint-tower-shield.png` is a recolour of `quintino-q23.png`.
 - **weapons30-\*.png**: a pasted 30-sword sheet, enlarged 2×. Free itch.io file, under the owner's assumption above; pack name and author not recorded.
 - **icons32-\*.png** and the ring, flask and frostleaf `tint-*.png` recolours made from them: a set of 32 pixel icons, enlarged 2×. Free itch.io file, under the owner's assumption above; pack name and author not recorded.
+- **music/\*.ogg**: 10 Medieval Tracks by AlkaKrab (itch.io), free pack, the looping versions of Silverbrook, Emberlight, Elven Dawn and Throne of Storms, re-encoded to 96 kbps Opus. Assumed free for public use while the game isn't sold. The pack's licence PDF goes further: royalty-free, commercial use allowed, credit appreciated, edits for timing, volume or EQ allowed. The files may not be redistributed as-is, and open-source games need the author's permission (alkakrab04@gmail.com), so ask before making this repo public.
 
 Which game id uses which file is in `docs/design/ASSET_MAPPING.md`.

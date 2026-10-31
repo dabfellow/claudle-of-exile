@@ -334,6 +334,7 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Music: older Safari can't play Ogg, and iPhones ignore page volume, so the slider may act as on/off there (mute still works). Neither tested. Act 3+ and maps past Act 2 reuse the Act 2 track. If this repo ever goes public, ask AlkaKrab first (`src/assets/CREDITS.md`).
 - Endless content: a post-Maps thing, not designed yet.
 - Sim pacing gaps: week 1 onward can't be tested until Act 3 exists; week 1 and month 1 predate the last drop cut; month 3 is two classes on one seed. Smithing, brewing, the bench and second rule slots aren't modelled ([BALANCE.md](design/BALANCE.md)).
 - Two devices at once: the newest account copy wins, so stash changes on the other device can be lost (unlocks can't).
@@ -381,6 +382,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - [x] Act 2 art: all 40 monsters and 6 uniques have pack art, and a test fails if a monster has none ([ASSET_MAPPING.md](design/ASSET_MAPPING.md)) — done 2026-10-30
 - [x] Act recipe written with Act 1 and Act 2 gap tables ([ACT_RECIPE.md](design/ACT_RECIPE.md)) — done 2026-10-30
 - [x] Drafted the 14 ascendancies and 5 hard mode bosses for your calls ([ASCENDANCIES.md](design/ASCENDANCIES.md), [HARD_BOSSES.md](design/HARD_BOSSES.md)) — done 2026-10-30
+- [x] Background music: 10 Medieval Tracks by AlkaKrab, one track each for Act 1, Act 2, hideout and bosses, 9.1 MB in all, streamed on first use; crossfades, starts after the first input, pauses in hidden tabs; volume and mute in Settings, saved per device — done 2026-10-31
 - [x] Docs updated for the reset: GDD rewritten as the current design, built-system docs note what changes, art notes corrected — done 2026-10-30
 - [x] Design reset settled: finished game, pacing, core systems, act recipe, live game, roadmap ([Decisions](#decisions)) — done 2026-10-30
 - [x] Retired docs deleted (AI art prompts, the superseded new content pass) and `npm run art -- --docs` removed — done 2026-10-30
