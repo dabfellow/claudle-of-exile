@@ -19,7 +19,7 @@ export interface AchievementDef {
   act?: number;
 }
 
-const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting'] as const;
+const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'runecarving'] as const;
 const totalSkillLevel = (s: GameState) => SKILLING.reduce((a, k) => a + levelOf(k, s.skills[k]), 0);
 const L = (s: GameState) => s.lifetime;
 const bossesBeatenIn = (s: GameState, act: number) => zonesInAct(act).filter((z) => s.bossesDefeated.includes(z.id)).length;

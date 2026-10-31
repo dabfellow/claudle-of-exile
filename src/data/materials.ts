@@ -1,6 +1,7 @@
 import { CRAFT_MATERIALS } from './craftMats';
+import { RUNE_MATERIALS } from './runes';
 
-export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'currency' | 'gold' | 'fish';
+export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'rune' | 'currency' | 'gold' | 'fish';
 
 export interface MaterialDef {
   id: string;
@@ -43,6 +44,7 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'arcane_dust', name: 'Arcane Dust', kind: 'dust', color: '#b9a7ff', value: 3, desc: 'Salvaged from items. Used in Alchemy.' },
 
   ...CRAFT_MATERIALS,
+  ...RUNE_MATERIALS,
 ];
 
 export interface CurrencyDef extends MaterialDef {

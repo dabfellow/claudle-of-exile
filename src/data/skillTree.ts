@@ -35,6 +35,10 @@ export type SkillTreeStat =
   | 'markerChance'
   | 'alertReduce'
   | 'cleanGetaway'
+  | 'runecarvingSpeed'
+  | 'secondStroke'
+  | 'deepCuts'
+  | 'livingScript'
   | 'fishingSpeed'
   | 'fishTreasure'
   | 'biggerFish'
@@ -129,6 +133,16 @@ const BRANCHES: BranchSpec[] = [
     keystone: { name: 'Clean Getaway', stats: { cleanGetaway: 1 }, desc: 'An alarm costs you none of the take. Heist jobs cost 50% more Markers' },
   },
   {
+    skill: 'runecarving',
+    angle: 120,
+    small: { name: 'Steady Chisel', stats: { runecarvingSpeed: 5 }, desc: '5% faster Rune-carving' },
+    notables: [
+      { name: 'Second Stroke', stats: { secondStroke: 15 }, desc: '15% chance to carve two runes for one' },
+      { name: 'Deep Cuts', stats: { deepCuts: 10 }, desc: 'Runes on your gear are 10% stronger' },
+    ],
+    keystone: { name: 'Living Script', stats: { livingScript: 1 }, desc: 'Resonance between your runes is doubled. Rune-carving is 25% slower' },
+  },
+  {
     skill: 'alchemy',
     angle: 210,
     small: { name: 'Distillation', stats: { alchemySpeed: 5 }, desc: '5% faster Alchemy' },
@@ -183,7 +197,7 @@ function build(): SkillTreeNode[] {
       return dist(n) < dist(bn) ? id : best;
     }, ring[0]);
 
-  add({ id: 'core_steady', name: 'Steady Hands', kind: 'notable', branch: 'core', ...polar(150, 120), stats: { inputSave: 5 }, desc: '5% chance for production not to consume its inputs' });
+  add({ id: 'core_steady', name: 'Steady Hands', kind: 'notable', branch: 'core', ...polar(150, 105), stats: { inputSave: 5 }, desc: '5% chance for production not to consume its inputs' });
   link('core_steady', ringAt(90));
   add({ id: 'core_overtime', name: 'Patient Crafter', kind: 'notable', branch: 'core', ...polar(150, 240), stats: { patientCrafter: 10 }, desc: 'Auto-crafting has a 10% chance each step not to use the orb' });
   link('core_overtime', ringAt(234));

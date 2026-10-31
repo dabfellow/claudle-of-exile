@@ -223,6 +223,10 @@ const MIGRATIONS: Record<number, Migration> = {
     (raw.skills as Record<string, number>).thieving ??= 0;
     raw.heist ??= newHeistState();
   },
+  22: (raw) => {
+    // Rune-carving arrived: everyone starts at level 1, and gear with no `rune` field simply has an empty slot
+    (raw.skills as Record<string, number>).runecarving ??= 0;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

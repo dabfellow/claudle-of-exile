@@ -2,8 +2,8 @@ import type { ClassId } from '../data/classes';
 import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
 
-export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'smithing' | 'alchemy' | 'gemcutting' | 'fishing';
-export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'fishing'];
+export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'smithing' | 'alchemy' | 'gemcutting' | 'runecarving' | 'fishing';
+export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'fishing'];
 
 export type Rarity = 'normal' | 'magic' | 'rare' | 'unique';
 
@@ -111,6 +111,8 @@ export interface Item {
   uniqueId?: string;
   /** Locksmith's Wax: how the item looked when the impression was taken, ready to restore */
   impression?: Pick<Item, 'rarity' | 'name' | 'prefixes' | 'suffixes'>;
+  /** the one rune slot (docs/design/RUNES.md): a rune id, apart from the modifiers, so no orb touches it */
+  rune?: string;
 }
 
 export type InstillCondition = 'lowLife' | 'fullCharges' | 'bossCast';

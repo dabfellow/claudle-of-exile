@@ -33,7 +33,9 @@ import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { HEIST_JOBS, ROGUES } from '../src/data/heist';
 import { cleanChance, jobBlocker, rankUpRogue, rogueReason, setJobExit, startHeist } from '../src/engine/heist';
-import { actionBlocker, startSkillAction } from '../src/engine/skills';
+import { RUNES } from '../src/data/runes';
+import { inscribeRune, itemRune, runeReason, runesOpen } from '../src/engine/runes';
+import { actionBlocker, skillLevel, startSkillAction } from '../src/engine/skills';
 import { grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
 import { groundFor } from '../src/engine/battlefield';
 import { newGame, tick } from '../src/engine/state';
@@ -81,8 +83,9 @@ const SCHEDULE = (day: number): Play[] =>
  * - push: combat, but the morning gap gathers while the next upgrade is short of materials.
  * - mix: the same, and every night gathers whether anything is short or not.
  * - heist: push, but every night from Act 2 on goes to Heist.
+ * - runes: push, but every night from Act 3 on goes to Rune-carving, gathering whatever the best recipe is short of.
  */
-type Profile = 'push' | 'mix' | 'heist';
+type Profile = 'push' | 'mix' | 'heist' | 'runes';
 const gathersAway = (profile: Profile, period: number, short: boolean) => (period === 0 && short) || (period === 2 && profile === 'mix');
 
 /** The order the bot buys automation in: rules before hours, as rules are what bosses are locked behind. */
@@ -402,6 +405,29 @@ function heistNight(s: GameState, ctx: Ctx): boolean {
   return !startHeist(s, ctx, job.id);
 }
 
+/** Fill every empty rune slot, keeping to the family the bot wears most so Resonance builds up. */
+function fitRunes(s: GameState, ctx: Ctx): void {
+  const worn = Object.values(s.equipment).filter((i): i is Item => !!i);
+  const count = (family: string) => worn.filter((i) => itemRune(i)?.family.id === family).length;
+  const best = [...RUNES].reverse().sort((a, b) => count(b.family.id) - count(a.family.id));
+  for (const item of worn) {
+    const rune = !item.rune && best.find((r) => !runeReason(s, r.id, item.uid));
+    if (rune) inscribeRune(s, ctx, rune.id, item.uid);
+  }
+}
+
+/** The night's carving: the best recipe it can pay for, or a node for what the best known recipe is short of. */
+function runeNight(s: GameState, ctx: Ctx): boolean {
+  if (!runesOpen(s)) return false;
+  fitRunes(s, ctx);
+  const recipes = actionsFor('runecarving').filter((a) => skillLevel(s, 'runecarving') >= a.level);
+  const ready = recipes.filter((a) => !actionBlocker(s, a)).at(-1);
+  if (ready) return !startSkillAction(s, ctx, ready.id);
+  const short = Object.entries(recipes.at(-1)!.inputs!).find(([id, n]) => (s.bank[id] ?? 0) < n);
+  const node = short && nodeFor(s, short[0]);
+  return !!node && !startSkillAction(s, ctx, node.id);
+}
+
 /** Areas open to the bot: unlocked, and within a level of its minimum. */
 function reachable(s: GameState): ZoneDef[] {
   const lvl = characterLevel(s);
@@ -484,6 +510,7 @@ interface Result {
   /** nights spent on Heist, and what came of them */
   heists: number;
   heistAlarms: number;
+  runesWorn: number;
 }
 
 function snapshot(s: GameState): Snapshot {
@@ -557,7 +584,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   let now = 0;
   const res: Result = {
     classId, seed, profile, levels: {}, bosses: {}, bossLevels: {}, upgrades: {}, checkpoints: {}, trials: {}, deaths: 0, offlineDeaths: 0, kills: 0,
-    activeMs: 0, awayCombatMs: 0, awayGatherMs: 0, cappedMs: 0, stoppedMs: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, skills: {}, bar: '', orbsUsed: 0, heists: 0, heistAlarms: 0,
+    activeMs: 0, awayCombatMs: 0, awayGatherMs: 0, cappedMs: 0, stoppedMs: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, skills: {}, bar: '', orbsUsed: 0, heists: 0, heistAlarms: 0, runesWorn: 0,
   };
   const deathStreak: Record<string, number> = {};
   const tally: Record<string, number> = {};
@@ -661,9 +688,10 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   /** Leave something running for `ms`. */
   const away = (ms: number, period: number) => {
     const heisting = profile === 'heist' && period === 2 && heistNight(s, ctx);
-    const job = !heisting && gathersAway(profile, period, !!nextUpgrade(s)?.short.length) ? gatherJob(s) : undefined;
+    const carving = profile === 'runes' && period === 2 && runeNight(s, ctx);
+    const job = !heisting && !carving && gathersAway(profile, period, !!nextUpgrade(s)?.short.length) ? gatherJob(s) : undefined;
     if (job) startSkillAction(s, ctx, job.id);
-    else if (!heisting) {
+    else if (!heisting && !carving) {
       if (awayBack && characterLevel(s) >= awayBackLevel + 2) awayBack--;
       const open = reachable(s);
       const zone = open[Math.max(0, open.length - 1 - awayBack)];
@@ -674,7 +702,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
     s.clock += ms - sum.ms;
     res.kills += sum.kills;
     res.cappedMs += ms - sum.ms;
-    if (job || heisting) res.awayGatherMs += sum.ms;
+    if (job || heisting || carving) res.awayGatherMs += sum.ms;
     else if (sum.diedAfterMs === null) res.awayCombatMs += sum.ms;
     else {
       res.awayCombatMs += sum.diedAfterMs;
@@ -717,9 +745,10 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   res.bank = s.bank;
   res.bestDps = d.dps;
   res.bestLife = d.maxLife;
-  res.skills = Object.fromEntries([...GATHER_SKILLS, 'thieving' as const].map((sk) => [sk, levelOf(sk, s.skills[sk])]));
+  res.skills = Object.fromEntries([...GATHER_SKILLS, 'thieving' as const, 'runecarving' as const].map((sk) => [sk, levelOf(sk, s.skills[sk])]));
   res.heists = s.heist.tally.jobs;
   res.heistAlarms = s.heist.tally.alarms;
+  res.runesWorn = Object.values(s.equipment).filter((i) => i && itemRune(i)).length;
   res.bar = s.skillBar.map((g) => g && `${activeGemDef(g.gemId).name} ${g.level}`).filter(Boolean).join(', ');
   res.orbsUsed = s.lifetime.orbsUsed;
   return res;
@@ -846,6 +875,10 @@ function report(results: Result[]) {
       row('markers', (r) => r.bank.rogues_marker ?? 0);
       row('seals', (r) => r.bank.forgers_seal ?? 0);
       row('wax', (r) => r.bank.locksmiths_wax ?? 0);
+    }
+    if (profile === 'runes') {
+      row('rune-carving', (r) => r.skills.runecarving);
+      row('runes worn', (r) => r.runesWorn);
     }
     share('played', (r) => r.activeMs);
     share('away fighting', (r) => r.awayCombatMs);

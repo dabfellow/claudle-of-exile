@@ -8,6 +8,7 @@ import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { STAT_KEYS, type Buff, type DamageType, type GameState, type Item, type StatKey, type Stats } from './types';
 import { characterLevel } from './character';
 import { MEGA_CRIT_MULTI, mechanicStats } from './mechanics';
+import { runeStats } from './runes';
 
 // built once: deriveStats runs every tick, and rebuilding this took most of a sim run
 let zeroStats: Stats | null = null;
@@ -164,6 +165,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
     }
     addStats(st, mods);
   }
+  addStats(st, runeStats(s));
   addStats(st, passiveStats(s.passives, s.masteries));
   const cls = classDef(s.character.classId);
   addStats(st, cls.baseAttributes);

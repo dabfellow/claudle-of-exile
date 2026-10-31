@@ -232,7 +232,7 @@ game system and also produces materials for the crafting economy (reset, 2026-10
 - **Archaeology → Expedition.** Dig sites per area for Artifacts that trade for currency or logbook-style rewards.
 - **Cartography → Maps.** Maps drop from monsters; Cartography is an optional second route that crafts them, for something like a huge offline map grind.
 - **Fletching → Quivers.** Shafts from logs into quivers (quivers don't exist yet).
-- **Runecrafting → Rune-carving.** Carve runes that enchant gear (would overlap Essences).
+- **Runecrafting → Rune-carving.** Built: see [RUNES.md](RUNES.md).
 - Skipped: Cooking, Firemaking, Farming, Summoning, Agility, Astrology, Township (no PoE hook, or overlap with flasks and the trees).
 
 ## Open questions

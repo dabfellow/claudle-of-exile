@@ -6,6 +6,7 @@ import { characterLevel } from '../../engine/character';
 import { defaultSlot } from '../../engine/equipment';
 import { describeMod, itemName, tierLabel, tierRangeText } from '../../engine/items';
 import { mechanicOf, STAT_MECHANIC } from '../../engine/mechanics';
+import { itemRune, runeMult, runesOpen, runeText } from '../../engine/runes';
 import { game } from '../../game';
 import { deriveStats, itemDefences, weaponPhys, type Derived } from '../../engine/stats';
 import type { EquipSlot, GameState, Item, RolledMod } from '../../engine/types';
@@ -146,6 +147,7 @@ export function ItemTip({
         {item.suffixes.map((m, i) => (
           <ModLine key={`s${i}`} mod={m} detail={alt} state={state} />
         ))}
+        <RuneLine item={item} state={state} />
         {unique && (
           <>
             <div className="sep" />
@@ -170,6 +172,26 @@ export function ItemTip({
         )}
       </div>
     </div>
+  );
+}
+
+/** The rune slot sits under the modifiers, in its rune's colour; an empty one shows once the skill is open. */
+function RuneLine({ item, state }: { item: Item; state?: GameState }) {
+  const rune = itemRune(item);
+  if (!rune && !(state && runesOpen(state))) return null;
+  const worn = !!state && Object.values(state.equipment).some((e) => e?.uid === item.uid);
+  return (
+    <>
+      <div className="sep" />
+      {rune ? (
+        <div className="mod rune" style={{ color: rune.family.color }}>
+          {runeText(rune, item, state && worn ? runeMult(state, rune.family.id) : 1)}
+          <span className="mod-tier">({rune.name})</span>
+        </div>
+      ) : (
+        <div className="dim small">Rune slot: empty</div>
+      )}
+    </>
   );
 }
 
