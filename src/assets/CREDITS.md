@@ -17,4 +17,4 @@ Files are named after their pack: `catalone-`, `woshi-`, `codespree-`, `sn-`, `c
 - **softline-\*.png**: Softline RPG Icons FREE 100 by The Cooked Works (see the pack's LICENSE.pdf).
 - **zones/gegx-\*.webp, scenes/gegx-\*.webp**: Painterly Backgrounds free sample by GegX (gegx.itch.io), AI-generated and hand-curated, resized to 1600px webp. Free for commercial and non-commercial projects; may not be redistributed as an asset pack or used to train image models.
 
-Which game id uses which file is in `docs/ASSET_MAPPING.md`.
+Which game id uses which file is in `docs/design/ASSET_MAPPING.md`.

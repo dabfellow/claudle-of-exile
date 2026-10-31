@@ -2,7 +2,7 @@ import { UPCOMING_SKILLS } from '../../data/skills';
 import { Badge } from '../components/common';
 import { Icon } from '../components/Icon';
 
-/** Skills that are planned but not built: a teaser list (docs/SKILLING_REWORK.md §8). */
+/** Skills that are planned but not built: a teaser list (docs/design/SKILLING_REWORK.md §8). */
 export function UpcomingSkillsPage() {
   return (
     <div className="page">

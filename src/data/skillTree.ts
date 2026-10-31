@@ -1,7 +1,7 @@
 import type { SkillId } from '../engine/types';
 
 /**
- * The skilling tree (docs/TREES.md §2): a shared core and one branch per gathering/production
+ * The skilling tree (docs/design/TREES.md §2): a shared core and one branch per gathering/production
  * skill. Points come from total skill level; deeper nodes need a level in that skill.
  */
 export type SkillTreeStat =

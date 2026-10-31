@@ -178,7 +178,7 @@ export function currentMovement(s: GameState): Movement {
 
 // ---------- monsters ----------
 
-/** Global kill-xp knob: Act 1 is paced to take 6–10 hours (docs/BALANCE.md). */
+/** Global kill-xp knob: Act 1 is paced to take 6–10 hours (docs/design/BALANCE.md). */
 export const KILL_XP_SCALE = 0.8;
 
 /** Base character xp for a kill, before the level-difference multiplier. */

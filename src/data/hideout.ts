@@ -85,7 +85,7 @@ export function stationDef(id: StationId): StationDef {
   return STATIONS.find((s) => s.id === id)!;
 }
 
-/** Gear storage: see docs/STASH.md. */
+/** Gear storage: see docs/design/TOWN.md. */
 export const BAG_SIZE = 60;
 export const GROUND_CAP = 50;
 export const OFFLINE_HAUL_CAP = 200;

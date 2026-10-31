@@ -1,5 +1,9 @@
 # Classes — Identity Rework
 
+**Design reset (2026-10-30):** six normal classes, plus Exile as an unlockable hard mode class that can also be taken
+into challenge modes. Each class gets two ascendancies (14 in total), unlocked around Act 3; picking one opens a new
+section of the main tree. Class balance doesn't need to be exact. See [GDD.md](GDD.md) §3.
+
 **Decided (2026-10-24):** 7 classes — 3 pure, 3 hybrid, 1 all-rounder. Identity comes from an
 **exclusive class mechanic**; every gem, base and unique stays shared (PoE-style).
 Energy Shield, weapon families and hybrid armour bases are being built separately — this doc
@@ -125,7 +129,7 @@ nodes** and begin there.
 - Purely a challenge: every bit of power comes from the tree, gear and gems.
 - Rewards: an Exile crest/badge on the character, a few achievements (e.g. "Clear Act 1 as an Exile",
   "Kill Ysolde as an Exile with no unique equipped"). No gameplay rewards, so it stays a flex.
-- Unlock: after any character clears Act 1 (so new players don't pick it by accident).
+- Unlock: after any character finishes the campaign (reset, 2026-10-30; the build still unlocks it at Act 1).
 
 ---
 
@@ -143,8 +147,8 @@ nodes** and begin there.
 - Stat keys for the knobs (`rageMax`, `rageDecay`, `momentumMax`, `maliceMax`, `fervorPct`, …) so passives and uniques can tune them.
 - New start nodes: `class_strdex`, `class_strint`, `class_dexint` in `passiveTree.ts`. Exile reuses any of the six.
 - Exile creation UI: start-node picker; unlock flag on the account after an Act 1 clear.
-- `npm run sim -- --class <id>` for all 7; Act 1 target stays 6–10h per class.
-- Class portraits/crests for the 4 new classes (`ART_PROMPTS.md`).
+- `npm run sim -- --class <id>` for all 7; pacing targets are in [GDD.md](GDD.md) §2.
+- Class portraits/crests for the 4 new classes.
 
 ## Open questions
 

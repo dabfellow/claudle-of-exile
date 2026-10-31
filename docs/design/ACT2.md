@@ -1,8 +1,11 @@
 # Act 2 — The Burning Steppe
 
 Status: **framework built, in preview** (2026-10-25). All eight areas, bosses, uniques and drop tiers are in
-[zones.ts](../src/data/zones.ts) and play end to end in dev builds, tests and the sim. Production players don't
+[zones.ts](../../src/data/zones.ts) and play end to end in dev builds, tests and the sim. Production players don't
 see it until `open: true` is set on Act 2 in `ACTS`.
+
+**Design reset (2026-10-30):** this act gets rebuilt from the act recipe ([GDD.md](GDD.md) §10). What's here is the
+starting point, and anything that doesn't fit gets redone.
 
 ## Level band
 
@@ -58,7 +61,7 @@ Starforged Edge.
 
 ## Drops
 
-New tiers 6 and 7 in [drops.ts](../src/data/drops.ts): a little more currency, more rares, slightly better orb
+New tiers 6 and 7 in [drops.ts](../../src/data/drops.ts): a little more currency, more rares, slightly better orb
 weights. Bosses: tier 6 guarantees 3 Chaos on the first kill (4% after), tier 7 an Exalted and a Divine (1.5%
 after).
 
@@ -77,14 +80,13 @@ after).
 
 ## To release
 
-1. Balance pass with `npm run sim -- --hours 36` (it now reports each act and the character level at every boss).
-2. Art: area banners reuse the Act 1 landscapes; monsters show the skull icon. Prompts for all 8 areas, 40
-   monsters and 6 uniques are in `artManifest.ts`. `npm run art -- --docs` would add them to ART_PROMPTS.md; not run
-   yet, since it can reshuffle the 3×3 sprite sheets you may be partway through.
-3. Set `open: true` on Act 2 in `ACTS`, update Settings → About and the title screen line, deploy.
+1. Rebuild from the recipe ([ROADMAP.md](../ROADMAP.md) milestone 4), after the pacing work.
+2. Pacing check with `npm run sim -- --hours 36` (it now reports each act and the character level at every boss).
+3. Art from asset packs: area banners reuse the Act 1 landscapes and monsters show the skull icon today.
+4. Set `open: true` on Act 2 in `ACTS`, update Settings → About and the title screen line, deploy.
 
 ## Not in this pass
 
 - Skilling band Lv 20–40 (Mithril / Yew / Emberroot, Screaming essences): see SKILLING_REWORK.md §6.
-- Act 2 skill gems or supports.
+- Act 2 skill gems, supports and new skill. The recipe needs all three.
 - Monster art.

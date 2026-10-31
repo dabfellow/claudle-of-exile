@@ -32,7 +32,7 @@ export type WeaponFamily = 'mace' | 'axe' | 'sword' | 'dagger' | 'bow' | 'sceptr
 
 export type Attribute = 'str' | 'dex' | 'int';
 
-/** Bases from this level up carry a bonus built-in mod (docs/GEAR.md). */
+/** Bases from this level up carry a bonus built-in mod (docs/design/GEAR.md). */
 export const IMPLICIT_LEVEL = 40;
 
 /** A bonus implicit's value at level 40 and at level 60. */
@@ -284,7 +284,7 @@ export const BASES: BaseDef[] = [
   A('raven_spirit_shield', 'Raven Spirit Shield', 'offhand', 47, 'int', 91),
   A('hierophant_ward', "Hierophant's Ward", 'offhand', 54, 'int', 110),
   A('seraph_ward', 'Seraph Ward', 'offhand', 60, 'int', 125),
-  // hybrid tiers to level 60 (docs/GEAR.md)
+  // hybrid tiers to level 60 (docs/design/GEAR.md)
   A('studded_round_shield', 'Studded Round Shield', 'offhand', 12, 'str_dex', 36),
   A('wyrmscale_shield', 'Wyrmscale Shield', 'offhand', 24, 'str_dex', 73),
   A('gladiator_buckler', "Gladiator's Buckler", 'offhand', 36, 'str_dex', 115),
@@ -310,7 +310,7 @@ export const BASES: BaseDef[] = [
   A('hunter_hood', 'Hunter Hood', 'helmet', 16, 'dex', 48),
   A('great_helm', 'Mithril Great Helm', 'helmet', 32, 'str', 115),
   A('shadow_mask', 'Shadow Mask', 'helmet', 32, 'dex', 115),
-  // pure tiers to level 60 (docs/GEAR.md): str, dex, int at 8, 24, 40, 47, 54, 60
+  // pure tiers to level 60 (docs/design/GEAR.md): str, dex, int at 8, 24, 40, 47, 54, 60
   A('blackened_sallet', 'Blackened Sallet', 'helmet', 8, 'str', 28),
   A('knight_helm', 'Knight Helm', 'helmet', 24, 'str', 83),
   A('warlord_helm', "Warlord's Helm", 'helmet', 40, 'str', 150),
@@ -338,7 +338,7 @@ export const BASES: BaseDef[] = [
   A('templar_crown', 'Templar Crown', 'helmet', 24, 'str_int', 49),
   A('wayfarer_hood', "Wayfarer's Hood", 'helmet', 8, 'dex_int', 17),
   A('duskweave_cowl', 'Duskweave Cowl', 'helmet', 24, 'dex_int', 49),
-  // hybrid tiers to level 60 (docs/GEAR.md)
+  // hybrid tiers to level 60 (docs/design/GEAR.md)
   A('ringmail_coif', 'Ringmail Coif', 'helmet', 16, 'str_dex', 32),
   A('lamellar_helm', 'Lamellar Helm', 'helmet', 32, 'str_dex', 69),
   A('gladiator_helm', "Gladiator's Helm", 'helmet', 40, 'str_dex', 90),
@@ -614,7 +614,7 @@ export const UNIQUES: UniqueDef[] = [
     ],
   },
 
-  // ---------- class-mechanic uniques (docs/NEW_UNIQUES.md) ----------
+  // ---------- class-mechanic uniques (docs/design/SKILLS_AND_UNIQUES.md) ----------
   // skill tweaks marked ★ in the doc wait for the new skills to exist
   {
     id: 'tavern_brawler', name: 'Tavern Brawler', baseId: 'oak_club', flavour: 'Last one standing buys the round.',
@@ -873,7 +873,7 @@ export const UNIQUES: UniqueDef[] = [
     ],
   },
 
-  // ---------- Act 2 (docs/ACT2.md) ----------
+  // ---------- Act 2 (docs/design/ACT2.md) ----------
   {
     id: 'sunmane_pelt', name: 'Sunmane Pelt', baseId: 'wyrmscale_hauberk', flavour: 'Still warm.',
     mods: [

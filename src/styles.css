@@ -1,6 +1,6 @@
 /* ==========================================================================
    The Ashen Codex — design tokens and shared components.
-   Spec: docs/DESIGN_SYSTEM.md. Components use these tokens, never raw colours.
+   Spec: docs/design/DESIGN_SYSTEM.md. Components use these tokens, never raw colours.
    ========================================================================== */
 :root {
   /* surfaces */
@@ -3512,7 +3512,7 @@ g.tut-hint circle.body {
   align-self: center;
 }
 
-/* ---- battlefield: a half-ring of hexes, the player on the bottom edge (docs/BATTLEFIELD.md) ---- */
+/* ---- battlefield: a half-ring of hexes, the player on the bottom edge (docs/design/BATTLEFIELD.md) ---- */
 .arena-side {
   display: flex;
   flex-direction: column;

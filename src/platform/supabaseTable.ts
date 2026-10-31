@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CharacterRow, CharacterSummary, CharacterTable } from './saves';
 
-/** The `characters` table (see docs/AUTH_SETUP.md). Row-level security limits every query to the signed-in player. */
+/** The `characters` table (see docs/ops/SETUP.md). Row-level security limits every query to the signed-in player. */
 export function supabaseCharacters(client: SupabaseClient): CharacterTable {
   const table = () => client.from('characters');
   return {

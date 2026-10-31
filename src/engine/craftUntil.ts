@@ -11,7 +11,7 @@ import { skillTreeStats } from './skillTree';
 import type { CraftMethod, GameState, Item, StopRule } from './types';
 
 /**
- * Auto-crafting, formerly "Craft until…" (docs/SKILLING_REWORK.md §4): an idle activity at the Crafting Bench
+ * Auto-crafting, formerly "Craft until…" (docs/design/SKILLING_REWORK.md §4): an idle activity at the Crafting Bench
  * (level 5) that spends one orb or Essence per step on an inventory item until a stop rule matches or the materials run out.
  */
 export function ruleMet(item: Item, rule: StopRule): boolean {

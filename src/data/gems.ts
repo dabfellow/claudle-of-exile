@@ -85,7 +85,7 @@ export interface ActiveGemDef {
   defaultRule: TacticRule;
 }
 
-/** Weapon families by what they're good for (docs/BATTLEFIELD.md §7). */
+/** Weapon families by what they're good for (docs/design/BATTLEFIELD.md §7). */
 const SLAM_WEAPONS: WeaponFamily[] = ['mace', 'axe', 'sceptre', 'staff'];
 const STRIKE_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'dagger', 'mace', 'sceptre'];
 const HEAVY_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'mace', 'sceptre', 'staff'];

@@ -2,6 +2,11 @@
 
 Goes with [GDD.md](GDD.md) §5 and [TREES.md](TREES.md) §2. **The Lv 1–20 band is built**; later bands are placeholders.
 
+**Design reset (2026-10-30), not built yet:** skill levels are per character, and skilling stays one activity at a time
+but always runs offline at full speed. Skill 99 stays around 53 days of nonstop training on the best node. High level
+passive nodes give rare crafting materials, which also drop rarely from monsters and map themes. Those materials can
+force an exact mod at a high price, or roll past normal limits with a risk of damaging or destroying the item.
+
 Right now every life skill works the same way: pick the highest node or recipe you've unlocked, wait. Gathering
 gives one plain material, Smithing makes plain normal bases, Alchemy makes a few low orbs. Nothing you gather
 changes *what* you can craft. It's one-dimensional.
@@ -221,17 +226,18 @@ Overtime's offline speed moves onto the core ring as a small instead of being cu
 - **Fishing: coming soon, forever.** A real skill id with five spots, catches (Soggy Boot, Message in a Bottle, Tasalio's Scale…) and a skilling-tree branch whose stats are summed and read by nothing. Every spot is blocked with "Coming soon"; its level never counts toward tree points.
 
 ### More skills: candidates from Melvor
-Not built; pick with you. Ordered by how well they fit:
+Not built. One new skill arrives with each act from Act 2 on, and more arrive around or after Act 6. Each feeds its own
+game system and also produces materials for the crafting economy (reset, 2026-10-30):
 - **Thieving → Heist.** Pickpocket townsfolk and rogues for gold, Rogue's Markers and the odd currency. Easy fit: a gathering skill with no inputs.
 - **Archaeology → Expedition.** Dig sites per area for Artifacts that trade for currency or logbook-style rewards.
-- **Cartography → Maps.** Draw and upgrade maps for the Map Device once maps are built.
+- **Cartography → Maps.** Maps drop from monsters; Cartography is an optional second route that crafts them, for something like a huge offline map grind.
 - **Fletching → Quivers.** Shafts from logs into quivers (quivers don't exist yet).
 - **Runecrafting → Rune-carving.** Carve runes that enchant gear (would overlap Essences).
 - Skipped: Cooking, Firemaking, Farming, Summoning, Agility, Astrology, Township (no PoE hook, or overlap with flasks and the trees).
 
 ## Open questions
 
-- **Mastery per action** (Melvor-style). Parked. Worth another look once the higher bands land and there's more to master.
+- **Mastery per action** (Melvor-style). Planned for the long tail ([ROADMAP.md](../ROADMAP.md) milestone 11).
 - **Gemcutting.** Left as is for now. One option: Gemcutting cuts Rough Gems into **Prisms** that pick a gem's attribute and support/skill type when cutting, so it gets a "force" material like the others.
 - **Stash space.** Five fossils, ten essences and three resins add 18 bank ids. They're bank stacks, not inventory items, so no new slots are needed, but the Stash page will need a materials tab.
 

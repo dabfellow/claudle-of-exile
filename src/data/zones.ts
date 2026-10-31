@@ -250,7 +250,7 @@ export const ZONES: ZoneDef[] = [
     uniques: ['titans_girth', 'iron_bulwark', 'emberheart', 'ninth_psalm', 'mask_of_the_patient', 'penitents_plate', 'hollow_locket', 'twin_oaths'],
   },
 
-  // ---------------- Act 2: The Burning Steppe (docs/ACT2.md) ----------------
+  // ---------------- Act 2: The Burning Steppe (docs/design/ACT2.md) ----------------
   // Characters arrive around level 21 and leave around 25–27. Areas climb one level each, so the
   // drop tiers (5 → 7) and boss mechanics (3 → 6) carry the sense of going deeper.
   {

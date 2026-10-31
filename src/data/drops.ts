@@ -1,7 +1,7 @@
 /**
  * Drop tables. Monsters drop most gear and all of the rare currency; deeper areas shift
  * the odds toward rarer orbs and better rarities. Every number here is a balance knob —
- * check changes with `npm run sim` (docs/BALANCE.md).
+ * check changes with `npm run sim` (docs/design/BALANCE.md).
  */
 
 export interface RarityWeights {
