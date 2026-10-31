@@ -47,12 +47,10 @@ docs/        design notes
 ## Docs
 
 - [docs/design/GDD.md](docs/design/GDD.md) — the game design we're building toward
-- [docs/ROADMAP.md](docs/ROADMAP.md) — milestones to 1.0
+- [docs/MILESTONES.md](docs/MILESTONES.md) — next steps, milestones to 1.0, decisions, open items and history
 - [docs/design/DESIGN.md](docs/design/DESIGN.md) — how the code fits together
 - [docs/design/BALANCE.md](docs/design/BALANCE.md) — pacing knobs, the balance sim, and baseline results
 - [docs/design/ACT2.md](docs/design/ACT2.md) — Act 2 areas, bosses, uniques, and how a preview act is released
 - [docs/ops/LAUNCH.md](docs/ops/LAUNCH.md) — what is left before launch
 - [docs/design/TREES.md](docs/design/TREES.md) — the character and skilling trees, masteries and keystones
 - [docs/ops/SETUP.md](docs/ops/SETUP.md) — setting up Google/Discord login with Supabase
-- [docs/DESIGN_RESET.md](docs/DESIGN_RESET.md) — the design reset decisions, in your words
-- [docs/TODO.md](docs/TODO.md) — the running task list

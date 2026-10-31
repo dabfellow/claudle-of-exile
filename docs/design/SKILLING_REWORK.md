@@ -237,7 +237,7 @@ game system and also produces materials for the crafting economy (reset, 2026-10
 
 ## Open questions
 
-- **Mastery per action** (Melvor-style). Planned for the long tail ([ROADMAP.md](../ROADMAP.md) milestone 11).
+- **Mastery per action** (Melvor-style). Planned for the long tail ([MILESTONES.md](../MILESTONES.md) milestone 11).
 - **Gemcutting.** Left as is for now. One option: Gemcutting cuts Rough Gems into **Prisms** that pick a gem's attribute and support/skill type when cutting, so it gets a "force" material like the others.
 - **Stash space.** Five fossils, ten essences and three resins add 18 bank ids. They're bank stacks, not inventory items, so no new slots are needed, but the Stash page will need a materials tab.
 

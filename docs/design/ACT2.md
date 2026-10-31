@@ -80,7 +80,7 @@ after).
 
 ## To release
 
-1. Rebuild from the recipe ([ROADMAP.md](../ROADMAP.md) milestone 4), after the pacing work.
+1. Rebuild from the recipe ([MILESTONES.md](../MILESTONES.md) milestone 4), after the pacing work.
 2. Pacing check with `npm run sim -- --hours 36` (it now reports each act and the character level at every boss).
 3. Art from asset packs: area banners reuse the Act 1 landscapes and monsters show the skull icon today.
 4. Set `open: true` on Act 2 in `ACTS`, update Settings → About and the title screen line, deploy.

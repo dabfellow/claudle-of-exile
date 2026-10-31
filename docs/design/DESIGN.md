@@ -57,4 +57,4 @@ The engine never talks to the UI directly. It calls `ctx.emit(event)` (`GameEven
 
 ## Planned next
 
-See [ROADMAP.md](../ROADMAP.md).
+See [MILESTONES.md](../MILESTONES.md).
