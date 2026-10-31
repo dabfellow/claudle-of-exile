@@ -313,6 +313,7 @@ function StationRow({ st, go }: { st: StationDef; go: (p: Page) => void }) {
       <span className="hx-ledger-act">
         {cost ? (
           <button
+            data-tut={`upgrade-${st.id}`}
             className={`btn sm ${affordable ? 'primary' : ''}`}
             disabled={!affordable}
             title={affordable ? `Upgrade to level ${lvl + 1}` : 'Not enough materials'}

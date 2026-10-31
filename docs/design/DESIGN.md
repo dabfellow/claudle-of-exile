@@ -53,7 +53,7 @@ The engine never talks to the UI directly. It calls `ctx.emit(event)` (`GameEven
 
 ## Tutorial
 
-`data/tutorial.ts` lists steps with an NPC line, objective, target count, reward and the `data-tut` ids to highlight. The quest tracker adds a pulsing `tut-hint` class to matching elements, so pages only need a `data-tut` attribute.
+`data/tutorial.ts` lists steps with an NPC line, objective, target count, reward and the `data-tut` ids to highlight. The quest tracker adds a pulsing `tut-hint` class to matching elements, so pages only need a `data-tut` attribute. A step's `done` check passes it by, unpaid, once there's nothing left to do: a blue weapon already in hand, or a bench the account built on another character.
 
 ## Planned next
 

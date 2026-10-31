@@ -60,6 +60,7 @@ export function upgradeStation(s: GameState, ctx: Ctx, id: StationId): string | 
   s.account.hideout[id] = lvl;
   grantUnlocks(s, stationDef(id).levels[lvl - 1].grants);
   ctx.emit({ t: 'info', text: `${stationDef(id).name} upgraded to level ${lvl}`, tone: 'good' });
+  ctx.emit({ t: 'stationUpgraded', id, level: lvl });
   if (id === 'vendor') refreshVendor(s, ctx.rng);
   if (id === 'stash') s.account.stash.push([]);
   return null;

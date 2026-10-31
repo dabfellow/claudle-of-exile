@@ -232,6 +232,11 @@ const MIGRATIONS: Record<number, Migration> = {
     s.ascendancy ??= newAscendancyState();
     if (s.combat) s.combat.asc ??= newAscendancyRuntime();
   },
+  // the tutorial gained three Crafting Bench steps after Equip (index 8): later steps move down three
+  23: (raw) => {
+    const tut = raw.tutorial as { step: number; done?: boolean } | undefined;
+    if (tut && !tut.done && tut.step >= 9) tut.step += 3;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

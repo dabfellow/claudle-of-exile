@@ -228,6 +228,7 @@ export function BenchPage() {
                 <div className="row" style={{ gap: 6 }}>
                   {!Object.values(s.equipment).some((i) => i?.uid === item.uid) && (
                     <button
+                      data-tut="salvage-item"
                       className="btn sm danger"
                       disabled={!benchBuilt(s)}
                       title={benchBuilt(s) ? '' : BENCH_UNBUILT}

@@ -260,6 +260,7 @@ export function salvage(s: GameState, ctx: Ctx, uids: number[]): number {
     s.bank.arcane_dust = (s.bank.arcane_dust ?? 0) + dust;
     s.lifetime.salvaged += n;
     ctx.emit({ t: 'info', text: `Salvaged ${n} item(s) for ${dust} Arcane Dust`, tone: 'good' });
+    ctx.emit({ t: 'salvage', count: n });
   }
   return dust;
 }

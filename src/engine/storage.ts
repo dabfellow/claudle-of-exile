@@ -144,5 +144,6 @@ export function salvagePile(s: GameState, ctx: Ctx, pile: Pile): number {
   addBank(s, 'arcane_dust', dust);
   s.lifetime.salvaged += n;
   ctx.emit({ t: 'info', text: `Salvaged ${n} item(s) for ${dust} Arcane Dust`, tone: 'good' });
+  ctx.emit({ t: 'salvage', count: n });
   return dust;
 }
