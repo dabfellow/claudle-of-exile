@@ -5,7 +5,7 @@ flat dark surfaces, one warm accent, quiet borders, readable type, and states yo
 read at a glance after hours of idle play. Ornament comes from the illustrations, not
 from the chrome around them.
 
-Everything lives in [`src/styles.css`](../src/styles.css). Components never hardcode a
+Everything lives in [`src/styles.css`](../../src/styles.css). Components never hardcode a
 colour: they use the tokens below (data colours that come from game data, such as a
 skill's or zone's colour, are passed in as CSS variables like `--zone`, `--station`,
 `--rar`).
@@ -94,7 +94,7 @@ Every interactive component uses the same vocabulary:
 
 ## 3. Components
 
-Shared React components live in [`src/ui/components/common.tsx`](../src/ui/components/common.tsx);
+Shared React components live in [`src/ui/components/common.tsx`](../../src/ui/components/common.tsx);
 the rest are CSS classes.
 
 | Component | Where | Notes |

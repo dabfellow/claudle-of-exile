@@ -1,5 +1,8 @@
 # Balance notes
 
+**Design reset (2026-10-30):** the pacing targets below, like Act 1 at 6–10 h, are replaced by [GDD.md](GDD.md) §2. The
+results stay as a record of how the game runs today. Exact balance isn't a goal.
+
 Run the headless sim to check pacing after any numbers change:
 
 ```bash

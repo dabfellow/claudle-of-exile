@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { game } from '../../game';
+import { isCloudAccount } from '../../platform/accounts';
 import { cloudConfigured } from '../../platform/supabase';
 import { errorText, FEEDBACK_MAX, feedbackContext, myReview, REVIEW_MAX, saveReview, sendFeedback, type FeedbackKind } from '../../platform/feedback';
 
@@ -33,7 +34,7 @@ export function FeedbackCard() {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const account = game.account;
-  const signedIn = !!account && account.provider !== 'guest';
+  const signedIn = isCloudAccount(account);
 
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState('');

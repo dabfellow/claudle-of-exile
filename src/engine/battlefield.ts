@@ -2,7 +2,7 @@ import type { Rng } from './rng';
 import type { DamageType, Ground, GroundKind, MonsterInstance, Movement } from './types';
 
 /**
- * The battlefield (docs/BATTLEFIELD.md): a half-ring of pointy-top hexes around the player, who stands on the
+ * The battlefield (docs/design/BATTLEFIELD.md): a half-ring of pointy-top hexes around the player, who stands on the
  * bottom edge. Axial coordinates with the player at (0, 0); the field is every hex 1–4 steps away on the player's
  * row or above it. A hex's ring is its distance from the player: ring 1 is melee range, ring 4 the edge where
  * monsters walk in. Cells are numbered ring by ring, left to right, so cell 0 is the hex to the player's left.

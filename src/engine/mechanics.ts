@@ -4,7 +4,7 @@ import type { Derived } from './stats';
 import type { CombatRuntime, GameState, StatKey, Stats } from './types';
 
 /**
- * Class mechanics (docs/CLASSES.md). The meter lives in `combat.mech`:
+ * Class mechanics (docs/design/CLASSES.md). The meter lives in `combat.mech`:
  * Rage / Momentum / Malice count stacks, Martyr counts Fervor in percent.
  * Riposte and Mana is Power have no meter.
  */

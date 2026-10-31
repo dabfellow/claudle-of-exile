@@ -71,7 +71,7 @@ export const ITEM_ART: Record<string, string> = {
   duskweave_boots: new URL('../assets/items/armor/set-31-legs.png', import.meta.url).href,
   studded_boots: new URL('../assets/items/armor/set-34-legs.png', import.meta.url).href,
   wyrmscale_boots: new URL('../assets/items/armor/set-21-legs.png', import.meta.url).href,
-  // pure tiers to level 60 (docs/GEAR.md): one whole gear set per tier, so the pieces match
+  // pure tiers to level 60 (docs/design/GEAR.md): one whole gear set per tier, so the pieces match
   blackened_sallet: new URL('../assets/items/armor/set-13-helmet.png', import.meta.url).href,
   blackened_cuirass: new URL('../assets/items/armor/set-13-body.png', import.meta.url).href,
   blackened_gauntlets: new URL('../assets/items/armor/set-13-gloves.png', import.meta.url).href,

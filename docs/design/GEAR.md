@@ -2,6 +2,8 @@
 
 All bases live in `src/data/bases.ts`: 315 in all. Every attribute type, pure and hybrid, now has a ladder to level 60 (added 2026-10-26).
 
+**Design reset (2026-10-30), not built yet:** base tiers extend to about level 80, so new Maps tiers keep bringing visibly better gear.
+
 ## Tier ladders (pure str / dex / int)
 
 | Slot | Levels |
@@ -90,4 +92,4 @@ All rollable mods are in `src/data/affixes.ts`. Each has 9 tiers, unlocking at i
 
 - Monsters stop at level 33, so bases above 34 can't drop until Act 3+ exists. Smithing (level = base level) and the Town Market (character level) can't reach them either.
 - Smithing uses mithril for everything from level 22 up. A level-60 base costs the same as a level-24 one.
-- New weapons and shields use placeholder icons. The pack has no spare pieces for them.
+- New weapons and shields share icons for now, because the current pack has no spare pieces. New asset packs can cover them.

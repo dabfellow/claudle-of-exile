@@ -1,6 +1,6 @@
 /**
  * Every picture the game can show, with the prompt used to generate it.
- * Single source of truth for `npm run art` (import + resize) and docs/ART_PROMPTS.md.
+ * Single source of truth for `npm run art` (import + resize).
  * Keys are paths inside src/assets/art without an extension, e.g. `currency/chaos`.
  *
  * Prompt rule of thumb: say exactly what is in the picture (shape, material, colour, wear, how many)

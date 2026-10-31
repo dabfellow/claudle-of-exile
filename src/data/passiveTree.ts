@@ -1,7 +1,7 @@
 import type { StatKey } from '../engine/types';
 
 /**
- * The character tree (docs/TREES.md): six class sectors around a shared centre, PoE-style.
+ * The character tree (docs/design/TREES.md): six class sectors around a shared centre, PoE-style.
  * Every sector uses the same slot layout (rotated): themed clusters in three bands and two keystones,
  * then a road out to the rim where the class-mechanic clusters and mechanic keystone sit.
  * Neighbouring sectors are cross-linked so any class can path anywhere.
@@ -9,7 +9,7 @@ import type { StatKey } from '../engine/types';
 export type PassiveKind = 'start' | 'small' | 'travel' | 'notable' | 'mastery' | 'keystone';
 export type ClassRegion = 'str' | 'duelist' | 'dex' | 'shadow' | 'int' | 'templar';
 export type TreeRegion = ClassRegion | 'center' | 'forbidden';
-/** class mechanics (docs/CLASSES.md); nodes tagged with one only do something for that class */
+/** class mechanics (docs/design/CLASSES.md); nodes tagged with one only do something for that class */
 export type Mechanic = 'rage' | 'riposte' | 'momentum' | 'malice' | 'manaPower' | 'martyr';
 
 type StatMap = Partial<Record<StatKey, number>>;
@@ -144,7 +144,7 @@ interface SectorSpec {
   key: ClassRegion;
   angle: number;
   startName: string;
-  /** start node id (docs/CLASSES.md) */
+  /** start node id (docs/design/CLASSES.md) */
   start: string;
   travel: StatMap;
   clusters: Record<SlotId, ClusterSpec>;

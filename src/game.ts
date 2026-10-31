@@ -10,14 +10,26 @@ import { MIN_OFFLINE_MS, simulateOffline, type OfflineSummary } from './engine/o
 import { mathRng } from './engine/rng';
 import type { ClassId } from './data/classes';
 import { TUTORIAL_STEPS } from './data/tutorial';
+import { serialize } from './engine/save';
 import { newGame, tick } from './engine/state';
 import { tutorialPage, withTutorial } from './engine/tutorial';
-import { AppAccounts, type Account, type AuthProviderId } from './platform/accounts';
+import { AppAccounts, isCloudAccount, type Account, type AuthProviderId } from './platform/accounts';
 import { reportError, setErrorUser } from './platform/errors';
 import { checkAdmin } from './platform/feedback';
 import { getSupabase } from './platform/supabase';
 import { supabaseCharacters } from './platform/supabaseTable';
-import { CloudSaveStore, LocalSaveStore, moveCharacters, type CharacterSummary, type SaveStore, type SyncStatus } from './platform/saves';
+import {
+  adoptDemo,
+  CloudSaveStore,
+  DEMO_PENDING_KEY,
+  hasGuestProgress,
+  LocalSaveStore,
+  MemorySaveStore,
+  moveCharacters,
+  type CharacterSummary,
+  type SaveStore,
+  type SyncStatus,
+} from './platform/saves';
 import type { GameEvent, GameState, Item, SkillId } from './engine/types';
 import { activeGemDef, supportGemDef } from './data/gems';
 
@@ -78,10 +90,16 @@ class GameStore {
   xpLog: { at: number; skill: SkillId; amount: number }[] = [];
   readonly accounts = new AppAccounts(localStorage, getSupabase());
   private saves: SaveStore | null = null;
-  /** cloud sync state while signed in with Google/Discord */
+  /** cloud sync state while signed in */
   sync: SyncStatus | null = null;
   /** characters saved as a guest on this browser, offered for moving to a signed-in account */
   guestCharacters: CharacterSummary[] = [];
+  /** this browser has guest characters, so the title offers them instead of the demo */
+  hasGuest = false;
+  /** the account form is open over a running demo */
+  showAccountForm = false;
+  /** arrived from a password reset email */
+  showNewPassword = false;
   private listeners = new Set<() => void>();
   private eventListeners = new Set<(e: GameEvent) => void>();
   private nextId = 1;
@@ -110,20 +128,88 @@ class GameStore {
       this.account = null;
       this.pushToast(err instanceof Error ? err.message : 'Sign-in failed', 'bad');
     }
+    await this.checkGuestProgress();
+    // a guest with nothing saved is a new player: they get the title and the demo
+    if (this.account?.provider === 'guest' && !this.hasGuest) {
+      await this.accounts.signOut();
+      this.account = null;
+    }
+    this.showNewPassword = this.accounts.recovering;
     if (this.account) await this.openAccount(this.account);
     else this.setScreen('title');
   }
 
-  /** Guests start right away; Google/Discord redirect to the provider and come back to boot(). */
+  private async checkGuestProgress() {
+    this.hasGuest = await hasGuestProgress(localStorage, this.accounts.guestAccount()?.id);
+  }
+
+  /** Demos and guests start right away; Google/Discord redirect to the provider and come back to boot(). */
   async signIn(provider: AuthProviderId) {
     try {
+      if (provider === 'demo') localStorage.removeItem(DEMO_PENDING_KEY);
+      this.stashDemo();
       const account = await this.accounts.signIn(provider);
       if (!account) return; // redirecting
-      this.account = account;
-      await this.openAccount(account);
+      await this.switchTo(account);
     } catch (err) {
+      localStorage.removeItem(DEMO_PENDING_KEY);
       this.pushToast(err instanceof Error ? err.message : 'Sign-in failed', 'warn');
     }
+  }
+
+  /** Throws for the form to show. Resolves to false when the address must be confirmed first. */
+  async signUpWithEmail(name: string, email: string, password: string): Promise<boolean> {
+    this.stashDemo();
+    try {
+      const account = await this.accounts.signUpWithEmail(name, email, password);
+      if (account) await this.switchTo(account);
+      return !!account;
+    } catch (err) {
+      localStorage.removeItem(DEMO_PENDING_KEY);
+      throw err;
+    }
+  }
+
+  /** Throws for the form to show. */
+  async signInWithEmail(email: string, password: string) {
+    this.stashDemo();
+    try {
+      await this.switchTo(await this.accounts.signInWithEmail(email, password));
+    } catch (err) {
+      localStorage.removeItem(DEMO_PENDING_KEY);
+      throw err;
+    }
+  }
+
+  async updatePassword(password: string) {
+    await this.accounts.updatePassword(password);
+    this.showNewPassword = false;
+    this.pushToast('Password changed', 'good');
+    this.notify();
+  }
+
+  setAccountForm(open: boolean) {
+    this.showAccountForm = open;
+    this.notify();
+  }
+
+  dismissNewPassword() {
+    this.showNewPassword = false;
+    this.notify();
+  }
+
+  /** Keep the demo running in this tab for the account that's about to open. */
+  private stashDemo() {
+    if (this.account?.provider !== 'demo' || this.screen !== 'game') return;
+    this.state.lastSaved = Date.now();
+    localStorage.setItem(DEMO_PENDING_KEY, serialize(this.state));
+  }
+
+  private async switchTo(account: Account) {
+    this.stopLoop();
+    this.showAccountForm = false;
+    this.account = account;
+    await this.openAccount(account);
   }
 
   async signOut() {
@@ -135,6 +221,7 @@ class GameStore {
     this.saves = null;
     this.sync = null;
     this.characters = [];
+    await this.checkGuestProgress();
     this.setScreen('title');
   }
 
@@ -142,7 +229,11 @@ class GameStore {
     const supabase = getSupabase();
     setErrorUser(account.id);
     this.isAdmin = false;
-    if (account.provider !== 'guest' && supabase) {
+    if (account.provider === 'demo') {
+      this.saves = new MemorySaveStore();
+      this.sync = null;
+      this.guestCharacters = [];
+    } else if (isCloudAccount(account) && supabase) {
       void checkAdmin().then((yes) => {
         this.isAdmin = yes && this.account?.id === account.id;
         this.notify();
@@ -156,6 +247,12 @@ class GameStore {
       this.saves = cloud;
       const guest = this.accounts.guestAccount();
       this.guestCharacters = guest ? await new LocalSaveStore(localStorage, guest.id, false).list() : [];
+      const adopted = await this.adoptPendingDemo();
+      if (adopted) {
+        await this.refreshCharacters();
+        await this.enter(adopted);
+        return;
+      }
     } else {
       this.saves = new LocalSaveStore(localStorage, account.id);
       this.sync = null;
@@ -165,10 +262,26 @@ class GameStore {
     this.setScreen(this.characters.length || this.guestCharacters.length ? 'select' : 'create');
   }
 
+  /** Bring the demo stashed at sign-up onto this account. */
+  private async adoptPendingDemo(): Promise<string | null> {
+    const raw = localStorage.getItem(DEMO_PENDING_KEY);
+    if (!raw || !this.saves) return null;
+    try {
+      const id = await adoptDemo(raw, this.saves);
+      this.pushToast('Your demo character is now saved to your account', 'good');
+      return id;
+    } catch (err) {
+      reportError(err, { where: 'adoptPendingDemo' });
+      return null;
+    } finally {
+      localStorage.removeItem(DEMO_PENDING_KEY);
+    }
+  }
+
   /** Move this browser's guest characters onto the signed-in account. */
   async adoptGuestCharacters() {
     const guest = this.accounts.guestAccount();
-    if (!guest || !this.saves || this.account?.provider === 'guest') return;
+    if (!guest || !this.saves || !isCloudAccount(this.account)) return;
     const moved = await moveCharacters(new LocalSaveStore(localStorage, guest.id, false), this.saves, this.characters.map((c) => c.name));
     this.guestCharacters = [];
     await this.refreshCharacters();

@@ -1,10 +1,10 @@
 # Asset-pack mapping report
 
-Asset packs mapped against the 187-slot art registry (`src/data/artManifest.ts`). What is wired in lives in `src/ui/assets.ts`, and this report is generated from it. Generated art dropped into `src/assets/art` always wins over pack art, slot by slot.
+Asset packs mapped against the 187-slot art registry (`src/data/artManifest.ts`). What is wired in lives in `src/ui/assets.ts`, and this report is generated from it. Asset packs are the game's real art; there's no AI art. Art dropped into `src/assets/art` wins over wired pack art, slot by slot.
 
 **Coverage: 187/187 slots have art (100.0%). 0 have none.**
 
-Confidence: exact 2, close 79, placeholder 106, none 0. The placeholders come from a deliberately loose first pass: every remaining slot got the most appropriate art on hand, even when it only roughly fits. They are the slots to replace first when better art arrives (the "Weakest stand-ins" list below).
+Confidence: exact 2, close 79, loose 106, none 0. The loose matches come from a deliberately broad first pass: every remaining slot got the most appropriate art on hand, even when it only roughly fits. They're the slots to swap first if a better pack piece turns up (the "Weakest stand-ins" list below).
 
 ## Usable artwork per pack
 

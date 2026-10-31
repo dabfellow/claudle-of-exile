@@ -1,5 +1,8 @@
 # Skill trees — v3 (built)
 
+**Design reset (2026-10-30), not built yet:** the character tree stays and gains enough nodes for characters reaching
+level 90–100. Picking an ascendancy unlocks a new section of the main tree.
+
 Two separate trees with separate points (GDD §5):
 
 | Tree | Points from | Purpose |

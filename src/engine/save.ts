@@ -166,7 +166,7 @@ const MIGRATIONS: Record<number, Migration> = {
     if ((hideout.bench ?? 1) < 2) hideout.bench = 2;
     raw.hideout = hideout;
   },
-  // the affix pool pass (docs/GEAR.md): Item Rarity became a prefix, so move it on existing items
+  // the affix pool pass (docs/design/GEAR.md): Item Rarity became a prefix, so move it on existing items
   17: (raw) => {
     const s = raw as unknown as GameState;
     const fix = (item: Item | undefined) => {
@@ -181,7 +181,7 @@ const MIGRATIONS: Record<number, Migration> = {
     s.vendor?.stock?.forEach((o) => fix(o.item));
   },
   18: (raw) => {
-    // the battlefield became a half-ring of hexes (docs/BATTLEFIELD.md): old cells mean nothing now, so the fight restarts
+    // the battlefield became a half-ring of hexes (docs/design/BATTLEFIELD.md): old cells mean nothing now, so the fight restarts
     const s = raw as unknown as GameState;
     if (!s.combat) return;
     s.combat.monsters = [];

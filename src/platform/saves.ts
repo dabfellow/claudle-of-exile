@@ -110,6 +110,34 @@ export class LocalSaveStore implements SaveStore {
   }
 }
 
+/** Whether this browser holds guest progress, including the pre-characters single save. */
+export async function hasGuestProgress(storage: Storage, guestId: string | undefined): Promise<boolean> {
+  if (storage.getItem(SAVE_KEY)) return true;
+  return !!guestId && (await new LocalSaveStore(storage, guestId, false).list()).length > 0;
+}
+
+/** A demo's characters: held in memory only, so they end with the tab. */
+export class MemorySaveStore implements SaveStore {
+  private chars = new Map<string, { summary: CharacterSummary; raw: string }>();
+
+  async list(): Promise<CharacterSummary[]> {
+    return [...this.chars.values()].map((c) => c.summary).sort((a, b) => b.lastPlayed - a.lastPlayed);
+  }
+
+  async load(id: string): Promise<GameState | null> {
+    const c = this.chars.get(id);
+    return c ? deserialize(c.raw) : null;
+  }
+
+  async save(s: GameState): Promise<void> {
+    this.chars.set(s.character.id, { summary: summarize(s), raw: serialize(s) });
+  }
+
+  async remove(id: string): Promise<void> {
+    this.chars.delete(id);
+  }
+}
+
 // ---------- cloud ----------
 
 /** One row of the Supabase `characters` table. */
@@ -225,6 +253,18 @@ export class CloudSaveStore implements SaveStore {
     await this.cache.remove(id);
     await this.table.remove(id);
   }
+}
+
+/** Written only when a demo player signs up, so the character survives a redirect or an email link. */
+export const DEMO_PENDING_KEY = 'coe-demo-pending';
+
+/** Save a stashed demo character to an account. Returns its id. */
+export async function adoptDemo(raw: string, to: SaveStore): Promise<string> {
+  const s = deserialize(raw);
+  const demo = new MemorySaveStore();
+  await demo.save(s);
+  await moveCharacters(demo, to, (await to.list()).map((c) => c.name));
+  return s.character.id;
 }
 
 /** Move every character from one store to another (guest → account). Returns how many moved. */

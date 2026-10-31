@@ -8,7 +8,7 @@ export interface ClassDef {
   name: string;
   attribute: string;
   region: ClassRegion;
-  /** the class's own combat mechanic (docs/CLASSES.md); the Exile has none */
+  /** the class's own combat mechanic (docs/design/CLASSES.md); the Exile has none */
   mechanic: Mechanic | null;
   /** challenge class: picks any start node, unlocked by an Act 1 clear */
   challenge?: boolean;

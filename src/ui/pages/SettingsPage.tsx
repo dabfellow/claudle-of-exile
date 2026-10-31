@@ -3,14 +3,16 @@ import { exportSave, importSave } from '../../engine/save';
 import { newGame } from '../../engine/state';
 import type { Rarity } from '../../engine/types';
 import { game, useGame } from '../../game';
+import { isCloudAccount } from '../../platform/accounts';
 import { fmt, PageHeader } from '../components/common';
 import { FeedbackCard } from '../components/FeedbackCard';
-import { AccountBadge } from '../screens/Screens';
+import { AccountBadge, leaveAccount } from '../screens/Screens';
 
 export function SettingsPage() {
   const s = useGame();
   const [text, setText] = useState('');
   const [exported, setExported] = useState('');
+  const demo = game.account?.provider === 'demo';
   return (
     <div className="page">
       <PageHeader title="Settings" />
@@ -19,14 +21,19 @@ export function SettingsPage() {
         <div className="row wrap">
           <AccountBadge />
           <span className="spacer" />
-          <button className="btn sm" onClick={() => game.signOut()}>
-            {game.account?.provider === 'guest' ? 'Back to title' : 'Sign out'}
+          <button className="btn sm" onClick={leaveAccount}>
+            {isCloudAccount(game.account) ? 'Sign out' : 'Back to title'}
           </button>
         </div>
         {game.account?.provider === 'guest' && (
           <p className="dim small" style={{ marginBottom: 0 }}>
-            Playing as a guest: progress is saved in this browser only. Sign in with Google or Discord from the title screen to save to the cloud — you can
-            bring your guest characters with you.
+            Playing as a guest: progress is saved in this browser only. Use an account from the title screen to save to the cloud — you can bring your
+            guest characters with you.
+          </p>
+        )}
+        {demo && (
+          <p className="dim small" style={{ marginBottom: 0 }}>
+            Playing the demo: nothing is saved, and your progress is lost when you close or refresh this tab. Create an account to keep this character.
           </p>
         )}
       </div>
@@ -42,10 +49,11 @@ export function SettingsPage() {
           filters and the story. Your characters carry over.
         </p>
         <p className="dim small" style={{ marginBottom: 0 }}>
-          <b>Privacy:</b> guest saves stay in this browser. If you sign in with Google or Discord, they share your name, email and avatar with our
-          sign-in service (Supabase), and we store your character saves there so you can play anywhere. That's all: no ads, no analytics, no
-          tracking. Signing out keeps your cloud saves. Feedback and reviews you send are stored there too, and if the game crashes, an error
-          report (what went wrong, your browser and game version, never your name or email) goes to our error tracker, Sentry.
+          <b>Privacy:</b> the demo isn't saved anywhere, and guest saves stay in this browser. With an account, our sign-in service (Supabase) stores
+          your email and player name (Google or Discord also share your name and avatar), and we store your character saves there so you can play
+          anywhere. That's all: no ads, no analytics, no tracking. Signing out keeps your cloud saves. Feedback and reviews you send are stored there
+          too, and if the game crashes, an error report (what went wrong, your browser and game version, never your name or email) goes to our error
+          tracker, Sentry.
         </p>
         <p className="dim small" style={{ marginBottom: 0 }}>
           <b>Support:</b> questions, or want your account and saves deleted? Email{' '}
@@ -78,7 +86,7 @@ export function SettingsPage() {
           Reduce motion
         </label>
       </div>
-      <div className="card">
+      {!demo && <div className="card">
         <div className="card-title">Save data</div>
         <p className="muted" style={{ marginTop: 0 }}>
           The game saves automatically every 10 seconds in this browser.
@@ -131,7 +139,7 @@ export function SettingsPage() {
         >
           Import save
         </button>
-      </div>
+      </div>}
       <div className="card">
         <div className="card-title">Lifetime</div>
         <div className="row wrap" style={{ gap: 18 }}>

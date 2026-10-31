@@ -428,7 +428,7 @@ export const AFFIXES: AffixDef[] = [
   U('u_poison_pct', 'suffix', '{0}% increased Poison Damage', 'poisonPct'),
   U('u_life_flask_recovery', 'suffix', '{0}% increased Life Flask Recovery', 'lifeFlaskRecovery'),
 
-  // class-mechanic knobs (docs/CLASSES.md): only the class with that mechanic uses them
+  // class-mechanic knobs (docs/design/CLASSES.md): only the class with that mechanic uses them
   U('u_rage_max', 'prefix', '+{0} to maximum Rage', 'rageMax'),
   U('u_rage_effect', 'prefix', '{0}% increased effect of Rage', 'rageEffect'),
   U('u_rage_decay', 'suffix', 'Rage decays {0}% slower', 'rageDecay'),
@@ -455,7 +455,7 @@ export const AFFIXES: AffixDef[] = [
   U('u_nova_heal', 'suffix', '{0}% increased holy nova healing', 'novaHeal'),
   U('u_nova_es', 'suffix', 'The holy nova restores {0}% of Energy Shield', 'novaEs'),
 
-  // skill modifiers (docs/NEW_UNIQUES.md ★): each tweaks one named skill gem
+  // skill modifiers (docs/design/SKILLS_AND_UNIQUES.md ★): each tweaks one named skill gem
   U('u_pummel_hits', 'suffix', 'Pummel strikes {0} additional time', 'pummelHits'),
   U('u_barrage_arrows', 'suffix', 'Barrage fires {0} additional arrow', 'barrageArrows'),
   U('u_parry_blocks', 'suffix', 'Parry blocks {0} additional hit', 'parryBlocks'),

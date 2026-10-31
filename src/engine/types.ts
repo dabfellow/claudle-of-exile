@@ -68,19 +68,19 @@ export const STAT_KEYS = [
   'evadeSpeed', 'manaRegenFlat', 'lifeFlaskRecovery', 'manaFlaskRecovery', 'utilityFlaskDuration',
   'bloodPact', 'windDancer', 'mindOverFlesh', 'steadyHand', 'arcaneRecursion', 'bastion', 'energyShield',
   'energyShieldPct', 'esRechargePct',
-  // local mods (docs/GEAR.md): change only the item they're on
+  // local mods (docs/design/GEAR.md): change only the item they're on
   'localPhysPct', 'localArmourPct', 'localEvasionPct', 'localEsPct',
   'physLeech', 'elemLeech', 'charXp', 'manaAsEs', 'spellBlock', 'poisonOnHit', 'igniteOnHit',
   // flat damage added to spells at full effectiveness
   'spellFireMin', 'spellFireMax', 'spellColdMin', 'spellColdMax', 'spellLightMin', 'spellLightMax',
-  // class mechanic knobs (docs/CLASSES.md): only the class with that mechanic uses them
+  // class mechanic knobs (docs/design/CLASSES.md): only the class with that mechanic uses them
   'rageMax', 'rageEffect', 'rageDecay', 'rageRegen', 'rageOnHitTaken', 'endlessFury',
   'ripostePct', 'riposteCooldown', 'riposteHeal', 'riposteCrit', 'riposteBleed', 'perfectForm',
   'momentumMax', 'momentumEffect', 'momentumRetain', 'momentumEvasion', 'perpetualMotion',
   'maliceMax', 'coupPct', 'maliceCritKeep', 'coupAilment', 'maliceOnHitTaken', 'thousandCuts',
   'manaPower', 'manaPowerFull', 'manaPowerEs', 'allOrNothing',
   'fervorPct', 'novaPct', 'novaHeal', 'novaEs', 'saintsSacrifice',
-  // skill modifiers on uniques (docs/NEW_UNIQUES.md ★): tweak one named skill
+  // skill modifiers on uniques (docs/design/SKILLS_AND_UNIQUES.md ★): tweak one named skill
   'pummelHits', 'barrageArrows', 'parryBlocks', 'hammerConvert', 'meditateEs', 'infernalSpread',
   // forbidden keystones
   'overclock', 'knifesEdge', 'eternalHunger',

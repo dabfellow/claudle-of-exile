@@ -1,6 +1,6 @@
 /* ==========================================================================
    The Ashen Codex — design tokens and shared components.
-   Spec: docs/DESIGN_SYSTEM.md. Components use these tokens, never raw colours.
+   Spec: docs/design/DESIGN_SYSTEM.md. Components use these tokens, never raw colours.
    ========================================================================== */
 :root {
   /* surfaces */
@@ -2683,6 +2683,7 @@ h3 {
 
 .provider.g { background: var(--brand-google); }
 .provider.d { background: var(--brand-discord); }
+.provider.e { background: var(--accent); }
 
 .soon {
   font-size: var(--fs-2xs);
@@ -2906,6 +2907,44 @@ input[type='checkbox'] {
 
 .guest-banner > div {
   flex: 1;
+}
+
+.demo-banner {
+  margin-bottom: var(--s-4);
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* the display font has no lowercase, which hides typos in an email address */
+.title-card .input.lg {
+  font-family: inherit;
+  letter-spacing: normal;
+}
+
+.account-form-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-xs);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  color: var(--text);
 }
 
 /* ============ tutorial ============ */
@@ -3473,7 +3512,7 @@ g.tut-hint circle.body {
   align-self: center;
 }
 
-/* ---- battlefield: a half-ring of hexes, the player on the bottom edge (docs/BATTLEFIELD.md) ---- */
+/* ---- battlefield: a half-ring of hexes, the player on the bottom edge (docs/design/BATTLEFIELD.md) ---- */
 .arena-side {
   display: flex;
   flex-direction: column;

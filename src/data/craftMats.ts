@@ -2,7 +2,7 @@ import type { SkillId } from '../engine/types';
 import type { MaterialDef } from './materials';
 
 /**
- * Crafting materials from life skills (docs/SKILLING_REWORK.md): Fossils bias which mods roll,
+ * Crafting materials from life skills (docs/design/SKILLING_REWORK.md): Fossils bias which mods roll,
  * Essences force one mod, Resin raises the item level of smithed bases, shards fuse into orbs.
  */
 export interface FossilDef {

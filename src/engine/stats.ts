@@ -31,7 +31,7 @@ export function itemStats(item: Item): Partial<Record<StatKey, number>> {
 }
 
 /**
- * Local mods (docs/GEAR.md): on an armour piece or shield, flat and % defence mods change only that
+ * Local mods (docs/design/GEAR.md): on an armour piece or shield, flat and % defence mods change only that
  * piece's own armour, evasion and energy shield. On a weapon, flat and % physical damage change only
  * that weapon's damage. Rings, amulets and belts have no local stats: everything there is global.
  */

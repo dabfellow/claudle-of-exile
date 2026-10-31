@@ -1,10 +1,11 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 
 /**
- * Account layer. Guests live in browser storage; Google and Discord sign in through
+ * Account layer. Demos live in memory and end with the tab; browsers that already have
+ * guest characters keep them in browser storage; email, Google and Discord sign in through
  * Supabase. The game only sees an Account and doesn't care which kind it is.
  */
-export type AuthProviderId = 'guest' | 'google' | 'discord';
+export type AuthProviderId = 'demo' | 'guest' | 'email' | 'google' | 'discord';
 
 export interface Account {
   id: string;
@@ -63,9 +64,17 @@ export class LocalAccounts implements AccountProvider {
   }
 }
 
-function toAccount(user: User): Account {
+/** True for accounts backed by Supabase, whose saves live in the cloud. */
+export function isCloudAccount(account: Account | null): boolean {
+  return !!account && account.provider !== 'guest' && account.provider !== 'demo';
+}
+
+const DEMO_ACCOUNT: Account = { id: 'demo', provider: 'demo', displayName: 'Demo' };
+
+export function toAccount(user: User): Account {
   const meta = user.user_metadata ?? {};
-  const provider = (user.app_metadata?.provider === 'discord' ? 'discord' : 'google') as AuthProviderId;
+  const signedInWith = user.app_metadata?.provider;
+  const provider: AuthProviderId = signedInWith === 'discord' || signedInWith === 'email' ? signedInWith : 'google';
   return {
     id: user.id,
     provider,
@@ -74,10 +83,12 @@ function toAccount(user: User): Account {
   };
 }
 
-/** Guest accounts plus Google/Discord through Supabase. */
+/** Demo and guest accounts plus email, Google and Discord through Supabase. */
 export class AppAccounts implements AccountProvider {
   private guest: LocalAccounts;
   private active: Account | null = null;
+  /** arrived from a password reset email, so the player needs to choose a new password */
+  recovering = false;
 
   constructor(
     private storage: Storage,
@@ -96,9 +107,11 @@ export class AppAccounts implements AccountProvider {
     if (this.supabase) {
       const authError = readAuthError();
       if (authError) throw new Error(authError);
+      const recovery = readRecovery();
       const { data } = await this.supabase.auth.getSession();
       cleanAuthParams();
-      if (data.session?.user && mode !== 'guest') {
+      if (data.session?.user && (mode !== 'guest' || recovery)) {
+        this.recovering = recovery;
         this.active = toAccount(data.session.user);
         this.storage.setItem(MODE_KEY, 'cloud');
         return this.active;
@@ -118,17 +131,21 @@ export class AppAccounts implements AccountProvider {
   }
 
   async signIn(provider: AuthProviderId): Promise<Account | null> {
+    if (provider === 'demo') {
+      this.active = DEMO_ACCOUNT;
+      return this.active;
+    }
     if (provider === 'guest') {
       this.active = await this.guest.signIn('guest');
       this.storage.setItem(MODE_KEY, 'guest');
       return this.active;
     }
+    if (provider === 'email') throw new Error('Email accounts sign in with a password');
     if (!this.supabase) throw new Error('Online accounts are not configured');
     this.storage.setItem(MODE_KEY, 'cloud');
     const { error } = await this.supabase.auth.signInWithOAuth({
       provider,
-      // return to the game's own folder (/path-of-idle/ on the live site), not the site hub
-      options: { redirectTo: window.location.origin + window.location.pathname },
+      options: { redirectTo: returnUrl() },
     });
     if (error) {
       this.storage.removeItem(MODE_KEY);
@@ -137,11 +154,61 @@ export class AppAccounts implements AccountProvider {
     return null; // the browser is now redirecting to the provider
   }
 
+  private online(): SupabaseClient {
+    if (!this.supabase) throw new Error('Online accounts are not configured');
+    return this.supabase;
+  }
+
+  /** Resolves to null when Supabase wants the address confirmed before the first sign-in. */
+  async signUpWithEmail(name: string, email: string, password: string): Promise<Account | null> {
+    const { data, error } = await this.online().auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name }, emailRedirectTo: returnUrl() },
+    });
+    if (error) throw error;
+    // the confirmation link may open in a new tab, which must not fall back to a guest
+    this.storage.setItem(MODE_KEY, 'cloud');
+    if (!data.session || !data.user) return null;
+    this.active = toAccount(data.user);
+    return this.active;
+  }
+
+  async signInWithEmail(email: string, password: string): Promise<Account> {
+    const { data, error } = await this.online().auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    this.storage.setItem(MODE_KEY, 'cloud');
+    this.active = toAccount(data.user);
+    return this.active;
+  }
+
+  async sendPasswordReset(email: string): Promise<void> {
+    const { error } = await this.online().auth.resetPasswordForEmail(email, { redirectTo: `${returnUrl()}?${RECOVERY_PARAM}=1` });
+    if (error) throw error;
+  }
+
+  async updatePassword(password: string): Promise<void> {
+    const { error } = await this.online().auth.updateUser({ password });
+    if (error) throw error;
+    this.recovering = false;
+  }
+
   async signOut(): Promise<void> {
-    if (this.active && this.active.provider !== 'guest' && this.supabase) await this.supabase.auth.signOut();
+    if (isCloudAccount(this.active) && this.supabase) await this.supabase.auth.signOut();
     this.storage.removeItem(MODE_KEY);
     this.active = null;
   }
+}
+
+const RECOVERY_PARAM = 'recovery';
+
+/** The game's own folder (/path-of-idle/ on the live site), not the site hub. */
+function returnUrl(): string {
+  return window.location.origin + window.location.pathname;
+}
+
+function readRecovery(): boolean {
+  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).has(RECOVERY_PARAM);
 }
 
 /** An OAuth error the provider sent back in the URL, if any. */

@@ -1,5 +1,5 @@
 /**
- * Crash reporting through Sentry (docs/ADMIN_SETUP.md). Off unless VITE_SENTRY_DSN is set at build
+ * Crash reporting through Sentry (docs/ops/SETUP.md). Off unless VITE_SENTRY_DSN is set at build
  * time; the SDK is loaded lazily so guest-only and dev builds don't pay for it.
  */
 

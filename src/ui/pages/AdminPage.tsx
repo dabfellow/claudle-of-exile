@@ -47,7 +47,7 @@ export function AdminPage() {
       {error && (
         <div className="card">
           <b>Couldn't load admin data:</b> <span className="muted">{error}</span>
-          <p className="dim small">Run the SQL in docs/ADMIN_SETUP.md and add your account to the admins table.</p>
+          <p className="dim small">Run the SQL in docs/ops/SETUP.md and add your account to the admins table.</p>
         </div>
       )}
       {tab === 'overview' && !error && <Overview stats={stats} />}
@@ -116,7 +116,7 @@ function Overview({ stats }: { stats: AdminStats | null }) {
           <Bars rows={levels} />
         </div>
       </div>
-      <p className="dim small">Signed-in players only: guest saves never leave the browser.</p>
+      <p className="dim small">Accounts only: demos aren't saved, and older guest saves stay in the browser.</p>
     </>
   );
 }
@@ -238,7 +238,7 @@ function ErrorsTab() {
         </>
       ) : (
         <p className="muted" style={{ margin: 0 }}>
-          Not set up yet: add <code>VITE_SENTRY_DSN</code> to <code>.env.local</code> and redeploy (docs/ADMIN_SETUP.md).
+          Not set up yet: add <code>VITE_SENTRY_DSN</code> to <code>.env.local</code> and redeploy (docs/ops/SETUP.md).
         </p>
       )}
     </div>

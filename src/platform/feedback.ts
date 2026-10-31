@@ -4,7 +4,7 @@ import { APP_VERSION } from './errors';
 import { getSupabase } from './supabase';
 
 /**
- * Player feedback, star reviews and the admin page's data (tables in docs/ADMIN_SETUP.md).
+ * Player feedback, star reviews and the admin page's data (tables in docs/ops/SETUP.md).
  * Row-level security does the gatekeeping: players can only write, admins can read.
  */
 

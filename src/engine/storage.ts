@@ -5,7 +5,7 @@ import { isCraftLocked } from './crafting';
 import { salvageValue } from './items';
 import type { GameState, Item } from './types';
 
-// Gear lives in four places: the ground, the bag (`inventory`), stash pages and equipment. See docs/STASH.md.
+// Gear lives in four places: the ground, the bag (`inventory`), stash pages and equipment. See docs/design/TOWN.md.
 
 export function bagFull(s: GameState): boolean {
   return s.inventory.length >= BAG_SIZE;
