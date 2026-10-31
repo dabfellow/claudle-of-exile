@@ -17,7 +17,8 @@ stay as they are, with no playtest planned, until you say otherwise.
 
 **In order:**
 
-1. **Claude:** build Act 3 and the first ascendancy trial from [ACT3.md](design/ACT3.md). Sessions started 2026-10-31.
+1. **Claude:** build Acts 4–6 from [ACTS_4_6.md](design/ACTS_4_6.md). Act 3 and the first trial are merged into `main`,
+   closed to players and unpushed.
 2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
 3. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
@@ -36,8 +37,8 @@ stay as they are, with no playtest planned, until you say otherwise.
 | 3 | Account layer | Live, not tested on real accounts | Real-account test |
 | 4 | Act recipe and Act 2 | **In progress**: pieces merged | Pacing and Act 1 cold check |
 | 5 | Maps preview | Built, dev only | You playing it |
-| 6 | Act 3 and ascendancies | **In progress**: design decided, sessions running | Sessions |
-| 7 | Acts 4–6 | Design decided; level 80 gear done early | Milestone 6 |
+| 6 | Act 3 and ascendancies | Built, closed to players | Opening Act 3, deploy |
+| 7 | Acts 4–6 | **Next**: design decided; level 80 gear done early | Your go |
 | 8 | Maps | Not started | Milestones 5 and 7 |
 | 9 | Hard mode bosses | Answered: 5 bosses, post-Act 6 | Milestone 8 |
 | 10 | Top-end crafting and hideout | Not started | Milestone 9 |
@@ -87,9 +88,11 @@ stay as they are, with no playtest planned, until you say otherwise.
 - **Done:** you've played it and said whether the loop is fun.
 
 ### 6. Act 3 and ascendancies
-- Act 3 from the recipe, with larger stage counts starting to grow.
-- First ascendancy trial at the start of Act 3: 12 in total, each with its own tree tab and points. Exile has none
-  ([ASCENDANCIES.md](design/ASCENDANCIES.md)). Trials 2 and 3 arrive with Acts 4 and 6 in Milestone 7.
+- [x] Act 3 from the recipe: 10 stages, Martyrs, aim rules, Zealots and blood, Rune-carving ([RUNES.md](design/RUNES.md)) — done 2026-10-31
+- [x] First ascendancy trial at the start of Act 3: 12 ascendancies, each with its own tree tab and points. Exile has
+  none ([ASCENDANCIES.md](design/ASCENDANCIES.md)) — done 2026-10-31
+- [ ] Trials 2 and 3 arrive with Acts 4 and 6 in Milestone 7.
+- [ ] Open Act 3 to players and deploy. Pacing and balance haven't been simmed.
 - Tree extended for the extra levels.
 - **Done:** every main class can pick either ascendancy and play it through Act 3.
 
