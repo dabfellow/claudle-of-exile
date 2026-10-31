@@ -139,6 +139,12 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
             <span style={{ color: 'var(--mana-2)' }}>{nums.manaCost}</span>
           </>
         )}
+        {nums.lifeCost > 0 && (
+          <>
+            <span className="muted">Life cost</span>
+            <span style={{ color: 'var(--life-2)' }}>{nums.lifeCost}</span>
+          </>
+        )}
         {def.cooldownMs > 0 && (
           <>
             <span className="muted">Cooldown</span>

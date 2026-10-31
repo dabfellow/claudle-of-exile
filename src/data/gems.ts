@@ -7,8 +7,9 @@ export type GemAttr = 'str' | 'dex' | 'int';
  * What a skill does, which decides the supports that fit it. `hit`: it deals damage when used (damage
  * supports need this, so they never fit a shield or a mana refill). `cast`: a spell with a cast time,
  * the only kind Faster Casts speeds up. `duration`: something it does lasts, so Lingering stretches it.
+ * `bleed`: it opens a bleed of its own. `blood`: it spends Life when used.
  */
-export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'curse' | 'movement' | 'dot' | 'sustain' | 'hit' | 'cast';
+export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'curse' | 'movement' | 'dot' | 'sustain' | 'hit' | 'cast' | 'bleed' | 'blood';
 export type SkillRole = 'main' | 'burst' | 'area' | 'guard' | 'buff' | 'curse' | 'sustain';
 
 /** What a skill does when it fires. Numbers are at gem level 1. */
@@ -40,6 +41,12 @@ export interface SkillEffect {
   blocks?: number;
   /** guard: evade everything for this long */
   evadeMs?: number;
+  /** spends this % of maximum life on use, past energy shield: supports' cost multipliers raise it, and rules stop short of LIFE_RESERVE_PCT */
+  lifePct?: number;
+  /** spells: adds this % of the life spent to the hit, as the skill's element */
+  lifeToDamage?: number;
+  /** cashes in the target's bleed: its remaining damage lands at once, and this % of that comes back as life, up to 25% of maximum life */
+  consumeBleed?: number;
   /** guard: absorb shield as % of max life */
   shieldPct?: number;
   /** guard/buff: timed stats and more-damage; regenPct is % of max life per second (negative drains, never below 1 life); outpace burns out hazards under you like running does */
@@ -59,6 +66,8 @@ export interface SkillEffect {
     dealLess?: number;
     /** % slower attacks, wind-ups and walking */
     slow?: number;
+    /** % increased damage taken from bleeding */
+    bleedTaken?: number;
   };
   /** attacks: this % of physical damage is converted to another type (and scales with that type's increases) */
   convert?: { type: DamageType; pct: number };
@@ -117,6 +126,7 @@ export type RuleCondition =
   | 'enemyCasting'
   | 'onGround'
   | 'lifeBelow'
+  | 'lifeAbove'
   | 'manaAbove'
   | 'manaBelow'
   | 'enemiesAtLeast'
@@ -167,6 +177,7 @@ export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; 
   enemyCasting: { label: 'When an enemy winds up', unlock: 'windups' },
   onGround: { label: 'While standing on', ground: true, unlock: 'ground' },
   lifeBelow: { label: 'When life below', unit: '%', defaultValue: 50, unlock: 'vitals' },
+  lifeAbove: { label: 'When life above', unit: '%', defaultValue: 60, unlock: 'vitals' },
   manaAbove: { label: 'When mana above', unit: '%', defaultValue: 40 },
   manaBelow: { label: 'When mana below', unit: '%', defaultValue: 30, unlock: 'vitals' },
   enemiesAtLeast: { label: 'When enemies at least', unit: '', defaultValue: 3 },
@@ -268,6 +279,34 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     desc: 'Curse the target and enemies next to it for 8s: they take 30% increased physical damage.',
     defaultRule: { when: 'notActive' },
   }),
+  A({
+    id: 'flagellate', name: 'Flagellate', attr: 'str', role: 'main', tags: ['attack', 'melee', 'blood', 'hit'],
+    manaCost: 0, cooldownMs: 0, timeMs: 3300, color: '#b03a3a',
+    effect: { weaponPct: 230, targets: 'single', lifePct: 3 }, weapons: STRIKE_WEAPONS,
+    desc: 'A savage blow that tears at you as well. Spends 3% of your Life instead of mana.',
+    defaultRule: { when: 'lifeAbove', value: 60 },
+  }),
+  A({
+    id: 'scourge', name: 'Scourge', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area', 'dot', 'duration', 'bleed', 'blood', 'hit'],
+    manaCost: 0, cooldownMs: 5000, timeMs: 3300, color: '#a8342f',
+    effect: { weaponPct: 110, area: 'arc', lifePct: 4, ailment: { kind: 'bleed', pctPerSec: 40, durationMs: 4000 } }, weapons: STRIKE_WEAPONS,
+    desc: 'A barbed lash across the target and the enemies either side of it, leaving them bleeding. Spends 4% of your Life instead of mana.',
+    defaultRule: { when: 'enemiesAtLeast', value: 3 },
+  }),
+  A({
+    id: 'blood_rite', name: 'Blood Rite', attr: 'str', role: 'buff', tags: ['buff', 'duration', 'blood'],
+    manaCost: 0, cooldownMs: 16000, timeMs: 600, color: '#c23030',
+    effect: { lifePct: 15, buff: { durationMs: 8000, moreDamage: 25 } },
+    desc: 'Offer up 15% of your Life for 25% more damage for 8s.',
+    defaultRule: { when: 'lifeAbove', value: 70 },
+  }),
+  A({
+    id: 'blood_ward', name: 'Blood Ward', attr: 'str', role: 'guard', tags: ['guard', 'duration', 'blood'],
+    manaCost: 0, cooldownMs: 10000, timeMs: 600, color: '#8e2f3f',
+    effect: { lifePct: 10, shieldPct: 40, buff: { durationMs: 5000 } },
+    desc: 'Spend 10% of your Life on a shield absorbing damage equal to 40% of your life for 5s.',
+    defaultRule: { when: 'enemyCasting' },
+  }),
 
   // ---------- Dexterity ----------
   A({
@@ -292,7 +331,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     defaultRule: { when: 'enemyCasting' },
   }),
   A({
-    id: 'lacerate', name: 'Lacerate', attr: 'dex', role: 'burst', tags: ['attack', 'melee', 'dot', 'duration', 'hit'],
+    id: 'lacerate', name: 'Lacerate', attr: 'dex', role: 'burst', tags: ['attack', 'melee', 'dot', 'duration', 'bleed', 'hit'],
     manaCost: 10, cooldownMs: 0, timeMs: 3300, color: '#c0392b',
     effect: { weaponPct: 130, targets: 'single', ailment: { kind: 'bleed', pctPerSec: 60, durationMs: 4000 } }, range: 2, weapons: ['sword', 'axe'],
     desc: 'A reaching sweep (2 rings) and a deep cut that bleeds heavily.',
@@ -359,6 +398,27 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     manaCost: 10, cooldownMs: 10000, timeMs: 0, color: '#7a9a5a',
     effect: { area: 'splash', radius: 1, curse: { durationMs: 8000, slow: 25 } },
     desc: 'Curse the target and enemies next to it for 8s: their attacks, wind-ups and walking are 25% slower.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'gash', name: 'Gash', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'dot', 'duration', 'bleed', 'hit'],
+    manaCost: 5, cooldownMs: 0, timeMs: 2400, color: '#d04a4a',
+    effect: { weaponPct: 100, targets: 'single', ailment: { kind: 'bleed', pctPerSec: 40, durationMs: 4000 } }, weapons: STRIKE_WEAPONS,
+    desc: 'A quick cut that leaves the target bleeding.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'barbed_arrow', name: 'Barbed Arrow', attr: 'dex', role: 'main', tags: ['attack', 'projectile', 'dot', 'duration', 'bleed', 'hit'],
+    manaCost: 5, cooldownMs: 0, timeMs: 2700, color: '#c8605a',
+    effect: { weaponPct: 105, targets: 'single', ailment: { kind: 'bleed', pctPerSec: 40, durationMs: 4000 } }, weapons: BOW,
+    desc: 'A hooked arrow that leaves the target bleeding.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'stigmata', name: 'Stigmata', attr: 'dex', role: 'curse', tags: ['spell', 'curse', 'area', 'duration'],
+    manaCost: 10, cooldownMs: 10000, timeMs: 0, color: '#b0485a',
+    effect: { area: 'splash', radius: 1, curse: { durationMs: 8000, bleedTaken: 40 } },
+    desc: 'Curse the target and enemies next to it for 8s: they take 40% increased damage from bleeding.',
     defaultRule: { when: 'notActive' },
   }),
 
@@ -454,6 +514,27 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     desc: 'Curse the target and enemies next to it for 8s: their hits deal 25% less damage.',
     defaultRule: { when: 'notActive' },
   }),
+  A({
+    id: 'blood_lance', name: 'Blood Lance', attr: 'int', role: 'burst', tags: ['spell', 'projectile', 'dot', 'duration', 'bleed', 'blood', 'hit', 'cast'],
+    manaCost: 0, cooldownMs: 4000, timeMs: 3000, color: '#a02840',
+    effect: { base: [34, 50], type: 'phys', targets: 'single', crit: 6, lifePct: 6, ailment: { kind: 'bleed', pctPerSec: 40, durationMs: 4000 } },
+    desc: 'A spear of your own blood that leaves the target bleeding. Spends 6% of your Life instead of mana.',
+    defaultRule: { when: 'lifeAbove', value: 60 },
+  }),
+  A({
+    id: 'burnt_offering', name: 'Burnt Offering', attr: 'int', role: 'area', tags: ['spell', 'area', 'blood', 'hit'],
+    manaCost: 0, cooldownMs: 6000, timeMs: 0, color: '#e0603a',
+    effect: { base: [14, 22], type: 'fire', area: 'nova', radius: 2, crit: 5, lifePct: 10, lifeToDamage: 100 }, range: 2,
+    desc: 'Burn 10% of your Life to scorch every enemy within 2 rings of you. All the Life spent is added to the damage.',
+    defaultRule: { when: 'enemiesAtLeast', value: 3 },
+  }),
+  A({
+    id: 'transfusion', name: 'Transfusion', attr: 'int', role: 'sustain', tags: ['spell', 'sustain', 'hit'],
+    manaCost: 8, cooldownMs: 8000, timeMs: 0, color: '#d05a70',
+    effect: { base: [8, 14], type: 'phys', targets: 'single', crit: 5, consumeBleed: 30 },
+    desc: "Drain the target's bleed: all the damage it had left lands at once, and 30% of that returns to you as Life (at most 25% of your Life).",
+    defaultRule: { when: 'targetHas', status: 'bleeding' },
+  }),
 ];
 
 // ---------- supports ----------
@@ -481,6 +562,10 @@ export interface SupportMods {
   cooldownPct?: number;
   /** % more effect of a curse */
   curseEffect?: number;
+  /** % more damage while you're below half life */
+  lowLifeMore?: number;
+  /** % more damage from the bleeds it causes */
+  moreBleed?: number;
   /** signature behaviour, handled by the combat engine */
   special?: string;
 }
@@ -493,6 +578,8 @@ export interface SupportGemDef {
   fits: GemTag[];
   /** ...and all of these (Spell Echo: a spell that hits) */
   needs?: GemTag[];
+  /** ...and none of these (Blood Price: a skill that already costs Life has nothing to convert) */
+  not?: GemTag[];
   /** signature supports only fit this one skill */
   signatureFor?: string;
   mods: SupportMods;
@@ -517,7 +604,11 @@ const GEM_LEVELS: Record<string, number> = {
   tailwind: 22, arcane_surge: 22,
   vulnerability: 24, hobble: 24,
   elemental_weakness: 26, enfeeble: 26,
+  flagellate: 32, gash: 32, barbed_arrow: 32,
+  scourge: 34, blood_rite: 34, blood_lance: 34,
   lacerate: 35,
+  blood_ward: 36, stigmata: 36, burnt_offering: 36,
+  transfusion: 38,
   // supports
   faster_attacks: 4, faster_casts: 4, efficiency: 4,
   brutality: 8, elemental_focus: 8, life_leech: 8, mana_leech: 8, pierce: 8,
@@ -527,6 +618,9 @@ const GEM_LEVELS: Record<string, number> = {
   fresh_horses: 24, trample: 24,
   wide_hex: 26,
   deep_hex: 28,
+  serrated_edge: 32, blood_price: 32,
+  deep_wounds: 34, tithe: 34,
+  desperate_faith: 36,
 };
 
 /**
@@ -541,8 +635,12 @@ const GEM_ACTS: Record<string, number> = {
   tailwind: 2, arcane_surge: 2,
   vulnerability: 2, hobble: 2, elemental_weakness: 2, enfeeble: 2,
   surefoot: 2, fresh_horses: 2, trample: 2, wide_hex: 2, deep_hex: 2,
-  // Act 3
+  // Act 3, Zealots and blood
   lacerate: 3,
+  flagellate: 3, scourge: 3, blood_rite: 3, blood_ward: 3,
+  gash: 3, barbed_arrow: 3, stigmata: 3,
+  blood_lance: 3, burnt_offering: 3, transfusion: 3,
+  serrated_edge: 3, blood_price: 3, deep_wounds: 3, tithe: 3, desperate_faith: 3,
 };
 
 /** The act a skill or support gem arrives with. */
@@ -609,6 +707,16 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'ember_trail', name: 'Ember Trail', attr: 'int', fits: [], signatureFor: 'ember_dash', mods: { special: 'embertrail' }, desc: 'The burning trail deals twice the damage.' }),
   S({ id: 'overflow', name: 'Overflow', attr: 'int', fits: [], signatureFor: 'arcane_surge', mods: { special: 'overflow' }, desc: 'While Arcane Surge lasts, skills cost 25% less mana.' }),
   S({ id: 'contagion', name: 'Contagion', attr: 'int', fits: [], signatureFor: 'elemental_weakness', mods: { special: 'contagion' }, desc: 'When a cursed enemy dies, the curse jumps to another enemy with the time it had left.' }),
+  S({ id: 'absolution', name: 'Absolution', attr: 'str', fits: [], signatureFor: 'flagellate', mods: { lifeLeech: 6 }, desc: '6% of damage leeched as life.' }),
+  S({ id: 'flay', name: 'Flay', attr: 'str', fits: [], signatureFor: 'scourge', mods: { special: 'flay' }, desc: 'Hits break armour (+15% damage taken for 4s).' }),
+  S({ id: 'blood_oath', name: 'Blood Oath', attr: 'str', fits: [], signatureFor: 'blood_rite', mods: { special: 'bloodoath' }, desc: 'While Blood Rite lasts, 3% of damage is leeched as life.' }),
+  S({ id: 'barbed_ward', name: 'Barbed Ward', attr: 'str', fits: [], signatureFor: 'blood_ward', mods: { special: 'barbedward' }, desc: 'When the shield breaks, the attacker takes twice the Life you spent on it.' }),
+  S({ id: 'gnawing_wound', name: 'Gnawing Wound', attr: 'dex', fits: [], signatureFor: 'gash', mods: { special: 'gnaw' }, desc: '30% more damage against bleeding enemies.' }),
+  S({ id: 'blood_trail', name: 'Blood Trail', attr: 'dex', fits: [], signatureFor: 'barbed_arrow', mods: { special: 'bloodtrail' }, desc: 'When a bleeding enemy dies, its bleed jumps to another enemy.' }),
+  S({ id: 'weeping_wounds', name: 'Weeping Wounds', attr: 'dex', fits: [], signatureFor: 'stigmata', mods: { special: 'weeping' }, desc: 'Your hits on cursed enemies cause Bleeding, unless the skill causes an ailment of its own.' }),
+  S({ id: 'arterial_spray', name: 'Arterial Spray', attr: 'int', fits: [], signatureFor: 'blood_lance', mods: { special: 'arterial' }, desc: 'Bleeds spread to enemies next to the target.' }),
+  S({ id: 'ashes_to_ashes', name: 'Ashes to Ashes', attr: 'int', fits: [], signatureFor: 'burnt_offering', mods: { manaMult: 1.5 }, desc: 'Burns 50% more Life, and all of it goes into the blast.' }),
+  S({ id: 'pale_communion', name: 'Pale Communion', attr: 'int', fits: [], signatureFor: 'transfusion', mods: { special: 'communion' }, desc: 'Returns the same amount of Mana as well.' }),
   S({ id: 'wither_will', name: 'Wither Will', attr: 'int', fits: [], signatureFor: 'enfeeble', mods: { special: 'witherwill' }, desc: 'Killing a cursed enemy restores 4% of your life.' }),
 
   // general
@@ -619,7 +727,7 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'elemental_focus', name: 'Elemental Focus', attr: 'int', fits: ['hit'], mods: { moreElem: 35, manaMult: 1.3 }, desc: '35% more elemental damage.' }),
   S({ id: 'faster_attacks', name: 'Faster Attacks', attr: 'dex', fits: ['attack'], mods: { attackSpeed: 25, manaMult: 1.15 }, desc: '25% more attack speed.' }),
   S({ id: 'faster_casts', name: 'Faster Casts', attr: 'int', fits: ['cast'], mods: { castSpeed: 25, manaMult: 1.15 }, desc: '25% more cast speed. Only fits spells with a cast time.' }),
-  S({ id: 'efficiency', name: 'Efficiency', attr: 'int', fits: ['attack', 'spell', 'guard', 'buff'], mods: { manaMult: 0.6 }, desc: '40% less mana cost.' }),
+  S({ id: 'efficiency', name: 'Efficiency', attr: 'int', fits: ['attack', 'spell', 'guard', 'buff'], mods: { manaMult: 0.6 }, desc: '40% less mana and Life cost.' }),
   S({ id: 'critical_strikes', name: 'Critical Strikes', attr: 'dex', fits: ['hit'], mods: { critChance: 100, critMulti: 30, manaMult: 1.2 }, desc: '100% increased critical strike chance and +30% critical multiplier.' }),
   S({ id: 'life_leech', name: 'Life Leech', attr: 'str', fits: ['hit'], mods: { lifeLeech: 3, manaMult: 1.1 }, desc: '3% of damage leeched as life.' }),
   S({ id: 'mana_leech', name: 'Mana Leech', attr: 'int', fits: ['hit'], mods: { manaLeech: 3, manaMult: 1.1 }, desc: '3% of damage leeched as mana.' }),
@@ -633,6 +741,11 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'trample', name: 'Trample', attr: 'str', fits: ['movement'], mods: { moreDamage: 30, manaMult: 1.3 }, desc: '30% more damage.' }),
   S({ id: 'wide_hex', name: 'Wide Hex', attr: 'int', fits: ['curse'], mods: { special: 'widehex', manaMult: 1.4 }, desc: 'The curse lands on every enemy on the field.' }),
   S({ id: 'deep_hex', name: 'Deep Hex', attr: 'int', fits: ['curse'], mods: { curseEffect: 30, manaMult: 1.3 }, desc: '30% more curse effect.' }),
+  S({ id: 'serrated_edge', name: 'Serrated Edge', attr: 'dex', fits: ['attack'], mods: { special: 'serrated', moreDamage: -10, manaMult: 1.2 }, desc: 'Hits cause Bleeding (20% of the hit per second for 4s), unless the skill causes an ailment of its own; 10% less damage.' }),
+  S({ id: 'blood_price', name: 'Blood Price', attr: 'str', fits: ['hit'], not: ['blood'], mods: { special: 'bloodprice', moreDamage: 15 }, desc: 'Pays its mana cost with twice as much Life instead; 15% more damage.' }),
+  S({ id: 'deep_wounds', name: 'Deep Wounds', attr: 'dex', fits: ['bleed'], mods: { moreBleed: 40, manaMult: 1.2 }, desc: '40% more damage from the bleeds it causes.' }),
+  S({ id: 'tithe', name: 'Tithe', attr: 'int', fits: ['blood'], mods: { special: 'tithe', manaMult: 1.1 }, desc: 'A third of the Life it spends flows back over 4s.' }),
+  S({ id: 'desperate_faith', name: 'Desperate Faith', attr: 'str', fits: ['hit'], mods: { lowLifeMore: 40, manaMult: 1.2 }, desc: "40% more damage while you're below half Life." }),
 ];
 
 export function activeGemDef(id: string): ActiveGemDef {

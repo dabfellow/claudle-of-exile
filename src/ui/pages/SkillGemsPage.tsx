@@ -295,7 +295,10 @@ function SlotTile({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; slot
         </span>
         <span className="skill-name">{def.name}</span>
         <span className="skill-meta">
-          Lv {gem.level} · {nums.manaCost > 0 ? <span style={{ color: 'var(--mana-2)' }}>{nums.manaCost} mana</span> : <span className="dim">free</span>}
+          Lv {gem.level} ·{' '}
+          {nums.lifeCost > 0 && <span style={{ color: 'var(--life-2)' }}>{nums.lifeCost} life </span>}
+          {nums.manaCost > 0 && <span style={{ color: 'var(--mana-2)' }}>{nums.manaCost} mana</span>}
+          {!nums.lifeCost && !nums.manaCost && <span className="dim">free</span>}
         </span>
         <span className="skill-supports">
           {Array.from({ length: supportSlots(gem) }, (_, i) => {
@@ -543,7 +546,7 @@ export function SkillGemsPage() {
           )
         }
       >
-        Your bar runs in cast order: the first skill whose rules all pass and that you have the mana for, otherwise a free Default Attack. Reactive rules are
+        Your bar runs in cast order: the first skill whose rules all pass and that you can pay for (rules keep 40% of your Life back), otherwise a free Default Attack. Reactive rules are
         taught at the Hideout's War Table. Press <b>Q–Y</b> in combat to cast a slot manually.
       </PageHeader>
 

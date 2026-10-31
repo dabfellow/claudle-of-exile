@@ -13,6 +13,7 @@ import {
   lockTarget,
   mitigate,
   nextArrivalMs,
+  canSpendLife,
   queueSkill,
   retreat,
   setMovement,
@@ -483,7 +484,7 @@ export function SkillBar({ s, d, fx }: { s: GameState; d: Derived; fx?: Fx }) {
         // every skill has at least the 0.1 s minimum cooldown; only show real ones
         const cd = nums.cooldownMs > MIN_COOLDOWN_MS ? (c?.cooldowns[i] ?? 0) : 0;
         const cdPct = nums.cooldownMs ? cd / nums.cooldownMs : 0;
-        const noMana = s.mana < nums.manaCost;
+        const noMana = s.mana < nums.manaCost || !canSpendLife(s, d, nums.lifeCost, false);
         const unusable = gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily);
         const flashed = fx?.usedSlot?.slot === i ? fx.usedSlot.n : 0;
         return (
@@ -502,7 +503,9 @@ export function SkillBar({ s, d, fx }: { s: GameState; d: Derived; fx?: Fx }) {
               </span>
               <span className="skill-name">{def.name}</span>
               <span className="skill-meta">
-                {nums.manaCost > 0 ? <span style={{ color: 'var(--mana-2)' }}>{nums.manaCost} mana</span> : <span className="dim">free</span>}
+                {nums.lifeCost > 0 && <span style={{ color: 'var(--life-2)' }}>{nums.lifeCost} life</span>}
+                {nums.manaCost > 0 && <span style={{ color: 'var(--mana-2)' }}>{nums.manaCost} mana</span>}
+                {!nums.lifeCost && !nums.manaCost && <span className="dim">free</span>}
               </span>
               <span className="skill-rule">{unusable ?? rulesLabel(s, gem.rules)}</span>
             </button>

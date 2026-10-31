@@ -68,7 +68,7 @@ import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './characte
 import { bossesOffline, castOrder, rulesPass } from './automation';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
-import { gemUseReason, grantGemXp, MIN_COOLDOWN_MS, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
+import { gemUseReason, grantGemXp, LIFE_RESERVE_PCT, MIN_COOLDOWN_MS, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
 import { rollLoot } from './loot';
 import { mapPackLeft, onMapFieldLost, onMapPack, rollMapDrops } from './maps';
@@ -594,12 +594,15 @@ export function ruleContext(s: GameState, d: Derived): RuleContext {
   };
 }
 
+/** Guards whose absorb shield ends with their buff. */
+const SHIELD_SKILLS = ['frost_ward', 'blood_ward'];
+
 /** Whether a skill's own effect is currently up (buff, guard, or its ailment on the target). */
 export function skillIsActive(c: CombatRuntime, gemId: string): boolean {
   if (c.buffs.some((b) => b.source === 'skill' && b.id === gemId)) return true;
   if ((gemId === 'iron_guard' || gemId === 'parry') && c.blocks > 0) return true;
   if (gemId === 'smoke_step' && c.evadeMs > 0) return true;
-  if (gemId === 'frost_ward' && c.shield > 0) return true;
+  if (SHIELD_SKILLS.includes(gemId) && c.shield > 0) return true;
   const target = c.monsters.find((m) => m.uid === c.targetUid && m.life > 0) ?? aliveMonsters(c)[0];
   return !!target?.dots.some((x) => x.gemId === gemId) || target?.curse?.gemId === gemId;
 }
@@ -617,6 +620,8 @@ export function ruleAllows(rule: TacticRule, rc: RuleContext, active: boolean): 
       return !!rule.ground && rc.ground.has(rule.ground);
     case 'lifeBelow':
       return rc.lifePct < v;
+    case 'lifeAbove':
+      return rc.lifePct > v;
     case 'manaAbove':
       return rc.manaPct > v;
     case 'manaBelow':
@@ -648,14 +653,24 @@ export function queueSkill(s: GameState, slot: number): string | null {
   return null;
 }
 
-/** Blood Pact pays skill costs with life instead of mana. */
-function canPay(s: GameState, d: Derived, cost: number): boolean {
-  if (d.raw.overclock) return true;
-  return d.raw.bloodPact ? s.life > cost : s.mana >= cost;
+/**
+ * Whether a skill's Life cost can be met: a rule keeps LIFE_RESERVE_PCT back, so nothing left running bleeds you
+ * out, while your own press can go down to your last point of Life. Neither can ever kill you.
+ */
+export function canSpendLife(s: GameState, d: Derived, cost: number, manual: boolean): boolean {
+  if (!cost || d.raw.overclock) return true;
+  return s.life - cost >= (manual ? 1 : (d.maxLife * LIFE_RESERVE_PCT) / 100);
 }
 
-function ready(s: GameState, d: Derived, slot: number, nums: SkillNumbers): boolean {
-  return s.combat!.cooldowns[slot] <= 0 && canPay(s, d, nums.manaCost);
+/** Blood Pact pays skill costs with life instead of mana. */
+function canPay(s: GameState, d: Derived, nums: SkillNumbers, manual: boolean): boolean {
+  if (!canSpendLife(s, d, nums.lifeCost, manual)) return false;
+  if (d.raw.overclock) return true;
+  return d.raw.bloodPact ? s.life - nums.lifeCost > nums.manaCost : s.mana >= nums.manaCost;
+}
+
+function ready(s: GameState, d: Derived, slot: number, nums: SkillNumbers, manual = false): boolean {
+  return s.combat!.cooldowns[slot] <= 0 && canPay(s, d, nums, manual);
 }
 
 export interface SkillChoice {
@@ -696,7 +711,7 @@ export function chooseSkill(s: GameState, d: Derived): SkillChoice {
     const gem = s.skillBar[slot];
     const nums = skillNumbers(d, gem);
     c.queued = null;
-    if (gem && ready(s, d, slot, nums) && !gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) {
+    if (gem && ready(s, d, slot, nums, true) && !gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) {
       const got = consider(slot, nums, true);
       if (got) return got;
       // out of reach: keep it queued while you close in
@@ -774,7 +789,7 @@ function rollHit(
   } else {
     const [lo, hi] = spellBaseAt(def, level);
     const type = def.effect.type ?? 'fire';
-    byType[type] += rInt(ctx.rng, lo, hi) * d.typeMult[type];
+    byType[type] += (rInt(ctx.rng, lo, hi) + (nums.lifeCost * (def.effect.lifeToDamage ?? 0)) / 100) * d.typeMult[type];
     for (const t of ['fire', 'cold', 'light'] as const) {
       const [alo, ahi] = d.hit[t];
       if (ahi > 0) byType[t] += rInt(ctx.rng, alo, ahi) * SPELL_ADDED_EFFECTIVENESS;
@@ -805,6 +820,8 @@ function rollHit(
   }
   if (mon.life < mon.maxLife * 0.3) more *= 1 + r.lowLifeDamage / 100;
   if (def.effect.moreVsAiling && hasAilment(mon)) more *= 1 + def.effect.moreVsAiling / 100;
+  if (mods.specials.has('gnaw') && mon.dots.some((x) => x.kind === 'bleed')) more *= 1.3;
+  if (mods.lowLifeMore && s.life < d.maxLife * 0.5) more *= 1 + mods.lowLifeMore / 100;
   // (Parting Shot's own hit doesn't spend the bonus Feigned Retreat just gave)
   if (isAttack && c.counterweightMore && def.id !== 'parting_shot') {
     more *= 1 + c.counterweightMore / 100;
@@ -889,19 +906,32 @@ function makeAilment(d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealt
   const kindPct = a.kind === 'bleed' ? r.bleedPct : a.kind === 'poison' ? r.poisonPct : r.ignitePct;
   const kindDur = a.kind === 'bleed' ? r.bleedDuration : a.kind === 'poison' ? r.poisonDuration : r.igniteDuration;
   const flatDur = a.kind === 'bleed' ? r.bleedDurationFlat : a.kind === 'poison' ? r.poisonDurationFlat : 0;
-  const bossBleed = a.kind === 'bleed' && mon.isBoss ? 1 + r.bleedBossMore / 100 : 1;
+  const bleedMore = a.kind === 'bleed' ? (1 + mods.moreBleed / 100) * (mon.isBoss ? 1 + r.bleedBossMore / 100 : 1) : 1;
   const duration = a.durationMs * nums.durationMult * (1 + (r.ailmentDuration + kindDur) / 100) + flatDur;
   return {
     kind: a.kind,
-    dps: ((dealt * a.pctPerSec) / 100) * (1 + (kindPct + r.ailmentPct) / 100) * bossBleed,
+    dps: ((dealt * a.pctPerSec) / 100) * (1 + (kindPct + r.ailmentPct) / 100) * bleedMore,
     remainingMs: duration,
     durationMs: duration,
     dealt: 0,
     gemId: def.id,
     burst: mods.specials.has('hemorrhage') ? 0.5 : undefined,
-    spreads: mods.specials.has('virulence') || undefined,
+    spreads: mods.specials.has('virulence') || mods.specials.has('bloodtrail') || undefined,
     pyre: (a.kind === 'ignite' && mods.specials.has('pyre')) || undefined,
   };
+}
+
+/** The most of your life Transfusion gives back in one go. */
+const TRANSFUSION_CAP = 0.25;
+/** Tithe: this share of the Life spent flows back over its time. */
+const TITHE_SHARE = 1 / 3;
+const TITHE_MS = 4000;
+/** Barbed Ward: the broken shield hits back for this many times the Life spent on it. */
+const BARBED_WARD_RETURN = 2;
+
+/** A dot's damage per second on this monster: Stigmata deepens bleeds. */
+function bleedDps(mon: MonsterInstance, dot: Dot): number {
+  return dot.dps * (dot.kind === 'bleed' ? 1 + (mon.curse?.bleedTaken ?? 0) / 100 : 1);
 }
 
 /** Coup de Grace with Needleworker's Wraps: also poisons and ignites. */
@@ -984,8 +1014,10 @@ function hitMonster(
   if (stunChance > 0 && chance(ctx.rng, stunChance)) {
     mon.stunMs = Math.max(mon.stunMs, (mon.isBoss ? 400 : 1000) * (1 + r.stunDuration / 100));
   }
-  if (mods.specials.has('shatter')) mon.vulnMs = 4000;
+  if (mods.specials.has('shatter') || mods.specials.has('flay')) mon.vulnMs = 4000;
   if (mods.specials.has('rundown')) mon.stunMs = Math.max(mon.stunMs, mon.isBoss ? 400 : 1000);
+
+  if (e.consumeBleed) consumeBleed(s, ctx, d, nums, mon);
 
   // ailments
   if (coup && r.coupAilment) {
@@ -996,7 +1028,7 @@ function hitMonster(
     const a = e.ailment;
     const dot = makeAilment(d, nums, mon, dealt, a);
     applyDot(mon, dot);
-    if (a.kind === 'ignite' && mods.specials.has('inferno')) {
+    if ((a.kind === 'ignite' && mods.specials.has('inferno')) || (a.kind === 'bleed' && mods.specials.has('arterial'))) {
       const near = new Set(neighbors(mon.cell));
       for (const other of aliveMonsters(c)) if (other !== mon && near.has(other.cell)) applyDot(other, { ...dot });
     }
@@ -1004,12 +1036,12 @@ function hitMonster(
     if (a.kind === 'ignite' && def.id === 'infernal_blow' && r.infernalSpread > 0) {
       for (const other of chainFrom(mon, aliveMonsters(c), r.infernalSpread).slice(1)) applyDot(other, { ...dot });
     }
-  } else if ((c.riposting && r.riposteBleed) || (r.bleedOnHit && def.tags.includes('attack') && chance(ctx.rng, r.bleedOnHit / 100))) {
-    // axes: any attack can open a wound (20% of the hit per second for 4s)
+  } else if ((c.riposting && r.riposteBleed) || mods.specials.has('serrated') || mon.curse?.weeping || (r.bleedOnHit && def.tags.includes('attack') && chance(ctx.rng, r.bleedOnHit / 100))) {
+    // axes, Serrated Edge and Weeping Wounds: a hit can open a wound (20% of the hit per second for 4s)
     const duration = 4000 * (1 + (r.ailmentDuration + r.bleedDuration) / 100) + r.bleedDurationFlat;
     applyDot(mon, {
       kind: 'bleed',
-      dps: ((dealt * 20) / 100) * (1 + (r.bleedPct + r.ailmentPct) / 100) * (mon.isBoss ? 1 + r.bleedBossMore / 100 : 1),
+      dps: ((dealt * 20) / 100) * (1 + (r.bleedPct + r.ailmentPct) / 100) * (1 + mods.moreBleed / 100) * (mon.isBoss ? 1 + r.bleedBossMore / 100 : 1),
       remainingMs: duration,
       durationMs: duration,
       dealt: 0,
@@ -1020,6 +1052,19 @@ function hitMonster(
   if (r.poisonOnHit && chance(ctx.rng, r.poisonOnHit / 100)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_POISON));
   if (r.igniteOnHit && byType.fire > 0 && chance(ctx.rng, r.igniteOnHit / 100)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_IGNITE));
   return dealt;
+}
+
+/** Transfusion: the rest of the target's bleed lands now, and part of it comes back to you. */
+function consumeBleed(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance): void {
+  const bleed = mon.dots.find((x) => x.kind === 'bleed');
+  if (!bleed) return;
+  mon.dots = mon.dots.filter((x) => x !== bleed);
+  const left = (bleedDps(mon, bleed) * bleed.remainingMs) / 1000;
+  damageMonster(mon, left);
+  ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(left), dmgType: 'phys', dot: true, monsterUid: mon.uid });
+  const back = Math.min((left * nums.def.effect.consumeBleed!) / 100, d.maxLife * TRANSFUSION_CAP);
+  s.life = Math.min(d.maxLife, s.life + back);
+  if (nums.mods.specials.has('communion')) s.mana = Math.min(d.maxMana, s.mana + back);
 }
 
 function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillNumbers, manual: boolean, aimed?: MonsterInstance): void {
@@ -1034,6 +1079,10 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (!r.overclock) {
     if (r.bloodPact) s.life -= nums.manaCost;
     else s.mana -= nums.manaCost;
+    if (nums.lifeCost) {
+      s.life = Math.max(1, s.life - nums.lifeCost);
+      if (mods.specials.has('tithe')) c.heals.push({ resource: 'life', perMs: (nums.lifeCost * TITHE_SHARE) / TITHE_MS, remainingMs: TITHE_MS });
+    }
   }
   if (slot >= 0) c.cooldowns[slot] = Math.max(MIN_COOLDOWN_MS, nums.cooldownMs);
   if (mechanicOf(s) === 'rage' && def.id === 'war_cry') gainMeter(s, d, 10);
@@ -1058,9 +1107,12 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
     if (mods.specials.has('ambush')) c.ambush = true;
   }
   if (e.shieldPct) {
+    // one shield at a time: a new one takes over from the old, whose timer would otherwise end it
+    c.buffs = c.buffs.filter((b) => !(b.source === 'skill' && SHIELD_SKILLS.includes(b.id)));
     c.shield = (d.maxLife * e.shieldPct * (1 + 0.03 * (level - 1)) * (1 + r.shieldEffect / 100)) / 100;
     c.shieldMax = c.shield;
     c.glacial = mods.specials.has('glacial');
+    c.barbedWard = mods.specials.has('barbedward') ? nums.lifeCost * BARBED_WARD_RETURN : undefined;
   }
   if (def.role === 'guard') {
     c.ground = stepOutOfGround(c.ground);
@@ -1079,7 +1131,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       source: 'skill',
       remainingMs: dur,
       durationMs: dur,
-      stats: { ...e.buff.stats, ...(mods.specials.has('galerider') && { cooldownRecovery: 25 }), ...(mods.specials.has('overflow') && { manaCostReduction: 25 }) },
+      stats: { ...e.buff.stats, ...(mods.specials.has('galerider') && { cooldownRecovery: 25 }), ...(mods.specials.has('overflow') && { manaCostReduction: 25 }), ...(mods.specials.has('bloodoath') && { lifeLeech: 3 }) },
       outpace: e.buff.outpace,
       moreDamage: e.buff.moreDamage ? e.buff.moreDamage + (level - 1) : undefined,
       regenPct: (e.buff.regenPct ?? 0) + (mods.specials.has('rally') ? 2 : 0) || undefined,
@@ -1212,6 +1264,8 @@ function curseEnemies(s: GameState, ctx: Ctx, nums: SkillNumbers, aimed?: Monste
       slow: (curse.slow ?? 0) * f,
       spreads: mods.specials.has('contagion') || undefined,
       withers: mods.specials.has('witherwill') || undefined,
+      bleedTaken: curse.bleedTaken ? curse.bleedTaken * f : undefined,
+      weeping: mods.specials.has('weeping') || undefined,
     };
     if (mods.specials.has('crackedhide')) m.vulnMs = Math.max(m.vulnMs, durationMs);
     if (mods.specials.has('snare')) m.stunMs = Math.max(m.stunMs, m.isBoss ? 400 : 1000);
@@ -1244,6 +1298,9 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   const spreading = mon.dots.filter((x) => x.kind === 'poison' && x.spreads && x.remainingMs > 0);
   const next = aliveMonsters(c)[0];
   if (spreading.length && next) for (const p of spreading) next.dots.push({ ...p, dealt: 0 });
+  // Blood Trail: so does the bleed
+  const bleed = mon.dots.find((x) => x.kind === 'bleed' && x.spreads && x.remainingMs > 0);
+  if (bleed && next) applyDot(next, { ...bleed, dealt: 0 });
   const ignite = mon.dots.find((x) => x.kind === 'ignite' && x.remainingMs > 0);
   if (d.raw.igniteSpread && ignite && next) applyDot(next, { ...ignite, dealt: 0 });
   // Pyre: a burning corpse bursts over the pack
@@ -1443,6 +1500,11 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
       mon.frozenMs = 2000;
       c.glacial = false;
     }
+    if (c.shield <= 0 && c.barbedWard) {
+      damageMonster(mon, c.barbedWard);
+      ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(c.barbedWard), dmgType: 'phys', monsterUid: mon.uid });
+      c.barbedWard = undefined;
+    }
   }
   // energy shield soaks what's left after mitigation, and any hit that lands delays its recharge
   c.esDelayMs = ES_RECHARGE_DELAY_MS;
@@ -1537,7 +1599,7 @@ function tickDots(s: GameState, ctx: Ctx, dt: number): void {
   for (const m of aliveMonsters(c)) {
     for (const dot of m.dots) {
       const t = Math.min(dt, dot.remainingMs);
-      const dmg = (dot.dps * t) / 1000;
+      const dmg = (bleedDps(m, dot) * t) / 1000;
       damageMonster(m, dmg);
       m.dotAcc += dmg;
       dot.dealt += dmg;
@@ -1695,9 +1757,10 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   for (const b of c.buffs) b.remainingMs -= dt;
   const expired = c.buffs.filter((b) => b.remainingMs <= 0);
   c.buffs = c.buffs.filter((b) => b.remainingMs > 0);
-  if (expired.some((b) => b.source === 'skill' && b.id === 'frost_ward')) {
+  if (expired.some((b) => b.source === 'skill' && SHIELD_SKILLS.includes(b.id))) {
     c.shield = 0;
     c.glacial = false;
+    c.barbedWard = undefined;
   }
   for (let i = 0; i < c.cooldowns.length; i++) c.cooldowns[i] = Math.max(0, c.cooldowns[i] - dt);
   c.evadeMs = Math.max(0, c.evadeMs - dt);
