@@ -98,6 +98,7 @@ export type RuleCondition =
   | 'always'
   | 'manual'
   | 'enemyCasting'
+  | 'onGround'
   | 'lifeBelow'
   | 'manaAbove'
   | 'manaBelow'
@@ -128,21 +129,25 @@ export interface TacticRule {
   value?: number;
   /** for targetHas / targetLacks */
   status?: TargetStatus;
+  /** for onGround */
+  ground?: GroundKind;
 }
 
 /** Reactive rules come in groups, each unlocked at the War Table. Rules outside a group are simple and free. */
-export type RuleUnlock = 'vitals' | 'status' | 'windups';
+export type RuleUnlock = 'vitals' | 'status' | 'ground' | 'windups';
 
 export const RULE_UNLOCK_NAMES: Record<RuleUnlock, string> = {
   vitals: 'Vitals rules',
   status: 'Status rules',
+  ground: 'Ground rules',
   windups: 'Wind-up rules',
 };
 
-export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; defaultValue?: number; status?: boolean; unlock?: RuleUnlock }> = {
+export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; defaultValue?: number; status?: boolean; ground?: boolean; unlock?: RuleUnlock }> = {
   always: { label: 'Whenever ready' },
   manual: { label: 'Manual only' },
   enemyCasting: { label: 'When an enemy winds up', unlock: 'windups' },
+  onGround: { label: 'While standing on', ground: true, unlock: 'ground' },
   lifeBelow: { label: 'When life below', unit: '%', defaultValue: 50, unlock: 'vitals' },
   manaAbove: { label: 'When mana above', unit: '%', defaultValue: 40 },
   manaBelow: { label: 'When mana below', unit: '%', defaultValue: 30, unlock: 'vitals' },

@@ -471,5 +471,5 @@ export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> 
   summon: { name: 'Summons', tip: 'Calls more adds during the fight. Area skills keep them down.' },
   enrage: { name: 'Enrage', tip: 'Below 35% life it attacks 50% faster for 30% more damage. Burst it down or drink.' },
   ward: { name: 'Ward', tip: 'At 66% and 33% life it raises a barrier. Break it within 8 s or the boss heals 10%.' },
-  scorch: { name: 'Scorched earth', tip: 'Every 11 s it sets the ground under you ablaze (or frozen, or charged) for 6 s. Resist its element, or Run to step out sooner.' },
+  scorch: { name: 'Scorched earth', tip: 'Every 11 s it sets the ground under you ablaze (or frozen, or charged) for 6 s. Resist its element, Run to step out sooner, or put a guard on a Ground rule to step out at once.' },
 };

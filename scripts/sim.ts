@@ -31,10 +31,11 @@ import { pickUp } from '../src/engine/storage';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { actionBlocker, startSkillAction } from '../src/engine/skills';
-import { grantUnlocks, suggestedRule } from '../src/engine/automation';
+import { GROUND_IN_PLAY, grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
+import { groundFor } from '../src/engine/battlefield';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats, hitChance, type Derived } from '../src/engine/stats';
-import type { FlaskInstance, GameEvent, GameState, InstillCondition, Item, SkillGemInstance, SkillId } from '../src/engine/types';
+import type { FlaskInstance, GameEvent, GameState, GroundKind, InstillCondition, Item, SkillGemInstance, SkillId } from '../src/engine/types';
 import { levelOf, xpToReach } from '../src/engine/xp';
 
 const args = process.argv.slice(2);
@@ -82,7 +83,7 @@ const gathersAway = (profile: Profile, period: number, short: boolean) => (perio
 
 /** The order the bot buys automation in: rules before hours, as rules are what bosses are locked behind. */
 const UPGRADES: [StationId, number][] = [
-  ['war_table', 2], ['watchtower', 2], ['war_table', 3], ['war_table', 4], ['watchtower', 3], ['war_table', 5], ['watchtower', 4],
+  ['war_table', 2], ['watchtower', 2], ['war_table', 3], ['war_table', 4], ['war_table', 5], ['watchtower', 3], ['war_table', 6], ['watchtower', 4],
 ];
 const CHECKPOINTS: [string, number][] = [['day 1', 1], ['week 1', 7], ['month 1', 30], ['month 3', 90]];
 /** bosses tested for idling, one per drop tier band: each right after the bot first beats it */
@@ -188,12 +189,20 @@ function gemDps(d: Derived, gem: SkillGemInstance): number {
 
 const DAMAGE_ROLES = new Set(['main', 'burst', 'area']);
 
+/** The ground to watch for: what this area's boss lays with Scorched earth, else the fire most of it comes with. */
+function groundToWatch(zoneId: string | undefined): GroundKind {
+  const boss = zoneId ? zoneDef(zoneId).boss : undefined;
+  const kind = boss?.mechanics?.includes('scorch') ? groundFor(boss.novaType ?? boss.dmgType) : 'burning';
+  return GROUND_IN_PLAY.has(kind) ? kind : 'burning';
+}
+
 /**
  * Like a player who reads tooltips: the best guard and buff it owns, then its three strongest damage
  * skills (judged bare, so a fresh drop isn't blinded by the old gem's supports), each on its suggested rule;
+ * a spare guard, once Ground rules are in, takes a free slot to watch the ground, as the main one is kept for wind-ups;
  * then the strongest support in every socket, damage skills first.
  */
-function manageSkills(s: GameState) {
+function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const d = deriveStats(s, []);
   // the best copy of each gem it owns and meets the attribute for: highest level wins
   const owned = new Map<string, SkillGemInstance>();
@@ -214,7 +223,8 @@ function manageSkills(s: GameState) {
   const instant = all
     .filter((g) => DAMAGE_ROLES.has(role(g)) && activeGemDef(g.gemId).timeMs === 0 && !damage.includes(g) && bare(g) > 0)
     .sort((a, b) => bare(b) - bare(a));
-  const want = [pick('guard'), pick('buff'), sustain, ...damage, ...instant].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
+  const groundGuard = ruleLockReason(s, 'onGround') ? undefined : all.filter((g) => role(g) === 'guard').sort(byLevel)[1];
+  const want = [pick('guard'), pick('buff'), sustain, ...damage, groundGuard, ...instant].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
 
   // put the bar together: anything leaving takes no supports with it
   const keep = new Set(want.map((g) => g.uid));
@@ -231,7 +241,7 @@ function manageSkills(s: GameState) {
   const bar = s.skillBar.filter((x): x is SkillGemInstance => !!x);
   for (const g of bar) {
     // one rule each: the suggested one, or Whenever ready until the War Table teaches it
-    g.rules = [suggestedRule(s, activeGemDef(g.gemId))];
+    g.rules = [g === groundGuard ? { when: 'onGround', ground: groundToWatch(zoneId) } : suggestedRule(s, activeGemDef(g.gemId))];
     syncSockets(g);
     g.supports.forEach((_, k) => unsocketSupport(s, g.uid, k));
   }
@@ -406,6 +416,7 @@ interface Snapshot {
 type Outcome = { win: number; lose: number; timeout: number };
 const VARIANTS = [
   { id: 'rules only', flee: false, instill: false, byHand: false },
+  { id: 'ground rule', flee: false, instill: false, byHand: false, ground: true },
   { id: 'auto-flee', flee: true, instill: false, byHand: false },
   { id: 'instilled', flee: false, instill: true, byHand: false },
   { id: 'both', flee: true, instill: true, byHand: false },
@@ -466,8 +477,12 @@ function bossTrial(snap: GameState, zoneId: string, seed: number): Record<string
     const tally = (out[v.id] = { win: 0, lose: 0, timeout: 0 });
     for (let n = 0; n < TRIALS; n++) {
       const s = structuredClone(snap);
-      if (!v.byHand) grantUnlocks(s, { rules: ['vitals', 'status', 'windups'] });
-      manageSkills(s);
+      if (!v.byHand) {
+        grantUnlocks(s, { rules: ['vitals', 'status', 'windups'] });
+        s.account.automation.rules = s.account.automation.rules.filter((r) => r !== 'ground');
+        if (v.ground) grantUnlocks(s, { rules: ['ground'] });
+      }
+      manageSkills(s, zoneId);
       s.settings.autoFlee = v.flee;
       for (const f of s.flaskSlots) {
         if (!f) continue;

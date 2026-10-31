@@ -53,6 +53,7 @@ import {
   chainFrom,
   CHILLED_GROUND_SLOW,
   GROUND,
+  groundUnderPlayer,
   groundFor,
   knockBack,
   layGround,
@@ -60,6 +61,7 @@ import {
   PLAYER_SPOT,
   SHOCKED_GROUND_TAKEN,
   STEP_OUT_RATE,
+  stepOutOfGround,
   type AreaShape,
 } from './battlefield';
 import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './character';
@@ -91,7 +93,7 @@ import {
 } from './mechanics';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
 import { openReachedZones } from './progress';
-import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, InstillCondition, MonsterInstance, Movement, TargetPriority, Targeting } from './types';
+import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, MonsterInstance, Movement, TargetPriority, Targeting } from './types';
 
 export const SPAWN_DELAY_MS = 900;
 /** closing in on a monster out of reach takes this long, shortened by movement speed */
@@ -548,6 +550,8 @@ export interface RuleContext {
   boss: boolean;
   meterFull: boolean;
   targetStatus: Set<TargetStatus>;
+  /** the ground under the player */
+  ground: Set<GroundKind>;
 }
 
 /** Every status a monster has right now, as skill rules see it. */
@@ -577,6 +581,7 @@ export function ruleContext(s: GameState, d: Derived): RuleContext {
     boss: alive.some((m) => m.isBoss),
     meterFull: meterFull(s, d),
     targetStatus: monsterStatuses(target),
+    ground: groundUnderPlayer(s.combat?.ground ?? []),
   };
 }
 
@@ -599,6 +604,8 @@ export function ruleAllows(rule: TacticRule, rc: RuleContext, active: boolean): 
       return false;
     case 'enemyCasting':
       return rc.casting;
+    case 'onGround':
+      return !!rule.ground && rc.ground.has(rule.ground);
     case 'lifeBelow':
       return rc.lifePct < v;
     case 'manaAbove':
@@ -1044,6 +1051,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
     c.glacial = mods.specials.has('glacial');
   }
   if (def.role === 'guard') {
+    c.ground = stepOutOfGround(c.ground);
     if (r.afterGuardDamage) c.empowered = true;
     if (r.guardArmourPct) {
       c.buffs = c.buffs.filter((b) => b.id !== 'guard_armour');

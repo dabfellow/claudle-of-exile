@@ -1,8 +1,19 @@
 import { activeGemDef, RULE_LABELS, RULE_UNLOCK_NAMES, type ActiveGemDef, type RuleCondition, type RuleUnlock, type SkillPriority, type TacticRule } from '../data/gems';
 import { STATIONS, stationDef, type StationGrant } from '../data/hideout';
-import type { GameState } from './types';
+import { ZONES } from '../data/zones';
+import { groundFor } from './battlefield';
+import type { GameState, GroundKind } from './types';
 
 const PRIORITY_RANK: Record<SkillPriority, number> = { high: 0, normal: 1, low: 2 };
+
+/** Ground some monster can put under you: a caster's spell, or a boss's nova or scorch. The rest stay greyed out until an act lays them. */
+export const GROUND_IN_PLAY: ReadonlySet<GroundKind> = new Set(
+  ZONES.flatMap((z) => [
+    ...z.monsters.filter((m) => m.basic.ground).map((m) => groundFor(m.dmgType)),
+    ...(z.boss.basic.ground ? [groundFor(z.boss.dmgType)] : []),
+    ...(z.boss.mechanics?.some((k) => k === 'nova' || k === 'scorch') ? [groundFor(z.boss.novaType ?? z.boss.dmgType)] : []),
+  ]),
+);
 
 /** The War Table level that teaches a group of reactive rules. */
 export function ruleUnlockLevel(unlock: RuleUnlock): number {

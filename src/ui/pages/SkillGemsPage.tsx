@@ -13,7 +13,9 @@ import {
   type TacticRule,
   type TargetStatus,
 } from '../../data/gems';
-import { castOrder, ruleLockReason, ruleSlots, suggestedRule } from '../../engine/automation';
+import { castOrder, GROUND_IN_PLAY, ruleLockReason, ruleSlots, suggestedRule } from '../../engine/automation';
+import { GROUND } from '../../engine/battlefield';
+import type { GroundKind } from '../../engine/types';
 import {
   expandSockets,
   gemUseReason,
@@ -102,7 +104,7 @@ function RuleSlot({ s, slot, index, rule, extra }: { s: GameState; slot: number;
         value={rule.when}
         onChange={(e) => {
           const when = e.target.value as RuleCondition;
-          set({ when, value: RULE_LABELS[when].defaultValue, status: RULE_LABELS[when].status ? 'bleeding' : undefined });
+          set({ when, value: RULE_LABELS[when].defaultValue, status: RULE_LABELS[when].status ? 'bleeding' : undefined, ground: RULE_LABELS[when].ground ? 'burning' : undefined });
         }}
       >
         {options.map((k) => (
@@ -117,6 +119,16 @@ function RuleSlot({ s, slot, index, rule, extra }: { s: GameState; slot: number;
           {TARGET_STATUSES.map((x) => (
             <option key={x.id} value={x.id}>
               {x.label}
+            </option>
+          ))}
+        </select>
+      )}
+      {meta.ground && (
+        <select className="input" value={rule.ground ?? 'burning'} onChange={(e) => set({ when: rule.when, ground: e.target.value as GroundKind })}>
+          {(Object.keys(GROUND) as GroundKind[]).map((k) => (
+            <option key={k} value={k} disabled={!GROUND_IN_PLAY.has(k)}>
+              {GROUND[k].name}
+              {GROUND_IN_PLAY.has(k) ? '' : ' (nothing lays this yet)'}
             </option>
           ))}
         </select>

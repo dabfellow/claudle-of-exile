@@ -1,6 +1,6 @@
 import { activeGemDef, ACTIVE_GEMS, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, gemReqLevel, RULE_LABELS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
 import { WEAPON_FAMILIES } from '../../data/bases';
-import { RINGS } from '../../engine/battlefield';
+import { GROUND, RINGS } from '../../engine/battlefield';
 import { ruleLockReason } from '../../engine/automation';
 import { skillRange } from '../../engine/combat';
 import { GEM_ATTR_NAME, gemAttrReq, gemLevelReq, gemProgress, gemWeaponReason, skillSummary, supportFits, supportSlots } from '../../engine/gems';
@@ -77,6 +77,7 @@ export function rulesLabel(s: GameState, rules: TacticRule[]): string {
 export function ruleText(rule: TacticRule): string {
   const r = RULE_LABELS[rule.when];
   if (r.status) return `${r.label} ${TARGET_STATUSES.find((x) => x.id === rule.status)?.label ?? '…'}`;
+  if (r.ground) return `${r.label} ${rule.ground ? GROUND[rule.ground].name.toLowerCase() : '…'}`;
   return r.unit !== undefined ? `${r.label} ${rule.value ?? r.defaultValue}${r.unit}` : r.label;
 }
 
@@ -114,6 +115,7 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
         </div>
       </div>
       <div style={{ margin: '6px 0' }}>{def.desc}</div>
+      {def.role === 'guard' && <div className="small muted">Also steps you out of any ground under you.</div>}
       {def.id !== DEFAULT_ATTACK.id && (() => {
         const need = gem ? gemLevelReq(gem.gemId, gem.level) : gemReqLevel(def.id);
         return <div className={`small ${d.combatLevel >= need ? 'muted' : 'bad'}`}>Requires character level {need}</div>;
