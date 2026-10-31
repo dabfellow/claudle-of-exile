@@ -1,7 +1,7 @@
 # Ascendancies (draft)
 
 Draft 2026-10-30, for you to pick from. Nothing here is built. They arrive in Milestone 6 of the
-[ROADMAP.md](../ROADMAP.md).
+[MILESTONES.md](../MILESTONES.md).
 
 **Settled:** two per class, 14 in total, unlocked around Act 3, and picking one unlocks a new section of the main tree.
 Exile is the seventh class, so it gets two as well.

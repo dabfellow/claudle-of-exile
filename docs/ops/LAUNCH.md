@@ -2,7 +2,7 @@
 
 What had to be true before Path of Idle went public with Act 1. ✅ done · 🔧 in progress · ⬜ to do · **[You]** needs you.
 
-**Design reset (2026-10-30):** the game is live and updated in stages, and 1.0 is your call ([ROADMAP.md](../ROADMAP.md)). Pacing and offline notes below describe the build as it stands; [GDD.md](../design/GDD.md) §2 has the new targets, including new bosses offline once reactive rules are earned.
+**Design reset (2026-10-30):** the game is live and updated in stages, and 1.0 is your call ([MILESTONES.md](../MILESTONES.md)). Pacing and offline notes below describe the build as it stands; [GDD.md](../design/GDD.md) §2 has the new targets, including new bosses offline once reactive rules are earned.
 
 ## Content
 - ✅ Act 1, *The Drowned Coast*: 8 areas, levels 1–25, each boss unlocks the next ([zones.ts](../../src/data/zones.ts)).

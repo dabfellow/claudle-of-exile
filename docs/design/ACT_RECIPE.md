@@ -1,8 +1,8 @@
 # Act recipe
 
-Every act is built from this checklist, which turns [DESIGN_RESET.md](../DESIGN_RESET.md) §4 into something to tick off.
+Every act is built from this checklist, which turns the Decisions in [MILESTONES.md](../MILESTONES.md) into something to tick off.
 The audits below compare Acts 1 and 2 against it, using `src/data/zones.ts` and `src/data/gems.ts` as of 2026-10-30. The
-work is [ROADMAP.md](../ROADMAP.md) milestone 4.
+work is [MILESTONES.md](../MILESTONES.md) milestone 4.
 
 ## Checklist
 
@@ -23,12 +23,12 @@ work is [ROADMAP.md](../ROADMAP.md) milestone 4.
 | Item | Today | Verdict | Work |
 |---|---|---|---|
 | Stages | 8 areas | Fits | None |
-| Boss mechanic | Scorched earth, on 6 of 8 bosses. No rule condition reads ground, and it has no wind-up for `enemyCasting` to catch | Partly fits | Give it a rule answer, after checking what milestone 1 adds |
+| Boss mechanic | Scorched earth, on 6 of 8 bosses. No rule condition reads ground, and it has no wind-up for `enemyCasting` to catch | Partly fits | Add the ground rules decided below |
 | Resistance check | Fire leads: 12 of 32 trash monsters (lightning 5, cold 4), and the nova or ground element on 5 of 8 bosses | Fits on paper | Nothing shows it bites: the bot rarely died in the 36 h Act 2 preview run, and that's the latest evidence |
 | Skill batch | None. No gem unlocks between level 16 and Lacerate at 35 | Doesn't fit | Rebuild: theme, gems, supports, and a way to tie gems to an act |
 | New skill | None | Doesn't fit | Rebuild: pick the skill and build it |
-| Level band | Monster levels 24–33 | **Open** | See [below](#open-act-2-level-band) |
-| Art | 0 of 40 monsters have art, so all show the skull. Banners reuse Act 1 landscapes | Doesn't fit | Pack art for 40 monsters and 8 areas |
+| Level band | Monster levels 24–33 | Fits | None; decided below |
+| Art | All 40 monsters have pack art, 21 of them loose matches. Banners reuse Act 1 landscapes | Partly fits | Art for 8 areas |
 | Pacing | About 1h40–3h25 after Ysolde (2026-10-26, active bot) | Not measured | Wait for milestone 2. The "6–16 h" and "3–7 days" figures are old targets |
 
 Keep the 8 areas, the bosses, Scorched earth, the 6 new uniques and drop tiers 6–7 as the starting point. The recipe
@@ -38,32 +38,17 @@ doesn't ask to replace them.
 reach. If an area's `id` changes, saves that have unlocked it will need handling. ACT2.md, the roadmap's "open it" and
 the reset's "paused" list all still describe it as unreleased.
 
-### Open: Act 2 level band
+### Decided: Act 2 (2026-10-31)
 
-**Not decided. This one is yours.** You said 17–25, areas are monster level 24–33, and the sim's characters leave at
-L30. Act 2's skills, XP and Act 3's start all depend on the answer.
-
-| Reading | What follows |
-|---|---|
-| **17–25 is character levels** (how ACT2.md took it) | Characters arrive at about 21, so the act covers only about 4 levels, then an 8-level jump to Act 3's 33. Act 2 hands out far fewer levels, and Act 3 starts lower or the jump gets filled |
-| **17–25 is monster levels** | It overlaps Act 1's last areas (16–24), so Act 1 has to end around 17. Same jump to 33, and both acts need new levels |
-| **Keep it as built, 24–33** | Monster levels run straight into Act 3 at 33, and about 9 character levels (21 to 30) matches the ~8 per act above. It's not what you asked for |
-
-What the numbers are worth:
-- 17–25 predates the reset's 33–65, so the reset may have overtaken it. That's your call.
-- L21 and L30 are partly the sim bot's own gate. It enters an area at one level below the area's minimum (22 and 31
-  here), so those are floors for when the bot arrives, not what the act gives.
-- Those runs are from 2026-10-25. By 2026-10-26 the smarter bot was L39–41 at 12 h, with Act 2 done and time left over.
-- The comment above Act 2 in `zones.ts` says characters leave at 25–27, which matches none of this.
-
-### Open: Act 2's theme and new skill
-
-| Question | Idea 1 | Idea 2 |
-|---|---|---|
-| Batch theme | **Burning ground:** skills that leave fire on the field or pay off standing near it, which turns the act's hazard into a build | **Riders and raiders:** fast movement and charge skills, which also answer Scorched earth by stepping out. Could fill the Dex and Int buffs and curses already on the list |
-| New skill | **Thieving → Heist:** Khanate raiders and Caravan's End give it a home, and it's the easy fit with no inputs | **Archaeology → Expedition:** dig sites in the Kurgan Fields, with Artifacts that trade for currency or rewards |
-
-Whichever is picked needs a home in the crafting economy. Cartography waits for Maps (milestone 8).
+- **Level band:** monster levels stay 24–33, because they run straight into Act 3 at 33 and give about 9 character
+  levels, matching the ~8 per act above. This replaces the earlier 17–25, which predates the reset's 33–65.
+- **Skill batch:** Riders and raiders: fast movement and charge skills, which step out of Scorched earth. It also fills
+  the missing Dex and Int buffs and real curses.
+- **New skill:** Thieving, feeding Heist. Khanate raiders and Caravan's End give it a home, and it needs no inputs. It
+  still needs a place in the crafting economy.
+- **Ground rules:** a new reactive rule group reads the ground under you, so a skill can react once something has put
+  an ailment there: burning, toxic, frozen, shocked and so on. It's unlocked at the War Table. Burning is the first
+  case, for Scorched earth; each later act can add its own.
 
 ## Act 1: The Drowned Coast
 
@@ -78,9 +63,9 @@ Whichever is picked needs a home in the crafting economy. Cartography waits for 
 | Art | 40 of 40 monsters have art | Fits | None |
 | Pacing | Milestone 2's job | Not measured | Wait for milestone 2 |
 
-### Open: Act 1
+### Decided: Act 1 (2026-10-31)
 
-| Question | Idea 1 | Idea 2 |
-|---|---|---|
-| Resistance check | **Cold:** matches ACT2.md and the Drowned Queen. Move some lightning damage to cold, starting with Ysolde's nova | **Cold and lightning:** call the coast's storm a two-element check, and change nothing but the docs |
-| Act 1 batch | **Everything today:** the 27 skills are the starter pool, and new batches add to it. Lacerate moves to whichever act matches level 35 | **Split the pool:** Act 1 keeps skills up to level 12, and the level 16 skills and Lacerate seed the Act 2 batch |
+- **Resistance check:** cold. One clear element teaches players what a resistance check is. Move some lightning damage
+  to cold, starting with Ysolde's nova.
+- **Skill batch:** split the pool. Act 1 keeps skills up to level 12, the level 16 skills join Act 2's batch, and
+  Lacerate moves to Act 3, which matches its level 35. New skills to find are what make each act feel fresh.

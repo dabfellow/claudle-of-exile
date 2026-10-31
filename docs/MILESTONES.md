@@ -1,23 +1,303 @@
-# To-do
+# Milestone Guideline
 
-Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Claude.
+The one place for what's next, what's planned, what's been decided and what's been done. **[You]** means it needs you,
+not Claude. **Done** on a milestone is what has to be true before moving on. The order is by dependency: pacing rules
+first, because every act is tuned against them.
 
-## Open
+Last updated 2026-10-31.
 
-### Roadmap — see [ROADMAP.md](ROADMAP.md), decisions in [DESIGN_RESET.md](DESIGN_RESET.md)
-- [ ] Milestone 1: automation and offline rules. Older balance, Act 2 and skill items below restart at their roadmap milestone.
+**On this page:** [Next steps](#next-steps) · [Milestones](#milestones) · [Decisions](#decisions) ·
+[Other open items](#other-open-items) · [Ideas / later](#ideas--later) · [Done](#done)
 
-### Launch (Act 1) — see [LAUNCH.md](ops/LAUNCH.md)
+## Next steps
+
+**Where we are:** Milestones 1, 2, 3 and 5 are built and merged into `main`, but nothing since Act 2 opened has been
+deployed. The live site is still the old build. The Act 2 rebuild started 2026-10-31.
+
+**In order:**
+
+1. **Claude:** rebuild Act 2 (Milestone 4). Skills, ground rules, Thieving and art are running; merge them, then tune
+   pacing and Act 1's cold check.
+2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
+   Discord. Moving guests to an account and demo adoption have only had unit tests.
+3. **[You]** Decide when to deploy. Milestones 1, 2 and 3 go live together, so post a heads-up first. Live players
+   lose 12 h offline (now 8 h), and lose offline boss fights and wind-up rules until they earn them. Act 1 also gets
+   slower.
+4. **[You]** Answer the 6 questions in [ASCENDANCIES.md](design/ASCENDANCIES.md). Milestone 6 needs them.
+5. **[You]** Answer the 8 questions in [HARD_BOSSES.md](design/HARD_BOSSES.md). This can wait until Milestone 9.
+6. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
+   hideout scenes ([ASSET_MAPPING.md](design/ASSET_MAPPING.md)).
+7. **[You]** Play the Maps preview whenever you like, and say whether the loop is fun. Maps stay post-Act 6 in the real
+   game; the preview is dev and admin only. Try it with `npm run dev`, then Map Device → Dev tools.
+
+## Milestones
+
+| # | Milestone | Status | Waiting on |
+|---|---|---|---|
+| 1 | Automation and offline rules | Built, not live | Deploy |
+| 2 | Measure the pacing | **Done**, not live | Deploy |
+| 3 | Account layer | Built, not live | Real-account test, deploy |
+| 4 | Act recipe and Act 2 | **In progress**: four sessions running | Sessions, then pacing and Act 1 cold check |
+| 5 | Maps preview | Built, dev only | You playing it |
+| 6 | Act 3 and ascendancies | Drafted | Milestone 4, your answers |
+| 7 | Acts 4–6 | Level 80 gear done early | Milestone 6 |
+| 8 | Maps | Not started | Milestones 5 and 7 |
+| 9 | Hard mode bosses | Drafted | Milestone 8, your answers |
+| 10 | Top-end crafting and hideout | Not started | Milestone 9 |
+| 11 | Long tail | Not started | Milestone 10 |
+| 1.0 | You call it | – | Vibes |
+
+### 1. Automation and offline rules
+- [x] Rule overhaul: per-skill rules, High/Normal/Low priority, and rule slots that unlock.
+- [x] Simple rules free, reactive rules unlocked through the War Table.
+- [x] Offline combat stops on death; offline cap starts at 8 h, and the Watchtower raises it toward 24 h.
+- [ ] Deploy (ships with Milestones 2 and 3).
+- **Done:** a fresh character can't idle bosses until it has earned reactive rules, and all of this plays on the live
+  site.
+- Merged 2026-10-30, save v20.
+
+### 2. Measure the pacing
+- [x] Sim knows the rule locks, offline stops and a combat/skilling split.
+- [x] Run against your timeline; Act 1 gap fixed through XP, early drops and late station costs.
+- **Done:** the sim reports game time per milestone, and day 1 lands at a couple of Act 1 stages.
+- Measured: day 1 is 2–4 stages; Act 1 finishes in 2–5.5 days and Act 2 in 2.5–6.5 days. Full results in
+  [BALANCE.md](design/BALANCE.md).
+
+### 3. Account layer
+- [x] Hideout, rule unlocks and offline cap shared by the account; skill levels per character; shared gear stash.
+- [x] Exile unlocked by finishing the campaign.
+- [ ] Test on a real account, then deploy.
+- [ ] Leave the reserved `account` rows out of the Admin stats query ([SETUP.md](ops/SETUP.md)).
+- **Done:** a second character starts with the account's unlocks, its own skills and access to the shared stash.
+- Merged 2026-10-31, save v21.
+
+### 4. Act recipe and Act 2
+- [x] Recipe written as a checklist ([ACT_RECIPE.md](design/ACT_RECIPE.md)), with Act 1 and Act 2 audits and picks.
+- [x] Pack art for Act 2's 40 monsters and 6 uniques.
+- [ ] Rebuild Act 2 from the recipe: Riders and raiders skill batch, Thieving and Heist, ground rules, and slower
+  pacing (the sim says it takes under a day after Act 1).
+- [ ] Update Act 1: cold resistance check, split the skill pool, tie gems to acts. Keep existing characters' skills
+  working.
+- [ ] Art for the 8 areas, and better matches for 21 loose monsters.
+- **Done:** Act 2 is live and the first week lands partway through Act 3's level range in the sim.
+- Act 2 is already open to players, so changed area ids need handling in saves.
+
+### 5. Maps preview
+- [x] Dev-only slice: Map Device, one tier, two themes, clear and boss runs, consumed per run, auto-run.
+- [ ] **[You]** Play it.
+- **Done:** you've played it and said whether the loop is fun.
+
+### 6. Act 3 and ascendancies
+- Act 3 from the recipe, with larger stage counts starting to grow.
+- Ascendancies unlock here: 14 in total, each a new section of the main tree ([ASCENDANCIES.md](design/ASCENDANCIES.md)).
+- Tree extended for the extra levels.
+- **Done:** every class can pick either ascendancy and play it through Act 3.
+
+### 7. Acts 4–6
+- Each from the recipe, growing to 10–20 stages, ending around level 65.
+- [x] Gear base tiers extended to about level 80 (428 bases).
+- **Done:** Act 6 can be finished at around month 1 when pushing combat hard, and is just starting on a mix, in the sim.
+
+### 8. Maps
+- Full tiers and themes, map drops, Cartography as the optional crafting route.
+- **Done:** a character can farm from the first tier to the last, with auto-run working offline.
+
+### 9. Hard mode bosses
+- New bosses, boss keys from drops and skilling, boss moments for manual play and a reactive-rule answer for idle
+  ([HARD_BOSSES.md](design/HARD_BOSSES.md)).
+- Rules need to be able to aim, and to tell a slam from a channel.
+- **Done:** a top-end character clears them on idle without dying, and the sim can test that.
+
+### 10. Top-end crafting and hideout
+- High level passive nodes, rare materials from skilling and from drops.
+- Forced-mod and past-the-limit crafts.
+- Late hideout upgrades.
+- **Done:** month 6 play works as you described: farming nodes to min-max gear for hard mode bosses.
+
+### 11. Long tail
+- Collection log, masteries, build-defining uniques, the skills arriving around or after Act 6.
+- Hardcore and Classic, each with their own stash, hideout and unlocks.
+- **Done:** your call.
+
+### 1.0
+You call it. On the day: wipe saves with a clear message.
+
+### After Maps
+Endless content. Not designed yet, and nothing above depends on it.
+
+## Decisions
+
+What you settled in the 2026-10-30 reset, in your words. The result is written up in [GDD.md](design/GDD.md). Later
+picks are in [ACT_RECIPE.md](design/ACT_RECIPE.md).
+
+### Fixed (you, 2026-10-30)
+
+- **End state:** months of play to build a top-end character that easily clears all content.
+- **Maps are essential.** They're the endgame and they stay.
+- **The long tail:** "years" comes from a broad mix of reasons to keep playing. Rare drops, expensive crafts and multiple
+  characters are three examples out of many, not the full list.
+- **Art:** asset packs, and they're the real art, not placeholders. No AI art.
+- **Pacing:** needs an overhaul. The current targets don't carry over.
+
+### Skeleton (kept whatever the design becomes)
+
+This is infrastructure. It doesn't depend on the numbers or the content in it.
+
+| Piece | Where |
+|---|---|
+| Game loop, state, offline progress | `src/game.ts`, `engine/state.ts`, `engine/offline.ts` |
+| Save system and migrations, cloud saves, accounts | `engine/save.ts`, `platform/` |
+| Headless sim and bot | `scripts/sim.ts` |
+| Data-driven content (zones, gems, bases, affixes, drops, trees) | `src/data/` |
+| Stat, item, crafting and combat engines | `src/engine/` |
+| UI shell, design system, art import | `src/ui/`, [DESIGN_SYSTEM.md](design/DESIGN_SYSTEM.md), `npm run art` |
+| Hosting, Sentry, Admin page, feedback | [LAUNCH.md](ops/LAUNCH.md) |
+
+The engines stay as code, but what they do is reopened below. Combat's rules can change without rewriting the loop
+around them.
+
+### Reopened, in the order to settle them
+
+Each decision depends on the ones above it. Numbers tuned before step 2 would just get thrown away.
+
+#### 1. The finished game
+
+**A dedicated player's journey (you, 2026-10-30):**
+- **Day 1:** equip your character with at most some blue crafted gear, that's okay; get through a couple of Act 1 stages.
+- **Week 1:** farm combat or mats to craft or find a good set of rare equipment; partially through Act 3.
+- **Month 1:** finished Act 6 if pushing combat hard, or just starting it if you've done a mix.
+- **Month 3:** farming Maps to get gear and levels for hard mode bosses, for uniques and other rare drops.
+- **Month 6 and beyond:** farming high level passive nodes for rare crafting materials, to min-max crafted gear to
+  easily farm hard mode bosses and endless content.
+
+**Settled:**
+- **Endless content:** a post-Maps thing. Not designed yet, and that's fine for now.
+- **Hard mode bosses:** new bosses. Boss keys drop from monsters or are crafted through skilling.
+- **High level passive nodes:** resource nodes from passive skilling.
+- **Maps:**
+  - **Getting them:** they drop from monsters. Cartography is an optional second route, for crafting them if you want
+    to do something like a huge offline map grind.
+  - **Running one:** a set number of monster packs, then a map boss.
+  - **What makes one better:** tiers set the difficulty; each map has a fixed theme that favours a certain drop (fossils,
+    a unique, boss keys).
+  - **Using them up:** consumed per run, so keeping a supply going is part of the game.
+  - **Idling:** auto-run. Pick a tier and theme, and the device keeps using matching maps from your stash until none
+    are left.
+- **Top-end character:** clears hard mode bosses and top-tier maps on idle without dying. The sim can test this.
+- **Long-term engagement so far:** rare drops, expensive crafts, multiple characters, collection log (uniques, bosses,
+  map themes, with rewards), Melvor-style masteries, ascendancies, build-defining uniques, shared stash. More can be
+  added. Competing is out: no leaderboards, no seasons.
+
+#### 2. The pacing model
+Work backwards from the end state, not forwards from Act 1.
+
+**Settled:**
+- **Daily play:** a mix. Players may need manual inputs for a hard boss or to push maps and zones, especially early on,
+  so they benefit from active play. No check-ins every couple of hours that last 20–40 minutes.
+- **Offline combat:** the game is already influenced a lot by the player being there. Automation can be locked behind
+  hideout upgrades, which limits how good offline combat is.
+- **Offline skilling:** always full speed.
+- **Offline cap:** starts at 8 hours; a hideout upgrade raises it to 24 over time.
+- **Automation unlocks:** by type of rule. Simple rules like "on cooldown" are free; reactive ones like "when a boss
+  winds up" or "when life is below 40%" unlock later, so bosses stay hard to idle until the smart rules are earned.
+- **Dying offline:** combat stops until you return.
+- **New bosses offline:** once a player has earned the reactive rules, a strong enough build can beat new bosses offline.
+- **Character levels:** around 65 at the end of Act 6. Top-end needs maybe level 90; level 100 is a long chase and a rare
+  goal well beyond that.
+- **Combat and skilling:** one at a time, as today. Each offline period is a real choice, which is what separates
+  pushing combat hard from doing a mix.
+- **Skill 99:** keep about the same, ~53 days of nonstop training on the best node.
+- **Slowing the campaign:** measure first. Add rule locks, offline stops and a combat/skilling split to the sim, then fix
+  only the gap left against the timeline.
+- **A typical visit:** you get on to check your offline progress, sort through some loot or start a new skilling
+  thing, spend skill points, check for upgrades, start up something passive and dip.
+
+**Still to settle:**
+- Exact hours for each milestone, set from the sim once rule locks, offline stops and the combat/skilling split are in.
+- Current numbers to replace: Act 1 6–10 h, "3–7 days" per act (never defined in hours), Maps at ~1 month. Level 100
+  and skill 99 curves are also in scope; gathering 99 is ~53 days of continuous training
+  ([BALANCE.md](design/BALANCE.md)).
+
+#### 3. The core systems
+
+**Settled:**
+- **Battlefield:** keep it. It feels awesome. Positioning, ranges and closing in stay the core of combat; tuning fixes
+  the rough edges.
+- **Manual play:** both. Better decisions (casting skills and drinking flasks at the right moment) and boss moments on
+  hard bosses that only a player can do well at first, like clicking a weak point or picking which add to kill.
+  Reactive rules need a way to handle these for idle clears.
+- **Rules:** per skill, as now, with better priority controls and more rule slots as they unlock.
+- **New skills:** batches by act. Each act brings a themed set of skills and supports, as part of the act recipe.
+- **Classes:** six normal classes. Exile becomes a hard mode, unlocked by finishing the campaign with another character.
+- **Ascendancies:** two per class, 14 in total, unlocked around Act 3. Picking one unlocks a new section of the main tree.
+- **Gear:** extend base tiers to about level 80, so new Maps tiers keep bringing visibly better gear.
+- **Character tree:** keep the current tree and add enough nodes for the extra levels.
+- **Top crafts:** both. Rare materials can force exactly the mod you want at a high price, and can roll past normal limits
+  with a risk of damaging or destroying the item.
+- **New skills:** both timings. One arrives with each act from Act 2 on, and more arrive around or after Act 6.
+- **What new skills do:** each feeds its own game system (Heist or Expedition-style activities) and also produces
+  materials for the crafting economy.
+- **Across characters:**
+  - **Hideout and rule unlocks:** shared by the account. Stations, reactive rules and the offline cap stay unlocked for
+    every character.
+  - **Skill levels:** per character.
+  - **Campaign:** true to PoE: every character plays through it.
+  - **Challenge modes:** each has its own separate stash, hideout and unlocks, so it's a true fresh start.
+    - **Hardcore:** when the character dies it's gone for good, with its gear.
+    - **Classic:** no skilling, combat only.
+    - **Exile:** stays an unlockable class in the normal game, and can also be taken into challenge modes.
+    - **Hardcore offline:** your risk. Offline combat works normally, so a setup that fails overnight loses the character.
+- **Rare crafting materials:** rare drops from monsters and map themes in every mode, including Classic. Skilling is the
+  min-max, faster way to get them, but the time investment might edge it out; players should figure that out.
+- **Late-game hideout:** long-term upgrades. High-level stations cost rare materials and give lasting bonuses like better
+  automation, the 24-hour offline cap and more map options.
+- **Balance:** the game doesn't need to be perfectly balanced. If it were, choices wouldn't matter.
+
+**Where each system stood going in (design settled above; numbers come from the sim):**
+
+| System | Today | Question | Doc |
+|---|---|---|---|
+| Combat | Hex half-ring, action times, 6 skills with rules | Is this the game? Does idle vs manual match the pillars? | [BATTLEFIELD.md](design/BATTLEFIELD.md) |
+| Skills and supports | Actives and supports, attribute gates, gem levels to 20 | How many, unlocking when; skill bar overhaul | [SKILLS_AND_UNIQUES.md](design/SKILLS_AND_UNIQUES.md) |
+| Classes | 7, each with a mechanic, plus ascendancies planned | Are 7 right for replaying? Do ascendancies exist? | [CLASSES.md](design/CLASSES.md) |
+| Trees | Character tree and skilling tree | Do they survive the new pacing? | [TREES.md](design/TREES.md) |
+| Gear and affixes | 315 bases to level 60 (428 to level 80 since), 9 affix tiers | Does the ladder match the new level range? Numbers were never simmed | [GEAR.md](design/GEAR.md) |
+| Crafting | Orbs, bench, fossils, essences, auto-crafting | Where do "super rare crafts" come from? | [SKILLING_REWORK.md](design/SKILLING_REWORK.md) |
+| Skilling | 5 planned skills on top of the current set | How many does the game need? | [SKILLING_REWORK.md](design/SKILLING_REWORK.md) |
+| Economy and drops | Tiered tables, sim-tuned for Act 1 | Rebuild from the pacing model | [BALANCE.md](design/BALANCE.md) |
+| Town and hideout | Stations, shops, upgrades | What do they do in the late game? | [TOWN.md](design/TOWN.md) |
+
+#### 4. Content plan
+**The act recipe:**
+- **Size:** acts grow. Early acts stay at about 8 stages and later ones reach 10–20, so the campaign feels like it's
+  getting bigger.
+- **Identity:** a new boss mechanic and resistance check, like Act 2's Scorched earth and fire damage.
+- **Each act also brings:** a themed batch of skills and supports, and from Act 2 on, a new skill.
+- **Levels:** Acts 3–6 cover about 33 to 65.
+
+**Act 2 as built:** rebuild from the recipe. Use it as a starting point, and redo anything that doesn't fit. Its 40
+monsters show a skull icon today and need pack art. Finding assets is quick, so it doesn't limit act size.
+
+#### 5. Live game and transition
+- **Saves:** wiped at the 1.0 launch, with a clear message. Everyone starts fresh.
+- **Live site:** updated as we go. Changes go live in stages, so real players test them early.
+- **1.0:** the game is already live on your site. You decide when to call 1.0, based solely on vibes.
+
+## Other open items
+
+- [ ] Add the art sent 2026-10-31. Originals are in Downloads. All free itch.io files; you said to assume free public
+  use while the game isn't sold, so recheck these if that ever changes.
+  - In progress on the Act 2 art branch: shields (set 3 needs a credit), `RPG_Weapons.aseprite`, `Icons.rar`, and the
+    two pasted weapon sheets.
+  - Kept for later, no slot yet: Void pack, SBS skies, `MediavelFree.png` UI.
+  - Music (10 AlkaKrab tracks): the game has no audio yet, so it needs its own small audio system.
+
+Not tied to a milestone yet. Older balance, Act 2 and skill items restart at their milestone.
+
+### Login
 - [ ] Demo mode and email login: new players get an unsaved demo, email + password joins Google and Discord, and browsers with guest characters keep them ([SETUP.md](ops/SETUP.md)).
-  - **[You]** In Supabase: turn on the Email provider, turn Confirm email off for now, check the live URL is in Redirect URLs.
-  - Then test on the live site: sign up, log in, password reset, and demo carryover through email, Google and Discord.
-
-### Act 2: The Burning Steppe — [ACT2.md](design/ACT2.md)
-- [ ] Release Act 2. The framework is built and playable in dev only (preview).
-  - **[You]** Confirm the level band: areas are monster level 24–33, and the sim's characters leave at L30 (you said 17–25).
-  - Slow it down: 6–16 h after Ysolde with almost no deaths (BALANCE.md → "Act 2 preview").
-  - Art for 8 areas, 40 monsters, 6 uniques from asset packs.
-  - Then `open: true` on Act 2, Settings → About text, deploy.
+  - Live since 2026-10-30. Email provider is on; Confirm email is still on, so sign-ups need a link and the built-in mailer's hourly limit applies.
+  - **[You]** Test on the live site: sign up, log in, password reset, and demo carryover through email, Google and Discord.
 
 ### Town feedback (your walkthrough, 2026-10-25)
 - [ ] More skills to train (Hideout skill list feels thin).
@@ -55,6 +335,13 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 
 ## Ideas / later
 - Endless content: a post-Maps thing, not designed yet.
+- Sim pacing gaps: week 1 onward can't be tested until Act 3 exists; week 1 and month 1 predate the last drop cut; month 3 is two classes on one seed. Smithing, brewing, the bench and second rule slots aren't modelled ([BALANCE.md](design/BALANCE.md)).
+- Two devices at once: the newest account copy wins, so stash changes on the other device can be lost (unlocks can't).
+- Maps preview: map bosses count for boss achievements and give the Tier 7 first-kill reward; `s.maps` stays per character for now, and may belong in the shared stash.
+- Bosses in an open tab: a fresh character can still fight them on simple rules, and auto-flee and instilled flasks react for free. Look again once Milestone 2 measures them.
+- Hard bosses need rules that can aim, and a rule that tells a slam from a channel ([HARD_BOSSES.md](design/HARD_BOSSES.md) → Fit with today's game).
+- Level 80 gear: 41 new weapons and shields use placeholder icons, no level 80 item has been equipped in-game, and Smithing lists 113 more locked actions with the same mithril gap ([GEAR.md](design/GEAR.md)).
+- Stale docs: `ACT2.md` says Act 2 is unreleased, `TREES.md` says ~900 nodes (it's 1,140), the `zones.ts` comment on leave levels matches nothing, and `CLASSES.md` says Exile gets no gameplay rewards.
 - Custom SMTP for Supabase, so Confirm email can go back on and password resets aren't held to the built-in mailer's few emails an hour.
 - Affix pool numbers are a vibe pass, not simmed: 30% leech, ~200% rarity per item, ~294% elemental at item level 80. Re-run the sim and look at sustain and drop rates ([GEAR.md](design/GEAR.md) → Affix pool).
 - Attack speed and crit chance on weapons are still global (PoE has them local); base implicits like a mace's % physical are global too.
@@ -88,8 +375,13 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Milestone 2: the sim reports game time per milestone; day 1 lands at 2–4 Act 1 stages on both play styles after tuning Act 1 XP, early drops and late station costs ([BALANCE.md](design/BALANCE.md)). Merged, not deployed — done 2026-10-31
+- [x] Gear bases extended to level 80: 113 new, 428 total ([GEAR.md](design/GEAR.md)). Not simmed — done 2026-10-30
+- [x] Act 2 art: all 40 monsters and 6 uniques have pack art, and a test fails if a monster has none ([ASSET_MAPPING.md](design/ASSET_MAPPING.md)) — done 2026-10-30
+- [x] Act recipe written with Act 1 and Act 2 gap tables ([ACT_RECIPE.md](design/ACT_RECIPE.md)) — done 2026-10-30
+- [x] Drafted the 14 ascendancies and 5 hard mode bosses for your calls ([ASCENDANCIES.md](design/ASCENDANCIES.md), [HARD_BOSSES.md](design/HARD_BOSSES.md)) — done 2026-10-30
 - [x] Docs updated for the reset: GDD rewritten as the current design, built-system docs note what changes, art notes corrected — done 2026-10-30
-- [x] Design reset settled: finished game, pacing, core systems, act recipe, live game, roadmap ([DESIGN_RESET.md](DESIGN_RESET.md)) — done 2026-10-30
+- [x] Design reset settled: finished game, pacing, core systems, act recipe, live game, roadmap ([Decisions](#decisions)) — done 2026-10-30
 - [x] Retired docs deleted (AI art prompts, the superseded new content pass) and `npm run art -- --docs` removed — done 2026-10-30
 - [x] Docs condensed: `design/` and `ops/` folders; merged setup, town + stash, and skills + uniques docs; links and code comments updated — done 2026-10-30
 - [x] Support mail tested: mail to support@dabfellow.party lands in Gmail (you) — done 2026-10-30

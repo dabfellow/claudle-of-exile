@@ -1,6 +1,6 @@
 # Hard mode bosses
 
-Draft, 2026-10-30, for you to make the calls early. Built in [ROADMAP.md](../ROADMAP.md) milestone 9. Levels, names and
+Draft, 2026-10-30, for you to make the calls early. Built in [MILESTONES.md](../MILESTONES.md) milestone 9. Levels, names and
 unique effects are starting suggestions. Rule types are described loosely, because Milestone 1 is finalising them now.
 
 ## Settled
@@ -84,7 +84,7 @@ unique effects are starting suggestions. Rule types are described loosely, becau
 - **Drops:** Crownless Sigil (needed for the highest past-the-limit crafts). Unique: *The Unwritten*, a body armour that
   gives one notable from your class's other ascendancy.
 
-**Every boss** also gets a collection log entry, and its material ties it to [Milestone 10](../ROADMAP.md) crafting, so
+**Every boss** also gets a collection log entry, and its material ties it to [Milestone 10](../MILESTONES.md) crafting, so
 each boss has a reason to be farmed for a particular build. Classic mode gets keys from drops only, which the map drops
 already cover.
 

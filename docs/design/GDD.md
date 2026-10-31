@@ -1,6 +1,6 @@
 # Path of Idle — Game Design (v0.3)
 
-> Status: **the design the game is building toward**, from the 2026-10-30 reset. Decisions and their wording are recorded in [DESIGN_RESET.md](../DESIGN_RESET.md); the order of work is in [ROADMAP.md](../ROADMAP.md). The live game doesn't match all of this yet. The other docs in this folder describe what's built, each with a note on what the reset changes.
+> Status: **the design the game is building toward**, from the 2026-10-30 reset. Decisions and their wording are recorded in [MILESTONES.md](../MILESTONES.md); the order of work is in [MILESTONES.md](../MILESTONES.md). The live game doesn't match all of this yet. The other docs in this folder describe what's built, each with a note on what the reset changes.
 
 ## 1. Vision
 
@@ -198,7 +198,7 @@ Asset packs, and they're the real art, not placeholders. No AI art. Mapping: [AS
 
 ## 13. Build order
 
-See [ROADMAP.md](../ROADMAP.md). The live site updates in stages, so real players test changes early.
+See [MILESTONES.md](../MILESTONES.md). The live site updates in stages, so real players test changes early.
 
 ---
 

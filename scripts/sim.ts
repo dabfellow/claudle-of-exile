@@ -1,6 +1,6 @@
 /**
  * Headless balance sim: a simple bot lives a dedicated player's days, visits and offline periods, earning the
- * War Table and Watchtower as it goes, and reports game time per milestone against docs/DESIGN_RESET.md.
+ * War Table and Watchtower as it goes, and reports game time per milestone against docs/MILESTONES.md.
  *
  *   npm run sim                               # every class, seeds 1-3, push and mix, 30 days
  *   npm run sim -- --days 7 --class mage --seeds 1,2 --profile push --jobs 8
@@ -822,7 +822,7 @@ function report(results: Result[]) {
     const z = actBossZone(act.n);
     if (z) console.log(`Act ${act.n} complete (${z.boss.name}): ` + PROFILES.map((p) => `${p} ${fmt(median(results.filter((r) => r.profile === p).map((r) => r.bosses[z.id] ?? Infinity)))}`).join(' · '));
   }
-  console.log('Targets (DESIGN_RESET §1): day 1 a couple of Act 1 stages at most some blue gear; week 1 partway through Act 3; month 1 Act 6 done pushing, starting it on a mix.\n');
+  console.log('Targets (MILESTONES.md): day 1 a couple of Act 1 stages at most some blue gear; week 1 partway through Act 3; month 1 Act 6 done pushing, starting it on a mix.\n');
 }
 
 if (JSON_OUT) console.log(JSON.stringify(runClass(classes[0].id, SEEDS[0], PROFILES[0])));

@@ -1,7 +1,7 @@
 import { EXTRA_ZONES, zoneDef, type MonsterDef, type ZoneDef } from './zones';
 
 /**
- * The Maps preview (docs/ROADMAP.md milestone 5): one tier, two themes, every number a knob. A map is a ZoneDef that
+ * The Maps preview (docs/MILESTONES.md milestone 5): one tier, two themes, every number a knob. A map is a ZoneDef that
  * isn't on the campaign road, so combat runs it like any area; engine/maps.ts holds what a run adds on top.
  */
 
