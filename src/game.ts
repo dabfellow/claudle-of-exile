@@ -16,6 +16,7 @@ import { newGame, tick } from './engine/state';
 import { tutorialPage, withTutorial } from './engine/tutorial';
 import { AppAccounts, isCloudAccount, type Account, type AuthProviderId } from './platform/accounts';
 import { reportError, setErrorUser } from './platform/errors';
+import { MAPS_PREVIEW } from './engine/maps';
 import { checkAdmin } from './platform/feedback';
 import { getSupabase } from './platform/supabase';
 import { supabaseCharacters } from './platform/supabaseTable';
@@ -222,7 +223,7 @@ class GameStore {
     await this.exit();
     await this.accounts.signOut();
     this.account = null;
-    this.isAdmin = false;
+    this.setAdmin(false);
     setErrorUser(null);
     this.saves = null;
     this.sync = null;
@@ -231,17 +232,23 @@ class GameStore {
     this.setScreen('title');
   }
 
+  /** Admins also get the dev-only Maps preview on the live site. */
+  private setAdmin(yes: boolean) {
+    this.isAdmin = yes;
+    MAPS_PREVIEW.enabled = yes || !!import.meta.env.DEV;
+  }
+
   private async openAccount(account: Account) {
     const supabase = getSupabase();
     setErrorUser(account.id);
-    this.isAdmin = false;
+    this.setAdmin(false);
     if (account.provider === 'demo') {
       this.saves = new MemorySaveStore();
       this.sync = null;
       this.guestCharacters = [];
     } else if (isCloudAccount(account) && supabase) {
       void checkAdmin().then((yes) => {
-        this.isAdmin = yes && this.account?.id === account.id;
+        this.setAdmin(yes && this.account?.id === account.id);
         this.notify();
       });
       const cloud = new CloudSaveStore(supabaseCharacters(supabase), new LocalSaveStore(localStorage, `cloud-${account.id}`, false), account.id);
@@ -452,6 +459,11 @@ class GameStore {
   private stopLoop() {
     if (this.loop) clearInterval(this.loop);
     this.loop = null;
+  }
+
+  /** Dev: pretend this much time passed away from the game. */
+  simulateAway(ms: number) {
+    this.runOffline(ms);
   }
 
   private runOffline(ms: number) {

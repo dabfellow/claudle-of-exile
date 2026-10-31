@@ -448,6 +448,30 @@ export interface AccountState {
 /** Account data arriving from elsewhere: a pre-account save, a demo, an import. */
 export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'exileUnlocked'>>;
 
+/** A map being run. Its map is already used up. */
+export interface MapRun {
+  zoneId: string;
+  tier: number;
+  theme: string;
+  packsLeft: number;
+  packsTotal: number;
+  /** game clock when it started */
+  startedAt: number;
+  /** lifetime deaths when it started: a rise means the run ended in one */
+  deaths: number;
+  bossDown: boolean;
+}
+
+export interface MapState {
+  /** maps held, by map zone id */
+  stock: Record<string, number>;
+  run: MapRun | null;
+  /** what auto-run keeps opening */
+  auto: { tier: number; theme: string } | null;
+  /** running totals, to judge a loop by; runs and clearMs count finished maps */
+  tally: { runs: number; clearMs: number; mapsFound: number; favoured: number };
+}
+
 export interface GameState {
   version: number;
   /** the shared account block; a running game holds the live one, and saves leave it out */
@@ -467,6 +491,8 @@ export interface GameState {
   offlineHaul: Item[];
   equipment: Partial<Record<EquipSlot, Item>>;
   flaskSlots: (FlaskInstance | null)[];
+  /** the Maps preview (engine/maps.ts) */
+  maps: MapState;
   skillBar: (SkillGemInstance | null)[];
   /** skill gems not on the bar */
   gems: SkillGemInstance[];

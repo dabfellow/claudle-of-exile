@@ -47,7 +47,7 @@ function rollCurrency(rng: Ctx['rng'], table: Record<string, number>): string {
   return pickWeighted(rng, ids, (id) => table[id])!;
 }
 
-function placeItem(s: GameState, ctx: Ctx, item: Item): void {
+export function placeItem(s: GameState, ctx: Ctx, item: Item): void {
   if (item.rarity === 'rare') s.lifetime.raresFound += 1;
   if (item.rarity === 'unique') s.lifetime.uniquesFound += 1;
   if (item.rarity !== 'unique' && s.settings.autoSalvage[item.rarity] && benchBuilt(s)) {
