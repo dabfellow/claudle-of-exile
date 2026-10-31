@@ -1,58 +1,56 @@
 # Gear bases
 
-All bases live in `src/data/bases.ts`: 315 in all. Every attribute type, pure and hybrid, now has a ladder to level 60 (added 2026-10-26).
-
-**Design reset (2026-10-30), not built yet:** base tiers extend to about level 80, so new Maps tiers keep bringing visibly better gear.
+All bases live in `src/data/bases.ts`: 428 in all. Every attribute type, pure and hybrid, has a ladder to level 80 (level 60 added 2026-10-26, level 80 added 2026-10-30), so new Maps tiers keep bringing visibly better gear. Belts, amulets and rings are not part of the ladders; they stop at level 26.
 
 ## Tier ladders (pure str / dex / int)
 
 | Slot | Levels |
 |---|---|
-| Helmet, body armour | 1, 8, 16, 24, 32, 40, 47, 54, 60 |
-| Gloves, boots | 1, 8, 20, 28, 36, 44, 52, 60 (staggered, so some slot upgrades every few levels) |
-| Shields | str 1, 8, 16, 24, 32, 40, 47, 54, 60 · dex 8, 16, 24, 32, 40, 47, 54, 60 · int 6, 14, 22, 32, 40, 47, 54, 60 |
-| Mace (str) | 1, 12, 19, 26, 33, 40, 47, 54, 60 |
-| Bow (dex) | 1, 8, 16, 23, 30, 37, 44, 52, 60 |
-| Wand (int) | 1, 7, 14, 22, 30, 37, 44, 52, 60 |
-| Staff (int) | 4, 16, 28, 38, 48, 60 |
+| Helmet, body armour | 1, 8, 16, 24, 32, 40, 47, 54, 60, 67, 74, 80 |
+| Gloves, boots | 1, 8, 20, 28, 36, 44, 52, 60, 64, 72, 80 (staggered, so some slot upgrades every few levels) |
+| Shields | str 1, 8, 16, 24, 32, 40, 47, 54, 60, 67, 74, 80 · dex 8, 16, 24, 32, 40, 47, 54, 60, 67, 74, 80 · int 6, 14, 22, 32, 40, 47, 54, 60, 67, 74, 80 |
+| Mace (str) | 1, 12, 19, 26, 33, 40, 47, 54, 60, 67, 74, 80 |
+| Bow (dex) | 1, 8, 16, 23, 30, 37, 44, 52, 60, 68, 74, 80 |
+| Wand (int) | 1, 7, 14, 22, 30, 37, 44, 52, 60, 68, 74, 80 |
+| Staff (int) | 4, 16, 28, 38, 48, 60, 70, 80 |
 
 Each new armour tier is a named set with matching art (one whole gear set from the pack per tier):
 
-| | 8 | 24 / 28 | 40 / 36 | 47 / 44 | 54 / 52 | 60 |
-|---|---|---|---|---|---|---|
-| Str | Blackened | Knight | Warlord | Dreadsteel | Champion | Sunforged |
-| Dex | Woodsman | Wolfpelt | Bonehunter | Hawkfeather | Thornwarden | Manticore |
-| Int | Acolyte | Magus | Stargazer | Raven | Hierophant | Seraph |
+| | 8 | 24 / 28 | 40 / 36 | 47 / 44 | 54 / 52 | 60 | 67 / 64 | 74 / 72 | 80 |
+|---|---|---|---|---|---|---|---|---|---|
+| Str | Blackened | Knight | Warlord | Dreadsteel | Champion | Sunforged | Colossus | Titan | Godforged |
+| Dex | Woodsman | Wolfpelt | Bonehunter | Hawkfeather | Thornwarden | Manticore | Gryphon | Stagheart | Wildlord |
+| Int | Acolyte | Magus | Stargazer | Raven | Hierophant | Seraph | Oracle | Astral | Celestial |
 
 ## Tier ladders (hybrids)
 
 | Slot | Levels |
 |---|---|
-| Helmet, body armour | 8, 16, 24, 32, 40, 47, 54, 60 |
-| Gloves, boots | 12, 20, 30, 37, 44, 52, 60 |
-| Shields (new; there were none) | 12, 24, 36, 44, 52, 60 |
-| Sword (str/dex) | 1, 8, 16, 24, 34, 41, 48, 54, 60 |
-| Axe (str/dex) | 1, 10, 18, 25, 32, 39, 46, 53, 60 |
-| Dagger (dex/int) | 1, 7, 14, 21, 28, 35, 43, 51, 60 |
-| Sceptre (str/int) | 6, 15, 24, 32, 40, 47, 54, 60 |
+| Helmet, body armour | 8, 16, 24, 32, 40, 47, 54, 60, 67, 74, 80 |
+| Gloves, boots | 12, 20, 30, 37, 44, 52, 60, 64, 72, 80 |
+| Shields | 12, 24, 36, 44, 52, 60, 64, 72, 80 |
+| Sword (str/dex) | 1, 8, 16, 24, 34, 41, 48, 54, 60, 66, 73, 80 |
+| Axe (str/dex) | 1, 10, 18, 25, 32, 39, 46, 53, 60, 67, 74, 80 |
+| Dagger (dex/int) | 1, 7, 14, 21, 28, 35, 43, 51, 60, 68, 74, 80 |
+| Sceptre (str/int) | 6, 15, 24, 32, 40, 47, 54, 60, 66, 73, 80 |
 
-| | 8 / 12 | 16 / 20 | 24 / 30 | 32 | 40 / 37 | 47 / 44 | 54 / 52 | 60 |
-|---|---|---|---|---|---|---|---|---|
-| Str/Dex | Studded | Ringmail | Wyrmscale | Lamellar | Gladiator | Corsair | Bladedancer | Dragonscale |
-| Str/Int | Chaplain | Crusader | Templar | Inquisitor | Paladin | Zealot | Hallowed | Archon |
-| Dex/Int | Wayfarer | Shade | Duskweave | Phantom | Nightshade | Wraith | Umbral | Voidwalker |
+| | 8 / 12 | 16 / 20 | 24 / 30 | 32 | 40 / 37 | 47 / 44 | 54 / 52 | 60 | 67 / 64 | 74 / 72 | 80 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Str/Dex | Studded | Ringmail | Wyrmscale | Lamellar | Gladiator | Corsair | Bladedancer | Dragonscale | Warbringer | Slayer | Wyrmlord |
+| Str/Int | Chaplain | Crusader | Templar | Inquisitor | Paladin | Zealot | Hallowed | Archon | Exarch | Sanctum | Empyrean |
+| Dex/Int | Wayfarer | Shade | Duskweave | Phantom | Nightshade | Wraith | Umbral | Voidwalker | Eclipse | Abyssal | Oblivion |
 
 (Level 32 sets are helmet and body only.) A hybrid carries 60% of a pure base's value in each of its two defences. When one of them is energy shield, the ES is half that value, as before.
 
 ## Base stats
 
-- Armour, evasion and energy shield follow `k × (level + 6)^1.4`. `k` is set per slot so the old level-32 (or level-20 gloves/boots) bases sit on the curve. A level-60 piece has about 2.2× the level-32 value.
-- Weapon average damage grows as `(level + 10)^1.15` from each family's old top base. The family's min:max spread stays the same.
-- Numbers are hardcoded per base. The curve is only where they came from.
+- Armour, evasion and energy shield follow `k × (level + 6)^1.4`. `k` is set per slot so the old level-32 (or level-20 gloves/boots) bases sit on the curve. A level-60 piece has about 2.2× the level-32 value, and a level-80 piece about 1.45× the level-60 value.
+- Weapon average damage grows as `(level + 10)^1.15` from each family's old top base. The family's min:max spread stays the same. A level-80 weapon has about 1.33× the level-60 average.
+- Numbers are hardcoded per base. The curve is only where they came from. The level 64+ numbers follow the curve and have not been through a sim.
 
 ## Bonus implicits (level 40+)
 
-Every base of level 40+ gets one built-in mod. Hybrid values are a bit lower than pure ones. It scales from its level-40 value to its level-60 value (`ARMOUR_BONUS` and `bonus` on `WEAPON_FAMILIES`). Weapons keep their family implicit and add this one on top.
+Every base of level 40+ gets one built-in mod. Hybrid values are a bit lower than pure ones. It scales from its level-40 value to its level-60 value (`ARMOUR_BONUS` and `bonus` on `WEAPON_FAMILIES`), then keeps climbing at the same rate, so a level-80 base carries `2 × level-60 value − level-40 value`. The table shows the level 40–60 range. Weapons keep their family implicit and add this one on top.
 
 | | Helmet | Body | Gloves | Boots | Shield |
 |---|---|---|---|---|---|
@@ -91,5 +89,5 @@ All rollable mods are in `src/data/affixes.ts`. Each has 9 tiers, unlocking at i
 ## Known gaps
 
 - Monsters stop at level 33, so bases above 34 can't drop until Act 3+ exists. Smithing (level = base level) and the Town Market (character level) can't reach them either.
-- Smithing uses mithril for everything from level 22 up. A level-60 base costs the same as a level-24 one.
-- New weapons and shields share icons for now, because the current pack has no spare pieces. New asset packs can cover them.
+- Smithing uses mithril for everything from level 22 up. A level-80 base costs the same as a level-24 one.
+- Weapons and shields above about level 34 have no pack art yet, and show the slot's placeholder icon. That includes all 41 weapons and shields added for levels 61–80. New asset packs can cover them. All armour tiers to level 80 have gear-set art; of the 89 sets only 59 is still unused.
