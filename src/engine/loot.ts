@@ -9,6 +9,7 @@ import { addBank } from './bank';
 import type { Ctx } from './context';
 import { benchBuilt } from './crafting';
 import { stationLevel } from './hideout';
+import { gemArrived } from './progress';
 import { dropItem } from './storage';
 import { createItem, createUnique, droppableBases, salvageValue } from './items';
 import { chance, pick, pickWeighted, rInt } from './rng';
@@ -18,18 +19,18 @@ import type { GameState, Item, MonsterInstance, Rarity } from './types';
 /** 40% skill gem, 60% support gem. */
 /**
  * Gems are rare drops (the Town's Gem shop is the main source): these scale the drop tables' gem chances.
- * A gem only drops if its level requirement is within the monster's level.
+ * A gem only drops if its act has arrived and its level requirement is within the monster's level.
  */
 export const GEM_DROP_SCALE = 0.05;
 export const BOSS_GEM_DROP_SCALE = 0.25;
 
 export function dropGem(s: GameState, ctx: Ctx, maxLevel: number): void {
   if (chance(ctx.rng, 0.4)) {
-    const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => gemReqLevel(g.id) <= maxLevel));
+    const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => gemReqLevel(g.id) <= maxLevel && gemArrived(s, g.id)));
     s.gems.push(createSkillGem(s, def.id));
     ctx.emit({ t: 'loot', gemId: def.id });
   } else {
-    const def = pick(ctx.rng, SUPPORT_GEMS.filter((g) => gemReqLevel(g.id) <= maxLevel));
+    const def = pick(ctx.rng, SUPPORT_GEMS.filter((g) => gemReqLevel(g.id) <= maxLevel && gemArrived(s, g.id)));
     s.supportGems.push(createSupportGem(s, def.id));
     ctx.emit({ t: 'loot', supportId: def.id });
   }

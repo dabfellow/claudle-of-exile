@@ -403,6 +403,9 @@ const GEM_SYMBOL: Record<string, string> = {
   pummel: 'a clenched fist', berserk: 'a pair of crossed axes', parry: 'a sword held sideways', judgement_hammer: 'a hammer with a lightning bolt',
   infernal_blow: 'a fist inside a flame', barrage: 'three parallel arrows', rain_of_arrows: 'arrows pointing down',
   feint: 'a curved arrow turning back', backstab: 'a dagger pointing down', ice_shot: 'an arrow with a snowflake tip',
+  cavalry_charge: 'a horse head over a lance', vulnerability: 'a cracked shield', raiding_leap: 'a blade over a rising arc', parting_shot: 'an arrow flying backwards',
+  tailwind: 'three swept wind lines', hobble: 'a shackled foot', ember_dash: 'a streak of flame', arcane_surge: 'a rising spark',
+  elemental_weakness: 'a broken flame', enfeeble: 'a drooping hand',
   glacial_lance: 'a long ice spear', meditate: 'a closed eye', shock_nova: 'a ring of short lightning bolts',
   consecrate: 'a sun over a flat line', frost_needle: 'three thin needles',
 };

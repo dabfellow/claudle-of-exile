@@ -1,4 +1,4 @@
-import type { AreaShape } from '../engine/battlefield';
+import { RINGS, type AreaShape } from '../engine/battlefield';
 import type { WeaponFamily } from './bases';
 import type { DamageType, GroundKind, StatKey } from '../engine/types';
 
@@ -8,8 +8,8 @@ export type GemAttr = 'str' | 'dex' | 'int';
  * supports need this, so they never fit a shield or a mana refill). `cast`: a spell with a cast time,
  * the only kind Faster Casts speeds up. `duration`: something it does lasts, so Lingering stretches it.
  */
-export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'dot' | 'sustain' | 'hit' | 'cast';
-export type SkillRole = 'main' | 'burst' | 'area' | 'guard' | 'buff' | 'sustain';
+export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'curse' | 'movement' | 'dot' | 'sustain' | 'hit' | 'cast';
+export type SkillRole = 'main' | 'burst' | 'area' | 'guard' | 'buff' | 'curse' | 'sustain';
 
 /** What a skill does when it fires. Numbers are at gem level 1. */
 export interface SkillEffect {
@@ -42,8 +42,24 @@ export interface SkillEffect {
   evadeMs?: number;
   /** guard: absorb shield as % of max life */
   shieldPct?: number;
-  /** guard/buff: timed stats and more-damage; regenPct is % of max life per second (negative drains, never below 1 life) */
-  buff?: { durationMs: number; stats?: Partial<Record<StatKey, number>>; moreDamage?: number; regenPct?: number };
+  /** guard/buff: timed stats and more-damage; regenPct is % of max life per second (negative drains, never below 1 life); outpace burns out hazards under you like running does */
+  buff?: { durationMs: number; stats?: Partial<Record<StatKey, number>>; moreDamage?: number; regenPct?: number; outpace?: boolean };
+  /** movement: leaves any hazard under you behind */
+  stepOut?: boolean;
+  /** movement: drags the target up to melee range, as you ride it down (bosses stand their ground) */
+  charge?: boolean;
+  /** curses enemies where it lands (see `area`): an enemy carries one curse at a time, and bosses take half its effect */
+  curse?: {
+    durationMs: number;
+    /** % increased physical damage taken */
+    physTaken?: number;
+    /** points off every elemental resistance */
+    resPen?: number;
+    /** % less damage dealt by its hits */
+    dealLess?: number;
+    /** % slower attacks, wind-ups and walking */
+    slow?: number;
+  };
   /** attacks: this % of physical damage is converted to another type (and scales with that type's increases) */
   convert?: { type: DamageType; pct: number };
   /** % more damage against enemies with an ailment (bleed, poison, ignite, chill or freeze) */
@@ -90,6 +106,7 @@ const SLAM_WEAPONS: WeaponFamily[] = ['mace', 'axe', 'sceptre', 'staff'];
 const STRIKE_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'dagger', 'mace', 'sceptre'];
 const HEAVY_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'mace', 'sceptre', 'staff'];
 const BOW: WeaponFamily[] = ['bow'];
+const CHARGE_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'dagger', 'mace', 'sceptre', 'staff'];
 /** spells deal more damage from a wand, staff, dagger or sceptre (they still work with anything) */
 export const CASTER_WEAPONS: WeaponFamily[] = ['wand', 'staff', 'dagger', 'sceptre'];
 export const CASTER_WEAPON_MORE = 20;
@@ -110,7 +127,7 @@ export type RuleCondition =
   | 'targetLacks';
 
 /** What a rule can check on the current target. */
-export type TargetStatus = 'bleeding' | 'poisoned' | 'ignited' | 'stunned' | 'frozen' | 'chilled' | 'shocked' | 'armourBroken';
+export type TargetStatus = 'bleeding' | 'poisoned' | 'ignited' | 'stunned' | 'frozen' | 'chilled' | 'shocked' | 'armourBroken' | 'cursed';
 
 export const TARGET_STATUSES: { id: TargetStatus; label: string }[] = [
   { id: 'bleeding', label: 'Bleed' },
@@ -121,6 +138,7 @@ export const TARGET_STATUSES: { id: TargetStatus; label: string }[] = [
   { id: 'chilled', label: 'Chill' },
   { id: 'shocked', label: 'Shock' },
   { id: 'armourBroken', label: 'Broken armour' },
+  { id: 'cursed', label: 'Curse' },
 ];
 
 export interface TacticRule {
@@ -231,6 +249,20 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     desc: 'A burning strike that sets the target alight.',
     defaultRule: { when: 'always' },
   }),
+  A({
+    id: 'cavalry_charge', name: 'Cavalry Charge', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area', 'movement', 'hit'],
+    manaCost: 10, cooldownMs: 7000, timeMs: 1800, color: '#c9803a',
+    effect: { weaponPct: 135, area: 'beam', stunChance: 0.15, stepOut: true, charge: true }, range: RINGS, weapons: CHARGE_WEAPONS,
+    desc: 'Ride out of any ground hazard and through the whole line to your target, anywhere on the field, dragging it into melee range. 15% chance to stun.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'vulnerability', name: 'Vulnerability', attr: 'str', role: 'curse', tags: ['spell', 'curse', 'area', 'duration'],
+    manaCost: 10, cooldownMs: 10000, timeMs: 0, color: '#a8503a',
+    effect: { area: 'splash', radius: 1, curse: { durationMs: 8000, physTaken: 30 } },
+    desc: 'Curse the target and enemies next to it for 8s: they take 30% increased physical damage.',
+    defaultRule: { when: 'notActive' },
+  }),
 
   // ---------- Dexterity ----------
   A({
@@ -295,6 +327,34 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     effect: { weaponPct: 115, targets: 'single', convert: { type: 'cold', pct: 50 }, chillMs: 3000 }, weapons: BOW,
     desc: 'A frozen arrow that chills the target. 50% of physical damage is converted to cold.',
     defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'raiding_leap', name: 'Raiding Leap', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'movement', 'hit'],
+    manaCost: 8, cooldownMs: 6000, timeMs: 1500, color: '#a8d05a',
+    effect: { weaponPct: 170, targets: 'single', stepOut: true, charge: true }, range: RINGS, weapons: STRIKE_WEAPONS,
+    desc: 'Leap out of any ground hazard onto your target, anywhere on the field, dragging it into melee range.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'parting_shot', name: 'Parting Shot', attr: 'dex', role: 'burst', tags: ['attack', 'projectile', 'movement', 'hit'],
+    manaCost: 8, cooldownMs: 6000, timeMs: 1500, color: '#c8e08a',
+    effect: { weaponPct: 130, targets: 'single', stepOut: true, knockback: true }, weapons: BOW,
+    desc: 'Wheel out of any ground hazard and loose an arrow as you go, shoving enemies in melee range back a ring.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'tailwind', name: 'Tailwind', attr: 'dex', role: 'buff', tags: ['buff', 'duration'],
+    manaCost: 12, cooldownMs: 16000, timeMs: 600, color: '#b8e0c0',
+    effect: { buff: { durationMs: 8000, stats: { attackSpeedPct: 15, evasionPct: 30, moveSpeedPct: 50 }, outpace: true } },
+    desc: 'For 8s: 15% increased Attack Speed, 30% increased Evasion Rating and 50% increased Movement Speed, and ground hazards under you burn out twice as fast.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'hobble', name: 'Hobble', attr: 'dex', role: 'curse', tags: ['spell', 'curse', 'area', 'duration'],
+    manaCost: 10, cooldownMs: 10000, timeMs: 0, color: '#7a9a5a',
+    effect: { area: 'splash', radius: 1, curse: { durationMs: 8000, slow: 25 } },
+    desc: 'Curse the target and enemies next to it for 8s: their attacks, wind-ups and walking are 25% slower.',
+    defaultRule: { when: 'notActive' },
   }),
 
   // ---------- Intelligence ----------
@@ -361,6 +421,34 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     desc: 'Three needles of ice in quick succession.',
     defaultRule: { when: 'always' },
   }),
+  A({
+    id: 'ember_dash', name: 'Ember Dash', attr: 'int', role: 'area', tags: ['spell', 'area', 'movement', 'duration', 'hit'],
+    manaCost: 11, cooldownMs: 7000, timeMs: 0, color: '#ff9a5a',
+    effect: { base: [16, 26], type: 'fire', area: 'beam', crit: 5, stepOut: true, ground: { kind: 'burning', pctPerSec: 30, durationMs: 3000, area: 'beam' } },
+    desc: 'Dash out of any ground hazard in a streak of flame, burning the whole line to your target and leaving it on fire for 3s.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'arcane_surge', name: 'Arcane Surge', attr: 'int', role: 'buff', tags: ['spell', 'buff', 'duration'],
+    manaCost: 12, cooldownMs: 16000, timeMs: 0, color: '#b08bff',
+    effect: { buff: { durationMs: 8000, stats: { spellPct: 30, castSpeedPct: 15 } } },
+    desc: 'For 8s: 30% increased Spell Damage and 15% increased Cast Speed.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'elemental_weakness', name: 'Elemental Weakness', attr: 'int', role: 'curse', tags: ['spell', 'curse', 'area', 'duration'],
+    manaCost: 10, cooldownMs: 10000, timeMs: 0, color: '#c08a4a',
+    effect: { area: 'splash', radius: 1, curse: { durationMs: 8000, resPen: 30 } },
+    desc: 'Curse the target and enemies next to it for 8s: they have 30 less of every elemental resistance.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'enfeeble', name: 'Enfeeble', attr: 'int', role: 'curse', tags: ['spell', 'curse', 'area', 'duration'],
+    manaCost: 10, cooldownMs: 10000, timeMs: 0, color: '#8a7a9a',
+    effect: { area: 'splash', radius: 1, curse: { durationMs: 8000, dealLess: 25 } },
+    desc: 'Curse the target and enemies next to it for 8s: their hits deal 25% less damage.',
+    defaultRule: { when: 'notActive' },
+  }),
 ];
 
 // ---------- supports ----------
@@ -384,6 +472,10 @@ export interface SupportMods {
   repeatDamage?: number;
   chains?: number;
   durationPct?: number;
+  /** % shorter cooldown */
+  cooldownPct?: number;
+  /** % more effect of a curse */
+  curseEffect?: number;
   /** signature behaviour, handled by the combat engine */
   special?: string;
 }
@@ -416,13 +508,43 @@ const GEM_LEVELS: Record<string, number> = {
   barrage: 10, fireball: 10, infernal_blow: 10,
   berserk: 12, consecrate: 12, meditate: 12,
   judgement_hammer: 16, backstab: 16, glacial_lance: 16,
+  cavalry_charge: 20, raiding_leap: 20, parting_shot: 20, ember_dash: 20,
+  tailwind: 22, arcane_surge: 22,
+  vulnerability: 24, hobble: 24,
+  elemental_weakness: 26, enfeeble: 26,
   lacerate: 35,
   // supports
   faster_attacks: 4, faster_casts: 4, efficiency: 4,
   brutality: 8, elemental_focus: 8, life_leech: 8, mana_leech: 8, pierce: 8,
   critical_strikes: 12, chain: 12, lingering: 12,
   multistrike: 18, spell_echo: 18,
+  surefoot: 22,
+  fresh_horses: 24, trample: 24,
+  wide_hex: 26,
+  deep_hex: 28,
 };
+
+/**
+ * The act each gem arrives with (GDD §4): it can't drop, be cut or be sold until the character reaches that
+ * act, and a gem already owned always stays usable. Character level still applies on top. Anything missing
+ * here is Act 1, and a signature support arrives with its skill.
+ */
+const GEM_ACTS: Record<string, number> = {
+  // Act 2, Riders and raiders
+  judgement_hammer: 2, backstab: 2, glacial_lance: 2,
+  cavalry_charge: 2, raiding_leap: 2, parting_shot: 2, ember_dash: 2,
+  tailwind: 2, arcane_surge: 2,
+  vulnerability: 2, hobble: 2, elemental_weakness: 2, enfeeble: 2,
+  surefoot: 2, fresh_horses: 2, trample: 2, wide_hex: 2, deep_hex: 2,
+  // Act 3
+  lacerate: 3,
+};
+
+/** The act a skill or support gem arrives with. */
+export function gemAct(id: string): number {
+  const sig = SUPPORT_GEMS.find((g) => g.id === id)?.signatureFor;
+  return GEM_ACTS[sig ?? id] ?? 1;
+}
 
 /**
  * The strongest skills ask this many times the usual attribute at every gem level
@@ -473,6 +595,16 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'static_field', name: 'Static Field', attr: 'int', fits: [], signatureFor: 'shock_nova', mods: { special: 'staticfield' }, desc: 'Enemies hit take 10% increased lightning damage for 4s.' }),
   S({ id: 'holy_ground', name: 'Holy Ground', attr: 'int', fits: [], signatureFor: 'consecrate', mods: { special: 'holyground' }, desc: 'The regeneration also restores 1% of maximum Energy Shield per second.' }),
   S({ id: 'shatterpoint', name: 'Shatterpoint', attr: 'int', fits: [], signatureFor: 'frost_needle', mods: { special: 'shatterpoint' }, desc: 'Critical strikes chill; hits against chilled enemies deal 15% more damage.' }),
+  S({ id: 'run_down', name: 'Run Down', attr: 'str', fits: [], signatureFor: 'cavalry_charge', mods: { special: 'rundown' }, desc: 'Every enemy in the line is stunned for 1s (0.4s for bosses).' }),
+  S({ id: 'cracked_hide', name: 'Cracked Hide', attr: 'str', fits: [], signatureFor: 'vulnerability', mods: { special: 'crackedhide' }, desc: 'The curse also breaks armour for as long as it lasts (+15% damage taken).' }),
+  S({ id: 'hit_and_fade', name: 'Hit and Fade', attr: 'dex', fits: [], signatureFor: 'raiding_leap', mods: { special: 'hitfade' }, desc: 'Evade every hit for 1.5s after you land.' }),
+  S({ id: 'feigned_retreat', name: 'Feigned Retreat', attr: 'dex', fits: [], signatureFor: 'parting_shot', mods: { special: 'feignedretreat' }, desc: 'Your next attack after Parting Shot deals 40% more damage.' }),
+  S({ id: 'gale_rider', name: 'Gale Rider', attr: 'dex', fits: [], signatureFor: 'tailwind', mods: { special: 'galerider' }, desc: 'While Tailwind lasts, skills recover from cooldowns 25% faster.' }),
+  S({ id: 'snare', name: 'Snare', attr: 'dex', fits: [], signatureFor: 'hobble', mods: { special: 'snare' }, desc: 'Cursed enemies are stopped dead for 1s (0.4s for bosses).' }),
+  S({ id: 'ember_trail', name: 'Ember Trail', attr: 'int', fits: [], signatureFor: 'ember_dash', mods: { special: 'embertrail' }, desc: 'The burning trail deals twice the damage.' }),
+  S({ id: 'overflow', name: 'Overflow', attr: 'int', fits: [], signatureFor: 'arcane_surge', mods: { special: 'overflow' }, desc: 'While Arcane Surge lasts, skills cost 25% less mana.' }),
+  S({ id: 'contagion', name: 'Contagion', attr: 'int', fits: [], signatureFor: 'elemental_weakness', mods: { special: 'contagion' }, desc: 'When a cursed enemy dies, the curse jumps to another enemy with the time it had left.' }),
+  S({ id: 'wither_will', name: 'Wither Will', attr: 'int', fits: [], signatureFor: 'enfeeble', mods: { special: 'witherwill' }, desc: 'Killing a cursed enemy restores 4% of your life.' }),
 
   // general
   S({ id: 'added_fire', name: 'Added Fire', attr: 'str', fits: ['hit'], mods: { extra: { type: 'fire', pct: 25 }, manaMult: 1.2 }, desc: 'Gain 25% of the hit as extra fire damage.' }),
@@ -491,6 +623,11 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'pierce', name: 'Pierce', attr: 'dex', fits: ['projectile'], mods: { special: 'pierce', moreDamage: -15, manaMult: 1.25 }, desc: "Projectiles pass through, hitting every enemy in the target's lane front to back; 15% less damage." }),
   S({ id: 'chain', name: 'Chain', attr: 'dex', fits: ['projectile', 'chain'], mods: { chains: 1, moreDamage: -10, manaMult: 1.3 }, desc: 'Hits chain to 1 more enemy; 10% less damage.' }),
   S({ id: 'lingering', name: 'Lingering', attr: 'int', fits: ['duration'], mods: { durationPct: 50, manaMult: 1.2 }, desc: 'Effects and ailments last 50% longer.' }),
+  S({ id: 'surefoot', name: 'Surefoot', attr: 'dex', fits: ['movement'], mods: { special: 'surefoot', manaMult: 1.1 }, desc: 'For 3s after you move, ground hazards under you do nothing.' }),
+  S({ id: 'fresh_horses', name: 'Fresh Horses', attr: 'dex', fits: ['movement'], mods: { cooldownPct: 25, manaMult: 1.2 }, desc: '25% shorter cooldown.' }),
+  S({ id: 'trample', name: 'Trample', attr: 'str', fits: ['movement'], mods: { moreDamage: 30, manaMult: 1.3 }, desc: '30% more damage.' }),
+  S({ id: 'wide_hex', name: 'Wide Hex', attr: 'int', fits: ['curse'], mods: { special: 'widehex', manaMult: 1.4 }, desc: 'The curse lands on every enemy on the field.' }),
+  S({ id: 'deep_hex', name: 'Deep Hex', attr: 'int', fits: ['curse'], mods: { curseEffect: 30, manaMult: 1.3 }, desc: '30% more curse effect.' }),
 ];
 
 export function activeGemDef(id: string): ActiveGemDef {

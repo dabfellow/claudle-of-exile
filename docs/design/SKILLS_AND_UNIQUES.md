@@ -3,6 +3,44 @@
 **Design reset (2026-10-30):** new skills and supports now arrive in themed batches, one per act, instead of by level.
 Build-defining uniques are planned for the long tail.
 
+## Act batches
+
+**Status (2026-10-31): built.** Each gem belongs to an act (`GEM_ACTS` in `data/gems.ts`; a signature follows its skill).
+It can't drop, be cut or be sold until the character has an area open in that act, and character level still applies on
+top. The act only decides what can turn up: nothing about a gem you own checks it, so old characters keep everything and
+no save migration was needed. The Gem shop stocks your furthest act's gems at 3× weight and restocks when you reach a new act.
+
+| Act | Skills | Supports |
+|---|---|---|
+| 1 | Everything up to level 12 | Everything up to level 18, plus those skills' signatures |
+| 2 | Riders and raiders (below), plus Judgement Hammer, Backstab and Glacial Lance | Below, plus those three skills' signatures |
+| 3 | Lacerate (level 35) | Hemorrhage |
+
+### Act 2: Riders and raiders
+
+Movement skills step out of Scorched earth: a skill with `stepOut` removes every hazard under you, because the player
+stays put on the field. They have a cooldown, so they default to Whenever ready.
+
+| Skill | Attr | Role | Lvl | Does | Signature (lvl +6) |
+|---|---|---|---|---|---|
+| Cavalry Charge | str | area | 20 | 135% down the line, any range, drags the target to melee, 7s | Run Down: stuns the line |
+| Raiding Leap | dex | main | 20 | 170% at any range, drags the target to melee, 6s | Hit and Fade: evade 1.5s |
+| Parting Shot | dex (bow) | burst | 20 | 130%, shoves melee back a ring, 6s | Feigned Retreat: next attack 40% more |
+| Ember Dash | int | area | 20 | 16–26 fire down the line, leaves it burning, instant, 7s | Ember Trail: double burn |
+| Tailwind | dex | buff | 22 | 8s: attack speed, evasion, movement; hazards under you burn out twice as fast | Gale Rider: 25% cooldown recovery |
+| Arcane Surge | int | buff | 22 | 8s: 30% spell damage, 15% cast speed | Overflow: 25% less mana cost |
+| Vulnerability | str | curse | 24 | 30% increased physical damage taken | Cracked Hide: breaks armour too |
+| Hobble | dex | curse | 24 | 25% slower attacks, wind-ups and walking | Snare: stops them dead briefly |
+| Elemental Weakness | int | curse | 26 | 30 less of every elemental resistance | Contagion: jumps on death |
+| Enfeeble | int | curse | 26 | Hits deal 25% less | Wither Will: kills heal 4% life |
+
+**Curses** are instant, last 8s on a 10s cooldown and land on the target and its neighbours. An enemy carries one, a new
+one replaces the old, bosses take half the effect, and gem level adds 2% effect per level. Rules can read them through the
+Status rule **Curse** and the free **When its effect is not active**.
+
+**General supports:** Surefoot (22, ground does nothing for 3s after you move), Fresh Horses (24, 25% shorter cooldown),
+Trample (24, 30% more damage), Wide Hex (26, curse lands on the whole field), Deep Hex (28, 30% more curse effect).
+
 ## New Skills — built around the class mechanics
 
 Goes with [CLASSES.md](CLASSES.md). Gems stay **shared**: nothing here is class-locked and no skill

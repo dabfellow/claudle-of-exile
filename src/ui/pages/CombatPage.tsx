@@ -250,6 +250,7 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
         {m.stunMs > 0 && <span className="status">Stunned</span>}
         {m.frozenMs > 0 && <span className="status cold">Frozen</span>}
         {m.vulnMs > 0 && <span className="status">Armour broken</span>}
+        {m.curse && <span className="status">{activeGemDef(m.curse.gemId).name}</span>}
         {m.dots.some((x) => x.kind === 'bleed') && <span className="status bad">Bleeding</span>}
         {poison > 0 && <span className="status poison">Poison ×{poison}</span>}
         {m.dots.some((x) => x.kind === 'ignite') && <span className="status fire">Ignited</span>}
@@ -267,6 +268,7 @@ function MonsterToken({ m, target, locked, fx }: { m: MonsterInstance; target: b
   if (m.dots.some((x) => x.kind === 'bleed')) pips.push(['Bleeding', 'var(--life-2)']);
   if (m.dots.some((x) => x.kind === 'poison')) pips.push(['Poisoned', 'var(--poison)']);
   if (m.dots.some((x) => x.kind === 'ignite')) pips.push(['Ignited', 'var(--fire)']);
+  if (m.curse) pips.push([activeGemDef(m.curse.gemId).name, 'var(--accent-2)']);
   if (m.enraged) pips.push(['Enraged', 'var(--danger)']);
   return (
     <Tooltip content={<MonsterCard m={m} target={target} fx={fx} />}>

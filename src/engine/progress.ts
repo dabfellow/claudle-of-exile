@@ -1,5 +1,16 @@
+import { gemAct } from '../data/gems';
 import { actOpen, bossesNeeded, roadsInto, ZONES, type ZoneDef } from '../data/zones';
 import type { GameState } from './types';
+
+/** The furthest act this character has an area open in. */
+export function reachedAct(s: GameState): number {
+  return Math.max(1, ...ZONES.filter((z) => s.unlockedZones.includes(z.id)).map((z) => z.act));
+}
+
+/** Whether a gem can turn up for this character yet: drops, cuts and the Gem shop all ask this. */
+export function gemArrived(s: GameState, gemId: string): boolean {
+  return gemAct(gemId) <= reachedAct(s);
+}
 
 /** Bosses beaten in one act. */
 export function bossesBeatenInAct(s: GameState, act: number): number {

@@ -497,6 +497,16 @@ export const GEM_GLYPHS: Record<string, string> = {
   parry: new URL('../assets/icons/status/armour.svg', import.meta.url).href,
   judgement_hammer: new URL('../assets/icons/skills/smithing.svg', import.meta.url).href,
   infernal_blow: new URL('../assets/icons/status/ignite.svg', import.meta.url).href,
+  cavalry_charge: new URL('../assets/icons/skills/charged-attack.svg', import.meta.url).href,
+  vulnerability: new URL('../assets/icons/status/broken-heart.svg', import.meta.url).href,
+  raiding_leap: new URL('../assets/icons/skills/backstab.svg', import.meta.url).href,
+  parting_shot: new URL('../assets/icons/skills/bow.svg', import.meta.url).href,
+  tailwind: new URL('../assets/icons/status/haste.svg', import.meta.url).href,
+  hobble: new URL('../assets/icons/status/stun.svg', import.meta.url).href,
+  ember_dash: new URL('../assets/icons/status/ignite.svg', import.meta.url).href,
+  arcane_surge: new URL('../assets/icons/status/prestige.svg', import.meta.url).href,
+  elemental_weakness: new URL('../assets/icons/skills/spell.svg', import.meta.url).href,
+  enfeeble: new URL('../assets/icons/status/death.svg', import.meta.url).href,
   twin_strike: new URL('../assets/icons/skills/combat.svg', import.meta.url).href,
   poison_dart: new URL('../assets/icons/status/poison.svg', import.meta.url).href,
   smoke_step: new URL('../assets/icons/status/evasion.svg', import.meta.url).href,
@@ -531,6 +541,11 @@ export const GEM_GLYPHS: Record<string, string> = {
   pierce: new URL('../assets/icons/skills/projectile.svg', import.meta.url).href,
   chain: new URL('../assets/icons/status/shock.svg', import.meta.url).href,
   lingering: new URL('../assets/icons/status/duration.svg', import.meta.url).href,
+  surefoot: new URL('../assets/icons/status/evasion.svg', import.meta.url).href,
+  fresh_horses: new URL('../assets/icons/status/cooldown.svg', import.meta.url).href,
+  trample: new URL('../assets/icons/skills/charged-attack.svg', import.meta.url).href,
+  wide_hex: new URL('../assets/icons/status/boss.svg', import.meta.url).href,
+  deep_hex: new URL('../assets/icons/status/rank.svg', import.meta.url).href,
 };
 
 /** game-icons.net silhouettes, keyed like the stroke icons in components/Icon.tsx so either can stand in. */

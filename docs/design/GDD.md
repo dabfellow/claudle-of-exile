@@ -81,6 +81,7 @@ Measure first: put rule locks, offline stops and a combat/skilling split in the 
 - **Skill gems** go into a **skill bar of 6 fixed slots**. Each has its own **support sockets**.
 - Gems **level up with use** and have attribute requirements.
 - **New skills arrive in batches by act:** each act brings a themed set of skills and supports.
+- **As built:** each gem is tied to an act, which decides when it can drop, be cut or be sold. Character level still applies, and gems you own always stay usable ([SKILLS_AND_UNIQUES.md](SKILLS_AND_UNIQUES.md#act-batches)).
 - Skill roles: Main, Burst, Area, Guard, Buff/Curse, Sustain. Current gems are in [SKILLS_AND_UNIQUES.md](SKILLS_AND_UNIQUES.md).
 
 ### Tactics rules (the idle core)
