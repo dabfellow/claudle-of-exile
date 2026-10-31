@@ -179,7 +179,7 @@ export function currentMovement(s: GameState): Movement {
 
 // ---------- monsters ----------
 
-/** Global kill-xp knob: Act 1 is paced to take 6–10 hours (docs/design/BALANCE.md). */
+/** Global kill-xp knob; areas scale it further with `xpScale` (docs/design/BALANCE.md). */
 export const KILL_XP_SCALE = 0.8;
 
 /** Base character xp for a kill, before the level-difference multiplier. */
@@ -1156,7 +1156,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   ctx.emit({ t: 'kill', name: mon.name, boss: mon.isBoss });
   c.hungerMs = HUNGER_MS;
   s.lifetime.kills += 1;
-  const xp = monsterXp(mon) * xpLevelMultiplier(characterLevel(s), mon.level);
+  const xp = monsterXp(mon) * xpLevelMultiplier(characterLevel(s), mon.level) * (zoneDef(s.combat!.zoneId).xpScale ?? 1);
   grantXp(s, ctx, 'combat', xp * (1 + d.charXp / 100));
   grantGemXp(s, ctx, xp, d.attributes);
   gainCharges(s, mon.isBoss ? 8 : 1, d);

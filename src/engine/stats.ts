@@ -9,12 +9,16 @@ import { STAT_KEYS, type Buff, type DamageType, type GameState, type Item, type 
 import { characterLevel } from './character';
 import { MEGA_CRIT_MULTI, mechanicStats } from './mechanics';
 
+// built once: deriveStats runs every tick, and rebuilding this took most of a sim run
+let zeroStats: Stats | null = null;
+
 export function emptyStats(): Stats {
-  return Object.fromEntries(STAT_KEYS.map((k) => [k, 0])) as Stats;
+  zeroStats ??= Object.fromEntries(STAT_KEYS.map((k) => [k, 0])) as Stats;
+  return { ...zeroStats };
 }
 
 export function addStats(into: Stats, from: Partial<Record<StatKey, number>>, mult = 1): void {
-  for (const [k, v] of Object.entries(from)) into[k as StatKey] += (v ?? 0) * mult;
+  for (const k in from) into[k as StatKey] += (from[k as StatKey] ?? 0) * mult;
 }
 
 /** Stat contributions of one item's implicits and mods (not base defences). */

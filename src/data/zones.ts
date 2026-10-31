@@ -63,6 +63,8 @@ export interface ZoneDef {
   packSize: [number, number];
   /** ms between waves walking in at a walking pace, even while you're still fighting the last one */
   spawnEveryMs: number;
+  /** multiplier on kill xp here: offline trash outruns the journey in Act 1 without it (docs/design/BALANCE.md) */
+  xpScale?: number;
   uniques: string[];
   /**
    * What opens this area. `after`: areas whose boss opens the road here, any one of them will do
@@ -139,6 +141,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: boss(m('gorger', 'Bloated Gorger', 5, 'phys', atk('Gnaw', 4200)), ['slam'], { slam: atk('Belly Flop', 4200) }),
     bossEvery: 15,
+    xpScale: 0.15,
     packSize: [1, 3],
     spawnEveryMs: 18000,
     uniques: ['miners_lament', 'bloodthirst', 'windstep', 'tavern_brawler', 'castaways_kerchief', 'quickfingers'],
@@ -154,6 +157,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: boss(m('harrow', 'Captain Harrow', 8, 'phys', atk('Hook Slash', 4000)), ['slam', 'summon'], { slam: atk('Anchor Drop', 3800) }),
     bossEvery: 18,
+    xpScale: 0.15,
     packSize: [1, 3],
     spawnEveryMs: 15000,
     uniques: ['windstep', 'bloodthirst', 'wellspring', 'slippers_of_the_tide', 'fishermans_knot', 'barnacle_band'],
@@ -169,6 +173,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: boss(m('pyre', 'Pyre-Mother Ulva', 11, 'fire', spell('Ember Lash', 3800)), ['slam', 'nova'], { slam: atk('Burning Bough', 3800), nova: spell('Pyre Burst', 4400) }),
     bossEvery: 20,
+    xpScale: 0.2,
     packSize: [2, 4],
     spawnEveryMs: 14000,
     uniques: ['emberheart', 'alchemists_band', 'rebuttal', 'second_guess'],
@@ -184,6 +189,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: boss(m('sedge', 'Old Mother Sedge', 14, 'light', spell('Hex Bolt', 3800)), ['slam', 'summon', 'enrage'], { slam: atk('Root Crush', 3600) }),
     bossEvery: 20,
+    xpScale: 0.3,
     packSize: [2, 4],
     spawnEveryMs: 13000,
     uniques: ['alchemists_band', 'miners_lament', 'stormhide', 'brimming_band', 'ember_of_faith', 'gulls_eye'],
@@ -199,6 +205,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: boss(m('tidecaller', 'Tidecaller Morvane', 17, 'cold', spell('Tide Bolt', 3800)), ['slam', 'nova', 'ward'], { slam: atk('Crashing Wave', 3600), nova: spell('Frost Tide', 4200) }),
     bossEvery: 22,
+    xpScale: 0.4,
     packSize: [2, 4],
     spawnEveryMs: 12000,
     uniques: ['iron_bulwark', 'windstep', 'needleworkers_wraps', 'sidestep', 'herbalists_sash'],
@@ -214,6 +221,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: boss(m('vosk', 'Admiral Vosk', 20, 'phys', atk('Sabre Cut', 3800)), ['slam', 'nova', 'enrage'], { slam: atk('Keelhaul Strike', 3400), nova: spell('Cannon Barrage', 4000), novaType: 'fire' }),
     bossEvery: 24,
+    xpScale: 0.5,
     packSize: [2, 5],
     spawnEveryMs: 11000,
     uniques: ['iron_bulwark', 'emberheart', 'thornquill', 'bellwether', 'lookouts_hood', 'robe_of_still_waters'],
@@ -229,6 +237,7 @@ export const ZONES: ZoneDef[] = [
     ],
     boss: boss(m('skarra', 'Skarra, Queen of Gales', 23, 'light', atk('Gale Talons', 3500)), ['slam', 'nova', 'summon', 'enrage'], { slam: atk('Thunder Dive', 3200), nova: spell('Storm Burst', 3800) }),
     bossEvery: 25,
+    xpScale: 0.6,
     packSize: [3, 5],
     spawnEveryMs: 10000,
     uniques: ['titans_girth', 'miners_lament', 'knuckledusters', 'windchaser'],
@@ -245,6 +254,7 @@ export const ZONES: ZoneDef[] = [
     boss: boss(m('ysolde', 'Ysolde, the Drowned Queen', 25, 'cold', atk('Drowned Sceptre', 3500), 1.5, 1.05), ['slam', 'nova', 'summon', 'enrage', 'ward'], { slam: atk('Abyssal Crush', 3200), nova: spell('Tempest of the Deep', 3800), novaType: 'light' }),
     actBoss: true,
     bossEvery: 25,
+    xpScale: 0.7,
     packSize: [3, 5],
     spawnEveryMs: 10000,
     uniques: ['titans_girth', 'iron_bulwark', 'emberheart', 'ninth_psalm', 'mask_of_the_patient', 'penitents_plate', 'hollow_locket', 'twin_oaths'],

@@ -41,18 +41,18 @@ const BASIC = { transmute: 45, augment: 30, alteration: 25, scour: 6, regret: 6,
 export const DROP_TABLES: Record<number, DropTable> = {
   1: {
     currencyChance: 0.045,
-    currency: { ...BASIC },
+    currency: { ...BASIC, regal: 0 },
     itemChance: 0.06,
-    rarity: { normal: 70, magic: 26, rare: 4 },
+    rarity: { normal: 74, magic: 25.75, rare: 0.25 },
     gemChance: 0.012,
     flaskChance: 0.01,
     uniqueChance: 0.0005,
   },
   2: {
     currencyChance: 0.045,
-    currency: { ...BASIC, regal: 6, alchemy: 4, chaos: 2.5 },
+    currency: { ...BASIC, regal: 0.3, alchemy: 0.3, chaos: 2.5 },
     itemChance: 0.06,
-    rarity: { normal: 66, magic: 28, rare: 6 },
+    rarity: { normal: 72, magic: 27.5, rare: 0.5 },
     gemChance: 0.012,
     flaskChance: 0.01,
     uniqueChance: 0.0006,
@@ -107,8 +107,8 @@ export const DROP_TABLES: Record<number, DropTable> = {
 
 /** Boss rewards by area tier: deeper bosses guarantee better currency. */
 export const BOSS_TABLES: Record<number, BossTable> = {
-  1: { currencyRolls: 2, guaranteed: [{ id: 'transmute', qty: 2 }], repeatChance: 0.1, items: [1, 2], rarity: { normal: 0, magic: 70, rare: 30 }, gemChance: 0.35, flaskChance: 0.25, uniqueChance: 0.06 },
-  2: { currencyRolls: 2, guaranteed: [{ id: 'alchemy', qty: 1 }], repeatChance: 0.1, items: [1, 2], rarity: { normal: 0, magic: 65, rare: 35 }, gemChance: 0.35, flaskChance: 0.25, uniqueChance: 0.07 },
+  1: { currencyRolls: 2, guaranteed: [{ id: 'transmute', qty: 2 }], repeatChance: 0.1, items: [1, 2], rarity: { normal: 0, magic: 92, rare: 8 }, gemChance: 0.35, flaskChance: 0.25, uniqueChance: 0.06 },
+  2: { currencyRolls: 2, guaranteed: [{ id: 'alchemy', qty: 1 }], repeatChance: 0.1, items: [1, 2], rarity: { normal: 0, magic: 88, rare: 12 }, gemChance: 0.35, flaskChance: 0.25, uniqueChance: 0.07 },
   3: { currencyRolls: 3, guaranteed: [{ id: 'chaos', qty: 1 }], repeatChance: 0.1, items: [2, 2], rarity: { normal: 0, magic: 60, rare: 40 }, gemChance: 0.4, flaskChance: 0.25, uniqueChance: 0.08 },
   4: { currencyRolls: 3, guaranteed: [{ id: 'chaos', qty: 2 }], repeatChance: 0.06, items: [2, 3], rarity: { normal: 0, magic: 55, rare: 45 }, gemChance: 0.4, flaskChance: 0.3, uniqueChance: 0.09 },
   5: { currencyRolls: 3, guaranteed: [{ id: 'exalted', qty: 1 }], repeatChance: 0.015, items: [2, 3], rarity: { normal: 0, magic: 50, rare: 50 }, gemChance: 0.45, flaskChance: 0.3, uniqueChance: 0.1 },
