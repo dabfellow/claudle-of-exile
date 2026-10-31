@@ -1,6 +1,6 @@
 import { CRAFT_MATERIALS } from './craftMats';
 
-export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'currency' | 'gold' | 'fish';
+export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'currency' | 'gold' | 'fish';
 
 export interface MaterialDef {
   id: string;

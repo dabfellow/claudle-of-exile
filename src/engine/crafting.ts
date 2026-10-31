@@ -2,18 +2,18 @@ import { affixDef } from '../data/affixes';
 import { stashedItems, takeOwned } from './storage';
 import { baseDef } from '../data/bases';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements';
-import { essenceDef, fossilDef, modBias } from '../data/craftMats';
+import { essenceDef, fossilDef, modBias, SEAL, WAX } from '../data/craftMats';
 import { BENCH_BUILT_LEVEL, BENCH_CRAFTS } from '../data/hideout';
 import type { Ctx } from './context';
 import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, salvageValue, spawnWeight, type ModBias } from './items';
 import { rInt, type Rng } from './rng';
 import { canAfford, hasItem, payCost } from './bank';
-import type { GameState, Item } from './types';
+import type { GameState, Item, RolledMod } from './types';
 
 export interface OrbDef {
   canApply(item: Item): string | null;
-  /** `bias` comes from a Fossil; only orbs that roll new modifiers use it (FOSSIL_ORBS) */
-  apply(item: Item, rng: Rng, bias?: ModBias): void;
+  /** `bias` comes from a Fossil; only orbs that roll new modifiers use it (FOSSIL_ORBS). `keep` comes from a Forger's Seal (SEAL_ORBS) */
+  apply(item: Item, rng: Rng, bias?: ModBias, keep?: RolledMod): void;
 }
 
 const notUnique = (item: Item) => (item.rarity === 'unique' ? 'Cannot modify unique items' : null);
@@ -34,7 +34,7 @@ export const ORBS: Record<string, OrbDef> = {
   },
   alteration: {
     canApply: (i) => notUnique(i) ?? (i.rarity !== 'magic' ? 'Item must be Magic' : null),
-    apply: (i, rng, bias) => rerollMods(i, rng, bias),
+    apply: (i, rng, bias, keep) => rerollMods(i, rng, bias, keep),
   },
   regal: {
     canApply: (i) => notUnique(i) ?? (i.rarity !== 'magic' ? 'Item must be Magic' : null),
@@ -53,7 +53,7 @@ export const ORBS: Record<string, OrbDef> = {
   },
   chaos: {
     canApply: (i) => notUnique(i) ?? (i.rarity !== 'rare' ? 'Item must be Rare' : null),
-    apply: (i, rng, bias) => rerollMods(i, rng, bias),
+    apply: (i, rng, bias, keep) => rerollMods(i, rng, bias, keep),
   },
   exalted: {
     canApply: (i) => notUnique(i) ?? (i.rarity !== 'rare' ? 'Item must be Rare' : !openKinds(i).length ? 'No room for another modifier' : null),
@@ -63,8 +63,8 @@ export const ORBS: Record<string, OrbDef> = {
   },
   annul: {
     canApply: (i) => notUnique(i) ?? (modCount(i) === 0 ? 'Item has no modifiers' : null),
-    apply: (i, rng) => {
-      const mods = allMods(i);
+    apply: (i, rng, _bias, keep) => {
+      const mods = allMods(i).filter((m) => m !== keep);
       const target = mods[rInt(rng, 0, mods.length - 1)];
       i.prefixes = i.prefixes.filter((m) => m !== target);
       i.suffixes = i.suffixes.filter((m) => m !== target);
@@ -81,8 +81,9 @@ export const ORBS: Record<string, OrbDef> = {
   },
   divine: {
     canApply: (i) => notUnique(i) ?? (modCount(i) === 0 ? 'Item has no modifiers' : null),
-    apply: (i, rng) => {
+    apply: (i, rng, _bias, keep) => {
       for (const m of allMods(i)) {
+        if (m === keep) continue;
         const a = affixDef(m.affixId);
         m.values = a.tiers[m.tier].ranges.map(([lo, hi]) => rInt(rng, lo, hi));
       }
@@ -93,6 +94,9 @@ export const ORBS: Record<string, OrbDef> = {
 /** Orbs that roll new modifiers, and so can be paired with a Fossil. */
 export const FOSSIL_ORBS = new Set(['transmute', 'augment', 'alteration', 'regal', 'alchemy', 'chaos', 'exalted']);
 
+/** Orbs that would change or remove a modifier, and so can be paired with a Forger's Seal. */
+export const SEAL_ORBS = new Set(['alteration', 'chaos', 'annul', 'divine']);
+
 /** The item a Craft until… activity is working on can't be salvaged, sold or equipped. */
 export function isCraftLocked(s: GameState, uid: number): boolean {
   return s.action?.kind === 'craft' && s.action.uid === uid;
@@ -102,7 +106,7 @@ export function findItem(s: GameState, uid: number): Item | undefined {
   return s.inventory.find((i) => i.uid === uid) ?? Object.values(s.equipment).find((i) => i?.uid === uid) ?? stashedItems(s).find((i) => i.uid === uid);
 }
 
-export function orbReason(s: GameState, orbId: string, uid: number, fossilId?: string | null): string | null {
+export function orbReason(s: GameState, orbId: string, uid: number, fossilId?: string | null, sealed?: string | null): string | null {
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
   if (!hasItem(s, orbId, 1)) return 'You have none';
@@ -111,18 +115,65 @@ export function orbReason(s: GameState, orbId: string, uid: number, fossilId?: s
     if (!FOSSIL_ORBS.has(orbId)) return "Fossils don't work with this orb";
     if (!hasItem(s, fossilId, 1)) return 'Out of that fossil';
   }
+  if (sealed) {
+    if (!SEAL_ORBS.has(orbId)) return "A Seal doesn't work with this orb";
+    if (!hasItem(s, SEAL, 1)) return "Out of Forger's Seals";
+    if (!allMods(item).some((m) => m.affixId === sealed)) return 'That modifier is not on this item';
+    if (orbId === 'annul' && modCount(item) < 2) return 'The Seal leaves nothing to remove';
+  }
   return ORBS[orbId].canApply(item);
 }
 
-export function applyOrb(s: GameState, ctx: Ctx, orbId: string, uid: number, fossilId?: string | null): string | null {
-  const reason = orbReason(s, orbId, uid, fossilId);
+export function applyOrb(s: GameState, ctx: Ctx, orbId: string, uid: number, fossilId?: string | null, sealed?: string | null): string | null {
+  const reason = orbReason(s, orbId, uid, fossilId, sealed);
   if (reason) return reason;
   const item = findItem(s, uid)!;
-  ORBS[orbId].apply(item, ctx.rng, fossilId ? modBias(fossilId) : undefined);
+  ORBS[orbId].apply(item, ctx.rng, fossilId ? modBias(fossilId) : undefined, sealed ? allMods(item).find((m) => m.affixId === sealed) : undefined);
   s.bank[orbId] -= 1;
   if (fossilId) s.bank[fossilId] -= 1;
+  if (sealed) s.bank[SEAL] -= 1;
   s.lifetime.orbsUsed += 1;
   ctx.emit({ t: 'craft', text: `${orbId} → ${itemName(item)}`, uid, orbId });
+  return null;
+}
+
+export function impressionReason(s: GameState, uid: number): string | null {
+  const item = findItem(s, uid);
+  if (!item) return 'Select an item';
+  if (!hasItem(s, WAX, 1)) return "You have no Locksmith's Wax";
+  if (item.rarity === 'unique') return 'Cannot take an impression of a unique';
+  if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
+  return null;
+}
+
+/** Locksmith's Wax: remember the item as it stands. A new impression replaces the old one. */
+export function takeImpression(s: GameState, ctx: Ctx, uid: number): string | null {
+  const reason = impressionReason(s, uid);
+  if (reason) return reason;
+  const item = findItem(s, uid)!;
+  const { rarity, name, prefixes, suffixes } = item;
+  item.impression = structuredClone({ rarity, name, prefixes, suffixes });
+  s.bank[WAX] -= 1;
+  ctx.emit({ t: 'craft', text: `Impression of ${itemName(item)}`, uid });
+  return null;
+}
+
+export function restoreReason(s: GameState, uid: number): string | null {
+  const item = findItem(s, uid);
+  if (!item) return 'Select an item';
+  if (!item.impression) return 'No impression taken';
+  if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
+  return null;
+}
+
+/** Put the item back as it was. An impression is good for one restore. */
+export function restoreImpression(s: GameState, ctx: Ctx, uid: number): string | null {
+  const reason = restoreReason(s, uid);
+  if (reason) return reason;
+  const item = findItem(s, uid)!;
+  Object.assign(item, item.impression);
+  delete item.impression;
+  ctx.emit({ t: 'craft', text: `Restored ${itemName(item)}`, uid });
   return null;
 }
 

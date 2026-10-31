@@ -120,7 +120,7 @@ export function fmtTime(ms: number): string {
 }
 
 /** A material/currency glyph. */
-const ORB_KINDS = new Set(['fossil', 'essence', 'resin', 'shard']);
+const ORB_KINDS = new Set(['fossil', 'essence', 'resin', 'shard', 'contraband']);
 
 export function MatIcon({ id, size = 14 }: { id: string; size?: number }) {
   const def = materialDef(id);

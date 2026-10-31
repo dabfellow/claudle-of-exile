@@ -4,6 +4,7 @@ import type { MaterialDef } from './materials';
 /**
  * Crafting materials from life skills (docs/design/SKILLING_REWORK.md): Fossils bias which mods roll,
  * Essences force one mod, Resin raises the item level of smithed bases, shards fuse into orbs.
+ * Contraband from Heist (docs/design/HEIST.md) protects a craft instead of steering it.
  */
 export interface FossilDef {
   id: string;
@@ -89,6 +90,13 @@ export const SHARDS_PER_ORB = 20;
 /** Act bosses drop a few Fossils or Essences. */
 export const BOSS_CRAFT_MAT = { chance: 0.5, qty: [1, 2] as [number, number] };
 
+/** Thieving's currency, and the two crafting materials only Heist makes in quantity. */
+export const MARKER = 'rogues_marker';
+export const SEAL = 'forgers_seal';
+export const WAX = 'locksmiths_wax';
+/** Combat can find Contraband too, rarely, from Act 2 on: skilling is the faster route, never the only one. */
+export const CONTRABAND_DROP = { bossChance: 0.12, killChance: 0.0006, firstAct: 2 };
+
 export const CRAFT_MATERIALS: MaterialDef[] = [
   ...FOSSILS.map((f): MaterialDef => ({ id: f.id, name: f.name, kind: 'fossil', color: f.color, value: 15, desc: `${f.desc}. Use with an orb or when smithing.` })),
   ...ESSENCES.map((e): MaterialDef => ({ id: e.id, name: e.name, kind: 'essence', color: e.color, value: e.tier ? 20 : 8, desc: 'Makes an item Magic with one guaranteed modifier.' })),
@@ -96,6 +104,9 @@ export const CRAFT_MATERIALS: MaterialDef[] = [
   { id: 'aug_shard', name: 'Augmentation Shard', kind: 'shard', color: '#5f8de0', value: 0, desc: `${SHARDS_PER_ORB} fuse into an Orb of Augmentation.` },
   { id: 'trans_shard', name: 'Transmutation Shard', kind: 'shard', color: '#7fb2ff', value: 0, desc: `${SHARDS_PER_ORB} fuse into an Orb of Transmutation.` },
   { id: 'alt_shard', name: 'Alteration Shard', kind: 'shard', color: '#9fd2ff', value: 0, desc: `${SHARDS_PER_ORB} fuse into an Orb of Alteration.` },
+  { id: MARKER, name: "Rogue's Marker", kind: 'contraband', color: '#c9a35a', value: 1, desc: 'Pays for Heist jobs and rogues. Earned by Thieving.' },
+  { id: SEAL, name: "Forger's Seal", kind: 'contraband', color: '#b5473c', value: 60, desc: 'Spent with an Alteration, Chaos, Annulment or Divine: one modifier you pick is left alone.' },
+  { id: WAX, name: "Locksmith's Wax", kind: 'contraband', color: '#d9c48a', value: 90, desc: 'Takes an impression of an item. Restore it any time to put the item back as it was.' },
 ];
 
 const FOSSIL_BY_ID: Record<string, FossilDef> = Object.fromEntries(FOSSILS.map((f) => [f.id, f]));

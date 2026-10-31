@@ -228,7 +228,7 @@ Overtime's offline speed moves onto the core ring as a small instead of being cu
 ### More skills: candidates from Melvor
 Not built. One new skill arrives with each act from Act 2 on, and more arrive around or after Act 6. Each feeds its own
 game system and also produces materials for the crafting economy (reset, 2026-10-30):
-- **Thieving → Heist.** Pickpocket townsfolk and rogues for gold, Rogue's Markers and the odd currency. Easy fit: a gathering skill with no inputs.
+- **Thieving → Heist.** Built: see [HEIST.md](HEIST.md).
 - **Archaeology → Expedition.** Dig sites per area for Artifacts that trade for currency or logbook-style rewards.
 - **Cartography → Maps.** Maps drop from monsters; Cartography is an optional second route that crafts them, for something like a huge offline map grind.
 - **Fletching → Quivers.** Shafts from logs into quivers (quivers don't exist yet).

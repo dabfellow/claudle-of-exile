@@ -1,4 +1,4 @@
-import { BOSS_CRAFT_MAT, ESSENCES, FOSSILS } from '../data/craftMats';
+import { BOSS_CRAFT_MAT, CONTRABAND_DROP, ESSENCES, FOSSILS, SEAL, WAX } from '../data/craftMats';
 import { bossTable, dropTable, type RarityWeights } from '../data/drops';
 import { ACTIVE_GEMS, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
 import { MAP_ILVL } from '../data/hideout';
@@ -72,6 +72,7 @@ export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: Zon
 
   const gold = Math.round(rInt(rng, 1, Math.max(1, Math.round(mon.level / 3))) * (mon.isBoss ? 15 : 1) * mon.scale);
   addBank(s, 'gold', gold);
+  if (zone.act >= CONTRABAND_DROP.firstAct && chance(rng, mon.isBoss ? CONTRABAND_DROP.bossChance : CONTRABAND_DROP.killChance)) giveCurrency(pick(rng, [SEAL, WAX]));
 
   if (mon.isBoss) {
     const boss = bossTable(zone.tier);

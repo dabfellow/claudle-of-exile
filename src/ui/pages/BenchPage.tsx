@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { stashedItems } from '../../engine/storage';
 import { affixDef } from '../../data/affixes';
 import { ACHIEVEMENT_BY_ID } from '../../data/achievements';
-import { ESSENCES, FOSSILS, fossilDef } from '../../data/craftMats';
+import { ESSENCES, FOSSILS, fossilDef, SEAL, WAX } from '../../data/craftMats';
 import { BENCH_CRAFTS } from '../../data/hideout';
 import { achievementProgress } from '../../engine/achievements';
 import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { currencyDef } from '../../data/materials';
 import { equipFlask, unequipFlask } from '../../engine/combat';
-import { applyEssence, applyOrb, BENCH_UNBUILT, benchBuilt, benchCraft, benchCraftReason, essenceReason, findItem, FOSSIL_ORBS, orbReason, salvage } from '../../engine/crafting';
+import { applyEssence, applyOrb, BENCH_UNBUILT, benchBuilt, benchCraft, benchCraftReason, essenceReason, findItem, FOSSIL_ORBS, impressionReason, orbReason, restoreImpression, restoreReason, salvage, SEAL_ORBS, takeImpression } from '../../engine/crafting';
 import { applyFlaskOrb, enchantFlask, findFlask, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
 import { stationLevel } from '../../engine/hideout';
-import { affixRangeText, itemName, salvageValue } from '../../engine/items';
+import { affixRangeText, allMods, describeMod, itemName, salvageValue } from '../../engine/items';
 import type { FlaskInstance, GameState, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { Badge, Cost, EmptyState, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
@@ -100,6 +100,7 @@ export function BenchPage() {
   const [flash, setFlash] = useState(0);
   const [history, setHistory] = useState<{ id: number; text: string; name: string; rarity: Item['rarity'] }[]>([]);
   const [fossil, setFossil] = useState<string | null>(null);
+  const [seal, setSeal] = useState<string | null>(null);
   const item = uid !== null ? findItem(s, uid) : undefined;
   const benchLvl = stationLevel(s, 'bench');
   const flask = flaskUid !== null ? findFlask(s, flaskUid) : undefined;
@@ -113,15 +114,28 @@ export function BenchPage() {
   };
 
   const fossilFor = (orbId: string) => (fossil && FOSSIL_ORBS.has(orbId) ? fossil : null);
+  // the Seal is on one modifier of one item, so it only counts while that modifier is there
+  const sealFor = (orbId: string) => (seal && item && SEAL_ORBS.has(orbId) && allMods(item).some((m) => m.affixId === seal) ? seal : null);
   const use = (orbId: string) => {
     if (!item) return;
     const f = fossilFor(orbId);
-    const err = game.act((st, ctx) => applyOrb(st, ctx, orbId, item.uid, f));
+    const kept = sealFor(orbId);
+    const err = game.act((st, ctx) => applyOrb(st, ctx, orbId, item.uid, f, kept));
     if (!err) {
       setFlash((n) => n + 1);
-      const text = f ? `${currencyDef(orbId).name} + ${fossilDef(f)!.name}` : currencyDef(orbId).name;
+      const text = [currencyDef(orbId).name, f && fossilDef(f)!.name, kept && "Forger's Seal"].filter(Boolean).join(' + ');
       setHistory((h) => [{ id: Date.now() + Math.random(), text, name: itemName(item), rarity: item.rarity }, ...h].slice(0, 12));
       if (f && (s.bank[f] ?? 0) <= 1) setFossil(null);
+      if (kept) setSeal(null);
+    }
+  };
+
+  const wax = (fn: typeof takeImpression, text: string) => {
+    if (!item) return;
+    const err = game.act((st, ctx) => fn(st, ctx, item.uid));
+    if (!err) {
+      setFlash((n) => n + 1);
+      setHistory((h) => [{ id: Date.now() + Math.random(), text, name: itemName(item), rarity: item.rarity }, ...h].slice(0, 12));
     }
   };
 
@@ -145,6 +159,9 @@ export function BenchPage() {
 
   const essences = ESSENCES.filter((e) => s.bank[e.id]);
   const fossils = FOSSILS.filter((f) => s.bank[f.id]);
+  const seals = s.bank[SEAL] ?? 0;
+  const waxes = s.bank[WAX] ?? 0;
+  const contraband = seals > 0 || waxes > 0 || !!item?.impression;
 
   return (
     <div className="page bench-page">
@@ -158,7 +175,8 @@ export function BenchPage() {
           const c = currencyDef(id);
           const n = s.bank[id] ?? 0;
           const f = fossilFor(id);
-          const reason = item ? orbReason(s, id, item.uid, f) : flask ? 'Flasks use the orbs under Flask crafting' : 'Select an item';
+          const kept = sealFor(id);
+          const reason = item ? orbReason(s, id, item.uid, f, kept) : flask ? 'Flasks use the orbs under Flask crafting' : 'Select an item';
           return (
             <Tooltip
               key={id}
@@ -169,11 +187,12 @@ export function BenchPage() {
                   </div>
                   <div>{c.desc}</div>
                   {f && <div className="dim small">With {fossilDef(f)!.name}</div>}
+                  {kept && <div className="dim small">With a Forger's Seal</div>}
                   {reason && <div className="warn" style={{ marginTop: 4 }}>{reason}</div>}
                 </div>
               }
             >
-              <button data-tut={`orb-${id}`} className={`orb-btn ${f ? 'fossiled' : ''}`} style={{ ['--orb' as string]: c.color }} disabled={!!reason} onClick={() => use(id)}>
+              <button data-tut={`orb-${id}`} className={`orb-btn ${f || kept ? 'fossiled' : ''}`} style={{ ['--orb' as string]: c.color }} disabled={!!reason} onClick={() => use(id)}>
                 <MatIcon id={id} size={24} />
                 <span>
                   <div className="name">{c.short}</div>
@@ -313,12 +332,41 @@ export function BenchPage() {
 
               <CraftUntilCard s={s} item={item} />
 
-              {(fossils.length > 0 || essences.length > 0) && (
+              {(fossils.length > 0 || essences.length > 0 || contraband) && (
                 <div className="card">
                   <div className="card-title">Special crafting</div>
+                  {seals > 0 && (
+                    <>
+                      <div className="section-label">Forger's Seal ×{seals} · pick a modifier, and the next Alteration, Chaos, Annulment or Divine leaves it alone</div>
+                      <div className="fossil-chips" style={{ marginTop: 0 }}>
+                        {item && allMods(item).length ? (
+                          allMods(item).map((m) => (
+                            <button key={m.affixId} className={`btn sm ${seal === m.affixId ? 'selected' : ''}`} title="Used up with the next orb it protects from." onClick={() => setSeal(seal === m.affixId ? null : m.affixId)}>
+                              <MatIcon id={SEAL} size={12} /> {describeMod(m)}
+                            </button>
+                          ))
+                        ) : (
+                          <span className="dim small">{item ? 'This item has no modifiers.' : 'Select an item.'}</span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {(waxes > 0 || item?.impression) && (
+                    <>
+                      <div className="section-label" style={{ marginTop: seals ? 10 : 0 }}>Locksmith's Wax ×{waxes} · keep a copy before a risky orb, and put the item back if you don't like the result</div>
+                      <div className="fossil-chips" style={{ marginTop: 0 }}>
+                        <button className="btn sm" disabled={!!(item ? impressionReason(s, item.uid) : 'x')} title={(item ? impressionReason(s, item.uid) : 'Select an item') ?? 'One impression per item: a new one replaces the old'} onClick={() => wax(takeImpression, "Locksmith's Wax")}>
+                          <MatIcon id={WAX} size={12} /> Take impression
+                        </button>
+                        <button className="btn sm" disabled={!!(item ? restoreReason(s, item.uid) : 'x')} title={(item ? restoreReason(s, item.uid) : 'Select an item') ?? 'Puts the item back. The orbs spent since stay spent'} onClick={() => wax(restoreImpression, 'Restored from wax')}>
+                          Restore
+                        </button>
+                      </div>
+                    </>
+                  )}
                   {fossils.length > 0 && (
                     <>
-                      <div className="section-label">Fossils · pick one, then use an orb that rolls modifiers</div>
+                      <div className="section-label" style={{ marginTop: contraband ? 10 : 0 }}>Fossils · pick one, then use an orb that rolls modifiers</div>
                       <div className="fossil-chips" style={{ marginTop: 0 }}>
                         {fossils.map((f) => (
                           <button
@@ -335,7 +383,7 @@ export function BenchPage() {
                   )}
                   {essences.length > 0 && (
                     <>
-                      <div className="section-label" style={{ marginTop: fossils.length ? 10 : 0 }}>
+                      <div className="section-label" style={{ marginTop: fossils.length || contraband ? 10 : 0 }}>
                         Essences · makes the item Magic with this modifier guaranteed
                       </div>
                       <div className="fossil-chips" style={{ marginTop: 0 }}>

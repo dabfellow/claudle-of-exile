@@ -31,6 +31,10 @@ export type SkillTreeStat =
   | 'bulkBrewer'
   | 'qualityBrews'
   | 'transmuter'
+  | 'thievingSpeed'
+  | 'markerChance'
+  | 'alertReduce'
+  | 'cleanGetaway'
   | 'fishingSpeed'
   | 'fishTreasure'
   | 'biggerFish'
@@ -113,6 +117,16 @@ const BRANCHES: BranchSpec[] = [
       { name: 'Masterwork', stats: { smithMagic: 10 }, desc: '10% chance a smithed base comes out Magic' },
     ],
     keystone: { name: 'Grandmaster Smith', stats: { grandmaster: 1 }, desc: 'Smithed bases are always Magic. Smithing is 25% slower' },
+  },
+  {
+    skill: 'thieving',
+    angle: 180,
+    small: { name: 'Quick Hands', stats: { thievingSpeed: 5 }, desc: '5% faster Thieving and Heist rooms' },
+    notables: [
+      { name: 'Light Fingers', stats: { markerChance: 50 }, desc: "50% increased chance to lift a Rogue's Marker" },
+      { name: 'Inside Man', stats: { alertReduce: 20 }, desc: '20% lower chance of an alarm in every Heist room' },
+    ],
+    keystone: { name: 'Clean Getaway', stats: { cleanGetaway: 1 }, desc: 'An alarm costs you none of the take. Heist jobs cost 50% more Markers' },
   },
   {
     skill: 'alchemy',
