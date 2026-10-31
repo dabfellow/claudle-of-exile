@@ -246,6 +246,8 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
         </div>
       )}
       <div className="status-row">
+        {m.chained && <span className="status bad">Chained: can't be hurt</span>}
+        {m.martyr && <span className="status">Click to strike. Only aimed blows land</span>}
         {m.enraged && <span className="status bad">Enraged</span>}
         {m.stunMs > 0 && <span className="status">Stunned</span>}
         {m.frozenMs > 0 && <span className="status cold">Frozen</span>}
@@ -270,9 +272,10 @@ function MonsterToken({ m, target, locked, fx }: { m: MonsterInstance; target: b
   if (m.dots.some((x) => x.kind === 'ignite')) pips.push(['Ignited', 'var(--fire)']);
   if (m.curse) pips.push([activeGemDef(m.curse.gemId).name, 'var(--accent-2)']);
   if (m.enraged) pips.push(['Enraged', 'var(--danger)']);
+  if (m.chained) pips.push(["Chained: can't be hurt", 'var(--ward)']);
   return (
     <Tooltip content={<MonsterCard m={m} target={target} fx={fx} />}>
-      <div className={`bf-token ${m.isBoss ? 'boss' : ''} ${target ? 'targeted' : ''} ${locked ? 'locked' : ''} ${m.casting >= 0 ? 'casting' : ''} ${shakeClass(fx.shakes[key])} ${critClass(fx.crits[key])}`}>
+      <div className={`bf-token ${m.isBoss ? 'boss' : ''} ${m.martyr ? 'martyr' : ''} ${m.chained ? 'chained' : ''} ${target ? 'targeted' : ''} ${locked ? 'locked' : ''} ${m.casting >= 0 ? 'casting' : ''} ${shakeClass(fx.shakes[key])} ${critClass(fx.crits[key])}`}>
         <Floaters list={fx.floaters.filter((f) => f.owner === m.uid)} />
         <div className="bf-token-head">
           <div className="portrait tiny">
@@ -286,6 +289,8 @@ function MonsterToken({ m, target, locked, fx }: { m: MonsterInstance; target: b
         {m.wardMax > 0 && <ProgressBar color="var(--ward)" value={m.ward / m.wardMax} className="thin" />}
         {m.casting >= 0 ? (
           <ProgressBar className="cast-bar thin" value={1 - m.casting / m.castTotal} />
+        ) : m.martyr ? (
+          <span className="bf-approach">chained</span>
         ) : inReach(m) ? (
           <ProgressBar value={m.attackTimer / m.attackMs} color="var(--dim)" className="thin" />
         ) : (
@@ -381,11 +386,17 @@ function FieldSummary({ s, c }: { s: GameState; c: CombatRuntime }) {
   const alive = aliveMonsters(c);
   const focus = focusTarget(s);
   const close = alive.filter((m) => cellRing(m.cell) === 1).length;
+  const martyrs = alive.filter((m) => m.martyr);
   return (
     <div className="bf-summary">
       <div>
         <b>{alive.length}</b> on the field · <b>{close}</b> in melee range
       </div>
+      {martyrs.map((m) => (
+        <button key={m.uid} className={`btn sm ${m.uid === c.lockedUid ? 'primary' : ''}`} onClick={() => game.act((st) => lockTarget(st, m.uid))}>
+          Strike {m.name} ({fmt(Math.max(0, m.life))})
+        </button>
+      ))}
       {focus && (
         <div className="bf-summary-target">
           <span>
@@ -417,7 +428,9 @@ function MovementBar({ s }: { s: GameState }) {
   const zone = zoneDef(c.zoneId);
   const mv = currentMovement(s);
   const next = nextArrivalMs(s);
-  const status = c.monsters.some((m) => m.isBoss)
+  const status = c.monsters.some((m) => m.chained)
+    ? 'The boss is chained: strike its martyrs'
+    : c.monsters.some((m) => m.isBoss)
     ? 'Boss fight: nothing else arrives'
     : mv === 'flee'
       ? aliveMonsters(c).length

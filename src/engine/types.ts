@@ -194,6 +194,12 @@ export interface MonsterInstance {
   shockMs?: number;
   /** the one curse it carries */
   curse?: Curse;
+  /** a boss with living martyrs: nothing can hurt it */
+  chained?: boolean;
+  /** how many times this boss has chained martyrs */
+  martyrWaves?: number;
+  /** a Chained Martyr: it stands still, never attacks and only takes hits aimed at it */
+  martyr?: boolean;
   /** pack members are scaled down; xp and loot scale with them */
   scale: number;
   /** damage-over-time accumulated since the last report */

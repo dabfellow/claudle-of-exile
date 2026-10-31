@@ -12,10 +12,11 @@ import {
   type SupportGemDef,
   type SkillPriority,
   type SupportMods,
+  type SkillAim,
   type TacticRule,
 } from '../data/gems';
 import { WEAPON_FAMILIES, type WeaponFamily } from '../data/bases';
-import { ruleLockReason, ruleSlots } from './automation';
+import { aimLockReason, ruleLockReason, ruleSlots } from './automation';
 import { characterLevel } from './character';
 import type { Ctx } from './context';
 import { newUid } from './items';
@@ -233,10 +234,20 @@ export function setRule(s: GameState, slot: number, index: number, rule: TacticR
   const gem = s.skillBar[slot];
   if (!gem) return 'Empty slot';
   if (index >= ruleSlots(s) || index > gem.rules.length) return 'No free rule slot';
-  const locked = ruleLockReason(s, rule.when);
+  const locked = ruleLockReason(s, rule.when) ?? (rule.aim ? aimLockReason(s) : null);
   if (locked) return locked;
   gem.rules[index] = rule;
   if (rule.when === 'manual') gem.rules = [rule];
+  return null;
+}
+
+/** Point a skill's rules at something, or back at the usual target. It sits on the first rule. */
+export function setAim(s: GameState, slot: number, aim: SkillAim | undefined): string | null {
+  const gem = s.skillBar[slot];
+  if (!gem) return 'Empty slot';
+  const locked = aim ? aimLockReason(s) : null;
+  if (locked) return locked;
+  gem.rules = gem.rules.map((r, i) => ({ ...r, aim: i === 0 ? aim : undefined }));
   return null;
 }
 

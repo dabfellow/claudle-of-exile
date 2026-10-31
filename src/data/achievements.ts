@@ -56,6 +56,14 @@ const ALL: AchievementDef[] = [
     target: zonesInAct(2).length, progress: (s) => bossesBeatenIn(s, 2), reward: { exalted: 1 },
   },
   {
+    id: 'act_3', name: 'The Bells Fall Silent', desc: 'Defeat Hierarch Solenne and complete Act 3', category: 'combat', act: 3,
+    target: 1, progress: (s) => (s.bossesDefeated.includes('highaltar') ? 1 : 0), reward: { divine: 2, exalted: 2 },
+  },
+  {
+    id: 'conqueror_3', name: 'Heretic of the City', desc: "Defeat every Act 3 area's boss", category: 'combat', act: 3,
+    target: zonesInAct(3).length, progress: (s) => bossesBeatenIn(s, 3), reward: { exalted: 1 },
+  },
+  {
     id: 'deathless', name: 'Untouchable', desc: 'Reach level 10 without dying', category: 'combat',
     target: 10, progress: (s) => (L(s).deaths === 0 ? Math.min(10, characterLevel(s)) : 0), reward: { regret: 2 },
   },

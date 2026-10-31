@@ -19,7 +19,7 @@ import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { actionsFor, type SkillAction } from '../src/data/skills';
 import { ACTS, actBossZone, actOpen, ZONES, zoneDef, type ZoneDef } from '../src/data/zones';
 import { characterLevel } from '../src/engine/character';
-import { equipFlask, flaskRecoveryAmount, queueSkill, startCombat, useFlask } from '../src/engine/combat';
+import { equipFlask, flaskRecoveryAmount, lockTarget, queueSkill, startCombat, useFlask } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
 import { applyOrb, benchBuilt, orbReason, salvage } from '../src/engine/crafting';
 import { equip, equipReason, slotsFor } from '../src/engine/equipment';
@@ -34,7 +34,7 @@ import { seeded } from '../src/engine/rng';
 import { HEIST_JOBS, ROGUES } from '../src/data/heist';
 import { cleanChance, jobBlocker, rankUpRogue, rogueReason, setJobExit, startHeist } from '../src/engine/heist';
 import { actionBlocker, startSkillAction } from '../src/engine/skills';
-import { grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
+import { aimLockReason, grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
 import { groundFor } from '../src/engine/battlefield';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats, hitChance, type Derived } from '../src/engine/stats';
@@ -87,11 +87,11 @@ const gathersAway = (profile: Profile, period: number, short: boolean) => (perio
 
 /** The order the bot buys automation in: rules before hours, as rules are what bosses are locked behind. */
 const UPGRADES: [StationId, number][] = [
-  ['war_table', 2], ['watchtower', 2], ['war_table', 3], ['war_table', 4], ['war_table', 5], ['watchtower', 3], ['war_table', 6], ['watchtower', 4],
+  ['war_table', 2], ['watchtower', 2], ['war_table', 3], ['war_table', 4], ['war_table', 5], ['watchtower', 3], ['war_table', 6], ['war_table', 7], ['watchtower', 4],
 ];
 const CHECKPOINTS: [string, number][] = [['day 1', 1], ['week 1', 7], ['month 1', 30], ['month 3', 90]];
 /** bosses tested for idling, one per drop tier band: each right after the bot first beats it */
-const TRIAL_ZONES = ['brinecaves', 'blackreed', 'shipgrave', 'sanctum', 'cinderroad', 'kurgans', 'pyretemple', 'burningthrone'];
+const TRIAL_ZONES = ['brinecaves', 'blackreed', 'shipgrave', 'sanctum', 'cinderroad', 'kurgans', 'pyretemple', 'burningthrone', 'inquisition', 'highaltar'];
 
 const fmt = (ms: number | undefined) => {
   if (ms === undefined || !Number.isFinite(ms)) return '—';
@@ -203,7 +203,7 @@ function scorchGround(zoneId: string | undefined): GroundKind | undefined {
  * Like a player who reads tooltips: the best guard and buff it owns, then its three strongest damage
  * skills (judged bare, so a fresh drop isn't blinded by the old gem's supports) and a curse, each on its suggested rule;
  * a spare guard, once Ground rules are in, takes a free slot against Scorched earth, as the main one is kept for wind-ups;
- * then the strongest support in every socket, damage skills first.
+ * once Aim rules are in, its damage skills go for martyrs; then the strongest support in every socket, damage skills first.
  */
 function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const d = deriveStats(s, []);
@@ -254,6 +254,7 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   for (const g of bar) {
     // one rule each: the suggested one, or Whenever ready until the War Table teaches it
     g.rules = [g === groundGuard ? { when: 'onGround', ground: scorch } : suggestedRule(s, activeGemDef(g.gemId))];
+    if (DAMAGE_ROLES.has(role(g)) && !aimLockReason(s)) g.rules[0].aim = 'martyrs';
     syncSockets(g);
     g.supports.forEach((_, k) => unsocketSupport(s, g.uid, k));
   }
@@ -408,9 +409,11 @@ function reachable(s: GameState): ZoneDef[] {
   return ZONES.filter((z) => s.unlockedZones.includes(z.id) && (z === ZONES[0] || z.levelRange[0] <= lvl + 1));
 }
 
-/** What a player's hands add: drinking flasks when they're needed, and pressing a guard as a boss winds up. */
+/** What a player's hands add: clicking martyrs, drinking flasks when they're needed, and pressing a guard as a boss winds up. */
 function hands(s: GameState, ctx: Ctx, d: Derived) {
   const alive = s.combat!.monsters.filter((m) => m.life > 0);
+  const martyr = alive.find((m) => m.martyr);
+  if (martyr && !alive.some((m) => m.martyr && m.uid === s.combat!.lockedUid)) lockTarget(s, martyr.uid);
   const costs = s.skillBar.filter((g) => g && DAMAGE_ROLES.has(activeGemDef(g.gemId).role)).map((g) => skillNumbers(d, g).manaCost);
   const casting = alive.some((m) => m.casting >= 0);
   const danger = casting || alive.some((m) => m.isBoss) || alive.length >= 4;
@@ -511,7 +514,7 @@ function bossTrial(snap: GameState, zoneId: string, seed: number): Record<string
     for (let n = 0; n < TRIALS; n++) {
       const s = structuredClone(snap);
       if (!v.byHand) {
-        grantUnlocks(s, { rules: ['vitals', 'status', 'windups'] });
+        grantUnlocks(s, { rules: ['vitals', 'status', 'windups', 'aim'] });
         s.account.automation.rules = s.account.automation.rules.filter((r) => r !== 'ground');
         if (v.ground) grantUnlocks(s, { rules: ['ground'] });
       }

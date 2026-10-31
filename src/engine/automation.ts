@@ -1,8 +1,8 @@
-import { activeGemDef, RULE_LABELS, RULE_UNLOCK_NAMES, type ActiveGemDef, type RuleCondition, type RuleUnlock, type SkillPriority, type TacticRule } from '../data/gems';
+import { activeGemDef, RULE_LABELS, RULE_UNLOCK_NAMES, type ActiveGemDef, type RuleCondition, type RuleUnlock, type SkillAim, type SkillPriority, type TacticRule } from '../data/gems';
 import { STATIONS, stationDef, type StationGrant } from '../data/hideout';
-import { ZONES } from '../data/zones';
+import { ZONES, type ZoneDef } from '../data/zones';
 import { groundFor } from './battlefield';
-import type { GameState, GroundKind } from './types';
+import type { GameState, GroundKind, SkillGemInstance } from './types';
 
 const PRIORITY_RANK: Record<SkillPriority, number> = { high: 0, normal: 1, low: 2 };
 
@@ -32,6 +32,26 @@ export function rulesPass(s: GameState, rules: TacticRule[], allows: (rule: Tact
   return rules.every((r) => !ruleLockReason(s, r.when) && allows(r));
 }
 
+/** Why a rule can't aim a skill yet, or null. */
+export function aimLockReason(s: GameState): string | null {
+  if (s.account.automation.rules.includes('aim')) return null;
+  return `${RULE_UNLOCK_NAMES.aim}: War Table level ${ruleUnlockLevel('aim')}`;
+}
+
+/** Where a skill's rules send it. A rule still locked (kept from an old save) aims at nothing. */
+export function skillAim(s: GameState, gem: SkillGemInstance): SkillAim | undefined {
+  return aimLockReason(s) ? undefined : gem.rules.find((r) => r.aim)?.aim;
+}
+
+/** A skill on the bar that fires by rule, hits, and aims here. */
+function aimsAt(s: GameState, aim: SkillAim): boolean {
+  return s.skillBar.some((g) => {
+    if (!g || skillAim(s, g) !== aim || g.rules[0].when === 'manual') return false;
+    const { weaponPct, base } = activeGemDef(g.gemId).effect;
+    return !!(weaponPct || base);
+  });
+}
+
 export function ruleSlots(s: GameState): number {
   return s.account.automation.ruleSlots;
 }
@@ -39,6 +59,11 @@ export function ruleSlots(s: GameState): number {
 /** Answering a wind-up is what lets a boss be left to your rules. */
 export function bossesOffline(s: GameState): boolean {
   return s.account.automation.rules.includes('windups');
+}
+
+/** Left alone, a boss only comes out if your rules can finish it: martyrs need a skill that aims at them, or the fight never ends. */
+export function bossLeftToRules(s: GameState, zone: ZoneDef): boolean {
+  return bossesOffline(s) && (!zone.boss.mechanics?.includes('martyrs') || aimsAt(s, 'martyrs'));
 }
 
 export function offlineCapMs(s: GameState): number {

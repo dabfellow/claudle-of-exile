@@ -65,7 +65,7 @@ export function placeItem(s: GameState, ctx: Ctx, item: Item): void {
 export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, d: Derived): void {
   const { rng } = ctx;
   const table = dropTable(zone.tier);
-  const ilvl = mon.level + MAP_ILVL[stationLevel(s, 'map_device') - 1];
+  const ilvl = mon.level + (zone.ilvlBonus ?? 0) + MAP_ILVL[stationLevel(s, 'map_device') - 1];
   const giveCurrency = (id: string, qty = 1) => {
     addBank(s, id, qty);
     ctx.emit({ t: 'loot', currencyId: id, qty });

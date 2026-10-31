@@ -1044,6 +1044,62 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_cast_speed', values: [10] },
     ],
   },
+
+  // ---------- Act 3 (docs/design/ACT3.md): one for each class's meter, each with lightning resistance ----------
+  {
+    id: 'martyrs_shroud', name: "Martyr's Shroud", baseId: 'warlord_plate', flavour: 'They wore it to the end. So will you.',
+    mods: [
+      { affixId: 'flat_life', values: [90] },
+      { affixId: 'inc_armour', values: [60] },
+      { affixId: 'light_res', values: [40] },
+      { affixId: 'u_rage_on_hit_taken', values: [2] },
+    ],
+  },
+  {
+    id: 'pilgrims_road', name: "The Pilgrim's Road", baseId: 'bonehunter_boots', flavour: 'Worn through, and still walking.',
+    mods: [
+      { affixId: 'flat_evasion', values: [130] },
+      { affixId: 'light_res', values: [35] },
+      { affixId: 'u_momentum_effect', values: [25] },
+      { affixId: 'u_momentum_retain', values: [30] },
+    ],
+  },
+  {
+    id: 'saints_shard', name: 'Shard of the Saint', baseId: 'onyx_amulet', flavour: 'Some of the holy bones still spark.',
+    mods: [
+      { affixId: 'spell_light', values: [12, 34] },
+      { affixId: 'inc_light', values: [30] },
+      { affixId: 'light_res', values: [25] },
+      { affixId: 'u_mana_power', values: [15] },
+    ],
+  },
+  {
+    id: 'confession_hood', name: 'Hood of the Last Confession', baseId: 'nightshade_cowl', flavour: 'Say it, and it is done.',
+    mods: [
+      { affixId: 'inc_evasion', values: [65] },
+      { affixId: 'flat_es', values: [40] },
+      { affixId: 'light_res', values: [30] },
+      { affixId: 'u_coup_pct', values: [35] },
+    ],
+  },
+  {
+    id: 'halo_of_wrath', name: 'Halo of Wrath', baseId: 'paladin_crown', flavour: 'It was never meant to be kind.',
+    mods: [
+      { affixId: 'flat_life', values: [60] },
+      { affixId: 'flat_es', values: [40] },
+      { affixId: 'light_res', values: [40] },
+      { affixId: 'u_nova_pct', values: [30] },
+    ],
+  },
+  {
+    id: 'chainbreaker', name: 'Chainbreaker', baseId: 'gladiator_gauntlets', flavour: 'One link at a time.',
+    mods: [
+      { affixId: 'flat_life', values: [50] },
+      { affixId: 'attack_speed', values: [10] },
+      { affixId: 'light_res', values: [30] },
+      { affixId: 'u_riposte_bleed', values: [1] },
+    ],
+  },
 ];
 
 export function uniqueDef(id: string): UniqueDef {
