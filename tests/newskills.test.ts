@@ -23,7 +23,7 @@ function arena(gem: string, opts: { cls?: ClassId; signature?: boolean; pack?: n
   const s = veteran(newGame(1, { name: 't', classId: opts.cls ?? 'warrior' }));
   s.skillBar = s.skillBar.map(() => null);
   const g = createSkillGem(s, gem);
-  g.rule = { when: 'always' };
+  g.rules = [{ when: 'always' }];
   if (opts.signature) g.supports[0] = createSupportGem(s, SUPPORT_GEMS.find((x) => x.signatureFor === gem)!.id);
   s.skillBar[0] = g;
   armFor(s, gem);
@@ -91,7 +91,7 @@ describe('new skill gems', () => {
 
   it('Rain of Arrows gives Momentum for every enemy struck', () => {
     const { s, ctx } = arena('rain_of_arrows', { cls: 'ranger', pack: 4 });
-    s.skillBar[0]!.rule = { when: 'always' };
+    s.skillBar[0]!.rules = [{ when: 'always' }];
     run(s, ctx, 10_000, () => ctx.events.some((e) => e.t === 'skill'));
     const landed = monsterHits(ctx.events).filter((e) => !e.evaded).length;
     expect(landed).toBeGreaterThanOrEqual(1);
@@ -126,7 +126,7 @@ describe('new skill gems', () => {
       for (let seed = 1; seed <= 20; seed++) {
         const { s, ctx, dummy } = arena('backstab', { cls: 'ranger' });
         ctx.rng = seeded(seed);
-        s.skillBar[0]!.rule = { when: 'always' };
+        s.skillBar[0]!.rules = [{ when: 'always' }];
         if (ailing) dummy.dots.push({ kind: 'poison', dps: 0, remainingMs: 1e9, dealt: 0, gemId: 'x' });
         run(s, ctx, 10_000, () => ctx.events.some((e) => e.t === 'skill'));
         total += monsterHits(ctx.events).reduce((a, e) => a + e.amount, 0);
@@ -156,7 +156,7 @@ describe('new skill gems', () => {
 
   it('Berserk speeds attacks and drains life, but never kills by itself', () => {
     const { s, ctx } = arena('berserk');
-    s.skillBar[0]!.rule = { when: 'always' };
+    s.skillBar[0]!.rules = [{ when: 'always' }];
     run(s, ctx, 1000, () => s.combat!.buffs.some((b) => b.id === 'berserk'));
     expect(deriveStats(s).raw.attackSpeedPct).toBeGreaterThanOrEqual(30);
     s.life = 2;
@@ -208,7 +208,7 @@ describe('new skill gems', () => {
 
   it('Consecrate with Holy Ground regenerates life and energy shield', () => {
     const { s, ctx } = arena('consecrate', { cls: 'templar', signature: true });
-    s.skillBar[0]!.rule = { when: 'always' };
+    s.skillBar[0]!.rules = [{ when: 'always' }];
     run(s, ctx, 3000, () => s.combat!.buffs.some((b) => b.id === 'consecrate'));
     const buff = s.combat!.buffs.find((b) => b.id === 'consecrate')!;
     expect(buff.regenPct).toBe(2);

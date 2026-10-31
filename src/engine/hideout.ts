@@ -3,6 +3,7 @@ import { ACTIVE_GEMS, activeGemDef, gemReqLevel, SUPPORT_GEMS, supportGemDef } f
 import { SHOP_REFRESH_MIN, SHOP_SLOTS, stationDef, type StationId } from '../data/hideout';
 import { currencyDef } from '../data/materials';
 import { actBossZone } from '../data/zones';
+import { grantUnlocks } from './automation';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { flaskName, flaskValue, rollFlask, stashFlask } from './flasks';
@@ -45,6 +46,7 @@ export function upgradeStation(s: GameState, ctx: Ctx, id: StationId): string | 
   if (!canAfford(s, cost)) return 'Not enough materials';
   payCost(s, cost);
   s.hideout[id] = stationLevel(s, id) + 1;
+  grantUnlocks(s, stationDef(id).levels[s.hideout[id] - 1].grants);
   ctx.emit({ t: 'info', text: `${stationDef(id).name} upgraded to level ${s.hideout[id]}`, tone: 'good' });
   if (id === 'vendor') refreshVendor(s, ctx.rng);
   if (id === 'stash') s.stash.push([]);

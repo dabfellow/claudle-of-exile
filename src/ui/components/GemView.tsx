@@ -1,6 +1,7 @@
 import { activeGemDef, ACTIVE_GEMS, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, gemReqLevel, RULE_LABELS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
 import { WEAPON_FAMILIES } from '../../data/bases';
 import { RINGS } from '../../engine/battlefield';
+import { ruleLockReason } from '../../engine/automation';
 import { skillRange } from '../../engine/combat';
 import { GEM_ATTR_NAME, gemAttrReq, gemLevelReq, gemProgress, gemWeaponReason, skillSummary, supportFits, supportSlots } from '../../engine/gems';
 import { deriveStats } from '../../engine/stats';
@@ -61,6 +62,16 @@ export function GemIcon({
       </span>
     </span>
   );
+}
+
+/** A skill's rules read as one trigger. */
+export function rulesText(rules: TacticRule[]): string {
+  return rules.map(ruleText).join(' and ');
+}
+
+/** The same, for a skill tile: a skill held back by a locked rule says so. */
+export function rulesLabel(s: GameState, rules: TacticRule[]): string {
+  return rules.some((r) => ruleLockReason(s, r.when)) ? 'Rule locked: War Table' : rulesText(rules);
 }
 
 export function ruleText(rule: TacticRule): string {
@@ -152,7 +163,7 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
         <>
           <div className="sep" />
           <div className="dim small">
-            Rule: <span style={{ color: 'var(--text)' }}>{ruleText(gem.rule)}</span>
+            Rule: <span style={{ color: 'var(--text)' }}>{rulesText(gem.rules)}</span>
           </div>
           <div className="dim small">
             Supports: {gem.supports.filter(Boolean).length}/{supportSlots(gem)}

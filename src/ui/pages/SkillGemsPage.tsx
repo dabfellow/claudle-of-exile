@@ -3,14 +3,17 @@ import {
   activeGemDef,
   RULE_LABELS,
   SKILL_BAR_SLOTS,
+  SKILL_PRIORITIES,
   SUPPORT_GEMS,
   supportGemDef,
   TARGET_STATUSES,
   type ActiveGemDef,
   type GemAttr,
   type RuleCondition,
+  type TacticRule,
   type TargetStatus,
 } from '../../data/gems';
+import { castOrder, ruleLockReason, ruleSlots, suggestedRule } from '../../engine/automation';
 import {
   expandSockets,
   gemUseReason,
@@ -18,6 +21,8 @@ import {
   skillNumbers,
   placeOnBar,
   removeFromBar,
+  removeRule,
+  setPriority,
   setRule,
   socketSupport,
   supportFits,
@@ -30,7 +35,7 @@ import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { EmptyState, PageHeader, ProgressBar, Tooltip } from '../components/common';
-import { GemIcon, GemTip, ruleText, SupportTip } from '../components/GemView';
+import { GemIcon, GemTip, rulesLabel, ruleText, SupportTip } from '../components/GemView';
 import { Icon } from '../components/Icon';
 
 export const SKILL_KEYS = ['Q', 'W', 'E', 'R', 'T', 'Y'];
@@ -84,31 +89,31 @@ function GemFilters({
   );
 }
 
-function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGemInstance }) {
-  const meta = RULE_LABELS[gem.rule.when];
-  const suggested = activeGemDef(gem.gemId).defaultRule;
+/** One rule slot. Locked rules stay in the list, greyed, so you can see what the War Table teaches. */
+function RuleSlot({ s, slot, index, rule, extra }: { s: GameState; slot: number; index: number; rule: TacticRule; extra: boolean }) {
+  const meta = RULE_LABELS[rule.when];
+  const locked = ruleLockReason(s, rule.when);
+  const options = (Object.keys(RULE_LABELS) as RuleCondition[]).filter((k) => !extra || (k !== 'always' && k !== 'manual'));
+  const set = (next: TacticRule) => game.act((st) => setRule(st, slot, index, next));
   return (
     <div className="rule-editor">
       <select
         className="input"
-        value={gem.rule.when}
+        value={rule.when}
         onChange={(e) => {
           const when = e.target.value as RuleCondition;
-          game.act((st) => setRule(st, slot, { when, value: RULE_LABELS[when].defaultValue, status: RULE_LABELS[when].status ? 'bleeding' : undefined }));
+          set({ when, value: RULE_LABELS[when].defaultValue, status: RULE_LABELS[when].status ? 'bleeding' : undefined });
         }}
       >
-        {(Object.keys(RULE_LABELS) as RuleCondition[]).map((k) => (
-          <option key={k} value={k}>
+        {options.map((k) => (
+          <option key={k} value={k} disabled={!!ruleLockReason(s, k)}>
             {RULE_LABELS[k].label}
+            {ruleLockReason(s, k) ? ' (locked)' : ''}
           </option>
         ))}
       </select>
       {meta.status && (
-        <select
-          className="input"
-          value={gem.rule.status ?? 'bleeding'}
-          onChange={(e) => game.act((st) => setRule(st, slot, { when: gem.rule.when, status: e.target.value as TargetStatus }))}
-        >
+        <select className="input" value={rule.status ?? 'bleeding'} onChange={(e) => set({ when: rule.when, status: e.target.value as TargetStatus })}>
           {TARGET_STATUSES.map((x) => (
             <option key={x.id} value={x.id}>
               {x.label}
@@ -123,19 +128,67 @@ function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGe
             type="number"
             min={0}
             max={meta.unit === '%' ? 100 : 5}
-            value={gem.rule.value ?? meta.defaultValue}
-            onChange={(e) => game.act((st) => setRule(st, slot, { when: gem.rule.when, value: Number(e.target.value) }))}
+            value={rule.value ?? meta.defaultValue}
+            onChange={(e) => set({ when: rule.when, value: Number(e.target.value) })}
             style={{ width: 64 }}
           />
           <span className="dim">{meta.unit}</span>
         </span>
       )}
-      {gem.rule.when === 'manual' && suggested.when !== 'manual' && (
-        <button className="btn sm ghost" title="Automate this skill with its suggested rule" onClick={() => game.act((st) => setRule(st, slot, { ...suggested }))}>
-          Suggested: {ruleText(suggested)}
+      {locked && <span className="chip bad">{locked}</span>}
+      {extra && (
+        <button className="btn sm ghost" title="Remove this rule" onClick={() => game.act((st) => removeRule(st, slot, index))}>
+          <Icon name="close" size={12} />
         </button>
       )}
-      {s.combat?.queued === slot && <span className="chip">queued</span>}
+    </div>
+  );
+}
+
+function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGemInstance }) {
+  const suggested = suggestedRule(s, activeGemDef(gem.gemId));
+  const manual = gem.rules[0].when === 'manual';
+  const canAdd = !manual && gem.rules.length < ruleSlots(s);
+  return (
+    <>
+      {gem.rules.map((rule, i) => (
+        <div key={i}>
+          {i > 0 && <div className="rule-join">and</div>}
+          <RuleSlot s={s} slot={slot} index={i} rule={rule} extra={i > 0} />
+        </div>
+      ))}
+      <div className="rule-editor">
+        {canAdd && (
+          <button className="btn sm" title="Fire only when this rule passes too" onClick={() => game.act((st) => setRule(st, slot, gem.rules.length, { when: 'bossOnly' }))}>
+            + Add a rule
+          </button>
+        )}
+        {manual && suggested.when !== 'manual' && (
+          <button className="btn sm ghost" title="Automate this skill with its suggested rule" onClick={() => game.act((st) => setRule(st, slot, 0, suggested))}>
+            Suggested: {ruleText(suggested)}
+          </button>
+        )}
+        {s.combat?.queued === slot && <span className="chip">queued</span>}
+        <span className="dim small">
+          {gem.rules.length} of {ruleSlots(s)} rule slots
+        </span>
+      </div>
+    </>
+  );
+}
+
+/** Who gets tried first, once priority, cooldowns and slots are all counted. */
+function CastOrder({ s }: { s: GameState }) {
+  const order = castOrder(s);
+  if (order.length < 2) return null;
+  return (
+    <div className="cast-order small">
+      <span className="dim">Cast order</span>
+      {order.map((slot, i) => (
+        <span key={slot} className="gem-chip">
+          {i + 1}. {activeGemDef(s.skillBar[slot]!.gemId).name}
+        </span>
+      ))}
     </div>
   );
 }
@@ -237,7 +290,7 @@ function SlotTile({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; slot
             return sup ? <GemIcon key={i} def={supportGemDef(sup.supportId)} size={16} support /> : <span key={i} className="socket-dot" />;
           })}
         </span>
-        <span className="skill-rule">{ruleText(gem.rule)}</span>
+        <span className="skill-rule">{rulesLabel(s, gem.rules)}</span>
       </button>
     </Tooltip>
   );
@@ -344,6 +397,15 @@ function SlotModal({
           <>
             <div className="section-label">Priority</div>
             <div className="prio-pick">
+              {SKILL_PRIORITIES.map((p) => (
+                <button key={p.id} className={`gem-chip ${gem.priority === p.id ? 'active' : ''}`} onClick={() => game.act((st) => setPriority(st, slot, p.id))}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="dim small">High skills are tried before Normal, Normal before Low. Within one, cooldown skills go first, then by bar slot.</div>
+            <div className="section-label">Bar slot</div>
+            <div className="prio-pick">
               {Array.from({ length: SKILL_BAR_SLOTS }, (_, i) => (
                 <button
                   key={i}
@@ -359,9 +421,8 @@ function SlotModal({
                 </button>
               ))}
             </div>
-            <div className="dim small">Cooldown skills run first, highest priority first; then the first attack whose trigger passes.</div>
 
-            <div className="section-label">Trigger</div>
+            <div className="section-label">Rules</div>
             <RuleEditor s={s} slot={slot} gem={gem} />
 
             <div className="section-label">Supports</div>
@@ -469,8 +530,8 @@ export function SkillGemsPage() {
           )
         }
       >
-        Your bar runs by priority, #1 first: skills with a cooldown (guards, buffs, spells, area attacks) fire when their trigger passes, then your first attack
-        whose trigger passes and that you have the mana for, otherwise a free Default Attack. Press <b>Q–Y</b> in combat to cast a slot manually.
+        Your bar runs in cast order: the first skill whose rules all pass and that you have the mana for, otherwise a free Default Attack. Reactive rules are
+        taught at the Hideout's War Table. Press <b>Q–Y</b> in combat to cast a slot manually.
       </PageHeader>
 
       <div className="card">
@@ -484,6 +545,7 @@ export function SkillGemsPage() {
             <SlotTile key={i} s={s} slot={i} pickedGem={pickedGem} onOpen={() => setOpenSlot(i)} onPlaced={clear} />
           ))}
         </div>
+        <CastOrder s={s} />
       </div>
       {openSlot !== null && (
         <SlotModal

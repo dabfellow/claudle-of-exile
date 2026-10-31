@@ -559,7 +559,9 @@ export function OfflineModal() {
               <GameIcon name="skull" size={16} />
               <b>Slain in Combat</b>
             </div>
-            <p>Your journey ended in death. You have returned to the hideout.</p>
+            <p>
+              You fell {(sum.diedAfterMs ?? 0) < 60_000 ? 'moments' : awayLabel(sum.diedAfterMs ?? 0)} after leaving and returned to the hideout. Combat stopped there until you came back.
+            </p>
           </div>
         )}
         {sum.stoppedReason && (
@@ -577,7 +579,7 @@ export function OfflineModal() {
               <GameIcon name="forge" size={16} />
               <b>An Unfinished Battle</b>
             </div>
-            <p>{sum.bossWaiting} awaits. This foe must be challenged in person.</p>
+            <p>{sum.bossWaiting} awaits. Bosses must be fought in person until the War Table teaches wind-up rules.</p>
           </div>
         )}
         {sum.crafted && (

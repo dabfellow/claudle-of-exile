@@ -178,7 +178,7 @@ function skirmish(gemId: string, cells: number[], support?: string) {
   s.skills.combat = charXpForLevel(40);
   s.skillBar = s.skillBar.map(() => null);
   const gem = createSkillGem(s, gemId);
-  gem.rule = { when: 'always' };
+  gem.rules = [{ when: 'always' }];
   if (support) gem.supports[0] = createSupportGem(s, support);
   s.skillBar[0] = gem;
   armFor(s, gemId);
@@ -325,7 +325,7 @@ describe('range, closing in and targeting', () => {
 
   it('targeting: lowest life first, and a clicked monster beats the setting', () => {
     const { s, c, mons } = skirmish('spark', [0, at(0, -3), at(3, -3)]);
-    s.skillBar[0]!.rule = { when: 'always' };
+    s.skillBar[0]!.rules = [{ when: 'always' }];
     mons[1].life = 10;
     mons[1].maxLife = 1e6;
     s.settings.targeting = { priority: 'none', order: 'lowest' };

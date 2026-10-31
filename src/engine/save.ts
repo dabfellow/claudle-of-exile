@@ -188,10 +188,20 @@ const MIGRATIONS: Record<number, Migration> = {
     s.combat.ground = [];
     s.combat.gates = undefined;
   },
+  19: (raw) => {
+    // a skill's one rule became a list of rule slots, with a priority; rules that are now locked stay set and wait for their unlock
+    const s = raw as unknown as GameState;
+    for (const gem of [...(s.skillBar ?? []), ...(s.gems ?? [])] as unknown as (Record<string, unknown> | null)[]) {
+      if (!gem) continue;
+      gem.rules ??= [gem.rule ?? { when: 'manual' }];
+      gem.priority ??= 'normal';
+      delete gem.rule;
+    }
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
-const MERGE_KEYS = new Set(['skills', 'hideout', 'settings', 'lifetime', 'vendor', 'tutorial', 'masteries']);
+const MERGE_KEYS = new Set(['skills', 'hideout', 'settings', 'lifetime', 'vendor', 'tutorial', 'masteries', 'automation']);
 
 export function serialize(s: GameState): string {
   return JSON.stringify(s);

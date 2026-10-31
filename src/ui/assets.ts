@@ -471,6 +471,8 @@ export const STATION_ART: Record<string, string> = {
   alchemy_table: new URL('../assets/items/consumables/potion-green-shelf.png', import.meta.url).href,
   bench: new URL('../assets/ui/decorations/sign-hammer.png', import.meta.url).href,
   vendor: new URL('../assets/icons/navigation/market.png', import.meta.url).href,
+  war_table: new URL('../assets/icons/navigation/flag.png', import.meta.url).href,
+  watchtower: new URL('../assets/icons/navigation/castle.png', import.meta.url).href,
 };
 
 /** Area banners: the only painted landscapes on hand are GegX's forest and tavern, reused as first-pass mood pieces. */

@@ -10,10 +10,12 @@ import {
   gemReqLevel,
   type GemAttr,
   type SupportGemDef,
+  type SkillPriority,
   type SupportMods,
   type TacticRule,
 } from '../data/gems';
 import { WEAPON_FAMILIES, type WeaponFamily } from '../data/bases';
+import { ruleLockReason, ruleSlots } from './automation';
 import { characterLevel } from './character';
 import type { Ctx } from './context';
 import { newUid } from './items';
@@ -139,7 +141,7 @@ export function gemProgress(gem: SkillGemInstance): number {
 
 /** New gems are Manual only: nothing casts itself until you give it a rule (its suggested one is a click away). */
 export function createSkillGem(s: GameState, gemId: string, level = 1): SkillGemInstance {
-  return { uid: newUid(s), gemId, level, xp: gemXpForLevel(level), supports: [null], extraSlots: 0, rule: { when: 'manual' } };
+  return { uid: newUid(s), gemId, level, xp: gemXpForLevel(level), supports: [null], extraSlots: 0, rules: [{ when: 'manual' }], priority: 'normal' };
 }
 
 export function createSupportGem(s: GameState, supportId: string): SupportGemInstance {
@@ -226,9 +228,26 @@ export function unsocketSupport(s: GameState, gemUid: number, socket: number): v
   s.supportGems.push(sup);
 }
 
-export function setRule(s: GameState, slot: number, rule: TacticRule): void {
+/** Set one of a skill's rules. Manual only stands alone, and a locked rule can't be picked. */
+export function setRule(s: GameState, slot: number, index: number, rule: TacticRule): string | null {
   const gem = s.skillBar[slot];
-  if (gem) gem.rule = rule;
+  if (!gem) return 'Empty slot';
+  if (index >= ruleSlots(s) || index > gem.rules.length) return 'No free rule slot';
+  const locked = ruleLockReason(s, rule.when);
+  if (locked) return locked;
+  gem.rules[index] = rule;
+  if (rule.when === 'manual') gem.rules = [rule];
+  return null;
+}
+
+export function removeRule(s: GameState, slot: number, index: number): void {
+  const gem = s.skillBar[slot];
+  if (gem && gem.rules.length > 1) gem.rules.splice(index, 1);
+}
+
+export function setPriority(s: GameState, slot: number, priority: SkillPriority): void {
+  const gem = s.skillBar[slot];
+  if (gem) gem.priority = priority;
 }
 
 /** Orb of Expansion: +1 support socket, up to the maximum. */

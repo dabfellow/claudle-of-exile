@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { activeGemDef } from '../src/data/gems';
 import { zoneDef } from '../src/data/zones';
 import { aliveMonsters, chooseSkill, combatStep, makeMonster, queueSkill, ruleAllows, ruleContext, startCombat } from '../src/engine/combat';
+import { unlockEverything } from '../src/engine/automation';
 import { makeCtx } from '../src/engine/context';
 import {
   createSkillGem,
@@ -33,8 +34,9 @@ function arena(gems: string[], pack: MonsterInstance[], classId: 'warrior' | 'ra
   const s = newGame(1, { name: 'T', classId });
   s.skills.combat = charXpForLevel(20);
   s.skillBar = s.skillBar.map(() => null);
+  unlockEverything(s);
   // gems start Manual only; these fights want each skill on its suggested rule
-  gems.forEach((id, i) => (s.skillBar[i] = { ...createSkillGem(s, id), rule: { ...activeGemDef(id).defaultRule } }));
+  gems.forEach((id, i) => (s.skillBar[i] = { ...createSkillGem(s, id), rules: [{ ...activeGemDef(id).defaultRule }] }));
   gems.forEach((id) => armFor(s, id));
   const c = ctx();
   startCombat(s, c, 'mudflats');
@@ -134,8 +136,8 @@ describe('skill gems', () => {
 describe('tactics', () => {
   it('new skill gems start Manual only', () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
-    expect(createSkillGem(s, 'heavy_strike').rule).toEqual({ when: 'manual' });
-    expect(s.skillBar.filter(Boolean).every((g) => g!.rule.when === 'manual')).toBe(true);
+    expect(createSkillGem(s, 'heavy_strike').rules).toEqual([{ when: 'manual' }]);
+    expect(s.skillBar.filter(Boolean).every((g) => g!.rules[0].when === 'manual')).toBe(true);
   });
 
 
@@ -161,7 +163,7 @@ describe('tactics', () => {
 
   it('manual casts jump the queue', () => {
     const { s } = arena(['heavy_strike', 'war_cry'], [dummy()]);
-    s.skillBar[1]!.rule = { when: 'manual' };
+    s.skillBar[1]!.rules = [{ when: 'manual' }];
     const d = deriveStats(s);
     expect(chooseSkill(s, d).nums.def.id).toBe('heavy_strike');
     expect(queueSkill(s, 1)).toBeNull();
@@ -172,7 +174,7 @@ describe('tactics', () => {
 describe('combat 2.0', () => {
   it('area skills hit the whole pack, single-target only the first', () => {
     const slam = arena(['ground_slam'], [dummy(), dummy(), dummy()]);
-    slam.s.skillBar[0]!.rule = { when: 'always' };
+    slam.s.skillBar[0]!.rules = [{ when: 'always' }];
     run(slam.s, slam.c, 3000);
     expect(slam.s.combat!.monsters.every((m) => m.life < m.maxLife)).toBe(true);
 
@@ -232,7 +234,7 @@ describe('combat 2.0', () => {
   it('ailments deal damage over time', () => {
     const { s, c } = arena(['lacerate'], [dummy()], 'ranger');
     veteran(s); // Lacerate is a late gem
-    s.skillBar[0]!.rule = { when: 'always' };
+    s.skillBar[0]!.rules = [{ when: 'always' }];
     run(s, c, 1500);
     const mon = s.combat!.monsters[0];
     expect(mon.dots.some((x) => x.kind === 'bleed')).toBe(true);

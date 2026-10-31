@@ -22,6 +22,7 @@ import { buyOffer, rerollCost, rerollVendor, sellItems } from '../src/engine/hid
 import { pickUp } from '../src/engine/storage';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
+import { unlockEverything } from '../src/engine/automation';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats, hitChance, type Derived } from '../src/engine/stats';
 import type { FlaskInstance, GameEvent, GameState, Item, SkillGemInstance, SkillId } from '../src/engine/types';
@@ -173,7 +174,7 @@ function manageSkills(s: GameState) {
   // re-socket from scratch: damage skills pick the support that adds the most, the rest take any that fits
   const bar = s.skillBar.filter((x): x is SkillGemInstance => !!x);
   for (const g of bar) {
-    if (g.rule.when === 'manual') g.rule = { ...activeGemDef(g.gemId).defaultRule };
+    if (g.rules[0].when === 'manual') g.rules = [{ ...activeGemDef(g.gemId).defaultRule }];
     syncSockets(g);
     g.supports.forEach((_, k) => unsocketSupport(s, g.uid, k));
   }
@@ -280,6 +281,8 @@ interface Result {
 
 function runClass(classId: ClassId): Result {
   const s = newGame(SEED, { name: 'Bot', classId });
+  // until Milestone 2 teaches the bot the War Table, it keeps the rules it was tuned with
+  unlockEverything(s);
   s.tutorial.done = true;
   let now = 0;
   const res: Result = { classId, levels: {}, bosses: {}, bossLevels: {}, deaths: 0, kills: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, fightSecs: 0, starvedSecs: 0, bar: '', orbsUsed: 0 };

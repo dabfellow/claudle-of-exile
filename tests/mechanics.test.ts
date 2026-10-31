@@ -21,7 +21,7 @@ function arena(classId: ClassId, gem = 'heavy_strike', passives: string[] = []) 
   s.skillBar = s.skillBar.map(() => null);
   s.skillBar[0] = createSkillGem(s, gem);
   armFor(s, gem);
-  s.skillBar[0].rule = { when: 'always' };
+  s.skillBar[0].rules = [{ when: 'always' }];
   s.settings.autoFlee = false;
   const ctx = makeCtx(seeded(7));
   startCombat(s, ctx, 'mudflats');
@@ -153,7 +153,7 @@ describe('class mechanics', () => {
     const { s, ctx } = arena('warrior', 'heavy_strike');
     s.skillBar[1] = createSkillGem(s, 'ground_slam');
     armFor(s, 'ground_slam');
-    s.skillBar[1].rule = { when: 'meterFull' };
+    s.skillBar[1].rules = [{ when: 'meterFull' }];
     s.skillBar[0] = null;
     run(s, ctx, 2000);
     expect(ctx.events.some((e) => e.t === 'skill' && e.gemId === 'ground_slam')).toBe(false);
@@ -183,7 +183,7 @@ describe('forbidden keystones', () => {
   it('an attack with no cooldown on top of the bar still lets a buff below it fire, and falls back to a default attack once mana runs out', () => {
     const { s, ctx } = arena('warrior', 'heavy_strike');
     s.skillBar[1] = createSkillGem(s, 'war_cry');
-    s.skillBar[1].rule = { when: 'always' };
+    s.skillBar[1].rules = [{ when: 'always' }];
     s.mana = 40; // a small pool so it runs dry inside the minute
     run(s, ctx, 60_000);
     const used = (id: string) => ctx.events.filter((e) => e.t === 'skill' && e.gemId === id).length;

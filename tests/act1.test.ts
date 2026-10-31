@@ -23,7 +23,7 @@ function arena(gems: string[], pack: MonsterInstance[], zoneId = 'mudflats') {
   const s = newGame(1, { name: 'T', classId: 'warrior' });
   s.skills.combat = charXpForLevel(20);
   s.skillBar = s.skillBar.map(() => null);
-  gems.forEach((id, i) => (s.skillBar[i] = { ...createSkillGem(s, id), rule: { ...activeGemDef(id).defaultRule } }));
+  gems.forEach((id, i) => (s.skillBar[i] = { ...createSkillGem(s, id), rules: [{ ...activeGemDef(id).defaultRule }] }));
   gems.forEach((id) => armFor(s, id));
   s.unlockedZones = ZONES.map((z) => z.id);
   const c = ctx();
@@ -187,7 +187,7 @@ describe('offline progress and bosses', { timeout: 20_000 }, () => {
     return s;
   };
 
-  it("never fights a boss you haven't beaten, so it can't unlock areas while you're away", () => {
+  it("never fights a boss without wind-up rules, so it can't unlock areas while you're away", () => {
     const s = strong();
     const c = ctx();
     startCombat(s, c, 'mudflats');
@@ -201,6 +201,7 @@ describe('offline progress and bosses', { timeout: 20_000 }, () => {
   it('farms bosses you have already beaten', () => {
     const s = strong();
     s.bossesDefeated = ['mudflats'];
+    s.automation.rules.push('windups');
     const c = ctx();
     startCombat(s, c, 'mudflats');
     const before = s.lifetime.bossKills;

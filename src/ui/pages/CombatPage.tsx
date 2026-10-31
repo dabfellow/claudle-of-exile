@@ -26,7 +26,7 @@ import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, Monst
 import { game, useGame, useGameEvent } from '../../game';
 import { anyArtUrl, Art, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
-import { GemIcon, GemTip, ruleText } from '../components/GemView';
+import { GemIcon, GemTip, rulesLabel } from '../components/GemView';
 import { LootPile } from '../components/GroundLoot';
 import type { Page } from '../Layout';
 import { SKILL_KEYS } from './SkillGemsPage';
@@ -497,7 +497,7 @@ export function SkillBar({ s, d, fx }: { s: GameState; d: Derived; fx?: Fx }) {
               <span className="skill-meta">
                 {nums.manaCost > 0 ? <span style={{ color: 'var(--mana-2)' }}>{nums.manaCost} mana</span> : <span className="dim">free</span>}
               </span>
-              <span className="skill-rule">{unusable ?? ruleText(gem.rule)}</span>
+              <span className="skill-rule">{unusable ?? rulesLabel(s, gem.rules)}</span>
             </button>
           </Tooltip>
         );

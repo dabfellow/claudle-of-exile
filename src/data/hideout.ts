@@ -1,9 +1,20 @@
-export type StationId = 'stash' | 'forge' | 'alchemy_table' | 'bench' | 'vendor' | 'map_device';
+import type { RuleUnlock } from './gems';
+
+export type StationId = 'stash' | 'forge' | 'alchemy_table' | 'bench' | 'vendor' | 'map_device' | 'war_table' | 'watchtower';
+
+/** What a station level adds to the automation unlocks for good. */
+export interface StationGrant {
+  rules?: RuleUnlock[];
+  /** rule slots per skill */
+  ruleSlots?: number;
+  offlineHours?: number;
+}
 
 export interface StationLevel {
   cost: Record<string, number>;
   /** human readable effect at this level */
   effect: string;
+  grants?: StationGrant;
 }
 
 export interface StationDef {
@@ -77,6 +88,27 @@ export const STATIONS: StationDef[] = [
       { cost: { gold: 5000, oak_log: 100 }, effect: '5 per shop, every 8 min, rare gear' },
       { cost: { gold: 20000, iron_ore: 200, rough_gem: 10 }, effect: '6 per shop, every 6 min, rarer currency' },
       { cost: { gold: 80000, mithril_ore: 150, rough_gem: 30 }, effect: '8 per shop, every 4 min, better-rolled gear' },
+    ],
+  },
+  {
+    id: 'war_table', name: 'War Table', page: 'skills', color: '#c8553d',
+    desc: 'Where you plan fights ahead of time. Upgrades teach your skills new rules, for good.',
+    levels: [
+      { cost: {}, effect: 'Simple rules, 1 rule slot per skill' },
+      { cost: { gold: 1500, ash_log: 150, copper_ore: 150 }, effect: 'Vitals rules: when life or mana is below', grants: { rules: ['vitals'] } },
+      { cost: { gold: 6000, oak_log: 200, iron_ore: 200 }, effect: 'Status rules, and a 2nd rule slot per skill', grants: { rules: ['status'], ruleSlots: 2 } },
+      { cost: { gold: 20000, oak_log: 400, iron_ore: 400, rough_gem: 15 }, effect: 'Wind-up rules: bosses can now be fought offline', grants: { rules: ['windups'] } },
+      { cost: { gold: 80000, yew_log: 300, mithril_ore: 300, rough_gem: 40 }, effect: 'A 3rd rule slot per skill', grants: { ruleSlots: 3 } },
+    ],
+  },
+  {
+    id: 'watchtower', name: 'Watchtower', page: 'hideout', color: '#7f9bb3',
+    desc: 'Someone to keep watch while you sleep. Upgrades keep the game running for longer while you are away.',
+    levels: [
+      { cost: {}, effect: 'Up to 8 hours of offline progress' },
+      { cost: { gold: 4000, ash_log: 300, copper_ore: 300 }, effect: 'Up to 12 hours offline', grants: { offlineHours: 12 } },
+      { cost: { gold: 25000, oak_log: 500, iron_ore: 500 }, effect: 'Up to 16 hours offline', grants: { offlineHours: 16 } },
+      { cost: { gold: 200000, yew_log: 800, mithril_ore: 800, rough_gem: 80 }, effect: 'Up to 24 hours offline', grants: { offlineHours: 24 } },
     ],
   },
 ];

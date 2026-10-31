@@ -51,6 +51,7 @@ It takes **months to build a top-end character** that easily clears all content.
 - **Dying offline** stops combat until you return.
 - **New bosses** can be beaten offline by a strong enough build once it has reactive rules.
 - **Offline cap:** starts at 8 hours; a hideout upgrade raises it to 24 over time.
+- **As built (Milestone 1):** the Watchtower sets the cap (8, 12, 16, 24 h). Until Wind-up rules are earned no boss spawns offline, new or already beaten, and one on the field when you leave goes back into hiding. A greenhouse keeps growing after combat stops.
 
 ### Hitting the timeline
 Measure first: put rule locks, offline stops and a combat/skilling split in the sim, then fix only the gap left. Exact hours per milestone come from that. Replaces the old targets (Act 1 at 6–10 h, 3–7 days per act).
@@ -87,6 +88,7 @@ Measure first: put rule locks, offline stops and a combat/skilling split in the 
 - **Simple rules** like "on cooldown" are free.
 - **Reactive rules** like "when a boss winds up" or "when life is below 40%" unlock later, so bosses stay hard to idle until the smart rules are earned.
 - You can always cast manually.
+- **As built (Milestone 1):** every skill has High, Normal or Low priority and 1 rule slot, rising to 3; all of a skill's rules must pass. The War Table teaches Vitals rules (life or mana below, level 2), Status rules (level 3, with the 2nd slot), Wind-up rules (level 4) and the 3rd slot (level 5). A rule locked for a character stays set but doesn't fire. Unlocks are one-way and live in `GameState.automation`, ready for the account layer.
 
 ---
 

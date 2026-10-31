@@ -129,7 +129,7 @@ describe('keystones', () => {
   const arena = (s: GameState) => {
     s.skillBar = s.skillBar.map(() => null);
     s.skillBar[0] = createSkillGem(s, 'heavy_strike');
-    s.skillBar[0].rule = { when: 'always' };
+    s.skillBar[0].rules = [{ when: 'always' }];
     const c = ctx();
     startCombat(s, c, 'mudflats');
     const dummy = makeMonster(zoneDef('mudflats').monsters[0], false, 1);

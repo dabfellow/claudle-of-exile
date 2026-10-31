@@ -130,21 +130,39 @@ export interface TacticRule {
   status?: TargetStatus;
 }
 
-export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; defaultValue?: number; status?: boolean }> = {
+/** Reactive rules come in groups, each unlocked at the War Table. Rules outside a group are simple and free. */
+export type RuleUnlock = 'vitals' | 'status' | 'windups';
+
+export const RULE_UNLOCK_NAMES: Record<RuleUnlock, string> = {
+  vitals: 'Vitals rules',
+  status: 'Status rules',
+  windups: 'Wind-up rules',
+};
+
+export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; defaultValue?: number; status?: boolean; unlock?: RuleUnlock }> = {
   always: { label: 'Whenever ready' },
   manual: { label: 'Manual only' },
-  enemyCasting: { label: 'When an enemy winds up' },
-  lifeBelow: { label: 'When life below', unit: '%', defaultValue: 50 },
+  enemyCasting: { label: 'When an enemy winds up', unlock: 'windups' },
+  lifeBelow: { label: 'When life below', unit: '%', defaultValue: 50, unlock: 'vitals' },
   manaAbove: { label: 'When mana above', unit: '%', defaultValue: 40 },
-  manaBelow: { label: 'When mana below', unit: '%', defaultValue: 30 },
+  manaBelow: { label: 'When mana below', unit: '%', defaultValue: 30, unlock: 'vitals' },
   enemiesAtLeast: { label: 'When enemies at least', unit: '', defaultValue: 3 },
   targetLifeAbove: { label: 'When target life above', unit: '%', defaultValue: 50 },
   notActive: { label: 'When its effect is not active' },
   bossOnly: { label: 'Only against bosses' },
   meterFull: { label: 'When your class meter is full (Rage, Malice…)' },
-  targetHas: { label: 'While target is affected by', status: true },
-  targetLacks: { label: "While target isn't affected by", status: true },
+  targetHas: { label: 'While target is affected by', status: true, unlock: 'status' },
+  targetLacks: { label: "While target isn't affected by", status: true, unlock: 'status' },
 };
+
+/** A skill's place in the cast order: high goes before normal, normal before low. */
+export type SkillPriority = 'high' | 'normal' | 'low';
+
+export const SKILL_PRIORITIES: { id: SkillPriority; label: string }[] = [
+  { id: 'high', label: 'High' },
+  { id: 'normal', label: 'Normal' },
+  { id: 'low', label: 'Low' },
+];
 
 const A = (d: ActiveGemDef) => d;
 

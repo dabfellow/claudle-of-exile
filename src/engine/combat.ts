@@ -1,4 +1,4 @@
-import { activeGemDef, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type TacticRule, type TargetStatus } from '../data/gems';
+import { CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type TacticRule, type TargetStatus } from '../data/gems';
 import { clearGround } from './storage';
 import {
   actOpen,
@@ -63,6 +63,7 @@ import {
   type AreaShape,
 } from './battlefield';
 import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './character';
+import { bossesOffline, castOrder, rulesPass } from './automation';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
 import { gemUseReason, grantGemXp, MIN_COOLDOWN_MS, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
@@ -252,9 +253,18 @@ export function aliveMonsters(c: CombatRuntime): MonsterInstance[] {
   return c.monsters.filter((m) => m.life > 0).sort((a, b) => cellRing(a.cell) - cellRing(b.cell) || a.uid - b.uid);
 }
 
-/** A boss you've never beaten has to be fought in person: offline, it stays in hiding and you keep farming trash. */
+/** Until wind-up rules are earned a boss has to be fought in person: offline, it stays in hiding and you keep farming trash. */
 function bossCanSpawn(s: GameState, ctx: Ctx, zoneId: string): boolean {
-  return bossIsNext(s, zoneId) && !(ctx.offline && !s.bossesDefeated.includes(zoneId));
+  return bossIsNext(s, zoneId) && (!ctx.offline || bossesOffline(s));
+}
+
+/** Leaving mid boss fight without wind-up rules: the boss and its adds go back into hiding, ready for your return. */
+export function clearBossFight(s: GameState): void {
+  const c = s.combat;
+  if (!c || !c.monsters.some((m) => m.isBoss) || bossesOffline(s)) return;
+  c.monsters = [];
+  c.using = null;
+  clearGround(s);
 }
 
 /** Each gate's next timer: the zone's pace spread over every gate, so monsters arrive about as often as one wave timer sent them. */
@@ -633,9 +643,8 @@ function needsTarget(def: ActiveGemDef): boolean {
 }
 
 /**
- * Pick what to do next: a queued manual cast; else the first skill with a cooldown (guards, buffs, spells, area
- * skills) whose rule passes; else the first cooldown-free attack whose rule passes and that you can pay for;
- * else a free default attack. Attacks without cooldowns would otherwise crowd out everything below them.
+ * Pick what to do next: a queued manual cast; else the first skill in cast order (see castOrder) whose rules all
+ * pass and that you can pay for; else a free default attack.
  * A damage skill only counts with a target in range. When none has one, the first that could reach a monster
  * by closing in comes back with `closeIn`; with nothing reachable at all, slot -1 and no target means wait.
  */
@@ -664,15 +673,13 @@ export function chooseSkill(s: GameState, d: Derived): SkillChoice {
     }
   }
   const rc = ruleContext(s, d);
-  for (const withCooldown of [true, false]) {
-    for (let i = 0; i < s.skillBar.length; i++) {
-      const gem = s.skillBar[i];
-      if (!gem || (activeGemDef(gem.gemId).cooldownMs > 0) !== withCooldown || gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) continue;
-      const nums = skillNumbers(d, gem);
-      if (!ready(s, d, i, nums) || !ruleAllows(gem.rule, rc, skillIsActive(c, gem.gemId))) continue;
-      const got = consider(i, nums, false);
-      if (got) return got;
-    }
+  for (const i of castOrder(s)) {
+    const gem = s.skillBar[i]!;
+    if (gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) continue;
+    const nums = skillNumbers(d, gem);
+    if (!ready(s, d, i, nums) || !rulesPass(s, gem.rules, (r) => ruleAllows(r, rc, skillIsActive(c, gem.gemId)))) continue;
+    const got = consider(i, nums, false);
+    if (got) return got;
   }
   const basic = skillNumbers(d, null);
   return consider(-1, basic, false) ?? later.approach ?? { slot: -1, nums: basic, manual: false };

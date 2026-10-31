@@ -1,5 +1,5 @@
 import type { ClassId } from '../data/classes';
-import type { TacticRule } from '../data/gems';
+import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
 
 export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'smithing' | 'alchemy' | 'gemcutting' | 'fishing';
@@ -247,7 +247,9 @@ export interface SkillGemInstance {
   supports: (SupportGemInstance | null)[];
   /** extra support sockets from Orbs of Expansion */
   extraSlots: number;
-  rule: TacticRule;
+  /** when it fires on its own: every rule has to pass, so a second rule narrows the first */
+  rules: TacticRule[];
+  priority: SkillPriority;
 }
 
 export interface HealOverTime {
@@ -411,6 +413,16 @@ export interface TutorialState {
   skipped: boolean;
 }
 
+/**
+ * What this character has earned for automation. One-way: nothing ever takes these back, and nothing but this
+ * block is read for them, so the account layer can lift it out of the character whole.
+ */
+export interface AutomationUnlocks {
+  rules: RuleUnlock[];
+  ruleSlots: number;
+  offlineHours: number;
+}
+
 export interface GameState {
   version: number;
   character: CharacterInfo;
@@ -428,6 +440,7 @@ export interface GameState {
   stash: Item[][];
   equipment: Partial<Record<EquipSlot, Item>>;
   flaskSlots: (FlaskInstance | null)[];
+  automation: AutomationUnlocks;
   skillBar: (SkillGemInstance | null)[];
   /** skill gems not on the bar */
   gems: SkillGemInstance[];
