@@ -87,6 +87,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
       { page: 'smithing', label: 'Smithing', icon: 'smithing', skill: 'smithing', divider: true },
       { page: 'alchemy', label: 'Alchemy', icon: 'alchemy', skill: 'alchemy' },
       { page: 'gemcutting', label: 'Gemcutting', icon: 'gemcutting', skill: 'gemcutting' },
+      { page: 'runecarving', label: 'Rune-carving', icon: 'runecarving', skill: 'runecarving' },
       { page: 'upcoming', label: 'Coming soon', icon: 'lock', divider: true },
     ],
   },

@@ -1,6 +1,7 @@
 import type { SkillId } from '../engine/types';
 import { BASES, type BaseDef } from './bases';
 import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
+import { RUNE_FAMILIES, RUNE_GATE, RUNES } from './runes';
 
 export interface SkillDef {
   id: SkillId;
@@ -23,6 +24,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   smithing: { id: 'smithing', name: 'Smithing', group: 'production', color: '#b8b8c8', verb: 'Smithing', desc: 'Forge equipment bases. Higher level → higher item level.' },
   alchemy: { id: 'alchemy', name: 'Alchemy', group: 'production', color: '#9b6dde', verb: 'Brewing', desc: 'Brew flasks and transmute dust into orbs.' },
   gemcutting: { id: 'gemcutting', name: 'Gemcutting', group: 'production', color: '#4fc1a6', verb: 'Cutting', desc: 'Cut rough gems into skill and support gems.' },
+  runecarving: { id: 'runecarving', name: 'Rune-carving', group: 'production', color: '#6fa8ff', verb: 'Carving', desc: 'Carve old materials into runes, then inscribe them in the rune slot on your gear.' },
   fishing: { id: 'fishing', name: 'Fishing', group: 'gathering', color: '#4fa3d9', verb: 'Fishing', desc: 'Cast a line into the waters of Wraeclast.', soon: true },
 };
 
@@ -31,7 +33,6 @@ export const UPCOMING_SKILLS: { name: string; theme: string; icon: string; color
   { name: 'Archaeology', theme: 'Expedition', icon: 'mining', color: '#b0784a', desc: 'Dig sites in every area for Artifacts to trade for currency.' },
   { name: 'Cartography', theme: 'Maps', icon: 'map', color: '#8a7ad8', desc: 'Draw and upgrade maps for the Map Device.' },
   { name: 'Fletching', theme: 'Quivers', icon: 'woodcutting', color: '#7fae6a', desc: 'Turn logs into shafts and shafts into quivers.' },
-  { name: 'Rune-carving', theme: 'Runes', icon: 'gemcutting', color: '#6fa8ff', desc: 'Carve runes that enchant your gear.' },
 ];
 
 export interface SkillAction {
@@ -53,6 +54,8 @@ export interface SkillAction {
   color: string;
   /** campaign area that must be unlocked first */
   area?: string;
+  /** the same, for an area named only by id, so a recipe can wait for an act's data: `label` says where to go */
+  gate?: { zone: string; label: string };
   /** chance each action gives its `outputs` at all (alternate nodes trade base material for secondaries) */
   outputChance?: number;
   /** batch recipe: makes this many at once; `batchOf` is the single recipe it scales */
@@ -240,10 +243,27 @@ const GEMCUTTING: SkillAction[] = [
   { id: 'cut_expansion', skill: 'gemcutting', name: 'Orb of Expansion', level: 45, intervalMs: 30000, xp: 250, inputs: { rough_gem: 8, arcane_dust: 40, voidbloom: 4 }, outputs: { expansion: 1 }, color: '#c08bff', area: 'stormcliffs' },
 ];
 
+/** One recipe per rune. Later families in a grade open two levels apart, so there's always a next one to reach. */
+const RUNECARVING: SkillAction[] = RUNES.map((r) => {
+  const flavour = r.grade.grade <= 2 ? r.family.flavour.low : r.family.flavour.high;
+  return {
+    id: `carve_${r.id}`,
+    skill: 'runecarving' as const,
+    name: r.name,
+    level: r.grade.level + RUNE_FAMILIES.indexOf(r.family) * 2,
+    intervalMs: r.grade.intervalMs,
+    xp: r.grade.xp,
+    inputs: { ...r.grade.inputs, [flavour]: r.grade.flavour },
+    outputs: { [r.id]: 1 },
+    color: r.family.color,
+    gate: RUNE_GATE,
+  };
+});
+
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-export const ACTIONS: SkillAction[] = [...GATHERING, ...THIEVING, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING].map((a) => ({
+export const ACTIONS: SkillAction[] = [...GATHERING, ...THIEVING, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING].map((a) => ({
   ...a,
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
 }));

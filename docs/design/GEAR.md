@@ -86,6 +86,10 @@ All rollable mods are in `src/data/affixes.ts`. Each has 9 tiers, unlocking at i
 - Attributes: armour and weapons roll only their own attribute, at weight 25. Jewellery rolls any.
 - Utility: Item Rarity is a prefix now, at 4× the old numbers. "% increased Experience gained" (character XP) replaced Skill Experience; the old `skill_xp` mod no longer rolls but still works on existing items and the Miner's Lament unique.
 
+## Rune slot
+
+Every piece of gear, uniques included, has one rune slot, apart from its prefixes and suffixes. See [RUNES.md](RUNES.md).
+
 ## Known gaps
 
 - Monsters stop at level 33, so bases above 34 can't drop until Act 3+ exists. Smithing (level = base level) and the Town Market (character level) can't reach them either.

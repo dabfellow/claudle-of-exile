@@ -581,6 +581,7 @@ export const GAME_ICONS: Record<string, string> = {
   smithing: new URL('../assets/icons/skills/smithing.svg', import.meta.url).href,
   alchemy: new URL('../assets/icons/skills/alchemy.svg', import.meta.url).href,
   gemcutting: new URL('../assets/icons/skills/gemcutting.svg', import.meta.url).href,
+  runecarving: new URL('../assets/icons/navigation/rune-circle.png', import.meta.url).href,
   // navigation
   home: new URL('../assets/icons/navigation/home.svg', import.meta.url).href,
   tree: new URL('../assets/icons/navigation/tree.svg', import.meta.url).href,

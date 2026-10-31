@@ -33,6 +33,7 @@ const MATERIAL_GROUPS: { label: string; kinds: string[] }[] = [
   { label: 'Essences', kinds: ['essence'] },
   { label: 'Resin & Shards', kinds: ['resin', 'shard'] },
   { label: 'Contraband', kinds: ['contraband'] },
+  { label: 'Runes', kinds: ['rune'] },
   { label: 'Other', kinds: ['dust'] },
 ];
 

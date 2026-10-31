@@ -1,6 +1,7 @@
 import { ESSENCES, FOSSILS, SEAL, WAX } from '../../data/craftMats';
 import { HEIST_JOBS } from '../../data/heist';
 import { materialDef } from '../../data/materials';
+import { RUNE_DROP, runeDef } from '../../data/runes';
 import { ACTIONS, SKILLS } from '../../data/skills';
 import type { Page } from '../Layout';
 
@@ -31,6 +32,8 @@ export function materialSources(id: string): Source[] {
     if ([...job.drops, ...job.vault].some((d) => d.id === id)) out.push({ label: `Heist: ${job.name}`, detail: `Thieving ${job.level}`, page: 'thieving' });
   }
   if (id === SEAL || id === WAX) out.push({ label: 'Monster drops', detail: 'rare, from Act 2 on', page: 'campaign' });
+  const rune = runeDef(id);
+  if (rune && rune.grade.grade <= RUNE_DROP.maxGrade) out.push({ label: 'Monster drops', detail: 'rare, from Act 3 on', page: 'campaign' });
   if (id === 'gold') out.push({ label: 'Monster drops', page: 'campaign' }, { label: 'Selling in Town', page: 'vendor' });
   if (id === 'arcane_dust') out.push({ label: 'Salvaging gear', detail: 'Stash or Equipment', page: 'stash' });
   if (FOSSIL_IDS.has(id) || ESSENCE_IDS.has(id)) out.push({ label: 'Area bosses', detail: 'about half of boss kills', page: 'campaign' });

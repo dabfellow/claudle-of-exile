@@ -179,7 +179,8 @@ export function Inventory({
     done();
   };
   const clickRarity = (r: Rarity) => {
-    const list = items.filter((i) => i.rarity === r).map((i) => i.uid);
+    // a rune is a deliberate choice, so bulk salvage leaves that gear alone; click it to salvage it
+    const list = items.filter((i) => i.rarity === r && !i.rune).map((i) => i.uid);
     const clicks = armed?.rarity === r ? armed.clicks + 1 : 1;
     if (clicks === 1) {
       setMarked(new Set(list));
@@ -189,7 +190,7 @@ export function Inventory({
     else salvageNow(list);
   };
   const rarityLabel = (r: Rarity) => {
-    const n = items.filter((i) => i.rarity === r).length;
+    const n = items.filter((i) => i.rarity === r && !i.rune).length;
     const name = r[0].toUpperCase() + r.slice(1);
     if (armed?.rarity !== r) return `All ${r} (${n})`;
     if (r === 'unique' && armed.clicks === 1) return `Salvage ${n} unique?`;

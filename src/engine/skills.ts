@@ -39,6 +39,7 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
   if (skill === 'mining' && t.motherlode) return 1.3;
   if (skill === 'smithing' && t.grandmaster) return 1.25;
   if (skill === 'alchemy' && t.transmuter) return 1.2;
+  if (skill === 'runecarving' && t.livingScript) return 1.25;
   return 1;
 }
 
@@ -80,9 +81,17 @@ export function stationLevelFor(a: SkillAction): { station: 'forge' | 'alchemy_t
   return null;
 }
 
+/** Where you still have to get to before this action opens, or null if you're there. */
+export function actionPlaceNeeded(s: GameState, a: SkillAction): string | null {
+  if (a.area && !s.unlockedZones.includes(a.area)) return zoneDef(a.area).name;
+  if (a.gate && !s.unlockedZones.includes(a.gate.zone)) return a.gate.label;
+  return null;
+}
+
 export function actionBlocker(s: GameState, a: SkillAction): string | null {
   if (a.soon) return 'Coming soon';
-  if (a.area && !s.unlockedZones.includes(a.area)) return `Reach ${zoneDef(a.area).name} to unlock`;
+  const place = actionPlaceNeeded(s, a);
+  if (place) return `Reach ${place} to unlock`;
   if (skillLevel(s, a.skill) < a.level) return `Requires ${SKILLS[a.skill].name} level ${a.level}`;
   const st = stationLevelFor(a);
   if (st && (s.account.hideout[st.station] ?? 1) < st.level) return `Needs ${st.station === 'forge' ? 'Forge' : 'Alchemy Table'} level ${st.level}`;
@@ -203,7 +212,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   const t = skillTreeStats(s);
   payCost(s, inputsToPay(a, t, ctx));
   const outputs: Record<string, number> = {};
-  const double = a.skill === 'alchemy' && chance(ctx.rng, ALCH_DOUBLE[(s.account.hideout.alchemy_table ?? 1) - 1]);
+  const double = a.skill === 'alchemy' ? chance(ctx.rng, ALCH_DOUBLE[(s.account.hideout.alchemy_table ?? 1) - 1]) : a.skill === 'runecarving' && !!t.secondStroke && chance(ctx.rng, t.secondStroke / 100);
   const mult = double ? 2 : 1;
 
   // alternate nodes trade some of their base material for a better secondary

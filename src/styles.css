@@ -2271,6 +2271,13 @@ h3 {
   color: var(--magic);
 }
 
+.rune-table {
+  display: grid;
+  grid-template-columns: auto repeat(3, minmax(0, 1fr));
+  gap: 6px 14px;
+  align-items: baseline;
+}
+
 .mod.crafted {
   color: var(--crafted);
 }

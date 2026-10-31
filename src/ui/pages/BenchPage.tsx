@@ -3,6 +3,7 @@ import { stashedItems } from '../../engine/storage';
 import { affixDef } from '../../data/affixes';
 import { ACHIEVEMENT_BY_ID } from '../../data/achievements';
 import { ESSENCES, FOSSILS, fossilDef, SEAL, WAX } from '../../data/craftMats';
+import { runeDef, RUNES } from '../../data/runes';
 import { BENCH_CRAFTS } from '../../data/hideout';
 import { achievementProgress } from '../../engine/achievements';
 import { INSTILL_CONDITIONS } from '../../data/flasks';
@@ -12,6 +13,7 @@ import { applyEssence, applyOrb, BENCH_UNBUILT, benchBuilt, benchCraft, benchCra
 import { applyFlaskOrb, enchantFlask, findFlask, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
 import { stationLevel } from '../../engine/hideout';
 import { affixRangeText, allMods, describeMod, itemName, salvageValue } from '../../engine/items';
+import { inscribeRune, runeReason, runeText } from '../../engine/runes';
 import type { FlaskInstance, GameState, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { Badge, Cost, EmptyState, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tooltip } from '../components/common';
@@ -148,6 +150,15 @@ export function BenchPage() {
     }
   };
 
+  const inscribe = (id: string) => {
+    if (!item) return;
+    const err = game.act((st, ctx) => inscribeRune(st, ctx, id, item.uid));
+    if (!err) {
+      setFlash((n) => n + 1);
+      setHistory((h) => [{ id: Date.now() + Math.random(), text: runeDef(id)!.name, name: itemName(item), rarity: item.rarity }, ...h].slice(0, 12));
+    }
+  };
+
   const craft = (id: string) => {
     if (!item) return;
     const err = game.act((st, ctx) => benchCraft(st, ctx, id, item.uid));
@@ -159,6 +170,7 @@ export function BenchPage() {
 
   const essences = ESSENCES.filter((e) => s.bank[e.id]);
   const fossils = FOSSILS.filter((f) => s.bank[f.id]);
+  const runes = RUNES.filter((r) => s.bank[r.id]);
   const seals = s.bank[SEAL] ?? 0;
   const waxes = s.bank[WAX] ?? 0;
   const contraband = seals > 0 || waxes > 0 || !!item?.impression;
@@ -332,9 +344,24 @@ export function BenchPage() {
 
               <CraftUntilCard s={s} item={item} />
 
-              {(fossils.length > 0 || essences.length > 0 || contraband) && (
+              {(fossils.length > 0 || essences.length > 0 || runes.length > 0 || contraband) && (
                 <div className="card">
                   <div className="card-title">Special crafting</div>
+                  {runes.length > 0 && (
+                    <>
+                      <div className="section-label">Runes · cut one into the item's rune slot. Orbs never touch it, and a new rune destroys the old one</div>
+                      <div className="fossil-chips" style={{ marginTop: 0, marginBottom: 10 }}>
+                        {runes.map((r) => {
+                          const reason = item ? runeReason(s, r.id, item.uid) : 'Select an item';
+                          return (
+                            <button key={r.id} data-rune={r.id} className="btn sm" disabled={!!reason} title={reason ?? runeText(r, item!)} onClick={() => inscribe(r.id)}>
+                              <MatIcon id={r.id} size={12} /> {r.name} <span className="dim">×{s.bank[r.id]}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                   {seals > 0 && (
                     <>
                       <div className="section-label">Forger's Seal ×{seals} · pick a modifier, and the next Alteration, Chaos, Annulment or Divine leaves it alone</div>

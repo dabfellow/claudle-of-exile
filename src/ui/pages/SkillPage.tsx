@@ -5,8 +5,7 @@ import { flaskDef } from '../../data/flasks';
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../../data/gems';
 import { materialDef } from '../../data/materials';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
-import { zoneDef } from '../../data/zones';
-import { actionBlocker, actionIntervalMs, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
+import { actionBlocker, actionIntervalMs, actionPlaceNeeded, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
 import { gemArrived } from '../../engine/progress';
@@ -15,6 +14,7 @@ import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
 import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/common';
 import { HeistBoard } from '../components/HeistBoard';
+import { RuneBoard } from '../components/RuneBoard';
 import { Icon, Orb, Swatch } from '../components/Icon';
 
 const START_LABEL: Record<SkillId, string> = {
@@ -26,6 +26,7 @@ const START_LABEL: Record<SkillId, string> = {
   smithing: 'Smith',
   alchemy: 'Brew',
   gemcutting: 'Cut',
+  runecarving: 'Carve',
   fishing: 'Fish',
 };
 
@@ -105,7 +106,8 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
   const s = useGame();
   const d = deriveStats(s);
   const running = s.action?.kind === 'skill' && s.action.actionId === a.id;
-  const areaLocked = !!a.area && !s.unlockedZones.includes(a.area);
+  const place = actionPlaceNeeded(s, a);
+  const areaLocked = !!place;
   const locked = !!a.soon || level < a.level || areaLocked;
   const interval = actionIntervalMs(s, a, d);
   const blocker = actionBlocker(s, a);
@@ -126,7 +128,7 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
   useGameEvent(onEvent);
 
   const missing = blocker === 'Missing materials';
-  const lockText = a.soon ? 'Coming soon' : areaLocked ? `Reach ${zoneDef(a.area!).name}` : `Lv ${a.level}`;
+  const lockText = a.soon ? 'Coming soon' : place ? `Reach ${place}` : `Lv ${a.level}`;
 
   return (
     <div
@@ -368,7 +370,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
   const [tab, setTab] = useState(SMITH_TABS[0].id);
   // tier groups the player opened or closed; untouched ones follow tierOpenByDefault
   const [tierToggled, setTierToggled] = useState<Set<string>>(new Set());
-  const isUnlocked = (a: SkillAction) => !a.soon && a.level <= level && (!a.area || s.unlockedZones.includes(a.area));
+  const isUnlocked = (a: SkillAction) => !a.soon && a.level <= level && !actionPlaceNeeded(s, a);
   const tabbed = skill === 'smithing';
   const inTab = tabbed ? actions.filter((a) => smithTab(a) === tab) : actions;
   const shown = onlyUnlocked ? inTab.filter(isUnlocked) : inTab;
@@ -410,6 +412,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
         </div>
       )}
       {skill === 'thieving' && <HeistBoard />}
+      {skill === 'runecarving' && <RuneBoard />}
       {skill === 'fishing' && (
         <div className="callout skill-note">
           Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.
