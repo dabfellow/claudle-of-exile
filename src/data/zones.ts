@@ -100,7 +100,7 @@ export const ACTS: ActDef[] = [
     outro: 'The fallen sun goes dark at last. Far to the south, the bells of a city of saints are ringing.',
   },
   {
-    n: 3, name: 'The City of Saints', open: false, preview: true,
+    n: 3, name: 'The City of Saints', open: true,
     outro: 'The Hierarch falls, and for the first time in a thousand years the bells of the city stop. Far to the north, the Hollow Peaks are waiting.',
   },
   { n: 4, name: 'The Hollow Peaks', open: false },

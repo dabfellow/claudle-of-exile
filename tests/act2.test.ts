@@ -108,7 +108,7 @@ describe('opening an act', () => {
     expect(actOpen(1)).toBe(true);
     expect(actOpen(4)).toBe(false);
     ACT_PREVIEW.enabled = false;
-    expect(actOpen(3)).toBe(false);
+    expect(actOpen(3)).toBe(true);
     expect(actOpen(2)).toBe(true);
     closeAct2();
     expect(actOpen(2)).toBe(false);

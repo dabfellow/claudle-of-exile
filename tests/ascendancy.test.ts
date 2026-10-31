@@ -139,12 +139,14 @@ describe('earning and spending', () => {
 
   it('stays off for live players until Act 3 opens, even on a save carried from a preview', () => {
     const { s } = arena('ravager');
+    const act3 = ACTS.find((a) => a.n === 3)!;
+    act3.open = false;
     ACT_PREVIEW.enabled = false;
     try {
-      expect(ACTS.find((a) => a.n === 3)!.open).toBe(false);
       expect(ascendancyOf(s)).toBeNull();
       expect(canAscend(s)).toBe(false);
     } finally {
+      act3.open = true;
       ACT_PREVIEW.enabled = true;
     }
   });

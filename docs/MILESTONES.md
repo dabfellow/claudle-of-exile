@@ -11,14 +11,13 @@ Last updated 2026-10-31.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3, the Act 2 pieces and music are live as 0.2.4 (deployed 2026-10-31). The real-account
+**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.6 (deployed 2026-10-31). The real-account
 test and player heads-up were skipped, so do both now. Act 2 pacing, Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
 **In order:**
 
-1. **Claude:** build Acts 4–6 from [ACTS_4_6.md](design/ACTS_4_6.md). Act 3 and the first trial are merged into `main`,
-   closed to players and unpushed.
+1. **Claude:** build Acts 4–6 from [ACTS_4_6.md](design/ACTS_4_6.md). Act 3 and the first trial are live.
 2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
 3. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
@@ -37,7 +36,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 | 3 | Account layer | Live, not tested on real accounts | Real-account test |
 | 4 | Act recipe and Act 2 | **In progress**: pieces merged | Pacing and Act 1 cold check |
 | 5 | Maps preview | Built, dev only | You playing it |
-| 6 | Act 3 and ascendancies | Built, closed to players | Opening Act 3, deploy |
+| 6 | Act 3 and ascendancies | **Done**, live; not simmed or played through | – |
 | 7 | Acts 4–6 | **Next**: design decided; level 80 gear done early | Your go |
 | 8 | Maps | Not started | Milestones 5 and 7 |
 | 9 | Hard mode bosses | Answered: 5 bosses, post-Act 6 | Milestone 8 |
@@ -92,7 +91,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 - [x] First ascendancy trial at the start of Act 3: 12 ascendancies, each with its own tree tab and points. Exile has
   none ([ASCENDANCIES.md](design/ASCENDANCIES.md)) — done 2026-10-31
 - [ ] Trials 2 and 3 arrive with Acts 4 and 6 in Milestone 7.
-- [ ] Open Act 3 to players and deploy. Pacing and balance haven't been simmed.
+- [x] Open Act 3 to players and deploy — done 2026-10-31. Pacing and balance haven't been simmed.
 - Tree extended for the extra levels.
 - **Done:** every main class can pick either ascendancy and play it through Act 3.
 

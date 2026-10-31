@@ -89,8 +89,15 @@ function bossFight(s: GameState, zone = ZONE, minutes = 30) {
   });
 }
 
-afterEach(() => {
+/** Back to how Act 3 was before release, for the tests about opening it. */
+function closeAct3() {
   ACTS[2].open = false;
+  ACTS[2].preview = true;
+}
+
+afterEach(() => {
+  ACTS[2].open = true;
+  ACTS[2].preview = false;
   ACT_PREVIEW.enabled = true;
 });
 
@@ -186,8 +193,8 @@ describe('opening Act 3', () => {
     return s;
   };
 
-  it('stays closed to players, and plays in dev builds, tests and the sim', () => {
-    expect(ACTS[2].open).toBe(false);
+  it('before release, stays closed to players, and plays in dev builds, tests and the sim', () => {
+    closeAct3();
     expect(actOpen(3)).toBe(true);
     ACT_PREVIEW.enabled = false;
     expect(actOpen(3)).toBe(false);
@@ -195,6 +202,7 @@ describe('opening Act 3', () => {
   });
 
   it("won't reach a player's save, or let a preview save travel there", () => {
+    closeAct3();
     ACT_PREVIEW.enabled = false;
     const s = beatAct2();
     openReachedZones(s);
