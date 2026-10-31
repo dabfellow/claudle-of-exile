@@ -9,6 +9,7 @@ import { queueSkill, retreat, useFlask } from '../engine/combat';
 import { findItem } from '../engine/crafting';
 import { methodName } from '../engine/craftUntil';
 import { alarmChance, roomMs } from '../engine/heist';
+import { ascendancyPointsLeft, canAscend, choiceWaiting } from '../engine/ascendancy';
 import { pointsLeft } from '../engine/passives';
 import { actionIntervalMs, stopAction } from '../engine/skills';
 import { deriveStats } from '../engine/stats';
@@ -117,7 +118,7 @@ function Ring({ value, color }: { value: number; color: string }) {
 export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
   const s = useGame();
   const active = activeSkill(s);
-  const points = pointsLeft(s);
+  const points = pointsLeft(s) + (choiceWaiting(s) ? 1 : canAscend(s) ? Math.max(0, ascendancyPointsLeft(s)) : 0);
   return (
     <nav className="sidebar">
       <div className="brand">

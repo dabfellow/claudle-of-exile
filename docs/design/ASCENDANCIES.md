@@ -1,7 +1,7 @@
 # Ascendancies
 
-Drafted 2026-10-30, decided 2026-10-31. Nothing here is built. They arrive in Milestone 6 of the
-[MILESTONES.md](../MILESTONES.md).
+Drafted 2026-10-30, decided 2026-10-31, built 2026-10-31 (see [Built](#built)). They arrive in Milestone 6 of the
+[MILESTONES.md](../MILESTONES.md), and stay switched off for live players until Act 3 opens.
 
 **Settled:** two per class for the six main classes, 12 in total. Exile has none. Picking one opens its own tree, on a
 new tab in the passive tree. Names are a first pass.
@@ -193,3 +193,35 @@ make it better, and each rule fits in one sentence.
 - You can read both ascendancies before you choose.
 - Challenge modes work the same way.
 - The hawk is the one new thing on the battlefield. It doesn't take up a hex.
+
+## Built
+
+Data is in `src/data/ascendancies.ts`, choice, points and switching in `src/engine/ascendancy.ts`, and the rules in
+`src/engine/mechanics.ts` (numbers at the top) and `src/engine/combat.ts`. All 12 gates work; notables and capstones are
+built and tested, sealed until trials 2 and 3 exist.
+
+Calls made while building:
+
+- **Switching price:** 1 Divine Orb, plus an Orb of Regret per node. Divine is already a rare drop and the deepest boss
+  table guarantees one, so no new source or art was needed.
+- **Points:** the trial's boss gives only the trial's 2; every other Act 3–6 boss gives 1 on its first kill. They stop at
+  11, all the section can use. With 10 stages, Act 3 alone reaches that.
+- **Ravager:** a Rampage drains on a clock, so hits during it don't hold it up. It counts as a full meter for tactics, so
+  Berserk can line up. No Mercy holds the drain for 2s per kill.
+- **Anvil:** attackers take 4% of your Armour, plus 5% of that per Rage.
+- **Longshot:** 3% more attack damage per Momentum, the same number as the speed it replaces.
+- **Falconer:** the hawk swings every 1.6s for half a weapon hit, 6% faster per Momentum. It has its own Targeting, set on
+  the Ascendancy tab. Stoop spends the Momentum, or every attack at full would be a dive. It has no sprite yet: its hits
+  show as ordinary hit numbers.
+- **Burnout:** "hitting 0" means a spell leaves you unable to pay for it again, since mana rarely lands on exactly 0. It
+  rearms above half Mana.
+- **Alchemist:** one charge counts as 3 Mana, so a full belt weighs about as much as a mid-game mana pool. A burst is 12
+  fire damage per character level, before Flask Effect.
+- **Matador:** a Riposte that misses doesn't add to the streak. Each one adds 15% more damage.
+- **Flagellant:** bar skills cost 3% of max Life; the free Default Attack doesn't. At that price a nova every seven
+  casts about pays back what it cost, so Life regen is what keeps you ahead.
+- **Lightkeeper:** the release setting on the Ascendancy tab is the "tactic": at 3, on a wind-up, below half Life, or by
+  click, with the middle two needing their War Table rules. "On a wind-up" still releases at 3 against trash.
+- **Beacon changed:** novas already hit every ring, so it would have done nothing. It breaks armour on every ring instead.
+- **Plaguewright:** each ailment ticking gives 0.5 Malice per second. A burst deals everything left on the ailments and
+  ends them.

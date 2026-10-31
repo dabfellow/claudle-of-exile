@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { passTrial } from './engine/ascendancy';
 import { game } from './game';
 import { initErrorReporting } from './platform/errors';
 import { App } from './ui/App';
@@ -10,7 +11,16 @@ void initErrorReporting();
 void game.boot();
 startMusic();
 // handy for poking at state from the devtools console
-if (import.meta.env.DEV) (window as unknown as { game: typeof game }).game = game;
+if (import.meta.env.DEV) {
+  const dev = window as unknown as { game: typeof game; passTrial: (n: 1 | 2 | 3, points?: number) => void };
+  dev.game = game;
+  // the first trial's boss is an Act 3 area: this stands in for it until then (points tops up, to try sealed nodes)
+  dev.passTrial = (n, points = 0) =>
+    game.act((s, ctx) => {
+      passTrial(s, ctx, n);
+      s.ascendancy.points += points;
+    });
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

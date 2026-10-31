@@ -1,6 +1,7 @@
 import { classDef, startClass, type ClassId } from '../data/classes';
 import { flaskDef, FLASK_SLOTS } from '../data/flasks';
 import { freshAccount } from './account';
+import { newAscendancyState } from './ascendancy';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { newFlask } from './flasks';
 import { createSkillGem } from './gems';
@@ -67,6 +68,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     unlockedZones: ['mudflats'],
     passives: [],
     masteries: {},
+    ascendancy: newAscendancyState(),
     skillPassives: [],
     achievements: [],
     bossesDefeated: [],

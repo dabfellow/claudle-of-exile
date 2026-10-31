@@ -1,5 +1,6 @@
 import { classDef } from '../data/classes';
 import { bundleCharacter } from './account';
+import { newAscendancyRuntime, newAscendancyState } from './ascendancy';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
@@ -226,6 +227,10 @@ const MIGRATIONS: Record<number, Migration> = {
   22: (raw) => {
     // Rune-carving arrived: everyone starts at level 1, and gear with no `rune` field simply has an empty slot
     (raw.skills as Record<string, number>).runecarving ??= 0;
+    // ascendancies arrived: nobody has passed a trial yet
+    const s = raw as unknown as GameState;
+    s.ascendancy ??= newAscendancyState();
+    if (s.combat) s.combat.asc ??= newAscendancyRuntime();
   },
 };
 

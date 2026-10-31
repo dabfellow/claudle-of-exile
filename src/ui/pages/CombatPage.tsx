@@ -15,6 +15,7 @@ import {
   nextArrivalMs,
   canSpendLife,
   queueSkill,
+  releaseNovas,
   retreat,
   setMovement,
   startCombat,
@@ -22,7 +23,9 @@ import {
 } from '../../engine/combat';
 import { flaskStats } from '../../engine/flasks';
 import { gemUseReason, MIN_COOLDOWN_MS, skillNumbers } from '../../engine/gems';
-import { meterLabel, meterMax, mechanicOf } from '../../engine/mechanics';
+import { ASCENDANCY_BY_ID } from '../../data/ascendancies';
+import { ascendancyOf } from '../../engine/ascendancy';
+import { flaskCapacity, meterLabel, meterMax, mechanicOf } from '../../engine/mechanics';
 import { classDef } from '../../data/classes';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
 import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, MonsterInstance, TargetOrder, TargetPriority } from '../../engine/types';
@@ -41,7 +44,7 @@ const DMG_COLOR: Record<DamageType, string> = {
   light: 'var(--light)',
 };
 /** buffs that come from tree effects rather than a skill gem */
-const EXTRA_BUFFS: Record<string, string> = { guard_armour: 'Guard Armour', evade_speed: 'Evasive' };
+const EXTRA_BUFFS: Record<string, string> = { guard_armour: 'Guard Armour', evade_speed: 'Evasive', stand_fast: 'Stand Fast', ecstasy: 'Ecstasy' };
 const DMG_NAME: Record<DamageType, string> = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' };
 const GROUND_STATUS: Record<GroundKind, string> = { burning: 'fire', chilled: 'cold', shocked: 'bad', caustic: 'poison' };
 
@@ -131,16 +134,31 @@ function MechanicMeter({ s, d, c }: { s: GameState; d: Derived; c: CombatRuntime
   const cls = classDef(s.character.classId);
   const max = meterMax(mechanicOf(s), d.raw);
   const label = meterLabel(s, d);
+  const asc = ascendancyOf(s);
   return (
-    <Tooltip content={<div className="tip">{cls.mechanicText}</div>}>
-      {max > 0 ? (
-        <ProgressBar value={Math.min(1, (c.mech ?? 0) / max)} size="md" color={cls.color} label={label} />
-      ) : (
-        <div className="mechanic-line" style={{ color: cls.color }}>
-          {label}
-        </div>
+    <>
+      <Tooltip
+        content={
+          <div className="tip">
+            {cls.mechanicText}
+            {asc && <div style={{ marginTop: 4 }}>{ASCENDANCY_BY_ID[asc].name}: {ASCENDANCY_BY_ID[asc].gate.desc}</div>}
+          </div>
+        }
+      >
+        {max > 0 ? (
+          <ProgressBar value={Math.min(1, (c.mech ?? 0) / max)} size="md" color={cls.color} label={label} />
+        ) : (
+          <div className="mechanic-line" style={{ color: cls.color }}>
+            {label}
+          </div>
+        )}
+      </Tooltip>
+      {asc === 'lightkeeper' && c.asc.novas > 0 && (
+        <button className="btn sm" onClick={() => game.act((st, ctx) => releaseNovas(st, ctx))}>
+          Release {c.asc.novas === 1 ? 'nova' : `${c.asc.novas} novas`}
+        </button>
       )}
-    </Tooltip>
+    </>
   );
 }
 
@@ -410,13 +428,13 @@ function FieldSummary({ s, c }: { s: GameState; c: CombatRuntime }) {
   );
 }
 
-const PRIORITIES: { id: TargetPriority; label: string }[] = [
+export const PRIORITIES: { id: TargetPriority; label: string }[] = [
   { id: 'none', label: 'Anything' },
   { id: 'boss', label: 'Bosses first' },
   { id: 'ranged', label: 'Ranged first' },
   { id: 'ailing', label: 'Ailing first' },
 ];
-const ORDERS: { id: TargetOrder; label: string }[] = [
+export const ORDERS: { id: TargetOrder; label: string }[] = [
   { id: 'closest', label: 'Closest' },
   { id: 'farthest', label: 'Farthest' },
   { id: 'lowest', label: 'Lowest life' },
@@ -553,12 +571,12 @@ function FlaskBelt({ s }: { s: GameState }) {
               onClick={() => game.act((st2, ctx) => useFlask(st2, ctx, i))}
               onContextMenu={(e) => (e.preventDefault(), pinFlask(f))}
             >
-              <div className="flask-liquid" style={{ height: `${(f.charges / st.maxCharges) * 100}%` }} />
+              <div className="flask-liquid" style={{ height: `${(f.charges / flaskCapacity(s, f)) * 100}%` }} />
               {buff && <div className="flask-timer" style={{ width: `${(buff.remainingMs / buff.durationMs) * 100}%` }} />}
               <span className="flask-key">{i + 1}</span>
               {f.instill && <span className="flask-auto">AUTO</span>}
               <span className="flask-charges">
-                {Math.floor(f.charges)}/{st.maxCharges}
+                {Math.floor(f.charges)}/{flaskCapacity(s, f)}
               </span>
             </button>
           </Tooltip>
