@@ -643,6 +643,12 @@ class GameStore {
         this.pushToast(`Act ${e.act} complete!`, 'good');
         break;
       }
+      case 'trialPassed': {
+        const text = e.n === 1 ? 'Trial passed! Choose your ascendancy on the Passive Tree page.' : 'Trial passed! More of your ascendancy opens.';
+        this.addFeed(text, 'good');
+        this.pushToast(text, 'good');
+        break;
+      }
       case 'tutorialStep': {
         const step = TUTORIAL_STEPS[e.step];
         this.addFeed(`Quest complete: ${step.title}${step.rewardText ? ` — ${step.rewardText}` : ''}`, 'good');

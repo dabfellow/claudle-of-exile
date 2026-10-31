@@ -1,3 +1,4 @@
+import type { AscendancyId } from '../data/ascendancies';
 import type { ClassId } from '../data/classes';
 import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
@@ -343,6 +344,51 @@ export interface CombatRuntime {
   overheatMs: number;
   /** Eternal Hunger: time left before you starve */
   hungerMs: number;
+  /** what the character's ascendancy keeps track of in a fight */
+  asc: AscendancyRuntime;
+}
+
+/** Ascendancy state that lasts as long as a fight (engine/combat.ts). Unused fields stay at zero. */
+export interface AscendancyRuntime {
+  /** Ravager: time left on a Rampage, its full length so far, and how long No Mercy holds the drain */
+  rampageMs: number;
+  rampageTotal: number;
+  holdMs: number;
+  /** Falconer: ms to the hawk's next attack, and whether the hit being rolled is the hawk's */
+  hawkMs: number;
+  hawking: boolean;
+  /** Last Arrow: the next hit can't miss and is a crit */
+  sureCrit: boolean;
+  /** Matador: Ripostes in a row */
+  streak: number;
+  /** Burnout: free spells left, and whether mana has climbed back enough to set it off again */
+  burnout: number;
+  burnoutRearmed: boolean;
+  /** Lightkeeper: novas stored, the damage that filled them, and Dawn waiting to absorb a wind-up */
+  novas: number;
+  novaDamage: number;
+  dawn: boolean;
+  /** whether monsters were on the field last step: an empty field starting to fill is a new fight */
+  fighting: boolean;
+}
+
+/** When a Lightkeeper's stored novas go off on their own. */
+export type NovaRelease = 'full' | 'windup' | 'lifeLow' | 'manual';
+
+/** A character's ascendancy (docs/design/ASCENDANCIES.md). */
+export interface AscendancyState {
+  id: AscendancyId | null;
+  /** allocated nodes; the gate comes free with the choice and isn't listed */
+  nodes: string[];
+  /** trials passed: 1 opens the choice, 2 the notables, 3 the capstone */
+  trials: number;
+  /** points earned */
+  points: number;
+  /** Next: Malice kept for the next fight */
+  carry: number;
+  /** Falconer: what the hawk goes for, set apart from the player's own targeting */
+  hawk: Targeting;
+  release: NovaRelease;
 }
 
 /** What a Craft until… activity spends each step: an orb (optionally with a Fossil) or an Essence. */
@@ -555,6 +601,7 @@ export interface GameState {
   passives: string[];
   /** chosen bonus (0–2) for each allocated mastery */
   masteries: Record<string, number>;
+  ascendancy: AscendancyState;
   /** allocated skilling-tree nodes */
   skillPassives: string[];
   /** completed achievement ids */
@@ -613,6 +660,7 @@ export type GameEvent =
   | { t: 'bossCast'; name: string; kind: 'slam' | 'nova'; skill: string }
   | { t: 'bossPhase'; name: string; text: string }
   | { t: 'actComplete'; act: number }
+  | { t: 'trialPassed'; n: number }
   | { t: 'bossWaiting'; name: string }
   | { t: 'zoneUnlocked'; zoneId: string }
   | { t: 'info'; text: string; tone?: 'warn' | 'good' };

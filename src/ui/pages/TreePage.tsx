@@ -1,15 +1,41 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  ASCENDANCY_NODE_BY_ID,
+  ascendanciesOf,
+  SWITCH_MATERIAL_COST,
+  TRIAL_SEAL,
+  type AscendancyDef,
+  type AscendancyId,
+  type AscendancyNode,
+} from '../../data/ascendancies';
+import { classDef } from '../../data/classes';
 import { CLASS_SECTORS, MECHANIC_INFO, PASSIVE_BY_ID, PASSIVE_NODES, REGION_NAMES, type PassiveNode, type TreeRegion } from '../../data/passiveTree';
 import { SKILL_TREE_BY_ID, SKILL_TREE_NODES, SKILL_TREE_START, type SkillTreeNode } from '../../data/skillTree';
 import { SKILLS } from '../../data/skills';
 import { describeStats } from '../../data/statText';
+import {
+  allocateAscNode,
+  ascendancyPointsLeft,
+  ascNodeReason,
+  canAscend,
+  chooseAscendancy,
+  chooseReason,
+  currentAscendancy,
+  refundAscNode,
+  refundAscReason,
+  switchAscendancy,
+  switchCost,
+  switchReason,
+} from '../../engine/ascendancy';
+import { ruleLockReason } from '../../engine/automation';
 import { allocate, allocateReason, changeMastery, pointsLeft, refund, refundReason, startNode, totalPoints } from '../../engine/passives';
 import { allocateSkillNode, refundSkillNode, refundSkillNodeReason, skillNodeReason, skillPointsLeft, skillTreePoints } from '../../engine/skillTree';
 import { deriveStats, passiveStats, type Derived } from '../../engine/stats';
-import type { GameState, SkillId } from '../../engine/types';
+import type { GameState, NovaRelease, SkillId, TargetOrder, TargetPriority } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { PageHeader, Tabs } from '../components/common';
+import { ORDERS, PRIORITIES } from './CombatPage';
 
 const REGION_COLOR: Record<TreeRegion, string> = {
   str: '#d0574a',
@@ -639,23 +665,248 @@ function SkillingTree({ s }: { s: GameState }) {
   );
 }
 
+// ---------- ascendancy ----------
+
+/** One ascendancy written out in full, for reading before you commit to it. */
+function AscendancyCard({ a, action }: { a: AscendancyDef; action: ReactNode }) {
+  const color = classDef(a.classId).color;
+  return (
+    <div className="card" style={{ flex: '1 1 300px' }}>
+      <div className="card-title" style={{ color }}>
+        {a.name}
+      </div>
+      <div className="dim" style={{ fontStyle: 'italic', marginBottom: 6 }}>
+        “{a.quote}”
+      </div>
+      <p className="muted" style={{ marginTop: 0, fontSize: 'var(--fs-sm)' }}>
+        {a.plays}
+      </p>
+      <div className="small" style={{ color: 'var(--accent-2)' }}>
+        The rule
+      </div>
+      <div className="mod">{a.gate.desc}</div>
+      <div className="small" style={{ color: 'var(--accent-2)', marginTop: 8 }}>
+        Notables
+      </div>
+      {a.notables.map((n) => (
+        <div key={n.id} className="mod">
+          <b>{n.name}:</b> {n.desc}
+        </div>
+      ))}
+      <div className="dim small">{TRIAL_SEAL[2]}</div>
+      <div className="small" style={{ color: 'var(--unique)', marginTop: 8 }}>
+        Capstone
+      </div>
+      <div className="mod">
+        <b>{a.capstone.name}:</b> {a.capstone.desc}
+      </div>
+      <div className="dim small">{TRIAL_SEAL[3]}</div>
+      <div style={{ marginTop: 12 }}>{action}</div>
+    </div>
+  );
+}
+
+function AscendancyChoice({ s }: { s: GameState }) {
+  const [picked, setPicked] = useState<AscendancyDef | null>(null);
+  return (
+    <>
+      <p className="muted" style={{ fontSize: 'var(--fs-sm)' }}>
+        You have passed the first trial. Read both, then choose: the gate is free and works the moment you pick. You can switch later, for a Divine Orb and an Orb of Regret per node.
+      </p>
+      <div className="row wrap" style={{ alignItems: 'stretch' }}>
+        {ascendanciesOf(s.character.classId).map((a) => (
+          <AscendancyCard
+            key={a.id}
+            a={a}
+            action={
+              <button className="btn" disabled={!!chooseReason(s, a.id)} onClick={() => setPicked(a)}>
+                Choose {a.name}
+              </button>
+            }
+          />
+        ))}
+      </div>
+      {picked && (
+        <div className="modal-backdrop" onClick={() => setPicked(null)}>
+          <div className="card modal" onClick={(e) => e.stopPropagation()}>
+            <div className="card-title">Choose {picked.name}?</div>
+            <p className="muted" style={{ marginTop: 0, fontSize: 'var(--fs-sm)' }}>
+              {picked.gate.desc}
+            </p>
+            <div className="row" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn sm ghost" onClick={() => setPicked(null)}>
+                Not yet
+              </button>
+              <button className="btn sm" onClick={() => game.act((st, ctx) => chooseAscendancy(st, ctx, picked.id))}>
+                Ascend
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function AscNodeTip({ s, n }: { s: GameState; n: AscendancyNode }) {
+  const allocated = s.ascendancy.nodes.includes(n.id);
+  const reason = n.kind === 'gate' ? null : allocated ? refundAscReason(s, n.id) : ascNodeReason(s, n.id);
+  return (
+    <div className="tip" style={{ minWidth: 240, maxWidth: 320 }}>
+      <div className="tip-title" style={{ color: n.kind === 'capstone' ? 'var(--unique)' : n.kind === 'small' ? 'var(--text)' : 'var(--accent-2)' }}>
+        {n.name}
+        <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 'var(--fs-xs)' }}>
+          {n.kind}
+        </span>
+      </div>
+      {(n.desc ? [n.desc] : describeStats(n.stats)).map((l) => (
+        <div key={l} className="mod">
+          {l}
+        </div>
+      ))}
+      <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
+        {n.kind === 'gate' ? 'Free with your ascendancy' : (reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to allocate'))}
+      </div>
+    </div>
+  );
+}
+
+const ASC_SHAPE: Record<AscendancyNode['kind'], string> = { gate: 'start', small: 'small', notable: 'notable', capstone: 'keystone' };
+
+const RELEASES: { id: NovaRelease; label: string; rule?: 'enemyCasting' | 'lifeBelow' }[] = [
+  { id: 'full', label: 'When all 3 are stored' },
+  { id: 'windup', label: 'On a boss wind-up, else at 3', rule: 'enemyCasting' },
+  { id: 'lifeLow', label: 'When life is below half', rule: 'lifeBelow' },
+  { id: 'manual', label: 'Only when I click' },
+];
+
+function AscendancySettings({ s, a }: { s: GameState; a: AscendancyDef }) {
+  if (a.id === 'falconer') {
+    const hawk = s.ascendancy.hawk;
+    return (
+      <div className="row wrap">
+        <span className="muted">Your hawk goes for</span>
+        <select className="input sm" value={hawk.priority} onChange={(e) => game.act((st) => void (st.ascendancy.hawk = { ...st.ascendancy.hawk, priority: e.target.value as TargetPriority }))}>
+          {PRIORITIES.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+        <select className="input sm" value={hawk.order} onChange={(e) => game.act((st) => void (st.ascendancy.hawk = { ...st.ascendancy.hawk, order: e.target.value as TargetOrder }))}>
+          {ORDERS.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+  if (a.id === 'lightkeeper') {
+    return (
+      <div className="row wrap">
+        <span className="muted">Release stored novas</span>
+        <select className="input sm" value={s.ascendancy.release} onChange={(e) => game.act((st) => void (st.ascendancy.release = e.target.value as NovaRelease))}>
+          {RELEASES.map((r) => (
+            <option key={r.id} value={r.id} disabled={!!(r.rule && ruleLockReason(s, r.rule))}>
+              {r.label}
+              {r.rule && ruleLockReason(s, r.rule) ? ` (${ruleLockReason(s, r.rule)})` : ''}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+  return null;
+}
+
+function AscendancyTree({ s, a }: { s: GameState; a: AscendancyDef }) {
+  const allocated = new Set(s.ascendancy.nodes);
+  const color = classDef(a.classId).color;
+  const isOn = (id: string) => id === a.gate.id || allocated.has(id);
+  const canTake = (id: string) => !isOn(id) && ascNodeReason(s, id) === null;
+  const other = ascendanciesOf(a.classId).find((x) => x.id !== a.id)!;
+  const cost = switchCost(s);
+  const names = useMemo(
+    () => a.nodes.filter((n) => n.kind !== 'small').map((n) => ({ text: n.name, x: n.x, y: n.y + (n.kind === 'capstone' ? 56 : 44), color: n.kind === 'capstone' ? 'var(--unique)' : 'var(--accent-2)', size: 17 })),
+    [a],
+  );
+  return (
+    <>
+      <div className="row wrap">
+        <span className={`chip ${ascendancyPointsLeft(s) > 0 ? 'good' : ''}`} style={{ fontSize: 14 }}>
+          {ascendancyPointsLeft(s)} / {s.ascendancy.points} ascendancy points left
+        </span>
+        <span className="chip">{s.bank.regret ?? 0} Orbs of Regret</span>
+        <span className="chip">{s.bank.divine ?? 0} Divine Orbs</span>
+        <span className="spacer" />
+        <AscendancySettings s={s} a={a} />
+      </div>
+      <TreeCanvas
+        nodes={a.nodes}
+        byId={ASCENDANCY_NODE_BY_ID}
+        size={900}
+        maxZoom={1.6}
+        version={`${a.id}|${s.ascendancy.nodes.join(',')}|${ascendancyPointsLeft(s)}|${s.ascendancy.trials}`}
+        names={names}
+        isOn={isOn}
+        canTake={canTake}
+        matches={null}
+        renderNode={(n, on, can) => (
+          <g opacity={s.ascendancy.trials < n.trial ? 0.45 : 1}>
+            <NodeShape kind={ASC_SHAPE[n.kind]} color={color} on={on} can={can} />
+          </g>
+        )}
+        tip={(n) => <AscNodeTip s={s} n={n} />}
+        onClick={(n) => {
+          if (n.kind === 'gate') return;
+          if (allocated.has(n.id)) game.act((st, ctx) => refundAscNode(st, ctx, n.id));
+          else game.act((st, ctx) => allocateAscNode(st, ctx, n.id));
+        }}
+      />
+      <AscendancyCard
+        a={other}
+        action={
+          <button className="btn sm" disabled={!!switchReason(s, other.id)} title={switchReason(s, other.id) ?? ''} onClick={() => game.act((st, ctx) => switchAscendancy(st, ctx, other.id as AscendancyId))}>
+            Switch to {other.name} ({SWITCH_MATERIAL_COST} Divine Orb{cost.regret ? ` + ${cost.regret} Orb${cost.regret === 1 ? '' : 's'} of Regret` : ''})
+          </button>
+        }
+      />
+    </>
+  );
+}
+
+function AscendancyPane({ s }: { s: GameState }) {
+  const a = currentAscendancy(s);
+  return a ? <AscendancyTree s={s} a={a} /> : <AscendancyChoice s={s} />;
+}
+
+const TREE_HEADERS = {
+  character: 'Character tree: combat power. Points from character levels.',
+  skilling: 'Skilling tree: gathering and production. Points from total skill levels.',
+  ascendancy: 'Ascendancy: its own points, from trials and bosses from Act 3 on.',
+};
+
 export function TreePage() {
   const s = useGame();
-  const [tab, setTab] = useState<'character' | 'skilling'>('character');
+  const [picked, setTab] = useState<keyof typeof TREE_HEADERS>('character');
+  const ascends = canAscend(s);
+  const tab = picked === 'ascendancy' && !ascends ? 'character' : picked;
+  const ascBadge = !s.ascendancy.id ? 1 : ascendancyPointsLeft(s);
   return (
     <div className="page wide">
-      <PageHeader title="Passive Trees">
-        {tab === 'character' ? 'Character tree: combat power. Points from character levels.' : 'Skilling tree: gathering and production. Points from total skill levels.'}
-      </PageHeader>
+      <PageHeader title="Passive Trees">{TREE_HEADERS[tab]}</PageHeader>
       <Tabs
         value={tab}
         onChange={setTab}
         tabs={[
           { id: 'character', label: 'Character', count: pointsLeft(s) > 0 ? pointsLeft(s) : undefined, hot: true },
           { id: 'skilling', label: 'Skilling', count: skillPointsLeft(s) > 0 ? skillPointsLeft(s) : undefined, hot: true },
+          ...(ascends ? [{ id: 'ascendancy' as const, label: 'Ascendancy', count: ascBadge > 0 ? ascBadge : undefined, hot: true }] : []),
         ]}
       />
-      {tab === 'character' ? <CharacterTree s={s} /> : <SkillingTree s={s} />}
+      {tab === 'character' ? <CharacterTree s={s} /> : tab === 'skilling' ? <SkillingTree s={s} /> : <AscendancyPane s={s} />}
     </div>
   );
 }

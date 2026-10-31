@@ -64,8 +64,9 @@ import {
   stepOutOfGround,
   type AreaShape,
 } from './battlefield';
+import { ascendancyOf, hasAscNode, newAscendancyRuntime, onBossFirstKill } from './ascendancy';
 import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './character';
-import { bossesOffline, castOrder, rulesPass } from './automation';
+import { bossesOffline, castOrder, ruleLockReason, rulesPass } from './automation';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
 import { gemUseReason, grantGemXp, MIN_COOLDOWN_MS, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
@@ -75,21 +76,57 @@ import { mapPackLeft, onMapFieldLost, onMapPack, rollMapDrops } from './maps';
 import { chance, pick, rInt } from './rng';
 import { grantXp } from './skills';
 import {
+  ANVIL_THORNS_PCT,
+  ANVIL_THORNS_PER_RAGE,
+  BACKDRAFT_COST,
+  BLOOM_MORE,
+  BURNOUT_SPELLS,
   coupMulti,
+  DRAUGHT_MORE,
+  ECSTASY_SPEED,
   ensureMechanicFields,
+  FEEDBACK_MANA,
   fervorThreshold,
+  flaskCapacity,
+  FLASK_BURST_PER_LEVEL,
   gainMeter,
+  HAWK_DAMAGE,
+  hawkInterval,
+  HEAD_START_MOMENTUM,
+  HOLD_THE_LINE_RAGE,
   HUNGER_MS,
+  longshotMore,
   manaFraction,
   manaPowerMore,
   mechanicOf,
   MEGA_CRIT_MULTI,
   meterFull,
+  meterMax,
+  MORTIFY_MORE,
+  NO_MERCY_HOLD_MS,
+  NOVA_STORE,
   OVERCLOCK_HEAT_MS,
   OVERHEAT_MS,
+  PHALANX_MULT,
+  PLAGUE_MALICE_PER_S,
   RAGE_DECAY_PER_S,
   rageMore,
+  RAMPAGE_KILL_MS,
+  RAMPAGE_MS,
+  rampaging,
+  RESERVE_MORE,
   RIPOSTE_COOLDOWN_MS,
+  SCOURGE_DAMAGE,
+  SELF_HARM_FERVOR,
+  SELF_HARM_PCT,
+  SHARP_AXE_MORE,
+  STAND_FAST_ARMOUR,
+  STOOP_MULT,
+  streakCap,
+  STREAK_MORE,
+  THE_BLOCK_AT,
+  TONIC_MANA,
+  VESPERS_SHIELD,
 } from './mechanics';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
 import { openReachedZones, reachedAct } from './progress';
@@ -143,6 +180,7 @@ function newRuntime(zoneId: string): CombatRuntime {
     heatMs: 0,
     overheatMs: 0,
     hungerMs: HUNGER_MS,
+    asc: newAscendancyRuntime(),
     ground: [],
     groundAcc: 0,
     groundTimer: 0,
@@ -159,15 +197,24 @@ export function startCombat(s: GameState, ctx: Ctx, zoneId: string): string | nu
 
 /** Start a fresh fight in an area, whatever got you there. */
 export function enterZone(s: GameState, ctx: Ctx, zoneId: string): void {
+  keepMalice(s);
   s.action = { kind: 'combat', zoneId };
   s.combat = newRuntime(zoneId);
+  s.combat.mech = s.ascendancy.carry;
+  s.ascendancy.carry = 0;
   // gates start part-way through their timers, so they don't all open together
   s.combat.gates = EDGE_CELLS.map(() => gateTimer(ctx, zoneId) * ctx.rng.next());
   ctx.emit({ t: 'info', text: `Entered ${zoneDef(zoneId).name}` });
   ctx.emit({ t: 'combatStart', zoneId });
 }
 
+/** Next: the Malice you walk away with waits for the next fight. */
+function keepMalice(s: GameState): void {
+  if (s.combat && hasAscNode(s, 'headsman_next')) s.ascendancy.carry = s.combat.mech;
+}
+
 export function retreat(s: GameState): void {
+  keepMalice(s);
   s.combat = null;
   s.action = null;
 }
@@ -455,7 +502,24 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
   }
   s.lifetime.flasksDrunk += 1;
   ctx.emit({ t: 'flask', slot, flaskId: f.flaskId, auto });
+  if (ascendancyOf(s) === 'alchemist') alchemistDrink(s, ctx, d, st.effectMult);
   return null;
+}
+
+/** Alchemist: every drink bursts on your target, for fire damage that grows with level and Flask Effect. */
+function alchemistDrink(s: GameState, ctx: Ctx, d: Derived, effectMult: number): void {
+  const c = s.combat!;
+  if (hasAscNode(s, 'alchemist_tonic')) s.mana = Math.min(d.maxMana, s.mana + d.maxMana * TONIC_MANA);
+  const target = focusTarget(s);
+  if (!target) return;
+  const burst = FLASK_BURST_PER_LEVEL * d.combatLevel * (1 + d.flaskEffect / 100) * effectMult * d.typeMult.fire * (1 + manaPowerMore(s, d, manaFraction(s, d)) / 100);
+  const near = hasAscNode(s, 'alchemist_volatile_mix') ? new Set(neighbors(target.cell)) : new Set<number>();
+  for (const m of aliveMonsters(c)) {
+    if (m !== target && !near.has(m.cell)) continue;
+    const amount = Math.max(1, Math.round(burst * (1 - m.res.fire / 100)));
+    damageMonster(m, amount);
+    ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'fire', monsterUid: m.uid });
+  }
 }
 
 function triggerInstilled(s: GameState, ctx: Ctx, cond: InstillCondition): void {
@@ -470,7 +534,7 @@ function gainCharges(s: GameState, amount: number, d: Derived): void {
   for (const f of s.flaskSlots) {
     if (!f) continue;
     const st = flaskStats(f);
-    f.charges = Math.min(st.maxCharges, f.charges + amount * (1 + d.flaskCharges / 100) * st.gainMult);
+    f.charges = Math.min(flaskCapacity(s, f), f.charges + amount * (1 + d.flaskCharges / 100) * st.gainMult);
   }
 }
 
@@ -648,6 +712,14 @@ export function queueSkill(s: GameState, slot: number): string | null {
   return null;
 }
 
+/** What a skill costs right now, after anything your ascendancy waives. */
+function skillCost(s: GameState, d: Derived, nums: SkillNumbers): number {
+  const spell = nums.def.tags.includes('spell');
+  if (spell && s.combat!.asc.burnout > 0) return 0;
+  if (s.life < d.maxLife / 2 && hasAscNode(s, 'flagellant_ecstasy')) return 0;
+  return nums.manaCost * (spell && s.mana < d.maxMana / 2 && hasAscNode(s, 'wildcaster_backdraft') ? BACKDRAFT_COST : 1);
+}
+
 /** Blood Pact pays skill costs with life instead of mana. */
 function canPay(s: GameState, d: Derived, cost: number): boolean {
   if (d.raw.overclock) return true;
@@ -655,7 +727,7 @@ function canPay(s: GameState, d: Derived, cost: number): boolean {
 }
 
 function ready(s: GameState, d: Derived, slot: number, nums: SkillNumbers): boolean {
-  return s.combat!.cooldowns[slot] <= 0 && canPay(s, d, nums.manaCost);
+  return s.combat!.cooldowns[slot] <= 0 && canPay(s, d, skillCost(s, d, nums));
 }
 
 export interface SkillChoice {
@@ -754,6 +826,8 @@ function rollHit(
   const { def, mods, level } = nums;
   const r = d.raw;
   const isAttack = def.tags.includes('attack');
+  const sureCrit = c.asc.sureCrit;
+  c.asc.sureCrit = false;
   if (isAttack && !sure && !c.ambush && !r.steadyHand && !r.knifesEdge && !chance(ctx.rng, hitChance(d.accuracy, mon.level))) return null;
 
   const byType: ByType = { phys: 0, fire: 0, cold: 0, light: 0 };
@@ -814,8 +888,10 @@ function rollHit(
     more *= 2;
     c.misdirect = false;
   }
-  if (isAttack) more *= 1 + rageMore(s, d) / 100;
+  if (isAttack) more *= (1 + rageMore(s, d) / 100) * (1 + longshotMore(s, d, cellRing(mon.cell)) / 100);
   if (def.tags.includes('spell')) more *= 1 + manaPowerMore(s, d, c.manaFrac) / 100;
+  if (s.life < d.maxLife / 2 && hasAscNode(s, 'flagellant_mortify')) more *= 1 + MORTIFY_MORE / 100;
+  if (hasAscNode(s, 'alchemist_philosophers_draught')) more *= 1 + (DRAUGHT_MORE * c.buffs.filter((b) => b.source === 'flask').length) / 100;
   if (def.tags.includes('spell') && d.weaponFamily && CASTER_WEAPONS.includes(d.weaponFamily)) more *= 1 + CASTER_WEAPON_MORE / 100;
   for (const t of DAMAGE_TYPES) byType[t] *= more;
 
@@ -843,7 +919,7 @@ function rollHit(
     for (const t of DAMAGE_TYPES) byType[t] *= megaMulti;
     return { byType, crit: true, mega: true, coup };
   }
-  const crit = chance(ctx.rng, critChance / 100);
+  const crit = sureCrit || chance(ctx.rng, critChance / 100);
   if (malice) {
     // a normal crit empties the meter (unless a passive says otherwise); every other hit fills it
     if (!crit || r.thousandCuts) gainMeter(s, d, 1);
@@ -946,8 +1022,10 @@ function hitMonster(
   if (mon.stunMs > 0) dealt *= 1 + r.stunnedVuln / 100;
   if (mon.dots.some((x) => x.kind === 'bleed')) dealt *= 1 + r.bleedVuln / 100;
   if (new Set(mon.dots.map((x) => x.kind)).size >= 2) dealt *= 1 + r.multiAilmentVuln / 100;
+  if (coup && mon.life < mon.maxLife / 2 && hasAscNode(s, 'headsman_sharp_axe')) dealt *= 1 + SHARP_AXE_MORE / 100;
   dealt = Math.max(1, Math.round(dealt));
   damageMonster(mon, dealt);
+  if (coup) afterCoup(s, ctx, d, mon);
   if (crit && r.critLeech) s.life = Math.min(d.maxLife, s.life + (dealt * r.critLeech) / 100);
   if (mon.life < 0 && r.overkillHeal) s.life = Math.min(d.maxLife, s.life + (-mon.life * r.overkillHeal) / 100);
   // Permafrost freezes what's already chilled, before this hit chills it again
@@ -962,8 +1040,9 @@ function hitMonster(
   }
   ctx.emit({ t: 'hit', target: 'monster', amount: dealt, crit, mega: mega || undefined, dmgType: mainType(byType), monsterUid: mon.uid });
   // Rage and Momentum count every hit dealt, so multi-hit and area skills fill them fastest
-  if (mechanicOf(s) === 'rage') gainMeter(s, d, 1);
-  if (mechanicOf(s) === 'momentum' && def.tags.includes('attack')) gainMeter(s, d, 1);
+  if (mechanicOf(s) === 'rage' && ascendancyOf(s) !== 'anvil') gainMeter(s, d, 1);
+  if (mechanicOf(s) === 'momentum' && def.tags.includes('attack') && (!c.asc.hawking || hasAscNode(s, 'falconer_bond'))) gainMeter(s, d, 1);
+  if (cellRing(mon.cell) > 1 && hasAscNode(s, 'longshot_pin')) mon.stepMs = Math.min(mon.moveMs * 2, mon.stepMs + mon.moveMs / 2);
 
   // leech
   const lifeLeech = d.leechPct + mods.lifeLeech + (e.leechLife ?? 0) + r.physLeech * physShare + r.elemLeech * (1 - physShare);
@@ -1004,7 +1083,7 @@ function hitMonster(
     if (a.kind === 'ignite' && def.id === 'infernal_blow' && r.infernalSpread > 0) {
       for (const other of chainFrom(mon, aliveMonsters(c), r.infernalSpread).slice(1)) applyDot(other, { ...dot });
     }
-  } else if ((c.riposting && r.riposteBleed) || (r.bleedOnHit && def.tags.includes('attack') && chance(ctx.rng, r.bleedOnHit / 100))) {
+  } else if ((c.riposting && r.riposteBleed) || (c.asc.hawking && hasAscNode(s, 'falconer_talons')) || (r.bleedOnHit && def.tags.includes('attack') && chance(ctx.rng, r.bleedOnHit / 100))) {
     // axes: any attack can open a wound (20% of the hit per second for 4s)
     const duration = 4000 * (1 + (r.ailmentDuration + r.bleedDuration) / 100) + r.bleedDurationFlat;
     applyDot(mon, {
@@ -1030,12 +1109,24 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   c.using = def.id;
   c.closingUid = undefined;
   c.manaFrac = manaFraction(s, d);
+  const cost = skillCost(s, d, nums);
+  // Burnout: a free spell always hits at the full bonus
+  if (def.tags.includes('spell') && c.asc.burnout > 0) {
+    c.asc.burnout -= 1;
+    c.manaFrac = 0;
+  }
   // Overclock: no costs, and cooldowns at the minimum
   if (!r.overclock) {
-    if (r.bloodPact) s.life -= nums.manaCost;
-    else s.mana -= nums.manaCost;
+    if (r.bloodPact) s.life -= cost;
+    else s.mana -= cost;
+  }
+  if (def.tags.includes('spell') && c.asc.burnoutRearmed && s.mana < nums.manaCost && hasAscNode(s, 'wildcaster_burnout')) {
+    c.asc.burnout = BURNOUT_SPELLS;
+    c.asc.burnoutRearmed = false;
+    ctx.emit({ t: 'info', text: 'Burnout: your next spells are free', tone: 'good' });
   }
   if (slot >= 0) c.cooldowns[slot] = Math.max(MIN_COOLDOWN_MS, nums.cooldownMs);
+  if (slot >= 0 && ascendancyOf(s) === 'flagellant') selfHarm(s, ctx, d);
   if (mechanicOf(s) === 'rage' && def.id === 'war_cry') gainMeter(s, d, 10);
   if (slot >= 0) ctx.emit({ t: 'skill', slot, gemId: def.id, manual });
 
@@ -1129,6 +1220,15 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (ground && mods.specials.has('embertrail')) ground = { ...ground, pctPerSec: ground.pctPerSec * 2 };
   let grounded = false;
   let target = aimed;
+  // Rampage: melee hits sweep the rings next to you. Last Arrow: the shot runs the whole line
+  const melee = def.tags.includes('attack') && skillRange(d, def) === 1;
+  const reach = melee && rampaging(s) ? (hasAscNode(s, 'ravager_trample') ? 2 : 1) : 0;
+  const lastArrow = !!aimed && def.tags.includes('attack') && meterFull(s, d) && hasAscNode(s, 'longshot_last_arrow');
+  if (lastArrow) {
+    c.mech = 0;
+    c.asc.sureCrit = true;
+    ctx.emit({ t: 'info', text: 'Last Arrow!', tone: 'good' });
+  }
 
   for (let pass = 0; pass < passes; pass++) {
     const passMult = pass === 0 ? 1 : (mods.repeatDamage / 100) * (1 + r.repeatMore / 100);
@@ -1153,12 +1253,17 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         chained = targets.length > 1;
         if (chained && pass === 0 && h === 0) ctx.emit({ t: 'area', gemId: def.id, cells: targets.map((m) => m.cell) });
       }
+      if (reach) targets = [...targets, ...alive.filter((m) => !targets.includes(m) && cellRing(m.cell) <= reach)];
+      if (lastArrow) {
+        const line = new Set(areaCells('beam', target.cell));
+        targets = [...targets, ...alive.filter((m) => !targets.includes(m) && line.has(m.cell) && cellRing(m.cell) <= cellRing(target!.cell))];
+      }
       streak = target.uid === lastTarget ? streak + 1 : 0;
       lastTarget = target.uid;
       const tender = mods.specials.has('tenderise') ? 1 + 0.1 * streak : 1;
       const stunned = target.stunMs > 0;
       const chilled = target.chillMs > 0;
-      const roll = rollHit(s, ctx, d, nums, target, volley && h === hitsPerPass - 1);
+      const roll = rollHit(s, ctx, d, nums, target, c.asc.sureCrit || (volley && h === hitsPerPass - 1));
       if (!roll) {
         ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: 'phys', evaded: true, monsterUid: target.uid });
         continue;
@@ -1232,6 +1337,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   const zone = zoneDef(c.zoneId);
   ctx.emit({ t: 'kill', name: mon.name, boss: mon.isBoss });
   c.hungerMs = HUNGER_MS;
+  ascendancyKill(s, d, mon);
   s.lifetime.kills += 1;
   const xp = monsterXp(mon) * xpLevelMultiplier(characterLevel(s), mon.level) * (zoneDef(s.combat!.zoneId).xpScale ?? 1);
   grantXp(s, ctx, 'combat', xp * (1 + d.charXp / 100));
@@ -1276,6 +1382,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
     if (!s.bossesDefeated.includes(zone.id)) {
       s.bossesDefeated.push(zone.id);
       if (zone.actBoss) ctx.emit({ t: 'actComplete', act: zone.act });
+      onBossFirstKill(s, ctx, zone.id, zone.act);
     }
     const act = reachedAct(s);
     for (const next of openReachedZones(s)) ctx.emit({ t: 'zoneUnlocked', zoneId: next.id });
@@ -1327,39 +1434,217 @@ function counterAttack(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance)
   if (roll) hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, 2, roll.mega, roll.coup);
 }
 
-/** Duelist: blocking or evading a hit answers with a weapon strike. */
-function riposte(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): void {
+/** Duelist: blocking or evading a hit answers with a weapon strike. A Matador only answers evades, a Vanguard only blocks. */
+function riposte(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, how: 'block' | 'evade', phalanx = false): void {
   const c = s.combat!;
   const r = d.raw;
-  if (mechanicOf(s) !== 'riposte' || mon.life <= 0 || (c.riposteMs > 0 && !r.perfectForm)) return;
+  const asc = ascendancyOf(s);
+  if (mechanicOf(s) !== 'riposte' || mon.life <= 0 || (c.riposteMs > 0 && !r.perfectForm && !phalanx)) return;
+  if ((asc === 'matador' && how === 'block') || (asc === 'vanguard' && how === 'evade')) return;
   c.riposteMs = RIPOSTE_COOLDOWN_MS / (1 + r.riposteCooldown / 100);
   const nums = skillNumbers(d, null);
+  const truth = c.asc.streak >= 10 && hasAscNode(s, 'matador_moment_of_truth');
+  if (truth) c.ambush = true;
+  const factor = (1 + r.ripostePct / 100) * (r.perfectForm ? 0.5 : 1) * (phalanx ? PHALANX_MULT : 1) * (1 + (STREAK_MORE * c.asc.streak) / 100);
   c.riposting = true;
   const roll = rollHit(s, ctx, d, nums, mon);
-  if (roll) hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, (1 + r.ripostePct / 100) * (r.perfectForm ? 0.5 : 1), roll.mega, roll.coup);
+  if (roll) {
+    hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, factor, roll.mega, roll.coup);
+    if (asc === 'vanguard') {
+      const reach = hasAscNode(s, 'vanguard_press_forward') ? 2 : 1;
+      for (const m of aliveMonsters(c)) if (m !== mon && cellRing(m.cell) <= reach) hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, factor, roll.mega, roll.coup);
+    }
+    if (asc === 'matador') c.asc.streak = truth ? 0 : Math.min(streakCap(s), c.asc.streak + 1);
+  }
   c.riposting = false;
   if (r.riposteHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.riposteHeal) / 100);
 }
 
-/** Templar: incoming damage (before mitigation) fills Fervor; full Fervor releases a holy nova. */
-function martyrFill(s: GameState, ctx: Ctx, d: Derived, raw: number): void {
+/** Templar: incoming damage (before mitigation) fills Fervor; full Fervor releases a holy nova. A Lightkeeper stores it instead. */
+function martyrFill(s: GameState, ctx: Ctx, d: Derived, raw: number, novaShare = 1): void {
   const c = s.combat!;
   if (mechanicOf(s) !== 'martyr') return;
-  c.mechDamage += raw;
+  c.mechDamage += raw * novaShare;
   c.mech = Math.min(100, c.mech + (raw / fervorThreshold(d)) * 100);
   if (c.mech < 100) return;
+  if (ascendancyOf(s) !== 'lightkeeper') {
+    const filled = c.mechDamage;
+    c.mech = 0;
+    c.mechDamage = 0;
+    holyNova(s, ctx, d, filled, 1);
+  } else if (c.asc.novas < NOVA_STORE) {
+    c.asc.novas += 1;
+    c.asc.novaDamage += c.mechDamage;
+    c.mech = 0;
+    c.mechDamage = 0;
+  }
+}
+
+/** One or more novas at once: damage to every enemy from what filled them, a heal for each. */
+function holyNova(s: GameState, ctx: Ctx, d: Derived, filled: number, count: number): void {
+  const c = s.combat!;
   const r = d.raw;
-  const dmg = c.mechDamage * 0.5 * (1 + r.novaPct / 100);
-  c.mech = 0;
-  c.mechDamage = 0;
-  if (!r.saintsSacrifice) s.life = Math.min(d.maxLife, s.life + d.maxLife * 0.2 * (1 + r.novaHeal / 100));
-  if (r.novaEs) s.es = Math.min(d.maxEs, s.es + (d.maxEs * r.novaEs) / 100);
-  ctx.emit({ t: 'info', text: 'Fervor releases a holy nova!', tone: 'good' });
+  const dmg = filled * 0.5 * (1 + r.novaPct / 100) * (hasAscNode(s, 'lightkeeper_reserve') ? 1 + RESERVE_MORE * (count - 1) : 1);
+  if (!r.saintsSacrifice) s.life = Math.min(d.maxLife, s.life + count * d.maxLife * 0.2 * (1 + r.novaHeal / 100));
+  if (r.novaEs) s.es = Math.min(d.maxEs, s.es + (count * d.maxEs * r.novaEs) / 100);
+  ctx.emit({ t: 'info', text: count > 1 ? `Fervor releases ${count} holy novas!` : 'Fervor releases a holy nova!', tone: 'good' });
+  const beacon = hasAscNode(s, 'lightkeeper_beacon');
+  const dawn = count >= NOVA_STORE && hasAscNode(s, 'lightkeeper_dawn');
   for (const m of aliveMonsters(c)) {
     const amount = Math.max(1, Math.round(dmg * (1 - m.res.light / 100)));
     damageMonster(m, amount);
     ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'light', monsterUid: m.uid });
+    if (beacon) m.vulnMs = Math.max(m.vulnMs, 4000);
+    if (dawn) m.stunMs = Math.max(m.stunMs, m.isBoss ? 400 : 1000);
   }
+  if (dawn) c.asc.dawn = true;
+  if (hasAscNode(s, 'lightkeeper_vespers')) {
+    c.shield = Math.max(c.shield, d.maxLife * VESPERS_SHIELD * (1 + r.shieldEffect / 100));
+    c.shieldMax = Math.max(c.shieldMax, c.shield);
+  }
+}
+
+/** Lightkeeper: let the stored novas go, with a click or when the release setting says so. */
+export function releaseNovas(s: GameState, ctx: Ctx): void {
+  const c = s.combat;
+  if (!c || c.asc.novas <= 0) return;
+  const count = c.asc.novas;
+  const filled = c.asc.novaDamage;
+  c.asc.novas = 0;
+  c.asc.novaDamage = 0;
+  holyNova(s, ctx, deriveStats(s), filled, count);
+}
+
+/** The Lightkeeper's standing order, if its rule is earned; a setting still locked falls back to releasing at full. */
+function novasDue(s: GameState, d: Derived): boolean {
+  const c = s.combat!;
+  const full = c.asc.novas >= NOVA_STORE;
+  const alive = aliveMonsters(c);
+  switch (s.ascendancy.release) {
+    case 'manual':
+      return false;
+    case 'windup':
+      if (ruleLockReason(s, 'enemyCasting')) return full;
+      return alive.some((m) => m.casting >= 0) || (full && !alive.some((m) => m.isBoss));
+    case 'lifeLow':
+      if (ruleLockReason(s, 'lifeBelow')) return full;
+      return s.life < d.maxLife / 2;
+    case 'full':
+      return full;
+  }
+}
+
+/** Flagellant: every skill draws Life, which fills Fervor faster than a hit does. This can kill you. */
+function selfHarm(s: GameState, ctx: Ctx, d: Derived): void {
+  const cost = (d.maxLife * SELF_HARM_PCT) / 100;
+  s.life -= cost;
+  martyrFill(s, ctx, d, cost * SELF_HARM_FERVOR, hasAscNode(s, 'flagellant_scourge') ? SCOURGE_DAMAGE : 1);
+}
+
+/** Anvil: whoever hits you breaks on your Armour, harder the more Rage you hold. */
+function anvilAnswer(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): void {
+  const c = s.combat!;
+  const ring1 = aliveMonsters(c).filter((m) => cellRing(m.cell) === 1).length;
+  gainMeter(s, d, 1 + (hasAscNode(s, 'anvil_hold_the_line') ? HOLD_THE_LINE_RAGE * ring1 : 0));
+  if (mon.life <= 0) return;
+  const amount = Math.max(1, Math.round(d.armour * (ANVIL_THORNS_PCT / 100) * (1 + ANVIL_THORNS_PER_RAGE * c.mech)));
+  damageMonster(mon, amount);
+  ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: mon.uid });
+  if (meterFull(s, d) && hasAscNode(s, 'anvil_unmoved')) mon.stunMs = Math.max(mon.stunMs, mon.isBoss ? 400 : 1000);
+}
+
+/** Everything that happens when a Coup de Grâce lands on an enemy. */
+function afterCoup(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): void {
+  const c = s.combat!;
+  const asc = ascendancyOf(s);
+  if (asc === 'headsman') {
+    if (!mon.isBoss && mon.life < mon.maxLife * THE_BLOCK_AT && hasAscNode(s, 'headsman_the_block')) mon.life = 0;
+    if (mon.life <= 0) c.mech = Math.max(c.mech, meterMax('malice', d.raw) / 2);
+    else if (hasAscNode(s, 'headsman_marked')) mon.vulnMs = Math.max(mon.vulnMs, 6000);
+  }
+  if (asc !== 'plaguewright' || !mon.dots.length) return;
+  // a burst deals everything its ailments had left, all at once
+  const kinds = new Set(mon.dots.map((x) => x.kind)).size;
+  const left = mon.dots.reduce((a, x) => a + (x.dps * x.remainingMs) / 1000, 0);
+  const burst = Math.round(left * (hasAscNode(s, 'plaguewright_bloom') ? 1 + (BLOOM_MORE * kinds) / 100 : 1));
+  damageMonster(mon, burst);
+  ctx.emit({ t: 'hit', target: 'monster', amount: burst, crit: true, dmgType: 'phys', monsterUid: mon.uid });
+  if (hasAscNode(s, 'plaguewright_pandemic')) {
+    const ring = cellRing(mon.cell);
+    for (const m of aliveMonsters(c)) if (m !== mon && Math.abs(cellRing(m.cell) - ring) <= 1) for (const x of mon.dots) applyDot(m, { ...x, dealt: 0 });
+  }
+  mon.dots = [];
+}
+
+/** What a kill does for your ascendancy. */
+function ascendancyKill(s: GameState, d: Derived, mon: MonsterInstance): void {
+  const c = s.combat!;
+  if (rampaging(s)) {
+    if (hasAscNode(s, 'ravager_bloodlust')) {
+      c.asc.rampageMs += RAMPAGE_KILL_MS;
+      c.asc.rampageTotal += RAMPAGE_KILL_MS;
+    }
+    if (hasAscNode(s, 'ravager_no_mercy')) c.asc.holdMs = NO_MERCY_HOLD_MS;
+  }
+  if (hasAscNode(s, 'wildcaster_feedback')) s.mana = Math.min(d.maxMana, s.mana + d.maxMana * FEEDBACK_MANA);
+  if (hasAscNode(s, 'plaguewright_contagion')) {
+    const nearest = aliveMonsters(c).find((m) => m !== mon);
+    if (nearest) for (const x of mon.dots) if (x.remainingMs > 0) applyDot(nearest, { ...x, dealt: 0 });
+  }
+}
+
+/** Falconer: the hawk flies over the front line, so it goes for anything on the field, by its own targeting. */
+export function hawkTarget(s: GameState): MonsterInstance | undefined {
+  const { priority, order } = s.ascendancy.hawk;
+  const hooded = hasAscNode(s, 'falconer_hooded');
+  const group = (m: MonsterInstance) => (hooded && m.attackKind === 'spell' ? 0 : inPriority(priority, m) ? 1 : 2);
+  const key = (m: MonsterInstance) => (order === 'farthest' ? -cellRing(m.cell) : order === 'lowest' ? m.life : order === 'highest' ? -m.life : cellRing(m.cell));
+  return aliveMonsters(s.combat!).sort((a, b) => group(a) - group(b) || key(a) - key(b) || a.uid - b.uid)[0];
+}
+
+function hawkStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
+  const c = s.combat!;
+  c.asc.hawkMs -= dt;
+  if (c.asc.hawkMs > 0) return;
+  const mon = hawkTarget(s);
+  if (!mon) return;
+  c.asc.hawkMs = hawkInterval(s, d);
+  const stoop = meterFull(s, d) && hasAscNode(s, 'falconer_stoop');
+  const nums = skillNumbers(d, null);
+  c.asc.hawking = true;
+  const roll = rollHit(s, ctx, d, nums, mon, stoop);
+  if (roll) hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, HAWK_DAMAGE * (stoop ? STOOP_MULT : 1), roll.mega, roll.coup);
+  c.asc.hawking = false;
+  if (!stoop) return;
+  c.mech = 0;
+  mon.stunMs = Math.max(mon.stunMs, mon.isBoss ? 400 : 1000);
+}
+
+/** Rampages, Head Start, Burnout's rearming, Ecstasy and stored novas. */
+function ascendancyStep(s: GameState, ctx: Ctx, d: Derived, dt: number, fighting: boolean): void {
+  const c = s.combat!;
+  const a = c.asc;
+  const asc = ascendancyOf(s);
+  if (!asc) return;
+  if (fighting && !a.fighting && hasAscNode(s, 'longshot_head_start')) c.mech = Math.max(c.mech, Math.min(HEAD_START_MOMENTUM, meterMax('momentum', d.raw)));
+  a.fighting = fighting;
+  if (s.mana >= d.maxMana / 2) a.burnoutRearmed = true;
+  if (asc === 'lightkeeper' && fighting && a.novas > 0 && novasDue(s, d)) releaseNovas(s, ctx);
+  if (hasAscNode(s, 'flagellant_ecstasy')) {
+    c.buffs = c.buffs.filter((b) => b.id !== 'ecstasy');
+    if (s.life < d.maxLife / 2) c.buffs.push({ id: 'ecstasy', source: 'skill', remainingMs: 200, durationMs: 200, stats: { attackSpeedPct: ECSTASY_SPEED, castSpeedPct: ECSTASY_SPEED } });
+  }
+  if (asc !== 'ravager') return;
+  const max = meterMax('rage', d.raw);
+  if (a.rampageMs <= 0 && fighting && c.mech >= max) {
+    a.rampageMs = a.rampageTotal = RAMPAGE_MS;
+    ctx.emit({ t: 'info', text: 'Rampage!', tone: 'good' });
+  }
+  if (a.rampageMs <= 0) return;
+  // the meter follows the clock, so hits landed during a Rampage don't hold it up
+  if (a.holdMs > 0) a.holdMs -= dt;
+  else a.rampageMs -= dt;
+  c.mech = a.rampageMs > 0 ? (max * a.rampageMs) / a.rampageTotal : 0;
 }
 
 function onEvade(s: GameState, d: Derived): void {
@@ -1382,47 +1667,47 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   if (mon.dots.some((x) => x.kind === 'poison')) raw *= 1 - r.poisonWeaken / 100;
   if (kind === 'slam') raw *= 1 - r.slamReduction / 100;
   if (underPlayer(c, 'shocked')) raw *= SHOCKED_GROUND_TAKEN;
+  // Dawn: the light takes the next wind-up in your place
+  if (isCast && c.asc.dawn) {
+    c.asc.dawn = false;
+    ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
+    return;
+  }
   if (c.evadeMs > 0) {
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, evaded: true, monsterUid: mon.uid });
     onEvade(s, d);
-    riposte(s, ctx, d, mon);
+    riposte(s, ctx, d, mon, 'evade');
     return;
   }
   if (c.blocks > 0 && kind !== 'nova') {
     c.blocks -= 1;
     if (c.counterweight) c.counterweightMore = Math.min(30, (c.counterweightMore ?? 0) + 15);
-    ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
-    if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
     if (c.retaliate) counterAttack(s, ctx, d, mon);
-    martyrFill(s, ctx, d, raw);
-    riposte(s, ctx, d, mon);
+    onBlock(s, ctx, d, mon, raw, type, isCast);
     return;
   }
   // staves: a flat chance to block, capped at 75%
   if (r.blockChance > 0 && kind !== 'nova' && chance(ctx.rng, Math.min(75, r.blockChance) / 100)) {
-    ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
-    if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
-    martyrFill(s, ctx, d, raw);
-    riposte(s, ctx, d, mon);
+    onBlock(s, ctx, d, mon, raw, type, isCast);
     return;
   }
   // spell block: any monster spell, telegraphed novas included
   if (r.spellBlock > 0 && (kind === 'nova' || (kind === 'hit' && mon.attackKind === 'spell')) && chance(ctx.rng, Math.min(75, r.spellBlock) / 100)) {
-    ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
-    if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
-    martyrFill(s, ctx, d, raw);
-    riposte(s, ctx, d, mon);
+    onBlock(s, ctx, d, mon, raw, type, isCast);
     return;
   }
   // heavy wind-ups can't be evaded by Evasion Rating (unless Wind Dancer) — guard, interrupt or drink
   if ((!isCast || r.windDancer) && chance(ctx.rng, evadeChance(d.evasion, mon.level))) {
     ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, evaded: true, monsterUid: mon.uid });
     onEvade(s, d);
-    riposte(s, ctx, d, mon);
+    riposte(s, ctx, d, mon, 'evade');
     return;
   }
   // the hit lands
   const mech = mechanicOf(s);
+  const asc = ascendancyOf(s);
+  if (asc === 'matador') c.asc.streak = hasAscNode(s, 'matador_close_call') ? Math.floor(c.asc.streak / 2) : 0;
+  if (asc === 'anvil') anvilAnswer(s, ctx, d, mon);
   if (mech === 'momentum') {
     if (!r.perpetualMotion) c.mech -= Math.ceil(c.mech * 0.5 * (1 - Math.min(100, r.momentumRetain) / 100));
   } else if (mech === 'rage') gainMeter(s, d, r.rageOnHitTaken);
@@ -1459,6 +1744,22 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   }
   s.life -= dmg;
   ctx.emit({ t: 'hit', target: 'player', amount: dmg, dmgType: type, absorbed: absorbed || undefined, es: Math.round(toEs) || undefined, monsterUid: mon.uid });
+  if (isCast && s.life > 0 && hasAscNode(s, 'anvil_shatter')) c.mech = meterMax('rage', d.raw);
+}
+
+/** Any block, however it came about. */
+function onBlock(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: number, type: DamageType, isCast: boolean): void {
+  const c = s.combat!;
+  const r = d.raw;
+  ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
+  if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
+  if (hasAscNode(s, 'anvil_temper')) anvilAnswer(s, ctx, d, mon);
+  if (hasAscNode(s, 'vanguard_stand_fast')) {
+    c.buffs = c.buffs.filter((b) => b.id !== 'stand_fast');
+    c.buffs.push({ id: 'stand_fast', source: 'skill', remainingMs: 3000, durationMs: 3000, stats: { armourPct: STAND_FAST_ARMOUR } });
+  }
+  martyrFill(s, ctx, d, raw);
+  riposte(s, ctx, d, mon, 'block', isCast && mon.isBoss && hasAscNode(s, 'vanguard_phalanx'));
 }
 
 // ---------- ground ----------
@@ -1532,9 +1833,11 @@ function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
 
 // ---------- the step ----------
 
-function tickDots(s: GameState, ctx: Ctx, dt: number): void {
+function tickDots(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   const c = s.combat!;
+  const plague = ascendancyOf(s) === 'plaguewright';
   for (const m of aliveMonsters(c)) {
+    if (plague) gainMeter(s, d, (m.dots.length * PLAGUE_MALICE_PER_S * dt) / 1000);
     for (const dot of m.dots) {
       const t = Math.min(dt, dot.remainingMs);
       const dmg = (dot.dps * t) / 1000;
@@ -1730,7 +2033,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   if (s.life < d.maxLife * 0.5) triggerInstilled(s, ctx, 'lowLife');
   for (let i = 0; i < s.flaskSlots.length; i++) {
     const f = s.flaskSlots[i];
-    if (f?.instill === 'fullCharges' && f.charges >= flaskStats(f).maxCharges && !flaskActive(s, f.flaskId)) {
+    if (f?.instill === 'fullCharges' && f.charges >= flaskCapacity(s, f) && !flaskActive(s, f.flaskId)) {
       useFlask(s, ctx, i, true);
     }
   }
@@ -1741,7 +2044,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   if (!c.monsters.length) return expired.length > 0;
 
   // damage over time
-  tickDots(s, ctx, dt);
+  tickDots(s, ctx, d, dt);
   tickGround(s, ctx, d, dt);
   reapDead(s, ctx, d);
   // burning ground can finish you off even as the last monster falls
@@ -1778,6 +2081,12 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
     }
   }
 
+  if (ascendancyOf(s) === 'falconer') {
+    hawkStep(s, ctx, d, dt);
+    reapDead(s, ctx, d);
+    if (!c.monsters.length) return true;
+  }
+
   // the monsters' turn
   advanceMonsters(c.monsters, dt, new Set(c.ground.filter((g) => g.cell >= 0).map((g) => g.cell)));
   for (const m of aliveMonsters(c)) {
@@ -1810,7 +2119,8 @@ function classMechanicsStep(s: GameState, ctx: Ctx, d: Derived, dt: number): boo
   const fighting = aliveMonsters(c).length > 0;
   c.riposteMs = Math.max(0, c.riposteMs - dt);
   const mech = mechanicOf(s);
-  if (mech === 'rage' && !fighting && !r.endlessFury) c.mech = Math.max(0, c.mech - (RAGE_DECAY_PER_S * (1 - Math.min(100, r.rageDecay) / 100) * dt) / 1000);
+  ascendancyStep(s, ctx, d, dt, fighting);
+  if (mech === 'rage' && !fighting && !r.endlessFury && !rampaging(s)) c.mech = Math.max(0, c.mech - (RAGE_DECAY_PER_S * (1 - Math.min(100, r.rageDecay) / 100) * dt) / 1000);
   if (mech === 'momentum' && r.perpetualMotion) c.mech = Math.max(0, c.mech - dt / 1000);
 
   if (r.overclock && fighting && c.overheatMs <= 0) {

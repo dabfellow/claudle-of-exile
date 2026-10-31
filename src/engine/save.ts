@@ -1,5 +1,6 @@
 import { classDef } from '../data/classes';
 import { bundleCharacter } from './account';
+import { newAscendancyRuntime, newAscendancyState } from './ascendancy';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
@@ -222,6 +223,12 @@ const MIGRATIONS: Record<number, Migration> = {
     // Thieving and Heist arrived: everyone starts at level 1 with no crew, and Act 2 characters find the marks already open
     (raw.skills as Record<string, number>).thieving ??= 0;
     raw.heist ??= newHeistState();
+  },
+  22: (raw) => {
+    // ascendancies arrived: nobody has passed a trial yet
+    const s = raw as unknown as GameState;
+    s.ascendancy ??= newAscendancyState();
+    if (s.combat) s.combat.asc ??= newAscendancyRuntime();
   },
 };
 

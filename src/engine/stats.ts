@@ -4,8 +4,10 @@ import { BASE_ATTACK_MS } from '../data/gems';
 import { baseDef, type WeaponFamily } from '../data/bases';
 import { flaskDef } from '../data/flasks';
 import { MAP_RARITY } from '../data/hideout';
+import { ASCENDANCY_NODE_BY_ID } from '../data/ascendancies';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { STAT_KEYS, type Buff, type DamageType, type GameState, type Item, type StatKey, type Stats } from './types';
+import { ascendancyOf } from './ascendancy';
 import { characterLevel } from './character';
 import { MEGA_CRIT_MULTI, mechanicStats } from './mechanics';
 
@@ -165,6 +167,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
     addStats(st, mods);
   }
   addStats(st, passiveStats(s.passives, s.masteries));
+  if (ascendancyOf(s)) for (const id of s.ascendancy.nodes) addStats(st, ASCENDANCY_NODE_BY_ID[id].stats);
   const cls = classDef(s.character.classId);
   addStats(st, cls.baseAttributes);
   addStats(st, cls.bonus);
