@@ -4,7 +4,7 @@ Asset packs mapped against the 187-slot art registry (`src/data/artManifest.ts`)
 
 **Coverage: 187/187 slots have art (100.0%). 0 have none.** Act 2's 46 monsters and uniques are listed in their own section below.
 
-Confidence: exact 2, close 79, loose 106, none 0. The loose matches come from a deliberately broad first pass: every remaining slot got the most appropriate art on hand, even when it only roughly fits. They're the slots to swap first if a better pack piece turns up (the "Weakest stand-ins" list below).
+Confidence: exact 2, close 96, loose 89, none 0. The loose matches come from a deliberately broad first pass: every remaining slot got the most appropriate art on hand, even when it only roughly fits. They're the slots to swap first if a better pack piece turns up (the "Weakest stand-ins" list below).
 
 ## Usable artwork per pack
 
@@ -21,13 +21,17 @@ Confidence: exact 2, close 79, loose 106, none 0. The loose matches come from a 
 | Softline RPG Icons FREE 100 (The Cooked Works) | 806 | 100 | Line/Fill alternates, 3 PNG sizes + SVG each, previews, licence |
 | Painterly Backgrounds free (GegX) | 27 | 3 (forest, tavern, forest parallax set) | night/fog mood versions, 1280×720 copies, previews, docs |
 | 32 Medieval Crafting Icons free | 161 | 32 | 32/128/256/512px copies, RPG Maker sheet |
+| SnoopethDuckDuck shields, packs 1 to 3 | 223 PNGs | 80 | 0px and 2px outline copies, sheets, sources |
+| RPG Weapons (quintino_pixels) | 1 Aseprite file | about 40 | Cards, Descriptions and credit layers |
+| Pasted weapon sheet (source not recorded) | 1 | 30 | none |
+| 32 icons (source not recorded) | 32 | 32 | none |
 | Grounded Medieval Remedies (Eldrion Team) | 89 | 16 | 128/256/512/1024px copies, 5 atlases, docs |
 
 Total: 829 unique artworks out of 1,939 files. The first pass also reused unused Kibyra and gear-set art that was already in the repo.
 
 ## How the art is used
 
-- **Weapons, shields, armour:** Catalone and the gear sets (dark 64px pixel art). A few Kibyra pieces (dagger, wooden shield) and one CodeSpree stick fill the gaps.
+- **Weapons, shields, armour:** Catalone and the gear sets (dark 64px pixel art), plus the 2026-10-31 weapon and shield packs (see "Item art added 2026-10-31"). A few Kibyra pieces (dagger, wooden shield) fill the gaps.
 - **Materials:** Woshi for copper ore, mithril ore, gem and gold; CodeSpree for iron ore (hematite), logs, dust and the four herbs; one Remedies bundle for frostleaf.
 - **Currency:** mostly SanguineNite round icons, plus a Remedies bottle (alchemy), a crafting stone (scour) and shell (annul), and a CodeSpree disc (chaos).
 - **Skill gems:** all 39 use SanguineNite icons, drawn inside the attribute-coloured gem so str/dex/int still shows.
@@ -42,104 +46,229 @@ Total: 829 unique artworks out of 1,939 files. The first pass also reused unused
 - **Softline** glyphs are flat white UI symbols; only the plain ring is used (iron ring).
 - **Missing licences:** Catalone, CodeSpree, SanguineNite and free_sample came without licence files (see `src/assets/CREDITS.md`).
 
-## Weakest stand-ins (106), replace first
+## Weakest stand-ins (93), replace first
 
 - **portraits** (3): trader, brannoc, class_mage
 - **scenes** (2): title, hideout
 - **stations** (2): alchemy_table, bench
 - **zones** (8): mudflats, brinecaves, ashwood, blackreed, crypt, shipgrave, stormcliffs, sanctum
 - **monsters** (29): zombie, wisp, crawler, sailor, siren, harrow, cinderhound, harpy, emberkin, pyre, lurker, stalker, fenwitch, sedge, ghoul, frostwraith, lich, tidecaller, gunner, wreckshaman, vosk, rockback, stormcaller, skarra, zealot, eel, coralgolem, priest, ysolde
-- **currency** (10): transmute, augment, alteration, regal, chaos, annul, exalted, divine, expansion, instill
-- **materials** (4): sunpetal, frostleaf, emberroot, voidbloom
-- **flasks** (3): life_grand, diamond, ruby
-- **items** (13): rusted_sword, driftwood_wand, plank_shield, kite_shield, tower_shield, coral_amulet, amber_amulet, jade_amulet, onyx_amulet, iron_ring, ruby_ring, sapphire_ring, topaz_ring
-- **uniques** (6): miners_lament, windstep, alchemists_band, iron_bulwark, starforged_edge, titans_girth
+- **currency** (9): transmute, augment, alteration, regal, chaos, annul, exalted, divine, expansion
+- **materials** (3): sunpetal, emberroot, voidbloom
+- **items** (7): rusted_sword, plank_shield, kite_shield, coral_amulet, amber_amulet, jade_amulet, onyx_amulet
+- **uniques** (4): miners_lament, windstep, iron_bulwark, titans_girth
 - **gems** (26): heavy_strike, iron_guard, twin_strike, poison_dart, lacerate, shattering_blow, aftershock, retaliation, rallying_roar, flurry, virulence, ambush, hemorrhage, overload, inferno, soul_tap, brutality, faster_attacks, faster_casts, efficiency, critical_strikes, mana_leech, multistrike, spell_echo, chain, lingering
 
-Custom art wanted most: the 8 area banners and 2 scenes (no fitting landscapes exist in any pack), the 9 rings and amulets (Catalone Part 1), and the four herbs: sunpetal, frostleaf, emberroot, voidbloom.
+Custom art wanted most: the 8 area banners and 2 scenes (no fitting landscapes exist in any pack), the 4 amulets (Catalone Part 1), and three herbs: sunpetal, emberroot, voidbloom.
 
 ## Act 2 (added 2026-10-30)
 
-All 40 Act 2 monsters and bosses now have their own picture, and no two share one. The six new uniques have their own art too. 19 of the monsters are close and 21 are loose. The table further down covers the first 187 slots; these are on top of it.
+All 40 Act 2 monsters and bosses now have their own picture, and no two share one. The six new uniques have their own art too. 27 of the monsters are close and 13 are loose, after a second pass on 2026-10-31 that looked through every creature and character sprite in the owned packs and replaced 11 of the original 21 loose matches. The table further down covers the first 187 slots; these are on top of it.
 
-**To swap a monster:** change its line in `MONSTER_ART` in `src/ui/assets.ts`, which is keyed by monster id. `tests/art.test.ts` fails if any monster or boss has no art, so a renamed or new monster can't fall back to the skull unnoticed. Recolours are named `tint-<id>`; rename the file if the id changes.
+**To swap a monster:** change its line in `MONSTER_ART` in `src/ui/assets.ts`, which is keyed by monster id. `tests/art.test.ts` fails if any monster or boss has no art, so a renamed or new monster can't fall back to the skull unnoticed. Recolours are named `tint-<id>`; rename the file if the id changes. A few Act 2 monsters reuse art from Act 1 or a portrait, always recoloured (for example `khorun` is the trader's sprite and `tamsin` is `gunner`'s).
 
 **Recolours:** the packs have too few fitting pieces, so `tint-<id>` files are recoloured pack art, made with sharp's `modulate` (hue, saturation, brightness, lightness) and `tint` (RGB). Pixel art stays PNG and painted art stays JPG, so `packArtIsPixel` scales each one correctly.
 
-**Loose matches, replace first (21):**
+**Loose matches, replace first (13):**
 
-- `outrider`: armoured head only; no horse or lance
-- `khorun`: roaring horned warlord; no horse, reads as an ogre
-- `mirage`: floating shape with bright eyes, not a human figure
-- `saltwitch`: pale young woman, not old or thin
-- `glass`: cold, spectral face; no mirror glass
+- `outrider`: padded brown hood and face wrap; no horse or lance. CodeSpree's Equestion is the only horse in the packs, and it looks too comic for a rider
+- `glass`: silvered woman's portrait, no cracked mirror glass. Same face as `qara`
 - `grassseer`: red-faced horned figure; no grass coat
-- `ashmane`: no lion in any pack: snarling grey-maned beast with a warm wash
 - `lancer`: scale hood, no pointed helmet or lance
 - `bonecamel`: animal skull, not a camel
-- `tamsin`: red high collar, but reads as a vampire
-- `horseskel`: blue-lit beast skull, not a horse
-- `moundguard`: bare skeleton, no bronze armour or axe
+- `moundguard`: bronze-stained skeleton, no armour or axe
 - `moundpriest`: undead in a tall helm; no charms
 - `horselord`: large bronze-green skull; no crown or horse
 - `rhino`: no rhino in any pack: grey boar
-- `stormrider`: horned purple armoured head, no rider
+- `stormrider`: blue armoured rider's head; no horse or lance
 - `qara`: stern blue-haired woman; no horse or glaive
-- `ozar`: flaming skull, no robes
 - `ashseer`: grey hooded figure, mouth wrapped rather than eyes
 - `sunpriest`: gold wash over a stern face; no sun disc
-- `azhar`: golden-orange beaked head; no flame wings
 
-**Areas are unchanged.** The 8 Act 2 areas keep their reused GegX banners from `ZONE_ART`, so none shows its actual place. GegX is the only landscape pack on hand, and its licence file says it is AI-generated, which conflicts with the no-AI-art rule. That also applies to Act 1's banners and the two scenes. Proper banners need a hand-made landscape pack.
+**Areas are unchanged.** No owned pack has hand-made art for these places, so the 8 Act 2 areas keep their reused GegX banners from `ZONE_ART`, and none shows its actual place. GegX's licence file says it is AI-generated, which conflicts with the no-AI-art rule, so these go when the replacement landscape pack arrives, along with Act 1's banners and the two scenes.
+
+Checked on 2026-10-31: the only other backgrounds on disk are Screaming Brain's Seamless Sky Backgrounds (CC0 tiling sky textures with no ground, not in the repo) and Foozle's Void pack (space). Neither shows a place. The skies could sit behind a transparent landscape layer if the replacement pack needs one.
+
+What each area needs from the replacement pack (1200×686 banner, no people or creatures; full briefs are in `ZONE_DESC` in `src/data/artManifest.ts`):
+
+| Area id | Needs | Current GegX banner |
+|---|---|---|
+| `cinderroad` | dirt road over burned yellow grass hills, smoke, orange haze | forest day |
+| `saltflats` | flat white cracked salt plain, pale hot sky | forest fog |
+| `blackgrass` | very tall black grass, red dusk sky, a line of fire | forest night |
+| `caravan` | walled mud-brick caravanserai, arched gate, carts, dry well | tavern day |
+| `kurgans` | grey-green steppe with round burial mounds, stone doorway, overcast | forest parallax |
+| `plateau` | bare brown flat-topped plateau, storm clouds, lightning | forest fog |
+| `pyretemple` | red stone temple interior, square pillars, large fire bowl | tavern fog |
+| `burningthrone` | bare hilltop at night, huge glowing orb in a crater | forest night |
+
+`caravan` and `pyretemple` need man-made places, so a nature-only pack won't cover all eight.
 
 | Game asset ID | Source file | Confidence | Final destination | Notes |
 |---|---|---|---|---|
 | `monsters/ashjackal` | `CodeSpree rpg-beings-all/Hyena.png` | close | `src/assets/monsters/codespree-hyena.png` | hyena, grey-brown and mangy; no burns |
-| `monsters/outrider` | `Craftpix avatars Transperent/con20.png` | placeholder | `src/assets/monsters/craftpix-con20.png` | armoured head only; no horse or lance |
+| `monsters/outrider` | `Craftpix avatars Transperent/con20.png` | placeholder | `src/assets/monsters/craftpix-con20.png` | padded brown hood and face wrap; no horse or lance |
 | `monsters/vulture` | `Craftpix avatars Transperent/con32.png` | close | `src/assets/monsters/tint-vulture.png` | black crow head, not bald. Recolour: hue 30, saturation 1.6, brightness 1.15 |
 | `monsters/firesprite` | `Craftpix avatars Transperent/con26.png` | close | `src/assets/monsters/craftpix-con26.png` | small red imp, no grass |
-| `monsters/khorun` | `free_sample/moooob28.jpg` | placeholder | `src/assets/monsters/freesample-moooob28.jpg` | roaring horned warlord; no horse, reads as an ogre |
+| `monsters/khorun` | `Craftpix avatars Transperent/con33.png` | close | `src/assets/monsters/tint-khorun.png` | scowling red-bearded nomad in a fur hood; no horse or banner. Recolour: hue 330, saturation 0.75, brightness 0.6 |
 | `monsters/saltcrawler` | `CodeSpree rpg-beings-all/Angry crab.png` | close | `src/assets/monsters/tint-saltcrawler.png` | pale crab. Recolour: lightness 34, tint 235,225,200 |
-| `monsters/mirage` | `CodeSpree rpg-beings-all/Ling.png` | placeholder | `src/assets/monsters/tint-mirage.png` | floating shape with bright eyes, not a human figure. Recolour: hue -230, saturation 0.7, brightness 1.5 |
+| `monsters/mirage` | `Craftpix avatars Transperent/con40.png` | close | `src/assets/monsters/tint-mirage.png` | pale see-through humanoid; eyes are faint, not bright. Recolour: saturation 0.1, brightness 1.4, 75% opacity |
 | `monsters/dustdevil` | `CodeSpree rpg-beings-all/Electrogust.png` | close | `src/assets/monsters/tint-dustdevil.png` | sandy whirlwind with a face. Recolour: saturation 0.55, brightness 0.95 |
-| `monsters/saltwitch` | `Craftpix avatars Transperent/con5.png` | placeholder | `src/assets/monsters/tint-saltwitch.png` | pale young woman, not old or thin. Recolour: saturation 0.12, brightness 1.25 |
-| `monsters/glass` | `free_sample/p7.jpg` | placeholder | `src/assets/monsters/tint-glass.jpg` | cold, spectral face; no mirror glass. Recolour: hue -70, saturation 1.4, brightness 1.25 |
+| `monsters/saltwitch` | `Craftpix avatars Transperent/con12.png` | close | `src/assets/monsters/tint-saltwitch.png` | bleached hood, white hair and face wrap, same base as the mage portrait; no frost. Recolour: saturation 0.1, brightness 1.25 |
+| `monsters/glass` | `free_sample/a66.jpg` | placeholder | `src/assets/monsters/tint-glass.jpg` | silvered woman's portrait; no cracked glass, same face as `qara`. Recolour: saturation 0.1, brightness 1.15, linear 1.5/-50, tint 200,235,255 |
 | `monsters/grasscat` | `CodeSpree rpg-beings-all/Purple cat.png` | close | `src/assets/monsters/tint-grasscat.png` | small dark cat, not a big cat. Recolour: saturation 0.15, lightness -1 |
 | `monsters/firebrand` | `Craftpix avatars Transperent/con27.png` | close | `src/assets/monsters/craftpix-con27.png` | orange horned hound, no brand |
 | `monsters/burnwalker` | `free_sample/spalenie.jpg` | close | `src/assets/monsters/freesample-spalenie.jpg` | charred skull in flames; head only |
 | `monsters/grassseer` | `free_sample/a24.jpg` | placeholder | `src/assets/monsters/freesample-a24.jpg` | red-faced horned figure; no grass coat |
-| `monsters/ashmane` | `free_sample/a16.jpg` | placeholder | `src/assets/monsters/tint-ashmane.jpg` | no lion in any pack: snarling grey-maned beast with a warm wash. Recolour: hue 25, saturation 1.5, brightness 1.05 |
+| `monsters/ashmane` | `Craftpix avatars Transperent/con31.png` | close | `src/assets/monsters/tint-ashmane.png` | golden-orange lion-like head; mane is fur, not fire. Recolour: hue 15, saturation 1.9, brightness 1.35 |
 | `monsters/raider` | `Craftpix avatars Transperent/con3.png` | close | `src/assets/monsters/tint-raider.png` | tan hood and face wrap; no scimitar. Recolour: brightness 1.25, tint 205,165,105 |
 | `monsters/lancer` | `Craftpix avatars Transperent/con7.png` | placeholder | `src/assets/monsters/craftpix-con7.png` | scale hood, no pointed helmet or lance |
 | `monsters/bonecamel` | `Craftpix avatars Transperent/con21.png` | placeholder | `src/assets/monsters/tint-bonecamel.png` | animal skull, not a camel. Recolour: hue 10, saturation 1.5, brightness 0.85 |
 | `monsters/hexmerchant` | `Craftpix avatars Transperent/con39.png` | close | `src/assets/monsters/tint-hexmerchant.png` | turbaned pale man with a moustache; no coins. Recolour: hue 40, saturation 0.5, brightness 1.2 |
-| `monsters/tamsin` | `Craftpix avatars Transperent/con24.png` | placeholder | `src/assets/monsters/craftpix-con24.png` | red high collar, but reads as a vampire |
+| `monsters/tamsin` | `Craftpix avatars Transperent/con9.png` | close | `src/assets/monsters/tint-tamsin.png` | bandit in a red headband and face mask, same base as `gunner`; no coat or helmet. Recolour: saturation 1.7, brightness 0.75 |
 | `monsters/barrowwight` | `Craftpix avatars Transperent/con22.png` | close | `src/assets/monsters/tint-barrowwight.png` | hooded blue ghost; no bronze helmet. Recolour: hue 180, saturation 3, brightness 1.3 |
-| `monsters/horseskel` | `Craftpix avatars Transperent/con10.png` | placeholder | `src/assets/monsters/tint-horseskel.png` | blue-lit beast skull, not a horse. Recolour: hue 170, saturation 0.9, brightness 0.9 |
-| `monsters/moundguard` | `Craftpix avatars Transperent/con23.png` | placeholder | `src/assets/monsters/craftpix-con23.png` | bare skeleton, no bronze armour or axe |
+| `monsters/horseskel` | `CodeSpree rpg-beings-all/Equestion.png` | close | `src/assets/monsters/tint-horseskel.png` | whole horse with rib-like markings, pale blue; no barding. Recolour: hue 170, saturation 0.7, lightness 30 |
+| `monsters/moundguard` | `Craftpix avatars Transperent/con23.png` | placeholder | `src/assets/monsters/tint-moundguard.png` | bronze-stained skeleton, no armour or axe. Recolour: tint 205,150,80 |
 | `monsters/moundpriest` | `free_sample/mobiszon999.jpg` | placeholder | `src/assets/monsters/tint-moundpriest.jpg` | undead in a tall helm; no charms. Recolour: hue 160, saturation 0.9, brightness 0.95 |
 | `monsters/horselord` | `free_sample/kociotrup.jpg` | placeholder | `src/assets/monsters/tint-horselord.jpg` | large bronze-green skull; no crown or horse. Recolour: hue -250, saturation 1.6, brightness 0.95 |
 | `monsters/thunderhawk` | `CodeSpree rpg-beings-all/Pigeon.png` | close | `src/assets/monsters/tint-thunderhawk.png` | blue bird, but a pigeon shape. Recolour: lightness 6, tint 80,120,210 |
 | `monsters/rhino` | `CodeSpree rpg-beings-all/Wild boar.png` | placeholder | `src/assets/monsters/tint-rhino.png` | no rhino in any pack: grey boar. Recolour: saturation 0.25, lightness 32 |
-| `monsters/stormrider` | `Craftpix avatars Transperent/con38.png` | placeholder | `src/assets/monsters/craftpix-con38.png` | horned purple armoured head, no rider |
+| `monsters/stormrider` | `Craftpix avatars Transperent/con20.png` | placeholder | `src/assets/monsters/tint-stormrider.png` | blue-grey rider's head, same base as `outrider`; no horse or lance. Recolour: saturation 0.15, brightness 0.9, tint 150,175,235 |
 | `monsters/skyshaman` | `Craftpix avatars Transperent/con19.png` | close | `src/assets/monsters/tint-skyshaman.png` | blue winged helm with a lightning slash; no drum. Recolour: hue 190, saturation 1.2, brightness 1.05 |
 | `monsters/qara` | `free_sample/a66.jpg` | placeholder | `src/assets/monsters/tint-qara.jpg` | stern blue-haired woman; no horse or glaive. Recolour: hue 180, saturation 0.9, brightness 1.05 |
 | `monsters/ashmonk` | `free_sample/a61.jpg` | close | `src/assets/monsters/tint-ashmonk.jpg` | bald, ash-pale, stern; no robe in frame. Recolour: saturation 0.25, brightness 1.05 |
 | `monsters/dervish` | `CodeSpree rpg-beings-all/Pyrogust.png` | close | `src/assets/monsters/codespree-pyrogust.png` | spinning fire with teeth; no dancer or blades |
 | `monsters/pyregolem` | `Craftpix avatars Transperent/con25.png` | close | `src/assets/monsters/tint-pyregolem.png` | molten rock head in flames. Recolour: hue -15, saturation 1.3, brightness 0.9 |
 | `monsters/acolyte` | `Craftpix avatars Transperent/con37.png` | close | `src/assets/monsters/craftpix-con37.png` | orange horned mask-like face |
-| `monsters/ozar` | `Craftpix avatars Transperent/con30.png` | placeholder | `src/assets/monsters/craftpix-con30.png` | flaming skull, no robes |
+| `monsters/ozar` | `Craftpix avatars Transperent/con10.png` | close | `src/assets/monsters/tint-ozar.png` | tall pale mask with red-gold flames around it, same base as `emberkin`; no staff. Recolour: hue -30, saturation 2, brightness 0.95 |
 | `monsters/sunguard` | `free_sample/mobeK1S.jpg` | close | `src/assets/monsters/tint-sunguard.jpg` | bronze-gold helmed guard. Recolour: hue -170, saturation 1.5, brightness 1.15 |
 | `monsters/wyrmling` | `Craftpix avatars Transperent/con29.png` | close | `src/assets/monsters/craftpix-con29.png` | red fire-breathing dragon, not black |
 | `monsters/ashseer` | `free_sample/op36.jpg` | placeholder | `src/assets/monsters/tint-ashseer.jpg` | grey hooded figure, mouth wrapped rather than eyes. Recolour: saturation 0.25, brightness 1.15 |
 | `monsters/sunpriest` | `free_sample/moooob27.jpg` | placeholder | `src/assets/monsters/tint-sunpriest.jpg` | gold wash over a stern face; no sun disc. Recolour: tint 235,175,60 |
-| `monsters/azhar` | `Craftpix avatars Transperent/con14.png` | placeholder | `src/assets/monsters/tint-azhar.png` | golden-orange beaked head; no flame wings. Recolour: hue -25, saturation 1.6, brightness 1.1 |
+| `monsters/azhar` | `Craftpix avatars Transperent/con32.png` | close | `src/assets/monsters/tint-azhar.png` | fiery orange raptor's head; no full wings, same base as `vulture`. Recolour: linear 1.6/50, saturation 1.1, tint 255,120,30 |
 | `uniques/sunmane_pelt` | `gear sets/set-52-body.png` | close | `src/assets/items/armor/set-52-body.png` | fur-trimmed gold-brown coat; fur is not orange |
 | `uniques/mirage_veil` | `gear sets/set-45-helmet.png` | close | `src/assets/items/armor/set-45-helmet.png` | dark hood with a cloth across the face |
 | `uniques/khans_tithe` | `game-icons.net diamond-ring.svg` | close | `src/assets/items/jewelry/gi-diamond-ring.svg` | silhouette tinted gold |
 | `uniques/kurgan_crown` | `gear sets/set-58-helmet.png` | close | `src/assets/items/armor/set-58-helmet.png` | bronze circlet with cowl; no horse heads |
 | `uniques/stormrider_greaves` | `gear sets/set-37-legs.png` | close | `src/assets/items/armor/set-37-legs.png` | dark boots with violet trim; no feathers |
 | `uniques/pyre_heart` | `game-icons.net heart-necklace.svg` | close | `src/assets/items/jewelry/gi-heart-necklace.svg` | heart pendant tinted ember orange; no flame |
+
+## Item art added 2026-10-31
+
+The owner's new packs fill most of the weapon and shield bases, which had no art before. 112 slots use them: 16 replace older art and 96 are new to this report. Pixel art is enlarged by whole numbers only (32px icons ×2, shields ×3), so it stays sharp in 64px item slots. Recolours follow the `tint-<id>` rule.
+
+**Sources:** the RPG Weapons art comes from the Aseprite file's `Itens` layer. Its other layers hold the card backgrounds, stat glyphs and the credit text, so none of those reach the game. `RPG_Weapons.png` (pasted image 2) has that credit in its bottom-left cell: "RPG Weapons by quintino_pixels", in near-white on white. Each piece is named after its place on the sheet (`q1` to `q40`, left to right, top to bottom; `q5` to `q8` are single daggers from the first two pairs).
+
+**Bases still with no art (34):**
+
+- axes (5): felling_axe, butcher_axe, ravager_axe, dragonbone_axe, slayer_axe
+- maces (6): flanged_mace, morning_star, champion_flail, sunforged_hammer, colossus_maul, titan_flail
+- bows (5): composite_bow, bonehunter_bow, gryphon_longbow, stagheart_bow, wildlord_greatbow
+- sceptres (9): iron_sceptre, inquisitor_sceptre, paladin_sceptre, zealot_sceptre, hallowed_sceptre, archon_sceptre, exarch_sceptre, sanctum_sceptre, empyrean_sceptre
+- wands (9): bone_wand, quartz_wand, stargazer_wand, raven_wand, hierophant_wand, seraph_wand, oracle_wand, astral_wand, celestial_wand
+
+Catalone's unused weapons are the first place to look for these.
+
+**Not used:** the keys, map scroll, quill and curios in the 32-icon set have no slot outside Heist and Thieving. The four RPG Weapons spears have no weapon family. The other 16 cells of the pasted sheet have no empty sword or dagger slot left, so they suit future uniques.
+
+| Game asset ID | Source file | Confidence | Final destination | Notes |
+|---|---|---|---|---|
+| `items/steel_longsword` | `RPG_Weapons.aseprite, Itens layer, q1` | close | `src/assets/items/weapons/quintino-q1.png` | plain steel longsword |
+| `items/gladiator_sword` | `RPG_Weapons.aseprite, Itens layer, q2` | close | `src/assets/items/weapons/quintino-q2.png` | broad blade, gem in the guard |
+| `items/warbringer_sword` | `RPG_Weapons.aseprite, Itens layer, q3` | close | `src/assets/items/weapons/quintino-q3.png` | heavy notched cleaver |
+| `items/skinning_knife` | `RPG_Weapons.aseprite, Itens layer, q5` | close | `src/assets/items/weapons/quintino-q5.png` | short plain blade |
+| `items/stiletto` | `RPG_Weapons.aseprite, Itens layer, q6` | close | `src/assets/items/weapons/quintino-q6.png` | narrow steel blade |
+| `items/eclipse_dirk` | `RPG_Weapons.aseprite, Itens layer, q7` | close | `src/assets/items/weapons/quintino-q7.png` | pale blade, gold and green guard |
+| `items/wraith_blade` | `RPG_Weapons.aseprite, Itens layer, q8` | close | `src/assets/items/weapons/quintino-q8.png` | pale steel dirk |
+| `items/hunting_bow` | `RPG_Weapons.aseprite, Itens layer, q12` | close | `src/assets/items/weapons/quintino-q12.png` | plain curved bow |
+| `items/hawkfeather_bow` | `RPG_Weapons.aseprite, Itens layer, q13` | close | `src/assets/items/weapons/quintino-q13.png` | bow with feathers at the tip |
+| `items/thornwarden_longbow` | `RPG_Weapons.aseprite, Itens layer, q14` | close | `src/assets/items/weapons/quintino-q14.png` | dark bow with green leaves |
+| `items/manticore_greatbow` | `RPG_Weapons.aseprite, Itens layer, q15` | close | `src/assets/items/weapons/quintino-q15.png` | gold bow with burning tips |
+| `items/war_hammer` | `RPG_Weapons.aseprite, Itens layer, q16` | close | `src/assets/items/weapons/quintino-q16.png` | square iron hammer head |
+| `items/warlord_mace` | `RPG_Weapons.aseprite, Itens layer, q17` | close | `src/assets/items/weapons/quintino-q17.png` | steel hammer with a blue gem |
+| `items/dreadsteel_hammer` | `RPG_Weapons.aseprite, Itens layer, q18` | close | `src/assets/items/weapons/quintino-q18.png` | dark banded hammer with a spike |
+| `items/godforged_hammer` | `RPG_Weapons.aseprite, Itens layer, q19` | close | `src/assets/items/weapons/quintino-q19.png` | green crystal hammer in gold |
+| `items/banded_shield` | `RPG_Weapons.aseprite, Itens layer, q20` | close | `src/assets/items/armor/quintino-q20.png` | round wood shield with iron bands |
+| `items/wyrmscale_shield` | `RPG_Weapons.aseprite, Itens layer, q21` | close | `src/assets/items/armor/quintino-q21.png` | red shield with a dragon emblem |
+| `items/templar_kite_shield` | `RPG_Weapons.aseprite, Itens layer, q22` | close | `src/assets/items/armor/quintino-q22.png` | blue kite with a sword emblem |
+| `items/godforged_tower_shield` | `RPG_Weapons.aseprite, Itens layer, q23` | close | `src/assets/items/armor/quintino-q23.png` | tall steel and orange tower shield with gems |
+| `items/oak_quarterstaff` | `RPG_Weapons.aseprite, Itens layer, q28` | close | `src/assets/items/weapons/quintino-q28.png` | crook staff with a blue grip |
+| `items/gnarled_staff` | `RPG_Weapons.aseprite, Itens layer, q29` | close | `src/assets/items/weapons/quintino-q29.png` | twisted brown staff |
+| `items/astral_staff` | `RPG_Weapons.aseprite, Itens layer, q30` | close | `src/assets/items/weapons/quintino-q30.png` | pale staff with green sparks |
+| `items/raven_staff` | `RPG_Weapons.aseprite, Itens layer, q32` | close | `src/assets/items/weapons/quintino-q32.png` | black and crimson staff |
+| `items/seraph_staff` | `RPG_Weapons.aseprite, Itens layer, q33` | close | `src/assets/items/weapons/quintino-q33.png` | winged staff with an orb |
+| `items/storm_staff` | `RPG_Weapons.aseprite, Itens layer, q34` | close | `src/assets/items/weapons/quintino-q34.png` | blue twisted staff with ice-like crest |
+| `items/stargazer_staff` | `RPG_Weapons.aseprite, Itens layer, q35` | close | `src/assets/items/weapons/quintino-q35.png` | thin staff with a green star |
+| `items/celestial_staff` | `RPG_Weapons.aseprite, Itens layer, q36` | close | `src/assets/items/weapons/quintino-q36.png` | green vine staff |
+| `items/double_axe` | `RPG_Weapons.aseprite, Itens layer, q37` | close | `src/assets/items/weapons/quintino-q37.png` | plain double-headed axe |
+| `items/headsman_axe` | `RPG_Weapons.aseprite, Itens layer, q38` | close | `src/assets/items/weapons/quintino-q38.png` | dark broad axe |
+| `items/warbringer_axe` | `RPG_Weapons.aseprite, Itens layer, q39` | close | `src/assets/items/weapons/quintino-q39.png` | gold and orange double axe |
+| `items/wyrmlord_greataxe` | `RPG_Weapons.aseprite, Itens layer, q40` | close | `src/assets/items/weapons/quintino-q40.png` | red flame-edged axe |
+| `items/corsair_cutlass` | `pasted sheet 1, cell 29` | close | `src/assets/items/weapons/weapons30-29.png` | plain curved cutlass |
+| `items/bladedancer_sabre` | `pasted sheet 1, cell 23` | close | `src/assets/items/weapons/weapons30-23.png` | slim sabre with a gold guard |
+| `items/dragonfang_sword` | `pasted sheet 1, cell 1` | close | `src/assets/items/weapons/weapons30-1.png` | curved blade in flames |
+| `items/slayer_sabre` | `pasted sheet 1, cell 24` | close | `src/assets/items/weapons/weapons30-24.png` | dark curved blade with molten lines |
+| `items/wyrmlord_sword` | `pasted sheet 1, cell 5` | close | `src/assets/items/weapons/weapons30-5.png` | burning blade with embers |
+| `items/nightshade_dirk` | `pasted sheet 1, cell 10` | close | `src/assets/items/weapons/weapons30-10.png` | thin blade with a thorn vine |
+| `items/umbral_dagger` | `pasted sheet 1, cell 14` | close | `src/assets/items/weapons/weapons30-14.png` | thin dark blade |
+| `items/voidfang_dagger` | `pasted sheet 1, cell 16` | close | `src/assets/items/weapons/weapons30-16.png` | dark blade with purple sparks |
+| `items/oblivion_fang` | `pasted sheet 1, cell 30` | close | `src/assets/items/weapons/weapons30-30.png` | black blade with gold marks |
+| `items/abyssal_kris` | `pasted sheet 1, cell 27` | close | `src/assets/items/weapons/weapons30-27.png` | two thin blades with red shards |
+| `uniques/rebuttal` | `pasted sheet 1, cell 4` | close | `src/assets/items/weapons/weapons30-4.png` | two crossed blades with glints |
+| `items/heater_shield` | `SnoopethDuckDuck Pack 3/1px/5.png` | close | `src/assets/items/armor/snoopeth-p3-5.png` | grey and bronze heater |
+| `items/warlord_pavise` | `SnoopethDuckDuck Pack 1/1px/1.png` | close | `src/assets/items/armor/snoopeth-p1-1.png` | tall blue and gold shield |
+| `items/dreadsteel_tower` | `SnoopethDuckDuck Pack 1/1px/18.png` | close | `src/assets/items/armor/snoopeth-p1-18.png` | grey steel shield |
+| `items/champion_aegis` | `SnoopethDuckDuck Pack 1/1px/25.png` | close | `src/assets/items/armor/snoopeth-p1-25.png` | radiant gold crest |
+| `items/sunforged_bulwark` | `SnoopethDuckDuck Pack 1/1px/32b.png` | close | `src/assets/items/armor/snoopeth-p1-32b.png` | gold and orange shield |
+| `items/colossus_bulwark` | `SnoopethDuckDuck Pack 2/1px/24.png` | close | `src/assets/items/armor/snoopeth-p2-24.png` | heavy bronze shield |
+| `items/titan_aegis` | `SnoopethDuckDuck Pack 2/1px/21.png` | close | `src/assets/items/armor/snoopeth-p2-21.png` | bronze shield with a raised rib |
+| `items/hide_targe` | `SnoopethDuckDuck Pack 3/1px/2.png` | close | `src/assets/items/armor/snoopeth-p3-2.png` | tan and orange frame |
+| `items/wolfpelt_targe` | `SnoopethDuckDuck Pack 2/1px/22.png` | close | `src/assets/items/armor/snoopeth-p2-22.png` | brown ribbed targe with green trim |
+| `items/spiked_buckler` | `SnoopethDuckDuck Pack 1/1px/24.png` | close | `src/assets/items/armor/snoopeth-p1-24.png` | spiky silver crest |
+| `items/bonehunter_buckler` | `SnoopethDuckDuck Pack 2/1px/29.png` | close | `src/assets/items/armor/snoopeth-p2-29.png` | grey-white ring of bones |
+| `items/hawkfeather_buckler` | `SnoopethDuckDuck Pack 1/1px/17.png` | close | `src/assets/items/armor/snoopeth-p1-17.png` | gold winged crest |
+| `items/thornwarden_targe` | `SnoopethDuckDuck Pack 2/1px/14.png` | close | `src/assets/items/armor/snoopeth-p2-14.png` | green vine lattice |
+| `items/manticore_buckler` | `SnoopethDuckDuck Pack 1/1px/23.png` | close | `src/assets/items/armor/snoopeth-p1-23.png` | spiked orange crest |
+| `items/gryphon_targe` | `SnoopethDuckDuck Pack 2/1px/10.png` | close | `src/assets/items/armor/snoopeth-p2-10.png` | gold and violet winged crest |
+| `items/stagheart_buckler` | `SnoopethDuckDuck Pack 2/1px/17.png` | close | `src/assets/items/armor/snoopeth-p2-17.png` | brown crest with antlers |
+| `items/wildlord_targe` | `SnoopethDuckDuck Pack 1/1px/22.png` | close | `src/assets/items/armor/snoopeth-p1-22.png` | green and white crest |
+| `items/slayer_buckler` | `SnoopethDuckDuck Pack 1/1px/31.png` | close | `src/assets/items/armor/snoopeth-p1-31.png` | crimson spiked crest |
+| `items/wayfarer_buckler` | `SnoopethDuckDuck Pack 2/1px/31.png` | close | `src/assets/items/armor/snoopeth-p2-31.png` | round green buckler |
+| `items/gladiator_buckler` | `SnoopethDuckDuck Pack 1/1px/10.png` | close | `src/assets/items/armor/snoopeth-p1-10.png` | orange round buckler |
+| `items/bone_spirit_shield` | `SnoopethDuckDuck Pack 2/1px/27.png` | close | `src/assets/items/armor/snoopeth-p2-27.png` | white orb in a pale frame |
+| `items/magus_ward` | `SnoopethDuckDuck Pack 1/1px/2.png` | close | `src/assets/items/armor/snoopeth-p1-2.png` | blue round ward |
+| `items/stargazer_ward` | `SnoopethDuckDuck Pack 1/1px/21.png` | close | `src/assets/items/armor/snoopeth-p1-21.png` | blue lattice orb |
+| `items/raven_spirit_shield` | `SnoopethDuckDuck Pack 2/1px/8.png` | close | `src/assets/items/armor/snoopeth-p2-8.png` | dark crimson ward |
+| `items/hierophant_ward` | `SnoopethDuckDuck Pack 1/1px/26.png` | close | `src/assets/items/armor/snoopeth-p1-26.png` | blue and white ward |
+| `items/seraph_ward` | `SnoopethDuckDuck Pack 1/1px/30.png` | close | `src/assets/items/armor/snoopeth-p1-30.png` | white and blue winged ward |
+| `items/oracle_ward` | `SnoopethDuckDuck Pack 2/1px/15.png` | close | `src/assets/items/armor/snoopeth-p2-15.png` | blue lattice |
+| `items/astral_spirit_shield` | `SnoopethDuckDuck Pack 2/1px/6.png` | close | `src/assets/items/armor/snoopeth-p2-6.png` | blue grid ward |
+| `items/celestial_ward` | `SnoopethDuckDuck Pack 2/1px/5.png` | close | `src/assets/items/armor/snoopeth-p2-5.png` | gold and blue gem crest |
+| `items/studded_round_shield` | `SnoopethDuckDuck Pack 2/1px/4.png` | close | `src/assets/items/armor/snoopeth-p2-4.png` | gold rings on orange |
+| `items/corsair_shield` | `SnoopethDuckDuck Pack 2/1px/30.png` | close | `src/assets/items/armor/snoopeth-p2-30.png` | grey and green round shield |
+| `items/bladedancer_shield` | `SnoopethDuckDuck Pack 1/1px/20.png` | close | `src/assets/items/armor/snoopeth-p1-20.png` | crossed blades crest |
+| `items/dragonscale_shield` | `SnoopethDuckDuck Pack 1/1px/15.png` | close | `src/assets/items/armor/snoopeth-p1-15.png` | red and gold shield |
+| `items/warbringer_shield` | `SnoopethDuckDuck Pack 3/1px/14.png` | close | `src/assets/items/armor/snoopeth-p3-14.png` | red and bronze shield |
+| `items/chaplain_shield` | `SnoopethDuckDuck Pack 1/1px/8.png` | close | `src/assets/items/armor/snoopeth-p1-8.png` | silver and blue diamond |
+| `items/paladin_shield` | `SnoopethDuckDuck Pack 2/1px/20.png` | close | `src/assets/items/armor/snoopeth-p2-20.png` | gold cross on blue |
+| `items/zealot_aegis` | `SnoopethDuckDuck Pack 1/1px/27.png` | close | `src/assets/items/armor/snoopeth-p1-27.png` | gold wings on dark |
+| `items/hallowed_shield` | `SnoopethDuckDuck Pack 2/1px/23.png` | close | `src/assets/items/armor/snoopeth-p2-23.png` | gold ring lattice |
+| `items/archon_aegis` | `SnoopethDuckDuck Pack 1/1px/29.png` | close | `src/assets/items/armor/snoopeth-p1-29.png` | blue and bronze tall shield |
+| `items/exarch_aegis` | `SnoopethDuckDuck Pack 1/1px/7.png` | close | `src/assets/items/armor/snoopeth-p1-7.png` | blue and gold round crest |
+| `items/sanctum_shield` | `SnoopethDuckDuck Pack 3/1px/9.png` | close | `src/assets/items/armor/snoopeth-p3-9.png` | blue and gold tall shield |
+| `items/empyrean_aegis` | `SnoopethDuckDuck Pack 2/1px/3.png` | close | `src/assets/items/armor/snoopeth-p2-3.png` | crimson and gold crest |
+| `items/duskweave_ward` | `SnoopethDuckDuck Pack 2/1px/13.png` | close | `src/assets/items/armor/snoopeth-p2-13.png` | purple heart-shaped ward |
+| `items/nightshade_ward` | `SnoopethDuckDuck Pack 1/1px/19.png` | close | `src/assets/items/armor/snoopeth-p1-19.png` | violet thorned crest |
+| `items/wraith_shield` | `SnoopethDuckDuck Pack 2/1px/19.png` | close | `src/assets/items/armor/snoopeth-p2-19.png` | grey ward with a pale gem |
+| `items/umbral_ward` | `SnoopethDuckDuck Pack 2/1px/2.png` | close | `src/assets/items/armor/snoopeth-p2-2.png` | dim blue ward |
+| `items/voidwalker_ward` | `SnoopethDuckDuck Pack 1/1px/28.png` | close | `src/assets/items/armor/snoopeth-p1-28.png` | violet and gold crest |
+| `items/eclipse_ward` | `SnoopethDuckDuck Pack 2/1px/32.png` | close | `src/assets/items/armor/snoopeth-p2-32.png` | dark ring with red arcs |
+| `items/abyssal_shield` | `SnoopethDuckDuck Pack 3/1px/13.png` | close | `src/assets/items/armor/snoopeth-p3-13.png` | dark blue and violet shield |
+| `items/oblivion_ward` | `SnoopethDuckDuck Pack 2/1px/12.png` | close | `src/assets/items/armor/snoopeth-p2-12.png` | black and white crest |
+| `uniques/gulls_eye` | `32 icons pack/icon29.png` | close | `src/assets/items/jewelry/icons32-29.png` | single orange eye |
+| `materials/message_bottle` | `32 icons pack/icon16.png` | close | `src/assets/items/materials/icons32-16.png` | small corked bottle |
+| `materials/tasalio_scale` | `32 icons pack/icon30.png` | close | `src/assets/items/materials/icons32-30.png` | teal shell plate |
+| `items/wyrmlord_shield` | `SnoopethDuckDuck Pack 2/1px/1.png` | close | `src/assets/items/armor/snoopeth-p2-1.png` | orange-red crest shaped like a beast |
 
 ## Mapping (first 187 slots)
 
@@ -218,7 +347,7 @@ All 40 Act 2 monsters and bosses now have their own picture, and no two share on
 | `currency/divine` | `SanguineNite 64/holy-flare.png` | placeholder | `src/assets/items/currency/sn-holy-flare.png` | first-pass stand-in |
 | `currency/regret` | `SanguineNite 64/verdant-cycle.png` | close | `src/assets/items/currency/sn-verdant-cycle.png` | green spiral |
 | `currency/expansion` | `SanguineNite 64/void-lance.png` | placeholder | `src/assets/items/currency/sn-void-lance.png` | first-pass stand-in |
-| `currency/instill` | `SanguineNite 64/fire-barrier.png` | placeholder | `src/assets/items/currency/sn-fire-barrier.png` | first-pass stand-in |
+| `currency/instill` | `32 icons pack/icon20.png` | close | `src/assets/items/currency/icons32-20.png` | orange orb with a glint |
 | `materials/gold` | `Woshi 64/gold_coin.png` | close | `src/assets/items/materials/woshi-gold_coin.png` | one coin rather than a stack |
 | `materials/copper_ore` | `Woshi 64/copper_ore.png` | exact | `src/assets/items/materials/woshi-copper_ore.png` |  |
 | `materials/iron_ore` | `CodeSpree rpg-items-all/hematite.png` | close | `src/assets/items/materials/codespree-hematite.png` | hematite: rusty red-grey ore, matches the description better than Woshi |
@@ -228,22 +357,22 @@ All 40 Act 2 monsters and bosses now have their own picture, and no two share on
 | `materials/oak_log` | `CodeSpree rpg-items-all/cedar log.png` | close | `src/assets/items/materials/codespree-cedar-log.png` | dark brown bark, ringed end |
 | `materials/yew_log` | `CodeSpree rpg-items-all/red pine log.png` | close | `src/assets/items/materials/codespree-red-pine-log.png` | reddish bark; cut end is pale |
 | `materials/sunpetal` | `CodeSpree rpg-items-all/fritillaria.png` | placeholder | `src/assets/items/materials/codespree-fritillaria.png` | orange flowering plant, not a single yellow flower |
-| `materials/frostleaf` | `Grounded Medieval Remedies 64x64/sage_bundle.png` | placeholder | `src/assets/items/materials/remedies-sage-bundle.png` | bundle of pale sage leaves |
+| `materials/frostleaf` | `32 icons pack/icon21.png` | close | `src/assets/items/materials/tint-frostleaf.png` | pale blue leaf. Recolour: hue 80, saturation 0.6, brightness 1.15 |
 | `materials/emberroot` | `CodeSpree rpg-items-all/heartroot.png` | placeholder | `src/assets/items/materials/codespree-heartroot.png` | red bulbous root; no glow |
 | `materials/voidbloom` | `CodeSpree rpg-items-all/rose.png` | placeholder | `src/assets/items/materials/codespree-rose.png` | dark red roses, not purple |
 | `materials/arcane_dust` | `CodeSpree rpg-items-all/character powder.png` | close | `src/assets/items/materials/codespree-character-powder.png` | pink-purple powder heap |
 | `flasks/life_small` | `Woshi 64/potion_health.png` | close | `src/assets/items/flasks/woshi-potion_health.png` | charge meter overlaid |
-| `flasks/life_medium` | `Kibyra UI pack (already in repo): items/consumables/potion-red.png` | close | `src/assets/items/consumables/potion-red.png` | Kibyra red potion |
-| `flasks/life_grand` | `Kibyra UI pack (already in repo): items/consumables/potion-red-shelf.png` | placeholder | `src/assets/items/consumables/potion-red-shelf.png` | Kibyra red potion on a stand |
+| `flasks/life_medium` | `32 icons pack/icon1.png` | close | `src/assets/items/flasks/tint-life_medium.png` | round red flask with a cork. Recolour: hue 15 |
+| `flasks/life_grand` | `32 icons pack/icon2.png` | close | `src/assets/items/flasks/tint-life_grand.png` | large red jar, not tall. Recolour: hue 15 |
 | `flasks/mana_small` | `Woshi 64/potion_mana.png` | close | `src/assets/items/flasks/woshi-potion_mana.png` | charge meter overlaid |
 | `flasks/mana_medium` | `Kibyra UI pack (already in repo): items/consumables/potion-blue.png` | close | `src/assets/items/consumables/potion-blue.png` | Kibyra blue potion |
 | `flasks/granite` | `Kibyra UI pack (already in repo): ui/decorations/bottle-grey.png` | close | `src/assets/ui/decorations/bottle-grey.png` | Kibyra grey bottle |
 | `flasks/quicksilver` | `CodeSpree rpg-items-all/vial mercury.png` | close | `src/assets/items/flasks/codespree-vial-mercury.png` | glass vial of mercury |
-| `flasks/diamond` | `CodeSpree rpg-items-all/glass vial.png` | placeholder | `src/assets/items/flasks/codespree-glass-vial.png` | plain clear vial |
-| `flasks/ruby` | `Grounded Medieval Remedies 64x64/willow_bark_decoction.png` | placeholder | `src/assets/items/flasks/remedies-willow-bark-decoction.png` | dark red round bottle, photoreal |
-| `items/rusted_sword` | `Catalone weapon_split/4_part_002.png` | placeholder | `src/assets/items/weapons/catalone-w4-002.png` | worn jagged dark blade; not rusty |
+| `flasks/diamond` | `32 icons pack/icon6.png` | close | `src/assets/items/flasks/tint-diamond.png` | clear faceted crystal bottle. Recolour: saturation 0.08, brightness 1.35 |
+| `flasks/ruby` | `32 icons pack/icon6.png` | close | `src/assets/items/flasks/tint-ruby.png` | red faceted crystal bottle. Recolour: hue 40, saturation 1 |
+| `items/rusted_sword` | `pasted sheet 1, cell 18` | placeholder | `src/assets/items/weapons/weapons30-18.png` | dull mossy blade with a wrapped grip; closer to worn than rusty |
 | `items/whittled_dagger` | `Kibyra UI pack (already in repo): items/weapons/dagger.png` | close | `src/assets/items/weapons/dagger.png` | Kibyra dagger: iron blade, wooden grip; brighter style |
-| `items/driftwood_wand` | `CodeSpree rpg-items-all/stick.png` | placeholder | `src/assets/items/weapons/codespree-stick.png` | wooden stick |
+| `items/driftwood_wand` | `pasted sheet 1, cell 26` | close | `src/assets/items/weapons/weapons30-26.png` | tapered brown wood with a pink tuft |
 | `items/iron_blade` | `Catalone weapon_split/7_part_014.png` | close | `src/assets/items/weapons/catalone-w7-014.png` | plain straight longsword; dark blade, gold guard |
 | `items/glinting_dagger` | `Catalone weapon_split/5_part_004.png` | close | `src/assets/items/weapons/catalone-w5-004.png` | small steel dagger; small red gem in guard |
 | `items/war_axe` | `Catalone weapon_split/3_part_015.png` | close | `src/assets/items/weapons/catalone-w3-015.png` | one-handed axe, dark iron head, wooden haft |
@@ -252,7 +381,7 @@ All 40 Act 2 monsters and bosses now have their own picture, and no two share on
 | `items/plank_shield` | `Kibyra UI pack (already in repo): ui/decorations/shield-round-wood.png` | placeholder | `src/assets/ui/decorations/shield-round-wood.png` | Kibyra round wooden shield; round, not planks |
 | `items/buckler` | `Catalone shield_split/10_part_004.png` | close | `src/assets/items/armor/catalone-s10-004.png` | small round wood shield, iron rim and boss |
 | `items/kite_shield` | `Catalone shield_split/4_part_009.png` | placeholder | `src/assets/items/armor/catalone-s4-009.png` | kite with an emblem |
-| `items/tower_shield` | `Catalone shield_split/8_part_005.png` | placeholder | `src/assets/items/armor/catalone-s8-005.png` | silver heater with a gem; not rectangular |
+| `items/tower_shield` | `RPG_Weapons.aseprite, Itens layer, q23` | close | `src/assets/items/armor/tint-tower-shield.png` | tall silver-blue tower shield. Recolour: hue 180, saturation 0.7 |
 | `items/iron_hat` | `gear sets/set-85-helmet.png` | close | `src/assets/items/armor/set-85-helmet.png` | gear set, integrated before these packs |
 | `items/leather_cap` | `gear sets/set-64-helmet.png` | close | `src/assets/items/armor/set-64-helmet.png` | gear set, integrated before these packs |
 | `items/soldier_helm` | `gear sets/set-44-helmet.png` | close | `src/assets/items/armor/set-44-helmet.png` | gear set, integrated before these packs |
@@ -280,18 +409,18 @@ All 40 Act 2 monsters and bosses now have their own picture, and no two share on
 | `items/amber_amulet` | `game-icons.net intricate-necklace.svg` | close | `src/assets/items/jewelry/gi-intricate-necklace.svg` | silhouette tinted amber |
 | `items/jade_amulet` | `game-icons.net emerald-necklace.svg` | close | `src/assets/items/jewelry/gi-emerald-necklace.svg` | silhouette tinted jade green |
 | `items/onyx_amulet` | `game-icons.net gem-necklace.svg` | close | `src/assets/items/jewelry/gi-gem-necklace.svg` | silhouette tinted onyx grey-violet |
-| `items/iron_ring` | `game-icons.net ring.svg` | close | `src/assets/items/jewelry/gi-ring.svg` | silhouette tinted iron grey |
-| `items/ruby_ring` | `game-icons.net fire-ring.svg` | close | `src/assets/items/jewelry/gi-fire-ring.svg` | silhouette tinted ruby red |
-| `items/sapphire_ring` | `game-icons.net frozen-ring.svg` | close | `src/assets/items/jewelry/gi-frozen-ring.svg` | silhouette tinted sapphire blue |
-| `items/topaz_ring` | `game-icons.net big-frozen-ring.svg` | close | `src/assets/items/jewelry/gi-big-frozen-ring.svg` | silhouette tinted topaz yellow |
-| `items/diamond_ring` | `game-icons.net power-ring.svg` | close | `src/assets/items/jewelry/gi-power-ring.svg` | silhouette tinted pale diamond |
+| `items/iron_ring` | `32 icons pack/icon27.png` | close | `src/assets/items/jewelry/tint-iron_ring.png` | plain dark band with a dull stone. Recolour: saturation 0.2 |
+| `items/ruby_ring` | `32 icons pack/icon26.png` | close | `src/assets/items/jewelry/tint-ruby_ring.png` | dark band, red stone. Recolour: hue 15, saturation 1.1 |
+| `items/sapphire_ring` | `32 icons pack/icon26.png` | close | `src/assets/items/jewelry/tint-sapphire_ring.png` | dark band, blue stone. Recolour: hue 240, saturation 1 |
+| `items/topaz_ring` | `32 icons pack/icon26.png` | close | `src/assets/items/jewelry/tint-topaz_ring.png` | dark band, yellow stone. Recolour: hue 70, saturation 1 |
+| `items/diamond_ring` | `32 icons pack/icon26.png` | close | `src/assets/items/jewelry/tint-diamond_ring.png` | pale band and clear stone. Recolour: saturation 0.08, brightness 1.35 |
 | `uniques/miners_lament` | `gear sets/set-55-helmet.png` | placeholder | `src/assets/items/armor/set-55-helmet.png` | plain iron helmet; no lantern |
 | `uniques/bloodthirst` | `Catalone weapon_split/2_part_008.png` | close | `src/assets/items/weapons/catalone-w2-008.png` | short sword with a red streak down the blade |
 | `uniques/emberheart` | `gear sets/set-10-body.png` | close | `src/assets/items/armor/set-10-body.png` | gold breastplate with an orange stone in the chest |
 | `uniques/windstep` | `gear sets/set-04-legs.png` | placeholder | `src/assets/items/armor/set-04-legs.png` | brown fur-trimmed boots; no feathers |
-| `uniques/alchemists_band` | `game-icons.net swirl-ring.svg` | close | `src/assets/items/jewelry/gi-swirl-ring.svg` | silhouette tinted green |
+| `uniques/alchemists_band` | `32 icons pack/icon25.png` | close | `src/assets/items/jewelry/icons32-25.png` | ring with a green stone; not a vial |
 | `uniques/iron_bulwark` | `Catalone shield_split/9_part_005.png` | placeholder | `src/assets/items/armor/catalone-s9-005.png` | studded iron kite with red gem |
-| `uniques/starforged_edge` | `Catalone weapon_split/9_part_010.png` | placeholder | `src/assets/items/weapons/catalone-w9-010.png` | dark straight blade with violet vein |
+| `uniques/starforged_edge` | `pasted sheet 1, cell 6` | close | `src/assets/items/weapons/weapons30-6.png` | dark curved blade with blue star glints |
 | `uniques/titans_girth` | `gear sets/set-63-belt.png` | placeholder | `src/assets/items/armor/set-63-belt.png` | same art as its Heavy Belt base |
 | `gems/heavy_strike` | `SanguineNite 64/dragons-might.png` | placeholder | `src/assets/icons/gems/sn-dragons-might.png` | first-pass stand-in |
 | `gems/ground_slam` | `SanguineNite 64/earth-spike.png` | close | `src/assets/icons/gems/sn-earth-spike.png` | ground eruption |
