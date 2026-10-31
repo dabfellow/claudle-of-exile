@@ -1,5 +1,5 @@
 import { BASES, type BaseDef } from '../data/bases';
-import { ACTIVE_GEMS, activeGemDef, gemReqLevel, SUPPORT_GEMS, supportGemDef } from '../data/gems';
+import { ACTIVE_GEMS, activeGemDef, gemAct, gemReqLevel, SUPPORT_GEMS, supportGemDef } from '../data/gems';
 import { SHOP_REFRESH_MIN, SHOP_SLOTS, stationDef, type StationId } from '../data/hideout';
 import { currencyDef } from '../data/materials';
 import { actBossZone } from '../data/zones';
@@ -9,7 +9,8 @@ import type { Ctx } from './context';
 import { flaskName, flaskValue, rollFlask, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { addRandomMod, createItem, itemName, modCount, sellValue } from './items';
-import { pick, rInt, type Rng } from './rng';
+import { gemArrived, reachedAct } from './progress';
+import { pick, pickWeighted, rInt, type Rng } from './rng';
 import type { GameState, Item, Rarity, VendorOffer } from './types';
 import { characterLevel } from './character';
 import { bagFull, takeOwned } from './storage';
@@ -17,6 +18,9 @@ import { bagFull, takeOwned } from './storage';
 export function stationLevel(s: GameState, id: StationId): number {
   return s.account.hideout[id] ?? 1;
 }
+
+/** How much likelier the Gem shop is to stock a gem from your furthest act than one from an earlier act. */
+const NEW_BATCH_STOCK = 3;
 
 /** Maps come after the campaign, PoE-style: the Map Device wakes once the last act's boss is beaten. */
 export const FINAL_ACT = 6;
@@ -121,15 +125,19 @@ export function refreshVendor(s: GameState, rng: Rng): void {
     const item = shopItem(s, rng, lvl, usable.filter((b) => !magicBase(b)), ilvl)!;
     add({ shop: 'armour', kind: 'item', item, price: shopItemPrice(item) });
   }
-  // Gem shop: skill and support gems you're high enough level to use; signatures from Town Market level 2
-  const skills = ACTIVE_GEMS.filter((g) => gemReqLevel(g.id) <= charLvl);
-  const supports = SUPPORT_GEMS.filter((g) => gemReqLevel(g.id) <= charLvl && (!g.signatureFor || lvl >= 2));
+  // Gem shop: skill and support gems that have arrived and you're high enough level to use; signatures from
+  // Town Market level 2. Your furthest act stocks heavier, so a new batch shows up instead of drowning in the old pool
+  const findable = (id: string) => gemReqLevel(id) <= charLvl && gemArrived(s, id);
+  const skills = ACTIVE_GEMS.filter((g) => findable(g.id));
+  const supports = SUPPORT_GEMS.filter((g) => findable(g.id) && (!g.signatureFor || lvl >= 2));
+  const fresh = reachedAct(s);
+  const stockWeight = (g: { id: string }) => (gemAct(g.id) === fresh ? NEW_BATCH_STOCK : 1);
   for (let i = 0; i < slots; i++) {
     if (rng.next() < 0.55 || !supports.length) {
-      const g = pick(rng, skills);
+      const g = pickWeighted(rng, skills, stockWeight)!;
       add({ shop: 'gems', kind: 'gem', gemId: g.id, price: 150 + gemReqLevel(g.id) * 60 });
     } else {
-      const g = pick(rng, supports);
+      const g = pickWeighted(rng, supports, stockWeight)!;
       add({ shop: 'gems', kind: 'support', supportId: g.id, price: (g.signatureFor ? 400 : 100) + gemReqLevel(g.id) * 50 });
     }
   }

@@ -12,7 +12,8 @@
 import { spawn } from 'node:child_process';
 import { baseDef } from '../src/data/bases';
 import { CLASSES, type ClassId } from '../src/data/classes';
-import { activeGemDef } from '../src/data/gems';
+import { activeGemDef, type GemTag } from '../src/data/gems';
+import { PLAYER_SPOT } from '../src/engine/battlefield';
 import { stationDef, type StationId } from '../src/data/hideout';
 import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { actionsFor, type SkillAction } from '../src/data/skills';
@@ -190,7 +191,7 @@ const DAMAGE_ROLES = new Set(['main', 'burst', 'area']);
 
 /**
  * Like a player who reads tooltips: the best guard and buff it owns, then its three strongest damage
- * skills (judged bare, so a fresh drop isn't blinded by the old gem's supports), each on its suggested rule;
+ * skills (judged bare, so a fresh drop isn't blinded by the old gem's supports) and a curse, each on its suggested rule;
  * then the strongest support in every socket, damage skills first.
  */
 function manageSkills(s: GameState) {
@@ -206,15 +207,23 @@ function manageSkills(s: GameState) {
   const role = (g: SkillGemInstance) => activeGemDef(g.gemId).role;
   const bare = (g: SkillGemInstance) => gemDps(d, { ...g, supports: g.supports.map(() => null) });
   const byLevel = (a: SkillGemInstance, b: SkillGemInstance) => b.level - a.level;
+  const tagged = (g: SkillGemInstance, tag: GemTag) => activeGemDef(g.gemId).tags.includes(tag);
   const pick = (r: string) => all.filter((g) => role(g) === r).sort(byLevel)[0];
-  const damage = all.filter((g) => DAMAGE_ROLES.has(role(g)) && bare(g) > 0).sort((a, b) => bare(b) - bare(a)).slice(0, 3);
+  const strongest = all.filter((g) => DAMAGE_ROLES.has(role(g)) && bare(g) > 0).sort((a, b) => bare(b) - bare(a));
+  // the strongest movement skill always comes along: it's the way out of Scorched earth
+  const mover = strongest.find((g) => tagged(g, 'movement'));
+  const damage = [...new Set([...(mover ? [mover] : []), ...strongest])].slice(0, 3);
   // casters keep a mana skill when their damage costs mana
-  const sustain = damage.some((g) => !activeGemDef(g.gemId).tags.includes('attack')) ? pick('sustain') : undefined;
+  const caster = damage.some((g) => !tagged(g, 'attack'));
+  const sustain = caster ? pick('sustain') : undefined;
+  // a buff the build can use (spell buffs do nothing for attackers), and the curse that suits its damage
+  const buff = all.filter((g) => role(g) === 'buff' && (caster || !tagged(g, 'spell'))).sort((a, b) => Number(tagged(b, 'spell')) - Number(tagged(a, 'spell')) || byLevel(a, b))[0];
+  const curse = all.find((g) => g.gemId === (caster ? 'elemental_weakness' : 'vulnerability')) ?? pick('curse');
   // instant damage skills don't use up the turn, so any free slot gets the strongest of them on top
   const instant = all
     .filter((g) => DAMAGE_ROLES.has(role(g)) && activeGemDef(g.gemId).timeMs === 0 && !damage.includes(g) && bare(g) > 0)
     .sort((a, b) => bare(b) - bare(a));
-  const want = [pick('guard'), pick('buff'), sustain, ...damage, ...instant].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
+  const want = [pick('guard'), buff, sustain, ...damage, curse, ...instant].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
 
   // put the bar together: anything leaving takes no supports with it
   const keep = new Set(want.map((g) => g.uid));
@@ -385,6 +394,11 @@ function hands(s: GameState, ctx: Ctx, d: Derived) {
     const low = (kind === 'life' && s.life < d.maxLife * 0.55) || (kind === 'mana' && (s.mana < d.maxMana * 0.35 || s.mana < Math.max(0, ...costs)));
     if (low || (kind === 'utility' && danger)) useFlask(s, ctx, i);
   });
+  // step out of what's under you by hand, without waiting on a rule
+  if (s.combat!.ground.some((g) => g.cell === PLAYER_SPOT)) {
+    const step = s.skillBar.findIndex((g, i) => g && activeGemDef(g.gemId).tags.includes('movement') && !s.combat!.cooldowns[i]);
+    if (step >= 0) queueSkill(s, step);
+  }
   if (casting) {
     const guard = s.skillBar.findIndex((g, i) => g && activeGemDef(g.gemId).role === 'guard' && !s.combat!.cooldowns[i]);
     if (guard >= 0) queueSkill(s, guard);

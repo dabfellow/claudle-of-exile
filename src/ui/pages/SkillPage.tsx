@@ -9,6 +9,8 @@ import { zoneDef } from '../../data/zones';
 import { actionBlocker, actionIntervalMs, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
+import { gemArrived } from '../../engine/progress';
+import type { GameState } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
 import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/common';
@@ -36,14 +38,14 @@ function outputName(id: string): string {
 }
 
 /** What a gemcutting recipe can produce, e.g. "Random support gem (1 of 24)". */
-function gemOutputText(gem: NonNullable<SkillAction['gem']>): string {
+function gemOutputText(s: GameState, gem: NonNullable<SkillAction['gem']>): string {
   if (gem.kind === 'signature') return 'Signature support for a skill you own';
-  const pool = gem.kind === 'skill' ? ACTIVE_GEMS : SUPPORT_GEMS.filter((g) => !g.signatureFor);
+  const pool = (gem.kind === 'skill' ? ACTIVE_GEMS : SUPPORT_GEMS.filter((g) => !g.signatureFor)).filter((g) => gemArrived(s, g.id));
   return `Random ${gem.kind} gem (1 of ${pool.length})`;
 }
 
 /** What an activity produces, as rows that line up with the ingredient list. */
-function OutputRows({ a }: { a: SkillAction }) {
+function OutputRows({ s, a }: { s: GameState; a: SkillAction }) {
   return (
     <ul className="ingredients outputs">
       {Object.entries(a.outputs ?? {}).map(([id, n]) => (
@@ -70,7 +72,7 @@ function OutputRows({ a }: { a: SkillAction }) {
       {a.gem && (
         <li>
           <GameIcon name="gemcutting" size={13} color={a.color} />
-          <span className="ing-name">{gemOutputText(a.gem)}</span>
+          <span className="ing-name">{gemOutputText(s, a.gem)}</span>
           <span className="ing-qty num">×1</span>
         </li>
       )}
@@ -186,7 +188,7 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
           )}
           <div className="action-section">
             <div className="io-label">Produces</div>
-            <OutputRows a={a} />
+            <OutputRows s={s} a={a} />
           </div>
           {a.inputs && (
             <div className="action-section">

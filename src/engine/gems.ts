@@ -283,6 +283,8 @@ export interface CombinedMods {
   repeatDamage: number;
   chains: number;
   durationPct: number;
+  cooldownPct: number;
+  curseEffect: number;
   specials: Set<string>;
 }
 
@@ -290,7 +292,7 @@ export function combineMods(list: SupportMods[]): CombinedMods {
   const out: CombinedMods = {
     moreDamage: 0, morePhys: 0, moreElem: 0, noElemental: false, extras: [], attackSpeed: 0, castSpeed: 0,
     manaMult: 1, critChance: 0, critMulti: 0, lifeLeech: 0, manaLeech: 0, repeats: 0, repeatDamage: 100,
-    chains: 0, durationPct: 0, specials: new Set(),
+    chains: 0, durationPct: 0, cooldownPct: 0, curseEffect: 0, specials: new Set(),
   };
   for (const m of list) {
     out.moreDamage += m.moreDamage ?? 0;
@@ -309,6 +311,8 @@ export function combineMods(list: SupportMods[]): CombinedMods {
     if (m.repeatDamage) out.repeatDamage = Math.min(out.repeatDamage, m.repeatDamage);
     out.chains += m.chains ?? 0;
     out.durationPct += m.durationPct ?? 0;
+    out.cooldownPct += m.cooldownPct ?? 0;
+    out.curseEffect += m.curseEffect ?? 0;
     if (m.special) out.specials.add(m.special);
   }
   return out;
@@ -352,7 +356,7 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
     mods,
     manaCost: Math.max(0, manaCost),
     // nothing — stats, keystones, resets — ever takes a cooldown below the minimum
-    cooldownMs: r.overclock ? MIN_COOLDOWN_MS : Math.max(MIN_COOLDOWN_MS, def.cooldownMs / cooldownSpeed),
+    cooldownMs: r.overclock ? MIN_COOLDOWN_MS : Math.max(MIN_COOLDOWN_MS, (def.cooldownMs * (1 - mods.cooldownPct / 100)) / cooldownSpeed),
     actionMs,
     durationMult: (1 + mods.durationPct / 100) * (1 + (r.skillDuration + (isGuard ? r.guardDuration : 0)) / 100),
   };

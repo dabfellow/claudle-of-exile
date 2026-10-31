@@ -244,7 +244,7 @@ export function advanceMonsters(monsters: MonsterInstance[], dt: number, hazards
   const walkers = monsters.filter((m) => m.life > 0 && !m.dead && walking(m)).sort((a, b) => cellRing(a.cell) - cellRing(b.cell));
   for (const m of walkers) {
     if (m.stunMs > 0 || m.frozenMs > 0) continue;
-    m.stepMs -= m.chillMs > 0 ? dt / 2 : dt;
+    m.stepMs -= (m.chillMs > 0 ? dt / 2 : dt) * (1 - (m.curse?.slow ?? 0) / 100);
     if (m.stepMs > 0) continue;
     m.stepMs = m.moveMs;
     const taken = occupied(monsters);

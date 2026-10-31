@@ -13,6 +13,7 @@ import {
   type TacticRule,
   type TargetStatus,
 } from '../../data/gems';
+import { gemArrived } from '../../engine/progress';
 import { castOrder, ruleLockReason, ruleSlots, suggestedRule } from '../../engine/automation';
 import {
   expandSockets,
@@ -56,7 +57,7 @@ const ATTRS: { id: GemAttr; label: string }[] = [
 
 function kindMatches(def: ActiveGemDef, kind: GemKind): boolean {
   if (kind === 'all') return true;
-  if (kind === 'utility') return def.role === 'guard' || def.role === 'buff' || def.role === 'sustain';
+  if (kind === 'utility') return def.role === 'guard' || def.role === 'buff' || def.role === 'curse' || def.role === 'sustain';
   return def.tags.includes(kind);
 }
 
@@ -199,7 +200,7 @@ function SocketPicker({ s, gem, index, onDone }: { s: GameState; gem: SkillGemIn
   const owned = s.supportGems.filter((g) => !supportReason(gem, g.supportId));
   // one entry per kind, even when several copies are in the bag
   const ownedKinds = [...new Map(owned.map((g) => [g.supportId, g])).values()];
-  const missing = SUPPORT_GEMS.filter((d) => supportFits(d, act) && !s.supportGems.some((g) => g.supportId === d.id) && !gem.supports.some((x) => x?.supportId === d.id));
+  const missing = SUPPORT_GEMS.filter((d) => supportFits(d, act) && gemArrived(s, d.id) && !s.supportGems.some((g) => g.supportId === d.id) && !gem.supports.some((x) => x?.supportId === d.id));
   return (
     <div className="socket-picker" onClick={(e) => e.stopPropagation()}>
       <div className="row" style={{ gap: 8 }}>

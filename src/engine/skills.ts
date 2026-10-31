@@ -13,6 +13,7 @@ import { newFlask, rerollMagic, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { bagFull } from './storage';
 import { allMods, createItem, salvageValue } from './items';
+import { gemArrived } from './progress';
 import { chance, pick } from './rng';
 import { skillTreeStats, type TreeStats } from './skillTree';
 import type { Derived } from './stats';
@@ -174,16 +175,17 @@ export function fossilHit(item: Item, fossilId: string): boolean {
 /** Gemcutting: a random gem of the recipe's kind. Signature supports favour skills you own. */
 function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, number>): void {
   const { kind } = a.gem!;
+  const findable = (id: string) => gemReqLevel(id) <= characterLevel(s) && gemArrived(s, id);
   if (kind === 'skill') {
-    const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => gemReqLevel(g.id) <= characterLevel(s)));
+    const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => findable(g.id)));
     s.gems.push(createSkillGem(s, def.id));
     outputs[def.id] = 1;
     ctx.emit({ t: 'loot', gemId: def.id });
     return;
   }
   // only gems you're high enough level to use; signatures you can't use yet fall back to any you can
-  let pool = SUPPORT_GEMS.filter((g) => (kind === 'signature' ? !!g.signatureFor : !g.signatureFor) && gemReqLevel(g.id) <= characterLevel(s));
-  if (!pool.length) pool = SUPPORT_GEMS.filter((g) => !g.signatureFor && gemReqLevel(g.id) <= characterLevel(s));
+  let pool = SUPPORT_GEMS.filter((g) => (kind === 'signature' ? !!g.signatureFor : !g.signatureFor) && findable(g.id));
+  if (!pool.length) pool = SUPPORT_GEMS.filter((g) => !g.signatureFor && findable(g.id));
   if (kind === 'signature') {
     const owned = new Set([...s.skillBar, ...s.gems].filter(Boolean).map((g) => g!.gemId));
     const mine = pool.filter((g) => owned.has(g.signatureFor!));

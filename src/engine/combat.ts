@@ -90,7 +90,7 @@ import {
   RIPOSTE_COOLDOWN_MS,
 } from './mechanics';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
-import { openReachedZones } from './progress';
+import { openReachedZones, reachedAct } from './progress';
 import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, InstillCondition, MonsterInstance, Movement, TargetPriority, Targeting } from './types';
 
 export const SPAWN_DELAY_MS = 900;
@@ -562,6 +562,7 @@ export function monsterStatuses(m: MonsterInstance | undefined): Set<TargetStatu
   if (m.chillMs > 0) out.add('chilled');
   if ((m.shockMs ?? 0) > 0) out.add('shocked');
   if (m.vulnMs > 0) out.add('armourBroken');
+  if (m.curse) out.add('cursed');
   return out;
 }
 
@@ -587,7 +588,7 @@ export function skillIsActive(c: CombatRuntime, gemId: string): boolean {
   if (gemId === 'smoke_step' && c.evadeMs > 0) return true;
   if (gemId === 'frost_ward' && c.shield > 0) return true;
   const target = c.monsters.find((m) => m.uid === c.targetUid && m.life > 0) ?? aliveMonsters(c)[0];
-  return !!target?.dots.some((x) => x.gemId === gemId);
+  return !!target?.dots.some((x) => x.gemId === gemId) || target?.curse?.gemId === gemId;
 }
 
 export function ruleAllows(rule: TacticRule, rc: RuleContext, active: boolean): boolean {
@@ -789,7 +790,8 @@ function rollHit(
   }
   if (mon.life < mon.maxLife * 0.3) more *= 1 + r.lowLifeDamage / 100;
   if (def.effect.moreVsAiling && hasAilment(mon)) more *= 1 + def.effect.moreVsAiling / 100;
-  if (isAttack && c.counterweightMore) {
+  // (Parting Shot's own hit doesn't spend the bonus Feigned Retreat just gave)
+  if (isAttack && c.counterweightMore && def.id !== 'parting_shot') {
     more *= 1 + c.counterweightMore / 100;
     c.counterweightMore = 0;
   }
@@ -914,7 +916,8 @@ function hitMonster(
   let physPart = 0;
   for (const t of DAMAGE_TYPES) {
     let amt = byType[t] * factor;
-    if (t !== 'phys') amt *= 1 - mon.res[t] / 100;
+    if (t !== 'phys') amt *= 1 - (mon.res[t] - (mon.curse?.resPen ?? 0)) / 100;
+    else amt *= 1 + (mon.curse?.physTaken ?? 0) / 100;
     if (t === 'light' && (mon.shockMs ?? 0) > 0) amt *= 1.1;
     dealt += amt;
     if (t === 'phys') physPart = amt;
@@ -967,6 +970,7 @@ function hitMonster(
     mon.stunMs = Math.max(mon.stunMs, (mon.isBoss ? 400 : 1000) * (1 + r.stunDuration / 100));
   }
   if (mods.specials.has('shatter')) mon.vulnMs = 4000;
+  if (mods.specials.has('rundown')) mon.stunMs = Math.max(mon.stunMs, mon.isBoss ? 400 : 1000);
 
   // ailments
   if (coup && r.coupAilment) {
@@ -1059,7 +1063,8 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       source: 'skill',
       remainingMs: dur,
       durationMs: dur,
-      stats: e.buff.stats,
+      stats: { ...e.buff.stats, ...(mods.specials.has('galerider') && { cooldownRecovery: 25 }), ...(mods.specials.has('overflow') && { manaCostReduction: 25 }) },
+      outpace: e.buff.outpace,
       moreDamage: e.buff.moreDamage ? e.buff.moreDamage + (level - 1) : undefined,
       regenPct: (e.buff.regenPct ?? 0) + (mods.specials.has('rally') ? 2 : 0) || undefined,
       esRegenPct: mods.specials.has('holyground') ? 1 : undefined,
@@ -1077,6 +1082,12 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       ctx.emit({ t: 'interrupt', name: m.name });
     }
   }
+
+  if (e.stepOut) stepOut(s, ctx, mods.specials.has('surefoot'));
+  if (e.charge && aimed && !aimed.isBoss) while (cellRing(aimed.cell) > 1 && pullCloser(c.monsters, aimed));
+  if (mods.specials.has('hitfade')) c.evadeMs = Math.max(c.evadeMs, 1500);
+  if (mods.specials.has('feignedretreat')) c.counterweightMore = Math.max(c.counterweightMore ?? 0, 40);
+  if (e.curse) curseEnemies(s, ctx, nums, aimed);
 
   // Flurry ramps attack speed on consecutive Twin Strikes
   if (def.id === 'twin_strike' && mods.specials.has('flurry')) c.flurryStacks = Math.min(5, c.flurryStacks + 1);
@@ -1098,7 +1109,8 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   let streak = 0;
   const shape = skillArea(nums);
   // Inferno's blast scorches the ground around the target
-  const ground = mods.specials.has('inferno') ? { kind: 'burning' as const, pctPerSec: 25, durationMs: 3000, area: 'splash' as const } : e.ground;
+  let ground = mods.specials.has('inferno') ? { kind: 'burning' as const, pctPerSec: 25, durationMs: 3000, area: 'splash' as const } : e.ground;
+  if (ground && mods.specials.has('embertrail')) ground = { ...ground, pctPerSec: ground.pctPerSec * 2 };
   let grounded = false;
   let target = aimed;
 
@@ -1156,6 +1168,40 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   }
 }
 
+/** Curses are this much weaker on bosses, and grow this many % with each gem level. */
+export const CURSE_BOSS_EFFECT = 0.5;
+export const CURSE_PCT_PER_LEVEL = 2;
+
+/** Lay a skill's curse where it lands. An enemy carries one curse, so a new one replaces the old. */
+function curseEnemies(s: GameState, ctx: Ctx, nums: SkillNumbers, aimed?: MonsterInstance): void {
+  const c = s.combat!;
+  const { def, mods, level } = nums;
+  const curse = def.effect.curse!;
+  const target = aimed ?? aliveMonsters(c)[0];
+  if (!target) return;
+  const cells = new Set(areaCells(mods.specials.has('widehex') ? 'field' : skillArea(nums), target.cell, def.effect.radius));
+  ctx.emit({ t: 'area', gemId: def.id, cells: [...cells] });
+  const durationMs = curse.durationMs * nums.durationMult;
+  const effect = (1 + (CURSE_PCT_PER_LEVEL / 100) * (level - 1)) * (1 + mods.curseEffect / 100);
+  for (const m of aliveMonsters(c)) {
+    if (!cells.has(m.cell)) continue;
+    const f = effect * (m.isBoss ? CURSE_BOSS_EFFECT : 1);
+    m.curse = {
+      gemId: def.id,
+      remainingMs: durationMs,
+      durationMs,
+      physTaken: (curse.physTaken ?? 0) * f,
+      resPen: (curse.resPen ?? 0) * f,
+      dealLess: (curse.dealLess ?? 0) * f,
+      slow: (curse.slow ?? 0) * f,
+      spreads: mods.specials.has('contagion') || undefined,
+      withers: mods.specials.has('witherwill') || undefined,
+    };
+    if (mods.specials.has('crackedhide')) m.vulnMs = Math.max(m.vulnMs, durationMs);
+    if (mods.specials.has('snare')) m.stunMs = Math.max(m.stunMs, m.isBoss ? 400 : 1000);
+  }
+}
+
 /** Where a skill's hit lands on the battlefield: Pierce turns any projectile into a beam to the edge; 'all' means the whole field. */
 export function skillArea(nums: SkillNumbers): AreaShape {
   const e = nums.def.effect;
@@ -1192,6 +1238,9 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
       ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'fire', monsterUid: m.uid });
     }
   }
+  // Contagion: the curse moves on with the time it had left; Wither Will: it pays you back
+  if (mon.curse?.spreads && next && !next.curse) next.curse = { ...mon.curse };
+  if (mon.curse?.withers) s.life = Math.min(d.maxLife, s.life + d.maxLife * 0.04);
   // Blood Frenzy: kills keep Berserk going
   const frenzy = c.buffs.find((b) => b.extendMaxMs && b.durationMs < b.extendMaxMs);
   if (frenzy) {
@@ -1212,7 +1261,13 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
       s.bossesDefeated.push(zone.id);
       if (zone.actBoss) ctx.emit({ t: 'actComplete', act: zone.act });
     }
+    const act = reachedAct(s);
     for (const next of openReachedZones(s)) ctx.emit({ t: 'zoneUnlocked', zoneId: next.id });
+    // a new act's batch goes on sale straight away
+    if (reachedAct(s) > act) {
+      s.vendor.refreshAt = 0;
+      ctx.emit({ t: 'info', text: `New gems from Act ${reachedAct(s)} have reached the Town's Gem shop.`, tone: 'good' });
+    }
   } else if (!c.monsters.some((m) => m.isBoss)) {
     // adds in a boss fight don't count toward the next boss
     s.zoneKills[zone.id] = (s.zoneKills[zone.id] ?? 0) + 1;
@@ -1304,6 +1359,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   const c = s.combat!;
   const r = d.raw;
   const isCast = kind !== 'hit';
+  if (mon.curse) raw *= 1 - mon.curse.dealLess / 100;
   if (mon.dots.some((x) => x.kind === 'poison')) raw *= 1 - r.poisonWeaken / 100;
   if (kind === 'slam') raw *= 1 - r.slamReduction / 100;
   if (underPlayer(c, 'shocked')) raw *= SHOCKED_GROUND_TAKEN;
@@ -1394,8 +1450,22 @@ export const MONSTER_GROUND_MS = 3000;
 export const BOSS_NOVA_GROUND_DPS = 0.12;
 export const BOSS_NOVA_GROUND_MS = 4000;
 
+/** Surefoot: how long hazards under you do nothing after a movement skill. */
+export const SUREFOOT_MS = 3000;
+
+const groundProof = (c: CombatRuntime) => (c.groundProofMs ?? 0) > 0;
+
 function underPlayer(c: CombatRuntime, kind: Ground['kind']): boolean {
-  return c.ground.some((g) => g.cell === PLAYER_SPOT && g.kind === kind);
+  return !groundProof(c) && c.ground.some((g) => g.cell === PLAYER_SPOT && g.kind === kind);
+}
+
+/** A movement skill leaves whatever is under you behind: the player stays put on the field, so the hazard goes instead. */
+function stepOut(s: GameState, ctx: Ctx, surefoot: boolean): void {
+  const c = s.combat!;
+  const left = c.ground.filter((g) => g.cell !== PLAYER_SPOT);
+  if (left.length < c.ground.length) ctx.emit({ t: 'info', text: 'You step out of the hazard.', tone: 'good' });
+  c.ground = left;
+  if (surefoot) c.groundProofMs = SUREFOOT_MS;
 }
 
 /**
@@ -1406,12 +1476,12 @@ function underPlayer(c: CombatRuntime, kind: Ground['kind']): boolean {
 function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   const c = s.combat!;
   if (!c.ground.length) return;
-  const outPace = currentMovement(s) === 'run' || currentMovement(s) === 'flee' ? STEP_OUT_RATE : 1;
+  const outPace = currentMovement(s) === 'run' || currentMovement(s) === 'flee' || c.buffs.some((b) => b.outpace) ? STEP_OUT_RATE : 1;
   for (const g of c.ground) {
     const t = Math.min(dt, g.remainingMs);
     const type = GROUND[g.kind].type;
     if (g.cell === PLAYER_SPOT) {
-      let dmg = (g.dps * t) / 1000;
+      let dmg = groundProof(c) ? 0 : (g.dps * t) / 1000;
       if (type !== 'phys') dmg *= (1 - d.res[type] / 100) * (1 - d.raw.elemTakenReduction / 100);
       const toEs = Math.min(s.es, dmg);
       s.es -= toEs;
@@ -1474,6 +1544,10 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
   mon.vulnMs = Math.max(0, mon.vulnMs - dt);
   mon.chillMs = Math.max(0, mon.chillMs - dt);
   if (mon.shockMs) mon.shockMs = Math.max(0, mon.shockMs - dt);
+  if (mon.curse) {
+    mon.curse.remainingMs -= dt;
+    if (mon.curse.remainingMs <= 0) mon.curse = undefined;
+  }
   if (mon.isBoss) bossPhases(s, ctx, mon, dt);
   if (mon.frozenMs > 0) {
     mon.frozenMs -= dt;
@@ -1484,7 +1558,7 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
     return;
   }
   if (mon.isBoss && bossCasts(s, ctx, d, mon, dt)) return;
-  const speed = (mon.enraged ? BOSS_ENRAGE_SPEED : 1) * (d.raw.overclock ? 1.6 : 1);
+  const speed = (mon.enraged ? BOSS_ENRAGE_SPEED : 1) * (d.raw.overclock ? 1.6 : 1) * (1 - (mon.curse?.slow ?? 0) / 100);
   const chill = Math.min(60, CHILL_SLOW_PCT + d.raw.chillOnHit) / 100;
   mon.attackTimer += (mon.chillMs > 0 ? dt * (1 - chill) : dt) * speed;
   if (mon.attackTimer >= mon.attackMs) {
@@ -1561,7 +1635,7 @@ function bossPhases(s: GameState, ctx: Ctx, mon: MonsterInstance, dt: number): v
 /** Wind-ups: slam and nova. Returns true while the boss is busy casting. */
 function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt: number): boolean {
   if (mon.casting >= 0) {
-    mon.casting -= dt;
+    mon.casting -= dt * (1 - (mon.curse?.slow ?? 0) / 100);
     if (mon.casting <= 0) {
       const kind = mon.castKind ?? 'slam';
       mon.casting = -1;
@@ -1608,6 +1682,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   }
   for (let i = 0; i < c.cooldowns.length; i++) c.cooldowns[i] = Math.max(0, c.cooldowns[i] - dt);
   c.evadeMs = Math.max(0, c.evadeMs - dt);
+  if (c.groundProofMs) c.groundProofMs = Math.max(0, c.groundProofMs - dt);
   if (classMechanicsStep(s, ctx, d, dt)) return true;
 
   for (const h of c.heals) {

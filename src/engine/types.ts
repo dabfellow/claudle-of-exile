@@ -190,6 +190,8 @@ export interface MonsterInstance {
   chillMs: number;
   /** Static Field: takes more lightning damage while > 0 */
   shockMs?: number;
+  /** the one curse it carries */
+  curse?: Curse;
   /** pack members are scaled down; xp and loot scale with them */
   scale: number;
   /** damage-over-time accumulated since the last report */
@@ -203,6 +205,21 @@ export interface MonsterInstance {
   moveMs: number;
   /** its basic spell leaves hazardous ground under the player */
   attackGround: boolean;
+}
+
+/** A curse on a monster, with its numbers already scaled for gem level, supports and bosses. */
+export interface Curse {
+  gemId: string;
+  remainingMs: number;
+  durationMs: number;
+  physTaken: number;
+  resPen: number;
+  dealLess: number;
+  slow: number;
+  /** Contagion: jumps to another enemy when this one dies */
+  spreads?: boolean;
+  /** Wither Will: killing this enemy heals you */
+  withers?: boolean;
 }
 
 export type GroundKind = 'burning' | 'chilled' | 'shocked' | 'caustic';
@@ -230,6 +247,8 @@ export interface Buff {
   esRegenPct?: number;
   /** Blood Frenzy: kills extend the buff, up to this long */
   extendMaxMs?: number;
+  /** Tailwind: hazards under you burn out as if you were running */
+  outpace?: boolean;
   /** flask buffs: the flask's own effect multiplier */
   mult?: number;
 }
@@ -302,6 +321,8 @@ export interface CombatRuntime {
   shakeMs: number;
   /** hazards on the field and under the player; ground damage to the player is reported once a second */
   ground: Ground[];
+  /** Surefoot: hazards under the player do nothing while > 0 */
+  groundProofMs?: number;
   groundAcc: number;
   groundTimer: number;
   /** class mechanic meter: Rage, Momentum or Malice stacks, or Fervor % (engine/mechanics.ts) */

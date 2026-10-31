@@ -16,6 +16,7 @@ const ROLE_LABEL: Record<string, string> = {
   area: 'Area',
   guard: 'Guard',
   buff: 'Buff',
+  curse: 'Curse',
   sustain: 'Sustain',
 };
 
