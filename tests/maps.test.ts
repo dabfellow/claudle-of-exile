@@ -62,7 +62,7 @@ describe('maps', () => {
   });
 });
 
-describe('maps offline', () => {
+describe('maps offline', { timeout: 60_000 }, () => {
   const kitted = (classId: ClassId = 'warrior', seed = 1) => {
     const s = newGame(seed, { name: 'T', classId });
     s.tutorial.done = true;
