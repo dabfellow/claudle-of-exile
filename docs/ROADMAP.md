@@ -22,7 +22,8 @@ The order is by dependency: pacing rules first, because every act is tuned again
 - **Done:** a second character starts with the account's unlocks, its own skills and access to the shared stash.
 
 ## 4. Act recipe and Act 2
-- Write the recipe as a checklist: stages, boss mechanic, resistance check, skill batch, new skill.
+- Write the recipe as a checklist: stages, boss mechanic, resistance check, skill batch, new skill
+  ([ACT_RECIPE.md](design/ACT_RECIPE.md), with the Act 1 and Act 2 audits).
 - Rebuild Act 2 from it, with its first new skill and monster art, and open it.
 - Update Act 1 where the recipe needs it.
 - **Done:** Act 2 is live and the first week lands partway through Act 3's level range in the sim.
