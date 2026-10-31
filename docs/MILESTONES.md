@@ -12,12 +12,12 @@ Last updated 2026-10-31.
 ## Next steps
 
 **Where we are:** Milestones 1, 2, 3 and 5 are built and merged into `main`, but nothing since Act 2 opened has been
-deployed. The live site is still the old build. The Act 2 rebuild started 2026-10-31.
+deployed. The live site is still the old build. Act 2's skills, ground rules, Thieving, art and music are merged into `main` too, unpushed.
 
 **In order:**
 
-1. **Claude:** rebuild Act 2 (Milestone 4). Skills, ground rules, Thieving and art are running; merge them, then tune
-   pacing and Act 1's cold check.
+1. **Claude:** rebuild Act 2 (Milestone 4). The pieces are merged; tune pacing and Act 1's cold check, and
+   make Scorched earth dangerous enough that ground rules matter.
 2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
 3. **[You]** Decide when to deploy. Milestones 1, 2 and 3 go live together, so post a heads-up first. Live players
@@ -37,7 +37,7 @@ deployed. The live site is still the old build. The Act 2 rebuild started 2026-1
 | 1 | Automation and offline rules | Built, not live | Deploy |
 | 2 | Measure the pacing | **Done**, not live | Deploy |
 | 3 | Account layer | Built, not live | Real-account test, deploy |
-| 4 | Act recipe and Act 2 | **In progress**: four sessions running | Sessions, then pacing and Act 1 cold check |
+| 4 | Act recipe and Act 2 | **In progress**: pieces merged | Pacing and Act 1 cold check |
 | 5 | Maps preview | Built, dev only | You playing it |
 | 6 | Act 3 and ascendancies | Drafted | Milestone 4, your answers |
 | 7 | Acts 4–6 | Level 80 gear done early | Milestone 6 |
@@ -74,11 +74,12 @@ deployed. The live site is still the old build. The Act 2 rebuild started 2026-1
 ### 4. Act recipe and Act 2
 - [x] Recipe written as a checklist ([ACT_RECIPE.md](design/ACT_RECIPE.md)), with Act 1 and Act 2 audits and picks.
 - [x] Pack art for Act 2's 40 monsters and 6 uniques.
-- [ ] Rebuild Act 2 from the recipe: Riders and raiders skill batch, Thieving and Heist, ground rules, and slower
-  pacing (the sim says it takes under a day after Act 1).
-- [ ] Update Act 1: cold resistance check, split the skill pool, tie gems to acts. Keep existing characters' skills
-  working.
-- [ ] Art for the 8 areas, and better matches for 21 loose monsters.
+- [x] Riders and raiders skill batch, Thieving and Heist, and ground rules — done 2026-10-31
+- [ ] Slower Act 2 pacing (the sim says it takes under a day after Act 1). The sim showed no gain from ground rules
+  on Azhar, so those fights need to bite.
+- [x] Split the skill pool and tie gems to acts, keeping existing characters' skills — done 2026-10-31
+- [ ] Act 1 cold resistance check.
+- [ ] Art for the 8 areas (waits on a hand-made landscape pack), and the 13 Act 2 monsters still on loose matches.
 - **Done:** Act 2 is live and the first week lands partway through Act 3's level range in the sim.
 - Act 2 is already open to players, so changed area ids need handling in saves.
 
@@ -285,12 +286,10 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 
 ## Other open items
 
-- [ ] Add the art sent 2026-10-31. Originals are in Downloads. All free itch.io files; you said to assume free public
-  use while the game isn't sold, so recheck these if that ever changes.
-  - In progress on the Act 2 art branch: shields (set 3 needs a credit), `RPG_Weapons.aseprite`, `Icons.rar`, and the
-    two pasted weapon sheets.
-  - Kept for later, no slot yet: Void pack, SBS skies, `MediavelFree.png` UI.
-  - Music (10 AlkaKrab tracks): the game has no audio yet, so it needs its own small audio system.
+- [x] Art and music sent 2026-10-31 merged: 112 item slots and 4 music tracks. All free itch.io files; you said to assume
+  free public use while the game isn't sold, so recheck if that changes — done 2026-10-31
+- [ ] Art for the 34 weapon bases that still have none.
+- [ ] Use the Void pack, SBS skies and `MediavelFree.png` UI once something needs them. Originals are in Downloads.
 
 Not tied to a milestone yet. Older balance, Act 2 and skill items restart at their milestone.
 
