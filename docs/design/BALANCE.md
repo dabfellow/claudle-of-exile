@@ -6,12 +6,66 @@ results stay as a record of how the game runs today. Exact balance isn't a goal.
 Run the headless sim to check pacing after any numbers change:
 
 ```bash
-npm run sim                              # 24h per class, bot drinks flasks
-npm run sim -- --hours 12 --idle         # no manual flasks
-npm run sim -- --class mage --seed 3
+npm run sim -- --days 7 --jobs 12           # every class, seeds 1-3, push and mix
+npm run sim -- --days 30 --seeds 4 --profile push --trials 0 --jobs 7
+npm run sim -- --class mage --seeds 3 --days 2 --profile mix
+npm run sim -- --nonstop --days 1           # never leaves the keyboard
 ```
 
-The bot pushes the furthest zone it's levelled for (area min level ≤ char level + 1), equips upgrades by a simple score, spends passives greedily, salvages extra items, and drops back a zone for 20 min after 3 deaths in a row. It is a sensible-but-simple player, not an optimal one.
+The bot lives the schedule in [Milestone 2](#milestone-2--pacing-measured-2026-10-30). It pushes the furthest area it's levelled for (area min level ≤ char level + 1), equips upgrades by a simple score, spends passives greedily, sells spare items, and drops back an area for 20 min after 3 deaths in a row. It is a sensible-but-simple player, not an optimal one.
+
+## Milestone 2 — pacing measured (2026-10-30)
+
+First sim of the real rules: rule locks, offline stops, combat or skilling, earned upgrades. Replaces the old 24 h nonstop run as the way to read pacing.
+
+**Assumptions**
+- **Schedule:** three logins a day, at 0 h, 5 h and 11 h. Morning and lunch are 10 min, the evening is 60 min, and the first login is 60 min. That's 80 min a day (2h10 on day 1), and everything else is offline.
+- **Hands on:** while logged in the bot drinks flasks and presses a guard when a boss winds up. Offline it has only its rules and instilled flasks, and it uses `simulateOffline`, the same code as the game.
+- **Push:** offline combat, except the morning gap gathers while the next upgrade is short of materials. **Mix:** the same, plus every night gathers. That's about 72% and 30% of all time away fighting.
+- **Automation:** bought as soon as affordable, in the order War Table 2, Watchtower 2, War Table 3, War Table 4, Watchtower 3, War Table 5, Watchtower 4. Next upgrade's gold is reserved before gear, not before gems.
+- **Rules:** one per skill, even with more slots. The suggested rule, or Whenever ready while it's locked.
+- **After an offline death** the bot idles one area lower until it gains 2 levels.
+- **Gear** comes from drops, the shops and orbs on worn gear. The bot doesn't smith, brew or bench-craft, so gathering pays only for upgrades here and **mix is pessimistic**.
+- **Instilling Orbs** are spent as they drop: life on low life, utility on boss wind-up, mana on full charges.
+
+**Timeline, all 7 classes.** Week runs are medians of seeds 1-3; month is seed 4 on push. "Stages" are area bosses beaten.
+
+| Milestone | Target | Push | Mix |
+|---|---|---|---|
+| Day 1 | a couple of Act 1 stages, at most some blue | 2-4 stages, L7-12, 2-8 rares | 2-4 stages, L6-8, 3-8 rares |
+| Act 1 done | | 2d00h-3d11h, median 2d11h-3d00h | 3d11h-5d11h |
+| Act 2 done | | 2d11h-4d00h | 3d11h-6d11h |
+| Week 1 | partway through Act 3 | all 16 stages, L44-47, no content left | 13-16 stages, L33-44 |
+| Month 1 | Act 6 done, or starting it | L54-57, still at the end of Act 2 | not run |
+| Month 3 | farming Maps | L69, about 1100 DPS, still at the end of Act 2 (mage and warrior, seed 5) | not run |
+
+- **Day 1 is hit.** The Ashen Woods boss (stage 3) falls at about 11 h, in the first evening sit-down, on nearly every run. Blackreed Marsh falls at 24 h or later.
+- **Week 1 onward can't be tested yet.** Only Acts 1 and 2 exist, so those rows say how fast the character runs out of campaign. Act 2 takes under a day after Act 1, and characters reach L30 by about day 3–4 against an act that ends at 32. Act 2 wasn't tuned: Milestone 4 rebuilds it.
+- **Bosses are the only hard gate.** Offline deaths are almost nil (0 per class in the week runs), so offline trash is safe, and the 8 h cap costs only 1–2% of all time.
+- **Level 100 is far off pace:** L54-57 at month 1, so the level curve needs its own look when Acts 3–6 are tuned.
+
+**Automation timeline.** Push buys War Table 2 at about 29 h, War Tables 3 and 4 together at 3d05h, Watchtower 3 at 5d05h, War Table 5 at 7d05h and Watchtower 4 at 11d05h. Mix is 1–3 days ahead from War Table 3 on and has nearly everything by day 7, which is what gathering at night buys. War Tables 3 and 4 land together on push because one morning of oak or iron overshoots both costs, and iron's bonus drops cover the gems. Fine for now: gathering costs would need to pass about 5,000 per material to split them.
+
+**What was tuned (all Act 1, nothing past tier 2 drops)**
+- Added `xpScale` per area, the one change that moved the timeline: before it, day 1 reached 3-7 stages at L11-24 and the fastest class had finished Act 2 by 36 h. It needs one line in `onMonsterDeath`.
+- Tier 1–2 drops: rare share 4/6% → 0.25/0.5%, regal 4/6 → 0/0.3, alchemy 4 → 0.3, boss rare share 30/35% → 8/12%. With about 10k kills on day 1, even 1–2% rare left 7–10 rares worn.
+- War Table and Watchtower material costs raised 6–10×, from War Table 3 and Watchtower 3 up. One 5 h morning gathers about 5,000 materials, so the old costs took one morning each. Gold costs didn't change, and gold isn't a limit: 1–3M by week 1.
+
+The last drop tweak (regal and alchemy) came after the week and month sweeps: the day 1 row is re-measured with it, the rest isn't, and it only touches tier 2.
+
+**Idling bosses.** Each boss was fought 6 times per class, seed and option, straight after the bot first beat it, from full with charged flasks, with wind-up rules granted. Percent won, push (the rest lost; none timed out):
+
+| Boss | Rules only | Auto-flee | Instilled | Both | By hand |
+|---|---|---|---|---|---|
+| Brine Caves | 43 | 71 | 79 | 97 | 99 |
+| Blackreed Marsh | 86 | 92 | 99 | 99 | 100 |
+| Ship Graveyard | 98 | 98 | 100 | 100 | 100 |
+| Drowned Sanctum and all Act 2 tested | 100 | 100 | 100 | 100 | 100 |
+
+- **Both matter a lot early and not at all later.** On a boss the character only just beat they turn a coin flip into a near-certainty, and instilling is the stronger of the two. Past Act 1 the bot is so overlevelled that nothing tests them.
+- **In real play this hardly counts yet.** Wind-up rules arrive around day 3, when the bosses where these matter are long dead, and Instilling Orbs only drop from tier 4. Retest when an act's bosses are fought at level, and on hard bosses.
+
+**Not modelled:** smithing, brewing and the bench, second rule slots, keystones, new skills, and players pushing an area before they're levelled for it. Warrior, Ranger and Exile run about a day behind on Act 1; left alone, since class balance doesn't need to be exact.
 
 ## Knobs
 
@@ -25,10 +79,11 @@ The bot pushes the furthest zone it's levelled for (area min level ≤ char leve
 | Monster action times | `data/zones.ts` `basic`, `slam`, `nova` | every monster has a named basic attack or spell (1.9–4.2 s, default 3 s); each boss has its own slam and nova wind-ups (3.2–4.4 s) |
 | Base life regen | `engine/stats.ts` `BASE_REGEN_PCT` | 0.5%/s |
 | Skill XP | `data/skills.ts` `SKILL_XP_SCALE` | 0.3 |
-| Drops | `data/drops.ts` `DROP_TABLES` | per area tier: currency 4.5→5.5%, items 6→7%, rare share 4→12%, unique 0.05→0.1%; chaos from tier 2, exalted/divine from tier 3, instill from tier 4 |
+| Drops | `data/drops.ts` `DROP_TABLES` | per area tier: currency 4.5→5.5%, items 6→7%, rare share 0.25%, 0.5%, then 8→12%, unique 0.05→0.1%; chaos from tier 2, exalted/divine from tier 3, instill from tier 4 |
 | Boss drops | `data/drops.ts` `BOSS_TABLES` | first kill guarantees the tier reward (2 transmute → 1 exalted), then `repeatChance` per kill (10% tiers 1–3, 6% tier 4, 1.5% tier 5); 2–3 extra currency rolls |
 | Boss mechanics | `data/zones.ts` `BOSS_*` | slam ×2.5 every 9 s; nova ×1.8 every 13 s (ignores blocks); wind-ups are per boss; summon up to 2 adds every 16 s; enrage below 35% (+50% attack speed, +30% damage); ward 12% of life at 66%/33%, heals 10% if not broken within 8 s |
 | Spell added damage | `engine/gems.ts` `SPELL_ADDED_EFFECTIVENESS` | spells add your flat fire/cold/lightning damage at 70% |
+| Area kill XP | `data/zones.ts` `xpScale` | Act 1 only: 0.15, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7 by area |
 | Gathering/recipe gating | `data/skills.ts` `area` | higher nodes and recipes need their area unlocked |
 | Bench recipes | `data/hideout.ts` `BENCH_CRAFTS` | bench level + an achievement for everything past life/resists |
 | Gold | `engine/loot.ts` | 1…level/3 per kill (×15 boss) |
