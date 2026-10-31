@@ -37,9 +37,9 @@ stay as they are, with no playtest planned, until you say otherwise.
 | 4 | Act recipe and Act 2 | **In progress**: pieces merged | Pacing and Act 1 cold check |
 | 5 | Maps preview | Built, dev only | You playing it |
 | 6 | Act 3 and ascendancies | **In progress**: design decided, sessions running | Sessions |
-| 7 | Acts 4–6 | Level 80 gear done early | Milestone 6 |
+| 7 | Acts 4–6 | Design decided; level 80 gear done early | Milestone 6 |
 | 8 | Maps | Not started | Milestones 5 and 7 |
-| 9 | Hard mode bosses | Answered | Milestone 8 |
+| 9 | Hard mode bosses | Answered: 5 bosses, post-Act 6 | Milestone 8 |
 | 10 | Top-end crafting and hideout | Not started | Milestone 9 |
 | 11 | Long tail | Not started | Milestone 10 |
 | 1.0 | You call it | – | Vibes |
@@ -94,7 +94,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 - **Done:** every main class can pick either ascendancy and play it through Act 3.
 
 ### 7. Acts 4–6
-- Each from the recipe, growing to 10–20 stages, ending around level 65.
+- Each from the recipe, growing to 10–20 stages, ending around level 65. Picks are in [ACTS_4_6.md](design/ACTS_4_6.md).
 - [x] Gear base tiers extended to about level 80 (428 bases).
 - **Done:** Act 6 can be finished at around month 1 when pushing combat hard, and is just starting on a mix, in the sim.
 
@@ -129,6 +129,8 @@ Endless content. Not designed yet, and nothing above depends on it.
 
 What you settled in the 2026-10-30 reset, in your words. The result is written up in [GDD.md](design/GDD.md). Later
 picks are in [ACT_RECIPE.md](design/ACT_RECIPE.md).
+
+Fishing is never being added; the menu's "Soon" entry is a Path of Exile joke and stays.
 
 ### Fixed (you, 2026-10-30)
 

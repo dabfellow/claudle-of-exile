@@ -93,9 +93,7 @@ already cover.
 Each has about two ideas, with my pick first.
 
 ### 1. How many bosses?
-- **A. Five, as above.** Each one has its own moment, and more can be added later. (My pick.)
-- **B. Seven.** One for each of Acts 1–6 with a twist on that act's mechanic, then The Crownless. Stronger link to the
-  campaign, but moments start to repeat.
+- **A. Five, as above.** Each one has its own moment, and more can be added later. They're post-Act 6 content.
 
 ### 2. How do bosses tier up?
 - **B. One version of each boss, with modded keys.** Craft a key like a map to add danger and drops, such as "+30% boss life,
