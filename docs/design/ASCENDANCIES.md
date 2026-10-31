@@ -1,0 +1,274 @@
+# Ascendancies (draft)
+
+Draft 2026-10-30, for you to pick from. Nothing here is built. They arrive in Milestone 6 of the
+[ROADMAP.md](../ROADMAP.md).
+
+**Settled:** two per class, 14 in total, unlocked around Act 3, and picking one unlocks a new section of the main tree.
+Exile is the seventh class, so it gets two as well.
+
+The ascendancies below are written as if you pick Idea A in question 1. Names are a first pass.
+
+## How a section is laid out
+
+Every section has the same shape, about 12 nodes:
+
+```
+Gate ─ small ─ small ─ Notable ─┐
+  ├─── small ─ small ─ Notable ─┼─ small ─ Capstone
+  └─── small ─ small ─ Notable ─┘
+```
+
+- **Gate:** free when you pick. It holds the headline rule, so the character changes the moment you choose.
+- **Notables:** three that lean into that rule in different ways.
+- **Capstone:** a keystone that finishes the idea.
+
+The class mechanic rules in [CLASSES.md](CLASSES.md) still apply: everything has to work while idling, tactics rules
+make it better, and each rule fits in one sentence.
+
+## At a glance
+
+| Class | Ascendancy | In a line |
+|---|---|---|
+| Warrior | Ravager | Rage builds to a rampage that hits everything next to you |
+| Warrior | Anvil | Rage comes from being hit, and enemies break on your Armour |
+| Ranger | Longshot | Momentum becomes damage, so you fire slow shots that kill at range |
+| Ranger | Falconer | Momentum drives a hawk that hits what you can't reach |
+| Mage | Wildcaster | Mana is Power flipped: the emptier you are, the harder you hit |
+| Mage | Alchemist | Flask charges count as mana, and every flask you drink explodes |
+| Duelist | Matador | Only evades Riposte, and a streak of them grows huge |
+| Duelist | Vanguard | Only blocks Riposte, and each one hits everything next to you |
+| Templar | Flagellant | You hurt yourself to fill Fervor, so novas fire on trash too |
+| Templar | Lightkeeper | You store novas and release them when it counts |
+| Shadow | Headsman | A killing Coup de Grâce refunds Malice and chains through packs |
+| Shadow | Plaguewright | Ailments fill Malice, and Coup de Grâce bursts them |
+| Exile | Usurper | Steals one class's mechanic |
+| Exile | Wayfarer | Gains a second start on the tree |
+
+## Warrior
+
+### Ravager
+*"Let it build, then let it out."*
+
+- **Plays:** surges instead of a steady ramp. Quiet until the meter fills, then the whole front line goes down. Best in
+  the swarm, and the "class meter full" tactic lets you line up Berserk with it.
+- **Gate:** at full Rage you Rampage for 6s: melee hits strike all of ring 1 while Rage drains to 0.
+- **Notables:** *Bloodlust* (kills add time to the Rampage), *Trample* (it reaches ring 2), *Red Haze* (more attack speed
+  during it).
+- **Capstone:** *No Mercy*: Rage stops draining during a Rampage while you keep getting kills.
+
+### Anvil
+*"They break on you."*
+
+- **Plays:** your damage comes from being hit, so Armour is your damage stat and attack speed barely matters. It wants
+  ring 1 full, is the easiest class to leave idling, and is slow when few enemies come at you.
+- **Gate:** you gain Rage from hits you take instead of hits you deal, and attackers take damage based on your Armour
+  and Rage.
+- **Notables:** *Hold the Line* (more Rage per enemy in ring 1), *Shatter* (surviving a boss wind-up fills Rage), *Temper*
+  (blocked hits still count).
+- **Capstone:** *Unmoved*: enemies that hit you at full Rage are stunned.
+
+## Ranger
+
+### Longshot
+*"One arrow, well placed."*
+
+- **Plays:** slow, heavy shots that kill things before they arrive, using Farthest targeting. Weak for the first few
+  shots of a fight, and in trouble if the swarm reaches you.
+- **Gate:** Momentum grants more damage instead of attack speed, doubled against enemies in rings 3–4.
+- **Notables:** *Head Start* (begin each fight with Momentum), *Pin* (your hits slow enemies walking in), *Steady Aim*
+  (being hit removes less Momentum).
+- **Capstone:** *Last Arrow*: at full Momentum your next attack spends it all on a guaranteed crit that hits the whole
+  line to the target.
+
+### Falconer
+*"Never hunts alone."*
+
+- **Plays:** two attackers. The hawk ignores blocked paths, so casters behind the front line stop being a problem, and
+  you pick its target priority separately from your own.
+- **Gate:** a hawk attacks alongside you, and each Momentum makes it attack faster.
+- **Notables:** *Talons* (hawk hits Bleed), *Hooded* (it goes for ranged enemies first), *Bond* (its hits count as attacks
+  for Momentum).
+- **Capstone:** *Stoop*: at full Momentum the hawk dives for a huge hit that stuns.
+
+## Mage
+
+### Wildcaster
+*"Spend it all."*
+
+- **Plays:** the opposite of careful mana use. You burn the tank on cheap spells, peak near empty, then wait out a
+  dry spell. Max mana stops being damage and mana regen becomes pacing, so gear choices flip.
+- **Gate:** Mana is Power is reversed: 30% more spell damage at empty mana, 0% at full.
+- **Notables:** *Ragged Edge* (more bonus below 25% mana), *Feedback* (kills restore a little mana), *Backdraft* (spells
+  cost less while you're below half).
+- **Capstone:** *Burnout*: hitting 0 mana makes your next 3 spells free at the full bonus.
+
+### Alchemist
+*"The brew is the spell."*
+
+- **Plays:** flasks are your main weapon. Kills refill charges and charges fuel spells, so fast clearing feeds itself,
+  and it pairs with Instilling Orb auto-flasks for idling. Flask Effect becomes a damage stat.
+- **Gate:** Mana is Power also counts flask charges, and every flask you drink bursts on your target.
+- **Notables:** *Volatile Mix* (bursts hit nearby enemies), *Deep Cellar* (more maximum charges), *Tonic* (flasks restore
+  mana).
+- **Capstone:** *Philosopher's Draught*: each active flask adds more damage, and they stack.
+
+## Duelist
+
+### Matador
+*"Let it miss by an inch."*
+
+- **Plays:** pure Evasion with no block. Damage climbs through a long fight, and one clean hit on you throws the streak
+  away, so it's a high wire compared to steady Riposte.
+- **Gate:** only evades trigger Riposte, and each Riposte in a row adds damage to the next, until you're hit.
+- **Notables:** *Veronica* (higher streak cap), *Close Call* (being hit halves the streak instead of ending it), *Crowd's
+  Roar* (attack speed per streak).
+- **Capstone:** *Moment of Truth*: at a streak of 10 your next Riposte is a Mega Crit.
+
+### Vanguard
+*"Hold the line."*
+
+- **Plays:** shield and Armour. Block chance becomes area damage, and guard skills like Iron Guard and Parry turn into
+  your pack clear. Slower on one target, excellent in the swarm.
+- **Gate:** only blocks trigger Riposte, and each one hits all of ring 1.
+- **Notables:** *Raised Shield* (more Block chance), *Press Forward* (Ripostes reach ring 2), *Stand Fast* (each block
+  grants Armour briefly).
+- **Capstone:** *Phalanx*: blocking a boss wind-up triggers a Riposte for triple damage.
+
+## Templar
+
+### Flagellant
+*"Pain on demand."*
+
+- **Plays:** a hurt and heal loop. Templar normally barely fills Fervor on trash, but this fills it everywhere. It needs
+  Life regen to stay safe, and a bad setup can kill itself offline.
+- **Gate:** using a skill costs a little Life, and that Life fills Fervor three times as fast as a hit.
+- **Notables:** *Scourge* (more nova damage from self-harm), *Mortify* (more damage while below half Life), *Absolution*
+  (more nova healing).
+- **Capstone:** *Ecstasy*: while below half Life your skills are faster and cost no mana.
+
+### Lightkeeper
+*"Hold the light until it's needed."*
+
+- **Plays:** the hands-on Templar. Save novas through a fight, then spend them on a boss wind-up as a burst and a heal.
+  Left alone it releases at full, and reactive rules let it hold for the right moment on idle.
+- **Gate:** Fervor stores up to 3 novas, released when full unless a tactic or a click says otherwise.
+- **Notables:** *Reserve* (stored novas grow stronger), *Vespers* (a nova also grants a shield), *Beacon* (a nova hits
+  every ring).
+- **Capstone:** *Dawn*: releasing all 3 at once stuns everything and absorbs the next boss wind-up.
+
+## Shadow
+
+### Headsman
+*"One cut per neck."*
+
+- **Plays:** the low-crit path made into a pack killer. Lowest Life targeting and a cheap meter let one Coup chain into
+  the next, so it clears in streaks, with long gaps when a boss won't die to one.
+- **Gate:** a Coup de Grâce that kills refunds half the Malice meter.
+- **Notables:** *Sharp Axe* (more Coup damage to wounded enemies), *Marked* (a Coup that doesn't kill makes the target
+  take more damage), *Next* (Malice carries into the next fight).
+- **Capstone:** *The Block*: a Coup de Grâce kills any non-boss below 30% Life outright.
+
+### Plaguewright
+*"Let it spread."*
+
+- **Plays:** hit once and wait. You rely on ailments rather than hits, spreading them across the field with Ailing
+  targeting. Poison Dart and Ignite builds get a big finish they don't have today.
+- **Gate:** ailments ticking on enemies fill Malice, and a Coup de Grâce bursts every ailment on its target.
+- **Notables:** *Incubation* (longer ailments), *Bloom* (more burst damage per ailment type), *Contagion* (kills spread
+  ailments).
+- **Capstone:** *Pandemic*: the burst copies the ailments to enemies within 1 ring.
+
+## Exile
+
+Exile has no mechanic to twist, so its two ascendancies add something instead, whichever idea you pick in question 1.
+Both keep what Exile is: no class bonus and no defence lean.
+
+### Usurper
+*"Takes what was never theirs."*
+
+- **Plays:** any class mechanic from any start, so combinations no normal class can have, like Rage from the Mage's
+  start. It stays behind the real class until the capstone.
+- **Gate:** pick one of the six class mechanics. It works at half strength, and its ⚙ tree nodes work for you.
+- **Notables:** *Stolen Knowledge* (a stronger mechanic), *Borrowed Time* (the meter fills faster), *Pretender* (more of
+  the stat that class leans on).
+- **Capstone:** *Crown of Nothing*: the stolen mechanic works at full strength.
+
+### Wayfarer
+*"Every road is home."*
+
+- **Plays:** still no mechanic, all tree. You build out from two corners at once, like Ranger crit plus Templar regen, a
+  spread no other class could afford in points.
+- **Gate:** pick a second class start. You can path from both.
+- **Notables:** *Crossroads* (stronger Exile's Crossing nodes), *Travel Light* (travel nodes give a little all-round
+  power), *Even Keel* (a bonus to your lowest attribute).
+- **Capstone:** *Nowhere*: pick a third start.
+
+## Questions for you
+
+### 1. Do ascendancies twist the class mechanic or add something separate?
+
+- **Idea A, twist (written above, my pick):** the gate changes a rule of the class mechanic. The two ascendancies of a
+  class feel like different characters, and the existing meters and stat keys stay in use.
+- **Idea B, separate:** the class mechanic stays exactly as it is, and the gate adds a new power on top, from the list
+  below. Capstones and notables get rewritten around that power.
+
+| Ascendancy | Idea B gate |
+|---|---|
+| Ravager | Melee hits splash onto ring 1 |
+| Anvil | Attackers take damage based on your Armour |
+| Longshot | Your first hit on each enemy in rings 3–4 is a guaranteed crit |
+| Falconer | A hawk attacks alongside you at a fixed speed |
+| Wildcaster | Every 5th spell is free and casts twice |
+| Alchemist | Every flask you drink bursts on your target |
+| Matador | After you evade, your next attack is a guaranteed crit |
+| Vanguard | Each block stacks up less damage taken for a few seconds |
+| Flagellant | Below half Life, your skills are faster |
+| Lightkeeper | A halo burns everything in ring 1 |
+| Headsman | Enemies below 15% Life die to your next hit |
+| Plaguewright | Ailments spread when an enemy dies |
+
+### 2. How do you unlock it?
+
+- **Idea A, one trial (my pick):** a trial boss stage partway through Act 3. Beat it, choose, and the gate opens.
+- **Idea B, three trials:** one at the start, middle and end of Act 3. The first opens the gate and the choice, and the
+  others open the notables and then the capstone, so the section grows through the act.
+
+### 3. What pays for the section?
+
+- **Idea A, normal tree points (my pick):** the section is about 11 points, spent from the same pool as the rest of the
+  tree, so it's a real trade against the main tree. This fits "a section of the main tree" most closely.
+- **Idea B, its own points:** each trial or Act 3–6 boss gives ascendancy points that only work here. Every character
+  fills the section, and the main tree loses nothing.
+
+### 4. Where does the section sit?
+
+The rim is further than you'd expect. The nearest mechanic keystone is 39 points from every class start, and a level 33
+character has 34 points. A section on the rim couldn't be reached when it unlocks.
+
+- **Idea A, beside your start (my pick):** the gate links straight to your class start and the section grows from there.
+  It's usable the moment you pick. An Exile's hangs off the start they chose.
+- **Idea B, out past the rim:** the section sits beyond the mechanic keystone as a long-term goal. The choice is made at
+  Act 3, but its power only arrives some levels later, unless picking also adds a free road out there.
+
+### 5. Can you change your mind?
+
+- **Idea A, never (my pick):** the choice is final for that character, so the other ascendancy is a reason to roll a new
+  one. Fits "choices should matter" and the multiple characters goal.
+- **Idea B, at a price:** switch for a rare material, plus the usual Orb of Regret per node. Late game characters can
+  try the other side without starting over.
+
+### 6. When does Exile get its ascendancy?
+
+- **Idea A, Act 3 like everyone (my pick):** simple, and an Exile gets something to look forward to on a hard run.
+- **Idea B, after Act 6:** Exile goes through the whole campaign with nothing, and the ascendancy is the reward. Harder,
+  and closer to hard mode, but the Exile plays longest without one.
+
+Either way, [CLASSES.md](CLASSES.md) needs a small update: it says Exile gets no gameplay rewards so that it stays a flex.
+Ascendancies are a gameplay reward, though the crest and achievements can stay as they are.
+
+## Defaults unless you say otherwise
+
+- Existing mechanic keystones like Endless Fury still work alongside any ascendancy, and odd combinations are left in.
+- You can read both ascendancies before you choose.
+- Challenge modes work the same way, and Exile keeps both ascendancies there.
+- The hawk is the one new thing on the battlefield. It doesn't take up a hex.
