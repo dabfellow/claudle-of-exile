@@ -1,6 +1,6 @@
 # Asset credits
 
-Files are named after their pack: `catalone-`, `woshi-`, `codespree-`, `sn-`, `craftpix-`, `freesample-`, `craft32-`, `remedies-`, `softline-`, `gegx-`, `set-NN-`. Unprefixed PNGs are Kibyra.
+Files are named after their pack: `catalone-`, `woshi-`, `codespree-`, `sn-`, `craftpix-`, `freesample-`, `craft32-`, `remedies-`, `softline-`, `gegx-`, `set-NN-`, `snoopeth-pN-`, `quintino-`, `weapons30-`, `icons32-`. Unprefixed PNGs are Kibyra.
 
 - **icons/\*\*.svg**: [game-icons.net](https://game-icons.net), CC BY 3.0 (a few CC0). Attribution required; authors are listed in `icons/LICENSE-game-icons.txt`. White on transparent, renamed to match game ids (`skills/mining.svg` was lorc's `mining.svg`).
 - **Unprefixed PNGs in icons/, ui/ and items/** (for example `items/weapons/dagger.png`, `items/currency/gem-red.png`): Free Medieval Fantasy UI Pack by Kibyra. Free for personal and commercial use; credit appreciated. The pack itself may not be redistributed or resold as-is.
@@ -17,5 +17,11 @@ Files are named after their pack: `catalone-`, `woshi-`, `codespree-`, `sn-`, `c
 - **remedies-\*.png**: Grounded Medieval Remedies by Eldrion Team. Free for personal and commercial products; not to be redistributed as an asset pack. Credit appreciated: "Eldrion Team".
 - **softline-\*.png**: Softline RPG Icons FREE 100 by The Cooked Works (see the pack's LICENSE.pdf).
 - **zones/gegx-\*.webp, scenes/gegx-\*.webp**: Painterly Backgrounds free sample by GegX (gegx.itch.io), AI-generated and hand-curated, resized to 1600px webp. Free for commercial and non-commercial projects; may not be redistributed as an asset pack or used to train image models.
+- **Packs added 2026-10-31:** the owner says all four below were free itch.io files, and to assume free public use is allowed while the game isn't sold. That assumption applies for now; recheck each one before any paid release.
+- **armor/snoopeth-p1-\*.png, snoopeth-p2-\*.png**: shield packs 1 and 2 by SnoopethDuckDuck (snoopethduckduck.itch.io). CC0, per the licence file in each pack.
+- **armor/snoopeth-p3-\*.png**: shield pack 3 by SnoopethDuckDuck (snoopethduckduck.itch.io). CC BY 4.0, per the pack's licence file. Credit required: by SnoopethDuckDuck. The pieces are enlarged 3×.
+- **quintino-\*.png**: RPG Weapons by quintino_pixels, exported from `RPG_Weapons.aseprite`. Free itch.io file, under the owner's assumption above; no licence file in the download. `armor/tint-tower-shield.png` is a recolour of `quintino-q23.png`.
+- **weapons30-\*.png**: a pasted 30-sword sheet, enlarged 2×. Free itch.io file, under the owner's assumption above; pack name and author not recorded.
+- **icons32-\*.png** and the ring, flask and frostleaf `tint-*.png` recolours made from them: a set of 32 pixel icons, enlarged 2×. Free itch.io file, under the owner's assumption above; pack name and author not recorded.
 
 Which game id uses which file is in `docs/design/ASSET_MAPPING.md`.
