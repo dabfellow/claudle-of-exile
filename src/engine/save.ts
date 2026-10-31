@@ -6,6 +6,7 @@ import { hasAction } from '../data/skills';
 import { ZONES } from '../data/zones';
 import { trimFlaskStash } from './flasks';
 import { settleGems } from './gems';
+import { settleMaps } from './maps';
 import { connectedWithout } from './passives';
 import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
@@ -225,6 +226,7 @@ export function deserialize(json: string): GameState {
   unlockReachedZones(s);
   settleGems(s);
   trimFlaskStash(s);
+  settleMaps(s);
   dropRemovedActions(s);
   return s;
 }

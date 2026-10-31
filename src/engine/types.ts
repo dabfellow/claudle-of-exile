@@ -423,6 +423,30 @@ export interface AutomationUnlocks {
   offlineHours: number;
 }
 
+/** A map being run. Its map is already used up. */
+export interface MapRun {
+  zoneId: string;
+  tier: number;
+  theme: string;
+  packsLeft: number;
+  packsTotal: number;
+  /** game clock when it started */
+  startedAt: number;
+  /** lifetime deaths when it started: a rise means the run ended in one */
+  deaths: number;
+  bossDown: boolean;
+}
+
+export interface MapState {
+  /** maps held, by map zone id */
+  stock: Record<string, number>;
+  run: MapRun | null;
+  /** what auto-run keeps opening */
+  auto: { tier: number; theme: string } | null;
+  /** running totals, to judge a loop by; runs and clearMs count finished maps */
+  tally: { runs: number; clearMs: number; mapsFound: number; favoured: number };
+}
+
 export interface GameState {
   version: number;
   character: CharacterInfo;
@@ -441,6 +465,8 @@ export interface GameState {
   equipment: Partial<Record<EquipSlot, Item>>;
   flaskSlots: (FlaskInstance | null)[];
   automation: AutomationUnlocks;
+  /** the Maps preview (engine/maps.ts) */
+  maps: MapState;
   skillBar: (SkillGemInstance | null)[];
   /** skill gems not on the bar */
   gems: SkillGemInstance[];

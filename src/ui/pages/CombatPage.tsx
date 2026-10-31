@@ -647,7 +647,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
   }
 
   const zone = zoneDef(c.zoneId);
-  const zoneArt = anyArtUrl(`zones/${zone.id}`);
+  const zoneArt = anyArtUrl(`zones/${zone.art ?? zone.id}`);
   // once this area's boss is down, offer the areas it opened
   const nexts = s.bossesDefeated.includes(zone.id) ? nextZones(zone.id).filter((z) => s.unlockedZones.includes(z.id)) : [];
   return (
@@ -671,7 +671,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
           </>
         }
       >
-        Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {s.zoneKills[zone.id] ?? 0}/{zone.bossEvery} until {zone.boss.name}
+        Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {s.maps.run ? `${s.maps.run.packsLeft}/${s.maps.run.packsTotal} packs left before ${zone.boss.name}` : `${s.zoneKills[zone.id] ?? 0}/${zone.bossEvery} until ${zone.boss.name}`}
       </PageHeader>
 
       <div className={`card arena2 ${zoneArt ? 'has-art' : ''}`} style={{ ['--zone' as string]: zone.color, ['--zone-art' as string]: zoneArt ? `url(${zoneArt})` : undefined }}>

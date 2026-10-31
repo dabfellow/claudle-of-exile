@@ -9,6 +9,7 @@ import { checkAchievements } from './achievements';
 import { combatStep } from './combat';
 import { refreshVendor, vendorTick } from './hideout';
 import { createItem } from './items';
+import { mapStep, newMapState } from './maps';
 import { seeded } from './rng';
 import { craftStep } from './craftUntil';
 import { greenhouseStep, skillStep } from './skills';
@@ -72,6 +73,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     smithCatalyst: { fossil: null, resin: null, until: false, salvageMisses: false },
     hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, watchtower: 1 },
     automation: { rules: [], ruleSlots: 1, offlineHours: 8 },
+    maps: newMapState(),
     vendor: { stock: [], refreshAt: 0 },
     settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false, movement: 'walk', autoFlee: true, targeting: { priority: 'none', order: 'closest' } },
     lifetime: {
@@ -119,6 +121,7 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
       s.mana = Math.min(d.maxMana, s.mana + d.maxMana * TOWN_REGEN * (step / 1000));
       s.es = Math.min(d.maxEs, s.es + d.maxEs * TOWN_REGEN * (step / 1000));
     }
+    mapStep(s, ctx);
   }
   if (s.life > d.maxLife) s.life = d.maxLife;
   if (s.mana > d.maxMana) s.mana = d.maxMana;

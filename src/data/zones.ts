@@ -57,6 +57,8 @@ export interface ZoneDef {
   boss: MonsterDef;
   /** the act's final boss: beating it completes the act */
   actBoss?: boolean;
+  /** the id its art is filed under, when it borrows another area's */
+  art?: string;
   /** kills needed before the boss appears */
   bossEvery: number;
   /** monsters per wave (bosses come with BOSS_ADDS adds) */
@@ -376,8 +378,11 @@ export const ZONES: ZoneDef[] = [
   },
 ];
 
+/** Areas off the campaign road (data/maps.ts): they can be fought in, but nothing that walks ZONES sees them. */
+export const EXTRA_ZONES: ZoneDef[] = [];
+
 export function zoneDef(id: string): ZoneDef {
-  const z = ZONES.find((x) => x.id === id);
+  const z = ZONES.find((x) => x.id === id) ?? EXTRA_ZONES.find((x) => x.id === id);
   if (!z) throw new Error(`Unknown zone ${id}`);
   return z;
 }

@@ -582,6 +582,15 @@ export function OfflineModal() {
             <p>{sum.bossWaiting} awaits. Bosses must be fought in person until the War Table teaches wind-up rules.</p>
           </div>
         )}
+        {sum.mapRuns > 0 && (
+          <div className="away-alert">
+            <div className="row">
+              <GameIcon name="map" size={16} />
+              <b>Maps Cleared</b>
+            </div>
+            <p>{sum.mapRuns} map run{sum.mapRuns === 1 ? '' : 's'} finished, {sum.mapsFound} new map{sum.mapsFound === 1 ? '' : 's'} found.</p>
+          </div>
+        )}
         {sum.crafted && (
           <div className="away-alert">
             <div className="row">

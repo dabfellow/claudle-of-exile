@@ -69,6 +69,7 @@ import { flaskStats } from './flasks';
 import { gemUseReason, grantGemXp, MIN_COOLDOWN_MS, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
 import { rollLoot } from './loot';
+import { mapPackLeft, onMapFieldLost, onMapPack, rollMapDrops } from './maps';
 import { chance, pick, rInt } from './rng';
 import { grantXp } from './skills';
 import {
@@ -150,14 +151,19 @@ export function startCombat(s: GameState, ctx: Ctx, zoneId: string): string | nu
   if (!s.unlockedZones.includes(zoneId)) return 'Zone is locked';
   // a save carried over from a preview build can hold areas of an act that isn't out yet
   if (!actOpen(zoneDef(zoneId).act)) return "This act isn't open yet";
+  clearGround(s);
+  enterZone(s, ctx, zoneId);
+  return null;
+}
+
+/** Start a fresh fight in an area, whatever got you there. */
+export function enterZone(s: GameState, ctx: Ctx, zoneId: string): void {
   s.action = { kind: 'combat', zoneId };
   s.combat = newRuntime(zoneId);
   // gates start part-way through their timers, so they don't all open together
   s.combat.gates = EDGE_CELLS.map(() => gateTimer(ctx, zoneId) * ctx.rng.next());
-  clearGround(s);
   ctx.emit({ t: 'info', text: `Entered ${zoneDef(zoneId).name}` });
   ctx.emit({ t: 'combatStart', zoneId });
-  return null;
 }
 
 export function retreat(s: GameState): void {
@@ -245,6 +251,7 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
 }
 
 export function bossIsNext(s: GameState, zoneId: string): boolean {
+  if (s.maps.run?.zoneId === zoneId) return !mapPackLeft(s);
   return (s.zoneKills[zoneId] ?? 0) >= zoneDef(zoneId).bossEvery;
 }
 
@@ -276,6 +283,7 @@ function gateTimer(ctx: Ctx, zoneId: string): number {
 function spawnPack(s: GameState, ctx: Ctx, gate: number): void {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
+  if (!mapPackLeft(s)) return;
   if (bossIsNext(s, zone.id)) ctx.emit({ t: 'bossWaiting', name: zone.boss.name });
   const [lo, hi] = zone.packSize;
   const n = rInt(ctx.rng, lo, hi);
@@ -285,6 +293,7 @@ function spawnPack(s: GameState, ctx: Ctx, gate: number): void {
     .filter((i) => i !== gate)
     .sort((a, b) => cellDistance(a, gate) - cellDistance(b, gate));
   const cells = [gate, ...others].slice(0, Math.min(n, room));
+  if (cells.length) onMapPack(s);
   for (const cell of cells) {
     const m = makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), scale);
     m.cell = cell;
@@ -323,6 +332,11 @@ function advanceSpawns(s: GameState, ctx: Ctx, dt: number): void {
   const alive = aliveMonsters(c).length;
   const boss = bossCanSpawn(s, ctx, zone.id);
   if (boss && alive) return;
+  // a map sends a set number of packs: past those, offline without wind-up rules, the boss stays in hiding and the run waits
+  if (!boss && s.maps.run && !mapPackLeft(s)) {
+    if (!alive) ctx.emit({ t: 'bossWaiting', name: zone.boss.name });
+    return;
+  }
   const pace = MOVEMENT[currentMovement(s)];
   if (!alive && c.spawnMs <= 0) c.spawnMs = SPAWN_DELAY_MS;
   if (c.spawnMs > 0) {
@@ -368,6 +382,7 @@ function shakeOff(s: GameState, ctx: Ctx, dt: number): void {
   if (!far) return;
   c.monsters = c.monsters.filter((m) => m !== far);
   ctx.emit({ t: 'info', text: `Left ${far.name} behind` });
+  if (!c.monsters.length) onMapFieldLost(s);
 }
 
 /** Auto-flee: on low life, back off until healed, then go back to the chosen pace. */
@@ -1161,6 +1176,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   grantGemXp(s, ctx, xp, d.attributes);
   gainCharges(s, mon.isBoss ? 8 : 1, d);
   rollLoot(s, ctx, mon, zone, d);
+  rollMapDrops(s, ctx, mon);
 
   // Virulence: poisons jump to another enemy
   const spreading = mon.dots.filter((x) => x.kind === 'poison' && x.spreads && x.remainingMs > 0);
@@ -1186,6 +1202,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
 
   if (mon.isBoss) {
     s.lifetime.bossKills += 1;
+    if (s.maps.run) s.maps.run.bossDown = true;
     s.zoneKills[zone.id] = 0;
     // Nothing But Will: Ysolde with no unique equipped
     if (zone.id === 'sanctum' && s.character.classId === 'exile' && !Object.values(s.equipment).some((it) => it?.rarity === 'unique')) {
