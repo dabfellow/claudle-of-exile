@@ -1,12 +1,10 @@
-# Ascendancies (draft)
+# Ascendancies
 
-Draft 2026-10-30, for you to pick from. Nothing here is built. They arrive in Milestone 6 of the
+Drafted 2026-10-30, decided 2026-10-31. Nothing here is built. They arrive in Milestone 6 of the
 [MILESTONES.md](../MILESTONES.md).
 
-**Settled:** two per class, 14 in total, unlocked around Act 3, and picking one unlocks a new section of the main tree.
-Exile is the seventh class, so it gets two as well.
-
-The ascendancies below are written as if you pick Idea A in question 1. Names are a first pass.
+**Settled:** two per class for the six main classes, 12 in total. Exile has none. Picking one opens its own tree, on a
+new tab in the passive tree. Names are a first pass.
 
 ## How a section is laid out
 
@@ -41,8 +39,6 @@ make it better, and each rule fits in one sentence.
 | Templar | Lightkeeper | You store novas and release them when it counts |
 | Shadow | Headsman | A killing Coup de Grâce refunds Malice and chains through packs |
 | Shadow | Plaguewright | Ailments fill Malice, and Coup de Grâce bursts them |
-| Exile | Usurper | Steals one class's mechanic |
-| Exile | Wayfarer | Gains a second start on the tree |
 
 ## Warrior
 
@@ -178,97 +174,22 @@ make it better, and each rule fits in one sentence.
   ailments).
 - **Capstone:** *Pandemic*: the burst copies the ailments to enemies within 1 ring.
 
-## Exile
+## Decisions (2026-10-31)
 
-Exile has no mechanic to twist, so its two ascendancies add something instead, whichever idea you pick in question 1.
-Both keep what Exile is: no class bonus and no defence lean.
+1. **Twist:** the gate changes a rule of the class mechanic, as written above.
+2. **Three trials:** one at the start of Act 3 opens the gate and the choice, one at the end of Act 4 opens the notables,
+   and one at the start of Act 6 opens the capstone.
+3. **Own points:** trials and Act 3–6 bosses give ascendancy points that only work here. Every character fills the
+   section, and the main tree loses nothing.
+4. **Separate tree:** the ascendancy gets its own tab in the passive tree after the first trial. So it's usable the
+   moment you pick, and the layout above stands on its own.
+5. **Switching:** allowed for a rare material, plus the usual Orb of Regret per node.
+6. **Exile:** no ascendancy, in the campaign or in challenge modes. This keeps [CLASSES.md](CLASSES.md)'s rule that Exile
+   gets no gameplay rewards.
 
-### Usurper
-*"Takes what was never theirs."*
-
-- **Plays:** any class mechanic from any start, so combinations no normal class can have, like Rage from the Mage's
-  start. It stays behind the real class until the capstone.
-- **Gate:** pick one of the six class mechanics. It works at half strength, and its ⚙ tree nodes work for you.
-- **Notables:** *Stolen Knowledge* (a stronger mechanic), *Borrowed Time* (the meter fills faster), *Pretender* (more of
-  the stat that class leans on).
-- **Capstone:** *Crown of Nothing*: the stolen mechanic works at full strength.
-
-### Wayfarer
-*"Every road is home."*
-
-- **Plays:** still no mechanic, all tree. You build out from two corners at once, like Ranger crit plus Templar regen, a
-  spread no other class could afford in points.
-- **Gate:** pick a second class start. You can path from both.
-- **Notables:** *Crossroads* (stronger Exile's Crossing nodes), *Travel Light* (travel nodes give a little all-round
-  power), *Even Keel* (a bonus to your lowest attribute).
-- **Capstone:** *Nowhere*: pick a third start.
-
-## Questions for you
-
-### 1. Do ascendancies twist the class mechanic or add something separate?
-
-- **Idea A, twist (written above, my pick):** the gate changes a rule of the class mechanic. The two ascendancies of a
-  class feel like different characters, and the existing meters and stat keys stay in use.
-- **Idea B, separate:** the class mechanic stays exactly as it is, and the gate adds a new power on top, from the list
-  below. Capstones and notables get rewritten around that power.
-
-| Ascendancy | Idea B gate |
-|---|---|
-| Ravager | Melee hits splash onto ring 1 |
-| Anvil | Attackers take damage based on your Armour |
-| Longshot | Your first hit on each enemy in rings 3–4 is a guaranteed crit |
-| Falconer | A hawk attacks alongside you at a fixed speed |
-| Wildcaster | Every 5th spell is free and casts twice |
-| Alchemist | Every flask you drink bursts on your target |
-| Matador | After you evade, your next attack is a guaranteed crit |
-| Vanguard | Each block stacks up less damage taken for a few seconds |
-| Flagellant | Below half Life, your skills are faster |
-| Lightkeeper | A halo burns everything in ring 1 |
-| Headsman | Enemies below 15% Life die to your next hit |
-| Plaguewright | Ailments spread when an enemy dies |
-
-### 2. How do you unlock it?
-
-- **Idea A, one trial (my pick):** a trial boss stage partway through Act 3. Beat it, choose, and the gate opens.
-- **Idea B, three trials:** one at the start, middle and end of Act 3. The first opens the gate and the choice, and the
-  others open the notables and then the capstone, so the section grows through the act.
-
-### 3. What pays for the section?
-
-- **Idea A, normal tree points (my pick):** the section is about 11 points, spent from the same pool as the rest of the
-  tree, so it's a real trade against the main tree. This fits "a section of the main tree" most closely.
-- **Idea B, its own points:** each trial or Act 3–6 boss gives ascendancy points that only work here. Every character
-  fills the section, and the main tree loses nothing.
-
-### 4. Where does the section sit?
-
-The rim is further than you'd expect. The nearest mechanic keystone is 39 points from every class start, and a level 33
-character has 34 points. A section on the rim couldn't be reached when it unlocks.
-
-- **Idea A, beside your start (my pick):** the gate links straight to your class start and the section grows from there.
-  It's usable the moment you pick. An Exile's hangs off the start they chose.
-- **Idea B, out past the rim:** the section sits beyond the mechanic keystone as a long-term goal. The choice is made at
-  Act 3, but its power only arrives some levels later, unless picking also adds a free road out there.
-
-### 5. Can you change your mind?
-
-- **Idea A, never (my pick):** the choice is final for that character, so the other ascendancy is a reason to roll a new
-  one. Fits "choices should matter" and the multiple characters goal.
-- **Idea B, at a price:** switch for a rare material, plus the usual Orb of Regret per node. Late game characters can
-  try the other side without starting over.
-
-### 6. When does Exile get its ascendancy?
-
-- **Idea A, Act 3 like everyone (my pick):** simple, and an Exile gets something to look forward to on a hard run.
-- **Idea B, after Act 6:** Exile goes through the whole campaign with nothing, and the ascendancy is the reward. Harder,
-  and closer to hard mode, but the Exile plays longest without one.
-
-Either way, [CLASSES.md](CLASSES.md) needs a small update: it says Exile gets no gameplay rewards so that it stays a flex.
-Ascendancies are a gameplay reward, though the crest and achievements can stay as they are.
-
-## Defaults unless you say otherwise
+## Defaults
 
 - Existing mechanic keystones like Endless Fury still work alongside any ascendancy, and odd combinations are left in.
 - You can read both ascendancies before you choose.
-- Challenge modes work the same way, and Exile keeps both ascendancies there.
+- Challenge modes work the same way.
 - The hawk is the one new thing on the battlefield. It doesn't take up a hex.

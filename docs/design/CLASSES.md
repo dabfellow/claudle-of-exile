@@ -1,8 +1,8 @@
 # Classes — Identity Rework
 
 **Design reset (2026-10-30):** six normal classes, plus Exile as an unlockable hard mode class that can also be taken
-into challenge modes. Each class gets two ascendancies (14 in total), unlocked around Act 3; picking one opens a new
-section of the main tree. Class balance doesn't need to be exact. See [GDD.md](GDD.md) §3.
+into challenge modes. Each main class gets two ascendancies (12 in total, none for Exile), starting at Act 3; picking one opens its own tree,
+on a new tab in the passive tree. Class balance doesn't need to be exact. See [GDD.md](GDD.md) §3.
 
 **Decided (2026-10-24):** 7 classes — 3 pure, 3 hybrid, 1 all-rounder. Identity comes from an
 **exclusive class mechanic**; every gem, base and unique stays shared (PoE-style).

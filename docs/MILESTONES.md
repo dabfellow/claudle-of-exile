@@ -12,21 +12,19 @@ Last updated 2026-10-31.
 ## Next steps
 
 **Where we are:** Milestones 1, 2, 3, the Act 2 pieces and music are live as 0.2.4 (deployed 2026-10-31). The real-account
-test and player heads-up were skipped, so do both now. Act 2 pacing is still to do.
+test and player heads-up were skipped, so do both now. Act 2 pacing, Act 1's cold check and Scorched earth's danger
+stay as they are, with no playtest planned, until you say otherwise.
 
 **In order:**
 
-1. **Claude:** rebuild Act 2 (Milestone 4). The pieces are merged; tune pacing and Act 1's cold check, and
-   make Scorched earth dangerous enough that ground rules matter.
+1. **Claude:** build Act 3 and the first ascendancy trial from [ACT3.md](design/ACT3.md). Sessions started 2026-10-31.
 2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
 3. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
    they earn them, and Act 1 got slower.
-4. **[You]** Answer the 6 questions in [ASCENDANCIES.md](design/ASCENDANCIES.md). Milestone 6 needs them.
-5. **[You]** Answer the 8 questions in [HARD_BOSSES.md](design/HARD_BOSSES.md). This can wait until Milestone 9.
-6. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
+4. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
    hideout scenes ([ASSET_MAPPING.md](design/ASSET_MAPPING.md)).
-7. **[You]** Play the Maps preview whenever you like, and say whether the loop is fun. Maps stay post-Act 6 in the real
+5. **[You]** Play the Maps preview whenever you like, and say whether the loop is fun. Maps stay post-Act 6 in the real
    game; the preview is dev and admin only. Try it with `npm run dev`, then Map Device → Dev tools.
 
 ## Milestones
@@ -38,10 +36,10 @@ test and player heads-up were skipped, so do both now. Act 2 pacing is still to 
 | 3 | Account layer | Live, not tested on real accounts | Real-account test |
 | 4 | Act recipe and Act 2 | **In progress**: pieces merged | Pacing and Act 1 cold check |
 | 5 | Maps preview | Built, dev only | You playing it |
-| 6 | Act 3 and ascendancies | Drafted | Milestone 4, your answers |
+| 6 | Act 3 and ascendancies | **In progress**: design decided, sessions running | Sessions |
 | 7 | Acts 4–6 | Level 80 gear done early | Milestone 6 |
 | 8 | Maps | Not started | Milestones 5 and 7 |
-| 9 | Hard mode bosses | Drafted | Milestone 8, your answers |
+| 9 | Hard mode bosses | Answered | Milestone 8 |
 | 10 | Top-end crafting and hideout | Not started | Milestone 9 |
 | 11 | Long tail | Not started | Milestone 10 |
 | 1.0 | You call it | – | Vibes |
@@ -90,9 +88,10 @@ test and player heads-up were skipped, so do both now. Act 2 pacing is still to 
 
 ### 6. Act 3 and ascendancies
 - Act 3 from the recipe, with larger stage counts starting to grow.
-- Ascendancies unlock here: 14 in total, each a new section of the main tree ([ASCENDANCIES.md](design/ASCENDANCIES.md)).
+- First ascendancy trial at the start of Act 3: 12 in total, each with its own tree tab and points. Exile has none
+  ([ASCENDANCIES.md](design/ASCENDANCIES.md)). Trials 2 and 3 arrive with Acts 4 and 6 in Milestone 7.
 - Tree extended for the extra levels.
-- **Done:** every class can pick either ascendancy and play it through Act 3.
+- **Done:** every main class can pick either ascendancy and play it through Act 3.
 
 ### 7. Acts 4–6
 - Each from the recipe, growing to 10–20 stages, ending around level 65.
@@ -230,7 +229,8 @@ Work backwards from the end state, not forwards from Act 1.
 - **Rules:** per skill, as now, with better priority controls and more rule slots as they unlock.
 - **New skills:** batches by act. Each act brings a themed set of skills and supports, as part of the act recipe.
 - **Classes:** six normal classes. Exile becomes a hard mode, unlocked by finishing the campaign with another character.
-- **Ascendancies:** two per class, 14 in total, unlocked around Act 3. Picking one unlocks a new section of the main tree.
+- **Ascendancies:** two per main class, 12 in total, with three trials from Act 3 to Act 6, their own tree tab and
+  points. Exile has none ([ASCENDANCIES.md](design/ASCENDANCIES.md)).
 - **Gear:** extend base tiers to about level 80, so new Maps tiers keep bringing visibly better gear.
 - **Character tree:** keep the current tree and add enough nodes for the extra levels.
 - **Top crafts:** both. Rare materials can force exactly the mod you want at a high price, and can roll past normal limits

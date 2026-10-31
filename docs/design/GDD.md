@@ -72,7 +72,8 @@ Measure first: put rule locks, offline stops and a combat/skilling split in the 
 ### Classes
 - **Six normal classes**, each with its own mechanic: Warrior, Ranger, Mage, Duelist, Templar, Shadow ([CLASSES.md](CLASSES.md)).
 - **Exile** is a hard mode class, unlocked by finishing the campaign with another character.
-- **Ascendancies:** two per class, 14 in total, unlocked around Act 3. Picking one unlocks a new section of the main tree.
+- **Ascendancies:** two per main class, 12 in total, with three trials from Act 3 to Act 6. Exile has none. Each has its
+  own tree and its own points ([ASCENDANCIES.md](ASCENDANCIES.md)).
 
 ---
 

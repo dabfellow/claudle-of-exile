@@ -98,43 +98,35 @@ Each has about two ideas, with my pick first.
   campaign, but moments start to repeat.
 
 ### 2. How do bosses tier up?
-- **A. Three tiers per boss.** Each tier has its own key and the same moment, with shorter windows, more damage and better
-  drops. Month 3 is first kills on tier 1; month 6 is farming tier 3. (My pick.)
 - **B. One version of each boss, with modded keys.** Craft a key like a map to add danger and drops, such as "+30% boss life,
   +50% unique chance". More crafting depth, but harder for the sim to test every mix.
 
 ### 3. What does a key cost you?
 - **A. Used when the fight starts, win or lose.** Simple, and it matches maps being consumed per run. (My pick.)
-- **B. Used only on a kill.** Friendlier for hand-played attempts, but it removes all the risk of a failed fight.
+
 
 ### 4. How common are keys?
-- **A. A supply.** One map farming session gives enough keys for a long offline boss run, and uniques stay the rare part.
-  Fits "keeping a supply going" and "easily farm". (My pick.)
+
 - **B. An event.** A handful a day, with better drops per kill. Each fight feels bigger, but offline boss farming mostly
   disappears.
 
 ### 5. How good is a rule compared to a player?
 - **A. A rule makes you safe, a player does better.** A rule always stops the bad result. A well-timed manual answer also
   gives a bonus, such as a longer plating break. Keeps being there worthwhile, as the vision says. (My pick.)
-- **B. A rule is as good as a player.** Once set up, there's no reason to watch. Simpler, and it fits the idle fantasy.
 
 ### 6. How do rules choose a target?
 Rules today decide whether a skill fires, not what it aims at. Moments need that. See [Fit with today's game](#fit-with-todays-game).
 - **A. An aim option on each skill's rule.** Keeps rules per skill, as settled. (My pick.)
-- **B. One plan per boss.** A small panel listing that boss's moments, each with a chosen answer. Easier to read, but it's a
-  second place to set up automation.
+
 
 ### 7. Where do players start a fight?
 - **A. The Map Device.** Keys sit beside maps, and auto-run works the same way, with no new screen. (My pick.)
-- **B. A new hideout station.** A Boss Altar with its own upgrades, like more attempts queued. More to build toward, but a
-  second auto-run to build.
+
 
 ### 8. What stops a fight running forever?
 A weak build on idle could get stuck against a boss that heals through its moments.
 - **A. A hard enrage.** After about five minutes the boss's damage climbs until the fight ends. Clear for players, and the
   sim gets a firm result. (My pick.)
-- **B. Moments snowball instead.** No timer; each missed moment makes the boss stronger until the fight ends by itself. More
-  natural, but fight length is harder to predict.
 
 ## Fit with today's game
 
@@ -155,7 +147,7 @@ What needs building, from reading `src/engine/combat.ts`, `src/engine/mechanics.
 
 ## Sim tests
 
-Moments must live in the engine, not the UI, so the sim and offline progress run the same fight a player sees.
+Moments must live in the engine, not the UI, so the sim and offline progress run the same fight a player sees. (keep sims to a minimal)
 
 | Test | Character | Pass |
 |---|---|---|
