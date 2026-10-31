@@ -162,6 +162,7 @@ export function ItemTip({
             </div>
           </>
         )}
+        {item.impression && <div className="dim small">Wax impression taken: can be restored at the Crafting Bench</div>}
         {!pinned && (
           <div className="tip-hint">
             {item.rarity !== 'normal' && item.rarity !== 'unique' && !alt ? 'Alt: tiers & keep open · ' : alt ? 'Alt held: staying open · ' : ''}Right-click: pin

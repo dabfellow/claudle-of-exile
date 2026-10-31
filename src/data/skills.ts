@@ -1,6 +1,6 @@
 import type { SkillId } from '../engine/types';
 import { BASES, type BaseDef } from './bases';
-import { SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB } from './craftMats';
+import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
 
 export interface SkillDef {
   id: SkillId;
@@ -19,6 +19,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   woodcutting: { id: 'woodcutting', name: 'Woodcutting', group: 'gathering', color: '#6fae4a', verb: 'Chopping', desc: 'Fell trees for hafts, frames and flask stoppers.' },
   // id kept as `harvesting` so saves, tree nodes and the Greenhouse don't need migrating
   harvesting: { id: 'harvesting', name: 'Foraging', group: 'gathering', color: '#d9b84a', verb: 'Foraging', desc: 'Pick herbs off the ground for Alchemy.' },
+  thieving: { id: 'thieving', name: 'Thieving', group: 'gathering', color: '#c9a35a', verb: 'Thieving', desc: "Lift purses for gold and Rogue's Markers, then spend them on Heists against the Khanate." },
   smithing: { id: 'smithing', name: 'Smithing', group: 'production', color: '#b8b8c8', verb: 'Smithing', desc: 'Forge equipment bases. Higher level → higher item level.' },
   alchemy: { id: 'alchemy', name: 'Alchemy', group: 'production', color: '#9b6dde', verb: 'Brewing', desc: 'Brew flasks and transmute dust into orbs.' },
   gemcutting: { id: 'gemcutting', name: 'Gemcutting', group: 'production', color: '#4fc1a6', verb: 'Cutting', desc: 'Cut rough gems into skill and support gems.' },
@@ -27,7 +28,6 @@ export const SKILLS: Record<SkillId, SkillDef> = {
 
 /** Planned skills shown on the Coming soon page; none exist in the engine yet. */
 export const UPCOMING_SKILLS: { name: string; theme: string; icon: string; color: string; desc: string }[] = [
-  { name: 'Thieving', theme: 'Heist', icon: 'stash', color: '#c9a35a', desc: "Pickpocket townsfolk and rogues for gold, Rogue's Markers and the odd orb." },
   { name: 'Archaeology', theme: 'Expedition', icon: 'mining', color: '#b0784a', desc: 'Dig sites in every area for Artifacts to trade for currency.' },
   { name: 'Cartography', theme: 'Maps', icon: 'map', color: '#8a7ad8', desc: 'Draw and upgrade maps for the Map Device.' },
   { name: 'Fletching', theme: 'Quivers', icon: 'woodcutting', color: '#7fae6a', desc: 'Turn logs into shafts and shafts into quivers.' },
@@ -119,6 +119,24 @@ const GATHERING: SkillAction[] = [
   { ...gather('harvesting', 'herb_ember', 'Emberroot Bed', 25, 4000, 32, 'emberroot', '#e2603f'), area: 'crypt' },
   { ...gather('harvesting', 'herb_void', 'Voidbloom Grove', 40, 5000, 55, 'voidbloom', '#9b6dde'), area: 'stormcliffs' },
 ].map((a) => ({ ...a, bonus: [...(a.bonus ?? []), { id: SHARD_FOR[a.skill]!, chance: SHARD_CHANCE, qty: 1 }] }));
+
+const mark = (id: string, name: string, level: number, intervalMs: number, xp: number, gold: number, marker: number, area: string, color: string, extra: SkillAction['bonus'] = []): SkillAction => ({
+  id, skill: 'thieving', name, level, intervalMs, xp, outputs: { gold }, bonus: [{ id: MARKER, chance: marker, qty: 1 }, ...extra], color, area,
+});
+
+/** Marks: no inputs, like a gathering node, and each Act 2 area adds some. A fence's mark trades its purse for Markers. */
+const THIEVING: SkillAction[] = [
+  mark('mark_peddler', 'Road Peddler', 1, 3000, 7, 3, 0.12, 'cinderroad', '#a0603a'),
+  mark('mark_hauler', 'Salt Hauler', 6, 3500, 11, 6, 0.14, 'saltflats', '#b8b09a'),
+  { ...mark('mark_runner', "Fence's Runner", 9, 3500, 12, 6, 0.3, 'saltflats', '#c9a35a'), outputChance: ALT_YIELD },
+  mark('mark_outrider', 'Khanate Outrider', 13, 3500, 16, 10, 0.16, 'blackgrass', '#7a7a4a'),
+  mark('mark_factor', 'Caravan Factor', 19, 4000, 22, 18, 0.18, 'caravan', '#b08a5a', [{ id: SEAL, chance: 0.002, qty: 1 }]),
+  { ...mark('mark_quartermaster', 'Khanate Quartermaster', 23, 4000, 24, 18, 0.4, 'caravan', '#d0a860'), outputChance: ALT_YIELD },
+  mark('mark_warden', 'Barrow Warden', 28, 4000, 28, 30, 0.2, 'kurgans', '#6f7a8a', [{ id: WAX, chance: 0.002, qty: 1 }]),
+  mark('mark_collector', 'Tax Collector', 35, 4500, 34, 48, 0.22, 'plateau', '#6a78a0'),
+  mark('mark_acolyte', 'Pyre Acolyte', 42, 5000, 41, 75, 0.25, 'pyretemple', '#c0502a', [{ id: SEAL, chance: 0.003, qty: 1 }, { id: WAX, chance: 0.002, qty: 1 }]),
+  mark('mark_steward', "Khan's Steward", 52, 5000, 46, 110, 0.28, 'burningthrone', '#e0702a', [{ id: SEAL, chance: 0.004, qty: 1 }, { id: WAX, chance: 0.003, qty: 1 }]),
+];
 
 /** Fishing is coming soon. It has always been coming soon. */
 const FISHING: SkillAction[] = [
@@ -225,7 +243,7 @@ const GEMCUTTING: SkillAction[] = [
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-export const ACTIONS: SkillAction[] = [...GATHERING, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING].map((a) => ({
+export const ACTIONS: SkillAction[] = [...GATHERING, ...THIEVING, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING].map((a) => ({
   ...a,
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
 }));

@@ -107,15 +107,16 @@ export function itemName(item: Item): string {
   return base.name;
 }
 
-/** Replace all mods on an item for its current rarity. */
-export function rerollMods(item: Item, rng: Rng, bias?: ModBias): void {
+/** Replace all mods on an item for its current rarity. `keep` stays and counts as one of the new rolls (a Forger's Seal). */
+export function rerollMods(item: Item, rng: Rng, bias?: ModBias, keep?: RolledMod): void {
   item.prefixes = [];
   item.suffixes = [];
+  if (keep) (affixDef(keep.affixId).kind === 'prefix' ? item.prefixes : item.suffixes).push(keep);
   if (item.rarity === 'magic') {
-    addRandomMod(item, rng, bias);
+    if (!keep) addRandomMod(item, rng, bias);
     if (rng.next() < 0.5) addRandomMod(item, rng, bias);
   } else if (item.rarity === 'rare') {
-    const n = rareModCount(rng);
+    const n = rareModCount(rng) - (keep ? 1 : 0);
     for (let i = 0; i < n; i++) addRandomMod(item, rng, bias);
     item.name = rareName(item, rng);
   }

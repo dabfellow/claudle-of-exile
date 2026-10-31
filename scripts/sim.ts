@@ -31,6 +31,8 @@ import { simulateOffline } from '../src/engine/offline';
 import { pickUp } from '../src/engine/storage';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
+import { HEIST_JOBS, ROGUES } from '../src/data/heist';
+import { cleanChance, jobBlocker, rankUpRogue, rogueReason, setJobExit, startHeist } from '../src/engine/heist';
 import { actionBlocker, startSkillAction } from '../src/engine/skills';
 import { grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
 import { groundFor } from '../src/engine/battlefield';
@@ -78,8 +80,9 @@ const SCHEDULE = (day: number): Play[] =>
  * Combat and skilling are one at a time, so each away period is a choice:
  * - push: combat, but the morning gap gathers while the next upgrade is short of materials.
  * - mix: the same, and every night gathers whether anything is short or not.
+ * - heist: push, but every night from Act 2 on goes to Heist.
  */
-type Profile = 'push' | 'mix';
+type Profile = 'push' | 'mix' | 'heist';
 const gathersAway = (profile: Profile, period: number, short: boolean) => (period === 0 && short) || (period === 2 && profile === 'mix');
 
 /** The order the bot buys automation in: rules before hours, as rules are what bosses are locked behind. */
@@ -386,6 +389,19 @@ function gatherJob(s: GameState): SkillAction | undefined {
   return GATHERING.filter((a) => a.skill === lagging && !actionBlocker(s, a)).at(-1);
 }
 
+/** The bot's job: the newest open one, walking out as deep as still comes off clean 40% of the time. */
+const HEIST_CLEAN = 0.4;
+function heistNight(s: GameState, ctx: Ctx): boolean {
+  const open = HEIST_JOBS.filter((j) => !jobBlocker(s, j));
+  const job = open.at(-1);
+  if (!job) return false;
+  for (const r of ROGUES) while (!rogueReason(s, r.id)) rankUpRogue(s, ctx, r.id);
+  let exit = job.rooms;
+  while (exit > 1 && cleanChance(s, job, exit) < HEIST_CLEAN) exit--;
+  setJobExit(s, job.id, exit);
+  return !startHeist(s, ctx, job.id);
+}
+
 /** Areas open to the bot: unlocked, and within a level of its minimum. */
 function reachable(s: GameState): ZoneDef[] {
   const lvl = characterLevel(s);
@@ -465,6 +481,9 @@ interface Result {
   skills: Record<string, number>;
   bar: string;
   orbsUsed: number;
+  /** nights spent on Heist, and what came of them */
+  heists: number;
+  heistAlarms: number;
 }
 
 function snapshot(s: GameState): Snapshot {
@@ -538,7 +557,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   let now = 0;
   const res: Result = {
     classId, seed, profile, levels: {}, bosses: {}, bossLevels: {}, upgrades: {}, checkpoints: {}, trials: {}, deaths: 0, offlineDeaths: 0, kills: 0,
-    activeMs: 0, awayCombatMs: 0, awayGatherMs: 0, cappedMs: 0, stoppedMs: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, skills: {}, bar: '', orbsUsed: 0,
+    activeMs: 0, awayCombatMs: 0, awayGatherMs: 0, cappedMs: 0, stoppedMs: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, skills: {}, bar: '', orbsUsed: 0, heists: 0, heistAlarms: 0,
   };
   const deathStreak: Record<string, number> = {};
   const tally: Record<string, number> = {};
@@ -641,9 +660,10 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
 
   /** Leave something running for `ms`. */
   const away = (ms: number, period: number) => {
-    const job = gathersAway(profile, period, !!nextUpgrade(s)?.short.length) ? gatherJob(s) : undefined;
+    const heisting = profile === 'heist' && period === 2 && heistNight(s, ctx);
+    const job = !heisting && gathersAway(profile, period, !!nextUpgrade(s)?.short.length) ? gatherJob(s) : undefined;
     if (job) startSkillAction(s, ctx, job.id);
-    else {
+    else if (!heisting) {
       if (awayBack && characterLevel(s) >= awayBackLevel + 2) awayBack--;
       const open = reachable(s);
       const zone = open[Math.max(0, open.length - 1 - awayBack)];
@@ -654,7 +674,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
     s.clock += ms - sum.ms;
     res.kills += sum.kills;
     res.cappedMs += ms - sum.ms;
-    if (job) res.awayGatherMs += sum.ms;
+    if (job || heisting) res.awayGatherMs += sum.ms;
     else if (sum.diedAfterMs === null) res.awayCombatMs += sum.ms;
     else {
       res.awayCombatMs += sum.diedAfterMs;
@@ -697,7 +717,9 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   res.bank = s.bank;
   res.bestDps = d.dps;
   res.bestLife = d.maxLife;
-  res.skills = Object.fromEntries(GATHER_SKILLS.map((sk) => [sk, levelOf(sk, s.skills[sk])]));
+  res.skills = Object.fromEntries([...GATHER_SKILLS, 'thieving' as const].map((sk) => [sk, levelOf(sk, s.skills[sk])]));
+  res.heists = s.heist.tally.jobs;
+  res.heistAlarms = s.heist.tally.alarms;
   res.bar = s.skillBar.map((g) => g && `${activeGemDef(g.gemId).name} ${g.level}`).filter(Boolean).join(', ');
   res.orbsUsed = s.lifetime.orbsUsed;
   return res;
@@ -817,6 +839,14 @@ function report(results: Result[]) {
     row('kk gold', (r) => (r.bank.gold ?? 0) / 1000);
     row('chaos', (r) => r.bank.chaos ?? 0);
     row('orbs used', (r) => r.orbsUsed);
+    if (profile === 'heist') {
+      row('thieving', (r) => r.skills.thieving);
+      row('heists', (r) => r.heists);
+      row('alarms', (r) => r.heistAlarms);
+      row('markers', (r) => r.bank.rogues_marker ?? 0);
+      row('seals', (r) => r.bank.forgers_seal ?? 0);
+      row('wax', (r) => r.bank.locksmiths_wax ?? 0);
+    }
     share('played', (r) => r.activeMs);
     share('away fighting', (r) => r.awayCombatMs);
     share('away gathering', (r) => r.awayGatherMs);
@@ -845,8 +875,9 @@ function report(results: Result[]) {
 
   console.log('\nGathering pace (best node, no gear bonuses)');
   const SKILL_TARGETS = [15, 30, 45, 60, 75, 99];
-  console.log(pad('level', 8) + GATHER_SKILLS.map((x) => pad(x, 14)).join(''));
-  const paces = GATHER_SKILLS.map((sk) => skillPace(sk, SKILL_TARGETS));
+  const PACED: SkillId[] = [...GATHER_SKILLS, 'thieving'];
+  console.log(pad('level', 8) + PACED.map((x) => pad(x, 14)).join(''));
+  const paces = PACED.map((sk) => skillPace(sk, SKILL_TARGETS));
   for (const l of SKILL_TARGETS) console.log(pad(String(l), 8) + paces.map((p) => pad(fmt(p[l]), 14)).join(''));
   console.log('');
   for (const act of ACTS.filter((a) => actOpen(a.n))) {

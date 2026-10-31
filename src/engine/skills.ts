@@ -1,5 +1,5 @@
 import { affixDef } from '../data/affixes';
-import { essenceDef, fossilDef, modBias, resinDef } from '../data/craftMats';
+import { essenceDef, fossilDef, MARKER, modBias, resinDef } from '../data/craftMats';
 import { flaskDef } from '../data/flasks';
 import { ACTIVE_GEMS, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
 import { ALCH_DOUBLE, FORGE_ILVL } from '../data/hideout';
@@ -11,6 +11,7 @@ import { addBank, canAfford, hasItem, payCost } from './bank';
 import type { Ctx } from './context';
 import { newFlask, rerollMagic, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
+import { markerBoost } from './heist';
 import { bagFull } from './storage';
 import { allMods, createItem, salvageValue } from './items';
 import { gemArrived } from './progress';
@@ -98,6 +99,7 @@ export function startSkillAction(s: GameState, ctx: Ctx, actionId: string): stri
     return blocker;
   }
   s.combat = null;
+  s.heist.auto = null;
   s.action = { kind: 'skill', actionId, progress: 0 };
   // Greenhouse remembers the last Foraging spot so it can keep growing in the background
   if (a.skill === 'harvesting') s.greenhouse = { actionId, progress: 0 };
@@ -219,7 +221,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
     if (herb >= 0 && herb < HERB_TIERS.length - 1 && t.rareBlooms && chance(ctx.rng, t.rareBlooms / 100)) give(s, outputs, HERB_TIERS[herb + 1], 1);
   }
   for (const b of a.bonus ?? []) {
-    const boost = b.id === 'rough_gem' ? t.gemChance : fossilDef(b.id) ? t.fossilChance : resinDef(b.id) ? t.resinChance : 0;
+    const boost = b.id === 'rough_gem' ? t.gemChance : fossilDef(b.id) ? t.fossilChance : resinDef(b.id) ? t.resinChance : b.id === MARKER ? markerBoost(s) : 0;
     if (!chance(ctx.rng, b.chance * (1 + (boost ?? 0) / 100))) continue;
     const upgrade = essenceDef(b.id)?.upgrade;
     give(s, outputs, upgrade && t.distiller && chance(ctx.rng, t.distiller / 100) ? upgrade : b.id, b.qty);

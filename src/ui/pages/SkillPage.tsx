@@ -14,6 +14,7 @@ import type { GameState } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
 import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/common';
+import { HeistBoard } from '../components/HeistBoard';
 import { Icon, Orb, Swatch } from '../components/Icon';
 
 const START_LABEL: Record<SkillId, string> = {
@@ -21,6 +22,7 @@ const START_LABEL: Record<SkillId, string> = {
   mining: 'Mine',
   woodcutting: 'Chop',
   harvesting: 'Forage',
+  thieving: 'Lift',
   smithing: 'Smith',
   alchemy: 'Brew',
   gemcutting: 'Cut',
@@ -345,7 +347,8 @@ function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
   for (const a of actions) {
     const out = a.outputs ? Object.keys(a.outputs)[0] : undefined;
     const band = Math.floor(a.level / 10) * 10;
-    const key = SKILLS[skill].group === 'gathering' && out ? out : `band-${band}`;
+    // every mark pays gold, so Thieving reads by level like production
+    const key = SKILLS[skill].group === 'gathering' && skill !== 'thieving' && out ? out : `band-${band}`;
     let t = tiers.find((x) => x.key === key);
     if (!t) {
       t = { key, label: key.startsWith('band-') ? `Tier ${band / 10 + 1}` : materialDef(out!).name, actions: [] };
@@ -406,6 +409,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
           Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b>{fmt(s.bank.rough_gem ?? 0)}</b> Rough Gems.
         </div>
       )}
+      {skill === 'thieving' && <HeistBoard />}
       {skill === 'fishing' && (
         <div className="callout skill-note">
           Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.

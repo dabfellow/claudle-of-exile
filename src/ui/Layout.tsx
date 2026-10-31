@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { classDef } from '../data/classes';
 import { CRAFT_STEP_MS } from '../data/hideout';
+import { heistJob } from '../data/heist';
 import { materialDef } from '../data/materials';
 import { actionDef, SKILLS } from '../data/skills';
 import { zoneDef } from '../data/zones';
 import { queueSkill, retreat, useFlask } from '../engine/combat';
 import { findItem } from '../engine/crafting';
 import { methodName } from '../engine/craftUntil';
+import { alarmChance, roomMs } from '../engine/heist';
 import { pointsLeft } from '../engine/passives';
 import { actionIntervalMs, stopAction } from '../engine/skills';
 import { deriveStats } from '../engine/stats';
@@ -80,6 +82,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
       { page: 'mining', label: 'Mining', icon: 'mining', skill: 'mining' },
       { page: 'woodcutting', label: 'Woodcutting', icon: 'woodcutting', skill: 'woodcutting' },
       { page: 'harvesting', label: 'Foraging', icon: 'harvesting', skill: 'harvesting' },
+      { page: 'thieving', label: 'Thieving', icon: 'thieving', skill: 'thieving' },
       { page: 'fishing', label: 'Fishing', icon: 'fishing', skill: 'fishing' },
       { page: 'smithing', label: 'Smithing', icon: 'smithing', skill: 'smithing', divider: true },
       { page: 'alchemy', label: 'Alchemy', icon: 'alchemy', skill: 'alchemy' },
@@ -96,6 +99,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
 function activeSkill(s: GameState): SkillId | null {
   if (s.action?.kind === 'skill') return actionDef(s.action.actionId).skill;
   if (s.action?.kind === 'combat') return 'combat';
+  if (s.action?.kind === 'heist') return 'thieving';
   return null;
 }
 
@@ -204,6 +208,13 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
     progress = s.action.progress / CRAFT_STEP_MS;
     color = 'var(--currency)';
     target = 'bench';
+  } else if (s.action?.kind === 'heist') {
+    const job = heistJob(s.action.jobId);
+    title = `Heist: ${job.name}`;
+    sub = `Room ${s.action.room} of ${s.action.lastRoom} · ${Math.round(alarmChance(s, job, s.action.room) * 100)}% alarm`;
+    progress = s.action.progress / roomMs(s, job, d);
+    color = SKILLS.thieving.color;
+    target = 'thieving';
   } else if (s.action?.kind === 'combat' && s.combat) {
     const z = zoneDef(s.combat.zoneId);
     const pack = s.combat.monsters;
@@ -284,7 +295,7 @@ export function XpBar() {
   const next = xpToReach('combat', lvl + 1);
   const pct = progressOf('combat', xp);
   const rate = game.xpPerHour('combat');
-  const training = s.action?.kind === 'skill' ? actionDef(s.action.actionId).skill : null;
+  const training = s.action?.kind === 'skill' ? actionDef(s.action.actionId).skill : s.action?.kind === 'heist' ? 'thieving' : null;
   const [pops, setPops] = useState<{ id: number; text: string; x: number }[]>([]);
   const [pulse, setPulse] = useState(0);
   const [levelUp, setLevelUp] = useState(0);
@@ -591,6 +602,15 @@ export function OfflineModal() {
               <b>Maps Cleared</b>
             </div>
             <p>{sum.mapRuns} map run{sum.mapRuns === 1 ? '' : 's'} finished, {sum.mapsFound} new map{sum.mapsFound === 1 ? '' : 's'} found.</p>
+          </div>
+        )}
+        {sum.heists > 0 && (
+          <div className="away-alert">
+            <div className="row">
+              <GameIcon name="thieving" size={16} />
+              <b>Heists Run</b>
+            </div>
+            <p>{sum.heists} job{sum.heists === 1 ? '' : 's'} done{sum.heistAlarms ? `, ${sum.heistAlarms} of them cut short by an alarm` : ', every one clean'}.</p>
           </div>
         )}
         {sum.crafted && (

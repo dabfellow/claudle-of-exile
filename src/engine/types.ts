@@ -2,8 +2,8 @@ import type { ClassId } from '../data/classes';
 import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
 
-export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'smithing' | 'alchemy' | 'gemcutting' | 'fishing';
-export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'smithing', 'alchemy', 'gemcutting', 'fishing'];
+export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'smithing' | 'alchemy' | 'gemcutting' | 'fishing';
+export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'fishing'];
 
 export type Rarity = 'normal' | 'magic' | 'rare' | 'unique';
 
@@ -109,6 +109,8 @@ export interface Item {
   prefixes: RolledMod[];
   suffixes: RolledMod[];
   uniqueId?: string;
+  /** Locksmith's Wax: how the item looked when the impression was taken, ready to restore */
+  impression?: Pick<Item, 'rarity' | 'name' | 'prefixes' | 'suffixes'>;
 }
 
 export type InstillCondition = 'lowLife' | 'fullCharges' | 'bossCast';
@@ -353,6 +355,7 @@ export type Action =
   | { kind: 'skill'; actionId: string; progress: number }
   | { kind: 'combat'; zoneId: string }
   | { kind: 'craft'; uid: number; method: CraftMethod; rule: StopRule; progress: number; steps: number }
+  | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number> }
   | null;
 
 /** Smithing catalyst slot: a Fossil biases the roll of a Magic base, Resin raises item level. */
@@ -497,6 +500,20 @@ export interface MapState {
   tally: { runs: number; clearMs: number; mapsFound: number; favoured: number };
 }
 
+/** Thieving's Heist board (engine/heist.ts). The job under way lives on `action`, so anything else you start ends it. */
+export interface HeistState {
+  /** rank of every rogue hired */
+  rogues: Record<string, number>;
+  /** rogues on the crew, up to crewSlots() */
+  crew: string[];
+  /** the room each job walks out after, where it isn't the vault */
+  exits: Record<string, number>;
+  /** the job that repeats, casing for Markers between runs */
+  auto: string | null;
+  /** running totals: jobs finished, and how many of those ended in an alarm */
+  tally: { jobs: number; alarms: number };
+}
+
 export interface GameState {
   version: number;
   /** the shared account block; a running game holds the live one, and saves leave it out */
@@ -520,6 +537,7 @@ export interface GameState {
   flaskSlots: (FlaskInstance | null)[];
   /** the Maps preview (engine/maps.ts) */
   maps: MapState;
+  heist: HeistState;
   skillBar: (SkillGemInstance | null)[];
   /** skill gems not on the bar */
   gems: SkillGemInstance[];

@@ -7,6 +7,7 @@ import { hasAction } from '../data/skills';
 import { ZONES } from '../data/zones';
 import { trimFlaskStash } from './flasks';
 import { settleGems } from './gems';
+import { newHeistState, settleHeist } from './heist';
 import { settleMaps } from './maps';
 import { connectedWithout } from './passives';
 import { openReachedZones } from './progress';
@@ -217,6 +218,11 @@ const MIGRATIONS: Record<number, Migration> = {
     delete raw.automation;
     delete raw.stash;
   },
+  21: (raw) => {
+    // Thieving and Heist arrived: everyone starts at level 1 with no crew, and Act 2 characters find the marks already open
+    (raw.skills as Record<string, number>).thieving ??= 0;
+    raw.heist ??= newHeistState();
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
@@ -252,6 +258,7 @@ export function deserialize(json: string): GameState {
   settleGems(s);
   trimFlaskStash(s);
   settleMaps(s);
+  settleHeist(s);
   dropRemovedActions(s);
   return s;
 }
