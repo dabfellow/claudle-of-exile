@@ -54,6 +54,7 @@ Seeded 2026-10-24 from the open items in `docs/`. **[You]** = needs you, not Cla
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Music: older Safari can't play Ogg, and iPhones ignore page volume, so the slider may act as on/off there (mute still works). Neither tested. Act 3+ and maps past Act 2 reuse the Act 2 track. If this repo ever goes public, ask AlkaKrab first (`src/assets/CREDITS.md`).
 - Endless content: a post-Maps thing, not designed yet.
 - Custom SMTP for Supabase, so Confirm email can go back on and password resets aren't held to the built-in mailer's few emails an hour.
 - Affix pool numbers are a vibe pass, not simmed: 30% leech, ~200% rarity per item, ~294% elemental at item level 80. Re-run the sim and look at sustain and drop rates ([GEAR.md](design/GEAR.md) → Affix pool).
@@ -88,6 +89,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Background music: 10 Medieval Tracks by AlkaKrab, one track each for Act 1, Act 2, hideout and bosses, 9.1 MB in all, streamed on first use; crossfades, starts after the first input, pauses in hidden tabs; volume and mute in Settings, saved per device — done 2026-10-31
 - [x] Docs updated for the reset: GDD rewritten as the current design, built-system docs note what changes, art notes corrected — done 2026-10-30
 - [x] Design reset settled: finished game, pacing, core systems, act recipe, live game, roadmap ([DESIGN_RESET.md](DESIGN_RESET.md)) — done 2026-10-30
 - [x] Retired docs deleted (AI art prompts, the superseded new content pass) and `npm run art -- --docs` removed — done 2026-10-30

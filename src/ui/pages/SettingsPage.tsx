@@ -6,12 +6,14 @@ import { game, useGame } from '../../game';
 import { isCloudAccount } from '../../platform/accounts';
 import { fmt, PageHeader } from '../components/common';
 import { FeedbackCard } from '../components/FeedbackCard';
+import { useMusicPrefs } from '../music';
 import { AccountBadge, leaveAccount } from '../screens/Screens';
 
 export function SettingsPage() {
   const s = useGame();
   const [text, setText] = useState('');
   const [exported, setExported] = useState('');
+  const [music, setMusic] = useMusicPrefs();
   const demo = game.account?.provider === 'demo';
   return (
     <div className="page">
@@ -78,6 +80,31 @@ export function SettingsPage() {
             </label>
           ))}
         </div>
+      </div>
+      <div className="card">
+        <div className="card-title">Sound</div>
+        <div className="row wrap">
+          <label className="muted row" style={{ cursor: 'pointer' }}>
+            Music
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={Math.round(music.volume * 100)}
+              aria-label="Music volume"
+              style={{ accentColor: 'var(--accent)', width: 180 }}
+              onChange={(e) => setMusic({ ...music, volume: Number(e.target.value) / 100 })}
+            />
+            <b>{Math.round(music.volume * 100)}%</b>
+          </label>
+          <label className="chip" style={{ cursor: 'pointer' }}>
+            <input type="checkbox" checked={music.muted} onChange={(e) => setMusic({ ...music, muted: e.target.checked })} />
+            Mute
+          </label>
+        </div>
+        <p className="dim small" style={{ marginBottom: 0 }}>
+          Saved on this device.
+        </p>
       </div>
       <div className="card">
         <div className="card-title">Display</div>
