@@ -993,7 +993,7 @@ function shielded(mon: MonsterInstance): boolean {
 
 /** Take life from a monster, through its ward first. */
 function damageMonster(mon: MonsterInstance, amount: number, direct = false): void {
-  if (mon.chained || shielded(mon) || (mon.martyr && !direct)) return;
+  if (mon.chained || (mon.martyr && !direct)) return;
   if (mon.ward > 0) {
     const absorbed = Math.min(mon.ward, amount);
     mon.ward -= absorbed;
