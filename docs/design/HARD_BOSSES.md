@@ -143,8 +143,8 @@ What needs building, from reading `src/engine/combat.ts`, `src/engine/mechanics.
 - **Already there:** wind-ups, the `bossCast` event, ward, adds, and click-to-target. Instilled flasks already trigger on a
   boss cast.
 - **Rule aim, the one ask of Milestone 1:** rules only allow or block a skill. Aim comes from one bar-wide setting or a
-  clicked lock. Question 6 needs rules to leave room for an aim. The current rule check also treats any monster casting
-  as "enemy casting", so a rule can't yet tell a boss channel from an add's spell.
+  clicked lock. Question 6 needs rules to leave room for an aim. The current "enemy casting" check is also a plain yes or
+  no, so a rule can't yet tell a slam from a channel.
 - **Weak points as field objects:** making one a monster with no attack means clicking, targeting, range and closing in all
   work as they do today.
 - **Offline:** `bossCanSpawn` keeps never-beaten bosses from appearing offline. Hard bosses need to skip this, since a strong
