@@ -31,7 +31,7 @@ import { pickUp } from '../src/engine/storage';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { actionBlocker, startSkillAction } from '../src/engine/skills';
-import { GROUND_IN_PLAY, grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
+import { grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
 import { groundFor } from '../src/engine/battlefield';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats, hitChance, type Derived } from '../src/engine/stats';
@@ -87,7 +87,7 @@ const UPGRADES: [StationId, number][] = [
 ];
 const CHECKPOINTS: [string, number][] = [['day 1', 1], ['week 1', 7], ['month 1', 30], ['month 3', 90]];
 /** bosses tested for idling, one per drop tier band: each right after the bot first beats it */
-const TRIAL_ZONES = ['brinecaves', 'blackreed', 'shipgrave', 'sanctum', 'kurgans', 'burningthrone'];
+const TRIAL_ZONES = ['brinecaves', 'blackreed', 'shipgrave', 'sanctum', 'cinderroad', 'kurgans', 'pyretemple', 'burningthrone'];
 
 const fmt = (ms: number | undefined) => {
   if (ms === undefined || !Number.isFinite(ms)) return '—';
@@ -189,17 +189,16 @@ function gemDps(d: Derived, gem: SkillGemInstance): number {
 
 const DAMAGE_ROLES = new Set(['main', 'burst', 'area']);
 
-/** The ground to watch for: what this area's boss lays with Scorched earth, else the fire most of it comes with. */
-function groundToWatch(zoneId: string | undefined): GroundKind {
+/** The ground this area's boss lays with Scorched earth, if it does. */
+function scorchGround(zoneId: string | undefined): GroundKind | undefined {
   const boss = zoneId ? zoneDef(zoneId).boss : undefined;
-  const kind = boss?.mechanics?.includes('scorch') ? groundFor(boss.novaType ?? boss.dmgType) : 'burning';
-  return GROUND_IN_PLAY.has(kind) ? kind : 'burning';
+  return boss?.mechanics?.includes('scorch') ? groundFor(boss.novaType ?? boss.dmgType) : undefined;
 }
 
 /**
  * Like a player who reads tooltips: the best guard and buff it owns, then its three strongest damage
  * skills (judged bare, so a fresh drop isn't blinded by the old gem's supports), each on its suggested rule;
- * a spare guard, once Ground rules are in, takes a free slot to watch the ground, as the main one is kept for wind-ups;
+ * a spare guard, once Ground rules are in, takes a free slot against Scorched earth, as the main one is kept for wind-ups;
  * then the strongest support in every socket, damage skills first.
  */
 function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
@@ -223,7 +222,8 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const instant = all
     .filter((g) => DAMAGE_ROLES.has(role(g)) && activeGemDef(g.gemId).timeMs === 0 && !damage.includes(g) && bare(g) > 0)
     .sort((a, b) => bare(b) - bare(a));
-  const groundGuard = ruleLockReason(s, 'onGround') ? undefined : all.filter((g) => role(g) === 'guard').sort(byLevel)[1];
+  const scorch = ruleLockReason(s, 'onGround') ? undefined : scorchGround(zoneId);
+  const groundGuard = scorch && all.filter((g) => role(g) === 'guard').sort(byLevel)[1];
   const want = [pick('guard'), pick('buff'), sustain, ...damage, groundGuard, ...instant].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
 
   // put the bar together: anything leaving takes no supports with it
@@ -241,7 +241,7 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const bar = s.skillBar.filter((x): x is SkillGemInstance => !!x);
   for (const g of bar) {
     // one rule each: the suggested one, or Whenever ready until the War Table teaches it
-    g.rules = [g === groundGuard ? { when: 'onGround', ground: groundToWatch(zoneId) } : suggestedRule(s, activeGemDef(g.gemId))];
+    g.rules = [g === groundGuard ? { when: 'onGround', ground: scorch } : suggestedRule(s, activeGemDef(g.gemId))];
     syncSockets(g);
     g.supports.forEach((_, k) => unsocketSupport(s, g.uid, k));
   }
