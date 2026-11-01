@@ -163,5 +163,21 @@ export function bossTable(tier: number): BossTable {
   return BOSS_TABLES[tier] ?? BOSS_TABLES[7];
 }
 
+/** A little gathering material from bosses: one kind from the band the boss's level has reached. */
+export const BOSS_GATHER_DROP = {
+  chance: 0.5,
+  qty: [1, 3] as [number, number],
+  bands: [
+    { level: 40, mats: ['mithril_ore', 'yew_log', 'voidbloom', 'rough_gem'] },
+    { level: 30, mats: ['mithril_ore', 'yew_log', 'emberroot', 'rough_gem'] },
+    { level: 15, mats: ['iron_ore', 'oak_log', 'frostleaf'] },
+    { level: 1, mats: ['copper_ore', 'ash_log', 'sunpetal'] },
+  ],
+};
+
+export function bossGatherMats(level: number): string[] {
+  return (BOSS_GATHER_DROP.bands.find((b) => level >= b.level) ?? BOSS_GATHER_DROP.bands[3]).mats;
+}
+
 /** Orbs that never come from skilling — only from monsters (Gemcutting 45 cuts Orbs of Expansion, so they're not listed). */
 export const COMBAT_ONLY_CURRENCY = ['regal', 'chaos', 'annul', 'exalted', 'divine', 'instill'];

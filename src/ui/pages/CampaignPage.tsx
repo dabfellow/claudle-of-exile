@@ -1,12 +1,12 @@
 import { uniqueDef } from '../../data/bases';
-import { bossTable, dropTable } from '../../data/drops';
+import { bossGatherMats, bossTable, dropTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
 import { useState } from 'react';
 import { ACT_REGIONS, actRegion, CONTINENT_SIZE, regionPath, regionViewBox, ZONE_POS } from '../../data/continent';
 import { actOpen, ACTS, bossesNeeded, MECHANIC_INFO, roadsInto, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
 import { zoneLockText } from '../../engine/progress';
 import { areaXpLabel, characterLevel } from '../../engine/character';
-import { bossIsNext, startCombat } from '../../engine/combat';
+import { BOSS_RESPAWN_MS, bossIsNext, canBossFarm, startCombat, toggleBossFarm } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { anyArtUrl, Badge, EmptyState, GameIcon, MatIcon, PageHeader, ProgressBar, sceneStyle } from '../components/common';
@@ -47,6 +47,7 @@ function DropPreview({ z }: { z: ZoneDef }) {
       <span className="dim">
         First boss kill: {boss.guaranteed.map((g) => `${g.qty}× ${materialDef(g.id).name}`).join(', ')} (then {Math.round(boss.repeatChance * 100)}% per kill)
       </span>
+      <span className="dim">Boss kills can also drop {bossGatherMats(z.boss.level).map((id) => materialDef(id).name).join(', ')}</span>
     </div>
   );
 }
@@ -72,6 +73,7 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
   const areaXp = areaXpLabel(characterLevel(s), z.levelRange);
   const n = zonesInAct(z.act).indexOf(z) + 1;
   const beaten = s.bossesDefeated.includes(z.id);
+  const farming = here && !!s.combat?.bossFarm;
   return (
     <div className={`card area ${here ? 'current' : ''} ${unlocked ? '' : 'locked'} ${z.actBoss ? 'act-boss' : ''}`} style={{ ['--zone' as string]: z.color }}>
       <div className={`area-banner ${anyArtUrl(`zones/${z.id}`) ? 'has-art' : ''}`} style={sceneStyle(`zones/${z.id}`)}>
@@ -128,6 +130,21 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
           >
             {here ? 'Return to fight' : 'Travel here'}
           </button>
+          {canBossFarm(s, z.id) && (
+            <button
+              className="btn"
+              title={`Fight only ${z.boss.name}, who comes back ${BOSS_RESPAWN_MS / 1000} seconds after each kill`}
+              onClick={() => {
+                game.act((st, ctx) => {
+                  if (!here && startCombat(st, ctx, z.id)) return;
+                  toggleBossFarm(st);
+                });
+                if (!farming) go('combat');
+              }}
+            >
+              {farming ? 'Stop boss farm' : 'Boss farm'}
+            </button>
+          )}
         </>
       )}
     </div>

@@ -349,6 +349,7 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 
 ## Ideas / later
 
+- Boss farm has no cost or cap, so a strong build gets boss XP (×10), rare-weighted gear and the repeat guaranteed orbs every few seconds, online and offline with wind-up rules (2026-10-31).
 - Melee starts slow: Warrior, Ranger, Duelist and Templar deal 4–6 DPS in the mudflats against 13–16 for Shadow and Mage (2026-10-31).
 - Riposte heals (Measured Reply, The Second Guess) now fire on landed hits too, so watch whether Duelist sustain gets too strong.
 - Matador and Vanguard lose landed-hit Ripostes on picking, so ascending may feel like a step down until the tree fills in.
@@ -398,6 +399,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Boss farm: once an area's boss is beaten, Boss farm on its Campaign card or the Combat header brings it back alone 5 seconds after each kill, with its adds and no trash. Fleeing holds the timer, and offline without wind-up rules it stays in hiding and trash comes instead. Bosses have a 50% chance of 1–3 of one gathering material for their level, listed on the Campaign card. Not simmed. 0.2.18 — done 2026-10-31
 - [x] Combat screen layout (player report): skills and flasks moved into the arena under the field, which shrinks on short screens so they stay in view; Matchup is a fixed size that scrolls on its own, always lists the area boss's abilities, and keeps its rows with no target; status text and the Challenge button no longer reflow the field. The "Target" label is gone from the bar to fit one row. 0.2.17 — done 2026-10-31
 - [x] Duelist feel: Riposte also answers hits that land, at 50% damage, and shows a labelled floater. A starter's ripostes went from 6.7 to 30.7 a minute and DPS from 4.3 to 5.7 (mudflats, 5 seeds). Matador and Vanguard keep their triggers ([CLASSES.md](design/CLASSES.md)). 0.2.16 — done 2026-10-31
 - [x] Area level XP: your level against the area's range sets kill and gem XP (−10, −20, −40, −50, −80%, then 1% more per level to none at 25 over; +10%, then +20% at most below), shown on Campaign and Combat. Replaces the monster level falloff; Act 1's `xpScale` removed. New level curve set by play time; save v25 keeps everyone's level and progress. 0.2.15 — done 2026-10-31

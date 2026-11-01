@@ -7,7 +7,9 @@ import {
   aliveMonsters,
   bossCalled,
   bossIsNext,
+  canBossFarm,
   challengeBoss,
+  toggleBossFarm,
   currentMovement,
   focusTarget,
   liveDps,
@@ -458,6 +460,10 @@ function MovementBar({ s }: { s: GameState }) {
       ? aliveMonsters(c).length
         ? 'Shaking them off…'
         : 'Holding back: nothing arrives'
+      : c.bossFarm
+        ? c.bossRespawnMs
+          ? `${zone.boss.name} respawns in ${(c.bossRespawnMs / 1000).toFixed(1)}s`
+          : `${zone.boss.name} waits for the field to clear`
       : bossCalled(s, zone.id)
         ? `${zone.boss.name} waits for the field to clear`
         : next === null
@@ -712,7 +718,12 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
                 Next area: {z.name} →
               </button>
             ))}
-            {!s.maps.run && (
+            {canBossFarm(s, zone.id) && (
+              <button className="btn" title={`Fight only ${zone.boss.name}, who comes back 5 seconds after each kill`} onClick={() => game.act((st) => toggleBossFarm(st))}>
+                {c.bossFarm ? 'Stop boss farm' : 'Boss farm'}
+              </button>
+            )}
+            {!s.maps.run && !c.bossFarm && (
               <button
                 className="btn primary challenge"
                 data-tut="challenge-boss"
@@ -732,7 +743,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
           </>
         }
       >
-        Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {areaXp && `${areaXp} · `}{s.maps.run ? `${s.maps.run.packsLeft}/${s.maps.run.packsTotal} packs left before ${zone.boss.name}` : bossReady ? `${zone.boss.name} is ready to fight` : `${kills}/${zone.bossEvery} until ${zone.boss.name}`}
+        Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {areaXp && `${areaXp} · `}{s.maps.run ? `${s.maps.run.packsLeft}/${s.maps.run.packsTotal} packs left before ${zone.boss.name}` : c.bossFarm ? `Boss farm: ${zone.boss.name}` : bossReady ? `${zone.boss.name} is ready to fight` : `${kills}/${zone.bossEvery} until ${zone.boss.name}`}
       </PageHeader>
 
       <div className={`card arena2 ${zoneArt ? 'has-art' : ''}`} style={{ ['--zone' as string]: zone.color, ['--zone-art' as string]: zoneArt ? `url(${zoneArt})` : undefined }}>

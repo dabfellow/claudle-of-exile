@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { STARTER_DROPS } from '../src/data/drops';
+import { BOSS_GATHER_DROP, bossGatherMats, STARTER_DROPS } from '../src/data/drops';
+import { materialDef } from '../src/data/materials';
 import { zoneDef } from '../src/data/zones';
 import { baseDef } from '../src/data/bases';
-import { aliveMonsters, challengeBoss, combatStep, makeMonster, startCombat } from '../src/engine/combat';
+import { aliveMonsters, BOSS_RESPAWN_MS, challengeBoss, combatStep, makeMonster, startCombat, toggleBossFarm } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createItem } from '../src/engine/items';
 import { rollLoot } from '../src/engine/loot';
@@ -70,6 +71,96 @@ describe('challenging a boss', () => {
     startCombat(s, c, 'mudflats');
     run(s, c, 10_000);
     expect(hasBoss(s)).toBe(true);
+  });
+});
+
+describe('boss farm', () => {
+  const farming = (offline = false) => {
+    const s = strong();
+    const c = { ...ctx(), offline };
+    s.settings.autoFlee = false;
+    s.bossesDefeated.push('mudflats');
+    startCombat(s, c, 'mudflats');
+    toggleBossFarm(s);
+    return { s, c };
+  };
+  const step = (s: ReturnType<typeof newGame>, c: ReturnType<typeof ctx>, ms: number) => {
+    for (let t = 0; t < ms; t += 50) combatStep(s, c, 50, deriveStats(s));
+  };
+
+  it("needs the area's boss beaten, and no map", () => {
+    const s = strong();
+    const c = ctx();
+    startCombat(s, c, 'mudflats');
+    toggleBossFarm(s);
+    expect(s.combat!.bossFarm).toBeFalsy();
+  });
+
+  it('brings the boss back 5 seconds after each kill, and nothing else', () => {
+    const { s, c } = farming();
+    step(s, c, BOSS_RESPAWN_MS - 200);
+    expect(s.combat!.monsters).toHaveLength(0);
+    step(s, c, 300);
+    expect(hasBoss(s)).toBe(true);
+    const kills = s.lifetime.bossKills;
+    s.combat!.monsters = s.combat!.monsters.filter((m) => m.isBoss);
+    s.combat!.monsters[0].life = 0;
+    while (s.lifetime.bossKills === kills) step(s, c, 50);
+    let gap = 0;
+    while (!hasBoss(s) && gap < 10_000) {
+      expect(s.combat!.monsters).toHaveLength(0);
+      step(s, c, 50);
+      gap += 50;
+    }
+    expect(gap).toBeGreaterThanOrEqual(BOSS_RESPAWN_MS - 50);
+    expect(gap).toBeLessThanOrEqual(BOSS_RESPAWN_MS + 50);
+  });
+
+  it('holds the timer while fleeing', () => {
+    const { s, c } = farming();
+    s.settings.movement = 'flee';
+    step(s, c, BOSS_RESPAWN_MS * 2);
+    expect(s.combat!.monsters).toHaveLength(0);
+  });
+
+  it('offline without wind-up rules, keeps to trash', () => {
+    const { s, c } = farming(true);
+    run(s, c, 30_000);
+    expect(hasBoss(s)).toBe(false);
+    expect(s.lifetime.kills).toBeGreaterThan(0);
+  });
+
+  it('stopping sends the area back to normal', () => {
+    const { s, c } = farming();
+    toggleBossFarm(s);
+    run(s, c, 30_000);
+    expect(hasBoss(s)).toBe(false);
+    expect(s.lifetime.kills).toBeGreaterThan(0);
+  });
+});
+
+describe('boss gathering drops', () => {
+  it("drops a little of the mats for the boss's level", () => {
+    const s = strong();
+    const c = ctx();
+    startCombat(s, c, 'mudflats');
+    const zone = zoneDef('mudflats');
+    const boss = makeMonster(zone.boss, true, 1);
+    s.bossesDefeated.push('mudflats');
+    const mats = bossGatherMats(boss.level);
+    const kills = 200;
+    for (let i = 0; i < kills; i++) rollLoot(s, c, boss, zone, deriveStats(s));
+    const got = mats.reduce((n, id) => n + (s.bank[id] ?? 0), 0);
+    expect(got).toBeGreaterThan(kills * 0.6);
+    expect(got).toBeLessThan(kills * 1.5);
+  });
+
+  it('moves up with boss level', () => {
+    expect(bossGatherMats(1)).toContain('copper_ore');
+    expect(bossGatherMats(20)).toContain('iron_ore');
+    expect(bossGatherMats(35)).toContain('emberroot');
+    expect(bossGatherMats(50)).toContain('voidbloom');
+    for (const b of BOSS_GATHER_DROP.bands) for (const id of b.mats) expect(materialDef(id).name).toBeTruthy();
   });
 });
 

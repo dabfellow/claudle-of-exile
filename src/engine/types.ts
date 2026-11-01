@@ -297,6 +297,9 @@ export interface CombatRuntime {
   monsters: MonsterInstance[];
   /** the player has sent for the boss; it comes once the field is clear */
   challenged?: boolean;
+  /** farming this area's beaten boss: it alone comes back, and bossRespawnMs is the wait until it does */
+  bossFarm?: boolean;
+  bossRespawnMs?: number;
   /** ms before the gates open: the pause while you search for monsters (tests hold it high to stop spawns) */
   spawnMs: number;
   /** ms until each edge gate (battlefield EDGE_CELLS) sends its next monster */

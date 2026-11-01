@@ -147,6 +147,8 @@ export const PACK_LIFE_SCALE = 0.6;
 export const PACK_DMG_SCALE = 0.65;
 
 const DAMAGE_TYPES: DamageType[] = ['phys', 'fire', 'cold', 'light'];
+/** a farmed boss comes back this long after it dies */
+export const BOSS_RESPAWN_MS = 5000;
 /** chilled monsters attack this much slower (plus any chillOnHit) */
 export const CHILL_SLOW_PCT = 15;
 
@@ -329,6 +331,22 @@ function bossCanSpawn(s: GameState, ctx: Ctx, zoneId: string): boolean {
   return bossCalled(s, zoneId) && (!ctx.offline || bossLeftToRules(s, zoneDef(zoneId)));
 }
 
+/** A boss you've beaten can be farmed in its own area. Maps have their own boss rules. */
+export function canBossFarm(s: GameState, zoneId: string): boolean {
+  return s.bossesDefeated.includes(zoneId) && !s.maps.run;
+}
+
+/** Start or stop farming the boss of the area you're in. */
+export function toggleBossFarm(s: GameState): void {
+  const c = s.combat;
+  if (!c) return;
+  if (c.bossFarm) c.bossFarm = false;
+  else if (canBossFarm(s, c.zoneId)) {
+    c.bossFarm = true;
+    c.bossRespawnMs = BOSS_RESPAWN_MS;
+  }
+}
+
 /** Leaving mid boss fight when your rules can't handle it: the boss and its adds go back into hiding, ready for your return. */
 export function clearBossFight(s: GameState): void {
   const c = s.combat;
@@ -347,7 +365,7 @@ function spawnPack(s: GameState, ctx: Ctx, gate: number): void {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
   if (!mapPackLeft(s)) return;
-  if (bossIsNext(s, zone.id)) ctx.emit({ t: 'bossWaiting', name: zone.boss.name });
+  if (c.bossFarm || bossIsNext(s, zone.id)) ctx.emit({ t: 'bossWaiting', name: zone.boss.name });
   const [lo, hi] = zone.packSize;
   const n = rInt(ctx.rng, lo, hi);
   const scale = n > 1 ? PACK_LIFE_SCALE : 1;
@@ -387,13 +405,21 @@ function spawnBoss(s: GameState, ctx: Ctx): void {
  * Every edge hex is a gate with its own timer, sped up by how fast the player is moving -- even mid-fight, so a slow
  * kill means more monsters walking in. A gate that's due waits while it's blocked or the field is as full as the pace
  * allows. An empty field fills after a short search unless the player is fleeing. The boss waits for the field to
- * clear, and nothing else arrives while it's alive.
+ * clear, and nothing else arrives while it's alive. A farmed boss is all that comes: fleeing holds its timer, and
+ * offline without wind-up rules it stays in hiding like any other boss.
  */
 function advanceSpawns(s: GameState, ctx: Ctx, dt: number): void {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
-  if (c.monsters.some((m) => m.isBoss && m.life > 0)) return;
+  // a boss on 0 life still counts until it's reaped, or a farmed one would come back in the same tick
+  if (c.monsters.some((m) => m.isBoss && !m.dead)) return;
   const alive = aliveMonsters(c).length;
+  if (c.bossFarm && (!ctx.offline || bossLeftToRules(s, zone))) {
+    if (!MOVEMENT[currentMovement(s)].spawnRate) return;
+    c.bossRespawnMs = Math.max(0, (c.bossRespawnMs ?? 0) - dt);
+    if (!c.bossRespawnMs && !alive) spawnBoss(s, ctx);
+    return;
+  }
   const boss = bossCanSpawn(s, ctx, zone.id);
   if (boss && alive) return;
   // a map sends a set number of packs: past those, offline without wind-up rules, the boss stays in hiding and the run waits
@@ -1498,6 +1524,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
     s.lifetime.bossKills += 1;
     if (s.maps.run) s.maps.run.bossDown = true;
     s.zoneKills[zone.id] = 0;
+    c.bossRespawnMs = BOSS_RESPAWN_MS;
     // Nothing But Will: Ysolde with no unique equipped
     if (zone.id === 'sanctum' && s.character.classId === 'exile' && !Object.values(s.equipment).some((it) => it?.rarity === 'unique')) {
       s.lifetime.exileBareKills = (s.lifetime.exileBareKills ?? 0) + 1;
