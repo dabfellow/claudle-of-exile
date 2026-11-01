@@ -17,8 +17,8 @@ stay as they are, with no playtest planned, until you say otherwise.
 
 **In order:**
 
-1. **Claude:** build Act 6 from [ACTS_4_6.md](design/ACTS_4_6.md). Acts 4 and 5 are merged to main as 0.2.24 but stay
-   closed to players (`preview: true`), so they run in dev only until opened.
+1. **Claude:** Acts 4, 5 and 6 are merged to main as 0.2.26 but stay closed to players (`preview: true`), so they run in
+   dev only until opened. Act 6 can't open until the real Map Device (Milestone 8) exists, as its ending opens it.
 2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
 3. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
@@ -38,7 +38,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 | 4 | Act recipe and Act 2 | **In progress**: pieces merged | Act 1 cold check |
 | 5 | Maps preview | Built, dev only | You playing it |
 | 6 | Act 3 and ascendancies | **Done**, live; not simmed or played through | – |
-| 7 | Acts 4–6 | **In progress**: Acts 4 and 5 merged, dev only; Act 6 not started | Your go on Act 6 |
+| 7 | Acts 4–6 | **Built**, dev only; not simmed or played through | Opening to players |
 | 8 | Maps | Not started | Milestones 5 and 7 |
 | 9 | Hard mode bosses | Answered: 5 bosses, post-Act 6 | Milestone 8 |
 | 10 | Top-end crafting and hideout | Not started | Milestone 9 |
@@ -91,8 +91,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 - [x] Act 3 from the recipe: 10 stages, Martyrs, aim rules, Zealots and blood, Rune-carving ([RUNES.md](design/RUNES.md)) — done 2026-10-31
 - [x] First ascendancy trial at the start of Act 3: 12 ascendancies, each with its own tree tab and points. Exile has
   none ([ASCENDANCIES.md](design/ASCENDANCIES.md)) — done 2026-10-31
-- [ ] Trials 2 and 3 arrive with Acts 4 and 6 in Milestone 7.
-  - Trial 2 is built at the end of Act 4, in dev only until that act opens. Trial 3 waits for Act 6.
+- [x] Trials 2 and 3 built with Acts 4 and 6, in dev only until those acts open — done 2026-11-01
 - [x] Open Act 3 to players and deploy — done 2026-10-31. Pacing and balance haven't been simmed.
 - Tree extended for the extra levels.
 - **Done:** every main class can pick either ascendancy and play it through Act 3.
@@ -102,8 +101,9 @@ stay as they are, with no playtest planned, until you say otherwise.
 - [x] Gear base tiers extended to about level 80 (428 bases).
 - [x] Act 4 built: 12 stages, Frostbite, Giants and weight, Archaeology ([ACT4.md](design/ACT4.md)) — done 2026-11-01. Closed to players; not simmed or played through.
 - [x] Act 5 built: 14 stages, Channels, Tides and summons, Cooking ([ACT5.md](design/ACT5.md)) — done 2026-11-01. Closed to players; not simmed or played through.
-- [ ] Act 6: 18 stages, Echoes, The last empire, Cartography, Unholy ground.
+- [x] Act 6 built: 18 stages, Echoes, Unholy ground, Trial 3 and the ending ([ACT6.md](design/ACT6.md)), The last empire ([ACT6_SKILLS.md](design/ACT6_SKILLS.md)), Cartography ([CARTOGRAPHY.md](design/CARTOGRAPHY.md)) — done 2026-11-01. Closed to players; not simmed or played through.
 - [ ] Open Acts 4–6 to players and deploy.
+  - Act 6 needs Milestone 8 first: its ending opens the Maps preview page, and players can't spend drawn maps yet.
 - **Done:** Acts 4–6 are live and playable through.
 
 ### 8. Maps
@@ -352,6 +352,7 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Act 6 leftovers: `TRIAL_ZONES` in `scripts/sim.ts` has no Act 6 area, the Long Fracture's Frozen ground may slow too hard, the six signature supports use the fallback icon, and vellum and inks use stand-in art.
 
 - Boss farm has no cost or cap, so a strong build gets boss XP (×10), rare-weighted gear and the repeat guaranteed orbs every few seconds, online and offline with wind-up rules (2026-10-31).
 - Loadouts: flasks in gear sets, a quick swap on the combat page, and a boss trigger for auto-switching.
@@ -404,6 +405,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Act 6 merged to main, closed to players: stages, Echoes, Unholy ground, Trial 3, the ending, The last empire and Cartography. 0.2.26 — done 2026-11-01
 - [x] Acts 4 and 5 merged to main, closed to players: stages, skills, Archaeology and Cooking. 0.2.24 — done 2026-11-01
 - [x] Boss farm: once an area's boss is beaten, Boss farm on its Campaign card or the Combat header brings it back alone 5 seconds after each kill, with its adds and no trash. Fleeing holds the timer, and offline without wind-up rules it stays in hiding and trash comes instead. Bosses have a 50% chance of 1–3 of one gathering material for their level, listed on the Campaign card. Not simmed. 0.2.21 — done 2026-10-31
 - [x] Gear sets and skill loadouts, with gear auto-switching at Crafting Bench level 3 ([TOWN.md](design/TOWN.md#gear-sets-and-skill-loadouts)) — done 2026-10-31
