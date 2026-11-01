@@ -105,14 +105,11 @@ describe('Act 5: The Sunless Sea', () => {
     expect(zoneLockText(newGame(1, { name: 'T', classId: 'warrior' }), act()[0])).toMatch(/to unlock/);
   });
 
-  it('is closed to players, and playable only in preview', () => {
-    const def = ACTS.find((a) => a.n === 5)!;
-    expect(def.open).toBe(false);
-    expect(def.preview).toBe(true);
-    expect(actOpen(5)).toBe(true);
+  it('is open to players', () => {
+    expect(ACTS.find((a) => a.n === 5)!.open).toBe(true);
     ACT_PREVIEW.enabled = false;
-    expect(actOpen(5)).toBe(false);
-    expect(nextZones('wreckline')).toEqual([]);
+    expect(actOpen(5)).toBe(true);
+    expect(nextZones('giantsthrone').map((z) => z.id)).toContain('blackharbor');
   });
 
   it('needs fire and lightning together, on trash and in each boss', () => {

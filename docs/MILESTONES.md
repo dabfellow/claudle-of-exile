@@ -11,14 +11,13 @@ Last updated 2026-11-01.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.32 (deployed 2026-11-01), with Acts 4–6 included but closed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, and all six acts are live as 0.2.33 (deployed 2026-11-01). Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
 **In order:**
 
-1. **Claude:** Acts 4, 5 and 6 are merged to main as 0.2.26 but stay closed to players (`preview: true`), so they run in
-   dev only until opened. Act 6 can't open until the real Map Device (Milestone 8) exists, as its ending opens it.
+1. **Claude:** build the real Maps (Milestone 8). Beating Act 6 opens the bare Maps preview page, and drawn maps can't be spent yet.
 2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
 3. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
@@ -38,8 +37,8 @@ stay as they are, with no playtest planned, until you say otherwise.
 | 4 | Act recipe and Act 2 | **In progress**: pieces merged | Act 1 cold check |
 | 5 | Maps preview | Built, dev only | You playing it |
 | 6 | Act 3 and ascendancies | **Done**, live; not simmed or played through | – |
-| 7 | Acts 4–6 | **Built**, dev only; not simmed or played through | Opening to players |
-| 8 | Maps | Not started | Milestones 5 and 7 |
+| 7 | Acts 4–6 | **Done**, live; not simmed or played through | – |
+| 8 | Maps | **Next**: players reach a bare page after Act 6 | Your go |
 | 9 | Hard mode bosses | Answered: 5 bosses, post-Act 6 | Milestone 8 |
 | 10 | Top-end crafting and hideout | Not started | Milestone 9 |
 | 11 | Long tail | Not started | Milestone 10 |
@@ -92,7 +91,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 - [x] Act 3 from the recipe: 10 stages, Martyrs, aim rules, Zealots and blood, Rune-carving ([RUNES.md](design/RUNES.md)) — done 2026-10-31
 - [x] First ascendancy trial at the start of Act 3: 12 ascendancies, each with its own tree tab and points. Exile has
   none ([ASCENDANCIES.md](design/ASCENDANCIES.md)) — done 2026-10-31
-- [x] Trials 2 and 3 built with Acts 4 and 6, in dev only until those acts open — done 2026-11-01
+- [x] Trials 2 and 3 built with Acts 4 and 6, — done 2026-11-01
 - [x] Open Act 3 to players and deploy — done 2026-10-31. Pacing and balance haven't been simmed.
 - Tree extended for the extra levels.
 - **Done:** every main class can pick either ascendancy and play it through Act 3.
@@ -100,11 +99,10 @@ stay as they are, with no playtest planned, until you say otherwise.
 ### 7. Acts 4–6
 - Each from the recipe, growing to 10–20 stages, ending around level 65. Picks are in [ACTS_4_6.md](design/ACTS_4_6.md).
 - [x] Gear base tiers extended to about level 80 (428 bases).
-- [x] Act 4 built: 12 stages, Frostbite, Giants and weight, Archaeology ([ACT4.md](design/ACT4.md)) — done 2026-11-01. Closed to players; not simmed or played through.
-- [x] Act 5 built: 14 stages, Channels, Tides and summons, Cooking ([ACT5.md](design/ACT5.md)) — done 2026-11-01. Closed to players; not simmed or played through.
-- [x] Act 6 built: 18 stages, Echoes, Unholy ground, Trial 3 and the ending ([ACT6.md](design/ACT6.md)), The last empire ([ACT6_SKILLS.md](design/ACT6_SKILLS.md)), Cartography ([CARTOGRAPHY.md](design/CARTOGRAPHY.md)) — done 2026-11-01. Closed to players; not simmed or played through.
-- [ ] Open Acts 4–6 to players and deploy.
-  - Act 6 needs Milestone 8 first: its ending opens the Maps preview page, and players can't spend drawn maps yet.
+- [x] Act 4 built: 12 stages, Frostbite, Giants and weight, Archaeology ([ACT4.md](design/ACT4.md)) — done 2026-11-01. Not simmed or played through.
+- [x] Act 5 built: 14 stages, Channels, Tides and summons, Cooking ([ACT5.md](design/ACT5.md)) — done 2026-11-01. Not simmed or played through.
+- [x] Act 6 built: 18 stages, Echoes, Unholy ground, Trial 3 and the ending ([ACT6.md](design/ACT6.md)), The last empire ([ACT6_SKILLS.md](design/ACT6_SKILLS.md)), Cartography ([CARTOGRAPHY.md](design/CARTOGRAPHY.md)) — done 2026-11-01. Not simmed or played through.
+- [x] Open Acts 4–6 to players and deploy, ahead of the real Maps — done 2026-11-01
 - **Done:** Acts 4–6 are live and playable through.
 
 ### 8. Maps
@@ -417,6 +415,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Acts 4, 5 and 6 opened to players. 0.2.33 — done 2026-11-01
 - [x] Hideout upgrade cards replace the station table: a "You have" total, every tier ticked or dimmed, the next upgrade with cost, later costs on hover. 0.2.32 — done 2026-11-01
 - [x] Every Stash tab shared: gold, currency, materials, spare gems and spare flasks moved to the account, per realm, so a challenge league will have its own. Save v27 adds up what each character held; tabs and devices playing at once merge their changes ([TOWN.md](design/TOWN.md)). 0.2.31 — done 2026-11-01
 - [x] Damage written up ([DAMAGE.md](design/DAMAGE.md)). Green upgrade arrows, the Upgrade sort and Pick up upgrades removed; hovering compares an item with what's worn: the items' base numbers, each bar skill's damage per second (with a warning if it would stop working) and character totals, with armour and evasion also as % against your level. Skill damage estimates now count spell gear, ailment modifiers and accuracy, and bleed and ignite don't stack in them, which also feeds the sim bot's skill choices. Not simmed. 0.2.30 — done 2026-11-01

@@ -207,15 +207,11 @@ describe('the Act 4 uniques', () => {
 });
 
 describe('staying closed', () => {
-  it('plays in previews and never in production', () => {
-    expect(ACTS[3].open).toBe(false);
-    expect(ACTS[3].preview).toBe(true);
-    expect(actOpen(4)).toBe(true);
+  it('is open to players', () => {
+    expect(ACTS[3].open).toBe(true);
     ACT_PREVIEW.enabled = false;
-    expect(actOpen(4)).toBe(false);
-    expect(nextZones('highaltar')).toEqual([]);
-    const s = fighter([['heavy_strike', [ALWAYS]]]);
-    expect(startCombat(s, ctx(), 'hollowpass')).toBeTruthy();
+    expect(actOpen(4)).toBe(true);
+    expect(nextZones('highaltar').map((z) => z.id)).toContain('hollowpass');
   });
 
   it("the Frostbite rule's act stays out of the list until Act 4 opens", () => {

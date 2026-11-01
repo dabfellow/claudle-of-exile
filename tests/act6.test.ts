@@ -114,16 +114,11 @@ describe('Act 6: The Shattered Throne', () => {
     expect(act().filter((z) => !ZONE_POS[z.id] || !inside(ZONE_POS[z.id])).map((z) => z.id)).toEqual([]);
   });
 
-  it('is closed to players, and playable only in preview', () => {
-    const def = ACTS.find((a) => a.n === 6)!;
-    expect(def.open).toBe(false);
-    expect(def.preview).toBe(true);
-    expect(actOpen(6)).toBe(true);
+  it('is open to players', () => {
+    expect(ACTS.find((a) => a.n === 6)!.open).toBe(true);
     ACT_PREVIEW.enabled = false;
-    expect(actOpen(6)).toBe(false);
-    expect(nextZones('maelstrom')).toEqual([]);
-    const s = fighter([['heavy_strike', PLAIN]]);
-    expect(startCombat(s, ctx(), 'exilesgate')).toMatch(/isn't open/);
+    expect(actOpen(6)).toBe(true);
+    expect(nextZones('maelstrom').map((z) => z.id)).toContain('exilesgate');
   });
 
   it('needs all three resistances, on trash and in each boss', () => {
@@ -409,6 +404,8 @@ describe('the third trial', () => {
 
 describe('the ending', () => {
   afterEach(() => {
+    ACTS[5].open = true;
+    ACTS[5].preview = false;
     ACT_PREVIEW.enabled = true;
     MAPS_PREVIEW.enabled = true;
   });
@@ -418,6 +415,8 @@ describe('the ending', () => {
     return s;
   };
   const closed = () => {
+    ACTS[5].open = false;
+    ACTS[5].preview = true;
     ACT_PREVIEW.enabled = false;
     MAPS_PREVIEW.enabled = false;
   };

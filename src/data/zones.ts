@@ -116,15 +116,15 @@ export const ACTS: ActDef[] = [
     outro: 'The Hierarch falls, and for the first time in a thousand years the bells of the city stop. Far to the north, the Hollow Peaks are waiting.',
   },
   {
-    n: 4, name: 'The Hollow Peaks', open: false, preview: true,
+    n: 4, name: 'The Hollow Peaks', open: true,
     outro: 'The Hollow King falls, and the mountain shakes as he lands. Past the last peak the land drops away to the east, down to a sea that has not seen the sun.',
   },
   {
-    n: 5, name: 'The Sunless Sea', open: false, preview: true,
+    n: 5, name: 'The Sunless Sea', open: true,
     outro: 'The Caller sinks, and for the first time in living memory the tide along the Drowned Coast goes out and stays out. To the north-east, the broken towers of the Shattered Throne stand clear of the storm.',
   },
   {
-    n: 6, name: 'The Shattered Throne', open: false, preview: true,
+    n: 6, name: 'The Shattered Throne', open: true,
     outro: 'The Last King falls, and nothing mends. The sky stays broken, and the throne he reached from is not empty: something that never wore a crown turns slowly to look at you. Back in your hideout, the old Map Device has begun to hum.',
   },
 ];

@@ -8,6 +8,19 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.33',
+    date: '1 Nov 2026',
+    title: 'The whole campaign is open',
+    items: [
+      'Acts 4, 5 and 6 are open: The Hollow Peaks, The Sunless Sea and The Shattered Throne, with 44 new areas and new uniques.',
+      "New boss mechanics: Frostbite slows you until you freeze, Channels must be broken in time, and Act 6's Echoes bring back old mechanics two at a time.",
+      'New skills in every act: Giants and weight, Tides and summons, and The last empire, the strongest skills in the game.',
+      'New trainable skills: Archaeology, Cooking and Cartography.',
+      'The last two ascendancy trials are here, at the end of Act 4 and the start of Act 6.',
+      'Beating Act 6 opens the Map Device and unlocks the Exile. Maps are still being built, so expect that page to be bare for now.',
+    ],
+  },
+  {
     version: '0.2.32',
     date: '1 Nov 2026',
     title: 'Clearer Hideout upgrades',
