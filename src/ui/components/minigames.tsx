@@ -28,6 +28,8 @@ const STROKE_H = 120;
 const STROKE_STEP = 5;
 const STROKE_REACH = 16;
 const STROKE_AHEAD = 30;
+const POTS = 3;
+const POT_ZONE = 0.76;
 
 type OnSwing = (r: SwingResult) => void;
 
@@ -202,6 +204,40 @@ function ForagingGame({ matId, onSwing }: { matId?: string; onSwing: OnSwing }) 
           }}
         >
           {matId && <MatIcon id={matId} size={22} />}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Three pots heat at their own pace: stir each in the band. One left to boil over just starts again. */
+function CookingGame({ onSwing }: { onSwing: OnSwing }) {
+  const newPot = () => ({ heat: random(0, 0.3), ms: random(2200, 3400) });
+  const pots = useRef([...Array(POTS)].map(newPot));
+  const fills = useRef<(HTMLDivElement | null)[]>([]);
+
+  const stir = (i: number) => {
+    const result = chargeResult(pots.current[i].heat, POT_ZONE);
+    if (!result) return;
+    pots.current[i] = newPot();
+    onSwing(result);
+  };
+
+  useFrame((dt) => {
+    pots.current.forEach((p, i) => {
+      p.heat += dt / p.ms;
+      if (p.heat >= 1) pots.current[i] = newPot();
+      const fill = fills.current[i];
+      if (fill) fill.style.width = `${pots.current[i].heat * 100}%`;
+    });
+  });
+
+  return (
+    <div className="mini-pots">
+      {[...Array(POTS).keys()].map((i) => (
+        <button key={i} className="mini-bar" aria-label={`Stir pot ${i + 1}`} onPointerDown={() => stir(i)}>
+          <span className="mini-zone" style={{ left: `${POT_ZONE * 100}%`, width: `${CHARGE_ZONE_WIDTH * 100}%` }} />
+          <div className="mini-fill" ref={(el) => void (fills.current[i] = el)} />
         </button>
       ))}
     </div>
@@ -476,6 +512,8 @@ export function SkillGame({ skill, matId, onSwing }: { skill: SkillId; matId?: s
       return <GemcuttingGame onSwing={onSwing} />;
     case 'runecarving':
       return <RuneGame onSwing={onSwing} />;
+    case 'cooking':
+      return <CookingGame onSwing={onSwing} />;
     default:
       return null;
   }

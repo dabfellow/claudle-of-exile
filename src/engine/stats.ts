@@ -9,6 +9,7 @@ import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { STAT_KEYS, type Buff, type DamageType, type GameState, type Item, type StatKey, type Stats } from './types';
 import { ascendancyOf } from './ascendancy';
 import { characterLevel } from './character';
+import { mealStats } from './cooking';
 import { MEGA_CRIT_MULTI, mechanicStats } from './mechanics';
 import { runeStats } from './runes';
 
@@ -148,7 +149,7 @@ export const ATTRIBUTE_EFFECTS = {
   int: { manaPer: 0.5, elemPctPer: 0.2, esPctPer: 0.2 },
 };
 
-/** Raw stat totals from gear, passives, hideout and active flask buffs. */
+/** Raw stat totals from gear, passives, hideout, your meal and active flask buffs. */
 export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): Stats {
   const st = emptyStats();
   for (const item of Object.values(s.equipment)) {
@@ -168,6 +169,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
     addStats(st, mods);
   }
   addStats(st, runeStats(s));
+  addStats(st, mealStats(s));
   addStats(st, passiveStats(s.passives, s.masteries));
   if (ascendancyOf(s)) for (const id of s.ascendancy.nodes) addStats(st, ASCENDANCY_NODE_BY_ID[id].stats);
   const cls = classDef(s.character.classId);

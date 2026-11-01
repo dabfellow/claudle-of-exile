@@ -15,6 +15,7 @@ import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
 import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/common';
 import { HeistBoard } from '../components/HeistBoard';
+import { PantryBoard } from '../components/PantryBoard';
 import { RuneBoard } from '../components/RuneBoard';
 import { SkillMinigame } from '../components/SkillMinigame';
 import { Icon, Orb, Swatch } from '../components/Icon';
@@ -29,6 +30,7 @@ const START_LABEL: Record<SkillId, string> = {
   alchemy: 'Brew',
   gemcutting: 'Cut',
   runecarving: 'Carve',
+  cooking: 'Cook',
   fishing: 'Fish',
 };
 
@@ -96,6 +98,7 @@ function ActionArt({ a, locked, running }: { a: SkillAction; locked: boolean; ru
   if (locked) return <GameIcon name="lock" size={16} color="var(--dim)" />;
   if (a.baseId) return <Art src={`items/${a.baseId}`} alt={baseDef(a.baseId).name} size={32} fallback={<Icon name={baseDef(a.baseId).slot} size={20} color={a.color} />} />;
   if (a.gem) return <GameIcon name="gemcutting" size={20} color={a.color} />;
+  if (a.skill === 'cooking') return <MatIcon id={Object.keys(a.outputs!)[0]} size={22} />;
   if (a.flaskId || a.skill === 'alchemy') return <Orb color={a.color} size={18} glow={running} />;
   return <Swatch color={a.color} size={16} />;
 }
@@ -426,6 +429,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
       )}
       {skill === 'thieving' && <HeistBoard />}
       {skill === 'runecarving' && <RuneBoard />}
+      {skill === 'cooking' && <PantryBoard />}
       {skill === 'fishing' && (
         <div className="callout skill-note">
           Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.

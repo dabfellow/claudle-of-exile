@@ -6,6 +6,7 @@ import { materialDef } from '../data/materials';
 import { actionDef, SKILLS } from '../data/skills';
 import { zoneDef } from '../data/zones';
 import { queueSkill, retreat, useFlask } from '../engine/combat';
+import { cookingOpen } from '../engine/cooking';
 import { findItem } from '../engine/crafting';
 import { methodName } from '../engine/craftUntil';
 import { alarmChance, roomMs } from '../engine/heist';
@@ -94,6 +95,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
       { page: 'alchemy', label: 'Alchemy', icon: 'alchemy', skill: 'alchemy' },
       { page: 'gemcutting', label: 'Gemcutting', icon: 'gemcutting', skill: 'gemcutting' },
       { page: 'runecarving', label: 'Rune-carving', icon: 'runecarving', skill: 'runecarving' },
+      { page: 'cooking', label: 'Cooking', icon: 'cooking', skill: 'cooking' },
     ],
   },
   {
@@ -136,7 +138,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
       {NAV.map((g) => (
         <div className={`nav-group ${g.label ? '' : 'unlabelled'}`} key={g.label || 'top'}>
           {g.label && <div className="nav-label">{g.label}</div>}
-          {g.items.map((it) => {
+          {g.items.filter((it) => it.page !== 'cooking' || cookingOpen(s)).map((it) => {
             const lvl = it.skill ? levelOf(it.skill, s.skills[it.skill]) : null;
             const isActive = it.skill && it.skill === active;
             const color = it.skill ? SKILLS[it.skill].color : 'var(--muted)';

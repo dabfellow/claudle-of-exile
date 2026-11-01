@@ -7,6 +7,7 @@ import { newFlask } from './flasks';
 import { createSkillGem } from './gems';
 import type { Ctx } from './context';
 import { checkAchievements } from './achievements';
+import { mealStep } from './cooking';
 import { combatStep } from './combat';
 import { heistAutoStep, heistStep, newHeistState } from './heist';
 import { checkExileUnlock, refreshVendor, vendorTick } from './hideout';
@@ -49,7 +50,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     },
     tutorial: { step: 0, progress: 0, done: false, skipped: false },
     nextUid: 1,
-    skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, thieving: 0, smithing: 0, alchemy: 0, gemcutting: 0, runecarving: 0, fishing: 0 },
+    skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, thieving: 0, smithing: 0, alchemy: 0, gemcutting: 0, runecarving: 0, cooking: 0, fishing: 0 },
     bank: { gold: 25, transmute: 3, augment: 2, arcane_dust: 6 },
     inventory: [],
     ground: [],
@@ -75,6 +76,8 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     achievements: [],
     bossesDefeated: [],
     greenhouse: null,
+    meal: null,
+    keepEating: true,
     smithCatalyst: { fossil: null, resin: null, until: false, salvageMisses: false, salvageFull: false, salvageAll: false },
     maps: newMapState(),
     heist: newHeistState(),
@@ -82,7 +85,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false, movement: 'walk', autoFlee: true, autoBoss: false, targeting: { priority: 'none', order: 'closest' } },
     lifetime: {
       kills: 0, bossKills: 0, deaths: 0, itemsLooted: 0, orbsUsed: 0, salvaged: 0, flasksDrunk: 0,
-      flasksBrewed: 0, itemsSmithed: 0, gathered: 0, benchCrafts: 0, raresFound: 0, uniquesFound: 0,
+      flasksBrewed: 0, mealsEaten: 0, itemsSmithed: 0, gathered: 0, benchCrafts: 0, raresFound: 0, uniquesFound: 0,
     },
     clock: 0,
     lastSaved: Date.now(),
@@ -122,6 +125,7 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
     heistAutoStep(s);
     greenhouseStep(s, ctx, step, d);
     if (s.combat) {
+      mealStep(s, ctx, step);
       if (combatStep(s, ctx, step, d)) d = deriveStats(s);
     } else {
       s.life = Math.min(d.maxLife, s.life + d.maxLife * TOWN_REGEN * (step / 1000));

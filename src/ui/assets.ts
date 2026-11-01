@@ -470,6 +470,18 @@ export const MATERIAL_ART: Record<string, string> = {
   // new item art
   message_bottle: new URL('../assets/items/materials/icons32-16.png', import.meta.url).href,
   tasalio_scale: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
+  // Cooking: first-pass stand-ins from Kibyra's consumables, none of them a fish
+  meal_porridge: new URL('../assets/items/consumables/provisions.png', import.meta.url).href,
+  meal_broth: new URL('../assets/items/consumables/ale.png', import.meta.url).href,
+  meal_hash: new URL('../assets/items/consumables/mushroom.png', import.meta.url).href,
+  meal_chilli: new URL('../assets/items/consumables/potion-red-shelf.png', import.meta.url).href,
+  meal_chowder: new URL('../assets/items/consumables/barrel.png', import.meta.url).href,
+  meal_roast: new URL('../assets/items/consumables/meat.png', import.meta.url).href,
+  meal_curry: new URL('../assets/items/consumables/potion-blue-shelf.png', import.meta.url).href,
+  meal_table: new URL('../assets/items/consumables/bread.png', import.meta.url).href,
+  frost_extract: new URL('../assets/items/consumables/medicine-jar.png', import.meta.url).href,
+  ember_reduction: new URL('../assets/items/consumables/medicine-jar.png', import.meta.url).href,
+  void_distillate: new URL('../assets/items/consumables/medicine-jar.png', import.meta.url).href,
 };
 
 /** Currency orbs: mostly SanguineNite round icons, a few loose stand-ins. */
@@ -582,6 +594,7 @@ export const GAME_ICONS: Record<string, string> = {
   alchemy: new URL('../assets/icons/skills/alchemy.svg', import.meta.url).href,
   gemcutting: new URL('../assets/icons/skills/gemcutting.svg', import.meta.url).href,
   runecarving: new URL('../assets/icons/navigation/rune-circle.png', import.meta.url).href,
+  cooking: new URL('../assets/icons/skills/cooking.png', import.meta.url).href,
   // navigation
   home: new URL('../assets/icons/navigation/home.svg', import.meta.url).href,
   tree: new URL('../assets/icons/navigation/tree.svg', import.meta.url).href,
@@ -622,6 +635,9 @@ export const FLASK_ART: Record<string, string> = {
   quicksilver: new URL('../assets/items/flasks/codespree-vial-mercury.png', import.meta.url).href,
   diamond: new URL('../assets/items/flasks/tint-diamond.png', import.meta.url).href,
   ruby: new URL('../assets/items/flasks/tint-ruby.png', import.meta.url).href,
+  life_sacred: new URL('../assets/items/consumables/potion-red.png', import.meta.url).href,
+  mana_sacred: new URL('../assets/items/consumables/potion-blue-shelf.png', import.meta.url).href,
+  sulphur: new URL('../assets/items/consumables/potion-green.png', import.meta.url).href,
 };
 
 /** Monsters: CodeSpree beings and Craftpix avatars (64px pixel art), free_sample portraits (painted JPG). */

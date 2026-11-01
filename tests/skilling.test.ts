@@ -114,7 +114,7 @@ describe('skilling mini-games', () => {
   });
 
   it('only feeds gathering skills that have a game', () => {
-    for (const skill of ['mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'runecarving'] as SkillId[]) {
+    for (const skill of ['mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking'] as SkillId[]) {
       expect(hasMinigame(skill)).toBe(true);
       const s = player();
       s.action = { kind: 'skill', actionId: actionsFor(skill)[0].id, progress: 0 };

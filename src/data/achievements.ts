@@ -19,7 +19,7 @@ export interface AchievementDef {
   act?: number;
 }
 
-const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'runecarving'] as const;
+const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking'] as const;
 const totalSkillLevel = (s: GameState) => SKILLING.reduce((a, k) => a + levelOf(k, s.skills[k]), 0);
 const L = (s: GameState) => s.lifetime;
 const bossesBeatenIn = (s: GameState, act: number) => zonesInAct(act).filter((z) => s.bossesDefeated.includes(z.id)).length;
@@ -86,6 +86,7 @@ const ALL: AchievementDef[] = [
   { id: 'total_50', name: 'Jack of All Trades', desc: 'Reach a total skill level of 50', category: 'skilling', target: 50, progress: totalSkillLevel },
   { id: 'total_150', name: 'Artisan', desc: 'Reach a total skill level of 150', category: 'skilling', target: 150, progress: totalSkillLevel, reward: { expansion: 1 } },
   { id: 'smith_100', name: 'Anvil Rhythm', desc: 'Smith 100 items', category: 'skilling', target: 100, progress: (s) => L(s).itemsSmithed },
+  { id: 'meals_50', name: 'Well Fed', desc: 'Eat 50 meals', category: 'skilling', act: 5, target: 50, progress: (s) => L(s).mealsEaten, reward: { chaos: 2 } },
   { id: 'gatherer_1000', name: 'Stockpile', desc: 'Gather 1,000 resources', category: 'skilling', target: 1000, progress: (s) => L(s).gathered, reward: { gold: 300 } },
 
   // ---------- character ----------

@@ -1,5 +1,6 @@
 import type { SkillId } from '../engine/types';
 import { BASES, type BaseDef } from './bases';
+import { COOKING_GATE } from './cooking';
 import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
 import { RUNE_FAMILIES, RUNE_GATE, RUNES } from './runes';
 
@@ -25,6 +26,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   alchemy: { id: 'alchemy', name: 'Alchemy', group: 'production', color: '#9b6dde', verb: 'Brewing', desc: 'Brew flasks and transmute dust into orbs.' },
   gemcutting: { id: 'gemcutting', name: 'Gemcutting', group: 'production', color: '#4fc1a6', verb: 'Cutting', desc: 'Cut rough gems into skill and support gems.' },
   runecarving: { id: 'runecarving', name: 'Rune-carving', group: 'production', color: '#6fa8ff', verb: 'Carving', desc: 'Carve old materials into runes, then inscribe them in the rune slot on your gear.' },
+  cooking: { id: 'cooking', name: 'Cooking', group: 'production', color: '#e08a4a', verb: 'Cooking', desc: 'Cook gathered plants into meals, and into the strongest flask ingredients for Alchemy.' },
   fishing: { id: 'fishing', name: 'Fishing', group: 'gathering', color: '#4fa3d9', verb: 'Fishing', desc: 'Cast a line into the waters of Wraeclast.', soon: true },
 };
 
@@ -204,6 +206,9 @@ const ALCHEMY: SkillAction[] = [
   { id: 'orb_regret', skill: 'alchemy', name: 'Orb of Regret', level: 28, intervalMs: 5000, xp: 50, inputs: { arcane_dust: 14, emberroot: 3 }, outputs: { regret: 1 }, color: '#8fbf7a', area: 'crypt' },
   { id: 'brew_life_grand', skill: 'alchemy', name: 'Grand Life Flask', level: 32, intervalMs: 6000, xp: 80, inputs: { emberroot: 10, yew_log: 3 }, flaskId: 'life_grand', color: '#d6453d', area: 'shipgrave' },
   { id: 'brew_diamond', skill: 'alchemy', name: 'Diamond Flask', level: 36, intervalMs: 6000, xp: 90, inputs: { voidbloom: 6, rough_gem: 2 }, flaskId: 'diamond', color: '#bfe3ff', area: 'stormcliffs' },
+  { id: 'brew_mana_sacred', skill: 'alchemy', name: 'Sacred Mana Flask', level: 42, intervalMs: 6000, xp: 110, inputs: { frost_extract: 3, yew_log: 2 }, flaskId: 'mana_sacred', color: '#4f82e8', gate: COOKING_GATE },
+  { id: 'brew_life_sacred', skill: 'alchemy', name: 'Sacred Life Flask', level: 46, intervalMs: 7000, xp: 140, inputs: { ember_reduction: 3, yew_log: 3 }, flaskId: 'life_sacred', color: '#e0584f', gate: COOKING_GATE },
+  { id: 'brew_sulphur', skill: 'alchemy', name: 'Sulphur Flask', level: 50, intervalMs: 7000, xp: 170, inputs: { void_distillate: 3, rough_gem: 3 }, flaskId: 'sulphur', color: '#d8c94a', gate: COOKING_GATE },
   { id: 'orb_alchemy', skill: 'alchemy', name: 'Orb of Alchemy', level: 40, intervalMs: 6000, xp: 90, inputs: { arcane_dust: 25, voidbloom: 2 }, outputs: { alchemy: 1 }, color: '#f0c14b', area: 'shipgrave' },
 ];
 
@@ -260,10 +265,29 @@ const RUNECARVING: SkillAction[] = RUNES.map((r) => {
   };
 });
 
+const cook = (id: string, name: string, level: number, intervalMs: number, xp: number, inputs: Record<string, number>, color: string): SkillAction => ({
+  id: `cook_${id}`, skill: 'cooking', name, level, intervalMs, xp, inputs, outputs: { [id]: 1 }, color, gate: COOKING_GATE,
+});
+
+/** Plants in, a meal or a flask ingredient out. Never fish: the fish have not been told. */
+const COOKING: SkillAction[] = [
+  cook('meal_porridge', 'Sunpetal Porridge', 1, 4000, 12, { sunpetal: 6, ash_log: 1 }, '#f2c94c'),
+  cook('meal_broth', 'Frostleaf Broth', 6, 4000, 18, { frostleaf: 4, sunpetal: 4 }, '#7fc8f8'),
+  cook('meal_hash', "Forager's Hash", 10, 4500, 26, { frostleaf: 6, sunpetal: 6, oak_log: 1 }, '#a8b860'),
+  cook('frost_extract', 'Frostleaf Extract', 15, 5000, 34, { frostleaf: 12, essence_frost_2: 1 }, '#7fc8f8'),
+  cook('meal_chilli', 'Emberroot Chilli', 20, 5000, 42, { emberroot: 6, frostleaf: 3 }, '#e2603f'),
+  cook('meal_chowder', 'Stormwatch Chowder', 26, 5500, 55, { emberroot: 8, essence_storm_2: 1 }, '#d8c070'),
+  cook('ember_reduction', 'Emberroot Reduction', 30, 6000, 70, { emberroot: 14, essence_vitality_2: 1 }, '#e2603f'),
+  cook('meal_roast', 'Slow Root Roast', 35, 6000, 80, { emberroot: 10, yew_log: 2 }, '#b0603a'),
+  cook('meal_curry', 'Voidbloom Curry', 40, 7000, 100, { voidbloom: 6, emberroot: 4 }, '#9b6dde'),
+  cook('void_distillate', 'Voidbloom Distillate', 45, 8000, 125, { voidbloom: 12, essence_haste_2: 1 }, '#9b6dde'),
+  cook('meal_table', "Captain's Table", 50, 10000, 170, { voidbloom: 10, emberroot: 6, essence_vitality_2: 1, yew_log: 2 }, '#e0a640'),
+];
+
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-export const ACTIONS: SkillAction[] = [...GATHERING, ...THIEVING, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING].map((a) => ({
+export const ACTIONS: SkillAction[] = [...GATHERING, ...THIEVING, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING].map((a) => ({
   ...a,
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
 }));

@@ -39,6 +39,10 @@ export type SkillTreeStat =
   | 'secondStroke'
   | 'deepCuts'
   | 'livingScript'
+  | 'cookingSpeed'
+  | 'secondHelping'
+  | 'slowSimmer'
+  | 'headChef'
   | 'fishingSpeed'
   | 'fishTreasure'
   | 'biggerFish'
@@ -141,6 +145,16 @@ const BRANCHES: BranchSpec[] = [
       { name: 'Deep Cuts', stats: { deepCuts: 10 }, desc: 'Runes on your gear are 10% stronger' },
     ],
     keystone: { name: 'Living Script', stats: { livingScript: 1 }, desc: 'Resonance between your runes is doubled. Rune-carving is 25% slower' },
+  },
+  {
+    skill: 'cooking',
+    angle: 60,
+    small: { name: 'Line Cook', stats: { cookingSpeed: 5 }, desc: '5% faster Cooking' },
+    notables: [
+      { name: 'Second Helping', stats: { secondHelping: 15 }, desc: '15% chance to cook two for one' },
+      { name: 'Slow Simmer', stats: { slowSimmer: 25 }, desc: 'Meals last 25% longer' },
+    ],
+    keystone: { name: 'Head Chef', stats: { headChef: 1 }, desc: 'Meals are 30% stronger. Cooking is 25% slower' },
   },
   {
     skill: 'alchemy',

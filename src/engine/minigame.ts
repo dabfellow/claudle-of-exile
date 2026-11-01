@@ -22,7 +22,7 @@ export const CHARGE_ZONE_WIDTH = 0.12;
 const STRIKE_HIT_MS = 120;
 const STRIKE_WEAK_MS = 260;
 
-const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'runecarving'];
+const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking'];
 
 export type SwingResult = 'hit' | 'weak' | 'miss';
 

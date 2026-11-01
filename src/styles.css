@@ -1475,6 +1475,15 @@ h3 {
   border-radius: var(--radius, 6px);
 }
 
+.mini-pots {
+  display: grid;
+  gap: 4px;
+}
+
+.mini-pots .mini-bar {
+  height: 24px;
+}
+
 .mini-zone {
   position: absolute;
   inset: 0 auto;

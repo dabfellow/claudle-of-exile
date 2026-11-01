@@ -1,7 +1,8 @@
+import { COOKING_MATERIALS } from './cooking';
 import { CRAFT_MATERIALS } from './craftMats';
 import { RUNE_MATERIALS } from './runes';
 
-export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'rune' | 'currency' | 'gold' | 'fish';
+export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'rune' | 'ingredient' | 'food' | 'currency' | 'gold' | 'fish';
 
 export interface MaterialDef {
   id: string;
@@ -45,6 +46,7 @@ export const MATERIALS: MaterialDef[] = [
 
   ...CRAFT_MATERIALS,
   ...RUNE_MATERIALS,
+  ...COOKING_MATERIALS,
 ];
 
 export interface CurrencyDef extends MaterialDef {
