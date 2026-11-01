@@ -8,6 +8,15 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.18',
+    date: '31 Oct 2026',
+    title: 'A tidier sidebar',
+    items: [
+      'The sidebar is sorted into Adventure, Character, Gathering, Crafting and Progress, so pages are easier to find.',
+      'The Crafting Bench now sits with Smithing, Alchemy and the other crafts.',
+    ],
+  },
+  {
     version: '0.2.17',
     date: '31 Oct 2026',
     title: 'A steadier combat screen',
