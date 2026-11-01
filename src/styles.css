@@ -1562,6 +1562,17 @@ h3 {
   min-width: 0;
 }
 
+/* Focus past full: thin, because it only buys time */
+.minigame-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.minigame-overflow {
+  height: 7px;
+}
+
 .minigame-result {
   min-width: 70px;
   font-size: 12px;

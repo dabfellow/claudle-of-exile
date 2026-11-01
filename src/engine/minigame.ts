@@ -6,9 +6,11 @@ import type { GameState, SkillId } from './types';
  * Skilling mini-games: playing fills Focus, which speeds up the running action on top of the
  * normal idle rate. It can only ever add speed, and it never runs offline.
  */
-export const MAX_FOCUS_SPEED = 0.3;
+export const MAX_FOCUS_SPEED = 0.45;
+/** Focus past full: adds no speed, but buys this much drain time before speed starts to fall (5 s). */
+const FOCUS_OVERFLOW = 0.5;
 const FOCUS_HIT = 0.25;
-const FOCUS_WEAK = 0.1;
+const FOCUS_WEAK = 0.05;
 const FOCUS_MISS = 0.1;
 const FOCUS_DRAIN_PER_SEC = 0.1;
 
@@ -38,7 +40,12 @@ function manualAction(s: GameState) {
 }
 
 export function focusOf(s: GameState): number {
-  return manualAction(s)?.focus ?? 0;
+  return Math.min(1, manualAction(s)?.focus ?? 0);
+}
+
+/** How full the overflow bar is, 0–1. */
+export function overflowOf(s: GameState): number {
+  return Math.max(0, (manualAction(s)?.focus ?? 0) - 1) / FOCUS_OVERFLOW;
 }
 
 /** Multiplies skilling progress: 1 with no Focus, never lower. */
@@ -50,7 +57,7 @@ export function minigameSwing(s: GameState, result: SwingResult): void {
   const a = manualAction(s);
   if (!a) return;
   const change = result === 'hit' ? FOCUS_HIT : result === 'weak' ? FOCUS_WEAK : -FOCUS_MISS;
-  a.focus = Math.min(1, Math.max(0, (a.focus ?? 0) + change));
+  a.focus = Math.min(1 + FOCUS_OVERFLOW, Math.max(0, (a.focus ?? 0) + change));
 }
 
 /** Focus drains while you're here, and is gone once you're away. */

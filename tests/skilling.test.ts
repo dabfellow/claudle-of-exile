@@ -10,7 +10,7 @@ import { ruleMet, startCraftUntil } from '../src/engine/craftUntil';
 import { equip } from '../src/engine/equipment';
 import { sellItems } from '../src/engine/hideout';
 import { allMods, createItem, rerollMods, spawnWeight } from '../src/engine/items';
-import { chargeResult, focusMult, focusOf, hasMinigame, MAX_FOCUS_SPEED, minigameSwing } from '../src/engine/minigame';
+import { chargeResult, focusMult, focusOf, hasMinigame, MAX_FOCUS_SPEED, minigameSwing, overflowOf } from '../src/engine/minigame';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -50,12 +50,28 @@ describe('skilling mini-games', () => {
     return s.action as Extract<GameState['action'], { kind: 'skill' }>;
   };
 
-  it('adds at most 30% speed', () => {
+  it('adds at most 45% speed', () => {
     const s = player();
     start(s);
     for (let i = 0; i < 20; i++) minigameSwing(s, 'hit');
     expect(focusOf(s)).toBe(1);
     expect(focusMult(s)).toBeCloseTo(1 + MAX_FOCUS_SPEED);
+  });
+
+  it('holds top speed while overflow drains, with no extra speed', () => {
+    const s = player();
+    const action = start(s);
+    for (let i = 0; i < 20; i++) minigameSwing(s, 'hit');
+    expect(overflowOf(s)).toBe(1);
+    expect(focusMult(s)).toBeCloseTo(1 + MAX_FOCUS_SPEED);
+    action.progress = -1e9;
+    const d = deriveStats(s);
+    skillStep(s, ctx(), 4_900, d);
+    expect(overflowOf(s)).toBeGreaterThan(0);
+    expect(focusMult(s)).toBeCloseTo(1 + MAX_FOCUS_SPEED);
+    skillStep(s, ctx(), 1_000, d);
+    expect(overflowOf(s)).toBe(0);
+    expect(focusMult(s)).toBeLessThan(1 + MAX_FOCUS_SPEED);
   });
 
   it('never drops below the idle rate on misses', () => {

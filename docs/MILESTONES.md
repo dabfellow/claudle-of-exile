@@ -201,7 +201,7 @@ Work backwards from the end state, not forwards from Act 1.
 - **Offline combat:** the game is already influenced a lot by the player being there. Automation can be locked behind
   hideout upgrades, which limits how good offline combat is.
 - **Offline skilling:** always full speed.
-- **Manual skilling (you, 2026-10-31):** always better than idle. Idle stays as it is; mini-games add up to 30% on top
+- **Manual skilling (you, 2026-10-31):** always better than idle. Idle stays as it is; mini-games add up to 45% on top
   ([SKILLING_REWORK.md](design/SKILLING_REWORK.md) §9).
 - **Offline cap:** starts at 8 hours; a hideout upgrade raises it to 24 over time.
 - **Automation unlocks:** by type of rule. Simple rules like "on cooldown" are free; reactive ones like "when a boss

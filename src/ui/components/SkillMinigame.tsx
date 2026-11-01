@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { actionDef, SKILLS } from '../../data/skills';
-import { CHARGE_ZONE_WIDTH, chargeResult, focusMult, focusOf, hasMinigame, MAX_FOCUS_SPEED, minigameSwing, type SwingResult } from '../../engine/minigame';
+import { CHARGE_ZONE_WIDTH, chargeResult, focusMult, focusOf, hasMinigame, MAX_FOCUS_SPEED, minigameSwing, overflowOf, type SwingResult } from '../../engine/minigame';
 import type { SkillId } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { MatIcon, ProgressBar } from './common';
 
 const CHARGE_MS = 1100;
 const SWEEP_MS = 1200;
-const REST_MS = 400;
+const LANDED_MS = 400;
 const WOOD_ZONE = 0.18;
 const HERB_EVERY_MS = 1500;
 const HERB_LIFE_MS = 2200;
@@ -70,10 +70,9 @@ function MiningGame({ onSwing }: { onSwing: (r: SwingResult) => void }) {
   const newZone = () => random(0.68, 0.84);
   const [zone, setZone] = useState(newZone);
   const fill = useRef<HTMLDivElement>(null);
-  const swing = useRef({ charging: false, charge: 0, restUntil: 0 });
+  const swing = useRef({ charging: false, charge: 0, shownUntil: 0 });
 
   const start = () => {
-    if (performance.now() < swing.current.restUntil) return;
     swing.current.charging = true;
     swing.current.charge = 0;
   };
@@ -86,7 +85,7 @@ function MiningGame({ onSwing }: { onSwing: (r: SwingResult) => void }) {
       sw.charge = 0;
       return;
     }
-    sw.restUntil = performance.now() + REST_MS;
+    sw.shownUntil = performance.now() + LANDED_MS;
     setZone(newZone());
     onSwing(result);
   };
@@ -96,7 +95,7 @@ function MiningGame({ onSwing }: { onSwing: (r: SwingResult) => void }) {
     if (sw.charging) {
       sw.charge = Math.min(1, sw.charge + dt / CHARGE_MS);
       if (sw.charge >= 1) release();
-    } else if (performance.now() >= sw.restUntil) sw.charge = 0;
+    } else if (performance.now() >= sw.shownUntil) sw.charge = 0;
     if (fill.current) fill.current.style.width = `${sw.charge * 100}%`;
   });
   useSpace(start, release);
@@ -123,12 +122,11 @@ function WoodcuttingGame({ onSwing }: { onSwing: (r: SwingResult) => void }) {
   const newZone = () => random(0.1, 0.72);
   const [zone, setZone] = useState(newZone);
   const marker = useRef<HTMLDivElement>(null);
-  const swing = useRef({ t: 0, pos: 0, restUntil: 0 });
+  const swing = useRef({ t: 0, pos: 0 });
 
+  // no wait between swings: each miss costs Focus, so mashing earns nothing
   const chop = () => {
     const sw = swing.current;
-    if (performance.now() < sw.restUntil) return;
-    sw.restUntil = performance.now() + REST_MS;
     const inZone = sw.pos >= zone && sw.pos <= zone + WOOD_ZONE;
     if (inZone) setZone(newZone());
     onSwing(inZone ? 'hit' : 'miss');
@@ -224,7 +222,10 @@ export function SkillMinigame({ skill }: { skill: SkillId }) {
       {skill === 'woodcutting' && <WoodcuttingGame onSwing={onSwing} />}
       {skill === 'harvesting' && <ForagingGame matId={Object.keys(action.outputs ?? {})[0]} onSwing={onSwing} />}
       <div className="row minigame-foot">
-        <ProgressBar value={focusOf(s)} color={color} className="grow" />
+        <div className="minigame-bars grow">
+          <ProgressBar value={focusOf(s)} color={color} />
+          <ProgressBar value={overflowOf(s)} color="var(--accent)" className="minigame-overflow" />
+        </div>
         <span className="num small">+{Math.round((focusMult(s) - 1) * 100)}% speed</span>
         {result && (
           <span key={result.id} className={`minigame-result ${result.r}`}>

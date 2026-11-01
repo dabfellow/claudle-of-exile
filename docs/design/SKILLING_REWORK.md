@@ -237,10 +237,11 @@ game system and also produces materials for the crafting economy (reset, 2026-10
 
 ## 9. Mini-games (2026-10-31)
 
-Manual is always better than idle, and idle is unchanged. Playing fills **Focus** (0–100%), worth up to **+30%** speed on
+Manual is always better than idle, and idle is unchanged. Playing fills **Focus** (0–100%), worth up to **+45%** speed on
 top of everything else, so materials, drops and XP all rise together. It's in `src/engine/minigame.ts`.
 
-- Hit +25%, weak hit +10%, miss -10%, drain 10% a second. Misses can't push speed below idle; a missed target that just
+- Focus past full goes into an overflow bar (up to 50%, about 5 s of drain). It adds no speed, but holds you at +45% for a bit.
+- Hit +25%, weak hit +5%, miss -10%, drain 10% a second. Misses can't push speed below idle; a missed target that just
   fades costs nothing beyond the drain. Offline ignores Focus and clears it.
 - **Mining:** hold to charge, release in a band that shifts each swing. Early is a weak hit, late is a miss.
 - **Woodcutting:** swing while a sweeping marker is in the band.
