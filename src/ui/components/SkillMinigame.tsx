@@ -11,6 +11,7 @@ const HOW_TO: Partial<Record<SkillId, string>> = {
   woodcutting: 'Swing while the marker is in the bright band.',
   harvesting: 'Click herbs as they pop up, before they wilt.',
   thieving: 'Watch the pins light up, then click them back in the same order.',
+  archaeology: 'Brush the soil off the find, and keep the brush away from cracked stones.',
   smithing: 'Strike the anvil just as the ring lands on it.',
   alchemy: 'Hold to heat and let go to cool. Keep the needle in the bright band.',
   gemcutting: 'Cut the facets in order, 1 to 3, before the stone settles.',

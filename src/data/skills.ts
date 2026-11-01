@@ -1,5 +1,6 @@
 import type { SkillId } from '../engine/types';
 import { BASES, type BaseDef } from './bases';
+import { CULTURES, digChance, EXPEDITION_GATE, SITES } from './expedition';
 import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
 import { RUNE_FAMILIES, RUNE_GATE, RUNES } from './runes';
 
@@ -21,6 +22,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   // id kept as `harvesting` so saves, tree nodes and the Greenhouse don't need migrating
   harvesting: { id: 'harvesting', name: 'Foraging', group: 'gathering', color: '#d9b84a', verb: 'Foraging', desc: 'Pick herbs off the ground for Alchemy.' },
   thieving: { id: 'thieving', name: 'Thieving', group: 'gathering', color: '#c9a35a', verb: 'Thieving', desc: "Lift purses for gold and Rogue's Markers, then spend them on Heists against the Khanate." },
+  archaeology: { id: 'archaeology', name: 'Archaeology', group: 'gathering', color: '#b0784a', verb: 'Digging', desc: 'Dig sites in the Hollow Peaks for Artifacts, then trade them with the merchants of the Expedition for currency.' },
   smithing: { id: 'smithing', name: 'Smithing', group: 'production', color: '#b8b8c8', verb: 'Smithing', desc: 'Forge equipment bases. Higher level → higher item level.' },
   alchemy: { id: 'alchemy', name: 'Alchemy', group: 'production', color: '#9b6dde', verb: 'Brewing', desc: 'Brew flasks and transmute dust into orbs.' },
   gemcutting: { id: 'gemcutting', name: 'Gemcutting', group: 'production', color: '#4fc1a6', verb: 'Cutting', desc: 'Cut rough gems into skill and support gems.' },
@@ -30,7 +32,6 @@ export const SKILLS: Record<SkillId, SkillDef> = {
 
 /** Planned skills shown on the Coming soon page; none exist in the engine yet. */
 export const UPCOMING_SKILLS: { name: string; theme: string; icon: string; color: string; desc: string }[] = [
-  { name: 'Archaeology', theme: 'Expedition', icon: 'mining', color: '#b0784a', desc: 'Dig sites in every area for Artifacts to trade for currency.' },
   { name: 'Cartography', theme: 'Maps', icon: 'map', color: '#8a7ad8', desc: 'Draw and upgrade maps for the Map Device.' },
   { name: 'Fletching', theme: 'Quivers', icon: 'woodcutting', color: '#7fae6a', desc: 'Turn logs into shafts and shafts into quivers.' },
 ];
@@ -140,6 +141,20 @@ const THIEVING: SkillAction[] = [
   mark('mark_acolyte', 'Pyre Acolyte', 42, 5000, 41, 75, 0.25, 'pyretemple', '#c0502a', [{ id: SEAL, chance: 0.003, qty: 1 }, { id: WAX, chance: 0.002, qty: 1 }]),
   mark('mark_steward', "Khan's Steward", 52, 5000, 46, 110, 0.28, 'burningthrone', '#e0702a', [{ id: SEAL, chance: 0.004, qty: 1 }, { id: WAX, chance: 0.003, qty: 1 }]),
 ];
+
+/** Digs: no inputs and nothing to go wrong. Most of a dig is dirt, so `outputChance` is how often it turns up an Artifact. */
+const ARCHAEOLOGY: SkillAction[] = SITES.map((x) => ({
+  id: x.id,
+  skill: 'archaeology' as const,
+  name: x.name,
+  level: x.level,
+  intervalMs: x.intervalMs,
+  xp: x.xp,
+  outputs: { [CULTURES.find((c) => c.id === x.culture)!.artifact]: 1 },
+  outputChance: digChance(x),
+  color: x.color,
+  gate: EXPEDITION_GATE,
+}));
 
 /** Fishing is coming soon. It has always been coming soon. */
 const FISHING: SkillAction[] = [
@@ -263,7 +278,7 @@ const RUNECARVING: SkillAction[] = RUNES.map((r) => {
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-export const ACTIONS: SkillAction[] = [...GATHERING, ...THIEVING, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING].map((a) => ({
+export const ACTIONS: SkillAction[] = [...GATHERING, ...THIEVING, ...ARCHAEOLOGY, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING].map((a) => ({
   ...a,
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
 }));

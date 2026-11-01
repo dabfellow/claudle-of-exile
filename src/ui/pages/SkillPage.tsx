@@ -14,6 +14,7 @@ import type { GameState } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
 import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/common';
+import { ExpeditionBoard } from '../components/ExpeditionBoard';
 import { HeistBoard } from '../components/HeistBoard';
 import { RuneBoard } from '../components/RuneBoard';
 import { SkillMinigame } from '../components/SkillMinigame';
@@ -25,6 +26,7 @@ const START_LABEL: Record<SkillId, string> = {
   woodcutting: 'Chop',
   harvesting: 'Forage',
   thieving: 'Lift',
+  archaeology: 'Dig',
   smithing: 'Smith',
   alchemy: 'Brew',
   gemcutting: 'Cut',
@@ -425,6 +427,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
         </div>
       )}
       {skill === 'thieving' && <HeistBoard />}
+      {skill === 'archaeology' && <ExpeditionBoard />}
       {skill === 'runecarving' && <RuneBoard />}
       {skill === 'fishing' && (
         <div className="callout skill-note">

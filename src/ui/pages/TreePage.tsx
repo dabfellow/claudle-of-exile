@@ -54,6 +54,7 @@ const BRANCH_COLOR: Record<string, string> = {
   woodcutting: '#6fae4a',
   harvesting: '#d9b84a',
   thieving: '#c9a35a',
+  archaeology: '#b0784a',
   fishing: '#4fa3d9',
   smithing: '#b8b8c8',
   alchemy: '#9b6dde',
@@ -642,7 +643,7 @@ function SkillingTree({ s }: { s: GameState }) {
         </span>
         <span className="chip">{s.bank.regret ?? 0} Orbs of Regret</span>
         <span className="dim" style={{ fontSize: 12 }}>
-          1 point per 5 total levels in Mining, Woodcutting, Foraging, Thieving, Smithing, Alchemy, Gemcutting and Rune-carving.
+          1 point per 5 total levels in Mining, Woodcutting, Foraging, Thieving, Archaeology, Smithing, Alchemy, Gemcutting and Rune-carving.
         </span>
       </div>
       <TreeCanvas

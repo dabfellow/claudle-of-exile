@@ -3,6 +3,7 @@ import { stashedItems, takeOwned } from './storage';
 import { baseDef } from '../data/bases';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements';
 import { essenceDef, fossilDef, modBias, SEAL, WAX } from '../data/craftMats';
+import { WHETSTONE } from '../data/expedition';
 import { BENCH_BUILT_LEVEL, BENCH_CRAFTS } from '../data/hideout';
 import type { Ctx } from './context';
 import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, salvageValue, spawnWeight, type ModBias } from './items';
@@ -151,8 +152,8 @@ export function takeImpression(s: GameState, ctx: Ctx, uid: number): string | nu
   const reason = impressionReason(s, uid);
   if (reason) return reason;
   const item = findItem(s, uid)!;
-  const { rarity, name, prefixes, suffixes } = item;
-  item.impression = structuredClone({ rarity, name, prefixes, suffixes });
+  const { rarity, name, prefixes, suffixes, honed } = item;
+  item.impression = structuredClone({ rarity, name, prefixes, suffixes, honed });
   s.bank[WAX] -= 1;
   ctx.emit({ t: 'craft', text: `Impression of ${itemName(item)}`, uid });
   return null;
@@ -174,6 +175,37 @@ export function restoreImpression(s: GameState, ctx: Ctx, uid: number): string |
   Object.assign(item, item.impression);
   delete item.impression;
   ctx.emit({ t: 'craft', text: `Restored ${itemName(item)}`, uid });
+  return null;
+}
+
+export function whetstoneReason(s: GameState, uid: number, affixId: string): string | null {
+  const item = findItem(s, uid);
+  if (!item) return 'Select an item';
+  if (!hasItem(s, WHETSTONE, 1)) return 'You have no Ancient Whetstone';
+  if (item.rarity === 'unique') return 'Cannot modify unique items';
+  if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
+  const mod = allMods(item).find((m) => m.affixId === affixId);
+  if (!mod) return 'That modifier is not on this item';
+  if (item.honed && allMods(item).some((m) => m.affixId === item.honed)) return 'This item already has a honed modifier';
+  if (mod.crafted) return 'Bench crafts cannot be raised';
+  const next = affixDef(affixId).tiers[mod.tier + 1];
+  if (!next) return 'Already the top tier';
+  if (next.ilvl > item.ilvl) return `Requires item level ${next.ilvl}`;
+  return null;
+}
+
+/** Ancient Whetstone: the only craft that makes a mod better without rolling for it. The new tier's values still roll. */
+export function applyWhetstone(s: GameState, ctx: Ctx, uid: number, affixId: string): string | null {
+  const reason = whetstoneReason(s, uid, affixId);
+  if (reason) return reason;
+  const item = findItem(s, uid)!;
+  const mod = allMods(item).find((m) => m.affixId === affixId)!;
+  mod.tier += 1;
+  item.honed = affixId;
+  mod.values = affixDef(affixId).tiers[mod.tier].ranges.map(([lo, hi]) => rInt(ctx.rng, lo, hi));
+  s.bank[WHETSTONE] -= 1;
+  s.lifetime.orbsUsed += 1;
+  ctx.emit({ t: 'craft', text: `Ancient Whetstone → ${itemName(item)}`, uid });
   return null;
 }
 

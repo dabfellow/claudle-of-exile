@@ -31,7 +31,9 @@ import { simulateOffline } from '../src/engine/offline';
 import { pickUp } from '../src/engine/storage';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
+import { CULTURES, SITES } from '../src/data/expedition';
 import { HEIST_JOBS, ROGUES } from '../src/data/heist';
+import { expeditionOpen, setOrder, shelvesFor, siteStratum } from '../src/engine/expedition';
 import { cleanChance, jobBlocker, rankUpRogue, rogueReason, setJobExit, startHeist } from '../src/engine/heist';
 import { RUNES } from '../src/data/runes';
 import { inscribeRune, itemRune, runeReason, runesOpen } from '../src/engine/runes';
@@ -84,8 +86,9 @@ const SCHEDULE = (day: number): Play[] =>
  * - mix: the same, and every night gathers whether anything is short or not.
  * - heist: push, but every night from Act 2 on goes to Heist.
  * - runes: push, but every night from Act 3 on goes to Rune-carving, gathering whatever the best recipe is short of.
+ * - expedition: push, but every night from Act 4 on digs, with a standing order on each merchant's dearest open ware.
  */
-type Profile = 'push' | 'mix' | 'heist' | 'runes';
+type Profile = 'push' | 'mix' | 'heist' | 'runes' | 'expedition';
 const gathersAway = (profile: Profile, period: number, short: boolean) => (period === 0 && short) || (period === 2 && profile === 'mix');
 
 /** The order the bot buys automation in: rules before hours, as rules are what bosses are locked behind. */
@@ -443,6 +446,18 @@ function runeNight(s: GameState, ctx: Ctx): boolean {
   return !!node && !startSkillAction(s, ctx, node.id);
 }
 
+/** The night's dig: the shallowest open site, so standing keeps rising, with an order on each merchant's dearest open ware. */
+function expeditionNight(s: GameState, ctx: Ctx): boolean {
+  if (!expeditionOpen(s)) return false;
+  for (const c of CULTURES) {
+    const best = shelvesFor(s, c.id).open.sort((a, b) => b.cost - a.cost)[0];
+    if (best && s.expedition.orders[c.id] !== best.id) setOrder(s, best.id);
+  }
+  const open = SITES.filter((x) => skillLevel(s, 'archaeology') >= x.level);
+  const site = [...open].reverse().sort((a, b) => siteStratum(s, a) - siteStratum(s, b))[0];
+  return !!site && !startSkillAction(s, ctx, site.id);
+}
+
 /** Areas open to the bot: unlocked, and within a level of its minimum. */
 function reachable(s: GameState): ZoneDef[] {
   const lvl = characterLevel(s);
@@ -538,6 +553,9 @@ interface Result {
   heists: number;
   heistAlarms: number;
   runesWorn: number;
+  /** Logbook finds and purchases on standing orders */
+  finds: number;
+  traded: number;
 }
 
 function snapshot(s: GameState): Snapshot {
@@ -611,7 +629,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   let now = 0;
   const res: Result = {
     classId, seed, profile, levels: {}, bosses: {}, bossLevels: {}, upgrades: {}, checkpoints: {}, trials: {}, deaths: 0, offlineDeaths: 0, kills: 0,
-    activeMs: 0, awayCombatMs: 0, awayGatherMs: 0, cappedMs: 0, stoppedMs: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, skills: {}, bar: '', orbsUsed: 0, heists: 0, heistAlarms: 0, runesWorn: 0,
+    activeMs: 0, awayCombatMs: 0, awayGatherMs: 0, cappedMs: 0, stoppedMs: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, skills: {}, bar: '', orbsUsed: 0, heists: 0, heistAlarms: 0, runesWorn: 0, finds: 0, traded: 0,
   };
   const deathStreak: Record<string, number> = {};
   const tally: Record<string, number> = {};
@@ -716,9 +734,10 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   const away = (ms: number, period: number) => {
     const heisting = profile === 'heist' && period === 2 && heistNight(s, ctx);
     const carving = profile === 'runes' && period === 2 && runeNight(s, ctx);
-    const job = !heisting && !carving && gathersAway(profile, period, !!nextUpgrade(s)?.short.length) ? gatherJob(s) : undefined;
+    const digging = profile === 'expedition' && period === 2 && expeditionNight(s, ctx);
+    const job = !heisting && !carving && !digging && gathersAway(profile, period, !!nextUpgrade(s)?.short.length) ? gatherJob(s) : undefined;
     if (job) startSkillAction(s, ctx, job.id);
-    else if (!heisting && !carving) {
+    else if (!heisting && !carving && !digging) {
       if (awayBack && characterLevel(s) >= awayBackLevel + 2) awayBack--;
       const open = reachable(s);
       const zone = open[Math.max(0, open.length - 1 - awayBack)];
@@ -729,7 +748,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
     s.clock += ms - sum.ms;
     res.kills += sum.kills;
     res.cappedMs += ms - sum.ms;
-    if (job || heisting || carving) res.awayGatherMs += sum.ms;
+    if (job || heisting || carving || digging) res.awayGatherMs += sum.ms;
     else if (sum.diedAfterMs === null) res.awayCombatMs += sum.ms;
     else {
       res.awayCombatMs += sum.diedAfterMs;
@@ -772,8 +791,10 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   res.bank = s.bank;
   res.bestDps = d.dps;
   res.bestLife = d.maxLife;
-  res.skills = Object.fromEntries([...GATHER_SKILLS, 'thieving' as const, 'runecarving' as const].map((sk) => [sk, levelOf(sk, s.skills[sk])]));
+  res.skills = Object.fromEntries([...GATHER_SKILLS, 'thieving' as const, 'archaeology' as const, 'runecarving' as const].map((sk) => [sk, levelOf(sk, s.skills[sk])]));
   res.heists = s.heist.tally.jobs;
+  res.finds = s.expedition.tally.finds;
+  res.traded = s.expedition.tally.traded;
   res.heistAlarms = s.heist.tally.alarms;
   res.runesWorn = Object.values(s.equipment).filter((i) => i && itemRune(i)).length;
   res.bar = s.skillBar.map((g) => g && `${activeGemDef(g.gemId).name} ${g.level}`).filter(Boolean).join(', ');
@@ -902,6 +923,11 @@ function report(results: Result[]) {
       row('markers', (r) => r.bank.rogues_marker ?? 0);
       row('seals', (r) => r.bank.forgers_seal ?? 0);
       row('wax', (r) => r.bank.locksmiths_wax ?? 0);
+    }
+    if (profile === 'expedition') {
+      row('archaeology', (r) => r.skills.archaeology);
+      row('finds', (r) => r.finds);
+      row('traded', (r) => r.traded);
     }
     if (profile === 'runes') {
       row('rune-carving', (r) => r.skills.runecarving);

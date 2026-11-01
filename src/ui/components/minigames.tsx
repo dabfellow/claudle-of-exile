@@ -23,6 +23,9 @@ const HEAT_BAND = 0.26;
 const HEAT_HOLD_MS = 1250;
 const FACETS = 3;
 const STONE_SETTLES_MS = 3500;
+const PLOT_TILES = 15;
+const PLOT_CRACKS = 4;
+const PLOT_PATIENCE_MS = 7000;
 const STROKE_W = 300;
 const STROKE_H = 120;
 const STROKE_STEP = 5;
@@ -262,6 +265,64 @@ function ThievingGame({ onSwing }: { onSwing: OnSwing }) {
   );
 }
 
+/** Drag across the plot to brush the soil away. Clearing it finds the piece; touching a cracked stone breaks it. */
+function ArchaeologyGame({ onSwing }: { onSwing: OnSwing }) {
+  const newPlot = () => ({ id: Math.random(), cracked: new Set([...Array(PLOT_TILES).keys()].sort(() => Math.random() - 0.5).slice(0, PLOT_CRACKS)) });
+  const [plot, setPlot] = useState(newPlot);
+  const [brushed, setBrushed] = useState<Set<number>>(new Set());
+  const held = useRef(false);
+
+  const next = () => {
+    setPlot(newPlot());
+    setBrushed(new Set());
+  };
+
+  useEffect(() => {
+    const giveUp = setTimeout(next, PLOT_PATIENCE_MS);
+    return () => clearTimeout(giveUp);
+  }, [plot]);
+
+  const brush = (x: number, y: number) => {
+    const tile = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-tile]');
+    if (!held.current || !tile) return;
+    const n = Number(tile.dataset.tile);
+    if (brushed.has(n)) return;
+    if (plot.cracked.has(n)) {
+      held.current = false;
+      onSwing('miss');
+      next();
+      return;
+    }
+    const done = new Set(brushed).add(n);
+    setBrushed(done);
+    if (done.size < PLOT_TILES - PLOT_CRACKS) return;
+    // a plot takes a few seconds to clear, so it's worth two swings
+    held.current = false;
+    onSwing('hit');
+    onSwing('hit');
+    next();
+  };
+
+  return (
+    <div
+      className="mini-plot"
+      onPointerDown={(e) => {
+        // a touch captures the pointer to whatever it landed on: let go so the drag reaches every tile
+        (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+        held.current = true;
+        brush(e.clientX, e.clientY);
+      }}
+      onPointerMove={(e) => brush(e.clientX, e.clientY)}
+      onPointerUp={() => (held.current = false)}
+      onPointerLeave={() => (held.current = false)}
+    >
+      {[...Array(PLOT_TILES).keys()].map((n) => (
+        <span key={n} data-tile={n} className={`mini-tile ${plot.cracked.has(n) ? 'cracked' : ''} ${brushed.has(n) ? 'brushed' : ''}`} />
+      ))}
+    </div>
+  );
+}
+
 /** A ring closes on the anvil: strike as it lands. */
 function SmithingGame({ onSwing }: { onSwing: OnSwing }) {
   const ring = useRef<HTMLSpanElement>(null);
@@ -468,6 +529,8 @@ export function SkillGame({ skill, matId, onSwing }: { skill: SkillId; matId?: s
       return <ForagingGame matId={matId} onSwing={onSwing} />;
     case 'thieving':
       return <ThievingGame onSwing={onSwing} />;
+    case 'archaeology':
+      return <ArchaeologyGame onSwing={onSwing} />;
     case 'smithing':
       return <SmithingGame onSwing={onSwing} />;
     case 'alchemy':

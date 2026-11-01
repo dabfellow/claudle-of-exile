@@ -8,6 +8,7 @@ import { createSkillGem } from './gems';
 import type { Ctx } from './context';
 import { checkAchievements } from './achievements';
 import { combatStep } from './combat';
+import { fillOrders, newExpeditionState } from './expedition';
 import { heistAutoStep, heistStep, newHeistState } from './heist';
 import { checkExileUnlock, refreshVendor, vendorTick } from './hideout';
 import { createItem } from './items';
@@ -19,7 +20,7 @@ import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { AccountState, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 25;
+export const SAVE_VERSION = 26;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -49,7 +50,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     },
     tutorial: { step: 0, progress: 0, done: false, skipped: false },
     nextUid: 1,
-    skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, thieving: 0, smithing: 0, alchemy: 0, gemcutting: 0, runecarving: 0, fishing: 0 },
+    skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, thieving: 0, archaeology: 0, smithing: 0, alchemy: 0, gemcutting: 0, runecarving: 0, fishing: 0 },
     bank: { gold: 25, transmute: 3, augment: 2, arcane_dust: 6 },
     inventory: [],
     ground: [],
@@ -78,6 +79,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     smithCatalyst: { fossil: null, resin: null, until: false, salvageMisses: false, salvageFull: false, salvageAll: false },
     maps: newMapState(),
     heist: newHeistState(),
+    expedition: newExpeditionState(),
     vendor: { stock: [], refreshAt: 0 },
     settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false, movement: 'walk', autoFlee: true, autoBoss: false, targeting: { priority: 'none', order: 'closest' } },
     lifetime: {
@@ -133,6 +135,7 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
   if (s.life > d.maxLife) s.life = d.maxLife;
   if (s.mana > d.maxMana) s.mana = d.maxMana;
   if (s.es > d.maxEs) s.es = d.maxEs;
+  fillOrders(s, ctx);
   vendorTick(s, ctx.rng);
   checkAchievements(s, ctx);
   checkExileUnlock(s, ctx);
