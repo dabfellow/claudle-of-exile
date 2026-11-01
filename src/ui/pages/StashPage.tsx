@@ -258,7 +258,7 @@ function Overflow({ s }: { s: GameState }) {
           Move to stash pages
         </button>
       </div>
-      <ItemTiles s={s} items={items} slots={items.length} showUpgrade onClick={(i) => openItemMenu(i.uid)} />
+      <ItemTiles s={s} items={items} slots={items.length} onClick={(i) => openItemMenu(i.uid)} />
     </div>
   );
 }
@@ -313,7 +313,7 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
           Take all
         </button>
       </div>
-      <ItemTiles s={s} items={sortItems(s, items, sort)} slots={STASH_PAGE_SIZE} showUpgrade onClick={(i) => openItemMenu(i.uid)} />
+      <ItemTiles s={s} items={sortItems(items, sort)} slots={STASH_PAGE_SIZE} onClick={(i) => openItemMenu(i.uid)} />
     </div>
   );
 }

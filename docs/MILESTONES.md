@@ -310,6 +310,8 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 - [ ] Art for the 34 weapon bases that still have none.
 - [ ] Use the Void pack, SBS skies and `MediavelFree.png` UI once something needs them. Originals are in Downloads.
 
+- [x] Ailment rework and chaos damage ([DAMAGE.md](design/DAMAGE.md)): fire burns, cold chills, lightning shocks, chaos poisons; each has a % chance, base 0, from skills and gear; buildup against 40% of the target's life. Burn builds to Ignite, chill to Freeze, shock scales. Poison stays as it is. Chaos is offence only. Not simmed. 0.2.29 — done 2026-11-01
+
 Not tied to a milestone yet. Older balance, Act 2 and skill items restart at their milestone.
 
 ### Login
@@ -352,6 +354,10 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Chaos is offence only: no monsters deal it, no player chaos resistance, no chaos skills past Poison Dart, and flat chaos doesn't reach spells ([DAMAGE.md](design/DAMAGE.md)).
+- Ailment numbers (40% threshold, 25% skill chance, ignite 50%, shock 40%) are first guesses, not simmed. Bosses may be near immune to Ignite and Freeze at these thresholds.
+- The game doesn't explain buildup or ailment scaling anywhere yet; players have to read [DAMAGE.md](design/DAMAGE.md).
+- The Equipment page's DPS is still the Default Attack, not your skills.
 - Act 6 leftovers: `TRIAL_ZONES` in `scripts/sim.ts` has no Act 6 area, the Long Fracture's Frozen ground may slow too hard, the six signature supports use the fallback icon, and vellum and inks use stand-in art.
 
 - Boss farm has no cost or cap, so a strong build gets boss XP (×10), rare-weighted gear and the repeat guaranteed orbs every few seconds, online and offline with wind-up rules (2026-10-31).
@@ -405,6 +411,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Damage written up ([DAMAGE.md](design/DAMAGE.md)). Green upgrade arrows, the Upgrade sort and Pick up upgrades removed; hovering compares an item with what's worn: the items' base numbers, each bar skill's damage per second (with a warning if it would stop working) and character totals, with armour and evasion also as % against your level. Skill damage estimates now count spell gear, ailment modifiers and accuracy, and bleed and ignite don't stack in them, which also feeds the sim bot's skill choices. Not simmed. 0.2.29 — done 2026-11-01
 - [x] Crafting Bench moved to the sidebar's Character group, after Stash. 0.2.28 — done 2026-11-01
 - [x] Act 6 merged to main, closed to players: stages, Echoes, Unholy ground, Trial 3, the ending, The last empire and Cartography. 0.2.26 — done 2026-11-01
 - [x] Acts 4 and 5 merged to main, closed to players: stages, skills, Archaeology and Cooking. 0.2.24 — done 2026-11-01

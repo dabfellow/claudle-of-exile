@@ -136,6 +136,15 @@ export const AFFIXES: AffixDef[] = [
     tiers: flat([[1, 1, 3, 5], [1, 2, 7, 10], [2, 3, 12, 18], [2, 4, 20, 29], [3, 5, 30, 43], [4, 7, 41, 58], [5, 8, 54, 76], [7, 10, 69, 96], [8, 12, 86, 120]]),
   },
   {
+    id: 'added_chaos', kind: 'prefix', group: 'added_chaos', label: 'Tainted', text: 'Adds {0} to {1} Chaos Damage to Attacks',
+    stats: ['chaosMin', 'chaosMax'], weights: { attack_weapon: 50, ring: 30, amulet: 25, gloves: 20 },
+    tiers: flat([[1, 2, 3, 4], [3, 5, 6, 9], [5, 8, 11, 16], [8, 12, 18, 26], [12, 17, 27, 38], [16, 23, 38, 52], [21, 29, 50, 68], [27, 37, 64, 86], [34, 46, 80, 108]]),
+  },
+  {
+    id: 'inc_chaos', kind: 'prefix', group: 'inc_chaos', label: 'Blighted', text: '{0}% increased Chaos Damage',
+    stats: ['chaosPct'], weights: { attack_weapon: 30, amulet: 25, ring: 25 }, tiers: single(ELEMENT_PCT),
+  },
+  {
     id: 'inc_fire', kind: 'prefix', group: 'inc_fire', label: 'Blazing', text: '{0}% increased Fire Damage',
     stats: ['firePct'], weights: { caster_weapon: 60, attack_weapon: 30, amulet: 40, ring: 40 }, tiers: single(ELEMENT_PCT),
   },
@@ -151,9 +160,9 @@ export const AFFIXES: AffixDef[] = [
   // ---------- prefixes: ailments (jewellery only) ----------
   { id: 'inc_bleed', kind: 'prefix', group: 'inc_bleed', label: 'Lacerating', text: '{0}% increased Bleed Damage', stats: ['bleedPct'], weights: AILMENT, tiers: single(AILMENT_PCT) },
   { id: 'inc_poison', kind: 'prefix', group: 'inc_poison', label: 'Venomous', text: '{0}% increased Poison Damage', stats: ['poisonPct'], weights: AILMENT, tiers: single(AILMENT_PCT) },
-  { id: 'inc_ignite', kind: 'prefix', group: 'inc_ignite', label: 'Searing', text: '{0}% increased Ignite Damage', stats: ['ignitePct'], weights: AILMENT, tiers: single(AILMENT_PCT) },
+  { id: 'inc_ignite', kind: 'prefix', group: 'inc_ignite', label: 'Searing', text: '{0}% increased Burn and Ignite Damage', stats: ['ignitePct'], weights: AILMENT, tiers: single(AILMENT_PCT) },
   {
-    id: 'inc_ailment', kind: 'prefix', group: 'inc_ailment', label: 'Festering', text: '{0}% increased damage with Bleed, Poison and Ignite',
+    id: 'inc_ailment', kind: 'prefix', group: 'inc_ailment', label: 'Festering', text: '{0}% increased damage with Bleed, Poison, Burn and Ignite',
     stats: ['ailmentPct'], weights: JEWELLERY(20, 40, 30),
     tiers: single([[6, 9], [10, 13], [14, 18], [19, 23], [24, 29], [30, 35], [36, 42], [43, 49], [50, 57]]),
   },
@@ -337,13 +346,15 @@ export const AFFIXES: AffixDef[] = [
 
   // ---------- suffixes: ailments (jewellery only) ----------
   {
-    id: 'ailment_duration', kind: 'suffix', group: 'ailment_duration', label: 'of Lingering', text: '{0}% longer Bleed, Poison and Ignite',
+    id: 'ailment_duration', kind: 'suffix', group: 'ailment_duration', label: 'of Lingering', text: '{0}% longer Bleed, Poison, Burn and Ignite',
     stats: ['ailmentDuration'], weights: JEWELLERY(30, 40, 40),
     tiers: single([[5, 7], [8, 10], [11, 13], [14, 16], [17, 19], [20, 22], [23, 25], [26, 28], [29, 32]]),
   },
   { id: 'bleed_chance', kind: 'suffix', group: 'bleed_chance', label: 'of Rending', text: 'Attacks have {0}% chance to cause Bleeding', stats: ['bleedOnHit'], weights: AILMENT_CHANCE, tiers: single(AILMENT_CHANCE_PCT) },
   { id: 'poison_chance', kind: 'suffix', group: 'poison_chance', label: 'of the Asp', text: 'Hits have {0}% chance to Poison', stats: ['poisonOnHit'], weights: AILMENT_CHANCE, tiers: single(AILMENT_CHANCE_PCT) },
-  { id: 'ignite_chance', kind: 'suffix', group: 'ignite_chance', label: 'of Kindling', text: 'Hits with Fire Damage have {0}% chance to Ignite', stats: ['igniteOnHit'], weights: AILMENT_CHANCE, tiers: single(AILMENT_CHANCE_PCT) },
+  { id: 'ignite_chance', kind: 'suffix', group: 'ignite_chance', label: 'of Kindling', text: 'Fire Damage has {0}% chance to Burn', stats: ['burnChance'], weights: AILMENT_CHANCE, tiers: single(AILMENT_CHANCE_PCT) },
+  { id: 'chill_chance', kind: 'suffix', group: 'chill_chance', label: 'of Rime', text: 'Cold Damage has {0}% chance to Chill', stats: ['chillChance'], weights: AILMENT_CHANCE, tiers: single(AILMENT_CHANCE_PCT) },
+  { id: 'shock_chance', kind: 'suffix', group: 'shock_chance', label: 'of Static', text: 'Lightning Damage has {0}% chance to Shock', stats: ['shockChance'], weights: AILMENT_CHANCE, tiers: single(AILMENT_CHANCE_PCT) },
 
   // ---------- suffixes: defence and sustain ----------
   { id: 'fire_res', kind: 'suffix', group: 'fire_res', label: 'of the Whelpling', text: '+{0}% to Fire Resistance', stats: ['fireRes'], weights: RES, tiers: single(RES_TIERS) },

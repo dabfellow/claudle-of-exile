@@ -8,6 +8,18 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.29',
+    date: '1 Nov 2026',
+    title: 'Compare gear, and new ailments',
+    items: [
+      "Hover over an item to compare it with what you're wearing: its base damage, speed, crit and defences, each skill's damage per second, and what changes on your character.",
+      'The green upgrade arrows are gone, along with the Upgrade sort and Pick up upgrades, because they hid the reasoning behind one score.',
+      'Skill tooltips now count spell damage, ailment modifiers and accuracy, so their damage numbers will change.',
+      "Ailments rebuilt: fire burns, cold chills and lightning shocks, each on a chance from skills and gear. Burn builds to Ignite, chill builds to Freeze, and shock grows stronger, all against the target's life, so big enemies take longer.",
+      'Chaos damage arrives on gear, and Poison Dart now deals half of its damage as chaos.',
+    ],
+  },
+  {
     version: '0.2.27',
     date: '1 Nov 2026',
     title: 'Getting ready for what comes next',

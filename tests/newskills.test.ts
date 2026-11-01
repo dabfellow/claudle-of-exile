@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ClassId } from '../src/data/classes';
 import { ACTIVE_GEMS, SUPPORT_GEMS, activeGemDef, type TargetStatus } from '../src/data/gems';
 import { zoneDef } from '../src/data/zones';
-import { combatStep, makeMonster, ruleAllows, startCombat } from '../src/engine/combat';
+import { ailmentThreshold, combatStep, makeMonster, ruleAllows, shockPct, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem, createSupportGem, skillSummary, supportFits } from '../src/engine/gems';
 import { createUnique } from '../src/engine/items';
@@ -213,5 +213,66 @@ describe('new skill gems', () => {
     const buff = s.combat!.buffs.find((b) => b.id === 'consecrate')!;
     expect(buff.regenPct).toBe(2);
     expect(buff.esRegenPct).toBe(1);
+  });
+});
+
+describe('ailment buildup', () => {
+  it('needs a chance: a plain physical attack burns, chills and shocks nothing', () => {
+    const { s, ctx, dummy } = arena('heavy_strike');
+    run(s, ctx, 5_000);
+    expect(dummy.dots).toHaveLength(0);
+    expect(dummy.chillMs).toBe(0);
+    expect(dummy.shockMs ?? 0).toBe(0);
+  });
+
+  it('a threshold grows with the life of the target', () => {
+    const { dummies } = arena('fireball', { pack: 2 });
+    dummies[1].maxLife = dummies[0].maxLife * 3;
+    expect(ailmentThreshold(dummies[1])).toBe(ailmentThreshold(dummies[0]) * 3);
+  });
+
+  it('burn builds into a stronger, longer ignite, then starts again', () => {
+    const { s, ctx, dummy } = arena('fireball', { cls: 'mage' });
+    dummy.life = dummy.maxLife = 2_000;
+    dummy.build = { burn: ailmentThreshold(dummy) - 1, chill: 0, shock: 0 };
+    run(s, ctx, 10_000, () => dummy.dots.some((x) => x.kind === 'ignite'));
+    const ignite = dummy.dots.find((x) => x.kind === 'ignite')!;
+    expect(ignite.durationMs).toBeGreaterThan(dummy.dots.find((x) => x.kind === 'burn')!.durationMs!);
+    expect(dummy.build!.burn).toBeLessThan(ailmentThreshold(dummy));
+  });
+
+  it('chill builds into freeze', () => {
+    const { s, ctx, dummy } = arena('glacial_lance', { cls: 'mage' });
+    dummy.life = dummy.maxLife = 2_000;
+    dummy.build = { burn: 0, chill: ailmentThreshold(dummy) - 1, shock: 0 };
+    run(s, ctx, 10_000, () => dummy.frozenMs > 0);
+    expect(dummy.frozenMs).toBeGreaterThan(0);
+  });
+
+  it('shock grows with buildup, up to its cap, and never pops', () => {
+    const { dummy } = arena('shock_nova');
+    dummy.shockMs = 1000;
+    dummy.build = { burn: 0, chill: 0, shock: 0 };
+    const low = shockPct(dummy);
+    dummy.build.shock = ailmentThreshold(dummy) * 2;
+    expect(shockPct(dummy)).toBeGreaterThan(low);
+    expect(shockPct(dummy)).toBe(40);
+  });
+
+  it('buildup fades', () => {
+    const { s, ctx, dummy } = arena('heavy_strike');
+    dummy.build = { burn: 1000, chill: 1000, shock: 1000 };
+    run(s, ctx, 1_000);
+    expect(dummy.build.burn).toBeLessThan(1000);
+  });
+
+  it('Poison Dart deals chaos, so chaos resistance cuts it', () => {
+    const hit = (res: number) => {
+      const { s, ctx, dummy } = arena('poison_dart');
+      dummy.res.chaos = res;
+      run(s, ctx, 20_000, () => dummy.dots.length > 0);
+      return dummy.dots[0].dps;
+    };
+    expect(hit(75)).toBeLessThan(hit(0));
   });
 });

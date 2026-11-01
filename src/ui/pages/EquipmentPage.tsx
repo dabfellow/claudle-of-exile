@@ -14,7 +14,7 @@ import { Inventory } from '../components/Inventory';
 import { PaperDoll, SLOT_LABEL } from '../components/PaperDoll';
 import { openItemMenu } from '../components/ItemMenu';
 
-const DMG_NAME = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' } as const;
+const DMG_NAME = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning', chaos: 'Chaos' } as const;
 
 function Row({ label, value, hint, color }: { label: string; value: string; hint?: string; color?: string }) {
   return (

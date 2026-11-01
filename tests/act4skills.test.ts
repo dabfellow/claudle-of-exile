@@ -367,7 +367,7 @@ describe('shields', () => {
       const a = arena('shield_crush', { supports });
       a.s.combat!.shield = shield;
       a.s.combat!.shieldMax = shield;
-      a.dummy.res = { fire: 0, cold: 0, light: 0 };
+      a.dummy.res = { fire: 0, cold: 0, light: 0, chaos: 0 };
       run(a.s, a.ctx, 4000, () => lost(a.dummy) > 0);
       return { dealt: lost(a.dummy), left: a.s.combat!.shield };
     };
@@ -422,7 +422,7 @@ describe('the rest of the batch', () => {
   it('Blackjack hits stunned enemies 60% harder, and Cheap Shot crits them', () => {
     const avg = (stunned: boolean, supports: string[] = []) => {
       const a = arena('blackjack', { supports });
-      a.dummy.res = { fire: 0, cold: 0, light: 0 };
+      a.dummy.res = { fire: 0, cold: 0, light: 0, chaos: 0 };
       const d = { ...deriveStats(a.s), accuracy: 1e6 };
       for (let t = 0; t < 60000; t += 50) {
         if (stunned) a.dummy.stunMs = 1000;
@@ -466,7 +466,7 @@ describe('the rest of the batch', () => {
 
   it('Shockwave shakes the nearest other enemies for 30%', () => {
     const { s, ctx, monsters: [a, b] } = arena('titans_blow', { pack: 2, supports: ['shockwave'] });
-    a.res = b.res = { fire: 0, cold: 0, light: 0 };
+    a.res = b.res = { fire: 0, cold: 0, light: 0, chaos: 0 };
     run(s, ctx, 9000, () => lost(a) > 0);
     expect(lost(b) / lost(a)).toBeGreaterThan(0.2);
     expect(lost(b) / lost(a)).toBeLessThan(0.4);

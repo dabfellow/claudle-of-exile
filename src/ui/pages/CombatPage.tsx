@@ -27,6 +27,8 @@ import {
   setMovement,
   startCombat,
   useFlask,
+  ailmentThreshold,
+  shockPct,
 } from '../../engine/combat';
 import { areaXpLabel, characterLevel } from '../../engine/character';
 import { mealEffectText } from '../../engine/cooking';
@@ -52,10 +54,11 @@ const DMG_COLOR: Record<DamageType, string> = {
   fire: 'var(--fire)',
   cold: 'var(--cold)',
   light: 'var(--light)',
+  chaos: 'var(--chaos)',
 };
 /** buffs that come from tree effects rather than a skill gem */
 const EXTRA_BUFFS: Record<string, string> = { guard_armour: 'Guard Armour', evade_speed: 'Evasive', stand_fast: 'Stand Fast', ecstasy: 'Ecstasy' };
-const DMG_NAME: Record<DamageType, string> = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' };
+const DMG_NAME: Record<DamageType, string> = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning', chaos: 'Chaos' };
 const GROUND_STATUS: Record<GroundKind, string> = { burning: 'fire', chilled: 'cold', frozen: 'cold', shocked: 'bad', caustic: 'poison', stormwater: 'cold', unholy: 'bad' };
 
 interface Floater {
@@ -316,6 +319,11 @@ function MonsterToken({ m, c, target, locked, fx }: { m: MonsterInstance; c: Com
   if (m.dots.some((x) => x.kind === 'bleed')) pips.push(['Bleeding', 'var(--life-2)']);
   if (m.dots.some((x) => x.kind === 'poison')) pips.push(['Poisoned', 'var(--poison)']);
   if (m.dots.some((x) => x.kind === 'ignite')) pips.push(['Ignited', 'var(--fire)']);
+  else if (m.dots.some((x) => x.kind === 'burn')) pips.push(['Burning', 'var(--fire)']);
+  if ((m.shockMs ?? 0) > 0) pips.push([`Shocked: takes ${Math.round(shockPct(m))}% more damage`, 'var(--light)']);
+  const built = (n: number) => Math.round((n / ailmentThreshold(m)) * 100);
+  if (m.build && built(m.build.burn) > 0) pips.push([`Burn ${built(m.build.burn)}% to Ignite`, 'var(--fire)']);
+  if (m.build && built(m.build.chill) > 0) pips.push([`Chill ${built(m.build.chill)}% to Freeze`, 'var(--cold)']);
   if (m.curse) pips.push([activeGemDef(m.curse.gemId).name, 'var(--accent-2)']);
   if (m.enraged) pips.push(['Enraged', 'var(--danger)']);
   if (m.chained) pips.push(["Chained: can't be hurt", 'var(--ward)']);
@@ -702,7 +710,7 @@ function Matchup({ s, d, bossDef }: { s: GameState; d: Derived; bossDef: Monster
       <StatRow label="Damage / sec" you={fmt(dps)} them={target ? theirDps.toFixed(1) : '–'} good={target && dps ? dps > theirDps * 1.5 : null} />
       <StatRow label="Chance to hit" you={target ? `${Math.round(hit * 100)}%` : '–'} them={target ? `${Math.round((1 - evade) * 100)}%` : '–'} />
       <StatRow label="Their hit on you" you={yourDefence} them={target ? `${fmt(perHit)} ${DMG_NAME[target.dmgType].toLowerCase()}` : '–'} good={target ? perHit < (d.maxLife + d.maxEs) * 0.1 : null} />
-      <StatRow label="Their resistances" you="" them={target ? `${target.res.fire}/${target.res.cold}/${target.res.light}% F/C/L` : '–'} />
+      <StatRow label="Their resistances" you="" them={target ? `${target.res.fire}/${target.res.cold}/${target.res.light}/${target.res.chaos}% F/C/L/Ch` : '–'} />
       <StatRow
         label="Attack / cast time"
         you={`Default Attack ${(d.attackMs / 1000).toFixed(2)}s`}

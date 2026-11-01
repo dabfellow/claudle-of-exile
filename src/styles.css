@@ -54,6 +54,7 @@
   --es-2: #bfe7f2;
   --ward: #8f7ad6;
   --poison: #9fc26a;
+  --chaos: #b06ad0;
   --phys: #d8d2c4;
   --fire: #e07a4c;
   --cold: #74bfe6;
@@ -2613,15 +2614,6 @@ h3 {
   color: var(--dim);
 }
 
-.cell .upgrade {
-  position: absolute;
-  top: 3px;
-  right: 4px;
-  font-size: var(--fs-2xs);
-  color: var(--good);
-  font-weight: 800;
-}
-
 .cell.empty-slot {
   cursor: default;
   border: 1px dashed var(--line-2);
@@ -2702,6 +2694,32 @@ h3 {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 2px 12px;
+}
+
+.compare-head {
+  font-size: var(--fs-xs);
+  color: var(--dim);
+}
+
+.compare-sub {
+  margin-top: 5px;
+  text-align: left;
+  font-size: var(--fs-2xs);
+  color: var(--dim);
+}
+
+.compare-list {
+  text-align: left;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 2px 10px;
+}
+
+.compare-list > :nth-child(3n + 2),
+.compare-list > :nth-child(3n) {
+  text-align: right;
 }
 
 .paperdoll {
@@ -5599,15 +5617,6 @@ img.art.mat-art {
   font-size: var(--fs-xs);
   color: var(--dim);
   font-variant-numeric: tabular-nums;
-}
-
-.item-tile-up {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  font-size: var(--fs-xs);
-  font-weight: 800;
-  color: var(--good);
 }
 
 .item-tile-set {

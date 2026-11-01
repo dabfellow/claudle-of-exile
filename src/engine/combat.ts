@@ -99,7 +99,7 @@ import { applyDeathPenalty, areaXpMultiplier, characterLevel } from './character
 import { bossLeftToRules, castOrder, ruleLockReason, rulesPass, skillAim } from './automation';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
-import { gemUseReason, grantGemXp, LIFE_RESERVE_PCT, MIN_COOLDOWN_MS, minionStats, skillNumbers, stormStats, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
+import { ailmentNumbers, BURN_MS, BURN_SHARE, gemUseReason, IGNITE_MS, IGNITE_SHARE, grantGemXp, LIFE_RESERVE_PCT, MIN_COOLDOWN_MS, minionStats, skillNumbers, stormStats, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
 import { rollLoot } from './loot';
 import { mapPackLeft, onMapFieldLost, onMapPack, rollMapDrops } from './maps';
@@ -173,7 +173,7 @@ export const DEATH_LIFE_FRACTION = 0.25;
 export const PACK_LIFE_SCALE = 0.6;
 export const PACK_DMG_SCALE = 0.65;
 
-const DAMAGE_TYPES: DamageType[] = ['phys', 'fire', 'cold', 'light'];
+const DAMAGE_TYPES: DamageType[] = ['phys', 'fire', 'cold', 'light', 'chaos'];
 /** a farmed boss comes back this long after it dies */
 export const BOSS_RESPAWN_MS = 5000;
 /** chilled monsters attack this much slower (plus any chillOnHit) */
@@ -313,6 +313,7 @@ const RESIST_BY_TYPE: Record<DamageType, Partial<MonsterInstance['res']>> = {
   fire: { fire: 30 },
   cold: { cold: 30 },
   light: { light: 30 },
+  chaos: { chaos: 30 },
 };
 
 export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1): MonsterInstance {
@@ -350,7 +351,7 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     wardMax: 0,
     wardMs: 0,
     wardsUsed: 0,
-    res: { fire: 0, cold: 0, light: 0, ...RESIST_BY_TYPE[def.dmgType] },
+    res: { fire: 0, cold: 0, light: 0, chaos: 0, ...RESIST_BY_TYPE[def.dmgType] },
     dots: [],
     stunMs: 0,
     frozenMs: 0,
@@ -1084,9 +1085,9 @@ function moreDamageFromBuffs(c: CombatRuntime): number {
   return c.buffs.reduce((a, b) => a + (b.moreDamage ?? 0), 0);
 }
 
-/** Bleeding, poisoned, ignited, chilled or frozen. */
+/** Bleeding, poisoned, burning, ignited, chilled, frozen or shocked. */
 function hasAilment(mon: MonsterInstance): boolean {
-  return mon.dots.length > 0 || mon.chillMs > 0 || mon.frozenMs > 0;
+  return mon.dots.length > 0 || mon.chillMs > 0 || mon.frozenMs > 0 || (mon.shockMs ?? 0) > 0;
 }
 
 /** Roll one hit of a skill. Returns null for a missed attack; `sure` hits can't miss. */
@@ -1106,7 +1107,7 @@ function rollHit(
   c.asc.sureCrit = false;
   if (isAttack && !sure && !c.ambush && !r.steadyHand && !r.knifesEdge && !chance(ctx.rng, hitChance(d.accuracy, mon.level))) return null;
 
-  const byType: ByType = { phys: 0, fire: 0, cold: 0, light: 0 };
+  const byType: ByType = { phys: 0, fire: 0, cold: 0, light: 0, chaos: 0 };
   if (isAttack) {
     const pct = weaponPctAt(def, level) / 100;
     for (const t of DAMAGE_TYPES) {
@@ -1229,6 +1230,13 @@ function applyDot(mon: MonsterInstance, dot: Dot): void {
     mon.dots.push(dot);
     return;
   }
+  // burns pool: what's left of the old one runs on in the new one
+  const burning = dot.kind === 'burn' && mon.dots.find((x) => x.kind === 'burn');
+  if (burning) {
+    const left = (burning.dps * burning.remainingMs) / 1000 + (dot.dps * dot.remainingMs) / 1000;
+    Object.assign(burning, dot, { dps: (left * 1000) / dot.remainingMs });
+    return;
+  }
   // bleed / ignite: only the strongest of each kind applies
   const existing = mon.dots.find((x) => x.kind === dot.kind);
   if (!existing) mon.dots.push(dot);
@@ -1272,24 +1280,20 @@ function damageMonster(s: GameState, mon: MonsterInstance, amount: number, direc
 }
 
 /** A damage-over-time ailment from a hit, with the player's ailment modifiers. */
-function makeAilment(d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealt: number, a: { kind: 'bleed' | 'poison' | 'ignite'; pctPerSec: number; durationMs: number }): Dot {
+function makeAilment(d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealt: number, a: { kind: Dot['kind']; pctPerSec: number; durationMs: number }): Dot {
   const r = d.raw;
   const { def, mods } = nums;
-  const kindPct = a.kind === 'bleed' ? r.bleedPct : a.kind === 'poison' ? r.poisonPct : r.ignitePct;
-  const kindDur = a.kind === 'bleed' ? r.bleedDuration : a.kind === 'poison' ? r.poisonDuration : r.igniteDuration;
-  const flatDur = a.kind === 'bleed' ? r.bleedDurationFlat : a.kind === 'poison' ? r.poisonDurationFlat : 0;
-  const bleedMore = a.kind === 'bleed' ? (1 + mods.moreBleed / 100) * (mon.isBoss ? 1 + r.bleedBossMore / 100 : 1) : 1;
-  const duration = a.durationMs * nums.durationMult * (1 + (r.ailmentDuration + kindDur) / 100) + flatDur;
+  const { pctPerSec, durationMs: duration } = ailmentNumbers(d, nums, a);
   return {
     kind: a.kind,
-    dps: ((dealt * a.pctPerSec) / 100) * (1 + (kindPct + r.ailmentPct) / 100) * bleedMore,
+    dps: ((dealt * pctPerSec) / 100) * (a.kind === 'bleed' && mon.isBoss ? 1 + r.bleedBossMore / 100 : 1),
     remainingMs: duration,
     durationMs: duration,
     dealt: 0,
     gemId: def.id,
     burst: mods.specials.has('hemorrhage') ? 0.5 : undefined,
     spreads: mods.specials.has('virulence') || mods.specials.has('bloodtrail') || undefined,
-    pyre: (a.kind === 'ignite' && mods.specials.has('pyre')) || undefined,
+    pyre: ((a.kind === 'ignite' || a.kind === 'burn') && mods.specials.has('pyre')) || undefined,
   };
 }
 
@@ -1313,9 +1317,72 @@ function bleedDps(mon: MonsterInstance, dot: Dot): number {
 /** Coup de Grace with Needleworker's Wraps: also poisons and ignites. */
 const COUP_POISON = { kind: 'poison', pctPerSec: 30, durationMs: 4000 } as const;
 const COUP_IGNITE = { kind: 'ignite', pctPerSec: 40, durationMs: 3000 } as const;
-/** "Hits have X% chance to Poison / Ignite" from gear */
+/** "Hits have X% chance to Poison" from gear */
 const GEAR_POISON = { kind: 'poison', pctPerSec: 20, durationMs: 4000 } as const;
-const GEAR_IGNITE = { kind: 'ignite', pctPerSec: 25, durationMs: 3000 } as const;
+
+/** Burn, chill and shock fill up against this % of a target's life, so big enemies take much longer. */
+export const AILMENT_THRESHOLD_PCT = 40;
+/** Buildup fades by this % of the threshold each second. */
+const AILMENT_DECAY_PCT = 10;
+const CHILL_MS = 3000;
+const SHOCK_MS = 4000;
+const FREEZE_MS = 1500;
+const BOSS_FREEZE_MS = 600;
+/** How much more damage a shocked target takes: from a touch of buildup to a full threshold. */
+const SHOCK_MIN_PCT = 5;
+const SHOCK_MAX_PCT = 40;
+
+export function ailmentThreshold(mon: MonsterInstance): number {
+  return (mon.maxLife * AILMENT_THRESHOLD_PCT) / 100;
+}
+
+export function shockPct(mon: MonsterInstance): number {
+  if (!mon.shockMs) return 0;
+  return SHOCK_MIN_PCT + (SHOCK_MAX_PCT - SHOCK_MIN_PCT) * Math.min(1, (mon.build?.shock ?? 0) / ailmentThreshold(mon));
+}
+
+/** Fire burns, cold chills, lightning shocks: each rolls on its own, and what lands builds toward the next stage. */
+function applyElementAilments(c: CombatRuntime, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealtBy: ByType, chillBonus: boolean): void {
+  const { def, mods } = nums;
+  const e = def.effect;
+  const r = d.raw;
+  const skill = e.ailmentChance ?? 0;
+  const lands = (amount: number, pct: number) => amount > 0 && pct > 0 && chance(ctx.rng, pct / 100);
+  const build = (mon.build ??= { burn: 0, chill: 0, shock: 0 });
+  const full = ailmentThreshold(mon);
+  if (lands(dealtBy.fire, skill + r.burnChance)) {
+    const burn = makeAilment(d, nums, mon, dealtBy.fire, { kind: 'burn', pctPerSec: BURN_SHARE / (BURN_MS / 1000), durationMs: BURN_MS });
+    const spread = (dot: Dot) => {
+      applyDot(mon, dot);
+      if (mods.specials.has('inferno')) {
+        const near = new Set(neighbors(mon.cell));
+        for (const other of aliveMonsters(c)) if (other !== mon && near.has(other.cell)) applyDot(other, { ...dot });
+      }
+      // Ember of Faith: Infernal Blow's fires spread to the nearest enemies
+      if (def.id === 'infernal_blow' && r.infernalSpread > 0) {
+        for (const other of chainFrom(mon, aliveMonsters(c), r.infernalSpread).slice(1)) applyDot(other, { ...dot });
+      }
+    };
+    spread(burn);
+    build.burn += dealtBy.fire;
+    if (build.burn >= full) {
+      spread(makeAilment(d, nums, mon, build.burn, { kind: 'ignite', pctPerSec: IGNITE_SHARE / (IGNITE_MS / 1000), durationMs: IGNITE_MS }));
+      build.burn = 0;
+    }
+  }
+  if (lands(dealtBy.cold, e.chillMs || chillBonus ? 100 : skill + r.chillChance)) {
+    mon.chillMs = Math.max(mon.chillMs, (e.chillMs ?? CHILL_MS) * nums.durationMult);
+    build.chill += dealtBy.cold;
+    if (build.chill >= full) {
+      mon.frozenMs = Math.max(mon.frozenMs, mon.isBoss ? BOSS_FREEZE_MS : FREEZE_MS);
+      build.chill = 0;
+    }
+  }
+  if (lands(dealtBy.light, mods.specials.has('staticfield') ? 100 : skill + r.shockChance)) {
+    mon.shockMs = SHOCK_MS * nums.durationMult;
+    build.shock = Math.min(full, build.shock + dealtBy.light);
+  }
+}
 
 /** Apply a rolled hit to one monster, with its resistances and the skill's on-hit effects. */
 function hitMonster(
@@ -1339,18 +1406,21 @@ function hitMonster(
   }
   let dealt = 0;
   let physPart = 0;
+  const dealtBy: ByType = { phys: 0, fire: 0, cold: 0, light: 0, chaos: 0 };
   for (const t of DAMAGE_TYPES) {
     let amt = byType[t] * factor;
     if (t !== 'phys') amt *= 1 - (mon.res[t] - (mon.curse?.resPen ?? 0)) / 100;
     else amt *= 1 + (mon.curse?.physTaken ?? 0) / 100;
-    if (t === 'light' && (mon.shockMs ?? 0) > 0) amt *= 1.1;
+    dealtBy[t] = amt;
     dealt += amt;
     if (t === 'phys') physPart = amt;
   }
   // the physical share of the hit, for physical vs elemental leech
   const physShare = dealt > 0 ? physPart / dealt : 0;
+  const beforeMore = dealt;
   const r = d.raw;
   if (mon.vulnMs > 0) dealt *= 1.15;
+  dealt *= 1 + shockPct(mon) / 100;
   if (mods.specials.has('shatterpoint') && mon.chillMs > 0) dealt *= 1.15;
   if (mods.specials.has('shatter') && mon.stunMs > 0) dealt *= 1.3;
   if (mon.stunMs > 0) dealt *= (1 + r.stunnedVuln / 100) * (1 + (e.moreVsStunned ?? 0) / 100) * (mon.curse?.crushing ? DEAD_WEIGHT_MORE : 1);
@@ -1364,10 +1434,7 @@ function hitMonster(
   if (mon.life < 0 && r.overkillHeal) s.life = Math.min(d.maxLife, s.life + (-mon.life * r.overkillHeal) / 100);
   // Permafrost freezes what's already chilled, before this hit chills it again
   if (mods.specials.has('permafrost') && mon.chillMs > 0) mon.frozenMs = Math.max(mon.frozenMs, mon.isBoss ? 600 : 1500);
-  if (byType.cold > 0 && r.chillOnHit) mon.chillMs = 3000;
-  if (e.chillMs) mon.chillMs = Math.max(mon.chillMs, e.chillMs * nums.durationMult);
   if (crit && mods.specials.has('shatterpoint')) mon.chillMs = Math.max(mon.chillMs, 3000);
-  if (mods.specials.has('staticfield')) mon.shockMs = 4000 * nums.durationMult;
   if (mods.specials.has('twist')) {
     for (const x of mon.dots) x.remainingMs = Math.max(x.remainingMs, x.durationMs ?? 0);
     if (mon.chillMs > 0) mon.chillMs = Math.max(mon.chillMs, 3000);
@@ -1414,13 +1481,9 @@ function hitMonster(
     const a = e.ailment;
     const dot = makeAilment(d, nums, mon, dealt, a);
     applyDot(mon, dot);
-    if ((a.kind === 'ignite' && mods.specials.has('inferno')) || (a.kind === 'bleed' && mods.specials.has('arterial'))) {
+    if (a.kind === 'bleed' && mods.specials.has('arterial')) {
       const near = new Set(neighbors(mon.cell));
       for (const other of aliveMonsters(c)) if (other !== mon && near.has(other.cell)) applyDot(other, { ...dot });
-    }
-    // Ember of Faith: Infernal Blow's ignites spread to the nearest enemies
-    if (a.kind === 'ignite' && def.id === 'infernal_blow' && r.infernalSpread > 0) {
-      for (const other of chainFrom(mon, aliveMonsters(c), r.infernalSpread).slice(1)) applyDot(other, { ...dot });
     }
   } else if ((c.riposting && r.riposteBleed) || (c.asc.hawking && hasAscNode(s, 'falconer_talons')) || mods.specials.has('serrated') || mon.curse?.weeping || (r.bleedOnHit && def.tags.includes('attack') && chance(ctx.rng, r.bleedOnHit / 100))) {
     // axes, Serrated Edge and Weeping Wounds: a hit can open a wound (20% of the hit per second for 4s)
@@ -1434,9 +1497,10 @@ function hitMonster(
       gemId: def.id,
     });
   }
-  // gear: a chance for any hit to poison, and for any hit with fire damage to ignite
+  // gear: a chance for any hit to poison
   if (r.poisonOnHit && chance(ctx.rng, r.poisonOnHit / 100)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_POISON));
-  if (r.igniteOnHit && byType.fire > 0 && chance(ctx.rng, r.igniteOnHit / 100)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_IGNITE));
+  const scale = beforeMore > 0 ? dealt / beforeMore : 0;
+  applyElementAilments(c, ctx, d, nums, mon, { phys: 0, fire: dealtBy.fire * scale, cold: dealtBy.cold * scale, light: dealtBy.light * scale, chaos: 0 }, !!r.chillOnHit);
   return dealt;
 }
 
@@ -1809,7 +1873,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   // Blood Trail: so does the bleed
   const bleed = mon.dots.find((x) => x.kind === 'bleed' && x.spreads && x.remainingMs > 0);
   if (bleed && next) applyDot(next, { ...bleed, dealt: 0 });
-  const ignite = mon.dots.find((x) => x.kind === 'ignite' && x.remainingMs > 0);
+  const ignite = mon.dots.find((x) => (x.kind === 'ignite' || x.kind === 'burn') && x.remainingMs > 0);
   if (d.raw.igniteSpread && ignite && next) applyDot(next, { ...ignite, dealt: 0 });
   // Pyre: a burning corpse bursts over the pack
   if (ignite?.pyre) {
@@ -2630,6 +2694,12 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
   mon.vulnMs = Math.max(0, mon.vulnMs - dt);
   mon.chillMs = Math.max(0, mon.chillMs - dt);
   if (mon.shockMs) mon.shockMs = Math.max(0, mon.shockMs - dt);
+  if (mon.build) {
+    const fade = (ailmentThreshold(mon) * AILMENT_DECAY_PCT * dt) / 100000;
+    mon.build.burn = Math.max(0, mon.build.burn - fade);
+    mon.build.chill = Math.max(0, mon.build.chill - fade);
+    if (!mon.shockMs) mon.build.shock = Math.max(0, mon.build.shock - fade);
+  }
   if (mon.curse) {
     mon.curse.remainingMs -= dt;
     if (mon.curse.remainingMs <= 0) {

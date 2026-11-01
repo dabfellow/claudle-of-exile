@@ -5,7 +5,6 @@ import { groundAtRisk, pickUp, salvagePile, type Pile } from '../../engine/stora
 import type { GameState } from '../../engine/types';
 import { game } from '../../game';
 import { ItemTiles, SalvageByRarity } from './Inventory';
-import { upgradeScore } from './ItemView';
 import { openItemMenu } from './ItemMenu';
 
 const PILES: Record<Pile, { title: string; cap: number; hint: string; empty: string }> = {
@@ -27,7 +26,6 @@ const PILES: Record<Pile, { title: string; cap: number; hint: string; empty: str
 export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
   const info = PILES[pile];
   const items = [...s[pile]].reverse();
-  const upgrades = items.filter((i) => upgradeScore(s, i) > 0.5);
   const take = (uids: number[]) => game.act((st, ctx) => void pickUp(st, ctx, pile, uids));
   const bagFull = s.inventory.length >= BAG_SIZE;
   const atRisk = pile === 'ground' ? groundAtRisk(s) : 0;
@@ -55,9 +53,6 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
         <span className="dim small">{info.hint}</span>
         {atRisk > 0 && <span className="bad small">{atRisk} lost if you die again</span>}
         <span className="spacer" />
-        <button className="btn sm" disabled={!upgrades.length || bagFull} onClick={() => take(upgrades.map((i) => i.uid))}>
-          Pick up upgrades ({upgrades.length})
-        </button>
         <button className="btn sm primary" disabled={!items.length || bagFull} onClick={() => take(items.map((i) => i.uid))}>
           Pick up all
         </button>
@@ -72,7 +67,7 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
         </button>
         <SalvageByRarity s={s} items={items} onSalvage={(uids) => game.act((st, ctx) => void salvagePile(st, ctx, pile, uids))} />
       </div>
-      <ItemTiles s={s} items={items} showUpgrade onClick={(i) => openItemMenu(i.uid)} empty={info.empty} />
+      <ItemTiles s={s} items={items} onClick={(i) => openItemMenu(i.uid)} empty={info.empty} />
     </div>
   );
 }

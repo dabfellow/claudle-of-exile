@@ -1,5 +1,7 @@
 import {
   activeGemDef,
+  CASTER_WEAPON_MORE,
+  CASTER_WEAPONS,
   DEFAULT_ATTACK,
   MAX_GEM_LEVEL,
   MAX_SUPPORT_SLOTS,
@@ -20,7 +22,7 @@ import { aimLockReason, ruleLockReason, ruleSlots } from './automation';
 import { characterLevel } from './character';
 import type { Ctx } from './context';
 import { newUid } from './items';
-import { deriveStats, type Attributes, type Derived } from './stats';
+import { deriveStats, hitChance, type Attributes, type Derived } from './stats';
 import type { GameState, SkillGemInstance, SupportGemInstance } from './types';
 
 // ---------- levels ----------
@@ -458,49 +460,106 @@ export function spellBaseAt(def: ActiveGemDef, level: number): [number, number] 
   return [Math.round(lo * f), Math.round(hi * f)];
 }
 
-/** Rough per-use and per-second damage of a skill against an unresisted target, for tooltips. */
+/** A burn carries this % of the fire damage behind it, over this long. */
+export const BURN_SHARE = 25;
+export const BURN_MS = 4000;
+/** An ignite carries this % of the burn built up to set it off, over this long. */
+export const IGNITE_SHARE = 50;
+export const IGNITE_MS = 6000;
+
+type AilmentKind = 'bleed' | 'poison' | 'ignite' | 'burn';
+
+/** An ailment's share of a hit per second and its time, with the player's ailment modifiers. */
+export function ailmentNumbers(d: Derived, nums: SkillNumbers, a: { kind: AilmentKind; pctPerSec: number; durationMs: number }): { pctPerSec: number; durationMs: number } {
+  const r = d.raw;
+  // burns are ignites' smaller kin: the same stats scale both
+  const kindPct = a.kind === 'bleed' ? r.bleedPct : a.kind === 'poison' ? r.poisonPct : r.ignitePct;
+  const kindDur = a.kind === 'bleed' ? r.bleedDuration : a.kind === 'poison' ? r.poisonDuration : r.igniteDuration;
+  const flatDur = a.kind === 'bleed' ? r.bleedDurationFlat : a.kind === 'poison' ? r.poisonDurationFlat : 0;
+  const bleedMore = a.kind === 'bleed' ? 1 + nums.mods.moreBleed / 100 : 1;
+  return {
+    pctPerSec: a.pctPerSec * (1 + (kindPct + r.ailmentPct) / 100) * bleedMore,
+    durationMs: a.durationMs * nums.durationMult * (1 + (r.ailmentDuration + kindDur) / 100) + flatDur,
+  };
+}
+
+/**
+ * Average per-use and per-second damage of a skill against an unresisted target of your level, for tooltips and
+ * gear comparison. It follows rollHit's standing modifiers and leaves out ones that come and go in a fight.
+ */
 export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse: number; perSecond: number; nums: SkillNumbers } {
   const nums = skillNumbers(d, gem);
   const { def, mods, level } = nums;
   const e = def.effect;
   if (!e.weaponPct && !e.base) return { perUse: 0, perSecond: 0, nums };
+  const r = d.raw;
+  const isAttack = def.tags.includes('attack');
+  const isSpell = def.tags.includes('spell');
   let phys = 0;
   let elem = 0;
-  if (def.tags.includes('attack')) {
+  let fire = 0;
+  if (isAttack) {
     const pct = weaponPctAt(def, level) / 100;
     phys = ((d.hit.phys[0] + d.hit.phys[1]) / 2) * pct;
-    elem = (['fire', 'cold', 'light'] as const).reduce((a, t) => a + ((d.hit[t][0] + d.hit[t][1]) / 2) * pct, 0);
+    elem = (['fire', 'cold', 'light', 'chaos'] as const).reduce((a, t) => a + ((d.hit[t][0] + d.hit[t][1]) / 2) * pct, 0);
+    fire = ((d.hit.fire[0] + d.hit.fire[1]) / 2) * pct;
     if (e.convert) {
-      const moved = phys * (Math.min(100, e.convert.pct + (def.id === 'judgement_hammer' ? d.raw.hammerConvert : 0)) / 100);
+      const moved = phys * (Math.min(100, e.convert.pct + (def.id === 'judgement_hammer' ? r.hammerConvert : 0)) / 100);
       phys -= moved;
       elem += (moved / d.physMult) * d.typeMult[e.convert.type];
+      if (e.convert.type === 'fire') fire += (moved / d.physMult) * d.typeMult.fire;
     }
   } else {
     const [lo, hi] = spellBaseAt(def, level);
-    elem = ((lo + hi) / 2 + (nums.lifeCost * (e.lifeToDamage ?? 0)) / 100) * d.typeMult[def.effect.type ?? 'fire'];
-    elem += (['fire', 'cold', 'light'] as const).reduce((a, t) => a + ((d.hit[t][0] + d.hit[t][1]) / 2) * SPELL_ADDED_EFFECTIVENESS, 0);
+    elem = ((lo + hi) / 2 + (nums.lifeCost * (e.lifeToDamage ?? 0)) / 100) * d.typeMult[e.type ?? 'fire'];
+    for (const t of ['fire', 'cold', 'light'] as const) {
+      elem += ((d.hit[t][0] + d.hit[t][1]) / 2) * SPELL_ADDED_EFFECTIVENESS + (d.spellHit[t][0] + d.spellHit[t][1]) / 2;
+    }
+    if (e.type === 'fire') fire = elem;
   }
+  const fireShare = phys + elem > 0 ? fire / (phys + elem) : 0;
+  const ranged = isAttack && d.ranged;
+  if (def.tags.includes('melee') && !ranged) phys *= 1 + r.meleePct / 100;
+  const inc = 1 + ((def.tags.includes('projectile') || ranged ? r.projectilePct : 0) + (isSpell ? r.spellPct : 0)) / 100;
+  phys *= inc;
+  elem *= inc;
   if (mods.noElemental) elem = 0;
   const extra = mods.extras.reduce((a, x) => a + x.pct, 0) / 100;
   elem += (phys + elem) * extra;
+  elem += (phys * r.physAsLight) / 100;
   phys *= 1 + mods.morePhys / 100;
   elem *= 1 + mods.moreElem / 100;
   let hit = (phys + elem) * (1 + mods.moreDamage / 100);
-  const critChance = def.tags.includes('attack') ? d.critChance : (e.crit ?? 5) * (1 + (d.raw.critChancePct + mods.critChance) / 100);
-  hit *= 1 + (Math.min(95, critChance) / 100) * ((d.critMulti + mods.critMulti) / 100 - 1);
-  const extraHits = (def.id === 'pummel' ? d.raw.pummelHits : 0) + (def.id === 'barrage' ? d.raw.barrageArrows + (mods.specials.has('volley') ? 1 : 0) : 0);
+  if (isSpell && d.weaponFamily && CASTER_WEAPONS.includes(d.weaponFamily)) hit *= 1 + CASTER_WEAPON_MORE / 100;
+  const critChance = isAttack
+    ? d.critChance * (1 + mods.critChance / 100)
+    : (e.crit ?? 5) * (1 + (r.critChancePct + r.spellCritPct + (e.type === 'light' ? r.lightCrit : 0) + mods.critChance) / 100);
+  const critMulti = d.critMulti + mods.critMulti + (isAttack ? 0 : r.spellCritMulti);
+  hit *= 1 + ((r.steadyHand ? 0 : Math.min(95, critChance)) / 100) * (critMulti / 100 - 1);
+  if (isAttack && !r.steadyHand && !r.knifesEdge) hit *= hitChance(d.accuracy, d.combatLevel);
+  const extraHits = (def.id === 'pummel' ? r.pummelHits : 0) + (def.id === 'barrage' ? r.barrageArrows + (mods.specials.has('volley') ? 1 : 0) : 0);
   const hits = ((e.hits ?? 1) + extraHits) * (1 + (mods.repeats * mods.repeatDamage) / 100);
-  const ailment = e.ailment ? (e.ailment.pctPerSec / 100) * (e.ailment.durationMs / 1000) * nums.durationMult : 0;
-  const perUse = hit * hits * (1 + ailment);
+  const ailment = e.ailment ? ailmentNumbers(d, nums, e.ailment) : null;
+  // burns and the ignites they build to come to a steady share of the fire dealt, as often as they're applied
+  const burn = ailmentNumbers(d, nums, { kind: 'burn', pctPerSec: 100, durationMs: 1000 });
+  const burnChance = Math.min(100, (e.ailmentChance ?? 0) + r.burnChance) / 100;
+  const burnShare = burnChance * fireShare * ((BURN_SHARE + IGNITE_SHARE) / 100) * (burn.pctPerSec / 100) * (burn.durationMs / 1000);
+  // an ailment works from the whole hit, so what it adds is a share of the hit
+  const ailmentShare = (ailment ? (ailment.pctPerSec / 100) * (ailment.durationMs / 1000) : 0) + burnShare;
+  const perUse = hit * hits * (1 + ailmentShare);
   // what a minion or storm does keeps going after the cast: its damage per second is how often it strikes, not how often you press
   if (e.minion) {
     const m = minionStats(d, nums);
-    return { perUse, perSecond: ((perUse * (1 + d.raw.minionPct / 100) * m.count) / m.attackMs) * 1000, nums };
+    return { perUse, perSecond: ((perUse * (1 + r.minionPct / 100) * m.count) / m.attackMs) * 1000, nums };
   }
   if (e.storm) {
     const st = stormStats(nums);
     return { perUse, perSecond: ((perUse * st.max) / st.everyMs) * 1000, nums };
   }
   const time = Math.max(nums.actionMs, nums.cooldownMs);
-  return { perUse, perSecond: (perUse / time) * 1000, nums };
+  // poisons stack; only the strongest bleed or ignite runs, so using the skill faster doesn't add more of them
+  const dotPerSecond = !ailment || e.ailment!.kind === 'poison'
+    ? (hit * hits * ailmentShare * 1000) / time
+    : hit * (ailment.pctPerSec / 100) * Math.min(1, ailment.durationMs / time);
+  return { perUse, perSecond: (hit * hits * 1000) / time + dotPerSecond, nums };
 }

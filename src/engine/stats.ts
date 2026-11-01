@@ -123,7 +123,8 @@ export interface Derived {
   dualWield: boolean;
   critChance: number;
   critMulti: number;
-  res: { fire: number; cold: number; light: number };
+  /** chaos isn't resisted yet: nothing deals it to you */
+  res: { fire: number; cold: number; light: number; chaos: number };
   leechPct: number;
   itemRarity: number;
   skillSpeed: number;
@@ -239,12 +240,14 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     fire: 1 + (elemBase + raw.firePct) / 100,
     cold: 1 + (elemBase + raw.coldPct) / 100,
     light: 1 + (elemBase + raw.lightPct) / 100,
+    chaos: 1 + raw.chaosPct / 100,
   };
   const hit: Record<DamageType, [number, number]> = {
     phys: [Math.round((wPhys[0] + raw.physMin) * physMult), Math.round((wPhys[1] + raw.physMax) * physMult)],
     fire: [Math.round(raw.fireMin * typeMult.fire), Math.round(raw.fireMax * typeMult.fire)],
     cold: [Math.round(raw.coldMin * typeMult.cold), Math.round(raw.coldMax * typeMult.cold)],
     light: [Math.round(raw.lightMin * typeMult.light), Math.round(raw.lightMax * typeMult.light)],
+    chaos: [Math.round(raw.chaosMin * typeMult.chaos), Math.round(raw.chaosMax * typeMult.chaos)],
   };
   // "Adds X to Y Damage to Spells": spells only, at full effectiveness
   const spellHit: Record<'fire' | 'cold' | 'light', [number, number]> = {
@@ -291,7 +294,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     dualWield,
     critChance,
     critMulti,
-    res: { fire: cap(raw.fireRes), cold: cap(raw.coldRes), light: cap(raw.lightRes) },
+    res: { fire: cap(raw.fireRes), cold: cap(raw.coldRes), light: cap(raw.lightRes), chaos: 0 },
     leechPct: raw.lifeLeech,
     itemRarity: raw.itemRarity,
     skillSpeed: raw.skillSpeed,

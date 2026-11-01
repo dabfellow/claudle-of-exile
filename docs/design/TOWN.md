@@ -69,7 +69,7 @@ Flasks, gems, currency and materials live in their own stores already; only gear
   up into your inventory.
 - **Inventory** (the bag you carry): fixed **60** slots.
 - **Stash**: **3 pages of 80** to start; more pages bought with **gold**.
-- **Item display**: bigger tiles (icon, name in rarity colour, slot + item level, ▲ when it's an upgrade).
+- **Item display**: bigger tiles (icon, name in rarity colour, slot + item level). Hovering compares with what's worn ([DAMAGE.md](DAMAGE.md#comparing-gear)).
 - **Trader Sell**: sells from the bag; a "show stash too" toggle lists stashed gear as well.
 - **Ground stays when you leave.** Changing area, retreating or starting a map keeps it, and it's on the Combat page in or out of a fight. Each death marks what's there; a second death loses whatever marked is still unclaimed. Drops after the first death are safe until the next one.
 - **Stash station** makes new stash pages **cheaper**: 0 / 10 / 20 / 35% off *(proposed)*.
@@ -93,8 +93,8 @@ Currency, materials, flasks and gems stay as they are (counters / their own list
 #### Combat page: ground panel
 
 ```
-┌ On the ground  37/50 ────────── [Pick up all] [Pick up upgrades] ┐
-│  tile  tile  tile ▲  tile  …   newest first; click → bag           │
+┌ On the ground  37/50 ────────── [Pick up all] ┐
+│  tile  tile  tile  tile  …   newest first; click → bag             │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
