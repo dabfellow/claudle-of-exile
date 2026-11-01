@@ -1,14 +1,15 @@
+import { Fragment } from 'react';
 import { affixDef } from '../../data/affixes';
 import { attributeReq, baseDef, uniqueDef, WEAPON_FAMILIES } from '../../data/bases';
 import { MECHANIC_INFO } from '../../data/passiveTree';
 import { BASE_ATTACK_MS } from '../../data/gems';
 import { characterLevel } from '../../engine/character';
-import { defaultSlot } from '../../engine/equipment';
+import { compareItem, type CompareRow, type CompareSkill, type GearComparison } from '../../engine/compare';
 import { describeMod, itemName, tierLabel, tierRangeText } from '../../engine/items';
 import { mechanicOf, STAT_MECHANIC } from '../../engine/mechanics';
 import { itemRune, runeMult, runesOpen, runeText } from '../../engine/runes';
 import { game } from '../../game';
-import { deriveStats, itemDefences, weaponPhys, type Derived } from '../../engine/stats';
+import { deriveStats, itemDefences, weaponPhys } from '../../engine/stats';
 import type { EquipSlot, GameState, Item, RolledMod } from '../../engine/types';
 import { Icon } from './Icon';
 import { togglePin, Tooltip, useAltKey, Art, artUrl } from './common';
@@ -32,45 +33,6 @@ function ModLine({ mod, detail, state }: { mod: RolledMod; detail: boolean; stat
       )}
     </div>
   );
-}
-
-export interface StatDelta {
-  label: string;
-  value: number;
-  fmt?: (n: number) => string;
-}
-
-/** What changes if `item` replaces what's in its slot. */
-export function compareItem(s: GameState, item: Item, into?: EquipSlot): { slot: EquipSlot; deltas: StatDelta[] } | null {
-  if (Object.values(s.equipment).some((e) => e?.uid === item.uid)) return null;
-  const slot = into ?? defaultSlot(s, item);
-  const before = deriveStats(s, []);
-  const after = deriveStats({ ...s, equipment: { ...s.equipment, [slot]: item } }, []);
-  const rows: [string, (d: Derived) => number, ((n: number) => string)?][] = [
-    ['DPS', (d) => d.dps, (n) => n.toFixed(1)],
-    ['Max Life', (d) => d.maxLife],
-    ['Armour', (d) => d.armour],
-    ['Evasion', (d) => d.evasion],
-    ['Energy Shield', (d) => d.maxEs],
-    ['Fire Res', (d) => d.res.fire],
-    ['Cold Res', (d) => d.res.cold],
-    ['Lightning Res', (d) => d.res.light],
-    ['Life Regen', (d) => d.lifeRegen, (n) => n.toFixed(1)],
-    ['Crit Chance', (d) => d.critChance, (n) => n.toFixed(1)],
-    ['Item Rarity', (d) => d.itemRarity],
-    ['Skill Speed', (d) => d.skillSpeed],
-  ];
-  const deltas = rows
-    .map(([label, f, fm]) => ({ label, value: f(after) - f(before), fmt: fm }))
-    .filter((r) => Math.abs(r.value) > 0.05);
-  return { slot, deltas };
-}
-
-export function upgradeScore(s: GameState, item: Item): number {
-  const c = compareItem(s, item);
-  if (!c) return 0;
-  const get = (l: string) => c.deltas.find((d) => d.label === l)?.value ?? 0;
-  return get('DPS') * 2 + get('Max Life') + get('Energy Shield') * 0.8 + get('Armour') * 0.1 + get('Evasion') * 0.1 + (get('Fire Res') + get('Cold Res') + get('Lightning Res')) * 0.6;
 }
 
 export function ItemTip({
@@ -154,16 +116,7 @@ export function ItemTip({
             <div className="unique-flavour">{unique.flavour}</div>
           </>
         )}
-        {cmp && cmp.deltas.length > 0 && (
-          <>
-            <div className="sep" />
-            <div className="delta-list">
-              {cmp.deltas.map((d) => (
-                <FragmentRow key={d.label} d={d} />
-              ))}
-            </div>
-          </>
-        )}
+        {cmp && <Comparison cmp={cmp} />}
         {item.impression && <div className="dim small">Wax impression taken: can be restored at the Crafting Bench</div>}
         {!pinned && (
           <div className="tip-hint">
@@ -219,15 +172,67 @@ function Requirements({ item, state }: { item: Item; state?: GameState }) {
   );
 }
 
-function FragmentRow({ d }: { d: StatDelta }) {
-  const v = d.fmt ? d.fmt(Math.abs(d.value)) : Math.round(Math.abs(d.value)).toString();
+const fmtRow = (r: CompareRow, n: number) => `${n.toFixed(r.digits ?? 0)}${r.unit ?? ''}`;
+
+function CompareRows({ rows }: { rows: CompareRow[] }) {
+  return (
+    <div className="compare-list">
+      {rows.map((r) => {
+        const gain = r.after - r.before;
+        const same = Math.abs(gain) < 0.05;
+        return (
+          <Fragment key={r.label}>
+            <span className="muted">{r.label}</span>
+            <span>{r.text ? `${r.text[0]} → ${r.text[1]}` : `${fmtRow(r, r.before)} → ${fmtRow(r, r.after)}`}</span>
+            <span className={same ? 'dim' : gain > 0 ? 'good' : 'bad'}>{same ? '=' : `${gain > 0 ? '+' : '−'}${fmtRow(r, Math.abs(gain))}`}</span>
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+function CompareSkills({ skills }: { skills: CompareSkill[] }) {
+  return (
+    <div className="compare-list">
+      {skills.map((k) => {
+        const pct = k.before > 0 ? ((k.after - k.before) / k.before) * 100 : 0;
+        return (
+          <Fragment key={k.name}>
+            <span className="muted">{k.name}</span>
+            <span className={k.blocked ? 'bad' : ''}>{k.blocked ?? `${k.before.toFixed(1)} → ${k.after.toFixed(1)}`}</span>
+            <span className={k.blocked ? 'bad' : Math.abs(pct) < 0.05 ? 'dim' : pct > 0 ? 'good' : 'bad'}>
+              {k.blocked ? '' : k.before <= 0 ? 'new' : Math.abs(pct) < 0.05 ? '=' : `${pct > 0 ? '+' : '−'}${Math.abs(pct).toFixed(1)}%`}
+            </span>
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Side by side with what's worn: the two items, your skills' damage, then your character's totals. */
+function Comparison({ cmp }: { cmp: GearComparison }) {
   return (
     <>
-      <span className="muted">{d.label}</span>
-      <span className={d.value > 0 ? 'good' : 'bad'}>
-        {d.value > 0 ? '+' : '−'}
-        {v}
-      </span>
+      <div className="sep" />
+      <div className="compare-head">
+        {cmp.worn ? <>Compared with <span className={`rarity-${cmp.worn.rarity}`}>{itemName(cmp.worn)}</span></> : 'Nothing worn in this slot'}
+      </div>
+      {cmp.alsoRemoves && <div className="bad small">Also takes off {itemName(cmp.alsoRemoves)}</div>}
+      {cmp.base.length > 0 && <CompareRows rows={cmp.base} />}
+      {cmp.skills.some((k) => k.blocked || Math.abs(k.after - k.before) >= 0.05) && (
+        <>
+          <div className="compare-sub">Your skills, damage per second</div>
+          <CompareSkills skills={cmp.skills} />
+        </>
+      )}
+      {cmp.character.length > 0 && (
+        <>
+          <div className="compare-sub">Your character</div>
+          <CompareRows rows={cmp.character} />
+        </>
+      )}
     </>
   );
 }
@@ -247,7 +252,6 @@ export function ItemCell({
   marked,
   onClick,
   onContextMenu,
-  showUpgrade,
   style,
   into,
 }: {
@@ -257,11 +261,9 @@ export function ItemCell({
   marked?: boolean;
   onClick?: () => void;
   onContextMenu?: () => void;
-  showUpgrade?: boolean;
   style?: React.CSSProperties;
   into?: EquipSlot;
 }) {
-  const better = showUpgrade && state ? upgradeScore(state, item) > 0.5 : false;
   return (
     <Tooltip content={<ItemTip item={item} state={state} into={into} />}>
       <button
@@ -275,7 +277,6 @@ export function ItemCell({
         }}
       >
         <ItemIcon item={item} />
-        {better && <span className="upgrade">▲</span>}
         <span className="ilvl">{item.ilvl}</span>
       </button>
     </Tooltip>

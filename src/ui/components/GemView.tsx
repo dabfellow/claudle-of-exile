@@ -135,6 +135,9 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
           {CASTER_WEAPON_MORE}% more damage with a {CASTER_WEAPONS.map((f) => WEAPON_FAMILIES[f].name.toLowerCase()).join(', ')}
         </div>
       )}
+      {!!def.effect.ailmentChance && (
+        <div className="small muted">{def.effect.ailmentChance}% chance: fire burns, cold chills, lightning shocks</div>
+      )}
       <div className="delta-list">
         {nums.manaCost > 0 && (
           <>

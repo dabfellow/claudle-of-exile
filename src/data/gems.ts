@@ -45,7 +45,9 @@ export interface SkillEffect {
   stagger?: number;
   /** % more damage against stunned enemies */
   moreVsStunned?: number;
-  ailment?: { kind: 'bleed' | 'poison' | 'ignite'; pctPerSec: number; durationMs: number };
+  ailment?: { kind: 'bleed' | 'poison'; pctPerSec: number; durationMs: number };
+  /** % chance its fire burns, cold chills and lightning shocks (engine: `applyElementAilments`) */
+  ailmentChance?: number;
   /** guard: block this many hits */
   blocks?: number;
   /** guard: evade everything for this long */
@@ -326,15 +328,15 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'judgement_hammer', name: 'Judgement Hammer', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit'],
     manaCost: 9, cooldownMs: 0, timeMs: 4200, color: '#e8d25a',
-    effect: { weaponPct: 250, targets: 'single', stunChance: 0.25, convert: { type: 'light', pct: 50 } }, weapons: SLAM_WEAPONS,
+    effect: { ailmentChance: 25, weaponPct: 250, targets: 'single', stunChance: 0.25, convert: { type: 'light', pct: 50 } }, weapons: SLAM_WEAPONS,
     desc: 'A slow, thunderous blow. 50% of physical damage is converted to lightning; 25% chance to stun.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'infernal_blow', name: 'Infernal Blow', attr: 'str', role: 'main', tags: ['attack', 'melee', 'dot', 'duration', 'hit'],
     manaCost: 6, cooldownMs: 0, timeMs: 3600, color: '#ff6a3a',
-    effect: { weaponPct: 120, targets: 'single', ailment: { kind: 'ignite', pctPerSec: 25, durationMs: 3000 } }, weapons: SLAM_WEAPONS,
-    desc: 'A burning strike that sets the target alight.',
+    effect: { weaponPct: 120, targets: 'single', convert: { type: 'fire', pct: 50 }, ailmentChance: 100 }, weapons: SLAM_WEAPONS,
+    desc: 'A strike that turns half its damage to fire and always burns.',
     defaultRule: { when: 'always' },
   }),
   A({
@@ -389,7 +391,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'avalanche', name: 'Avalanche', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area', 'hit', 'heavy'],
     manaCost: 16, cooldownMs: 5000, timeMs: 4800, color: '#a8c8d8',
-    effect: { weaponPct: 210, area: 'splash', radius: 2, stunChance: 0.5, stunMs: 1500, stagger: 15, convert: { type: 'cold', pct: 50 } }, range: 2, weapons: SLAM_WEAPONS,
+    effect: { ailmentChance: 25, weaponPct: 210, area: 'splash', radius: 2, stunChance: 0.5, stunMs: 1500, stagger: 15, convert: { type: 'cold', pct: 50 } }, range: 2, weapons: SLAM_WEAPONS,
     desc: 'Bring the mountain down on everything within 2 steps of a target up to 2 rings away. 50% of physical damage is converted to cold; 50% chance to stun for 1.5s.',
     defaultRule: { when: 'enemiesAtLeast', value: 2 },
   }),
@@ -426,7 +428,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'poison_dart', name: 'Poison Dart', attr: 'dex', role: 'main', tags: ['attack', 'projectile', 'dot', 'duration', 'hit'],
     manaCost: 6, cooldownMs: 0, timeMs: 2400, color: '#7bc04a',
-    effect: { weaponPct: 55, targets: 'single', ailment: { kind: 'poison', pctPerSec: 30, durationMs: 4000 } }, range: 3,
+    effect: { weaponPct: 55, targets: 'single', convert: { type: 'chaos', pct: 50 }, ailment: { kind: 'poison', pctPerSec: 30, durationMs: 4000 } }, range: 3,
     desc: 'A thrown dart (3 rings, any weapon) that poisons. Poison stacks.',
     defaultRule: { when: 'targetLifeAbove', value: 40 },
   }),
@@ -547,15 +549,15 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'spark', name: 'Spark', attr: 'int', role: 'main', tags: ['spell', 'projectile', 'chain', 'hit'],
     manaCost: 5, cooldownMs: 2000, timeMs: 0, color: '#6fc8ff',
-    effect: { base: [4, 16], type: 'light', targets: 'chain', chains: 2, crit: 6 },
+    effect: { ailmentChance: 25, base: [4, 16], type: 'light', targets: 'chain', chains: 2, crit: 6 },
     desc: 'Crackling bolts that chain to the 2 nearest enemies.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'fireball', name: 'Fireball', attr: 'int', role: 'burst', tags: ['spell', 'projectile', 'dot', 'duration', 'hit', 'cast'],
     manaCost: 12, cooldownMs: 4000, timeMs: 3600, color: '#ff7a45',
-    effect: { base: [12, 20], type: 'fire', targets: 'single', crit: 6, ailment: { kind: 'ignite', pctPerSec: 40, durationMs: 3000 } },
-    desc: 'A heavy fire bolt that ignites.',
+    effect: { base: [12, 20], type: 'fire', targets: 'single', crit: 6, ailmentChance: 100 },
+    desc: 'A heavy fire bolt that always burns.',
     defaultRule: { when: 'manaAbove', value: 30 },
   }),
   A({
@@ -568,7 +570,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'arcane_siphon', name: 'Arcane Siphon', attr: 'int', role: 'sustain', tags: ['spell', 'sustain', 'hit'],
     manaCost: 0, cooldownMs: 5000, timeMs: 0, color: '#9b6dde',
-    effect: { base: [6, 10], type: 'cold', targets: 'single', crit: 5, leechLife: 25, leechMana: 40 },
+    effect: { ailmentChance: 25, base: [6, 10], type: 'cold', targets: 'single', crit: 5, leechLife: 25, leechMana: 40 },
     desc: 'Drain the target, returning life and mana. Costs no mana.',
     defaultRule: { when: 'lifeBelow', value: 60 },
   }),
@@ -589,28 +591,28 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'shock_nova', name: 'Shock Nova', attr: 'int', role: 'area', tags: ['spell', 'area', 'hit'],
     manaCost: 9, cooldownMs: 4000, timeMs: 0, color: '#a0c8ff',
-    effect: { base: [5, 11], type: 'light', area: 'nova', radius: 2, crit: 5 }, range: 2,
+    effect: { ailmentChance: 25, base: [5, 11], type: 'light', area: 'nova', radius: 2, crit: 5 }, range: 2,
     desc: 'A burst of lightning that strikes every enemy within 2 rings of you.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
   }),
   A({
     id: 'consecrate', name: 'Consecrate', attr: 'int', role: 'sustain', tags: ['spell', 'area', 'duration', 'hit'],
     manaCost: 10, cooldownMs: 6000, timeMs: 0, color: '#f0c070',
-    effect: { base: [5, 9], type: 'fire', area: 'nova', radius: 2, buff: { durationMs: 4000, regenPct: 2 } }, range: 2,
+    effect: { ailmentChance: 25, base: [5, 9], type: 'fire', area: 'nova', radius: 2, buff: { durationMs: 4000, regenPct: 2 } }, range: 2,
     desc: 'Hallow the ground: burn every enemy within 2 rings of you, and regenerate 2% of your life per second for 4s.',
     defaultRule: { when: 'lifeBelow', value: 70 },
   }),
   A({
     id: 'frost_needle', name: 'Frost Needle', attr: 'int', role: 'main', tags: ['spell', 'projectile', 'hit'],
     manaCost: 5, cooldownMs: 2000, timeMs: 0, color: '#c0e8ff',
-    effect: { base: [3, 7], type: 'cold', hits: 3, targets: 'single', crit: 6 },
+    effect: { ailmentChance: 25, base: [3, 7], type: 'cold', hits: 3, targets: 'single', crit: 6 },
     desc: 'Three needles of ice in quick succession.',
     defaultRule: { when: 'always' },
   }),
   A({
     id: 'ember_dash', name: 'Ember Dash', attr: 'int', role: 'area', tags: ['spell', 'area', 'movement', 'duration', 'hit'],
     manaCost: 11, cooldownMs: 7000, timeMs: 0, color: '#ff9a5a',
-    effect: { base: [16, 26], type: 'fire', area: 'beam', crit: 5, stepOut: true, ground: { kind: 'burning', pctPerSec: 30, durationMs: 3000, area: 'beam' } },
+    effect: { ailmentChance: 25, base: [16, 26], type: 'fire', area: 'beam', crit: 5, stepOut: true, ground: { kind: 'burning', pctPerSec: 30, durationMs: 3000, area: 'beam' } },
     desc: 'Dash out of any ground hazard in a streak of flame, burning the whole line to your target and leaving it on fire for 3s.',
     defaultRule: { when: 'always' },
   }),
@@ -645,7 +647,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'burnt_offering', name: 'Burnt Offering', attr: 'int', role: 'area', tags: ['spell', 'area', 'blood', 'hit'],
     manaCost: 0, cooldownMs: 6000, timeMs: 0, color: '#e0603a',
-    effect: { base: [14, 22], type: 'fire', area: 'nova', radius: 2, crit: 5, lifePct: 10, lifeToDamage: 100 }, range: 2,
+    effect: { ailmentChance: 25, base: [14, 22], type: 'fire', area: 'nova', radius: 2, crit: 5, lifePct: 10, lifeToDamage: 100 }, range: 2,
     desc: 'Burn 10% of your Life to scorch every enemy within 2 rings of you. All the Life spent is added to the damage.',
     defaultRule: { when: 'enemiesAtLeast', value: 3 },
   }),
@@ -659,7 +661,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'meteor', name: 'Meteor', attr: 'int', role: 'burst', tags: ['spell', 'area', 'hit', 'cast', 'heavy'],
     manaCost: 26, cooldownMs: 6000, timeMs: 5400, color: '#ff8a4a',
-    effect: { base: [80, 120], type: 'fire', area: 'splash', radius: 1, crit: 6, stunChance: 0.6, stunMs: 1500, stagger: 20 },
+    effect: { ailmentChance: 25, base: [80, 120], type: 'fire', area: 'splash', radius: 1, crit: 6, stunChance: 0.6, stunMs: 1500, stagger: 20 },
     desc: 'Call a burning rock down on the target and the enemies next to it. It lands at the end of the cast; 60% chance to stun for 1.5s.',
     defaultRule: { when: 'manaAbove', value: 40 },
   }),
@@ -738,7 +740,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'thunderhead', name: 'Thunderhead', attr: 'int', role: 'area', tags: ['spell', 'area', 'duration', 'storm', 'hit'],
     manaCost: 14, cooldownMs: 6000, timeMs: 0, color: '#c8c86a',
-    effect: { base: [18, 30], type: 'light', crit: 6, area: 'splash', radius: 1, storm: { everyMs: 1500, durationMs: 10000, max: 1 } },
+    effect: { ailmentChance: 25, base: [18, 30], type: 'light', crit: 6, area: 'splash', radius: 1, storm: { everyMs: 1500, durationMs: 10000, max: 1 } },
     desc: 'A black cloud settles on the target for 10s. Lightning strikes everything under it every 1.5s, and whatever walks in after.',
     defaultRule: { when: 'notActive' },
   }),
@@ -752,7 +754,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'leviathan', name: 'Call the Leviathan', attr: 'int', role: 'summon', tags: ['spell', 'minion', 'area', 'duration', 'hit', 'cast'],
     manaCost: 40, cooldownMs: 30000, timeMs: 2400, color: '#3a5a9a',
-    effect: { base: [70, 110], type: 'cold', crit: 5, area: 'splash', radius: 1, minion: { name: 'Leviathan', art: 'wyrmling', count: 1, lifePct: 150, attackMs: 2800, reach: 2, durationMs: 14000 } }, range: 2,
+    effect: { ailmentChance: 25, base: [70, 110], type: 'cold', crit: 5, area: 'splash', radius: 1, minion: { name: 'Leviathan', art: 'wyrmling', count: 1, lifePct: 150, attackMs: 2800, reach: 2, durationMs: 14000 } }, range: 2,
     desc: 'The deep answers: for 14s a Leviathan fights at your side, crushing the target and everything next to it.',
     defaultRule: { when: 'bossOnly' },
   }),
@@ -789,14 +791,14 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'royal_decree', name: 'Royal Decree', attr: 'int', role: 'burst', tags: ['spell', 'hit', 'cast'],
     manaCost: 42, cooldownMs: 24000, timeMs: 1800, color: '#e8c84a',
-    effect: { base: [90, 130], type: 'light', targets: 'single', crit: 6, decree: 60 },
+    effect: { ailmentChance: 25, base: [90, 130], type: 'light', targets: 'single', crit: 6, decree: 60 },
     desc: 'Speak with the last king\'s voice. Every other damage spell on your bar that is ready fires at once, for free and with no cast time, at 60% of its damage, and starts its cooldown.',
     defaultRule: { when: 'manaAbove', value: 50 },
   }),
   A({
     id: 'eye_of_the_storm', name: 'Eye of the Storm', attr: 'int', role: 'guard', tags: ['spell', 'guard', 'area', 'duration', 'shield', 'storm', 'hit'],
     manaCost: 28, cooldownMs: 14000, timeMs: 0, color: '#8ac8e8',
-    effect: { base: [30, 46], type: 'light', area: 'nova', radius: 2, crit: 6, shieldPct: 35, shieldEs: true, shieldToDamage: 10, buff: { durationMs: 8000 }, storm: { everyMs: 1200, durationMs: 8000, max: 1, anchored: true, whileShield: true } }, range: 2,
+    effect: { ailmentChance: 25, base: [30, 46], type: 'light', area: 'nova', radius: 2, crit: 6, shieldPct: 35, shieldEs: true, shieldToDamage: 10, buff: { durationMs: 8000 }, storm: { everyMs: 1200, durationMs: 8000, max: 1, anchored: true, whileShield: true } }, range: 2,
     desc: 'A shield absorbing damage equal to 35% of your life and energy shield for 8s, with a storm around it that strikes everything within 2 rings every 1.2s. Each strike adds 10% of the shield still standing, and the storm ends with the shield.',
     defaultRule: { when: 'enemyCasting' },
   }),
@@ -1011,7 +1013,7 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'splinter', name: 'Splinter', attr: 'dex', fits: [], signatureFor: 'ice_shot', mods: { special: 'splinter' }, desc: 'Hitting a chilled enemy shatters shards into 2 others for 40% damage.' }),
   S({ id: 'permafrost', name: 'Permafrost', attr: 'int', fits: [], signatureFor: 'glacial_lance', mods: { special: 'permafrost' }, desc: 'If the target is already chilled, it is frozen for 1.5s (0.6s for bosses).' }),
   S({ id: 'clarity', name: 'Clarity', attr: 'int', fits: [], signatureFor: 'meditate', mods: { special: 'clarity' }, desc: 'For 4s after Meditate, skills cost 30% less mana.' }),
-  S({ id: 'static_field', name: 'Static Field', attr: 'int', fits: [], signatureFor: 'shock_nova', mods: { special: 'staticfield' }, desc: 'Enemies hit take 10% increased lightning damage for 4s.' }),
+  S({ id: 'static_field', name: 'Static Field', attr: 'int', fits: [], signatureFor: 'shock_nova', mods: { special: 'staticfield' }, desc: 'Its lightning always shocks.' }),
   S({ id: 'holy_ground', name: 'Holy Ground', attr: 'int', fits: [], signatureFor: 'consecrate', mods: { special: 'holyground' }, desc: 'The regeneration also restores 1% of maximum Energy Shield per second.' }),
   S({ id: 'shatterpoint', name: 'Shatterpoint', attr: 'int', fits: [], signatureFor: 'frost_needle', mods: { special: 'shatterpoint' }, desc: 'Critical strikes chill; hits against chilled enemies deal 15% more damage.' }),
   S({ id: 'run_down', name: 'Run Down', attr: 'str', fits: [], signatureFor: 'cavalry_charge', mods: { special: 'rundown' }, desc: 'Every enemy in the line is stunned for 1s (0.4s for bosses).' }),
@@ -1041,7 +1043,7 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'reel_in', name: 'Reel In', attr: 'dex', fits: [], signatureFor: 'harpoon', mods: { special: 'reelin' }, desc: 'Drags the target all the way into melee range.' }),
   S({ id: 'flensing_wind', name: 'Flensing Wind', attr: 'dex', fits: [], signatureFor: 'squall', mods: { special: 'flay' }, desc: 'Hits break armour (+15% damage taken for 4s).' }),
   S({ id: 'deep_chill', name: 'Deep Chill', attr: 'int', fits: [], signatureFor: 'tidecallers', mods: { special: 'shatterpoint' }, desc: 'Critical strikes chill; hits against chilled enemies deal 15% more damage.' }),
-  S({ id: 'charged_air', name: 'Charged Air', attr: 'int', fits: [], signatureFor: 'thunderhead', mods: { special: 'staticfield' }, desc: 'Enemies hit take 10% increased lightning damage for 4s.' }),
+  S({ id: 'charged_air', name: 'Charged Air', attr: 'int', fits: [], signatureFor: 'thunderhead', mods: { special: 'staticfield' }, desc: 'Its lightning always shocks.' }),
   S({ id: 'black_ice', name: 'Black Ice', attr: 'int', fits: [], signatureFor: 'whirlpool', mods: { special: 'permafrost' }, desc: 'If what it hits is already chilled, it is frozen for 1.5s (0.6s for bosses).' }),
   S({ id: 'abyssal_hunger', name: 'Abyssal Hunger', attr: 'int', fits: [], signatureFor: 'leviathan', mods: { special: 'abyssal' }, desc: 'Each kill by the Leviathan keeps it here 2s longer.' }),
   S({ id: 'wither_will', name: 'Wither Will', attr: 'int', fits: [], signatureFor: 'enfeeble', mods: { special: 'witherwill' }, desc: 'Killing a cursed enemy restores 4% of your life.' }),

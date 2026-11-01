@@ -114,7 +114,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'equip',
     title: 'Dress for the Grave',
-    npc: 'Now put something on. The ▲ marks anything better than what you wear.',
+    npc: 'Now put something on. Hover over a piece to see how it compares with what you wear.',
     objective: 'Equip an item',
     target: 1,
     highlight: ['nav-equipment'],

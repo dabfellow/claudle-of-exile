@@ -8,12 +8,24 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
-    version: '0.2.30',
+    version: '0.2.31',
     date: '1 Nov 2026',
     title: 'One stash for all your characters',
     items: [
       'Every Stash tab is now shared: gold, currency, materials, spare gems and spare flasks join your gear pages. What each of your characters was holding has been added together.',
       'Your skill bar and flask belt still belong to each character. If you end up with more than 10 of one spare flask, the worst are sold for gold, as usual.',
+    ],
+  },
+  {
+    version: '0.2.30',
+    date: '1 Nov 2026',
+    title: 'Compare gear, and new ailments',
+    items: [
+      "Hover over an item to compare it with what you're wearing: its base damage, speed, crit and defences, each skill's damage per second, and what changes on your character.",
+      'The green upgrade arrows are gone, along with the Upgrade sort and Pick up upgrades, because they hid the reasoning behind one score.',
+      'Skill tooltips now count spell damage, ailment modifiers and accuracy, so their damage numbers will change.',
+      "Ailments rebuilt: fire burns, cold chills and lightning shocks, each on a chance from skills and gear. Burn builds to Ignite, chill builds to Freeze, and shock grows stronger, all against the target's life, so big enemies take longer.",
+      'Chaos damage arrives on gear, and Poison Dart now deals half of its damage as chaos.',
     ],
   },
   {

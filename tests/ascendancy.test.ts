@@ -71,7 +71,7 @@ function addDummy(s: GameState, uid: number, cell = FIRST_RING): MonsterInstance
   m.life = m.maxLife = 1e7;
   m.attackMs = 1e9;
   m.moveMs = m.stepMs = 1e9;
-  m.res = { fire: 0, cold: 0, light: 0 };
+  m.res = { fire: 0, cold: 0, light: 0, chaos: 0 };
   m.cell = cell;
   s.combat!.monsters.push(m);
   return m;

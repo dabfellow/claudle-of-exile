@@ -53,7 +53,7 @@ export type Tag =
 /** Every stat a character can have. Add new ones here; Stats and the stat engine pick them up. */
 export const STAT_KEYS = [
   'life', 'lifePct', 'lifeMore', 'lifeRegen', 'lifeRegenPct', 'lifeLeech', 'physMin', 'physMax', 'physPct',
-  'fireMin', 'fireMax', 'coldMin', 'coldMax', 'lightMin', 'lightMax', 'elemPct', 'attackSpeedPct', 'moveSpeedPct',
+  'fireMin', 'fireMax', 'coldMin', 'coldMax', 'lightMin', 'lightMax', 'chaosMin', 'chaosMax', 'chaosPct', 'chillChance', 'shockChance', 'elemPct', 'attackSpeedPct', 'moveSpeedPct',
   'attackSpeedMore', 'critChancePct', 'critMulti', 'armour', 'armourPct', 'armourMore', 'evasion',
   'evasionPct', 'fireRes', 'coldRes', 'lightRes', 'allRes', 'itemRarity', 'skillSpeed', 'skillXp',
   'flaskEffect', 'flaskCharges', 'str', 'dex', 'int', 'allAttr', 'accuracy', 'mana', 'manaPct',
@@ -72,7 +72,7 @@ export const STAT_KEYS = [
   'energyShieldPct', 'esRechargePct',
   // local mods (docs/design/GEAR.md): change only the item they're on
   'localPhysPct', 'localArmourPct', 'localEvasionPct', 'localEsPct',
-  'physLeech', 'elemLeech', 'charXp', 'manaAsEs', 'spellBlock', 'poisonOnHit', 'igniteOnHit',
+  'physLeech', 'elemLeech', 'charXp', 'manaAsEs', 'spellBlock', 'poisonOnHit', 'burnChance',
   // flat damage added to spells at full effectiveness
   'spellFireMin', 'spellFireMax', 'spellColdMin', 'spellColdMax', 'spellLightMin', 'spellLightMax',
   // class mechanic knobs (docs/design/CLASSES.md): only the class with that mechanic uses them
@@ -94,7 +94,7 @@ export type StatKey = (typeof STAT_KEYS)[number];
 
 export type Stats = Record<StatKey, number>;
 
-export type DamageType = 'phys' | 'fire' | 'cold' | 'light';
+export type DamageType = 'phys' | 'fire' | 'cold' | 'light' | 'chaos';
 
 export interface RolledMod {
   affixId: string;
@@ -194,7 +194,9 @@ export interface MonsterInstance {
   wardMax: number;
   wardMs: number;
   wardsUsed: number;
-  res: { fire: number; cold: number; light: number };
+  res: { fire: number; cold: number; light: number; chaos: number };
+  /** burn, chill and shock built up against its ailment threshold (combat.ts `ailmentThreshold`) */
+  build?: { burn: number; chill: number; shock: number };
   dots: Dot[];
   stunMs: number;
   /** a boss's Stagger, filled by your stuns, and how many times it has been staggered (each needs more; combat.ts `staggerMax`) */
@@ -205,7 +207,7 @@ export interface MonsterInstance {
   vulnMs: number;
   /** chilled: attacks slowed while > 0 */
   chillMs: number;
-  /** Static Field: takes more lightning damage while > 0 */
+  /** shocked: takes more damage while > 0, by how much shock has built up */
   shockMs?: number;
   /** the one curse it carries */
   curse?: Curse;

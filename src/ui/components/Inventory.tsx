@@ -7,18 +7,17 @@ import { inGearSet } from '../../engine/loadouts';
 import type { GameState, Item, Rarity } from '../../engine/types';
 import { game } from '../../game';
 import { Tooltip } from './common';
-import { ItemIcon, ItemTip, pinItem, upgradeScore } from './ItemView';
+import { ItemIcon, ItemTip, pinItem } from './ItemView';
 import { openItemMenu } from './ItemMenu';
 
-export type SortKey = 'recent' | 'rarity' | 'slot' | 'upgrade';
+export type SortKey = 'recent' | 'rarity' | 'slot';
 const RARITY_ORDER: Record<Rarity, number> = { unique: 0, rare: 1, magic: 2, normal: 3 };
 
-export function sortItems(s: GameState, items: Item[], key: SortKey): Item[] {
+export function sortItems(items: Item[], key: SortKey): Item[] {
   const list = [...items];
   if (key === 'recent') return list.reverse();
   if (key === 'rarity') return list.sort((a, b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || b.ilvl - a.ilvl);
-  if (key === 'slot') return list.sort((a, b) => baseDef(a.baseId).slot.localeCompare(baseDef(b.baseId).slot));
-  return list.sort((a, b) => upgradeScore(s, b) - upgradeScore(s, a));
+  return list.sort((a, b) => baseDef(a.baseId).slot.localeCompare(baseDef(b.baseId).slot));
 }
 
 function slotLabel(item: Item): string {
@@ -26,23 +25,20 @@ function slotLabel(item: Item): string {
   return slot === 'body' ? 'Body armour' : slot[0].toUpperCase() + slot.slice(1);
 }
 
-/** One item as a tile: icon, base name in its rarity colour (uniques keep their own name), slot and item level, ▲ when it beats what's worn. */
+/** One item as a tile: icon, base name in its rarity colour (uniques keep their own name), slot and item level. */
 export function ItemTile({
   item,
   s,
   onClick,
   selected,
   marked,
-  showUpgrade,
 }: {
   item: Item;
   s: GameState;
   onClick?: () => void;
   selected?: boolean;
   marked?: boolean;
-  showUpgrade?: boolean;
 }) {
-  const better = showUpgrade && upgradeScore(s, item) > 0.5;
   return (
     <Tooltip content={<ItemTip item={item} state={s} />}>
       <button
@@ -56,7 +52,6 @@ export function ItemTile({
         <span className="item-tile-icon">
           <ItemIcon item={item} size={34} />
         </span>
-        {better && <span className="item-tile-up" title="Upgrade">▲</span>}
         {inGearSet(s, item.uid) && <span className="item-tile-set" title="In a gear set: bulk salvage skips it">Set</span>}
         <span className={`item-tile-name rarity-${item.rarity}`}>
           {item.rarity === 'unique' ? itemName(item) : baseDef(item.baseId).name}
@@ -79,7 +74,6 @@ export function ItemTiles({
   onClick,
   selected,
   marked,
-  showUpgrade,
   empty,
   slots,
 }: {
@@ -88,7 +82,6 @@ export function ItemTiles({
   onClick?: (item: Item) => void;
   selected?: (item: Item) => boolean;
   marked?: (item: Item) => boolean;
-  showUpgrade?: boolean;
   empty?: ReactNode;
   slots?: number;
 }) {
@@ -97,7 +90,7 @@ export function ItemTiles({
   return (
     <div className={`item-tiles ${slots ? `fixed slots-${slots}` : ''}`}>
       {items.map((item) => (
-        <ItemTile key={item.uid} item={item} s={s} selected={selected?.(item)} marked={marked?.(item)} showUpgrade={showUpgrade} onClick={() => onClick?.(item)} />
+        <ItemTile key={item.uid} item={item} s={s} selected={selected?.(item)} marked={marked?.(item)} onClick={() => onClick?.(item)} />
       ))}
       {Array.from({ length: pad }, (_, i) => (
         <span key={`empty-${i}`} className="item-tile empty" />
@@ -125,7 +118,7 @@ export function PageTabs({ count, page, setPage, fill }: { count: number; page: 
 export function SortTabs({ value, onChange }: { value: SortKey; onChange: (k: SortKey) => void }) {
   return (
     <div className="tabs">
-      {(['recent', 'rarity', 'slot', 'upgrade'] as SortKey[]).map((k) => (
+      {(['recent', 'rarity', 'slot'] as SortKey[]).map((k) => (
         <button key={k} className={`tab ${value === k ? 'active' : ''}`} onClick={() => onChange(k)}>
           {k[0].toUpperCase() + k.slice(1)}
         </button>
@@ -207,7 +200,7 @@ export function Inventory({
   const [marked, setMarked] = useState<Set<number>>(new Set());
   /** clicks so far on a rarity button: 1 selects them all, the next salvages (uniques ask once more) */
   const [armed, setArmed] = useState<{ rarity: Rarity; clicks: number } | null>(null);
-  const sorted = sortItems(s, items, sort);
+  const sorted = sortItems(items, sort);
   const pages = Math.max(1, Math.ceil((cap ?? 0) / BAG_PAGE), Math.ceil(items.length / BAG_PAGE));
   const shownPage = Math.min(page, pages - 1);
   const pageItems = sorted.slice(shownPage * BAG_PAGE, (shownPage + 1) * BAG_PAGE);
@@ -278,7 +271,7 @@ export function Inventory({
         {!salvageMode ? (
           <>
             <span className="dim" style={{ fontSize: 12 }}>
-              {hint ?? (onPick ? 'Click an item to select it.' : 'Click an item for Equip, Stash, Salvage · ▲ upgrade · right-click to pin')}
+              {hint ?? (onPick ? 'Click an item to select it.' : 'Click an item for Equip, Stash, Salvage · hover to compare · right-click to pin')}
             </span>
             <span className="spacer" />
             {actions}
@@ -322,7 +315,6 @@ export function Inventory({
         s={s}
         items={pageItems}
         slots={BAG_PAGE}
-        showUpgrade={!onPick && !salvageMode}
         selected={(item) => selected === item.uid || (salvageMode && marked.has(item.uid))}
         onClick={click}
       />
