@@ -11,6 +11,7 @@ import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
 import { droppableBases, createItem } from '../src/engine/items';
 import { simulateOffline } from '../src/engine/offline';
+import { zoneLockText } from '../src/engine/progress';
 import { seeded } from '../src/engine/rng';
 import { SAVE_VERSION, newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
@@ -98,6 +99,10 @@ describe('Act 5: The Sunless Sea', () => {
       return hit;
     };
     expect(act().filter((z) => !ZONE_POS[z.id] || !inside(ZONE_POS[z.id])).map((z) => z.id)).toEqual([]);
+  });
+
+  it('its locked card reads, with or without the area on the road in', () => {
+    expect(zoneLockText(newGame(1, { name: 'T', classId: 'warrior' }), act()[0])).toMatch(/to unlock/);
   });
 
   it('is closed to players, and playable only in preview', () => {
