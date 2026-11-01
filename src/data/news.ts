@@ -8,6 +8,16 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.16',
+    date: '31 Oct 2026',
+    title: 'A steadier combat screen',
+    items: [
+      'Skills and flasks now sit right under the battlefield, so you can use them without scrolling away from the fight.',
+      'The Matchup panel stays one size and scrolls on its own, so the screen no longer jumps around during a fight.',
+      "The area boss's abilities are always listed in Matchup, before you fight it and whoever you're targeting.",
+    ],
+  },
+  {
     version: '0.2.15',
     date: '31 Oct 2026',
     title: 'Faster levelling, stronger Focus',

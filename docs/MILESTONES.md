@@ -395,6 +395,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Combat screen layout (player report): skills and flasks moved into the arena under the field, which shrinks on short screens so they stay in view; Matchup is a fixed size that scrolls on its own, always lists the area boss's abilities, and keeps its rows with no target; status text and the Challenge button no longer reflow the field. The "Target" label is gone from the bar to fit one row. 0.2.16 — done 2026-10-31
 - [x] Area level XP: your level against the area's range sets kill and gem XP (−10, −20, −40, −50, −80%, then 1% more per level to none at 25 over; +10%, then +20% at most below), shown on Campaign and Combat. Replaces the monster level falloff; Act 1's `xpScale` removed. New level curve set by play time; save v25 keeps everyone's level and progress. 0.2.15 — done 2026-10-31
 - [x] Focus raised to 45% with an overflow bar that holds it about 5 seconds; no wait between Mining or Woodcutting swings; weak hits +5%. 0.2.15 — done 2026-10-31
 - [x] Skilling mini-games for Mining, Woodcutting and Foraging: playing builds Focus for up to 30% more speed; idle and offline unchanged. 0.2.14 — done 2026-10-31

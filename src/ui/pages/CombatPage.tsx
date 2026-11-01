@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
-import { BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, nextZones, zoneDef } from '../../data/zones';
+import { BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, nextZones, zoneDef, type MonsterDef } from '../../data/zones';
 import { CELLS, cellRing, GROUND, groundFor, inReach, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT, RINGS } from '../../engine/battlefield';
 import {
   aliveMonsters,
@@ -12,6 +12,7 @@ import {
   focusTarget,
   liveDps,
   lockTarget,
+  makeMonster,
   mitigate,
   nextArrivalMs,
   canSpendLife,
@@ -471,11 +472,10 @@ function MovementBar({ s }: { s: GameState }) {
         onChange={(id) => game.act((st) => setMovement(st, id))}
         tabs={MOVEMENT_ORDER.map((id) => ({ id, label: MOVEMENT[id].name, title: MOVEMENT[id].desc }))}
       />
-      {c.fleeing && <span className="status bad">Auto-fleeing</span>}
-      <span className="dim bf-status">{status}</span>
-      <span className="grow" />
+      <span className="dim bf-status" title={status}>
+        {c.fleeing ? <span className="status bad">Auto-fleeing</span> : status}
+      </span>
       <label className="bf-target" title="Who your skills go for. Click a monster on the field to pick it yourself.">
-        Target
         <select className="input sm" value={targeting.priority} onChange={(e) => game.act((st) => void (st.settings.targeting = { ...st.settings.targeting, priority: e.target.value as TargetPriority }))}>
           {PRIORITIES.map((p) => (
             <option key={p.id} value={p.id}>
@@ -598,65 +598,66 @@ function StatRow({ label, you, them, good }: { label: string; you: string; them:
   );
 }
 
-/** Side-by-side numbers: how you match up against your current target. */
-function Matchup({ s, d }: { s: GameState; d: Derived }) {
+/**
+ * Side-by-side numbers against your current target, then what this area's boss can do. The rows are always there, so
+ * the panel reads the same with no target, and the boss section doesn't wait for the boss to arrive or be targeted.
+ */
+function Matchup({ s, d, bossDef }: { s: GameState; d: Derived; bossDef: MonsterDef }) {
   const target = focusTarget(s);
-  if (!target) return <div className="dim">No enemy in sight.</div>;
-  const hit = hitChance(d.accuracy, target.level);
-  const evade = evadeChance(d.evasion, target.level);
-  const perHit = mitigate(d, target.damage, target.dmgType);
-  const slam = target.isBoss ? mitigate(d, target.damage * BOSS_SLAM_MULT, target.dmgType) : 0;
-  const nova = target.isBoss ? mitigate(d, target.damage * BOSS_NOVA_MULT, target.novaType) : 0;
-  const theirDps = (perHit * (1 - evade)) / (target.attackMs / 1000);
+  const boss = makeMonster(bossDef, true);
+  const hit = target ? hitChance(d.accuracy, target.level) : 0;
+  const evade = target ? evadeChance(d.evasion, target.level) : 0;
+  const perHit = target ? mitigate(d, target.damage, target.dmgType) : 0;
+  const slam = mitigate(d, boss.damage * BOSS_SLAM_MULT, boss.dmgType);
+  const nova = mitigate(d, boss.damage * BOSS_NOVA_MULT, boss.novaType);
+  const theirDps = target ? (perHit * (1 - evade)) / (target.attackMs / 1000) : 0;
   const dps = s.combat ? liveDps(s.combat) : 0;
-  const yourDefence = target.dmgType === 'phys' ? `${fmt(d.armour)} armour` : `${d.res[target.dmgType]}% resist`;
+  const yourDefence = !target ? '–' : target.dmgType === 'phys' ? `${fmt(d.armour)} armour` : `${d.res[target.dmgType]}% resist`;
   return (
     <div className="matchup">
       <span />
       <span className="matchup-head">You</span>
-      <span className="matchup-head">{target.name}</span>
+      <span className="matchup-head" title={target?.name}>{target?.name ?? 'No target'}</span>
       <StatRow
         label="Level"
         you={String(d.combatLevel)}
-        them={String(target.level)}
-        good={d.combatLevel >= target.level ? true : target.level - d.combatLevel > 3 ? false : null}
+        them={target ? String(target.level) : '–'}
+        good={!target ? null : d.combatLevel >= target.level ? true : target.level - d.combatLevel > 3 ? false : null}
       />
-      <StatRow label="Life" you={d.maxEs ? `${fmt(d.maxLife)} + ${fmt(d.maxEs)} ES` : fmt(d.maxLife)} them={`${fmt(Math.max(0, target.life))} / ${fmt(target.maxLife)}`} />
-      <StatRow label="Damage / sec" you={fmt(dps)} them={theirDps.toFixed(1)} good={dps ? dps > theirDps * 1.5 : null} />
-      <StatRow label="Chance to hit" you={`${Math.round(hit * 100)}%`} them={`${Math.round((1 - evade) * 100)}%`} />
-      <StatRow label="Their hit on you" you={yourDefence} them={`${fmt(perHit)} ${DMG_NAME[target.dmgType].toLowerCase()}`} good={perHit < (d.maxLife + d.maxEs) * 0.1} />
-      <StatRow label="Their resistances" you="" them={`${target.res.fire}/${target.res.cold}/${target.res.light}% F/C/L`} />
+      <StatRow label="Life" you={d.maxEs ? `${fmt(d.maxLife)} + ${fmt(d.maxEs)} ES` : fmt(d.maxLife)} them={target ? `${fmt(Math.max(0, target.life))} / ${fmt(target.maxLife)}` : '–'} />
+      <StatRow label="Damage / sec" you={fmt(dps)} them={target ? theirDps.toFixed(1) : '–'} good={target && dps ? dps > theirDps * 1.5 : null} />
+      <StatRow label="Chance to hit" you={target ? `${Math.round(hit * 100)}%` : '–'} them={target ? `${Math.round((1 - evade) * 100)}%` : '–'} />
+      <StatRow label="Their hit on you" you={yourDefence} them={target ? `${fmt(perHit)} ${DMG_NAME[target.dmgType].toLowerCase()}` : '–'} good={target ? perHit < (d.maxLife + d.maxEs) * 0.1 : null} />
+      <StatRow label="Their resistances" you="" them={target ? `${target.res.fire}/${target.res.cold}/${target.res.light}% F/C/L` : '–'} />
       <StatRow
         label="Attack / cast time"
         you={`Default Attack ${(d.attackMs / 1000).toFixed(2)}s`}
-        them={`${target.attackName} ${(target.attackMs / 1000).toFixed(2)}s ${target.attackKind === 'spell' ? 'cast' : 'attack'}`}
+        them={target ? `${target.attackName} ${(target.attackMs / 1000).toFixed(2)}s ${target.attackKind === 'spell' ? 'cast' : 'attack'}` : '–'}
       />
-      {target.attackGround && (
+      <div className="target-label matchup-section">Boss: {boss.name}</div>
+      <div className="matchup-note">
+        <b>{boss.casts.slam.name}:</b> a heavy blow that winds up for {(boss.casts.slam.ms / 1000).toFixed(1)}s, then hits for about{' '}
+        <b className={slam >= s.life ? 'bad' : ''}>{fmt(slam)}</b>. Evasion Rating can't dodge it — use a guard skill, War Cry or a flask.
+      </div>
+      {boss.mechanics.includes('nova') && (
+        <div className="matchup-note">
+          <b>{boss.casts.nova.name}:</b> a {DMG_NAME[boss.novaType].toLowerCase()} nova that winds up for{' '}
+          {(boss.casts.nova.ms / 1000).toFixed(1)}s, then hits for about{' '}
+          <b className={nova >= s.life ? 'bad' : ''}>{fmt(nova)}</b>. Blocks don't stop it — resistances, shields, evades or an interrupt do.
+        </div>
+      )}
+      {boss.mechanics
+        .filter((k) => k !== 'slam' && k !== 'nova')
+        .map((k) => (
+          <div key={k} className="matchup-note">
+            <b>{MECHANIC_INFO[k].name}:</b> {MECHANIC_INFO[k].tip}
+          </div>
+        ))}
+      {target?.attackGround && (
         <div className="matchup-note">
           <b>{target.attackName}:</b> leaves {GROUND[groundFor(target.dmgType)].name.toLowerCase()} under you for a few seconds. Run or Flee to step out of it faster.
         </div>
       )}
-      {target.isBoss && (
-        <div className="matchup-note">
-          <b>{target.casts.slam.name}:</b> a heavy blow that winds up for {(target.casts.slam.ms / 1000).toFixed(1)}s, then hits for about{' '}
-          <b className={slam >= s.life ? 'bad' : ''}>{fmt(slam)}</b>. Evasion Rating can't dodge it — use a guard skill, War Cry or a flask.
-        </div>
-      )}
-      {target.isBoss && target.mechanics.includes('nova') && (
-        <div className="matchup-note">
-          <b>{target.casts.nova.name}:</b> a {DMG_NAME[target.novaType].toLowerCase()} nova that winds up for{' '}
-          {(target.casts.nova.ms / 1000).toFixed(1)}s, then hits for about{' '}
-          <b className={nova >= s.life ? 'bad' : ''}>{fmt(nova)}</b>. Blocks don't stop it — resistances, shields, evades or an interrupt do.
-        </div>
-      )}
-      {target.isBoss &&
-        target.mechanics
-          .filter((k) => k !== 'slam' && k !== 'nova')
-          .map((k) => (
-            <div key={k} className="matchup-note">
-              <b>{MECHANIC_INFO[k].name}:</b> {MECHANIC_INFO[k].tip}
-            </div>
-          ))}
     </div>
   );
 }
@@ -698,8 +699,9 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
   const bossReady = bossIsNext(s, zone.id);
   const bossComing = bossCalled(s, zone.id);
   const areaXp = areaXpLabel(characterLevel(s), zone.levelRange);
+  const bossHere = c.monsters.some((m) => m.isBoss);
   return (
-    <div className="page">
+    <div className="page combat-page">
       <PageHeader
         title={zone.name}
         kicker="Fighting"
@@ -710,15 +712,15 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
                 Next area: {z.name} →
               </button>
             ))}
-            {!s.maps.run && !c.monsters.some((m) => m.isBoss) && (
+            {!s.maps.run && (
               <button
-                className="btn primary"
+                className="btn primary challenge"
                 data-tut="challenge-boss"
-                disabled={!bossReady || bossComing}
+                disabled={!bossReady || bossComing || bossHere}
                 title={bossReady ? `Fight ${zone.boss.name} once the field is clear` : `${zone.boss.name} comes out after ${zone.bossEvery} kills here`}
                 onClick={() => game.act((st) => challengeBoss(st))}
               >
-                {!bossReady ? `Challenge boss (${kills}/${zone.bossEvery})` : bossComing ? `${zone.boss.name} is coming…` : `Challenge ${zone.boss.name}`}
+                {bossHere ? 'Boss fight' : !bossReady ? `Challenge boss (${kills}/${zone.bossEvery})` : bossComing ? `${zone.boss.name} is coming…` : `Challenge ${zone.boss.name}`}
               </button>
             )}
             <button className="btn" onClick={() => go('campaign')}>
@@ -738,31 +740,30 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
           <PlayerCard s={s} d={d} fx={fx} />
           <div className="matchup-card">
             <div className="target-label">Matchup</div>
-            <Matchup s={s} d={d} />
+            <Matchup s={s} d={d} bossDef={zone.boss} />
           </div>
         </div>
         <div className="bf-wrap">
           <MovementBar s={s} />
           <Battlefield s={s} c={c} fx={fx} />
           <FieldSummary s={s} c={c} />
-        </div>
-      </div>
-
-      <div className="card action-bar">
-        <div className="action-bar-group">
-          <div className="action-bar-label">
-            Skills
-            <button className="btn sm ghost" onClick={() => go('skills')}>
-              Edit skills & rules
-            </button>
+          <div className="action-bar">
+            <div className="action-bar-group">
+              <div className="action-bar-label">
+                Skills
+                <button className="btn sm ghost" onClick={() => go('skills')}>
+                  Edit skills & rules
+                </button>
+              </div>
+              <SkillBar s={s} d={d} fx={fx} />
+            </div>
+            <div className="action-bar-group flasks">
+              <div className="action-bar-label">
+                Flasks <span className="card-hint">keys 1–5</span>
+              </div>
+              <FlaskBelt s={s} />
+            </div>
           </div>
-          <SkillBar s={s} d={d} fx={fx} />
-        </div>
-        <div className="action-bar-group flasks">
-          <div className="action-bar-label">
-            Flasks <span className="card-hint">keys 1–5 · refill on kills</span>
-          </div>
-          <FlaskBelt s={s} />
         </div>
       </div>
 
