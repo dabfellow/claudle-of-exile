@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vitest run)",
+      "Bash(npx vitest run 2>&1)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx tsc --noEmit 2>&1)",
+      "Bash(npx tsc --noEmit -p .)",
+      "Bash(npx tsc --noEmit -p . 2>&1)",
+      "Bash(npm test)",
+      "Bash(npm test 2>&1)",
+      "Bash(git rev-list --left-right *)",
+      "Bash(git rev-list --count *)",
+      "Bash(git merge-base *)",
+      "mcp__Claude_Browser__read_console_messages",
+      "mcp__Claude_Browser__find",
+      "mcp__Claude_Browser__read_page",
+      "mcp__Claude_Browser__get_page_text",
+      "mcp__Claude_Browser__preview_logs",
+      "mcp__Claude_Browser__tabs_context",
+      "mcp__ccd_session_mgmt__list_events"
+    ]
+  }
+}
