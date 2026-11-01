@@ -68,7 +68,7 @@ describe('new skill gems', () => {
       expect(supportFits(sigs[0], def)).toBe(true);
       expect(supportFits(sigs[0], activeGemDef('heavy_strike'))).toBe(false);
     }
-    for (const [attr, n] of [['str', 15], ['dex', 16], ['int', 16]] as const) expect(ACTIVE_GEMS.filter((g) => g.attr === attr)).toHaveLength(n);
+    for (const [attr, n] of [['str', 19], ['dex', 19], ['int', 20]] as const) expect(ACTIVE_GEMS.filter((g) => g.attr === attr)).toHaveLength(n);
   });
 
   it('Pummel strikes three times per use, four with Tavern Brawler', () => {

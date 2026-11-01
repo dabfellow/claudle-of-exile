@@ -55,11 +55,12 @@ function run(s: GameState, ctx: ReturnType<typeof makeCtx>, ms: number, until?: 
 const used = (ctx: ReturnType<typeof makeCtx>) => ctx.events.some((e) => e.t === 'skill');
 
 describe('gems tied to acts', () => {
-  it('splits the pool: Act 1 keeps skills up to level 12, the level 16 skills join Act 2, level 32 and up waits for Act 3', () => {
+  it('splits the pool: Act 1 keeps skills up to level 12, the level 16 skills join Act 2, level 32 and up waits for Act 3, level 50 and up for Act 5', () => {
     for (const g of ACTIVE_GEMS) {
       if (gemReqLevel(g.id) <= 12) expect(gemAct(g.id), g.id).toBe(1);
       else if (gemReqLevel(g.id) < 32) expect(gemAct(g.id), g.id).toBe(2);
-      else expect(gemAct(g.id), g.id).toBe(3);
+      else if (gemReqLevel(g.id) < 50) expect(gemAct(g.id), g.id).toBe(3);
+      else expect(gemAct(g.id), g.id).toBe(5);
     }
   });
 

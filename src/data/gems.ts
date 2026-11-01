@@ -7,10 +7,11 @@ export type GemAttr = 'str' | 'dex' | 'int';
  * What a skill does, which decides the supports that fit it. `hit`: it deals damage when used (damage
  * supports need this, so they never fit a shield or a mana refill). `cast`: a spell with a cast time,
  * the only kind Faster Casts speeds up. `duration`: something it does lasts, so Lingering stretches it.
- * `bleed`: it opens a bleed of its own. `blood`: it spends Life when used.
+ * `bleed`: it opens a bleed of its own. `blood`: it spends Life when used. `minion`: it calls minions, whose hits are the
+ * skill's damage. `storm`: it leaves a storm on the field, whose strikes are the skill's damage.
  */
-export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'curse' | 'movement' | 'dot' | 'sustain' | 'hit' | 'cast' | 'bleed' | 'blood';
-export type SkillRole = 'main' | 'burst' | 'area' | 'guard' | 'buff' | 'curse' | 'sustain';
+export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'curse' | 'movement' | 'dot' | 'sustain' | 'hit' | 'cast' | 'bleed' | 'blood' | 'minion' | 'storm';
+export type SkillRole = 'main' | 'burst' | 'area' | 'guard' | 'buff' | 'curse' | 'sustain' | 'summon';
 
 /** What a skill does when it fires. Numbers are at gem level 1. */
 export interface SkillEffect {
@@ -55,6 +56,37 @@ export interface SkillEffect {
   stepOut?: boolean;
   /** movement: drags the target up to melee range, as you ride it down (bosses stand their ground) */
   charge?: boolean;
+  /** drags everything it hits this many rings toward you (bosses stand their ground) */
+  drag?: number;
+  /** calls minions, who deal the skill's hit themselves instead of the skill dealing it */
+  minion?: {
+    name: string;
+    /** the monster art it wears */
+    art: string;
+    /** how many the gem keeps up */
+    count: number;
+    /** its life, as % of your maximum life at gem level 1 */
+    lifePct: number;
+    /** time between its hits */
+    attackMs: number;
+    /** steps it can hit across */
+    reach: number;
+    /** monsters in reach swing at it before anything else */
+    taunts?: boolean;
+    /** gone after this long; without it, a minion stays until it falls or you leave the area */
+    durationMs?: number;
+  };
+  /** leaves a storm on the field, which deals the skill's hit to everything in its area every `everyMs` */
+  storm?: {
+    everyMs: number;
+    durationMs: number;
+    /** how many the gem keeps up: a new one past this blows out the oldest */
+    max: number;
+    /** walks a step toward the nearest enemy with each strike */
+    drift?: boolean;
+    /** draws what's in it a step toward the centre with each strike */
+    pull?: boolean;
+  };
   /** curses enemies where it lands (see `area`): an enemy carries one curse at a time, and bosses take half its effect */
   curse?: {
     durationMs: number;
@@ -543,6 +575,85 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     desc: "Drain the target's bleed: all the damage it had left lands at once, and 30% of that returns to you as Life (at most 25% of your Life).",
     defaultRule: { when: 'targetHas', status: 'bleeding' },
   }),
+
+  // ---------- Act 5, Tides and summons (docs/design/MINIONS.md) ----------
+  A({
+    id: 'drowned_thralls', name: 'Drowned Thralls', attr: 'str', role: 'summon', tags: ['attack', 'melee', 'minion', 'hit'],
+    manaCost: 18, cooldownMs: 4000, timeMs: 1800, color: '#5a8a7a',
+    effect: { weaponPct: 50, minion: { name: 'Drowned Thrall', art: 'ghoul', count: 3, lifePct: 30, attackMs: 2000, reach: 1 } },
+    desc: 'Call up to 3 thralls from the deep. They walk out to meet the enemy, hit with your weapon, and hold whatever they reach. They stay between packs.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'barnacle_brute', name: 'Barnacle Brute', attr: 'str', role: 'summon', tags: ['attack', 'melee', 'minion', 'hit'],
+    manaCost: 24, cooldownMs: 8000, timeMs: 2400, color: '#6a7a6a',
+    effect: { weaponPct: 70, stunChance: 0.15, minion: { name: 'Barnacle Brute', art: 'coralgolem', count: 1, lifePct: 120, attackMs: 3000, reach: 1, taunts: true } },
+    desc: 'Call a hulk crusted with barnacles. Monsters in reach of it swing at it instead of you, and its blows have a 15% chance to stun.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'riptide', name: 'Riptide', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area', 'hit'],
+    manaCost: 10, cooldownMs: 5000, timeMs: 3300, color: '#3f8fa8',
+    effect: { weaponPct: 125, area: 'arc', drag: 1 }, range: 2, weapons: SLAM_WEAPONS,
+    desc: 'A sweep that reaches 2 rings, hitting the target and the enemies either side of it and dragging them a ring toward you.',
+    defaultRule: { when: 'enemiesAtLeast', value: 3 },
+  }),
+  A({
+    id: 'drowned_bell', name: 'Drowned Bell', attr: 'str', role: 'buff', tags: ['buff', 'duration'],
+    manaCost: 14, cooldownMs: 16000, timeMs: 600, color: '#8a9a7a',
+    effect: { buff: { durationMs: 8000, stats: { minionPct: 40, minionSpeedPct: 20 } } },
+    desc: 'For 8s: your minions deal 40% increased damage and hit 20% faster.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'boarding_party', name: 'Boarding Party', attr: 'dex', role: 'summon', tags: ['attack', 'projectile', 'minion', 'hit'],
+    manaCost: 18, cooldownMs: 4000, timeMs: 1500, color: '#7aa86a',
+    effect: { weaponPct: 55, minion: { name: 'Boarder', art: 'gunner', count: 2, lifePct: 15, attackMs: 2000, reach: 4 } }, range: 4,
+    desc: 'Call 2 boarders who keep close to you and shoot across the field with the strength of your weapon. They stay between packs.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'harpoon', name: 'Harpoon', attr: 'dex', role: 'main', tags: ['attack', 'projectile', 'hit'],
+    manaCost: 7, cooldownMs: 0, timeMs: 3000, color: '#5a9a9a',
+    effect: { weaponPct: 150, targets: 'single', drag: 1 }, range: 3,
+    desc: 'A thrown harpoon (3 rings, any weapon) that drags the target a ring toward you.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'squall', name: 'Squall', attr: 'dex', role: 'area', tags: ['attack', 'area', 'duration', 'storm', 'hit'],
+    manaCost: 12, cooldownMs: 6000, timeMs: 1500, color: '#9ac8c0',
+    effect: { weaponPct: 30, area: 'splash', radius: 1, storm: { everyMs: 800, durationMs: 8000, max: 1, drift: true } }, range: 4,
+    desc: 'A knot of wind and salt that hits everything inside it with your weapon every 0.8s for 8s, and wanders after the nearest enemy.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'tidecallers', name: 'Tidecallers', attr: 'int', role: 'summon', tags: ['spell', 'minion', 'hit', 'cast'],
+    manaCost: 18, cooldownMs: 4000, timeMs: 1500, color: '#5a9ac8',
+    effect: { base: [16, 26], type: 'cold', crit: 5, chillMs: 2000, minion: { name: 'Tidecaller', art: 'tidecaller', count: 2, lifePct: 20, attackMs: 2400, reach: 3 } }, range: 3,
+    desc: 'Call 2 drowned priests who stay close to you and cast cold bolts that chill, across 3 rings. They stay between packs.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'thunderhead', name: 'Thunderhead', attr: 'int', role: 'area', tags: ['spell', 'area', 'duration', 'storm', 'hit'],
+    manaCost: 14, cooldownMs: 6000, timeMs: 0, color: '#c8c86a',
+    effect: { base: [18, 30], type: 'light', crit: 6, area: 'splash', radius: 1, storm: { everyMs: 1500, durationMs: 10000, max: 1 } },
+    desc: 'A black cloud settles on the target for 10s. Lightning strikes everything under it every 1.5s, and whatever walks in after.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'whirlpool', name: 'Whirlpool', attr: 'int', role: 'area', tags: ['spell', 'area', 'duration', 'storm', 'hit'],
+    manaCost: 14, cooldownMs: 8000, timeMs: 0, color: '#4f7ac8',
+    effect: { base: [10, 16], type: 'cold', crit: 5, area: 'splash', radius: 2, chillMs: 1500, storm: { everyMs: 1200, durationMs: 8000, max: 1, pull: true } },
+    desc: 'A churning pool within 2 steps of the target for 8s. Every 1.2s it chills what\'s in it and draws them toward the centre.',
+    defaultRule: { when: 'enemiesAtLeast', value: 2 },
+  }),
+  A({
+    id: 'leviathan', name: 'Call the Leviathan', attr: 'int', role: 'summon', tags: ['spell', 'minion', 'area', 'duration', 'hit', 'cast'],
+    manaCost: 40, cooldownMs: 30000, timeMs: 2400, color: '#3a5a9a',
+    effect: { base: [70, 110], type: 'cold', crit: 5, area: 'splash', radius: 1, minion: { name: 'Leviathan', art: 'wyrmling', count: 1, lifePct: 150, attackMs: 2800, reach: 2, durationMs: 14000 } }, range: 2,
+    desc: 'The deep answers: for 14s a Leviathan fights at your side, crushing the target and everything next to it.',
+    defaultRule: { when: 'bossOnly' },
+  }),
 ];
 
 // ---------- supports ----------
@@ -565,6 +676,12 @@ export interface SupportMods {
   repeats?: number;
   repeatDamage?: number;
   chains?: number;
+  /** % more minion life, and more minions the gem keeps up */
+  minionLife?: number;
+  minionCount?: number;
+  /** more storms the gem keeps up, and % faster strikes */
+  stormCount?: number;
+  stormSpeed?: number;
   durationPct?: number;
   /** % shorter cooldown */
   cooldownPct?: number;
@@ -617,6 +734,10 @@ const GEM_LEVELS: Record<string, number> = {
   lacerate: 35,
   blood_ward: 36, stigmata: 36, burnt_offering: 36,
   transfusion: 38,
+  drowned_thralls: 50, boarding_party: 50, tidecallers: 50, harpoon: 50, riptide: 50,
+  squall: 52, thunderhead: 52, whirlpool: 52,
+  barnacle_brute: 54, drowned_bell: 54,
+  leviathan: 56,
   // supports
   faster_attacks: 4, faster_casts: 4, efficiency: 4,
   brutality: 8, elemental_focus: 8, life_leech: 8, mana_leech: 8, pierce: 8,
@@ -629,6 +750,7 @@ const GEM_LEVELS: Record<string, number> = {
   serrated_edge: 32, blood_price: 32,
   deep_wounds: 34, tithe: 34,
   desperate_faith: 36,
+  savage_crew: 50, gale_force: 52, hardened_crew: 52, full_muster: 54, stormfront: 54,
 };
 
 /**
@@ -649,6 +771,11 @@ const GEM_ACTS: Record<string, number> = {
   gash: 3, barbed_arrow: 3, stigmata: 3,
   blood_lance: 3, burnt_offering: 3, transfusion: 3,
   serrated_edge: 3, blood_price: 3, deep_wounds: 3, tithe: 3, desperate_faith: 3,
+  // Act 5, Tides and summons
+  drowned_thralls: 5, barnacle_brute: 5, riptide: 5, drowned_bell: 5,
+  boarding_party: 5, harpoon: 5, squall: 5,
+  tidecallers: 5, thunderhead: 5, whirlpool: 5, leviathan: 5,
+  savage_crew: 5, hardened_crew: 5, full_muster: 5, gale_force: 5, stormfront: 5,
 };
 
 /** The act a skill or support gem arrives with. */
@@ -725,6 +852,17 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'arterial_spray', name: 'Arterial Spray', attr: 'int', fits: [], signatureFor: 'blood_lance', mods: { special: 'arterial' }, desc: 'Bleeds spread to enemies next to the target.' }),
   S({ id: 'ashes_to_ashes', name: 'Ashes to Ashes', attr: 'int', fits: [], signatureFor: 'burnt_offering', mods: { manaMult: 1.5 }, desc: 'Burns 50% more Life, and all of it goes into the blast.' }),
   S({ id: 'pale_communion', name: 'Pale Communion', attr: 'int', fits: [], signatureFor: 'transfusion', mods: { special: 'communion' }, desc: 'Returns the same amount of Mana as well.' }),
+  S({ id: 'press_gang', name: 'Press Gang', attr: 'str', fits: [], signatureFor: 'drowned_thralls', mods: { special: 'pressgang' }, desc: 'Each kill by a thrall restores 15% of every thrall\'s life.' }),
+  S({ id: 'crusted_hide', name: 'Crusted Hide', attr: 'str', fits: [], signatureFor: 'barnacle_brute', mods: { special: 'crustedhide' }, desc: 'The Brute takes 40% less damage.' }),
+  S({ id: 'drag_under', name: 'Drag Under', attr: 'str', fits: [], signatureFor: 'riptide', mods: { special: 'dragunder' }, desc: 'Everything it drags is stunned for 1s.' }),
+  S({ id: 'deep_toll', name: 'Deep Toll', attr: 'str', fits: [], signatureFor: 'drowned_bell', mods: { special: 'deeptoll' }, desc: 'The bell also restores 30% of every minion\'s life.' }),
+  S({ id: 'broadside', name: 'Broadside', attr: 'dex', fits: [], signatureFor: 'boarding_party', mods: { chains: 2 }, desc: 'Their shots chain to 2 more enemies.' }),
+  S({ id: 'reel_in', name: 'Reel In', attr: 'dex', fits: [], signatureFor: 'harpoon', mods: { special: 'reelin' }, desc: 'Drags the target all the way into melee range.' }),
+  S({ id: 'flensing_wind', name: 'Flensing Wind', attr: 'dex', fits: [], signatureFor: 'squall', mods: { special: 'flay' }, desc: 'Hits break armour (+15% damage taken for 4s).' }),
+  S({ id: 'deep_chill', name: 'Deep Chill', attr: 'int', fits: [], signatureFor: 'tidecallers', mods: { special: 'shatterpoint' }, desc: 'Critical strikes chill; hits against chilled enemies deal 15% more damage.' }),
+  S({ id: 'charged_air', name: 'Charged Air', attr: 'int', fits: [], signatureFor: 'thunderhead', mods: { special: 'staticfield' }, desc: 'Enemies hit take 10% increased lightning damage for 4s.' }),
+  S({ id: 'black_ice', name: 'Black Ice', attr: 'int', fits: [], signatureFor: 'whirlpool', mods: { special: 'permafrost' }, desc: 'If what it hits is already chilled, it is frozen for 1.5s (0.6s for bosses).' }),
+  S({ id: 'abyssal_hunger', name: 'Abyssal Hunger', attr: 'int', fits: [], signatureFor: 'leviathan', mods: { special: 'abyssal' }, desc: 'Each kill by the Leviathan keeps it here 2s longer.' }),
   S({ id: 'wither_will', name: 'Wither Will', attr: 'int', fits: [], signatureFor: 'enfeeble', mods: { special: 'witherwill' }, desc: 'Killing a cursed enemy restores 4% of your life.' }),
 
   // general
@@ -754,6 +892,11 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'deep_wounds', name: 'Deep Wounds', attr: 'dex', fits: ['bleed'], mods: { moreBleed: 40, manaMult: 1.2 }, desc: '40% more damage from the bleeds it causes.' }),
   S({ id: 'tithe', name: 'Tithe', attr: 'int', fits: ['blood'], mods: { special: 'tithe', manaMult: 1.1 }, desc: 'A third of the Life it spends flows back over 4s.' }),
   S({ id: 'desperate_faith', name: 'Desperate Faith', attr: 'str', fits: ['hit'], mods: { lowLifeMore: 40, manaMult: 1.2 }, desc: "40% more damage while you're below half Life." }),
+  S({ id: 'savage_crew', name: 'Savage Crew', attr: 'str', fits: ['minion'], mods: { moreDamage: 30, manaMult: 1.3 }, desc: '30% more minion damage.' }),
+  S({ id: 'hardened_crew', name: 'Hardened Crew', attr: 'str', fits: ['minion'], mods: { minionLife: 50, manaMult: 1.2 }, desc: '50% more minion life.' }),
+  S({ id: 'full_muster', name: 'Full Muster', attr: 'dex', fits: ['minion'], mods: { minionCount: 1, moreDamage: -15, manaMult: 1.4 }, desc: 'Keeps 1 more minion up; 15% less minion damage.' }),
+  S({ id: 'gale_force', name: 'Gale Force', attr: 'int', fits: ['storm'], mods: { stormSpeed: 30, manaMult: 1.3 }, desc: 'The storm strikes 30% faster.' }),
+  S({ id: 'stormfront', name: 'Stormfront', attr: 'int', fits: ['storm'], mods: { stormCount: 1, manaMult: 1.4 }, desc: 'Keeps 1 more storm up at once.' }),
 ];
 
 export function activeGemDef(id: string): ActiveGemDef {

@@ -2,9 +2,10 @@ import { useCallback, useState } from 'react';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
 import { BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, nextZones, zoneDef, type MonsterDef } from '../../data/zones';
-import { CELLS, cellRing, GROUND, groundFor, inReach, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT, RINGS } from '../../engine/battlefield';
+import { CELLS, cellRing, GROUND, groundFor, inReach, minionInWay, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT, RINGS } from '../../engine/battlefield';
 import {
   aliveMonsters,
+  army,
   bossCalled,
   bossIsNext,
   canBossFarm,
@@ -33,7 +34,7 @@ import { ascendancyOf } from '../../engine/ascendancy';
 import { flaskCapacity, meterLabel, meterMax, mechanicOf } from '../../engine/mechanics';
 import { classDef } from '../../data/classes';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
-import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, MonsterInstance, TargetOrder, TargetPriority } from '../../engine/types';
+import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, Minion, MonsterInstance, TargetOrder, TargetPriority } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
 import { anyArtUrl, Art, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
@@ -86,7 +87,10 @@ function useCombatFx() {
       if (e.t === 'area') setArea((a) => ({ cells: e.cells, n: (a?.n ?? 0) + 1 }));
       if (e.t === 'closeIn') setLunge((n) => n + 1);
       if (e.t !== 'hit') return;
-      if (e.target === 'monster') {
+      if (e.target === 'minion') {
+        add({ owner: e.monsterUid ?? 0, text: `-${fmt(e.amount)}`, cls: '', color: e.dmgType === 'phys' ? 'var(--life-2)' : DMG_COLOR[e.dmgType] });
+        bump(setShakes, String(e.monsterUid ?? 0));
+      } else if (e.target === 'monster') {
         const owner = e.monsterUid ?? 0;
         if (e.evaded) add({ owner, text: 'miss', cls: 'miss', color: '' });
         else {
@@ -286,7 +290,7 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
 }
 
 /** A monster as it stands on the battlefield: just enough to read the fight at a glance. Hover for the full card. */
-function MonsterToken({ m, target, locked, fx }: { m: MonsterInstance; target: boolean; locked: boolean; fx: Fx }) {
+function MonsterToken({ m, c, target, locked, fx }: { m: MonsterInstance; c: CombatRuntime; target: boolean; locked: boolean; fx: Fx }) {
   const key = String(m.uid);
   const pips: [string, string][] = [];
   if (m.stunMs > 0) pips.push(['Stunned', 'var(--text)']);
@@ -315,7 +319,7 @@ function MonsterToken({ m, target, locked, fx }: { m: MonsterInstance; target: b
           <ProgressBar className="cast-bar thin" value={1 - m.casting / m.castTotal} />
         ) : m.martyr ? (
           <span className="bf-approach">chained</span>
-        ) : inReach(m) ? (
+        ) : inReach(m) || minionInWay(m, army(c)) ? (
           <ProgressBar value={m.attackTimer / m.attackMs} color="var(--dim)" className="thin" />
         ) : (
           <span className="bf-approach">walking in…</span>
@@ -327,6 +331,35 @@ function MonsterToken({ m, target, locked, fx }: { m: MonsterInstance; target: b
             ))}
           </div>
         )}
+      </div>
+    </Tooltip>
+  );
+}
+
+/** One of your minions on the battlefield, drawn like a monster but on your side. */
+function MinionToken({ x, fx }: { x: Minion; fx: Fx }) {
+  const key = String(x.uid);
+  return (
+    <Tooltip
+      content={
+        <div className="tip">
+          <div className="tip-title">{x.name}</div>
+          <div className="dim small">Your minion{x.taunts ? ': monsters in reach swing at it first' : ''}</div>
+          <div className="small">Life {fmt(Math.max(0, x.life))} / {fmt(x.maxLife)}</div>
+          {x.remainingMs !== undefined && <div className="small">Stays {(x.remainingMs / 1000).toFixed(1)}s</div>}
+        </div>
+      }
+    >
+      <div className={`bf-token minion ${x.taunts ? 'taunts' : ''} ${shakeClass(fx.shakes[key])}`}>
+        <Floaters list={fx.floaters.filter((f) => f.owner === x.uid)} />
+        <div className="bf-token-head">
+          <div className="portrait tiny">
+            <Art src={`monsters/${x.art}`} alt={x.name} cover fallback={<GameIcon name="skull" size={14} color="var(--cold)" />} />
+          </div>
+          <span className="bf-token-name">{x.name}</span>
+        </div>
+        <ProgressBar value={Math.max(0, x.life) / x.maxLife} color="linear-gradient(90deg, var(--es), var(--es-2))" />
+        {x.remainingMs !== undefined && x.durationMs ? <ProgressBar value={x.remainingMs / x.durationMs} color="var(--dim)" className="thin" /> : null}
       </div>
     </Tooltip>
   );
@@ -358,18 +391,21 @@ function Battlefield({ s, c, fx }: { s: GameState; c: CombatRuntime; fx: Fx }) {
   const alive = aliveMonsters(c);
   const byCell = new Map(alive.map((m) => [m.cell, m]));
   const focus = focusTarget(s);
+  const stormOn = (i: number) => c.storms?.find((st) => st.cells.includes(i));
   return (
     <div className="battlefield" style={{ aspectRatio: `${FIELD_W} / ${FIELD_H}` }}>
       {CELLS.map((cell, i) => {
         const m = byCell.get(i);
         const ground = c.ground.find((g) => g.cell === i);
         const flash = fx.area?.cells.includes(i) ? (fx.area.n % 2 ? 'flash-a' : 'flash-b') : '';
+        const storm = stormOn(i);
+        const stormDef = storm && activeGemDef(storm.gemId);
         return (
           <div
             key={i}
-            className={`bf-cell ring-${cell.ring} ${m ? 'occupied' : ''} ${m && m === focus ? 'target' : ''} ${m?.isBoss ? 'boss' : ''} ${ground ? `ground-${ground.kind}` : ''} ${flash}`}
+            className={`bf-cell ring-${cell.ring} ${m ? 'occupied' : ''} ${m && m === focus ? 'target' : ''} ${m?.isBoss ? 'boss' : ''} ${ground ? `ground-${ground.kind}` : ''} ${storm ? `storm storm-${stormDef!.effect.type ?? 'phys'}` : ''} ${flash}`}
             style={hexBox(cell.x, cell.y)}
-            title={ground ? `${GROUND[ground.kind].name} (${(ground.remainingMs / 1000).toFixed(1)}s): ${GROUND[ground.kind].desc}` : undefined}
+            title={storm ? `${stormDef!.name} (${(storm.remainingMs / 1000).toFixed(1)}s)` : ground ? `${GROUND[ground.kind].name} (${(ground.remainingMs / 1000).toFixed(1)}s): ${GROUND[ground.kind].desc}` : undefined}
           />
         );
       })}
@@ -396,7 +432,15 @@ function Battlefield({ s, c, fx }: { s: GameState; c: CombatRuntime; fx: Fx }) {
             }}
             onClick={() => game.act((st) => lockTarget(st, m.uid))}
           >
-            <MonsterToken m={m} target={m === focus} locked={m.uid === c.lockedUid} fx={fx} />
+            <MonsterToken m={m} c={c} target={m === focus} locked={m.uid === c.lockedUid} fx={fx} />
+          </div>
+        );
+      })}
+      {army(c).map((x) => {
+        const cell = CELLS[x.cell];
+        return (
+          <div key={x.uid} className="bf-unit ally" style={{ left: `${pctX(cell.x)}%`, top: `${pctY(cell.y)}%`, width: `${(HEX_W / FIELD_W) * 100 * 0.92}%`, transitionDuration: '450ms' }}>
+            <MinionToken x={x} fx={fx} />
           </div>
         );
       })}
@@ -415,6 +459,11 @@ function FieldSummary({ s, c }: { s: GameState; c: CombatRuntime }) {
     <div className="bf-summary">
       <div>
         <b>{alive.length}</b> on the field · <b>{close}</b> in melee range
+        {army(c).length > 0 && (
+          <>
+            {' '}· <b>{army(c).length}</b> {army(c).length === 1 ? 'minion' : 'minions'}
+          </>
+        )}
       </div>
       {martyrs.map((m) => (
         <button key={m.uid} className={`btn sm ${m.uid === c.lockedUid ? 'primary' : ''}`} onClick={() => game.act((st) => lockTarget(st, m.uid))}>

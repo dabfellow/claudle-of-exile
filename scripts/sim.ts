@@ -194,7 +194,7 @@ function gemDps(d: Derived, gem: SkillGemInstance): number {
   return sum.perSecond * (sum.nums.def.tags.includes('attack') ? hitChance(d.accuracy, d.combatLevel) : 1);
 }
 
-const DAMAGE_ROLES = new Set(['main', 'burst', 'area']);
+const DAMAGE_ROLES = new Set(['main', 'burst', 'area', 'summon']);
 
 /** The ground this area's boss lays with Scorched earth, if it does. */
 function scorchGround(zoneId: string | undefined): GroundKind | undefined {
@@ -259,7 +259,7 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   for (const g of bar) {
     // one rule each: the suggested one, or Whenever ready until the War Table teaches it
     g.rules = [g === groundGuard ? { when: 'onGround', ground: scorch } : suggestedRule(s, activeGemDef(g.gemId))];
-    if (DAMAGE_ROLES.has(role(g)) && !aimLockReason(s)) g.rules[0].aim = 'martyrs';
+    if (DAMAGE_ROLES.has(role(g)) && role(g) !== 'summon' && !aimLockReason(s)) g.rules[0].aim = 'martyrs';
     syncSockets(g);
     g.supports.forEach((_, k) => unsocketSupport(s, g.uid, k));
   }

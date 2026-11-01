@@ -4087,6 +4087,33 @@ g.tut-hint circle.body {
   box-shadow: 0 0 0 2px var(--ward);
 }
 
+.bf-token.minion {
+  border-color: color-mix(in srgb, var(--es) 70%, var(--line));
+}
+
+.bf-token.minion.taunts {
+  border-width: 2px;
+}
+
+.bf-unit.ally {
+  cursor: default;
+  animation: none;
+}
+
+.bf-cell.storm::before {
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55) 35%, color-mix(in srgb, var(--storm) 45%, transparent));
+  animation: bf-storm 1.6s ease-in-out infinite alternate;
+}
+.bf-cell.storm-phys { --storm: var(--dim); }
+.bf-cell.storm-fire { --storm: var(--fire); }
+.bf-cell.storm-cold { --storm: var(--cold); }
+.bf-cell.storm-light { --storm: var(--light); }
+@keyframes bf-storm {
+  to {
+    filter: brightness(1.5);
+  }
+}
+
 .bf-token.boss {
   border-color: color-mix(in srgb, var(--danger) 60%, var(--line));
   box-shadow: 0 0 24px color-mix(in srgb, var(--danger) 20%, transparent);
