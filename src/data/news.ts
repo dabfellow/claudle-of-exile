@@ -8,6 +8,16 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.38',
+    date: '1 Nov 2026',
+    title: 'The Wellspring',
+    items: [
+      'The Mage’s Wildcaster is gone, because it punished you for keeping your mana full. The Wellspring takes its place.',
+      'Mana you would waste at full now fills Overflow. A full meter makes your next damaging spell free, with 100% more damage.',
+      'Wildcasters become Wellsprings automatically, and get their ascendancy points back to spend.',
+    ],
+  },
+  {
     version: '0.2.37',
     date: '1 Nov 2026',
     title: 'A new tutorial',

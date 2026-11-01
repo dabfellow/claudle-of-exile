@@ -26,8 +26,8 @@ import { areaCells, cellRing, CELLS } from '../src/engine/battlefield';
 import { combatStep, enterZone, hawkTarget, makeMonster, releaseNovas, startCombat, useFlask } from '../src/engine/combat';
 import { makeCtx, type Ctx } from '../src/engine/context';
 import { flaskStats } from '../src/engine/flasks';
-import { createSkillGem, skillNumbers } from '../src/engine/gems';
-import { BACKDRAFT_COST, longshotMore, manaFraction, manaPowerMore, meterLabel, meterMax } from '../src/engine/mechanics';
+import { createSkillGem } from '../src/engine/gems';
+import { longshotMore, manaFraction, manaPowerMore, meterLabel, meterMax, overflowMax } from '../src/engine/mechanics';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -355,13 +355,67 @@ describe.each([false, true])('gates (offline: %s)', (offline) => {
     expect(meterLabel(s, deriveStats(s))).toContain('hawk every');
   });
 
-  it('Wildcaster: the bonus is 30% at empty mana and nothing at full', () => {
-    const { s } = arena('wildcaster', { offline });
+  it('Wellspring: a full tank keeps Mana is Power, and spare mana fills Overflow', () => {
+    const { s, ctx, c } = arena('wellspring', { offline });
     const d = deriveStats(s);
-    expect(manaPowerMore(s, d, 1)).toBe(0);
-    expect(manaPowerMore(s, d, 0)).toBe(30);
-    s.mana = d.maxMana / 2;
-    expect(manaPowerMore(s, d, manaFraction(s, d))).toBeCloseTo(15, 0);
+    expect(d.manaRegen).toBeGreaterThanOrEqual(2);
+    expect(manaPowerMore(s, d, 1)).toBe(30);
+    expect(manaPowerMore(s, d, 0)).toBe(0);
+    // below full nothing spills
+    s.mana = d.maxMana - 1;
+    combatStep(s, ctx, 50, deriveStats(s));
+    expect(c.mech).toBe(0);
+    s.mana = d.maxMana;
+    run(s, ctx, 1000);
+    expect(c.mech).toBeGreaterThan(0);
+    expect(meterLabel(s, deriveStats(s))).toContain('Overflow');
+    expect(manaFraction(s, d)).toBe(1);
+  });
+
+  it('Wellspring: a Surge is free and hits about twice as hard', () => {
+    const { s, ctx, c, dummy, events } = arena('wellspring', { gem: 'spark', offline });
+    const hit = () => {
+      events.length = 0;
+      run(s, ctx, 3000, () => dealt(events, dummy.uid) > 0);
+      return dealt(events, dummy.uid);
+    };
+    let plain = 0;
+    for (let i = 0; i < 20; i++) {
+      s.mana = deriveStats(s).maxMana;
+      c.mech = 0;
+      plain += hit();
+    }
+    let surged = 0;
+    for (let i = 0; i < 20; i++) {
+      s.mana = deriveStats(s).maxMana;
+      c.mech = overflowMax(deriveStats(s));
+      expect(meterLabel(s, deriveStats(s))).toContain('Surges');
+      surged += hit();
+      expect(s.mana).toBe(deriveStats(s).maxMana);
+    }
+    expect(surged / plain).toBeGreaterThan(1.6);
+    expect(surged / plain).toBeLessThan(2.5);
+  });
+
+  it('Wellspring: a Surge waits for a spell that deals damage', () => {
+    const { s, ctx, c } = arena('wellspring', { gem: 'frost_ward', offline });
+    const max = overflowMax(deriveStats(s));
+    c.mech = max;
+    run(s, ctx, 500, () => c.cooldowns[0] > 0);
+    expect(c.cooldowns[0]).toBeGreaterThan(0);
+    expect(c.mech).toBe(max);
+  });
+
+  it('Wellspring: old Wildcasters move over with their points back', () => {
+    const { s } = arena('wellspring', { offline });
+    const raw = JSON.parse(serialize(s));
+    raw.version = 28;
+    raw.ascendancy.id = 'wildcaster';
+    raw.ascendancy.nodes = ['wildcaster_ragged_edge_1', 'wildcaster_burnout'];
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.ascendancy.id).toBe('wellspring');
+    expect(loaded.ascendancy.nodes).toEqual([]);
+    expect(ascendancyPointsLeft(loaded)).toBe(ASCENDANCY_MAX_POINTS);
   });
 
   it('Alchemist: flask charges count as mana, and a drink bursts on your target', () => {
@@ -590,22 +644,25 @@ describe('sealed notables and capstones', () => {
     expect(dummy.life).toBe(dummy.maxLife);
   });
 
-  it('Wildcaster: Burnout makes the next 3 spells free at the full bonus', () => {
-    const { s, ctx, c } = arena('wildcaster', { gem: 'spark', nodes: ['wildcaster_burnout', 'wildcaster_ragged_edge', 'wildcaster_backdraft', 'wildcaster_feedback'] });
+  it('Wellspring: Riptide echoes a single-target spell and Deluge makes a Surge a Mega Crit', () => {
+    // Fireball winds up, so the Surge has to last from paying to landing
+    const { s, ctx, c, events } = arena('wellspring', { gem: 'fireball', nodes: ['wellspring_riptide', 'wellspring_deluge'] });
+    c.mech = overflowMax(deriveStats(s));
+    const megas = () => events.flatMap((e) => (e.t === 'hit' && e.target === 'monster' && e.mega ? [e] : []));
+    run(s, ctx, 6000, () => megas().length > 0);
+    expect(c.asc.surging).toBe(false);
+    expect(megas()).toHaveLength(2);
+    expect(megas()[1].amount).toBeLessThan(megas()[0].amount * 1.2);
+  });
+
+  it('Wellspring: Wake lands the ailment and Springward restores Energy Shield', () => {
+    const { s, ctx, c, dummy, events } = arena('wellspring', { gem: 'spark', nodes: ['wellspring_wake', 'wellspring_springward'] });
+    c.mech = overflowMax(deriveStats(s));
+    s.es = 0;
+    run(s, ctx, 3000, () => dealt(events, dummy.uid) > 0);
+    expect(dummy.shockMs).toBeGreaterThan(0);
     const d = deriveStats(s);
-    expect(manaPowerMore(s, d, 0.1)).toBeCloseTo(27 + 15);
-    // the spell that empties the tank sets it off
-    s.mana = 0.5;
-    c.asc.burnout = 0;
-    const cost = skillNumbers(deriveStats(s), s.skillBar[0]).manaCost;
-    s.mana = cost * BACKDRAFT_COST;
-    run(s, ctx, 3000, () => c.asc.burnout > 0);
-    expect(c.asc.burnout).toBe(3);
-    s.mana = 0;
-    run(s, ctx, 30000, () => c.asc.burnout === 0);
-    expect(c.asc.burnout).toBe(0);
-    expect(c.manaFrac).toBe(0);
-    expect(c.asc.burnoutRearmed).toBe(false);
+    expect(s.es).toBeGreaterThanOrEqual(Math.min(d.maxEs, d.maxMana * 0.1));
   });
 
   it('Alchemist: Deep Cellar, Tonic, Volatile Mix and Philosopher\'s Draught', () => {

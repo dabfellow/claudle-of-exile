@@ -26,7 +26,7 @@ export function newAscendancyState(): AscendancyState {
 }
 
 export function newAscendancyRuntime(): AscendancyRuntime {
-  return { rampageMs: 0, rampageTotal: 0, holdMs: 0, hawkMs: 0, hawking: false, sureCrit: false, streak: 0, burnout: 0, burnoutRearmed: true, novas: 0, novaDamage: 0, dawn: false, fighting: false };
+  return { rampageMs: 0, rampageTotal: 0, holdMs: 0, hawkMs: 0, hawking: false, sureCrit: false, streak: 0, surging: false, novas: 0, novaDamage: 0, dawn: false, fighting: false };
 }
 
 /** Everything waits for Act 3: dev builds, tests and the sim get it early, like preview acts. */

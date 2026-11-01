@@ -36,7 +36,7 @@ import { flaskStats } from '../../engine/flasks';
 import { gemUseReason, MIN_COOLDOWN_MS, skillNumbers } from '../../engine/gems';
 import { ASCENDANCY_BY_ID } from '../../data/ascendancies';
 import { ascendancyOf } from '../../engine/ascendancy';
-import { flaskCapacity, meterLabel, meterMax, mechanicOf } from '../../engine/mechanics';
+import { flaskCapacity, meterLabel, meterMax, mechanicOf, overflowMax } from '../../engine/mechanics';
 import { classDef } from '../../data/classes';
 import { mealTimeLeft } from '../components/PantryBoard';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
@@ -148,9 +148,9 @@ const critClass = (n?: number) => (n ? (n % 2 ? 'crit-a' : 'crit-b') : '');
 /** The class mechanic's meter (Rage, Momentum, Malice, Fervor) or its current effect (Mana is Power, Riposte). */
 function MechanicMeter({ s, d, c }: { s: GameState; d: Derived; c: CombatRuntime }) {
   const cls = classDef(s.character.classId);
-  const max = meterMax(mechanicOf(s), d.raw);
-  const label = meterLabel(s, d);
   const asc = ascendancyOf(s);
+  const max = asc === 'wellspring' ? overflowMax(d) : meterMax(mechanicOf(s), d.raw);
+  const label = meterLabel(s, d);
   return (
     <>
       <Tooltip

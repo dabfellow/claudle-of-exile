@@ -38,11 +38,11 @@ export const HAWK_MS = 1600;
 export const HAWK_SPEED_PER_STACK = 0.06;
 export const HAWK_DAMAGE = 0.5;
 export const STOOP_MULT = 4;
-export const RAGGED_EDGE_BONUS = 15;
-export const RAGGED_EDGE_BELOW = 0.25;
-export const FEEDBACK_MANA = 0.02;
-export const BACKDRAFT_COST = 0.7;
-export const BURNOUT_SPELLS = 3;
+/** Wellspring: Overflow holds this share of max Mana, and a Surge from it deals this % more damage */
+export const OVERFLOW_SHARE = 0.25;
+export const SURGE_MORE = 100;
+export const RIPTIDE_ECHO = 0.8;
+export const SPRINGWARD_ES = 0.1;
 /** Alchemist: one flask charge counts as this much mana */
 export const CHARGE_MANA = 3;
 /** A flask burst deals this much fire damage per character level, before Flask Effect. */
@@ -117,12 +117,29 @@ export function meterMax(mech: Mechanic | null, r: Partial<Stats>): number {
 
 /** Rampaging counts as a full meter for rules, so Berserk can line up with it while Rage drains. */
 export function meterFull(s: GameState, d: Derived): boolean {
+  if (ascendancyOf(s) === 'wellspring') return surgeReady(s, d);
   const max = meterMax(mechanicOf(s), d.raw);
   return max > 0 && ((s.combat?.mech ?? 0) >= max || rampaging(s));
 }
 
 export function rampaging(s: GameState): boolean {
   return (s.combat?.asc?.rampageMs ?? 0) > 0;
+}
+
+/** Wellspring: how much mana a Surge takes */
+export function overflowMax(d: Derived): number {
+  return d.maxMana * OVERFLOW_SHARE;
+}
+
+export function surgeReady(s: GameState, d: Derived): boolean {
+  return ascendancyOf(s) === 'wellspring' && d.maxMana > 0 && (s.combat?.mech ?? 0) >= overflowMax(d);
+}
+
+/** Add mana in a fight. For a Wellspring, what doesn't fit fills Overflow. */
+export function gainMana(s: GameState, d: Derived, amount: number): void {
+  const spare = s.mana + amount - d.maxMana;
+  s.mana = Math.min(d.maxMana, s.mana + amount);
+  if (spare > 0 && s.combat && ascendancyOf(s) === 'wellspring') s.combat.mech = Math.min(overflowMax(d), s.combat.mech + spare);
 }
 
 /** Matador: how long the streak can get */
@@ -193,11 +210,8 @@ export function manaFraction(s: GameState, d: Derived): number {
 /** Mana is Power: % more spell damage at a given fullness */
 export function manaPowerMore(s: GameState, d: Derived, frac: number): number {
   if (mechanicOf(s) !== 'manaPower') return 0;
-  // Wildcaster: the emptier the tank, the bigger the bonus
-  const wild = ascendancyOf(s) === 'wildcaster';
-  const f = wild ? 1 - frac : frac;
-  if (d.raw.allOrNothing) return f >= 0.8 ? 60 : 0;
-  return (30 + d.raw.manaPower) * f + (frac < RAGGED_EDGE_BELOW && hasAscNode(s, 'wildcaster_ragged_edge') ? RAGGED_EDGE_BONUS : 0);
+  if (d.raw.allOrNothing) return frac >= 0.8 ? 60 : 0;
+  return (30 + d.raw.manaPower) * frac;
 }
 
 /** How many charges a flask holds for this character. */
@@ -238,6 +252,7 @@ export function meterLabel(s: GameState, d: Derived): string {
     case 'martyr':
       return ascendancyOf(s) === 'lightkeeper' ? `Fervor ${stacks}% · ${c?.asc.novas ?? 0}/${NOVA_STORE} novas stored` : `Fervor ${stacks}%`;
     case 'manaPower':
+      if (ascendancyOf(s) === 'wellspring') return surgeReady(s, d) ? 'Overflow full · next spell Surges' : `Overflow ${Math.floor(((c?.mech ?? 0) / Math.max(1, overflowMax(d))) * 100)}%`;
       return `Mana is Power · ${manaPowerMore(s, d, manaFraction(s, d)).toFixed(0)}% more spell damage`;
     case 'riposte':
       return `${c && c.riposteMs > 0 && !d.raw.perfectForm ? 'Riposte recovering' : 'Riposte ready'}${ascendancyOf(s) === 'matador' ? ` · streak ${c?.asc.streak ?? 0}/${streakCap(s)}` : ''}`;

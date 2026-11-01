@@ -108,14 +108,12 @@ import { grantXp } from './skills';
 import {
   ANVIL_THORNS_PCT,
   ANVIL_THORNS_PER_RAGE,
-  BACKDRAFT_COST,
   BLOOM_MORE,
-  BURNOUT_SPELLS,
   coupMulti,
   DRAUGHT_MORE,
   ECSTASY_SPEED,
   ensureMechanicFields,
-  FEEDBACK_MANA,
+  gainMana,
   fervorThreshold,
   flaskCapacity,
   FLASK_BURST_PER_LEVEL,
@@ -145,6 +143,7 @@ import {
   RAMPAGE_MS,
   rampaging,
   RESERVE_MORE,
+  RIPTIDE_ECHO,
   RIPOSTE_COOLDOWN_MS,
   RIPOSTE_LANDED_MULT,
   SCOURGE_DAMAGE,
@@ -158,6 +157,9 @@ import {
   THE_BLOCK_AT,
   TONIC_MANA,
   VESPERS_SHIELD,
+  SPRINGWARD_ES,
+  SURGE_MORE,
+  surgeReady,
 } from './mechanics';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
 import { openReachedZones, reachedAct } from './progress';
@@ -847,10 +849,15 @@ export function queueSkill(s: GameState, slot: number): string | null {
 
 /** What a skill costs right now, after anything your ascendancy waives. */
 function skillCost(s: GameState, d: Derived, nums: SkillNumbers): number {
-  const spell = nums.def.tags.includes('spell');
-  if (spell && s.combat!.asc.burnout > 0) return 0;
+  if (surgeWaiting(s, d, nums)) return 0;
   if (s.life < d.maxLife / 2 && hasAscNode(s, 'flagellant_ecstasy')) return 0;
-  return nums.manaCost * (spell && s.mana < d.maxMana / 2 && hasAscNode(s, 'wildcaster_backdraft') ? BACKDRAFT_COST : 1);
+  return nums.manaCost;
+}
+
+/** Wellspring: a full Overflow goes to the next spell that deals damage, not to a ward or a summon. */
+function surgeWaiting(s: GameState, d: Derived, nums: SkillNumbers): boolean {
+  const e = nums.def.effect;
+  return nums.def.tags.includes('spell') && !!e.base && !e.minion && !e.storm && surgeReady(s, d);
 }
 
 /**
@@ -1098,6 +1105,7 @@ function rollHit(
   nums: SkillNumbers,
   mon: MonsterInstance,
   sure = false,
+  surge = false,
 ): { byType: ByType; crit: boolean; mega: boolean; coup: boolean } | null {
   const c = s.combat!;
   const { def, mods, level } = nums;
@@ -1178,6 +1186,7 @@ function rollHit(
   }
   if (isAttack) more *= (1 + rageMore(s, d) / 100) * (1 + longshotMore(s, d, cellRing(mon.cell)) / 100);
   if (def.tags.includes('spell')) more *= 1 + manaPowerMore(s, d, c.manaFrac) / 100;
+  if (surge) more *= 1 + SURGE_MORE / 100;
   if (s.life < d.maxLife / 2 && hasAscNode(s, 'flagellant_mortify')) more *= 1 + MORTIFY_MORE / 100;
   if (hasAscNode(s, 'alchemist_philosophers_draught')) more *= 1 + (DRAUGHT_MORE * c.buffs.filter((b) => b.source === 'flask').length) / 100;
   if (def.tags.includes('spell') && d.weaponFamily && CASTER_WEAPONS.includes(d.weaponFamily)) more *= 1 + CASTER_WEAPON_MORE / 100;
@@ -1192,7 +1201,7 @@ function rollHit(
 
   // Mega Crits: a flat 400% that ignores crit multiplier, only from Knife's Edge, Ambush and Coup de Grâce
   const malice = mechanicOf(s) === 'malice';
-  let megaMulti = r.knifesEdge ? MEGA_CRIT_MULTI : 0;
+  let megaMulti = r.knifesEdge || (surge && hasAscNode(s, 'wellspring_deluge')) ? MEGA_CRIT_MULTI : 0;
   if (isAttack && c.ambush) {
     megaMulti = Math.max(megaMulti, MEGA_CRIT_MULTI);
     c.ambush = false;
@@ -1342,12 +1351,12 @@ export function shockPct(mon: MonsterInstance): number {
 }
 
 /** Fire burns, cold chills, lightning shocks: each rolls on its own, and what lands builds toward the next stage. */
-function applyElementAilments(c: CombatRuntime, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealtBy: ByType, chillBonus: boolean): void {
+function applyElementAilments(c: CombatRuntime, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealtBy: ByType, chillBonus: boolean, sure: boolean): void {
   const { def, mods } = nums;
   const e = def.effect;
   const r = d.raw;
   const skill = e.ailmentChance ?? 0;
-  const lands = (amount: number, pct: number) => amount > 0 && pct > 0 && chance(ctx.rng, pct / 100);
+  const lands = (amount: number, pct: number) => amount > 0 && (sure || (pct > 0 && chance(ctx.rng, pct / 100)));
   const build = (mon.build ??= { burn: 0, chill: 0, shock: 0 });
   const full = ailmentThreshold(mon);
   if (lands(dealtBy.fire, skill + r.burnChance)) {
@@ -1396,6 +1405,7 @@ function hitMonster(
   factor: number,
   mega = false,
   coup = false,
+  wake = false,
 ): number {
   const c = s.combat!;
   const { def, mods } = nums;
@@ -1457,7 +1467,7 @@ function hitMonster(
     }
   }
   const manaLeech = mods.manaLeech + (e.leechMana ?? 0);
-  if (manaLeech > 0) s.mana = Math.min(d.maxMana, s.mana + (dealt * manaLeech) / 100);
+  if (manaLeech > 0) gainMana(s, d, (dealt * manaLeech) / 100);
 
   // stun / armour break
   const stunChance = (e.stunChance ?? 0) + (mods.stunChance + r.stunChance) / 100;
@@ -1497,10 +1507,10 @@ function hitMonster(
       gemId: def.id,
     });
   }
-  // gear: a chance for any hit to poison
-  if (r.poisonOnHit && chance(ctx.rng, r.poisonOnHit / 100)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_POISON));
+  // gear: a chance for any hit to poison. Wake: a Surge's chaos always does
+  if ((wake && dealtBy.chaos > 0) || (r.poisonOnHit && chance(ctx.rng, r.poisonOnHit / 100))) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_POISON));
   const scale = beforeMore > 0 ? dealt / beforeMore : 0;
-  applyElementAilments(c, ctx, d, nums, mon, { phys: 0, fire: dealtBy.fire * scale, cold: dealtBy.cold * scale, light: dealtBy.light * scale, chaos: 0 }, !!r.chillOnHit);
+  applyElementAilments(c, ctx, d, nums, mon, { phys: 0, fire: dealtBy.fire * scale, cold: dealtBy.cold * scale, light: dealtBy.light * scale, chaos: 0 }, !!r.chillOnHit, wake);
   return dealt;
 }
 
@@ -1548,7 +1558,7 @@ function consumeBleed(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mo
   ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(left), dmgType: 'phys', dot: true, monsterUid: mon.uid });
   const back = Math.min((left * nums.def.effect.consumeBleed!) / 100, d.maxLife * TRANSFUSION_CAP);
   s.life = Math.min(d.maxLife, s.life + back);
-  if (nums.mods.specials.has('communion')) s.mana = Math.min(d.maxMana, s.mana + back);
+  if (nums.mods.specials.has('communion')) gainMana(s, d, back);
 }
 
 /** Everything using a skill costs: mana or Life, the cooldown and what your class and ascendancy do on a use. */
@@ -1558,11 +1568,7 @@ function paySkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillN
   const r = d.raw;
   c.manaFrac = manaFraction(s, d);
   const cost = skillCost(s, d, nums);
-  // Burnout: a free spell always hits at the full bonus
-  if (def.tags.includes('spell') && c.asc.burnout > 0) {
-    c.asc.burnout -= 1;
-    c.manaFrac = 0;
-  }
+  if (surgeWaiting(s, d, nums)) startSurge(s, ctx, d);
   // Overclock: no costs, and cooldowns at the minimum
   if (!r.overclock) {
     if (r.bloodPact) s.life -= cost;
@@ -1572,15 +1578,19 @@ function paySkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillN
       if (mods.specials.has('tithe')) c.heals.push({ resource: 'life', perMs: (nums.lifeCost * TITHE_SHARE) / TITHE_MS, remainingMs: TITHE_MS });
     }
   }
-  if (def.tags.includes('spell') && c.asc.burnoutRearmed && s.mana < nums.manaCost && hasAscNode(s, 'wildcaster_burnout')) {
-    c.asc.burnout = BURNOUT_SPELLS;
-    c.asc.burnoutRearmed = false;
-    ctx.emit({ t: 'info', text: 'Burnout: your next spells are free', tone: 'good' });
-  }
   if (slot >= 0) c.cooldowns[slot] = Math.max(MIN_COOLDOWN_MS, nums.cooldownMs);
   if (slot >= 0 && ascendancyOf(s) === 'flagellant') selfHarm(s, ctx, d);
   if (mechanicOf(s) === 'rage' && def.id === 'war_cry') gainMeter(s, d, 10);
   if (slot >= 0) ctx.emit({ t: 'skill', slot, gemId: def.id, manual });
+}
+
+/** Wellspring: Overflow is spent, and the spell paying for it Surges when it lands. */
+function startSurge(s: GameState, ctx: Ctx, d: Derived): void {
+  const c = s.combat!;
+  c.mech = 0;
+  c.asc.surging = true;
+  if (hasAscNode(s, 'wellspring_springward')) s.es = Math.min(d.maxEs, s.es + d.maxMana * SPRINGWARD_ES);
+  ctx.emit({ t: 'info', text: 'Surge!', tone: 'good' });
 }
 
 /** A heavy skill paid when it started winding up, so `paid` skips that when it lands. */
@@ -1599,7 +1609,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
     c.retaliate = mods.specials.has('retaliate');
     c.counterweight = mods.specials.has('counterweight');
   }
-  if (e.restoreManaPct) s.mana = Math.min(d.maxMana, s.mana + (d.maxMana * e.restoreManaPct) / 100);
+  if (e.restoreManaPct) gainMana(s, d, (d.maxMana * e.restoreManaPct) / 100);
   if (def.id === 'meditate') {
     if (r.meditateEs) s.es = Math.min(d.maxEs, s.es + (d.maxEs * r.meditateEs) / 100);
     if (mods.specials.has('clarity')) {
@@ -1706,8 +1716,20 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
     ctx.emit({ t: 'info', text: 'Last Arrow!', tone: 'good' });
   }
 
+  // a Surge covers the whole cast. Riptide: an area grows, a chain reaches further, anything else fires again
+  const surge = c.asc.surging && def.tags.includes('spell');
+  if (surge) c.asc.surging = false;
+  const riptide = surge && hasAscNode(s, 'wellspring_riptide');
+  const wake = surge && hasAscNode(s, 'wellspring_wake');
+  const chains = (e.targets === 'chain' ? (e.chains ?? 0) + r.extraChains : 0) + mods.chains;
+  const widens = riptide && (shape === 'splash' || shape === 'nova');
+  const reaches = riptide && shape === 'target' && chains > 0;
+  const echo = riptide && !widens && !reaches;
+  if (echo) passes += 1;
+  const radius = widens ? (e.radius ?? (shape === 'nova' ? 2 : 1)) + 1 : e.radius;
+
   for (let pass = 0; pass < passes; pass++) {
-    const passMult = pass === 0 ? 1 : (mods.repeatDamage / 100) * (1 + r.repeatMore / 100);
+    const passMult = echo && pass === passes - 1 ? RIPTIDE_ECHO : pass === 0 ? 1 : (mods.repeatDamage / 100) * (1 + r.repeatMore / 100);
     for (let h = 0; h < hitsPerPass; h++) {
       // the target died mid-skill: the next one in reach takes the rest
       if (!target || target.life <= 0) {
@@ -1722,12 +1744,11 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       let targets: MonsterInstance[];
       let chained = false;
       if (shape !== 'target') {
-        const cells = new Set(areaCells(shape, target.cell, e.radius));
+        const cells = new Set(areaCells(shape, target.cell, radius));
         targets = [target, ...alive.filter((m) => m !== target && cells.has(m.cell))];
         if (pass === 0 && h === 0) ctx.emit({ t: 'area', gemId: def.id, cells: [...cells] });
       } else {
-        const chains = (e.targets === 'chain' ? (e.chains ?? 0) + r.extraChains : 0) + mods.chains;
-        targets = chainFrom(target, alive, chains);
+        targets = chainFrom(target, alive, chains + (reaches ? 1 : 0));
         chained = targets.length > 1;
         if (chained && pass === 0 && h === 0) ctx.emit({ t: 'area', gemId: def.id, cells: targets.map((m) => m.cell) });
       }
@@ -1743,7 +1764,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       const chilled = target.chillMs > 0;
       if (mods.specials.has('cheapshot') && stunned) c.asc.sureCrit = true;
       // a blow you waited for doesn't miss
-      const roll = rollHit(s, ctx, d, nums, target, c.asc.sureCrit || def.tags.includes('heavy') || (volley && h === hitsPerPass - 1));
+      const roll = rollHit(s, ctx, d, nums, target, c.asc.sureCrit || def.tags.includes('heavy') || (volley && h === hitsPerPass - 1), surge);
       if (!roll) {
         ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: 'phys', evaded: true, monsterUid: target.uid });
         continue;
@@ -1751,7 +1772,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       const aim = target;
       targets.forEach((m, i) => {
         const chainMult = chained ? 1 + ((mods.specials.has('overload') ? 20 : 0) + r.chainMore) / 100 * i : 1;
-        const dealt = hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * chainMult * tender, roll.mega, roll.coup);
+        const dealt = hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * chainMult * tender, roll.mega, roll.coup, wake);
         if (e.drag && pass === 0) dragIn(c, m, nums);
         if (ground && !grounded && m === aim) {
           grounded = true;
@@ -1857,7 +1878,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   if (mon.martyr) return onMartyrDeath(c, ctx, mon);
   ctx.emit({ t: 'kill', name: mon.name, boss: mon.isBoss });
   c.hungerMs = HUNGER_MS;
-  ascendancyKill(s, d, mon);
+  ascendancyKill(s, mon);
   s.lifetime.kills += 1;
   const xp = monsterXp(mon) * areaXpMultiplier(characterLevel(s), zone.levelRange);
   grantXp(s, ctx, 'combat', xp * (1 + d.charXp / 100));
@@ -2108,7 +2129,7 @@ function afterCoup(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): vo
 }
 
 /** What a kill does for your ascendancy. */
-function ascendancyKill(s: GameState, d: Derived, mon: MonsterInstance): void {
+function ascendancyKill(s: GameState, mon: MonsterInstance): void {
   const c = s.combat!;
   if (rampaging(s)) {
     if (hasAscNode(s, 'ravager_bloodlust')) {
@@ -2117,7 +2138,6 @@ function ascendancyKill(s: GameState, d: Derived, mon: MonsterInstance): void {
     }
     if (hasAscNode(s, 'ravager_no_mercy')) c.asc.holdMs = NO_MERCY_HOLD_MS;
   }
-  if (hasAscNode(s, 'wildcaster_feedback')) s.mana = Math.min(d.maxMana, s.mana + d.maxMana * FEEDBACK_MANA);
   if (hasAscNode(s, 'plaguewright_contagion')) {
     const nearest = aliveMonsters(c).find((m) => m !== mon);
     if (nearest) for (const x of mon.dots) if (x.remainingMs > 0) applyDot(nearest, { ...x, dealt: 0 });
@@ -2151,7 +2171,7 @@ function hawkStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   mon.stunMs = Math.max(mon.stunMs, mon.isBoss ? 400 : 1000);
 }
 
-/** Rampages, Head Start, Burnout's rearming, Ecstasy and stored novas. */
+/** Rampages, Head Start, Ecstasy and stored novas. */
 function ascendancyStep(s: GameState, ctx: Ctx, d: Derived, dt: number, fighting: boolean): void {
   const c = s.combat!;
   const a = c.asc;
@@ -2159,7 +2179,6 @@ function ascendancyStep(s: GameState, ctx: Ctx, d: Derived, dt: number, fighting
   if (!asc) return;
   if (fighting && !a.fighting && hasAscNode(s, 'longshot_head_start')) c.mech = Math.max(c.mech, Math.min(HEAD_START_MOMENTUM, meterMax('momentum', d.raw)));
   a.fighting = fighting;
-  if (s.mana >= d.maxMana / 2) a.burnoutRearmed = true;
   if (asc === 'lightkeeper' && fighting && a.novas > 0 && novasDue(s, d)) releaseNovas(s, ctx);
   if (hasAscNode(s, 'flagellant_ecstasy')) {
     c.buffs = c.buffs.filter((b) => b.id !== 'ecstasy');
@@ -2948,7 +2967,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   const recovery = underPlayer(c, 'unholy') ? UNHOLY_RECOVERY : 1;
   for (const h of c.heals) {
     const t = Math.min(dt, h.remainingMs);
-    if (h.resource === 'mana') s.mana += h.perMs * t;
+    if (h.resource === 'mana') gainMana(s, d, h.perMs * t);
     else s.life += h.perMs * t * recovery;
     h.remainingMs -= dt;
   }
@@ -2960,11 +2979,11 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   s.life = Math.min(d.maxLife, regenPct < 0 ? Math.max(Math.min(s.life, 1), regenned) : regenned);
   const esRegenPct = c.buffs.reduce((a, b) => a + (b.esRegenPct ?? 0), 0);
   if (esRegenPct) s.es = Math.min(d.maxEs, s.es + (d.maxEs * esRegenPct * dt) / 100000);
-  s.mana = Math.min(d.maxMana, s.mana + (d.manaRegen * dt) / 1000);
+  gainMana(s, d, (d.manaRegen * dt) / 1000);
   // there's no natural regen in a fight, so a flight that has shaken off every monster is a breather
   if (c.fleeing && !c.monsters.length) {
     s.life = Math.min(d.maxLife, s.life + (d.maxLife * FLEE_BREATHER_REGEN * dt) / 1000);
-    s.mana = Math.min(d.maxMana, s.mana + (d.maxMana * FLEE_BREATHER_REGEN * dt) / 1000);
+    gainMana(s, d, (d.maxMana * FLEE_BREATHER_REGEN * dt) / 1000);
   }
   c.esDelayMs = Math.max(0, c.esDelayMs - dt);
   if (c.esDelayMs <= 0) s.es = Math.min(d.maxEs, s.es + (d.esRecharge * dt) / 1000);

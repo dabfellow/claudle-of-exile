@@ -487,9 +487,8 @@ export interface AscendancyRuntime {
   sureCrit: boolean;
   /** Matador: Ripostes in a row */
   streak: number;
-  /** Burnout: free spells left, and whether mana has climbed back enough to set it off again */
-  burnout: number;
-  burnoutRearmed: boolean;
+  /** Wellspring: a Surge is paid for and waiting for its spell to land */
+  surging: boolean;
   /** Lightkeeper: novas stored, the damage that filled them, and Dawn waiting to absorb a wind-up */
   novas: number;
   novaDamage: number;

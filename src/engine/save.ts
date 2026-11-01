@@ -267,6 +267,15 @@ const MIGRATIONS: Record<number, Migration> = {
     const tut = raw.tutorial as { step: number; done?: boolean } | undefined;
     if (tut && !tut.done && tut.step >= 9) tut.step += 3;
   },
+  28: (raw) => {
+    // Wellspring replaced Wildcaster: the character moves over, and its nodes come back as points to spend
+    const s = raw as unknown as { ascendancy?: { id: string | null; nodes: string[] }; combat?: { asc?: unknown } };
+    if (s.ascendancy?.id === 'wildcaster') {
+      s.ascendancy.id = 'wellspring';
+      s.ascendancy.nodes = [];
+    }
+    if (s.combat) s.combat.asc = newAscendancyRuntime();
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
