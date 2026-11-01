@@ -22,7 +22,7 @@ import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { AccountState, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 29;
+export const SAVE_VERSION = 30;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;

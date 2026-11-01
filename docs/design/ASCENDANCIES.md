@@ -180,7 +180,7 @@ make it better, and each rule fits in one sentence.
 2. **Three trials:** one at the start of Act 3 opens the gate and the choice, one at the end of Act 4 opens the notables,
    and one at the start of Act 6 opens the capstone.
 3. **Own points:** the first pass of each trial gives ascendancy points that only work here; bosses give none (changed
-   2026-11-01). Every character fills the section, and the main tree loses nothing.
+   2026-11-01). They stop short of the whole section, and the main tree loses nothing.
 4. **Separate tree:** the ascendancy gets its own tab in the passive tree after the first trial. So it's usable the
    moment you pick, and the layout above stands on its own.
 5. **Switching:** allowed for a rare material, plus the usual Orb of Regret per node.
@@ -204,8 +204,9 @@ Calls made while building:
 
 - **Switching price:** 1 Divine Orb, plus an Orb of Regret per node. Divine is already a rare drop and the deepest boss
   table guarantees one, so no new source or art was needed.
-- **Points:** trials give 4, 4 and 3, which is the 11 the section can use. Each leaves a choice of what to take first,
-  and only the third fills the tree. Saves were cut back to this in v29, and a tree holding more than its points was refunded.
+- **Points:** trials give 3 each, 9 of the 11 the section could use, so nobody fills it. That buys three of the four big
+  nodes: all three notables, or two notables, the bridge and the capstone with a point over. Saves were cut back to this
+  in v30, and a tree holding more than its points was refunded.
 - **Ravager:** a Rampage drains on a clock, so hits during it don't hold it up. It counts as a full meter for tactics, so
   Berserk can line up. No Mercy holds the drain for 2s per kill.
 - **Anvil:** attackers take 4% of your Armour, plus 5% of that per Rage.

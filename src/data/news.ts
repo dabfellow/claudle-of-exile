@@ -8,6 +8,16 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.41',
+    date: '1 Nov 2026',
+    title: 'Choose your ascendancy nodes',
+    items: [
+      "Trials now give 3 ascendancy points each, 9 in all, so you can't fill the tree.",
+      'That buys three of the four big nodes: all three notables, or two notables and the capstone.',
+      'If your tree no longer fits, its nodes are refunded so you can choose again.',
+    ],
+  },
+  {
     version: '0.2.40',
     date: '1 Nov 2026',
     title: 'Trials give the points',

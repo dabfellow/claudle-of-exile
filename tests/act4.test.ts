@@ -455,15 +455,15 @@ describe('the second trial', () => {
     return { s, c };
   };
 
-  it('stands on the last stage, giving 4 points', () => {
-    expect(TRIALS.find((t) => t.n === 2)).toMatchObject({ zoneId: 'giantsthrone', points: 4 });
+  it('stands on the last stage, giving 3 points', () => {
+    expect(TRIALS.find((t) => t.n === 2)).toMatchObject({ zoneId: 'giantsthrone', points: 3 });
   });
 
   it('other Act 4 bosses give nothing', () => {
     const { s, c } = ascended();
-    expect(s.ascendancy.points).toBe(4);
+    expect(s.ascendancy.points).toBe(3);
     onBossFirstKill(s, c, 'hollowpass');
-    expect(s.ascendancy.points).toBe(4);
+    expect(s.ascendancy.points).toBe(3);
     expect(s.ascendancy.trials).toBe(1);
   });
 
@@ -484,8 +484,8 @@ describe('the second trial', () => {
   it('passes once', () => {
     const { s, c } = ascended();
     onBossFirstKill(s, c, 'giantsthrone');
-    expect(s.ascendancy.points).toBe(8);
+    expect(s.ascendancy.points).toBe(6);
     onBossFirstKill(s, c, 'giantsthrone');
-    expect(s.ascendancy.points).toBe(8);
+    expect(s.ascendancy.points).toBe(6);
   });
 });

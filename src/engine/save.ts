@@ -28,6 +28,13 @@ type OldSave = GameState & { stash: Item[][] };
 type PoolSave = GameState & AccountPool;
 
 /** MIGRATIONS[n] upgrades a save from version n to n + 1. */
+function resetAscendancyPoints(raw: Record<string, unknown>): void {
+  const asc = raw.ascendancy as { trials: number; points: number; nodes: string[] } | undefined;
+  if (!asc) return;
+  asc.points = TRIALS.filter((t) => t.n <= asc.trials).reduce((a, t) => a + t.points, 0);
+  if (asc.nodes.length > asc.points) asc.nodes = [];
+}
+
 const MIGRATIONS: Record<number, Migration> = {
   0: (raw) => {
     // pre-release saves had no lifetime stats
@@ -268,13 +275,10 @@ const MIGRATIONS: Record<number, Migration> = {
     const tut = raw.tutorial as { step: number; done?: boolean } | undefined;
     if (tut && !tut.done && tut.step >= 9) tut.step += 3;
   },
-  28: (raw) => {
-    // bosses stopped giving ascendancy points: only passed trials count, and a tree that no longer fits is handed back
-    const asc = raw.ascendancy as { trials: number; points: number; nodes: string[] } | undefined;
-    if (!asc) return;
-    asc.points = TRIALS.filter((t) => t.n <= asc.trials).reduce((a, t) => a + t.points, 0);
-    if (asc.nodes.length > asc.points) asc.nodes = [];
-  },
+  // bosses stopped giving ascendancy points: only passed trials count, and a tree that no longer fits is handed back
+  28: resetAscendancyPoints,
+  // trials cut to 3 points each, so the tree can't be filled
+  29: resetAscendancyPoints,
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

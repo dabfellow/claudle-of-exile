@@ -11,7 +11,7 @@ Decided 2026-10-31. It's Milestone 6 of [MILESTONES.md](../MILESTONES.md), plann
   there.
 - **First trial:** the act's first stage, so the choice comes as soon as you arrive, as you decided.
 - **Lacerate:** arrives here, as already decided in Act 1's skill split.
-- **Ascendancy points:** the trial gives 4, and Act 3's other bosses give none. That's 4 of the 6 small passives, with
+- **Ascendancy points:** the trial gives 3, and Act 3's other bosses give none. That's 3 of the 6 small passives, with
   the notables still sealed until the Act 4 trial.
 - **Rewards:** bases up to about level 45 start dropping, plus 6 new uniques, as in Act 2.
 

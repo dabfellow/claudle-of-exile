@@ -420,6 +420,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Ascendancy tree can't be filled: trials give 3 each, 9 of 11, so at most three of the four big nodes. Save v30 cuts points back and refunds trees that no longer fit ([ASCENDANCIES.md](design/ASCENDANCIES.md)). 0.2.41 — done 2026-11-01
 - [x] Ascendancy points only from a trial's first pass (4, 4, 3 to fill the 11), bosses give none, and the area card, Tree page and toast say what each trial gives and opens. Save v29 cuts held points to what passed trials give, and refunds a tree that no longer fits ([ASCENDANCIES.md](design/ASCENDANCIES.md)). 0.2.40 — done 2026-11-01
 - [x] Martyrs eased: area and chain skills go for them with no click or rule and count for offline bosses (a spread from a support doesn't count offline yet), and a chained boss shows a notice over the field and "chained" instead of 0 ([ACT3.md](design/ACT3.md)). 0.2.39 — done 2026-11-01
 - [x] Running list of uniques: [UNIQUES.md](UNIQUES.md), generated from the game data by `npm run uniques`, and a test fails if it's stale — done 2026-11-01

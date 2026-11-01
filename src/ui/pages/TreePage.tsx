@@ -4,6 +4,7 @@ import {
   ASCENDANCY_NODE_BY_ID,
   ascendanciesOf,
   SWITCH_MATERIAL_COST,
+  ASCENDANCY_MAX_POINTS,
   TRIAL_SEAL,
   TRIALS,
   type AscendancyDef,
@@ -889,7 +890,7 @@ function TrialList({ s }: { s: GameState }) {
     <div className="card" style={{ marginBottom: 12 }}>
       <h3 style={{ margin: 0 }}>Trials</h3>
       <p className="muted small" style={{ margin: '4px 0' }}>
-        Ascendancy points come only from passing a trial, once each.
+        Ascendancy points come only from passing a trial, once each. They add up to {ASCENDANCY_MAX_POINTS}, enough for three of the four big nodes, so choose what to leave out.
       </p>
       {TRIALS.map((t) => {
         const z = zoneDef(t.zoneId);

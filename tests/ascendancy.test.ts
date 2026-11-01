@@ -120,9 +120,9 @@ describe('earning and spending', () => {
     expect(chooseAscendancy(s, ctx, 'ravager')).toBeTruthy();
     passTrial(s, ctx, 1);
     expect(choiceWaiting(s)).toBe(true);
-    expect(s.ascendancy.points).toBe(4);
+    expect(s.ascendancy.points).toBe(3);
     passTrial(s, ctx, 1);
-    expect(s.ascendancy.points).toBe(4);
+    expect(s.ascendancy.points).toBe(3);
     expect(chooseAscendancy(s, ctx, 'matador')).toBeTruthy();
     expect(chooseAscendancy(s, ctx, 'ravager')).toBeNull();
     expect(ascendancyOf(s)).toBe('ravager');
@@ -151,7 +151,7 @@ describe('earning and spending', () => {
     }
   });
 
-  it('only trials give points, and the three fill the section', () => {
+  it('only trials give points, 9 in all', () => {
     const s = veteran(newGame(1, { name: 't', classId: 'mage' }));
     const ctx = makeCtx(seeded(1));
     onBossFirstKill(s, ctx, 'almsquarter');
@@ -159,11 +159,25 @@ describe('earning and spending', () => {
     onBossFirstKill(s, ctx, 'pilgrimgate');
     onBossFirstKill(s, ctx, 'almsquarter');
     onBossFirstKill(s, ctx, 'highaltar');
-    expect(s.ascendancy.points).toBe(4);
+    expect(s.ascendancy.points).toBe(3);
     onBossFirstKill(s, ctx, 'giantsthrone');
     onBossFirstKill(s, ctx, 'exilesgate');
     expect(s.ascendancy.points).toBe(ASCENDANCY_MAX_POINTS);
-    expect(ASCENDANCY_BY_ID.ravager.nodes.filter((n) => n.kind !== 'gate')).toHaveLength(ASCENDANCY_MAX_POINTS);
+  });
+
+  it('9 points buy three big nodes, never all four', () => {
+    const { s, ctx } = arena('anvil');
+    const a = ASCENDANCY_BY_ID.anvil;
+    const take = (ids: string[]) => {
+      s.ascendancy.trials = 3;
+      s.ascendancy.points = 9;
+      s.ascendancy.nodes = [];
+      return ids.map((id) => allocateAscNode(s, ctx, id));
+    };
+    const branch = (i: number) => [`${a.notables[i].id}_1`, `${a.notables[i].id}_2`, a.notables[i].id];
+    expect(take([0, 1, 2].flatMap(branch)).every((r) => r === null)).toBe(true);
+    expect(take([...branch(0), ...branch(1), 'anvil_bridge', a.capstone.id]).every((r) => r === null)).toBe(true);
+    expect(take([0, 1, 2].flatMap(branch).concat('anvil_bridge', a.capstone.id)).at(-2)).toBe('No points left');
   });
 
   it('points already earned from bosses go, and a tree that no longer fits is handed back', () => {
@@ -173,10 +187,10 @@ describe('earning and spending', () => {
       Object.assign(old.ascendancy, { id: 'ravager', trials, points, nodes });
       return deserialize(JSON.stringify(old)).ascendancy;
     };
-    const small = ['ravager_bloodlust_1', 'ravager_bloodlust_2', 'ravager_trample_1', 'ravager_trample_2'];
-    expect(load(1, 11, small)).toMatchObject({ points: 4, nodes: small });
-    expect(load(1, 11, [...small, 'ravager_red_haze_1'])).toMatchObject({ points: 4, nodes: [], id: 'ravager' });
-    expect(load(2, 11, small).points).toBe(8);
+    const small = ['ravager_bloodlust_1', 'ravager_bloodlust_2', 'ravager_trample_1'];
+    expect(load(1, 11, small)).toMatchObject({ points: 3, nodes: small });
+    expect(load(1, 4, [...small, 'ravager_trample_2'])).toMatchObject({ points: 3, nodes: [], id: 'ravager' });
+    expect(load(2, 8, small).points).toBe(6);
     expect(load(0, 0, []).points).toBe(0);
   });
 
@@ -265,10 +279,10 @@ describe('the first trial', () => {
     fight();
     expect(s.bossesDefeated).toContain('pilgrimgate');
     expect(s.ascendancy.trials).toBe(1);
-    expect(s.ascendancy.points).toBe(4);
+    expect(s.ascendancy.points).toBe(3);
     expect(events.filter((e) => e.t === 'trialPassed')).toHaveLength(1);
     fight();
-    expect(s.ascendancy.points).toBe(4);
+    expect(s.ascendancy.points).toBe(3);
   });
 });
 
