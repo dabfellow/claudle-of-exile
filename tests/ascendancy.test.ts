@@ -774,7 +774,7 @@ describe('sealed notables and capstones', () => {
     expect(dummy.stunMs).toBeGreaterThan(0);
     expect(dummy.vulnMs).toBeGreaterThan(0);
     expect(c.shield).toBeGreaterThan(0);
-    expect(dealt(events, dummy.uid)).toBe(Math.round(1000 * 0.5 * 1.4));
+    expect(dealt(events, dummy.uid)).toBe(Math.round(1000 * 0.55 * 1.4));
     expect(c.asc.dawn).toBe(true);
     const boss = makeMonster(zoneDef('mudflats').boss, true, 50);
     boss.life = boss.maxLife = 1e7;
