@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { activeGemDef } from '../src/data/gems';
 import { zoneDef } from '../src/data/zones';
-import { aliveMonsters, chooseSkill, combatStep, DPS_WINDOW_S, liveDps, makeMonster, queueSkill, ruleAllows, ruleContext, startCombat } from '../src/engine/combat';
+import { aliveMonsters, chooseSkill, combatStep, DPS_WINDOW_MS, liveDps, makeMonster, queueSkill, ruleAllows, ruleContext, startCombat } from '../src/engine/combat';
 import { unlockEverything } from '../src/engine/automation';
 import { makeCtx } from '../src/engine/context';
 import {
@@ -176,10 +176,23 @@ describe('DPS meter', () => {
 
   it('counts every monster hit, for skills as well as the default attack', () => {
     const { s, c } = arena(['ground_slam'], [dummy(), dummy(), dummy()]);
-    run(s, c, 5000);
+    run(s, c, DPS_WINDOW_MS);
     expect(lost(s)).toBeGreaterThan(0);
-    expect(s.combat!.dealt.reduce((a, n) => a + n, 0)).toBeCloseTo(lost(s));
-    expect(liveDps(s.combat!)).toBeCloseTo(lost(s) / 5, 0);
+    expect(liveDps(s.combat!)).toBeCloseTo(lost(s) / 2);
+  });
+
+  it('keeps counting through kills', () => {
+    const { s, c } = arena(['ground_slam'], Array.from({ length: 6 }, () => dummy(5)));
+    s.settings.autoFlee = false;
+    s.combat!.monsters.forEach((m) => (m.cell = 0));
+    let dealt = 0;
+    for (let i = 0; i < 5; i++) {
+      run(s, c, DPS_WINDOW_MS);
+      dealt += s.combat!.dealt[0];
+    }
+    const dead = 6 - aliveMonsters(s.combat!).length;
+    expect(dead).toBeGreaterThan(0);
+    expect(dealt).toBeGreaterThanOrEqual(5 * dead);
   });
 
   it('counts damage over time', () => {
@@ -192,13 +205,19 @@ describe('DPS meter', () => {
     expect(s.combat!.dealt.reduce((a, n) => a + n, 0)).toBeCloseTo(200, 0);
   });
 
-  it('only looks back over the last 10 seconds', () => {
+  it('holds a 2 second average until the next window ends', () => {
     const { s, c } = arena([], [dummy(1e9)]);
     s.combat!.dealt = [5000];
     s.combat!.actionMs = 1e9;
-    run(s, c, 12000);
-    expect(s.combat!.dealt).toHaveLength(DPS_WINDOW_S);
+    run(s, c, 1000);
     expect(liveDps(s.combat!)).toBe(0);
+    run(s, c, 1000);
+    expect(liveDps(s.combat!)).toBe(2500);
+    run(s, c, 1950);
+    expect(liveDps(s.combat!)).toBe(2500);
+    run(s, c, 50);
+    expect(liveDps(s.combat!)).toBe(0);
+    expect(s.combat!.dealt).toHaveLength(2);
   });
 
   it('starts from nothing for a fight saved before it', () => {

@@ -8,6 +8,12 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.11',
+    date: '31 Oct 2026',
+    title: 'A steadier DPS meter',
+    items: ['DPS in combat now shows your average over the last 2 seconds and holds it until the next update.'],
+  },
+  {
     version: '0.2.10',
     date: '31 Oct 2026',
     title: 'A DPS number you can trust',

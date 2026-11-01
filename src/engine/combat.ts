@@ -993,22 +993,21 @@ function shielded(mon: MonsterInstance): boolean {
   return !!mon.chained || !!mon.martyr;
 }
 
-/** How many seconds of damage the DPS meter looks back over. */
-export const DPS_WINDOW_S = 10;
+/** The DPS meter shows the average over one window, and holds it until the next window ends. */
+export const DPS_WINDOW_MS = 2000;
 
-/** Damage per second actually dealt lately: hits, skills, ailments, ground and the rest, with the walking between packs. */
+/** Damage per second actually dealt in the last finished window: hits, skills, ailments, ground and the rest. */
 export function liveDps(c: CombatRuntime): number {
-  const total = c.dealt.reduce((a, n) => a + n, 0);
-  return total / Math.max(1, c.dealt.length - 1 + c.dealtMs / 1000);
+  return ((c.dealt.at(-2) ?? 0) * 1000) / DPS_WINDOW_MS;
 }
 
 function tickDpsMeter(c: CombatRuntime, dt: number): void {
   c.dealtMs += dt;
-  while (c.dealtMs >= 1000) {
-    c.dealtMs -= 1000;
+  while (c.dealtMs >= DPS_WINDOW_MS) {
+    c.dealtMs -= DPS_WINDOW_MS;
     c.dealt.push(0);
-    if (c.dealt.length > DPS_WINDOW_S) c.dealt.shift();
   }
+  if (c.dealt.length > 2) c.dealt.splice(0, c.dealt.length - 2);
 }
 
 /** Take life from a monster, through its ward first. */
@@ -1681,7 +1680,10 @@ function afterCoup(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): vo
   const c = s.combat!;
   const asc = ascendancyOf(s);
   if (asc === 'headsman') {
-    if (!mon.isBoss && mon.life < mon.maxLife * THE_BLOCK_AT && hasAscNode(s, 'headsman_the_block')) mon.life = 0;
+    if (!mon.isBoss && mon.life < mon.maxLife * THE_BLOCK_AT && hasAscNode(s, 'headsman_the_block')) {
+      c.dealt[c.dealt.length - 1] += Math.max(0, mon.life);
+      mon.life = 0;
+    }
     if (mon.life <= 0) c.mech = Math.max(c.mech, meterMax('malice', d.raw) / 2);
     else if (hasAscNode(s, 'headsman_marked')) mon.vulnMs = Math.max(mon.vulnMs, 6000);
   }

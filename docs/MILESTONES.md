@@ -382,6 +382,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] DPS meter shows a 2 second average, held until the next one, instead of a live 10 second figure; The Block's execute now counts. 0.2.11 — done 2026-10-31
 - [x] Gear sell prices up 50% (flasks and materials unchanged; shop prices unaffected). Not simmed. 0.2.10 — done 2026-10-31
 - [x] Combat DPS is now measured (player report): every point of damage dealt to monsters over the last 10 seconds, overkill included. Default Attack DPS stays on Equipment, labelled as such; save v24. 0.2.10 — done 2026-10-31
 - [x] News panel on character select too, since signed-in players skip the title screen. 0.2.10 — done 2026-10-31

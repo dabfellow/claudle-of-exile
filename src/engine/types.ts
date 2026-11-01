@@ -344,9 +344,9 @@ export interface CombatRuntime {
   groundProofMs?: number;
   groundAcc: number;
   groundTimer: number;
-  /** the DPS meter: damage dealt in each recent second, newest last */
+  /** the DPS meter: damage dealt in the last finished window and the current one */
   dealt: number[];
-  /** how far through the newest second the meter is */
+  /** how far through the current window the meter is */
   dealtMs: number;
   /** class mechanic meter: Rage, Momentum or Malice stacks, or Fervor % (engine/mechanics.ts) */
   mech: number;
