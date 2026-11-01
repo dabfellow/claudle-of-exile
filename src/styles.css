@@ -4046,6 +4046,7 @@ g.tut-hint circle.body {
 .bf-cell.ground-chilled::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--cold) 50%, transparent), color-mix(in srgb, var(--cold) 20%, rgba(0, 0, 0, 0.5))); }
 .bf-cell.ground-shocked::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--light) 50%, transparent), color-mix(in srgb, var(--light) 20%, rgba(0, 0, 0, 0.5))); }
 .bf-cell.ground-stormwater::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--cold) 45%, transparent), color-mix(in srgb, var(--light) 25%, rgba(0, 0, 0, 0.5))); }
+.bf-cell.ground-unholy::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--accent-2) 55%, black), color-mix(in srgb, var(--accent-2) 20%, rgba(0, 0, 0, 0.6))); }
 .bf-cell.ground-caustic::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--poison) 50%, transparent), color-mix(in srgb, var(--poison) 20%, rgba(0, 0, 0, 0.5))); }
 
 .bf-cell.flash-a::after,

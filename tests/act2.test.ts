@@ -106,8 +106,8 @@ describe('scorch', () => {
 describe('opening an act', () => {
   it('is live for everyone, and a preview act stays hidden outside previews', () => {
     expect(actOpen(1)).toBe(true);
-    expect(actOpen(6)).toBe(false);
     ACT_PREVIEW.enabled = false;
+    expect(actOpen(6)).toBe(false);
     expect(actOpen(3)).toBe(true);
     expect(actOpen(2)).toBe(true);
     closeAct2();

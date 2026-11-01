@@ -72,13 +72,13 @@ function answersFrostbite(s: GameState): boolean {
   return (skill && !ruleLockReason(s, 'frostbite')) || s.flaskSlots.some((f) => f?.instill === 'frostbite');
 }
 
-/** A skill on the bar that fires on a channel and can break it, with an interrupt or a stun. */
-export function rulesBreakChannels(s: GameState): boolean {
+/** A skill on the bar that fires on a channel and can break it, with an interrupt or a stun. No stun lands on a chained boss, so that takes an interrupt. */
+export function rulesBreakChannels(s: GameState, chained = false): boolean {
   if (ruleLockReason(s, 'enemyChannels')) return false;
   return s.skillBar.some((g) => {
     if (!g?.rules.some((r) => r.when === 'enemyChannels')) return false;
     const { interrupts, stunChance } = activeGemDef(g.gemId).effect;
-    return !!(interrupts || stunChance);
+    return !!(interrupts || (stunChance && !chained));
   });
 }
 
@@ -88,7 +88,7 @@ export function rulesBreakChannels(s: GameState): boolean {
  */
 export function bossLeftToRules(s: GameState, zone: ZoneDef): boolean {
   const has = (k: BossMechanic) => !!zone.boss.mechanics?.includes(k);
-  return bossesOffline(s) && (!has('martyrs') || aimsAt(s, 'martyrs')) && (!has('frostbite') || answersFrostbite(s)) && (!has('channel') || rulesBreakChannels(s));
+  return bossesOffline(s) && (!has('martyrs') || aimsAt(s, 'martyrs')) && (!has('frostbite') || answersFrostbite(s)) && (!has('channel') || rulesBreakChannels(s, has('martyrs')));
 }
 
 export function offlineCapMs(s: GameState): number {

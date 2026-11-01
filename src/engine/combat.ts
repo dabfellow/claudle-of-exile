@@ -46,6 +46,8 @@ import {
   zoneDef,
   type BossMechanic,
   type MonsterDef,
+  echoMechanics,
+  MECHANIC_INFO,
 } from '../data/zones';
 import {
   advanceMinions,
@@ -75,6 +77,7 @@ import {
   CHILLED_GROUND_SLOW,
   FROZEN_GROUND_SLOW,
   STORMWATER_COOLDOWN,
+  UNHOLY_RECOVERY,
   GROUND,
   groundUnderPlayer,
   monsterGround,
@@ -296,7 +299,7 @@ const RESIST_BY_TYPE: Record<DamageType, Partial<MonsterInstance['res']>> = {
 export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1): MonsterInstance {
   const life = Math.round(monsterLife(def.level) * (def.lifeMult ?? 1) * (boss ? BOSS_LIFE_MULT : 1) * scale);
   const dmgScale = scale < 1 ? PACK_DMG_SCALE : 1;
-  const mechanics: BossMechanic[] = boss ? (def.mechanics ?? ['slam']) : [];
+  const mechanics: BossMechanic[] = boss ? echoMechanics(def, 0) : [];
   return {
     uid,
     defId: def.id,
@@ -317,6 +320,8 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
       ? { slam: BOSS_SLAM_EVERY_MS * 0.6, nova: BOSS_NOVA_EVERY_MS * 0.8, summon: BOSS_SUMMON_EVERY_MS * 0.7, scorch: BOSS_SCORCH_EVERY_MS * 0.5, frostbite: BOSS_FROSTBITE_EVERY_MS, channel: BOSS_CHANNEL_EVERY_MS * 0.7 }
       : {},
     novaType: def.novaType ?? def.dmgType,
+    slamType: def.slamType,
+    echoes: boss ? def.echoes : undefined,
     casting: -1,
     castKind: null,
     castTotal: 1,
@@ -2154,6 +2159,12 @@ export const SUREFOOT_MS = 3000;
 
 const groundProof = (c: CombatRuntime) => (c.groundProofMs ?? 0) > 0;
 
+/** The element a patch of ground deals: unholy ground finds whichever you resist least. */
+function groundElement(d: Derived, kind: Ground['kind']): DamageType {
+  if (kind !== 'unholy') return GROUND[kind].type;
+  return (['fire', 'cold', 'light'] as const).reduce((worst, t) => (d.res[t] < d.res[worst] ? t : worst));
+}
+
 function underPlayer(c: CombatRuntime, kind: Ground['kind']): boolean {
   return !groundProof(c) && c.ground.some((g) => g.cell === PLAYER_SPOT && g.kind === kind);
 }
@@ -2190,7 +2201,7 @@ function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   const outPace = currentMovement(s) === 'run' || currentMovement(s) === 'flee' || c.buffs.some((b) => b.outpace) ? STEP_OUT_RATE : 1;
   for (const g of c.ground) {
     const t = Math.min(dt, g.remainingMs);
-    const type = GROUND[g.kind].type;
+    const type = groundElement(d, g.kind);
     if (g.cell === PLAYER_SPOT) {
       let dmg = groundProof(c) ? 0 : (g.dps * t) / 1000;
       if (type !== 'phys') dmg *= (1 - d.res[type] / 100) * (1 - d.raw.elemTakenReduction / 100);
@@ -2216,7 +2227,7 @@ function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   c.groundTimer += dt;
   if (c.groundTimer >= 1000) {
     const g = c.ground.find((x) => x.cell === PLAYER_SPOT);
-    if (c.groundAcc >= 1) ctx.emit({ t: 'hit', target: 'player', amount: Math.round(c.groundAcc), dmgType: g ? GROUND[g.kind].type : 'fire', dot: true });
+    if (c.groundAcc >= 1) ctx.emit({ t: 'hit', target: 'player', amount: Math.round(c.groundAcc), dmgType: g ? groundElement(d, g.kind) : 'fire', dot: true });
     c.groundAcc = 0;
     c.groundTimer = 0;
   }
@@ -2510,10 +2521,22 @@ function chainMartyrs(s: GameState, ctx: Ctx, boss: MonsterInstance): void {
   if (cells.length) ctx.emit({ t: 'bossPhase', name: boss.name, text: 'chains its martyrs: strike them down!' });
 }
 
+/** Echoes: a boss with several pairs moves on to the next as its life falls, and only ever forward. */
+function echoStep(ctx: Ctx, mon: MonsterInstance, lifeFrac: number): void {
+  if (!mon.echoes) return;
+  const phase = Math.min(mon.echoes.length - 1, Math.floor((1 - lifeFrac) * mon.echoes.length));
+  if (phase <= (mon.echoPhase ?? 0)) return;
+  mon.echoPhase = phase;
+  mon.mechanics = echoMechanics({ mechanics: [...new Set([...mon.mechanics, ...mon.echoes.flat()])], echoes: mon.echoes }, phase);
+  const [a, b] = mon.echoes[phase];
+  ctx.emit({ t: 'bossPhase', name: mon.name, text: `brings back ${MECHANIC_INFO[a].name.toLowerCase()} and ${MECHANIC_INFO[b].name.toLowerCase()}!` });
+}
+
 /** Life-threshold boss mechanics (enrage, ward, martyrs) and timed adds. These run even while the boss is stunned. */
 function bossPhases(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt: number): void {
   const has = (k: BossMechanic) => mon.mechanics.includes(k);
   const lifeFrac = mon.life / mon.maxLife;
+  echoStep(ctx, mon, lifeFrac);
   if (has('enrage') && !mon.enraged && lifeFrac <= BOSS_ENRAGE_AT) {
     mon.enraged = true;
     ctx.emit({ t: 'bossPhase', name: mon.name, text: 'flies into a rage!' });
@@ -2644,7 +2667,7 @@ function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt:
         layGround(s.combat!.ground, PLAYER_SPOT, monsterGround(mon, mon.novaType), bossDamage(mon) * BOSS_NOVA_GROUND_DPS, BOSS_NOVA_GROUND_MS);
       } else {
         mon.timers.slam = BOSS_SLAM_EVERY_MS;
-        takeHit(s, ctx, d, mon, bossDamage(mon) * BOSS_SLAM_MULT, mon.dmgType, 'slam');
+        takeHit(s, ctx, d, mon, bossDamage(mon) * BOSS_SLAM_MULT, mon.slamType ?? mon.dmgType, 'slam');
       }
     }
     return true;
@@ -2690,15 +2713,17 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   if (c.frostbite && !c.monsters.some((m) => m.life > 0 && m.mechanics.includes('frostbite'))) c.frostbite = 0;
   if (classMechanicsStep(s, ctx, d, dt)) return true;
 
+  const recovery = underPlayer(c, 'unholy') ? UNHOLY_RECOVERY : 1;
   for (const h of c.heals) {
     const t = Math.min(dt, h.remainingMs);
     if (h.resource === 'mana') s.mana += h.perMs * t;
-    else s.life += h.perMs * t;
+    else s.life += h.perMs * t * recovery;
     h.remainingMs -= dt;
   }
   c.heals = c.heals.filter((h) => h.remainingMs > 0);
   const regenPct = c.buffs.reduce((a, b) => a + (b.regenPct ?? 0), 0);
-  const regenned = s.life + ((d.lifeRegen + (d.maxLife * regenPct) / 100) * dt) / 1000;
+  const regen = d.lifeRegen + (d.maxLife * regenPct) / 100;
+  const regenned = s.life + ((regen > 0 ? regen * recovery : regen) * dt) / 1000;
   // a draining buff (Berserk) never kills you by itself
   s.life = Math.min(d.maxLife, regenPct < 0 ? Math.max(Math.min(s.life, 1), regenned) : regenned);
   const esRegenPct = c.buffs.reduce((a, b) => a + (b.esRegenPct ?? 0), 0);

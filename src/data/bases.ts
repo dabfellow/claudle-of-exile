@@ -1217,6 +1217,67 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_riposte_bleed', values: [1] },
     ],
   },
+
+  // ---------- Act 6 (docs/design/ACT6.md): one for each class's meter, each with all three resistances ----------
+  {
+    id: 'oathbreaker', name: 'Oathbreaker', baseId: 'sunforged_hammer', flavour: 'Sworn on by nine guards. Eight of them left it behind.',
+    mods: [
+      { affixId: 'inc_phys', values: [140] },
+      { affixId: 'flat_life', values: [80] },
+      { affixId: 'all_res', values: [15] },
+      { affixId: 'u_rage_max', values: [5] },
+      { affixId: 'u_rage_effect', values: [30] },
+    ],
+  },
+  {
+    id: 'kingsmarch', name: "The King's March", baseId: 'manticore_boots', flavour: 'Forty leagues of white stone, and not one step back.',
+    mods: [
+      { affixId: 'flat_evasion', values: [200] },
+      { affixId: 'all_res', values: [15] },
+      { affixId: 'u_momentum_max', values: [4] },
+      { affixId: 'u_momentum_effect', values: [30] },
+    ],
+  },
+  {
+    id: 'last_decree', name: 'The Last Decree', baseId: 'seraph_wand', flavour: 'Signed, sealed, and read aloud to an empty room.',
+    mods: [
+      { affixId: 'spell_cold', values: [20, 38] },
+      { affixId: 'spell_fire', values: [20, 38] },
+      { affixId: 'all_res', values: [15] },
+      { affixId: 'u_mana_power', values: [25] },
+      { affixId: 'u_mana_power_full', values: [15] },
+    ],
+  },
+  {
+    id: 'crownbreaker_mask', name: "Crownbreaker's Mask", baseId: 'voidwalker_cowl', flavour: 'Worn to the coronation. It went badly for everyone else.',
+    mods: [
+      { affixId: 'inc_evasion', values: [85] },
+      { affixId: 'flat_es', values: [65] },
+      { affixId: 'all_res', values: [15] },
+      { affixId: 'u_coup_pct', values: [55] },
+      { affixId: 'u_malice_crit_keep', values: [2] },
+    ],
+  },
+  {
+    id: 'hand_of_the_regent', name: 'Hand of the Regent', baseId: 'dragonscale_gauntlets', flavour: 'It signs for the king, and it answers for him too.',
+    mods: [
+      { affixId: 'flat_life', values: [85] },
+      { affixId: 'attack_speed', values: [14] },
+      { affixId: 'all_res', values: [15] },
+      { affixId: 'u_riposte_pct', values: [50] },
+      { affixId: 'u_riposte_heal', values: [2] },
+    ],
+  },
+  {
+    id: 'regents_mantle', name: "The Regent's Mantle", baseId: 'archon_regalia', flavour: 'Held in trust, for a king who will not be needing it.',
+    mods: [
+      { affixId: 'flat_life', values: [110] },
+      { affixId: 'flat_es', values: [75] },
+      { affixId: 'all_res', values: [15] },
+      { affixId: 'u_nova_pct', values: [45] },
+      { affixId: 'u_nova_heal', values: [35] },
+    ],
+  },
 ];
 
 export function uniqueDef(id: string): UniqueDef {

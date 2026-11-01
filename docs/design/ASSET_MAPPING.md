@@ -129,6 +129,109 @@ All 60 Act 4 monsters and bosses have their own picture: 50 close, 10 loose. The
 | `monsters/frozenhusk` | `src/assets/monsters/freesample-spalenie.jpg` | close | `src/assets/monsters/tint-frozenhusk.jpg` | dark skull, turned cold. Recolour: hue 200 |
 | `monsters/wintervoice` | `src/assets/monsters/tint-barrowwight.png` | close | `src/assets/monsters/tint-wintervoice.png` | hooded wight, white. Recolour: tint 200,230,245 |
 | `monsters/hollowking` | `src/assets/monsters/freesample-mobiszon999.jpg` | close | `src/assets/monsters/tint-hollowking.jpg` | dead king, hollow-eyed and pale; no sceptre. Recolour: saturation 0.4, brightness 1.1, tint 190,225,250 |
+## Act 6 (added 2026-11-01)
+
+All 90 Act 6 monsters and bosses have their own picture, and no two share one. All are `tint-<id>` recolours of owned CodeSpree, Craftpix and free_sample pieces, some of them new tints of pieces used in earlier acts, so nothing here is AI-generated and nothing new comes from GegX. The banners reuse the GegX scenes until a landscape pack arrives. Same tool as Act 5: sharp's `modulate` and `tint`, pixel art kept as PNG and painted art as JPG.
+
+| Slot | Source | Confidence | File | Notes |
+|---|---|---|---|---|
+| `monsters/gatesentry` | `Craftpix con1` | close | `src/assets/monsters/tint-gatesentry.png` | helmed sentry, rimed. Recolour: saturation .3, tint 180,200,225 |
+| `monsters/banishedhound` | `rpg-beings Blue dog` | close | `src/assets/monsters/tint-banishedhound.png` | hound, ember red. Recolour: hue 170, saturation .9, brightness .85 |
+| `monsters/sealclerk` | `Craftpix con12` | close | `src/assets/monsters/tint-sealclerk.png` | hooded clerk, blue-lit. Recolour: hue 200, tint 190,200,240 |
+| `monsters/gatecantor` | `Craftpix con22` | close | `src/assets/monsters/tint-gatecantor.png` | hooded cantor, void violet. Recolour: saturation .2, tint 170,160,220 |
+| `monsters/corvane` | `free_sample mobeK1S` | placeholder | `src/assets/monsters/tint-corvane.jpg` | old helmed warden in tarnished steel; no keys. Recolour: hue 250, saturation .5, brightness .95 |
+| `monsters/milestonewalker` | `rpg-beings Geograb` | placeholder | `src/assets/monsters/tint-milestonewalker.png` | walking stone in road-white, warm cracks. Recolour: saturation .4, lightness 20, tint 230,200,160 |
+| `monsters/roadcrow` | `rpg-beings Pigeon` | close | `src/assets/monsters/tint-roadcrow.png` | dark crow, storm-lit. Recolour: saturation .2, brightness .5, tint 150,170,240 |
+| `monsters/wagonghast` | `rpg-beings Rhunst` | close | `src/assets/monsters/tint-wagonghast.png` | frosted roadside ghost. Recolour: saturation .4, brightness .85, tint 170,200,240 |
+| `monsters/roadreeve` | `Craftpix con33` | close | `src/assets/monsters/tint-roadreeve.png` | bearded road officer, dust-grey. Recolour: saturation .5, brightness .8, tint 195,185,165 |
+| `monsters/haldane` | `free_sample a32` | placeholder | `src/assets/monsters/tint-haldane.jpg` | tired grey-faced official; no hook. Recolour: hue 30, saturation .7, brightness .9 |
+| `monsters/tithereaper` | `Craftpix con21` | close | `src/assets/monsters/tint-tithereaper.png` | bone skull reaper, frost-blue. Recolour: tint 170,200,235 |
+| `monsters/blackrook` | `rpg-beings Gray parrot` | close | `src/assets/monsters/tint-blackrook.png` | black bird, ember edges. Recolour: saturation .1, brightness .45, tint 235,140,80 |
+| `monsters/scarecrowlord` | `Craftpix con15` | placeholder | `src/assets/monsters/tint-scarecrowlord.png` | bark-faced scarecrow, straw-yellow, lightning-lit. Recolour: saturation .4, tint 220,205,120 |
+| `monsters/grainwitch` | `Craftpix con12` | close | `src/assets/monsters/tint-grainwitch.png` | hooded witch, burnt violet. Recolour: hue 300, saturation .7, brightness .75 |
+| `monsters/lastreaper` | `free_sample kociotrup` | placeholder | `src/assets/monsters/tint-lastreaper.jpg` | pale skull, cold straw light; no scythe. Recolour: hue 170, saturation .35, brightness .9 |
+| `monsters/garrisonman` | `Craftpix con9` | close | `src/assets/monsters/tint-garrisonman.png` | bandaged soldier, field-grey. Recolour: saturation .25, brightness .8, tint 170,175,185 |
+| `monsters/wallarcher` | `Craftpix con6` | close | `src/assets/monsters/tint-wallarcher.png` | green hood gone storm-grey. Recolour: saturation .4, tint 165,185,235 |
+| `monsters/fortmastiff` | `rpg-beings Hyena` | close | `src/assets/monsters/tint-fortmastiff.png` | spotted war dog, burnt. Recolour: saturation .5, brightness .7, tint 235,130,80 |
+| `monsters/fortchaplain` | `Craftpix con24` | close | `src/assets/monsters/tint-fortchaplain.png` | pale high-collared chaplain, cold light. Recolour: saturation .3, tint 170,195,235 |
+| `monsters/brandt` | `free_sample moooob28` | placeholder | `src/assets/monsters/tint-brandt.jpg` | orc-jawed officer, steel-blue. Recolour: hue 180, saturation .6, brightness .9 |
+| `monsters/bannerman` | `Craftpix con19` | close | `src/assets/monsters/tint-bannerman.png` | winged helm, banner red. Recolour: saturation .6, tint 235,150,100 |
+| `monsters/siegehusk` | `rpg-beings Sasquatch` | placeholder | `src/assets/monsters/tint-siegehusk.png` | huge shaggy husk, frozen over. Recolour: saturation .2, brightness .9, tint 170,195,235 |
+| `monsters/warhawk` | `rpg-beings Thorn dragon` | placeholder | `src/assets/monsters/tint-warhawk.png` | black thorned bird of prey, storm-edged. Recolour: saturation .3, brightness .8, tint 170,190,245 |
+| `monsters/fieldsurgeon` | `Craftpix con23` | close | `src/assets/monsters/tint-fieldsurgeon.png` | bone surgeon, violet-lit. Recolour: tint 200,180,235 |
+| `monsters/ivarra` | `free_sample a66` | placeholder | `src/assets/monsters/tint-ivarra.jpg` | red-haired marshal; no baton. Recolour: hue 20, saturation .8, brightness .85 |
+| `monsters/bailiff` | `Craftpix con3` | close | `src/assets/monsters/tint-bailiff.png` | hooded bailiff, cold blue. Recolour: saturation .3, tint 160,190,225 |
+| `monsters/oathwitness` | `Craftpix con18` | close | `src/assets/monsters/tint-oathwitness.png` | blank dark mask, pale blue. Recolour: tint 190,200,250 |
+| `monsters/pettifogger` | `rpg-beings Gossip` | placeholder | `src/assets/monsters/tint-pettifogger.png` | all mouth, burning. Recolour: saturation .8, tint 235,150,90 |
+| `monsters/juror` | `Craftpix con11` | close | `src/assets/monsters/tint-juror.png` | black mask, cold red eyes. Recolour: tint 150,190,235 |
+| `monsters/morrow` | `free_sample op53` | placeholder | `src/assets/monsters/tint-morrow.jpg` | stone-faced judge, lightning-pale. Recolour: hue 200, saturation .6, brightness .95 |
+| `monsters/queuer` | `Craftpix con7` | close | `src/assets/monsters/tint-queuer.png` | patient dead, colour gone. Recolour: saturation .15, brightness .75 |
+| `monsters/gutterrat` | `rpg-beings Mouse` | close | `src/assets/monsters/tint-gutterrat.png` | sewer rat, smouldering. Recolour: saturation .5, brightness .6, tint 240,150,80 |
+| `monsters/lamplighter` | `Craftpix con39` | placeholder | `src/assets/monsters/tint-lamplighter.png` | turbaned figure, lamp-orange. Recolour: hue 180, saturation .6, tint 240,190,120 |
+| `monsters/sewerpriest` | `Craftpix con34` | close | `src/assets/monsters/tint-sewerpriest.png` | wet one-eyed priest, storm-teal. Recolour: hue 200, saturation .8, tint 180,210,235 |
+| `monsters/sarn` | `free_sample mobiszon997` | placeholder | `src/assets/monsters/tint-sarn.jpg` | huge roaring merchant, cold blue; no purse. Recolour: hue 210, saturation .5, brightness .95 |
+| `monsters/sluicekeeper` | `Craftpix con20` | close | `src/assets/monsters/tint-sluicekeeper.png` | hooded keeper, wet blue. Recolour: saturation .4, tint 165,195,230 |
+| `monsters/frostmoth` | `rpg-beings Common blue` | close | `src/assets/monsters/tint-frostmoth.png` | pale blue moth. Recolour: saturation .5, lightness 30 |
+| `monsters/archgolem` | `rpg-beings Icewalker` | placeholder | `src/assets/monsters/tint-archgolem.png` | stone golem, hot at the joints. Recolour: saturation .3, tint 235,160,100 |
+| `monsters/hangingdrop` | `rpg-beings Jellyfish` | placeholder | `src/assets/monsters/tint-hangingdrop.png` | hanging water, lightning in it. Recolour: saturation .8, tint 170,200,250 |
+| `monsters/vossa` | `free_sample a10` | placeholder | `src/assets/monsters/tint-vossa.jpg` | heavy engineer, rust-green; no bob. Recolour: hue 120, saturation .6, brightness .9 |
+| `monsters/coinstriker` | `Craftpix con4` | close | `src/assets/monsters/tint-coinstriker.png` | bearded smith, gold-dusted. Recolour: saturation .4, tint 235,205,120 |
+| `monsters/goldbeetle` | `rpg-beings Lady beetle` | close | `src/assets/monsters/tint-goldbeetle.png` | gilded beetle. Recolour: saturation .3, tint 245,200,90 |
+| `monsters/assayer` | `Craftpix con32` | placeholder | `src/assets/monsters/tint-assayer.png` | black bird mask, cold light. Recolour: saturation .2, tint 170,200,240 |
+| `monsters/coinghost` | `Craftpix con35` | close | `src/assets/monsters/tint-coinghost.png` | white ghost, tarnished gold. Recolour: tint 240,220,140 |
+| `monsters/mintmaster` | `free_sample mobilizacja` | placeholder | `src/assets/monsters/tint-mintmaster.jpg` | gold winged sign; a seal, not a person. Recolour: tint 245,210,120 |
+| `monsters/thorngroom` | `Craftpix con15` | close | `src/assets/monsters/tint-thorngroom.png` | living bark, cold green. Recolour: hue 60, saturation 1.1, brightness .9 |
+| `monsters/gardenwasp` | `rpg-beings Bee` | close | `src/assets/monsters/tint-gardenwasp.png` | wasp, charged blue. Recolour: saturation .7, tint 180,210,250 |
+| `monsters/oldhedge` | `rpg-beings Spicatus` | placeholder | `src/assets/monsters/tint-oldhedge.png` | bristling hedge, smouldering. Recolour: saturation .9, tint 230,150,80 |
+| `monsters/bloomwife` | `Craftpix con41` | close | `src/assets/monsters/tint-bloomwife.png` | snake-haired woman, leaf green. Recolour: saturation .8, brightness 1.05 |
+| `monsters/queensgardener` | `free_sample a24` | placeholder | `src/assets/monsters/tint-queensgardener.jpg` | green-skinned horned gardener; no knife. Recolour: hue 120, saturation .7, brightness .9 |
+| `monsters/scriptorghast` | `Craftpix con30` | close | `src/assets/monsters/tint-scriptorghast.png` | burning skull, ink-red. Recolour: hue 330, brightness .85 |
+| `monsters/pagebat` | `rpg-beings Aurora bat` | close | `src/assets/monsters/tint-pagebat.png` | paper-white bat. Recolour: saturation .15, lightness 30, tint 220,225,250 |
+| `monsters/indexer` | `Craftpix con10` | close | `src/assets/monsters/tint-indexer.png` | horned skull mask, shelf dust and cold. Recolour: saturation .4, tint 170,190,225 |
+| `monsters/redactor` | `Craftpix con17` | close | `src/assets/monsters/tint-redactor.png` | crested mask, blotted violet. Recolour: saturation .2, tint 190,170,230 |
+| `monsters/lastarchivist` | `free_sample p7` | placeholder | `src/assets/monsters/tint-lastarchivist.jpg` | long-haired old man, ink-dark. Recolour: hue 260, saturation .6, brightness .85 |
+| `monsters/riftclimber` | `Craftpix con28` | close | `src/assets/monsters/tint-riftclimber.png` | dark finned climber, cold blue. Recolour: hue 190, brightness .8 |
+| `monsters/edgeskater` | `rpg-beings Stabbycrab` | placeholder | `src/assets/monsters/tint-edgeskater.png` | long-legged skater, fire-edged. Recolour: hue 120, saturation .9 |
+| `monsters/voidlight` | `rpg-beings Starflake` | close | `src/assets/monsters/tint-voidlight.png` | star of wrong light, violet. Recolour: hue 80, saturation 1.2, brightness .9 |
+| `monsters/fracturepriest` | `Craftpix con36` | placeholder | `src/assets/monsters/tint-fracturepriest.png` | hooded serpent priest, abyss blue. Recolour: hue 110, saturation .7, brightness .8 |
+| `monsters/riftwarden` | `free_sample szary kleszcz` | placeholder | `src/assets/monsters/tint-riftwarden.jpg` | pincered horror, void violet. Recolour: hue 230, saturation .6, brightness .9 |
+| `monsters/footman` | `Craftpix con2` | placeholder | `src/assets/monsters/tint-footman.png` | grey-faced servant. Recolour: saturation .1, brightness .7 |
+| `monsters/skywisp` | `rpg-beings Electrogust` | placeholder | `src/assets/monsters/tint-skywisp.png` | small sky storm, blue. Recolour: hue 170, saturation .7, brightness 1.1 |
+| `monsters/dowager` | `Craftpix con38` | placeholder | `src/assets/monsters/tint-dowager.png` | plated dowager, candle-lit. Recolour: saturation .6, tint 240,170,110 |
+| `monsters/noherald` | `Craftpix con40` | close | `src/assets/monsters/tint-noherald.png` | smiling yellow mask gone cold. Recolour: saturation .3, tint 170,190,240 |
+| `monsters/vanterre` | `free_sample op36` | placeholder | `src/assets/monsters/tint-vanterre.jpg` | hooded noblewoman, wine-red. Recolour: hue 330, saturation .9, brightness .85 |
+| `monsters/towermason` | `Craftpix con26` | placeholder | `src/assets/monsters/tint-towermason.png` | horned mason, hot-faced. Recolour: saturation .6, brightness .8, tint 235,170,120 |
+| `monsters/stairgargoyle` | `Craftpix con42` | close | `src/assets/monsters/tint-stairgargoyle.png` | horned stone beast, rimed. Recolour: saturation .3, tint 165,195,235 |
+| `monsters/stairspark` | `rpg-beings Stellectric` | close | `src/assets/monsters/tint-stairspark.png` | running spark, violet-white. Recolour: hue 200, brightness .9 |
+| `monsters/stargazer` | `Craftpix con13` | close | `src/assets/monsters/tint-stargazer.png` | one great eye, storm-lit. Recolour: saturation .4, tint 190,195,250 |
+| `monsters/astrologer` | `free_sample op36` | placeholder | `src/assets/monsters/tint-astrologer.jpg` | hooded stargazer, star-violet. Recolour: hue 250, saturation .8, brightness .9 |
+| `monsters/courtier` | `Craftpix con8` | placeholder | `src/assets/monsters/tint-courtier.png` | smiling courtier, ghost-blue. Recolour: saturation .35, brightness .85, tint 180,190,240 |
+| `monsters/splitguard` | `Craftpix con19` | close | `src/assets/monsters/tint-splitguard.png` | winged helm, split cold. Recolour: saturation .15, brightness .8, tint 165,185,220 |
+| `monsters/kingsfool` | `rpg-beings Kuku` | placeholder | `src/assets/monsters/tint-kingsfool.png` | grinning fool, fire-orange. Recolour: hue 120, saturation 1, tint 240,170,110 |
+| `monsters/royalconfessor` | `Craftpix con37` | close | `src/assets/monsters/tint-royalconfessor.png` | horned confessor, unholy violet. Recolour: saturation .5, brightness .7, tint 200,120,200 |
+| `monsters/chamberlain` | `free_sample a61` | placeholder | `src/assets/monsters/tint-chamberlain.jpg` | bald cold-eyed courtier; no staff. Recolour: hue 200, saturation .6, brightness .9 |
+| `monsters/oldking` | `Craftpix con21` | close | `src/assets/monsters/tint-oldking.png` | long bone skull, cold crown-light. Recolour: saturation .3, tint 190,205,240 |
+| `monsters/tombguardian` | `rpg-beings Coral monster` | placeholder | `src/assets/monsters/tint-tombguardian.png` | many-armed tomb thing, molten. Recolour: saturation .2, lightness 15, tint 235,160,90 |
+| `monsters/crownmite` | `rpg-beings Spicatus` | placeholder | `src/assets/monsters/tint-crownmite.png` | spiked crown-mite, gold and spark. Recolour: saturation .4, tint 245,225,140 |
+| `monsters/linekeeper` | `Craftpix con24` | close | `src/assets/monsters/tint-linekeeper.png` | high-collared keeper, grave blue. Recolour: saturation .2, tint 190,205,235 |
+| `monsters/crownbearer` | `free_sample mobiszon999` | placeholder | `src/assets/monsters/tint-crownbearer.jpg` | helmed skull, old gold; no cushion. Recolour: hue 30, saturation .8, brightness .95 |
+| `monsters/stairknight` | `Craftpix con1` | close | `src/assets/monsters/tint-stairknight.png` | dark helmed knight, oath blue. Recolour: saturation .35, brightness .7, tint 165,185,235 |
+| `monsters/kingshound` | `rpg-beings Wolf` | close | `src/assets/monsters/tint-kingshound.png` | black hound, coals in its throat. Recolour: saturation .5, brightness .6, tint 240,140,80 |
+| `monsters/lastpage` | `Craftpix con5` | placeholder | `src/assets/monsters/tint-lastpage.png` | red-haired page, drained to blue. Recolour: saturation .2, tint 170,195,245 |
+| `monsters/kingsvoice` | `Craftpix con11` | close | `src/assets/monsters/tint-kingsvoice.png` | black mask, unholy violet. Recolour: saturation .3, tint 200,170,245 |
+| `monsters/ninthguard` | `free_sample moooob27` | placeholder | `src/assets/monsters/tint-ninthguard.jpg` | blue-faced guard, steel; the last loyal one. Recolour: hue 60, saturation .6, brightness .9 |
+| `monsters/thronewatcher` | `Craftpix con13` | close | `src/assets/monsters/tint-thronewatcher.png` | one watching eye, cold. Recolour: saturation .3, brightness .7, tint 170,185,235 |
+| `monsters/skysliver` | `rpg-beings Starfish` | placeholder | `src/assets/monsters/tint-skysliver.png` | a falling sliver of sky. Recolour: saturation .2, lightness 20, tint 200,215,255 |
+| `monsters/ashofcourt` | `Craftpix con22` | close | `src/assets/monsters/tint-ashofcourt.png` | hooded ash, fire within. Recolour: saturation .1, tint 235,170,120 |
+| `monsters/unanointed` | `Craftpix con30` | close | `src/assets/monsters/tint-unanointed.png` | burning skull, unholy violet fire. Recolour: hue 280, saturation .9, brightness .9 |
+| `monsters/aurelane` | `free_sample ik52` | placeholder | `src/assets/monsters/tint-aurelane.jpg` | pale ruined face, violet-lit; no crown. Recolour: hue 290, saturation .6, brightness .8 |
+| `uniques/oathbreaker` | `Kibyra mace.png` | close | `src/assets/items/weapons/tint-oathbreaker.png` | two-handed mace, void violet. Recolour: saturation .3, brightness .9, tint 200,150,235 |
+| `uniques/kingsmarch` | `gear sets/set-10-legs.png` | close | `src/assets/items/armor/tint-kingsmarch.png` | gold boots, dulled. Recolour: saturation .4, tint 240,210,130 |
+| `uniques/last_decree` | `pasted sheet 1, cell 26` | close | `src/assets/items/weapons/tint-last_decree.png` | wand, sealing-wax gold. Recolour: saturation .6, tint 240,210,130 |
+| `uniques/crownbreaker_mask` | `gear sets/set-35-helmet.png` | close | `src/assets/items/armor/tint-crownbreaker_mask.png` | dark mask, violet. Recolour: saturation .4, tint 200,170,240 |
+| `uniques/hand_of_the_regent` | `gear sets/set-85-gloves.png` | close | `src/assets/items/armor/tint-hand_of_the_regent.png` | plated gauntlets, old gold. Recolour: saturation .4, tint 245,205,120 |
+| `uniques/regents_mantle` | `gear sets/set-56-body.png` | close | `src/assets/items/armor/tint-regents_mantle.png` | heavy plate, ceremonial gold. Recolour: saturation .5, tint 235,215,160 |
+
 ## Act 5 (added 2026-11-01)
 
 All 70 Act 5 monsters and bosses have their own picture, and no two share one. All are `tint-<id>` recolours of owned CodeSpree, Craftpix and free_sample pieces, which brings many unused sea creatures into the game. Nothing here is AI-generated and nothing new comes from GegX. The banners reuse the GegX scenes until a landscape pack arrives.

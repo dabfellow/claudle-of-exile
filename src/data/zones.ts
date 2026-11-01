@@ -46,10 +46,17 @@ export interface MonsterDef {
   channel?: MonsterSkill;
   /** element of the nova and scorch mechanics (defaults to the boss's damage type) */
   novaType?: DamageType;
+  /** element of the slam (defaults to the boss's damage type) */
+  slamType?: DamageType;
   /** its cold ground is Frozen ground, not Chilled */
   rime?: boolean;
   /** the ground it lays, when that isn't what its element leaves behind */
   groundKind?: GroundKind;
+  /**
+   * Echoes: old mechanics brought back two at a time, also listed in `mechanics`. With more than one pair the boss
+   * moves on to the next as its life falls, an even share each, and only the pair at hand is in force.
+   */
+  echoes?: [BossMechanic, BossMechanic][];
 }
 
 export interface ZoneDef {
@@ -116,7 +123,10 @@ export const ACTS: ActDef[] = [
     n: 5, name: 'The Sunless Sea', open: false, preview: true,
     outro: 'The Caller sinks, and for the first time in living memory the tide along the Drowned Coast goes out and stays out. To the north-east, the broken towers of the Shattered Throne stand clear of the storm.',
   },
-  { n: 6, name: 'The Shattered Throne', open: false },
+  {
+    n: 6, name: 'The Shattered Throne', open: false, preview: true,
+    outro: 'The Last King falls, and nothing mends. The sky stays broken, and the throne he reached from is not empty: something that never wore a crown turns slowly to look at you. Back in your hideout, the old Map Device has begun to hum.',
+  },
 ];
 
 /** Preview acts are playable when this is on: dev builds, tests and the sim, never production. */
@@ -136,6 +146,8 @@ const slow = (def: MonsterDef): MonsterDef => ({ ...def, moveMs: 1800 });
 const rime = (def: MonsterDef): MonsterDef => ({ ...def, rime: true });
 /** its spell leaves storm-tossed water, not shocked ground */
 const stormy = (def: MonsterDef): MonsterDef => ({ ...def, groundKind: 'stormwater' });
+/** its spell leaves unholy ground, whatever its element */
+const unholy = (def: MonsterDef): MonsterDef => ({ ...def, groundKind: 'unholy' });
 
 const m = (id: string, name: string, level: number, dmgType: DamageType, basic: MonsterSkill, lifeMult = 1, dmgMult = 1): MonsterDef => ({
   id, name, level, dmgType, basic, lifeMult, dmgMult,
@@ -146,10 +158,17 @@ interface BossCasts {
   nova?: MonsterSkill;
   channel?: MonsterSkill;
   novaType?: DamageType;
+  slamType?: DamageType;
+  rime?: boolean;
   groundKind?: GroundKind;
+  echoes?: [BossMechanic, BossMechanic][];
 }
 
-const boss = (def: MonsterDef, mechanics: BossMechanic[], casts: BossCasts): MonsterDef => ({ ...def, mechanics, ...casts });
+const boss = (def: MonsterDef, mechanics: BossMechanic[], casts: BossCasts): MonsterDef => ({
+  ...def,
+  ...casts,
+  mechanics: [...new Set([...mechanics, ...(casts.echoes?.flat() ?? [])])],
+});
 
 /** Areas in campaign order: each boss unlocks the next area. */
 export const ZONES: ZoneDef[] = [
@@ -959,6 +978,280 @@ export const ZONES: ZoneDef[] = [
     spawnEveryMs: 8500,
     uniques: ['leviathan_hide', 'bosuns_oath', 'corposant', 'deckwalkers', 'tide_crown', 'harpoons_answer', 'starforged_edge'],
   },
+
+  // ---------------- Act 6: The Shattered Throne (docs/design/ACT6.md) ----------------
+  {
+    id: 'exilesgate', name: "The Exiles' Gate", act: 6, tier: 15, levelRange: [57, 58], color: '#6a5a4a', ilvlBonus: 14,
+    requires: { after: ['maelstrom'] }, // Act 5's last area: its boss clears the way home
+    desc: 'The gate they drove you out of. It still stands, with nothing left on either side of it to keep apart.',
+    monsters: [
+      m('gatesentry', 'Gate Sentry', 57, 'cold', atk('Rimed Halberd', 2800), 1.05, 1.05),
+      fast(m('banishedhound', 'Banished Hound', 57, 'fire', atk('Cinder Bite', 2100), 0.7, 0.9)),
+      m('sealclerk', 'Clerk of Exile', 58, 'light', spell('Writ of Banishment', 3000), 0.9, 1.15),
+      unholy(m('gatecantor', 'Gate Cantor', 58, 'cold', spell('Unmaking Psalm', 3300, true), 1, 1.25)),
+    ],
+    boss: boss(m('corvane', 'Warden Corvane', 58, 'cold', atk('Keys of the Gate', 3200)), ['slam', 'nova'], { slam: atk('The Gate Swings', 3200), slamType: 'light', nova: spell('Sentence of Fire', 3800), novaType: 'fire', groundKind: 'unholy', echoes: [['scorch', 'martyrs']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['oathbreaker', 'heart_of_winter', 'bosuns_oath'],
+  },
+  {
+    id: 'kingsroad', name: "The King's Road", act: 6, tier: 15, levelRange: [57, 59], color: '#8a7a5a', ilvlBonus: 14,
+    desc: 'Forty leagues of white stone, every milestone cut with the same name. The name has been scratched out, by hand, on all of them.',
+    monsters: [
+      m('milestonewalker', 'Milestone Walker', 57, 'fire', atk('Carved Fist', 3000), 1.1, 1.05),
+      fast(m('roadcrow', 'Tax Crow', 58, 'light', atk('Shocking Peck', 2100), 0.7, 0.9)),
+      slow(m('wagonghast', 'Wagon Ghast', 58, 'cold', atk('Frozen Axle', 4000), 1.6, 1.2)),
+      m('roadreeve', 'Road Reeve', 59, 'phys', atk('Levy Staff', 2900), 1, 1.1),
+    ],
+    boss: boss(m('haldane', 'Reeve Haldane', 59, 'fire', atk('Tollman\'s Hook', 3200)), ['slam', 'nova', 'summon'], { slam: atk('Road Closed', 3100), slamType: 'cold', nova: spell('Levy of Storms', 3800), novaType: 'light', groundKind: 'stormwater', echoes: [['ward', 'scorch']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['kingsmarch', 'deckwalkers', 'rimewalkers'],
+  },
+  {
+    id: 'tithefields', name: 'The Tithe Fields', act: 6, tier: 15, levelRange: [58, 60], color: '#9a8a3a', ilvlBonus: 14,
+    desc: 'The grain came up black the year the king reached for it. The reapers were never told to stop.',
+    monsters: [
+      m('tithereaper', 'Tithe Reaper', 58, 'cold', atk('Frostbitten Scythe', 2800), 1, 1.1),
+      fast(m('blackrook', 'Black Rook', 59, 'fire', atk('Ember Talon', 2000), 0.7, 0.9)),
+      m('scarecrowlord', 'Bound Scarecrow', 59, 'light', spell('Crackling Straw', 3000), 0.95, 1.15),
+      unholy(m('grainwitch', 'Black Grain Witch', 60, 'fire', spell('Blighted Harvest', 3300, true), 1, 1.25)),
+    ],
+    boss: boss(m('lastreaper', 'The Last Reaper', 60, 'cold', atk('Long Scythe', 3100)), ['slam', 'nova'], { slam: atk('The Harvest Comes In', 3100), slamType: 'fire', nova: spell('Lightning Fallow', 3800), novaType: 'light', rime: true, echoes: [['summon', 'frostbite']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['regents_mantle', 'crown_of_the_hollow', 'frostgrip'],
+  },
+  {
+    id: 'fortobedience', name: 'Fort Obedience', act: 6, tier: 15, levelRange: [59, 61], color: '#5a5f66', ilvlBonus: 14,
+    desc: 'The garrison held its post through the end of the world, because no order came to do anything else.',
+    monsters: [
+      m('garrisonman', 'Garrison Soldier', 59, 'phys', atk('Regulation Blade', 2800), 1.1, 1.1),
+      m('wallarcher', 'Wall Archer', 60, 'light', atk('Charged Bolt', 3100), 0.85, 1.2),
+      fast(m('fortmastiff', 'Fort Mastiff', 60, 'fire', atk('Burning Maw', 2100), 0.75, 0.95)),
+      m('fortchaplain', 'Fort Chaplain', 61, 'cold', spell('Cold Benediction', 3300), 1, 1.25),
+    ],
+    boss: boss(m('brandt', 'Castellan Brandt', 61, 'light', atk('Order of the Day', 3100)), ['slam', 'nova'], { slam: atk('Hold the Wall', 3100), slamType: 'cold', nova: spell('Boiling Oil', 3700), novaType: 'fire', echoes: [['martyrs', 'ward']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['last_decree', 'old_grudge', 'harpoons_answer'],
+  },
+  {
+    id: 'bannerfield', name: 'The Field of Banners', act: 6, tier: 15, levelRange: [59, 61], color: '#7a3a3a', ilvlBonus: 14,
+    desc: 'The last army in the empire died here in perfect order. The banners still stand, and still turn to follow you.',
+    monsters: [
+      m('bannerman', 'Fallen Banner-Bearer', 59, 'fire', atk('Burning Standard', 2900), 1.05, 1.1),
+      slow(m('siegehusk', 'Siege Husk', 60, 'cold', atk('Frozen Ram', 4100), 1.7, 1.25)),
+      fast(m('warhawk', 'Carrion Hawk', 60, 'light', atk('Stormclaw', 2000), 0.7, 0.95)),
+      unholy(m('fieldsurgeon', 'Field Surgeon', 61, 'light', spell('Last Rites', 3200, true), 1, 1.25)),
+    ],
+    boss: boss(m('ivarra', 'Marshal Ivarra', 61, 'fire', atk('Marshal\'s Baton', 3100)), ['slam', 'nova'], { slam: atk('Advance!', 3000), slamType: 'light', nova: spell('Winter Campaign', 3700), novaType: 'cold', channel: spell('The Last Muster', 5800), echoes: [['channel', 'enrage']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['oathbreaker', 'leviathan_hide', 'giants_knuckle'],
+  },
+  {
+    id: 'assizes', name: 'The Assizes', act: 6, tier: 15, levelRange: [60, 62], color: '#4a4a6a', ilvlBonus: 14,
+    desc: 'The court that sentenced you. Your case was never closed, and the jury has been waiting.',
+    monsters: [
+      m('bailiff', 'Bailiff', 60, 'cold', atk('Iron Summons', 2800), 1.05, 1.1),
+      m('oathwitness', 'Sworn Witness', 61, 'light', spell('Damning Word', 2900), 0.85, 1.2),
+      fast(m('pettifogger', 'Pettifogger', 61, 'fire', spell('Burning Brief', 2300), 0.7, 1)),
+      rime(m('juror', 'Hollow Juror', 62, 'cold', spell('Cold Verdict', 3300, true), 1, 1.25)),
+    ],
+    boss: boss(m('morrow', 'High Justice Morrow', 62, 'light', spell('Gavel of Heaven', 3100)), ['slam', 'nova', 'enrage'], { slam: atk('Guilty', 3000), slamType: 'fire', nova: spell('Cold Judgement', 3600), novaType: 'cold', rime: true, echoes: [['martyrs', 'frostbite']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['crownbreaker_mask', 'tide_crown', 'wolfmother_pelt'],
+  },
+  {
+    id: 'lowercity', name: 'The Lower City', act: 6, tier: 16, levelRange: [60, 62], color: '#6a4a3f', ilvlBonus: 14,
+    desc: 'The streets fell a hundred feet and kept their shape. People still queue outside the shops.',
+    monsters: [
+      m('queuer', 'The Patient Dead', 60, 'phys', atk('Grip of the Queue', 3000), 1.15, 1.1),
+      fast(m('gutterrat', 'Gutter Rat', 61, 'fire', atk('Burning Bite', 2000), 0.7, 0.95)),
+      m('lamplighter', 'Lamplighter', 61, 'fire', spell('Lit Wick', 3000, true), 0.95, 1.2),
+      stormy(m('sewerpriest', 'Sewer Priest', 62, 'light', spell('Rising Damp', 3200, true), 1, 1.25)),
+    ],
+    boss: boss(m('sarn', 'Guildmaster Sarn', 62, 'cold', atk('Weighted Purse', 3000)), ['slam', 'nova', 'summon'], { slam: atk('Foreclosure', 3000), slamType: 'fire', nova: spell('Bad Debt', 3600), novaType: 'light', groundKind: 'stormwater', channel: spell('Calling In the Loan', 5600), echoes: [['scorch', 'channel']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['kingsmarch', 'corposant', 'pyre_heart'],
+  },
+  {
+    id: 'dryaqueduct', name: 'The Dry Aqueducts', act: 6, tier: 16, levelRange: [60, 62], color: '#7a8a9a', ilvlBonus: 14,
+    desc: 'They carried a river to the capital. The river stopped mid-air the day the sky broke, and is still up there, frozen and waiting.',
+    monsters: [
+      m('sluicekeeper', 'Sluice Keeper', 60, 'cold', atk('Iron Wheel', 2900), 1.05, 1.1),
+      fast(m('frostmoth', 'Pale Moth', 61, 'cold', spell('Rime Dust', 2200), 0.7, 0.95)),
+      slow(m('archgolem', 'Arch Golem', 61, 'fire', atk('Fallen Keystone', 4100), 1.7, 1.25)),
+      m('hangingdrop', 'Hanging Water', 62, 'light', spell('Static Rain', 3100), 0.95, 1.2),
+    ],
+    boss: boss(m('vossa', 'Engineer Vossa', 62, 'fire', atk('Plumb Bob', 3000)), ['slam', 'nova'], { slam: atk('Burst Main', 3000), slamType: 'light', nova: spell('The River Falls', 3600), novaType: 'cold', rime: true, channel: spell('Opening the Sluices', 5600), echoes: [['frostbite', 'channel']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['hand_of_the_regent', 'heart_of_winter', 'frostgrip'],
+  },
+  {
+    id: 'kingsmint', name: "The King's Mint", act: 6, tier: 16, levelRange: [61, 63], color: '#b0903a', ilvlBonus: 14,
+    desc: 'Every coin in the empire was struck here, and every coin has the same face. It has started to look back.',
+    monsters: [
+      m('coinstriker', 'Coin Striker', 61, 'phys', atk('Die Hammer', 3000), 1.1, 1.15),
+      fast(m('goldbeetle', 'Gilded Beetle', 62, 'fire', atk('Hot Mandible', 2000), 0.75, 0.95)),
+      m('assayer', 'Assayer', 62, 'cold', spell('Cold Assay', 3000), 0.95, 1.2),
+      unholy(m('coinghost', 'Debased Shade', 63, 'light', spell('Counterfeit Bolt', 3200, true), 1, 1.25)),
+    ],
+    boss: boss(m('mintmaster', 'The Mintmaster', 63, 'fire', atk('Master Die', 3000)), ['slam', 'nova'], { slam: atk('Struck', 2900), slamType: 'cold', nova: spell('Hoard of Lightning', 3600), novaType: 'light', groundKind: 'unholy', echoes: [['summon', 'martyrs']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8000,
+    uniques: ['last_decree', 'crown_of_the_hollow', 'bosuns_oath'],
+  },
+  {
+    id: 'hanginggardens', name: 'The Hanging Gardens', act: 6, tier: 16, levelRange: [61, 63], color: '#3f7a4a', ilvlBonus: 14,
+    desc: 'Nobody has tended them since the fall, and they have never been better. The only green thing left in the empire, and it knows it.',
+    monsters: [
+      m('thorngroom', 'Thorn Groom', 61, 'cold', atk('Frost Shears', 2800), 1, 1.1),
+      fast(m('gardenwasp', 'Garden Wasp', 62, 'light', atk('Charged Sting', 1900), 0.65, 0.95)),
+      slow(m('oldhedge', 'The Old Hedge', 62, 'fire', atk('Burning Bramble', 4100), 1.7, 1.2)),
+      m('bloomwife', 'Bloom Wife', 63, 'light', spell('Pollen Spark', 3100), 1, 1.2),
+    ],
+    boss: boss(m('queensgardener', "The Queen's Gardener", 63, 'light', atk('Grafting Knife', 3000)), ['slam', 'nova'], { slam: atk('Pruned', 2900), slamType: 'cold', nova: spell('Burning Blossom', 3600), novaType: 'fire', echoes: [['ward', 'summon']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8000,
+    uniques: ['crownbreaker_mask', 'wolfmother_pelt', 'pilgrims_road'],
+  },
+  {
+    id: 'burnedarchive', name: 'The Burned Archive', act: 6, tier: 16, levelRange: [62, 64], color: '#5a3a2a', ilvlBonus: 14,
+    desc: 'The king had every record of what he meant to do put to the torch. The pages are still falling.',
+    monsters: [
+      m('scriptorghast', 'Scriptor', 62, 'fire', spell('Burning Margin', 2900), 0.9, 1.15),
+      fast(m('pagebat', 'Page Bat', 63, 'light', atk('Paper Cut', 2000), 0.7, 1)),
+      m('indexer', 'Indexer', 63, 'cold', atk('Cold Reference', 2900), 1.05, 1.1),
+      unholy(m('redactor', 'Redactor', 64, 'cold', spell('Blot', 3200, true), 1, 1.3)),
+    ],
+    boss: boss(m('lastarchivist', 'The Last Archivist', 64, 'cold', spell('Recited Fire', 3000)), ['slam', 'nova'], { slam: atk('The Heavy Volume', 2900), slamType: 'light', nova: spell('Burning Index', 3500), novaType: 'fire', groundKind: 'unholy', channel: spell('The Unread Page', 5400), echoes: [['martyrs', 'channel']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8000,
+    uniques: ['last_decree', 'hand_of_the_regent', 'saints_shard'],
+  },
+  {
+    id: 'longfracture', name: 'The Long Fracture', act: 6, tier: 16, levelRange: [62, 64], color: '#2f3f5f', ilvlBonus: 14,
+    desc: 'A crack through the world, thirty miles long and cold as the far side of it. Things climb out, and the wind goes in.',
+    monsters: [
+      m('riftclimber', 'Rift Climber', 62, 'cold', atk('Numb Hands', 2800), 1.05, 1.1),
+      fast(m('edgeskater', 'Edge Skater', 63, 'fire', atk('Burning Edge', 2000), 0.7, 1)),
+      m('voidlight', 'Light from Below', 63, 'light', spell('Wrong Lightning', 3000), 0.85, 1.25),
+      rime(m('fracturepriest', 'Priest of the Crack', 64, 'cold', spell('Breath of the Fracture', 3200, true), 1, 1.3)),
+    ],
+    boss: boss(m('riftwarden', 'Warden of the Rift', 64, 'light', atk('Span Hammer', 3000)), ['slam', 'nova', 'enrage'], { slam: atk('The Ground Gives', 2900), slamType: 'fire', nova: spell('Breath of the Deep Cold', 3500), novaType: 'cold', rime: true, echoes: [['scorch', 'frostbite']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8000,
+    uniques: ['oathbreaker', 'crown_of_the_hollow', 'rimewalkers'],
+  },
+  {
+    id: 'driftingquarter', name: 'The Drifting Quarter', act: 6, tier: 17, levelRange: [63, 65], color: '#6f6a8f', ilvlBonus: 14,
+    desc: 'The noble quarter tore free and never came down. Its houses turn slowly in the air, lit from inside, and the dinner is still being served.',
+    monsters: [
+      m('footman', 'Silent Footman', 63, 'phys', atk('Silver Tray', 2900), 1.1, 1.15),
+      fast(m('skywisp', 'Sky Wisp', 64, 'light', spell('Falling Star', 2200), 0.7, 1)),
+      m('dowager', 'Burning Dowager', 64, 'fire', spell('Candle Hex', 3000, true), 0.95, 1.2),
+      unholy(m('noherald', 'Herald of No House', 65, 'cold', spell('Unnamed Title', 3200, true), 1, 1.3)),
+    ],
+    boss: boss(m('vanterre', 'Duchess Vanterre', 65, 'fire', spell('Dinner Is Served', 3000)), ['slam', 'nova', 'summon'], { slam: atk('The House Falls', 2900), slamType: 'cold', nova: spell('A Storm Indoors', 3500), novaType: 'light', groundKind: 'unholy', echoes: [['enrage', 'scorch']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8000,
+    uniques: ['kingsmarch', 'crownbreaker_mask', 'corposant'],
+  },
+  {
+    id: 'kingsreach', name: "The King's Reach", act: 6, tier: 17, levelRange: [63, 65], color: '#3f3050', ilvlBonus: 14,
+    desc: 'The tower he built to touch it. It leans now, and at the top the stairs go on into nothing, and something on the other side has hold of them.',
+    monsters: [
+      m('towermason', 'Tower Mason', 63, 'fire', atk('Hot Trowel', 2900), 1.1, 1.15),
+      slow(m('stairgargoyle', 'Stair Gargoyle', 64, 'cold', atk('Frozen Plunge', 4000), 1.7, 1.3)),
+      fast(m('stairspark', 'Stair Spark', 64, 'light', atk('Running Current', 1900), 0.7, 1)),
+      stormy(m('stargazer', 'Stargazer', 65, 'light', spell('The Sky Comes Close', 3200, true), 1, 1.3)),
+    ],
+    boss: boss(m('astrologer', 'Court Astrologer Ilse', 65, 'light', spell('Wrong Star', 2900)), ['slam', 'nova'], { slam: atk('Fallen Sphere', 2800), slamType: 'fire', nova: spell('The Cold Between', 3500), novaType: 'cold', rime: true, channel: spell('Reading the End', 5200), echoes: [['channel', 'frostbite']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8000,
+    uniques: ['regents_mantle', 'frostgrip', 'halo_of_wrath'],
+  },
+  {
+    id: 'sunderedhall', name: 'The Sundered Hall', act: 6, tier: 17, levelRange: [64, 65], color: '#50404a', ilvlBonus: 14,
+    desc: 'The great hall split down the middle on the last night. The court carries on in both halves, each sure that the other is dead.',
+    monsters: [
+      m('courtier', 'Courtier', 64, 'light', spell('Whispered Charge', 2800), 0.9, 1.2),
+      m('splitguard', 'Sundered Guard', 64, 'cold', atk('Half a Halberd', 2900), 1.1, 1.15),
+      fast(m('kingsfool', "The King's Fool", 65, 'fire', atk('Burning Bells', 2000), 0.75, 1.05)),
+      unholy(m('royalconfessor', 'Confessor Royal', 65, 'fire', spell('Absolved of Nothing', 3200, true), 1, 1.3)),
+    ],
+    boss: boss(m('chamberlain', 'The Lord Chamberlain', 65, 'cold', atk('Staff of Office', 2900)), ['slam', 'nova', 'summon'], { slam: atk('You Are Dismissed', 2800), slamType: 'light', nova: spell('Audience with Fire', 3400), novaType: 'fire', groundKind: 'unholy', echoes: [['martyrs', 'scorch']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8000,
+    uniques: ['oathbreaker', 'kingsmarch', 'hand_of_the_regent'],
+  },
+  {
+    id: 'hallofcrowns', name: 'The Hall of Crowns', act: 6, tier: 17, levelRange: [64, 65], color: '#8a7a2a', ilvlBonus: 14,
+    desc: 'Every king of the line lies here with his crown on. All of the crowns are turned to face the throne, and one of the biers is empty.',
+    monsters: [
+      m('oldking', 'Interred King', 64, 'cold', atk('Sceptre of Ice', 2900), 1.15, 1.15),
+      slow(m('tombguardian', 'Tomb Guardian', 64, 'fire', atk('Molten Mace', 4000), 1.7, 1.3)),
+      fast(m('crownmite', 'Crown Mite', 65, 'light', atk('Arcing Bite', 1900), 0.7, 1)),
+      rime(m('linekeeper', 'Keeper of the Line', 65, 'cold', spell('The Long Cold', 3100, true), 1, 1.3)),
+    ],
+    boss: boss(m('crownbearer', 'The Crownbearer', 65, 'fire', atk('Velvet Cushion', 2900)), ['slam', 'nova', 'enrage'], { slam: atk('Heavy Is the Head', 2800), slamType: 'light', nova: spell('Winter of the Line', 3400), novaType: 'cold', rime: true, echoes: [['frostbite', 'martyrs']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8000,
+    uniques: ['crownbreaker_mask', 'last_decree', 'crown_of_the_hollow'],
+  },
+  {
+    id: 'ninthstair', name: 'The Ninth Stair', act: 6, tier: 17, levelRange: [64, 65], color: '#3a2a3a', ilvlBonus: 14,
+    desc: 'Nine flights to the throne room, and the king had one guard for each. Eight of them left when they saw what he had reached for.',
+    monsters: [
+      m('stairknight', 'Knight of the Stair', 64, 'cold', atk('Oath Blade', 2800), 1.1, 1.2),
+      m('kingshound', "King's Hound", 65, 'fire', atk('Throat of Coals', 2200), 0.8, 1.05),
+      fast(m('lastpage', 'The Last Page', 65, 'light', spell('Message Undelivered', 2100), 0.7, 1.05)),
+      unholy(m('kingsvoice', "The King's Voice", 65, 'light', spell('By Royal Command', 3100, true), 1, 1.3)),
+    ],
+    boss: boss(m('ninthguard', 'The Ninth Guard', 65, 'light', atk('Duty', 2800), 1.15), ['slam', 'nova', 'summon', 'enrage'], { slam: atk('None Shall Pass', 2800), slamType: 'cold', nova: spell('Burning Loyalty', 3400), novaType: 'fire', groundKind: 'unholy', channel: spell('The Last Oath', 5000), echoes: [['channel', 'scorch']] }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8000,
+    uniques: ['regents_mantle', 'kingsmarch', 'starforged_edge'],
+  },
+  {
+    id: 'shatteredthrone', name: 'The Shattered Throne', act: 6, tier: 17, levelRange: [64, 65], color: '#1f1a2a', ilvlBonus: 14,
+    desc: 'The room where he reached. The roof is gone, the sky behind it is broken, and everything the empire ever was has come here to watch him do it again.',
+    monsters: [
+      m('thronewatcher', 'Watcher of the Throne', 64, 'cold', atk('Unblinking Spear', 2800), 1.15, 1.2),
+      fast(m('skysliver', 'Sky Sliver', 65, 'light', atk('Falling Edge', 1900), 0.75, 1.05)),
+      m('ashofcourt', 'Ash of the Court', 65, 'fire', spell('Burning Fealty', 3000), 1, 1.25),
+      unholy(m('unanointed', 'The Unanointed', 65, 'fire', spell('Empty Coronation', 3100, true), 1, 1.3)),
+    ],
+    boss: boss(m('aurelane', 'Oswin Aurelane, the Last King', 66, 'fire', atk('The Hand That Reached', 2900), 1.6, 1.05), ['slam', 'nova', 'summon', 'enrage', 'ward'], { slam: atk('Kneel', 2800), slamType: 'light', nova: spell('Winter of the Last Reign', 3400), novaType: 'cold', groundKind: 'unholy', channel: spell('He Reaches Again', 4800), echoes: [['scorch', 'martyrs'], ['frostbite', 'channel'], ['martyrs', 'channel']] }),
+    actBoss: true,
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8000,
+    uniques: ['oathbreaker', 'kingsmarch', 'last_decree', 'crownbreaker_mask', 'hand_of_the_regent', 'regents_mantle', 'starforged_edge'],
+  },
 ];
 
 /** Areas off the campaign road (data/maps.ts): they can be fought in, but nothing that walks ZONES sees them. */
@@ -992,6 +1285,15 @@ export function actBossZone(act: number): ZoneDef | undefined {
 
 export function zonesInAct(act: number): ZoneDef[] {
   return ZONES.filter((z) => z.act === act);
+}
+
+/** The mechanics in force in an Echoes phase: everything but the echoes of the other phases. */
+export function echoMechanics(def: Pick<MonsterDef, 'mechanics' | 'echoes'>, phase: number): BossMechanic[] {
+  const mechanics = def.mechanics ?? ['slam'];
+  if (!def.echoes) return mechanics;
+  const here = def.echoes[phase];
+  const others = def.echoes.flat().filter((k) => !here.includes(k));
+  return mechanics.filter((k) => !others.includes(k));
 }
 
 export function monsterLife(level: number): number {
@@ -1068,6 +1370,19 @@ export const BOSS_FROSTBITE_INSTILL_AT = 6;
 /** A martyr fights at its boss's level on this fraction of a trash monster's life. It doesn't attack: it only has to die. */
 export const MARTYR: MonsterDef = { id: 'martyr', name: 'Chained Martyr', level: 1, dmgType: 'phys', basic: { name: 'Prays', kind: 'attack', ms: MONSTER_BASE_ATTACK_MS }, lifeMult: 0.5 };
 
+/** Where an Echoes pairing changes what answers a mechanic. */
+export const ECHO_TIPS: { pair: [BossMechanic, BossMechanic]; tip: string }[] = [
+  { pair: ['martyrs', 'channel'], tip: "A stun can't land on a chained boss, so only an interrupt, like War Cry, breaks a channel while its martyrs stand." },
+  { pair: ['frostbite', 'channel'], tip: "Frozen solid, you can't press anything: clear Frostbite before a channel comes, or the two land together." },
+  { pair: ['martyrs', 'frostbite'], tip: 'Frostbite keeps building while you cut down its martyrs, so its answer has to fire by itself.' },
+];
+
+/** What a boss's Echoes mean together: the tips for each pairing it brings at once. */
+export function echoTips(def: Pick<MonsterDef, 'echoes'>): string[] {
+  const pairs = def.echoes ?? [];
+  return ECHO_TIPS.filter((t) => pairs.some((p) => t.pair.every((k) => p.includes(k)))).map((t) => t.tip);
+}
+
 /** What each mechanic is called on screen, and how to answer it. */
 export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> = {
   slam: { name: 'Heavy blow', tip: "Telegraphed big hit. Evasion Rating can't dodge it — guard, interrupt or drink." },
@@ -1077,6 +1392,6 @@ export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> 
   ward: { name: 'Ward', tip: 'At 66% and 33% life it raises a barrier. Break it within 8 s or the boss heals 10%.' },
   martyrs: { name: 'Martyrs', tip: "It can't be hurt while the martyrs chained to it live, and it chains two more at half life. Only a blow aimed at a martyr lands: click one, or set a skill's rule to aim at martyrs (Aim rules, War Table)." },
   channel: { name: 'Channels', tip: "It stops to call up a long spell that pulses harder as it grows, then lands past any block and leaves it stronger for the rest of the fight. A stun, freeze or interrupt breaks it and staggers the boss: press War Cry, or put a skill on the rule When an enemy channels (a wind-up rule won't fire)." },
-  scorch: { name: 'Scorched earth', tip: 'Every 11 s it sets the ground under you ablaze (or frozen, or charged) for 6 s. Resist its element, Run to step out sooner, or put a guard on a Ground rule to step out at once.' },
+  scorch: { name: 'Scorched earth', tip: 'Every 11 s it sets the ground under you ablaze (or frozen, charged or worse) for 6 s. Resist its element, Run to step out sooner, or put a guard on a Ground rule to step out at once.' },
   frostbite: { name: 'Frostbite', tip: "A stack builds on you every 2.5 s, twice as fast on Frozen ground, and each slows you by 4%. At 10 you freeze solid for 3 s and take a cold shatter. A guard or movement skill shakes off 5, and a flask clears them all. Set one to the Frostbite rule (Vitals rules, War Table), or Instill a flask, so it fires at a stack count." },
 };

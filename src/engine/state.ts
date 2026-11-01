@@ -11,7 +11,7 @@ import { mealStep } from './cooking';
 import { combatStep } from './combat';
 import { fillOrders, newExpeditionState } from './expedition';
 import { heistAutoStep, heistStep, newHeistState } from './heist';
-import { checkExileUnlock, refreshVendor, vendorTick } from './hideout';
+import { checkCampaignDone, refreshVendor, vendorTick } from './hideout';
 import { createItem } from './items';
 import { autoSwitchGear, newLoadouts } from './loadouts';
 import { mapStep, newMapState } from './maps';
@@ -142,5 +142,5 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
   fillOrders(s, ctx);
   vendorTick(s, ctx.rng);
   checkAchievements(s, ctx);
-  checkExileUnlock(s, ctx);
+  checkCampaignDone(s, ctx);
 }

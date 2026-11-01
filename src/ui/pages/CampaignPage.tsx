@@ -4,6 +4,7 @@ import { materialDef } from '../../data/materials';
 import { useState } from 'react';
 import { ACT_REGIONS, actRegion, CONTINENT_SIZE, regionPath, regionViewBox, ZONE_POS } from '../../data/continent';
 import { actOpen, ACTS, bossesNeeded, MECHANIC_INFO, roadsInto, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
+import { FINAL_ACT } from '../../engine/hideout';
 import { zoneLockText } from '../../engine/progress';
 import { areaXpLabel, characterLevel } from '../../engine/character';
 import { BOSS_RESPAWN_MS, bossIsNext, canBossFarm, startCombat, toggleBossFarm } from '../../engine/combat';
@@ -59,6 +60,7 @@ function BossMechanics({ z }: { z: ZoneDef }) {
       {(z.boss.mechanics ?? ['slam']).map((k) => (
         <span key={k} className={`chip mechanic ${k}`} title={MECHANIC_INFO[k].tip}>
           {MECHANIC_INFO[k].name}
+          {z.boss.echoes?.some((p) => p.includes(k)) ? ' (echo)' : ''}
         </span>
       ))}
     </div>
@@ -300,9 +302,11 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
           <h3>Act {current.n} complete</h3>
           <p className="muted" style={{ margin: 0 }}>
             {current.outro}{' '}
-            {next && actOpen(next.n)
-              ? `Act ${next.n}, ${next.name}, is open.`
-              : `Act ${current.n + 1} arrives in a future update — until then, farm these areas for better gear, push your skills and fill your stash.`}
+            {current.n === FINAL_ACT
+              ? 'The campaign is over: the Map Device is open, and the Exile can be created.'
+              : next && actOpen(next.n)
+                ? `Act ${next.n}, ${next.name}, is open.`
+                : `Act ${current.n + 1} arrives in a future update — until then, farm these areas for better gear, push your skills and fill your stash.`}
           </p>
           {next && actOpen(next.n) && (
             <button className="btn primary" style={{ alignSelf: 'flex-start' }} onClick={() => pickAct(next.n)}>

@@ -83,6 +83,7 @@ function mergeUnlocks(a: AccountState, from: AccountTransfer): void {
     };
   }
   a.exileUnlocked ||= !!from.exileUnlocked;
+  if (from.campaignDone) a.campaignDone = true;
   alignWarTable(a);
 }
 

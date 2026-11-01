@@ -41,8 +41,8 @@ export const ACT_REGIONS: ActRegion[] = [
   },
   {
     act: 6, // the Shattered Throne: the far north-east
-    points: [[600, 70], [780, 60], [900, 130], [820, 200], [640, 160]],
-    label: [760, 125],
+    points: [[600, 70], [680, 35], [800, 30], [935, 105], [905, 155], [820, 200], [640, 160]],
+    label: [745, 55],
   },
 ];
 
@@ -105,6 +105,25 @@ export const ZONE_POS: Record<string, [number, number]> = {
   voicetrench: [640, 335],
   lightless: [675, 290],
   maelstrom: [730, 285],
+  // Act 6 comes in by the gate you were driven out of, along the south of the empire, back through the capital, then up to the throne
+  exilesgate: [665, 148],
+  kingsroad: [705, 160],
+  tithefields: [750, 170],
+  fortobedience: [795, 178],
+  bannerfield: [840, 170],
+  assizes: [885, 130],
+  lowercity: [840, 125],
+  dryaqueduct: [795, 130],
+  kingsmint: [750, 128],
+  hanginggardens: [705, 122],
+  burnedarchive: [660, 112],
+  longfracture: [625, 92],
+  driftingquarter: [665, 72],
+  kingsreach: [710, 85],
+  sunderedhall: [755, 85],
+  hallofcrowns: [800, 85],
+  ninthstair: [845, 90],
+  shatteredthrone: [890, 95],
 };
 
 export function actRegion(act: number): ActRegion | undefined {

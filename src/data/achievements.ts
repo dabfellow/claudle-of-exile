@@ -80,6 +80,14 @@ const ALL: AchievementDef[] = [
     target: zonesInAct(5).length, progress: (s) => bossesBeatenIn(s, 5), reward: { exalted: 2 },
   },
   {
+    id: 'act_6', name: 'The King Is Dead', desc: 'Defeat Oswin Aurelane, the Last King, and complete Act 6', category: 'combat', act: 6,
+    target: 1, progress: (s) => (s.bossesDefeated.includes('shatteredthrone') ? 1 : 0), reward: { divine: 4, exalted: 4 },
+  },
+  {
+    id: 'conqueror_6', name: 'Long Live No One', desc: "Defeat every Act 6 area's boss", category: 'combat', act: 6,
+    target: zonesInAct(6).length, progress: (s) => bossesBeatenIn(s, 6), reward: { exalted: 3 },
+  },
+  {
     id: 'deathless', name: 'Untouchable', desc: 'Reach level 10 without dying', category: 'combat',
     target: 10, progress: (s) => (L(s).deaths === 0 ? Math.min(10, characterLevel(s)) : 0), reward: { regret: 2 },
   },

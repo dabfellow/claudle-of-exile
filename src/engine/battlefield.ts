@@ -159,6 +159,7 @@ export const GROUND: Record<GroundKind, { name: string; type: DamageType; desc: 
   shocked: { name: 'Shocked ground', type: 'light', desc: 'Deals lightning damage over time; hits taken there deal 20% more.' },
   caustic: { name: 'Caustic ground', type: 'phys', desc: 'Deals physical damage over time.' },
   stormwater: { name: 'Storm-tossed water', type: 'light', desc: 'Deals lightning damage over time; your cooldowns run 40% slower.' },
+  unholy: { name: 'Unholy ground', type: 'fire', desc: 'Deals damage over time of whichever element you resist least, and halves your flask healing and Life regeneration.' },
 };
 /** `rime`: monsters of the high peaks (Act 4), whose cold ground is Frozen. */
 export const groundFor = (type: DamageType, rime = false): GroundKind =>
@@ -169,6 +170,8 @@ export const monsterGround = (m: { groundKind?: GroundKind; rime?: boolean }, ty
 export const SHOCKED_GROUND_TAKEN = 1.2;
 /** standing in storm-tossed water: cooldowns run at this rate */
 export const STORMWATER_COOLDOWN = 0.6;
+/** standing on unholy ground: flask healing and Life regeneration work at this rate */
+export const UNHOLY_RECOVERY = 0.5;
 /** standing on chilled ground: actions take this much longer */
 export const CHILLED_GROUND_SLOW = 0.75;
 /** standing on frozen ground: the same, harder */

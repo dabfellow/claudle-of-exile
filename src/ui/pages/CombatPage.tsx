@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { mealDef } from '../../data/cooking';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
-import { BOSS_FROSTBITE_MAX, BOSS_FROSTBITE_SLOW_PCT, BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, nextZones, zoneDef, type MonsterDef } from '../../data/zones';
+import { BOSS_FROSTBITE_MAX, BOSS_FROSTBITE_SLOW_PCT, BOSS_NOVA_MULT, BOSS_SLAM_MULT, echoTips, MECHANIC_INFO, nextZones, zoneDef, type MonsterDef } from '../../data/zones';
 import { CELLS, cellRing, GROUND, inReach, minionInWay, monsterGround, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT, RINGS } from '../../engine/battlefield';
 import {
   aliveMonsters,
@@ -56,7 +56,7 @@ const DMG_COLOR: Record<DamageType, string> = {
 /** buffs that come from tree effects rather than a skill gem */
 const EXTRA_BUFFS: Record<string, string> = { guard_armour: 'Guard Armour', evade_speed: 'Evasive', stand_fast: 'Stand Fast', ecstasy: 'Ecstasy' };
 const DMG_NAME: Record<DamageType, string> = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' };
-const GROUND_STATUS: Record<GroundKind, string> = { burning: 'fire', chilled: 'cold', frozen: 'cold', shocked: 'bad', caustic: 'poison', stormwater: 'cold' };
+const GROUND_STATUS: Record<GroundKind, string> = { burning: 'fire', chilled: 'cold', frozen: 'cold', shocked: 'bad', caustic: 'poison', stormwater: 'cold', unholy: 'bad' };
 
 interface Floater {
   id: number;
@@ -682,7 +682,7 @@ function Matchup({ s, d, bossDef }: { s: GameState; d: Derived; bossDef: Monster
   const hit = target ? hitChance(d.accuracy, target.level) : 0;
   const evade = target ? evadeChance(d.evasion, target.level) : 0;
   const perHit = target ? mitigate(d, target.damage, target.dmgType) : 0;
-  const slam = mitigate(d, boss.damage * BOSS_SLAM_MULT, boss.dmgType);
+  const slam = mitigate(d, boss.damage * BOSS_SLAM_MULT, boss.slamType ?? boss.dmgType);
   const nova = mitigate(d, boss.damage * BOSS_NOVA_MULT, boss.novaType);
   const theirDps = target ? (perHit * (1 - evade)) / (target.attackMs / 1000) : 0;
   const dps = s.combat ? liveDps(s.combat) : 0;
@@ -711,16 +711,26 @@ function Matchup({ s, d, bossDef }: { s: GameState; d: Derived; bossDef: Monster
       <div className="target-label matchup-section">Boss: {boss.name}</div>
       <div className="matchup-note">
         <b>{boss.casts.slam.name}:</b> a heavy blow that winds up for {(boss.casts.slam.ms / 1000).toFixed(1)}s, then hits for about{' '}
-        <b className={slam >= s.life ? 'bad' : ''}>{fmt(slam)}</b>. Evasion Rating can't dodge it — use a guard skill, War Cry or a flask.
+        <b className={slam >= s.life ? 'bad' : ''}>{fmt(slam)}</b>{boss.slamType ? ` ${DMG_NAME[boss.slamType].toLowerCase()}` : ''}. Evasion Rating can't dodge it — use a guard skill, War Cry or a flask.
       </div>
-      {boss.mechanics.includes('nova') && (
+      {bossDef.mechanics?.includes('nova') && (
         <div className="matchup-note">
           <b>{boss.casts.nova.name}:</b> a {DMG_NAME[boss.novaType].toLowerCase()} nova that winds up for{' '}
           {(boss.casts.nova.ms / 1000).toFixed(1)}s, then hits for about{' '}
           <b className={nova >= s.life ? 'bad' : ''}>{fmt(nova)}</b>. Blocks don't stop it — resistances, shields, evades or an interrupt do.
         </div>
       )}
-      {boss.mechanics
+      {bossDef.echoes && (
+        <div className="matchup-note">
+          <b>Echoes:</b> {bossDef.echoes.map(([a, b]) => `${MECHANIC_INFO[a].name} and ${MECHANIC_INFO[b].name}`).join(', then ')}{bossDef.echoes.length > 1 ? ', a pair at a time as its life falls' : ', together'}.
+        </div>
+      )}
+      {echoTips(bossDef).map((tip) => (
+        <div key={tip} className="matchup-note">
+          <b>Together:</b> {tip}
+        </div>
+      ))}
+      {(bossDef.mechanics ?? ['slam'])
         .filter((k) => k !== 'slam' && k !== 'nova')
         .map((k) => (
           <div key={k} className="matchup-note">

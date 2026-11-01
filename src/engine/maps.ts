@@ -5,6 +5,7 @@ import { activeGemDef } from '../data/gems';
 import { hasMap, MAP_DROPS, MAP_THEMES, MAP_TIERS, mapTheme, mapTier, mapZoneId } from '../data/maps';
 import { addBank } from './bank';
 import { suggestedRule } from './automation';
+import { campaignComplete } from './hideout';
 import { enterZone } from './combat';
 import type { Ctx } from './context';
 import { createItem, createUnique } from './items';
@@ -19,6 +20,11 @@ import { charXpForLevel } from './xp';
  * in production game.ts turns it on for accounts in the `admins` table. A run already under way never checks it.
  */
 export const MAPS_PREVIEW = { enabled: !!import.meta.env?.DEV };
+
+/** Maps are open once the campaign is beaten, and to the preview before that. */
+export function mapsOpen(s: GameState): boolean {
+  return MAPS_PREVIEW.enabled || campaignComplete(s);
+}
 
 export function newMapState(): MapState {
   return { stock: {}, run: null, auto: null, tally: { runs: 0, clearMs: 0, mapsFound: 0, favoured: 0 } };
@@ -120,7 +126,7 @@ function leaveMap(s: GameState): void {
 /** Maps from any monster, and what a map's theme favours. */
 export function rollMapDrops(s: GameState, ctx: Ctx, mon: MonsterInstance): void {
   const run = s.maps.run;
-  if (!run && (!MAPS_PREVIEW.enabled || mon.level < MAP_DROPS.campaignMinLevel)) return;
+  if (!run && (!mapsOpen(s) || mon.level < MAP_DROPS.campaignMinLevel)) return;
   const dropChance = run ? (mon.isBoss ? MAP_DROPS.inMapBoss : MAP_DROPS.inMapKill) : mon.isBoss ? MAP_DROPS.campaignBoss : MAP_DROPS.campaignKill;
   if (chance(ctx.rng, dropChance)) {
     const tier = run?.tier ?? MAP_TIERS[0].tier;

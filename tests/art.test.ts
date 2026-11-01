@@ -47,6 +47,16 @@ describe('pack art', () => {
     expect(ids.filter((id) => !packArtUrl(`uniques/${id}`))).toEqual([]);
   });
 
+  it('no two Act 6 monsters share a picture, and its areas and uniques have art', () => {
+    const ids = zonesInAct(6).flatMap((z) => [...z.monsters, z.boss]).map((m) => m.id);
+    const urls = ids.map((id) => packArtUrl(`monsters/${id}`));
+    expect(urls.filter((u) => !u)).toEqual([]);
+    expect(new Set(urls).size).toBe(urls.length);
+    expect(zonesInAct(6).filter((z) => !packArtUrl(`zones/${z.id}`)).map((z) => z.id)).toEqual([]);
+    const uniques = ['oathbreaker', 'kingsmarch', 'last_decree', 'crownbreaker_mask', 'hand_of_the_regent', 'regents_mantle'];
+    expect(uniques.filter((id) => !packArtUrl(`uniques/${id}`))).toEqual([]);
+  });
+
   it('no two Act 5 monsters share a picture, and its areas and uniques have art', () => {
     const ids = zonesInAct(5).flatMap((z) => [...z.monsters, z.boss]).map((m) => m.id);
     const urls = ids.map((id) => packArtUrl(`monsters/${id}`));

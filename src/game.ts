@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { flaskDef } from './data/flasks';
 import { SKILLS } from './data/skills';
 import { ACTS, actOpen, ZONES } from './data/zones';
+import { FINAL_ACT } from './engine/hideout';
 import type { Ctx } from './engine/context';
 import { itemName } from './engine/items';
 import { alignWarTable, freshAccount, settleCharacter } from './engine/account';
@@ -689,14 +690,18 @@ class GameStore {
       case 'actComplete': {
         const next = ACTS.find((a) => a.n === e.act + 1);
         this.addFeed(
-          next && actOpen(next.n) ? `Act ${e.act} complete! Act ${next.n}, ${next.name}, is open.` : `Act ${e.act} complete! More of the world opens in a future update.`,
+          e.act === FINAL_ACT
+            ? 'The campaign is complete! The Map Device wakes in your hideout.'
+            : next && actOpen(next.n)
+              ? `Act ${e.act} complete! Act ${next.n}, ${next.name}, is open.`
+              : `Act ${e.act} complete! More of the world opens in a future update.`,
           'good',
         );
         this.pushToast(`Act ${e.act} complete!`, 'good');
         break;
       }
       case 'trialPassed': {
-        const text = e.n === 1 ? 'Trial passed! Choose your ascendancy on the Passive Tree page.' : 'Trial passed! More of your ascendancy opens.';
+        const text = e.n === 1 ? 'Trial passed! Choose your ascendancy on the Passive Tree page.' : e.n === 3 ? 'Final trial passed! Your ascendancy capstone opens.' : 'Trial passed! More of your ascendancy opens.';
         this.addFeed(text, 'good');
         this.pushToast(text, 'good');
         break;

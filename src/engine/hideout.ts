@@ -2,7 +2,7 @@ import { BASES, type BaseDef } from '../data/bases';
 import { ACTIVE_GEMS, activeGemDef, gemAct, gemReqLevel, SUPPORT_GEMS, supportGemDef } from '../data/gems';
 import { SHOP_REFRESH_MIN, SHOP_SLOTS, stationDef, type StationId } from '../data/hideout';
 import { currencyDef } from '../data/materials';
-import { actBossZone } from '../data/zones';
+import { actBossZone, actOpen } from '../data/zones';
 import { grantUnlocks } from './automation';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
@@ -25,16 +25,21 @@ const NEW_BATCH_STOCK = 3;
 /** Maps come after the campaign, PoE-style: the Map Device wakes once the last act's boss is beaten. */
 export const FINAL_ACT = 6;
 
+/** Any character beating the last act counts for the account. A save carried over from a preview build counts for nothing while the act is closed. */
 export function campaignComplete(s: GameState): boolean {
+  if (!actOpen(FINAL_ACT)) return false;
   const z = actBossZone(FINAL_ACT);
-  return !!z && s.bossesDefeated.includes(z.id);
+  return !!s.account.campaignDone || (!!z && s.bossesDefeated.includes(z.id));
 }
 
-/** Finishing the campaign with any character opens the Exile for the whole account. */
-export function checkExileUnlock(s: GameState, ctx: Ctx): void {
-  if (s.account.exileUnlocked || !campaignComplete(s)) return;
+/** Finishing the campaign with any character wakes the Map Device and opens the Exile for the whole account. */
+export function checkCampaignDone(s: GameState, ctx: Ctx): void {
+  if (s.account.campaignDone || !campaignComplete(s)) return;
+  s.account.campaignDone = true;
+  // accounts from when Act 1 opened it already hold the Exile
+  const exile = s.account.exileUnlocked ? '' : ', and the Exile can now be created';
   s.account.exileUnlocked = true;
-  ctx.emit({ t: 'info', text: 'Campaign complete: the Exile can now be created', tone: 'good' });
+  ctx.emit({ t: 'info', text: `Campaign complete: the Map Device wakes${exile}`, tone: 'good' });
 }
 
 /** Why a station can't be used or upgraded yet, or null. */

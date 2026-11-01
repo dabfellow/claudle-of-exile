@@ -177,6 +177,10 @@ export interface MonsterInstance {
   mechanics: BossMechanic[];
   timers: Partial<Record<BossMechanic, number>>;
   novaType: DamageType;
+  slamType?: DamageType;
+  /** Echoes: its pairs of old mechanics, and which pair it's on */
+  echoes?: [BossMechanic, BossMechanic][];
+  echoPhase?: number;
   /** remaining cast time in ms, or -1 when not casting */
   casting: number;
   /** what is being wound up, and its full cast time */
@@ -258,7 +262,7 @@ export interface Curse {
   crushing?: boolean;
 }
 
-export type GroundKind = 'burning' | 'chilled' | 'frozen' | 'shocked' | 'caustic' | 'stormwater';
+export type GroundKind = 'burning' | 'chilled' | 'frozen' | 'shocked' | 'caustic' | 'stormwater' | 'unholy';
 
 /** A hazard on a battlefield cell (the player's, hurting monsters) or under the player (cell -1, a monster's). */
 export interface Ground {
@@ -616,12 +620,14 @@ export interface AccountState {
   /** the next account uid: see ACCOUNT_UID_BASE */
   nextUid: number;
   exileUnlocked: boolean;
+  /** some character on the account has beaten the last act, so the Map Device stays awake for all of them */
+  campaignDone?: boolean;
   /** characters and accounts already folded in, so none counts twice */
   absorbed: string[];
 }
 
 /** Account data arriving from elsewhere: a pre-account save, a demo, an import. */
-export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'exileUnlocked'>>;
+export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'exileUnlocked' | 'campaignDone'>>;
 
 /** A map being run. Its map is already used up. */
 export interface MapRun {
