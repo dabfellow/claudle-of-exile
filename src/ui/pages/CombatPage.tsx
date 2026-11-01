@@ -22,6 +22,7 @@ import {
   startCombat,
   useFlask,
 } from '../../engine/combat';
+import { areaXpLabel, characterLevel } from '../../engine/character';
 import { flaskStats } from '../../engine/flasks';
 import { gemUseReason, MIN_COOLDOWN_MS, skillNumbers } from '../../engine/gems';
 import { ASCENDANCY_BY_ID } from '../../data/ascendancies';
@@ -696,6 +697,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
   const kills = s.zoneKills[zone.id] ?? 0;
   const bossReady = bossIsNext(s, zone.id);
   const bossComing = bossCalled(s, zone.id);
+  const areaXp = areaXpLabel(characterLevel(s), zone.levelRange);
   return (
     <div className="page">
       <PageHeader
@@ -728,7 +730,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
           </>
         }
       >
-        Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {s.maps.run ? `${s.maps.run.packsLeft}/${s.maps.run.packsTotal} packs left before ${zone.boss.name}` : bossReady ? `${zone.boss.name} is ready to fight` : `${kills}/${zone.bossEvery} until ${zone.boss.name}`}
+        Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {areaXp && `${areaXp} · `}{s.maps.run ? `${s.maps.run.packsLeft}/${s.maps.run.packsTotal} packs left before ${zone.boss.name}` : bossReady ? `${zone.boss.name} is ready to fight` : `${kills}/${zone.bossEvery} until ${zone.boss.name}`}
       </PageHeader>
 
       <div className={`card arena2 ${zoneArt ? 'has-art' : ''}`} style={{ ['--zone' as string]: zone.color, ['--zone-art' as string]: zoneArt ? `url(${zoneArt})` : undefined }}>

@@ -3,6 +3,9 @@
 **Design reset (2026-10-30):** the pacing targets below, like Act 1 at 6–10 h, are replaced by [GDD.md](GDD.md) §2. The
 results stay as a record of how the game runs today. Exact balance isn't a goal.
 
+**2026-10-31:** pacing targets are dropped. `xpScale` is gone and area level ranges cap levelling instead, so the
+timings below ran on XP rules that no longer exist.
+
 Run the headless sim to check pacing after any numbers change:
 
 ```bash
@@ -71,8 +74,9 @@ The last drop tweak (regal and alchemy) came after the week and month sweeps: th
 
 | Knob | Where | Current |
 |---|---|---|
-| Character XP curve | `engine/xp.ts` `CHAR_CURVE` | `36·(L−1)³ + 100·(L−1)` to 100 |
-| Kill XP | `engine/combat.ts` `monsterXp`, `KILL_XP_SCALE` | `(5 + 3·level) × 10 for bosses × 0.8`, × level-difference multiplier |
+| Character XP curve | `engine/xp.ts` `CHAR_CURVE` | set by play time: `18·(L−1)³ + 50·(L−1)` to 20 (about 3 h), then `CHAR_PACE`: 20–40 3 h, 40–65 6 h, 65–80 12 h, 80–95 20 h, 95–99 20 h, assuming 3,300 kills an hour. 99→100 costs as much as 1→99. Sim, nonstop, all classes, seed 1: level 20 at 4h15–7h31, 20–40 in 3h27–6h51, held back by bosses more than XP (doubling Act 1 XP barely moved it). Nothing above about 46 can be measured until content goes past level 41 |
+| Kill XP | `engine/combat.ts` `monsterXp`, `KILL_XP_SCALE` | `(5 + 3·level) × 10 for bosses × 0.8`, × area level multiplier |
+| Area level XP | `engine/character.ts` `areaXpMultiplier` | by your level against the area's range. Above it: −10, −20, −40, −50, −80%, then 1% more per level, reaching no XP at 25 over. Below it: +10%, then +20% at most. Applies to gem XP too |
 | Death penalty | `engine/character.ts` | 5% of xp toward next level |
 | Player action times | `data/gems.ts` `timeMs`, `BASE_ATTACK_MS` | default attack 3 s; each skill has its own attack or cast time (Heavy Strike 3.9 s, Twin Strike 2.7 s, Fireball 3.6 s, guards 0.75–1.2 s). Most spells are instant (`timeMs: 0`) and limited by their cooldown, so they don't use up the turn; only big wind-ups (Fireball, Glacial Lance) have a cast time. Under Overclock instant skills take 0.5 s (`OVERCLOCK_INSTANT_MS`). No cooldown can ever drop below 0.1 s (`MIN_COOLDOWN_MS` in `engine/gems.ts`): not through cooldown recovery, Arcane Recursion or Overclock, whose cooldowns sit at that minimum. Weapons add attack speed (`data/bases.ts` `speed`, 0–35%); attack and cast speed shorten them |
 | Monster life | `data/zones.ts` `MONSTER_LIFE_SCALE` | ×0.85 (was ×1.8 when actions were ~2× quicker) |
@@ -83,7 +87,6 @@ The last drop tweak (regal and alchemy) came after the week and month sweeps: th
 | Boss drops | `data/drops.ts` `BOSS_TABLES` | first kill guarantees the tier reward (2 transmute → 1 exalted), then `repeatChance` per kill (10% tiers 1–3, 6% tier 4, 1.5% tier 5); 2–3 extra currency rolls |
 | Boss mechanics | `data/zones.ts` `BOSS_*` | slam ×2.5 every 9 s; nova ×1.8 every 13 s (ignores blocks); wind-ups are per boss; summon up to 2 adds every 16 s; enrage below 35% (+50% attack speed, +30% damage); ward 12% of life at 66%/33%, heals 10% if not broken within 8 s |
 | Spell added damage | `engine/gems.ts` `SPELL_ADDED_EFFECTIVENESS` | spells add your flat fire/cold/lightning damage at 70% |
-| Area kill XP | `data/zones.ts` `xpScale` | Act 1 only: 0.15, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7 by area |
 | Gathering/recipe gating | `data/skills.ts` `area` | higher nodes and recipes need their area unlocked |
 | Bench recipes | `data/hideout.ts` `BENCH_CRAFTS` | bench level + an achievement for everything past life/resists |
 | Gold | `engine/loot.ts` | 1…level/3 per kill (×15 boss) |

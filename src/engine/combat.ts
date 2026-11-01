@@ -68,7 +68,7 @@ import {
   type AreaShape,
 } from './battlefield';
 import { ascendancyOf, hasAscNode, newAscendancyRuntime, onBossFirstKill } from './ascendancy';
-import { applyDeathPenalty, characterLevel, xpLevelMultiplier } from './character';
+import { applyDeathPenalty, areaXpMultiplier, characterLevel } from './character';
 import { bossLeftToRules, castOrder, ruleLockReason, rulesPass, skillAim } from './automation';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
@@ -237,10 +237,10 @@ export function currentMovement(s: GameState): Movement {
 
 // ---------- monsters ----------
 
-/** Global kill-xp knob; areas scale it further with `xpScale` (docs/design/BALANCE.md). */
+/** Global kill-xp knob (docs/design/BALANCE.md). */
 export const KILL_XP_SCALE = 0.8;
 
-/** Base character xp for a kill, before the level-difference multiplier. */
+/** Base character xp for a kill, before the area level multiplier. */
 export function monsterXp(mon: MonsterInstance): number {
   return Math.round((5 + mon.level * 3) * (mon.isBoss ? 10 : 1) * mon.scale * KILL_XP_SCALE);
 }
@@ -1457,7 +1457,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   c.hungerMs = HUNGER_MS;
   ascendancyKill(s, d, mon);
   s.lifetime.kills += 1;
-  const xp = monsterXp(mon) * xpLevelMultiplier(characterLevel(s), mon.level) * (zoneDef(s.combat!.zoneId).xpScale ?? 1);
+  const xp = monsterXp(mon) * areaXpMultiplier(characterLevel(s), zone.levelRange);
   grantXp(s, ctx, 'combat', xp * (1 + d.charXp / 100));
   grantGemXp(s, ctx, xp, d.attributes);
   gainCharges(s, mon.isBoss ? 8 : 1, d);

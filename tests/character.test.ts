@@ -3,6 +3,7 @@ import { ACTIVE_GEMS } from '../src/data/gems';
 import { equipFrom, moveToStash, salvageAny } from '../src/engine/itemActions';
 import { zoneDef } from '../src/data/zones';
 import { openReachedZones, zoneLockText } from '../src/engine/progress';
+import { areaXpLabel, areaXpMultiplier } from '../src/engine/character';
 import { makeCtx } from '../src/engine/context';
 import { equip, slotsFor } from '../src/engine/equipment';
 import { createItem } from '../src/engine/items';
@@ -14,6 +15,33 @@ import { charXpForLevel } from '../src/engine/xp';
 import { veteran } from './helpers';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
+
+describe('xp for your level against the area', () => {
+  const range: [number, number] = [10, 13];
+
+  it('is normal anywhere in the range', () => {
+    for (const level of [10, 11, 12, 13]) expect(areaXpMultiplier(level, range)).toBe(1);
+  });
+
+  it('falls away above the range, then 1% more per level, to nothing at 25 levels over', () => {
+    const over = [14, 15, 16, 17, 18, 19, 20, 37, 38, 60].map((level) => areaXpMultiplier(level, range));
+    [0.9, 0.8, 0.6, 0.5, 0.2, 0.19, 0.18, 0.01, 0, 0].forEach((want, i) => expect(over[i]).toBeCloseTo(want, 6));
+  });
+
+  it('pays up to 20% extra below the range', () => {
+    expect(areaXpMultiplier(9, range)).toBeCloseTo(1.1, 6);
+    expect(areaXpMultiplier(8, range)).toBeCloseTo(1.2, 6);
+    expect(areaXpMultiplier(1, range)).toBeCloseTo(1.2, 6);
+  });
+
+  it('labels the change for players', () => {
+    expect(areaXpLabel(11, range)).toBe('');
+    expect(areaXpLabel(8, range)).toBe('+20% XP');
+    expect(areaXpLabel(16, range)).toBe('−40% XP');
+    expect(areaXpLabel(19, range)).toBe('−81% XP');
+    expect(areaXpLabel(38, range)).toBe('No XP');
+  });
+});
 
 describe('hands and fingers', () => {
   it('a one-handed weapon fits either hand; a shield only the off hand; there are four ring fingers', () => {

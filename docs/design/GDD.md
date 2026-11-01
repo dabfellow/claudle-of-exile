@@ -24,6 +24,8 @@ It takes **months to build a top-end character** that easily clears all content.
 
 ## 2. Progression & pacing
 
+**Dropped 2026-10-31:** the journey below was too slow for players, so it no longer sets XP. Players set the pace through acts. The level curve is set by play time: 1–20 about 3 h, 20–40 3 h, 40–65 6 h, 65–80 12 h, 80–95 20 h, 95–99 20 h, and 99 is halfway to 100 in XP. Area level ranges cap levelling: above an area's range XP falls to −80% at 5 levels over and to nothing at 25 over, and below it pays up to 20% more ([BALANCE.md](BALANCE.md) → Knobs).
+
 ### A dedicated player's journey
 | When | What they're doing |
 |---|---|
