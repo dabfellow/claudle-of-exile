@@ -125,7 +125,6 @@ describe('Act 3 layout', () => {
   it('follows the Burning Throne and every area sits on the map', () => {
     expect(nextZones('burningthrone')[0]?.id).toBe('pilgrimgate');
     const zones = act();
-    for (let i = 0; i < zones.length - 1; i++) expect(nextZones(zones[i].id)[0]?.id).toBe(zones[i + 1].id);
     expect(nextZones(zones.at(-1)!.id)[0]?.id).toBe('hollowpass');
     for (const z of zones) expect(ZONE_POS[z.id]).toBeTruthy();
   });

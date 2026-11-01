@@ -8,6 +8,18 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.34',
+    date: '1 Nov 2026',
+    title: 'The roads fork',
+    items: [
+      'Acts 3 to 6 are no longer a straight line. Roads split and rejoin, and side areas branch off them, so you choose your way through each act.',
+      "Each of these act bosses now waits until you've beaten most of its act's bosses: 7 of 9 in Act 3, 8 of 11 in Act 4, 10 of 13 in Act 5 and 14 of 17 in Act 6. Skip what you like within that.",
+      'Every area and every boss is still there, and side areas keep their bosses, ascendancy points and drops.',
+      'Your progress is safe: everything you had open stays open, and some areas may open early.',
+      'The act maps are bigger, and area names no longer overlap.',
+    ],
+  },
+  {
     version: '0.2.33',
     date: '1 Nov 2026',
     title: 'The whole campaign is open',

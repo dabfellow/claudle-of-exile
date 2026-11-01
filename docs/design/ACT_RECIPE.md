@@ -8,6 +8,7 @@ work is [MILESTONES.md](../MILESTONES.md) milestone 4.
 
 - [ ] **Stages:** about 8 in early acts, growing to 10–20 in later ones. Act 3 starts the growth. A stage is one area
   (`ZoneDef`).
+- [ ] **Roads (Act 3 on):** forks that rejoin, plus dead-end side areas, as below.
 - [ ] **Boss mechanic:** one new mechanic, added to `BossMechanic`, that says what answers it by hand and by rule.
 - [ ] **Resistance check:** one element clearly leads, across trash damage and the bosses' nova and ground damage.
 - [ ] **Skill batch:** a themed set of skill gems and supports that arrives with the act.
@@ -17,6 +18,17 @@ work is [MILESTONES.md](../MILESTONES.md) milestone 4.
   at around 65 at the end of Act 6. That's about 8 levels per act.
 - [ ] **Art:** pack art for every monster and area.
 - [ ] **Pacing:** checked in the sim once milestone 2 can measure it.
+
+## Roads
+
+Decided 2026-11-01, from your "PoE-like divergence". Acts 1 and 2 stay straight; every act from 3 on branches.
+
+- **Forks:** `requires.after` lists every road into an area, and any one of them opens it. The area order in `ZONES` stays campaign order, with the act boss last.
+- **Side areas:** a dead end no road leads on from (`isSideArea`). The map draws them smaller, on a thinner road, and they read "Side area" on their card.
+- **Act boss gate:** `requires.bosses` asks for about 75% of the act's other bosses, more than the shortest route gives. Forks are a real choice of what to skip, and the act can't shrink to its shortest route. Every boss still counts toward ascendancy points and the act's all-bosses achievement.
+- **Act complete:** the Campaign page's banner now follows the act boss, not every boss.
+- **Saves:** areas are only ever added on load (`openReachedZones`), so straight-line saves keep everything, and no area id changed.
+- **Map:** each area's point is in `ZONE_POS`, its label's side in `LABEL_SIDE`, and `stretch` makes a crowded region taller in close-up. `tests/actRoads.test.ts` fails if a label hits another label, a point or a road.
 
 ## Act 2: The Burning Steppe
 

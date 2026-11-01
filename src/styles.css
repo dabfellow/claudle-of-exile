@@ -6942,6 +6942,10 @@ button.star {
   opacity: 0.75;
 }
 
+.act-road.side {
+  stroke-width: 1.5;
+}
+
 .act-node {
   cursor: pointer;
 }
@@ -6989,8 +6993,7 @@ button.star {
 }
 
 .act-node-name {
-  text-anchor: middle;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   fill: var(--text);
   paint-order: stroke;

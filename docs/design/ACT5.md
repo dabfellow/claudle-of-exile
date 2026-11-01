@@ -29,6 +29,10 @@ The road in is one entry: `blackharbor` has `requires: { after: ['giantsthrone']
 
 **Fire and lightning together:** a boss hits in one and blasts in the other, so a nova or scorch is always the opposite element to its channel and slam. On trash the two run level, each well ahead of physical, with a few cold monsters. Every new unique carries both resistances and feeds one class's meter.
 
+## Roads
+
+Forked on 2026-11-01. The act boss needs 10 of the 13 other bosses. Harbour → Wreck Line or Cinder Key → Squall Banks → Drowned Fleet → Brimstone Isle or Hollow Reef → Thunderhead → Black Current → Trench of Voices or Lightless Deep → Maelstrom's Eye. Side areas: Gulf of Lamps (off the Banks), Leviathan's Rib (off the Thunderhead). See [ACT_RECIPE.md](ACT_RECIPE.md) → Roads.
+
 ## Channels (`channel`)
 
 - Every 20 s the boss stops and channels for 5–6.5 s (`channel` on its `MonsterDef`). It does nothing else meanwhile, but its adds and timers carry on.

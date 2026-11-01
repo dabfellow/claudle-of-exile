@@ -86,7 +86,6 @@ describe('Act 5: The Sunless Sea', () => {
 
   it("follows Act 4's last area with one entry, and every area sits on the map inside the act's region", () => {
     expect(roadsInto(act()[0])).toEqual(['giantsthrone']);
-    for (const z of act().slice(1)) expect(roadsInto(z)[0]).toBe(act()[act().indexOf(z) - 1].id);
     expect(nextZones('highaltar').map((z) => z.id)).not.toContain('blackharbor');
     const region = actRegion(5)!.points;
     const inside = ([x, y]: [number, number]) => {
