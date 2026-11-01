@@ -18,7 +18,11 @@ const FOCUS_DRAIN_PER_SEC = 0.1;
 export const CHARGE_MIN = 0.5;
 export const CHARGE_ZONE_WIDTH = 0.12;
 
-const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting'];
+/** Smithing: how far off the beat a strike can land and still count. */
+const STRIKE_HIT_MS = 120;
+const STRIKE_WEAK_MS = 260;
+
+const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'runecarving'];
 
 export type SwingResult = 'hit' | 'weak' | 'miss';
 
@@ -33,9 +37,16 @@ export function chargeResult(charge: number, zone: number): SwingResult | null {
   return charge >= CHARGE_MIN ? 'weak' : null;
 }
 
-/** The skill action a mini-game can feed right now, or null. */
+/** How a strike landed against the beat. */
+export function strikeResult(offMs: number): SwingResult {
+  const off = Math.abs(offMs);
+  return off <= STRIKE_HIT_MS ? 'hit' : off <= STRIKE_WEAK_MS ? 'weak' : 'miss';
+}
+
+/** The action a mini-game can feed right now, or null. A Heist job is Thieving. */
 function manualAction(s: GameState) {
   const a = s.action;
+  if (a?.kind === 'heist') return a;
   return a?.kind === 'skill' && hasMinigame(actionDef(a.actionId).skill) ? a : null;
 }
 
