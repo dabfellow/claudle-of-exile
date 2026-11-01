@@ -94,7 +94,7 @@ function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
       ))}
       {next && (
         <p className="lock-note small">
-          {materialDef(next.item).name} at standing {next.standing}. Finds at {culture.artifactName} sites raise it.
+          {materialDef(next.item).name} at standing {next.standing}. Finds at {SITES.filter((x) => x.culture === culture.id).map((x) => x.name).join(' and ')} raise it.
         </p>
       )}
     </div>
@@ -110,7 +110,7 @@ export function ExpeditionBoard() {
   const level = skillLevel(s, 'archaeology');
   const next = SITES.find((x) => x.level > level);
   const shown = SITES.filter((x) => x.level <= level || x === next);
-  const { finds, traded } = s.expedition.tally;
+  const found = SITES.reduce((a, x) => a + siteStratum(s, x), 0);
   return (
     <>
       <div className="callout skill-note">
@@ -120,7 +120,7 @@ export function ExpeditionBoard() {
         <div className="section-head">
           <h3>Logbook</h3>
           <span className="dim small">
-            {finds} of {SITES.length * FIND_HOURS.length} found
+            {found} of {SITES.length * FIND_HOURS.length} found
           </span>
         </div>
         <div className="action-grid">
@@ -132,7 +132,7 @@ export function ExpeditionBoard() {
       <section>
         <div className="section-head">
           <h3>Merchants</h3>
-          <span className="dim small">{fmt(traded)} traded · the emptier a shelf, the dearer it gets</span>
+          <span className="dim small">{fmt(s.expedition.tally.traded)} traded · the emptier a shelf, the dearer it gets</span>
         </div>
         <div className="card-grid" style={{ ['--card-min' as string]: '340px', gap: 8 }}>
           {CULTURES.map((c) => (

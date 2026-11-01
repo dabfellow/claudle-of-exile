@@ -1549,9 +1549,7 @@ h3 {
 }
 
 .ware-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
 }
 
 .logbook-finds {
@@ -1600,7 +1598,10 @@ h3 {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   grid-auto-rows: 1fr;
   gap: 3px;
-  height: 96px;
+  width: 100%;
+  max-width: 360px;
+  height: 132px;
+  margin: 0 auto;
   padding: var(--s-2);
   cursor: grab;
   touch-action: none;
