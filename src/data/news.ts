@@ -8,13 +8,32 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
-    version: '0.2.41',
+    version: '0.2.43',
     date: '1 Nov 2026',
     title: 'Choose your ascendancy nodes',
     items: [
       "Trials now give 3 ascendancy points each, 9 in all, so you can't fill the tree.",
       'That buys three of the four big nodes: all three notables, or two notables and the capstone.',
       'If your tree no longer fits, its nodes are refunded so you can choose again.',
+    ],
+  },
+  {
+    version: '0.2.42',
+    date: '1 Nov 2026',
+    title: 'Mages choose again',
+    items: [
+      'Now that the Wellspring is here, every Mage who had picked an ascendancy gets to pick again, for free.',
+      'Your ascendancy tree is cleared and all your points come back to spend.',
+    ],
+  },
+  {
+    version: '0.2.41',
+    date: '1 Nov 2026',
+    title: 'The Wellspring',
+    items: [
+      'The Mage’s Wildcaster is gone, because it punished you for keeping your mana full. The Wellspring takes its place.',
+      'Mana you would waste at full now fills Overflow. A full meter makes your next damaging spell free, with 100% more damage.',
+      'Wildcasters become Wellsprings automatically, and get their ascendancy points back to spend.',
     ],
   },
   {

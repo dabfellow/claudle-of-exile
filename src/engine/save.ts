@@ -277,8 +277,29 @@ const MIGRATIONS: Record<number, Migration> = {
   },
   // bosses stopped giving ascendancy points: only passed trials count, and a tree that no longer fits is handed back
   28: resetAscendancyPoints,
+  29: (raw) => {
+    // Wellspring replaced Wildcaster: the character moves over, and its nodes come back as points to spend
+    const s = raw as unknown as { ascendancy?: { id: string | null; nodes: string[] }; combat?: { asc?: unknown } };
+    if (s.ascendancy?.id === 'wildcaster') {
+      s.ascendancy.id = 'wellspring';
+      s.ascendancy.nodes = [];
+    }
+    if (s.combat) s.combat.asc = newAscendancyRuntime();
+  },
+  30: (raw) => {
+    // the Mage's choice changed: every Mage who picked gets to pick again, with their points to spend
+    const s = raw as unknown as Pick<GameState, 'ascendancy' | 'character' | 'combat'>;
+    if (s.character.classId !== 'mage' || !s.ascendancy?.id) return;
+    s.ascendancy.id = null;
+    s.ascendancy.nodes = [];
+    s.ascendancy.carry = 0;
+    if (s.combat) {
+      s.combat.mech = 0;
+      s.combat.asc = newAscendancyRuntime();
+    }
+  },
   // trials cut to 3 points each, so the tree can't be filled
-  29: resetAscendancyPoints,
+  31: resetAscendancyPoints,
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
