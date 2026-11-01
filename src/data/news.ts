@@ -8,6 +8,15 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.27',
+    date: '1 Nov 2026',
+    title: 'Getting ready for what comes next',
+    items: [
+      'The skilling tree has grown, with new branches for skills still to come, and everyone gets a few more points to spend in it.',
+      'The rest of the campaign is on its way behind the scenes. Nothing changes in your game yet.',
+    ],
+  },
+  {
     version: '0.2.21',
     date: '31 Oct 2026',
     title: 'Boss farming',
