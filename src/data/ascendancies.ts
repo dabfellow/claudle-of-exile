@@ -223,11 +223,11 @@ export const ASCENDANCIES: AscendancyDef[] = ([
     plays: 'A hurt and heal loop. Templar normally barely fills Fervor on trash, but this fills it everywhere. It needs Life regen to stay safe, and a bad setup can kill itself offline.',
     gate: 'Using a skill costs 3% of your Life, and that Life fills Fervor three times as fast as a hit.',
     branches: [
-      { key: 'scourge', name: 'Scourge', desc: 'Fervor from self-harm counts for 50% more nova damage.', small: { name: 'Lash', stats: { novaPct: 8 } } },
-      { key: 'mortify', name: 'Mortify', desc: '25% more damage while below half Life.', small: { name: 'Vigil', stats: { lifeRegen: 2 } } },
-      { key: 'absolution', name: 'Absolution', desc: '30% increased holy nova healing.', stats: { novaHeal: 30 }, small: { name: 'Mercy', stats: { life: 12, novaHeal: 3 } } },
+      { key: 'scourge', name: 'Scourge', desc: 'Fervor from self-harm counts for 50% more nova damage.', small: { name: 'Lash', stats: { novaPct: 8.8 } } },
+      { key: 'mortify', name: 'Mortify', desc: '25% more damage while below half Life.', small: { name: 'Vigil', stats: { lifeRegen: 2.2 } } },
+      { key: 'absolution', name: 'Absolution', desc: '33% increased holy nova healing.', stats: { novaHeal: 33 }, small: { name: 'Mercy', stats: { life: 13, novaHeal: 3.3 } } },
     ],
-    bridge: { name: 'Hair Shirt', stats: { lifeRegenPct: 0.2, fervorPct: 5 } },
+    bridge: { name: 'Hair Shirt', stats: { lifeRegenPct: 0.22, fervorPct: 5.5 } },
     capstone: { key: 'ecstasy', name: 'Ecstasy', desc: 'While below half Life your skills are 15% faster and cost no Mana.' },
   },
   {
@@ -236,11 +236,11 @@ export const ASCENDANCIES: AscendancyDef[] = ([
     plays: 'The hands-on Templar. Save novas through a fight, then spend them on a boss wind-up as a burst and a heal. Left alone it releases at full, and reactive rules let it hold for the right moment on idle.',
     gate: 'Fervor stores up to 3 novas, released when full unless your release setting or a click says otherwise.',
     branches: [
-      { key: 'reserve', name: 'Reserve', desc: 'Novas released together deal 20% more damage for each one after the first.', small: { name: 'Banked Light', stats: { novaPct: 8 } } },
-      { key: 'vespers', name: 'Vespers', desc: 'A nova also grants a shield of 15% of your Life.', small: { name: 'Evensong', stats: { shieldEffect: 6 } } },
-      { key: 'beacon', name: 'Beacon', desc: 'A nova breaks the armour of everything on every ring for 4s.', small: { name: 'Lantern', stats: { allRes: 2, fervorPct: 3 } } },
+      { key: 'reserve', name: 'Reserve', desc: 'Novas released together deal 20% more damage for each one after the first.', small: { name: 'Banked Light', stats: { novaPct: 8.8 } } },
+      { key: 'vespers', name: 'Vespers', desc: 'A nova also grants a shield of 15% of your Life.', small: { name: 'Evensong', stats: { shieldEffect: 6.6 } } },
+      { key: 'beacon', name: 'Beacon', desc: 'A nova breaks the armour of everything on every ring for 4s.', small: { name: 'Lantern', stats: { allRes: 2.2, fervorPct: 3.3 } } },
     ],
-    bridge: { name: 'Patience', stats: { fervorPct: 6, novaPct: 8 } },
+    bridge: { name: 'Patience', stats: { fervorPct: 6.6, novaPct: 8.8 } },
     capstone: { key: 'dawn', name: 'Dawn', desc: 'Releasing all 3 at once stuns everything and absorbs the next boss wind-up.' },
   },
   {

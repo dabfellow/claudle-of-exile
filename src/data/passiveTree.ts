@@ -515,6 +515,20 @@ const SECTORS: SectorSpec[] = [
   },
 ];
 
+/** Templar balance pass (2026-11-01): every Templar cluster node is 10% stronger. Keystones and flat counts stay as written. */
+const TEMPLAR_BUFF = 1.1;
+const buffStats = (stats: StatMap): StatMap =>
+  Object.fromEntries(
+    Object.entries(stats).map(([k, v = 0]) => [k, k === 'extraChains' ? v : v >= 10 ? Math.round(v * TEMPLAR_BUFF) : Math.round(v * TEMPLAR_BUFF * 10) / 10]),
+  );
+{
+  const templar = SECTORS.find((sec) => sec.key === 'templar')!;
+  for (const slot of Object.keys(templar.clusters) as SlotId[]) {
+    const cl = templar.clusters[slot];
+    templar.clusters[slot] = { ...cl, small: [cl.small[0], buffStats(cl.small[1])], notables: cl.notables.map(([name, stats]) => [name, buffStats(stats)]) };
+  }
+}
+
 /** The shared centre every class can reach: a ring of all-attribute nodes and six notables. */
 const CROSSING: [string, StatMap][] = [
   ["Castaway's Grit", { life: 20, allRes: 4 }],

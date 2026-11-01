@@ -127,7 +127,9 @@ const WEAPON_ROLES: Record<WeaponFamily, Tag[]> = {
 const W = (id: string, name: string, family: WeaponFamily, reqLevel: number, phys: [number, number], speed: number, crit: number): BaseDef => {
   const fam = WEAPON_FAMILIES[family];
   return {
-    id, name, slot: 'weapon', reqLevel, phys, speed, crit, family,
+    id, name, slot: 'weapon', reqLevel, speed, crit, family,
+    // Templar balance pass (2026-11-01): sceptres hit 10% harder
+    phys: family === 'sceptre' ? [Math.round(phys[0] * 1.1), Math.round(phys[1] * 1.1)] : phys,
     tags: ['weapon', ...WEAPON_ROLES[family], ...fam.attrs.map((a) => `${a}_weapon` as const)],
     implicits: [...fam.implicits(reqLevel), ...(fam.bonus && reqLevel >= IMPLICIT_LEVEL ? [bonusImplicit(fam.bonus, reqLevel)] : [])],
     ...(fam.twoHanded ? { twoHanded: true } : {}),
