@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { classDef, type ClassId } from '../../data/classes';
-import { EVENTS } from '../../data/events';
+import { EVENTS, type EventRow, type LiveEvent } from '../../data/events';
 import { game, useGame } from '../../game';
 import { errorReportingConfigured, sentryIssuesUrl } from '../../platform/errors';
 import {
@@ -226,36 +226,83 @@ function ReviewsTab() {
   );
 }
 
-/** Turns a limited-time event on or off for everyone. */
+/** A stored time as a date picker wants it, in the admin's own time zone. */
+function toPicker(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
+
+const fromPicker = (value: string) => (value ? new Date(value).toISOString() : null);
+
+/** One event: on or off by hand, or between two times. */
+function EventControl({ event }: { event: LiveEvent }) {
+  const row = game.eventRows.find((r) => r.id === event.id);
+  const [start, setStart] = useState(toPicker(row?.starts_at));
+  const [end, setEnd] = useState(toPicker(row?.ends_at));
+  const [error, setError] = useState<string | null>(null);
+  const enabled = !!row?.enabled;
+  const live = game.liveEvents.includes(event);
+  const stored = { id: event.id, enabled, starts_at: row?.starts_at ?? null, ends_at: row?.ends_at ?? null };
+  const save = (next: EventRow) => {
+    setError(null);
+    game.saveEvent(next).catch((e) => setError(`Couldn't change it: ${errorText(e)}. If the table is missing, run the events SQL in docs/ops/SETUP.md.`));
+  };
+  const schedule = () => {
+    if (!start) return setError('Pick a start time');
+    if (end && end <= start) return setError('The end has to be after the start');
+    save({ ...stored, starts_at: fromPicker(start), ends_at: fromPicker(end) });
+  };
+  const clear = () => {
+    setStart('');
+    setEnd('');
+    save({ ...stored, starts_at: null, ends_at: null });
+  };
+  return (
+    <div className="admin-event">
+      <div className="row wrap">
+        <b>{event.name}</b>
+        <span className="muted small">{event.blurb}</span>
+        {live && <Badge>Live</Badge>}
+        <span className="spacer" />
+        <button className={`btn sm ${enabled ? '' : 'primary'}`} onClick={() => save({ ...stored, enabled: !enabled })}>
+          {enabled ? 'Turn off' : 'Turn on'}
+        </button>
+      </div>
+      <div className="row wrap">
+        <label className="dim small">
+          Starts <input className="input" type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} />
+        </label>
+        <label className="dim small">
+          Ends <input className="input" type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} />
+        </label>
+        <button className="btn sm" onClick={schedule}>
+          Save schedule
+        </button>
+        <button className="btn sm ghost" disabled={!stored.starts_at && !start && !end} onClick={clear}>
+          Clear
+        </button>
+      </div>
+      {error && <p className="warn small">{error}</p>}
+    </div>
+  );
+}
+
+/** Runs limited-time events for everyone, by hand or on a schedule. */
 function EventsTab() {
   useGame();
-  const [error, setError] = useState<string | null>(null);
-  const flip = (id: string | null) => {
-    setError(null);
-    game.switchEvent(id).catch((e) => setError(errorText(e)));
-  };
+  useEffect(() => void game.refreshEvents(), []);
   return (
     <div className="card">
       <div className="card-title">Limited-time events</div>
       <p className="dim small" style={{ marginTop: 0 }}>
-        One at a time, for all players. Open games pick up a change within 5 minutes.
+        Turn on runs an event until you turn it off. A schedule starts and ends it by itself, in your time zone; leave Ends empty to run it until you clear it. Events running together use the best
+        bonus of each kind. Open games pick up a change within 5 minutes.
       </p>
       {EVENTS.map((e) => {
-        const on = game.liveEvent?.id === e.id;
-        return (
-          <div key={e.id} className="row wrap">
-            <div>
-              <b>{e.name}</b> <span className="muted small">{e.blurb}</span>
-            </div>
-            <span className="spacer" />
-            {on && <Badge>Live</Badge>}
-            <button className={`btn sm ${on ? '' : 'primary'}`} onClick={() => flip(on ? null : e.id)}>
-              {on ? 'Turn off' : 'Turn on'}
-            </button>
-          </div>
-        );
+        const row = game.eventRows.find((r) => r.id === e.id);
+        return <EventControl key={`${e.id} ${row?.starts_at} ${row?.ends_at}`} event={e} />;
       })}
-      {error && <p className="warn small">Couldn't change it: {error}. If the table is missing, run the events SQL in docs/ops/SETUP.md.</p>}
     </div>
   );
 }

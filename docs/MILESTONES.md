@@ -382,6 +382,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Event schedules: holidays plus a Double XP event in `src/data/events.ts`; Admin → Events runs each by hand or between two times, and overlapping events use the best bonus of each kind. Replaces `live_event` with `live_events`: run the SQL in [SETUP.md](ops/SETUP.md). 0.2.13 — done 2026-10-31
 - [x] XP per hour readouts update every 2 seconds, still measured over the last 10 minutes. 0.2.12 — done 2026-10-31
 - [x] Limited-time events: Admin → Events turns Halloween (2x XP including gems, every monster's drops rolled twice) on or off with no deploy; needs the `live_event` SQL in [SETUP.md](ops/SETUP.md) run once. 0.2.12 — done 2026-10-31
 - [x] DPS meter shows a 2 second average, held until the next one, instead of a live 10 second figure; The Block's execute now counts. 0.2.11 — done 2026-10-31

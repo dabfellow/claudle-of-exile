@@ -8,6 +8,12 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.13',
+    date: '31 Oct 2026',
+    title: 'Holiday events',
+    items: ['Big holidays and Double XP weekends can now run on a schedule. Look for the banner in game.'],
+  },
+  {
     version: '0.2.12',
     date: '31 Oct 2026',
     title: 'Limited-time events',
