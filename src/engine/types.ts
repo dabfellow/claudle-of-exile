@@ -419,7 +419,7 @@ export type Action =
   | { kind: 'skill'; actionId: string; progress: number; focus?: number }
   | { kind: 'combat'; zoneId: string }
   | { kind: 'craft'; uid: number; method: CraftMethod; rule: StopRule; progress: number; steps: number }
-  | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number> }
+  | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number>; focus?: number }
   | null;
 
 /** Smithing catalyst slot: a Fossil biases the roll of a Magic base, Resin raises item level. */

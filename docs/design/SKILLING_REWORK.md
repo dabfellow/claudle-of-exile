@@ -246,8 +246,11 @@ top of everything else, so materials, drops and XP all rise together. It's in `s
 - **Mining:** hold to charge, release in a band that shifts each swing. Early is a weak hit, late is a miss.
 - **Woodcutting:** swing while a sweeping marker is in the band.
 - **Foraging:** click herbs before they wilt.
-- Thieving and production aren't built. The plan is a timing bar shared by production, reskinned per skill, and a
-  tumbler game for Thieving.
+- **Thieving:** a lock shows 3 pins in order, then you click them back. A whole lock is two hits, because watching takes half the time. Runs for marks and Heist jobs; Focus speeds up rooms, leaves alarms and loot alone, and carries across a repeat.
+- **Smithing:** strike as a closing ring lands: within 0.12 s a hit, within 0.26 s a weak hit.
+- **Alchemy:** hold to heat, let go to cool, and keep the needle in a drifting band. Each 1.25 s in a row is a hit, and leaving only resets that timer.
+- **Gemcutting:** click 3 numbered facets in order before the stone settles.
+- **Rune-carving:** drag along a stroke from the circle to its end. Sliding off is a miss.
 
 ## Open questions
 
