@@ -50,51 +50,58 @@ interface NavEntry {
   label: string;
   icon: string;
   skill?: SkillId;
-  /** draw a thin line above this entry (gathering → production) */
-  divider?: boolean;
 }
 
 const NAV: { label: string; items: NavEntry[] }[] = [
-  // Hideout on its own at the top, then the pages you use most, in the order you use them
+  // Hideout on its own at the top, then one group per kind of thing you came to do
   {
     label: '',
     items: [{ page: 'hideout', label: 'Hideout', icon: 'home' }],
   },
   {
-    label: 'Character',
+    label: 'Adventure',
     items: [
       { page: 'combat', label: 'Combat', icon: 'combat', skill: 'combat' },
-      { page: 'stash', label: 'Stash', icon: 'stash' },
       { page: 'campaign', label: 'Campaign', icon: 'campaign' },
+      { page: 'maps', label: 'Map Device', icon: 'map' },
       { page: 'vendor', label: 'Town', icon: 'vendor' },
+    ],
+  },
+  {
+    label: 'Character',
+    items: [
       { page: 'equipment', label: 'Equipment', icon: 'equipment' },
-      { page: 'bench', label: 'Crafting Bench', icon: 'bench' },
+      { page: 'stash', label: 'Stash', icon: 'stash' },
       { page: 'skills', label: 'Skills', icon: 'gems' },
       { page: 'tree', label: 'Passive Tree', icon: 'tree' },
     ],
   },
   {
-    label: 'Maps',
-    items: [{ page: 'maps', label: 'Map Device', icon: 'map' }],
-  },
-  {
-    label: 'Skilling',
+    label: 'Gathering',
     items: [
       { page: 'mining', label: 'Mining', icon: 'mining', skill: 'mining' },
       { page: 'woodcutting', label: 'Woodcutting', icon: 'woodcutting', skill: 'woodcutting' },
       { page: 'harvesting', label: 'Foraging', icon: 'harvesting', skill: 'harvesting' },
       { page: 'thieving', label: 'Thieving', icon: 'thieving', skill: 'thieving' },
       { page: 'fishing', label: 'Fishing', icon: 'fishing', skill: 'fishing' },
-      { page: 'smithing', label: 'Smithing', icon: 'smithing', skill: 'smithing', divider: true },
+    ],
+  },
+  {
+    label: 'Crafting',
+    items: [
+      { page: 'bench', label: 'Crafting Bench', icon: 'bench' },
+      { page: 'smithing', label: 'Smithing', icon: 'smithing', skill: 'smithing' },
       { page: 'alchemy', label: 'Alchemy', icon: 'alchemy', skill: 'alchemy' },
       { page: 'gemcutting', label: 'Gemcutting', icon: 'gemcutting', skill: 'gemcutting' },
       { page: 'runecarving', label: 'Rune-carving', icon: 'runecarving', skill: 'runecarving' },
-      { page: 'upcoming', label: 'Coming soon', icon: 'lock', divider: true },
     ],
   },
   {
     label: 'Progress',
-    items: [{ page: 'achievements', label: 'Achievements', icon: 'trophy' }],
+    items: [
+      { page: 'achievements', label: 'Achievements', icon: 'trophy' },
+      { page: 'upcoming', label: 'Coming soon', icon: 'lock' },
+    ],
   },
 ];
 
@@ -134,7 +141,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
             const isActive = it.skill && it.skill === active;
             const color = it.skill ? SKILLS[it.skill].color : 'var(--muted)';
             return (
-              <button key={it.page} data-tut={`nav-${it.page}`} className={`nav-item ${page === it.page ? 'active' : ''} ${it.divider ? 'divided' : ''}`} onClick={() => go(it.page)}>
+              <button key={it.page} data-tut={`nav-${it.page}`} className={`nav-item ${page === it.page ? 'active' : ''}`} onClick={() => go(it.page)}>
                 <span className="nav-icon">
                   <GameIcon name={it.icon} size={16} color={isActive ? color : undefined} />
                   {isActive && it.skill && <Ring value={progressOf(it.skill, s.skills[it.skill])} color={color} />}

@@ -11,7 +11,7 @@ Last updated 2026-10-31.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.19 (deployed 2026-10-31). The real-account
+**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.20 (deployed 2026-10-31). The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -398,6 +398,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 
 ## Done
 - [x] Gear sets and skill loadouts, with gear auto-switching at Crafting Bench level 3 ([TOWN.md](design/TOWN.md#gear-sets-and-skill-loadouts)) — done 2026-10-31
+- [x] Sidebar sorted by purpose: Hideout, then Adventure (Combat, Campaign, Map Device, Town), Character (Equipment, Stash, Skills, Passive Tree), Gathering, Crafting (Crafting Bench and the production skills) and Progress (Achievements, Coming soon). 0.2.19 — done 2026-10-31
 - [x] Mini-games for Thieving (marks and Heists), Smithing, Alchemy, Gemcutting and Rune-carving, a different game each ([SKILLING_REWORK.md](design/SKILLING_REWORK.md) §9). 0.2.18 — done 2026-10-31
 - [x] Combat screen layout (player report): skills and flasks moved into the arena under the field, which shrinks on short screens so they stay in view; Matchup is a fixed size that scrolls on its own, always lists the area boss's abilities, and keeps its rows with no target; status text and the Challenge button no longer reflow the field. The "Target" label is gone from the bar to fit one row. 0.2.17 — done 2026-10-31
 - [x] Duelist feel: Riposte also answers hits that land, at 50% damage, and shows a labelled floater. A starter's ripostes went from 6.7 to 30.7 a minute and DPS from 4.3 to 5.7 (mudflats, 5 seeds). Matador and Vanguard keep their triggers ([CLASSES.md](design/CLASSES.md)). 0.2.16 — done 2026-10-31

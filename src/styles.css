@@ -423,19 +423,6 @@ h3 {
   color: var(--dim);
 }
 
-/* gathering → production split inside the Skilling group */
-.nav-item.divided {
-  margin-top: 9px;
-}
-.nav-item.divided::before {
-  content: '';
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  top: -5px;
-  border-top: 1px solid var(--line);
-}
-
 .nav-item {
   position: relative;
   display: flex;
@@ -6297,17 +6284,6 @@ img.art.mat-art {
     width: auto;
     min-height: 44px;
     padding: 4px 8px;
-  }
-  .nav-item.divided {
-    margin: 0 0 0 9px;
-  }
-  .nav-item.divided::before {
-    left: -5px;
-    right: auto;
-    top: 8px;
-    bottom: 8px;
-    border-top: 0;
-    border-left: 1px solid var(--line);
   }
   .nav-item.active::before {
     left: 8px;

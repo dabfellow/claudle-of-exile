@@ -8,13 +8,22 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
-    version: '0.2.19',
+    version: '0.2.20',
     date: '31 Oct 2026',
     title: 'Gear sets and skill loadouts',
     items: [
       'Save what you wear as a gear set on the Equipment page, and put it back on with one click, from your bag or your stash.',
       'Save your skill bar as a loadout on the Skills page, with its supports, rules and priorities, so one skill can be set up for bosses and again for packs.',
       'Crafting Bench level 3 lets gear sets go on by themselves when you start fighting, chopping or anything else you pick.',
+    ],
+  },
+  {
+    version: '0.2.19',
+    date: '31 Oct 2026',
+    title: 'A tidier sidebar',
+    items: [
+      'The sidebar is sorted into Adventure, Character, Gathering, Crafting and Progress, so pages are easier to find.',
+      'The Crafting Bench now sits with Smithing, Alchemy and the other crafts.',
     ],
   },
   {
