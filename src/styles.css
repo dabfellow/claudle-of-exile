@@ -7128,47 +7128,40 @@ button.star {
   color: var(--bad);
 }
 
-/* B: one ledger table */
-.hx-ledger {
-  padding: 4px 0;
+/* stations: what you have up top, then every tier as a ladder */
+.hx-stations-wrap {
   display: grid;
+  gap: 8px;
 }
 
-.hx-ledger-row {
+.hx-stations {
   display: grid;
-  grid-template-columns: minmax(170px, 1.1fr) 120px minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 1.3fr) 96px;
-  align-items: center;
-  gap: 14px;
-  padding: 10px var(--s-4);
-  border-top: 1px solid var(--line);
-  cursor: pointer;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--s-3);
 }
 
-.hx-ledger-row:hover:not(.head) {
-  background: color-mix(in srgb, var(--station) 7%, transparent);
+.hx-station {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.hx-ledger-row.head {
-  border-top: 0;
-  cursor: default;
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-.hx-ledger-row.ready {
+.hx-station.ready {
   box-shadow: inset 3px 0 0 var(--success);
 }
 
-.hx-ledger-name {
+.hx-station.locked .hx-station-head,
+.hx-station.locked .hx-tiers {
+  opacity: 0.7;
+}
+
+.hx-station-head {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.hx-ledger-icon {
+.hx-station-icon {
   width: 34px;
   height: 34px;
   flex: none;
@@ -7179,19 +7172,124 @@ button.star {
   background: radial-gradient(circle, color-mix(in srgb, var(--station) 20%, transparent), transparent 70%), var(--bg-2);
 }
 
-.hx-ledger-level {
+.hx-station-title {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hx-station-level {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 2px 8px;
+}
+
+.hx-station-level .pip {
+  width: 12px;
+}
+
+.hx-have {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--station) 7%, var(--bg-2));
+}
+
+.hx-perks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.hx-tiers {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.hx-tier {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
   gap: 8px;
+  padding-bottom: 8px;
 }
 
-.hx-ledger-level b {
-  font-family: var(--font);
-  font-size: var(--fs-lg);
+.hx-tier:last-child {
+  padding-bottom: 0;
 }
 
-.hx-ledger-act {
-  justify-self: end;
+/* the rail joining one tier to the next */
+.hx-tier:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  bottom: 0;
+  left: 9px;
+  width: 2px;
+  background: var(--line);
+}
+
+.hx-tier.done:not(:last-child)::before {
+  background: var(--station);
+}
+
+.hx-tier-mark {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  color: var(--dim);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+}
+
+.hx-tier.done .hx-tier-mark {
+  border-color: var(--station);
+  background: var(--station);
+  color: var(--bg);
+}
+
+.hx-tier.next .hx-tier-mark {
+  border-color: var(--station);
+  color: var(--text);
+}
+
+.hx-tier-body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  line-height: 20px;
+}
+
+.hx-tier.done .hx-tier-body {
+  color: var(--muted);
+}
+
+.hx-tier.next .hx-tier-body {
+  font-weight: 600;
+}
+
+.hx-tier.later .hx-tier-body {
+  color: var(--dim);
+}
+
+.hx-tier-buy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  font-weight: 400;
 }
 
 /* B: skill dials */
@@ -7279,16 +7377,6 @@ button.star {
   font-size: var(--fs-2xs);
   text-align: center;
   line-height: 1.2;
-}
-
-@container (max-width: 1100px) {
-  .hx-ledger-row {
-    grid-template-columns: minmax(150px, 1fr) 100px minmax(0, 1.4fr) 96px;
-  }
-  .hx-ledger-row > :nth-child(4),
-  .hx-ledger-row > :nth-child(5) {
-    display: none;
-  }
 }
 
 /* ============ Hideout (home) ============ */
@@ -7387,16 +7475,6 @@ button.star {
 
 .home-nav-btn .nav-badge {
   margin-left: auto;
-}
-
-/* stations: a locked one (the Map Device) is a single greyed line */
-.hx-ledger-row.locked {
-  cursor: default;
-  opacity: 0.7;
-}
-
-.hx-ledger-locked {
-  grid-column: 2 / -1;
 }
 
 button.hx-mat {

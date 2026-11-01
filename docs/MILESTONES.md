@@ -314,6 +314,7 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 - [ ] Use the Void pack, SBS skies and `MediavelFree.png` UI once something needs them. Originals are in Downloads.
 
 - [x] Ailment rework and chaos damage ([DAMAGE.md](design/DAMAGE.md)): fire burns, cold chills, lightning shocks, chaos poisons; each has a % chance, base 0, from skills and gear; buildup against 40% of the target's life. Burn builds to Ignite, chill to Freeze, shock scales. Poison stays as it is. Chaos is offence only. Not simmed. 0.2.30 — done 2026-11-01
+- [x] Hideout upgrade cards: each station shows what you have now, every tier as a ladder, and the next upgrade with its cost. 0.2.32 — done 2026-11-01
 
 Not tied to a milestone yet. Older balance, Act 2 and skill items restart at their milestone.
 
@@ -357,6 +358,7 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Hideout later-tier costs only show on hover, so phones can't see them.
 - Chaos is offence only: no monsters deal it, no player chaos resistance, no chaos skills past Poison Dart, and flat chaos doesn't reach spells ([DAMAGE.md](design/DAMAGE.md)).
 - Ailment numbers (40% threshold, 25% skill chance, ignite 50%, shock 40%) are first guesses, not simmed. Bosses may be near immune to Ignite and Freeze at these thresholds.
 - The game doesn't explain buildup or ailment scaling anywhere yet; players have to read [DAMAGE.md](design/DAMAGE.md).
@@ -415,6 +417,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Hideout upgrade cards replace the station table: a "You have" total, every tier ticked or dimmed, the next upgrade with cost, later costs on hover. 0.2.32 — done 2026-11-01
 - [x] Every Stash tab shared: gold, currency, materials, spare gems and spare flasks moved to the account, per realm, so a challenge league will have its own. Save v27 adds up what each character held; tabs and devices playing at once merge their changes ([TOWN.md](design/TOWN.md)). 0.2.31 — done 2026-11-01
 - [x] Damage written up ([DAMAGE.md](design/DAMAGE.md)). Green upgrade arrows, the Upgrade sort and Pick up upgrades removed; hovering compares an item with what's worn: the items' base numbers, each bar skill's damage per second (with a warning if it would stop working) and character totals, with armour and evasion also as % against your level. Skill damage estimates now count spell gear, ailment modifiers and accuracy, and bleed and ignite don't stack in them, which also feeds the sim bot's skill choices. Not simmed. 0.2.30 — done 2026-11-01
 - [x] One tab per character: opening a character sends any other tab of this browser holding it back to the select screen, after it saves. 0.2.29 — done 2026-11-01

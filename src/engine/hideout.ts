@@ -1,6 +1,21 @@
 import { BASES, type BaseDef } from '../data/bases';
 import { ACTIVE_GEMS, activeGemDef, gemAct, gemReqLevel, SUPPORT_GEMS, supportGemDef } from '../data/gems';
-import { SHOP_REFRESH_MIN, SHOP_SLOTS, stationDef, type StationId } from '../data/hideout';
+import {
+  ALCH_DOUBLE,
+  AUTO_CRAFT_BENCH_LEVEL,
+  BENCH_BUILT_LEVEL,
+  BENCH_CRAFTS,
+  FORGE_ILVL,
+  GEAR_SWITCH_BENCH_LEVEL,
+  MAP_ILVL,
+  MAP_RARITY,
+  SHOP_REFRESH_MIN,
+  SHOP_SLOTS,
+  STASH_START_PAGES,
+  stationDef,
+  type StationId,
+} from '../data/hideout';
+import type { RuleUnlock } from '../data/gems';
 import { currencyDef } from '../data/materials';
 import { actBossZone, actOpen } from '../data/zones';
 import { grantUnlocks } from './automation';
@@ -52,6 +67,49 @@ export function nextUpgradeCost(s: GameState, id: StationId): Record<string, num
   const def = stationDef(id);
   const lvl = stationLevel(s, id);
   return lvl >= def.levels.length ? null : def.levels[lvl].cost;
+}
+
+const RULE_NAMES: Record<RuleUnlock, string> = { vitals: 'Vitals', status: 'Status', ground: 'Ground', windups: 'Wind-up', aim: 'Aim' };
+const FORGE_REACH = ['Smith bases up to level 9', 'Smith bases up to level 21', 'Smith every base'];
+const ALCH_REACH = ['Brew recipes below Alchemy level 10', 'Brew recipes up to Alchemy level 19', 'Brew every recipe'];
+const SHOP_PERKS = [[], ['Rare gear in shops'], ['Rare gear in shops', 'Rarer currency'], ['Rare gear in shops', 'Rarer currency', 'Better-rolled gear']];
+
+/** Everything a station gives you right now, added up across the levels you've bought. */
+export function stationPerks(s: GameState, id: StationId): string[] {
+  const lvl = stationLevel(s, id);
+  const i = lvl - 1;
+  switch (id) {
+    case 'map_device':
+      if (!MAP_RARITY[i]) return ['Portals to unlocked zones'];
+      return [`+${MAP_RARITY[i]}% Item Rarity`, ...(MAP_ILVL[i] ? [`+${MAP_ILVL[i]} item level on drops`] : [])];
+    case 'stash': {
+      const pages = s.account.stash.length;
+      const bought = Math.max(0, pages - (STASH_START_PAGES + i));
+      return [`${pages} stash pages${bought ? ` (${bought} bought)` : ''}`];
+    }
+    case 'forge':
+      return [FORGE_REACH[Math.min(i, 2)], ...(FORGE_ILVL[i] ? [`Smithed bases +${FORGE_ILVL[i]} item level`] : [])];
+    case 'alchemy_table':
+      return [ALCH_REACH[Math.min(i, 2)], ...(ALCH_DOUBLE[i] ? [`${ALCH_DOUBLE[i] * 100}% chance of double output`] : [])];
+    case 'bench': {
+      if (lvl < BENCH_BUILT_LEVEL) return ['Use orbs on your gear'];
+      const open = BENCH_CRAFTS.filter((c) => c.benchLevel <= lvl && (!c.achievement || s.achievements.includes(c.achievement)));
+      return [
+        'Salvage gear',
+        `${open.length} of ${BENCH_CRAFTS.length} bench recipes`,
+        ...(lvl >= GEAR_SWITCH_BENCH_LEVEL ? ['Gear sets switch on their own'] : []),
+        ...(lvl >= AUTO_CRAFT_BENCH_LEVEL ? ['Auto-crafting'] : []),
+      ];
+    }
+    case 'vendor':
+      return [`${SHOP_SLOTS[i]} wares per shop`, `Restock every ${SHOP_REFRESH_MIN[i]} min`, ...SHOP_PERKS[i]];
+    case 'war_table': {
+      const { rules, ruleSlots } = s.account.automation;
+      return [`Rules: ${['Simple', ...rules.map((r) => RULE_NAMES[r])].join(', ')}`, `${ruleSlots} rule slot${ruleSlots > 1 ? 's' : ''} per skill`];
+    }
+    case 'watchtower':
+      return [`Up to ${s.account.automation.offlineHours} hours offline`];
+  }
 }
 
 export function upgradeStation(s: GameState, ctx: Ctx, id: StationId): string | null {

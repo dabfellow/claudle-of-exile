@@ -5,14 +5,14 @@ import { materialDef } from '../../data/materials';
 import { actionDef, actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { canAfford } from '../../engine/bank';
 import { skillSummary } from '../../engine/gems';
-import { nextUpgradeCost, stationLevel, stationLockReason, upgradeStation } from '../../engine/hideout';
+import { nextUpgradeCost, stationLevel, stationLockReason, stationPerks, upgradeStation } from '../../engine/hideout';
 import { pointsLeft } from '../../engine/passives';
 import { deriveStats } from '../../engine/stats';
 import { cartographyOpen } from '../../engine/cartography';
 import { SKILL_IDS, type GameState, type SkillId } from '../../engine/types';
 import { levelOf, maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
-import { Badge, fmt, GameIcon, MatIcon, ProgressBar, sceneStyle, Tooltip } from '../components/common';
+import { Badge, Cost, fmt, GameIcon, MatIcon, ProgressBar, sceneStyle, Tooltip } from '../components/common';
 import { openItemMenu } from '../components/ItemMenu';
 import { materialSources } from '../components/materialSources';
 import { PaperDoll } from '../components/PaperDoll';
@@ -276,79 +276,109 @@ function HaveNeed({ cost, have, go }: { cost: Record<string, number>; have: Reco
   );
 }
 
-function StationRow({ st, go }: { st: StationDef; go: (p: Page) => void }) {
+type TierState = 'done' | 'next' | 'later';
+
+/** One step of a station's ladder. Later tiers show their cost on hover. */
+function Tier({ n, effect, cost, state, have, children }: { n: number; effect: string; cost: Record<string, number>; state: TierState; have: Record<string, number>; children?: ReactNode }) {
+  const later = state === 'later' && Object.keys(cost).length > 0;
+  return (
+    <li className={`hx-tier ${state}`}>
+      <span className="hx-tier-mark num">{state === 'done' ? '✓' : n}</span>
+      <div className="hx-tier-body">
+        {later ? (
+          <Tooltip
+            content={
+              <div className="tip">
+                <div className="tip-title">Level {n} cost</div>
+                <Cost cost={cost} have={have} />
+              </div>
+            }
+          >
+            <span>{effect}</span>
+          </Tooltip>
+        ) : (
+          <span>{effect}</span>
+        )}
+        {children}
+      </div>
+    </li>
+  );
+}
+
+function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
   const s = useGame();
   const lvl = stationLevel(s, st.id);
   const locked = stationLockReason(s, st.id);
   const cost = nextUpgradeCost(s, st.id);
-  const affordable = !!cost && canAfford(s, cost);
-  const next = cost ? st.levels[lvl].effect : null;
-  if (locked) {
-    return (
-      <div className="hx-ledger-row locked" style={{ ['--station' as string]: st.color }} title={st.desc}>
-        <span className="hx-ledger-name">
-          <span className="hx-ledger-icon">
-            <GameIcon name={STATION_ICON[st.id]} size={18} color="var(--dim)" />
-          </span>
-          <b>{st.name}</b>
-        </span>
-        <span className="hx-ledger-locked dim small">{locked}</span>
-      </div>
-    );
-  }
+  const affordable = !locked && !!cost && canAfford(s, cost);
+  const hasPage = !locked && st.page !== 'hideout';
   return (
-    <div className={`hx-ledger-row ${affordable ? 'ready' : ''}`} style={{ ['--station' as string]: st.color }} onClick={() => go(st.page as Page)} title={`${st.desc} Click to open.`}>
-      <span className="hx-ledger-name">
-        <span className="hx-ledger-icon">
-          <GameIcon name={STATION_ICON[st.id]} size={18} color={st.color} />
+    <div className={`card hx-station ${affordable ? 'ready' : ''} ${locked ? 'locked' : ''}`} style={{ ['--station' as string]: st.color }}>
+      <div className="hx-station-head" title={st.desc}>
+        <span className="hx-station-icon">
+          <GameIcon name={STATION_ICON[st.id]} size={18} color={locked ? 'var(--dim)' : st.color} />
         </span>
-        <b>{st.name}</b>
-      </span>
-      <span className="hx-ledger-level">
-        <b className="num">{lvl}</b>
-        <Pips lvl={lvl} max={st.levels.length} />
-      </span>
-      <span className="small">{st.levels[lvl - 1].effect}</span>
-      <span className="small muted">{next ?? '—'}</span>
-      <span onClick={(e) => e.stopPropagation()}>{cost ? <HaveNeed cost={cost} have={s.account.bank} go={go} /> : <span className="dim small">Fully upgraded</span>}</span>
-      <span className="hx-ledger-act">
-        {cost ? (
-          <button
-            className={`btn sm ${affordable ? 'primary' : ''}`}
-            disabled={!affordable}
-            title={affordable ? `Upgrade to level ${lvl + 1}` : 'Not enough materials'}
-            onClick={(e) => {
-              e.stopPropagation();
-              game.act((g, ctx) => upgradeStation(g, ctx, st.id));
-            }}
-          >
-            Upgrade
+        <span className="hx-station-title">
+          <b>{st.name}</b>
+          <span className="hx-station-level">
+            <span className="dim small num">
+              Level {lvl} of {st.levels.length}
+            </span>
+            <Pips lvl={lvl} max={st.levels.length} />
+          </span>
+        </span>
+        <span className="grow" />
+        {!cost && <Badge tone="gold">Max</Badge>}
+        {hasPage && (
+          <button className="btn sm ghost" onClick={() => go(st.page as Page)}>
+            Open →
           </button>
-        ) : (
-          <Badge tone="gold">Max</Badge>
         )}
-      </span>
+      </div>
+      <div className="hx-have">
+        <div className="io-label">{locked ? 'Locked' : 'You have'}</div>
+        {locked ? (
+          <div className="dim small">{locked}</div>
+        ) : (
+          <div className="hx-perks">
+            {stationPerks(s, st.id).map((p) => (
+              <span key={p} className="hx-perk">
+                {p}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <ol className="hx-tiers">
+        {st.levels.map((tier, i) => {
+          const state: TierState = locked || i > lvl ? 'later' : i < lvl ? 'done' : 'next';
+          return (
+            <Tier key={i} n={i + 1} effect={tier.effect} cost={tier.cost} state={state} have={s.account.bank}>
+              {state === 'next' && (
+                <div className="hx-tier-buy">
+                  <HaveNeed cost={tier.cost} have={s.account.bank} go={go} />
+                  <button className={`btn sm ${affordable ? 'primary' : ''}`} disabled={!affordable} title={affordable ? `Upgrade to level ${lvl + 1}` : 'Not enough materials'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id))}>
+                    Upgrade
+                  </button>
+                </div>
+              )}
+            </Tier>
+          );
+        })}
+      </ol>
     </div>
   );
 }
 
 function StationLedger({ go }: { go: (p: Page) => void }) {
   return (
-    <div className="card hx-ledger">
-      <div className="dim small" style={{ padding: '0 0 8px' }}>
-        Stations and their unlocks are shared by all your characters.
+    <div className="hx-stations-wrap">
+      <div className="dim small">Stations and their unlocks are shared by all your characters. Hover a later tier to see its cost.</div>
+      <div className="hx-stations">
+        {STATIONS.map((st) => (
+          <StationCard key={st.id} st={st} go={go} />
+        ))}
       </div>
-      <div className="hx-ledger-row head">
-        <span>Station</span>
-        <span>Level</span>
-        <span>Now</span>
-        <span>Next level</span>
-        <span>Cost (have / need)</span>
-        <span />
-      </div>
-      {STATIONS.map((st) => (
-        <StationRow key={st.id} st={st} go={go} />
-      ))}
     </div>
   );
 }

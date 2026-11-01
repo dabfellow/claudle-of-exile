@@ -8,6 +8,15 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.32',
+    date: '1 Nov 2026',
+    title: 'Clearer Hideout upgrades',
+    items: [
+      'Each Hideout station now has its own card: what it gives you right now, every tier with the ones you own ticked off, and the next upgrade with its cost. Hover a later tier to see what it will cost.',
+      'The Next level and cost details no longer vanish on narrower windows.',
+    ],
+  },
+  {
     version: '0.2.31',
     date: '1 Nov 2026',
     title: 'One stash for all your characters',
