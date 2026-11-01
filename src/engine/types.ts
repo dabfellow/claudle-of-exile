@@ -178,10 +178,10 @@ export interface MonsterInstance {
   /** remaining cast time in ms, or -1 when not casting */
   casting: number;
   /** what is being wound up, and its full cast time */
-  castKind: 'slam' | 'nova' | null;
+  castKind: 'slam' | 'nova' | 'channel' | null;
   castTotal: number;
   /** this boss's own wind-ups */
-  casts: Record<'slam' | 'nova', MonsterSkill>;
+  casts: Record<'slam' | 'nova' | 'channel', MonsterSkill>;
   enraged: boolean;
   /** boss barrier: absorbs damage; heals the boss if still up when wardMs runs out */
   ward: number;
@@ -224,6 +224,13 @@ export interface MonsterInstance {
   attackGround: boolean;
   /** the high peaks: its cold ground is Frozen, not Chilled */
   rime?: boolean;
+  /** the ground it lays, when that isn't what its element leaves behind */
+  groundKind?: GroundKind;
+  /** channels of this boss that have landed: each leaves it stronger */
+  surges?: number;
+  /** ms into the channel, and how many of its pulses have gone off */
+  channelMs?: number;
+  pulses?: number;
 }
 
 /** A curse on a monster, with its numbers already scaled for gem level, supports and bosses. */
@@ -249,7 +256,7 @@ export interface Curse {
   crushing?: boolean;
 }
 
-export type GroundKind = 'burning' | 'chilled' | 'frozen' | 'shocked' | 'caustic';
+export type GroundKind = 'burning' | 'chilled' | 'frozen' | 'shocked' | 'caustic' | 'stormwater';
 
 /** A hazard on a battlefield cell (the player's, hurting monsters) or under the player (cell -1, a monster's). */
 export interface Ground {
@@ -752,7 +759,7 @@ export type GameEvent =
   | { t: 'tutorialStep'; step: number; done: boolean }
   | { t: 'achievement'; id: string }
   | { t: 'flask'; slot: number; flaskId: string; auto: boolean }
-  | { t: 'bossCast'; name: string; kind: 'slam' | 'nova'; skill: string }
+  | { t: 'bossCast'; name: string; kind: 'slam' | 'nova' | 'channel'; skill: string }
   | { t: 'bossPhase'; name: string; text: string }
   | { t: 'actComplete'; act: number }
   | { t: 'trialPassed'; n: number }

@@ -39,7 +39,7 @@ import { RUNES } from '../src/data/runes';
 import { inscribeRune, itemRune, runeReason, runesOpen } from '../src/engine/runes';
 import { actionBlocker, skillLevel, startSkillAction } from '../src/engine/skills';
 import { aimLockReason, cleansesFrostbite, grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
-import { groundFor } from '../src/engine/battlefield';
+import { monsterGround } from '../src/engine/battlefield';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats, hitChance, type Derived } from '../src/engine/stats';
 import type { FlaskInstance, GameEvent, GameState, GroundKind, InstillCondition, Item, SkillGemInstance, SkillId } from '../src/engine/types';
@@ -97,7 +97,7 @@ const UPGRADES: [StationId, number][] = [
 ];
 const CHECKPOINTS: [string, number][] = [['day 1', 1], ['week 1', 7], ['month 1', 30], ['month 3', 90]];
 /** bosses tested for idling, one per drop tier band: each right after the bot first beats it */
-const TRIAL_ZONES = ['brinecaves', 'blackreed', 'shipgrave', 'sanctum', 'cinderroad', 'kurgans', 'pyretemple', 'burningthrone', 'inquisition', 'highaltar', 'howlingfells', 'giantsthrone'];
+const TRIAL_ZONES = ['brinecaves', 'blackreed', 'shipgrave', 'sanctum', 'cinderroad', 'kurgans', 'pyretemple', 'burningthrone', 'inquisition', 'highaltar', 'howlingfells', 'giantsthrone', 'hollowreef', 'maelstrom'];
 
 /** the bot answers Frostbite at this many stacks, by rule or by hand */
 const BOT_FROSTBITE_AT = 5;
@@ -206,7 +206,12 @@ const DAMAGE_ROLES = new Set(['main', 'burst', 'area']);
 /** The ground this area's boss lays with Scorched earth, if it does. */
 function scorchGround(zoneId: string | undefined): GroundKind | undefined {
   const boss = zoneId ? zoneDef(zoneId).boss : undefined;
-  return boss?.mechanics?.includes('scorch') ? groundFor(boss.novaType ?? boss.dmgType, boss.rime) : undefined;
+  return boss?.mechanics?.includes('scorch') ? monsterGround(boss, boss.novaType ?? boss.dmgType) : undefined;
+}
+
+/** A skill that stops a channel for certain, and any boss here that needs one. */
+function channelBreaker(all: SkillGemInstance[], zoneId: string | undefined): SkillGemInstance | undefined {
+  return zoneId && zoneDef(zoneId).boss.mechanics?.includes('channel') ? all.find((g) => activeGemDef(g.gemId).effect.interrupts) : undefined;
 }
 
 const frostbiteZone = (zoneId: string | undefined) => !!zoneId && !!zoneDef(zoneId).boss.mechanics?.includes('frostbite');
@@ -215,7 +220,8 @@ const frostbiteZone = (zoneId: string | undefined) => !!zoneId && !!zoneDef(zone
  * Like a player who reads tooltips: the best guard and buff it owns, then its three strongest damage
  * skills (judged bare, so a fresh drop isn't blinded by the old gem's supports) and a curse, each on its suggested rule;
  * a spare guard, once Ground rules are in, takes a free slot against Scorched earth, as the main one is kept for wind-ups;
- * once Aim rules are in, its damage skills go for martyrs; then the strongest support in every socket, damage skills first.
+ * once Aim rules are in, its damage skills go for martyrs; where a boss channels, its interrupt goes on a channel rule and
+ * nothing else; then the strongest support in every socket, damage skills first.
  */
 function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const d = deriveStats(s, []);
@@ -253,7 +259,8 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   // Frostbite's rule goes on a spare cleansing skill when there is one: a spare guard, or the mover if nothing else can
   const cleansers = all.filter((g) => cleansesFrostbite(activeGemDef(g.gemId)) && g !== pick('guard') && g !== groundGuard).sort(byLevel);
   const frostGuard = !ruleLockReason(s, 'frostbite') && frostbiteZone(zoneId) ? cleansers.find((g) => role(g) === 'guard') ?? cleansers.find((g) => g === mover) : undefined;
-  const want = [pick('guard'), buff, sustain, ...damage, transfusion, curse, groundGuard, frostGuard, ...instant].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
+  const breaker = ruleLockReason(s, 'enemyChannels') ? undefined : channelBreaker(all, zoneId);
+  const want = [...new Set([breaker, pick('guard'), buff, sustain, ...damage, transfusion, curse, groundGuard, frostGuard, ...instant])].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
 
   // put the bar together: anything leaving takes no supports with it
   const keep = new Set(want.map((g) => g.uid));
@@ -270,7 +277,7 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const bar = s.skillBar.filter((x): x is SkillGemInstance => !!x);
   for (const g of bar) {
     // one rule each: the suggested one, or Whenever ready until the War Table teaches it
-    g.rules = [g === groundGuard ? { when: 'onGround', ground: scorch } : g === frostGuard ? { when: 'frostbite', value: BOT_FROSTBITE_AT } : suggestedRule(s, activeGemDef(g.gemId))];
+    g.rules = [g === breaker ? { when: 'enemyChannels' } : g === groundGuard ? { when: 'onGround', ground: scorch } : g === frostGuard ? { when: 'frostbite', value: BOT_FROSTBITE_AT } : suggestedRule(s, activeGemDef(g.gemId))];
     if (DAMAGE_ROLES.has(role(g)) && !aimLockReason(s)) g.rules[0].aim = 'martyrs';
     syncSockets(g);
     g.supports.forEach((_, k) => unsocketSupport(s, g.uid, k));
@@ -464,13 +471,14 @@ function reachable(s: GameState): ZoneDef[] {
   return ZONES.filter((z) => s.unlockedZones.includes(z.id) && (z === ZONES[0] || z.levelRange[0] <= lvl + 1));
 }
 
-/** What a player's hands add: clicking martyrs, drinking flasks when they're needed, and pressing a guard as a boss winds up. */
+/** What a player's hands add: clicking martyrs, drinking flasks when they're needed, pressing a guard as a boss winds up and an interrupt as it channels. */
 function hands(s: GameState, ctx: Ctx, d: Derived) {
   const alive = s.combat!.monsters.filter((m) => m.life > 0);
   const martyr = alive.find((m) => m.martyr);
   if (martyr && !alive.some((m) => m.martyr && m.uid === s.combat!.lockedUid)) lockTarget(s, martyr.uid);
   const costs = s.skillBar.filter((g) => g && DAMAGE_ROLES.has(activeGemDef(g.gemId).role)).map((g) => skillNumbers(d, g).manaCost);
-  const casting = alive.some((m) => m.casting >= 0);
+  const casting = alive.some((m) => m.casting >= 0 && m.castKind !== 'channel');
+  const channel = alive.some((m) => m.castKind === 'channel' && m.casting >= 0);
   const danger = casting || alive.some((m) => m.isBoss) || alive.length >= 4;
   s.flaskSlots.forEach((f, i) => {
     if (!f || s.combat?.buffs.some((b) => b.source === 'flask' && b.id === f.flaskId)) return;
@@ -491,6 +499,10 @@ function hands(s: GameState, ctx: Ctx, d: Derived) {
       const flask = s.flaskSlots.findIndex((f) => f && f.charges >= flaskStats(f).chargesPerUse);
       if (flask >= 0) useFlask(s, ctx, flask);
     }
+  }
+  if (channel) {
+    const breaker = s.skillBar.findIndex((g, i) => g && activeGemDef(g.gemId).effect.interrupts && !s.combat!.cooldowns[i]);
+    if (breaker >= 0) queueSkill(s, breaker);
   }
   if (casting) {
     // a hand on the button can spend past the reserve, but this one doesn't: a Blood Ward at low Life costs more than it saves

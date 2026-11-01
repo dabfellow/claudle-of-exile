@@ -129,6 +129,88 @@ All 60 Act 4 monsters and bosses have their own picture: 50 close, 10 loose. The
 | `monsters/frozenhusk` | `src/assets/monsters/freesample-spalenie.jpg` | close | `src/assets/monsters/tint-frozenhusk.jpg` | dark skull, turned cold. Recolour: hue 200 |
 | `monsters/wintervoice` | `src/assets/monsters/tint-barrowwight.png` | close | `src/assets/monsters/tint-wintervoice.png` | hooded wight, white. Recolour: tint 200,230,245 |
 | `monsters/hollowking` | `src/assets/monsters/freesample-mobiszon999.jpg` | close | `src/assets/monsters/tint-hollowking.jpg` | dead king, hollow-eyed and pale; no sceptre. Recolour: saturation 0.4, brightness 1.1, tint 190,225,250 |
+## Act 5 (added 2026-11-01)
+
+All 70 Act 5 monsters and bosses have their own picture, and no two share one. All are `tint-<id>` recolours of owned CodeSpree, Craftpix and free_sample pieces, which brings many unused sea creatures into the game. Nothing here is AI-generated and nothing new comes from GegX. The banners reuse the GegX scenes until a landscape pack arrives.
+
+| Slot | Source | Confidence | File | Notes |
+|---|---|---|---|---|
+| `monsters/pressganger` | `Craftpix con33` | close | `src/assets/monsters/tint-pressganger.png` | bearded hooded docker, sea-grey. Recolour: saturation .5, brightness .8, tint 150,165,175 |
+| `monsters/dockrat` | `rpg-beings Mouse` | close | `src/assets/monsters/tint-dockrat.png` | tar-black rat, ember tint. Recolour: saturation .4, brightness .55, tint 215,130,70 |
+| `monsters/harbourwatch` | `Craftpix con1` | close | `src/assets/monsters/tint-harbourwatch.png` | helmed watchman, harbour teal. Recolour: tint 150,190,200 |
+| `monsters/saltcaulker` | `Craftpix con4` | close | `src/assets/monsters/tint-saltcaulker.png` | bearded workman, stained with pitch. Recolour: saturation .5, brightness .7, tint 200,150,110 |
+| `monsters/creel` | `free_sample a10` | placeholder | `src/assets/monsters/tint-creel.jpg` | big man in harbour teal; no hook. Recolour: hue 170, saturation .6, brightness .85 |
+| `monsters/hullbreaker` | `rpg-beings Angry crab` | close | `src/assets/monsters/tint-hullbreaker.png` | dark barnacled crab. Recolour: saturation .3, brightness .6, tint 170,150,130 |
+| `monsters/flotsam` | `rpg-beings Tumbleweed` | placeholder | `src/assets/monsters/tint-flotsam.png` | a tangle of burning wrack. Recolour: tint 240,130,60 |
+| `monsters/wreckgunner` | `Craftpix con3` | close | `src/assets/monsters/tint-wreckgunner.png` | hooded gunner, soot and fire. Recolour: saturation .6, tint 215,150,110 |
+| `monsters/stormrigger` | `Craftpix con9` | close | `src/assets/monsters/tint-stormrigger.png` | bandana sailor, storm blue. Recolour: tint 130,170,230 |
+| `monsters/gall` | `free_sample a43` | placeholder | `src/assets/monsters/tint-gall.jpg` | ogreish bosun, sea-green; no rope. Recolour: hue 90, saturation .8, brightness .9 |
+| `monsters/tarwalker` | `rpg-beings Slime slug` | close | `src/assets/monsters/tint-tarwalker.png` | black tar thing, lit orange. Recolour: saturation .3, brightness .5, tint 220,120,60 |
+| `monsters/steamkin` | `rpg-beings Gust` | close | `src/assets/monsters/tint-steamkin.png` | pale steam whirl with a face. Recolour: saturation .2, lightness 30, tint 225,225,215 |
+| `monsters/obsidiancrab` | `rpg-beings Crab` | close | `src/assets/monsters/tint-obsidiancrab.png` | glass-black crab. Recolour: saturation .1, brightness .4, tint 150,130,190 |
+| `monsters/keyshaman` | `Craftpix con28` | close | `src/assets/monsters/tint-keyshaman.png` | dark finned shaman, lava-lit. Recolour: tint 230,110,80 |
+| `monsters/tarry` | `free_sample a66` | placeholder | `src/assets/monsters/tint-tarry.jpg` | dark-stained woman; no tar. Recolour: hue 340, saturation .7, brightness .75 |
+| `monsters/stormgull` | `rpg-beings Gull` | close | `src/assets/monsters/tint-stormgull.png` | gull in storm blue. Recolour: tint 120,150,220 |
+| `monsters/shoalstalker` | `Craftpix con34` | close | `src/assets/monsters/tint-shoalstalker.png` | one-eyed fish man, blue-green. Recolour: hue 150 |
+| `monsters/sandback` | `rpg-beings Roman snail` | close | `src/assets/monsters/tint-sandback.png` | huge sand-coloured shell. Recolour: tint 200,185,140 |
+| `monsters/squallwife` | `Craftpix con41` | close | `src/assets/monsters/tint-squallwife.png` | snake-haired woman, storm blue. Recolour: hue 110 |
+| `monsters/aune` | `free_sample op36` | close | `src/assets/monsters/tint-aune.jpg` | hooded woman, storm-lit. Recolour: hue 150, saturation 1.1 |
+| `monsters/lampfish` | `rpg-beings Cave fish` | close | `src/assets/monsters/tint-lampfish.png` | pale deep fish, lit yellow. Recolour: tint 240,225,120 |
+| `monsters/deepeel` | `rpg-beings Electric eel` | close | `src/assets/monsters/tint-deepeel.png` | violet eel. Recolour: hue 240, saturation 1.5, brightness .8 |
+| `monsters/lureman` | `Craftpix con7` | close | `src/assets/monsters/tint-lureman.png` | scaled hood, drowned green-blue. Recolour: hue 120, brightness .8 |
+| `monsters/anglerpriest` | `rpg-beings Jiong` | close | `src/assets/monsters/tint-anglerpriest.png` | tentacled mouth-thing, flame coloured. Recolour: tint 240,170,100 |
+| `monsters/lanternmaw` | `free_sample wezwanie krokodyla` | placeholder | `src/assets/monsters/tint-lanternmaw.jpg` | huge toothed jaws, deep-sea teal; no lure. Recolour: hue 160, saturation .8, brightness .85 |
+| `monsters/fleetmarine` | `Craftpix con23` | close | `src/assets/monsters/tint-fleetmarine.png` | skeleton, weed-green. Recolour: tint 140,190,175 |
+| `monsters/powdermonkey` | `Craftpix con20` | close | `src/assets/monsters/tint-powdermonkey.png` | small hooded figure, gunpowder orange. Recolour: tint 230,140,80 |
+| `monsters/fleetgunner` | `Craftpix con22` | close | `src/assets/monsters/tint-fleetgunner.png` | hooded skeleton, fire-lit. Recolour: tint 220,150,90 |
+| `monsters/signalman` | `Craftpix con19` | close | `src/assets/monsters/tint-signalman.png` | winged helm, signal blue. Recolour: saturation .5, tint 150,185,235 |
+| `monsters/hask` | `free_sample mobiszon999` | placeholder | `src/assets/monsters/tint-hask.jpg` | helmed skull, drowned green; no uniform. Recolour: hue 110, saturation .7, brightness .9 |
+| `monsters/sulphurman` | `Craftpix con16` | close | `src/assets/monsters/tint-sulphurman.png` | goblin, sulphur yellow. Recolour: tint 230,215,90 |
+| `monsters/ashgull` | `rpg-beings Puffin` | close | `src/assets/monsters/tint-ashgull.png` | ash-grey seabird, ember tint. Recolour: saturation .2, brightness .7, tint 225,140,80 |
+| `monsters/brimstonehulk` | `Craftpix con25` | close | `src/assets/monsters/tint-brimstonehulk.png` | armoured flame man, yellow fire. Recolour: tint 240,200,110 |
+| `monsters/stokerpriest` | `Craftpix con37` | close | `src/assets/monsters/tint-stokerpriest.png` | horned figure, brimstone orange. Recolour: tint 240,190,120 |
+| `monsters/brimstonekeeper` | `free_sample spalenie` | close | `src/assets/monsters/tint-brimstonekeeper.jpg` | burning skull, sulphur yellow. Recolour: tint 245,205,120 |
+| `monsters/coralbrute` | `rpg-beings Coral monster` | close | `src/assets/monsters/tint-coralbrute.png` | many-armed coral thing, pink. Recolour: lightness 25, tint 240,130,140 |
+| `monsters/reefdart` | `rpg-beings Seahorse` | close | `src/assets/monsters/tint-reefdart.png` | sea horse, shock blue. Recolour: hue 200 |
+| `monsters/polypmother` | `rpg-beings Twentacle` | close | `src/assets/monsters/tint-polypmother.png` | jelly-capped polyp, sickly yellow. Recolour: hue 120, saturation .8 |
+| `monsters/reefspeaker` | `rpg-beings Staruss` | placeholder | `src/assets/monsters/tint-reefspeaker.png` | star with a face, lightning-blue. Recolour: hue 240, tint 170,190,240 |
+| `monsters/reefmother` | `rpg-beings Octopus` | close | `src/assets/monsters/tint-reefmother.png` | great coral-red octopus. Recolour: saturation 1.5, brightness 1.05, tint 240,150,150 |
+| `monsters/spoutrider` | `rpg-beings Hydrogust` | close | `src/assets/monsters/tint-spoutrider.png` | waterspout with teeth. Recolour: lightness 8 |
+| `monsters/rainwraith` | `Craftpix con35` | close | `src/assets/monsters/tint-rainwraith.png` | white wraith, rain blue. Recolour: tint 170,190,240 |
+| `monsters/emberpetrel` | `rpg-beings Swan` | placeholder | `src/assets/monsters/tint-emberpetrel.png` | long-necked seabird on fire. Recolour: saturation 1, brightness .75, tint 240,130,60 |
+| `monsters/tempestkeeper` | `rpg-beings Stellectric` | placeholder | `src/assets/monsters/tint-tempestkeeper.png` | a living burst of lightning. Recolour: tint 220,235,255 |
+| `monsters/vane` | `free_sample mobeK1S` | close | `src/assets/monsters/tint-vane.jpg` | helmed captain, storm blue. Recolour: hue 200, saturation .9 |
+| `monsters/flenser` | `free_sample a32` | placeholder | `src/assets/monsters/tint-flenser.jpg` | grey-faced worker in blubber-grey. Recolour: saturation .35, brightness .85 |
+| `monsters/ribcrawler` | `rpg-beings Scorpion` | close | `src/assets/monsters/tint-ribcrawler.png` | bone-pale scorpion. Recolour: saturation .1, lightness 45, tint 225,215,190 |
+| `monsters/oilbat` | `rpg-beings Bat` | close | `src/assets/monsters/tint-oilbat.png` | oil-black bat, burning at the edges. Recolour: saturation .3, brightness .5, tint 225,130,70 |
+| `monsters/tryworker` | `Craftpix con38` | close | `src/assets/monsters/tint-tryworker.png` | plated figure, oil-fire orange. Recolour: tint 235,170,110 |
+| `monsters/flensemaster` | `free_sample mobiszon997` | placeholder | `src/assets/monsters/tint-flensemaster.jpg` | huge roaring brute, oil-stained; no spade. Recolour: hue 60, saturation .9, brightness .85 |
+| `monsters/currentshade` | `rpg-beings Whalkst` | close | `src/assets/monsters/tint-currentshade.png` | grinning ghost, cold dark blue. Recolour: brightness .6, tint 130,160,220 |
+| `monsters/blackeel` | `rpg-beings Salmon` | close | `src/assets/monsters/tint-blackeel.png` | black fish, blue glints. Recolour: saturation .15, brightness .45, tint 140,170,240 |
+| `monsters/helmsman` | `Craftpix con21` | close | `src/assets/monsters/tint-helmsman.png` | long bone skull, sea grey. Recolour: saturation .3, tint 150,175,190 |
+| `monsters/currentcaller` | `rpg-beings Ling` | close | `src/assets/monsters/tint-currentcaller.png` | long-mouthed wisp, storm blue. Recolour: hue 280, brightness .9 |
+| `monsters/steersman` | `free_sample p7` | close | `src/assets/monsters/tint-steersman.jpg` | dark long-haired man, cold blue. Recolour: hue 190, saturation .8, brightness .9 |
+| `monsters/namelessone` | `rpg-beings Rhunst` | close | `src/assets/monsters/tint-namelessone.png` | faceless ghost, grey-violet. Recolour: brightness .65, tint 150,150,190 |
+| `monsters/whisperer` | `Craftpix con18` | placeholder | `src/assets/monsters/tint-whisperer.png` | dark mask, blue. Recolour: tint 130,160,240 |
+| `monsters/trenchburner` | `Craftpix con30` | close | `src/assets/monsters/tint-trenchburner.png` | burning skull, violet fire. Recolour: hue 310 |
+| `monsters/trenchhorror` | `rpg-beings Thorn dragon` | close | `src/assets/monsters/tint-trenchhorror.png` | black thorned horror, fire edged. Recolour: tint 240,120,70 |
+| `monsters/choirdeep` | `free_sample kociotrup` | placeholder | `src/assets/monsters/tint-choirdeep.jpg` | skull in deep violet; one voice, not a choir. Recolour: hue 240, saturation 1, brightness .8 |
+| `monsters/deepthing` | `Craftpix con13` | close | `src/assets/monsters/tint-deepthing.png` | one great eye in pale flesh. Recolour: saturation .4, brightness .7, tint 160,190,190 |
+| `monsters/blindhunter` | `rpg-beings Shark` | close | `src/assets/monsters/tint-blindhunter.png` | pale blind shark. Recolour: saturation .2, lightness 25, tint 200,215,230 |
+| `monsters/dimfire` | `Craftpix con29` | close | `src/assets/monsters/tint-dimfire.png` | fire-mawed serpent, dim blue flame. Recolour: hue 250, brightness .8 |
+| `monsters/abyssherald` | `Craftpix con17` | close | `src/assets/monsters/tint-abyssherald.png` | crested mask, deep blue. Recolour: hue 230, brightness .85 |
+| `monsters/firstdrowned` | `free_sample ik52` | close | `src/assets/monsters/tint-firstdrowned.jpg` | pale undead face, drowned blue. Recolour: hue 20, saturation .8, brightness .9 |
+| `monsters/crewless` | `Craftpix con11` | close | `src/assets/monsters/tint-crewless.png` | black mask, red eyes, deep-sea violet. Recolour: tint 170,170,210 |
+| `monsters/maelstromkin` | `rpg-beings Orca` | close | `src/assets/monsters/tint-maelstromkin.png` | orca, storm-lit. Recolour: tint 150,175,240 |
+| `monsters/eyepriest` | `Craftpix con24` | close | `src/assets/monsters/tint-eyepriest.png` | pale high-collared priest, fire-lit. Recolour: tint 235,160,120 |
+| `monsters/eyestorm` | `Craftpix con10` | close | `src/assets/monsters/tint-eyestorm.png` | horned skull mask, storm blue. Recolour: hue 200, tint 170,190,240 |
+| `monsters/caller` | `free_sample szary kleszcz` | placeholder | `src/assets/monsters/tint-caller.jpg` | pincered grey horror in abyssal blue; the nearest thing to something vast. Recolour: hue 150, saturation 1, brightness .75 |
+| `uniques/leviathan_hide` | `gear sets/set-59-body.png` | close | `src/assets/items/armor/set-59-body.png` | the last unused gear set |
+| `uniques/deckwalkers` | `gear sets/set-59-legs.png` | close | `src/assets/items/armor/set-59-legs.png` | |
+| `uniques/tide_crown` | `gear sets/set-59-helmet.png` | close | `src/assets/items/armor/set-59-helmet.png` | |
+| `uniques/harpoons_answer` | `gear sets/set-59-gloves.png` | close | `src/assets/items/armor/set-59-gloves.png` | |
+| `uniques/corposant` | `gear sets/set-30-helmet.png` | close | `src/assets/items/armor/tint-corposant.png` | Recolour: tint 150,200,245 |
+| `uniques/bosuns_oath` | `CodeSpree rpg-items-all badge` | placeholder | `src/assets/items/jewelry/codespree-badge.png` | a badge, not an amulet |
 
 ## Act 3 (added 2026-10-31)
 

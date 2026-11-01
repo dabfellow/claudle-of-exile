@@ -158,12 +158,17 @@ export const GROUND: Record<GroundKind, { name: string; type: DamageType; desc: 
   frozen: { name: 'Frozen ground', type: 'cold', desc: 'Deals cold damage over time, slows actions by 40%, and Frostbite builds twice as fast.' },
   shocked: { name: 'Shocked ground', type: 'light', desc: 'Deals lightning damage over time; hits taken there deal 20% more.' },
   caustic: { name: 'Caustic ground', type: 'phys', desc: 'Deals physical damage over time.' },
+  stormwater: { name: 'Storm-tossed water', type: 'light', desc: 'Deals lightning damage over time; your cooldowns run 40% slower.' },
 };
 /** `rime`: monsters of the high peaks (Act 4), whose cold ground is Frozen. */
 export const groundFor = (type: DamageType, rime = false): GroundKind =>
   type === 'fire' ? 'burning' : type === 'cold' ? (rime ? 'frozen' : 'chilled') : type === 'light' ? 'shocked' : 'caustic';
+/** What a monster leaves under the player: its own kind of ground if it has one, or what this element leaves behind. */
+export const monsterGround = (m: { groundKind?: GroundKind; rime?: boolean }, type: DamageType): GroundKind => m.groundKind ?? groundFor(type, m.rime);
 /** standing on shocked ground: hits there deal this much more */
 export const SHOCKED_GROUND_TAKEN = 1.2;
+/** standing in storm-tossed water: cooldowns run at this rate */
+export const STORMWATER_COOLDOWN = 0.6;
 /** standing on chilled ground: actions take this much longer */
 export const CHILLED_GROUND_SLOW = 0.75;
 /** standing on frozen ground: the same, harder */

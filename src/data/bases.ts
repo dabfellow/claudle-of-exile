@@ -1155,6 +1155,68 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_riposte_heal', values: [2] },
     ],
   },
+
+  // ---------- Act 5 (docs/design/ACT5.md): one for each class's meter, each with fire and lightning resistance ----------
+  {
+    id: 'leviathan_hide', name: 'Leviathan Hide', baseId: 'champion_plate', flavour: 'They flensed it a thousand years ago. It has not finished healing.',
+    mods: [
+      { affixId: 'flat_life', values: [120] },
+      { affixId: 'inc_armour', values: [70] },
+      { affixId: 'fire_res', values: [30] },
+      { affixId: 'light_res', values: [30] },
+      { affixId: 'u_rage_on_hit_taken', values: [3] },
+    ],
+  },
+  {
+    id: 'deckwalkers', name: 'Deckwalkers', baseId: 'thornwarden_boots', flavour: 'Sea legs, for a sea that fights back.',
+    mods: [
+      { affixId: 'flat_evasion', values: [160] },
+      { affixId: 'fire_res', values: [25] },
+      { affixId: 'light_res', values: [25] },
+      { affixId: 'u_momentum_effect', values: [30] },
+      { affixId: 'u_momentum_retain', values: [35] },
+    ],
+  },
+  {
+    id: 'bosuns_oath', name: "The Bosun's Oath", baseId: 'onyx_amulet', flavour: 'Sworn in salt, kept in fire.',
+    mods: [
+      { affixId: 'spell_fire', values: [18, 34] },
+      { affixId: 'spell_light', values: [12, 44] },
+      { affixId: 'fire_res', values: [20] },
+      { affixId: 'light_res', values: [20] },
+      { affixId: 'u_mana_power', values: [20] },
+    ],
+  },
+  {
+    id: 'tide_crown', name: 'Crown of the Slack Tide', baseId: 'umbral_mask', flavour: 'The moment the water stops is the moment it takes you.',
+    mods: [
+      { affixId: 'inc_evasion', values: [75] },
+      { affixId: 'flat_es', values: [55] },
+      { affixId: 'fire_res', values: [25] },
+      { affixId: 'light_res', values: [25] },
+      { affixId: 'u_coup_pct', values: [45] },
+    ],
+  },
+  {
+    id: 'corposant', name: 'Corposant', baseId: 'hallowed_crown', flavour: 'The fire that burns on the mast and does not burn the mast.',
+    mods: [
+      { affixId: 'flat_life', values: [80] },
+      { affixId: 'flat_es', values: [55] },
+      { affixId: 'fire_res', values: [30] },
+      { affixId: 'light_res', values: [30] },
+      { affixId: 'u_nova_pct', values: [40] },
+    ],
+  },
+  {
+    id: 'harpoons_answer', name: "The Harpoon's Answer", baseId: 'bladedancer_gloves', flavour: 'It comes back on the line.',
+    mods: [
+      { affixId: 'flat_life', values: [70] },
+      { affixId: 'attack_speed', values: [12] },
+      { affixId: 'fire_res', values: [25] },
+      { affixId: 'light_res', values: [25] },
+      { affixId: 'u_riposte_bleed', values: [1] },
+    ],
+  },
 ];
 
 export function uniqueDef(id: string): UniqueDef {

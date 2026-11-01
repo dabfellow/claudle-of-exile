@@ -1,7 +1,7 @@
 import { activeGemDef, RULE_LABELS, RULE_UNLOCK_NAMES, type ActiveGemDef, type RuleCondition, type RuleUnlock, type SkillAim, type SkillPriority, type TacticRule } from '../data/gems';
 import { STATIONS, stationDef, type StationGrant } from '../data/hideout';
 import { actOpen, ZONES, type BossMechanic, type ZoneDef } from '../data/zones';
-import { groundFor } from './battlefield';
+import { monsterGround } from './battlefield';
 import type { GameState, GroundKind, SkillGemInstance } from './types';
 
 const PRIORITY_RANK: Record<SkillPriority, number> = { high: 0, normal: 1, low: 2 };
@@ -9,9 +9,9 @@ const PRIORITY_RANK: Record<SkillPriority, number> = { high: 0, normal: 1, low: 
 /** Ground some monster can put under you: a caster's spell, or a boss's nova or scorch. The rest stay greyed out until an act that lays them opens. */
 export const GROUND_IN_PLAY: ReadonlySet<GroundKind> = new Set(
   ZONES.filter((z) => actOpen(z.act)).flatMap((z) => [
-    ...z.monsters.filter((m) => m.basic.ground).map((m) => groundFor(m.dmgType, m.rime)),
-    ...(z.boss.basic.ground ? [groundFor(z.boss.dmgType, z.boss.rime)] : []),
-    ...(z.boss.mechanics?.some((k) => k === 'nova' || k === 'scorch') ? [groundFor(z.boss.novaType ?? z.boss.dmgType, z.boss.rime)] : []),
+    ...z.monsters.filter((m) => m.basic.ground).map((m) => monsterGround(m, m.dmgType)),
+    ...(z.boss.basic.ground ? [monsterGround(z.boss, z.boss.dmgType)] : []),
+    ...(z.boss.mechanics?.some((k) => k === 'nova' || k === 'scorch') ? [monsterGround(z.boss, z.boss.novaType ?? z.boss.dmgType)] : []),
   ]),
 );
 
@@ -72,13 +72,23 @@ function answersFrostbite(s: GameState): boolean {
   return (skill && !ruleLockReason(s, 'frostbite')) || s.flaskSlots.some((f) => f?.instill === 'frostbite');
 }
 
+/** A skill on the bar that fires on a channel and can break it, with an interrupt or a stun. */
+export function rulesBreakChannels(s: GameState): boolean {
+  if (ruleLockReason(s, 'enemyChannels')) return false;
+  return s.skillBar.some((g) => {
+    if (!g?.rules.some((r) => r.when === 'enemyChannels')) return false;
+    const { interrupts, stunChance } = activeGemDef(g.gemId).effect;
+    return !!(interrupts || stunChance);
+  });
+}
+
 /**
  * Left alone, a boss only comes out if your rules can finish it: martyrs need a skill that aims at them, or the fight
- * never ends, and Frostbite needs an answer, or the hours end in a freeze.
+ * never ends, Frostbite needs an answer, or the hours end in a freeze, and a channel left to land snowballs until you die.
  */
 export function bossLeftToRules(s: GameState, zone: ZoneDef): boolean {
   const has = (k: BossMechanic) => !!zone.boss.mechanics?.includes(k);
-  return bossesOffline(s) && (!has('martyrs') || aimsAt(s, 'martyrs')) && (!has('frostbite') || answersFrostbite(s));
+  return bossesOffline(s) && (!has('martyrs') || aimsAt(s, 'martyrs')) && (!has('frostbite') || answersFrostbite(s)) && (!has('channel') || rulesBreakChannels(s));
 }
 
 export function offlineCapMs(s: GameState): number {

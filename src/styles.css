@@ -4036,6 +4036,7 @@ g.tut-hint circle.body {
 .bf-cell.ground-frozen::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--cold) 70%, white), color-mix(in srgb, var(--cold) 30%, rgba(0, 0, 0, 0.5))); }
 .bf-cell.ground-chilled::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--cold) 50%, transparent), color-mix(in srgb, var(--cold) 20%, rgba(0, 0, 0, 0.5))); }
 .bf-cell.ground-shocked::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--light) 50%, transparent), color-mix(in srgb, var(--light) 20%, rgba(0, 0, 0, 0.5))); }
+.bf-cell.ground-stormwater::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--cold) 45%, transparent), color-mix(in srgb, var(--light) 25%, rgba(0, 0, 0, 0.5))); }
 .bf-cell.ground-caustic::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--poison) 50%, transparent), color-mix(in srgb, var(--poison) 20%, rgba(0, 0, 0, 0.5))); }
 
 .bf-cell.flash-a::after,
@@ -4780,6 +4781,7 @@ g.tut-hint circle.body {
 .chip.mechanic.ward { color: var(--ward); }
 .chip.mechanic.scorch { color: var(--fire); }
 .chip.mechanic.martyrs { color: var(--accent-2); }
+.chip.mechanic.channel { color: var(--light); }
 
 .act-complete {
   border-color: var(--good);

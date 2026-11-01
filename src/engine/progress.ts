@@ -38,7 +38,7 @@ export function zoneLockText(s: GameState, z: ZoneDef): string {
   const roads = roadsInto(z);
   const parts: string[] = [];
   if (roads.length && !roads.some((id) => s.bossesDefeated.includes(id))) {
-    parts.push(`Defeat the boss of ${roads.map((id) => ZONES.find((x) => x.id === id)!.name).join(' or ')}`);
+    parts.push(`Defeat the boss of ${roads.map((id) => ZONES.find((x) => x.id === id)?.name ?? 'the act before').join(' or ')}`);
   }
   const need = bossesNeeded(z) - bossesBeatenInAct(s, z.act);
   if (need > 0) parts.push(`beat ${need} more Act ${z.act} boss${need === 1 ? '' : 'es'}`);

@@ -1,4 +1,4 @@
-import type { DamageType } from '../engine/types';
+import type { DamageType, GroundKind } from '../engine/types';
 
 /**
  * Boss mechanics. Every boss slams; later bosses stack more so a single guard skill isn't enough.
@@ -10,8 +10,9 @@ import type { DamageType } from '../engine/types';
  * - scorch: every so often it sets the ground under you ablaze (frozen, charged) — resistances and pace matter
  * - martyrs: it can't be hurt while the martyrs chained to it live — aim at them, by hand or by rule
  * - frostbite: stacks build on you through the fight, slowing you until you freeze solid — cleanse them, by hand or by rule
+ * - channel: a long spell that grows until it lands, and snowballs the fight if it does — stun or interrupt it, by hand or by rule
  */
-export type BossMechanic = 'slam' | 'nova' | 'summon' | 'enrage' | 'ward' | 'scorch' | 'martyrs' | 'frostbite';
+export type BossMechanic = 'slam' | 'nova' | 'summon' | 'enrage' | 'ward' | 'scorch' | 'martyrs' | 'frostbite' | 'channel';
 
 /** One thing a monster does: its name, whether it's an attack or a spell, and its attack or cast time in ms. */
 export interface MonsterSkill {
@@ -42,10 +43,13 @@ export interface MonsterDef {
   /** bosses: the telegraphed casts; ms is the wind-up */
   slam?: MonsterSkill;
   nova?: MonsterSkill;
+  channel?: MonsterSkill;
   /** element of the nova and scorch mechanics (defaults to the boss's damage type) */
   novaType?: DamageType;
   /** its cold ground is Frozen ground, not Chilled */
   rime?: boolean;
+  /** the ground it lays, when that isn't what its element leaves behind */
+  groundKind?: GroundKind;
 }
 
 export interface ZoneDef {
@@ -108,7 +112,10 @@ export const ACTS: ActDef[] = [
     n: 4, name: 'The Hollow Peaks', open: false, preview: true,
     outro: 'The Hollow King falls, and the mountain shakes as he lands. Past the last peak the land drops away to the east, down to a sea that has not seen the sun.',
   },
-  { n: 5, name: 'The Sunless Sea', open: false },
+  {
+    n: 5, name: 'The Sunless Sea', open: false, preview: true,
+    outro: 'The Caller sinks, and for the first time in living memory the tide along the Drowned Coast goes out and stays out. To the north-east, the broken towers of the Shattered Throne stand clear of the storm.',
+  },
   { n: 6, name: 'The Shattered Throne', open: false },
 ];
 
@@ -127,6 +134,8 @@ const fast = (def: MonsterDef): MonsterDef => ({ ...def, moveMs: 600 });
 const slow = (def: MonsterDef): MonsterDef => ({ ...def, moveMs: 1800 });
 /** the high peaks: its cold ground is Frozen ground, not Chilled */
 const rime = (def: MonsterDef): MonsterDef => ({ ...def, rime: true });
+/** its spell leaves storm-tossed water, not shocked ground */
+const stormy = (def: MonsterDef): MonsterDef => ({ ...def, groundKind: 'stormwater' });
 
 const m = (id: string, name: string, level: number, dmgType: DamageType, basic: MonsterSkill, lifeMult = 1, dmgMult = 1): MonsterDef => ({
   id, name, level, dmgType, basic, lifeMult, dmgMult,
@@ -135,7 +144,9 @@ const m = (id: string, name: string, level: number, dmgType: DamageType, basic: 
 interface BossCasts {
   slam: MonsterSkill;
   nova?: MonsterSkill;
+  channel?: MonsterSkill;
   novaType?: DamageType;
+  groundKind?: GroundKind;
 }
 
 const boss = (def: MonsterDef, mechanics: BossMechanic[], casts: BossCasts): MonsterDef => ({ ...def, mechanics, ...casts });
@@ -731,6 +742,223 @@ export const ZONES: ZoneDef[] = [
     spawnEveryMs: 11000,
     uniques: ['crown_of_the_hollow', 'giants_knuckle', 'wolfmother_pelt', 'rimewalkers', 'heart_of_winter', 'frostgrip', 'starforged_edge'],
   },
+
+  // ---------------- Act 5: The Sunless Sea (docs/design/ACT5.md) ----------------
+  // Island to island across the drowned dark: fire and lightning together are the check, a boss hitting in one and blasting
+  // in the other. Channels arrive at the second stage. Items roll ten levels above the monster, so the act's last kills reach
+  // bases of about level 68. The first area hangs off Act 4's last; everything after it follows on as usual.
+  {
+    id: 'blackharbor', name: 'The Black Harbour', act: 5, tier: 12, levelRange: [49, 50], color: '#39424e', ilvlBonus: 10,
+    requires: { after: ['giantsthrone'] }, // Act 4's last area: its boss opens the sea
+    desc: 'The last port on the coast, where the lamps burn all day and every ship that sails comes back with the wrong crew.',
+    monsters: [
+      m('pressganger', 'Press-Ganger', 49, 'phys', atk('Belaying Pin', 2700), 1, 1),
+      fast(m('dockrat', 'Tar Rat', 49, 'fire', atk('Burning Bite', 2100), 0.7, 0.85)),
+      m('harbourwatch', 'Lamp Watchman', 50, 'light', spell('Signal Flare', 2900), 0.85, 1.1),
+      m('saltcaulker', 'Pitch Caulker', 50, 'fire', spell('Hot Pitch', 3300, true), 1, 1.2),
+    ],
+    boss: boss(m('creel', 'Harbourmaster Creel', 50, 'fire', atk('Boarding Hook', 3300)), ['slam', 'nova', 'summon'], { slam: atk('Dropped Anchor', 3300), nova: spell('Harbour Lightning', 3800), novaType: 'light' }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['bosuns_oath', 'old_grudge', 'pyre_heart'],
+  },
+  {
+    id: 'wreckline', name: 'The Wreck Line', act: 5, tier: 12, levelRange: [49, 51], color: '#6a4a3a', ilvlBonus: 10,
+    desc: 'A reef of burning hulks across the harbour mouth, set alight by no one, still alight.',
+    monsters: [
+      slow(m('hullbreaker', 'Hull Crawler', 49, 'phys', atk('Keel Claw', 3900), 1.5, 1.15)),
+      fast(m('flotsam', 'Burning Flotsam', 50, 'fire', atk('Cinder Splash', 2200), 0.75, 0.9)),
+      m('wreckgunner', 'Taken Gunner', 50, 'fire', atk('Loaded Swivel', 3200), 1, 1.15),
+      m('stormrigger', 'Storm Rigger', 51, 'light', spell('Crackling Line', 3200, true), 0.95, 1.2),
+    ],
+    boss: boss(m('gall', 'Bosun Gall', 51, 'fire', atk('Burning Rope', 3200)), ['slam', 'channel'], { slam: atk('Keelhauler', 3200), channel: spell('Call to Quarters', 6500) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['leviathan_hide', 'starforged_edge', 'stormhide'],
+  },
+  {
+    id: 'cinderkey', name: 'Cinder Key', act: 5, tier: 12, levelRange: [50, 52], color: '#a0482a', ilvlBonus: 10,
+    desc: 'The first island out: a black cone of rock weeping fire into the sea, and the steam never lifts.',
+    monsters: [
+      m('tarwalker', 'Tar Walker', 50, 'fire', atk('Sticky Grasp', 3000), 1.05, 1.05),
+      fast(m('steamkin', 'Steam Kin', 51, 'fire', atk('Scalding Rush', 2100), 0.7, 0.9)),
+      slow(m('obsidiancrab', 'Obsidian Crab', 51, 'phys', atk('Glass Pincer', 4100), 1.6, 1.2)),
+      m('keyshaman', 'Vent Shaman', 52, 'fire', spell('Lava Spit', 3300, true), 1, 1.25),
+    ],
+    boss: boss(m('tarry', 'Mother Tarry', 52, 'fire', spell('Boiling Pitch', 3400)), ['slam', 'scorch', 'channel'], { slam: atk('Tar Wave', 3200), channel: spell('Heart of the Vent', 6400), novaType: 'light', groundKind: 'stormwater' }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['corposant', 'pyre_heart', 'emberheart'],
+  },
+  {
+    id: 'squallbanks', name: 'The Squall Banks', act: 5, tier: 12, levelRange: [51, 53], color: '#4f6f8f', ilvlBonus: 10,
+    desc: 'Shoals so shallow that the storm stands on them. Nothing keeps its feet here for long.',
+    monsters: [
+      fast(m('stormgull', 'Storm Gull', 51, 'light', atk('Charged Dive', 2100), 0.7, 0.9)),
+      m('shoalstalker', 'Shoal Stalker', 52, 'light', atk('Barbed Gaff', 2800), 1, 1.05),
+      slow(m('sandback', 'Sandback', 52, 'phys', atk('Shell Rush', 4000), 1.6, 1.15)),
+      stormy(m('squallwife', 'Squall Witch', 53, 'light', spell('Breaking Wave', 3300, true), 1, 1.25)),
+    ],
+    boss: boss(m('aune', 'Aune, the Stormwife', 53, 'light', spell('Wind-Lashed Bolt', 3300)), ['slam', 'nova', 'scorch', 'channel'], { slam: atk('Wave Hammer', 3200), nova: spell('Burning Rain', 3800), novaType: 'fire', channel: spell('Marriage of Storms', 6200) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['deckwalkers', 'stormrider_greaves', 'stormhide'],
+  },
+  {
+    id: 'lampgulf', name: 'The Gulf of Lamps', act: 5, tier: 13, levelRange: [51, 53], color: '#2f5f6a', ilvlBonus: 10,
+    desc: 'Black water with lights moving under it. The sailors who followed them are still down there, and they have lights now too.',
+    monsters: [
+      m('lampfish', 'Lure Swimmer', 51, 'light', spell('Glowing Bite', 2700), 0.85, 1.05),
+      fast(m('deepeel', 'Deep Eel', 52, 'light', atk('Shock Coil', 2200), 0.75, 0.9)),
+      m('lureman', 'Lure-Taken Sailor', 52, 'phys', atk('Lamp Hook', 3000), 1.1, 1.05),
+      m('anglerpriest', 'Lamp Priest', 53, 'fire', spell('Drowned Flame', 3300, true), 1, 1.25),
+    ],
+    boss: boss(m('lanternmaw', 'The Lantern Maw', 53, 'fire', atk('Hooked Jaws', 3300)), ['nova', 'summon', 'channel'], { slam: atk('Snapping Jaws', 3200), nova: spell('Blinding Lure', 3800), novaType: 'light', channel: spell('The Long Light', 6200) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['corposant', 'saints_shard', 'halo_of_wrath'],
+  },
+  {
+    id: 'drownedfleet', name: 'The Drowned Fleet', act: 5, tier: 13, levelRange: [52, 54], color: '#50606a', ilvlBonus: 10,
+    desc: 'Every ship the coast ever lost, under full sail, a fathom below the surface and still in line.',
+    monsters: [
+      m('fleetmarine', 'Drowned Marine', 52, 'phys', atk('Rusted Boarding Axe', 2900), 1.1, 1.05),
+      fast(m('powdermonkey', 'Powder Monkey', 53, 'fire', atk('Lit Fuse', 2200), 0.7, 0.95)),
+      m('fleetgunner', 'Broadside Gunner', 53, 'fire', atk('Chain Shot', 3300), 1, 1.2),
+      m('signalman', 'Dead Signalman', 54, 'light', spell('Storm Semaphore', 3200, true), 0.95, 1.25),
+    ],
+    boss: boss(m('hask', 'Commodore Hask', 54, 'light', atk('Dead Man\'s Cutlass', 3200)), ['slam', 'summon', 'enrage', 'channel'], { slam: atk('Full Broadside', 3100), novaType: 'fire', channel: spell('All Hands Below', 6000) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['harpoons_answer', 'old_grudge', 'martyrs_shroud'],
+  },
+  {
+    id: 'brimstone', name: 'Brimstone Isle', act: 5, tier: 13, levelRange: [52, 54], color: '#b0702a', ilvlBonus: 10,
+    desc: 'Yellow stone and bad air. A shore of fire where the taken crews come to be burned clean of their names.',
+    monsters: [
+      m('sulphurman', 'Sulphur Digger', 52, 'fire', atk('Yellow Pick', 2800), 1, 1.05),
+      fast(m('ashgull', 'Cinder Gull', 53, 'fire', atk('Burning Peck', 2000), 0.7, 0.85)),
+      slow(m('brimstonehulk', 'Brimstone Hulk', 53, 'fire', atk('Molten Fist', 4100), 1.7, 1.25)),
+      m('stokerpriest', 'Stoker of Names', 54, 'fire', spell('Pillar of Sulphur', 3300, true), 1, 1.3),
+    ],
+    boss: boss(m('brimstonekeeper', 'The Name-Burner', 54, 'fire', spell('Searing Ledger', 3300)), ['slam', 'nova', 'scorch'], { slam: atk('Branding Iron', 3100), nova: spell('Thunder of the Pit', 3700), novaType: 'light', groundKind: 'stormwater' }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['leviathan_hide', 'pyre_heart', 'kurgan_crown'],
+  },
+  {
+    id: 'hollowreef', name: 'The Hollow Reef', act: 5, tier: 13, levelRange: [53, 55], color: '#8a5a6a', ilvlBonus: 10,
+    desc: 'A reef grown over a city no map remembers. It breathes, slowly, and the tunnels change.',
+    monsters: [
+      slow(m('coralbrute', 'Coral-Grown Brute', 53, 'phys', atk('Reef Fist', 4000), 1.6, 1.2)),
+      fast(m('reefdart', 'Reef Dart', 54, 'light', atk('Stinging Rush', 2100), 0.7, 0.9)),
+      m('polypmother', 'Polyp Mother', 54, 'cold', spell('Cold Spawn', 3200), 0.9, 1.15),
+      m('reefspeaker', 'Reef Speaker', 55, 'light', spell('Coral Arc', 3300, true), 1, 1.25),
+    ],
+    boss: boss(m('reefmother', 'The Reef Mother', 55, 'light', spell('Living Coral', 3200)), ['slam', 'summon', 'ward', 'channel'], { slam: atk('Tunnel Collapse', 3100), novaType: 'fire', channel: spell('The Slow Breath', 5800) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 9000,
+    uniques: ['tide_crown', 'confession_hood', 'kurgan_crown'],
+  },
+  {
+    id: 'thunderhead', name: 'The Thunderhead', act: 5, tier: 14, levelRange: [54, 56], color: '#46506f', ilvlBonus: 10,
+    desc: 'Open water under the great storm. Waterspouts walk the horizon, and the rain falls upward.',
+    monsters: [
+      m('spoutrider', 'Spout Rider', 54, 'light', atk('Lightning Harpoon', 2800), 1, 1.1),
+      fast(m('rainwraith', 'Rain Wraith', 55, 'light', spell('Falling Spark', 2300), 0.7, 0.95)),
+      m('emberpetrel', 'Fire Petrel', 55, 'fire', atk('St Elmo\'s Talon', 2500), 0.85, 1.05),
+      stormy(m('tempestkeeper', 'Tempest Keeper', 56, 'light', spell('Waterspout', 3300, true), 1, 1.3)),
+    ],
+    boss: boss(m('vane', 'Captain Vane, Eye of the Storm', 56, 'fire', atk('Burning Mainsail', 3100)), ['slam', 'nova', 'enrage', 'scorch', 'channel'], { slam: atk('Mast Fall', 3000), nova: spell('Eye of the Storm', 3600), novaType: 'light', groundKind: 'stormwater', channel: spell('Fire in the Rigging', 5600) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['deckwalkers', 'stormrider_greaves', 'pilgrims_road'],
+  },
+  {
+    id: 'leviathanrib', name: "Leviathan's Rib", act: 5, tier: 14, levelRange: [54, 56], color: '#a09a8a', ilvlBonus: 10,
+    desc: 'The island is a dead thing. Its ribs stand a mile out of the sea, and the crews who flense it have been at it for a thousand years.',
+    monsters: [
+      m('flenser', 'Flenser', 54, 'phys', atk('Blubber Spade', 2900), 1.05, 1.1),
+      slow(m('ribcrawler', 'Rib Crawler', 55, 'phys', atk('Marrow Pincer', 4100), 1.7, 1.2)),
+      fast(m('oilbat', 'Oil-Slick Bat', 55, 'fire', atk('Burning Wing', 2100), 0.7, 0.9)),
+      m('tryworker', 'Tryworks Keeper', 56, 'fire', spell('Whale-Oil Fire', 3300, true), 1, 1.3),
+    ],
+    boss: boss(m('flensemaster', 'Master Flenser Oake', 56, 'fire', atk('Great Spade', 3100)), ['slam', 'summon', 'ward', 'channel'], { slam: atk('The Long Cut', 3000), novaType: 'light', channel: spell('Rendered Fire', 5600) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['harpoons_answer', 'chainbreaker', 'starforged_edge'],
+  },
+  {
+    id: 'blackcurrent', name: 'The Black Current', act: 5, tier: 14, levelRange: [55, 57], color: '#26323f', ilvlBonus: 10,
+    desc: 'A river in the sea, running against the wind. Ships that enter it stop answering the helm.',
+    monsters: [
+      m('currentshade', 'Current Shade', 55, 'cold', spell('Cold Undertone', 2900), 0.85, 1.1),
+      fast(m('blackeel', 'Black Eel', 56, 'light', atk('Lightning Coil', 2100), 0.75, 0.95)),
+      m('helmsman', 'Lost Helmsman', 56, 'phys', atk('Spoke of the Wheel', 3000), 1.1, 1.1),
+      stormy(m('currentcaller', 'Current Caller', 57, 'light', spell('Pull of the Deep', 3300, true), 1, 1.3)),
+    ],
+    boss: boss(m('steersman', 'The Steersman', 57, 'light', atk('Iron Tiller', 3000)), ['slam', 'nova', 'enrage', 'channel'], { slam: atk('Hard Over', 2900), nova: spell('Burning Wake', 3500), novaType: 'fire', channel: spell('Course Laid In', 5400) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['tide_crown', 'bosuns_oath', 'halo_of_wrath'],
+  },
+  {
+    id: 'voicetrench', name: 'The Trench of Voices', act: 5, tier: 14, levelRange: [55, 57], color: '#3a3a5a', ilvlBonus: 10,
+    desc: 'The sea floor falls away here, and every name the water ever took comes up out of it, one at a time.',
+    monsters: [
+      m('namelessone', 'The Nameless', 55, 'phys', atk('Grasping Reach', 2800), 1, 1.1),
+      fast(m('whisperer', 'Whisperer', 56, 'light', spell('Word in the Dark', 2300), 0.7, 0.95)),
+      m('trenchburner', 'Trench Burner', 56, 'fire', spell('Vent Flame', 3000, true), 0.95, 1.2),
+      slow(m('trenchhorror', 'Trench Horror', 57, 'fire', atk('Crushing Depth', 4000), 1.7, 1.3)),
+    ],
+    boss: boss(m('choirdeep', 'The Choir Below', 57, 'fire', spell('Rising Hymn', 3100)), ['nova', 'summon', 'scorch', 'channel'], { slam: atk('Swell', 3000), nova: spell('Thousand Names', 3500), novaType: 'light', groundKind: 'stormwater', channel: spell('The Long Note', 5400) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['corposant', 'saints_shard', 'bosuns_oath'],
+  },
+  {
+    id: 'lightless', name: 'The Lightless Deep', act: 5, tier: 14, levelRange: [56, 57], color: '#14181f', ilvlBonus: 10,
+    desc: 'Below the storm and below the sea, where the only light is what the deep things burn.',
+    monsters: [
+      m('deepthing', 'Deep Thing', 56, 'phys', atk('Too Many Hands', 2900), 1.15, 1.15),
+      fast(m('blindhunter', 'Blind Hunter', 56, 'light', atk('Sensing Strike', 2000), 0.75, 0.95)),
+      m('dimfire', 'Deepfire', 57, 'fire', spell('Lightless Flame', 3000, true), 0.9, 1.2),
+      stormy(m('abyssherald', 'Herald of the Deep', 57, 'light', spell('Pressure Storm', 3300, true), 1, 1.3)),
+    ],
+    boss: boss(m('firstdrowned', 'The First Drowned', 57, 'light', atk('Weight of Water', 3000), 1.2), ['slam', 'nova', 'summon', 'enrage', 'channel'], { slam: atk('Sea-Floor Crush', 2900), nova: spell('Burning Deep', 3500), novaType: 'fire', channel: spell('The Drowning Word', 5200) }),
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['leviathan_hide', 'tide_crown', 'harpoons_answer'],
+  },
+  {
+    id: 'maelstrom', name: "The Maelstrom's Eye", act: 5, tier: 14, levelRange: [56, 57], color: '#1e2a3f', ilvlBonus: 10,
+    desc: 'The middle of the Sunless Sea, where the water turns forever around a hole in the world. What drowned the coast is calling from the bottom.',
+    monsters: [
+      m('crewless', 'Crew of the Last Ship', 56, 'phys', atk('Hands on the Rope', 2800), 1.1, 1.15),
+      fast(m('maelstromkin', 'Whirl Kin', 57, 'light', atk('Spinning Lash', 2000), 0.75, 1)),
+      m('eyepriest', 'Priest of the Eye', 57, 'fire', spell('Burning Tide', 3200, true), 1, 1.3),
+      stormy(m('eyestorm', 'Stormbound Herald', 57, 'light', spell('Maelstrom Bolt', 3200, true), 1, 1.3)),
+    ],
+    boss: boss(m('caller', 'Thalass, the Caller Below', 58, 'fire', atk('Hand of the Deep', 3000), 1.5, 1.05), ['slam', 'nova', 'summon', 'enrage', 'ward', 'scorch', 'martyrs', 'channel'], { slam: atk('The Sea Comes In', 2900), nova: spell('Sky-Drowning Storm', 3500), novaType: 'light', groundKind: 'stormwater', channel: spell('The Last Call', 5000) }),
+    actBoss: true,
+    bossEvery: 25,
+    packSize: [3, 5],
+    spawnEveryMs: 8500,
+    uniques: ['leviathan_hide', 'bosuns_oath', 'corposant', 'deckwalkers', 'tide_crown', 'harpoons_answer', 'starforged_edge'],
+  },
 ];
 
 /** Areas off the campaign road (data/maps.ts): they can be fought in, but nothing that walks ZONES sees them. */
@@ -789,9 +1017,24 @@ export const BOSS_SLAM_EVERY_MS = 9000;
 /** nova: telegraphed elemental blast that ignores blocks */
 export const BOSS_NOVA_MULT = 1.8;
 export const BOSS_NOVA_EVERY_MS = 13000;
+/**
+ * channel: every so often the boss stops to call up a long spell. It pulses harder and harder as it grows, then lands
+ * like a nova; a landed channel also leaves the boss stronger for the rest of the fight. A stun, freeze or interrupt
+ * breaks it, and the boss staggers.
+ */
+export const BOSS_CHANNEL_EVERY_MS = 20000;
+export const BOSS_CHANNEL_PULSE_MS = 1000;
+/** a pulse at the start and at the end of the channel, as multiples of the boss's hit */
+export const BOSS_CHANNEL_PULSE_MIN = 0.15;
+export const BOSS_CHANNEL_PULSE_MAX = 0.75;
+export const BOSS_CHANNEL_LAND_MULT = 3.5;
+/** every channel that lands: this much more damage from the boss, for the rest of the fight */
+export const BOSS_CHANNEL_SURGE = 0.2;
+export const BOSS_CHANNEL_STAGGER_MS = 1500;
 /** wind-ups for a boss whose data doesn't name its own */
 export const BOSS_SLAM_DEFAULT: MonsterSkill = { name: 'Heavy Blow', kind: 'attack', ms: 3600 };
 export const BOSS_NOVA_DEFAULT: MonsterSkill = { name: 'Nova', kind: 'spell', ms: 4000 };
+export const BOSS_CHANNEL_DEFAULT: MonsterSkill = { name: 'Deep Call', kind: 'spell', ms: 6000 };
 /** summon: tops the pack back up to this many adds */
 export const BOSS_SUMMON_EVERY_MS = 16000;
 export const BOSS_SUMMON_COUNT = 2;
@@ -833,6 +1076,7 @@ export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> 
   enrage: { name: 'Enrage', tip: 'Below 35% life it attacks 50% faster for 30% more damage. Burst it down or drink.' },
   ward: { name: 'Ward', tip: 'At 66% and 33% life it raises a barrier. Break it within 8 s or the boss heals 10%.' },
   martyrs: { name: 'Martyrs', tip: "It can't be hurt while the martyrs chained to it live, and it chains two more at half life. Only a blow aimed at a martyr lands: click one, or set a skill's rule to aim at martyrs (Aim rules, War Table)." },
+  channel: { name: 'Channels', tip: "It stops to call up a long spell that pulses harder as it grows, then lands past any block and leaves it stronger for the rest of the fight. A stun, freeze or interrupt breaks it and staggers the boss: press War Cry, or put a skill on the rule When an enemy channels (a wind-up rule won't fire)." },
   scorch: { name: 'Scorched earth', tip: 'Every 11 s it sets the ground under you ablaze (or frozen, or charged) for 6 s. Resist its element, Run to step out sooner, or put a guard on a Ground rule to step out at once.' },
   frostbite: { name: 'Frostbite', tip: "A stack builds on you every 2.5 s, twice as fast on Frozen ground, and each slows you by 4%. At 10 you freeze solid for 3 s and take a cold shatter. A guard or movement skill shakes off 5, and a flask clears them all. Set one to the Frostbite rule (Vitals rules, War Table), or Instill a flask, so it fires at a stack count." },
 };

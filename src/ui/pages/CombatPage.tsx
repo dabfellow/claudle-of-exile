@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
 import { BOSS_FROSTBITE_MAX, BOSS_FROSTBITE_SLOW_PCT, BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, nextZones, zoneDef, type MonsterDef } from '../../data/zones';
-import { CELLS, cellRing, GROUND, groundFor, inReach, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT, RINGS } from '../../engine/battlefield';
+import { CELLS, cellRing, GROUND, inReach, monsterGround, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT, RINGS } from '../../engine/battlefield';
 import {
   aliveMonsters,
   bossCalled,
@@ -52,7 +52,7 @@ const DMG_COLOR: Record<DamageType, string> = {
 /** buffs that come from tree effects rather than a skill gem */
 const EXTRA_BUFFS: Record<string, string> = { guard_armour: 'Guard Armour', evade_speed: 'Evasive', stand_fast: 'Stand Fast', ecstasy: 'Ecstasy' };
 const DMG_NAME: Record<DamageType, string> = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' };
-const GROUND_STATUS: Record<GroundKind, string> = { burning: 'fire', chilled: 'cold', frozen: 'cold', shocked: 'bad', caustic: 'poison' };
+const GROUND_STATUS: Record<GroundKind, string> = { burning: 'fire', chilled: 'cold', frozen: 'cold', shocked: 'bad', caustic: 'poison', stormwater: 'cold' };
 
 interface Floater {
   id: number;
@@ -263,7 +263,9 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
         <>
           <ProgressBar className="cast-bar" value={1 - m.casting / m.castTotal} />
           <div className="cast-warning">
-            {m.castKind === 'nova'
+            {m.castKind === 'channel'
+              ? `⚠ ${m.casts.channel.name}: growing — stun or interrupt it before it lands!`
+              : m.castKind === 'nova'
               ? `⚠ ${m.casts.nova.name}: ${DMG_NAME[m.novaType].toLowerCase()} nova incoming — blocks won't stop it!`
               : `⚠ ${m.casts.slam.name}: heavy blow incoming — guard, interrupt or drink!`}
           </div>
@@ -670,7 +672,7 @@ function Matchup({ s, d, bossDef }: { s: GameState; d: Derived; bossDef: Monster
         ))}
       {target?.attackGround && (
         <div className="matchup-note">
-          <b>{target.attackName}:</b> leaves {GROUND[groundFor(target.dmgType, target.rime)].name.toLowerCase()} under you for a few seconds. Run or Flee to step out of it faster.
+          <b>{target.attackName}:</b> leaves {GROUND[monsterGround(target, target.dmgType)].name.toLowerCase()} under you for a few seconds. Run or Flee to step out of it faster.
         </div>
       )}
     </div>
