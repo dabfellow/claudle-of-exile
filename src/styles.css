@@ -4018,6 +4018,20 @@ g.tut-hint circle.body {
   gap: 8px 12px;
 }
 
+.chained-anchor {
+  position: relative;
+  height: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.chained-notice {
+  position: absolute;
+  inset: 0 0 auto;
+  color: var(--text);
+  backdrop-filter: blur(4px);
+}
+.chained-notice b { color: var(--text); }
+
 /* a fixed share of the bar, so the changing text never rewraps the controls and moves the field */
 .bf-status {
   flex: 1 1 100px;
@@ -4342,6 +4356,13 @@ g.tut-hint circle.body {
   }
   .bf-summary {
     display: flex;
+  }
+  /* no field to float over here, and the summary's Strike buttons sit right under it */
+  .chained-anchor {
+    height: auto;
+  }
+  .chained-notice {
+    position: static;
   }
 }
 

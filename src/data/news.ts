@@ -8,6 +8,16 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.38',
+    date: '1 Nov 2026',
+    title: 'Martyrs loosen their grip',
+    items: [
+      'Area and chain skills now go for Chained Martyrs by themselves, and catch them when they land nearby. No click or rule needed.',
+      'Single-target skills still need a click or an Aim rule.',
+      "A chained boss now says so: a notice over the field tells you why it can't be hurt and how to free it, and your hits show as chained rather than 0.",
+    ],
+  },
+  {
     version: '0.2.37',
     date: '1 Nov 2026',
     title: 'A new tutorial',

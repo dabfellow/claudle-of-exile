@@ -43,12 +43,14 @@ export function skillAim(s: GameState, gem: SkillGemInstance): SkillAim | undefi
   return aimLockReason(s) ? undefined : gem.rules.find((r) => r.aim)?.aim;
 }
 
-/** A skill on the bar that fires by rule, hits, and aims here. */
-function aimsAt(s: GameState, aim: SkillAim): boolean {
+/** A skill on the bar that fires by rule, hits, and gets to martyrs: aimed at them, or an area or chain that finds them by itself. */
+function strikesMartyrs(s: GameState): boolean {
   return s.skillBar.some((g) => {
-    if (!g || skillAim(s, g) !== aim || g.rules[0].when === 'manual') return false;
-    const { weaponPct, base } = activeGemDef(g.gemId).effect;
-    return !!(weaponPct || base);
+    if (!g || g.rules[0].when === 'manual') return false;
+    const { role, effect } = activeGemDef(g.gemId);
+    if (!effect.weaponPct && !effect.base) return false;
+    const spreads = (effect.area && effect.area !== 'target') || effect.targets === 'chain' || effect.targets === 'all';
+    return skillAim(s, g) === 'martyrs' || (spreads && role !== 'guard' && role !== 'buff' && role !== 'sustain' && role !== 'summon');
   });
 }
 
@@ -83,12 +85,12 @@ export function rulesBreakChannels(s: GameState, chained = false): boolean {
 }
 
 /**
- * Left alone, a boss only comes out if your rules can finish it: martyrs need a skill that aims at them, or the fight
+ * Left alone, a boss only comes out if your rules can finish it: martyrs need a skill that strikes them, or the fight
  * never ends, Frostbite needs an answer, or the hours end in a freeze, and a channel left to land snowballs until you die.
  */
 export function bossLeftToRules(s: GameState, zone: ZoneDef): boolean {
   const has = (k: BossMechanic) => !!zone.boss.mechanics?.includes(k);
-  return bossesOffline(s) && (!has('martyrs') || aimsAt(s, 'martyrs')) && (!has('frostbite') || answersFrostbite(s)) && (!has('channel') || rulesBreakChannels(s, has('martyrs')));
+  return bossesOffline(s) && (!has('martyrs') || strikesMartyrs(s)) && (!has('frostbite') || answersFrostbite(s)) && (!has('channel') || rulesBreakChannels(s, has('martyrs')));
 }
 
 export function offlineCapMs(s: GameState): number {

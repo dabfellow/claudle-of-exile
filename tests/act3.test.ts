@@ -5,7 +5,7 @@ import { ZONE_POS } from '../src/data/continent';
 import { BOSS_TABLES, bossTable, DROP_TABLES, dropTable } from '../src/data/drops';
 import type { TacticRule } from '../src/data/gems';
 import { ACT_PREVIEW, ACTS, actBossZone, actOpen, BOSS_MARTYR_COUNT, nextZones, zoneDef, zonesInAct, type ZoneDef } from '../src/data/zones';
-import { GROUND_IN_PLAY, ruleLockReason, ruleUnlockLevel, skillAim, unlockEverything } from '../src/engine/automation';
+import { bossLeftToRules, GROUND_IN_PLAY, ruleLockReason, ruleUnlockLevel, skillAim, unlockEverything } from '../src/engine/automation';
 import { chooseSkill, combatStep, focusTarget, lockTarget, makeMonster, retreat, ruleContext, skillTarget, startCombat, targetOrder } from '../src/engine/combat';
 import { EDGE_CELLS, FRONT_CELL } from '../src/engine/battlefield';
 import { makeCtx } from '../src/engine/context';
@@ -244,13 +244,11 @@ describe('martyrs', () => {
     expect(c.events.some((e) => e.t === 'hit' && e.target === 'monster' && e.monsterUid === boss.uid && e.blocked)).toBe(true);
   });
 
-  it('nobody targets a martyr by accident, so area skills and ailments pass it by', () => {
-    const s = fighter(['ground_slam', 'heavy_strike']);
-    s.skillBar[0]!.rules = [{ when: 'always' }];
+  it('nobody targets a martyr by accident, so single hits and ailments pass it by', () => {
+    const s = fighter(['heavy_strike']);
     const { boss, martyrs, c } = chained(s);
     expect(targetOrder(s).some((m) => m.martyr)).toBe(false);
     expect(focusTarget(s)).toBe(boss);
-    // an arc aimed at the boss, with a martyr right beside it
     const lives = martyrs().map((m) => m.life);
     martyrs()[0].cell = boss.cell + 1;
     s.combat!.actionMs = 0;
@@ -258,6 +256,27 @@ describe('martyrs', () => {
     s.combat!.ground.push({ cell: martyrs()[1].cell, kind: 'burning', dps: 1e6, remainingMs: 5000, durationMs: 5000 });
     for (let t = 0; t < 8000; t += 50) combatStep(s, c, 50, deriveStats(s));
     expect(martyrs().map((m) => m.life)).toEqual(lives);
+  });
+
+  it('area and chain skills go for martyrs with no click or rule', () => {
+    for (const id of ['ground_slam', 'spark']) {
+      const s = fighter([id]);
+      const { martyrs } = chained(s);
+      const nums = skillNumbers(deriveStats(s), s.skillBar[0]);
+      expect(martyrs(), id).toContain(skillTarget(s, deriveStats(s), nums)!.mon);
+    }
+  });
+
+  it('an area clicked at the boss still catches a martyr beside it', () => {
+    const s = fighter(['ground_slam']);
+    const { boss, martyrs, c } = chained(s);
+    lockTarget(s, boss.uid);
+    boss.cell = FRONT_CELL;
+    martyrs()[0].cell = FRONT_CELL + 1;
+    const life = martyrs()[0].life;
+    s.combat!.actionMs = 0;
+    for (let t = 0; t < 8000 && martyrs()[0]?.life === life; t += 50) combatStep(s, c, 50, deriveStats(s));
+    expect(martyrs()[0]?.life ?? 0).toBeLessThan(life);
   });
 
   it('clicking a martyr strikes it, and the last one breaks the chains', () => {
@@ -395,8 +414,12 @@ describe('a martyr boss, by rule alone', { timeout: 60_000 }, () => {
     expect(fight.won).toBe(true);
   });
 
-  it("can't be beaten without one: it never loses a point of life", () => {
-    const fight = bossFight(fighter(['heavy_strike', 'ground_slam']));
+  it('falls to an area skill with no rule at all', () => {
+    expect(bossFight(fighter(['ground_slam'])).won).toBe(true);
+  });
+
+  it("can't be beaten by a single-target skill without one: it never loses a point of life", () => {
+    const fight = bossFight(fighter(['heavy_strike']));
     expect(fight.won).toBe(false);
     expect(fight.boss!.life).toBe(fight.boss!.maxLife);
     expect(fight.boss!.chained).toBe(true);
@@ -434,6 +457,11 @@ describe('a martyr boss, offline', { timeout: 60_000 }, () => {
 
   it('comes out and falls when a rule aims at its martyrs', () => {
     expect(away([AIM]).s.bossesDefeated).toContain(ZONE);
+  });
+
+  it('counts an area skill as an answer', () => {
+    expect(bossLeftToRules(fighter(['ground_slam']), zoneDef(ZONE))).toBe(true);
+    expect(bossLeftToRules(fighter(['heavy_strike']), zoneDef(ZONE))).toBe(false);
   });
 
   it('stays in hiding without one, so the hours go on trash', () => {

@@ -59,11 +59,11 @@ Forked on 2026-11-01. The act boss needs 7 of the 9 other bosses. Gate → Alms 
 - The boss arrives chained with 2 martyrs beside it, and chains 2 more at 50% life. Knobs: `BOSS_MARTYR_*` and `MARTYR` in `zones.ts`.
 - While any lives, nothing hurts the boss: hits show as blocked, and ailments, ground and novas do nothing. It keeps fighting.
 - Martyrs stand still, never attack, have half a trash monster's life, and give no xp, loot or kill count.
-- Only a blow aimed at a martyr lands. Targeting skips martyrs, and area skills, chains, ailments, ground and novas pass over them, so an area build can't clear them by accident and the rule is really needed.
+- Area and chain skills go for martyrs by themselves and catch them where they land (changed 2026-11-01: having to target them felt bad). Single-target skills only land on one when aimed. Ailments, ground, novas and minions still pass over them. Offline, a skill counts if its own gem spreads; a spread from a support doesn't count yet.
 - A martyr is always in reach of a skill aimed at it, because adds and a summoning boss could otherwise wall melee off for good.
 - A chained boss goes last in the target order, so a character with no answer at least clears the adds.
 
-**By hand:** click a martyr; any attack then goes for it, the Default Attack included. **By rule:** set a skill to aim at Chained martyrs.
+**By skill:** any area or chain skill. **By hand:** click a martyr; any attack then goes for it, the Default Attack included. **By rule:** set a skill to aim at Chained martyrs. While the boss is chained, a notice over the field says so.
 
 ## Aim rules
 
