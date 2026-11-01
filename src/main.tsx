@@ -14,7 +14,7 @@ startMusic();
 if (import.meta.env.DEV) {
   const dev = window as unknown as { game: typeof game; passTrial: (n: 1 | 2 | 3, points?: number) => void };
   dev.game = game;
-  // the first trial's boss is an Act 3 area: this stands in for it until then (points tops up, to try sealed nodes)
+  // stands in for a trial's boss (points tops up, to try sealed nodes)
   dev.passTrial = (n, points = 0) =>
     game.act((s, ctx) => {
       passTrial(s, ctx, n);

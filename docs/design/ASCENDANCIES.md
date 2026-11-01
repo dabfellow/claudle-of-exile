@@ -198,7 +198,7 @@ make it better, and each rule fits in one sentence.
 
 Data is in `src/data/ascendancies.ts`, choice, points and switching in `src/engine/ascendancy.ts`, and the rules in
 `src/engine/mechanics.ts` (numbers at the top) and `src/engine/combat.ts`. All 12 gates work; notables and capstones are
-built and tested, sealed until trials 2 and 3 exist.
+built and tested. Trial 2 stands on the Giants' Throne (Act 4) and opens the notables. Capstones stay sealed until trial 3.
 
 Calls made while building:
 

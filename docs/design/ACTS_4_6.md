@@ -1,6 +1,6 @@
 # Acts 4–6
 
-Decided 2026-10-31. Nothing here is built. It's Milestone 7 of [MILESTONES.md](../MILESTONES.md), planned from the
+Decided 2026-10-31. Act 4's stages are built, in [ACT4.md](ACT4.md); the rest isn't yet. It's Milestone 7 of [MILESTONES.md](../MILESTONES.md), planned from the
 checklist in [ACT_RECIPE.md](ACT_RECIPE.md). The names and places come from the continent map.
 
 ## Smaller calls
