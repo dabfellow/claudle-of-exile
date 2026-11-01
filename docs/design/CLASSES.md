@@ -76,8 +76,10 @@ Every class is one chain:
 ## Duelist — Riposte
 *"Answer every blow."* Start 17 / 17 / 8. Starts in the Duelist zone (Str/Dex).
 
-**Riposte:** when you **block or evade** a hit, counter-attack for **100% weapon damage**
-(at most once per 0.5s).
+**Riposte:** when you **block or evade** a hit, counter-attack for **100% weapon damage**, or **50%** if the hit lands
+(at most once per 0.5s). Matador and Vanguard give up the landed-hit answer for their own triggers.
+
+Landed hits were added on 2026-10-31: 85% of hits on a starter land, so Riposte only fired about every 9 s.
 
 - Turns both halves of an Armour/Evasion hybrid into damage. Tanky-ish, steady, idle-friendly.
 - Hooks: Iron Guard blocks and Smoke Step evades both trigger it — guard skills become damage skills.

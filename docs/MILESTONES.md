@@ -349,6 +349,9 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 
 ## Ideas / later
 
+- Melee starts slow: Warrior, Ranger, Duelist and Templar deal 4–6 DPS in the mudflats against 13–16 for Shadow and Mage (2026-10-31).
+- Riposte heals (Measured Reply, The Second Guess) now fire on landed hits too, so watch whether Duelist sustain gets too strong.
+- Matador and Vanguard lose landed-hit Ripostes on picking, so ascending may feel like a step down until the tree fills in.
 - Level ceiling: XP is at −80% or worse from 46 and gone at 66 until Act 4 arrives (the High Altar tops out at 41), gem XP goes with it, and the bot's area choice doesn't know about either.
 - Level times: the sim's bot reaches 20 at 4h15–7h31, not 3 h; bosses hold it back, not XP, and it doesn't smith or bench-craft. Everything past about 46 is calculated, not measured, and assumes 3,300 kills an hour.
 - "Salvage the rest" on the offline haul works without the Crafting Bench, unlike every other salvage. Left as it was.
@@ -395,6 +398,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Duelist feel: Riposte also answers hits that land, at 50% damage, and shows a labelled floater. A starter's ripostes went from 6.7 to 30.7 a minute and DPS from 4.3 to 5.7 (mudflats, 5 seeds). Matador and Vanguard keep their triggers ([CLASSES.md](design/CLASSES.md)). 0.2.16 — done 2026-10-31
 - [x] Area level XP: your level against the area's range sets kill and gem XP (−10, −20, −40, −50, −80%, then 1% more per level to none at 25 over; +10%, then +20% at most below), shown on Campaign and Combat. Replaces the monster level falloff; Act 1's `xpScale` removed. New level curve set by play time; save v25 keeps everyone's level and progress. 0.2.15 — done 2026-10-31
 - [x] Focus raised to 45% with an overflow bar that holds it about 5 seconds; no wait between Mining or Woodcutting swings; weak hits +5%. 0.2.15 — done 2026-10-31
 - [x] Skilling mini-games for Mining, Woodcutting and Foraging: playing builds Focus for up to 30% more speed; idle and offline unchanged. 0.2.14 — done 2026-10-31

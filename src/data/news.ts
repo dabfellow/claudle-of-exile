@@ -8,6 +8,16 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.16',
+    date: '31 Oct 2026',
+    title: 'Duelists answer every blow',
+    items: [
+      'Riposte now answers hits that land too, at half damage, so it fires about five times as often for a new Duelist.',
+      'Ripostes are labelled on the battlefield in the Duelist colour.',
+      'Matador and Vanguard keep their own triggers: evades only and blocks only.',
+    ],
+  },
+  {
     version: '0.2.15',
     date: '31 Oct 2026',
     title: 'Faster levelling, stronger Focus',

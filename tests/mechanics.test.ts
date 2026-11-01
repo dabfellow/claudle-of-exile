@@ -128,6 +128,24 @@ describe('class mechanics', () => {
     expect(ours).toBeGreaterThan(evades * 0.5);
   });
 
+  it('Riposte answers a hit that lands at half damage', () => {
+    const answers = (evade: boolean) => {
+      const { s, ctx, dummy } = arena('duelist', 'heavy_strike', ['duelist_ks']); // Steady Hand: no misses or crits to skew the average
+      s.skillBar = s.skillBar.map(() => null);
+      dummy.attackMs = 600;
+      dummy.damage = 1;
+      if (evade) s.combat!.evadeMs = 1e9;
+      run(s, ctx, 60_000);
+      const ripostes = hits(ctx.events).filter((e) => e.riposte).map((e) => e.amount);
+      return { count: ripostes.length, avg: ripostes.reduce((a, b) => a + b, 0) / ripostes.length };
+    };
+    const landed = answers(false);
+    const evaded = answers(true);
+    expect(landed.count).toBeGreaterThan(40);
+    expect(landed.avg / evaded.avg).toBeCloseTo(0.5, 0);
+    expect(landed.avg).toBeLessThan(evaded.avg);
+  });
+
   it('Martyr: taking hits fills Fervor, which releases a holy nova that heals and strikes', () => {
     const { s, ctx, dummy } = arena('templar');
     dummy.attackMs = 200;
