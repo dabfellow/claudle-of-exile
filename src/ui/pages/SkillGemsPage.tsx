@@ -43,6 +43,7 @@ import { game, useGame } from '../../game';
 import { EmptyState, PageHeader, ProgressBar, Tooltip } from '../components/common';
 import { GemIcon, GemTip, rulesLabel, ruleText, SupportTip } from '../components/GemView';
 import { Icon } from '../components/Icon';
+import { SkillSets } from '../components/Loadouts';
 
 export const SKILL_KEYS = ['Q', 'W', 'E', 'R', 'T', 'Y'];
 
@@ -593,6 +594,7 @@ export function SkillGemsPage() {
         </div>
         <CastOrder s={s} />
       </div>
+      <SkillSets s={s} />
       {openSlot !== null && (
         <SlotModal
           key={openSlot}

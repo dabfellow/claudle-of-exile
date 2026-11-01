@@ -1,5 +1,5 @@
 import { BAG_SIZE } from '../data/hideout';
-import { claimItem } from './account';
+import { claimOwned } from './account';
 import type { Ctx } from './context';
 import { BENCH_UNBUILT, benchBuilt, isCraftLocked, salvage } from './crafting';
 import { equip, equipReason, unequip } from './equipment';
@@ -46,8 +46,8 @@ function lift(s: GameState, p: ItemPlace): void {
 
 /** Put an item back where another one came from. */
 function putBack(s: GameState, p: ItemPlace, item: Item): void {
-  if (p.at === 'stash') s.account.stash[p.page].push(claimItem(s.account, item));
-  else if (p.at === 'overflow') s.account.overflow.push(claimItem(s.account, item));
+  if (p.at === 'stash') s.account.stash[p.page].push(claimOwned(s, item));
+  else if (p.at === 'overflow') s.account.overflow.push(claimOwned(s, item));
   else if (p.at === 'ground' || p.at === 'offlineHaul') s[p.at].push(item);
 }
 
@@ -124,7 +124,7 @@ export function moveToStash(s: GameState, ctx: Ctx, uid: number, page = 0): stri
   const target = stashPageRoom(s, page) > 0 ? page : firstStashPageWithRoom(s);
   if (p.at === 'equipped') delete s.equipment[p.slot];
   else lift(s, p);
-  s.account.stash[target].push(claimItem(s.account, p.item));
+  s.account.stash[target].push(claimOwned(s, p.item));
   return null;
 }
 

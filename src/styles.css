@@ -423,19 +423,6 @@ h3 {
   color: var(--dim);
 }
 
-/* gathering → production split inside the Skilling group */
-.nav-item.divided {
-  margin-top: 9px;
-}
-.nav-item.divided::before {
-  content: '';
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  top: -5px;
-  border-top: 1px solid var(--line);
-}
-
 .nav-item {
   position: relative;
   display: flex;
@@ -5501,6 +5488,56 @@ img.art.mat-art {
   color: var(--good);
 }
 
+.item-tile-set {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--accent-2);
+}
+
+/* saved gear sets and skill bars */
+.loadout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.loadout-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.loadout-row .input {
+  flex: 0 1 200px;
+  min-width: 120px;
+}
+
+.loadout-sum {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.loadout-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px 12px;
+}
+
+.loadout-auto label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.loadout-auto .input {
+  width: 110px;
+}
+
 /* spare flasks, one tab per kind */
 .flask-shelf {
   display: grid;
@@ -6247,17 +6284,6 @@ img.art.mat-art {
     width: auto;
     min-height: 44px;
     padding: 4px 8px;
-  }
-  .nav-item.divided {
-    margin: 0 0 0 9px;
-  }
-  .nav-item.divided::before {
-    left: -5px;
-    right: auto;
-    top: 8px;
-    bottom: 8px;
-    border-top: 0;
-    border-left: 1px solid var(--line);
   }
   .nav-item.active::before {
     left: 8px;

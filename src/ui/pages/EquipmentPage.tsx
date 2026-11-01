@@ -8,6 +8,7 @@ import { game, useGame } from '../../game';
 import { fmt, GameIcon, PageHeader, ProgressBar } from '../components/common';
 import { Icon } from '../components/Icon';
 import { FlaskShelf } from '../components/FlaskView';
+import { GearSets } from '../components/Loadouts';
 import { ItemCell } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
 import { PaperDoll, SLOT_LABEL } from '../components/PaperDoll';
@@ -257,6 +258,7 @@ export function EquipmentPage() {
         <CenterColumn s={s} d={d} />
         <Defense d={d} />
       </div>
+      <GearSets s={s} />
       <Inventory s={s} />
     </div>
   );

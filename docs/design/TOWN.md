@@ -139,3 +139,17 @@ Picks items from equipment, inventory and stash (crafting shouldn't need shuffli
 4. Stash page (bag on top, Gear pages / Currency / Materials / Flasks / Gems tabs).
 5. Equipment page (bag only), trader Sell toggle, Crafting Bench picking from all three.
 6. Stash station text and costs; offline summary wording; sim bot picks up its loot.
+
+## Gear sets and skill loadouts
+
+Decided 2026-10-31. Code in `engine/loadouts.ts`, saved per character.
+
+- **Free from the start.** Only auto-switching is locked, at Crafting Bench level 3 alongside the recipes there.
+- **A gear set is the whole doll.** Empty slots in the set come off. Pieces can wait in the bag or stash; what comes off goes
+  to the bag, then the stash. Flasks aren't part of a set.
+- **A skill loadout keeps each gem's supports, rules and priority**, so one skill can be set up two ways. Supports move
+  between skills as loadouts load. A cooldown stays with its gem, so a swap can't reset one.
+- **Auto-switching fires once, as an activity starts**, also offline, so a set changed by hand holds. Each skill, and
+  combat, picks one set. Nothing switches back when you stop.
+- Life, mana and shield keep their share of the maximum across a swap, so skilling gear doesn't start a fight half dead.
+- Bulk salvage skips gear in a set, as it does runed gear. Salvaging a piece by hand still works, and the set shows it missing.

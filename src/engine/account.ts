@@ -1,5 +1,5 @@
 import { STASH_PAGE_SIZE, STASH_START_PAGES, stationDef } from '../data/hideout';
-import type { AccountState, AccountTransfer, AutomationUnlocks, GameState, Item } from './types';
+import type { AccountState, AccountTransfer, AutomationUnlocks, EquipSlot, GameState, Item } from './types';
 
 /**
  * What every character on an account shares: the hideout, automation unlocks, the gear stash and the Exile unlock.
@@ -37,6 +37,16 @@ export function freshAccount(): AccountState {
 /** Give an item an account uid if it doesn't have one yet. Call this on everything entering the stash. */
 export function claimItem(a: AccountState, item: Item): Item {
   if (item.uid < ACCOUNT_UID_BASE) item.uid = a.nextUid++;
+  return item;
+}
+
+/** The same for a character's own item: any gear set holding it follows it to the new uid. */
+export function claimOwned(s: GameState, item: Item): Item {
+  const old = item.uid;
+  claimItem(s.account, item);
+  for (const set of s.loadouts.gear) {
+    for (const [slot, uid] of Object.entries(set.items)) if (uid === old) set.items[slot as EquipSlot] = item.uid;
+  }
   return item;
 }
 
