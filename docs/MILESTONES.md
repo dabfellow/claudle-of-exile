@@ -11,7 +11,7 @@ Last updated 2026-10-31.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.6 (deployed 2026-10-31). The real-account
+**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.8 (deployed 2026-10-31). The real-account
 test and player heads-up were skipped, so do both now. Act 2 pacing, Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
