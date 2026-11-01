@@ -59,6 +59,7 @@ const BRANCH_COLOR: Record<string, string> = {
   smithing: '#b8b8c8',
   alchemy: '#9b6dde',
   runecarving: '#6fa8ff',
+  cooking: '#e08a4a',
 };
 
 // ---------- a pannable, zoomable tree canvas shared by both trees ----------

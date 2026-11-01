@@ -43,6 +43,10 @@ export type SkillTreeStat =
   | 'secondStroke'
   | 'deepCuts'
   | 'livingScript'
+  | 'cookingSpeed'
+  | 'secondHelping'
+  | 'slowSimmer'
+  | 'headChef'
   | 'fishingSpeed'
   | 'fishTreasure'
   | 'biggerFish'
@@ -155,6 +159,16 @@ const BRANCHES: BranchSpec[] = [
       { name: 'Silver Tongue', stats: { wareDiscount: 15 }, desc: "Merchants' prices are 15% lower" },
     ],
     keystone: { name: 'Deep Survey', stats: { deepSurvey: 1 }, desc: "Every dig counts twice towards a site's next find. Archaeology is 25% slower" },
+  },
+  {
+    skill: 'cooking',
+    angle: 60,
+    small: { name: 'Line Cook', stats: { cookingSpeed: 5 }, desc: '5% faster Cooking' },
+    notables: [
+      { name: 'Second Helping', stats: { secondHelping: 15 }, desc: '15% chance to cook two for one' },
+      { name: 'Slow Simmer', stats: { slowSimmer: 25 }, desc: 'Meals last 25% longer' },
+    ],
+    keystone: { name: 'Head Chef', stats: { headChef: 1 }, desc: 'Meals are 30% stronger. Cooking is 25% slower' },
   },
   {
     skill: 'alchemy',

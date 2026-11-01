@@ -16,6 +16,7 @@ const HOW_TO: Partial<Record<SkillId, string>> = {
   alchemy: 'Hold to heat and let go to cool. Keep the needle in the bright band.',
   gemcutting: 'Cut the facets in order, 1 to 3, before the stone settles.',
   runecarving: 'Drag from the circle along the whole stroke without leaving the line.',
+  cooking: 'Three pots are heating up. Stir each one in the bright band, before it boils over.',
 };
 
 const RESULT_TEXT: Record<SwingResult, string> = { hit: 'Clean hit', weak: 'Weak hit', miss: 'Miss' };

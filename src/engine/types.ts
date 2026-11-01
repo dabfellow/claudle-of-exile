@@ -4,8 +4,8 @@ import type { CultureId } from '../data/expedition';
 import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
 
-export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'archaeology' | 'smithing' | 'alchemy' | 'gemcutting' | 'runecarving' | 'fishing';
-export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'fishing'];
+export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'archaeology' | 'smithing' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'fishing';
+export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'fishing'];
 
 export type Rarity = 'normal' | 'magic' | 'rare' | 'unique';
 
@@ -561,6 +561,7 @@ export interface Lifetime {
   salvaged: number;
   flasksDrunk: number;
   flasksBrewed: number;
+  mealsEaten: number;
   itemsSmithed: number;
   gathered: number;
   benchCrafts: number;
@@ -754,6 +755,10 @@ export interface GameState {
   bossesDefeated: string[];
   /** Greenhouse keystone: the Foraging action that keeps ticking in the background */
   greenhouse: { actionId: string; progress: number } | null;
+  /** what you've eaten: its clock only runs while you fight */
+  meal: { id: string; remainingMs: number } | null;
+  /** when a meal runs out, eat another of the same from the bank */
+  keepEating: boolean;
   smithCatalyst: SmithCatalyst;
   /** `rerolls`: paid restocks since the last free one (raises the price) */
   vendor: { stock: VendorOffer[]; refreshAt: number; rerolls?: number };

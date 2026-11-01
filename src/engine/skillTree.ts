@@ -6,7 +6,7 @@ import type { GameState } from './types';
 import { levelOf } from './xp';
 
 // Fishing is left out: it is always level 1 and would only nudge the point count
-const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving'] as const;
+const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking'] as const;
 
 /** 1 point per 5 total gathering/production levels (everyone starts with 1). */
 export function skillTreePoints(s: GameState): number {

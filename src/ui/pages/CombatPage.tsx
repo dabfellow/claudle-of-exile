@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { mealDef } from '../../data/cooking';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
 import { BOSS_FROSTBITE_MAX, BOSS_FROSTBITE_SLOW_PCT, BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, nextZones, zoneDef, type MonsterDef } from '../../data/zones';
@@ -28,12 +29,14 @@ import {
   useFlask,
 } from '../../engine/combat';
 import { areaXpLabel, characterLevel } from '../../engine/character';
+import { mealEffectText } from '../../engine/cooking';
 import { flaskStats } from '../../engine/flasks';
 import { gemUseReason, MIN_COOLDOWN_MS, skillNumbers } from '../../engine/gems';
 import { ASCENDANCY_BY_ID } from '../../data/ascendancies';
 import { ascendancyOf } from '../../engine/ascendancy';
 import { flaskCapacity, meterLabel, meterMax, mechanicOf } from '../../engine/mechanics';
 import { classDef } from '../../data/classes';
+import { mealTimeLeft } from '../components/PantryBoard';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
 import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, Minion, MonsterInstance, TargetOrder, TargetPriority } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
@@ -228,6 +231,11 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
           <span className={`status ${c.hungerMs < 2000 ? 'bad' : 'good'}`}>Hunger {(Math.max(0, c.hungerMs) / 1000).toFixed(1)}s</span>
         )}
         {c.flurryStacks > 0 && <span className="status">Flurry ×{c.flurryStacks}</span>}
+        {s.meal && (
+          <span className="buff" style={{ ['--flask' as string]: mealDef(s.meal.id).color }} title={mealEffectText(s, s.meal.id)}>
+            {mealDef(s.meal.id).name} {mealTimeLeft(s.meal.remainingMs)}
+          </span>
+        )}
         {c.buffs.map((b) => {
           const name = b.source === 'flask' ? flaskDef(b.id).name.replace(' Flask', '') : (EXTRA_BUFFS[b.id] ?? activeGemDef(b.id).name);
           const color = b.source === 'flask' ? flaskDef(b.id).color : 'var(--accent)';

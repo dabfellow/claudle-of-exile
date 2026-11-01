@@ -14,7 +14,7 @@ export interface FlaskDef {
   buff?: Partial<Record<StatKey, number>>;
   desc: string;
   price: number;
-  /** lowest monster level that can drop this flask */
+  /** lowest monster level that can drop this flask (Infinity: it never drops and can only be brewed) */
   dropLevel: number;
 }
 
@@ -32,12 +32,20 @@ export const FLASKS: FlaskDef[] = [
     maxCharges: 30, chargesPerUse: 10, durationMs: 1200, heal: 520, desc: 'Recovers 520 Life over 1.2s', price: 600, dropLevel: 28,
   },
   {
+    id: 'life_sacred', name: 'Sacred Life Flask', kind: 'life', color: '#e0584f',
+    maxCharges: 30, chargesPerUse: 10, durationMs: 1200, heal: 900, desc: 'Recovers 900 Life over 1.2s', price: 1500, dropLevel: Infinity,
+  },
+  {
     id: 'mana_small', name: 'Small Mana Flask', kind: 'mana', color: '#3d6fd6',
     maxCharges: 24, chargesPerUse: 6, durationMs: 3000, heal: 50, desc: 'Recovers 50 Mana over 3s', price: 30, dropLevel: 1,
   },
   {
     id: 'mana_medium', name: 'Medium Mana Flask', kind: 'mana', color: '#3d6fd6',
     maxCharges: 30, chargesPerUse: 6, durationMs: 3000, heal: 140, desc: 'Recovers 140 Mana over 3s', price: 150, dropLevel: 12,
+  },
+  {
+    id: 'mana_sacred', name: 'Sacred Mana Flask', kind: 'mana', color: '#4f82e8',
+    maxCharges: 36, chargesPerUse: 6, durationMs: 3000, heal: 400, desc: 'Recovers 400 Mana over 3s', price: 1000, dropLevel: Infinity,
   },
   {
     id: 'granite', name: 'Granite Flask', kind: 'utility', color: '#9b8e7e',
@@ -58,6 +66,11 @@ export const FLASKS: FlaskDef[] = [
     id: 'ruby', name: 'Ruby Flask', kind: 'utility', color: '#ff6a5a',
     maxCharges: 40, chargesPerUse: 20, durationMs: 4500, buff: { allRes: 35 },
     desc: '+35% to all Elemental Resistances for 4.5s', price: 220, dropLevel: 10,
+  },
+  {
+    id: 'sulphur', name: 'Sulphur Flask', kind: 'utility', color: '#d8c94a',
+    maxCharges: 40, chargesPerUse: 20, durationMs: 4500, buff: { physPct: 40, elemPct: 40 },
+    desc: '40% increased Physical and Elemental Damage for 4.5s', price: 1200, dropLevel: Infinity,
   },
 ];
 

@@ -45,6 +45,7 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
   if (skill === 'alchemy' && t.transmuter) return 1.2;
   if (skill === 'runecarving' && t.livingScript) return 1.25;
   if (skill === 'archaeology' && t.deepSurvey) return 1.25;
+  if (skill === 'cooking' && t.headChef) return 1.25;
   return 1;
 }
 
@@ -227,7 +228,8 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   const t = skillTreeStats(s);
   payCost(s, inputsToPay(a, t, ctx));
   const outputs: Record<string, number> = {};
-  const double = a.skill === 'alchemy' ? chance(ctx.rng, ALCH_DOUBLE[(s.account.hideout.alchemy_table ?? 1) - 1]) : a.skill === 'runecarving' && !!t.secondStroke && chance(ctx.rng, t.secondStroke / 100);
+  const twoForOne = a.skill === 'runecarving' ? t.secondStroke : a.skill === 'cooking' ? t.secondHelping : 0;
+  const double = a.skill === 'alchemy' ? chance(ctx.rng, ALCH_DOUBLE[(s.account.hideout.alchemy_table ?? 1) - 1]) : !!twoForOne && chance(ctx.rng, twoForOne / 100);
   const mult = double ? 2 : 1;
 
   // alternate nodes trade some of their base material for a better secondary

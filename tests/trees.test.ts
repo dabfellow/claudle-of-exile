@@ -194,9 +194,9 @@ describe('keystones', () => {
 describe('skilling tree', () => {
   it('earns a point per 5 total skill levels and gates deep nodes by level', () => {
     const s = newGame(1);
-    expect(skillTreePoints(s)).toBe(1);
+    expect(skillTreePoints(s)).toBe(2);
     s.skills.mining = xpForLevel(30);
-    // 30 mining + 1 in each of the other five skills = 35
+    // 30 mining + 1 in each of the other nine skills = 39
     expect(skillTreePoints(s)).toBe(7);
     for (const id of ['core_0', 'mining_s0', 'mining_s1', 'mining_s2', 'mining_n1']) expect(allocateSkillNode(s, ctx(), id)).toBeNull();
     expect(skillNodeReason(s, 'mining_ks')).toMatch(/level 50/);

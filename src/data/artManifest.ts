@@ -363,6 +363,9 @@ const FLASK_DESC: Record<string, string> = {
   quicksilver: 'a slim glass bottle with a cork, full of shiny liquid silver',
   diamond: 'a clear cut-glass bottle with flat faces like a gem, with a glass stopper',
   ruby: 'a bottle of dark red cut glass with flat faces like a gem, with a gold stopper',
+  life_sacred: 'a tall ornate glass bottle with a silver neck, full of bright red liquid',
+  mana_sacred: 'a tall ornate glass bottle with a silver neck, full of bright blue liquid',
+  sulphur: 'a squat yellow glass bottle with a wax seal',
 };
 
 const ITEM_DESC: Record<string, string> = {

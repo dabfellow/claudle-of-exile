@@ -35,7 +35,9 @@ import { CULTURES, SITES } from '../src/data/expedition';
 import { HEIST_JOBS, ROGUES } from '../src/data/heist';
 import { expeditionOpen, setOrder, shelvesFor, siteStratum } from '../src/engine/expedition';
 import { cleanChance, jobBlocker, rankUpRogue, rogueReason, setJobExit, startHeist } from '../src/engine/heist';
+import { MEALS } from '../src/data/cooking';
 import { RUNES } from '../src/data/runes';
+import { cookingOpen, eatMeal } from '../src/engine/cooking';
 import { inscribeRune, itemRune, runeReason, runesOpen } from '../src/engine/runes';
 import { actionBlocker, skillLevel, startSkillAction } from '../src/engine/skills';
 import { aimLockReason, cleansesFrostbite, grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
@@ -87,8 +89,9 @@ const SCHEDULE = (day: number): Play[] =>
  * - heist: push, but every night from Act 2 on goes to Heist.
  * - runes: push, but every night from Act 3 on goes to Rune-carving, gathering whatever the best recipe is short of.
  * - expedition: push, but every night from Act 4 on digs, with a standing order on each merchant's dearest open ware.
+ * - cooking: push, but every night from Act 5 on goes to Cooking, the same way, eating the best dish it has.
  */
-type Profile = 'push' | 'mix' | 'heist' | 'runes' | 'expedition';
+type Profile = 'push' | 'mix' | 'heist' | 'runes' | 'expedition' | 'cooking';
 const gathersAway = (profile: Profile, period: number, short: boolean) => (period === 0 && short) || (period === 2 && profile === 'mix');
 
 /** The order the bot buys automation in: rules before hours, as rules are what bosses are locked behind. */
@@ -445,7 +448,12 @@ function fitRunes(s: GameState, ctx: Ctx): void {
 function runeNight(s: GameState, ctx: Ctx): boolean {
   if (!runesOpen(s)) return false;
   fitRunes(s, ctx);
-  const recipes = actionsFor('runecarving').filter((a) => skillLevel(s, 'runecarving') >= a.level);
+  return recipeNight(s, ctx, actionsFor('runecarving'));
+}
+
+/** Start the best of these recipes it can pay for, or a node for what the best known one is short of. */
+function recipeNight(s: GameState, ctx: Ctx, actions: SkillAction[]): boolean {
+  const recipes = actions.filter((a) => skillLevel(s, a.skill) >= a.level);
   const ready = recipes.filter((a) => !actionBlocker(s, a)).at(-1);
   if (ready) return !startSkillAction(s, ctx, ready.id);
   const short = Object.entries(recipes.at(-1)!.inputs!).find(([id, n]) => (s.bank[id] ?? 0) < n);
@@ -463,6 +471,14 @@ function expeditionNight(s: GameState, ctx: Ctx): boolean {
   const open = SITES.filter((x) => skillLevel(s, 'archaeology') >= x.level);
   const site = [...open].reverse().sort((a, b) => siteStratum(s, a) - siteStratum(s, b))[0];
   return !!site && !startSkillAction(s, ctx, site.id);
+}
+
+/** The night's cooking: meals only, as the bot brews no flasks. It eats the best dish in the bank and keeps eating. */
+function cookNight(s: GameState, ctx: Ctx): boolean {
+  if (!cookingOpen(s)) return false;
+  const dish = MEALS.filter((m) => s.bank[m.id]).at(-1);
+  if (dish) eatMeal(s, ctx, dish.id);
+  return recipeNight(s, ctx, actionsFor('cooking').filter((a) => a.outputs && Object.keys(a.outputs)[0].startsWith('meal_')));
 }
 
 /** Areas open to the bot: unlocked, and within a level of its minimum. */
@@ -568,6 +584,7 @@ interface Result {
   /** Logbook finds and purchases on standing orders */
   finds: number;
   traded: number;
+  mealsEaten: number;
 }
 
 function snapshot(s: GameState): Snapshot {
@@ -641,7 +658,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   let now = 0;
   const res: Result = {
     classId, seed, profile, levels: {}, bosses: {}, bossLevels: {}, upgrades: {}, checkpoints: {}, trials: {}, deaths: 0, offlineDeaths: 0, kills: 0,
-    activeMs: 0, awayCombatMs: 0, awayGatherMs: 0, cappedMs: 0, stoppedMs: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, skills: {}, bar: '', orbsUsed: 0, heists: 0, heistAlarms: 0, runesWorn: 0, finds: 0, traded: 0,
+    activeMs: 0, awayCombatMs: 0, awayGatherMs: 0, cappedMs: 0, stoppedMs: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, skills: {}, bar: '', orbsUsed: 0, heists: 0, heistAlarms: 0, runesWorn: 0, finds: 0, traded: 0, mealsEaten: 0,
   };
   const deathStreak: Record<string, number> = {};
   const tally: Record<string, number> = {};
@@ -745,7 +762,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   /** Leave something running for `ms`. */
   const away = (ms: number, period: number) => {
     const heisting = profile === 'heist' && period === 2 && heistNight(s, ctx);
-    const carving = profile === 'runes' && period === 2 && runeNight(s, ctx);
+    const carving = (profile === 'runes' && period === 2 && runeNight(s, ctx)) || (profile === 'cooking' && period === 2 && cookNight(s, ctx));
     const digging = profile === 'expedition' && period === 2 && expeditionNight(s, ctx);
     const job = !heisting && !carving && !digging && gathersAway(profile, period, !!nextUpgrade(s)?.short.length) ? gatherJob(s) : undefined;
     if (job) startSkillAction(s, ctx, job.id);
@@ -803,11 +820,12 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   res.bank = s.bank;
   res.bestDps = d.dps;
   res.bestLife = d.maxLife;
-  res.skills = Object.fromEntries([...GATHER_SKILLS, 'thieving' as const, 'archaeology' as const, 'runecarving' as const].map((sk) => [sk, levelOf(sk, s.skills[sk])]));
+  res.skills = Object.fromEntries([...GATHER_SKILLS, 'thieving' as const, 'archaeology' as const, 'runecarving' as const, 'cooking' as const].map((sk) => [sk, levelOf(sk, s.skills[sk])]));
   res.heists = s.heist.tally.jobs;
   res.finds = s.expedition.tally.finds;
   res.traded = s.expedition.tally.traded;
   res.heistAlarms = s.heist.tally.alarms;
+  res.mealsEaten = s.lifetime.mealsEaten;
   res.runesWorn = Object.values(s.equipment).filter((i) => i && itemRune(i)).length;
   res.bar = s.skillBar.map((g) => g && `${activeGemDef(g.gemId).name} ${g.level}`).filter(Boolean).join(', ');
   res.orbsUsed = s.lifetime.orbsUsed;
@@ -944,6 +962,10 @@ function report(results: Result[]) {
     if (profile === 'runes') {
       row('rune-carving', (r) => r.skills.runecarving);
       row('runes worn', (r) => r.runesWorn);
+    }
+    if (profile === 'cooking') {
+      row('cooking', (r) => r.skills.cooking);
+      row('meals eaten', (r) => r.mealsEaten);
     }
     share('played', (r) => r.activeMs);
     share('away fighting', (r) => r.awayCombatMs);
