@@ -8,6 +8,12 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.12',
+    date: '31 Oct 2026',
+    title: 'Limited-time events',
+    items: ['Events like double XP and double loot can now run for a limited time. Look for the banner in game.'],
+  },
+  {
     version: '0.2.11',
     date: '31 Oct 2026',
     title: 'A steadier DPS meter',

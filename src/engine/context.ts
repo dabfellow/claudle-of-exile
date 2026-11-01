@@ -1,3 +1,4 @@
+import type { LiveEvent } from '../data/events';
 import type { GameEvent } from './types';
 import type { Rng } from './rng';
 
@@ -9,6 +10,8 @@ export interface Ctx {
   now: number;
   /** true while simulating time spent away */
   offline?: boolean;
+  /** the limited-time event running right now */
+  event?: LiveEvent | null;
 }
 
 export function makeCtx(rng: Rng, now = 0, sink: GameEvent[] = []): Ctx & { events: GameEvent[] } {

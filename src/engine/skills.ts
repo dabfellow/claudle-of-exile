@@ -28,6 +28,7 @@ export function skillLevel(s: GameState, skill: SkillId): number {
 }
 
 export function grantXp(s: GameState, ctx: Ctx, skill: SkillId, amount: number): void {
+  amount *= ctx.event?.xp ?? 1;
   const before = levelOf(skill, s.skills[skill]);
   s.skills[skill] += amount;
   ctx.emit({ t: 'xp', skill, amount });

@@ -63,7 +63,12 @@ export function placeItem(s: GameState, ctx: Ctx, item: Item): void {
   ctx.emit({ t: 'loot', item });
 }
 
+/** Everything a monster drops; an event can roll it more than once. */
 export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, d: Derived): void {
+  for (let i = 0; i < (ctx.event?.loot ?? 1); i++) rollDrops(s, ctx, mon, zone, d);
+}
+
+function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, d: Derived): void {
   const { rng } = ctx;
   const table = dropTable(zone.tier);
   const ilvl = mon.level + (zone.ilvlBonus ?? 0) + MAP_ILVL[stationLevel(s, 'map_device') - 1];

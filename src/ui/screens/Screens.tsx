@@ -215,6 +215,21 @@ export function DemoBanner() {
   );
 }
 
+/** Shown while an event is running. */
+export function EventBanner() {
+  useGame();
+  const event = game.liveEvent;
+  if (!event) return null;
+  return (
+    <div className="card guest-banner demo-banner">
+      <div>
+        <b>{event.name} event</b>
+        <span className="dim small"> · {event.blurb}, for a limited time.</span>
+      </div>
+    </div>
+  );
+}
+
 export function AccountModal() {
   useGame();
   if (!game.showAccountForm) return null;

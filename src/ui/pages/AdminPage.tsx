@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { classDef, type ClassId } from '../../data/classes';
+import { EVENTS } from '../../data/events';
+import { game, useGame } from '../../game';
 import { errorReportingConfigured, sentryIssuesUrl } from '../../platform/errors';
 import {
   adminStats,
@@ -15,7 +17,7 @@ import {
 import { Badge, EmptyState, PageHeader, Tabs } from '../components/common';
 import { Stars } from '../components/FeedbackCard';
 
-type Tab = 'overview' | 'feedback' | 'reviews' | 'errors';
+type Tab = 'overview' | 'events' | 'feedback' | 'reviews' | 'errors';
 
 const when = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -37,6 +39,7 @@ export function AdminPage() {
       <Tabs
         tabs={[
           { id: 'overview', label: 'Overview' },
+          { id: 'events', label: 'Events' },
           { id: 'feedback', label: 'Feedback', count: stats?.feedback_open, hot: !!stats?.feedback_open },
           { id: 'reviews', label: 'Reviews', count: stats?.reviews.count },
           { id: 'errors', label: 'Errors' },
@@ -51,6 +54,7 @@ export function AdminPage() {
         </div>
       )}
       {tab === 'overview' && !error && <Overview stats={stats} />}
+      {tab === 'events' && <EventsTab />}
       {tab === 'feedback' && <FeedbackTab onChange={loadStats} />}
       {tab === 'reviews' && <ReviewsTab />}
       {tab === 'errors' && <ErrorsTab />}
@@ -219,6 +223,40 @@ function ReviewsTab() {
         </div>
       ))}
     </>
+  );
+}
+
+/** Turns a limited-time event on or off for everyone. */
+function EventsTab() {
+  useGame();
+  const [error, setError] = useState<string | null>(null);
+  const flip = (id: string | null) => {
+    setError(null);
+    game.switchEvent(id).catch((e) => setError(errorText(e)));
+  };
+  return (
+    <div className="card">
+      <div className="card-title">Limited-time events</div>
+      <p className="dim small" style={{ marginTop: 0 }}>
+        One at a time, for all players. Open games pick up a change within 5 minutes.
+      </p>
+      {EVENTS.map((e) => {
+        const on = game.liveEvent?.id === e.id;
+        return (
+          <div key={e.id} className="row wrap">
+            <div>
+              <b>{e.name}</b> <span className="muted small">{e.blurb}</span>
+            </div>
+            <span className="spacer" />
+            {on && <Badge>Live</Badge>}
+            <button className={`btn sm ${on ? '' : 'primary'}`} onClick={() => flip(on ? null : e.id)}>
+              {on ? 'Turn off' : 'Turn on'}
+            </button>
+          </div>
+        );
+      })}
+      {error && <p className="warn small">Couldn't change it: {error}. If the table is missing, run the events SQL in docs/ops/SETUP.md.</p>}
+    </div>
   );
 }
 

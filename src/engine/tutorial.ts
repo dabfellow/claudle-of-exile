@@ -51,6 +51,9 @@ export function withTutorial(ctx: Ctx, getState: () => GameState): Ctx {
     get offline() {
       return ctx.offline;
     },
+    get event() {
+      return ctx.event;
+    },
     emit(e) {
       ctx.emit(e);
       tutorialEvent(getState(), wrapped, e);

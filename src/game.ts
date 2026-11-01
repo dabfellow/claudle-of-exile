@@ -18,6 +18,8 @@ import { AppAccounts, isCloudAccount, type Account, type AuthProviderId } from '
 import { reportError, setErrorUser } from './platform/errors';
 import { MAPS_PREVIEW } from './engine/maps';
 import { checkAdmin } from './platform/feedback';
+import { fetchLiveEvent, setLiveEvent } from './platform/events';
+import { eventDef, type LiveEvent } from './data/events';
 import { getSupabase } from './platform/supabase';
 import { supabaseCharacters } from './platform/supabaseTable';
 import {
@@ -72,6 +74,11 @@ const BACKGROUND_MS = 5 * 60_000;
 
 export type Screen = 'boot' | 'title' | 'select' | 'create' | 'game';
 
+/** How often an open game checks whether an event started or ended. */
+const EVENT_CHECK_MS = 5 * 60 * 1000;
+/** XP per hour readouts update this often. */
+const XP_RATE_HOLD_MS = 2000;
+
 class GameStore {
   state: GameState;
   screen: Screen = 'boot';
@@ -90,6 +97,7 @@ class GameStore {
   offline: OfflineSummary | null = null;
   /** recent xp gains, for the xp/hour readout */
   xpLog: { at: number; skill: SkillId; amount: number }[] = [];
+  private xpRates = new Map<SkillId, { at: number; rate: number }>();
   readonly accounts = new AppAccounts(localStorage, getSupabase());
   private saves: SaveStore | null = null;
   /** the shared hideout, stash and unlocks; every character played on this account holds this same object */
@@ -115,6 +123,8 @@ class GameStore {
   /** a failing save is reported once per session, not on every autosave */
   private saveErrorReported = false;
   private loop: ReturnType<typeof setInterval> | null = null;
+  /** the limited-time event running right now, set from the Admin page */
+  liveEvent: LiveEvent | null = null;
   private baseCtx: Ctx;
   readonly ctx: Ctx;
 
@@ -124,6 +134,24 @@ class GameStore {
     this.ctx = withTutorial(this.baseCtx, () => this.state);
     window.addEventListener('beforeunload', () => this.save());
     window.addEventListener('storage', (e) => this.onOtherTab(e));
+    void this.refreshEvent();
+    setInterval(() => void this.refreshEvent(), EVENT_CHECK_MS);
+  }
+
+  private applyEvent(id: string | null) {
+    this.liveEvent = eventDef(id);
+    this.baseCtx.event = this.liveEvent;
+    this.notify();
+  }
+
+  async refreshEvent() {
+    this.applyEvent(await fetchLiveEvent());
+  }
+
+  /** Admins only: the database refuses anyone else. */
+  async switchEvent(id: string | null) {
+    await setLiveEvent(id);
+    this.applyEvent(id);
   }
 
   // ---------- account & characters ----------
@@ -397,7 +425,10 @@ class GameStore {
     this.attach(s);
     this.begin(s);
     const away = Date.now() - s.lastSaved;
-    if (away >= MIN_OFFLINE_MS) this.runOffline(away);
+    if (away >= MIN_OFFLINE_MS) {
+      await this.refreshEvent();
+      this.runOffline(away);
+    }
   }
 
   async removeCharacter(id: string) {
@@ -431,6 +462,7 @@ class GameStore {
     this.state = s;
     this.feed = [];
     this.xpLog = [];
+    this.xpRates.clear();
     this.combatLog = [];
     this.lootLog = [];
     this.offline = null;
@@ -495,7 +527,16 @@ class GameStore {
   }
 
   /** XP per hour for a skill over the last 10 minutes of play this session. */
+  /** The rate over the last 10 minutes, held for a moment so the readout doesn't change on every gain. */
   xpPerHour(skill: SkillId): number {
+    const held = this.xpRates.get(skill);
+    if (held && Date.now() - held.at < XP_RATE_HOLD_MS) return held.rate;
+    const rate = this.measureXpRate(skill);
+    this.xpRates.set(skill, { at: Date.now(), rate });
+    return rate;
+  }
+
+  private measureXpRate(skill: SkillId): number {
     const since = Date.now() - 10 * 60_000;
     const recent = this.xpLog.filter((x) => x.skill === skill && x.at >= since);
     if (!recent.length) return 0;
