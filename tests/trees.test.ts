@@ -102,7 +102,7 @@ describe('masteries', () => {
     expect(allocate(s, ctx(), 'iron_skin_m', 0)).toBeNull();
     expect(deriveStats(s, []).raw.armourPct).toBe(before + 15);
     expect(changeMastery(s, ctx(), 'iron_skin_m', 2)).toMatch(/Regret/);
-    s.bank.regret = 2;
+    s.account.bank.regret = 2;
     expect(changeMastery(s, ctx(), 'iron_skin_m', 2)).toBeNull();
     expect(deriveStats(s, []).raw.slamReduction).toBe(10);
     // the notable can't be refunded while its mastery depends on it
@@ -215,7 +215,7 @@ describe('skilling tree', () => {
     startSkillAction(s, c, 'mine_copper');
     tick(s, c, 60_000);
     const actions = Math.floor(60_000 / actionIntervalMs(s, a, d));
-    expect(s.bank.copper_ore ?? 0).toBeGreaterThanOrEqual(actions * 2);
+    expect(s.account.bank.copper_ore ?? 0).toBeGreaterThanOrEqual(actions * 2);
   });
 
   it('Greenhouse keeps the last harvest growing in the background', () => {
@@ -228,6 +228,6 @@ describe('skilling tree', () => {
     startSkillAction(s, c, 'herb_sun');
     startSkillAction(s, c, 'mine_copper');
     tick(s, c, 120_000);
-    expect(s.bank.sunpetal ?? 0).toBeGreaterThan(0);
+    expect(s.account.bank.sunpetal ?? 0).toBeGreaterThan(0);
   });
 });

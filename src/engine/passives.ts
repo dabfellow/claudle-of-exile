@@ -71,7 +71,7 @@ export function allocate(s: GameState, ctx: Ctx, id: string, choice?: number): s
 
 export function refundReason(s: GameState, id: string): string | null {
   if (!s.passives.includes(id)) return 'Not allocated';
-  if ((s.bank.regret ?? 0) < 1) return 'Requires an Orb of Regret';
+  if ((s.account.bank.regret ?? 0) < 1) return 'Requires an Orb of Regret';
   if (!connectedWithout(s.passives, id, startNode(s))) return 'Would disconnect other nodes';
   return null;
 }
@@ -79,7 +79,7 @@ export function refundReason(s: GameState, id: string): string | null {
 export function refund(s: GameState, ctx: Ctx, id: string): string | null {
   const reason = refundReason(s, id);
   if (reason) return reason;
-  s.bank.regret -= 1;
+  s.account.bank.regret -= 1;
   s.passives = s.passives.filter((x) => x !== id);
   delete s.masteries[id];
   ctx.emit({ t: 'info', text: `Refunded ${PASSIVE_BY_ID[id].name}` });
@@ -92,8 +92,8 @@ export function changeMastery(s: GameState, ctx: Ctx, id: string, choice: number
   if (node?.kind !== 'mastery' || !s.passives.includes(id)) return 'Mastery not allocated';
   if (!node.options?.[choice]) return 'Invalid choice';
   if (s.masteries[id] === choice) return 'Already chosen';
-  if ((s.bank.regret ?? 0) < 1) return 'Requires an Orb of Regret';
-  s.bank.regret -= 1;
+  if ((s.account.bank.regret ?? 0) < 1) return 'Requires an Orb of Regret';
+  s.account.bank.regret -= 1;
   s.masteries[id] = choice;
   ctx.emit({ t: 'info', text: `${node.name}: ${node.options[choice].label}` });
   return null;

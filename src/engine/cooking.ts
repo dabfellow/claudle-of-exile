@@ -32,13 +32,13 @@ export function mealEffectText(s: GameState, id: string): string {
 }
 
 export function mealReason(s: GameState, id: string): string | null {
-  if ((s.bank[id] ?? 0) < 1) return `You have no ${mealDef(id).name}`;
+  if ((s.account.bank[id] ?? 0) < 1) return `You have no ${mealDef(id).name}`;
   if (s.meal?.id === id) return 'You are already full of that';
   return null;
 }
 
 function serve(s: GameState, id: string, leftover = 0): void {
-  s.bank[id] -= 1;
+  s.account.bank[id] -= 1;
   s.lifetime.mealsEaten += 1;
   s.meal = { id, remainingMs: mealLength(s) + leftover };
 }
@@ -58,7 +58,7 @@ export function mealStep(s: GameState, ctx: Ctx, dt: number): void {
   s.meal.remainingMs -= dt;
   if (s.meal.remainingMs > 0) return;
   const { id, remainingMs } = s.meal;
-  if (s.keepEating && (s.bank[id] ?? 0) > 0) {
+  if (s.keepEating && (s.account.bank[id] ?? 0) > 0) {
     serve(s, id, remainingMs);
     return;
   }

@@ -3039,11 +3039,11 @@ function classMechanicsStep(s: GameState, ctx: Ctx, d: Derived, dt: number): boo
 // ---------- flask management ----------
 
 export function equipFlask(s: GameState, uid: number, slot: number): void {
-  const idx = s.flaskStash.findIndex((f) => f.uid === uid);
+  const idx = s.account.flaskStash.findIndex((f) => f.uid === uid);
   if (idx < 0) return;
-  const [f] = s.flaskStash.splice(idx, 1);
+  const [f] = s.account.flaskStash.splice(idx, 1);
   const prev = s.flaskSlots[slot];
-  if (prev) s.flaskStash.push(prev);
+  if (prev) s.account.flaskStash.push(prev);
   s.flaskSlots[slot] = f;
 }
 
@@ -3058,6 +3058,6 @@ export function wearFlask(s: GameState, uid: number): string | null {
 export function unequipFlask(s: GameState, slot: number): void {
   const f = s.flaskSlots[slot];
   if (!f) return;
-  s.flaskStash.push(f);
+  s.account.flaskStash.push(f);
   s.flaskSlots[slot] = null;
 }

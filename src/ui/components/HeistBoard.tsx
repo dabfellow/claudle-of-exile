@@ -60,7 +60,7 @@ function JobCard({ s, job }: { s: GameState; job: HeistJob }) {
   const exit = jobExit(s, job);
   const running = (s.action?.kind === 'heist' && s.action.jobId === job.id) || s.heist.auto === job.id;
   const cost = jobCost(s, job);
-  const short = (s.bank[MARKER] ?? 0) < cost;
+  const short = (s.account.bank[MARKER] ?? 0) < cost;
   const setExit = (room: number) => game.act((st) => setJobExit(st, job.id, room));
   const pay = job.vault.map((d) => takeName(d.id));
   return (
@@ -125,7 +125,7 @@ function RogueCard({ s, rogue }: { s: GameState; rogue: RogueDef }) {
       <span className="dim small">
         {effect}% {rogue.effect} per rank{rank ? ` (${effect * rank}% now)` : ''}
       </span>
-      {rank < MAX_ROGUE_RANK && <Cost cost={rogueRankCost(rank + 1)} have={s.bank} />}
+      {rank < MAX_ROGUE_RANK && <Cost cost={rogueRankCost(rank + 1)} have={s.account.bank} />}
       <span className="row">
         {rank < MAX_ROGUE_RANK && (
           <button className="btn sm" disabled={!!reason} title={reason ?? ''} onClick={() => game.act((st, ctx) => rankUpRogue(st, ctx, rogue.id))}>
@@ -157,7 +157,7 @@ export function HeistBoard() {
   return (
     <>
       <div className="callout skill-note">
-        Marks pay gold and Rogue's Markers. Markers set up Heists: each room is richer and riskier, and the vault is in the last one. You have <b className="num">{fmt(s.bank[MARKER] ?? 0)}</b> Markers.
+        Marks pay gold and Rogue's Markers. Markers set up Heists: each room is richer and riskier, and the vault is in the last one. You have <b className="num">{fmt(s.account.bank[MARKER] ?? 0)}</b> Markers.
       </div>
       {casing && mark && (
         <div className="callout skill-note">

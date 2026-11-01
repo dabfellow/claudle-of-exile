@@ -75,7 +75,7 @@ function craftOnce(s: GameState, ctx: Ctx): void {
   const refund = 'orb' in method && chance(ctx.rng, (skillTreeStats(s).patientCrafter ?? 0) / 100);
   if ('essence' in method) applyEssence(s, ctx, method.essence, uid);
   else applyOrb(s, ctx, method.orb, uid, method.fossil);
-  if (refund && 'orb' in method) s.bank[method.orb] += 1;
+  if (refund && 'orb' in method) s.account.bank[method.orb] += 1;
   s.action.steps += 1;
   if (ruleMet(item!, rule)) {
     const steps = s.action.steps;

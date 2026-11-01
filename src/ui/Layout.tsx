@@ -293,7 +293,7 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
       </div>
       <div className="currency-strip">
         {STRIP.map((id) => (
-          <CurrencyAmount key={id} id={id} amount={s.bank[id] ?? 0} label={id === 'gold' ? 'gold' : materialDef(id).name.split(' ')[0]} />
+          <CurrencyAmount key={id} id={id} amount={s.account.bank[id] ?? 0} label={id === 'gold' ? 'gold' : materialDef(id).name.split(' ')[0]} />
         ))}
       </div>
     </header>

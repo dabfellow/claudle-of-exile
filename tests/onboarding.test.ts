@@ -70,18 +70,18 @@ describe('tutorial', () => {
     expect(s.tutorial.step).toBe(1);
     run(s, [{ t: 'combatStart', zoneId: 'mudflats' }]);
     expect(currentStep(s)?.id).toBe('slay');
-    const gold = s.bank.gold;
+    const gold = s.account.bank.gold;
     run(s, [
       { t: 'kill', name: 'a', boss: false },
       { t: 'kill', name: 'b', boss: false },
     ]);
     expect(s.tutorial.progress).toBe(2);
-    expect(s.bank.gold).toBe(gold);
+    expect(s.account.bank.gold).toBe(gold);
     const evs = run(s, [
       { t: 'kill', name: 'c', boss: false },
       { t: 'kill', name: 'd', boss: false },
     ]);
-    expect(s.bank.gold).toBe(gold + 20);
+    expect(s.account.bank.gold).toBe(gold + 20);
     expect(currentStep(s)?.id).toBe('flask');
     expect(evs.filter((e) => e.t === 'tutorialStep')).toHaveLength(1);
     // auto-used flasks don't count
@@ -99,7 +99,7 @@ describe('tutorial', () => {
     s.tutorial.step = TUTORIAL_STEPS.length - 1;
     run(s, [{ t: 'kill', name: 'Bloated Gorger', boss: true }]);
     expect(s.tutorial.done).toBe(true);
-    expect(s.bank.regal).toBe(1);
+    expect(s.account.bank.regal).toBe(1);
   });
 
   it('life flask, then mana flask: each step wants its own kind', () => {
@@ -158,11 +158,11 @@ describe('saves & accounts', () => {
     const b = newGame(2, { name: 'Bo', classId: 'ranger' });
     await store.save(a);
     await store.save(b);
-    a.bank.gold = 999;
+    a.clock = 999;
     await store.save(a);
     const list = await store.list();
     expect(list.map((c) => c.name).sort()).toEqual(['Ann', 'Bo']);
-    expect((await store.load(a.character.id))?.bank.gold).toBe(999);
+    expect((await store.load(a.character.id))?.clock).toBe(999);
     await store.remove(b.character.id);
     expect(await store.list()).toHaveLength(1);
     expect(await store.load(b.character.id)).toBeNull();

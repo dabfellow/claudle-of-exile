@@ -157,7 +157,7 @@ export function startHeist(s: GameState, ctx: Ctx, jobId: string): string | null
   }
   s.combat = null;
   s.heist.auto = job.id;
-  if ((s.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job);
+  if ((s.account.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job);
   else if (!goCasing(s)) return 'No mark to case the job on';
   return null;
 }
@@ -205,7 +205,7 @@ function endJob(s: GameState, ctx: Ctx, job: HeistJob, take: Record<string, numb
   s.action = null;
   const next = s.heist.auto;
   if (!next) return;
-  if ((s.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job, focus);
+  if ((s.account.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job, focus);
   else if (!goCasing(s, focus)) s.heist.auto = null;
 }
 
@@ -249,7 +249,7 @@ export function heistAutoStep(s: GameState): void {
     return;
   }
   const job = heistJob(id);
-  if ((s.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job, s.action?.kind === 'skill' ? s.action.focus : undefined);
+  if ((s.account.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job, s.action?.kind === 'skill' ? s.action.focus : undefined);
 }
 
 /** A save on a job or rogue that has since been removed stops instead of crashing the load. */

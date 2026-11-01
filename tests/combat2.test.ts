@@ -87,7 +87,7 @@ describe('skill gems', () => {
     expect(gemAttrReq('heavy_strike', 1)).toBeLessThanOrEqual(8); // every class can use any level-1 gem
     veteran(s, 60); // past a level 10 Lacerate's level requirement, so only its Dexterity stops it
     const lacerate = createSkillGem(s, 'lacerate', 10);
-    s.gems.push(lacerate);
+    s.account.gems.push(lacerate);
     expect(placeOnBar(s, lacerate.uid, 2)).toMatch(/Requires \d+ Dexterity/);
     expect(s.skillBar[2]).toBeNull();
   });
@@ -101,10 +101,10 @@ describe('skill gems', () => {
     expect(supportReason(strike, 'shattering_blow')).toBeNull();
     expect(supportReason(guard, 'shattering_blow')).toMatch(/Only fits Heavy Strike/);
     const sup = createSupportGem(s, 'multistrike');
-    s.supportGems.push(sup);
+    s.account.supportGems.push(sup);
     expect(socketSupport(s, strike.uid, sup.uid, 0)).toBeNull();
     expect(strike.supports[0]?.supportId).toBe('multistrike');
-    expect(s.supportGems).toHaveLength(0);
+    expect(s.account.supportGems).toHaveLength(0);
   });
 
   it('supports raise mana cost and change numbers', () => {
@@ -121,7 +121,7 @@ describe('skill gems', () => {
   it('bar slots can be filled, swapped and emptied', () => {
     const s = veteran(newGame(1));
     const extra = createSkillGem(s, 'war_cry');
-    s.gems.push(extra);
+    s.account.gems.push(extra);
     expect(placeOnBar(s, extra.uid, 2)).toBeNull();
     expect(s.skillBar[2]?.gemId).toBe('war_cry');
     placeOnBar(s, extra.uid, 0);
@@ -129,7 +129,7 @@ describe('skill gems', () => {
     expect(s.skillBar[2]?.gemId).toBe('heavy_strike');
     removeFromBar(s, 0);
     expect(s.skillBar[0]).toBeNull();
-    expect(s.gems.some((g) => g.gemId === 'war_cry')).toBe(true);
+    expect(s.account.gems.some((g) => g.gemId === 'war_cry')).toBe(true);
   });
 });
 

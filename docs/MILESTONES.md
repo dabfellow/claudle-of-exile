@@ -65,6 +65,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 - [x] Hideout, rule unlocks and offline cap shared by the account; skill levels per character; shared gear stash.
 - [x] Exile unlocked by finishing the campaign.
 - [x] Deploy — done 2026-10-31
+- [x] Every Stash tab shared across the realm, not just gear — done 2026-11-01
 - [ ] Test on a real account.
 - [ ] Leave the reserved `account` rows out of the Admin stats query ([SETUP.md](ops/SETUP.md)).
 - **Done:** a second character starts with the account's unlocks, its own skills and access to the shared stash.
@@ -259,6 +260,8 @@ Work backwards from the end state, not forwards from Act 1.
 - **Across characters:**
   - **Hideout and rule unlocks:** shared by the account. Stations, reactive rules and the offline cap stay unlocked for
     every character.
+  - **Stash (you, 2026-11-01):** every tab is shared by all characters on an account in the same challenge league. That
+    includes gold; skill bars and flask belts stay with the character.
   - **Skill levels:** per character.
   - **Campaign:** true to PoE: every character plays through it.
   - **Challenge modes:** each has its own separate stash, hideout and unlocks, so it's a true fresh start.
@@ -366,7 +369,8 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Music: older Safari can't play Ogg, and iPhones ignore page volume, so the slider may act as on/off there (mute still works). Neither tested. Act 3+ and maps past Act 2 reuse the Act 2 track. If this repo ever goes public, ask AlkaKrab first (`src/assets/CREDITS.md`).
 - Endless content: a post-Maps thing, not designed yet.
 - Sim pacing gaps: week 1 onward can't be tested until Act 3 exists; week 1 and month 1 predate the last drop cut; month 3 is two classes on one seed. Smithing, brewing, the bench and second rule slots aren't modelled ([BALANCE.md](design/BALANCE.md)).
-- Two devices at once: the newest account copy wins, so stash changes on the other device can be lost (unlocks can't).
+- Two devices at once: the account is now pulled every 30 seconds and merged, but there's no locking, so a few seconds of one device's gold and materials, or an item moved in that window, can be lost or doubled. Tabs in one browser merge exactly (unlocks are always kept).
+- Shared bank: each new or reset character adds its small starting kit (25 gold, a few orbs) to the shared tabs, and gold and materials now help a second character from the start. Not simmed (2026-11-01).
 - Maps preview: map bosses count for boss achievements and give the Tier 7 first-kill reward; `s.maps` stays per character for now, and may belong in the shared stash.
 - Bosses in an open tab: a fresh character can still fight them on simple rules, and auto-flee and instilled flasks react for free. Look again once Milestone 2 measures them.
 - Hard bosses need rules that can aim, and a rule that tells a slam from a channel ([HARD_BOSSES.md](design/HARD_BOSSES.md) → Fit with today's game).
@@ -405,6 +409,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Every Stash tab shared: gold, currency, materials, spare gems and spare flasks moved to the account, per realm, so a challenge league will have its own. Save v27 adds up what each character held; tabs and devices playing at once merge their changes ([TOWN.md](design/TOWN.md)). 0.2.30 — done 2026-11-01
 - [x] One tab per character: opening a character sends any other tab of this browser holding it back to the select screen, after it saves. 0.2.29 — done 2026-11-01
 - [x] Crafting Bench moved to the sidebar's Character group, after Stash. 0.2.28 — done 2026-11-01
 - [x] Act 6 merged to main, closed to players: stages, Echoes, Unholy ground, Trial 3, the ending, The last empire and Cartography. 0.2.26 — done 2026-11-01

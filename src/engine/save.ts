@@ -1,12 +1,11 @@
 import { classDef } from '../data/classes';
-import { bundleCharacter } from './account';
+import { bundleCharacter, freshAccount } from './account';
 import { newAscendancyRuntime, newAscendancyState } from './ascendancy';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
 import { hasAction } from '../data/skills';
 import { ZONES } from '../data/zones';
-import { trimFlaskStash } from './flasks';
 import { settleGems } from './gems';
 import { newExpeditionState, settleExpedition } from './expedition';
 import { newHeistState, settleHeist } from './heist';
@@ -14,7 +13,7 @@ import { settleMaps } from './maps';
 import { connectedWithout } from './passives';
 import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
-import type { AccountTransfer, FlaskInstance, GameState, Item } from './types';
+import type { AccountPool, AccountTransfer, FlaskInstance, GameState, Item } from './types';
 import { charXpFromOldCurve } from './xp';
 
 // kept from the game's old name: changing it would orphan every existing save
@@ -24,6 +23,8 @@ type Migration = (raw: Record<string, unknown>) => void;
 
 /** Saves before version 21 kept the stash on the character. */
 type OldSave = GameState & { stash: Item[][] };
+/** Saves before version 27 kept currency, materials, spare gems and flasks on the character. */
+type PoolSave = GameState & AccountPool;
 
 /** MIGRATIONS[n] upgrades a save from version n to n + 1. */
 const MIGRATIONS: Record<number, Migration> = {
@@ -44,7 +45,7 @@ const MIGRATIONS: Record<number, Migration> = {
   },
   3: (raw) => {
     // skill gems arrived; the combat runtime changed shape, so leave any fight in progress
-    const s = raw as unknown as GameState;
+    const s = raw as unknown as PoolSave;
     s.skillBar ??= Array(SKILL_BAR_SLOTS).fill(null);
     s.gems ??= [];
     s.supportGems ??= [];
@@ -54,7 +55,7 @@ const MIGRATIONS: Record<number, Migration> = {
   },
   4: (raw) => {
     // flasks became items with rarity, modifiers and an enchantment slot
-    const s = raw as unknown as GameState;
+    const s = raw as unknown as PoolSave;
     const upgrade = (f: FlaskInstance | null) => {
       if (!f) return;
       f.rarity ??= 'normal';
@@ -199,7 +200,7 @@ const MIGRATIONS: Record<number, Migration> = {
   },
   19: (raw) => {
     // a skill's one rule became a list of rule slots, with a priority; rules that are now locked stay set and wait for their unlock
-    const s = raw as unknown as GameState;
+    const s = raw as unknown as PoolSave;
     for (const gem of [...(s.skillBar ?? []), ...(s.gems ?? [])] as unknown as (Record<string, unknown> | null)[]) {
       if (!gem) continue;
       gem.rules ??= [gem.rule ?? { when: 'manual' }];
@@ -252,6 +253,15 @@ const MIGRATIONS: Record<number, Migration> = {
     (raw.skills as Record<string, number>).archaeology ??= 0;
     raw.expedition ??= newExpeditionState();
   },
+  26: (raw) => {
+    // every Stash tab moved up to the account: they wait here until the character is settled onto it
+    const s = raw as unknown as PoolSave;
+    s.unpooled = { bank: s.bank, gems: s.gems, supportGems: s.supportGems, flaskStash: s.flaskStash };
+    delete raw.bank;
+    delete raw.gems;
+    delete raw.supportGems;
+    delete raw.flaskStash;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
@@ -270,6 +280,7 @@ export function serializeBundle(s: GameState): string {
 /** Loads a character with an empty account: the caller attaches the real one. */
 export function deserialize(json: string): GameState {
   const raw = JSON.parse(json) as Record<string, unknown>;
+  raw.account ??= freshAccount();
   let v = typeof raw.version === 'number' ? raw.version : 0;
   while (v < SAVE_VERSION) {
     MIGRATIONS[v]?.(raw);
@@ -285,7 +296,6 @@ export function deserialize(json: string): GameState {
   const s = raw as unknown as GameState;
   unlockReachedZones(s);
   settleGems(s);
-  trimFlaskStash(s);
   settleMaps(s);
   settleHeist(s);
   settleExpedition(s);

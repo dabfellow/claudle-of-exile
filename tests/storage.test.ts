@@ -36,12 +36,12 @@ describe('gear storage', () => {
   it('salvages the whole ground pile into dust', () => {
     const s = newGame(1);
     s.ground.push(sword(s), sword(s));
-    s.bank.arcane_dust = 0;
+    s.account.bank.arcane_dust = 0;
     expect(salvagePile(s, ctx(), 'ground')).toBeGreaterThan(0);
     expect(s.ground).toHaveLength(0);
     expect(groundAtRisk(s)).toBe(0);
     expect(s.lifetime.salvaged).toBe(2);
-    expect(s.bank.arcane_dust).toBeGreaterThan(0);
+    expect(s.account.bank.arcane_dust).toBeGreaterThan(0);
   });
 
   it('salvages only the given items from a pile', () => {
@@ -113,7 +113,7 @@ describe('gear storage', () => {
 
   it('stash pages cost more each time', () => {
     const s = newGame(1);
-    s.bank.gold = 10_000;
+    s.account.bank.gold = 10_000;
     expect(stashPagePrice(s)).toBe(1000);
     expect(buyStashPage(s, ctx())).toBeNull();
     expect(s.account.stash).toHaveLength(4);

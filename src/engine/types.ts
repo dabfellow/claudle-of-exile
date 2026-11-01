@@ -641,6 +641,14 @@ export interface AccountState {
   stash: Item[][];
   /** items that didn't fit when stashes were merged: they can only be taken out */
   overflow: Item[];
+  /** gold, currency and materials */
+  bank: Record<string, number>;
+  /** skill gems not on any character's bar */
+  gems: SkillGemInstance[];
+  /** loose support gems */
+  supportGems: SupportGemInstance[];
+  /** spare flasks */
+  flaskStash: FlaskInstance[];
   /** the next account uid: see ACCOUNT_UID_BASE */
   nextUid: number;
   exileUnlocked: boolean;
@@ -651,7 +659,10 @@ export interface AccountState {
 }
 
 /** Account data arriving from elsewhere: a pre-account save, a demo, an import. */
-export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'exileUnlocked' | 'campaignDone'>>;
+export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'exileUnlocked' | 'campaignDone'>> & Partial<AccountPool>;
+
+/** The Stash tabs that hold more than gear. */
+export type AccountPool = Pick<AccountState, 'bank' | 'gems' | 'supportGems' | 'flaskStash'>;
 
 /** A map being run. Its map is already used up. */
 export interface MapRun {
@@ -739,11 +750,12 @@ export interface GameState {
   account: AccountState;
   /** account data this character still has to hand over (see settleCharacter) */
   unmerged?: AccountTransfer;
+  /** currency, materials, gems and flasks this character still has to hand over (see settleCharacter) */
+  unpooled?: Partial<AccountPool>;
   character: CharacterInfo;
   tutorial: TutorialState;
   nextUid: number;
   skills: Record<SkillId, number>;
-  bank: Record<string, number>;
   /** the bag you carry (BAG_SIZE) */
   inventory: Item[];
   /** fresh drops waiting to be picked up, oldest first; kept when you leave an area */
@@ -759,11 +771,6 @@ export interface GameState {
   heist: HeistState;
   expedition: ExpeditionState;
   skillBar: (SkillGemInstance | null)[];
-  /** skill gems not on the bar */
-  gems: SkillGemInstance[];
-  /** loose support gems */
-  supportGems: SupportGemInstance[];
-  flaskStash: FlaskInstance[];
   loadouts: Loadouts;
   action: Action;
   life: number;

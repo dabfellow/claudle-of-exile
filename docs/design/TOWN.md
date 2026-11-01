@@ -4,9 +4,11 @@
 - Hideout stations, reactive rule unlocks and the offline cap are shared by the account. Challenge modes will each keep their own.
 - The offline cap starts at 8 hours, and a hideout upgrade raises it to 24 over time.
 - High-level stations cost rare materials and give lasting bonuses, so upgrades run for months. *(Not built yet.)*
-- A shared stash lets characters pass items to each other. Challenge modes will each keep their own stash.
+- A shared stash lets characters pass items to each other: every tab, plus gold. Challenge modes will each keep their own stash.
 
 **As built (Milestone 3):** `AccountState` (`engine/account.ts`) holds the hideout, automation unlocks, gear stash pages, overflow and Exile unlock.
+
+**Shared tabs (0.2.30):** the account also holds the bank (gold, currency, materials), spare skill and support gems, and spare flasks, so every Stash tab is shared by all characters in a realm. Each realm has its own `AccountState`, so a future challenge league gets its own tabs. Skill bars, socketed supports and flask belts stay with the character, and a gem or flask leaving one goes to the shared tab. Gems and flasks are made with account uids. Save v27 hands each character's old holdings over once (`settlePool`, marked `pool:<id>` in `absorbed`), adding them up; spare flasks past the cap of 10 per kind are sold. Two characters can play at once: tabs merge each other's changes into their own (`mergeAccounts`), and devices pull the account every 30 seconds.
 It's saved apart from characters and attached as `s.account`. Gear pages are shared; currency, materials, gems, flasks, the bag and Town stock stay per character.
 Items take an account uid when they first enter the stash, because each character numbers its own items from 1.
 Old saves hand their hideout and stash over one character at a time (`settleCharacter`), taking the highest of each station and unlock. Pages anyone bought are kept, and items that don't fit wait in an overflow that can be emptied but not added to.
@@ -88,7 +90,7 @@ Flasks, gems, currency and materials live in their own stores already; only gear
 | **Stash** | Long-term storage, in pages | 3 × 80, more for gold | Stash page |
 | **Equipment** | What you're wearing: 10 gear slots + 5 flasks | fixed | Equipment page (paper doll) |
 
-Currency, materials, flasks and gems stay as they are (counters / their own lists) but are *shown* as Stash tabs.
+Currency, materials, flasks and gems are counters or lists of their own on the account, *shown* as Stash tabs.
 
 #### Combat page: ground panel
 

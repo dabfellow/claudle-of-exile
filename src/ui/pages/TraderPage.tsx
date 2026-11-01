@@ -139,7 +139,7 @@ function OfferCard({ s, o, gold }: { s: GameState; o: VendorOffer; gold: number 
 }
 
 function ShopTab({ s, shop }: { s: GameState; shop: (typeof SHOPS)[number] }) {
-  const gold = s.bank.gold ?? 0;
+  const gold = s.account.bank.gold ?? 0;
   const cost = rerollCost(s);
   const wares = s.vendor.stock.filter((o) => o.shop === shop.id);
   return (
@@ -194,9 +194,9 @@ function SellTab({ s }: { s: GameState }) {
     apply(n);
   };
   const pickedGold = pool.filter((i) => picked.has(i.uid)).reduce((a, i) => a + sellValue(i), 0);
-  const flaskGold = s.flaskStash.filter((f) => flasks.has(f.uid)).reduce((a, f) => a + flaskValue(f), 0);
+  const flaskGold = s.account.flaskStash.filter((f) => flasks.has(f.uid)).reduce((a, f) => a + flaskValue(f), 0);
   const byRarity = (r: Rarity) => pool.filter((i) => i.rarity === r);
-  const mats = MATERIALS.filter((m) => m.kind !== 'gold' && (s.bank[m.id] ?? 0) > 0);
+  const mats = MATERIALS.filter((m) => m.kind !== 'gold' && (s.account.bank[m.id] ?? 0) > 0);
 
   return (
     <>
@@ -254,7 +254,7 @@ function SellTab({ s }: { s: GameState }) {
         </div>
       </div>
 
-      {s.flaskStash.length > 0 && (
+      {s.account.flaskStash.length > 0 && (
         <div className="card">
           <div className="card-title">
             Spare flasks
@@ -271,7 +271,7 @@ function SellTab({ s }: { s: GameState }) {
             </button>
           </div>
           <div className="gem-bag">
-            {s.flaskStash.map((f) => (
+            {s.account.flaskStash.map((f) => (
               <Tooltip key={f.uid} content={<FlaskTip f={f} />}>
                 <button className={`gem-card ${flasks.has(f.uid) ? 'selected' : ''}`} onClick={() => toggle(flasks, f.uid, setFlasks)}>
                   <FlaskIcon f={f} size={28} />
@@ -303,12 +303,12 @@ function SellTab({ s }: { s: GameState }) {
                   {m.value}g
                 </span>
               </span>
-              <b className="num">{fmt(s.bank[m.id] ?? 0)}</b>
+              <b className="num">{fmt(s.account.bank[m.id] ?? 0)}</b>
               <div className="row" style={{ gridColumn: '1 / -1', justifyContent: 'flex-end' }}>
                 <button className="btn sm" onClick={() => game.act((st, ctx) => sellMaterial(st, ctx, m.id, 10, m.value))}>
                   Sell 10
                 </button>
-                <button className="btn sm ghost" onClick={() => game.act((st, ctx) => sellMaterial(st, ctx, m.id, st.bank[m.id] ?? 0, m.value))}>
+                <button className="btn sm ghost" onClick={() => game.act((st, ctx) => sellMaterial(st, ctx, m.id, st.account.bank[m.id] ?? 0, m.value))}>
                   All
                 </button>
               </div>
@@ -345,7 +345,7 @@ export function TraderPage() {
         <div className="npc-aside">
           <span className="label">Your gold</span>
           <span className="gold-amount">
-            <MatIcon id="gold" size={22} /> {fmt(s.bank.gold ?? 0)}
+            <MatIcon id="gold" size={22} /> {fmt(s.account.bank.gold ?? 0)}
           </span>
         </div>
       </div>

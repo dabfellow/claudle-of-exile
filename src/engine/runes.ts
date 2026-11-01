@@ -73,7 +73,7 @@ export function inscribeRune(s: GameState, ctx: Ctx, runeId: string, uid: number
   if (reason) return reason;
   const item = findItem(s, uid)!;
   item.rune = runeId;
-  s.bank[runeId] -= 1;
+  s.account.bank[runeId] -= 1;
   ctx.emit({ t: 'craft', text: `${runeDef(runeId)!.name} → ${itemName(item)}`, uid });
   return null;
 }

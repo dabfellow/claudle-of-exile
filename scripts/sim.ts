@@ -152,12 +152,12 @@ function scoreWith(s: GameState, item: Item): number {
 function shop(s: GameState, ctx: Ctx) {
   const base = scoreOf(s);
   let bought = false;
-  const spare = () => (s.bank.gold ?? 0) - (nextUpgrade(s)?.cost.gold ?? 0);
-  const owned = new Set([...s.skillBar, ...s.gems].filter(Boolean).map((g) => g!.gemId));
-  const ownedSupports = new Set(s.supportGems.map((g) => g.supportId));
+  const spare = () => (s.account.bank.gold ?? 0) - (nextUpgrade(s)?.cost.gold ?? 0);
+  const owned = new Set([...s.skillBar, ...s.account.gems].filter(Boolean).map((g) => g!.gemId));
+  const ownedSupports = new Set(s.account.supportGems.map((g) => g.supportId));
   for (const offer of [...s.vendor.stock]) {
     const newGem = (offer.gemId && !owned.has(offer.gemId)) || (offer.supportId && !ownedSupports.has(offer.supportId));
-    if (newGem && offer.price * 2 <= (s.bank.gold ?? 0) && !buyOffer(s, ctx, offer.id)) bought = true;
+    if (newGem && offer.price * 2 <= (s.account.bank.gold ?? 0) && !buyOffer(s, ctx, offer.id)) bought = true;
   }
   for (const offer of [...s.vendor.stock]) {
     if (offer.kind !== 'item' || !offer.item || offer.price > spare() || equipReason(s, offer.item)) continue;
@@ -230,7 +230,7 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const d = deriveStats(s, []);
   // the best copy of each gem it owns and meets the attribute for: highest level wins
   const owned = new Map<string, SkillGemInstance>();
-  for (const g of [...s.skillBar.filter((x): x is SkillGemInstance => !!x), ...s.gems]) {
+  for (const g of [...s.skillBar.filter((x): x is SkillGemInstance => !!x), ...s.account.gems]) {
     if (gemUseReason(d.combatLevel, d.attributes, g, d.weaponFamily)) continue;
     const have = owned.get(g.gemId);
     if (!have || g.level > have.level) owned.set(g.gemId, g);
@@ -288,7 +288,7 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const order = [...bar].sort((a, b) => Number(DAMAGE_ROLES.has(role(b))) - Number(DAMAGE_ROLES.has(role(a))));
   for (const g of order) {
     for (let k = 0; k < g.supports.length; k++) {
-      const fits = s.supportGems.filter((x) => !supportReason(g, x.supportId));
+      const fits = s.account.supportGems.filter((x) => !supportReason(g, x.supportId));
       if (!fits.length) break;
       let best = fits[0];
       if (DAMAGE_ROLES.has(role(g))) {
@@ -310,7 +310,7 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
 /** Belt: the strongest life and mana flask in slots 1–2, then Granite, Ruby and Quicksilver (attackers) or Diamond. */
 function manageFlasks(s: GameState) {
   const d = deriveStats(s, []);
-  const pool = () => [...s.flaskSlots.filter((f): f is FlaskInstance => !!f), ...s.flaskStash];
+  const pool = () => [...s.flaskSlots.filter((f): f is FlaskInstance => !!f), ...s.account.flaskStash];
   const strongest = (kind: 'life' | 'mana') =>
     pool()
       .filter((f) => flaskDef(f.flaskId).kind === kind)
@@ -324,7 +324,7 @@ function manageFlasks(s: GameState) {
     if (f && !want.some((w) => w?.flaskId === id)) want.push(f);
   }
   want.forEach((f, i) => {
-    if (f && s.flaskSlots[i]?.uid !== f.uid && s.flaskStash.includes(f)) equipFlask(s, f.uid, i);
+    if (f && s.flaskSlots[i]?.uid !== f.uid && s.account.flaskStash.includes(f)) equipFlask(s, f.uid, i);
   });
 }
 
@@ -373,7 +373,7 @@ const INSTILL_FOR: Record<string, InstillCondition> = { life: 'lowLife', utility
 function instillFlasks(s: GameState, ctx: Ctx) {
   if (!INSTILL) return;
   for (const f of s.flaskSlots) {
-    if (!f || !s.bank.instill) continue;
+    if (!f || !s.account.bank.instill) continue;
     const kind = flaskDef(f.flaskId).kind;
     const want = kind === 'utility' && frostbiteZone(s.combat?.zoneId) ? 'frostbite' : INSTILL_FOR[kind];
     if (!f.instill || (f.instill === 'bossCast' && want === 'frostbite')) enchantFlask(s, ctx, f.uid, want);
@@ -386,8 +386,8 @@ function nextUpgrade(s: GameState): { id: StationId; cost: Record<string, number
   if (!next) return null;
   const cost = nextUpgradeCost(s, next[0])!;
   const short = Object.entries(cost)
-    .filter(([id, n]) => id !== 'gold' && (s.bank[id] ?? 0) < n)
-    .map(([id, n]): [string, number] => [id, n - (s.bank[id] ?? 0)]);
+    .filter(([id, n]) => id !== 'gold' && (s.account.bank[id] ?? 0) < n)
+    .map(([id, n]): [string, number] => [id, n - (s.account.bank[id] ?? 0)]);
   return { id: next[0], cost, short };
 }
 
@@ -456,7 +456,7 @@ function recipeNight(s: GameState, ctx: Ctx, actions: SkillAction[]): boolean {
   const recipes = actions.filter((a) => skillLevel(s, a.skill) >= a.level);
   const ready = recipes.filter((a) => !actionBlocker(s, a)).at(-1);
   if (ready) return !startSkillAction(s, ctx, ready.id);
-  const short = Object.entries(recipes.at(-1)!.inputs!).find(([id, n]) => (s.bank[id] ?? 0) < n);
+  const short = Object.entries(recipes.at(-1)!.inputs!).find(([id, n]) => (s.account.bank[id] ?? 0) < n);
   const node = short && nodeFor(s, short[0]);
   return !!node && !startSkillAction(s, ctx, node.id);
 }
@@ -476,7 +476,7 @@ function expeditionNight(s: GameState, ctx: Ctx): boolean {
 /** The night's cooking: meals only, as the bot brews no flasks. It eats the best dish in the bank and keeps eating. */
 function cookNight(s: GameState, ctx: Ctx): boolean {
   if (!cookingOpen(s)) return false;
-  const dish = MEALS.filter((m) => s.bank[m.id]).at(-1);
+  const dish = MEALS.filter((m) => s.account.bank[m.id]).at(-1);
   if (dish) eatMeal(s, ctx, dish.id);
   return recipeNight(s, ctx, actionsFor('cooking').filter((a) => a.outputs && Object.keys(a.outputs)[0].startsWith('meal_')));
 }
@@ -817,7 +817,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
     console.log(`  [${classId}] life ${d.maxLife} armour ${d.armour} res ${JSON.stringify(d.res)} dps ${d.dps.toFixed(0)}`);
   }
   res.finalLevel = characterLevel(s);
-  res.bank = s.bank;
+  res.bank = s.account.bank;
   res.bestDps = d.dps;
   res.bestLife = d.maxLife;
   res.skills = Object.fromEntries([...GATHER_SKILLS, 'thieving' as const, 'archaeology' as const, 'runecarving' as const, 'cooking' as const].map((sk) => [sk, levelOf(sk, s.skills[sk])]));

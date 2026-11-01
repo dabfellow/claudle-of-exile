@@ -42,7 +42,7 @@ function wear(s: GameState, slot: EquipSlot, item: Item): Item {
 }
 
 function give(s: GameState, id: string, n = 1): void {
-  s.bank[id] = (s.bank[id] ?? 0) + n;
+  s.account.bank[id] = (s.account.bank[id] ?? 0) + n;
 }
 
 describe('the skill', () => {
@@ -91,13 +91,13 @@ describe('the skill', () => {
     for (const [id, n] of Object.entries(a.inputs!)) give(s, id, n * 5);
     expect(startSkillAction(s, ctx(), a.id)).toBeNull();
     skillStep(s, ctx(), a.intervalMs + 1, deriveStats(s));
-    expect(s.bank[Object.keys(a.outputs!)[0]]).toBe(1);
+    expect(s.account.bank[Object.keys(a.outputs!)[0]]).toBe(1);
     expect(s.skills.runecarving).toBeGreaterThan(0);
 
     const rune = Object.keys(a.outputs!)[0];
-    const before = s.bank[rune];
+    const before = s.account.bank[rune];
     simulateOffline(s, ctx(), a.intervalMs * 3.5);
-    expect(s.bank[rune]).toBe(before + 3);
+    expect(s.account.bank[rune]).toBe(before + 3);
   });
 
   it('stops when the materials run out, offline too', () => {
@@ -106,7 +106,7 @@ describe('the skill', () => {
     for (const [id, n] of Object.entries(a.inputs!)) give(s, id, n);
     startSkillAction(s, ctx(), a.id);
     simulateOffline(s, ctx(), a.intervalMs * 10);
-    expect(s.bank[Object.keys(a.outputs!)[0]]).toBe(1);
+    expect(s.account.bank[Object.keys(a.outputs!)[0]]).toBe(1);
     expect(s.action).toBeNull();
   });
 
@@ -118,7 +118,7 @@ describe('the skill', () => {
     for (const [id, n] of Object.entries(a.inputs!)) give(s, id, n * 200);
     startSkillAction(s, ctx(), a.id);
     skillStep(s, ctx(), a.intervalMs * 200 + 1, deriveStats(s));
-    expect(s.bank[rune]).toBeGreaterThan(200);
+    expect(s.account.bank[rune]).toBeGreaterThan(200);
   });
 });
 
@@ -138,7 +138,7 @@ describe('the rune slot', () => {
     give(s, 'rune_ember_3');
     s.inventory.push(body);
     expect(inscribeRune(s, ctx(), 'rune_ember_3', body.uid)).toBeNull();
-    expect(s.bank.rune_ember_3).toBe(0);
+    expect(s.account.bank.rune_ember_3).toBe(0);
     const before = rawStats(s).fireRes;
     s.inventory = [];
     wear(s, 'body', body);
@@ -174,7 +174,7 @@ describe('the rune slot', () => {
     expect(runeReason(s, 'rune_keen_1', low.uid)).toBe('Already inscribed');
     inscribeRune(s, ctx(), 'rune_rime_1', low.uid);
     expect(low.rune).toBe('rune_rime_1');
-    expect(s.bank.rune_keen_1).toBe(1);
+    expect(s.account.bank.rune_keen_1).toBe(1);
   });
 
   it('stays through every orb and the wax, and costs no affix room', () => {

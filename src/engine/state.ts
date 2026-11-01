@@ -1,6 +1,7 @@
 import { classDef, startClass, type ClassId } from '../data/classes';
 import { flaskDef, FLASK_SLOTS } from '../data/flasks';
 import { freshAccount } from './account';
+import { addBank } from './bank';
 import { newAscendancyState } from './ascendancy';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { newFlask } from './flasks';
@@ -21,7 +22,7 @@ import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
 import type { AccountState, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 26;
+export const SAVE_VERSION = 27;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -33,6 +34,8 @@ export interface NewCharacter {
   startNode?: string;
   id?: string;
 }
+
+const STARTING_BANK = { gold: 25, transmute: 3, augment: 2, arcane_dust: 6 };
 
 export function newCharacterId(): string {
   return `c${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
@@ -52,16 +55,12 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     tutorial: { step: 0, progress: 0, done: false, skipped: false },
     nextUid: 1,
     skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, thieving: 0, archaeology: 0, smithing: 0, alchemy: 0, gemcutting: 0, runecarving: 0, cooking: 0, cartography: 0, fishing: 0 },
-    bank: { gold: 25, transmute: 3, augment: 2, arcane_dust: 6 },
     inventory: [],
     ground: [],
     offlineHaul: [],
     equipment: {},
     flaskSlots: Array(FLASK_SLOTS).fill(null),
-    flaskStash: [],
     skillBar: Array(SKILL_BAR_SLOTS).fill(null),
-    gems: [],
-    supportGems: [],
     loadouts: newLoadouts(),
     action: null,
     life: 60,
@@ -92,6 +91,8 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     clock: 0,
     lastSaved: Date.now(),
   };
+  // every new character adds its starting kit to the shared tabs
+  for (const [id, n] of Object.entries(STARTING_BANK)) addBank(s, id, n);
   const rng = seeded(seed);
   for (const [slot, baseId] of Object.entries(classDef(who.classId).kit)) {
     s.equipment[slot as EquipSlot] = createItem(s, baseId, 1, 'normal', rng);

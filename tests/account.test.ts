@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { STASH_PAGE_SIZE } from '../src/data/hideout';
-import { ACCOUNT_UID_BASE, freshAccount, reconcileAccounts, settleCharacter } from '../src/engine/account';
+import { ACCOUNT_UID_BASE, freshAccount, mergeAccounts, reconcileAccounts, settleCharacter } from '../src/engine/account';
+import { FLASK_STASH_CAP, newFlask } from '../src/engine/flasks';
+import { createSkillGem, createSupportGem, removeFromBar } from '../src/engine/gems';
+import { saveSkillSet } from '../src/engine/loadouts';
 import { bossesOffline, grantUnlocks, offlineCapMs } from '../src/engine/automation';
 import { makeCtx } from '../src/engine/context';
 import { campaignComplete, FINAL_ACT, stationLevel } from '../src/engine/hideout';
@@ -10,9 +13,9 @@ import { seeded } from '../src/engine/rng';
 import { deserialize, exportSave, importSave, serialize } from '../src/engine/save';
 import { newGame, SAVE_VERSION, tick } from '../src/engine/state';
 import { settleOverflow, stashItems, takeFromStash, takeOwned } from '../src/engine/storage';
-import type { GameState } from '../src/engine/types';
+import type { AccountState, GameState } from '../src/engine/types';
 import { actBossZone } from '../src/data/zones';
-import { LocalSaveStore, MemorySaveStore, moveCharacters } from '../src/platform/saves';
+import { LocalSaveStore, MemorySaveStore, moveCharacters, summarize } from '../src/platform/saves';
 
 const ctx = () => makeCtx(seeded(1));
 const sword = (s: GameState) => createItem(s, 'rusted_sword', 1, 'normal', seeded(s.nextUid));
@@ -107,7 +110,7 @@ describe('migrating to the account', () => {
   };
 
   it('is the current version, and leaves a lone character exactly as it was', () => {
-    expect(SAVE_VERSION).toBe(26);
+    expect(SAVE_VERSION).toBe(27);
     const s = newGame(1);
     const item = sword(s);
     const { a, s: loaded } = settle(v20(s, { hideout: { stash: 2, bench: 3 }, rules: ['vitals'], slots: 2, hours: 12, stash: [[], [item], [], []] }));
@@ -130,7 +133,7 @@ describe('migrating to the account', () => {
     expect(a.stash[0]).toHaveLength(2);
     const uids = a.stash.flat().map((i) => i.uid);
     expect(new Set(uids).size).toBe(2);
-    expect(a.absorbed).toHaveLength(2);
+    expect(a.absorbed.filter((id) => !id.startsWith('pool:'))).toHaveLength(2);
   });
 
   it('keeps pages paid for on each character, counts free pages once, and overflows the rest', () => {
@@ -236,14 +239,14 @@ describe('stores', () => {
     expect((await store.loadAccount())?.hideout.forge).toBe(2);
   });
 
-  it('marks a save settled only once it has handed over', async () => {
+  it('marks a save handed over only once it has', async () => {
     const store = new MemorySaveStore();
     const s = deserialize(v20(newGame(1)));
     await store.save(s);
-    expect((await store.list())[0].settled).toBe(false);
+    expect((await store.list())[0].handedOver).toBe(false);
     settleCharacter(s, freshAccount());
     await store.save(s);
-    expect((await store.list())[0].settled).toBe(true);
+    expect((await store.list())[0].handedOver).toBe(true);
   });
 
   it('moving guests brings their stash and unlocks, once', async () => {
@@ -275,5 +278,152 @@ describe('stores', () => {
     const merged = reconcileAccounts(newer, older);
     expect(merged.hideout).toMatchObject({ forge: 4, bench: 3 });
     expect(merged.automation.offlineHours).toBe(16);
+  });
+});
+
+/** A save from just before the shared tabs: this character's bank, gems and flasks are its own. */
+function beforePool(s: GameState, pool: Record<string, unknown>): GameState {
+  const old = JSON.parse(serialize(s));
+  Object.assign(old, { version: 26, bank: {}, gems: [], supportGems: [], flaskStash: [] }, pool);
+  // made back when characters numbered their own gems
+  for (const g of old.skillBar) if (g) g.uid = (old.nextUid += 1);
+  return deserialize(JSON.stringify(old));
+}
+
+describe('shared Stash tabs', () => {
+  it("a second character in the realm sees the first one's currency, gems and flasks", () => {
+    const a = freshAccount();
+    const one = newGame(1, { name: 'One', classId: 'mage' }, a);
+    one.account.bank.chaos = 7;
+    one.account.gems.push(createSkillGem(one, 'spark'));
+    one.account.supportGems.push(createSupportGem(one, 'spell_echo'));
+    one.account.flaskStash.push(newFlask(one, 'life_small'));
+    const two = newGame(2, { name: 'Two', classId: 'warrior' }, a);
+    expect(two.account.bank.chaos).toBe(7);
+    expect(two.account.gems).toHaveLength(1);
+    expect(two.account.supportGems).toHaveLength(1);
+    expect(two.account.flaskStash).toHaveLength(1);
+  });
+
+  it("a gem leaving one bar never clashes with another character's", () => {
+    const a = freshAccount();
+    const one = newGame(1, { name: 'One', classId: 'mage' }, a);
+    const two = newGame(1, { name: 'Two', classId: 'mage' }, a);
+    removeFromBar(one, 0);
+    const uids = [...two.skillBar.flatMap((g) => (g ? [g.uid] : [])), ...a.gems.map((g) => g.uid)];
+    expect(new Set(uids).size).toBe(uids.length);
+    expect(uids.every((u) => u >= ACCOUNT_UID_BASE)).toBe(true);
+  });
+
+  it("a character's save leaves the tabs on the account", () => {
+    const s = newGame(1);
+    s.account.bank.gold = 500;
+    expect('bank' in JSON.parse(serialize(s))).toBe(false);
+  });
+});
+
+describe('moving old saves into the shared tabs', () => {
+  it('adds up every character, and only once', () => {
+    const a = freshAccount();
+    const one = beforePool(newGame(1, { name: 'One', classId: 'mage' }), { bank: { gold: 100, chaos: 2 } });
+    const two = beforePool(newGame(2, { name: 'Two', classId: 'warrior' }), { bank: { gold: 50 } });
+    expect(summarize(one).handedOver).toBe(false);
+    const again = deserialize(JSON.stringify({ ...JSON.parse(serialize(one)), version: SAVE_VERSION }));
+    expect(settleCharacter(one, a)).toBe(true);
+    expect(settleCharacter(two, a)).toBe(true);
+    expect(a.bank).toEqual({ gold: 150, chaos: 2 });
+    expect(summarize(one).handedOver).toBe(true);
+    settleCharacter(again, a);
+    expect(a.bank.gold).toBe(150);
+  });
+
+  it('counts a character that already handed over its stash', () => {
+    const a = freshAccount();
+    const s = beforePool(newGame(1, { name: 'Old', classId: 'mage' }), { bank: { gold: 100 } });
+    a.absorbed.push(s.character.id);
+    settleCharacter(s, a);
+    expect(a.bank.gold).toBe(100);
+  });
+
+  it('moves gems and flasks onto account uids, and skill sets follow them', () => {
+    const a = freshAccount();
+    const fresh = newGame(1, { name: 'Old', classId: 'mage' });
+    saveSkillSet(fresh, 'Main');
+    const spare = { ...createSkillGem(fresh, 'spark'), uid: 900 };
+    const s = beforePool(fresh, { gems: [spare], supportGems: [{ uid: 901, supportId: 'spell_echo' }], flaskStash: [{ ...newFlask(fresh, 'life_small'), uid: 902 }] });
+    s.loadouts.skills[0].slots[0]!.gem = s.skillBar[0]!.uid;
+    s.loadouts.skills[0].slots[1] = { gem: 900, supports: [901], rules: [], priority: 'normal' };
+    settleCharacter(s, a);
+    expect([...a.gems, ...a.supportGems, ...a.flaskStash].every((x) => x.uid >= ACCOUNT_UID_BASE)).toBe(true);
+    expect(s.skillBar[0]!.uid).toBeGreaterThanOrEqual(ACCOUNT_UID_BASE);
+    expect(s.loadouts.skills[0].slots[0]!.gem).toBe(s.skillBar[0]!.uid);
+    expect(s.loadouts.skills[0].slots[1]).toMatchObject({ gem: a.gems[0].uid, supports: [a.supportGems[0].uid] });
+  });
+
+  it('sells flasks past the cap for gold, as any full kind does', () => {
+    const a = freshAccount();
+    const fresh = newGame(1, { name: 'Old', classId: 'mage' });
+    const flasks = Array.from({ length: FLASK_STASH_CAP + 2 }, (_, i) => ({ ...newFlask(fresh, 'life_small'), uid: 900 + i }));
+    settleCharacter(beforePool(fresh, { flaskStash: flasks }), a);
+    expect(a.flaskStash).toHaveLength(FLASK_STASH_CAP);
+    expect(a.bank.gold).toBeGreaterThan(0);
+  });
+});
+
+describe('two copies at once', () => {
+  const pair = () => {
+    const base = freshAccount();
+    base.bank = { gold: 100, chaos: 5 };
+    return { base, mine: structuredClone(base), theirs: structuredClone(base) };
+  };
+  const gem = (a: AccountState, uid: number) => ({ ...createSkillGem(newGame(1, undefined, a), 'spark'), uid });
+
+  it("adds both sides' gains and spends", () => {
+    const { base, mine, theirs } = pair();
+    mine.bank.gold = 130;
+    mine.bank.iron = 4;
+    theirs.bank.gold = 110;
+    theirs.bank.chaos = 3;
+    mergeAccounts(mine, base, theirs);
+    expect(mine.bank).toEqual({ gold: 140, chaos: 3, iron: 4 });
+  });
+
+  it('never goes below nothing when both spent the same orbs', () => {
+    const { base, mine, theirs } = pair();
+    mine.bank.chaos = 0;
+    theirs.bank.chaos = 0;
+    mergeAccounts(mine, base, theirs);
+    expect(mine.bank.chaos).toBe(0);
+  });
+
+  it('keeps gems added on either side and drops gems taken on either side', () => {
+    const { base, mine, theirs } = pair();
+    const kept = gem(base, 1);
+    const taken = gem(base, 2);
+    base.gems = [kept, taken];
+    mine.gems = [structuredClone(kept), gem(mine, 3)];
+    theirs.gems = [structuredClone(kept), structuredClone(taken), gem(theirs, 4)];
+    mergeAccounts(mine, base, theirs);
+    expect(mine.gems.map((g) => g.uid).sort()).toEqual([1, 3, 4]);
+  });
+
+  it('two new gems with the same uid both survive', () => {
+    const { base, mine, theirs } = pair();
+    mine.gems = [gem(mine, 7)];
+    theirs.gems = [gem(theirs, 7)];
+    mergeAccounts(mine, base, theirs);
+    expect(mine.gems).toHaveLength(2);
+    expect(new Set(mine.gems.map((g) => g.uid)).size).toBe(2);
+  });
+
+  it("merges gear pages the same way, and neither copy's bought page is lost", () => {
+    const { base, mine, theirs } = pair();
+    const s = newGame(1, undefined, mine);
+    const item = s.equipment.weapon!;
+    theirs.stash[0].push(structuredClone(item));
+    theirs.stash.push([]);
+    mergeAccounts(mine, base, theirs);
+    expect(mine.stash[0].map((i) => i.uid)).toEqual([item.uid]);
+    expect(mine.stash).toHaveLength(theirs.stash.length);
   });
 });

@@ -90,7 +90,7 @@ export function wareReason(s: GameState, id: string): string | null {
 }
 
 function take(s: GameState, ctx: Ctx, w: WareDef): void {
-  s.bank[cultureDef(w.culture).artifact] -= warePrice(s, w);
+  s.account.bank[cultureDef(w.culture).artifact] -= warePrice(s, w);
   s.expedition.shelves[w.id] = { sold: soldNow(s, w) + 1, at: s.clock };
   s.expedition.tally.traded += 1;
   addBank(s, w.item, w.qty);

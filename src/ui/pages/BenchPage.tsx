@@ -30,7 +30,7 @@ const ORB_ORDER = ['transmute', 'augment', 'alteration', 'regal', 'alchemy', 'ch
 /** Orbs, enchanting and belt slots for the selected flask. */
 function FlaskCraft({ s, f, onCraft }: { s: GameState; f: FlaskInstance; onCraft: () => void }) {
   const slotIndex = s.flaskSlots.findIndex((x) => x?.uid === f.uid);
-  const instills = s.bank.instill ?? 0;
+  const instills = s.account.bank.instill ?? 0;
   const run = (err: string | null) => {
     if (!err) onCraft();
   };
@@ -49,7 +49,7 @@ function FlaskCraft({ s, f, onCraft }: { s: GameState; f: FlaskInstance; onCraft
               const reason = flaskOrbReason(s, orb, f);
               return (
                 <button key={orb} className="btn sm" disabled={!!reason} title={reason ?? currencyDef(orb).desc} onClick={() => run(game.act((st, ctx) => applyFlaskOrb(st, ctx, orb, f.uid)))}>
-                  <MatIcon id={orb} size={13} /> {currencyDef(orb).short} <span className="dim">×{s.bank[orb] ?? 0}</span>
+                  <MatIcon id={orb} size={13} /> {currencyDef(orb).short} <span className="dim">×{s.account.bank[orb] ?? 0}</span>
                 </button>
               );
             })}
@@ -129,7 +129,7 @@ export function BenchPage() {
       setFlash((n) => n + 1);
       const text = [currencyDef(orbId).name, f && fossilDef(f)!.name, kept && "Forger's Seal"].filter(Boolean).join(' + ');
       setHistory((h) => [{ id: Date.now() + Math.random(), text, name: itemName(item), rarity: item.rarity }, ...h].slice(0, 12));
-      if (f && (s.bank[f] ?? 0) <= 1) setFossil(null);
+      if (f && (s.account.bank[f] ?? 0) <= 1) setFossil(null);
       if (kept) setSeal(null);
     }
   };
@@ -179,13 +179,13 @@ export function BenchPage() {
     }
   };
 
-  const essences = ESSENCES.filter((e) => s.bank[e.id]);
-  const fossils = FOSSILS.filter((f) => s.bank[f.id]);
-  const runes = RUNES.filter((r) => s.bank[r.id]);
-  const seals = s.bank[SEAL] ?? 0;
-  const waxes = s.bank[WAX] ?? 0;
+  const essences = ESSENCES.filter((e) => s.account.bank[e.id]);
+  const fossils = FOSSILS.filter((f) => s.account.bank[f.id]);
+  const runes = RUNES.filter((r) => s.account.bank[r.id]);
+  const seals = s.account.bank[SEAL] ?? 0;
+  const waxes = s.account.bank[WAX] ?? 0;
   const contraband = seals > 0 || waxes > 0 || !!item?.impression;
-  const whetstones = s.bank[WHETSTONE] ?? 0;
+  const whetstones = s.account.bank[WHETSTONE] ?? 0;
 
   return (
     <div className="page bench-page">
@@ -197,7 +197,7 @@ export function BenchPage() {
       <div className="card bench-orb-bar">
         {ORB_ORDER.map((id) => {
           const c = currencyDef(id);
-          const n = s.bank[id] ?? 0;
+          const n = s.account.bank[id] ?? 0;
           const f = fossilFor(id);
           const kept = sealFor(id);
           const reason = item ? orbReason(s, id, item.uid, f, kept) : flask ? 'Flasks use the orbs under Flask crafting' : 'Select an item';
@@ -329,7 +329,7 @@ export function BenchPage() {
                       <div key={b.id} className="mat" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
                         <span className="mod crafted small">{preview}</span>
                         <span className="dim small">{a.kind}</span>
-                        <Cost cost={b.cost} have={s.bank} />
+                        <Cost cost={b.cost} have={s.account.bank} />
                         <button className="btn sm" disabled={!!reason} title={reason ?? ''} onClick={() => craft(b.id)}>
                           {reason && item ? reason : 'Craft'}
                         </button>
@@ -367,7 +367,7 @@ export function BenchPage() {
                           const reason = item ? runeReason(s, r.id, item.uid) : 'Select an item';
                           return (
                             <button key={r.id} data-rune={r.id} className="btn sm" disabled={!!reason} title={reason ?? runeText(r, item!)} onClick={() => inscribe(r.id)}>
-                              <MatIcon id={r.id} size={12} /> {r.name} <span className="dim">×{s.bank[r.id]}</span>
+                              <MatIcon id={r.id} size={12} /> {r.name} <span className="dim">×{s.account.bank[r.id]}</span>
                             </button>
                           );
                         })}
@@ -433,7 +433,7 @@ export function BenchPage() {
                             title={`${f.desc}. Used up with the next orb that rolls modifiers.`}
                             onClick={() => setFossil(fossil === f.id ? null : f.id)}
                           >
-                            <MatIcon id={f.id} size={12} /> {f.name.replace(' Fossil', '')} <span className="dim">×{s.bank[f.id]}</span>
+                            <MatIcon id={f.id} size={12} /> {f.name.replace(' Fossil', '')} <span className="dim">×{s.account.bank[f.id]}</span>
                           </button>
                         ))}
                       </div>
@@ -449,7 +449,7 @@ export function BenchPage() {
                           const reason = item ? essenceReason(s, e.id, item.uid) : 'Select an item';
                           return (
                             <button key={e.id} className="btn sm" disabled={!!reason} title={reason ?? affixRangeText(e.affixId, e.tier)} onClick={() => essence(e.id)}>
-                              <MatIcon id={e.id} size={12} /> {e.name} <span className="dim">×{s.bank[e.id]}</span>
+                              <MatIcon id={e.id} size={12} /> {e.name} <span className="dim">×{s.account.bank[e.id]}</span>
                             </button>
                           );
                         })}
@@ -461,10 +461,10 @@ export function BenchPage() {
             </div>
           </div>
 
-          {s.flaskStash.length > 0 && (
+          {s.account.flaskStash.length > 0 && (
             <div className="card">
-              <div className="card-title">Spare flasks ({s.flaskStash.length})</div>
-              <FlaskShelf flasks={s.flaskStash} selected={flaskUid} onPick={(f) => pickFlask(f.uid)} />
+              <div className="card-title">Spare flasks ({s.account.flaskStash.length})</div>
+              <FlaskShelf flasks={s.account.flaskStash} selected={flaskUid} onPick={(f) => pickFlask(f.uid)} />
             </div>
           )}
           <Inventory s={s} title="Bag & stash" items={[...stashedItems(s), ...s.inventory]} cap={null} onPick={(it) => pickItem(it.uid)} selected={uid} />

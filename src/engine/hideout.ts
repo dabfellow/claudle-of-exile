@@ -186,8 +186,8 @@ export function buyOffer(s: GameState, ctx: Ctx, offerId: number): string | null
   payCost(s, { gold: offer.price });
   if (offer.item) s.inventory.push(offer.item);
   else if (offer.flask) stashFlask(s, offer.flask);
-  else if (offer.gemId) s.gems.push(createSkillGem(s, offer.gemId));
-  else if (offer.supportId) s.supportGems.push(createSupportGem(s, offer.supportId));
+  else if (offer.gemId) s.account.gems.push(createSkillGem(s, offer.gemId));
+  else if (offer.supportId) s.account.supportGems.push(createSupportGem(s, offer.supportId));
   else if (offer.currencyId) addBank(s, offer.currencyId, offer.qty ?? 1);
   ctx.emit({ t: 'info', text: `Bought ${offerName(offer)}`, tone: 'good' });
   s.vendor.stock = s.vendor.stock.filter((o) => o.id !== offerId);
@@ -206,9 +206,9 @@ export function sellItems(s: GameState, ctx: Ctx, uids: number[]): number {
 }
 
 export function sellMaterial(s: GameState, ctx: Ctx, id: string, qty: number, value: number): void {
-  const n = Math.min(qty, s.bank[id] ?? 0);
+  const n = Math.min(qty, s.account.bank[id] ?? 0);
   if (n <= 0) return;
-  s.bank[id] -= n;
+  s.account.bank[id] -= n;
   addBank(s, 'gold', n * value);
   ctx.emit({ t: 'info', text: `Sold ${n} for ${n * value} gold`, tone: 'good' });
 }

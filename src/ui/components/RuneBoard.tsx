@@ -49,7 +49,7 @@ export function RuneBoard() {
   if (!runesOpen(s)) return <div className="callout skill-note">The rite of carving is kept behind the walls of the City of Saints. Reach Act 3 to start.</div>;
   const worn = Object.values(s.equipment).filter((i): i is Item => !!i);
   const inscribed = worn.filter((i) => itemRune(i));
-  const best = Math.max(1, ...RUNES.filter((r) => s.bank[r.id] || inscribed.some((i) => itemRune(i) === r)).map((r) => r.grade.grade));
+  const best = Math.max(1, ...RUNES.filter((r) => s.account.bank[r.id] || inscribed.some((i) => itemRune(i) === r)).map((r) => r.grade.grade));
   return (
     <>
       <div className="callout skill-note">

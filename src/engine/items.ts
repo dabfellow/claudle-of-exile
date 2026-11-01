@@ -7,6 +7,11 @@ export function newUid(s: GameState): number {
   return s.nextUid++;
 }
 
+/** For what can sit in the shared Stash tabs (gems, flasks), where characters' own uids would overlap. */
+export function accountUid(s: GameState): number {
+  return s.account.nextUid++;
+}
+
 export function maxAffixes(rarity: Rarity): number {
   return rarity === 'magic' ? 1 : rarity === 'rare' ? 3 : 0;
 }

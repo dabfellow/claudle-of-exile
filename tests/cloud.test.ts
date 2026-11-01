@@ -76,16 +76,16 @@ describe('cloud saves', () => {
     const s = newGame(1, { name: 'Bo', classId: 'ranger' });
     await cloud.save(s);
     table.down = true;
-    s.bank.gold = 999;
+    s.clock = 999;
     s.lastSaved += 10_000;
     await cloud.save(s);
     expect(cloud.status).toBe('offline');
     expect((await cloud.list()).map((c) => c.name)).toEqual(['Bo']);
     table.down = false;
     const loaded = await cloud.load(s.character.id);
-    expect(loaded?.bank.gold).toBe(999);
+    expect(loaded?.clock).toBe(999);
     await new Promise((r) => setTimeout(r, 0));
-    expect((table.rows.get(s.character.id)?.save as { bank: { gold: number } }).bank.gold).toBe(999);
+    expect((table.rows.get(s.character.id)?.save as { clock: number }).clock).toBe(999);
   });
 
   it('prefers the cloud copy when it is newer (played on another device)', async () => {
@@ -93,27 +93,27 @@ describe('cloud saves', () => {
     const s = newGame(1, { name: 'Cy', classId: 'warrior' });
     await cloud.save(s);
     const other = structuredClone(s);
-    other.bank.gold = 5000;
+    other.clock = 5000;
     other.lastSaved += 60_000;
     const row = table.rows.get(s.character.id)!;
     row.save = JSON.parse(JSON.stringify(other));
     const loaded = await cloud.load(s.character.id);
-    expect(loaded?.bank.gold).toBe(5000);
-    expect((await cache.load(s.character.id))?.bank.gold).toBe(5000);
+    expect(loaded?.clock).toBe(5000);
+    expect((await cache.load(s.character.id))?.clock).toBe(5000);
   });
 
   it('collapses overlapping saves into the latest one', async () => {
     const { table, cloud } = store();
     const s = newGame(1, { name: 'Di', classId: 'mage' });
     const a = cloud.save(s);
-    s.bank.gold = 1;
+    s.clock = 1;
     void cloud.save(s);
-    s.bank.gold = 2;
+    s.clock = 2;
     void cloud.save(s);
     await a;
     await new Promise((r) => setTimeout(r, 0));
     expect(table.upserts).toBe(2);
-    expect((table.rows.get(s.character.id)?.save as { bank: { gold: number } }).bank.gold).toBe(2);
+    expect((table.rows.get(s.character.id)?.save as { clock: number }).clock).toBe(2);
   });
 
   it('keeps the account in a reserved row that never shows up as a character', async () => {

@@ -7,7 +7,7 @@ import { ACTS, actOpen, ZONES } from './data/zones';
 import { FINAL_ACT } from './engine/hideout';
 import type { Ctx } from './engine/context';
 import { itemName } from './engine/items';
-import { alignWarTable, freshAccount, settleCharacter } from './engine/account';
+import { alignWarTable, fillAccount, freshAccount, mergeAccounts, settleCharacter } from './engine/account';
 import { MIN_OFFLINE_MS, simulateOffline, type OfflineSummary } from './engine/offline';
 import { mathRng } from './engine/rng';
 import type { ClassId } from './data/classes';
@@ -71,6 +71,8 @@ export interface Toast {
 
 const NOTIFY_MS = 100;
 const AUTOSAVE_MS = 10_000;
+/** How often to look for another device's copy of the account. */
+const ACCOUNT_PULL_MS = 30_000;
 /** frames further apart than this (tab hidden, laptop asleep) are treated as offline time */
 const BACKGROUND_MS = 5 * 60_000;
 
@@ -104,10 +106,12 @@ class GameStore {
   readonly accounts = new AppAccounts(localStorage, getSupabase());
   private saves: SaveStore | null = null;
   private tabs = new TabClaims((id, stale) => this.releaseCharacter(id, stale));
-  /** the shared hideout, stash and unlocks; every character played on this account holds this same object */
+  /** the shared hideout, Stash tabs and unlocks; every character played on this account holds this same object */
   realm: AccountState = freshAccount();
   /** the account as last written, to tell when it has changed */
   private savedRealm = '';
+  /** the same, leaving out the bank */
+  private savedShelves = '';
   /** cloud sync state while signed in */
   sync: SyncStatus | null = null;
   /** characters saved as a guest on this browser, offered for moving to a signed-in account */
@@ -124,6 +128,7 @@ class GameStore {
   private lastFrame = 0;
   private lastNotify = 0;
   private lastSave = 0;
+  private lastPull = 0;
   /** a failing save is reported once per session, not on every autosave */
   private saveErrorReported = false;
   private loop: ReturnType<typeof setInterval> | null = null;
@@ -324,7 +329,7 @@ class GameStore {
     await this.refreshCharacters();
     let merged = 0;
     for (const c of this.characters) {
-      if (c.settled) continue;
+      if (c.handedOver) continue;
       const s = await saves.load(c.id);
       if (!s) continue;
       if (settleCharacter(s, this.realm)) {
@@ -349,17 +354,33 @@ class GameStore {
     this.markRealmSaved();
   }
 
-  private realmJson(): string {
-    return JSON.stringify({ ...this.realm, rev: 0 });
+  private realmJson(a = this.realm): string {
+    return JSON.stringify({ ...a, rev: 0 });
   }
 
-  private markRealmSaved() {
-    this.savedRealm = this.realmJson();
+  /** Everything but the bank, which changes too often to be worth a save of its own. */
+  private shelvesJson(a = this.realm): string {
+    return JSON.stringify({ ...a, rev: 0, bank: undefined });
+  }
+
+  private markRealmSaved(a = this.realm) {
+    this.savedRealm = this.realmJson(a);
+    this.savedShelves = this.shelvesJson(a);
+  }
+
+  /** Another copy of the account is ahead of this one: take it, keeping what changed here since the last save. */
+  private mergeRealm(theirs: AccountState | null) {
+    if (!theirs || theirs.id !== this.realm.id || theirs.rev <= this.realm.rev) return;
+    mergeAccounts(this.realm, JSON.parse(this.savedRealm) as AccountState, theirs);
+    this.realm.rev = theirs.rev;
+    this.markRealmSaved(theirs);
   }
 
   /** Written whenever it changes, not with every autosave, so an idle tab can't overwrite newer stash changes. */
   private saveRealm() {
-    if (!this.saves || this.realmJson() === this.savedRealm) return;
+    if (!this.saves) return;
+    this.mergeRealm(this.saves.peekAccount());
+    if (this.realmJson() === this.savedRealm) return;
     this.realm.rev += 1;
     this.markRealmSaved();
     this.saves.saveAccount(this.realm).catch((err) => reportError(err, { where: 'saveAccount' }));
@@ -368,10 +389,7 @@ class GameStore {
   /** Another tab changed the shared account: use its copy. */
   private onOtherTab(e: StorageEvent) {
     if (!e.newValue || !e.key?.endsWith('-account-standard') || !this.saves) return;
-    const theirs = JSON.parse(e.newValue) as AccountState;
-    if (theirs.id !== this.realm.id || theirs.rev <= this.realm.rev) return;
-    Object.assign(this.realm, theirs);
-    this.markRealmSaved();
+    this.mergeRealm(fillAccount(JSON.parse(e.newValue) as AccountState));
     this.notify();
   }
 
@@ -544,6 +562,10 @@ class GameStore {
       reportError(err, { where: 'save' });
     });
     this.saveRealm();
+    if (performance.now() - this.lastPull >= ACCOUNT_PULL_MS) {
+      this.lastPull = performance.now();
+      void this.saves.pullAccount().then((theirs) => this.mergeRealm(theirs));
+    }
   }
 
   /** Swap in a different state for the current session (import / reset). */
@@ -597,7 +619,7 @@ class GameStore {
     const result = fn(this.state, this.ctx);
     if (typeof result === 'string' && result) this.pushToast(result, 'warn');
     // the stash and the bag have to be written together, or a crash could lose or copy an item
-    if (this.screen === 'game' && this.realmJson() !== this.savedRealm) this.save();
+    if (this.screen === 'game' && this.shelvesJson() !== this.savedShelves) this.save();
     this.notify();
     return result;
   }

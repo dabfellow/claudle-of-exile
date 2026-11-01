@@ -165,10 +165,10 @@ describe('fossils', () => {
   it('are spent with mod-rolling orbs and refused with others', () => {
     const s = player();
     const item = ring(s);
-    Object.assign(s.bank, { transmute: 2, scour: 1, scorched_fossil: 1 });
+    Object.assign(s.account.bank, { transmute: 2, scour: 1, scorched_fossil: 1 });
     expect(applyOrb(s, ctx(), 'transmute', item.uid, 'scorched_fossil')).toBeNull();
-    expect(s.bank.transmute).toBe(1);
-    expect(s.bank.scorched_fossil).toBe(0);
+    expect(s.account.bank.transmute).toBe(1);
+    expect(s.account.bank.scorched_fossil).toBe(0);
     expect(orbReason(s, 'scour', item.uid, 'scorched_fossil')).toBe("Fossils don't work with this orb");
   });
 });
@@ -177,7 +177,7 @@ describe('essences', () => {
   it('always force their modifier at their tier', () => {
     const s = player();
     const item = ring(s, 10);
-    s.bank.essence_embers_2 = 20;
+    s.account.bank.essence_embers_2 = 20;
     for (let i = 0; i < 20; i++) {
       expect(applyEssence(s, ctx(i), 'essence_embers_2', item.uid)).toBeNull();
       expect(item.rarity).toBe('magic');
@@ -187,8 +187,8 @@ describe('essences', () => {
 
   it('are refused on low item level or a base that cannot roll the modifier', () => {
     const s = player();
-    s.bank.essence_embers_2 = 1;
-    s.bank.essence_haste_2 = 1;
+    s.account.bank.essence_embers_2 = 1;
+    s.account.bank.essence_haste_2 = 1;
     expect(essenceReason(s, 'essence_embers_2', ring(s, 5).uid)).toMatch(/item level 8/);
     const base = BASES.find((b) => spawnWeight(affixDef('attack_speed'), b) === 0)!;
     const other = createItem(s, base.id, 20, 'normal', seeded(1));
@@ -208,39 +208,39 @@ describe('auto-crafting', () => {
   it('needs Crafting Bench level 5', () => {
     const s = player();
     const item = ring(s, 20, 'magic');
-    s.bank.alteration = 10;
+    s.account.bank.alteration = 10;
     expect(startCraftUntil(s, ctx(1), item.uid, { orb: 'alteration' }, { kind: 'has', affixId: 'fire_res' })).toMatch(/Bench level 5/);
   });
 
   it('spends orbs until the rule matches, then stops', () => {
     const s = crafter();
     const item = ring(s, 20, 'magic');
-    s.bank.alteration = 2000;
+    s.account.bank.alteration = 2000;
     const c = ctx(3);
     expect(startCraftUntil(s, c, item.uid, { orb: 'alteration' }, { kind: 'has', affixId: 'fire_res' })).toBeNull();
     for (let i = 0; i < 4000 && s.action; i++) tick(s, c, 1500);
     expect(s.action).toBeNull();
     expect(ruleMet(item, { kind: 'has', affixId: 'fire_res' })).toBe(true);
-    expect(s.bank.alteration).toBeLessThan(2000);
+    expect(s.account.bank.alteration).toBeLessThan(2000);
   });
 
   it('stops when the orbs run out', () => {
     const s = crafter();
     const item = ring(s, 20, 'magic');
-    s.bank.alteration = 3;
+    s.account.bank.alteration = 3;
     const c = ctx(1);
     // a magic item has one suffix, so it can never have two resistances
     startCraftUntil(s, c, item.uid, { orb: 'alteration' }, { kind: 'twoOf', affixIds: ['fire_res', 'cold_res'] });
     tick(s, c, 1500 * 10);
     expect(s.action).toBeNull();
-    expect(s.bank.alteration).toBe(0);
+    expect(s.account.bank.alteration).toBe(0);
   });
 
   it('keeps going offline and reports the result', () => {
     const s = crafter();
     const item = ring(s, 20, 'magic');
-    s.bank.alteration = 2000;
-    s.bank.scorched_fossil = 2000;
+    s.account.bank.alteration = 2000;
+    s.account.bank.scorched_fossil = 2000;
     const c = ctx(5);
     startCraftUntil(s, c, item.uid, { orb: 'alteration', fossil: 'scorched_fossil' }, { kind: 'has', affixId: 'fire_res' });
     const sum = simulateOffline(s, c, 60 * 60_000);
@@ -251,7 +251,7 @@ describe('auto-crafting', () => {
   it('locks the item while it works', () => {
     const s = crafter();
     const item = ring(s, 20, 'magic');
-    s.bank.alteration = 10;
+    s.account.bank.alteration = 10;
     const c = ctx(1);
     startCraftUntil(s, c, item.uid, { orb: 'alteration' }, { kind: 'twoOf', affixIds: ['fire_res', 'cold_res'] });
     salvage(s, c, [item.uid]);
@@ -264,7 +264,7 @@ describe('auto-crafting', () => {
     const s = crafter();
     s.skillPassives = ['core_overtime'];
     const item = ring(s, 20, 'magic');
-    s.bank.alteration = 200;
+    s.account.bank.alteration = 200;
     const c = ctx(2);
     startCraftUntil(s, c, item.uid, { orb: 'alteration' }, { kind: 'twoOf', affixIds: ['fire_res', 'cold_res'] });
     let steps = 0;
@@ -279,11 +279,11 @@ describe('auto-crafting', () => {
 describe('smithing catalysts', () => {
   it('Resin raises item level but never past the campaign cap', () => {
     const s = player();
-    s.bank = { ...s.bank, copper_ore: 100, rough_gem: 100, ash_resin: 5 };
+    s.account.bank = { ...s.account.bank, copper_ore: 100, rough_gem: 100, ash_resin: 5 };
     setSmithCatalyst(s, { resin: 'ash_resin' });
     run(s, 'smith_iron_ring', 1);
     expect(s.inventory.at(-1)!.ilvl).toBe(3);
-    expect(s.bank.ash_resin).toBe(4);
+    expect(s.account.bank.ash_resin).toBe(4);
 
     s.skills.smithing = xpForLevel(30);
     run(s, 'smith_iron_ring', 1);
@@ -292,20 +292,20 @@ describe('smithing catalysts', () => {
 
   it('a Fossil is only used when the base comes out Magic', () => {
     const s = player();
-    s.bank = { ...s.bank, copper_ore: 100, rough_gem: 100, scorched_fossil: 5 };
+    s.account.bank = { ...s.account.bank, copper_ore: 100, rough_gem: 100, scorched_fossil: 5 };
     setSmithCatalyst(s, { fossil: 'scorched_fossil' });
     run(s, 'smith_iron_ring', 3);
-    expect(s.bank.scorched_fossil).toBe(5);
+    expect(s.account.bank.scorched_fossil).toBe(5);
     s.skillPassives = ['smithing_ks']; // Grandmaster Smith: always Magic
     run(s, 'smith_iron_ring', 3);
-    expect(s.bank.scorched_fossil).toBe(2);
+    expect(s.account.bank.scorched_fossil).toBe(2);
   });
 
   it('repeat until stops on a Fossil modifier', () => {
     const s = player();
     s.skills.smithing = xpForLevel(20);
     s.skillPassives = ['smithing_ks'];
-    s.bank = { ...s.bank, copper_ore: 10000, rough_gem: 10000, scorched_fossil: 1000 };
+    s.account.bank = { ...s.account.bank, copper_ore: 10000, rough_gem: 10000, scorched_fossil: 1000 };
     setSmithCatalyst(s, { fossil: 'scorched_fossil', until: true, salvageMisses: true });
     run(s, 'smith_iron_ring', 500);
     expect(s.action).toBeNull();
@@ -317,7 +317,7 @@ describe('smithing catalysts', () => {
   function smith(full = false): GameState {
     const s = player();
     s.account.hideout.bench = BENCH_BUILT_LEVEL;
-    s.bank = { ...s.bank, copper_ore: 10000, rough_gem: 10000 };
+    s.account.bank = { ...s.account.bank, copper_ore: 10000, rough_gem: 10000 };
     if (full) while (s.inventory.length < BAG_SIZE) ring(s);
     return s;
   }
@@ -332,7 +332,7 @@ describe('smithing catalysts', () => {
     expect(s.action?.kind).toBe('skill');
     expect(s.inventory).toHaveLength(BAG_SIZE);
     expect(s.lifetime.salvaged).toBe(3);
-    expect(s.bank.arcane_dust).toBeGreaterThan(0);
+    expect(s.account.bank.arcane_dust).toBeGreaterThan(0);
   });
 
   it('salvaging when full keeps bases while the bag has room', () => {
@@ -364,7 +364,7 @@ describe('smithing catalysts', () => {
     const s = smith(true);
     s.skills.smithing = xpForLevel(20);
     s.skillPassives = ['smithing_ks'];
-    s.bank.scorched_fossil = 1000;
+    s.account.bank.scorched_fossil = 1000;
     setSmithCatalyst(s, { fossil: 'scorched_fossil', until: true, salvageFull: true });
     run(s, 'smith_iron_ring', 500);
     expect(s.action).toBeNull();
@@ -379,16 +379,16 @@ describe('gathering and alchemy', () => {
     const s = player();
     s.skills.mining = xpForLevel(5);
     run(s, 'mine_scorched', 400);
-    expect(s.bank.copper_ore).toBeGreaterThan(150);
-    expect(s.bank.copper_ore).toBeLessThan(250);
-    expect(s.bank.scorched_fossil).toBeGreaterThan(10);
+    expect(s.account.bank.copper_ore).toBeGreaterThan(150);
+    expect(s.account.bank.copper_ore).toBeLessThan(250);
+    expect(s.account.bank.scorched_fossil).toBeGreaterThan(10);
   });
 
   it('every gathering action can drop its orb shard', () => {
     const s = player();
     run(s, 'mine_copper', 1000);
-    expect(s.bank.aug_shard).toBeGreaterThan(5);
-    expect(s.bank.aug_shard).toBeLessThan(40);
+    expect(s.account.bank.aug_shard).toBeGreaterThan(5);
+    expect(s.account.bank.aug_shard).toBeLessThan(40);
   });
 
   it('Fossil Hunter finds more Fossils', () => {
@@ -399,33 +399,33 @@ describe('gathering and alchemy', () => {
       s.skills.mining = xpForLevel(5);
       run(s, 'mine_scorched', 1000, 7);
     }
-    expect(hunter.bank.scorched_fossil).toBeGreaterThan(plain.bank.scorched_fossil);
+    expect(hunter.account.bank.scorched_fossil).toBeGreaterThan(plain.account.bank.scorched_fossil);
   });
 
   it('Distiller turns some Lesser Essences into Greater', () => {
     const s = player();
     s.skillPassives = ['harvesting_n0'];
     run(s, 'herb_sun', 3000);
-    expect(s.bank.essence_vitality_2).toBeGreaterThan(0);
+    expect(s.account.bank.essence_vitality_2).toBeGreaterThan(0);
   });
 
   it('batch recipes cost 8.5×, or 7.5× with Bulk Brewer', () => {
     expect(actionDef('orb_transmute_x10').inputs).toEqual({ arcane_dust: 26, sunpetal: 17 });
     const s = player();
     s.skillPassives = ['alchemy_n0'];
-    s.bank = { ...s.bank, arcane_dust: 100, sunpetal: 100 };
+    s.account.bank = { ...s.account.bank, arcane_dust: 100, sunpetal: 100 };
     run(s, 'orb_transmute_x10', 1);
-    expect(s.bank.arcane_dust).toBe(100 - 23);
-    expect(s.bank.sunpetal).toBe(100 - 15);
-    expect(s.bank.transmute).toBeGreaterThanOrEqual(10);
+    expect(s.account.bank.arcane_dust).toBe(100 - 23);
+    expect(s.account.bank.sunpetal).toBe(100 - 15);
+    expect(s.account.bank.transmute).toBeGreaterThanOrEqual(10);
   });
 
   it('fuses 20 shards into an orb', () => {
     const s = player();
-    s.bank.alt_shard = 40;
+    s.account.bank.alt_shard = 40;
     run(s, 'fuse_alt_shard', 2);
-    expect(s.bank.alt_shard).toBe(0);
-    expect(s.bank.alteration).toBe(2);
+    expect(s.account.bank.alt_shard).toBe(0);
+    expect(s.account.bank.alteration).toBe(2);
   });
 });
 

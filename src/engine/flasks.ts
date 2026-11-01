@@ -1,14 +1,14 @@
 import { FLASKS, flaskAffixDef, FLASK_AFFIXES, flaskDef, type FlaskAffixDef, type FlaskDef, type FlaskStat } from '../data/flasks';
 import { currencyDef } from '../data/materials';
 import type { Ctx } from './context';
-import { newUid } from './items';
+import { accountUid } from './items';
 import { chance, pick, pickWeighted, rInt, type Rng } from './rng';
-import type { FlaskInstance, FlaskMod, GameState, InstillCondition } from './types';
+import type { AccountState, FlaskInstance, FlaskMod, GameState, InstillCondition } from './types';
 
 // ---------- creation ----------
 
 export function newFlask(s: GameState, flaskId: string, ilvl = 1): FlaskInstance {
-  return { uid: newUid(s), flaskId, charges: 0, rarity: 'normal', ilvl, prefixes: [], suffixes: [], instill: null };
+  return { uid: accountUid(s), flaskId, charges: 0, rarity: 'normal', ilvl, prefixes: [], suffixes: [], instill: null };
 }
 
 function eligible(f: FlaskInstance, kind: 'prefix' | 'suffix'): FlaskAffixDef[] {
@@ -109,11 +109,11 @@ export const FLASK_ORBS = ['transmute', 'augment', 'alteration', 'scour'] as con
 export type FlaskOrb = (typeof FLASK_ORBS)[number];
 
 export function findFlask(s: GameState, uid: number): FlaskInstance | undefined {
-  return s.flaskSlots.find((f) => f?.uid === uid) ?? s.flaskStash.find((f) => f.uid === uid);
+  return s.flaskSlots.find((f) => f?.uid === uid) ?? s.account.flaskStash.find((f) => f.uid === uid);
 }
 
 export function flaskOrbReason(s: GameState, orb: FlaskOrb, f: FlaskInstance): string | null {
-  if ((s.bank[orb] ?? 0) < 1) return `You have no ${currencyDef(orb).name}`;
+  if ((s.account.bank[orb] ?? 0) < 1) return `You have no ${currencyDef(orb).name}`;
   const room = f.prefixes.length < 1 || f.suffixes.length < 1;
   switch (orb) {
     case 'transmute':
@@ -132,7 +132,7 @@ export function applyFlaskOrb(s: GameState, ctx: Ctx, orb: FlaskOrb, uid: number
   if (!f) return 'Flask not found';
   const reason = flaskOrbReason(s, orb, f);
   if (reason) return reason;
-  s.bank[orb] -= 1;
+  s.account.bank[orb] -= 1;
   if (orb === 'transmute') {
     f.rarity = 'magic';
     rerollMagic(f, ctx.rng);
@@ -152,9 +152,9 @@ export function applyFlaskOrb(s: GameState, ctx: Ctx, orb: FlaskOrb, uid: number
 export function enchantFlask(s: GameState, ctx: Ctx, uid: number, cond: InstillCondition): string | null {
   const f = findFlask(s, uid);
   if (!f) return 'Flask not found';
-  if ((s.bank.instill ?? 0) < 1) return 'You need an Instilling Orb';
+  if ((s.account.bank.instill ?? 0) < 1) return 'You need an Instilling Orb';
   if (f.instill === cond) return 'Already has that enchantment';
-  s.bank.instill -= 1;
+  s.account.bank.instill -= 1;
   f.instill = cond;
   ctx.emit({ t: 'info', text: `${flaskName(f)} enchanted`, tone: 'good' });
   return null;
@@ -170,41 +170,41 @@ export function flaskValue(f: FlaskInstance): number {
 export const FLASK_STASH_CAP = 10;
 
 /** Sell the least valuable spares of any kind over the cap. Returns the gold. */
-export function trimFlaskStash(s: GameState): number {
+export function trimFlaskStash(a: AccountState): number {
   const byKind = new Map<string, FlaskInstance[]>();
-  for (const f of s.flaskStash) byKind.set(f.flaskId, [...(byKind.get(f.flaskId) ?? []), f]);
+  for (const f of a.flaskStash) byKind.set(f.flaskId, [...(byKind.get(f.flaskId) ?? []), f]);
   const sold = new Set<number>();
   for (const list of byKind.values()) {
     if (list.length <= FLASK_STASH_CAP) continue;
-    for (const f of [...list].sort((a, b) => flaskValue(a) - flaskValue(b)).slice(0, list.length - FLASK_STASH_CAP)) sold.add(f.uid);
+    for (const f of [...list].sort((x, y) => flaskValue(x) - flaskValue(y)).slice(0, list.length - FLASK_STASH_CAP)) sold.add(f.uid);
   }
   if (!sold.size) return 0;
   let gold = 0;
-  s.flaskStash = s.flaskStash.filter((f) => {
+  a.flaskStash = a.flaskStash.filter((f) => {
     if (!sold.has(f.uid)) return true;
     gold += flaskValue(f);
     return false;
   });
-  s.bank.gold = (s.bank.gold ?? 0) + gold;
+  a.bank.gold = (a.bank.gold ?? 0) + gold;
   return gold;
 }
 
 /** Add a spare flask, selling the worst of its kind if that puts it over the cap. */
 export function stashFlask(s: GameState, f: FlaskInstance): void {
-  s.flaskStash.push(f);
-  trimFlaskStash(s);
+  s.account.flaskStash.push(f);
+  trimFlaskStash(s.account);
 }
 
 export function sellFlasks(s: GameState, ctx: Ctx, uids: number[]): number {
   const set = new Set(uids);
   let gold = 0;
-  s.flaskStash = s.flaskStash.filter((f) => {
+  s.account.flaskStash = s.account.flaskStash.filter((f) => {
     if (!set.has(f.uid)) return true;
     gold += flaskValue(f);
     return false;
   });
   if (gold) {
-    s.bank.gold = (s.bank.gold ?? 0) + gold;
+    s.account.bank.gold = (s.account.bank.gold ?? 0) + gold;
     ctx.emit({ t: 'info', text: `Sold ${uids.length} flask(s) for ${gold} gold`, tone: 'good' });
   }
   return gold;

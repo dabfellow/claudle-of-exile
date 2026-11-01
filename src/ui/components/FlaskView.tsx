@@ -68,7 +68,7 @@ export function FlaskTip({ f, pinned = false }: { f: FlaskInstance; pinned?: boo
 }
 
 export function pinFlask(f: FlaskInstance): void {
-  togglePin({ key: `flask-${f.uid}`, title: flaskName(f), render: () => <FlaskTip f={game.state.flaskSlots.find((x) => x?.uid === f.uid) ?? game.state.flaskStash.find((x) => x.uid === f.uid) ?? f} pinned /> });
+  togglePin({ key: `flask-${f.uid}`, title: flaskName(f), render: () => <FlaskTip f={game.state.flaskSlots.find((x) => x?.uid === f.uid) ?? game.state.account.flaskStash.find((x) => x.uid === f.uid) ?? f} pinned /> });
 }
 
 /** Life and Mana flasks group by kind; each utility flask (Granite, Ruby, …) is its own group. */

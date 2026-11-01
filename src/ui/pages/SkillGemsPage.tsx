@@ -241,10 +241,10 @@ function CastOrder({ s }: { s: GameState }) {
 /** Opened from an empty socket: the loose supports that fit this skill, then the ones that would if you had them. */
 function SocketPicker({ s, gem, index, onDone }: { s: GameState; gem: SkillGemInstance; index: number; onDone: () => void }) {
   const act = activeGemDef(gem.gemId);
-  const owned = s.supportGems.filter((g) => !supportReason(gem, g.supportId));
+  const owned = s.account.supportGems.filter((g) => !supportReason(gem, g.supportId));
   // one entry per kind, even when several copies are in the bag
   const ownedKinds = [...new Map(owned.map((g) => [g.supportId, g])).values()];
-  const missing = SUPPORT_GEMS.filter((d) => supportFits(d, act) && gemArrived(s, d.id) && !s.supportGems.some((g) => g.supportId === d.id) && !gem.supports.some((x) => x?.supportId === d.id));
+  const missing = SUPPORT_GEMS.filter((d) => supportFits(d, act) && gemArrived(s, d.id) && !s.account.supportGems.some((g) => g.supportId === d.id) && !gem.supports.some((x) => x?.supportId === d.id));
   return (
     <div className="socket-picker" onClick={(e) => e.stopPropagation()}>
       <div className="row" style={{ gap: 8 }}>
@@ -348,7 +348,7 @@ function SlotTile({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; slot
 function Sockets({ s, gem, pickedSupport, onPlaced }: { s: GameState; gem: SkillGemInstance; pickedSupport: number | null; onPlaced: () => void }) {
   const [openSocket, setOpenSocket] = useState<number | null>(null);
   const sockets = supportSlots(gem);
-  const pickedDef = pickedSupport !== null ? s.supportGems.find((x) => x.uid === pickedSupport) : null;
+  const pickedDef = pickedSupport !== null ? s.account.supportGems.find((x) => x.uid === pickedSupport) : null;
   const fitReason = pickedDef ? supportReason(gem, pickedDef.supportId) : null;
   const canDrop = !!pickedDef && !fitReason;
   const drop = (i: number) => {
@@ -384,7 +384,7 @@ function Sockets({ s, gem, pickedSupport, onPlaced }: { s: GameState; gem: Skill
             </button>
           );
         })}
-        {(s.bank.expansion ?? 0) > 0 && gem.extraSlots < 1 && (
+        {(s.account.bank.expansion ?? 0) > 0 && gem.extraSlots < 1 && (
           <button className="btn sm" onClick={() => game.act((st, ctx) => expandSockets(st, ctx, gem.uid))}>
             + Socket (Orb of Expansion)
           </button>
@@ -414,7 +414,7 @@ function SlotModal({
   const gem = s.skillBar[slot];
   const d = deriveStats(s, []);
   const [choosing, setChoosing] = useState(!gem);
-  const usable = [...s.gems].sort((a, b) => b.level - a.level || activeGemDef(a.gemId).name.localeCompare(activeGemDef(b.gemId).name));
+  const usable = [...s.account.gems].sort((a, b) => b.level - a.level || activeGemDef(a.gemId).name.localeCompare(activeGemDef(b.gemId).name));
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="card modal slot-modal" onClick={(e) => e.stopPropagation()}>
@@ -552,14 +552,14 @@ export function SkillGemsPage() {
   const d = deriveStats(s, []);
   const has = (name: string, search: string) => name.toLowerCase().includes(search.trim().toLowerCase());
   const byName = (a: string, b: string) => activeGemDef(a).name.localeCompare(activeGemDef(b).name);
-  const gems = s.gems
+  const gems = s.account.gems
     .filter((g) => {
       const def = activeGemDef(g.gemId);
       return kindMatches(def, gemKind) && (!gemAttr || def.attr === gemAttr) && has(def.name, gemSearch);
     })
     .sort((a, b) => (gemSort === 'level' ? b.level - a.level || byName(a.gemId, b.gemId) : byName(a.gemId, b.gemId) || b.level - a.level));
   const fitsBar = (supportId: string) => s.skillBar.some((b) => b && !supportReason(b, supportId));
-  const supports = s.supportGems
+  const supports = s.account.supportGems
     .filter((g) => {
       const def = supportGemDef(g.supportId);
       return (!supAttr || def.attr === supAttr) && (!supFits || fitsBar(g.supportId)) && has(def.name, supSearch);
@@ -613,14 +613,14 @@ export function SkillGemsPage() {
           <div className="card-title">
             Skill gems
             <span className="muted num small">
-              {gems.length}/{s.gems.length}
+              {gems.length}/{s.account.gems.length}
             </span>
             <span className="grow" />
             <span className="card-hint">
               Click one, then a slot above
             </span>
           </div>
-          {s.gems.length > 0 && (
+          {s.account.gems.length > 0 && (
             <GemFilters search={gemSearch} setSearch={setGemSearch} attr={gemAttr} setAttr={setGemAttr}>
               <div className="gem-chips">
                 {GEM_KINDS.map((k) => (
@@ -639,8 +639,8 @@ export function SkillGemsPage() {
               </div>
             </GemFilters>
           )}
-          {s.gems.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, especially bosses.</EmptyState>}
-          {s.gems.length > 0 && gems.length === 0 && <div className="dim small">No gems match these filters.</div>}
+          {s.account.gems.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, especially bosses.</EmptyState>}
+          {s.account.gems.length > 0 && gems.length === 0 && <div className="dim small">No gems match these filters.</div>}
           <div className="gem-bag">
             {gems.map((g) => (
               <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
@@ -662,14 +662,14 @@ export function SkillGemsPage() {
           <div className="card-title">
             Support gems
             <span className="muted num small">
-              {supports.length}/{s.supportGems.length}
+              {supports.length}/{s.account.supportGems.length}
             </span>
             <span className="grow" />
             <span className="card-hint">
               Click one, then a skill on the bar
             </span>
           </div>
-          {s.supportGems.length > 0 && (
+          {s.account.supportGems.length > 0 && (
             <GemFilters search={supSearch} setSearch={setSupSearch} attr={supAttr} setAttr={setSupAttr}>
               <div className="gem-chips">
                 <button className={`gem-chip ${supFits ? 'active' : ''}`} onClick={() => setSupFits(!supFits)} title="Only supports that fit a skill on your bar">
@@ -678,8 +678,8 @@ export function SkillGemsPage() {
               </div>
             </GemFilters>
           )}
-          {s.supportGems.length === 0 && <EmptyState small>No loose support gems yet.</EmptyState>}
-          {s.supportGems.length > 0 && supports.length === 0 && <div className="dim small">No supports match these filters.</div>}
+          {s.account.supportGems.length === 0 && <EmptyState small>No loose support gems yet.</EmptyState>}
+          {s.account.supportGems.length > 0 && supports.length === 0 && <div className="dim small">No supports match these filters.</div>}
           <div className="gem-bag">
             {supports.map((g) => {
               const def = supportGemDef(g.supportId);

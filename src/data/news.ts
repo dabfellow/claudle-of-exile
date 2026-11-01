@@ -8,6 +8,15 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.30',
+    date: '1 Nov 2026',
+    title: 'One stash for all your characters',
+    items: [
+      'Every Stash tab is now shared: gold, currency, materials, spare gems and spare flasks join your gear pages. What each of your characters was holding has been added together.',
+      'Your skill bar and flask belt still belong to each character. If you end up with more than 10 of one spare flask, the worst are sold for gold, as usual.',
+    ],
+  },
+  {
     version: '0.2.27',
     date: '1 Nov 2026',
     title: 'Getting ready for what comes next',

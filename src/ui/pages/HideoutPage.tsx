@@ -310,7 +310,7 @@ function StationRow({ st, go }: { st: StationDef; go: (p: Page) => void }) {
       </span>
       <span className="small">{st.levels[lvl - 1].effect}</span>
       <span className="small muted">{next ?? '—'}</span>
-      <span onClick={(e) => e.stopPropagation()}>{cost ? <HaveNeed cost={cost} have={s.bank} go={go} /> : <span className="dim small">Fully upgraded</span>}</span>
+      <span onClick={(e) => e.stopPropagation()}>{cost ? <HaveNeed cost={cost} have={s.account.bank} go={go} /> : <span className="dim small">Fully upgraded</span>}</span>
       <span className="hx-ledger-act">
         {cost ? (
           <button

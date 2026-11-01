@@ -23,7 +23,7 @@ function gemcutter(level = 1): GameState {
   const s = veteran(newGame(1, { name: 'T', classId: 'warrior' }));
   s.skills.gemcutting = xpForLevel(level);
   s.unlockedZones = ['mudflats', 'brinecaves', 'ashwood', 'blackreed', 'crypt', 'shipgrave', 'stormcliffs'];
-  Object.assign(s.bank, { rough_gem: 100, arcane_dust: 1000, frostleaf: 100, emberroot: 100, voidbloom: 100 });
+  Object.assign(s.account.bank, { rough_gem: 100, arcane_dust: 1000, frostleaf: 100, emberroot: 100, voidbloom: 100 });
   return s;
 }
 
@@ -31,9 +31,9 @@ describe('gemcutting', () => {
   it('cuts skill gems from the whole pool into the gem bag', () => {
     const s = gemcutter();
     cut(s, 'cut_skill', 30);
-    expect(s.gems).toHaveLength(30);
-    expect(new Set(s.gems.map((g) => activeGemDef(g.gemId).attr)).size).toBe(3);
-    expect(s.bank.rough_gem).toBe(10);
+    expect(s.account.gems).toHaveLength(30);
+    expect(new Set(s.account.gems.map((g) => activeGemDef(g.gemId).attr)).size).toBe(3);
+    expect(s.account.bank.rough_gem).toBe(10);
     expect(s.skills.gemcutting).toBeGreaterThan(xpForLevel(1));
   });
 
@@ -46,24 +46,24 @@ describe('gemcutting', () => {
   it('support recipe gives general supports of any attribute', () => {
     const s = gemcutter(10);
     cut(s, 'cut_support', 20);
-    expect(s.supportGems).toHaveLength(20);
-    for (const g of s.supportGems) expect(supportGemDef(g.supportId).signatureFor).toBeUndefined();
-    expect(new Set(s.supportGems.map((g) => supportGemDef(g.supportId).attr)).size).toBeGreaterThan(1);
+    expect(s.account.supportGems).toHaveLength(20);
+    for (const g of s.account.supportGems) expect(supportGemDef(g.supportId).signatureFor).toBeUndefined();
+    expect(new Set(s.account.supportGems.map((g) => supportGemDef(g.supportId).attr)).size).toBeGreaterThan(1);
   });
 
   it('signature supports favour skills you own', () => {
     const s = gemcutter(25);
     const owned = s.skillBar.filter(Boolean).map((g) => g!.gemId);
     cut(s, 'cut_signature', 8);
-    expect(s.supportGems).toHaveLength(8);
-    for (const g of s.supportGems) expect(owned).toContain(supportGemDef(g.supportId).signatureFor);
+    expect(s.account.supportGems).toHaveLength(8);
+    for (const g of s.account.supportGems) expect(owned).toContain(supportGemDef(g.supportId).signatureFor);
   });
 
   it('stops when rough gems run out', () => {
     const s = gemcutter();
-    s.bank.rough_gem = 7;
+    s.account.bank.rough_gem = 7;
     cut(s, 'cut_skill', 5);
-    expect(s.gems).toHaveLength(2);
+    expect(s.account.gems).toHaveLength(2);
     expect(s.action).toBeNull();
   });
 

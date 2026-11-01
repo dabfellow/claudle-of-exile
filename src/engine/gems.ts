@@ -19,7 +19,7 @@ import { WEAPON_FAMILIES, type WeaponFamily } from '../data/bases';
 import { aimLockReason, ruleLockReason, ruleSlots } from './automation';
 import { characterLevel } from './character';
 import type { Ctx } from './context';
-import { newUid } from './items';
+import { accountUid } from './items';
 import { deriveStats, type Attributes, type Derived } from './stats';
 import type { GameState, SkillGemInstance, SupportGemInstance } from './types';
 
@@ -90,14 +90,15 @@ export function gemAttrReason(attrs: Attributes, gem: SkillGemInstance, level = 
  */
 export function settleGems(s: GameState): void {
   const charLvl = characterLevel(s);
-  for (const gem of [...s.skillBar, ...s.gems]) {
+  for (const gem of [...s.skillBar, ...(s.unpooled?.gems ?? [])]) {
     if (!gem) continue;
     while (gem.level > 1 && gemLevelReq(gem.gemId, gem.level) > charLvl) gem.level -= 1;
     const act = activeGemDef(gem.gemId);
     const slots = supportSlots(gem);
     gem.supports = gem.supports.map((sup, i) => {
       if (!sup || (i < slots && supportFits(supportGemDef(sup.supportId), act))) return sup;
-      s.supportGems.push(sup);
+      // this runs before the account is attached, so it waits to be handed over
+      ((s.unpooled ??= {}).supportGems ??= []).push(sup);
       return null;
     });
     gem.supports.length = Math.min(gem.supports.length, slots);
@@ -143,12 +144,12 @@ export function gemProgress(gem: SkillGemInstance): number {
 
 /** New gems are Manual only: nothing casts itself until you give it a rule (its suggested one is a click away). */
 export function createSkillGem(s: GameState, gemId: string, level = 1): SkillGemInstance {
-  return { uid: newUid(s), gemId, level, xp: gemXpForLevel(level), supports: [null], extraSlots: 0, rules: [{ when: 'manual' }], priority: 'normal' };
+  return { uid: accountUid(s), gemId, level, xp: gemXpForLevel(level), supports: [null], extraSlots: 0, rules: [{ when: 'manual' }], priority: 'normal' };
 }
 
 export function createSupportGem(s: GameState, supportId: string): SupportGemInstance {
   supportGemDef(supportId);
-  return { uid: newUid(s), supportId };
+  return { uid: accountUid(s), supportId };
 }
 
 /** Keep the supports array length in step with the number of sockets. */
@@ -173,7 +174,7 @@ export function supportReason(gem: SkillGemInstance, supportId: string): string 
 
 /** Find a skill gem wherever it is (bar or bag). */
 export function findSkillGem(s: GameState, uid: number): SkillGemInstance | undefined {
-  return s.skillBar.find((g) => g?.uid === uid) ?? s.gems.find((g) => g.uid === uid);
+  return s.skillBar.find((g) => g?.uid === uid) ?? s.account.gems.find((g) => g.uid === uid);
 }
 
 export function placeOnBar(s: GameState, gemUid: number, slot: number): string | null {
@@ -186,13 +187,13 @@ export function placeOnBar(s: GameState, gemUid: number, slot: number): string |
     s.skillBar[fromBar] = other;
     return null;
   }
-  const fromBag = s.gems.findIndex((g) => g.uid === gemUid);
+  const fromBag = s.account.gems.findIndex((g) => g.uid === gemUid);
   if (fromBag < 0) return 'Gem not found';
-  const reason = gemUseReason(characterLevel(s), deriveStats(s, []).attributes, s.gems[fromBag]);
+  const reason = gemUseReason(characterLevel(s), deriveStats(s, []).attributes, s.account.gems[fromBag]);
   if (reason) return reason;
-  const [gem] = s.gems.splice(fromBag, 1);
+  const [gem] = s.account.gems.splice(fromBag, 1);
   const current = s.skillBar[slot];
-  if (current) s.gems.push(current);
+  if (current) s.account.gems.push(current);
   s.skillBar[slot] = gem;
   return null;
 }
@@ -201,7 +202,7 @@ export function removeFromBar(s: GameState, slot: number): void {
   const gem = s.skillBar[slot];
   if (!gem) return;
   s.skillBar[slot] = null;
-  s.gems.push(gem);
+  s.account.gems.push(gem);
 }
 
 export function socketSupport(s: GameState, gemUid: number, supportUid: number, socket: number): string | null {
@@ -209,15 +210,15 @@ export function socketSupport(s: GameState, gemUid: number, supportUid: number, 
   if (!gem) return 'Gem not found';
   syncSockets(gem);
   if (socket < 0 || socket >= supportSlots(gem)) return 'No such socket';
-  const idx = s.supportGems.findIndex((x) => x.uid === supportUid);
+  const idx = s.account.supportGems.findIndex((x) => x.uid === supportUid);
   if (idx < 0) return 'Support not found';
-  const reason = supportReason(gem, s.supportGems[idx].supportId);
+  const reason = supportReason(gem, s.account.supportGems[idx].supportId);
   if (reason) return reason;
-  const need = gemReqLevel(s.supportGems[idx].supportId);
+  const need = gemReqLevel(s.account.supportGems[idx].supportId);
   if (characterLevel(s) < need) return `Requires level ${need}`;
-  const [sup] = s.supportGems.splice(idx, 1);
+  const [sup] = s.account.supportGems.splice(idx, 1);
   const prev = gem.supports[socket];
-  if (prev) s.supportGems.push(prev);
+  if (prev) s.account.supportGems.push(prev);
   gem.supports[socket] = sup;
   return null;
 }
@@ -227,7 +228,7 @@ export function unsocketSupport(s: GameState, gemUid: number, socket: number): v
   const sup = gem?.supports[socket];
   if (!gem || !sup) return;
   gem.supports[socket] = null;
-  s.supportGems.push(sup);
+  s.account.supportGems.push(sup);
 }
 
 /** Set one of a skill's rules. Manual only stands alone, and a locked rule can't be picked. */
@@ -266,9 +267,9 @@ export function setPriority(s: GameState, slot: number, priority: SkillPriority)
 export function expandSockets(s: GameState, ctx: Ctx, gemUid: number): string | null {
   const gem = findSkillGem(s, gemUid);
   if (!gem) return 'Gem not found';
-  if ((s.bank.expansion ?? 0) < 1) return 'Requires an Orb of Expansion';
+  if ((s.account.bank.expansion ?? 0) < 1) return 'Requires an Orb of Expansion';
   if (gem.extraSlots >= 1 || supportSlots(gem) >= MAX_SUPPORT_SLOTS) return 'No more sockets can be added';
-  s.bank.expansion -= 1;
+  s.account.bank.expansion -= 1;
   gem.extraSlots += 1;
   syncSockets(gem);
   ctx.emit({ t: 'info', text: `${activeGemDef(gem.gemId).name} gained a support socket`, tone: 'good' });

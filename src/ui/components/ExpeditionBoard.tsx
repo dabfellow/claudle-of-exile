@@ -87,7 +87,7 @@ function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
         </Badge>
       </div>
       <p className="dim small">
-        {culture.deals}, for <MatIcon id={culture.artifact} size={12} /> {culture.artifactName}. You have <b className="num">{fmt(s.bank[culture.artifact] ?? 0)}</b>.
+        {culture.deals}, for <MatIcon id={culture.artifact} size={12} /> {culture.artifactName}. You have <b className="num">{fmt(s.account.bank[culture.artifact] ?? 0)}</b>.
       </p>
       {open.map((w) => (
         <WareRow key={w.id} s={s} culture={culture} w={w} />

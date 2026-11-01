@@ -49,9 +49,9 @@ describe('drop tables', () => {
   it('bosses always drop their guaranteed reward', () => {
     const s = fresh();
     const z = zoneDef('mudflats');
-    const before = s.bank.transmute ?? 0;
+    const before = s.account.bank.transmute ?? 0;
     rollLoot(s, ctx(), makeMonster(z.boss, true, 1), z, deriveStats(s));
-    expect((s.bank.transmute ?? 0) - before).toBeGreaterThanOrEqual(bossTable(1).guaranteed[0].qty);
+    expect((s.account.bank.transmute ?? 0) - before).toBeGreaterThanOrEqual(bossTable(1).guaranteed[0].qty);
   });
 });
 
@@ -71,12 +71,12 @@ describe('achievements', () => {
     const c = makeCtx(seeded(1));
     const events: GameEvent[] = c.events;
     s.lifetime.kills = 100;
-    const gold = s.bank.gold ?? 0;
+    const gold = s.account.bank.gold ?? 0;
     expect(checkAchievements(s, c)).toContain('slayer_100');
-    expect(s.bank.gold).toBe(gold + 100);
+    expect(s.account.bank.gold).toBe(gold + 100);
     expect(events.some((e) => e.t === 'achievement' && e.id === 'slayer_100')).toBe(true);
     expect(checkAchievements(s, c)).not.toContain('slayer_100');
-    expect(s.bank.gold).toBe(gold + 100);
+    expect(s.account.bank.gold).toBe(gold + 100);
   });
 
   it('every gated bench recipe points at a real achievement', () => {
@@ -87,8 +87,8 @@ describe('achievements', () => {
   it('bench recipes need their achievement', () => {
     const s = fresh();
     s.account.hideout.bench = 4;
-    s.bank.gold = 1e6;
-    s.bank.arcane_dust = 1e6;
+    s.account.bank.gold = 1e6;
+    s.account.bank.arcane_dust = 1e6;
     const item = createItem(s, 'rusted_sword', 30, 'magic', seeded(3));
     s.inventory.push(item);
     expect(benchCraftReason(s, 'bc_speed', item.uid)).toMatch(/achievement/);

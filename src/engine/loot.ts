@@ -29,11 +29,11 @@ export const BOSS_GEM_DROP_SCALE = 0.25;
 export function dropGem(s: GameState, ctx: Ctx, maxLevel: number): void {
   if (chance(ctx.rng, 0.4)) {
     const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => gemReqLevel(g.id) <= maxLevel && gemArrived(s, g.id)));
-    s.gems.push(createSkillGem(s, def.id));
+    s.account.gems.push(createSkillGem(s, def.id));
     ctx.emit({ t: 'loot', gemId: def.id });
   } else {
     const def = pick(ctx.rng, SUPPORT_GEMS.filter((g) => gemReqLevel(g.id) <= maxLevel && gemArrived(s, g.id)));
-    s.supportGems.push(createSupportGem(s, def.id));
+    s.account.supportGems.push(createSupportGem(s, def.id));
     ctx.emit({ t: 'loot', supportId: def.id });
   }
 }

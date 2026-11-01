@@ -115,14 +115,14 @@ export function allocateAscNode(s: GameState, ctx: Ctx, id: string): string | nu
 export function refundAscReason(s: GameState, id: string): string | null {
   const a = currentAscendancy(s);
   if (!a || !s.ascendancy.nodes.includes(id)) return 'Not allocated';
-  if ((s.bank.regret ?? 0) < 1) return 'Requires an Orb of Regret';
+  if ((s.account.bank.regret ?? 0) < 1) return 'Requires an Orb of Regret';
   return connectedWithout(s.ascendancy.nodes, id, a.gate.id, ASCENDANCY_NODE_BY_ID) ? null : 'Would disconnect other nodes';
 }
 
 export function refundAscNode(s: GameState, ctx: Ctx, id: string): string | null {
   const reason = refundAscReason(s, id);
   if (reason) return reason;
-  s.bank.regret -= 1;
+  s.account.bank.regret -= 1;
   s.ascendancy.nodes = s.ascendancy.nodes.filter((x) => x !== id);
   ctx.emit({ t: 'info', text: `Refunded ${ASCENDANCY_NODE_BY_ID[id].name}` });
   return null;
@@ -139,8 +139,8 @@ export function switchReason(s: GameState, id: AscendancyId): string | null {
   if (id === now) return 'Already your ascendancy';
   if (ASCENDANCY_BY_ID[id]?.classId !== s.character.classId) return 'Not for your class';
   const cost = switchCost(s);
-  if ((s.bank[SWITCH_MATERIAL] ?? 0) < cost.material) return 'Requires a Divine Orb';
-  return (s.bank.regret ?? 0) < cost.regret ? `Requires ${cost.regret} Orbs of Regret` : null;
+  if ((s.account.bank[SWITCH_MATERIAL] ?? 0) < cost.material) return 'Requires a Divine Orb';
+  return (s.account.bank.regret ?? 0) < cost.regret ? `Requires ${cost.regret} Orbs of Regret` : null;
 }
 
 /** Trade one ascendancy for the other. Every node comes back as a point to spend, and the gate swaps straight away. */
@@ -148,8 +148,8 @@ export function switchAscendancy(s: GameState, ctx: Ctx, id: AscendancyId): stri
   const reason = switchReason(s, id);
   if (reason) return reason;
   const cost = switchCost(s);
-  s.bank[SWITCH_MATERIAL] -= cost.material;
-  s.bank.regret = (s.bank.regret ?? 0) - cost.regret;
+  s.account.bank[SWITCH_MATERIAL] -= cost.material;
+  s.account.bank.regret = (s.account.bank.regret ?? 0) - cost.regret;
   s.ascendancy.id = id;
   s.ascendancy.nodes = [];
   s.ascendancy.carry = 0;

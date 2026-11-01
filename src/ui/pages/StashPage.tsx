@@ -43,7 +43,7 @@ const MATERIAL_GROUPS: { label: string; kinds: string[] }[] = [
 
 function CurrencySlot({ s, id }: { s: GameState; id: string }) {
   const def = currencyDef(id);
-  const n = s.bank[id] ?? 0;
+  const n = s.account.bank[id] ?? 0;
   return (
     <Tooltip
       content={
@@ -69,7 +69,7 @@ function CurrencySlot({ s, id }: { s: GameState; id: string }) {
 
 function MaterialTile({ s, id }: { s: GameState; id: string }) {
   const def = materialDef(id);
-  const n = s.bank[id] ?? 0;
+  const n = s.account.bank[id] ?? 0;
   return (
     <Tooltip
       content={
@@ -98,13 +98,13 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
     { id: 'gear', label: 'Gear', count: stashedItems(s).length },
     { id: 'currency', label: 'Currency' },
     { id: 'materials', label: 'Materials' },
-    { id: 'gems', label: 'Gems', count: s.gems.length + s.supportGems.length },
-    { id: 'flasks', label: 'Flasks', count: s.flaskStash.length },
+    { id: 'gems', label: 'Gems', count: s.account.gems.length + s.account.supportGems.length },
+    { id: 'flasks', label: 'Flasks', count: s.account.flaskStash.length },
   ];
   return (
     <div className="page">
-      <PageHeader title="Stash" actions={<CurrencyAmount id="gold" amount={s.bank.gold ?? 0} label="gold" />}>
-        Gear pages are shared by all your characters. Currency, materials, gems and flasks stay with this character.
+      <PageHeader title="Stash" actions={<CurrencyAmount id="gold" amount={s.account.bank.gold ?? 0} label="gold" />}>
+        Every tab here, and your gold, is shared by all your characters. Your skill bar and belt stay with this character.
       </PageHeader>
       <div className="stash-top">
         <div className="card doll-card">
@@ -182,10 +182,10 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
                 </Tooltip>
               ))}
             </div>
-            <div className="section-label">Spare skill gems ({s.gems.length})</div>
-            {s.gems.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, especially bosses.</EmptyState>}
+            <div className="section-label">Spare skill gems ({s.account.gems.length})</div>
+            {s.account.gems.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, especially bosses.</EmptyState>}
             <div className="gem-bag">
-              {s.gems.map((g) => (
+              {s.account.gems.map((g) => (
                 <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
                   <div className="gem-card">
                     <GemIcon def={activeGemDef(g.gemId)} size={30} />
@@ -196,10 +196,10 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
                 </Tooltip>
               ))}
             </div>
-            <div className="section-label">Support gems ({s.supportGems.length})</div>
-            {s.supportGems.length === 0 && <EmptyState small>No loose support gems. Cut them with Gemcutting or find them on monsters.</EmptyState>}
+            <div className="section-label">Support gems ({s.account.supportGems.length})</div>
+            {s.account.supportGems.length === 0 && <EmptyState small>No loose support gems. Cut them with Gemcutting or find them on monsters.</EmptyState>}
             <div className="gem-bag">
-              {s.supportGems.map((g) => (
+              {s.account.supportGems.map((g) => (
                 <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
                   <div className="gem-card">
                     <GemIcon def={supportGemDef(g.supportId)} size={26} support />
@@ -220,8 +220,8 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
                 Open Crafting Bench
               </button>
             </div>
-            {s.flaskStash.length === 0 && <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>}
-            <FlaskShelf flasks={s.flaskStash} onPick={(f) => game.act((st) => wearFlask(st, f.uid))} />
+            {s.account.flaskStash.length === 0 && <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>}
+            <FlaskShelf flasks={s.account.flaskStash} onPick={(f) => game.act((st) => wearFlask(st, f.uid))} />
           </div>
         </StashTab>
       </div>
@@ -279,7 +279,7 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
               {p.length >= STASH_PAGE_SIZE && <span className="bad"> ●</span>}
             </button>
           ))}
-          <button className="stash-page-tab buy" disabled={(s.bank.gold ?? 0) < price} title={`Buy stash page ${pages.length + 1}`} onClick={() => game.act((st, ctx) => buyStashPage(st, ctx))}>
+          <button className="stash-page-tab buy" disabled={(s.account.bank.gold ?? 0) < price} title={`Buy stash page ${pages.length + 1}`} onClick={() => game.act((st, ctx) => buyStashPage(st, ctx))}>
             + <MatIcon id="gold" size={12} /> {fmt(price)}
           </button>
         </div>

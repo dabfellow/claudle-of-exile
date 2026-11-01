@@ -130,9 +130,9 @@ export function applyOrb(s: GameState, ctx: Ctx, orbId: string, uid: number, fos
   if (reason) return reason;
   const item = findItem(s, uid)!;
   ORBS[orbId].apply(item, ctx.rng, fossilId ? modBias(fossilId) : undefined, sealed ? allMods(item).find((m) => m.affixId === sealed) : undefined);
-  s.bank[orbId] -= 1;
-  if (fossilId) s.bank[fossilId] -= 1;
-  if (sealed) s.bank[SEAL] -= 1;
+  s.account.bank[orbId] -= 1;
+  if (fossilId) s.account.bank[fossilId] -= 1;
+  if (sealed) s.account.bank[SEAL] -= 1;
   s.lifetime.orbsUsed += 1;
   ctx.emit({ t: 'craft', text: `${orbId} → ${itemName(item)}`, uid, orbId });
   return null;
@@ -154,7 +154,7 @@ export function takeImpression(s: GameState, ctx: Ctx, uid: number): string | nu
   const item = findItem(s, uid)!;
   const { rarity, name, prefixes, suffixes, honed } = item;
   item.impression = structuredClone({ rarity, name, prefixes, suffixes, honed });
-  s.bank[WAX] -= 1;
+  s.account.bank[WAX] -= 1;
   ctx.emit({ t: 'craft', text: `Impression of ${itemName(item)}`, uid });
   return null;
 }
@@ -203,7 +203,7 @@ export function applyWhetstone(s: GameState, ctx: Ctx, uid: number, affixId: str
   mod.tier += 1;
   item.honed = affixId;
   mod.values = affixDef(affixId).tiers[mod.tier].ranges.map(([lo, hi]) => rInt(ctx.rng, lo, hi));
-  s.bank[WHETSTONE] -= 1;
+  s.account.bank[WHETSTONE] -= 1;
   s.lifetime.orbsUsed += 1;
   ctx.emit({ t: 'craft', text: `Ancient Whetstone → ${itemName(item)}`, uid });
   return null;
@@ -235,7 +235,7 @@ export function applyEssence(s: GameState, ctx: Ctx, essenceId: string, uid: num
   item.suffixes = [];
   addFixedMod(item, ess.affixId, ess.tier, ctx.rng);
   if (ctx.rng.next() < 0.5) addRandomMod(item, ctx.rng);
-  s.bank[essenceId] -= 1;
+  s.account.bank[essenceId] -= 1;
   s.lifetime.orbsUsed += 1;
   ctx.emit({ t: 'craft', text: `${ess.name} → ${itemName(item)}`, uid });
   return null;
@@ -289,7 +289,7 @@ export function salvage(s: GameState, ctx: Ctx, uids: number[]): number {
   const dust = gone.reduce((a, i) => a + salvageValue(i), 0);
   const n = gone.length;
   if (dust > 0) {
-    s.bank.arcane_dust = (s.bank.arcane_dust ?? 0) + dust;
+    s.account.bank.arcane_dust = (s.account.bank.arcane_dust ?? 0) + dust;
     s.lifetime.salvaged += n;
     ctx.emit({ t: 'info', text: `Salvaged ${n} item(s) for ${dust} Arcane Dust`, tone: 'good' });
   }

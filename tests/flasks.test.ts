@@ -12,22 +12,22 @@ const ctx = (seed = 1) => makeCtx(seeded(seed));
 describe('flask items', () => {
   it('keeps at most 10 spares of a kind, selling the least valuable', () => {
     const s = newGame(1);
-    s.bank.gold = 0;
+    s.account.bank.gold = 0;
     for (let i = 0; i < FLASK_STASH_CAP; i++) stashFlask(s, newFlask(s, 'life_small', 1));
     const magic = newFlask(s, 'life_small', 1);
     magic.rarity = 'magic';
     stashFlask(s, magic);
     stashFlask(s, newFlask(s, 'mana_small', 1));
-    expect(s.flaskStash.filter((f) => f.flaskId === 'life_small')).toHaveLength(FLASK_STASH_CAP);
-    expect(s.flaskStash).toContain(magic);
-    expect(s.flaskStash.filter((f) => f.flaskId === 'mana_small')).toHaveLength(1);
-    expect(s.bank.gold).toBeGreaterThan(0);
+    expect(s.account.flaskStash.filter((f) => f.flaskId === 'life_small')).toHaveLength(FLASK_STASH_CAP);
+    expect(s.account.flaskStash).toContain(magic);
+    expect(s.account.flaskStash.filter((f) => f.flaskId === 'mana_small')).toHaveLength(1);
+    expect(s.account.bank.gold).toBeGreaterThan(0);
   });
 
   it('paid trader restocks double in price until the free one', () => {
     const s = newGame(1);
     const c = ctx();
-    s.bank.gold = 100_000;
+    s.account.bank.gold = 100_000;
     const base = rerollCost(s);
     const at = s.vendor.refreshAt;
     expect(rerollVendor(s, c)).toBeNull();
@@ -40,14 +40,14 @@ describe('flask items', () => {
     const s = newGame(1);
     s.flaskSlots = s.flaskSlots.map((f, i) => (i === 1 ? null : f ?? newFlask(s, 'life_small', 1)));
     const f = newFlask(s, 'granite', 30);
-    s.flaskStash.push(f);
+    s.account.flaskStash.push(f);
     expect(wearFlask(s, f.uid)).toBeNull();
     expect(s.flaskSlots[1]).toBe(f);
-    expect(s.flaskStash).not.toContain(f);
+    expect(s.account.flaskStash).not.toContain(f);
     const g = newFlask(s, 'granite', 30);
-    s.flaskStash.push(g);
+    s.account.flaskStash.push(g);
     expect(wearFlask(s, g.uid)).toMatch(/full/);
-    expect(s.flaskStash).toContain(g);
+    expect(s.account.flaskStash).toContain(g);
   });
 
   it('magic flask modifiers change charges and recovery', () => {
@@ -65,9 +65,9 @@ describe('flask items', () => {
   it('orbs craft flasks: transmute, augment, alteration, scour', () => {
     const s = newGame(1);
     const c = ctx();
-    s.bank = { transmute: 2, augment: 5, alteration: 5, scour: 1 };
+    s.account.bank = { transmute: 2, augment: 5, alteration: 5, scour: 1 };
     const f = newFlask(s, 'granite', 30);
-    s.flaskStash.push(f);
+    s.account.flaskStash.push(f);
     expect(applyFlaskOrb(s, c, 'augment', f.uid)).toMatch(/Magic/);
     expect(applyFlaskOrb(s, c, 'transmute', f.uid)).toBeNull();
     expect(f.rarity).toBe('magic');
@@ -97,10 +97,10 @@ describe('flask items', () => {
     const c = ctx();
     const f = s.flaskSlots[0]!;
     expect(enchantFlask(s, c, f.uid, 'lowLife')).toMatch(/Instilling Orb/);
-    s.bank.instill = 1;
+    s.account.bank.instill = 1;
     expect(enchantFlask(s, c, f.uid, 'lowLife')).toBeNull();
     expect(f.instill).toBe('lowLife');
-    expect(s.bank.instill).toBe(0);
+    expect(s.account.bank.instill).toBe(0);
   });
 
   it('reduced charges used is applied when drinking', () => {

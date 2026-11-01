@@ -183,10 +183,10 @@ function FlaskPicker({ s, slot, onDone }: { s: GameState; slot: number; onDone: 
           <Icon name="close" size={12} />
         </button>
       </div>
-      {s.flaskStash.length === 0 ? (
+      {s.account.flaskStash.length === 0 ? (
         <div className="dim small">No spare flasks. Brew them with Alchemy, loot them or buy them in Town.</div>
       ) : (
-        <FlaskShelf flasks={s.flaskStash} onPick={(f) => (game.act((st) => equipFlask(st, f.uid, slot)), onDone())} />
+        <FlaskShelf flasks={s.account.flaskStash} onPick={(f) => (game.act((st) => equipFlask(st, f.uid, slot)), onDone())} />
       )}
     </div>
   );

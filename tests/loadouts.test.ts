@@ -147,7 +147,7 @@ describe('skill loadouts', () => {
     const s = fresh();
     const gem = s.skillBar[0]!;
     const sup = createSupportGem(s, 'added_fire');
-    s.supportGems.push(sup);
+    s.account.supportGems.push(sup);
     const socketed = !socketSupport(s, gem.uid, sup.uid, 0);
     gem.rules = [{ when: 'always' }];
     gem.priority = 'high';
@@ -156,18 +156,18 @@ describe('skill loadouts', () => {
 
     const other = createSkillGem(s, gem.gemId);
     s.skillBar[0] = other;
-    s.gems.push(gem);
+    s.account.gems.push(gem);
     gem.rules = [{ when: 'manual' }];
     gem.priority = 'low';
     if (socketed) {
       gem.supports[0] = null;
-      s.supportGems.push(sup);
+      s.account.supportGems.push(sup);
     }
     expect(skillSetActive(s, set)).toBe(false);
 
     expect(applySkillSet(s, set.id)).toBeNull();
     expect(s.skillBar[0]).toBe(gem);
-    expect(s.gems).toContain(other);
+    expect(s.account.gems).toContain(other);
     expect(gem.rules).toEqual([{ when: 'always' }]);
     expect(gem.priority).toBe('high');
     if (socketed) expect(gem.supports[0]).toBe(sup);
@@ -191,11 +191,11 @@ describe('skill loadouts', () => {
   it('never leaves a gem in two places', () => {
     const s = fresh();
     saveSkillSet(s, 'A');
-    s.gems.push(createSkillGem(s, s.skillBar[0]!.gemId));
-    s.gems.push(s.skillBar[1]!);
+    s.account.gems.push(createSkillGem(s, s.skillBar[0]!.gemId));
+    s.account.gems.push(s.skillBar[1]!);
     s.skillBar[1] = null;
     applySkillSet(s, s.loadouts.skills[0].id);
-    const uids = [...s.gems, ...s.skillBar].filter(Boolean).map((g) => g!.uid);
+    const uids = [...s.account.gems, ...s.skillBar].filter(Boolean).map((g) => g!.uid);
     expect(new Set(uids).size).toBe(uids.length);
   });
 });
@@ -214,7 +214,7 @@ describe('auto-switching gear', () => {
     saveGearSet(s, 'Free');
     expect(s.loadouts.gear).toHaveLength(1);
     expect(setAutoGear(s, 'woodcutting', lastSet(s).id)).toMatch(/Crafting Bench level 3/);
-    Object.assign(s.bank, { gold: 1e6, ash_log: 1e4, copper_ore: 1e4, arcane_dust: 1e4, rough_gem: 100 });
+    Object.assign(s.account.bank, { gold: 1e6, ash_log: 1e4, copper_ore: 1e4, arcane_dust: 1e4, rough_gem: 100 });
     upgradeStation(s, ctx, 'bench');
     expect(gearSwitchUnlocked(s)).toBe(false);
     upgradeStation(s, ctx, 'bench');

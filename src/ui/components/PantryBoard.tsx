@@ -12,8 +12,8 @@ export function mealTimeLeft(ms: number): string {
 export function PantryBoard() {
   const s = useGame();
   if (!cookingOpen(s)) return <div className="callout skill-note">There's no galley fire this far inland. Reach Act 5 to start.</div>;
-  const dishes = MEALS.filter((m) => s.bank[m.id]);
-  const ingredients = INGREDIENTS.filter((m) => s.bank[m.id]);
+  const dishes = MEALS.filter((m) => s.account.bank[m.id]);
+  const ingredients = INGREDIENTS.filter((m) => s.account.bank[m.id]);
   return (
     <>
       <div className="callout skill-note">
@@ -46,7 +46,7 @@ export function PantryBoard() {
             <div key={m.id} className="row wrap" style={{ gap: 6, marginTop: 6 }}>
               <MatIcon id={m.id} size={16} />
               <span>
-                {m.name} <span className="dim num">×{fmt(s.bank[m.id])}</span>
+                {m.name} <span className="dim num">×{fmt(s.account.bank[m.id])}</span>
               </span>
               <span className="small">{mealEffectText(s, m.id)}</span>
               <span className="spacer" />
@@ -60,7 +60,7 @@ export function PantryBoard() {
           <div className="row wrap dim small" style={{ gap: 8, marginTop: 8 }}>
             {ingredients.map((m) => (
               <span key={m.id} title={m.desc}>
-                <MatIcon id={m.id} size={12} /> {m.name} ×{fmt(s.bank[m.id])}
+                <MatIcon id={m.id} size={12} /> {m.name} ×{fmt(s.account.bank[m.id])}
               </span>
             ))}
           </div>

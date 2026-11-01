@@ -219,7 +219,7 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
           {a.inputs && (
             <div className="action-section">
               <div className="io-label">Requires</div>
-              <Ingredients cost={a.inputs} have={s.bank} />
+              <Ingredients cost={a.inputs} have={s.account.bank} />
               {a.chart?.upgrade && <MapInput s={s} a={a} />}
             </div>
           )}
@@ -234,7 +234,7 @@ function CatalystPanel() {
   const s = useGame();
   const cat = s.smithCatalyst;
   const set = (patch: Partial<typeof cat>) => game.act((st) => setSmithCatalyst(st, patch));
-  const owned = (id: string) => fmt(s.bank[id] ?? 0);
+  const owned = (id: string) => fmt(s.account.bank[id] ?? 0);
   return (
     <div className="card catalyst-panel">
       <div className="card-title">
@@ -248,7 +248,7 @@ function CatalystPanel() {
           <select className="input" value={cat.fossil ?? ''} onChange={(e) => set({ fossil: e.target.value || null })}>
             <option value="">None</option>
             {FOSSILS.map((f) => (
-              <option key={f.id} value={f.id} disabled={!s.bank[f.id]}>
+              <option key={f.id} value={f.id} disabled={!s.account.bank[f.id]}>
                 {f.name} ({owned(f.id)}) — {f.desc}
               </option>
             ))}
@@ -259,7 +259,7 @@ function CatalystPanel() {
           <select className="input" value={cat.resin ?? ''} onChange={(e) => set({ resin: e.target.value || null })}>
             <option value="">None</option>
             {RESINS.map((r) => (
-              <option key={r.id} value={r.id} disabled={!s.bank[r.id]}>
+              <option key={r.id} value={r.id} disabled={!s.account.bank[r.id]}>
                 {r.name} +{r.ilvl} ({owned(r.id)})
               </option>
             ))}
@@ -460,7 +460,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
       {skill === 'alchemy' && <div className="callout skill-note">Salvage unwanted items at the Crafting Bench for Arcane Dust, then transmute it into orbs here.</div>}
       {skill === 'gemcutting' && (
         <div className="callout skill-note">
-          Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b>{fmt(s.bank.rough_gem ?? 0)}</b> Rough Gems.
+          Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b>{fmt(s.account.bank.rough_gem ?? 0)}</b> Rough Gems.
         </div>
       )}
       {skill === 'thieving' && <HeistBoard />}

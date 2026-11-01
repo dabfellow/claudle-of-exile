@@ -29,7 +29,7 @@ function act5(): GameState {
 }
 
 function give(s: GameState, inputs: Record<string, number>, times = 1): void {
-  for (const [id, n] of Object.entries(inputs)) s.bank[id] = (s.bank[id] ?? 0) + n * times;
+  for (const [id, n] of Object.entries(inputs)) s.account.bank[id] = (s.account.bank[id] ?? 0) + n * times;
 }
 
 const PORRIDGE = 'meal_porridge';
@@ -78,8 +78,8 @@ describe('recipes', () => {
     give(s, a.inputs!);
     expect(startSkillAction(s, ctx(), a.id)).toBeNull();
     skillStep(s, ctx(), actionIntervalMs(s, a, deriveStats(s)), deriveStats(s));
-    expect(s.bank[PORRIDGE]).toBe(1);
-    expect(s.bank.sunpetal).toBe(0);
+    expect(s.account.bank[PORRIDGE]).toBe(1);
+    expect(s.account.bank.sunpetal).toBe(0);
     expect(s.skills.cooking).toBeGreaterThan(0);
   });
 
@@ -92,7 +92,7 @@ describe('recipes', () => {
     const c = ctx();
     const d = deriveStats(s);
     skillStep(s, c, actionIntervalMs(s, a, d) * 200, d);
-    expect(s.bank[PORRIDGE]).toBeGreaterThan(200);
+    expect(s.account.bank[PORRIDGE]).toBeGreaterThan(200);
   });
 
   it('Head Chef slows Cooking and strengthens meals', () => {
@@ -100,7 +100,7 @@ describe('recipes', () => {
     const a = actionDef(`cook_${PORRIDGE}`);
     const d = deriveStats(s);
     const slow = actionIntervalMs(s, a, d);
-    s.bank[PORRIDGE] = 1;
+    s.account.bank[PORRIDGE] = 1;
     eatMeal(s, ctx(), PORRIDGE);
     const plain = mealStats(s).lifePct!;
     s.skillPassives.push('cooking_ks');
@@ -122,7 +122,7 @@ describe('recipes', () => {
       startSkillAction(s, ctx(), a.id);
       const d = deriveStats(s);
       skillStep(s, ctx(), actionIntervalMs(s, a, d), d);
-      expect(s.flaskStash.some((f) => f.flaskId === flaskId)).toBe(true);
+      expect(s.account.flaskStash.some((f) => f.flaskId === flaskId)).toBe(true);
     }
     expect(flaskDef('life_sacred').heal).toBeGreaterThan(flaskDef('life_grand').heal!);
     const rng = seeded(3);
@@ -135,21 +135,21 @@ describe('meals', () => {
   it('gives its stats from the moment you eat, in or out of a fight', () => {
     const s = act5();
     const before = deriveStats(s).maxLife;
-    s.bank[PORRIDGE] = 1;
+    s.account.bank[PORRIDGE] = 1;
     expect(eatMeal(s, ctx(), PORRIDGE)).toBeNull();
-    expect(s.bank[PORRIDGE]).toBe(0);
+    expect(s.account.bank[PORRIDGE]).toBe(0);
     expect(s.lifetime.mealsEaten).toBe(1);
     expect(deriveStats(s).maxLife).toBeGreaterThan(before);
   });
 
   it('only one meal at a time: a new dish replaces it, and the same dish is refused', () => {
     const s = act5();
-    s.bank[PORRIDGE] = 2;
-    s.bank.meal_broth = 1;
+    s.account.bank[PORRIDGE] = 2;
+    s.account.bank.meal_broth = 1;
     eatMeal(s, ctx(), PORRIDGE);
     expect(mealReason(s, PORRIDGE)).toBe('You are already full of that');
     expect(eatMeal(s, ctx(), PORRIDGE)).not.toBeNull();
-    expect(s.bank[PORRIDGE]).toBe(1);
+    expect(s.account.bank[PORRIDGE]).toBe(1);
     eatMeal(s, ctx(), 'meal_broth');
     expect(s.meal?.id).toBe('meal_broth');
     expect(mealStats(s).lifePct).toBeUndefined();
@@ -157,7 +157,7 @@ describe('meals', () => {
 
   it('waits while you do anything but fight', () => {
     const s = act5();
-    s.bank[PORRIDGE] = 1;
+    s.account.bank[PORRIDGE] = 1;
     eatMeal(s, ctx(), PORRIDGE);
     tick(s, ctx(), 60_000);
     expect(s.meal?.remainingMs).toBe(MEAL_MS);
@@ -168,23 +168,23 @@ describe('meals', () => {
   it('runs down in a fight and wears off', () => {
     const s = act5();
     s.keepEating = false;
-    s.bank[PORRIDGE] = 3;
+    s.account.bank[PORRIDGE] = 3;
     eatMeal(s, ctx(), PORRIDGE);
     startCombat(s, ctx(), 'mudflats');
     tick(s, ctx(), 1000);
     expect(s.meal!.remainingMs).toBe(MEAL_MS - 1000);
     mealStep(s, ctx(), MEAL_MS);
     expect(s.meal).toBeNull();
-    expect(s.bank[PORRIDGE]).toBe(2);
+    expect(s.account.bank[PORRIDGE]).toBe(2);
   });
 
   it('Keep eating serves the next one, with no time lost, until the bank is empty', () => {
     const s = act5();
-    s.bank[PORRIDGE] = 2;
+    s.account.bank[PORRIDGE] = 2;
     eatMeal(s, ctx(), PORRIDGE);
     mealStep(s, ctx(), MEAL_MS + 500);
     expect(s.meal).toEqual({ id: PORRIDGE, remainingMs: MEAL_MS - 500 });
-    expect(s.bank[PORRIDGE]).toBe(0);
+    expect(s.account.bank[PORRIDGE]).toBe(0);
     expect(s.lifetime.mealsEaten).toBe(2);
     mealStep(s, ctx(), MEAL_MS);
     expect(s.meal).toBeNull();
@@ -192,12 +192,12 @@ describe('meals', () => {
 
   it('a night of fighting is fed the same as a day online', () => {
     const s = act5();
-    s.bank[PORRIDGE] = 4;
+    s.account.bank[PORRIDGE] = 4;
     eatMeal(s, ctx(), PORRIDGE);
     startCombat(s, ctx(), 'mudflats');
     const sum = simulateOffline(s, ctx(), 45 * 60 * 1000);
     expect(sum.died).toBe(false);
-    expect(s.bank[PORRIDGE]).toBe(2);
+    expect(s.account.bank[PORRIDGE]).toBe(2);
     expect(sum.materials[PORRIDGE]).toBe(-1);
     expect(s.meal?.id).toBe(PORRIDGE);
   });
@@ -225,7 +225,7 @@ describe('saves', () => {
 
   it('keeps your meal', () => {
     const s = act5();
-    s.bank[PORRIDGE] = 1;
+    s.account.bank[PORRIDGE] = 1;
     eatMeal(s, ctx(), PORRIDGE);
     expect(deserialize(serialize(s)).meal).toEqual(s.meal);
   });

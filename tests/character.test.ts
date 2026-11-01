@@ -171,10 +171,10 @@ describe('item menu actions', () => {
     // salvage from the floor
     const junk = createItem(s, 'iron_ring', 1, 'normal', seeded(99));
     s.ground.push(junk);
-    const dust = s.bank.arcane_dust ?? 0;
+    const dust = s.account.bank.arcane_dust ?? 0;
     expect(salvageAny(s, c, junk.uid)).toBeNull();
     expect(s.ground).toHaveLength(0);
-    expect(s.bank.arcane_dust).toBeGreaterThan(dust);
+    expect(s.account.bank.arcane_dust).toBeGreaterThan(dust);
   });
 });
 

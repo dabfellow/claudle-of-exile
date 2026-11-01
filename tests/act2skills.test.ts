@@ -84,8 +84,8 @@ describe('gems tied to acts', () => {
     const s = veteran(newGame(1), 60);
     const ctx = makeCtx(seeded(3));
     for (let i = 0; i < 600; i++) dropGem(s, ctx, 60);
-    for (const g of s.gems) expect(gemAct(g.gemId), g.gemId).toBe(1);
-    for (const g of s.supportGems) expect(gemAct(g.supportId), g.supportId).toBe(1);
+    for (const g of s.account.gems) expect(gemAct(g.gemId), g.gemId).toBe(1);
+    for (const g of s.account.supportGems) expect(gemAct(g.supportId), g.supportId).toBe(1);
   });
 
   it('reaching Act 2 opens its batch to drops', () => {
@@ -93,8 +93,8 @@ describe('gems tied to acts', () => {
     s.unlockedZones = ACT_2_ZONES;
     const ctx = makeCtx(seeded(3));
     for (let i = 0; i < 600; i++) dropGem(s, ctx, 60);
-    expect(s.gems.some((g) => BATCH.includes(g.gemId))).toBe(true);
-    expect(s.gems.some((g) => g.gemId === 'lacerate')).toBe(false);
+    expect(s.account.gems.some((g) => BATCH.includes(g.gemId))).toBe(true);
+    expect(s.account.gems.some((g) => g.gemId === 'lacerate')).toBe(false);
   });
 
   it('the Gem shop stocks what has arrived, the newest act heaviest', () => {
@@ -135,8 +135,8 @@ describe('gems tied to acts', () => {
     lace.supports[0] = createSupportGem(s, 'hemorrhage');
     s.skillBar[1] = lace;
     const backstab = createSkillGem(s, 'backstab');
-    s.gems.push(backstab);
-    s.supportGems.push(createSupportGem(s, 'verdict'));
+    s.account.gems.push(backstab);
+    s.account.supportGems.push(createSupportGem(s, 'verdict'));
     expect(reachedAct(s)).toBe(1);
 
     const loaded = deserialize(serialize(s));
@@ -144,8 +144,6 @@ describe('gems tied to acts', () => {
     expect(loaded.skillBar[1]!.gemId).toBe('lacerate');
     expect(loaded.skillBar[1]!.level).toBe(3);
     expect(loaded.skillBar[1]!.supports[0]?.supportId).toBe('hemorrhage');
-    expect(loaded.gems.some((g) => g.gemId === 'backstab')).toBe(true);
-    expect(loaded.supportGems.some((g) => g.supportId === 'verdict')).toBe(true);
     expect(skillNumbers(deriveStats(loaded), loaded.skillBar[1]).mods.specials.has('hemorrhage')).toBe(true);
   });
 });

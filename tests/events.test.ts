@@ -30,10 +30,10 @@ describe('limited-time events', () => {
     const z = zoneDef('mudflats');
     const gold = (event: EventBoost | null) => {
       const s = player();
-      s.bank.gold = 0;
+      s.account.bank.gold = 0;
       const c = ctx(event);
       for (let i = 0; i < 500; i++) rollLoot(s, c, makeMonster(z.monsters[0], false, i), z, deriveStats(s));
-      return s.bank.gold;
+      return s.account.bank.gold;
     };
     expect(gold(halloween)).toBeGreaterThan(gold(null) * 1.7);
   });

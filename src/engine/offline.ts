@@ -44,7 +44,7 @@ export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offl
   const drawnBefore = s.lifetime.mapsDrawn;
   const heistsBefore = { ...s.heist.tally };
   const expeditionBefore = { ...s.expedition.tally };
-  const bankBefore = { ...s.bank };
+  const bankBefore = { ...s.account.bank };
   let left = ms;
   const quiet: Ctx = withTutorial({
     ...ctx,
@@ -83,7 +83,7 @@ export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offl
   sum.heistAlarms = s.heist.tally.alarms - heistsBefore.alarms;
   sum.finds = s.expedition.tally.finds - expeditionBefore.finds;
   sum.traded = s.expedition.tally.traded - expeditionBefore.traded;
-  for (const [id, n] of Object.entries(s.bank)) {
+  for (const [id, n] of Object.entries(s.account.bank)) {
     const delta = n - (bankBefore[id] ?? 0);
     if (delta !== 0) sum.materials[id] = delta;
   }

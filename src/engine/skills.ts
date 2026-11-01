@@ -166,12 +166,12 @@ function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats): void {
   if (s.smithCatalyst.fossil && !hasItem(s, s.smithCatalyst.fossil, 1)) catalystRanOut(s, ctx, 'fossil');
   const cat = s.smithCatalyst;
   const resin = resinBonus(s);
-  if (cat.resin) s.bank[cat.resin] -= 1;
+  if (cat.resin) s.account.bank[cat.resin] -= 1;
   const magic = t.grandmaster || (t.smithMagic && chance(ctx.rng, t.smithMagic / 100));
   // the Fossil only matters (and is only used up) when the base comes out Magic
   const fossil = magic ? cat.fossil : null;
   const item = createItem(s, a.baseId!, smithIlvl(s, resin), magic ? 'magic' : 'normal', ctx.rng, fossil ? modBias(fossil) : undefined);
-  if (fossil && !(t.steadyTemper && chance(ctx.rng, t.steadyTemper / 100))) s.bank[fossil] -= 1;
+  if (fossil && !(t.steadyTemper && chance(ctx.rng, t.steadyTemper / 100))) s.account.bank[fossil] -= 1;
   s.lifetime.itemsSmithed += 1;
 
   const repeating = cat.until && !!cat.fossil;
@@ -207,7 +207,7 @@ function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, 
   const findable = (id: string) => gemReqLevel(id) <= characterLevel(s) && gemArrived(s, id);
   if (kind === 'skill') {
     const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => findable(g.id)));
-    s.gems.push(createSkillGem(s, def.id));
+    s.account.gems.push(createSkillGem(s, def.id));
     outputs[def.id] = 1;
     ctx.emit({ t: 'loot', gemId: def.id });
     return;
@@ -216,12 +216,12 @@ function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, 
   let pool = SUPPORT_GEMS.filter((g) => (kind === 'signature' ? !!g.signatureFor : !g.signatureFor) && findable(g.id));
   if (!pool.length) pool = SUPPORT_GEMS.filter((g) => !g.signatureFor && findable(g.id));
   if (kind === 'signature') {
-    const owned = new Set([...s.skillBar, ...s.gems].filter(Boolean).map((g) => g!.gemId));
+    const owned = new Set([...s.skillBar, ...s.account.gems].filter(Boolean).map((g) => g!.gemId));
     const mine = pool.filter((g) => owned.has(g.signatureFor!));
     if (mine.length) pool = mine;
   }
   const def = pick(ctx.rng, pool);
-  s.supportGems.push(createSupportGem(s, def.id));
+  s.account.supportGems.push(createSupportGem(s, def.id));
   outputs[def.id] = 1;
   ctx.emit({ t: 'loot', supportId: def.id });
 }

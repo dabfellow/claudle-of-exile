@@ -113,7 +113,7 @@ describe('adopting a demo', () => {
     const id = await adoptDemo(serializeBundle(s), account);
     const adopted = (await account.load(id))!;
     const mine = freshAccount();
-    expect((await account.list())[0].settled).toBe(false);
+    expect((await account.list())[0].handedOver).toBe(false);
     expect(settleCharacter(adopted, mine)).toBe(true);
     expect(mine.hideout.bench).toBe(3);
     expect(mine.stash[1]).toHaveLength(1);

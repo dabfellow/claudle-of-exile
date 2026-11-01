@@ -193,10 +193,10 @@ describe('earning and spending', () => {
     const { s, ctx } = arena('anvil');
     allocateAscNode(s, ctx, 'anvil_temper_1');
     allocateAscNode(s, ctx, 'anvil_temper_2');
-    s.bank.regret = 1;
+    s.account.bank.regret = 1;
     expect(refundAscReason(s, 'anvil_temper_1')).toMatch(/disconnect/);
     expect(refundAscNode(s, ctx, 'anvil_temper_2')).toBeNull();
-    expect(s.bank.regret).toBe(0);
+    expect(s.account.bank.regret).toBe(0);
     expect(refundAscReason(s, 'anvil_temper_1')).toMatch(/Regret/);
   });
 
@@ -207,16 +207,16 @@ describe('earning and spending', () => {
     expect(switchCost(s)).toEqual({ material: 1, regret: 2 });
     expect(switchReason(s, 'anvil')).toBeTruthy();
     expect(switchReason(s, 'matador')).toBeTruthy();
-    s.bank.divine = 0;
-    s.bank.regret = 2;
+    s.account.bank.divine = 0;
+    s.account.bank.regret = 2;
     expect(switchAscendancy(s, ctx, 'ravager')).toMatch(/Divine/);
-    s.bank.divine = 2;
-    s.bank.regret = 1;
+    s.account.bank.divine = 2;
+    s.account.bank.regret = 1;
     expect(switchAscendancy(s, ctx, 'ravager')).toMatch(/Regret/);
-    s.bank.regret = 3;
+    s.account.bank.regret = 3;
     expect(switchAscendancy(s, ctx, 'ravager')).toBeNull();
-    expect(s.bank.divine).toBe(1);
-    expect(s.bank.regret).toBe(1);
+    expect(s.account.bank.divine).toBe(1);
+    expect(s.account.bank.regret).toBe(1);
     expect(s.ascendancy.nodes).toEqual([]);
     expect(ascendancyOf(s)).toBe('ravager');
     expect(ascendancyPointsLeft(s)).toBe(ASCENDANCY_MAX_POINTS);

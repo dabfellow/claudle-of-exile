@@ -1,5 +1,5 @@
 import type { ClassId } from '../data/classes';
-import { absorbAccount, freshAccount, reconcileAccounts } from '../engine/account';
+import { absorbAccount, fillAccount, freshAccount, reconcileAccounts } from '../engine/account';
 import { deserialize, SAVE_KEY, serialize } from '../engine/save';
 import { SKILL_IDS, type AccountState, type GameState } from '../engine/types';
 import { characterLevel } from '../engine/character';
@@ -12,7 +12,7 @@ export interface CharacterSummary {
   classId: ClassId;
   act1Cleared?: boolean;
   /** this character has nothing left to hand over to the account */
-  settled?: boolean;
+  handedOver?: boolean;
   combatLevel: number;
   totalLevel: number;
   createdAt: number;
@@ -28,6 +28,10 @@ export interface SaveStore {
   /** The shared account, or null if none has been saved yet. */
   loadAccount(): Promise<AccountState | null>;
   saveAccount(a: AccountState): Promise<void>;
+  /** The account as this browser last wrote it, from any tab. Synchronous, so a save can merge it first. */
+  peekAccount(): AccountState | null;
+  /** The account as another device left it, where there can be one. */
+  pullAccount(): Promise<AccountState | null>;
   removeAccount(): Promise<void>;
 }
 
@@ -37,7 +41,7 @@ export function summarize(s: GameState): CharacterSummary {
     name: s.character.name,
     classId: s.character.classId,
     act1Cleared: s.bossesDefeated.includes('sanctum'),
-    settled: !s.unmerged,
+    handedOver: !s.unmerged && !s.unpooled,
     combatLevel: characterLevel(s),
     totalLevel: SKILL_IDS.filter((k) => k !== 'combat' && k !== 'fishing').reduce((a, k) => a + levelOf(k, s.skills[k]), 0),
     createdAt: s.character.createdAt,
@@ -122,8 +126,16 @@ export class LocalSaveStore implements SaveStore {
   }
 
   async loadAccount(): Promise<AccountState | null> {
+    return this.peekAccount();
+  }
+
+  peekAccount(): AccountState | null {
     const raw = this.storage.getItem(this.accountKey);
-    return raw ? (JSON.parse(raw) as AccountState) : null;
+    return raw ? fillAccount(JSON.parse(raw) as AccountState) : null;
+  }
+
+  async pullAccount(): Promise<AccountState | null> {
+    return null;
   }
 
   /** Synchronous like save(), so an item never leaves the stash without reaching the bag. */
@@ -166,7 +178,15 @@ export class MemorySaveStore implements SaveStore {
   }
 
   async loadAccount(): Promise<AccountState | null> {
-    return this.account ? (JSON.parse(this.account) as AccountState) : null;
+    return this.peekAccount();
+  }
+
+  peekAccount(): AccountState | null {
+    return this.account ? fillAccount(JSON.parse(this.account) as AccountState) : null;
+  }
+
+  async pullAccount(): Promise<AccountState | null> {
+    return null;
   }
 
   async saveAccount(a: AccountState): Promise<void> {
@@ -315,7 +335,7 @@ export class CloudSaveStore implements SaveStore {
     let remote: AccountState | null = null;
     try {
       const row = await this.table.get(this.accountRow);
-      remote = row ? (row.save as AccountState) : null;
+      remote = row ? fillAccount(row.save as AccountState) : null;
       this.setStatus('synced');
     } catch {
       this.setStatus('offline');
@@ -329,6 +349,19 @@ export class CloudSaveStore implements SaveStore {
     const merged = remote ? reconcileAccounts(local, remote) : local;
     void this.saveAccount(merged);
     return merged;
+  }
+
+  peekAccount(): AccountState | null {
+    return this.cache.peekAccount();
+  }
+
+  async pullAccount(): Promise<AccountState | null> {
+    try {
+      const row = await this.table.get(this.accountRow);
+      return row ? fillAccount(row.save as AccountState) : null;
+    } catch {
+      return null;
+    }
   }
 
   saveAccount(a: AccountState): Promise<void> {

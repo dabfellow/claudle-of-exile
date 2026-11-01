@@ -33,11 +33,12 @@ describe('gem tags', () => {
     const s = veteran(newGame(1, { name: 't', classId: 'mage' }));
     const ward = createSkillGem(s, 'frost_ward');
     ward.supports[0] = createSupportGem(s, 'spell_echo');
-    s.gems.push(ward);
-    const loaded = deserialize(serialize(s));
-    const back = loaded.gems.find((g) => g.uid === ward.uid)!;
+    const old = JSON.parse(serialize(s));
+    Object.assign(old, { version: 26, bank: {}, gems: [ward], supportGems: [], flaskStash: [] });
+    const loaded = deserialize(JSON.stringify(old));
+    const back = loaded.unpooled!.gems!.find((g) => g.uid === ward.uid)!;
     expect(back.supports[0]).toBeNull();
-    expect(loaded.supportGems.some((x) => x.supportId === 'spell_echo')).toBe(true);
+    expect(loaded.unpooled!.supportGems!.some((x) => x.supportId === 'spell_echo')).toBe(true);
   });
 });
 
