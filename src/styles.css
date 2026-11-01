@@ -5320,6 +5320,56 @@ img.art.mat-art {
   color: var(--good);
 }
 
+.item-tile-set {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--accent-2);
+}
+
+/* saved gear sets and skill bars */
+.loadout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.loadout-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.loadout-row .input {
+  flex: 0 1 200px;
+  min-width: 120px;
+}
+
+.loadout-sum {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.loadout-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px 12px;
+}
+
+.loadout-auto label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.loadout-auto .input {
+  width: 110px;
+}
+
 /* spare flasks, one tab per kind */
 .flask-shelf {
   display: grid;

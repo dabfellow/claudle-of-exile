@@ -582,6 +582,37 @@ export interface HeistState {
   tally: { jobs: number; alarms: number };
 }
 
+/** A saved doll: what each slot holds, by item uid. A slot left out comes off when the set goes on. */
+export interface GearSet {
+  id: number;
+  name: string;
+  items: Partial<Record<EquipSlot, number>>;
+}
+
+/** One saved bar slot. Sockets, rules and priority are part of it, so one skill can be set up for bosses and again for packs. */
+export interface SkillSetSlot {
+  gem: number;
+  supports: (number | null)[];
+  rules: TacticRule[];
+  priority: SkillPriority;
+}
+
+export interface SkillSet {
+  id: number;
+  name: string;
+  slots: (SkillSetSlot | null)[];
+}
+
+/** Saved gear sets and skill bars (engine/loadouts.ts). */
+export interface Loadouts {
+  gear: GearSet[];
+  skills: SkillSet[];
+  /** the gear set each activity switches to */
+  auto: Partial<Record<SkillId, number>>;
+  /** the activity last seen, so a switch only happens when it changes */
+  lastActivity: SkillId | null;
+}
+
 export interface GameState {
   version: number;
   /** the shared account block; a running game holds the live one, and saves leave it out */
@@ -612,6 +643,7 @@ export interface GameState {
   /** loose support gems */
   supportGems: SupportGemInstance[];
   flaskStash: FlaskInstance[];
+  loadouts: Loadouts;
   action: Action;
   life: number;
   mana: number;

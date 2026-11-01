@@ -11,6 +11,7 @@ import { combatStep } from './combat';
 import { heistAutoStep, heistStep, newHeistState } from './heist';
 import { checkExileUnlock, refreshVendor, vendorTick } from './hideout';
 import { createItem } from './items';
+import { autoSwitchGear, newLoadouts } from './loadouts';
 import { mapStep, newMapState } from './maps';
 import { seeded } from './rng';
 import { craftStep } from './craftUntil';
@@ -59,6 +60,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     skillBar: Array(SKILL_BAR_SLOTS).fill(null),
     gems: [],
     supportGems: [],
+    loadouts: newLoadouts(),
     action: null,
     life: 60,
     mana: 30,
@@ -107,6 +109,7 @@ export function giveStarterGems(s: GameState): void {
 
 /** Advance the simulation by dtMs using fixed sub-steps. */
 export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
+  autoSwitchGear(s, ctx);
   let d = deriveStats(s);
   let remaining = dtMs;
   while (remaining > 0) {

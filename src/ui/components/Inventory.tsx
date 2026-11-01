@@ -3,6 +3,7 @@ import { baseDef } from '../../data/bases';
 import { BAG_SIZE } from '../../data/hideout';
 import { BENCH_UNBUILT, benchBuilt, salvage } from '../../engine/crafting';
 import { itemName } from '../../engine/items';
+import { inGearSet } from '../../engine/loadouts';
 import type { GameState, Item, Rarity } from '../../engine/types';
 import { game } from '../../game';
 import { Tooltip } from './common';
@@ -56,6 +57,7 @@ export function ItemTile({
           <ItemIcon item={item} size={34} />
         </span>
         {better && <span className="item-tile-up" title="Upgrade">▲</span>}
+        {inGearSet(s, item.uid) && <span className="item-tile-set" title="In a gear set: bulk salvage skips it">Set</span>}
         <span className={`item-tile-name rarity-${item.rarity}`}>
           {item.rarity === 'unique' ? itemName(item) : baseDef(item.baseId).name}
         </span>
@@ -134,12 +136,12 @@ export function SortTabs({ value, onChange }: { value: SortKey; onChange: (k: So
 
 /**
  * For gear outside the bag card: pick a rarity and click it again to salvage it (uniques ask once more).
- * Like the bag card, it leaves runed gear alone.
+ * Like the bag card, it leaves runed gear and gear in a set alone.
  */
 export function SalvageByRarity({ s, items, onSalvage }: { s: GameState; items: Item[]; onSalvage: (uids: number[]) => void }) {
   const [open, setOpen] = useState(false);
   const [armed, setArmed] = useState<{ rarity: Rarity; clicks: number } | null>(null);
-  const list = (r: Rarity) => items.filter((i) => i.rarity === r && !i.rune).map((i) => i.uid);
+  const list = (r: Rarity) => items.filter((i) => i.rarity === r && !i.rune && !inGearSet(s, i.uid)).map((i) => i.uid);
   const done = () => {
     setArmed(null);
     setOpen(false);
@@ -223,8 +225,8 @@ export function Inventory({
     done();
   };
   const clickRarity = (r: Rarity) => {
-    // a rune is a deliberate choice, so bulk salvage leaves that gear alone; click it to salvage it
-    const list = items.filter((i) => i.rarity === r && !i.rune).map((i) => i.uid);
+    // a rune or a gear set is a deliberate choice, so bulk salvage leaves that gear alone; click it to salvage it
+    const list = items.filter((i) => i.rarity === r && !i.rune && !inGearSet(s, i.uid)).map((i) => i.uid);
     const clicks = armed?.rarity === r ? armed.clicks + 1 : 1;
     if (clicks === 1) {
       setMarked(new Set(list));
@@ -234,7 +236,7 @@ export function Inventory({
     else salvageNow(list);
   };
   const rarityLabel = (r: Rarity) => {
-    const n = items.filter((i) => i.rarity === r && !i.rune).length;
+    const n = items.filter((i) => i.rarity === r && !i.rune && !inGearSet(s, i.uid)).length;
     const name = r[0].toUpperCase() + r.slice(1);
     if (armed?.rarity !== r) return `All ${r} (${n})`;
     if (r === 'unique' && armed.clicks === 1) return `Salvage ${n} unique?`;

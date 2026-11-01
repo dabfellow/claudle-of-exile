@@ -1,5 +1,5 @@
 import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP, STASH_PAGE_GROWTH, STASH_PAGE_PRICE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
-import { claimItem } from './account';
+import { claimOwned } from './account';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { isCraftLocked } from './crafting';
@@ -64,7 +64,7 @@ export function stashItems(s: GameState, ctx: Ctx, uids: number[], page = 0): nu
     if (!want.has(i.uid) || isCraftLocked(s, i.uid)) return true;
     const target = order.find((p) => stashPageRoom(s, p) > 0);
     if (target === undefined) return true;
-    s.account.stash[target].push(claimItem(s.account, i));
+    s.account.stash[target].push(claimOwned(s, i));
     n++;
     return false;
   });

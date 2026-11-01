@@ -75,7 +75,7 @@ export const STATIONS: StationDef[] = [
     levels: [
       { cost: {}, effect: 'Not built: use orbs on your gear' },
       { cost: { gold: 1500, ash_log: 200, copper_ore: 200 }, effect: 'Built: salvage gear, Life & Resistance crafts' },
-      { cost: { gold: 8000, arcane_dust: 400, rough_gem: 10 }, effect: 'More bench recipes (each also needs its achievement)' },
+      { cost: { gold: 8000, arcane_dust: 400, rough_gem: 10 }, effect: 'More bench recipes (each also needs its achievement), and gear sets can switch on their own' },
       { cost: { gold: 30000, arcane_dust: 1200, rough_gem: 25 }, effect: 'Top-tier bench recipes (each also needs its achievement)' },
       { cost: { gold: 100000, arcane_dust: 3000, rough_gem: 60 }, effect: 'Auto-crafting: spend orbs until a modifier rolls, even offline' },
     ],
@@ -141,6 +141,8 @@ export const SHOP_REFRESH_MIN = [10, 8, 6, 4];
 /** Auto-crafting: time per orb or Essence spent. */
 export const AUTO_CRAFT_BENCH_LEVEL = 5;
 export const CRAFT_STEP_MS = 1500;
+/** The Crafting Bench level that lets a gear set go on by itself when an activity starts. Sets themselves are free. */
+export const GEAR_SWITCH_BENCH_LEVEL = 3;
 
 export interface BenchCraft {
   id: string;
