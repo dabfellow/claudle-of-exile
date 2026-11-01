@@ -419,6 +419,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Running list of uniques: [UNIQUES.md](UNIQUES.md), generated from the game data by `npm run uniques`, and a test fails if it's stale — done 2026-11-01
 - [x] Tutorial redone around crafting: smith a weapon, Transmute it blue, wield it, then Old Brannoc pays for the Crafting Bench (1,500 gold, 200 logs, 200 ore) and you build it and salvage your old weapon. 14 steps, save v28; steps already settled are passed unpaid, so a second character can't collect the bench kit. In [DESIGN.md](design/DESIGN.md) 0.2.37 — done 2026-11-01
 - [x] Acts 3–6 branch: forks that rejoin, side areas, act bosses that need about 75% of their act, and redrawn act maps with no overlapping labels. 0.2.36 — done 2026-11-01
 - [x] Acts 4, 5 and 6 opened to players. 0.2.33 — done 2026-11-01
