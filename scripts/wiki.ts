@@ -212,22 +212,43 @@ function uniquesPage(): string {
 }
 
 function modifiersPage(): string {
+  const tagName = (t: string) => title(t);
+  const plain = (a: (typeof AFFIXES)[number]) => a.text.replace(/\{\d\}/g, '#');
   const section = (kind: 'prefix' | 'suffix') => {
     const rows = AFFIXES.filter((a) => a.kind === kind && a.tiers.length).map((a) => {
       const best = a.tiers.length - 1;
+      const w = Object.entries(a.weights).map(([t, n]) => `${tagName(t)} ${n}`).join(', ');
       return [
         esc(a.label),
-        esc(a.text.replace(/\{\d\}/g, '#')),
+        esc(plain(a)),
         String(a.tiers.length),
         esc(affixRangeText(a.id, 0)),
         esc(affixRangeText(a.id, best)),
         String(a.tiers[best].ilvl),
+        esc(w || 'Never rolls'),
       ];
     });
-    return `<h2>${kind === 'prefix' ? 'Prefixes' : 'Suffixes'}</h2>` + table(['Name', 'Modifier', 'Tiers', 'Lowest tier', 'Best tier', 'Best needs item level'], rows);
+    return `<h2>${kind === 'prefix' ? 'Prefixes' : 'Suffixes'}</h2>` + table(['Name', 'Modifier', 'Tiers', 'Lowest tier', 'Best tier', 'Best needs item level', 'Spawn weights'], rows);
   };
-  for (const a of AFFIXES) index(a.text.replace(/\{\d\}/g, '#'), `${BASE_URL}modifiers/`, `modifier ${a.kind} ${a.label}`);
-  return `<h1>Modifiers</h1><p>Rare items roll prefixes and suffixes. Higher item levels unlock better tiers.</p>${section('prefix')}${section('suffix')}`;
+  // weights by item type: how likely each modifier is to be picked among those that can roll on that type
+  const rollable = AFFIXES.filter((a) => a.tiers.length && !a.uniqueOnly);
+  const tags = [...new Set(rollable.flatMap((a) => Object.keys(a.weights)))].sort();
+  let byType = `<h2 id="weights">Modifier weights by item type</h2><p>When an item gains a modifier, one is picked at random from those that fit it, and a higher weight means a likelier pick. Weights are shown as a share of all prefixes or all suffixes that can roll on that item type. Item level also limits which tiers can appear.</p><p class="meta">Jump to: ${tags.map((t) => `<a href="#w-${t}">${esc(tagName(t))}</a>`).join(' &middot; ')}</p>`;
+  for (const t of tags) {
+    const pool = rollable.filter((a) => (a.weights as Record<string, number>)[t]);
+    const w = (a: (typeof AFFIXES)[number]) => (a.weights as Record<string, number>)[t];
+    const sum = (k: string) => pool.filter((a) => a.kind === k).reduce((n, a) => n + w(a), 0);
+    const rows = [...pool].sort((a, b) => a.kind.localeCompare(b.kind) || w(b) - w(a)).map((a) => [
+      esc(plain(a)),
+      a.kind === 'prefix' ? 'Prefix' : 'Suffix',
+      String(w(a)),
+      `${((w(a) / sum(a.kind)) * 100).toFixed(1)}%`,
+    ]);
+    byType += `<h3 id="w-${t}">${esc(tagName(t))}</h3>${table(['Modifier', 'Kind', 'Weight', 'Chance within its kind'], rows)}`;
+    index(`${tagName(t)} modifier weights`, `${BASE_URL}modifiers/#w-${t}`, 'modifier weights spawn chance');
+  }
+  for (const a of AFFIXES) index(plain(a), `${BASE_URL}modifiers/`, `modifier ${a.kind} ${a.label}`);
+  return `<h1>Modifiers</h1><p>Rare items roll prefixes and suffixes. Higher item levels unlock better tiers. <a href="#weights">Jump to weights by item type</a>.</p>${section('prefix')}${section('suffix')}${byType}`;
 }
 
 // ---------- currency and materials ----------
