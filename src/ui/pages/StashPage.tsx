@@ -37,6 +37,7 @@ const MATERIAL_GROUPS: { label: string; kinds: string[] }[] = [
   { label: 'Artifacts', kinds: ['artifact'] },
   { label: 'Runes', kinds: ['rune'] },
   { label: 'Meals & Ingredients', kinds: ['food', 'ingredient'] },
+  { label: 'Vellum & Ink', kinds: ['chart'] },
   { label: 'Other', kinds: ['dust'] },
 ];
 

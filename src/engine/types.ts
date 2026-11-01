@@ -4,8 +4,8 @@ import type { CultureId } from '../data/expedition';
 import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
 
-export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'archaeology' | 'smithing' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'fishing';
-export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'fishing'];
+export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'archaeology' | 'smithing' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'fishing';
+export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'fishing'];
 
 export type Rarity = 'normal' | 'magic' | 'rare' | 'unique';
 
@@ -589,6 +589,7 @@ export interface Lifetime {
   flasksDrunk: number;
   flasksBrewed: number;
   mealsEaten: number;
+  mapsDrawn: number;
   itemsSmithed: number;
   gathered: number;
   benchCrafts: number;

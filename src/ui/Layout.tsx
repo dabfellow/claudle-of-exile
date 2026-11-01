@@ -6,6 +6,7 @@ import { materialDef } from '../data/materials';
 import { actionDef, SKILLS } from '../data/skills';
 import { zoneDef } from '../data/zones';
 import { queueSkill, retreat, useFlask } from '../engine/combat';
+import { cartographyOpen } from '../engine/cartography';
 import { cookingOpen } from '../engine/cooking';
 import { findItem } from '../engine/crafting';
 import { methodName } from '../engine/craftUntil';
@@ -97,6 +98,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
       { page: 'gemcutting', label: 'Gemcutting', icon: 'gemcutting', skill: 'gemcutting' },
       { page: 'runecarving', label: 'Rune-carving', icon: 'runecarving', skill: 'runecarving' },
       { page: 'cooking', label: 'Cooking', icon: 'cooking', skill: 'cooking' },
+      { page: 'cartography', label: 'Cartography', icon: 'cartography', skill: 'cartography' },
     ],
   },
   {
@@ -139,7 +141,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
       {NAV.map((g) => (
         <div className={`nav-group ${g.label ? '' : 'unlabelled'}`} key={g.label || 'top'}>
           {g.label && <div className="nav-label">{g.label}</div>}
-          {g.items.filter((it) => it.page !== 'cooking' || cookingOpen(s)).map((it) => {
+          {g.items.filter((it) => (it.page !== 'cooking' || cookingOpen(s)) && (it.page !== 'cartography' || cartographyOpen(s))).map((it) => {
             const lvl = it.skill ? levelOf(it.skill, s.skills[it.skill]) : null;
             const isActive = it.skill && it.skill === active;
             const color = it.skill ? SKILLS[it.skill].color : 'var(--muted)';
@@ -614,6 +616,15 @@ export function OfflineModal() {
               <b>Maps Cleared</b>
             </div>
             <p>{sum.mapRuns} map run{sum.mapRuns === 1 ? '' : 's'} finished, {sum.mapsFound} new map{sum.mapsFound === 1 ? '' : 's'} found.</p>
+          </div>
+        )}
+        {sum.mapsDrawn > 0 && (
+          <div className="away-alert">
+            <div className="row">
+              <GameIcon name="cartography" size={16} />
+              <b>Maps Drawn</b>
+            </div>
+            <p>{sum.mapsDrawn} map{sum.mapsDrawn === 1 ? '' : 's'} drawn and put in the case.</p>
           </div>
         )}
         {sum.heists > 0 && (

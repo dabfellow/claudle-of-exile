@@ -1,9 +1,10 @@
+import { CHART_MATERIALS } from './cartography';
 import { COOKING_MATERIALS } from './cooking';
 import { CRAFT_MATERIALS } from './craftMats';
 import { EXPEDITION_MATERIALS } from './expedition';
 import { RUNE_MATERIALS } from './runes';
 
-export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'rune' | 'artifact' | 'ingredient' | 'food' | 'currency' | 'gold' | 'fish';
+export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'rune' | 'artifact' | 'ingredient' | 'food' | 'chart' | 'currency' | 'gold' | 'fish';
 
 export interface MaterialDef {
   id: string;
@@ -49,6 +50,7 @@ export const MATERIALS: MaterialDef[] = [
   ...RUNE_MATERIALS,
   ...EXPEDITION_MATERIALS,
   ...COOKING_MATERIALS,
+  ...CHART_MATERIALS,
 ];
 
 export interface CurrencyDef extends MaterialDef {

@@ -14,6 +14,7 @@ import { newFlask, rerollMagic, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { digDone } from './expedition';
 import { markerBoost } from './heist';
+import { chartDone, hasChartMaps } from './cartography';
 import { focusMult, focusStep } from './minigame';
 import { bagFull, dropItem } from './storage';
 import { allMods, createItem, salvageValue } from './items';
@@ -46,6 +47,7 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
   if (skill === 'runecarving' && t.livingScript) return 1.25;
   if (skill === 'archaeology' && t.deepSurvey) return 1.25;
   if (skill === 'cooking' && t.headChef) return 1.25;
+  if (skill === 'cartography' && t.masterCartographer) return 1.25;
   return 1;
 }
 
@@ -107,7 +109,7 @@ export function actionBlocker(s: GameState, a: SkillAction): string | null {
   if (skillLevel(s, a.skill) < a.level) return `Requires ${SKILLS[a.skill].name} level ${a.level}`;
   const st = stationLevelFor(a);
   if (st && (s.account.hideout[st.station] ?? 1) < st.level) return `Needs ${st.station === 'forge' ? 'Forge' : 'Alchemy Table'} level ${st.level}`;
-  if (a.inputs && !canAfford(s, a.inputs)) return 'Missing materials';
+  if ((a.inputs && !canAfford(s, a.inputs)) || !hasChartMaps(s, a)) return 'Missing materials';
   if (a.baseId && bagFull(s) && !salvagesBases(s)) return 'Inventory full';
   return null;
 }
@@ -226,9 +228,10 @@ function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, 
 
 function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   const t = skillTreeStats(s);
-  payCost(s, inputsToPay(a, t, ctx));
+  const cost = inputsToPay(a, t, ctx);
+  payCost(s, cost);
   const outputs: Record<string, number> = {};
-  const twoForOne = a.skill === 'runecarving' ? t.secondStroke : a.skill === 'cooking' ? t.secondHelping : 0;
+  const twoForOne = a.skill === 'runecarving' ? t.secondStroke : a.skill === 'cooking' ? t.secondHelping : a.skill === 'cartography' ? t.secondCopy : 0;
   const double = a.skill === 'alchemy' ? chance(ctx.rng, ALCH_DOUBLE[(s.account.hideout.alchemy_table ?? 1) - 1]) : !!twoForOne && chance(ctx.rng, twoForOne / 100);
   const mult = double ? 2 : 1;
 
@@ -255,6 +258,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   if (a.skill === 'woodcutting' && t.birdsNest && chance(ctx.rng, t.birdsNest / 100)) give(s, outputs, pick(ctx.rng, HERB_TIERS.slice(0, 2)), 1);
 
   if (a.skill === 'archaeology') digDone(s, ctx, a, outputs);
+  if (a.chart) chartDone(s, a, mult, Object.keys(cost).length > 0, outputs);
 
   if (a.baseId) smithBase(s, ctx, a, t);
   if (a.flaskId) {

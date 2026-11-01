@@ -17,6 +17,7 @@ const HOW_TO: Partial<Record<SkillId, string>> = {
   gemcutting: 'Cut the facets in order, 1 to 3, before the stone settles.',
   runecarving: 'Drag from the circle along the whole stroke without leaving the line.',
   cooking: 'Three pots are heating up. Stir each one in the bright band, before it boils over.',
+  cartography: 'A landmark is hidden in the fog. Each sounding shows how many steps away it is: find it within 5.',
 };
 
 const RESULT_TEXT: Record<SwingResult, string> = { hit: 'Clean hit', weak: 'Weak hit', miss: 'Miss' };

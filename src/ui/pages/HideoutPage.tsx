@@ -8,6 +8,7 @@ import { skillSummary } from '../../engine/gems';
 import { nextUpgradeCost, stationLevel, stationLockReason, upgradeStation } from '../../engine/hideout';
 import { pointsLeft } from '../../engine/passives';
 import { deriveStats } from '../../engine/stats';
+import { cartographyOpen } from '../../engine/cartography';
 import { SKILL_IDS, type GameState, type SkillId } from '../../engine/types';
 import { levelOf, maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
@@ -363,7 +364,7 @@ function SkillDials({ go, training }: { go: (p: Page) => void; training: SkillId
           <div key={group} className="hx-dial-group">
             <div className="io-label">{group === 'gathering' ? 'Gathering' : 'Production'}</div>
             <div className="hx-dials">
-              {SKILL_IDS.filter((id) => id !== 'combat' && SKILLS[id].group === group).map((id) => (
+              {SKILL_IDS.filter((id) => id !== 'combat' && SKILLS[id].group === group && (id !== 'cartography' || cartographyOpen(s))).map((id) => (
                 <SkillDial key={id} id={id} s={s} running={training === id} go={go} />
               ))}
             </div>

@@ -11,6 +11,7 @@ import type { Ctx } from './context';
 import { createItem, createUnique } from './items';
 import { placeItem } from './loot';
 import { chance, pick, rInt } from './rng';
+import { skillTreeStats } from './skillTree';
 import { deriveStats } from './stats';
 import type { EquipSlot, GameState, MapState, MonsterInstance } from './types';
 import { charXpForLevel } from './xp';
@@ -34,9 +35,10 @@ export function mapsHeld(s: GameState, tier: number, themeId: string): number {
   return s.maps.stock[mapZoneId(tier, themeId)] ?? 0;
 }
 
-function addMaps(s: GameState, tier: number, themeId: string, n: number): void {
+export function addMaps(s: GameState, tier: number, themeId: string, n: number): string {
   const id = mapZoneId(tier, themeId);
   s.maps.stock[id] = (s.maps.stock[id] ?? 0) + n;
+  return id;
 }
 
 /** Use up a map and step through. Each map starts you fresh: there's no town between auto-runs to recover in. */
@@ -123,13 +125,18 @@ function leaveMap(s: GameState): void {
   s.action = null;
 }
 
+/** A map found in a run is that run's tier, or now and then the next one up. */
+function droppedTier(ctx: Ctx, tier: number): number {
+  return MAP_TIERS.some((t) => t.tier === tier + 1) && chance(ctx.rng, MAP_DROPS.tierUp) ? tier + 1 : tier;
+}
+
 /** Maps from any monster, and what a map's theme favours. */
 export function rollMapDrops(s: GameState, ctx: Ctx, mon: MonsterInstance): void {
   const run = s.maps.run;
   if (!run && (!mapsOpen(s) || mon.level < MAP_DROPS.campaignMinLevel)) return;
   const dropChance = run ? (mon.isBoss ? MAP_DROPS.inMapBoss : MAP_DROPS.inMapKill) : mon.isBoss ? MAP_DROPS.campaignBoss : MAP_DROPS.campaignKill;
-  if (chance(ctx.rng, dropChance)) {
-    const tier = run?.tier ?? MAP_TIERS[0].tier;
+  if (chance(ctx.rng, dropChance * (1 + (skillTreeStats(s).mapFind ?? 0) / 100))) {
+    const tier = run ? droppedTier(ctx, run.tier) : MAP_TIERS[0].tier;
     const theme = pick(ctx.rng, MAP_THEMES);
     addMaps(s, tier, theme.id, 1);
     if (run) s.maps.tally.mapsFound += 1;

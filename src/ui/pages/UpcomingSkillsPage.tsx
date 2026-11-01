@@ -1,14 +1,17 @@
 import { UPCOMING_SKILLS } from '../../data/skills';
+import { useGame } from '../../game';
 import { Badge } from '../components/common';
 import { Icon } from '../components/Icon';
 
 /** Skills that are planned but not built: a teaser list (docs/design/SKILLING_REWORK.md §8). */
 export function UpcomingSkillsPage() {
+  const s = useGame();
+  const upcoming = UPCOMING_SKILLS.filter((u) => !u.gate || !s.unlockedZones.includes(u.gate.zone));
   return (
     <div className="page">
       <div className="card upcoming-hero">
         <div className="upcoming-hero-icons" aria-hidden>
-          {UPCOMING_SKILLS.map((u) => (
+          {upcoming.map((u) => (
             <span key={u.name} style={{ ['--skill' as string]: u.color }}>
               <Icon name={u.icon} size={26} color={u.color} />
             </span>
@@ -17,11 +20,11 @@ export function UpcomingSkillsPage() {
         <span className="page-kicker">Skilling</span>
         <h1>Coming soon</h1>
         <p>
-          {UPCOMING_SKILLS.length} more skills are on the workbench. None of them can be trained yet.
+          {upcoming.length} more skills are on the workbench. None of them can be trained yet.
         </p>
       </div>
       <div className="upcoming-grid">
-        {UPCOMING_SKILLS.map((u) => (
+        {upcoming.map((u) => (
           <div key={u.name} className="card upcoming-card" style={{ ['--skill' as string]: u.color }}>
             <div className="upcoming-icon">
               <Icon name={u.icon} size={34} color={u.color} />
