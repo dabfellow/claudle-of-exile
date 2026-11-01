@@ -95,7 +95,7 @@ export const STATIONS: StationDef[] = [
     desc: 'Where you plan fights ahead of time. Upgrades teach your skills new rules, for good.',
     levels: [
       { cost: {}, effect: 'Simple rules, 1 rule slot per skill' },
-      { cost: { gold: 1500, ash_log: 150, copper_ore: 150 }, effect: 'Vitals rules: when life or mana is below', grants: { rules: ['vitals'] } },
+      { cost: { gold: 1500, ash_log: 150, copper_ore: 150 }, effect: 'Vitals rules: when life or mana is below, or Frostbite builds', grants: { rules: ['vitals'] } },
       { cost: { gold: 6000, oak_log: 1200, iron_ore: 1200 }, effect: 'Status rules, and a 2nd rule slot per skill', grants: { rules: ['status'], ruleSlots: 2 } },
       { cost: { gold: 8000, oak_log: 1500, iron_ore: 1500, rough_gem: 15 }, effect: 'Ground rules: react to the ground under you', grants: { rules: ['ground'] } },
       { cost: { gold: 12000, oak_log: 1500, iron_ore: 1500, rough_gem: 25 }, effect: 'Wind-up rules: bosses can now be fought offline', grants: { rules: ['windups'] } },

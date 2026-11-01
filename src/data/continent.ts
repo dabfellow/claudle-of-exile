@@ -77,6 +77,19 @@ export const ZONE_POS: Record<string, [number, number]> = {
   choirloft: [620, 595],
   saintswalk: [580, 565],
   highaltar: [640, 540],
+  // Act 4 climbs the northern range from the steppe's edge, west to east, up to the throne on the highest peak
+  hollowpass: [325, 225],
+  screefields: [305, 165],
+  howlingfells: [375, 195],
+  glasslake: [380, 125],
+  bonequarry: [445, 195],
+  icevault: [450, 100],
+  mammothroad: [520, 180],
+  hangingglacier: [525, 110],
+  steading: [585, 150],
+  longhall: [580, 90],
+  kingsstair: [515, 70],
+  giantsthrone: [445, 65],
 };
 
 export function actRegion(act: number): ActRegion | undefined {

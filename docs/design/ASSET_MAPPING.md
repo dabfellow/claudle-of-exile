@@ -61,6 +61,75 @@ Total: 829 unique artworks out of 1,939 files. The first pass also reused unused
 
 Custom art wanted most: the 8 area banners and 2 scenes (no fitting landscapes exist in any pack), the 4 amulets (Catalone Part 1), and three herbs: sunpetal, emberroot, voidbloom.
 
+## Act 4 (added 2026-11-01)
+
+All 60 Act 4 monsters and bosses have their own picture: 50 close, 10 loose. The raw packs aren't on this machine, so every one is a `tint-<id>` recolour of a pack sprite that was already in `src/assets`, a few of them recolours of earlier recolours. The packs have no giants as such, so giants use the biggest heads on hand (`freesample-a43`, `a10`, `mobeK1S`) and the mammoth is the boar-like `rhino` sprite. Five uniques use unused gear-set and Woshi pieces; `giants_knuckle` is a pale recolour of `quintino-q18.png`, as no unused hammer was left.
+
+**Areas:** the 12 banners reuse GegX landscapes in `ZONE_ART` until the landscape pack arrives. Nothing new comes from GegX. Full briefs for them are in `ZONE_DESC` in `src/data/artManifest.ts`.
+
+| Game asset ID | Source file | Confidence | Final destination | Notes |
+|---|---|---|---|---|
+| `monsters/snowwolf` | `src/assets/monsters/freesample-p19.jpg` | close | `src/assets/monsters/tint-snowwolf.jpg` | pale grey wolf. Recolour: saturation 0.4, brightness 1.1, tint 210,225,240 |
+| `monsters/hillgiant` | `src/assets/monsters/freesample-a43.jpg` | close | `src/assets/monsters/tint-hillgiant.jpg` | heavy-browed brute, dusty; head only, no club. Recolour: tint 190,170,140 |
+| `monsters/passtroll` | `src/assets/monsters/craftpix-con16.png` | close | `src/assets/monsters/tint-passtroll.png` | squat green-grey troll face. Recolour: tint 150,190,170 |
+| `monsters/rimecaller` | `src/assets/portraits/craftpix-con12.png` | close | `src/assets/monsters/tint-rimecaller.png` | hooded caster in ice blue. Recolour: tint 170,210,240 |
+| `monsters/hrolf` | `src/assets/monsters/freesample-a10.jpg` | close | `src/assets/monsters/tint-hrolf.jpg` | broad man in a stone wash; no beam. Recolour: tint 200,190,170 |
+| `monsters/screegolem` | `src/assets/monsters/codespree-geograb.png` | close | `src/assets/monsters/tint-screegolem.png` | rock creature, grey. Recolour: saturation 0.3, tint 190,190,185 |
+| `monsters/stonehawk` | `src/assets/monsters/craftpix-con32.png` | close | `src/assets/monsters/tint-stonehawk.png` | dark hawk head, stone grey. Recolour: tint 175,180,185 |
+| `monsters/boulderthrower` | `src/assets/monsters/craftpix-con20.png` | placeholder | `src/assets/monsters/tint-boulderthrower.png` | padded hood, too small for a giant; no boulder. Recolour: tint 175,165,150 |
+| `monsters/frostshrike` | `src/assets/monsters/codespree-gray-parrot.png` | close | `src/assets/monsters/tint-frostshrike.png` | perched bird in ice blue. Recolour: tint 170,210,240 |
+| `monsters/asa` | `src/assets/monsters/freesample-a66.jpg` | placeholder | `src/assets/monsters/tint-asa.jpg` | stern woman, grey; no boulder. Recolour: saturation 0.3, tint 190,190,200 |
+| `monsters/direwolf` | `src/assets/monsters/freesample-p19.jpg` | close | `src/assets/monsters/tint-direwolf.jpg` | snarling wolf in frost blue. Recolour: saturation 0.5, tint 140,190,230 |
+| `monsters/fellbear` | `src/assets/monsters/craftpix-con27.png` | close | `src/assets/monsters/tint-fellbear.png` | heavy-jawed brown beast. Recolour: tint 160,130,110 |
+| `monsters/windwraith` | `src/assets/monsters/codespree-gust.png` | close | `src/assets/monsters/tint-windwraith.png` | living whirlwind, ice blue. Recolour: tint 180,220,240 |
+| `monsters/wolfshaman` | `src/assets/portraits/craftpix-con33.png` | close | `src/assets/monsters/tint-wolfshaman.png` | bearded hooded man, cold light. Recolour: tint 170,200,225 |
+| `monsters/fenrik` | `src/assets/monsters/freesample-p19.jpg` | close | `src/assets/monsters/tint-fenrik.jpg` | huge dark grey wolf. Recolour: saturation 0.2, brightness 0.7 |
+| `monsters/icefisher` | `src/assets/monsters/craftpix-con7.png` | close | `src/assets/monsters/tint-icefisher.png` | scale hood in lake blue; no harpoon. Recolour: tint 170,200,210 |
+| `monsters/frostshell` | `src/assets/monsters/codespree-crab.png` | close | `src/assets/monsters/tint-frostshell.png` | crab, rimed pale. Recolour: saturation 0.2, tint 190,225,240 |
+| `monsters/skater` | `src/assets/monsters/codespree-white-cave-spider.png` | close | `src/assets/monsters/tint-skater.png` | long-legged pale spider. Recolour: tint 170,210,235 |
+| `monsters/undertow` | `src/assets/monsters/tint-mirage.png` | close | `src/assets/monsters/tint-undertow.png` | pale eyeless thing, drawn from the Act 2 mirage. Recolour: tint 170,210,225 |
+| `monsters/mirrawen` | `src/assets/monsters/tint-glass.jpg` | close | `src/assets/monsters/tint-mirrawen.jpg` | silvered woman in ice blue. Recolour: tint 190,225,245 |
+| `monsters/quarrygiant` | `src/assets/monsters/freesample-a43.jpg` | close | `src/assets/monsters/tint-quarrygiant.jpg` | brute, quarry grey. Recolour: saturation 0.5, brightness 0.9, tint 170,160,150 |
+| `monsters/bonecutter` | `src/assets/monsters/craftpix-con21.png` | close | `src/assets/monsters/tint-bonecutter.png` | bone-masked creature. Recolour: tint 210,200,170 |
+| `monsters/marrowhound` | `src/assets/monsters/craftpix-con27.png` | placeholder | `src/assets/monsters/tint-marrowhound.png` | long-jawed beast, bone white. Recolour: saturation 0.2, tint 200,210,225 |
+| `monsters/gravethane` | `src/assets/monsters/freesample-mobiszon999.jpg` | close | `src/assets/monsters/tint-gravethane.jpg` | dead lord, frost-lit. Recolour: tint 170,200,225 |
+| `monsters/ulfhild` | `src/assets/monsters/freesample-op53.jpg` | placeholder | `src/assets/monsters/tint-ulfhild.jpg` | scarred pale head; no hammer. Recolour: tint 200,190,170 |
+| `monsters/vaultyeti` | `src/assets/monsters/codespree-sasquatch.png` | close | `src/assets/monsters/tint-vaultyeti.png` | shaggy upright beast, lightened. Recolour: saturation 0.4, brightness 3, tint 190,225,245 |
+| `monsters/icespider` | `src/assets/monsters/codespree-white-cave-spider.png` | close | `src/assets/monsters/tint-icespider.png` | spider, deep blue. Recolour: saturation 0, tint 110,170,230 |
+| `monsters/frostmite` | `src/assets/monsters/codespree-geograb.png` | placeholder | `src/assets/monsters/tint-frostmite.png` | rock creature in blue; not much of a mite. Recolour: saturation 0.6, tint 130,190,230 |
+| `monsters/hoarfrost` | `src/assets/monsters/freesample-op36.jpg` | close | `src/assets/monsters/tint-hoarfrost.jpg` | hooded gaunt face. Recolour: tint 170,210,240 |
+| `monsters/skaldi` | `src/assets/monsters/freesample-moooob27.jpg` | close | `src/assets/monsters/tint-skaldi.jpg` | blue-skinned bald head. Recolour: tint 180,215,240 |
+| `monsters/mammoth` | `src/assets/monsters/tint-rhino.png` | close | `src/assets/monsters/tint-mammoth.png` | heavy tusked beast, shaggy brown; a boar more than a mammoth. Recolour: brightness 1.2, tint 190,150,115 |
+| `monsters/herdsman` | `src/assets/monsters/craftpix-con20.png` | close | `src/assets/monsters/tint-herdsman.png` | padded hood, slate; no goad. Recolour: tint 150,165,190 |
+| `monsters/snowlynx` | `src/assets/monsters/tint-grasscat.png` | close | `src/assets/monsters/tint-snowlynx.png` | crouching cat, white. Recolour: saturation 0, brightness 2, tint 225,230,240 |
+| `monsters/tuskseer` | `src/assets/monsters/craftpix-con39.png` | placeholder | `src/assets/monsters/tint-tuskseer.png` | turbaned figure, cold. Recolour: tint 190,205,220 |
+| `monsters/oldtusk` | `src/assets/monsters/tint-rhino.png` | close | `src/assets/monsters/tint-oldtusk.png` | the same beast, old and pale. Recolour: brightness 0.8, tint 200,180,160 |
+| `monsters/glacierogre` | `src/assets/monsters/freesample-a43.jpg` | close | `src/assets/monsters/tint-glacierogre.jpg` | brute in glacier blue. Recolour: tint 150,190,220 |
+| `monsters/crevasse` | `src/assets/monsters/craftpix-con11.png` | close | `src/assets/monsters/tint-crevasse.png` | dark beast with lit eyes. Recolour: tint 120,170,210 |
+| `monsters/ropecutter` | `src/assets/monsters/craftpix-con9.png` | close | `src/assets/monsters/tint-ropecutter.png` | headband and mask, cold; no axe. Recolour: tint 170,190,215 |
+| `monsters/avalanchepriest` | `src/assets/monsters/freesample-a61.jpg` | placeholder | `src/assets/monsters/tint-avalanchepriest.jpg` | bald gaunt figure, snow-lit. Recolour: hue 190, saturation 0.6, brightness 1.2 |
+| `monsters/sigrun` | `src/assets/monsters/tint-qara.jpg` | close | `src/assets/monsters/tint-sigrun.jpg` | blue-haired woman, pale. Recolour: tint 200,235,245 |
+| `monsters/steadgiant` | `src/assets/monsters/freesample-a43.jpg` | close | `src/assets/monsters/tint-steadgiant.jpg` | brute, weathered. Recolour: hue 20, saturation 0.7, brightness 1.1 |
+| `monsters/frostgiant` | `src/assets/monsters/freesample-mobeK1S.jpg` | close | `src/assets/monsters/tint-frostgiant.jpg` | iron-faced giant in blue steel; no greataxe. Recolour: tint 150,190,235 |
+| `monsters/wardog` | `src/assets/monsters/freesample-p19.jpg` | close | `src/assets/monsters/tint-wardog.jpg` | snarling brown hound. Recolour: hue 20, saturation 0.8, brightness 0.85 |
+| `monsters/hearthwitch` | `src/assets/monsters/tint-saltwitch.png` | close | `src/assets/monsters/tint-hearthwitch.png` | hooded witch, cold grey. Recolour: tint 200,205,230 |
+| `monsters/borghild` | `src/assets/monsters/freesample-a66.jpg` | placeholder | `src/assets/monsters/tint-borghild.jpg` | stern woman, weathered; no knife. Recolour: saturation 0.5, brightness 0.85, tint 210,190,170 |
+| `monsters/hallgiant` | `src/assets/monsters/freesample-a10.jpg` | close | `src/assets/monsters/tint-hallgiant.jpg` | broad bare-shouldered man, ruddy. Recolour: hue 340, tint 200,170,140 |
+| `monsters/jarl` | `src/assets/monsters/craftpix-con19.png` | close | `src/assets/monsters/tint-jarl.png` | winged helm, cold steel. Recolour: tint 170,200,235 |
+| `monsters/skald` | `src/assets/monsters/craftpix-con4.png` | placeholder | `src/assets/monsters/tint-skald.png` | bearded smith; a cheerful face for a giant. Recolour: tint 190,210,225 |
+| `monsters/meadwitch` | `src/assets/monsters/craftpix-con41.png` | placeholder | `src/assets/monsters/tint-meadwitch.png` | serpent-haired woman in honey gold; no cup. Recolour: tint 210,190,120 |
+| `monsters/gunnvor` | `src/assets/monsters/freesample-a24.jpg` | close | `src/assets/monsters/tint-gunnvor.jpg` | horned face, turned blue. Recolour: hue 180 |
+| `monsters/stairguard` | `src/assets/portraits/craftpix-con1.png` | close | `src/assets/monsters/tint-stairguard.png` | helmed guard; no maul. Recolour: tint 170,190,210 |
+| `monsters/stormgiant` | `src/assets/monsters/tint-sunguard.jpg` | close | `src/assets/monsters/tint-stormgiant.jpg` | great armoured head, ice blue. Recolour: tint 170,215,235 |
+| `monsters/stairwolf` | `src/assets/monsters/craftpix-con27.png` | close | `src/assets/monsters/tint-stairwolf.png` | long-jawed beast, blue. Recolour: hue 180, saturation 0.7 |
+| `monsters/kingsrime` | `src/assets/portraits/craftpix-con6.png` | close | `src/assets/monsters/tint-kingsrime.png` | hooded herald, ice blue. Recolour: tint 190,225,240 |
+| `monsters/hallvard` | `src/assets/monsters/freesample-mobeK1S.jpg` | close | `src/assets/monsters/tint-hallvard.jpg` | iron-faced captain, frosted. Recolour: saturation 0.3, brightness 1.2, tint 205,215,230 |
+| `monsters/thronegiant` | `src/assets/monsters/tint-sunpriest.jpg` | close | `src/assets/monsters/tint-thronegiant.jpg` | huge smooth face, ice blue. Recolour: tint 170,210,235 |
+| `monsters/hollowthane` | `src/assets/monsters/freesample-kociotrup.jpg` | close | `src/assets/monsters/tint-hollowthane.jpg` | bare skull, frost-lit. Recolour: tint 180,215,240 |
+| `monsters/frozenhusk` | `src/assets/monsters/freesample-spalenie.jpg` | close | `src/assets/monsters/tint-frozenhusk.jpg` | dark skull, turned cold. Recolour: hue 200 |
+| `monsters/wintervoice` | `src/assets/monsters/tint-barrowwight.png` | close | `src/assets/monsters/tint-wintervoice.png` | hooded wight, white. Recolour: tint 200,230,245 |
+| `monsters/hollowking` | `src/assets/monsters/freesample-mobiszon999.jpg` | close | `src/assets/monsters/tint-hollowking.jpg` | dead king, hollow-eyed and pale; no sceptre. Recolour: saturation 0.4, brightness 1.1, tint 190,225,250 |
+
 ## Act 3 (added 2026-10-31)
 
 All 50 Act 3 monsters and bosses and the Chained Martyr have their own picture: 36 close, 15 loose. Every one is a `tint-<id>` recolour of a Craftpix or free_sample person, since the act is nearly all human and the packs hold few people. Craftpix's cartoon faces take a one-colour wash (`tint`), because a hue turn gives them green or purple skin; free_sample paintings can take a hue turn. The six uniques use unused gear-set pieces, and `gi-shard-necklace.svg` is a pale blue copy of `gi-gem-pendant.svg`.

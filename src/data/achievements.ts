@@ -64,6 +64,14 @@ const ALL: AchievementDef[] = [
     target: zonesInAct(3).length, progress: (s) => bossesBeatenIn(s, 3), reward: { exalted: 1 },
   },
   {
+    id: 'act_4', name: 'The Mountain Falls', desc: 'Defeat the Hollow King and complete Act 4', category: 'combat', act: 4,
+    target: 1, progress: (s) => (s.bossesDefeated.includes('giantsthrone') ? 1 : 0), reward: { divine: 2, exalted: 2 },
+  },
+  {
+    id: 'conqueror_4', name: 'Giantsbane', desc: "Defeat every Act 4 area's boss", category: 'combat', act: 4,
+    target: zonesInAct(4).length, progress: (s) => bossesBeatenIn(s, 4), reward: { exalted: 1 },
+  },
+  {
     id: 'deathless', name: 'Untouchable', desc: 'Reach level 10 without dying', category: 'combat',
     target: 10, progress: (s) => (L(s).deaths === 0 ? Math.min(10, characterLevel(s)) : 0), reward: { regret: 2 },
   },

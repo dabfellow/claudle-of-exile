@@ -1100,6 +1100,61 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_riposte_bleed', values: [1] },
     ],
   },
+  // ---------- Act 4 (docs/design/ACT4.md): one for each class's meter, each with cold resistance ----------
+  {
+    id: 'giants_knuckle', name: "The Giant's Knuckle", baseId: 'dreadsteel_hammer', flavour: 'Cut from the hand of one who was still using it.',
+    mods: [
+      { affixId: 'inc_phys', values: [120] },
+      { affixId: 'flat_life', values: [60] },
+      { affixId: 'cold_res', values: [30] },
+      { affixId: 'u_rage_effect', values: [25] },
+    ],
+  },
+  {
+    id: 'rimewalkers', name: 'Rimewalkers', baseId: 'hawkfeather_boots', flavour: 'They leave no tracks, and neither will you.',
+    mods: [
+      { affixId: 'flat_evasion', values: [150] },
+      { affixId: 'cold_res', values: [40] },
+      { affixId: 'u_momentum_max', values: [2] },
+      { affixId: 'u_momentum_evasion', values: [3] },
+    ],
+  },
+  {
+    id: 'heart_of_winter', name: 'Heart of Winter', baseId: 'onyx_amulet', flavour: 'It beats once a year. You will not like the year it stops.',
+    mods: [
+      { affixId: 'spell_cold', values: [14, 38] },
+      { affixId: 'inc_cold', values: [35] },
+      { affixId: 'cold_res', values: [30] },
+      { affixId: 'u_mana_power_full', values: [20] },
+    ],
+  },
+  {
+    id: 'frostgrip', name: 'Frostgrip', baseId: 'wraith_wraps', flavour: 'Whatever you hold goes still.',
+    mods: [
+      { affixId: 'flat_es', values: [45] },
+      { affixId: 'attack_speed', values: [10] },
+      { affixId: 'cold_res', values: [35] },
+      { affixId: 'u_malice_on_hit_taken', values: [2] },
+    ],
+  },
+  {
+    id: 'crown_of_the_hollow', name: 'Crown of the Hollow', baseId: 'dreadsteel_helm', flavour: 'Heavy enough to empty a king.',
+    mods: [
+      { affixId: 'flat_life', values: [70] },
+      { affixId: 'inc_armour', values: [55] },
+      { affixId: 'cold_res', values: [40] },
+      { affixId: 'u_fervor_pct', values: [30] },
+    ],
+  },
+  {
+    id: 'wolfmother_pelt', name: 'Wolfmother’s Pelt', baseId: 'corsair_coat', flavour: 'She let you have it. You should ask why.',
+    mods: [
+      { affixId: 'flat_life', values: [100] },
+      { affixId: 'cold_res', values: [40] },
+      { affixId: 'u_riposte_pct', values: [35] },
+      { affixId: 'u_riposte_heal', values: [2] },
+    ],
+  },
 ];
 
 export function uniqueDef(id: string): UniqueDef {

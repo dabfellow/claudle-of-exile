@@ -275,13 +275,16 @@ export function ascendanciesOf(classId: ClassId): AscendancyDef[] {
   return ASCENDANCIES.filter((a) => a.classId === classId);
 }
 
-/** What each trial grants. Trials 2 and 3 come with their acts: until then notables and capstones stay sealed. */
-export const TRIALS: { n: 1 | 2 | 3; zoneId: string; points: number }[] = [{ n: 1, zoneId: 'pilgrimgate', points: 2 }];
+/** What each trial grants. Trial 3 comes with Act 6: until then capstones stay sealed. */
+export const TRIALS: { n: 1 | 2 | 3; zoneId: string; points: number }[] = [
+  { n: 1, zoneId: 'pilgrimgate', points: 2 },
+  { n: 2, zoneId: 'giantsthrone', points: 2 },
+];
 
 /** The trial that opens a node, in words. */
 export const TRIAL_SEAL: Record<1 | 2 | 3, string> = {
   1: 'Opens with the first trial',
-  2: 'Sealed until the trial at the end of Act 4',
+  2: 'Sealed until the trial at the Giants’ Throne, at the end of Act 4',
   3: 'Sealed until the trial at the start of Act 6',
 };
 

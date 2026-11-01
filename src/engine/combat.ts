@@ -28,6 +28,13 @@ import {
   MARTYR,
   monsterDamage,
   monsterLife,
+  BOSS_FROSTBITE_CLEANSE,
+  BOSS_FROSTBITE_EVERY_MS,
+  BOSS_FROSTBITE_FREEZE_MS,
+  BOSS_FROSTBITE_INSTILL_AT,
+  BOSS_FROSTBITE_MAX,
+  BOSS_FROSTBITE_SHATTER,
+  BOSS_FROSTBITE_SLOW_PCT,
   zoneDef,
   type BossMechanic,
   type MonsterDef,
@@ -55,6 +62,7 @@ import {
   areaCells,
   chainFrom,
   CHILLED_GROUND_SLOW,
+  FROZEN_GROUND_SLOW,
   GROUND,
   groundUnderPlayer,
   groundFor,
@@ -276,7 +284,7 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     mechanics,
     // offset the first casts so a boss doesn't open with everything at once
     timers: boss
-      ? { slam: BOSS_SLAM_EVERY_MS * 0.6, nova: BOSS_NOVA_EVERY_MS * 0.8, summon: BOSS_SUMMON_EVERY_MS * 0.7, scorch: BOSS_SCORCH_EVERY_MS * 0.5 }
+      ? { slam: BOSS_SLAM_EVERY_MS * 0.6, nova: BOSS_NOVA_EVERY_MS * 0.8, summon: BOSS_SUMMON_EVERY_MS * 0.7, scorch: BOSS_SCORCH_EVERY_MS * 0.5, frostbite: BOSS_FROSTBITE_EVERY_MS }
       : {},
     novaType: def.novaType ?? def.dmgType,
     casting: -1,
@@ -302,6 +310,7 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     stepMs: def.moveMs ?? MONSTER_STEP_MS,
     moveMs: def.moveMs ?? MONSTER_STEP_MS,
     attackGround: !!def.basic.ground,
+    rime: def.rime,
     chained: mechanics.includes('martyrs') || undefined,
   };
 }
@@ -534,6 +543,8 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
     c.heals.push({ resource, perMs: (st.def.heal * effect) / duration, remainingMs: duration });
   }
   s.lifetime.flasksDrunk += 1;
+  c.frostbite = 0;
+  c.frozenMs = 0;
   ctx.emit({ t: 'flask', slot, flaskId: f.flaskId, auto });
   if (ascendancyOf(s) === 'alchemist') alchemistDrink(s, ctx, d, st.effectMult);
   return null;
@@ -669,6 +680,8 @@ export interface RuleContext {
   targetStatus: Set<TargetStatus>;
   /** the ground under the player */
   ground: Set<GroundKind>;
+  /** Frostbite stacks on the player */
+  frostbite: number;
 }
 
 /** Every status a monster has right now, as skill rules see it. */
@@ -700,6 +713,7 @@ export function ruleContext(s: GameState, d: Derived): RuleContext {
     meterFull: meterFull(s, d),
     targetStatus: monsterStatuses(target),
     ground: groundUnderPlayer(s.combat?.ground ?? []),
+    frostbite: s.combat?.frostbite ?? 0,
   };
 }
 
@@ -727,6 +741,8 @@ export function ruleAllows(rule: TacticRule, rc: RuleContext, active: boolean): 
       return rc.casting;
     case 'onGround':
       return !!rule.ground && rc.ground.has(rule.ground);
+    case 'frostbite':
+      return rc.frostbite > 0 && rc.frostbite >= v;
     case 'lifeBelow':
       return rc.lifePct < v;
     case 'lifeAbove':
@@ -1286,6 +1302,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   }
   if (def.role === 'guard') {
     c.ground = stepOutOfGround(c.ground);
+    thaw(c);
     if (r.afterGuardDamage) c.empowered = true;
     if (r.guardArmourPct) {
       c.buffs = c.buffs.filter((b) => b.id !== 'guard_armour');
@@ -1938,13 +1955,25 @@ function underPlayer(c: CombatRuntime, kind: Ground['kind']): boolean {
   return !groundProof(c) && c.ground.some((g) => g.cell === PLAYER_SPOT && g.kind === kind);
 }
 
+/** How fast your actions run: cold ground and Frostbite both drag on them. */
+function actionPace(c: CombatRuntime): number {
+  const ground = underPlayer(c, 'frozen') ? FROZEN_GROUND_SLOW : underPlayer(c, 'chilled') ? CHILLED_GROUND_SLOW : 1;
+  return ground * (1 - ((c.frostbite ?? 0) * BOSS_FROSTBITE_SLOW_PCT) / 100);
+}
+
 /** A movement skill leaves whatever is under you behind: the player stays put on the field, so the hazard goes instead. */
 function stepOut(s: GameState, ctx: Ctx, surefoot: boolean): void {
   const c = s.combat!;
   const left = c.ground.filter((g) => g.cell !== PLAYER_SPOT);
   if (left.length < c.ground.length) ctx.emit({ t: 'info', text: 'You step out of the hazard.', tone: 'good' });
   c.ground = left;
+  thaw(c);
   if (surefoot) c.groundProofMs = SUREFOOT_MS;
+}
+
+/** A guard or a movement skill shakes off some Frostbite. */
+function thaw(c: CombatRuntime): void {
+  c.frostbite = Math.max(0, (c.frostbite ?? 0) - BOSS_FROSTBITE_CLEANSE);
 }
 
 /**
@@ -2030,7 +2059,7 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
     mon.curse.remainingMs -= dt;
     if (mon.curse.remainingMs <= 0) mon.curse = undefined;
   }
-  if (mon.isBoss) bossPhases(s, ctx, mon, dt);
+  if (mon.isBoss) bossPhases(s, ctx, d, mon, dt);
   if (mon.frozenMs > 0) {
     mon.frozenMs -= dt;
     return;
@@ -2053,7 +2082,7 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
     const enrage = mon.enraged ? BOSS_ENRAGE_DMG : 1;
     takeHit(s, ctx, d, mon, mon.damage * enrage * (0.85 + ctx.rng.next() * 0.3), mon.dmgType, 'hit');
     // some casters' spells splash hazardous ground at the player's feet
-    if (mon.attackGround) layGround(s.combat!.ground, PLAYER_SPOT, groundFor(mon.dmgType), mon.damage * MONSTER_GROUND_DPS, MONSTER_GROUND_MS);
+    if (mon.attackGround) layGround(s.combat!.ground, PLAYER_SPOT, groundFor(mon.dmgType, mon.rime), mon.damage * MONSTER_GROUND_DPS, MONSTER_GROUND_MS);
   }
 }
 
@@ -2073,7 +2102,7 @@ function chainMartyrs(s: GameState, ctx: Ctx, boss: MonsterInstance): void {
 }
 
 /** Life-threshold boss mechanics (enrage, ward, martyrs) and timed adds. These run even while the boss is stunned. */
-function bossPhases(s: GameState, ctx: Ctx, mon: MonsterInstance, dt: number): void {
+function bossPhases(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt: number): void {
   const has = (k: BossMechanic) => mon.mechanics.includes(k);
   const lifeFrac = mon.life / mon.maxLife;
   if (has('enrage') && !mon.enraged && lifeFrac <= BOSS_ENRAGE_AT) {
@@ -2126,11 +2155,27 @@ function bossPhases(s: GameState, ctx: Ctx, mon: MonsterInstance, dt: number): v
     mon.timers.scorch = (mon.timers.scorch ?? BOSS_SCORCH_EVERY_MS) - dt;
     if (mon.timers.scorch <= 0) {
       mon.timers.scorch = BOSS_SCORCH_EVERY_MS;
-      const kind = groundFor(mon.novaType);
+      const kind = groundFor(mon.novaType, mon.rime);
       layGround(s.combat!.ground, PLAYER_SPOT, kind, mon.damage * BOSS_SCORCH_DPS, BOSS_SCORCH_MS);
       ctx.emit({ t: 'bossPhase', name: mon.name, text: `scorches the earth: ${GROUND[kind].name.toLowerCase()} under you!` });
     }
   }
+  if (has('frostbite')) frostbiteStep(s, ctx, d, mon, dt);
+}
+
+/** Frostbite builds through the fight, faster on Frozen ground, until you freeze solid. It stops for the freeze and starts again from nothing. */
+function frostbiteStep(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt: number): void {
+  const c = s.combat!;
+  if ((c.frozenMs ?? 0) > 0) return;
+  mon.timers.frostbite = (mon.timers.frostbite ?? BOSS_FROSTBITE_EVERY_MS) - dt * (underPlayer(c, 'frozen') ? 2 : 1);
+  if (mon.timers.frostbite > 0) return;
+  mon.timers.frostbite += BOSS_FROSTBITE_EVERY_MS;
+  c.frostbite = (c.frostbite ?? 0) + 1;
+  if (c.frostbite < BOSS_FROSTBITE_MAX) return;
+  c.frostbite = 0;
+  c.frozenMs = BOSS_FROSTBITE_FREEZE_MS;
+  ctx.emit({ t: 'bossPhase', name: mon.name, text: 'freezes you solid!' });
+  takeHit(s, ctx, d, mon, mon.damage * BOSS_FROSTBITE_SHATTER, 'cold', 'nova');
 }
 
 /** Wind-ups: slam and nova. Returns true while the boss is busy casting. */
@@ -2145,7 +2190,7 @@ function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt:
         mon.timers.nova = BOSS_NOVA_EVERY_MS;
         takeHit(s, ctx, d, mon, mon.damage * BOSS_NOVA_MULT, mon.novaType, 'nova');
         // the blast leaves the ground under the player burning, frozen or charged
-        layGround(s.combat!.ground, PLAYER_SPOT, groundFor(mon.novaType), mon.damage * BOSS_NOVA_GROUND_DPS, BOSS_NOVA_GROUND_MS);
+        layGround(s.combat!.ground, PLAYER_SPOT, groundFor(mon.novaType, mon.rime), mon.damage * BOSS_NOVA_GROUND_DPS, BOSS_NOVA_GROUND_MS);
       } else {
         mon.timers.slam = BOSS_SLAM_EVERY_MS;
         takeHit(s, ctx, d, mon, mon.damage * BOSS_SLAM_MULT, mon.dmgType, 'slam');
@@ -2186,6 +2231,8 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   for (let i = 0; i < c.cooldowns.length; i++) c.cooldowns[i] = Math.max(0, c.cooldowns[i] - dt);
   c.evadeMs = Math.max(0, c.evadeMs - dt);
   if (c.groundProofMs) c.groundProofMs = Math.max(0, c.groundProofMs - dt);
+  if (c.frozenMs) c.frozenMs = Math.max(0, c.frozenMs - dt);
+  if (c.frostbite && !c.monsters.some((m) => m.life > 0 && m.mechanics.includes('frostbite'))) c.frostbite = 0;
   if (classMechanicsStep(s, ctx, d, dt)) return true;
 
   for (const h of c.heals) {
@@ -2212,6 +2259,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
 
   // instilled flasks
   if (s.life < d.maxLife * 0.5) triggerInstilled(s, ctx, 'lowLife');
+  if ((c.frostbite ?? 0) >= BOSS_FROSTBITE_INSTILL_AT) triggerInstilled(s, ctx, 'frostbite');
   for (let i = 0; i < s.flaskSlots.length; i++) {
     const f = s.flaskSlots[i];
     if (f?.instill === 'fullCharges' && f.charges >= flaskCapacity(s, f) && !flaskActive(s, f.flaskId)) {
@@ -2231,10 +2279,11 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   // burning ground can finish you off even as the last monster falls
   if (checkDeath(s, ctx, d) || !c.monsters.length) return true;
 
-  // the player's turn (an overheated Overclock sits it out)
+  // the player's turn (an overheated Overclock sits it out, and so does anyone frozen solid)
+  const frozen = (c.frozenMs ?? 0) > 0;
   if (c.overheatMs > 0) c.overheatMs -= dt;
-  else c.actionMs -= underPlayer(c, 'chilled') ? dt * CHILLED_GROUND_SLOW : dt;
-  if (c.actionMs <= 0) {
+  else if (!frozen) c.actionMs -= dt * actionPace(c);
+  if (c.actionMs <= 0 && !frozen) {
     // instant skills don't use up the turn: fire them and choose again. Each goes on cooldown,
     // so this ends on a skill that takes time (at worst the Default Attack); the cap is a safety net
     for (let n = 0; n < 8; n++) {

@@ -7,6 +7,7 @@ import { runeDef, RUNES } from '../../data/runes';
 import { BENCH_CRAFTS } from '../../data/hideout';
 import { achievementProgress } from '../../engine/achievements';
 import { INSTILL_CONDITIONS } from '../../data/flasks';
+import { actOpen } from '../../data/zones';
 import { currencyDef } from '../../data/materials';
 import { equipFlask, unequipFlask } from '../../engine/combat';
 import { applyEssence, applyOrb, BENCH_UNBUILT, benchBuilt, benchCraft, benchCraftReason, essenceReason, findItem, FOSSIL_ORBS, impressionReason, orbReason, restoreImpression, restoreReason, salvage, SEAL_ORBS, takeImpression } from '../../engine/crafting';
@@ -58,7 +59,7 @@ function FlaskCraft({ s, f, onCraft }: { s: GameState; f: FlaskInstance; onCraft
             Enchant with an Instilling Orb <span className="dim">({instills} owned)</span>
           </div>
           <div className="row wrap">
-            {INSTILL_CONDITIONS.map((c) => (
+            {INSTILL_CONDITIONS.filter((c) => !c.act || actOpen(c.act)).map((c) => (
               <button
                 key={c.id}
                 className={`btn sm ${f.instill === c.id ? 'active' : ''}`}

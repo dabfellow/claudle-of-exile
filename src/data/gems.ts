@@ -125,6 +125,7 @@ export type RuleCondition =
   | 'manual'
   | 'enemyCasting'
   | 'onGround'
+  | 'frostbite'
   | 'lifeBelow'
   | 'lifeAbove'
   | 'manaAbove'
@@ -179,11 +180,12 @@ export const RULE_UNLOCK_NAMES: Record<RuleUnlock, string> = {
   aim: 'Aim rules',
 };
 
-export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; defaultValue?: number; status?: boolean; ground?: boolean; unlock?: RuleUnlock }> = {
+export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; defaultValue?: number; max?: number; status?: boolean; ground?: boolean; unlock?: RuleUnlock; act?: number }> = {
   always: { label: 'Whenever ready' },
   manual: { label: 'Manual only' },
   enemyCasting: { label: 'When an enemy winds up', unlock: 'windups' },
   onGround: { label: 'While standing on', ground: true, unlock: 'ground' },
+  frostbite: { label: 'When Frostbite reaches', unit: ' stacks', defaultValue: 6, max: 9, unlock: 'vitals', act: 4 },
   lifeBelow: { label: 'When life below', unit: '%', defaultValue: 50, unlock: 'vitals' },
   lifeAbove: { label: 'When life above', unit: '%', defaultValue: 60, unlock: 'vitals' },
   manaAbove: { label: 'When mana above', unit: '%', defaultValue: 40 },

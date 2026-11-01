@@ -1,5 +1,6 @@
 import { activeGemDef, ACTIVE_GEMS, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, gemReqLevel, RULE_LABELS, SKILL_AIMS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
 import { WEAPON_FAMILIES } from '../../data/bases';
+import { actOpen } from '../../data/zones';
 import { GROUND, RINGS } from '../../engine/battlefield';
 import { ruleLockReason } from '../../engine/automation';
 import { skillRange } from '../../engine/combat';
@@ -117,7 +118,7 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
         </div>
       </div>
       <div style={{ margin: '6px 0' }}>{def.desc}</div>
-      {def.role === 'guard' && <div className="small muted">Also steps you out of any ground under you.</div>}
+      {def.role === 'guard' && <div className="small muted">Also steps you out of any ground under you{actOpen(4) ? ' and shakes off Frostbite' : ''}.</div>}
       {def.id !== DEFAULT_ATTACK.id && (() => {
         const need = gem ? gemLevelReq(gem.gemId, gem.level) : gemReqLevel(def.id);
         return <div className={`small ${d.combatLevel >= need ? 'muted' : 'bad'}`}>Requires character level {need}</div>;

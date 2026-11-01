@@ -1,17 +1,17 @@
 import { activeGemDef, RULE_LABELS, RULE_UNLOCK_NAMES, type ActiveGemDef, type RuleCondition, type RuleUnlock, type SkillAim, type SkillPriority, type TacticRule } from '../data/gems';
 import { STATIONS, stationDef, type StationGrant } from '../data/hideout';
-import { ZONES, type ZoneDef } from '../data/zones';
+import { actOpen, ZONES, type BossMechanic, type ZoneDef } from '../data/zones';
 import { groundFor } from './battlefield';
 import type { GameState, GroundKind, SkillGemInstance } from './types';
 
 const PRIORITY_RANK: Record<SkillPriority, number> = { high: 0, normal: 1, low: 2 };
 
-/** Ground some monster can put under you: a caster's spell, or a boss's nova or scorch. The rest stay greyed out until an act lays them. */
+/** Ground some monster can put under you: a caster's spell, or a boss's nova or scorch. The rest stay greyed out until an act that lays them opens. */
 export const GROUND_IN_PLAY: ReadonlySet<GroundKind> = new Set(
-  ZONES.flatMap((z) => [
-    ...z.monsters.filter((m) => m.basic.ground).map((m) => groundFor(m.dmgType)),
-    ...(z.boss.basic.ground ? [groundFor(z.boss.dmgType)] : []),
-    ...(z.boss.mechanics?.some((k) => k === 'nova' || k === 'scorch') ? [groundFor(z.boss.novaType ?? z.boss.dmgType)] : []),
+  ZONES.filter((z) => actOpen(z.act)).flatMap((z) => [
+    ...z.monsters.filter((m) => m.basic.ground).map((m) => groundFor(m.dmgType, m.rime)),
+    ...(z.boss.basic.ground ? [groundFor(z.boss.dmgType, z.boss.rime)] : []),
+    ...(z.boss.mechanics?.some((k) => k === 'nova' || k === 'scorch') ? [groundFor(z.boss.novaType ?? z.boss.dmgType, z.boss.rime)] : []),
   ]),
 );
 
@@ -61,9 +61,24 @@ export function bossesOffline(s: GameState): boolean {
   return s.account.automation.rules.includes('windups');
 }
 
-/** Left alone, a boss only comes out if your rules can finish it: martyrs need a skill that aims at them, or the fight never ends. */
+/** What shakes off Frostbite: guards and movement skills (drinking a flask does too). */
+export function cleansesFrostbite(def: ActiveGemDef): boolean {
+  return def.role === 'guard' || !!def.effect.stepOut;
+}
+
+/** Something fires by itself as Frostbite builds: a cleansing skill on the Frostbite rule, or a flask Instilled for it. */
+function answersFrostbite(s: GameState): boolean {
+  const skill = s.skillBar.some((g) => g && cleansesFrostbite(activeGemDef(g.gemId)) && g.rules.some((r) => r.when === 'frostbite'));
+  return (skill && !ruleLockReason(s, 'frostbite')) || s.flaskSlots.some((f) => f?.instill === 'frostbite');
+}
+
+/**
+ * Left alone, a boss only comes out if your rules can finish it: martyrs need a skill that aims at them, or the fight
+ * never ends, and Frostbite needs an answer, or the hours end in a freeze.
+ */
 export function bossLeftToRules(s: GameState, zone: ZoneDef): boolean {
-  return bossesOffline(s) && (!zone.boss.mechanics?.includes('martyrs') || aimsAt(s, 'martyrs'));
+  const has = (k: BossMechanic) => !!zone.boss.mechanics?.includes(k);
+  return bossesOffline(s) && (!has('martyrs') || aimsAt(s, 'martyrs')) && (!has('frostbite') || answersFrostbite(s));
 }
 
 export function offlineCapMs(s: GameState): number {

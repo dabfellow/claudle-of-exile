@@ -120,10 +120,11 @@ export function flaskAffixDef(id: string): FlaskAffixDef {
   return a;
 }
 
-export const INSTILL_CONDITIONS: { id: InstillCondition; label: string; desc: string }[] = [
+export const INSTILL_CONDITIONS: { id: InstillCondition; label: string; desc: string; act?: number }[] = [
   { id: 'lowLife', label: 'Low Life', desc: 'Used automatically when Life drops below 50%' },
   { id: 'fullCharges', label: 'Full Charges', desc: 'Used automatically whenever the flask is full' },
   { id: 'bossCast', label: 'Boss Wind-up', desc: 'Used automatically when a boss begins a heavy attack' },
+  { id: 'frostbite', label: 'Frostbite', desc: 'Used automatically at 6 Frostbite stacks, which it clears', act: 4 },
 ];
 
 export const FLASK_SLOTS = 5;

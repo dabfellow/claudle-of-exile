@@ -3982,6 +3982,7 @@ g.tut-hint circle.body {
   animation: ground-pulse 1.6s ease-in-out infinite;
 }
 .bf-cell.ground-burning::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--fire) 55%, transparent), color-mix(in srgb, var(--fire) 22%, rgba(0, 0, 0, 0.5))); }
+.bf-cell.ground-frozen::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--cold) 70%, white), color-mix(in srgb, var(--cold) 30%, rgba(0, 0, 0, 0.5))); }
 .bf-cell.ground-chilled::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--cold) 50%, transparent), color-mix(in srgb, var(--cold) 20%, rgba(0, 0, 0, 0.5))); }
 .bf-cell.ground-shocked::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--light) 50%, transparent), color-mix(in srgb, var(--light) 20%, rgba(0, 0, 0, 0.5))); }
 .bf-cell.ground-caustic::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--poison) 50%, transparent), color-mix(in srgb, var(--poison) 20%, rgba(0, 0, 0, 0.5))); }

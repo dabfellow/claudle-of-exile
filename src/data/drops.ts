@@ -124,6 +124,25 @@ export const DROP_TABLES: Record<number, DropTable> = {
     flaskChance: 0.014,
     uniqueChance: 0.0014,
   },
+  // Act 4 (zones.ts: 9, 10 ×5, 11 ×6): fewer, bigger monsters, each worth a little more
+  10: {
+    currencyChance: 0.07,
+    currency: { ...BASIC, regal: 13, alchemy: 13, chaos: 11, annul: 2.8, exalted: 0.6, divine: 1.2, expansion: 1.2, instill: 2.8 },
+    itemChance: 0.2,
+    rarity: { normal: 44, magic: 35, rare: 21 },
+    gemChance: 0.02,
+    flaskChance: 0.015,
+    uniqueChance: 0.0016,
+  },
+  11: {
+    currencyChance: 0.075,
+    currency: { ...BASIC, regal: 14, alchemy: 14, chaos: 12, annul: 3.1, exalted: 0.65, divine: 1.3, expansion: 1.3, instill: 3.1 },
+    itemChance: 0.21,
+    rarity: { normal: 42, magic: 35, rare: 23 },
+    gemChance: 0.021,
+    flaskChance: 0.015,
+    uniqueChance: 0.0018,
+  },
 };
 
 /**
@@ -153,6 +172,8 @@ export const BOSS_TABLES: Record<number, BossTable> = {
   7: { currencyRolls: 4, guaranteed: [{ id: 'exalted', qty: 1 }, { id: 'divine', qty: 1 }], repeatChance: 0.015, items: [3, 3], rarity: { normal: 0, magic: 40, rare: 60 }, gemChance: 0.5, flaskChance: 0.3, uniqueChance: 0.12 },
   8: { currencyRolls: 4, guaranteed: [{ id: 'chaos', qty: 4 }], repeatChance: 0.04, items: [3, 3], rarity: { normal: 0, magic: 38, rare: 62 }, gemChance: 0.5, flaskChance: 0.3, uniqueChance: 0.13 },
   9: { currencyRolls: 4, guaranteed: [{ id: 'exalted', qty: 1 }, { id: 'divine', qty: 2 }], repeatChance: 0.015, items: [3, 4], rarity: { normal: 0, magic: 35, rare: 65 }, gemChance: 0.55, flaskChance: 0.3, uniqueChance: 0.14 },
+  10: { currencyRolls: 4, guaranteed: [{ id: 'chaos', qty: 5 }], repeatChance: 0.04, items: [3, 4], rarity: { normal: 0, magic: 32, rare: 68 }, gemChance: 0.55, flaskChance: 0.3, uniqueChance: 0.15 },
+  11: { currencyRolls: 5, guaranteed: [{ id: 'exalted', qty: 1 }, { id: 'divine', qty: 2 }], repeatChance: 0.015, items: [4, 4], rarity: { normal: 0, magic: 30, rare: 70 }, gemChance: 0.6, flaskChance: 0.3, uniqueChance: 0.16 },
 };
 
 export function dropTable(tier: number): DropTable {

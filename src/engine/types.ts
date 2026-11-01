@@ -116,7 +116,7 @@ export interface Item {
   rune?: string;
 }
 
-export type InstillCondition = 'lowLife' | 'fullCharges' | 'bossCast';
+export type InstillCondition = 'lowLife' | 'fullCharges' | 'bossCast' | 'frostbite';
 
 export interface FlaskMod {
   affixId: string;
@@ -216,6 +216,8 @@ export interface MonsterInstance {
   moveMs: number;
   /** its basic spell leaves hazardous ground under the player */
   attackGround: boolean;
+  /** the high peaks: its cold ground is Frozen, not Chilled */
+  rime?: boolean;
 }
 
 /** A curse on a monster, with its numbers already scaled for gem level, supports and bosses. */
@@ -237,7 +239,7 @@ export interface Curse {
   weeping?: boolean;
 }
 
-export type GroundKind = 'burning' | 'chilled' | 'shocked' | 'caustic';
+export type GroundKind = 'burning' | 'chilled' | 'frozen' | 'shocked' | 'caustic';
 
 /** A hazard on a battlefield cell (the player's, hurting monsters) or under the player (cell -1, a monster's). */
 export interface Ground {
@@ -345,6 +347,10 @@ export interface CombatRuntime {
   ground: Ground[];
   /** Surefoot: hazards under the player do nothing while > 0 */
   groundProofMs?: number;
+  /** Frostbite stacks on the player */
+  frostbite?: number;
+  /** frozen solid: no actions until this runs out */
+  frozenMs?: number;
   groundAcc: number;
   groundTimer: number;
   /** the DPS meter: damage dealt in the last finished window and the current one */

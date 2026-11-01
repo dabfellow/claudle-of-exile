@@ -15,6 +15,7 @@ import {
   type TacticRule,
   type TargetStatus,
 } from '../../data/gems';
+import { actOpen } from '../../data/zones';
 import { gemArrived } from '../../engine/progress';
 import { aimLockReason, castOrder, GROUND_IN_PLAY, ruleLockReason, ruleSlots, suggestedRule } from '../../engine/automation';
 import { GROUND } from '../../engine/battlefield';
@@ -100,7 +101,7 @@ function GemFilters({
 function RuleSlot({ s, slot, index, rule, extra }: { s: GameState; slot: number; index: number; rule: TacticRule; extra: boolean }) {
   const meta = RULE_LABELS[rule.when];
   const locked = ruleLockReason(s, rule.when);
-  const options = (Object.keys(RULE_LABELS) as RuleCondition[]).filter((k) => !extra || (k !== 'always' && k !== 'manual'));
+  const options = (Object.keys(RULE_LABELS) as RuleCondition[]).filter((k) => (!extra || (k !== 'always' && k !== 'manual')) && (!RULE_LABELS[k].act || actOpen(RULE_LABELS[k].act)));
   const set = (next: TacticRule) => game.act((st) => setRule(st, slot, index, { ...next, aim: rule.aim }));
   return (
     <div className="rule-editor">
@@ -144,7 +145,7 @@ function RuleSlot({ s, slot, index, rule, extra }: { s: GameState; slot: number;
             className="input"
             type="number"
             min={0}
-            max={meta.unit === '%' ? 100 : 5}
+            max={meta.max ?? (meta.unit === '%' ? 100 : 5)}
             value={rule.value ?? meta.defaultValue}
             onChange={(e) => set({ when: rule.when, value: Number(e.target.value) })}
             style={{ width: 64 }}

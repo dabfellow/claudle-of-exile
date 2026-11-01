@@ -155,15 +155,19 @@ export const PLAYER_SPOT = -1;
 export const GROUND: Record<GroundKind, { name: string; type: DamageType; desc: string }> = {
   burning: { name: 'Burning ground', type: 'fire', desc: 'Deals fire damage over time.' },
   chilled: { name: 'Chilled ground', type: 'cold', desc: 'Deals cold damage over time and slows actions.' },
+  frozen: { name: 'Frozen ground', type: 'cold', desc: 'Deals cold damage over time, slows actions by 40%, and Frostbite builds twice as fast.' },
   shocked: { name: 'Shocked ground', type: 'light', desc: 'Deals lightning damage over time; hits taken there deal 20% more.' },
   caustic: { name: 'Caustic ground', type: 'phys', desc: 'Deals physical damage over time.' },
 };
-export const groundFor = (type: DamageType): GroundKind =>
-  type === 'fire' ? 'burning' : type === 'cold' ? 'chilled' : type === 'light' ? 'shocked' : 'caustic';
+/** `rime`: monsters of the high peaks (Act 4), whose cold ground is Frozen. */
+export const groundFor = (type: DamageType, rime = false): GroundKind =>
+  type === 'fire' ? 'burning' : type === 'cold' ? (rime ? 'frozen' : 'chilled') : type === 'light' ? 'shocked' : 'caustic';
 /** standing on shocked ground: hits there deal this much more */
 export const SHOCKED_GROUND_TAKEN = 1.2;
 /** standing on chilled ground: actions take this much longer */
 export const CHILLED_GROUND_SLOW = 0.75;
+/** standing on frozen ground: the same, harder */
+export const FROZEN_GROUND_SLOW = 0.6;
 /** a hazard under the player burns out this much faster while running or fleeing out of it */
 export const STEP_OUT_RATE = 2;
 

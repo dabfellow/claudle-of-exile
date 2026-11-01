@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
-import { BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, nextZones, zoneDef, type MonsterDef } from '../../data/zones';
+import { BOSS_FROSTBITE_MAX, BOSS_FROSTBITE_SLOW_PCT, BOSS_NOVA_MULT, BOSS_SLAM_MULT, MECHANIC_INFO, nextZones, zoneDef, type MonsterDef } from '../../data/zones';
 import { CELLS, cellRing, GROUND, groundFor, inReach, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT, RINGS } from '../../engine/battlefield';
 import {
   aliveMonsters,
@@ -51,7 +51,7 @@ const DMG_COLOR: Record<DamageType, string> = {
 /** buffs that come from tree effects rather than a skill gem */
 const EXTRA_BUFFS: Record<string, string> = { guard_armour: 'Guard Armour', evade_speed: 'Evasive', stand_fast: 'Stand Fast', ecstasy: 'Ecstasy' };
 const DMG_NAME: Record<DamageType, string> = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning' };
-const GROUND_STATUS: Record<GroundKind, string> = { burning: 'fire', chilled: 'cold', shocked: 'bad', caustic: 'poison' };
+const GROUND_STATUS: Record<GroundKind, string> = { burning: 'fire', chilled: 'cold', frozen: 'cold', shocked: 'bad', caustic: 'poison' };
 
 interface Floater {
   id: number;
@@ -212,6 +212,12 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
               {GROUND[g.kind].name} {(g.remainingMs / 1000).toFixed(1)}s
             </span>
           ))}
+        {(c.frostbite ?? 0) > 0 && (
+          <span className="status cold" title={MECHANIC_INFO.frostbite.tip}>
+            Frostbite {c.frostbite}/{BOSS_FROSTBITE_MAX} · {(c.frostbite ?? 0) * BOSS_FROSTBITE_SLOW_PCT}% slower
+          </span>
+        )}
+        {(c.frozenMs ?? 0) > 0 && <span className="status bad">Frozen solid {((c.frozenMs ?? 0) / 1000).toFixed(1)}s</span>}
         {c.overheatMs > 0 && <span className="status bad">Overheated {(c.overheatMs / 1000).toFixed(1)}s</span>}
         {d.raw.eternalHunger > 0 && aliveMonsters(c).length > 0 && (
           <span className={`status ${c.hungerMs < 2000 ? 'bad' : 'good'}`}>Hunger {(Math.max(0, c.hungerMs) / 1000).toFixed(1)}s</span>
@@ -661,7 +667,7 @@ function Matchup({ s, d, bossDef }: { s: GameState; d: Derived; bossDef: Monster
         ))}
       {target?.attackGround && (
         <div className="matchup-note">
-          <b>{target.attackName}:</b> leaves {GROUND[groundFor(target.dmgType)].name.toLowerCase()} under you for a few seconds. Run or Flee to step out of it faster.
+          <b>{target.attackName}:</b> leaves {GROUND[groundFor(target.dmgType, target.rime)].name.toLowerCase()} under you for a few seconds. Run or Flee to step out of it faster.
         </div>
       )}
     </div>

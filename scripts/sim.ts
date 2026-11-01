@@ -17,7 +17,7 @@ import { PLAYER_SPOT } from '../src/engine/battlefield';
 import { stationDef, type StationId } from '../src/data/hideout';
 import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { actionsFor, type SkillAction } from '../src/data/skills';
-import { ACTS, actBossZone, actOpen, ZONES, zoneDef, type ZoneDef } from '../src/data/zones';
+import { ACTS, actBossZone, actOpen, BOSS_FROSTBITE_MAX, ZONES, zoneDef, type ZoneDef } from '../src/data/zones';
 import { characterLevel } from '../src/engine/character';
 import { canSpendLife, equipFlask, flaskRecoveryAmount, lockTarget, queueSkill, startCombat, useFlask } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
@@ -36,7 +36,7 @@ import { cleanChance, jobBlocker, rankUpRogue, rogueReason, setJobExit, startHei
 import { RUNES } from '../src/data/runes';
 import { inscribeRune, itemRune, runeReason, runesOpen } from '../src/engine/runes';
 import { actionBlocker, skillLevel, startSkillAction } from '../src/engine/skills';
-import { aimLockReason, grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
+import { aimLockReason, cleansesFrostbite, grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
 import { groundFor } from '../src/engine/battlefield';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats, hitChance, type Derived } from '../src/engine/stats';
@@ -94,7 +94,10 @@ const UPGRADES: [StationId, number][] = [
 ];
 const CHECKPOINTS: [string, number][] = [['day 1', 1], ['week 1', 7], ['month 1', 30], ['month 3', 90]];
 /** bosses tested for idling, one per drop tier band: each right after the bot first beats it */
-const TRIAL_ZONES = ['brinecaves', 'blackreed', 'shipgrave', 'sanctum', 'cinderroad', 'kurgans', 'pyretemple', 'burningthrone', 'inquisition', 'highaltar'];
+const TRIAL_ZONES = ['brinecaves', 'blackreed', 'shipgrave', 'sanctum', 'cinderroad', 'kurgans', 'pyretemple', 'burningthrone', 'inquisition', 'highaltar', 'howlingfells', 'giantsthrone'];
+
+/** the bot answers Frostbite at this many stacks, by rule or by hand */
+const BOT_FROSTBITE_AT = 6;
 
 const fmt = (ms: number | undefined) => {
   if (ms === undefined || !Number.isFinite(ms)) return '—';
@@ -199,8 +202,10 @@ const DAMAGE_ROLES = new Set(['main', 'burst', 'area']);
 /** The ground this area's boss lays with Scorched earth, if it does. */
 function scorchGround(zoneId: string | undefined): GroundKind | undefined {
   const boss = zoneId ? zoneDef(zoneId).boss : undefined;
-  return boss?.mechanics?.includes('scorch') ? groundFor(boss.novaType ?? boss.dmgType) : undefined;
+  return boss?.mechanics?.includes('scorch') ? groundFor(boss.novaType ?? boss.dmgType, boss.rime) : undefined;
 }
+
+const frostbiteZone = (zoneId: string | undefined) => !!zoneId && !!zoneDef(zoneId).boss.mechanics?.includes('frostbite');
 
 /**
  * Like a player who reads tooltips: the best guard and buff it owns, then its three strongest damage
@@ -241,7 +246,10 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
     .sort((a, b) => bare(b) - bare(a));
   const scorch = ruleLockReason(s, 'onGround') ? undefined : scorchGround(zoneId);
   const groundGuard = scorch && all.filter((g) => role(g) === 'guard').sort(byLevel)[1];
-  const want = [pick('guard'), buff, sustain, ...damage, transfusion, curse, groundGuard, ...instant].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
+  // Frostbite's rule goes on a spare cleansing skill when there is one: a spare guard, or the mover if nothing else can
+  const cleansers = all.filter((g) => cleansesFrostbite(activeGemDef(g.gemId)) && g !== pick('guard') && g !== groundGuard).sort(byLevel);
+  const frostGuard = !ruleLockReason(s, 'frostbite') && frostbiteZone(zoneId) ? cleansers.find((g) => role(g) === 'guard') ?? cleansers.find((g) => g === mover) : undefined;
+  const want = [pick('guard'), buff, sustain, ...damage, transfusion, curse, groundGuard, frostGuard, ...instant].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
 
   // put the bar together: anything leaving takes no supports with it
   const keep = new Set(want.map((g) => g.uid));
@@ -258,7 +266,7 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const bar = s.skillBar.filter((x): x is SkillGemInstance => !!x);
   for (const g of bar) {
     // one rule each: the suggested one, or Whenever ready until the War Table teaches it
-    g.rules = [g === groundGuard ? { when: 'onGround', ground: scorch } : suggestedRule(s, activeGemDef(g.gemId))];
+    g.rules = [g === groundGuard ? { when: 'onGround', ground: scorch } : g === frostGuard ? { when: 'frostbite', value: BOT_FROSTBITE_AT } : suggestedRule(s, activeGemDef(g.gemId))];
     if (DAMAGE_ROLES.has(role(g)) && !aimLockReason(s)) g.rules[0].aim = 'martyrs';
     syncSockets(g);
     g.supports.forEach((_, k) => unsocketSupport(s, g.uid, k));
@@ -345,13 +353,16 @@ function spendPassives(s: GameState, ctx: Ctx) {
   }
 }
 
-/** Instilling Orbs go on whatever is on the belt: life when hurt, utility on a boss wind-up, mana when full. */
+/** Instilling Orbs go on whatever is on the belt: life when hurt, utility on a boss wind-up (or Frostbite in its areas), mana when full. */
 const INSTILL_FOR: Record<string, InstillCondition> = { life: 'lowLife', utility: 'bossCast', mana: 'fullCharges' };
 
 function instillFlasks(s: GameState, ctx: Ctx) {
   if (!INSTILL) return;
   for (const f of s.flaskSlots) {
-    if (f && !f.instill && s.bank.instill) enchantFlask(s, ctx, f.uid, INSTILL_FOR[flaskDef(f.flaskId).kind]);
+    if (!f || !s.bank.instill) continue;
+    const kind = flaskDef(f.flaskId).kind;
+    const want = kind === 'utility' && frostbiteZone(s.combat?.zoneId) ? 'frostbite' : INSTILL_FOR[kind];
+    if (!f.instill || (f.instill === 'bossCast' && want === 'frostbite')) enchantFlask(s, ctx, f.uid, want);
   }
 }
 
@@ -455,6 +466,15 @@ function hands(s: GameState, ctx: Ctx, d: Derived) {
   if (s.combat!.ground.some((g) => g.cell === PLAYER_SPOT)) {
     const step = s.skillBar.findIndex((g, i) => g && activeGemDef(g.gemId).tags.includes('movement') && !s.combat!.cooldowns[i]);
     if (step >= 0) queueSkill(s, step);
+  }
+  // shake off Frostbite before it freezes: a skill first, as flasks are for when they're needed
+  if ((s.combat!.frostbite ?? 0) >= BOT_FROSTBITE_AT) {
+    const shake = s.skillBar.findIndex((g, i) => g && cleansesFrostbite(activeGemDef(g.gemId)) && !s.combat!.cooldowns[i]);
+    if (shake >= 0) queueSkill(s, shake);
+    else if ((s.combat!.frostbite ?? 0) >= BOSS_FROSTBITE_MAX - 2) {
+      const flask = s.flaskSlots.findIndex((f) => f && f.charges >= flaskStats(f).chargesPerUse);
+      if (flask >= 0) useFlask(s, ctx, flask);
+    }
   }
   if (casting) {
     // a hand on the button can spend past the reserve, but this one doesn't: a Blood Ward at low Life costs more than it saves

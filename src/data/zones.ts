@@ -9,8 +9,9 @@ import type { DamageType } from '../engine/types';
  * - ward: at 66% and 33% life it raises a barrier that heals it if not broken in time — burst matters
  * - scorch: every so often it sets the ground under you ablaze (frozen, charged) — resistances and pace matter
  * - martyrs: it can't be hurt while the martyrs chained to it live — aim at them, by hand or by rule
+ * - frostbite: stacks build on you through the fight, slowing you until you freeze solid — cleanse them, by hand or by rule
  */
-export type BossMechanic = 'slam' | 'nova' | 'summon' | 'enrage' | 'ward' | 'scorch' | 'martyrs';
+export type BossMechanic = 'slam' | 'nova' | 'summon' | 'enrage' | 'ward' | 'scorch' | 'martyrs' | 'frostbite';
 
 /** One thing a monster does: its name, whether it's an attack or a spell, and its attack or cast time in ms. */
 export interface MonsterSkill {
@@ -43,6 +44,8 @@ export interface MonsterDef {
   nova?: MonsterSkill;
   /** element of the nova and scorch mechanics (defaults to the boss's damage type) */
   novaType?: DamageType;
+  /** its cold ground is Frozen ground, not Chilled */
+  rime?: boolean;
 }
 
 export interface ZoneDef {
@@ -101,7 +104,10 @@ export const ACTS: ActDef[] = [
     n: 3, name: 'The City of Saints', open: true,
     outro: 'The Hierarch falls, and for the first time in a thousand years the bells of the city stop. Far to the north, the Hollow Peaks are waiting.',
   },
-  { n: 4, name: 'The Hollow Peaks', open: false },
+  {
+    n: 4, name: 'The Hollow Peaks', open: false, preview: true,
+    outro: 'The Hollow King falls, and the mountain shakes as he lands. Past the last peak the land drops away to the east, down to a sea that has not seen the sun.',
+  },
   { n: 5, name: 'The Sunless Sea', open: false },
   { n: 6, name: 'The Shattered Throne', open: false },
 ];
@@ -119,6 +125,8 @@ const spell = (name: string, ms = MONSTER_BASE_ATTACK_MS, ground?: boolean): Mon
 /** quick and slow walkers: how fast they close in on the battlefield */
 const fast = (def: MonsterDef): MonsterDef => ({ ...def, moveMs: 600 });
 const slow = (def: MonsterDef): MonsterDef => ({ ...def, moveMs: 1800 });
+/** the high peaks: its cold ground is Frozen ground, not Chilled */
+const rime = (def: MonsterDef): MonsterDef => ({ ...def, rime: true });
 
 const m = (id: string, name: string, level: number, dmgType: DamageType, basic: MonsterSkill, lifeMult = 1, dmgMult = 1): MonsterDef => ({
   id, name, level, dmgType, basic, lifeMult, dmgMult,
@@ -537,6 +545,192 @@ export const ZONES: ZoneDef[] = [
     spawnEveryMs: 9000,
     uniques: ['halo_of_wrath', 'martyrs_shroud', 'pilgrims_road', 'saints_shard', 'confession_hood', 'chainbreaker', 'starforged_edge'],
   },
+
+  // ---------- Act 4: The Hollow Peaks (docs/design/ACT4.md) ----------------
+  // The giants' range: monsters are large and few, a change from the swarms. Cold is the check, on trash and in the
+  // bosses' novas and ground. Most bosses bring Frostbite. Items roll seven levels above the monster, so the act's last
+  // kills reach bases of about level 57, a third of the way from Act 3's 45 to the 80 that Act 6 ends on.
+  {
+    id: 'hollowpass', name: 'The Hollow Pass', act: 4, tier: 9, levelRange: [41, 42], color: '#8fa6b8', ilvlBonus: 7,
+    desc: 'The only road into the peaks, cut by something that did not need tools.',
+    monsters: [
+      fast(m('snowwolf', 'Pass Wolf', 41, 'phys', atk('Hamstring', 2500), 1.1, 1.05)),
+      slow(m('hillgiant', 'Hill Giant', 41, 'phys', atk('Boulder Club', 4300), 1.9, 1.4)),
+      slow(m('passtroll', 'Pass Troll', 42, 'phys', atk('Gnarled Fist', 4000), 1.7, 1.3)),
+      rime(m('rimecaller', 'Rimecaller', 42, 'cold', spell('Ice Lance', 3500, true), 1.1, 1.3)),
+    ],
+    boss: boss(rime(m('hrolf', 'Hrolf Toll-Taker', 42, 'phys', atk('Bridge Beam', 3500))), ['slam', 'nova', 'summon'], { slam: atk('Pass Collapse', 3400), nova: spell('Breath of the Pass', 3900), novaType: 'cold' }),
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 12000,
+    uniques: ['rimewalkers', 'stormhide', 'iron_bulwark'],
+  },
+  {
+    id: 'screefields', name: 'The Scree Fields', act: 4, tier: 10, levelRange: [41, 43], color: '#9a9a94', ilvlBonus: 7,
+    desc: 'Miles of broken stone, thrown down from above by someone who wanted the valley empty.',
+    monsters: [
+      slow(m('screegolem', 'Scree Golem', 41, 'phys', atk('Rockslide', 4300), 2, 1.35)),
+      fast(m('stonehawk', 'Scree Hawk', 42, 'phys', atk('Stooping Talons', 2300), 0.9, 1)),
+      slow(m('boulderthrower', 'Boulder Thrower', 42, 'phys', atk('Hurled Stone', 3900), 1.7, 1.45)),
+      rime(m('frostshrike', 'Frost Shrike', 43, 'cold', spell('Needle of Ice', 3100, true), 1, 1.2)),
+    ],
+    boss: boss(rime(m('asa', 'Asa Stone-Thrower', 43, 'phys', atk('Flung Boulder', 3400))), ['slam', 'nova', 'frostbite'], { slam: atk('Rain of Rock', 3400), nova: spell('Killing Frost', 3900), novaType: 'cold' }),
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 12000,
+    uniques: ['frostgrip', 'hollow_locket', 'titans_girth'],
+  },
+  {
+    id: 'howlingfells', name: 'The Howling Fells', act: 4, tier: 10, levelRange: [42, 44], color: '#7f93a8', ilvlBonus: 7,
+    desc: 'High moors where the wind never drops, and the wolves have learned to hunt inside it.',
+    monsters: [
+      fast(m('direwolf', 'Dire Wolf', 42, 'cold', atk('Frozen Jaws', 2500), 1.15, 1.1)),
+      slow(m('fellbear', 'Fell Bear', 43, 'phys', atk('Mauling Paw', 3900), 2, 1.4)),
+      fast(m('windwraith', 'Wind Wraith', 43, 'cold', spell('Howling Cold', 2800), 0.9, 1.1)),
+      rime(m('wolfshaman', 'Wolf Speaker', 44, 'cold', spell('Winter Call', 3500, true), 1.1, 1.3)),
+    ],
+    boss: boss(rime(m('fenrik', 'Fenrik, Father of Wolves', 44, 'cold', atk('Throat Tear', 3300))), ['slam', 'summon', 'frostbite'], { slam: atk('Pack Leap', 3300) }),
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 12000,
+    uniques: ['wolfmother_pelt', 'sunmane_pelt', 'windchaser'],
+  },
+  {
+    id: 'glasslake', name: 'The Glass Lake', act: 4, tier: 10, levelRange: [43, 45], color: '#a0c8d8', ilvlBonus: 7,
+    desc: 'A lake frozen so clear you can see what is walking on the underside of the ice.',
+    monsters: [
+      m('icefisher', 'Ice Fisher', 43, 'cold', atk('Bone Harpoon', 3100), 1.15, 1.15),
+      slow(m('frostshell', 'Rime Crab', 44, 'phys', atk('Shell Crush', 4200), 2.1, 1.3)),
+      fast(m('skater', 'Lake Skater', 44, 'cold', atk('Razor Legs', 2400), 0.9, 1)),
+      rime(m('undertow', 'Thing Under the Ice', 45, 'cold', spell('Cracking Cold', 3600, true), 1.2, 1.35)),
+    ],
+    boss: boss(rime(m('mirrawen', 'Mirrawen of the Ice', 45, 'cold', spell('Black Ice', 3500))), ['slam', 'nova', 'ward', 'frostbite'], { slam: atk('Breaking Floe', 3300), nova: spell('Frozen Depths', 3800) }),
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 12000,
+    uniques: ['heart_of_winter', 'kurgan_crown', 'hollow_locket'],
+  },
+  {
+    id: 'bonequarry', name: 'The Bone Quarry', act: 4, tier: 10, levelRange: [43, 45], color: '#c8bfa8', ilvlBonus: 7,
+    desc: 'The giants bury their dead here, and cut the old ones up for building stone.',
+    monsters: [
+      slow(m('quarrygiant', 'Quarry Giant', 43, 'phys', atk('Stone Maul', 4200), 2, 1.45)),
+      m('bonecutter', 'Bone Cutter', 44, 'phys', atk('Rib Saw', 3000), 1.2, 1.15),
+      fast(m('marrowhound', 'Marrow Hound', 44, 'cold', atk('Gnawing Chill', 2400), 0.95, 1)),
+      rime(m('gravethane', 'Grave Thane', 45, 'cold', spell('Cold of the Barrow', 3500, true), 1.15, 1.3)),
+    ],
+    boss: boss(rime(m('ulfhild', 'Ulfhild Bone-Mason', 45, 'phys', atk('Femur Hammer', 3300))), ['slam', 'enrage', 'frostbite'], { slam: atk('Cornerstone', 3300), novaType: 'cold' }),
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 11500,
+    uniques: ['giants_knuckle', 'titans_girth', 'old_grudge'],
+  },
+  {
+    id: 'icevault', name: 'The Blue Vault', act: 4, tier: 10, levelRange: [44, 46], color: '#6a9ac8', ilvlBonus: 7,
+    desc: 'A cavern under the glacier, blue as a drowned eye, where the cold has been stored since before the first winter.',
+    monsters: [
+      slow(m('vaultyeti', 'Vault Yeti', 44, 'cold', atk('Avalanche Fist', 4000), 1.9, 1.4)),
+      m('icespider', 'Crystal Spider', 45, 'cold', atk('Numbing Bite', 2700), 1.05, 1.05),
+      m('frostmite', 'Frost Mite Queen', 45, 'phys', atk('Ice Mandibles', 3200), 1.3, 1.15),
+      rime(m('hoarfrost', 'Hoarfrost Sage', 46, 'cold', spell('Bitter Hail', 3500, true), 1.15, 1.35)),
+    ],
+    boss: boss(rime(m('skaldi', 'Skaldi the Cold Hoard', 46, 'cold', spell('Hoarded Winter', 3400))), ['slam', 'nova', 'summon', 'frostbite'], { slam: atk('Vault Door', 3300), nova: spell('The First Cold', 3700) }),
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 11500,
+    uniques: ['crown_of_the_hollow', 'pyre_heart', 'stormhide'],
+  },
+  {
+    id: 'mammothroad', name: 'The Mammoth Road', act: 4, tier: 11, levelRange: [44, 46], color: '#a08a70', ilvlBonus: 7,
+    desc: 'Tusked herds have walked this ledge for ten thousand years, and nothing has ever stopped one.',
+    monsters: [
+      slow(m('mammoth', 'Woolly Mammoth', 44, 'phys', atk('Tusk Sweep', 4300), 2.3, 1.45)),
+      m('herdsman', 'Giant Herdsman', 45, 'phys', atk('Goad Spear', 3300), 1.5, 1.3),
+      fast(m('snowlynx', 'Snow Lynx', 45, 'phys', atk('Silent Pounce', 2300), 0.9, 1.05)),
+      rime(m('tuskseer', 'Tusk Seer', 46, 'cold', spell('Stampede of Ice', 3600, true), 1.15, 1.35)),
+    ],
+    boss: boss(rime(m('oldtusk', 'Old Tusk', 46, 'phys', atk('Gore', 3400), 1.2)), ['slam', 'enrage', 'scorch'], { slam: atk('Earthshaker', 3300), novaType: 'cold' }),
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 11500,
+    uniques: ['rimewalkers', 'brawlers_buckle', 'windchaser'],
+  },
+  {
+    id: 'hangingglacier', name: 'The Hanging Glacier', act: 4, tier: 11, levelRange: [45, 47], color: '#b8d8e8', ilvlBonus: 7,
+    desc: 'A river of ice held on the cliff face by nothing but habit. It groans when you walk on it.',
+    monsters: [
+      slow(m('glacierogre', 'Glacier Ogre', 45, 'cold', atk('Ice-Bound Club', 4100), 1.9, 1.4)),
+      fast(m('crevasse', 'Crevasse Stalker', 46, 'cold', atk('Sudden Drop', 2500), 1, 1.1)),
+      m('ropecutter', 'Ropecutter', 46, 'phys', atk('Ice Axe', 3000), 1.2, 1.2),
+      rime(m('avalanchepriest', 'Avalanche Priest', 47, 'cold', spell('Bringing Down the Snow', 3500, true), 1.2, 1.35)),
+    ],
+    boss: boss(rime(m('sigrun', 'Sigrun, Voice of the Glacier', 47, 'cold', spell('Groan of the Ice', 3300))), ['slam', 'nova', 'scorch', 'frostbite'], { slam: atk('Serac Fall', 3200), nova: spell('White Death', 3700) }),
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 11500,
+    uniques: ['frostgrip', 'wolfmother_pelt', 'mirage_veil'],
+  },
+  {
+    id: 'steading', name: 'The Stone Steading', act: 4, tier: 11, levelRange: [46, 48], color: '#8a8078', ilvlBonus: 7,
+    desc: 'A giant farmstead, every door a cliff, every table a hill. You are about the size of what they keep in the walls.',
+    monsters: [
+      slow(m('steadgiant', 'Steading Giant', 46, 'phys', atk('Hearthstone', 4200), 2.1, 1.45)),
+      slow(m('frostgiant', 'Frost Giant', 47, 'cold', atk('Frozen Greataxe', 4000), 2, 1.45)),
+      fast(m('wardog', 'Giant War Dog', 47, 'phys', atk('Crushing Bite', 2500), 1.2, 1.15)),
+      rime(m('hearthwitch', 'Hearth Witch', 48, 'cold', spell('Cold Hearth', 3500, true), 1.15, 1.4)),
+    ],
+    boss: boss(rime(m('borghild', 'Borghild of the Long Table', 48, 'cold', atk('Carving Knife', 3200))), ['slam', 'summon', 'enrage', 'frostbite'], { slam: atk('Table Flip', 3200) }),
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 11000,
+    uniques: ['crown_of_the_hollow', 'old_grudge', 'khans_tithe'],
+  },
+  {
+    id: 'longhall', name: 'The Long Hall', act: 4, tier: 11, levelRange: [47, 48], color: '#907050', ilvlBonus: 7,
+    desc: 'Their feast hall, a day’s walk from end to end. The fires went out an age ago, and the feast never stopped.',
+    monsters: [
+      slow(m('hallgiant', 'Feasting Giant', 47, 'phys', atk('Bone Trencher', 4100), 2.1, 1.45)),
+      m('jarl', 'Giant Jarl', 48, 'cold', atk('Oathsword of Ice', 3300), 1.6, 1.35),
+      fast(m('skald', 'Giant Skald', 48, 'cold', spell('Saga of Frost', 2900), 1.1, 1.15)),
+      rime(m('meadwitch', 'Mead Witch', 48, 'cold', spell('Cup of Winter', 3500, true), 1.2, 1.4)),
+    ],
+    boss: boss(rime(m('gunnvor', 'Thane Gunnvor', 48, 'cold', atk('Drinking Horn', 3200))), ['slam', 'nova', 'enrage', 'ward', 'frostbite'], { slam: atk('Boast of the Hall', 3200), nova: spell('Cold Toast', 3600) }),
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 11000,
+    uniques: ['giants_knuckle', 'crown_of_the_hollow', 'starforged_edge'],
+  },
+  {
+    id: 'kingsstair', name: "The King's Stair", act: 4, tier: 11, levelRange: [48, 49], color: '#a0b0c0', ilvlBonus: 7,
+    desc: 'Each step is the height of a house. Nothing small has climbed it and come down.',
+    monsters: [
+      slow(m('stairguard', 'Stair Guard', 48, 'phys', atk('Pillar Maul', 4100), 2.2, 1.5)),
+      slow(m('stormgiant', 'Peak Giant', 49, 'cold', atk('Summit Fist', 3900), 2.1, 1.5)),
+      fast(m('stairwolf', 'Hound of the King', 49, 'cold', atk('Rime Fangs', 2500), 1.1, 1.15)),
+      rime(m('kingsrime', 'Rime Herald', 49, 'cold', spell('Word of the King', 3400, true), 1.2, 1.4)),
+    ],
+    boss: boss(rime(m('hallvard', 'Hallvard Kingsguard', 49, 'cold', atk('Throne Pike', 3100))), ['slam', 'nova', 'summon', 'enrage', 'frostbite'], { slam: atk('The Last Step', 3100), nova: spell('Crown of Frost', 3600) }),
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 11000,
+    uniques: ['giants_knuckle', 'rimewalkers', 'heart_of_winter'],
+  },
+  {
+    id: 'giantsthrone', name: "The Giants' Throne", act: 4, tier: 11, levelRange: [48, 49], color: '#d8e8f0', ilvlBonus: 7,
+    desc: 'The summit is a chair. The king who sits in it has been hollowed out by the cold, and he has not noticed yet.',
+    monsters: [
+      slow(m('thronegiant', 'Throne Giant', 48, 'cold', atk('King’s Justice', 4000), 2.2, 1.5)),
+      m('hollowthane', 'Hollow Thane', 49, 'cold', atk('Hollow Blade', 3200), 1.5, 1.3),
+      m('frozenhusk', 'Frozen Husk', 49, 'phys', atk('Stiff Blow', 3400), 1.4, 1.3),
+      rime(m('wintervoice', 'Voice of Winter', 49, 'cold', spell('Winter’s Decree', 3400, true), 1.2, 1.4)),
+    ],
+    boss: boss(rime(m('hollowking', 'Ymir Vane, the Hollow King', 50, 'cold', atk('Sceptre of the Peak', 3200), 1.5, 1.05)), ['slam', 'nova', 'summon', 'enrage', 'ward', 'scorch', 'frostbite'], { slam: atk('The Mountain Falls', 3100), nova: spell('Endless Winter', 3600) }),
+    actBoss: true,
+    bossEvery: 16,
+    packSize: [1, 2],
+    spawnEveryMs: 11000,
+    uniques: ['crown_of_the_hollow', 'giants_knuckle', 'wolfmother_pelt', 'rimewalkers', 'heart_of_winter', 'frostgrip', 'starforged_edge'],
+  },
 ];
 
 /** Areas off the campaign road (data/maps.ts): they can be fought in, but nothing that walks ZONES sees them. */
@@ -617,6 +811,17 @@ export const BOSS_SCORCH_MS = 6000;
 /** martyrs: chained as the fight opens and again at these life fractions; the boss can't be hurt while any of them lives */
 export const BOSS_MARTYR_AT = [1, 0.5];
 export const BOSS_MARTYR_COUNT = 2;
+/** frostbite: one stack this often, and each slows your actions; at the cap you freeze solid, take the shatter and lose your turns */
+export const BOSS_FROSTBITE_EVERY_MS = 2000;
+export const BOSS_FROSTBITE_SLOW_PCT = 4;
+export const BOSS_FROSTBITE_MAX = 10;
+export const BOSS_FROSTBITE_FREEZE_MS = 3000;
+/** the shatter, as a multiple of the boss's hit: cold, and blocks don't stop it */
+export const BOSS_FROSTBITE_SHATTER = 2;
+/** a guard or movement skill shakes off this many stacks; a flask clears them all and breaks the ice */
+export const BOSS_FROSTBITE_CLEANSE = 5;
+/** an Instilled flask drinks itself at this many stacks */
+export const BOSS_FROSTBITE_INSTILL_AT = 6;
 /** A martyr fights at its boss's level on this fraction of a trash monster's life. It doesn't attack: it only has to die. */
 export const MARTYR: MonsterDef = { id: 'martyr', name: 'Chained Martyr', level: 1, dmgType: 'phys', basic: { name: 'Prays', kind: 'attack', ms: MONSTER_BASE_ATTACK_MS }, lifeMult: 0.5 };
 
@@ -629,4 +834,5 @@ export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> 
   ward: { name: 'Ward', tip: 'At 66% and 33% life it raises a barrier. Break it within 8 s or the boss heals 10%.' },
   martyrs: { name: 'Martyrs', tip: "It can't be hurt while the martyrs chained to it live, and it chains two more at half life. Only a blow aimed at a martyr lands: click one, or set a skill's rule to aim at martyrs (Aim rules, War Table)." },
   scorch: { name: 'Scorched earth', tip: 'Every 11 s it sets the ground under you ablaze (or frozen, or charged) for 6 s. Resist its element, Run to step out sooner, or put a guard on a Ground rule to step out at once.' },
+  frostbite: { name: 'Frostbite', tip: "A stack builds on you every 2 s, twice as fast on Frozen ground, and each slows you by 4%. At 10 you freeze solid for 3 s and take a cold shatter. A guard or movement skill shakes off 5, and a flask clears them all. Set one to the Frostbite rule (Vitals rules, War Table), or Instill a flask, so it fires at a stack count." },
 };
