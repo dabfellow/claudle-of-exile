@@ -8,7 +8,7 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
-    version: '0.2.29',
+    version: '0.2.30',
     date: '1 Nov 2026',
     title: 'Compare gear, and new ailments',
     items: [

@@ -11,7 +11,7 @@ Last updated 2026-11-01.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.28 (deployed 2026-11-01), with Acts 4–6 included but closed. The real-account
+**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.30 (deployed 2026-11-01), with Acts 4–6 included but closed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -310,7 +310,7 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 - [ ] Art for the 34 weapon bases that still have none.
 - [ ] Use the Void pack, SBS skies and `MediavelFree.png` UI once something needs them. Originals are in Downloads.
 
-- [x] Ailment rework and chaos damage ([DAMAGE.md](design/DAMAGE.md)): fire burns, cold chills, lightning shocks, chaos poisons; each has a % chance, base 0, from skills and gear; buildup against 40% of the target's life. Burn builds to Ignite, chill to Freeze, shock scales. Poison stays as it is. Chaos is offence only. Not simmed. 0.2.29 — done 2026-11-01
+- [x] Ailment rework and chaos damage ([DAMAGE.md](design/DAMAGE.md)): fire burns, cold chills, lightning shocks, chaos poisons; each has a % chance, base 0, from skills and gear; buildup against 40% of the target's life. Burn builds to Ignite, chill to Freeze, shock scales. Poison stays as it is. Chaos is offence only. Not simmed. 0.2.30 — done 2026-11-01
 
 Not tied to a milestone yet. Older balance, Act 2 and skill items restart at their milestone.
 
@@ -411,7 +411,8 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
-- [x] Damage written up ([DAMAGE.md](design/DAMAGE.md)). Green upgrade arrows, the Upgrade sort and Pick up upgrades removed; hovering compares an item with what's worn: the items' base numbers, each bar skill's damage per second (with a warning if it would stop working) and character totals, with armour and evasion also as % against your level. Skill damage estimates now count spell gear, ailment modifiers and accuracy, and bleed and ignite don't stack in them, which also feeds the sim bot's skill choices. Not simmed. 0.2.29 — done 2026-11-01
+- [x] Damage written up ([DAMAGE.md](design/DAMAGE.md)). Green upgrade arrows, the Upgrade sort and Pick up upgrades removed; hovering compares an item with what's worn: the items' base numbers, each bar skill's damage per second (with a warning if it would stop working) and character totals, with armour and evasion also as % against your level. Skill damage estimates now count spell gear, ailment modifiers and accuracy, and bleed and ignite don't stack in them, which also feeds the sim bot's skill choices. Not simmed. 0.2.30 — done 2026-11-01
+- [x] One tab per character: opening a character sends any other tab of this browser holding it back to the select screen, after it saves. 0.2.29 — done 2026-11-01
 - [x] Crafting Bench moved to the sidebar's Character group, after Stash. 0.2.28 — done 2026-11-01
 - [x] Act 6 merged to main, closed to players: stages, Echoes, Unholy ground, Trial 3, the ending, The last empire and Cartography. 0.2.26 — done 2026-11-01
 - [x] Acts 4 and 5 merged to main, closed to players: stages, skills, Archaeology and Cooking. 0.2.24 — done 2026-11-01

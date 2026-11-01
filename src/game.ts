@@ -23,6 +23,7 @@ import { fetchEventRows, saveEventRow } from './platform/events';
 import { activeEvents, eventBoost, type EventRow, type LiveEvent } from './data/events';
 import { getSupabase } from './platform/supabase';
 import { supabaseCharacters } from './platform/supabaseTable';
+import { TabClaims } from './platform/tabClaims';
 import {
   adoptDemo,
   CloudSaveStore,
@@ -102,6 +103,7 @@ class GameStore {
   private xpRates = new Map<SkillId, { at: number; rate: number }>();
   readonly accounts = new AppAccounts(localStorage, getSupabase());
   private saves: SaveStore | null = null;
+  private tabs = new TabClaims((id, stale) => this.releaseCharacter(id, stale));
   /** the shared hideout, stash and unlocks; every character played on this account holds this same object */
   realm: AccountState = freshAccount();
   /** the account as last written, to tell when it has changed */
@@ -426,6 +428,8 @@ class GameStore {
   }
 
   async enter(id: string) {
+    // first, so the load below sees what the other tab saved on its way out
+    await this.tabs.claim(id);
     const s = await this.saves?.load(id);
     if (!s) {
       this.pushToast('That character could not be loaded', 'bad');
@@ -461,6 +465,17 @@ class GameStore {
     this.stopLoop();
     await this.refreshCharacters();
     this.setScreen('select');
+  }
+
+  /** Another tab opened this character: back to the select screen, so only that tab plays and saves it. */
+  private releaseCharacter(id: string, stale: boolean): boolean {
+    if (this.screen !== 'game' || this.state.character.id !== id) return false;
+    if (!stale) this.save();
+    this.stopLoop();
+    this.setScreen('select');
+    this.pushToast('This character was opened in another tab', 'warn');
+    void this.refreshCharacters();
+    return true;
   }
 
   dismissIntro() {
