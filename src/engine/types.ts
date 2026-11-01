@@ -1,3 +1,4 @@
+import type { StationId } from '../data/hideout';
 import type { AscendancyId } from '../data/ascendancies';
 import type { ClassId } from '../data/classes';
 import type { CultureId } from '../data/expedition';
@@ -838,7 +839,9 @@ export type GameEvent =
   | { t: 'loot'; item?: Item; currencyId?: string; qty?: number; salvaged?: boolean; gemId?: string; supportId?: string; flask?: FlaskInstance }
   | { t: 'levelup'; skill: SkillId; level: number }
   | { t: 'xp'; skill: SkillId; amount: number }
-  | { t: 'produce'; skill: SkillId; outputs: Record<string, number> }
+  | { t: 'produce'; skill: SkillId; outputs: Record<string, number>; baseId?: string }
+  | { t: 'salvage'; count: number }
+  | { t: 'stationUpgraded'; id: StationId; level: number }
   | { t: 'craft'; text: string; uid: number; orbId?: string }
   | { t: 'craftDone'; text: string; uid: number }
   | { t: 'equip'; uid: number }

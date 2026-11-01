@@ -8,6 +8,16 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.37',
+    date: '1 Nov 2026',
+    title: 'A new tutorial',
+    items: [
+      'New characters now learn by crafting: smith a weapon, turn it blue with a Transmutation orb and wield it.',
+      'Old Brannoc then pays for your Crafting Bench, and you salvage your old weapon on it.',
+      'If you are partway through the tutorial, you stay on your step. Later characters pass steps they have already settled, without the reward.',
+    ],
+  },
+  {
     version: '0.2.36',
     date: '1 Nov 2026',
     title: 'The roads fork',

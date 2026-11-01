@@ -73,6 +73,8 @@ function GameScreen() {
     mainRef.current?.scrollTo({ top: 0 });
     game.visitPage(page);
   }, [page]);
+  // a quest can ask for the page you're already on
+  useEffect(() => game.visitPage(page), [s.tutorial.step]);
   return (
     <div className={`app ${s.settings.reducedMotion ? 'reduced-motion' : ''}`}>
       <Sidebar page={page} go={go} />

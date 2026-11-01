@@ -275,7 +275,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
     outputs[a.flaskId] = mult;
   }
   if (a.gem) cutGem(s, ctx, a, outputs);
-  ctx.emit({ t: 'produce', skill: a.skill, outputs });
+  ctx.emit({ t: 'produce', skill: a.skill, outputs, baseId: a.baseId });
   const heartwoodXp = a.skill === 'woodcutting' && t.heartwood ? 0.8 : 1;
   grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0)) / 100) * heartwoodXp);
 }

@@ -1,7 +1,12 @@
-import type { GameEvent } from '../engine/types';
+import { benchBuilt, findItem } from '../engine/crafting';
+import type { GameEvent, GameState } from '../engine/types';
+import { baseDef } from './bases';
 import { flaskDef } from './flasks';
+import { BENCH_BUILT_LEVEL, stationDef } from './hideout';
 
 const drank = (e: GameEvent, kind: 'life' | 'mana') => (e.t === 'flask' && !e.auto && flaskDef(e.flaskId).kind === kind ? 1 : 0);
+const isWeapon = (baseId: string) => baseDef(baseId).slot === 'weapon';
+const wieldsBlue = (s: GameState) => (s.equipment.weapon?.rarity ?? 'normal') !== 'normal';
 
 export interface TutorialStep {
   id: string;
@@ -15,7 +20,9 @@ export interface TutorialStep {
   /** data-tut ids to pulse while this step is active */
   highlight: string[];
   /** how much progress an event is worth (0 = ignore) */
-  match?: (e: GameEvent) => number;
+  match?: (e: GameEvent, s: GameState) => number;
+  /** already settled, so the step passes by unpaid: a blue weapon in hand, or a bench the account built on another character */
+  done?: (s: GameState) => boolean;
   reward: Record<string, number>;
   rewardText: string;
 }
@@ -81,9 +88,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'mine',
     title: 'Honest Work',
-    npc: "Fighting's not the only way to get strong. There's copper in the cliffs, and the anvil is hungry. Bring me nine ore — I'll throw in the wood.",
+    npc: "Fighting's not the only way to get strong. There's copper in the cliffs, and the anvil is hungry. Bring me fifteen ore — I'll throw in the wood.",
     objective: 'Mine Copper Ore',
-    target: 9,
+    target: 15,
     highlight: ['nav-mining', 'action-mine_copper'],
     match: (e) => (e.t === 'produce' && e.skill === 'mining' ? (e.outputs.copper_ore ?? 0) : 0),
     reward: { ash_log: 6 },
@@ -91,36 +98,77 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'smith',
-    title: 'Forge Something',
-    npc: 'Ore and wood make gear. Gloves or boots (their own tabs on the Smithing page) are cheapest — 9 ore, 3 logs, about ten seconds at the anvil. The better your Smithing, the better the item level.',
-    objective: 'Smith any item',
+    title: 'Forge a Weapon',
+    npc: "Ore and wood make gear. Open the Weapons tab on the Smithing page and hammer out the same kind you're holding — 15 ore, 6 logs, about ten seconds at the anvil. The better your Smithing, the better the item level.",
+    objective: 'Smith a weapon',
     target: 1,
-    highlight: ['nav-smithing', 'smith-tab-gloves', 'smith-tab-boots'],
-    match: (e) => (e.t === 'produce' && e.skill === 'smithing' ? 1 : 0),
+    highlight: ['nav-smithing', 'smith-tab-weapon'],
+    match: (e) => (e.t === 'produce' && e.baseId && isWeapon(e.baseId) ? 1 : 0),
     reward: { transmute: 1 },
     rewardText: 'Orb of Transmutation',
   },
   {
     id: 'transmute',
     title: 'A Touch of Magic',
-    npc: "Plain gear is boring. At the Crafting Bench, pick it from your bag and rub a Transmutation orb on it. Don't ask me how that works.",
-    objective: 'Use an Orb of Transmutation',
+    npc: "Plain steel is boring. At the Crafting Bench, pick your new weapon from the bag and rub a Transmutation orb on it. It comes out blue, with a modifier or two. Don't ask me how that works.",
+    objective: 'Transmute a weapon',
     target: 1,
     highlight: ['nav-bench', 'orb-transmute'],
-    match: (e) => (e.t === 'craft' && e.orbId === 'transmute' ? 1 : 0),
+    match: (e, s) => {
+      if (e.t !== 'craft' || e.orbId !== 'transmute') return 0;
+      const item = findItem(s, e.uid);
+      return item && isWeapon(item.baseId) ? 1 : 0;
+    },
+    done: wieldsBlue,
     reward: { augment: 2 },
     rewardText: '2 Orbs of Augmentation',
   },
   {
     id: 'equip',
     title: 'Dress for the Grave',
-    npc: 'Now put something on. Hover over a piece to see how it compares with what you wear.',
-    objective: 'Equip an item',
+    npc: 'Now put that blue blade in your hand: click it in your bag on the Equipment page. Those Augmentation orbs can add another modifier first, if it has room.',
+    objective: 'Equip your blue weapon',
     target: 1,
     highlight: ['nav-equipment'],
-    match: (e) => (e.t === 'equip' ? 1 : 0),
+    match: (e, s) => (e.t === 'equip' && wieldsBlue(s) ? 1 : 0),
+    done: wieldsBlue,
     reward: { gold: 50 },
     rewardText: '50 gold',
+  },
+  {
+    id: 'hideout',
+    title: 'A Proper Workshop',
+    npc: "Orbs work anywhere, but that bench of yours is barely a plank. Come back to your Hideout. I've left you what it takes to build it properly.",
+    objective: 'Open your Hideout',
+    target: 1,
+    visitPage: 'hideout',
+    highlight: ['nav-hideout'],
+    done: benchBuilt,
+    reward: stationDef('bench').levels[BENCH_BUILT_LEVEL - 1].cost,
+    rewardText: '1,500 gold, 200 Ash Logs, 200 Copper Ore',
+  },
+  {
+    id: 'build_bench',
+    title: 'Raise the Bench',
+    npc: 'Gold, logs, ore: all there. Scroll down to your stations and upgrade the Crafting Bench, and you can break down gear you no longer need.',
+    objective: 'Build the Crafting Bench',
+    target: 1,
+    highlight: ['upgrade-bench'],
+    match: (e) => (e.t === 'stationUpgraded' && e.id === 'bench' && e.level >= BENCH_BUILT_LEVEL ? 1 : 0),
+    done: benchBuilt,
+    reward: {},
+    rewardText: '',
+  },
+  {
+    id: 'salvage',
+    title: 'Nothing Wasted',
+    npc: "Your old weapon's still in your bag, and it's no use to anyone in one piece. Pick it at the Crafting Bench and salvage it. Arcane Dust is what orbs are made of — Alchemy turns one into the other.",
+    objective: 'Salvage an item',
+    target: 1,
+    highlight: ['nav-bench', 'salvage-item'],
+    match: (e) => (e.t === 'salvage' ? 1 : 0),
+    reward: { arcane_dust: 12 },
+    rewardText: '12 Arcane Dust',
   },
   {
     id: 'passive',

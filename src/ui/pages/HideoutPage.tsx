@@ -357,7 +357,7 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
               {state === 'next' && (
                 <div className="hx-tier-buy">
                   <HaveNeed cost={tier.cost} have={s.account.bank} go={go} />
-                  <button className={`btn sm ${affordable ? 'primary' : ''}`} disabled={!affordable} title={affordable ? `Upgrade to level ${lvl + 1}` : 'Not enough materials'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id))}>
+                  <button data-tut={`upgrade-${st.id}`} className={`btn sm ${affordable ? 'primary' : ''}`} disabled={!affordable} title={affordable ? `Upgrade to level ${lvl + 1}` : 'Not enough materials'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id))}>
                     Upgrade
                   </button>
                 </div>
