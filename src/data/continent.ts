@@ -77,6 +77,21 @@ export const ZONE_POS: Record<string, [number, number]> = {
   choirloft: [620, 595],
   saintswalk: [580, 565],
   highaltar: [640, 540],
+  // Act 5 sails island to island round the sea, then spirals in to the eye of the maelstrom
+  blackharbor: [600, 215],
+  wreckline: [650, 195],
+  cinderkey: [705, 205],
+  squallbanks: [765, 225],
+  lampgulf: [815, 255],
+  drownedfleet: [855, 310],
+  brimstone: [835, 365],
+  hollowreef: [785, 385],
+  thunderhead: [725, 410],
+  leviathanrib: [665, 425],
+  blackcurrent: [620, 395],
+  voicetrench: [640, 335],
+  lightless: [675, 290],
+  maelstrom: [730, 285],
 };
 
 export function actRegion(act: number): ActRegion | undefined {

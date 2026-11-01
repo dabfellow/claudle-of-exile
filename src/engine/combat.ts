@@ -17,6 +17,14 @@ import {
   BOSS_NOVA_EVERY_MS,
   BOSS_NOVA_MULT,
   BOSS_SCORCH_DPS,
+  BOSS_CHANNEL_DEFAULT,
+  BOSS_CHANNEL_EVERY_MS,
+  BOSS_CHANNEL_LAND_MULT,
+  BOSS_CHANNEL_PULSE_MAX,
+  BOSS_CHANNEL_PULSE_MIN,
+  BOSS_CHANNEL_PULSE_MS,
+  BOSS_CHANNEL_STAGGER_MS,
+  BOSS_CHANNEL_SURGE,
   BOSS_SCORCH_EVERY_MS,
   BOSS_SCORCH_MS,
   BOSS_SUMMON_COUNT,
@@ -55,9 +63,10 @@ import {
   areaCells,
   chainFrom,
   CHILLED_GROUND_SLOW,
+  STORMWATER_COOLDOWN,
   GROUND,
   groundUnderPlayer,
-  groundFor,
+  monsterGround,
   knockBack,
   layGround,
   neighbors,
@@ -276,13 +285,13 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     mechanics,
     // offset the first casts so a boss doesn't open with everything at once
     timers: boss
-      ? { slam: BOSS_SLAM_EVERY_MS * 0.6, nova: BOSS_NOVA_EVERY_MS * 0.8, summon: BOSS_SUMMON_EVERY_MS * 0.7, scorch: BOSS_SCORCH_EVERY_MS * 0.5 }
+      ? { slam: BOSS_SLAM_EVERY_MS * 0.6, nova: BOSS_NOVA_EVERY_MS * 0.8, summon: BOSS_SUMMON_EVERY_MS * 0.7, scorch: BOSS_SCORCH_EVERY_MS * 0.5, channel: BOSS_CHANNEL_EVERY_MS * 0.7 }
       : {},
     novaType: def.novaType ?? def.dmgType,
     casting: -1,
     castKind: null,
     castTotal: 1,
-    casts: { slam: def.slam ?? BOSS_SLAM_DEFAULT, nova: def.nova ?? BOSS_NOVA_DEFAULT },
+    casts: { slam: def.slam ?? BOSS_SLAM_DEFAULT, nova: def.nova ?? BOSS_NOVA_DEFAULT, channel: def.channel ?? BOSS_CHANNEL_DEFAULT },
     enraged: false,
     ward: 0,
     wardMax: 0,
@@ -302,6 +311,7 @@ export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1):
     stepMs: def.moveMs ?? MONSTER_STEP_MS,
     moveMs: def.moveMs ?? MONSTER_STEP_MS,
     attackGround: !!def.basic.ground,
+    groundKind: def.groundKind,
     chained: mechanics.includes('martyrs') || undefined,
   };
 }
@@ -663,7 +673,10 @@ export interface RuleContext {
   manaPct: number;
   enemies: number;
   targetLifePct: number;
+  /** a slam or nova winding up */
   casting: boolean;
+  /** a channel under way, which a rule can tell from a wind-up */
+  channeling: boolean;
   boss: boolean;
   meterFull: boolean;
   targetStatus: Set<TargetStatus>;
@@ -695,7 +708,8 @@ export function ruleContext(s: GameState, d: Derived): RuleContext {
     manaPct: d.maxMana ? (s.mana / d.maxMana) * 100 : 0,
     enemies: alive.length,
     targetLifePct: target ? (target.life / target.maxLife) * 100 : 0,
-    casting: alive.some((m) => m.casting >= 0),
+    casting: alive.some((m) => m.casting >= 0 && !channeling(m)),
+    channeling: alive.some(channeling),
     boss: alive.some((m) => m.isBoss),
     meterFull: meterFull(s, d),
     targetStatus: monsterStatuses(target),
@@ -725,6 +739,8 @@ export function ruleAllows(rule: TacticRule, rc: RuleContext, active: boolean): 
       return false;
     case 'enemyCasting':
       return rc.casting;
+    case 'enemyChannels':
+      return rc.channeling;
     case 'onGround':
       return !!rule.ground && rc.ground.has(rule.ground);
     case 'lifeBelow':
@@ -1313,11 +1329,14 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (e.interrupts) {
     for (const m of aliveMonsters(c)) {
       if (m.casting < 0) continue;
-      if (m.castKind) m.timers[m.castKind] = m.castKind === 'nova' ? BOSS_NOVA_EVERY_MS : BOSS_SLAM_EVERY_MS;
-      m.casting = -1;
-      m.castKind = null;
+      if (channeling(m)) breakChannel(ctx, m);
+      else {
+        if (m.castKind) m.timers[m.castKind] = m.castKind === 'nova' ? BOSS_NOVA_EVERY_MS : BOSS_SLAM_EVERY_MS;
+        m.casting = -1;
+        m.castKind = null;
+        ctx.emit({ t: 'interrupt', name: m.name });
+      }
       if (mods.specials.has('rally')) m.stunMs = Math.max(m.stunMs, 1000);
-      ctx.emit({ t: 'interrupt', name: m.name });
     }
   }
 
@@ -2031,6 +2050,8 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
     if (mon.curse.remainingMs <= 0) mon.curse = undefined;
   }
   if (mon.isBoss) bossPhases(s, ctx, mon, dt);
+  // any stun or freeze, whatever it came from, breaks a channel
+  if (channeling(mon) && (mon.stunMs > 0 || mon.frozenMs > 0)) breakChannel(ctx, mon);
   if (mon.frozenMs > 0) {
     mon.frozenMs -= dt;
     return;
@@ -2051,9 +2072,9 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
     }
     mon.attackTimer -= mon.attackMs;
     const enrage = mon.enraged ? BOSS_ENRAGE_DMG : 1;
-    takeHit(s, ctx, d, mon, mon.damage * enrage * (0.85 + ctx.rng.next() * 0.3), mon.dmgType, 'hit');
+    takeHit(s, ctx, d, mon, bossDamage(mon) * enrage * (0.85 + ctx.rng.next() * 0.3), mon.dmgType, 'hit');
     // some casters' spells splash hazardous ground at the player's feet
-    if (mon.attackGround) layGround(s.combat!.ground, PLAYER_SPOT, groundFor(mon.dmgType), mon.damage * MONSTER_GROUND_DPS, MONSTER_GROUND_MS);
+    if (mon.attackGround) layGround(s.combat!.ground, PLAYER_SPOT, monsterGround(mon, mon.dmgType), mon.damage * MONSTER_GROUND_DPS, MONSTER_GROUND_MS);
   }
 }
 
@@ -2126,40 +2147,81 @@ function bossPhases(s: GameState, ctx: Ctx, mon: MonsterInstance, dt: number): v
     mon.timers.scorch = (mon.timers.scorch ?? BOSS_SCORCH_EVERY_MS) - dt;
     if (mon.timers.scorch <= 0) {
       mon.timers.scorch = BOSS_SCORCH_EVERY_MS;
-      const kind = groundFor(mon.novaType);
-      layGround(s.combat!.ground, PLAYER_SPOT, kind, mon.damage * BOSS_SCORCH_DPS, BOSS_SCORCH_MS);
+      const kind = monsterGround(mon, mon.novaType);
+      layGround(s.combat!.ground, PLAYER_SPOT, kind, bossDamage(mon) * BOSS_SCORCH_DPS, BOSS_SCORCH_MS);
       ctx.emit({ t: 'bossPhase', name: mon.name, text: `scorches the earth: ${GROUND[kind].name.toLowerCase()} under you!` });
     }
   }
 }
 
-/** Wind-ups: slam and nova. Returns true while the boss is busy casting. */
+/** A boss's hit, with every channel that has landed behind it. */
+function bossDamage(mon: MonsterInstance): number {
+  return mon.damage * (1 + BOSS_CHANNEL_SURGE * (mon.surges ?? 0));
+}
+
+function channeling(m: MonsterInstance): boolean {
+  return m.casting >= 0 && m.castKind === 'channel';
+}
+
+/** A channel broken in time: it fizzles and the boss staggers. */
+function breakChannel(ctx: Ctx, mon: MonsterInstance): void {
+  mon.casting = -1;
+  mon.castKind = null;
+  mon.timers.channel = BOSS_CHANNEL_EVERY_MS;
+  mon.stunMs = Math.max(mon.stunMs, BOSS_CHANNEL_STAGGER_MS);
+  ctx.emit({ t: 'interrupt', name: mon.name });
+  ctx.emit({ t: 'bossPhase', name: mon.name, text: `loses ${mon.casts.channel.name} and staggers!` });
+}
+
+/** How hard a channel's pulse hits at this point in it (0–1), as a multiple of the boss's hit. */
+export function channelPulse(progress: number): number {
+  return BOSS_CHANNEL_PULSE_MIN + (BOSS_CHANNEL_PULSE_MAX - BOSS_CHANNEL_PULSE_MIN) * progress;
+}
+
+/** The pulses that have come due. A channel lands in the boss's own element, so a boss whose nova is the other one tests both. */
+function channelPulses(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, step: number): void {
+  mon.channelMs = (mon.channelMs ?? 0) + step;
+  while ((mon.pulses ?? 0) < Math.floor(mon.channelMs / BOSS_CHANNEL_PULSE_MS) && s.life > 0) {
+    mon.pulses = (mon.pulses ?? 0) + 1;
+    takeHit(s, ctx, d, mon, bossDamage(mon) * channelPulse(Math.min(1, (mon.pulses * BOSS_CHANNEL_PULSE_MS) / mon.castTotal)), mon.dmgType, 'nova');
+  }
+}
+
+/** Wind-ups: slam, nova and channel. Returns true while the boss is busy casting. */
 function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt: number): boolean {
   if (mon.casting >= 0) {
-    mon.casting -= dt * (1 - (mon.curse?.slow ?? 0) / 100);
+    const step = dt * (1 - (mon.curse?.slow ?? 0) / 100);
+    mon.casting -= step;
+    if (channeling(mon) && mon.casting > 0) channelPulses(s, ctx, d, mon, step);
     if (mon.casting <= 0) {
       const kind = mon.castKind ?? 'slam';
       mon.casting = -1;
       mon.castKind = null;
-      if (kind === 'nova') {
+      if (kind === 'channel') {
+        mon.timers.channel = BOSS_CHANNEL_EVERY_MS;
+        takeHit(s, ctx, d, mon, bossDamage(mon) * BOSS_CHANNEL_LAND_MULT, mon.dmgType, 'nova');
+        mon.surges = (mon.surges ?? 0) + 1;
+        ctx.emit({ t: 'bossPhase', name: mon.name, text: `lands ${mon.casts.channel.name} and grows stronger!` });
+      } else if (kind === 'nova') {
         mon.timers.nova = BOSS_NOVA_EVERY_MS;
-        takeHit(s, ctx, d, mon, mon.damage * BOSS_NOVA_MULT, mon.novaType, 'nova');
+        takeHit(s, ctx, d, mon, bossDamage(mon) * BOSS_NOVA_MULT, mon.novaType, 'nova');
         // the blast leaves the ground under the player burning, frozen or charged
-        layGround(s.combat!.ground, PLAYER_SPOT, groundFor(mon.novaType), mon.damage * BOSS_NOVA_GROUND_DPS, BOSS_NOVA_GROUND_MS);
+        layGround(s.combat!.ground, PLAYER_SPOT, monsterGround(mon, mon.novaType), bossDamage(mon) * BOSS_NOVA_GROUND_DPS, BOSS_NOVA_GROUND_MS);
       } else {
         mon.timers.slam = BOSS_SLAM_EVERY_MS;
-        takeHit(s, ctx, d, mon, mon.damage * BOSS_SLAM_MULT, mon.dmgType, 'slam');
+        takeHit(s, ctx, d, mon, bossDamage(mon) * BOSS_SLAM_MULT, mon.dmgType, 'slam');
       }
     }
     return true;
   }
-  for (const kind of ['slam', 'nova'] as const) {
+  for (const kind of ['channel', 'slam', 'nova'] as const) {
     if (!mon.mechanics.includes(kind)) continue;
     const left = (mon.timers[kind] ?? 0) - dt;
     mon.timers[kind] = left;
     if (left <= 0) {
       mon.castKind = kind;
       mon.casting = mon.castTotal = mon.casts[kind].ms;
+      mon.channelMs = mon.pulses = 0;
       ctx.emit({ t: 'bossCast', name: mon.name, kind, skill: mon.casts[kind].name });
       triggerInstilled(s, ctx, 'bossCast');
       return true;
@@ -2183,7 +2245,8 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
     c.glacial = false;
     c.barbedWard = undefined;
   }
-  for (let i = 0; i < c.cooldowns.length; i++) c.cooldowns[i] = Math.max(0, c.cooldowns[i] - dt);
+  const cooled = underPlayer(c, 'stormwater') ? dt * STORMWATER_COOLDOWN : dt;
+  for (let i = 0; i < c.cooldowns.length; i++) c.cooldowns[i] = Math.max(0, c.cooldowns[i] - cooled);
   c.evadeMs = Math.max(0, c.evadeMs - dt);
   if (c.groundProofMs) c.groundProofMs = Math.max(0, c.groundProofMs - dt);
   if (classMechanicsStep(s, ctx, d, dt)) return true;

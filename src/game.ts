@@ -626,7 +626,7 @@ class GameStore {
         this.log(`Interrupted ${e.name}!`, 'good');
         break;
       case 'bossCast':
-        this.log(`${e.name} winds up ${e.skill} (${e.kind === 'nova' ? 'nova' : 'heavy blow'})`, 'warn');
+        this.log(`${e.name} ${e.kind === 'channel' ? 'channels' : 'winds up'} ${e.skill} (${e.kind === 'nova' ? 'nova' : e.kind === 'channel' ? 'break it!' : 'heavy blow'})`, 'warn');
         break;
       case 'bossPhase':
         this.log(`${e.name} ${e.text}`, 'warn');
@@ -684,7 +684,7 @@ class GameStore {
         break;
       }
       case 'bossCast':
-        this.addFeed(`${e.name} winds up ${e.skill}!`, 'warn');
+        this.addFeed(`${e.name} ${e.kind === 'channel' ? 'channels' : 'winds up'} ${e.skill}!`, 'warn');
         break;
       case 'actComplete': {
         const next = ACTS.find((a) => a.n === e.act + 1);

@@ -124,6 +124,34 @@ export const DROP_TABLES: Record<number, DropTable> = {
     flaskChance: 0.014,
     uniqueChance: 0.0014,
   },
+  // Act 5 (zones.ts: 12 × 4, 13 × 4, 14 × 6). Tiers 10 and 11 are Act 4's
+  12: {
+    currencyChance: 0.075,
+    currency: { ...BASIC, regal: 15, alchemy: 15, chaos: 13, annul: 3.4, exalted: 0.7, divine: 1.4, expansion: 1.4, instill: 3.4 },
+    itemChance: 0.205,
+    rarity: { normal: 40, magic: 36, rare: 24 },
+    gemChance: 0.022,
+    flaskChance: 0.015,
+    uniqueChance: 0.0017,
+  },
+  13: {
+    currencyChance: 0.08,
+    currency: { ...BASIC, regal: 16, alchemy: 16, chaos: 14, annul: 3.7, exalted: 0.75, divine: 1.5, expansion: 1.5, instill: 3.7 },
+    itemChance: 0.21,
+    rarity: { normal: 38, magic: 36, rare: 26 },
+    gemChance: 0.023,
+    flaskChance: 0.015,
+    uniqueChance: 0.0018,
+  },
+  14: {
+    currencyChance: 0.085,
+    currency: { ...BASIC, regal: 17, alchemy: 17, chaos: 15, annul: 4, exalted: 0.8, divine: 1.6, expansion: 1.6, instill: 4 },
+    itemChance: 0.215,
+    rarity: { normal: 36, magic: 36, rare: 28 },
+    gemChance: 0.024,
+    flaskChance: 0.016,
+    uniqueChance: 0.0019,
+  },
 };
 
 /**
@@ -153,6 +181,9 @@ export const BOSS_TABLES: Record<number, BossTable> = {
   7: { currencyRolls: 4, guaranteed: [{ id: 'exalted', qty: 1 }, { id: 'divine', qty: 1 }], repeatChance: 0.015, items: [3, 3], rarity: { normal: 0, magic: 40, rare: 60 }, gemChance: 0.5, flaskChance: 0.3, uniqueChance: 0.12 },
   8: { currencyRolls: 4, guaranteed: [{ id: 'chaos', qty: 4 }], repeatChance: 0.04, items: [3, 3], rarity: { normal: 0, magic: 38, rare: 62 }, gemChance: 0.5, flaskChance: 0.3, uniqueChance: 0.13 },
   9: { currencyRolls: 4, guaranteed: [{ id: 'exalted', qty: 1 }, { id: 'divine', qty: 2 }], repeatChance: 0.015, items: [3, 4], rarity: { normal: 0, magic: 35, rare: 65 }, gemChance: 0.55, flaskChance: 0.3, uniqueChance: 0.14 },
+  12: { currencyRolls: 5, guaranteed: [{ id: 'exalted', qty: 2 }], repeatChance: 0.02, items: [3, 4], rarity: { normal: 0, magic: 30, rare: 70 }, gemChance: 0.6, flaskChance: 0.3, uniqueChance: 0.17 },
+  13: { currencyRolls: 5, guaranteed: [{ id: 'exalted', qty: 2 }, { id: 'divine', qty: 2 }], repeatChance: 0.02, items: [3, 4], rarity: { normal: 0, magic: 28, rare: 72 }, gemChance: 0.6, flaskChance: 0.3, uniqueChance: 0.18 },
+  14: { currencyRolls: 5, guaranteed: [{ id: 'exalted', qty: 2 }, { id: 'divine', qty: 3 }], repeatChance: 0.02, items: [4, 4], rarity: { normal: 0, magic: 25, rare: 75 }, gemChance: 0.65, flaskChance: 0.3, uniqueChance: 0.19 },
 };
 
 export function dropTable(tier: number): DropTable {

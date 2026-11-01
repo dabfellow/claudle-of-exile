@@ -64,6 +64,14 @@ const ALL: AchievementDef[] = [
     target: zonesInAct(3).length, progress: (s) => bossesBeatenIn(s, 3), reward: { exalted: 1 },
   },
   {
+    id: 'act_5', name: 'Slack Water', desc: 'Defeat Thalass, the Caller Below, and complete Act 5', category: 'combat', act: 5,
+    target: 1, progress: (s) => (s.bossesDefeated.includes('maelstrom') ? 1 : 0), reward: { divine: 3, exalted: 3 },
+  },
+  {
+    id: 'conqueror_5', name: 'Master of the Sunless Sea', desc: "Defeat every Act 5 area's boss", category: 'combat', act: 5,
+    target: zonesInAct(5).length, progress: (s) => bossesBeatenIn(s, 5), reward: { exalted: 2 },
+  },
+  {
     id: 'deathless', name: 'Untouchable', desc: 'Reach level 10 without dying', category: 'combat',
     target: 10, progress: (s) => (L(s).deaths === 0 ? Math.min(10, characterLevel(s)) : 0), reward: { regret: 2 },
   },

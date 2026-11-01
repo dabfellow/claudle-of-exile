@@ -31,6 +31,16 @@ describe('pack art', () => {
     expect(ids.filter((id) => !packArtUrl(`uniques/${id}`))).toEqual([]);
   });
 
+  it('no two Act 5 monsters share a picture, and its areas and uniques have art', () => {
+    const ids = zonesInAct(5).flatMap((z) => [...z.monsters, z.boss]).map((m) => m.id);
+    const urls = ids.map((id) => packArtUrl(`monsters/${id}`));
+    expect(urls.filter((u) => !u)).toEqual([]);
+    expect(new Set(urls).size).toBe(urls.length);
+    expect(zonesInAct(5).filter((z) => !packArtUrl(`zones/${z.id}`)).map((z) => z.id)).toEqual([]);
+    const uniques = ['leviathan_hide', 'deckwalkers', 'bosuns_oath', 'tide_crown', 'corposant', 'harpoons_answer'];
+    expect(uniques.filter((id) => !packArtUrl(`uniques/${id}`))).toEqual([]);
+  });
+
   it('the Act 2 uniques have their own art', () => {
     const ids = ['sunmane_pelt', 'mirage_veil', 'khans_tithe', 'kurgan_crown', 'stormrider_greaves', 'pyre_heart'];
     expect(ids.filter((id) => !UNIQUES.some((u) => u.id === id))).toEqual([]);

@@ -124,6 +124,7 @@ export type RuleCondition =
   | 'always'
   | 'manual'
   | 'enemyCasting'
+  | 'enemyChannels'
   | 'onGround'
   | 'lifeBelow'
   | 'lifeAbove'
@@ -183,6 +184,7 @@ export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; 
   always: { label: 'Whenever ready' },
   manual: { label: 'Manual only' },
   enemyCasting: { label: 'When an enemy winds up', unlock: 'windups' },
+  enemyChannels: { label: 'When an enemy channels', unlock: 'windups' },
   onGround: { label: 'While standing on', ground: true, unlock: 'ground' },
   lifeBelow: { label: 'When life below', unit: '%', defaultValue: 50, unlock: 'vitals' },
   lifeAbove: { label: 'When life above', unit: '%', defaultValue: 60, unlock: 'vitals' },
@@ -235,7 +237,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     id: 'war_cry', name: 'War Cry', attr: 'str', role: 'buff', tags: ['buff', 'duration'],
     manaCost: 14, cooldownMs: 12000, timeMs: 1200, color: '#e0a640',
     effect: { interrupts: true, knockback: true, buff: { durationMs: 6000, moreDamage: 20 } },
-    desc: 'Interrupts enemy wind-ups, shoves enemies in melee range back a ring, and grants 20% more damage for 6s.',
+    desc: 'Interrupts enemy wind-ups and channels, shoves enemies in melee range back a ring, and grants 20% more damage for 6s.',
     defaultRule: { when: 'enemyCasting' },
   }),
   A({
