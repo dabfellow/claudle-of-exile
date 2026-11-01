@@ -67,7 +67,7 @@ Built for question 6 of [HARD_BOSSES.md](HARD_BOSSES.md). `TacticRule.aim` sends
 
 To add a moment in a later act: add it to `SkillAim` and `SKILL_AIMS`, and teach `inAim` in `combat.ts` what it picks out. Weak points and choir adds are monsters, so that is all they need. The range exception for martyrs is in `skillTarget`.
 
-**Unlock:** War Table level 6, as Aim rules, between Wind-up rules and the third rule slot. Every other rule group is taught there. It sits below the third slot because that one needs yew and mithril, which a character at the second stage may not have, and clicking works until then. The third slot moved up to level 7; `alignWarTable` moves anyone who already holds it, and they get Aim rules with it.
+**Unlock:** War Table level 6, as Aim rules, between the second and third rule slots. Every other rule group is taught there. It sits below the third slot because that one needs yew and mithril, which a character at the second stage may not have, and clicking works until then. The third slot moved up to level 7; `alignWarTable` moves anyone who already holds it, and they get Aim rules with it.
 
 **Offline:** like wind-ups, a martyr boss stays in hiding while you're away unless a damage skill on the bar has a rule (not Manual only) aiming at martyrs. Otherwise the hours would go on a fight that can't end. See `bossLeftToRules` in `automation.ts`.
 

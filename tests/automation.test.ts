@@ -71,11 +71,12 @@ describe('rule locks', () => {
   it('War Table levels open rule groups in order', () => {
     const s = newGame(1);
     upgradeTo(s, 'war_table', 2);
+    expect(bossesOffline(s)).toBe(true);
     expect(ruleLockReason(s, 'lifeBelow')).toBeNull();
     expect(ruleLockReason(s, 'targetHas')).not.toBeNull();
     upgradeTo(s, 'war_table', 3);
     expect(ruleLockReason(s, 'targetHas')).toBeNull();
-    expect(bossesOffline(s)).toBe(false);
+    expect(ruleLockReason(s, 'onGround')).not.toBeNull();
   });
 
   it('a locked rule kept from an old save never fires, but the skill can still be cast by hand', () => {
@@ -105,7 +106,9 @@ describe('rule slots', () => {
     const s = fighter(['heavy_strike']);
     expect(ruleSlots(s)).toBe(1);
     expect(setRule(s, 0, 1, { when: 'bossOnly' })).toMatch(/No free rule slot/);
-    upgradeTo(s, 'war_table', 3);
+    upgradeTo(s, 'war_table', 4);
+    expect(ruleSlots(s)).toBe(1);
+    upgradeTo(s, 'war_table', 5);
     expect(ruleSlots(s)).toBe(2);
     expect(setRule(s, 0, 1, { when: 'bossOnly' })).toBeNull();
     inFight(s, [dummy()]);
@@ -148,7 +151,7 @@ describe('unlocks', () => {
     const s = newGame(1);
     upgradeTo(s, 'war_table', stationDef('war_table').levels.length);
     upgradeTo(s, 'watchtower', 4);
-    expect(s.account.automation).toEqual({ rules: ['vitals', 'status', 'ground', 'windups', 'aim'], ruleSlots: 3, offlineHours: 24 });
+    expect(s.account.automation).toEqual({ rules: ['vitals', 'windups', 'status', 'ground', 'aim'], ruleSlots: 3, offlineHours: 24 });
     s.account.hideout.war_table = 1;
     const back = s;
     expect(back.account.automation.ruleSlots).toBe(3);

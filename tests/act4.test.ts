@@ -320,7 +320,7 @@ describe('Frostbite', () => {
     const s = fighter([['iron_guard', [AT_SIX]]]);
     s.account.automation.rules = [];
     expect(ruleLockReason(s, 'frostbite')).toContain('Vitals');
-    expect(STATIONS.find((x) => x.id === 'war_table')!.levels[1].effect).toContain('Frostbite');
+    expect(STATIONS.find((x) => x.id === 'war_table')!.levels.find((l) => l.grants?.rules?.includes('vitals'))!.effect).toContain('Frostbite');
   });
 
   it('an Instilled flask drinks itself at its stack count', () => {

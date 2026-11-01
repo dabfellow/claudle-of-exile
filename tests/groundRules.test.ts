@@ -161,19 +161,28 @@ describe('War Table', () => {
     return a;
   };
 
-  it('teaches ground rules before wind-ups, so bosses left offline can have them', () => {
-    expect(groundAt()).toBeLessThan(windupsAt());
-    expect(stationDef('war_table').levels[groundAt() - 1].effect).toMatch(/Ground rules/);
+  it('teaches wind-ups with vitals, ground rules at 4 and the second slot at 5', () => {
+    expect(windupsAt()).toBe(2);
+    expect(groundAt()).toBe(4);
+    expect(stationDef('war_table').levels[4].grants).toEqual({ ruleSlots: 2 });
   });
 
-  it('moves an account that bought wind-ups before the new level up to where wind-ups now sit', () => {
-    const a = account(4, ['vitals', 'status', 'windups'], 2);
+  it('gives an old level 2 table wind-ups, at the same level', () => {
+    const a = account(2, ['vitals'], 1);
     alignWarTable(a);
-    expect(a.hideout.war_table).toBe(windupsAt());
-    expect(a.automation.rules).toContain('ground');
+    expect(a.hideout.war_table).toBe(2);
+    expect(a.automation.rules).toEqual(['vitals', 'windups']);
+    expect(a.automation.ruleSlots).toBe(1);
+  });
+
+  it('moves a table already holding the second slot up to where it now sits', () => {
+    const a = account(3, ['vitals', 'status'], 2);
+    alignWarTable(a);
+    expect(a.hideout.war_table).toBe(5);
+    expect(a.automation.rules).toEqual(expect.arrayContaining(['windups', 'ground']));
     expect(a.automation.ruleSlots).toBe(2);
     alignWarTable(a);
-    expect(a.hideout.war_table).toBe(windupsAt());
+    expect(a.hideout.war_table).toBe(5);
   });
 
   it('moves the third rule slot too', () => {
@@ -182,19 +191,19 @@ describe('War Table', () => {
     expect(a.hideout.war_table).toBe(stationDef('war_table').levels.length);
   });
 
-  it('leaves an account below the new level alone', () => {
-    const a = account(2, ['vitals'], 1);
+  it('leaves a new table alone', () => {
+    const a = account(2, ['vitals', 'windups'], 1);
     alignWarTable(a);
     expect(a.hideout.war_table).toBe(2);
-    expect(a.automation.rules).toEqual(['vitals']);
+    expect(a.automation.rules).toEqual(['vitals', 'windups']);
     const fresh = freshAccount();
     alignWarTable(fresh);
     expect(fresh.hideout.war_table).toBe(1);
   });
 
   it('survives a stale copy from another device', () => {
-    const fresh = account(windupsAt(), ['vitals', 'status', 'ground', 'windups'], 2);
+    const fresh = account(5, ['vitals', 'status', 'ground', 'windups'], 2);
     const merged = reconcileAccounts(fresh, account(4, ['vitals', 'status', 'windups'], 2));
-    expect(merged.hideout.war_table).toBe(windupsAt());
+    expect(merged.hideout.war_table).toBe(5);
   });
 });

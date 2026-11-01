@@ -8,6 +8,15 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.35',
+    date: '1 Nov 2026',
+    title: 'War Table reshuffled',
+    items: [
+      'Wind-up rules now come with Vitals rules at War Table level 2, so offline boss fights arrive much sooner.',
+      'The 2nd rule slot moved to level 5. Nobody loses anything: if you already have the 2nd slot, you keep it, and your War Table moves up to level 5 with everything below it unlocked.',
+    ],
+  },
+  {
     version: '0.2.33',
     date: '1 Nov 2026',
     title: 'The whole campaign is open',

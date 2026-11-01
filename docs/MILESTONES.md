@@ -356,6 +356,7 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- War Table: Wind-up rules are now level 2, about 15 minutes of gathering, so offline bosses come far earlier than Milestone 1's pacing assumed. Not simmed.
 - Hideout later-tier costs only show on hover, so phones can't see them.
 - Chaos is offence only: no monsters deal it, no player chaos resistance, no chaos skills past Poison Dart, and flat chaos doesn't reach spells ([DAMAGE.md](design/DAMAGE.md)).
 - Ailment numbers (40% threshold, 25% skill chance, ignite 50%, shock 40%) are first guesses, not simmed. Bosses may be near immune to Ignite and Freeze at these thresholds.
