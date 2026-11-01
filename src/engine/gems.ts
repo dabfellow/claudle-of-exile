@@ -299,6 +299,10 @@ export interface CombinedMods {
   curseEffect: number;
   lowLifeMore: number;
   moreBleed: number;
+  stunChance: number;
+  stagger: number;
+  windupPct: number;
+  shieldMore: number;
   specials: Set<string>;
 }
 
@@ -306,7 +310,7 @@ export function combineMods(list: SupportMods[]): CombinedMods {
   const out: CombinedMods = {
     moreDamage: 0, morePhys: 0, moreElem: 0, noElemental: false, extras: [], attackSpeed: 0, castSpeed: 0,
     manaMult: 1, critChance: 0, critMulti: 0, lifeLeech: 0, manaLeech: 0, repeats: 0, repeatDamage: 100,
-    chains: 0, durationPct: 0, cooldownPct: 0, curseEffect: 0, lowLifeMore: 0, moreBleed: 0, specials: new Set(),
+    chains: 0, durationPct: 0, cooldownPct: 0, curseEffect: 0, lowLifeMore: 0, moreBleed: 0, stunChance: 0, stagger: 0, windupPct: 0, shieldMore: 0, specials: new Set(),
   };
   for (const m of list) {
     out.moreDamage += m.moreDamage ?? 0;
@@ -329,6 +333,10 @@ export function combineMods(list: SupportMods[]): CombinedMods {
     out.curseEffect += m.curseEffect ?? 0;
     out.lowLifeMore += m.lowLifeMore ?? 0;
     out.moreBleed += m.moreBleed ?? 0;
+    out.stunChance += m.stunChance ?? 0;
+    out.stagger += m.stagger ?? 0;
+    out.windupPct += m.windupPct ?? 0;
+    out.shieldMore += m.shieldMore ?? 0;
     if (m.special) out.specials.add(m.special);
   }
   return out;
@@ -360,7 +368,7 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
   const dexSkill = def.id === 'twin_strike' || def.id === 'lacerate' ? d.raw.dexSkillSpeed : 0;
   const speed = isAttack ? d.attackSpeed * (1 + (mods.attackSpeed + dexSkill) / 100) : d.castSpeed * (1 + mods.castSpeed / 100);
   // instant skills take no time; Overclock cuts cooldowns to the minimum, so there they take half a second instead
-  const actionMs = def.timeMs ? def.timeMs / speed : d.raw.overclock ? OVERCLOCK_INSTANT_MS : 0;
+  const actionMs = def.timeMs ? (def.timeMs / speed) * (1 + mods.windupPct / 100) : d.raw.overclock ? OVERCLOCK_INSTANT_MS : 0;
   // mana cost grows a little with gem level, like PoE
   const r = d.raw;
   const paidInMana = Math.round(

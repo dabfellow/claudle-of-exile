@@ -1,4 +1,4 @@
-import { CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
+import { ACTIVE_GEMS, activeGemDef, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
 import { groundAtRisk, groundOnDeath } from './storage';
 import {
   actOpen,
@@ -151,6 +151,20 @@ const DAMAGE_TYPES: DamageType[] = ['phys', 'fire', 'cold', 'light'];
 export const BOSS_RESPAWN_MS = 5000;
 /** chilled monsters attack this much slower (plus any chillOnHit) */
 export const CHILL_SLOW_PCT = 15;
+/** a kill with a heavy skill swings on: the next wind-up takes this share of its time, or LONG_DRAW_CARRY with Long Draw */
+export const WINDUP_CARRY = 0.5;
+export const LONG_DRAW_CARRY = 0.1;
+/** Rage a heavy hit is worth, so one huge hit every few seconds isn't punished for being one hit */
+export const HEAVY_RAGE = 4;
+/** a boss's Stagger: stuns fill it, and when it's full the boss reels for longer and loses any wind-up. Each time takes STAGGER_GROWTH times as much */
+export const STAGGER_FULL = 100;
+export const STAGGER_GROWTH = 1.5;
+export const STAGGER_PER_STUN = 10;
+export const BOSS_STAGGER_MS = 1500;
+export const BOSS_STAGGER_CAP_MS = 3000;
+/** Recoil's stun, and the Stagger it adds */
+const RECOIL_STUN_MS = 2000;
+const RECOIL_STAGGER = 25;
 
 // ---------- entering & leaving ----------
 
@@ -704,7 +718,7 @@ export function ruleContext(s: GameState, d: Derived): RuleContext {
 }
 
 /** Guards whose absorb shield ends with their buff. */
-const SHIELD_SKILLS = ['frost_ward', 'blood_ward'];
+const SHIELD_SKILLS = ACTIVE_GEMS.filter((g) => g.effect.shieldPct).map((g) => g.id);
 
 /** Whether a skill's own effect is currently up (buff, guard, or its ailment on the target). */
 export function skillIsActive(c: CombatRuntime, gemId: string): boolean {
@@ -865,6 +879,83 @@ function closeIn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): void
   ctx.emit({ t: 'closeIn', monsterUid: mon.uid });
 }
 
+/**
+ * Heavy skills take their time before the hit, not after it. What they cost is paid now, and landBlow brings the
+ * blow down when the time is up.
+ */
+function startWindup(s: GameState, ctx: Ctx, d: Derived, choice: SkillChoice): void {
+  const c = s.combat!;
+  const { slot, nums, manual, target } = choice;
+  paySkill(s, ctx, d, slot, nums, manual);
+  c.using = nums.def.id;
+  c.closingUid = undefined;
+  c.targetUid = target?.uid;
+  c.windup = { gemUid: s.skillBar[slot]!.uid, targetUid: target?.uid, manual, manaFrac: c.manaFrac };
+  const time = nums.actionMs * (c.windupCarry ?? 1);
+  c.windupCarry = undefined;
+  c.actionTotal = time;
+  c.actionMs = Math.max(c.actionMs + time, time * 0.5);
+}
+
+/**
+ * Bring a wound-up blow down on its target, or on the next in reach if that one's gone. With nothing in reach it's held,
+ * closing in if there's a way, until there is. Returns false while it's held. It's only lost if the gem leaves the bar.
+ */
+function landBlow(s: GameState, ctx: Ctx, d: Derived): boolean {
+  const c = s.combat!;
+  const w = c.windup!;
+  const slot = s.skillBar.findIndex((g) => g?.uid === w.gemUid);
+  if (slot < 0) {
+    c.windup = undefined;
+    return true;
+  }
+  const gem = s.skillBar[slot]!;
+  const nums = skillNumbers(d, gem);
+  const aim = skillAim(s, gem);
+  const held = c.monsters.find((m) => m.uid === w.targetUid && m.life > 0 && cellRing(m.cell) <= skillRange(d, nums.def));
+  const found = held ? { mon: held, closeIn: false } : skillTarget(s, d, nums, aim);
+  if (!found) {
+    c.actionTotal = IDLE_MS;
+    c.actionMs = Math.max(c.actionMs + IDLE_MS, IDLE_MS * 0.5);
+    return false;
+  }
+  if (found.closeIn) {
+    closeIn(s, ctx, d, found.mon);
+    return false;
+  }
+  c.windup = undefined;
+  c.manaFrac = w.manaFrac;
+  performSkill(s, ctx, d, slot, nums, w.manual, found.mon, aim, true);
+  if (found.mon.life <= 0) c.windupCarry = nums.mods.specials.has('longdraw') ? LONG_DRAW_CARRY : WINDUP_CARRY;
+  reapDead(s, ctx, d);
+  return true;
+}
+
+/**
+ * A long wind-up mustn't leave you open: a guard whose rule calls for it, or that you press, goes up at once, and the
+ * blow waits that much longer.
+ */
+function guardBreaksIn(s: GameState, ctx: Ctx, d: Derived): void {
+  const c = s.combat!;
+  let rc: RuleContext | undefined;
+  for (const i of castOrder(s)) {
+    const gem = s.skillBar[i]!;
+    if (activeGemDef(gem.gemId).role !== 'guard' || gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) continue;
+    const nums = skillNumbers(d, gem);
+    const manual = c.queued === i;
+    if (!ready(s, d, i, nums, manual)) continue;
+    rc ??= ruleContext(s, d);
+    if (!manual && !rulesPass(s, gem.rules, (r) => ruleAllows(r, rc!, skillIsActive(c, gem.gemId)))) continue;
+    if (manual) c.queued = null;
+    const using = c.using;
+    performSkill(s, ctx, d, i, nums, manual);
+    c.using = using;
+    c.actionMs += nums.actionMs;
+    c.actionTotal += nums.actionMs;
+    return;
+  }
+}
+
 // ---------- damage ----------
 
 type ByType = Record<DamageType, number>;
@@ -909,6 +1000,12 @@ function rollHit(
       const moved = byType.phys * share;
       byType.phys -= moved;
       byType[conv.type] += (moved / d.physMult) * d.typeMult[conv.type];
+    }
+    if (def.effect.shieldToDamage) {
+      // Battering Ram spends the shield for all of it
+      const ram = mods.specials.has('ram');
+      byType.phys += ram ? c.shield : (c.shield * def.effect.shieldToDamage) / 100;
+      if (ram) c.shield = 0;
     }
   } else {
     const [lo, hi] = spellBaseAt(def, level);
@@ -1079,6 +1176,10 @@ const TITHE_SHARE = 1 / 3;
 const TITHE_MS = 4000;
 /** Barbed Ward: the broken shield hits back for this many times the Life spent on it. */
 const BARBED_WARD_RETURN = 2;
+/** Radiance: the broken shield strikes for this share of what it held. */
+const RADIANCE_SHARE = 0.5;
+/** Dead Weight: damage to stunned enemies under the curse. */
+const DEAD_WEIGHT_MORE = 1.25;
 
 /** A dot's damage per second on this monster: Stigmata deepens bleeds. */
 function bleedDps(mon: MonsterInstance, dot: Dot): number {
@@ -1128,7 +1229,7 @@ function hitMonster(
   if (mon.vulnMs > 0) dealt *= 1.15;
   if (mods.specials.has('shatterpoint') && mon.chillMs > 0) dealt *= 1.15;
   if (mods.specials.has('shatter') && mon.stunMs > 0) dealt *= 1.3;
-  if (mon.stunMs > 0) dealt *= 1 + r.stunnedVuln / 100;
+  if (mon.stunMs > 0) dealt *= (1 + r.stunnedVuln / 100) * (1 + (e.moreVsStunned ?? 0) / 100) * (mon.curse?.crushing ? DEAD_WEIGHT_MORE : 1);
   if (mon.dots.some((x) => x.kind === 'bleed')) dealt *= 1 + r.bleedVuln / 100;
   if (new Set(mon.dots.map((x) => x.kind)).size >= 2) dealt *= 1 + r.multiAilmentVuln / 100;
   if (coup && mon.life < mon.maxLife / 2 && hasAscNode(s, 'headsman_sharp_axe')) dealt *= 1 + SHARP_AXE_MORE / 100;
@@ -1149,7 +1250,7 @@ function hitMonster(
   }
   ctx.emit({ t: 'hit', target: 'monster', amount: dealt, crit, mega: mega || undefined, riposte: c.riposting || undefined, dmgType: mainType(byType), monsterUid: mon.uid });
   // Rage and Momentum count every hit dealt, so multi-hit and area skills fill them fastest
-  if (mechanicOf(s) === 'rage' && ascendancyOf(s) !== 'anvil') gainMeter(s, d, 1);
+  if (mechanicOf(s) === 'rage' && ascendancyOf(s) !== 'anvil') gainMeter(s, d, def.tags.includes('heavy') ? HEAVY_RAGE : 1);
   if (mechanicOf(s) === 'momentum' && def.tags.includes('attack') && (!c.asc.hawking || hasAscNode(s, 'falconer_bond'))) gainMeter(s, d, 1);
   if (cellRing(mon.cell) > 1 && hasAscNode(s, 'longshot_pin')) mon.stepMs = Math.min(mon.moveMs * 2, mon.stepMs + mon.moveMs / 2);
 
@@ -1168,11 +1269,14 @@ function hitMonster(
   if (manaLeech > 0) s.mana = Math.min(d.maxMana, s.mana + (dealt * manaLeech) / 100);
 
   // stun / armour break
-  const stunChance = (e.stunChance ?? 0) + r.stunChance / 100;
+  const stunChance = (e.stunChance ?? 0) + (mods.stunChance + r.stunChance) / 100;
   if (stunChance > 0 && chance(ctx.rng, stunChance)) {
-    mon.stunMs = Math.max(mon.stunMs, (mon.isBoss ? 400 : 1000) * (1 + r.stunDuration / 100));
+    const longer = (r.stunDuration + (mon.curse?.stunTaken ?? 0)) / 100;
+    mon.stunMs = Math.max(mon.stunMs, (mon.isBoss ? 400 : (e.stunMs ?? 1000)) * (1 + longer) * (mods.specials.has('buried') ? 2 : 1));
+    // a repeat of the hit counts for what it deals, so Multistrike adds no more than its share
+    if (mon.isBoss) addStagger(ctx, d, mon, (e.stagger ?? STAGGER_PER_STUN) * (1 + mods.stagger / 100) * (mods.specials.has('sunder') ? 1.5 : 1) * Math.min(1, factor));
   }
-  if (mods.specials.has('shatter') || mods.specials.has('flay')) mon.vulnMs = 4000;
+  if (mods.specials.has('shatter') || mods.specials.has('flay') || mods.specials.has('sunder')) mon.vulnMs = 4000;
   if (mods.specials.has('rundown')) mon.stunMs = Math.max(mon.stunMs, mon.isBoss ? 400 : 1000);
 
   if (e.consumeBleed) consumeBleed(s, ctx, d, nums, mon);
@@ -1212,6 +1316,39 @@ function hitMonster(
   return dealt;
 }
 
+/** Stagger a boss needs to fill, more each time. */
+export function staggerMax(mon: MonsterInstance): number {
+  return STAGGER_FULL * STAGGER_GROWTH ** (mon.staggers ?? 0);
+}
+
+/** Cut a wind-up off, and it starts its wait over. */
+function interruptCast(ctx: Ctx, mon: MonsterInstance): void {
+  if (mon.casting < 0) return;
+  if (mon.castKind) mon.timers[mon.castKind] = mon.castKind === 'nova' ? BOSS_NOVA_EVERY_MS : BOSS_SLAM_EVERY_MS;
+  mon.casting = -1;
+  mon.castKind = null;
+  ctx.emit({ t: 'interrupt', name: mon.name });
+}
+
+/** Fill a boss's Stagger. When it's full the boss reels: a long stun, and any wind-up is lost. */
+function addStagger(ctx: Ctx, d: Derived, mon: MonsterInstance, amount: number): void {
+  mon.stagger = (mon.stagger ?? 0) + amount * (1 + (mon.curse?.stunTaken ?? 0) / 100);
+  if (mon.stagger < staggerMax(mon)) return;
+  mon.stagger = 0;
+  mon.staggers = (mon.staggers ?? 0) + 1;
+  mon.stunMs = Math.max(mon.stunMs, Math.min(BOSS_STAGGER_CAP_MS, BOSS_STAGGER_MS * (1 + d.raw.stunDuration / 100)));
+  interruptCast(ctx, mon);
+  ctx.emit({ t: 'bossPhase', name: mon.name, text: 'staggers under the weight!' });
+}
+
+/** Follow Through: what a killing blow had to spare lands on the nearest enemy. */
+function carryOverkill(s: GameState, ctx: Ctx, mon: MonsterInstance): void {
+  const next = chainFrom(mon, aliveMonsters(s.combat!).filter((m) => !shielded(m)), 1)[1];
+  if (!next) return;
+  damageMonster(s, next, -mon.life);
+  ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(-mon.life), dmgType: 'phys', monsterUid: next.uid });
+}
+
 /** Transfusion: the rest of the target's bleed lands now, and part of it comes back to you. */
 function consumeBleed(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance): void {
   const bleed = mon.dots.find((x) => x.kind === 'bleed');
@@ -1225,13 +1362,11 @@ function consumeBleed(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mo
   if (nums.mods.specials.has('communion')) s.mana = Math.min(d.maxMana, s.mana + back);
 }
 
-function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillNumbers, manual: boolean, aimed?: MonsterInstance, aimRule?: SkillAim): void {
+/** Everything using a skill costs: mana or Life, the cooldown and what your class and ascendancy do on a use. */
+function paySkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillNumbers, manual: boolean): void {
   const c = s.combat!;
-  const { def, mods, level } = nums;
-  const e = def.effect;
+  const { def, mods } = nums;
   const r = d.raw;
-  c.using = def.id;
-  c.closingUid = undefined;
   c.manaFrac = manaFraction(s, d);
   const cost = skillCost(s, d, nums);
   // Burnout: a free spell always hits at the full bonus
@@ -1257,6 +1392,17 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (slot >= 0 && ascendancyOf(s) === 'flagellant') selfHarm(s, ctx, d);
   if (mechanicOf(s) === 'rage' && def.id === 'war_cry') gainMeter(s, d, 10);
   if (slot >= 0) ctx.emit({ t: 'skill', slot, gemId: def.id, manual });
+}
+
+/** A heavy skill paid when it started winding up, so `paid` skips that when it lands. */
+function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillNumbers, manual: boolean, aimed?: MonsterInstance, aimRule?: SkillAim, paid = false): void {
+  const c = s.combat!;
+  const { def, mods, level } = nums;
+  const e = def.effect;
+  const r = d.raw;
+  c.using = def.id;
+  c.closingUid = undefined;
+  if (!paid) paySkill(s, ctx, d, slot, nums, manual);
 
   // utility effects
   if (e.blocks) {
@@ -1279,10 +1425,12 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (e.shieldPct) {
     // one shield at a time: a new one takes over from the old, whose timer would otherwise end it
     c.buffs = c.buffs.filter((b) => !(b.source === 'skill' && SHIELD_SKILLS.includes(b.id)));
-    c.shield = (d.maxLife * e.shieldPct * (1 + 0.03 * (level - 1)) * (1 + r.shieldEffect / 100)) / 100;
+    c.shield = ((d.maxLife + (e.shieldEs ? d.maxEs : 0)) * e.shieldPct * (1 + 0.03 * (level - 1)) * (1 + r.shieldEffect / 100) * (1 + mods.shieldMore / 100)) / 100;
     c.shieldMax = c.shield;
     c.glacial = mods.specials.has('glacial');
     c.barbedWard = mods.specials.has('barbedward') ? nums.lifeCost * BARBED_WARD_RETURN : undefined;
+    c.recoil = mods.specials.has('recoil') || undefined;
+    c.radiance = mods.specials.has('radiance') ? c.shield * RADIANCE_SHARE : undefined;
   }
   if (def.role === 'guard') {
     c.ground = stepOutOfGround(c.ground);
@@ -1301,7 +1449,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       source: 'skill',
       remainingMs: dur,
       durationMs: dur,
-      stats: { ...e.buff.stats, ...(mods.specials.has('galerider') && { cooldownRecovery: 25 }), ...(mods.specials.has('overflow') && { manaCostReduction: 25 }), ...(mods.specials.has('bloodoath') && { lifeLeech: 3 }) },
+      stats: { ...e.buff.stats, ...(mods.specials.has('galerider') && { cooldownRecovery: 25 }), ...(mods.specials.has('overflow') && { manaCostReduction: 25 }), ...(mods.specials.has('bloodoath') && { lifeLeech: 3 }), ...(mods.specials.has('immovable') && { stunDuration: 50 }) },
       outpace: e.buff.outpace,
       moreDamage: e.buff.moreDamage ? e.buff.moreDamage + (level - 1) : undefined,
       regenPct: (e.buff.regenPct ?? 0) + (mods.specials.has('rally') ? 2 : 0) || undefined,
@@ -1313,11 +1461,8 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (e.interrupts) {
     for (const m of aliveMonsters(c)) {
       if (m.casting < 0) continue;
-      if (m.castKind) m.timers[m.castKind] = m.castKind === 'nova' ? BOSS_NOVA_EVERY_MS : BOSS_SLAM_EVERY_MS;
-      m.casting = -1;
-      m.castKind = null;
+      interruptCast(ctx, m);
       if (mods.specials.has('rally')) m.stunMs = Math.max(m.stunMs, 1000);
-      ctx.emit({ t: 'interrupt', name: m.name });
     }
   }
 
@@ -1347,7 +1492,11 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   let streak = 0;
   const shape = skillArea(nums);
   // Inferno's blast scorches the ground around the target
-  let ground = mods.specials.has('inferno') ? { kind: 'burning' as const, pctPerSec: 25, durationMs: 3000, area: 'splash' as const } : e.ground;
+  let ground = mods.specials.has('inferno')
+    ? { kind: 'burning' as const, pctPerSec: 25, durationMs: 3000, area: 'splash' as const }
+    : mods.specials.has('cataclysm')
+      ? { kind: 'burning' as const, pctPerSec: 25, durationMs: 4000, area: 'splash' as const }
+      : e.ground;
   if (ground && mods.specials.has('embertrail')) ground = { ...ground, pctPerSec: ground.pctPerSec * 2 };
   let grounded = false;
   let target = aimed;
@@ -1396,7 +1545,9 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       const tender = mods.specials.has('tenderise') ? 1 + 0.1 * streak : 1;
       const stunned = target.stunMs > 0;
       const chilled = target.chillMs > 0;
-      const roll = rollHit(s, ctx, d, nums, target, c.asc.sureCrit || (volley && h === hitsPerPass - 1));
+      if (mods.specials.has('cheapshot') && stunned) c.asc.sureCrit = true;
+      // a blow you waited for doesn't miss
+      const roll = rollHit(s, ctx, d, nums, target, c.asc.sureCrit || def.tags.includes('heavy') || (volley && h === hitsPerPass - 1));
       if (!roll) {
         ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: 'phys', evaded: true, monsterUid: target.uid });
         continue;
@@ -1410,9 +1561,10 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
           const dps = (dealt * ground.pctPerSec) / 100;
           for (const cell of areaCells(ground.area ?? 'target', aim.cell)) layGround(c.ground, cell, ground.kind, dps, ground.durationMs * nums.durationMult);
         }
+        if (m === aim && m.life < 0 && mods.specials.has('followthrough')) carryOverkill(s, ctx, m);
       });
-      // Verdict arcs off stunned targets, Splinter shatters off chilled ones
-      const arc = mods.specials.has('verdict') && stunned ? 0.5 : mods.specials.has('splinter') && chilled ? 0.4 : 0;
+      // Verdict arcs off stunned targets, Splinter shatters off chilled ones, Shockwave off anything
+      const arc = mods.specials.has('verdict') && stunned ? 0.5 : mods.specials.has('splinter') && chilled ? 0.4 : mods.specials.has('shockwave') ? 0.3 : 0;
       if (arc) {
         const others = chainFrom(target, aliveMonsters(c).filter((m) => !targets.includes(m) && !m.martyr), 2).slice(1);
         if (others.length && pass === 0) ctx.emit({ t: 'area', gemId: def.id, cells: others.map((m) => m.cell) });
@@ -1452,6 +1604,8 @@ function curseEnemies(s: GameState, ctx: Ctx, nums: SkillNumbers, aimed?: Monste
       withers: mods.specials.has('witherwill') || undefined,
       bleedTaken: curse.bleedTaken ? curse.bleedTaken * f : undefined,
       weeping: mods.specials.has('weeping') || undefined,
+      stunTaken: curse.stunTaken ? curse.stunTaken * f : undefined,
+      crushing: mods.specials.has('deadweight') || undefined,
     };
     if (mods.specials.has('crackedhide')) m.vulnMs = Math.max(m.vulnMs, durationMs);
     if (mods.specials.has('snare')) m.stunMs = Math.max(m.stunMs, m.isBoss ? 400 : 1000);
@@ -1559,7 +1713,7 @@ function reapDead(s: GameState, ctx: Ctx, d: Derived): void {
   }
   if (!c.monsters.some((m) => m.dead)) return;
   c.monsters = c.monsters.filter((m) => !m.dead);
-  if (!c.monsters.length) c.using = null;
+  if (!c.monsters.length && !c.windup) c.using = null;
 }
 
 function die(s: GameState, ctx: Ctx, d: Derived): void {
@@ -1886,6 +2040,22 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
       ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(c.barbedWard), dmgType: 'phys', monsterUid: mon.uid });
       c.barbedWard = undefined;
     }
+    if (c.shield <= 0 && c.recoil) {
+      c.recoil = undefined;
+      for (const m of aliveMonsters(c)) {
+        if (cellRing(m.cell) > 1) continue;
+        m.stunMs = Math.max(m.stunMs, m.isBoss ? 400 : RECOIL_STUN_MS);
+        if (m.isBoss) addStagger(ctx, d, m, RECOIL_STAGGER);
+      }
+    }
+    if (c.shield <= 0 && c.radiance) {
+      for (const m of aliveMonsters(c)) {
+        if (shielded(m)) continue;
+        damageMonster(s, m, c.radiance);
+        ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(c.radiance), dmgType: 'light', monsterUid: m.uid });
+      }
+      c.radiance = undefined;
+    }
   }
   // energy shield soaks what's left after mitigation, and any hit that lands delays its recharge
   c.esDelayMs = ES_RECHARGE_DELAY_MS;
@@ -2182,6 +2352,8 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
     c.shield = 0;
     c.glacial = false;
     c.barbedWard = undefined;
+    c.recoil = undefined;
+    c.radiance = undefined;
   }
   for (let i = 0; i < c.cooldowns.length; i++) c.cooldowns[i] = Math.max(0, c.cooldowns[i] - dt);
   c.evadeMs = Math.max(0, c.evadeMs - dt);
@@ -2222,7 +2394,11 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   autoFlee(s, ctx, d);
   advanceSpawns(s, ctx, dt);
   shakeOff(s, ctx, dt);
-  if (!c.monsters.length) return expired.length > 0;
+  // a wind-up goes on across the gap between packs, so the blow is ready for the next one
+  if (!c.monsters.length) {
+    if (c.windup) c.actionMs = Math.max(0, c.actionMs - dt);
+    return expired.length > 0;
+  }
 
   // damage over time
   tickDots(s, ctx, d, dt);
@@ -2234,10 +2410,13 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   // the player's turn (an overheated Overclock sits it out)
   if (c.overheatMs > 0) c.overheatMs -= dt;
   else c.actionMs -= underPlayer(c, 'chilled') ? dt * CHILLED_GROUND_SLOW : dt;
+  if (c.windup && c.actionMs > 0) guardBreaksIn(s, ctx, d);
   if (c.actionMs <= 0) {
+    const landed = !c.windup || landBlow(s, ctx, d);
+    if (!s.combat || !c.monsters.length) return true;
     // instant skills don't use up the turn: fire them and choose again. Each goes on cooldown,
     // so this ends on a skill that takes time (at worst the Default Attack); the cap is a safety net
-    for (let n = 0; n < 8; n++) {
+    for (let n = 0; landed && n < 8; n++) {
       const choice = chooseSkill(s, d);
       if (choice.closeIn) {
         closeIn(s, ctx, d, choice.target!);
@@ -2249,6 +2428,10 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
         c.closingUid = undefined;
         c.actionTotal = IDLE_MS;
         c.actionMs = Math.max(c.actionMs + IDLE_MS, IDLE_MS * 0.5);
+        break;
+      }
+      if (choice.nums.def.tags.includes('heavy')) {
+        startWindup(s, ctx, d, choice);
         break;
       }
       performSkill(s, ctx, d, choice.slot, choice.nums, choice.manual, choice.target, choice.aim);

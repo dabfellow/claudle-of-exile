@@ -7,9 +7,10 @@ export type GemAttr = 'str' | 'dex' | 'int';
  * What a skill does, which decides the supports that fit it. `hit`: it deals damage when used (damage
  * supports need this, so they never fit a shield or a mana refill). `cast`: a spell with a cast time,
  * the only kind Faster Casts speeds up. `duration`: something it does lasts, so Lingering stretches it.
- * `bleed`: it opens a bleed of its own. `blood`: it spends Life when used.
+ * `bleed`: it opens a bleed of its own. `blood`: it spends Life when used. `heavy`: it winds up first and lands at the
+ * end, can't miss, and is never lost to a dead target (combat.ts `startWindup`). `shield`: it raises an absorb shield.
  */
-export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'curse' | 'movement' | 'dot' | 'sustain' | 'hit' | 'cast' | 'bleed' | 'blood';
+export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'curse' | 'movement' | 'dot' | 'sustain' | 'hit' | 'cast' | 'bleed' | 'blood' | 'heavy' | 'shield';
 export type SkillRole = 'main' | 'burst' | 'area' | 'guard' | 'buff' | 'curse' | 'sustain';
 
 /** What a skill does when it fires. Numbers are at gem level 1. */
@@ -36,6 +37,12 @@ export interface SkillEffect {
   /** base crit chance for spells */
   crit?: number;
   stunChance?: number;
+  /** how long its stuns hold a normal enemy, default 1s; bosses always 0.4s */
+  stunMs?: number;
+  /** what each stun adds to a boss's Stagger, default STAGGER_PER_STUN (combat.ts) */
+  stagger?: number;
+  /** % more damage against stunned enemies */
+  moreVsStunned?: number;
   ailment?: { kind: 'bleed' | 'poison' | 'ignite'; pctPerSec: number; durationMs: number };
   /** guard: block this many hits */
   blocks?: number;
@@ -49,6 +56,10 @@ export interface SkillEffect {
   consumeBleed?: number;
   /** guard: absorb shield as % of max life */
   shieldPct?: number;
+  /** guard: the shield also counts maximum energy shield */
+  shieldEs?: boolean;
+  /** attacks: adds this % of your current shield to the hit, as physical damage */
+  shieldToDamage?: number;
   /** guard/buff: timed stats and more-damage; regenPct is % of max life per second (negative drains, never below 1 life); outpace burns out hazards under you like running does */
   buff?: { durationMs: number; stats?: Partial<Record<StatKey, number>>; moreDamage?: number; regenPct?: number; outpace?: boolean };
   /** movement: leaves any hazard under you behind */
@@ -68,6 +79,8 @@ export interface SkillEffect {
     slow?: number;
     /** % increased damage taken from bleeding */
     bleedTaken?: number;
+    /** % longer stuns and % more Stagger */
+    stunTaken?: number;
   };
   /** attacks: this % of physical damage is converted to another type (and scales with that type's increases) */
   convert?: { type: DamageType; pct: number };
@@ -309,11 +322,46 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     defaultRule: { when: 'lifeAbove', value: 70 },
   }),
   A({
-    id: 'blood_ward', name: 'Blood Ward', attr: 'str', role: 'guard', tags: ['guard', 'duration', 'blood'],
+    id: 'blood_ward', name: 'Blood Ward', attr: 'str', role: 'guard', tags: ['guard', 'duration', 'blood', 'shield'],
     manaCost: 0, cooldownMs: 10000, timeMs: 600, color: '#8e2f3f',
     effect: { lifePct: 10, shieldPct: 40, buff: { durationMs: 5000 } },
     desc: 'Spend 10% of your Life on a shield absorbing damage equal to 40% of your life for 5s.',
     defaultRule: { when: 'enemyCasting' },
+  }),
+  A({
+    id: 'titans_blow', name: "Titan's Blow", attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit', 'heavy'],
+    manaCost: 14, cooldownMs: 0, timeMs: 5400, color: '#c8743a',
+    effect: { weaponPct: 430, targets: 'single', stunChance: 1, stunMs: 2000, stagger: 25 }, weapons: HEAVY_WEAPONS,
+    desc: 'Heave your weapon up and bring it down. The blow lands at the end of its wind-up, always stuns (2s) and adds 25 Stagger to bosses.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'avalanche', name: 'Avalanche', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area', 'hit', 'heavy'],
+    manaCost: 16, cooldownMs: 5000, timeMs: 4800, color: '#a8c8d8',
+    effect: { weaponPct: 210, area: 'splash', radius: 2, stunChance: 0.5, stunMs: 1500, stagger: 15, convert: { type: 'cold', pct: 50 } }, range: 2, weapons: SLAM_WEAPONS,
+    desc: 'Bring the mountain down on everything within 2 steps of a target up to 2 rings away. 50% of physical damage is converted to cold; 50% chance to stun for 1.5s.',
+    defaultRule: { when: 'enemiesAtLeast', value: 2 },
+  }),
+  A({
+    id: 'bulwark', name: 'Bulwark', attr: 'str', role: 'guard', tags: ['guard', 'duration', 'shield'],
+    manaCost: 16, cooldownMs: 12000, timeMs: 900, color: '#a89878',
+    effect: { shieldPct: 45, buff: { durationMs: 6000, stats: { armourPct: 40 } } },
+    desc: 'Set yourself behind stone: a shield absorbing damage equal to 45% of your life, and 40% increased Armour, for 6s.',
+    defaultRule: { when: 'enemyCasting' },
+  }),
+  A({
+    id: 'shield_crush', name: 'Shield Crush', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit'],
+    manaCost: 9, cooldownMs: 0, timeMs: 3900, color: '#b89a5a',
+    effect: { weaponPct: 190, targets: 'single', stunChance: 0.3, shieldToDamage: 50 }, weapons: STRIKE_WEAPONS,
+    desc: 'Drive your whole guard into the target. Adds 50% of your current shield to the hit as physical damage, without spending it; 30% chance to stun.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'mountain_stance', name: 'Mountain Stance', attr: 'str', role: 'buff', tags: ['buff', 'duration'],
+    manaCost: 14, cooldownMs: 16000, timeMs: 600, color: '#8a7a68',
+    effect: { buff: { durationMs: 8000, stats: { attackSpeedPct: -15, castSpeedPct: -15, armourPct: 40 }, moreDamage: 30 } },
+    desc: 'For 8s: 30% more damage and 40% increased Armour, but 15% reduced Attack and Cast Speed.',
+    defaultRule: { when: 'notActive' },
   }),
 
   // ---------- Dexterity ----------
@@ -429,6 +477,20 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     desc: 'Curse the target and enemies next to it for 8s: they take 40% increased damage from bleeding.',
     defaultRule: { when: 'notActive' },
   }),
+  A({
+    id: 'siege_shot', name: 'Siege Shot', attr: 'dex', role: 'main', tags: ['attack', 'projectile', 'hit', 'heavy'],
+    manaCost: 12, cooldownMs: 0, timeMs: 4800, color: '#a8b060',
+    effect: { weaponPct: 360, targets: 'single', stunChance: 0.5, stagger: 15 }, weapons: BOW,
+    desc: 'Crank the bow to breaking point. The bolt looses at the end of its wind-up; 50% chance to stun.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'blackjack', name: 'Blackjack', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'hit'],
+    manaCost: 6, cooldownMs: 0, timeMs: 2400, color: '#6a8a70',
+    effect: { weaponPct: 110, targets: 'single', stunChance: 0.2, moreVsStunned: 60 }, weapons: ['dagger', 'sword', 'mace'],
+    desc: 'A short, ugly blow to the head. 20% chance to stun, and 60% more damage against stunned enemies.',
+    defaultRule: { when: 'always' },
+  }),
 
   // ---------- Intelligence ----------
   A({
@@ -446,7 +508,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     defaultRule: { when: 'manaAbove', value: 30 },
   }),
   A({
-    id: 'frost_ward', name: 'Frost Ward', attr: 'int', role: 'guard', tags: ['spell', 'guard', 'duration'],
+    id: 'frost_ward', name: 'Frost Ward', attr: 'int', role: 'guard', tags: ['spell', 'guard', 'duration', 'shield'],
     manaCost: 12, cooldownMs: 10000, timeMs: 0, color: '#bfe3ff',
     effect: { shieldPct: 30, buff: { durationMs: 5000 } },
     desc: 'An ice shield absorbing damage equal to 30% of your life for 5s.',
@@ -543,6 +605,27 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     desc: "Drain the target's bleed: all the damage it had left lands at once, and 30% of that returns to you as Life (at most 25% of your Life).",
     defaultRule: { when: 'targetHas', status: 'bleeding' },
   }),
+  A({
+    id: 'meteor', name: 'Meteor', attr: 'int', role: 'burst', tags: ['spell', 'area', 'hit', 'cast', 'heavy'],
+    manaCost: 26, cooldownMs: 6000, timeMs: 5400, color: '#ff8a4a',
+    effect: { base: [80, 120], type: 'fire', area: 'splash', radius: 1, crit: 6, stunChance: 0.6, stunMs: 1500, stagger: 20 },
+    desc: 'Call a burning rock down on the target and the enemies next to it. It lands at the end of the cast; 60% chance to stun for 1.5s.',
+    defaultRule: { when: 'manaAbove', value: 40 },
+  }),
+  A({
+    id: 'sacred_aegis', name: 'Sacred Aegis', attr: 'int', role: 'guard', tags: ['spell', 'guard', 'duration', 'shield'],
+    manaCost: 16, cooldownMs: 10000, timeMs: 0, color: '#f0e0a0',
+    effect: { shieldPct: 30, shieldEs: true, buff: { durationMs: 6000 } },
+    desc: 'A shield of light absorbing damage equal to 30% of your life and energy shield together, for 6s.',
+    defaultRule: { when: 'enemyCasting' },
+  }),
+  A({
+    id: 'burden', name: 'Burden', attr: 'int', role: 'curse', tags: ['spell', 'curse', 'area', 'duration'],
+    manaCost: 10, cooldownMs: 10000, timeMs: 0, color: '#7a7088',
+    effect: { area: 'splash', radius: 1, curse: { durationMs: 8000, slow: 15, stunTaken: 40 } },
+    desc: 'Curse the target and enemies next to it for 8s: they move and attack 15% slower, stuns on them last 40% longer, and bosses take 40% more Stagger.',
+    defaultRule: { when: 'notActive' },
+  }),
 ];
 
 // ---------- supports ----------
@@ -574,6 +657,14 @@ export interface SupportMods {
   lowLifeMore?: number;
   /** % more damage from the bleeds it causes */
   moreBleed?: number;
+  /** chance to stun on hit, % */
+  stunChance?: number;
+  /** % more Stagger */
+  stagger?: number;
+  /** % longer wind-up on a heavy skill */
+  windupPct?: number;
+  /** % more shield */
+  shieldMore?: number;
   /** signature behaviour, handled by the combat engine */
   special?: string;
 }
@@ -617,6 +708,10 @@ const GEM_LEVELS: Record<string, number> = {
   lacerate: 35,
   blood_ward: 36, stigmata: 36, burnt_offering: 36,
   transfusion: 38,
+  titans_blow: 40, bulwark: 40, sacred_aegis: 40,
+  avalanche: 42, siege_shot: 42, meteor: 42,
+  shield_crush: 44, blackjack: 44,
+  mountain_stance: 46, burden: 46,
   // supports
   faster_attacks: 4, faster_casts: 4, efficiency: 4,
   brutality: 8, elemental_focus: 8, life_leech: 8, mana_leech: 8, pierce: 8,
@@ -629,6 +724,9 @@ const GEM_LEVELS: Record<string, number> = {
   serrated_edge: 32, blood_price: 32,
   deep_wounds: 34, tithe: 34,
   desperate_faith: 36,
+  crushing_weight: 40, ponderous: 40,
+  shockwave: 42, reinforced: 42,
+  follow_through: 44,
 };
 
 /**
@@ -649,6 +747,11 @@ const GEM_ACTS: Record<string, number> = {
   gash: 3, barbed_arrow: 3, stigmata: 3,
   blood_lance: 3, burnt_offering: 3, transfusion: 3,
   serrated_edge: 3, blood_price: 3, deep_wounds: 3, tithe: 3, desperate_faith: 3,
+  // Act 4, Giants and weight
+  titans_blow: 4, avalanche: 4, bulwark: 4, shield_crush: 4, mountain_stance: 4,
+  siege_shot: 4, blackjack: 4,
+  meteor: 4, sacred_aegis: 4, burden: 4,
+  crushing_weight: 4, ponderous: 4, shockwave: 4, reinforced: 4, follow_through: 4,
 };
 
 /** The act a skill or support gem arrives with. */
@@ -726,6 +829,16 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'ashes_to_ashes', name: 'Ashes to Ashes', attr: 'int', fits: [], signatureFor: 'burnt_offering', mods: { manaMult: 1.5 }, desc: 'Burns 50% more Life, and all of it goes into the blast.' }),
   S({ id: 'pale_communion', name: 'Pale Communion', attr: 'int', fits: [], signatureFor: 'transfusion', mods: { special: 'communion' }, desc: 'Returns the same amount of Mana as well.' }),
   S({ id: 'wither_will', name: 'Wither Will', attr: 'int', fits: [], signatureFor: 'enfeeble', mods: { special: 'witherwill' }, desc: 'Killing a cursed enemy restores 4% of your life.' }),
+  S({ id: 'sundering', name: 'Sundering', attr: 'str', fits: [], signatureFor: 'titans_blow', mods: { special: 'sunder' }, desc: 'Hits break armour (+15% damage taken for 4s) and add 50% more Stagger.' }),
+  S({ id: 'buried_alive', name: 'Buried Alive', attr: 'str', fits: [], signatureFor: 'avalanche', mods: { special: 'buried' }, desc: 'Its stuns last twice as long.' }),
+  S({ id: 'recoil', name: 'Recoil', attr: 'str', fits: [], signatureFor: 'bulwark', mods: { special: 'recoil' }, desc: 'When the shield breaks, enemies in melee range are stunned for 2s (0.4s for bosses, with 25 Stagger).' }),
+  S({ id: 'battering_ram', name: 'Battering Ram', attr: 'str', fits: [], signatureFor: 'shield_crush', mods: { special: 'ram' }, desc: 'Spends your whole shield on the hit, which gains all of it.' }),
+  S({ id: 'immovable', name: 'Immovable', attr: 'str', fits: [], signatureFor: 'mountain_stance', mods: { special: 'immovable' }, desc: 'While Mountain Stance lasts, your stuns last 50% longer.' }),
+  S({ id: 'long_draw', name: 'Long Draw', attr: 'dex', fits: [], signatureFor: 'siege_shot', mods: { special: 'longdraw' }, desc: 'After a kill, your next wind-up is 90% shorter, not 50%.' }),
+  S({ id: 'cheap_shot', name: 'Cheap Shot', attr: 'dex', fits: [], signatureFor: 'blackjack', mods: { special: 'cheapshot' }, desc: 'Hits on stunned enemies are always critical.' }),
+  S({ id: 'cataclysm', name: 'Cataclysm', attr: 'int', fits: [], signatureFor: 'meteor', mods: { special: 'cataclysm' }, desc: 'The impact leaves burning ground around the target for 4s.' }),
+  S({ id: 'radiance', name: 'Radiance', attr: 'int', fits: [], signatureFor: 'sacred_aegis', mods: { special: 'radiance' }, desc: 'When the shield breaks, it strikes every enemy for half of what it held.' }),
+  S({ id: 'dead_weight', name: 'Dead Weight', attr: 'int', fits: [], signatureFor: 'burden', mods: { special: 'deadweight' }, desc: 'Cursed enemies take 25% more damage while stunned.' }),
 
   // general
   S({ id: 'added_fire', name: 'Added Fire', attr: 'str', fits: ['hit'], mods: { extra: { type: 'fire', pct: 25 }, manaMult: 1.2 }, desc: 'Gain 25% of the hit as extra fire damage.' }),
@@ -754,6 +867,11 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'deep_wounds', name: 'Deep Wounds', attr: 'dex', fits: ['bleed'], mods: { moreBleed: 40, manaMult: 1.2 }, desc: '40% more damage from the bleeds it causes.' }),
   S({ id: 'tithe', name: 'Tithe', attr: 'int', fits: ['blood'], mods: { special: 'tithe', manaMult: 1.1 }, desc: 'A third of the Life it spends flows back over 4s.' }),
   S({ id: 'desperate_faith', name: 'Desperate Faith', attr: 'str', fits: ['hit'], mods: { lowLifeMore: 40, manaMult: 1.2 }, desc: "40% more damage while you're below half Life." }),
+  S({ id: 'crushing_weight', name: 'Crushing Weight', attr: 'str', fits: ['hit'], mods: { stunChance: 25, stagger: 50, manaMult: 1.2 }, desc: '+25% chance to stun on hit, and 50% more Stagger against bosses.' }),
+  S({ id: 'ponderous', name: 'Ponderous', attr: 'str', fits: ['heavy'], mods: { moreDamage: 40, windupPct: 25, manaMult: 1.2 }, desc: '40% more damage, and a 25% longer wind-up.' }),
+  S({ id: 'shockwave', name: 'Shockwave', attr: 'str', fits: ['heavy'], mods: { special: 'shockwave', manaMult: 1.3 }, desc: 'The blow shakes the 2 nearest other enemies for 30% damage.' }),
+  S({ id: 'reinforced', name: 'Reinforced', attr: 'int', fits: ['shield'], mods: { shieldMore: 30, manaMult: 1.2 }, desc: '30% more shield.' }),
+  S({ id: 'follow_through', name: 'Follow Through', attr: 'str', fits: ['heavy'], mods: { special: 'followthrough', manaMult: 1.2 }, desc: 'The damage a killing blow had to spare carries on into the nearest enemy.' }),
 ];
 
 export function activeGemDef(id: string): ActiveGemDef {

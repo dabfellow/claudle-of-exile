@@ -191,7 +191,8 @@ function sortBag(s: GameState, ctx: Ctx) {
 /** A gem's damage per second as the bot judges it: attacks scaled by the chance to hit monsters of its level. */
 function gemDps(d: Derived, gem: SkillGemInstance): number {
   const sum = skillSummary(d, gem);
-  return sum.perSecond * (sum.nums.def.tags.includes('attack') ? hitChance(d.accuracy, d.combatLevel) : 1);
+  const { tags } = sum.nums.def;
+  return sum.perSecond * (tags.includes('attack') && !tags.includes('heavy') ? hitChance(d.accuracy, d.combatLevel) : 1);
 }
 
 const DAMAGE_ROLES = new Set(['main', 'burst', 'area']);
@@ -234,7 +235,7 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const transfusion = bleeder ? all.find((g) => activeGemDef(g.gemId).effect.consumeBleed) : undefined;
   // a buff the build can use (spell buffs do nothing for attackers), and the curse that suits its damage
   const buff = all.filter((g) => role(g) === 'buff' && (caster || !tagged(g, 'spell'))).sort((a, b) => Number(tagged(b, 'spell')) - Number(tagged(a, 'spell')) || byLevel(a, b))[0];
-  const curse = all.find((g) => g.gemId === (bleeder ? 'stigmata' : caster ? 'elemental_weakness' : 'vulnerability')) ?? all.find((g) => g.gemId === (caster ? 'elemental_weakness' : 'vulnerability')) ?? pick('curse');
+  const curse = all.find((g) => g.gemId === (bleeder ? 'stigmata' : damage.some((x) => tagged(x, 'heavy')) ? 'burden' : caster ? 'elemental_weakness' : 'vulnerability')) ?? all.find((g) => g.gemId === (caster ? 'elemental_weakness' : 'vulnerability')) ?? pick('curse');
   // instant damage skills don't use up the turn, so any free slot gets the strongest of them on top
   const instant = all
     .filter((g) => DAMAGE_ROLES.has(role(g)) && activeGemDef(g.gemId).timeMs === 0 && !damage.includes(g) && bare(g) > 0)

@@ -188,6 +188,9 @@ export interface MonsterInstance {
   res: { fire: number; cold: number; light: number };
   dots: Dot[];
   stunMs: number;
+  /** a boss's Stagger, filled by your stuns, and how many times it has been staggered (each needs more; combat.ts `staggerMax`) */
+  stagger?: number;
+  staggers?: number;
   frozenMs: number;
   /** armour broken: takes more damage while > 0 */
   vulnMs: number;
@@ -235,6 +238,10 @@ export interface Curse {
   bleedTaken?: number;
   /** Weeping Wounds: your hits on this enemy cause Bleeding */
   weeping?: boolean;
+  /** Burden: % longer stuns and % more Stagger */
+  stunTaken?: number;
+  /** Dead Weight: takes more damage while stunned */
+  crushing?: boolean;
 }
 
 export type GroundKind = 'burning' | 'chilled' | 'shocked' | 'caustic';
@@ -328,6 +335,14 @@ export interface CombatRuntime {
   glacial: boolean;
   /** Barbed Ward: what the shield hits back for when it breaks */
   barbedWard?: number;
+  /** Recoil: the shield stuns what's in melee range when it breaks */
+  recoil?: boolean;
+  /** Radiance: what the shield strikes every enemy for when it breaks */
+  radiance?: number;
+  /** a heavy skill coming down: paid for, it lands when actionMs runs out, and waits there for something to hit */
+  windup?: { gemUid: number; targetUid?: number; manual: boolean; manaFrac: number };
+  /** a heavy kill swings on: the next wind-up takes this share of its time */
+  windupCarry?: number;
   retaliate: boolean;
   ambush: boolean;
   flurryStacks: number;
