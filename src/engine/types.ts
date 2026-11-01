@@ -1,3 +1,4 @@
+import type { StationId } from '../data/hideout';
 import type { AscendancyId } from '../data/ascendancies';
 import type { ClassId } from '../data/classes';
 import type { CultureId } from '../data/expedition';
@@ -486,9 +487,8 @@ export interface AscendancyRuntime {
   sureCrit: boolean;
   /** Matador: Ripostes in a row */
   streak: number;
-  /** Burnout: free spells left, and whether mana has climbed back enough to set it off again */
-  burnout: number;
-  burnoutRearmed: boolean;
+  /** Wellspring: a Surge is paid for and waiting for its spell to land */
+  surging: boolean;
   /** Lightkeeper: novas stored, the damage that filled them, and Dawn waiting to absorb a wind-up */
   novas: number;
   novaDamage: number;
@@ -838,7 +838,9 @@ export type GameEvent =
   | { t: 'loot'; item?: Item; currencyId?: string; qty?: number; salvaged?: boolean; gemId?: string; supportId?: string; flask?: FlaskInstance }
   | { t: 'levelup'; skill: SkillId; level: number }
   | { t: 'xp'; skill: SkillId; amount: number }
-  | { t: 'produce'; skill: SkillId; outputs: Record<string, number> }
+  | { t: 'produce'; skill: SkillId; outputs: Record<string, number>; baseId?: string }
+  | { t: 'salvage'; count: number }
+  | { t: 'stationUpgraded'; id: StationId; level: number }
   | { t: 'craft'; text: string; uid: number; orbId?: string }
   | { t: 'craftDone'; text: string; uid: number }
   | { t: 'equip'; uid: number }

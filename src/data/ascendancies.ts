@@ -15,7 +15,7 @@ import type { ClassId } from './classes';
 export type AscendancyId =
   | 'ravager' | 'anvil'
   | 'longshot' | 'falconer'
-  | 'wildcaster' | 'alchemist'
+  | 'wellspring' | 'alchemist'
   | 'matador' | 'vanguard'
   | 'flagellant' | 'lightkeeper'
   | 'headsman' | 'plaguewright';
@@ -71,6 +71,8 @@ interface Spec {
   line: string;
   plays: string;
   gate: string;
+  /** what the gate grants on top of its rule */
+  gateStats?: StatMap;
   branches: [Branch, Branch, Branch];
   bridge: { name: string; stats: StatMap };
   capstone: Rule;
@@ -88,7 +90,7 @@ function build(a: Spec): AscendancyDef {
     nodes[x].links.push(y);
     nodes[y].links.push(x);
   };
-  const gate = add(`${a.id}_gate`, a.name, 'gate', 0, ROWS.gate, 1, {}, a.gate);
+  const gate = add(`${a.id}_gate`, a.name, 'gate', 0, ROWS.gate, 1, a.gateStats, a.gate);
   const bridge = add(`${a.id}_bridge`, a.bridge.name, 'small', 0, ROWS.bridge, 2, a.bridge.stats);
   const capstone = add(`${a.id}_${a.capstone.key}`, a.capstone.name, 'capstone', 0, ROWS.capstone, 3, a.capstone.stats, a.capstone.desc);
   link(bridge.id, capstone.id);
@@ -163,17 +165,18 @@ export const ASCENDANCIES: AscendancyDef[] = ([
     capstone: { key: 'stoop', name: 'Stoop', desc: 'At full Momentum your hawk spends it all on a dive for a huge hit that stuns.' },
   },
   {
-    id: 'wildcaster', name: 'Wildcaster', classId: 'mage', quote: 'Spend it all.',
-    line: 'Mana is Power flipped: the emptier you are, the harder you hit.',
-    plays: 'The opposite of careful mana use. You burn the tank on cheap spells, peak near empty, then wait out a dry spell. Max mana stops being damage and mana regen becomes pacing, so gear choices flip.',
-    gate: 'Mana is Power is reversed: 30% more spell damage at empty mana, 0% at full.',
+    id: 'wellspring', name: 'Wellspring', classId: 'mage', quote: 'Never run dry.',
+    line: 'Mana you’d waste at full fills Overflow, and a full meter powers up your next spell.',
+    plays: 'The reward for staying topped up. You spend less than you regenerate, keep Mana is Power at its peak, and the spare mana turns into a Surge. Mana regen becomes a damage stat, and a quiet stretch sets up a strong first spell.',
+    gate: 'Regenerate 2 Mana per second. Mana gained while full fills Overflow, and at 25% of your max Mana your next damaging spell is free and deals 100% more damage.',
+    gateStats: { manaRegenFlat: 2 },
     branches: [
-      { key: 'ragged_edge', name: 'Ragged Edge', desc: '+15% to the Mana is Power bonus below 25% Mana.', small: { name: 'Reckless', stats: { spellPct: 6 } } },
-      { key: 'feedback', name: 'Feedback', desc: 'Kills restore 2% of your Mana.', small: { name: 'Quickening', stats: { manaRegenPct: 15 } } },
-      { key: 'backdraft', name: 'Backdraft', desc: 'Spells cost 30% less while you’re below half Mana.', small: { name: 'Haste', stats: { castSpeedPct: 3 } } },
+      { key: 'riptide', name: 'Riptide', desc: 'A Surge gives its spell +1 area or +1 chain, or casts it a second time at 80% damage if it can have neither.', small: { name: 'Swell', stats: { spellPct: 6 } } },
+      { key: 'wake', name: 'Wake', desc: 'A Surge always applies its element’s ailment: fire burns, cold chills, lightning shocks and chaos poisons.', small: { name: 'Trickle', stats: { manaRegenPct: 15 } } },
+      { key: 'springward', name: 'Springward', desc: 'A Surge restores Energy Shield equal to 10% of your max Mana.', small: { name: 'Tributary', stats: { mana: 12, manaRegenPct: 6 } } },
     ],
     bridge: { name: 'Torrent', stats: { spellPct: 8, manaCostReduction: 4 } },
-    capstone: { key: 'burnout', name: 'Burnout', desc: 'Running dry makes your next 3 spells free at the full bonus. It rearms above half Mana.' },
+    capstone: { key: 'deluge', name: 'Deluge', desc: 'Every Surge is a Mega Crit.' },
   },
   {
     id: 'alchemist', name: 'Alchemist', classId: 'mage', quote: 'The brew is the spell.',
@@ -275,11 +278,19 @@ export function ascendanciesOf(classId: ClassId): AscendancyDef[] {
   return ASCENDANCIES.filter((a) => a.classId === classId);
 }
 
-/** What each trial grants. Trial 3 stands at the first stage of Act 6 and opens the capstones. */
-export const TRIALS: { n: 1 | 2 | 3; zoneId: string; points: number }[] = [
-  { n: 1, zoneId: 'pilgrimgate', points: 2 },
-  { n: 2, zoneId: 'giantsthrone', points: 2 },
-  { n: 3, zoneId: 'exilesgate', points: 2 },
+export interface TrialDef {
+  n: 1 | 2 | 3;
+  zoneId: string;
+  points: number;
+  /** what it opens, to follow "opens" in a sentence */
+  opens: string;
+}
+
+/** What each trial grants, the first time it's passed: the only source of ascendancy points. Trial 3 stands at the first stage of Act 6 and opens the capstones. */
+export const TRIALS: TrialDef[] = [
+  { n: 1, zoneId: 'pilgrimgate', points: 3, opens: 'your choice of ascendancy, its free gate and the six small passives' },
+  { n: 2, zoneId: 'giantsthrone', points: 3, opens: 'the three notables and the bridge to the capstone' },
+  { n: 3, zoneId: 'exilesgate', points: 3, opens: 'the capstone' },
 ];
 
 /** The trial that opens a node, in words. */
@@ -289,11 +300,8 @@ export const TRIAL_SEAL: Record<1 | 2 | 3, string> = {
   3: 'Sealed until the trial at the Exiles’ Gate, at the start of Act 6',
 };
 
-/** Everything past the free gate: earned points stop here. */
-export const ASCENDANCY_MAX_POINTS = 11;
-
-/** Bosses of these acts give an ascendancy point the first time they fall. */
-export const ASCENDANCY_BOSS_ACTS = [3, 4, 5, 6];
+/** What the trials add up to: two short of the whole section, so at most 3 of the 4 big nodes can be held. */
+export const ASCENDANCY_MAX_POINTS = 9;
 
 /** Switching costs this many of the rare material, plus an Orb of Regret per node. */
 export const SWITCH_MATERIAL = 'divine';

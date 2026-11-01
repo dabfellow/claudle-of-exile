@@ -1,6 +1,7 @@
 import { classDef } from '../data/classes';
 import { bundleCharacter, freshAccount } from './account';
 import { newAscendancyRuntime, newAscendancyState } from './ascendancy';
+import { TRIALS } from '../data/ascendancies';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
@@ -27,6 +28,13 @@ type OldSave = GameState & { stash: Item[][] };
 type PoolSave = GameState & AccountPool;
 
 /** MIGRATIONS[n] upgrades a save from version n to n + 1. */
+function resetAscendancyPoints(raw: Record<string, unknown>): void {
+  const asc = raw.ascendancy as { trials: number; points: number; nodes: string[] } | undefined;
+  if (!asc) return;
+  asc.points = TRIALS.filter((t) => t.n <= asc.trials).reduce((a, t) => a + t.points, 0);
+  if (asc.nodes.length > asc.points) asc.nodes = [];
+}
+
 const MIGRATIONS: Record<number, Migration> = {
   0: (raw) => {
     // pre-release saves had no lifetime stats
@@ -262,6 +270,36 @@ const MIGRATIONS: Record<number, Migration> = {
     delete raw.supportGems;
     delete raw.flaskStash;
   },
+  27: (raw) => {
+    // the tutorial gained three Crafting Bench steps after Equip (index 8): later steps move down three
+    const tut = raw.tutorial as { step: number; done?: boolean } | undefined;
+    if (tut && !tut.done && tut.step >= 9) tut.step += 3;
+  },
+  // bosses stopped giving ascendancy points: only passed trials count, and a tree that no longer fits is handed back
+  28: resetAscendancyPoints,
+  29: (raw) => {
+    // Wellspring replaced Wildcaster: the character moves over, and its nodes come back as points to spend
+    const s = raw as unknown as { ascendancy?: { id: string | null; nodes: string[] }; combat?: { asc?: unknown } };
+    if (s.ascendancy?.id === 'wildcaster') {
+      s.ascendancy.id = 'wellspring';
+      s.ascendancy.nodes = [];
+    }
+    if (s.combat) s.combat.asc = newAscendancyRuntime();
+  },
+  30: (raw) => {
+    // the Mage's choice changed: every Mage who picked gets to pick again, with their points to spend
+    const s = raw as unknown as Pick<GameState, 'ascendancy' | 'character' | 'combat'>;
+    if (s.character.classId !== 'mage' || !s.ascendancy?.id) return;
+    s.ascendancy.id = null;
+    s.ascendancy.nodes = [];
+    s.ascendancy.carry = 0;
+    if (s.combat) {
+      s.combat.mech = 0;
+      s.combat.asc = newAscendancyRuntime();
+    }
+  },
+  // trials cut to 3 points each, so the tree can't be filled
+  31: resetAscendancyPoints,
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

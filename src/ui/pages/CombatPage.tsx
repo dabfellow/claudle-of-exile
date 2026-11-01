@@ -30,13 +30,14 @@ import {
   ailmentThreshold,
   shockPct,
 } from '../../engine/combat';
+import { aimLockReason, ruleUnlockLevel, skillAim } from '../../engine/automation';
 import { areaXpLabel, characterLevel } from '../../engine/character';
 import { mealEffectText } from '../../engine/cooking';
 import { flaskStats } from '../../engine/flasks';
 import { gemUseReason, MIN_COOLDOWN_MS, skillNumbers } from '../../engine/gems';
 import { ASCENDANCY_BY_ID } from '../../data/ascendancies';
 import { ascendancyOf } from '../../engine/ascendancy';
-import { flaskCapacity, meterLabel, meterMax, mechanicOf } from '../../engine/mechanics';
+import { flaskCapacity, meterLabel, meterMax, mechanicOf, overflowMax } from '../../engine/mechanics';
 import { classDef } from '../../data/classes';
 import { mealTimeLeft } from '../components/PantryBoard';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
@@ -100,6 +101,7 @@ function useCombatFx() {
       } else if (e.target === 'monster') {
         const owner = e.monsterUid ?? 0;
         if (e.evaded) add({ owner, text: 'miss', cls: 'miss', color: '' });
+        else if (e.blocked) add({ owner, text: 'chained', cls: 'block', color: '' });
         else {
           add({
             owner,
@@ -148,9 +150,9 @@ const critClass = (n?: number) => (n ? (n % 2 ? 'crit-a' : 'crit-b') : '');
 /** The class mechanic's meter (Rage, Momentum, Malice, Fervor) or its current effect (Mana is Power, Riposte). */
 function MechanicMeter({ s, d, c }: { s: GameState; d: Derived; c: CombatRuntime }) {
   const cls = classDef(s.character.classId);
-  const max = meterMax(mechanicOf(s), d.raw);
-  const label = meterLabel(s, d);
   const asc = ascendancyOf(s);
+  const max = asc === 'wellspring' ? overflowMax(d) : meterMax(mechanicOf(s), d.raw);
+  const label = meterLabel(s, d);
   return (
     <>
       <Tooltip
@@ -296,7 +298,7 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
       )}
       <div className="status-row">
         {m.chained && <span className="status bad">Chained: can't be hurt</span>}
-        {m.martyr && <span className="status">Click to strike. Only aimed blows land</span>}
+        {m.martyr && <span className="status">Area and chain skills strike it. Click it to aim anything else</span>}
         {m.enraged && <span className="status bad">Enraged</span>}
         {m.stunMs > 0 && <span className="status">Stunned</span>}
         {m.frozenMs > 0 && <span className="status cold">Frozen</span>}
@@ -522,6 +524,22 @@ export const ORDERS: { id: TargetOrder; label: string }[] = [
   { id: 'highest', label: 'Highest life' },
 ];
 
+/** While a boss is chained, why your hits do nothing and every way past it. Laid over the field, so it never moves the hexes, and clicks pass through to the martyrs. */
+function ChainedNotice({ s, c }: { s: GameState; c: CombatRuntime }) {
+  const boss = c.monsters.find((m) => m.chained);
+  if (!boss) return null;
+  const locked = aimLockReason(s);
+  const aimed = s.skillBar.some((g) => g && skillAim(s, g));
+  return (
+    <div className="chained-anchor">
+      <div className="callout bad chained-notice">
+        <b>{boss.name} is chained and can't be hurt.</b> Kill its martyrs first: area and chain skills strike them, or click one
+        {aimed ? '.' : locked ? ` (a rule can do it from War Table level ${ruleUnlockLevel('aim')}).` : ", or set a skill's rule to aim at them."}
+      </div>
+    </div>
+  );
+}
+
 /** Flee / creep / walk / run, what the field will do next, and who your skills go for. */
 function MovementBar({ s }: { s: GameState }) {
   const c = s.combat!;
@@ -529,7 +547,7 @@ function MovementBar({ s }: { s: GameState }) {
   const mv = currentMovement(s);
   const next = nextArrivalMs(s);
   const status = c.monsters.some((m) => m.chained)
-    ? 'The boss is chained: strike its martyrs'
+    ? 'The boss is chained: kill its martyrs'
     : c.monsters.some((m) => m.isBoss)
     ? 'Boss fight: nothing else arrives'
     : mv === 'flee'
@@ -842,6 +860,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         </div>
         <div className="bf-wrap">
           <MovementBar s={s} />
+          <ChainedNotice s={s} c={c} />
           <Battlefield s={s} c={c} fx={fx} />
           <FieldSummary s={s} c={c} />
           <div className="action-bar">

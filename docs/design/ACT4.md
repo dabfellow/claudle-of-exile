@@ -29,6 +29,10 @@ The Hollow Pass has no Frostbite, so the first boss teaches the band and the sec
 
 **Cold:** every boss's nova and ground is cold, and cold leads physical on trash, with no fire or lightning. Each new unique carries cold resistance and feeds one class's meter.
 
+## Roads
+
+Forked on 2026-11-01. The act boss needs 8 of the 11 other bosses. From the Hollow Pass, a high road (Scree Fields, Glass Lake, Hanging Glacier) and a low road (Howling Fells, Bone Quarry, Mammoth Road, Stone Steading) meet at the King's Stair, below the Throne. Side areas: Blue Vault (off the Glass Lake), Long Hall (off the Steading). See [ACT_RECIPE.md](ACT_RECIPE.md) → Roads.
+
 ## Frostbite (`frostbite`)
 
 - A stack builds on you every 2.5 s through the boss fight, and each slows your actions by 4%. Knobs: `BOSS_FROSTBITE_*` in `zones.ts`.
@@ -56,11 +60,9 @@ The Hollow Pass has no Frostbite, so the first boss teaches the band and the sec
 
 ## Second trial
 
-The first kill of the Hollow King passes trial 2: it gives its 2 points and opens the notables and bridge. `TRIALS` in `ascendancies.ts` names `giantsthrone`. The other 11 Act 4 bosses give 1 point each, as `ASCENDANCY_BOSS_ACTS` already said.
+The first kill of the Hollow King passes trial 2: it gives its 3 points and opens the notables and bridge. `TRIALS` in `ascendancies.ts` names `giantsthrone`. The other 11 Act 4 bosses give no ascendancy points.
 
-**The cap makes these points moot.** Points stop at 11, and Act 3 alone gives 2 + 9 = 11, so a character who has cleared Act 3 already holds every point and Act 4 adds nothing. What the trial really gives is the seal coming off. That's as [ASCENDANCIES.md](ASCENDANCIES.md) says, so it's left alone.
-
-**The dev `passTrial(1, 2)` "+1":** display, not a bug. Before you choose, the Ascendancy tab's badge counts the waiting choice, so it says +1 whatever you hold. The state held 4 points (the trial's 2, plus the 2 the dev call tops up), and the badge said +4 the moment an ascendancy was chosen.
+**The dev `passTrial(1, 2)` "+1":** display, not a bug. Before you choose, the Ascendancy tab's badge counts the waiting choice, so it says +1 whatever you hold.
 
 ## Rewards
 

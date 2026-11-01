@@ -24,7 +24,7 @@ Online accounts (Google/Discord + cloud saves) need a `.env.local` with `VITE_SU
 
 - **Act 1, The Drowned Coast**: 8 areas (levels 1–25) ending in the act boss, Ysolde, the Drowned Queen. Bosses stack mechanics as the act goes on: slam, nova, summon, enrage, ward.
 - **Act 2, The Burning Steppe**: 8 more areas (monster levels 24–33) ending in Azhar, the Fallen Sun, with a new boss mechanic, Scorched earth (see [docs/design/ACT2.md](docs/design/ACT2.md)). Acts 3–6 and Maps are shown as coming soon.
-- **Characters**: an unsaved demo, or email, Google or Discord sign-in with cloud saves, several characters per account, Warrior / Ranger / Mage, a guided 10-step tutorial.
+- **Characters**: an unsaved demo, or email, Google or Discord sign-in with cloud saves, several characters per account, Warrior / Ranger / Mage, a guided 14-step tutorial.
 - **Combat**: 12 skill gems plus signature and general supports on a 6-slot bar, tactics rules that cast for you, packs of 1–5, flasks with their own affixes and enchantments.
 - **Trees**: a character tree with masteries and keystones, and a separate skilling tree.
 - **Skills**: Mining, Woodcutting, Harvesting (better nodes unlock with areas), Smithing (item level capped by campaign progress), Alchemy (flasks and orbs).

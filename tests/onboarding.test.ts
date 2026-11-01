@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { CLASSES } from '../src/data/classes';
-import { actionsFor } from '../src/data/skills';
+import { BENCH_BUILT_LEVEL } from '../src/data/hideout';
+import { actionDef } from '../src/data/skills';
 import { TUTORIAL_STEPS } from '../src/data/tutorial';
 import { makeCtx } from '../src/engine/context';
+import { applyOrb, BENCH_UNBUILT } from '../src/engine/crafting';
+import { equip } from '../src/engine/equipment';
+import { upgradeStation } from '../src/engine/hideout';
+import { salvageAny, salvageReason } from '../src/engine/itemActions';
+import { createItem } from '../src/engine/items';
 import { allocate, allocateReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { deserialize, SAVE_KEY, serialize } from '../src/engine/save';
@@ -115,12 +121,87 @@ describe('tutorial', () => {
     expect(currentStep(s)?.id).toBe('mine');
   });
 
-  it('the tutorial gives enough to smith the cheapest item', () => {
+  it('the tutorial gives enough to smith every class its own weapon', () => {
     const mine = TUTORIAL_STEPS.find((x) => x.id === 'mine')!;
-    const inputs = actionsFor('smithing')
-      .filter((a) => !a.inputs!.rough_gem && a.level <= 1)
-      .map((a) => a.inputs!);
-    expect(inputs.some((i) => (i.copper_ore ?? 0) <= mine.target && (i.ash_log ?? 0) <= (mine.reward.ash_log ?? 0))).toBe(true);
+    for (const c of CLASSES) {
+      const smith = actionDef(`smith_${c.kit.weapon}`);
+      expect(smith.level).toBe(1);
+      expect(smith.inputs!.copper_ore).toBeLessThanOrEqual(mine.target);
+      expect(smith.inputs!.ash_log).toBeLessThanOrEqual(mine.reward.ash_log);
+    }
+  });
+
+  it('forges, transmutes and wields a blue weapon, then builds the bench and salvages', () => {
+    const s = newGame(1, { name: 'T', classId: 'warrior' });
+    s.tutorial.step = TUTORIAL_STEPS.findIndex((x) => x.id === 'smith');
+    const ctx = withTutorial(makeCtx(seeded(1)), () => s);
+
+    // boots don't count: it has to be a weapon
+    run(s, [{ t: 'produce', skill: 'smithing', outputs: {}, baseId: 'leather_boots' }]);
+    expect(currentStep(s)?.id).toBe('smith');
+    run(s, [{ t: 'produce', skill: 'smithing', outputs: {}, baseId: 'rusted_sword' }]);
+    expect(currentStep(s)?.id).toBe('transmute');
+
+    const boots = createItem(s, 'leather_boots', 1, 'normal', seeded(2));
+    const sword = createItem(s, 'rusted_sword', 1, 'normal', seeded(3));
+    s.inventory.push(boots, sword);
+    s.account.bank.transmute = 2;
+    applyOrb(s, ctx, 'transmute', boots.uid);
+    expect(currentStep(s)?.id).toBe('transmute');
+    applyOrb(s, ctx, 'transmute', sword.uid);
+    expect(currentStep(s)?.id).toBe('equip');
+
+    const old = s.equipment.weapon!;
+    equip(s, ctx, boots.uid);
+    expect(currentStep(s)?.id).toBe('equip');
+    equip(s, ctx, sword.uid);
+    expect(currentStep(s)?.id).toBe('hideout');
+
+    tutorialPage(s, ctx, 'hideout');
+    expect(currentStep(s)?.id).toBe('build_bench');
+    expect(salvageReason(s, old.uid)).toBe(BENCH_UNBUILT);
+    expect(upgradeStation(s, ctx, 'bench')).toBeNull(); // the Hideout step's reward pays for it
+    expect(currentStep(s)?.id).toBe('salvage');
+
+    expect(salvageAny(s, ctx, old.uid)).toBeNull();
+    expect(currentStep(s)?.id).toBe('passive');
+  });
+
+  it('transmuting the weapon already in hand skips the equip step', () => {
+    const s = newGame(1, { name: 'T', classId: 'warrior' });
+    s.tutorial.step = TUTORIAL_STEPS.findIndex((x) => x.id === 'transmute');
+    s.account.bank.transmute = 1;
+    applyOrb(s, withTutorial(makeCtx(seeded(1)), () => s), 'transmute', s.equipment.weapon!.uid);
+    expect(currentStep(s)?.id).toBe('hideout');
+  });
+
+  it('a bench built on another character passes the bench steps unpaid', () => {
+    const s = newGame(1, { name: 'T', classId: 'warrior' });
+    s.account.hideout.bench = BENCH_BUILT_LEVEL;
+    const gold = s.account.bank.gold ?? 0;
+    s.tutorial.step = TUTORIAL_STEPS.findIndex((x) => x.id === 'equip');
+    const blue = createItem(s, 'rusted_sword', 1, 'magic', seeded(3));
+    s.inventory.push(blue);
+    const ctx = withTutorial(makeCtx(seeded(1)), () => s);
+    equip(s, ctx, blue.uid);
+    expect(currentStep(s)?.id).toBe('salvage');
+    expect(s.account.bank.gold).toBe(gold + 50);
+
+    // built elsewhere while this character waited at the bench: the next page it opens moves it on
+    s.tutorial.step = TUTORIAL_STEPS.findIndex((x) => x.id === 'build_bench');
+    tutorialPage(s, ctx, 'combat');
+    expect(currentStep(s)?.id).toBe('salvage');
+  });
+
+  it('saves mid-tutorial keep their step when the bench steps are added', () => {
+    const old = JSON.parse(serialize(newGame(1)));
+    old.version = 27;
+    old.tutorial.step = 9; // the old Passive step
+    expect(currentStep(deserialize(JSON.stringify(old)))?.id).toBe('passive');
+    old.tutorial.step = 10; // the old Boss step
+    expect(currentStep(deserialize(JSON.stringify(old)))?.id).toBe('boss');
+    old.tutorial.step = 8; // Equip stays put
+    expect(currentStep(deserialize(JSON.stringify(old)))?.id).toBe('equip');
   });
 
   it('saves mid-tutorial keep their step when the Mana Flask step is added', () => {

@@ -8,6 +8,86 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.43',
+    date: '1 Nov 2026',
+    title: 'Choose your ascendancy nodes',
+    items: [
+      "Trials now give 3 ascendancy points each, 9 in all, so you can't fill the tree.",
+      'That buys three of the four big nodes: all three notables, or two notables and the capstone.',
+      'If your tree no longer fits, its nodes are refunded so you can choose again.',
+    ],
+  },
+  {
+    version: '0.2.42',
+    date: '1 Nov 2026',
+    title: 'Mages choose again',
+    items: [
+      'Now that the Wellspring is here, every Mage who had picked an ascendancy gets to pick again, for free.',
+      'Your ascendancy tree is cleared and all your points come back to spend.',
+    ],
+  },
+  {
+    version: '0.2.41',
+    date: '1 Nov 2026',
+    title: 'The Wellspring',
+    items: [
+      'The Mage’s Wildcaster is gone, because it punished you for keeping your mana full. The Wellspring takes its place.',
+      'Mana you would waste at full now fills Overflow. A full meter makes your next damaging spell free, with 100% more damage.',
+      'Wildcasters become Wellsprings automatically, and get their ascendancy points back to spend.',
+    ],
+  },
+  {
+    version: '0.2.40',
+    date: '1 Nov 2026',
+    title: 'Trials give the points',
+    items: [
+      'Ascendancy points now come only from passing a trial for the first time: 4, 4 and 3. Bosses no longer give them.',
+      'Points you held from bosses are gone. If your tree no longer fits, its nodes are refunded so you can choose again.',
+      'Area cards and the Ascendancy tab now say what each trial gives and opens.',
+    ],
+  },
+  {
+    version: '0.2.39',
+    date: '1 Nov 2026',
+    title: 'Martyrs loosen their grip',
+    items: [
+      'Area and chain skills now go for Chained Martyrs by themselves, and catch them when they land nearby. No click or rule needed.',
+      'Single-target skills still need a click or an Aim rule.',
+      "A chained boss now says so: a notice over the field tells you why it can't be hurt and how to free it, and your hits show as chained rather than 0.",
+    ],
+  },
+  {
+    version: '0.2.37',
+    date: '1 Nov 2026',
+    title: 'A new tutorial',
+    items: [
+      'New characters now learn by crafting: smith a weapon, turn it blue with a Transmutation orb and wield it.',
+      'Old Brannoc then pays for your Crafting Bench, and you salvage your old weapon on it.',
+      'If you are partway through the tutorial, you stay on your step. Later characters pass steps they have already settled, without the reward.',
+    ],
+  },
+  {
+    version: '0.2.36',
+    date: '1 Nov 2026',
+    title: 'The roads fork',
+    items: [
+      'Acts 3 to 6 are no longer a straight line. Roads split and rejoin, and side areas branch off them, so you choose your way through each act.',
+      "Each of these act bosses now waits until you've beaten most of its act's bosses: 7 of 9 in Act 3, 8 of 11 in Act 4, 10 of 13 in Act 5 and 14 of 17 in Act 6. Skip what you like within that.",
+      'Every area and every boss is still there, and side areas keep their bosses, ascendancy points and drops.',
+      'Your progress is safe: everything you had open stays open, and some areas may open early.',
+      'The act maps are bigger, and area names no longer overlap.',
+    ],
+  },
+  {
+    version: '0.2.35',
+    date: '1 Nov 2026',
+    title: 'War Table reshuffled',
+    items: [
+      'Wind-up rules now come with Vitals rules at War Table level 2, so offline boss fights arrive much sooner.',
+      'The 2nd rule slot moved to level 5. Nobody loses anything: if you already have the 2nd slot, you keep it, and your War Table moves up to level 5 with everything below it unlocked.',
+    ],
+  },
+  {
     version: '0.2.33',
     date: '1 Nov 2026',
     title: 'The whole campaign is open',

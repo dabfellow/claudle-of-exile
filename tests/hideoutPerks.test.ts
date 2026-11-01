@@ -25,7 +25,7 @@ describe('stationPerks', () => {
     const ctx = makeCtx(seeded(1));
     upgradeStation(s, ctx, 'war_table');
     upgradeStation(s, ctx, 'war_table');
-    expect(stationPerks(s, 'war_table')).toEqual(['Rules: Simple, Vitals, Status', '2 rule slots per skill']);
+    expect(stationPerks(s, 'war_table')).toEqual(['Rules: Simple, Vitals, Wind-up, Status', '1 rule slot per skill']);
   });
 
   it('counts only bench recipes you can actually craft', () => {

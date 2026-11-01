@@ -31,7 +31,7 @@ make it better, and each rule fits in one sentence.
 | Warrior | Anvil | Rage comes from being hit, and enemies break on your Armour |
 | Ranger | Longshot | Momentum becomes damage, so you fire slow shots that kill at range |
 | Ranger | Falconer | Momentum drives a hawk that hits what you can't reach |
-| Mage | Wildcaster | Mana is Power flipped: the emptier you are, the harder you hit |
+| Mage | Wellspring | Mana you'd waste at full fills Overflow, and a full meter powers up your next spell |
 | Mage | Alchemist | Flask charges count as mana, and every flask you drink explodes |
 | Duelist | Matador | Only evades Riposte, and a streak of them grows huge |
 | Duelist | Vanguard | Only blocks Riposte, and each one hits everything next to you |
@@ -88,15 +88,18 @@ make it better, and each rule fits in one sentence.
 
 ## Mage
 
-### Wildcaster
-*"Spend it all."*
+### Wellspring
+*"Never run dry."*
 
-- **Plays:** the opposite of careful mana use. You burn the tank on cheap spells, peak near empty, then wait out a
-  dry spell. Max mana stops being damage and mana regen becomes pacing, so gear choices flip.
-- **Gate:** Mana is Power is reversed: 30% more spell damage at empty mana, 0% at full.
-- **Notables:** *Ragged Edge* (more bonus below 25% mana), *Feedback* (kills restore a little mana), *Backdraft* (spells
-  cost less while you're below half).
-- **Capstone:** *Burnout*: hitting 0 mana makes your next 3 spells free at the full bonus.
+- **Plays:** the reward for staying topped up. You spend less than you regenerate, keep Mana is Power at its peak, and
+  the spare mana turns into a Surge. Mana regen becomes a damage stat, and a quiet stretch sets up a strong first spell.
+- **Gate:** regenerate 2 Mana per second. Mana gained while full fills Overflow, and at 25% of max Mana your next damaging
+  spell is free and deals 100% more damage (a Surge).
+- **Notables:** *Riptide* (a Surge gets +1 area or +1 chain, or casts again at 80% damage if it can have neither), *Wake*
+  (a Surge always applies its element's ailment), *Springward* (a Surge restores Energy Shield equal to 10% of max Mana).
+- **Capstone:** *Deluge*: every Surge is a Mega Crit.
+
+Replaced Wildcaster on 2026-11-01: its reversed Mana is Power punished players who'd worked to keep their mana full.
 
 ### Alchemist
 *"The brew is the spell."*
@@ -179,8 +182,8 @@ make it better, and each rule fits in one sentence.
 1. **Twist:** the gate changes a rule of the class mechanic, as written above.
 2. **Three trials:** one at the start of Act 3 opens the gate and the choice, one at the end of Act 4 opens the notables,
    and one at the start of Act 6 opens the capstone.
-3. **Own points:** trials and Act 3–6 bosses give ascendancy points that only work here. Every character fills the
-   section, and the main tree loses nothing.
+3. **Own points:** the first pass of each trial gives ascendancy points that only work here; bosses give none (changed
+   2026-11-01). They stop short of the whole section, and the main tree loses nothing.
 4. **Separate tree:** the ascendancy gets its own tab in the passive tree after the first trial. So it's usable the
    moment you pick, and the layout above stands on its own.
 5. **Switching:** allowed for a rare material, plus the usual Orb of Regret per node.
@@ -204,8 +207,9 @@ Calls made while building:
 
 - **Switching price:** 1 Divine Orb, plus an Orb of Regret per node. Divine is already a rare drop and the deepest boss
   table guarantees one, so no new source or art was needed.
-- **Points:** the trial's boss gives only the trial's 2; every other Act 3–6 boss gives 1 on its first kill. They stop at
-  11, all the section can use. With 10 stages, Act 3 alone reaches that.
+- **Points:** trials give 3 each, 9 of the 11 the section could use, so nobody fills it. That buys three of the four big
+  nodes: all three notables, or two notables, the bridge and the capstone with a point over. Saves were cut back to this
+  in v32, and a tree holding more than its points was refunded.
 - **Ravager:** a Rampage drains on a clock, so hits during it don't hold it up. It counts as a full meter for tactics, so
   Berserk can line up. No Mercy holds the drain for 2s per kill.
 - **Anvil:** attackers take 4% of your Armour, plus 5% of that per Rage.
@@ -213,8 +217,11 @@ Calls made while building:
 - **Falconer:** the hawk swings every 1.6s for half a weapon hit, 6% faster per Momentum. It has its own Targeting, set on
   the Ascendancy tab. Stoop spends the Momentum, or every attack at full would be a dive. It has no sprite yet: its hits
   show as ordinary hit numbers.
-- **Burnout:** "hitting 0" means a spell leaves you unable to pay for it again, since mana rarely lands on exactly 0. It
-  rearms above half Mana.
+- **Wellspring:** Overflow only fills from mana that would be wasted: regen, leech, flasks and restore skills. Nothing
+  speeds it up, and no notable gives mana on kill, by your call. The gate's 2 regen is there because regen otherwise comes
+  only from gear and passives, so a bare character would never Surge. A Surge waits for a spell that deals damage, not a
+  ward or a summon, and Overflow lasts between packs but empties on a new zone. Riptide's echo also covers arcs, beams and
+  whole-field spells, whose area can't grow. Save 31 resets every Mage who had picked, Alchemists included, to choose again for free with their points back with their points back.
 - **Alchemist:** one charge counts as 3 Mana, so a full belt weighs about as much as a mid-game mana pool. A burst is 12
   fire damage per character level, before Flask Effect.
 - **Matador:** a Riposte that misses doesn't add to the streak. Each one adds 15% more damage.

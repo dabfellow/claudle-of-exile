@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
-import { ASCENDANCY_BY_ID, ASCENDANCY_MAX_POINTS, TRIALS } from '../src/data/ascendancies';
+import { ASCENDANCY_BY_ID, TRIALS } from '../src/data/ascendancies';
 import { UNIQUES, uniqueDef } from '../src/data/bases';
 import { ZONE_POS, actRegion } from '../src/data/continent';
 import { BOSS_TABLES, DROP_TABLES, bossTable, dropTable } from '../src/data/drops';
@@ -374,30 +374,29 @@ describe('the third trial', () => {
     const c = ctx();
     s.ascendancy.id = 'ravager';
     s.ascendancy.trials = 2;
-    s.ascendancy.points = ASCENDANCY_MAX_POINTS;
+    s.ascendancy.points = 6;
     return { s, c };
   };
 
-  it('stands on the first stage, giving 2 points', () => {
-    expect(TRIALS.find((t) => t.n === 3)).toMatchObject({ zoneId: act()[0].id, points: 2 });
+  it('stands on the first stage, giving 3 points', () => {
+    expect(TRIALS.find((t) => t.n === 3)).toMatchObject({ zoneId: act()[0].id, points: 3 });
   });
 
   it('opens the capstone', () => {
     const { s, c } = ascended();
     const a = ASCENDANCY_BY_ID.ravager;
-    s.ascendancy.nodes = a.nodes.filter((n) => n.kind !== 'gate' && n.kind !== 'capstone').map((n) => n.id);
+    s.ascendancy.nodes = ['ravager_bloodlust_1', 'ravager_bloodlust_2', 'ravager_bloodlust', 'ravager_bridge'];
     expect(ascNodeReason(s, a.capstone.id)).toContain('Exiles');
-    onBossFirstKill(s, c, 'exilesgate', 6);
+    onBossFirstKill(s, c, 'exilesgate');
     expect(s.ascendancy.trials).toBe(3);
     expect(allocateAscNode(s, c, a.capstone.id)).toBeNull();
     expect(c.events.some((e) => e.t === 'trialPassed' && e.n === 3)).toBe(true);
   });
 
-  it('every other Act 6 boss gives a point', () => {
+  it('other Act 6 bosses give nothing', () => {
     const { s, c } = ascended();
-    s.ascendancy.points = 4;
-    onBossFirstKill(s, c, 'kingsroad', 6);
-    expect(s.ascendancy.points).toBe(5);
+    onBossFirstKill(s, c, 'kingsroad');
+    expect(s.ascendancy.points).toBe(6);
     expect(s.ascendancy.trials).toBe(2);
   });
 });

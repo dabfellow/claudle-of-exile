@@ -1,7 +1,7 @@
 {
   "name": "path-of-idle",
   "private": true,
-  "version": "0.2.36",
+  "version": "0.2.47",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "sim": "vite-node scripts/sim.ts",
     "art": "vite-node scripts/art.ts",
-    "deploy": "npm run build && cf deploy"
+    "uniques": "vite-node scripts/uniques.ts",
+    "deploy": "node scripts/deploy.mjs"
   },
   "dependencies": {
     "@sentry/browser": "^8.55.1",

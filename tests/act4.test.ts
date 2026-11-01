@@ -130,7 +130,6 @@ describe('Act 4 layout', () => {
   it('follows the High Altar, and every area sits on the map inside the northern range', () => {
     expect(nextZones('highaltar')[0]?.id).toBe('hollowpass');
     const zones = act();
-    for (let i = 0; i < zones.length - 1; i++) expect(nextZones(zones[i].id)[0]?.id).toBe(zones[i + 1].id);
     for (const z of zones) {
       const pos = ZONE_POS[z.id];
       expect(pos, z.id).toBeTruthy();
@@ -320,7 +319,7 @@ describe('Frostbite', () => {
     const s = fighter([['iron_guard', [AT_SIX]]]);
     s.account.automation.rules = [];
     expect(ruleLockReason(s, 'frostbite')).toContain('Vitals');
-    expect(STATIONS.find((x) => x.id === 'war_table')!.levels[1].effect).toContain('Frostbite');
+    expect(STATIONS.find((x) => x.id === 'war_table')!.levels.find((l) => l.grants?.rules?.includes('vitals'))!.effect).toContain('Frostbite');
   });
 
   it('an Instilled flask drinks itself at its stack count', () => {
@@ -451,19 +450,19 @@ describe('the second trial', () => {
   const ascended = () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
     const c = ctx();
-    onBossFirstKill(s, c, 'pilgrimgate', 3);
+    onBossFirstKill(s, c, 'pilgrimgate');
     chooseAscendancy(s, c, 'ravager');
     return { s, c };
   };
 
-  it('stands on the last stage, giving 2 points', () => {
-    expect(TRIALS.find((t) => t.n === 2)).toMatchObject({ zoneId: 'giantsthrone', points: 2 });
+  it('stands on the last stage, giving 3 points', () => {
+    expect(TRIALS.find((t) => t.n === 2)).toMatchObject({ zoneId: 'giantsthrone', points: 3 });
   });
 
-  it('every other Act 4 boss gives a point', () => {
+  it('other Act 4 bosses give nothing', () => {
     const { s, c } = ascended();
-    expect(s.ascendancy.points).toBe(2);
-    onBossFirstKill(s, c, 'hollowpass', 4);
+    expect(s.ascendancy.points).toBe(3);
+    onBossFirstKill(s, c, 'hollowpass');
     expect(s.ascendancy.points).toBe(3);
     expect(s.ascendancy.trials).toBe(1);
   });
@@ -475,7 +474,7 @@ describe('the second trial', () => {
     for (const id of ['ravager_bloodlust_1', 'ravager_bloodlust_2']) expect(allocateAscNode(s, c, id)).toBeNull();
     expect(ascNodeReason(s, 'ravager_bloodlust')).toContain('Giants');
 
-    onBossFirstKill(s, c, 'giantsthrone', 4);
+    onBossFirstKill(s, c, 'giantsthrone');
     expect(s.ascendancy.trials).toBe(2);
     expect(allocateAscNode(s, c, 'ravager_bloodlust')).toBeNull();
     expect(allocateAscNode(s, c, 'ravager_bridge')).toBeNull();
@@ -484,9 +483,9 @@ describe('the second trial', () => {
 
   it('passes once', () => {
     const { s, c } = ascended();
-    onBossFirstKill(s, c, 'giantsthrone', 4);
-    expect(s.ascendancy.points).toBe(4);
-    onBossFirstKill(s, c, 'giantsthrone', 4);
-    expect(s.ascendancy.points).toBe(4);
+    onBossFirstKill(s, c, 'giantsthrone');
+    expect(s.ascendancy.points).toBe(6);
+    onBossFirstKill(s, c, 'giantsthrone');
+    expect(s.ascendancy.points).toBe(6);
   });
 });

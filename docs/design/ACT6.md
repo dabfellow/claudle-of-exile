@@ -35,6 +35,10 @@ The road in is one entry: `exilesgate` has `requires: { after: ['maelstrom'] }`.
 
 **All three resistances:** each boss hits and channels in one element, slams in a second and blasts in the third, so no boss is two-coloured. `slamType` on `MonsterDef` is new for this, and Matchup prints it. On trash the three run about level, with a few physical monsters. Unholy ground, below, punishes whichever one you left out. Every new unique carries all three and feeds one class's meter.
 
+## Roads
+
+Forked on 2026-11-01. The act boss needs 14 of the 17 other bosses. Gate → King's Road → Tithe Fields or Fort Obedience → Field of Banners → Lower City → Dry Aqueducts or King's Mint → Hanging Gardens → Long Fracture → Drifting Quarter or King's Reach → Sundered Hall → Ninth Stair → Shattered Throne. Side areas: the Assizes (off the Banners), Burned Archive (off the Gardens), Hall of Crowns (off the Sundered Hall). See [ACT_RECIPE.md](ACT_RECIPE.md) → Roads.
+
 ## Echoes (`echoes`)
 
 Bosses bring old mechanics back two at a time, for example scorching the ground while its martyrs stand. There's no new mechanic and no new rule: the answers are the ones already learned, and the test is holding two at once.
@@ -63,7 +67,7 @@ New ground, laid with `groundKind: 'unholy'` through `monsterGround`, like storm
 
 ## Third trial
 
-The first kill of Warden Corvane passes trial 3: it gives its 2 points and opens the capstones. `TRIALS` names `exilesgate`. The other 17 bosses give 1 point each, up to the cap of 11.
+The first kill of Warden Corvane passes trial 3: it gives its 3 points, the last of the 9, and opens the capstones. `TRIALS` names `exilesgate`. The other 17 bosses give no ascendancy points.
 
 ## The ending
 

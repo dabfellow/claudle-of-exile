@@ -26,8 +26,8 @@ import { areaCells, cellRing, CELLS } from '../src/engine/battlefield';
 import { combatStep, enterZone, hawkTarget, makeMonster, releaseNovas, startCombat, useFlask } from '../src/engine/combat';
 import { makeCtx, type Ctx } from '../src/engine/context';
 import { flaskStats } from '../src/engine/flasks';
-import { createSkillGem, skillNumbers } from '../src/engine/gems';
-import { BACKDRAFT_COST, longshotMore, manaFraction, manaPowerMore, meterLabel, meterMax } from '../src/engine/mechanics';
+import { createSkillGem } from '../src/engine/gems';
+import { longshotMore, manaFraction, manaPowerMore, meterLabel, meterMax, overflowMax } from '../src/engine/mechanics';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -113,16 +113,16 @@ describe('the data', () => {
 });
 
 describe('earning and spending', () => {
-  it('stays closed until the first trial, and the trial gives 2 points and the choice', () => {
+  it('stays closed until the first trial, and the trial gives its points and the choice', () => {
     const s = veteran(newGame(1, { name: 't', classId: 'warrior' }));
     const ctx = makeCtx(seeded(1));
     expect(canAscend(s)).toBe(false);
     expect(chooseAscendancy(s, ctx, 'ravager')).toBeTruthy();
     passTrial(s, ctx, 1);
     expect(choiceWaiting(s)).toBe(true);
-    expect(s.ascendancy.points).toBe(2);
+    expect(s.ascendancy.points).toBe(3);
     passTrial(s, ctx, 1);
-    expect(s.ascendancy.points).toBe(2);
+    expect(s.ascendancy.points).toBe(3);
     expect(chooseAscendancy(s, ctx, 'matador')).toBeTruthy();
     expect(chooseAscendancy(s, ctx, 'ravager')).toBeNull();
     expect(ascendancyOf(s)).toBe('ravager');
@@ -132,7 +132,7 @@ describe('earning and spending', () => {
     const s = veteran(newGame(1, { name: 't', classId: 'exile', startNode: 'class_str' }));
     const ctx = makeCtx(seeded(1));
     passTrial(s, ctx, 1);
-    onBossFirstKill(s, ctx, 'pilgrimgate', 3);
+    onBossFirstKill(s, ctx, 'pilgrimgate');
     expect(canAscend(s)).toBe(false);
     expect(s.ascendancy.points).toBe(0);
   });
@@ -151,17 +151,47 @@ describe('earning and spending', () => {
     }
   });
 
-  it('Act 3 to 6 bosses give a point each, up to what the section can use', () => {
+  it('only trials give points, 9 in all', () => {
     const s = veteran(newGame(1, { name: 't', classId: 'mage' }));
     const ctx = makeCtx(seeded(1));
-    onBossFirstKill(s, ctx, 'act3_stage', 3);
-    expect(s.ascendancy.points).toBe(0); // no trial yet
-    onBossFirstKill(s, ctx, 'pilgrimgate', 3);
-    onBossFirstKill(s, ctx, 'act3_stage', 3);
-    onBossFirstKill(s, ctx, 'old_stage', 2);
+    onBossFirstKill(s, ctx, 'almsquarter');
+    expect(s.ascendancy.points).toBe(0);
+    onBossFirstKill(s, ctx, 'pilgrimgate');
+    onBossFirstKill(s, ctx, 'almsquarter');
+    onBossFirstKill(s, ctx, 'highaltar');
     expect(s.ascendancy.points).toBe(3);
-    for (let i = 0; i < 20; i++) onBossFirstKill(s, ctx, `stage_${i}`, 4);
+    onBossFirstKill(s, ctx, 'giantsthrone');
+    onBossFirstKill(s, ctx, 'exilesgate');
     expect(s.ascendancy.points).toBe(ASCENDANCY_MAX_POINTS);
+  });
+
+  it('9 points buy three big nodes, never all four', () => {
+    const { s, ctx } = arena('anvil');
+    const a = ASCENDANCY_BY_ID.anvil;
+    const take = (ids: string[]) => {
+      s.ascendancy.trials = 3;
+      s.ascendancy.points = 9;
+      s.ascendancy.nodes = [];
+      return ids.map((id) => allocateAscNode(s, ctx, id));
+    };
+    const branch = (i: number) => [`${a.notables[i].id}_1`, `${a.notables[i].id}_2`, a.notables[i].id];
+    expect(take([0, 1, 2].flatMap(branch)).every((r) => r === null)).toBe(true);
+    expect(take([...branch(0), ...branch(1), 'anvil_bridge', a.capstone.id]).every((r) => r === null)).toBe(true);
+    expect(take([0, 1, 2].flatMap(branch).concat('anvil_bridge', a.capstone.id)).at(-2)).toBe('No points left');
+  });
+
+  it('points already earned from bosses go, and a tree that no longer fits is handed back', () => {
+    const load = (trials: number, points: number, nodes: string[]) => {
+      const old = JSON.parse(serialize(newGame(1, { name: 't', classId: 'warrior' })));
+      old.version = 28;
+      Object.assign(old.ascendancy, { id: 'ravager', trials, points, nodes });
+      return deserialize(JSON.stringify(old)).ascendancy;
+    };
+    const small = ['ravager_bloodlust_1', 'ravager_bloodlust_2', 'ravager_trample_1'];
+    expect(load(1, 11, small)).toMatchObject({ points: 3, nodes: small });
+    expect(load(1, 4, [...small, 'ravager_trample_2'])).toMatchObject({ points: 3, nodes: [], id: 'ravager' });
+    expect(load(2, 8, small).points).toBe(6);
+    expect(load(0, 0, []).points).toBe(0);
   });
 
   it('notables and capstones stay sealed behind trials 2 and 3', () => {
@@ -249,10 +279,10 @@ describe('the first trial', () => {
     fight();
     expect(s.bossesDefeated).toContain('pilgrimgate');
     expect(s.ascendancy.trials).toBe(1);
-    expect(s.ascendancy.points).toBe(2);
+    expect(s.ascendancy.points).toBe(3);
     expect(events.filter((e) => e.t === 'trialPassed')).toHaveLength(1);
     fight();
-    expect(s.ascendancy.points).toBe(2);
+    expect(s.ascendancy.points).toBe(3);
   });
 });
 
@@ -355,13 +385,83 @@ describe.each([false, true])('gates (offline: %s)', (offline) => {
     expect(meterLabel(s, deriveStats(s))).toContain('hawk every');
   });
 
-  it('Wildcaster: the bonus is 30% at empty mana and nothing at full', () => {
-    const { s } = arena('wildcaster', { offline });
+  it('Wellspring: a full tank keeps Mana is Power, and spare mana fills Overflow', () => {
+    const { s, ctx, c } = arena('wellspring', { offline });
     const d = deriveStats(s);
-    expect(manaPowerMore(s, d, 1)).toBe(0);
-    expect(manaPowerMore(s, d, 0)).toBe(30);
-    s.mana = d.maxMana / 2;
-    expect(manaPowerMore(s, d, manaFraction(s, d))).toBeCloseTo(15, 0);
+    expect(d.manaRegen).toBeGreaterThanOrEqual(2);
+    expect(manaPowerMore(s, d, 1)).toBe(30);
+    expect(manaPowerMore(s, d, 0)).toBe(0);
+    // below full nothing spills
+    s.mana = d.maxMana - 1;
+    combatStep(s, ctx, 50, deriveStats(s));
+    expect(c.mech).toBe(0);
+    s.mana = d.maxMana;
+    run(s, ctx, 1000);
+    expect(c.mech).toBeGreaterThan(0);
+    expect(meterLabel(s, deriveStats(s))).toContain('Overflow');
+    expect(manaFraction(s, d)).toBe(1);
+  });
+
+  it('Wellspring: a Surge is free and hits about twice as hard', () => {
+    const { s, ctx, c, dummy, events } = arena('wellspring', { gem: 'spark', offline });
+    const hit = () => {
+      events.length = 0;
+      run(s, ctx, 3000, () => dealt(events, dummy.uid) > 0);
+      return dealt(events, dummy.uid);
+    };
+    let plain = 0;
+    for (let i = 0; i < 20; i++) {
+      s.mana = deriveStats(s).maxMana;
+      c.mech = 0;
+      plain += hit();
+    }
+    let surged = 0;
+    for (let i = 0; i < 20; i++) {
+      s.mana = deriveStats(s).maxMana;
+      c.mech = overflowMax(deriveStats(s));
+      expect(meterLabel(s, deriveStats(s))).toContain('Surges');
+      surged += hit();
+      expect(s.mana).toBe(deriveStats(s).maxMana);
+    }
+    expect(surged / plain).toBeGreaterThan(1.6);
+    expect(surged / plain).toBeLessThan(2.5);
+  });
+
+  it('Wellspring: a Surge waits for a spell that deals damage', () => {
+    const { s, ctx, c } = arena('wellspring', { gem: 'frost_ward', offline });
+    const max = overflowMax(deriveStats(s));
+    c.mech = max;
+    run(s, ctx, 500, () => c.cooldowns[0] > 0);
+    expect(c.cooldowns[0]).toBeGreaterThan(0);
+    expect(c.mech).toBe(max);
+  });
+
+  it('Every Mage who had picked chooses again, with their points back', () => {
+    const { s } = arena('wellspring', { offline });
+    const raw = JSON.parse(serialize(s));
+    raw.version = 29;
+    raw.ascendancy.id = 'wildcaster';
+    raw.ascendancy.nodes = ['wildcaster_ragged_edge_1', 'wildcaster_burnout'];
+    const wildcaster = deserialize(JSON.stringify(raw));
+    expect(wildcaster.ascendancy.id).toBeNull();
+    expect(wildcaster.ascendancy.nodes).toEqual([]);
+    expect(ascendancyPointsLeft(wildcaster)).toBe(ASCENDANCY_MAX_POINTS);
+    expect(choiceWaiting(wildcaster)).toBe(true);
+
+    raw.version = 30;
+    raw.ascendancy.id = 'alchemist';
+    raw.ascendancy.nodes = ['alchemist_tonic_1'];
+    expect(deserialize(JSON.stringify(raw)).ascendancy.id).toBeNull();
+  });
+
+  it('A reset leaves other classes as they were', () => {
+    const { s } = arena('ravager', { offline });
+    s.ascendancy.nodes = ['ravager_red_haze_1'];
+    const raw = JSON.parse(serialize(s));
+    raw.version = 30;
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.ascendancy.id).toBe('ravager');
+    expect(loaded.ascendancy.nodes).toEqual(['ravager_red_haze_1']);
   });
 
   it('Alchemist: flask charges count as mana, and a drink bursts on your target', () => {
@@ -590,22 +690,25 @@ describe('sealed notables and capstones', () => {
     expect(dummy.life).toBe(dummy.maxLife);
   });
 
-  it('Wildcaster: Burnout makes the next 3 spells free at the full bonus', () => {
-    const { s, ctx, c } = arena('wildcaster', { gem: 'spark', nodes: ['wildcaster_burnout', 'wildcaster_ragged_edge', 'wildcaster_backdraft', 'wildcaster_feedback'] });
+  it('Wellspring: Riptide echoes a single-target spell and Deluge makes a Surge a Mega Crit', () => {
+    // Fireball winds up, so the Surge has to last from paying to landing
+    const { s, ctx, c, events } = arena('wellspring', { gem: 'fireball', nodes: ['wellspring_riptide', 'wellspring_deluge'] });
+    c.mech = overflowMax(deriveStats(s));
+    const megas = () => events.flatMap((e) => (e.t === 'hit' && e.target === 'monster' && e.mega ? [e] : []));
+    run(s, ctx, 6000, () => megas().length > 0);
+    expect(c.asc.surging).toBe(false);
+    expect(megas()).toHaveLength(2);
+    expect(megas()[1].amount).toBeLessThan(megas()[0].amount * 1.2);
+  });
+
+  it('Wellspring: Wake lands the ailment and Springward restores Energy Shield', () => {
+    const { s, ctx, c, dummy, events } = arena('wellspring', { gem: 'spark', nodes: ['wellspring_wake', 'wellspring_springward'] });
+    c.mech = overflowMax(deriveStats(s));
+    s.es = 0;
+    run(s, ctx, 3000, () => dealt(events, dummy.uid) > 0);
+    expect(dummy.shockMs).toBeGreaterThan(0);
     const d = deriveStats(s);
-    expect(manaPowerMore(s, d, 0.1)).toBeCloseTo(27 + 15);
-    // the spell that empties the tank sets it off
-    s.mana = 0.5;
-    c.asc.burnout = 0;
-    const cost = skillNumbers(deriveStats(s), s.skillBar[0]).manaCost;
-    s.mana = cost * BACKDRAFT_COST;
-    run(s, ctx, 3000, () => c.asc.burnout > 0);
-    expect(c.asc.burnout).toBe(3);
-    s.mana = 0;
-    run(s, ctx, 30000, () => c.asc.burnout === 0);
-    expect(c.asc.burnout).toBe(0);
-    expect(c.manaFrac).toBe(0);
-    expect(c.asc.burnoutRearmed).toBe(false);
+    expect(s.es).toBeGreaterThanOrEqual(Math.min(d.maxEs, d.maxMana * 0.1));
   });
 
   it('Alchemist: Deep Cellar, Tonic, Volatile Mix and Philosopher\'s Draught', () => {

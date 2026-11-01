@@ -1,11 +1,12 @@
+import { trialAt } from '../../engine/ascendancy';
 import { uniqueDef } from '../../data/bases';
 import { bossGatherMats, bossTable, dropTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
 import { useState } from 'react';
-import { ACT_REGIONS, actRegion, CONTINENT_SIZE, regionPath, regionViewBox, ZONE_POS } from '../../data/continent';
-import { actOpen, ACTS, bossesNeeded, MECHANIC_INFO, roadsInto, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
+import { ACT_REGIONS, actMapPoint, actRegion, CONTINENT_SIZE, LABEL_LINE_HEIGHT, LABEL_SIDE, labelAnchor, labelLines, regionPath, regionViewBox, ZONE_POS, type ActRegion } from '../../data/continent';
+import { actBossZone, actOpen, ACTS, bossesNeeded, isSideArea, MECHANIC_INFO, roadsInto, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
 import { FINAL_ACT } from '../../engine/hideout';
-import { zoneLockText } from '../../engine/progress';
+import { bossesBeatenInAct, zoneLockText } from '../../engine/progress';
 import { areaXpLabel, characterLevel } from '../../engine/character';
 import { BOSS_RESPAWN_MS, bossIsNext, canBossFarm, startCombat, toggleBossFarm } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
@@ -76,10 +77,11 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
   const n = zonesInAct(z.act).indexOf(z) + 1;
   const beaten = s.bossesDefeated.includes(z.id);
   const farming = here && !!s.combat?.bossFarm;
+  const trial = trialAt(s, z.id);
   return (
     <div className={`card area ${here ? 'current' : ''} ${unlocked ? '' : 'locked'} ${z.actBoss ? 'act-boss' : ''}`} style={{ ['--zone' as string]: z.color }}>
       <div className={`area-banner ${anyArtUrl(`zones/${z.id}`) ? 'has-art' : ''}`} style={sceneStyle(`zones/${z.id}`)}>
-        <span className="area-tier">{z.actBoss ? 'Act boss' : `Area ${n}`}</span>
+        <span className="area-tier">{z.actBoss ? 'Act boss' : isSideArea(z) ? 'Side area' : `Area ${n}`}</span>
         {here && (
           <Badge tone="success" live>
             You are here
@@ -117,6 +119,12 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
             {areaXp && <span>{areaXp} at your level</span>}
           </div>
           <BossMechanics z={z} />
+          {trial && (
+            <div className="small">
+              <b>Ascendancy trial {trial.n}:</b>{' '}
+              {s.ascendancy.trials >= trial.n ? 'passed.' : `your first win over ${z.boss.name} gives ${trial.points} ascendancy points and opens ${trial.opens}.`}
+            </div>
+          )}
           <DropPreview z={z} />
           <ProgressBar value={Math.min(1, kills / z.bossEvery)} color={bossIsNext(s, z.id) ? 'var(--life-2)' : z.color} />
           <div className="dim small">
@@ -215,28 +223,41 @@ function ContinentMap({ s, act, onPick }: { s: GameState; act: number; onPick: (
   );
 }
 
-/** One act up close: its areas as linked points, opened in order by their bosses. */
+const nodeRadius = (z: ZoneDef) => (z.actBoss ? 13 : isSideArea(z) ? 9 : 11);
+
+/** A region's outline as drawn on another act's close-up map. */
+function stretchedPath(on: ActRegion, r: ActRegion): string {
+  return regionPath({ ...r, points: r.points.map((p) => actMapPoint(on, p)) });
+}
+
+/** One act up close: its areas as points on the roads their bosses open, with side areas drawn smaller. */
 function ActMap({ s, act, selected, onSelect }: { s: GameState; act: number; selected: string; onSelect: (id: string) => void }) {
   const region = actRegion(act);
   if (!region) return null;
   const zones = zonesInAct(act).filter((z) => ZONE_POS[z.id]);
   return (
     <svg className="act-map" viewBox={regionViewBox(region)} role="img" aria-label={`Areas of Act ${act}`}>
-      <rect className="continent-sea" x={-100} y={-100} width={CONTINENT_SIZE.w + 200} height={CONTINENT_SIZE.h + 200} />
+      <rect className="continent-sea" x={-100} y={-100} width={CONTINENT_SIZE.w + 200} height={CONTINENT_SIZE.h * 3} />
       {ACT_REGIONS.map((r) => (
-        <path key={r.act} d={regionPath(r)} className={`act-map-region ${r.act === act ? 'this' : ''}`} />
+        <path key={r.act} d={stretchedPath(region, r)} className={`act-map-region ${r.act === act ? 'this' : ''}`} />
       ))}
       {zones.flatMap((z) =>
         roadsInto(z)
           .filter((from) => ZONE_POS[from])
           .map((from) => {
-            const [x1, y1] = ZONE_POS[from];
-            const [x2, y2] = ZONE_POS[z.id];
-            return <line key={`${from}-${z.id}`} className={`act-road ${s.unlockedZones.includes(z.id) ? 'walked' : ''}`} x1={x1} y1={y1} x2={x2} y2={y2} />;
+            const [x1, y1] = actMapPoint(region, ZONE_POS[from]);
+            const [x2, y2] = actMapPoint(region, ZONE_POS[z.id]);
+            const walked = s.unlockedZones.includes(z.id) && s.bossesDefeated.includes(from);
+            return <line key={`${from}-${z.id}`} className={`act-road ${walked ? 'walked' : ''} ${isSideArea(z) ? 'side' : ''}`} x1={x1} y1={y1} x2={x2} y2={y2} />;
           }),
       )}
       {zones.map((z) => {
-        const [x, y] = ZONE_POS[z.id];
+        const [x, y] = actMapPoint(region, ZONE_POS[z.id]);
+        const side = isSideArea(z);
+        const r = nodeRadius(z);
+        const lines = labelLines(z.name);
+        const label = labelAnchor(LABEL_SIDE[z.id] ?? 'below', r, lines.length);
+        const need = bossesNeeded(z) - bossesBeatenInAct(s, act);
         return (
           <g
             key={z.id}
@@ -247,15 +268,19 @@ function ActMap({ s, act, selected, onSelect }: { s: GameState; act: number; sel
             style={{ ['--zone' as string]: z.color }}
           >
             <title>{s.unlockedZones.includes(z.id) ? z.name : `${z.name}: ${zoneLockText(s, z)}`}</title>
-            <circle className="act-node-ring" r={z.actBoss ? 13 : 11} />
-            <circle className="act-node-core" r={z.actBoss ? 8 : 6.5} />
-            {bossesNeeded(z) > 0 && (
+            <circle className="act-node-ring" r={r} />
+            <circle className="act-node-core" r={z.actBoss ? 8 : side ? 5 : 6.5} />
+            {need > 0 && (
               <text y={3.5} className="act-node-gate">
-                {bossesNeeded(z)}
+                {need}
               </text>
             )}
-            <text y={z.actBoss ? 25 : 22} className="act-node-name">
-              {z.name.replace(/^The /, '')}
+            <text className="act-node-name" textAnchor={label.anchor}>
+              {lines.map((line, i) => (
+                <tspan key={line} x={label.x} y={label.y + i * LABEL_LINE_HEIGHT}>
+                  {line}
+                </tspan>
+              ))}
             </text>
           </g>
         );
@@ -276,12 +301,13 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
   const open = actOpen(act);
   const zones = zonesInAct(act);
   const cleared = zones.filter((z) => s.bossesDefeated.includes(z.id)).length;
-  const done = zones.length > 0 && cleared === zones.length;
+  const bossZone = actBossZone(act);
+  const done = !!bossZone && s.bossesDefeated.includes(bossZone.id);
   const next = ACTS.find((a) => a.n === act + 1);
   const zone = zones.find((z) => z.id === zoneId);
   return (
     <div className="page">
-      <PageHeader title="Campaign">Pick an act on the map, then an area. Each boss opens the road to the next.</PageHeader>
+      <PageHeader title="Campaign">Pick an act on the map, then an area. Each boss opens the roads ahead. From Act 3 they fork, and each act boss waits until you've beaten most of its act's bosses, so which ones you skip is up to you.</PageHeader>
       <div className="card continent-card">
         <ContinentMap s={s} act={act} onPick={pickAct} />
       </div>

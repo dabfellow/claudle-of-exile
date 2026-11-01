@@ -1,6 +1,5 @@
 import { classDef } from '../data/classes';
 import {
-  ASCENDANCY_BOSS_ACTS,
   ASCENDANCY_BY_ID,
   ASCENDANCY_MAX_POINTS,
   ASCENDANCY_NODE_BY_ID,
@@ -10,6 +9,7 @@ import {
   TRIALS,
   type AscendancyDef,
   type AscendancyId,
+  type TrialDef,
 } from '../data/ascendancies';
 import { ACT_PREVIEW, actOpen } from '../data/zones';
 import type { Ctx } from './context';
@@ -26,7 +26,7 @@ export function newAscendancyState(): AscendancyState {
 }
 
 export function newAscendancyRuntime(): AscendancyRuntime {
-  return { rampageMs: 0, rampageTotal: 0, holdMs: 0, hawkMs: 0, hawking: false, sureCrit: false, streak: 0, burnout: 0, burnoutRearmed: true, novas: 0, novaDamage: 0, dawn: false, fighting: false };
+  return { rampageMs: 0, rampageTotal: 0, holdMs: 0, hawkMs: 0, hawking: false, sureCrit: false, streak: 0, surging: false, novas: 0, novaDamage: 0, dawn: false, fighting: false };
 }
 
 /** Everything waits for Act 3: dev builds, tests and the sim get it early, like preview acts. */
@@ -69,11 +69,16 @@ export function passTrial(s: GameState, ctx: Ctx, n: 1 | 2 | 3): void {
   ctx.emit({ t: 'trialPassed', n });
 }
 
-/** The first kill of a boss: a trial's boss passes the trial, any other Act 3–6 boss gives a point once the choice is open. */
-export function onBossFirstKill(s: GameState, ctx: Ctx, zoneId: string, act: number): void {
+/** The first kill of a boss: a trial's boss passes the trial. Other bosses give nothing. */
+export function onBossFirstKill(s: GameState, ctx: Ctx, zoneId: string): void {
   const trial = TRIALS.find((t) => t.zoneId === zoneId);
   if (trial) passTrial(s, ctx, trial.n);
-  else if (ASCENDANCY_BOSS_ACTS.includes(act) && s.ascendancy.trials >= 1) addPoints(s, 1);
+}
+
+/** The trial standing in an area, for a class that can take it. */
+export function trialAt(s: GameState, zoneId: string): TrialDef | null {
+  if (!ascendancyOpen() || classDef(s.character.classId).mechanic === null) return null;
+  return TRIALS.find((t) => t.zoneId === zoneId) ?? null;
 }
 
 export function chooseReason(s: GameState, id: AscendancyId): string | null {

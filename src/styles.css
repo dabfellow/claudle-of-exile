@@ -4070,6 +4070,20 @@ g.tut-hint circle.body {
   gap: 8px 12px;
 }
 
+.chained-anchor {
+  position: relative;
+  height: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.chained-notice {
+  position: absolute;
+  inset: 0 0 auto;
+  color: var(--text);
+  backdrop-filter: blur(4px);
+}
+.chained-notice b { color: var(--text); }
+
 /* a fixed share of the bar, so the changing text never rewraps the controls and moves the field */
 .bf-status {
   flex: 1 1 100px;
@@ -4394,6 +4408,13 @@ g.tut-hint circle.body {
   }
   .bf-summary {
     display: flex;
+  }
+  /* no field to float over here, and the summary's Strike buttons sit right under it */
+  .chained-anchor {
+    height: auto;
+  }
+  .chained-notice {
+    position: static;
   }
 }
 
@@ -6994,6 +7015,10 @@ button.star {
   opacity: 0.75;
 }
 
+.act-road.side {
+  stroke-width: 1.5;
+}
+
 .act-node {
   cursor: pointer;
 }
@@ -7041,8 +7066,7 @@ button.star {
 }
 
 .act-node-name {
-  text-anchor: middle;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   fill: var(--text);
   paint-order: stroke;
