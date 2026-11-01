@@ -60,8 +60,12 @@ export interface SkillEffect {
   shieldPct?: number;
   /** guard: the shield also counts maximum energy shield */
   shieldEs?: boolean;
-  /** attacks: adds this % of your current shield to the hit, as physical damage */
+  /** adds this % of your current shield to the hit: physical damage on an attack, the skill's element on a spell */
   shieldToDamage?: number;
+  /** heavy: adds this % of the damage you took during the wind-up to the blow, shields included, as physical damage */
+  storedToDamage?: number;
+  /** every other spell on the bar that's ready fires with it, for free and at no time, at this % of its damage */
+  decree?: number;
   /** guard/buff: timed stats and more-damage; regenPct is % of max life per second (negative drains, never below 1 life); outpace burns out hazards under you like running does */
   buff?: { durationMs: number; stats?: Partial<Record<StatKey, number>>; moreDamage?: number; regenPct?: number; outpace?: boolean };
   /** movement: leaves any hazard under you behind */
@@ -85,6 +89,8 @@ export interface SkillEffect {
     reach: number;
     /** monsters in reach swing at it before anything else */
     taunts?: boolean;
+    /** takes this % of each hit that lands on you, before your shield and energy shield */
+    shares?: number;
     /** gone after this long; without it, a minion stays until it falls or you leave the area */
     durationMs?: number;
   };
@@ -98,6 +104,12 @@ export interface SkillEffect {
     drift?: boolean;
     /** draws what's in it a step toward the centre with each strike */
     pull?: boolean;
+    /** stays around you rather than on the target, over the rings in `radius` */
+    anchored?: boolean;
+    /** also strikes each time you use an attack */
+    onAttack?: boolean;
+    /** blows out when your shield goes */
+    whileShield?: boolean;
   };
   /** curses enemies where it lands (see `area`): an enemy carries one curse at a time, and bosses take half its effect */
   curse?: {
@@ -114,6 +126,8 @@ export interface SkillEffect {
     bleedTaken?: number;
     /** % longer stuns and % more Stagger */
     stunTaken?: number;
+    /** keeps count of all damage the enemy takes, and this % of it lands again when the curse ends */
+    warrant?: number;
   };
   /** attacks: this % of physical damage is converted to another type (and scales with that type's increases) */
   convert?: { type: DamageType; pct: number };
@@ -742,6 +756,50 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     desc: 'The deep answers: for 14s a Leviathan fights at your side, crushing the target and everything next to it.',
     defaultRule: { when: 'bossOnly' },
   }),
+
+  // ---------- Act 6, The last empire (docs/design/ACT6_SKILLS.md) ----------
+  A({
+    id: 'worldbreaker', name: 'Worldbreaker', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area', 'hit', 'heavy'],
+    manaCost: 26, cooldownMs: 6000, timeMs: 6000, color: '#c84a2a',
+    effect: { weaponPct: 420, area: 'nova', radius: 2, stunChance: 1, stunMs: 2000, stagger: 30, storedToDamage: 300 }, range: 2, weapons: SLAM_WEAPONS,
+    desc: 'Raise the weapon that broke the empire and stand there. It falls on everything within 2 rings at the end of the wind-up, always stuns (2s), and adds 3 times the damage you took while it was raised, shields included.',
+    defaultRule: { when: 'enemiesAtLeast', value: 2 },
+  }),
+  A({
+    id: 'last_legion', name: 'The Last Legion', attr: 'str', role: 'summon', tags: ['attack', 'melee', 'minion', 'hit'],
+    manaCost: 34, cooldownMs: 8000, timeMs: 2400, color: '#c8a84a',
+    effect: { weaponPct: 80, minion: { name: 'Legionary', art: 'gildedknight', count: 4, lifePct: 35, attackMs: 2200, reach: 1, shares: 30 } },
+    desc: 'Call 4 legionaries who never heard the empire fell. They hit with your weapon, and one of them takes 30% of every hit that lands on you. They stay between packs.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'death_warrant', name: 'Death Warrant', attr: 'dex', role: 'curse', tags: ['spell', 'curse', 'area', 'duration'],
+    manaCost: 18, cooldownMs: 12000, timeMs: 0, color: '#5a3a6a',
+    effect: { area: 'target', curse: { durationMs: 6000, warrant: 50 } },
+    desc: 'Curse the target for 6s, counting all the damage it takes from anything. When the curse ends, 50% of that lands at once. If it dies first, the debt falls on the nearest enemy.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'gale_of_knives', name: 'Gale of Knives', attr: 'dex', role: 'area', tags: ['attack', 'area', 'duration', 'storm', 'hit'],
+    manaCost: 22, cooldownMs: 6000, timeMs: 1500, color: '#9ad8a0',
+    effect: { weaponPct: 75, area: 'nova', radius: 2, storm: { everyMs: 1600, durationMs: 10000, max: 1, anchored: true, onAttack: true } }, range: 2,
+    desc: 'A storm of blades turns around you for 10s, cutting everything within 2 rings with your weapon every 1.6s, and again every time you use an attack.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'royal_decree', name: 'Royal Decree', attr: 'int', role: 'burst', tags: ['spell', 'hit', 'cast'],
+    manaCost: 42, cooldownMs: 24000, timeMs: 1800, color: '#e8c84a',
+    effect: { base: [90, 130], type: 'light', targets: 'single', crit: 6, decree: 60 },
+    desc: 'Speak with the last king\'s voice. Every other damage spell on your bar that is ready fires at once, for free and with no cast time, at 60% of its damage, and starts its cooldown.',
+    defaultRule: { when: 'manaAbove', value: 50 },
+  }),
+  A({
+    id: 'eye_of_the_storm', name: 'Eye of the Storm', attr: 'int', role: 'guard', tags: ['spell', 'guard', 'area', 'duration', 'shield', 'storm', 'hit'],
+    manaCost: 28, cooldownMs: 14000, timeMs: 0, color: '#8ac8e8',
+    effect: { base: [30, 46], type: 'light', area: 'nova', radius: 2, crit: 6, shieldPct: 35, shieldEs: true, shieldToDamage: 10, buff: { durationMs: 8000 }, storm: { everyMs: 1200, durationMs: 8000, max: 1, anchored: true, whileShield: true } }, range: 2,
+    desc: 'A shield absorbing damage equal to 35% of your life and energy shield for 8s, with a storm around it that strikes everything within 2 rings every 1.2s. Each strike adds 10% of the shield still standing, and the storm ends with the shield.',
+    defaultRule: { when: 'enemyCasting' },
+  }),
 ];
 
 // ---------- supports ----------
@@ -838,6 +896,9 @@ const GEM_LEVELS: Record<string, number> = {
   squall: 52, thunderhead: 52, whirlpool: 52,
   barnacle_brute: 54, drowned_bell: 54,
   leviathan: 56,
+  worldbreaker: 58, gale_of_knives: 58, eye_of_the_storm: 58,
+  last_legion: 60, death_warrant: 60,
+  royal_decree: 62,
   // supports
   faster_attacks: 4, faster_casts: 4, efficiency: 4,
   brutality: 8, elemental_focus: 8, life_leech: 8, mana_leech: 8, pierce: 8,
@@ -854,6 +915,9 @@ const GEM_LEVELS: Record<string, number> = {
   shockwave: 42, reinforced: 42,
   follow_through: 44,
   savage_crew: 50, gale_force: 52, hardened_crew: 52, full_muster: 54, stormfront: 54,
+  goaded: 58, funeral_rites: 58, crowned_storm: 58,
+  eternal_ward: 60, reprisal: 60,
+  succession: 62, imperial_reach: 62,
 };
 
 /**
@@ -884,6 +948,9 @@ const GEM_ACTS: Record<string, number> = {
   boarding_party: 5, harpoon: 5, squall: 5,
   tidecallers: 5, thunderhead: 5, whirlpool: 5, leviathan: 5,
   savage_crew: 5, hardened_crew: 5, full_muster: 5, gale_force: 5, stormfront: 5,
+  // Act 6, The last empire
+  worldbreaker: 6, last_legion: 6, death_warrant: 6, gale_of_knives: 6, royal_decree: 6, eye_of_the_storm: 6,
+  goaded: 6, funeral_rites: 6, crowned_storm: 6, eternal_ward: 6, reprisal: 6, succession: 6, imperial_reach: 6,
 };
 
 /** The act a skill or support gem arrives with. */
@@ -899,6 +966,12 @@ export function gemAct(id: string): number {
 const GEM_ATTR_MULTS: Record<string, number> = {
   lacerate: 1.3,
   backstab: 1.3,
+  worldbreaker: 1.3,
+  last_legion: 1.3,
+  death_warrant: 1.3,
+  gale_of_knives: 1.3,
+  royal_decree: 1.3,
+  eye_of_the_storm: 1.3,
 };
 
 export function gemAttrMult(id: string): number {
@@ -982,6 +1055,12 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'cataclysm', name: 'Cataclysm', attr: 'int', fits: [], signatureFor: 'meteor', mods: { special: 'cataclysm' }, desc: 'The impact leaves burning ground around the target for 4s.' }),
   S({ id: 'radiance', name: 'Radiance', attr: 'int', fits: [], signatureFor: 'sacred_aegis', mods: { special: 'radiance' }, desc: 'When the shield breaks, it strikes every enemy for half of what it held.' }),
   S({ id: 'dead_weight', name: 'Dead Weight', attr: 'int', fits: [], signatureFor: 'burden', mods: { special: 'deadweight' }, desc: 'Cursed enemies take 25% more damage while stunned.' }),
+  S({ id: 'unmoved', name: 'Unmoved', attr: 'str', fits: [], signatureFor: 'worldbreaker', mods: { special: 'unmoved' }, desc: 'You take 25% less damage from hits during the wind-up. The blow still counts all of it.' }),
+  S({ id: 'dying_oath', name: 'Dying Oath', attr: 'str', fits: [], signatureFor: 'last_legion', mods: { special: 'dyingoath' }, desc: 'A legionary who falls leaves you a shield worth half its life, up to half of yours.' }),
+  S({ id: 'collective_guilt', name: 'Collective Guilt', attr: 'dex', fits: [], signatureFor: 'death_warrant', mods: { special: 'collective' }, desc: 'When the debt lands, enemies next to the target pay half of it.' }),
+  S({ id: 'reaping_wind', name: 'Reaping Wind', attr: 'dex', fits: [], signatureFor: 'gale_of_knives', mods: { special: 'reaping' }, desc: 'Each enemy it kills keeps it here 1s longer.' }),
+  S({ id: 'absolute_power', name: 'Absolute Power', attr: 'int', fits: [], signatureFor: 'royal_decree', mods: { special: 'absolute' }, desc: 'Also fires spells that are still on cooldown.' }),
+  S({ id: 'eyewall', name: 'Eyewall', attr: 'int', fits: [], signatureFor: 'eye_of_the_storm', mods: { special: 'eyewall' }, desc: 'Each enemy a strike hits gives back 2% of the shield.' }),
 
   // general
   S({ id: 'added_fire', name: 'Added Fire', attr: 'str', fits: ['hit'], mods: { extra: { type: 'fire', pct: 25 }, manaMult: 1.2 }, desc: 'Gain 25% of the hit as extra fire damage.' }),
@@ -1019,7 +1098,14 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'hardened_crew', name: 'Hardened Crew', attr: 'str', fits: ['minion'], mods: { minionLife: 50, manaMult: 1.2 }, desc: '50% more minion life.' }),
   S({ id: 'full_muster', name: 'Full Muster', attr: 'dex', fits: ['minion'], mods: { minionCount: 1, moreDamage: -15, manaMult: 1.4 }, desc: 'Keeps 1 more minion up; 15% less minion damage.' }),
   S({ id: 'gale_force', name: 'Gale Force', attr: 'int', fits: ['storm'], mods: { stormSpeed: 30, manaMult: 1.3 }, desc: 'The storm strikes 30% faster.' }),
-  S({ id: 'stormfront', name: 'Stormfront', attr: 'int', fits: ['storm'], mods: { stormCount: 1, manaMult: 1.4 }, desc: 'Keeps 1 more storm up at once.' }),
+  S({ id: 'stormfront', name: 'Stormfront', attr: 'int', fits: ['storm'], not: ['shield'], mods: { stormCount: 1, manaMult: 1.4 }, desc: 'Keeps 1 more storm up at once.' }),
+  S({ id: 'reprisal', name: 'Reprisal', attr: 'str', fits: ['hit'], not: ['heavy', 'minion', 'storm'], mods: { special: 'reprisal', manaMult: 1.3 }, desc: 'Fires by itself when a hit lands on you, instead of by rule, and takes none of your time. It can do so once a second at most.' }),
+  S({ id: 'succession', name: 'Succession', attr: 'dex', fits: ['hit'], not: ['heavy', 'minion', 'storm'], mods: { special: 'succession', manaMult: 1.3 }, desc: 'Fires by itself when you kill an enemy, instead of by rule, and takes none of your time. It can do so once a second at most.' }),
+  S({ id: 'imperial_reach', name: 'Imperial Reach', attr: 'int', fits: ['hit'], not: ['minion', 'storm'], mods: { special: 'reach', moreDamage: -55, manaMult: 2 }, desc: 'Hits every enemy on the field, whatever its shape; 55% less damage.' }),
+  S({ id: 'goaded', name: 'Goaded', attr: 'str', fits: ['heavy'], mods: { special: 'goaded', manaMult: 1.2 }, desc: 'Each hit that lands on you cuts 15% off the wind-up.' }),
+  S({ id: 'eternal_ward', name: 'Eternal Ward', attr: 'int', fits: ['shield'], mods: { special: 'eternal', shieldMore: -20, manaMult: 1.3 }, desc: 'The shield has no time limit: it stays until it breaks, even between packs; 20% less shield.' }),
+  S({ id: 'funeral_rites', name: 'Funeral Rites', attr: 'str', fits: ['minion'], mods: { special: 'funeral', manaMult: 1.3 }, desc: 'A minion that falls strikes everything next to it for 3 times its hit.' }),
+  S({ id: 'crowned_storm', name: 'Crowned Storm', attr: 'int', fits: ['storm'], mods: { special: 'crowned', manaMult: 1.2 }, desc: 'The storm stays around you, over at least 2 rings, instead of on the target.' }),
 ];
 
 export function activeGemDef(id: string): ActiveGemDef {

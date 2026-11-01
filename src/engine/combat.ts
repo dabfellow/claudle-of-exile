@@ -192,6 +192,25 @@ export const BOSS_STAGGER_CAP_MS = 3000;
 /** Recoil's stun, and the Stagger it adds */
 const RECOIL_STUN_MS = 2000;
 const RECOIL_STAGGER = 25;
+/** Reprisal and Succession: the fewest ms between two firings, on top of the skill's own cooldown */
+export const TRIGGER_COOLDOWN_MS = 1000;
+/** Goaded: the share of a wind-up each hit taken cuts off */
+const GOADED_CUT = 0.15;
+/** Unmoved: % less damage from hits during a wind-up */
+const UNMOVED_LESS = 25;
+/** Dying Oath: the share of a fallen legionary's life that becomes shield, and the most shield it can leave, as a share of your life */
+const DYING_OATH_SHARE = 0.5;
+const DYING_OATH_CAP = 0.5;
+/** Collective Guilt: the share of the debt enemies next to the target pay */
+const COLLECTIVE_SHARE = 0.5;
+/** Reaping Wind: how much longer each kill keeps the storm */
+const REAPING_MS = 1000;
+/** Eyewall: the share of the shield each enemy struck gives back */
+const EYEWALL_SHARE = 0.02;
+/** Funeral Rites: the fallen minion's last strike, as a multiple of its hit */
+const FUNERAL_MULT = 3;
+/** Crowned Storm: the fewest rings a storm around you covers */
+const CROWNED_RINGS = 2;
 
 // ---------- entering & leaving ----------
 
@@ -908,12 +927,62 @@ export function chooseSkill(s: GameState, d: Derived): SkillChoice {
     const gem = s.skillBar[i]!;
     if (gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) continue;
     const nums = skillNumbers(d, gem);
-    if (!ready(s, d, i, nums) || !rulesPass(s, gem.rules, (r) => ruleAllows(r, rc, skillIsActive(c, gem.gemId)))) continue;
+    if (triggered(nums) || !ready(s, d, i, nums) || !rulesPass(s, gem.rules, (r) => ruleAllows(r, rc, skillIsActive(c, gem.gemId)))) continue;
     const got = consider(i, nums, false);
     if (got) return got;
   }
   const basic = skillNumbers(d, null);
   return consider(-1, basic, false) ?? later.approach ?? { slot: -1, nums: basic, manual: false };
+}
+
+/** Reprisal and Succession take a skill out of the turn order: it fires on what they say, whatever its rules are. */
+function triggered(nums: SkillNumbers): boolean {
+  return nums.mods.specials.has('reprisal') || nums.mods.specials.has('succession');
+}
+
+/**
+ * Fire a skill from inside something else, in no time and without disturbing what you're in the middle of. It needs
+ * something in reach: nothing closes in. Returns whether it went off.
+ */
+function fireSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillNumbers, paid: boolean): boolean {
+  const c = s.combat!;
+  const aim = skillAim(s, s.skillBar[slot]!);
+  const found = skillTarget(s, d, nums, aim);
+  if (needsTarget(nums.def) && (!found || found.closeIn)) return false;
+  const { using, closingUid, targetUid } = c;
+  performSkill(s, ctx, d, slot, nums, false, found && !found.closeIn ? found.mon : undefined, aim, paid);
+  c.using = using;
+  c.closingUid = closingUid;
+  c.targetUid = targetUid;
+  return true;
+}
+
+/** Reprisal and Succession: every skill waiting on this moment goes off, as far as it's ready and can be paid for. */
+function fireTriggered(s: GameState, ctx: Ctx, d: Derived, special: 'reprisal' | 'succession'): void {
+  const c = s.combat!;
+  s.skillBar.forEach((gem, slot) => {
+    if (!gem || gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) return;
+    const nums = skillNumbers(d, gem);
+    if (!nums.mods.specials.has(special) || !ready(s, d, slot, nums)) return;
+    if (fireSkill(s, ctx, d, slot, nums, false)) c.cooldowns[slot] = Math.max(c.cooldowns[slot], TRIGGER_COOLDOWN_MS);
+  });
+}
+
+/** Royal Decree: the other spells on the bar go off with it, free and at once, heavy ones included. */
+function callSpells(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers): void {
+  const c = s.combat!;
+  const absolute = nums.mods.specials.has('absolute');
+  c.decreeMult = nums.def.effect.decree! / 100;
+  s.skillBar.forEach((gem, slot) => {
+    if (!gem || gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) return;
+    const called = skillNumbers(d, gem);
+    const { def } = called;
+    if (def.effect.decree || !def.tags.includes('spell') || !def.tags.includes('hit') || (c.cooldowns[slot] > 0 && !absolute)) return;
+    if (!fireSkill(s, ctx, d, slot, called, true)) return;
+    c.cooldowns[slot] = Math.max(MIN_COOLDOWN_MS, called.cooldownMs);
+    ctx.emit({ t: 'skill', slot, gemId: def.id, manual: false });
+  });
+  c.decreeMult = undefined;
 }
 
 /** Run at a monster out of reach: it ends up a ring closer. Movement speed makes it quicker. */
@@ -939,7 +1008,7 @@ function startWindup(s: GameState, ctx: Ctx, d: Derived, choice: SkillChoice): v
   c.using = nums.def.id;
   c.closingUid = undefined;
   c.targetUid = target?.uid;
-  c.windup = { gemUid: s.skillBar[slot]!.uid, targetUid: target?.uid, manual, manaFrac: c.manaFrac };
+  c.windup = { gemUid: s.skillBar[slot]!.uid, targetUid: target?.uid, manual, manaFrac: c.manaFrac, goaded: nums.mods.specials.has('goaded') || undefined, braced: nums.mods.specials.has('unmoved') || undefined };
   const time = nums.actionMs * (c.windupCarry ?? 1);
   c.windupCarry = undefined;
   c.actionTotal = time;
@@ -974,7 +1043,9 @@ function landBlow(s: GameState, ctx: Ctx, d: Derived): boolean {
   }
   c.windup = undefined;
   c.manaFrac = w.manaFrac;
+  c.storedDamage = w.stored;
   performSkill(s, ctx, d, slot, nums, w.manual, found.mon, aim, true);
+  c.storedDamage = undefined;
   if (found.mon.life <= 0) c.windupCarry = nums.mods.specials.has('longdraw') ? LONG_DRAW_CARRY : WINDUP_CARRY;
   reapDead(s, ctx, d);
   return true;
@@ -1056,10 +1127,12 @@ function rollHit(
       byType.phys += ram ? c.shield : (c.shield * def.effect.shieldToDamage) / 100;
       if (ram) c.shield = 0;
     }
+    if (def.effect.storedToDamage) byType.phys += ((c.storedDamage ?? 0) * def.effect.storedToDamage) / 100;
   } else {
     const [lo, hi] = spellBaseAt(def, level);
     const type = def.effect.type ?? 'fire';
-    byType[type] += (rInt(ctx.rng, lo, hi) + (nums.lifeCost * (def.effect.lifeToDamage ?? 0)) / 100) * d.typeMult[type];
+    const fromShield = (c.shield * (def.effect.shieldToDamage ?? 0)) / 100;
+    byType[type] += (rInt(ctx.rng, lo, hi) + (nums.lifeCost * (def.effect.lifeToDamage ?? 0)) / 100 + fromShield) * d.typeMult[type];
     for (const t of ['fire', 'cold', 'light'] as const) {
       const [alo, ahi] = d.hit[t];
       if (ahi > 0) byType[t] += rInt(ctx.rng, alo, ahi) * SPELL_ADDED_EFFECTIVENESS;
@@ -1084,6 +1157,7 @@ function rollHit(
   for (const t of ['fire', 'cold', 'light'] as const) byType[t] *= (1 + mods.moreElem / 100) * (1 + highLife / 100);
   let more = (1 + mods.moreDamage / 100) * (1 + moreDamageFromBuffs(c) / 100);
   if (r.buffMore && c.buffs.some((b) => b.source === 'skill')) more *= 1 + r.buffMore / 100;
+  if (c.decreeMult) more *= c.decreeMult;
   if (c.empowered) {
     more *= 1 + r.afterGuardDamage / 100;
     c.empowered = false;
@@ -1188,6 +1262,7 @@ function damageMonster(s: GameState, mon: MonsterInstance, amount: number, direc
   if (mon.chained || (mon.martyr && !direct)) return;
   const dealt = s.combat?.dealt;
   if (dealt) dealt[dealt.length - 1] += amount;
+  if (mon.curse?.warrant) mon.curse.owed = (mon.curse.owed ?? 0) + amount;
   if (mon.ward > 0) {
     const absorbed = Math.min(mon.ward, amount);
     mon.ward -= absorbed;
@@ -1481,6 +1556,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
     c.barbedWard = mods.specials.has('barbedward') ? nums.lifeCost * BARBED_WARD_RETURN : undefined;
     c.recoil = mods.specials.has('recoil') || undefined;
     c.radiance = mods.specials.has('radiance') ? c.shield * RADIANCE_SHARE : undefined;
+    c.holdShield = mods.specials.has('eternal') || undefined;
   }
   if (def.role === 'guard') {
     c.ground = stepOutOfGround(c.ground);
@@ -1531,6 +1607,8 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (e.minion) return callMinions(s, ctx, d, nums, aimed);
   if (e.storm) return raiseStorm(s, ctx, nums, aimed);
   if (!e.weaponPct && !e.base) return;
+  if (e.decree) callSpells(s, ctx, d, nums);
+  if (def.tags.includes('attack')) stormsAnswer(s, ctx, d);
 
   let passes = 1 + mods.repeats;
   if (mods.specials.has('aftershock') && chance(ctx.rng, 0.35)) passes += 1;
@@ -1646,6 +1724,7 @@ function curseEnemies(s: GameState, ctx: Ctx, nums: SkillNumbers, aimed?: Monste
   const effect = (1 + (CURSE_PCT_PER_LEVEL / 100) * (level - 1)) * (1 + mods.curseEffect / 100);
   for (const m of aliveMonsters(c)) {
     if (!cells.has(m.cell)) continue;
+    collectDebt(s, ctx, m, m);
     const f = effect * (m.isBoss ? CURSE_BOSS_EFFECT : 1);
     m.curse = {
       gemId: def.id,
@@ -1661,15 +1740,38 @@ function curseEnemies(s: GameState, ctx: Ctx, nums: SkillNumbers, aimed?: Monste
       weeping: mods.specials.has('weeping') || undefined,
       stunTaken: curse.stunTaken ? curse.stunTaken * f : undefined,
       crushing: mods.specials.has('deadweight') || undefined,
+      warrant: curse.warrant ? curse.warrant * f : undefined,
+      collective: mods.specials.has('collective') || undefined,
     };
     if (mods.specials.has('crackedhide')) m.vulnMs = Math.max(m.vulnMs, durationMs);
     if (mods.specials.has('snare')) m.stunMs = Math.max(m.stunMs, m.isBoss ? 400 : 1000);
   }
 }
 
-/** Where a skill's hit lands on the battlefield: Pierce turns any projectile into a beam to the edge; 'all' means the whole field. */
+/**
+ * Death Warrant comes due: what `mon` owes lands on `payer`, itself unless it died first. The curse is spent either
+ * way, so what this deals can't add to the debt.
+ */
+function collectDebt(s: GameState, ctx: Ctx, mon: MonsterInstance, payer: MonsterInstance | undefined): void {
+  const curse = mon.curse;
+  if (!curse?.warrant) return;
+  mon.curse = undefined;
+  const debt = ((curse.owed ?? 0) * curse.warrant) / 100;
+  if (debt < 1 || !payer) return;
+  const pay = (m: MonsterInstance, amount: number) => {
+    damageMonster(s, m, amount);
+    ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(amount), crit: true, dmgType: 'phys', monsterUid: m.uid });
+  };
+  pay(payer, debt);
+  if (!curse.collective) return;
+  const near = new Set(neighbors(payer.cell));
+  for (const m of aliveMonsters(s.combat!)) if (near.has(m.cell) && m !== payer && !shielded(m)) pay(m, debt * COLLECTIVE_SHARE);
+}
+
+/** Where a skill's hit lands on the battlefield: Imperial Reach takes in the whole field, Pierce turns any projectile into a beam to the edge; 'all' means the whole field. */
 export function skillArea(nums: SkillNumbers): AreaShape {
   const e = nums.def.effect;
+  if (nums.mods.specials.has('reach')) return 'field';
   if (nums.mods.specials.has('pierce')) return 'beam';
   return e.area ?? (e.targets === 'all' ? 'field' : 'target');
 }
@@ -1717,6 +1819,8 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
       ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'fire', monsterUid: m.uid });
     }
   }
+  // Death Warrant: a debt outlives the debtor
+  collectDebt(s, ctx, mon, chainFrom(mon, aliveMonsters(c).filter((m) => !shielded(m)), 1)[1]);
   // Contagion: the curse moves on with the time it had left; Wither Will: it pays you back
   if (mon.curse?.spreads && next && !next.curse) next.curse = { ...mon.curse };
   if (mon.curse?.withers) s.life = Math.min(d.maxLife, s.life + d.maxLife * 0.04);
@@ -1768,6 +1872,7 @@ function reapDead(s: GameState, ctx: Ctx, d: Derived): void {
   }
   if (!c.monsters.some((m) => m.dead)) return;
   c.monsters = c.monsters.filter((m) => !m.dead);
+  fireTriggered(s, ctx, d, 'succession');
   if (!c.monsters.length && !c.windup) c.using = null;
 }
 
@@ -2069,6 +2174,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   const mech = mechanicOf(s);
   const asc = ascendancyOf(s);
   if (asc === 'matador') c.asc.streak = hasAscNode(s, 'matador_close_call') ? Math.floor(c.asc.streak / 2) : 0;
+  if (c.windup?.goaded) c.actionMs -= c.actionTotal * GOADED_CUT;
   if (asc === 'anvil') anvilAnswer(s, ctx, d, mon);
   if (mech === 'momentum') {
     if (!r.perpetualMotion) c.mech -= Math.ceil(c.mech * 0.5 * (1 - Math.min(100, r.momentumRetain) / 100));
@@ -2081,6 +2187,17 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     dmg = Math.round(mitigate(d, raw * (1 - p), type) + mitigate(d, raw * p, 'phys'));
   } else dmg = mitigate(d, raw, type);
   if (type !== 'phys') dmg = Math.max(1, Math.round(dmg * (1 - r.elemTakenReduction / 100)));
+  if (c.windup) {
+    c.windup.stored = (c.windup.stored ?? 0) + dmg;
+    if (c.windup.braced) dmg = Math.max(1, Math.round(dmg * (1 - UNMOVED_LESS / 100)));
+  }
+  const legionary = army(c).find((x) => x.shares && x.life > 0);
+  if (legionary) {
+    const part = Math.round((dmg * legionary.shares!) / 100);
+    legionary.life -= part * (1 - (legionary.tough ?? 0) / 100);
+    dmg -= part;
+    if (part > 0) ctx.emit({ t: 'hit', target: 'minion', amount: part, dmgType: type, monsterUid: legionary.uid });
+  }
   let absorbed = 0;
   if (c.shield > 0) {
     absorbed = Math.min(c.shield, dmg);
@@ -2129,6 +2246,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   ctx.emit({ t: 'hit', target: 'player', amount: dmg, dmgType: type, absorbed: absorbed || undefined, es: Math.round(toEs) || undefined, monsterUid: mon.uid });
   if (isCast && s.life > 0 && hasAscNode(s, 'anvil_shatter')) c.mech = meterMax('rage', d.raw);
   if (s.life > 0) riposte(s, ctx, d, mon, 'landed');
+  if (s.life > 0) fireTriggered(s, ctx, d, 'reprisal');
 }
 
 /** Any block, however it came about. */
@@ -2292,6 +2410,7 @@ function callMinions(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, aim
       max: st.count,
       reach: m.reach,
       tough: mods.specials.has('crustedhide') ? CRUSTED_HIDE : undefined,
+      shares: m.shares,
       taunts: m.taunts,
       attackMs: st.attackMs,
       stepMs: 0,
@@ -2387,20 +2506,50 @@ function minionStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
     x.attackMs = minionStats(d, nums).attackMs;
     minionStrike(s, ctx, d, nums, x, target);
   }
+  for (const x of c.minions) if (x.life <= 0) minionFalls(s, ctx, d, x);
   c.minions = c.minions.filter((x) => x.life > 0 && (x.remainingMs === undefined || x.remainingMs > 0));
+}
+
+/** What a fallen minion leaves behind. One whose gem left the bar just goes. */
+function minionFalls(s: GameState, ctx: Ctx, d: Derived, x: Minion): void {
+  const c = s.combat!;
+  const nums = callerNumbers(s, d, x.gemId);
+  if (!nums) return;
+  if (nums.mods.specials.has('dyingoath')) {
+    c.shield = Math.min(Math.max(c.shield, d.maxLife * DYING_OATH_CAP), c.shield + x.maxLife * DYING_OATH_SHARE);
+    c.shieldMax = Math.max(c.shieldMax, c.shield);
+  }
+  if (!nums.mods.specials.has('funeral')) return;
+  const cells = new Set(areaCells('splash', x.cell, 1));
+  const targets = aliveMonsters(c).filter((m) => cells.has(m.cell) && !m.martyr);
+  ctx.emit({ t: 'area', gemId: x.gemId, cells: [...cells] });
+  if (targets.length) proxyStrike(s, ctx, d, nums, targets, FUNERAL_MULT, true);
+}
+
+/** Whether a storm stays around you, not where it landed. */
+function stormAround(nums: SkillNumbers): boolean {
+  return !!nums.def.effect.storm!.anchored || nums.mods.specials.has('crowned');
+}
+
+/** The cells a storm covers with its centre on `center`. */
+function stormCells(nums: SkillNumbers, center: number): number[] {
+  const radius = nums.def.effect.radius;
+  if (!stormAround(nums)) return areaCells(skillArea(nums), center, radius);
+  return areaCells('nova', center, nums.mods.specials.has('crowned') ? Math.max(radius ?? 0, CROWNED_RINGS) : radius);
 }
 
 /** Lay a storm where the skill lands: past what the gem keeps up, the oldest blows out. */
 function raiseStorm(s: GameState, ctx: Ctx, nums: SkillNumbers, aimed?: MonsterInstance): void {
   const c = s.combat!;
   const { def } = nums;
-  if (!aimed) return;
+  if (!aimed && !stormAround(nums)) return;
+  const center = aimed?.cell ?? FRONT_CELL;
   const st = stormStats(nums);
   const storms = (c.storms ??= []);
   const mine = storms.filter((x) => x.gemId === def.id);
   if (mine.length >= st.max) c.storms = storms.filter((x) => !mine.slice(0, mine.length - st.max + 1).includes(x));
-  const cells = areaCells(skillArea(nums), aimed.cell, def.effect.radius);
-  c.storms!.push({ uid: newUid(s), gemId: def.id, center: aimed.cell, cells, max: st.max, pulseMs: 0, remainingMs: st.durationMs, durationMs: st.durationMs });
+  const cells = stormCells(nums, center);
+  c.storms!.push({ uid: newUid(s), gemId: def.id, center, cells, max: st.max, pulseMs: 0, remainingMs: st.durationMs, durationMs: st.durationMs });
   ctx.emit({ t: 'area', gemId: def.id, cells });
 }
 
@@ -2411,10 +2560,20 @@ function stormStrike(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, st:
   const inside = new Set(st.cells);
   const targets = aliveMonsters(c).filter((m) => inside.has(m.cell) && !m.martyr);
   if (targets.length) proxyStrike(s, ctx, d, nums, targets, 1, true);
+  if (nums.mods.specials.has('eyewall') && c.shield > 0) c.shield = Math.min(c.shieldMax, c.shield + c.shieldMax * EYEWALL_SHARE * targets.length);
+  if (nums.mods.specials.has('reaping')) st.remainingMs += REAPING_MS * targets.filter((m) => m.life <= 0).length;
   if (e.storm!.pull) drawIn(c.monsters, army(c), st.cells, st.center);
-  if (e.storm!.drift) {
+  if (e.storm!.drift && !stormAround(nums)) {
     st.center = driftCell(st.center, c.monsters);
-    st.cells = areaCells(skillArea(nums), st.center, e.radius);
+    st.cells = stormCells(nums, st.center);
+  }
+}
+
+/** Gale of Knives: storms that answer your attacks strike now. */
+function stormsAnswer(s: GameState, ctx: Ctx, d: Derived): void {
+  for (const st of s.combat!.storms ?? []) {
+    const nums = callerNumbers(s, d, st.gemId);
+    if (nums?.def.effect.storm!.onAttack) stormStrike(s, ctx, d, nums, st);
   }
 }
 
@@ -2426,7 +2585,7 @@ function stormStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
     st.remainingMs -= dt;
     st.pulseMs -= dt;
     const nums = callerNumbers(s, d, st.gemId);
-    if (!nums) st.remainingMs = 0;
+    if (!nums || (nums.def.effect.storm!.whileShield && c.shield <= 0)) st.remainingMs = 0;
     else if (st.pulseMs <= 0) {
       st.pulseMs += stormStats(nums).everyMs;
       stormStrike(s, ctx, d, nums, st);
@@ -2473,7 +2632,10 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
   if (mon.shockMs) mon.shockMs = Math.max(0, mon.shockMs - dt);
   if (mon.curse) {
     mon.curse.remainingMs -= dt;
-    if (mon.curse.remainingMs <= 0) mon.curse = undefined;
+    if (mon.curse.remainingMs <= 0) {
+      collectDebt(s, ctx, mon, mon);
+      mon.curse = undefined;
+    }
   }
   if (mon.isBoss) bossPhases(s, ctx, d, mon, dt);
   // any stun or freeze, whatever it came from, breaks a channel
@@ -2698,7 +2860,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   for (const b of c.buffs) b.remainingMs -= dt;
   const expired = c.buffs.filter((b) => b.remainingMs <= 0);
   c.buffs = c.buffs.filter((b) => b.remainingMs > 0);
-  if (expired.some((b) => b.source === 'skill' && SHIELD_SKILLS.includes(b.id))) {
+  if (!c.holdShield && expired.some((b) => b.source === 'skill' && SHIELD_SKILLS.includes(b.id))) {
     c.shield = 0;
     c.glacial = false;
     c.barbedWard = undefined;
