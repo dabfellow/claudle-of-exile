@@ -375,7 +375,7 @@ export function BenchPage() {
                   )}
                   {whetstones > 0 && (
                     <>
-                      <div className="section-label">Ancient Whetstone ×{whetstones} · raise one modifier a tier, as far as the item level allows. Its values reroll within the new tier</div>
+                      <div className="section-label">Ancient Whetstone ×{whetstones} · raise one modifier a tier, as far as the item level allows. Its values reroll within the new tier. One per item, for as long as that modifier stays</div>
                       <div className="fossil-chips" style={{ marginTop: 0, marginBottom: 10 }}>
                         {item && allMods(item).length ? (
                           allMods(item).map((m) => {

@@ -152,8 +152,8 @@ export function takeImpression(s: GameState, ctx: Ctx, uid: number): string | nu
   const reason = impressionReason(s, uid);
   if (reason) return reason;
   const item = findItem(s, uid)!;
-  const { rarity, name, prefixes, suffixes } = item;
-  item.impression = structuredClone({ rarity, name, prefixes, suffixes });
+  const { rarity, name, prefixes, suffixes, honed } = item;
+  item.impression = structuredClone({ rarity, name, prefixes, suffixes, honed });
   s.bank[WAX] -= 1;
   ctx.emit({ t: 'craft', text: `Impression of ${itemName(item)}`, uid });
   return null;
@@ -186,6 +186,7 @@ export function whetstoneReason(s: GameState, uid: number, affixId: string): str
   if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
   const mod = allMods(item).find((m) => m.affixId === affixId);
   if (!mod) return 'That modifier is not on this item';
+  if (item.honed && allMods(item).some((m) => m.affixId === item.honed)) return 'This item already has a honed modifier';
   if (mod.crafted) return 'Bench crafts cannot be raised';
   const next = affixDef(affixId).tiers[mod.tier + 1];
   if (!next) return 'Already the top tier';
@@ -200,6 +201,7 @@ export function applyWhetstone(s: GameState, ctx: Ctx, uid: number, affixId: str
   const item = findItem(s, uid)!;
   const mod = allMods(item).find((m) => m.affixId === affixId)!;
   mod.tier += 1;
+  item.honed = affixId;
   mod.values = affixDef(affixId).tiers[mod.tier].ranges.map(([lo, hi]) => rInt(ctx.rng, lo, hi));
   s.bank[WHETSTONE] -= 1;
   s.lifetime.orbsUsed += 1;

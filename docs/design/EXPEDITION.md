@@ -51,7 +51,8 @@ than anything else in the game, and it has no ticket to buy.
 
 - **Ancient Whetstone:** the first craft that makes a mod better without rolling for it. It can't go past what the item
   level allows, so an old item with room to grow is what it wants. The new tier's values still roll, and they replace the
-  old ones. It doesn't work on uniques or bench crafts. It drops rarely from Act 4 monsters and bosses, so nothing here
+  old ones. An item holds one honed mod, and a new one can go on only once that mod has left the item, so it finishes an item
+  without becoming a riskless road to a perfect one. It doesn't work on uniques or bench crafts. It drops rarely from Act 4 monsters and bosses, so nothing here
   needs the skill.
 - **Choosing your currency:** every other source gives you what it gives you. Artifacts are a stored choice, spent on the
   exact orb or material you're short of. That covers any Fossil, the Greater Essences that Deep and Sainted runes want,

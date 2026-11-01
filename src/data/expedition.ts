@@ -170,5 +170,5 @@ export function hasWare(id: string): boolean {
 
 export const EXPEDITION_MATERIALS: MaterialDef[] = [
   ...CULTURES.map((c): MaterialDef => ({ id: c.artifact, name: c.artifactName, kind: 'artifact', color: c.color, value: 1, desc: `${c.merchant} trades these for goods. Dug up by Archaeology.` })),
-  { id: WHETSTONE, name: 'Ancient Whetstone', kind: 'artifact', color: '#a8c8f8', value: 150, desc: 'Raises one modifier you pick by one tier, as far as the item level allows.' },
+  { id: WHETSTONE, name: 'Ancient Whetstone', kind: 'artifact', color: '#a8c8f8', value: 150, desc: 'Raises one modifier you pick by one tier, as far as the item level allows. One per item.' },
 ];

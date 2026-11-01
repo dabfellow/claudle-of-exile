@@ -112,9 +112,11 @@ export interface Item {
   suffixes: RolledMod[];
   uniqueId?: string;
   /** Locksmith's Wax: how the item looked when the impression was taken, ready to restore */
-  impression?: Pick<Item, 'rarity' | 'name' | 'prefixes' | 'suffixes'>;
+  impression?: Pick<Item, 'rarity' | 'name' | 'prefixes' | 'suffixes' | 'honed'>;
   /** the one rune slot (docs/design/RUNES.md): a rune id, apart from the modifiers, so no orb touches it */
   rune?: string;
+  /** Ancient Whetstone: the affix id it last raised. Only counts while that modifier is on the item */
+  honed?: string;
 }
 
 export type InstillCondition = 'lowLife' | 'fullCharges' | 'bossCast';

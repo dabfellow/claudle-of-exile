@@ -3,7 +3,7 @@ import { CULTURES, digChance, EXPEDITION_GATE, findDigs, MAX_STANDING, SITES, si
 import { actionDef, actionsFor, SKILLS, UPCOMING_SKILLS } from '../src/data/skills';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import type { Ctx } from '../src/engine/context';
-import { applyWhetstone, whetstoneReason } from '../src/engine/crafting';
+import { applyWhetstone, restoreImpression, takeImpression, whetstoneReason } from '../src/engine/crafting';
 import { artifactsPerDig, buyWare, expeditionOpen, fillOrders, setOrder, shelvesFor, siteStratum, standing, stratumProgress, warePrice, wareLeft, wareReason } from '../src/engine/expedition';
 import { allMods, createItem } from '../src/engine/items';
 import { focusOf, hasMinigame, minigameSwing } from '../src/engine/minigame';
@@ -304,6 +304,34 @@ describe('Ancient Whetstone', () => {
     mod.crafted = false;
     item.rarity = 'unique';
     expect(whetstoneReason(s, item.uid, mod.affixId)).toMatch(/unique/);
+  });
+
+  it('honed once per item, until that modifier leaves', () => {
+    const item = rare();
+    const s = bench(item);
+    s.bank[WHETSTONE] = 3;
+    const [mod, other] = allMods(item);
+    mod.tier = other.tier = 0;
+    expect(applyWhetstone(s, ctx(), item.uid, mod.affixId)).toBeNull();
+    expect(whetstoneReason(s, item.uid, other.affixId)).toMatch(/already has a honed/);
+    expect(whetstoneReason(s, item.uid, mod.affixId)).toMatch(/already has a honed/);
+    item.prefixes = item.prefixes.filter((m) => m.affixId !== mod.affixId);
+    item.suffixes = item.suffixes.filter((m) => m.affixId !== mod.affixId);
+    expect(whetstoneReason(s, item.uid, other.affixId)).toBeNull();
+  });
+
+  it('Wax puts the item back to before it was honed', () => {
+    const item = rare();
+    const s = bench(item);
+    s.bank.locksmiths_wax = 1;
+    const mod = allMods(item)[0];
+    mod.tier = 0;
+    takeImpression(s, ctx(), item.uid);
+    applyWhetstone(s, ctx(), item.uid, mod.affixId);
+    expect(item.honed).toBe(mod.affixId);
+    restoreImpression(s, ctx(), item.uid);
+    expect(item.honed).toBeUndefined();
+    expect(allMods(item)[0].tier).toBe(0);
   });
 
   it('needs a Whetstone', () => {
