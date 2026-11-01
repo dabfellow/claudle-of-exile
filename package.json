@@ -1,7 +1,7 @@
 {
   "name": "path-of-idle",
   "private": true,
-  "version": "0.2.38",
+  "version": "0.2.39",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "sim": "vite-node scripts/sim.ts",
     "art": "vite-node scripts/art.ts",
+    "uniques": "vite-node scripts/uniques.ts",
     "deploy": "npm run build && cf deploy"
   },
   "dependencies": {

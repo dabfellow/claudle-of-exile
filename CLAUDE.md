@@ -4,6 +4,10 @@
 
 The version in `package.json` shows under the title in the game's sidebar, so you can tell a refresh picked up the latest build. Bump the patch number (0.2.3 → 0.2.4, and in `package-lock.json`) in every commit that changes the game, and before every push or deploy.
 
+## Unique items list
+
+[docs/UNIQUES.md](docs/UNIQUES.md) is the running list of every unique: mods, base and where it drops. It's generated, so run `npm run uniques` after adding or changing a unique or a drop pool, and commit the result. A test fails if it's stale.
+
 ## Milestones and to-do tracking
 
 The plan, decisions, task list and history all live in [docs/MILESTONES.md](docs/MILESTONES.md).
