@@ -7,6 +7,7 @@ import { makeCtx, type Ctx } from '../src/engine/context';
 import { applyOrb, impressionReason, orbReason, restoreImpression, restoreReason, takeImpression } from '../src/engine/crafting';
 import { alarmChance, alarmKeeps, bestMark, cleanChance, crewSlots, heistStep, jobBlocker, jobCost, jobExit, rankUpRogue, rogueReason, setJobExit, startHeist, stopHeistRepeat, toggleCrew } from '../src/engine/heist';
 import { allMods, createItem, modCount } from '../src/engine/items';
+import { focusOf, minigameSwing } from '../src/engine/minigame';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded, type Rng } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -37,6 +38,40 @@ function clearRoom(s: GameState, c: Ctx): void {
   s.action.progress = 1e9;
   heistStep(s, c, 1, deriveStats(s));
 }
+
+describe('Focus on a job', () => {
+  const job = HEIST_JOBS[0];
+  const underWay = () => {
+    const s = thief(job.level, 100);
+    expect(startHeist(s, ctx(), job.id)).toBeNull();
+    return s;
+  };
+  const progressAfter = (s: GameState, c: Ctx) => {
+    if (s.action?.kind !== 'heist') throw new Error('no job under way');
+    s.action.progress = 0;
+    heistStep(s, c, 100, deriveStats(s));
+    return s.action.progress;
+  };
+
+  it('speeds up rooms online, not offline, and leaves the alarm alone', () => {
+    const s = underWay();
+    const alarm = alarmChance(s, job, 1);
+    for (let i = 0; i < 4; i++) minigameSwing(s, 'hit');
+    expect(progressAfter(s, ctx())).toBeGreaterThan(100);
+    expect(alarmChance(s, job, 1)).toBe(alarm);
+    expect(progressAfter(s, { ...ctx(), offline: true })).toBe(100);
+    expect(focusOf(s)).toBe(0);
+  });
+
+  it('carries over when a repeat starts the next job', () => {
+    const s = underWay();
+    for (let i = 0; i < 4; i++) minigameSwing(s, 'hit');
+    const safe = fixed(0.999);
+    for (let i = 0; i < jobExit(s, job); i++) clearRoom(s, safe);
+    expect(s.action?.kind).toBe('heist');
+    expect(focusOf(s)).toBeGreaterThan(0);
+  });
+});
 
 const rareItem = (s: GameState, seed = 1): Item => {
   const item = createItem(s, 'iron_ring', 30, 'rare', seeded(seed));
