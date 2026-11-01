@@ -232,6 +232,14 @@ const MIGRATIONS: Record<number, Migration> = {
     s.ascendancy ??= newAscendancyState();
     if (s.combat) s.combat.asc ??= newAscendancyRuntime();
   },
+  23: (raw) => {
+    // the DPS meter arrived: a fight in progress starts it from nothing
+    const s = raw as unknown as GameState;
+    if (s.combat) {
+      s.combat.dealt ??= [0];
+      s.combat.dealtMs ??= 0;
+    }
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

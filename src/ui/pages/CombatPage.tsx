@@ -10,6 +10,7 @@ import {
   challengeBoss,
   currentMovement,
   focusTarget,
+  liveDps,
   lockTarget,
   mitigate,
   nextArrivalMs,
@@ -177,7 +178,7 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
         <div>
           <div className="fighter-name">{s.character.name}</div>
           <div className="muted" style={{ fontSize: 12 }}>
-            Level {d.combatLevel} · {d.dps.toFixed(1)} DPS
+            Level {d.combatLevel} · {fmt(liveDps(c))} DPS
           </div>
         </div>
       </div>
@@ -606,6 +607,7 @@ function Matchup({ s, d }: { s: GameState; d: Derived }) {
   const slam = target.isBoss ? mitigate(d, target.damage * BOSS_SLAM_MULT, target.dmgType) : 0;
   const nova = target.isBoss ? mitigate(d, target.damage * BOSS_NOVA_MULT, target.novaType) : 0;
   const theirDps = (perHit * (1 - evade)) / (target.attackMs / 1000);
+  const dps = s.combat ? liveDps(s.combat) : 0;
   const yourDefence = target.dmgType === 'phys' ? `${fmt(d.armour)} armour` : `${d.res[target.dmgType]}% resist`;
   return (
     <div className="matchup">
@@ -619,7 +621,7 @@ function Matchup({ s, d }: { s: GameState; d: Derived }) {
         good={d.combatLevel >= target.level ? true : target.level - d.combatLevel > 3 ? false : null}
       />
       <StatRow label="Life" you={d.maxEs ? `${fmt(d.maxLife)} + ${fmt(d.maxEs)} ES` : fmt(d.maxLife)} them={`${fmt(Math.max(0, target.life))} / ${fmt(target.maxLife)}`} />
-      <StatRow label="Damage / sec" you={d.dps.toFixed(1)} them={theirDps.toFixed(1)} good={d.dps > theirDps * 1.5} />
+      <StatRow label="Damage / sec" you={fmt(dps)} them={theirDps.toFixed(1)} good={dps ? dps > theirDps * 1.5 : null} />
       <StatRow label="Chance to hit" you={`${Math.round(hit * 100)}%`} them={`${Math.round((1 - evade) * 100)}%`} />
       <StatRow label="Their hit on you" you={yourDefence} them={`${fmt(perHit)} ${DMG_NAME[target.dmgType].toLowerCase()}`} good={perHit < (d.maxLife + d.maxEs) * 0.1} />
       <StatRow label="Their resistances" you="" them={`${target.res.fire}/${target.res.cold}/${target.res.light}% F/C/L`} />
@@ -678,7 +680,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
               </button>
             }
           >
-            Max Life {fmt(d.maxLife)}{d.maxEs ? ` + ${fmt(d.maxEs)} ES` : ''} · {d.dps.toFixed(1)} DPS · {fmt(d.armour)} Armour · {fmt(d.evasion)} Evasion
+            Max Life {fmt(d.maxLife)}{d.maxEs ? ` + ${fmt(d.maxEs)} ES` : ''} · {fmt(d.armour)} Armour · {fmt(d.evasion)} Evasion
           </EmptyState>
         </div>
         {s.offlineHaul.length > 0 && <LootPile s={s} pile="offlineHaul" />}

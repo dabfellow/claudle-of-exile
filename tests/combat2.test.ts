@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { activeGemDef } from '../src/data/gems';
 import { zoneDef } from '../src/data/zones';
-import { aliveMonsters, chooseSkill, combatStep, makeMonster, queueSkill, ruleAllows, ruleContext, startCombat } from '../src/engine/combat';
+import { aliveMonsters, chooseSkill, combatStep, DPS_WINDOW_S, liveDps, makeMonster, queueSkill, ruleAllows, ruleContext, startCombat } from '../src/engine/combat';
 import { unlockEverything } from '../src/engine/automation';
 import { makeCtx } from '../src/engine/context';
 import {
@@ -20,7 +20,7 @@ import {
   supportSlots,
 } from '../src/engine/gems';
 import { seeded } from '../src/engine/rng';
-import { deserialize } from '../src/engine/save';
+import { deserialize, serialize } from '../src/engine/save';
 import { newGame, SAVE_VERSION, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameState, MonsterInstance } from '../src/engine/types';
@@ -168,6 +168,48 @@ describe('tactics', () => {
     expect(chooseSkill(s, d).nums.def.id).toBe('heavy_strike');
     expect(queueSkill(s, 1)).toBeNull();
     expect(chooseSkill(s, d).nums.def.id).toBe('war_cry');
+  });
+});
+
+describe('DPS meter', () => {
+  const lost = (s: GameState) => s.combat!.monsters.reduce((a, m) => a + m.maxLife - m.life, 0);
+
+  it('counts every monster hit, for skills as well as the default attack', () => {
+    const { s, c } = arena(['ground_slam'], [dummy(), dummy(), dummy()]);
+    run(s, c, 5000);
+    expect(lost(s)).toBeGreaterThan(0);
+    expect(s.combat!.dealt.reduce((a, n) => a + n, 0)).toBeCloseTo(lost(s));
+    expect(liveDps(s.combat!)).toBeCloseTo(lost(s) / 5, 0);
+  });
+
+  it('counts damage over time', () => {
+    const { s, c } = arena([], [dummy()]);
+    const mon = s.combat!.monsters[0];
+    mon.cell = 0;
+    mon.dots = [{ kind: 'poison', dps: 100, remainingMs: 2000, dealt: 0, gemId: 'default_attack' }];
+    s.combat!.actionMs = 1e9;
+    run(s, c, 2000);
+    expect(s.combat!.dealt.reduce((a, n) => a + n, 0)).toBeCloseTo(200, 0);
+  });
+
+  it('only looks back over the last 10 seconds', () => {
+    const { s, c } = arena([], [dummy(1e9)]);
+    s.combat!.dealt = [5000];
+    s.combat!.actionMs = 1e9;
+    run(s, c, 12000);
+    expect(s.combat!.dealt).toHaveLength(DPS_WINDOW_S);
+    expect(liveDps(s.combat!)).toBe(0);
+  });
+
+  it('starts from nothing for a fight saved before it', () => {
+    const { s } = arena([], [dummy()]);
+    const raw = JSON.parse(serialize(s));
+    raw.version = 23;
+    delete raw.combat.dealt;
+    delete raw.combat.dealtMs;
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.combat!.dealt).toEqual([0]);
+    expect(loaded.combat!.dealtMs).toBe(0);
   });
 });
 

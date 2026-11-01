@@ -192,6 +192,6 @@ export function salvageValue(item: Item): number {
 }
 
 export function sellValue(item: Item): number {
-  const r = { normal: 2, magic: 6, rare: 16, unique: 60 }[item.rarity];
+  const r = { normal: 3, magic: 9, rare: 24, unique: 90 }[item.rarity];
   return Math.round(r * (1 + item.ilvl / 8));
 }

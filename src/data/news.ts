@@ -8,6 +8,16 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.10',
+    date: '31 Oct 2026',
+    title: 'A DPS number you can trust',
+    items: [
+      'DPS in combat now shows the damage you actually dealt over the last 10 seconds: skills, ailments, ground effects and all.',
+      'Gear sells for 50% more gold in Town.',
+      'News now shows on the character screen too, so signed-in players see it.',
+    ],
+  },
+  {
     version: '0.2.9',
     date: '31 Oct 2026',
     title: 'Salvage by rarity',

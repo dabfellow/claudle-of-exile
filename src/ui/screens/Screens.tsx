@@ -373,43 +373,46 @@ function AccountSummary() {
 export function CharacterSelect() {
   useGame();
   return (
-    <ScreenShell>
-      <div className="grid" style={{ gap: 12 }}>
-        <div className="row wrap">
-          <h2 style={{ fontSize: 20 }}>Choose your exile</h2>
-          <span className="spacer" />
-          <AccountBadge />
-          <button className="btn ghost sm" onClick={leaveAccount}>
-            {isCloudAccount(game.account) ? 'Sign out' : 'Title'}
-          </button>
-        </div>
-        {game.guestCharacters.length > 0 && (
-          <div className="card guest-banner">
-            <div>
-              <b>
-                {game.guestCharacters.length} guest character{game.guestCharacters.length === 1 ? '' : 's'} on this browser
-              </b>
-              <div className="dim" style={{ fontSize: 12 }}>
-                {game.guestCharacters.map((c) => c.name).join(', ')} — move them to your account to keep them in the cloud.
-              </div>
-            </div>
-            <button className="btn primary sm" onClick={() => game.adoptGuestCharacters()}>
-              Move to my account
+    <ScreenShell wide>
+      <div className="title-layout">
+        <div className="grid" style={{ gap: 12 }}>
+          <div className="row wrap">
+            <h2 style={{ fontSize: 20 }}>Choose your exile</h2>
+            <span className="spacer" />
+            <AccountBadge />
+            <button className="btn ghost sm" onClick={leaveAccount}>
+              {isCloudAccount(game.account) ? 'Sign out' : 'Title'}
             </button>
           </div>
-        )}
-        {game.characters.length === 0 && game.guestCharacters.length > 0 && (
-          <div className="dim" style={{ textAlign: 'center', fontSize: 'var(--fs-sm)' }}>
-            No characters on this account yet.
-          </div>
-        )}
-        {game.characters.map((c) => (
-          <CharacterCard key={c.id} c={c} />
-        ))}
-        {game.characters.length > 0 && <AccountSummary />}
-        <button className="btn lg new-char" onClick={() => game.setScreen('create')}>
-          <Icon name="plus" size={16} /> New Character
-        </button>
+          {game.guestCharacters.length > 0 && (
+            <div className="card guest-banner">
+              <div>
+                <b>
+                  {game.guestCharacters.length} guest character{game.guestCharacters.length === 1 ? '' : 's'} on this browser
+                </b>
+                <div className="dim" style={{ fontSize: 12 }}>
+                  {game.guestCharacters.map((c) => c.name).join(', ')} — move them to your account to keep them in the cloud.
+                </div>
+              </div>
+              <button className="btn primary sm" onClick={() => game.adoptGuestCharacters()}>
+                Move to my account
+              </button>
+            </div>
+          )}
+          {game.characters.length === 0 && game.guestCharacters.length > 0 && (
+            <div className="dim" style={{ textAlign: 'center', fontSize: 'var(--fs-sm)' }}>
+              No characters on this account yet.
+            </div>
+          )}
+          {game.characters.map((c) => (
+            <CharacterCard key={c.id} c={c} />
+          ))}
+          {game.characters.length > 0 && <AccountSummary />}
+          <button className="btn lg new-char" onClick={() => game.setScreen('create')}>
+            <Icon name="plus" size={16} /> New Character
+          </button>
+        </div>
+        <NewsCard />
       </div>
     </ScreenShell>
   );

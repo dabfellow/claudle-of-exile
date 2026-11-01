@@ -187,6 +187,8 @@ function newRuntime(zoneId: string): CombatRuntime {
     ground: [],
     groundAcc: 0,
     groundTimer: 0,
+    dealt: [0],
+    dealtMs: 0,
   };
 }
 
@@ -521,7 +523,7 @@ function alchemistDrink(s: GameState, ctx: Ctx, d: Derived, effectMult: number):
   for (const m of aliveMonsters(c)) {
     if (m !== target && !near.has(m.cell)) continue;
     const amount = Math.max(1, Math.round(burst * (1 - m.res.fire / 100)));
-    damageMonster(m, amount);
+    damageMonster(s, m, amount);
     ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'fire', monsterUid: m.uid });
   }
 }
@@ -991,9 +993,29 @@ function shielded(mon: MonsterInstance): boolean {
   return !!mon.chained || !!mon.martyr;
 }
 
+/** How many seconds of damage the DPS meter looks back over. */
+export const DPS_WINDOW_S = 10;
+
+/** Damage per second actually dealt lately: hits, skills, ailments, ground and the rest, with the walking between packs. */
+export function liveDps(c: CombatRuntime): number {
+  const total = c.dealt.reduce((a, n) => a + n, 0);
+  return total / Math.max(1, c.dealt.length - 1 + c.dealtMs / 1000);
+}
+
+function tickDpsMeter(c: CombatRuntime, dt: number): void {
+  c.dealtMs += dt;
+  while (c.dealtMs >= 1000) {
+    c.dealtMs -= 1000;
+    c.dealt.push(0);
+    if (c.dealt.length > DPS_WINDOW_S) c.dealt.shift();
+  }
+}
+
 /** Take life from a monster, through its ward first. */
-function damageMonster(mon: MonsterInstance, amount: number, direct = false): void {
+function damageMonster(s: GameState, mon: MonsterInstance, amount: number, direct = false): void {
   if (mon.chained || (mon.martyr && !direct)) return;
+  const dealt = s.combat?.dealt;
+  if (dealt) dealt[dealt.length - 1] += amount;
   if (mon.ward > 0) {
     const absorbed = Math.min(mon.ward, amount);
     mon.ward -= absorbed;
@@ -1085,7 +1107,7 @@ function hitMonster(
   if (new Set(mon.dots.map((x) => x.kind)).size >= 2) dealt *= 1 + r.multiAilmentVuln / 100;
   if (coup && mon.life < mon.maxLife / 2 && hasAscNode(s, 'headsman_sharp_axe')) dealt *= 1 + SHARP_AXE_MORE / 100;
   dealt = Math.max(1, Math.round(dealt));
-  damageMonster(mon, dealt, true);
+  damageMonster(s, mon, dealt, true);
   if (coup) afterCoup(s, ctx, d, mon);
   if (crit && r.critLeech) s.life = Math.min(d.maxLife, s.life + (dealt * r.critLeech) / 100);
   if (mon.life < 0 && r.overkillHeal) s.life = Math.min(d.maxLife, s.life + (-mon.life * r.overkillHeal) / 100);
@@ -1170,7 +1192,7 @@ function consumeBleed(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mo
   if (!bleed || shielded(mon)) return;
   mon.dots = mon.dots.filter((x) => x !== bleed);
   const left = (bleedDps(mon, bleed) * bleed.remainingMs) / 1000;
-  damageMonster(mon, left);
+  damageMonster(s, mon, left);
   ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(left), dmgType: 'phys', dot: true, monsterUid: mon.uid });
   const back = Math.min((left * nums.def.effect.consumeBleed!) / 100, d.maxLife * TRANSFUSION_CAP);
   s.life = Math.min(d.maxLife, s.life + back);
@@ -1456,7 +1478,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   if (ignite?.pyre) {
     for (const m of aliveMonsters(c).filter((x) => !shielded(x))) {
       const amount = Math.max(1, Math.round(mon.maxLife * 0.1 * (1 - m.res.fire / 100)));
-      damageMonster(m, amount);
+      damageMonster(s, m, amount);
       ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'fire', monsterUid: m.uid });
     }
   }
@@ -1593,7 +1615,7 @@ function holyNova(s: GameState, ctx: Ctx, d: Derived, filled: number, count: num
   const dawn = count >= NOVA_STORE && hasAscNode(s, 'lightkeeper_dawn');
   for (const m of aliveMonsters(c).filter((x) => !shielded(x))) {
     const amount = Math.max(1, Math.round(dmg * (1 - m.res.light / 100)));
-    damageMonster(m, amount);
+    damageMonster(s, m, amount);
     ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'light', monsterUid: m.uid });
     if (beacon) m.vulnMs = Math.max(m.vulnMs, 4000);
     if (dawn) m.stunMs = Math.max(m.stunMs, m.isBoss ? 400 : 1000);
@@ -1649,7 +1671,7 @@ function anvilAnswer(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): 
   gainMeter(s, d, 1 + (hasAscNode(s, 'anvil_hold_the_line') ? HOLD_THE_LINE_RAGE * ring1 : 0));
   if (mon.life <= 0) return;
   const amount = Math.max(1, Math.round(d.armour * (ANVIL_THORNS_PCT / 100) * (1 + ANVIL_THORNS_PER_RAGE * c.mech)));
-  damageMonster(mon, amount);
+  damageMonster(s, mon, amount);
   ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: mon.uid });
   if (meterFull(s, d) && hasAscNode(s, 'anvil_unmoved')) mon.stunMs = Math.max(mon.stunMs, mon.isBoss ? 400 : 1000);
 }
@@ -1668,7 +1690,7 @@ function afterCoup(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): vo
   const kinds = new Set(mon.dots.map((x) => x.kind)).size;
   const left = mon.dots.reduce((a, x) => a + (x.dps * x.remainingMs) / 1000, 0);
   const burst = Math.round(left * (hasAscNode(s, 'plaguewright_bloom') ? 1 + (BLOOM_MORE * kinds) / 100 : 1));
-  damageMonster(mon, burst);
+  damageMonster(s, mon, burst);
   ctx.emit({ t: 'hit', target: 'monster', amount: burst, crit: true, dmgType: 'phys', monsterUid: mon.uid });
   if (hasAscNode(s, 'plaguewright_pandemic')) {
     const ring = cellRing(mon.cell);
@@ -1830,7 +1852,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
       c.glacial = false;
     }
     if (c.shield <= 0 && c.barbedWard) {
-      damageMonster(mon, c.barbedWard);
+      damageMonster(s, mon, c.barbedWard);
       ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(c.barbedWard), dmgType: 'phys', monsterUid: mon.uid });
       c.barbedWard = undefined;
     }
@@ -1919,7 +1941,7 @@ function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
     for (const m of aliveMonsters(c)) {
       if (m.cell !== g.cell || shielded(m)) continue;
       const dmg = ((g.dps * t) / 1000) * (type === 'phys' ? 1 : 1 - m.res[type] / 100);
-      damageMonster(m, dmg);
+      damageMonster(s, m, dmg);
       m.dotAcc += dmg;
       if (g.kind === 'chilled') m.chillMs = Math.max(m.chillMs, 500);
       if (g.kind === 'shocked') m.vulnMs = Math.max(m.vulnMs, 500);
@@ -1947,13 +1969,13 @@ function tickDots(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
     for (const dot of m.dots) {
       const t = Math.min(dt, dot.remainingMs);
       const dmg = shielded(m) ? 0 : (bleedDps(m, dot) * t) / 1000;
-      damageMonster(m, dmg);
+      damageMonster(s, m, dmg);
       m.dotAcc += dmg;
       dot.dealt += dmg;
       dot.remainingMs -= dt;
       if (dot.remainingMs <= 0 && dot.burst && dot.dealt > 0) {
         const burst = dot.dealt * dot.burst;
-        damageMonster(m, burst);
+        damageMonster(s, m, burst);
         ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(burst), crit: true, dmgType: 'phys', monsterUid: m.uid });
       }
     }
@@ -2119,6 +2141,7 @@ function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt:
 export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): boolean {
   const c = s.combat;
   if (!c) return false;
+  tickDpsMeter(c, dt);
 
   // timers, buffs and recovery
   for (const b of c.buffs) b.remainingMs -= dt;
