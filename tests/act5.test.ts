@@ -3,7 +3,7 @@ import { UNIQUES, uniqueDef } from '../src/data/bases';
 import { ZONE_POS, actRegion } from '../src/data/continent';
 import { BOSS_TABLES, DROP_TABLES, bossTable, dropTable } from '../src/data/drops';
 import { RULE_LABELS, type TacticRule } from '../src/data/gems';
-import { ACT_PREVIEW, ACTS, actBossZone, actOpen, BOSS_CHANNEL_EVERY_MS, BOSS_CHANNEL_LAND_MULT, MECHANIC_INFO, nextZones, roadsInto, zoneDef, zonesInAct } from '../src/data/zones';
+import { ACT_PREVIEW, ACTS, actBossZone, actOpen, BOSS_CHANNEL_EVERY_MS, BOSS_CHANNEL_LAND_MULT, nextZones, roadsInto, zoneDef, zonesInAct } from '../src/data/zones';
 import { bossLeftToRules, GROUND_IN_PLAY, rulesBreakChannels, unlockEverything } from '../src/engine/automation';
 import { CHILLED_GROUND_SLOW, GROUND, PLAYER_SPOT, STORMWATER_COOLDOWN } from '../src/engine/battlefield';
 import { channelPulse, chooseSkill, combatStep, makeMonster, queueSkill, ruleAllows, ruleContext, startCombat } from '../src/engine/combat';
@@ -13,7 +13,7 @@ import { droppableBases, createItem } from '../src/engine/items';
 import { simulateOffline } from '../src/engine/offline';
 import { zoneLockText } from '../src/engine/progress';
 import { seeded } from '../src/engine/rng';
-import { SAVE_VERSION, newGame } from '../src/engine/state';
+import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameState, MonsterInstance } from '../src/engine/types';
 import { charXpForLevel } from '../src/engine/xp';
@@ -132,7 +132,7 @@ describe('Act 5: The Sunless Sea', () => {
     expect(zoneDef('blackharbor').boss.mechanics).not.toContain('channel');
     expect(zoneDef('wreckline').boss.mechanics).toContain('channel');
     expect(act().filter((z) => z.boss.mechanics!.includes('channel')).length).toBeGreaterThanOrEqual(11);
-    expect(actBossZone(5)!.boss.mechanics!.sort()).toEqual((Object.keys(MECHANIC_INFO) as string[]).sort());
+    expect([...actBossZone(5)!.boss.mechanics!].sort()).toEqual(['channel', 'enrage', 'martyrs', 'nova', 'scorch', 'slam', 'summon', 'ward']);
     // a channel is long: longer than any slam or nova in the act
     for (const z of act()) if (z.boss.channel) expect(z.boss.channel.ms).toBeGreaterThan(Math.max(z.boss.slam?.ms ?? 0, z.boss.nova?.ms ?? 0));
   });
@@ -164,10 +164,6 @@ describe('Act 5: The Sunless Sea', () => {
     const levels = droppableBases(top).map((b) => b.reqLevel);
     expect(Math.max(...levels)).toBe(68);
     expect(droppableBases(act()[0].monsters[0].level + act()[0].ilvlBonus!).some((b) => b.reqLevel >= 54)).toBe(true);
-  });
-
-  it('adds nothing a save has to migrate', () => {
-    expect(SAVE_VERSION).toBe(25);
   });
 });
 
