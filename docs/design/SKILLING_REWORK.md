@@ -21,7 +21,7 @@ The rework gives skilling a clear job: **combat finds things, skilling makes thi
 A finished item usually takes both: smith the base, steer it with skilling materials, finish it with a combat orb.
 
 Rules this keeps:
-- **Idle, decisions only.** Depth comes from *what* you gather and *what* you target. Nothing needs clicking mid-action, and offline is worth the same as online.
+- **Idle by default, faster by hand.** Depth comes from *what* you gather and *what* you target. Nothing needs clicking mid-action and offline is worth the same as idling online; playing a mini-game only adds on top (§9).
 - **Light crossover.** Each loop can progress through a band on its own. Some things move both ways, but neither *needs* the other.
 - **Built in bands.** What exists now is the Lv 1–20 baseline. Everything below is a template that repeats each band; this doc fills in Lv 1–20 only.
 
@@ -234,6 +234,19 @@ game system and also produces materials for the crafting economy (reset, 2026-10
 - **Fletching → Quivers.** Shafts from logs into quivers (quivers don't exist yet).
 - **Runecrafting → Rune-carving.** Built: see [RUNES.md](RUNES.md).
 - Skipped: Cooking, Firemaking, Farming, Summoning, Agility, Astrology, Township (no PoE hook, or overlap with flasks and the trees).
+
+## 9. Mini-games (2026-10-31)
+
+Manual is always better than idle, and idle is unchanged. Playing fills **Focus** (0–100%), worth up to **+30%** speed on
+top of everything else, so materials, drops and XP all rise together. It's in `src/engine/minigame.ts`.
+
+- Hit +25%, weak hit +10%, miss -10%, drain 10% a second. Misses can't push speed below idle; a missed target that just
+  fades costs nothing beyond the drain. Offline ignores Focus and clears it.
+- **Mining:** hold to charge, release in a band that shifts each swing. Early is a weak hit, late is a miss.
+- **Woodcutting:** swing while a sweeping marker is in the band.
+- **Foraging:** click herbs before they wilt.
+- Thieving and production aren't built. The plan is a timing bar shared by production, reskinned per skill, and a
+  tumbler game for Thieving.
 
 ## Open questions
 

@@ -16,6 +16,7 @@ import { game, useGame, useGameEvent } from '../../game';
 import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/common';
 import { HeistBoard } from '../components/HeistBoard';
 import { RuneBoard } from '../components/RuneBoard';
+import { SkillMinigame } from '../components/SkillMinigame';
 import { Icon, Orb, Swatch } from '../components/Icon';
 
 const START_LABEL: Record<SkillId, string> = {
@@ -410,6 +411,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
   return (
     <div className="page">
       <SkillHeader skill={skill} />
+      <SkillMinigame skill={skill} />
       {skill === 'smithing' && (
         <div className="callout skill-note">
           Smithed bases are item level <b>{smithIlvl(s, resinBonus(s))}</b> — higher item level unlocks better modifier tiers when crafting.

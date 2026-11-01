@@ -13,6 +13,7 @@ import { benchBuilt } from './crafting';
 import { newFlask, rerollMagic, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { markerBoost } from './heist';
+import { focusMult, focusStep } from './minigame';
 import { bagFull, dropItem } from './storage';
 import { allMods, createItem, salvageValue } from './items';
 import { gemArrived } from './progress';
@@ -275,7 +276,8 @@ export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
   const interval = actionIntervalMs(s, a, d);
   // Overtime: skilling is faster while you're away
   const offlineBoost = ctx.offline ? 1 + (skillTreeStats(s).offlineSpeed ?? 0) / 100 : 1;
-  s.action.progress += dt * offlineBoost;
+  focusStep(s, ctx, dt);
+  s.action.progress += dt * offlineBoost * focusMult(s);
   while (s.action && s.action.kind === 'skill' && s.action.progress >= interval) {
     const blocker = actionBlocker(s, a);
     if (blocker) {

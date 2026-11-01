@@ -3,20 +3,21 @@ import { AUTO_CRAFT_BENCH_LEVEL, BAG_SIZE, BENCH_BUILT_LEVEL } from '../src/data
 import { affixDef } from '../src/data/affixes';
 import { BASES } from '../src/data/bases';
 import { modBias } from '../src/data/craftMats';
-import { actionDef } from '../src/data/skills';
+import { actionDef, actionsFor } from '../src/data/skills';
 import { makeCtx } from '../src/engine/context';
 import { applyEssence, applyOrb, essenceReason, orbReason, salvage } from '../src/engine/crafting';
 import { ruleMet, startCraftUntil } from '../src/engine/craftUntil';
 import { equip } from '../src/engine/equipment';
 import { sellItems } from '../src/engine/hideout';
 import { allMods, createItem, rerollMods, spawnWeight } from '../src/engine/items';
+import { chargeResult, focusMult, focusOf, hasMinigame, MAX_FOCUS_SPEED, minigameSwing } from '../src/engine/minigame';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { actionIntervalMs, fossilHit, setSmithCatalyst, skillStep, startSkillAction } from '../src/engine/skills';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
-import type { GameState, Item } from '../src/engine/types';
+import type { GameState, Item, SkillId } from '../src/engine/types';
 import { xpForLevel } from '../src/engine/xp';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
@@ -42,6 +43,78 @@ function ring(s: GameState, ilvl = 20, rarity: Item['rarity'] = 'normal'): Item 
 }
 
 const has = (item: Item, groups: string[]) => allMods(item).some((m) => groups.includes(affixDef(m.affixId).group));
+
+describe('skilling mini-games', () => {
+  const start = (s: GameState, actionId = actionsFor('mining')[0].id) => {
+    expect(startSkillAction(s, ctx(), actionId)).toBeNull();
+    return s.action as Extract<GameState['action'], { kind: 'skill' }>;
+  };
+
+  it('adds at most 30% speed', () => {
+    const s = player();
+    start(s);
+    for (let i = 0; i < 20; i++) minigameSwing(s, 'hit');
+    expect(focusOf(s)).toBe(1);
+    expect(focusMult(s)).toBeCloseTo(1 + MAX_FOCUS_SPEED);
+  });
+
+  it('never drops below the idle rate on misses', () => {
+    const s = player();
+    start(s);
+    for (let i = 0; i < 20; i++) minigameSwing(s, 'miss');
+    expect(focusMult(s)).toBe(1);
+  });
+
+  it('drains back to idle when you stop', () => {
+    const s = player();
+    const action = start(s);
+    action.focus = 1;
+    const c = ctx();
+    const d = deriveStats(s);
+    action.progress = -1e9;
+    skillStep(s, c, 10_000, d);
+    expect(focusOf(s)).toBe(0);
+  });
+
+  it('gives faster progress online, and nothing offline', () => {
+    const s = player();
+    const action = start(s);
+    action.focus = 1;
+    action.progress = 0;
+    const c = ctx();
+    skillStep(s, c, 100, deriveStats(s));
+    expect(action.progress).toBeGreaterThan(100);
+
+    action.focus = 1;
+    action.progress = 0;
+    skillStep(s, { ...c, offline: true }, 100, deriveStats(s));
+    expect(action.progress).toBe(100);
+    expect(action.focus).toBe(0);
+  });
+
+  it('beats offline even with Overtime', () => {
+    const overtime = 10;
+    expect(1 + MAX_FOCUS_SPEED).toBeGreaterThan(1 + overtime / 100);
+  });
+
+  it('only feeds gathering skills that have a game', () => {
+    expect(['mining', 'woodcutting', 'harvesting'].every((x) => hasMinigame(x as SkillId))).toBe(true);
+    expect(hasMinigame('smithing')).toBe(false);
+    expect(hasMinigame('thieving')).toBe(false);
+    const s = player();
+    s.action = { kind: 'skill', actionId: actionsFor('thieving')[0].id, progress: 0 };
+    minigameSwing(s, 'hit');
+    expect(s.action.focus).toBeUndefined();
+    expect(focusMult(s)).toBe(1);
+  });
+
+  it('scores a released swing by where it landed', () => {
+    expect(chargeResult(0.3, 0.7)).toBeNull();
+    expect(chargeResult(0.6, 0.7)).toBe('weak');
+    expect(chargeResult(0.75, 0.7)).toBe('hit');
+    expect(chargeResult(0.9, 0.7)).toBe('miss');
+  });
+});
 
 describe('fossils', () => {
   it('block their banned groups and favour their own', () => {

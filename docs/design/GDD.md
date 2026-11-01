@@ -46,7 +46,7 @@ It takes **months to build a top-end character** that easily clears all content.
 
 ### Offline
 - A character does one thing at a time: combat, a skill or auto-crafting. Each offline period is a real choice.
-- **Skilling** always runs at full speed.
+- **Skilling** always runs at full speed. Mini-games add up to 30% on top while you play ([SKILLING_REWORK.md](SKILLING_REWORK.md) §9).
 - **Combat** is limited by automation, not by a speed penalty. Better rules are earned (§4).
 - **Dying offline** stops combat until you return.
 - **New bosses** can be beaten offline by a strong enough build once it has reactive rules.

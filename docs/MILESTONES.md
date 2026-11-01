@@ -201,6 +201,8 @@ Work backwards from the end state, not forwards from Act 1.
 - **Offline combat:** the game is already influenced a lot by the player being there. Automation can be locked behind
   hideout upgrades, which limits how good offline combat is.
 - **Offline skilling:** always full speed.
+- **Manual skilling (you, 2026-10-31):** always better than idle. Idle stays as it is; mini-games add up to 30% on top
+  ([SKILLING_REWORK.md](design/SKILLING_REWORK.md) §9).
 - **Offline cap:** starts at 8 hours; a hideout upgrade raises it to 24 over time.
 - **Automation unlocks:** by type of rule. Simple rules like "on cooldown" are free; reactive ones like "when a boss
   winds up" or "when life is below 40%" unlock later, so bosses stay hard to idle until the smart rules are earned.
@@ -294,6 +296,9 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
   free public use while the game isn't sold, so recheck if that changes — done 2026-10-31
 - [ ] Art for the 34 weapon bases that still have none.
 - [ ] Use the Void pack, SBS skies and `MediavelFree.png` UI once something needs them. Originals are in Downloads.
+- [ ] Skilling mini-games for the rest, once players have tried the first three ([SKILLING_REWORK.md](design/SKILLING_REWORK.md) §9).
+  - Thieving: tumbler game.
+  - Smithing, Alchemy, Gemcutting, Rune-carving: one timing bar, reskinned.
 
 Not tied to a milestone yet. Older balance, Act 2 and skill items restart at their milestone.
 
@@ -382,6 +387,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Skilling mini-games for Mining, Woodcutting and Foraging: playing builds Focus for up to 30% more speed; idle and offline unchanged. 0.2.13, not deployed — done 2026-10-31
 - [x] XP per hour readouts update every 2 seconds, still measured over the last 10 minutes. 0.2.12 — done 2026-10-31
 - [x] Limited-time events: Admin → Events turns Halloween (2x XP including gems, every monster's drops rolled twice) on or off with no deploy; needs the `live_event` SQL in [SETUP.md](ops/SETUP.md) run once. 0.2.12 — done 2026-10-31
 - [x] DPS meter shows a 2 second average, held until the next one, instead of a live 10 second figure; The Block's execute now counts. 0.2.11 — done 2026-10-31

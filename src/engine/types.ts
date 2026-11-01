@@ -416,7 +416,7 @@ export type CraftMethod = { orb: string; fossil?: string | null } | { essence: s
 export type StopRule = { kind: 'has'; affixId: string; minTier?: number } | { kind: 'twoOf'; affixIds: string[] };
 
 export type Action =
-  | { kind: 'skill'; actionId: string; progress: number }
+  | { kind: 'skill'; actionId: string; progress: number; focus?: number }
   | { kind: 'combat'; zoneId: string }
   | { kind: 'craft'; uid: number; method: CraftMethod; rule: StopRule; progress: number; steps: number }
   | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number> }
