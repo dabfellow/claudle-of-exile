@@ -48,6 +48,7 @@ import {
   type MonsterDef,
 } from '../data/zones';
 import {
+  advanceMinions,
   advanceMonsters,
   AUTO_FLEE_AT,
   AUTO_FLEE_RESUME,
@@ -56,6 +57,8 @@ import {
   BOSS_ENTRY,
   cellDistance,
   cellRing,
+  driftCell,
+  drawIn,
   EDGE_CELLS,
   FLEE_SHAKE_MS,
   FRONT_CELL,
@@ -77,6 +80,10 @@ import {
   monsterGround,
   knockBack,
   layGround,
+  MINION_CAP,
+  minionCells,
+  minionInWay,
+  minionTarget,
   neighbors,
   PLAYER_SPOT,
   SHOCKED_GROUND_TAKEN,
@@ -89,7 +96,7 @@ import { applyDeathPenalty, areaXpMultiplier, characterLevel } from './character
 import { bossLeftToRules, castOrder, ruleLockReason, rulesPass, skillAim } from './automation';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
-import { gemUseReason, grantGemXp, LIFE_RESERVE_PCT, MIN_COOLDOWN_MS, skillNumbers, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
+import { gemUseReason, grantGemXp, LIFE_RESERVE_PCT, MIN_COOLDOWN_MS, minionStats, skillNumbers, stormStats, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
 import { rollLoot } from './loot';
 import { mapPackLeft, onMapFieldLost, onMapPack, rollMapDrops } from './maps';
@@ -151,7 +158,7 @@ import {
 } from './mechanics';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
 import { openReachedZones, reachedAct } from './progress';
-import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, MonsterInstance, Movement, TargetPriority, Targeting } from './types';
+import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, Minion, MonsterInstance, Movement, Storm, TargetPriority, Targeting } from './types';
 
 export const SPAWN_DELAY_MS = 900;
 /** closing in on a monster out of reach takes this long, shortened by movement speed */
@@ -424,7 +431,7 @@ function spawnBoss(s: GameState, ctx: Ctx): void {
   c.challenged = false;
   boss.cell = BOSS_ENTRY;
   c.monsters.push(boss);
-  const near = freeNear(c.monsters, BOSS_ENTRY, ctx.rng);
+  const near = freeNear(bodies(c), BOSS_ENTRY, ctx.rng);
   for (let i = 0; i < BOSS_ADDS && i < near.length; i++) {
     const m = makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE);
     m.cell = near[i];
@@ -751,6 +758,11 @@ const SHIELD_SKILLS = ACTIVE_GEMS.filter((g) => g.effect.shieldPct).map((g) => g
 /** Whether a skill's own effect is currently up (buff, guard, or its ailment on the target). */
 export function skillIsActive(c: CombatRuntime, gemId: string): boolean {
   if (c.buffs.some((b) => b.source === 'skill' && b.id === gemId)) return true;
+  // minions and storms count once the gem has all it can keep up, or the field has no room for more
+  const called = army(c).filter((x) => x.gemId === gemId);
+  if ((called.length && called.length >= called[0].max) || (army(c).length >= MINION_CAP && activeGemDef(gemId).effect.minion)) return true;
+  const storms = (c.storms ?? []).filter((x) => x.gemId === gemId);
+  if (storms.length && storms.length >= storms[0].max) return true;
   if ((gemId === 'iron_guard' || gemId === 'parry') && c.blocks > 0) return true;
   if (gemId === 'smoke_step' && c.evadeMs > 0) return true;
   if (SHIELD_SKILLS.includes(gemId) && c.shield > 0) return true;
@@ -851,7 +863,7 @@ export interface SkillChoice {
 
 /** Damage skills need someone in reach; guards, buffs and sustain skills (Consecrate's heal) go off regardless. */
 function needsTarget(def: ActiveGemDef): boolean {
-  return !!(def.effect.weaponPct || def.effect.base) && def.role !== 'guard' && def.role !== 'buff' && def.role !== 'sustain';
+  return !!(def.effect.weaponPct || def.effect.base) && def.role !== 'guard' && def.role !== 'buff' && def.role !== 'sustain' && def.role !== 'summon';
 }
 
 /**
@@ -902,7 +914,7 @@ export function chooseSkill(s: GameState, d: Derived): SkillChoice {
 /** Run at a monster out of reach: it ends up a ring closer. Movement speed makes it quicker. */
 function closeIn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): void {
   const c = s.combat!;
-  pullCloser(c.monsters, mon);
+  pullCloser(c.monsters, mon, army(c));
   c.using = null;
   c.closingUid = c.targetUid = mon.uid;
   const time = CLOSE_IN_MS / (1 + d.raw.moveSpeedPct / 100);
@@ -1491,7 +1503,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       extendMaxMs: mods.specials.has('bloodfrenzy') ? 12000 : undefined,
     });
   }
-  if (e.knockback && knockBack(c.monsters)) ctx.emit({ t: 'area', gemId: def.id, cells: areaCells('nova', 0, 1) });
+  if (e.knockback && knockBack(c.monsters, army(c))) ctx.emit({ t: 'area', gemId: def.id, cells: areaCells('nova', 0, 1) });
   if (e.interrupts) {
     for (const m of aliveMonsters(c)) {
       if (m.casting < 0) continue;
@@ -1501,7 +1513,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   }
 
   if (e.stepOut) stepOut(s, ctx, mods.specials.has('surefoot'));
-  if (e.charge && aimed && !aimed.isBoss) while (cellRing(aimed.cell) > 1 && pullCloser(c.monsters, aimed));
+  if (e.charge && aimed && !aimed.isBoss) while (cellRing(aimed.cell) > 1 && pullCloser(c.monsters, aimed, army(c)));
   if (mods.specials.has('hitfade')) c.evadeMs = Math.max(c.evadeMs, 1500);
   if (mods.specials.has('feignedretreat')) c.counterweightMore = Math.max(c.counterweightMore ?? 0, 40);
   if (e.curse) curseEnemies(s, ctx, nums, aimed);
@@ -1510,6 +1522,9 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (def.id === 'twin_strike' && mods.specials.has('flurry')) c.flurryStacks = Math.min(5, c.flurryStacks + 1);
   else c.flurryStacks = 0;
 
+  if (mods.specials.has('deeptoll')) for (const x of army(c)) x.life = Math.min(x.maxLife, x.life + x.maxLife * DEEP_TOLL_HEAL);
+  if (e.minion) return callMinions(s, ctx, d, nums, aimed);
+  if (e.storm) return raiseStorm(s, ctx, nums, aimed);
   if (!e.weaponPct && !e.base) return;
 
   let passes = 1 + mods.repeats;
@@ -1590,6 +1605,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       targets.forEach((m, i) => {
         const chainMult = chained ? 1 + ((mods.specials.has('overload') ? 20 : 0) + r.chainMore) / 100 * i : 1;
         const dealt = hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * chainMult * tender, roll.mega, roll.coup);
+        if (e.drag && pass === 0) dragIn(c, m, nums);
         if (ground && !grounded && m === aim) {
           grounded = true;
           const dps = (dealt * ground.pctPerSec) / 100;
@@ -2206,6 +2222,208 @@ function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   }
 }
 
+// ---------- minions and storms (docs/design/MINIONS.md) ----------
+
+/** Fraction of its life a minion recovers each second once the field is clear. */
+export const MINION_REST_REGEN = 0.1;
+/** Press Gang and Deep Toll: fraction of life they restore. */
+const PRESS_GANG_HEAL = 0.15;
+const DEEP_TOLL_HEAL = 0.3;
+/** Abyssal Hunger: how much longer each kill keeps the Leviathan. */
+const ABYSSAL_MS = 2000;
+/** Crusted Hide: % less damage the Brute takes. */
+const CRUSTED_HIDE = 40;
+
+/** The player's minions. Saves from before minions have no list. */
+export function army(c: CombatRuntime): Minion[] {
+  return (c.minions ??= []);
+}
+
+/** Everything that takes up a hex. */
+function bodies(c: CombatRuntime) {
+  return [...c.monsters, ...army(c)];
+}
+
+/** Drag a monster toward you, past your own minions. */
+function dragIn(c: CombatRuntime, m: MonsterInstance, nums: SkillNumbers): void {
+  if (m.isBoss || m.martyr || m.life <= 0) return;
+  const rings = nums.mods.specials.has('reelin') ? RINGS : nums.def.effect.drag!;
+  for (let i = 0; i < rings && cellRing(m.cell) > 1 && pullCloser(c.monsters, m, army(c)); i++);
+  if (nums.mods.specials.has('dragunder')) m.stunMs = Math.max(m.stunMs, 1000);
+}
+
+/** The gem on the bar a minion or storm answers to: take it off the bar and they go. */
+function callerNumbers(s: GameState, d: Derived, gemId: string): SkillNumbers | null {
+  const gem = s.skillBar.find((g) => g?.gemId === gemId);
+  return gem ? skillNumbers(d, gem) : null;
+}
+
+/** Call up the minions the gem is short of, as far as the field has room. The ones still standing stay as they are. */
+function callMinions(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, aimed?: MonsterInstance): void {
+  const c = s.combat!;
+  const { def, mods } = nums;
+  const m = def.effect.minion!;
+  const st = minionStats(d, nums);
+  const mine = army(c).filter((x) => x.gemId === def.id);
+  // a temporary minion's clock starts again when it's called back
+  for (const x of mine) if (m.durationMs) x.remainingMs = x.durationMs = m.durationMs * nums.durationMult;
+  const room = Math.min(st.count - mine.length, MINION_CAP - army(c).length);
+  const cells = minionCells(bodies(c), aimed?.cell ?? BOSS_CELL, m.reach > 1, ctx.rng).slice(0, Math.max(0, room));
+  for (const cell of cells) {
+    army(c).push({
+      uid: newUid(s),
+      gemId: def.id,
+      name: m.name,
+      art: m.art,
+      cell,
+      life: st.life,
+      maxLife: st.life,
+      max: st.count,
+      reach: m.reach,
+      tough: mods.specials.has('crustedhide') ? CRUSTED_HIDE : undefined,
+      taunts: m.taunts,
+      attackMs: st.attackMs,
+      stepMs: 0,
+      remainingMs: m.durationMs && m.durationMs * nums.durationMult,
+      durationMs: m.durationMs && m.durationMs * nums.durationMult,
+    });
+  }
+  if (cells.length) ctx.emit({ t: 'area', gemId: def.id, cells });
+}
+
+/** Roll a hit for a minion or a storm: the damage is yours, but it doesn't use up anything saved for your own next attack. */
+function proxyRoll(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance, sure: boolean) {
+  const c = s.combat!;
+  const held = { ambush: c.ambush, empowered: c.empowered, counterweightMore: c.counterweightMore, sureCrit: c.asc.sureCrit };
+  c.ambush = c.empowered = c.asc.sureCrit = false;
+  c.counterweightMore = 0;
+  c.manaFrac = manaFraction(s, d);
+  const roll = rollHit(s, ctx, d, nums, mon, sure);
+  c.ambush = held.ambush;
+  c.empowered = held.empowered;
+  c.counterweightMore = held.counterweightMore;
+  c.asc.sureCrit = held.sureCrit;
+  return roll;
+}
+
+/** One strike of a minion or storm on everything it reaches: supports that repeat a skill's hits repeat this. */
+function proxyStrike(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, targets: MonsterInstance[], factor: number, sure: boolean): void {
+  const { mods } = nums;
+  for (let pass = 0; pass <= mods.repeats; pass++) {
+    const passMult = pass === 0 ? 1 : (mods.repeatDamage / 100) * (1 + d.raw.repeatMore / 100);
+    const roll = proxyRoll(s, ctx, d, nums, targets[0], sure);
+    if (!roll) {
+      ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: 'phys', evaded: true, monsterUid: targets[0].uid });
+      continue;
+    }
+    for (const m of targets) if (m.life > 0) hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, factor * passMult, roll.mega, roll.coup);
+  }
+}
+
+/** A minion's turn: it hits what's in reach, with the area or chains its gem gives it. */
+function minionStrike(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, x: Minion, target: MonsterInstance): void {
+  const c = s.combat!;
+  const shape = skillArea(nums);
+  const alive = aliveMonsters(c).filter((m) => !m.martyr);
+  let targets = [target];
+  if (shape !== 'target') {
+    const cells = new Set(areaCells(shape, target.cell, nums.def.effect.radius));
+    targets = [target, ...alive.filter((m) => m !== target && cells.has(m.cell))];
+    ctx.emit({ t: 'area', gemId: nums.def.id, cells: [...cells] });
+  } else if (nums.mods.chains) targets = chainFrom(target, alive, nums.mods.chains);
+  const before = targets.filter((m) => m.life > 0).length;
+  proxyStrike(s, ctx, d, nums, targets, 1 + d.raw.minionPct / 100, false);
+  const kills = before - targets.filter((m) => m.life > 0).length;
+  if (!kills) return;
+  if (nums.mods.specials.has('pressgang')) for (const y of army(c)) if (y.gemId === x.gemId) y.life = Math.min(y.maxLife, y.life + y.maxLife * PRESS_GANG_HEAL * kills);
+  if (nums.mods.specials.has('abyssal') && x.remainingMs !== undefined) {
+    x.remainingMs += ABYSSAL_MS * kills;
+    x.durationMs = Math.max(x.durationMs ?? 0, x.remainingMs);
+  }
+}
+
+/** A hit on a minion, through your armour and resistances: it shares your defences, but can't evade or block. */
+function hurtMinion(ctx: Ctx, d: Derived, mon: MonsterInstance, x: Minion, raw: number, type: DamageType): void {
+  if (mon.curse) raw *= 1 - mon.curse.dealLess / 100;
+  const amount = Math.max(1, Math.round(mitigate(d, raw, type) * (1 - (x.tough ?? 0) / 100)));
+  x.life -= amount;
+  ctx.emit({ t: 'hit', target: 'minion', amount, dmgType: type, monsterUid: x.uid });
+}
+
+/**
+ * Minions walk and fight by themselves, and rest once the field is clear. The fallen go, and so does anyone whose gem
+ * left the bar or whose time is up.
+ */
+function minionStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
+  const c = s.combat!;
+  if (!c.minions?.length) return;
+  advanceMinions(c.minions, c.monsters, dt, c.lockedUid);
+  for (const x of c.minions) {
+    if (x.remainingMs !== undefined) x.remainingMs -= dt;
+    if (!c.monsters.length) x.life = Math.min(x.maxLife, x.life + (x.maxLife * MINION_REST_REGEN * dt) / 1000);
+    x.attackMs -= dt;
+    if (x.attackMs > 0 || x.life <= 0) continue;
+    const target = minionTarget(x, c.monsters, c.lockedUid);
+    const nums = callerNumbers(s, d, x.gemId);
+    if (!nums) {
+      x.life = 0;
+      continue;
+    }
+    if (!target || cellDistance(x.cell, target.cell) > x.reach) {
+      x.attackMs = 0;
+      continue;
+    }
+    x.attackMs = minionStats(d, nums).attackMs;
+    minionStrike(s, ctx, d, nums, x, target);
+  }
+  c.minions = c.minions.filter((x) => x.life > 0 && (x.remainingMs === undefined || x.remainingMs > 0));
+}
+
+/** Lay a storm where the skill lands: past what the gem keeps up, the oldest blows out. */
+function raiseStorm(s: GameState, ctx: Ctx, nums: SkillNumbers, aimed?: MonsterInstance): void {
+  const c = s.combat!;
+  const { def } = nums;
+  if (!aimed) return;
+  const st = stormStats(nums);
+  const storms = (c.storms ??= []);
+  const mine = storms.filter((x) => x.gemId === def.id);
+  if (mine.length >= st.max) c.storms = storms.filter((x) => !mine.slice(0, mine.length - st.max + 1).includes(x));
+  const cells = areaCells(skillArea(nums), aimed.cell, def.effect.radius);
+  c.storms!.push({ uid: newUid(s), gemId: def.id, center: aimed.cell, cells, max: st.max, pulseMs: 0, remainingMs: st.durationMs, durationMs: st.durationMs });
+  ctx.emit({ t: 'area', gemId: def.id, cells });
+}
+
+/** One strike: everything standing in the storm is hit, whenever it walked in, and it can't miss. */
+function stormStrike(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, st: Storm): void {
+  const c = s.combat!;
+  const e = nums.def.effect;
+  const inside = new Set(st.cells);
+  const targets = aliveMonsters(c).filter((m) => inside.has(m.cell) && !m.martyr);
+  if (targets.length) proxyStrike(s, ctx, d, nums, targets, 1, true);
+  if (e.storm!.pull) drawIn(c.monsters, army(c), st.cells, st.center);
+  if (e.storm!.drift) {
+    st.center = driftCell(st.center, c.monsters);
+    st.cells = areaCells(skillArea(nums), st.center, e.radius);
+  }
+}
+
+/** Storms run their course whether or not anything is on the field, and go if their gem leaves the bar. */
+function stormStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
+  const c = s.combat!;
+  if (!c.storms?.length) return;
+  for (const st of c.storms) {
+    st.remainingMs -= dt;
+    st.pulseMs -= dt;
+    const nums = callerNumbers(s, d, st.gemId);
+    if (!nums) st.remainingMs = 0;
+    else if (st.pulseMs <= 0) {
+      st.pulseMs += stormStats(nums).everyMs;
+      stormStrike(s, ctx, d, nums, st);
+    }
+  }
+  c.storms = c.storms.filter((st) => st.remainingMs > 0);
+}
+
 // ---------- the step ----------
 
 function tickDots(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
@@ -2262,13 +2480,15 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
   const chill = Math.min(60, CHILL_SLOW_PCT + d.raw.chillOnHit) / 100;
   mon.attackTimer += (mon.chillMs > 0 ? dt * (1 - chill) : dt) * speed;
   if (mon.attackTimer >= mon.attackMs) {
-    // a melee monster still walking up holds its swing until it reaches the front rank
-    if (!inReach(mon)) {
+    const minion = minionInWay(mon, army(s.combat!));
+    // a melee monster still walking up holds its swing until it reaches the front rank, or meets a minion
+    if (!minion && !inReach(mon)) {
       mon.attackTimer = mon.attackMs;
       return;
     }
     mon.attackTimer -= mon.attackMs;
     const enrage = mon.enraged ? BOSS_ENRAGE_DMG : 1;
+    if (minion) return hurtMinion(ctx, d, mon, minion, bossDamage(mon) * enrage * (0.85 + ctx.rng.next() * 0.3), mon.dmgType);
     takeHit(s, ctx, d, mon, bossDamage(mon) * enrage * (0.85 + ctx.rng.next() * 0.3), mon.dmgType, 'hit');
     // some casters' spells splash hazardous ground at the player's feet
     if (mon.attackGround) layGround(s.combat!.ground, PLAYER_SPOT, monsterGround(mon, mon.dmgType), mon.damage * MONSTER_GROUND_DPS, MONSTER_GROUND_MS);
@@ -2278,7 +2498,7 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
 /** Fresh martyrs on the free hexes nearest the boss's place in the field, and the chains go back on. */
 function chainMartyrs(s: GameState, ctx: Ctx, boss: MonsterInstance): void {
   const c = s.combat!;
-  const cells = freeNear(c.monsters, BOSS_CELL, ctx.rng).filter((i) => cellRing(i) >= 2).slice(0, BOSS_MARTYR_COUNT);
+  const cells = freeNear(bodies(c), BOSS_CELL, ctx.rng).filter((i) => cellRing(i) >= 2).slice(0, BOSS_MARTYR_COUNT);
   for (const cell of cells) {
     const m = makeMonster({ ...MARTYR, level: boss.level }, false, newUid(s));
     m.martyr = true;
@@ -2331,7 +2551,7 @@ function bossPhases(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt
       for (let i = adds; i < BOSS_SUMMON_COUNT; i++) fresh.push(makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE));
       // new adds appear at the boss's side, in front of it where there's room, to shield it
       const behind = (i: number) => Number(cellRing(i) > cellRing(mon.cell));
-      const near = freeNear(c.monsters, mon.cell, ctx.rng).sort((a, b) => behind(a) - behind(b));
+      const near = freeNear(bodies(c), mon.cell, ctx.rng).sort((a, b) => behind(a) - behind(b));
       const placed = fresh.slice(0, near.length);
       placed.forEach((m, i) => {
         m.cell = near[i];
@@ -2418,6 +2638,8 @@ function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt:
       } else if (kind === 'nova') {
         mon.timers.nova = BOSS_NOVA_EVERY_MS;
         takeHit(s, ctx, d, mon, bossDamage(mon) * BOSS_NOVA_MULT, mon.novaType, 'nova');
+        // a nova catches everything on the field, so a boss fight wears minions down
+        for (const x of army(s.combat!)) hurtMinion(ctx, d, mon, x, bossDamage(mon) * BOSS_NOVA_MULT, mon.novaType);
         // the blast leaves the ground under the player burning, frozen or charged
         layGround(s.combat!.ground, PLAYER_SPOT, monsterGround(mon, mon.novaType), bossDamage(mon) * BOSS_NOVA_GROUND_DPS, BOSS_NOVA_GROUND_MS);
       } else {
@@ -2503,9 +2725,11 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   autoFlee(s, ctx, d);
   advanceSpawns(s, ctx, dt);
   shakeOff(s, ctx, dt);
+  stormStep(s, ctx, d, dt);
   // a wind-up goes on across the gap between packs, so the blow is ready for the next one
   if (!c.monsters.length) {
     if (c.windup) c.actionMs = Math.max(0, c.actionMs - dt);
+    minionStep(s, ctx, d, dt);
     return expired.length > 0;
   }
 
@@ -2561,8 +2785,12 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
     if (!c.monsters.length) return true;
   }
 
+  minionStep(s, ctx, d, dt);
+  reapDead(s, ctx, d);
+  if (!c.monsters.length) return true;
+
   // the monsters' turn
-  advanceMonsters(c.monsters, dt, new Set(c.ground.filter((g) => g.cell >= 0).map((g) => g.cell)));
+  advanceMonsters(c.monsters, dt, new Set(c.ground.filter((g) => g.cell >= 0).map((g) => g.cell)), army(c));
   for (const m of aliveMonsters(c)) {
     monsterTurn(s, ctx, d, m, dt);
     if (s.life <= 0) break;

@@ -1,5 +1,5 @@
 import type { Rng } from './rng';
-import type { DamageType, Ground, GroundKind, MonsterInstance, Movement } from './types';
+import type { DamageType, Ground, GroundKind, Minion, MonsterInstance, Movement } from './types';
 
 /**
  * The battlefield (docs/design/BATTLEFIELD.md): a half-ring of pointy-top hexes around the player, who stands on the
@@ -196,8 +196,11 @@ export function stepOutOfGround(ground: Ground[]): Ground[] {
   return ground.filter((g) => g.cell !== PLAYER_SPOT);
 }
 
-function occupied(monsters: MonsterInstance[]): Set<number> {
-  return new Set(monsters.filter((m) => m.life > 0 && !m.dead).map((m) => m.cell));
+/** Anything that takes up a hex: monsters and the player's minions. */
+type Body = { cell: number; life: number; dead?: boolean };
+
+function occupied(bodies: Body[]): Set<number> {
+  return new Set(bodies.filter((m) => m.life > 0 && !m.dead).map((m) => m.cell));
 }
 
 /** How far a cell sits from the straight line out from the player (pixel distance from the player), for "head straight in". */
@@ -211,11 +214,11 @@ function freeInward(i: number, taken: Set<number>): number[] {
 }
 
 /** War Cry's shove: melee-range monsters are pushed one ring outward and have to walk in again. */
-export function knockBack(monsters: MonsterInstance[]): number {
+export function knockBack(monsters: MonsterInstance[], minions: Minion[] = []): number {
   let moved = 0;
   for (const m of monsters) {
     if (m.life <= 0 || m.isBoss || cellRing(m.cell) !== 1) continue;
-    const taken = occupied(monsters);
+    const taken = occupied([...monsters, ...minions]);
     const c = CELLS[m.cell];
     // straight away from the player: nearest to the point twice as far out
     const back = neighbors(m.cell)
@@ -241,14 +244,19 @@ function walking(m: MonsterInstance): boolean {
   return m.isBoss ? cellRing(m.cell) > BOSS_RING : !inReach(m);
 }
 
+/** Next to a minion: anything but a boss stops walking and fights it, so minions hold a line out on the field. */
+function engaged(m: MonsterInstance, minions: Minion[]): boolean {
+  return !m.isBoss && minions.some((x) => x.life > 0 && cellDistance(x.cell, m.cell) === 1);
+}
+
 /** Free edge cells (gates), and free cells nearest a spot, for monsters arriving or being called in. */
 export function freeEdge(monsters: MonsterInstance[]): number[] {
   const taken = occupied(monsters);
   return EDGE_CELLS.filter((i) => !taken.has(i));
 }
 
-export function freeNear(monsters: MonsterInstance[], cell: number, rng?: Rng): number[] {
-  const taken = occupied(monsters);
+export function freeNear(bodies: Body[], cell: number, rng?: Rng): number[] {
+  const taken = occupied(bodies);
   const jitter = CELLS.map(() => rng?.next() ?? 0);
   return CELLS.map((_, i) => i)
     .filter((i) => !taken.has(i))
@@ -260,14 +268,14 @@ export function freeNear(monsters: MonsterInstance[], cell: number, rng?: Rng): 
  * around hazards when they can. With nothing free ahead, a melee monster slides sideways to a hex that has a way in
  * (around casters and the crowd), or waits: the swarm queues in ring 2.
  */
-export function advanceMonsters(monsters: MonsterInstance[], dt: number, hazards: Set<number> = new Set()): void {
+export function advanceMonsters(monsters: MonsterInstance[], dt: number, hazards: Set<number> = new Set(), minions: Minion[] = []): void {
   const walkers = monsters.filter((m) => m.life > 0 && !m.dead && walking(m)).sort((a, b) => cellRing(a.cell) - cellRing(b.cell));
   for (const m of walkers) {
-    if (m.stunMs > 0 || m.frozenMs > 0) continue;
+    if (m.stunMs > 0 || m.frozenMs > 0 || engaged(m, minions)) continue;
     m.stepMs -= (m.chillMs > 0 ? dt / 2 : dt) * (1 - (m.curse?.slow ?? 0) / 100);
     if (m.stepMs > 0) continue;
     m.stepMs = m.moveMs;
-    const taken = occupied(monsters);
+    const taken = occupied([...monsters, ...minions]);
     const ahead = freeInward(m.cell, taken).sort((a, b) => Number(hazards.has(a)) - Number(hazards.has(b)));
     if (ahead.length) {
       m.cell = ahead[0];
@@ -293,11 +301,94 @@ export function reachable(monsters: MonsterInstance[], m: MonsterInstance, range
   return true;
 }
 
-/** Closing in: the player runs at a monster, so it ends up one ring closer. Returns false when the way is blocked. */
-export function pullCloser(monsters: MonsterInstance[], m: MonsterInstance): boolean {
+/**
+ * Closing in: the player runs at a monster, so it ends up one ring closer. Returns false when the way is blocked.
+ * Your own minions never block you: one in the way trades places with the monster, which is why `reachable` ignores them.
+ */
+export function pullCloser(monsters: MonsterInstance[], m: MonsterInstance, minions: Minion[] = []): boolean {
   const taken = occupied(monsters);
   const next = freeInward(m.cell, taken)[0];
   if (next === undefined) return false;
+  const ally = minions.find((x) => x.life > 0 && x.cell === next);
+  if (ally) ally.cell = m.cell;
   m.cell = next;
   return true;
+}
+
+// ---------- minions (docs/design/MINIONS.md) ----------
+
+/** The most minions on the field at once, from every gem together: as many as a Walk pace sends monsters. */
+export const MINION_CAP = 6;
+/** Minions walk no further out than this, so they don't stand on a gate. */
+export const MINION_LEASH = 3;
+/** Where minions go back to between packs. */
+export const MINION_HOME_RING = 2;
+export const MINION_STEP_MS = 700;
+
+/** Free cells to call a minion onto: fighters out in front near the target, the rest close to the player. */
+export function minionCells(bodies: Body[], near: number, ranged: boolean, rng?: Rng): number[] {
+  const rings = ranged ? [1, 2] : [2, 1];
+  return freeNear(bodies, near, rng)
+    .filter((i) => rings.includes(cellRing(i)))
+    .sort((a, b) => rings.indexOf(cellRing(a)) - rings.indexOf(cellRing(b)));
+}
+
+/** Who a minion goes for: the player's clicked target if it can hit it, else the nearest. Martyrs are only for aimed blows, and chains stop everything. */
+export function minionTarget(x: Minion, monsters: MonsterInstance[], lockedUid?: number): MonsterInstance | undefined {
+  const open = monsters.filter((m) => m.life > 0 && !m.dead && !m.martyr && !m.chained);
+  const locked = open.find((m) => m.uid === lockedUid);
+  if (locked && cellDistance(x.cell, locked.cell) <= x.reach) return locked;
+  return open.sort((a, b) => cellDistance(x.cell, a.cell) - cellDistance(x.cell, b.cell) || a.uid - b.uid)[0];
+}
+
+/** A step toward a cell over free hexes, staying on the leash. */
+function stepToward(x: Minion, to: number, taken: Set<number>): number | undefined {
+  const here = cellDistance(x.cell, to);
+  return neighbors(x.cell)
+    .filter((j) => !taken.has(j) && cellRing(j) <= MINION_LEASH && cellDistance(j, to) < here)
+    .sort((a, b) => cellDistance(a, to) - cellDistance(b, to) || fromPlayer(a) - fromPlayer(b))[0];
+}
+
+/** Minions walk into reach of their target, or home to ring 2 once the field is clear. */
+export function advanceMinions(minions: Minion[], monsters: MonsterInstance[], dt: number, lockedUid?: number): void {
+  for (const x of minions) {
+    x.stepMs -= dt;
+    if (x.stepMs > 0 || x.life <= 0) continue;
+    x.stepMs = MINION_STEP_MS;
+    const target = minionTarget(x, monsters, lockedUid);
+    if (target ? cellDistance(x.cell, target.cell) <= x.reach : cellRing(x.cell) === MINION_HOME_RING) continue;
+    const taken = occupied([...monsters, ...minions]);
+    const to = target?.cell ?? CELLS.map((_, i) => i).filter((i) => cellRing(i) === MINION_HOME_RING && !taken.has(i)).sort((a, b) => cellDistance(a, x.cell) - cellDistance(b, x.cell))[0];
+    if (to === undefined) continue;
+    x.cell = stepToward(x, to, taken) ?? x.cell;
+  }
+}
+
+/** The minion a monster swings at instead of the player: a taunter it can reach, else one beside it. A melee monster already on you stays on you. */
+export function minionInWay(m: MonsterInstance, minions: Minion[]): Minion | undefined {
+  const up = minions.filter((x) => x.life > 0);
+  const reach = m.isBoss || m.attackKind === 'spell' ? MONSTER_RANGE : 1;
+  const taunter = up.find((x) => x.taunts && cellDistance(x.cell, m.cell) <= reach);
+  if (taunter) return taunter;
+  if (!m.isBoss && m.attackKind !== 'spell' && cellRing(m.cell) === 1) return undefined;
+  return up.find((x) => cellDistance(x.cell, m.cell) === 1);
+}
+
+/** A drifting storm moves a step toward whatever's nearest its centre. */
+export function driftCell(center: number, monsters: MonsterInstance[]): number {
+  const open = monsters.filter((m) => m.life > 0 && !m.dead && !m.chained && !m.martyr);
+  const near = open.sort((a, b) => cellDistance(center, a.cell) - cellDistance(center, b.cell) || a.uid - b.uid)[0];
+  if (!near || near.cell === center) return center;
+  return neighbors(center).sort((a, b) => cellDistance(a, near.cell) - cellDistance(b, near.cell))[0];
+}
+
+/** A whirlpool draws what's in it a step toward its centre, onto a free hex. */
+export function drawIn(monsters: MonsterInstance[], minions: Minion[], cells: number[], center: number): void {
+  const inside = new Set(cells);
+  for (const m of monsters) {
+    if (m.life <= 0 || m.dead || m.isBoss || m.martyr || !inside.has(m.cell) || m.cell === center) continue;
+    const taken = occupied([...monsters, ...minions]);
+    const next = neighbors(m.cell).find((j) => inside.has(j) && !taken.has(j) && cellDistance(j, center) < cellDistance(m.cell, center));
+    if (next !== undefined) m.cell = next;
+  }
 }

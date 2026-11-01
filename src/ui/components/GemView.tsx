@@ -4,7 +4,7 @@ import { actOpen } from '../../data/zones';
 import { GROUND, RINGS } from '../../engine/battlefield';
 import { ruleLockReason } from '../../engine/automation';
 import { skillRange } from '../../engine/combat';
-import { GEM_ATTR_NAME, gemAttrReq, gemLevelReq, gemProgress, gemWeaponReason, skillSummary, supportFits, supportSlots } from '../../engine/gems';
+import { GEM_ATTR_NAME, gemAttrReq, gemLevelReq, gemProgress, gemWeaponReason, minionStats, skillSummary, stormStats, supportFits, supportSlots } from '../../engine/gems';
 import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { fmt, ProgressBar } from './common';
@@ -19,6 +19,7 @@ const ROLE_LABEL: Record<string, string> = {
   buff: 'Buff',
   curse: 'Curse',
   sustain: 'Sustain',
+  summon: 'Summon',
 };
 
 /**
@@ -153,7 +154,27 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
             <span>{(nums.cooldownMs / 1000).toFixed(1)}s</span>
           </>
         )}
-        {(def.effect.weaponPct || def.effect.base) && (
+        {def.effect.minion && (
+          <>
+            <span className="muted">Minions</span>
+            <span>{minionStats(d, nums).count}</span>
+            <span className="muted">Minion life</span>
+            <span style={{ color: 'var(--life-2)' }}>{fmt(minionStats(d, nums).life)}</span>
+            <span className="muted">Minion hits every</span>
+            <span>{(minionStats(d, nums).attackMs / 1000).toFixed(2)}s</span>
+          </>
+        )}
+        {def.effect.storm && (
+          <>
+            <span className="muted">Storms at once</span>
+            <span>{stormStats(nums).max}</span>
+            <span className="muted">Strikes every</span>
+            <span>{(stormStats(nums).everyMs / 1000).toFixed(2)}s</span>
+            <span className="muted">Lasts</span>
+            <span>{(stormStats(nums).durationMs / 1000).toFixed(1)}s</span>
+          </>
+        )}
+        {(def.effect.weaponPct || def.effect.base) && !def.effect.minion && (
           <>
             <span className="muted">Reach</span>
             <span>{rangeText(skillRange(d, def))}</span>
@@ -163,7 +184,7 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
         <span>{nums.actionMs > 0 ? `${(nums.actionMs / 1000).toFixed(2)}s` : 'Instant'}</span>
         {sum.perUse > 0 && (
           <>
-            <span className="muted">Damage per use</span>
+            <span className="muted">{def.effect.minion || def.effect.storm ? 'Damage per strike' : 'Damage per use'}</span>
             <span style={{ color: 'var(--accent-2)' }}>~{fmt(sum.perUse)}</span>
             <span className="muted">Damage per second</span>
             <span style={{ color: 'var(--accent-2)' }}>~{sum.perSecond.toFixed(1)}</span>

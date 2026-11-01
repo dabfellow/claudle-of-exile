@@ -294,6 +294,10 @@ export interface CombinedMods {
   repeats: number;
   repeatDamage: number;
   chains: number;
+  minionLife: number;
+  minionCount: number;
+  stormCount: number;
+  stormSpeed: number;
   durationPct: number;
   cooldownPct: number;
   curseEffect: number;
@@ -310,7 +314,7 @@ export function combineMods(list: SupportMods[]): CombinedMods {
   const out: CombinedMods = {
     moreDamage: 0, morePhys: 0, moreElem: 0, noElemental: false, extras: [], attackSpeed: 0, castSpeed: 0,
     manaMult: 1, critChance: 0, critMulti: 0, lifeLeech: 0, manaLeech: 0, repeats: 0, repeatDamage: 100,
-    chains: 0, durationPct: 0, cooldownPct: 0, curseEffect: 0, lowLifeMore: 0, moreBleed: 0, stunChance: 0, stagger: 0, windupPct: 0, shieldMore: 0, specials: new Set(),
+    chains: 0, minionLife: 0, minionCount: 0, stormCount: 0, stormSpeed: 0, durationPct: 0, cooldownPct: 0, curseEffect: 0, lowLifeMore: 0, moreBleed: 0, stunChance: 0, stagger: 0, windupPct: 0, shieldMore: 0, specials: new Set(),
   };
   for (const m of list) {
     out.moreDamage += m.moreDamage ?? 0;
@@ -328,6 +332,10 @@ export function combineMods(list: SupportMods[]): CombinedMods {
     out.repeats += m.repeats ?? 0;
     if (m.repeatDamage) out.repeatDamage = Math.min(out.repeatDamage, m.repeatDamage);
     out.chains += m.chains ?? 0;
+    out.minionLife += m.minionLife ?? 0;
+    out.minionCount += m.minionCount ?? 0;
+    out.stormCount += m.stormCount ?? 0;
+    out.stormSpeed += m.stormSpeed ?? 0;
     out.durationPct += m.durationPct ?? 0;
     out.cooldownPct += m.cooldownPct ?? 0;
     out.curseEffect += m.curseEffect ?? 0;
@@ -390,6 +398,27 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
     actionMs,
     durationMult: (1 + mods.durationPct / 100) * (1 + (r.skillDuration + (isGuard ? r.guardDuration : 0)) / 100),
   };
+}
+
+/** A minion's life grows this many % with each gem level, as a shield does. */
+export const MINION_LIFE_PER_LEVEL = 3;
+
+/** What a summon skill's minions are like right now: how many it keeps up, their life and the time between their hits. */
+export function minionStats(d: Derived, nums: SkillNumbers): { count: number; life: number; attackMs: number } {
+  const m = nums.def.effect.minion!;
+  const { mods, level } = nums;
+  const r = d.raw;
+  return {
+    count: m.count + mods.minionCount,
+    life: Math.round(((d.maxLife * m.lifePct) / 100) * (1 + (MINION_LIFE_PER_LEVEL / 100) * (level - 1)) * (1 + r.minionLifePct / 100) * (1 + mods.minionLife / 100)),
+    attackMs: m.attackMs / ((1 + r.minionSpeedPct / 100) * (1 + (mods.attackSpeed + mods.castSpeed) / 100)),
+  };
+}
+
+/** How a storm from this skill strikes right now. */
+export function stormStats(nums: SkillNumbers): { max: number; everyMs: number; durationMs: number } {
+  const st = nums.def.effect.storm!;
+  return { max: st.max + nums.mods.stormCount, everyMs: st.everyMs / (1 + nums.mods.stormSpeed / 100), durationMs: st.durationMs * nums.durationMult };
 }
 
 /** Life Blood Price spends for each point of the mana cost it replaces. */
@@ -463,6 +492,15 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
   const hits = ((e.hits ?? 1) + extraHits) * (1 + (mods.repeats * mods.repeatDamage) / 100);
   const ailment = e.ailment ? (e.ailment.pctPerSec / 100) * (e.ailment.durationMs / 1000) * nums.durationMult : 0;
   const perUse = hit * hits * (1 + ailment);
+  // what a minion or storm does keeps going after the cast: its damage per second is how often it strikes, not how often you press
+  if (e.minion) {
+    const m = minionStats(d, nums);
+    return { perUse, perSecond: ((perUse * (1 + d.raw.minionPct / 100) * m.count) / m.attackMs) * 1000, nums };
+  }
+  if (e.storm) {
+    const st = stormStats(nums);
+    return { perUse, perSecond: ((perUse * st.max) / st.everyMs) * 1000, nums };
+  }
   const time = Math.max(nums.actionMs, nums.cooldownMs);
   return { perUse, perSecond: (perUse / time) * 1000, nums };
 }

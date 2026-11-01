@@ -86,6 +86,8 @@ export const STAT_KEYS = [
   'pummelHits', 'barrageArrows', 'parryBlocks', 'hammerConvert', 'meditateEs', 'infernalSpread',
   // forbidden keystones
   'overclock', 'knifesEdge', 'eternalHunger',
+  // minions (docs/design/MINIONS.md)
+  'minionPct', 'minionLifePct', 'minionSpeedPct',
 ] as const;
 
 export type StatKey = (typeof STAT_KEYS)[number];
@@ -267,6 +269,45 @@ export interface Ground {
   durationMs: number;
 }
 
+/** One of the player's minions on the field. Everything it does comes from the skill gem that called it, read live from the bar. */
+export interface Minion {
+  uid: number;
+  gemId: string;
+  name: string;
+  /** the monster art it wears */
+  art: string;
+  cell: number;
+  life: number;
+  maxLife: number;
+  /** how many of these the gem keeps up, for "its effect is not active" */
+  max: number;
+  /** steps it can hit across */
+  reach: number;
+  /** % less damage taken */
+  tough?: number;
+  taunts?: boolean;
+  /** ms until its next hit, and until its next step */
+  attackMs: number;
+  stepMs: number;
+  /** only temporary minions have these */
+  remainingMs?: number;
+  durationMs?: number;
+}
+
+/** A storm on the field: it hits whatever stands in its cells every so often, until it blows out. */
+export interface Storm {
+  uid: number;
+  gemId: string;
+  center: number;
+  cells: number[];
+  /** how many of these the gem keeps up, for "its effect is not active" */
+  max: number;
+  /** ms until its next strike */
+  pulseMs: number;
+  remainingMs: number;
+  durationMs: number;
+}
+
 export interface Buff {
   /** flask id or skill gem id */
   id: string;
@@ -378,6 +419,9 @@ export interface CombatRuntime {
   frozenMs?: number;
   groundAcc: number;
   groundTimer: number;
+  /** the player's minions and storms; both stay on the field between packs, and neither survives leaving the area */
+  minions?: Minion[];
+  storms?: Storm[];
   /** the DPS meter: damage dealt in the last finished window and the current one */
   dealt: number[];
   /** how far through the current window the meter is */
@@ -723,7 +767,7 @@ export interface GameState {
 export type GameEvent =
   | {
       t: 'hit';
-      target: 'player' | 'monster';
+      target: 'player' | 'monster' | 'minion';
       amount: number;
       crit?: boolean;
       /** a Mega Crit: flat 400%, ignores crit multiplier */
