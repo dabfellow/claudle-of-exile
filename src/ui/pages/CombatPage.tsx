@@ -18,6 +18,7 @@ import {
   mitigate,
   nextArrivalMs,
   canSpendLife,
+  staggerMax,
   queueSkill,
   releaseNovas,
   retreat,
@@ -196,8 +197,8 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
       <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} size="md" color="linear-gradient(90deg, var(--mana), var(--mana-2))" label={`${fmt(s.mana)} / ${fmt(d.maxMana)}`} />
       {mechanicOf(s) && <MechanicMeter s={s} d={d} c={c} />}
       <div className="action-line">
-        <span className="dim">{using ? using.name : closing ? `Closing in on ${closing.name}` : 'Waiting'}</span>
-        <span className="dim">{using ? `${(c.actionTotal / 1000).toFixed(1)}s ${using.tags.includes('attack') ? 'attack' : 'cast'}` : ''}</span>
+        <span className="dim">{using ? (c.windup ? `Winding up ${using.name}` : using.name) : closing ? `Closing in on ${closing.name}` : 'Waiting'}</span>
+        <span className="dim">{using ? `${(c.actionTotal / 1000).toFixed(1)}s ${c.windup ? 'wind-up' : using.tags.includes('attack') ? 'attack' : 'cast'}` : ''}</span>
         <ProgressBar value={progress} color={using || closing ? 'var(--accent)' : 'var(--line-2)'} />
       </div>
       <div className="status-row">
@@ -257,6 +258,7 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
       </div>
       <ProgressBar value={Math.max(0, m.life) / m.maxLife} size="md" color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(Math.max(0, m.life))} / ${fmt(m.maxLife)}`} ghost />
       {m.wardMax > 0 && <ProgressBar size="md" color="var(--ward)" value={m.ward / m.wardMax} label={`Ward ${fmt(m.ward)} · ${Math.ceil(m.wardMs / 1000)}s`} />}
+      {(m.stagger ?? 0) > 0 && <ProgressBar color="var(--accent)" value={m.stagger! / staggerMax(m)} label="Stagger" />}
       {m.casting >= 0 ? (
         <>
           <ProgressBar className="cast-bar" value={1 - m.casting / m.castTotal} />
@@ -317,6 +319,7 @@ function MonsterToken({ m, target, locked, fx }: { m: MonsterInstance; target: b
         </div>
         <ProgressBar value={Math.max(0, m.life) / m.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" />
         {m.wardMax > 0 && <ProgressBar color="var(--ward)" value={m.ward / m.wardMax} className="thin" />}
+        {(m.stagger ?? 0) > 0 && <ProgressBar color="var(--accent)" value={m.stagger! / staggerMax(m)} className="thin" />}
         {m.casting >= 0 ? (
           <ProgressBar className="cast-bar thin" value={1 - m.casting / m.castTotal} />
         ) : m.martyr ? (

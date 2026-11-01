@@ -15,6 +15,7 @@ no save migration was needed. The Gem shop stocks your furthest act's gems at 3Ã
 | 1 | Everything up to level 12 | Everything up to level 18, plus those skills' signatures |
 | 2 | Riders and raiders (below), plus Judgement Hammer, Backstab and Glacial Lance | Below, plus those three skills' signatures |
 | 3 | Zealots and blood (below), plus Lacerate (level 35) | Below, plus Hemorrhage |
+| 4 | Giants and weight (below) | Below |
 
 ### Act 2: Riders and raiders
 
@@ -73,6 +74,51 @@ just under half: the skill stops once you're there. No save migration: every new
 **Art:** these use existing icons as glyphs, so several repeat: Gash, Deep Wounds and Serrated Edge share the bleed drop,
 Blood Price shares Flagellate's pierced heart, Tithe shares Transfusion's heal. Wanted from an asset pack, not generated: a
 whip or lash, a chalice, a hand with a wound, a hooked arrowhead. `GEM_SYMBOL` in `artManifest.ts` lists the symbols.
+
+### Act 4: Giants and weight
+
+Built 2026-11-01. Huge slow hits, stuns and shields, leaning Strength for the Warrior and Templar, with enough Dexterity
+and Intelligence for bows, daggers and casters to join in.
+
+**Heavy skills** (`heavy` tag) wind up first and land at the end; every other skill still hits first and recovers after.
+
+- They're paid for when the wind-up starts, and **can't miss**.
+- If the target dies, the blow turns on the next enemy in reach. With none, it's **held** and closes in where it can, and
+  a wind-up goes on across the gap between packs, so it's ready for the next one. It's only lost if the gem leaves the bar.
+- There's no recovery after the hit. A **kill makes the next wind-up half as long**, so trash doesn't cost a full swing.
+- **Guards break in:** a guard whose rule passes, or that you press, goes up during the wind-up, and the blow waits for it.
+  Nothing else does.
+- A heavy hit gives 4 Rage rather than 1.
+
+**Stagger** is how stuns matter on bosses. A stun on a boss is still only 0.4s, but each adds to a meter shown on the boss:
+10 by default, or the skill's own number. When it's full the boss is stunned for 1.5s (longer with stun duration, up to 3s)
+and loses any wind-up, whose timer starts over. Life-threshold mechanics still run. Each Stagger needs 1.5 times the last,
+so stun stacking pays less the longer a fight goes and can't lock a boss. No new rule condition: **While target is affected
+by: Stun** and **When an enemy winds up** already cover it, and Act 5's Channels can use `interruptCast` in combat.ts.
+
+| Skill | Attr | Role | Lvl | Does | Signature (lvl +6) |
+|---|---|---|---|---|---|
+| Titan's Blow | str | main, heavy | 40 | 430% in 5.4s, always stuns (2s), 25 Stagger | Sundering: breaks armour, 50% more Stagger |
+| Bulwark | str | guard | 40 | Shield of 45% Life and 40% Armour for 6s, 12s | Recoil: breaking stuns melee range 2s |
+| Avalanche | str | area, heavy | 42 | 210% in 4.8s, radius 2, reach 2, half cold, 50% stun (1.5s), 5s | Buried Alive: stuns last twice as long |
+| Shield Crush | str | main | 44 | 190%, plus 50% of your shield, 30% stun | Battering Ram: spends the shield for all of it |
+| Mountain Stance | str | buff | 46 | 30% more damage and 40% Armour, 15% slower, for 8s, 16s | Immovable: 50% longer stuns while it lasts |
+| Siege Shot | dex (bow) | main, heavy | 42 | 360% in 4.8s, 50% stun | Long Draw: a kill cuts the next wind-up 90% |
+| Blackjack | dex | main | 44 | 110%, 20% stun, 60% more against stunned | Cheap Shot: always crits the stunned |
+| Sacred Aegis | int | guard | 40 | Instant shield of 30% of Life plus ES for 6s, 10s | Radiance: breaking strikes all for half of it |
+| Meteor | int | burst, heavy | 42 | 80-120 fire in 5.4s, radius 1, 60% stun (1.5s), 6s | Cataclysm: burning ground for 4s |
+| Burden | int | curse | 46 | 15% slower, 40% longer stuns and more Stagger | Dead Weight: 25% more damage while stunned |
+
+**General supports:** Crushing Weight (40, +25% stun chance, 50% more Stagger), Ponderous (40, heavy, 40% more damage, 25%
+longer wind-up), Shockwave (42, heavy, the 2 nearest others take 30%), Reinforced (42, shield, 30% more shield), Follow
+Through (44, heavy, a kill's spare damage lands on the nearest enemy).
+
+Frost Ward and Blood Ward gain the `shield` tag, so Reinforced fits them. No save migration: every new field is optional.
+
+**Art:** these use existing icons as glyphs, so several repeat: Bulwark, Mountain Stance and Reinforced share the armour
+icon, Shield Crush and Sacred Aegis the energy shield, Blackjack, Burden and Crushing Weight the stun, and Avalanche and
+Shockwave the charged attack. Wanted from an asset pack, not generated: a maul, boulders, a stone wall, a ballista bolt, a
+cosh, a falling rock, a halo shield, a hanging weight. `GEM_SYMBOL` in `artManifest.ts` lists the symbols.
 
 ## New Skills â€” built around the class mechanics
 
