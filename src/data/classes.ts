@@ -90,7 +90,7 @@ export const CLASSES: ClassDef[] = [
     attribute: 'Strength & Dexterity',
     region: 'duelist',
     mechanic: 'riposte',
-    mechanicText: 'Riposte: when you block or evade a hit, counter-attack for 100% weapon damage (at most once per 0.5s).',
+    mechanicText: 'Riposte: when you block or evade a hit, counter-attack for 100% weapon damage, or 50% if the hit lands (at most once per 0.5s).',
     startNode: 'class_strdex',
     color: '#d39a4a',
     icon: 'weapon',

@@ -12,6 +12,8 @@ import type { CombatRuntime, FlaskInstance, GameState, StatKey, Stats } from './
  */
 
 export const RIPOSTE_COOLDOWN_MS = 500;
+/** A Riposte answering a hit that landed deals this share of a blocked or evaded one's damage. */
+export const RIPOSTE_LANDED_MULT = 0.5;
 export const RAGE_DECAY_PER_S = 2;
 /** Eternal Hunger: how long a kill keeps you alive */
 export const HUNGER_MS = 5000;

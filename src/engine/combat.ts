@@ -119,6 +119,7 @@ import {
   rampaging,
   RESERVE_MORE,
   RIPOSTE_COOLDOWN_MS,
+  RIPOSTE_LANDED_MULT,
   SCOURGE_DAMAGE,
   SELF_HARM_FERVOR,
   SELF_HARM_PCT,
@@ -1120,7 +1121,7 @@ function hitMonster(
     for (const x of mon.dots) x.remainingMs = Math.max(x.remainingMs, x.durationMs ?? 0);
     if (mon.chillMs > 0) mon.chillMs = Math.max(mon.chillMs, 3000);
   }
-  ctx.emit({ t: 'hit', target: 'monster', amount: dealt, crit, mega: mega || undefined, dmgType: mainType(byType), monsterUid: mon.uid });
+  ctx.emit({ t: 'hit', target: 'monster', amount: dealt, crit, mega: mega || undefined, riposte: c.riposting || undefined, dmgType: mainType(byType), monsterUid: mon.uid });
   // Rage and Momentum count every hit dealt, so multi-hit and area skills fill them fastest
   if (mechanicOf(s) === 'rage' && ascendancyOf(s) !== 'anvil') gainMeter(s, d, 1);
   if (mechanicOf(s) === 'momentum' && def.tags.includes('attack') && (!c.asc.hawking || hasAscNode(s, 'falconer_bond'))) gainMeter(s, d, 1);
@@ -1556,18 +1557,18 @@ function counterAttack(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance)
   if (roll) hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, 2, roll.mega, roll.coup);
 }
 
-/** Duelist: blocking or evading a hit answers with a weapon strike. A Matador only answers evades, a Vanguard only blocks. */
-function riposte(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, how: 'block' | 'evade', phalanx = false): void {
+/** Duelist: every hit is answered with a weapon strike, at half damage if it landed. A Matador only answers evades, a Vanguard only blocks. */
+function riposte(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, how: 'block' | 'evade' | 'landed', phalanx = false): void {
   const c = s.combat!;
   const r = d.raw;
   const asc = ascendancyOf(s);
   if (mechanicOf(s) !== 'riposte' || mon.life <= 0 || (c.riposteMs > 0 && !r.perfectForm && !phalanx)) return;
-  if ((asc === 'matador' && how === 'block') || (asc === 'vanguard' && how === 'evade')) return;
+  if ((asc === 'matador' && how !== 'evade') || (asc === 'vanguard' && how !== 'block')) return;
   c.riposteMs = RIPOSTE_COOLDOWN_MS / (1 + r.riposteCooldown / 100);
   const nums = skillNumbers(d, null);
   const truth = c.asc.streak >= 10 && hasAscNode(s, 'matador_moment_of_truth');
   if (truth) c.ambush = true;
-  const factor = (1 + r.ripostePct / 100) * (r.perfectForm ? 0.5 : 1) * (phalanx ? PHALANX_MULT : 1) * (1 + (STREAK_MORE * c.asc.streak) / 100);
+  const factor = (1 + r.ripostePct / 100) * (r.perfectForm ? 0.5 : 1) * (phalanx ? PHALANX_MULT : 1) * (how === 'landed' ? RIPOSTE_LANDED_MULT : 1) * (1 + (STREAK_MORE * c.asc.streak) / 100);
   c.riposting = true;
   const roll = rollHit(s, ctx, d, nums, mon);
   if (roll) {
@@ -1875,6 +1876,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   s.life -= dmg;
   ctx.emit({ t: 'hit', target: 'player', amount: dmg, dmgType: type, absorbed: absorbed || undefined, es: Math.round(toEs) || undefined, monsterUid: mon.uid });
   if (isCast && s.life > 0 && hasAscNode(s, 'anvil_shatter')) c.mech = meterMax('rage', d.raw);
+  if (s.life > 0) riposte(s, ctx, d, mon, 'landed');
 }
 
 /** Any block, however it came about. */

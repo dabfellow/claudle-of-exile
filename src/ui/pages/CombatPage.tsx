@@ -90,9 +90,9 @@ function useCombatFx() {
         else {
           add({
             owner,
-            text: e.mega ? `MEGA ${fmt(e.amount)}` : fmt(e.amount),
-            cls: e.mega ? 'crit mega' : e.crit ? 'crit' : e.dot ? 'dot' : '',
-            color: e.crit ? '' : e.dot ? 'var(--life-2)' : DMG_COLOR[e.dmgType],
+            text: e.mega ? `MEGA ${fmt(e.amount)}` : e.riposte ? `Riposte ${fmt(e.amount)}` : fmt(e.amount),
+            cls: e.mega ? 'crit mega' : e.crit ? 'crit' : e.dot ? 'dot' : e.riposte ? 'riposte' : '',
+            color: e.crit ? '' : e.dot ? 'var(--life-2)' : e.riposte ? '' : DMG_COLOR[e.dmgType],
           });
           if (!e.dot) bump(setShakes, String(owner));
           if (e.crit) bump(setCrits, String(owner));

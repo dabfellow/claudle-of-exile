@@ -650,6 +650,8 @@ export type GameEvent =
       crit?: boolean;
       /** a Mega Crit: flat 400%, ignores crit multiplier */
       mega?: boolean;
+      /** dealt by a Duelist's Riposte */
+      riposte?: boolean;
       dmgType: DamageType;
       evaded?: boolean;
       blocked?: boolean;
