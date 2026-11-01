@@ -26,6 +26,8 @@ export interface OfflineSummary {
   /** map runs finished while you were away, and maps found on them */
   mapRuns: number;
   mapsFound: number;
+  /** maps Cartography drew while you were away */
+  mapsDrawn: number;
   /** Heist jobs finished while you were away, and how many of them tripped an alarm */
   heists: number;
   heistAlarms: number;
@@ -37,8 +39,9 @@ export interface OfflineSummary {
 /** Run the simulation for time spent away, collecting a summary instead of live events. */
 export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): OfflineSummary {
   const ms = Math.min(elapsedMs, offlineCapMs(s));
-  const sum: OfflineSummary = { ms, xp: {}, levels: {}, materials: {}, items: 0, gems: 0, kills: 0, died: false, diedAfterMs: null, stoppedReason: null, bossWaiting: null, crafted: null, mapRuns: 0, mapsFound: 0, heists: 0, heistAlarms: 0, finds: 0, traded: 0 };
+  const sum: OfflineSummary = { ms, xp: {}, levels: {}, materials: {}, items: 0, gems: 0, kills: 0, died: false, diedAfterMs: null, stoppedReason: null, bossWaiting: null, crafted: null, mapRuns: 0, mapsFound: 0, mapsDrawn: 0, heists: 0, heistAlarms: 0, finds: 0, traded: 0 };
   const mapsBefore = { ...s.maps.tally };
+  const drawnBefore = s.lifetime.mapsDrawn;
   const heistsBefore = { ...s.heist.tally };
   const expeditionBefore = { ...s.expedition.tally };
   const bankBefore = { ...s.bank };
@@ -75,6 +78,7 @@ export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offl
   s.clock += Math.max(0, left - 60_000);
   sum.mapRuns = s.maps.tally.runs - mapsBefore.runs;
   sum.mapsFound = s.maps.tally.mapsFound - mapsBefore.mapsFound;
+  sum.mapsDrawn = s.lifetime.mapsDrawn - drawnBefore;
   sum.heists = s.heist.tally.jobs - heistsBefore.jobs;
   sum.heistAlarms = s.heist.tally.alarms - heistsBefore.alarms;
   sum.finds = s.expedition.tally.finds - expeditionBefore.finds;

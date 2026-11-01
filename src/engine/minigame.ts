@@ -22,7 +22,12 @@ export const CHARGE_ZONE_WIDTH = 0.12;
 const STRIKE_HIT_MS = 120;
 const STRIKE_WEAK_MS = 260;
 
-const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking'];
+/** Cartography: the survey grid, and how many soundings you get to find the landmark. */
+export const SURVEY_COLS = 7;
+export const SURVEY_ROWS = 4;
+export const SURVEY_SOUNDINGS = 5;
+
+const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'];
 
 export type SwingResult = 'hit' | 'weak' | 'miss';
 
@@ -41,6 +46,17 @@ export function chargeResult(charge: number, zone: number): SwingResult | null {
 export function strikeResult(offMs: number): SwingResult {
   const off = Math.abs(offMs);
   return off <= STRIKE_HIT_MS ? 'hit' : off <= STRIKE_WEAK_MS ? 'weak' : 'miss';
+}
+
+/** Steps between two tiles of the survey grid: what a sounding shows. */
+export function surveyDistance(a: number, b: number): number {
+  return Math.abs((a % SURVEY_COLS) - (b % SURVEY_COLS)) + Math.abs(Math.floor(a / SURVEY_COLS) - Math.floor(b / SURVEY_COLS));
+}
+
+/** How a survey ended after `taken` soundings, or null while it's still going. The last sounding is only a weak find. */
+export function surveyResult(found: boolean, taken: number): SwingResult | null {
+  if (found) return taken < SURVEY_SOUNDINGS ? 'hit' : 'weak';
+  return taken >= SURVEY_SOUNDINGS ? 'miss' : null;
 }
 
 /** The action a mini-game can feed right now, or null. A Heist job is Thieving. */

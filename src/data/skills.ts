@@ -1,7 +1,9 @@
 import type { SkillId } from '../engine/types';
 import { BASES, type BaseDef } from './bases';
+import { CARTOGRAPHY_GATE, CHART_TIERS, FOLIO_COST, FOLIO_LEVEL, FOLIO_SIZE, THEME_LEVEL_STEP } from './cartography';
 import { COOKING_GATE } from './cooking';
 import { CULTURES, digChance, EXPEDITION_GATE, SITES } from './expedition';
+import { MAP_THEMES, MAP_TIERS, type MapTheme } from './maps';
 import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
 import { RUNE_FAMILIES, RUNE_GATE, RUNES } from './runes';
 
@@ -29,12 +31,13 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   gemcutting: { id: 'gemcutting', name: 'Gemcutting', group: 'production', color: '#4fc1a6', verb: 'Cutting', desc: 'Cut rough gems into skill and support gems.' },
   runecarving: { id: 'runecarving', name: 'Rune-carving', group: 'production', color: '#6fa8ff', verb: 'Carving', desc: 'Carve old materials into runes, then inscribe them in the rune slot on your gear.' },
   cooking: { id: 'cooking', name: 'Cooking', group: 'production', color: '#e08a4a', verb: 'Cooking', desc: 'Cook gathered plants into meals, and into the strongest flask ingredients for Alchemy.' },
+  cartography: { id: 'cartography', name: 'Cartography', group: 'production', color: '#8a7ad8', verb: 'Drawing', desc: 'Draw maps of the theme you want and upgrade them to higher tiers, ready for the Map Device.' },
   fishing: { id: 'fishing', name: 'Fishing', group: 'gathering', color: '#4fa3d9', verb: 'Fishing', desc: 'Cast a line into the waters of Wraeclast.', soon: true },
 };
 
-/** Planned skills shown on the Coming soon page; none exist in the engine yet. */
-export const UPCOMING_SKILLS: { name: string; theme: string; icon: string; color: string; desc: string }[] = [
-  { name: 'Cartography', theme: 'Maps', icon: 'map', color: '#8a7ad8', desc: 'Draw and upgrade maps for the Map Device.' },
+/** Planned skills shown on the Coming soon page. One with a `gate` is built, and leaves the page once that area opens. */
+export const UPCOMING_SKILLS: { name: string; theme: string; icon: string; color: string; desc: string; gate?: { zone: string } }[] = [
+  { name: 'Cartography', theme: 'Maps', icon: 'map', color: '#8a7ad8', desc: 'Draw and upgrade maps for the Map Device.', gate: CARTOGRAPHY_GATE },
   { name: 'Fletching', theme: 'Quivers', icon: 'woodcutting', color: '#7fae6a', desc: 'Turn logs into shafts and shafts into quivers.' },
 ];
 
@@ -64,6 +67,8 @@ export interface SkillAction {
   /** batch recipe: makes this many at once; `batchOf` is the single recipe it scales */
   batch?: number;
   batchOf?: string;
+  /** cartography: makes `qty` maps, into the Map Device's stock. An upgrade also uses up maps of the tier below */
+  chart?: { tier: number; theme: string; qty: number; upgrade?: boolean };
   /** listed but can never be started (every Fishing spot) */
   soon?: boolean;
 }
@@ -299,10 +304,60 @@ const COOKING: SkillAction[] = [
   cook('meal_table', "Captain's Table", 50, 10000, 170, { voidbloom: 10, emberroot: 6, essence_vitality_2: 1, yew_log: 2 }, '#e0a640'),
 ];
 
+const sheet = (id: string, name: string, level: number, intervalMs: number, xp: number, inputs: Record<string, number>, color: string): SkillAction => ({
+  id: `chart_${id}`, skill: 'cartography', name, level, intervalMs, xp, inputs, outputs: { [id]: 1 }, color, gate: CARTOGRAPHY_GATE,
+});
+
+function chartInputs(inputs: Record<string, number>, theme: MapTheme, mult = 1): Record<string, number> {
+  const all = { ...inputs };
+  for (const [id, n] of Object.entries(theme.drawWith)) all[id] = (all[id] ?? 0) + n;
+  return Object.fromEntries(Object.entries(all).map(([id, n]) => [id, n * mult]));
+}
+
+/** One map of each theme per tier: drawn at tier 1, upgraded from the tier below after that. */
+const CHARTS: SkillAction[] = CHART_TIERS.flatMap((c) =>
+  MAP_THEMES.map((theme, i): SkillAction => ({
+    id: `chart_${theme.id}_t${c.tier}`,
+    skill: 'cartography',
+    name: `${c.tier === 1 ? 'Draw' : 'Upgrade'}: ${theme.name} T${c.tier}`,
+    level: c.level + i * THEME_LEVEL_STEP,
+    intervalMs: c.intervalMs,
+    xp: c.xp,
+    inputs: chartInputs(c.inputs, theme),
+    chart: { tier: c.tier, theme: theme.id, qty: 1, upgrade: c.tier > 1 },
+    color: '#8a7ad8',
+    gate: CARTOGRAPHY_GATE,
+  })),
+);
+
+/** The long-night recipe: a stack of one theme, cheaper per map. */
+const FOLIOS: SkillAction[] = MAP_THEMES.map((theme, i) => ({
+  id: `chart_folio_${theme.id}`,
+  skill: 'cartography',
+  name: `Folio: ${theme.name}`,
+  level: FOLIO_LEVEL + i * THEME_LEVEL_STEP,
+  intervalMs: CHART_TIERS[0].intervalMs * FOLIO_SIZE,
+  xp: CHART_TIERS[0].xp * FOLIO_SIZE,
+  inputs: chartInputs(CHART_TIERS[0].inputs, theme, FOLIO_COST),
+  chart: { tier: MAP_TIERS[0].tier, theme: theme.id, qty: FOLIO_SIZE },
+  color: '#a89ae8',
+  gate: CARTOGRAPHY_GATE,
+}));
+
+/** Logs into vellum, plants into ink, and both into maps, so a map costs what gathering can feed. */
+const CARTOGRAPHY: SkillAction[] = [
+  sheet('vellum', 'Vellum', 1, 3500, 10, { ash_log: 4 }, '#d8c8a0'),
+  sheet('gall_ink', 'Gall Ink', 4, 4000, 14, { sunpetal: 3, iron_ore: 1 }, '#46506a'),
+  sheet('fine_vellum', 'Fine Vellum', 15, 5000, 40, { oak_log: 5, vellum: 2 }, '#f0e4c4'),
+  sheet('sepia_ink', 'Sepia Ink', 20, 5500, 55, { emberroot: 3, gall_ink: 1, arcane_dust: 4 }, '#8a5a34'),
+  ...CHARTS,
+  ...FOLIOS,
+];
+
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-export const ACTIONS: SkillAction[] = [...GATHERING, ...THIEVING, ...ARCHAEOLOGY, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING].map((a) => ({
+export const ACTIONS: SkillAction[] = [...GATHERING, ...THIEVING, ...ARCHAEOLOGY, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY].map((a) => ({
   ...a,
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
 }));

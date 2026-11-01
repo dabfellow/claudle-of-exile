@@ -4,7 +4,11 @@ import { FOSSILS, fossilDef, RESINS } from '../../data/craftMats';
 import { flaskDef } from '../../data/flasks';
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../../data/gems';
 import { materialDef } from '../../data/materials';
+import { isMapId, mapTheme } from '../../data/maps';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
+import { zoneDef } from '../../data/zones';
+import { upgradeCost } from '../../engine/cartography';
+import { mapsHeld } from '../../engine/maps';
 import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
 import { actionBlocker, actionIntervalMs, actionPlaceNeeded, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
@@ -16,6 +20,7 @@ import { game, useGame, useGameEvent } from '../../game';
 import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/common';
 import { ExpeditionBoard } from '../components/ExpeditionBoard';
 import { HeistBoard } from '../components/HeistBoard';
+import { MapCaseBoard } from '../components/MapCaseBoard';
 import { PantryBoard } from '../components/PantryBoard';
 import { RuneBoard } from '../components/RuneBoard';
 import { SkillMinigame } from '../components/SkillMinigame';
@@ -33,10 +38,12 @@ const START_LABEL: Record<SkillId, string> = {
   gemcutting: 'Cut',
   runecarving: 'Carve',
   cooking: 'Cook',
+  cartography: 'Draw',
   fishing: 'Fish',
 };
 
 function outputName(id: string): string {
+  if (isMapId(id)) return zoneDef(id).name;
   const gem = ACTIVE_GEMS.find((g) => g.id === id) ?? SUPPORT_GEMS.find((g) => g.id === id);
   if (gem) return gem.name;
   try {
@@ -85,6 +92,13 @@ function OutputRows({ s, a }: { s: GameState; a: SkillAction }) {
           <span className="ing-qty num">×1</span>
         </li>
       )}
+      {a.chart && (
+        <li>
+          <GameIcon name="map" size={13} color={a.color} />
+          <span className="ing-name">Tier {a.chart.tier} {mapTheme(a.chart.theme).name}</span>
+          <span className="ing-qty num">×{a.chart.qty}</span>
+        </li>
+      )}
       {a.bonus?.map((b) => (
         <li key={b.id} className="bonus">
           <MatIcon id={b.id} size={12} />
@@ -100,7 +114,8 @@ function ActionArt({ a, locked, running }: { a: SkillAction; locked: boolean; ru
   if (locked) return <GameIcon name="lock" size={16} color="var(--dim)" />;
   if (a.baseId) return <Art src={`items/${a.baseId}`} alt={baseDef(a.baseId).name} size={32} fallback={<Icon name={baseDef(a.baseId).slot} size={20} color={a.color} />} />;
   if (a.gem) return <GameIcon name="gemcutting" size={20} color={a.color} />;
-  if (a.skill === 'cooking') return <MatIcon id={Object.keys(a.outputs!)[0]} size={22} />;
+  if (a.chart) return <GameIcon name="map" size={20} color={a.color} />;
+  if (a.skill === 'cooking' || a.skill === 'cartography') return <MatIcon id={Object.keys(a.outputs!)[0]} size={22} />;
   if (a.flaskId || a.skill === 'alchemy') return <Orb color={a.color} size={18} glow={running} />;
   return <Swatch color={a.color} size={16} />;
 }
@@ -205,6 +220,7 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
             <div className="action-section">
               <div className="io-label">Requires</div>
               <Ingredients cost={a.inputs} have={s.bank} />
+              {a.chart?.upgrade && <MapInput s={s} a={a} />}
             </div>
           )}
         </div>
@@ -290,6 +306,24 @@ function Ingredients({ cost, have }: { cost: Record<string, number>; have: Recor
           </li>
         );
       })}
+    </ul>
+  );
+}
+
+/** The lower maps an upgrade uses up, as a row under its ingredients. */
+function MapInput({ s, a }: { s: GameState; a: SkillAction }) {
+  const { tier, theme } = a.chart!;
+  const need = upgradeCost(s, a);
+  const held = mapsHeld(s, tier - 1, theme);
+  return (
+    <ul className="ingredients">
+      <li className={held >= need ? 'ok' : 'short'}>
+        <GameIcon name="map" size={12} />
+        <span className="ing-name">Tier {tier - 1} {mapTheme(theme).name}</span>
+        <span className="ing-qty num">
+          <b>{fmt(held)}</b> / {need}
+        </span>
+      </li>
     </ul>
   );
 }
@@ -433,6 +467,7 @@ export function SkillPage({ skill }: { skill: SkillId }) {
       {skill === 'archaeology' && <ExpeditionBoard />}
       {skill === 'runecarving' && <RuneBoard />}
       {skill === 'cooking' && <PantryBoard />}
+      {skill === 'cartography' && <MapCaseBoard />}
       {skill === 'fishing' && (
         <div className="callout skill-note">
           Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.

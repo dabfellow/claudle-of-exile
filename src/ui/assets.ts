@@ -495,6 +495,11 @@ export const MATERIAL_ART: Record<string, string> = {
   frost_extract: new URL('../assets/items/consumables/medicine-jar.png', import.meta.url).href,
   ember_reduction: new URL('../assets/items/consumables/medicine-jar.png', import.meta.url).href,
   void_distillate: new URL('../assets/items/consumables/medicine-jar.png', import.meta.url).href,
+  // Cartography: first-pass stand-ins, the pack has no paper
+  vellum: new URL('../assets/items/consumables/provisions.png', import.meta.url).href,
+  fine_vellum: new URL('../assets/items/consumables/provisions.png', import.meta.url).href,
+  gall_ink: new URL('../assets/items/consumables/potion-blue.png', import.meta.url).href,
+  sepia_ink: new URL('../assets/items/consumables/potion-red.png', import.meta.url).href,
 };
 
 /** Currency orbs: mostly SanguineNite round icons, a few loose stand-ins. */
@@ -624,6 +629,7 @@ export const GAME_ICONS: Record<string, string> = {
   gemcutting: new URL('../assets/icons/skills/gemcutting.svg', import.meta.url).href,
   runecarving: new URL('../assets/icons/navigation/rune-circle.png', import.meta.url).href,
   cooking: new URL('../assets/icons/skills/cooking.png', import.meta.url).href,
+  cartography: new URL('../assets/icons/navigation/map.svg', import.meta.url).href,
   // navigation
   home: new URL('../assets/icons/navigation/home.svg', import.meta.url).href,
   tree: new URL('../assets/icons/navigation/tree.svg', import.meta.url).href,

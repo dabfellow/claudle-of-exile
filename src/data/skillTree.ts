@@ -47,6 +47,10 @@ export type SkillTreeStat =
   | 'secondHelping'
   | 'slowSimmer'
   | 'headChef'
+  | 'cartographySpeed'
+  | 'secondCopy'
+  | 'mapFind'
+  | 'masterCartographer'
   | 'fishingSpeed'
   | 'fishTreasure'
   | 'biggerFish'
@@ -169,6 +173,16 @@ const BRANCHES: BranchSpec[] = [
       { name: 'Slow Simmer', stats: { slowSimmer: 25 }, desc: 'Meals last 25% longer' },
     ],
     keystone: { name: 'Head Chef', stats: { headChef: 1 }, desc: 'Meals are 30% stronger. Cooking is 25% slower' },
+  },
+  {
+    skill: 'cartography',
+    angle: 0,
+    small: { name: 'Steady Line', stats: { cartographySpeed: 5 }, desc: '5% faster Cartography' },
+    notables: [
+      { name: 'Second Copy', stats: { secondCopy: 15 }, desc: '15% chance to draw two for one' },
+      { name: 'Surveyor\'s Eye', stats: { mapFind: 25 }, desc: 'Monsters drop maps 25% more often' },
+    ],
+    keystone: { name: 'Master Cartographer', stats: { masterCartographer: 1 }, desc: 'Upgrading a map uses 2 lower maps instead of 3. Cartography is 25% slower' },
   },
   {
     skill: 'alchemy',

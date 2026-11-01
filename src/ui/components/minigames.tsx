@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { CHARGE_ZONE_WIDTH, chargeResult, strikeResult, type SwingResult } from '../../engine/minigame';
+import { CHARGE_ZONE_WIDTH, chargeResult, strikeResult, surveyDistance, surveyResult, SURVEY_COLS, SURVEY_ROWS, type SwingResult } from '../../engine/minigame';
 import type { SkillId } from '../../engine/types';
 import { MatIcon } from './common';
 
@@ -33,6 +33,7 @@ const STROKE_REACH = 16;
 const STROKE_AHEAD = 30;
 const POTS = 3;
 const POT_ZONE = 0.76;
+const SURVEY_PATIENCE_MS = 15000;
 
 type OnSwing = (r: SwingResult) => void;
 
@@ -241,6 +242,48 @@ function CookingGame({ onSwing }: { onSwing: OnSwing }) {
         <button key={i} className="mini-bar" aria-label={`Stir pot ${i + 1}`} onPointerDown={() => stir(i)}>
           <span className="mini-zone" style={{ left: `${POT_ZONE * 100}%`, width: `${CHARGE_ZONE_WIDTH * 100}%` }} />
           <div className="mini-fill" ref={(el) => void (fills.current[i] = el)} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Sound the fog for a hidden landmark: every sounding shows how many steps off it is. A good surveyor needs three. */
+function CartographyGame({ onSwing }: { onSwing: OnSwing }) {
+  const tiles = SURVEY_COLS * SURVEY_ROWS;
+  const newSurvey = () => ({ id: Math.random(), landmark: Math.floor(Math.random() * tiles) });
+  const [survey, setSurvey] = useState(newSurvey);
+  const [soundings, setSoundings] = useState<number[]>([]);
+
+  const next = () => {
+    setSurvey(newSurvey());
+    setSoundings([]);
+  };
+
+  useEffect(() => {
+    const giveUp = setTimeout(next, SURVEY_PATIENCE_MS);
+    return () => clearTimeout(giveUp);
+  }, [survey]);
+
+  const sound = (tile: number) => {
+    if (soundings.includes(tile)) return;
+    const taken = [...soundings, tile];
+    const result = surveyResult(tile === survey.landmark, taken.length);
+    if (!result) {
+      setSoundings(taken);
+      return;
+    }
+    onSwing(result);
+    // a survey takes a few seconds of thought, so a clean one is worth two swings
+    if (result === 'hit') onSwing('hit');
+    next();
+  };
+
+  return (
+    <div className="mini-survey" style={{ gridTemplateColumns: `repeat(${SURVEY_COLS}, minmax(0, 1fr))` }}>
+      {[...Array(tiles).keys()].map((tile) => (
+        <button key={tile} className={`mini-sounding ${soundings.includes(tile) ? 'sounded' : ''}`} aria-label={`Sound tile ${tile + 1}`} onPointerDown={() => sound(tile)}>
+          {soundings.includes(tile) ? surveyDistance(tile, survey.landmark) : ''}
         </button>
       ))}
     </div>
@@ -577,6 +620,8 @@ export function SkillGame({ skill, matId, onSwing }: { skill: SkillId; matId?: s
       return <RuneGame onSwing={onSwing} />;
     case 'cooking':
       return <CookingGame onSwing={onSwing} />;
+    case 'cartography':
+      return <CartographyGame onSwing={onSwing} />;
     default:
       return null;
   }
