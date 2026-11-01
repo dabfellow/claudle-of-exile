@@ -256,6 +256,10 @@ export interface Curse {
   stunTaken?: number;
   /** Dead Weight: takes more damage while stunned */
   crushing?: boolean;
+  /** Death Warrant: the share of what the enemy takes that lands again, what it has taken so far, and whether its neighbours pay too */
+  warrant?: number;
+  owed?: number;
+  collective?: boolean;
 }
 
 export type GroundKind = 'burning' | 'chilled' | 'frozen' | 'shocked' | 'caustic' | 'stormwater';
@@ -285,6 +289,8 @@ export interface Minion {
   reach: number;
   /** % less damage taken */
   tough?: number;
+  /** takes this % of each hit that lands on the player */
+  shares?: number;
   taunts?: boolean;
   /** ms until its next hit, and until its next step */
   attackMs: number;
@@ -393,7 +399,24 @@ export interface CombatRuntime {
   /** Radiance: what the shield strikes every enemy for when it breaks */
   radiance?: number;
   /** a heavy skill coming down: paid for, it lands when actionMs runs out, and waits there for something to hit */
-  windup?: { gemUid: number; targetUid?: number; manual: boolean; manaFrac: number };
+  windup?: {
+    gemUid: number;
+    targetUid?: number;
+    manual: boolean;
+    manaFrac: number;
+    /** Worldbreaker: damage taken since it started */
+    stored?: number;
+    /** Goaded: hits shorten it */
+    goaded?: boolean;
+    /** Unmoved: hits do less */
+    braced?: boolean;
+  };
+  /** what the blow coming down adds, from `windup.stored` */
+  storedDamage?: number;
+  /** Royal Decree: the share of their damage the spells it calls deal, only while it's calling them */
+  decreeMult?: number;
+  /** Eternal Ward: the shield outlives its timer */
+  holdShield?: boolean;
   /** a heavy kill swings on: the next wind-up takes this share of its time */
   windupCarry?: number;
   retaliate: boolean;

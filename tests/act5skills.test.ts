@@ -106,7 +106,8 @@ describe('the Tides and summons batch', () => {
       expect(g.tags.includes('storm'), g.id).toBe(!!g.effect.storm);
     }
     for (const id of SUMMONS) expect(supportFits(supportGemDef('savage_crew'), activeGemDef(id)), id).toBe(true);
-    for (const id of STORMS) expect(supportFits(supportGemDef('stormfront'), activeGemDef(id)), id).toBe(true);
+    // a storm tied to a shield can't be doubled: there's one shield at a time
+    for (const id of STORMS) expect(supportFits(supportGemDef('stormfront'), activeGemDef(id)), id).toBe(!activeGemDef(id).effect.shieldPct);
     expect(supportFits(supportGemDef('savage_crew'), activeGemDef('thunderhead'))).toBe(false);
     expect(supportFits(supportGemDef('stormfront'), activeGemDef('drowned_thralls'))).toBe(false);
   });

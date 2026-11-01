@@ -492,6 +492,8 @@ const UNIQUE_DESC: Record<string, string> = {
 const ATTR_GEM = { str: 'red', dex: 'green', int: 'blue' } as const;
 
 const GEM_SYMBOL: Record<string, string> = {
+  worldbreaker: 'a maul over a cracked crown', last_legion: 'a row of three tower shields', death_warrant: 'a sealed scroll with a skull',
+  gale_of_knives: 'a ring of flying knives', royal_decree: 'a crown over an open mouth', eye_of_the_storm: 'a shield inside a spiral of cloud',
   titans_blow: 'a huge raised maul', avalanche: 'a slide of boulders', bulwark: 'a stone wall', shield_crush: 'a shield splitting a rock',
   mountain_stance: 'a peak with planted feet', siege_shot: 'a ballista bolt', blackjack: 'a short cosh',
   meteor: 'a falling burning rock', sacred_aegis: 'a shield with a halo', burden: 'a hanging weight',
