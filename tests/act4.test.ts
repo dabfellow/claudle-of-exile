@@ -450,20 +450,20 @@ describe('the second trial', () => {
   const ascended = () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
     const c = ctx();
-    onBossFirstKill(s, c, 'pilgrimgate', 3);
+    onBossFirstKill(s, c, 'pilgrimgate');
     chooseAscendancy(s, c, 'ravager');
     return { s, c };
   };
 
-  it('stands on the last stage, giving 2 points', () => {
-    expect(TRIALS.find((t) => t.n === 2)).toMatchObject({ zoneId: 'giantsthrone', points: 2 });
+  it('stands on the last stage, giving 4 points', () => {
+    expect(TRIALS.find((t) => t.n === 2)).toMatchObject({ zoneId: 'giantsthrone', points: 4 });
   });
 
-  it('every other Act 4 boss gives a point', () => {
+  it('other Act 4 bosses give nothing', () => {
     const { s, c } = ascended();
-    expect(s.ascendancy.points).toBe(2);
-    onBossFirstKill(s, c, 'hollowpass', 4);
-    expect(s.ascendancy.points).toBe(3);
+    expect(s.ascendancy.points).toBe(4);
+    onBossFirstKill(s, c, 'hollowpass');
+    expect(s.ascendancy.points).toBe(4);
     expect(s.ascendancy.trials).toBe(1);
   });
 
@@ -474,7 +474,7 @@ describe('the second trial', () => {
     for (const id of ['ravager_bloodlust_1', 'ravager_bloodlust_2']) expect(allocateAscNode(s, c, id)).toBeNull();
     expect(ascNodeReason(s, 'ravager_bloodlust')).toContain('Giants');
 
-    onBossFirstKill(s, c, 'giantsthrone', 4);
+    onBossFirstKill(s, c, 'giantsthrone');
     expect(s.ascendancy.trials).toBe(2);
     expect(allocateAscNode(s, c, 'ravager_bloodlust')).toBeNull();
     expect(allocateAscNode(s, c, 'ravager_bridge')).toBeNull();
@@ -483,9 +483,9 @@ describe('the second trial', () => {
 
   it('passes once', () => {
     const { s, c } = ascended();
-    onBossFirstKill(s, c, 'giantsthrone', 4);
-    expect(s.ascendancy.points).toBe(4);
-    onBossFirstKill(s, c, 'giantsthrone', 4);
-    expect(s.ascendancy.points).toBe(4);
+    onBossFirstKill(s, c, 'giantsthrone');
+    expect(s.ascendancy.points).toBe(8);
+    onBossFirstKill(s, c, 'giantsthrone');
+    expect(s.ascendancy.points).toBe(8);
   });
 });

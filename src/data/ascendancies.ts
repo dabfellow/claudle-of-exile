@@ -275,11 +275,19 @@ export function ascendanciesOf(classId: ClassId): AscendancyDef[] {
   return ASCENDANCIES.filter((a) => a.classId === classId);
 }
 
-/** What each trial grants. Trial 3 stands at the first stage of Act 6 and opens the capstones. */
-export const TRIALS: { n: 1 | 2 | 3; zoneId: string; points: number }[] = [
-  { n: 1, zoneId: 'pilgrimgate', points: 2 },
-  { n: 2, zoneId: 'giantsthrone', points: 2 },
-  { n: 3, zoneId: 'exilesgate', points: 2 },
+export interface TrialDef {
+  n: 1 | 2 | 3;
+  zoneId: string;
+  points: number;
+  /** what it opens, to follow "opens" in a sentence */
+  opens: string;
+}
+
+/** What each trial grants, the first time it's passed: the only source of ascendancy points. Trial 3 stands at the first stage of Act 6 and opens the capstones. */
+export const TRIALS: TrialDef[] = [
+  { n: 1, zoneId: 'pilgrimgate', points: 4, opens: 'your choice of ascendancy, its free gate and the six small passives' },
+  { n: 2, zoneId: 'giantsthrone', points: 4, opens: 'the three notables and the bridge to the capstone' },
+  { n: 3, zoneId: 'exilesgate', points: 3, opens: 'the capstone' },
 ];
 
 /** The trial that opens a node, in words. */
@@ -289,11 +297,8 @@ export const TRIAL_SEAL: Record<1 | 2 | 3, string> = {
   3: 'Sealed until the trial at the Exiles’ Gate, at the start of Act 6',
 };
 
-/** Everything past the free gate: earned points stop here. */
+/** Everything past the free gate: the trials add up to this. */
 export const ASCENDANCY_MAX_POINTS = 11;
-
-/** Bosses of these acts give an ascendancy point the first time they fall. */
-export const ASCENDANCY_BOSS_ACTS = [3, 4, 5, 6];
 
 /** Switching costs this many of the rare material, plus an Orb of Regret per node. */
 export const SWITCH_MATERIAL = 'divine';

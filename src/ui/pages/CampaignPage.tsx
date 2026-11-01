@@ -1,3 +1,4 @@
+import { trialAt } from '../../engine/ascendancy';
 import { uniqueDef } from '../../data/bases';
 import { bossGatherMats, bossTable, dropTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
@@ -76,6 +77,7 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
   const n = zonesInAct(z.act).indexOf(z) + 1;
   const beaten = s.bossesDefeated.includes(z.id);
   const farming = here && !!s.combat?.bossFarm;
+  const trial = trialAt(s, z.id);
   return (
     <div className={`card area ${here ? 'current' : ''} ${unlocked ? '' : 'locked'} ${z.actBoss ? 'act-boss' : ''}`} style={{ ['--zone' as string]: z.color }}>
       <div className={`area-banner ${anyArtUrl(`zones/${z.id}`) ? 'has-art' : ''}`} style={sceneStyle(`zones/${z.id}`)}>
@@ -117,6 +119,12 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
             {areaXp && <span>{areaXp} at your level</span>}
           </div>
           <BossMechanics z={z} />
+          {trial && (
+            <div className="small">
+              <b>Ascendancy trial {trial.n}:</b>{' '}
+              {s.ascendancy.trials >= trial.n ? 'passed.' : `your first win over ${z.boss.name} gives ${trial.points} ascendancy points and opens ${trial.opens}.`}
+            </div>
+          )}
           <DropPreview z={z} />
           <ProgressBar value={Math.min(1, kills / z.bossEvery)} color={bossIsNext(s, z.id) ? 'var(--life-2)' : z.color} />
           <div className="dim small">

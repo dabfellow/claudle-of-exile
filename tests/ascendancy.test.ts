@@ -113,16 +113,16 @@ describe('the data', () => {
 });
 
 describe('earning and spending', () => {
-  it('stays closed until the first trial, and the trial gives 2 points and the choice', () => {
+  it('stays closed until the first trial, and the trial gives its points and the choice', () => {
     const s = veteran(newGame(1, { name: 't', classId: 'warrior' }));
     const ctx = makeCtx(seeded(1));
     expect(canAscend(s)).toBe(false);
     expect(chooseAscendancy(s, ctx, 'ravager')).toBeTruthy();
     passTrial(s, ctx, 1);
     expect(choiceWaiting(s)).toBe(true);
-    expect(s.ascendancy.points).toBe(2);
+    expect(s.ascendancy.points).toBe(4);
     passTrial(s, ctx, 1);
-    expect(s.ascendancy.points).toBe(2);
+    expect(s.ascendancy.points).toBe(4);
     expect(chooseAscendancy(s, ctx, 'matador')).toBeTruthy();
     expect(chooseAscendancy(s, ctx, 'ravager')).toBeNull();
     expect(ascendancyOf(s)).toBe('ravager');
@@ -132,7 +132,7 @@ describe('earning and spending', () => {
     const s = veteran(newGame(1, { name: 't', classId: 'exile', startNode: 'class_str' }));
     const ctx = makeCtx(seeded(1));
     passTrial(s, ctx, 1);
-    onBossFirstKill(s, ctx, 'pilgrimgate', 3);
+    onBossFirstKill(s, ctx, 'pilgrimgate');
     expect(canAscend(s)).toBe(false);
     expect(s.ascendancy.points).toBe(0);
   });
@@ -151,17 +151,33 @@ describe('earning and spending', () => {
     }
   });
 
-  it('Act 3 to 6 bosses give a point each, up to what the section can use', () => {
+  it('only trials give points, and the three fill the section', () => {
     const s = veteran(newGame(1, { name: 't', classId: 'mage' }));
     const ctx = makeCtx(seeded(1));
-    onBossFirstKill(s, ctx, 'act3_stage', 3);
-    expect(s.ascendancy.points).toBe(0); // no trial yet
-    onBossFirstKill(s, ctx, 'pilgrimgate', 3);
-    onBossFirstKill(s, ctx, 'act3_stage', 3);
-    onBossFirstKill(s, ctx, 'old_stage', 2);
-    expect(s.ascendancy.points).toBe(3);
-    for (let i = 0; i < 20; i++) onBossFirstKill(s, ctx, `stage_${i}`, 4);
+    onBossFirstKill(s, ctx, 'almsquarter');
+    expect(s.ascendancy.points).toBe(0);
+    onBossFirstKill(s, ctx, 'pilgrimgate');
+    onBossFirstKill(s, ctx, 'almsquarter');
+    onBossFirstKill(s, ctx, 'highaltar');
+    expect(s.ascendancy.points).toBe(4);
+    onBossFirstKill(s, ctx, 'giantsthrone');
+    onBossFirstKill(s, ctx, 'exilesgate');
     expect(s.ascendancy.points).toBe(ASCENDANCY_MAX_POINTS);
+    expect(ASCENDANCY_BY_ID.ravager.nodes.filter((n) => n.kind !== 'gate')).toHaveLength(ASCENDANCY_MAX_POINTS);
+  });
+
+  it('points already earned from bosses go, and a tree that no longer fits is handed back', () => {
+    const load = (trials: number, points: number, nodes: string[]) => {
+      const old = JSON.parse(serialize(newGame(1, { name: 't', classId: 'warrior' })));
+      old.version = 28;
+      Object.assign(old.ascendancy, { id: 'ravager', trials, points, nodes });
+      return deserialize(JSON.stringify(old)).ascendancy;
+    };
+    const small = ['ravager_bloodlust_1', 'ravager_bloodlust_2', 'ravager_trample_1', 'ravager_trample_2'];
+    expect(load(1, 11, small)).toMatchObject({ points: 4, nodes: small });
+    expect(load(1, 11, [...small, 'ravager_red_haze_1'])).toMatchObject({ points: 4, nodes: [], id: 'ravager' });
+    expect(load(2, 11, small).points).toBe(8);
+    expect(load(0, 0, []).points).toBe(0);
   });
 
   it('notables and capstones stay sealed behind trials 2 and 3', () => {
@@ -249,10 +265,10 @@ describe('the first trial', () => {
     fight();
     expect(s.bossesDefeated).toContain('pilgrimgate');
     expect(s.ascendancy.trials).toBe(1);
-    expect(s.ascendancy.points).toBe(2);
+    expect(s.ascendancy.points).toBe(4);
     expect(events.filter((e) => e.t === 'trialPassed')).toHaveLength(1);
     fight();
-    expect(s.ascendancy.points).toBe(2);
+    expect(s.ascendancy.points).toBe(4);
   });
 });
 

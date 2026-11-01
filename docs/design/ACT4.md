@@ -60,11 +60,9 @@ Forked on 2026-11-01. The act boss needs 8 of the 11 other bosses. From the Holl
 
 ## Second trial
 
-The first kill of the Hollow King passes trial 2: it gives its 2 points and opens the notables and bridge. `TRIALS` in `ascendancies.ts` names `giantsthrone`. The other 11 Act 4 bosses give 1 point each, as `ASCENDANCY_BOSS_ACTS` already said.
+The first kill of the Hollow King passes trial 2: it gives its 4 points and opens the notables and bridge. `TRIALS` in `ascendancies.ts` names `giantsthrone`. The other 11 Act 4 bosses give no ascendancy points.
 
-**The cap makes these points moot.** Points stop at 11, and Act 3 alone gives 2 + 9 = 11, so a character who has cleared Act 3 already holds every point and Act 4 adds nothing. What the trial really gives is the seal coming off. That's as [ASCENDANCIES.md](ASCENDANCIES.md) says, so it's left alone.
-
-**The dev `passTrial(1, 2)` "+1":** display, not a bug. Before you choose, the Ascendancy tab's badge counts the waiting choice, so it says +1 whatever you hold. The state held 4 points (the trial's 2, plus the 2 the dev call tops up), and the badge said +4 the moment an ascendancy was chosen.
+**The dev `passTrial(1, 2)` "+1":** display, not a bug. Before you choose, the Ascendancy tab's badge counts the waiting choice, so it says +1 whatever you hold.
 
 ## Rewards
 

@@ -1,4 +1,5 @@
 import { ACHIEVEMENT_BY_ID } from './data/achievements';
+import { TRIALS } from './data/ascendancies';
 import { BENCH_CRAFTS } from './data/hideout';
 import { useEffect, useSyncExternalStore } from 'react';
 import { flaskDef } from './data/flasks';
@@ -738,7 +739,8 @@ class GameStore {
         break;
       }
       case 'trialPassed': {
-        const text = e.n === 1 ? 'Trial passed! Choose your ascendancy on the Passive Tree page.' : e.n === 3 ? 'Final trial passed! Your ascendancy capstone opens.' : 'Trial passed! More of your ascendancy opens.';
+        const trial = TRIALS.find((t) => t.n === e.n)!;
+        const text = `${e.n === 3 ? 'Final trial' : 'Trial'} passed! +${trial.points} ascendancy points. It opens ${trial.opens}.${e.n === 1 ? ' Choose on the Passive Tree page.' : ''}`;
         this.addFeed(text, 'good');
         this.pushToast(text, 'good');
         break;

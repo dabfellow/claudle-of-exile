@@ -5,6 +5,7 @@ import {
   ascendanciesOf,
   SWITCH_MATERIAL_COST,
   TRIAL_SEAL,
+  TRIALS,
   type AscendancyDef,
   type AscendancyId,
   type AscendancyNode,
@@ -13,6 +14,7 @@ import { classDef } from '../../data/classes';
 import { CLASS_SECTORS, MECHANIC_INFO, PASSIVE_BY_ID, PASSIVE_NODES, REGION_NAMES, type PassiveNode, type TreeRegion } from '../../data/passiveTree';
 import { SKILL_TREE_BY_ID, SKILL_TREE_NODES, SKILL_TREE_START, type SkillTreeNode } from '../../data/skillTree';
 import { SKILLS } from '../../data/skills';
+import { zoneDef } from '../../data/zones';
 import { describeStats } from '../../data/statText';
 import {
   allocateAscNode,
@@ -881,15 +883,43 @@ function AscendancyTree({ s, a }: { s: GameState; a: AscendancyDef }) {
   );
 }
 
+/** Where every point comes from, and what each trial opens. */
+function TrialList({ s }: { s: GameState }) {
+  return (
+    <div className="card" style={{ marginBottom: 12 }}>
+      <h3 style={{ margin: 0 }}>Trials</h3>
+      <p className="muted small" style={{ margin: '4px 0' }}>
+        Ascendancy points come only from passing a trial, once each.
+      </p>
+      {TRIALS.map((t) => {
+        const z = zoneDef(t.zoneId);
+        return (
+          <div key={t.n} className={`small ${s.ascendancy.trials >= t.n ? '' : 'muted'}`}>
+            <b>
+              Trial {t.n}, {z.name} (Act {z.act}):
+            </b>{' '}
+            {s.ascendancy.trials >= t.n ? 'passed.' : 'not passed yet.'} {t.points} points, and opens {t.opens}.
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function AscendancyPane({ s }: { s: GameState }) {
   const a = currentAscendancy(s);
-  return a ? <AscendancyTree s={s} a={a} /> : <AscendancyChoice s={s} />;
+  return (
+    <>
+      <TrialList s={s} />
+      {a ? <AscendancyTree s={s} a={a} /> : <AscendancyChoice s={s} />}
+    </>
+  );
 }
 
 const TREE_HEADERS = {
   character: 'Character tree: combat power. Points from character levels.',
   skilling: 'Skilling tree: gathering and production. Points from total skill levels.',
-  ascendancy: 'Ascendancy: its own points, from trials and bosses from Act 3 on.',
+  ascendancy: 'Ascendancy: its own points, from passing trials.',
 };
 
 export function TreePage() {

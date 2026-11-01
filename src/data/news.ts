@@ -8,6 +8,16 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.40',
+    date: '1 Nov 2026',
+    title: 'Trials give the points',
+    items: [
+      'Ascendancy points now come only from passing a trial for the first time: 4, 4 and 3. Bosses no longer give them.',
+      'Points you held from bosses are gone. If your tree no longer fits, its nodes are refunded so you can choose again.',
+      'Area cards and the Ascendancy tab now say what each trial gives and opens.',
+    ],
+  },
+  {
     version: '0.2.39',
     date: '1 Nov 2026',
     title: 'Martyrs loosen their grip',

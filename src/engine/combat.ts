@@ -1916,7 +1916,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
     if (!s.bossesDefeated.includes(zone.id)) {
       s.bossesDefeated.push(zone.id);
       if (zone.actBoss) ctx.emit({ t: 'actComplete', act: zone.act });
-      onBossFirstKill(s, ctx, zone.id, zone.act);
+      onBossFirstKill(s, ctx, zone.id);
     }
     const act = reachedAct(s);
     for (const next of openReachedZones(s)) ctx.emit({ t: 'zoneUnlocked', zoneId: next.id });
