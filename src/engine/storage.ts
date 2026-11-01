@@ -135,12 +135,14 @@ export function takeOwned(s: GameState, uids: number[]): Item[] {
   return out;
 }
 
-/** Salvage everything left in a pile into Arcane Dust. */
-export function salvagePile(s: GameState, ctx: Ctx, pile: Pile): number {
-  const dust = s[pile].reduce((a, i) => a + salvageValue(i), 0);
-  const n = s[pile].length;
+/** Salvage a pile into Arcane Dust: the given items, or everything left in it. */
+export function salvagePile(s: GameState, ctx: Ctx, pile: Pile, uids?: number[]): number {
+  const want = uids && new Set(uids);
+  const gone = want ? s[pile].filter((i) => want.has(i.uid)) : s[pile];
+  const dust = gone.reduce((a, i) => a + salvageValue(i), 0);
+  const n = gone.length;
   if (!n) return 0;
-  s[pile] = [];
+  s[pile] = want ? s[pile].filter((i) => !want.has(i.uid)) : [];
   addBank(s, 'arcane_dust', dust);
   s.lifetime.salvaged += n;
   ctx.emit({ t: 'info', text: `Salvaged ${n} item(s) for ${dust} Arcane Dust`, tone: 'good' });

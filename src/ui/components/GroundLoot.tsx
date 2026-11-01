@@ -4,7 +4,7 @@ import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
 import { groundAtRisk, pickUp, salvagePile, type Pile } from '../../engine/storage';
 import type { GameState } from '../../engine/types';
 import { game } from '../../game';
-import { ItemTiles } from './Inventory';
+import { ItemTiles, SalvageByRarity } from './Inventory';
 import { upgradeScore } from './ItemView';
 import { openItemMenu } from './ItemMenu';
 
@@ -70,6 +70,7 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
         >
           {hasUniques && confirmUniques ? 'Includes uniques. Sure?' : pile === 'ground' ? 'Salvage all' : 'Salvage the rest'}
         </button>
+        <SalvageByRarity s={s} items={items} onSalvage={(uids) => game.act((st, ctx) => void salvagePile(st, ctx, pile, uids))} />
       </div>
       <ItemTiles s={s} items={items} showUpgrade onClick={(i) => openItemMenu(i.uid)} empty={info.empty} />
     </div>

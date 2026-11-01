@@ -382,6 +382,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Salvage by rarity on the ground, offline haul, stash gear pages and stash overflow, matching the bag card. Skips runed gear; uniques ask twice. 0.2.9 — done 2026-10-31
 - [x] Smithing salvage toggles (player report): on the Catalyst panel, "when the bag is full" and "everything I smith" turn new bases into Arcane Dust so smithing doesn't stop at a full bag. Both need the Crafting Bench; a repeat-until hit is kept, on the ground if the bag is full. Salvage all on the ground pile, also bench-only; uniques ask once more. 0.2.8 — done 2026-10-31
 - [x] Before the balance pass: Challenge boss button (a ready boss waits so an area can be farmed; Auto-challenge beside Auto-flee sends it in on its own, online and, with wind-up rules, offline); version number in the sidebar from 0.2.3; more gear on every tier (6–7.5% → 15–18% per kill), basic orbs doubled on tiers 1–2, starter drops (5 bases, 2 Transmutes, 2 Alterations over a new character's first 14 kills); the ground no longer clears on leaving an area or on one death: a second death loses what the first left unclaimed ([TOWN.md](design/TOWN.md)). Sim not rerun. Merged, not deployed — done 2026-10-31
 - [x] Milestone 2: the sim reports game time per milestone; day 1 lands at 2–4 Act 1 stages on both play styles after tuning Act 1 XP, early drops and late station costs ([BALANCE.md](design/BALANCE.md)). Merged, not deployed — done 2026-10-31

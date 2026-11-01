@@ -133,6 +133,50 @@ export function SortTabs({ value, onChange }: { value: SortKey; onChange: (k: So
 }
 
 /**
+ * For gear outside the bag card: pick a rarity and click it again to salvage it (uniques ask once more).
+ * Like the bag card, it leaves runed gear alone.
+ */
+export function SalvageByRarity({ s, items, onSalvage }: { s: GameState; items: Item[]; onSalvage: (uids: number[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const [armed, setArmed] = useState<{ rarity: Rarity; clicks: number } | null>(null);
+  const list = (r: Rarity) => items.filter((i) => i.rarity === r && !i.rune).map((i) => i.uid);
+  const done = () => {
+    setArmed(null);
+    setOpen(false);
+  };
+  const click = (r: Rarity) => {
+    const clicks = armed?.rarity === r ? armed.clicks + 1 : 1;
+    if (clicks < (r === 'unique' ? 3 : 2)) return setArmed({ rarity: r, clicks });
+    onSalvage(list(r));
+    done();
+  };
+  const label = (r: Rarity) => {
+    const n = list(r).length;
+    if (armed?.rarity !== r) return `All ${r} (${n})`;
+    return armed.clicks === 2 ? 'Sure? Click to salvage' : `Salvage ${n} ${r}?`;
+  };
+  if (!open) {
+    return (
+      <button className="btn sm" disabled={!items.length || !benchBuilt(s)} title={benchBuilt(s) ? '' : BENCH_UNBUILT} onClick={() => setOpen(true)}>
+        Salvage by rarity…
+      </button>
+    );
+  }
+  return (
+    <>
+      {(['normal', 'magic', 'rare', 'unique'] as Rarity[]).map((r) => (
+        <button key={r} className={`btn sm salvage-rarity rar-${r} ${armed?.rarity === r ? 'armed' : ''}`} disabled={!list(r).length} onClick={() => click(r)}>
+          {label(r)}
+        </button>
+      ))}
+      <button className="btn sm ghost" onClick={done}>
+        Cancel
+      </button>
+    </>
+  );
+}
+
+/**
  * The bag card: sorting, salvage mode, and click-to-equip (or a custom handler).
  * `items` defaults to the bag; the Crafting Bench passes bag + stash.
  */

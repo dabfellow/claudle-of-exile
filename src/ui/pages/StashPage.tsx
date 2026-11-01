@@ -3,6 +3,7 @@ import { activeGemDef, supportGemDef } from '../../data/gems';
 import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
 import { STASH_PAGE_SIZE } from '../../data/hideout';
 import { wearFlask } from '../../engine/combat';
+import { salvage } from '../../engine/crafting';
 import { buyStashPage, settleOverflow, stashedItems, stashItems, stashPagePrice, stashPageRoom, takeFromStash } from '../../engine/storage';
 import { game } from '../../game';
 import type { GameState } from '../../engine/types';
@@ -11,7 +12,7 @@ import { Art, CurrencyAmount, EmptyState, fmt, MatIcon, PageHeader, Tabs, Toolti
 import { FlaskShelf } from '../components/FlaskView';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
 import { Orb, Swatch } from '../components/Icon';
-import { Inventory, ItemTiles, sortItems, SortTabs, type SortKey } from '../components/Inventory';
+import { Inventory, ItemTiles, SalvageByRarity, sortItems, SortTabs, type SortKey } from '../components/Inventory';
 import { PaperDoll } from '../components/PaperDoll';
 import type { Page } from '../Layout';
 import { openItemMenu } from '../components/ItemMenu';
@@ -234,6 +235,8 @@ function StashTab({ on, children }: { on: boolean; children: ReactNode }) {
   );
 }
 
+const salvageGear = (uids: number[]) => game.act((st, ctx) => void salvage(st, ctx, uids));
+
 /** Items that didn't fit when characters' stashes were merged. Nothing here is lost: take it out or move it in as room appears. */
 function Overflow({ s }: { s: GameState }) {
   const items = s.account.overflow;
@@ -241,12 +244,13 @@ function Overflow({ s }: { s: GameState }) {
   const room = s.account.stash.some((_, i) => stashPageRoom(s, i) > 0);
   return (
     <div className="card stash-panel" style={{ marginBottom: 12 }}>
-      <div className="row" style={{ marginBottom: 10 }}>
+      <div className="row wrap" style={{ marginBottom: 10 }}>
         <div>
           <b className="warn">Stash overflow · {items.length}</b>
           <div className="dim small">These didn't fit when your characters' stashes were merged. They're safe here, and nothing new can be added.</div>
         </div>
         <span className="spacer" />
+        <SalvageByRarity s={s} items={items} onSalvage={salvageGear} />
         <button className="btn sm" disabled={!room} title={room ? undefined : 'Your stash pages are full'} onClick={() => game.act((st) => void settleOverflow(st))}>
           Move to stash pages
         </button>
@@ -279,7 +283,7 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
         <span className="grow" />
         <SortTabs value={sort} onChange={setSort} />
       </div>
-      <div className="row" style={{ marginBottom: 10 }}>
+      <div className="row wrap" style={{ marginBottom: 10 }}>
         <span className="dim small">
           Page {page + 1} ·{' '}
           <span className="num">
@@ -288,6 +292,7 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
           · click an item for Equip, To bag, Salvage
         </span>
         <span className="spacer" />
+        <SalvageByRarity s={s} items={items} onSalvage={salvageGear} />
         <button
           className="btn sm"
           disabled={!items.length}

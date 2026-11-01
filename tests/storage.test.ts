@@ -44,6 +44,16 @@ describe('gear storage', () => {
     expect(s.bank.arcane_dust).toBeGreaterThan(0);
   });
 
+  it('salvages only the given items from a pile', () => {
+    const s = newGame(1);
+    const a = sword(s);
+    const b = sword(s);
+    s.ground.push(a, b);
+    salvagePile(s, ctx(), 'ground', [a.uid]);
+    expect(s.ground).toEqual([b]);
+    expect(s.lifetime.salvaged).toBe(1);
+  });
+
   it('picks up into the bag until it is full', () => {
     const s = newGame(1);
     for (let i = 0; i < BAG_SIZE - 1; i++) s.inventory.push(sword(s));

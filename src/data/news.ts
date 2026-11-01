@@ -8,6 +8,12 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.9',
+    date: '31 Oct 2026',
+    title: 'Salvage by rarity',
+    items: ['The ground, offline finds and stash pages can now salvage gear by rarity, like the bag.'],
+  },
+  {
     version: '0.2.8',
     date: '31 Oct 2026',
     title: 'Smith without stopping',
