@@ -74,6 +74,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
     items: [
       { page: 'equipment', label: 'Equipment', icon: 'equipment' },
       { page: 'stash', label: 'Stash', icon: 'stash' },
+      { page: 'bench', label: 'Crafting Bench', icon: 'bench' },
       { page: 'skills', label: 'Skills', icon: 'gems' },
       { page: 'tree', label: 'Passive Tree', icon: 'tree' },
     ],
@@ -92,7 +93,6 @@ const NAV: { label: string; items: NavEntry[] }[] = [
   {
     label: 'Crafting',
     items: [
-      { page: 'bench', label: 'Crafting Bench', icon: 'bench' },
       { page: 'smithing', label: 'Smithing', icon: 'smithing', skill: 'smithing' },
       { page: 'alchemy', label: 'Alchemy', icon: 'alchemy', skill: 'alchemy' },
       { page: 'gemcutting', label: 'Gemcutting', icon: 'gemcutting', skill: 'gemcutting' },
