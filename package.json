@@ -12,7 +12,7 @@
     "sim": "vite-node scripts/sim.ts",
     "art": "vite-node scripts/art.ts",
     "uniques": "vite-node scripts/uniques.ts",
-    "deploy": "npm run build && cf deploy"
+    "deploy": "node scripts/deploy.mjs"
   },
   "dependencies": {
     "@sentry/browser": "^8.55.1",

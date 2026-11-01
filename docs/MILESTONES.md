@@ -420,6 +420,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Guarded release flow: a `/ship` skill, and `npm run deploy` now refuses uncommitted work, a stale branch or missing login settings, and confirms the live site afterwards. — done 2026-11-01
 - [x] Ascendancy tree can't be filled: trials give 3 each, 9 of 11, so at most three of the four big nodes. Save v32 cuts points back and refunds trees that no longer fit ([ASCENDANCIES.md](design/ASCENDANCIES.md)). 0.2.43 — done 2026-11-01
 - [x] Wellspring replaces Wildcaster: full mana no longer costs damage, and wasted mana fills Overflow into a free Surge ([ASCENDANCIES.md](design/ASCENDANCIES.md)). Tested, not simmed or played. Save v31 resets every Mage who had picked, Alchemists included, to choose again with their points back. 0.2.41, reset 0.2.42 — done 2026-11-01
 - [x] Ascendancy points only from a trial's first pass (4, 4, 3 to fill the 11), bosses give none, and the area card, Tree page and toast say what each trial gives and opens. Save v29 cuts held points to what passed trials give, and refunds a tree that no longer fits ([ASCENDANCIES.md](design/ASCENDANCIES.md)). 0.2.40 — done 2026-11-01
