@@ -19,13 +19,35 @@ export function applyDeathPenalty(s: GameState): number {
   return Math.max(0, loss);
 }
 
+/** Share of xp lost per level above an area's range. */
+const OVERLEVEL_XP_PENALTY = [0.1, 0.2, 0.4, 0.5, 0.8];
+
+/** Past the end of that list, each further level loses this much more, down to no xp at all. */
+const OVERLEVEL_XP_RAMP = 0.01;
+
+/** Share of xp gained per level below an area's range; the last entry is the most you can get. */
+const UNDERLEVEL_XP_BONUS = [0.1, 0.2];
+
 /**
- * Monster xp multiplier for fighting far below (or above) your level, like PoE:
- * a safe zone of 3 + level/16, then a steep falloff.
+ * Kill xp multiplier for your level against an area's range, like PoE. It's what stops a long offline
+ * run outlevelling the campaign: past the top of the range, xp falls away toward nothing.
  */
-export function xpLevelMultiplier(playerLevel: number, monsterLevel: number): number {
-  const safe = 3 + Math.floor(playerLevel / 16);
-  const excess = Math.max(0, Math.abs(playerLevel - monsterLevel) - safe);
-  if (excess === 0) return 1;
-  return Math.max(0.01, Math.pow(1 / (1 + 0.25 * excess * excess), 1.2));
+export function areaXpMultiplier(playerLevel: number, [min, max]: [number, number]): number {
+  if (playerLevel > max) {
+    const over = playerLevel - max;
+    const steps = OVERLEVEL_XP_PENALTY.length;
+    const penalty = OVERLEVEL_XP_PENALTY[over - 1] ?? OVERLEVEL_XP_PENALTY[steps - 1] + (over - steps) * OVERLEVEL_XP_RAMP;
+    return Math.max(0, 1 - penalty);
+  }
+  if (playerLevel < min) return 1 + UNDERLEVEL_XP_BONUS[Math.min(min - playerLevel, UNDERLEVEL_XP_BONUS.length) - 1];
+  return 1;
+}
+
+/** The area multiplier as players read it; empty when xp is normal. */
+export function areaXpLabel(playerLevel: number, range: [number, number]): string {
+  const mult = areaXpMultiplier(playerLevel, range);
+  if (mult === 1) return '';
+  if (mult === 0) return 'No XP';
+  const pct = Math.round((mult - 1) * 100);
+  return `${pct > 0 ? '+' : '−'}${Math.abs(pct)}% XP`;
 }

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { ACT_REGIONS, actRegion, CONTINENT_SIZE, regionPath, regionViewBox, ZONE_POS } from '../../data/continent';
 import { actOpen, ACTS, bossesNeeded, MECHANIC_INFO, roadsInto, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
 import { zoneLockText } from '../../engine/progress';
-import { characterLevel } from '../../engine/character';
+import { areaXpLabel, characterLevel } from '../../engine/character';
 import { bossIsNext, startCombat } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
@@ -69,6 +69,7 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
   const here = s.combat?.zoneId === z.id;
   const kills = s.zoneKills[z.id] ?? 0;
   const risk = danger(s, z);
+  const areaXp = areaXpLabel(characterLevel(s), z.levelRange);
   const n = zonesInAct(z.act).indexOf(z) + 1;
   const beaten = s.bossesDefeated.includes(z.id);
   return (
@@ -109,6 +110,7 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
             <span className={risk.cls}>
               <GameIcon name="bolt" size={12} /> {risk.label} for your level
             </span>
+            {areaXp && <span>{areaXp} at your level</span>}
           </div>
           <BossMechanics z={z} />
           <DropPreview z={z} />

@@ -21,7 +21,7 @@ import { actionBlocker, startSkillAction } from '../src/engine/skills';
 import { newGame, SAVE_VERSION, tick } from '../src/engine/state';
 import { armourReduction, deriveStats } from '../src/engine/stats';
 import type { Item } from '../src/engine/types';
-import { charLevelForXp, charXpForLevel, levelForXp, xpForLevel } from '../src/engine/xp';
+import { charLevelForXp, charXpForLevel, charXpFromOldCurve, levelForXp, xpForLevel } from '../src/engine/xp';
 import { zoneDef } from '../src/data/zones';
 import { actionsFor } from '../src/data/skills';
 
@@ -37,9 +37,23 @@ describe('xp curve', () => {
   });
 
   it('character level uses its own longer curve', () => {
-    expect(charXpForLevel(2)).toBe(136);
+    expect(charXpForLevel(2)).toBe(68);
     expect(charLevelForXp(charXpForLevel(15))).toBe(15);
-    expect(charXpForLevel(100)).toBeGreaterThan(30_000_000);
+    expect(charXpForLevel(100)).toBeCloseTo(charXpForLevel(99) * 2, -1);
+  });
+
+  it('every character level costs at least as much as the one before', () => {
+    for (let l = 2; l < 100; l++) {
+      expect(charXpForLevel(l + 1) - charXpForLevel(l)).toBeGreaterThanOrEqual(charXpForLevel(l) - charXpForLevel(l - 1));
+    }
+  });
+
+  it('old character xp keeps its level and progress on the new curve', () => {
+    const old = (l: number) => 36 * Math.pow(l - 1, 3) + 100 * (l - 1);
+    expect(charXpFromOldCurve(0)).toBe(0);
+    expect(charXpFromOldCurve(old(42))).toBe(charXpForLevel(42));
+    expect(charXpFromOldCurve((old(42) + old(43)) / 2)).toBeCloseTo((charXpForLevel(42) + charXpForLevel(43)) / 2, 0);
+    expect(charXpFromOldCurve(old(100) + 5000)).toBe(charXpForLevel(100));
   });
 });
 

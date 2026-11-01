@@ -11,8 +11,8 @@ Last updated 2026-10-31.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.12 (deployed 2026-10-31). The real-account
-test and player heads-up were skipped, so do both now. Act 2 pacing, Act 1's cold check and Scorched earth's danger
+**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.12 (deployed 2026-10-31). 0.2.13 (area level XP) is on a branch, not deployed. The real-account
+test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
 **In order:**
@@ -34,7 +34,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 | 1 | Automation and offline rules | **Done**, live | – |
 | 2 | Measure the pacing | **Done**, live | – |
 | 3 | Account layer | Live, not tested on real accounts | Real-account test |
-| 4 | Act recipe and Act 2 | **In progress**: pieces merged | Pacing and Act 1 cold check |
+| 4 | Act recipe and Act 2 | **In progress**: pieces merged | Act 1 cold check |
 | 5 | Maps preview | Built, dev only | You playing it |
 | 6 | Act 3 and ascendancies | **Done**, live; not simmed or played through | – |
 | 7 | Acts 4–6 | **Next**: design decided; level 80 gear done early | Your go |
@@ -73,12 +73,12 @@ stay as they are, with no playtest planned, until you say otherwise.
 - [x] Recipe written as a checklist ([ACT_RECIPE.md](design/ACT_RECIPE.md)), with Act 1 and Act 2 audits and picks.
 - [x] Pack art for Act 2's 40 monsters and 6 uniques.
 - [x] Riders and raiders skill batch, Thieving and Heist, and ground rules — done 2026-10-31
-- [ ] Slower Act 2 pacing (the sim says it takes under a day after Act 1). The sim showed no gain from ground rules
-  on Azhar, so those fights need to bite.
+- Slower Act 2 pacing dropped 2026-10-31 with the pacing targets. The sim showed no gain from ground rules on Azhar, so
+  those fights still need to bite.
 - [x] Split the skill pool and tie gems to acts, keeping existing characters' skills — done 2026-10-31
 - [ ] Act 1 cold resistance check.
 - [ ] Art for the 8 areas (waits on a hand-made landscape pack), and the 13 Act 2 monsters still on loose matches.
-- **Done:** Act 2 is live and the first week lands partway through Act 3's level range in the sim.
+- **Done:** Act 2 is live.
 - Act 2 is already open to players, so changed area ids need handling in saves.
 
 ### 5. Maps preview
@@ -98,7 +98,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 ### 7. Acts 4–6
 - Each from the recipe, growing to 10–20 stages, ending around level 65. Picks are in [ACTS_4_6.md](design/ACTS_4_6.md).
 - [x] Gear base tiers extended to about level 80 (428 bases).
-- **Done:** Act 6 can be finished at around month 1 when pushing combat hard, and is just starting on a mix, in the sim.
+- **Done:** Acts 4–6 are live and playable through.
 
 ### 8. Maps
 - Full tiers and themes, map drops, Cartography as the optional crafting route.
@@ -133,6 +133,12 @@ What you settled in the 2026-10-30 reset, in your words. The result is written u
 picks are in [ACT_RECIPE.md](design/ACT_RECIPE.md).
 
 Fishing is never being added; the menu's "Soon" entry is a Path of Exile joke and stays.
+
+**Pacing (you, 2026-10-31):** players find the XP rates too slow, so ignore the timeline and pacing targets below,
+including the journey and Milestone 2's numbers. Players feel the level number more than the zones, so levels get
+target times and players set the acts' pace: 1–20 about 3 h, 20–40 about 3 h, 40–65 6 h, 65–80 12 h, 80–95 20 h,
+95–99 20 h, and 99 is halfway to 100 in XP. Area level ranges cap levelling, PoE-style, so a long offline run can't
+outlevel the campaign ([BALANCE.md](design/BALANCE.md) → Knobs).
 
 ### Fixed (you, 2026-10-30)
 
@@ -338,6 +344,8 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 
 ## Ideas / later
 
+- Level ceiling: XP is at −80% or worse from 46 and gone at 66 until Act 4 arrives (the High Altar tops out at 41), gem XP goes with it, and the bot's area choice doesn't know about either.
+- Level times: the sim's bot reaches 20 at 4h15–7h31, not 3 h; bosses hold it back, not XP, and it doesn't smith or bench-craft. Everything past about 46 is calculated, not measured, and assumes 3,300 kills an hour.
 - "Salvage the rest" on the offline haul works without the Crafting Bench, unlike every other salvage. Left as it was.
 - Add each release to `src/data/news.ts`, which feeds the title screen's News panel.
 - Music: older Safari can't play Ogg, and iPhones ignore page volume, so the slider may act as on/off there (mute still works). Neither tested. Act 3+ and maps past Act 2 reuse the Act 2 track. If this repo ever goes public, ask AlkaKrab first (`src/assets/CREDITS.md`).
@@ -382,6 +390,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Area level XP: your level against the area's range sets kill and gem XP (−10, −20, −40, −50, −80%, then 1% more per level to none at 25 over; +10%, then +20% at most below), shown on Campaign and Combat. Replaces the monster level falloff; Act 1's `xpScale` removed. New level curve set by play time; save v25 keeps everyone's level and progress. 0.2.13 — done 2026-10-31
 - [x] XP per hour readouts update every 2 seconds, still measured over the last 10 minutes. 0.2.12 — done 2026-10-31
 - [x] Limited-time events: Admin → Events turns Halloween (2x XP including gems, every monster's drops rolled twice) on or off with no deploy; needs the `live_event` SQL in [SETUP.md](ops/SETUP.md) run once. 0.2.12 — done 2026-10-31
 - [x] DPS meter shows a 2 second average, held until the next one, instead of a live 10 second figure; The Block's execute now counts. 0.2.11 — done 2026-10-31

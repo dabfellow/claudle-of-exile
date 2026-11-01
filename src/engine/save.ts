@@ -14,6 +14,7 @@ import { connectedWithout } from './passives';
 import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { AccountTransfer, FlaskInstance, GameState, Item } from './types';
+import { charXpFromOldCurve } from './xp';
 
 // kept from the game's old name: changing it would orphan every existing save
 export const SAVE_KEY = 'claudle-of-exile-save';
@@ -239,6 +240,11 @@ const MIGRATIONS: Record<number, Migration> = {
       s.combat.dealt ??= [0];
       s.combat.dealtMs ??= 0;
     }
+  },
+  24: (raw) => {
+    // the character curve changed: everyone keeps their level and progress
+    const skills = raw.skills as Record<string, number> | undefined;
+    if (skills?.combat) skills.combat = charXpFromOldCurve(skills.combat);
   },
 };
 

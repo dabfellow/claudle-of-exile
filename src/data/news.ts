@@ -8,6 +8,16 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.13',
+    date: '31 Oct 2026',
+    title: 'Faster levelling',
+    items: [
+      'Levelling is much faster: a new level curve, and Act 1\'s XP slowdown is gone. You keep your level and progress.',
+      'Being above an area\'s level range now costs XP: 10%, 20%, 40%, 50% and 80% for one to five levels over, then 1% more per level.',
+      'Being below the range pays up to 20% more. Campaign and Combat show what you\'re getting.',
+    ],
+  },
+  {
     version: '0.2.12',
     date: '31 Oct 2026',
     title: 'Limited-time events',
