@@ -18,7 +18,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { StashPage } from './pages/StashPage';
 import { TraderPage } from './pages/TraderPage';
 import { TreePage } from './pages/TreePage';
-import { AccountModal, CharacterCreate, CharacterSelect, DemoBanner, EventBanner, IntroModal, NewPasswordModal, TitleScreen } from './screens/Screens';
+import { AccountModal, AccountScreen, CharacterCreate, CharacterSelect, DemoBanner, EventBanner, IntroModal, NewPasswordModal, TitleScreen } from './screens/Screens';
 
 // admins only: kept out of the main bundle
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
@@ -99,6 +99,7 @@ export function App() {
   return (
     <>
       {game.screen === 'title' && <TitleScreen />}
+      {game.screen === 'menu' && <AccountScreen />}
       {game.screen === 'select' && <CharacterSelect />}
       {game.screen === 'create' && <CharacterCreate />}
       {game.screen === 'game' && <GameScreen />}

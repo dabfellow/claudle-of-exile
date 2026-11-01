@@ -165,9 +165,9 @@ Act 1 is *The Drowned Coast* and ends with Ysolde. Act 2 is *The Burning Steppe*
 The endgame, unlocked after Act 6.
 - **Getting them:** they drop from monsters. Cartography is an optional second route, for crafting them if you want to do something like a huge offline map grind.
 - **Running one:** a set number of monster packs, then a map boss.
-- **What makes one better:** tiers set the difficulty. Each map has a fixed theme that favours a certain drop (fossils, a unique, boss keys).
+- **What makes one better:** a map is just a tier, Map Tier 1 to 10. Sextants slotted in the Map Device add mods that raise the danger and the reward ([MAPS.md](MAPS.md)).
 - **Using them up:** consumed per run, so keeping a supply going is part of the game.
-- **Idling:** auto-run. Pick a tier and theme, and the device keeps using matching maps from your stash until none are left.
+- **Idling:** auto-run. Pick a tier, and the device keeps using those maps until none are left.
 
 ### Hard mode bosses
 New bosses. Boss keys drop from monsters or are crafted through skilling.

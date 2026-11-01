@@ -387,11 +387,55 @@ function AccountSummary() {
   );
 }
 
-export function CharacterSelect() {
+/** Signed in: shows who you are, and Play goes on to the characters. */
+export function AccountScreen() {
   useGame();
+  const a = game.account;
+  if (!a) return null;
+  const count = game.characters.length;
   return (
     <ScreenShell wide>
-      <div className="title-layout">
+      <div className="title-layout select-layout">
+        <div className="card title-card account-card">
+          <div className="muted small" style={{ textAlign: 'center' }}>
+            Signed in as
+          </div>
+          <div className="account-name">{a.displayName}</div>
+          <div style={{ textAlign: 'center' }}>
+            <AccountBadge />
+          </div>
+          {a.email && (
+            <div className="dim small" style={{ textAlign: 'center' }}>
+              {a.email}
+            </div>
+          )}
+          <div className="dim small" style={{ textAlign: 'center' }}>
+            {count === 0 ? 'No characters yet' : `${count} character${count === 1 ? '' : 's'}`}
+          </div>
+          <button className="btn primary lg" onClick={() => game.play()}>
+            Play
+          </button>
+          <button className="btn ghost sm" onClick={leaveAccount}>
+            Sign out
+          </button>
+        </div>
+        <NewsCard />
+      </div>
+    </ScreenShell>
+  );
+}
+
+const PAGE_SIZE = 10;
+
+export function CharacterSelect() {
+  useGame();
+  const [page, setPage] = useState(0);
+  const pages = Math.max(1, Math.ceil(game.characters.length / PAGE_SIZE));
+  const shown = Math.min(page, pages - 1);
+  const slice = game.characters.slice(shown * PAGE_SIZE, (shown + 1) * PAGE_SIZE);
+  return (
+    <ScreenShell wide>
+      <div className="title-layout select-layout">
         <div className="grid" style={{ gap: 12 }}>
           <div className="row wrap">
             <h2 style={{ fontSize: 20 }}>Choose your exile</h2>
@@ -421,9 +465,24 @@ export function CharacterSelect() {
               No characters on this account yet.
             </div>
           )}
-          {game.characters.map((c) => (
-            <CharacterCard key={c.id} c={c} />
-          ))}
+          <div className="char-grid">
+            {slice.map((c) => (
+              <CharacterCard key={c.id} c={c} />
+            ))}
+          </div>
+          {pages > 1 && (
+            <div className="row" style={{ justifyContent: 'center', gap: 12 }}>
+              <button className="btn ghost sm" disabled={shown === 0} onClick={() => setPage(shown - 1)}>
+                ‹ Prev
+              </button>
+              <span className="muted small">
+                Page {shown + 1} of {pages}
+              </span>
+              <button className="btn ghost sm" disabled={shown >= pages - 1} onClick={() => setPage(shown + 1)}>
+                Next ›
+              </button>
+            </div>
+          )}
           {game.characters.length > 0 && <AccountSummary />}
           <button className="btn lg new-char" onClick={() => game.setScreen('create')}>
             <Icon name="plus" size={16} /> New Character

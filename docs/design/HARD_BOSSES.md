@@ -1,5 +1,7 @@
 # Hard mode bosses
 
+> **2026-11-01:** map themes were dropped ([MAPS.md](MAPS.md)). Where this page says a key drops from themed maps, read a Sextant hunting mod instead.
+
 Draft, 2026-10-30, for you to make the calls early. Built in [MILESTONES.md](../MILESTONES.md) milestone 9. Levels, names and
 unique effects are starting suggestions. Rule types are described loosely, because Milestone 1 is finalising them now.
 

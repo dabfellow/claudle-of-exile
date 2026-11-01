@@ -2012,7 +2012,7 @@ function martyrFill(s: GameState, ctx: Ctx, d: Derived, raw: number, novaShare =
 function holyNova(s: GameState, ctx: Ctx, d: Derived, filled: number, count: number): void {
   const c = s.combat!;
   const r = d.raw;
-  const dmg = filled * 0.5 * (1 + r.novaPct / 100) * (hasAscNode(s, 'lightkeeper_reserve') ? 1 + RESERVE_MORE * (count - 1) : 1);
+  const dmg = filled * 0.75 * (1 + r.novaPct / 100) * (hasAscNode(s, 'lightkeeper_reserve') ? 1 + RESERVE_MORE * (count - 1) : 1);
   if (!r.saintsSacrifice) s.life = Math.min(d.maxLife, s.life + count * d.maxLife * 0.2 * (1 + r.novaHeal / 100));
   if (r.novaEs) s.es = Math.min(d.maxEs, s.es + (count * d.maxEs * r.novaEs) / 100);
   ctx.emit({ t: 'info', text: count > 1 ? `Fervor releases ${count} holy novas!` : 'Fervor releases a holy nova!', tone: 'good' });

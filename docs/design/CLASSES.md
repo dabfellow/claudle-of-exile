@@ -92,7 +92,7 @@ Landed hits were added on 2026-10-31: 85% of hits on a starter land, so Riposte 
 
 **Martyr:** hits you take fill **Fervor** (full at damage equal to 60% of your max Life + ES).
 When full it releases a **holy nova**: heals 20% of max Life and deals lightning damage to every enemy
-equal to 50% of the damage that filled it.
+equal to 75% of the damage that filled it (buffed from 50% on 2026-11-01).
 
 - Fervor fills from incoming damage **before mitigation**, so Armour/ES keep you alive without
   slowing the nova — the tank hybrid gets to stack defence with no penalty.

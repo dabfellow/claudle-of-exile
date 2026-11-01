@@ -76,7 +76,7 @@ const ACCOUNT_PULL_MS = 30_000;
 /** frames further apart than this (tab hidden, laptop asleep) are treated as offline time */
 const BACKGROUND_MS = 5 * 60_000;
 
-export type Screen = 'boot' | 'title' | 'select' | 'create' | 'game';
+export type Screen = 'boot' | 'title' | 'menu' | 'select' | 'create' | 'game';
 
 /** How often an open game asks whether events changed, and how often it checks the clock against their schedules. */
 const EVENT_FETCH_MS = 5 * 60 * 1000;
@@ -319,6 +319,12 @@ class GameStore {
       this.guestCharacters = [];
     }
     await this.openRealm();
+    // a signed-in player sees their account and presses Play; a demo has no account to show
+    this.setScreen(account.provider === 'demo' ? (this.characters.length ? 'select' : 'create') : 'menu');
+  }
+
+  /** From the account screen: on to the characters, or straight to making one. */
+  play() {
     this.setScreen(this.characters.length || this.guestCharacters.length ? 'select' : 'create');
   }
 

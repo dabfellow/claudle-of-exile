@@ -30,6 +30,7 @@ const PATHS: Record<string, string> = {
   trophy: 'M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H5c0 3 1.5 4.5 3 5M16 6h3c0 3-1.5 4.5-3 5M12 13v4M8.5 20h7M10 17h4v3h-4z',
   lock: 'M7 11V8a5 5 0 0 1 10 0v3M5.5 11h13v9h-13zM12 14.5v2',
   clock: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16ZM12 8v4l3 2',
+  book: 'M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4ZM5 17a3 3 0 0 1 3-3h10M9 8h5',
   // item slots
   weapon: 'M5 19 16 8M16 8l2-4 2 2-4 2M7 15l2 2M4 20l1.5-1.5',
   offhand: 'M12 3 5 5.5V11c0 5 3 8 7 10 4-2 7-5 7-10V5.5L12 3ZM12 7v10M8 11h8',

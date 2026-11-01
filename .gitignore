@@ -9,3 +9,6 @@ dist
 
 .cloudflare/
 .wrangler/
+
+# generated wiki pages (npm run wiki)
+public/path-of-idle/wiki/

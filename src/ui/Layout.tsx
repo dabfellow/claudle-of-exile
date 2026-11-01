@@ -176,6 +176,12 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
             Switch
           </button>
         </div>
+        <a className="nav-item" href="/path-of-idle/wiki/" target="_blank" rel="noopener" style={{ textDecoration: 'none' }}>
+          <span className="nav-icon">
+            <GameIcon name="book" size={16} />
+          </span>
+          <span className="nav-name">Wiki</span>
+        </a>
         <button className={`nav-item ${page === 'settings' ? 'active' : ''}`} onClick={() => go('settings')}>
           <span className="nav-icon">
             <GameIcon name="settings" size={16} />

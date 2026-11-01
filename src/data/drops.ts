@@ -206,15 +206,15 @@ export const DROP_TABLES: Record<number, DropTable> = {
  * something to craft it with before its boss. Keyed by lifetime kill number.
  */
 export const STARTER_DROPS: Record<number, { slot: ItemSlotType } | { currency: string; qty: number }> = {
-  2: { slot: 'gloves' },
-  3: { currency: 'transmute', qty: 1 },
-  5: { slot: 'boots' },
-  6: { currency: 'alteration', qty: 1 },
-  8: { slot: 'body' },
-  9: { currency: 'transmute', qty: 1 },
-  11: { slot: 'weapon' },
-  12: { currency: 'alteration', qty: 1 },
-  14: { slot: 'helmet' },
+  1: { slot: 'gloves' },
+  2: { currency: 'transmute', qty: 1 },
+  3: { slot: 'boots' },
+  4: { currency: 'alteration', qty: 1 },
+  5: { slot: 'body' },
+  6: { currency: 'transmute', qty: 1 },
+  7: { slot: 'weapon' },
+  8: { currency: 'alteration', qty: 1 },
+  9: { slot: 'helmet' },
 };
 
 /** Boss rewards by area tier: deeper bosses guarantee better currency. */

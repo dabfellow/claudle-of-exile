@@ -17,7 +17,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 
 **In order:**
 
-1. **Claude:** build the real Maps (Milestone 8). Beating Act 6 opens the bare Maps preview page, and drawn maps can't be spent yet.
+1. **Claude:** build the real Maps (Milestone 8) from [MAPS.md](design/MAPS.md). Beating Act 6 opens the bare Maps preview page, and drawn maps can't be spent yet.
 2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
 3. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
@@ -106,8 +106,13 @@ stay as they are, with no playtest planned, until you say otherwise.
 - **Done:** Acts 4–6 are live and playable through.
 
 ### 8. Maps
-- Full tiers and themes, map drops, Cartography as the optional crafting route.
-- **Done:** a character can farm from the first tier to the last, with auto-run working offline.
+- Planned in [MAPS.md](design/MAPS.md): 10 plain tiers, no themes, general loot by level, Sextants, an Atlas tree, Cartography reworked.
+- [ ] Plain tiers and the real Map Device page
+- [ ] Sextants
+- [ ] Atlas tree
+- [ ] Cartography rework
+- [ ] Key and unique hunting mods
+- **Done:** a character can farm from Tier 1 to Tier 10, with Sextants and the Atlas, with auto-run working offline.
 
 ### 9. Hard mode bosses
 - New bosses, boss keys from drops and skilling, boss moments for manual play and a reactive-rule answer for idle
@@ -144,6 +149,12 @@ including the journey and Milestone 2's numbers. Players feel the level number m
 target times and players set the acts' pace: 1–20 about 3 h, 20–40 about 3 h, 40–65 6 h, 65–80 12 h, 80–95 20 h,
 95–99 20 h, and 99 is halfway to 100 in XP. Area level ranges cap levelling, PoE-style, so a long offline run can't
 outlevel the campaign ([BALANCE.md](design/BALANCE.md) → Knobs).
+
+**Wiki (design pass, 2026-11-01):**
+- Spoilers: B. The wiki is fully public with no login. Boss mechanics, unique drop sources and later acts sit behind click-to-reveal "Spoiler" boxes.
+- Next content: A. Reference pages first (passive notables, life skills and recipes, hideout upgrades, runes and flasks, boss glossary). Guides (automation, formulas) come after.
+- Linking: A. Sidebar and title screen link to the wiki home, and the wiki has its own search. Deep links from item/gem/boss tooltips are later, once the reference pages exist.
+- Decided for you: spoiler boxes cover boss mechanics, unique drop sources and anything from Acts 4–6; the generator marks them automatically from the data, so new content is covered by default. Pages stay in the existing style and generator.
 
 ### Fixed (you, 2026-10-30)
 
@@ -193,11 +204,10 @@ Each decision depends on the ones above it. Numbers tuned before step 2 would ju
   - **Getting them:** they drop from monsters. Cartography is an optional second route, for crafting them if you want
     to do something like a huge offline map grind.
   - **Running one:** a set number of monster packs, then a map boss.
-  - **What makes one better:** tiers set the difficulty; each map has a fixed theme that favours a certain drop (fossils,
-    a unique, boss keys).
+  - **What makes one better:** a map is just a tier. Sextants in the Map Device add danger and reward. Themes were
+    dropped 2026-11-01 ([MAPS.md](design/MAPS.md)).
   - **Using them up:** consumed per run, so keeping a supply going is part of the game.
-  - **Idling:** auto-run. Pick a tier and theme, and the device keeps using matching maps from your stash until none
-    are left.
+  - **Idling:** auto-run. Pick a tier, and the device keeps using those maps until none are left.
 - **Top-end character:** clears hard mode bosses and top-tier maps on idle without dying. The sim can test this.
 - **Long-term engagement so far:** rare drops, expensive crafts, multiple characters, collection log (uniques, bosses,
   map themes, with rewards), Melvor-style masteries, ascendancies, build-defining uniques, shared stash. More can be
@@ -305,6 +315,14 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 
 ## Other open items
 
+- [x] Player wiki at `/path-of-idle/wiki/`, generated from the game's data by `npm run wiki` on every build: acts and areas, skill and support gems, item bases, uniques, modifiers, currency and materials, classes and ascendancies, plus a hand-written Getting started page (`docs/wiki/`). Linked from the sidebar. 0.2.34 — done 2026-11-01
+- [ ] Wiki next, decided in the 2026-11-01 design pass (see Decisions → Wiki), in this order:
+  - [ ] Spoiler boxes: click-to-reveal for boss mechanics, unique drop sources and Acts 4–6, applied by the generator.
+  - [ ] Reference pages: passive tree notables, life skills and recipes, hideout upgrades, runes and flasks, boss mechanics glossary.
+  - [ ] A link from the title screen to the wiki home.
+  - [ ] Then guides: automation rules guide, formulas page (from [DAMAGE.md](design/DAMAGE.md)).
+  - [ ] Later: deep links from in-game tooltips to wiki pages.
+  - [ ] Deploy the wiki (first version is built but not live).
 - [x] Gear sets and skill loadouts, with auto-switching behind the Crafting Bench — done 2026-10-31
 - [x] Art and music sent 2026-10-31 merged: 112 item slots and 4 music tracks. All free itch.io files; you said to assume
   free public use while the game isn't sold, so recheck if that changes — done 2026-10-31
@@ -415,6 +433,8 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Kills before each area boss now ramp evenly from 10 (Mud Flats) to 80 (Shattered Throne) instead of 15–25; the starter drops moved to kills 1–9 so they finish before the first boss. 0.2.35 — done 2026-11-01
+- [x] Player wiki, first version, built for `/path-of-idle/wiki/` (not deployed yet). 0.2.34 — done 2026-11-01
 - [x] Acts 4, 5 and 6 opened to players. 0.2.33 — done 2026-11-01
 - [x] Hideout upgrade cards replace the station table: a "You have" total, every tier ticked or dimmed, the next upgrade with cost, later costs on hover. 0.2.32 — done 2026-11-01
 - [x] Every Stash tab shared: gold, currency, materials, spare gems and spare flasks moved to the account, per realm, so a challenge league will have its own. Save v27 adds up what each character held; tabs and devices playing at once merge their changes ([TOWN.md](design/TOWN.md)). 0.2.31 — done 2026-11-01

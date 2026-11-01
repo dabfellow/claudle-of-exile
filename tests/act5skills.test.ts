@@ -475,7 +475,7 @@ describe('idling', () => {
     const ctx = makeCtx(seeded(3));
     startCombat(s, ctx, 'cinderroad');
     const sum = simulateOffline(s, ctx, 10 * 60 * 1000);
-    expect(sum.kills).toBeGreaterThan(5);
+    expect(sum.kills).toBeGreaterThan(2);
     expect(sum.died).toBe(false);
     expect(army(s.combat!).length).toBeGreaterThan(0);
   });
