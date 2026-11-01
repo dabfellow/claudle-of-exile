@@ -657,9 +657,9 @@ function inAim(aim: SkillAim | undefined, m: MonsterInstance): boolean {
 }
 
 /**
- * Every living monster in the order skills want them: a clicked monster first, then what the skill's rule aims at, then
- * the priority group, then the order; nearest breaks ties. Martyrs are nobody's target unless clicked or aimed at, and a
- * chained boss comes last, so the adds in the way of a martyr get cleared.
+ * Every living monster in the order skills want them: a clicked monster first, then what the skill aims at, then the
+ * priority group, then the order; nearest breaks ties. Martyrs are nobody's target unless clicked or aimed at (areas and
+ * chains aim at them by themselves), and a chained boss comes last, so the adds in the way of a martyr get cleared.
  */
 export function targetOrder(s: GameState, aim?: SkillAim): MonsterInstance[] {
   const c = s.combat;
@@ -694,14 +694,21 @@ export function skillRange(d: Derived, def: ActiveGemDef): number {
   return 1;
 }
 
+/** A hit with an area or a chain: it goes for martyrs by itself, with no click or rule. */
+function spreads(d: Derived, nums: SkillNumbers): boolean {
+  const e = nums.def.effect;
+  return needsTarget(nums.def) && (skillArea(nums) !== 'target' || (e.targets === 'chain' ? (e.chains ?? 0) + d.raw.extraChains : 0) + nums.mods.chains > 0);
+}
+
 /**
  * Who a skill goes for: the first monster in targeting order that's in range or that you can close in on (a clear
  * way in). Area skills aim at whoever in range puts the most monsters under the hit, within the same priority.
  * Null when nothing can be reached.
  */
-export function skillTarget(s: GameState, d: Derived, nums: SkillNumbers, aim?: SkillAim): { mon: MonsterInstance; closeIn: boolean } | null {
+export function skillTarget(s: GameState, d: Derived, nums: SkillNumbers, ruleAim?: SkillAim): { mon: MonsterInstance; closeIn: boolean } | null {
   const c = s.combat!;
   const range = skillRange(d, nums.def);
+  const aim = ruleAim ?? (spreads(d, nums) ? 'martyrs' : undefined);
   const order = targetOrder(s, aim);
   // the chains hold a martyr in reach of any skill: adds and a summoning boss could otherwise wall melee off from it
   const fits = (m: MonsterInstance) => cellRing(m.cell) <= range || !!m.martyr;
@@ -1738,9 +1745,9 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         target = aim.mon;
       }
       c.targetUid = target.uid;
-      // a blast only reaches martyrs when it's aimed at one
+      // areas and chains catch martyrs wherever they land; anything else has to be aimed at one
       const struck = target;
-      const alive = aliveMonsters(c).filter((m) => !m.martyr || struck.martyr);
+      const alive = aliveMonsters(c).filter((m) => !m.martyr || struck.martyr || spreads(d, nums));
       let targets: MonsterInstance[];
       let chained = false;
       if (shape !== 'target') {
@@ -1930,7 +1937,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
     if (!s.bossesDefeated.includes(zone.id)) {
       s.bossesDefeated.push(zone.id);
       if (zone.actBoss) ctx.emit({ t: 'actComplete', act: zone.act });
-      onBossFirstKill(s, ctx, zone.id, zone.act);
+      onBossFirstKill(s, ctx, zone.id);
     }
     const act = reachedAct(s);
     for (const next of openReachedZones(s)) ctx.emit({ t: 'zoneUnlocked', zoneId: next.id });
@@ -2769,7 +2776,7 @@ function chainMartyrs(s: GameState, ctx: Ctx, boss: MonsterInstance): void {
     c.monsters.push(m);
   }
   boss.chained = cells.length > 0 || undefined;
-  if (cells.length) ctx.emit({ t: 'bossPhase', name: boss.name, text: 'chains its martyrs: strike them down!' });
+  if (cells.length) ctx.emit({ t: 'bossPhase', name: boss.name, text: "chains its martyrs: it can't be hurt until they die!" });
 }
 
 /** Echoes: a boss with several pairs moves on to the next as its life falls, and only ever forward. */

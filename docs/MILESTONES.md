@@ -11,7 +11,7 @@ Last updated 2026-11-01.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, and all six acts are live as 0.2.37 (deployed 2026-11-01), with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, and all six acts are live as 0.2.41 (deployed 2026-11-01), with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -93,6 +93,7 @@ stay as they are, with no playtest planned, until you say otherwise.
   none ([ASCENDANCIES.md](design/ASCENDANCIES.md)) — done 2026-10-31
 - [x] Trials 2 and 3 built with Acts 4 and 6, — done 2026-11-01
 - [x] Open Act 3 to players and deploy — done 2026-10-31. Pacing and balance haven't been simmed.
+- [x] Ascendancy points only from a trial's first pass (4, 4, 3), bosses give none, and trials say what they open — done 2026-11-01
 - Tree extended for the extra levels.
 - **Done:** every main class can pick either ascendancy and play it through Act 3.
 
@@ -419,7 +420,10 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
-- [x] Wellspring replaces Wildcaster: full mana no longer costs damage, and wasted mana fills Overflow into a free Surge ([ASCENDANCIES.md](design/ASCENDANCIES.md)). Tested, not simmed or played. Save v29 moves Wildcasters over with their points back. 0.2.38 — done 2026-11-01
+- [x] Wellspring replaces Wildcaster: full mana no longer costs damage, and wasted mana fills Overflow into a free Surge ([ASCENDANCIES.md](design/ASCENDANCIES.md)). Tested, not simmed or played. Save v30 moves Wildcasters over with their points back. 0.2.41 — done 2026-11-01
+- [x] Ascendancy points only from a trial's first pass (4, 4, 3 to fill the 11), bosses give none, and the area card, Tree page and toast say what each trial gives and opens. Save v29 cuts held points to what passed trials give, and refunds a tree that no longer fits ([ASCENDANCIES.md](design/ASCENDANCIES.md)). 0.2.40 — done 2026-11-01
+- [x] Martyrs eased: area and chain skills go for them with no click or rule and count for offline bosses (a spread from a support doesn't count offline yet), and a chained boss shows a notice over the field and "chained" instead of 0 ([ACT3.md](design/ACT3.md)). 0.2.39 — done 2026-11-01
+- [x] Running list of uniques: [UNIQUES.md](UNIQUES.md), generated from the game data by `npm run uniques`, and a test fails if it's stale — done 2026-11-01
 - [x] Tutorial redone around crafting: smith a weapon, Transmute it blue, wield it, then Old Brannoc pays for the Crafting Bench (1,500 gold, 200 logs, 200 ore) and you build it and salvage your old weapon. 14 steps, save v28; steps already settled are passed unpaid, so a second character can't collect the bench kit. In [DESIGN.md](design/DESIGN.md) 0.2.37 — done 2026-11-01
 - [x] Acts 3–6 branch: forks that rejoin, side areas, act bosses that need about 75% of their act, and redrawn act maps with no overlapping labels. 0.2.36 — done 2026-11-01
 - [x] Acts 4, 5 and 6 opened to players. 0.2.33 — done 2026-11-01

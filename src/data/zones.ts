@@ -8,7 +8,7 @@ import type { DamageType, GroundKind } from '../engine/types';
  * - enrage: below 35% life it attacks faster and harder — burst and flasks matter
  * - ward: at 66% and 33% life it raises a barrier that heals it if not broken in time — burst matters
  * - scorch: every so often it sets the ground under you ablaze (frozen, charged) — resistances and pace matter
- * - martyrs: it can't be hurt while the martyrs chained to it live — aim at them, by hand or by rule
+ * - martyrs: it can't be hurt while the martyrs chained to it live — areas and chains strike them; anything else aims by hand or by rule
  * - frostbite: stacks build on you through the fight, slowing you until you freeze solid — cleanse them, by hand or by rule
  * - channel: a long spell that grows until it lands, and snowballs the fight if it does — stun or interrupt it, by hand or by rule
  */
@@ -1448,7 +1448,7 @@ export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> 
   summon: { name: 'Summons', tip: 'Calls more adds during the fight. Area skills keep them down.' },
   enrage: { name: 'Enrage', tip: 'Below 35% life it attacks 50% faster for 30% more damage. Burst it down or drink.' },
   ward: { name: 'Ward', tip: 'At 66% and 33% life it raises a barrier. Break it within 8 s or the boss heals 10%.' },
-  martyrs: { name: 'Martyrs', tip: "It can't be hurt while the martyrs chained to it live, and it chains two more at half life. Only a blow aimed at a martyr lands: click one, or set a skill's rule to aim at martyrs (Aim rules, War Table)." },
+  martyrs: { name: 'Martyrs', tip: "It can't be hurt while the martyrs chained to it live, and it chains two more at half life. Area and chain skills strike martyrs by themselves. Single-target skills need aiming: click one, or set a skill's rule to aim at martyrs (Aim rules, War Table)." },
   channel: { name: 'Channels', tip: "It stops to call up a long spell that pulses harder as it grows, then lands past any block and leaves it stronger for the rest of the fight. A stun, freeze or interrupt breaks it and staggers the boss: press War Cry, or put a skill on the rule When an enemy channels (a wind-up rule won't fire)." },
   scorch: { name: 'Scorched earth', tip: 'Every 11 s it sets the ground under you ablaze (or frozen, charged or worse) for 6 s. Resist its element, Run to step out sooner, or put a guard on a Ground rule to step out at once.' },
   frostbite: { name: 'Frostbite', tip: "A stack builds on you every 2.5 s, twice as fast on Frozen ground, and each slows you by 4%. At 10 you freeze solid for 3 s and take a cold shatter. A guard or movement skill shakes off 5, and a flask clears them all. Set one to the Frostbite rule (Vitals rules, War Table), or Instill a flask, so it fires at a stack count." },

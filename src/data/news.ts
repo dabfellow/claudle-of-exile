@@ -8,13 +8,33 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
-    version: '0.2.38',
+    version: '0.2.41',
     date: '1 Nov 2026',
     title: 'The Wellspring',
     items: [
       'The Mage’s Wildcaster is gone, because it punished you for keeping your mana full. The Wellspring takes its place.',
       'Mana you would waste at full now fills Overflow. A full meter makes your next damaging spell free, with 100% more damage.',
       'Wildcasters become Wellsprings automatically, and get their ascendancy points back to spend.',
+    ],
+  },
+  {
+    version: '0.2.40',
+    date: '1 Nov 2026',
+    title: 'Trials give the points',
+    items: [
+      'Ascendancy points now come only from passing a trial for the first time: 4, 4 and 3. Bosses no longer give them.',
+      'Points you held from bosses are gone. If your tree no longer fits, its nodes are refunded so you can choose again.',
+      'Area cards and the Ascendancy tab now say what each trial gives and opens.',
+    ],
+  },
+  {
+    version: '0.2.39',
+    date: '1 Nov 2026',
+    title: 'Martyrs loosen their grip',
+    items: [
+      'Area and chain skills now go for Chained Martyrs by themselves, and catch them when they land nearby. No click or rule needed.',
+      'Single-target skills still need a click or an Aim rule.',
+      "A chained boss now says so: a notice over the field tells you why it can't be hurt and how to free it, and your hits show as chained rather than 0.",
     ],
   },
   {

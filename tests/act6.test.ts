@@ -378,8 +378,8 @@ describe('the third trial', () => {
     return { s, c };
   };
 
-  it('stands on the first stage, giving 2 points', () => {
-    expect(TRIALS.find((t) => t.n === 3)).toMatchObject({ zoneId: act()[0].id, points: 2 });
+  it('stands on the first stage, giving 3 points', () => {
+    expect(TRIALS.find((t) => t.n === 3)).toMatchObject({ zoneId: act()[0].id, points: 3 });
   });
 
   it('opens the capstone', () => {
@@ -387,17 +387,17 @@ describe('the third trial', () => {
     const a = ASCENDANCY_BY_ID.ravager;
     s.ascendancy.nodes = a.nodes.filter((n) => n.kind !== 'gate' && n.kind !== 'capstone').map((n) => n.id);
     expect(ascNodeReason(s, a.capstone.id)).toContain('Exiles');
-    onBossFirstKill(s, c, 'exilesgate', 6);
+    onBossFirstKill(s, c, 'exilesgate');
     expect(s.ascendancy.trials).toBe(3);
     expect(allocateAscNode(s, c, a.capstone.id)).toBeNull();
     expect(c.events.some((e) => e.t === 'trialPassed' && e.n === 3)).toBe(true);
   });
 
-  it('every other Act 6 boss gives a point', () => {
+  it('other Act 6 bosses give nothing', () => {
     const { s, c } = ascended();
-    s.ascendancy.points = 4;
-    onBossFirstKill(s, c, 'kingsroad', 6);
-    expect(s.ascendancy.points).toBe(5);
+    s.ascendancy.points = 8;
+    onBossFirstKill(s, c, 'kingsroad');
+    expect(s.ascendancy.points).toBe(8);
     expect(s.ascendancy.trials).toBe(2);
   });
 });

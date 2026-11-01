@@ -1037,7 +1037,7 @@ export const UNIQUES: UniqueDef[] = [
     ],
   },
   {
-    id: 'pyre_heart', name: 'Heart of the Pyre', baseId: 'onyx_amulet', flavour: 'It beats.',
+    id: 'pyre_heart', name: 'Heart of the Pyre', baseId: 'onyx_amulet', flavour: "It beats slowly. A sloth's revenge is in no hurry.",
     mods: [
       { affixId: 'added_fire', values: [10, 20] },
       { affixId: 'inc_elem', values: [25] },

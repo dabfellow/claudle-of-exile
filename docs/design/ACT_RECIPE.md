@@ -25,7 +25,7 @@ Decided 2026-11-01, from your "PoE-like divergence". Acts 1 and 2 stay straight;
 
 - **Forks:** `requires.after` lists every road into an area, and any one of them opens it. The area order in `ZONES` stays campaign order, with the act boss last.
 - **Side areas:** a dead end no road leads on from (`isSideArea`). The map draws them smaller, on a thinner road, and they read "Side area" on their card.
-- **Act boss gate:** `requires.bosses` asks for about 75% of the act's other bosses, more than the shortest route gives. Forks are a real choice of what to skip, and the act can't shrink to its shortest route. Every boss still counts toward ascendancy points and the act's all-bosses achievement.
+- **Act boss gate:** `requires.bosses` asks for about 75% of the act's other bosses, more than the shortest route gives. Forks are a real choice of what to skip, and the act can't shrink to its shortest route. Every boss still counts toward the act's all-bosses achievement.
 - **Act complete:** the Campaign page's banner now follows the act boss, not every boss.
 - **Saves:** areas are only ever added on load (`openReachedZones`), so straight-line saves keep everything, and no area id changed.
 - **Map:** each area's point is in `ZONE_POS`, its label's side in `LABEL_SIDE`, and `stretch` makes a crowded region taller in close-up. `tests/actRoads.test.ts` fails if a label hits another label, a point or a road.

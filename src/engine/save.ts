@@ -1,6 +1,7 @@
 import { classDef } from '../data/classes';
 import { bundleCharacter, freshAccount } from './account';
 import { newAscendancyRuntime, newAscendancyState } from './ascendancy';
+import { TRIALS } from '../data/ascendancies';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
@@ -268,6 +269,13 @@ const MIGRATIONS: Record<number, Migration> = {
     if (tut && !tut.done && tut.step >= 9) tut.step += 3;
   },
   28: (raw) => {
+    // bosses stopped giving ascendancy points: only passed trials count, and a tree that no longer fits is handed back
+    const asc = raw.ascendancy as { trials: number; points: number; nodes: string[] } | undefined;
+    if (!asc) return;
+    asc.points = TRIALS.filter((t) => t.n <= asc.trials).reduce((a, t) => a + t.points, 0);
+    if (asc.nodes.length > asc.points) asc.nodes = [];
+  },
+  29: (raw) => {
     // Wellspring replaced Wildcaster: the character moves over, and its nodes come back as points to spend
     const s = raw as unknown as { ascendancy?: { id: string | null; nodes: string[] }; combat?: { asc?: unknown } };
     if (s.ascendancy?.id === 'wildcaster') {

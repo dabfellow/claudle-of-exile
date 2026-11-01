@@ -182,8 +182,8 @@ Replaced Wildcaster on 2026-11-01: its reversed Mana is Power punished players w
 1. **Twist:** the gate changes a rule of the class mechanic, as written above.
 2. **Three trials:** one at the start of Act 3 opens the gate and the choice, one at the end of Act 4 opens the notables,
    and one at the start of Act 6 opens the capstone.
-3. **Own points:** trials and Act 3–6 bosses give ascendancy points that only work here. Every character fills the
-   section, and the main tree loses nothing.
+3. **Own points:** the first pass of each trial gives ascendancy points that only work here; bosses give none (changed
+   2026-11-01). Every character fills the section, and the main tree loses nothing.
 4. **Separate tree:** the ascendancy gets its own tab in the passive tree after the first trial. So it's usable the
    moment you pick, and the layout above stands on its own.
 5. **Switching:** allowed for a rare material, plus the usual Orb of Regret per node.
@@ -207,8 +207,8 @@ Calls made while building:
 
 - **Switching price:** 1 Divine Orb, plus an Orb of Regret per node. Divine is already a rare drop and the deepest boss
   table guarantees one, so no new source or art was needed.
-- **Points:** the trial's boss gives only the trial's 2; every other Act 3–6 boss gives 1 on its first kill. They stop at
-  11, all the section can use. With 10 stages, Act 3 alone reaches that.
+- **Points:** trials give 4, 4 and 3, which is the 11 the section can use. Each leaves a choice of what to take first,
+  and only the third fills the tree. Saves were cut back to this in v29, and a tree holding more than its points was refunded.
 - **Ravager:** a Rampage drains on a clock, so hits during it don't hold it up. It counts as a full meter for tactics, so
   Berserk can line up. No Mercy holds the drain for 2s per kill.
 - **Anvil:** attackers take 4% of your Armour, plus 5% of that per Rage.
@@ -220,7 +220,7 @@ Calls made while building:
   speeds it up, and no notable gives mana on kill, by your call. The gate's 2 regen is there because regen otherwise comes
   only from gear and passives, so a bare character would never Surge. A Surge waits for a spell that deals damage, not a
   ward or a summon, and Overflow lasts between packs but empties on a new zone. Riptide's echo also covers arcs, beams and
-  whole-field spells, whose area can't grow. Wildcasters moved over in save 29 with their points back.
+  whole-field spells, whose area can't grow. Wildcasters moved over in save 30 with their points back.
 - **Alchemist:** one charge counts as 3 Mana, so a full belt weighs about as much as a mid-game mana pool. A burst is 12
   fire damage per character level, before Flask Effect.
 - **Matador:** a Riposte that misses doesn't add to the streak. Each one adds 15% more damage.
