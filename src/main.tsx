@@ -20,6 +20,9 @@ if (import.meta.env.DEV) {
       passTrial(s, ctx, n);
       s.ascendancy.points += points;
     });
+  void import('./dev/scenarios').then(({ scenario }) => {
+    (window as unknown as { scenario: typeof scenario }).scenario = scenario;
+  });
 }
 
 createRoot(document.getElementById('root')!).render(
