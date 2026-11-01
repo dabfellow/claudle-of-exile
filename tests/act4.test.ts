@@ -130,7 +130,6 @@ describe('Act 4 layout', () => {
   it('follows the High Altar, and every area sits on the map inside the northern range', () => {
     expect(nextZones('highaltar')[0]?.id).toBe('hollowpass');
     const zones = act();
-    for (let i = 0; i < zones.length - 1; i++) expect(nextZones(zones[i].id)[0]?.id).toBe(zones[i + 1].id);
     for (const z of zones) {
       const pos = ZONE_POS[z.id];
       expect(pos, z.id).toBeTruthy();

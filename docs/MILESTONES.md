@@ -103,6 +103,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 - [x] Act 5 built: 14 stages, Channels, Tides and summons, Cooking ([ACT5.md](design/ACT5.md)) — done 2026-11-01. Not simmed or played through.
 - [x] Act 6 built: 18 stages, Echoes, Unholy ground, Trial 3 and the ending ([ACT6.md](design/ACT6.md)), The last empire ([ACT6_SKILLS.md](design/ACT6_SKILLS.md)), Cartography ([CARTOGRAPHY.md](design/CARTOGRAPHY.md)) — done 2026-11-01. Not simmed or played through.
 - [x] Open Acts 4–6 to players and deploy, ahead of the real Maps — done 2026-11-01
+- [x] Non-linear roads for Acts 3–6: forks, side areas and an act boss gate ([ACT_RECIPE.md](design/ACT_RECIPE.md) → Roads) — done 2026-11-01. Not simmed; not deployed.
 - **Done:** Acts 4–6 are live and playable through.
 
 ### 8. Maps
@@ -357,6 +358,8 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 
 ## Ideas / later
 - War Table: Wind-up rules are now level 2, about 15 minutes of gathering, so offline bosses come far earlier than Milestone 1's pacing assumed. Not simmed.
+- The sim's `reachable` now pushes unbeaten areas so it walks every branch, but hasn't been run since the roads forked, and its pacing numbers for Acts 3–6 predate them.
+- `TRIAL_ZONES` in `scripts/sim.ts` has `hollowreef`, now one side of a fork; the bot still clears it.
 - Hideout later-tier costs only show on hover, so phones can't see them.
 - Chaos is offence only: no monsters deal it, no player chaos resistance, no chaos skills past Poison Dart, and flat chaos doesn't reach spells ([DAMAGE.md](design/DAMAGE.md)).
 - Ailment numbers (40% threshold, 25% skill chance, ignite 50%, shock 40%) are first guesses, not simmed. Bosses may be near immune to Ignite and Freeze at these thresholds.
@@ -416,6 +419,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Acts 3–6 branch: forks that rejoin, side areas, act bosses that need about 75% of their act, and redrawn act maps with no overlapping labels. 0.2.34 — done 2026-11-01
 - [x] Acts 4, 5 and 6 opened to players. 0.2.33 — done 2026-11-01
 - [x] Hideout upgrade cards replace the station table: a "You have" total, every tier ticked or dimmed, the next upgrade with cost, later costs on hover. 0.2.32 — done 2026-11-01
 - [x] Every Stash tab shared: gold, currency, materials, spare gems and spare flasks moved to the account, per realm, so a challenge league will have its own. Save v27 adds up what each character held; tabs and devices playing at once merge their changes ([TOWN.md](design/TOWN.md)). 0.2.31 — done 2026-11-01

@@ -50,6 +50,10 @@ The Pilgrim Gate's boss stays plain so the ascendancy trial can hook onto it. Th
 
 **Lightning:** every boss's nova and ground is lightning, and lightning leads the trash ahead of physical, with a few fire and cold monsters mixed in. Each new unique carries lightning resistance and feeds one class's meter.
 
+## Roads
+
+Forked on 2026-11-01. The act boss needs 7 of the 9 other bosses. Gate → Alms Quarter or Scourging Yard → Bell Foundry → Hall of Inquisition or Stair of Penitents → Saints' Walk → High Altar. Side areas: Reliquary Vaults (off the Alms Quarter), Choir Loft (off the Stair). See [ACT_RECIPE.md](ACT_RECIPE.md) → Roads.
+
 ## Martyrs (`martyrs`)
 
 - The boss arrives chained with 2 martyrs beside it, and chains 2 more at 50% life. Knobs: `BOSS_MARTYR_*` and `MARTYR` in `zones.ts`.

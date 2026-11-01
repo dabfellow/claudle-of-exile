@@ -170,7 +170,10 @@ const boss = (def: MonsterDef, mechanics: BossMechanic[], casts: BossCasts): Mon
   mechanics: [...new Set([...mechanics, ...(casts.echoes?.flat() ?? [])])],
 });
 
-/** Areas in campaign order: each boss unlocks the next area. */
+/**
+ * Areas in campaign order, with each act's boss last. Acts 1 and 2 run straight, each boss opening the next area. From
+ * Act 3 on the roads fork: `requires` sets them, and a side area is one no road leads on from (isSideArea).
+ */
 export const ZONES: ZoneDef[] = [
   // ---------------- Act 1: The Drowned Coast ----------------
   {
@@ -442,6 +445,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'almsquarter', name: 'The Alms Quarter', act: 3, tier: 8, levelRange: [33, 35], color: '#a89a8a', ilvlBonus: 3,
     desc: 'Crowded lanes of the poor, who give what little they have and watch for anyone who gives less.',
+    requires: { after: ['pilgrimgate'] },
     monsters: [
       m('almscollector', 'Alms Collector', 33, 'phys', atk('Weighted Purse', 2600), 0.9, 1),
       fast(m('streetzealot', 'Street Zealot', 34, 'phys', atk('Cobble Stone', 2300), 0.8, 0.9)),
@@ -457,6 +461,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'scourgeyard', name: 'The Scourging Yard', act: 3, tier: 8, levelRange: [34, 36], color: '#8a5a50', ilvlBonus: 3,
     desc: 'A sanded yard behind the walls, where the faithful come every morning to bleed for their sins.',
+    requires: { after: ['pilgrimgate'] },
     monsters: [
       fast(m('flagellant', 'Flagellant', 34, 'phys', atk('Barbed Scourge', 2200), 0.8, 0.95)),
       m('yardmaster', 'Yard Master', 35, 'phys', atk('Iron Rod', 3600), 1.25, 1.1),
@@ -472,6 +477,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'reliquary', name: 'The Reliquary Vaults', act: 3, tier: 8, levelRange: [35, 37], color: '#7a7a9a', ilvlBonus: 3,
     desc: 'Cold vaults under the city, packed to the roof with the bones of the holy. Relic hunters dig here by torchlight.',
+    requires: { after: ['almsquarter'] },
     monsters: [
       m('relichunter', 'Relic Hunter', 35, 'phys', atk('Grave Pick', 2800), 1, 1),
       fast(m('vaultthief', 'Vault Thief', 36, 'phys', atk('Stolen Dagger', 2100), 0.75, 0.85)),
@@ -487,6 +493,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'bellfoundry', name: 'The Bell Foundry', act: 3, tier: 8, levelRange: [36, 38], color: '#a07a4a', ilvlBonus: 3,
     desc: 'Where the city casts its bells in bronze and holy fire. Every bell here has rung for a death.',
+    requires: { after: ['almsquarter', 'scourgeyard'] },
     monsters: [
       m('bellcaster', 'Bellcaster', 36, 'fire', atk('Ladle of Bronze', 3000), 1, 1.05),
       fast(m('clapperboy', 'Clapper Boy', 37, 'light', atk('Ringing Hammer', 2200), 0.75, 0.9)),
@@ -502,6 +509,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'inquisition', name: 'The Hall of Inquisition', act: 3, tier: 9, levelRange: [36, 38], color: '#6a5a7a', ilvlBonus: 3,
     desc: 'Long quiet halls of ledgers and locked doors. Everyone here is guilty; it is only a matter of writing it down.',
+    requires: { after: ['bellfoundry'] },
     monsters: [
       m('inquisitor', 'Inquisitor', 36, 'light', spell('Lightning Verdict', 3000), 0.95, 1.15),
       m('hallguard', 'Hall Guard', 37, 'phys', atk('Ranseur', 3400), 1.2, 1.1),
@@ -517,6 +525,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'penitentstair', name: 'The Stair of Penitents', act: 3, tier: 9, levelRange: [37, 39], color: '#8a8a7a', ilvlBonus: 3,
     desc: 'Nine thousand steps up to the high city, climbed on the knees, with lightning walking the rails.',
+    requires: { after: ['bellfoundry'] },
     monsters: [
       fast(m('stairrunner', 'Stair Runner', 37, 'phys', atk('Spiked Staff', 2200), 0.8, 0.9)),
       slow(m('kneelingknight', 'Kneeling Knight', 38, 'light', atk('Thunder Mace', 3900), 1.6, 1.15)),
@@ -532,6 +541,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'choirloft', name: 'The Choir Loft', act: 3, tier: 9, levelRange: [38, 40], color: '#9a9ac0', ilvlBonus: 3,
     desc: 'High galleries under the cathedral roof, where the singing never stops and the air tastes of storms.',
+    requires: { after: ['penitentstair'] },
     monsters: [
       m('chorister', 'Chorister', 38, 'light', spell('High Note', 2600), 0.8, 1.05),
       fast(m('censerboy', 'Censer Boy', 39, 'fire', atk('Swung Censer', 2300), 0.75, 0.95)),
@@ -547,6 +557,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'saintswalk', name: "The Saints' Walk", act: 3, tier: 9, levelRange: [39, 41], color: '#c0b080', ilvlBonus: 3,
     desc: 'An avenue of gilded statues in the high city. The guards here have never once been told they were wrong.',
+    requires: { after: ['inquisition', 'penitentstair'] },
     monsters: [
       m('templeguard', 'Temple Guard', 39, 'phys', atk('Gilded Spear', 3300), 1.2, 1.15),
       m('crusader', 'Crusader', 40, 'light', atk('Smiting Blade', 2900), 1.05, 1.1),
@@ -562,6 +573,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'highaltar', name: 'The High Altar', act: 3, tier: 9, levelRange: [40, 41], color: '#e0d8a0', ilvlBonus: 3,
     desc: 'The heart of the cathedral, open to the sky. The storm over the altar has been praying back for a thousand years.',
+    requires: { after: ['saintswalk'], bosses: 7 },
     monsters: [
       m('altarguard', 'Altar Guard', 40, 'light', atk('Consecrated Glaive', 3400), 1.3, 1.15),
       m('ascendedzealot', 'Ascended Zealot', 41, 'light', atk('Winged Blade', 2600), 0.9, 1.05),
@@ -598,6 +610,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'screefields', name: 'The Scree Fields', act: 4, tier: 10, levelRange: [41, 43], color: '#9a9a94', ilvlBonus: 7,
     desc: 'Miles of broken stone, thrown down from above by someone who wanted the valley empty.',
+    requires: { after: ['hollowpass'] },
     monsters: [
       slow(m('screegolem', 'Scree Golem', 41, 'phys', atk('Rockslide', 4300), 2, 1.35)),
       fast(m('stonehawk', 'Scree Hawk', 42, 'phys', atk('Stooping Talons', 2300), 0.9, 1)),
@@ -613,6 +626,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'howlingfells', name: 'The Howling Fells', act: 4, tier: 10, levelRange: [42, 44], color: '#7f93a8', ilvlBonus: 7,
     desc: 'High moors where the wind never drops, and the wolves have learned to hunt inside it.',
+    requires: { after: ['hollowpass'] },
     monsters: [
       fast(m('direwolf', 'Dire Wolf', 42, 'cold', atk('Frozen Jaws', 2500), 1.15, 1.1)),
       slow(m('fellbear', 'Fell Bear', 43, 'phys', atk('Mauling Paw', 3900), 2, 1.4)),
@@ -628,6 +642,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'glasslake', name: 'The Glass Lake', act: 4, tier: 10, levelRange: [43, 45], color: '#a0c8d8', ilvlBonus: 7,
     desc: 'A lake frozen so clear you can see what is walking on the underside of the ice.',
+    requires: { after: ['screefields'] },
     monsters: [
       m('icefisher', 'Ice Fisher', 43, 'cold', atk('Bone Harpoon', 3100), 1.15, 1.15),
       slow(m('frostshell', 'Rime Crab', 44, 'phys', atk('Shell Crush', 4200), 2.1, 1.3)),
@@ -643,6 +658,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'bonequarry', name: 'The Bone Quarry', act: 4, tier: 10, levelRange: [43, 45], color: '#c8bfa8', ilvlBonus: 7,
     desc: 'The giants bury their dead here, and cut the old ones up for building stone.',
+    requires: { after: ['howlingfells'] },
     monsters: [
       slow(m('quarrygiant', 'Quarry Giant', 43, 'phys', atk('Stone Maul', 4200), 2, 1.45)),
       m('bonecutter', 'Bone Cutter', 44, 'phys', atk('Rib Saw', 3000), 1.2, 1.15),
@@ -658,6 +674,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'icevault', name: 'The Blue Vault', act: 4, tier: 10, levelRange: [44, 46], color: '#6a9ac8', ilvlBonus: 7,
     desc: 'A cavern under the glacier, blue as a drowned eye, where the cold has been stored since before the first winter.',
+    requires: { after: ['glasslake'] },
     monsters: [
       slow(m('vaultyeti', 'Vault Yeti', 44, 'cold', atk('Avalanche Fist', 4000), 1.9, 1.4)),
       m('icespider', 'Crystal Spider', 45, 'cold', atk('Numbing Bite', 2700), 1.05, 1.05),
@@ -673,6 +690,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'mammothroad', name: 'The Mammoth Road', act: 4, tier: 11, levelRange: [44, 46], color: '#a08a70', ilvlBonus: 7,
     desc: 'Tusked herds have walked this ledge for ten thousand years, and nothing has ever stopped one.',
+    requires: { after: ['bonequarry'] },
     monsters: [
       slow(m('mammoth', 'Woolly Mammoth', 44, 'phys', atk('Tusk Sweep', 4300), 2.3, 1.45)),
       m('herdsman', 'Giant Herdsman', 45, 'phys', atk('Goad Spear', 3300), 1.5, 1.3),
@@ -688,6 +706,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'hangingglacier', name: 'The Hanging Glacier', act: 4, tier: 11, levelRange: [45, 47], color: '#b8d8e8', ilvlBonus: 7,
     desc: 'A river of ice held on the cliff face by nothing but habit. It groans when you walk on it.',
+    requires: { after: ['glasslake'] },
     monsters: [
       slow(m('glacierogre', 'Glacier Ogre', 45, 'cold', atk('Ice-Bound Club', 4100), 1.9, 1.4)),
       fast(m('crevasse', 'Crevasse Stalker', 46, 'cold', atk('Sudden Drop', 2500), 1, 1.1)),
@@ -703,6 +722,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'steading', name: 'The Stone Steading', act: 4, tier: 11, levelRange: [46, 48], color: '#8a8078', ilvlBonus: 7,
     desc: 'A giant farmstead, every door a cliff, every table a hill. You are about the size of what they keep in the walls.',
+    requires: { after: ['mammothroad'] },
     monsters: [
       slow(m('steadgiant', 'Steading Giant', 46, 'phys', atk('Hearthstone', 4200), 2.1, 1.45)),
       slow(m('frostgiant', 'Frost Giant', 47, 'cold', atk('Frozen Greataxe', 4000), 2, 1.45)),
@@ -718,6 +738,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'longhall', name: 'The Long Hall', act: 4, tier: 11, levelRange: [47, 48], color: '#907050', ilvlBonus: 7,
     desc: 'Their feast hall, a day’s walk from end to end. The fires went out an age ago, and the feast never stopped.',
+    requires: { after: ['steading'] },
     monsters: [
       slow(m('hallgiant', 'Feasting Giant', 47, 'phys', atk('Bone Trencher', 4100), 2.1, 1.45)),
       m('jarl', 'Giant Jarl', 48, 'cold', atk('Oathsword of Ice', 3300), 1.6, 1.35),
@@ -733,6 +754,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'kingsstair', name: "The King's Stair", act: 4, tier: 11, levelRange: [48, 49], color: '#a0b0c0', ilvlBonus: 7,
     desc: 'Each step is the height of a house. Nothing small has climbed it and come down.',
+    requires: { after: ['hangingglacier', 'steading'] },
     monsters: [
       slow(m('stairguard', 'Stair Guard', 48, 'phys', atk('Pillar Maul', 4100), 2.2, 1.5)),
       slow(m('stormgiant', 'Peak Giant', 49, 'cold', atk('Summit Fist', 3900), 2.1, 1.5)),
@@ -748,6 +770,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'giantsthrone', name: "The Giants' Throne", act: 4, tier: 11, levelRange: [48, 49], color: '#d8e8f0', ilvlBonus: 7,
     desc: 'The summit is a chair. The king who sits in it has been hollowed out by the cold, and he has not noticed yet.',
+    requires: { after: ['kingsstair'], bosses: 8 },
     monsters: [
       slow(m('thronegiant', 'Throne Giant', 48, 'cold', atk('King’s Justice', 4000), 2.2, 1.5)),
       m('hollowthane', 'Hollow Thane', 49, 'cold', atk('Hollow Blade', 3200), 1.5, 1.3),
@@ -785,6 +808,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'wreckline', name: 'The Wreck Line', act: 5, tier: 12, levelRange: [49, 51], color: '#6a4a3a', ilvlBonus: 10,
     desc: 'A reef of burning hulks across the harbour mouth, set alight by no one, still alight.',
+    requires: { after: ['blackharbor'] },
     monsters: [
       slow(m('hullbreaker', 'Hull Crawler', 49, 'phys', atk('Keel Claw', 3900), 1.5, 1.15)),
       fast(m('flotsam', 'Burning Flotsam', 50, 'fire', atk('Cinder Splash', 2200), 0.75, 0.9)),
@@ -800,6 +824,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'cinderkey', name: 'Cinder Key', act: 5, tier: 12, levelRange: [50, 52], color: '#a0482a', ilvlBonus: 10,
     desc: 'The first island out: a black cone of rock weeping fire into the sea, and the steam never lifts.',
+    requires: { after: ['blackharbor'] },
     monsters: [
       m('tarwalker', 'Tar Walker', 50, 'fire', atk('Sticky Grasp', 3000), 1.05, 1.05),
       fast(m('steamkin', 'Steam Kin', 51, 'fire', atk('Scalding Rush', 2100), 0.7, 0.9)),
@@ -815,6 +840,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'squallbanks', name: 'The Squall Banks', act: 5, tier: 12, levelRange: [51, 53], color: '#4f6f8f', ilvlBonus: 10,
     desc: 'Shoals so shallow that the storm stands on them. Nothing keeps its feet here for long.',
+    requires: { after: ['wreckline', 'cinderkey'] },
     monsters: [
       fast(m('stormgull', 'Storm Gull', 51, 'light', atk('Charged Dive', 2100), 0.7, 0.9)),
       m('shoalstalker', 'Shoal Stalker', 52, 'light', atk('Barbed Gaff', 2800), 1, 1.05),
@@ -830,6 +856,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'lampgulf', name: 'The Gulf of Lamps', act: 5, tier: 13, levelRange: [51, 53], color: '#2f5f6a', ilvlBonus: 10,
     desc: 'Black water with lights moving under it. The sailors who followed them are still down there, and they have lights now too.',
+    requires: { after: ['squallbanks'] },
     monsters: [
       m('lampfish', 'Lure Swimmer', 51, 'light', spell('Glowing Bite', 2700), 0.85, 1.05),
       fast(m('deepeel', 'Deep Eel', 52, 'light', atk('Shock Coil', 2200), 0.75, 0.9)),
@@ -845,6 +872,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'drownedfleet', name: 'The Drowned Fleet', act: 5, tier: 13, levelRange: [52, 54], color: '#50606a', ilvlBonus: 10,
     desc: 'Every ship the coast ever lost, under full sail, a fathom below the surface and still in line.',
+    requires: { after: ['squallbanks'] },
     monsters: [
       m('fleetmarine', 'Drowned Marine', 52, 'phys', atk('Rusted Boarding Axe', 2900), 1.1, 1.05),
       fast(m('powdermonkey', 'Powder Monkey', 53, 'fire', atk('Lit Fuse', 2200), 0.7, 0.95)),
@@ -860,6 +888,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'brimstone', name: 'Brimstone Isle', act: 5, tier: 13, levelRange: [52, 54], color: '#b0702a', ilvlBonus: 10,
     desc: 'Yellow stone and bad air. A shore of fire where the taken crews come to be burned clean of their names.',
+    requires: { after: ['drownedfleet'] },
     monsters: [
       m('sulphurman', 'Sulphur Digger', 52, 'fire', atk('Yellow Pick', 2800), 1, 1.05),
       fast(m('ashgull', 'Cinder Gull', 53, 'fire', atk('Burning Peck', 2000), 0.7, 0.85)),
@@ -875,6 +904,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'hollowreef', name: 'The Hollow Reef', act: 5, tier: 13, levelRange: [53, 55], color: '#8a5a6a', ilvlBonus: 10,
     desc: 'A reef grown over a city no map remembers. It breathes, slowly, and the tunnels change.',
+    requires: { after: ['drownedfleet'] },
     monsters: [
       slow(m('coralbrute', 'Coral-Grown Brute', 53, 'phys', atk('Reef Fist', 4000), 1.6, 1.2)),
       fast(m('reefdart', 'Reef Dart', 54, 'light', atk('Stinging Rush', 2100), 0.7, 0.9)),
@@ -890,6 +920,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'thunderhead', name: 'The Thunderhead', act: 5, tier: 14, levelRange: [54, 56], color: '#46506f', ilvlBonus: 10,
     desc: 'Open water under the great storm. Waterspouts walk the horizon, and the rain falls upward.',
+    requires: { after: ['brimstone', 'hollowreef'] },
     monsters: [
       m('spoutrider', 'Spout Rider', 54, 'light', atk('Lightning Harpoon', 2800), 1, 1.1),
       fast(m('rainwraith', 'Rain Wraith', 55, 'light', spell('Falling Spark', 2300), 0.7, 0.95)),
@@ -905,6 +936,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'leviathanrib', name: "Leviathan's Rib", act: 5, tier: 14, levelRange: [54, 56], color: '#a09a8a', ilvlBonus: 10,
     desc: 'The island is a dead thing. Its ribs stand a mile out of the sea, and the crews who flense it have been at it for a thousand years.',
+    requires: { after: ['thunderhead'] },
     monsters: [
       m('flenser', 'Flenser', 54, 'phys', atk('Blubber Spade', 2900), 1.05, 1.1),
       slow(m('ribcrawler', 'Rib Crawler', 55, 'phys', atk('Marrow Pincer', 4100), 1.7, 1.2)),
@@ -920,6 +952,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'blackcurrent', name: 'The Black Current', act: 5, tier: 14, levelRange: [55, 57], color: '#26323f', ilvlBonus: 10,
     desc: 'A river in the sea, running against the wind. Ships that enter it stop answering the helm.',
+    requires: { after: ['thunderhead'] },
     monsters: [
       m('currentshade', 'Current Shade', 55, 'cold', spell('Cold Undertone', 2900), 0.85, 1.1),
       fast(m('blackeel', 'Black Eel', 56, 'light', atk('Lightning Coil', 2100), 0.75, 0.95)),
@@ -935,6 +968,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'voicetrench', name: 'The Trench of Voices', act: 5, tier: 14, levelRange: [55, 57], color: '#3a3a5a', ilvlBonus: 10,
     desc: 'The sea floor falls away here, and every name the water ever took comes up out of it, one at a time.',
+    requires: { after: ['blackcurrent'] },
     monsters: [
       m('namelessone', 'The Nameless', 55, 'phys', atk('Grasping Reach', 2800), 1, 1.1),
       fast(m('whisperer', 'Whisperer', 56, 'light', spell('Word in the Dark', 2300), 0.7, 0.95)),
@@ -950,6 +984,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'lightless', name: 'The Lightless Deep', act: 5, tier: 14, levelRange: [56, 57], color: '#14181f', ilvlBonus: 10,
     desc: 'Below the storm and below the sea, where the only light is what the deep things burn.',
+    requires: { after: ['blackcurrent'] },
     monsters: [
       m('deepthing', 'Deep Thing', 56, 'phys', atk('Too Many Hands', 2900), 1.15, 1.15),
       fast(m('blindhunter', 'Blind Hunter', 56, 'light', atk('Sensing Strike', 2000), 0.75, 0.95)),
@@ -965,6 +1000,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'maelstrom', name: "The Maelstrom's Eye", act: 5, tier: 14, levelRange: [56, 57], color: '#1e2a3f', ilvlBonus: 10,
     desc: 'The middle of the Sunless Sea, where the water turns forever around a hole in the world. What drowned the coast is calling from the bottom.',
+    requires: { after: ['voicetrench', 'lightless'], bosses: 10 },
     monsters: [
       m('crewless', 'Crew of the Last Ship', 56, 'phys', atk('Hands on the Rope', 2800), 1.1, 1.15),
       fast(m('maelstromkin', 'Whirl Kin', 57, 'light', atk('Spinning Lash', 2000), 0.75, 1)),
@@ -999,6 +1035,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'kingsroad', name: "The King's Road", act: 6, tier: 15, levelRange: [57, 59], color: '#8a7a5a', ilvlBonus: 14,
     desc: 'Forty leagues of white stone, every milestone cut with the same name. The name has been scratched out, by hand, on all of them.',
+    requires: { after: ['exilesgate'] },
     monsters: [
       m('milestonewalker', 'Milestone Walker', 57, 'fire', atk('Carved Fist', 3000), 1.1, 1.05),
       fast(m('roadcrow', 'Tax Crow', 58, 'light', atk('Shocking Peck', 2100), 0.7, 0.9)),
@@ -1014,6 +1051,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'tithefields', name: 'The Tithe Fields', act: 6, tier: 15, levelRange: [58, 60], color: '#9a8a3a', ilvlBonus: 14,
     desc: 'The grain came up black the year the king reached for it. The reapers were never told to stop.',
+    requires: { after: ['kingsroad'] },
     monsters: [
       m('tithereaper', 'Tithe Reaper', 58, 'cold', atk('Frostbitten Scythe', 2800), 1, 1.1),
       fast(m('blackrook', 'Black Rook', 59, 'fire', atk('Ember Talon', 2000), 0.7, 0.9)),
@@ -1029,6 +1067,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'fortobedience', name: 'Fort Obedience', act: 6, tier: 15, levelRange: [59, 61], color: '#5a5f66', ilvlBonus: 14,
     desc: 'The garrison held its post through the end of the world, because no order came to do anything else.',
+    requires: { after: ['kingsroad'] },
     monsters: [
       m('garrisonman', 'Garrison Soldier', 59, 'phys', atk('Regulation Blade', 2800), 1.1, 1.1),
       m('wallarcher', 'Wall Archer', 60, 'light', atk('Charged Bolt', 3100), 0.85, 1.2),
@@ -1044,6 +1083,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'bannerfield', name: 'The Field of Banners', act: 6, tier: 15, levelRange: [59, 61], color: '#7a3a3a', ilvlBonus: 14,
     desc: 'The last army in the empire died here in perfect order. The banners still stand, and still turn to follow you.',
+    requires: { after: ['tithefields', 'fortobedience'] },
     monsters: [
       m('bannerman', 'Fallen Banner-Bearer', 59, 'fire', atk('Burning Standard', 2900), 1.05, 1.1),
       slow(m('siegehusk', 'Siege Husk', 60, 'cold', atk('Frozen Ram', 4100), 1.7, 1.25)),
@@ -1059,6 +1099,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'assizes', name: 'The Assizes', act: 6, tier: 15, levelRange: [60, 62], color: '#4a4a6a', ilvlBonus: 14,
     desc: 'The court that sentenced you. Your case was never closed, and the jury has been waiting.',
+    requires: { after: ['bannerfield'] },
     monsters: [
       m('bailiff', 'Bailiff', 60, 'cold', atk('Iron Summons', 2800), 1.05, 1.1),
       m('oathwitness', 'Sworn Witness', 61, 'light', spell('Damning Word', 2900), 0.85, 1.2),
@@ -1074,6 +1115,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'lowercity', name: 'The Lower City', act: 6, tier: 16, levelRange: [60, 62], color: '#6a4a3f', ilvlBonus: 14,
     desc: 'The streets fell a hundred feet and kept their shape. People still queue outside the shops.',
+    requires: { after: ['bannerfield'] },
     monsters: [
       m('queuer', 'The Patient Dead', 60, 'phys', atk('Grip of the Queue', 3000), 1.15, 1.1),
       fast(m('gutterrat', 'Gutter Rat', 61, 'fire', atk('Burning Bite', 2000), 0.7, 0.95)),
@@ -1089,6 +1131,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'dryaqueduct', name: 'The Dry Aqueducts', act: 6, tier: 16, levelRange: [60, 62], color: '#7a8a9a', ilvlBonus: 14,
     desc: 'They carried a river to the capital. The river stopped mid-air the day the sky broke, and is still up there, frozen and waiting.',
+    requires: { after: ['lowercity'] },
     monsters: [
       m('sluicekeeper', 'Sluice Keeper', 60, 'cold', atk('Iron Wheel', 2900), 1.05, 1.1),
       fast(m('frostmoth', 'Pale Moth', 61, 'cold', spell('Rime Dust', 2200), 0.7, 0.95)),
@@ -1104,6 +1147,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'kingsmint', name: "The King's Mint", act: 6, tier: 16, levelRange: [61, 63], color: '#b0903a', ilvlBonus: 14,
     desc: 'Every coin in the empire was struck here, and every coin has the same face. It has started to look back.',
+    requires: { after: ['lowercity'] },
     monsters: [
       m('coinstriker', 'Coin Striker', 61, 'phys', atk('Die Hammer', 3000), 1.1, 1.15),
       fast(m('goldbeetle', 'Gilded Beetle', 62, 'fire', atk('Hot Mandible', 2000), 0.75, 0.95)),
@@ -1119,6 +1163,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'hanginggardens', name: 'The Hanging Gardens', act: 6, tier: 16, levelRange: [61, 63], color: '#3f7a4a', ilvlBonus: 14,
     desc: 'Nobody has tended them since the fall, and they have never been better. The only green thing left in the empire, and it knows it.',
+    requires: { after: ['dryaqueduct', 'kingsmint'] },
     monsters: [
       m('thorngroom', 'Thorn Groom', 61, 'cold', atk('Frost Shears', 2800), 1, 1.1),
       fast(m('gardenwasp', 'Garden Wasp', 62, 'light', atk('Charged Sting', 1900), 0.65, 0.95)),
@@ -1134,6 +1179,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'burnedarchive', name: 'The Burned Archive', act: 6, tier: 16, levelRange: [62, 64], color: '#5a3a2a', ilvlBonus: 14,
     desc: 'The king had every record of what he meant to do put to the torch. The pages are still falling.',
+    requires: { after: ['hanginggardens'] },
     monsters: [
       m('scriptorghast', 'Scriptor', 62, 'fire', spell('Burning Margin', 2900), 0.9, 1.15),
       fast(m('pagebat', 'Page Bat', 63, 'light', atk('Paper Cut', 2000), 0.7, 1)),
@@ -1149,6 +1195,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'longfracture', name: 'The Long Fracture', act: 6, tier: 16, levelRange: [62, 64], color: '#2f3f5f', ilvlBonus: 14,
     desc: 'A crack through the world, thirty miles long and cold as the far side of it. Things climb out, and the wind goes in.',
+    requires: { after: ['hanginggardens'] },
     monsters: [
       m('riftclimber', 'Rift Climber', 62, 'cold', atk('Numb Hands', 2800), 1.05, 1.1),
       fast(m('edgeskater', 'Edge Skater', 63, 'fire', atk('Burning Edge', 2000), 0.7, 1)),
@@ -1164,6 +1211,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'driftingquarter', name: 'The Drifting Quarter', act: 6, tier: 17, levelRange: [63, 65], color: '#6f6a8f', ilvlBonus: 14,
     desc: 'The noble quarter tore free and never came down. Its houses turn slowly in the air, lit from inside, and the dinner is still being served.',
+    requires: { after: ['longfracture'] },
     monsters: [
       m('footman', 'Silent Footman', 63, 'phys', atk('Silver Tray', 2900), 1.1, 1.15),
       fast(m('skywisp', 'Sky Wisp', 64, 'light', spell('Falling Star', 2200), 0.7, 1)),
@@ -1179,6 +1227,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'kingsreach', name: "The King's Reach", act: 6, tier: 17, levelRange: [63, 65], color: '#3f3050', ilvlBonus: 14,
     desc: 'The tower he built to touch it. It leans now, and at the top the stairs go on into nothing, and something on the other side has hold of them.',
+    requires: { after: ['longfracture'] },
     monsters: [
       m('towermason', 'Tower Mason', 63, 'fire', atk('Hot Trowel', 2900), 1.1, 1.15),
       slow(m('stairgargoyle', 'Stair Gargoyle', 64, 'cold', atk('Frozen Plunge', 4000), 1.7, 1.3)),
@@ -1194,6 +1243,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'sunderedhall', name: 'The Sundered Hall', act: 6, tier: 17, levelRange: [64, 65], color: '#50404a', ilvlBonus: 14,
     desc: 'The great hall split down the middle on the last night. The court carries on in both halves, each sure that the other is dead.',
+    requires: { after: ['driftingquarter', 'kingsreach'] },
     monsters: [
       m('courtier', 'Courtier', 64, 'light', spell('Whispered Charge', 2800), 0.9, 1.2),
       m('splitguard', 'Sundered Guard', 64, 'cold', atk('Half a Halberd', 2900), 1.1, 1.15),
@@ -1209,6 +1259,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'hallofcrowns', name: 'The Hall of Crowns', act: 6, tier: 17, levelRange: [64, 65], color: '#8a7a2a', ilvlBonus: 14,
     desc: 'Every king of the line lies here with his crown on. All of the crowns are turned to face the throne, and one of the biers is empty.',
+    requires: { after: ['sunderedhall'] },
     monsters: [
       m('oldking', 'Interred King', 64, 'cold', atk('Sceptre of Ice', 2900), 1.15, 1.15),
       slow(m('tombguardian', 'Tomb Guardian', 64, 'fire', atk('Molten Mace', 4000), 1.7, 1.3)),
@@ -1224,6 +1275,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'ninthstair', name: 'The Ninth Stair', act: 6, tier: 17, levelRange: [64, 65], color: '#3a2a3a', ilvlBonus: 14,
     desc: 'Nine flights to the throne room, and the king had one guard for each. Eight of them left when they saw what he had reached for.',
+    requires: { after: ['sunderedhall'] },
     monsters: [
       m('stairknight', 'Knight of the Stair', 64, 'cold', atk('Oath Blade', 2800), 1.1, 1.2),
       m('kingshound', "King's Hound", 65, 'fire', atk('Throat of Coals', 2200), 0.8, 1.05),
@@ -1239,6 +1291,7 @@ export const ZONES: ZoneDef[] = [
   {
     id: 'shatteredthrone', name: 'The Shattered Throne', act: 6, tier: 17, levelRange: [64, 65], color: '#1f1a2a', ilvlBonus: 14,
     desc: 'The room where he reached. The roof is gone, the sky behind it is broken, and everything the empire ever was has come here to watch him do it again.',
+    requires: { after: ['ninthstair'], bosses: 14 },
     monsters: [
       m('thronewatcher', 'Watcher of the Throne', 64, 'cold', atk('Unblinking Spear', 2800), 1.15, 1.2),
       fast(m('skysliver', 'Sky Sliver', 65, 'light', atk('Falling Edge', 1900), 0.75, 1.05)),
@@ -1276,6 +1329,11 @@ export function bossesNeeded(z: ZoneDef): number {
 /** The areas the given area's boss leads to (only those whose act is open), ignoring boss-count gates. */
 export function nextZones(id: string): ZoneDef[] {
   return ZONES.filter((z) => roadsInto(z).includes(id) && actOpen(z.act));
+}
+
+/** A dead end off the roads: nothing past it needs it, except as one of the bosses an act boss counts. */
+export function isSideArea(z: ZoneDef): boolean {
+  return !z.actBoss && !ZONES.some((x) => roadsInto(x).includes(z.id));
 }
 
 /** The act boss's area for an act. */

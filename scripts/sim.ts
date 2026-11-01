@@ -481,10 +481,11 @@ function cookNight(s: GameState, ctx: Ctx): boolean {
   return recipeNight(s, ctx, actionsFor('cooking').filter((a) => a.outputs && Object.keys(a.outputs)[0].startsWith('meal_')));
 }
 
-/** Areas open to the bot: unlocked, and within a level of its minimum. */
+/** Areas open to the bot: unlocked, and within a level of its minimum. Unbeaten ones go last, so it pushes those and walks every branch. */
 function reachable(s: GameState): ZoneDef[] {
   const lvl = characterLevel(s);
-  return ZONES.filter((z) => s.unlockedZones.includes(z.id) && (z === ZONES[0] || z.levelRange[0] <= lvl + 1));
+  const open = ZONES.filter((z) => s.unlockedZones.includes(z.id) && (z === ZONES[0] || z.levelRange[0] <= lvl + 1));
+  return [...open.filter((z) => s.bossesDefeated.includes(z.id)), ...open.filter((z) => !s.bossesDefeated.includes(z.id))];
 }
 
 /** What a player's hands add: clicking martyrs, drinking flasks when they're needed, pressing a guard as a boss winds up and an interrupt as it channels. */

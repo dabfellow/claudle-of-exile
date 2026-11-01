@@ -29,6 +29,10 @@ The Hollow Pass has no Frostbite, so the first boss teaches the band and the sec
 
 **Cold:** every boss's nova and ground is cold, and cold leads physical on trash, with no fire or lightning. Each new unique carries cold resistance and feeds one class's meter.
 
+## Roads
+
+Forked on 2026-11-01. The act boss needs 8 of the 11 other bosses. From the Hollow Pass, a high road (Scree Fields, Glass Lake, Hanging Glacier) and a low road (Howling Fells, Bone Quarry, Mammoth Road, Stone Steading) meet at the King's Stair, below the Throne. Side areas: Blue Vault (off the Glass Lake), Long Hall (off the Steading). See [ACT_RECIPE.md](ACT_RECIPE.md) → Roads.
+
 ## Frostbite (`frostbite`)
 
 - A stack builds on you every 2.5 s through the boss fight, and each slows your actions by 4%. Knobs: `BOSS_FROSTBITE_*` in `zones.ts`.
