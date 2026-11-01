@@ -18,8 +18,8 @@ import { AppAccounts, isCloudAccount, type Account, type AuthProviderId } from '
 import { reportError, setErrorUser } from './platform/errors';
 import { MAPS_PREVIEW } from './engine/maps';
 import { checkAdmin } from './platform/feedback';
-import { fetchLiveEvent, setLiveEvent } from './platform/events';
-import { eventDef, type LiveEvent } from './data/events';
+import { fetchEventRows, saveEventRow } from './platform/events';
+import { activeEvents, eventBoost, type EventRow, type LiveEvent } from './data/events';
 import { getSupabase } from './platform/supabase';
 import { supabaseCharacters } from './platform/supabaseTable';
 import {
@@ -74,8 +74,9 @@ const BACKGROUND_MS = 5 * 60_000;
 
 export type Screen = 'boot' | 'title' | 'select' | 'create' | 'game';
 
-/** How often an open game checks whether an event started or ended. */
-const EVENT_CHECK_MS = 5 * 60 * 1000;
+/** How often an open game asks whether events changed, and how often it checks the clock against their schedules. */
+const EVENT_FETCH_MS = 5 * 60 * 1000;
+const EVENT_CHECK_MS = 30 * 1000;
 /** XP per hour readouts update this often. */
 const XP_RATE_HOLD_MS = 2000;
 
@@ -123,8 +124,10 @@ class GameStore {
   /** a failing save is reported once per session, not on every autosave */
   private saveErrorReported = false;
   private loop: ReturnType<typeof setInterval> | null = null;
-  /** the limited-time event running right now, set from the Admin page */
-  liveEvent: LiveEvent | null = null;
+  /** every event's switch and schedule, set from the Admin page */
+  eventRows: EventRow[] = [];
+  /** the limited-time events running right now */
+  liveEvents: LiveEvent[] = [];
   private baseCtx: Ctx;
   readonly ctx: Ctx;
 
@@ -134,24 +137,32 @@ class GameStore {
     this.ctx = withTutorial(this.baseCtx, () => this.state);
     window.addEventListener('beforeunload', () => this.save());
     window.addEventListener('storage', (e) => this.onOtherTab(e));
-    void this.refreshEvent();
-    setInterval(() => void this.refreshEvent(), EVENT_CHECK_MS);
+    void this.refreshEvents();
+    setInterval(() => void this.refreshEvents(), EVENT_FETCH_MS);
+    // a scheduled event starts and ends on time between fetches
+    setInterval(() => this.applyEvents(), EVENT_CHECK_MS);
   }
 
-  private applyEvent(id: string | null) {
-    this.liveEvent = eventDef(id);
-    this.baseCtx.event = this.liveEvent;
-    this.notify();
+  private applyEvents() {
+    const live = activeEvents(this.eventRows, Date.now());
+    const changed = live.length !== this.liveEvents.length || live.some((e, i) => e !== this.liveEvents[i]);
+    this.liveEvents = live;
+    this.baseCtx.event = eventBoost(live);
+    if (changed) this.notify();
   }
 
-  async refreshEvent() {
-    this.applyEvent(await fetchLiveEvent());
+  /** A failed read keeps what we knew, so a dropped connection doesn't end an event. */
+  async refreshEvents() {
+    this.eventRows = (await fetchEventRows()) ?? this.eventRows;
+    this.applyEvents();
   }
 
   /** Admins only: the database refuses anyone else. */
-  async switchEvent(id: string | null) {
-    await setLiveEvent(id);
-    this.applyEvent(id);
+  async saveEvent(row: EventRow) {
+    await saveEventRow(row);
+    this.eventRows = [...this.eventRows.filter((r) => r.id !== row.id), row];
+    this.applyEvents();
+    this.notify();
   }
 
   // ---------- account & characters ----------
@@ -426,7 +437,7 @@ class GameStore {
     this.begin(s);
     const away = Date.now() - s.lastSaved;
     if (away >= MIN_OFFLINE_MS) {
-      await this.refreshEvent();
+      await this.refreshEvents();
       this.runOffline(away);
     }
   }

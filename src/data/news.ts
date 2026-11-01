@@ -8,10 +8,16 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
-    version: '0.2.13',
+    version: '0.2.14',
     date: '31 Oct 2026',
     title: 'Gather by hand',
     items: ['Mining, Woodcutting and Foraging now have mini-games. Play them to build Focus and gather up to 30% faster, or leave them running at the normal rate.'],
+  },
+  {
+    version: '0.2.13',
+    date: '31 Oct 2026',
+    title: 'Holiday events',
+    items: ['Big holidays and Double XP weekends can now run on a schedule. Look for the banner in game.'],
   },
   {
     version: '0.2.12',

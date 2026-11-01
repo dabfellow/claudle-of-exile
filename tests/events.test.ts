@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eventDef, type LiveEvent } from '../src/data/events';
+import { activeEvents, eventBoost, eventDef, type EventBoost, type EventRow } from '../src/data/events';
 import { zoneDef } from '../src/data/zones';
 import { makeMonster } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
@@ -12,7 +12,7 @@ import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 
 const halloween = eventDef('halloween');
-const ctx = (event: LiveEvent | null) => ({ ...makeCtx(seeded(3)), event });
+const ctx = (event: EventBoost | null) => ({ ...makeCtx(seeded(3)), event });
 const player = () => newGame(1, { name: 'T', classId: 'warrior' });
 
 describe('limited-time events', () => {
@@ -28,7 +28,7 @@ describe('limited-time events', () => {
 
   it("rolls a monster's drops twice, and only while it runs", () => {
     const z = zoneDef('mudflats');
-    const gold = (event: LiveEvent | null) => {
+    const gold = (event: EventBoost | null) => {
       const s = player();
       s.bank.gold = 0;
       const c = ctx(event);
@@ -44,8 +44,37 @@ describe('limited-time events', () => {
     expect(serialize(s)).not.toContain('halloween');
   });
 
+  const row = (patch: Partial<EventRow>): EventRow => ({ id: 'christmas', enabled: false, starts_at: null, ends_at: null, ...patch });
+  const at = (iso: string) => Date.parse(iso);
+
+  it('runs by hand until turned off', () => {
+    expect(activeEvents([row({ enabled: true })], 0).map((e) => e.id)).toEqual(['christmas']);
+    expect(activeEvents([row({})], 0)).toEqual([]);
+  });
+
+  it('starts and ends on its schedule', () => {
+    const rows = [row({ starts_at: '2026-12-24T00:00:00Z', ends_at: '2026-12-26T00:00:00Z' })];
+    expect(activeEvents(rows, at('2026-12-23T23:59:59Z'))).toEqual([]);
+    expect(activeEvents(rows, at('2026-12-24T00:00:00Z'))).toHaveLength(1);
+    expect(activeEvents(rows, at('2026-12-26T00:00:00Z'))).toEqual([]);
+  });
+
+  it('a schedule with no end runs until it is cleared', () => {
+    expect(activeEvents([row({ starts_at: '2026-12-24T00:00:00Z' })], at('2030-01-01T00:00:00Z'))).toHaveLength(1);
+  });
+
+  it('Double XP leaves drops alone', () => {
+    expect(eventBoost([eventDef('double_xp')!])).toEqual({ xp: 2, loot: 1 });
+  });
+
+  it('events running together use the best of each bonus without stacking', () => {
+    expect(eventBoost([eventDef('double_xp')!, eventDef('christmas')!])).toEqual({ xp: 2, loot: 2 });
+    expect(eventBoost([])).toBeNull();
+  });
+
   it('an unknown event id means no event', () => {
     expect(eventDef('retired_event')).toBeNull();
     expect(eventDef(null)).toBeNull();
+    expect(activeEvents([row({ id: 'retired_event', enabled: true })], 0)).toEqual([]);
   });
 });

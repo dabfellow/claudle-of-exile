@@ -3081,6 +3081,14 @@ input[type='checkbox'] {
 .sync.saving { color: var(--accent-2); border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
 .sync.offline { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
 
+.admin-event {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
 .guest-banner {
   display: flex;
   align-items: center;

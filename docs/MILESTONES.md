@@ -11,7 +11,7 @@ Last updated 2026-10-31.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.12 (deployed 2026-10-31). The real-account
+**Where we are:** Milestones 1, 2, 3, Act 2, music, and Act 3 with ascendancies and Rune-carving are live as 0.2.14 (deployed 2026-10-31). The real-account
 test and player heads-up were skipped, so do both now. Act 2 pacing, Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -387,7 +387,8 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
-- [x] Skilling mini-games for Mining, Woodcutting and Foraging: playing builds Focus for up to 30% more speed; idle and offline unchanged. 0.2.13, not deployed — done 2026-10-31
+- [x] Skilling mini-games for Mining, Woodcutting and Foraging: playing builds Focus for up to 30% more speed; idle and offline unchanged. 0.2.14 — done 2026-10-31
+- [x] Event schedules: holidays plus a Double XP event in `src/data/events.ts`; Admin → Events runs each by hand or between two times, and overlapping events use the best bonus of each kind. Replaces `live_event` with `live_events`: run the SQL in [SETUP.md](ops/SETUP.md). 0.2.13 — done 2026-10-31
 - [x] XP per hour readouts update every 2 seconds, still measured over the last 10 minutes. 0.2.12 — done 2026-10-31
 - [x] Limited-time events: Admin → Events turns Halloween (2x XP including gems, every monster's drops rolled twice) on or off with no deploy; needs the `live_event` SQL in [SETUP.md](ops/SETUP.md) run once. 0.2.12 — done 2026-10-31
 - [x] DPS meter shows a 2 second average, held until the next one, instead of a live 10 second figure; The Block's execute now counts. 0.2.11 — done 2026-10-31

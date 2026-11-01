@@ -234,17 +234,19 @@ Reload the game: **Admin** shows up under Settings in the sidebar. Add a friend 
 
 ### Limited-time events
 
-The Admin page's Events tab turns events like Halloween on and off for everyone, with no deploy. It needs this table once (SQL Editor → New query → paste → Run). New events are added in `src/data/events.ts`.
+The Admin page's Events tab runs holidays and Double XP for everyone, by hand or on a schedule, with no deploy. It needs this table once (SQL Editor → New query → paste → Run). New events are added in `src/data/events.ts`.
 
 ```sql
-create table public.live_event (
-  id int primary key default 1 check (id = 1),
-  event_id text
+create table public.live_events (
+  id text primary key,
+  enabled boolean not null default false,
+  starts_at timestamptz,
+  ends_at timestamptz
 );
-insert into public.live_event (id, event_id) values (1, null);
-alter table public.live_event enable row level security;
-create policy "anyone reads the live event" on public.live_event for select using (true);
-create policy "admins change the live event" on public.live_event for update using (public.is_admin());
+alter table public.live_events enable row level security;
+create policy "anyone reads live events" on public.live_events for select using (true);
+create policy "admins add live events" on public.live_events for insert with check (public.is_admin());
+create policy "admins change live events" on public.live_events for update using (public.is_admin());
 ```
 
 ### 3. Sentry (crash reports)
