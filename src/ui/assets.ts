@@ -578,6 +578,7 @@ export const GAME_ICONS: Record<string, string> = {
   woodcutting: new URL('../assets/icons/skills/woodcutting.svg', import.meta.url).href,
   harvesting: new URL('../assets/icons/skills/harvesting.svg', import.meta.url).href,
   thieving: new URL('../assets/icons/skills/thieving.svg', import.meta.url).href,
+  archaeology: new URL('../assets/icons/skills/digging.png', import.meta.url).href,
   smithing: new URL('../assets/icons/skills/smithing.svg', import.meta.url).href,
   alchemy: new URL('../assets/icons/skills/alchemy.svg', import.meta.url).href,
   gemcutting: new URL('../assets/icons/skills/gemcutting.svg', import.meta.url).href,

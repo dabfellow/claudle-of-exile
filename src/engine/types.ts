@@ -1,10 +1,11 @@
 import type { AscendancyId } from '../data/ascendancies';
 import type { ClassId } from '../data/classes';
+import type { CultureId } from '../data/expedition';
 import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
 
-export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'smithing' | 'alchemy' | 'gemcutting' | 'runecarving' | 'fishing';
-export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'fishing'];
+export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'archaeology' | 'smithing' | 'alchemy' | 'gemcutting' | 'runecarving' | 'fishing';
+export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'fishing'];
 
 export type Rarity = 'normal' | 'magic' | 'rare' | 'unique';
 
@@ -571,6 +572,17 @@ export interface MapState {
   tally: { runs: number; clearMs: number; mapsFound: number; favoured: number };
 }
 
+/** Archaeology's Expedition (engine/expedition.ts). A dig is a plain skill action: this is what outlasts it. */
+export interface ExpeditionState {
+  /** digs done at each site: its stratum and finds are worked out from this */
+  dug: Record<string, number>;
+  /** purchases gone from a shelf as of the clock time `at`; a ware with no entry has a full shelf */
+  shelves: Record<string, { sold: number; at: number }>;
+  /** one standing order per people, as a ware id */
+  orders: Partial<Record<CultureId, string>>;
+  tally: { finds: number; traded: number };
+}
+
 /** Thieving's Heist board (engine/heist.ts). The job under way lives on `action`, so anything else you start ends it. */
 export interface HeistState {
   /** rank of every rogue hired */
@@ -640,6 +652,7 @@ export interface GameState {
   /** the Maps preview (engine/maps.ts) */
   maps: MapState;
   heist: HeistState;
+  expedition: ExpeditionState;
   skillBar: (SkillGemInstance | null)[];
   /** skill gems not on the bar */
   gems: SkillGemInstance[];

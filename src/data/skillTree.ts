@@ -35,6 +35,10 @@ export type SkillTreeStat =
   | 'markerChance'
   | 'alertReduce'
   | 'cleanGetaway'
+  | 'archaeologySpeed'
+  | 'artifactChance'
+  | 'wareDiscount'
+  | 'deepSurvey'
   | 'runecarvingSpeed'
   | 'secondStroke'
   | 'deepCuts'
@@ -141,6 +145,16 @@ const BRANCHES: BranchSpec[] = [
       { name: 'Deep Cuts', stats: { deepCuts: 10 }, desc: 'Runes on your gear are 10% stronger' },
     ],
     keystone: { name: 'Living Script', stats: { livingScript: 1 }, desc: 'Resonance between your runes is doubled. Rune-carving is 25% slower' },
+  },
+  {
+    skill: 'archaeology',
+    angle: -60,
+    small: { name: 'Trowelwork', stats: { archaeologySpeed: 5 }, desc: '5% faster Archaeology' },
+    notables: [
+      { name: 'Keen Eye', stats: { artifactChance: 25 }, desc: '25% more Artifacts from every dig' },
+      { name: 'Silver Tongue', stats: { wareDiscount: 15 }, desc: "Merchants' prices are 15% lower" },
+    ],
+    keystone: { name: 'Deep Survey', stats: { deepSurvey: 1 }, desc: "Every dig counts twice towards a site's next find. Archaeology is 25% slower" },
   },
   {
     skill: 'alchemy',

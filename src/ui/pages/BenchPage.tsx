@@ -3,13 +3,14 @@ import { stashedItems } from '../../engine/storage';
 import { affixDef } from '../../data/affixes';
 import { ACHIEVEMENT_BY_ID } from '../../data/achievements';
 import { ESSENCES, FOSSILS, fossilDef, SEAL, WAX } from '../../data/craftMats';
+import { WHETSTONE } from '../../data/expedition';
 import { runeDef, RUNES } from '../../data/runes';
 import { BENCH_CRAFTS } from '../../data/hideout';
 import { achievementProgress } from '../../engine/achievements';
 import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { currencyDef } from '../../data/materials';
 import { equipFlask, unequipFlask } from '../../engine/combat';
-import { applyEssence, applyOrb, BENCH_UNBUILT, benchBuilt, benchCraft, benchCraftReason, essenceReason, findItem, FOSSIL_ORBS, impressionReason, orbReason, restoreImpression, restoreReason, salvage, SEAL_ORBS, takeImpression } from '../../engine/crafting';
+import { applyEssence, applyOrb, applyWhetstone, BENCH_UNBUILT, benchBuilt, benchCraft, benchCraftReason, essenceReason, findItem, FOSSIL_ORBS, impressionReason, orbReason, restoreImpression, restoreReason, salvage, SEAL_ORBS, takeImpression, whetstoneReason } from '../../engine/crafting';
 import { applyFlaskOrb, enchantFlask, findFlask, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
 import { stationLevel } from '../../engine/hideout';
 import { affixRangeText, allMods, describeMod, itemName, salvageValue } from '../../engine/items';
@@ -141,6 +142,15 @@ export function BenchPage() {
     }
   };
 
+  const hone = (affixId: string) => {
+    if (!item) return;
+    const err = game.act((st, ctx) => applyWhetstone(st, ctx, item.uid, affixId));
+    if (!err) {
+      setFlash((n) => n + 1);
+      setHistory((h) => [{ id: Date.now() + Math.random(), text: 'Ancient Whetstone', name: itemName(item), rarity: item.rarity }, ...h].slice(0, 12));
+    }
+  };
+
   const essence = (id: string) => {
     if (!item) return;
     const err = game.act((st, ctx) => applyEssence(st, ctx, id, item.uid));
@@ -174,6 +184,7 @@ export function BenchPage() {
   const seals = s.bank[SEAL] ?? 0;
   const waxes = s.bank[WAX] ?? 0;
   const contraband = seals > 0 || waxes > 0 || !!item?.impression;
+  const whetstones = s.bank[WHETSTONE] ?? 0;
 
   return (
     <div className="page bench-page">
@@ -344,7 +355,7 @@ export function BenchPage() {
 
               <CraftUntilCard s={s} item={item} />
 
-              {(fossils.length > 0 || essences.length > 0 || runes.length > 0 || contraband) && (
+              {(fossils.length > 0 || essences.length > 0 || runes.length > 0 || contraband || whetstones > 0) && (
                 <div className="card">
                   <div className="card-title">Special crafting</div>
                   {runes.length > 0 && (
@@ -359,6 +370,25 @@ export function BenchPage() {
                             </button>
                           );
                         })}
+                      </div>
+                    </>
+                  )}
+                  {whetstones > 0 && (
+                    <>
+                      <div className="section-label">Ancient Whetstone ×{whetstones} · raise one modifier a tier, as far as the item level allows. Its values reroll within the new tier</div>
+                      <div className="fossil-chips" style={{ marginTop: 0, marginBottom: 10 }}>
+                        {item && allMods(item).length ? (
+                          allMods(item).map((m) => {
+                            const reason = whetstoneReason(s, item.uid, m.affixId);
+                            return (
+                              <button key={m.affixId} className="btn sm" disabled={!!reason} title={reason ?? 'Uses one Ancient Whetstone'} onClick={() => hone(m.affixId)}>
+                                <MatIcon id={WHETSTONE} size={12} /> {describeMod(m)}
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <span className="dim small">{item ? 'This item has no modifiers.' : 'Select an item.'}</span>
+                        )}
                       </div>
                     </>
                   )}

@@ -12,6 +12,7 @@ import type { Ctx } from './context';
 import { benchBuilt } from './crafting';
 import { newFlask, rerollMagic, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
+import { digDone } from './expedition';
 import { markerBoost } from './heist';
 import { focusMult, focusStep } from './minigame';
 import { bagFull, dropItem } from './storage';
@@ -43,6 +44,7 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
   if (skill === 'smithing' && t.grandmaster) return 1.25;
   if (skill === 'alchemy' && t.transmuter) return 1.2;
   if (skill === 'runecarving' && t.livingScript) return 1.25;
+  if (skill === 'archaeology' && t.deepSurvey) return 1.25;
   return 1;
 }
 
@@ -249,6 +251,8 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
     give(s, outputs, upgrade && t.distiller && chance(ctx.rng, t.distiller / 100) ? upgrade : b.id, b.qty);
   }
   if (a.skill === 'woodcutting' && t.birdsNest && chance(ctx.rng, t.birdsNest / 100)) give(s, outputs, pick(ctx.rng, HERB_TIERS.slice(0, 2)), 1);
+
+  if (a.skill === 'archaeology') digDone(s, ctx, a, outputs);
 
   if (a.baseId) smithBase(s, ctx, a, t);
   if (a.flaskId) {

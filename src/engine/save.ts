@@ -8,6 +8,7 @@ import { hasAction } from '../data/skills';
 import { ZONES } from '../data/zones';
 import { trimFlaskStash } from './flasks';
 import { settleGems } from './gems';
+import { newExpeditionState, settleExpedition } from './expedition';
 import { newHeistState, settleHeist } from './heist';
 import { settleMaps } from './maps';
 import { connectedWithout } from './passives';
@@ -246,6 +247,11 @@ const MIGRATIONS: Record<number, Migration> = {
     const skills = raw.skills as Record<string, number> | undefined;
     if (skills?.combat) skills.combat = charXpFromOldCurve(skills.combat);
   },
+  25: (raw) => {
+    // Archaeology and Expedition arrived: everyone starts at level 1 with nothing dug, and the sites wait for Act 4
+    (raw.skills as Record<string, number>).archaeology ??= 0;
+    raw.expedition ??= newExpeditionState();
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
@@ -282,6 +288,7 @@ export function deserialize(json: string): GameState {
   trimFlaskStash(s);
   settleMaps(s);
   settleHeist(s);
+  settleExpedition(s);
   dropRemovedActions(s);
   return s;
 }

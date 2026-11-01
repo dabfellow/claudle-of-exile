@@ -83,6 +83,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
       { page: 'woodcutting', label: 'Woodcutting', icon: 'woodcutting', skill: 'woodcutting' },
       { page: 'harvesting', label: 'Foraging', icon: 'harvesting', skill: 'harvesting' },
       { page: 'thieving', label: 'Thieving', icon: 'thieving', skill: 'thieving' },
+      { page: 'archaeology', label: 'Archaeology', icon: 'archaeology', skill: 'archaeology' },
       { page: 'fishing', label: 'Fishing', icon: 'fishing', skill: 'fishing' },
     ],
   },
@@ -620,6 +621,18 @@ export function OfflineModal() {
               <b>Heists Run</b>
             </div>
             <p>{sum.heists} job{sum.heists === 1 ? '' : 's'} done{sum.heistAlarms ? `, ${sum.heistAlarms} of them cut short by an alarm` : ', every one clean'}.</p>
+          </div>
+        )}
+        {(sum.finds > 0 || sum.traded > 0) && (
+          <div className="away-alert">
+            <div className="row">
+              <GameIcon name="archaeology" size={16} />
+              <b>Expedition</b>
+            </div>
+            <p>
+              {sum.finds > 0 && `${sum.finds} new find${sum.finds === 1 ? '' : 's'} in the Logbook. `}
+              {sum.traded > 0 && `${sum.traded} purchase${sum.traded === 1 ? '' : 's'} on standing orders.`}
+            </p>
           </div>
         )}
         {sum.crafted && (
