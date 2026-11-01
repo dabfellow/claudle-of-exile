@@ -8,12 +8,21 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
-    version: '0.2.18',
+    version: '0.2.19',
     date: '31 Oct 2026',
     title: 'A tidier sidebar',
     items: [
       'The sidebar is sorted into Adventure, Character, Gathering, Crafting and Progress, so pages are easier to find.',
       'The Crafting Bench now sits with Smithing, Alchemy and the other crafts.',
+    ],
+  },
+  {
+    version: '0.2.18',
+    date: '31 Oct 2026',
+    title: 'Mini-games for every skill',
+    items: [
+      'Thieving, Smithing, Alchemy, Gemcutting and Rune-carving now have mini-games of their own, so all your skills can build Focus.',
+      'The Thieving game works during Heists too: Focus speeds up the rooms, and it carries over when a job repeats.',
     ],
   },
   {

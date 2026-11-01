@@ -10,7 +10,7 @@ import { ruleMet, startCraftUntil } from '../src/engine/craftUntil';
 import { equip } from '../src/engine/equipment';
 import { sellItems } from '../src/engine/hideout';
 import { allMods, createItem, rerollMods, spawnWeight } from '../src/engine/items';
-import { chargeResult, focusMult, focusOf, hasMinigame, MAX_FOCUS_SPEED, minigameSwing, overflowOf } from '../src/engine/minigame';
+import { chargeResult, focusMult, focusOf, hasMinigame, MAX_FOCUS_SPEED, minigameSwing, overflowOf, strikeResult } from '../src/engine/minigame';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -114,14 +114,27 @@ describe('skilling mini-games', () => {
   });
 
   it('only feeds gathering skills that have a game', () => {
-    expect(['mining', 'woodcutting', 'harvesting'].every((x) => hasMinigame(x as SkillId))).toBe(true);
-    expect(hasMinigame('smithing')).toBe(false);
-    expect(hasMinigame('thieving')).toBe(false);
+    for (const skill of ['mining', 'woodcutting', 'harvesting', 'thieving', 'smithing', 'alchemy', 'gemcutting', 'runecarving'] as SkillId[]) {
+      expect(hasMinigame(skill)).toBe(true);
+      const s = player();
+      s.action = { kind: 'skill', actionId: actionsFor(skill)[0].id, progress: 0 };
+      minigameSwing(s, 'hit');
+      expect(focusOf(s)).toBeGreaterThan(0);
+    }
+    expect(hasMinigame('fishing')).toBe(false);
     const s = player();
-    s.action = { kind: 'skill', actionId: actionsFor('thieving')[0].id, progress: 0 };
+    s.action = { kind: 'skill', actionId: actionsFor('fishing')[0].id, progress: 0 };
     minigameSwing(s, 'hit');
     expect(s.action.focus).toBeUndefined();
     expect(focusMult(s)).toBe(1);
+  });
+
+  it('scores a strike by how close it is to the beat', () => {
+    expect(strikeResult(0)).toBe('hit');
+    expect(strikeResult(-100)).toBe('hit');
+    expect(strikeResult(200)).toBe('weak');
+    expect(strikeResult(-200)).toBe('weak');
+    expect(strikeResult(400)).toBe('miss');
   });
 
   it('scores a released swing by where it landed', () => {

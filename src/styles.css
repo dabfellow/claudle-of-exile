@@ -1539,6 +1539,187 @@ h3 {
   }
 }
 
+.mini-lock {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-2);
+  height: 72px;
+  padding: var(--s-2);
+  touch-action: manipulation;
+  user-select: none;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius, 6px);
+}
+
+.mini-pin {
+  padding: 0;
+  cursor: default;
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: 4px 4px 12px 12px;
+  transition: background 90ms;
+}
+
+.mini-lock.picking .mini-pin {
+  cursor: pointer;
+  border-color: var(--accent);
+}
+
+.mini-pin.lit {
+  background: var(--accent);
+}
+
+.mini-pin.set {
+  background: var(--success-soft);
+  border-color: var(--success);
+}
+
+.mini-anvil {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 120px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius, 6px);
+}
+
+.mini-ring,
+.mini-strike {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+}
+
+.mini-ring {
+  border: 2px solid var(--accent);
+}
+
+.mini-strike {
+  background: var(--success-soft);
+  border: 2px solid var(--success);
+}
+
+.mini-heat {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: 120px;
+  padding: 8px 0 12px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius, 6px);
+}
+
+.mini-tube {
+  position: relative;
+  width: 44px;
+  height: 100%;
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+}
+
+.mini-tube-band {
+  position: absolute;
+  inset-inline: 0;
+  background: var(--success-soft);
+  border-block: 2px solid var(--success);
+}
+
+.mini-needle {
+  position: absolute;
+  inset-inline: -8px;
+  height: 3px;
+  margin-bottom: -1px;
+  background: var(--accent);
+}
+
+.mini-steady {
+  position: absolute;
+  inset: auto auto 3px 8px;
+  width: 0;
+  max-width: calc(100% - 16px);
+  height: 4px;
+  background: var(--success);
+}
+
+.mini-stone {
+  position: relative;
+  height: 120px;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius, 6px);
+}
+
+.mini-facet {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--bg-2);
+  background: var(--accent);
+  border: 0;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.mini-facet.cut {
+  cursor: default;
+  color: transparent;
+  background: var(--success-soft);
+}
+
+.mini-rune {
+  display: block;
+  width: 100%;
+  height: 120px;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius, 6px);
+}
+
+.mini-rune polyline {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mini-rune-line {
+  stroke: var(--line-2);
+  stroke-width: 12;
+}
+
+.mini-rune-cut {
+  stroke: var(--accent);
+  stroke-width: 6;
+}
+
+.mini-rune-start {
+  stroke: var(--success);
+  stroke-width: 20;
+}
+
 .minigame-foot {
   gap: var(--s-2);
   align-items: center;

@@ -6,6 +6,7 @@ import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { createItem, droppableBases } from './items';
 import { placeItem } from './loot';
+import { focusMult, focusStep } from './minigame';
 import { chance, pick } from './rng';
 import { actionBlocker, grantXp, skillLevel, smithIlvlCap } from './skills';
 import { skillTreeStats } from './skillTree';
@@ -135,14 +136,14 @@ export function bestMark(s: GameState): SkillAction | undefined {
 
 // ---------- running a job ----------
 
-function beginJob(s: GameState, job: HeistJob): void {
+function beginJob(s: GameState, job: HeistJob, focus?: number): void {
   payCost(s, { [MARKER]: jobCost(s, job) });
-  s.action = { kind: 'heist', jobId: job.id, room: 1, lastRoom: jobExit(s, job), progress: 0, take: {} };
+  s.action = { kind: 'heist', jobId: job.id, room: 1, lastRoom: jobExit(s, job), progress: 0, take: {}, focus };
 }
 
-function goCasing(s: GameState): boolean {
+function goCasing(s: GameState, focus?: number): boolean {
   const mark = bestMark(s);
-  if (mark) s.action = { kind: 'skill', actionId: mark.id, progress: 0 };
+  if (mark) s.action = { kind: 'skill', actionId: mark.id, progress: 0, focus };
   return !!mark;
 }
 
@@ -200,11 +201,12 @@ function endJob(s: GameState, ctx: Ctx, job: HeistJob, take: Record<string, numb
   payOut(s, ctx, job, take, alarm ? alarmKeeps(s) : 1);
   // an alarm is a bad night, not a stop: the tone stays plain so it never reads as work halted
   ctx.emit({ t: 'info', text: alarm ? `${job.name}: the alarm went up. You got out with part of the take` : `${job.name}: clean getaway`, ...(alarm ? {} : { tone: 'good' as const }) });
+  const focus = s.action?.kind === 'heist' ? s.action.focus : undefined;
   s.action = null;
   const next = s.heist.auto;
   if (!next) return;
-  if ((s.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job);
-  else if (!goCasing(s)) s.heist.auto = null;
+  if ((s.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job, focus);
+  else if (!goCasing(s, focus)) s.heist.auto = null;
 }
 
 /** One room down: XP either way, and either the alarm or the room's loot. */
@@ -229,7 +231,9 @@ export function heistStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
   const job = heistJob(s.action.jobId);
   const interval = roomMs(s, job, d);
   // Overtime: the same offline speed as any other skilling
-  s.action.progress += dt * (ctx.offline ? 1 + (skillTreeStats(s).offlineSpeed ?? 0) / 100 : 1);
+  const offlineBoost = ctx.offline ? 1 + (skillTreeStats(s).offlineSpeed ?? 0) / 100 : 1;
+  focusStep(s, ctx, dt);
+  s.action.progress += dt * offlineBoost * focusMult(s);
   if (s.action.progress < interval) return;
   s.action.progress -= interval;
   finishRoom(s, ctx, job, d);
@@ -245,7 +249,7 @@ export function heistAutoStep(s: GameState): void {
     return;
   }
   const job = heistJob(id);
-  if ((s.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job);
+  if ((s.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job, s.action?.kind === 'skill' ? s.action.focus : undefined);
 }
 
 /** A save on a job or rogue that has since been removed stops instead of crashing the load. */
