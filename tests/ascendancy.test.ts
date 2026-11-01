@@ -422,16 +422,32 @@ describe.each([false, true])('gates (offline: %s)', (offline) => {
     expect(c.mech).toBe(max);
   });
 
-  it('Wellspring: old Wildcasters move over with their points back', () => {
+  it('Every Mage who had picked chooses again, with their points back', () => {
     const { s } = arena('wellspring', { offline });
     const raw = JSON.parse(serialize(s));
     raw.version = 29;
     raw.ascendancy.id = 'wildcaster';
     raw.ascendancy.nodes = ['wildcaster_ragged_edge_1', 'wildcaster_burnout'];
+    const wildcaster = deserialize(JSON.stringify(raw));
+    expect(wildcaster.ascendancy.id).toBeNull();
+    expect(wildcaster.ascendancy.nodes).toEqual([]);
+    expect(ascendancyPointsLeft(wildcaster)).toBe(ASCENDANCY_MAX_POINTS);
+    expect(choiceWaiting(wildcaster)).toBe(true);
+
+    raw.version = 30;
+    raw.ascendancy.id = 'alchemist';
+    raw.ascendancy.nodes = ['alchemist_tonic_1'];
+    expect(deserialize(JSON.stringify(raw)).ascendancy.id).toBeNull();
+  });
+
+  it('A reset leaves other classes as they were', () => {
+    const { s } = arena('ravager', { offline });
+    s.ascendancy.nodes = ['ravager_red_haze_1'];
+    const raw = JSON.parse(serialize(s));
+    raw.version = 30;
     const loaded = deserialize(JSON.stringify(raw));
-    expect(loaded.ascendancy.id).toBe('wellspring');
-    expect(loaded.ascendancy.nodes).toEqual([]);
-    expect(ascendancyPointsLeft(loaded)).toBe(ASCENDANCY_MAX_POINTS);
+    expect(loaded.ascendancy.id).toBe('ravager');
+    expect(loaded.ascendancy.nodes).toEqual(['ravager_red_haze_1']);
   });
 
   it('Alchemist: flask charges count as mana, and a drink bursts on your target', () => {

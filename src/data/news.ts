@@ -8,6 +8,15 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.2.42',
+    date: '1 Nov 2026',
+    title: 'Mages choose again',
+    items: [
+      'Now that the Wellspring is here, every Mage who had picked an ascendancy gets to pick again, for free.',
+      'Your ascendancy tree is cleared and all your points come back to spend.',
+    ],
+  },
+  {
     version: '0.2.41',
     date: '1 Nov 2026',
     title: 'The Wellspring',

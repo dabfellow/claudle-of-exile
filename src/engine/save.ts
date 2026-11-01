@@ -284,6 +284,18 @@ const MIGRATIONS: Record<number, Migration> = {
     }
     if (s.combat) s.combat.asc = newAscendancyRuntime();
   },
+  30: (raw) => {
+    // the Mage's choice changed: every Mage who picked gets to pick again, with their points to spend
+    const s = raw as unknown as Pick<GameState, 'ascendancy' | 'character' | 'combat'>;
+    if (s.character.classId !== 'mage' || !s.ascendancy?.id) return;
+    s.ascendancy.id = null;
+    s.ascendancy.nodes = [];
+    s.ascendancy.carry = 0;
+    if (s.combat) {
+      s.combat.mech = 0;
+      s.combat.asc = newAscendancyRuntime();
+    }
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

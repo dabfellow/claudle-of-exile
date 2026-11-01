@@ -220,7 +220,7 @@ Calls made while building:
   speeds it up, and no notable gives mana on kill, by your call. The gate's 2 regen is there because regen otherwise comes
   only from gear and passives, so a bare character would never Surge. A Surge waits for a spell that deals damage, not a
   ward or a summon, and Overflow lasts between packs but empties on a new zone. Riptide's echo also covers arcs, beams and
-  whole-field spells, whose area can't grow. Wildcasters moved over in save 30 with their points back.
+  whole-field spells, whose area can't grow. Save 31 resets every Mage who had picked, Alchemists included, to choose again for free with their points back with their points back.
 - **Alchemist:** one charge counts as 3 Mana, so a full belt weighs about as much as a mid-game mana pool. A burst is 12
   fire damage per character level, before Flask Effect.
 - **Matador:** a Riposte that misses doesn't add to the streak. Each one adds 15% more damage.
