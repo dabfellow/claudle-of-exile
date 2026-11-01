@@ -97,7 +97,7 @@ const CHECKPOINTS: [string, number][] = [['day 1', 1], ['week 1', 7], ['month 1'
 const TRIAL_ZONES = ['brinecaves', 'blackreed', 'shipgrave', 'sanctum', 'cinderroad', 'kurgans', 'pyretemple', 'burningthrone', 'inquisition', 'highaltar', 'howlingfells', 'giantsthrone'];
 
 /** the bot answers Frostbite at this many stacks, by rule or by hand */
-const BOT_FROSTBITE_AT = 6;
+const BOT_FROSTBITE_AT = 5;
 
 const fmt = (ms: number | undefined) => {
   if (ms === undefined || !Number.isFinite(ms)) return '—';

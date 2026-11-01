@@ -812,7 +812,7 @@ export const BOSS_SCORCH_MS = 6000;
 export const BOSS_MARTYR_AT = [1, 0.5];
 export const BOSS_MARTYR_COUNT = 2;
 /** frostbite: one stack this often, and each slows your actions; at the cap you freeze solid, take the shatter and lose your turns */
-export const BOSS_FROSTBITE_EVERY_MS = 2000;
+export const BOSS_FROSTBITE_EVERY_MS = 2500;
 export const BOSS_FROSTBITE_SLOW_PCT = 4;
 export const BOSS_FROSTBITE_MAX = 10;
 export const BOSS_FROSTBITE_FREEZE_MS = 3000;
@@ -834,5 +834,5 @@ export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> 
   ward: { name: 'Ward', tip: 'At 66% and 33% life it raises a barrier. Break it within 8 s or the boss heals 10%.' },
   martyrs: { name: 'Martyrs', tip: "It can't be hurt while the martyrs chained to it live, and it chains two more at half life. Only a blow aimed at a martyr lands: click one, or set a skill's rule to aim at martyrs (Aim rules, War Table)." },
   scorch: { name: 'Scorched earth', tip: 'Every 11 s it sets the ground under you ablaze (or frozen, or charged) for 6 s. Resist its element, Run to step out sooner, or put a guard on a Ground rule to step out at once.' },
-  frostbite: { name: 'Frostbite', tip: "A stack builds on you every 2 s, twice as fast on Frozen ground, and each slows you by 4%. At 10 you freeze solid for 3 s and take a cold shatter. A guard or movement skill shakes off 5, and a flask clears them all. Set one to the Frostbite rule (Vitals rules, War Table), or Instill a flask, so it fires at a stack count." },
+  frostbite: { name: 'Frostbite', tip: "A stack builds on you every 2.5 s, twice as fast on Frozen ground, and each slows you by 4%. At 10 you freeze solid for 3 s and take a cold shatter. A guard or movement skill shakes off 5, and a flask clears them all. Set one to the Frostbite rule (Vitals rules, War Table), or Instill a flask, so it fires at a stack count." },
 };

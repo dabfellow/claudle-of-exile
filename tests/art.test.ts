@@ -25,6 +25,22 @@ describe('pack art', () => {
     expect(zonesInAct(3).filter((z) => !packArtUrl(`zones/${z.id}`)).map((z) => z.id)).toEqual([]);
   });
 
+  it('no two Act 4 monsters share a picture', () => {
+    const urls = zonesInAct(4).flatMap((z) => [...z.monsters, z.boss]).map((m) => packArtUrl(`monsters/${m.id}`));
+    expect(urls.filter((u) => !u)).toEqual([]);
+    expect(new Set(urls).size).toBe(urls.length);
+  });
+
+  it('every Act 4 area has a banner, until the landscape pack replaces it', () => {
+    expect(zonesInAct(4).filter((z) => !packArtUrl(`zones/${z.id}`)).map((z) => z.id)).toEqual([]);
+  });
+
+  it('the Act 4 uniques have their own art', () => {
+    const ids = ['giants_knuckle', 'rimewalkers', 'heart_of_winter', 'frostgrip', 'crown_of_the_hollow', 'wolfmother_pelt'];
+    expect(ids.filter((id) => !UNIQUES.some((u) => u.id === id))).toEqual([]);
+    expect(ids.filter((id) => !packArtUrl(`uniques/${id}`))).toEqual([]);
+  });
+
   it('the Act 3 uniques have their own art', () => {
     const ids = ['martyrs_shroud', 'pilgrims_road', 'saints_shard', 'confession_hood', 'halo_of_wrath', 'chainbreaker'];
     expect(ids.filter((id) => !UNIQUES.some((u) => u.id === id))).toEqual([]);
