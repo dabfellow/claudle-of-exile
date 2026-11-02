@@ -1,3 +1,4 @@
+import { uniqueDef } from '../data/bases';
 import { STASH_PAGE_SIZE } from '../data/hideout';
 import { addBank } from './bank';
 import { takeOwned } from './storage';
@@ -36,6 +37,10 @@ function addHold(s: GameState, hold: MarketHold): void {
 export function holdItem(s: GameState, op: string, uid: number): string | null {
   const [item] = takeOwned(s, [uid]);
   if (!item) return 'That item is being crafted or has gone';
+  if (item.uniqueId && uniqueDef(item.uniqueId).noTrade) {
+    s.inventory.push(item);
+    return "That item can't be traded";
+  }
   addHold(s, { op, item });
   return null;
 }

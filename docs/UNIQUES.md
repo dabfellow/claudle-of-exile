@@ -2,7 +2,7 @@
 
 Generated from the game data; run `npm run uniques` after changing a unique, instead of editing this file.
 
-70 uniques, each under the first act that drops it.
+71 uniques, each under the first act that drops it.
 
 ## Act 1: The Drowned Coast (34)
 
@@ -103,3 +103,9 @@ Generated from the game data; run `npm run uniques` after changing a unique, ins
 | **The King's March**<br>*Forty leagues of white stone, and not one step back.* | boots | Manticore Boots (60) | +200 to Evasion Rating<br>+15% to all Elemental Resistances<br>+4 to maximum Momentum<br>30% increased effect of Momentum | The King's Road (Act 6), The Lower City (Act 6), The Drifting Quarter (Act 6), The Sundered Hall (Act 6), The Ninth Stair (Act 6), The Shattered Throne (Act 6) |
 | **The Last Decree**<br>*Signed, sealed, and read aloud to an empty room.* | weapon | Seraph Wand (60) | Adds 20 to 38 Cold Damage to Spells<br>Adds 20 to 38 Fire Damage to Spells<br>+15% to all Elemental Resistances<br>+25% to the Mana is Power bonus<br>Mana within 15% of full counts as full for Mana is Power | Fort Obedience (Act 6), The King's Mint (Act 6), The Burned Archive (Act 6), The Hall of Crowns (Act 6), The Shattered Throne (Act 6) |
 | **The Regent's Mantle**<br>*Held in trust, for a king who will not be needing it.* | body | Archon Regalia (60) | +110 to maximum Life<br>+75 to maximum Energy Shield<br>+15% to all Elemental Resistances<br>45% increased holy nova damage<br>35% increased holy nova healing | The Tithe Fields (Act 6), The King's Reach (Act 6), The Ninth Stair (Act 6), The Shattered Throne (Act 6) |
+
+## No drop source yet (1)
+
+| Unique | Slot | Base (req. level) | Mods | Drops in |
+| --- | --- | --- | --- | --- |
+| **The Old Covenant**<br>*Given to those who were here before the tide turned.* | ring | Iron Ring (1) | 3% of Damage Leeched as Life<br>2% of Damage Leeched as Mana | — |

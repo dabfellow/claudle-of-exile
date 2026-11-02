@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BASES } from '../../data/bases';
+import { BASES, uniqueDef } from '../../data/bases';
 import { CURRENCIES, currencyDef } from '../../data/materials';
 import { MARKET_CUT_PCT, MARKET_MAX_LISTINGS, MARKET_MAX_PRICE, minBid, saleProceeds } from '../../engine/market';
 import { stashedItems } from '../../engine/storage';
@@ -92,7 +92,7 @@ function useListings(filters: MarketFilters) {
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState(PAGE);
   const load = useCallback(async () => {
-    const api = marketApi();
+    const api = marketApi(game.realm.realm);
     if (!api) return setError('Online features are not configured');
     try {
       const f = JSON.parse(key) as MarketFilters;
@@ -188,7 +188,7 @@ function SellTab({ s }: { s: GameState }) {
   return (
     <div className="card">
       <div className="card-title">Pick something to sell</div>
-      <ItemTiles s={s} items={[...s.inventory, ...stashedItems(s)].reverse()} selected={(i) => i.uid === item?.uid} onClick={setItem} empty="Your bag and stash have no gear." />
+      <ItemTiles s={s} items={[...s.inventory, ...stashedItems(s)].filter((i) => !(i.uniqueId && uniqueDef(i.uniqueId).noTrade)).reverse()} selected={(i) => i.uid === item?.uid} onClick={setItem} empty="Your bag and stash have no gear." />
       {item && (
         <div className="market-sell">
           <Tabs
@@ -239,6 +239,7 @@ export function MarketPage() {
   const access = game.marketAccess;
   const [tab, setTab] = useState<'browse' | 'sell' | 'mine'>('browse');
   useEffect(() => void game.marketSync(), []);
+  if (access === 'solo') return <div className="page card muted">Solo Self-Found characters can't use the Player Market.</div>;
   return (
     <div className="page">
       <PageHeader

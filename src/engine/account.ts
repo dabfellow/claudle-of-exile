@@ -1,6 +1,8 @@
 import { STASH_PAGE_SIZE, STASH_START_PAGES, stationDef } from '../data/hideout';
+import { STANDARD_REALM } from './challenge';
 import { trimFlaskStash } from './flasks';
-import type { AccountPool, AccountState, AccountTransfer, AutomationUnlocks, EquipSlot, GameState, Item, SkillGemInstance } from './types';
+import { createUnique } from './items';
+import type { AccountPool, AccountState, AccountTransfer, AutomationUnlocks, EquipSlot, GameState, Item, Realm, SkillGemInstance } from './types';
 
 /**
  * What every character in a realm shares: the hideout, automation unlocks, every Stash tab and the Exile unlock.
@@ -21,10 +23,10 @@ export function freshAutomation(): AutomationUnlocks {
   return { rules: [], ruleSlots: 1, offlineHours: 8 };
 }
 
-export function freshAccount(): AccountState {
+export function freshAccount(realm: Realm = STANDARD_REALM): AccountState {
   return {
     id: `a${Date.now().toString(36)}${Math.floor(Math.random() * 1e9).toString(36)}`,
-    realm: 'standard',
+    realm,
     rev: 0,
     hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, watchtower: 1 },
     automation: freshAutomation(),
@@ -177,6 +179,14 @@ export function settleCharacter(s: GameState, a: AccountState): boolean {
   absorbAccount(a, from);
   if (job && target) job.uid = target.uid;
   a.absorbed.push(s.character.id);
+  return true;
+}
+
+/** Hand a character from before the skill reform its keepsake, once. Returns whether it did. */
+export function giveKeepsake(s: GameState): boolean {
+  if (!s.keepsakeDue) return false;
+  delete s.keepsakeDue;
+  s.inventory.push(createUnique(s, 'old_covenant', 1)); // can go over the bag's size, but nothing is lost
   return true;
 }
 

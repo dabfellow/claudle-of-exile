@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { GUIDE_NAME, TUTORIAL_STEPS } from '../../data/tutorial';
+import { GUIDE_NAME, rewardText, TUTORIAL_STEPS } from '../../data/tutorial';
+import { isClassic } from '../../engine/challenge';
 import { currentStep, skipTutorial } from '../../engine/tutorial';
 import { game, useGame } from '../../game';
 import { ProgressBar, Art, GameIcon } from './common';
@@ -51,7 +52,7 @@ export function QuestTracker({ floating }: { floating?: boolean }) {
         </button>
       </div>
       <p className="quest-npc">
-        <b>{GUIDE_NAME}:</b> “{step.npc}”
+        <b>{GUIDE_NAME}:</b> “{(isClassic(s) && step.classicNpc) || step.npc}”
       </p>
       <div className="quest-objective">
         <span>{step.objective}</span>
@@ -62,7 +63,7 @@ export function QuestTracker({ floating }: { floating?: boolean }) {
         )}
       </div>
       {step.target > 1 && <ProgressBar value={s.tutorial.progress / step.target} color="var(--accent)" smooth />}
-      {step.rewardText && <div className="quest-reward">Reward: {step.rewardText}</div>}
+      {step.rewardText && <div className="quest-reward">Reward: {rewardText(s, step)}</div>}
     </div>
   );
 }

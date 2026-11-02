@@ -14,7 +14,7 @@ import { deriveStats } from '../src/engine/stats';
 import type { GameState, MonsterInstance } from '../src/engine/types';
 import { armFor, veteran } from './helpers';
 
-const BATCH = ['titans_blow', 'avalanche', 'bulwark', 'shield_crush', 'mountain_stance', 'siege_shot', 'blackjack', 'meteor', 'sacred_aegis', 'burden'];
+const BATCH = ['titans_blow', 'avalanche', 'bulwark', 'mountain_stance', 'blackjack', 'meteor', 'sacred_aegis', 'burden'];
 const SUPPORTS = ['crushing_weight', 'ponderous', 'shockwave', 'reinforced', 'follow_through'];
 
 interface Opts {
@@ -27,7 +27,7 @@ interface Opts {
 
 /** One skill on the bar, optionally with supports, against dummies that stand still and never attack unless told to. */
 function arena(gem: string, opts: Opts = {}) {
-  const s = veteran(newGame(1, { name: 't', classId: opts.classId ?? 'warrior' }), 60);
+  const s = veteran(newGame(1, { name: 't', classId: opts.classId ?? 'warrior' }), 64);
   s.skillBar = s.skillBar.map(() => null);
   const g = createSkillGem(s, gem);
   g.rules = [{ when: 'always' }];

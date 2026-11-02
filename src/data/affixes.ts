@@ -419,6 +419,14 @@ export const AFFIXES: AffixDef[] = [
 
   // ---------- unique-only ----------
   {
+    id: 'u_life_leech', kind: 'suffix', group: 'u_life_leech', label: '', text: '{0}% of Damage Leeched as Life', uniqueOnly: true,
+    stats: ['lifeLeech'], weights: {}, tiers: [],
+  },
+  {
+    id: 'u_mana_leech', kind: 'suffix', group: 'u_mana_leech', label: '', text: '{0}% of Damage Leeched as Mana', uniqueOnly: true,
+    stats: ['manaLeech'], weights: {}, tiers: [],
+  },
+  {
     id: 'u_life_more', kind: 'prefix', group: 'u_life_more', label: '', text: '{0}% more maximum Life', uniqueOnly: true,
     stats: ['lifeMore'], weights: {}, tiers: [],
   },

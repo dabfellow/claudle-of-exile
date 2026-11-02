@@ -316,7 +316,9 @@ function SlotTile({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; slot
   }
   syncSockets(gem);
   const def = activeGemDef(gem.gemId);
-  const nums = skillNumbers(deriveStats(s, []), gem);
+  const stats = deriveStats(s, []);
+  const nums = skillNumbers(stats, gem);
+  const locked = gemUseReason(stats.combatLevel, stats.attributes, gem);
   return (
     <Tooltip content={<GemTip gem={gem} state={s} />}>
       <button className={`skill-btn setup ${pickedGem !== null ? 'target' : ''}`} onClick={click}>
@@ -338,7 +340,7 @@ function SlotTile({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; slot
             return sup ? <GemIcon key={i} def={supportGemDef(sup.supportId)} size={16} support /> : <span key={i} className="socket-dot" />;
           })}
         </span>
-        <span className="skill-rule">{rulesLabel(s, gem.rules)}</span>
+        <span className="skill-rule" style={locked ? { color: 'var(--life-2)' } : undefined}>{locked ?? rulesLabel(s, gem.rules)}</span>
       </button>
     </Tooltip>
   );

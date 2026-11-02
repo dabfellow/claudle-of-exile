@@ -20,9 +20,10 @@ import { seeded } from './rng';
 import { craftStep } from './craftUntil';
 import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
-import type { AccountState, EquipSlot, GameState } from './types';
+import { challengeName } from './challenge';
+import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 32;
+export const SAVE_VERSION = 33;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -33,6 +34,7 @@ export interface NewCharacter {
   /** Exile only: which class's tree start to begin from */
   startNode?: string;
   id?: string;
+  challenge?: ChallengeFlags;
 }
 
 const STARTING_BANK = { gold: 25, transmute: 3, augment: 2, arcane_dust: 6 };
@@ -50,6 +52,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
       name: who.name,
       classId: who.classId,
       ...(who.classId === 'exile' && { startNode: startClass('exile', who.startNode).startNode }),
+      ...(who.challenge && challengeName(who.challenge) && { challenge: who.challenge }),
       createdAt: Date.now(),
     },
     tutorial: { step: 0, progress: 0, done: false, skipped: false },
@@ -115,6 +118,7 @@ export function giveStarterGems(s: GameState): void {
 
 /** Advance the simulation by dtMs using fixed sub-steps. */
 export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
+  if (s.fallen) return;
   autoSwitchGear(s, ctx);
   let d = deriveStats(s);
   let remaining = dtMs;
@@ -130,6 +134,7 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
     if (s.combat) {
       mealStep(s, ctx, step);
       if (combatStep(s, ctx, step, d)) d = deriveStats(s);
+      if (s.fallen) return;
     } else {
       s.life = Math.min(d.maxLife, s.life + d.maxLife * TOWN_REGEN * (step / 1000));
       s.mana = Math.min(d.maxMana, s.mana + d.maxMana * TOWN_REGEN * (step / 1000));

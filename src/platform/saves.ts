@@ -1,7 +1,8 @@
 import type { ClassId } from '../data/classes';
 import { absorbAccount, fillAccount, freshAccount, reconcileAccounts } from '../engine/account';
+import { realmOf, STANDARD_REALM } from '../engine/challenge';
 import { deserialize, SAVE_KEY, serialize } from '../engine/save';
-import { SKILL_IDS, type AccountState, type GameState } from '../engine/types';
+import { SKILL_IDS, type AccountState, type ChallengeFlags, type GameState, type Realm } from '../engine/types';
 import { characterLevel } from '../engine/character';
 import { levelOf } from '../engine/xp';
 import { reportError } from './errors';
@@ -10,6 +11,9 @@ export interface CharacterSummary {
   id: string;
   name: string;
   classId: ClassId;
+  challenge?: ChallengeFlags;
+  /** which account it shares: left out on summaries from before challenge modes, which are all standard */
+  realm?: Realm;
   act1Cleared?: boolean;
   /** this character has nothing left to hand over to the account */
   handedOver?: boolean;
@@ -25,14 +29,14 @@ export interface SaveStore {
   load(id: string): Promise<GameState | null>;
   save(s: GameState): Promise<void>;
   remove(id: string): Promise<void>;
-  /** The shared account, or null if none has been saved yet. */
-  loadAccount(): Promise<AccountState | null>;
+  /** A realm's shared account, or null if none has been saved yet. */
+  loadAccount(realm?: Realm): Promise<AccountState | null>;
   saveAccount(a: AccountState): Promise<void>;
   /** The account as this browser last wrote it, from any tab. Synchronous, so a save can merge it first. */
-  peekAccount(): AccountState | null;
+  peekAccount(realm?: Realm): AccountState | null;
   /** The account as another device left it, where there can be one. */
-  pullAccount(): Promise<AccountState | null>;
-  removeAccount(): Promise<void>;
+  pullAccount(realm?: Realm): Promise<AccountState | null>;
+  removeAccount(realm?: Realm): Promise<void>;
 }
 
 export function summarize(s: GameState): CharacterSummary {
@@ -40,6 +44,8 @@ export function summarize(s: GameState): CharacterSummary {
     id: s.character.id,
     name: s.character.name,
     classId: s.character.classId,
+    challenge: s.character.challenge,
+    realm: realmOf(s.character),
     act1Cleared: s.bossesDefeated.includes('sanctum'),
     handedOver: !s.unmerged && !s.unpooled,
     combatLevel: characterLevel(s),
@@ -68,9 +74,9 @@ export class LocalSaveStore implements SaveStore {
     return `coe-${this.accountId}-char-${id}`;
   }
 
-  /** One key per realm, so a challenge mode's account will sit beside this one. */
-  get accountKey() {
-    return `coe-${this.accountId}-account-standard`;
+  /** One key per realm, so each challenge mode's account sits beside the standard one. */
+  private accountKey(realm: Realm) {
+    return `coe-${this.accountId}-account-${realm}`;
   }
 
   private readIndex(): CharacterSummary[] {
@@ -125,12 +131,12 @@ export class LocalSaveStore implements SaveStore {
     this.writeIndex(this.readIndex().filter((c) => c.id !== id));
   }
 
-  async loadAccount(): Promise<AccountState | null> {
-    return this.peekAccount();
+  async loadAccount(realm: Realm = STANDARD_REALM): Promise<AccountState | null> {
+    return this.peekAccount(realm);
   }
 
-  peekAccount(): AccountState | null {
-    const raw = this.storage.getItem(this.accountKey);
+  peekAccount(realm: Realm = STANDARD_REALM): AccountState | null {
+    const raw = this.storage.getItem(this.accountKey(realm));
     return raw ? fillAccount(JSON.parse(raw) as AccountState) : null;
   }
 
@@ -140,12 +146,12 @@ export class LocalSaveStore implements SaveStore {
 
   /** Synchronous like save(), so an item never leaves the stash without reaching the bag. */
   saveAccount(a: AccountState): Promise<void> {
-    this.storage.setItem(this.accountKey, JSON.stringify(a));
+    this.storage.setItem(this.accountKey(a.realm), JSON.stringify(a));
     return Promise.resolve();
   }
 
-  async removeAccount(): Promise<void> {
-    this.storage.removeItem(this.accountKey);
+  async removeAccount(realm: Realm = STANDARD_REALM): Promise<void> {
+    this.storage.removeItem(this.accountKey(realm));
   }
 }
 
@@ -158,7 +164,7 @@ export async function hasGuestProgress(storage: Storage, guestId: string | undef
 /** A demo's characters: held in memory only, so they end with the tab. */
 export class MemorySaveStore implements SaveStore {
   private chars = new Map<string, { summary: CharacterSummary; raw: string }>();
-  private account: string | null = null;
+  private accounts = new Map<Realm, string>();
 
   async list(): Promise<CharacterSummary[]> {
     return [...this.chars.values()].map((c) => c.summary).sort((a, b) => b.lastPlayed - a.lastPlayed);
@@ -177,12 +183,13 @@ export class MemorySaveStore implements SaveStore {
     this.chars.delete(id);
   }
 
-  async loadAccount(): Promise<AccountState | null> {
-    return this.peekAccount();
+  async loadAccount(realm: Realm = STANDARD_REALM): Promise<AccountState | null> {
+    return this.peekAccount(realm);
   }
 
-  peekAccount(): AccountState | null {
-    return this.account ? fillAccount(JSON.parse(this.account) as AccountState) : null;
+  peekAccount(realm: Realm = STANDARD_REALM): AccountState | null {
+    const raw = this.accounts.get(realm);
+    return raw ? fillAccount(JSON.parse(raw) as AccountState) : null;
   }
 
   async pullAccount(): Promise<AccountState | null> {
@@ -190,11 +197,11 @@ export class MemorySaveStore implements SaveStore {
   }
 
   async saveAccount(a: AccountState): Promise<void> {
-    this.account = JSON.stringify(a);
+    this.accounts.set(a.realm, JSON.stringify(a));
   }
 
-  async removeAccount(): Promise<void> {
-    this.account = null;
+  async removeAccount(realm: Realm = STANDARD_REALM): Promise<void> {
+    this.accounts.delete(realm);
   }
 }
 
@@ -243,8 +250,8 @@ export class CloudSaveStore implements SaveStore {
     private userId: string,
   ) {}
 
-  private get accountRow() {
-    return `${ACCOUNT_ROW_PREFIX}standard:${this.userId}`;
+  private accountRow(realm: Realm) {
+    return `${ACCOUNT_ROW_PREFIX}${realm}:${this.userId}`;
   }
 
   private setStatus(s: SyncStatus) {
@@ -324,17 +331,18 @@ export class CloudSaveStore implements SaveStore {
     return p;
   }
 
+  /** The cloud first: if that fails the local copy stays, so a dead Hardcore character can't come back from an older cloud save. */
   async remove(id: string): Promise<void> {
-    await this.cache.remove(id);
     await this.table.remove(id);
+    await this.cache.remove(id);
   }
 
   /** Same rule as a character, except that the newer copy also takes every unlock from the older one. */
-  async loadAccount(): Promise<AccountState | null> {
-    const local = await this.cache.loadAccount();
+  async loadAccount(realm: Realm = STANDARD_REALM): Promise<AccountState | null> {
+    const local = await this.cache.loadAccount(realm);
     let remote: AccountState | null = null;
     try {
-      const row = await this.table.get(this.accountRow);
+      const row = await this.table.get(this.accountRow(realm));
       remote = row ? fillAccount(row.save as AccountState) : null;
       this.setStatus('synced');
     } catch {
@@ -351,13 +359,13 @@ export class CloudSaveStore implements SaveStore {
     return merged;
   }
 
-  peekAccount(): AccountState | null {
-    return this.cache.peekAccount();
+  peekAccount(realm: Realm = STANDARD_REALM): AccountState | null {
+    return this.cache.peekAccount(realm);
   }
 
-  async pullAccount(): Promise<AccountState | null> {
+  async pullAccount(realm: Realm = STANDARD_REALM): Promise<AccountState | null> {
     try {
-      const row = await this.table.get(this.accountRow);
+      const row = await this.table.get(this.accountRow(realm));
       return row ? fillAccount(row.save as AccountState) : null;
     } catch {
       return null;
@@ -366,7 +374,7 @@ export class CloudSaveStore implements SaveStore {
 
   saveAccount(a: AccountState): Promise<void> {
     void this.cache.saveAccount(a);
-    const id = this.accountRow;
+    const id = this.accountRow(a.realm);
     return this.upload(id, () => ({
       id,
       name: 'Account',
@@ -377,9 +385,9 @@ export class CloudSaveStore implements SaveStore {
     }));
   }
 
-  async removeAccount(): Promise<void> {
-    await this.cache.removeAccount();
-    await this.table.remove(this.accountRow);
+  async removeAccount(realm: Realm = STANDARD_REALM): Promise<void> {
+    await this.cache.removeAccount(realm);
+    await this.table.remove(this.accountRow(realm));
   }
 }
 
@@ -397,17 +405,18 @@ export async function adoptDemo(raw: string, to: SaveStore): Promise<string> {
 
 /** Move every character from one store to another (guest → account). Returns how many moved. */
 export async function moveCharacters(from: SaveStore, to: SaveStore, takenNames: string[]): Promise<number> {
-  // the old account's stash and unlocks come along; its id stops a retry counting them twice
-  const incoming = await from.loadAccount();
-  if (incoming) {
-    const target = (await to.loadAccount()) ?? freshAccount();
+  // each old account's stash and unlocks come along; its id stops a retry counting them twice
+  for (const realm of new Set([STANDARD_REALM, ...(await from.list()).map((c) => c.realm ?? STANDARD_REALM)])) {
+    const incoming = await from.loadAccount(realm);
+    if (!incoming) continue;
+    const target = (await to.loadAccount(realm)) ?? freshAccount(realm);
     if (!target.absorbed.includes(incoming.id)) {
       absorbAccount(target, incoming);
       target.absorbed.push(incoming.id);
       target.rev += 1;
       await to.saveAccount(target);
     }
-    await from.removeAccount();
+    await from.removeAccount(realm);
   }
   const taken = new Set(takenNames.map((n) => n.toLowerCase()));
   let moved = 0;

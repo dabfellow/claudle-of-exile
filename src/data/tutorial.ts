@@ -1,3 +1,4 @@
+import { isClassic } from '../engine/challenge';
 import { benchBuilt, findItem } from '../engine/crafting';
 import type { GameEvent, GameState } from '../engine/types';
 import { baseDef } from './bases';
@@ -13,6 +14,8 @@ export interface TutorialStep {
   title: string;
   /** what the guide says */
   npc: string;
+  /** said instead to a Classic character, who skips the mining and smithing steps */
+  classicNpc?: string;
   objective: string;
   target: number;
   /** page that satisfies a "visit" step */
@@ -25,7 +28,11 @@ export interface TutorialStep {
   done?: (s: GameState) => boolean;
   reward: Record<string, number>;
   rewardText: string;
+  /** the same, where a Classic character is paid in gold instead */
+  classicRewardText?: string;
 }
+
+export const rewardText = (s: GameState, step: TutorialStep): string => (isClassic(s) && step.classicRewardText) || step.rewardText;
 
 export const GUIDE_NAME = 'Old Brannoc';
 
@@ -93,6 +100,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 15,
     highlight: ['nav-mining', 'action-mine_copper'],
     match: (e) => (e.t === 'produce' && e.skill === 'mining' ? (e.outputs.copper_ore ?? 0) : 0),
+    done: isClassic,
     reward: { ash_log: 6 },
     rewardText: '6 Ash Logs',
   },
@@ -104,6 +112,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 1,
     highlight: ['nav-smithing', 'smith-tab-weapon'],
     match: (e) => (e.t === 'produce' && e.baseId && isWeapon(e.baseId) ? 1 : 0),
+    done: isClassic,
     reward: { transmute: 1 },
     rewardText: 'Orb of Transmutation',
   },
@@ -111,6 +120,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'transmute',
     title: 'A Touch of Magic',
     npc: "Plain steel is boring. At the Crafting Bench, pick your new weapon from the bag and rub a Transmutation orb on it. It comes out blue, with a modifier or two. Don't ask me how that works.",
+    classicNpc: "Plain steel is boring. At the Crafting Bench, pick the weapon you're holding and rub a Transmutation orb on it. It comes out blue, with a modifier or two. Don't ask me how that works.",
     objective: 'Transmute a weapon',
     target: 1,
     highlight: ['nav-bench', 'orb-transmute'],
@@ -146,11 +156,13 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     done: benchBuilt,
     reward: stationDef('bench').levels[BENCH_BUILT_LEVEL - 1].cost,
     rewardText: '1,500 gold, 200 Ash Logs, 200 Copper Ore',
+    classicRewardText: '5,500 gold',
   },
   {
     id: 'build_bench',
     title: 'Raise the Bench',
     npc: 'Gold, logs, ore: all there. Scroll down to your stations and upgrade the Crafting Bench, and you can break down gear you no longer need.',
+    classicNpc: 'The gold is all there. Scroll down to your stations and upgrade the Crafting Bench, and you can break down gear you no longer need.',
     objective: 'Build the Crafting Bench',
     target: 1,
     highlight: ['upgrade-bench'],
@@ -163,6 +175,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'salvage',
     title: 'Nothing Wasted',
     npc: "Your old weapon's still in your bag, and it's no use to anyone in one piece. Pick it at the Crafting Bench and salvage it. Arcane Dust is what orbs are made of — Alchemy turns one into the other.",
+    classicNpc: "Pick up something you don't need, pick it at the Crafting Bench and salvage it. Arcane Dust pays for the bench's better crafts.",
     objective: 'Salvage an item',
     target: 1,
     highlight: ['nav-bench', 'salvage-item'],

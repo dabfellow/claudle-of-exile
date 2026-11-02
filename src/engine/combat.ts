@@ -1,4 +1,5 @@
 import { ACTIVE_GEMS, activeGemDef, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
+import { isHardcore } from './challenge';
 import { groundAtRisk, groundOnDeath } from './storage';
 import {
   actOpen,
@@ -797,8 +798,9 @@ export function skillIsActive(c: CombatRuntime, gemId: string): boolean {
   if ((called.length && called.length >= called[0].max) || (army(c).length >= MINION_CAP && activeGemDef(gemId).effect.minion)) return true;
   const storms = (c.storms ?? []).filter((x) => x.gemId === gemId);
   if (storms.length && storms.length >= storms[0].max) return true;
-  if ((gemId === 'iron_guard' || gemId === 'parry') && c.blocks > 0) return true;
-  if (gemId === 'smoke_step' && c.evadeMs > 0) return true;
+  const own = activeGemDef(gemId).effect;
+  if (own.blocks && c.blocks > 0) return true;
+  if (own.evadeMs && c.evadeMs > 0) return true;
   if (SHIELD_SKILLS.includes(gemId) && c.shield > 0) return true;
   const target = c.monsters.find((m) => m.uid === c.targetUid && m.life > 0) ?? aliveMonsters(c)[0];
   return !!target?.dots.some((x) => x.gemId === gemId) || target?.curse?.gemId === gemId;
@@ -900,9 +902,10 @@ export interface SkillChoice {
   aim?: SkillAim;
 }
 
-/** Damage skills need someone in reach; guards, buffs and sustain skills (Consecrate's heal) go off regardless. */
+/** Damage skills need someone in reach; guards, buffs and sustain skills (Consecrate's heal) go off regardless, but a drain has nothing to give without a hit. */
 function needsTarget(def: ActiveGemDef): boolean {
-  return !!(def.effect.weaponPct || def.effect.base) && def.role !== 'guard' && def.role !== 'buff' && def.role !== 'sustain' && def.role !== 'summon';
+  const drains = def.effect.leechLife || def.effect.leechMana;
+  return !!(def.effect.weaponPct || def.effect.base) && def.role !== 'guard' && def.role !== 'buff' && (def.role !== 'sustain' || !!drains) && def.role !== 'summon';
 }
 
 /**
@@ -1473,7 +1476,7 @@ function hitMonster(
       c.shieldMax = Math.max(c.shieldMax, c.shield);
     }
   }
-  const manaLeech = mods.manaLeech + (e.leechMana ?? 0);
+  const manaLeech = r.manaLeech + mods.manaLeech + (e.leechMana ?? 0);
   if (manaLeech > 0) gainMana(s, d, (dealt * manaLeech) / 100);
 
   // stun / armour break
@@ -1970,6 +1973,13 @@ function reapDead(s: GameState, ctx: Ctx, d: Derived): void {
 
 function die(s: GameState, ctx: Ctx, d: Derived): void {
   s.lifetime.deaths += 1;
+  if (isHardcore(s)) {
+    s.fallen = { zoneId: s.combat?.zoneId ?? null, offline: !!ctx.offline };
+    s.greenhouse = null;
+    ctx.emit({ t: 'death', xpLost: 0 });
+    retreat(s);
+    return;
+  }
   // losing to a boss sends it back into hiding so the zone can be farmed again
   if (s.combat && aliveMonsters(s.combat).some((m) => m.isBoss)) s.zoneKills[s.combat.zoneId] = 0;
   const xpLost = applyDeathPenalty(s);

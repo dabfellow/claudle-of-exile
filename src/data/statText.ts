@@ -12,6 +12,7 @@ const TEXT: Partial<Record<StatKey, (v: number) => string>> = {
   lifeRegen: (v) => `Regenerate ${v} Life per second`,
   lifeRegenPct: (v) => `Regenerate ${v}% of Life per second`,
   lifeLeech: (v) => `${v}% of damage leeched as Life`,
+  manaLeech: (v) => `${v}% of damage leeched as Mana`,
   physPct: pct('increased Physical Damage'),
   physMin: flat('to minimum Physical Damage with attacks'),
   physMax: flat('to maximum Physical Damage with attacks'),

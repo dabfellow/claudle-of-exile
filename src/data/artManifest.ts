@@ -487,6 +487,7 @@ const UNIQUE_DESC: Record<string, string> = {
   kurgan_crown: 'an ancient bronze helmet-crown with small horse heads around the rim, green with age',
   stormrider_greaves: 'a pair of scale boots with grey feathers at the top and a thin blue lightning line down each side',
   pyre_heart: 'a black onyx pendant shaped like a heart with a small flame burning inside it',
+  old_covenant: 'a worn iron band with two thin lines, one red and one blue, twisted around it',
 };
 
 const ATTR_GEM = { str: 'red', dex: 'green', int: 'blue' } as const;

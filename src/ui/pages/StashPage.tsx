@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { activeGemDef, supportGemDef } from '../../data/gems';
 import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
 import { STASH_PAGE_SIZE } from '../../data/hideout';
+import { challengeName, isSolo } from '../../engine/challenge';
 import { wearFlask } from '../../engine/combat';
 import { salvage } from '../../engine/crafting';
 import { sortFigure, sortItems, type SortKey } from '../../engine/itemSort';
@@ -102,10 +103,11 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
     { id: 'gems', label: 'Gems', count: s.account.gems.length + s.account.supportGems.length },
     { id: 'flasks', label: 'Flasks', count: s.account.flaskStash.length },
   ];
+  const isChallenge = !!challengeName(s.character.challenge);
   return (
     <div className="page">
       <PageHeader title="Stash" actions={<CurrencyAmount id="gold" amount={s.account.bank.gold ?? 0} label="gold" />}>
-        Every tab here, and your gold, is shared by all your characters. Your skill bar and belt stay with this character.
+        {isSolo(s) ? 'Every tab here, and your gold, belongs to this character alone.' : `Every tab here, and your gold, is shared by all your ${isChallenge ? `${challengeName(s.character.challenge)} ` : ''}characters.`} Your skill bar and belt stay with this character.
       </PageHeader>
       <div className="stash-top">
         <div className="card doll-card">

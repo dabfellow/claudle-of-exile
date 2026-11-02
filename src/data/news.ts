@@ -8,6 +8,37 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.3.5',
+    date: '1 Nov 2026',
+    title: 'Stash sorting',
+    items: [
+      'The Stash screen has a new sort dropdown for your bag and gear pages: Item level, Can equip, Weapon DPS and Defence join Recent, Rarity and Slot.',
+      'Sorting by Weapon DPS or Defence shows that number on each item.',
+    ],
+  },
+  {
+    version: '0.3.4',
+    date: '1 Nov 2026',
+    title: 'Challenge modes',
+    items: [
+      'New characters can take on Hardcore, Solo Self-Found and Classic, in any mix. Each mode starts with a fresh stash and hideout.',
+      'Hardcore: one death deletes the character and everything it carries, even while you are away.',
+      'Solo Self-Found: no Player Market, and every character has a stash and hideout of its own.',
+      'Classic: combat only, with no gathering or crafting skills. The Crafting Bench still works, and hideout upgrades cost gold instead.',
+    ],
+  },
+  {
+    version: '0.3.3',
+    date: '1 Nov 2026',
+    title: 'Skill gem reform',
+    items: [
+      'Every act now has area, single target, guard and leech options for Strength, Dexterity and Intelligence: 31 new skills and 12 new supports.',
+      "Some gems moved: Parry and Fireball to Act 2, Glacial Lance to Act 4, Shield Crush and Arcane Siphon to Act 5, Siege Shot to Act 6. You keep them, but they can't be used until their new level.",
+      'Arcane Siphon now drains life only, and Life Leech and Mana Leech cost much more mana.',
+      'Characters made before this update get The Old Covenant, a ring with life and mana leech. It can be found in your bag and can\'t be traded.',
+    ],
+  },
+  {
     version: '0.3.0',
     date: '1 Nov 2026',
     title: 'The Market',
