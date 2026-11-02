@@ -6,6 +6,12 @@ export interface NewsEntry {
   items: string[];
 }
 
+/**
+ * Changes made since the last release, one plain line each for players. Not shown in game.
+ * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
+ */
+export const UPCOMING: string[] = [];
+
 export const NEWS: NewsEntry[] = [
   {
     version: '0.3.10',

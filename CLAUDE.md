@@ -2,7 +2,11 @@
 
 ## Version number
 
-The version in `package.json` shows under the title in the game's sidebar, so you can tell a refresh picked up the latest build. Bump the patch number (0.2.3 → 0.2.4, and in `package-lock.json`) in every commit that changes the game, and before every push or deploy.
+The version in `package.json` shows under the title in the game's sidebar, so you can tell a refresh picked up the latest build. It goes up once per release, in the `/ship` skill's release step. Don't bump it in ordinary commits.
+
+## Changelog
+
+Each change that players will notice adds one plain line to `UPCOMING` in [src/data/news.ts](src/data/news.ts). A release moves those lines into a new news entry with the new version, and empties `UPCOMING`. `/ship` holds off the release while other sessions are still working, and pushes the work so the next release includes it.
 
 ## Unique items list
 
