@@ -343,11 +343,19 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
   - [x] Run `docs/ops/market.sql` in Supabase and ship: live as 0.3.0 "The Market". — done 2026-11-01
   - [ ] **[You]** Press Upload on Admin → Market, then try a real trade between two accounts. Nothing can be listed until the upload.
 - [x] Player wiki at `/path-of-idle/wiki/`, generated from the game's data by `npm run wiki` on every build: acts and areas, skill and support gems, item bases, uniques, modifiers, currency and materials, classes and ascendancies, plus a hand-written Getting started page (`docs/wiki/`). Linked from the sidebar. 0.2.34 — done 2026-11-01
+- [ ] Wiki rebuild from your spec ([WIKI_SPEC.txt](design/WIKI_SPEC.txt)). Phases are in that file. It says Netlify, but the wiki stays on Cloudflare.
+  - [x] Phase 1: look, home page, sidebar and phone menu, full search, filterable and sortable tables, section links. — done 2026-11-01
+  - [x] Phase 2: a page for each gem, item, unique, currency, area and monster, with game art, cross-links, hover cards, spoiler boxes, a support finder and a link check in the build. The spec's other menu pages are in as placeholders; a file in `docs/wiki/` named for one fills it. — done 2026-11-01
+    - [ ] Later: materials and modifiers have rows with direct links, not pages of their own.
+  - [x] Phase 3: Getting started, checklist, FAQ, glossary, automation guide and rule reference, offline, gathering, farming, walkthrough, boss preparation, loot tables, unlocks, starter builds, patch notes, data version, and reporting through the game's Feedback card. Guides live in `docs/wiki/`, with `{{data:…}}` tables and `{{skill:…}}` links filled from the game. Starter builds aren't playtested. — done 2026-11-01
+    - [ ] **[You]** Read the guides for tone and anything that doesn't match how you see the game.
+  - [ ] Phase 4: planners and calculators, once their formulas are checked against the game.
 - [ ] Wiki next, decided in the 2026-11-01 design pass (see Decisions → Wiki), in this order:
-  - [ ] Spoiler boxes: click-to-reveal for boss mechanics, unique drop sources and Acts 4–6, applied by the generator.
+  - [x] Spoiler boxes: click-to-reveal for boss mechanics, unique drop sources and Acts 4–6, applied by the generator. — done 2026-11-01
   - [ ] Reference pages: passive tree notables, life skills and recipes, hideout upgrades, runes and flasks, boss mechanics glossary.
   - [ ] A link from the title screen to the wiki home.
-  - [ ] Then guides: automation rules guide, formulas page (from [DAMAGE.md](design/DAMAGE.md)).
+  - [x] Formulas page: Damage and ailments, with its numbers read from the game's code. — done 2026-11-01
+  - [x] Then guides: automation rules guide. — done 2026-11-01
   - [ ] Later: deep links from in-game tooltips to wiki pages.
   - [ ] Deploy the wiki (first version is built but not live).
 - [x] Gear sets and skill loadouts, with auto-switching behind the Crafting Bench — done 2026-10-31
@@ -417,7 +425,10 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Hideout later-tier costs only show on hover, so phones can't see them.
 - Chaos is offence only: no monsters deal it, no player chaos resistance, no chaos skills past Poison Dart, and flat chaos doesn't reach spells ([DAMAGE.md](design/DAMAGE.md)).
 - Ailment numbers (40% threshold, 25% skill chance, ignite 50%, shock 40%) are first guesses, not simmed. Bosses may be near immune to Ignite and Freeze at these thresholds.
-- The game doesn't explain buildup or ailment scaling anywhere yet; players have to read [DAMAGE.md](design/DAMAGE.md).
+- The game doesn't explain buildup or ailment scaling in-game yet; the wiki's Damage and ailments page does.
+- The reference pages the 2026-11-01 design pass asked for still to come: passive tree notables, life skill recipes, runes and flasks.
+- [DAMAGE.md](design/DAMAGE.md) is out of date: it still lists the ×1.2 caster weapon bonus, says bleed is 40–60%/s (Sanguine Blow is 30%) and says shock raises all damage (it raises hits only, not running damage over time).
+- The wiki's Acts page could collapse by act, as the spec suggests.
 - The Equipment page's DPS is still the Default Attack, not your skills.
 - Act 6 leftovers: `TRIAL_ZONES` in `scripts/sim.ts` has no Act 6 area, the Long Fracture's Frozen ground may slow too hard, the six signature supports use the fallback icon, and vellum and inks use stand-in art.
 
@@ -479,6 +490,8 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - [x] Challenge modes: Hardcore, Solo Self-Found and Classic toggles at character creation, in any mix. 0.3.4 — done 2026-11-01
 - [x] Skill gem reform: every act and attribute has AoE, single target, guard and leech ([SKILL_REFORM.md](design/SKILL_REFORM.md)). Save v33 gives existing characters The Old Covenant. 0.3.3 — done 2026-11-01
 - [x] Kills before each area boss now ramp evenly from 10 (Mud Flats) to 80 (Shattered Throne) instead of 15–25; the starter drops moved to kills 1–9 so they finish before the first boss. 0.2.35 — done 2026-11-01
+- [x] Wiki restyled as The Exile's Codex from your ChatGPT prototype: dark stone and gold look, left sidebar, new home page with game art. Content and generation unchanged. Every table sorts by clicking a column heading. Collapsible acts not included. — done 2026-11-01
+- [x] Wiki Damage and ailments page: damage types, how attacks, spells and crits work out, every ailment formula, and defences. — done 2026-11-01
 - [x] Player wiki at `/path-of-idle/wiki/` in a Fandom-style look (dark bar, orange banner, contents sidebar). 0.2.47 — done 2026-11-01
 - [x] `/playtest`, `/build-act` and `/design-pass` skills, plus saved test scenarios in dev builds (`src/dev/scenarios.ts`). — done 2026-11-01
 - [x] Guarded release flow: a `/ship` skill, and `npm run deploy` now refuses uncommitted work, a stale branch or missing login settings, and confirms the live site afterwards. — done 2026-11-01

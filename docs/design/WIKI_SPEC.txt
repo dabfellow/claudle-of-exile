@@ -1,0 +1,511 @@
+PATH OF IDLE — WIKI DESIGN & FEATURE SPECIFICATION
+Version: 1.0
+Date: November 1, 2026
+Purpose: Design and implementation brief for rebuilding the Path of Idle wiki.
+Reference: https://dabfellow.party/path-of-idle/wiki/
+
+====================================================================
+1. PROJECT VISION
+====================================================================
+
+Transform the existing wiki from a collection of long reference pages into a
+beautiful, fast, searchable, cross-linked game encyclopedia and companion tool.
+
+The visual experience should feel like an adventurer's archive from Path of Idle:
+dark fantasy, weathered and atmospheric, with charcoal/stone surfaces, restrained
+antique-gold highlights, game artwork, and exceptional readability.
+
+The functional experience should combine:
+- Discovery: Players find answers immediately.
+- Education: Players understand mechanics, progression, and strategy.
+- Planning: Players compare equipment and plan builds, crafting, and farming.
+- Reliability: Game facts stay synchronized with source data and versions.
+
+CORE DESIGN PRINCIPLE:
+Do not sacrifice usability for atmosphere. The homepage can feel cinematic;
+reference pages should be compact, readable, and practical.
+
+CORE ENGINEERING PRINCIPLE:
+Preserve the existing game-data-driven wiki generation. Improve the presentation
+and linking layer rather than maintaining a second, conflicting source of truth.
+
+====================================================================
+2. VISUAL DESIGN SYSTEM
+====================================================================
+
+Art direction:
+- Moody dark fantasy inspired by Path of Exile and Diablo.
+- Restrained, worn medieval detail rather than bright fantasy ornamentation.
+- Use real Path of Idle icons, portraits, and environment artwork when available.
+- Add atmosphere with subtle stone textures, fine borders, soft ember lighting.
+- Avoid excessive glow, motion, ornate borders, and visually noisy backgrounds.
+
+Suggested palette:
+- Primary background: #111317 (near-black charcoal)
+- Panel background: #1D2227 (dark slate)
+- Gold accent: #D2A659 (antique gold)
+- Danger: #A94C3D (muted ember red)
+- Primary text: #E0D7C6 (warm off-white)
+- Supporting text: muted cool gray; maintain accessible contrast.
+
+Typography:
+- Atmospheric serif or display font for page titles and prominent headings.
+- Clean, readable sans-serif for paragraphs, tables, controls, and stat blocks.
+- Use consistent size, line-height, weight, and spacing throughout.
+- Prefer restrained headings to decorative all-caps everywhere.
+
+Reusable UI elements:
+- Site header and global search
+- Collapsible navigation sidebar
+- Breadcrumb trail
+- Category cards with artwork
+- Article table of contents
+- Stat chips and badges
+- Tag labels (strength, dexterity, intelligence; damage/skill types)
+- Searchable/filterable tables
+- Item/skill hover cards and mobile tap popovers
+- Collapsible section panels
+- Related articles and version metadata
+- In-article notes, warnings, and examples
+
+Responsive layouts:
+- Desktop: persistent or sticky left sidebar; main content; optional right-side
+  article contents panel on very wide screens.
+- Tablet: collapsible sidebar, main content retains useful table density.
+- Mobile: navigation drawer, legible tables with horizontal scroll or card views,
+  usable touch targets, tap-to-open tooltips, search always accessible.
+- Support keyboard navigation, clear focus indicators, reduced motion,
+  sufficient contrast, and adjustable browser font sizes.
+
+====================================================================
+3. INFORMATION ARCHITECTURE
+====================================================================
+
+Suggested main navigation:
+
+START HERE
+- Wiki Home
+- Getting Started
+- Beginner's Checklist
+- Frequently Asked Questions
+
+CHARACTERS
+- Classes and Ascendancies
+- Active Skill Gems
+- Support Gems
+- Builds and Playstyles
+- Combat Mechanics
+
+EQUIPMENT
+- Item Bases
+- Unique Items
+- Modifiers / Affixes
+- Crafting and Currency
+- Materials and Resources
+
+THE WORLD
+- Acts and Areas
+- Monsters and Bosses
+- Loot and Drop Tables
+- Unlocks and Progression
+
+IDLE SYSTEMS
+- Automation Basics
+- Automation Rule Reference
+- Offline Progression
+- Gathering and Production
+- Farming Strategies
+
+TOOLS (LATER PHASE)
+- Item Comparison
+- Drop Probability Calculator
+- Crafting Planner
+- XP / Farming Planner
+- Automation Rule Builder
+- Build Planner
+
+UPDATES
+- Patch Notes
+- Data Version / Update Status
+- Report Incorrect Information
+
+Navigation behavior:
+- Left sidebar groups can expand/collapse.
+- Always show breadcrumbs on content pages.
+- Long articles have linked headings and a sticky table of contents.
+- Every major item, gem, boss, modifier, and currency entry should have a stable
+  shareable URL.
+- Offer related entries and clear paths back to parent categories.
+
+====================================================================
+4. WIKI HOME PAGE
+====================================================================
+
+Homepage goals:
+- Communicate immediately that this is the official Path of Idle knowledge hub.
+- Provide one prominent, fast, global search bar.
+- Help beginners start without understanding wiki taxonomy.
+- Let returning players jump straight to databases and tools.
+
+Recommended sections in order:
+1. Atmospheric but compact header/hero: title, short tagline, global search.
+2. "New here?" featured Getting Started / beginner checklist link.
+3. Illustrated category grid: Skills, Equipment, Crafting, World, Classes,
+   Automation, Offline Progression, Mechanics.
+4. Popular and frequently needed references.
+5. Latest game patch / wiki data version.
+6. Optional featured guide or recently updated content.
+
+Avoid making the hero so tall that the actual wiki links require extensive
+scrolling. The first screen should provide immediate navigation.
+
+====================================================================
+5. CORE EXPERIENCE FEATURES
+====================================================================
+
+5.1 GLOBAL SEARCH (MUST HAVE)
+- Instant results while typing.
+- Index titles, descriptions, categories, tags, aliases, and relevant mechanics.
+- Fuzzy matching for minor spelling mistakes.
+- Categorize results: skills, supports, items, bosses, guides, currencies, etc.
+- Display relevant game icon, entry title, type, and concise snippet.
+- Keyboard support: / to focus, arrows to navigate, Enter to open, Esc to close.
+- Link to specific entries, not only category pages.
+- Helpful empty-state suggestions and spelling alternatives.
+- Build the search index from the wiki's structured game records and guides.
+
+5.2 DATABASE TABLES (MUST HAVE)
+- Full-text search within each category.
+- Filters appropriate to the category (attribute, level, act, item slot, tags,
+  rarity, source, modifier group, etc.).
+- Sortable numeric and textual columns.
+- Show result count and active filters; offer "clear all".
+- Preserve table density and readable alignment for power users.
+- Make individual entries clickable.
+- Consider pagination or virtualized rows for very large datasets.
+- Retain useful information on mobile via card view or horizontal scroll.
+
+5.3 ARTICLE FEATURES (MUST HAVE)
+- Readable heading hierarchy and paragraphs.
+- Table of contents with anchors.
+- Shareable deep links to sections.
+- Last updated / source-data version field.
+- Related pages and cross-links.
+- Copy URL, back-to-top, and visible navigation context.
+- Collapsible long technical details where useful.
+
+5.4 CONTEXTUAL TOOLTIPS (SHOULD HAVE)
+- Hovering a linked gem/item/modifier/status displays a concise stat card.
+- On mobile, tapping opens a popover; no hover-only content.
+- Provide a link to the full detail page.
+- Reuse source-derived values rather than duplicating text manually.
+
+5.5 PERSONAL QUALITY-OF-LIFE (LATER)
+- Recently viewed pages.
+- Bookmarked favorites (local storage initially).
+- Optional compact table density and accessibility preferences.
+- Print-friendly article styling.
+
+====================================================================
+6. CONTENT TYPES AND PAGE TEMPLATES
+====================================================================
+
+6.1 ITEMS AND UNIQUE ITEMS
+Each item page should show:
+- Actual icon and full name
+- Rarity, slot, class of item, requirements
+- Base combat/defensive properties and special mechanics
+- Possible modifier pools and tiers where applicable
+- Sources: enemies, bosses, areas, vendors, crafting (only if implemented)
+- Crafting interactions and upgrade possibilities
+- Comparisons to similar bases or alternatives
+- Related guides and builds
+- Game data version
+
+Support both directions of lookup:
+- Item -> where it drops / how it is obtained
+- Enemy / area -> relevant obtainable items
+
+6.2 ACTIVE AND SUPPORT GEMS
+Each gem page should show:
+- Icon, name, attribute, required level, tags
+- Skill effect, resource cost, cast/action time, cooldown, scaling
+- Status effects and damage types
+- Acquisition and unlock source
+- Compatible supports; reason for incompatibility where possible
+- Automation interactions / recommended rule types
+- Related skills and build guides
+- Version metadata
+
+Build a support-gem compatibility explorer driven by the same rules the game uses.
+Do not invent compatibility by manually guessing from displayed tags.
+
+6.3 BOSSES AND MONSTERS
+Each boss page should show:
+- Portrait or icon, area, unlock conditions
+- Level, defenses, dangerous abilities and phases
+- Status effects and counters
+- Reward/drop data with actual rates when available
+- Preparation checklist and sample strategy
+- Idle/automation considerations
+- Verified mechanics separately labeled from editorial strategy
+
+6.4 ACTS AND AREAS
+Each area page should show:
+- Act, area name, required/unlock progression
+- Enemies, bosses, notable drops and resources
+- Skills/unlocks available at that point
+- Recommended preparation and linked guides
+- Connected areas / progression sequence
+
+The master Acts and Areas page should become an expandable chapter overview
+rather than one uninterrupted long reference listing.
+
+6.5 CRAFTING, CURRENCY, MODIFIERS
+Currency pages:
+- What the currency does, eligible targets, restrictions
+- Obtaining it, relevant recipes, practical examples
+
+Modifier pages:
+- Effect, value/tier ranges, item eligibility, restrictions
+- Applicable base types, required levels, related currencies
+
+Interactive modifier explorer:
+- Filter by item slot/base, prefix/suffix, level, effect type, tier
+- Show only actually rollable modifiers on the selected base
+
+6.6 CLASSES / ASCENDANCIES
+- Class identity, strengths, trade-offs, special mechanics
+- Skills, equipment, and stats commonly associated with the class
+- Ascendancy unlocks and progression
+- Linked playstyles and beginner guides
+
+6.7 BUILD GUIDES
+Each build guide should include:
+- Build overview, target audience, skill level, strengths and weaknesses
+- Primary skills and compatible support gems
+- Equipment priorities and meaningful upgrade milestones
+- Automation setup and special-case boss rules
+- Early/mid/late progression sections
+- Variants, tradeoffs, difficult encounters
+- Game version tested, author, and last review date
+
+Editorial recommendations must be distinguished from verified game mechanics.
+
+====================================================================
+7. IDLE-GAME-SPECIFIC KNOWLEDGE
+====================================================================
+
+7.1 AUTOMATION ENCYCLOPEDIA (HIGH PRIORITY)
+Document:
+- All available rules / triggers
+- Unlock conditions
+- Execution order and priority
+- Resource and cooldown interactions
+- Examples for healing, defensive skill use, ailments, and boss attacks
+- Troubleshooting: "Why didn't this skill trigger?"
+
+Advanced future tool:
+- Rule builder with condition selection, validation, and understandable
+  explanation of resulting behavior.
+- Shareable presets or import/export only if supported by the game.
+
+7.2 OFFLINE PROGRESSION
+Document:
+- Offline duration limits and how they are unlocked/extended
+- What systems progress offline and which do not
+- Reward calculations and limitations
+- What ends offline progression (including death when applicable)
+- How to choose safer activities and prepare for unattended play
+- Differences between active and offline simulation
+
+7.3 GATHERING AND FARMING
+Document:
+- Gathering skills and resource sources
+- Resources used by crafting recipes and upgrades
+- XP yields, unlock requirements, production rates where known
+- Best farming methods as conditional suggestions, not universal truths
+- What a player can do next if materials or levels are insufficient
+
+====================================================================
+8. INTERACTIVE COMPANION TOOLS (PHASE 4)
+====================================================================
+
+Build tools only when their calculations can be verified against real game logic.
+Label assumptions and estimates clearly.
+
+Priority candidates:
+1. Equipment comparison: stat differences and relevant properties.
+2. Crafting material planner: target recipe -> total materials and shortages.
+3. Drop chance calculator: chance of at least one drop after N attempts.
+4. XP / farming planner: expected progress based on user-provided rates.
+5. Automation rule builder: compose and validate actual trigger logic.
+6. Build planner: skills, supports, equipment, and progression milestones.
+7. Offline survivability estimator: estimated risk, never false guarantees.
+
+For estimated farming results, account for assumptions such as encounter rate,
+clear speed, survival, drop modifiers, and idle/offline rule differences.
+
+====================================================================
+9. CONTENT RELIABILITY AND MAINTENANCE
+====================================================================
+
+Separate two content layers:
+A. AUTHORITATIVE GAME DATA
+   Generated directly from game definitions. Includes stats, restrictions,
+   tags, drop sources, unlocks, mechanics and other structured facts.
+
+B. EDITORIAL GUIDES
+   Manually maintained explanations, tips, strategies, tutorials, FAQs,
+   and builds. Must include version tested and review metadata.
+
+Required quality practices:
+- Include source game version and generated-at timestamp.
+- Mark outdated build guides when a balance patch changes relevant content.
+- Validate schema and cross-reference IDs during build.
+- Detect broken links, missing assets, duplicate slugs, and orphan pages.
+- Prefer stable internal entity IDs, not display names, for linking.
+- Preserve existing URLs or implement redirects to avoid breaking shared links.
+- Keep descriptions factual and avoid unverified drop-rate claims.
+- Provide an easy "Report incorrect information" flow.
+- Add patch notes and eventually per-entry change history.
+
+For a small personal game, do not start by building a full community editing
+platform. Accept reports/feedback first; consider curated community guides later.
+
+====================================================================
+10. TECHNICAL IMPLEMENTATION GUIDANCE
+====================================================================
+
+Suggested content/data flow:
+
+GAME SOURCE / DEFINITIONS
+        |
+        v
+VALIDATED WIKI DATA GENERATION
+        |
+        +--> REFERENCE PAGE GENERATION
+        +--> SEARCH INDEX GENERATION
+        +--> CROSS-LINK / RELATED-ENTITY INDEX
+        +--> CALCULATOR DATA (WHEN SUPPORTED)
+        |
+        v
+STATIC WIKI SITE + CLIENT-SIDE INTERACTIVITY
+
+Implementation considerations:
+- Favor static generation and client-side search/filtering where possible;
+  compatible with a Netlify-hosted project.
+- Keep pages fast; lazy-load large artwork and detailed datasets.
+- Use accessible semantic HTML and appropriate keyboard behaviors.
+- Avoid shipping a huge game dataset to every page if unnecessary.
+- Centralize stat formatting, rarity colors, attribute tags and entity links.
+- Use current item art, not generic placeholders, wherever assets exist.
+- Gracefully handle entries that still lack artwork.
+- Add automated tests for wiki generation and navigation.
+- Ensure build succeeds when new game data is added.
+- Keep wiki design tokens and components consistent with the game's UI.
+
+Do not rewrite existing mechanics or fabricate values just to support a UI.
+If required data is missing, mark a feature as unavailable until the data can
+be exported safely from the game.
+
+====================================================================
+11. IMPLEMENTATION ROADMAP
+====================================================================
+
+PHASE 1 — VISUAL FOUNDATION AND DISCOVERY (MUST DO FIRST)
+[ ] Establish shared design tokens and typography.
+[ ] Redesign homepage and category navigation.
+[ ] Add desktop sidebar and mobile navigation drawer.
+[ ] Add global search with keyboard support.
+[ ] Introduce searchable, filterable, sortable database tables.
+[ ] Add breadcrumbs, in-page contents and deep-link anchors.
+[ ] Make layouts responsive and accessible.
+[ ] Preserve current URLs and source-driven generation.
+
+Definition of done:
+A player can quickly find information in the existing wiki, use it on mobile,
+and read dense reference pages without excessive scrolling or eye strain.
+
+PHASE 2 — CONNECTED ENCYCLOPEDIA
+[ ] Individual detail pages for items and uniques.
+[ ] Individual active/support gem pages.
+[ ] Boss, monster, area and currency pages.
+[ ] Modifier and compatibility explorers.
+[ ] Cross-links and contextual tooltips.
+[ ] Real game art and version metadata.
+
+Definition of done:
+Every important entity has a stable shareable destination with links to its
+sources, related mechanics and relevant uses.
+
+PHASE 3 — LEARNING AND PLAYER GUIDES
+[ ] Expanded Getting Started experience and checklist.
+[ ] Combat mechanics explanations and terminology glossary.
+[ ] Dedicated automation reference and troubleshooting.
+[ ] Offline progression and gathering guides.
+[ ] Campaign walkthrough and boss preparation.
+[ ] Classes, ascendancies and starter build guides.
+[ ] Feedback/reporting workflow.
+
+Definition of done:
+Players can answer both "What is this?" and "What should I do next?"
+
+PHASE 4 — COMPANION AND OPTIMIZATION TOOLS
+[ ] Equipment comparison.
+[ ] Crafting material planner.
+[ ] Drop probability and farming calculators.
+[ ] Automation rule builder / validator.
+[ ] Build planner and shareable setups, if supported.
+[ ] More advanced patch-history and community features, if useful.
+
+Definition of done:
+Players can plan upgrades and farming using calculations that agree with
+verified game rules.
+
+====================================================================
+12. ACCEPTANCE CRITERIA AND COMMON PITFALLS
+====================================================================
+
+A successful implementation should:
+- Feel unmistakably connected to Path of Idle's dark-fantasy world.
+- Keep important controls and content readable, not hidden by decoration.
+- Find a known gem or item quickly via search and filters.
+- Provide direct, stable links to the exact entry.
+- Cross-link skills, supports, item sources, bosses, areas, and guides.
+- Display correct game-version information.
+- Avoid duplicating or manually guessing the authoritative stats.
+- Work with mouse, keyboard and touch devices.
+- Remain fast with large reference datasets.
+- Continue updating through the current wiki generation pipeline.
+
+Avoid:
+- Giant static tables without search/filter controls.
+- A visually impressive homepage with poor reference navigation.
+- Decorative glows/textures that obscure information.
+- Building calculators before confirming their underlying game formulas.
+- Inventing drop percentages, stat values, unlock rules, or support synergy.
+- Breaking old links while reorganizing content.
+- Implementing login and community edits before core discovery works well.
+
+====================================================================
+13. RECOMMENDED FIRST DEVELOPMENT TASK
+====================================================================
+
+Implement a cohesive wiki shell and update ONE complete vertical slice first:
+
+1. Design the homepage and navigation shell.
+2. Implement global search and reusable filterable table components.
+3. Pick Skill Gems as the reference-page pilot.
+4. Build one individual Skill Gem page with related support links.
+5. Verify all displayed data against the game's existing definitions.
+6. Test desktop, tablet, and mobile usability.
+7. Generalize those components to items, bosses, crafting and other categories.
+
+This pilot prevents redesigning every page at once and validates the visual and
+technical direction before large-scale rollout.
+
+FINAL GOAL:
+A cohesive, atmospheric, data-accurate encyclopedia where a player can find
+an item or skill, understand its mechanics, discover its sources, compare
+alternatives, and plan character progression without leaving Path of Idle.

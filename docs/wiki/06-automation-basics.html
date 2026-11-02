@@ -1,0 +1,40 @@
+<!-- checked 0.3.7 -->
+<h1>Automation basics</h1>
+<p>A skill on your bar only fires by itself if you give it a rule. Gems start on Manual only, so a new skill does nothing until you set one on the Skills page. Your Default Attack needs no rule: it's what you do when nothing else is ready.</p>
+
+<h2 id="first-rules">Your first rules</h2>
+<ul>
+  <li><strong>Main attack:</strong> Whenever ready.</li>
+  <li><strong>Area skill:</strong> When enemies at least 3, so it isn't wasted on one target.</li>
+  <li><strong>Buff:</strong> When its effect is not active.</li>
+  <li><strong>Big cooldown:</strong> Only against bosses.</li>
+  <li><strong>Mana-hungry skill:</strong> When mana above 40%, so it leaves enough for your guard.</li>
+</ul>
+<p>Each gem also has a suggested rule, offered in the rule editor. It falls back to Whenever ready if you haven't unlocked that rule yet.</p>
+
+<h2 id="unlocks">Unlocking more rules</h2>
+<p>Simple rules are free. The War Table in your Hideout teaches the reactive ones, for good, across your account. Its levels also add more rule slots per skill.</p>
+{{data:war-table}}
+
+<h2 id="several">Several rules on one skill</h2>
+<p>When a skill has more than one rule, <strong>all of them must pass</strong>. For example, "Only against bosses" and "When mana above 40%" means it fires only on bosses, and only with the mana to spare.</p>
+
+<h2 id="order">Which skill goes first</h2>
+<ol>
+  <li>A skill you pressed yourself goes next, ignoring its rule.</li>
+  <li>Then skills are tried by priority: High, Normal, then Low.</li>
+  <li>Within a priority, skills with a cooldown go before cooldown-free attacks.</li>
+  <li>After that, bar order breaks the tie, left to right.</li>
+  <li>If nothing can fire, you use your Default Attack.</li>
+</ol>
+<p>This is why a cooldown-free attack doesn't crowd out your guard. If two cooldown skills compete, raise the one that matters to High.</p>
+
+<h2 id="examples">Examples</h2>
+<ul>
+  <li><strong>Healing:</strong> a heal on When life below 50%.</li>
+  <li><strong>Boss wind-ups:</strong> a guard on When an enemy winds up.</li>
+  <li><strong>Breaking a channel:</strong> {{skill:war_cry}} on When an enemy channels. A wind-up rule doesn't fire for a channel.</li>
+  <li><strong>Ailments:</strong> a skill that needs a bleed on While target is affected by Bleed.</li>
+  <li><strong>Bad ground:</strong> a movement skill on While standing on, to step out at once.</li>
+</ul>
+<p>Every rule, with what it unlocks and why a skill might not fire, is in the <a href="/path-of-idle/wiki/automation-rules/">Automation rule reference</a>.</p>

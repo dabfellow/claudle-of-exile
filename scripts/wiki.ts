@@ -4,16 +4,31 @@
  *
  * Hand-written pages live in docs/wiki/*.html (an <h1> plus plain HTML); the generator wraps them in the wiki frame.
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { AFFIXES } from '../src/data/affixes';
 import { ASCENDANCIES } from '../src/data/ascendancies';
-import { BASES, UNIQUES, baseDef, attributeReq } from '../src/data/bases';
+import { BASES, UNIQUES, WEAPON_FAMILIES, baseDef, attributeReq, type BaseDef, type UniqueDef } from '../src/data/bases';
 import { CLASSES } from '../src/data/classes';
-import { ACTIVE_GEMS, SUPPORT_GEMS, activeGemDef, gemAct, gemReqLevel } from '../src/data/gems';
-import { CURRENCIES, MATERIALS } from '../src/data/materials';
-import { ACTS, MECHANIC_INFO, ZONES, type MonsterDef } from '../src/data/zones';
-import { affixRangeText, describeMod } from '../src/engine/items';
+import { TRIALS } from '../src/data/ascendancies';
+import { BOSS_TABLES, DROP_TABLES, bossTable } from '../src/data/drops';
+import { INSTILL_CONDITIONS } from '../src/data/flasks';
+import { ACTIVE_GEMS, MAX_GEM_LEVEL, RULE_LABELS, RULE_UNLOCK_NAMES, SUPPORT_GEMS, TARGET_STATUSES, activeGemDef, gemAct, gemReqLevel, gemWeapons, type ActiveGemDef, type SupportGemDef } from '../src/data/gems';
+import { OFFLINE_HAUL_CAP, STATIONS, stationDef, type StationId } from '../src/data/hideout';
+import { CURRENCIES, MATERIALS, type CurrencyDef } from '../src/data/materials';
+import { NEWS } from '../src/data/news';
+import { SKILLS, actionsFor } from '../src/data/skills';
+import { ACTS, MECHANIC_INFO, ZONES, type MonsterDef, type ZoneDef } from '../src/data/zones';
+import {
+  AILMENT_DECAY_PCT, AILMENT_THRESHOLD_PCT, BOSS_FREEZE_MS, CHILL_MS, CHILL_SLOW_PCT, FREEZE_MS, GEAR_POISON,
+  MONSTER_OWN_RES, SHOCK_MAX_PCT, SHOCK_MIN_PCT, SHOCK_MS, makeMonster,
+} from '../src/engine/combat';
+import { ATTACK_PCT_PER_LEVEL, BURN_MS, BURN_SHARE, IGNITE_MS, IGNITE_SHARE, LIFE_RESERVE_PCT, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, supportFits, weaponPctAt } from '../src/engine/gems';
+import { affixRangeText, describeMod, spawnWeight } from '../src/engine/items';
+import { CURRENCY_ART, GEM_GLYPHS, ITEM_ART, MONSTER_ART, UNIQUE_ART, ZONE_ART } from '../src/ui/assets';
+import { MEGA_CRIT_MULTI } from '../src/engine/mechanics';
+import { ATTRIBUTE_EFFECTS, RES_CAP } from '../src/engine/stats';
 
 const ROOT = join(__dirname, '..');
 const OUT = join(ROOT, 'public', 'path-of-idle', 'wiki');
@@ -24,26 +39,87 @@ const title = (s: string) => s.replace(/_/g, ' ').replace(/^./, (c) => c.toUpper
 const attrName = { str: 'Strength', dex: 'Dexterity', int: 'Intelligence' } as const;
 const secs = (ms: number) => (ms ? `${+(ms / 1000).toFixed(2)}s` : 'instant');
 
-interface Section { slug: string; name: string; blurb: string }
+const VERSION: string = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
+
+interface Section { slug: string; name: string; blurb: string; group: string; icon: string; art: string }
+const START = 'Start here';
+const CHARACTERS = 'Characters';
+const EQUIPMENT = 'Equipment';
+const WORLD = 'The world';
+const IDLE = 'Idle systems';
+const TOOLS = 'Tools';
+const UPDATES = 'Updates';
 const SECTIONS: Section[] = [
-  { slug: 'acts', name: 'Acts and areas', blurb: 'Every act, area, monster and boss.' },
-  { slug: 'skills', name: 'Skill gems', blurb: 'Active skills: cost, cooldown, level and what they do.' },
-  { slug: 'supports', name: 'Support gems', blurb: 'Supports and which skills they fit.' },
-  { slug: 'items', name: 'Item bases', blurb: 'Every weapon and armour base by slot.' },
-  { slug: 'uniques', name: 'Unique items', blurb: 'Unique items, their mods and where they drop.' },
-  { slug: 'modifiers', name: 'Modifiers', blurb: 'Every rollable modifier and its tiers.' },
-  { slug: 'currency', name: 'Currency and materials', blurb: 'Orbs, crafting materials and gathered goods.' },
-  { slug: 'classes', name: 'Classes and ascendancies', blurb: 'The seven classes and twelve ascendancies.' },
+  { slug: 'classes', name: 'Classes and ascendancies', blurb: 'The seven classes and twelve ascendancies.', group: CHARACTERS, icon: '♜', art: 'portraits/craftpix-con1.png' },
+  { slug: 'skills', name: 'Skill gems', blurb: 'Active skills: cost, cooldown, level and what they do.', group: CHARACTERS, icon: '✦', art: 'items/weapons/quintino-q34.png' },
+  { slug: 'supports', name: 'Support gems', blurb: 'Supports and which skills they fit.', group: CHARACTERS, icon: '◇', art: 'items/materials/woshi-gem.png' },
+  { slug: 'damage', name: 'Damage and ailments', blurb: 'Damage types, how a hit is worked out, and every ailment formula.', group: CHARACTERS, icon: '✹', art: 'items/weapons/weapons30-1.png' },
+  { slug: 'items', name: 'Item bases', blurb: 'Every weapon and armour base by slot.', group: EQUIPMENT, icon: '⛨', art: 'items/armor/set-30-helmet.png' },
+  { slug: 'uniques', name: 'Unique items', blurb: 'Unique items, their mods and where they drop.', group: EQUIPMENT, icon: '♛', art: 'items/weapons/pack3-bloodthirst.png' },
+  { slug: 'modifiers', name: 'Modifiers', blurb: 'Every rollable modifier and its tiers.', group: EQUIPMENT, icon: '⚒', art: 'items/currency/sn-blessed-orb.png' },
+  { slug: 'currency', name: 'Currency and materials', blurb: 'Orbs, crafting materials and gathered goods.', group: EQUIPMENT, icon: '◈', art: 'items/currency/codespree-copper-disk.png' },
+  { slug: 'acts', name: 'Acts and areas', blurb: 'Every act, area, monster and boss.', group: WORLD, icon: '⚔', art: 'items/weapons/quintino-q1.png' },
+  { slug: 'monsters', name: 'Monsters and bosses', blurb: 'Every monster and boss, with level, life and damage.', group: WORLD, icon: '☠', art: 'portraits/craftpix-con6.png' },
 ];
+/**
+ * Pages in the menu that aren't written yet. Adding docs/wiki/NN-<slug>.html fills one: the hand-written page takes
+ * its place in the menu at the same address.
+ */
+const PLANNED: Omit<Section, 'art'>[] = [
+  { slug: 'beginners-checklist', name: "Beginner's checklist", group: START, icon: '☑', blurb: 'The first things to do with a new character.' },
+  { slug: 'faq', name: 'Frequently asked questions', group: START, icon: '?', blurb: 'Quick answers to common questions.' },
+  { slug: 'builds', name: 'Builds and playstyles', group: CHARACTERS, icon: '✧', blurb: 'Starter builds and how each one plays.' },
+  { slug: 'glossary', name: 'Glossary', group: CHARACTERS, icon: 'Aa', blurb: "What the game's terms mean." },
+  { slug: 'walkthrough', name: 'Campaign walkthrough', group: WORLD, icon: '➜', blurb: 'Every area in order, with its boss and rewards.' },
+  { slug: 'boss-prep', name: 'Boss preparation', group: WORLD, icon: '☗', blurb: 'What to bring, and how to answer each mechanic.' },
+  { slug: 'loot', name: 'Loot and drop tables', group: WORLD, icon: '❖', blurb: 'What drops where.' },
+  { slug: 'progression', name: 'Unlocks and progression', group: WORLD, icon: '➤', blurb: 'What opens when as you play.' },
+  { slug: 'automation-basics', name: 'Automation basics', group: IDLE, icon: '⚙', blurb: 'How to make your skills fire on their own.' },
+  { slug: 'automation-rules', name: 'Automation rule reference', group: IDLE, icon: '☰', blurb: 'Every rule, what unlocks it, and why a skill might not fire.' },
+  { slug: 'offline', name: 'Offline progression', group: IDLE, icon: '☾', blurb: 'What keeps going while you are away, and what ends it.' },
+  { slug: 'gathering', name: 'Gathering and production', group: IDLE, icon: '⛏', blurb: 'Gathering skills, resources and what they make.' },
+  { slug: 'farming', name: 'Farming strategies', group: IDLE, icon: '⟳', blurb: 'Ways to farm, and when each one makes sense.' },
+  { slug: 'item-comparison', name: 'Item comparison', group: TOOLS, icon: '⚖', blurb: 'Compare two items side by side.' },
+  { slug: 'drop-calculator', name: 'Drop probability calculator', group: TOOLS, icon: '%', blurb: 'The chance of at least one drop after a number of tries.' },
+  { slug: 'crafting-planner', name: 'Crafting planner', group: TOOLS, icon: '⚒', blurb: 'Pick a recipe and see the materials you need.' },
+  { slug: 'farming-planner', name: 'XP and farming planner', group: TOOLS, icon: '⧗', blurb: 'Estimate progress from your own rates.' },
+  { slug: 'rule-builder', name: 'Automation rule builder', group: TOOLS, icon: '⚙', blurb: 'Compose rules and see what they will do.' },
+  { slug: 'build-planner', name: 'Build planner', group: TOOLS, icon: '✎', blurb: 'Plan skills, supports and equipment.' },
+  { slug: 'patch-notes', name: 'Patch notes', group: UPDATES, icon: '✉', blurb: 'What changed in each version.' },
+  { slug: 'data-version', name: 'Data version', group: UPDATES, icon: '#', blurb: 'Which game version this wiki was built from.' },
+  { slug: 'report', name: 'Report incorrect information', group: UPDATES, icon: '!', blurb: 'Tell us when something here is wrong.' },
+];
+const NAV_GROUPS = [CHARACTERS, EQUIPMENT, WORLD, IDLE, TOOLS, UPDATES];
+/** Game art the home page shows, copied next to the wiki pages. */
+const GUIDE_ART = 'items/armor/pack3-unblinking_tome.png';
+const HERO_ART = 'zones/gegx-forest-night.webp';
+const usedArt = new Set<string>();
+const artUrl = (rel: string) => {
+  usedArt.add(rel);
+  return `${BASE_URL}art/${rel}`;
+};
+/** The wiki's address for a file from src/ui/assets.ts, or '' when there's no art. */
+const packArt = (file: string | undefined) => (file ? artUrl(relative(join(ROOT, 'src', 'assets'), fileURLToPath(file)).replace(/\\/g, '/')) : '');
 
-const search: { t: string; u: string; k: string }[] = [];
-const index = (t: string, u: string, k: string) => search.push({ t, u, k });
+const search: { t: string; u: string; k: string; c: string; s?: string; i?: string }[] = [];
+const index = (t: string, u: string, k: string, s?: string, i?: string) =>
+  search.push({ t, u, k, c: k.startsWith('boss') ? 'Boss' : u.includes('/areas/') ? 'Area' : SECTIONS.find((x) => u.includes(`/${x.slug}/`))?.name ?? 'Guide', s, i: i || undefined });
 
-function frame(slug: string, pageTitle: string, body: string): string {
+function frame(slug: string, pageTitle: string, body: string, parent?: { slug: string; name: string }): string {
+  const here = parent?.slug ?? slug;
+  const written = (to: string) => !PLANNED.some((p) => p.slug === to) || extraPages.some((p) => p.slug === to);
+  const link = (to: string, name: string, icon: string) =>
+    `<a class="navlink${here === to ? ' active' : ''}${written(to) ? '' : ' stub'}" href="${BASE_URL}${to === 'index' ? '' : `${to}/`}"><span class="ico">${icon}</span>${esc(name)}</a>`;
+  const group = (label: string, links: string[]) =>
+    `<details class="navgroup" open data-group="${esc(label)}"><summary class="navlabel">${esc(label)}</summary>${links.join('\n')}</details>`;
+  const planned = (label: string) => PLANNED.filter((s) => s.group === label).map((s) => link(s.slug, s.name, s.icon));
   const nav = [
-    `<a href="${BASE_URL}"${slug === 'index' ? ' class="on"' : ''}>Home</a>`,
-    ...extraPages.map((p) => `<a href="${BASE_URL}${p.slug}/"${slug === p.slug ? ' class="on"' : ''}>${esc(p.name)}</a>`),
-    ...SECTIONS.map((s) => `<a href="${BASE_URL}${s.slug}/"${slug === s.slug ? ' class="on"' : ''}>${esc(s.name)}</a>`),
+    group(START, [
+      link('index', 'Codex home', '⌂'),
+      ...extraPages.filter((p) => !PLANNED.some((s) => s.slug === p.slug)).map((p) => link(p.slug, p.name, '✧')),
+      ...planned(START),
+    ]),
+    ...NAV_GROUPS.map((label) => group(label, [...SECTIONS.filter((s) => s.group === label).map((s) => link(s.slug, s.name, s.icon)), ...planned(label)])),
   ].join('\n');
   return `<!doctype html>
 <html lang="en">
@@ -52,35 +128,34 @@ function frame(slug: string, pageTitle: string, body: string): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(pageTitle)} - Path of Idle Wiki</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="${BASE_URL}wiki.css">
 </head>
 <body>
-<header class="top">
-  <a class="brand" href="${BASE_URL}">PATH OF IDLE <span>WIKI</span></a>
-  <input id="q" type="search" placeholder="Search this wiki" autocomplete="off">
-  <a class="play" href="/path-of-idle/">Play the game</a>
-</header>
-<div id="results" hidden></div>
-<div class="hero">
-  <div class="hero-in">
-    <a class="hero-name" href="${BASE_URL}">Path of Idle Wiki</a>
-    <nav>${nav}</nav>
-  </div>
-</div>
-<div class="wrap">
-<main>
-<div class="crumbs"><a href="${BASE_URL}">Path of Idle Wiki</a>${slug === 'index' ? '' : ` <i>&rsaquo;</i> ${esc(pageTitle)}`}</div>
-<article>
-${body}
-<div class="cats"><b>Category:</b> <a href="${BASE_URL}">${slug === 'index' ? 'Main page' : esc(pageTitle)}</a></div>
-</article>
-</main>
-<aside>
-  <div class="rail" id="toc" hidden><h4>Contents</h4><ol></ol></div>
-  <div class="rail"><h4>Explore</h4><ul>${SECTIONS.map((s) => `<li><a href="${BASE_URL}${s.slug}/">${esc(s.name)}</a></li>`).join('')}</ul></div>
-  <div class="rail"><h4>Play now</h4><p>Fed up reading? <a href="/path-of-idle/">Jump into the game</a>.</p></div>
+<div class="app">
+<aside class="sidebar" id="sidebar">
+  <a class="brand" href="${BASE_URL}"><span class="sigil">✦</span><span><b>PATH OF IDLE</b><small>THE EXILE'S CODEX</small></span></a>
+  <nav>${nav}</nav>
+  <div class="sidebar-foot">An archive of all things lost, forged and found.<br><br>Game data version <b>${esc(VERSION)}</b></div>
 </aside>
+<div class="main">
+<header class="topbar">
+  <button id="menu" type="button" aria-label="Open the menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+  <div class="crumbs"><a href="${BASE_URL}">The archive</a><i>&rsaquo;</i>${parent ? `<a href="${BASE_URL}${parent.slug}/">${esc(parent.name)}</a><i>&rsaquo;</i>` : ''}${slug === 'index' ? 'Codex home' : esc(pageTitle)}</div>
+  <div class="toptools">
+    <input id="q" type="search" placeholder="Search the codex  ( / )" aria-label="Search the wiki" autocomplete="off">
+    <a class="play" href="/path-of-idle/">▶ PLAY GAME</a>
+    <div id="results" hidden></div>
+  </div>
+</header>
+<main class="content">
+${slug === 'index' ? body : `<div class="page"><article>
+${body}
+</article>
+<div class="side"><div class="rail" id="toc" hidden><h4>Contents</h4><ol></ol></div></div></div>`}
+<footer class="footer"><span>PATH OF IDLE · THE EXILE'S CODEX</span><span>Generated from game data, version ${esc(VERSION)}. Skill icons from game-icons.net (CC BY 3.0).</span><span><a href="${BASE_URL}report/">Report an error</a> &middot; <a href="#">Back to top ↑</a></span></footer>
+</main>
+</div>
 </div>
 <script src="${BASE_URL}wiki.js"></script>
 </body>
@@ -111,34 +186,258 @@ if (existsSync(HAND)) {
   }
 }
 
-// ---------- acts and areas ----------
-const dmgName: Record<string, string> = { phys: 'Physical', fire: 'Fire', cold: 'Cold', lightning: 'Lightning', chaos: 'Chaos' };
+// ---------- entries: every gem, item, area and monster has its own page ----------
+const dmgName: Record<string, string> = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning', chaos: 'Chaos' };
+const SPOILER_ACT = 4;
+const OPEN_ZONES = ZONES.filter((z) => ACTS.find((a) => a.n === z.act)?.open);
+const ZONE_OF = new Map(OPEN_ZONES.flatMap((z) => [...z.monsters, z.boss].map((m) => [m.id, z] as const)));
+const isBoss = (m: MonsterDef) => ZONE_OF.get(m.id)?.boss.id === m.id;
+
+const U = {
+  skill: (id: string) => `${BASE_URL}skills/${id}/`,
+  support: (id: string) => `${BASE_URL}supports/${id}/`,
+  item: (id: string) => `${BASE_URL}items/${id}/`,
+  unique: (id: string) => `${BASE_URL}uniques/${id}/`,
+  currency: (id: string) => `${BASE_URL}currency/${id}/`,
+  area: (id: string) => `${BASE_URL}areas/${id}/`,
+  monster: (id: string) => `${BASE_URL}monsters/${id}/`,
+};
+
+/** What an entry's links, search result and hover card all show, from one place. */
+interface Entity { name: string; kind: string; art: string; pixel?: boolean; text: string }
+const ENTITIES = new Map<string, Entity>();
+const ent = (url: string, label?: string) => `<a class="ent" href="${url}">${esc(label ?? ENTITIES.get(url)!.name)}</a>`;
+const entList = (urls: string[]) => `<div class="linklist">${urls.map((u) => ent(u)).join('')}</div>`;
+const chip = (text: string, cls = '') => `<span class="chip ${cls}">${esc(text)}</span>`;
+const facts = (rows: [string, string][]) =>
+  `<dl class="facts">${rows.filter(([, v]) => v).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join('')}</dl>`;
+const spoiler = (label: string, html: string) => `<details class="spoiler"><summary>Spoiler: ${esc(label)} (click to show)</summary>${html}</details>`;
+const baseStats = (b: BaseDef) =>
+  [
+    b.phys ? `${b.phys[0]}-${b.phys[1]} physical` : '',
+    b.crit ? `${b.crit}% crit` : '',
+    b.armour ? `${b.armour} armour` : '',
+    b.evasion ? `${b.evasion} evasion` : '',
+    b.energyShield ? `${b.energyShield} energy shield` : '',
+  ].filter(Boolean).join(', ');
+const uniqueMods = (u: UniqueDef) => u.mods.map((m) => describeMod({ affixId: m.affixId, values: m.values, tier: -1 } as never));
+
+function registerEntities() {
+  for (const g of ACTIVE_GEMS) ENTITIES.set(U.skill(g.id), { name: g.name, kind: 'Skill gem', art: packArt(GEM_GLYPHS[g.id]), text: g.desc });
+  for (const g of SUPPORT_GEMS) ENTITIES.set(U.support(g.id), { name: g.name, kind: g.signatureFor ? 'Signature support' : 'Support gem', art: packArt(GEM_GLYPHS[g.id]), text: g.desc });
+  for (const b of BASES) ENTITIES.set(U.item(b.id), { name: b.name, kind: `${title(b.slot)}, level ${b.reqLevel}`, art: packArt(ITEM_ART[b.id]), text: baseStats(b) });
+  for (const u of UNIQUES) {
+    ENTITIES.set(U.unique(u.id), { name: u.name, kind: `Unique ${baseDef(u.baseId).name}`, art: packArt(UNIQUE_ART[u.id] ?? ITEM_ART[u.baseId]), text: uniqueMods(u).join('; ') });
+  }
+  for (const c of CURRENCIES) ENTITIES.set(U.currency(c.id), { name: c.name, kind: 'Currency', art: packArt(CURRENCY_ART[c.id]), text: c.desc });
+  for (const z of OPEN_ZONES) {
+    ENTITIES.set(U.area(z.id), { name: z.name, kind: `Act ${z.act} area, level ${z.levelRange[0]}-${z.levelRange[1]}`, art: packArt(ZONE_ART[z.art ?? z.id]), text: z.desc });
+    for (const m of [...z.monsters, z.boss]) {
+      ENTITIES.set(U.monster(m.id), { name: m.name, kind: `${isBoss(m) ? 'Boss' : 'Monster'}, level ${m.level}`, art: packArt(MONSTER_ART[m.id]), pixel: true, text: `${dmgName[m.dmgType]} damage. Found in ${z.name}.` });
+    }
+  }
+}
+
+/** Write one entry's page, with its heading, and list it in the search. */
+function entry(sectionSlug: string, url: string, keywords: string, chips: string, body: string, banner = '') {
+  const section = SECTIONS.find((s) => s.slug === sectionSlug) ?? { slug: 'acts', name: 'Acts and areas' };
+  const e = ENTITIES.get(url)!;
+  const pic = e.art && !banner
+    ? `<img class="entry-art${e.pixel ? ' pixel' : ''}" src="${e.art}" alt="">`
+    : banner ? '' : `<span class="entry-art noart">${esc(e.name[0])}</span>`;
+  const head = `${banner ? `<img class="entry-banner" src="${banner}" alt="">` : ''}<div class="entry-head">${pic}<div><h1>${esc(e.name)}</h1><div class="chips">${chips}</div></div></div>`;
+  write(`${url.slice(BASE_URL.length)}index.html`, frame(url, e.name, head + body, section));
+  index(e.name, url, keywords, e.text, e.art);
+}
+
+const openZonesText = (zones: ZoneDef[]) => entList(zones.map((z) => U.area(z.id)));
+
+function skillEntry(g: ActiveGemDef) {
+  const e = g.effect;
+  const lvl = (n: number) => {
+    if (e.weaponPct) return `${Math.round(weaponPctAt(g, n))}% of weapon damage`;
+    if (!e.base) return '';
+    const [lo, hi] = spellBaseAt(g, n);
+    return `${lo}-${hi} ${dmgName[e.type ?? 'fire'].toLowerCase()} damage`;
+  };
+  const rule = g.defaultRule;
+  const label = RULE_LABELS[rule.when];
+  const status = TARGET_STATUSES.find((t) => t.id === rule.status)?.label;
+  const ruleText = `${label.label}${rule.value != null ? ` ${rule.value}${label.unit ?? ''}` : ''}${status ? ` ${status}` : ''}`;
+  const weapons = gemWeapons(g);
+  const fits = SUPPORT_GEMS.filter((s) => supportFits(s, g));
+  const starts = CLASSES.filter((c) => c.starterGems.includes(g.id));
+  const near = ACTIVE_GEMS.filter((o) => o.id !== g.id && o.role === g.role && o.attr === g.attr).sort((a, b) => gemReqLevel(a.id) - gemReqLevel(b.id)).slice(0, 8);
+  entry('skills', U.skill(g.id), `skill gem ${g.tags.join(' ')}`,
+    chip(attrName[g.attr], g.attr) + g.tags.map((t) => chip(t)).join(''),
+    `<p>${esc(g.desc)}</p>
+${facts([
+    ['Required level', String(gemReqLevel(g.id))],
+    ['First appears', `Act ${gemAct(g.id)}`],
+    ['Mana cost', String(g.manaCost)],
+    ['Cooldown', secs(g.cooldownMs)],
+    ['Attack or cast time', secs(g.timeMs)],
+    ['Damage at gem level 1', esc(lvl(1))],
+    [`Damage at gem level ${MAX_GEM_LEVEL}`, esc(lvl(MAX_GEM_LEVEL))],
+    ['Weapons', esc(weapons ? weapons.map((w) => WEAPON_FAMILIES[w].name).join(', ') : 'Any')],
+    ['Suggested rule', esc(ruleText)],
+    ['Starting skill for', esc(starts.map((c) => c.name).join(', '))],
+  ])}
+<h2 id="supports">Supports that fit (${fits.length})</h2>${fits.length ? entList(fits.map((s) => U.support(s.id))) : '<p>No support fits this skill.</p>'}
+${near.length ? `<h2 id="related">Related skills</h2>${entList(near.map((o) => U.skill(o.id)))}` : ''}`);
+}
+
+function supportFitsText(g: SupportGemDef) {
+  if (g.signatureFor) return `Only ${activeGemDef(g.signatureFor).name}`;
+  return [g.fits.join(' or '), g.needs?.length ? `must also be ${g.needs.join(', ')}` : '', g.not?.length ? `not ${g.not.join(', ')}` : ''].filter(Boolean).join('; ');
+}
+
+function supportEntry(g: SupportGemDef) {
+  const fits = ACTIVE_GEMS.filter((a) => supportFits(g, a));
+  entry('supports', U.support(g.id), 'support gem',
+    chip(attrName[g.attr], g.attr) + (g.signatureFor ? chip('Signature', 'gold') : ''),
+    `<p>${esc(g.desc)}</p>
+${facts([
+    ['Required level', String(gemReqLevel(g.id))],
+    ['First appears', `Act ${gemAct(g.id)}`],
+    ['Fits', esc(supportFitsText(g))],
+  ])}
+<h2 id="skills">Skills it fits (${fits.length})</h2>${entList(fits.map((a) => U.skill(a.id)))}`);
+}
+
+function rollableTable(b: BaseDef) {
+  const pool = AFFIXES.filter((a) => a.tiers.length && spawnWeight(a, b) > 0);
+  const sum = (kind: string) => pool.filter((a) => a.kind === kind).reduce((n, a) => n + spawnWeight(a, b), 0);
+  const rows = [...pool].sort((a, c) => a.kind.localeCompare(c.kind) || spawnWeight(c, b) - spawnWeight(a, b)).map((a) => {
+    const best = a.tiers.length - 1;
+    return [
+      `<a href="${BASE_URL}modifiers/#m-${a.id}">${esc(a.text.replace(/\{\d\}/g, '#'))}</a>`,
+      a.kind === 'prefix' ? 'Prefix' : 'Suffix',
+      `${((spawnWeight(a, b) / sum(a.kind)) * 100).toFixed(1)}%`,
+      esc(affixRangeText(a.id, 0)),
+      esc(affixRangeText(a.id, best)),
+      String(a.tiers[best].ilvl),
+    ];
+  });
+  return rows.length ? table(['Modifier', 'Kind', 'Chance within its kind', 'Lowest tier', 'Best tier', 'Best needs item level'], rows) : '<p>No modifiers roll on this base.</p>';
+}
+
+function itemEntry(b: BaseDef) {
+  const uniques = UNIQUES.filter((u) => u.baseId === b.id);
+  const similar = BASES.filter((o) => o.id !== b.id && o.slot === b.slot && o.family === b.family).sort((x, y) => Math.abs(x.reqLevel - b.reqLevel) - Math.abs(y.reqLevel - b.reqLevel)).slice(0, 6);
+  const first = OPEN_ZONES.find((z) => z.levelRange[1] >= b.reqLevel);
+  const req = Object.entries(attributeReq(b)).map(([k, v]) => `${v} ${attrName[k as keyof typeof attrName]}`).join(', ');
+  entry('items', U.item(b.id), `base ${b.slot}`,
+    chip(title(b.slot)) + (b.family ? chip(WEAPON_FAMILIES[b.family].name) : '') + (b.twoHanded ? chip('Two-handed') : ''),
+    `${facts([
+      ['Required level', String(b.reqLevel)],
+      ['Stats', esc(baseStats(b))],
+      ['Attack speed', b.speed ? `+${b.speed}%` : ''],
+      ['Attributes', esc(req)],
+      ['Built-in', esc((b.implicits ?? []).map((i) => i.text).join('; '))],
+      ['Drops from', first ? `Item level ${b.reqLevel} and up. First possible around ${ent(U.area(first.id))}` : ''],
+    ])}
+<h2 id="mods">Modifiers that can roll</h2><p>Chances are for a pick among the modifiers of that kind on this base. Item level also limits which tiers appear.</p>${rollableTable(b)}
+${uniques.length ? `<h2 id="uniques">Uniques on this base</h2>${entList(uniques.map((u) => U.unique(u.id)))}` : ''}
+${similar.length ? `<h2 id="similar">Similar bases</h2>${entList(similar.map((o) => U.item(o.id)))}` : ''}`);
+}
+
+function uniqueEntry(u: UniqueDef) {
+  const zones = OPEN_ZONES.filter((z) => z.uniques.includes(u.id));
+  const base = baseDef(u.baseId);
+  entry('uniques', U.unique(u.id), `unique ${base.name}`,
+    chip('Unique', 'gold') + chip(title(base.slot)) + (u.noTrade ? chip("Can't be traded") : ''),
+    `<ul>${uniqueMods(u).map((m) => `<li>${esc(m)}</li>`).join('')}</ul><p class="quote">${esc(u.flavour)}</p>
+${facts([['Base', ent(U.item(base.id))], ['Required level', String(base.reqLevel)]])}
+${zones.length ? `<h2 id="drops">Where it drops</h2>${spoiler('drop areas', openZonesText(zones))}` : ''}`);
+}
+
+function currencyEntry(c: CurrencyDef) {
+  const first = OPEN_ZONES.find((z) => z.tier >= c.minTier);
+  entry('currency', U.currency(c.id), 'currency orb', chip('Currency', 'gold'),
+    `<p>${esc(c.desc)}</p>
+${facts([
+    ['Drops from', c.dropWeight && first ? `Area tier ${c.minTier} and up, first in ${ent(U.area(first.id))}` : 'Does not drop'],
+    ['Sell value', String(c.value)],
+  ])}`);
+}
 
 function monsterRow(m: MonsterDef): string[] {
-  return [esc(m.name), String(m.level), esc(dmgName[m.dmgType] ?? m.dmgType), esc(m.basic.name)];
+  return [ent(U.monster(m.id)), String(m.level), esc(dmgName[m.dmgType]), esc(m.basic.name)];
 }
 
 function bossBlock(b: MonsterDef): string {
   const mech = (b.mechanics ?? []).map((k) => `<li><strong>${esc(MECHANIC_INFO[k].name)}</strong>: ${esc(MECHANIC_INFO[k].tip)}</li>`).join('');
-  return `<p><strong>Boss: ${esc(b.name)}</strong> (level ${b.level}, ${esc(dmgName[b.dmgType] ?? b.dmgType)})</p>${mech ? `<ul>${mech}</ul>` : ''}`;
+  return `<p><strong>Boss: ${ent(U.monster(b.id))}</strong> (level ${b.level}, ${esc(dmgName[b.dmgType])})</p>${mech ? spoiler('boss mechanics', `<ul>${mech}</ul>`) : ''}`;
+}
+
+function areaEntry(z: ZoneDef, i: number) {
+  const before = z.requires?.after ?? (i > 0 ? [OPEN_ZONES[i - 1].id] : []);
+  const opens = OPEN_ZONES.filter((o, n) => (o.requires?.after ?? (n > 0 ? [OPEN_ZONES[n - 1].id] : [])).includes(z.id));
+  const gems = ACTIVE_GEMS.filter((g) => gemAct(g.id) === z.act && gemReqLevel(g.id) >= z.levelRange[0] && gemReqLevel(g.id) <= z.levelRange[1]);
+  const uniques = z.uniques.filter((id) => UNIQUES.some((u) => u.id === id));
+  const body = `<p>${esc(z.desc)}</p>
+${facts([
+    ['Act', `<a href="${BASE_URL}acts/#act-${z.act}">Act ${z.act}: ${esc(ACTS.find((a) => a.n === z.act)!.name)}</a>`],
+    ['Monster levels', `${z.levelRange[0]}-${z.levelRange[1]}`],
+    ['Boss appears after', `${z.bossEvery} kills`],
+    ['Monsters per wave', `${z.packSize[0]}-${z.packSize[1]}`],
+    ['Comes after', before.filter((id) => ENTITIES.has(U.area(id))).map((id) => ent(U.area(id))).join(', ')],
+    ['Also needs', z.requires?.bosses ? `${z.requires.bosses} of this act's bosses beaten` : ''],
+    ['Leads to', opens.map((o) => ent(U.area(o.id))).join(', ')],
+  ])}
+<h2 id="monsters">Monsters</h2>${table(['Monster', 'Level', 'Damage', 'Attack'], z.monsters.map(monsterRow))}
+<h2 id="boss">Boss</h2>${bossBlock(z.boss)}
+${uniques.length ? `<h2 id="uniques">Uniques that drop here</h2>${spoiler('drops', entList(uniques.map(U.unique)))}` : ''}
+${gems.length ? `<h2 id="skills">Skills for this level</h2>${entList(gems.map((g) => U.skill(g.id)))}` : ''}`;
+  entry('acts', U.area(z.id), `area act ${z.act} ${z.name} ${z.boss.name}`, chip(`Act ${z.act}`, 'gold') + chip(`Level ${z.levelRange[0]}-${z.levelRange[1]}`) + (z.actBoss ? chip('Act boss') : ''),
+    z.act >= SPOILER_ACT ? spoiler(`Act ${z.act}`, body) : body, ENTITIES.get(U.area(z.id))!.art);
+}
+
+function monsterEntry(m: MonsterDef) {
+  const z = ZONE_OF.get(m.id)!;
+  const boss = isBoss(m);
+  const made = makeMonster(m, boss);
+  const res = (['fire', 'cold', 'light', 'chaos'] as const).filter((t) => made.res[t]).map((t) => `${made.res[t]}% ${dmgName[t].toLowerCase()}`).join(', ');
+  const casts = [m.slam, m.nova, m.channel].filter(Boolean).map((c) => `${c!.name} (${secs(c!.ms)} wind-up)`).join(', ');
+  const mech = (m.mechanics ?? []).map((k) => `<li><strong>${esc(MECHANIC_INFO[k].name)}</strong>: ${esc(MECHANIC_INFO[k].tip)}</li>`).join('');
+  const others = [...z.monsters, z.boss].filter((o) => o.id !== m.id);
+  const body = `${facts([
+    ['Found in', ent(U.area(z.id))],
+    ['Level', String(m.level)],
+    ['Life', made.maxLife.toLocaleString('en')],
+    ['Damage per hit', made.damage.toLocaleString('en')],
+    ['Damage type', dmgName[m.dmgType]],
+    ['Attack', `${esc(m.basic.name)} (${m.basic.kind}, ${secs(m.basic.ms)})`],
+    ['Resistances', res || 'None'],
+    ['Big moves', esc(casts)],
+  ])}
+${mech ? `<h2 id="mechanics">Mechanics</h2>${spoiler('boss mechanics', `<ul>${mech}</ul>`)}` : ''}
+<h2 id="also">Also in this area</h2>${entList(others.map((o) => U.monster(o.id)))}`;
+  entry('monsters', U.monster(m.id), `${boss ? 'boss' : 'monster'} ${z.name}`, chip(boss ? 'Boss' : 'Monster', boss ? 'gold' : '') + chip(`Level ${m.level}`) + chip(dmgName[m.dmgType]),
+    z.act >= SPOILER_ACT ? spoiler(`Act ${z.act}`, body) : body);
+}
+
+function monstersPage(): string {
+  const rows = OPEN_ZONES.flatMap((z) => [...z.monsters, z.boss].map((m) => {
+    const made = makeMonster(m, isBoss(m));
+    return [ent(U.monster(m.id)), isBoss(m) ? 'Boss' : 'Monster', String(m.level), made.maxLife.toLocaleString('en'), made.damage.toLocaleString('en'), dmgName[m.dmgType], `Act ${z.act}`, ent(U.area(z.id))];
+  }));
+  return `<h1>Monsters and bosses</h1><p>Life and damage are for a single monster at full strength. Packs split these between their members.</p>${table(['Name', 'Kind', 'Level', 'Life', 'Damage', 'Type', 'Act', 'Area'], rows)}`;
 }
 
 function actsPage(): string {
   let body = `<h1>Acts and areas</h1><p>Each act is a chain of areas. Beating an area's boss opens the road onward. Levels are monster levels.</p>`;
-  const uniqueName = (id: string) => UNIQUES.find((u) => u.id === id)?.name ?? id;
   for (const act of ACTS.filter((a) => a.open)) {
-    const zones = ZONES.filter((z) => z.act === act.n);
     body += `<h2 id="act-${act.n}">Act ${act.n}: ${esc(act.name)}</h2>`;
-    for (const z of zones) {
-      index(z.name, `${BASE_URL}acts/#${z.id}`, `area act ${act.n} ${z.name} ${z.boss.name}`);
-      index(z.boss.name, `${BASE_URL}acts/#${z.id}`, `boss ${z.name}`);
-      body += `<section class="card" id="${z.id}"><h3>${esc(z.name)} <small>level ${z.levelRange[0]}-${z.levelRange[1]}${z.actBoss ? ' &middot; act boss' : ''}</small></h3>
-<p>${esc(z.desc)}</p>
+    for (const z of OPEN_ZONES.filter((o) => o.act === act.n)) {
+      const inner = `<p>${esc(z.desc)}</p>
 ${table(['Monster', 'Level', 'Damage', 'Attack'], z.monsters.map(monsterRow))}
 ${bossBlock(z.boss)}
-<p class="meta">Boss appears after ${z.bossEvery} kills.${z.uniques.length ? ` Uniques: ${z.uniques.map((u) => `<a href="${BASE_URL}uniques/#${u}">${esc(uniqueName(u))}</a>`).join(', ')}.` : ''}</p></section>`;
+<p class="meta">Boss appears after ${z.bossEvery} kills.</p>`;
+      body += `<section class="card" id="${z.id}"><h3>${ent(U.area(z.id))} <small>level ${z.levelRange[0]}-${z.levelRange[1]}${z.actBoss ? ' &middot; act boss' : ''}</small></h3>${act.n >= SPOILER_ACT ? spoiler(`Act ${act.n}`, inner) : inner}</section>`;
     }
-    if (act.outro) body += `<p class="quote">${esc(act.outro)}</p>`;
+    if (act.outro) body += act.n >= SPOILER_ACT ? spoiler(`how Act ${act.n} ends`, `<p class="quote">${esc(act.outro)}</p>`) : `<p class="quote">${esc(act.outro)}</p>`;
   }
   return body;
 }
@@ -146,9 +445,8 @@ ${bossBlock(z.boss)}
 // ---------- gems ----------
 function skillsPage(): string {
   const rows = [...ACTIVE_GEMS].sort((a, b) => gemReqLevel(a.id) - gemReqLevel(b.id) || a.name.localeCompare(b.name)).map((g) => {
-    index(g.name, `${BASE_URL}skills/#${g.id}`, `skill gem ${g.tags.join(' ')}`);
     return [
-      `<span id="${g.id}"></span><strong>${esc(g.name)}</strong>`,
+      `<span id="${g.id}"></span>${ent(U.skill(g.id))}`,
       String(gemReqLevel(g.id)),
       String(gemAct(g.id)),
       esc(attrName[g.attr]),
@@ -167,11 +465,11 @@ function skillsPage(): string {
 
 function supportsPage(): string {
   const rows = [...SUPPORT_GEMS].sort((a, b) => gemReqLevel(a.id) - gemReqLevel(b.id) || a.name.localeCompare(b.name)).map((g) => {
-    index(g.name, `${BASE_URL}supports/#${g.id}`, 'support gem');
     const fits = g.signatureFor ? `Only ${esc(activeGemDef(g.signatureFor).name)}` : esc([...g.fits, ...(g.needs ? g.needs.map((t) => `+${t}`) : [])].join(', ') || 'any');
-    return [`<span id="${g.id}"></span><strong>${esc(g.name)}</strong>`, String(gemReqLevel(g.id)), esc(attrName[g.attr]), fits, esc(g.desc)];
+    const skills = ACTIVE_GEMS.filter((a) => supportFits(g, a)).map((a) => a.name).join('|');
+    return [`<span id="${g.id}" data-skills="${esc(skills)}"></span>${ent(U.support(g.id))}`, String(gemReqLevel(g.id)), esc(attrName[g.attr]), fits, esc(g.desc)];
   });
-  return `<h1>Support gems</h1><p>A support fits a skill that has any of the listed tags. Signature supports fit one skill only.</p>${table(
+  return `<h1>Support gems</h1><p>A support fits a skill that has any of the listed tags. Signature supports fit one skill only. Pick a skill below to see only the supports that fit it, using the game's own rule.</p>${table(
     ['Support', 'Level', 'Attribute', 'Fits', 'What it does'],
     rows,
   )}`;
@@ -184,16 +482,8 @@ function itemsPage(): string {
   let body = `<h1>Item bases</h1><p>The base decides an item's starting stats and what level it can drop at. Modifiers are added on top.</p>`;
   for (const [slot, list] of bySlot) {
     const rows = [...list].sort((a, b) => a.reqLevel - b.reqLevel).map((b) => {
-      index(b.name, `${BASE_URL}items/#${b.id}`, `base ${slot}`);
-      const stats = [
-        b.phys ? `${b.phys[0]}-${b.phys[1]} physical` : '',
-        b.crit ? `${b.crit}% crit` : '',
-        b.armour ? `${b.armour} armour` : '',
-        b.evasion ? `${b.evasion} evasion` : '',
-        b.energyShield ? `${b.energyShield} energy shield` : '',
-      ].filter(Boolean).join(', ');
       const req = Object.entries(attributeReq(b)).map(([k, v]) => `${v} ${k}`).join(', ');
-      return [`<span id="${b.id}"></span><strong>${esc(b.name)}</strong>`, String(b.reqLevel), esc(stats), esc(req), esc((b.implicits ?? []).map((i) => i.text).join('; '))];
+      return [`<span id="${b.id}"></span>${ent(U.item(b.id))}`, String(b.reqLevel), esc(baseStats(b)), esc(req), esc((b.implicits ?? []).map((i) => i.text).join('; '))];
     });
     body += `<h2>${esc(title(slot))}</h2>${table(['Base', 'Level', 'Stats', 'Attributes', 'Built-in'], rows)}`;
   }
@@ -201,12 +491,10 @@ function itemsPage(): string {
 }
 
 function uniquesPage(): string {
-  const dropsIn = (id: string) => ZONES.filter((z) => z.uniques.includes(id)).map((z) => z.name);
   const cards = UNIQUES.map((u) => {
-    index(u.name, `${BASE_URL}uniques/#${u.id}`, `unique ${baseDef(u.baseId).name}`);
-    const mods = u.mods.map((m) => `<li>${esc(describeMod({ affixId: m.affixId, values: m.values, tier: -1 } as never))}</li>`).join('');
-    const where = dropsIn(u.id);
-    return `<section class="card" id="${u.id}"><h3>${esc(u.name)} <small>${esc(baseDef(u.baseId).name)}, level ${baseDef(u.baseId).reqLevel}</small></h3><ul>${mods}</ul><p class="quote">${esc(u.flavour)}</p>${where.length ? `<p class="meta">Drops in: ${esc(where.join(', '))}</p>` : ''}</section>`;
+    const mods = uniqueMods(u).map((m) => `<li>${esc(m)}</li>`).join('');
+    const where = OPEN_ZONES.filter((z) => z.uniques.includes(u.id));
+    return `<section class="card" id="${u.id}"><h3>${ent(U.unique(u.id))} <small>${ent(U.item(u.baseId))}, level ${baseDef(u.baseId).reqLevel}</small></h3><ul>${mods}</ul><p class="quote">${esc(u.flavour)}</p>${where.length ? spoiler('drop areas', openZonesText(where)) : ''}</section>`;
   });
   return `<h1>Unique items</h1><p>${UNIQUES.length} uniques.</p>${cards.join('')}`;
 }
@@ -219,7 +507,7 @@ function modifiersPage(): string {
       const best = a.tiers.length - 1;
       const w = Object.entries(a.weights).map(([t, n]) => `${tagName(t)} ${n}`).join(', ');
       return [
-        esc(a.label),
+        `<span id="m-${a.id}"></span>${esc(a.label)}`,
         esc(plain(a)),
         String(a.tiers.length),
         esc(affixRangeText(a.id, 0)),
@@ -247,15 +535,16 @@ function modifiersPage(): string {
     byType += `<h3 id="w-${t}">${esc(tagName(t))}</h3>${table(['Modifier', 'Kind', 'Weight', 'Chance within its kind'], rows)}`;
     index(`${tagName(t)} modifier weights`, `${BASE_URL}modifiers/#w-${t}`, 'modifier weights spawn chance');
   }
-  for (const a of AFFIXES) index(plain(a), `${BASE_URL}modifiers/`, `modifier ${a.kind} ${a.label}`);
-  return `<h1>Modifiers</h1><p>Rare items roll prefixes and suffixes. Higher item levels unlock better tiers. <a href="#weights">Jump to weights by item type</a>.</p>${section('prefix')}${section('suffix')}${byType}`;
+  for (const a of AFFIXES) index(plain(a), a.tiers.length ? `${BASE_URL}modifiers/#m-${a.id}` : `${BASE_URL}modifiers/`, `modifier ${a.kind} ${a.label}`);
+  const slots = [...new Set(BASES.map((b) => b.slot))];
+  const explorer = `<div class="jump"><label for="base-jump">See what can roll on a base:</label><select id="base-jump" data-jump><option value="">Choose a base</option>${slots.map((s) => `<optgroup label="${esc(title(s))}">${BASES.filter((b) => b.slot === s).map((b) => `<option value="${U.item(b.id)}#mods">${esc(b.name)}</option>`).join('')}</optgroup>`).join('')}</select></div>`;
+  return `<h1>Modifiers</h1><p>Rare items roll prefixes and suffixes. Higher item levels unlock better tiers. <a href="#weights">Jump to weights by item type</a>.</p>${explorer}${section('prefix')}${section('suffix')}${byType}`;
 }
 
 // ---------- currency and materials ----------
 function currencyPage(): string {
   const cur = CURRENCIES.map((c) => {
-    index(c.name, `${BASE_URL}currency/#${c.id}`, 'currency orb');
-    return [`<span id="${c.id}"></span><strong>${esc(c.name)}</strong>`, esc(c.desc), c.dropWeight ? `Area tier ${c.minTier}+` : 'Does not drop', String(c.value)];
+    return [`<span id="${c.id}"></span>${ent(U.currency(c.id))}`, esc(c.desc), c.dropWeight ? `Area tier ${c.minTier}+` : 'Does not drop', String(c.value)];
   });
   let body = `<h1>Currency and materials</h1><h2>Currency</h2>${table(['Orb', 'What it does', 'Drops from', 'Sell value'], cur)}`;
   const kinds = new Map<string, typeof MATERIALS>();
@@ -281,7 +570,7 @@ function classesPage(): string {
     body += `<section class="card" id="${c.id}"><h2>${esc(c.name)} <small>${esc(c.attribute)}</small></h2><p>${esc(c.desc)}</p>
 <p><strong>Mechanic:</strong> ${esc(c.mechanicText)}</p>
 ${c.bonusText.length ? `<ul>${c.bonusText.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
-<p class="meta">Starts with: ${esc(c.starterGems.map((g) => activeGemDef(g).name).join(', '))}. Starting attributes: ${c.baseAttributes.str} Str, ${c.baseAttributes.dex} Dex, ${c.baseAttributes.int} Int.</p>`;
+<p class="meta">Starts with: ${c.starterGems.map((g) => ent(U.skill(g))).join(', ') || 'no skills'}. Starting attributes: ${c.baseAttributes.str} Str, ${c.baseAttributes.dex} Dex, ${c.baseAttributes.int} Int.</p>`;
     for (const a of asc) {
       index(a.name, `${BASE_URL}classes/#${a.id}`, `ascendancy ${c.name}`);
       body += `<div class="sub" id="${a.id}"><h3>${esc(a.name)}</h3><p>${esc(a.plays)}</p><p><strong>Gate:</strong> ${esc(a.gate.desc ?? '')}</p>
@@ -292,13 +581,279 @@ ${c.bonusText.length ? `<ul>${c.bonusText.map((t) => `<li>${esc(t)}</li>`).join(
   return body;
 }
 
+// ---------- damage and ailments ----------
+function ailmentSkillRows(): string[][] {
+  const ailmentOf = { fire: 'Burn', cold: 'Chill', light: 'Shock' } as Record<string, string>;
+  const rows: string[][] = [];
+  for (const g of [...ACTIVE_GEMS].sort((a, b) => a.name.localeCompare(b.name))) {
+    const e = g.effect;
+    const link = ent(U.skill(g.id));
+    if (e.ailment) rows.push([link, title(e.ailment.kind), `${e.ailment.pctPerSec}% of the hit per second for ${secs(e.ailment.durationMs)}`]);
+    const type = e.convert?.type ?? e.type;
+    if (e.chillMs) rows.push([link, 'Chill', `Always, for ${secs(e.chillMs)}`]);
+    else if (e.ailmentChance && type) rows.push([link, ailmentOf[type] ?? 'None', `${e.ailmentChance}% chance per hit`]);
+  }
+  return rows;
+}
+
+function damagePage(): string {
+  const threshold = AILMENT_THRESHOLD_PCT;
+  const decay = (threshold * AILMENT_DECAY_PCT) / 100;
+  const igniteOfLife = (threshold * IGNITE_SHARE) / 100;
+  const burnPerSec = +(BURN_SHARE / (BURN_MS / 1000)).toFixed(2);
+  const ignitePerSec = +(IGNITE_SHARE / (IGNITE_MS / 1000)).toFixed(2);
+  const shockHalf = (SHOCK_MIN_PCT + SHOCK_MAX_PCT) / 2;
+  const { str, dex, int } = ATTRIBUTE_EFFECTS;
+  const lookup: [string, string, string][] = [
+    ['Physical damage', 'physical', 'damage type armour'],
+    ['Elemental damage', 'elemental', 'fire cold lightning resistance'],
+    ['Chaos damage', 'chaos', 'damage type'],
+    ['Critical strikes', 'crit', 'crit chance multiplier'],
+    ['Burn', 'burn', 'ailment fire'],
+    ['Ignite', 'burn', 'ailment fire'],
+    ['Chill', 'chill', 'ailment cold'],
+    ['Freeze', 'chill', 'ailment cold'],
+    ['Shock', 'shock', 'ailment lightning'],
+    ['Poison', 'poison', 'ailment'],
+    ['Bleed', 'bleed', 'ailment'],
+    ['Armour and evasion', 'defence', 'mitigation taking damage'],
+  ];
+  for (const [t, id, k] of lookup) index(t, `${BASE_URL}damage/#${id}`, k);
+  return `<h1>Damage and ailments</h1>
+<p>How the game works out every hit and ailment. The numbers on this page come from the game's own code.</p>
+
+<h2 id="types">Damage types</h2>
+${table(['Type', 'Raised by', 'Reduced on monsters by', 'Reduced on you by', 'Ailment'], [
+    [`<strong id="physical">Physical</strong>`, `% physical and Strength (${str.physPctPer}% per point)`, 'Nothing', 'Armour', 'None of its own'],
+    [`<strong id="elemental">Fire</strong>`, `% fire, % elemental and Intelligence (${int.elemPctPer}% per point)`, 'Fire resistance', 'Fire resistance', '<a href="#burn">Burn, then Ignite</a>'],
+    ['<strong>Cold</strong>', `% cold, % elemental and Intelligence (${int.elemPctPer}% per point)`, 'Cold resistance', 'Cold resistance', '<a href="#chill">Chill, then Freeze</a>'],
+    ['<strong>Lightning</strong>', `% lightning, % elemental and Intelligence (${int.elemPctPer}% per point)`, 'Lightning resistance', 'Lightning resistance', '<a href="#shock">Shock</a>'],
+    [`<strong id="chaos">Chaos</strong>`, '% chaos only', 'Chaos resistance', 'Nothing: your chaos resistance is always 0', 'None of its own'],
+  ])}
+<p>A hit can carry several types at once. Each is raised and resisted on its own, then they are added together into the number you see. A monster resists the type it deals by ${MONSTER_OWN_RES}% and has 0% in the others. Your own resistances cap at ${RES_CAP}%.</p>
+
+<h2 id="attacks">How an attack is worked out</h2>
+<ol>
+  <li><strong>Base damage:</strong> your weapon's physical damage plus flat damage of each type from anywhere. Dual wielding averages the two weapons.</li>
+  <li><strong>Increases by type:</strong> each type is multiplied by its own increases, from the table above. All your increases to a type add together first.</li>
+  <li><strong>The skill:</strong> multiply by the skill's weapon damage %, which grows by ${ATTACK_PCT_PER_LEVEL}% of its base per gem level.</li>
+  <li><strong>Conversion:</strong> converted physical damage stops using physical increases and uses the new type's instead.</li>
+  <li><strong>Skill type:</strong> % melee (physical only) and % projectile.</li>
+  <li><strong>More multipliers:</strong> supports, buffs, Rage and the like. Each one multiplies separately, so they are stronger than increases.</li>
+  <li><strong>Critical strike:</strong> see <a href="#crit">below</a>.</li>
+  <li><strong>The monster:</strong> resistance reduces each type except physical, then shock and other vulnerabilities multiply the total.</li>
+</ol>
+<p>Attacks can miss. Your chance to hit is between 60% and 95%, from your accuracy and the monster's level:</p>
+<p class="formula">Hit chance = 1.25 × accuracy ÷ (accuracy + (0.2 × monster evasion)^0.9), where monster evasion = 30 + 12 × its level</p>
+<p>Each point of Dexterity gives ${dex.accuracyPer} accuracy. Attack speed sets how often all of this happens. Only the main hand's speed counts, and each skill has its own base time.</p>
+
+<h2 id="spells">How a spell is worked out</h2>
+<p>Your weapon's physical damage, attack speed and crit chance do nothing for a spell. Spells never miss.</p>
+<p class="formula">Damage = (the gem's base damage × increases for its type) + (flat fire, cold and lightning × ${SPELL_ADDED_EFFECTIVENESS * 100}%) + "Adds X to Y to Spells" in full</p>
+<p>The gem's base damage grows 16% per gem level, and flat damage counts your increases to its type too. The total is then multiplied by % spell damage, supports and buffs, and the monster's resistance applies as it does for an attack. Flat physical and chaos damage don't add to spells.</p>
+
+<h2 id="crit">Critical strikes</h2>
+<p class="formula">Crit chance = base crit × (1 + % crit ÷ 100), up to 95%</p>
+<p>The base is your weapon's crit for attacks and the gem's own crit for spells. Spells also add % spell crit. A crit multiplies the whole hit by 150% plus your crit multiplier bonuses. Mega Crits are a flat ${MEGA_CRIT_MULTI * 100}% and ignore crit multiplier.</p>
+
+<h2 id="ailments">Ailments</h2>
+<p>There are two families. <strong>Burn, chill and shock</strong> roll on each hit and use only their own element's damage. <strong>Poison and bleed</strong> use the whole finished hit, whatever its types.</p>
+<h3 id="chance">Chance to apply burn, chill and shock</h3>
+<p>Every hit rolls separately for each element in it. The chance starts at 0.</p>
+<p class="formula">Chance = the skill's ailment chance + % chance to burn, chill or shock from gear and passives</p>
+<p>A skill's chance covers every element in the hit, so added fire on a lightning skill can burn. Skills that say they always chill, and "Cold hits slow" gear, chill on every cold hit.</p>
+<h3 id="buildup">Buildup</h3>
+<p>Each burn, chill or shock that lands adds its damage to that ailment's buildup on the target, after resistance. Damage from hits that didn't apply the ailment doesn't count.</p>
+<p class="formula">Threshold = ${threshold}% of the target's maximum life. Buildup fades by ${AILMENT_DECAY_PCT}% of the threshold per second</p>
+<p>That fade is ${decay}% of maximum life per second, so big enemies take far longer and you need steady damage to fill the bar.</p>
+
+<h3 id="burn">Burn and Ignite (fire)</h3>
+<p class="formula">Burn = ${BURN_SHARE}% of the hit's fire damage, over ${secs(BURN_MS)} (${burnPerSec}% per second)</p>
+<p>Burns pool into one: the damage left on the old burn joins the new one, and the timer restarts. When fire buildup reaches the threshold, the target ignites and its buildup resets.</p>
+<p class="formula">Ignite = ${IGNITE_SHARE}% of the buildup, over ${secs(IGNITE_MS)} (${ignitePerSec}% per second)</p>
+<p>A full ignite is worth at least ${igniteOfLife}% of the target's maximum life. Only the strongest ignite runs at a time. Example: a monster with 1,000 life has a threshold of ${10 * threshold}. A burn from a 100 fire hit deals ${BURN_SHARE} over ${secs(BURN_MS)}, and an ignite from ${10 * threshold} buildup deals ${(10 * threshold * IGNITE_SHARE) / 100} over ${secs(IGNITE_MS)}.</p>
+
+<h3 id="chill">Chill and Freeze (cold)</h3>
+<p>Chill makes the target attack ${CHILL_SLOW_PCT}% slower for ${secs(CHILL_MS)}. "Cold hits slow" adds to that, up to 60%. When cold buildup reaches the threshold, the target freezes and its buildup resets.</p>
+<p class="formula">Freeze = ${secs(FREEZE_MS)} on normal monsters, ${secs(BOSS_FREEZE_MS)} on bosses</p>
+<p>A frozen target can't act, and freezing breaks a channel. Some supports freeze a target that is already chilled straight away.</p>
+
+<h3 id="shock">Shock (lightning)</h3>
+<p class="formula">Shock = ${SHOCK_MIN_PCT}% + (${SHOCK_MAX_PCT - SHOCK_MIN_PCT}% × buildup ÷ threshold) more damage from hits, for ${secs(SHOCK_MS)}</p>
+<p>Shock has no second stage: it stops at ${SHOCK_MAX_PCT}% at a full threshold, and buildup only fades once the shock ends. At half the threshold it's ${shockHalf}%. Shock doesn't raise damage over time that is already running, but burns, poisons and bleeds from a hit on a shocked target start larger.</p>
+
+<h3 id="poison">Poison</h3>
+<p class="formula">Per second = the finished hit × the skill's % per second × (1 + (% poison + % all ailments) ÷ 100)</p>
+<p>Poison stacks: every application runs on its own. "Chance to Poison" gear works on any hit, at ${GEAR_POISON.pctPerSec}% per second for ${secs(GEAR_POISON.durationMs)}. Anything that makes the hit bigger makes the poison bigger, including crits.</p>
+
+<h3 id="bleed">Bleed</h3>
+<p class="formula">Per second = the finished hit × the skill's % per second × (1 + (% bleed + % all ailments) ÷ 100) × more bleed</p>
+<p>Bleed doesn't stack: only the strongest runs. A new bleed replaces the old one if it is at least as strong. "Chance to Bleed" works on attacks, at 20% per second for 4s. Bleed uses the whole hit, so fire or cold damage on the hit counts too.</p>
+
+<h3 id="duration">Ailment damage and duration</h3>
+<p class="formula">Duration = base × the skill's duration × (1 + (% ailment duration + % duration of that ailment) ÷ 100)</p>
+<p>Burn and Ignite share the same damage and duration stats. Longer burns, ignites and poisons deal more in total, because damage per second doesn't drop. Chill and shock last longer only from the skill's own duration, and freeze time is fixed. Ailment damage ignores resistance, because the hit it came from was already resisted.</p>
+
+<h3 id="skills">Skills that apply ailments</h3>
+${table(['Skill', 'Ailment', 'How'], ailmentSkillRows())}
+<p class="meta">Spells and attacks with an elemental ailment chance can also apply the ailments of any other element they carry. Supports and gear add more.</p>
+
+<h2 id="defence">Damage you take</h2>
+<p class="formula">Physical hits: damage × (1 − armour ÷ (armour + 5 × damage)), reduced by at most 90%</p>
+<p>Armour works best against small hits: the same armour stops far less of a big one.</p>
+<p class="formula">Fire, cold and lightning hits: damage × (1 − resistance ÷ 100)</p>
+<p class="formula">Evade chance = evasion ÷ (evasion + 2.5 × (40 + 18 × monster level)), up to 75%</p>
+<p>Evasion can't dodge a boss's telegraphed slams and novas. Blocks stop slams but not novas.</p>`;
+}
+
+// ---------- guides: hand-written pages, with live tables and links dropped in ----------
+const matName = (id: string) => [...MATERIALS, ...CURRENCIES].find((m) => m.id === id)?.name ?? title(id);
+const costText = (cost: Record<string, number>) => Object.entries(cost).map(([id, n]) => `${n.toLocaleString('en')} ${matName(id)}`).join(', ') || 'Free';
+const stationTable = (id: StationId) => table(['Level', 'Cost', 'What it gives'], stationDef(id).levels.map((l, i) => [String(i + 1), esc(costText(l.cost)), esc(l.effect)]));
+const pct = (n: number, digits = 1) => `${+(n * 100).toFixed(digits)}%`;
+const rewardText = (list: { id: string; qty: number }[]) => list.map((r) => `${matName(r.id)} ×${r.qty}`).join(', ');
+const zoneBefore = (z: ZoneDef) => {
+  const i = OPEN_ZONES.indexOf(z);
+  return (z.requires?.after ?? (i > 0 ? [OPEN_ZONES[i - 1].id] : [])).filter((id) => ENTITIES.has(U.area(id)));
+};
+
+/** A starter plan. The generator refuses a support that doesn't fit its skill, or a gem nobody could reach by this stage. */
+interface Build { classId: string; plays: string; main: string; supports: string[]; extras: string[]; stats: string; rules: string; weapon?: string }
+const BUILDS: Build[] = [
+  { classId: 'warrior', plays: 'Hit hard, soak damage and let Rage build. The safest choice for leaving overnight.', main: 'heavy_strike', supports: ['faster_attacks', 'brutality', 'life_leech'], extras: ['iron_guard', 'war_cry', 'leeching_blow'], stats: 'Life and Armour, then physical damage.', rules: 'Iron Guard on wind-ups, Leeching Blow on low life, and War Cry on channels.' },
+  { classId: 'ranger', plays: 'Attack fast, avoid being hit, and keep Momentum up.', main: 'twin_strike', supports: ['faster_attacks', 'critical_strikes', 'mana_leech'], extras: ['smoke_step', 'feint', 'backstab'], stats: 'Evasion, attack speed and crit.', rules: 'Smoke Step on wind-ups, and Backstab while the target has high life.', weapon: 'Backstab needs a dagger or sword.' },
+  { classId: 'mage', plays: 'Keep your mana high for the most damage, and clear from range.', main: 'spark', supports: ['added_lightning', 'elemental_focus', 'pierce'], extras: ['frost_ward', 'mind_sip', 'shock_nova'], stats: 'Mana, energy shield and elemental damage.', rules: 'Frost Ward on wind-ups, Mind Sip on low mana, and Shock Nova at 3 enemies.', weapon: 'Every skill here needs a wand, staff or sceptre.' },
+  { classId: 'duelist', plays: 'Block and evade to trigger Riposte, and let the counter-attacks do the work.', main: 'twin_strike', supports: ['faster_attacks', 'life_leech', 'brutality'], extras: ['iron_guard', 'parry', 'feint'], stats: 'Evasion and block, then physical damage.', rules: 'Keep a guard on wind-ups, and Parry when life is low.' },
+  { classId: 'templar', plays: 'Take hits on purpose: every one fills Fervor for a healing nova. Your class bonus favours elemental damage.', main: 'infernal_blow', supports: ['added_fire', 'elemental_focus', 'life_leech'], extras: ['heavy_strike', 'iron_guard', 'consecrate'], stats: 'Life, Armour, resistances and elemental damage.', rules: 'Iron Guard on wind-ups. Start on Heavy Strike until Infernal Blow.', weapon: 'Infernal Blow needs a mace, axe, sceptre or staff. Consecrate needs a wand, staff or sceptre.' },
+  { classId: 'shadow', plays: 'Stack poisons and wait for Coup de Grâce. Avoid crit if you want it often, because a normal crit empties Malice.', main: 'poison_dart', supports: ['lingering', 'faster_attacks', 'efficiency'], extras: ['twin_strike', 'feint', 'brine_leech'], stats: 'Evasion, attack speed and ailment damage.', rules: 'Poison Dart while the target has high life, Twin Strike whenever ready, and Brine Leech on low life.' },
+];
+
+function buildsBlock(): string {
+  return BUILDS.map((b) => {
+    const c = CLASSES.find((x) => x.id === b.classId)!;
+    const main = activeGemDef(b.main);
+    for (const id of b.supports) {
+      const s = SUPPORT_GEMS.find((x) => x.id === id);
+      if (!s || !supportFits(s, main)) throw new Error(`wiki: build ${b.classId}: ${id} doesn't fit ${b.main}`);
+    }
+    for (const id of [b.main, ...b.supports, ...b.extras]) if (gemReqLevel(id) > 16) throw new Error(`wiki: build ${b.classId}: ${id} is past level 16`);
+    return `<section class="card" id="${c.id}"><h3><a href="${BASE_URL}classes/#${c.id}">${esc(c.name)}</a></h3><p>${esc(b.plays)}</p>
+${facts([
+      ['Main skill', ent(U.skill(b.main))],
+      ['Supports', b.supports.map((s) => ent(U.support(s))).join(', ')],
+      ['Also bring', b.extras.map((s) => ent(U.skill(s))).join(', ')],
+      ['Look for', esc(b.stats)],
+      ['Rules', esc(b.rules)],
+      ['Weapons', esc(b.weapon ?? '')],
+    ])}</section>`;
+  }).join('');
+}
+
+function rulesBlock(): string {
+  return table(['Rule', 'Value', 'Needs'], (Object.values(RULE_LABELS)).map((r) => [
+    esc(r.label),
+    r.status ? 'A status' : r.ground ? 'A kind of ground' : r.defaultValue != null ? `Default ${r.defaultValue}${r.unit ?? ''}` : '',
+    r.unlock ? `${esc(RULE_UNLOCK_NAMES[r.unlock])} (War Table level ${stationDef('war_table').levels.findIndex((l) => l.grants?.rules?.includes(r.unlock!)) + 1})${r.act ? `, Act ${r.act}` : ''}` : 'Free',
+  ]));
+}
+
+function gatheringBlock(): string {
+  return Object.values(SKILLS).filter((s) => s.group === 'gathering' && !s.soon).map((s) => {
+    const rows = actionsFor(s.id).filter((a) => !a.soon).map((a) => {
+      const perHour = 3600000 / a.intervalMs;
+      const zone = a.area ?? a.gate?.zone;
+      const out = Object.entries(a.outputs ?? {}).map(([id, n]) => `${n} ${matName(id)}`).join(', ');
+      const extra = (a.bonus ?? []).map((b) => `${matName(b.id)} ${pct(b.chance)}`).join(', ');
+      return [esc(a.name), String(a.level), secs(a.intervalMs), Math.round(perHour * a.xp).toLocaleString('en'), esc(out), pct(a.outputChance ?? 1), esc(extra), zone && ENTITIES.has(U.area(zone)) ? ent(U.area(zone)) : 'From the start'];
+    });
+    return `<h3 id="${s.id}">${esc(s.name)}</h3><p>${esc(s.desc)}</p>${table(['Spot', 'Level', 'Time', 'XP per hour', 'Gives', 'Yield', 'Extra finds', 'Opens with'], rows)}`;
+  }).join('');
+}
+
+function walkthroughBlock(): string {
+  return ACTS.filter((a) => a.open).map((act) => {
+    const rows = OPEN_ZONES.filter((z) => z.act === act.n).map((z) => [
+      ent(U.area(z.id)),
+      `${z.levelRange[0]}-${z.levelRange[1]}`,
+      ent(U.monster(z.boss.id)),
+      String(z.bossEvery),
+      esc(rewardText(bossTable(z.tier).guaranteed)),
+      zoneBefore(z).map((id) => ent(U.area(id))).join(', '),
+    ]);
+    const trials = TRIALS.filter((t) => OPEN_ZONES.find((z) => z.id === t.zoneId)?.act === act.n).map((t) => `<p><strong>Trial ${t.n}</strong> at ${ent(U.area(t.zoneId))} opens ${esc(t.opens)}.</p>`).join('');
+    const inner = table(['Area', 'Levels', 'Boss', 'Kills to boss', 'First-kill reward', 'Comes after'], rows) + trials;
+    return `<h2 id="act-${act.n}">Act ${act.n}: ${esc(act.name)}</h2>${act.n >= SPOILER_ACT ? spoiler(`Act ${act.n}`, inner) : inner}`;
+  }).join('');
+}
+
+const GUIDE_DATA: Record<string, () => string> = {
+  builds: buildsBlock,
+  rules: rulesBlock,
+  gathering: gatheringBlock,
+  walkthrough: walkthroughBlock,
+  'war-table': () => stationTable('war_table'),
+  watchtower: () => stationTable('watchtower'),
+  stations: () => STATIONS.map((s) => `<h3 id="${s.id}">${esc(s.name)}</h3><p>${esc(s.desc)}</p>${stationTable(s.id)}`).join(''),
+  instill: () => table(['Condition', 'What it does'], INSTILL_CONDITIONS.map((c) => [esc(c.label), esc(c.desc)])),
+  'life-reserve': () => String(LIFE_RESERVE_PCT),
+  'haul-cap': () => String(OFFLINE_HAUL_CAP),
+  trials: () => table(['Trial', 'Area', 'Points', 'Opens'], TRIALS.map((t) => [String(t.n), ent(U.area(t.zoneId)), String(t.points), esc(t.opens)])),
+  production: () => table(['Skill', 'What it does', 'Recipes'], Object.values(SKILLS).filter((s) => s.group === 'production').map((s) => [esc(s.name), esc(s.desc), String(actionsFor(s.id).length)])),
+  drops: () => table(['Tier', 'First area', 'Currency', 'Item', 'Rare share', 'Flask', 'Unique'], Object.entries(DROP_TABLES).map(([tier, t]) => {
+    const z = OPEN_ZONES.find((o) => o.tier === +tier);
+    const total = t.rarity.normal + t.rarity.magic + t.rarity.rare;
+    return [tier, z ? ent(U.area(z.id)) : '', pct(t.currencyChance), pct(t.itemChance), pct(t.rarity.rare / total), pct(t.flaskChance), pct(t.uniqueChance, 2)];
+  })),
+  'boss-drops': () => table(['Tier', 'First-kill reward', 'Repeat chance', 'Items', 'Rare share', 'Unique'], Object.entries(BOSS_TABLES).map(([tier, t]) => {
+    const total = t.rarity.normal + t.rarity.magic + t.rarity.rare;
+    return [tier, esc(rewardText(t.guaranteed)), pct(t.repeatChance), t.items[0] === t.items[1] ? String(t.items[0]) : `${t.items[0]}-${t.items[1]}`, pct(t.rarity.rare / total), pct(t.uniqueChance)];
+  })),
+  mechanics: () => spoiler('boss mechanics', Object.values(MECHANIC_INFO).map((m) => `<h3>${esc(m.name)}</h3><p>${esc(m.tip)}</p>`).join('')),
+  'patch-notes': () => NEWS.map((n) => `<h2 id="v${n.version.replace(/\./g, '-')}">${esc(n.version)}: ${esc(n.title)}</h2><p class="meta">${esc(n.date)}</p><ul>${n.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul>`).join(''),
+  version: () => facts([
+    ['Game version', esc(VERSION)],
+    ['Skill gems', String(ACTIVE_GEMS.length)],
+    ['Support gems', String(SUPPORT_GEMS.length)],
+    ['Item bases', String(BASES.length)],
+    ['Unique items', String(UNIQUES.length)],
+    ['Areas', String(OPEN_ZONES.length)],
+    ['Monsters and bosses', String(ZONE_OF.size)],
+  ]),
+};
+
+const GUIDE_LINKS: Record<string, (id: string) => string> = U;
+
+/** Fill a guide's {{data:name}} tables and {{skill:id}} links. A name that doesn't exist fails the build. */
+function renderGuide(html: string): string {
+  const body = html.replace(/\{\{(\w+):([\w-]+)\}\}/g, (_, kind: string, id: string) => {
+    if (kind === 'data') {
+      if (!GUIDE_DATA[id]) throw new Error(`wiki: no guide data called ${id}`);
+      return GUIDE_DATA[id]();
+    }
+    const url = GUIDE_LINKS[kind]?.(id);
+    if (!url || !ENTITIES.has(url)) throw new Error(`wiki: guide links to unknown ${kind} ${id}`);
+    return ent(url);
+  });
+  const checked = /<!-- checked ([\d.]+) -->/.exec(html)?.[1];
+  return `${body}${checked ? `<p class="meta">Guide last checked against game version ${esc(checked)}. Tables and linked stats update with the game. Advice is opinion.</p>` : ''}`;
+}
+
 // ---------- write everything ----------
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
+registerEntities();
+ACTIVE_GEMS.forEach(skillEntry);
+SUPPORT_GEMS.forEach(supportEntry);
+BASES.forEach(itemEntry);
+UNIQUES.forEach(uniqueEntry);
+CURRENCIES.forEach(currencyEntry);
+OPEN_ZONES.forEach(areaEntry);
+OPEN_ZONES.forEach((z) => [...z.monsters, z.boss].forEach(monsterEntry));
+
 const pages: Record<string, () => string> = {
   acts: actsPage, skills: skillsPage, supports: supportsPage, items: itemsPage,
-  uniques: uniquesPage, modifiers: modifiersPage, currency: currencyPage, classes: classesPage,
+  uniques: uniquesPage, modifiers: modifiersPage, currency: currencyPage, classes: classesPage, damage: damagePage, monsters: monstersPage,
 };
 for (const s of SECTIONS) {
   const body = pages[s.slug]();
@@ -306,20 +861,67 @@ for (const s of SECTIONS) {
   index(s.name, `${BASE_URL}${s.slug}/`, s.blurb);
 }
 for (const p of extraPages) {
-  write(`${p.slug}/index.html`, frame(p.slug, p.name, p.html));
-  index(p.name, `${BASE_URL}${p.slug}/`, 'guide');
+  write(`${p.slug}/index.html`, frame(p.slug, p.name, renderGuide(p.html)));
+  index(p.name, `${BASE_URL}${p.slug}/`, 'guide', PLANNED.find((x) => x.slug === p.slug)?.blurb);
+}
+for (const p of PLANNED.filter((x) => !extraPages.some((e) => e.slug === x.slug))) {
+  write(`${p.slug}/index.html`, frame(p.slug, p.name, `<h1>${esc(p.name)}</h1><div class="notice"><p><strong>This page is still being written.</strong></p><p>${esc(p.blurb)}</p></div>`));
+  index(p.name, `${BASE_URL}${p.slug}/`, 'guide coming soon', p.blurb);
 }
 
-const home = `<h1>Path of Idle Wiki</h1>
-<p>Everything here is generated from the game's own data, so it always matches the version you are playing.</p>
-${extraPages.length ? `<h2>Guides</h2><ul class="tiles">${extraPages.map((p) => `<li><a href="${BASE_URL}${p.slug}/">${esc(p.name)}</a></li>`).join('')}</ul>` : ''}
-<h2>Reference</h2>
-<ul class="tiles">${SECTIONS.map((s) => `<li><a href="${BASE_URL}${s.slug}/">${esc(s.name)}</a><span>${esc(s.blurb)}</span></li>`).join('')}</ul>
-<p class="meta">Game version ${esc(JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version)}.</p>`;
+const sectionBy = (slug: string) => SECTIONS.find((s) => s.slug === slug)!;
+const feature = (href: string, art: string, name: string, text: string) =>
+  `<a class="feature" href="${BASE_URL}${href}/"><img src="${artUrl(art)}" alt="" loading="lazy"><h3>${esc(name)}</h3><p>${esc(text)}</p><span class="arrow">↗</span></a>`;
+const reference = (s: Section) =>
+  `<a class="reference" href="${BASE_URL}${s.slug}/"><div class="iconbox"><img src="${artUrl(s.art)}" alt="" loading="lazy"></div><div><h3>${esc(s.name)}</h3><p>${esc(s.blurb)}</p></div></a>`;
+const home = `<section class="hero" style="--scene:url('${artUrl(HERO_ART)}')"><div class="heroinner">
+<div class="eyebrow">The game reference · v${esc(VERSION)}</div>
+<h1>The Exile's <em>Codex</em></h1>
+<p>Knowledge is the last weapon of the forsaken. Discover the lands beyond the shore, master forbidden skills, and uncover the secrets of every item, class and enemy.</p>
+<a class="cta" href="${BASE_URL}getting-started/">BEGIN YOUR JOURNEY ↗</a><a class="cta secondary" href="#explore">EXPLORE THE ARCHIVE ↓</a>
+</div><div class="hero-version">✦ GENERATED FROM LIVE GAME DATA</div></section>
+<div class="sectionhead"><h2>Begin Your Journey</h2><small>Choose your path through the archive</small></div>
+<div class="featuregrid">
+${feature('getting-started', GUIDE_ART, 'Getting started', 'Survive the Mud Flats, learn combat, automation and your first upgrades.')}
+${feature('acts', sectionBy('acts').art, 'Acts and areas', 'Traverse the campaign. Discover areas, monsters, bosses and encounters.')}
+${feature('classes', sectionBy('classes').art, 'Classes and paths', `Find your fighting style among ${CLASSES.length} classes and ${ASCENDANCIES.length} ascendancies.`)}
+${feature('uniques', sectionBy('uniques').art, 'Unique treasures', 'Uncover rare equipment, distinctive modifiers and where each item drops.')}
+</div>
+<div class="sectionhead" id="explore"><h2>Explore the Archive</h2><small>Detailed references and item knowledge</small></div>
+<div class="referencegrid">${['skills', 'supports', 'items', 'modifiers', 'currency', 'damage'].map((s) => reference(sectionBy(s))).join('')}</div>
+<div class="bottomgrid">
+<div class="panel"><h3>New to the Shore?</h3><div class="steps">
+<div class="step"><span class="number">01</span><span><b>Enter the Mud Flats.</b> Start your campaign and meet Old Brannoc.</span></div>
+<div class="step"><span class="number">02</span><span><b>Set your skill rules.</b> Decide when your abilities fire automatically.</span></div>
+<div class="step"><span class="number">03</span><span><b>Claim your first spoils.</b> Equip better gear and prepare for the boss.</span></div>
+</div></div>
+<div class="panel"><h3>Living Game Archive</h3><p>This wiki is generated directly from the game's own data, so items, stats and areas stay in step with the game.</p><div class="version"><span>Current game data</span><span class="pill">VERSION ${esc(VERSION)}</span></div></div>
+</div>`;
 write('index.html', frame('index', 'Home', home));
 
+// areas are listed on the Acts page, so their parent address goes there
+write('areas/index.html', `<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${BASE_URL}acts/"><title>Acts and areas</title><a href="${BASE_URL}acts/">Acts and areas</a>`);
 write('search-index.json', JSON.stringify(search));
+write('hover-cards.json', JSON.stringify(Object.fromEntries([...ENTITIES].map(([u, e]) => [u, { n: e.name, k: e.kind, a: e.art || undefined, p: e.pixel || undefined, t: e.text }]))));
 write('wiki.css', readFileSync(join(__dirname, 'wiki-assets', 'wiki.css'), 'utf8'));
 write('wiki.js', readFileSync(join(__dirname, 'wiki-assets', 'wiki.js'), 'utf8'));
 
-console.log(`wiki: ${SECTIONS.length + extraPages.length + 1} pages, ${search.length} searchable entries -> ${OUT}`);
+for (const rel of usedArt) {
+  mkdirSync(dirname(join(OUT, 'art', rel)), { recursive: true });
+  copyFileSync(join(ROOT, 'src', 'assets', rel), join(OUT, 'art', rel));
+}
+
+// a page that links somewhere missing fails the build rather than reaching players
+function htmlFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((f) => (f.isDirectory() ? htmlFiles(join(dir, f.name)) : f.name.endsWith('.html') ? [join(dir, f.name)] : []));
+}
+const html = htmlFiles(OUT);
+const broken = new Set<string>();
+for (const file of html) {
+  for (const [, path] of readFileSync(file, 'utf8').matchAll(/(?:href|src)="\/path-of-idle\/wiki\/([^"#?]*)/g)) {
+    if (!existsSync(join(OUT, path)) || (path.endsWith('/') && !existsSync(join(OUT, path, 'index.html')))) broken.add(path);
+  }
+}
+if (broken.size) throw new Error(`wiki: broken links to ${[...broken].join(', ')}`);
+
+console.log(`wiki: ${html.length} pages, ${search.length} searchable entries, ${usedArt.size} art files -> ${OUT}`);

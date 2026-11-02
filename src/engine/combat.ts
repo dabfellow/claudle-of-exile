@@ -311,12 +311,14 @@ export function monsterXp(mon: MonsterInstance): number {
   return Math.round((5 + mon.level * 3) * (mon.isBoss ? 10 : 1) * mon.scale * KILL_XP_SCALE);
 }
 
+/** A monster resists the type it deals by this %. */
+export const MONSTER_OWN_RES = 30;
 const RESIST_BY_TYPE: Record<DamageType, Partial<MonsterInstance['res']>> = {
   phys: {},
-  fire: { fire: 30 },
-  cold: { cold: 30 },
-  light: { light: 30 },
-  chaos: { chaos: 30 },
+  fire: { fire: MONSTER_OWN_RES },
+  cold: { cold: MONSTER_OWN_RES },
+  light: { light: MONSTER_OWN_RES },
+  chaos: { chaos: MONSTER_OWN_RES },
 };
 
 export function makeMonster(def: MonsterDef, boss: boolean, uid = 0, scale = 1): MonsterInstance {
@@ -1336,19 +1338,19 @@ function bleedDps(mon: MonsterInstance, dot: Dot): number {
 const COUP_POISON = { kind: 'poison', pctPerSec: 30, durationMs: 4000 } as const;
 const COUP_IGNITE = { kind: 'ignite', pctPerSec: 40, durationMs: 3000 } as const;
 /** "Hits have X% chance to Poison" from gear */
-const GEAR_POISON = { kind: 'poison', pctPerSec: 20, durationMs: 4000 } as const;
+export const GEAR_POISON = { kind: 'poison', pctPerSec: 20, durationMs: 4000 } as const;
 
 /** Burn, chill and shock fill up against this % of a target's life, so big enemies take much longer. */
 export const AILMENT_THRESHOLD_PCT = 40;
 /** Buildup fades by this % of the threshold each second. */
-const AILMENT_DECAY_PCT = 10;
-const CHILL_MS = 3000;
-const SHOCK_MS = 4000;
-const FREEZE_MS = 1500;
-const BOSS_FREEZE_MS = 600;
+export const AILMENT_DECAY_PCT = 10;
+export const CHILL_MS = 3000;
+export const SHOCK_MS = 4000;
+export const FREEZE_MS = 1500;
+export const BOSS_FREEZE_MS = 600;
 /** How much more damage a shocked target takes: from a touch of buildup to a full threshold. */
-const SHOCK_MIN_PCT = 5;
-const SHOCK_MAX_PCT = 40;
+export const SHOCK_MIN_PCT = 5;
+export const SHOCK_MAX_PCT = 40;
 
 export function ailmentThreshold(mon: MonsterInstance): number {
   return (mon.maxLife * AILMENT_THRESHOLD_PCT) / 100;
