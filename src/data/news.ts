@@ -8,6 +8,17 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.3.9',
+    date: '1 Nov 2026',
+    title: "The Exile's Codex",
+    items: [
+      'The wiki has a new look, a left-hand menu and much better search.',
+      'Every skill, support, item, unique, currency, area and monster now has its own page, with hover cards linking them together.',
+      'Wiki tables can be sorted and filtered, and the Support gems page can show what fits any skill.',
+      'New guides cover automation, offline play, gathering, farming, bosses and the campaign, with starter builds, drop rates and a glossary.',
+    ],
+  },
+  {
     version: '0.3.8',
     date: '1 Nov 2026',
     title: 'A wand for the Exile',
