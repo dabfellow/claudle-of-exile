@@ -17,15 +17,14 @@ stay as they are, with no playtest planned, until you say otherwise.
 
 **In order:**
 
-1. **[You]** Challenge modes are live: paste [market.sql](ops/market.sql) into Supabase (**SQL Editor → New query → Run**). Until then the Hardcore and Classic markets show an error; the normal market works either way.
-2. **Claude:** build the real Maps (Milestone 8) from [MAPS.md](design/MAPS.md). Beating Act 6 opens the bare Maps preview page, and drawn maps can't be spent yet.
-3. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
+1. **Claude:** build the real Maps (Milestone 8) from [MAPS.md](design/MAPS.md). Beating Act 6 opens the bare Maps preview page, and drawn maps can't be spent yet.
+2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
-4. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
+3. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
    they earn them, and Act 1 got slower. Also say that six gems moved in 0.3.3 and can lock until their new level.
-5. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
+4. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
    hideout scenes ([ASSET_MAPPING.md](design/ASSET_MAPPING.md)).
-6. **[You]** Play the Maps preview whenever you like, and say whether the loop is fun. Maps stay post-Act 6 in the real
+5. **[You]** Play the Maps preview whenever you like, and say whether the loop is fun. Maps stay post-Act 6 in the real
    game; the preview is dev and admin only. Try it with `npm run dev`, then Map Device → Dev tools.
 
 ## Milestones
@@ -131,7 +130,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 
 ### 11. Long tail
 - Collection log, masteries, build-defining uniques, the skills arriving around or after Act 6.
-- [x] Challenge modes: Hardcore, Solo Self-Found and Classic as toggles in any mix ([GDD.md](design/GDD.md) §11) — done 2026-11-01. Live in 0.3.4; the per-mode markets need market.sql run.
+- [x] Challenge modes: Hardcore, Solo Self-Found and Classic as toggles in any mix ([GDD.md](design/GDD.md) §11) — done 2026-11-01. Live in 0.3.4.
 - **Done:** your call.
 
 ### 1.0
