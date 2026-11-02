@@ -39,6 +39,11 @@ export interface GearComparison {
 
 type Figure = Omit<CompareRow, 'before' | 'after'> & { value: number; shown?: string };
 
+/** A weapon's listed Weapon DPS; 0 for anything else. */
+export function weaponDps(item: Item): number {
+  return itemFigures(item).find((f) => f.label === 'Weapon DPS')?.value ?? 0;
+}
+
 /** One item's own numbers, the ones printed at the top of its tooltip. */
 function itemFigures(item: Item | null): Figure[] {
   if (!item) return [];

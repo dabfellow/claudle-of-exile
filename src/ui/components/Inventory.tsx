@@ -4,6 +4,7 @@ import { BAG_SIZE } from '../../data/hideout';
 import { BENCH_UNBUILT, benchBuilt, salvage } from '../../engine/crafting';
 import { equipReason } from '../../engine/equipment';
 import { itemName } from '../../engine/items';
+import { sortFigure, sortItems, STASH_SORTS, type SortKey } from '../../engine/itemSort';
 import { inGearSet } from '../../engine/loadouts';
 import type { GameState, Item, Rarity } from '../../engine/types';
 import { game } from '../../game';
@@ -11,34 +12,26 @@ import { Tooltip } from './common';
 import { ItemIcon, ItemTip, pinItem } from './ItemView';
 import { openItemMenu } from './ItemMenu';
 
-export type SortKey = 'recent' | 'rarity' | 'slot';
-const RARITY_ORDER: Record<Rarity, number> = { unique: 0, rare: 1, magic: 2, normal: 3 };
-
-export function sortItems(items: Item[], key: SortKey): Item[] {
-  const list = [...items];
-  if (key === 'recent') return list.reverse();
-  if (key === 'rarity') return list.sort((a, b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || b.ilvl - a.ilvl);
-  return list.sort((a, b) => baseDef(a.baseId).slot.localeCompare(baseDef(b.baseId).slot));
-}
-
 function slotLabel(item: Item): string {
   const slot = baseDef(item.baseId).slot;
   return slot === 'body' ? 'Body armour' : slot[0].toUpperCase() + slot.slice(1);
 }
 
-/** One item as a tile: icon, base name in its rarity colour (uniques keep their own name), slot and item level. */
+/** One item as a tile: icon, base name in its rarity colour (uniques keep their own name), slot and item level (or `figure` in its place). */
 export function ItemTile({
   item,
   s,
   onClick,
   selected,
   marked,
+  figure,
 }: {
   item: Item;
   s: GameState;
   onClick?: () => void;
   selected?: boolean;
   marked?: boolean;
+  figure?: string | null;
 }) {
   const locked = equipReason(s, item) !== null;
   return (
@@ -59,7 +52,7 @@ export function ItemTile({
           {item.rarity === 'unique' ? itemName(item) : baseDef(item.baseId).name}
         </span>
         <span className="item-tile-meta">
-          {slotLabel(item)} · i{item.ilvl}
+          {slotLabel(item)} · {figure ?? `i${item.ilvl}`}
         </span>
       </button>
     </Tooltip>
@@ -78,6 +71,7 @@ export function ItemTiles({
   marked,
   empty,
   slots,
+  figure,
 }: {
   s: GameState;
   items: Item[];
@@ -86,13 +80,14 @@ export function ItemTiles({
   marked?: (item: Item) => boolean;
   empty?: ReactNode;
   slots?: number;
+  figure?: (item: Item) => string | null;
 }) {
   if (!items.length && !slots) return <div className="item-tiles-empty dim small">{empty ?? 'Nothing here.'}</div>;
   const pad = slots ? Math.max(0, slots - items.length) : 0;
   return (
     <div className={`item-tiles ${slots ? `fixed slots-${slots}` : ''}`}>
       {items.map((item) => (
-        <ItemTile key={item.uid} item={item} s={s} selected={selected?.(item)} marked={marked?.(item)} onClick={() => onClick?.(item)} />
+        <ItemTile key={item.uid} item={item} s={s} selected={selected?.(item)} marked={marked?.(item)} figure={figure?.(item)} onClick={() => onClick?.(item)} />
       ))}
       {Array.from({ length: pad }, (_, i) => (
         <span key={`empty-${i}`} className="item-tile empty" />
@@ -126,6 +121,19 @@ export function SortTabs({ value, onChange }: { value: SortKey; onChange: (k: So
         </button>
       ))}
     </div>
+  );
+}
+
+/** The Stash screen's longer list of sorts, as a dropdown so it fits beside the page tabs. */
+export function StashSort({ value, onChange }: { value: SortKey; onChange: (k: SortKey) => void }) {
+  return (
+    <select className="input sm" aria-label="Sort by" value={value} onChange={(e) => onChange(e.target.value as SortKey)}>
+      {STASH_SORTS.map((o) => (
+        <option key={o.key} value={o.key}>
+          {o.label}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -175,7 +183,7 @@ export function SalvageByRarity({ s, items, onSalvage }: { s: GameState; items: 
 
 /**
  * The bag card: sorting, salvage mode, and click-to-equip (or a custom handler).
- * `items` defaults to the bag; the Crafting Bench passes bag + stash.
+ * `items` defaults to the bag; the Crafting Bench passes bag + stash. `stashSorts` swaps in the Stash screen's sorts.
  */
 export function Inventory({
   s,
@@ -186,6 +194,7 @@ export function Inventory({
   cap = BAG_SIZE,
   hint,
   actions,
+  stashSorts,
 }: {
   s: GameState;
   onPick?: (item: Item) => void;
@@ -195,6 +204,7 @@ export function Inventory({
   cap?: number | null;
   hint?: string;
   actions?: ReactNode;
+  stashSorts?: boolean;
 }) {
   const [sort, setSort] = useState<SortKey>('recent');
   const [page, setPage] = useState(0);
@@ -202,7 +212,7 @@ export function Inventory({
   const [marked, setMarked] = useState<Set<number>>(new Set());
   /** clicks so far on a rarity button: 1 selects them all, the next salvages (uniques ask once more) */
   const [armed, setArmed] = useState<{ rarity: Rarity; clicks: number } | null>(null);
-  const sorted = sortItems(items, sort);
+  const sorted = sortItems(items, sort, s);
   const pages = Math.max(1, Math.ceil((cap ?? 0) / BAG_PAGE), Math.ceil(items.length / BAG_PAGE));
   const shownPage = Math.min(page, pages - 1);
   const pageItems = sorted.slice(shownPage * BAG_PAGE, (shownPage + 1) * BAG_PAGE);
@@ -267,7 +277,7 @@ export function Inventory({
           fill={(i) => `${Math.max(0, Math.min(BAG_PAGE, items.length - i * BAG_PAGE))}/${BAG_PAGE}`}
         />
         <span className="grow" />
-        <SortTabs value={sort} onChange={setSort} />
+        {stashSorts ? <StashSort value={sort} onChange={setSort} /> : <SortTabs value={sort} onChange={setSort} />}
       </div>
       <div className="row wrap" style={{ marginBottom: 10 }}>
         {!salvageMode ? (
@@ -317,6 +327,7 @@ export function Inventory({
         s={s}
         items={pageItems}
         slots={BAG_PAGE}
+        figure={(item) => sortFigure(item, sort)}
         selected={(item) => selected === item.uid || (salvageMode && marked.has(item.uid))}
         onClick={click}
       />
