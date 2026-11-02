@@ -21,6 +21,8 @@ export interface ClassDef {
   tagline: string;
   desc: string;
   kit: Partial<Record<EquipSlot, string>>;
+  /** what an Exile on this class's start holds instead of the Rusted Sword, when the sword can't use the starter gems */
+  exileWeapon?: string;
   /** starting Strength / Dexterity / Intelligence */
   baseAttributes: { str: number; dex: number; int: number };
   bonus: Partial<Record<StatKey, number>>;
@@ -79,6 +81,7 @@ export const CLASSES: ClassDef[] = [
     tagline: 'Bend the elements and the brew.',
     desc: 'Channels lightning through a wand and gets the most out of flasks. Fragile early, explosive later.',
     kit: { weapon: 'driftwood_wand', body: 'simple_robe', amulet: 'coral_amulet' },
+    exileWeapon: 'driftwood_wand',
     baseAttributes: { str: 10, dex: 12, int: 20 },
     bonus: { elemPct: 15, flaskEffect: 10 },
     bonusText: ['15% increased Elemental Damage', '10% increased Flask Effect'],
@@ -149,7 +152,7 @@ export const CLASSES: ClassDef[] = [
     color: '#a39a8a',
     icon: 'name',
     tagline: 'Washed ashore with nothing.',
-    desc: "A challenge class. No mechanic, no class bonus, no armour. Start from any class's spot on the tree with only a Rusted Sword and that class's starter gems.",
+    desc: "A challenge class. No mechanic, no class bonus, no armour. Start from any class's spot on the tree with only a Rusted Sword (a Driftwood Wand from the Mage's spot) and that class's starter gems.",
     kit: { weapon: 'rusted_sword' },
     baseAttributes: { str: 10, dex: 10, int: 10 },
     bonus: {},
