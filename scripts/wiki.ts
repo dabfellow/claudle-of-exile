@@ -14,18 +14,24 @@ import { CLASSES } from '../src/data/classes';
 import { TRIALS } from '../src/data/ascendancies';
 import { BOSS_TABLES, DROP_TABLES, bossTable } from '../src/data/drops';
 import { INSTILL_CONDITIONS } from '../src/data/flasks';
-import { ACTIVE_GEMS, MAX_GEM_LEVEL, RULE_LABELS, RULE_UNLOCK_NAMES, SUPPORT_GEMS, TARGET_STATUSES, activeGemDef, gemAct, gemReqLevel, gemWeapons, type ActiveGemDef, type SupportGemDef } from '../src/data/gems';
+import { ACTIVE_GEMS, MAX_GEM_LEVEL, MAX_SUPPORT_SLOTS, RULE_LABELS, RULE_UNLOCK_NAMES, SKILL_BAR_SLOTS, SUPPORT_GEMS, TARGET_STATUSES, activeGemDef, gemAct, gemReqLevel, gemWeapons, type ActiveGemDef, type RuleCondition, type RuleUnlock, type SupportGemDef } from '../src/data/gems';
 import { OFFLINE_HAUL_CAP, STATIONS, stationDef, type StationId } from '../src/data/hideout';
 import { CURRENCIES, MATERIALS, type CurrencyDef } from '../src/data/materials';
 import { NEWS } from '../src/data/news';
 import { SKILLS, actionsFor } from '../src/data/skills';
 import { ACTS, MECHANIC_INFO, ZONES, type MonsterDef, type ZoneDef } from '../src/data/zones';
+import { GROUND_IN_PLAY, cleansesFrostbite } from '../src/engine/automation';
+import { areaXpMultiplier } from '../src/engine/character';
 import {
   AILMENT_DECAY_PCT, AILMENT_THRESHOLD_PCT, BOSS_FREEZE_MS, CHILL_MS, CHILL_SLOW_PCT, FREEZE_MS, GEAR_POISON,
-  MONSTER_OWN_RES, SHOCK_MAX_PCT, SHOCK_MIN_PCT, SHOCK_MS, makeMonster,
+  MONSTER_OWN_RES, SHOCK_MAX_PCT, SHOCK_MIN_PCT, SHOCK_MS, makeMonster, monsterXp,
 } from '../src/engine/combat';
-import { ATTACK_PCT_PER_LEVEL, BURN_MS, BURN_SHARE, IGNITE_MS, IGNITE_SHARE, LIFE_RESERVE_PCT, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, supportFits, weaponPctAt } from '../src/engine/gems';
-import { affixRangeText, describeMod, spawnWeight } from '../src/engine/items';
+import { itemFigures } from '../src/engine/compare';
+import { ATTACK_PCT_PER_LEVEL, BURN_MS, BURN_SHARE, IGNITE_MS, IGNITE_SHARE, LIFE_RESERVE_PCT, SPELL_ADDED_EFFECTIVENESS, gemAttrReq, gemLevelReq, spellBaseAt, supportFits, weaponPctAt } from '../src/engine/gems';
+import { affixRangeText, createUnique, describeMod, spawnWeight } from '../src/engine/items';
+import { GEM_DROP_SCALE } from '../src/engine/loot';
+import type { GameState, Item } from '../src/engine/types';
+import { xpToReach } from '../src/engine/xp';
 import { CURRENCY_ART, GEM_GLYPHS, ITEM_ART, MONSTER_ART, UNIQUE_ART, ZONE_ART } from '../src/ui/assets';
 import { MEGA_CRIT_MULTI } from '../src/engine/mechanics';
 import { ATTRIBUTE_EFFECTS, RES_CAP } from '../src/engine/stats';
@@ -786,7 +792,111 @@ function walkthroughBlock(): string {
   }).join('');
 }
 
+/** A calculator's place on a page, with the game numbers it runs on. tools.js does the rest. */
+function tool(name: string, data: unknown): string {
+  const json = JSON.stringify(data).replace(/</g, '\\u003c');
+  return `<div class="tool" data-tool="${name}"></div><script type="application/json" id="tool-data">${json}</script><script src="${BASE_URL}tools.js" defer></script><noscript><p>This tool needs JavaScript.</p></noscript>`;
+}
+
+const ZONE_DROPS = () => OPEN_ZONES.map((z) => ({ n: z.name, act: z.act, tier: z.tier, u: z.uniques.flatMap((id) => UNIQUES.find((u) => u.id === id)?.name ?? []) }));
+
+function dropTool() {
+  const tiers = Object.fromEntries(Object.entries(DROP_TABLES).map(([k, t]) => [k, {
+    cc: t.currencyChance, cur: Object.fromEntries(Object.entries(t.currency).map(([id, w]) => [matName(id), w])), ic: t.itemChance, rarity: t.rarity, fc: t.flaskChance, gc: t.gemChance * GEM_DROP_SCALE, uc: t.uniqueChance,
+  }]));
+  const bosses = Object.fromEntries(Object.entries(BOSS_TABLES).map(([k, t]) => [k, { uc: t.uniqueChance }]));
+  return tool('drop', { areas: ZONE_DROPS(), tiers, bosses });
+}
+
+function craftTool() {
+  const crafting = Object.values(SKILLS).filter((s) => s.group === 'production');
+  const recipes = crafting.flatMap((s) => actionsFor(s.id).filter((a) => !a.soon).map((a) => {
+    const zone = a.area ? ENTITIES.get(U.area(a.area))?.name : a.gate?.label;
+    const out = a.baseId ? baseDef(a.baseId).name : a.gem ? `a random ${a.gem.kind} gem` : Object.entries(a.outputs ?? {}).map(([id, n]) => `${n} ${matName(id)}`).join(', ');
+    return {
+      n: a.name, skill: s.name, skillName: s.name, lvl: a.level, ms: a.intervalMs, xp: a.xp,
+      in: Object.fromEntries(Object.entries(a.inputs ?? {}).map(([id, n]) => [matName(id), n])),
+      out: out || (a.flaskId ? 'a flask' : ''),
+      where: zone ? `${zone} open` : '',
+    };
+  }));
+  return tool('craft', { skills: crafting.map((s) => s.name), recipes });
+}
+
+function xpTool() {
+  const levels = (skill: 'combat' | 'mining', top: number) => Array.from({ length: top + 1 }, (_, l) => xpToReach(skill, l));
+  const areas = OPEN_ZONES.map((z) => ({
+    n: z.name, act: z.act, min: z.levelRange[0], max: z.levelRange[1],
+    xp: z.monsters.reduce((sum, m) => sum + monsterXp(makeMonster(m, false)), 0) / z.monsters.length,
+  }));
+  // how far past or short of an area's range changes XP, from the game's own function
+  const over: number[] = [];
+  for (let n = 1; areaXpMultiplier(200 + n, [200, 200]) > 0; n++) over.push(areaXpMultiplier(200 + n, [200, 200]));
+  const under = [1, 2].map((n) => areaXpMultiplier(200 - n, [200, 200]));
+  const spots = Object.values(SKILLS).filter((s) => s.id !== 'combat' && !s.soon).map((s) => ({
+    n: s.name, spots: actionsFor(s.id).filter((a) => !a.soon).map((a) => ({ n: a.name, lvl: a.level, ms: a.intervalMs, xp: a.xp })),
+  }));
+  return tool('xp', { char: levels('combat', 100), skill: levels('mining', 99), areas, over, under, spots });
+}
+
+function compareTool() {
+  const figures = (item: Item) => itemFigures(item).map((f) => [f.label, f.value, f.digits ?? 0, f.unit ?? '']);
+  const req = (b: BaseDef) => Object.entries(attributeReq(b)).map(([k, v]) => `${v} ${attrName[k as keyof typeof attrName]}`).join(', ');
+  const stub = { nextUid: 1 } as unknown as GameState;
+  const items = [
+    ...BASES.map((b) => ({ n: b.name, slot: title(b.slot), lvl: b.reqLevel, req: req(b), mods: (b.implicits ?? []).map((i) => i.text), fig: figures({ uid: 0, baseId: b.id, ilvl: b.reqLevel, rarity: 'normal', name: null, prefixes: [], suffixes: [] }), group: title(b.slot) })),
+    ...UNIQUES.map((u) => {
+      const b = baseDef(u.baseId);
+      return { n: u.name, slot: title(b.slot), lvl: b.reqLevel, req: req(b), mods: [...(b.implicits ?? []).map((i) => i.text), ...uniqueMods(u)], fig: figures(createUnique(stub, u.id, b.reqLevel)), group: 'Uniques' };
+    }),
+  ];
+  const groups = [...new Set(items.map((i) => i.group))].map((n) => ({ n, items: items.flatMap((x, i) => (x.group === n ? [i] : [])) }));
+  const first = items.findIndex((i) => i.n === 'Rusted Sword');
+  return tool('compare', { items, groups, start: [first, items.findIndex((i, n) => n > first && i.group === 'Weapon')] });
+}
+
+function ruleTool() {
+  const keys = Object.keys(RULE_LABELS) as RuleCondition[];
+  const unlockLevel = (u?: RuleUnlock) => (u ? stationDef('war_table').levels.findIndex((l) => l.grants?.rules?.includes(u)) + 1 : 1);
+  const rules = keys.map((id) => {
+    const r = RULE_LABELS[id];
+    return { id, label: r.label, unit: r.unit, def: r.defaultValue, status: r.status, ground: r.ground, level: unlockLevel(r.unlock), act: r.act };
+  });
+  const skills = [...ACTIVE_GEMS].sort((a, b) => a.name.localeCompare(b.name)).map((g) => {
+    const e = g.effect;
+    return {
+      n: g.name, mana: g.manaCost, cd: g.cooldownMs ? secs(g.cooldownMs) : '', melee: !!(e.weaponPct || e.base),
+      tracked: !!(e.buff || e.blocks || e.evadeMs || e.shieldPct || e.ailment || e.curse || e.minion || e.storm),
+      cleanses: cleansesFrostbite(g), breaks: !!(e.interrupts || e.stunChance),
+      rule: { i: keys.indexOf(g.defaultRule.when), value: g.defaultRule.value },
+    };
+  });
+  const levels = stationDef('war_table').levels.map((l, i) => ({ level: i + 1, text: l.effect.split(':')[0], slots: l.grants?.ruleSlots }));
+  return tool('rules', { rules, skills, levels, statuses: TARGET_STATUSES.map((s) => s.label), grounds: [...GROUND_IN_PLAY].map((g) => title(g)) });
+}
+
+function buildTool() {
+  const supports = SUPPORT_GEMS.map((s) => ({ id: s.id, n: s.name, lvl: gemReqLevel(s.id) }));
+  const skills = ACTIVE_GEMS.map((g) => ({
+    id: g.id, n: g.name, attr: g.attr, lvl: gemReqLevel(g.id), w: gemWeapons(g) ?? null,
+    levels: Array.from({ length: MAX_GEM_LEVEL }, (_, i) => gemLevelReq(g.id, i + 1)),
+    attrs: Array.from({ length: MAX_GEM_LEVEL }, (_, i) => gemAttrReq(g.id, i + 1)),
+    sup: SUPPORT_GEMS.flatMap((s, i) => (supportFits(s, g) ? [i] : [])),
+  }));
+  return tool('build', {
+    skills, supports, bar: SKILL_BAR_SLOTS, maxSockets: MAX_SUPPORT_SLOTS, attrs: attrName,
+    weapons: Object.fromEntries(Object.entries(WEAPON_FAMILIES).map(([k, f]) => [k, f.name])),
+    classes: CLASSES.map((c) => ({ id: c.id, n: c.name, attr: c.baseAttributes })),
+  });
+}
+
 const GUIDE_DATA: Record<string, () => string> = {
+  'tool-drop': dropTool,
+  'tool-craft': craftTool,
+  'tool-xp': xpTool,
+  'tool-compare': compareTool,
+  'tool-rules': ruleTool,
+  'tool-build': buildTool,
   builds: buildsBlock,
   rules: rulesBlock,
   gathering: gatheringBlock,
@@ -905,6 +1015,7 @@ write('search-index.json', JSON.stringify(search));
 write('hover-cards.json', JSON.stringify(Object.fromEntries([...ENTITIES].map(([u, e]) => [u, { n: e.name, k: e.kind, a: e.art || undefined, p: e.pixel || undefined, t: e.text }]))));
 write('wiki.css', readFileSync(join(__dirname, 'wiki-assets', 'wiki.css'), 'utf8'));
 write('wiki.js', readFileSync(join(__dirname, 'wiki-assets', 'wiki.js'), 'utf8'));
+write('tools.js', readFileSync(join(__dirname, 'wiki-assets', 'tools.js'), 'utf8'));
 
 for (const rel of usedArt) {
   mkdirSync(dirname(join(OUT, 'art', rel)), { recursive: true });

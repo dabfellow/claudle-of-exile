@@ -349,7 +349,8 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
     - [ ] Later: materials and modifiers have rows with direct links, not pages of their own.
   - [x] Phase 3: Getting started, checklist, FAQ, glossary, automation guide and rule reference, offline, gathering, farming, walkthrough, boss preparation, loot tables, unlocks, starter builds, patch notes, data version, and reporting through the game's Feedback card. Guides live in `docs/wiki/`, with `{{data:…}}` tables and `{{skill:…}}` links filled from the game. Starter builds aren't playtested. — done 2026-11-01
     - [ ] **[You]** Read the guides for tone and anything that doesn't match how you see the game.
-  - [ ] Phase 4: planners and calculators, once their formulas are checked against the game.
+  - [x] Phase 4: item comparison, drop calculator, crafting planner, XP and farming planner, rule builder and build planner with share links. Numbers are worked out by the game's own code at build time. Patch history per entry and community features are left out. — done 2026-11-01
+    - [ ] Not live yet.
 - [ ] Wiki next, decided in the 2026-11-01 design pass (see Decisions → Wiki), in this order:
   - [x] Spoiler boxes: click-to-reveal for boss mechanics, unique drop sources and Acts 4–6, applied by the generator. — done 2026-11-01
   - [ ] Reference pages: passive tree notables, life skills and recipes, hideout upgrades, runes and flasks, boss mechanics glossary.

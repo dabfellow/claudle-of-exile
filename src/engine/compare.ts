@@ -45,7 +45,7 @@ export function weaponDps(item: Item): number {
 }
 
 /** One item's own numbers, the ones printed at the top of its tooltip. */
-function itemFigures(item: Item | null): Figure[] {
+export function itemFigures(item: Item | null): Figure[] {
   if (!item) return [];
   const base = baseDef(item.baseId);
   const st = itemStats(item);
