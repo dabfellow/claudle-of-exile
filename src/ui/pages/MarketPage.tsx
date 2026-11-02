@@ -92,7 +92,7 @@ function useListings(filters: MarketFilters) {
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState(PAGE);
   const load = useCallback(async () => {
-    const api = marketApi();
+    const api = marketApi(game.realm.realm);
     if (!api) return setError('Online features are not configured');
     try {
       const f = JSON.parse(key) as MarketFilters;
@@ -239,6 +239,7 @@ export function MarketPage() {
   const access = game.marketAccess;
   const [tab, setTab] = useState<'browse' | 'sell' | 'mine'>('browse');
   useEffect(() => void game.marketSync(), []);
+  if (access === 'solo') return <div className="page card muted">Solo Self-Found characters can't use the Player Market.</div>;
   return (
     <div className="page">
       <PageHeader

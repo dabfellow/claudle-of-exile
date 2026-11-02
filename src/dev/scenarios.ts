@@ -14,7 +14,7 @@ import { challengeBoss, startCombat } from '../engine/combat';
 import { createItem } from '../engine/items';
 import { seeded } from '../engine/rng';
 import { deriveStats } from '../engine/stats';
-import type { EquipSlot, GameState, ItemSlotType } from '../engine/types';
+import type { ChallengeFlags, EquipSlot, GameState, ItemSlotType } from '../engine/types';
 import { charXpForLevel } from '../engine/xp';
 import { MARKET_UNLOCK_BOSS } from '../engine/market';
 import { game } from '../game';
@@ -31,6 +31,7 @@ interface Setup {
   boss?: boolean;
   /** keep the tutorial running */
   tutorial?: boolean;
+  challenge?: ChallengeFlags;
   /** anything else the scenario needs, after gearing up */
   prepare?: (s: GameState) => void;
 }
@@ -44,6 +45,8 @@ const PRESETS: Record<string, Setup> = {
   act1Boss: { classId: 'warrior', zone: actBoss(1).id, boss: true },
   act3Boss: { classId: 'mage', zone: actBoss(3).id, boss: true },
   act6Boss: { classId: 'duelist', zone: actBoss(6).id, boss: true },
+  /** all three challenge modes at once, in a fight it can lose */
+  hardcoreSsfClassic: { classId: 'warrior', zone: actBoss(3).id, level: 1, challenge: { hardcore: true, ssf: true, classic: true } },
   /** a full bag of rares, for salvage, stash and overflow */
   fullInventory: {
     level: 30,
@@ -103,7 +106,7 @@ async function load(setup: Setup) {
 
   if (game.screen === 'game') await game.exit();
   if (!game.account) await game.signIn('demo');
-  await game.create('Playtest', setup.classId ?? 'warrior');
+  await game.create('Playtest', setup.classId ?? 'warrior', undefined, setup.challenge);
   game.dismissIntro();
 
   game.act((s, ctx) => {

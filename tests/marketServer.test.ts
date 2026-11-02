@@ -91,7 +91,7 @@ describe('who can trade', () => {
   });
 
   it('never lets a player run the inner steps or read the tables', async () => {
-    await expect(as(BOB, `select market_send($1, 'gold', 999, null, 'free money')`, [BOB])).rejects.toThrow('permission denied');
+    await expect(as(BOB, `select market_send($1, 'gold', 999, null, 'free money', 'standard')`, [BOB])).rejects.toThrow('permission denied');
     await expect(as(BOB, 'select market_settle()')).rejects.toThrow('permission denied');
     expect(await as(BOB, 'select count(*)::int from market_inbox')).toBe(0);
     await expect(as(BOB, 'select market_set_rules($1, $2)', ['x', '{}'])).rejects.toThrow('Admins only');
@@ -330,5 +330,43 @@ describe('admin tools', () => {
     const rows = await as<{ seller: string }[]>(ADMIN, 'select market_admin_list()');
     expect(rows[0].seller).toBe(ALICE);
     expect(JSON.stringify(await browse(BOB))).not.toContain(ALICE);
+  });
+});
+
+describe('markets by realm', () => {
+  const HC = 'hardcore';
+
+  beforeAll(async () => {
+    for (const id of [ALICE, BOB]) await db.query(`insert into characters values ($1, $2, '{"act1Cleared":true,"realm":"hardcore"}')`, [`hc-${id}`, id]);
+  });
+
+  const listIn = (who: string, realm: string) => as<number>(who, 'select market_list($1, $2, $3, $4, $5, $6)', [op(), JSON.stringify(plainRing()), 'buy', 'gold', 1000, realm]);
+  const browseIn = (realm: string) => as<{ id: number }[]>(ALICE, 'select market_browse(p_scope => $1, p_realm => $2)', ['all', realm]);
+
+  it('keeps listings apart', async () => {
+    const id = await listIn(ALICE, HC);
+    expect((await browseIn(HC)).map((l) => l.id)).toEqual([id]);
+    expect(await browse(BOB)).toEqual([]);
+  });
+
+  it('refuses a purchase from another realm', async () => {
+    const id = await listIn(ALICE, HC);
+    await expect(buy(BOB, id)).rejects.toThrow('gone');
+  });
+
+  it('delivers to the realm it was sold in', async () => {
+    const id = await listIn(ALICE, HC);
+    await as(BOB, 'select market_buy($1, $2, $3, $4, $5)', [op(), id, 'gold', 1000, HC]);
+    expect(await collect(ALICE)).toEqual([]);
+    const rows = await as<{ amount: number }[]>(ALICE, 'select market_collect($1)', [HC]);
+    expect(rows.map((r) => r.amount)).toEqual([900]);
+  });
+
+  it('needs Act 1 cleared in that realm', async () => {
+    await expect(listIn(CARA, HC)).rejects.toThrow('Clear Act 1');
+  });
+
+  it('has no market for Solo Self-Found', async () => {
+    await expect(listIn(ALICE, 'ssf-c1')).rejects.toThrow("doesn't exist");
   });
 });

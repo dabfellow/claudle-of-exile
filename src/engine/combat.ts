@@ -1,4 +1,5 @@
 import { ACTIVE_GEMS, activeGemDef, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
+import { isHardcore } from './challenge';
 import { groundAtRisk, groundOnDeath } from './storage';
 import {
   actOpen,
@@ -1972,6 +1973,13 @@ function reapDead(s: GameState, ctx: Ctx, d: Derived): void {
 
 function die(s: GameState, ctx: Ctx, d: Derived): void {
   s.lifetime.deaths += 1;
+  if (isHardcore(s)) {
+    s.fallen = { zoneId: s.combat?.zoneId ?? null, offline: !!ctx.offline };
+    s.greenhouse = null;
+    ctx.emit({ t: 'death', xpLost: 0 });
+    retreat(s);
+    return;
+  }
   // losing to a boss sends it back into hiding so the zone can be farmed again
   if (s.combat && aliveMonsters(s.combat).some((m) => m.isBoss)) s.zoneKills[s.combat.zoneId] = 0;
   const xpLost = applyDeathPenalty(s);

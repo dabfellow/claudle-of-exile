@@ -184,24 +184,41 @@ begin
   return market_gear_problem(r, item->>'baseId', ilvl, item->>'uniqueId', item->'impression');
 end $$;
 
+-- ---------- one market per realm ----------
+
+-- Hardcore, Classic and Hardcore Classic each trade apart, so money and items only ever land back in the realm they
+-- came from. Solo Self-Found characters don't trade. The older versions of these functions go, or they'd stay callable.
+alter table public.market_inbox add column if not exists realm text not null default 'standard';
+drop index if exists market_inbox_user_idx;
+create index if not exists market_inbox_user_idx on public.market_inbox (user_id, realm) where collected_at is null;
+
+drop function if exists public.market_trader();
+drop function if exists public.market_send(uuid, text, bigint, jsonb, text);
+drop function if exists public.market_browse(text, text, text, text, text, text, int);
+drop function if exists public.market_list(uuid, jsonb, text, text, bigint);
+drop function if exists public.market_buy(uuid, bigint, text, bigint);
+drop function if exists public.market_bid(uuid, bigint, text, bigint);
+drop function if exists public.market_collect();
+
 -- ---------- inner steps (not callable by players) ----------
 
--- Signed in, not banned, past Act 1. Everything except collecting and cancelling goes through this.
-create or replace function public.market_trader() returns uuid
+-- Signed in, not banned, past Act 1 in this realm. Everything except collecting and cancelling goes through this.
+create or replace function public.market_trader(p_realm text default 'standard') returns uuid
   language plpgsql stable security definer set search_path = public as $$
 declare me uuid := auth.uid();
 begin
   if me is null then raise exception 'Sign in to use the market'; end if;
+  if p_realm not in ('standard', 'hardcore', 'classic', 'hardcore-classic') then raise exception 'That market doesn''t exist'; end if;
   if exists (select 1 from market_bans where user_id = me) then raise exception 'You are banned from the market'; end if;
-  if not exists (select 1 from characters where user_id = me and coalesce((summary->>'act1Cleared')::boolean, false)) then
+  if not exists (select 1 from characters where user_id = me and coalesce(summary->>'realm', 'standard') = p_realm and coalesce((summary->>'act1Cleared')::boolean, false)) then
     raise exception 'Clear Act 1 to use the market';
   end if;
   return me;
 end $$;
 
-create or replace function public.market_send(who uuid, cur text, amt bigint, gear jsonb, what text)
+create or replace function public.market_send(who uuid, cur text, amt bigint, gear jsonb, what text, to_realm text)
   returns void language sql security definer set search_path = public as $$
-  insert into market_inbox (user_id, currency, amount, item, note) values (who, cur, amt, gear, what);
+  insert into market_inbox (user_id, currency, amount, item, note, realm) values (who, cur, amt, gear, what, to_realm);
 $$;
 
 -- The sale: 10% rounded down disappears, the rest and the item go to their new owners.
@@ -209,8 +226,8 @@ create or replace function public.market_close_sale(l market_listings, buyer uui
   returns void language plpgsql security definer set search_path = public as $$
 begin
   update market_listings set status = 'sold', sold_to = buyer, sold_at = now() where id = l.id;
-  perform market_send(l.seller, l.currency, paid - paid / 10, null, 'Sold ' || l.item_name);
-  if buyer is not null then perform market_send(buyer, null, null, l.item, 'Bought ' || l.item_name);
+  perform market_send(l.seller, l.currency, paid - paid / 10, null, 'Sold ' || l.item_name, l.realm);
+  if buyer is not null then perform market_send(buyer, null, null, l.item, 'Bought ' || l.item_name, l.realm);
   end if;
 end $$;
 
@@ -224,7 +241,7 @@ begin
       perform market_close_sale(l, l.high_bidder, l.high_bid);
     else
       update market_listings set status = 'expired' where id = l.id;
-      perform market_send(l.seller, null, null, l.item, 'Listing ended: ' || l.item_name);
+      perform market_send(l.seller, null, null, l.item, 'Listing ended: ' || l.item_name, l.realm);
     end if;
   end loop;
 end $$;
@@ -250,7 +267,7 @@ end $$;
 
 create or replace function public.market_browse(
   p_scope text default 'all', p_text text default null, p_slot text default null, p_rarity text default null,
-  p_currency text default null, p_mode text default null, p_offset int default 0
+  p_currency text default null, p_mode text default null, p_offset int default 0, p_realm text default 'standard'
 ) returns jsonb language plpgsql security definer set search_path = public as $$
 declare
   me uuid := auth.uid();
@@ -261,7 +278,7 @@ begin
     select l.id, l.item, l.item_name, l.mode, l.currency, l.price, l.high_bid, l.ends_at,
            l.seller = me as mine, l.high_bidder = me as winning
       from market_listings l
-     where l.status = 'active' and l.realm = 'standard' and l.ends_at > now()
+     where l.status = 'active' and l.realm = p_realm and l.ends_at > now()
        and case p_scope when 'mine' then l.seller = me when 'bids' then l.high_bidder = me else true end
        and (p_text is null or l.item_name ilike '%' || replace(replace(replace(p_text, '\', '\\'), '%', '\%'), '_', '\_') || '%')
        and (p_slot is null or l.slot = p_slot)
@@ -274,10 +291,10 @@ begin
   return out_rows;
 end $$;
 
-create or replace function public.market_list(p_op uuid, p_item jsonb, p_mode text, p_currency text, p_price bigint)
+create or replace function public.market_list(p_op uuid, p_item jsonb, p_mode text, p_currency text, p_price bigint, p_realm text default 'standard')
   returns bigint language plpgsql security definer set search_path = public as $$
 declare
-  me uuid := market_trader();
+  me uuid := market_trader(p_realm);
   problem text := market_item_problem(p_item);
   r jsonb;
   new_id bigint;
@@ -288,27 +305,27 @@ begin
   if p_price is null or p_price < 1 or p_price > 1000000000000 then raise exception 'That price won''t work'; end if;
   -- one lock per seller, so two tabs can't slip past the limit together
   perform pg_advisory_xact_lock(hashtextextended(me::text, 0));
-  if (select count(*) from market_listings where seller = me and status = 'active') >= 20 then
+  if (select count(*) from market_listings where seller = me and realm = p_realm and status = 'active') >= 20 then
     raise exception 'You already have 20 listings up';
   end if;
   perform market_claim_op(p_op, me);
   select rules into r from market_rules where id = 1;
-  insert into market_listings (seller, item, item_name, slot, rarity, ilvl, mode, currency, price, ends_at)
-  values (me, p_item - 'uid', coalesce(r->'uniques'->(p_item->>'uniqueId')->>'name', p_item->>'name', r->'bases'->(p_item->>'baseId')->>'name'),
+  insert into market_listings (realm, seller, item, item_name, slot, rarity, ilvl, mode, currency, price, ends_at)
+  values (p_realm, me, p_item - 'uid', coalesce(r->'uniques'->(p_item->>'uniqueId')->>'name', p_item->>'name', r->'bases'->(p_item->>'baseId')->>'name'),
           r->'bases'->(p_item->>'baseId')->>'slot', p_item->>'rarity', (p_item->>'ilvl')::int, p_mode, p_currency, p_price,
           now() + case p_mode when 'buy' then interval '7 days' else interval '24 hours' end)
   returning id into new_id;
   return new_id;
 end $$;
 
-create or replace function public.market_buy(p_op uuid, p_id bigint, p_currency text, p_amount bigint)
+create or replace function public.market_buy(p_op uuid, p_id bigint, p_currency text, p_amount bigint, p_realm text default 'standard')
   returns void language plpgsql security definer set search_path = public as $$
 declare
-  me uuid := market_trader();
+  me uuid := market_trader(p_realm);
   l market_listings;
 begin
   select * into l from market_listings where id = p_id for update;
-  if l.id is null or l.status <> 'active' or l.ends_at <= now() then raise exception 'That listing is gone'; end if;
+  if l.id is null or l.realm <> p_realm or l.status <> 'active' or l.ends_at <= now() then raise exception 'That listing is gone'; end if;
   if l.mode <> 'buy' then raise exception 'That listing is an auction'; end if;
   if l.seller = me then raise exception 'That''s your own listing'; end if;
   if l.currency <> p_currency or l.price <> p_amount then raise exception 'The price doesn''t match'; end if;
@@ -316,14 +333,14 @@ begin
   perform market_close_sale(l, me, l.price);
 end $$;
 
-create or replace function public.market_bid(p_op uuid, p_id bigint, p_currency text, p_amount bigint)
+create or replace function public.market_bid(p_op uuid, p_id bigint, p_currency text, p_amount bigint, p_realm text default 'standard')
   returns void language plpgsql security definer set search_path = public as $$
 declare
-  me uuid := market_trader();
+  me uuid := market_trader(p_realm);
   l market_listings;
 begin
   select * into l from market_listings where id = p_id for update;
-  if l.id is null or l.status <> 'active' or l.ends_at <= now() then raise exception 'That auction is over'; end if;
+  if l.id is null or l.realm <> p_realm or l.status <> 'active' or l.ends_at <= now() then raise exception 'That auction is over'; end if;
   if l.mode <> 'auction' then raise exception 'That listing isn''t an auction'; end if;
   if l.seller = me then raise exception 'That''s your own listing'; end if;
   if l.high_bidder = me then raise exception 'You''re already the highest bidder'; end if;
@@ -331,7 +348,7 @@ begin
   if p_amount is null or p_amount < market_min_bid(l.price, l.high_bid) then raise exception 'Someone bid first: the lowest bid is now %', market_min_bid(l.price, l.high_bid); end if;
   if p_amount > 1000000000000 then raise exception 'That price won''t work'; end if;
   perform market_claim_op(p_op, me);
-  if l.high_bidder is not null then perform market_send(l.high_bidder, l.currency, l.high_bid, null, 'Outbid on ' || l.item_name); end if;
+  if l.high_bidder is not null then perform market_send(l.high_bidder, l.currency, l.high_bid, null, 'Outbid on ' || l.item_name, l.realm); end if;
   update market_listings
      set high_bid = p_amount, high_bidder = me,
          ends_at = case when ends_at - now() < interval '5 minutes' then ends_at + interval '5 minutes' else ends_at end
@@ -356,11 +373,11 @@ begin
   if l.status <> 'active' then raise exception 'That listing is gone'; end if;
   if l.high_bid is not null then raise exception 'An auction with a bid can''t be cancelled'; end if;
   update market_listings set status = 'cancelled' where id = l.id;
-  perform market_send(me, null, null, l.item, 'Cancelled: ' || l.item_name);
+  perform market_send(me, null, null, l.item, 'Cancelled: ' || l.item_name, l.realm);
 end $$;
 
 -- Hand over everything waiting. Allowed for a banned player, so they still get what they're owed.
-create or replace function public.market_collect() returns jsonb
+create or replace function public.market_collect(p_realm text default 'standard') returns jsonb
   language plpgsql security definer set search_path = public as $$
 declare
   me uuid := auth.uid();
@@ -369,7 +386,7 @@ begin
   if me is null then raise exception 'Sign in to use the market'; end if;
   perform market_settle();
   with taken as (
-    update market_inbox set collected_at = now() where user_id = me and collected_at is null
+    update market_inbox set collected_at = now() where user_id = me and realm = p_realm and collected_at is null
     returning id, currency, amount, item, note
   ) select coalesce(jsonb_agg(row_to_json(taken)), '[]') into out_rows from taken;
   return out_rows;
@@ -425,9 +442,9 @@ begin
   select * into l from market_listings where id = p_id for update;
   if l.id is null or l.status <> 'active' then raise exception 'That listing is gone'; end if;
   update market_listings set status = 'removed' where id = l.id;
-  perform market_send(l.seller, null, null, l.item, 'Removed by an admin: ' || l.item_name);
+  perform market_send(l.seller, null, null, l.item, 'Removed by an admin: ' || l.item_name, l.realm);
   if l.high_bidder is not null then
-    perform market_send(l.high_bidder, l.currency, l.high_bid, null, 'Refund: ' || l.item_name || ' was removed');
+    perform market_send(l.high_bidder, l.currency, l.high_bid, null, 'Refund: ' || l.item_name || ' was removed', l.realm);
   end if;
 end $$;
 
@@ -446,19 +463,19 @@ end $$;
 revoke all on function
   public.market_gear_problem(jsonb, text, int, text, jsonb),
   public.market_item_problem(jsonb),
-  public.market_trader(),
-  public.market_send(uuid, text, bigint, jsonb, text),
+  public.market_trader(text),
+  public.market_send(uuid, text, bigint, jsonb, text, text),
   public.market_close_sale(market_listings, uuid, bigint),
   public.market_settle(),
   public.market_claim_op(uuid, uuid),
   public.market_check_currency(text),
   public.market_admin_check(),
-  public.market_browse(text, text, text, text, text, text, int),
-  public.market_list(uuid, jsonb, text, text, bigint),
-  public.market_buy(uuid, bigint, text, bigint),
-  public.market_bid(uuid, bigint, text, bigint),
+  public.market_browse(text, text, text, text, text, text, int, text),
+  public.market_list(uuid, jsonb, text, text, bigint, text),
+  public.market_buy(uuid, bigint, text, bigint, text),
+  public.market_bid(uuid, bigint, text, bigint, text),
   public.market_cancel(bigint),
-  public.market_collect(),
+  public.market_collect(text),
   public.market_op_done(uuid),
   public.market_rules_version(),
   public.market_set_rules(text, jsonb),
@@ -467,12 +484,12 @@ revoke all on function
   public.market_admin_ban(uuid, boolean)
 from public, anon, authenticated;
 
-grant execute on function public.market_browse(text, text, text, text, text, text, int) to anon, authenticated;
-grant execute on function public.market_list(uuid, jsonb, text, text, bigint) to authenticated;
-grant execute on function public.market_buy(uuid, bigint, text, bigint) to authenticated;
-grant execute on function public.market_bid(uuid, bigint, text, bigint) to authenticated;
+grant execute on function public.market_browse(text, text, text, text, text, text, int, text) to anon, authenticated;
+grant execute on function public.market_list(uuid, jsonb, text, text, bigint, text) to authenticated;
+grant execute on function public.market_buy(uuid, bigint, text, bigint, text) to authenticated;
+grant execute on function public.market_bid(uuid, bigint, text, bigint, text) to authenticated;
 grant execute on function public.market_cancel(bigint) to authenticated;
-grant execute on function public.market_collect() to authenticated;
+grant execute on function public.market_collect(text) to authenticated;
 grant execute on function public.market_op_done(uuid) to authenticated;
 grant execute on function public.market_rules_version() to authenticated;
 grant execute on function public.market_set_rules(text, jsonb) to authenticated;

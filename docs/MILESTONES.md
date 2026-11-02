@@ -17,14 +17,15 @@ stay as they are, with no playtest planned, until you say otherwise.
 
 **In order:**
 
-1. **Claude:** build the real Maps (Milestone 8) from [MAPS.md](design/MAPS.md). Beating Act 6 opens the bare Maps preview page, and drawn maps can't be spent yet.
-2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
+1. **[You]** Before shipping challenge modes, paste [market.sql](ops/market.sql) into Supabase (**SQL Editor → New query → Run**). Until then the Hardcore and Classic markets show an error; the normal market works either way.
+2. **Claude:** build the real Maps (Milestone 8) from [MAPS.md](design/MAPS.md). Beating Act 6 opens the bare Maps preview page, and drawn maps can't be spent yet.
+3. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
-3. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
+4. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
    they earn them, and Act 1 got slower. Also say that six gems moved in 0.3.3 and can lock until their new level.
-4. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
+5. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
    hideout scenes ([ASSET_MAPPING.md](design/ASSET_MAPPING.md)).
-5. **[You]** Play the Maps preview whenever you like, and say whether the loop is fun. Maps stay post-Act 6 in the real
+6. **[You]** Play the Maps preview whenever you like, and say whether the loop is fun. Maps stay post-Act 6 in the real
    game; the preview is dev and admin only. Try it with `npm run dev`, then Map Device → Dev tools.
 
 ## Milestones
@@ -130,7 +131,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 
 ### 11. Long tail
 - Collection log, masteries, build-defining uniques, the skills arriving around or after Act 6.
-- Hardcore and Classic, each with their own stash, hideout and unlocks.
+- [x] Challenge modes: Hardcore, Solo Self-Found and Classic as toggles in any mix ([GDD.md](design/GDD.md) §11) — done 2026-11-01. Played in the test build; not deployed, and the per-mode markets need market.sql run.
 - **Done:** your call.
 
 ### 1.0
@@ -153,6 +154,9 @@ target times and players set the acts' pace: 1–20 about 3 h, 20–40 about 3 h
 outlevel the campaign ([BALANCE.md](design/BALANCE.md) → Knobs).
 
 **Skill gem reform (you, 2026-11-01):** every act and attribute gets AoE, single target, guard, and a life and a mana source, with leech very weak until Acts 3–4. Drain skills return life or mana, never both, and supports can fill the other half. Arcane Siphon moved to Act 5, the leech supports cost 1.8 times the mana, no new signature supports, and existing gems were sorted where they fit. Existing characters get one The Old Covenant ring; new ones don't ([SKILL_REFORM.md](design/SKILL_REFORM.md)).
+
+**Challenge modes (you, 2026-11-01):** Hardcore deletes the character, Solo Self-Found can't use the Player Market and each one has its own stash, and Classic has no idle skilling but keeps the Crafting Bench. They're toggles, in any mix.
+- Decided for you: an SSF character's hideout and unlocks are its own too, and are deleted with it. Hardcore characters share a stash that outlives them, and each non-SSF mix has its own market. Modes can't be changed after creation. NPC shops stay open to SSF. Heist counts as skilling. Classic pays gold (5 times sale value) for gathered materials in hideout upgrades, since nothing else supplies them in bulk, and skips the Forge, the Alchemy Table, the skilling tree and the tutorial's mining and smithing steps. The two bench recipe achievements that need skilling are waived for Classic. The Exile unlock carries from any mode to the whole account.
 
 **Wiki (design pass, 2026-11-01):**
 - Spoilers: B. The wiki is fully public with no login. Boss mechanics, unique drop sources and later acts sit behind click-to-reveal "Spoiler" boxes.
@@ -401,6 +405,8 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+
+- Hardcore on two devices: a second device still holding a local copy of a dead character can bring it back. Deleted characters would need a cloud marker to stop that.
 - Skill reform: a The Old Covenant moved to the shared stash can be worn by a new character on that account. Life Leech's 1.8 multiplier also raises Life-spending skills' Life cost, and drains cost no mana, so leech supports are free on them. The 31 new skills use reused icons, and none has its own art.
 - War Table: Wind-up rules are now level 2, about 15 minutes of gathering, so offline bosses come far earlier than Milestone 1's pacing assumed. Not simmed.
 - The sim's `reachable` now pushes unbeaten areas so it walks every branch, but hasn't been run since the roads forked, and its pacing numbers for Acts 3–6 predate them.
@@ -464,6 +470,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Challenge modes: Hardcore, Solo Self-Found and Classic toggles at character creation, in any mix. Not deployed. — done 2026-11-01
 - [x] Skill gem reform: every act and attribute has AoE, single target, guard and leech ([SKILL_REFORM.md](design/SKILL_REFORM.md)). Save v33 gives existing characters The Old Covenant. 0.3.3 — done 2026-11-01
 - [x] Kills before each area boss now ramp evenly from 10 (Mud Flats) to 80 (Shattered Throne) instead of 15–25; the starter drops moved to kills 1–9 so they finish before the first boss. 0.2.35 — done 2026-11-01
 - [x] Player wiki at `/path-of-idle/wiki/` in a Fandom-style look (dark bar, orange banner, contents sidebar). 0.2.47 — done 2026-11-01

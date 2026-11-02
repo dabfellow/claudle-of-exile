@@ -188,9 +188,11 @@ Supabase login with cloud saves; see [SETUP.md](../ops/SETUP.md).
 | Skill levels | Per character |
 | Campaign | True to PoE: every character plays through it |
 
-**Challenge modes** each have their own separate stash, hideout and unlocks, so they're a true fresh start. Exile can be taken into them.
-- **Hardcore:** when the character dies it's gone for good, with its gear. Offline combat works normally, so a setup that fails overnight loses the character.
-- **Classic:** no skilling, combat only.
+**Challenge modes** are three toggles picked when a character is made, in any mix, and fixed from then on. Each mix has its own separate stash, hideout and unlocks, so it's a true fresh start. Exile can be taken into them, and finishing the campaign in any mode unlocks it for the whole account.
+- **Hardcore:** when the character dies it's deleted for good, with its bag and gear. Hardcore characters share a stash with each other, and that stays. Offline combat works normally, so a setup that fails overnight loses the character.
+- **Solo Self-Found:** no Player Market. Every SSF character is alone: its stash, hideout and unlocks are its own, and go when it does. NPC shops still work.
+- **Classic:** no gathering, crafting or Heist, combat only. The Crafting Bench and orbs still work. Hideout upgrades swap gathered materials for gold at 5 times their sale value, the Forge and Alchemy Table are hidden, and the bench recipes tied to skilling achievements are open from the start.
+- Hardcore, Classic and Hardcore Classic each have their own Player Market.
 
 ---
 

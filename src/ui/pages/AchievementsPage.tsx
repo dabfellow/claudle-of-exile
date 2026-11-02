@@ -3,6 +3,7 @@ import { ACHIEVEMENTS, CATEGORY_NAMES, type AchievementCategory, type Achievemen
 import { BENCH_CRAFTS } from '../../data/hideout';
 import { materialDef } from '../../data/materials';
 import { achievementProgress } from '../../engine/achievements';
+import { isClassic } from '../../engine/challenge';
 import { affixRangeText } from '../../engine/items';
 import type { GameState } from '../../engine/types';
 import { useGame } from '../../game';
@@ -85,7 +86,7 @@ export function AchievementsPage() {
       >
         Milestones across combat, crafting and skilling. Many teach the Crafting Bench a new recipe.
       </PageHeader>
-      {CATEGORIES.map((c) => {
+      {CATEGORIES.filter((c) => c !== 'skilling' || !isClassic(s)).map((c) => {
         const list = ACHIEVEMENTS.filter((a) => a.category === c);
         const n = list.filter((a) => s.achievements.includes(a.id)).length;
         return (
