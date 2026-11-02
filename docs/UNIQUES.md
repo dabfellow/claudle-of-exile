@@ -2,7 +2,7 @@
 
 Generated from the game data; run `npm run uniques` after changing a unique, instead of editing this file.
 
-68 uniques, each under the first act that drops it.
+70 uniques, each under the first act that drops it.
 
 ## Act 1: The Drowned Coast (34)
 
@@ -43,7 +43,7 @@ Generated from the game data; run `npm run uniques` after changing a unique, ins
 | **Twin Oaths**<br>*Sworn twice, broken never.* | ring | Diamond Ring (24) | +15 to Dexterity<br>25% increased Riposte damage<br>30% faster Riposte recovery | The Drowned Sanctum (Act 1), Caravan's End (Act 2) |
 | **Titan's Girth**<br>*Mountains bow to no one.* | belt | Heavy Belt (26) | 15% more maximum Life<br>+15% to all Elemental Resistances<br>30% increased Flask Charges gained | The Storm Cliffs (Act 1), The Drowned Sanctum (Act 1), The Cinder Road (Act 2), The Scourging Yard (Act 3), The Scree Fields (Act 4), The Bone Quarry (Act 4) |
 
-## Act 2: The Burning Steppe (10)
+## Act 2: The Burning Steppe (11)
 
 | Unique | Slot | Base (req. level) | Mods | Drops in |
 | --- | --- | --- | --- | --- |
@@ -56,9 +56,10 @@ Generated from the game data; run `npm run uniques` after changing a unique, ins
 | **Last Breath**<br>*Spend it wisely.* | weapon | Shadow Kris (28) | Adds 8 to 20 Physical Damage<br>-3 to Malice meter size<br>60% increased Coup de Grâce damage | The Saltpan Flats (Act 2), The Burning Throne (Act 2), The Scourging Yard (Act 3) |
 | **Stormrider Greaves**<br>*Ride ahead of the thunder.* | boots | Wyrmscale Boots (30) | +110 to Evasion Rating<br>+40% to Lightning Resistance<br>20% increased effect of Momentum<br>Taking a hit removes 25% less Momentum | The Thunder Plateau (Act 2), The Burning Throne (Act 2), The Stair of Penitents (Act 3), The Squall Banks (Act 5), The Thunderhead (Act 5), Storm Vault (Map) |
 | **The Old Grudge**<br>*Forgive nothing. Forget nothing.* | offhand | Mithril Tower Shield (32) | 25% more Armour<br>+70 to maximum Life<br>Gain 2 Rage when you are hit<br>Regenerate 0.1% of Life per second per Rage | Caravan's End (Act 2), The Burning Throne (Act 2), The Pilgrim Gate (Act 3), The Bone Quarry (Act 4), The Stone Steading (Act 4), The Black Harbour (Act 5), The Drowned Fleet (Act 5), Fort Obedience (Act 6) |
+| **The Unblinking Tome**<br>*Every page is a reading of you.* | offhand | Magus Ward (32) | +45 to maximum Energy Shield<br>Adds 8 to 18 Fire Damage to Spells<br>8% increased Cast Speed<br>+25% to Fire Resistance | The Pyre Temple (Act 2), The Burning Throne (Act 2) |
 | **Starforged Edge**<br>*Cut from a falling star.* | weapon | Mithril Sabre (34) | Adds 30 to 62 Physical Damage<br>40% increased Critical Strike Chance<br>+45% to Critical Strike Multiplier | The Burning Throne (Act 2), The Saints' Walk (Act 3), The High Altar (Act 3), The Long Hall (Act 4), The Giants' Throne (Act 4), The Wreck Line (Act 5), Leviathan's Rib (Act 5), The Maelstrom's Eye (Act 5), The Ninth Stair (Act 6), The Shattered Throne (Act 6) |
 
-## Act 3: The City of Saints (6)
+## Act 3: The City of Saints (7)
 
 | Unique | Slot | Base (req. level) | Mods | Drops in |
 | --- | --- | --- | --- | --- |
@@ -68,6 +69,7 @@ Generated from the game data; run `npm run uniques` after changing a unique, ins
 | **Halo of Wrath**<br>*It was never meant to be kind.* | helmet | Paladin Crown (40) | +60 to maximum Life<br>+40 to maximum Energy Shield<br>+40% to Lightning Resistance<br>30% increased holy nova damage | The Hall of Inquisition (Act 3), The Choir Loft (Act 3), The Saints' Walk (Act 3), The High Altar (Act 3), The Gulf of Lamps (Act 5), The Black Current (Act 5), The King's Reach (Act 6) |
 | **Hood of the Last Confession**<br>*Say it, and it is done.* | helmet | Nightshade Cowl (40) | 65% increased Evasion Rating<br>+40 to maximum Energy Shield<br>+30% to Lightning Resistance<br>35% increased Coup de Grâce damage | The Reliquary Vaults (Act 3), The Hall of Inquisition (Act 3), The High Altar (Act 3), The Hollow Reef (Act 5) |
 | **Martyr's Shroud**<br>*They wore it to the end. So will you.* | body | Warlord's Plate (40) | +90 to maximum Life<br>60% increased Armour<br>+40% to Lightning Resistance<br>Gain 2 Rage when you are hit | The Scourging Yard (Act 3), The Stair of Penitents (Act 3), The High Altar (Act 3), The Drowned Fleet (Act 5) |
+| **The Briar Key**<br>*It opens every door in the Sanctum. Not all of them lead out.* | weapon | Paladin Sceptre (40) | Adds 18 to 36 Physical Damage<br>35% increased holy nova damage<br>25% increased holy nova healing | The Reliquary Vaults (Act 3), The Hall of Inquisition (Act 3) |
 
 ## Act 4: The Hollow Peaks (6)
 

@@ -425,43 +425,42 @@ export const ITEM_ART: Record<string, string> = {
 
 /** Uniques with their own pack art; the rest show their base's art. */
 export const UNIQUE_ART: Record<string, string> = {
-  bloodthirst: new URL('../assets/items/weapons/catalone-w2-008.png', import.meta.url).href,
+  bloodthirst: new URL('../assets/items/weapons/pack3-bloodthirst.png', import.meta.url).href,
   miners_lament: new URL('../assets/items/armor/set-55-helmet.png', import.meta.url).href,
   emberheart: new URL('../assets/items/armor/set-10-body.png', import.meta.url).href,
   windstep: new URL('../assets/items/armor/set-04-legs.png', import.meta.url).href,
   alchemists_band: new URL('../assets/items/jewelry/icons32-25.png', import.meta.url).href,
   iron_bulwark: new URL('../assets/items/armor/catalone-s9-005.png', import.meta.url).href,
-  starforged_edge: new URL('../assets/items/weapons/weapons30-6.png', import.meta.url).href,
+  starforged_edge: new URL('../assets/items/weapons/pack3-starforged_edge.png', import.meta.url).href,
   titans_girth: new URL('../assets/items/armor/set-63-belt.png', import.meta.url).href, // same as its Heavy Belt base
   // Act 2
   sunmane_pelt: new URL('../assets/items/armor/set-52-body.png', import.meta.url).href,
   mirage_veil: new URL('../assets/items/armor/set-45-helmet.png', import.meta.url).href,
   khans_tithe: new URL('../assets/items/jewelry/gi-diamond-ring.svg', import.meta.url).href,
-  kurgan_crown: new URL('../assets/items/armor/set-58-helmet.png', import.meta.url).href,
+  kurgan_crown: new URL('../assets/items/armor/pack3-kurgan_crown.png', import.meta.url).href,
   stormrider_greaves: new URL('../assets/items/armor/set-37-legs.png', import.meta.url).href,
-  pyre_heart: new URL('../assets/items/jewelry/gi-heart-necklace.svg', import.meta.url).href,
+  pyre_heart: new URL('../assets/items/jewelry/pack3-pyre_heart.png', import.meta.url).href,
   // Act 3
   martyrs_shroud: new URL('../assets/items/armor/set-03-body.png', import.meta.url).href,
   pilgrims_road: new URL('../assets/items/armor/set-69-legs.png', import.meta.url).href,
   saints_shard: new URL('../assets/items/jewelry/gi-shard-necklace.svg', import.meta.url).href,
   confession_hood: new URL('../assets/items/armor/set-08-helmet.png', import.meta.url).href,
-  halo_of_wrath: new URL('../assets/items/armor/set-10-helmet.png', import.meta.url).href,
+  halo_of_wrath: new URL('../assets/items/armor/pack3-halo_of_wrath.png', import.meta.url).href,
   chainbreaker: new URL('../assets/items/armor/set-10-gloves.png', import.meta.url).href,
   // Act 4
   giants_knuckle: new URL('../assets/items/weapons/tint-giants_knuckle.png', import.meta.url).href,
   rimewalkers: new URL('../assets/items/armor/set-41-legs.png', import.meta.url).href,
   heart_of_winter: new URL('../assets/items/jewelry/woshi-crystal.png', import.meta.url).href,
   frostgrip: new URL('../assets/items/armor/set-56-gloves.png', import.meta.url).href,
-  crown_of_the_hollow: new URL('../assets/items/armor/set-34-helmet.png', import.meta.url).href,
+  crown_of_the_hollow: new URL('../assets/items/armor/pack3-crown_of_the_hollow.png', import.meta.url).href,
   wolfmother_pelt: new URL('../assets/items/armor/set-04-body.png', import.meta.url).href,
   leviathan_hide: new URL('../assets/items/armor/set-59-body.png', import.meta.url).href,
   deckwalkers: new URL('../assets/items/armor/set-59-legs.png', import.meta.url).href,
   bosuns_oath: new URL('../assets/items/jewelry/codespree-badge.png', import.meta.url).href,
-  tide_crown: new URL('../assets/items/armor/set-59-helmet.png', import.meta.url).href,
   corposant: new URL('../assets/items/armor/tint-corposant.png', import.meta.url).href,
   harpoons_answer: new URL('../assets/items/armor/set-59-gloves.png', import.meta.url).href,
   // Act 6
-  oathbreaker: new URL('../assets/items/weapons/tint-oathbreaker.png', import.meta.url).href,
+  oathbreaker: new URL('../assets/items/weapons/pack3-oathbreaker.png', import.meta.url).href,
   kingsmarch: new URL('../assets/items/armor/tint-kingsmarch.png', import.meta.url).href,
   last_decree: new URL('../assets/items/weapons/tint-last_decree.png', import.meta.url).href,
   crownbreaker_mask: new URL('../assets/items/armor/tint-crownbreaker_mask.png', import.meta.url).href,
@@ -470,6 +469,14 @@ export const UNIQUE_ART: Record<string, string> = {
   // new item art
   rebuttal: new URL('../assets/items/weapons/weapons30-4.png', import.meta.url).href,
   gulls_eye: new URL('../assets/items/jewelry/icons32-29.png', import.meta.url).href,
+  last_breath: new URL('../assets/items/weapons/pack3-last_breath.png', import.meta.url).href,
+  knuckledusters: new URL('../assets/items/armor/pack3-knuckledusters.png', import.meta.url).href,
+  brimming_band: new URL('../assets/items/jewelry/pack3-brimming_band.png', import.meta.url).href,
+  tide_crown: new URL('../assets/items/armor/pack3-tide_crown.png', import.meta.url).href,
+  hollow_locket: new URL('../assets/items/jewelry/pack3-hollow_locket.png', import.meta.url).href,
+  briar_key: new URL('../assets/items/weapons/pack3-briar_key.png', import.meta.url).href,
+  unblinking_tome: new URL('../assets/items/armor/pack3-unblinking_tome.png', import.meta.url).href,
+  ember_of_faith: new URL('../assets/items/jewelry/pack3-ember_of_faith.png', import.meta.url).href,
 };
 
 /** Materials. Mining drops use Woshi, logs and dust use CodeSpree (both pixel art); herbs are first-pass stand-ins. */

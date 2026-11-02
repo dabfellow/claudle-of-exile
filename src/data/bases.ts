@@ -1280,6 +1280,25 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_nova_heal', values: [35] },
     ],
   },
+
+  // ---------- from the third art pack: a key and a book ----------
+  {
+    id: 'unblinking_tome', name: 'The Unblinking Tome', baseId: 'magus_ward', flavour: 'Every page is a reading of you.',
+    mods: [
+      { affixId: 'flat_es', values: [45] },
+      { affixId: 'spell_fire', values: [8, 18] },
+      { affixId: 'cast_speed', values: [8] },
+      { affixId: 'fire_res', values: [25] },
+    ],
+  },
+  {
+    id: 'briar_key', name: 'The Briar Key', baseId: 'paladin_sceptre', flavour: 'It opens every door in the Sanctum. Not all of them lead out.',
+    mods: [
+      { affixId: 'added_phys', values: [18, 36] },
+      { affixId: 'u_nova_pct', values: [35] },
+      { affixId: 'u_nova_heal', values: [25] },
+    ],
+  },
 ];
 
 export function uniqueDef(id: string): UniqueDef {

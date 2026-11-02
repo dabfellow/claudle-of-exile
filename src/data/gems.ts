@@ -570,7 +570,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   A({
     id: 'arcane_siphon', name: 'Arcane Siphon', attr: 'int', role: 'sustain', tags: ['spell', 'sustain', 'hit'],
     manaCost: 0, cooldownMs: 5000, timeMs: 0, color: '#9b6dde',
-    effect: { ailmentChance: 25, base: [6, 10], type: 'cold', targets: 'single', crit: 5, leechLife: 25, leechMana: 40 },
+    effect: { ailmentChance: 25, base: [6, 10], type: 'cold', targets: 'single', crit: 5, leechLife: 15, leechMana: 25 },
     desc: 'Drain the target, returning life and mana. Costs no mana.',
     defaultRule: { when: 'lifeBelow', value: 60 },
   }),

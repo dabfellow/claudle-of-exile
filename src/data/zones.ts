@@ -405,7 +405,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 24,
     packSize: [3, 5],
     spawnEveryMs: 9500,
-    uniques: ['pyre_heart', 'ember_of_faith', 'ninth_psalm'],
+    uniques: ['pyre_heart', 'ember_of_faith', 'ninth_psalm', 'unblinking_tome'],
   },
   {
     id: 'burningthrone', name: 'The Burning Throne', act: 2, tier: 7, levelRange: [31, 32], color: '#e0702a',
@@ -421,7 +421,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 25,
     packSize: [3, 5],
     spawnEveryMs: 9500,
-    uniques: ['starforged_edge', 'pyre_heart', 'kurgan_crown', 'khans_tithe', 'mirage_veil', 'stormrider_greaves', 'old_grudge', 'last_breath'],
+    uniques: ['starforged_edge', 'pyre_heart', 'kurgan_crown', 'khans_tithe', 'mirage_veil', 'stormrider_greaves', 'old_grudge', 'last_breath', 'unblinking_tome'],
   },
 
   // ---------------- Act 3: The City of Saints (docs/design/ACT3.md) ----------------
@@ -488,7 +488,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 29,
     packSize: [3, 5],
     spawnEveryMs: 9500,
-    uniques: ['confession_hood', 'kurgan_crown', 'hollow_locket'],
+    uniques: ['confession_hood', 'kurgan_crown', 'hollow_locket', 'briar_key'],
   },
   {
     id: 'bellfoundry', name: 'The Bell Foundry', act: 3, tier: 8, levelRange: [36, 38], color: '#a07a4a', ilvlBonus: 3,
@@ -520,7 +520,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 31,
     packSize: [3, 5],
     spawnEveryMs: 9000,
-    uniques: ['confession_hood', 'halo_of_wrath', 'ninth_psalm'],
+    uniques: ['confession_hood', 'halo_of_wrath', 'ninth_psalm', 'briar_key'],
   },
   {
     id: 'penitentstair', name: 'The Stair of Penitents', act: 3, tier: 9, levelRange: [37, 39], color: '#8a8a7a', ilvlBonus: 3,

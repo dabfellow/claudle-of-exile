@@ -347,6 +347,8 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 - [x] Gear sets and skill loadouts, with auto-switching behind the Crafting Bench — done 2026-10-31
 - [x] Art and music sent 2026-10-31 merged: 112 item slots and 4 music tracks. All free itch.io files; you said to assume
   free public use while the game isn't sold, so recheck if that changes — done 2026-10-31
+- [x] Third unique art sheet: 13 icons on existing uniques, plus 2 new uniques, The Briar Key and The Unblinking Tome (first-pass mods, not balanced). The green potion icon is unused (the belt unique was dropped) — done 2026-11-01
+- [x] Arcane Siphon leech cut: life 25% → 15%, mana 40% → 25% — done 2026-11-01
 - [ ] Art for the 34 weapon bases that still have none.
 - [ ] Use the Void pack, SBS skies and `MediavelFree.png` UI once something needs them. Originals are in Downloads.
 
