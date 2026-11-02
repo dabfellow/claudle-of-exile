@@ -11,7 +11,7 @@ Last updated 2026-11-01.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts and the Player Market are live as 0.3.1 (0.3.0 "The Market", plus the unique art sheet and Siphon change, deployed 2026-11-01), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts and the Player Market are live as 0.3.2 (0.3.0 "The Market", plus the unique art sheet, the Siphon change and a red shade on gear you can't equip yet, deployed 2026-11-01), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
