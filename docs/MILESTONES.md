@@ -472,6 +472,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Exiles on the Mage start get a Driftwood Wand instead of the Rusted Sword. 0.3.8 — done 2026-11-01
 - [x] Spells need a wand, staff or sceptre, curses work with anything, the 20% caster bonus is gone, daggers roll no caster mods ([BATTLEFIELD.md](design/BATTLEFIELD.md) §7). Shadow starts with Twin Strike, Templar with Iron Guard. 0.3.7 — done 2026-11-01
 - [x] Gem shop crash fixed: hovering a summon or storm gem blanked the game, and every shop gem's tooltip showed Default Attack's numbers. 0.3.6 — done 2026-11-01
 - [x] Stash screen sorting: the bag and gear pages sort by Recent, Rarity, Slot, Item level, Can equip, Weapon DPS or Defence from a dropdown; DPS and Defence show their number on the tile. Other screens keep their three tabs. 0.3.5, went live with the 0.3.6 deploy — done 2026-11-01
