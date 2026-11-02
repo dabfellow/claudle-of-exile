@@ -5,7 +5,7 @@ import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { zoneDef } from '../src/data/zones';
 import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
-import { createSkillGem, MIN_COOLDOWN_MS } from '../src/engine/gems';
+import { createSkillGem, gemWeaponReason, MIN_COOLDOWN_MS } from '../src/engine/gems';
 import { mechanicOf, meterMax } from '../src/engine/mechanics';
 import { startNode } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
@@ -48,6 +48,15 @@ describe('classes', () => {
     expect(new Set(six.map((c) => c.mechanic)).size).toBe(6);
     expect(new Set(six.map((c) => c.startNode)).size).toBe(6);
     expect(CLASSES.find((c) => c.id === 'exile')?.mechanic).toBeNull();
+  });
+
+  it('every Exile start can use its starter gems, and the Mage start swaps the sword for a wand', () => {
+    for (const c of CLASSES.filter((x) => !x.challenge)) {
+      const s = newGame(1, { name: 't', classId: 'exile', startNode: c.startNode });
+      const d = deriveStats(s);
+      for (const gem of s.skillBar.filter(Boolean)) expect(gemWeaponReason(gem!.gemId, d.weaponFamily), `${c.id} ${gem!.gemId}`).toBeNull();
+      expect(s.equipment.weapon?.baseId).toBe(c.id === 'mage' ? 'driftwood_wand' : 'rusted_sword');
+    }
   });
 
   it('an Exile starts at the picked tree start with that class’s gems, a Rusted Sword and nothing else', () => {

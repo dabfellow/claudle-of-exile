@@ -11,7 +11,7 @@ Last updated 2026-11-01.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.7 (deployed 2026-11-01), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.8 (deployed 2026-11-01), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -413,7 +413,6 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
-- An Exile on the Mage start has a Rusted Sword, so Spark and Frost Ward can't be used until they find a caster weapon; only the basic attack works. Exiles on the Shadow and Templar starts are fine.
 - Melee characters with spells on their bar lost them in 0.3.7 until they equip a caster weapon; worth a line in the player heads-up.
 - Any error while drawing a page blanks the whole game: there's no error screen to catch it. A tab still on an older version also goes blank if a gem it has never heard of reaches the shared account from a newer tab or device, until it's refreshed. Nothing tells an open tab that a new version is out.
 - When browser storage is full, a save throws an error instead of the "keep playing" handling meant for it. The game carries on, but the page can miss a refresh after buying a gem.
@@ -484,6 +483,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Exiles on the Mage start get a Driftwood Wand instead of the Rusted Sword. 0.3.8 — done 2026-11-01
 - [x] Spells need a wand, staff or sceptre, curses work with anything, the 20% caster bonus is gone, daggers roll no caster mods ([BATTLEFIELD.md](design/BATTLEFIELD.md) §7). Shadow starts with Twin Strike, Templar with Iron Guard. 0.3.7 — done 2026-11-01
 - [x] Gem shop crash fixed: hovering a summon or storm gem blanked the game, and every shop gem's tooltip showed Default Attack's numbers. 0.3.6 — done 2026-11-01
 - [x] Stash screen sorting: the bag and gear pages sort by Recent, Rarity, Slot, Item level, Can equip, Weapon DPS or Defence from a dropdown; DPS and Defence show their number on the tile. Other screens keep their three tabs. 0.3.5, went live with the 0.3.6 deploy — done 2026-11-01

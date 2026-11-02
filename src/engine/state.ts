@@ -97,7 +97,8 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
   // every new character adds its starting kit to the shared tabs
   for (const [id, n] of Object.entries(STARTING_BANK)) addBank(s, id, n);
   const rng = seeded(seed);
-  for (const [slot, baseId] of Object.entries(classDef(who.classId).kit)) {
+  const exileWeapon = who.classId === 'exile' ? startClass('exile', who.startNode).exileWeapon : undefined;
+  for (const [slot, baseId] of Object.entries({ ...classDef(who.classId).kit, ...(exileWeapon && { weapon: exileWeapon }) })) {
     s.equipment[slot as EquipSlot] = createItem(s, baseId, 1, 'normal', rng);
   }
   // a life and a mana flask: nobody regenerates in a fight, so these are all the recovery you start with

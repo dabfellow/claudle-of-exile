@@ -8,6 +8,14 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.3.8',
+    date: '1 Nov 2026',
+    title: 'A wand for the Exile',
+    items: [
+      "New Exiles on the Mage's start get a Driftwood Wand instead of the Rusted Sword, so they can use Spark and Frost Ward.",
+    ],
+  },
+  {
     version: '0.3.7',
     date: '1 Nov 2026',
     title: 'Spells need a caster weapon',

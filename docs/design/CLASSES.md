@@ -119,6 +119,7 @@ A **normal crit empties the meter immediately**.
   big skill like Fireball be saved for the Coup de Grâce.
 - Class bonus: +20% Ailment Damage, +10% Evasion.
 - Starter gems: Poison Dart, Twin Strike.
+- An Exile on the Mage start gets a Driftwood Wand instead of the Rusted Sword, so Spark and Frost Ward work (2026-11-01).
 - Bend later: "crits remove only 5 Malice", "Coup de Grâce also spreads ailments", "meter of 10, Coup de Grâce 250%".
 
 ## Exile — Challenge class
