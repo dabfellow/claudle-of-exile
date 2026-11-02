@@ -16,7 +16,10 @@ import { seeded } from '../engine/rng';
 import { deriveStats } from '../engine/stats';
 import type { EquipSlot, GameState, ItemSlotType } from '../engine/types';
 import { charXpForLevel } from '../engine/xp';
+import { MARKET_UNLOCK_BOSS } from '../engine/market';
 import { game } from '../game';
+import { setMarketStandIn } from '../platform/market';
+import { fakeMarket } from './fakeMarket';
 
 interface Setup {
   classId?: ClassId;
@@ -57,6 +60,22 @@ const PRESETS: Record<string, Setup> = {
     level: 40,
     prepare: (s) => {
       for (const { id } of [...CURRENCIES, ...MATERIALS]) s.account.bank[id] = 9999;
+    },
+  },
+  /** signed in as far as the Player Market can tell, against a pretend server */
+  market: {
+    level: 30,
+    prepare: (s) => {
+      const rng = seeded(2);
+      const bases = BASES.filter((b) => b.reqLevel <= 30);
+      for (let i = 0; i < 6; i++) s.inventory.push(createItem(s, bases[i * 5].id, 30, 'rare', rng));
+      s.account.bank.gold = 50_000;
+      s.account.bank.chaos = 50;
+      s.bossesDefeated.push(MARKET_UNLOCK_BOSS);
+      const others = bases.slice(0, 8).map((b) => createItem(s, b.id, 30, 'rare', rng));
+      const fake = fakeMarket(others);
+      setMarketStandIn(fake);
+      (window as unknown as { fakeMarket: typeof fake }).fakeMarket = fake;
     },
   },
 };

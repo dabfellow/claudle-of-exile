@@ -658,6 +658,17 @@ export interface AccountState {
   campaignDone?: boolean;
   /** characters and accounts already folded in, so none counts twice */
   absorbed: string[];
+  /** what's been taken for a market step the server hasn't confirmed yet: see engine/market.ts */
+  marketHolds?: MarketHold[];
+}
+
+/** An item being listed, or a price being paid, on its way to the Player Market. */
+export interface MarketHold {
+  /** names the step on the server, so a lost reply can be checked */
+  op: string;
+  item?: Item;
+  currency?: string;
+  amount?: number;
 }
 
 /** Account data arriving from elsewhere: a pre-account save, a demo, an import. */

@@ -216,6 +216,11 @@ export function mergeAccounts(mine: AccountState, base: AccountState, theirs: Ac
     bank[id] = Math.max(0, (theirs.bank[id] ?? 0) + (mine.bank[id] ?? 0) - (base.bank[id] ?? 0));
   }
   mine.bank = bank;
+  // a hold this copy released stays released; one only the other tab has made stays
+  const released = new Set((base.marketHolds ?? []).map((h) => h.op));
+  const myHolds = new Set((mine.marketHolds ?? []).map((h) => h.op));
+  const theirHolds = (theirs.marketHolds ?? []).filter((h) => !myHolds.has(h.op) && !released.has(h.op));
+  if (theirHolds.length) mine.marketHolds = [...(mine.marketHolds ?? []), ...theirHolds];
   mine.gems = mergeList(mine, mine.gems, base.gems, theirs.gems);
   mine.supportGems = mergeList(mine, mine.supportGems, base.supportGems, theirs.supportGems);
   mine.flaskStash = mergeList(mine, mine.flaskStash, base.flaskStash, theirs.flaskStash);

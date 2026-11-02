@@ -158,6 +158,17 @@ outlevel the campaign ([BALANCE.md](design/BALANCE.md) → Knobs).
 - Linking: A. Sidebar and title screen link to the wiki home, and the wiki has its own search. Deep links from item/gem/boss tooltips are later, once the reference pages exist.
 - Decided for you: spoiler boxes cover boss mechanics, unique drop sources and anything from Acts 4–6; the generator marks them automatically from the data, so new content is covered by default. Pages stay in the existing style and generator.
 
+**Player Market (design pass, started 2026-11-01):**
+- Access: signed-in accounts only. Guests can see it but can't list or buy, enforced on the server.
+- What trades: A. Gear only. Materials and currency can't be listed.
+- Prices: both. A seller can price in gold or in currency orbs. Orbs move only as payment; they still can't be listed for sale.
+- Cheating: A. Sanity checks. The server refuses impossible items (real base, mods in legal ranges) when they're listed, and you get admin tools to remove listings and ban players from the market. Believable fakes and edited gold can still get through; the server doesn't run the game.
+- Buying: both, the seller determines which. Each listing is either buy now or an auction.
+- Unlock: A. After Act 1 is cleared.
+- Decided for you (auctions and limits): a listing is one or the other, never both. Auctions run 24 hours; a bid is held in the bidder's wallet and returned if they're outbid; a bid in the last 5 minutes adds 5 minutes, so last-second sniping doesn't win. Buy now listings last 7 days, then the item returns to the seller. 20 active listings per player, so nobody floods the market. One market per realm, so a future challenge mode trades separately.
+- Decided for you: each listing has one price in one thing (gold or a single orb type), so listings compare cleanly and search stays simple. The market takes 10% of each sale, rounded down, and that cut disappears, so prices don't run away. A listed item leaves the player's stash and is held on the server until it sells or is cancelled. Each player has a market wallet on the server: sale money, refunds and items land in it, and the game collects it at login and on opening the market. Buying takes the price straight from the player. The browser owns the save, so the server can't safely change a player's gold directly ([MARKET.md](design/MARKET.md)).
+- Decided for you: the next bid must be at least 5% higher. A rebalance that makes an older item fail the sanity check means it can't be listed; saves are wiped at 1.0 anyway.
+
 ### Fixed (you, 2026-10-30)
 
 - **End state:** months of play to build a top-end character that easily clears all content.
@@ -317,6 +328,13 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 
 ## Other open items
 
+- [ ] Player Market (live trading between players; named "Player Market" so it isn't confused with the Town Market shop station). Design pass finished 2026-11-01; see Decisions → Player Market and [MARKET.md](design/MARKET.md).
+  - [x] Server: listings, bids and wallet tables, with signed-in-only rules and all-or-nothing buy, bid, cancel and collect actions. — done 2026-11-01
+  - [x] Server: sanity check on listed items (real base, mods in legal ranges). — done 2026-11-01
+  - [x] Auctions: closing at 24 hours, last-minute extension, refunds; buy now expiry at 7 days. — done 2026-11-01
+  - [x] Game: list from the stash, browse and search, buy, bid, my listings, collect from the wallet; unlocks after Act 1, sign-in prompt for guests. — done 2026-11-01
+  - [x] Admin tools: remove a listing, ban a player from the market. — done 2026-11-01
+  - [ ] Go live: run `docs/ops/market.sql` in Supabase, ship, then press Upload on Admin → Market. Built and tested but not live; not yet tried against the real server.
 - [x] Player wiki at `/path-of-idle/wiki/`, generated from the game's data by `npm run wiki` on every build: acts and areas, skill and support gems, item bases, uniques, modifiers, currency and materials, classes and ascendancies, plus a hand-written Getting started page (`docs/wiki/`). Linked from the sidebar. 0.2.34 — done 2026-11-01
 - [ ] Wiki next, decided in the 2026-11-01 design pass (see Decisions → Wiki), in this order:
   - [ ] Spoiler boxes: click-to-reveal for boss mechanics, unique drop sources and Acts 4–6, applied by the generator.

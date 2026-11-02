@@ -16,6 +16,7 @@ import { UpcomingSkillsPage } from './pages/UpcomingSkillsPage';
 import { SkillPage } from './pages/SkillPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { StashPage } from './pages/StashPage';
+import { MarketPage } from './pages/MarketPage';
 import { TraderPage } from './pages/TraderPage';
 import { TreePage } from './pages/TreePage';
 import { AccountModal, AccountScreen, CharacterCreate, CharacterSelect, DemoBanner, EventBanner, IntroModal, NewPasswordModal, TitleScreen } from './screens/Screens';
@@ -47,6 +48,8 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
       return <StashPage go={go} />;
     case 'vendor':
       return <TraderPage />;
+    case 'market':
+      return <MarketPage />;
     case 'achievements':
       return <AchievementsPage />;
     case 'settings':

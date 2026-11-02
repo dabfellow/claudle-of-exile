@@ -41,6 +41,7 @@ export type Page =
   | 'bench'
   | 'stash'
   | 'vendor'
+  | 'market'
   | 'achievements'
   | 'settings'
   | 'admin'
@@ -67,6 +68,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
       { page: 'campaign', label: 'Campaign', icon: 'campaign' },
       { page: 'maps', label: 'Map Device', icon: 'map' },
       { page: 'vendor', label: 'Town', icon: 'vendor' },
+      { page: 'market', label: 'Player Market', icon: 'vendor' },
     ],
   },
   {

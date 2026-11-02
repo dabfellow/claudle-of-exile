@@ -249,6 +249,14 @@ create policy "admins add live events" on public.live_events for insert with che
 create policy "admins change live events" on public.live_events for update using (public.is_admin());
 ```
 
+### Player Market
+
+Needs the admin step above first. Do these in order, before the release that adds the market goes live:
+
+1. **SQL Editor → New query**, paste all of [market.sql](market.sql), **Run**. It's safe to run again after a change.
+2. Sign in to the game as an admin, open **Admin → Market**, and press **Upload from this build**. Nothing can be listed until this is done.
+3. Press it again after any release that changes modifiers, bases, uniques or runes.
+
 ### 3. Sentry (crash reports)
 
 1. Sign up at https://sentry.io (free tier is plenty), create a project, platform **Browser JavaScript**.

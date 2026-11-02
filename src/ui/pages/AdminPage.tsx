@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { classDef, type ClassId } from '../../data/classes';
 import { EVENTS, type EventRow, type LiveEvent } from '../../data/events';
 import { game, useGame } from '../../game';
-import { errorReportingConfigured, sentryIssuesUrl } from '../../platform/errors';
+import { APP_VERSION, errorReportingConfigured, sentryIssuesUrl } from '../../platform/errors';
+import { marketAdminBan, marketAdminList, marketAdminRemove, marketRulesVersion, uploadMarketRules, type MarketAdminRow } from '../../platform/market';
 import {
   adminStats,
   errorText,
@@ -17,7 +18,7 @@ import {
 import { Badge, EmptyState, PageHeader, Tabs } from '../components/common';
 import { Stars } from '../components/FeedbackCard';
 
-type Tab = 'overview' | 'events' | 'feedback' | 'reviews' | 'errors';
+type Tab = 'overview' | 'events' | 'market' | 'feedback' | 'reviews' | 'errors';
 
 const when = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -40,6 +41,7 @@ export function AdminPage() {
         tabs={[
           { id: 'overview', label: 'Overview' },
           { id: 'events', label: 'Events' },
+          { id: 'market', label: 'Market' },
           { id: 'feedback', label: 'Feedback', count: stats?.feedback_open, hot: !!stats?.feedback_open },
           { id: 'reviews', label: 'Reviews', count: stats?.reviews.count },
           { id: 'errors', label: 'Errors' },
@@ -55,6 +57,7 @@ export function AdminPage() {
       )}
       {tab === 'overview' && !error && <Overview stats={stats} />}
       {tab === 'events' && <EventsTab />}
+      {tab === 'market' && <MarketTab />}
       {tab === 'feedback' && <FeedbackTab onChange={loadStats} />}
       {tab === 'reviews' && <ReviewsTab />}
       {tab === 'errors' && <ErrorsTab />}
@@ -121,6 +124,84 @@ function Overview({ stats }: { stats: AdminStats | null }) {
         </div>
       </div>
       <p className="dim small">Accounts only: demos aren't saved, and older guest saves stay in the browser.</p>
+    </>
+  );
+}
+
+/** Keeps the server's item rules in step with the game, and takes bad listings or traders down. */
+function MarketTab() {
+  const [filter, setFilter] = useState<'active' | 'all'>('active');
+  const [rows, setRows] = useState<MarketAdminRow[] | null>(null);
+  const [rules, setRules] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    setError(null);
+    marketRulesVersion().then(setRules, (e) => setError(errorText(e)));
+    marketAdminList(filter).then(setRows, (e) => setError(errorText(e)));
+  }, [filter]);
+  useEffect(load, [load]);
+
+  const act = (step: Promise<void>) => step.then(load, (e) => setError(errorText(e)));
+  const upload = async () => {
+    const { marketRules } = await import('../../data/marketRules');
+    await act(uploadMarketRules(APP_VERSION, marketRules()));
+  };
+
+  return (
+    <>
+      {error && (
+        <div className="card">
+          <b>Market problem:</b> <span className="muted">{error}</span>
+          <p className="dim small">If the market isn't set up yet, run docs/ops/market.sql in Supabase first.</p>
+        </div>
+      )}
+      <div className="card">
+        <div className="card-title">
+          Item rules
+          <span className="grow" />
+          <button className="btn sm primary" onClick={() => void upload()}>
+            Upload from this build
+          </button>
+        </div>
+        <p className="small">
+          {rules ? `The server is checking items against ${rules}. This build is ${APP_VERSION}.` : 'No rules uploaded yet, so nothing can be listed.'}
+        </p>
+        <p className="dim small">Upload again whenever a release changes modifiers, bases, uniques or runes. Until then, items using the new ones can't be listed.</p>
+      </div>
+      <Tabs
+        compact
+        tabs={[
+          { id: 'active', label: 'Up for sale' },
+          { id: 'all', label: 'All' },
+        ]}
+        value={filter}
+        onChange={setFilter}
+      />
+      {!rows ? (
+        <p className="dim">Loading…</p>
+      ) : rows.length === 0 ? (
+        <EmptyState small title="No listings" />
+      ) : (
+        rows.map((l) => (
+          <div key={l.id} className="card row wrap">
+            <b className={`rarity-${l.item.rarity}`}>{l.item_name}</b>
+            <span className="muted small">
+              {l.mode === 'buy' ? 'Buy now' : 'Auction'} · {l.high_bid ?? l.price} {l.currency} · {when(l.created_at)}
+            </span>
+            <Badge tone={l.status === 'active' ? 'success' : 'neutral'}>{l.status}</Badge>
+            {l.seller_banned && <Badge tone="warn">Seller banned</Badge>}
+            <span className="spacer" />
+            {l.status === 'active' && (
+              <button className="btn sm" onClick={() => void act(marketAdminRemove(l.id))}>
+                Remove
+              </button>
+            )}
+            <button className="btn sm ghost" onClick={() => void act(marketAdminBan(l.seller, !l.seller_banned))}>
+              {l.seller_banned ? 'Unban seller' : 'Ban seller'}
+            </button>
+          </div>
+        ))
+      )}
     </>
   );
 }

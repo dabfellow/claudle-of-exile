@@ -24,6 +24,9 @@ import { fetchEventRows, saveEventRow } from './platform/events';
 import { activeEvents, eventBoost, type EventRow, type LiveEvent } from './data/events';
 import { getSupabase } from './platform/supabase';
 import { supabaseCharacters } from './platform/supabaseTable';
+import { errorText } from './platform/feedback';
+import { isRefusal, marketApi, marketStandIn, type MarketApi, type MarketMode } from './platform/market';
+import { holdItem, holdPayment, MARKET_UNLOCK_BOSS, marketHold, receiveDeliveries, releaseHold } from './engine/market';
 import { TabClaims } from './platform/tabClaims';
 import {
   adoptDemo,
@@ -521,6 +524,110 @@ class GameStore {
     this.screen = 'game';
     this.startLoop();
     this.notify();
+    void this.marketSync();
+  }
+
+  // ---------- Player Market ----------
+
+  /** Signed in and past Act 1, or why not. The server checks all of this too. */
+  get marketAccess(): 'guest' | 'locked' | 'open' {
+    if (!marketStandIn() && !isCloudAccount(this.account)) return 'guest';
+    const cleared = this.state.bossesDefeated.includes(MARKET_UNLOCK_BOSS) || this.characters.some((c) => c.act1Cleared);
+    return cleared ? 'open' : 'locked';
+  }
+
+  private marketTrader(): MarketApi | null {
+    return this.marketAccess === 'guest' ? null : marketApi();
+  }
+
+  /** Steps waiting on the server, in this tab: marketSync leaves these alone. */
+  private marketInFlight = new Set<string>();
+
+  /** Send a step that has already taken something from the player. Returns why it failed, if it did. */
+  private async marketSend(op: string, send: () => Promise<void>): Promise<string | null> {
+    this.marketInFlight.add(op);
+    try {
+      await send();
+      this.act((s) => releaseHold(s, op, false));
+      await this.marketCollect();
+      return null;
+    } catch (err) {
+      if (isRefusal(err)) {
+        this.act((s) => releaseHold(s, op, true));
+        return errorText(err);
+      }
+      return `Couldn't reach the market. What you sent is safe and will be sorted out when it's back.`;
+    } finally {
+      this.marketInFlight.delete(op);
+    }
+  }
+
+  async marketList(uid: number, mode: MarketMode, currency: string, price: number): Promise<string | null> {
+    const api = this.marketTrader();
+    if (!api) return 'Sign in to use the market';
+    const op = crypto.randomUUID();
+    const why = holdItem(this.state, op, uid);
+    if (why) return why;
+    this.save();
+    this.notify();
+    return this.marketSend(op, () => api.list(op, marketHold(this.state, op)!.item!, mode, currency, price));
+  }
+
+  private async marketPay(currency: string, amount: number, send: (api: MarketApi, op: string) => Promise<void>): Promise<string | null> {
+    const api = this.marketTrader();
+    if (!api) return 'Sign in to use the market';
+    const op = crypto.randomUUID();
+    const why = holdPayment(this.state, op, currency, amount);
+    if (why) return why;
+    this.save();
+    this.notify();
+    return this.marketSend(op, () => send(api, op));
+  }
+
+  marketBuy(id: number, currency: string, amount: number) {
+    return this.marketPay(currency, amount, (api, op) => api.buy(op, id, currency, amount));
+  }
+
+  marketBid(id: number, currency: string, amount: number) {
+    return this.marketPay(currency, amount, (api, op) => api.bid(op, id, currency, amount));
+  }
+
+  async marketCancel(id: number): Promise<string | null> {
+    const api = this.marketTrader();
+    if (!api) return 'Sign in to use the market';
+    try {
+      await api.cancel(id);
+      await this.marketCollect();
+      return null;
+    } catch (err) {
+      return errorText(err);
+    }
+  }
+
+  private async marketCollect() {
+    const api = this.marketTrader();
+    if (!api) return;
+    const rows = await api.collect();
+    if (!rows.length) return;
+    this.act((s) => receiveDeliveries(s, rows));
+    for (const row of rows.slice(0, 3)) this.addFeed(`Market: ${row.note}`, 'good');
+    this.pushToast(rows.length === 1 ? `Market: ${rows[0].note}` : `Market: ${rows.length} things collected`, 'good');
+  }
+
+  /** Settle any step whose reply was lost, then collect what's waiting. Quiet if the market can't be reached. */
+  async marketSync() {
+    const api = this.marketTrader();
+    if (!api) return;
+    try {
+      for (const hold of [...(this.realm.marketHolds ?? [])]) {
+        if (this.marketInFlight.has(hold.op)) continue;
+        const done = await api.opDone(hold.op);
+        this.act((s) => releaseHold(s, hold.op, !done));
+      }
+      await this.marketCollect();
+    } catch {
+      // the next visit tries again
+    }
   }
 
   private startLoop() {

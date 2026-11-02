@@ -7579,3 +7579,32 @@ button.hx-mat:hover {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+/* Player Market */
+.market-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  align-items: center;
+}
+
+.market-filters .input {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.market-sell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  align-items: center;
+  margin-top: var(--s-3);
+}
+
+.market-sell .input {
+  width: 180px;
+}
+
+.market-bid {
+  width: 90px;
+}

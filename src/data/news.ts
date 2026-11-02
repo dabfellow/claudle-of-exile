@@ -8,6 +8,17 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.3.0',
+    date: '1 Nov 2026',
+    title: 'The Market',
+    items: [
+      'The Player Market is open: trade gear with other players, under Adventure.',
+      'Sell for gold or orbs, at a fixed price or by 24-hour auction. The market keeps 10% of each sale.',
+      'You need an account and an Act 1 clear to trade. Anyone can look around.',
+      'Money from sales waits for you and arrives when you log in or open the market.',
+    ],
+  },
+  {
     version: '0.2.43',
     date: '1 Nov 2026',
     title: 'Choose your ascendancy nodes',
