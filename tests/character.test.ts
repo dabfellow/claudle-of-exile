@@ -179,9 +179,9 @@ describe('item menu actions', () => {
 });
 
 describe('cooldowns', () => {
-  it('single-target attacks have none (mana limits them); guards, buffs, spells, area, movement and summon skills keep theirs', () => {
+  it('single-target attacks have none (mana limits them); guards, buffs, spells, area, movement, summon and drain skills keep theirs', () => {
     for (const g of ACTIVE_GEMS) {
-      const freeAttack = g.tags.includes('attack') && !g.tags.includes('area') && !g.tags.includes('movement') && !g.tags.includes('minion');
+      const freeAttack = g.tags.includes('attack') && !g.tags.includes('area') && !g.tags.includes('movement') && !g.tags.includes('minion') && !g.tags.includes('sustain');
       expect(g.cooldownMs === 0, g.id).toBe(freeAttack);
     }
   });

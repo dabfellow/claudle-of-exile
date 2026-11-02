@@ -666,6 +666,8 @@ export interface UniqueDef {
   baseId: string;
   mods: { affixId: string; values: number[] }[];
   flavour: string;
+  /** can't be listed on the Player Market */
+  noTrade?: boolean;
 }
 
 export const UNIQUES: UniqueDef[] = [
@@ -1297,6 +1299,15 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'added_phys', values: [18, 36] },
       { affixId: 'u_nova_pct', values: [35] },
       { affixId: 'u_nova_heal', values: [25] },
+    ],
+  },
+
+  // ---------- keepsake for characters from before the skill reform: never drops, can't be traded ----------
+  {
+    id: 'old_covenant', name: 'The Old Covenant', baseId: 'iron_ring', flavour: 'Given to those who were here before the tide turned.', noTrade: true,
+    mods: [
+      { affixId: 'u_life_leech', values: [3] },
+      { affixId: 'u_mana_leech', values: [2] },
     ],
   },
 ];

@@ -8,7 +8,7 @@ import { ACTS, actOpen, ZONES } from './data/zones';
 import { FINAL_ACT } from './engine/hideout';
 import type { Ctx } from './engine/context';
 import { itemName } from './engine/items';
-import { alignWarTable, fillAccount, freshAccount, mergeAccounts, settleCharacter } from './engine/account';
+import { alignWarTable, fillAccount, freshAccount, giveKeepsake, mergeAccounts, settleCharacter } from './engine/account';
 import { MIN_OFFLINE_MS, simulateOffline, type OfflineSummary } from './engine/offline';
 import { mathRng } from './engine/rng';
 import type { ClassId } from './data/classes';
@@ -484,6 +484,7 @@ class GameStore {
   private attach(s: GameState) {
     s.account = this.realm;
     settleCharacter(s, this.realm);
+    if (giveKeepsake(s)) this.pushToast('Skill gems were re-sorted, so early leech moved. The Old Covenant is in your bag to make up for it.', 'good');
   }
 
   /** Save and leave the current character for the select screen. */

@@ -68,7 +68,7 @@ describe('new skill gems', () => {
       expect(supportFits(sigs[0], def)).toBe(true);
       expect(supportFits(sigs[0], activeGemDef('heavy_strike'))).toBe(false);
     }
-    for (const [attr, n] of [['str', 26], ['dex', 23], ['int', 25]] as const) expect(ACTIVE_GEMS.filter((g) => g.attr === attr)).toHaveLength(n);
+    for (const [attr, n] of [['str', 35], ['dex', 37], ['int', 33]] as const) expect(ACTIVE_GEMS.filter((g) => g.attr === attr)).toHaveLength(n);
   });
 
   it('Pummel strikes three times per use, four with Tavern Brawler', () => {
@@ -115,6 +115,7 @@ describe('new skill gems', () => {
     expect(a.dummy.chillMs).toBeGreaterThan(0);
 
     const b = arena('glacial_lance', { cls: 'mage', signature: true });
+    veteran(b.s, 46); // Permafrost's own level
     b.dummy.chillMs = 5000;
     run(b.s, b.ctx, 10_000, () => b.dummy.frozenMs > 0);
     expect(b.dummy.frozenMs).toBeGreaterThan(0);

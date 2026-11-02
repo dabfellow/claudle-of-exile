@@ -252,10 +252,15 @@ describe('the sanity check', () => {
   }, 60_000);
 
   it('accepts every unique', async () => {
-    for (const u of UNIQUES) {
+    for (const u of UNIQUES.filter((x) => !x.noTrade)) {
       const problem = (await db.query<{ p: string | null }>('select market_item_problem($1) as p', [JSON.stringify(createUnique(s, u.id, 50))])).rows[0].p;
       expect(problem, u.id).toBeNull();
     }
+  }, 60_000);
+
+  it('refuses a no-trade unique', async () => {
+    const problem = (await db.query<{ p: string | null }>('select market_item_problem($1) as p', [JSON.stringify(createUnique(s, 'old_covenant', 1))])).rows[0].p;
+    expect(problem).not.toBeNull();
   }, 60_000);
 
   const rare = () => {

@@ -53,7 +53,7 @@ export type Tag =
 
 /** Every stat a character can have. Add new ones here; Stats and the stat engine pick them up. */
 export const STAT_KEYS = [
-  'life', 'lifePct', 'lifeMore', 'lifeRegen', 'lifeRegenPct', 'lifeLeech', 'physMin', 'physMax', 'physPct',
+  'life', 'lifePct', 'lifeMore', 'lifeRegen', 'lifeRegenPct', 'lifeLeech', 'manaLeech', 'physMin', 'physMax', 'physPct',
   'fireMin', 'fireMax', 'coldMin', 'coldMax', 'lightMin', 'lightMax', 'chaosMin', 'chaosMax', 'chaosPct', 'chillChance', 'shockChance', 'elemPct', 'attackSpeedPct', 'moveSpeedPct',
   'attackSpeedMore', 'critChancePct', 'critMulti', 'armour', 'armourPct', 'armourMore', 'evasion',
   'evasionPct', 'fireRes', 'coldRes', 'lightRes', 'allRes', 'itemRarity', 'skillSpeed', 'skillXp',
@@ -765,6 +765,8 @@ export interface GameState {
   unmerged?: AccountTransfer;
   /** currency, materials, gems and flasks this character still has to hand over (see settleCharacter) */
   unpooled?: Partial<AccountPool>;
+  /** from before the skill reform: The Old Covenant waits to be handed over */
+  keepsakeDue?: boolean;
   character: CharacterInfo;
   tutorial: TutorialState;
   nextUid: number;

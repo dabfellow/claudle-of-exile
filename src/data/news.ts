@@ -8,6 +8,17 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.3.3',
+    date: '1 Nov 2026',
+    title: 'Skill gem reform',
+    items: [
+      'Every act now has area, single target, guard and leech options for Strength, Dexterity and Intelligence: 31 new skills and 12 new supports.',
+      "Some gems moved: Parry and Fireball to Act 2, Glacial Lance to Act 4, Shield Crush and Arcane Siphon to Act 5, Siege Shot to Act 6. You keep them, but they can't be used until their new level.",
+      'Arcane Siphon now drains life only, and Life Leech and Mana Leech cost much more mana.',
+      'Characters made before this update get The Old Covenant, a ring with life and mana leech. It can be found in your bag and can\'t be traded.',
+    ],
+  },
+  {
     version: '0.3.0',
     date: '1 Nov 2026',
     title: 'The Market',

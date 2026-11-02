@@ -1,5 +1,6 @@
 import { STASH_PAGE_SIZE, STASH_START_PAGES, stationDef } from '../data/hideout';
 import { trimFlaskStash } from './flasks';
+import { createUnique } from './items';
 import type { AccountPool, AccountState, AccountTransfer, AutomationUnlocks, EquipSlot, GameState, Item, SkillGemInstance } from './types';
 
 /**
@@ -177,6 +178,14 @@ export function settleCharacter(s: GameState, a: AccountState): boolean {
   absorbAccount(a, from);
   if (job && target) job.uid = target.uid;
   a.absorbed.push(s.character.id);
+  return true;
+}
+
+/** Hand a character from before the skill reform its keepsake, once. Returns whether it did. */
+export function giveKeepsake(s: GameState): boolean {
+  if (!s.keepsakeDue) return false;
+  delete s.keepsakeDue;
+  s.inventory.push(createUnique(s, 'old_covenant', 1)); // can go over the bag's size, but nothing is lost
   return true;
 }
 

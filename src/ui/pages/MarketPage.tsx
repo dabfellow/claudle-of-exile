@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BASES } from '../../data/bases';
+import { BASES, uniqueDef } from '../../data/bases';
 import { CURRENCIES, currencyDef } from '../../data/materials';
 import { MARKET_CUT_PCT, MARKET_MAX_LISTINGS, MARKET_MAX_PRICE, minBid, saleProceeds } from '../../engine/market';
 import { stashedItems } from '../../engine/storage';
@@ -188,7 +188,7 @@ function SellTab({ s }: { s: GameState }) {
   return (
     <div className="card">
       <div className="card-title">Pick something to sell</div>
-      <ItemTiles s={s} items={[...s.inventory, ...stashedItems(s)].reverse()} selected={(i) => i.uid === item?.uid} onClick={setItem} empty="Your bag and stash have no gear." />
+      <ItemTiles s={s} items={[...s.inventory, ...stashedItems(s)].filter((i) => !(i.uniqueId && uniqueDef(i.uniqueId).noTrade)).reverse()} selected={(i) => i.uid === item?.uid} onClick={setItem} empty="Your bag and stash have no gear." />
       {item && (
         <div className="market-sell">
           <Tabs

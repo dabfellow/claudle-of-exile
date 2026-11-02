@@ -300,6 +300,10 @@ const MIGRATIONS: Record<number, Migration> = {
   },
   // trials cut to 3 points each, so the tree can't be filled
   31: resetAscendancyPoints,
+  32: (raw) => {
+    // the skill reform moved early leech to later acts: characters from before it are owed The Old Covenant
+    raw.keepsakeDue = true;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
