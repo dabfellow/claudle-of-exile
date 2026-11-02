@@ -1,4 +1,4 @@
-import { activeGemDef, ACTIVE_GEMS, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, gemReqLevel, RULE_LABELS, SKILL_AIMS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
+import { activeGemDef, ACTIVE_GEMS, DEFAULT_ATTACK, gemReqLevel, gemWeapons, RULE_LABELS, SKILL_AIMS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
 import { WEAPON_FAMILIES } from '../../data/bases';
 import { actOpen } from '../../data/zones';
 import { GROUND, RINGS } from '../../engine/battlefield';
@@ -125,14 +125,9 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
         return <div className={`small ${d.combatLevel >= need ? 'muted' : 'bad'}`}>Requires character level {need}</div>;
       })()}
       {gem && <GemRequirement have={d.attributes[def.attr]} def={def} level={gem.level} />}
-      {def.weapons && (
+      {gemWeapons(def) && (
         <div className={`small ${gemWeaponReason(def.id, d.weaponFamily) ? 'bad' : 'muted'}`}>
-          Main hand: {def.weapons.map((f) => WEAPON_FAMILIES[f].name).join(', ')}
-        </div>
-      )}
-      {def.tags.includes('spell') && (def.effect.weaponPct || def.effect.base) && (
-        <div className="small muted">
-          {CASTER_WEAPON_MORE}% more damage with a {CASTER_WEAPONS.map((f) => WEAPON_FAMILIES[f].name.toLowerCase()).join(', ')}
+          Main hand: {gemWeapons(def)!.map((f) => WEAPON_FAMILIES[f].name).join(', ')}
         </div>
       )}
       {!!def.effect.ailmentChance && (

@@ -1,4 +1,4 @@
-import { ACTIVE_GEMS, activeGemDef, CASTER_WEAPON_MORE, CASTER_WEAPONS, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
+import { ACTIVE_GEMS, activeGemDef, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
 import { groundAtRisk, groundOnDeath } from './storage';
 import {
   actOpen,
@@ -1198,7 +1198,6 @@ function rollHit(
   if (surge) more *= 1 + SURGE_MORE / 100;
   if (s.life < d.maxLife / 2 && hasAscNode(s, 'flagellant_mortify')) more *= 1 + MORTIFY_MORE / 100;
   if (hasAscNode(s, 'alchemist_philosophers_draught')) more *= 1 + (DRAUGHT_MORE * c.buffs.filter((b) => b.source === 'flask').length) / 100;
-  if (def.tags.includes('spell') && d.weaponFamily && CASTER_WEAPONS.includes(d.weaponFamily)) more *= 1 + CASTER_WEAPON_MORE / 100;
   for (const t of DAMAGE_TYPES) byType[t] *= more;
 
   const spellType = def.effect.type;

@@ -53,7 +53,7 @@ describe('classes', () => {
   it('an Exile starts at the picked tree start with that class’s gems, a Rusted Sword and nothing else', () => {
     const s = newGame(1, { name: 't', classId: 'exile', startNode: 'class_dexint' });
     expect(startNode(s)).toBe('class_dexint');
-    expect(s.skillBar.filter(Boolean).map((g) => g!.gemId)).toEqual(['poison_dart', 'spark']);
+    expect(s.skillBar.filter(Boolean).map((g) => g!.gemId)).toEqual(['poison_dart', 'twin_strike']);
     expect(Object.keys(s.equipment)).toEqual(['weapon']);
     expect(s.equipment.weapon?.baseId).toBe('rusted_sword');
     const d = deriveStats(s);

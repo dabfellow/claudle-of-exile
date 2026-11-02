@@ -99,7 +99,7 @@ equal to 55% of the damage that filled it.
 - Harder fights fire it more often; trash you outgear barely fills it. Bosses are where it shines.
 - Hooks: Iron Guard's blocked hit still counts toward Fervor. Ground Slam packs fill it fast.
 - Class bonus: +15% Elemental Damage, +8% all Resistances.
-- Starter gems: Heavy Strike, Frost Ward.
+- Starter gems: Heavy Strike, Iron Guard.
 - Bend later: "nova also applies Frost Ward", "Fervor full at 40%", "nova damage scales with Armour".
 
 ## Shadow — Malice
@@ -118,7 +118,7 @@ A **normal crit empties the meter immediately**.
 - Meter shows on the combat page; tactics rule "Only with Malice full" (**NEW** `RuleCondition`) lets a
   big skill like Fireball be saved for the Coup de Grâce.
 - Class bonus: +20% Ailment Damage, +10% Evasion.
-- Starter gems: Poison Dart, Spark.
+- Starter gems: Poison Dart, Twin Strike.
 - Bend later: "crits remove only 5 Malice", "Coup de Grâce also spreads ailments", "meter of 10, Coup de Grâce 250%".
 
 ## Exile — Challenge class

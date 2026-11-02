@@ -1,7 +1,6 @@
 import {
   activeGemDef,
-  CASTER_WEAPON_MORE,
-  CASTER_WEAPONS,
+  gemWeapons,
   DEFAULT_ATTACK,
   MAX_GEM_LEVEL,
   MAX_SUPPORT_SLOTS,
@@ -72,7 +71,7 @@ export function gemUseReason(charLevel: number, attrs: Attributes, gem: SkillGem
 
 /** Why the weapon in your main hand can't use this skill, or null. */
 export function gemWeaponReason(gemId: string, family: WeaponFamily | null): string | null {
-  const need = activeGemDef(gemId).weapons;
+  const need = gemWeapons(activeGemDef(gemId));
   if (!need || (family && need.includes(family))) return null;
   const names = need.map((f) => WEAPON_FAMILIES[f].name);
   return `Needs a ${names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names.at(-1)}` : names[0]}`;
@@ -531,7 +530,6 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
   phys *= 1 + mods.morePhys / 100;
   elem *= 1 + mods.moreElem / 100;
   let hit = (phys + elem) * (1 + mods.moreDamage / 100);
-  if (isSpell && d.weaponFamily && CASTER_WEAPONS.includes(d.weaponFamily)) hit *= 1 + CASTER_WEAPON_MORE / 100;
   const critChance = isAttack
     ? d.critChance * (1 + mods.critChance / 100)
     : (e.crit ?? 5) * (1 + (r.critChancePct + r.spellCritPct + (e.type === 'light' ? r.lightCrit : 0) + mods.critChance) / 100);

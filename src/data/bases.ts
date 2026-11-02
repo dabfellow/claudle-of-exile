@@ -120,7 +120,7 @@ export const WEAPON_FAMILIES: Record<WeaponFamily, FamilyDef> = {
 /** Which weapon mod pool each family rolls from: hybrid attack/caster families roll from both. */
 const WEAPON_ROLES: Record<WeaponFamily, Tag[]> = {
   mace: ['attack_weapon'], axe: ['attack_weapon'], sword: ['attack_weapon'], bow: ['attack_weapon'],
-  dagger: ['attack_weapon', 'caster_weapon'], sceptre: ['attack_weapon', 'caster_weapon'],
+  dagger: ['attack_weapon'], sceptre: ['attack_weapon', 'caster_weapon'],
   wand: ['caster_weapon'], staff: ['caster_weapon'],
 };
 

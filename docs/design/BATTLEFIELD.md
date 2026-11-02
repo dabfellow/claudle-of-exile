@@ -94,7 +94,7 @@ Going from "the whole field" to novas/splashes is a nerf for Shock Nova and Rain
 
 ## 7. Weapon restrictions on skills
 
-Weapon families today: mace, axe, sword, dagger, bow, sceptre, wand, staff. Daggers and sceptres are already tagged both `attack_weapon` and `caster_weapon`.
+Weapon families today: mace, axe, sword, dagger, bow, sceptre, wand, staff. Sceptres are tagged both `attack_weapon` and `caster_weapon`; daggers are attack only.
 
 Proposal:
 
@@ -107,8 +107,9 @@ Proposal:
 | Backstab | dagger, sword |
 | Bow skills: Barrage, Ice Shot, Rain of Arrows | bow |
 | Poison Dart | any (it's thrown) |
-| Spells | any weapon; 20% more damage with a wand, staff, dagger or sceptre (your answer below) |
-| Guards, buffs, Meditate, Frost Ward | any |
+| Spells, including spell guards and buffs like Frost Ward | wand, staff, sceptre (your call, 2026-11-01; no damage bonus) |
+| Curses | any |
+| Non-spell guards and buffs | any |
 | Default Attack | any |
 
 - Gems carry `weapons?: WeaponFamily[]` (or a `caster` flag for spells). A gem whose weapon you're not holding greys out on the bar and stops firing, like the attribute shortfall does today; the tooltip says why.
@@ -141,7 +142,7 @@ Proposal:
 
 - Ring 1 has only 4 hexes (left, right, two above). Enough pressure, or should ring 1 allow 2 small monsters per hex? yes 4 is fine
 - Staves: caster only (current tag), or also slams? both
-- Should spells really need a caster weapon (a Templar with a mace couldn't use Shock Nova), or only get a bonus from one? fine only a bonus from it to incentivise correct weapons
+- Should spells really need a caster weapon (a Templar with a mace couldn't use Shock Nova), or only get a bonus from one? first a bonus, then changed 2026-11-01: spells need a wand, staff or sceptre, and the bonus is gone
 
 ## As built (2026-10-27)
 

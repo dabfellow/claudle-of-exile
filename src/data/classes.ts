@@ -118,7 +118,7 @@ export const CLASSES: ClassDef[] = [
     baseAttributes: { str: 17, dex: 8, int: 17 },
     bonus: { elemPct: 16.5, allRes: 8.8 },
     bonusText: ['16.5% increased Elemental Damage', '+8.8% to all Elemental Resistances'],
-    starterGems: ['heavy_strike', 'frost_ward'],
+    starterGems: ['heavy_strike', 'iron_guard'],
   },
   {
     id: 'shadow',
@@ -136,7 +136,7 @@ export const CLASSES: ClassDef[] = [
     baseAttributes: { str: 8, dex: 17, int: 17 },
     bonus: { ailmentPct: 20, evasionPct: 10 },
     bonusText: ['20% increased damage with ailments', '10% increased Evasion Rating'],
-    starterGems: ['poison_dart', 'spark'],
+    starterGems: ['poison_dart', 'twin_strike'],
   },
   {
     id: 'exile',

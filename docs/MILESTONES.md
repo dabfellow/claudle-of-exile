@@ -330,6 +330,9 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 
 ## Other open items
 
+- [ ] Spells need a wand, staff or sceptre; curses work with anything; the 20% caster bonus is gone; daggers roll no caster mods ([BATTLEFIELD.md](design/BATTLEFIELD.md) §7).
+  - Built and tested on `claude/spark-caster-weapon-50e744`, not live. Waiting on your call: the Shadow starts with Spark on a dagger, and the Templar with Frost Ward on a club, so both start with a skill they can't use.
+
 - [ ] Player Market (live trading between players; named "Player Market" so it isn't confused with the Town Market shop station). Design pass finished 2026-11-01; see Decisions → Player Market and [MARKET.md](design/MARKET.md).
   - [x] Server: listings, bids and wallet tables, with signed-in-only rules and all-or-nothing buy, bid, cancel and collect actions. — done 2026-11-01
   - [x] Server: sanity check on listed items (real base, mods in legal ranges). — done 2026-11-01

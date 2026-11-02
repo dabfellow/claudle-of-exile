@@ -69,7 +69,7 @@ Every base of level 40+ gets one built-in mod. Hybrid values are a bit lower tha
 
 All rollable mods are in `src/data/affixes.ts`. Each has 9 tiers, unlocking at item levels 1, 8, 16, 25, 35, 45, 55, 68 and 80 (`ILVLS`). Only the top 5 tiers an item's level allows can roll (`TIER_WINDOW` in `items.ts`). Each step up is still ~70% as likely as the one below.
 
-**Tags decide the pool.** Weapons carry `attack_weapon` (mace, axe, sword, bow), `caster_weapon` (wand, staff) or both (dagger, sceptre), plus `str_weapon` / `dex_weapon` / `int_weapon`. Hybrid armour also carries its pair tag (`str_dex_armour` …).
+**Tags decide the pool.** Weapons carry `attack_weapon` (mace, axe, sword, bow, dagger), `caster_weapon` (wand, staff) or both (sceptre), plus `str_weapon` / `dex_weapon` / `int_weapon`. Hybrid armour also carries its pair tag (`str_dex_armour` …).
 
 **Local vs global.**
 - On armour and shields, flat and % defence mods are local: they change only that piece's armour, evasion or energy shield (`itemDefences` in `stats.ts`). The tooltip shows the result in magic blue.

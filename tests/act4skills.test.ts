@@ -40,7 +40,7 @@ function arena(gem: string, opts: Opts = {}) {
     e.supports = (x.supports ?? []).map((id) => createSupportGem(s, id));
     s.skillBar[i + 1] = e;
   });
-  armFor(s, gem);
+  armFor(s, gem, ...(opts.extra ?? []).map((x) => x.gem));
   unlockEverything(s);
   s.unlockedZones = ['mudflats', 'cinderroad'];
   s.settings.autoFlee = false;

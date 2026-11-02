@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { attributeReq, BASES, baseDef, WEAPON_FAMILIES, type WeaponFamily } from '../src/data/bases';
 import { makeCtx } from '../src/engine/context';
 import { equip } from '../src/engine/equipment';
+import { gemWeaponReason } from '../src/engine/gems';
 import { createItem } from '../src/engine/items';
 import { seeded } from '../src/engine/rng';
 import { newGame } from '../src/engine/state';
@@ -55,5 +56,21 @@ describe('weapon families', () => {
     expect(equip(s, ctx(), shield.uid)).toBeNull();
     expect(s.equipment.offhand?.uid).toBe(shield.uid);
     expect(s.equipment.weapon).toBeUndefined();
+  });
+
+  it('spells need a wand, staff or sceptre; curses work with anything', () => {
+    for (const f of ['wand', 'staff', 'sceptre'] as const) expect(gemWeaponReason('spark', f), f).toBeNull();
+    for (const f of ['dagger', 'sword', 'mace', 'axe', 'bow', null] as const) expect(gemWeaponReason('spark', f), f ?? 'unarmed').toBe('Needs a Wand, Staff or Sceptre');
+    expect(gemWeaponReason('frost_ward', 'mace')).toBe('Needs a Wand, Staff or Sceptre');
+    expect(gemWeaponReason('enfeeble', 'dagger')).toBeNull();
+    expect(gemWeaponReason('enfeeble', null)).toBeNull();
+  });
+
+  it('daggers roll no caster mods; sceptres roll both', () => {
+    const tags = (id: string) => baseDef(id).tags;
+    expect(tags('whittled_dagger')).toContain('attack_weapon');
+    expect(tags('whittled_dagger')).not.toContain('caster_weapon');
+    const sceptre = BASES.find((b) => b.family === 'sceptre')!;
+    expect(sceptre.tags).toEqual(expect.arrayContaining(['attack_weapon', 'caster_weapon']));
   });
 });

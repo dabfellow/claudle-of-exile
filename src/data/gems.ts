@@ -178,9 +178,13 @@ const STRIKE_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'dagger', 'mace', 'scept
 const HEAVY_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'mace', 'sceptre', 'staff'];
 const BOW: WeaponFamily[] = ['bow'];
 const CHARGE_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'dagger', 'mace', 'sceptre', 'staff'];
-/** spells deal more damage from a wand, staff, dagger or sceptre (they still work with anything) */
-export const CASTER_WEAPONS: WeaponFamily[] = ['wand', 'staff', 'dagger', 'sceptre'];
-export const CASTER_WEAPON_MORE = 20;
+/** spells can only be cast with a wand, staff or sceptre in the main hand (curses work with anything) */
+export const CASTER_WEAPONS: WeaponFamily[] = ['wand', 'staff', 'sceptre'];
+
+/** The main-hand weapons a skill can be used with: its own list, or any caster weapon for a spell other than a curse; undefined = any weapon. */
+export function gemWeapons(def: Pick<ActiveGemDef, 'weapons' | 'tags'>): WeaponFamily[] | undefined {
+  return def.weapons ?? (def.tags.includes('spell') && !def.tags.includes('curse') ? CASTER_WEAPONS : undefined);
+}
 
 export type RuleCondition =
   | 'always'
