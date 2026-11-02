@@ -11,7 +11,7 @@ Last updated 2026-11-01.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, and all six acts are live as 0.2.48 (deployed 2026-11-01, Templar buffed 10%), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts and the Player Market are live as 0.3.0 "The Market" (deployed 2026-11-01), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -334,7 +334,8 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
   - [x] Auctions: closing at 24 hours, last-minute extension, refunds; buy now expiry at 7 days. — done 2026-11-01
   - [x] Game: list from the stash, browse and search, buy, bid, my listings, collect from the wallet; unlocks after Act 1, sign-in prompt for guests. — done 2026-11-01
   - [x] Admin tools: remove a listing, ban a player from the market. — done 2026-11-01
-  - [ ] Go live: run `docs/ops/market.sql` in Supabase, ship, then press Upload on Admin → Market. Built and tested but not live; not yet tried against the real server.
+  - [x] Run `docs/ops/market.sql` in Supabase and ship: live as 0.3.0 "The Market". — done 2026-11-01
+  - [ ] **[You]** Press Upload on Admin → Market, then try a real trade between two accounts. Nothing can be listed until the upload.
 - [x] Player wiki at `/path-of-idle/wiki/`, generated from the game's data by `npm run wiki` on every build: acts and areas, skill and support gems, item bases, uniques, modifiers, currency and materials, classes and ascendancies, plus a hand-written Getting started page (`docs/wiki/`). Linked from the sidebar. 0.2.34 — done 2026-11-01
 - [ ] Wiki next, decided in the 2026-11-01 design pass (see Decisions → Wiki), in this order:
   - [ ] Spoiler boxes: click-to-reveal for boss mechanics, unique drop sources and Acts 4–6, applied by the generator.
