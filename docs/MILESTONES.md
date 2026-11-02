@@ -11,7 +11,7 @@ Last updated 2026-11-01.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts and the Player Market are live as 0.3.2 (0.3.0 "The Market", plus the unique art sheet, the Siphon change and a red shade on gear you can't equip yet, deployed 2026-11-01), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts and the Player Market are live as 0.3.3 (0.3.0 "The Market", plus the unique art sheet, a red shade on gear you can't equip yet and the skill gem reform, deployed 2026-11-01), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -21,7 +21,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
 3. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
-   they earn them, and Act 1 got slower. Once 0.3.3 ships, add that six gems moved and can lock until their new level.
+   they earn them, and Act 1 got slower. Also say that six gems moved in 0.3.3 and can lock until their new level.
 4. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
    hideout scenes ([ASSET_MAPPING.md](design/ASSET_MAPPING.md)).
 5. **[You]** Play the Maps preview whenever you like, and say whether the loop is fun. Maps stay post-Act 6 in the real
@@ -351,8 +351,8 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
   free public use while the game isn't sold, so recheck if that changes — done 2026-10-31
 - [x] Third unique art sheet: 13 icons on existing uniques, plus 2 new uniques, The Briar Key and The Unblinking Tome (first-pass mods, not balanced). The green potion icon is unused (the belt unique was dropped) — done 2026-11-01
 - [x] Arcane Siphon leech cut: life 25% → 15%, mana 40% → 25% — done 2026-11-01
-- [x] Skill gem reform: 31 new skills, 12 new leech supports, 6 gems moved, and The Old Covenant for existing characters ([SKILL_REFORM.md](design/SKILL_REFORM.md)). 0.3.3. Not simmed; not deployed — done 2026-11-01
-  - [ ] **[You]** After it ships, press Upload on Admin → Market again, so the server also refuses the ring.
+- [x] Skill gem reform: 31 new skills, 12 new leech supports, 6 gems moved, and The Old Covenant for existing characters ([SKILL_REFORM.md](design/SKILL_REFORM.md)). Live as 0.3.3. Not simmed — done 2026-11-01
+  - [ ] **[You]** Press Upload on Admin → Market again, so the server also refuses the ring.
 - [ ] Art for the 34 weapon bases that still have none.
 - [ ] Use the Void pack, SBS skies and `MediavelFree.png` UI once something needs them. Originals are in Downloads.
 
