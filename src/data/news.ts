@@ -8,6 +8,17 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.3.7',
+    date: '1 Nov 2026',
+    title: 'Spells need a caster weapon',
+    items: [
+      "Spells now need a wand, staff or sceptre in your main hand, and can't be used with anything else. Curses still work with any weapon.",
+      'The 20% more spell damage from a caster weapon is gone.',
+      'Daggers no longer roll caster mods on new drops. Daggers you already own keep theirs.',
+      'New Shadows start with Twin Strike instead of Spark, and new Templars with Iron Guard instead of Frost Ward.',
+    ],
+  },
+  {
     version: '0.3.5',
     date: '1 Nov 2026',
     title: 'Stash sorting',
