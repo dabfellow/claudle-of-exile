@@ -11,13 +11,13 @@ Last updated 2026-11-01.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts and the Player Market are live as 0.3.3 (0.3.0 "The Market", plus the unique art sheet, a red shade on gear you can't equip yet and the skill gem reform, deployed 2026-11-01), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.4 (deployed 2026-11-01), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
 **In order:**
 
-1. **[You]** Before shipping challenge modes, paste [market.sql](ops/market.sql) into Supabase (**SQL Editor → New query → Run**). Until then the Hardcore and Classic markets show an error; the normal market works either way.
+1. **[You]** Challenge modes are live: paste [market.sql](ops/market.sql) into Supabase (**SQL Editor → New query → Run**). Until then the Hardcore and Classic markets show an error; the normal market works either way.
 2. **Claude:** build the real Maps (Milestone 8) from [MAPS.md](design/MAPS.md). Beating Act 6 opens the bare Maps preview page, and drawn maps can't be spent yet.
 3. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
    Discord. Moving guests to an account and demo adoption have only had unit tests.
@@ -131,7 +131,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 
 ### 11. Long tail
 - Collection log, masteries, build-defining uniques, the skills arriving around or after Act 6.
-- [x] Challenge modes: Hardcore, Solo Self-Found and Classic as toggles in any mix ([GDD.md](design/GDD.md) §11) — done 2026-11-01. Played in the test build; not deployed, and the per-mode markets need market.sql run.
+- [x] Challenge modes: Hardcore, Solo Self-Found and Classic as toggles in any mix ([GDD.md](design/GDD.md) §11) — done 2026-11-01. Live in 0.3.4; the per-mode markets need market.sql run.
 - **Done:** your call.
 
 ### 1.0
@@ -470,7 +470,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
-- [x] Challenge modes: Hardcore, Solo Self-Found and Classic toggles at character creation, in any mix. Not deployed. — done 2026-11-01
+- [x] Challenge modes: Hardcore, Solo Self-Found and Classic toggles at character creation, in any mix. 0.3.4 — done 2026-11-01
 - [x] Skill gem reform: every act and attribute has AoE, single target, guard and leech ([SKILL_REFORM.md](design/SKILL_REFORM.md)). Save v33 gives existing characters The Old Covenant. 0.3.3 — done 2026-11-01
 - [x] Kills before each area boss now ramp evenly from 10 (Mud Flats) to 80 (Shattered Throne) instead of 15–25; the starter drops moved to kills 1–9 so they finish before the first boss. 0.2.35 — done 2026-11-01
 - [x] Player wiki at `/path-of-idle/wiki/` in a Fandom-style look (dark bar, orange banner, contents sidebar). 0.2.47 — done 2026-11-01
