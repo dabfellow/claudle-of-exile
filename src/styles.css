@@ -5669,6 +5669,16 @@ img.art.mat-art {
   opacity: 0.4;
 }
 
+/* gear the character can't equip yet (level or attributes): a red shade over the tile */
+.item-tile.cant-equip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(200, 30, 30, 0.15);
+  pointer-events: none;
+}
+
 .item-tile-icon {
   height: 40px;
   display: grid;

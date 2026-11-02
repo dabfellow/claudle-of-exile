@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { baseDef } from '../../data/bases';
 import { BAG_SIZE } from '../../data/hideout';
 import { BENCH_UNBUILT, benchBuilt, salvage } from '../../engine/crafting';
+import { equipReason } from '../../engine/equipment';
 import { itemName } from '../../engine/items';
 import { inGearSet } from '../../engine/loadouts';
 import type { GameState, Item, Rarity } from '../../engine/types';
@@ -39,10 +40,11 @@ export function ItemTile({
   selected?: boolean;
   marked?: boolean;
 }) {
+  const locked = equipReason(s, item) !== null;
   return (
     <Tooltip content={<ItemTip item={item} state={s} />}>
       <button
-        className={`item-tile rar-${item.rarity} ${selected ? 'selected' : ''} ${marked ? 'marked' : ''}`}
+        className={`item-tile rar-${item.rarity} ${selected ? 'selected' : ''} ${marked ? 'marked' : ''} ${locked ? 'cant-equip' : ''}`}
         onClick={onClick}
         onContextMenu={(e) => {
           e.preventDefault();
