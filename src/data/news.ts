@@ -8,6 +8,15 @@ export interface NewsEntry {
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.3.10',
+    date: '1 Nov 2026',
+    title: 'Wiki tools',
+    items: [
+      'The wiki now has an item comparison, drop calculator, crafting planner and XP planner.',
+      'Try out rules with the rule builder, and plan a skill bar with the build planner, which gives you a link to share.',
+    ],
+  },
+  {
     version: '0.3.9',
     date: '1 Nov 2026',
     title: "The Exile's Codex",

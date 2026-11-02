@@ -11,7 +11,7 @@ Last updated 2026-11-01.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.9 (deployed 2026-11-01), with the rebuilt player wiki, The Exile's Codex, at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.10 (deployed 2026-11-01), with the rebuilt player wiki, The Exile's Codex, at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -349,9 +349,7 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
     - [ ] Later: materials and modifiers have rows with direct links, not pages of their own.
   - [x] Phase 3: Getting started, checklist, FAQ, glossary, automation guide and rule reference, offline, gathering, farming, walkthrough, boss preparation, loot tables, unlocks, starter builds, patch notes, data version, and reporting through the game's Feedback card. Guides live in `docs/wiki/`, with `{{data:…}}` tables and `{{skill:…}}` links filled from the game. Starter builds aren't playtested. — done 2026-11-01
     - [ ] **[You]** Read the guides for tone and anything that doesn't match how you see the game.
-  - [x] Phase 4: item comparison, drop calculator, crafting planner, XP and farming planner, rule builder and build planner with share links. Numbers are worked out by the game's own code at build time. Patch history per entry and community features are left out. — done 2026-11-01
-    - [ ] Not live yet.
-- [ ] Wiki next, decided in the 2026-11-01 design pass (see Decisions → Wiki), in this order:
+  - [x] Phase 4: item comparison, drop calculator, crafting planner, XP and farming planner, rule builder and build planner with share links. Numbers are worked out by the game's own code at build time. Patch history per entry and community features are left out. — done 2026-11-01- [ ] Wiki next, decided in the 2026-11-01 design pass (see Decisions → Wiki), in this order:
   - [x] Spoiler boxes: click-to-reveal for boss mechanics, unique drop sources and Acts 4–6, applied by the generator. — done 2026-11-01
   - [ ] Reference pages: passive tree notables, life skills and recipes, hideout upgrades, runes and flasks, boss mechanics glossary.
   - [ ] A link from the title screen to the wiki home.
