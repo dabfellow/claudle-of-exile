@@ -5,6 +5,7 @@ called the Player Market so it isn't confused with the Town Market station, whic
 
 ## How it works
 
+- **One market per realm:** standard, Hardcore, Classic and Hardcore Classic each have their own listings and deliveries, and need Act 1 cleared in that realm. Solo Self-Found characters can't trade.
 - **Server:** [docs/ops/market.sql](../ops/market.sql). Players can't touch the tables. Every step is one all-or-nothing
   function, so an item can't be sold twice and a bid can't be half-placed.
 - **Game:** `src/engine/market.ts` (holds and deliveries), `src/platform/market.ts` (server calls), the market section of

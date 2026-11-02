@@ -1,7 +1,8 @@
 import { STASH_PAGE_SIZE, STASH_START_PAGES, stationDef } from '../data/hideout';
+import { STANDARD_REALM } from './challenge';
 import { trimFlaskStash } from './flasks';
 import { createUnique } from './items';
-import type { AccountPool, AccountState, AccountTransfer, AutomationUnlocks, EquipSlot, GameState, Item, SkillGemInstance } from './types';
+import type { AccountPool, AccountState, AccountTransfer, AutomationUnlocks, EquipSlot, GameState, Item, Realm, SkillGemInstance } from './types';
 
 /**
  * What every character in a realm shares: the hideout, automation unlocks, every Stash tab and the Exile unlock.
@@ -22,10 +23,10 @@ export function freshAutomation(): AutomationUnlocks {
   return { rules: [], ruleSlots: 1, offlineHours: 8 };
 }
 
-export function freshAccount(): AccountState {
+export function freshAccount(realm: Realm = STANDARD_REALM): AccountState {
   return {
     id: `a${Date.now().toString(36)}${Math.floor(Math.random() * 1e9).toString(36)}`,
-    realm: 'standard',
+    realm,
     rev: 0,
     hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, watchtower: 1 },
     automation: freshAutomation(),

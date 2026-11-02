@@ -20,6 +20,7 @@ import { currencyDef } from '../data/materials';
 import { actBossZone, actOpen } from '../data/zones';
 import { grantUnlocks } from './automation';
 import { addBank, canAfford, payCost } from './bank';
+import { hideoutCost, recipeUnlocked } from './challenge';
 import type { Ctx } from './context';
 import { flaskName, flaskValue, rollFlask, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
@@ -66,7 +67,7 @@ export function stationLockReason(s: GameState, id: StationId): string | null {
 export function nextUpgradeCost(s: GameState, id: StationId): Record<string, number> | null {
   const def = stationDef(id);
   const lvl = stationLevel(s, id);
-  return lvl >= def.levels.length ? null : def.levels[lvl].cost;
+  return lvl >= def.levels.length ? null : hideoutCost(s, def.levels[lvl].cost);
 }
 
 const RULE_NAMES: Record<RuleUnlock, string> = { vitals: 'Vitals', status: 'Status', ground: 'Ground', windups: 'Wind-up', aim: 'Aim' };
@@ -93,7 +94,7 @@ export function stationPerks(s: GameState, id: StationId): string[] {
       return [ALCH_REACH[Math.min(i, 2)], ...(ALCH_DOUBLE[i] ? [`${ALCH_DOUBLE[i] * 100}% chance of double output`] : [])];
     case 'bench': {
       if (lvl < BENCH_BUILT_LEVEL) return ['Use orbs on your gear'];
-      const open = BENCH_CRAFTS.filter((c) => c.benchLevel <= lvl && (!c.achievement || s.achievements.includes(c.achievement)));
+      const open = BENCH_CRAFTS.filter((c) => c.benchLevel <= lvl && recipeUnlocked(s, c.achievement));
       return [
         'Salvage gear',
         `${open.length} of ${BENCH_CRAFTS.length} bench recipes`,

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { STANDARD_REALM } from '../engine/challenge';
 import type { MarketDelivery } from '../engine/market';
-import type { Item } from '../engine/types';
+import type { Item, Realm } from '../engine/types';
 import { getSupabase } from './supabase';
 
 /** The Player Market's server calls (docs/ops/market.sql). Every step is one all-or-nothing function there. */
@@ -53,12 +54,14 @@ export function isRefusal(err: unknown): boolean {
   return !!err && typeof err === 'object' && 'code' in err && !!err.code;
 }
 
-function supabaseMarket(client: SupabaseClient): MarketApi {
+function supabaseMarket(client: SupabaseClient, realm: Realm): MarketApi {
   const call = async <T>(fn: string, args?: Record<string, unknown>): Promise<T> => {
     const { data, error } = await client.rpc(fn, args);
     if (error) throw error;
     return data as T;
   };
+  // the standard market leaves the realm out, so it doesn't depend on which version of market.sql is live
+  const inRealm = realm === STANDARD_REALM ? {} : { p_realm: realm };
   return {
     browse: (f) =>
       call('market_browse', {
@@ -69,12 +72,13 @@ function supabaseMarket(client: SupabaseClient): MarketApi {
         p_currency: f.currency || null,
         p_mode: f.mode || null,
         p_offset: f.offset ?? 0,
+        ...inRealm,
       }),
-    list: (op, item, mode, currency, price) => call('market_list', { p_op: op, p_item: item, p_mode: mode, p_currency: currency, p_price: price }),
-    buy: (op, id, currency, amount) => call('market_buy', { p_op: op, p_id: id, p_currency: currency, p_amount: amount }),
-    bid: (op, id, currency, amount) => call('market_bid', { p_op: op, p_id: id, p_currency: currency, p_amount: amount }),
+    list: (op, item, mode, currency, price) => call('market_list', { p_op: op, p_item: item, p_mode: mode, p_currency: currency, p_price: price, ...inRealm }),
+    buy: (op, id, currency, amount) => call('market_buy', { p_op: op, p_id: id, p_currency: currency, p_amount: amount, ...inRealm }),
+    bid: (op, id, currency, amount) => call('market_bid', { p_op: op, p_id: id, p_currency: currency, p_amount: amount, ...inRealm }),
     cancel: (id) => call('market_cancel', { p_id: id }),
-    collect: () => call('market_collect'),
+    collect: () => call('market_collect', inRealm),
     opDone: (op) => call('market_op_done', { p_op: op }),
   };
 }
@@ -88,10 +92,10 @@ export function setMarketStandIn(api: MarketApi | null): void {
 
 export const marketStandIn = () => standIn;
 
-export function marketApi(): MarketApi | null {
+export function marketApi(realm: Realm = STANDARD_REALM): MarketApi | null {
   if (standIn) return standIn;
   const client = getSupabase();
-  return client ? supabaseMarket(client) : null;
+  return client ? supabaseMarket(client, realm) : null;
 }
 
 // ---------- admin ----------

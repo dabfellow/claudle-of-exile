@@ -2,8 +2,10 @@ import { useState, type ReactNode } from 'react';
 import { activeGemDef, supportGemDef } from '../../data/gems';
 import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
 import { STASH_PAGE_SIZE } from '../../data/hideout';
+import { challengeName, isSolo } from '../../engine/challenge';
 import { wearFlask } from '../../engine/combat';
 import { salvage } from '../../engine/crafting';
+import { sortFigure, sortItems, type SortKey } from '../../engine/itemSort';
 import { buyStashPage, settleOverflow, stashedItems, stashItems, stashPagePrice, stashPageRoom, takeFromStash } from '../../engine/storage';
 import { game } from '../../game';
 import type { GameState } from '../../engine/types';
@@ -12,7 +14,7 @@ import { Art, CurrencyAmount, EmptyState, fmt, MatIcon, PageHeader, Tabs, Toolti
 import { FlaskShelf } from '../components/FlaskView';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
 import { Orb, Swatch } from '../components/Icon';
-import { Inventory, ItemTiles, SalvageByRarity, sortItems, SortTabs, type SortKey } from '../components/Inventory';
+import { Inventory, ItemTiles, SalvageByRarity, StashSort } from '../components/Inventory';
 import { PaperDoll } from '../components/PaperDoll';
 import type { Page } from '../Layout';
 import { openItemMenu } from '../components/ItemMenu';
@@ -101,10 +103,11 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
     { id: 'gems', label: 'Gems', count: s.account.gems.length + s.account.supportGems.length },
     { id: 'flasks', label: 'Flasks', count: s.account.flaskStash.length },
   ];
+  const isChallenge = !!challengeName(s.character.challenge);
   return (
     <div className="page">
       <PageHeader title="Stash" actions={<CurrencyAmount id="gold" amount={s.account.bank.gold ?? 0} label="gold" />}>
-        Every tab here, and your gold, is shared by all your characters. Your skill bar and belt stay with this character.
+        {isSolo(s) ? 'Every tab here, and your gold, belongs to this character alone.' : `Every tab here, and your gold, is shared by all your ${isChallenge ? `${challengeName(s.character.challenge)} ` : ''}characters.`} Your skill bar and belt stay with this character.
       </PageHeader>
       <div className="stash-top">
         <div className="card doll-card">
@@ -112,6 +115,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
         </div>
         <Inventory
           s={s}
+          stashSorts
           hint="Click an item for Equip, Stash, Salvage. Stash all fills the page below."
           actions={
             <button className="btn sm" disabled={!s.inventory.length} onClick={() => game.act((st, ctx) => void stashItems(st, ctx, st.inventory.map((i) => i.uid), here))}>
@@ -284,7 +288,7 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
           </button>
         </div>
         <span className="grow" />
-        <SortTabs value={sort} onChange={setSort} />
+        <StashSort value={sort} onChange={setSort} />
       </div>
       <div className="row wrap" style={{ marginBottom: 10 }}>
         <span className="dim small">
@@ -313,7 +317,7 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
           Take all
         </button>
       </div>
-      <ItemTiles s={s} items={sortItems(items, sort)} slots={STASH_PAGE_SIZE} onClick={(i) => openItemMenu(i.uid)} />
+      <ItemTiles s={s} items={sortItems(items, sort, s)} slots={STASH_PAGE_SIZE} figure={(i) => sortFigure(i, sort)} onClick={(i) => openItemMenu(i.uid)} />
     </div>
   );
 }

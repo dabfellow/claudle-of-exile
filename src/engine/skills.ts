@@ -8,6 +8,7 @@ import { HERB_TIERS, ORB_TIERS } from '../data/skillTree';
 import { actionDef, SKILLS, type SkillAction } from '../data/skills';
 import { actOpen, ZONES, zoneDef } from '../data/zones';
 import { addBank, canAfford, hasItem, payCost } from './bank';
+import { CLASSIC_BLOCK, isClassic } from './challenge';
 import type { Ctx } from './context';
 import { benchBuilt } from './crafting';
 import { newFlask, rerollMagic, stashFlask } from './flasks';
@@ -103,6 +104,7 @@ function salvagesBases(s: GameState): boolean {
 }
 
 export function actionBlocker(s: GameState, a: SkillAction): string | null {
+  if (isClassic(s)) return CLASSIC_BLOCK;
   if (a.soon) return 'Coming soon';
   const place = actionPlaceNeeded(s, a);
   if (place) return `Reach ${place} to unlock`;

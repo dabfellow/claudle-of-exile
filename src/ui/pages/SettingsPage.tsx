@@ -139,7 +139,7 @@ export function SettingsPage() {
             className="btn danger"
             onClick={() => {
               const c = s.character;
-              if (confirm(`Reset ${c.name} back to level 1? The Hideout and shared stash stay. This cannot be undone.`)) game.replace(newGame(Date.now(), { id: c.id, name: c.name, classId: c.classId, startNode: c.startNode }, s.account));
+              if (confirm(`Reset ${c.name} back to level 1? The Hideout and shared stash stay. This cannot be undone.`)) void game.replace(newGame(Date.now(), { id: c.id, name: c.name, classId: c.classId, startNode: c.startNode, challenge: c.challenge }, s.account));
             }}
           >
             Reset character
@@ -156,7 +156,7 @@ export function SettingsPage() {
           style={{ marginTop: 8 }}
           onClick={() => {
             try {
-              game.replace(importSave(text));
+              void game.replace(importSave(text));
               setText('');
               game.pushToast('Save imported', 'good');
             } catch {

@@ -11,7 +11,7 @@ Last updated 2026-11-01.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts and the Player Market are live as 0.3.3 (0.3.0 "The Market", plus the unique art sheet, a red shade on gear you can't equip yet and the skill gem reform, deployed 2026-11-01), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.4 (deployed 2026-11-01), with the new player wiki at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -130,7 +130,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 
 ### 11. Long tail
 - Collection log, masteries, build-defining uniques, the skills arriving around or after Act 6.
-- Hardcore and Classic, each with their own stash, hideout and unlocks.
+- [x] Challenge modes: Hardcore, Solo Self-Found and Classic as toggles in any mix ([GDD.md](design/GDD.md) §11) — done 2026-11-01. Live in 0.3.4.
 - **Done:** your call.
 
 ### 1.0
@@ -153,6 +153,9 @@ target times and players set the acts' pace: 1–20 about 3 h, 20–40 about 3 h
 outlevel the campaign ([BALANCE.md](design/BALANCE.md) → Knobs).
 
 **Skill gem reform (you, 2026-11-01):** every act and attribute gets AoE, single target, guard, and a life and a mana source, with leech very weak until Acts 3–4. Drain skills return life or mana, never both, and supports can fill the other half. Arcane Siphon moved to Act 5, the leech supports cost 1.8 times the mana, no new signature supports, and existing gems were sorted where they fit. Existing characters get one The Old Covenant ring; new ones don't ([SKILL_REFORM.md](design/SKILL_REFORM.md)).
+
+**Challenge modes (you, 2026-11-01):** Hardcore deletes the character, Solo Self-Found can't use the Player Market and each one has its own stash, and Classic has no idle skilling but keeps the Crafting Bench. They're toggles, in any mix.
+- Decided for you: an SSF character's hideout and unlocks are its own too, and are deleted with it. Hardcore characters share a stash that outlives them, and each non-SSF mix has its own market. Modes can't be changed after creation. NPC shops stay open to SSF. Heist counts as skilling. Classic pays gold (5 times sale value) for gathered materials in hideout upgrades, since nothing else supplies them in bulk, and skips the Forge, the Alchemy Table, the skilling tree and the tutorial's mining and smithing steps. The two bench recipe achievements that need skilling are waived for Classic. The Exile unlock carries from any mode to the whole account.
 
 **Wiki (design pass, 2026-11-01):**
 - Spoilers: B. The wiki is fully public with no login. Boss mechanics, unique drop sources and later acts sit behind click-to-reveal "Spoiler" boxes.
@@ -403,6 +406,7 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 ## Ideas / later
 - Any error while drawing a page blanks the whole game: there's no error screen to catch it. A tab still on an older version also goes blank if a gem it has never heard of reaches the shared account from a newer tab or device, until it's refreshed. Nothing tells an open tab that a new version is out.
 - When browser storage is full, a save throws an error instead of the "keep playing" handling meant for it. The game carries on, but the page can miss a refresh after buying a gem.
+- Hardcore on two devices: a second device still holding a local copy of a dead character can bring it back. Deleted characters would need a cloud marker to stop that.
 - Skill reform: a The Old Covenant moved to the shared stash can be worn by a new character on that account. Life Leech's 1.8 multiplier also raises Life-spending skills' Life cost, and drains cost no mana, so leech supports are free on them. The 31 new skills use reused icons, and none has its own art.
 - War Table: Wind-up rules are now level 2, about 15 minutes of gathering, so offline bosses come far earlier than Milestone 1's pacing assumed. Not simmed.
 - The sim's `reachable` now pushes unbeaten areas so it walks every branch, but hasn't been run since the roads forked, and its pacing numbers for Acts 3–6 predate them.
@@ -466,7 +470,9 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
-- [x] Gem shop crash fixed: hovering a summon or storm gem blanked the game, and every shop gem's tooltip showed Default Attack's numbers. — done 2026-11-01
+- [x] Gem shop crash fixed: hovering a summon or storm gem blanked the game, and every shop gem's tooltip showed Default Attack's numbers. 0.3.6 — done 2026-11-01
+- [x] Stash screen sorting: the bag and gear pages sort by Recent, Rarity, Slot, Item level, Can equip, Weapon DPS or Defence from a dropdown; DPS and Defence show their number on the tile. Other screens keep their three tabs. 0.3.5 — done 2026-11-01
+- [x] Challenge modes: Hardcore, Solo Self-Found and Classic toggles at character creation, in any mix. 0.3.4 — done 2026-11-01
 - [x] Skill gem reform: every act and attribute has AoE, single target, guard and leech ([SKILL_REFORM.md](design/SKILL_REFORM.md)). Save v33 gives existing characters The Old Covenant. 0.3.3 — done 2026-11-01
 - [x] Kills before each area boss now ramp evenly from 10 (Mud Flats) to 80 (Shattered Throne) instead of 15–25; the starter drops moved to kills 1–9 so they finish before the first boss. 0.2.35 — done 2026-11-01
 - [x] Player wiki at `/path-of-idle/wiki/` in a Fandom-style look (dark bar, orange banner, contents sidebar). 0.2.47 — done 2026-11-01

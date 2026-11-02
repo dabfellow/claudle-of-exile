@@ -1,5 +1,6 @@
 import { TUTORIAL_STEPS, type TutorialStep } from '../data/tutorial';
 import { addBank } from './bank';
+import { hideoutCost } from './challenge';
 import type { Ctx } from './context';
 import type { GameEvent, GameState } from './types';
 
@@ -9,7 +10,7 @@ export function currentStep(s: GameState): TutorialStep | null {
 }
 
 function complete(s: GameState, ctx: Ctx, step: TutorialStep): void {
-  for (const [id, n] of Object.entries(step.reward)) addBank(s, id, n);
+  for (const [id, n] of Object.entries(hideoutCost(s, step.reward))) addBank(s, id, n);
   const finished = s.tutorial.step;
   s.tutorial.step += 1;
   s.tutorial.progress = 0;

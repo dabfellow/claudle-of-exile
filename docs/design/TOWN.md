@@ -12,7 +12,7 @@
 It's saved apart from characters and attached as `s.account`. Gear pages are shared; currency, materials, gems, flasks, the bag and Town stock stay per character.
 Items take an account uid when they first enter the stash, because each character numbers its own items from 1.
 Old saves hand their hideout and stash over one character at a time (`settleCharacter`), taking the highest of each station and unlock. Pages anyone bought are kept, and items that don't fit wait in an overflow that can be emptied but not added to.
-`Realm` is where challenge modes will plug in: each will be a separate `AccountState` under its own key.
+Challenge modes (`engine/challenge.ts`): a character's toggles pick its `Realm`, and each realm is a separate `AccountState` under its own key: `standard`, `hardcore`, `classic`, `hardcore-classic`, or `ssf-<character id>` for a Solo Self-Found character. In play `game.realm` is the character's realm; on every other screen it's the standard one.
 
 ## Hideout, Town and station upgrades
 

@@ -607,7 +607,19 @@ export interface CharacterInfo {
   classId: ClassId;
   /** Exile only: the passive tree start node picked at creation */
   startNode?: string;
+  /** chosen at creation and fixed from then on; left out for a normal character */
+  challenge?: ChallengeFlags;
   createdAt: number;
+}
+
+/** Challenge mode toggles, in any mix: see engine/challenge.ts. */
+export interface ChallengeFlags {
+  /** one death ends the character */
+  hardcore?: boolean;
+  /** Solo Self-Found: no Player Market, and a stash of its own */
+  ssf?: boolean;
+  /** no gathering or crafting skills */
+  classic?: boolean;
 }
 
 export interface TutorialState {
@@ -626,10 +638,10 @@ export interface AutomationUnlocks {
 }
 
 /**
- * Which set of hideout, stash and unlocks a character belongs to. Challenge modes (Hardcore, Classic) will each be a
- * realm of their own, with their own AccountState, so they start fresh.
+ * Which set of hideout, stash and unlocks a character belongs to. Each mix of Hardcore and Classic is a realm with its
+ * own AccountState, so it starts fresh, and every Solo Self-Found character is a realm of one. See realmFor.
  */
-export type Realm = 'standard';
+export type Realm = string;
 
 /** What every character in a realm shares. Saved on its own, never inside a character. See engine/account.ts. */
 export interface AccountState {
@@ -768,6 +780,8 @@ export interface GameState {
   /** from before the skill reform: The Old Covenant waits to be handed over */
   keepsakeDue?: boolean;
   character: CharacterInfo;
+  /** a Hardcore character has died here: nothing runs again, and the game deletes it */
+  fallen?: { zoneId: string | null; offline: boolean };
   tutorial: TutorialState;
   nextUid: number;
   skills: Record<SkillId, number>;
