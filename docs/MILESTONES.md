@@ -401,6 +401,8 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Any error while drawing a page blanks the whole game: there's no error screen to catch it. A tab still on an older version also goes blank if a gem it has never heard of reaches the shared account from a newer tab or device, until it's refreshed. Nothing tells an open tab that a new version is out.
+- When browser storage is full, a save throws an error instead of the "keep playing" handling meant for it. The game carries on, but the page can miss a refresh after buying a gem.
 - Skill reform: a The Old Covenant moved to the shared stash can be worn by a new character on that account. Life Leech's 1.8 multiplier also raises Life-spending skills' Life cost, and drains cost no mana, so leech supports are free on them. The 31 new skills use reused icons, and none has its own art.
 - War Table: Wind-up rules are now level 2, about 15 minutes of gathering, so offline bosses come far earlier than Milestone 1's pacing assumed. Not simmed.
 - The sim's `reachable` now pushes unbeaten areas so it walks every branch, but hasn't been run since the roads forked, and its pacing numbers for Acts 3–6 predate them.
@@ -464,6 +466,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Gem shop crash fixed: hovering a summon or storm gem blanked the game, and every shop gem's tooltip showed Default Attack's numbers. — done 2026-11-01
 - [x] Skill gem reform: every act and attribute has AoE, single target, guard and leech ([SKILL_REFORM.md](design/SKILL_REFORM.md)). Save v33 gives existing characters The Old Covenant. 0.3.3 — done 2026-11-01
 - [x] Kills before each area boss now ramp evenly from 10 (Mud Flats) to 80 (Shattered Throne) instead of 15–25; the starter drops moved to kills 1–9 so they finish before the first boss. 0.2.35 — done 2026-11-01
 - [x] Player wiki at `/path-of-idle/wiki/` in a Fandom-style look (dark bar, orange banner, contents sidebar). 0.2.47 — done 2026-11-01
