@@ -27,8 +27,9 @@ import { ItemIcon, ItemTip } from './components/ItemView';
 import { SKILL_KEYS } from './pages/SkillGemsPage';
 import { CurrencyAmount, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tooltip } from './components/common';
 import { QuestTracker } from './components/QuestTracker';
-import { Crest } from './screens/Screens';
+import { ChallengeTag, Crest } from './screens/Screens';
 import { APP_VERSION } from '../platform/errors';
+import { isClassic, isSolo } from '../engine/challenge';
 
 export type Page =
   | 'hideout'
@@ -140,10 +141,10 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
         <span className="brand-sub">an idle exile's tale</span>
         <span className="brand-version">v{APP_VERSION}</span>
       </div>
-      {NAV.map((g) => (
+      {NAV.filter((g) => !isClassic(s) || (g.label !== 'Gathering' && g.label !== 'Crafting')).map((g) => (
         <div className={`nav-group ${g.label ? '' : 'unlabelled'}`} key={g.label || 'top'}>
           {g.label && <div className="nav-label">{g.label}</div>}
-          {g.items.filter((it) => (it.page !== 'cooking' || cookingOpen(s)) && (it.page !== 'cartography' || cartographyOpen(s))).map((it) => {
+          {g.items.filter((it) => (it.page !== 'cooking' || cookingOpen(s)) && (it.page !== 'cartography' || cartographyOpen(s)) && (it.page !== 'market' || !isSolo(s))).map((it) => {
             const lvl = it.skill ? levelOf(it.skill, s.skills[it.skill]) : null;
             const isActive = it.skill && it.skill === active;
             const color = it.skill ? SKILLS[it.skill].color : 'var(--muted)';
@@ -173,6 +174,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
             <div className="dim small">
               Lv {characterLevel(s)} {classDef(s.character.classId).name}
             </div>
+            <ChallengeTag challenge={s.character.challenge} />
           </div>
           <button className="btn ghost sm" title="Switch character" onClick={() => game.exit()}>
             Switch

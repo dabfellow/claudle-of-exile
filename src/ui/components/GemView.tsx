@@ -104,7 +104,8 @@ function GemRequirement({ have, def, level }: { have: number; def: ActiveGemDef;
 export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | null; state: GameState; def?: ActiveGemDef }) {
   const def = given ?? (gem ? activeGemDef(gem.gemId) : DEFAULT_ATTACK);
   const d = deriveStats(state, []);
-  const sum = skillSummary(d, gem ?? null);
+  // a gem on a shelf isn't owned yet: show it as the level 1 copy you'd be buying
+  const sum = skillSummary(d, gem ?? (given ? { uid: 0, gemId: given.id, level: 1, xp: 0, supports: [], extraSlots: 0, rules: [], priority: 'normal' } : null));
   const nums = sum.nums;
   return (
     <div className="tip gem-tip" style={{ ['--gem' as string]: ATTR_COLOR[def.attr] }}>

@@ -4,6 +4,7 @@ import { STATIONS, type StationDef, type StationId } from '../../data/hideout';
 import { materialDef } from '../../data/materials';
 import { actionDef, actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { canAfford } from '../../engine/bank';
+import { hideoutCost, isClassic, isSolo } from '../../engine/challenge';
 import { skillSummary } from '../../engine/gems';
 import { nextUpgradeCost, stationLevel, stationLockReason, stationPerks, upgradeStation } from '../../engine/hideout';
 import { pointsLeft } from '../../engine/passives';
@@ -81,7 +82,7 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
         <QuickNav go={go} />
       </div>
       <StationLedger go={go} />
-      <SkillDials go={go} training={training} />
+      {!isClassic(s) && <SkillDials go={go} training={training} />}
     </div>
   );
 }
@@ -353,10 +354,10 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
         {st.levels.map((tier, i) => {
           const state: TierState = locked || i > lvl ? 'later' : i < lvl ? 'done' : 'next';
           return (
-            <Tier key={i} n={i + 1} effect={tier.effect} cost={tier.cost} state={state} have={s.account.bank}>
+            <Tier key={i} n={i + 1} effect={tier.effect} cost={hideoutCost(s, tier.cost)} state={state} have={s.account.bank}>
               {state === 'next' && (
                 <div className="hx-tier-buy">
-                  <HaveNeed cost={tier.cost} have={s.account.bank} go={go} />
+                  <HaveNeed cost={hideoutCost(s, tier.cost)} have={s.account.bank} go={go} />
                   <button data-tut={`upgrade-${st.id}`} className={`btn sm ${affordable ? 'primary' : ''}`} disabled={!affordable} title={affordable ? `Upgrade to level ${lvl + 1}` : 'Not enough materials'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id))}>
                     Upgrade
                   </button>
@@ -371,11 +372,13 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
 }
 
 function StationLedger({ go }: { go: (p: Page) => void }) {
+  const s = useGame();
+  const classic = isClassic(s);
   return (
     <div className="hx-stations-wrap">
-      <div className="dim small">Stations and their unlocks are shared by all your characters. Hover a later tier to see its cost.</div>
+      <div className="dim small">Stations and their unlocks {isSolo(s) ? 'are this character\'s alone' : 'are shared by all your characters in this mode'}. Hover a later tier to see its cost.</div>
       <div className="hx-stations">
-        {STATIONS.map((st) => (
+        {STATIONS.filter((st) => !classic || (st.id !== 'forge' && st.id !== 'alchemy_table')).map((st) => (
           <StationCard key={st.id} st={st} go={go} />
         ))}
       </div>

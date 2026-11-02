@@ -9,12 +9,14 @@ import { FINAL_ACT } from './engine/hideout';
 import type { Ctx } from './engine/context';
 import { itemName } from './engine/items';
 import { alignWarTable, fillAccount, freshAccount, giveKeepsake, mergeAccounts, settleCharacter } from './engine/account';
+import { realmFor, realmOf, soloRealm, STANDARD_REALM } from './engine/challenge';
+import { characterLevel } from './engine/character';
 import { MIN_OFFLINE_MS, simulateOffline, type OfflineSummary } from './engine/offline';
 import { mathRng } from './engine/rng';
 import type { ClassId } from './data/classes';
-import { TUTORIAL_STEPS } from './data/tutorial';
+import { rewardText, TUTORIAL_STEPS } from './data/tutorial';
 import { serializeBundle } from './engine/save';
-import { newGame, tick } from './engine/state';
+import { newCharacterId, newGame, tick } from './engine/state';
 import { tutorialPage, withTutorial } from './engine/tutorial';
 import { AppAccounts, isCloudAccount, type Account, type AuthProviderId } from './platform/accounts';
 import { reportError, setErrorUser } from './platform/errors';
@@ -40,7 +42,7 @@ import {
   type SaveStore,
   type SyncStatus,
 } from './platform/saves';
-import type { AccountState, GameEvent, GameState, Item, SkillId } from './engine/types';
+import type { AccountState, ChallengeFlags, GameEvent, GameState, Item, Realm, SkillId } from './engine/types';
 import { activeGemDef, supportGemDef } from './data/gems';
 
 export interface FeedEntry {
@@ -80,7 +82,17 @@ const ACCOUNT_PULL_MS = 30_000;
 /** frames further apart than this (tab hidden, laptop asleep) are treated as offline time */
 const BACKGROUND_MS = 5 * 60_000;
 
-export type Screen = 'boot' | 'title' | 'menu' | 'select' | 'create' | 'game';
+export type Screen = 'boot' | 'title' | 'menu' | 'select' | 'create' | 'game' | 'fallen';
+
+/** The last word on a Hardcore character, shown after its save is gone. */
+export interface FallenCharacter {
+  name: string;
+  classId: ClassId;
+  level: number;
+  challenge?: ChallengeFlags;
+  zoneId: string | null;
+  offline: boolean;
+}
 
 /** How often an open game asks whether events changed, and how often it checks the clock against their schedules. */
 const EVENT_FETCH_MS = 5 * 60 * 1000;
@@ -110,7 +122,9 @@ class GameStore {
   readonly accounts = new AppAccounts(localStorage, getSupabase());
   private saves: SaveStore | null = null;
   private tabs = new TabClaims((id, stale) => this.releaseCharacter(id, stale));
-  /** the shared hideout, Stash tabs and unlocks; every character played on this account holds this same object */
+  /** the Hardcore character that just died */
+  fallen: FallenCharacter | null = null;
+  /** the shared hideout, Stash tabs and unlocks: the character's own realm in play, the standard one on every other screen */
   realm: AccountState = freshAccount();
   /** the account as last written, to tell when it has changed */
   private savedRealm = '';
@@ -342,11 +356,13 @@ class GameStore {
       if (c.handedOver) continue;
       const s = await saves.load(c.id);
       if (!s) continue;
-      if (settleCharacter(s, this.realm)) {
+      const realm = realmOf(s.character);
+      const home = realm === STANDARD_REALM ? this.realm : ((await saves.loadAccount(realm)) ?? freshAccount(realm));
+      if (settleCharacter(s, home)) {
         merged++;
         // the account first: if the character's save fails, it is marked absorbed and simply settles again
-        this.realm.rev += 1;
-        await saves.saveAccount(this.realm);
+        home.rev += 1;
+        await saves.saveAccount(home);
       }
       await saves.save(s);
     }
@@ -362,6 +378,20 @@ class GameStore {
     alignWarTable(a);
     this.realm = a;
     this.markRealmSaved();
+  }
+
+  private async switchRealm(realm: Realm) {
+    if (this.realm.realm === realm || !this.saves) return;
+    this.adoptRealm((await this.saves.loadAccount(realm)) ?? freshAccount(realm));
+  }
+
+  /** Finishing the campaign in a challenge mode opens the Exile for the whole account. */
+  private async carryExile() {
+    const home = this.saves && ((await this.saves.loadAccount()) ?? freshAccount());
+    if (!home || home.exileUnlocked) return;
+    home.exileUnlocked = true;
+    home.rev += 1;
+    await this.saves!.saveAccount(home);
   }
 
   private realmJson(a = this.realm): string {
@@ -389,16 +419,17 @@ class GameStore {
   /** Written whenever it changes, not with every autosave, so an idle tab can't overwrite newer stash changes. */
   private saveRealm() {
     if (!this.saves) return;
-    this.mergeRealm(this.saves.peekAccount());
+    this.mergeRealm(this.saves.peekAccount(this.realm.realm));
     if (this.realmJson() === this.savedRealm) return;
     this.realm.rev += 1;
     this.markRealmSaved();
     this.saves.saveAccount(this.realm).catch((err) => reportError(err, { where: 'saveAccount' }));
+    if (this.realm.realm !== STANDARD_REALM && this.realm.exileUnlocked) void this.carryExile();
   }
 
   /** Another tab changed the shared account: use its copy. */
   private onOtherTab(e: StorageEvent) {
-    if (!e.newValue || !e.key?.endsWith('-account-standard') || !this.saves) return;
+    if (!e.newValue || !e.key?.endsWith(`-account-${this.realm.realm}`) || !this.saves) return;
     this.mergeRealm(fillAccount(JSON.parse(e.newValue) as AccountState));
     this.notify();
   }
@@ -448,8 +479,10 @@ class GameStore {
     return this.realm.exileUnlocked;
   }
 
-  async create(name: string, classId: ClassId, startNode?: string) {
-    const s = newGame(Date.now(), { name: name.trim(), classId, startNode }, this.realm);
+  async create(name: string, classId: ClassId, startNode?: string, challenge: ChallengeFlags = {}) {
+    const id = newCharacterId();
+    await this.switchRealm(realmFor(challenge, id));
+    const s = newGame(Date.now(), { id, name: name.trim(), classId, startNode, challenge }, this.realm);
     await this.saves?.save(s);
     this.showIntro = true;
     this.begin(s);
@@ -463,8 +496,16 @@ class GameStore {
       this.pushToast('That character could not be loaded', 'bad');
       return;
     }
+    // it died, but deleting it never finished (no connection, say)
+    if (s.fallen) {
+      this.mourn(s);
+      await this.forget(s);
+      await this.refreshCharacters();
+      return;
+    }
+    await this.switchRealm(realmOf(s.character));
     // another device may have changed the account since it was opened
-    const latest = await this.saves?.loadAccount();
+    const latest = await this.saves?.loadAccount(this.realm.realm);
     if (latest && latest.rev > this.realm.rev) this.adoptRealm(latest);
     this.attach(s);
     this.begin(s);
@@ -476,9 +517,45 @@ class GameStore {
   }
 
   async removeCharacter(id: string) {
+    const realm = this.characters.find((c) => c.id === id)?.realm;
     await this.saves?.remove(id);
+    if (realm && soloRealm(realm)) await this.saves?.removeAccount(realm);
     await this.refreshCharacters();
     if (!this.characters.length) this.setScreen('create');
+  }
+
+  /** Hardcore: the character is gone, with its bag and gear. A Solo Self-Found one takes its stash and hideout too. */
+  private async forget(s: GameState) {
+    const realm = realmOf(s.character);
+    try {
+      // the fallen mark first: if the delete fails, the next attempt to play it finishes the job
+      await this.saves?.save(s);
+      await this.saves?.remove(s.character.id);
+      if (soloRealm(realm)) await this.saves?.removeAccount(realm);
+    } catch (err) {
+      reportError(err, { where: 'forget' });
+    }
+  }
+
+  private mourn(s: GameState) {
+    const { name, classId, challenge } = s.character;
+    this.fallen = { name, classId, challenge, level: characterLevel(s), zoneId: s.fallen!.zoneId, offline: s.fallen!.offline };
+    this.setScreen('fallen');
+  }
+
+  private async bury(s: GameState) {
+    this.stopLoop();
+    s.lastSaved = Date.now();
+    this.saveRealm();
+    this.mourn(s);
+    await this.forget(s);
+    await this.switchRealm(STANDARD_REALM);
+    await this.refreshCharacters();
+  }
+
+  dismissFallen() {
+    this.fallen = null;
+    this.setScreen(this.characters.length ? 'select' : 'create');
   }
 
   private attach(s: GameState) {
@@ -492,6 +569,7 @@ class GameStore {
     if (this.screen !== 'game') return;
     this.save();
     this.stopLoop();
+    await this.switchRealm(STANDARD_REALM);
     await this.refreshCharacters();
     this.setScreen('select');
   }
@@ -503,7 +581,7 @@ class GameStore {
     this.stopLoop();
     this.setScreen('select');
     this.pushToast('This character was opened in another tab', 'warn');
-    void this.refreshCharacters();
+    void this.switchRealm(STANDARD_REALM).then(() => this.refreshCharacters());
     return true;
   }
 
@@ -530,15 +608,18 @@ class GameStore {
 
   // ---------- Player Market ----------
 
-  /** Signed in and past Act 1, or why not. The server checks all of this too. */
-  get marketAccess(): 'guest' | 'locked' | 'open' {
+  /** Signed in and past Act 1 in this realm, or why not. The server checks all of this too. */
+  get marketAccess(): 'solo' | 'guest' | 'locked' | 'open' {
+    const realm = this.realm.realm;
+    if (soloRealm(realm)) return 'solo';
     if (!marketStandIn() && !isCloudAccount(this.account)) return 'guest';
-    const cleared = this.state.bossesDefeated.includes(MARKET_UNLOCK_BOSS) || this.characters.some((c) => c.act1Cleared);
+    const cleared = this.state.bossesDefeated.includes(MARKET_UNLOCK_BOSS) || this.characters.some((c) => c.act1Cleared && (c.realm ?? STANDARD_REALM) === realm);
     return cleared ? 'open' : 'locked';
   }
 
   private marketTrader(): MarketApi | null {
-    return this.marketAccess === 'guest' ? null : marketApi();
+    const access = this.marketAccess;
+    return access === 'guest' || access === 'solo' ? null : marketApi(this.realm.realm);
   }
 
   /** Steps waiting on the server, in this tab: marketSync leaves these alone. */
@@ -642,6 +723,7 @@ class GameStore {
       this.baseCtx.now = Date.now();
       if (dt > BACKGROUND_MS) this.runOffline(dt);
       else tick(this.state, this.ctx, dt);
+      if (this.state.fallen && this.loop) return void this.bury(this.state);
       if (now - this.lastNotify >= NOTIFY_MS) this.notify();
       if (now - this.lastSave >= AUTOSAVE_MS) this.save();
     };
@@ -662,6 +744,7 @@ class GameStore {
   private runOffline(ms: number) {
     const hadAction = !!this.state.action;
     const sum = simulateOffline(this.state, this.ctx, ms);
+    if (this.state.fallen && this.loop) return void this.bury(this.state);
     if (hadAction && sum.ms >= MIN_OFFLINE_MS) this.offline = sum;
     this.notify();
   }
@@ -679,12 +762,13 @@ class GameStore {
     this.saveRealm();
     if (performance.now() - this.lastPull >= ACCOUNT_PULL_MS) {
       this.lastPull = performance.now();
-      void this.saves.pullAccount().then((theirs) => this.mergeRealm(theirs));
+      void this.saves.pullAccount(this.realm.realm).then((theirs) => this.mergeRealm(theirs));
     }
   }
 
   /** Swap in a different state for the current session (import / reset). */
-  replace(s: GameState) {
+  async replace(s: GameState) {
+    await this.switchRealm(realmOf(s.character));
     this.attach(s);
     this.begin(s);
     this.save();
@@ -861,7 +945,7 @@ class GameStore {
       }
       case 'tutorialStep': {
         const step = TUTORIAL_STEPS[e.step];
-        this.addFeed(`Quest complete: ${step.title}${step.rewardText ? ` — ${step.rewardText}` : ''}`, 'good');
+        this.addFeed(`Quest complete: ${step.title}${step.rewardText ? ` — ${rewardText(this.state, step)}` : ''}`, 'good');
         this.pushToast(e.done ? 'Tutorial complete! Follow the coast — the Drowned Queen waits at its end.' : `Quest complete: ${step.title}`, 'good');
         break;
       }

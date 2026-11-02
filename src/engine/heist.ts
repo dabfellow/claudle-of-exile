@@ -3,6 +3,7 @@ import { MARKER } from '../data/craftMats';
 import { actionsFor, type SkillAction } from '../data/skills';
 import { zoneDef } from '../data/zones';
 import { addBank, canAfford, payCost } from './bank';
+import { CLASSIC_BLOCK, isClassic } from './challenge';
 import type { Ctx } from './context';
 import { createItem, droppableBases } from './items';
 import { placeItem } from './loot';
@@ -117,6 +118,7 @@ export function setJobExit(s: GameState, jobId: string, room: number): void {
 }
 
 export function jobBlocker(s: GameState, job: HeistJob): string | null {
+  if (isClassic(s)) return CLASSIC_BLOCK;
   if (!s.unlockedZones.includes(job.area)) return `Reach ${zoneDef(job.area).name} to unlock`;
   if (skillLevel(s, 'thieving') < job.level) return `Requires Thieving level ${job.level}`;
   return null;

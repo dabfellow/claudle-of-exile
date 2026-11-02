@@ -5,6 +5,9 @@ import { baseDef } from '../../data/bases';
 import { activeGemDef } from '../../data/gems';
 import { NEWS } from '../../data/news';
 import { GUIDE_NAME } from '../../data/tutorial';
+import { zoneDef } from '../../data/zones';
+import { challengeName } from '../../engine/challenge';
+import type { ChallengeFlags } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { isCloudAccount, type AuthProviderId } from '../../platform/accounts';
 import { errorText } from '../../platform/feedback';
@@ -325,6 +328,11 @@ export function AccountBadge() {
   );
 }
 
+export function ChallengeTag({ challenge }: { challenge?: ChallengeFlags }) {
+  const name = challengeName(challenge);
+  return name ? <div className={`challenge-tag ${challenge?.hardcore ? 'hardcore' : ''}`}>{name}</div> : null;
+}
+
 function CharacterCard({ c }: { c: CharacterSummary }) {
   const [confirming, setConfirming] = useState(false);
   const [typed, setTyped] = useState('');
@@ -338,6 +346,7 @@ function CharacterCard({ c }: { c: CharacterSummary }) {
           <div className="muted" style={{ fontSize: 'var(--fs-sm)' }}>
             Level {c.combatLevel} {cls.name} · Total level {c.totalLevel}
           </div>
+          <ChallengeTag challenge={c.challenge} />
           <div className="dim small">Last played {ago(c.lastPlayed)}</div>
         </div>
         {!confirming && (
@@ -381,7 +390,7 @@ function AccountSummary() {
   const items = a.stash.flat().length;
   return (
     <div className="dim small" style={{ textAlign: 'center' }}>
-      Shared by all your characters: Hideout, {a.automation.offlineHours} hour offline cap, {a.stash.length} stash pages ({items} items)
+      Shared by your normal characters: Hideout, {a.automation.offlineHours} hour offline cap, {a.stash.length} stash pages ({items} items)
       {a.overflow.length > 0 && <span className="warn"> · {a.overflow.length} in stash overflow</span>}
     </div>
   );
@@ -496,10 +505,70 @@ export function CharacterSelect() {
 
 const NAME_RE = /^[A-Za-z][A-Za-z '-]{1,15}$/;
 
+const CHALLENGE_TOGGLES: { id: keyof ChallengeFlags; name: string; desc: string }[] = [
+  { id: 'hardcore', name: 'Hardcore', desc: 'One death deletes this character and everything it carries, even while you are away.' },
+  { id: 'ssf', name: 'Solo Self-Found', desc: 'No Player Market. This character gets a stash and hideout of its own, shared with nobody.' },
+  { id: 'classic', name: 'Classic', desc: 'No gathering or crafting skills, just combat. The Crafting Bench still works, and hideout upgrades cost gold instead.' },
+];
+
+function ChallengeCard({ value, onChange }: { value: ChallengeFlags; onChange: (v: ChallengeFlags) => void }) {
+  return (
+    <div className="card">
+      <div className="section-label" style={{ marginBottom: 8 }}>
+        Challenge modes
+      </div>
+      <div className="challenge-toggles">
+        {CHALLENGE_TOGGLES.map((t) => (
+          <label key={t.id} className={`challenge-toggle ${value[t.id] ? 'on' : ''}`}>
+            <input type="checkbox" checked={!!value[t.id]} onChange={(e) => onChange({ ...value, [t.id]: e.target.checked })} />
+            <span>
+              <b>{t.name}</b>
+              <span className="dim small">{t.desc}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+      <div className="dim small" style={{ marginTop: 6 }}>
+        {challengeName(value)
+          ? `${value.ssf ? 'Starts with its own fresh stash and hideout.' : 'Shares a fresh stash and hideout with your other characters of the same mode.'} These can't be changed after you begin.`
+          : 'Pick any mix, or none for a normal character. These can’t be changed after you begin.'}
+      </div>
+    </div>
+  );
+}
+
+/** A Hardcore character's end. Its save has already gone. */
+export function FallenScreen() {
+  useGame();
+  const f = game.fallen;
+  if (!f) return null;
+  const cls = classDef(f.classId);
+  const place = f.zoneId ? zoneDef(f.zoneId).name : 'the wilds';
+  return (
+    <ScreenShell>
+      <div className="card title-card fallen-card">
+        <Crest classId={f.classId} size={72} />
+        <h2 style={{ fontSize: 24 }}>{f.name} has fallen</h2>
+        <div className="muted">
+          Level {f.level} {cls.name}
+        </div>
+        <ChallengeTag challenge={f.challenge} />
+        <p className="muted" style={{ margin: 0 }}>
+          Slain in {place}{f.offline ? ' while you were away' : ''}. Hardcore deaths are final: the character is gone, and everything it carried with it{f.challenge?.ssf ? ', including its stash' : ''}.
+        </p>
+        <button className="btn primary lg" onClick={() => game.dismissFallen()}>
+          Continue
+        </button>
+      </div>
+    </ScreenShell>
+  );
+}
+
 export function CharacterCreate() {
   useGame();
   const [classId, setClassId] = useState<ClassId>('warrior');
   const [exileStart, setExileStart] = useState('class_str');
+  const [challenge, setChallenge] = useState<ChallengeFlags>({});
   const [name, setName] = useState('');
   const trimmed = name.trim();
   const error = !trimmed
@@ -511,7 +580,7 @@ export function CharacterCreate() {
         : null;
   const valid = !!trimmed && !error;
   const cls = classDef(classId);
-  const begin = () => game.create(trimmed, classId, classId === 'exile' ? exileStart : undefined);
+  const begin = () => game.create(trimmed, classId, classId === 'exile' ? exileStart : undefined, challenge);
 
   return (
     <ScreenShell wide>
@@ -610,10 +679,11 @@ export function CharacterCreate() {
             ))}
           </div>
           <div className="dim small" style={{ marginTop: 6 }}>
-            You begin at the {startClass('exile', exileStart).name}'s tree start with their two starter gems. Your character's skills start fresh; the Hideout and stash stay shared.
+            You begin at the {startClass('exile', exileStart).name}'s tree start with their two starter gems. Your character's skills start fresh.
           </div>
         </div>
       )}
+      <ChallengeCard value={challenge} onChange={setChallenge} />
       <div className="card create-bar" style={{ ['--class' as string]: cls.color }}>
         <Crest classId={classId} size={44} />
         <div style={{ flex: 1, minWidth: 200 }}>

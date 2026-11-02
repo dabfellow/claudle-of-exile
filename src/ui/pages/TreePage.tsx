@@ -32,6 +32,7 @@ import {
   switchReason,
 } from '../../engine/ascendancy';
 import { ruleLockReason } from '../../engine/automation';
+import { isClassic } from '../../engine/challenge';
 import { allocate, allocateReason, changeMastery, pointsLeft, refund, refundReason, startNode, totalPoints } from '../../engine/passives';
 import { allocateSkillNode, refundSkillNode, refundSkillNodeReason, skillNodeReason, skillPointsLeft, skillTreePoints } from '../../engine/skillTree';
 import { deriveStats, passiveStats, type Derived } from '../../engine/stats';
@@ -927,7 +928,8 @@ export function TreePage() {
   const s = useGame();
   const [picked, setTab] = useState<keyof typeof TREE_HEADERS>('character');
   const ascends = canAscend(s);
-  const tab = picked === 'ascendancy' && !ascends ? 'character' : picked;
+  const classic = isClassic(s);
+  const tab = (picked === 'ascendancy' && !ascends) || (picked === 'skilling' && classic) ? 'character' : picked;
   const ascBadge = !s.ascendancy.id ? 1 : ascendancyPointsLeft(s);
   return (
     <div className="page wide">
@@ -937,7 +939,7 @@ export function TreePage() {
         onChange={setTab}
         tabs={[
           { id: 'character', label: 'Character', count: pointsLeft(s) > 0 ? pointsLeft(s) : undefined, hot: true },
-          { id: 'skilling', label: 'Skilling', count: skillPointsLeft(s) > 0 ? skillPointsLeft(s) : undefined, hot: true },
+          ...(classic ? [] : [{ id: 'skilling' as const, label: 'Skilling', count: skillPointsLeft(s) > 0 ? skillPointsLeft(s) : undefined, hot: true }]),
           ...(ascends ? [{ id: 'ascendancy' as const, label: 'Ascendancy', count: ascBadge > 0 ? ascBadge : undefined, hot: true }] : []),
         ]}
       />

@@ -7,6 +7,7 @@ import { WHETSTONE } from '../../data/expedition';
 import { runeDef, RUNES } from '../../data/runes';
 import { BENCH_CRAFTS } from '../../data/hideout';
 import { achievementProgress } from '../../engine/achievements';
+import { recipeUnlocked } from '../../engine/challenge';
 import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { actOpen } from '../../data/zones';
 import { currencyDef } from '../../data/materials';
@@ -307,7 +308,7 @@ export function BenchPage() {
                     const a = affixDef(b.affixId);
                     const preview = affixRangeText(a.id, b.tier);
                     const reason = item ? benchCraftReason(s, b.id, item.uid) : 'Select an item';
-                    if (b.achievement && !s.achievements.includes(b.achievement)) {
+                    if (b.achievement && !recipeUnlocked(s, b.achievement)) {
                       const ach = ACHIEVEMENT_BY_ID[b.achievement];
                       const p = achievementProgress(s, b.achievement);
                       return (
