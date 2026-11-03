@@ -298,7 +298,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     dualWield,
     critChance,
     critMulti,
-    res: { fire: cap(raw.fireRes), cold: cap(raw.coldRes), light: cap(raw.lightRes), chaos: 0 },
+    res: { fire: cap(raw.fireRes), cold: cap(raw.coldRes), light: cap(raw.lightRes), chaos: Math.min(RES_CAP, raw.chaosRes) },
     leechPct: raw.lifeLeech,
     itemRarity: raw.itemRarity,
     skillSpeed: raw.skillSpeed,

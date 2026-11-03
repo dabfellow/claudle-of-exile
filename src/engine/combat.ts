@@ -645,6 +645,18 @@ function alchemistDrink(s: GameState, ctx: Ctx, d: Derived, effectMult: number):
   }
 }
 
+/** a Low Mana flask drinks itself below this share of maximum Mana */
+const INSTILL_LOW_MANA = 0.3;
+/** a hit is savage when it takes at least this share of maximum Life */
+const SAVAGE_HIT = 0.2;
+
+/** Hit-enchanted flasks answer the hit that just landed on you. */
+function triggerOnHit(s: GameState, ctx: Ctx, d: Derived, taken: number, type: DamageType): void {
+  if (taken >= d.maxLife * SAVAGE_HIT) triggerInstilled(s, ctx, 'savageHit');
+  if (type === 'fire' || type === 'cold' || type === 'light') triggerInstilled(s, ctx, 'elemHit');
+  if (type === 'chaos') triggerInstilled(s, ctx, 'chaosHit');
+}
+
 function triggerInstilled(s: GameState, ctx: Ctx, cond: InstillCondition): void {
   s.flaskSlots.forEach((f, i) => {
     if (!f || f.instill !== cond) return;
@@ -2352,6 +2364,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     c.windup.stored = (c.windup.stored ?? 0) + dmg;
     if (c.windup.braced) dmg = Math.max(1, Math.round(dmg * (1 - UNMOVED_LESS / 100)));
   }
+  const taken = dmg;
   const legionary = army(c).find((x) => x.shares && x.life > 0);
   if (legionary) {
     const part = Math.round((dmg * legionary.shares!) / 100);
@@ -2408,6 +2421,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   if (isCast && s.life > 0 && hasAscNode(s, 'anvil_shatter')) c.mech = meterMax('rage', d.raw);
   if (s.life > 0) riposte(s, ctx, d, mon, 'landed');
   if (s.life > 0) fireTriggered(s, ctx, d, 'reprisal');
+  if (s.life > 0) triggerOnHit(s, ctx, d, taken, type);
 }
 
 /** Any block, however it came about. */
@@ -3072,6 +3086,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
 
   // instilled flasks
   if (s.life < d.maxLife * 0.5) triggerInstilled(s, ctx, 'lowLife');
+  if (d.maxMana > 0 && s.mana < d.maxMana * INSTILL_LOW_MANA) triggerInstilled(s, ctx, 'lowMana');
   if ((c.frostbite ?? 0) >= BOSS_FROSTBITE_INSTILL_AT) triggerInstilled(s, ctx, 'frostbite');
   for (let i = 0; i < s.flaskSlots.length; i++) {
     const f = s.flaskSlots[i];

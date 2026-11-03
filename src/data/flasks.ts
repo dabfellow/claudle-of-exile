@@ -68,6 +68,11 @@ export const FLASKS: FlaskDef[] = [
     desc: '+35% to all Elemental Resistances for 4.5s', price: 220, dropLevel: 10,
   },
   {
+    id: 'amethyst', name: 'Amethyst Flask', kind: 'utility', color: '#a36bdc',
+    maxCharges: 40, chargesPerUse: 20, durationMs: 4500, buff: { chaosRes: 35 },
+    desc: '+35% to Chaos Resistance for 4.5s', price: 260, dropLevel: 18,
+  },
+  {
     id: 'sulphur', name: 'Sulphur Flask', kind: 'utility', color: '#d8c94a',
     maxCharges: 40, chargesPerUse: 20, durationMs: 4500, buff: { physPct: 40, elemPct: 40 },
     desc: '40% increased Physical and Elemental Damage for 4.5s', price: 1200, dropLevel: Infinity,
@@ -135,8 +140,12 @@ export function flaskAffixDef(id: string): FlaskAffixDef {
 
 export const INSTILL_CONDITIONS: { id: InstillCondition; label: string; desc: string; act?: number }[] = [
   { id: 'lowLife', label: 'Low Life', desc: 'Used automatically when Life drops below 50%' },
+  { id: 'lowMana', label: 'Low Mana', desc: 'Used automatically when Mana drops below 30%' },
   { id: 'fullCharges', label: 'Full Charges', desc: 'Used automatically whenever the flask is full' },
   { id: 'bossCast', label: 'Boss Wind-up', desc: 'Used automatically when a boss begins a heavy attack' },
+  { id: 'savageHit', label: 'Savage Hit', desc: 'Used automatically when one hit takes 20% or more of your maximum Life' },
+  { id: 'elemHit', label: 'Elemental Hit', desc: 'Used automatically when you take a fire, cold or lightning hit' },
+  { id: 'chaosHit', label: 'Chaos Hit', desc: 'Used automatically when you take a chaos hit' },
   { id: 'frostbite', label: 'Frostbite', desc: 'Used automatically at 6 Frostbite stacks, which it clears', act: 4 },
 ];
 

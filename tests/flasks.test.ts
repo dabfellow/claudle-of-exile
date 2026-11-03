@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeCtx } from '../src/engine/context';
-import { startCombat, useFlask, wearFlask } from '../src/engine/combat';
+import { combatStep, startCombat, useFlask, wearFlask } from '../src/engine/combat';
+import { deriveStats } from '../src/engine/stats';
 import { applyFlaskOrb, enchantFlask, FLASK_STASH_CAP, flaskName, flaskStats, newFlask, rollFlask, stashFlask } from '../src/engine/flasks';
 import { rerollCost, rerollVendor } from '../src/engine/hideout';
 import { seeded } from '../src/engine/rng';
@@ -101,6 +102,38 @@ describe('flask items', () => {
     expect(enchantFlask(s, c, f.uid, 'lowLife')).toBeNull();
     expect(f.instill).toBe('lowLife');
     expect(s.account.bank.instill).toBe(0);
+  });
+
+  it('a Low Mana flask drinks itself when Mana runs low', () => {
+    const s = newGame(1);
+    const c = ctx();
+    startCombat(s, c, 'mudflats');
+    const cb = s.combat!;
+    cb.monsters = [];
+    cb.spawnMs = 1e12;
+    const f = s.flaskSlots[1]!;
+    expect(f.flaskId).toBe('mana_small');
+    f.charges = 24;
+    f.instill = 'lowMana';
+    const d = deriveStats(s);
+    s.mana = d.maxMana;
+    combatStep(s, c, 50, d);
+    expect(f.charges).toBe(24);
+    s.mana = 0;
+    combatStep(s, c, 50, d);
+    expect(f.charges).toBe(18);
+  });
+
+  it('Amethyst Flask grants Chaos Resistance while active', () => {
+    const s = newGame(1);
+    const c = ctx();
+    const f = newFlask(s, 'amethyst', 20);
+    f.charges = 40;
+    s.flaskSlots[2] = f;
+    startCombat(s, c, 'mudflats');
+    expect(deriveStats(s).res.chaos).toBe(0);
+    expect(useFlask(s, c, 2)).toBeNull();
+    expect(deriveStats(s).res.chaos).toBe(35);
   });
 
   it('reduced charges used is applied when drinking', () => {

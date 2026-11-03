@@ -56,7 +56,7 @@ export const STAT_KEYS = [
   'life', 'lifePct', 'lifeMore', 'lifeRegen', 'lifeRegenPct', 'lifeLeech', 'manaLeech', 'physMin', 'physMax', 'physPct',
   'fireMin', 'fireMax', 'coldMin', 'coldMax', 'lightMin', 'lightMax', 'chaosMin', 'chaosMax', 'chaosPct', 'chillChance', 'shockChance', 'elemPct', 'attackSpeedPct', 'moveSpeedPct',
   'attackSpeedMore', 'critChancePct', 'critMulti', 'armour', 'armourPct', 'armourMore', 'evasion',
-  'evasionPct', 'fireRes', 'coldRes', 'lightRes', 'allRes', 'itemRarity', 'skillSpeed', 'skillXp',
+  'evasionPct', 'fireRes', 'coldRes', 'lightRes', 'allRes', 'chaosRes', 'itemRarity', 'skillSpeed', 'skillXp',
   'flaskEffect', 'flaskCharges', 'str', 'dex', 'int', 'allAttr', 'accuracy', 'mana', 'manaPct',
   'manaRegenPct', 'castSpeedPct', 'firePct', 'coldPct', 'lightPct', 'bleedPct', 'poisonPct', 'ignitePct',
   'ailmentPct', 'ailmentDuration', 'bleedDuration', 'poisonDuration', 'igniteDuration', 'bleedDurationFlat',
@@ -122,7 +122,7 @@ export interface Item {
   honed?: string;
 }
 
-export type InstillCondition = 'lowLife' | 'fullCharges' | 'bossCast' | 'frostbite';
+export type InstillCondition = 'lowLife' | 'lowMana' | 'fullCharges' | 'bossCast' | 'savageHit' | 'elemHit' | 'chaosHit' | 'frostbite';
 
 export interface FlaskMod {
   affixId: string;

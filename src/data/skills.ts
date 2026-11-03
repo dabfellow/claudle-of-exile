@@ -224,6 +224,7 @@ const ALCHEMY: SkillAction[] = [
   { id: 'brew_ruby', skill: 'alchemy', name: 'Ruby Flask', level: 23, intervalMs: 5000, xp: 50, inputs: { emberroot: 6, rough_gem: 1 }, flaskId: 'ruby', color: '#ff6a5a', area: 'crypt' },
   { id: 'brew_quicksilver', skill: 'alchemy', name: 'Quicksilver Flask', level: 26, intervalMs: 5000, xp: 55, inputs: { emberroot: 8, sunpetal: 6 }, flaskId: 'quicksilver', color: '#c9d3dc', area: 'crypt' },
   { id: 'orb_regret', skill: 'alchemy', name: 'Orb of Regret', level: 28, intervalMs: 5000, xp: 50, inputs: { arcane_dust: 14, emberroot: 3 }, outputs: { regret: 1 }, color: '#8fbf7a', area: 'crypt' },
+  { id: 'brew_amethyst', skill: 'alchemy', name: 'Amethyst Flask', level: 30, intervalMs: 5500, xp: 65, inputs: { voidbloom: 5, rough_gem: 1 }, flaskId: 'amethyst', color: '#a36bdc', area: 'shipgrave' },
   { id: 'brew_life_grand', skill: 'alchemy', name: 'Grand Life Flask', level: 32, intervalMs: 6000, xp: 80, inputs: { emberroot: 10, yew_log: 3 }, flaskId: 'life_grand', color: '#d6453d', area: 'shipgrave' },
   { id: 'brew_diamond', skill: 'alchemy', name: 'Diamond Flask', level: 36, intervalMs: 6000, xp: 90, inputs: { voidbloom: 6, rough_gem: 2 }, flaskId: 'diamond', color: '#bfe3ff', area: 'stormcliffs' },
   { id: 'brew_mana_sacred', skill: 'alchemy', name: 'Sacred Mana Flask', level: 42, intervalMs: 6000, xp: 110, inputs: { frost_extract: 3, yew_log: 2 }, flaskId: 'mana_sacred', color: '#4f82e8', gate: COOKING_GATE },

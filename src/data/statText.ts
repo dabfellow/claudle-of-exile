@@ -37,6 +37,7 @@ const TEXT: Partial<Record<StatKey, (v: number) => string>> = {
   coldRes: (v) => `+${v}% to Cold Resistance`,
   lightRes: (v) => `+${v}% to Lightning Resistance`,
   allRes: (v) => `+${v}% to all Elemental Resistances`,
+  chaosRes: (v) => `+${v}% to Chaos Resistance`,
   itemRarity: pct('increased Item Rarity'),
   skillSpeed: pct('faster gathering and production'),
   skillXp: pct('increased Skill Experience'),

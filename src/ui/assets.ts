@@ -748,6 +748,7 @@ export const FLASK_ART: Record<string, string> = {
   quicksilver: new URL('../assets/items/flasks/codespree-vial-mercury.png', import.meta.url).href,
   diamond: new URL('../assets/items/flasks/tint-diamond.png', import.meta.url).href,
   ruby: new URL('../assets/items/flasks/tint-ruby.png', import.meta.url).href,
+  amethyst: new URL('../assets/items/flasks/tint-amethyst.png', import.meta.url).href,
   life_sacred: new URL('../assets/items/consumables/potion-red.png', import.meta.url).href,
   mana_sacred: new URL('../assets/items/consumables/potion-blue-shelf.png', import.meta.url).href,
   sulphur: new URL('../assets/items/consumables/potion-green.png', import.meta.url).href,
