@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'New achievement, Unbroken: complete Act 6 without dying once in it to earn The Unbroken Temper, a unique amulet that never drops.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.3.19',
+    date: '2 Nov 2026',
+    title: 'Unbroken',
+    items: [
+      'New achievement, Unbroken: complete Act 6 without dying once in it to earn The Unbroken Temper, a Templar unique amulet that never drops.',
+    ],
+  },
   {
     version: '0.3.18',
     date: '2 Nov 2026',
