@@ -11,7 +11,7 @@ Last updated 2026-11-02.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.10 (deployed 2026-11-01), with the rebuilt player wiki, The Exile's Codex, at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.11 (deployed 2026-11-02, the class balance pass), with the rebuilt player wiki, The Exile's Codex, at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -514,6 +514,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Class balance pass: cast times for every skill, single-target and area starter skills for every class, a bow for the Ranger, Rain of Daggers, Quick Slash and Rending Cut, faster melee, stronger Strength attacks and physical mods, new sword and mace bases, Hulking monsters, chain falloff, slower spell growth and weaker top caster mods; scenario mode for the sim. Mage Act 1 is still too slow (see Other open items). 0.3.11 — done 2026-11-02
 - [x] Versions go up once per release, not every change. Changes collect in `UPCOMING` in `src/data/news.ts` and become that release's news post. `/ship` holds off going live while other sessions are working, and saves the work for the next release. — done 2026-11-02
 - [x] Exiles on the Mage start get a Driftwood Wand instead of the Rusted Sword. 0.3.8 — done 2026-11-01
 - [x] Spells need a wand, staff or sceptre, curses work with anything, the 20% caster bonus is gone, daggers roll no caster mods ([BATTLEFIELD.md](design/BATTLEFIELD.md) §7). Shadow starts with Twin Strike, Templar with Iron Guard. 0.3.7 — done 2026-11-01
