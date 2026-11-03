@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'The Gem shop is now a fixed shelf that never sells out: every gem from the areas you have opened, with a few more added as each new area opens.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.3.13',
+    date: '2 Nov 2026',
+    title: 'Full Gem shop',
+    items: [
+      'The Gem shop is now a fixed shelf that never sells out: every gem from the areas you have opened, with a few more added as each new area opens.',
+    ],
+  },
   {
     version: '0.3.12',
     date: '2 Nov 2026',
