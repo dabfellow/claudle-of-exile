@@ -15,6 +15,8 @@ export interface AchievementDef {
   progress: (s: GameState) => number;
   /** currency/material rewards; bench recipe unlocks are listed on the recipes themselves */
   reward?: Record<string, number>;
+  /** a unique item handed over on completion */
+  unique?: string;
   /** belongs to this act: hidden until the act is open */
   act?: number;
 }
@@ -86,6 +88,10 @@ const ALL: AchievementDef[] = [
   {
     id: 'conqueror_6', name: 'Long Live No One', desc: "Defeat every Act 6 area's boss", category: 'combat', act: 6,
     target: zonesInAct(6).length, progress: (s) => bossesBeatenIn(s, 6), reward: { exalted: 3 },
+  },
+  {
+    id: 'act_6_deathless', name: 'Unbroken', desc: 'Complete Act 6 without dying once in it', category: 'combat', act: 6,
+    target: 1, progress: (s) => L(s).act6Deathless ?? 0, unique: 'unbroken_temper',
   },
   {
     id: 'deathless', name: 'Untouchable', desc: 'Reach level 10 without dying', category: 'combat',

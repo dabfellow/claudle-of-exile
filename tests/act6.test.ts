@@ -8,6 +8,7 @@ import type { TacticRule } from '../src/data/gems';
 import { MAP_DROPS } from '../src/data/maps';
 import { ACT_PREVIEW, ACTS, actBossZone, actOpen, echoMechanics, echoTips, nextZones, zoneDef, zonesInAct, type BossMechanic, type ZoneDef } from '../src/data/zones';
 import { absorbAccount } from '../src/engine/account';
+import { checkAchievements } from '../src/engine/achievements';
 import { allocateAscNode, ascNodeReason, onBossFirstKill } from '../src/engine/ascendancy';
 import { bossLeftToRules, GROUND_IN_PLAY, rulesBreakChannels, unlockEverything } from '../src/engine/automation';
 import { GROUND, PLAYER_SPOT, UNHOLY_RECOVERY } from '../src/engine/battlefield';
@@ -496,5 +497,39 @@ describe('the ending', () => {
     s.account.campaignDone = true;
     for (let i = 0; i < 200; i++) rollMapDrops(s, ctx(i), mon);
     expect(held()).toBeGreaterThan(0);
+  });
+});
+
+describe('Unbroken: Act 6 with no deaths', () => {
+  /** Walk into Act 6, maybe die along the way, then fell the Last King. */
+  function kingFalls(diedOnTheWay: boolean): GameState {
+    const s = fighter([['heavy_strike', PLAIN]]);
+    startCombat(s, ctx(), 'exilesgate');
+    if (diedOnTheWay) s.lifetime.deaths += 1;
+    const { boss, c } = bossFight(s, 'shatteredthrone');
+    boss.mechanics = [];
+    boss.chained = undefined;
+    boss.martyrWaves = 2;
+    boss.life = 1;
+    s.life = 1e7;
+    run(s, c, 3000);
+    expect(s.bossesDefeated).toContain('shatteredthrone');
+    checkAchievements(s, c);
+    return s;
+  }
+
+  it('hands over The Unbroken Temper when the king falls with no death in Act 6', () => {
+    const s = kingFalls(false);
+    expect(s.achievements).toContain('act_6_deathless');
+    expect(s.inventory.some((i) => i.uniqueId === 'unbroken_temper')).toBe(true);
+    expect(uniqueDef('unbroken_temper').noTrade).toBe(true);
+  });
+
+  it('a death in Act 6 rules it out, but deaths before it do not', () => {
+    expect(kingFalls(true).achievements).not.toContain('act_6_deathless');
+    const s = fighter([]);
+    s.lifetime.deaths = 5;
+    startCombat(s, ctx(), 'exilesgate');
+    expect(s.lifetime.act6StartDeaths).toBe(5);
   });
 });

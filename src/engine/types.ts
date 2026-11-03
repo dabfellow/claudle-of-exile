@@ -605,6 +605,10 @@ export interface Lifetime {
   uniquesFound: number;
   /** Exile achievement: Ysolde kills with no unique equipped */
   exileBareKills?: number;
+  /** lifetime deaths when the character first fought in Act 6 */
+  act6StartDeaths?: number;
+  /** Act 6 achievement: 1 once the Last King falls with no death since Act 6 began */
+  act6Deathless?: number;
 }
 
 export interface CharacterInfo {

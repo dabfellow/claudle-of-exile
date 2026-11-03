@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'New achievement, Unbroken: complete Act 6 without dying once in it to earn The Unbroken Temper, a unique amulet that never drops.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

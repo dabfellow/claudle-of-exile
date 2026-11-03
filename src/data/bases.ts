@@ -1325,6 +1325,18 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_mana_leech', values: [2] },
     ],
   },
+
+  // ---------- reward for the Unbroken achievement (Act 6 with no deaths): never drops, can't be traded ----------
+  {
+    id: 'unbroken_temper', name: 'The Unbroken Temper', baseId: 'onyx_amulet', flavour: 'Six acts of wounds and prayers, and not once did it break.', noTrade: true,
+    mods: [
+      { affixId: 'flat_life', values: [90] },
+      { affixId: 'all_res', values: [15] },
+      { affixId: 'u_regen_pct', values: [1] },
+      { affixId: 'u_fervor_pct', values: [25] },
+      { affixId: 'u_nova_heal', values: [30] },
+    ],
+  },
 ];
 
 export function uniqueDef(id: string): UniqueDef {

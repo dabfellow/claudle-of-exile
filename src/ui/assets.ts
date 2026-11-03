@@ -442,6 +442,7 @@ export const UNIQUE_ART: Record<string, string> = {
   mirage_veil: new URL('../assets/items/armor/set-45-helmet.png', import.meta.url).href,
   khans_tithe: new URL('../assets/items/jewelry/gi-diamond-ring.svg', import.meta.url).href,
   old_covenant: new URL('../assets/items/jewelry/gi-diamond-ring.svg', import.meta.url).href,
+  unbroken_temper: new URL('../assets/items/jewelry/gi-heart-necklace.svg', import.meta.url).href,
   kurgan_crown: new URL('../assets/items/armor/pack3-kurgan_crown.png', import.meta.url).href,
   stormrider_greaves: new URL('../assets/items/armor/set-37-legs.png', import.meta.url).href,
   pyre_heart: new URL('../assets/items/jewelry/pack3-pyre_heart.png', import.meta.url).href,

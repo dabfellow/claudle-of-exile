@@ -274,6 +274,8 @@ export function enterZone(s: GameState, ctx: Ctx, zoneId: string): void {
   s.combat = newRuntime(zoneId);
   s.combat.mech = s.ascendancy.carry;
   s.ascendancy.carry = 0;
+  // Unbroken: Act 6 counts its deaths from the first fight there
+  if (zoneDef(zoneId).act === 6) s.lifetime.act6StartDeaths ??= s.lifetime.deaths;
   // gates start part-way through their timers, so they don't all open together
   s.combat.gates = EDGE_CELLS.map(() => gateTimer(ctx, zoneId) * ctx.rng.next());
   ctx.emit({ t: 'info', text: `Entered ${zoneDef(zoneId).name}` });
@@ -2017,6 +2019,8 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
       s.lifetime.exileBareKills = (s.lifetime.exileBareKills ?? 0) + 1;
     }
     if (!s.bossesDefeated.includes(zone.id)) {
+      // Unbroken: the Last King, with no death since Act 6 began
+      if (zone.id === 'shatteredthrone' && s.lifetime.deaths === s.lifetime.act6StartDeaths) s.lifetime.act6Deathless = 1;
       s.bossesDefeated.push(zone.id);
       if (zone.actBoss) ctx.emit({ t: 'actComplete', act: zone.act });
       onBossFirstKill(s, ctx, zone.id);

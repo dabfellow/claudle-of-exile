@@ -1,5 +1,6 @@
 import { affixDef } from '../../data/affixes';
 import { ACHIEVEMENTS, CATEGORY_NAMES, type AchievementCategory, type AchievementDef } from '../../data/achievements';
+import { uniqueDef } from '../../data/bases';
 import { BENCH_CRAFTS } from '../../data/hideout';
 import { materialDef } from '../../data/materials';
 import { achievementProgress } from '../../engine/achievements';
@@ -53,13 +54,18 @@ function AchievementCard({ s, a }: { s: GameState; a: AchievementDef }) {
           </span>
         </div>
       )}
-      {(a.reward || recipes.length > 0) && (
+      {(a.reward || a.unique || recipes.length > 0) && (
         <div className="achievement-rewards">
           {Object.entries(a.reward ?? {}).map(([id, n]) => (
             <span key={id} className="io-item" title={materialDef(id).name}>
               <MatIcon id={id} /> {n} {materialDef(id).name}
             </span>
           ))}
+          {a.unique && (
+            <span className="io-item" style={{ color: 'var(--unique)' }} title="Unique item: never drops, can't be traded">
+              {uniqueDef(a.unique).name}
+            </span>
+          )}
           {recipes.map((b) => (
             <span key={b.id} className="io-item mod crafted" title={`Crafting Bench level ${b.benchLevel} recipe`}>
               Bench: {affixRangeText(affixDef(b.affixId).id, b.tier)}
