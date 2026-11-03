@@ -3,7 +3,7 @@ import { claimOwned } from './account';
 import type { Ctx } from './context';
 import { BENCH_UNBUILT, benchBuilt, isCraftLocked, salvage } from './crafting';
 import { equip, equipReason, unequip } from './equipment';
-import { bagFull, pickUp, stashItems, stashPageRoom, takeFromStash } from './storage';
+import { bagFull, pickUp, shelveUnique, stashItems, stashPageRoom, takeFromStash } from './storage';
 import type { EquipSlot, GameState, Item } from './types';
 
 /**
@@ -11,7 +11,7 @@ import type { EquipSlot, GameState, Item } from './types';
  * on the ground, in the offline haul, the bag, a stash page, the stash overflow, or worn.
  */
 export type ItemPlace =
-  | { at: 'ground' | 'offlineHaul' | 'bag' | 'overflow'; item: Item }
+  | { at: 'ground' | 'offlineHaul' | 'bag' | 'overflow' | 'uniques'; item: Item }
   | { at: 'stash'; page: number; item: Item }
   | { at: 'equipped'; slot: EquipSlot; item: Item };
 
@@ -22,13 +22,15 @@ export function locateItem(s: GameState, uid: number): ItemPlace | null {
   }
   const bag = s.inventory.find((i) => i.uid === uid);
   if (bag) return { at: 'bag', item: bag };
-  const { stash, overflow } = s.account;
+  const { stash, overflow, uniqueStash } = s.account;
   for (let page = 0; page < stash.length; page++) {
     const item = stash[page].find((i) => i.uid === uid);
     if (item) return { at: 'stash', page, item };
   }
   const spilled = overflow.find((i) => i.uid === uid);
   if (spilled) return { at: 'overflow', item: spilled };
+  const shelved = uniqueStash.find((i) => i.uid === uid);
+  if (shelved) return { at: 'uniques', item: shelved };
   for (const [slot, item] of Object.entries(s.equipment) as [EquipSlot, Item | undefined][]) {
     if (item?.uid === uid) return { at: 'equipped', slot, item };
   }
@@ -42,12 +44,14 @@ function lift(s: GameState, p: ItemPlace): void {
   else if (p.at === 'bag') s.inventory = s.inventory.filter((i) => i.uid !== uid);
   else if (p.at === 'stash') s.account.stash[p.page] = s.account.stash[p.page].filter((i) => i.uid !== uid);
   else if (p.at === 'overflow') s.account.overflow = s.account.overflow.filter((i) => i.uid !== uid);
+  else if (p.at === 'uniques') s.account.uniqueStash = s.account.uniqueStash.filter((i) => i.uid !== uid);
 }
 
 /** Put an item back where another one came from. */
 function putBack(s: GameState, p: ItemPlace, item: Item): void {
   if (p.at === 'stash') s.account.stash[p.page].push(claimOwned(s, item));
   else if (p.at === 'overflow') s.account.overflow.push(claimOwned(s, item));
+  else if (p.at === 'uniques') s.account.uniqueStash.push(claimOwned(s, item));
   else if (p.at === 'ground' || p.at === 'offlineHaul') s[p.at].push(item);
 }
 
@@ -100,7 +104,7 @@ export function moveToBag(s: GameState, ctx: Ctx, uid: number): string | null {
   if (reason) return reason;
   const p = locateItem(s, uid)!;
   if (p.at === 'ground' || p.at === 'offlineHaul') pickUp(s, ctx, p.at, [uid]);
-  else if (p.at === 'stash' || p.at === 'overflow') takeFromStash(s, ctx, [uid]);
+  else if (p.at === 'stash' || p.at === 'overflow' || p.at === 'uniques') takeFromStash(s, ctx, [uid]);
   else if (p.at === 'equipped') return unequip(s, p.slot);
   return null;
 }
@@ -108,8 +112,9 @@ export function moveToBag(s: GameState, ctx: Ctx, uid: number): string | null {
 export function toStashReason(s: GameState, uid: number): string | null {
   const p = locateItem(s, uid);
   if (!p) return 'Item not found';
-  if (p.at === 'stash') return 'Already in the stash';
+  if (p.at === 'stash' || p.at === 'uniques') return 'Already in the stash';
   if (isCraftLocked(s, uid)) return 'Being crafted';
+  if (p.item.rarity === 'unique') return null;
   return firstStashPageWithRoom(s) < 0 ? 'Your stash is full' : null;
 }
 
@@ -121,10 +126,10 @@ export function moveToStash(s: GameState, ctx: Ctx, uid: number, page = 0): stri
     stashItems(s, ctx, [uid], page);
     return null;
   }
-  const target = stashPageRoom(s, page) > 0 ? page : firstStashPageWithRoom(s);
   if (p.at === 'equipped') delete s.equipment[p.slot];
   else lift(s, p);
-  s.account.stash[target].push(claimOwned(s, p.item));
+  if (p.item.rarity === 'unique') shelveUnique(s, p.item);
+  else s.account.stash[stashPageRoom(s, page) > 0 ? page : firstStashPageWithRoom(s)].push(claimOwned(s, p.item));
   return null;
 }
 

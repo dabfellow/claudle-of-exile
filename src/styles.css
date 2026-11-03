@@ -6030,6 +6030,38 @@ img.art.mat-art {
   grid-template-columns: 34px 1fr auto;
 }
 
+/* ============ Uniques tab: a spot for every unique ============ */
+.unique-shelf {
+  margin-bottom: var(--s-4);
+}
+
+.unique-spot {
+  position: relative;
+  display: grid;
+}
+
+.unique-spot-count {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--unique);
+  pointer-events: none;
+}
+
+/* a unique not in the tab: greyed out, with where it drops on hover */
+.item-tile.unique-spot-missing {
+  cursor: default;
+  opacity: 0.4;
+  filter: grayscale(0.85);
+}
+
+.item-tile.unique-spot-missing:hover {
+  transform: none;
+  opacity: 0.6;
+}
+
 /* ============ NPC panel (Trader's Stall) ============ */
 .npc-panel {
   display: grid;

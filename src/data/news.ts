@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'New Uniques tab in the Stash: every unique has its own spot there, with no limit on room. Uniques you stash go there by themselves, including ones already on your gear pages. Ones you have not found show greyed out, with where they drop.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

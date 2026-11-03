@@ -32,6 +32,8 @@ export function freshAccount(realm: Realm = STANDARD_REALM): AccountState {
     automation: freshAutomation(),
     stash: Array.from({ length: STASH_START_PAGES }, () => []),
     overflow: [],
+    uniqueStash: [],
+    uniquesSeen: [],
     bank: {},
     gems: [],
     supportGems: [],
@@ -48,7 +50,44 @@ export function fillAccount(a: AccountState): AccountState {
   a.gems ??= [];
   a.supportGems ??= [];
   a.flaskStash ??= [];
+  fileUniques(a);
   return a;
+}
+
+/**
+ * Copies saved by a version from before the Uniques tab (an old tab, or a device not yet updated). They never saw the
+ * tab, so it isn't theirs to empty: a merge keeps the tab from the other copy.
+ */
+const beforeUniqueTab = new WeakSet<AccountState>();
+
+/** The Uniques tab an old copy stands for: what it filed off its own pages, plus the tab it never knew about. */
+function tabOf(a: AccountState, other: AccountState): Item[] {
+  if (!beforeUniqueTab.has(a)) return a.uniqueStash;
+  const held = new Set(a.uniqueStash.map((i) => i.uid));
+  return [...a.uniqueStash, ...other.uniqueStash.filter((i) => !held.has(i.uid))];
+}
+
+/**
+ * Uniques live in the Uniques tab: any still on a gear page or in the overflow (from before the tab, or merged in)
+ * move there, and every unique held counts as seen. Safe on any copy, any number of times.
+ */
+export function fileUniques(a: AccountState): void {
+  if (!a.uniqueStash) {
+    beforeUniqueTab.add(a);
+    a.uniqueStash = [];
+  }
+  a.uniquesSeen ??= [];
+  const isUnique = (i: Item) => i.rarity === 'unique';
+  for (const list of [...a.stash, a.overflow]) a.uniqueStash.push(...list.filter(isUnique));
+  a.stash = a.stash.map((page) => page.filter((i) => !isUnique(i)));
+  a.overflow = a.overflow.filter((i) => !isUnique(i));
+  for (const i of a.uniqueStash) seeUnique(a, i);
+}
+
+/** Mark a unique as found, for the Uniques tab's collection. */
+export function seeUnique(a: AccountState, item: Item): void {
+  a.uniquesSeen ??= [];
+  if (item.uniqueId && !a.uniquesSeen.includes(item.uniqueId)) a.uniquesSeen.push(item.uniqueId);
 }
 
 /** Give an item an account uid if it doesn't have one yet. Call this on everything entering the stash. */
@@ -128,6 +167,9 @@ export function absorbAccount(a: AccountState, from: AccountTransfer): void {
     }
   });
   a.overflow.push(...(from.overflow ?? []).map((item) => claimItem(a, item)));
+  a.uniqueStash.push(...(from.uniqueStash ?? []).map((item) => claimItem(a, item)));
+  a.uniquesSeen = [...new Set([...a.uniquesSeen, ...(from.uniquesSeen ?? [])])];
+  fileUniques(a);
   addPool(a, from);
 }
 
@@ -175,7 +217,7 @@ export function settleCharacter(s: GameState, a: AccountState): boolean {
   if (a.absorbed.includes(s.character.id) || from.id === a.id) return pooled;
   // an auto-craft running on a stashed item follows it to its new uid
   const job = s.action?.kind === 'craft' ? s.action : null;
-  const target = job && [...(from.stash ?? []).flat(), ...(from.overflow ?? [])].find((i) => i.uid === job.uid);
+  const target = job && [...(from.stash ?? []).flat(), ...(from.overflow ?? []), ...(from.uniqueStash ?? [])].find((i) => i.uid === job.uid);
   absorbAccount(a, from);
   if (job && target) job.uid = target.uid;
   a.absorbed.push(s.character.id);
@@ -194,6 +236,10 @@ export function giveKeepsake(s: GameState): boolean {
 export function reconcileAccounts(newer: AccountState, older: AccountState): AccountState {
   mergeUnlocks(newer, older);
   newer.absorbed = [...new Set([...newer.absorbed, ...older.absorbed])];
+  fileUniques(newer);
+  fileUniques(older);
+  newer.uniqueStash = tabOf(newer, older);
+  newer.uniquesSeen = [...new Set([...newer.uniquesSeen, ...older.uniquesSeen])];
   newer.nextUid = Math.max(newer.nextUid, older.nextUid);
   return newer;
 }
@@ -218,8 +264,11 @@ function mergeList<T extends { uid: number }>(a: AccountState, mine: T[], base: 
  * top of their copy, so two characters playing at once both keep what they earn. Changes `mine` in place.
  */
 export function mergeAccounts(mine: AccountState, base: AccountState, theirs: AccountState): void {
+  // all three copies file their uniques the same way first, so a unique isn't read as taken off a page and added twice
+  for (const a of [mine, base, theirs]) fileUniques(a);
   mergeUnlocks(mine, theirs);
   mine.absorbed = [...new Set([...mine.absorbed, ...theirs.absorbed])];
+  mine.uniquesSeen = [...new Set([...mine.uniquesSeen, ...theirs.uniquesSeen])];
   mine.nextUid = Math.max(mine.nextUid, theirs.nextUid);
   const bank: Record<string, number> = { ...theirs.bank };
   for (const id of new Set([...Object.keys(mine.bank), ...Object.keys(base.bank)])) {
@@ -235,6 +284,7 @@ export function mergeAccounts(mine: AccountState, base: AccountState, theirs: Ac
   mine.supportGems = mergeList(mine, mine.supportGems, base.supportGems, theirs.supportGems);
   mine.flaskStash = mergeList(mine, mine.flaskStash, base.flaskStash, theirs.flaskStash);
   mine.overflow = mergeList(mine, mine.overflow, base.overflow, theirs.overflow);
+  mine.uniqueStash = mergeList(mine, mine.uniqueStash, base.uniqueStash, tabOf(theirs, base));
   const pages = Math.max(mine.stash.length, theirs.stash.length);
   mine.stash = Array.from({ length: pages }, (_, i) => mergeList(mine, mine.stash[i] ?? [], base.stash[i] ?? [], theirs.stash[i] ?? []));
 }

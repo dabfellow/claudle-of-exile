@@ -661,6 +661,10 @@ export interface AccountState {
   stash: Item[][];
   /** items that didn't fit when stashes were merged: they can only be taken out */
   overflow: Item[];
+  /** the Uniques tab: every stashed unique, with no limit on room */
+  uniqueStash: Item[];
+  /** every unique id anyone on the account has found, for the Uniques tab's collection */
+  uniquesSeen: string[];
   /** gold, currency and materials */
   bank: Record<string, number>;
   /** skill gems not on any character's bar */
@@ -690,7 +694,7 @@ export interface MarketHold {
 }
 
 /** Account data arriving from elsewhere: a pre-account save, a demo, an import. */
-export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'exileUnlocked' | 'campaignDone'>> & Partial<AccountPool>;
+export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'uniqueStash' | 'uniquesSeen' | 'exileUnlocked' | 'campaignDone'>> & Partial<AccountPool>;
 
 /** The Stash tabs that hold more than gear. */
 export type AccountPool = Pick<AccountState, 'bank' | 'gems' | 'supportGems' | 'flaskStash'>;

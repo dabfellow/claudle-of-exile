@@ -444,6 +444,7 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Uniques tab: copies of the same unique share one spot, which shows the first copy and a count; the next copy appears once that one is taken out. Uniques found before the tab existed only show as found once they're in the stash, bag or worn.
 - No monster deals chaos damage yet, so the Amethyst Flask and the Chaos Hit enchantment do nothing until some do. The character sheet doesn't show Chaos Resistance either.
 - Offline, a Warrior in starting gear dies to the Mud Flats boss on most seeds even at level 40, and about half at level 60 (seen 2026-11-02, same before and after that day's changes). Worth finding out what kills them: an overlevelled character farming Act 1 offline shouldn't die there.
 - Melee characters with spells on their bar lost them in 0.3.7 until they equip a caster weapon; worth a line in the player heads-up.
@@ -516,6 +517,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Uniques tab in the Stash: a fixed spot for every unique, by the act that first drops it, with unlimited room (`account.uniqueStash`); stashed uniques file there by themselves, old ones move off gear pages on load, and unfound ones show greyed with their drop areas (`account.uniquesSeen`). A copy saved by an older version (an old tab or device) can't empty the tab when merged. — done 2026-11-02
 - [x] Retreating to the Hideout (or abandoning a map) refills every flask on the belt. Dying doesn't. — done 2026-11-02
 - [x] New Instilling enchantments: Low Mana (below 30%), Savage Hit (one hit of 20%+ of max Life), Elemental Hit, Chaos Hit. New Amethyst Flask (+35% Chaos Resistance, drops from level 18, brewed at Alchemy 30 in the Ship Graveyard); players gain a `chaosRes` stat for it. — done 2026-11-02
 - [x] Gem shop has Skill gems / Support gems tabs and the Skills page's filters (search, attribute, skill type, Fits my skills); the filters live in `ui/components/GemFilters.tsx`. — done 2026-11-02

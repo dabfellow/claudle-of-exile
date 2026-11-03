@@ -17,10 +17,11 @@ import { GemIcon, GemTip, SupportTip } from '../components/GemView';
 import { Orb, Swatch } from '../components/Icon';
 import { Inventory, ItemTiles, SalvageByRarity, StashSort } from '../components/Inventory';
 import { PaperDoll } from '../components/PaperDoll';
+import { UniqueShelf } from '../components/UniqueShelf';
 import type { Page } from '../Layout';
 import { openItemMenu } from '../components/ItemMenu';
 
-type Tab = 'gear' | 'currency' | 'materials' | 'gems' | 'flasks';
+type Tab = 'gear' | 'uniques' | 'currency' | 'materials' | 'gems' | 'flasks';
 
 /** The currency tab has a fixed place for every orb, like a real stash tab. */
 const CURRENCY_LAYOUT: { label: string; ids: string[] }[] = [
@@ -98,7 +99,8 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
   const [page, setPage] = useState(0);
   const here = Math.min(page, s.account.stash.length - 1);
   const tabs: TabDef<Tab>[] = [
-    { id: 'gear', label: 'Gear', count: stashedItems(s).length },
+    { id: 'gear', label: 'Gear', count: stashedItems(s).length - s.account.uniqueStash.length },
+    { id: 'uniques', label: 'Uniques', count: s.account.uniqueStash.length },
     { id: 'currency', label: 'Currency' },
     { id: 'materials', label: 'Materials' },
     { id: 'gems', label: 'Gems', count: s.account.gems.length + s.account.supportGems.length },
@@ -133,6 +135,10 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
         <StashTab on={tab === 'gear'}>
           <Overflow s={s} />
           <GearPages s={s} page={here} setPage={setPage} />
+        </StashTab>
+
+        <StashTab on={tab === 'uniques'}>
+          <UniqueShelf s={s} />
         </StashTab>
 
         <StashTab on={tab === 'currency'}>

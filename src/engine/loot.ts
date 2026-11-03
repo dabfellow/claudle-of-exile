@@ -5,6 +5,7 @@ import { MAP_ILVL } from '../data/hideout';
 import { RUNE_DROP, RUNES } from '../data/runes';
 import { rollFlask, stashFlask } from './flasks';
 import type { ZoneDef } from '../data/zones';
+import { seeUnique } from './account';
 import { addBank } from './bank';
 import type { Ctx } from './context';
 import { benchBuilt } from './crafting';
@@ -29,7 +30,10 @@ function rollCurrency(rng: Ctx['rng'], table: Record<string, number>): string {
 
 export function placeItem(s: GameState, ctx: Ctx, item: Item): void {
   if (item.rarity === 'rare') s.lifetime.raresFound += 1;
-  if (item.rarity === 'unique') s.lifetime.uniquesFound += 1;
+  if (item.rarity === 'unique') {
+    s.lifetime.uniquesFound += 1;
+    seeUnique(s.account, item);
+  }
   if (item.rarity !== 'unique' && s.settings.autoSalvage[item.rarity] && benchBuilt(s)) {
     addBank(s, 'arcane_dust', salvageValue(item));
     s.lifetime.salvaged += 1;

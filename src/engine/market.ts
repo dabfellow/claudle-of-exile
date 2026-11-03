@@ -1,5 +1,6 @@
 import { uniqueDef } from '../data/bases';
 import { STASH_PAGE_SIZE } from '../data/hideout';
+import { seeUnique } from './account';
 import { addBank } from './bank';
 import { takeOwned } from './storage';
 import type { GameState, Item, MarketHold } from './types';
@@ -53,11 +54,14 @@ export function holdPayment(s: GameState, op: string, currency: string, amount: 
   return null;
 }
 
-/** Put an item in the first stash page with room, or the overflow, so a market item is never lost to a full stash. */
+/** Put an item in the Uniques tab, or the first stash page with room, or the overflow, so a market item is never lost to a full stash. */
 function shelve(s: GameState, item: Item): void {
   const a = s.account;
   item.uid = a.nextUid++;
-  (a.stash.find((p) => p.length < STASH_PAGE_SIZE) ?? a.overflow).push(item);
+  if (item.rarity === 'unique') {
+    a.uniqueStash.push(item);
+    seeUnique(a, item);
+  } else (a.stash.find((p) => p.length < STASH_PAGE_SIZE) ?? a.overflow).push(item);
 }
 
 /** The server answered. A step it refused gives back what was held. */

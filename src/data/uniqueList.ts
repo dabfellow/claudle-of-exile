@@ -11,11 +11,16 @@ export const UNIQUE_LIST_PATH = 'docs/UNIQUES.md';
 
 const modLines = (u: UniqueDef) => u.mods.map((m) => describeMod({ affixId: m.affixId, tier: -1, values: m.values }));
 
-function row(u: UniqueDef): string {
-  const base = baseDef(u.baseId);
+/** Every place a unique drops: its areas, then its Maps. */
+export function uniqueDropsIn(u: UniqueDef): string[] {
   const zones = ZONES.filter((z) => z.uniques.includes(u.id)).map((z) => `${z.name} (Act ${z.act})`);
   const maps = MAP_THEMES.filter((t) => t.drop.kind === 'unique' && t.drop.uniqueId === u.id).map((t) => `${t.name} (Map)`);
-  const cells = [`**${u.name}**<br>*${u.flavour}*`, base.slot, `${base.name} (${base.reqLevel})`, modLines(u).join('<br>'), [...zones, ...maps].join(', ') || '—'];
+  return [...zones, ...maps];
+}
+
+function row(u: UniqueDef): string {
+  const base = baseDef(u.baseId);
+  const cells = [`**${u.name}**<br>*${u.flavour}*`, base.slot, `${base.name} (${base.reqLevel})`, modLines(u).join('<br>'), uniqueDropsIn(u).join(', ') || '—'];
   return `| ${cells.map((c) => c.replace(/\|/g, '\\|')).join(' | ')} |`;
 }
 
@@ -24,22 +29,25 @@ function table(uniques: UniqueDef[]): string[] {
 }
 
 /** Each unique's first act, by the zones that drop it; undefined if no zone does. */
-function firstAct(u: UniqueDef): number | undefined {
+export function firstAct(u: UniqueDef): number | undefined {
   const acts = ZONES.filter((z) => z.uniques.includes(u.id)).map((z) => z.act);
   return acts.length ? Math.min(...acts) : undefined;
 }
 
-export function renderUniqueList(): string {
+/** Every unique under the first act that drops it, in level order, then the Maps-only ones and those with no source. */
+export function uniqueSections(): [string, UniqueDef[]][] {
   const byLevel = (a: UniqueDef, b: UniqueDef) => baseDef(a.baseId).reqLevel - baseDef(b.baseId).reqLevel || a.name.localeCompare(b.name);
   const sorted = [...UNIQUES].sort(byLevel);
   const fromMaps = (u: UniqueDef) => MAP_THEMES.some((t) => t.drop.kind === 'unique' && t.drop.uniqueId === u.id);
-
-  const sections: [string, UniqueDef[]][] = [
+  return [
     ...ACTS.map((a): [string, UniqueDef[]] => [`Act ${a.n}: ${a.name}`, sorted.filter((u) => firstAct(u) === a.n)]),
     ['Maps only', sorted.filter((u) => firstAct(u) === undefined && fromMaps(u))],
     ['No drop source yet', sorted.filter((u) => firstAct(u) === undefined && !fromMaps(u))],
   ];
+}
 
+export function renderUniqueList(): string {
+  const sections = uniqueSections();
   const lines = [
     '# Unique items',
     '',
