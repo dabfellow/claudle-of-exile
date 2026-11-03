@@ -516,6 +516,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Retreating to the Hideout (or abandoning a map) refills every flask on the belt. Dying doesn't. — done 2026-11-02
 - [x] New Instilling enchantments: Low Mana (below 30%), Savage Hit (one hit of 20%+ of max Life), Elemental Hit, Chaos Hit. New Amethyst Flask (+35% Chaos Resistance, drops from level 18, brewed at Alchemy 30 in the Ship Graveyard); players gain a `chaosRes` stat for it. — done 2026-11-02
 - [x] Gem shop has Skill gems / Support gems tabs and the Skills page's filters (search, attribute, skill type, Fits my skills); the filters live in `ui/components/GemFilters.tsx`. — done 2026-11-02
 - [x] Monsters and bosses no longer drop skill or support gems; the Gem shop is the source. The Stash's Gems tab has a Clear all Lv 1 button (skips gems with Expansion sockets or in a saved skill set, and returns socketed supports). — done 2026-11-02

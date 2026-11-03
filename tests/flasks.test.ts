@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeCtx } from '../src/engine/context';
-import { combatStep, startCombat, useFlask, wearFlask } from '../src/engine/combat';
+import { combatStep, retreat, startCombat, useFlask, wearFlask } from '../src/engine/combat';
 import { deriveStats } from '../src/engine/stats';
 import { applyFlaskOrb, enchantFlask, FLASK_STASH_CAP, flaskName, flaskStats, newFlask, rollFlask, stashFlask } from '../src/engine/flasks';
 import { rerollCost, rerollVendor } from '../src/engine/hideout';
@@ -122,6 +122,18 @@ describe('flask items', () => {
     s.mana = 0;
     combatStep(s, c, 50, d);
     expect(f.charges).toBe(18);
+  });
+
+  it('retreating to the hideout refills every flask', () => {
+    const s = newGame(1);
+    const c = ctx();
+    startCombat(s, c, 'mudflats');
+    s.flaskSlots[0]!.charges = 0;
+    s.flaskSlots[1]!.charges = 3;
+    retreat(s);
+    expect(s.combat).toBeNull();
+    expect(s.flaskSlots[0]!.charges).toBe(21);
+    expect(s.flaskSlots[1]!.charges).toBe(24);
   });
 
   it('Amethyst Flask grants Chaos Resistance while active', () => {

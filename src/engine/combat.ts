@@ -285,10 +285,16 @@ function keepMalice(s: GameState): void {
   if (s.combat && hasAscNode(s, 'headsman_next')) s.ascendancy.carry = s.combat.mech;
 }
 
-export function retreat(s: GameState): void {
+function leaveCombat(s: GameState): void {
   keepMalice(s);
   s.combat = null;
   s.action = null;
+}
+
+/** Walking back to the hideout refills every flask on the belt. Dying doesn't. */
+export function retreat(s: GameState): void {
+  leaveCombat(s);
+  for (const f of s.flaskSlots) if (f) f.charges = flaskCapacity(s, f);
 }
 
 /** Picking a pace by hand also takes back control from auto-flee. */
@@ -2050,7 +2056,7 @@ function die(s: GameState, ctx: Ctx, d: Derived): void {
     s.fallen = { zoneId: s.combat?.zoneId ?? null, offline: !!ctx.offline };
     s.greenhouse = null;
     ctx.emit({ t: 'death', xpLost: 0 });
-    retreat(s);
+    leaveCombat(s);
     return;
   }
   // losing to a boss sends it back into hiding so the zone can be farmed again
@@ -2062,7 +2068,7 @@ function die(s: GameState, ctx: Ctx, d: Derived): void {
   const lost = groundOnDeath(s);
   if (!ctx.offline && lost) ctx.emit({ t: 'info', text: `${lost} unclaimed ${lost === 1 ? 'item' : 'items'} lost on the ground`, tone: 'warn' });
   else if (!ctx.offline && groundAtRisk(s)) ctx.emit({ t: 'info', text: 'Pick up your loot: die again and it is lost', tone: 'warn' });
-  retreat(s);
+  leaveCombat(s);
 }
 
 // ---------- incoming damage ----------
