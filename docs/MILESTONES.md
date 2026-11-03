@@ -11,7 +11,7 @@ Last updated 2026-11-02.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.16 (deployed 2026-11-02: the Stash's Uniques tab; 0.3.15 the same day made retreating to the Hideout refill flasks, and 0.3.14 brought Low Mana, Savage Hit, Elemental Hit and Chaos Hit flask enchantments and the Amethyst Flask; 0.3.13 the same day made the Gem shop a fixed shelf of every gem from the areas you've opened; 0.3.12 brought Instilling Orbs from Act 4, no gem drops, Clear all Lv 1 gems and Gem shop tabs and filters), with the rebuilt player wiki, The Exile's Codex, at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.17 (deployed 2026-11-02: the Exile's centre start, with other classes' starts no longer blocking an Exile; 0.3.16 the same day brought the Stash's Uniques tab; 0.3.15 the same day made retreating to the Hideout refill flasks, and 0.3.14 brought Low Mana, Savage Hit, Elemental Hit and Chaos Hit flask enchantments and the Amethyst Flask; 0.3.13 the same day made the Gem shop a fixed shelf of every gem from the areas you've opened; 0.3.12 brought Instilling Orbs from Act 4, no gem drops, Clear all Lv 1 gems and Gem shop tabs and filters), with the rebuilt player wiki, The Exile's Codex, at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -517,7 +517,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
-- [x] Exile centre start: an Exile can start at a new node in the middle of the Crossing (`EXILE_START`, the default pick, with the Rusted Sword and Warrior gems), and can take other classes' start nodes like any other node to path into their areas. Every other class is still blocked by them, the centre one included. Not yet released. — done 2026-11-02
+- [x] Exile centre start: an Exile can start at a new node in the middle of the Crossing (`EXILE_START`, the default pick, with the Rusted Sword and Warrior gems), and can take other classes' start nodes like any other node to path into their areas. Every other class is still blocked by them, the centre one included. 0.3.17 — done 2026-11-02
 - [x] Uniques tab in the Stash: a fixed spot for every unique, by the act that first drops it, with unlimited room (`account.uniqueStash`); stashed uniques file there by themselves, old ones move off gear pages on load, and unfound ones show greyed with their drop areas (`account.uniquesSeen`). A copy saved by an older version (an old tab or device) can't empty the tab when merged. — done 2026-11-02
 - [x] Retreating to the Hideout (or abandoning a map) refills every flask on the belt. Dying doesn't. — done 2026-11-02
 - [x] New Instilling enchantments: Low Mana (below 30%), Savage Hit (one hit of 20%+ of max Life), Elemental Hit, Chaos Hit. New Amethyst Flask (+35% Chaos Resistance, drops from level 18, brewed at Alchemy 30 in the Ship Graveyard); players gain a `chaosRes` stat for it. — done 2026-11-02
