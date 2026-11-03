@@ -10,12 +10,18 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'New Instilling Orb enchantments: Low Mana, Savage Hit (a hit of 20% or more of your Life), Elemental Hit and Chaos Hit.',
-  'New Amethyst Flask: +35% to Chaos Resistance for 4.5s. Drops from level 18 monsters, and Alchemy can brew it at level 30.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.3.14',
+    date: '2 Nov 2026',
+    title: 'Flask enchantments and Amethyst Flask',
+    items: [
+      'New Instilling Orb enchantments: Low Mana, Savage Hit (a hit of 20% or more of your Life), Elemental Hit and Chaos Hit.',
+      'New Amethyst Flask: +35% to Chaos Resistance for 4.5s. Drops from level 18 monsters, and Alchemy can brew it at level 30.',
+    ],
+  },
   {
     version: '0.3.13',
     date: '2 Nov 2026',
