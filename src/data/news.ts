@@ -10,14 +10,20 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Instilling Orbs now drop only from Act 4 on, starting in the Hollow Pass.',
-  "Monsters no longer drop skill or support gems. The Gem shop sells every gem you've unlocked.",
-  'The Gems tab in the Stash has a Clear all Lv 1 button for spare level 1 skill gems.',
-  'The Gem shop has Skill gems and Support gems tabs, with search, attribute and skill-type filters like the Skills page.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.3.12',
+    date: '2 Nov 2026',
+    title: 'Gem shop and drops',
+    items: [
+      'Instilling Orbs now drop only from Act 4 on, starting in the Hollow Pass.',
+      'Monsters no longer drop skill or support gems. Buy them at the Gem shop.',
+      'The Gems tab in the Stash has a Clear all Lv 1 button for spare level 1 skill gems.',
+      'The Gem shop has Skill gems and Support gems tabs, with search, attribute and skill-type filters like the Skills page.',
+    ],
+  },
   {
     version: '0.3.11',
     date: '2 Nov 2026',
