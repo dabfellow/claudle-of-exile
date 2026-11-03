@@ -1,5 +1,5 @@
 import { BASES, obtainable, type BaseDef } from '../data/bases';
-import { ACTIVE_GEMS, activeGemDef, gemAct, gemReqLevel, SUPPORT_GEMS, supportGemDef } from '../data/gems';
+import { ACTIVE_GEMS, activeGemDef, gemReqLevel, SUPPORT_GEMS, supportGemDef } from '../data/gems';
 import {
   ALCH_DOUBLE,
   AUTO_CRAFT_BENCH_LEVEL,
@@ -17,7 +17,7 @@ import {
 } from '../data/hideout';
 import type { RuleUnlock } from '../data/gems';
 import { currencyDef } from '../data/materials';
-import { actBossZone, actOpen } from '../data/zones';
+import { actBossZone, actOpen, ZONES, type ZoneDef } from '../data/zones';
 import { grantUnlocks } from './automation';
 import { addBank, canAfford, payCost } from './bank';
 import { hideoutCost, recipeUnlocked } from './challenge';
@@ -25,8 +25,8 @@ import type { Ctx } from './context';
 import { flaskName, flaskValue, rollFlask, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { addRandomMod, createItem, itemName, modCount, sellValue } from './items';
-import { gemArrived, reachedAct } from './progress';
-import { pick, pickWeighted, rInt, type Rng } from './rng';
+import { gemInShop, gemShopZone } from './progress';
+import { pick, rInt, type Rng } from './rng';
 import type { GameState, Item, Rarity, VendorOffer } from './types';
 import { characterLevel } from './character';
 import { bagFull, takeOwned } from './storage';
@@ -34,9 +34,6 @@ import { bagFull, takeOwned } from './storage';
 export function stationLevel(s: GameState, id: StationId): number {
   return s.account.hideout[id] ?? 1;
 }
-
-/** How much likelier the Gem shop is to stock a gem from your furthest act than one from an earlier act. */
-const NEW_BATCH_STOCK = 3;
 
 /** Maps come after the campaign, PoE-style: the Map Device wakes once the last act's boss is beaten. */
 export const FINAL_ACT = 6;
@@ -190,23 +187,55 @@ export function refreshVendor(s: GameState, rng: Rng): void {
     const item = shopItem(s, rng, lvl, usable.filter((b) => !magicBase(b)), ilvl)!;
     add({ shop: 'armour', kind: 'item', item, price: shopItemPrice(item) });
   }
-  // Gem shop: skill and support gems that have arrived and you're high enough level to use; signatures from
-  // Town Market level 2. Your furthest act stocks heavier, so a new batch shows up instead of drowning in the old pool
-  const findable = (id: string) => gemReqLevel(id) <= charLvl && gemArrived(s, id);
-  const skills = ACTIVE_GEMS.filter((g) => findable(g.id));
-  const supports = SUPPORT_GEMS.filter((g) => findable(g.id) && (!g.signatureFor || lvl >= 2));
-  const fresh = reachedAct(s);
-  const stockWeight = (g: { id: string }) => (gemAct(g.id) === fresh ? NEW_BATCH_STOCK : 1);
-  for (let i = 0; i < slots; i++) {
-    if (rng.next() < 0.55 || !supports.length) {
-      const g = pickWeighted(rng, skills, stockWeight)!;
-      add({ shop: 'gems', kind: 'gem', gemId: g.id, price: 150 + gemReqLevel(g.id) * 60 });
-    } else {
-      const g = pickWeighted(rng, supports, stockWeight)!;
-      add({ shop: 'gems', kind: 'support', supportId: g.id, price: (g.signatureFor ? 400 : 100) + gemReqLevel(g.id) * 50 });
+  // the Gem shop keeps a fixed shelf (gemShopOffers), so it never takes a restock slot
+  s.vendor = { stock, refreshAt: s.clock + SHOP_REFRESH_MIN[lvl - 1] * 60_000 };
+}
+
+/**
+ * The Gem shop's shelf: every skill and support gem whose area you've opened, never selling out, so each area
+ * pushed puts a few more gems on it. Signature supports wait for Town Market level 2.
+ */
+export function gemShopOffers(s: GameState): VendorOffer[] {
+  const market = stationLevel(s, 'vendor');
+  const offers: VendorOffer[] = [];
+  for (const g of ACTIVE_GEMS) {
+    if (gemInShop(s, g.id)) offers.push({ id: offers.length + 1, shop: 'gems', kind: 'gem', gemId: g.id, price: 150 + gemReqLevel(g.id) * 60 });
+  }
+  for (const g of SUPPORT_GEMS) {
+    if (gemInShop(s, g.id) && (!g.signatureFor || market >= 2)) {
+      offers.push({ id: offers.length + 1, shop: 'gems', kind: 'support', supportId: g.id, price: (g.signatureFor ? 400 : 100) + gemReqLevel(g.id) * 50 });
     }
   }
-  s.vendor = { stock, refreshAt: s.clock + SHOP_REFRESH_MIN[lvl - 1] * 60_000 };
+  return offers.sort((a, b) => gemReqLevel(a.gemId ?? a.supportId!) - gemReqLevel(b.gemId ?? b.supportId!));
+}
+
+/** How many gems go on the Gem shop's shelf when this area opens. */
+export function gemsArrivingAt(s: GameState, zoneId: string): number {
+  const market = stationLevel(s, 'vendor');
+  return ACTIVE_GEMS.filter((g) => gemShopZone(g.id)?.id === zoneId).length + SUPPORT_GEMS.filter((g) => gemShopZone(g.id)?.id === zoneId && (!g.signatureFor || market >= 2)).length;
+}
+
+/** The next area still to open that puts gems in the Gem shop, and how many. */
+export function nextGemShopArea(s: GameState): { zone: ZoneDef; count: number } | null {
+  for (const z of ZONES) {
+    if (s.unlockedZones.includes(z.id) || !actOpen(z.act)) continue;
+    const count = gemsArrivingAt(s, z.id);
+    if (count) return { zone: z, count };
+  }
+  return null;
+}
+
+/** Buy a gem off the Gem shop's shelf; the shelf never sells out. */
+export function buyGem(s: GameState, ctx: Ctx, gemId: string): string | null {
+  const offer = gemShopOffers(s).find((o) => (o.gemId ?? o.supportId) === gemId);
+  if (!offer) return 'Not on sale';
+  if (gemReqLevel(gemId) > characterLevel(s)) return `Needs level ${gemReqLevel(gemId)}`;
+  if (!canAfford(s, { gold: offer.price })) return 'Not enough gold';
+  payCost(s, { gold: offer.price });
+  if (offer.gemId) s.account.gems.push(createSkillGem(s, offer.gemId));
+  else s.account.supportGems.push(createSupportGem(s, offer.supportId!));
+  ctx.emit({ t: 'info', text: `Bought ${offerName(offer)}`, tone: 'good' });
+  return null;
 }
 
 /** Gold to restock every shop early; doubles with each paid restock until the next free one. */

@@ -341,14 +341,13 @@ describe('hideout', () => {
 });
 
 describe('town and gems', () => {
-  it('stocks three shops with level-appropriate wares, priced well above their worth', () => {
+  it('stocks the two gear shops with level-appropriate wares, priced well above their worth', () => {
     const s = newGame(1);
     s.skills.combat = charXpForLevel(8);
     refreshVendor(s, seeded(3));
-    for (const shop of ['magic', 'armour', 'gems'] as const) expect(s.vendor.stock.filter((o) => o.shop === shop)).toHaveLength(4);
+    for (const shop of ['magic', 'armour'] as const) expect(s.vendor.stock.filter((o) => o.shop === shop)).toHaveLength(4);
+    expect(s.vendor.stock.some((o) => o.shop === 'gems')).toBe(false);
     for (const o of s.vendor.stock) {
-      if (o.gemId) expect(gemReqLevel(o.gemId)).toBeLessThanOrEqual(8);
-      if (o.supportId) expect(gemReqLevel(o.supportId)).toBeLessThanOrEqual(8);
       if (o.item) {
         expect(o.item.rarity === 'magic' || o.item.rarity === 'rare').toBe(true);
         expect(o.price).toBeGreaterThan(sellValue(o.item) * 4);

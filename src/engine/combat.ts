@@ -163,7 +163,8 @@ import {
   surgeReady,
 } from './mechanics';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
-import { openReachedZones, reachedAct } from './progress';
+import { gemsArrivingAt } from './hideout';
+import { openReachedZones } from './progress';
 import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, Minion, MonsterInstance, Movement, Storm, TargetPriority, Targeting } from './types';
 
 export const SPAWN_DELAY_MS = 900;
@@ -2002,13 +2003,13 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
       if (zone.actBoss) ctx.emit({ t: 'actComplete', act: zone.act });
       onBossFirstKill(s, ctx, zone.id);
     }
-    const act = reachedAct(s);
-    for (const next of openReachedZones(s)) ctx.emit({ t: 'zoneUnlocked', zoneId: next.id });
-    // a new act's batch goes on sale straight away
-    if (reachedAct(s) > act) {
-      s.vendor.refreshAt = 0;
-      ctx.emit({ t: 'info', text: `New gems from Act ${reachedAct(s)} have reached the Town's Gem shop.`, tone: 'good' });
+    // each area opened can put a few more gems on the Gem shop's shelf
+    let gems = 0;
+    for (const next of openReachedZones(s)) {
+      ctx.emit({ t: 'zoneUnlocked', zoneId: next.id });
+      gems += gemsArrivingAt(s, next.id);
     }
+    if (gems) ctx.emit({ t: 'info', text: `${gems} new gem${gems === 1 ? '' : 's'} in the Town's Gem shop.`, tone: 'good' });
   } else if (!c.monsters.some((m) => m.isBoss)) {
     // adds in a boss fight don't count toward the next boss
     s.zoneKills[zone.id] = (s.zoneKills[zone.id] ?? 0) + 1;

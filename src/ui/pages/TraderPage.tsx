@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { activeGemDef, supportGemDef, type GemAttr } from '../../data/gems';
+import { activeGemDef, gemReqLevel, supportGemDef, type GemAttr } from '../../data/gems';
 import { supportReason } from '../../engine/gems';
 import { GemFilters, GemKindChips, kindMatches, nameHas, type GemKind } from '../components/GemFilters';
 import { currencyDef, MATERIALS } from '../../data/materials';
+import { characterLevel } from '../../engine/character';
 import { flaskName, flaskValue, sellFlasks } from '../../engine/flasks';
-import { buyOffer, offerName, rerollCost, rerollVendor, sellItems, sellMaterial, stationLevel } from '../../engine/hideout';
+import { buyGem, buyOffer, gemShopOffers, nextGemShopArea, offerName, rerollCost, rerollVendor, sellItems, sellMaterial, stationLevel } from '../../engine/hideout';
 import { sellValue } from '../../engine/items';
 import type { GameState, Rarity, ShopId, VendorOffer } from '../../engine/types';
 import { baseDef } from '../../data/bases';
@@ -49,7 +50,7 @@ const SHOPS: { id: ShopId; name: string; keeper: string; blurb: string; portrait
     id: 'gems',
     name: 'Gem shop',
     keeper: 'The Gemwright',
-    blurb: "Skill and support gems, as many as your level allows. Monsters don't drop gems, so this is where they come from.",
+    blurb: 'Every skill and support gem from the areas you’ve opened, and it never sells out. Each new area brings a few more.',
     icon: 'gemcutting',
     shelves: [
       { label: 'Skill gems', match: (o) => o.kind === 'gem' },
@@ -114,6 +115,8 @@ function nameClass(o: VendorOffer): string {
 function OfferCard({ s, o, gold }: { s: GameState; o: VendorOffer; gold: number }) {
   const afford = gold >= o.price;
   const full = o.kind === 'item' && bagFull(s);
+  const gem = o.gemId ?? o.supportId;
+  const needLevel = gem && gemReqLevel(gem) > characterLevel(s) ? gemReqLevel(gem) : 0;
   return (
     <Tooltip content={offerTip(s, o)}>
       <div className={`offer-card ${rarityClass(o)} ${afford ? '' : 'poor'}`}>
@@ -128,34 +131,54 @@ function OfferCard({ s, o, gold }: { s: GameState; o: VendorOffer; gold: number 
           <MatIcon id="gold" size={14} /> {fmt(o.price)}
         </span>
         <button
-          className={`btn sm ${afford && !full ? 'primary' : ''}`}
-          disabled={!afford || full}
-          title={full ? 'Inventory full' : afford ? '' : 'Not enough gold'}
-          onClick={() => game.act((st, ctx) => buyOffer(st, ctx, o.id))}
+          className={`btn sm ${afford && !full && !needLevel ? 'primary' : ''}`}
+          disabled={!afford || full || !!needLevel}
+          title={needLevel ? `Needs character level ${needLevel}` : full ? 'Inventory full' : afford ? '' : 'Not enough gold'}
+          onClick={() => game.act((st, ctx) => (gem ? buyGem(st, ctx, gem) : buyOffer(st, ctx, o.id)))}
         >
-          {full ? 'Bag full' : afford ? 'Buy' : 'Too costly'}
+          {needLevel ? `Level ${needLevel}` : full ? 'Bag full' : afford ? 'Buy' : 'Too costly'}
         </button>
       </div>
     </Tooltip>
   );
 }
 
+/** The Gem shop's shelf is fixed; the other two sell from the restocking stock. */
+function shopWares(s: GameState, shop: ShopId): VendorOffer[] {
+  return shop === 'gems' ? gemShopOffers(s) : s.vendor.stock.filter((o) => o.shop === shop);
+}
+
 function ShopTab({ s, shop }: { s: GameState; shop: (typeof SHOPS)[number] }) {
   const gold = s.account.bank.gold ?? 0;
   const cost = rerollCost(s);
-  const wares = s.vendor.stock.filter((o) => o.shop === shop.id);
+  const wares = shopWares(s, shop.id);
+  const next = shop.id === 'gems' ? nextGemShopArea(s) : null;
   return (
     <>
-      <div className="shop-bar">
-        <span className="muted small">
-          New stock in <b className="num">{fmtTime(Math.max(0, s.vendor.refreshAt - s.clock))}</b>
-        </span>
-        <span className="spacer" />
-        <button className="btn sm" disabled={gold < cost} onClick={() => game.act((st, ctx) => rerollVendor(st, ctx))}>
-          <GameIcon name="clock" size={12} /> Restock every shop · {fmt(cost)} gold
-        </button>
-        {(s.vendor.rerolls ?? 0) > 0 && <span className="dim small">Price doubles each restock until the next free one</span>}
-      </div>
+      {shop.id === 'gems' ? (
+        <div className="shop-bar">
+          <span className="muted small">
+            {next ? (
+              <>
+                <b className="num">{next.count}</b> more gem{next.count === 1 ? '' : 's'} arrive when {next.zone.name} opens
+              </>
+            ) : (
+              'Every gem from the open acts is on the shelf.'
+            )}
+          </span>
+        </div>
+      ) : (
+        <div className="shop-bar">
+          <span className="muted small">
+            New stock in <b className="num">{fmtTime(Math.max(0, s.vendor.refreshAt - s.clock))}</b>
+          </span>
+          <span className="spacer" />
+          <button className="btn sm" disabled={gold < cost} onClick={() => game.act((st, ctx) => rerollVendor(st, ctx))}>
+            <GameIcon name="clock" size={12} /> Restock gear shops · {fmt(cost)} gold
+          </button>
+          {(s.vendor.rerolls ?? 0) > 0 && <span className="dim small">Price doubles each restock until the next free one</span>}
+        </div>
+      )}
       {wares.length === 0 ? (
         <div className="card">
           <EmptyState icon={<PixelArt name="stall" alt="" scale={2} />} title="Sold out">
@@ -408,12 +431,12 @@ export function TraderPage() {
         value={tab}
         onChange={setTab}
         tabs={[
-          ...SHOPS.map((x) => ({ id: x.id, label: x.name, count: s.vendor.stock.filter((o) => o.shop === x.id).length })),
+          ...SHOPS.map((x) => ({ id: x.id, label: x.name, count: shopWares(s, x.id).length })),
           { id: 'sell' as const, label: 'Sell', count: s.inventory.length },
         ]}
       />
       {shop ? <ShopTab s={s} shop={shop} /> : <SellTab s={s} />}
-      <div className="dim small">Prices in gold. Upgrade the Town Market in your Hideout for more stock in every shop and faster restocks.</div>
+      <div className="dim small">Prices in gold. Upgrade the Town Market in your Hideout for more stock and faster restocks in the gear shops, and signature supports in the Gem shop.</div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { gemAct } from '../data/gems';
+import { ACTIVE_GEMS, gemAct, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
 import { actOpen, bossesNeeded, roadsInto, ZONES, type ZoneDef } from '../data/zones';
 import type { GameState } from './types';
 
@@ -10,6 +10,38 @@ export function reachedAct(s: GameState): number {
 /** Whether a gem can turn up for this character yet: drops, cuts and the Gem shop all ask this. */
 export function gemArrived(s: GameState, gemId: string): boolean {
   return gemAct(gemId) <= reachedAct(s);
+}
+
+let shopZones: Map<string, ZoneDef> | undefined;
+
+/**
+ * The area whose opening puts a gem on the Gem shop's shelf. Each act's gems spread over the first half of its
+ * areas in level order, and never before the area at the gem's own level, so the shelf grows as you push through.
+ */
+export function gemShopZone(gemId: string): ZoneDef | undefined {
+  if (!shopZones) {
+    shopZones = new Map();
+    const ids = [...ACTIVE_GEMS, ...SUPPORT_GEMS].map((g) => g.id);
+    for (const act of new Set(ZONES.map((z) => z.act))) {
+      const zones = ZONES.filter((z) => z.act === act);
+      const gems = ids.filter((id) => gemAct(id) === act);
+      const levels = [...new Set(gems.map(gemReqLevel))].sort((a, b) => a - b);
+      const spread = Math.ceil(zones.length / 2);
+      for (const id of gems) {
+        const lvl = gemReqLevel(id);
+        const rank = Math.floor((levels.indexOf(lvl) * spread) / levels.length);
+        const fit = zones.findIndex((z) => z.levelRange[1] >= lvl);
+        shopZones.set(id, zones[Math.max(rank, fit < 0 ? zones.length - 1 : fit)]);
+      }
+    }
+  }
+  return shopZones.get(gemId);
+}
+
+/** Whether the Gem shop sells this gem yet: its area is open. */
+export function gemInShop(s: GameState, gemId: string): boolean {
+  const z = gemShopZone(gemId);
+  return !!z && s.unlockedZones.includes(z.id);
 }
 
 /** Bosses beaten in one act. */

@@ -25,15 +25,15 @@ Your walkthrough, 2026-10-26. The Hideout is home: the first page you land on, w
 - Further down: the station ledger (level, now, next, cost as have/need, Upgrade), then skill dials.
 
 ### Town (replaces the Trader's Stall page)
-Three shops share one restock timer and one paid "restock now". They sell **decent crafted gear at high prices**: an obvious way to gear up for people who don't want to grind, never the best way.
+The two gear shops share one restock timer and one paid "restock now"; the Gem shop has a fixed shelf. They sell **decent crafted gear at high prices**: an obvious way to gear up for people who don't want to grind, never the best way.
 
 | Shop | Sells |
 |---|---|
 | Magic shop | Wands, staves and other caster weapons; rings, amulets, belts; flasks; currency orbs |
 | Weapon & Armour shop | Other weapons (swords, axes, daggers, bows, maces), shields, and armour |
-| Gem shop | Skill and support gems up to your level (gems are rare drops now) |
+| Gem shop | Every skill and support gem from the areas you've opened, never selling out (monsters don't drop gems) |
 
-The **Town Market** station (was Trader's Stall) gives every shop more stock and faster restocks.
+The **Town Market** station (was Trader's Stall) gives the gear shops more stock and faster restocks, and from level 2 puts signature supports in the Gem shop.
 
 ### Station upgrades
 Upgrades unlock tiers. Gathering skills stay level-gated only.
@@ -51,7 +51,8 @@ Costs are steep: tens of minutes of gathering for the first upgrade, hours for t
 
 ### Gems
 - Monsters don't drop gems (since 2026-11-02); the Gem shop is the source, with a few from Gemcutting.
-- Every skill and support gem has a character level requirement, so strong skills and supports come later. Gemcutting and the shop only offer gems you're allowed to use.
+- Every skill and support gem has a character level requirement, so strong skills and supports come later. Gemcutting only offers gems you're allowed to use.
+- The Gem shop's shelf grows area by area (`gemShopZone` in engine/progress.ts): each act's gems spread over the first half of its areas in level order, never before the area at the gem's own level, so a few go on sale with each area opened. Gems above your level show with their level but can't be bought yet.
 
 
 ## Stash, inventory and equipment

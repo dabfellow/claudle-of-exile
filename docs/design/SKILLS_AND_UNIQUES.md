@@ -8,7 +8,7 @@ Build-defining uniques are planned for the long tail.
 **Status (2026-10-31): built.** Each gem belongs to an act (`GEM_ACTS` in `data/gems.ts`; a signature follows its skill).
 It can't drop, be cut or be sold until the character has an area open in that act, and character level still applies on
 top. The act only decides what can turn up: nothing about a gem you own checks it, so old characters keep everything and
-no save migration was needed. The Gem shop stocks your furthest act's gems at 3× weight and restocks when you reach a new act.
+no save migration was needed. The Gem shop sells every gem whose area you've opened, a few more with each area (see [TOWN.md](TOWN.md) → Gems).
 
 | Act | Skills | Supports |
 |---|---|---|

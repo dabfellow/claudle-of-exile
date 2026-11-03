@@ -82,7 +82,7 @@ export const STATIONS: StationDef[] = [
   },
   {
     id: 'vendor', name: 'Town Market', page: 'vendor', color: '#6fae4a',
-    desc: 'Your standing with the town merchants. Upgrades bring more stock to every shop, restocked faster.',
+    desc: 'Your standing with the town merchants. Upgrades bring more stock to the gear shops, restocked faster.',
     levels: [
       { cost: {}, effect: '4 wares per shop, restock every 10 min' },
       { cost: { gold: 5000, oak_log: 100 }, effect: '5 per shop, every 8 min, rare gear' },

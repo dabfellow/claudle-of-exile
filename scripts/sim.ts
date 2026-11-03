@@ -29,7 +29,7 @@ import { equip, equipReason, slotsFor } from '../src/engine/equipment';
 import { chainFalloff, createSkillGem, createSupportGem, gemChains, gemUseReason, gemXpForLevel, placeOnBar, removeFromBar, skillNumbers, skillSummary, socketSupport, supportReason, syncSockets, unsocketSupport, type SkillNumbers } from '../src/engine/gems';
 import { flaskDef } from '../src/data/flasks';
 import { enchantFlask, flaskStats } from '../src/engine/flasks';
-import { buyOffer, nextUpgradeCost, rerollCost, rerollVendor, sellItems, stationLevel, upgradeStation } from '../src/engine/hideout';
+import { buyGem, buyOffer, gemShopOffers, nextUpgradeCost, rerollCost, rerollVendor, sellItems, stationLevel, upgradeStation } from '../src/engine/hideout';
 import { simulateOffline } from '../src/engine/offline';
 import { pickUp } from '../src/engine/storage';
 import { allocate, allocateReason } from '../src/engine/passives';
@@ -175,9 +175,9 @@ function shop(s: GameState, ctx: Ctx) {
   const spare = () => (s.account.bank.gold ?? 0) - (nextUpgrade(s)?.cost.gold ?? 0);
   const owned = new Set([...s.skillBar, ...s.account.gems].filter(Boolean).map((g) => g!.gemId));
   const ownedSupports = new Set(s.account.supportGems.map((g) => g.supportId));
-  for (const offer of [...s.vendor.stock]) {
+  for (const offer of gemShopOffers(s)) {
     const newGem = (offer.gemId && !owned.has(offer.gemId)) || (offer.supportId && !ownedSupports.has(offer.supportId));
-    if (newGem && offer.price * 2 <= (s.account.bank.gold ?? 0) && !buyOffer(s, ctx, offer.id)) bought = true;
+    if (newGem && offer.price * 2 <= (s.account.bank.gold ?? 0) && !buyGem(s, ctx, (offer.gemId ?? offer.supportId)!)) bought = true;
   }
   for (const offer of [...s.vendor.stock]) {
     if (offer.kind !== 'item' || !offer.item || offer.price > spare() || equipReason(s, offer.item) || offWeapon(s, offer.item)) continue;

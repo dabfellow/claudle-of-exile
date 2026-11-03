@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { ACTIVE_GEMS, SUPPORT_GEMS, activeGemDef, gemAct, gemReqLevel, supportGemDef } from '../src/data/gems';
-import { zoneDef } from '../src/data/zones';
+import { zoneDef, ZONES } from '../src/data/zones';
 import { PLAYER_SPOT, cellRing } from '../src/engine/battlefield';
 import { combatStep, CURSE_BOSS_EFFECT, makeMonster, monsterStatuses, skillIsActive, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem, createSupportGem, skillNumbers, supportFits } from '../src/engine/gems';
-import { refreshVendor } from '../src/engine/hideout';
-import { gemArrived, reachedAct } from '../src/engine/progress';
+import { buyGem, gemShopOffers } from '../src/engine/hideout';
+import { gemArrived, gemShopZone, reachedAct } from '../src/engine/progress';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { newGame, SAVE_VERSION } from '../src/engine/state';
@@ -79,36 +79,58 @@ describe('gems tied to acts', () => {
     expect(gemArrived(s, 'lacerate')).toBe(false);
   });
 
-  it('the Gem shop stocks what has arrived, the newest act heaviest', () => {
-    const count = (zones: string[]) => {
+  it('the Gem shop is a fixed shelf that grows as each act’s areas open', () => {
+    const shelf = (zones: string[]) => {
       const s = veteran(newGame(1), 60);
+      s.account.hideout.vendor = 2;
       s.unlockedZones = zones;
-      let batch = 0;
-      for (let i = 0; i < 100; i++) {
-        refreshVendor(s, seeded(i));
-        batch += s.vendor.stock.filter((o) => o.gemId && gemAct(o.gemId) === 2).length;
-        expect(s.vendor.stock.some((o) => o.gemId === 'lacerate')).toBe(false);
-      }
-      return batch;
+      return gemShopOffers(s).map((o) => (o.gemId ?? o.supportId)!);
     };
-    expect(count(['mudflats'])).toBe(0);
-    // 13 of the 33 skills that have arrived are Act 2's, at three times the weight
-    expect(count(ACT_2_ZONES)).toBeGreaterThan(100);
+    const first = shelf(['mudflats']);
+    expect(first).toContain('heavy_strike');
+    expect(first.every((id) => gemAct(id) === 1)).toBe(true);
+    // the same zones always give the same shelf
+    expect(shelf(['mudflats'])).toEqual(first);
+    // every act's gems spread over several of its areas
+    for (const act of [1, 2, 3, 4, 5, 6]) {
+      const gems = [...ACTIVE_GEMS, ...SUPPORT_GEMS].filter((g) => gemAct(g.id) === act);
+      const used = new Set(gems.map((g) => gemShopZone(g.id)!.id));
+      for (const g of gems) expect(gemShopZone(g.id)!.act, g.id).toBe(act);
+      expect(used.size, `act ${act}`).toBeGreaterThanOrEqual(3);
+    }
+    // never before the area at the gem's level
+    for (const g of [...ACTIVE_GEMS, ...SUPPORT_GEMS]) {
+      const z = gemShopZone(g.id)!;
+      const fit = ZONES.find((x) => x.act === z.act && x.levelRange[1] >= gemReqLevel(g.id));
+      if (fit) expect(ZONES.indexOf(z), g.id).toBeGreaterThanOrEqual(ZONES.indexOf(fit));
+    }
+    expect(shelf([...ACT_2_ZONES]).length).toBeGreaterThan(first.length);
+    expect(shelf(ACT_2_ZONES)).not.toContain('lacerate');
   });
 
-  it('beating the act boss puts the new batch on sale at once', () => {
+  it('buying from the Gem shop never sells out, and waits for the gem’s level', () => {
+    const s = veteran(newGame(1), 1);
+    s.account.bank.gold = 1e6;
+    s.unlockedZones = ['mudflats'];
+    const ctx = makeCtx(seeded(1));
+    expect(buyGem(s, ctx, 'heavy_strike')).toBeNull();
+    expect(buyGem(s, ctx, 'heavy_strike')).toBeNull();
+    expect(s.account.gems.filter((g) => g.gemId === 'heavy_strike').length).toBeGreaterThanOrEqual(2);
+    expect(buyGem(s, ctx, 'quick_slash')).toMatch(/level 2/);
+    expect(buyGem(s, ctx, 'backstab')).toMatch(/Not on sale/);
+  });
+
+  it('opening an area that brings gems says so', () => {
     const { s, ctx, dummy } = arena('heavy_strike');
     s.combat!.zoneId = 'sanctum';
     s.unlockedZones = ['mudflats', 'sanctum'];
     s.bossesDefeated = zoneDef('cinderroad').requires?.after ?? ['sanctum'];
     s.bossesDefeated = s.bossesDefeated.filter((z) => z !== 'sanctum');
-    s.vendor.refreshAt = 1e12;
     dummy.isBoss = true;
     dummy.life = 1;
     run(s, ctx, 8000, () => reachedAct(s) === 2);
     expect(reachedAct(s)).toBe(2);
-    expect(s.vendor.refreshAt).toBe(0);
-    expect(ctx.events.some((e) => e.t === 'info' && /Act 2/.test(e.text))).toBe(true);
+    expect(ctx.events.some((e) => e.t === 'info' && /new gems? in the Town's Gem shop/.test(e.text))).toBe(true);
   });
 
   it('existing characters keep everything: no migration, later-act gems stay usable and socketed', () => {
