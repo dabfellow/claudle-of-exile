@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Retreating to the Hideout now refills all your flask charges.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.3.15',
+    date: '2 Nov 2026',
+    title: 'Flasks refill at the Hideout',
+    items: [
+      'Retreating to the Hideout now refills all your flask charges.',
+    ],
+  },
   {
     version: '0.3.14',
     date: '2 Nov 2026',
