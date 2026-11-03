@@ -50,21 +50,22 @@ describe('classes', () => {
     expect(CLASSES.find((c) => c.id === 'exile')?.mechanic).toBeNull();
   });
 
-  it('every Exile start can use its starter gems, and the Mage start swaps the sword for a wand', () => {
+  it('every Exile start can use its starter gems: the Mage, Ranger and Shadow starts swap the sword for a wand, bow and dagger', () => {
+    const swap: Record<string, string> = { mage: 'driftwood_wand', ranger: 'short_bow', shadow: 'whittled_dagger' };
     for (const c of CLASSES.filter((x) => !x.challenge)) {
       const s = newGame(1, { name: 't', classId: 'exile', startNode: c.startNode });
       const d = deriveStats(s);
       for (const gem of s.skillBar.filter(Boolean)) expect(gemWeaponReason(gem!.gemId, d.weaponFamily), `${c.id} ${gem!.gemId}`).toBeNull();
-      expect(s.equipment.weapon?.baseId).toBe(c.id === 'mage' ? 'driftwood_wand' : 'rusted_sword');
+      expect(s.equipment.weapon?.baseId).toBe(swap[c.id] ?? 'rusted_sword');
     }
   });
 
-  it('an Exile starts at the picked tree start with that class’s gems, a Rusted Sword and nothing else', () => {
+  it('an Exile starts at the picked tree start with that class’s gems, one weapon and nothing else', () => {
     const s = newGame(1, { name: 't', classId: 'exile', startNode: 'class_dexint' });
     expect(startNode(s)).toBe('class_dexint');
-    expect(s.skillBar.filter(Boolean).map((g) => g!.gemId)).toEqual(['poison_dart', 'twin_strike']);
+    expect(s.skillBar.filter(Boolean).map((g) => g!.gemId)).toEqual(['poison_dart', 'rain_of_daggers', 'twin_strike']);
     expect(Object.keys(s.equipment)).toEqual(['weapon']);
-    expect(s.equipment.weapon?.baseId).toBe('rusted_sword');
+    expect(s.equipment.weapon?.baseId).toBe('whittled_dagger');
     const d = deriveStats(s);
     expect([d.raw.str, d.raw.dex, d.raw.int]).toEqual([10, 10, 10]);
     expect(meterMax(mechanicOf(s), d.raw)).toBe(0);
@@ -226,7 +227,7 @@ describe('forbidden keystones', () => {
   it('faster Cooldowns shortens the cooldown a skill starts in a fight', () => {
     const fast = PASSIVE_NODES.find((n) => n.kind !== 'keystone' && (n.stats?.cooldownRecovery ?? 0) > 0)!;
     const used = (passives: string[]) => {
-      const { s, ctx } = arena('warrior', 'ground_slam', passives);
+      const { s, ctx } = arena('warrior', 'iron_guard', passives);
       run(s, ctx, 20_000, () => s.combat!.cooldowns[0] > 0);
       return s.combat!.cooldowns[0];
     };

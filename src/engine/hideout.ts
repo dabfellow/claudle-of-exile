@@ -1,4 +1,4 @@
-import { BASES, type BaseDef } from '../data/bases';
+import { BASES, obtainable, type BaseDef } from '../data/bases';
 import { ACTIVE_GEMS, activeGemDef, gemAct, gemReqLevel, SUPPORT_GEMS, supportGemDef } from '../data/gems';
 import {
   ALCH_DOUBLE,
@@ -164,7 +164,7 @@ export function refreshVendor(s: GameState, rng: Rng): void {
   const charLvl = characterLevel(s);
   // Town Market level 4 stocks a little above your level: better-rolled gear
   const ilvl = Math.max(2, charLvl + (lvl >= 4 ? 3 : 0));
-  const usable = BASES.filter((b) => b.reqLevel <= Math.max(1, charLvl));
+  const usable = BASES.filter((b) => b.reqLevel <= Math.max(1, charLvl) && obtainable(b));
   const stock: VendorOffer[] = [];
   let id = 1;
   const add = (o: Omit<VendorOffer, 'id'>) => stock.push({ ...o, id: id++ } as VendorOffer);

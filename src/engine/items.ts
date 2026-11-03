@@ -1,5 +1,5 @@
 import { AFFIXES, affixDef, type AffixDef } from '../data/affixes';
-import { BASES, baseDef, uniqueDef, type BaseDef } from '../data/bases';
+import { BASES, baseDef, obtainable, uniqueDef, type BaseDef } from '../data/bases';
 import { pick, pickWeighted, rInt, type Rng } from './rng';
 import type { GameState, Item, Rarity, RolledMod } from './types';
 
@@ -184,7 +184,7 @@ export function tierRangeText(mod: RolledMod): string {
 
 /** Bases that can drop at a given item level. */
 export function droppableBases(ilvl: number): BaseDef[] {
-  return BASES.filter((b) => b.reqLevel <= ilvl);
+  return BASES.filter((b) => b.reqLevel <= ilvl && obtainable(b));
 }
 
 export function allMods(item: Item): RolledMod[] {

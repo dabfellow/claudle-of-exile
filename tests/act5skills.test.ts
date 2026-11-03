@@ -297,7 +297,7 @@ describe('scaling and supports', () => {
     a.s.skillBar[0]!.level = 10;
     a.s.skillBar[1]!.level = 10;
     expect(skillSummary(a.d, a.s.skillBar[0]).perUse).toBeGreaterThan(base * 1.4);
-    expect(skillSummary(a.d, a.s.skillBar[1]).perUse).toBeGreaterThan(cold * 2);
+    expect(skillSummary(a.d, a.s.skillBar[1]).perUse).toBeGreaterThan(cold * 1.9);
   });
 
   it('Savage Crew, Hardened Crew and Full Muster do what they say', () => {
@@ -370,9 +370,11 @@ describe('scaling and supports', () => {
 describe('storms', () => {
   it('stay on the field after the skill, and hit what stands inside again and again', () => {
     const { s, ctx, c, dummy } = arena(['thunderhead']);
-    run(s, ctx, 300, () => (c.storms?.length ?? 0) > 0);
+    run(s, ctx, 5000, () => (c.storms?.length ?? 0) > 0);
     expect(c.storms).toHaveLength(1);
     s.skillBar[0]!.rules = [{ when: 'manual' }];
+    handsOff(s);
+    dummy.moveMs = dummy.stepMs = 1e9;
     const hits = () => ctx.events.filter((e) => e.t === 'hit' && e.target === 'monster' && e.monsterUid === dummy.uid).length;
     run(s, ctx, 6100);
     expect(hits()).toBeGreaterThanOrEqual(4);

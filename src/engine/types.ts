@@ -212,6 +212,8 @@ export interface MonsterInstance {
   shockMs?: number;
   /** the one curse it carries */
   curse?: Curse;
+  /** Rend: stacks of increased physical damage taken, from hits that rend; all fall off together */
+  rend?: { gemId: string; stacks: number; pctPerStack: number; remainingMs: number };
   /** a boss with living martyrs: nothing can hurt it */
   chained?: boolean;
   /** how many times this boss has chained martyrs */
@@ -220,6 +222,8 @@ export interface MonsterInstance {
   martyr?: boolean;
   /** pack members are scaled down; xp and loot scale with them */
   scale: number;
+  /** a Hulking monster: big, slow, hits hard, worth more xp, and shrugs off area and chain hits (see makeHulking) */
+  hulking?: boolean;
   /** damage-over-time accumulated since the last report */
   dotAcc: number;
   dotTimer: number;
@@ -339,6 +343,8 @@ export interface Buff {
   outpace?: boolean;
   /** flask buffs: the flask's own effect multiplier */
   mult?: number;
+  /** a buff that stacks with each use (Battle Rhythm): how many it has, its stats already multiplied in */
+  stacks?: number;
 }
 
 export interface SupportGemInstance {

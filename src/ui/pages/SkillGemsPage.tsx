@@ -453,7 +453,7 @@ function SlotModal({
                 </button>
               ))}
             </div>
-            <div className="dim small">High skills are tried before Normal, Normal before Low. Within one, cooldown skills go first, then by bar slot.</div>
+            <div className="dim small">High skills are tried before Normal, Normal before Low. Within one, cooldown and area skills go first, then by bar slot.</div>
             <div className="section-label">Bar slot</div>
             <div className="prio-pick">
               {Array.from({ length: SKILL_BAR_SLOTS }, (_, i) => (

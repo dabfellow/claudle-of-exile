@@ -267,8 +267,9 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
         </div>
         <div style={{ minWidth: 0 }}>
           <div className="fighter-name small">{m.name}</div>
-          <div className="muted small">
-            {m.isBoss ? 'Boss · ' : ''}Lv {m.level} · {DMG_NAME[m.dmgType]}
+          <div className="muted small" title={m.hulking ? 'Hulking: area, chain and piercing hits do 60% less to it' : undefined}>
+            {m.isBoss ? 'Boss · ' : ''}
+            {m.hulking ? 'Hulking · ' : ''}Lv {m.level} · {DMG_NAME[m.dmgType]}
           </div>
         </div>
         {target && <span className="target-pip" title="Current target" />}

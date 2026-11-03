@@ -80,12 +80,14 @@ export const AFFIXES: AffixDef[] = [
     // local on weapons (adds to the weapon's own damage), global on rings, gloves and amulets
     id: 'added_phys', kind: 'prefix', group: 'added_phys', label: 'Glinting', text: 'Adds {0} to {1} Physical Damage',
     stats: ['physMin', 'physMax'], weights: { attack_weapon: 100, ring: 60, gloves: 50, amulet: 40 },
-    tiers: flat([[1, 2, 3, 5], [2, 4, 6, 9], [4, 7, 10, 15], [6, 10, 16, 23], [9, 14, 24, 33], [12, 19, 32, 45], [16, 24, 42, 58], [20, 30, 54, 74], [25, 37, 68, 92]]),
+    // raised 50% across the board (2026-11-02), so attackers' weapons pull their weight early and late
+    tiers: flat([[2, 3, 5, 8], [3, 6, 9, 14], [6, 11, 15, 23], [9, 15, 24, 35], [14, 21, 36, 50], [18, 29, 48, 68], [24, 36, 63, 87], [30, 45, 81, 111], [38, 56, 102, 138]]),
   },
   {
     id: 'inc_phys', kind: 'prefix', group: 'inc_phys', label: 'Heavy', text: '{0}% increased Physical Damage',
     stats: ['localPhysPct'], weights: { attack_weapon: 100 },
-    tiers: single([[15, 24], [25, 39], [40, 59], [60, 84], [85, 109], [110, 139], [140, 169], [170, 199], [200, 239]]),
+    // raised most at the bottom (about +50%) and the top (about +20%) on 2026-11-02, a little less in between
+    tiers: single([[25, 35], [36, 52], [53, 75], [76, 100], [101, 128], [129, 160], [161, 195], [196, 240], [241, 290]]),
   },
   {
     id: 'inc_phys_global', kind: 'prefix', group: 'inc_phys_global', label: 'Brutal', text: '{0}% increased global Physical Damage',
@@ -117,23 +119,25 @@ export const AFFIXES: AffixDef[] = [
   {
     id: 'spell_damage', kind: 'prefix', group: 'spell_damage', label: 'Runic', text: '{0}% increased Spell Damage',
     stats: ['spellPct'], weights: { caster_weapon: 100, amulet: 50, ring: 30 },
-    tiers: single([[10, 19], [20, 29], [30, 44], [45, 59], [60, 79], [80, 99], [100, 119], [120, 144], [145, 170]]),
+    // top tiers trimmed (2026-11-02): about 10% less at item level 45, rising to 35% less at 80
+    tiers: single([[10, 19], [20, 29], [30, 44], [45, 59], [60, 79], [72, 89], [80, 95], [84, 101], [94, 110]]),
   },
   {
-    // unlike "Adds X Fire Damage", these count in full for spells (no 70% added-damage effectiveness)
+    // unlike "Adds X Fire Damage", these count in full for spells (no 70% added-damage effectiveness).
+    // Top tiers trimmed like Spell Damage's (2026-11-02), as late wands made spells outrun everything
     id: 'spell_fire', kind: 'prefix', group: 'spell_fire', label: 'Smouldering', text: 'Adds {0} to {1} Fire Damage to Spells',
     stats: ['spellFireMin', 'spellFireMax'], weights: { caster_weapon: 80, ring: 40, amulet: 40 },
-    tiers: flat([[1, 2, 2, 4], [2, 4, 5, 8], [4, 6, 9, 14], [6, 10, 15, 22], [10, 14, 23, 32], [13, 19, 32, 44], [17, 24, 42, 57], [22, 31, 54, 73], [28, 38, 67, 91]]),
+    tiers: flat([[1, 2, 2, 4], [2, 4, 5, 8], [4, 6, 9, 14], [6, 10, 15, 22], [10, 14, 23, 32], [12, 17, 29, 40], [14, 19, 34, 46], [15, 22, 38, 51], [18, 25, 44, 59]]),
   },
   {
     id: 'spell_cold', kind: 'prefix', group: 'spell_cold', label: 'Wintry', text: 'Adds {0} to {1} Cold Damage to Spells',
     stats: ['spellColdMin', 'spellColdMax'], weights: { caster_weapon: 80, ring: 40, amulet: 40 },
-    tiers: flat([[1, 2, 2, 3], [2, 3, 5, 7], [4, 6, 8, 12], [6, 9, 13, 20], [9, 13, 21, 29], [12, 17, 29, 40], [16, 22, 38, 52], [20, 28, 49, 66], [25, 34, 61, 82]]),
+    tiers: flat([[1, 2, 2, 3], [2, 3, 5, 7], [4, 6, 8, 12], [6, 9, 13, 20], [9, 13, 21, 29], [11, 15, 26, 36], [13, 18, 30, 42], [14, 20, 34, 46], [16, 22, 40, 53]]),
   },
   {
     id: 'spell_light', kind: 'prefix', group: 'spell_light', label: 'Crackling', text: 'Adds {0} to {1} Lightning Damage to Spells',
     stats: ['spellLightMin', 'spellLightMax'], weights: { caster_weapon: 80, ring: 40, amulet: 40 },
-    tiers: flat([[1, 1, 3, 5], [1, 2, 7, 10], [2, 3, 12, 18], [2, 4, 20, 29], [3, 5, 30, 43], [4, 7, 41, 58], [5, 8, 54, 76], [7, 10, 69, 96], [8, 12, 86, 120]]),
+    tiers: flat([[1, 1, 3, 5], [1, 2, 7, 10], [2, 3, 12, 18], [2, 4, 20, 29], [3, 5, 30, 43], [4, 6, 37, 52], [4, 6, 43, 61], [5, 7, 48, 67], [5, 8, 56, 78]]),
   },
   {
     id: 'added_chaos', kind: 'prefix', group: 'added_chaos', label: 'Tainted', text: 'Adds {0} to {1} Chaos Damage to Attacks',

@@ -107,6 +107,20 @@ export function settleGems(s: GameState): void {
   }
 }
 
+/** Each chain hop deals this much less than the one before (15% of the full hit), down to a floor of 20% of it. */
+export const CHAIN_FALLOFF = 0.15;
+export const CHAIN_FLOOR = 0.2;
+
+/** The share of a full hit the chain's `hop`th enemy takes (0 is the target itself). */
+export function chainFalloff(hop: number): number {
+  return Math.max(CHAIN_FLOOR, 1 - CHAIN_FALLOFF * hop);
+}
+
+/** How many more enemies a chaining skill reaches at this gem level (Spark: 2, then 3 at 7, 4 at 13, 5 at 19). */
+export function gemChains(def: ActiveGemDef, level: number): number {
+  return (def.effect.chains ?? 0) + (def.effect.chainsAt ?? []).filter((l) => level >= l).length;
+}
+
 export function supportSlots(gem: SkillGemInstance): number {
   return Math.min(MAX_SUPPORT_SLOTS, Math.min(4, 1 + Math.floor(gem.level / 5)) + gem.extraSlots);
 }
@@ -454,9 +468,21 @@ export function weaponPctAt(def: ActiveGemDef, level: number): number {
 /** Spells also deal your flat added elemental damage (gear, wand implicits) at this effectiveness. */
 export const SPELL_ADDED_EFFECTIVENESS = 0.7;
 
+/**
+ * A spell's base damage grows with each gem level by a step that starts at 12% (gem level 2) and shrinks evenly to
+ * 8% (gem level 20): about 2.9x at level 20. Spells used to grow a flat 16% a level, which with late wands let them
+ * outrun every attack.
+ */
+export function spellGrowth(level: number): number {
+  const steps = Math.max(0, level - 1);
+  return 1 + SPELL_STEP_FIRST * steps - ((SPELL_STEP_FIRST - SPELL_STEP_LAST) / (MAX_GEM_LEVEL - 2)) * ((steps * (steps - 1)) / 2);
+}
+const SPELL_STEP_FIRST = 0.12;
+const SPELL_STEP_LAST = 0.08;
+
 export function spellBaseAt(def: ActiveGemDef, level: number): [number, number] {
   const [lo, hi] = def.effect.base ?? [0, 0];
-  const f = 1 + 0.16 * (level - 1);
+  const f = spellGrowth(level);
   return [Math.round(lo * f), Math.round(hi * f)];
 }
 
@@ -513,7 +539,7 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
     const [lo, hi] = spellBaseAt(def, level);
     elem = ((lo + hi) / 2 + (nums.lifeCost * (e.lifeToDamage ?? 0)) / 100) * d.typeMult[e.type ?? 'fire'];
     for (const t of ['fire', 'cold', 'light'] as const) {
-      elem += ((d.hit[t][0] + d.hit[t][1]) / 2) * SPELL_ADDED_EFFECTIVENESS + (d.spellHit[t][0] + d.spellHit[t][1]) / 2;
+      elem += (((d.hit[t][0] + d.hit[t][1]) / 2) * SPELL_ADDED_EFFECTIVENESS + (d.spellHit[t][0] + d.spellHit[t][1]) / 2) * (e.addedShare ?? 1);
     }
     if (e.type === 'fire') fire = elem;
   }

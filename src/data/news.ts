@@ -10,7 +10,33 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Every skill now takes time to cast. Spells used to fire for free on top of your attacks, which made the Mage far stronger than everyone else early on. Spark and Frost Needle lose their cooldowns to make up for it, and Faster Casts now fits any spell that deals damage.',
+  'Area attacks no longer have cooldowns: Ground Slam, Rain of Arrows, Scourge, Riptide, Flensing Fan, Rockslide Volley and Horse Archer\'s Arc can be used back to back. Heavy slams like Avalanche keep theirs. Area skills still go before your other attacks when they can fire.',
+  'Ground Slam now works with swords.',
+  'Bone Wands and Quartz Wands no longer drop or sell. Any you already have keep working.',
+  'New weapon bases: Bronze Shortsword (level 4), Bastard Sword (29), Iron Cudgel (6) and Studded Mace (16).',
+  'Warriors, Duelists and Templars move 25% faster.',
+  'Physical damage mods hit harder: "Adds # to # Physical Damage" is up 50% on every tier, and "% increased Physical Damage" is up about 50% on the low tiers and 20% on the top ones. Items you already have keep their rolls.',
+  'Frost Needle\'s three needles now share your added spell damage (a third each) instead of each getting all of it, so it no longer outgrows every later spell.',
+  'Poison Dart can no longer be thrown with a wand, staff or sceptre.',
+  'Chains lose damage as they go: each hop deals 15% less than the one before, never under 20% of the full hit. Spark reaching 5 enemies now deals about 3.5 hits\' worth between them, not 5.',
+  'Spells grow less with gem level: 12% a level at first, tapering to 8% by level 20 (about 2.9x at level 20, down from 4x).',
+  'The top tiers of caster mods are weaker: "% increased Spell Damage" and "Adds # to # Fire, Cold or Lightning Damage to Spells" lose about 10% at item level 45, rising to about 35% at item level 80. Items you already have keep their rolls.',
+  'Hulking monsters now turn up from Act 3 on: big, slow brutes that hit hard and give five times the experience. Area, chain and piercing hits do 60% less to them, so bring a heavy single-target skill.',
+  'Intelligence damage spells from Act 2 on deal 40% less damage: Fireball, Glacial Lance, Ember Dash, Blood Lance, Burnt Offering, Meteor, Tidecallers, Thunderhead, Whirlpool, Call the Leviathan, Royal Decree and Drowning Bolt.',
+  'Barrage, Rain of Arrows and Ice Shot deal 20% less damage.',
+  'Spark deals about 40% less damage, Frost Needle about 10% less, and Shock Nova about 20% less. Spark now chains further as the gem levels: 2 enemies, 3 from gem level 7, 4 from 13 and 5 from 19.',
+  'Act 1 attacks hit 40% harder: Heavy Strike, Ground Slam, Pummel, Infernal Blow, Twin Strike, Poison Dart, Barrage, Rain of Arrows, Rain of Daggers, Feint, Ice Shot, Quick Slash and Rending Cut.',
+  'Every class now starts with a single target skill and an area skill. New characters: Warrior, Duelist and Templar get Ground Slam, Mage gets Frost Needle, and Shadow gets the new Rain of Daggers.',
+  'The Ranger now starts with a Short Bow, Ice Shot and Rain of Arrows.',
+  'New skill: Rain of Daggers, poisoned knives that rain on a group. Dexterity, daggers only.',
+  'Horse Archer\'s Arc now needs a bow.',
+  'Heavy Strike is faster (3.3s, from 3.9s) and hits about twice as hard (392% weapon damage, from 185%).',
+  'Strength attacks hit much harder, so each new one is an upgrade when it arrives: Pummel 147% x3 (from 55%), Infernal Blow 448% (from 120%), Judgement Hammer 644% (from 250%), Flagellate 588% (from 230%), Titan\'s Blow 1064% (from 430%), Shield Crush 840% (from 190%).',
+  'Backstab deals 165% weapon damage, down from 240%.',
+  'New Strength skills for swords and axes: Quick Slash and Rending Cut, fast 1.5s cuts that build Rage. Quick Slash stacks up to 25% more damage on you, Rending Cut stacks up to 30% increased physical damage taken on the target. At full stacks they wait until the stacks are about to run out, so your big hit goes in between. Rending Cut is set to bosses only by default.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

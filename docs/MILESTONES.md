@@ -152,6 +152,10 @@ target times and players set the acts' pace: 1–20 about 3 h, 20–40 about 3 h
 95–99 20 h, and 99 is halfway to 100 in XP. Area level ranges cap levelling, PoE-style, so a long offline run can't
 outlevel the campaign ([BALANCE.md](design/BALANCE.md) → Knobs).
 
+**Day 1 benchmark (you, 2026-11-02):** a hard nonstop day 1 should end around the end of Act 6, like reaching Maps on day 1 in PoE. The sim's `--nonstop --days 1` run checks it. The old day 1 / week 1 targets came from sim bots that didn't use the tree or upgrade weapons.
+
+**Every skill takes time (you, 2026-11-02):** like PoE, no skill is instant. Spells that were instant fired on top of the turn for free, which is why the Mage was so far ahead. Spark and Frost Needle are now spammable main skills with no cooldown, like Twin Strike, and Faster Casts fits any spell that deals damage.
+
 **Skill gem reform (you, 2026-11-01):** every act and attribute gets AoE, single target, guard, and a life and a mana source, with leech very weak until Acts 3–4. Drain skills return life or mana, never both, and supports can fill the other half. Arcane Siphon moved to Act 5, the leech supports cost 1.8 times the mana, no new signature supports, and existing gems were sorted where they fit. Existing characters get one The Old Covenant ring; new ones don't ([SKILL_REFORM.md](design/SKILL_REFORM.md)).
 
 **Challenge modes (you, 2026-11-01):** Hardcore deletes the character, Solo Self-Found can't use the Player Market and each one has its own stash, and Classic has no idle skilling but keeps the Crafting Bench. They're toggles, in any mix.
@@ -333,6 +337,34 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 
 ## Other open items
 
+- [ ] Mage is far ahead early: players report level 60 in a day while other classes take days to reach Act 3. Sims agree: Mage clears Act 1 in about 2h nonstop against 5-17h for the rest. The cause: Spark, Frost Needle and Shock Nova took no time to cast, so all three fired every turn on top of everything else.
+  - [x] Every skill takes time (see Decisions). Mage's Act 1 lead drops from about 4x to under 1.5x in the scenario sim. — done 2026-11-02
+  - [x] Sim bot fills its six slots by job (single target, clear, guard, buff, curse, one for the fight), weighs skills by how much of a pack they hit, and switches weapons for a skill it owns. Exile only runs when named. — done 2026-11-02
+  - [x] Plain area attacks lost their cooldowns (heavy slams keep theirs) and go before other attacks in the cast order; Ground Slam fits swords; Spark and Shock Nova about 20% less damage. Classes now clear about evenly from Act 3 on. — done 2026-11-02
+  - [x] Every class starts with a single target and an area skill; Ranger starts with a Short Bow; new Rain of Daggers (poison, daggers) for the Shadow; Horse Archer's Arc needs a bow; Spark chains 2-5 with gem level. — done 2026-11-02 (only Warrior simmed since)
+  - [ ] Warrior still slowest: Act 1 takes 10h nonstop (Duelist and Templar about 5h), Act 5 by 21h, 19 deaths a day. Early on Heavy Strike is slow (3.9 s), and in the mid game the bot drifts to Backstab and Lacerate, which its Dexterity can't level past 8-9. Backstab deals about 80% weapon damage a second against 45-50% for the other basic attacks.
+    - Backstab 240% → 165% weapon damage; Heavy Strike 3.9 s → 3.3 s and 185% → 280%.
+    - Later Strength single-target attacks raised so each beats a levelled Heavy Strike when it arrives: Pummel, Infernal Blow, Judgement Hammer, Flagellate, Titan's Blow, Shield Crush (you: "I want Warrior one-shotting things").
+    - Warrior now: Act 1 in about 9h nonstop, Act 4 by 22h, 15 deaths a day (Heavy Strike at 370% had Act 1 in 6h). Act 1 is still where it loses the most time.
+    - New Quick Slash (stacking more damage on you) and Rending Cut (stacking physical damage taken on the target), fast sword and axe cuts that build Rage. Warrior: Act 1 in 8h26, Act 5 by 23h. Rending Cut slows Act 1 packs down, as it restacks on every new monster.
+    - Rending Cut set to bosses only, and stacking skills wait at full stacks. All-class nonstop day (bot on its own weapon type): Act 6 done by Mage 6h24, Ranger 15h24, Shadow 19h01; Duelist and Templar reach Act 5, Warrior Act 4. Mage still clears 2-3x faster in Act 1, helped by starting with Frost Needle.
+    - Spark and Frost Needle -40%, Act 1 attacks +40%, later Strength attacks +40% to stay ahead of Heavy Strike. Nonstop day, Act 6 done: Ranger 7h12, Shadow 13h48, Mage 15h50, Duelist 21h32; Templar and Warrior reach Act 5. Mage now stalls in Act 1 (12h, 36 deaths), then flies through Acts 2-6 in 4h. Ranger is the new outlier.
+    - Ranger bow skills -20% (Barrage, Rain of Arrows, Ice Shot). Frost Needle 3-6 per hit: the Mage has about 30% less life, so it needs to kill about 30% faster than the median class at level 1 (8.0 dps against a median of 5.9).
+    - [ ] Why the Strength classes lag: still open. Traces show them on old weapons for long stretches (the Templar keeps a level 19 mace from character level 17 to 39, the Warrior a level 8 sword from 20 to 39), while the Ranger's bow keeps pace. It isn't the base ladder (swords and maces have 12 bases each, like bows; an earlier count was wrong), nor walking (5-8% of the time), nor damage on paper (melee has the highest skill dps in every scenario). Letting the bot wear any sword, axe or mace barely moved it. Next: log which weapons the Warrior sees and why it keeps the old one.
+    - Bone Wand and Quartz Wand retired (no longer drop or sell; owned ones still work), to slow the early Mage: its Act 1 went from 5h35 to 6h59 nonstop.
+    - New bases Bronze Shortsword (4), Bastard Sword (29), Iron Cudgel (6), Studded Mace (16), on spare pack art; Warrior, Duelist and Templar +25% movement speed; Act 2+ Intelligence damage spells -40%. Not simmed yet.
+    - [ ] Plan to bring every class within 1-2 hours of each other per act. Shadow is right (Act 6 at about 14h nonstop, you, 2026-11-02); Mage at 10-11h and Ranger at 12h are too fast. Time per act goes roughly with 1 / clear speed, plus downtime from deaths (each 3 deaths in an area also costs a 20 minute retreat).
+      - Strength classes need about 2x in Acts 2-6: weapons pull their weight through stronger physical damage mods (added 50% on every tier; increased about 50% at the bottom and 20% at the top).
+      - Mage and Ranger clear too fast in the later acts: Hulking monsters from Act 3 on (1 pack in 5 has one: 5x life, 2x damage, half speed, 5x xp, 60% less damage from area, chain and piercing hits) favour heavy single hits over screen clears.
+      - Warrior deaths (18 a day against 6 for the Duelist): more armour from the class bonus, or a little life regeneration. Not done.
+      - Not doing (you): a guaranteed class weapon in the Town Market; there's enough loot already.
+      - Result (nonstop day, Act 6 done): Mage 6h37, Ranger 11h28, Shadow 12h33, Duelist 17h27, Templar 20h13, Warrior 20h16. The Strength classes now finish Act 6. Mage and Ranger ride an Act 1 single-target skill all game (Frost Needle to about 200k dps, Poison Dart likewise), which Hulking monsters don't slow and the later-spell cut doesn't touch.
+      - Frost Needle's three hits each got all of the flat added spell damage from gear; now each gets a third. Poison Dart can't be used with a wand, staff or sceptre (otherwise unchanged, you). Act 6 now: Ranger 11h28, Mage 12h10, Shadow 12h33, Duelist 17h27, Templar 20h13, Warrior 20h16. Mage and Shadow are where you want them; the Strength classes are 5-8h behind.
+      - The Mage still flies through Acts 4-6 on Spark (chains to 5 at full damage) and late wands. Top-tier caster mods trimmed (about -10% at item level 45 to -35% at 80), and spells now grow 12% a gem level tapering to 8% (x2.9 at 20, from x4). Chain hops now deal 15% less each, down to 20% of the full hit (you). Mage after all three: Act 6 at 20h28, but Act 1 takes 11h with 21 deaths, as its only early skills got weaker too. Open: Spark and Frost Needle base damage up about 30% to fix its Act 1. Shipped as is (you).
+    - Spotted in passing: the Ranger's Poison Dart reaches about 200k dps by the end of a nonstop day, far past everything else.
+    - After the Ranger and Frost Needle changes, nonstop day, Act 6 done: Mage 10h50 (Act 1 in 5h35, 11 deaths), Ranger 12h29, Shadow 13h48, Duelist 21h32; Templar and Warrior reach Act 5. The Strength classes are next, once the weapon ladder is settled.
+  - [x] The sim bot keeps each class on its own weapon type. — done 2026-11-02
+  - [x] `npm run sim -- --scenario <preset>` runs every class through a playtest scenario side by side (presets now in `src/dev/presets.ts`). — done 2026-11-02
 
 - [ ] Player Market (live trading between players; named "Player Market" so it isn't confused with the Town Market shop station). Design pass finished 2026-11-01; see Decisions → Player Market and [MARKET.md](design/MARKET.md).
   - [x] Server: listings, bids and wallet tables, with signed-in-only rules and all-or-nothing buy, bid, cancel and collect actions. — done 2026-11-01

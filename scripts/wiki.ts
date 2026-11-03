@@ -330,7 +330,7 @@ function rollableTable(b: BaseDef) {
 
 function itemEntry(b: BaseDef) {
   const uniques = UNIQUES.filter((u) => u.baseId === b.id);
-  const similar = BASES.filter((o) => o.id !== b.id && o.slot === b.slot && o.family === b.family).sort((x, y) => Math.abs(x.reqLevel - b.reqLevel) - Math.abs(y.reqLevel - b.reqLevel)).slice(0, 6);
+  const similar = BASES.filter((o) => o.id !== b.id && !o.retired && o.slot === b.slot && o.family === b.family).sort((x, y) => Math.abs(x.reqLevel - b.reqLevel) - Math.abs(y.reqLevel - b.reqLevel)).slice(0, 6);
   const first = OPEN_ZONES.find((z) => z.levelRange[1] >= b.reqLevel);
   const req = Object.entries(attributeReq(b)).map(([k, v]) => `${v} ${attrName[k as keyof typeof attrName]}`).join(', ');
   entry('items', U.item(b.id), `base ${b.slot}`,
@@ -484,7 +484,7 @@ function supportsPage(): string {
 // ---------- items ----------
 function itemsPage(): string {
   const bySlot = new Map<string, typeof BASES>();
-  for (const b of BASES) bySlot.set(b.slot, [...(bySlot.get(b.slot) ?? []), b]);
+  for (const b of BASES.filter((x) => !x.retired)) bySlot.set(b.slot, [...(bySlot.get(b.slot) ?? []), b]);
   let body = `<h1>Item bases</h1><p>The base decides an item's starting stats and what level it can drop at. Modifiers are added on top.</p>`;
   for (const [slot, list] of bySlot) {
     const rows = [...list].sort((a, b) => a.reqLevel - b.reqLevel).map((b) => {

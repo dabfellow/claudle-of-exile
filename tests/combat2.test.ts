@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { activeGemDef } from '../src/data/gems';
 import { zoneDef } from '../src/data/zones';
-import { aliveMonsters, chooseSkill, combatStep, DPS_WINDOW_MS, liveDps, makeMonster, queueSkill, ruleAllows, ruleContext, startCombat } from '../src/engine/combat';
+import { aliveMonsters, chooseSkill, combatStep, DPS_WINDOW_MS, liveDps, makeMonster, queueSkill, ruleAllows, ruleContext, skillIsActive, startCombat } from '../src/engine/combat';
 import { unlockEverything } from '../src/engine/automation';
 import { makeCtx } from '../src/engine/context';
 import {
   createSkillGem,
   createSupportGem,
+  chainFalloff,
   gemAttrReq,
+  gemChains,
   gemLevelReq,
   gemXpForLevel,
   MIN_COOLDOWN_MS,
@@ -16,6 +18,7 @@ import {
   removeFromBar,
   skillNumbers,
   socketSupport,
+  spellGrowth,
   supportReason,
   supportSlots,
 } from '../src/engine/gems';
@@ -61,8 +64,8 @@ function run(s: GameState, c: ReturnType<typeof ctx>, ms: number) {
 
 describe('skill gems', () => {
   it('starter classes come with their skills on the bar', () => {
-    expect(newGame(1, { name: 'a', classId: 'warrior' }).skillBar.map((g) => g?.gemId)).toEqual(['heavy_strike', 'iron_guard', undefined, undefined, undefined, undefined].map((x) => x ?? undefined));
-    expect(newGame(1, { name: 'a', classId: 'mage' }).skillBar[0]?.gemId).toBe('spark');
+    expect(newGame(1, { name: 'a', classId: 'warrior' }).skillBar.map((g) => g?.gemId)).toEqual(['heavy_strike', 'ground_slam', 'iron_guard', undefined, undefined, undefined].map((x) => x ?? undefined));
+    expect(newGame(1, { name: 'a', classId: 'mage' }).skillBar[0]?.gemId).toBe('frost_needle');
   });
 
   it('gem levels follow character level and unlock support sockets', () => {
@@ -88,8 +91,8 @@ describe('skill gems', () => {
     veteran(s, 60); // past a level 10 Lacerate's level requirement, so only its Dexterity stops it
     const lacerate = createSkillGem(s, 'lacerate', 10);
     s.account.gems.push(lacerate);
-    expect(placeOnBar(s, lacerate.uid, 2)).toMatch(/Requires \d+ Dexterity/);
-    expect(s.skillBar[2]).toBeNull();
+    expect(placeOnBar(s, lacerate.uid, 3)).toMatch(/Requires \d+ Dexterity/);
+    expect(s.skillBar[3]).toBeNull();
   });
 
   it('supports only fit matching skills, signatures only their own', () => {
@@ -251,19 +254,68 @@ describe('combat 2.0', () => {
     expect(s.combat!.monsters.every((m) => m.life < m.maxLife)).toBe(true);
   });
 
-  it('instant spells fire without using the turn: Spark, then straight into an attack', () => {
+  it('Quick Slash stacks its buff to 5, then steps aside for the big blow', () => {
+    const { s, c } = arena(['quick_slash', 'heavy_strike'], [dummy(1e7)]);
+    s.combat!.monsters[0].cell = 0; // already in reach
+    const stacks = () => s.combat!.buffs.find((b) => b.id === 'quick_slash')?.stacks ?? 0;
+    s.combat!.actionMs = 0;
+    run(s, c, 100);
+    expect(stacks()).toBe(1);
+    expect(skillIsActive(s.combat!, 'quick_slash')).toBe(false);
+    run(s, c, 8000);
+    expect(stacks()).toBe(5);
+    expect(skillIsActive(s.combat!, 'quick_slash')).toBe(true);
+    expect(c.events.some((e) => e.t === 'skill' && e.gemId === 'heavy_strike')).toBe(true);
+  });
+
+  it('Rending Cut leaves normal monsters alone by default, and on a boss stacks increased physical damage taken, up to 5', () => {
+    const { s, c } = arena(['rending_cut'], [dummy(1e7)]);
+    const mon = s.combat!.monsters[0];
+    mon.cell = 0;
+    s.combat!.actionMs = 0;
+    run(s, c, 3000);
+    expect(mon.rend).toBeUndefined();
+    mon.isBoss = true;
+    s.combat!.actionMs = 0;
+    run(s, c, 100);
+    expect(mon.rend?.stacks).toBe(1);
+    run(s, c, 12_000);
+    expect(mon.rend?.stacks).toBe(5);
+    expect(mon.rend!.stacks * mon.rend!.pctPerStack).toBe(30);
+    s.combat!.actionMs = 1e12; // stop cutting, and it wears off
+    run(s, c, 7000);
+    expect(mon.rend).toBeUndefined();
+  });
+
+  it('spells take the turn like attacks: Spark is cast, not fired on top of an attack', () => {
     const { s, c } = arena(['spark'], [dummy()], 'mage');
-    expect(activeGemDef('spark').timeMs).toBe(0);
     s.combat!.actionMs = 0;
     s.combat!.monsters[0].cell = 0; // already in reach
     combatStep(s, c, 50, deriveStats(s));
-    expect(s.combat!.cooldowns[0]).toBeGreaterThan(0);
-    expect(s.combat!.using).toBe('default_attack');
+    expect(s.combat!.using).toBe('spark');
     expect(s.combat!.actionMs).toBeGreaterThan(0);
   });
 
+  it('spells grow 12% a gem level at first, tapering to 8% by level 20', () => {
+    expect(spellGrowth(1)).toBe(1);
+    expect(spellGrowth(2)).toBeCloseTo(1.12);
+    expect(spellGrowth(20) - spellGrowth(19)).toBeCloseTo(0.08);
+    expect(spellGrowth(20)).toBeCloseTo(2.9);
+  });
+
+  it('each chain hop deals 15% less than the last, never under 20% of the full hit', () => {
+    expect([0, 1, 2, 3, 4, 5, 6, 9].map(chainFalloff)).toEqual([1, 0.85, 0.7, 0.55, 0.4, 0.25, 0.2, 0.2]);
+    // Spark at gem level 19 reaches 5 enemies, about 3.5 full hits between them
+    expect([0, 1, 2, 3, 4].reduce((a, hop) => a + chainFalloff(hop), 0)).toBeCloseTo(3.5);
+  });
+
+  it('Spark chains further as the gem levels: 2, then 3 at 7, 4 at 13 and 5 at 19', () => {
+    const spark = activeGemDef('spark');
+    expect([1, 6, 7, 12, 13, 18, 19, 20].map((l) => gemChains(spark, l))).toEqual([2, 2, 3, 3, 4, 4, 5, 5]);
+  });
+
   it('no cooldown ever goes below the 0.1 s minimum', () => {
-    const { s } = arena(['spark', 'heavy_strike'], [dummy()], 'mage');
+    const { s } = arena(['shock_nova', 'heavy_strike'], [dummy()], 'mage');
     const d = deriveStats(s);
     d.raw.cooldownRecovery = 1e6;
     expect(skillNumbers(d, s.skillBar[0]).cooldownMs).toBe(MIN_COOLDOWN_MS);
@@ -400,7 +452,7 @@ describe('combat 2.0', () => {
     old.combat = { zoneId: 'mudflats', monster: null };
     const s = deserialize(JSON.stringify(old));
     expect(s.version).toBe(SAVE_VERSION);
-    expect(s.skillBar[0]?.gemId).toBe('spark');
+    expect(s.skillBar[0]?.gemId).toBe('frost_needle');
     expect(s.combat).toBeNull();
     expect(s.action).toBeNull();
   });

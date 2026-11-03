@@ -117,12 +117,16 @@ export function suggestedRule(s: GameState, def: ActiveGemDef): TacticRule {
 }
 
 /**
- * The order skills are tried in, as bar slots: by priority, then skills with a cooldown (guards, buffs, spells, area
- * skills) before cooldown-free attacks, which would otherwise crowd out everything below them, then by slot.
+ * The order skills are tried in, as bar slots: by priority, then skills with a cooldown (guards, buffs, spells), area
+ * skills, which wait on their rule for a pack, and stacking skills, which wait on theirs until the stacks are full,
+ * before the other cooldown-free skills, which would otherwise crowd out everything below them, then by slot.
  */
 export function castOrder(s: GameState): number[] {
-  const hasCooldown = (slot: number) => activeGemDef(s.skillBar[slot]!.gemId).cooldownMs > 0;
+  const goesFirst = (slot: number) => {
+    const def = activeGemDef(s.skillBar[slot]!.gemId);
+    return def.cooldownMs > 0 || def.role === 'area' || !!def.effect.buff?.maxStacks || !!def.effect.rend;
+  };
   return s.skillBar
     .flatMap((gem, slot) => (gem ? [slot] : []))
-    .sort((a, b) => PRIORITY_RANK[s.skillBar[a]!.priority] - PRIORITY_RANK[s.skillBar[b]!.priority] || Number(hasCooldown(b)) - Number(hasCooldown(a)) || a - b);
+    .sort((a, b) => PRIORITY_RANK[s.skillBar[a]!.priority] - PRIORITY_RANK[s.skillBar[b]!.priority] || Number(goesFirst(b)) - Number(goesFirst(a)) || a - b);
 }

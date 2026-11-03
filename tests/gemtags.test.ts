@@ -7,10 +7,10 @@ import { deriveStats } from '../src/engine/stats';
 import { veteran } from './helpers';
 
 describe('gem tags', () => {
-  it('a skill is tagged hit exactly when it deals damage, and cast exactly when it is a spell with a cast time', () => {
+  it('a skill is tagged hit exactly when it deals damage, and every skill takes time to use', () => {
     for (const g of ACTIVE_GEMS) {
       expect(g.tags.includes('hit'), g.id).toBe(!!(g.effect.weaponPct || g.effect.base));
-      expect(g.tags.includes('cast'), g.id).toBe(g.tags.includes('spell') && g.timeMs > 0);
+      expect(g.timeMs, g.id).toBeGreaterThan(0);
     }
   });
 
@@ -23,7 +23,8 @@ describe('gem tags', () => {
     }
     expect(supportFits(supportGemDef('spell_echo'), activeGemDef('shock_nova'))).toBe(true);
     expect(supportFits(supportGemDef('faster_casts'), activeGemDef('fireball'))).toBe(true);
-    expect(supportFits(supportGemDef('faster_casts'), activeGemDef('spark'))).toBe(false);
+    expect(supportFits(supportGemDef('faster_casts'), activeGemDef('spark'))).toBe(true);
+    expect(supportFits(supportGemDef('faster_casts'), activeGemDef('frost_ward'))).toBe(false);
     expect(supportFits(supportGemDef('lingering'), activeGemDef('parry'))).toBe(false);
     // supports that make a skill worse are still allowed: that's the player's call
     expect(supportFits(supportGemDef('pierce'), activeGemDef('rain_of_arrows'))).toBe(true);

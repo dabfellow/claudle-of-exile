@@ -1,4 +1,4 @@
-import { BASES, type BaseDef } from '../data/bases';
+import { BASES, obtainable, type BaseDef } from '../data/bases';
 import { classDef } from '../data/classes';
 import { FOSSILS } from '../data/craftMats';
 import { activeGemDef } from '../data/gems';
@@ -180,7 +180,7 @@ export function devKit(s: GameState, ctx: Ctx, level: number): void {
   const kit = classDef(s.character.classId).kit;
   const armourLike = BASES.find((b) => b.id === (s.equipment.body?.baseId ?? kit.body));
   const same = (a?: number, b?: number) => !a === !b;
-  const best = (fits: (b: BaseDef) => boolean) => BASES.filter((b) => b.reqLevel <= level && fits(b)).sort((a, b) => b.reqLevel - a.reqLevel)[0];
+  const best = (fits: (b: BaseDef) => boolean) => BASES.filter((b) => b.reqLevel <= level && obtainable(b) && fits(b)).sort((a, b) => b.reqLevel - a.reqLevel)[0];
   const give = (slot: EquipSlot, base?: BaseDef) => {
     if (base) s.equipment[slot] = createItem(s, base.id, level, 'rare', ctx.rng);
   };

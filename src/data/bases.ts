@@ -26,6 +26,8 @@ export interface BaseDef {
   family?: WeaponFamily;
   /** takes the offhand slot too */
   twoHanded?: boolean;
+  /** no longer drops or sells (`obtainable`), but items already made on it keep working */
+  retired?: boolean;
 }
 
 export type WeaponFamily = 'mace' | 'axe' | 'sword' | 'dagger' | 'bow' | 'sceptre' | 'wand' | 'staff';
@@ -186,9 +188,11 @@ const J = (id: string, name: string, slot: 'belt' | 'amulet' | 'ring', reqLevel:
 
 export const BASES: BaseDef[] = [
   W('rusted_sword', 'Rusted Sword', 'sword', 1, [4, 10], 20, 5),
+  W('bronze_shortsword', 'Bronze Shortsword', 'sword', 4, [5, 13], 20, 5),
   W('iron_blade', 'Iron Blade', 'sword', 8, [7, 16], 20, 5),
   W('steel_longsword', 'Steel Longsword', 'sword', 16, [14, 28], 20, 5),
   W('steel_broadsword', 'Steel Broadsword', 'sword', 24, [17, 36], 15, 5),
+  W('bastard_sword', 'Bastard Sword', 'sword', 29, [21, 44], 20, 5),
   W('mithril_sabre', 'Mithril Sabre', 'sword', 34, [26, 52], 30, 6),
   W('gladiator_sword', "Gladiator's Sword", 'sword', 41, [31, 62], 20, 6),
   W('corsair_cutlass', 'Corsair Cutlass', 'sword', 48, [36, 71], 25, 6),
@@ -225,7 +229,9 @@ export const BASES: BaseDef[] = [
   W('wyrmlord_greataxe', 'Wyrmlord Greataxe', 'axe', 80, [67, 135], 5, 7),
 
   W('oak_club', 'Oak Club', 'mace', 1, [5, 12], 0, 5),
+  W('iron_cudgel', 'Iron Cudgel', 'mace', 6, [8, 18], 0, 5),
   W('spiked_mace', 'Spiked Mace', 'mace', 12, [12, 26], 0, 5),
+  W('studded_mace', 'Studded Mace', 'mace', 16, [15, 31], 0, 5),
   W('flanged_mace', 'Flanged Mace', 'mace', 19, [19, 37], 0, 5),
   W('war_hammer', 'Iron War Hammer', 'mace', 26, [24, 48], -5, 5),
   W('morning_star', 'Morning Star', 'mace', 33, [29, 59], 5, 5),
@@ -641,6 +647,15 @@ export const BASES: BaseDef[] = [
   J('topaz_ring', 'Topaz Ring', 'ring', 8, [{ stat: 'lightRes', value: 25, text: '+25% to Lightning Resistance' }]),
   J('diamond_ring', 'Diamond Ring', 'ring', 24, [{ stat: 'critChancePct', value: 25, text: '25% increased Critical Strike Chance' }]),
 ];
+
+/**
+ * Retired 2026-11-02: two early wands, so a Mage's weapon upgrades come less often early on (Bone Wand at 7, Quartz
+ * Wand at 22). They stay defined, as saves, the stash and Player Market listings may still hold them.
+ */
+for (const id of ['bone_wand', 'quartz_wand']) BASES.find((b) => b.id === id)!.retired = true;
+
+/** Whether a base can still be found: drops, the shops and crafting new items skip retired ones. */
+export const obtainable = (b: BaseDef) => !b.retired;
 
 const BY_ID: Record<string, BaseDef> = Object.fromEntries(BASES.map((b) => [b.id, b]));
 

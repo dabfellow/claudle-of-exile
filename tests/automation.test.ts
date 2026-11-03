@@ -129,7 +129,7 @@ describe('rule slots', () => {
 });
 
 describe('cast order', () => {
-  it('by default: cooldown skills, then attacks, each by slot', () => {
+  it('by default: cooldown and area skills, then other attacks, each by slot', () => {
     const s = fighter(['heavy_strike', 'iron_guard', 'twin_strike', 'ground_slam']);
     expect(castOrder(s)).toEqual([1, 3, 0, 2]);
   });
@@ -192,7 +192,8 @@ describe('offline rules', { timeout: 30_000 }, () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
     s.tutorial.done = true;
     s.skills.combat = charXpForLevel(30);
-    for (const g of s.skillBar) if (g) g.rules = [{ when: 'always' }];
+    // each on its suggested rule, so Ground Slam waits for a pack rather than taking every turn on the boss
+    for (const g of s.skillBar) if (g) g.rules = [suggestedRule(s, activeGemDef(g.gemId))];
     return s;
   };
 

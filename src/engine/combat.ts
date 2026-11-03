@@ -100,7 +100,7 @@ import { applyDeathPenalty, areaXpMultiplier, characterLevel } from './character
 import { bossLeftToRules, castOrder, ruleLockReason, rulesPass, skillAim } from './automation';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
-import { ailmentNumbers, BURN_MS, BURN_SHARE, gemUseReason, IGNITE_MS, IGNITE_SHARE, grantGemXp, LIFE_RESERVE_PCT, MIN_COOLDOWN_MS, minionStats, skillNumbers, stormStats, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
+import { ailmentNumbers, BURN_MS, BURN_SHARE, chainFalloff, gemChains, gemUseReason, IGNITE_MS, IGNITE_SHARE, grantGemXp, LIFE_RESERVE_PCT, MIN_COOLDOWN_MS, minionStats, skillNumbers, stormStats, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
 import { rollLoot } from './loot';
 import { mapPackLeft, onMapFieldLost, onMapPack, rollMapDrops } from './maps';
@@ -308,7 +308,22 @@ export const KILL_XP_SCALE = 0.8;
 
 /** Base character xp for a kill, before the area level multiplier. */
 export function monsterXp(mon: MonsterInstance): number {
-  return Math.round((5 + mon.level * 3) * (mon.isBoss ? 10 : 1) * mon.scale * KILL_XP_SCALE);
+  return Math.round((5 + mon.level * 3) * (mon.isBoss ? 10 : 1) * (mon.hulking ? HULKING.xp : 1) * mon.scale * KILL_XP_SCALE);
+}
+
+/**
+ * Hulking monsters, from Act 3 on: now and then one of a pack is a big, slow brute that hits hard and is worth a lot
+ * of xp, and area and chain hits mostly glance off it. It rewards a heavy single-target blow over a screen-clearing
+ * spell, so skills that only clear can't race through the later acts.
+ */
+export const HULKING = { fromAct: 3, chance: 0.2, life: 5, damage: 2, xp: 5, slow: 2, areaTaken: 0.4 };
+
+function makeHulking(m: MonsterInstance): void {
+  m.hulking = true;
+  m.maxLife = m.life = Math.round(m.maxLife * HULKING.life);
+  m.damage = Math.round(m.damage * HULKING.damage);
+  m.moveMs *= HULKING.slow;
+  m.stepMs *= HULKING.slow;
 }
 
 /** A monster resists the type it deals by this %. */
@@ -445,11 +460,13 @@ function spawnPack(s: GameState, ctx: Ctx, gate: number): void {
     .sort((a, b) => cellDistance(a, gate) - cellDistance(b, gate));
   const cells = [gate, ...others].slice(0, Math.min(n, room));
   if (cells.length) onMapPack(s);
-  for (const cell of cells) {
+  const hulk = zone.act >= HULKING.fromAct && ctx.rng.next() < HULKING.chance ? 0 : -1;
+  cells.forEach((cell, i) => {
     const m = makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), scale);
+    if (i === hulk) makeHulking(m);
     m.cell = cell;
     c.monsters.push(m);
-  }
+  });
   if (cells.length) ctx.emit({ t: 'spawn', name: cells.length > 1 ? `${cells.length} monsters` : c.monsters[c.monsters.length - 1].name, boss: false });
 }
 
@@ -700,7 +717,7 @@ export function skillRange(d: Derived, def: ActiveGemDef): number {
 /** A hit with an area or a chain: it goes for martyrs by itself, with no click or rule. */
 function spreads(d: Derived, nums: SkillNumbers): boolean {
   const e = nums.def.effect;
-  return needsTarget(nums.def) && (skillArea(nums) !== 'target' || (e.targets === 'chain' ? (e.chains ?? 0) + d.raw.extraChains : 0) + nums.mods.chains > 0);
+  return needsTarget(nums.def) && (skillArea(nums) !== 'target' || (e.targets === 'chain' ? gemChains(nums.def, nums.level) + d.raw.extraChains : 0) + nums.mods.chains > 0);
 }
 
 /**
@@ -794,7 +811,14 @@ const SHIELD_SKILLS = ACTIVE_GEMS.filter((g) => g.effect.shieldPct).map((g) => g
 
 /** Whether a skill's own effect is currently up (buff, guard, or its ailment on the target). */
 export function skillIsActive(c: CombatRuntime, gemId: string): boolean {
-  if (c.buffs.some((b) => b.source === 'skill' && b.id === gemId)) return true;
+  // a stacking buff or Rend only counts once it's at its most, so "while not active" keeps building it up
+  const max = activeGemDef(gemId).effect.buff?.maxStacks;
+  if (c.buffs.some((b) => b.source === 'skill' && b.id === gemId && (!max || (b.stacks ?? 0) >= max))) return true;
+  const rend = activeGemDef(gemId).effect.rend;
+  if (rend) {
+    const target = c.monsters.find((m) => m.uid === c.targetUid && m.life > 0) ?? aliveMonsters(c)[0];
+    return !!target?.rend && target.rend.stacks >= rend.maxStacks;
+  }
   // minions and storms count once the gem has all it can keep up, or the field has no room for more
   const called = army(c).filter((x) => x.gemId === gemId);
   if ((called.length && called.length >= called[0].max) || (army(c).length >= MINION_CAP && activeGemDef(gemId).effect.minion)) return true;
@@ -947,12 +971,32 @@ export function chooseSkill(s: GameState, d: Derived): SkillChoice {
     const gem = s.skillBar[i]!;
     if (gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) continue;
     const nums = skillNumbers(d, gem);
-    if (triggered(nums) || !ready(s, d, i, nums) || !rulesPass(s, gem.rules, (r) => ruleAllows(r, rc, skillIsActive(c, gem.gemId)))) continue;
+    if (triggered(nums) || !ready(s, d, i, nums) || stackedUp(c, gem.gemId) || !rulesPass(s, gem.rules, (r) => ruleAllows(r, rc, skillIsActive(c, gem.gemId)))) continue;
     const got = consider(i, nums, false);
     if (got) return got;
   }
   const basic = skillNumbers(d, null);
   return consider(-1, basic, false) ?? later.approach ?? { slot: -1, nums: basic, manual: false };
+}
+
+/** A stacking skill whose stacks are full won't top them up again until they're within this long of running out. */
+export const RESTACK_MS = 2000;
+
+/**
+ * A stacking skill (Quick Slash, Rending Cut) at its most, with time to spare: its rules don't get a say, it waits
+ * its turn, so the big blow behind it goes instead. A press of your own still uses it.
+ */
+function stackedUp(c: CombatRuntime, gemId: string): boolean {
+  const e = activeGemDef(gemId).effect;
+  if (e.buff?.maxStacks) {
+    const b = c.buffs.find((x) => x.source === 'skill' && x.id === gemId);
+    return !!b && (b.stacks ?? 0) >= e.buff.maxStacks && b.remainingMs > RESTACK_MS;
+  }
+  if (e.rend) {
+    const target = c.monsters.find((m) => m.uid === c.targetUid && m.life > 0) ?? aliveMonsters(c)[0];
+    return !!target?.rend && target.rend.stacks >= e.rend.maxStacks && target.rend.remainingMs > RESTACK_MS;
+  }
+  return false;
 }
 
 /** Reprisal and Succession take a skill out of the turn order: it fires on what they say, whatever its rules are. */
@@ -1154,12 +1198,14 @@ function rollHit(
     const type = def.effect.type ?? 'fire';
     const fromShield = (c.shield * (def.effect.shieldToDamage ?? 0)) / 100;
     byType[type] += (rInt(ctx.rng, lo, hi) + (nums.lifeCost * (def.effect.lifeToDamage ?? 0)) / 100 + fromShield) * d.typeMult[type];
+    // a spell that hits several times takes only its share of flat added damage on each hit (Frost Needle: a third)
+    const share = def.effect.addedShare ?? 1;
     for (const t of ['fire', 'cold', 'light'] as const) {
       const [alo, ahi] = d.hit[t];
-      if (ahi > 0) byType[t] += rInt(ctx.rng, alo, ahi) * SPELL_ADDED_EFFECTIVENESS;
+      if (ahi > 0) byType[t] += rInt(ctx.rng, alo, ahi) * SPELL_ADDED_EFFECTIVENESS * share;
       // "Adds X to Y Damage to Spells" counts in full
       const [slo, shi] = d.spellHit[t];
-      if (shi > 0) byType[t] += rInt(ctx.rng, slo, shi);
+      if (shi > 0) byType[t] += rInt(ctx.rng, slo, shi) * share;
     }
   }
 
@@ -1428,10 +1474,12 @@ function hitMonster(
   let dealt = 0;
   let physPart = 0;
   const dealtBy: ByType = { phys: 0, fire: 0, cold: 0, light: 0, chaos: 0 };
+  // a Hulking monster shrugs off hits that spread: areas, chains, piercing
+  const glance = mon.hulking && spreads(d, nums) ? HULKING.areaTaken : 1;
   for (const t of DAMAGE_TYPES) {
-    let amt = byType[t] * factor;
+    let amt = byType[t] * factor * glance;
     if (t !== 'phys') amt *= 1 - (mon.res[t] - (mon.curse?.resPen ?? 0)) / 100;
-    else amt *= 1 + (mon.curse?.physTaken ?? 0) / 100;
+    else amt *= 1 + ((mon.curse?.physTaken ?? 0) + (mon.rend ? mon.rend.stacks * mon.rend.pctPerStack : 0)) / 100;
     dealtBy[t] = amt;
     dealt += amt;
     if (t === 'phys') physPart = amt;
@@ -1490,6 +1538,11 @@ function hitMonster(
   }
   if (mods.specials.has('shatter') || mods.specials.has('flay') || mods.specials.has('sunder')) mon.vulnMs = 4000;
   if (mods.specials.has('rundown')) mon.stunMs = Math.max(mon.stunMs, mon.isBoss ? 400 : 1000);
+  // Rend: one more stack per use (a repeat adds none), and every stack's duration starts over
+  if (e.rend && !mega && factor >= 1) {
+    const stacks = Math.min(e.rend.maxStacks, (mon.rend?.stacks ?? 0) + 1);
+    mon.rend = { gemId: def.id, stacks, pctPerStack: e.rend.pctPerStack, remainingMs: e.rend.durationMs * nums.durationMult };
+  }
 
   if (e.consumeBleed) consumeBleed(s, ctx, d, nums, mon);
 
@@ -1655,15 +1708,20 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (def.id === 'war_cry' && r.warCryHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.warCryHeal) / 100);
   if (e.buff) {
     const dur = e.buff.durationMs * nums.durationMult + (def.role === 'buff' ? r.buffDurationFlat : 0);
+    // a stacking buff gains a stack with each use, up to its most, and every stack's duration starts over
+    const prev = c.buffs.find((b) => b.source === 'skill' && b.id === def.id);
+    const stacks = e.buff.maxStacks ? Math.min(e.buff.maxStacks, (prev?.stacks ?? 0) + 1) : undefined;
+    const own = Object.fromEntries(Object.entries(e.buff.stats ?? {}).map(([k, v]) => [k, v * (stacks ?? 1)]));
     c.buffs = c.buffs.filter((b) => !(b.source === 'skill' && b.id === def.id));
     c.buffs.push({
       id: def.id,
       source: 'skill',
       remainingMs: dur,
       durationMs: dur,
-      stats: { ...e.buff.stats, ...(mods.specials.has('galerider') && { cooldownRecovery: 25 }), ...(mods.specials.has('overflow') && { manaCostReduction: 25 }), ...(mods.specials.has('bloodoath') && { lifeLeech: 3 }), ...(mods.specials.has('immovable') && { stunDuration: 50 }) },
+      stacks,
+      stats: { ...own, ...(mods.specials.has('galerider') && { cooldownRecovery: 25 }), ...(mods.specials.has('overflow') && { manaCostReduction: 25 }), ...(mods.specials.has('bloodoath') && { lifeLeech: 3 }), ...(mods.specials.has('immovable') && { stunDuration: 50 }) },
       outpace: e.buff.outpace,
-      moreDamage: e.buff.moreDamage ? e.buff.moreDamage + (level - 1) : undefined,
+      moreDamage: e.buff.moreDamage ? (e.buff.moreDamage + (level - 1)) * (stacks ?? 1) : undefined,
       regenPct: (e.buff.regenPct ?? 0) + (mods.specials.has('rally') ? 2 : 0) || undefined,
       esRegenPct: mods.specials.has('holyground') ? 1 : undefined,
       extendMaxMs: mods.specials.has('bloodfrenzy') ? 12000 : undefined,
@@ -1732,7 +1790,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (surge) c.asc.surging = false;
   const riptide = surge && hasAscNode(s, 'wellspring_riptide');
   const wake = surge && hasAscNode(s, 'wellspring_wake');
-  const chains = (e.targets === 'chain' ? (e.chains ?? 0) + r.extraChains : 0) + mods.chains;
+  const chains = (e.targets === 'chain' ? gemChains(def, nums.level) + r.extraChains : 0) + mods.chains;
   const widens = riptide && (shape === 'splash' || shape === 'nova');
   const reaches = riptide && shape === 'target' && chains > 0;
   const echo = riptide && !widens && !reaches;
@@ -1782,7 +1840,8 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       }
       const aim = target;
       targets.forEach((m, i) => {
-        const chainMult = chained ? 1 + ((mods.specials.has('overload') ? 20 : 0) + r.chainMore) / 100 * i : 1;
+        // each hop deals 15% less than the one before, never under 20% (chainFalloff); "more damage per chain" adds back
+        const chainMult = chained ? chainFalloff(i) * (1 + (((mods.specials.has('overload') ? 20 : 0) + r.chainMore) / 100) * i) : 1;
         const dealt = hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * chainMult * tender, roll.mega, roll.coup, wake);
         if (e.drag && pass === 0) dragIn(c, m, nums);
         if (ground && !grounded && m === aim) {
@@ -2736,6 +2795,10 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
     mon.build.burn = Math.max(0, mon.build.burn - fade);
     mon.build.chill = Math.max(0, mon.build.chill - fade);
     if (!mon.shockMs) mon.build.shock = Math.max(0, mon.build.shock - fade);
+  }
+  if (mon.rend) {
+    mon.rend.remainingMs -= dt;
+    if (mon.rend.remainingMs <= 0) mon.rend = undefined;
   }
   if (mon.curse) {
     mon.curse.remainingMs -= dt;

@@ -6,24 +6,27 @@
  *   npm run sim -- --days 7 --class mage --seeds 1,2 --profile push --jobs 8
  *   npm run sim -- --nonstop --days 1         # never leaves the keyboard
  *   npm run sim -- --no-flee --no-instill     # auto-flee off, no Instilling Orbs spent
+ *   npm run sim -- --scenario act3Boss,midAct1 --minutes 30   # every class in a playtest scenario, side by side
  *
  * The assumptions live at SCHEDULE and awayJob, and are written up in docs/design/BALANCE.md.
  */
 import { spawn } from 'node:child_process';
 import { baseDef } from '../src/data/bases';
-import { CLASSES, type ClassId } from '../src/data/classes';
-import { activeGemDef, type GemTag } from '../src/data/gems';
+import { CLASSES, classDef, type ClassId } from '../src/data/classes';
+import { ACTIVE_GEMS, activeGemDef, gemReqLevel, MAX_GEM_LEVEL, SUPPORT_GEMS, supportGemDef, type GemTag } from '../src/data/gems';
+import { applySetup, PRESETS, setupZone } from '../src/dev/presets';
+import { gemArrived } from '../src/engine/progress';
 import { PLAYER_SPOT } from '../src/engine/battlefield';
 import { stationDef, type StationId } from '../src/data/hideout';
 import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { actionsFor, type SkillAction } from '../src/data/skills';
 import { ACTS, actBossZone, actOpen, BOSS_FROSTBITE_MAX, ZONES, zoneDef, type ZoneDef } from '../src/data/zones';
 import { characterLevel } from '../src/engine/character';
-import { canSpendLife, equipFlask, flaskRecoveryAmount, lockTarget, queueSkill, startCombat, useFlask } from '../src/engine/combat';
+import { canSpendLife, CLOSE_IN_MS, equipFlask, flaskRecoveryAmount, lockTarget, queueSkill, skillArea, startCombat, useFlask } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
 import { applyOrb, benchBuilt, orbReason, salvage } from '../src/engine/crafting';
 import { equip, equipReason, slotsFor } from '../src/engine/equipment';
-import { gemUseReason, placeOnBar, removeFromBar, skillNumbers, skillSummary, socketSupport, supportReason, syncSockets, unsocketSupport } from '../src/engine/gems';
+import { chainFalloff, createSkillGem, createSupportGem, gemChains, gemUseReason, gemXpForLevel, placeOnBar, removeFromBar, skillNumbers, skillSummary, socketSupport, supportReason, syncSockets, unsocketSupport, type SkillNumbers } from '../src/engine/gems';
 import { flaskDef } from '../src/data/flasks';
 import { enchantFlask, flaskStats } from '../src/engine/flasks';
 import { buyOffer, nextUpgradeCost, rerollCost, rerollVendor, sellItems, stationLevel, upgradeStation } from '../src/engine/hideout';
@@ -45,7 +48,7 @@ import { monsterGround } from '../src/engine/battlefield';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats, hitChance, type Derived } from '../src/engine/stats';
 import type { FlaskInstance, GameEvent, GameState, GroundKind, InstillCondition, Item, SkillGemInstance, SkillId } from '../src/engine/types';
-import { levelOf, xpToReach } from '../src/engine/xp';
+import { charXpForLevel, levelOf, xpToReach } from '../src/engine/xp';
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.includes(`--${name}`);
@@ -65,6 +68,8 @@ const PROFILES = opt('profile', 'push,mix').split(',') as Profile[];
 const JOBS = Number(opt('jobs', '1'));
 const TRACE = flag('trace');
 const JSON_OUT = flag('json');
+const SCENARIOS = opt('scenario', '');
+const SCENARIO_MIN = Number(opt('minutes', '30'));
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -113,18 +118,17 @@ const fmt = (ms: number | undefined) => {
 };
 
 /**
- * How much the bot values a character's stats: its best damage skill's output (attacks scaled by the
- * chance to hit monsters of its level), life, energy shield and defences.
+ * How much the bot values a character's stats: the best damage skill it owns (attacks scaled by the chance to
+ * hit monsters of its level, area skills by how much of a pack they hit), life, energy shield and defences.
  */
 function score(s: GameState, d: Derived): number {
-  const hit = hitChance(d.accuracy, d.combatLevel);
+  const pack = packOf(s);
   const skillDps = Math.max(
     d.dps,
-    ...s.skillBar.map((g) => {
-      // a skill the weapon can't use is worth nothing, so the bot won't swap to a weapon that turns its bar off
+    ...[...s.skillBar, ...s.account.gems].map((g) => {
+      // a skill the weapon can't use is worth nothing (and the bot keeps to its class's weapon type, see offWeapon)
       if (!g || gemUseReason(d.combatLevel, d.attributes, g, d.weaponFamily)) return 0;
-      const sum = skillSummary(d, g);
-      return sum.perSecond * (sum.nums.def.tags.includes('attack') ? hit : 1);
+      return gemValue(d, g, pack);
     }),
   );
   return (
@@ -138,6 +142,22 @@ function wearing(s: GameState, item: Item, slot: ReturnType<typeof slotsFor>[num
   if (slot === 'weapon' && baseDef(item.baseId).twoHanded) delete equipment.offhand;
   if (slot === 'offhand' && s.equipment.weapon && baseDef(s.equipment.weapon.baseId).twoHanded) delete equipment.weapon;
   return { ...s, equipment };
+}
+
+/** The Strength weapons: a class that starts on one wears whichever of them is best, as a player would. */
+const STR_WEAPONS = new Set(['sword', 'axe', 'mace']);
+
+/**
+ * A weapon the class doesn't fight with. A class should get by on its own weapons, so the bot never crosses over: a
+ * Duelist that picks up a wand turns into a Mage, and the sim stops measuring Duelists. Strength classes may wear any
+ * sword, axe or mace; the rest keep to the type they start with.
+ */
+function offWeapon(s: GameState, item: Item): boolean {
+  const start = classDef(s.character.classId).kit.weapon;
+  const family = baseDef(item.baseId).family;
+  if (!family || !start) return false;
+  const home = baseDef(start).family!;
+  return STR_WEAPONS.has(home) ? !STR_WEAPONS.has(family) : family !== home;
 }
 
 /** Score after putting `item` in its best slot. */
@@ -160,7 +180,7 @@ function shop(s: GameState, ctx: Ctx) {
     if (newGem && offer.price * 2 <= (s.account.bank.gold ?? 0) && !buyOffer(s, ctx, offer.id)) bought = true;
   }
   for (const offer of [...s.vendor.stock]) {
-    if (offer.kind !== 'item' || !offer.item || offer.price > spare() || equipReason(s, offer.item)) continue;
+    if (offer.kind !== 'item' || !offer.item || offer.price > spare() || equipReason(s, offer.item) || offWeapon(s, offer.item)) continue;
     // worth it if it beats what's worn by a clear margin (~1% of the current score)
     if (scoreWith(s, offer.item) - base > Math.max(5, base * 0.01) && !buyOffer(s, ctx, offer.id)) bought = true;
   }
@@ -180,7 +200,7 @@ function sortBag(s: GameState, ctx: Ctx) {
   pickUp(s, ctx, 'ground', s.ground.map((i: Item) => i.uid));
   pickUp(s, ctx, 'offlineHaul', s.offlineHaul.map((i: Item) => i.uid));
   for (const item of [...s.inventory]) {
-    if (equipReason(s, item)) continue;
+    if (equipReason(s, item) || offWeapon(s, item)) continue;
     const base = scoreOf(s);
     let best: { slot: ReturnType<typeof slotsFor>[number]; gain: number } | null = null;
     for (const slot of slotsFor(item)) {
@@ -204,6 +224,34 @@ function gemDps(d: Derived, gem: SkillGemInstance): number {
   return sum.perSecond * (tags.includes('attack') && !tags.includes('heavy') ? hitChance(d.accuracy, d.combatLevel) : 1);
 }
 
+/**
+ * About how many of a pack one use hits, by where it lands. Monsters crowd round you, so a wide nova catches most
+ * of them; minions and storms count their own strikes in their damage already.
+ */
+function enemiesHit(nums: SkillNumbers, pack: number): number {
+  const e = nums.def.effect;
+  if (e.minion) return 1;
+  if (e.targets === 'chain') {
+    // each hop deals less than the last, so count what the reachable enemies take, not how many there are
+    const n = Math.floor(Math.min(pack, 1 + gemChains(nums.def, nums.level) + nums.mods.chains));
+    return [...Array(n).keys()].reduce((sum, hop) => sum + chainFalloff(hop), 0);
+  }
+  const r = e.radius ?? 1;
+  const reach = { target: 1, arc: 2, beam: 2, splash: r >= 2 ? 3.5 : 2.5, nova: r >= 2 ? pack * 0.8 : 2.5, field: pack }[skillArea(nums)];
+  return Math.max(1, Math.min(pack, reach));
+}
+
+/** The average pack where the character fights: the area it's in, else the furthest one open. */
+function packOf(s: GameState, zoneId = s.combat?.zoneId ?? s.unlockedZones.at(-1)): number {
+  const z = zoneId ? zoneDef(zoneId) : undefined;
+  return z ? (z.packSize[0] + z.packSize[1]) / 2 : 3;
+}
+
+/** What a gem is worth to the bot: half for bosses (one target), half for clearing packs (everything it hits). */
+function gemValue(d: Derived, gem: SkillGemInstance, pack: number): number {
+  return (gemDps(d, gem) * (1 + enemiesHit(skillNumbers(d, gem), pack))) / 2;
+}
+
 const DAMAGE_ROLES = new Set(['main', 'burst', 'area', 'summon']);
 
 /** The ground this area's boss lays with Scorched earth, if it does. */
@@ -220,8 +268,8 @@ function channelBreaker(all: SkillGemInstance[], zoneId: string | undefined): Sk
 const frostbiteZone = (zoneId: string | undefined) => !!zoneId && !!zoneDef(zoneId).boss.mechanics?.includes('frostbite');
 
 /**
- * Like a player who reads tooltips: the best guard and buff it owns, then its three strongest damage
- * skills (judged bare, so a fresh drop isn't blinded by the old gem's supports) and a curse, each on its suggested rule;
+ * Like a player who reads tooltips: a slot each for single target, clearing packs, defence, a buff and a curse, and
+ * a sixth for what the fight needs (damage judged bare, so a fresh drop isn't blinded by the old gem's supports), each on its suggested rule;
  * a spare guard, once Ground rules are in, takes a free slot against Scorched earth, as the main one is kept for wind-ups;
  * once Aim rules are in, its damage skills go for martyrs; where a boss channels, its interrupt goes on a channel rule and
  * nothing else; then the strongest support in every socket, damage skills first.
@@ -237,14 +285,17 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   }
   const all = [...owned.values()];
   const role = (g: SkillGemInstance) => activeGemDef(g.gemId).role;
-  const bare = (g: SkillGemInstance) => gemDps(d, { ...g, supports: g.supports.map(() => null) });
+  const pack = packOf(s, zoneId);
+  const bare = (g: SkillGemInstance) => gemValue(d, { ...g, supports: g.supports.map(() => null) }, pack);
   const byLevel = (a: SkillGemInstance, b: SkillGemInstance) => b.level - a.level;
   const tagged = (g: SkillGemInstance, tag: GemTag) => activeGemDef(g.gemId).tags.includes(tag);
   const pick = (r: string) => all.filter((g) => role(g) === r).sort(byLevel)[0];
   const strongest = all.filter((g) => DAMAGE_ROLES.has(role(g)) && bare(g) > 0).sort((a, b) => bare(b) - bare(a));
-  // the strongest movement skill always comes along: it's the way out of Scorched earth
+  // one slot each for single target (bosses) and clearing packs (what it hits across a pack)
+  const single = [...strongest].sort((a, b) => gemDps(d, { ...b, supports: [] }) - gemDps(d, { ...a, supports: [] }))[0];
+  const clear = strongest.find((g) => g !== single && enemiesHit(skillNumbers(d, g), pack) >= 2);
+  const damage = [single, clear].filter((g): g is SkillGemInstance => !!g);
   const mover = strongest.find((g) => tagged(g, 'movement'));
-  const damage = [...new Set([...(mover ? [mover] : []), ...strongest])].slice(0, 3);
   // casters keep a mana skill when their damage costs mana (Transfusion is none: it comes for bleeders below)
   const caster = damage.some((g) => !tagged(g, 'attack'));
   const sustain = caster ? all.filter((g) => role(g) === 'sustain' && !activeGemDef(g.gemId).effect.consumeBleed).sort(byLevel)[0] : undefined;
@@ -253,27 +304,31 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   // a buff the build can use (spell buffs do nothing for attackers), and the curse that suits its damage
   const buff = all.filter((g) => role(g) === 'buff' && (caster || !tagged(g, 'spell'))).sort((a, b) => Number(tagged(b, 'spell')) - Number(tagged(a, 'spell')) || byLevel(a, b))[0];
   const curse = all.find((g) => g.gemId === (bleeder ? 'stigmata' : damage.some((x) => tagged(x, 'heavy')) ? 'burden' : caster ? 'elemental_weakness' : 'vulnerability')) ?? all.find((g) => g.gemId === (caster ? 'elemental_weakness' : 'vulnerability')) ?? pick('curse');
-  // instant damage skills don't use up the turn, so any free slot gets the strongest of them on top
-  const instant = all
-    .filter((g) => DAMAGE_ROLES.has(role(g)) && activeGemDef(g.gemId).timeMs === 0 && !damage.includes(g) && bare(g) > 0)
-    .sort((a, b) => bare(b) - bare(a));
   const scorch = ruleLockReason(s, 'onGround') ? undefined : scorchGround(zoneId);
   const groundGuard = scorch && all.filter((g) => role(g) === 'guard').sort(byLevel)[1];
   // Frostbite's rule goes on a spare cleansing skill when there is one: a spare guard, or the mover if nothing else can
   const cleansers = all.filter((g) => cleansesFrostbite(activeGemDef(g.gemId)) && g !== pick('guard') && g !== groundGuard).sort(byLevel);
   const frostGuard = !ruleLockReason(s, 'frostbite') && frostbiteZone(zoneId) ? cleansers.find((g) => role(g) === 'guard') ?? cleansers.find((g) => g === mover) : undefined;
   const breaker = ruleLockReason(s, 'enemyChannels') ? undefined : channelBreaker(all, zoneId);
-  const want = [...new Set([breaker, pick('guard'), buff, sustain, ...damage, transfusion, curse, groundGuard, frostGuard, ...instant])].filter((g): g is SkillGemInstance => !!g).slice(0, s.skillBar.length);
+  // five slots by job: single target, clear, defence, buff, debuff, left empty while nothing fills the job (no curses
+  // before Act 2). The sixth goes to what this fight needs (an interrupt, a cleanse, a spare guard or a way out of
+  // Scorched earth), else mana or bleed sustain, else a fast cut that stacks up for the big blow, else more damage
+  // Rending Cut is a debuff too, so it holds that slot until a curse comes along
+  const rend = all.filter((g) => activeGemDef(g.gemId).effect.rend).sort(byLevel)[0];
+  const core = [single, clear, pick('guard'), buff, curse ?? rend];
+  const stacker = all.filter((g) => activeGemDef(g.gemId).effect.buff?.maxStacks || activeGemDef(g.gemId).effect.rend).sort(byLevel)[0];
+  const flex = [breaker, frostGuard, groundGuard, scorch ? mover : undefined, sustain, transfusion, stacker, ...strongest].find((g) => g && !core.includes(g));
+  const want = [...core, flex].slice(0, s.skillBar.length);
 
   // put the bar together: anything leaving takes no supports with it
-  const keep = new Set(want.map((g) => g.uid));
+  const keep = new Set(want.map((g) => g?.uid));
   s.skillBar.forEach((g, i) => {
     if (!g || keep.has(g.uid)) return;
     g.supports.forEach((_, k) => unsocketSupport(s, g.uid, k));
     removeFromBar(s, i);
   });
   want.forEach((g, i) => {
-    if (s.skillBar[i]?.uid !== g.uid) placeOnBar(s, g.uid, i);
+    if (g && s.skillBar[i]?.uid !== g.uid) placeOnBar(s, g.uid, i);
   });
 
   // re-socket from scratch: damage skills pick the support that adds the most, the rest take any that fits
@@ -295,7 +350,7 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
         let bestDps = -Infinity;
         for (const sup of fits) {
           const trial = { ...g, supports: g.supports.map((x, j) => (j === k ? sup : x)) };
-          const v = gemDps(d, trial);
+          const v = gemValue(d, trial, pack);
           if (v > bestDps) {
             bestDps = v;
             best = sup;
@@ -751,6 +806,11 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
       tick(s, ctx, 1000);
       runTrials();
       if (TRACE && now % HOUR === 0 && now) {
+        const d = deriveStats(s, []);
+        const w = s.equipment.weapon;
+        const main = s.skillBar.find((g) => g && DAMAGE_ROLES.has(activeGemDef(g.gemId).role));
+        const at = s.combat?.zoneId ? zoneDef(s.combat.zoneId) : undefined;
+        console.log(`  ${fmt(now)} L${characterLevel(s)} ${at ? `act ${at.act} ${at.name} (L${at.levelRange[0]}-${at.levelRange[1]})` : '-'} · ${w ? `${baseDef(w.baseId).name} i${w.ilvl} ${w.rarity}` : 'no weapon'} · ${main ? `${activeGemDef(main.gemId).name} ${main.level}` : '-'} · skill dps ${Math.round(main ? gemDps(d, main) : 0)} · life ${d.maxLife}`);
         console.log('   ', Object.entries(tally).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${Math.round(v)}`).join(' · '));
         for (const k in tally) delete tally[k];
       }
@@ -855,7 +915,8 @@ function skillPace(skill: SkillId, targets: number[]): Record<number, number> {
 
 // ---------- report ----------
 
-const classes = CLASSES.filter((c) => !ONLY || c.id === ONLY);
+// challenge classes (the Exile) aren't balanced around, so they only run when asked for by name
+const classes = CLASSES.filter((c) => (ONLY ? c.id === ONLY : !c.challenge));
 
 /** Each run in its own process, so a full sweep can use every core. */
 function runElsewhere(classId: ClassId, seed: number, profile: Profile): Promise<Result> {
@@ -1005,10 +1066,132 @@ function report(results: Result[]) {
     const z = actBossZone(act.n);
     if (z) console.log(`Act ${act.n} complete (${z.boss.name}): ` + PROFILES.map((p) => `${p} ${fmt(median(results.filter((r) => r.profile === p).map((r) => r.bosses[z.id] ?? Infinity)))}`).join(' · '));
   }
-  console.log('Targets (MILESTONES.md): day 1 a couple of Act 1 stages at most some blue gear; week 1 partway through Act 3; month 1 Act 6 done pushing, starting it on a mix.\n');
+  console.log('Target (MILESTONES.md): a hard nonstop day 1 (--nonstop --days 1) ends around the end of Act 6, like Maps on day 1 in PoE.\n');
 }
 
-if (JSON_OUT) console.log(JSON.stringify(runClass(classes[0].id, SEEDS[0], PROFILES[0])));
+// ---------- scenarios ----------
+
+interface ScenarioResult {
+  classId: ClassId;
+  level: number;
+  dps: number;
+  life: number;
+  es: number;
+  /** what the bot's best damage skill hits for per second, and its tags */
+  skillDps: number;
+  skill: string;
+  kills: number;
+  xp: number;
+  deaths: number;
+  bossMs?: number;
+  bar: string;
+  /** steps run toward a target out of reach, seconds with nothing alive to fight, and hits taken */
+  steps: number;
+  emptyS: number;
+  hitsTaken: number;
+}
+
+/** Every gem the Gem shop could stock here, at the highest level the character's level and attributes allow, and three of each support. */
+function stockGems(s: GameState) {
+  const lvl = characterLevel(s);
+  const { attributes } = deriveStats(s, []);
+  const findable = (id: string) => gemReqLevel(id) <= lvl && gemArrived(s, id);
+  const usable = (id: string) =>
+    [...Array(MAX_GEM_LEVEL).keys()].map((i) => i + 1).filter((l) => !gemUseReason(lvl, attributes, { ...createSkillGem(s, id, l) })).at(-1) ?? 1;
+  for (const g of s.skillBar) if (g) Object.assign(g, { level: usable(g.gemId), xp: gemXpForLevel(usable(g.gemId)) });
+  const have = new Set(s.skillBar.filter(Boolean).map((g) => g!.gemId));
+  for (const g of ACTIVE_GEMS) if (findable(g.id) && !have.has(g.id)) s.account.gems.push(createSkillGem(s, g.id, usable(g.id)));
+  for (const g of SUPPORT_GEMS) if (findable(g.id)) for (let n = 0; n < 3; n++) s.account.supportGems.push(createSupportGem(s, g.id));
+}
+
+/**
+ * One class dropped into a playtest scenario: the scenario's plain rares, every gem the shop could stock, passives
+ * spent, then SCENARIO_MIN minutes fighting that area by hand, never moving on, so classes compare on equal footing.
+ */
+function runScenario(name: string, classId: ClassId, seed: number): ScenarioResult {
+  const setup = { ...PRESETS[name], classId };
+  const s = newGame(seed, { name: 'Bot', classId });
+  s.settings.autoFlee = FLEE;
+  s.settings.autoBoss = true;
+  let now = 0;
+  const res: ScenarioResult = { classId, level: 0, dps: 0, life: 0, es: 0, skillDps: 0, skill: '', kills: 0, xp: 0, deaths: 0, bar: '', steps: 0, emptyS: 0, hitsTaken: 0 };
+  const ctx: Ctx = {
+    rng: seeded(seed * 31 + classId.length),
+    now: 0,
+    emit(e: GameEvent) {
+      if (e.t === 'kill') {
+        res.kills++;
+        if (e.boss) res.bossMs ??= now;
+      }
+      if (e.t === 'death') res.deaths++;
+      if (e.t === 'closeIn') res.steps++;
+      if (e.t === 'hit' && e.target === 'player') res.hitsTaken++;
+    },
+  };
+  applySetup(s, ctx, setup);
+  const zone = setupZone(setup)!;
+  // passives first, as they raise the attributes that decide how far each gem can level
+  spendPassives(s, ctx);
+  stockGems(s);
+  manageSkills(s, zone.id);
+  manageFlasks(s);
+  const d = deriveStats(s, []);
+  Object.assign(s, { life: d.maxLife, mana: d.maxMana, es: d.maxEs });
+  const best = s.skillBar.filter((g): g is SkillGemInstance => !!g && DAMAGE_ROLES.has(activeGemDef(g.gemId).role)).sort((a, b) => gemDps(d, b) - gemDps(d, a))[0];
+  Object.assign(res, {
+    level: characterLevel(s),
+    dps: Math.round(d.dps),
+    life: d.maxLife,
+    es: d.maxEs,
+    skillDps: best ? Math.round(gemDps(d, best)) : 0,
+    skill: best ? `${activeGemDef(best.gemId).name} (${activeGemDef(best.gemId).tags.join(' ')})` : '-',
+    bar: s.skillBar.map((g) => (g ? `${activeGemDef(g.gemId).name}[${g.supports.filter(Boolean).map((x) => supportGemDef(x!.supportId).name).join('+')}]` : '-')).join(' '),
+  });
+  const xp0 = s.skills.combat;
+  for (; now < SCENARIO_MIN * MIN; now += 1000) {
+    if (s.action?.kind !== 'combat') startCombat(s, ctx, zone.id);
+    if (s.combat) hands(s, ctx, deriveStats(s));
+    if (s.combat && !s.combat.monsters.some((m) => m.life > 0)) res.emptyS++;
+    tick(s, ctx, 1000);
+  }
+  res.xp = s.skills.combat - xp0;
+  return res;
+}
+
+function scenarioReport() {
+  const names = SCENARIOS.split(',');
+  for (const name of names) {
+    if (!PRESETS[name]?.zone) {
+      console.log(`\n${name}: not a fighting scenario (try ${Object.keys(PRESETS).filter((k) => PRESETS[k].zone && !PRESETS[k].challenge).join(', ')})`);
+      continue;
+    }
+    const zone = setupZone(PRESETS[name])!;
+    const runs = classes.map((c) => SEEDS.map((seed) => runScenario(name, c.id, seed)));
+    const per = (f: (r: ScenarioResult) => number) => runs.map((rs) => median(rs.map(f)));
+    const row = (label: string, xs: (number | string)[]) => console.log(pad(label, 22) + xs.map((x) => pad(String(x), 12)).join(''));
+    const lvl = runs[0][0].level;
+    const xpPerLevel = charXpForLevel(lvl + 1) - charXpForLevel(lvl);
+    console.log(`\n===== ${name}: ${zone.name}, level ${lvl}, ${SCENARIO_MIN} min each (median of ${SEEDS.length} seed${SEEDS.length > 1 ? 's' : ''}) =====`);
+    row('', classes.map((c) => c.id));
+    row('sheet dps', per((r) => r.dps));
+    row('best skill dps', per((r) => r.skillDps));
+    row('life', per((r) => r.life));
+    row('energy shield', per((r) => r.es));
+    row('kills / min', per((r) => r.kills / SCENARIO_MIN).map((x) => x.toFixed(1)));
+    row('levels / hour', per((r) => (r.xp / xpPerLevel) * (60 / SCENARIO_MIN)).map((x) => x.toFixed(2)));
+    row('deaths', per((r) => r.deaths));
+    // where the time goes: running at targets out of reach (CLOSE_IN_MS a step, before movement speed), and empty field
+    row('% time walking', per((r) => (100 * r.steps * CLOSE_IN_MS) / (SCENARIO_MIN * MIN)).map((x) => x.toFixed(0)));
+    row('% time no enemies', per((r) => (100 * r.emptyS * 1000) / (SCENARIO_MIN * MIN)).map((x) => x.toFixed(0)));
+    row('hits taken / min', per((r) => r.hitsTaken / SCENARIO_MIN).map((x) => x.toFixed(0)));
+    if (PRESETS[name].boss) row('first boss kill', per((r) => r.bossMs ?? Infinity).map(fmt));
+    console.log('\nBest damage skill and bar (seed ' + SEEDS[0] + ')');
+    for (const rs of runs) console.log(`  ${pad(rs[0].classId, 9)} ${rs[0].skill}\n  ${pad('', 9)} ${rs[0].bar}`);
+  }
+}
+
+if (SCENARIOS) scenarioReport();
+else if (JSON_OUT) console.log(JSON.stringify(runClass(classes[0].id, SEEDS[0], PROFILES[0])));
 else {
   const mode = NONSTOP ? 'nonstop' : 'dedicated schedule';
   console.log(`\nPath of Idle balance sim — ${DAYS} days, ${mode}, ${IDLE ? 'no hands' : 'hands on while playing'}, auto-flee ${FLEE ? 'on' : 'off'}, instilling ${INSTILL ? 'on' : 'off'}, seeds ${SEEDS.join(',')}`);

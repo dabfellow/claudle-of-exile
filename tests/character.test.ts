@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACTIVE_GEMS } from '../src/data/gems';
+import { ACTIVE_GEMS, type GemTag } from '../src/data/gems';
 import { equipFrom, moveToStash, salvageAny } from '../src/engine/itemActions';
 import { zoneDef } from '../src/data/zones';
 import { openReachedZones, zoneLockText } from '../src/engine/progress';
@@ -179,10 +179,12 @@ describe('item menu actions', () => {
 });
 
 describe('cooldowns', () => {
-  it('single-target attacks have none (mana limits them); guards, buffs, spells, area, movement, summon and drain skills keep theirs', () => {
+  it('attacks and main spells have none (mana limits them); guards, buffs, other spells, heavy slams, storms, movement, summon and drain skills keep theirs', () => {
     for (const g of ACTIVE_GEMS) {
-      const freeAttack = g.tags.includes('attack') && !g.tags.includes('area') && !g.tags.includes('movement') && !g.tags.includes('minion') && !g.tags.includes('sustain');
-      expect(g.cooldownMs === 0, g.id).toBe(freeAttack);
+      const t = (tag: GemTag) => g.tags.includes(tag);
+      const freeAttack = t('attack') && !t('movement') && !t('minion') && !t('sustain') && !(t('heavy') && t('area')) && !t('storm');
+      const freeSpell = t('spell') && g.role === 'main';
+      expect(g.cooldownMs === 0, g.id).toBe(freeAttack || freeSpell);
     }
   });
 });
