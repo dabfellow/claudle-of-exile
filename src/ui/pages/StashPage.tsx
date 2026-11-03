@@ -5,6 +5,7 @@ import { STASH_PAGE_SIZE } from '../../data/hideout';
 import { challengeName, isSolo } from '../../engine/challenge';
 import { wearFlask } from '../../engine/combat';
 import { salvage } from '../../engine/crafting';
+import { clearableGems, clearLevelOneGems } from '../../engine/gems';
 import { sortFigure, sortItems, type SortKey } from '../../engine/itemSort';
 import { buyStashPage, settleOverflow, stashedItems, stashItems, stashPagePrice, stashPageRoom, takeFromStash } from '../../engine/storage';
 import { game } from '../../game';
@@ -104,6 +105,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
     { id: 'flasks', label: 'Flasks', count: s.account.flaskStash.length },
   ];
   const isChallenge = !!challengeName(s.character.challenge);
+  const clearable = clearableGems(s).length;
   return (
     <div className="page">
       <PageHeader title="Stash" actions={<CurrencyAmount id="gold" amount={s.account.bank.gold ?? 0} label="gold" />}>
@@ -186,8 +188,23 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
                 </Tooltip>
               ))}
             </div>
-            <div className="section-label">Spare skill gems ({s.account.gems.length})</div>
-            {s.account.gems.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, especially bosses.</EmptyState>}
+            <div className="row">
+              <div className="section-label" style={{ margin: 0 }}>
+                Spare skill gems ({s.account.gems.length})
+              </div>
+              <span className="spacer" />
+              <button
+                className="btn sm"
+                disabled={!clearable}
+                title="Throws away spare level 1 skill gems. Supports in them go back to your loose supports. Gems with Expansion sockets or in a saved skill set stay."
+                onClick={() => {
+                  if (confirm(`Throw away ${clearable} spare level 1 skill gem${clearable === 1 ? '' : 's'}? The Gem shop sells them all again.`)) game.act((st) => void clearLevelOneGems(st));
+                }}
+              >
+                Clear all Lv 1 ({clearable})
+              </button>
+            </div>
+            {s.account.gems.length === 0 && <EmptyState small>No spare skill gems. Buy them at the Gem shop.</EmptyState>}
             <div className="gem-bag">
               {s.account.gems.map((g) => (
                 <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
@@ -201,7 +218,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
               ))}
             </div>
             <div className="section-label">Support gems ({s.account.supportGems.length})</div>
-            {s.account.supportGems.length === 0 && <EmptyState small>No loose support gems. Cut them with Gemcutting or find them on monsters.</EmptyState>}
+            {s.account.supportGems.length === 0 && <EmptyState small>No loose support gems. Buy them at the Gem shop or cut them with Gemcutting.</EmptyState>}
             <div className="gem-bag">
               {s.account.supportGems.map((g) => (
                 <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>

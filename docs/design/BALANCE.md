@@ -66,7 +66,7 @@ The last drop tweak (regal and alchemy) came after the week and month sweeps: th
 | Drowned Sanctum and all Act 2 tested | 100 | 100 | 100 | 100 | 100 |
 
 - **Both matter a lot early and not at all later.** On a boss the character only just beat they turn a coin flip into a near-certainty, and instilling is the stronger of the two. Past Act 1 the bot is so overlevelled that nothing tests them.
-- **In real play this hardly counts yet.** Wind-up rules arrive around day 3, when the bosses where these matter are long dead, and Instilling Orbs only drop from tier 4. Retest when an act's bosses are fought at level, and on hard bosses.
+- **In real play this hardly counts yet.** Wind-up rules arrive around day 3, when the bosses where these matter are long dead, and Instilling Orbs only drop from Act 4. Retest when an act's bosses are fought at level, and on hard bosses.
 
 **Not modelled:** smithing, brewing and the bench, second rule slots, keystones, new skills, and players pushing an area before they're levelled for it. Warrior, Ranger and Exile run about a day behind on Act 1; left alone, since class balance doesn't need to be exact.
 
@@ -83,7 +83,7 @@ The last drop tweak (regal and alchemy) came after the week and month sweeps: th
 | Monster action times | `data/zones.ts` `basic`, `slam`, `nova` | every monster has a named basic attack or spell (1.9–4.2 s, default 3 s); each boss has its own slam and nova wind-ups (3.2–4.4 s) |
 | Base life regen | `engine/stats.ts` `BASE_REGEN_PCT` | 0.5%/s |
 | Skill XP | `data/skills.ts` `SKILL_XP_SCALE` | 0.3 |
-| Drops | `data/drops.ts` `DROP_TABLES` | per area tier: currency 4.5→5.5%, items 6→7%, rare share 0.25%, 0.5%, then 8→12%, unique 0.05→0.1%; chaos from tier 2, exalted/divine from tier 3, instill from tier 4 |
+| Drops | `data/drops.ts` `DROP_TABLES` | per area tier: currency 4.5→5.5%, items 6→7%, rare share 0.25%, 0.5%, then 8→12%, unique 0.05→0.1%; chaos from tier 2, exalted/divine from tier 3, instill from Act 4 (`areaCurrency`, since the Hollow Pass shares tier 9 with Act 3) |
 | Boss drops | `data/drops.ts` `BOSS_TABLES` | first kill guarantees the tier reward (2 transmute → 1 exalted), then `repeatChance` per kill (10% tiers 1–3, 6% tier 4, 1.5% tier 5); 2–3 extra currency rolls |
 | Boss mechanics | `data/zones.ts` `BOSS_*` | slam ×2.5 every 9 s; nova ×1.8 every 13 s (ignores blocks); wind-ups are per boss; summon up to 2 adds every 16 s; enrage below 35% (+50% attack speed, +30% damage); ward 12% of life at 66%/33%, heals 10% if not broken within 8 s |
 | Spell added damage | `engine/gems.ts` `SPELL_ADDED_EFFECTIVENESS` | spells add your flat fire/cold/lightning damage at 70% |

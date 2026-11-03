@@ -220,6 +220,20 @@ export function removeFromBar(s: GameState, slot: number): void {
   s.account.gems.push(gem);
 }
 
+/** Spare level 1 skill gems the stash can clear: none with Expansion sockets or in a saved skill set. */
+export function clearableGems(s: GameState): SkillGemInstance[] {
+  const saved = new Set(s.loadouts.skills.flatMap((set) => set.slots.map((x) => x?.gem)));
+  return s.account.gems.filter((g) => g.level === 1 && !g.extraSlots && !saved.has(g.uid));
+}
+
+/** Throw away spare level 1 skill gems (the Gem shop sells them all). Their supports go back to the loose pile. */
+export function clearLevelOneGems(s: GameState): number {
+  const gone = clearableGems(s);
+  for (const gem of gone) gem.supports.forEach((_, socket) => unsocketSupport(s, gem.uid, socket));
+  s.account.gems = s.account.gems.filter((g) => !gone.includes(g));
+  return gone.length;
+}
+
 export function socketSupport(s: GameState, gemUid: number, supportUid: number, socket: number): string | null {
   const gem = findSkillGem(s, gemUid);
   if (!gem) return 'Gem not found';

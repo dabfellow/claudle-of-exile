@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import {
   activeGemDef,
   RULE_LABELS,
@@ -8,7 +8,6 @@ import {
   SUPPORT_GEMS,
   supportGemDef,
   TARGET_STATUSES,
-  type ActiveGemDef,
   type GemAttr,
   type RuleCondition,
   type SkillAim,
@@ -42,60 +41,12 @@ import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { EmptyState, PageHeader, ProgressBar, Tooltip } from '../components/common';
+import { GemFilters, GemKindChips, kindMatches, type GemKind } from '../components/GemFilters';
 import { GemIcon, GemTip, rulesLabel, ruleText, SupportTip } from '../components/GemView';
 import { Icon } from '../components/Icon';
 import { SkillSets } from '../components/Loadouts';
 
 export const SKILL_KEYS = ['Q', 'W', 'E', 'R', 'T', 'Y'];
-
-type GemKind = 'all' | 'attack' | 'spell' | 'area' | 'utility';
-const GEM_KINDS: { id: GemKind; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'attack', label: 'Attacks' },
-  { id: 'spell', label: 'Spells' },
-  { id: 'area', label: 'Area' },
-  { id: 'utility', label: 'Guards & buffs' },
-];
-const ATTRS: { id: GemAttr; label: string }[] = [
-  { id: 'str', label: 'Str' },
-  { id: 'dex', label: 'Dex' },
-  { id: 'int', label: 'Int' },
-];
-
-function kindMatches(def: ActiveGemDef, kind: GemKind): boolean {
-  if (kind === 'all') return true;
-  if (kind === 'utility') return def.role === 'guard' || def.role === 'buff' || def.role === 'curse' || def.role === 'sustain';
-  return def.tags.includes(kind);
-}
-
-/** Search box and attribute chips, plus whatever else a gem list filters by. */
-function GemFilters({
-  search,
-  setSearch,
-  attr,
-  setAttr,
-  children,
-}: {
-  search: string;
-  setSearch: (v: string) => void;
-  attr: GemAttr | null;
-  setAttr: (a: GemAttr | null) => void;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="gem-filters">
-      <input className="input gem-search" placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} />
-      <div className="gem-chips">
-        {ATTRS.map((a) => (
-          <button key={a.id} className={`gem-chip attr-${a.id} ${attr === a.id ? 'active' : ''}`} onClick={() => setAttr(attr === a.id ? null : a.id)}>
-            {a.label}
-          </button>
-        ))}
-      </div>
-      {children}
-    </div>
-  );
-}
 
 /** One rule slot. Locked rules stay in the list, greyed, so you can see what the War Table teaches. */
 function RuleSlot({ s, slot, index, rule, extra }: { s: GameState; slot: number; index: number; rule: TacticRule; extra: boolean }) {
@@ -498,7 +449,7 @@ function SlotModal({
         {choosing && (
           <>
             <div className="section-label">{gem ? 'Swap for' : 'Put a skill gem here'}</div>
-            {usable.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, and the Town's Gem shop sells them.</EmptyState>}
+            {usable.length === 0 && <EmptyState small>No spare skill gems. The Town's Gem shop sells them.</EmptyState>}
             <div className="gem-bag">
               {usable.map((g) => {
                 const reason = gemUseReason(d.combatLevel, d.attributes, g);
@@ -624,13 +575,7 @@ export function SkillGemsPage() {
           </div>
           {s.account.gems.length > 0 && (
             <GemFilters search={gemSearch} setSearch={setGemSearch} attr={gemAttr} setAttr={setGemAttr}>
-              <div className="gem-chips">
-                {GEM_KINDS.map((k) => (
-                  <button key={k.id} className={`gem-chip ${gemKind === k.id ? 'active' : ''}`} onClick={() => setGemKind(k.id)}>
-                    {k.label}
-                  </button>
-                ))}
-              </div>
+              <GemKindChips kind={gemKind} setKind={setGemKind} />
               <div className="gem-chips">
                 <button className={`gem-chip ${gemSort === 'level' ? 'active' : ''}`} onClick={() => setGemSort('level')}>
                   By level
@@ -641,7 +586,7 @@ export function SkillGemsPage() {
               </div>
             </GemFilters>
           )}
-          {s.account.gems.length === 0 && <EmptyState small>No spare skill gems. They drop from monsters, especially bosses.</EmptyState>}
+          {s.account.gems.length === 0 && <EmptyState small>No spare skill gems. Buy them at the Gem shop.</EmptyState>}
           {s.account.gems.length > 0 && gems.length === 0 && <div className="dim small">No gems match these filters.</div>}
           <div className="gem-bag">
             {gems.map((g) => (

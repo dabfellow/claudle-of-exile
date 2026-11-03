@@ -50,7 +50,7 @@ Upgrades unlock tiers. Gathering skills stay level-gated only.
 Costs are steep: tens of minutes of gathering for the first upgrade, hours for the last.
 
 ### Gems
-- Gem drops are very rare; the Gem shop is the main source.
+- Monsters don't drop gems (since 2026-11-02); the Gem shop is the source, with a few from Gemcutting.
 - Every skill and support gem has a character level requirement, so strong skills and supports come later. Gemcutting and the shop only offer gems you're allowed to use.
 
 

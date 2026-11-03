@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ACHIEVEMENTS } from '../src/data/achievements';
-import { bossTable, COMBAT_ONLY_CURRENCY, dropTable } from '../src/data/drops';
+import { areaCurrency, bossTable, COMBAT_ONLY_CURRENCY, dropTable } from '../src/data/drops';
+import { SUPPORT_GEMS } from '../src/data/gems';
 import { BENCH_CRAFTS } from '../src/data/hideout';
 import { ACTIONS, actionDef } from '../src/data/skills';
 import { ZONES, zoneDef } from '../src/data/zones';
@@ -8,6 +9,7 @@ import { checkAchievements } from '../src/engine/achievements';
 import { makeMonster } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { benchCraftReason, salvage } from '../src/engine/crafting';
+import { clearLevelOneGems, createSkillGem, createSupportGem } from '../src/engine/gems';
 import { createItem } from '../src/engine/items';
 import { rollLoot } from '../src/engine/loot';
 import { seeded } from '../src/engine/rng';
@@ -27,9 +29,12 @@ describe('drop tables', () => {
     expect(dropTable(1).currency.exalted).toBeUndefined();
     expect(dropTable(2).currency.chaos).toBeGreaterThan(0);
     expect(dropTable(3).currency.exalted).toBeGreaterThan(0);
-    expect(dropTable(4).currency.instill).toBeGreaterThan(0);
     // deeper areas roll more rares
     expect(dropTable(5).rarity.rare).toBeGreaterThan(dropTable(1).rarity.rare);
+  });
+
+  it('Instilling Orbs drop from Act 4 on, including its first area', () => {
+    for (const z of ZONES) expect(!!areaCurrency(z).instill, z.id).toBe(z.act >= 4);
   });
 
   it('no skilling action makes combat-only orbs', () => {
@@ -52,6 +57,34 @@ describe('drop tables', () => {
     const before = s.account.bank.transmute ?? 0;
     rollLoot(s, ctx(), makeMonster(z.boss, true, 1), z, deriveStats(s));
     expect((s.account.bank.transmute ?? 0) - before).toBeGreaterThanOrEqual(bossTable(1).guaranteed[0].qty);
+  });
+
+  it('monsters and bosses never drop gems', () => {
+    const s = veteran(fresh(), 60);
+    const z = zoneDef('giantsthrone');
+    const c = ctx(5);
+    for (let i = 0; i < 300; i++) rollLoot(s, c, makeMonster(z.boss, true, 1), z, deriveStats(s));
+    for (let i = 0; i < 3000; i++) rollLoot(s, c, makeMonster(z.monsters[0], false, 1), z, deriveStats(s));
+    expect(c.events.some((e) => e.t === 'loot' && (e.gemId || e.supportId))).toBe(false);
+  });
+});
+
+describe('clearing level 1 gems', () => {
+  it('keeps levelled gems, Expansion-socketed gems and saved skill sets, and frees socketed supports', () => {
+    const s = fresh();
+    const plain = createSkillGem(s, 'heavy_strike');
+    const levelled = { ...createSkillGem(s, 'heavy_strike'), level: 2 };
+    const expanded = { ...createSkillGem(s, 'heavy_strike'), extraSlots: 1 };
+    const saved = createSkillGem(s, 'heavy_strike');
+    const socketed = createSkillGem(s, 'heavy_strike');
+    const sup = createSupportGem(s, SUPPORT_GEMS[0].id);
+    socketed.supports[0] = sup;
+    s.account.gems = [plain, levelled, expanded, saved, socketed];
+    s.account.supportGems = [];
+    s.loadouts.skills = [{ id: 1, name: 'x', slots: [{ gem: saved.uid, supports: [], rules: [], priority: 'normal' }] } as never];
+    expect(clearLevelOneGems(s)).toBe(2);
+    expect(s.account.gems).toEqual([levelled, expanded, saved]);
+    expect(s.account.supportGems).toEqual([sup]);
   });
 });
 

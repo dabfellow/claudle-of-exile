@@ -58,13 +58,13 @@
       var list = [];
       function rebuild() {
         var a = data.areas[area.value], t = data.tiers[a.tier], b = data.bosses[a.tier], kept = what.value;
-        var sum = Object.keys(t.cur).reduce(function (n, k) { return n + t.cur[k]; }, 0);
+        var sum = Object.keys(a.cur).reduce(function (n, k) { return n + a.cur[k]; }, 0);
         var cur = function (r) { return t.cc * (1 + r / 300); }, uni = function (c) { return function (r) { return c * (1 + r / 100); }; };
         list = [['Any orb', cur], ['Any item', function () { return t.ic; }], ['A rare item', function (r) {
           var m = 1 + r / 100, w = t.rarity;
           return t.ic * (w.rare * m) / (w.normal + w.magic * m + w.rare * m);
-        }], ['Any flask', function () { return t.fc; }], ['Any gem', function () { return t.gc; }]];
-        Object.keys(t.cur).forEach(function (k) { if (t.cur[k]) list.push([k, function (r) { return cur(r) * t.cur[k] / sum; }]); });
+        }], ['Any flask', function () { return t.fc; }]];
+        Object.keys(a.cur).forEach(function (k) { if (a.cur[k]) list.push([k, function (r) { return cur(r) * a.cur[k] / sum; }]); });
         if (a.u.length) {
           list.push(['Any unique here', uni(t.uc)]);
           a.u.forEach(function (n) { list.push([n, function (r) { return uni(t.uc)(r) / a.u.length; }]); });

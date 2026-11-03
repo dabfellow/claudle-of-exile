@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { activeGemDef, supportGemDef } from '../../data/gems';
+import { activeGemDef, supportGemDef, type GemAttr } from '../../data/gems';
+import { supportReason } from '../../engine/gems';
+import { GemFilters, GemKindChips, kindMatches, nameHas, type GemKind } from '../components/GemFilters';
 import { currencyDef, MATERIALS } from '../../data/materials';
 import { flaskName, flaskValue, sellFlasks } from '../../engine/flasks';
 import { buyOffer, offerName, rerollCost, rerollVendor, sellItems, sellMaterial, stationLevel } from '../../engine/hideout';
@@ -47,7 +49,7 @@ const SHOPS: { id: ShopId; name: string; keeper: string; blurb: string; portrait
     id: 'gems',
     name: 'Gem shop',
     keeper: 'The Gemwright',
-    blurb: 'Skill and support gems, as many as your level allows. Gems rarely drop, so this is where most come from.',
+    blurb: "Skill and support gems, as many as your level allows. Monsters don't drop gems, so this is where they come from.",
     icon: 'gemcutting',
     shelves: [
       { label: 'Skill gems', match: (o) => o.kind === 'gem' },
@@ -160,6 +162,8 @@ function ShopTab({ s, shop }: { s: GameState; shop: (typeof SHOPS)[number] }) {
             “Come back when the tide brings more.”
           </EmptyState>
         </div>
+      ) : shop.id === 'gems' ? (
+        <GemStall s={s} wares={wares} gold={gold} />
       ) : (
         <div className="stall">
           {shop.shelves.map((shelf) => {
@@ -179,6 +183,57 @@ function ShopTab({ s, shop }: { s: GameState; shop: (typeof SHOPS)[number] }) {
         </div>
       )}
     </>
+  );
+}
+
+/** The Gem shop's wares: a tab each for skill and support gems, with the same filters as the Skills page. */
+function GemStall({ s, wares, gold }: { s: GameState; wares: VendorOffer[]; gold: number }) {
+  const [tab, setTab] = useState<'gem' | 'support'>('gem');
+  const [search, setSearch] = useState('');
+  const [attr, setAttr] = useState<GemAttr | null>(null);
+  const [kind, setKind] = useState<GemKind>('all');
+  const [fits, setFits] = useState(false);
+  const fitsBar = (supportId: string) => s.skillBar.some((b) => b && !supportReason(b, supportId));
+  const shelf = wares.filter((o) => o.kind === tab);
+  const goods = shelf.filter((o) => {
+    if (o.gemId) {
+      const def = activeGemDef(o.gemId);
+      return kindMatches(def, kind) && (!attr || def.attr === attr) && nameHas(def.name, search);
+    }
+    const def = supportGemDef(o.supportId!);
+    return (!attr || def.attr === attr) && (!fits || fitsBar(o.supportId!)) && nameHas(def.name, search);
+  });
+  return (
+    <div className="card">
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'gem', label: 'Skill gems', count: wares.filter((o) => o.kind === 'gem').length },
+          { id: 'support', label: 'Support gems', count: wares.filter((o) => o.kind === 'support').length },
+        ]}
+      />
+      <GemFilters search={search} setSearch={setSearch} attr={attr} setAttr={setAttr}>
+        {tab === 'gem' ? (
+          <GemKindChips kind={kind} setKind={setKind} />
+        ) : (
+          <div className="gem-chips">
+            <button className={`gem-chip ${fits ? 'active' : ''}`} onClick={() => setFits(!fits)} title="Only supports that fit a skill on your bar">
+              Fits my skills
+            </button>
+          </div>
+        )}
+      </GemFilters>
+      {shelf.length === 0 && <div className="dim small">None in stock right now.</div>}
+      {shelf.length > 0 && goods.length === 0 && <div className="dim small">No gems match these filters.</div>}
+      {goods.length > 0 && (
+        <div className="shelf-goods">
+          {goods.map((o) => (
+            <OfferCard key={o.id} s={s} o={o} gold={gold} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

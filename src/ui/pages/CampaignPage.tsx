@@ -1,6 +1,6 @@
 import { trialAt } from '../../engine/ascendancy';
 import { uniqueDef } from '../../data/bases';
-import { bossGatherMats, bossTable, dropTable } from '../../data/drops';
+import { areaCurrency, bossGatherMats, bossTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
 import { useState } from 'react';
 import { ACT_REGIONS, actMapPoint, actRegion, CONTINENT_SIZE, LABEL_LINE_HEIGHT, LABEL_SIDE, labelAnchor, labelLines, regionPath, regionViewBox, ZONE_POS, type ActRegion } from '../../data/continent';
@@ -25,9 +25,8 @@ function danger(s: GameState, z: ZoneDef): { label: string; cls: string } {
 
 /** The rarest orbs an area can drop, its uniques, and what its boss always gives. */
 function DropPreview({ z }: { z: ZoneDef }) {
-  const table = dropTable(z.tier);
   const boss = bossTable(z.tier);
-  const orbs = Object.entries(table.currency)
+  const orbs = Object.entries(areaCurrency(z))
     .sort((a, b) => a[1] - b[1])
     .slice(0, 4)
     .map(([id]) => id);

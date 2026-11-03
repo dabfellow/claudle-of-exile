@@ -12,7 +12,7 @@ import { ASCENDANCIES } from '../src/data/ascendancies';
 import { BASES, UNIQUES, WEAPON_FAMILIES, baseDef, attributeReq, type BaseDef, type UniqueDef } from '../src/data/bases';
 import { CLASSES } from '../src/data/classes';
 import { TRIALS } from '../src/data/ascendancies';
-import { BOSS_TABLES, DROP_TABLES, bossTable } from '../src/data/drops';
+import { BOSS_TABLES, DROP_TABLES, areaCurrency, bossTable } from '../src/data/drops';
 import { INSTILL_CONDITIONS } from '../src/data/flasks';
 import { ACTIVE_GEMS, MAX_GEM_LEVEL, MAX_SUPPORT_SLOTS, RULE_LABELS, RULE_UNLOCK_NAMES, SKILL_BAR_SLOTS, SUPPORT_GEMS, TARGET_STATUSES, activeGemDef, gemAct, gemReqLevel, gemWeapons, type ActiveGemDef, type RuleCondition, type RuleUnlock, type SupportGemDef } from '../src/data/gems';
 import { OFFLINE_HAUL_CAP, STATIONS, stationDef, type StationId } from '../src/data/hideout';
@@ -29,7 +29,6 @@ import {
 import { itemFigures } from '../src/engine/compare';
 import { ATTACK_PCT_PER_LEVEL, BURN_MS, BURN_SHARE, IGNITE_MS, IGNITE_SHARE, LIFE_RESERVE_PCT, SPELL_ADDED_EFFECTIVENESS, gemAttrReq, gemLevelReq, spellBaseAt, supportFits, weaponPctAt } from '../src/engine/gems';
 import { affixRangeText, createUnique, describeMod, spawnWeight } from '../src/engine/items';
-import { GEM_DROP_SCALE } from '../src/engine/loot';
 import type { GameState, Item } from '../src/engine/types';
 import { xpToReach } from '../src/engine/xp';
 import { CURRENCY_ART, GEM_GLYPHS, ITEM_ART, MONSTER_ART, UNIQUE_ART, ZONE_ART } from '../src/ui/assets';
@@ -798,11 +797,11 @@ function tool(name: string, data: unknown): string {
   return `<div class="tool" data-tool="${name}"></div><script type="application/json" id="tool-data">${json}</script><script src="${BASE_URL}tools.js" defer></script><noscript><p>This tool needs JavaScript.</p></noscript>`;
 }
 
-const ZONE_DROPS = () => OPEN_ZONES.map((z) => ({ n: z.name, act: z.act, tier: z.tier, u: z.uniques.flatMap((id) => UNIQUES.find((u) => u.id === id)?.name ?? []) }));
+const ZONE_DROPS = () => OPEN_ZONES.map((z) => ({ n: z.name, act: z.act, tier: z.tier, cur: Object.fromEntries(Object.entries(areaCurrency(z)).map(([id, w]) => [matName(id), w])), u:z.uniques.flatMap((id) => UNIQUES.find((u) => u.id === id)?.name ?? []) }));
 
 function dropTool() {
   const tiers = Object.fromEntries(Object.entries(DROP_TABLES).map(([k, t]) => [k, {
-    cc: t.currencyChance, cur: Object.fromEntries(Object.entries(t.currency).map(([id, w]) => [matName(id), w])), ic: t.itemChance, rarity: t.rarity, fc: t.flaskChance, gc: t.gemChance * GEM_DROP_SCALE, uc: t.uniqueChance,
+    cc: t.currencyChance, ic: t.itemChance, rarity: t.rarity, fc: t.flaskChance, uc: t.uniqueChance,
   }]));
   const bosses = Object.fromEntries(Object.entries(BOSS_TABLES).map(([k, t]) => [k, { uc: t.uniqueChance }]));
   return tool('drop', { areas: ZONE_DROPS(), tiers, bosses });

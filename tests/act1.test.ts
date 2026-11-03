@@ -198,16 +198,20 @@ describe('offline progress and bosses', { timeout: 20_000 }, () => {
     expect(sum.bossWaiting).toBe(zoneDef('mudflats').boss.name);
   });
 
+  // this bare character often dies to the boss, so one seed is a coin flip: across a few, it has to farm some
   it('farms bosses you have already beaten', () => {
-    const s = strong();
-    s.bossesDefeated = ['mudflats'];
-    s.account.automation.rules.push('windups');
-    s.settings.autoBoss = true;
-    const c = ctx();
-    startCombat(s, c, 'mudflats');
-    const before = s.lifetime.bossKills;
-    const sum = simulateOffline(s, c, 30 * 60_000);
-    expect(s.lifetime.bossKills).toBeGreaterThan(before);
-    expect(sum.bossWaiting).toBeNull();
+    let kills = 0;
+    for (let seed = 1; seed <= 5; seed++) {
+      const s = strong();
+      s.bossesDefeated = ['mudflats'];
+      s.account.automation.rules.push('windups');
+      s.settings.autoBoss = true;
+      const c = ctx(seed);
+      startCombat(s, c, 'mudflats');
+      const sum = simulateOffline(s, c, 30 * 60_000);
+      kills += s.lifetime.bossKills;
+      expect(sum.bossWaiting).toBeNull();
+    }
+    expect(kills).toBeGreaterThan(0);
   });
 });

@@ -444,6 +444,7 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Offline, a Warrior in starting gear dies to the Mud Flats boss on most seeds even at level 40, and about half at level 60 (seen 2026-11-02, same before and after that day's changes). Worth finding out what kills them: an overlevelled character farming Act 1 offline shouldn't die there.
 - Melee characters with spells on their bar lost them in 0.3.7 until they equip a caster weapon; worth a line in the player heads-up.
 - Any error while drawing a page blanks the whole game: there's no error screen to catch it. A tab still on an older version also goes blank if a gem it has never heard of reaches the shared account from a newer tab or device, until it's refreshed. Nothing tells an open tab that a new version is out.
 - When browser storage is full, a save throws an error instead of the "keep playing" handling meant for it. The game carries on, but the page can miss a refresh after buying a gem.
@@ -514,6 +515,9 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Gem shop has Skill gems / Support gems tabs and the Skills page's filters (search, attribute, skill type, Fits my skills); the filters live in `ui/components/GemFilters.tsx`. — done 2026-11-02
+- [x] Monsters and bosses no longer drop skill or support gems; the Gem shop sells them all. The Stash's Gems tab has a Clear all Lv 1 button (skips gems with Expansion sockets or in a saved skill set, and returns socketed supports). — done 2026-11-02
+- [x] Instilling Orbs drop only from Act 4 on, starting in the Hollow Pass (`areaCurrency` in `data/drops.ts`). The Expedition giant and the Iron Stomach achievement still give them earlier. — done 2026-11-02
 - [x] Class balance pass: cast times for every skill, single-target and area starter skills for every class, a bow for the Ranger, Rain of Daggers, Quick Slash and Rending Cut, faster melee, stronger Strength attacks and physical mods, new sword and mace bases, Hulking monsters, chain falloff, slower spell growth and weaker top caster mods; scenario mode for the sim. Mage Act 1 is still too slow (see Other open items). 0.3.11 — done 2026-11-02
 - [x] Versions go up once per release, not every change. Changes collect in `UPCOMING` in `src/data/news.ts` and become that release's news post. `/ship` holds off going live while other sessions are working, and saves the work for the next release. — done 2026-11-02
 - [x] Exiles on the Mage start get a Driftwood Wand instead of the Rusted Sword. 0.3.8 — done 2026-11-01

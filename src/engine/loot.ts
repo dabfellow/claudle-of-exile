@@ -1,42 +1,19 @@
 import { BOSS_CRAFT_MAT, CONTRABAND_DROP, ESSENCES, FOSSILS, SEAL, WAX } from '../data/craftMats';
 import { WHETSTONE, WHETSTONE_DROP } from '../data/expedition';
-import { BOSS_GATHER_DROP, bossGatherMats, bossTable, dropTable, STARTER_DROPS, type RarityWeights } from '../data/drops';
-import { ACTIVE_GEMS, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
+import { areaCurrency, BOSS_GATHER_DROP, bossGatherMats, bossTable, dropTable, STARTER_DROPS, type RarityWeights } from '../data/drops';
 import { MAP_ILVL } from '../data/hideout';
 import { RUNE_DROP, RUNES } from '../data/runes';
 import { rollFlask, stashFlask } from './flasks';
-import { createSkillGem, createSupportGem } from './gems';
 import type { ZoneDef } from '../data/zones';
 import { addBank } from './bank';
 import type { Ctx } from './context';
 import { benchBuilt } from './crafting';
 import { stationLevel } from './hideout';
-import { gemArrived } from './progress';
 import { dropItem } from './storage';
 import { createItem, createUnique, droppableBases, salvageValue } from './items';
 import { chance, pick, pickWeighted, rInt } from './rng';
 import type { Derived } from './stats';
 import type { GameState, Item, MonsterInstance, Rarity } from './types';
-
-/** 40% skill gem, 60% support gem. */
-/**
- * Gems are rare drops (the Town's Gem shop is the main source): these scale the drop tables' gem chances.
- * A gem only drops if its act has arrived and its level requirement is within the monster's level.
- */
-export const GEM_DROP_SCALE = 0.05;
-export const BOSS_GEM_DROP_SCALE = 0.25;
-
-export function dropGem(s: GameState, ctx: Ctx, maxLevel: number): void {
-  if (chance(ctx.rng, 0.4)) {
-    const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => gemReqLevel(g.id) <= maxLevel && gemArrived(s, g.id)));
-    s.account.gems.push(createSkillGem(s, def.id));
-    ctx.emit({ t: 'loot', gemId: def.id });
-  } else {
-    const def = pick(ctx.rng, SUPPORT_GEMS.filter((g) => gemReqLevel(g.id) <= maxLevel && gemArrived(s, g.id)));
-    s.account.supportGems.push(createSupportGem(s, def.id));
-    ctx.emit({ t: 'loot', supportId: def.id });
-  }
-}
 
 export function rollRarity(rng: Ctx['rng'], itemRarity: number, weights: RarityWeights): Rarity {
   const r = 1 + itemRarity / 100;
@@ -72,6 +49,7 @@ export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: Zon
 function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, d: Derived): void {
   const { rng } = ctx;
   const table = dropTable(zone.tier);
+  const orbs = areaCurrency(zone);
   const ilvl = mon.level + (zone.ilvlBonus ?? 0) + MAP_ILVL[stationLevel(s, 'map_device') - 1];
   const giveCurrency = (id: string, qty = 1) => {
     addBank(s, id, qty);
@@ -90,14 +68,13 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
     const boss = bossTable(zone.tier);
     const firstKill = !s.bossesDefeated.includes(zone.id);
     if (firstKill || chance(rng, boss.repeatChance)) for (const g of boss.guaranteed) giveCurrency(g.id, g.qty);
-    for (let i = 0; i < boss.currencyRolls; i++) giveCurrency(rollCurrency(rng, table.currency));
+    for (let i = 0; i < boss.currencyRolls; i++) giveCurrency(rollCurrency(rng, orbs));
     const count = rInt(rng, boss.items[0], boss.items[1]);
     for (let i = 0; i < count; i++) {
       const base = pick(rng, droppableBases(ilvl));
       placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, d.itemRarity, boss.rarity), rng));
     }
     if (chance(rng, boss.flaskChance)) dropFlask(s, ctx, ilvl);
-    if (chance(rng, boss.gemChance * BOSS_GEM_DROP_SCALE)) dropGem(s, ctx, mon.level);
     if (zone.uniques.length && chance(rng, boss.uniqueChance * (1 + d.itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, zone.uniques), ilvl));
     if (chance(rng, BOSS_CRAFT_MAT.chance)) {
       // Greater Essences only from the later Act 1 areas
@@ -114,13 +91,12 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
     placeItem(s, ctx, createItem(s, base.id, ilvl, 'normal', rng));
   } else if (starter) giveCurrency(starter.currency, starter.qty);
 
-  if (chance(rng, table.currencyChance * mon.scale * (1 + d.itemRarity / 300))) giveCurrency(rollCurrency(rng, table.currency));
+  if (chance(rng, table.currencyChance * mon.scale * (1 + d.itemRarity / 300))) giveCurrency(rollCurrency(rng, orbs));
   if (chance(rng, table.itemChance * mon.scale)) {
     const base = pick(rng, droppableBases(ilvl));
     placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, d.itemRarity, table.rarity), rng));
   }
   if (chance(rng, table.flaskChance * mon.scale)) dropFlask(s, ctx, ilvl);
-  if (chance(rng, table.gemChance * mon.scale * GEM_DROP_SCALE)) dropGem(s, ctx, mon.level);
   if (zone.uniques.length && chance(rng, table.uniqueChance * (1 + d.itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, zone.uniques), ilvl));
 }
 

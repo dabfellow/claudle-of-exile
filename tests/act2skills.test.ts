@@ -6,7 +6,6 @@ import { combatStep, CURSE_BOSS_EFFECT, makeMonster, monsterStatuses, skillIsAct
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem, createSupportGem, skillNumbers, supportFits } from '../src/engine/gems';
 import { refreshVendor } from '../src/engine/hideout';
-import { dropGem } from '../src/engine/loot';
 import { gemArrived, reachedAct } from '../src/engine/progress';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -78,23 +77,6 @@ describe('gems tied to acts', () => {
     expect(reachedAct(s)).toBe(2);
     expect(gemArrived(s, 'backstab')).toBe(true);
     expect(gemArrived(s, 'lacerate')).toBe(false);
-  });
-
-  it('a gem from a later act never drops, even for a high-level character', () => {
-    const s = veteran(newGame(1), 60);
-    const ctx = makeCtx(seeded(3));
-    for (let i = 0; i < 600; i++) dropGem(s, ctx, 60);
-    for (const g of s.account.gems) expect(gemAct(g.gemId), g.gemId).toBe(1);
-    for (const g of s.account.supportGems) expect(gemAct(g.supportId), g.supportId).toBe(1);
-  });
-
-  it('reaching Act 2 opens its batch to drops', () => {
-    const s = veteran(newGame(1), 60);
-    s.unlockedZones = ACT_2_ZONES;
-    const ctx = makeCtx(seeded(3));
-    for (let i = 0; i < 600; i++) dropGem(s, ctx, 60);
-    expect(s.account.gems.some((g) => BATCH.includes(g.gemId))).toBe(true);
-    expect(s.account.gems.some((g) => g.gemId === 'lacerate')).toBe(false);
   });
 
   it('the Gem shop stocks what has arrived, the newest act heaviest', () => {
