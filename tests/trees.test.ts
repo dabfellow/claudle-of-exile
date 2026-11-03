@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PASSIVE_BY_ID, PASSIVE_NODES, RIM_RADIUS } from '../src/data/passiveTree';
+import { EXILE_START, PASSIVE_BY_ID, PASSIVE_NODES, RIM_RADIUS } from '../src/data/passiveTree';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { actionDef } from '../src/data/skills';
 import { zoneDef } from '../src/data/zones';
@@ -48,7 +48,7 @@ function route(start: string, target: string): string[] {
 describe('character tree shape', () => {
   it('matches the agreed layout', () => {
     const count = (k: string) => PASSIVE_NODES.filter((n) => n.kind === k).length;
-    expect(count('start')).toBe(6);
+    expect(count('start')).toBe(7); // six classes and the Exile's centre
     expect(count('keystone')).toBe(21);
     expect(count('notable')).toBe(198);
     expect(count('mastery')).toBe(90);
@@ -88,6 +88,24 @@ describe('character tree shape', () => {
     expect(w.passives).toContain('duelists_edge_n');
     expect(r.passives).toContain('duelists_edge_n');
     expect(route('class_int', 'crossing_n0').length).toBeLessThanOrEqual(8);
+  });
+
+  it("lets an Exile start in the centre and walk through other classes' starts; everyone else stays blocked", () => {
+    const ex = newGame(1, { name: 'ex', classId: 'exile', startNode: EXILE_START });
+    expect(ex.character.startNode).toBe(EXILE_START);
+    expect(PASSIVE_BY_ID[EXILE_START]).toMatchObject({ x: 0, y: 0, kind: 'start' });
+    take(ex, ['crossing_str', 't_class_str_crossing_str_1', 'class_str', 'str_hub']);
+    expect(ex.passives).toContain('str_hub');
+    expect(allocateReason(ex, EXILE_START)).toBe('Invalid node');
+    // an Exile on a class's spot can also walk through a neighbour's start
+    const exr = newGame(1, { name: 'exr', classId: 'exile', startNode: 'class_dex' });
+    take(exr, ['t_class_dex_crossing_dex_1', 'crossing_dex', EXILE_START, 'crossing_str', 't_class_str_crossing_str_1', 'class_str', 'str_hub']);
+    // other classes can't take any start, the Exile's included
+    const w = newGame(1, { name: 'w', classId: 'warrior' });
+    take(w, ['t_class_str_crossing_str_1', 'crossing_str']);
+    expect(allocateReason(w, EXILE_START)).toBe('Invalid node');
+    take(w, ['crossing_n0', 'crossing_duelist', 't_class_strdex_crossing_duelist_1']);
+    expect(allocateReason(w, 'class_strdex')).toBe('Invalid node');
   });
 });
 

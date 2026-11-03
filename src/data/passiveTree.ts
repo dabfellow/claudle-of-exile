@@ -561,6 +561,9 @@ const FORBIDDEN: (KeystoneSpec & { id: string; angle: number })[] = [
   },
 ];
 
+/** The Exile's start in the middle of the Crossing (an Exile can also pick any class's start). */
+export const EXILE_START = 'class_exile';
+
 // ---------- building the graph ----------
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
@@ -660,6 +663,9 @@ function build(): PassiveNode[] {
     link(id, nid);
     link(nid, ringIds[(i + 1) % ringIds.length][0]);
   });
+  // the Exile's own start, dead centre, one step from each of the ring's crossings
+  add({ id: EXILE_START, name: 'Exile', kind: 'start', region: 'center', x: 0, y: 0 });
+  ringIds.forEach(([id]) => link(EXILE_START, id));
 
   const ports: Record<string, Record<string, string>> = {};
   for (const sec of SECTORS) {

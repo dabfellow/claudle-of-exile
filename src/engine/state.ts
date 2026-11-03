@@ -1,5 +1,6 @@
 import { classDef, startClass, type ClassId } from '../data/classes';
 import { flaskDef, FLASK_SLOTS } from '../data/flasks';
+import { EXILE_START } from '../data/passiveTree';
 import { freshAccount } from './account';
 import { addBank } from './bank';
 import { newAscendancyState } from './ascendancy';
@@ -51,7 +52,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
       id: who.id ?? newCharacterId(),
       name: who.name,
       classId: who.classId,
-      ...(who.classId === 'exile' && { startNode: startClass('exile', who.startNode).startNode }),
+      ...(who.classId === 'exile' && { startNode: who.startNode === EXILE_START ? EXILE_START : startClass('exile', who.startNode).startNode }),
       ...(who.challenge && challengeName(who.challenge) && { challenge: who.challenge }),
       createdAt: Date.now(),
     },

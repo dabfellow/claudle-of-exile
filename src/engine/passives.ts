@@ -51,7 +51,9 @@ export function treeAllocateReason(byId: Links, allocated: string[], start: stri
 
 export function allocateReason(s: GameState, id: string): string | null {
   const node = PASSIVE_BY_ID[id];
-  if (!node || node.kind === 'start') return 'Invalid node';
+  if (!node) return 'Invalid node';
+  // other classes' starts seal off their areas, except to an Exile, who can walk through them
+  if (node.kind === 'start' && (s.character.classId !== 'exile' || id === startNode(s))) return 'Invalid node';
   return treeAllocateReason(PASSIVE_BY_ID, s.passives, startNode(s), id, pointsLeft(s));
 }
 

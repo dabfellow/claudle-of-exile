@@ -154,7 +154,7 @@ export const CLASSES: ClassDef[] = [
     color: '#a39a8a',
     icon: 'name',
     tagline: 'Washed ashore with nothing.',
-    desc: "A challenge class. No mechanic, no class bonus, no armour. Start from any class's spot on the tree with only a Rusted Sword (a Driftwood Wand from the Mage's spot, a Short Bow from the Ranger's, a Whittled Dagger from the Shadow's) and that class's starter gems.",
+    desc: "A challenge class. No mechanic, no class bonus, no armour. Start in the middle of the tree or from any class's spot, free to path through every class's start, with only a Rusted Sword (a Driftwood Wand from the Mage's spot, a Short Bow from the Ranger's, a Whittled Dagger from the Shadow's) and that class's starter gems.",
     kit: { weapon: 'rusted_sword' },
     baseAttributes: { str: 10, dex: 10, int: 10 },
     bonus: {},
@@ -171,5 +171,6 @@ export function classDef(id: ClassId): ClassDef {
 /** The class whose tree start an Exile picked (or the class itself for everyone else). */
 export function startClass(id: ClassId, startNode?: string): ClassDef {
   if (id !== 'exile') return classDef(id);
+  // the centre start (EXILE_START) falls through to the Warrior's kit: Rusted Sword and its gems
   return CLASSES.find((c) => !c.challenge && c.startNode === startNode) ?? CLASSES[0];
 }

@@ -4,6 +4,7 @@ import { CLASSES, classDef, startClass, type ClassId } from '../../data/classes'
 import { baseDef } from '../../data/bases';
 import { activeGemDef } from '../../data/gems';
 import { NEWS } from '../../data/news';
+import { EXILE_START } from '../../data/passiveTree';
 import { GUIDE_NAME } from '../../data/tutorial';
 import { zoneDef } from '../../data/zones';
 import { challengeName } from '../../engine/challenge';
@@ -567,7 +568,7 @@ export function FallenScreen() {
 export function CharacterCreate() {
   useGame();
   const [classId, setClassId] = useState<ClassId>('warrior');
-  const [exileStart, setExileStart] = useState('class_str');
+  const [exileStart, setExileStart] = useState(EXILE_START);
   const [challenge, setChallenge] = useState<ChallengeFlags>({});
   const [name, setName] = useState('');
   const trimmed = name.trim();
@@ -667,6 +668,13 @@ export function CharacterCreate() {
             Start on the passive tree as
           </div>
           <div className="row wrap" style={{ gap: 8 }}>
+            <button
+              className={`btn sm ${exileStart === EXILE_START ? 'primary' : ''}`}
+              title={`Starter gems: ${startClass('exile', EXILE_START).starterGems.map((g) => activeGemDef(g).name).join(', ')}`}
+              onClick={() => setExileStart(EXILE_START)}
+            >
+              Centre
+            </button>
             {CLASSES.filter((c) => !c.challenge).map((c) => (
               <button
                 key={c.id}
@@ -679,7 +687,10 @@ export function CharacterCreate() {
             ))}
           </div>
           <div className="dim small" style={{ marginTop: 6 }}>
-            You begin at the {startClass('exile', exileStart).name}'s tree start with their two starter gems. Your character's skills start fresh.
+            {exileStart === EXILE_START
+              ? `You begin in the middle of the tree with the ${startClass('exile', exileStart).name}'s starter gems.`
+              : `You begin at the ${startClass('exile', exileStart).name}'s tree start with their starter gems.`}{' '}
+            Other classes' starts don't block an Exile, so you can path into any class's area. Your character's skills start fresh.
           </div>
         </div>
       )}

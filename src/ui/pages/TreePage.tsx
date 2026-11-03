@@ -332,7 +332,7 @@ function BaseShape({ kind, color, on, can, mine = true }: { kind: string; color:
       );
     case 'start':
     case 'core':
-      return <circle className="body" r={24} style={{ ...style, fill: mine ? `color-mix(in srgb, ${color} 40%, #1c1f28)` : '#15171c', opacity: mine ? 1 : 0.35 }} />;
+      return <circle className="body" r={24} style={{ ...style, fill: mine ? `color-mix(in srgb, ${color} 40%, #1c1f28)` : on ? fill : '#15171c', opacity: mine || on || can ? 1 : 0.35 }} />;
     case 'travel':
       return <circle className="body" r={8} style={style} />;
     default:
@@ -344,7 +344,8 @@ function BaseShape({ kind, color, on, can, mine = true }: { kind: string; color:
 
 function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
   const allocated = s.passives.includes(n.id);
-  if (n.kind === 'start') {
+  // an Exile can walk through other classes' starts, so those get the normal node tip
+  if (n.kind === 'start' && (n.id === startNode(s) || s.character.classId !== 'exile')) {
     return <div className="tip">{n.id === startNode(s) ? `${n.name} start — your starting point` : `${n.name} start (another class)`}</div>;
   }
   const reason = allocated ? refundReason(s, n.id) : allocateReason(s, n.id);
@@ -490,7 +491,8 @@ const CHAR_LABELS: CanvasLabel[] = [
     const a = (c.angle * Math.PI) / 180;
     return { text: c.name.toUpperCase(), x: Math.round(2120 * Math.cos(a)), y: Math.round(2120 * Math.sin(a)), color: REGION_COLOR[c.key], size: 64 };
   }),
-  { text: 'CROSSING', x: 0, y: 0, color: REGION_COLOR.center, size: 30 },
+  // just above the Exile's centre start, inside the ring
+  { text: 'CROSSING', x: 0, y: -110, color: REGION_COLOR.center, size: 30 },
 ];
 
 /** names under notables, keystones and class starts once zoomed in */
@@ -517,7 +519,7 @@ function CharacterTree({ s }: { s: GameState }) {
   const totals = describeStats(Object.fromEntries(Object.entries(passiveStats(s.passives, s.masteries)).filter(([, v]) => v)));
 
   const click = (n: PassiveNode) => {
-    if (n.kind === 'start') return;
+    if (n.kind === 'start' && (n.id === myStart || s.character.classId !== 'exile')) return;
     if (n.kind === 'mastery' && (allocated.has(n.id) || canTake(n.id))) return setPicker(n);
     if (allocated.has(n.id)) game.act((st, ctx) => refund(st, ctx, n.id));
     else game.act((st, ctx) => allocate(st, ctx, n.id));
