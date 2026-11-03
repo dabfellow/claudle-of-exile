@@ -1,5 +1,5 @@
 import { stationDef } from '../../data/hideout';
-import { MAP_THEMES, MAP_TIERS, mapZoneId } from '../../data/maps';
+import { MAP_DROPS, MAP_THEMES, MAP_TIERS, mapZoneId } from '../../data/maps';
 import { actOpen, zoneDef } from '../../data/zones';
 import { bossesOffline } from '../../engine/automation';
 import { retreat } from '../../engine/combat';
@@ -32,10 +32,18 @@ function MapPreview({ go }: { go: (p: Page) => void }) {
           </div>
         </div>
       )}
+      {!MAP_TIERS.some((tier) => MAP_THEMES.some((theme) => mapsHeld(s, tier.tier, theme.id) > 0)) && (
+        <div className="card">
+          <EmptyState icon={<GameIcon name="map" size={32} color="var(--dim)" />} title="No maps">
+            Maps drop from monsters in level {MAP_DROPS.campaignMinLevel} areas and up, and from map runs.
+          </EmptyState>
+        </div>
+      )}
       {MAP_TIERS.flatMap((tier) =>
         MAP_THEMES.map((theme) => {
           const held = mapsHeld(s, tier.tier, theme.id);
           const zone = zoneDef(mapZoneId(tier.tier, theme.id));
+          if (held <= 0 && run?.zoneId !== zone.id) return null;
           return (
             <div className="card" key={zone.id}>
               <b>{theme.name}</b> <span className="muted">· Tier {tier.tier} · level {tier.level} · {tier.packs} packs, then {zone.boss.name}</span>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mapZoneId } from '../src/data/maps';
+import { MAP_TIERS, mapZoneId } from '../src/data/maps';
 import { bossIsNext } from '../src/engine/combat';
 import { makeCtx, type Ctx } from '../src/engine/context';
 import type { ClassId } from '../src/data/classes';
@@ -66,7 +66,8 @@ describe('maps offline', { timeout: 60_000 }, () => {
   const kitted = (classId: ClassId = 'warrior', seed = 1) => {
     const s = newGame(seed, { name: 'T', classId });
     s.tutorial.done = true;
-    devKit(s, makeCtx(seeded(seed)), 42);
+    // the Map Device's dev kit margin: no passives spent, so it sits well above the tier
+    devKit(s, makeCtx(seeded(seed)), MAP_TIERS[0].level + 14);
     return s;
   };
 

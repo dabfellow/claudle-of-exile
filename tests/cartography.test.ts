@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_BY_ID, ACHIEVEMENTS } from '../src/data/achievements';
-import { CARTOGRAPHY_GATE, CHART_MATERIALS, FOLIO_COST, FOLIO_SIZE, MASTER_UPGRADE_MAPS, UPGRADE_MAPS } from '../src/data/cartography';
+import { CARTOGRAPHY_GATE, CHART_MATERIALS, CHART_TIERS, FOLIO_COST, FOLIO_SIZE, MASTER_UPGRADE_MAPS, UPGRADE_MAPS } from '../src/data/cartography';
 import { MAP_DROPS, MAP_THEMES, MAP_TIERS, mapZoneId } from '../src/data/maps';
 import { actionDef, actionsFor, SKILLS, UPCOMING_SKILLS } from '../src/data/skills';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
@@ -86,9 +86,11 @@ describe('the skill', () => {
     }
   });
 
-  it('has a recipe for every tier and theme of map', () => {
+  // Cartography draws the first tiers only until its rework (docs/design/MAPS.md); the rest come from map runs
+  it('has a recipe for every theme of each tier it draws, and every tier it draws is a real map', () => {
     const made = actionsFor('cartography').filter((a) => a.chart);
-    for (const tier of MAP_TIERS) {
+    for (const tier of CHART_TIERS) {
+      expect(MAP_TIERS.some((t) => t.tier === tier.tier)).toBe(true);
       for (const theme of MAP_THEMES) {
         expect(made.some((a) => a.chart!.tier === tier.tier && a.chart!.theme === theme.id)).toBe(true);
       }
@@ -173,7 +175,7 @@ describe('the tree', () => {
       const s = veteran(newGame(1));
       if (node) s.skillPassives.push(node);
       const c = ctx();
-      const mon = { level: 40, isBoss: false } as MonsterInstance;
+      const mon = { level: MAP_DROPS.campaignMinLevel, isBoss: false } as MonsterInstance;
       for (let i = 0; i < 20000; i++) rollMapDrops(s, c, mon);
       return mapsHeld(s, 1, 'barrows') + mapsHeld(s, 1, 'stormvault');
     };

@@ -219,6 +219,31 @@ export const BOSS_TABLES: Record<number, BossTable> = {
   17: { currencyRolls: 6, guaranteed: [{ id: 'exalted', qty: 3 }, { id: 'divine', qty: 4 }], repeatChance: 0.025, items: [5, 5], rarity: { normal: 0, magic: 20, rare: 80 }, flaskChance: 0.3, uniqueChance: 0.22 },
 };
 
+/** The top drop table tier: Maps (data/maps.ts) run 18 to 27. */
+export const TOP_DROP_TIER = 27;
+
+// Maps carry on Act 6's curve one step a tier: more currency and more rares, with normal items fading out.
+for (let tier = 18; tier <= TOP_DROP_TIER; tier++) {
+  const n = tier - 17;
+  DROP_TABLES[tier] = {
+    currencyChance: 0.1 + 0.005 * n,
+    currency: { ...BASIC, regal: 20 + n, alchemy: 20 + n, chaos: 18 + n, annul: 5 + 0.3 * n, exalted: 1 + 0.05 * n, divine: 2 + 0.1 * n, expansion: 2 + 0.1 * n, instill: 5 + 0.3 * n },
+    itemChance: 0.23 + 0.005 * n,
+    rarity: { normal: 30 - 2 * n, magic: 36, rare: 34 + 2 * n },
+    flaskChance: 0.017,
+    uniqueChance: 0.0022 + 0.0001 * n,
+  };
+  BOSS_TABLES[tier] = {
+    currencyRolls: 6 + Math.floor(n / 4),
+    guaranteed: [{ id: 'exalted', qty: 3 + Math.floor(n / 3) }, { id: 'divine', qty: 4 + Math.floor(n / 3) }],
+    repeatChance: 0.025,
+    items: [5, n >= 5 ? 6 : 5],
+    rarity: { normal: 0, magic: 20 - n, rare: 80 + n },
+    flaskChance: 0.3,
+    uniqueChance: 0.22 + 0.01 * n,
+  };
+}
+
 export function dropTable(tier: number): DropTable {
   return DROP_TABLES[tier] ?? DROP_TABLES[7];
 }

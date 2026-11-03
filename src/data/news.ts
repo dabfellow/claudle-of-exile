@@ -10,7 +10,10 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Maps now run Tier 1 to Tier 10, from monster level 66 up to 84, with better loot each tier. Maps you already hold keep their tier at the new level.',
+  'Maps only drop in level 60 areas and up, and the Map Device lists just the maps you hold.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

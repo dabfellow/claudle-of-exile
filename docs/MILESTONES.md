@@ -110,6 +110,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 ### 8. Maps
 - Planned in [MAPS.md](design/MAPS.md): 10 plain tiers, no themes, general loot by level, Sextants, an Atlas tree, Cartography reworked.
 - [ ] Plain tiers and the real Map Device page
+  - Levels done 2026-11-02: 10 tiers at monster level 66–84, drop tables 18–27, item level bonus 14, map drops from level 60 areas. Themes, the shared supply, the area boss and Last King map drops, the save migration and the real page are still to do. Cartography still draws only Tiers 1–3.
 - [ ] Sextants
 - [ ] Atlas tree
 - [ ] Cartography rework

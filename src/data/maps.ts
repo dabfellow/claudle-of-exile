@@ -1,7 +1,7 @@
 import { EXTRA_ZONES, zoneDef, type MonsterDef, type ZoneDef } from './zones';
 
 /**
- * The Maps preview (docs/MILESTONES.md milestone 5): one tier, two themes, every number a knob. A map is a ZoneDef that
+ * The Maps preview (docs/MILESTONES.md milestone 5): ten tiers, two themes, every number a knob. A map is a ZoneDef that
  * isn't on the campaign road, so combat runs it like any area; engine/maps.ts holds what a run adds on top.
  */
 
@@ -37,11 +37,25 @@ export interface MapTheme {
   drawWith: Record<string, number>;
 }
 
+/**
+ * docs/design/MAPS.md: Tier 1 picks up from the Last King at 66 and each tier is two levels on, to 84. Drop tables carry
+ * on from Act 6's 17. Life and damage scales are placeholders until Maps are tuned.
+ */
 export const MAP_TIERS: MapTier[] = [
-  { tier: 1, level: 28, packs: 6, dropTier: 7, lifeScale: 0.35, dmgScale: 0.5 },
-  { tier: 2, level: 31, packs: 7, dropTier: 8, lifeScale: 0.42, dmgScale: 0.58 },
-  { tier: 3, level: 34, packs: 8, dropTier: 9, lifeScale: 0.5, dmgScale: 0.66 },
+  { tier: 1, level: 66, packs: 6, dropTier: 18, lifeScale: 1, dmgScale: 1 },
+  { tier: 2, level: 68, packs: 7, dropTier: 19, lifeScale: 1.05, dmgScale: 1.03 },
+  { tier: 3, level: 70, packs: 8, dropTier: 20, lifeScale: 1.1, dmgScale: 1.06 },
+  { tier: 4, level: 72, packs: 8, dropTier: 21, lifeScale: 1.15, dmgScale: 1.09 },
+  { tier: 5, level: 74, packs: 9, dropTier: 22, lifeScale: 1.2, dmgScale: 1.12 },
+  { tier: 6, level: 76, packs: 9, dropTier: 23, lifeScale: 1.25, dmgScale: 1.15 },
+  { tier: 7, level: 78, packs: 10, dropTier: 24, lifeScale: 1.3, dmgScale: 1.18 },
+  { tier: 8, level: 80, packs: 10, dropTier: 25, lifeScale: 1.35, dmgScale: 1.21 },
+  { tier: 9, level: 82, packs: 11, dropTier: 26, lifeScale: 1.4, dmgScale: 1.24 },
+  { tier: 10, level: 84, packs: 12, dropTier: 27, lifeScale: 1.45, dmgScale: 1.27 },
 ];
+
+/** Act 6's item level bonus, kept so map drops roll higher than the campaign's. */
+const MAP_ILVL_BONUS = 14;
 
 export const MAP_THEMES: MapTheme[] = [
   {
@@ -67,7 +81,7 @@ export const MAP_DROPS = {
   campaignKill: 0.004,
   campaignBoss: 0.1,
   /** campaign monsters below this level never drop maps */
-  campaignMinLevel: 24,
+  campaignMinLevel: 60,
   /** chance a map found in a run is one tier higher, so the top tiers never need Cartography */
   tierUp: 0.15,
 };
@@ -113,6 +127,7 @@ function mapZone(tier: MapTier, theme: MapTheme): ZoneDef {
     desc: theme.desc,
     art: area.id,
     tier: tier.dropTier,
+    ilvlBonus: MAP_ILVL_BONUS,
     levelRange: [tier.level, tier.level + 1],
     monsters: area.monsters.map((m) => scaled(m, tier, tier.level)),
     boss: { ...scaled(area.boss, tier, tier.level + 1), name: theme.bossName },

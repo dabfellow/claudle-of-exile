@@ -23,7 +23,7 @@ export function MapCaseBoard() {
         </div>
         <ul className="ingredients">
           {MAP_TIERS.flatMap((tier) =>
-            MAP_THEMES.map((theme) => (
+            MAP_THEMES.filter((theme) => tier.tier <= 3 || mapsHeld(s, tier.tier, theme.id) > 0).map((theme) => (
               <li key={`${tier.tier}-${theme.id}`}>
                 <GameIcon name="map" size={13} />
                 <span className="ing-name">Tier {tier.tier} {theme.name}</span>
