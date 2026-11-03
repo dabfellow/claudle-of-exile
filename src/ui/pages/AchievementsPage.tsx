@@ -62,7 +62,7 @@ function AchievementCard({ s, a }: { s: GameState; a: AchievementDef }) {
             </span>
           ))}
           {a.unique && (
-            <span className="io-item" style={{ color: 'var(--unique)' }} title="Unique item: never drops, can't be traded">
+            <span className="io-item" style={{ color: 'var(--unique)' }} title="Templar unique amulet: never drops, can't be traded">
               {uniqueDef(a.unique).name}
             </span>
           )}

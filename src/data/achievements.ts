@@ -90,8 +90,8 @@ const ALL: AchievementDef[] = [
     target: zonesInAct(6).length, progress: (s) => bossesBeatenIn(s, 6), reward: { exalted: 3 },
   },
   {
-    id: 'act_6_deathless', name: 'Unbroken', desc: 'Complete Act 6 without dying once in it', category: 'combat', act: 6,
-    target: 1, progress: (s) => L(s).act6Deathless ?? 0, unique: 'unbroken_temper',
+    id: 'act_6_deathless', name: 'Unbroken', desc: 'Complete all six acts without ever dying', category: 'combat', act: 6,
+    target: 1, progress: (s) => (L(s).act6Deathless || (L(s).deaths === 0 && s.bossesDefeated.includes('shatteredthrone')) ? 1 : 0), unique: 'unbroken_temper',
   },
   {
     id: 'deathless', name: 'Untouchable', desc: 'Reach level 10 without dying', category: 'combat',

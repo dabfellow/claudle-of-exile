@@ -518,7 +518,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
-- [x] Unbroken achievement: complete Act 6 with no death since the first fight there (`lifetime.act6StartDeaths`), rewards The Unbroken Temper, a no-trade Templar unique amulet (Fervor and holy nova healing) that never drops. Achievements can now hand over a unique (`unique` on the def). Characters already past Act 6 can't earn it retroactively. — done 2026-11-02
+- [x] Unbroken achievement: complete all six acts without ever dying on the character (was Act 6 only in 0.3.19), rewards The Unbroken Temper, a no-trade Templar unique amulet (Fervor and holy nova healing) that never drops. Achievements can now hand over a unique (`unique` on the def). Characters already past Act 6 with no deaths earn it on load. — done 2026-11-02
 - [x] Exile centre start: an Exile can start at a new node in the middle of the Crossing (`EXILE_START`, the default pick, with the Rusted Sword and Warrior gems), and can take other classes' start nodes like any other node to path into their areas. Every other class is still blocked by them, the centre one included. 0.3.17 — done 2026-11-02
 - [x] Uniques tab in the Stash: a fixed spot for every unique, by the act that first drops it, with unlimited room (`account.uniqueStash`); stashed uniques file there by themselves, old ones move off gear pages on load, and unfound ones show greyed with their drop areas (`account.uniquesSeen`). A copy saved by an older version (an old tab or device) can't empty the tab when merged. — done 2026-11-02
 - [x] Retreating to the Hideout (or abandoning a map) refills every flask on the belt. Dying doesn't. — done 2026-11-02

@@ -1326,9 +1326,9 @@ export const UNIQUES: UniqueDef[] = [
     ],
   },
 
-  // ---------- reward for the Unbroken achievement (Act 6 with no deaths): never drops, can't be traded ----------
+  // ---------- reward for the Unbroken achievement (all six acts without ever dying): never drops, can't be traded ----------
   {
-    id: 'unbroken_temper', name: 'The Unbroken Temper', baseId: 'onyx_amulet', flavour: 'Six acts of wounds and prayers, and not once did it break.', noTrade: true,
+    id: 'unbroken_temper', name: 'The Unbroken Temper', baseId: 'onyx_amulet', flavour: 'From the first shore to the Last King, every wound was a prayer, and not one was the last.', noTrade: true,
     mods: [
       { affixId: 'flat_life', values: [90] },
       { affixId: 'all_res', values: [15] },

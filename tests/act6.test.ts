@@ -500,12 +500,11 @@ describe('the ending', () => {
   });
 });
 
-describe('Unbroken: Act 6 with no deaths', () => {
-  /** Walk into Act 6, maybe die along the way, then fell the Last King. */
-  function kingFalls(diedOnTheWay: boolean): GameState {
+describe('Unbroken: all six acts without ever dying', () => {
+  /** Fell the Last King, having died this many times on the way. */
+  function kingFalls(deaths: number): GameState {
     const s = fighter([['heavy_strike', PLAIN]]);
-    startCombat(s, ctx(), 'exilesgate');
-    if (diedOnTheWay) s.lifetime.deaths += 1;
+    s.lifetime.deaths = deaths;
     const { boss, c } = bossFight(s, 'shatteredthrone');
     boss.mechanics = [];
     boss.chained = undefined;
@@ -518,18 +517,37 @@ describe('Unbroken: Act 6 with no deaths', () => {
     return s;
   }
 
-  it('hands over The Unbroken Temper when the king falls with no death in Act 6', () => {
-    const s = kingFalls(false);
+  it('hands over The Unbroken Temper when the king falls to a character that has never died', () => {
+    const s = kingFalls(0);
     expect(s.achievements).toContain('act_6_deathless');
     expect(s.inventory.some((i) => i.uniqueId === 'unbroken_temper')).toBe(true);
     expect(uniqueDef('unbroken_temper').noTrade).toBe(true);
   });
 
-  it('a death in Act 6 rules it out, but deaths before it do not', () => {
-    expect(kingFalls(true).achievements).not.toContain('act_6_deathless');
+  it('any death on the character rules it out', () => {
+    const s = kingFalls(1);
+    expect(s.achievements).not.toContain('act_6_deathless');
+    expect(s.inventory.some((i) => i.uniqueId === 'unbroken_temper')).toBe(false);
+  });
+});
+
+describe('Unbroken for characters already past Act 6', () => {
+  it('a character that beat the Last King before 0.3.19 and has never died earns it on load', () => {
     const s = fighter([]);
-    s.lifetime.deaths = 5;
-    startCombat(s, ctx(), 'exilesgate');
-    expect(s.lifetime.act6StartDeaths).toBe(5);
+    s.bossesDefeated.push('shatteredthrone');
+    const c = ctx();
+    checkAchievements(s, c);
+    expect(s.achievements).toContain('act_6_deathless');
+    expect(s.inventory.filter((i) => i.uniqueId === 'unbroken_temper')).toHaveLength(1);
+    checkAchievements(s, c);
+    expect(s.inventory.filter((i) => i.uniqueId === 'unbroken_temper')).toHaveLength(1);
+  });
+
+  it('one that has died does not', () => {
+    const s = fighter([]);
+    s.bossesDefeated.push('shatteredthrone');
+    s.lifetime.deaths = 1;
+    checkAchievements(s, ctx());
+    expect(s.achievements).not.toContain('act_6_deathless');
   });
 });

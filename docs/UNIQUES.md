@@ -109,4 +109,4 @@ Generated from the game data; run `npm run uniques` after changing a unique, ins
 | Unique | Slot | Base (req. level) | Mods | Drops in |
 | --- | --- | --- | --- | --- |
 | **The Old Covenant**<br>*Given to those who were here before the tide turned.* | ring | Iron Ring (1) | 3% of Damage Leeched as Life<br>2% of Damage Leeched as Mana | — |
-| **The Unbroken Temper**<br>*Six acts of wounds and prayers, and not once did it break.* | amulet | Onyx Amulet (24) | +90 to maximum Life<br>+15% to all Elemental Resistances<br>Regenerate 1% of Life per second<br>25% faster Fervor<br>30% increased holy nova healing | — |
+| **The Unbroken Temper**<br>*From the first shore to the Last King, every wound was a prayer, and not one was the last.* | amulet | Onyx Amulet (24) | +90 to maximum Life<br>+15% to all Elemental Resistances<br>Regenerate 1% of Life per second<br>25% faster Fervor<br>30% increased holy nova healing | — |
