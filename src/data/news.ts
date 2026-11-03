@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  "Exiles can start in the middle of the passive tree, and other classes' starting spots no longer block an Exile, so it can path into any class's area.",
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.3.17',
+    date: '2 Nov 2026',
+    title: 'Exile centre start',
+    items: [
+      "Exiles can start in the middle of the passive tree, and other classes' starting spots no longer block an Exile, so it can path into any class's area.",
+    ],
+  },
   {
     version: '0.3.16',
     date: '2 Nov 2026',
