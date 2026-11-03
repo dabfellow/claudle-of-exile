@@ -11,7 +11,7 @@ Last updated 2026-11-02.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.17 (deployed 2026-11-02: the Exile's centre start, with other classes' starts no longer blocking an Exile; 0.3.16 the same day brought the Stash's Uniques tab; 0.3.15 the same day made retreating to the Hideout refill flasks, and 0.3.14 brought Low Mana, Savage Hit, Elemental Hit and Chaos Hit flask enchantments and the Amethyst Flask; 0.3.13 the same day made the Gem shop a fixed shelf of every gem from the areas you've opened; 0.3.12 brought Instilling Orbs from Act 4, no gem drops, Clear all Lv 1 gems and Gem shop tabs and filters), with the rebuilt player wiki, The Exile's Codex, at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
+**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.18 (deployed 2026-11-02: map tiers 1 to 10 at monster level 66 to 84; 0.3.17 the same day brought the Exile's centre start, with other classes' starts no longer blocking an Exile; 0.3.16 the same day brought the Stash's Uniques tab; 0.3.15 the same day made retreating to the Hideout refill flasks, and 0.3.14 brought Low Mana, Savage Hit, Elemental Hit and Chaos Hit flask enchantments and the Amethyst Flask; 0.3.13 the same day made the Gem shop a fixed shelf of every gem from the areas you've opened; 0.3.12 brought Instilling Orbs from Act 4, no gem drops, Clear all Lv 1 gems and Gem shop tabs and filters), with the rebuilt player wiki, The Exile's Codex, at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
 test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
 stay as they are, with no playtest planned, until you say otherwise.
 
@@ -110,7 +110,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 ### 8. Maps
 - Planned in [MAPS.md](design/MAPS.md): 10 plain tiers, no themes, general loot by level, Sextants, an Atlas tree, Cartography reworked.
 - [ ] Plain tiers and the real Map Device page
-  - Levels done 2026-11-02: 10 tiers at monster level 66–84, drop tables 18–27, item level bonus 14, map drops from level 60 areas. Themes, the shared supply, the area boss and Last King map drops, the save migration and the real page are still to do. Cartography still draws only Tiers 1–3.
+  - Levels done and live in 0.3.18, 2026-11-02: 10 tiers at monster level 66–84, drop tables 18–27, item level bonus 14, map drops from level 60 areas. Themes, the shared supply, the area boss and Last King map drops, the save migration and the real page are still to do. Cartography still draws only Tiers 1–3.
 - [ ] Sextants
 - [ ] Atlas tree
 - [ ] Cartography rework
