@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Unbroken now asks for more: complete all six acts without ever dying on the character, not just Act 6. Characters that already did it get the achievement and The Unbroken Temper when they log in.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.3.20',
+    date: '2 Nov 2026',
+    title: 'Truly Unbroken',
+    items: [
+      'Unbroken now asks for more: complete all six acts without ever dying on the character, not just Act 6. Characters that already did it get the achievement and The Unbroken Temper when they log in.',
+    ],
+  },
   {
     version: '0.3.19',
     date: '2 Nov 2026',
