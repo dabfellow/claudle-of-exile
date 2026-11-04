@@ -49,14 +49,30 @@ numbers are placeholders from the preview.
 Each run borrows a random campaign act's monsters, art and boss mechanics, so runs still look different. That's only
 looks and danger, not loot.
 
+### Tier identity
+
+Each tier group has a permanent mod baked into every map of that group, and exclusive loot that doesn't appear below it.
+No artificial gates: a strong-enough build can always run a higher tier, but the permanent mod is a genuine gear check.
+
+| Tier group | Permanent mod | First exclusive |
+|---|---|---|
+| T1–2 | None | General loot only |
+| T3–4 | **Elite packs** — 2 of the run's packs are elite (4× life, 1.5× damage, 3× XP, 60% more drops) | First place Chaos Orbs reliably drop |
+| T5–6 | **Twin boss** — the boss spawns a lieutenant at 60% stats; they share a life pool | First tier-locked unique pool (T5–6 uniques) |
+| T7–8 | **Dangerous ground** — unholy, burning or frozen ground covers part of the arena during the boss fight | Second tier-locked unique pool (T7–8 uniques); first place Regal Orbs drop |
+| T9 | **Enraged** — all monsters start enraged (30% faster, 40% more damage, can't be un-enraged) | First place Exalted Orbs drop |
+| T10 | **Pinnacle** — elite packs + twin boss + enraged, all three at once | Best Divine Orb rates outside Doomed Maps; T10-exclusive unique pool; Doomed Maps can drop here (once the Atlas unlock is active) |
+
+Tier-locked uniques only drop in that tier group and above. Their identities are settled when the pools are built.
+
 ## Loot
 
-There are no themed loot pools. Maps use the same general drop tables as everywhere else, weighted by level: low areas drop
-mostly white and magic items with basic orbs, and high ones drop mostly rares, some chaos, the odd divine, and plenty of
-other currency. `DROP_TABLES` already works this way, by tier, so Maps add tiers 18 and up on the same curve.
+Maps use the same general drop tables as everywhere else, weighted by level: low areas drop mostly white and magic items
+with basic orbs, and high ones drop mostly rares, some chaos, the odd divine, and plenty of other currency. `DROP_TABLES`
+already works this way, by tier, so Maps add tiers 18 and up on the same curve.
 
-Two things to settle while building:
-- **Uniques:** areas list their own today, and map runs list none. Maps get a general pool by level, so any unique can drop.
+- **Uniques:** maps get a general pool by level, so any campaign unique can drop, plus the tier-locked unique pools defined in
+  Tier identity above. Identities for those pools are settled when the pools are built.
 - **Gear:** Act 6's boss already reaches level 80 bases, so map tiers can't rely on new bases. Their gain has to come from
   rarity, more drops and the top affix tiers.
 
@@ -115,15 +131,78 @@ stash. That resolves the `s.maps` note in [MILESTONES.md](../MILESTONES.md).
 - **Collection log:** it can list map tiers and mods in place of themes.
 - **Saves:** any themed maps a player already holds fold into plain maps of the same tier, with a save migration.
 
+## Doomed Maps
+
+Five map items beyond the regular tiers, each substantially harder than the last. They drop rarely from Tier 8–10 runs, but
+only once the Atlas tree unlock is active (~20 Atlas points). They have their own supply, separate from regular maps.
+
+| Map | Monster level | Packs | Mods rolled |
+|---|---|---|---|
+| Doomed I | 86 | 14 | 2 |
+| Doomed II | 88 | 15 | 2–3 |
+| Doomed III | 90 | 15 | 3 |
+| Doomed IV | 92 | 16 | 3–4 |
+| Doomed V | 94 | 16 | 4 |
+
+### The Doomed mod pool
+
+Doomed mods use new mechanics that don't exist in the Sextant pool — they change how the run works, not just the numbers:
+
+| Mod | Effect |
+|---|---|
+| Pre-assembled adds | The area boss arrives with 3 adds already summoned |
+| Revenant packs | Monsters in every third pack revive once at 30% life when killed |
+| Drained belts | Flasks are not refilled at the start of the run |
+| Unending enrage | The boss enrages permanently at 75% life (normally enrage is temporary) |
+| Hulking surge | Every fourth pack is a Hulking pack |
+| Searing aftermath | The arena floor ignites for 4 seconds after each pack is cleared |
+| Warded threshold | The boss gains a 6-second damage immunity ward when it first drops below 60% life |
+
+### Doomed Map rewards
+
+- **The best source of top-end currency.** Doomed Maps have 3–4× the Divine Orb and Exalted Orb drop rate of T10. Running them is how players fund top crafts.
+- **Fractured Orbs.** A new currency that only drops in Doomed Maps. Its exact use is settled in Milestone 10 (placeholder: locks one mod on a rare item while the rest are rerolled). Players stockpile them for when crafting needs them.
+- **Uber Boss keys.** On boss kill: a chance to drop one of three Uber Keys. Higher Doomed tiers have a better chance.
+
+| Doomed tier | Key drop chance |
+|---|---|
+| Doomed I | 10% |
+| Doomed II | 15% |
+| Doomed III | 20% |
+| Doomed IV | 25% |
+| Doomed V | 35% |
+
+Each key run drops one of the three Uber Keys (Uber Key I, II, or III) at random, weighted equally.
+
+## Uber Bosses
+
+Three bosses above the Milestone 9 hard mode bosses. Keys drop from any Doomed Map boss; run from the Map Device. A key
+is consumed when the fight starts, win or lose. Full mechanics are designed when they're built; what's settled here is their
+identity, level and reward type.
+
+| Boss | Level | Identity |
+|---|---|---|
+| The First Exile | ~90 | Mirrors your build — uses the same skill types and adapts to your rule patterns. No fixed moment to exploit; reading the fight is the skill |
+| The Architect of Ruin | ~93 | The force behind all six acts' disasters. Cycles through each act boss's mechanic in sequence, each phase harder than the original |
+| The Void Sovereign | ~96 | Introduces chaos as an active damage type. Immune to hits unless a buildup mechanic is triggered, then briefly vulnerable for a burst window |
+
+### Chase gear
+
+Each Uber Boss drops:
+- **1–2 build-defining uniques** that don't drop anywhere else. Their effects are designed alongside the bosses.
+- **Doom Sigils** — a crafting material used in Milestone 10 top-end crafting for past-the-limit mods.
+
 ## Build order
 
-1. **Plain tiers.** Ten tiers, themes removed, random act look per run, shared supply, map drops from level 60, the Last King's top-up, save migration, and drop tables 18 and up.
+1. **Plain tiers with identity.** Ten tiers, themes removed, random act look per run, shared supply, permanent mod per tier group, map drops from level 60, the Last King's top-up, save migration, and drop tables 18 and up.
 2. **Device page.** The real Map Device page replaces the preview, and the preview flag goes.
 3. **Sextants.** Slots, mods, tiers, and offline use.
-4. **Atlas tree.** Points, the four wings, and the page.
-5. **Cartography rework.** Plain maps and Sextant recipes.
-6. **Key and unique hunting.** Mods only, as the keys arrive with Milestone 9.
+4. **Atlas tree.** Points, the four wings, the Doomed Maps unlock node, and the page.
+5. **Tier-exclusive drops.** Chaos/Regal/Exalt/Divine scaling by tier, and the tier-locked unique pools.
+6. **Doomed Maps.** Five item types, Doomed mod pool, Fractured Orb drops, key drops from bosses, offline support.
+7. **Cartography rework.** Plain maps and Sextant recipes.
+8. **Uber Bosses.** Three bosses, three key types, chase uniques and Doom Sigils.
 
-Steps 1 and 2 go first because they fix what players reach today. Steps 3, 4 and 5 can then run side by side.
+Steps 1 and 2 go first because they fix what players reach today. Steps 3–5 can run side by side. Steps 6–8 are Milestone 9+.
 
-**Done:** a character can farm from Tier 1 to Tier 10, with Sextants and the Atlas, with auto-run working offline.
+**Done:** a character can farm from Tier 1 to Tier 10, through Doomed Maps to Uber Bosses, with Sextants and the Atlas, and auto-run working offline.

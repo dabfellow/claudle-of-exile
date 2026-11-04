@@ -106,17 +106,19 @@ you say otherwise.
 - **Done:** Acts 4–6 are live and playable through.
 
 ### 8. Maps
-- Planned in [MAPS.md](design/MAPS.md): 10 plain tiers, no themes, general loot by level, Sextants, an Atlas tree, Cartography reworked.
-- [ ] Plain tiers and the real Map Device page
-  - Levels done and live in 0.3.18, 2026-11-02: 10 tiers at monster level 66–84, drop tables 18–27, item level bonus 14, map drops from level 60 areas. Themes, the shared supply, the area boss and Last King map drops, the save migration and the real page are still to do. Cartography still draws only Tiers 1–3.
+- Planned in [MAPS.md](design/MAPS.md): 10 tiers with identity (permanent mod per group + tier-exclusive drops), Sextants, an Atlas tree, Cartography reworked, and Doomed Maps + Uber Bosses as the endgame layer beyond T10.
+- [ ] Plain tiers with identity and the real Map Device page
+  - Levels done and live in 0.3.18, 2026-11-02: 10 tiers at monster level 66–84, drop tables 18–27, item level bonus 14, map drops from level 60 areas. Themes, the shared supply, the area boss and Last King map drops, the save migration, the real page, and the permanent mods + exclusive drops per tier are still to do. Cartography still draws only Tiers 1–3.
 - [ ] Sextants
-- [ ] Atlas tree
+- [ ] Atlas tree (including the ~20-point Doomed Maps unlock node)
+- [ ] Tier-exclusive drops: Chaos/Regal/Exalt/Divine scaling by tier, and tier-locked unique pools
 - [ ] Cartography rework
-- [ ] Key and unique hunting mods
-- **Done:** a character can farm from Tier 1 to Tier 10, with Sextants and the Atlas, with auto-run working offline.
+- [ ] Doomed Maps: five item types (Doomed I–V, monster level 86–94), the Doomed mod pool, Fractured Orb drops, Uber Key drops from bosses, offline support
+- [ ] Uber Bosses: The First Exile (~90), The Architect of Ruin (~93), The Void Sovereign (~96); three key types; chase uniques and Doom Sigils; designed when built
+- **Done:** a character can farm from Tier 1 to Tier 10, through Doomed Maps to Uber Bosses, with Sextants and the Atlas, and auto-run working offline.
 
 ### 9. Hard mode bosses
-- New bosses, boss keys from drops and skilling, boss moments for manual play and a reactive-rule answer for idle
+- Five bosses: Ossuar, Mother Vael, The Undertow, The Twin Regents, The Crownless. Keys from Sextant hunting mods.
   ([HARD_BOSSES.md](design/HARD_BOSSES.md)).
 - Rules need to be able to aim, and to tell a slam from a channel.
 - **Done:** a top-end character clears them on idle without dying, and the sim can test that.
@@ -152,6 +154,11 @@ target times and players set the acts' pace: 1–20 about 3 h, 20–40 about 3 h
 outlevel the campaign ([BALANCE.md](design/BALANCE.md) → Knobs).
 
 **Day 1 benchmark (you, 2026-11-02):** a hard nonstop day 1 should end around the end of Act 6, like reaching Maps on day 1 in PoE. The sim's `--nonstop --days 1` run checks it. The old day 1 / week 1 targets came from sim bots that didn't use the tree or upgrade weapons.
+
+**Maps rework (design pass, 2026-11-03):** maps were too bland and easy. The new design, in [MAPS.md](design/MAPS.md):
+- **Tier identity (you):** each tier group has a permanent baked-in mod and tier-exclusive drops. No artificial gates — a strong build can always try a higher tier, but the mod is a real gear check. T1–2 baseline; T3–4 elite packs; T5–6 twin boss; T7–8 dangerous ground; T9 enraged; T10 all three. Tier-locked unique pools and escalating currency from Chaos through Divines by tier group.
+- **Doomed Maps (you):** five separate map items (Doomed I–V, monster level 86–94) that drop from T8–10 once an Atlas tree node (~20 points) is active. Each rolls a random number of mods (2–4, more on higher tiers) from a pool of new mechanics — pre-assembled boss adds, revenant packs, drained belts, searing aftermath, etc. — that don't exist in the Sextant pool. Best source of Divine and Exalted Orbs. Also drop Fractured Orbs (a new Doomed-exclusive currency; exact use settled in Milestone 10). Boss kills have a 10–35% chance of an Uber Key.
+- **Uber Bosses (you):** two separate tiers of bosses. The five hard mode bosses (Milestone 9, Sextant keys) stay. Three Uber Bosses above them reached via Uber Keys from Doomed Map bosses: The First Exile (~90), The Architect of Ruin (~93), The Void Sovereign (~96). Three key types; keys drop from any Doomed Map boss, higher tier better chance. Chase loot: 1–2 build-defining uniques per boss (don't drop anywhere else) plus Doom Sigils (Milestone 10 past-the-limit crafting material). Full mechanics designed when built.
 
 **Every skill takes time (you, 2026-11-02):** like PoE, no skill is instant. Spells that were instant fired on top of the turn for free, which is why the Mage was so far ahead. Spark and Frost Needle are now spammable main skills with no cooldown, like Twin Strike, and Faster Casts fits any spell that deals damage.
 
@@ -336,6 +343,8 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 
 ## Other open items
 
+- [x] Make defences and gear progression matter: PoE-style magic/rare monsters and monster modifiers, with more rewards; a much larger, slot-specific item affix pool so Chaos Orbs are less deterministic. — done 2026-11-03
+
 - [ ] Mage is far ahead early: players report level 60 in a day while other classes take days to reach Act 3. Sims agree: Mage clears Act 1 in about 2h nonstop against 5-17h for the rest. The cause: Spark, Frost Needle and Shock Nova took no time to cast, so all three fired every turn on top of everything else.
   - [x] Every skill takes time (see Decisions). Mage's Act 1 lead drops from about 4x to under 1.5x in the scenario sim. — done 2026-11-02
   - [x] Sim bot fills its six slots by job (single target, clear, guard, buff, curse, one for the fight), weighs skills by how much of a pack they hit, and switches weapons for a skill it owns. Exile only runs when named. — done 2026-11-02
@@ -512,6 +521,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Cosmetics shop (never pay-to-win).
 
 ## Done
+- [x] Magic packs and rare monsters: rarity-scaled life, damage, XP and loot; 12 visible monster mods including regeneration, leech, resistances, anti-AoE and elemental threats. Added 21 rollable gear affixes, including boots-only movement speed, Chaos resistance and focused melee, projectile, minion, sustain, guard and flask pools. — done 2026-11-03
 - [x] Rule files for other AI assistants: `AGENTS.md` (GPT, Codex and most others), `GEMINI.md` and `.github/copilot-instructions.md`, so they stop bumping the version on every change and add changelog lines to `UPCOMING`. — done 2026-11-03
 - [x] Unbroken achievement: complete all six acts without ever dying on the character (was Act 6 only in 0.3.19), rewards The Unbroken Temper, a no-trade Templar unique amulet (Fervor and holy nova healing) that never drops. Achievements can now hand over a unique (`unique` on the def). Characters already past Act 6 with no deaths earn it on load. — done 2026-11-02
 - [x] Exile centre start: an Exile can start at a new node in the middle of the Crossing (`EXILE_START`, the default pick, with the Rusted Sword and Warrior gems), and can take other classes' start nodes like any other node to path into their areas. Every other class is still blocked by them, the centre one included. 0.3.17 — done 2026-11-02

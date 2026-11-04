@@ -2,6 +2,8 @@
 
 > **2026-11-01:** map themes were dropped ([MAPS.md](MAPS.md)). Where this page says a key drops from themed maps, read a Sextant hunting mod instead.
 
+> **2026-11-03:** a second boss tier (Uber Bosses) was added above these five, reached via Doomed Map keys. The five bosses here are Milestone 9; Uber Bosses are Milestone 9+. See [MAPS.md](MAPS.md) → Uber Bosses.
+
 Draft, 2026-10-30, for you to make the calls early. Built in [MILESTONES.md](../MILESTONES.md) milestone 9. Levels, names and
 unique effects are starting suggestions. Rule types are described loosely, because Milestone 1 is finalising them now.
 
