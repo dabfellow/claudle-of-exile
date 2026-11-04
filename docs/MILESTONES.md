@@ -11,20 +11,18 @@ Last updated 2026-11-03.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.20 (deployed 2026-11-02: Unbroken now asks for all six acts without ever dying, and credits characters that already did it; 0.3.19 the same day brought the Unbroken achievement and The Unbroken Temper; 0.3.18 the same day brought map tiers 1 to 10 at monster level 66 to 84; 0.3.17 the same day brought the Exile's centre start, with other classes' starts no longer blocking an Exile; 0.3.16 the same day brought the Stash's Uniques tab; 0.3.15 the same day made retreating to the Hideout refill flasks, and 0.3.14 brought Low Mana, Savage Hit, Elemental Hit and Chaos Hit flask enchantments and the Amethyst Flask; 0.3.13 the same day made the Gem shop a fixed shelf of every gem from the areas you've opened; 0.3.12 brought Instilling Orbs from Act 4, no gem drops, Clear all Lv 1 gems and Gem shop tabs and filters), with the rebuilt player wiki, The Exile's Codex, at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account
-test and player heads-up were skipped, so do both now. Act 1's cold check and Scorched earth's danger
-stay as they are, with no playtest planned, until you say otherwise.
+**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.20 (deployed 2026-11-02: Unbroken now asks for all six acts without ever dying, and credits characters that already did it; 0.3.19 the same day brought the Unbroken achievement and The Unbroken Temper; 0.3.18 the same day brought map tiers 1 to 10 at monster level 66 to 84; 0.3.17 the same day brought the Exile's centre start, with other classes' starts no longer blocking an Exile; 0.3.16 the same day brought the Stash's Uniques tab; 0.3.15 the same day made retreating to the Hideout refill flasks, and 0.3.14 brought Low Mana, Savage Hit, Elemental Hit and Chaos Hit flask enchantments and the Amethyst Flask; 0.3.13 the same day made the Gem shop a fixed shelf of every gem from the areas you've opened; 0.3.12 brought Instilling Orbs from Act 4, no gem drops, Clear all Lv 1 gems and Gem shop tabs and filters), with the rebuilt player wiki, The Exile's Codex, at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account test is done; the player heads-up is still to
+send. Act 1's cold check and Scorched earth's danger stay as they are, with no playtest planned, until
+you say otherwise.
 
 **In order:**
 
 1. **Claude:** build the real Maps (Milestone 8) from [MAPS.md](design/MAPS.md). Beating Act 6 opens the bare Maps preview page, and drawn maps can't be spent yet.
-2. **[You]** Test on a real account: sign up, log in, password reset, and demo carryover through email, Google and
-   Discord. Moving guests to an account and demo adoption have only had unit tests.
-3. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
+2. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
    they earn them, and Act 1 got slower. Also say that six gems moved in 0.3.3 and can lock until their new level.
-4. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
+3. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
    hideout scenes ([ASSET_MAPPING.md](design/ASSET_MAPPING.md)).
-5. **[You]** Play the Maps preview whenever you like, and say whether the loop is fun. Maps stay post-Act 6 in the real
+4. **[You]** Play the Maps preview whenever you like, and say whether the loop is fun. Maps stay post-Act 6 in the real
    game; the preview is dev and admin only. Try it with `npm run dev`, then Map Device → Dev tools.
 
 ## Milestones
@@ -33,7 +31,7 @@ stay as they are, with no playtest planned, until you say otherwise.
 |---|---|---|---|
 | 1 | Automation and offline rules | **Done**, live | – |
 | 2 | Measure the pacing | **Done**, live | – |
-| 3 | Account layer | Live, not tested on real accounts | Real-account test |
+| 3 | Account layer | **Done**, live | – |
 | 4 | Act recipe and Act 2 | **In progress**: pieces merged | Act 1 cold check |
 | 5 | Maps preview | Built, dev only | You playing it |
 | 6 | Act 3 and ascendancies | **Done**, live; not simmed or played through | – |
@@ -65,8 +63,8 @@ stay as they are, with no playtest planned, until you say otherwise.
 - [x] Exile unlocked by finishing the campaign.
 - [x] Deploy — done 2026-10-31
 - [x] Every Stash tab shared across the realm, not just gear — done 2026-11-01
-- [ ] Test on a real account.
-- [ ] Leave the reserved `account` rows out of the Admin stats query ([SETUP.md](ops/SETUP.md)).
+- [x] Test on a real account.
+- [x] Leave the reserved `account` rows out of the Admin stats query ([SETUP.md](ops/SETUP.md)).
 - **Done:** a second character starts with the account's unlocks, its own skills and access to the shared stash.
 - Merged 2026-10-31, save v21.
 
@@ -503,19 +501,15 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
   - Warrior missed Act 1 in 14 h on 2 of 3 seeds (33–54 DPS vs 50–100 for others).
   - Ranger and Duelist ran 10–13 h on some seeds.
   - Bot now crafts worn gear with basic orbs but still ends with 200–350k gold and 300–460 Chaos.
-- Revisit Sanctum chaos farming (85–155 per 14 h) when Act 2 lands.
 - Art comes from asset packs: a final visual pass (area cards, combat screen, phone widths), swapping any loose matches in [ASSET_MAPPING.md](design/ASSET_MAPPING.md) as better pieces turn up.
-- Bot only enters an area within a level of its minimum, so the sim can't tell whether players could push Act 2 earlier.
 - Skilling band Lv 20–40 for Act 2 (Mithril / Yew / Emberroot) isn't built; gathering nodes stop at the Storm Cliffs.
 - Chill now always slows attacks 15% (was 0% without `chillOnHit`); watch whether chilled ground is too strong.
 - Clarity cuts every skill's mana cost, not just spells; split out a spell-only stat if that matters.
-- Ascendancy classes — and decide whether they twist the class mechanic or add something separate.
 - Skilling bands above Lv 20 (Act 2+), including Chaos / Regal recipes — [SKILLING_REWORK.md](design/SKILLING_REWORK.md).
 - Gemcutting "Prisms" as its force material.
 - Mastery per action (Melvor-style), once higher skilling bands exist.
 - Loot / sell filter rules (post-launch, GDD §7).
 - Cosmetics shop (never pay-to-win).
-- Acts 3–6 and Maps.
 
 ## Done
 - [x] Rule files for other AI assistants: `AGENTS.md` (GPT, Codex and most others), `GEMINI.md` and `.github/copilot-instructions.md`, so they stop bumping the version on every change and add changelog lines to `UPCOMING`. — done 2026-11-03
