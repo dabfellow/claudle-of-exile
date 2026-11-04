@@ -1,5 +1,7 @@
 # Project instructions
 
+Other AI assistants (GPT, Gemini, Copilot) read [AGENTS.md](AGENTS.md), [GEMINI.md](GEMINI.md) and [.github/copilot-instructions.md](.github/copilot-instructions.md) instead of this file. When a rule here changes, change it there too.
+
 ## Version number
 
 The version in `package.json` shows under the title in the game's sidebar, so you can tell a refresh picked up the latest build. It goes up once per release, in the `/ship` skill's release step. Don't bump it in ordinary commits.

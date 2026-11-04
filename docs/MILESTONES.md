@@ -4,7 +4,7 @@ The one place for what's next, what's planned, what's been decided and what's be
 not Claude. **Done** on a milestone is what has to be true before moving on. The order is by dependency: pacing rules
 first, because every act is tuned against them.
 
-Last updated 2026-11-02.
+Last updated 2026-11-03.
 
 **On this page:** [Next steps](#next-steps) · [Milestones](#milestones) · [Decisions](#decisions) ·
 [Other open items](#other-open-items) · [Ideas / later](#ideas--later) · [Done](#done)
@@ -518,6 +518,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Acts 3–6 and Maps.
 
 ## Done
+- [x] Rule files for other AI assistants: `AGENTS.md` (GPT, Codex and most others), `GEMINI.md` and `.github/copilot-instructions.md`, so they stop bumping the version on every change and add changelog lines to `UPCOMING`. — done 2026-11-03
 - [x] Unbroken achievement: complete all six acts without ever dying on the character (was Act 6 only in 0.3.19), rewards The Unbroken Temper, a no-trade Templar unique amulet (Fervor and holy nova healing) that never drops. Achievements can now hand over a unique (`unique` on the def). Characters already past Act 6 with no deaths earn it on load. — done 2026-11-02
 - [x] Exile centre start: an Exile can start at a new node in the middle of the Crossing (`EXILE_START`, the default pick, with the Rusted Sword and Warrior gems), and can take other classes' start nodes like any other node to path into their areas. Every other class is still blocked by them, the centre one included. 0.3.17 — done 2026-11-02
 - [x] Uniques tab in the Stash: a fixed spot for every unique, by the act that first drops it, with unlimited room (`account.uniqueStash`); stashed uniques file there by themselves, old ones move off gear pages on load, and unfound ones show greyed with their drop areas (`account.uniquesSeen`). A copy saved by an older version (an old tab or device) can't empty the tab when merged. — done 2026-11-02
