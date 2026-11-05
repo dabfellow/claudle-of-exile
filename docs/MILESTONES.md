@@ -15,9 +15,9 @@ Last updated 2026-11-05.
 send. Act 1's cold check and Scorched earth's danger stay as they are, with no playtest planned, until
 you say otherwise.
 
-**Latest release:** 0.4.1, Flexible Gems, deployed 2026-11-04. Ordinary skill gems now reach 155 attributes at level
-20 instead of 245, and the most demanding gems reach 178 instead of 318, preserving meaningful off-attribute
-investment without consuming an entire build.
+**Latest release:** 0.4.2, Smarter Foundations, deployed 2026-11-05. Essential survival automation is baseline,
+hideout upgrades use smoother refined-component costs, combat has automatic range postures and smarter Mana use,
+and the interface is clearer across phones and common desktop resolutions.
 
 **In order:**
 
@@ -543,6 +543,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Cosmetics shop (never pay-to-win).
 
 ## Done
+- [x] 0.4.2 Smarter Foundations deployed successfully. — live 2026-11-05
 - [x] Combat-flow pass: spend-based Mana is Power, Evasion-linked Momentum with flat protected losses, Arcane Dust Field Tinkering for campaign gear, Brawler/Kiter/Cautious range postures, and 1.5-second higher-priority Mana reservation. — done 2026-11-05
 - [x] Automation and hideout-cost overhaul: Vitals, Wind-up and Ground rules plus two condition slots are baseline; recovery flasks self-trigger; later War Table levels grant Status, Aim, a third slot and rarity-by-rarity auto-salvage. Six refining recipes turn logs and ore into planks and bars, bosses award trophies, and every station now has a much smoother component-based cost curve. — done 2026-11-05
 - [x] Mobile and mid-resolution readability pass: larger base UI typography, earlier feed collapse (≤1280), denser 720p shell spacing, and phone nav labels shown (not icon-only), so pages stay legible on phones and 720p/1280p/1440p screens. — done 2026-11-05
