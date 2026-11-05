@@ -46,16 +46,15 @@ export function gemLevelReq(gemId: string, level: number): number {
 export const GEM_ATTR_NAME: Record<GemAttr, string> = { str: 'Strength', dex: 'Dexterity', int: 'Intelligence' };
 
 /**
- * A skill gem needs its own attribute, more as it levels: 8 at gem level 1, 119 at 10, 245 at 20 (3 per
- * character level a level 1 gem needs there). That sits between a main attribute (~5 a level) and an off one
- * (~1–2.5 a level), so every class can use any gem at level 1, but an off-attribute skill stops levelling
- * unless the build invests in that attribute. `gemAttrMult` asks extra of the strongest gems.
+ * A skill gem needs its own attribute, more as it levels: 8 at gem level 1, 77 at 10 and 155 at 20.
+ * This leaves room for an off-attribute gem when the build invests in travel attributes or gear without
+ * making its requirement consume the entire build. `gemAttrMult` lifts the strongest gems to 178 at level 20.
  */
-export const GEM_ATTR_PER_LEVEL = 3;
+export const GEM_ATTR_MAX_REQ = 155;
 
 export function gemAttrReq(gemId: string, level: number): number {
-  const charLevel = 1 + ((GEM_MAX_LEVEL_REQ - 1) * (Math.max(1, level) - 1)) / (MAX_GEM_LEVEL - 1);
-  return Math.floor((8 + GEM_ATTR_PER_LEVEL * (charLevel - 1)) * gemAttrMult(gemId));
+  const progress = (Math.max(1, Math.min(MAX_GEM_LEVEL, level)) - 1) / (MAX_GEM_LEVEL - 1);
+  return Math.floor((8 + (GEM_ATTR_MAX_REQ - 8) * progress) * gemAttrMult(gemId));
 }
 
 /** Why you can't use this skill gem right now (character level, then attribute), or null. */

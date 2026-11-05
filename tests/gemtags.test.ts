@@ -52,9 +52,13 @@ describe('gem requirements', () => {
     expect(gemLevelReq('lacerate', 10)).toBeGreaterThan(gemLevelReq('heavy_strike', 10));
   });
 
-  it('strong gems ask more of their attribute', () => {
+  it('keeps gem requirements restrictive without consuming an entire build', () => {
+    expect(gemAttrReq('heavy_strike', 1)).toBe(8);
+    expect(gemAttrReq('heavy_strike', 10)).toBe(77);
+    expect(gemAttrReq('heavy_strike', 20)).toBe(155);
     expect(gemAttrReq('backstab', 5)).toBeGreaterThan(gemAttrReq('feint', 5));
-    expect(gemAttrReq('heavy_strike', 20)).toBeGreaterThan(200);
+    expect(gemAttrReq('backstab', 10)).toBe(89);
+    expect(gemAttrReq('backstab', 20)).toBe(178);
   });
 
   it("a gem above the character's level can't be used, and a loaded save drops it back without losing xp", () => {

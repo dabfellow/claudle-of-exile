@@ -348,6 +348,8 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 
 ## Other open items
 
+- [x] Recalculate skill-gem attribute requirements so off-attribute gems still demand travel or gear without ordinary level-20 gems requiring 245 attributes. — done 2026-11-04
+
 - [x] Rebuild the character passive tree around compact clusters: keep attributes on shorter travel roads, remove filler inside clusters, put meaningful choices every few points and document the tree's design rules. — done 2026-11-04
 
 - [x] Overhaul the character and ascendancy trees: remove class-only mechanic beelines from the character tree; give each ascendancy six notable paths and two capstones with a normal nine-point three-notable/one-capstone build but no hard node-count limit; remove Act locks; add the fourth trial at Tier 5 Maps. — done 2026-11-04
@@ -531,6 +533,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Cosmetics shop (never pay-to-win).
 
 ## Done
+- [x] Gem attribute requirements now scale from 8 to 155 instead of 245; demanding gems use ×1.15 and reach 178 instead of ×1.3 and 318. Off-attribute gems still require passive-tree or gear investment. — done 2026-11-04
 - [x] Compact passive-tree pass: travel nodes fell from 423 to 249 while retaining their attribute role; lines, forks and wheels lost repeated small passives but kept all 198 notables, 90 masteries and 21 keystones. The new design contract records regional overlaps, route-package balancing and future item-based tree bending. Save v36 refunds the changed character tree. — done 2026-11-04
 - [x] Skill tree overhaul: the outer character-tree paths are build-neutral; class-mechanic choices moved into both of their class's ascendancies; each ascendancy has six notable paths and two capstones, all visible after Trial 1. Four trials award 2/2/3/2 points, ending at Tier 5 Maps with nine points for a normal three-notable/one-capstone build and no hard node-count ceiling. Save v35 refunds both trees for clean respecs. — done 2026-11-04
 - [x] Magic packs and rare monsters: rarity-scaled life, damage, XP and loot; 12 visible monster mods including regeneration, leech, resistances, anti-AoE and elemental threats. Added 21 rollable gear affixes, including boots-only movement speed, Chaos resistance and focused melee, projectile, minion, sustain, guard and flask pools. — done 2026-11-03

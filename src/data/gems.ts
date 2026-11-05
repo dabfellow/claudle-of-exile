@@ -1238,14 +1238,14 @@ export function gemAct(id: string): number {
  * (engine/gems.ts `gemAttrReq`), so they need a build that commits to them.
  */
 const GEM_ATTR_MULTS: Record<string, number> = {
-  lacerate: 1.3,
-  backstab: 1.3,
-  worldbreaker: 1.3,
-  last_legion: 1.3,
-  death_warrant: 1.3,
-  gale_of_knives: 1.3,
-  royal_decree: 1.3,
-  eye_of_the_storm: 1.3,
+  lacerate: 1.15,
+  backstab: 1.15,
+  worldbreaker: 1.15,
+  last_legion: 1.15,
+  death_warrant: 1.15,
+  gale_of_knives: 1.15,
+  royal_decree: 1.15,
+  eye_of_the_storm: 1.15,
 };
 
 export function gemAttrMult(id: string): number {

@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Skill-gem attribute requirements are much less punishing: ordinary gems now reach 155 at level 20 and the most demanding gems reach 178, while off-attribute skills still require passive-tree or gear investment.',
+];
 
 export const NEWS: NewsEntry[] = [
   {
