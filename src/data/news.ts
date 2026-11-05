@@ -10,12 +10,18 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'The passive tree now uses much shorter attribute roads and more compact clusters, putting notables, masteries and branching choices closer together while preserving attributes for skill and equipment requirements.',
-  'The character tree now has build-neutral outer paths instead of class-only mechanic nodes; ascendancies offer six notable paths and two capstones with no Act locks, while four trials ending at Tier 5 Maps provide nine points for a normal three-notable, one-capstone build without a hard node-count limit.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.3.21',
+    date: '4 Nov 2026',
+    title: 'Trees Reborn',
+    items: [
+      'The passive tree now uses much shorter attribute roads and more compact clusters, putting notables, masteries and branching choices closer together while preserving attributes for skill and equipment requirements.',
+      'The character tree now has build-neutral outer paths instead of class-only mechanic nodes; ascendancies offer six notable paths and two capstones with no Act locks, while four trials ending at Tier 5 Maps provide nine points for a normal three-notable, one-capstone build without a hard node-count limit.',
+    ],
+  },
   {
     version: '0.3.20',
     date: '2 Nov 2026',
