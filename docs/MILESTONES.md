@@ -15,9 +15,9 @@ Last updated 2026-11-04.
 send. Act 1's cold check and Scorched earth's danger stay as they are, with no playtest planned, until
 you say otherwise.
 
-**Latest release:** 0.4.0, Trees Reborn, deployed 2026-11-04. The character tree now uses compact build-focused
-clusters and shorter attribute roads; ascendancies have six notables, two capstones, no milestone locks and a fourth
-trial at Tier 5 Maps.
+**Latest release:** 0.4.1, Flexible Gems, deployed 2026-11-04. Ordinary skill gems now reach 155 attributes at level
+20 instead of 245, and the most demanding gems reach 178 instead of 318, preserving meaningful off-attribute
+investment without consuming an entire build.
 
 **In order:**
 
