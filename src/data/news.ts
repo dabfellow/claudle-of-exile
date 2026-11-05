@@ -14,6 +14,7 @@ export const UPCOMING: string[] = [
   'Mana is Power now rewards Mana spent recently, Momentum grants Evasion and loses flat stacks to landed hits, low-level gear can be tinkered with Arcane Dust, combat has automatic range postures, and filler skills reserve Mana for higher-priority cooldowns.',
   'Vitals, wind-up and ground rules now start unlocked with two conditions per skill, while Life and Mana flasks automatically trigger at low resources; later War Table tiers focus on advanced targeting, a third condition and loot auto-salvage.',
   'Hideout upgrades now use bars, planks and Boss Trophies with much smoother costs instead of demanding thousands of raw logs and ore at once.',
+  'The whole interface now scales up more clearly on phones and 720p/1280p/1440p screens, with larger text and mobile navigation labels visible instead of icon-only tabs.',
 ];
 
 export const NEWS: NewsEntry[] = [
