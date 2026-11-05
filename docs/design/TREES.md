@@ -126,7 +126,7 @@ other rows remain the character-tree content; the six replacement rim specialisa
 ### Mage sector
 | Cluster | Small node | Notables |
 |---|---|---|
-| mana_is_power ⚙ | Reservoir: +2% to the Mana is Power bonus, +8 to maximum Mana | **Wellspring** — +5% to the Mana is Power bonus, 15% increased maximum Mana<br>**Brimming** — Mana above 90% counts as full for Mana is Power, 10% increased Mana Regeneration<br>**Overflow** — +3% to the Mana is Power bonus, 30% increased Mana Regeneration |
+| mana_is_power ⚙ | Reservoir: +2% to the Mana is Power bonus, +8 to maximum Mana | **Wellspring** — +5% to the Mana is Power bonus, 15% increased maximum Mana<br>**Brimming** — recent Mana spending counts 10% more, 10% increased Mana Regeneration<br>**Overflow** — +3% to the Mana is Power bonus, 30% increased Mana Regeneration |
 | pyromancer | Kindling: 10% increased Fire Damage | **Pyromancer** — 25% increased Fire Damage, 20% increased Ignite Damage |
 | frostweaver | Rime: 10% increased Cold Damage | **Frostweaver** — 25% increased Cold Damage, 20% stronger absorb Shields |
 | stormcaller | Static: 10% increased Lightning Damage | **Stormcaller** — 25% increased Lightning Damage, Chaining skills hit 1 additional enemy<br>**Overcharge** — 8% more damage per chain, 15% increased Critical Strike Chance with Lightning skills<br>**Static Field** — 15% increased Lightning Damage, 3% increased Cast Speed |
@@ -140,7 +140,7 @@ other rows remain the character-tree content; the six replacement rim specialisa
 | conjurer | Conjuration: 6% stronger absorb Shields | **Ice Ward** — 20% stronger absorb Shields, 10% increased Cold Damage<br>**Arcane Shell** — 10% of damage is taken from Mana before Life, +15 to maximum Mana<br>**Resilient Wards** — 15% stronger absorb Shields, +25 to maximum Energy Shield |
 | pyre | Pyre: 6% increased Fire Damage | **Inferno** — 20% increased Fire Damage, 15% increased Ignite Damage<br>**Spreading Flames** — Ignites spread to another enemy when the target dies, 10% longer Ignites<br>**Cinders** — 25% increased Ignite Damage |
 
-**Keystones:** **Alchemist's Covenant** — 50% increased Flask Effect and Charges gained. 10% less maximum Life. · **Mind over Flesh** — 30% of damage is taken from Mana before Life. · **All or Nothing** ⚙ — Mana is Power gives 60% more damage at full Mana, but nothing below 80% Mana.
+**Keystones:** **Alchemist's Covenant** — 50% increased Flask Effect and Charges gained. 10% less maximum Life. · **Mind over Flesh** — 30% of damage is taken from Mana before Life. · **All or Nothing** ⚙ — Mana is Power doubles its current bonus and maximum.
 
 ### Templar sector
 | Cluster | Small node | Notables |

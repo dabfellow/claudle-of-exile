@@ -85,7 +85,7 @@ export function PaperDoll({
                     {flaskRecoveryAmount(d, f)}
                   </span>
                 )}
-                {f.instill && <span className="flask-enchanted" title="Enchanted: drinks itself" />}
+                {(f.instill || flaskStats(f).def.kind !== 'utility') && <span className="flask-enchanted" title={f.instill ? 'Enchanted: drinks itself' : 'Automatic at low Life or Mana'} />}
               </button>
             </Tooltip>
           ) : (

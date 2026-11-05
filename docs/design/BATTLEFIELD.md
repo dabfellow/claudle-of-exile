@@ -21,7 +21,10 @@ Design agreed 2026-10-27 from your mockup (player at the bottom, hexes to the le
 
 - Each ring-4 hex has its own spawn timer, randomly offset at the start so they don't all fire together.
 - When a timer is up and the hex is free (and the field is under the pace cap), a monster spawns **just outside the field** behind that hex and walks onto it. The walk-in from off-screen stays.
-- The pace setting keeps its job: Creep / Walk / Run scale every gate timer (`spawnRate`) and set the field cap (`maxField`). Flee still stops spawns.
+- Creep / Walk / Run remain engine-level paces, but the HUD exposes automatic postures: **Brawler** walks in and runs at
+  far-edge targets; **Kiter** creeps at range, runs out of hazards and pushes adjacent normal enemies back once per
+  second; **Cautious** creeps into small packs and flees below 35% Life after its Life flasks are empty. Explicit Flee
+  still stops spawns, and direct pace controls remain available to tests and engine callers.
 - Packs: a spawn can bring 1–3 monsters through neighbouring gates at once, so packs still exist without waves.
 - Zones can weight the sides (`spawnSides: { left, top, right }`), e.g. a coastal area mostly from the left. Default is even. *(Not built yet: every gate is equal.)*
 - Bosses walk in through the **top centre** gate and stop at ring 2 at the top. Adds come through the side gates.

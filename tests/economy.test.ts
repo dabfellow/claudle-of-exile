@@ -8,7 +8,7 @@ import { ZONES, zoneDef } from '../src/data/zones';
 import { checkAchievements } from '../src/engine/achievements';
 import { makeMonster } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
-import { benchCraftReason, salvage } from '../src/engine/crafting';
+import { applyOrb, benchCraftReason, FIELD_TINKER_ILVL, salvage, TINKER_DUST_COST } from '../src/engine/crafting';
 import { clearLevelOneGems, createSkillGem, createSupportGem } from '../src/engine/gems';
 import { createItem } from '../src/engine/items';
 import { rollLoot } from '../src/engine/loot';
@@ -135,6 +135,19 @@ describe('achievements', () => {
     s.inventory.push(...items);
     salvage(s, ctx(), items.map((i) => i.uid));
     expect(s.lifetime.salvaged).toBe(3);
+  });
+
+  it('field-tinkers low-level gear with salvage dust when basic orbs run out', () => {
+    const s = fresh();
+    s.account.hideout.bench = 2;
+    s.account.bank.transmute = 0;
+    s.account.bank.arcane_dust = 10;
+    const item = createItem(s, 'rusted_sword', FIELD_TINKER_ILVL, 'normal', seeded(3));
+    s.inventory.push(item);
+    expect(applyOrb(s, ctx(), 'transmute', item.uid)).toBeNull();
+    expect(item.rarity).toBe('magic');
+    expect(s.account.bank.arcane_dust).toBe(10 - TINKER_DUST_COST.transmute);
+    expect(s.account.bank.transmute).toBe(0);
   });
 });
 

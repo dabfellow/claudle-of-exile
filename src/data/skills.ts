@@ -131,6 +131,13 @@ const GATHERING: SkillAction[] = [
   { ...gather('harvesting', 'herb_void', 'Voidbloom Grove', 40, 5000, 55, 'voidbloom', '#9b6dde'), area: 'stormcliffs' },
 ].map((a) => ({ ...a, bonus: [...(a.bonus ?? []), { id: SHARD_FOR[a.skill]!, chance: SHARD_CHANCE, qty: 1 }] }));
 
+/** Turn gathered logs into compact construction materials instead of asking station upgrades for thousands of logs. */
+const MILLING: SkillAction[] = [
+  { id: 'mill_ash', skill: 'woodcutting', name: 'Cut Ash Planks', level: 1, intervalMs: 3000, xp: 8, inputs: { ash_log: 5 }, outputs: { ash_plank: 1 }, color: '#b89a72' },
+  { id: 'mill_oak', skill: 'woodcutting', name: 'Cut Oak Planks', level: 15, intervalMs: 3500, xp: 20, inputs: { oak_log: 5 }, outputs: { oak_plank: 1 }, color: '#8a6338', area: 'ashwood' },
+  { id: 'mill_yew', skill: 'woodcutting', name: 'Cut Yew Planks', level: 30, intervalMs: 4000, xp: 42, inputs: { yew_log: 5 }, outputs: { yew_plank: 1 }, color: '#6b3d2c', area: 'shipgrave' },
+];
+
 const mark = (id: string, name: string, level: number, intervalMs: number, xp: number, gold: number, marker: number, area: string, color: string, extra: SkillAction['bonus'] = []): SkillAction => ({
   id, skill: 'thieving', name, level, intervalMs, xp, outputs: { gold }, bonus: [{ id: MARKER, chance: marker, qty: 1 }, ...extra], color, area,
 });
@@ -211,6 +218,13 @@ const SMITHING: SkillAction[] = BASES.map((b) => ({
   baseId: b.id,
   color: '#b8b8c8',
 }));
+
+/** Construction bars give gathered ore a deliberate refining step before it becomes a station upgrade. */
+const SMELTING: SkillAction[] = [
+  { id: 'smelt_copper', skill: 'smithing', name: 'Smelt Copper Bars', level: 1, intervalMs: 3000, xp: 8, inputs: { copper_ore: 5 }, outputs: { copper_bar: 1 }, color: '#c8743f' },
+  { id: 'smelt_iron', skill: 'smithing', name: 'Smelt Iron Bars', level: 15, intervalMs: 3500, xp: 20, inputs: { iron_ore: 5 }, outputs: { iron_bar: 1 }, color: '#9aa3ad', area: 'ashwood' },
+  { id: 'smelt_mithril', skill: 'smithing', name: 'Smelt Mithril Bars', level: 30, intervalMs: 4000, xp: 42, inputs: { mithril_ore: 5 }, outputs: { mithril_bar: 1 }, color: '#6fc3d8', area: 'shipgrave' },
+];
 
 const ALCHEMY: SkillAction[] = [
   { id: 'brew_life_small', skill: 'alchemy', name: 'Small Life Flask', level: 1, intervalMs: 4000, xp: 12, inputs: { sunpetal: 5, ash_log: 2 }, flaskId: 'life_small', color: '#d6453d' },
@@ -358,7 +372,7 @@ const CARTOGRAPHY: SkillAction[] = [
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-export const ACTIONS: SkillAction[] = [...GATHERING, ...THIEVING, ...ARCHAEOLOGY, ...FISHING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY].map((a) => ({
+export const ACTIONS: SkillAction[] = [...GATHERING, ...MILLING, ...THIEVING, ...ARCHAEOLOGY, ...FISHING, ...SMELTING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY].map((a) => ({
   ...a,
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
 }));

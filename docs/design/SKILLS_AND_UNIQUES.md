@@ -424,7 +424,7 @@ written as the stat they set (`→ rageMax +5`); all of those stats already exis
 |---|---|---|---|---|---|
 | 1 | Tavern Brawler | Weapon | Oak Club (1) | Warrior | ★ Pummel hits 4 times |
 | 2 | Thornquill | Weapon | Ash Longbow (16) | Ranger | ★ Barrage +1 arrow, +4 max Momentum |
-| 3 | Wellspring | Weapon | Gnarled Staff (4) | Mage | Mana counts as full above 90% |
+| 3 | Wellspring | Weapon | Gnarled Staff (4) | Mage | Recent Mana spending counts 10% more |
 | 4 | Rebuttal | Weapon | Iron Blade (8) | Duelist | ★ Parry blocks 3 hits, stronger Ripostes |
 | 5 | The Ninth Psalm | Weapon | Crystal Sceptre (24) | Templar | ★ Judgement Hammer is all lightning |
 | 6 | Last Breath | Weapon | Shadow Kris (28) | Shadow | Smaller Malice meter, bigger Coup |
@@ -474,7 +474,7 @@ written as the stat they set (`→ rageMax +5`); all of those stats already exis
 **3. Wellspring** — Gnarled Staff (Staff, lvl 4) · *Mage*
 - `flat_mana` 40
 - `mana_regen` 40
-- `→ manaPowerFull` 10 (mana above 90% counts as full)
+- `→ manaPowerFull` 10 (recent Mana spending counts 10% more)
 > *Draw deep; the well remembers.*
 
 **4. Rebuttal** — Iron Blade (Sword, lvl 8) · *Duelist*
@@ -681,7 +681,7 @@ The high-crit Shadow's answer: crits no longer fully reset the meter.
 
 - **Warrior "never stops"** — Tavern Brawler + Knuckledusters + Brawler's Buckle: Pummel at 4 hits, Rage barely decays.
 - **Ranger "untouchable volley"** — Thornquill + Windchaser + Lookout's Hood: 17 max Momentum, huge evasion, keeps it when hit.
-- **Mage "full tank"** — Wellspring + Brimming Band + Slippers: Mana is Power at 40% and "full" at 90%.
+- **Mage spender** — Wellspring + Brimming Band + Slippers: Mana is Power reaches a higher cap and ramps faster from linked casts.
 - **Duelist "bleeding counter"** — Stormhide + an axe + Twin Oaths: fast Ripostes that always bleed.
 - **Templar "storm saint"** — Ninth Psalm + Bellwether + Penitent's Plate: all-lightning hammer, frequent nova that refills ES.
 - **Shadow, two ways** — *patient*: Mask of the Patient + Last Breath (rare crits, 12-meter Coup); *gambler*: Hollow Locket + crit gear.

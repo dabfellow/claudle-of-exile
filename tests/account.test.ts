@@ -117,7 +117,7 @@ describe('migrating to the account', () => {
     expect(loaded.version).toBe(SAVE_VERSION);
     expect(loaded.unmerged).toBeUndefined();
     expect(a.hideout.bench).toBe(3);
-    expect(a.automation).toEqual({ rules: ['vitals', 'windups', 'status', 'ground'], ruleSlots: 2, offlineHours: 12 });
+    expect(a.automation).toEqual({ rules: ['vitals', 'windups', 'ground'], ruleSlots: 2, offlineHours: 12 });
     expect(a.stash.map((p) => p.length)).toEqual([0, 1, 0, 0]);
     expect(a.overflow).toEqual([]);
   });
@@ -128,8 +128,8 @@ describe('migrating to the account', () => {
     const a = freshAccount();
     settle(v20(one, { hideout: { forge: 4, war_table: 2 }, rules: ['vitals'], hours: 12, stash: [[sword(one)], [], []] }), a);
     settle(v20(two, { hideout: { forge: 2, war_table: 3, watchtower: 3 }, rules: ['status'], slots: 2, hours: 16, stash: [[sword(two)], [], []] }), a);
-    expect(a.hideout).toMatchObject({ forge: 4, war_table: 5, watchtower: 3 });
-    expect(a.automation).toEqual({ rules: ['vitals', 'windups', 'status', 'ground'], ruleSlots: 2, offlineHours: 16 });
+    expect(a.hideout).toMatchObject({ forge: 4, war_table: 3, watchtower: 3 });
+    expect(a.automation).toEqual({ rules: ['vitals', 'windups', 'ground', 'status', 'aim'], ruleSlots: 2, offlineHours: 16 });
     expect(a.stash[0]).toHaveLength(2);
     const uids = a.stash.flat().map((i) => i.uid);
     expect(new Set(uids).size).toBe(2);

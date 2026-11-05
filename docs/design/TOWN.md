@@ -8,6 +8,8 @@
 
 **As built (Milestone 3):** `AccountState` (`engine/account.ts`) holds the hideout, automation unlocks, gear stash pages, overflow and Exile unlock.
 
+**Automation and construction pass (2026-11-05):** essential idle survival is no longer a station tax. Vitals, boss wind-up and hazardous-ground rules start unlocked, every skill starts with two condition slots, and Life/Mana flasks use themselves below 50%/30%. The War Table now progresses through Status rules, Aim rules, a third condition slot, then Normal/Magic/Rare auto-salvage. Station upgrades use refined bars and planks (five raw materials each) plus a few Boss Trophies instead of four-figure raw-material walls. First boss kills always award a trophy; repeat kills have a 25% chance.
+
 **Shared tabs (0.2.31):** the account also holds the bank (gold, currency, materials), spare skill and support gems, and spare flasks, so every Stash tab is shared by all characters in a realm. Each realm has its own `AccountState`, so a future challenge league gets its own tabs. Skill bars, socketed supports and flask belts stay with the character, and a gem or flask leaving one goes to the shared tab. Gems and flasks are made with account uids. Save v27 hands each character's old holdings over once (`settlePool`, marked `pool:<id>` in `absorbed`), adding them up; spare flasks past the cap of 10 per kind are sold. Two characters can play at once: tabs merge each other's changes into their own (`mergeAccounts`), and devices pull the account every 30 seconds.
 It's saved apart from characters and attached as `s.account`. Gear pages are shared; currency, materials, gems, flasks, the bag and Town stock stay per character.
 Items take an account uid when they first enter the stash, because each character numbers its own items from 1.
@@ -46,8 +48,9 @@ Upgrades unlock tiers. Gathering skills stay level-gated only.
 | Crafting Bench | L1 not built (orbs work anywhere) · L2 built: salvage, Life & Resistance crafts · L3–L4 more recipes · L5 auto-crafting |
 | Town Market | More stock per shop and faster restocks each level |
 | Map Device | Locked until Act 6 is beaten (maps come after the campaign) |
+| War Table | L1 survival rules + 2 conditions · L2 Status · L3 Aim · L4 third condition · L5–L7 Normal/Magic/Rare auto-salvage |
 
-Costs are steep: tens of minutes of gathering for the first upgrade, hours for the last.
+Costs rise through smaller component steps. Woodcutting cuts five logs into a plank, Smithing smelts five ore into a bar, and later upgrades mix those components with Rough Gems and Boss Trophies instead of demanding thousands of raw materials in one purchase.
 
 ### Gems
 - Monsters don't drop gems (since 2026-11-02); the Gem shop is the source, with a few from Gemcutting.
@@ -120,6 +123,11 @@ Paper doll and stats as now; underneath, the **inventory only** (click to equip)
 #### Crafting Bench
 
 Picks items from equipment, inventory and stash (crafting shouldn't need shuffling).
+
+**Field Tinkering:** once the Bench is built, an item at item level 45 or below can consume Arcane Dust when the matching
+basic orb is empty: 3 Dust for Transmutation, 4 for Augmentation, or 5 for Alteration. Real orbs are still used first,
+and higher-level gear always requires the real currency. This makes salvaged campaign gear fund more campaign crafting
+without adding lesser-orb inventory clutter.
 
 ### Save migration
 

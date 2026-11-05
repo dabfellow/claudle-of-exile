@@ -93,6 +93,15 @@ export const ORBS: Record<string, OrbDef> = {
   },
 };
 
+export const FIELD_TINKER_ILVL = 45;
+export const TINKER_DUST_COST: Record<string, number> = { transmute: 3, augment: 4, alteration: 5 };
+
+/** Early gear can consume salvage dust instead of hoardable basic orbs. */
+export function tinkerDustCost(s: GameState, orbId: string, item: Item): number | null {
+  if (hasItem(s, orbId, 1) || item.ilvl > FIELD_TINKER_ILVL || !TINKER_DUST_COST[orbId] || !benchBuilt(s)) return null;
+  return TINKER_DUST_COST[orbId];
+}
+
 /** Orbs that roll new modifiers, and so can be paired with a Fossil. */
 export const FOSSIL_ORBS = new Set(['transmute', 'augment', 'alteration', 'regal', 'alchemy', 'chaos', 'exalted']);
 
@@ -111,7 +120,12 @@ export function findItem(s: GameState, uid: number): Item | undefined {
 export function orbReason(s: GameState, orbId: string, uid: number, fossilId?: string | null, sealed?: string | null): string | null {
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
-  if (!hasItem(s, orbId, 1)) return 'You have none';
+  const dust = tinkerDustCost(s, orbId, item);
+  if (!hasItem(s, orbId, 1) && dust === null) {
+    if (item.ilvl <= FIELD_TINKER_ILVL && TINKER_DUST_COST[orbId] && !benchBuilt(s)) return 'Build the Crafting Bench to tinker with Arcane Dust';
+    return 'You have none';
+  }
+  if (dust !== null && !hasItem(s, 'arcane_dust', dust)) return `Needs ${dust} Arcane Dust`;
   if (fossilId) {
     if (!fossilDef(fossilId)) return 'Unknown fossil';
     if (!FOSSIL_ORBS.has(orbId)) return "Fossils don't work with this orb";
@@ -130,12 +144,14 @@ export function applyOrb(s: GameState, ctx: Ctx, orbId: string, uid: number, fos
   const reason = orbReason(s, orbId, uid, fossilId, sealed);
   if (reason) return reason;
   const item = findItem(s, uid)!;
+  const dust = tinkerDustCost(s, orbId, item);
   ORBS[orbId].apply(item, ctx.rng, fossilId ? modBias(fossilId) : undefined, sealed ? allMods(item).find((m) => m.affixId === sealed) : undefined);
-  s.account.bank[orbId] -= 1;
+  if (dust === null) s.account.bank[orbId] -= 1;
+  else s.account.bank.arcane_dust -= dust;
   if (fossilId) s.account.bank[fossilId] -= 1;
   if (sealed) s.account.bank[SEAL] -= 1;
   s.lifetime.orbsUsed += 1;
-  ctx.emit({ t: 'craft', text: `${orbId} → ${itemName(item)}`, uid, orbId });
+  ctx.emit({ t: 'craft', text: `${dust === null ? orbId : `${dust} dust`} → ${itemName(item)}`, uid, orbId });
   return null;
 }
 

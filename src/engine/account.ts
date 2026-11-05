@@ -20,7 +20,7 @@ export const ACCOUNT_UID_BASE = 2 ** 40;
 const ACCOUNT_UID_SPREAD = 2 ** 28;
 
 export function freshAutomation(): AutomationUnlocks {
-  return { rules: [], ruleSlots: 1, offlineHours: 8 };
+  return { rules: ['vitals', 'windups', 'ground'], ruleSlots: 2, offlineHours: 8 };
 }
 
 export function freshAccount(realm: Realm = STANDARD_REALM): AccountState {
@@ -46,6 +46,11 @@ export function freshAccount(realm: Realm = STANDARD_REALM): AccountState {
 
 /** An account saved before the shared tabs arrived. Accounts carry no version, so this is safe on any copy. */
 export function fillAccount(a: AccountState): AccountState {
+  const baseline = freshAutomation();
+  a.automation ??= baseline;
+  a.automation.rules = [...new Set([...baseline.rules, ...a.automation.rules])];
+  a.automation.ruleSlots = Math.max(baseline.ruleSlots, a.automation.ruleSlots);
+  a.automation.offlineHours = Math.max(baseline.offlineHours, a.automation.offlineHours);
   a.bank ??= {};
   a.gems ??= [];
   a.supportGems ??= [];
@@ -118,6 +123,10 @@ function pagesBought(hideout: Record<string, number>, pages: number): number {
 export function alignWarTable(a: AccountState): void {
   const levels = stationDef('war_table').levels;
   const u = a.automation;
+  const baseline = freshAutomation();
+  u.rules = [...new Set([...baseline.rules, ...u.rules])];
+  u.ruleSlots = Math.max(baseline.ruleSlots, u.ruleSlots);
+  u.offlineHours = Math.max(baseline.offlineHours, u.offlineHours);
   const held = levels.map((l) => !!l.grants && (l.grants.rules ?? []).every((r) => u.rules.includes(r)) && u.ruleSlots >= (l.grants.ruleSlots ?? 0));
   const top = Math.max(held.lastIndexOf(true) + 1, a.hideout.war_table ?? 1);
   a.hideout.war_table = top;

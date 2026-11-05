@@ -469,8 +469,14 @@ export interface CombatRuntime {
   /** Riposte cooldown, and whether the hit being rolled is a riposte */
   riposteMs: number;
   riposting: boolean;
-  /** Mana is Power: how full mana was when the current skill started */
+  /** Mana is Power: recent-spending fraction when the current skill started. */
   manaFrac: number;
+  /** Mana is Power: mana paid during the rolling four-second window. */
+  manaSpent?: { amount: number; remainingMs: number }[];
+  /** Momentum: landed hits can only strip stacks once during this grace window. */
+  momentumHitGraceMs?: number;
+  /** Range posture movement pulse. */
+  postureMs?: number;
   /** Overclock: time spent running hot, and time left locked up */
   heatMs: number;
   overheatMs: number;
@@ -567,6 +573,7 @@ export interface VendorOffer {
 
 /** how fast the player pushes through an area: sets how often new monsters arrive */
 export type Movement = 'flee' | 'slow' | 'walk' | 'run';
+export type Posture = 'brawler' | 'kiter' | 'cautious';
 
 /** Which monster skills go for: a priority group first, then an order inside it (nearest breaks ties). */
 export type TargetPriority = 'none' | 'boss' | 'ranged' | 'ailing';
@@ -580,6 +587,8 @@ export interface Settings {
   autoSalvage: Record<Rarity, boolean>;
   reducedMotion: boolean;
   movement: Movement;
+  /** Automatic combat spacing; legacy movement remains the low-level pace used by old saves and tests. */
+  posture?: Posture;
   /** flee on low life, then resume the chosen pace once healed */
   autoFlee: boolean;
   /** a ready boss comes on its own instead of waiting to be challenged */

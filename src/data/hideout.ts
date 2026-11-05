@@ -34,9 +34,9 @@ export const STATIONS: StationDef[] = [
     desc: 'Opens portals to the wilds. Upgrades attune it to richer loot.',
     levels: [
       { cost: {}, effect: 'Open portals to unlocked zones' },
-      { cost: { gold: 400, rough_gem: 3 }, effect: '+10% Item Rarity' },
-      { cost: { gold: 1500, rough_gem: 8, iron_ore: 40 }, effect: '+20% Item Rarity' },
-      { cost: { gold: 5000, rough_gem: 20, mithril_ore: 60 }, effect: '+35% Item Rarity, +1 item level on drops' },
+      { cost: { gold: 400, copper_bar: 8, ash_plank: 8 }, effect: '+10% Item Rarity' },
+      { cost: { gold: 1500, iron_bar: 20, oak_plank: 15, rough_gem: 4 }, effect: '+20% Item Rarity' },
+      { cost: { gold: 5000, mithril_bar: 30, yew_plank: 20, rough_gem: 10, boss_trophy: 5 }, effect: '+35% Item Rarity, +1 item level on drops' },
     ],
   },
   {
@@ -44,9 +44,9 @@ export const STATIONS: StationDef[] = [
     desc: 'Your hoard. Each upgrade carves out a free stash page.',
     levels: [
       { cost: {}, effect: '3 stash pages' },
-      { cost: { gold: 2000, ash_log: 300, copper_ore: 150 }, effect: '+1 free stash page' },
-      { cost: { gold: 10000, oak_log: 400, iron_ore: 250 }, effect: '+1 free stash page' },
-      { cost: { gold: 40000, yew_log: 400, mithril_ore: 250 }, effect: '+1 free stash page' },
+      { cost: { gold: 1500, ash_plank: 40, copper_bar: 25 }, effect: '+1 free stash page' },
+      { cost: { gold: 6000, oak_plank: 50, iron_bar: 35, boss_trophy: 2 }, effect: '+1 free stash page' },
+      { cost: { gold: 18000, yew_plank: 60, mithril_bar: 40, boss_trophy: 5 }, effect: '+1 free stash page' },
     ],
   },
   {
@@ -54,9 +54,9 @@ export const STATIONS: StationDef[] = [
     desc: 'Where bases are hammered out. Each upgrade opens the next tier of bases to smith.',
     levels: [
       { cost: {}, effect: 'Smith copper-tier bases (level 1–9)' },
-      { cost: { gold: 3000, copper_ore: 500, ash_log: 250 }, effect: 'Smith iron-tier bases (level 10–21)' },
-      { cost: { gold: 15000, iron_ore: 700, oak_log: 350 }, effect: 'Smith mithril-tier bases (level 22+)' },
-      { cost: { gold: 60000, mithril_ore: 600, yew_log: 300, rough_gem: 25 }, effect: 'Masterwork: smithed bases +5 item level' },
+      { cost: { gold: 1500, copper_bar: 50, ash_plank: 25 }, effect: 'Smith iron-tier bases (level 10–21)' },
+      { cost: { gold: 7000, iron_bar: 70, oak_plank: 35, boss_trophy: 2 }, effect: 'Smith mithril-tier bases (level 22+)' },
+      { cost: { gold: 22000, mithril_bar: 80, yew_plank: 40, rough_gem: 12, boss_trophy: 6 }, effect: 'Masterwork: smithed bases +5 item level' },
     ],
   },
   {
@@ -64,9 +64,9 @@ export const STATIONS: StationDef[] = [
     desc: 'Bubbling retorts. Each upgrade opens the next tier of recipes.',
     levels: [
       { cost: {}, effect: 'Brew recipes below Alchemy level 10' },
-      { cost: { gold: 3000, sunpetal: 400, ash_log: 150 }, effect: 'Brew recipes up to Alchemy level 19' },
-      { cost: { gold: 15000, frostleaf: 500, rough_gem: 10 }, effect: 'Brew every recipe' },
-      { cost: { gold: 60000, emberroot: 500, voidbloom: 100 }, effect: '20% chance of double output' },
+      { cost: { gold: 1500, sunpetal: 150, ash_plank: 20 }, effect: 'Brew recipes up to Alchemy level 19' },
+      { cost: { gold: 7000, frostleaf: 200, rough_gem: 6, boss_trophy: 2 }, effect: 'Brew every recipe' },
+      { cost: { gold: 22000, emberroot: 180, voidbloom: 40, boss_trophy: 6 }, effect: '20% chance of double output' },
     ],
   },
   {
@@ -74,10 +74,10 @@ export const STATIONS: StationDef[] = [
     desc: 'Orbs work on gear anywhere. Build the bench to salvage gear and add a crafted modifier of your choosing.',
     levels: [
       { cost: {}, effect: 'Not built: use orbs on your gear' },
-      { cost: { gold: 1500, ash_log: 200, copper_ore: 200 }, effect: 'Built: salvage gear, Life & Resistance crafts' },
-      { cost: { gold: 8000, arcane_dust: 400, rough_gem: 10 }, effect: 'More bench recipes (each also needs its achievement), and gear sets can switch on their own' },
-      { cost: { gold: 30000, arcane_dust: 1200, rough_gem: 25 }, effect: 'Top-tier bench recipes (each also needs its achievement)' },
-      { cost: { gold: 100000, arcane_dust: 3000, rough_gem: 60 }, effect: 'Auto-crafting: spend orbs until a modifier rolls, even offline' },
+      { cost: { gold: 1500, ash_plank: 30, copper_bar: 30 }, effect: 'Built: salvage gear, Life & Resistance crafts' },
+      { cost: { gold: 6000, arcane_dust: 250, iron_bar: 25, rough_gem: 5, boss_trophy: 2 }, effect: 'More bench recipes (each also needs its achievement), and gear sets can switch on their own' },
+      { cost: { gold: 18000, arcane_dust: 600, mithril_bar: 35, rough_gem: 12, boss_trophy: 5 }, effect: 'Top-tier bench recipes (each also needs its achievement)' },
+      { cost: { gold: 50000, arcane_dust: 1200, mithril_bar: 70, rough_gem: 25, boss_trophy: 10 }, effect: 'Auto-crafting: spend orbs until a modifier rolls, even offline' },
     ],
   },
   {
@@ -85,22 +85,22 @@ export const STATIONS: StationDef[] = [
     desc: 'Your standing with the town merchants. Upgrades bring more stock to the gear shops, restocked faster.',
     levels: [
       { cost: {}, effect: '4 wares per shop, restock every 10 min' },
-      { cost: { gold: 5000, oak_log: 100 }, effect: '5 per shop, every 8 min, rare gear' },
-      { cost: { gold: 20000, iron_ore: 200, rough_gem: 10 }, effect: '6 per shop, every 6 min, rarer currency' },
-      { cost: { gold: 80000, mithril_ore: 150, rough_gem: 30 }, effect: '8 per shop, every 4 min, better-rolled gear' },
+      { cost: { gold: 3000, oak_plank: 20 }, effect: '5 per shop, every 8 min, rare gear' },
+      { cost: { gold: 10000, iron_bar: 35, rough_gem: 5, boss_trophy: 2 }, effect: '6 per shop, every 6 min, rarer currency' },
+      { cost: { gold: 30000, mithril_bar: 45, rough_gem: 15, boss_trophy: 6 }, effect: '8 per shop, every 4 min, better-rolled gear' },
     ],
   },
   {
     id: 'war_table', name: 'War Table', page: 'skills', color: '#c8553d',
-    desc: 'Where you plan fights ahead of time. Upgrades teach your skills new rules, for good.',
+    desc: 'Where you plan fights ahead of time. Essential survival rules are free; upgrades add advanced tactics and loot automation.',
     levels: [
-      { cost: {}, effect: 'Simple rules, 1 rule slot per skill' },
-      { cost: { gold: 1500, ash_log: 150, copper_ore: 150 }, effect: 'Vitals rules: when life or mana is below, or Frostbite builds. Wind-up rules: bosses can now be fought offline', grants: { rules: ['vitals', 'windups'] } },
-      { cost: { gold: 6000, oak_log: 1200, iron_ore: 1200 }, effect: 'Status rules', grants: { rules: ['status'] } },
-      { cost: { gold: 8000, oak_log: 1500, iron_ore: 1500, rough_gem: 15 }, effect: 'Ground rules: react to the ground under you', grants: { rules: ['ground'] } },
-      { cost: { gold: 12000, oak_log: 1500, iron_ore: 1500, rough_gem: 25 }, effect: 'A 2nd rule slot per skill', grants: { ruleSlots: 2 } },
-      { cost: { gold: 16000, oak_log: 2000, iron_ore: 2000, rough_gem: 40 }, effect: "Aim rules: a skill's rule can send it at chained martyrs", grants: { rules: ['aim'] } },
-      { cost: { gold: 80000, yew_log: 4000, mithril_ore: 4000, rough_gem: 100 }, effect: 'A 3rd rule slot per skill', grants: { ruleSlots: 3 } },
+      { cost: {}, effect: 'Vitals, wind-up and ground rules; 2 rule slots per skill; recovery flasks use themselves at low Life or Mana' },
+      { cost: { gold: 750, ash_plank: 15, copper_bar: 15 }, effect: 'Status rules', grants: { rules: ['status'] } },
+      { cost: { gold: 2000, oak_plank: 25, iron_bar: 25 }, effect: "Aim rules: a skill's rule can send it at special targets", grants: { rules: ['aim'] } },
+      { cost: { gold: 4000, oak_plank: 40, iron_bar: 40, rough_gem: 4 }, effect: 'A 3rd rule slot per skill', grants: { ruleSlots: 3 } },
+      { cost: { gold: 7000, oak_plank: 60, iron_bar: 60, rough_gem: 6 }, effect: 'Auto-salvage Normal drops' },
+      { cost: { gold: 12000, oak_plank: 80, iron_bar: 80, rough_gem: 8, boss_trophy: 3 }, effect: 'Auto-salvage Magic drops' },
+      { cost: { gold: 30000, yew_plank: 150, mithril_bar: 150, rough_gem: 20, boss_trophy: 8 }, effect: 'Auto-salvage Rare drops' },
     ],
   },
   {
@@ -108,9 +108,9 @@ export const STATIONS: StationDef[] = [
     desc: 'Someone to keep watch while you sleep. Upgrades keep the game running for longer while you are away.',
     levels: [
       { cost: {}, effect: 'Up to 8 hours of offline progress' },
-      { cost: { gold: 4000, ash_log: 300, copper_ore: 300 }, effect: 'Up to 12 hours offline', grants: { offlineHours: 12 } },
-      { cost: { gold: 25000, oak_log: 4000, iron_ore: 4000 }, effect: 'Up to 16 hours offline', grants: { offlineHours: 16 } },
-      { cost: { gold: 200000, yew_log: 8000, mithril_ore: 8000, rough_gem: 200 }, effect: 'Up to 24 hours offline', grants: { offlineHours: 24 } },
+      { cost: { gold: 2000, ash_plank: 50, copper_bar: 50 }, effect: 'Up to 12 hours offline', grants: { offlineHours: 12 } },
+      { cost: { gold: 10000, oak_plank: 120, iron_bar: 120, boss_trophy: 3 }, effect: 'Up to 16 hours offline', grants: { offlineHours: 16 } },
+      { cost: { gold: 50000, yew_plank: 250, mithril_bar: 250, rough_gem: 30, boss_trophy: 10 }, effect: 'Up to 24 hours offline', grants: { offlineHours: 24 } },
     ],
   },
 ];
@@ -143,6 +143,8 @@ export const AUTO_CRAFT_BENCH_LEVEL = 5;
 export const CRAFT_STEP_MS = 1500;
 /** The Crafting Bench level that lets a gear set go on by itself when an activity starts. Sets themselves are free. */
 export const GEAR_SWITCH_BENCH_LEVEL = 3;
+/** War Table tiers that allow each loot rarity to be auto-salvaged. */
+export const AUTO_SALVAGE_WAR_TABLE_LEVEL: Record<'normal' | 'magic' | 'rare', number> = { normal: 5, magic: 6, rare: 7 };
 
 export interface BenchCraft {
   id: string;

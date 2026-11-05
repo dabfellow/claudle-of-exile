@@ -371,6 +371,7 @@ function SkillHeader({ skill }: { skill: SkillId }) {
 
 /** Smithing makes hundreds of bases, so it splits them into tabs by slot first. */
 const SMITH_TABS: { id: string; label: string; slots: string[] }[] = [
+  { id: 'materials', label: 'Materials', slots: [] },
   { id: 'weapon', label: 'Weapons', slots: ['weapon'] },
   { id: 'offhand', label: 'Off hands', slots: ['offhand'] },
   { id: 'helmet', label: 'Helmets', slots: ['helmet'] },
@@ -381,6 +382,7 @@ const SMITH_TABS: { id: string; label: string; slots: string[] }[] = [
 ];
 
 function smithTab(a: SkillAction): string {
+  if (a.outputs && !a.baseId) return 'materials';
   const slot = a.baseId ? baseDef(a.baseId).slot : '';
   return SMITH_TABS.find((x) => x.slots.includes(slot))?.id ?? 'weapon';
 }

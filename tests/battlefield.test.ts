@@ -12,9 +12,10 @@ import {
   MOVEMENT,
   neighbors,
   PLAYER_SPOT,
+  POSTURES,
   RINGS,
 } from '../src/engine/battlefield';
-import { aliveMonsters, combatStep, lockTarget, makeMonster, setMovement, startCombat } from '../src/engine/combat';
+import { aliveMonsters, combatStep, currentMovement, lockTarget, makeMonster, setMovement, setPosture, startCombat } from '../src/engine/combat';
 import { createSkillGem, createSupportGem, gemUseReason } from '../src/engine/gems';
 import { createItem } from '../src/engine/items';
 import { makeCtx } from '../src/engine/context';
@@ -36,7 +37,7 @@ function idler(movement: Movement = 'walk') {
   const s = newGame(1, { name: 'T', classId: 'warrior' });
   s.skills.combat = charXpForLevel(30);
   s.skillBar = s.skillBar.map(() => null);
-  s.settings.movement = movement;
+  setMovement(s, movement);
   s.settings.autoFlee = false;
   const c = ctx();
   startCombat(s, c, 'mudflats');
@@ -105,6 +106,23 @@ describe('battlefield', () => {
     expect(aliveMonsters(s.combat!).length).toBe(before - 2);
     run(s, c, 60_000);
     expect(aliveMonsters(s.combat!)).toHaveLength(0);
+  });
+
+  it('postures turn range intent into the underlying movement pace', () => {
+    const { s, c } = idler();
+    const far = makeMonster(zoneDef('mudflats').monsters[0], false, 1);
+    far.cell = EDGE_CELLS[0];
+    s.combat!.monsters = [far];
+    setPosture(s, 'brawler');
+    expect(currentMovement(s)).toBe('run');
+    far.cell = CELLS.findIndex((cell) => cell.ring === 1);
+    expect(currentMovement(s)).toBe('walk');
+    setPosture(s, 'kiter');
+    combatStep(s, c, 50, deriveStats(s));
+    expect(cellRing(far.cell)).toBe(2);
+    setPosture(s, 'cautious');
+    expect(currentMovement(s)).toBe('slow');
+    expect(POSTURES.cautious.desc).toContain('flasks');
   });
 
   it('melee monsters walk to ring 1 before they can hit; casters stop at their range', () => {

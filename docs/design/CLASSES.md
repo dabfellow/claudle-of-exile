@@ -53,7 +53,8 @@ Every class is one chain:
 *"Strike first, never get hit."* Start 12 / 20 / 10.
 
 **Momentum:** each attack grants 1 Momentum (max 10), **3% increased attack speed** each.
-**Taking a hit halves it**; evaded hits don't count.
+Each stack also grants **1% increased Evasion**. Evaded hits remove nothing. A landed hit removes 2 stacks, or 4 when
+the mitigated hit is at least 15% of maximum Life; only one hit can remove stacks per 0.5 seconds.
 
 - Directly rewards Evasion — the defence and the damage feed each other.
 - Hooks: Smoke Step keeps Momentum topped (evade everything for 2s). Twin Strike counts as 2 attacks.
@@ -63,15 +64,16 @@ Every class is one chain:
 ## Mage — Mana is Power
 *"Bend the elements and the brew."* Start 10 / 12 / 20.
 
-**Mana is Power:** spells deal **up to 30% more damage the fuller your mana** — 30% at full,
-0% at empty, linear in between (checked before the cast's cost is paid).
+**Mana is Power:** spells deal **up to 30% more damage from Mana spent during the last 4 seconds**. Every 3% of maximum
+Mana spent contributes 1% more spell damage, reaching the cap after spending 90%. A spell's own payment counts for its
+hit, so expensive linked spells start the ramp instead of being punished for spending.
 
-- The core tension is spend vs. save: cheap spam drains the bonus, a full tank hits hard.
-- Makes mana stats (max mana, regen, mana flasks, Mana Leech, Efficiency) count as damage stats.
+- The core rhythm is spend and recover: linked spells build power, then regeneration and leech refill the next burst.
+- Maximum Mana raises the spending needed for a full ramp but also supports more linked casts before the pool runs dry.
 - Hooks: existing `manaAbove` tactics rule becomes a real choice ("only cast Fireball above 80% mana").
   Mind over Flesh (keystone) is a deliberate trade — taking hits on mana lowers your damage.
 - Class bonus: +15% Elemental Damage, +10% Flask Effect (unchanged).
-- Bend later: "bonus is 50% but caps at 90% mana", "bonus also applies to ES recharge", "counts ES instead of mana".
+- Bend later: faster spending progress, a larger maximum bonus, or doubling the current ramp.
 
 ## Duelist — Riposte
 *"Answer every blow."* Start 17 / 17 / 8. Starts in the Duelist zone (Str/Dex).

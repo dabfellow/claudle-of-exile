@@ -183,7 +183,8 @@ describe('offline progress and bosses', { timeout: 20_000 }, () => {
   const strong = () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
     s.tutorial.done = true;
-    s.skills.combat = charXpForLevel(30);
+    // This test is about offline boss farming, not whether a bare character survives the new rare packs.
+    s.skills.combat = charXpForLevel(60);
     return s;
   };
 

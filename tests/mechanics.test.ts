@@ -3,10 +3,10 @@ import type { ClassId } from '../src/data/classes';
 import { CLASSES } from '../src/data/classes';
 import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { zoneDef } from '../src/data/zones';
-import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
+import { chooseSkill, combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
-import { createSkillGem, gemWeaponReason, MIN_COOLDOWN_MS } from '../src/engine/gems';
-import { mechanicOf, meterMax } from '../src/engine/mechanics';
+import { createSkillGem, gemWeaponReason, MIN_COOLDOWN_MS, skillNumbers } from '../src/engine/gems';
+import { manaFraction, manaPowerMore, mechanicOf, meterMax, recordManaSpent } from '../src/engine/mechanics';
 import { startNode } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { newGame } from '../src/engine/state';
@@ -17,6 +17,7 @@ import { veteran, armFor } from './helpers';
 /** A character in a fight against one durable dummy that never attacks (unless told to). */
 function arena(classId: ClassId, gem = 'heavy_strike', passives: string[] = []) {
   const s = veteran(newGame(1, { name: 't', classId }));
+  s.flaskSlots = s.flaskSlots.map(() => null);
   s.passives.push(...passives);
   s.skillBar = s.skillBar.map(() => null);
   s.skillBar[0] = createSkillGem(s, gem);
@@ -99,29 +100,50 @@ describe('class mechanics', () => {
     expect(c.mech).toBeLessThan(20);
   });
 
-  it('Momentum builds on attacks for attack speed and is halved by a hit', () => {
+  it('Momentum grants speed and Evasion, then loses two stacks to a landed normal hit', () => {
     const { s, ctx, dummy } = arena('ranger', 'twin_strike');
     const speed0 = deriveStats(s).attackSpeed;
+    const evasion0 = deriveStats(s).evasion;
     run(s, ctx, 60_000, () => s.combat!.mech >= 10);
     const c = s.combat!;
     expect(c.mech).toBe(10);
     expect(deriveStats(s).attackSpeed).toBeGreaterThan(speed0 * 1.25);
+    expect(deriveStats(s).evasion).toBeGreaterThan(evasion0);
     dummy.attackMs = 100;
     dummy.damage = 1;
     s.combat!.evadeMs = 0;
     const before = c.mech;
     run(s, ctx, 3000, () => c.mech < before);
-    expect(c.mech).toBeLessThanOrEqual(Math.floor(before / 2) + 1);
+    expect(c.mech).toBe(before - 2);
   });
 
-  it('Mana is Power: a full tank hits harder than an empty one', () => {
-    const full = arena('mage', 'spark');
-    const empty = arena('mage', 'spark');
-    empty.s.mana = 6; // just enough for a cast or two, then regen only
-    run(full.s, full.ctx, 10_000, () => hits(full.ctx.events).length > 0);
-    run(empty.s, empty.ctx, 10_000, () => hits(empty.ctx.events).length > 0);
-    const first = (e: GameEvent[]) => hits(e)[0]?.amount ?? 0;
-    expect(first(full.ctx.events)).toBeGreaterThan(first(empty.ctx.events));
+  it('Mana is Power ramps with Mana spent during the last four seconds', () => {
+    const { s, ctx } = arena('mage', 'spark');
+    const d = deriveStats(s);
+    expect(manaPowerMore(s, d, manaFraction(s, d))).toBe(0);
+    recordManaSpent(s, d.maxMana * 0.45);
+    expect(manaPowerMore(s, d, manaFraction(s, d))).toBeCloseTo(15);
+    recordManaSpent(s, d.maxMana * 0.45);
+    expect(manaPowerMore(s, d, manaFraction(s, d))).toBeCloseTo(30);
+    s.skillBar = s.skillBar.map(() => null);
+    run(s, ctx, 4100);
+    expect(manaFraction(s, d)).toBe(0);
+  });
+
+  it('holds Mana for a higher-priority skill that is about to be ready', () => {
+    const { s } = arena('mage', 'spark');
+    s.skillBar[0] = createSkillGem(s, 'frost_ward');
+    s.skillBar[0]!.rules = [{ when: 'always' }];
+    s.skillBar[1] = createSkillGem(s, 'spark');
+    s.skillBar[1]!.rules = [{ when: 'always' }];
+    const d = deriveStats(s);
+    const ward = skillNumbers(d, s.skillBar[0]).manaCost;
+    const filler = skillNumbers(d, s.skillBar[1]).manaCost;
+    s.mana = ward + filler - 1;
+    s.combat!.cooldowns[0] = 1000;
+    expect(chooseSkill(s, d).slot).toBe(-1);
+    s.combat!.cooldowns[0] = 2000;
+    expect(chooseSkill(s, d).slot).toBe(1);
   });
 
   it('Riposte counter-attacks when the Duelist blocks or evades', () => {

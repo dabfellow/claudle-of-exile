@@ -46,7 +46,7 @@ Forked on 2026-11-01. The act boss needs 8 of the 11 other bosses. From the Holl
 - **The rule waits for the swing in hand,** so a heavy attack at 6 stacks can run into the cap. That's why it suggests 5, and the slower the build, the lower it wants setting.
 - **A lone 7 s guard doesn't stop every freeze** on a boss that also lays Frozen ground, and it isn't meant to. In the test it cuts freezes by about 40% and outlasts the same fighter without it in every seed; a second answer does the rest.
 
-**Unlock:** the rule is in the Vitals group, which the War Table teaches at level 2. It reads your own state, like life and mana, and it costs nobody a new level. A new group would have needed its own level, which moves every level after it again, straight after Act 3 did the same for Aim rules. The War Table's Vitals line mentions it, and the rule and the flask enchantment stay out of the lists until Act 4 opens (`act: 4` on `RULE_LABELS` and `INSTILL_CONDITIONS`).
+**Unlock:** the rule is in the baseline Vitals group. Frostbite itself stays out of the rule and flask-enchantment lists until Act 4 opens (`act: 4` on `RULE_LABELS` and `INSTILL_CONDITIONS`), but it needs no War Table purchase once the mechanic appears.
 
 **Offline:** like martyrs, a Frostbite boss stays in hiding while you're away unless something answers it by itself: a guard or movement skill on the rule, or a flask Instilled for it. See `bossLeftToRules` in `automation.ts`. Otherwise the hours would end in a freeze and a death.
 

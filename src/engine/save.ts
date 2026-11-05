@@ -1,5 +1,5 @@
 import { classDef } from '../data/classes';
-import { bundleCharacter, freshAccount } from './account';
+import { bundleCharacter, fillAccount, freshAccount } from './account';
 import { newAscendancyRuntime, newAscendancyState } from './ascendancy';
 import { TRIALS } from '../data/ascendancies';
 import { SKILL_BAR_SLOTS } from '../data/gems';
@@ -355,6 +355,7 @@ export function deserialize(json: string): GameState {
     else if (MERGE_KEYS.has(k)) raw[k] = { ...(val as object), ...(raw[k] as object) };
   }
   const s = raw as unknown as GameState;
+  fillAccount(s.account);
   unlockReachedZones(s);
   settleGems(s);
   settleMaps(s);

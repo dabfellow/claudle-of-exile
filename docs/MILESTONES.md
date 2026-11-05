@@ -4,7 +4,7 @@ The one place for what's next, what's planned, what's been decided and what's be
 not Claude. **Done** on a milestone is what has to be true before moving on. The order is by dependency: pacing rules
 first, because every act is tuned against them.
 
-Last updated 2026-11-04.
+Last updated 2026-11-05.
 
 **On this page:** [Next steps](#next-steps) · [Milestones](#milestones) · [Decisions](#decisions) ·
 [Other open items](#other-open-items) · [Ideas / later](#ideas--later) · [Done](#done)
@@ -48,11 +48,10 @@ investment without consuming an entire build.
 
 ### 1. Automation and offline rules
 - [x] Rule overhaul: per-skill rules, High/Normal/Low priority, and rule slots that unlock.
-- [x] Simple rules free, reactive rules unlocked through the War Table.
+- [x] Simple and survival rules are free; the War Table unlocks advanced targeting, a third condition and loot automation.
 - [x] Offline combat stops on death; offline cap starts at 8 h, and the Watchtower raises it toward 24 h.
 - [x] Deploy — done 2026-10-31
-- **Done:** a fresh character can't idle bosses until it has earned reactive rules, and all of this plays on the live
-  site.
+- **Done:** a fresh character has the rules needed to idle bosses safely; death still stops offline combat.
 - Merged 2026-10-30, save v20.
 
 ### 2. Measure the pacing
@@ -261,7 +260,7 @@ Work backwards from the end state, not forwards from Act 1.
 - **Automation unlocks:** by type of rule. Simple rules like "on cooldown" are free; reactive ones like "when a boss
   winds up" or "when life is below 40%" unlock later, so bosses stay hard to idle until the smart rules are earned.
 - **Dying offline:** combat stops until you return.
-- **New bosses offline:** once a player has earned the reactive rules, a strong enough build can beat new bosses offline.
+- **New bosses offline:** baseline wind-up rules let a strong enough build beat new bosses offline.
 - **Character levels:** around 65 at the end of Act 6. Top-end needs maybe level 90; level 100 is a long chase and a rare
   goal well beyond that.
 - **Combat and skilling:** one at a time, as today. Each offline period is a real choice, which is what separates
@@ -347,6 +346,17 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 - **1.0:** the game is already live on your site. You decide when to call 1.0, based solely on vibes.
 
 ## Other open items
+
+- [x] Refine class combat flow and idle decision-making: make Mana is Power reward recent spending, make Momentum grant Evasion and lose flat stacks only to meaningful landed hits, let low-level gear consume Arcane Dust instead of basic orbs, replace manual movement pacing with automatic range postures, and reserve Mana for higher-priority skills nearing readiness. — done 2026-11-05
+
+- [x] Rework War Table gating so an idle character has essential survival automation from Act 1 instead of needing manual boss micro. — done 2026-11-05
+  - Baseline kit: Vitals, Wind-up and Ground rules, automatic Life/Mana flask thresholds and two condition slots for each of the six skill-bar positions.
+  - Later War Table rewards: Status and Aim rules, a third condition, then Normal/Magic/Rare auto-salvage.
+  - This supersedes Milestone 1's original decision to gate reactive boss rules.
+
+- [x] Smooth hideout upgrade costs so mid- and late-tier stations do not stop combat progression for multi-day raw-material grinds. — done 2026-11-05
+  - Six recipes refine five logs or ore into planks or bars; first boss kills guarantee a Boss Trophy and repeats have a 25% chance.
+  - War Table level 7 fell from 80,000 Gold, 4,000 Yew Logs, 4,000 Mithril Ore and 100 Rough Gems to 30,000 Gold, 150 Yew Planks, 150 Mithril Bars, 20 Rough Gems and 8 Boss Trophies; every station received the same smoothing pass.
 
 - [x] Recalculate skill-gem attribute requirements so off-attribute gems still demand travel or gear without ordinary level-20 gems requiring 245 attributes. — done 2026-11-04
 
@@ -472,7 +482,7 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - When browser storage is full, a save throws an error instead of the "keep playing" handling meant for it. The game carries on, but the page can miss a refresh after buying a gem.
 - Hardcore on two devices: a second device still holding a local copy of a dead character can bring it back. Deleted characters would need a cloud marker to stop that.
 - Skill reform: a The Old Covenant moved to the shared stash can be worn by a new character on that account. Life Leech's 1.8 multiplier also raises Life-spending skills' Life cost, and drains cost no mana, so leech supports are free on them. The 31 new skills use reused icons, and none has its own art.
-- War Table: Wind-up rules are now level 2, about 15 minutes of gathering, so offline bosses come far earlier than Milestone 1's pacing assumed. Not simmed.
+- War Table survival rules are now baseline, superseding Milestone 1's old offline-boss gate. The pacing impact is not simmed.
 - The sim's `reachable` now pushes unbeaten areas so it walks every branch, but hasn't been run since the roads forked, and its pacing numbers for Acts 3–6 predate them.
 - `TRIAL_ZONES` in `scripts/sim.ts` has `hollowreef`, now one side of a fork; the bot still clears it.
 - Hideout later-tier costs only show on hover, so phones can't see them.
@@ -533,6 +543,9 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Cosmetics shop (never pay-to-win).
 
 ## Done
+- [x] Combat-flow pass: spend-based Mana is Power, Evasion-linked Momentum with flat protected losses, Arcane Dust Field Tinkering for campaign gear, Brawler/Kiter/Cautious range postures, and 1.5-second higher-priority Mana reservation. — done 2026-11-05
+- [x] Automation and hideout-cost overhaul: Vitals, Wind-up and Ground rules plus two condition slots are baseline; recovery flasks self-trigger; later War Table levels grant Status, Aim, a third slot and rarity-by-rarity auto-salvage. Six refining recipes turn logs and ore into planks and bars, bosses award trophies, and every station now has a much smoother component-based cost curve. — done 2026-11-05
+
 - [x] Gem attribute requirements now scale from 8 to 155 instead of 245; demanding gems use ×1.15 and reach 178 instead of ×1.3 and 318. Off-attribute gems still require passive-tree or gear investment. — done 2026-11-04
 - [x] Compact passive-tree pass: travel nodes fell from 423 to 249 while retaining their attribute role; lines, forks and wheels lost repeated small passives but kept all 198 notables, 90 masteries and 21 keystones. The new design contract records regional overlaps, route-package balancing and future item-based tree bending. Save v36 refunds the changed character tree. — done 2026-11-04
 - [x] Skill tree overhaul: the outer character-tree paths are build-neutral; class-mechanic choices moved into both of their class's ascendancies; each ascendancy has six notable paths and two capstones, all visible after Trial 1. Four trials award 2/2/3/2 points, ending at Tier 5 Maps with nine points for a normal three-notable/one-capstone build and no hard node-count ceiling. Save v35 refunds both trees for clean respecs. — done 2026-11-04

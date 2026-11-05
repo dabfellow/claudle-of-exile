@@ -27,7 +27,7 @@ import { combatStep, enterZone, hawkTarget, makeMonster, releaseNovas, startComb
 import { makeCtx, type Ctx } from '../src/engine/context';
 import { flaskStats } from '../src/engine/flasks';
 import { createSkillGem } from '../src/engine/gems';
-import { longshotMore, manaFraction, manaPowerMore, meterLabel, meterMax, overflowMax } from '../src/engine/mechanics';
+import { longshotMore, manaFraction, manaPowerMore, meterLabel, meterMax, overflowMax, recordManaSpent } from '../src/engine/mechanics';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -420,7 +420,7 @@ describe.each([false, true])('gates (offline: %s)', (offline) => {
     expect(meterLabel(s, deriveStats(s))).toContain('hawk every');
   });
 
-  it('Wellspring: a full tank keeps Mana is Power, and spare mana fills Overflow', () => {
+  it('Wellspring: spending ramps Mana is Power, and spare recovery fills Overflow', () => {
     const { s, ctx, c } = arena('wellspring', { offline });
     const d = deriveStats(s);
     expect(d.manaRegen).toBeGreaterThanOrEqual(2);
@@ -434,6 +434,7 @@ describe.each([false, true])('gates (offline: %s)', (offline) => {
     run(s, ctx, 1000);
     expect(c.mech).toBeGreaterThan(0);
     expect(meterLabel(s, deriveStats(s))).toContain('Overflow');
+    recordManaSpent(s, d.maxMana * 0.9);
     expect(manaFraction(s, d)).toBe(1);
   });
 
@@ -499,17 +500,18 @@ describe.each([false, true])('gates (offline: %s)', (offline) => {
     expect(loaded.ascendancy.nodes).toEqual([]);
   });
 
-  it('Alchemist: flask charges count as mana, and a drink bursts on your target', () => {
+  it('Alchemist: spent flask charges count as Mana spent, and a drink bursts on your target', () => {
     const { s, ctx, dummy, events } = arena('alchemist', { offline });
     const d = deriveStats(s);
     s.mana = 0;
-    expect(manaFraction(s, d)).toBeGreaterThan(0.1);
+    expect(manaFraction(s, d)).toBe(0);
     for (const f of s.flaskSlots) if (f) f.charges = 0;
     expect(manaFraction(s, d)).toBe(0);
     const f = s.flaskSlots[0]!;
     f.charges = flaskStats(f).maxCharges;
     events.length = 0;
     expect(useFlask(s, ctx, 0)).toBeNull();
+    expect(manaFraction(s, d)).toBeGreaterThan(0);
     expect(dealt(events, dummy.uid)).toBeGreaterThan(d.combatLevel * 10);
   });
 

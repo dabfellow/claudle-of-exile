@@ -43,7 +43,7 @@ Every 11 s the boss sets the ground under you burning (or chilled, shocked, caus
 `STEP_OUT_RATE`), drink. It reuses the battlefield ground code, so chilled ground also slows you and shocked ground
 makes hits land harder. Knobs: `BOSS_SCORCH_*` in `zones.ts`.
 
-The rule answer is **Ground rules** (War Table level 4). "While standing on [ground]" passes while that kind of hazard
+The rule answer is **Ground rules**, available from the start. "While standing on [ground]" passes while that kind of hazard
 is under you, and any guard skill steps you out of everything under you when it's cast, by hand or by rule. Rules all
 have to pass, so one guard can't watch both wind-ups and the ground: that's a second guard, or a choice. Consecrate's
 regen on the same rule is the softer answer.
@@ -52,8 +52,8 @@ To add a ground type in a later act: add it to `GroundKind` and `GROUND`, and gi
 rule editor lists every `GROUND` entry and greys out any that nothing lays yet (`GROUND_IN_PLAY`), which today is only
 caustic. Boss ground follows the boss's element, so a boss that scorches lightning (Qara) needs a Shocked ground rule.
 
-The War Table level sits in the middle of the track, and accounts have no version, so `alignWarTable` puts a stored
-level back in step with the unlocks it holds whenever an account loads or merges.
+Accounts have no version, so `fillAccount` gives old and new accounts the baseline survival rules and two condition
+slots whenever an account loads or merges.
 
 ## New uniques
 

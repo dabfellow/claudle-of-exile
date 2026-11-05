@@ -8,7 +8,7 @@ import type { CombatRuntime, FlaskInstance, GameState, StatKey, Stats } from './
 /**
  * Class mechanics (docs/design/CLASSES.md). The meter lives in `combat.mech`:
  * Rage / Momentum / Malice count stacks, Martyr counts Fervor in percent.
- * Riposte and Mana is Power have no meter.
+ * Riposte has no meter. Mana is Power uses mana spent during a rolling four-second window.
  */
 
 export const RIPOSTE_COOLDOWN_MS = 500;
@@ -20,6 +20,9 @@ export const HUNGER_MS = 5000;
 /** Overclock: run hot this long, then lock up for OVERHEAT_MS */
 export const OVERCLOCK_HEAT_MS = 8000;
 export const OVERHEAT_MS = 2000;
+export const MANA_POWER_WINDOW_MS = 4000;
+/** Spending 90% of maximum Mana inside the window reaches the base 30% bonus. */
+export const MANA_POWER_FULL_SPEND = 0.9;
 
 // ascendancy numbers (docs/design/ASCENDANCIES.md)
 export const RAMPAGE_MS = 6000;
@@ -92,6 +95,9 @@ export function ensureMechanicFields(c: CombatRuntime): void {
   c.riposteMs ??= 0;
   c.riposting ??= false;
   c.manaFrac ??= 1;
+  c.manaSpent ??= [];
+  c.momentumHitGraceMs ??= 0;
+  c.postureMs ??= 0;
   c.heatMs ??= 0;
   c.overheatMs ??= 0;
   c.hungerMs ??= HUNGER_MS;
@@ -179,7 +185,7 @@ export function mechanicStats(s: GameState, st: Stats): Partial<Record<StatKey, 
         attackSpeedPct: rampaging(s) && hasAscNode(s, 'ravager_red_haze') ? RED_HAZE_SPEED : 0,
       };
     case 'momentum':
-      return { attackSpeedPct: ascendancyOf(s) === 'longshot' ? 0 : 3 * stacks * (1 + st.momentumEffect / 100), evasionPct: st.momentumEvasion * stacks };
+      return { attackSpeedPct: ascendancyOf(s) === 'longshot' ? 0 : 3 * stacks * (1 + st.momentumEffect / 100), evasionPct: (1 + st.momentumEvasion) * stacks };
     default:
       return {};
   }
@@ -191,27 +197,25 @@ export function rageMore(s: GameState, d: Derived): number {
   return (s.combat?.mech ?? 0) * (1 + d.raw.rageEffect / 100);
 }
 
-/** How full mana counts as for Mana is Power, 0–1 (checked before a cast pays its cost). */
-export function manaFraction(s: GameState, d: Derived): number {
-  const r = d.raw;
-  let cur = s.mana + (r.manaPowerEs ? s.es : 0);
-  let max = d.maxMana + (r.manaPowerEs ? d.maxEs : 0);
-  if (ascendancyOf(s) === 'alchemist') {
-    for (const f of s.flaskSlots) {
-      if (!f) continue;
-      cur += f.charges * CHARGE_MANA;
-      max += flaskCapacity(s, f) * CHARGE_MANA;
-    }
-  }
-  if (max <= 0) return 0;
-  return Math.min(1, cur / max / (1 - Math.min(50, r.manaPowerFull) / 100));
+/** Record Mana paid so it contributes to the rolling four-second power window. */
+export function recordManaSpent(s: GameState, amount: number): void {
+  if (amount <= 0 || !s.combat || mechanicOf(s) !== 'manaPower') return;
+  ensureMechanicFields(s.combat);
+  s.combat.manaSpent!.push({ amount, remainingMs: MANA_POWER_WINDOW_MS });
 }
 
-/** Mana is Power: % more spell damage at a given fullness */
+/** Recent spending toward Mana is Power, from 0 to 1. */
+export function manaFraction(s: GameState, d: Derived): number {
+  const spent = s.combat?.manaSpent?.reduce((sum, payment) => sum + payment.amount, 0) ?? 0;
+  const target = d.maxMana * MANA_POWER_FULL_SPEND / (1 + Math.max(0, d.raw.manaPowerFull) / 100);
+  return target > 0 ? Math.min(1, spent / target) : 0;
+}
+
+/** Mana is Power: % more spell damage at a given recent-spending fraction. */
 export function manaPowerMore(s: GameState, d: Derived, frac: number): number {
   if (mechanicOf(s) !== 'manaPower') return 0;
-  if (d.raw.allOrNothing) return frac >= 0.8 ? 60 : 0;
-  return (30 + d.raw.manaPower) * frac;
+  const cap = 30 + d.raw.manaPower + (d.raw.manaPowerEs ? 10 : 0);
+  return cap * frac * (d.raw.allOrNothing ? 2 : 1);
 }
 
 /** How many charges a flask holds for this character. */
@@ -246,14 +250,14 @@ export function meterLabel(s: GameState, d: Derived): string {
     case 'momentum':
       if (ascendancyOf(s) === 'longshot') return `Momentum ${stacks}/${max} · ${longshotMore(s, d, 1).toFixed(0)}% more attack damage, double at range`;
       if (ascendancyOf(s) === 'falconer') return `Momentum ${stacks}/${max} · hawk every ${(hawkInterval(s, d) / 1000).toFixed(1)}s`;
-      return `Momentum ${stacks}/${max} · ${(3 * stacks * (1 + d.raw.momentumEffect / 100)).toFixed(0)}% attack speed`;
+      return `Momentum ${stacks}/${max} · ${(3 * stacks * (1 + d.raw.momentumEffect / 100)).toFixed(0)}% attack speed, ${((1 + d.raw.momentumEvasion) * stacks).toFixed(0)}% Evasion`;
     case 'malice':
       return stacks >= max ? 'Malice full · next hit is a Coup de Grâce' : `Malice ${stacks}/${max}`;
     case 'martyr':
       return ascendancyOf(s) === 'lightkeeper' ? `Fervor ${stacks}% · ${c?.asc.novas ?? 0}/${NOVA_STORE} novas stored` : `Fervor ${stacks}%`;
     case 'manaPower':
       if (ascendancyOf(s) === 'wellspring') return surgeReady(s, d) ? 'Overflow full · next spell Surges' : `Overflow ${Math.floor(((c?.mech ?? 0) / Math.max(1, overflowMax(d))) * 100)}%`;
-      return `Mana is Power · ${manaPowerMore(s, d, manaFraction(s, d)).toFixed(0)}% more spell damage`;
+      return `Mana is Power · ${manaPowerMore(s, d, manaFraction(s, d)).toFixed(0)}% more spell damage from recent spending`;
     case 'riposte':
       return `${c && c.riposteMs > 0 && !d.raw.perfectForm ? 'Riposte recovering' : 'Riposte ready'}${ascendancyOf(s) === 'matador' ? ` · streak ${c?.asc.streak ?? 0}/${streakCap(s)}` : ''}`;
     case null:

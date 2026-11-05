@@ -316,10 +316,10 @@ describe('hideout', () => {
     const price = stashPagePrice(s);
     const pages = s.account.stash.length;
     s.account.bank.gold = 2500;
-    s.account.bank.ash_log = 350;
-    s.account.bank.copper_ore = 150;
+    s.account.bank.ash_plank = 40;
+    s.account.bank.copper_bar = 25;
     expect(upgradeStation(s, c, 'stash')).toBeNull();
-    expect(s.account.bank.ash_log).toBe(50);
+    expect(s.account.bank.ash_plank).toBe(0);
     expect(s.account.stash.length).toBe(pages + 1);
     expect(stashPagePrice(s)).toBe(price);
   });

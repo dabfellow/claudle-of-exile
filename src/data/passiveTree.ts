@@ -75,7 +75,7 @@ const MASTERIES = {
   riposte: [m('Ripostes deal 20% increased damage', { ripostePct: 20 }), m('Riposte recovers 20% faster', { riposteCooldown: 20 }), m('+2% chance to Block hits', { blockChance: 2 })],
   momentum: [m('+2 to maximum Momentum', { momentumMax: 2 }), m('Taking a hit removes 20% less Momentum', { momentumRetain: 20 }), m('4% increased Attack Speed', { attackSpeedPct: 4 })],
   malice: [m('Malice meter is 2 smaller', { maliceMax: -2 }), m('25% increased Coup de Grâce damage', { coupPct: 25 }), m('10% increased Critical Strike Chance', { critChancePct: 10 })],
-  manaPower: [m('+5% to the Mana is Power bonus', { manaPower: 5 }), m('Mana above 95% counts as full for Mana is Power', { manaPowerFull: 5 }), m('+25 to maximum Mana', { mana: 25 })],
+  manaPower: [m('+5% to the Mana is Power bonus', { manaPower: 5 }), m('Recent Mana spending counts 5% more toward Mana is Power', { manaPowerFull: 5 }), m('+25 to maximum Mana', { mana: 25 })],
   martyr: [m('Fervor fills 10% faster', { fervorPct: 10 }), m('The holy nova deals 25% increased damage', { novaPct: 25 }), m('+5% to all Elemental Resistances', { allRes: 5 })],
 } satisfies Record<string, MasteryOption[]>;
 type MasteryTheme = keyof typeof MASTERIES;

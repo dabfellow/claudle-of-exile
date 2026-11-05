@@ -46,6 +46,7 @@ export function FlaskTip({ f, pinned = false }: { f: FlaskInstance; pinned?: boo
           {f.rarity === 'magic' ? 'Magic' : 'Normal'} {st.def.kind} flask · Item Level {f.ilvl}
         </div>
         <div>{flaskEffectText(f)}</div>
+        {st.def.kind !== 'utility' && <div className="mod enchant">Automatic: used below {st.def.kind === 'life' ? '50% Life' : '30% Mana'}</div>}
         <div>
           Consumes <b>{st.chargesPerUse}</b> of <b>{st.maxCharges}</b> charges · currently <b>{Math.floor(f.charges)}</b>
         </div>

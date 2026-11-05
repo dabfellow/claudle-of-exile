@@ -4,7 +4,7 @@ import { CRAFT_MATERIALS } from './craftMats';
 import { EXPEDITION_MATERIALS } from './expedition';
 import { RUNE_MATERIALS } from './runes';
 
-export type MaterialKind = 'ore' | 'log' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'rune' | 'artifact' | 'ingredient' | 'food' | 'chart' | 'currency' | 'gold' | 'fish';
+export type MaterialKind = 'ore' | 'log' | 'component' | 'trophy' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'rune' | 'artifact' | 'ingredient' | 'food' | 'chart' | 'currency' | 'gold' | 'fish';
 
 export interface MaterialDef {
   id: string;
@@ -25,9 +25,18 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'mithril_ore', name: 'Mithril Ore', kind: 'ore', color: '#6fc3d8', value: 12 },
   { id: 'rough_gem', name: 'Rough Gem', kind: 'gem', color: '#d0569b', value: 25 },
 
+  { id: 'copper_bar', name: 'Copper Bar', kind: 'component', color: '#c8743f', value: 10, desc: 'Smelted from Copper Ore for hideout construction.' },
+  { id: 'iron_bar', name: 'Iron Bar', kind: 'component', color: '#9aa3ad', value: 25, desc: 'Smelted from Iron Ore for hideout construction.' },
+  { id: 'mithril_bar', name: 'Mithril Bar', kind: 'component', color: '#6fc3d8', value: 60, desc: 'Smelted from Mithril Ore for advanced hideout construction.' },
+
   { id: 'ash_log', name: 'Ash Log', kind: 'log', color: '#b89a72', value: 2 },
   { id: 'oak_log', name: 'Oak Log', kind: 'log', color: '#8a6338', value: 5 },
   { id: 'yew_log', name: 'Yew Log', kind: 'log', color: '#6b3d2c', value: 12 },
+
+  { id: 'ash_plank', name: 'Ash Plank', kind: 'component', color: '#b89a72', value: 10, desc: 'Cut from Ash Logs for hideout construction.' },
+  { id: 'oak_plank', name: 'Oak Plank', kind: 'component', color: '#8a6338', value: 25, desc: 'Cut from Oak Logs for hideout construction.' },
+  { id: 'yew_plank', name: 'Yew Plank', kind: 'component', color: '#6b3d2c', value: 60, desc: 'Cut from Yew Logs for advanced hideout construction.' },
+  { id: 'boss_trophy', name: 'Boss Trophy', kind: 'trophy', color: '#d7b56d', value: 100, desc: 'Proof of a boss victory. Advanced hideout upgrades demand a few.' },
 
   { id: 'sunpetal', name: 'Sunpetal', kind: 'herb', color: '#f2c94c', value: 2 },
   { id: 'frostleaf', name: 'Frostleaf', kind: 'herb', color: '#7fc8f8', value: 5 },

@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { AUTO_SALVAGE_WAR_TABLE_LEVEL } from '../../data/hideout';
+import { stationLevel } from '../../engine/hideout';
 import { exportSave, importSave } from '../../engine/save';
 import { newGame } from '../../engine/state';
-import type { Rarity } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { isCloudAccount } from '../../platform/accounts';
 import { fmt, PageHeader } from '../components/common';
@@ -69,14 +70,16 @@ export function SettingsPage() {
           Automatically salvage dropped items of these rarities into Arcane Dust. Uniques are always kept.
         </p>
         <div className="row wrap">
-          {(['normal', 'magic', 'rare'] as Rarity[]).map((r) => (
-            <label key={r} className="chip" style={{ cursor: 'pointer' }}>
+          {(['normal', 'magic', 'rare'] as const).map((r) => (
+            <label key={r} className="chip" style={{ cursor: stationLevel(s, 'war_table') >= AUTO_SALVAGE_WAR_TABLE_LEVEL[r] ? 'pointer' : 'not-allowed' }}>
               <input
                 type="checkbox"
                 checked={s.settings.autoSalvage[r]}
+                disabled={stationLevel(s, 'war_table') < AUTO_SALVAGE_WAR_TABLE_LEVEL[r]}
                 onChange={(e) => game.act((st) => void (st.settings.autoSalvage[r] = e.target.checked))}
               />
-              <span style={{ color: `var(--${r})` }}>{r[0].toUpperCase() + r.slice(1)}</span>
+              <span style={{ color: `var(--${r})` }}>{r[0].toUpperCase() + r.slice(1)}</span>{' '}
+              <span className="dim small">War Table {AUTO_SALVAGE_WAR_TABLE_LEVEL[r]}</span>
             </label>
           ))}
         </div>

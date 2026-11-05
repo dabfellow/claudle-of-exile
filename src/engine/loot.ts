@@ -1,7 +1,7 @@
 import { BOSS_CRAFT_MAT, CONTRABAND_DROP, ESSENCES, FOSSILS, SEAL, WAX } from '../data/craftMats';
 import { WHETSTONE, WHETSTONE_DROP } from '../data/expedition';
 import { areaCurrency, BOSS_GATHER_DROP, bossGatherMats, bossTable, dropTable, STARTER_DROPS, type RarityWeights } from '../data/drops';
-import { MAP_ILVL } from '../data/hideout';
+import { AUTO_SALVAGE_WAR_TABLE_LEVEL, MAP_ILVL } from '../data/hideout';
 import { RUNE_DROP, RUNES } from '../data/runes';
 import { rollFlask, stashFlask } from './flasks';
 import type { ZoneDef } from '../data/zones';
@@ -34,7 +34,8 @@ export function placeItem(s: GameState, ctx: Ctx, item: Item): void {
     s.lifetime.uniquesFound += 1;
     seeUnique(s.account, item);
   }
-  if (item.rarity !== 'unique' && s.settings.autoSalvage[item.rarity] && benchBuilt(s)) {
+  const autoLevel = item.rarity === 'unique' ? Infinity : AUTO_SALVAGE_WAR_TABLE_LEVEL[item.rarity];
+  if (item.rarity !== 'unique' && s.settings.autoSalvage[item.rarity] && benchBuilt(s) && stationLevel(s, 'war_table') >= autoLevel) {
     addBank(s, 'arcane_dust', salvageValue(item));
     s.lifetime.salvaged += 1;
     ctx.emit({ t: 'loot', item, salvaged: true });
@@ -71,6 +72,7 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
   if (mon.isBoss) {
     const boss = bossTable(zone.tier);
     const firstKill = !s.bossesDefeated.includes(zone.id);
+    if ((!s.maps.run && firstKill) || chance(rng, 0.25)) giveCurrency('boss_trophy');
     if (firstKill || chance(rng, boss.repeatChance)) for (const g of boss.guaranteed) giveCurrency(g.id, g.qty);
     for (let i = 0; i < boss.currencyRolls; i++) giveCurrency(rollCurrency(rng, orbs));
     const count = rInt(rng, boss.items[0], boss.items[1]);

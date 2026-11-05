@@ -5,7 +5,6 @@ import { UNIQUES } from '../src/data/bases';
 import { ZONE_POS } from '../src/data/continent';
 import { BOSS_TABLES, DROP_TABLES } from '../src/data/drops';
 import { RULE_LABELS, type TacticRule } from '../src/data/gems';
-import { STATIONS } from '../src/data/hideout';
 import {
   ACT_PREVIEW,
   ACTS,
@@ -314,12 +313,11 @@ describe('Frostbite', () => {
     expect(c.events.some((e) => e.t === 'bossPhase' && e.text.includes('freezes you'))).toBe(false);
   });
 
-  it('comes with Vitals rules, so an old War Table already has it', () => {
+  it('comes with Vitals rules from the start', () => {
     expect(RULE_LABELS.frostbite.unlock).toBe('vitals');
     const s = fighter([['iron_guard', [AT_SIX]]]);
-    s.account.automation.rules = [];
-    expect(ruleLockReason(s, 'frostbite')).toContain('Vitals');
-    expect(STATIONS.find((x) => x.id === 'war_table')!.levels.find((l) => l.grants?.rules?.includes('vitals'))!.effect).toContain('Frostbite');
+    expect(s.account.automation.rules).toContain('vitals');
+    expect(ruleLockReason(s, 'frostbite')).toBeNull();
   });
 
   it('an Instilled flask drinks itself at its stack count', () => {

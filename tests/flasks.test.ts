@@ -104,7 +104,7 @@ describe('flask items', () => {
     expect(s.account.bank.instill).toBe(0);
   });
 
-  it('a Low Mana flask drinks itself when Mana runs low', () => {
+  it('a Mana flask drinks itself when Mana runs low without an enchantment', () => {
     const s = newGame(1);
     const c = ctx();
     startCombat(s, c, 'mudflats');
@@ -114,7 +114,7 @@ describe('flask items', () => {
     const f = s.flaskSlots[1]!;
     expect(f.flaskId).toBe('mana_small');
     f.charges = 24;
-    f.instill = 'lowMana';
+    expect(f.instill).toBeNull();
     const d = deriveStats(s);
     s.mana = d.maxMana;
     combatStep(s, c, 50, d);

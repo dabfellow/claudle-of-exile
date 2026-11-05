@@ -22,6 +22,7 @@ const LIFE_SKILLS = ACTIVE_GEMS.filter((g) => g.effect.lifePct).map((g) => g.id)
 /** One skill on the bar, optionally with supports, against dummies that stand still and never attack unless told to. */
 function arena(gem: string, opts: { supports?: string[]; pack?: number; boss?: boolean; classId?: 'warrior' | 'mage' } = {}) {
   const s = veteran(newGame(1, { name: 't', classId: opts.classId ?? 'warrior' }), 60);
+  s.flaskSlots = s.flaskSlots.map(() => null);
   s.skillBar = s.skillBar.map(() => null);
   const g = createSkillGem(s, gem);
   g.rules = [{ when: 'always' }];

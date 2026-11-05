@@ -63,17 +63,13 @@ describe('the ground rule', () => {
     expect(passes({ when: 'onGround' })).toBe(false);
   });
 
-  it('waits for the War Table, and locked it never fires', () => {
+  it('is available from the start and fires without a War Table upgrade', () => {
     const s = newGame(1);
-    expect(ruleLockReason(s, 'onGround')).toMatch(`Ground rules: War Table level ${ruleUnlockLevel('ground')}`);
-    expect(setRule(s, 0, 0, WATCH_BURNING)).toMatch(/War Table/);
-
-    const locked = fighter(['iron_guard']);
-    locked.account.automation.rules = locked.account.automation.rules.filter((r) => r !== 'ground');
-    locked.skillBar[0]!.rules = [WATCH_BURNING];
-    inFight(locked);
-    burn(locked);
-    expect(chooseSkill(locked, deriveStats(locked)).slot).toBe(-1);
+    expect(ruleLockReason(s, 'onGround')).toBeNull();
+    expect(setRule(s, 0, 0, WATCH_BURNING)).toBeNull();
+    inFight(s);
+    burn(s);
+    expect(chooseSkill(s, deriveStats(s)).slot).toBe(0);
   });
 
   it('sends a skill off only once something is under you', () => {
@@ -161,41 +157,42 @@ describe('War Table', () => {
     return a;
   };
 
-  it('teaches wind-ups with vitals, ground rules at 4 and the second slot at 5', () => {
-    expect(windupsAt()).toBe(2);
-    expect(groundAt()).toBe(4);
-    expect(stationDef('war_table').levels[4].grants).toEqual({ ruleSlots: 2 });
+  it('starts with wind-ups, ground rules and two slots, then grants the third slot at level 4', () => {
+    expect(windupsAt()).toBe(1);
+    expect(groundAt()).toBe(1);
+    expect(freshAccount().automation.ruleSlots).toBe(2);
+    expect(stationDef('war_table').levels[3].grants).toEqual({ ruleSlots: 3 });
   });
 
   it('gives an old level 2 table wind-ups, at the same level', () => {
     const a = account(2, ['vitals'], 1);
     alignWarTable(a);
     expect(a.hideout.war_table).toBe(2);
-    expect(a.automation.rules).toEqual(['vitals', 'windups']);
-    expect(a.automation.ruleSlots).toBe(1);
+    expect(a.automation.rules).toEqual(['vitals', 'windups', 'ground', 'status']);
+    expect(a.automation.ruleSlots).toBe(2);
   });
 
   it('moves a table already holding the second slot up to where it now sits', () => {
     const a = account(3, ['vitals', 'status'], 2);
     alignWarTable(a);
-    expect(a.hideout.war_table).toBe(5);
-    expect(a.automation.rules).toEqual(expect.arrayContaining(['windups', 'ground']));
+    expect(a.hideout.war_table).toBe(3);
+    expect(a.automation.rules).toEqual(expect.arrayContaining(['windups', 'ground', 'aim']));
     expect(a.automation.ruleSlots).toBe(2);
     alignWarTable(a);
-    expect(a.hideout.war_table).toBe(5);
+    expect(a.hideout.war_table).toBe(3);
   });
 
   it('moves the third rule slot too', () => {
     const a = account(5, ['vitals', 'status', 'windups'], 3);
     alignWarTable(a);
-    expect(a.hideout.war_table).toBe(stationDef('war_table').levels.length);
+    expect(a.hideout.war_table).toBe(5);
   });
 
   it('leaves a new table alone', () => {
     const a = account(2, ['vitals', 'windups'], 1);
     alignWarTable(a);
     expect(a.hideout.war_table).toBe(2);
-    expect(a.automation.rules).toEqual(['vitals', 'windups']);
+    expect(a.automation.rules).toEqual(['vitals', 'windups', 'ground', 'status']);
     const fresh = freshAccount();
     alignWarTable(fresh);
     expect(fresh.hideout.war_table).toBe(1);

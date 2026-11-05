@@ -10,7 +10,11 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Mana is Power now rewards Mana spent recently, Momentum grants Evasion and loses flat stacks to landed hits, low-level gear can be tinkered with Arcane Dust, combat has automatic range postures, and filler skills reserve Mana for higher-priority cooldowns.',
+  'Vitals, wind-up and ground rules now start unlocked with two conditions per skill, while Life and Mana flasks automatically trigger at low resources; later War Table tiers focus on advanced targeting, a third condition and loot auto-salvage.',
+  'Hideout upgrades now use bars, planks and Boss Trophies with much smoother costs instead of demanding thousands of raw logs and ore at once.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

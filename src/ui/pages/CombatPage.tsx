@@ -3,7 +3,7 @@ import { mealDef } from '../../data/cooking';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
 import { BOSS_FROSTBITE_MAX, BOSS_FROSTBITE_SLOW_PCT, BOSS_NOVA_MULT, BOSS_SLAM_MULT, echoTips, MECHANIC_INFO, nextZones, zoneDef, type MonsterDef } from '../../data/zones';
-import { CELLS, cellRing, GROUND, inReach, minionInWay, monsterGround, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT, RINGS } from '../../engine/battlefield';
+import { CELLS, cellRing, GROUND, inReach, minionInWay, monsterGround, PLAYER_SPOT, POSTURES, POSTURE_ORDER, RINGS } from '../../engine/battlefield';
 import {
   aliveMonsters,
   army,
@@ -24,7 +24,7 @@ import {
   queueSkill,
   releaseNovas,
   retreat,
-  setMovement,
+  setPosture,
   startCombat,
   useFlask,
   ailmentThreshold,
@@ -41,7 +41,7 @@ import { flaskCapacity, meterLabel, meterMax, mechanicOf, overflowMax } from '..
 import { classDef } from '../../data/classes';
 import { mealTimeLeft } from '../components/PantryBoard';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
-import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, Minion, MonsterInstance, TargetOrder, TargetPriority } from '../../engine/types';
+import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, Minion, MonsterInstance, Posture, TargetOrder, TargetPriority } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
 import { anyArtUrl, Art, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
@@ -541,7 +541,7 @@ function ChainedNotice({ s, c }: { s: GameState; c: CombatRuntime }) {
   );
 }
 
-/** Flee / creep / walk / run, what the field will do next, and who your skills go for. */
+/** Automatic range posture, what the field will do next, and who your skills go for. */
 function MovementBar({ s }: { s: GameState }) {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
@@ -569,9 +569,9 @@ function MovementBar({ s }: { s: GameState }) {
     <div className="bf-bar">
       <Tabs
         compact
-        value={s.settings.movement}
-        onChange={(id) => game.act((st) => setMovement(st, id))}
-        tabs={MOVEMENT_ORDER.map((id) => ({ id, label: MOVEMENT[id].name, title: MOVEMENT[id].desc }))}
+        value={s.settings.posture ?? 'brawler'}
+        onChange={(id) => game.act((st) => setPosture(st, id as Posture))}
+        tabs={POSTURE_ORDER.map((id) => ({ id, label: POSTURES[id].name, title: POSTURES[id].desc }))}
       />
       <span className="dim bf-status" title={status}>
         {c.fleeing ? <span className="status bad">Auto-fleeing</span> : status}
@@ -592,8 +592,8 @@ function MovementBar({ s }: { s: GameState }) {
           ))}
         </select>
       </label>
-      <label className="bf-auto" title="Below 35% life, flee until you're back above 90%, then resume your pace">
-        <input type="checkbox" checked={s.settings.autoFlee} onChange={(e) => game.act((st) => void (st.settings.autoFlee = e.target.checked))} /> Auto-flee
+      <label className="bf-auto" title="Emergency fallback: below 35% Life, flee until you're back above 90%. Cautious posture also waits for Life flasks to empty.">
+        <input type="checkbox" checked={s.settings.autoFlee} onChange={(e) => game.act((st) => void (st.settings.autoFlee = e.target.checked))} /> Emergency flee
       </label>
       <label className="bf-auto" title="A ready boss comes on its own, instead of waiting for you to challenge it">
         <input type="checkbox" checked={s.settings.autoBoss} onChange={(e) => game.act((st) => void (st.settings.autoBoss = e.target.checked))} /> Auto-challenge
@@ -677,7 +677,7 @@ function FlaskBelt({ s }: { s: GameState }) {
               <div className="flask-liquid" style={{ height: `${(f.charges / flaskCapacity(s, f)) * 100}%` }} />
               {buff && <div className="flask-timer" style={{ width: `${(buff.remainingMs / buff.durationMs) * 100}%` }} />}
               <span className="flask-key">{i + 1}</span>
-              {f.instill && <span className="flask-auto">AUTO</span>}
+              {(f.instill || st.def.kind !== 'utility') && <span className="flask-auto">AUTO</span>}
               <span className="flask-charges">
                 {Math.floor(f.charges)}/{flaskCapacity(s, f)}
               </span>

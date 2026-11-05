@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { STATIONS } from '../src/data/hideout';
 import { makeCtx } from '../src/engine/context';
 import { stationPerks, upgradeStation } from '../src/engine/hideout';
 import { seeded } from '../src/engine/rng';
@@ -6,8 +7,11 @@ import { newGame } from '../src/engine/state';
 
 const fresh = () => {
   const s = newGame(1);
-  s.account.bank.gold = 1e7;
-  for (const id of ['ash_log', 'copper_ore', 'oak_log', 'iron_ore', 'rough_gem', 'arcane_dust']) s.account.bank[id] = 1e5;
+  for (const station of STATIONS) {
+    for (const level of station.levels) {
+      for (const id of Object.keys(level.cost)) s.account.bank[id] = 1e7;
+    }
+  }
   return s;
 };
 
@@ -25,7 +29,7 @@ describe('stationPerks', () => {
     const ctx = makeCtx(seeded(1));
     upgradeStation(s, ctx, 'war_table');
     upgradeStation(s, ctx, 'war_table');
-    expect(stationPerks(s, 'war_table')).toEqual(['Rules: Simple, Vitals, Wind-up, Status', '1 rule slot per skill']);
+    expect(stationPerks(s, 'war_table')).toEqual(['Rules: Simple, Vitals, Wind-up, Ground, Status, Aim', '2 rule slots per skill']);
   });
 
   it('counts only bench recipes you can actually craft', () => {

@@ -87,17 +87,15 @@ describe('maps offline', { timeout: 60_000 }, () => {
     return s;
   };
 
-  it('without wind-up rules, stops at the first boss and keeps the rest of the maps', () => {
+  it('has baseline wind-up rules and never parks at a map boss', () => {
     const s = kitted();
     const c = makeCtx(seeded(2));
     grantMaps(s, 3);
     startAutoRun(s, c, 1, 'barrows');
     const sum = simulateOffline(s, c, 3_600_000);
-    expect(s.lifetime.deaths).toBe(0);
-    expect(s.lifetime.bossKills).toBe(0);
-    expect(sum.bossWaiting).toBeTruthy();
-    expect(s.maps.run?.packsLeft).toBe(0);
-    expect(mapsHeld(s, 1, 'barrows')).toBeGreaterThanOrEqual(2);
+    expect(s.lifetime.deaths + s.lifetime.bossKills).toBeGreaterThan(0);
+    expect(sum.bossWaiting).toBeNull();
+    expect(mapsHeld(s, 1, 'barrows')).toBe(0);
   });
 
   it('with wind-up rules, runs maps until they are gone', () => {

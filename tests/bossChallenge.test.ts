@@ -3,7 +3,7 @@ import { BOSS_GATHER_DROP, bossGatherMats, STARTER_DROPS } from '../src/data/dro
 import { materialDef } from '../src/data/materials';
 import { zoneDef } from '../src/data/zones';
 import { baseDef } from '../src/data/bases';
-import { aliveMonsters, BOSS_RESPAWN_MS, challengeBoss, combatStep, makeMonster, startCombat, toggleBossFarm } from '../src/engine/combat';
+import { aliveMonsters, BOSS_RESPAWN_MS, challengeBoss, combatStep, makeMonster, setMovement, startCombat, toggleBossFarm } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createItem } from '../src/engine/items';
 import { rollLoot } from '../src/engine/loot';
@@ -118,16 +118,15 @@ describe('boss farm', () => {
 
   it('holds the timer while fleeing', () => {
     const { s, c } = farming();
-    s.settings.movement = 'flee';
+    setMovement(s, 'flee');
     step(s, c, BOSS_RESPAWN_MS * 2);
     expect(s.combat!.monsters).toHaveLength(0);
   });
 
-  it('offline without wind-up rules, keeps to trash', () => {
+  it('offline baseline wind-up handling lets the farm bring out its boss', () => {
     const { s, c } = farming(true);
     run(s, c, 30_000);
-    expect(hasBoss(s)).toBe(false);
-    expect(s.lifetime.kills).toBeGreaterThan(0);
+    expect(hasBoss(s)).toBe(true);
   });
 
   it('stopping sends the area back to normal', () => {

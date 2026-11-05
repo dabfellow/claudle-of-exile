@@ -90,6 +90,7 @@ import {
   minionTarget,
   neighbors,
   PLAYER_SPOT,
+  POSTURES,
   SHOCKED_GROUND_TAKEN,
   STEP_OUT_RATE,
   stepOutOfGround,
@@ -110,6 +111,7 @@ import {
   ANVIL_THORNS_PCT,
   ANVIL_THORNS_PER_RAGE,
   BLOOM_MORE,
+  CHARGE_MANA,
   coupMulti,
   DRAUGHT_MORE,
   ECSTASY_SPEED,
@@ -127,6 +129,7 @@ import {
   longshotMore,
   manaFraction,
   manaPowerMore,
+  recordManaSpent,
   mechanicOf,
   MEGA_CRIT_MULTI,
   meterFull,
@@ -165,13 +168,15 @@ import {
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
 import { gemsArrivingAt } from './hideout';
 import { openReachedZones } from './progress';
-import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, Minion, MonsterInstance, Movement, Storm, TargetPriority, Targeting } from './types';
+import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, Minion, MonsterInstance, Movement, Posture, Storm, TargetPriority, Targeting } from './types';
 
 export const SPAWN_DELAY_MS = 900;
 /** closing in on a monster out of reach takes this long, shortened by movement speed */
 export const CLOSE_IN_MS = 500;
 /** with nothing in reach and no way in, the player waits this long before looking again */
 const IDLE_MS = 250;
+/** Lower-priority skills preserve Mana for a higher-priority skill this close to ready. */
+export const MANA_LOOKAHEAD_MS = 1500;
 export const DEATH_LIFE_FRACTION = 0.25;
 /** each monster in a pack of 2+ is weaker; xp and loot scale with it */
 export const PACK_LIFE_SCALE = 0.6;
@@ -247,6 +252,9 @@ function newRuntime(zoneId: string): CombatRuntime {
     riposteMs: 0,
     riposting: false,
     manaFrac: 1,
+    manaSpent: [],
+    momentumHitGraceMs: 0,
+    postureMs: 0,
     heatMs: 0,
     overheatMs: 0,
     hungerMs: HUNGER_MS,
@@ -300,12 +308,25 @@ export function retreat(s: GameState): void {
 /** Picking a pace by hand also takes back control from auto-flee. */
 export function setMovement(s: GameState, movement: Movement): void {
   s.settings.movement = movement;
+  // Low-level callers can still take direct control; the player HUD uses setPosture instead.
+  s.settings.posture = undefined;
+  if (s.combat) s.combat.fleeing = false;
+}
+
+export function setPosture(s: GameState, posture: Posture): void {
+  s.settings.posture = posture;
   if (s.combat) s.combat.fleeing = false;
 }
 
 /** The pace in effect: the player's choice, unless auto-flee has taken over. */
 export function currentMovement(s: GameState): Movement {
-  return s.combat?.fleeing ? 'flee' : (s.settings.movement ?? 'walk');
+  const c = s.combat;
+  if (c?.fleeing) return 'flee';
+  if (!c || !s.settings.posture) return s.settings.movement ?? 'walk';
+  const living = aliveMonsters(c);
+  if (s.settings.posture === 'cautious') return 'slow';
+  if (s.settings.posture === 'kiter') return living.some((m) => cellRing(m.cell) <= 1) || c.ground.some((g) => g.cell === PLAYER_SPOT) ? 'run' : 'slow';
+  return living.length > 0 && living.every((m) => cellRing(m.cell) > 3) ? 'run' : 'walk';
 }
 
 // ---------- monsters ----------
@@ -572,14 +593,30 @@ function shakeOff(s: GameState, ctx: Ctx, dt: number): void {
 /** Auto-flee: on low life, back off until healed, then go back to the chosen pace. */
 function autoFlee(s: GameState, ctx: Ctx, d: Derived): void {
   const c = s.combat!;
-  if (!s.settings.autoFlee) c.fleeing = false;
-  else if (!c.fleeing && s.life < d.maxLife * AUTO_FLEE_AT && c.monsters.length) {
+  const cautious = s.settings.posture === 'cautious';
+  const lifeFlasksEmpty = s.flaskSlots
+    .filter((f) => f && flaskStats(f).def.kind === 'life')
+    .every((f) => f!.charges < flaskStats(f!).chargesPerUse);
+  const enabled = s.settings.autoFlee || (cautious && lifeFlasksEmpty);
+  if (!enabled) c.fleeing = false;
+  else if (!c.fleeing && s.life < d.maxLife * AUTO_FLEE_AT && c.monsters.length && (!cautious || lifeFlasksEmpty)) {
     c.fleeing = true;
     ctx.emit({ t: 'info', text: 'Badly hurt: fleeing until you recover' });
   } else if (c.fleeing && s.life >= d.maxLife * AUTO_FLEE_RESUME) {
     c.fleeing = false;
-    ctx.emit({ t: 'info', text: `Recovered: back to ${MOVEMENT[s.settings.movement ?? 'walk'].name.toLowerCase()}ing` });
+    ctx.emit({ t: 'info', text: `Recovered: ${POSTURES[s.settings.posture ?? 'brawler'].name} posture resumed` });
   }
+}
+
+/** Kiter posture creates real spacing on the fixed-player hex field without deleting the whole pack. */
+function postureStep(s: GameState, ctx: Ctx, dt: number): void {
+  const c = s.combat!;
+  if (s.settings.posture !== 'kiter' || c.fleeing) return;
+  c.postureMs = Math.max(0, (c.postureMs ?? 0) - dt);
+  if (c.postureMs > 0 || !aliveMonsters(c).some((m) => !m.isBoss && cellRing(m.cell) === 1)) return;
+  c.postureMs = 1000;
+  const moved = knockBack(c.monsters, army(c));
+  if (moved) ctx.emit({ t: 'info', text: `Kiter posture opens space from ${moved} ${moved === 1 ? 'enemy' : 'enemies'}` });
 }
 
 /** Damage a monster hit does to the player after mitigation. */
@@ -631,7 +668,10 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
   c.frostbite = 0;
   c.frozenMs = 0;
   ctx.emit({ t: 'flask', slot, flaskId: f.flaskId, auto });
-  if (ascendancyOf(s) === 'alchemist') alchemistDrink(s, ctx, d, st.effectMult);
+  if (ascendancyOf(s) === 'alchemist') {
+    recordManaSpent(s, st.chargesPerUse * CHARGE_MANA);
+    alchemistDrink(s, ctx, d, st.effectMult);
+  }
   return null;
 }
 
@@ -667,6 +707,14 @@ function triggerInstilled(s: GameState, ctx: Ctx, cond: InstillCondition): void 
   s.flaskSlots.forEach((f, i) => {
     if (!f || f.instill !== cond) return;
     if (flaskActive(s, f.flaskId)) return;
+    useFlask(s, ctx, i, true);
+  });
+}
+
+/** Recovery flasks carry their essential low-resource automation without needing an Instilling Orb. */
+function triggerRecoveryFlasks(s: GameState, ctx: Ctx, kind: 'life' | 'mana'): void {
+  s.flaskSlots.forEach((f, i) => {
+    if (!f || flaskStats(f).def.kind !== kind || flaskActive(s, f.flaskId)) return;
     useFlask(s, ctx, i, true);
   });
 }
@@ -986,11 +1034,25 @@ export function chooseSkill(s: GameState, d: Derived): SkillChoice {
     }
   }
   const rc = ruleContext(s, d);
-  for (const i of castOrder(s)) {
+  const order = castOrder(s);
+  const reservedBefore = (position: number) => {
+    if (d.raw.overclock || d.raw.bloodPact) return 0;
+    let reserved = 0;
+    for (const slot of order.slice(0, position)) {
+      const gem = s.skillBar[slot]!;
+      if (c.cooldowns[slot] > MANA_LOOKAHEAD_MS || gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) continue;
+      const nums = skillNumbers(d, gem);
+      if (triggered(nums) || stackedUp(c, gem.gemId) || !rulesPass(s, gem.rules, (r) => ruleAllows(r, rc, skillIsActive(c, gem.gemId)))) continue;
+      reserved += skillCost(s, d, nums);
+    }
+    return reserved;
+  };
+  for (const [position, i] of order.entries()) {
     const gem = s.skillBar[i]!;
     if (gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) continue;
     const nums = skillNumbers(d, gem);
     if (triggered(nums) || !ready(s, d, i, nums) || stackedUp(c, gem.gemId) || !rulesPass(s, gem.rules, (r) => ruleAllows(r, rc, skillIsActive(c, gem.gemId)))) continue;
+    if (!d.raw.overclock && !d.raw.bloodPact && s.mana - skillCost(s, d, nums) < reservedBefore(position)) continue;
     const got = consider(i, nums, false);
     if (got) return got;
   }
@@ -1649,18 +1711,21 @@ function paySkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillN
   const c = s.combat!;
   const { def, mods } = nums;
   const r = d.raw;
-  c.manaFrac = manaFraction(s, d);
   const cost = skillCost(s, d, nums);
   if (surgeWaiting(s, d, nums)) startSurge(s, ctx, d);
   // Overclock: no costs, and cooldowns at the minimum
   if (!r.overclock) {
     if (r.bloodPact) s.life -= cost;
-    else s.mana -= cost;
+    else {
+      s.mana -= cost;
+      recordManaSpent(s, cost);
+    }
     if (nums.lifeCost) {
       s.life = Math.max(1, s.life - nums.lifeCost);
       if (mods.specials.has('tithe')) c.heals.push({ resource: 'life', perMs: (nums.lifeCost * TITHE_SHARE) / TITHE_MS, remainingMs: TITHE_MS });
     }
   }
+  c.manaFrac = manaFraction(s, d);
   if (slot >= 0) c.cooldowns[slot] = Math.max(MIN_COOLDOWN_MS, nums.cooldownMs);
   if (slot >= 0 && ascendancyOf(s) === 'flagellant') selfHarm(s, ctx, d);
   if (mechanicOf(s) === 'rage' && def.id === 'war_cry') gainMeter(s, d, 10);
@@ -2360,9 +2425,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   if (asc === 'matador') c.asc.streak = hasAscNode(s, 'matador_close_call') ? Math.floor(c.asc.streak / 2) : 0;
   if (c.windup?.goaded) c.actionMs -= c.actionTotal * GOADED_CUT;
   if (asc === 'anvil') anvilAnswer(s, ctx, d, mon);
-  if (mech === 'momentum') {
-    if (!r.perpetualMotion) c.mech -= Math.ceil(c.mech * 0.5 * (1 - Math.min(100, r.momentumRetain) / 100));
-  } else if (mech === 'rage') gainMeter(s, d, r.rageOnHitTaken);
+  if (mech === 'rage') gainMeter(s, d, r.rageOnHitTaken);
   else if (mech === 'malice') gainMeter(s, d, r.maliceOnHitTaken);
   martyrFill(s, ctx, d, raw);
   let dmg: number;
@@ -2376,6 +2439,12 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     if (c.windup.braced) dmg = Math.max(1, Math.round(dmg * (1 - UNMOVED_LESS / 100)));
   }
   const taken = dmg;
+  if (mech === 'momentum' && !r.perpetualMotion && (c.momentumHitGraceMs ?? 0) <= 0) {
+    const stacks = taken >= d.maxLife * 0.15 ? 4 : 2;
+    const loss = Math.ceil(stacks * (1 - Math.min(100, r.momentumRetain) / 100));
+    c.mech = Math.max(0, c.mech - loss);
+    c.momentumHitGraceMs = 500;
+  }
   const legionary = army(c).find((x) => x.shares && x.life > 0);
   if (legionary) {
     const part = Math.round((dmg * legionary.shares!) / 100);
@@ -3096,8 +3165,14 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   if (c.esDelayMs <= 0) s.es = Math.min(d.maxEs, s.es + (d.esRecharge * dt) / 1000);
 
   // instilled flasks
-  if (s.life < d.maxLife * 0.5) triggerInstilled(s, ctx, 'lowLife');
-  if (d.maxMana > 0 && s.mana < d.maxMana * INSTILL_LOW_MANA) triggerInstilled(s, ctx, 'lowMana');
+  if (s.life < d.maxLife * 0.5) {
+    triggerRecoveryFlasks(s, ctx, 'life');
+    triggerInstilled(s, ctx, 'lowLife');
+  }
+  if (d.maxMana > 0 && s.mana < d.maxMana * INSTILL_LOW_MANA) {
+    triggerRecoveryFlasks(s, ctx, 'mana');
+    triggerInstilled(s, ctx, 'lowMana');
+  }
   if ((c.frostbite ?? 0) >= BOSS_FROSTBITE_INSTILL_AT) triggerInstilled(s, ctx, 'frostbite');
   for (let i = 0; i < s.flaskSlots.length; i++) {
     const f = s.flaskSlots[i];
@@ -3107,6 +3182,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   }
 
   autoFlee(s, ctx, d);
+  postureStep(s, ctx, dt);
   advanceSpawns(s, ctx, dt);
   shakeOff(s, ctx, dt);
   stormStep(s, ctx, d, dt);
@@ -3204,6 +3280,11 @@ function classMechanicsStep(s: GameState, ctx: Ctx, d: Derived, dt: number): boo
   const r = d.raw;
   const fighting = aliveMonsters(c).length > 0;
   c.riposteMs = Math.max(0, c.riposteMs - dt);
+  c.momentumHitGraceMs = Math.max(0, (c.momentumHitGraceMs ?? 0) - dt);
+  if (c.manaSpent?.length) {
+    for (const payment of c.manaSpent) payment.remainingMs -= dt;
+    c.manaSpent = c.manaSpent.filter((payment) => payment.remainingMs > 0);
+  }
   const mech = mechanicOf(s);
   ascendancyStep(s, ctx, d, dt, fighting);
   if (mech === 'rage' && !fighting && !r.endlessFury && !rampaging(s)) c.mech = Math.max(0, c.mech - (RAGE_DECAY_PER_S * (1 - Math.min(100, r.rageDecay) / 100) * dt) / 1000);

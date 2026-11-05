@@ -214,7 +214,15 @@ describe('auto-switching gear', () => {
     saveGearSet(s, 'Free');
     expect(s.loadouts.gear).toHaveLength(1);
     expect(setAutoGear(s, 'woodcutting', lastSet(s).id)).toMatch(/Crafting Bench level 3/);
-    Object.assign(s.account.bank, { gold: 1e6, ash_log: 1e4, copper_ore: 1e4, arcane_dust: 1e4, rough_gem: 100 });
+    Object.assign(s.account.bank, {
+      gold: 1e6,
+      ash_plank: 1e4,
+      copper_bar: 1e4,
+      iron_bar: 1e4,
+      arcane_dust: 1e4,
+      rough_gem: 100,
+      boss_trophy: 100,
+    });
     upgradeStation(s, ctx, 'bench');
     expect(gearSwitchUnlocked(s)).toBe(false);
     upgradeStation(s, ctx, 'bench');

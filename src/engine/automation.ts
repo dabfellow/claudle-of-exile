@@ -17,7 +17,8 @@ export const GROUND_IN_PLAY: ReadonlySet<GroundKind> = new Set(
 
 /** The War Table level that teaches a group of reactive rules. */
 export function ruleUnlockLevel(unlock: RuleUnlock): number {
-  return stationDef('war_table').levels.findIndex((l) => l.grants?.rules?.includes(unlock)) + 1;
+  const level = stationDef('war_table').levels.findIndex((l) => l.grants?.rules?.includes(unlock)) + 1;
+  return Math.max(1, level);
 }
 
 /** Why a rule can't be used yet, or null. */

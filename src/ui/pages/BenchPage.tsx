@@ -12,7 +12,7 @@ import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { actOpen } from '../../data/zones';
 import { currencyDef } from '../../data/materials';
 import { equipFlask, unequipFlask } from '../../engine/combat';
-import { applyEssence, applyOrb, applyWhetstone, BENCH_UNBUILT, benchBuilt, benchCraft, benchCraftReason, essenceReason, findItem, FOSSIL_ORBS, impressionReason, orbReason, restoreImpression, restoreReason, salvage, SEAL_ORBS, takeImpression, whetstoneReason } from '../../engine/crafting';
+import { applyEssence, applyOrb, applyWhetstone, BENCH_UNBUILT, benchBuilt, benchCraft, benchCraftReason, essenceReason, FIELD_TINKER_ILVL, findItem, FOSSIL_ORBS, impressionReason, orbReason, restoreImpression, restoreReason, salvage, SEAL_ORBS, takeImpression, TINKER_DUST_COST, whetstoneReason } from '../../engine/crafting';
 import { applyFlaskOrb, enchantFlask, findFlask, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
 import { stationLevel } from '../../engine/hideout';
 import { affixRangeText, allMods, describeMod, itemName, salvageValue } from '../../engine/items';
@@ -201,6 +201,7 @@ export function BenchPage() {
           const n = s.account.bank[id] ?? 0;
           const f = fossilFor(id);
           const kept = sealFor(id);
+          const tinkering = !!item && n === 0 && item.ilvl <= FIELD_TINKER_ILVL && !!TINKER_DUST_COST[id];
           const reason = item ? orbReason(s, id, item.uid, f, kept) : flask ? 'Flasks use the orbs under Flask crafting' : 'Select an item';
           return (
             <Tooltip
@@ -213,6 +214,7 @@ export function BenchPage() {
                   <div>{c.desc}</div>
                   {f && <div className="dim small">With {fossilDef(f)!.name}</div>}
                   {kept && <div className="dim small">With a Forger's Seal</div>}
+                  {tinkering && <div className="dim small">Field Tinkering spends {TINKER_DUST_COST[id]} Arcane Dust instead.</div>}
                   {reason && <div className="warn" style={{ marginTop: 4 }}>{reason}</div>}
                 </div>
               }
@@ -221,7 +223,7 @@ export function BenchPage() {
                 <MatIcon id={id} size={24} />
                 <span>
                   <div className="name">{c.short}</div>
-                  <div className="count num">×{fmt(n)}</div>
+                  <div className="count num">{tinkering ? `${fmt(s.account.bank.arcane_dust ?? 0)} dust` : `×${fmt(n)}`}</div>
                 </span>
               </button>
             </Tooltip>

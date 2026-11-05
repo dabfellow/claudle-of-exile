@@ -131,11 +131,11 @@ const CLASS_MECHANICS: Record<Exclude<ClassId, 'exile'>, MechanicSpec> = {
   mage: {
     branches: [
       { key: 'arcane_wellspring', name: 'Arcane Wellspring', desc: '+5% to the Mana is Power bonus.', stats: { manaPower: 5, manaPct: 15 }, small: { name: 'Reservoir', stats: { manaPower: 2, mana: 8 } } },
-      { key: 'brimming', name: 'Brimming', desc: 'Mana above 90% counts as full for Mana is Power.', stats: { manaPowerFull: 10, manaRegenPct: 10 }, small: { name: 'Deep Reserves', stats: { mana: 10, manaRegenPct: 6 } } },
-      { key: 'soul_battery', name: 'Soul Battery', desc: 'Energy Shield also adds to Mana is Power.', stats: { manaPowerEs: 1, energyShieldPct: 15 }, small: { name: 'Overflow', stats: { manaPower: 3, manaRegenPct: 15 } } },
+      { key: 'brimming', name: 'Brimming', desc: 'Recent Mana spending counts 10% more toward Mana is Power.', stats: { manaPowerFull: 10, manaRegenPct: 10 }, small: { name: 'Deep Reserves', stats: { mana: 10, manaRegenPct: 6 } } },
+      { key: 'soul_battery', name: 'Soul Battery', desc: 'Mana is Power has +10% maximum bonus; 15% increased Energy Shield.', stats: { manaPowerEs: 1, energyShieldPct: 15 }, small: { name: 'Overflow', stats: { manaPower: 3, manaRegenPct: 15 } } },
     ],
     bridge: { name: 'Full to Bursting', stats: { manaPower: 3 } },
-    capstone: { key: 'all_or_nothing', name: 'All or Nothing', desc: 'Mana is Power gives 60% more damage above 80% Mana, and nothing below.', stats: { allOrNothing: 1 } },
+    capstone: { key: 'all_or_nothing', name: 'All or Nothing', desc: 'Mana is Power doubles its current bonus and maximum.', stats: { allOrNothing: 1 } },
   },
   templar: {
     branches: [
@@ -248,7 +248,7 @@ export const ASCENDANCIES: AscendancyDef[] = ([
   {
     id: 'wellspring', name: 'Wellspring', classId: 'mage', quote: 'Never run dry.',
     line: 'Mana you’d waste at full fills Overflow, and a full meter powers up your next spell.',
-    plays: 'The reward for staying topped up. You spend less than you regenerate, keep Mana is Power at its peak, and the spare mana turns into a Surge. Mana regen becomes a damage stat, and a quiet stretch sets up a strong first spell.',
+    plays: 'A spend-and-recover caster. Linked spells ramp Mana is Power, while regeneration refills the pool and excess recovery becomes a Surge.',
     gate: 'Regenerate 2 Mana per second. Mana gained while full fills Overflow, and at 25% of your max Mana your next damaging spell is free and deals 100% more damage.',
     gateStats: { manaRegenFlat: 2 },
     branches: [
@@ -261,9 +261,9 @@ export const ASCENDANCIES: AscendancyDef[] = ([
   },
   {
     id: 'alchemist', name: 'Alchemist', classId: 'mage', quote: 'The brew is the spell.',
-    line: 'Flask charges count as mana, and every flask you drink explodes.',
-    plays: 'Flasks are your main weapon. Kills refill charges and charges fuel spells, so fast clearing feeds itself, and it pairs with Instilling Orb auto-flasks for idling. Flask Effect becomes a damage stat.',
-    gate: 'Each flask charge counts as 3 Mana for Mana is Power, and every flask you drink bursts on your target for fire damage.',
+    line: 'Spent flask charges ramp Mana is Power, and every flask you drink explodes.',
+    plays: 'Flasks are your main weapon. Drinking them counts as recent Mana spending, so kills refill both charges and your damage ramp while Flask Effect strengthens the burst.',
+    gate: 'Each flask charge spent counts as 3 Mana spent for Mana is Power, and every flask you drink bursts on your target for fire damage.',
     branches: [
       { key: 'volatile_mix', name: 'Volatile Mix', desc: 'Flask bursts also hit enemies next to your target.', small: { name: 'Measured Dose', stats: { flaskEffect: 5 } } },
       { key: 'deep_cellar', name: 'Deep Cellar', desc: 'Flasks hold 50% more charges.', small: { name: 'Well Stocked', stats: { flaskCharges: 8 } } },

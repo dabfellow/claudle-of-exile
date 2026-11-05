@@ -24,6 +24,7 @@ const made = (challenge: ChallengeFlags, id = 'c1') => newGame(1, { id, name: 'T
 /** Put a character in a fight it can't win. */
 function losing(s: GameState, ctx: Ctx) {
   expect(startCombat(s, ctx, 'mudflats')).toBeNull();
+  s.flaskSlots = s.flaskSlots.map(() => null);
   s.life = 1;
   s.settings.autoFlee = false;
   s.combat!.monsters = [makeMonster(zoneDef('mudflats').boss, true, 99)];
@@ -144,7 +145,7 @@ describe('Classic', () => {
     s.account.bank.gold = 1e7;
     s.account.bank.copper_ore = 0;
     s.account.bank.ash_log = 0;
-    expect(nextUpgradeCost(s, 'bench')).toEqual({ gold: 5500 });
+    expect(nextUpgradeCost(s, 'bench')).toEqual({ gold: 4500 });
     expect(upgradeStation(s, ctxFor(), 'bench')).toBeNull();
     expect(s.account.hideout.bench).toBe(2);
   });
@@ -164,7 +165,7 @@ describe('Classic', () => {
     s.tutorial.step = TUTORIAL_STEPS.findIndex((t) => t.id === 'hideout');
     const gold = s.account.bank.gold;
     tutorialPage(s, ctx, 'hideout');
-    expect(s.account.bank.gold).toBe(gold + 5500);
+    expect(s.account.bank.gold).toBe(gold + 4500);
     expect(s.account.bank.copper_ore ?? 0).toBe(0);
   });
 });

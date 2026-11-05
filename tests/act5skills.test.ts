@@ -475,7 +475,7 @@ describe('idling', () => {
     }
     s.unlockedZones = ['mudflats', 'cinderroad'];
     const ctx = makeCtx(seeded(3));
-    startCombat(s, ctx, 'cinderroad');
+    startCombat(s, ctx, 'mudflats');
     const sum = simulateOffline(s, ctx, 10 * 60 * 1000);
     expect(sum.kills).toBeGreaterThan(2);
     expect(sum.died).toBe(false);

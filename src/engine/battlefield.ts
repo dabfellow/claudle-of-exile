@@ -1,5 +1,5 @@
 import type { Rng } from './rng';
-import type { DamageType, Ground, GroundKind, Minion, MonsterInstance, Movement } from './types';
+import type { DamageType, Ground, GroundKind, Minion, MonsterInstance, Movement, Posture } from './types';
 
 /**
  * The battlefield (docs/design/BATTLEFIELD.md): a half-ring of pointy-top hexes around the player, who stands on the
@@ -65,6 +65,13 @@ export const AUTO_FLEE_RESUME = 0.9;
 /** fraction of max life and mana recovered per second once fleeing has shaken off every monster */
 export const FLEE_BREATHER_REGEN = 0.1;
 export const MOVEMENT_ORDER: Movement[] = ['flee', 'slow', 'walk', 'run'];
+
+export const POSTURES: Record<Posture, { name: string; desc: string }> = {
+  brawler: { name: 'Brawler', desc: 'Walks into a fight and runs when every target is still at the far edge.' },
+  kiter: { name: 'Kiter', desc: 'Creeps at range, runs out of hazards and pushes adjacent normal enemies back.' },
+  cautious: { name: 'Cautious', desc: 'Creeps into small packs and flees below 35% Life once recovery flasks are empty.' },
+};
+export const POSTURE_ORDER: Posture[] = ['brawler', 'kiter', 'cautious'];
 
 export const cellRing = (i: number): number => CELLS[i]?.ring ?? 1;
 

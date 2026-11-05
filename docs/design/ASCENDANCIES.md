@@ -107,8 +107,8 @@ make it better, and each rule fits in one sentence.
 ### Wellspring
 *"Never run dry."*
 
-- **Plays:** the reward for staying topped up. You spend less than you regenerate, keep Mana is Power at its peak, and
-  the spare mana turns into a Surge. Mana regen becomes a damage stat, and a quiet stretch sets up a strong first spell.
+- **Plays:** a spend-and-recover caster. Linked spells ramp Mana is Power, while regeneration refills the pool and excess
+  recovery becomes a Surge.
 - **Gate:** regenerate 2 Mana per second. Mana gained while full fills Overflow, and at 25% of max Mana your next damaging
   spell is free and deals 100% more damage (a Surge).
 - **Notables:** *Riptide* (a Surge gets +1 area or +1 chain, or casts again at 80% damage if it can have neither), *Wake*
@@ -120,9 +120,9 @@ Replaced Wildcaster on 2026-11-01: its reversed Mana is Power punished players w
 ### Alchemist
 *"The brew is the spell."*
 
-- **Plays:** flasks are your main weapon. Kills refill charges and charges fuel spells, so fast clearing feeds itself,
-  and it pairs with Instilling Orb auto-flasks for idling. Flask Effect becomes a damage stat.
-- **Gate:** Mana is Power also counts flask charges, and every flask you drink bursts on your target.
+- **Plays:** flasks are your main weapon. Spent charges count toward the recent-spending ramp, so fast clearing refills
+  both the belt and the damage cycle. Flask Effect remains a damage stat.
+- **Gate:** each flask charge spent counts as 3 Mana spent for Mana is Power, and every drink bursts on your target.
 - **Notables:** *Volatile Mix* (bursts hit nearby enemies), *Deep Cellar* (more maximum charges), *Tonic* (flasks restore
   mana).
 - **Capstone:** *Philosopher's Draught*: each active flask adds more damage, and they stack.

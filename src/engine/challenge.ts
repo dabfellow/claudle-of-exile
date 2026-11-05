@@ -32,7 +32,7 @@ export const CLASSIC_BLOCK = 'Classic characters only fight';
 
 /** Classic can't gather, so these parts of a hideout cost are paid in gold, at this many times what they'd sell for. */
 const CLASSIC_GOLD_RATE = 5;
-const GATHERED = new Set(['ore', 'log', 'herb', 'gem']);
+const GATHERED = new Set(['ore', 'log', 'herb', 'gem', 'component', 'trophy']);
 
 export function classicCost(cost: Record<string, number>): Record<string, number> {
   const out: Record<string, number> = {};

@@ -55,39 +55,38 @@ const dummy = () => {
 };
 
 describe('rule locks', () => {
-  it('simple rules are free; reactive rules wait for the War Table', () => {
+  it('survival rules are free; advanced target rules wait for the War Table', () => {
     const s = newGame(1);
-    for (const when of ['always', 'manual', 'bossOnly', 'enemiesAtLeast', 'notActive', 'manaAbove', 'targetLifeAbove', 'meterFull'] as const) {
+    for (const when of ['always', 'manual', 'bossOnly', 'enemiesAtLeast', 'notActive', 'manaAbove', 'targetLifeAbove', 'meterFull', 'lifeBelow', 'manaBelow', 'onGround', 'enemyCasting'] as const) {
       expect(ruleLockReason(s, when)).toBeNull();
     }
-    for (const when of ['lifeBelow', 'manaBelow', 'targetHas', 'targetLacks', 'onGround', 'enemyCasting'] as const) {
+    for (const when of ['targetHas', 'targetLacks'] as const) {
       expect(ruleLockReason(s, when)).toMatch(/War Table/);
     }
-    expect(setRule(s, 0, 0, { when: 'enemyCasting' })).toMatch(`War Table level ${ruleUnlockLevel('windups')}`);
-    expect(s.skillBar[0]!.rules).toEqual([{ when: 'manual' }]);
-    expect(setRule(s, 0, 0, { when: 'always' })).toBeNull();
+    expect(setRule(s, 0, 0, { when: 'enemyCasting' })).toBeNull();
+    expect(s.skillBar[0]!.rules).toEqual([{ when: 'enemyCasting' }]);
   });
 
-  it('War Table levels open rule groups in order', () => {
+  it('War Table levels open advanced rule groups in order', () => {
     const s = newGame(1);
-    upgradeTo(s, 'war_table', 2);
     expect(bossesOffline(s)).toBe(true);
-    expect(ruleLockReason(s, 'lifeBelow')).toBeNull();
     expect(ruleLockReason(s, 'targetHas')).not.toBeNull();
-    upgradeTo(s, 'war_table', 3);
+    upgradeTo(s, 'war_table', 2);
     expect(ruleLockReason(s, 'targetHas')).toBeNull();
-    expect(ruleLockReason(s, 'onGround')).not.toBeNull();
+    expect(s.account.automation.rules).not.toContain('aim');
+    upgradeTo(s, 'war_table', 3);
+    expect(s.account.automation.rules).toContain('aim');
   });
 
   it('a locked rule kept from an old save never fires, but the skill can still be cast by hand', () => {
     const s = fighter(['iron_guard']);
-    s.skillBar[0]!.rules = [{ when: 'lifeBelow', value: 100 }];
+    s.skillBar[0]!.rules = [{ when: 'targetLacks', status: 'bleeding' }];
     s.life = 1;
     inFight(s, [dummy()]);
     expect(chooseSkill(s, deriveStats(s)).slot).toBe(-1);
     expect(queueSkill(s, 0)).toBeNull();
     expect(chooseSkill(s, deriveStats(s)).slot).toBe(0);
-    s.account.automation.rules.push('vitals');
+    s.account.automation.rules.push('status');
     expect(chooseSkill(s, deriveStats(s)).slot).toBe(0);
   });
 
@@ -95,22 +94,20 @@ describe('rule locks', () => {
     const s = newGame(1);
     const guard = activeGemDef('iron_guard');
     expect(guard.defaultRule.when).toBe('enemyCasting');
-    expect(suggestedRule(s, guard)).toEqual({ when: 'always' });
+    expect(suggestedRule(s, guard)).toEqual(guard.defaultRule);
     unlockEverything(s);
     expect(suggestedRule(s, guard)).toEqual(guard.defaultRule);
   });
 });
 
 describe('rule slots', () => {
-  it('start at one, and every rule in a slot has to pass', () => {
+  it('start at two, and every rule in a slot has to pass', () => {
     const s = fighter(['heavy_strike']);
-    expect(ruleSlots(s)).toBe(1);
-    expect(setRule(s, 0, 1, { when: 'bossOnly' })).toMatch(/No free rule slot/);
-    upgradeTo(s, 'war_table', 4);
-    expect(ruleSlots(s)).toBe(1);
-    upgradeTo(s, 'war_table', 5);
     expect(ruleSlots(s)).toBe(2);
     expect(setRule(s, 0, 1, { when: 'bossOnly' })).toBeNull();
+    expect(setRule(s, 0, 2, { when: 'notActive' })).toMatch(/No free rule slot/);
+    upgradeTo(s, 'war_table', 4);
+    expect(ruleSlots(s)).toBe(3);
     inFight(s, [dummy()]);
     expect(chooseSkill(s, deriveStats(s)).slot).toBe(-1);
     removeRule(s, 0, 1);
@@ -151,7 +148,7 @@ describe('unlocks', () => {
     const s = newGame(1);
     upgradeTo(s, 'war_table', stationDef('war_table').levels.length);
     upgradeTo(s, 'watchtower', 4);
-    expect(s.account.automation).toEqual({ rules: ['vitals', 'windups', 'status', 'ground', 'aim'], ruleSlots: 3, offlineHours: 24 });
+    expect(s.account.automation).toEqual({ rules: ['vitals', 'windups', 'ground', 'status', 'aim'], ruleSlots: 3, offlineHours: 24 });
     s.account.hideout.war_table = 1;
     const back = s;
     expect(back.account.automation.ruleSlots).toBe(3);
@@ -197,28 +194,30 @@ describe('offline rules', { timeout: 30_000 }, () => {
     return s;
   };
 
-  it("a fresh character can't idle any boss, new or already beaten", () => {
+  it('a fresh character can use wind-up rules against bosses offline', () => {
+    let bosses = 0;
     for (const beaten of [[], ['mudflats']]) {
       const s = strong();
       s.bossesDefeated = beaten;
+      s.settings.autoBoss = true;
       const c = ctx();
       startCombat(s, c, 'mudflats');
       const sum = simulateOffline(s, c, 30 * 60_000);
       expect(sum.kills).toBeGreaterThan(zoneDef('mudflats').bossEvery);
-      expect(s.lifetime.bossKills).toBe(0);
-      expect(sum.bossWaiting).toBe(zoneDef('mudflats').boss.name);
+      bosses += s.lifetime.bossKills;
+      expect(sum.bossWaiting).toBeNull();
     }
+    expect(bosses).toBeGreaterThan(0);
   });
 
-  it('a boss on the field when you leave waits for your return', () => {
+  it('a boss already on the field is fought while you are away', () => {
     const s = strong();
     const c = ctx();
     startCombat(s, c, 'mudflats');
     s.zoneKills.mudflats = zoneDef('mudflats').bossEvery;
     s.combat!.monsters = [makeMonster(zoneDef('mudflats').boss, true, 99)];
     simulateOffline(s, c, 10 * 60_000);
-    expect(s.lifetime.bossKills).toBe(0);
-    expect(s.zoneKills.mudflats).toBeGreaterThanOrEqual(zoneDef('mudflats').bossEvery);
+    expect(s.lifetime.bossKills).toBe(1);
   });
 
   it('with wind-up rules earned, a strong build beats a new boss offline', () => {
@@ -280,7 +279,7 @@ describe('save migration', () => {
     expect('rule' in gem).toBe(false);
     expect(loaded.unpooled!.gems![0].rules).toEqual([{ when: 'enemyCasting' }]);
     settleCharacter(loaded, loaded.account);
-    expect(loaded.account.automation).toEqual({ rules: [], ruleSlots: 1, offlineHours: 8 });
+    expect(loaded.account.automation).toEqual({ rules: ['vitals', 'windups', 'ground'], ruleSlots: 2, offlineHours: 8 });
     expect(loaded.account.hideout.war_table).toBe(1);
     expect(loaded.account.hideout.watchtower).toBe(1);
   });
