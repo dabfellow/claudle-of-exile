@@ -80,13 +80,13 @@
   --s-7: 48px;
 
   /* type */
-  --fs-2xs: 11px;
-  --fs-xs: 12px;
-  --fs-sm: 13px;
-  --fs: 14px;
-  --fs-md: 16px;
-  --fs-lg: 20px;
-  --fs-xl: 28px;
+  --fs-2xs: 12px;
+  --fs-xs: 13px;
+  --fs-sm: 14px;
+  --fs: 15px;
+  --fs-md: 17px;
+  --fs-lg: 21px;
+  --fs-xl: 30px;
   --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-display: 'Cinzel', Georgia, serif;
 
@@ -6477,7 +6477,31 @@ img.art.mat-art {
 }
 
 /* ============ responsive ============ */
-@media (max-width: 1200px) {
+@media (max-width: 1440px) {
+  .app {
+    grid-template-columns: 220px minmax(0, 1fr) 260px;
+  }
+  .char-plate-body {
+    width: 220px;
+  }
+}
+
+@media (max-height: 760px) and (min-width: 861px) {
+  .app {
+    grid-template-rows: 56px minmax(0, 1fr) 34px;
+  }
+  .topbar {
+    padding: 0 var(--s-4);
+  }
+  .main {
+    padding: var(--s-3) var(--s-4);
+  }
+  .page {
+    gap: var(--s-3);
+  }
+}
+
+@media (max-width: 1280px) {
   .app {
     grid-template-columns: 210px minmax(0, 1fr);
     grid-template-areas:
@@ -6528,8 +6552,24 @@ img.art.mat-art {
   }
   .nav-item {
     width: auto;
-    min-height: 44px;
+    min-height: 64px;
     padding: 4px 8px;
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    align-content: start;
+    gap: 4px;
+    text-align: center;
+  }
+  .nav-name {
+    display: block;
+    font-size: var(--fs-2xs);
+    line-height: 1.15;
+    font-weight: 600;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: 74px;
   }
   .nav-item.active::before {
     left: 8px;
@@ -6539,7 +6579,6 @@ img.art.mat-art {
     width: auto;
     height: 3px;
   }
-  .nav-name,
   .nav-badge:not(.hot) {
     display: none;
   }
