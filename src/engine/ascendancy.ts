@@ -5,7 +5,6 @@ import {
   ASCENDANCY_NODE_BY_ID,
   SWITCH_MATERIAL,
   SWITCH_MATERIAL_COST,
-  TRIAL_SEAL,
   TRIALS,
   type AscendancyDef,
   type AscendancyId,
@@ -61,8 +60,8 @@ function addPoints(s: GameState, n: number): void {
   s.ascendancy.points = Math.min(ASCENDANCY_MAX_POINTS, s.ascendancy.points + n);
 }
 
-/** Pass a trial: it opens that trial's nodes and gives its points. */
-export function passTrial(s: GameState, ctx: Ctx, n: 1 | 2 | 3): void {
+/** Pass a trial: the first opens the tree; every trial gives points that work anywhere in it. */
+export function passTrial(s: GameState, ctx: Ctx, n: 1 | 2 | 3 | 4): void {
   if (classDef(s.character.classId).mechanic === null || s.ascendancy.trials >= n) return;
   s.ascendancy.trials = n;
   addPoints(s, TRIALS.find((t) => t.n === n)?.points ?? 0);
@@ -72,6 +71,12 @@ export function passTrial(s: GameState, ctx: Ctx, n: 1 | 2 | 3): void {
 /** The first kill of a boss: a trial's boss passes the trial. Other bosses give nothing. */
 export function onBossFirstKill(s: GameState, ctx: Ctx, zoneId: string): void {
   const trial = TRIALS.find((t) => t.zoneId === zoneId);
+  if (trial) passTrial(s, ctx, trial.n);
+}
+
+/** The first Tier 5 map boss is the fourth and final trial. */
+export function onMapBossKill(s: GameState, ctx: Ctx, tier: number): void {
+  const trial = TRIALS.find((t) => t.mapTier === tier);
   if (trial) passTrial(s, ctx, trial.n);
 }
 
@@ -105,7 +110,8 @@ export function ascNodeReason(s: GameState, id: string): string | null {
   const a = currentAscendancy(s);
   const node = ASCENDANCY_NODE_BY_ID[id];
   if (!a || !a.nodes.includes(node) || node.kind === 'gate') return 'Invalid node';
-  if (s.ascendancy.trials < node.trial) return TRIAL_SEAL[node.trial];
+  const notableCount = s.ascendancy.nodes.filter((x) => ASCENDANCY_NODE_BY_ID[x]?.kind === 'notable').length;
+  if (node.kind === 'capstone' && notableCount < 2) return 'Requires two ascendancy notables';
   return treeAllocateReason(ASCENDANCY_NODE_BY_ID, s.ascendancy.nodes, a.gate.id, id, ascendancyPointsLeft(s));
 }
 

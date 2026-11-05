@@ -8,12 +8,12 @@ import {
   allocateAscNode,
   ascendancyOf,
   ascendancyPointsLeft,
-  ascNodeReason,
   canAscend,
   chooseAscendancy,
   choiceWaiting,
   hasAscNode,
   onBossFirstKill,
+  onMapBossKill,
   passTrial,
   refundAscNode,
   refundAscReason,
@@ -96,18 +96,19 @@ describe('the data', () => {
     for (const c of CLASSES) expect(ascendanciesOf(c.id)).toHaveLength(c.mechanic ? 2 : 0);
   });
 
-  it('every section is 12 nodes joined the same way, and every node reads', () => {
+  it('every section has six notable paths and two capstones', () => {
     for (const a of ASCENDANCIES) {
-      expect(a.nodes).toHaveLength(12);
-      expect(a.notables).toHaveLength(3);
-      expect(a.gate.links).toHaveLength(3);
+      expect(a.nodes).toHaveLength(19);
+      expect(a.signatureNotables).toHaveLength(3);
+      expect(a.mechanicNotables).toHaveLength(3);
+      expect(a.notables).toHaveLength(6);
+      expect(a.capstones).toHaveLength(2);
+      expect(a.gate.links).toHaveLength(8);
       for (const n of a.nodes) {
         expect(n.links.length).toBeGreaterThan(0);
         if (n.kind !== 'small') expect(n.desc, n.id).toBeTruthy();
         else expect(Object.keys(n.stats).length, n.id).toBeGreaterThan(0);
       }
-      expect(a.notables.every((n) => n.trial === 2)).toBe(true);
-      expect(a.capstone.trial).toBe(3);
     }
   });
 });
@@ -120,9 +121,9 @@ describe('earning and spending', () => {
     expect(chooseAscendancy(s, ctx, 'ravager')).toBeTruthy();
     passTrial(s, ctx, 1);
     expect(choiceWaiting(s)).toBe(true);
-    expect(s.ascendancy.points).toBe(3);
+    expect(s.ascendancy.points).toBe(2);
     passTrial(s, ctx, 1);
-    expect(s.ascendancy.points).toBe(3);
+    expect(s.ascendancy.points).toBe(2);
     expect(chooseAscendancy(s, ctx, 'matador')).toBeTruthy();
     expect(chooseAscendancy(s, ctx, 'ravager')).toBeNull();
     expect(ascendancyOf(s)).toBe('ravager');
@@ -159,25 +160,55 @@ describe('earning and spending', () => {
     onBossFirstKill(s, ctx, 'pilgrimgate');
     onBossFirstKill(s, ctx, 'almsquarter');
     onBossFirstKill(s, ctx, 'highaltar');
-    expect(s.ascendancy.points).toBe(3);
+    expect(s.ascendancy.points).toBe(2);
     onBossFirstKill(s, ctx, 'giantsthrone');
     onBossFirstKill(s, ctx, 'exilesgate');
+    expect(s.ascendancy.points).toBe(7);
+    onMapBossKill(s, ctx, 5);
     expect(s.ascendancy.points).toBe(ASCENDANCY_MAX_POINTS);
   });
 
-  it('9 points buy three big nodes, never all four', () => {
+  it('9 points support three notables and one capstone without a hard node-count lock', () => {
     const { s, ctx } = arena('anvil');
     const a = ASCENDANCY_BY_ID.anvil;
-    const take = (ids: string[]) => {
-      s.ascendancy.trials = 3;
-      s.ascendancy.points = 9;
-      s.ascendancy.nodes = [];
-      return ids.map((id) => allocateAscNode(s, ctx, id));
-    };
-    const branch = (i: number) => [`${a.notables[i].id}_1`, `${a.notables[i].id}_2`, a.notables[i].id];
-    expect(take([0, 1, 2].flatMap(branch)).every((r) => r === null)).toBe(true);
-    expect(take([...branch(0), ...branch(1), 'anvil_bridge', a.capstone.id]).every((r) => r === null)).toBe(true);
-    expect(take([0, 1, 2].flatMap(branch).concat('anvil_bridge', a.capstone.id)).at(-2)).toBe('No points left');
+    const branch = (i: number) => [`${a.notables[i].id}_1`, a.notables[i].id];
+    const capstone = ['anvil_bridge', 'anvil_bridge_2', a.capstone.id];
+    s.ascendancy.trials = 4;
+    s.ascendancy.points = 9;
+    s.ascendancy.nodes = [];
+    expect([...branch(0), ...branch(1), ...branch(2), ...capstone].map((id) => allocateAscNode(s, ctx, id)).every((r) => r === null)).toBe(true);
+    expect(ascendancyPointsLeft(s)).toBe(0);
+    expect(a.notables.length + a.capstones.length).toBe(8);
+
+    s.ascendancy.points = 20;
+    expect(allocateAscNode(s, ctx, `${a.notables[3].id}_1`)).toBeNull();
+    expect(allocateAscNode(s, ctx, a.notables[3].id)).toBeNull();
+    expect(allocateAscNode(s, ctx, 'anvil_mechanic_bridge')).toBeNull();
+    expect(allocateAscNode(s, ctx, 'anvil_mechanic_bridge_2')).toBeNull();
+    expect(allocateAscNode(s, ctx, a.capstones[1].id)).toBeNull();
+  });
+
+  it('paces one notable, two notables, a capstone, then the final 3+1 build across four trials', () => {
+    const s = veteran(newGame(1, { name: 't', classId: 'warrior' }));
+    const ctx = makeCtx(seeded(1));
+    passTrial(s, ctx, 1);
+    chooseAscendancy(s, ctx, 'ravager');
+    for (const id of ['ravager_bloodlust_1', 'ravager_bloodlust']) expect(allocateAscNode(s, ctx, id)).toBeNull();
+    expect(ascendancyPointsLeft(s)).toBe(0);
+
+    passTrial(s, ctx, 2);
+    for (const id of ['ravager_trample_1', 'ravager_trample']) expect(allocateAscNode(s, ctx, id)).toBeNull();
+    expect(ascendancyPointsLeft(s)).toBe(0);
+
+    passTrial(s, ctx, 3);
+    for (const id of ['ravager_bridge', 'ravager_bridge_2', 'ravager_no_mercy']) expect(allocateAscNode(s, ctx, id)).toBeNull();
+    expect(ascendancyPointsLeft(s)).toBe(0);
+
+    passTrial(s, ctx, 4);
+    for (const id of ['ravager_red_haze_1', 'ravager_red_haze']) expect(allocateAscNode(s, ctx, id)).toBeNull();
+    expect(ascendancyPointsLeft(s)).toBe(0);
+    expect(s.ascendancy.nodes.filter((id) => ASCENDANCY_BY_ID.ravager.notables.some((n) => n.id === id))).toHaveLength(3);
+    expect(s.ascendancy.nodes.filter((id) => ASCENDANCY_BY_ID.ravager.capstones.some((n) => n.id === id))).toHaveLength(1);
   });
 
   it('points already earned from bosses go, and a tree that no longer fits is handed back', () => {
@@ -187,26 +218,30 @@ describe('earning and spending', () => {
       Object.assign(old.ascendancy, { id: 'ravager', trials, points, nodes });
       return deserialize(JSON.stringify(old)).ascendancy;
     };
-    const small = ['ravager_bloodlust_1', 'ravager_bloodlust_2', 'ravager_trample_1'];
-    expect(load(1, 11, small)).toMatchObject({ points: 3, nodes: small });
-    expect(load(1, 4, [...small, 'ravager_trample_2'])).toMatchObject({ points: 3, nodes: [], id: 'ravager' });
-    expect(load(2, 8, small).points).toBe(6);
+    const oldNodes = ['ravager_bloodlust_1', 'ravager_bloodlust_2', 'ravager_trample_1'];
+    expect(load(1, 11, oldNodes)).toMatchObject({ points: 2, nodes: [] });
+    expect(load(2, 8, oldNodes)).toMatchObject({ points: 4, nodes: [], id: 'ravager' });
+    expect(load(3, 9, oldNodes).points).toBe(7);
     expect(load(0, 0, []).points).toBe(0);
   });
 
-  it('notables and capstones stay sealed behind trials 2 and 3', () => {
+  it('the first trial makes every node reachable with enough points', () => {
     const { s, ctx } = arena('anvil');
     s.ascendancy.trials = 1;
+    s.ascendancy.points = 9;
     const def = ASCENDANCY_BY_ID.anvil;
-    expect(allocateAscNode(s, ctx, 'anvil_shatter')).toMatch(/Act 4/);
-    expect(allocateAscNode(s, ctx, def.capstone.id)).toMatch(/Act 6/);
-    expect(allocateAscNode(s, ctx, 'anvil_shatter_2')).toMatch(/connect/);
+    expect(allocateAscNode(s, ctx, 'anvil_shatter')).toMatch(/connect/);
     expect(allocateAscNode(s, ctx, 'anvil_shatter_1')).toBeNull();
-    expect(allocateAscNode(s, ctx, 'anvil_shatter_2')).toBeNull();
-    expect(ascNodeReason(s, 'anvil_shatter')).toMatch(/Act 4/);
-    s.ascendancy.trials = 2;
     expect(allocateAscNode(s, ctx, 'anvil_shatter')).toBeNull();
+    expect(allocateAscNode(s, ctx, 'anvil_temper_1')).toBeNull();
+    expect(allocateAscNode(s, ctx, 'anvil_temper')).toBeNull();
     expect(hasAscNode(s, 'anvil_shatter')).toBe(true);
+    expect(allocateAscNode(s, ctx, 'anvil_bridge')).toBeNull();
+    expect(allocateAscNode(s, ctx, 'anvil_bridge_2')).toBeNull();
+    expect(allocateAscNode(s, ctx, def.capstone.id)).toBeNull();
+    expect(allocateAscNode(s, ctx, 'anvil_mechanic_bridge')).toBeNull();
+    expect(allocateAscNode(s, ctx, 'anvil_mechanic_bridge_2')).toBeNull();
+    expect(allocateAscNode(s, ctx, def.capstones[1].id)).toBe('No points left');
   });
 
   it('small nodes grant their stats, and points run out', () => {
@@ -222,10 +257,10 @@ describe('earning and spending', () => {
   it('refunds cost an Orb of Regret and can\'t cut the tree', () => {
     const { s, ctx } = arena('anvil');
     allocateAscNode(s, ctx, 'anvil_temper_1');
-    allocateAscNode(s, ctx, 'anvil_temper_2');
+    allocateAscNode(s, ctx, 'anvil_temper');
     s.account.bank.regret = 1;
     expect(refundAscReason(s, 'anvil_temper_1')).toMatch(/disconnect/);
-    expect(refundAscNode(s, ctx, 'anvil_temper_2')).toBeNull();
+    expect(refundAscNode(s, ctx, 'anvil_temper')).toBeNull();
     expect(s.account.bank.regret).toBe(0);
     expect(refundAscReason(s, 'anvil_temper_1')).toMatch(/Regret/);
   });
@@ -233,7 +268,7 @@ describe('earning and spending', () => {
   it('switching costs a Divine Orb plus an Orb of Regret per node, and frees the points', () => {
     const { s, ctx } = arena('anvil');
     allocateAscNode(s, ctx, 'anvil_temper_1');
-    allocateAscNode(s, ctx, 'anvil_temper_2');
+    allocateAscNode(s, ctx, 'anvil_temper');
     expect(switchCost(s)).toEqual({ material: 1, regret: 2 });
     expect(switchReason(s, 'anvil')).toBeTruthy();
     expect(switchReason(s, 'matador')).toBeTruthy();
@@ -279,10 +314,10 @@ describe('the first trial', () => {
     fight();
     expect(s.bossesDefeated).toContain('pilgrimgate');
     expect(s.ascendancy.trials).toBe(1);
-    expect(s.ascendancy.points).toBe(3);
+    expect(s.ascendancy.points).toBe(2);
     expect(events.filter((e) => e.t === 'trialPassed')).toHaveLength(1);
     fight();
-    expect(s.ascendancy.points).toBe(3);
+    expect(s.ascendancy.points).toBe(2);
   });
 });
 
@@ -445,7 +480,7 @@ describe.each([false, true])('gates (offline: %s)', (offline) => {
     const wildcaster = deserialize(JSON.stringify(raw));
     expect(wildcaster.ascendancy.id).toBeNull();
     expect(wildcaster.ascendancy.nodes).toEqual([]);
-    expect(ascendancyPointsLeft(wildcaster)).toBe(ASCENDANCY_MAX_POINTS);
+    expect(ascendancyPointsLeft(wildcaster)).toBe(7);
     expect(choiceWaiting(wildcaster)).toBe(true);
 
     raw.version = 30;
@@ -454,14 +489,14 @@ describe.each([false, true])('gates (offline: %s)', (offline) => {
     expect(deserialize(JSON.stringify(raw)).ascendancy.id).toBeNull();
   });
 
-  it('A reset leaves other classes as they were', () => {
+  it('the new layout refunds other classes too', () => {
     const { s } = arena('ravager', { offline });
     s.ascendancy.nodes = ['ravager_red_haze_1'];
     const raw = JSON.parse(serialize(s));
     raw.version = 30;
     const loaded = deserialize(JSON.stringify(raw));
     expect(loaded.ascendancy.id).toBe('ravager');
-    expect(loaded.ascendancy.nodes).toEqual(['ravager_red_haze_1']);
+    expect(loaded.ascendancy.nodes).toEqual([]);
   });
 
   it('Alchemist: flask charges count as mana, and a drink bursts on your target', () => {

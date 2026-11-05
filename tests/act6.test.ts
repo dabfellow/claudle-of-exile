@@ -9,7 +9,7 @@ import { MAP_DROPS } from '../src/data/maps';
 import { ACT_PREVIEW, ACTS, actBossZone, actOpen, echoMechanics, echoTips, nextZones, zoneDef, zonesInAct, type BossMechanic, type ZoneDef } from '../src/data/zones';
 import { absorbAccount } from '../src/engine/account';
 import { checkAchievements } from '../src/engine/achievements';
-import { allocateAscNode, ascNodeReason, onBossFirstKill } from '../src/engine/ascendancy';
+import { allocateAscNode, onBossFirstKill } from '../src/engine/ascendancy';
 import { bossLeftToRules, GROUND_IN_PLAY, rulesBreakChannels, unlockEverything } from '../src/engine/automation';
 import { GROUND, PLAYER_SPOT, UNHOLY_RECOVERY } from '../src/engine/battlefield';
 import { combatStep, makeMonster, ruleAllows, ruleContext, startCombat } from '../src/engine/combat';
@@ -375,7 +375,7 @@ describe('the third trial', () => {
     const c = ctx();
     s.ascendancy.id = 'ravager';
     s.ascendancy.trials = 2;
-    s.ascendancy.points = 6;
+    s.ascendancy.points = 4;
     return { s, c };
   };
 
@@ -383,13 +383,16 @@ describe('the third trial', () => {
     expect(TRIALS.find((t) => t.n === 3)).toMatchObject({ zoneId: act()[0].id, points: 3 });
   });
 
-  it('opens the capstone', () => {
+  it('is the first trial that gives enough points to reach a capstone', () => {
     const { s, c } = ascended();
     const a = ASCENDANCY_BY_ID.ravager;
-    s.ascendancy.nodes = ['ravager_bloodlust_1', 'ravager_bloodlust_2', 'ravager_bloodlust', 'ravager_bridge'];
-    expect(ascNodeReason(s, a.capstone.id)).toContain('Exiles');
+    s.ascendancy.nodes = ['ravager_bloodlust_1', 'ravager_bloodlust', 'ravager_trample_1', 'ravager_trample'];
+    expect(allocateAscNode(s, c, 'ravager_bridge')).toBe('No points left');
     onBossFirstKill(s, c, 'exilesgate');
     expect(s.ascendancy.trials).toBe(3);
+    expect(s.ascendancy.points).toBe(7);
+    expect(allocateAscNode(s, c, 'ravager_bridge')).toBeNull();
+    expect(allocateAscNode(s, c, 'ravager_bridge_2')).toBeNull();
     expect(allocateAscNode(s, c, a.capstone.id)).toBeNull();
     expect(c.events.some((e) => e.t === 'trialPassed' && e.n === 3)).toBe(true);
   });
@@ -397,7 +400,7 @@ describe('the third trial', () => {
   it('other Act 6 bosses give nothing', () => {
     const { s, c } = ascended();
     onBossFirstKill(s, c, 'kingsroad');
-    expect(s.ascendancy.points).toBe(6);
+    expect(s.ascendancy.points).toBe(4);
     expect(s.ascendancy.trials).toBe(2);
   });
 });

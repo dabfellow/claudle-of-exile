@@ -1,6 +1,6 @@
 # Ascendancies
 
-Drafted 2026-10-30, decided 2026-10-31, built 2026-10-31 (see [Built](#built)). They arrive in Milestone 6 of the
+Drafted 2026-10-30, decided 2026-10-31, built 2026-10-31 and overhauled 2026-11-04 (see [Built](#built)). They arrive in Milestone 6 of the
 [MILESTONES.md](../MILESTONES.md), and stay switched off for live players until Act 3 opens.
 
 **Settled:** two per class for the six main classes, 12 in total. Exile has none. Picking one opens its own tree, on a
@@ -8,17 +8,33 @@ new tab in the passive tree. Names are a first pass.
 
 ## How a section is laid out
 
-Every section has the same shape, about 12 nodes:
+Every section has 19 nodes and two independent halves:
 
 ```
-Gate ─ small ─ small ─ Notable ─┐
-  ├─── small ─ small ─ Notable ─┼─ small ─ Capstone
-  └─── small ─ small ─ Notable ─┘
+Ascendancy paths (3) ─┐       ┌─ class-mechanic paths (3)
+                      Gate
+                 small   small
+                   │       │
+                 small   small
+                   │       │
+              Capstone   mechanic capstone
 ```
 
 - **Gate:** free when you pick. It holds the headline rule, so the character changes the moment you choose.
-- **Notables:** three that lean into that rule in different ways.
-- **Capstone:** a keystone that finishes the idea.
+- **Ascendancy paths:** three notables that lean into the chosen rule in different ways.
+- **Class-mechanic paths:** three notables moved out of the character tree. Both ascendancies for a class can use them.
+- **Capstones:** one finishes the ascendancy idea and one transforms the base class mechanic.
+- **No node seals:** passing the first trial reveals every node. Later trials give more points, but never
+  permission to use particular nodes.
+
+The four trials give 2, 2, 3 and 2 points. A notable path costs 2 and a capstone path costs 3. A capstone requires any
+two notables first, so Trial 3 is the earliest it can be reached without an Act lock. The normal nine-point capstone
+build takes any three of the six notables and either capstone. This is a point budget, not a hard node-count rule:
+extra sources can support a fourth notable or both capstones.
+
+Future chase items may grant a particular ascendancy notable or capstone directly. An item-granted node should not
+spend trial points and may take a character beyond the normal three-notable/one-capstone build; the tree must never
+reject it merely because the character already has three notables or one capstone.
 
 The class mechanic rules in [CLASSES.md](CLASSES.md) still apply: everything has to work while idling, tactics rules
 make it better, and each rule fits in one sentence.
@@ -180,8 +196,8 @@ Replaced Wildcaster on 2026-11-01: its reversed Mana is Power punished players w
 ## Decisions (2026-10-31)
 
 1. **Twist:** the gate changes a rule of the class mechanic, as written above.
-2. **Three trials:** one at the start of Act 3 opens the gate and the choice, one at the end of Act 4 opens the notables,
-   and one at the start of Act 6 opens the capstone.
+2. **Four trials:** one at the start of Act 3 opens the choice and the whole tree. The trials at the end of Act 4, the
+   start of Act 6 and the end of Tier 5 Maps add points only. There are no Act or Map-tier locks on nodes.
 3. **Own points:** the first pass of each trial gives ascendancy points that only work here; bosses give none (changed
    2026-11-01). They stop short of the whole section, and the main tree loses nothing.
 4. **Separate tree:** the ascendancy gets its own tab in the passive tree after the first trial. So it's usable the
@@ -192,7 +208,7 @@ Replaced Wildcaster on 2026-11-01: its reversed Mana is Power punished players w
 
 ## Defaults
 
-- Existing mechanic keystones like Endless Fury still work alongside any ascendancy, and odd combinations are left in.
+- Shared mechanic capstones like Endless Fury now sit inside both ascendancies for their class, and odd combinations are left in.
 - You can read both ascendancies before you choose.
 - Challenge modes work the same way.
 - The hawk is the one new thing on the battlefield. It doesn't take up a hex.
@@ -201,15 +217,16 @@ Replaced Wildcaster on 2026-11-01: its reversed Mana is Power punished players w
 
 Data is in `src/data/ascendancies.ts`, choice, points and switching in `src/engine/ascendancy.ts`, and the rules in
 `src/engine/mechanics.ts` (numbers at the top) and `src/engine/combat.ts`. All 12 gates work; notables and capstones are
-built and tested. Trial 2 stands on the Giants' Throne (Act 4) and opens the notables. Trial 3 stands on the Exiles' Gate, the first stage of Act 6, and opens the capstones.
+built and tested. Trial 2 stands on the Giants' Throne (Act 4) and Trial 3 stands on the Exiles' Gate, the first stage
+of Act 6. Trial 4 is the first Tier 5 map boss. All three later trials add points; none seals or opens particular nodes.
 
 Calls made while building:
 
 - **Switching price:** 1 Divine Orb, plus an Orb of Regret per node. Divine is already a rare drop and the deepest boss
   table guarantees one, so no new source or art was needed.
-- **Points:** trials give 3 each, 9 of the 11 the section could use, so nobody fills it. That buys three of the four big
-  nodes: all three notables, or two notables, the bridge and the capstone with a point over. Saves were cut back to this
-  in v32, and a tree holding more than its points was refunded.
+- **Points and overhaul:** trials give 2/2/3/2, 9 in total. The 2026-11-04 overhaul expanded each tree
+  from three to six notable paths and from one to two capstones, moved the base class-mechanic choices here from the
+  character tree, and removed every node-specific trial seal.
 - **Ravager:** a Rampage drains on a clock, so hits during it don't hold it up. It counts as a full meter for tactics, so
   Berserk can line up. No Mercy holds the drain for 2s per kill.
 - **Anvil:** attackers take 4% of your Armour, plus 5% of that per Rage.

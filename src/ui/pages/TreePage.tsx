@@ -5,17 +5,15 @@ import {
   ascendanciesOf,
   SWITCH_MATERIAL_COST,
   ASCENDANCY_MAX_POINTS,
-  TRIAL_SEAL,
   TRIALS,
   type AscendancyDef,
   type AscendancyId,
   type AscendancyNode,
 } from '../../data/ascendancies';
 import { classDef } from '../../data/classes';
-import { CLASS_SECTORS, MECHANIC_INFO, PASSIVE_BY_ID, PASSIVE_NODES, REGION_NAMES, type PassiveNode, type TreeRegion } from '../../data/passiveTree';
+import { CLASS_SECTORS, PASSIVE_BY_ID, PASSIVE_NODES, REGION_NAMES, type PassiveNode, type TreeRegion } from '../../data/passiveTree';
 import { SKILL_TREE_BY_ID, SKILL_TREE_NODES, SKILL_TREE_START, type SkillTreeNode } from '../../data/skillTree';
 import { SKILLS } from '../../data/skills';
-import { zoneDef } from '../../data/zones';
 import { describeStats } from '../../data/statText';
 import {
   allocateAscNode,
@@ -288,17 +286,8 @@ function hexPoints(r: number): string {
   }).join(' ');
 }
 
-function NodeShape(props: { kind: string; color: string; on: boolean; can: boolean; mine?: boolean; mech?: boolean }) {
-  const r = { keystone: 30, notable: 22, mastery: 0, start: 0, core: 0, travel: 12, small: 15 }[props.kind] ?? 15;
-  // class-mechanic nodes out on the rim glow in their class colour, so the long road out reads as worth it
-  if (!props.mech || !r) return <BaseShape {...props} />;
-  return (
-    <>
-      <circle className="mech-glow" r={r * 2.1} style={{ ['--region' as string]: props.color }} />
-      <circle r={r} fill="none" stroke={props.color} strokeWidth={3} opacity={props.on ? 1 : 0.85} />
-      <BaseShape {...props} />
-    </>
-  );
+function NodeShape(props: { kind: string; color: string; on: boolean; can: boolean; mine?: boolean }) {
+  return <BaseShape {...props} />;
 }
 
 function BaseShape({ kind, color, on, can, mine = true }: { kind: string; color: string; on: boolean; can: boolean; mine?: boolean }) {
@@ -361,11 +350,6 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
           {n.kind} · {REGION_NAMES[n.region]}
         </span>
       </div>
-      {n.mechanic && (
-        <div className="small" style={{ color: REGION_COLOR[n.region], marginBottom: 4 }}>
-          {MECHANIC_INFO[n.mechanic].cls} mechanic · only affects characters with {MECHANIC_INFO[n.mechanic].name}
-        </div>
-      )}
       {n.kind === 'mastery' ? (
         <div className="mastery-tip">
           {n.options!.map((o, i) => (
@@ -547,7 +531,7 @@ function CharacterTree({ s }: { s: GameState }) {
         canTake={canTake}
         matches={matches}
         labels={CHAR_LABELS}
-        renderNode={(n, on, can) => <NodeShape kind={n.kind} color={REGION_COLOR[n.region]} on={on} can={can} mine={n.id === myStart} mech={!!n.mechanic} />}
+        renderNode={(n, on, can) => <NodeShape kind={n.kind} color={REGION_COLOR[n.region]} on={on} can={can} mine={n.id === myStart} />}
         tip={(n) => <CharacterNodeTip s={s} n={n} />}
         onClick={click}
         tutId={(id) => (s.passives.length === 0 && canTake(id) ? 'tree-start' : undefined)}
@@ -696,21 +680,30 @@ function AscendancyCard({ a, action }: { a: AscendancyDef; action: ReactNode }) 
       </div>
       <div className="mod">{a.gate.desc}</div>
       <div className="small" style={{ color: 'var(--accent-2)', marginTop: 8 }}>
-        Notables
+        {a.name} paths
       </div>
-      {a.notables.map((n) => (
+      {a.signatureNotables.map((n) => (
         <div key={n.id} className="mod">
           <b>{n.name}:</b> {n.desc}
         </div>
       ))}
-      <div className="dim small">{TRIAL_SEAL[2]}</div>
+      <div className="small" style={{ color: 'var(--accent-2)', marginTop: 8 }}>
+        Class mechanic paths
+      </div>
+      {a.mechanicNotables.map((n) => (
+        <div key={n.id} className="mod">
+          <b>{n.name}:</b> {n.desc}
+        </div>
+      ))}
       <div className="small" style={{ color: 'var(--unique)', marginTop: 8 }}>
-        Capstone
+        Capstones
       </div>
-      <div className="mod">
-        <b>{a.capstone.name}:</b> {a.capstone.desc}
-      </div>
-      <div className="dim small">{TRIAL_SEAL[3]}</div>
+      {a.capstones.map((n) => (
+        <div key={n.id} className="mod">
+          <b>{n.name}:</b> {n.desc}
+        </div>
+      ))}
+      <div className="dim small">Every path is visible as soon as you ascend. Either capstone can follow any two notables; later trials only add points.</div>
       <div style={{ marginTop: 12 }}>{action}</div>
     </div>
   );
@@ -864,9 +857,7 @@ function AscendancyTree({ s, a }: { s: GameState; a: AscendancyDef }) {
         canTake={canTake}
         matches={null}
         renderNode={(n, on, can) => (
-          <g opacity={s.ascendancy.trials < n.trial ? 0.45 : 1}>
-            <NodeShape kind={ASC_SHAPE[n.kind]} color={color} on={on} can={can} />
-          </g>
+          <NodeShape kind={ASC_SHAPE[n.kind]} color={color} on={on} can={can} />
         )}
         tip={(n) => <AscNodeTip s={s} n={n} />}
         onClick={(n) => {
@@ -887,22 +878,21 @@ function AscendancyTree({ s, a }: { s: GameState; a: AscendancyDef }) {
   );
 }
 
-/** Where every point comes from, and what each trial opens. */
+/** Where every point comes from. No trial locks individual nodes. */
 function TrialList({ s }: { s: GameState }) {
   return (
     <div className="card" style={{ marginBottom: 12 }}>
       <h3 style={{ margin: 0 }}>Trials</h3>
       <p className="muted small" style={{ margin: '4px 0' }}>
-        Ascendancy points come only from passing a trial, once each. They add up to {ASCENDANCY_MAX_POINTS}, enough for three of the four big nodes, so choose what to leave out.
+        Ascendancy points come only from passing a trial, once each. The first trial opens every node. All four trials give {ASCENDANCY_MAX_POINTS} points, supporting a normal build of any three notables and either capstone. There is no hard node-count limit.
       </p>
       {TRIALS.map((t) => {
-        const z = zoneDef(t.zoneId);
         return (
           <div key={t.n} className={`small ${s.ascendancy.trials >= t.n ? '' : 'muted'}`}>
             <b>
-              Trial {t.n}, {z.name} (Act {z.act}):
+              Trial {t.n}, {t.name} ({t.place}):
             </b>{' '}
-            {s.ascendancy.trials >= t.n ? 'passed.' : 'not passed yet.'} {t.points} points, and opens {t.opens}.
+            {s.ascendancy.trials >= t.n ? 'passed.' : 'not passed yet.'} {t.points} points. {t.result}
           </div>
         );
       })}

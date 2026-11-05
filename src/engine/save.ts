@@ -304,6 +304,25 @@ const MIGRATIONS: Record<number, Migration> = {
     // the skill reform moved early leech to later acts: characters from before it are owed The Old Covenant
     raw.keepsakeDue = true;
   },
+  33: (raw) => {
+    // class mechanics moved from the character tree into ascendancies, and the old rim became build-neutral.
+    // Refund the character tree so nobody silently receives unrelated replacements for their old nodes.
+    raw.passives = [];
+    raw.masteries = {};
+  },
+  34: (raw) => {
+    // Notable paths now cost 2, capstone paths cost 3, and the fourth trial completes the 9-point budget.
+    // Return every ascendancy point so existing characters can make a clean choice in the new layout.
+    const asc = raw.ascendancy as { trials: number; points: number; nodes: string[] } | undefined;
+    if (!asc) return;
+    asc.nodes = [];
+    resetAscendancyPoints(raw);
+  },
+  35: (raw) => {
+    // Character-tree roads and cluster interiors became shorter. Refund the old graph rather than leave stale nodes.
+    raw.passives = [];
+    raw.masteries = {};
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

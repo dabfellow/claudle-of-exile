@@ -121,7 +121,7 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
           {trial && (
             <div className="small">
               <b>Ascendancy trial {trial.n}:</b>{' '}
-              {s.ascendancy.trials >= trial.n ? 'passed.' : `your first win over ${z.boss.name} gives ${trial.points} ascendancy points and opens ${trial.opens}.`}
+              {s.ascendancy.trials >= trial.n ? 'passed.' : `your first win over ${z.boss.name} gives ${trial.points} ascendancy points. ${trial.result}`}
             </div>
           )}
           <DropPreview z={z} />

@@ -7,7 +7,7 @@ import { giveKeepsake } from '../src/engine/account';
 import { holdItem } from '../src/engine/market';
 import { createUnique } from '../src/engine/items';
 import { deserialize, serialize } from '../src/engine/save';
-import { newGame, SAVE_VERSION } from '../src/engine/state';
+import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 
 const ATTRS = ['str', 'dex', 'int'] as const;
@@ -47,7 +47,7 @@ describe('the skill reform', () => {
 describe('The Old Covenant', () => {
   const oldSave = () => {
     const raw = JSON.parse(serialize(newGame(1, { name: 't', classId: 'mage' })));
-    raw.version = SAVE_VERSION - 1;
+    raw.version = 32;
     return JSON.stringify(raw);
   };
   const rings = (s: ReturnType<typeof newGame>) => s.inventory.filter((i) => i.uniqueId === 'old_covenant').length;

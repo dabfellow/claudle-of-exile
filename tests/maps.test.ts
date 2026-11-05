@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MAP_TIERS, mapZoneId } from '../src/data/maps';
 import { bossIsNext } from '../src/engine/combat';
+import { onMapBossKill, passTrial } from '../src/engine/ascendancy';
 import { makeCtx, type Ctx } from '../src/engine/context';
 import type { ClassId } from '../src/data/classes';
 import { devKit, grantMaps, mapsHeld, mapStep, onMapFieldLost, startAutoRun, startMap } from '../src/engine/maps';
@@ -59,6 +60,21 @@ describe('maps', () => {
     const back = deserialize(serialize(s));
     expect(back.maps.run).toBeNull();
     expect(back.combat).toBeNull();
+  });
+
+  it('makes the first Tier 5 boss the fourth and final ascendancy trial', () => {
+    const s = newGame(1, { name: 'T', classId: 'warrior' });
+    const c = ctx();
+    passTrial(s, c, 1);
+    passTrial(s, c, 2);
+    passTrial(s, c, 3);
+    expect(s.ascendancy.points).toBe(7);
+    onMapBossKill(s, c, 4);
+    expect(s.ascendancy.points).toBe(7);
+    onMapBossKill(s, c, 5);
+    expect(s.ascendancy).toMatchObject({ trials: 4, points: 9 });
+    onMapBossKill(s, c, 5);
+    expect(s.ascendancy.points).toBe(9);
   });
 });
 

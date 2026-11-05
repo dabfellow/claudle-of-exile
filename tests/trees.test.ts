@@ -12,6 +12,7 @@ import { allocateSkillNode, skillNodeReason, skillTreePoints } from '../src/engi
 import { actionIntervalMs, startSkillAction } from '../src/engine/skills';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
+import { deserialize, serialize } from '../src/engine/save';
 import type { GameState } from '../src/engine/types';
 import { charXpForLevel, xpForLevel } from '../src/engine/xp';
 
@@ -52,7 +53,11 @@ describe('character tree shape', () => {
     expect(count('keystone')).toBe(21);
     expect(count('notable')).toBe(198);
     expect(count('mastery')).toBe(90);
-    expect(PASSIVE_NODES.length).toBeGreaterThanOrEqual(850);
+    expect(count('small')).toBe(282);
+    expect(count('travel')).toBe(249);
+    expect(PASSIVE_NODES).toHaveLength(847);
+    // Attribute roads remain important, but interesting destinations now outnumber travel nodes.
+    expect(count('travel')).toBeLessThan(count('notable') + count('mastery'));
     for (const n of PASSIVE_NODES.filter((x) => x.kind === 'mastery')) {
       expect(n.options).toHaveLength(3);
       expect(n.links).toHaveLength(1);
@@ -64,20 +69,26 @@ describe('character tree shape', () => {
     expect(closest).toBeGreaterThan(30);
   });
 
-  it('keeps every class mechanic out on the rim, reached through its own sector', () => {
-    for (const mech of ['rage', 'riposte', 'momentum', 'malice', 'manaPower', 'martyr']) {
-      const nodes = PASSIVE_NODES.filter((n) => n.mechanic === mech);
-      expect(nodes.filter((n) => n.kind === 'notable')).toHaveLength(5);
-      expect(nodes.filter((n) => n.kind === 'keystone')).toHaveLength(1);
-      for (const n of nodes) expect(Math.hypot(n.x, n.y)).toBeGreaterThan(RIM_RADIUS - 150);
+  it('keeps class mechanics out of the character tree and offers build-neutral rim choices', () => {
+    expect(PASSIVE_NODES.some((n) => 'mechanic' in n)).toBe(false);
+    for (const id of ['heavy_arms_n1', 'weapon_dance_n1', 'deadeye_n1', 'fatal_design_n1', 'high_sorcery_n1', 'consecrated_path_n1']) {
+      expect(Math.hypot(PASSIVE_BY_ID[id].x, PASSIVE_BY_ID[id].y)).toBeGreaterThan(RIM_RADIUS - 150);
     }
-    // nothing in the main circle is tied to a class mechanic
-    expect(PASSIVE_NODES.filter((n) => n.mechanic && Math.hypot(n.x, n.y) < 2000)).toHaveLength(0);
-    const w = newGame(1, { name: 'w', classId: 'warrior' });
-    const toRage = route('class_str', 'rage_n1');
-    expect(toRage.every((id) => ['str', 'center'].includes(PASSIVE_BY_ID[id].region))).toBe(true);
-    take(w, toRage);
-    expect(deriveStats(w, []).raw.rageEffect).toBeGreaterThan(0);
+    const ranger = newGame(1, { name: 'r', classId: 'ranger' });
+    take(ranger, route('class_dex', 'heavy_arms_n1'));
+    expect(ranger.passives).toContain('heavy_arms_n1');
+    expect(deriveStats(ranger, []).raw.physPct).toBeGreaterThan(0);
+  });
+
+  it('refunds the old graph when compact clusters remove or repurpose nodes', () => {
+    const s = newGame(1);
+    s.passives = ['iron_skin_s1', 'iron_skin_s2', 'iron_skin_s3', 'iron_skin_n', 'iron_skin_m'];
+    s.masteries = { iron_skin_m: 1 };
+    const raw = JSON.parse(serialize(s));
+    raw.version = 35;
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.passives).toEqual([]);
+    expect(loaded.masteries).toEqual({});
   });
 
   it('neighbouring classes can path into each other and everyone reaches the centre quickly', () => {

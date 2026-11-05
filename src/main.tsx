@@ -12,9 +12,9 @@ void game.boot();
 startMusic();
 // handy for poking at state from the devtools console
 if (import.meta.env.DEV) {
-  const dev = window as unknown as { game: typeof game; passTrial: (n: 1 | 2 | 3, points?: number) => void };
+  const dev = window as unknown as { game: typeof game; passTrial: (n: 1 | 2 | 3 | 4, points?: number) => void };
   dev.game = game;
-  // stands in for a trial's boss (points tops up, to try sealed nodes)
+  // stands in for a trial's boss (points tops up, to try any path)
   dev.passTrial = (n, points = 0) =>
     game.act((s, ctx) => {
       passTrial(s, ctx, n);

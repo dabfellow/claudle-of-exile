@@ -67,7 +67,9 @@ New ground, laid with `groundKind: 'unholy'` through `monsterGround`, like storm
 
 ## Third trial
 
-The first kill of Warden Corvane passes trial 3: it gives its 3 points, the last of the 9, and opens the capstones. `TRIALS` names `exilesgate`. The other 17 bosses give no ascendancy points.
+The first kill of Warden Corvane passes trial 3 and gives 3 points, bringing the total to 7. Two notables are required
+before either capstone, so this is the first trial that can fund one. `TRIALS` names `exilesgate`. The other 17 bosses
+give no ascendancy points.
 
 ## The ending
 

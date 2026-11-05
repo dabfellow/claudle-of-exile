@@ -24,7 +24,7 @@ import { deriveStats } from './stats';
 import { challengeName } from './challenge';
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 33;
+export const SAVE_VERSION = 36;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;

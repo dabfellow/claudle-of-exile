@@ -95,7 +95,7 @@ import {
   stepOutOfGround,
   type AreaShape,
 } from './battlefield';
-import { ascendancyOf, hasAscNode, newAscendancyRuntime, onBossFirstKill } from './ascendancy';
+import { ascendancyOf, hasAscNode, newAscendancyRuntime, onBossFirstKill, onMapBossKill } from './ascendancy';
 import { applyDeathPenalty, areaXpMultiplier, characterLevel } from './character';
 import { bossLeftToRules, castOrder, ruleLockReason, rulesPass, skillAim } from './automation';
 import type { Ctx } from './context';
@@ -2009,7 +2009,10 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   if (mon.isBoss) {
     c.monsters = c.monsters.filter((m) => !m.martyr);
     s.lifetime.bossKills += 1;
-    if (s.maps.run) s.maps.run.bossDown = true;
+    if (s.maps.run) {
+      s.maps.run.bossDown = true;
+      onMapBossKill(s, ctx, s.maps.run.tier);
+    }
     s.zoneKills[zone.id] = 0;
     c.bossRespawnMs = BOSS_RESPAWN_MS;
     // Nothing But Will: Ysolde with no unique equipped

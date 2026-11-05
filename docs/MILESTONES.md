@@ -4,7 +4,7 @@ The one place for what's next, what's planned, what's been decided and what's be
 not Claude. **Done** on a milestone is what has to be true before moving on. The order is by dependency: pacing rules
 first, because every act is tuned against them.
 
-Last updated 2026-11-03.
+Last updated 2026-11-04.
 
 **On this page:** [Next steps](#next-steps) · [Milestones](#milestones) · [Decisions](#decisions) ·
 [Other open items](#other-open-items) · [Ideas / later](#ideas--later) · [Done](#done)
@@ -109,6 +109,7 @@ you say otherwise.
 - Planned in [MAPS.md](design/MAPS.md): 10 tiers with identity (permanent mod per group + tier-exclusive drops), Sextants, an Atlas tree, Cartography reworked, and Doomed Maps + Uber Bosses as the endgame layer beyond T10.
 - [ ] Plain tiers with identity and the real Map Device page
   - Levels done and live in 0.3.18, 2026-11-02: 10 tiers at monster level 66–84, drop tables 18–27, item level bonus 14, map drops from level 60 areas. Themes, the shared supply, the area boss and Last King map drops, the save migration, the real page, and the permanent mods + exclusive drops per tier are still to do. Cartography still draws only Tiers 1–3.
+- [x] Fourth ascendancy trial: the first Tier 5 map boss grants the final 2 points; it unlocks no nodes. — done 2026-11-04
 - [ ] Sextants
 - [ ] Atlas tree (including the ~20-point Doomed Maps unlock node)
 - [ ] Tier-exclusive drops: Chaos/Regal/Exalt/Divine scaling by tier, and tier-locked unique pools
@@ -343,6 +344,10 @@ monsters show a skull icon today and need pack art. Finding assets is quick, so 
 
 ## Other open items
 
+- [x] Rebuild the character passive tree around compact clusters: keep attributes on shorter travel roads, remove filler inside clusters, put meaningful choices every few points and document the tree's design rules. — done 2026-11-04
+
+- [x] Overhaul the character and ascendancy trees: remove class-only mechanic beelines from the character tree; give each ascendancy six notable paths and two capstones with a normal nine-point three-notable/one-capstone build but no hard node-count limit; remove Act locks; add the fourth trial at Tier 5 Maps. — done 2026-11-04
+
 - [x] Make defences and gear progression matter: PoE-style magic/rare monsters and monster modifiers, with more rewards; a much larger, slot-specific item affix pool so Chaos Orbs are less deterministic. — done 2026-11-03
 
 - [ ] Mage is far ahead early: players report level 60 in a day while other classes take days to reach Act 3. Sims agree: Mage clears Act 1 in about 2h nonstop against 5-17h for the rest. The cause: Spark, Frost Needle and Shock Nova took no time to cast, so all three fired every turn on top of everything else.
@@ -452,6 +457,7 @@ Not tied to a milestone yet. Older balance, Act 2 and skill items restart at the
 - Campaign: needs real area art (already above). Map Device: work in progress.
 
 ## Ideas / later
+- Ascendancy chase items: grant a specific notable or capstone without spending trial points, allowing a fourth notable or both capstones. These item-granted nodes must bypass the normal point budget rather than relying on a hard node-count exception.
 - Uniques tab: copies of the same unique share one spot, which shows the first copy and a count; the next copy appears once that one is taken out. Uniques found before the tab existed only show as found once they're in the stash, bag or worn.
 - No monster deals chaos damage yet, so the Amethyst Flask and the Chaos Hit enchantment do nothing until some do. The character sheet doesn't show Chaos Resistance either.
 - Offline, a Warrior in starting gear dies to the Mud Flats boss on most seeds even at level 40, and about half at level 60 (seen 2026-11-02, same before and after that day's changes). Worth finding out what kills them: an overlevelled character farming Act 1 offline shouldn't die there.
@@ -521,6 +527,8 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Cosmetics shop (never pay-to-win).
 
 ## Done
+- [x] Compact passive-tree pass: travel nodes fell from 423 to 249 while retaining their attribute role; lines, forks and wheels lost repeated small passives but kept all 198 notables, 90 masteries and 21 keystones. The new design contract records regional overlaps, route-package balancing and future item-based tree bending. Save v36 refunds the changed character tree. — done 2026-11-04
+- [x] Skill tree overhaul: the outer character-tree paths are build-neutral; class-mechanic choices moved into both of their class's ascendancies; each ascendancy has six notable paths and two capstones, all visible after Trial 1. Four trials award 2/2/3/2 points, ending at Tier 5 Maps with nine points for a normal three-notable/one-capstone build and no hard node-count ceiling. Save v35 refunds both trees for clean respecs. — done 2026-11-04
 - [x] Magic packs and rare monsters: rarity-scaled life, damage, XP and loot; 12 visible monster mods including regeneration, leech, resistances, anti-AoE and elemental threats. Added 21 rollable gear affixes, including boots-only movement speed, Chaos resistance and focused melee, projectile, minion, sustain, guard and flask pools. — done 2026-11-03
 - [x] Rule files for other AI assistants: `AGENTS.md` (GPT, Codex and most others), `GEMINI.md` and `.github/copilot-instructions.md`, so they stop bumping the version on every change and add changelog lines to `UPCOMING`. — done 2026-11-03
 - [x] Unbroken achievement: complete all six acts without ever dying on the character (was Act 6 only in 0.3.19), rewards The Unbroken Temper, a no-trade Templar unique amulet (Fervor and holy nova healing) that never drops. Achievements can now hand over a unique (`unique` on the def). Characters already past Act 6 with no deaths earn it on load. — done 2026-11-02

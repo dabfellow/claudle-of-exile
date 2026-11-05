@@ -114,12 +114,10 @@ describe('recovery', () => {
 });
 
 describe('save', () => {
-  it('keeps a tree allocation that still connects, and refunds one that the rim move broke', () => {
+  it('refunds the character tree for the mechanic-node overhaul', () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
-    s.version = 14;
+    s.version = 33;
     s.passives = ['t_class_str_crossing_str_1'];
-    expect(deserialize(serialize(s)).passives).toEqual(s.passives);
-    s.passives = ['rage_s1'];
     expect(deserialize(serialize(s)).passives).toEqual([]);
   });
 });

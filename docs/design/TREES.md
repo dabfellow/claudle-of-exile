@@ -1,7 +1,8 @@
-# Skill trees — v3 (built)
+# Skill trees — v5 (built)
 
-**Design reset (2026-10-30), not built yet:** the character tree stays and gains enough nodes for characters reaching
-level 90–100. Picking an ascendancy unlocks a new section of the main tree.
+**Overhauled 2026-11-04:** the character tree stays broad for levels 90–100, but no longer contains nodes that only one
+class mechanic can use. Those choices now live in the separate ascendancy tree. The character tree's cluster, travel
+and regional rules are in [PASSIVE_TREE.md](PASSIVE_TREE.md).
 
 Two separate trees with separate points (GDD §5):
 
@@ -24,19 +25,27 @@ Two separate trees with separate points (GDD §5):
      Mage (Int)             Ranger (Dex)
                  Shadow (Dex/Int)
 ```
-- **~900 nodes**: 6 class starts, 342 smalls, 168 notables, 78 masteries, 18 keystones, ~290 travel nodes.
+- **847 nodes**: 7 starts (six classes and the Exile), 282 smalls, 249 travel nodes, 198 notables, 90 masteries
+  and 21 keystones.
 - Each class owns a **60° sector**. Every sector uses the same slot layout, rotated (`SLOTS` in `passiveTree.ts`):
-  - **The rim (2026-10-25):** the class-mechanic wheel and fork (⚙ in the tables below) and the mechanic keystone sit on an outer ring past the keystones (`RIM_RADIUS`), reached only by a road out of the class's own sector. Their old spots (the wheel by the start, slot I; the deep fork, slot G) hold general clusters now (e.g. Warrior: Warpath, Ironclad), so the main circle has no mechanic-only nodes. The ⚙ tables below still list the mechanic clusters; the new general ones are in `passiveTree.ts`.
-  - **11 themed clusters** in three bands: two short *lines* (3 smalls → notable) by the start, *wheels* (5 smalls, 3 notables around a mastery) and *forks* (entry → two arms, 2 notables) further out.
-  - **3 keystones**: two general at the edge of the main circle, the mechanic one out on the rim.
-- **Travel nodes** (+10 to the class attribute, +5/+5 in hybrid sectors) fill every path, roughly one per 80 units.
+  - **The rim (2026-11-04):** every old class-mechanic wheel, fork and keystone was replaced by a build-neutral
+    specialisation. Any class can path to Heavy Arms, Weapon Dance, Deadeye, Fatal Design, High Sorcery or Consecrated
+    paths and receive the full benefit. The class-mechanic choices moved to ascendancies.
+  - **15 themed clusters** in four bands: compact *lines* (2 smalls to a notable), *wheels* (4 small approaches and 3 notables around a mastery) and *forks* (entry, then one small and notable on each arm).
+  - **3 keystones**: all three are build-neutral, with the most specialised one out on the rim.
+- **Travel nodes** (+10 to the class attribute, +5/+5 in hybrid sectors) remain on roads for skill and equipment requirements, but spacing doubled to at most one per 160 layout units.
 - **Bridges** link each sector to its neighbours at three radii, so any class can path anywhere.
 - **Exile's Crossing**: a ring at the centre (+3 all attributes, 6 all-round notables) that every start reaches in ~7 points.
 - **Forbidden keystones** (crimson, 3 of them, equally spaced past the rim on the Duelist/Ranger, Shadow/Mage and Templar/Warrior borders, each at the end of a long road): a mechanical upside (no "% more") with a side effect that only hurts the player. **Overclock**: skills have no cooldowns and cost nothing; every 8s of fighting you overheat and can't act for 2s. **Knife's Edge**: your hits can't be evaded and are always Mega Crits; max Life is 1 (Energy Shield builds only). **Eternal Hunger**: you can't die while your Hunger is fed (each kill feeds it for 5s); if it starves in a fight, you die.
 - **Mega Crits**: a flat 400% hit that ignores critical strike multiplier. Separate from crits and only granted by specific sources: Knife's Edge, the Ambush support, and the Shadow's Coup de Grâce.
-- **Mechanic nodes** only do something for the class with that mechanic (tooltip says so). Their stats always carry a small generic bonus too, so Exiles starting there aren't wasting points. The mechanic stat keys (`rageMax`, `ripostePct`, `momentumMax`, `maliceMax`, `manaPower`, `fervorPct`, …) exist but **do nothing until the class mechanics are built** (CLASSES.md).
+- **Mechanic nodes are ascendancy nodes.** The character tree has none. Both ascendancies for a class offer three shared
+  mechanic notable paths and the class-mechanic capstone alongside their own three paths and capstone.
 - **Masteries** are shared by theme like PoE (armour, life, bleed, rage, …): every cluster of that theme offers the same 3 picks.
 - Start node ids: `class_str`, `class_strdex`, `class_dex`, `class_dexint`, `class_int`, `class_strint`.
+
+The sector tables below retain the ⚙ rows and third keystone as a record of what moved into ascendancies in v4. The
+other rows remain the character-tree content; the six replacement rim specialisations are data-driven in
+`passiveTree.ts`.
 
 ### Warrior sector
 | Cluster | Small node | Notables |

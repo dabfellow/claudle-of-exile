@@ -3,11 +3,16 @@ import type { ClassId } from './classes';
 
 /**
  * Ascendancies (docs/design/ASCENDANCIES.md): two for each main class, none for the Exile. Each is one small tree on
- * its own tab, laid out the same way:
+ * its own tab. Three paths specialise the chosen ascendancy and three paths specialise the base class mechanic.
+ * Every notable costs two points and either capstone costs three; all paths are available after the first trial:
  *
- *   Gate ─ small ─ small ─ Notable ─┐
- *     ├─── small ─ small ─ Notable ─┼─ small ─ Capstone
- *     └─── small ─ small ─ Notable ─┘
+ *   Ascendancy paths (3) ─┐       ┌─ Class-mechanic paths (3)
+ *                         Gate
+ *                    small   small
+ *                      │       │
+ *                    small   small
+ *                      │       │
+ *                 Capstone   Mechanic capstone
  *
  * The gate is free. Gates, notables and capstones are rules, built in engine/combat.ts and engine/mechanics.ts, which
  * look a node up by its id. Smalls and some notables are plain stats.
@@ -33,8 +38,6 @@ export interface AscendancyNode {
   links: string[];
   stats: StatMap;
   desc?: string;
-  /** how many trials must be passed before this node can be taken */
-  trial: 1 | 2 | 3;
 }
 
 export interface AscendancyDef {
@@ -46,8 +49,11 @@ export interface AscendancyDef {
   line: string;
   plays: string;
   gate: AscendancyNode;
+  signatureNotables: AscendancyNode[];
+  mechanicNotables: AscendancyNode[];
   notables: AscendancyNode[];
   capstone: AscendancyNode;
+  capstones: AscendancyNode[];
   nodes: AscendancyNode[];
 }
 
@@ -78,36 +84,111 @@ interface Spec {
   capstone: Rule;
 }
 
-/** where each branch sits, and the rows of the section from the gate up */
-const COLUMNS = [-230, 0, 230];
-const ROWS = { gate: 340, first: 200, second: 70, notable: -70, bridge: -200, capstone: -340 };
+interface MechanicSpec {
+  branches: [Branch, Branch, Branch];
+  bridge: { name: string; stats: StatMap };
+  capstone: Rule;
+}
+
+/** The old class-only character-tree choices now live with both ascendancies for that class. */
+const CLASS_MECHANICS: Record<Exclude<ClassId, 'exile'>, MechanicSpec> = {
+  warrior: {
+    branches: [
+      { key: 'seething', name: 'Seething', desc: '+5 to maximum Rage and 10% increased Physical Damage.', stats: { rageMax: 5, physPct: 10 }, small: { name: 'Fury', stats: { rageEffect: 5, physPct: 4 } } },
+      { key: 'blood_boil', name: 'Blood Boil', desc: 'Regenerate 0.1% of Life per second per Rage.', stats: { rageRegen: 0.1, life: 15 }, small: { name: 'Wrath', stats: { rageEffect: 6, life: 5 } } },
+      { key: 'unquenched', name: 'Unquenched', desc: 'Rage decays 50% slower.', stats: { rageDecay: 50, armourPct: 15 }, small: { name: 'Anger', stats: { rageMax: 2, armourPct: 5 } } },
+    ],
+    bridge: { name: 'Unending', stats: { rageEffect: 5 } },
+    capstone: { key: 'endless_fury', name: 'Endless Fury', desc: 'Rage no longer decays. Maximum Rage is halved.', stats: { endlessFury: 1 } },
+  },
+  duelist: {
+    branches: [
+      { key: 'counterpoint', name: 'Counterpoint', desc: '30% increased Riposte damage and +2% chance to Block.', stats: { ripostePct: 30, blockChance: 2 }, small: { name: 'Retort', stats: { ripostePct: 8, accuracy: 15 } } },
+      { key: 'parry_and_thrust', name: 'Parry and Thrust', desc: 'Riposte recovers 25% faster.', stats: { riposteCooldown: 25, evasionPct: 10 }, small: { name: 'Poise', stats: { ripostePct: 8, evasionPct: 4 } } },
+      { key: 'bloody_answer', name: 'Bloody Answer', desc: 'Ripostes always cause Bleeding.', stats: { riposteBleed: 1, bleedPct: 15 }, small: { name: 'Measured Reply', stats: { riposteHeal: 1, armourPct: 5 } } },
+    ],
+    bridge: { name: 'Perfect Timing', stats: { ripostePct: 10 } },
+    capstone: { key: 'perfect_form', name: 'Perfect Form', desc: 'Riposte has no cooldown. Ripostes deal 50% less damage.', stats: { perfectForm: 1 } },
+  },
+  ranger: {
+    branches: [
+      { key: 'second_wind', name: 'Second Wind', desc: '+3 to maximum Momentum.', stats: { momentumMax: 3, evasionPct: 10 }, small: { name: 'Motion', stats: { momentumEffect: 5, attackSpeedPct: 1 } } },
+      { key: 'sure_footed', name: 'Sure-Footed', desc: 'Taking a hit removes 25% less Momentum.', stats: { momentumRetain: 25, accuracy: 30 }, small: { name: 'Slipstream', stats: { momentumEffect: 6, evasionPct: 4 } } },
+      { key: 'gathering_storm', name: 'Gathering Storm', desc: '20% increased effect of Momentum.', stats: { momentumEffect: 20, critChancePct: 10 }, small: { name: 'Tailwind', stats: { momentumMax: 1, attackSpeedPct: 2 } } },
+    ],
+    bridge: { name: 'Always Moving', stats: { momentumEffect: 5 } },
+    capstone: { key: 'perpetual_motion', name: 'Perpetual Motion', desc: "Taking a hit doesn't halve Momentum. Momentum decays by 1 per second instead.", stats: { perpetualMotion: 1 } },
+  },
+  shadow: {
+    branches: [
+      { key: 'patience', name: 'Patience', desc: 'The Malice meter is 3 smaller.', stats: { maliceMax: -3, evasionPct: 10 }, small: { name: 'Ill Intent', stats: { coupPct: 6, ailmentPct: 4 } } },
+      { key: 'twist_the_knife', name: 'Twist the Knife', desc: '40% increased Coup de Grâce damage.', stats: { coupPct: 40, critMulti: 5 }, small: { name: 'Cold Purpose', stats: { coupPct: 8, poisonPct: 4 } } },
+      { key: 'spite', name: 'Spite', desc: 'Critical strikes leave 5 Malice instead of emptying the meter.', stats: { maliceCritKeep: 5, critChancePct: 10 }, small: { name: 'Grudge', stats: { maliceOnHitTaken: 1, evasionPct: 4 } } },
+    ],
+    bridge: { name: 'A Thousand Plans', stats: { coupPct: 8 } },
+    capstone: { key: 'thousand_cuts', name: 'Thousand Cuts', desc: 'Critical strikes also add Malice. Coup de Grâce deals 200% damage instead of 400%.', stats: { thousandCuts: 1 } },
+  },
+  mage: {
+    branches: [
+      { key: 'arcane_wellspring', name: 'Arcane Wellspring', desc: '+5% to the Mana is Power bonus.', stats: { manaPower: 5, manaPct: 15 }, small: { name: 'Reservoir', stats: { manaPower: 2, mana: 8 } } },
+      { key: 'brimming', name: 'Brimming', desc: 'Mana above 90% counts as full for Mana is Power.', stats: { manaPowerFull: 10, manaRegenPct: 10 }, small: { name: 'Deep Reserves', stats: { mana: 10, manaRegenPct: 6 } } },
+      { key: 'soul_battery', name: 'Soul Battery', desc: 'Energy Shield also adds to Mana is Power.', stats: { manaPowerEs: 1, energyShieldPct: 15 }, small: { name: 'Overflow', stats: { manaPower: 3, manaRegenPct: 15 } } },
+    ],
+    bridge: { name: 'Full to Bursting', stats: { manaPower: 3 } },
+    capstone: { key: 'all_or_nothing', name: 'All or Nothing', desc: 'Mana is Power gives 60% more damage above 80% Mana, and nothing below.', stats: { allOrNothing: 1 } },
+  },
+  templar: {
+    branches: [
+      { key: 'devotion', name: 'Devotion', desc: '15% increased Fervor gain.', stats: { fervorPct: 15, allRes: 5 }, small: { name: 'Penitence', stats: { novaPct: 8.8, life: 4 } } },
+      { key: 'holy_light', name: 'Holy Light', desc: 'Holy novas heal 10% more.', stats: { novaHeal: 11, lifeRegen: 1.1 }, small: { name: 'Penance', stats: { fervorPct: 5.5, armourPct: 4.4 } } },
+      { key: 'divine_wrath', name: 'Divine Wrath', desc: '40% increased holy nova damage.', stats: { novaPct: 44, elemPct: 5.5 }, small: { name: 'Radiance', stats: { novaEs: 10, energyShieldPct: 5.5 } } },
+    ],
+    bridge: { name: 'Consecration', stats: { fervorPct: 5.5 } },
+    capstone: { key: 'saints_sacrifice', name: "Saint's Sacrifice", desc: 'Fervor fills twice as fast. The holy nova no longer heals you.', stats: { saintsSacrifice: 1 } },
+  },
+};
+
+const SIGNATURE_COLUMNS = [-520, -310, -100];
+const MECHANIC_COLUMNS = [100, 310, 520];
+const ROWS = { gate: 350, first: 200, second: 60, notable: -80, bridge: -210, capstone: -350 };
+const halfStats = (stats: StatMap): StatMap => Object.fromEntries(Object.entries(stats).map(([key, value]) => [key, (value ?? 0) / 2]));
 
 function build(a: Spec): AscendancyDef {
   const nodes: Record<string, AscendancyNode> = {};
-  const add = (id: string, name: string, kind: AscendancyNodeKind, x: number, y: number, trial: 1 | 2 | 3, stats: StatMap = {}, desc?: string) =>
-    (nodes[id] = { id, name, kind, x, y, trial, stats, desc, links: [] });
+  const add = (id: string, name: string, kind: AscendancyNodeKind, x: number, y: number, stats: StatMap = {}, desc?: string) =>
+    (nodes[id] = { id, name, kind, x, y, stats, desc, links: [] });
   const link = (x: string, y: string) => {
     nodes[x].links.push(y);
     nodes[y].links.push(x);
   };
-  const gate = add(`${a.id}_gate`, a.name, 'gate', 0, ROWS.gate, 1, a.gateStats, a.gate);
-  const bridge = add(`${a.id}_bridge`, a.bridge.name, 'small', 0, ROWS.bridge, 2, a.bridge.stats);
-  const capstone = add(`${a.id}_${a.capstone.key}`, a.capstone.name, 'capstone', 0, ROWS.capstone, 3, a.capstone.stats, a.capstone.desc);
-  link(bridge.id, capstone.id);
-  const notables = a.branches.map((b, i) => {
-    const x = COLUMNS[i];
-    const first = add(`${a.id}_${b.key}_1`, b.small.name, 'small', x * 0.75, ROWS.first, 1, b.small.stats);
-    const second = add(`${a.id}_${b.key}_2`, b.small.name, 'small', x, ROWS.second, 1, b.small.stats);
-    const notable = add(`${a.id}_${b.key}`, b.name, 'notable', x, ROWS.notable, 2, b.stats, b.desc);
+  const gate = add(`${a.id}_gate`, a.name, 'gate', 0, ROWS.gate, a.gateStats, a.gate);
+  const branch = (b: Branch, x: number) => {
+    const first = add(`${a.id}_${b.key}_1`, b.small.name, 'small', x * 0.72, ROWS.second, b.small.stats);
+    const notable = add(`${a.id}_${b.key}`, b.name, 'notable', x, ROWS.notable, b.stats, b.desc);
     link(gate.id, first.id);
-    link(first.id, second.id);
-    link(second.id, notable.id);
-    link(notable.id, bridge.id);
+    link(first.id, notable.id);
     return notable;
-  });
+  };
+  const signatureNotables = a.branches.map((b, i) => branch(b, SIGNATURE_COLUMNS[i]));
+  const mechanic = CLASS_MECHANICS[a.classId as Exclude<ClassId, 'exile'>];
+  const mechanicNotables = mechanic.branches.map((b, i) => branch(b, MECHANIC_COLUMNS[i]));
+  const bridge = add(`${a.id}_bridge`, a.bridge.name, 'small', -240, ROWS.bridge, halfStats(a.bridge.stats));
+  const bridge2 = add(`${a.id}_bridge_2`, a.bridge.name, 'small', -240, (ROWS.bridge + ROWS.capstone) / 2, halfStats(a.bridge.stats));
+  const capstone = add(`${a.id}_${a.capstone.key}`, a.capstone.name, 'capstone', -240, ROWS.capstone, a.capstone.stats, a.capstone.desc);
+  link(gate.id, bridge.id);
+  link(bridge.id, bridge2.id);
+  link(bridge2.id, capstone.id);
+  const mechanicBridge = add(`${a.id}_mechanic_bridge`, mechanic.bridge.name, 'small', 240, ROWS.bridge, halfStats(mechanic.bridge.stats));
+  const mechanicBridge2 = add(`${a.id}_mechanic_bridge_2`, mechanic.bridge.name, 'small', 240, (ROWS.bridge + ROWS.capstone) / 2, halfStats(mechanic.bridge.stats));
+  const mechanicCapstone = add(`${a.id}_${mechanic.capstone.key}`, mechanic.capstone.name, 'capstone', 240, ROWS.capstone, mechanic.capstone.stats, mechanic.capstone.desc);
+  link(gate.id, mechanicBridge.id);
+  link(mechanicBridge.id, mechanicBridge2.id);
+  link(mechanicBridge2.id, mechanicCapstone.id);
+  const notables = [...signatureNotables, ...mechanicNotables];
+  const capstones = [capstone, mechanicCapstone];
   return {
     id: a.id, name: a.name, classId: a.classId, quote: a.quote, line: a.line, plays: a.plays,
-    gate, notables, capstone, nodes: Object.values(nodes),
+    gate, signatureNotables, mechanicNotables, notables, capstone, capstones, nodes: Object.values(nodes),
   };
 }
 
@@ -279,28 +360,25 @@ export function ascendanciesOf(classId: ClassId): AscendancyDef[] {
 }
 
 export interface TrialDef {
-  n: 1 | 2 | 3;
-  zoneId: string;
+  n: 1 | 2 | 3 | 4;
+  zoneId?: string;
+  mapTier?: number;
+  name: string;
+  place: string;
   points: number;
-  /** what it opens, to follow "opens" in a sentence */
-  opens: string;
+  /** player-facing result after the points are awarded */
+  result: string;
 }
 
-/** What each trial grants, the first time it's passed: the only source of ascendancy points. Trial 3 stands at the first stage of Act 6 and opens the capstones. */
+/** What each trial grants, the first time it's passed: the only source of ascendancy points. Nodes never have act locks. */
 export const TRIALS: TrialDef[] = [
-  { n: 1, zoneId: 'pilgrimgate', points: 3, opens: 'your choice of ascendancy, its free gate and the six small passives' },
-  { n: 2, zoneId: 'giantsthrone', points: 3, opens: 'the three notables and the bridge to the capstone' },
-  { n: 3, zoneId: 'exilesgate', points: 3, opens: 'the capstone' },
+  { n: 1, zoneId: 'pilgrimgate', name: 'The Pilgrim Gate', place: 'Act 3', points: 2, result: 'Choose your ascendancy; its entire tree is visible and you can afford one notable.' },
+  { n: 2, zoneId: 'giantsthrone', name: "The Giants' Throne", place: 'Act 4', points: 2, result: 'You can now afford two notables.' },
+  { n: 3, zoneId: 'exilesgate', name: "The Exiles' Gate", place: 'Act 6', points: 3, result: 'With two notables, you can now reach either capstone.' },
+  { n: 4, mapTier: 5, name: 'Tier 5 Maps', place: 'Maps', points: 2, result: 'The normal nine-point budget now supports three notables and one capstone.' },
 ];
 
-/** The trial that opens a node, in words. */
-export const TRIAL_SEAL: Record<1 | 2 | 3, string> = {
-  1: 'Opens with the first trial',
-  2: 'Sealed until the trial at the Giants’ Throne, at the end of Act 4',
-  3: 'Sealed until the trial at the Exiles’ Gate, at the start of Act 6',
-};
-
-/** What the trials add up to: two short of the whole section, so at most 3 of the 4 big nodes can be held. */
+/** Nine points buy exactly three complete notable paths and one capstone path. */
 export const ASCENDANCY_MAX_POINTS = 9;
 
 /** Switching costs this many of the rare material, plus an Orb of Regret per node. */

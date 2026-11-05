@@ -7136,14 +7136,6 @@ button.star {
   }
 }
 
-/* passive tree: the class-mechanic nodes on the rim */
-.mech-glow {
-  fill: var(--region);
-  opacity: 0.16;
-  filter: blur(6px);
-  pointer-events: none;
-}
-
 /* ============ item click menu ============ */
 .item-menu-backdrop {
   position: fixed;

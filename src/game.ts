@@ -938,7 +938,7 @@ class GameStore {
       }
       case 'trialPassed': {
         const trial = TRIALS.find((t) => t.n === e.n)!;
-        const text = `${e.n === 3 ? 'Final trial' : 'Trial'} passed! +${trial.points} ascendancy points. It opens ${trial.opens}.${e.n === 1 ? ' Choose on the Passive Tree page.' : ''}`;
+        const text = `${e.n === 4 ? 'Final trial' : 'Trial'} passed! +${trial.points} ascendancy points. ${trial.result}${e.n === 1 ? ' Choose on the Passive Tree page.' : ''}`;
         this.addFeed(text, 'good');
         this.pushToast(text, 'good');
         break;

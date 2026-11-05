@@ -21,7 +21,7 @@ import {
   zoneDef,
   zonesInAct,
 } from '../src/data/zones';
-import { allocateAscNode, ascNodeReason, chooseAscendancy, onBossFirstKill } from '../src/engine/ascendancy';
+import { allocateAscNode, chooseAscendancy, onBossFirstKill } from '../src/engine/ascendancy';
 import { bossLeftToRules, GROUND_IN_PLAY, ruleLockReason, unlockEverything } from '../src/engine/automation';
 import { GROUND, groundFor, layGround, PLAYER_SPOT } from '../src/engine/battlefield';
 import { combatStep, makeMonster, queueSkill, ruleAllows, ruleContext, startCombat, useFlask, type RuleContext } from '../src/engine/combat';
@@ -455,37 +455,41 @@ describe('the second trial', () => {
     return { s, c };
   };
 
-  it('stands on the last stage, giving 3 points', () => {
-    expect(TRIALS.find((t) => t.n === 2)).toMatchObject({ zoneId: 'giantsthrone', points: 3 });
+  it('stands on the last stage, giving 2 points', () => {
+    expect(TRIALS.find((t) => t.n === 2)).toMatchObject({ zoneId: 'giantsthrone', points: 2 });
   });
 
   it('other Act 4 bosses give nothing', () => {
     const { s, c } = ascended();
-    expect(s.ascendancy.points).toBe(3);
+    expect(s.ascendancy.points).toBe(2);
     onBossFirstKill(s, c, 'hollowpass');
-    expect(s.ascendancy.points).toBe(3);
+    expect(s.ascendancy.points).toBe(2);
     expect(s.ascendancy.trials).toBe(1);
   });
 
-  it('opens the notables on the Giants’ Throne, and leaves the capstone sealed', () => {
+  it('adds points on the Giants’ Throne without gating any nodes', () => {
     const { s, c } = ascended();
     s.ascendancy.points = ASCENDANCY_MAX_POINTS;
     const a = ASCENDANCY_BY_ID.ravager;
-    for (const id of ['ravager_bloodlust_1', 'ravager_bloodlust_2']) expect(allocateAscNode(s, c, id)).toBeNull();
-    expect(ascNodeReason(s, 'ravager_bloodlust')).toContain('Giants');
-
-    onBossFirstKill(s, c, 'giantsthrone');
-    expect(s.ascendancy.trials).toBe(2);
+    expect(allocateAscNode(s, c, 'ravager_bloodlust_1')).toBeNull();
     expect(allocateAscNode(s, c, 'ravager_bloodlust')).toBeNull();
+    expect(allocateAscNode(s, c, 'ravager_trample_1')).toBeNull();
+    expect(allocateAscNode(s, c, 'ravager_trample')).toBeNull();
     expect(allocateAscNode(s, c, 'ravager_bridge')).toBeNull();
-    expect(ascNodeReason(s, a.capstone.id)).toContain('Act 6');
+    expect(allocateAscNode(s, c, 'ravager_bridge_2')).toBeNull();
+    expect(allocateAscNode(s, c, a.capstone.id)).toBeNull();
+
+    const earned = ascended();
+    onBossFirstKill(earned.s, earned.c, 'giantsthrone');
+    expect(earned.s.ascendancy.trials).toBe(2);
+    expect(earned.s.ascendancy.points).toBe(4);
   });
 
   it('passes once', () => {
     const { s, c } = ascended();
     onBossFirstKill(s, c, 'giantsthrone');
-    expect(s.ascendancy.points).toBe(6);
+    expect(s.ascendancy.points).toBe(4);
     onBossFirstKill(s, c, 'giantsthrone');
-    expect(s.ascendancy.points).toBe(6);
+    expect(s.ascendancy.points).toBe(4);
   });
 });

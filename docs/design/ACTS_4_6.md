@@ -10,7 +10,7 @@ checklist in [ACT_RECIPE.md](ACT_RECIPE.md). The names and places come from the 
 | **Stages** | 12 | 14 | 18 |
 | **Monster levels** | 41–49 | 49–57 | 57–65 |
 | **Resistance check** | Cold | Fire and lightning together | All three |
-| **Ascendancy trial** | Last stage: opens notables | – | First stage: opens the capstone |
+| **Ascendancy trial** | Last stage: +2 points, no node locks | – | First stage: +3 points, capstone now affordable |
 | **Ground rule added** | Frozen | Storm-tossed water, or as the theme needs | Unholy ground |
 
 - **Resistance checks** get harder rather than just changing colour. Act 4 repeats cold at a higher level, Act 5 needs two

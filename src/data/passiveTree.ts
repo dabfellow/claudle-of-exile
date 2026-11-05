@@ -3,7 +3,7 @@ import type { StatKey } from '../engine/types';
 /**
  * The character tree (docs/design/TREES.md): six class sectors around a shared centre, PoE-style.
  * Every sector uses the same slot layout (rotated): themed clusters in three bands and two keystones,
- * then a road out to the rim where the class-mechanic clusters and mechanic keystone sit.
+ * then a road out to build-neutral rim clusters and a high-cost keystone.
  * Neighbouring sectors are cross-linked so any class can path anywhere.
  */
 export type PassiveKind = 'start' | 'small' | 'travel' | 'notable' | 'mastery' | 'keystone';
@@ -26,7 +26,6 @@ export interface PassiveNode {
   region: TreeRegion;
   /** cluster id for smalls, notables and masteries */
   cluster?: string;
-  mechanic?: Mechanic;
   x: number;
   y: number;
   stats: StatMap;
@@ -92,7 +91,6 @@ interface ClusterSpec {
   small: [string, StatMap];
   notables: [string, StatMap][];
   mastery: MasteryTheme;
-  mechanic?: Mechanic;
 }
 
 interface KeystoneSpec {
@@ -103,7 +101,7 @@ interface KeystoneSpec {
 
 type SlotId = 'I' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'J' | 'K' | 'L' | 'M' | 'R1' | 'R2';
 
-/** the outer ring where every class keeps its mechanic clusters and mechanic keystone */
+/** the outer ring of build-neutral clusters and high-cost keystones */
 export const RIM_RADIUS = 2420;
 
 /** polar position (radius, degrees off the sector's centre line; + is clockwise) and shape */
@@ -121,11 +119,13 @@ const SLOTS: Record<SlotId, { shape: Shape; r: number; a: number }> = {
   K: { shape: 'line', r: 1620, a: 10 },
   L: { shape: 'wheel', r: 1690, a: -22 },
   M: { shape: 'wheel', r: 1690, a: 22 },
-  // the class mechanic, out on the rim past the keystones: only reachable through this sector
+  // build-neutral specialisation clusters, out on the rim past the keystones
   R1: { shape: 'wheel', r: RIM_RADIUS, a: -9 },
   R2: { shape: 'fork', r: RIM_RADIUS, a: 9 },
 };
 const NOTABLES_PER_SHAPE: Record<Shape, number> = { line: 1, fork: 2, wheel: 3 };
+/** Attribute roads matter for skill and equipment requirements, but should not outnumber the interesting picks. */
+const TRAVEL_SPACING = 160;
 
 type End = `${SlotId}.${Port}` | 'hub' | 'ks0' | 'ks1' | 'ksm';
 /** paths inside a sector; each becomes a chain of travel nodes */
@@ -155,18 +155,6 @@ interface SectorSpec {
 
 const c = (id: string, mastery: MasteryTheme, small: [string, StatMap], ...notables: [string, StatMap][]): ClusterSpec => ({ id, mastery, small, notables });
 /** rim clusters are a long walk from anywhere, so their numbers are half again as big */
-const RIM_BONUS = 1.5;
-const richer = (stats: StatMap): StatMap =>
-  Object.fromEntries(
-    Object.entries(stats).map(([k, v = 0]) => [k, Number.isInteger(v) ? Math.round(v * RIM_BONUS) : Math.round(v * RIM_BONUS * 100) / 100]),
-  );
-const mech = (mechanic: Mechanic, cl: ClusterSpec): ClusterSpec => ({
-  ...cl,
-  mechanic,
-  small: [cl.small[0], richer(cl.small[1])],
-  notables: cl.notables.map(([name, stats]) => [name, richer(stats)]),
-});
-
 const SECTORS: SectorSpec[] = [
   {
     key: 'str',
@@ -179,10 +167,10 @@ const SECTORS: SectorSpec[] = [
         ['Battle-Hardened', { lifePct: 6, armourPct: 15 }],
         ['Cleaving Blows', { meleePct: 15, stunChance: 5 }],
         ['Second Wind', { lifeFlaskRecovery: 20, life: 15 }]),
-      R1: mech('rage', c('rage', 'rage', ['Fury', { rageEffect: 5, physPct: 4 }],
-        ['Seething', { rageMax: 5, physPct: 10 }],
-        ['Blood Boil', { rageRegen: 0.1, life: 15 }],
-        ['Unquenched', { rageDecay: 50, armourPct: 15 }])),
+      R1: c('heavy_arms', 'phys', ['Heavy Blows', { physPct: 12, stunChance: 3 }],
+        ['Bonebreaker', { physPct: 30, stunChance: 12 }],
+        ['Crushing Weight', { stunnedVuln: 15, stunDuration: 30 }],
+        ['Measured Force', { physMin: 3, physMax: 6 }]),
       A: c('iron_skin', 'armour', ['Toughened Hide', { armourPct: 12 }], ['Iron Skin', { armourPct: 30, armour: 40 }]),
       B: c('heart_of_stone', 'life', ['Vitality', { life: 8 }], ['Bloodline', { lifePct: 8, lifeRegen: 1.5 }]),
       C: c('brute_force', 'phys', ['Might', { physPct: 8 }],
@@ -202,9 +190,9 @@ const SECTORS: SectorSpec[] = [
       G: c('ironclad', 'armour', ['Ironclad', { armour: 20, life: 4 }],
         ['Ironclad', { armourPct: 25, slamReduction: 6 }],
         ['Grit', { lifePct: 6, allRes: 4 }]),
-      R2: mech('rage', c('wrath', 'rage', ['Wrath', { rageEffect: 6, life: 5 }],
-        ['Bloodrage', { rageOnHitTaken: 1, lifePct: 6 }],
-        ["Berserker's Toll", { rageMax: 10, rageEffect: 10 }])),
+      R2: c('fortress', 'guard', ['Braced', { armourPct: 10, life: 6 }],
+        ['Holdfast', { blockChance: 5, armourPct: 18 }],
+        ['Lasting Guard', { guardDuration: 25, guardCooldown: 10 }]),
       H: c('juggernaut', 'life', ['Juggernaut', { life: 6, lifeRegen: 0.5 }],
         ['Juggernaut', { lifePct: 10, slamReduction: 8 }],
         ['Unstoppable', { lifeRegenPct: 0.4, stunChance: 5 }]),
@@ -222,7 +210,7 @@ const SECTORS: SectorSpec[] = [
     keystones: {
       ks0: { name: 'Unbreakable', stats: { armourMore: 60, attackSpeedMore: -15 }, desc: '60% more Armour. 15% less Attack Speed.' },
       ks1: { name: 'Blood Pact', stats: { bloodPact: 1 }, desc: 'Skills cost Life instead of Mana. You have no Mana.' },
-      ksm: { name: 'Endless Fury', stats: { endlessFury: 1 }, desc: 'Rage no longer decays. Maximum Rage is halved.' },
+      ksm: { name: 'Colossal Frame', stats: { lifePct: 25, attackSpeedMore: -10 }, desc: '25% increased maximum Life. 10% less Attack Speed.' },
     },
   },
   {
@@ -236,10 +224,10 @@ const SECTORS: SectorSpec[] = [
         ['Blade Dancer', { attackSpeedPct: 6, physPct: 10 }],
         ['Fencing Form', { accuracy: 60, critChancePct: 15 }],
         ['Steady Stance', { blockChance: 3, armourPct: 10 }]),
-      R1: mech('riposte', c('riposte', 'riposte', ['Riposte', { ripostePct: 8, accuracy: 15 }],
-        ['Counterpoint', { ripostePct: 30, blockChance: 2 }],
-        ['Parry and Thrust', { riposteCooldown: 25, evasionPct: 10 }],
-        ['Measured Reply', { riposteHeal: 2, armourPct: 10 }])),
+      R1: c('weapon_dance', 'speed', ['Weapon Dance', { attackSpeedPct: 3, accuracy: 25 }],
+        ['Quick Hands', { attackSpeedPct: 10, accuracy: 60 }],
+        ['Open Guard', { afterGuardDamage: 25, cooldownRecovery: 8 }],
+        ['Final Flourish', { critMulti: 20, lowLifeDamage: 12 }]),
       A: c('duelists_edge', 'strdex', ["Duelist's Edge", { str: 5, dex: 5 }], ['Swordmaster', { physPct: 20, attackSpeedPct: 5 }]),
       B: c('bloodletting', 'leech', ['Bloodletting', { lifeLeech: 0.3 }], ['Bloodthirst', { lifeLeech: 1, lifePct: 10 }]),
       C: c('gladiator', 'block', ['Shield Arm', { blockChance: 1 }],
@@ -259,9 +247,9 @@ const SECTORS: SectorSpec[] = [
       G: c('tempo', 'speed', ['Tempo', { attackSpeedPct: 2 }],
         ['Flurry of Blows', { attackSpeedPct: 8, meleePct: 8 }],
         ['Killer Instinct', { critMulti: 15, lowLifeDamage: 10 }]),
-      R2: mech('riposte', c('retort', 'riposte', ['Retort', { ripostePct: 10, life: 4 }],
-        ["Fencer's Instinct", { riposteCrit: 30, critMulti: 10 }],
-        ['Bloody Answer', { riposteBleed: 1, bleedPct: 15 }])),
+      R2: c('red_guard', 'block', ['Red Guard', { blockChance: 2, bleedPct: 6 }],
+        ['Shield and Blade', { blockChance: 5, meleePct: 18 }],
+        ['Blooded Defence', { bleedOnHit: 15, armourPct: 18 }]),
       H: c('showman', 'crit', ['Showmanship', { critChancePct: 8 }],
         ['Flourish', { critChancePct: 25, critMulti: 10 }],
         ['Grand Finale', { critFullLife: 25, critMulti: 15 }]),
@@ -279,7 +267,7 @@ const SECTORS: SectorSpec[] = [
     keystones: {
       ks0: { name: 'Steady Hand', stats: { steadyHand: 1 }, desc: "Your hits always land. You can't deal critical strikes." },
       ks1: { name: 'Blade Waltz', stats: { attackSpeedMore: 15, armourMore: -30 }, desc: '15% more Attack Speed. 30% less Armour.' },
-      ksm: { name: 'Perfect Form', stats: { perfectForm: 1 }, desc: 'Riposte has no cooldown. Ripostes deal 50% less damage.' },
+      ksm: { name: 'Dancing Steel', stats: { attackSpeedMore: 20, armourMore: -40 }, desc: '20% more Attack Speed. 40% less Armour.' },
     },
     keystoneIds: { ks0: 'duelist_ks' },
   },
@@ -294,10 +282,10 @@ const SECTORS: SectorSpec[] = [
         ['Deadeye', { projectilePct: 20, accuracy: 40 }],
         ['Quick Draw', { attackSpeedPct: 6, projectilePct: 6 }],
         ["Hunter's Mark", { critChancePct: 20, critMulti: 10 }]),
-      R1: mech('momentum', c('momentum', 'momentum', ['Momentum', { momentumEffect: 5, attackSpeedPct: 1 }],
-        ['Second Wind', { momentumMax: 3, evasionPct: 10 }],
-        ['Sure-Footed', { momentumRetain: 25, accuracy: 30 }],
-        ['Gathering Storm', { momentumEffect: 20, critChancePct: 10 }])),
+      R1: c('deadeye', 'projectile', ['Deadeye', { projectilePct: 12, accuracy: 25 }],
+        ['Long Reach', { projectilePct: 30, accuracy: 70 }],
+        ['Piercing Focus', { critChancePct: 25, critMulti: 12 }],
+        ['Fletching', { attackSpeedPct: 7, projectilePct: 18 }]),
       A: c('fleetfoot', 'evasion', ['Evasion', { evasionPct: 12 }], ['Fleetfoot', { evasionPct: 30, attackSpeedPct: 5 }]),
       B: c('precision', 'crit', ['Keen Eye', { critChancePct: 10, accuracy: 20 }], ['Precision', { critChancePct: 30, accuracy: 60 }]),
       C: c('executioner', 'critMulti', ['Lethality', { critMulti: 8 }],
@@ -317,9 +305,9 @@ const SECTORS: SectorSpec[] = [
       G: c('fleet', 'evasion', ['Fleet', { evasionPct: 8 }],
         ['Wind Runner', { evasionPct: 25, evadeSpeed: 4 }],
         ['Light Step', { evadeHeal: 2, dex: 10 }]),
-      R2: mech('momentum', c('slipstream', 'momentum', ['Slipstream', { momentumEffect: 6, evasionPct: 4 }],
-        ['Wind at Your Back', { momentumMax: 5, attackSpeedPct: 3 }],
-        ['Untouchable', { momentumEvasion: 2, evasionPct: 10 }])),
+      R2: c('windrunner', 'evasion', ['Windrunner', { evasionPct: 12, attackSpeedPct: 2 }],
+        ['Untouchable', { evasionPct: 35, evadeHeal: 2 }],
+        ['Following Wind', { evadeSpeed: 7, attackSpeedPct: 5 }]),
       H: c('marksman', 'projectile', ['Marksman', { projectilePct: 8 }],
         ['Marksman', { projectilePct: 25, accuracy: 50 }],
         ['Far Shot', { projectilePct: 15, critChancePct: 15 }]),
@@ -337,7 +325,7 @@ const SECTORS: SectorSpec[] = [
     keystones: {
       ks0: { name: 'Glass Edge', stats: { critMulti: 80, lifeMore: -25 }, desc: '+80% Critical Strike Multiplier. 25% less maximum Life.' },
       ks1: { name: 'Wind Dancer', stats: { windDancer: 1, armourMore: -40 }, desc: 'Evasion can dodge boss wind-ups. 40% less Armour.' },
-      ksm: { name: 'Perpetual Motion', stats: { perpetualMotion: 1 }, desc: "Taking a hit doesn't halve Momentum. Momentum decays by 1 per second instead." },
+      ksm: { name: 'One Clean Shot', stats: { projectilePct: 60, lifePct: -15 }, desc: '60% increased Projectile Damage. 15% less maximum Life.' },
     },
   },
   {
@@ -351,10 +339,10 @@ const SECTORS: SectorSpec[] = [
         ["Assassin's Mark", { critChancePct: 25, critFullLife: 15 }],
         ['Cruel Edge', { critMulti: 15 }],
         ['Opportunist', { lowLifeDamage: 15, accuracy: 40 }]),
-      R1: mech('malice', c('malice', 'malice', ['Malice', { coupPct: 6, ailmentPct: 4 }],
-        ['Patience', { maliceMax: -3, evasionPct: 10 }],
-        ['Twist the Knife', { coupPct: 40, critMulti: 5 }],
-        ['Spite', { maliceCritKeep: 5, critChancePct: 10 }])),
+      R1: c('fatal_design', 'critMulti', ['Fatal Design', { critChancePct: 10, critMulti: 5 }],
+        ['Patient Killer', { critMulti: 30, lowLifeDamage: 12 }],
+        ['First Cut', { critFullLife: 35, critChancePct: 15 }],
+        ['Blood Price', { critLeech: 1, critMulti: 18 }]),
       A: c('saboteur', 'ailment', ['Saboteur', { dex: 5, int: 5 }], ['Saboteur', { poisonPct: 20, ignitePct: 20 }]),
       B: c('spellblade', 'elemental', ['Spellblade', { elemPct: 6 }], ['Spellblade', { elemPct: 20, attackSpeedPct: 4 }]),
       C: c('assassin', 'critMulti', ['Assassin', { critChancePct: 8 }],
@@ -374,9 +362,9 @@ const SECTORS: SectorSpec[] = [
       G: c('venom', 'poison', ['Venom', { poisonPct: 6 }],
         ['Toxic Strikes', { poisonPct: 25, poisonDurationFlat: 500 }],
         ['Debilitate', { poisonWeaken: 5, ailmentPct: 10 }]),
-      R2: mech('malice', c('ill_intent', 'malice', ['Ill Intent', { coupPct: 8, poisonPct: 4 }],
-        ['Opportunist', { coupAilment: 1, poisonPct: 10 }],
-        ['Grudge', { maliceOnHitTaken: 1, evasionPct: 10 }])),
+      R2: c('slow_poison', 'poison', ['Slow Poison', { poisonPct: 12, ailmentDuration: 5 }],
+        ['Patient Venom', { poisonPct: 35, poisonDurationFlat: 1000 }],
+        ['Withering Touch', { poisonWeaken: 5, multiAilmentVuln: 8 }]),
       H: c('infuser', 'ailment', ['Cruelty', { ailmentPct: 8 }],
         ['Cruel Methods', { ailmentPct: 25 }],
         ['Slow Death', { ailmentDuration: 20, multiAilmentVuln: 5 }]),
@@ -394,7 +382,7 @@ const SECTORS: SectorSpec[] = [
     keystones: {
       ks0: { name: 'Arcane Recursion', stats: { arcaneRecursion: 1 }, desc: 'Cooldowns recover 40% faster. Skills cost 50% more Mana.' },
       ks1: { name: 'Venomous Soul', stats: { ailmentPct: 60, lifeMore: -15 }, desc: '60% increased damage with ailments. 15% less maximum Life.' },
-      ksm: { name: 'Thousand Cuts', stats: { thousandCuts: 1 }, desc: 'Critical strikes also add Malice instead of emptying it. Coup de Grâce deals 200% damage instead of 400%.' },
+      ksm: { name: 'Venomous Soul', stats: { ailmentPct: 60, lifePct: -15 }, desc: '60% increased damage with ailments. 15% less maximum Life.' },
     },
     keystoneIds: { ks0: 'shadow_ks' },
   },
@@ -409,10 +397,10 @@ const SECTORS: SectorSpec[] = [
         ['Spellweaver', { spellPct: 20, castSpeedPct: 4 }],
         ['Quickened Mind', { castSpeedPct: 8 }],
         ['Focused Will', { spellCritMulti: 15, mana: 15 }]),
-      R1: mech('manaPower', c('mana_is_power', 'manaPower', ['Reservoir', { manaPower: 2, mana: 8 }],
-        ['Wellspring', { manaPower: 5, manaPct: 15 }],
-        ['Brimming', { manaPowerFull: 10, manaRegenPct: 10 }],
-        ['Overflow', { manaPower: 3, manaRegenPct: 30 }])),
+      R1: c('high_sorcery', 'spell', ['High Sorcery', { spellPct: 12, mana: 8 }],
+        ['Spellwright', { spellPct: 30, castSpeedPct: 5 }],
+        ['Arcane Precision', { spellCritMulti: 25, critChancePct: 15 }],
+        ['Deep Study', { manaPct: 15, manaCostReduction: 6 }]),
       A: c('pyromancer', 'fire', ['Kindling', { firePct: 10 }], ['Pyromancer', { firePct: 25, ignitePct: 20 }]),
       B: c('frostweaver', 'cold', ['Rime', { coldPct: 10 }], ['Frostweaver', { coldPct: 25, shieldEffect: 20 }]),
       C: c('stormcaller', 'light', ['Static', { lightPct: 10 }],
@@ -432,9 +420,9 @@ const SECTORS: SectorSpec[] = [
       G: c('aegis', 'es', ['Aegis', { energyShieldPct: 6 }],
         ['Arcane Aegis', { energyShieldPct: 25, esRechargePct: 15 }],
         ['Warding Runes', { energyShield: 30, allRes: 4 }]),
-      R2: mech('manaPower', c('deep_reserves', 'manaPower', ['Deep Reserves', { mana: 10, manaRegenPct: 6 }],
-        ['Font of Power', { manaPower: 8, mana: 20 }],
-        ['Soul Battery', { manaPowerEs: 1, energyShieldPct: 15 }])),
+      R2: c('arcane_battery', 'es', ['Arcane Battery', { mana: 12, energyShieldPct: 8 }],
+        ['Soul Ward', { energyShieldPct: 30, manaPct: 10 }],
+        ['Rapid Recharge', { esRechargePct: 35, manaRegenPct: 15 }]),
       H: c('eldritch', 'es', ['Eldritch Ward', { energyShieldPct: 8 }],
         ['Arcane Barrier', { energyShieldPct: 25, energyShield: 20 }],
         ['Quick Recovery', { esRechargePct: 30, energyShieldPct: 10 }]),
@@ -452,7 +440,7 @@ const SECTORS: SectorSpec[] = [
     keystones: {
       ks0: { name: "Alchemist's Covenant", stats: { flaskEffect: 50, flaskCharges: 50, lifeMore: -10 }, desc: '50% increased Flask Effect and Charges gained. 10% less maximum Life.' },
       ks1: { name: 'Mind over Flesh', stats: { mindOverFlesh: 30 }, desc: '30% of damage is taken from Mana before Life.' },
-      ksm: { name: 'All or Nothing', stats: { allOrNothing: 1 }, desc: 'Mana is Power gives 60% more damage while above 80% Mana, and nothing below.' },
+      ksm: { name: 'Arcane Body', stats: { spellPct: 50, lifePct: -20 }, desc: '50% increased Spell Damage. 20% less maximum Life.' },
     },
   },
   {
@@ -466,10 +454,10 @@ const SECTORS: SectorSpec[] = [
         ['Divine Fury', { elemPct: 20, firePct: 5 }],
         ['Sanctified', { allRes: 6, lifePct: 4 }],
         ['Zeal of Faith', { castSpeedPct: 4, elemPct: 8 }]),
-      R1: mech('martyr', c('martyr', 'martyr', ['Penitence', { novaPct: 8, life: 4 }],
-        ['Devotion', { fervorPct: 15, allRes: 5 }],
-        ['Holy Light', { novaHeal: 10, lifeRegen: 1 }],
-        ['Divine Wrath', { novaPct: 40, elemPct: 5 }])),
+      R1: c('consecrated_path', 'elemental', ['Consecrated', { elemPct: 10, allRes: 3 }],
+        ['Sacred Flame', { elemPct: 28, ignitePct: 15 }],
+        ['Winter Prayer', { coldPct: 22, shieldEffect: 18 }],
+        ['Storm Psalm', { lightPct: 22, chainMore: 8 }]),
       A: c('zealot', 'strint', ['Zeal', { int: 5, str: 5 }], ['Zealot', { lifeRegen: 3, elemPct: 15 }]),
       B: c('warding', 'resist', ['Warding', { allRes: 4 }], ['Elemental Warding', { allRes: 12, life: 20 }]),
       C: c('inquisitor', 'elemental', ['Inquisition', { elemPct: 5, critChancePct: 5 }],
@@ -489,9 +477,9 @@ const SECTORS: SectorSpec[] = [
       G: c('faith', 'resist', ['Faith', { allRes: 2, armourPct: 4 }],
         ['Bastion of Faith', { allRes: 8, elemTakenReduction: 4 }],
         ['Light of Grace', { lifeRegen: 3, lifePct: 5 }]),
-      R2: mech('martyr', c('penance', 'martyr', ['Penance', { fervorPct: 5, armourPct: 4 }],
-        ['Sanctified Wounds', { fervorPct: 15, armourPct: 15 }],
-        ['Radiance', { novaEs: 20, energyShieldPct: 10 }])),
+      R2: c('sanctuary', 'resist', ['Sanctuary', { allRes: 5, lifeRegen: 1 }],
+        ['Hallowed Ground', { allRes: 12, elemTakenReduction: 4 }],
+        ['Living Bastion', { armourPct: 20, energyShieldPct: 20 }]),
       H: c('purity', 'resist', ['Purity', { allRes: 3 }],
         ['Purity of Flesh', { allRes: 10, elemTakenReduction: 3 }],
         ['Cleansing Light', { lifeRegenPct: 0.3, allRes: 5 }]),
@@ -509,7 +497,7 @@ const SECTORS: SectorSpec[] = [
     keystones: {
       ks0: { name: 'Bastion', stats: { bastion: 1 }, desc: 'Your Evasion Rating is converted to Armour.' },
       ks1: { name: 'Sacred Oath', stats: { allRes: 15, attackSpeedMore: -10 }, desc: '+15% to all Elemental Resistances. 10% less Attack Speed.' },
-      ksm: { name: "Saint's Sacrifice", stats: { saintsSacrifice: 1 }, desc: 'Fervor fills twice as fast. The holy nova no longer heals you.' },
+      ksm: { name: 'Unshaken Faith', stats: { allRes: 20, attackSpeedMore: -10 }, desc: '+20% to all Elemental Resistances. 10% less Attack Speed.' },
     },
     keystoneIds: { ks0: 'templar_ks' },
   },
@@ -576,11 +564,11 @@ function build(): PassiveNode[] {
     if (!nodes[a].links.includes(b)) nodes[a].links.push(b);
     if (!nodes[b].links.includes(a)) nodes[b].links.push(a);
   };
-  /** link two nodes through travel nodes, one roughly every 80 units */
+  /** Link two clusters with a short attribute road. Long crossings cost points; local connections do not become filler. */
   const path = (a: string, b: string, region: TreeRegion, stats: StatMap) => {
     const A = nodes[a];
     const B = nodes[b];
-    const steps = Math.max(1, Math.round(Math.hypot(B.x - A.x, B.y - A.y) / 80));
+    const steps = Math.max(1, Math.ceil(Math.hypot(B.x - A.x, B.y - A.y) / TRAVEL_SPACING));
     let prev = a;
     for (let i = 1; i < steps; i++) {
       const id = `t_${a}_${b}_${i}`;
@@ -599,7 +587,7 @@ function build(): PassiveNode[] {
     const u = { x: Math.cos(rad(angle)), y: Math.sin(rad(angle)) }; // outward
     const v = { x: -u.y, y: u.x }; // clockwise
     const at = (du: number, dv: number) => ({ x: Math.round(cx + u.x * du + v.x * dv), y: Math.round(cy + u.y * du + v.y * dv) });
-    const base = { region, cluster: spec.id, mechanic: spec.mechanic };
+    const base = { region, cluster: spec.id };
     let si = 0;
     let ni = 0;
     const one = shape === 'line';
@@ -622,17 +610,17 @@ function build(): PassiveNode[] {
     };
 
     if (shape === 'line') {
-      const ids = [-75, -25, 25].map((du) => node('small', at(du, 0)));
-      const n = node('notable', at(75, 0));
+      const ids = [-60, 0].map((du) => node('small', at(du, 0)));
+      const n = node('notable', at(65, 0));
       chain([...ids, n]);
-      mastery(at(55, 48 * side), n);
+      mastery(at(45, 50 * side), n);
       return { entry: ids[0], out: n, left: n, right: n };
     }
     if (shape === 'fork') {
-      const entry = node('small', at(-75, 0));
+      const entry = node('small', at(-65, 0));
       const arm = (side: number) => {
-        const a = [node('small', at(-25, 45 * side)), node('small', at(25, 65 * side))];
-        const n = node('notable', at(75, 70 * side));
+        const a = [node('small', at(0, 45 * side))];
+        const n = node('notable', at(65, 70 * side));
         chain([entry, ...a, n]);
         return n;
       };
@@ -641,14 +629,14 @@ function build(): PassiveNode[] {
       mastery(at(45, 0), left);
       return { entry, out: right, left, right };
     }
-    // wheel: 8 around a centre mastery, slot 0 facing inward; notables at 3, 5 and 7
-    const ring = Array.from({ length: 8 }, (_, i) => {
-      const a = rad(180 + i * 45);
-      return node(i === 3 || i === 5 || i === 7 ? 'notable' : 'small', at(Math.cos(a) * 85, Math.sin(a) * 85));
+    // compact wheel: four approaches, three notables and a centre mastery; slot 0 faces inward
+    const ring = Array.from({ length: 7 }, (_, i) => {
+      const a = rad(180 + i * (360 / 7));
+      return node(i === 2 || i === 4 || i === 5 ? 'notable' : 'small', at(Math.cos(a) * 85, Math.sin(a) * 85));
     });
     chain([...ring, ring[0]]);
-    mastery(at(0, 0), ring[3]);
-    return { entry: ring[0], left: ring[2], out: ring[4], right: ring[6] };
+    mastery(at(0, 0), ring[2]);
+    return { entry: ring[0], left: ring[1], out: ring[3], right: ring[6] };
   };
 
   // the shared centre
@@ -686,7 +674,7 @@ function build(): PassiveNode[] {
       const id = sec.keystoneIds?.[k] ?? `${sec.key}_${k}`;
       add({
         id, name: ks.name, kind: 'keystone', region: sec.key, ...polar(KS_AT[k][0], sec.angle + KS_AT[k][1]),
-        stats: ks.stats, desc: ks.desc, mechanic: k === 'ksm' ? sec.clusters.R1.mechanic : undefined,
+        stats: ks.stats, desc: ks.desc,
       });
       p[k] = id;
     }

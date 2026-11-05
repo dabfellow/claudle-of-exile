@@ -785,7 +785,8 @@ function walkthroughBlock(): string {
       esc(rewardText(bossTable(z.tier).guaranteed)),
       zoneBefore(z).map((id) => ent(U.area(id))).join(', '),
     ]);
-    const trials = TRIALS.filter((t) => OPEN_ZONES.find((z) => z.id === t.zoneId)?.act === act.n).map((t) => `<p><strong>Trial ${t.n}</strong> at ${ent(U.area(t.zoneId))} opens ${esc(t.opens)}.</p>`).join('');
+    const trials = TRIALS.filter((t) => t.zoneId && OPEN_ZONES.find((z) => z.id === t.zoneId)?.act === act.n)
+      .map((t) => `<p><strong>Trial ${t.n}</strong> at ${t.zoneId ? ent(U.area(t.zoneId)) : esc(t.name)}: ${esc(t.result)}</p>`).join('');
     const inner = table(['Area', 'Levels', 'Boss', 'Kills to boss', 'First-kill reward', 'Comes after'], rows) + trials;
     return `<h2 id="act-${act.n}">Act ${act.n}: ${esc(act.name)}</h2>${act.n >= SPOILER_ACT ? spoiler(`Act ${act.n}`, inner) : inner}`;
   }).join('');
@@ -906,7 +907,7 @@ const GUIDE_DATA: Record<string, () => string> = {
   instill: () => table(['Condition', 'What it does'], INSTILL_CONDITIONS.map((c) => [esc(c.label), esc(c.desc)])),
   'life-reserve': () => String(LIFE_RESERVE_PCT),
   'haul-cap': () => String(OFFLINE_HAUL_CAP),
-  trials: () => table(['Trial', 'Area', 'Points', 'Opens'], TRIALS.map((t) => [String(t.n), ent(U.area(t.zoneId)), String(t.points), esc(t.opens)])),
+  trials: () => table(['Trial', 'Place', 'Points', 'Result'], TRIALS.map((t) => [String(t.n), t.zoneId ? ent(U.area(t.zoneId)) : esc(t.name), String(t.points), esc(t.result)])),
   production: () => table(['Skill', 'What it does', 'Recipes'], Object.values(SKILLS).filter((s) => s.group === 'production').map((s) => [esc(s.name), esc(s.desc), String(actionsFor(s.id).length)])),
   drops: () => table(['Tier', 'First area', 'Currency', 'Item', 'Rare share', 'Flask', 'Unique'], Object.entries(DROP_TABLES).map(([tier, t]) => {
     const z = OPEN_ZONES.find((o) => o.tier === +tier);

@@ -51,6 +51,10 @@ looks and danger, not loot.
 
 ### Tier identity
 
+The first Tier 5 map boss is also the fourth and final ascendancy trial. It grants 2 points, bringing the total to 9:
+enough for any three notable paths and either capstone. It does not unlock nodes; the full tree has been visible since
+Trial 1.
+
 Each tier group has a permanent mod baked into every map of that group, and exclusive loot that doesn't appear below it.
 No artificial gates: a strong-enough build can always run a higher tier, but the permanent mod is a genuine gear check.
 

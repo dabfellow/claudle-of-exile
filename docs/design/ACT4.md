@@ -60,7 +60,8 @@ Forked on 2026-11-01. The act boss needs 8 of the 11 other bosses. From the Holl
 
 ## Second trial
 
-The first kill of the Hollow King passes trial 2: it gives its 3 points and opens the notables and bridge. `TRIALS` in `ascendancies.ts` names `giantsthrone`. The other 11 Act 4 bosses give no ascendancy points.
+The first kill of the Hollow King passes trial 2 and gives 2 more points, enough for a second notable path.
+`TRIALS` in `ascendancies.ts` names `giantsthrone`. The other 11 Act 4 bosses give no ascendancy points.
 
 **The dev `passTrial(1, 2)` "+1":** display, not a bug. Before you choose, the Ascendancy tab's badge counts the waiting choice, so it says +1 whatever you hold.
 
