@@ -15,6 +15,10 @@ Last updated 2026-11-04.
 send. Act 1's cold check and Scorched earth's danger stay as they are, with no playtest planned, until
 you say otherwise.
 
+**Latest release:** 0.4.0, Trees Reborn, deployed 2026-11-04. The character tree now uses compact build-focused
+clusters and shorter attribute roads; ascendancies have six notables, two capstones, no milestone locks and a fourth
+trial at Tier 5 Maps.
+
 **In order:**
 
 1. **Claude:** build the real Maps (Milestone 8) from [MAPS.md](design/MAPS.md). Beating Act 6 opens the bare Maps preview page, and drawn maps can't be spent yet.
