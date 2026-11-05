@@ -4,7 +4,7 @@ The one place for what's next, what's planned, what's been decided and what's be
 not Claude. **Done** on a milestone is what has to be true before moving on. The order is by dependency: pacing rules
 first, because every act is tuned against them.
 
-Last updated 2026-11-04.
+Last updated 2026-11-05.
 
 **On this page:** [Next steps](#next-steps) · [Milestones](#milestones) · [Decisions](#decisions) ·
 [Other open items](#other-open-items) · [Ideas / later](#ideas--later) · [Done](#done)
@@ -533,6 +533,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Cosmetics shop (never pay-to-win).
 
 ## Done
+- [x] Mobile and mid-resolution readability pass: larger base UI typography, earlier feed collapse (≤1280), denser 720p shell spacing, and phone nav labels shown (not icon-only), so pages stay legible on phones and 720p/1280p/1440p screens. — done 2026-11-05
 - [x] Gem attribute requirements now scale from 8 to 155 instead of 245; demanding gems use ×1.15 and reach 178 instead of ×1.3 and 318. Off-attribute gems still require passive-tree or gear investment. — done 2026-11-04
 - [x] Compact passive-tree pass: travel nodes fell from 423 to 249 while retaining their attribute role; lines, forks and wheels lost repeated small passives but kept all 198 notables, 90 masteries and 21 keystones. The new design contract records regional overlaps, route-package balancing and future item-based tree bending. Save v36 refunds the changed character tree. — done 2026-11-04
 - [x] Skill tree overhaul: the outer character-tree paths are build-neutral; class-mechanic choices moved into both of their class's ascendancies; each ascendancy has six notable paths and two capstones, all visible after Trial 1. Four trials award 2/2/3/2 points, ending at Tier 5 Maps with nine points for a normal three-notable/one-capstone build and no hard node-count ceiling. Save v35 refunds both trees for clean respecs. — done 2026-11-04
