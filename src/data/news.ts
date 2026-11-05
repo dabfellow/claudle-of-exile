@@ -14,7 +14,7 @@ export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
   {
-    version: '0.3.21',
+    version: '0.4.0',
     date: '4 Nov 2026',
     title: 'Trees Reborn',
     items: [
