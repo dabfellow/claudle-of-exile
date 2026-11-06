@@ -104,7 +104,8 @@ import { flaskStats } from './flasks';
 import { ailmentNumbers, BURN_MS, BURN_SHARE, chainFalloff, gemChains, gemUseReason, IGNITE_MS, IGNITE_SHARE, grantGemXp, LIFE_RESERVE_PCT, MIN_COOLDOWN_MS, minionStats, skillNumbers, stormStats, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
 import { rollLoot } from './loot';
-import { mapPackLeft, onMapFieldLost, onMapPack, rollMapDrops } from './maps';
+import { TIER_MOD_RULES } from '../data/maps';
+import { mapPackLeft, onMapFieldLost, onMapPack, rollMapDrops, runModifiers, topUpKingMaps } from './maps';
 import { chance, pick, rInt } from './rng';
 import { grantXp } from './skills';
 import {
@@ -336,7 +337,7 @@ export const KILL_XP_SCALE = 0.8;
 
 /** Base character xp for a kill, before the area level multiplier. */
 export function monsterXp(mon: MonsterInstance): number {
-  return Math.round((5 + mon.level * 3) * (mon.isBoss ? 10 : 1) * (mon.hulking ? HULKING.xp : 1) * mon.scale * KILL_XP_SCALE);
+  return Math.round((5 + mon.level * 3) * (mon.isBoss ? 10 : 1) * (mon.hulking ? HULKING.xp : 1) * mon.scale * (mon.xpMult ?? 1) * KILL_XP_SCALE);
 }
 
 /**
@@ -487,11 +488,36 @@ function spawnPack(s: GameState, ctx: Ctx, gate: number): void {
     .filter((i) => i !== gate)
     .sort((a, b) => cellDistance(a, gate) - cellDistance(b, gate));
   const cells = [gate, ...others].slice(0, Math.min(n, room));
-  if (cells.length) onMapPack(s);
-  const hulk = zone.act >= HULKING.fromAct && ctx.rng.next() < HULKING.chance ? 0 : -1;
+  const packNum = cells.length ? onMapPack(s) : 0;
+  const mapMods = s.maps.run ? runModifiers(s) : null;
+  const isElitePack = !!(s.maps.run?.elitePacks && packNum > 0 && s.maps.run.elitePacks.includes(packNum));
+  const isPermEnraged = mapMods?.tierMod === 'enrage' || mapMods?.tierMod === 'pinnacle';
+  const isRevenantPack = !!mapMods?.doomedMods.has('revenant_packs') && packNum > 0 && packNum % 3 === 0;
+  const isHulkingSurge = !!mapMods?.doomedMods.has('hulking_surge') && packNum > 0 && packNum % 4 === 0;
+  const hulk = isHulkingSurge ? 0 : zone.act >= HULKING.fromAct && ctx.rng.next() < HULKING.chance ? 0 : -1;
   cells.forEach((cell, i) => {
     const m = makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), scale);
     if (i === hulk) makeHulking(m);
+    if (mapMods) {
+      if (mapMods.monsterLifeMult !== 1) m.maxLife = m.life = Math.round(m.maxLife * mapMods.monsterLifeMult);
+      if (mapMods.monsterDmgMult !== 1) m.damage = Math.round(m.damage * mapMods.monsterDmgMult);
+      if (mapMods.monsterXpDropMult !== 1) {
+        m.xpMult = (m.xpMult ?? 1) * mapMods.monsterXpDropMult;
+        m.lootMult = (m.lootMult ?? 1) * mapMods.monsterXpDropMult;
+      }
+    }
+    if (isElitePack) {
+      m.elite = true;
+      m.maxLife = m.life = Math.round(m.maxLife * TIER_MOD_RULES.eliteLife);
+      m.damage = Math.round(m.damage * TIER_MOD_RULES.eliteDamage);
+      m.xpMult = (m.xpMult ?? 1) * TIER_MOD_RULES.eliteXp;
+      m.lootMult = (m.lootMult ?? 1) * TIER_MOD_RULES.eliteLoot;
+    }
+    if (isPermEnraged) {
+      m.enraged = true;
+      m.permEnrage = true;
+    }
+    if (isRevenantPack) m.revenant = true;
     m.cell = cell;
     c.monsters.push(m);
   });
@@ -503,13 +529,57 @@ function spawnBoss(s: GameState, ctx: Ctx): void {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
   const boss = makeMonster(zone.boss, true, newUid(s));
+  const mapMods = s.maps.run ? runModifiers(s) : null;
+  if (mapMods) {
+    if (mapMods.monsterLifeMult !== 1) boss.maxLife = boss.life = Math.round(boss.maxLife * mapMods.monsterLifeMult);
+    if (mapMods.monsterDmgMult !== 1) boss.damage = Math.round(boss.damage * mapMods.monsterDmgMult);
+    if (mapMods.monsterXpDropMult !== 1) {
+      boss.xpMult = (boss.xpMult ?? 1) * mapMods.monsterXpDropMult;
+      boss.lootMult = (boss.lootMult ?? 1) * mapMods.monsterXpDropMult;
+    }
+    if (mapMods.tierMod === 'enrage' || mapMods.tierMod === 'pinnacle') {
+      boss.enraged = true;
+      boss.permEnrage = true;
+    }
+    if (mapMods.bossEchoes) {
+      boss.echoes = [...(boss.echoes ?? []), mapMods.bossEchoes];
+      boss.mechanics = [...new Set([...boss.mechanics, ...mapMods.bossEchoes])];
+      if (boss.mechanics.includes('martyrs')) boss.chained = true;
+    }
+  }
   c.challenged = false;
   boss.cell = BOSS_ENTRY;
   c.monsters.push(boss);
   const near = freeNear(bodies(c), BOSS_ENTRY, ctx.rng);
-  for (let i = 0; i < BOSS_ADDS && i < near.length; i++) {
+  let nearIdx = 0;
+  if ((mapMods?.tierMod === 'twin' || mapMods?.tierMod === 'pinnacle') && nearIdx < near.length) {
+    const lt = makeMonster(zone.boss, false, newUid(s), TIER_MOD_RULES.twinStatScale);
+    lt.name = `${zone.boss.name}'s Lieutenant`;
+    lt.isTwin = true;
+    lt.twinOf = boss.uid;
+    boss.twinOf = lt.uid;
+    lt.maxLife = boss.maxLife;
+    lt.life = boss.life;
+    if (mapMods.monsterDmgMult !== 1) lt.damage = Math.round(lt.damage * mapMods.monsterDmgMult);
+    if (boss.permEnrage) {
+      lt.enraged = true;
+      lt.permEnrage = true;
+    }
+    lt.cell = near[nearIdx++];
+    c.monsters.push(lt);
+  }
+  const addCount = BOSS_ADDS + (mapMods?.doomedMods.has('preassembled_adds') ? 3 : 0);
+  for (let i = 0; i < addCount && nearIdx < near.length; i++, nearIdx++) {
     const m = makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), PACK_LIFE_SCALE);
-    m.cell = near[i];
+    if (mapMods) {
+      if (mapMods.monsterLifeMult !== 1) m.maxLife = m.life = Math.round(m.maxLife * mapMods.monsterLifeMult);
+      if (mapMods.monsterDmgMult !== 1) m.damage = Math.round(m.damage * mapMods.monsterDmgMult);
+    }
+    if (boss.permEnrage) {
+      m.enraged = true;
+      m.permEnrage = true;
+    }
+    m.cell = near[nearIdx];
     c.monsters.push(m);
   }
   ctx.emit({ t: 'spawn', name: boss.name, boss: true });
@@ -1413,8 +1483,8 @@ function tickDpsMeter(c: CombatRuntime, dt: number): void {
 }
 
 /** Take life from a monster, through its ward first. */
-function damageMonster(s: GameState, mon: MonsterInstance, amount: number, direct = false): void {
-  if (mon.chained || (mon.martyr && !direct)) return;
+export function damageMonster(s: GameState, mon: MonsterInstance, amount: number, direct = false): void {
+  if (mon.chained || (mon.immuneMs ?? 0) > 0 || (mon.martyr && !direct)) return;
   const dealt = s.combat?.dealt;
   if (dealt) dealt[dealt.length - 1] += amount;
   if (mon.curse?.warrant) mon.curse.owed = (mon.curse.owed ?? 0) + amount;
@@ -1424,6 +1494,10 @@ function damageMonster(s: GameState, mon: MonsterInstance, amount: number, direc
     amount -= absorbed;
   }
   mon.life -= amount;
+  if (mon.twinOf && s.combat) {
+    const twin = s.combat.monsters.find((m) => m.uid === mon.twinOf);
+    if (twin) twin.life = mon.life;
+  }
 }
 
 /** A damage-over-time ailment from a hit, with the player's ailment modifiers. */
@@ -1548,7 +1622,7 @@ function hitMonster(
   const c = s.combat!;
   const { def, mods } = nums;
   const e = def.effect;
-  if (mon.chained) {
+  if (mon.chained || (mon.immuneMs ?? 0) > 0) {
     ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: 'phys', blocked: true, monsterUid: mon.uid });
     return 0;
   }
@@ -2030,6 +2104,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
   if (mon.martyr) return onMartyrDeath(c, ctx, mon);
+  if (mon.isTwin) return;
   ctx.emit({ t: 'kill', name: mon.name, boss: mon.isBoss });
   c.hungerMs = HUNGER_MS;
   ascendancyKill(s, mon);
@@ -2040,6 +2115,11 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   gainCharges(s, mon.isBoss ? 8 : 1, d);
   rollLoot(s, ctx, mon, zone, d);
   rollMapDrops(s, ctx, mon);
+
+  // Doomed Map Searing Aftermath: packs leave Burning Ground for 4s on death
+  if (!mon.isBoss && s.maps.run?.doomedMods?.includes('searing_aftermath') && !aliveMonsters(c).some((m) => !m.isBoss && m !== mon)) {
+    layGround(c.ground, PLAYER_SPOT, 'burning', mon.damage * MONSTER_GROUND_DPS * 1.5, 4000);
+  }
 
   // Virulence: poisons jump to another enemy
   const spreading = mon.dots.filter((x) => x.kind === 'poison' && x.spreads && x.remainingMs > 0);
@@ -2091,6 +2171,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
       if (zone.actBoss) ctx.emit({ t: 'actComplete', act: zone.act });
       onBossFirstKill(s, ctx, zone.id);
     }
+    if (zone.id === 'shatteredthrone') topUpKingMaps(s, ctx);
     // each area opened can put a few more gems on the Gem shop's shelf
     let gems = 0;
     for (const next of openReachedZones(s)) {
@@ -2110,6 +2191,13 @@ function reapDead(s: GameState, ctx: Ctx, d: Derived): void {
   if (!c) return;
   for (const m of c.monsters) {
     if (m.life <= 0 && !m.dead) {
+      if (m.revenant) {
+        m.revenant = false;
+        m.life = Math.max(1, Math.round(m.maxLife * 0.3));
+        m.dots = [];
+        ctx.emit({ t: 'info', text: `${m.name} rises again as a Revenant!`, tone: 'warn' });
+        continue;
+      }
       m.dead = true;
       onMonsterDeath(s, ctx, d, m);
     }
@@ -2902,6 +2990,7 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
       mon.curse = undefined;
     }
   }
+  if (mon.immuneMs && mon.immuneMs > 0) mon.immuneMs = Math.max(0, mon.immuneMs - dt);
   if (mon.isBoss) bossPhases(s, ctx, d, mon, dt);
   // any stun or freeze, whatever it came from, breaks a channel
   if (channeling(mon) && (mon.stunMs > 0 || mon.frozenMs > 0)) breakChannel(ctx, mon);
@@ -2914,7 +3003,8 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
     return;
   }
   if (mon.isBoss && bossCasts(s, ctx, d, mon, dt)) return;
-  const speed = (mon.enraged ? BOSS_ENRAGE_SPEED : 1) * (d.raw.overclock ? 1.6 : 1) * (1 - (mon.curse?.slow ?? 0) / 100);
+  const enrageSpeed = mon.permEnrage ? TIER_MOD_RULES.enrageSpeed : BOSS_ENRAGE_SPEED;
+  const speed = (mon.enraged ? enrageSpeed : 1) * (d.raw.overclock ? 1.6 : 1) * (1 - (mon.curse?.slow ?? 0) / 100);
   const chill = Math.min(60, CHILL_SLOW_PCT + d.raw.chillOnHit) / 100;
   mon.attackTimer += (mon.chillMs > 0 ? dt * (1 - chill) : dt) * speed;
   if (mon.attackTimer >= mon.attackMs) {
@@ -2925,7 +3015,8 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
       return;
     }
     mon.attackTimer -= mon.attackMs;
-    const enrage = mon.enraged ? BOSS_ENRAGE_DMG : 1;
+    const enrageDmg = mon.permEnrage ? TIER_MOD_RULES.enrageDamage : BOSS_ENRAGE_DMG;
+    const enrage = mon.enraged ? enrageDmg : 1;
     if (minion) return hurtMinion(ctx, d, mon, minion, bossDamage(mon) * enrage * (0.85 + ctx.rng.next() * 0.3), mon.dmgType);
     takeHit(s, ctx, d, mon, bossDamage(mon) * enrage * (0.85 + ctx.rng.next() * 0.3), mon.dmgType, 'hit');
     // some casters' spells splash hazardous ground at the player's feet
@@ -2964,6 +3055,26 @@ function bossPhases(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt
   const has = (k: BossMechanic) => mon.mechanics.includes(k);
   const lifeFrac = mon.life / mon.maxLife;
   echoStep(ctx, mon, lifeFrac);
+  const mapMods = s.maps.run ? runModifiers(s) : null;
+  if (mapMods?.doomedMods.has('unending_enrage') && !mon.enraged && lifeFrac <= 0.75) {
+    mon.enraged = true;
+    mon.permEnrage = true;
+    ctx.emit({ t: 'bossPhase', name: mon.name, text: 'enters an unending rage!' });
+  }
+  if (mapMods?.doomedMods.has('warded_threshold') && !mon.doomedWardUsed && lifeFrac <= 0.6) {
+    mon.doomedWardUsed = true;
+    mon.immuneMs = 6000;
+    ctx.emit({ t: 'bossPhase', name: mon.name, text: 'raises an impervious ward for 6s!' });
+  }
+  if (mapMods && (mapMods.tierMod === 'ground' || mapMods.arenaGround) && s.maps.run) {
+    s.maps.run.groundMs = (s.maps.run.groundMs ?? 2000) - dt;
+    if (s.maps.run.groundMs <= 0) {
+      s.maps.run.groundMs = TIER_MOD_RULES.bossGroundEveryMs;
+      const kind: GroundKind = mapMods.arenaGround ?? pick(ctx.rng, ['unholy', 'burning', 'frozen'] as const);
+      layGround(s.combat!.ground, PLAYER_SPOT, kind, bossDamage(mon) * TIER_MOD_RULES.bossGroundDps, TIER_MOD_RULES.bossGroundDurationMs);
+      ctx.emit({ t: 'bossPhase', name: mon.name, text: `floods the arena: ${GROUND[kind].name.toLowerCase()} under you!` });
+    }
+  }
   if (has('enrage') && !mon.enraged && lifeFrac <= BOSS_ENRAGE_AT) {
     mon.enraged = true;
     ctx.emit({ t: 'bossPhase', name: mon.name, text: 'flies into a rage!' });
@@ -2985,6 +3096,10 @@ function bossPhases(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt
         ctx.emit({ t: 'bossPhase', name: mon.name, text: 'loses its ward' });
       } else if (mon.wardMs <= 0) {
         mon.life = Math.min(mon.maxLife, mon.life + mon.maxLife * BOSS_WARD_HEAL);
+        if (mon.twinOf && s.combat) {
+          const twin = s.combat.monsters.find((m) => m.uid === mon.twinOf);
+          if (twin) twin.life = mon.life;
+        }
         mon.ward = mon.wardMax = 0;
         ctx.emit({ t: 'bossPhase', name: mon.name, text: 'drinks in its ward and recovers!' });
       }

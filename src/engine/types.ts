@@ -222,8 +222,25 @@ export interface MonsterInstance {
   martyr?: boolean;
   /** pack members are scaled down; xp and loot scale with them */
   scale: number;
+  /** extra XP multiplier (e.g. Elite map packs) */
+  xpMult?: number;
+  /** extra loot roll multiplier (e.g. Elite map packs) */
+  lootMult?: number;
   /** a Hulking monster: big, slow, hits hard, worth more xp, and shrugs off area and chain hits (see makeHulking) */
   hulking?: boolean;
+  /** an Elite map pack member (T3–T4 & T10) */
+  elite?: boolean;
+  /** starts permanently enraged (T9 & T10) */
+  permEnrage?: boolean;
+  /** Twin boss lieutenant sharing a Life pool with the main boss (T5–T6 & T10) */
+  twinOf?: number;
+  isTwin?: boolean;
+  /** Doomed Map Revenant: revives once at 30% Life */
+  revenant?: boolean;
+  /** Doomed Map Warded Threshold: whether the 60% Life immunity ward has fired */
+  doomedWardUsed?: boolean;
+  /** temporary damage immunity timer in ms (Doomed Map Warded Threshold) */
+  immuneMs?: number;
   /** damage-over-time accumulated since the last report */
   dotAcc: number;
   dotTimer: number;
@@ -660,6 +677,25 @@ export interface AutomationUnlocks {
  */
 export type Realm = string;
 
+/** A rolled Sextant sitting in one of the Map Device's Astrolabe slots. */
+export interface SextantSlot {
+  modId: string;
+  tier: 'apprentice' | 'journeyman' | 'master';
+  charges: number;
+}
+
+/** Realm-shared Atlas progression and allocated nodes. */
+export interface AtlasState {
+  /** tiers (1..10) cleared at least once */
+  cleared: number[];
+  /** tiers (1..10) cleared with all unlocked Sextant slots filled */
+  slotted: number[];
+  /** tiers (1..10) cleared with zero deaths during the run */
+  deathless: number[];
+  /** allocated Atlas node ids */
+  nodes: string[];
+}
+
 /** What every character in a realm shares. Saved on its own, never inside a character. See engine/account.ts. */
 export interface AccountState {
   id: string;
@@ -678,6 +714,12 @@ export interface AccountState {
   uniquesSeen: string[];
   /** gold, currency and materials */
   bank: Record<string, number>;
+  /** shared map supply (`map_t1`..`map_t10` and `doomed_t1`..`doomed_t5`) */
+  maps?: Record<string, number>;
+  /** up to 4 Astrolabe Sextant slots on the Map Device */
+  sextants?: (SextantSlot | null)[];
+  /** realm-shared Atlas progression and allocated tree nodes */
+  atlas?: AtlasState;
   /** skill gems not on any character's bar */
   gems: SkillGemInstance[];
   /** loose support gems */
@@ -705,7 +747,7 @@ export interface MarketHold {
 }
 
 /** Account data arriving from elsewhere: a pre-account save, a demo, an import. */
-export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'uniqueStash' | 'uniquesSeen' | 'exileUnlocked' | 'campaignDone'>> & Partial<AccountPool>;
+export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'uniqueStash' | 'uniquesSeen' | 'exileUnlocked' | 'campaignDone' | 'maps' | 'sextants' | 'atlas'>> & Partial<AccountPool>;
 
 /** The Stash tabs that hold more than gear. */
 export type AccountPool = Pick<AccountState, 'bank' | 'gems' | 'supportGems' | 'flaskStash'>;
@@ -714,9 +756,23 @@ export type AccountPool = Pick<AccountState, 'bank' | 'gems' | 'supportGems' | '
 export interface MapRun {
   zoneId: string;
   tier: number;
+  /** borrowed campaign area id for visuals and monster roster */
+  areaId?: string;
+  /** legacy theme field, kept for backward compatibility */
   theme: string;
+  /** Doomed Map tier (1..5) and rolled Doomed modifiers when running a Doomed Map */
+  doomedTier?: number;
+  doomedMods?: import('../data/maps').DoomedModId[];
   packsLeft: number;
   packsTotal: number;
+  /** pack numbers (1-indexed by packs spawned) that are Elite packs in this run */
+  elitePacks?: number[];
+  /** whether all unlocked Sextant slots were filled when the run opened */
+  slottedFull?: boolean;
+  /** active Sextant modifier ids snapshot for this run */
+  sextantMods?: string[];
+  /** timer for boss arena dangerous ground in T7–8 */
+  groundMs?: number;
   /** game clock when it started */
   startedAt: number;
   /** lifetime deaths when it started: a rise means the run ended in one */
@@ -725,11 +781,11 @@ export interface MapRun {
 }
 
 export interface MapState {
-  /** maps held, by map zone id */
+  /** maps held, synced with the realm's `s.account.maps` */
   stock: Record<string, number>;
   run: MapRun | null;
   /** what auto-run keeps opening */
-  auto: { tier: number; theme: string } | null;
+  auto: { tier: number; doomed?: boolean; theme?: string } | null;
   /** running totals, to judge a loop by; runs and clearMs count finished maps */
   tally: { runs: number; clearMs: number; mapsFound: number; favoured: number };
 }

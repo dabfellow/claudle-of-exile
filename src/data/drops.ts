@@ -1,7 +1,7 @@
 /**
  * Drop tables. Monsters drop most gear and all of the rare currency; deeper areas shift
  * the odds toward rarer orbs and better rarities. Every number here is a balance knob —
- * check changes with `npm run sim` (docs/design/BALANCE.md).
+ * check changes with `npm run sim` (docs/DEVELOPMENT.md).
  */
 
 import type { ItemSlotType } from '../engine/types';
@@ -219,15 +219,20 @@ export const BOSS_TABLES: Record<number, BossTable> = {
   17: { currencyRolls: 6, guaranteed: [{ id: 'exalted', qty: 3 }, { id: 'divine', qty: 4 }], repeatChance: 0.025, items: [5, 5], rarity: { normal: 0, magic: 20, rare: 80 }, flaskChance: 0.3, uniqueChance: 0.22 },
 };
 
-/** The top drop table tier: Maps (data/maps.ts) run 18 to 27. */
+/** The top drop table tier: Maps (data/maps.ts) run 18 to 27, and Doomed Maps use 28. */
 export const TOP_DROP_TIER = 27;
+export const DOOMED_DROP_TIER = 28;
 
-// Maps carry on Act 6's curve one step a tier: more currency and more rares, with normal items fading out.
+// Maps carry on Act 6's curve one step a tier, with tier-group currency emphasis (Chaos at T3+, Regal at T7+, Exalted at T9+, Divine at T10).
 for (let tier = 18; tier <= TOP_DROP_TIER; tier++) {
   const n = tier - 17;
+  const chaos = n >= 3 ? 24 + 2 * n : 18 + n;
+  const regal = n >= 7 ? 28 + 2 * n : 20 + n;
+  const exalted = n >= 9 ? 2.2 + 0.4 * (n - 9) : 1 + 0.05 * n;
+  const divine = n >= 10 ? 4.5 : 2 + 0.1 * n;
   DROP_TABLES[tier] = {
     currencyChance: 0.1 + 0.005 * n,
-    currency: { ...BASIC, regal: 20 + n, alchemy: 20 + n, chaos: 18 + n, annul: 5 + 0.3 * n, exalted: 1 + 0.05 * n, divine: 2 + 0.1 * n, expansion: 2 + 0.1 * n, instill: 5 + 0.3 * n },
+    currency: { ...BASIC, regal, alchemy: 20 + n, chaos, annul: 5 + 0.3 * n, exalted, divine, expansion: 2 + 0.1 * n, instill: 5 + 0.3 * n },
     itemChance: 0.23 + 0.005 * n,
     rarity: { normal: 30 - 2 * n, magic: 36, rare: 34 + 2 * n },
     flaskChance: 0.017,
@@ -243,6 +248,29 @@ for (let tier = 18; tier <= TOP_DROP_TIER; tier++) {
     uniqueChance: 0.22 + 0.01 * n,
   };
 }
+
+// Doomed Maps (tier 28): 3.5× T10 Exalted and Divine rates.
+DROP_TABLES[DOOMED_DROP_TIER] = {
+  currencyChance: 0.17,
+  currency: {
+    ...DROP_TABLES[TOP_DROP_TIER].currency,
+    exalted: +(DROP_TABLES[TOP_DROP_TIER].currency.exalted * 3.5).toFixed(2),
+    divine: +(DROP_TABLES[TOP_DROP_TIER].currency.divine * 3.5).toFixed(2),
+  },
+  itemChance: 0.3,
+  rarity: { normal: 6, magic: 30, rare: 64 },
+  flaskChance: 0.02,
+  uniqueChance: 0.004,
+};
+BOSS_TABLES[DOOMED_DROP_TIER] = {
+  currencyRolls: 10,
+  guaranteed: [{ id: 'exalted', qty: 6 }, { id: 'divine', qty: 8 }],
+  repeatChance: 0.05,
+  items: [6, 7],
+  rarity: { normal: 0, magic: 8, rare: 92 },
+  flaskChance: 0.35,
+  uniqueChance: 0.35,
+};
 
 export function dropTable(tier: number): DropTable {
   return DROP_TABLES[tier] ?? DROP_TABLES[7];

@@ -4,7 +4,7 @@ import { FOSSILS, fossilDef, RESINS } from '../../data/craftMats';
 import { flaskDef } from '../../data/flasks';
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../../data/gems';
 import { materialDef } from '../../data/materials';
-import { isMapId, mapTheme } from '../../data/maps';
+import { isMapId } from '../../data/maps';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { zoneDef } from '../../data/zones';
 import { upgradeCost } from '../../engine/cartography';
@@ -95,7 +95,7 @@ function OutputRows({ s, a }: { s: GameState; a: SkillAction }) {
       {a.chart && (
         <li>
           <GameIcon name="map" size={13} color={a.color} />
-          <span className="ing-name">Tier {a.chart.tier} {mapTheme(a.chart.theme).name}</span>
+          <span className="ing-name">Map Tier {a.chart.tier}</span>
           <span className="ing-qty num">×{a.chart.qty}</span>
         </li>
       )}
@@ -312,14 +312,14 @@ function Ingredients({ cost, have }: { cost: Record<string, number>; have: Recor
 
 /** The lower maps an upgrade uses up, as a row under its ingredients. */
 function MapInput({ s, a }: { s: GameState; a: SkillAction }) {
-  const { tier, theme } = a.chart!;
+  const { tier } = a.chart!;
   const need = upgradeCost(s, a);
-  const held = mapsHeld(s, tier - 1, theme);
+  const held = mapsHeld(s, tier - 1);
   return (
     <ul className="ingredients">
       <li className={held >= need ? 'ok' : 'short'}>
         <GameIcon name="map" size={12} />
-        <span className="ing-name">Tier {tier - 1} {mapTheme(theme).name}</span>
+        <span className="ing-name">Map Tier {tier - 1}</span>
         <span className="ing-qty num">
           <b>{fmt(held)}</b> / {need}
         </span>

@@ -4,7 +4,7 @@ The one place for what's next, what's planned, what's been decided and what's be
 not Claude. **Done** on a milestone is what has to be true before moving on. The order is by dependency: pacing rules
 first, because every act is tuned against them.
 
-Last updated 2026-11-05.
+Last updated 2026-11-06.
 
 **On this page:** [Next steps](#next-steps) · [Milestones](#milestones) · [Decisions](#decisions) ·
 [Other open items](#other-open-items) · [Ideas / later](#ideas--later) · [Done](#done)
@@ -40,7 +40,7 @@ and the interface is clearer across phones and common desktop resolutions.
 | 5 | Maps preview | Built, dev only | You playing it |
 | 6 | Act 3 and ascendancies | **Done**, live; not simmed or played through | – |
 | 7 | Acts 4–6 | **Done**, live; not simmed or played through | – |
-| 8 | Maps | **Next**: players reach a bare page after Act 6 | Your go |
+| 8 | Maps | **In progress**: plain tiers, Sextants, Atlas, Cartography, Doomed Maps built | Uber Bosses |
 | 9 | Hard mode bosses | Answered: 5 bosses, post-Act 6 | Milestone 8 |
 | 10 | Top-end crafting and hideout | Not started | Milestone 9 |
 | 11 | Long tail | Not started | Milestone 10 |
@@ -110,14 +110,13 @@ and the interface is clearer across phones and common desktop resolutions.
 
 ### 8. Maps
 - Planned in [MAPS.md](design/MAPS.md): 10 tiers with identity (permanent mod per group + tier-exclusive drops), Sextants, an Atlas tree, Cartography reworked, and Doomed Maps + Uber Bosses as the endgame layer beyond T10.
-- [ ] Plain tiers with identity and the real Map Device page
-  - Levels done and live in 0.3.18, 2026-11-02: 10 tiers at monster level 66–84, drop tables 18–27, item level bonus 14, map drops from level 60 areas. Themes, the shared supply, the area boss and Last King map drops, the save migration, the real page, and the permanent mods + exclusive drops per tier are still to do. Cartography still draws only Tiers 1–3.
+- [x] Plain tiers with identity and the real Map Device page — done 2026-11-06
 - [x] Fourth ascendancy trial: the first Tier 5 map boss grants the final 2 points; it unlocks no nodes. — done 2026-11-04
-- [ ] Sextants
-- [ ] Atlas tree (including the ~20-point Doomed Maps unlock node)
-- [ ] Tier-exclusive drops: Chaos/Regal/Exalt/Divine scaling by tier, and tier-locked unique pools
-- [ ] Cartography rework
-- [ ] Doomed Maps: five item types (Doomed I–V, monster level 86–94), the Doomed mod pool, Fractured Orb drops, Uber Key drops from bosses, offline support
+- [x] Sextants — done 2026-11-06
+- [x] Atlas tree (including the ~20-point Doomed Maps unlock node) — done 2026-11-06
+- [x] Tier-exclusive drops: Chaos/Regal/Exalt/Divine scaling by tier, and tier-locked unique pools — done 2026-11-06
+- [x] Cartography rework — done 2026-11-06
+- [x] Doomed Maps: five item types (Doomed I–V, monster level 86–94), the Doomed mod pool, Fractured Orb drops, Uber Key drops from bosses, offline support — done 2026-11-06
 - [ ] Uber Bosses: The First Exile (~90), The Architect of Ruin (~93), The Void Sovereign (~96); three key types; chase uniques and Doom Sigils; designed when built
 - **Done:** a character can farm from Tier 1 to Tier 10, through Doomed Maps to Uber Bosses, with Sextants and the Atlas, and auto-run working offline.
 
@@ -543,6 +542,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Cosmetics shop (never pay-to-win).
 
 ## Done
+- [x] Maps redesign (Milestone 8): 10 plain shared tiers (`map_t1`–`map_t10`) with borrowed Act 1–6 areas, permanent tier-group mods (Elite packs, Twin boss shared Life, Dangerous ground, Enraged, Pinnacle) and tier-exclusive currency/unique drops; Apprentice/Journeyman/Master Sextants on the Map Device Astrolabe; 30-point realm-shared Atlas Tree (Sextant, Loot, Sustain and Bossing branches); Cartography T1–T10 + Sextant recipes; and Doomed Maps I–V (`doomed_t1`–`doomed_t5`, monster level 86–94) with 10 Doomed modifiers, Fractured Orb drops and Uber Key boss drops. — done 2026-11-06
 - [x] 0.4.2 Smarter Foundations deployed successfully. — live 2026-11-05
 - [x] Combat-flow pass: spend-based Mana is Power, Evasion-linked Momentum with flat protected losses, Arcane Dust Field Tinkering for campaign gear, Brawler/Kiter/Cautious range postures, and 1.5-second higher-priority Mana reservation. — done 2026-11-05
 - [x] Automation and hideout-cost overhaul: Vitals, Wind-up and Ground rules plus two condition slots are baseline; recovery flasks self-trigger; later War Table levels grant Status, Aim, a third slot and rarity-by-rarity auto-salvage. Six refining recipes turn logs and ore into planks and bars, bosses award trophies, and every station now has a much smoother component-based cost curve. — done 2026-11-05

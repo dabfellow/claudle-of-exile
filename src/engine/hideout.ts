@@ -26,6 +26,7 @@ import type { Ctx } from './context';
 import { flaskName, flaskValue, rollFlask, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { addRandomMod, createItem, itemName, modCount, sellValue } from './items';
+import { topUpKingMaps } from './maps';
 import { gemInShop, gemShopZone } from './progress';
 import { pick, rInt, type Rng } from './rng';
 import type { GameState, Item, Rarity, VendorOffer } from './types';
@@ -54,6 +55,7 @@ export function checkCampaignDone(s: GameState, ctx: Ctx): void {
   const exile = s.account.exileUnlocked ? '' : ', and the Exile can now be created';
   s.account.exileUnlocked = true;
   ctx.emit({ t: 'info', text: `Campaign complete: the Map Device wakes${exile}`, tone: 'good' });
+  topUpKingMaps(s, ctx);
 }
 
 /** Why a station can't be used or upgraded yet, or null. */

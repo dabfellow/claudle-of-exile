@@ -3,7 +3,7 @@
  * `npm run uniques` rewrites the file; tests/uniques.test.ts fails if it has gone stale.
  */
 import { baseDef, UNIQUES, type UniqueDef } from './bases';
-import { MAP_THEMES } from './maps';
+import { MAP_UNIQUE_POOLS } from './maps';
 import { ACTS, ZONES } from './zones';
 import { describeMod } from '../engine/items';
 
@@ -11,10 +11,10 @@ export const UNIQUE_LIST_PATH = 'docs/UNIQUES.md';
 
 const modLines = (u: UniqueDef) => u.mods.map((m) => describeMod({ affixId: m.affixId, tier: -1, values: m.values }));
 
-/** Every place a unique drops: its areas, then its Maps. */
+/** Every place a unique drops: its areas, then its Maps tier pool. */
 export function uniqueDropsIn(u: UniqueDef): string[] {
   const zones = ZONES.filter((z) => z.uniques.includes(u.id)).map((z) => `${z.name} (Act ${z.act})`);
-  const maps = MAP_THEMES.filter((t) => t.drop.kind === 'unique' && t.drop.uniqueId === u.id).map((t) => `${t.name} (Map)`);
+  const maps = MAP_UNIQUE_POOLS.filter((p) => p.uniques.includes(u.id)).map((p) => `${p.label} (Maps)`);
   return [...zones, ...maps];
 }
 
@@ -38,7 +38,7 @@ export function firstAct(u: UniqueDef): number | undefined {
 export function uniqueSections(): [string, UniqueDef[]][] {
   const byLevel = (a: UniqueDef, b: UniqueDef) => baseDef(a.baseId).reqLevel - baseDef(b.baseId).reqLevel || a.name.localeCompare(b.name);
   const sorted = [...UNIQUES].sort(byLevel);
-  const fromMaps = (u: UniqueDef) => MAP_THEMES.some((t) => t.drop.kind === 'unique' && t.drop.uniqueId === u.id);
+  const fromMaps = (u: UniqueDef) => MAP_UNIQUE_POOLS.some((p) => p.uniques.includes(u.id));
   return [
     ...ACTS.map((a): [string, UniqueDef[]] => [`Act ${a.n}: ${a.name}`, sorted.filter((u) => firstAct(u) === a.n)]),
     ['Maps only', sorted.filter((u) => firstAct(u) === undefined && fromMaps(u))],

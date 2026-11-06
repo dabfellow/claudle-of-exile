@@ -16,14 +16,14 @@ export function upgradeCost(s: GameState, a: SkillAction): number {
 
 /** Does this recipe have the lower maps it needs? */
 export function hasChartMaps(s: GameState, a: SkillAction): boolean {
-  return !a.chart?.upgrade || mapsHeld(s, a.chart.tier - 1, a.chart.theme) >= upgradeCost(s, a);
+  return !a.chart?.upgrade || mapsHeld(s, a.chart.tier - 1) >= upgradeCost(s, a);
 }
 
 /** The finished map goes into the Map Device's own stock. `paid` is false when Steady Hands saved the inputs. */
 export function chartDone(s: GameState, a: SkillAction, mult: number, paid: boolean, outputs: Record<string, number>): void {
-  const { tier, theme, qty } = a.chart!;
-  if (paid && a.chart!.upgrade) addMaps(s, tier - 1, theme, -upgradeCost(s, a));
+  const { tier, qty } = a.chart!;
+  if (paid && a.chart!.upgrade) addMaps(s, tier - 1, -upgradeCost(s, a));
   const made = qty * mult;
-  outputs[addMaps(s, tier, theme, made)] = made;
+  outputs[addMaps(s, tier, made)] = made;
   s.lifetime.mapsDrawn += made;
 }

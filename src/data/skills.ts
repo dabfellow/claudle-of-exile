@@ -1,9 +1,9 @@
 import type { SkillId } from '../engine/types';
 import { BASES, type BaseDef } from './bases';
-import { CARTOGRAPHY_GATE, CHART_TIERS, FOLIO_COST, FOLIO_LEVEL, FOLIO_SIZE, THEME_LEVEL_STEP } from './cartography';
+import { CARTOGRAPHY_GATE, CHART_TIERS, FOLIO_COST, FOLIO_LEVEL, FOLIO_SIZE, SEXTANT_RECIPES } from './cartography';
 import { COOKING_GATE } from './cooking';
 import { CULTURES, digChance, EXPEDITION_GATE, SITES } from './expedition';
-import { MAP_THEMES, MAP_TIERS, type MapTheme } from './maps';
+import { MAP_TIERS } from './maps';
 import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
 import { RUNE_FAMILIES, RUNE_GATE, RUNES } from './runes';
 
@@ -67,8 +67,8 @@ export interface SkillAction {
   /** batch recipe: makes this many at once; `batchOf` is the single recipe it scales */
   batch?: number;
   batchOf?: string;
-  /** cartography: makes `qty` maps, into the Map Device's stock. An upgrade also uses up maps of the tier below */
-  chart?: { tier: number; theme: string; qty: number; upgrade?: boolean };
+  /** cartography: makes `qty` maps, into the shared map supply. An upgrade also uses up maps of the tier below */
+  chart?: { tier: number; qty: number; upgrade?: boolean };
   /** listed but can never be started (every Fishing spot) */
   soon?: boolean;
 }
@@ -323,48 +323,51 @@ const sheet = (id: string, name: string, level: number, intervalMs: number, xp: 
   id: `chart_${id}`, skill: 'cartography', name, level, intervalMs, xp, inputs, outputs: { [id]: 1 }, color, gate: CARTOGRAPHY_GATE,
 });
 
-function chartInputs(inputs: Record<string, number>, theme: MapTheme, mult = 1): Record<string, number> {
-  const all = { ...inputs };
-  for (const [id, n] of Object.entries(theme.drawWith)) all[id] = (all[id] ?? 0) + n;
-  return Object.fromEntries(Object.entries(all).map(([id, n]) => [id, n * mult]));
+function scaleInputs(inputs: Record<string, number>, mult = 1): Record<string, number> {
+  return Object.fromEntries(Object.entries(inputs).map(([id, n]) => [id, n * mult]));
 }
 
-/** One map of each theme per tier: drawn at tier 1, upgraded from the tier below after that. */
-const CHARTS: SkillAction[] = CHART_TIERS.flatMap((c) =>
-  MAP_THEMES.map((theme, i): SkillAction => ({
-    id: `chart_${theme.id}_t${c.tier}`,
-    skill: 'cartography',
-    name: `${c.tier === 1 ? 'Draw' : 'Upgrade'}: ${theme.name} T${c.tier}`,
-    level: c.level + i * THEME_LEVEL_STEP,
-    intervalMs: c.intervalMs,
-    xp: c.xp,
-    inputs: chartInputs(c.inputs, theme),
-    chart: { tier: c.tier, theme: theme.id, qty: 1, upgrade: c.tier > 1 },
-    color: '#8a7ad8',
-    gate: CARTOGRAPHY_GATE,
-  })),
-);
-
-/** The long-night recipe: a stack of one theme, cheaper per map. */
-const FOLIOS: SkillAction[] = MAP_THEMES.map((theme, i) => ({
-  id: `chart_folio_${theme.id}`,
+/** One plain map recipe per tier: drawn at tier 1, upgraded from the tier below after that. */
+const CHARTS: SkillAction[] = CHART_TIERS.map((c): SkillAction => ({
+  id: `chart_t${c.tier}`,
   skill: 'cartography',
-  name: `Folio: ${theme.name}`,
-  level: FOLIO_LEVEL + i * THEME_LEVEL_STEP,
-  intervalMs: CHART_TIERS[0].intervalMs * FOLIO_SIZE,
-  xp: CHART_TIERS[0].xp * FOLIO_SIZE,
-  inputs: chartInputs(CHART_TIERS[0].inputs, theme, FOLIO_COST),
-  chart: { tier: MAP_TIERS[0].tier, theme: theme.id, qty: FOLIO_SIZE },
-  color: '#a89ae8',
+  name: `${c.tier === 1 ? 'Draw' : 'Upgrade'}: Map Tier ${c.tier}`,
+  level: c.level,
+  intervalMs: c.intervalMs,
+  xp: c.xp,
+  inputs: scaleInputs(c.inputs),
+  chart: { tier: c.tier, qty: 1, upgrade: c.tier > 1 },
+  color: '#8a7ad8',
   gate: CARTOGRAPHY_GATE,
 }));
 
-/** Logs into vellum, plants into ink, and both into maps, so a map costs what gathering can feed. */
+/** The long-night recipe: a stack of Tier 1 maps, cheaper per map. */
+const FOLIOS: SkillAction[] = [
+  {
+    id: 'chart_folio_t1',
+    skill: 'cartography',
+    name: 'Folio: Map Tier 1',
+    level: FOLIO_LEVEL,
+    intervalMs: CHART_TIERS[0].intervalMs * FOLIO_SIZE,
+    xp: CHART_TIERS[0].xp * FOLIO_SIZE,
+    inputs: scaleInputs(CHART_TIERS[0].inputs, FOLIO_COST),
+    chart: { tier: MAP_TIERS[0].tier, qty: FOLIO_SIZE },
+    color: '#a89ae8',
+    gate: CARTOGRAPHY_GATE,
+  },
+];
+
+const SEXTANT_CHARTS: SkillAction[] = SEXTANT_RECIPES.map((r) =>
+  sheet(r.id, r.name, r.level, r.intervalMs, r.xp, r.inputs, r.color),
+);
+
+/** Logs into vellum, plants into ink, and both into plain maps and Sextants. */
 const CARTOGRAPHY: SkillAction[] = [
   sheet('vellum', 'Vellum', 1, 3500, 10, { ash_log: 4 }, '#d8c8a0'),
   sheet('gall_ink', 'Gall Ink', 4, 4000, 14, { sunpetal: 3, iron_ore: 1 }, '#46506a'),
   sheet('fine_vellum', 'Fine Vellum', 15, 5000, 40, { oak_log: 5, vellum: 2 }, '#f0e4c4'),
   sheet('sepia_ink', 'Sepia Ink', 20, 5500, 55, { emberroot: 3, gall_ink: 1, arcane_dust: 4 }, '#8a5a34'),
+  ...SEXTANT_CHARTS,
   ...CHARTS,
   ...FOLIOS,
 ];
@@ -379,14 +382,21 @@ export const ACTIONS: SkillAction[] = [...GATHERING, ...MILLING, ...THIEVING, ..
 
 const BY_ID: Record<string, SkillAction> = Object.fromEntries(ACTIONS.map((a) => [a.id, a]));
 
+function normalizeChartActionId(id: string): string {
+  const m = /^chart_(?:barrows|stormvault)_t(\d+)$/.exec(id);
+  if (m) return `chart_t${m[1]}`;
+  if (/^chart_folio_(?:barrows|stormvault)$/.test(id)) return 'chart_folio_t1';
+  return id;
+}
+
 export function actionDef(id: string): SkillAction {
-  const a = BY_ID[id];
+  const a = BY_ID[normalizeChartActionId(id)];
   if (!a) throw new Error(`Unknown action ${id}`);
   return a;
 }
 
 export function hasAction(id: string): boolean {
-  return id in BY_ID;
+  return normalizeChartActionId(id) in BY_ID;
 }
 
 export function actionsFor(skill: SkillId): SkillAction[] {
