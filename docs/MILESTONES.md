@@ -15,9 +15,9 @@ Last updated 2026-11-06.
 send. Act 1's cold check and Scorched earth's danger stay as they are, with no playtest planned, until
 you say otherwise.
 
-**Latest release:** 0.4.2, Smarter Foundations, deployed 2026-11-05. Essential survival automation is baseline,
-hideout upgrades use smoother refined-component costs, combat has automatic range postures and smarter Mana use,
-and the interface is clearer across phones and common desktop resolutions.
+**Latest release:** 0.4.3, Uncharted Realms, deployed 2026-11-06. Maps have been rebuilt with 10 plain shared tiers,
+permanent tier-group modifiers and exclusive drops, Apprentice/Journeyman/Master Sextants, a 30-point Atlas Tree,
+reworked Cartography recipes, and Doomed Maps I–V beyond Tier 10.
 
 **In order:**
 
@@ -40,7 +40,7 @@ and the interface is clearer across phones and common desktop resolutions.
 | 5 | Maps preview | Built, dev only | You playing it |
 | 6 | Act 3 and ascendancies | **Done**, live; not simmed or played through | – |
 | 7 | Acts 4–6 | **Done**, live; not simmed or played through | – |
-| 8 | Maps | **In progress**: plain tiers, Sextants, Atlas, Cartography, Doomed Maps built | Uber Bosses |
+| 8 | Maps | **In progress**: live in 0.4.3 (plain tiers, Sextants, Atlas, Cartography, Doomed Maps) | Uber Bosses |
 | 9 | Hard mode bosses | Answered: 5 bosses, post-Act 6 | Milestone 8 |
 | 10 | Top-end crafting and hideout | Not started | Milestone 9 |
 | 11 | Long tail | Not started | Milestone 10 |
@@ -542,6 +542,7 @@ Parked 2026-10-24 until more of the game is built: testing, sim balancing and ar
 - Cosmetics shop (never pay-to-win).
 
 ## Done
+- [x] 0.4.3 Uncharted Realms deployed successfully. — live 2026-11-06
 - [x] Maps redesign (Milestone 8): 10 plain shared tiers (`map_t1`–`map_t10`) with borrowed Act 1–6 areas, permanent tier-group mods (Elite packs, Twin boss shared Life, Dangerous ground, Enraged, Pinnacle) and tier-exclusive currency/unique drops; Apprentice/Journeyman/Master Sextants on the Map Device Astrolabe; 30-point realm-shared Atlas Tree (Sextant, Loot, Sustain and Bossing branches); Cartography T1–T10 + Sextant recipes; and Doomed Maps I–V (`doomed_t1`–`doomed_t5`, monster level 86–94) with 10 Doomed modifiers, Fractured Orb drops and Uber Key boss drops. — done 2026-11-06
 - [x] 0.4.2 Smarter Foundations deployed successfully. — live 2026-11-05
 - [x] Combat-flow pass: spend-based Mana is Power, Evasion-linked Momentum with flat protected losses, Arcane Dust Field Tinkering for campaign gear, Brawler/Kiter/Cautious range postures, and 1.5-second higher-priority Mana reservation. — done 2026-11-05
