@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Maps have been rebuilt: run Tiers 1–10 from a shared realm map pool with tier-group modifiers and exclusive drops, roll Apprentice, Journeyman and Master Sextants on the Map Device, spend up to 30 Atlas Tree points across four branches, scribe all 10 map tiers and Sextants through Cartography, and unlock Doomed Maps I–V beyond Tier 10.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.3',
+    date: '6 Nov 2026',
+    title: 'Uncharted Realms',
+    items: [
+      'Maps have been rebuilt: run Tiers 1–10 from a shared realm map pool with tier-group modifiers and exclusive drops, roll Apprentice, Journeyman and Master Sextants on the Map Device, spend up to 30 Atlas Tree points across four branches, scribe all 10 map tiers and Sextants through Cartography, and unlock Doomed Maps I–V beyond Tier 10.',
+    ],
+  },
   {
     version: '0.4.2',
     date: '5 Nov 2026',
