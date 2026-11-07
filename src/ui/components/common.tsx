@@ -218,7 +218,9 @@ export function Tooltip({
     left = pos.x + 16;
     top = pos.y + 16;
     if (left + size.w > window.innerWidth - 8) left = pos.x - size.w - 12;
+    if (left < 8) left = 8;
     if (top + size.h > window.innerHeight - 8) top = Math.max(8, window.innerHeight - size.h - 8);
+    if (top < 8) top = 8;
   }
 
   const frozen = alt && !hovering;
