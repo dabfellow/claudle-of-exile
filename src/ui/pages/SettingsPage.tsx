@@ -21,10 +21,13 @@ export function SettingsPage() {
       <PageHeader title="Settings" />
       <div className="card">
         <div className="card-title">Account</div>
-        <div className="row wrap">
+        <div className="row wrap" style={{ gap: 8 }}>
           <AccountBadge />
           <span className="spacer" />
-          <button className="btn sm" onClick={leaveAccount}>
+          <button className="btn sm" onClick={() => game.exit()}>
+            Switch character
+          </button>
+          <button className="btn sm ghost" onClick={leaveAccount}>
             {isCloudAccount(game.account) ? 'Sign out' : 'Back to title'}
           </button>
         </div>
@@ -43,13 +46,8 @@ export function SettingsPage() {
       <div className="card">
         <div className="card-title">About</div>
         <p className="muted" style={{ marginTop: 0 }}>
-          <b>Act 1: The Drowned Coast</b> has eight areas from the Mud Flats to the Drowned Sanctum, ending with Ysolde, the Drowned Queen. Expect
-          roughly a day of play to finish it. <b>Act 2: The Burning Steppe</b> has eight more, from the Cinder Road to the Burning Throne, ending with
-          Azhar, the Fallen Sun.
-        </p>
-        <p className="muted">
-          <b>Coming next:</b> Acts 3–6, each with new areas, gathering tiers, items and skills; then maps for the endgame, ascendancy classes, loot
-          filters and the story. Your characters carry over.
+          <b>Path of Idle</b> features six complete acts from the Mud Flats to the cathedral of Oriath, ten themed map tiers,
+          doomed maps, twelve character ascendancies, and the endgame Map Device. Progress continues while you are away.
         </p>
         <p className="dim small" style={{ marginBottom: 0 }}>
           <b>Privacy:</b> the demo isn't saved anywhere, and guest saves stay in this browser. With an account, our sign-in service (Supabase) stores

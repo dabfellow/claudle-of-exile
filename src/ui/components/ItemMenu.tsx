@@ -62,8 +62,8 @@ export function ItemMenuHost() {
   ];
   // hide what can't apply here at all (equipping worn gear, sending a bag item to the bag…)
   const shown = actions.filter((a) => !a.reason || !/^Already/.test(a.reason));
-  const left = Math.min(menu.x + 4, window.innerWidth - 220);
-  const top = Math.min(menu.y + 4, window.innerHeight - 44 * shown.length - 50);
+  const left = Math.max(8, Math.min(menu.x + 4, window.innerWidth - 220));
+  const top = Math.max(8, Math.min(menu.y + 4, window.innerHeight - 44 * shown.length - 50));
   return createPortal(
     <div className="item-menu-backdrop" onPointerDown={() => setMenu(null)} onContextMenu={(e) => (e.preventDefault(), setMenu(null))}>
       <div className="item-menu" style={{ left, top }} onPointerDown={(e) => e.stopPropagation()}>

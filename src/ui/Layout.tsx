@@ -180,6 +180,12 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
             Switch
           </button>
         </div>
+        <button className="nav-item nav-switch-mobile" title="Switch character" onClick={() => game.exit()}>
+          <span className="nav-icon">
+            <GameIcon name="combat" size={16} />
+          </span>
+          <span className="nav-name">Switch</span>
+        </button>
         <a className="nav-item" href="/path-of-idle/wiki/" target="_blank" rel="noopener" style={{ textDecoration: 'none' }}>
           <span className="nav-icon">
             <GameIcon name="book" size={16} />
