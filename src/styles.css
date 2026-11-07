@@ -5788,6 +5788,16 @@ img.art.mat-art {
   cursor: default;
 }
 
+.stash-page-tab .aff-dot {
+  font-size: var(--fs-2xs);
+  color: var(--accent-2);
+  margin-left: 2px;
+}
+
+.nav-switch-mobile {
+  display: none;
+}
+
 /* salvage mode: rarity buttons arm on the first click, salvage on the next */
 .salvage-rarity {
   border-color: color-mix(in srgb, var(--rar) 45%, var(--line));
@@ -6864,7 +6874,19 @@ img.art.mat-art {
     grid-template-columns: 1fr;
   }
   .currency-strip {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .currency-strip .chip .dim {
     display: none;
+  }
+  .currency-strip .chip:nth-child(n+3) {
+    display: none;
+  }
+  .nav-switch-mobile {
+    display: grid;
   }
   .hideout-scene {
     padding: var(--s-4);
@@ -7887,6 +7909,15 @@ button.hx-mat:hover {
   }
   .home-nav {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 640px) {
+  .home-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .home-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
