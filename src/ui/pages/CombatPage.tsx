@@ -352,6 +352,9 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
       <div className="status-row">
         {m.chained && <span className="status bad">Chained: can't be hurt</span>}
         {m.martyr && <span className="status">Area and chain skills strike it. Click it to aim anything else</span>}
+        {m.weakPoint && <span className="status warn">Weak point: strike to shatter plating!</span>}
+        {m.choir && <span className="status">Choir ({m.choir}): silence to scatter singers</span>}
+        {m.plated && <span className="status">Plated carapace: reduced physical damage</span>}
         {m.enraged && <span className="status bad">Enraged</span>}
         {m.stunMs > 0 && <span className="status">Stunned</span>}
         {m.frozenMs > 0 && <span className="status cold">Frozen</span>}
@@ -540,7 +543,7 @@ function FieldSummary({ s, c }: { s: GameState; c: CombatRuntime }) {
   const alive = aliveMonsters(c);
   const focus = focusTarget(s);
   const close = alive.filter((m) => cellRing(m.cell) === 1).length;
-  const martyrs = alive.filter((m) => m.martyr);
+  const priorities = alive.filter((m) => m.martyr || m.weakPoint || m.choir);
   return (
     <div className="bf-summary">
       <div>
@@ -551,7 +554,7 @@ function FieldSummary({ s, c }: { s: GameState; c: CombatRuntime }) {
           </>
         )}
       </div>
-      {martyrs.map((m) => (
+      {priorities.map((m) => (
         <button key={m.uid} className={`btn sm ${m.uid === c.lockedUid ? 'primary' : ''}`} onClick={() => game.act((st) => lockTarget(st, m.uid))}>
           Strike {m.name} ({fmt(Math.max(0, m.life))})
         </button>
