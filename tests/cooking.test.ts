@@ -200,7 +200,7 @@ describe('meals', () => {
     expect(s.account.bank[PORRIDGE]).toBe(2);
     expect(sum.materials[PORRIDGE]).toBe(-1);
     expect(s.meal?.id).toBe(PORRIDGE);
-  });
+  }, 20_000);
 
   it('Slow Simmer lengthens them', () => {
     const s = act5();

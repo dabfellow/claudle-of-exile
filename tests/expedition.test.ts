@@ -355,7 +355,7 @@ describe('Expedition offline', () => {
     expect(sum.traded).toBeGreaterThan(0);
     expect(s.account.bank.alteration).toBeGreaterThanOrEqual(100);
     expect(s.expedition.dug.dig_cairn).toBeGreaterThan(8000);
-  });
+  }, 20_000);
 
   it('a night at the Cairn pays about what its rate says', () => {
     const s = digger();

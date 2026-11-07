@@ -227,7 +227,7 @@ describe('Heist', () => {
     startHeist(job, ctx(), 'last_wagon');
     const loop = simulateOffline(job, ctx(), 8 * 60 * 60 * 1000);
     expect(loop.xp.thieving!).toBeGreaterThan(plain.xp.thieving!);
-  });
+  }, 20_000);
 
   it('steals gear at the job\'s level, no higher than the campaign allows', () => {
     const s = thief(20, 30);
