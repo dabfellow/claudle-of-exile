@@ -1,19 +1,16 @@
 # Roadmap and decisions
 
-Last updated 2026-11-06. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-07. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
-Latest confirmed live release: **0.4.2, Smarter Foundations**, deployed 2026-11-05. Six acts, ten themed map tiers, twelve ascendancies, Player Market, challenge modes and the generated wiki are implemented. The former “two acts / Maps preview only / three trials” descriptions are obsolete.
+Latest confirmed live release: **0.4.4, Pinnacle of Ruin**, deployed 2026-11-07. Five Hard Bosses and three Uber Bosses with keyed arenas and 11 exclusive uniques (Milestone 9), top-end crafting with Fractured items, Doom Sigils, Bench L6/L7 meta-crafting and Hideout expansions (Milestone 10), monster defences/affixes, and manual recovery-flask default policy are live.
 
-1. Verified removal of default recovery-flask automation: unenchanted flasks require manual click; automated triggers strictly require Instilling Orb enchantments.
-   Security prerequisite: confirm revocation of the historical Google OAuth client secret, confirm the separate account-helper lookup-path changes and perform signed-in isolation/login checks; see SETUP.
-   Owner reports market/admin SQL applied on 2026-11-06; live anonymous Admin access checks pass. Current validation upload and real-account inspection/recovery/mail/event checks remain before release.
-2. Finish and verify the local Maps skill batch, monster rarity/affix and defence work. Monster identity reference budgets, ailments, save checks, and the full test suite (72 suites, 1,250 tests) plus TypeScript checks all pass locally. Existing edits are not evidence of a completed release.
-3. Verify the local Hard Bosses & Uber Bosses layer (Milestone 9) and Maps redesign (plain/shared maps, tier identities, Map Device page, Sextants, Atlas, exclusive drops, Doomed Maps and Cartography rework), both implemented locally.
-4. Investigate player save-loss/range reports before speculative fixes. Retest pacing using the current tree, costs, skills and defences.
-5. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
-6. Non-combat band mastery now has a revised, bounded design below; implementation has not started. Its progression must never gate content.
+1. Security prerequisite: confirm revocation of the historical Google OAuth client secret, confirm the separate account-helper lookup-path changes and perform signed-in isolation/login checks; see SETUP.
+   Owner reports market/admin SQL applied on 2026-11-06; live anonymous Admin access checks pass. Current validation upload and real-account inspection/recovery/mail/event checks remain before next release.
+2. Investigate player save-loss/range reports before speculative fixes. Retest pacing using the current tree, costs, skills and defences.
+3. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
+4. Non-combat band mastery has a revised, bounded design below; implementation has not started. Its progression must never gate content.
 
 ## Milestones
 
@@ -26,9 +23,9 @@ Latest confirmed live release: **0.4.2, Smarter Foundations**, deployed 2026-11-
 | 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18 |
 | 6 | Act 3 / ascendancies | Released; four trials and 2/2/3/2 points replace original structure |
 | 7 | Acts 4–6 | Released with branching roads and side skills |
-| 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants; Uber bosses remain in Milestone 9 |
-| 9 | Hard bosses / Uber layer | Implemented locally: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
-| 10 | Top-end crafting/hideout | Implemented locally: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
+| 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
+| 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
+| 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
 | 11 | Long tail | Challenge modes and Unique discovery implemented; non-combat action mastery designed, not implemented; collection expansion planned |
 | 1.0 | Launch designation | Owner decides; any save wipe requires a clear announcement |
 
