@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Screen layouts and menus across the game have been polished for mobile and desktop, adding stash tab affinity controls, missing currency and trophy tabs, responsive Hideout stacking, and priority boss targeting on narrow screens.',
+];
 
 export const NEWS: NewsEntry[] = [
   {
