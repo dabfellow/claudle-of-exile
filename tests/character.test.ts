@@ -19,27 +19,35 @@ const ctx = (seed = 1) => makeCtx(seeded(seed));
 describe('xp for your level against the area', () => {
   const range: [number, number] = [10, 13];
 
-  it('is normal anywhere in the range', () => {
-    for (const level of [10, 11, 12, 13]) expect(areaXpMultiplier(level, range)).toBe(1);
+  it('is normal throughout the range and within two levels either side', () => {
+    for (const level of [8, 9, 10, 11, 12, 13, 14, 15]) expect(areaXpMultiplier(level, range)).toBe(1);
   });
 
-  it('falls away above the range, then 1% more per level, to nothing at 25 levels over', () => {
-    const over = [14, 15, 16, 17, 18, 19, 20, 37, 38, 60].map((level) => areaXpMultiplier(level, range));
-    [0.9, 0.8, 0.6, 0.5, 0.2, 0.19, 0.18, 0.01, 0, 0].forEach((want, i) => expect(over[i]).toBeCloseTo(want, 6));
+  it('curves the penalty more steeply each level against easier areas and never below 30% XP', () => {
+    const over = [3, 4, 5, 6, 7, 8, 9, 10, 25, 100].map((gap) => areaXpMultiplier(range[1] + gap, range));
+    [0.9, 0.89, 0.85, 0.79, 0.7, 0.59, 0.46, 0.3, 0.3, 0.3].forEach((want, i) => expect(over[i]).toBeCloseTo(want, 6));
+    const losses = over.slice(0, 7).map((mult, i) => mult - over[i + 1]);
+    for (let i = 1; i < losses.length; i++) expect(losses[i]).toBeGreaterThan(losses[i - 1]);
   });
 
-  it('pays up to 20% extra below the range', () => {
-    expect(areaXpMultiplier(9, range)).toBeCloseTo(1.1, 6);
-    expect(areaXpMultiplier(8, range)).toBeCloseTo(1.2, 6);
+  it('pays 5% extra against areas three levels harder, reaching the 20% cap at five', () => {
+    expect(areaXpMultiplier(7, range)).toBeCloseTo(1.05, 6);
+    expect(areaXpMultiplier(6, range)).toBeCloseTo(1.125, 6);
+    expect(areaXpMultiplier(5, range)).toBeCloseTo(1.2, 6);
     expect(areaXpMultiplier(1, range)).toBeCloseTo(1.2, 6);
   });
 
   it('labels the change for players', () => {
     expect(areaXpLabel(11, range)).toBe('');
-    expect(areaXpLabel(8, range)).toBe('+20% XP');
-    expect(areaXpLabel(16, range)).toBe('−40% XP');
-    expect(areaXpLabel(19, range)).toBe('−81% XP');
-    expect(areaXpLabel(38, range)).toBe('No XP');
+    expect(areaXpLabel(8, range)).toBe('');
+    expect(areaXpLabel(15, range)).toBe('');
+    expect(areaXpLabel(7, range)).toBe('+5% XP');
+    expect(areaXpLabel(6, range)).toBe('+12.5% XP');
+    expect(areaXpLabel(5, range)).toBe('+20% XP');
+    expect(areaXpLabel(16, range)).toBe('−10% XP');
+    expect(areaXpLabel(18, range)).toBe('−15% XP');
+    expect(areaXpLabel(21, range)).toBe('−41% XP');
+    expect(areaXpLabel(38, range)).toBe('−70% XP');
   });
 });
 
@@ -180,7 +188,7 @@ describe('cooldowns', () => {
   it('attacks and main spells have none (mana limits them); guards, buffs, other spells, heavy slams, storms, movement, summon and drain skills keep theirs', () => {
     for (const g of ACTIVE_GEMS) {
       const t = (tag: GemTag) => g.tags.includes(tag);
-      const freeAttack = t('attack') && !t('movement') && !t('minion') && !t('sustain') && !(t('heavy') && t('area')) && !t('storm');
+      const freeAttack = t('attack') && !t('movement') && !t('minion') && !t('totem') && !t('sustain') && !(t('heavy') && t('area')) && !t('storm') && !t('warcry');
       const freeSpell = t('spell') && g.role === 'main';
       expect(g.cooldownMs === 0, g.id).toBe(freeAttack || freeSpell);
     }

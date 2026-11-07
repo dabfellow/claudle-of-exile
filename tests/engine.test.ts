@@ -19,10 +19,10 @@ import { seeded } from '../src/engine/rng';
 import { deserialize, exportSave, importSave, serialize } from '../src/engine/save';
 import { actionBlocker, startSkillAction } from '../src/engine/skills';
 import { newGame, SAVE_VERSION, tick } from '../src/engine/state';
-import { armourReduction, deriveStats } from '../src/engine/stats';
+import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, ES_RECHARGE_PCT, evadeChance } from '../src/engine/stats';
 import type { Item } from '../src/engine/types';
 import { charLevelForXp, charXpForLevel, charXpFromOldCurve, levelForXp, xpForLevel } from '../src/engine/xp';
-import { zoneDef } from '../src/data/zones';
+import { monsterDamage, zoneDef } from '../src/data/zones';
 import { actionsFor } from '../src/data/skills';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
@@ -199,7 +199,20 @@ describe('ticking', () => {
 describe('combat', () => {
   it('armour reduces big hits less than small ones', () => {
     expect(armourReduction(500, 10)).toBeGreaterThan(armourReduction(500, 200));
+    expect(armourReduction(200, 100)).toBe(0.5);
     expect(armourReduction(1e9, 1)).toBe(0.9);
+  });
+
+  it('evasion and energy shield provide meaningful layered defence', () => {
+    expect(evadeChance(1e9, 1)).toBe(0.85);
+    expect(ES_RECHARGE_PCT).toBe(30);
+    expect(ES_RECHARGE_DELAY_MS).toBe(1000);
+  });
+
+  it('monster damage ramps after level 20 without changing the early campaign', () => {
+    const oldCurve = (level: number) => Math.round((1 + Math.pow(level, 1.15)) * 1.15);
+    expect(monsterDamage(20)).toBe(oldCurve(20));
+    expect(monsterDamage(65)).toBeGreaterThan(oldCurve(65) * 2);
   });
 
   it('resistances mitigate elemental damage', () => {

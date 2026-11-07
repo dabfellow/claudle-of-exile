@@ -8,10 +8,12 @@ import { levelOf } from './xp';
 // Fishing is left out: it is always level 1 and would only nudge the point count
 const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as const;
 
-/** 1 point per 5 total gathering/production levels (everyone starts with 1). */
+export const MAX_SKILL_TREE_POINTS = 36;
+
+/** One point per 10 total gathering/production levels, capped so the tree remains a specialisation. */
 export function skillTreePoints(s: GameState): number {
   const total = SKILLING.reduce((a, k) => a + levelOf(k, s.skills[k]), 0);
-  return Math.floor(total / 5);
+  return Math.min(MAX_SKILL_TREE_POINTS, Math.floor(total / 10));
 }
 
 export function skillPointsLeft(s: GameState): number {

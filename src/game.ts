@@ -22,6 +22,7 @@ import { AppAccounts, isCloudAccount, type Account, type AuthProviderId } from '
 import { reportError, setErrorUser } from './platform/errors';
 import { MAPS_PREVIEW } from './engine/maps';
 import { checkAdmin } from './platform/feedback';
+import { readAdminMail, recordDemo, sandboxState, type AdminMail } from './platform/admin';
 import { fetchEventRows, saveEventRow } from './platform/events';
 import { activeEvents, eventBoost, type EventRow, type LiveEvent } from './data/events';
 import { getSupabase } from './platform/supabase';
@@ -102,6 +103,9 @@ const XP_RATE_HOLD_MS = 2000;
 
 class GameStore {
   state: GameState;
+  sandbox = false;
+  adminMail: AdminMail[] = [];
+  private sandboxReturn: { saves: SaveStore | null; state: GameState; realm: AccountState } | null = null;
   screen: Screen = 'boot';
   account: Account | null = null;
   /** listed in the `admins` table: sees the Admin page */
@@ -165,15 +169,17 @@ class GameStore {
     window.addEventListener('storage', (e) => this.onOtherTab(e));
     void this.refreshEvents();
     setInterval(() => void this.refreshEvents(), EVENT_FETCH_MS);
+    setInterval(() => void this.refreshAdminMail(), 60000);
     // a scheduled event starts and ends on time between fetches
     setInterval(() => this.applyEvents(), EVENT_CHECK_MS);
   }
 
   private applyEvents() {
     const live = activeEvents(this.eventRows, Date.now());
-    const changed = live.length !== this.liveEvents.length || live.some((e, i) => e !== this.liveEvents[i]);
+    const changed = JSON.stringify(live) !== JSON.stringify(this.liveEvents);
     this.liveEvents = live;
     this.baseCtx.event = eventBoost(live);
+    this.baseCtx.eventRows = this.eventRows;
     if (changed) this.notify();
   }
 
@@ -285,9 +291,11 @@ class GameStore {
   }
 
   async signOut() {
+    if (this.sandbox) await this.exit();
     await this.exit();
     await this.accounts.signOut();
     this.account = null;
+    this.adminMail = [];
     this.setAdmin(false);
     setErrorUser(null);
     this.saves = null;
@@ -304,14 +312,17 @@ class GameStore {
   }
 
   private async openAccount(account: Account) {
+    this.adminMail = [];
     const supabase = getSupabase();
     setErrorUser(account.id);
     this.setAdmin(false);
     if (account.provider === 'demo') {
+      void recordDemo('demo_started');
       this.saves = new MemorySaveStore();
       this.sync = null;
       this.guestCharacters = [];
     } else if (isCloudAccount(account) && supabase) {
+      void this.refreshAdminMail();
       void checkAdmin().then((yes) => {
         this.setAdmin(yes && this.account?.id === account.id);
         this.notify();
@@ -429,6 +440,7 @@ class GameStore {
 
   /** Another tab changed the shared account: use its copy. */
   private onOtherTab(e: StorageEvent) {
+    if (this.sandbox) return;
     if (!e.newValue || !e.key?.endsWith(`-account-${this.realm.realm}`) || !this.saves) return;
     this.mergeRealm(fillAccount(JSON.parse(e.newValue) as AccountState));
     this.notify();
@@ -440,6 +452,7 @@ class GameStore {
     if (!raw || !this.saves) return null;
     try {
       const id = await adoptDemo(raw, this.saves);
+      void recordDemo('demo_converted_to_account');
       this.pushToast('Your demo character is now saved to your account', 'good');
       return id;
     } catch (err) {
@@ -545,6 +558,13 @@ class GameStore {
 
   private async bury(s: GameState) {
     this.stopLoop();
+    if (this.sandbox) {
+      delete s.fallen;
+      s.life = Math.max(1, s.life);
+      this.pushToast('Sandbox character died. Real saves are unchanged; exit the sandbox when finished.', 'warn');
+      this.notify();
+      return;
+    }
     s.lastSaved = Date.now();
     this.saveRealm();
     this.mourn(s);
@@ -566,6 +586,17 @@ class GameStore {
 
   /** Save and leave the current character for the select screen. */
   async exit() {
+    if (this.sandboxReturn) {
+      this.stopLoop();
+      const original = this.sandboxReturn;
+      this.sandboxReturn = null;
+      this.sandbox = false;
+      this.saves = original.saves;
+      this.adoptRealm(original.realm);
+      this.begin(original.state);
+      this.pushToast('Returned to your character', 'info');
+      return;
+    }
     if (this.screen !== 'game') return;
     this.save();
     this.stopLoop();
@@ -610,6 +641,7 @@ class GameStore {
 
   /** Signed in and past Act 1 in this realm, or why not. The server checks all of this too. */
   get marketAccess(): 'solo' | 'guest' | 'locked' | 'open' {
+    if (this.sandbox) return 'solo';
     const realm = this.realm.realm;
     if (soloRealm(realm)) return 'solo';
     if (!marketStandIn() && !isCloudAccount(this.account)) return 'guest';
@@ -696,6 +728,44 @@ class GameStore {
     this.pushToast(rows.length === 1 ? `Market: ${rows[0].note}` : `Market: ${rows.length} things collected`, 'good');
   }
 
+  /** Compensation is also available before Act 1 and in SSF; the RPC only returns this account's realm. */
+  async collectAdminCompensation(): Promise<void> {
+    if (this.sandbox || !isCloudAccount(this.account)) return;
+    const rows = await marketApi(this.realm.realm)?.collect();
+    if (rows?.length) {
+      this.act((s) => receiveDeliveries(s, rows));
+      this.save();
+      this.pushToast(`${rows.length} deliveries collected`, 'good');
+    } else this.pushToast('No deliveries waiting in this realm', 'info');
+  }
+
+  async refreshAdminMail(): Promise<void> {
+    if (this.sandbox || !isCloudAccount(this.account)) return;
+    const owner = this.account?.id;
+    try {
+      const rows = await readAdminMail();
+      if (this.account?.id !== owner || this.sandbox) return;
+      if (JSON.stringify(rows) !== JSON.stringify(this.adminMail)) { this.adminMail = rows; this.notify(); }
+    } catch { /* Older deployments may not have the inbox yet; never interrupt gameplay. */ }
+  }
+
+  /** Reproduction never writes the target or admin's real character/account stores. */
+  startSandbox(save: unknown, account?: AccountState | null) {
+    if (!this.isAdmin) throw new Error('Admins only');
+    const state = sandboxState(save, account);
+    if (!this.sandboxReturn) {
+      this.save();
+      this.sandboxReturn = { saves: this.saves, state: this.state, realm: this.realm };
+    }
+    this.stopLoop();
+    this.sandbox = true;
+    this.saves = new MemorySaveStore();
+    state.account.realm = realmOf(state.character);
+    this.adoptRealm(state.account);
+    this.begin(state);
+    this.pushToast('Sandbox ready. Open Combat to reproduce the report.', 'info');
+  }
+
   /** Settle any step whose reply was lost, then collect what's waiting. Quiet if the market can't be reached. */
   async marketSync() {
     const api = this.marketTrader();
@@ -742,8 +812,10 @@ class GameStore {
   }
 
   private runOffline(ms: number) {
+    this.baseCtx.now = Date.now();
     const hadAction = !!this.state.action;
     const sum = simulateOffline(this.state, this.ctx, ms);
+    if (this.account?.provider === 'demo' && this.state.bossesDefeated.includes('sanctum')) void recordDemo('demo_act1_boss_killed');
     if (this.state.fallen && this.loop) return void this.bury(this.state);
     if (hadAction && sum.ms >= MIN_OFFLINE_MS) this.offline = sum;
     this.notify();
@@ -851,6 +923,7 @@ class GameStore {
     // sidebar logs
     switch (e.t) {
       case 'kill':
+        if (e.boss && this.account?.provider === 'demo' && e.name === ZONES.find((z) => z.id === 'sanctum')?.boss.name) void recordDemo('demo_act1_boss_killed');
         this.log(`Slew ${e.name}`, e.boss ? 'good' : 'info');
         break;
       case 'spawn':

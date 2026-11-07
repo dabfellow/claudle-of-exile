@@ -293,6 +293,7 @@ describe('channels', () => {
       const { boss, c } = channeler(s);
       boss.timers.channel = BOSS_CHANNEL_EVERY_MS * 0.1;
       const d = deriveStats(s);
+      d.maxLife = 500_000;
       let lost = 0;
       for (let t = 0; t < 70_000; t += 100) {
         s.life = d.maxLife; // kept alive, so both runs last the same 70 s

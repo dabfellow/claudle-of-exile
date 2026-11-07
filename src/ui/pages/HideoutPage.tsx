@@ -29,6 +29,7 @@ const STATION_ICON: Record<StationId, string> = {
   vendor: 'vendor',
   war_table: 'combat',
   watchtower: 'clock',
+  trophy_altar: 'trophy',
 };
 
 export function Embers() {

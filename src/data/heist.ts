@@ -2,7 +2,7 @@ import { MARKER, SEAL, WAX } from './craftMats';
 import { SKILL_XP_SCALE } from './skills';
 
 /**
- * Heist (docs/design/HEIST.md): Thieving's Markers buy jobs against the Khanate. A job is a run of rooms, each a little
+ * Heist (docs/GAME.md): Thieving's Markers buy jobs against the Khanate. A job is a run of rooms, each a little
  * riskier and richer than the last, and you choose in advance how deep to go. The vault is in the last room.
  */
 

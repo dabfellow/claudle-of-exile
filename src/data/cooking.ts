@@ -2,7 +2,7 @@ import type { StatKey } from '../engine/types';
 import type { MaterialDef } from './materials';
 
 /**
- * Cooking, Act 5's skill (docs/design/COOKING.md): gathered plants become flask ingredients for Alchemy's strongest
+ * Cooking, Act 5's skill (docs/GAME.md): gathered plants become flask ingredients for Alchemy's strongest
  * brews, and meals. A meal fills your one meal slot and its clock only runs while you fight.
  */
 export const COOKING_GATE = { zone: 'blackharbor', label: 'Act 5' };

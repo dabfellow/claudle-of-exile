@@ -1,30 +1,29 @@
 import { useCallback, useEffect, useState } from 'react';
 import { classDef, type ClassId } from '../../data/classes';
-import { EVENTS, type EventRow, type LiveEvent } from '../../data/events';
-import { game, useGame } from '../../game';
+import { classBreakdown, levelBreakdown } from '../../platform/admin';
+import { PlayerInspector } from '../components/AdminOperations';
+import { AdminFeedback } from '../components/AdminFeedback';
+import { AdminEvents } from '../components/AdminEvents';
 import { APP_VERSION, errorReportingConfigured, sentryIssuesUrl } from '../../platform/errors';
 import { marketAdminBan, marketAdminList, marketAdminRemove, marketRulesVersion, uploadMarketRules, type MarketAdminRow } from '../../platform/market';
 import {
   adminStats,
   errorText,
-  listFeedback,
   listReviews,
-  setFeedbackStatus,
   type AdminStats,
-  type FeedbackRow,
-  type FeedbackStatus,
   type ReviewRow,
 } from '../../platform/feedback';
 import { Badge, EmptyState, PageHeader, Tabs } from '../components/common';
 import { Stars } from '../components/FeedbackCard';
 
-type Tab = 'overview' | 'events' | 'market' | 'feedback' | 'reviews' | 'errors';
+type Tab = 'players' | 'overview' | 'events' | 'market' | 'feedback' | 'reviews' | 'errors';
 
 const when = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 /** Only reachable when the account is in the `admins` table; the database refuses everyone else anyway. */
 export function AdminPage() {
   const [tab, setTab] = useState<Tab>('overview');
+  const [inspectId, setInspectId] = useState('');
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +31,7 @@ export function AdminPage() {
     setError(null);
     adminStats().then(setStats, (e) => setError(errorText(e)));
   }, []);
-  useEffect(loadStats, [loadStats]);
+  useEffect(() => { loadStats(); const timer = setInterval(loadStats, 30000); return () => clearInterval(timer); }, [loadStats]);
 
   return (
     <div className="page">
@@ -40,6 +39,7 @@ export function AdminPage() {
       <Tabs
         tabs={[
           { id: 'overview', label: 'Overview' },
+          { id: 'players', label: 'Players' },
           { id: 'events', label: 'Events' },
           { id: 'market', label: 'Market' },
           { id: 'feedback', label: 'Feedback', count: stats?.feedback_open, hot: !!stats?.feedback_open },
@@ -52,13 +52,14 @@ export function AdminPage() {
       {error && (
         <div className="card">
           <b>Couldn't load admin data:</b> <span className="muted">{error}</span>
-          <p className="dim small">Run the SQL in docs/ops/SETUP.md and add your account to the admins table.</p>
+          <p className="dim small">Apply docs/ops/admin.sql after the setup and market SQL, and add your account to the admins table.</p>
         </div>
       )}
       {tab === 'overview' && !error && <Overview stats={stats} />}
-      {tab === 'events' && <EventsTab />}
+      {tab === 'events' && <AdminEvents />}
+      {tab === 'players' && <PlayerInspector initialId={inspectId} />}
       {tab === 'market' && <MarketTab />}
-      {tab === 'feedback' && <FeedbackTab onChange={loadStats} />}
+      {tab === 'feedback' && <AdminFeedback onChange={loadStats} onInspect={(id) => { setInspectId(id); setTab('players'); }} />}
       {tab === 'reviews' && <ReviewsTab />}
       {tab === 'errors' && <ErrorsTab />}
     </div>
@@ -96,22 +97,28 @@ function Bars({ rows }: { rows: [string, number][] }) {
 
 function Overview({ stats }: { stats: AdminStats | null }) {
   if (!stats) return <p className="dim">Loading…</p>;
-  const classes = Object.entries(stats.by_class)
-    .map(([id, n]) => [classDef(id as ClassId).name, n] as [string, number])
-    .sort((a, b) => b[1] - a[1]);
-  const levels = Object.entries(stats.by_level)
-    .map(([b, n]) => [Number(b), n] as [number, number])
-    .sort((a, b) => a[0] - b[0])
-    .map(([b, n]) => [`${Math.max(1, b)}–${b + 4}`, n] as [string, number]);
+  const classes = classBreakdown(stats.by_class).map(([id, n]) => [
+    ['warrior','duelist','ranger','shadow','mage','templar','exile'].includes(id) ? classDef(id as ClassId).name : id, n,
+  ] as [string, number]);
+  const levels = levelBreakdown(stats.by_level);
   return (
     <>
+      <div className="card"><div className="card-title">Campaign progression</div>
+        <div className="admin-funnel">{[['Created',stats.characters],...(stats.funnel ?? []).map((r) => [`Act ${r.act}`,r.count]),['Maps T1+',stats.maps ?? 0]].map(([label,n]) => <div key={label}><b>{n}</b><span>{label}</span></div>)}</div>
+        <p className="dim small">Current cloud characters and their recorded milestones.</p>
+      </div>
       <div className="admin-stats">
         <Stat label="Accounts" value={stats.accounts} sub={`+${stats.new_accounts_week} this week`} />
         <Stat label="Players with a character" value={stats.players} />
         <Stat label="Characters" value={stats.characters} />
         <Stat label="Active today" value={stats.active_day} sub={`${stats.active_week} this week`} />
-        <Stat label="Act 1 clears" value={stats.act1_clears} />
         <Stat label="Average review" value={stats.reviews.avg ? `${stats.reviews.avg}★` : '—'} sub={`${stats.reviews.count} reviews`} />
+      </div>
+      <div className="admin-two">
+        <div className="card"><div className="card-title">Top death zones</div><Bars rows={Object.entries(stats.death_zones ?? {}).sort((a,b) => b[1]-a[1])} /><p className="dim small">Locations are recorded from this update onward; old saves only contain total deaths.</p></div>
+        <div className="card"><div className="card-title">Anonymous demo counters (last 30 days)</div><Bars rows={[
+          ['Demo started',stats.demos?.demo_started ?? 0],['Act 1 boss beaten',stats.demos?.demo_act1_boss_killed ?? 0],['Converted to account',stats.demos?.demo_converted_to_account ?? 0],
+        ]} /><p className="dim small">Approximate session counters, not unique people or a matched retention cohort. Do Not Track is respected. Guest saves remain local.</p></div>
       </div>
       <div className="admin-two">
         <div className="card">
@@ -123,7 +130,6 @@ function Overview({ stats }: { stats: AdminStats | null }) {
           <Bars rows={levels} />
         </div>
       </div>
-      <p className="dim small">Accounts only: demos aren't saved, and older guest saves stay in the browser.</p>
     </>
   );
 }
@@ -206,78 +212,6 @@ function MarketTab() {
   );
 }
 
-const STATUS_TONE: Record<FeedbackStatus, 'warn' | 'neutral' | 'success'> = { new: 'warn', read: 'neutral', resolved: 'success' };
-
-function FeedbackTab({ onChange }: { onChange: () => void }) {
-  const [filter, setFilter] = useState<FeedbackStatus | 'all'>('new');
-  const [rows, setRows] = useState<FeedbackRow[] | null>(null);
-  const load = useCallback(() => {
-    setRows(null);
-    listFeedback(filter).then(setRows, () => setRows([]));
-  }, [filter]);
-  useEffect(load, [load]);
-
-  const mark = async (row: FeedbackRow, status: FeedbackStatus) => {
-    await setFeedbackStatus(row.id, status);
-    load();
-    onChange();
-  };
-
-  return (
-    <>
-      <Tabs
-        compact
-        tabs={[
-          { id: 'new', label: 'New' },
-          { id: 'read', label: 'Read' },
-          { id: 'resolved', label: 'Resolved' },
-          { id: 'all', label: 'All' },
-        ]}
-        value={filter}
-        onChange={setFilter}
-      />
-      {!rows ? (
-        <p className="dim">Loading…</p>
-      ) : !rows.length ? (
-        <EmptyState small title="Nothing here">No {filter === 'all' ? '' : filter} feedback.</EmptyState>
-      ) : (
-        rows.map((r) => (
-          <div key={r.id} className="card admin-feedback">
-            <div className="row wrap">
-              <Badge tone={r.kind === 'bug' ? 'danger' : r.kind === 'idea' ? 'gold' : 'neutral'}>{r.kind}</Badge>
-              <Badge tone={STATUS_TONE[r.status]}>{r.status}</Badge>
-              <span className="dim small">{when(r.created_at)}</span>
-              <span className="spacer" />
-              {r.status !== 'read' && (
-                <button className="btn ghost sm" onClick={() => mark(r, 'read')}>
-                  Mark read
-                </button>
-              )}
-              {r.status !== 'resolved' && (
-                <button className="btn sm" onClick={() => mark(r, 'resolved')}>
-                  Resolve
-                </button>
-              )}
-              {r.status === 'resolved' && (
-                <button className="btn ghost sm" onClick={() => mark(r, 'new')}>
-                  Reopen
-                </button>
-              )}
-            </div>
-            <p className="admin-message">{r.message}</p>
-            <div className="dim small">
-              v{r.context.version}
-              {r.context.classId && ` · ${classDef(r.context.classId as ClassId).name} lv ${r.context.level}`}
-              {r.context.zone && ` · ${r.context.zone}`}
-              {r.user_id ? ' · signed in' : ' · guest'}
-            </div>
-          </div>
-        ))
-      )}
-    </>
-  );
-}
-
 function ReviewsTab() {
   const [rows, setRows] = useState<ReviewRow[] | null>(null);
   useEffect(() => {
@@ -304,87 +238,6 @@ function ReviewsTab() {
         </div>
       ))}
     </>
-  );
-}
-
-/** A stored time as a date picker wants it, in the admin's own time zone. */
-function toPicker(iso: string | null | undefined): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-}
-
-const fromPicker = (value: string) => (value ? new Date(value).toISOString() : null);
-
-/** One event: on or off by hand, or between two times. */
-function EventControl({ event }: { event: LiveEvent }) {
-  const row = game.eventRows.find((r) => r.id === event.id);
-  const [start, setStart] = useState(toPicker(row?.starts_at));
-  const [end, setEnd] = useState(toPicker(row?.ends_at));
-  const [error, setError] = useState<string | null>(null);
-  const enabled = !!row?.enabled;
-  const live = game.liveEvents.includes(event);
-  const stored = { id: event.id, enabled, starts_at: row?.starts_at ?? null, ends_at: row?.ends_at ?? null };
-  const save = (next: EventRow) => {
-    setError(null);
-    game.saveEvent(next).catch((e) => setError(`Couldn't change it: ${errorText(e)}. If the table is missing, run the events SQL in docs/ops/SETUP.md.`));
-  };
-  const schedule = () => {
-    if (!start) return setError('Pick a start time');
-    if (end && end <= start) return setError('The end has to be after the start');
-    save({ ...stored, starts_at: fromPicker(start), ends_at: fromPicker(end) });
-  };
-  const clear = () => {
-    setStart('');
-    setEnd('');
-    save({ ...stored, starts_at: null, ends_at: null });
-  };
-  return (
-    <div className="admin-event">
-      <div className="row wrap">
-        <b>{event.name}</b>
-        <span className="muted small">{event.blurb}</span>
-        {live && <Badge>Live</Badge>}
-        <span className="spacer" />
-        <button className={`btn sm ${enabled ? '' : 'primary'}`} onClick={() => save({ ...stored, enabled: !enabled })}>
-          {enabled ? 'Turn off' : 'Turn on'}
-        </button>
-      </div>
-      <div className="row wrap">
-        <label className="dim small">
-          Starts <input className="input" type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} />
-        </label>
-        <label className="dim small">
-          Ends <input className="input" type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} />
-        </label>
-        <button className="btn sm" onClick={schedule}>
-          Save schedule
-        </button>
-        <button className="btn sm ghost" disabled={!stored.starts_at && !start && !end} onClick={clear}>
-          Clear
-        </button>
-      </div>
-      {error && <p className="warn small">{error}</p>}
-    </div>
-  );
-}
-
-/** Runs limited-time events for everyone, by hand or on a schedule. */
-function EventsTab() {
-  useGame();
-  useEffect(() => void game.refreshEvents(), []);
-  return (
-    <div className="card">
-      <div className="card-title">Limited-time events</div>
-      <p className="dim small" style={{ marginTop: 0 }}>
-        Turn on runs an event until you turn it off. A schedule starts and ends it by itself, in your time zone; leave Ends empty to run it until you clear it. Events running together use the best
-        bonus of each kind. Open games pick up a change within 5 minutes.
-      </p>
-      {EVENTS.map((e) => {
-        const row = game.eventRows.find((r) => r.id === e.id);
-        return <EventControl key={`${e.id} ${row?.starts_at} ${row?.ends_at}`} event={e} />;
-      })}
-    </div>
   );
 }
 

@@ -5,7 +5,7 @@ import { getSupabase } from './supabase';
 export async function fetchEventRows(): Promise<EventRow[] | null> {
   const client = getSupabase();
   if (!client) return [];
-  const { data, error } = await client.from('live_events').select('id, enabled, starts_at, ends_at');
+  const { data, error } = await client.from('live_events').select('*');
   return error ? null : (data as EventRow[]);
 }
 

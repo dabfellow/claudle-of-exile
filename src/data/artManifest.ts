@@ -518,6 +518,31 @@ const GEM_SYMBOL: Record<string, string> = {
   elemental_weakness: 'a broken flame', enfeeble: 'a drooping hand',
   glacial_lance: 'a long ice spear', meditate: 'a closed eye', shock_nova: 'a ring of short lightning bolts',
   consecrate: 'a sun over a flat line', frost_needle: 'three thin needles',
+  // Maps gems — marks
+  brand_of_ruin: 'a void spiral with a brand mark', scorched_brand: 'a flame brand seared into flesh',
+  sunder_mark: 'a cracked shield with a mark', void_brand: 'a hollow circle of void symbols',
+  fracture_mark: 'a fractured crystal with a cross', marked_for_death: 'a skull over a crossed mark',
+  shadow_mark: 'a shadowy hand leaving a dark brand', martyrdom_brand: 'a thorned crown with a shield',
+  // Maps gems — warcries
+  battle_cry: 'an open mouth with battle lines', rallying_cry: 'a banner with raised fists',
+  hunters_call: 'a horn with a bow', intimidate: 'a mailed fist raised in threat',
+  ancestral_call: 'three ancestor spirits rising', dark_howl: 'a void-shadowed howling mouth',
+  death_rattle: 'a skull rattling with sound waves', primal_roar: 'a beast jaw open wide',
+  // Maps gems — totems
+  flame_totem: 'a small stone pillar with flames', ice_totem: 'a small stone pillar with ice crystals',
+  storm_totem: 'a small stone pillar with lightning', war_totem: 'a small stone pillar with a sword',
+  shadow_totem: 'a small stone pillar with a dagger', siege_totem: 'a small stone pillar with a crossbow bolt',
+  chaos_totem: 'a small stone pillar with void swirls', void_totem: 'a small stone pillar dissolving into void',
+  // Maps gems — doom
+  doom_bolt: 'a chaos bolt striking downward', void_blast: 'a void explosion ring',
+  doom_strike: 'a fist wreathed in void flame', entropy: 'a small void spark',
+  doomsday: 'a large void detonation', cursed_arrow: 'an arrow tipped with void energy',
+  shadow_pact: 'two hands shaking in shadow', void_pact: 'a void hourglass',
+  // Maps gems — exertion
+  gut_punch: 'a clenched fist with energy lines', quickdraw: 'a bow drawn back fully',
+  charged_strike: 'a charged fist with lightning lines', void_surge: 'a void pulse expanding outward',
+  rend: 'three sharp claw marks', void_wave: 'a void wave sweeping outward',
+  soul_rip: 'a hand tearing a soul free', deathblow: 'a hammer raised for a final blow',
 };
 
 export interface ArtEntry {

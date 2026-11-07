@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { affixDef } from '../../data/affixes';
-import { attributeReq, baseDef, uniqueDef, WEAPON_FAMILIES } from '../../data/bases';
+import { attributeReq, baseDef, uniqueDef, WEAPON_FAMILIES, type UniqueDef } from '../../data/bases';
 import { MECHANIC_INFO } from '../../data/passiveTree';
 import { BASE_ATTACK_MS } from '../../data/gems';
 import { characterLevel } from '../../engine/character';
@@ -17,18 +17,27 @@ import { packArtUrl } from '../assets';
 
 const RARITY_LABEL = { normal: 'Normal', magic: 'Magic', rare: 'Rare', unique: 'Unique' };
 
-function ModLine({ mod, detail, state }: { mod: RolledMod; detail: boolean; state?: GameState }) {
+function ModLine({ mod, detail, state, uniqueItem }: { mod: RolledMod; detail: boolean; state?: GameState; uniqueItem?: UniqueDef | null }) {
   // class-mechanic knobs do nothing on other classes
   const mech = affixDef(mod.affixId).stats.map((k) => STAT_MECHANIC[k]).find(Boolean);
   const inactive = !!mech && !!state && mechanicOf(state) !== mech;
+  const uMod = uniqueItem?.mods.find((m) => m.affixId === mod.affixId);
+  const uRanges = uMod?.ranges;
   return (
-    <div className={`mod ${mod.crafted ? 'crafted' : ''} ${inactive ? 'inactive' : ''}`}>
+    <div className={`mod ${mod.crafted ? 'crafted' : ''} ${mod.fractured ? 'fractured' : ''} ${inactive ? 'inactive' : ''}`}>
       {describeMod(mod)}
+      {mod.fractured && <span className="mod-tier mod-fractured-badge">(fractured)</span>}
+      {mod.elevated && <span className="mod-tier mod-elevated-badge" style={{ color: '#ff4d4d', fontWeight: 'bold' }}> (Doom T0)</span>}
       {mod.crafted && <span className="mod-tier">(crafted)</span>}
       {inactive && <span className="mod-tier">({MECHANIC_INFO[mech].name} — {MECHANIC_INFO[mech].cls} only)</span>}
       {detail && mod.tier >= 0 && (
         <span className="mod-tier">
           {tierLabel(mod)} · {tierRangeText(mod)}
+        </span>
+      )}
+      {detail && uRanges && uRanges.length > 0 && (
+        <span className="mod-tier">
+          ({uRanges.map(([lo, hi]) => (lo === hi ? `${lo}` : `${lo}–${hi}`)).join(' / ')})
         </span>
       )}
     </div>
@@ -96,19 +105,28 @@ export function ItemTip({
           </div>
         ) : null}
         <Requirements item={item} state={state} />
-        {implicits.length > 0 && <div className="sep" />}
+        {(implicits.length > 0 || item.doomImplicit) && <div className="sep" />}
         {implicits.map((i) => (
           <div key={i.text} className="mod">
             {i.text}
           </div>
         ))}
+        {item.doomImplicit && (
+          <div className="mod mod-doom" style={{ color: '#e85a4f', fontWeight: 'bold' }}>
+            {item.doomImplicit === 'doom_all_res' ? '+16% to all Elemental Resistances (Doom)'
+              : item.doomImplicit === 'doom_damage' ? '20% increased Damage (Doom)'
+              : item.doomImplicit === 'doom_max_life' ? '+10% increased Maximum Life (Doom)'
+              : '+35% to Critical Strike Multiplier (Doom)'}
+          </div>
+        )}
         {(item.prefixes.length > 0 || item.suffixes.length > 0) && <div className="sep" />}
         {item.prefixes.map((m, i) => (
-          <ModLine key={`p${i}`} mod={m} detail={alt} state={state} />
+          <ModLine key={`p${i}`} mod={m} detail={alt} state={state} uniqueItem={unique} />
         ))}
         {item.suffixes.map((m, i) => (
-          <ModLine key={`s${i}`} mod={m} detail={alt} state={state} />
+          <ModLine key={`s${i}`} mod={m} detail={alt} state={state} uniqueItem={unique} />
         ))}
+        {item.voidSlot && <div className="dim small" style={{ color: '#9b6dde', marginTop: 4 }}>Void Slot: holds up to 7 modifiers</div>}
         <RuneLine item={item} state={state} />
         {unique && (
           <>
@@ -120,7 +138,7 @@ export function ItemTip({
         {item.impression && <div className="dim small">Wax impression taken: can be restored at the Crafting Bench</div>}
         {!pinned && (
           <div className="tip-hint">
-            {item.rarity !== 'normal' && item.rarity !== 'unique' && !alt ? 'Alt: tiers & keep open · ' : alt ? 'Alt held: staying open · ' : ''}Right-click: pin
+            {item.rarity !== 'normal' && !alt ? 'Alt: ranges & keep open · ' : alt ? 'Alt held: staying open · ' : ''}Right-click: pin
           </div>
         )}
       </div>

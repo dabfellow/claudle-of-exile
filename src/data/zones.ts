@@ -12,7 +12,24 @@ import type { DamageType, GroundKind } from '../engine/types';
  * - frostbite: stacks build on you through the fight, slowing you until you freeze solid — cleanse them, by hand or by rule
  * - channel: a long spell that grows until it lands, and snowballs the fight if it does — stun or interrupt it, by hand or by rule
  */
-export type BossMechanic = 'slam' | 'nova' | 'summon' | 'enrage' | 'ward' | 'scorch' | 'martyrs' | 'frostbite' | 'channel';
+export type BossMechanic =
+  | 'slam'
+  | 'nova'
+  | 'summon'
+  | 'enrage'
+  | 'ward'
+  | 'scorch'
+  | 'martyrs'
+  | 'frostbite'
+  | 'channel'
+  | 'plating'
+  | 'choir'
+  | 'tide'
+  | 'regents'
+  | 'crownless'
+  | 'mirror'
+  | 'ruin_cycle'
+  | 'void_shield';
 
 /** One thing a monster does: its name, whether it's an attack or a spell, and its attack or cast time in ms. */
 export interface MonsterSkill {
@@ -34,6 +51,8 @@ export interface MonsterDef {
   /** multipliers on the level-based stat curve */
   lifeMult?: number;
   dmgMult?: number;
+  /** Optional explicit identity; otherwise selected from its creature/attack description. */
+  archetype?: import('./monsterProfiles').MonsterArchetype;
   /** what it does whenever it isn't winding up something bigger */
   basic: MonsterSkill;
   /** ms to cross one battlefield column (melee only; default MONSTER_STEP_MS) */
@@ -190,7 +209,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 10,
     packSize: [1, 3],
     spawnEveryMs: 18000,
-    uniques: ['miners_lament', 'bloodthirst', 'windstep', 'tavern_brawler', 'castaways_kerchief', 'quickfingers'],
+    uniques: ['castaways_kerchief'],
   },
   {
     id: 'brinecaves', name: 'The Brine Caves', act: 1, tier: 1, levelRange: [4, 7], color: '#4f8a8b',
@@ -205,7 +224,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 11,
     packSize: [1, 3],
     spawnEveryMs: 15000,
-    uniques: ['windstep', 'bloodthirst', 'wellspring', 'slippers_of_the_tide', 'fishermans_knot', 'barnacle_band'],
+    uniques: ['barnacle_band', 'fishermans_knot'],
   },
   {
     id: 'ashwood', name: 'Ashen Woods', act: 1, tier: 2, levelRange: [7, 10], color: '#9a6a4a',
@@ -220,7 +239,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 12,
     packSize: [2, 4],
     spawnEveryMs: 14000,
-    uniques: ['emberheart', 'alchemists_band', 'rebuttal', 'second_guess'],
+    uniques: ['miners_lament', 'emberheart'],
   },
   {
     id: 'blackreed', name: 'Blackreed Marsh', act: 1, tier: 2, levelRange: [10, 13], color: '#5d6b3a',
@@ -235,7 +254,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 13,
     packSize: [2, 4],
     spawnEveryMs: 13000,
-    uniques: ['alchemists_band', 'miners_lament', 'stormhide', 'brimming_band', 'ember_of_faith', 'gulls_eye'],
+    uniques: ['windstep', 'gulls_eye'],
   },
   {
     id: 'crypt', name: 'The Sunken Crypt', act: 1, tier: 3, levelRange: [13, 16], color: '#5a7a9a',
@@ -250,7 +269,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 14,
     packSize: [2, 4],
     spawnEveryMs: 12000,
-    uniques: ['iron_bulwark', 'windstep', 'needleworkers_wraps', 'sidestep', 'herbalists_sash'],
+    uniques: ['iron_bulwark', 'herbalists_sash', 'bloodthirst'],
   },
   {
     id: 'shipgrave', name: 'The Ship Graveyard', act: 1, tier: 3, levelRange: [16, 19], color: '#7d6a55',
@@ -265,7 +284,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 15,
     packSize: [2, 5],
     spawnEveryMs: 11000,
-    uniques: ['iron_bulwark', 'emberheart', 'thornquill', 'bellwether', 'lookouts_hood', 'robe_of_still_waters'],
+    uniques: ['lookouts_hood', 'robe_of_still_waters', 'alchemists_band'],
   },
   {
     id: 'stormcliffs', name: 'The Storm Cliffs', act: 1, tier: 4, levelRange: [19, 22], color: '#6a7fa8',
@@ -280,7 +299,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 16,
     packSize: [3, 5],
     spawnEveryMs: 10000,
-    uniques: ['titans_girth', 'miners_lament', 'knuckledusters', 'windchaser'],
+    uniques: ['stormhide', 'titans_girth', 'sunmane_pelt'],
   },
   {
     id: 'sanctum', name: 'The Drowned Sanctum', act: 1, tier: 5, levelRange: [22, 24], color: '#3f6f8f',
@@ -296,10 +315,10 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 17,
     packSize: [3, 5],
     spawnEveryMs: 10000,
-    uniques: ['titans_girth', 'iron_bulwark', 'emberheart', 'ninth_psalm', 'mask_of_the_patient', 'penitents_plate', 'hollow_locket', 'twin_oaths'],
+    uniques: ['penitents_plate', 'ember_of_faith', 'brawlers_buckle'],
   },
 
-  // ---------------- Act 2: The Burning Steppe (docs/design/ACT2.md) ----------------
+  // ---------------- Act 2: The Burning Steppe (docs/GAME.md) ----------------
   // Characters arrive around level 21 and leave around 25–27. Areas climb one level each, so the
   // drop tiers (5 → 7) and boss mechanics (3 → 6) carry the sense of going deeper.
   {
@@ -330,7 +349,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 19,
     packSize: [3, 5],
     spawnEveryMs: 10000,
-    uniques: ['last_breath', 'mirage_veil', 'windchaser'],
+    uniques: ['last_breath', 'mirage_veil'],
   },
   {
     id: 'blackgrass', name: 'The Blackgrass Sea', act: 2, tier: 6, levelRange: [26, 28], color: '#5a5a3a',
@@ -345,7 +364,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 20,
     packSize: [3, 5],
     spawnEveryMs: 10000,
-    uniques: ['sunmane_pelt', 'emberheart', 'knuckledusters'],
+    uniques: ['sunmane_pelt', 'emberheart'],
   },
   {
     id: 'caravan', name: "Caravan's End", act: 2, tier: 6, levelRange: [27, 29], color: '#b08a5a',
@@ -360,7 +379,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 21,
     packSize: [3, 5],
     spawnEveryMs: 10000,
-    uniques: ['old_grudge', 'khans_tithe', 'twin_oaths'],
+    uniques: ['old_grudge', 'khans_tithe'],
   },
   {
     id: 'kurgans', name: 'The Kurgan Fields', act: 2, tier: 6, levelRange: [28, 30], color: '#6f7a8a',
@@ -375,7 +394,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 22,
     packSize: [3, 5],
     spawnEveryMs: 10000,
-    uniques: ['kurgan_crown', 'hollow_locket', 'iron_bulwark'],
+    uniques: ['kurgan_crown', 'iron_bulwark'],
   },
   {
     id: 'plateau', name: 'The Thunder Plateau', act: 2, tier: 7, levelRange: [29, 31], color: '#6a78a0',
@@ -390,7 +409,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 23,
     packSize: [3, 5],
     spawnEveryMs: 9500,
-    uniques: ['stormrider_greaves', 'stormhide', 'windchaser'],
+    uniques: ['stormrider_greaves', 'stormhide'],
   },
   {
     id: 'pyretemple', name: 'The Pyre Temple', act: 2, tier: 7, levelRange: [30, 32], color: '#c0502a',
@@ -405,7 +424,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 24,
     packSize: [3, 5],
     spawnEveryMs: 9500,
-    uniques: ['pyre_heart', 'ember_of_faith', 'ninth_psalm', 'unblinking_tome'],
+    uniques: ['pyre_heart', 'ember_of_faith', 'unblinking_tome'],
   },
   {
     id: 'burningthrone', name: 'The Burning Throne', act: 2, tier: 7, levelRange: [31, 32], color: '#e0702a',
@@ -424,7 +443,7 @@ export const ZONES: ZoneDef[] = [
     uniques: ['starforged_edge', 'pyre_heart', 'kurgan_crown', 'khans_tithe', 'mirage_veil', 'stormrider_greaves', 'old_grudge', 'last_breath', 'unblinking_tome'],
   },
 
-  // ---------------- Act 3: The City of Saints (docs/design/ACT3.md) ----------------
+  // ---------------- Act 3: The City of Saints (docs/GAME.md) ----------------
   // A living city of human zealots: lightning is the check, on trash and in the bosses' novas and ground. Most bosses
   // chain martyrs. Items here roll three levels above the monster, so the act's last kills reach bases of about level 45.
   {
@@ -588,7 +607,7 @@ export const ZONES: ZoneDef[] = [
     uniques: ['halo_of_wrath', 'martyrs_shroud', 'pilgrims_road', 'saints_shard', 'confession_hood', 'chainbreaker', 'starforged_edge'],
   },
 
-  // ---------- Act 4: The Hollow Peaks (docs/design/ACT4.md) ----------------
+  // ---------- Act 4: The Hollow Peaks (docs/GAME.md) ----------------
   // The giants' range: monsters are large and few, a change from the swarms. Cold is the check, on trash and in the
   // bosses' novas and ground. Most bosses bring Frostbite. Items roll seven levels above the monster, so the act's last
   // kills reach bases of about level 57, a third of the way from Act 3's 45 to the 80 that Act 6 ends on.
@@ -605,14 +624,14 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 36,
     packSize: [1, 2],
     spawnEveryMs: 12000,
-    uniques: ['rimewalkers', 'stormhide', 'iron_bulwark'],
+    uniques: ['rimewalkers', 'tavern_brawler', 'bellwether'],
   },
   {
     id: 'screefields', name: 'The Scree Fields', act: 4, tier: 10, levelRange: [41, 43], color: '#9a9a94', ilvlBonus: 7,
     desc: 'Miles of broken stone, thrown down from above by someone who wanted the valley empty.',
     requires: { after: ['hollowpass'] },
     monsters: [
-      slow(m('screegolem', 'Scree Golem', 41, 'phys', atk('Rockslide', 4300), 2, 1.35)),
+      slow({ ...m('screegolem', 'Rimebound Golem', 41, 'phys', atk('Glacial Fist', 4300), 2, 1.35), archetype: 'ice_golem' }),
       fast(m('stonehawk', 'Scree Hawk', 42, 'phys', atk('Stooping Talons', 2300), 0.9, 1)),
       slow(m('boulderthrower', 'Boulder Thrower', 42, 'phys', atk('Hurled Stone', 3900), 1.7, 1.45)),
       rime(m('frostshrike', 'Frost Shrike', 43, 'cold', spell('Needle of Ice', 3100, true), 1, 1.2)),
@@ -621,7 +640,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 37,
     packSize: [1, 2],
     spawnEveryMs: 12000,
-    uniques: ['frostgrip', 'hollow_locket', 'titans_girth'],
+    uniques: ['frostgrip', 'second_guess', 'hollow_locket'],
   },
   {
     id: 'howlingfells', name: 'The Howling Fells', act: 4, tier: 10, levelRange: [42, 44], color: '#7f93a8', ilvlBonus: 7,
@@ -637,7 +656,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 38,
     packSize: [1, 2],
     spawnEveryMs: 12000,
-    uniques: ['wolfmother_pelt', 'sunmane_pelt', 'windchaser'],
+    uniques: ['wolfmother_pelt', 'quickfingers', 'needleworkers_wraps', 'sidestep'],
   },
   {
     id: 'glasslake', name: 'The Glass Lake', act: 4, tier: 10, levelRange: [43, 45], color: '#a0c8d8', ilvlBonus: 7,
@@ -653,7 +672,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 39,
     packSize: [1, 2],
     spawnEveryMs: 12000,
-    uniques: ['heart_of_winter', 'kurgan_crown', 'hollow_locket'],
+    uniques: ['heart_of_winter', 'slippers_of_the_tide', 'mask_of_the_patient'],
   },
   {
     id: 'bonequarry', name: 'The Bone Quarry', act: 4, tier: 10, levelRange: [43, 45], color: '#c8bfa8', ilvlBonus: 7,
@@ -669,7 +688,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 40,
     packSize: [1, 2],
     spawnEveryMs: 11500,
-    uniques: ['giants_knuckle', 'titans_girth', 'old_grudge'],
+    uniques: ['giants_knuckle', 'knuckledusters', 'second_guess'],
   },
   {
     id: 'icevault', name: 'The Blue Vault', act: 4, tier: 10, levelRange: [44, 46], color: '#6a9ac8', ilvlBonus: 7,
@@ -685,7 +704,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 41,
     packSize: [1, 2],
     spawnEveryMs: 11500,
-    uniques: ['crown_of_the_hollow', 'pyre_heart', 'stormhide'],
+    uniques: ['crown_of_the_hollow', 'brimming_band', 'bellwether'],
   },
   {
     id: 'mammothroad', name: 'The Mammoth Road', act: 4, tier: 11, levelRange: [44, 46], color: '#a08a70', ilvlBonus: 7,
@@ -701,7 +720,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 42,
     packSize: [1, 2],
     spawnEveryMs: 11500,
-    uniques: ['rimewalkers', 'brawlers_buckle', 'windchaser'],
+    uniques: ['rimewalkers', 'quickfingers', 'knuckledusters', 'windchaser'],
   },
   {
     id: 'hangingglacier', name: 'The Hanging Glacier', act: 4, tier: 11, levelRange: [45, 47], color: '#b8d8e8', ilvlBonus: 7,
@@ -785,7 +804,7 @@ export const ZONES: ZoneDef[] = [
     uniques: ['crown_of_the_hollow', 'giants_knuckle', 'wolfmother_pelt', 'rimewalkers', 'heart_of_winter', 'frostgrip', 'starforged_edge'],
   },
 
-  // ---------------- Act 5: The Sunless Sea (docs/design/ACT5.md) ----------------
+  // ---------------- Act 5: The Sunless Sea (docs/GAME.md) ----------------
   // Island to island across the drowned dark: fire and lightning together are the check, a boss hitting in one and blasting
   // in the other. Channels arrive at the second stage. Items roll ten levels above the monster, so the act's last kills reach
   // bases of about level 68. The first area hangs off Act 4's last; everything after it follows on as usual.
@@ -803,7 +822,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 49,
     packSize: [3, 5],
     spawnEveryMs: 9000,
-    uniques: ['bosuns_oath', 'old_grudge', 'pyre_heart'],
+    uniques: ['bosuns_oath', 'rebuttal', 'hollow_locket'],
   },
   {
     id: 'wreckline', name: 'The Wreck Line', act: 5, tier: 12, levelRange: [49, 51], color: '#6a4a3a', ilvlBonus: 10,
@@ -819,7 +838,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 50,
     packSize: [3, 5],
     spawnEveryMs: 9000,
-    uniques: ['leviathan_hide', 'starforged_edge', 'stormhide'],
+    uniques: ['leviathan_hide', 'thornquill', 'rebuttal'],
   },
   {
     id: 'cinderkey', name: 'Cinder Key', act: 5, tier: 12, levelRange: [50, 52], color: '#a0482a', ilvlBonus: 10,
@@ -835,7 +854,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 51,
     packSize: [3, 5],
     spawnEveryMs: 9000,
-    uniques: ['corposant', 'pyre_heart', 'emberheart'],
+    uniques: ['corposant', 'wellspring', 'ninth_psalm'],
   },
   {
     id: 'squallbanks', name: 'The Squall Banks', act: 5, tier: 12, levelRange: [51, 53], color: '#4f6f8f', ilvlBonus: 10,
@@ -851,7 +870,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 52,
     packSize: [3, 5],
     spawnEveryMs: 9000,
-    uniques: ['deckwalkers', 'stormrider_greaves', 'stormhide'],
+    uniques: ['deckwalkers', 'twin_oaths', 'thornquill'],
   },
   {
     id: 'lampgulf', name: 'The Gulf of Lamps', act: 5, tier: 13, levelRange: [51, 53], color: '#2f5f6a', ilvlBonus: 10,
@@ -883,7 +902,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 54,
     packSize: [3, 5],
     spawnEveryMs: 9000,
-    uniques: ['harpoons_answer', 'old_grudge', 'martyrs_shroud'],
+    uniques: ['harpoons_answer', 'ninth_psalm', 'wellspring'],
   },
   {
     id: 'brimstone', name: 'Brimstone Isle', act: 5, tier: 13, levelRange: [52, 54], color: '#b0702a', ilvlBonus: 10,
@@ -899,7 +918,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 55,
     packSize: [3, 5],
     spawnEveryMs: 9000,
-    uniques: ['leviathan_hide', 'pyre_heart', 'kurgan_crown'],
+    uniques: ['leviathan_hide', 'mask_of_the_patient', 'twin_oaths'],
   },
   {
     id: 'hollowreef', name: 'The Hollow Reef', act: 5, tier: 13, levelRange: [53, 55], color: '#8a5a6a', ilvlBonus: 10,
@@ -915,7 +934,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 56,
     packSize: [3, 5],
     spawnEveryMs: 9000,
-    uniques: ['tide_crown', 'confession_hood', 'kurgan_crown'],
+    uniques: ['tide_crown', 'wellspring', 'rebuttal'],
   },
   {
     id: 'thunderhead', name: 'The Thunderhead', act: 5, tier: 14, levelRange: [54, 56], color: '#46506f', ilvlBonus: 10,
@@ -1015,7 +1034,7 @@ export const ZONES: ZoneDef[] = [
     uniques: ['leviathan_hide', 'bosuns_oath', 'corposant', 'deckwalkers', 'tide_crown', 'harpoons_answer', 'starforged_edge'],
   },
 
-  // ---------------- Act 6: The Shattered Throne (docs/design/ACT6.md) ----------------
+  // ---------------- Act 6: The Shattered Throne (docs/GAME.md) ----------------
   {
     id: 'exilesgate', name: "The Exiles' Gate", act: 6, tier: 15, levelRange: [57, 58], color: '#6a5a4a', ilvlBonus: 14,
     requires: { after: ['maelstrom'] }, // Act 5's last area: its boss clears the way home
@@ -1359,7 +1378,8 @@ export function monsterLife(level: number): number {
 }
 
 export function monsterDamage(level: number): number {
-  return Math.round((1 + 1.0 * Math.pow(level, 1.15)) * MONSTER_DMG_SCALE);
+  const lateCampaign = 1 + Math.max(0, level - 20) / 35;
+  return Math.round((1 + Math.pow(level, 1.15)) * MONSTER_DMG_SCALE * lateCampaign);
 }
 
 /**
@@ -1452,4 +1472,12 @@ export const MECHANIC_INFO: Record<BossMechanic, { name: string; tip: string }> 
   channel: { name: 'Channels', tip: "It stops to call up a long spell that pulses harder as it grows, then lands past any block and leaves it stronger for the rest of the fight. A stun, freeze or interrupt breaks it and staggers the boss: press War Cry, or put a skill on the rule When an enemy channels (a wind-up rule won't fire)." },
   scorch: { name: 'Scorched earth', tip: 'Every 11 s it sets the ground under you ablaze (or frozen, charged or worse) for 6 s. Resist its element, Run to step out sooner, or put a guard on a Ground rule to step out at once.' },
   frostbite: { name: 'Frostbite', tip: "A stack builds on you every 2.5 s, twice as fast on Frozen ground, and each slows you by 4%. At 10 you freeze solid for 3 s and take a cold shatter. A guard or movement skill shakes off 5, and a flask clears them all. Set one to the Frostbite rule (Vitals rules, War Table), or Instill a flask, so it fires at a stack count." },
+  plating: { name: 'Plated carapace', tip: 'Ossuar takes 65% less damage while plated. Every 25 s a Cracked Fault opens beside him for 6 s: shatter it with area skills, click it, or aim a skill at Weak points (Aim rules, War Table) to break his plating and expose him for 10 s (14 s if targeted manually).' },
+  choir: { name: 'Resonant choir', tip: 'Calls up to 3 Choir Singers (Mending heals the boss, Wall shields her, Haste speeds her casts). Aim a skill at Choir adds (Aim rules, War Table) or use area/chain skills to silence them; targeting a singer manually also staggers the boss.' },
+  tide: { name: 'Rising tide', tip: 'Cold tide stacks build on you during the fight, slowing your actions by 3% per stack. Breaking Deep Call with a stun, interrupt or heavy burst damage (10% of max life during the channel) clears all tide stacks.' },
+  regents: { name: 'Twin regents', tip: 'Two bosses fight together (Sol of fire and Luna of cold). Every 16 s one raises an 80% Guard for 7 s while the other attacks, and if their life drifts more than 25% apart the healthier regent shares life with the weaker.' },
+  crownless: { name: 'Three-fold crown', tip: 'Shifts element and encounter moment at 100% (Fire + Weak point), 66% (Cold + Choir adds) and 33% life (Lightning + Deep Call channel).' },
+  mirror: { name: 'Mirror stance', tip: 'Adapts every 12 s to your most recently used skill type (melee, projectile or spell), gaining mitigation against repeated skills of that stance.' },
+  ruin_cycle: { name: 'Sixfold ruin', tip: 'Cycles through all six campaign boss signatures as its life falls across six thresholds.' },
+  void_shield: { name: 'Void carapace', tip: 'Shrouded in a Void Carapace (60% less damage taken) that builds Instability from every hit, mark or Doom stack; at 15 buildup it shatters, exposing the Sovereign (+35% damage taken) for 10 s.' },
 };

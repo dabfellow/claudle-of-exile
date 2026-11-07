@@ -20,6 +20,7 @@ import { MarketPage } from './pages/MarketPage';
 import { TraderPage } from './pages/TraderPage';
 import { TreePage } from './pages/TreePage';
 import { AccountModal, AccountScreen, CharacterCreate, CharacterSelect, DemoBanner, EventBanner, FallenScreen, IntroModal, NewPasswordModal, TitleScreen } from './screens/Screens';
+import { AdminMailNotice } from './components/AdminInbox';
 
 // admins only: kept out of the main bundle
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
@@ -85,6 +86,7 @@ function GameScreen() {
       <main className="main" ref={mainRef}>
         <DemoBanner />
         <EventBanner />
+        {page !== 'settings' && <AdminMailNotice open={() => go('settings')} />}
         <Content key={page} page={page} go={go} />
       </main>
       <Feed />

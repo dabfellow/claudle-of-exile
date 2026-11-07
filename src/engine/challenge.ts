@@ -2,7 +2,7 @@ import { materialDef } from '../data/materials';
 import type { ChallengeFlags, CharacterInfo, GameState, Realm } from './types';
 
 /**
- * Challenge modes (docs/design/GDD.md §11): three toggles chosen at creation, in any mix, and fixed from then on.
+ * Challenge modes (docs/GAME.md): three toggles chosen at creation, in any mix, and fixed from then on.
  * A character's toggles pick its realm, which is the set of hideout, stash and unlocks it uses.
  */
 

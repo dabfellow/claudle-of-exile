@@ -6,7 +6,7 @@ import type { Derived } from './stats';
 import type { CombatRuntime, FlaskInstance, GameState, StatKey, Stats } from './types';
 
 /**
- * Class mechanics (docs/design/CLASSES.md). The meter lives in `combat.mech`:
+ * Class mechanics (docs/GAME.md). The meter lives in `combat.mech`:
  * Rage / Momentum / Malice count stacks, Martyr counts Fervor in percent.
  * Riposte has no meter. Mana is Power uses mana spent during a rolling four-second window.
  */
@@ -24,7 +24,7 @@ export const MANA_POWER_WINDOW_MS = 4000;
 /** Spending 90% of maximum Mana inside the window reaches the base 30% bonus. */
 export const MANA_POWER_FULL_SPEND = 0.9;
 
-// ascendancy numbers (docs/design/ASCENDANCIES.md)
+// ascendancy numbers (docs/GAME.md)
 export const RAMPAGE_MS = 6000;
 export const RAMPAGE_KILL_MS = 1000;
 export const NO_MERCY_HOLD_MS = 2000;
@@ -79,7 +79,7 @@ export const STAT_MECHANIC: Partial<Record<StatKey, Mechanic>> = {
   rageMax: 'rage', rageEffect: 'rage', rageDecay: 'rage', rageRegen: 'rage', rageOnHitTaken: 'rage', endlessFury: 'rage',
   ripostePct: 'riposte', riposteCooldown: 'riposte', riposteHeal: 'riposte', riposteCrit: 'riposte', riposteBleed: 'riposte', perfectForm: 'riposte',
   momentumMax: 'momentum', momentumEffect: 'momentum', momentumRetain: 'momentum', momentumEvasion: 'momentum', perpetualMotion: 'momentum',
-  maliceMax: 'malice', coupPct: 'malice', maliceCritKeep: 'malice', coupAilment: 'malice', maliceOnHitTaken: 'malice', thousandCuts: 'malice',
+  maliceMax: 'malice', coupPct: 'malice', maliceCritKeep: 'malice', coupAilment: 'malice', maliceOnHitTaken: 'malice', thousandCuts: 'malice', maliceOnHit: 'malice',
   manaPower: 'manaPower', manaPowerFull: 'manaPower', manaPowerEs: 'manaPower', allOrNothing: 'manaPower',
   fervorPct: 'martyr', novaPct: 'martyr', novaHeal: 'martyr', novaEs: 'martyr', saintsSacrifice: 'martyr',
 };
@@ -130,6 +130,11 @@ export function meterFull(s: GameState, d: Derived): boolean {
 
 export function rampaging(s: GameState): boolean {
   return (s.combat?.asc?.rampageMs ?? 0) > 0;
+}
+
+/** Maps — Exertion: charges (0–5) built by player hits; at 5 the next Exertion-tagged skill fires powered. */
+export function exertionFull(s: GameState): boolean {
+  return (s.combat?.exertion ?? 0) >= 5;
 }
 
 /** Wellspring: how much mana a Surge takes */

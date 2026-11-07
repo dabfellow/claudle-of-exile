@@ -23,6 +23,7 @@ import { newGame, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameState, MonsterInstance } from '../src/engine/types';
 import { charXpForLevel } from '../src/engine/xp';
+import { trainingDummy } from './helpers';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
 const act = () => zonesInAct(6);
@@ -56,7 +57,13 @@ function bossFight(s: GameState, zone: string, life?: number): { boss: MonsterIn
   const c = ctx();
   startCombat(s, c, zone);
   const boss = makeMonster(zoneDef(zone).boss, true, 1);
-  if (life) boss.maxLife = boss.life = life;
+  if (life) {
+    // This abbreviated encounter scales the whole pool, including its profile's shield.
+    const scale = life / boss.maxLife;
+    boss.es = (boss.es ?? 0) * scale;
+    boss.maxEs = (boss.maxEs ?? 0) * scale;
+    boss.maxLife = boss.life = life;
+  }
   s.combat!.monsters = [boss];
   s.combat!.spawnMs = 1e12;
   s.combat!.gates = s.combat!.gates!.map(() => 1e12);
@@ -282,6 +289,8 @@ describe('Echoes', () => {
       for (const z of act()) {
         const s = fighter(answers(z));
         const { boss, c } = bossFight(s, z.id, 2000);
+        // Isolate mechanic pairings from the deliberately undergeared fighter's damage matchup.
+        trainingDummy(boss);
         boss.damage = 1;
         const d = deriveStats(s);
         for (let t = 0; t < 300_000 && s.combat && boss.life > 0; t += 100) {

@@ -56,7 +56,8 @@ const used = (ctx: ReturnType<typeof makeCtx>) => ctx.events.some((e) => e.t ===
 describe('gems tied to acts', () => {
   it('splits the pool: Act 1 keeps skills up to level 12, the level 16 skills join Act 2, level 32 and up waits for Act 3, level 40 and up for Act 4, level 50 and up for Act 5, level 58 and up for Act 6', () => {
     for (const g of ACTIVE_GEMS) {
-      if (gemReqLevel(g.id) <= 12) expect(gemAct(g.id), g.id).toBe(1);
+      if (gemAct(g.id) === 7) expect(gemReqLevel(g.id), g.id).toBeGreaterThanOrEqual(66);
+      else if (gemReqLevel(g.id) <= 12) expect(gemAct(g.id), g.id).toBe(1);
       else if (gemReqLevel(g.id) < 32) expect(gemAct(g.id), g.id).toBe(2);
       else if (gemReqLevel(g.id) >= 58) expect(gemAct(g.id), g.id).toBe(6);
       else if (gemReqLevel(g.id) >= 50) expect(gemAct(g.id), g.id).toBe(5);
@@ -99,7 +100,7 @@ describe('gems tied to acts', () => {
       expect(used.size, `act ${act}`).toBeGreaterThanOrEqual(3);
     }
     // never before the area at the gem's level
-    for (const g of [...ACTIVE_GEMS, ...SUPPORT_GEMS]) {
+    for (const g of [...ACTIVE_GEMS, ...SUPPORT_GEMS].filter((g) => gemAct(g.id) <= 6)) {
       const z = gemShopZone(g.id)!;
       const fit = ZONES.find((x) => x.act === z.act && x.levelRange[1] >= gemReqLevel(g.id));
       if (fit) expect(ZONES.indexOf(z), g.id).toBeGreaterThanOrEqual(ZONES.indexOf(fit));

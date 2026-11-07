@@ -11,7 +11,7 @@ import { deriveStats } from './stats';
 import { unequip } from './equipment';
 import type { EquipSlot, GameState, GearSet, SkillId, SkillSet, SkillSetSlot } from './types';
 
-// Saved gear sets and skill bars, one list per character. See docs/design/TOWN.md.
+// Saved gear sets and skill bars, one list per character. See docs/GAME.md.
 
 /** Weapons first: a two-hander or an off-hand can push the other out, so the main hand has to settle first. */
 const GEAR_SLOTS: EquipSlot[] = ['weapon', 'offhand', 'helmet', 'body', 'gloves', 'boots', 'belt', 'amulet', 'ring1', 'ring2', 'ring3', 'ring4'];

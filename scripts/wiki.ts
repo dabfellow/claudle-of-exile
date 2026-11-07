@@ -17,23 +17,26 @@ import { INSTILL_CONDITIONS } from '../src/data/flasks';
 import { ACTIVE_GEMS, MAX_GEM_LEVEL, MAX_SUPPORT_SLOTS, RULE_LABELS, RULE_UNLOCK_NAMES, SKILL_BAR_SLOTS, SUPPORT_GEMS, TARGET_STATUSES, activeGemDef, gemAct, gemReqLevel, gemWeapons, type ActiveGemDef, type RuleCondition, type RuleUnlock, type SupportGemDef } from '../src/data/gems';
 import { OFFLINE_HAUL_CAP, STATIONS, stationDef, type StationId } from '../src/data/hideout';
 import { CURRENCIES, MATERIALS, type CurrencyDef } from '../src/data/materials';
+import { MONSTER_MODS } from '../src/data/monsterMods';
+import { MONSTER_PROFILES } from '../src/data/monsterProfiles';
 import { NEWS } from '../src/data/news';
 import { SKILLS, actionsFor } from '../src/data/skills';
 import { ACTS, MECHANIC_INFO, ZONES, type MonsterDef, type ZoneDef } from '../src/data/zones';
-import { GROUND_IN_PLAY, cleansesFrostbite } from '../src/engine/automation';
-import { areaXpMultiplier } from '../src/engine/character';
+import { GROUND_IN_PLAY, cleansesFrostbite, ruleUnlockLevel } from '../src/engine/automation';
+import { freshAutomation } from '../src/engine/account';
+import { areaXpMultiplier, OVERLEVEL_XP_PENALTY, UNDERLEVEL_XP_BONUS } from '../src/engine/character';
 import {
   AILMENT_DECAY_PCT, AILMENT_THRESHOLD_PCT, BOSS_FREEZE_MS, CHILL_MS, CHILL_SLOW_PCT, FREEZE_MS, GEAR_POISON,
-  MONSTER_OWN_RES, SHOCK_MAX_PCT, SHOCK_MIN_PCT, SHOCK_MS, makeMonster, monsterXp,
+  MONSTER_OWN_RES, MONSTER_RARITY, SHOCK_MAX_PCT, SHOCK_MIN_PCT, SHOCK_MS, makeMonster, monsterXp,
 } from '../src/engine/combat';
 import { itemFigures } from '../src/engine/compare';
-import { ATTACK_PCT_PER_LEVEL, BURN_MS, BURN_SHARE, IGNITE_MS, IGNITE_SHARE, LIFE_RESERVE_PCT, SPELL_ADDED_EFFECTIVENESS, gemAttrReq, gemLevelReq, spellBaseAt, supportFits, weaponPctAt } from '../src/engine/gems';
-import { affixRangeText, createUnique, describeMod, spawnWeight } from '../src/engine/items';
+import { ATTACK_PCT_PER_LEVEL, BURN_MS, BURN_SHARE, IGNITE_MS, IGNITE_SHARE, LIFE_RESERVE_PCT, SPELL_ADDED_EFFECTIVENESS, gemAttrReq, gemLevelReq, spellBaseAt, spellGrowth, supportFits, weaponPctAt } from '../src/engine/gems';
+import { affixRangeText, createUnique, describeUniqueModDef, spawnWeight } from '../src/engine/items';
 import type { GameState, Item } from '../src/engine/types';
 import { xpToReach } from '../src/engine/xp';
 import { CURRENCY_ART, GEM_GLYPHS, ITEM_ART, MONSTER_ART, UNIQUE_ART, ZONE_ART } from '../src/ui/assets';
 import { MEGA_CRIT_MULTI } from '../src/engine/mechanics';
-import { ATTRIBUTE_EFFECTS, RES_CAP } from '../src/engine/stats';
+import { armourReduction, evadeChance, ES_RECHARGE_DELAY_MS, ES_RECHARGE_PCT, ATTRIBUTE_EFFECTS, RES_CAP } from '../src/engine/stats';
 
 const ROOT = join(__dirname, '..');
 const OUT = join(ROOT, 'public', 'path-of-idle', 'wiki');
@@ -225,7 +228,7 @@ const baseStats = (b: BaseDef) =>
     b.evasion ? `${b.evasion} evasion` : '',
     b.energyShield ? `${b.energyShield} energy shield` : '',
   ].filter(Boolean).join(', ');
-const uniqueMods = (u: UniqueDef) => u.mods.map((m) => describeMod({ affixId: m.affixId, values: m.values, tier: -1 } as never));
+const uniqueMods = (u: UniqueDef) => u.mods.map(describeUniqueModDef);
 
 function registerEntities() {
   for (const g of ACTIVE_GEMS) ENTITIES.set(U.skill(g.id), { name: g.name, kind: 'Skill gem', art: packArt(GEM_GLYPHS[g.id]), text: g.desc });
@@ -368,12 +371,12 @@ ${facts([
 }
 
 function monsterRow(m: MonsterDef): string[] {
-  return [ent(U.monster(m.id)), String(m.level), esc(dmgName[m.dmgType]), esc(m.basic.name)];
+  return [ent(U.monster(m.id)), String(m.level), esc(dmgName[makeMonster(m, isBoss(m)).dmgType]), esc(m.basic.name)];
 }
 
 function bossBlock(b: MonsterDef): string {
   const mech = (b.mechanics ?? []).map((k) => `<li><strong>${esc(MECHANIC_INFO[k].name)}</strong>: ${esc(MECHANIC_INFO[k].tip)}</li>`).join('');
-  return `<p><strong>Boss: ${ent(U.monster(b.id))}</strong> (level ${b.level}, ${esc(dmgName[b.dmgType])})</p>${mech ? spoiler('boss mechanics', `<ul>${mech}</ul>`) : ''}`;
+  return `<p><strong>Boss: ${ent(U.monster(b.id))}</strong> (level ${b.level}, ${esc(dmgName[makeMonster(b, true).dmgType])})</p>${mech ? spoiler('boss mechanics', `<ul>${mech}</ul>`) : ''}`;
 }
 
 function areaEntry(z: ZoneDef, i: number) {
@@ -410,25 +413,37 @@ function monsterEntry(m: MonsterDef) {
   const body = `${facts([
     ['Found in', ent(U.area(z.id))],
     ['Level', String(m.level)],
-    ['Life', made.maxLife.toLocaleString('en')],
-    ['Damage per hit', made.damage.toLocaleString('en')],
-    ['Damage type', dmgName[m.dmgType]],
-    ['Attack', `${esc(m.basic.name)} (${m.basic.kind}, ${secs(m.basic.ms)})`],
+    ['Archetype', made.archetype ? MONSTER_PROFILES[made.archetype].name : 'Encounter summon'],
+    ['Life', String(Math.round(made.maxLife))],
+    ['Energy Shield', String(Math.round(made.maxEs ?? 0))],
+    ['Armour / Evasion', `${Math.round(made.armour ?? 0)} / ${Math.round(made.evasion ?? 0)}`],
+    ['Attack / spell block', `${made.blockChance ?? 0}% / ${made.spellBlockChance ?? 0}%`],
+    ['Basic hit (before criticals)', String(Math.round(made.damage * (made.basicDamageMult ?? 1)))],
+    ['Damage type', dmgName[made.dmgType]],
+    ['Attack', `${esc(m.basic.name)} (${m.basic.kind}, ${secs(made.attackMs)})`],
+    ['Critical chance / multiplier', `${made.critChance ?? 0}% / ${made.critMulti ?? 1.5}×`],
+    ['Ailment', made.attackAilment ? `${title(made.attackAilment)} (${Math.round((made.dotShare ?? 0) * 100)}% of basic damage budget)` : 'Cold and lightning hits can inflict their elemental ailments'],
     ['Resistances', res || 'None'],
     ['Big moves', esc(casts)],
   ])}
 ${mech ? `<h2 id="mechanics">Mechanics</h2>${spoiler('boss mechanics', `<ul>${mech}</ul>`)}` : ''}
 <h2 id="also">Also in this area</h2>${entList(others.map((o) => U.monster(o.id)))}`;
-  entry('monsters', U.monster(m.id), `${boss ? 'boss' : 'monster'} ${z.name}`, chip(boss ? 'Boss' : 'Monster', boss ? 'gold' : '') + chip(`Level ${m.level}`) + chip(dmgName[m.dmgType]),
+  entry('monsters', U.monster(m.id), `${boss ? 'boss' : 'monster'} ${z.name}`, chip(boss ? 'Boss' : 'Monster', boss ? 'gold' : '') + chip(`Level ${m.level}`) + chip(dmgName[made.dmgType]),
     z.act >= SPOILER_ACT ? spoiler(`Act ${z.act}`, body) : body);
 }
 
 function monstersPage(): string {
   const rows = OPEN_ZONES.flatMap((z) => [...z.monsters, z.boss].map((m) => {
     const made = makeMonster(m, isBoss(m));
-    return [ent(U.monster(m.id)), isBoss(m) ? 'Boss' : 'Monster', String(m.level), made.maxLife.toLocaleString('en'), made.damage.toLocaleString('en'), dmgName[m.dmgType], `Act ${z.act}`, ent(U.area(z.id))];
+    return [ent(U.monster(m.id)), isBoss(m) ? 'Boss' : 'Monster', String(m.level), String(Math.round(made.maxLife)), String(Math.round(made.maxEs ?? 0)), String(Math.round(made.damage * (made.basicDamageMult ?? 1))), dmgName[made.dmgType], secs(made.attackMs), `Act ${z.act}`, ent(U.area(z.id))];
   }));
-  return `<h1>Monsters and bosses</h1><p>Life and damage are for a single monster at full strength. Packs split these between their members.</p>${table(['Name', 'Kind', 'Level', 'Life', 'Damage', 'Type', 'Act', 'Area'], rows)}`;
+  const mods = MONSTER_MODS.map((m) => [esc(m.name), esc(m.desc), m.minLevel ? String(m.minLevel) : '1']);
+  return `<h1>Monsters and bosses</h1><p>Life and damage are for a single normal monster at full strength. Packs split these between their members.</p>
+<p>Creature archetypes trade Life for Armour, Evasion, block or Energy Shield. Chaos bypasses ES. Regular monster ES recharges at 5% per second after one second without damage; bosses retain their authored ward recovery instead. Slow basics hit harder and fast basics hit softer; criticals and poison, bleed or burn share the original damage budget. Cold builds Chill/Freeze and lightning builds Shock. Build matchups vary even with equal reference effective pools and raw damage per second.</p>
+${table(['Name', 'Kind', 'Level', 'Life', 'ES', 'Basic hit', 'Type', 'Attack interval', 'Act', 'Area'], rows)}
+<h2 id="rarity">Monster rarity</h2>
+<p>${pct(MONSTER_RARITY.magicPackChance)} of packs are Magic: every monster in the pack shares one modifier, has ${MONSTER_RARITY.magic.life} times Life and ES, and pays ${MONSTER_RARITY.magic.xp} times experience and ${MONSTER_RARITY.magic.loot} times loot. ${pct(MONSTER_RARITY.rareChance)} of other packs contain a Rare with three modifiers, ${MONSTER_RARITY.rare.life} times Life and ES, and ${MONSTER_RARITY.rare.xp} times experience and ${MONSTER_RARITY.rare.loot} times loot.</p>
+${table(['Modifier', 'Effect', 'From monster level'], mods)}`;
 }
 
 function actsPage(): string {
@@ -579,7 +594,7 @@ ${c.bonusText.length ? `<ul>${c.bonusText.map((t) => `<li>${esc(t)}</li>`).join(
     for (const a of asc) {
       index(a.name, `${BASE_URL}classes/#${a.id}`, `ascendancy ${c.name}`);
       body += `<div class="sub" id="${a.id}"><h3>${esc(a.name)}</h3><p>${esc(a.plays)}</p><p><strong>Gate:</strong> ${esc(a.gate.desc ?? '')}</p>
-<ul>${a.notables.map((n) => `<li><strong>${esc(n.name)}</strong>: ${esc(n.desc ?? '')}</li>`).join('')}<li><strong>${esc(a.capstone.name)}</strong> (capstone): ${esc(a.capstone.desc ?? '')}</li></ul></div>`;
+<ul>${a.notables.map((n) => `<li><strong>${esc(n.name)}</strong>: ${esc(n.desc ?? '')}</li>`).join('')}${a.capstones.map((n) => `<li><strong>${esc(n.name)}</strong> (capstone): ${esc(n.desc ?? '')}</li>`).join('')}</ul></div>`;
     }
     body += `</section>`;
   }
@@ -633,9 +648,9 @@ ${table(['Type', 'Raised by', 'Reduced on monsters by', 'Reduced on you by', 'Ai
     [`<strong id="elemental">Fire</strong>`, `% fire, % elemental and Intelligence (${int.elemPctPer}% per point)`, 'Fire resistance', 'Fire resistance', '<a href="#burn">Burn, then Ignite</a>'],
     ['<strong>Cold</strong>', `% cold, % elemental and Intelligence (${int.elemPctPer}% per point)`, 'Cold resistance', 'Cold resistance', '<a href="#chill">Chill, then Freeze</a>'],
     ['<strong>Lightning</strong>', `% lightning, % elemental and Intelligence (${int.elemPctPer}% per point)`, 'Lightning resistance', 'Lightning resistance', '<a href="#shock">Shock</a>'],
-    [`<strong id="chaos">Chaos</strong>`, '% chaos only', 'Chaos resistance', 'Nothing: your chaos resistance is always 0', 'None of its own'],
+    [`<strong id="chaos">Chaos</strong>`, '% chaos only', 'Chaos resistance', 'Chaos resistance', 'Poison when a skill or modifier grants it'],
   ])}
-<p>A hit can carry several types at once. Each is raised and resisted on its own, then they are added together into the number you see. A monster resists the type it deals by ${MONSTER_OWN_RES}% and has 0% in the others. Your own resistances cap at ${RES_CAP}%.</p>
+<p>A hit can carry several types at once. Each is raised and resisted on its own, then added into the number you see. A monster's base resistance to its own damage type is ${MONSTER_OWN_RES}%; modifiers and encounter effects can change its resistances. Your own resistances normally cap at ${RES_CAP}%.</p>
 
 <h2 id="attacks">How an attack is worked out</h2>
 <ol>
@@ -655,7 +670,7 @@ ${table(['Type', 'Raised by', 'Reduced on monsters by', 'Reduced on you by', 'Ai
 <h2 id="spells">How a spell is worked out</h2>
 <p>Your weapon's physical damage, attack speed and crit chance do nothing for a spell. Spells never miss.</p>
 <p class="formula">Damage = (the gem's base damage × increases for its type) + (flat fire, cold and lightning × ${SPELL_ADDED_EFFECTIVENESS * 100}%) + "Adds X to Y to Spells" in full</p>
-<p>The gem's base damage grows 16% per gem level, and flat damage counts your increases to its type too. The total is then multiplied by % spell damage, supports and buffs, and the monster's resistance applies as it does for an attack. Flat physical and chaos damage don't add to spells.</p>
+<p>The gem's base damage follows a tapered growth curve. Relative to level 1, its base scales to ${spellGrowth(2).toFixed(2)}× at level 2, ${spellGrowth(10).toFixed(2)}× at level 10 and ${spellGrowth(MAX_GEM_LEVEL).toFixed(2)}× at level ${MAX_GEM_LEVEL}. Flat damage counts your increases to its type too. The total is then multiplied by % spell damage, supports and buffs, and monster resistance applies. Generic flat physical and chaos attack damage do not add to spells.</p>
 
 <h2 id="crit">Critical strikes</h2>
 <p class="formula">Crit chance = base crit × (1 + % crit ÷ 100), up to 95%</p>
@@ -704,11 +719,11 @@ ${table(['Skill', 'Ailment', 'How'], ailmentSkillRows())}
 <p class="meta">Spells and attacks with an elemental ailment chance can also apply the ailments of any other element they carry. Supports and gear add more.</p>
 
 <h2 id="defence">Damage you take</h2>
-<p class="formula">Physical hits: damage × (1 − armour ÷ (armour + 5 × damage)), reduced by at most 90%</p>
+<p>Armour reduction is capped at ${Math.round(armourReduction(1e12, 1) * 100)}%. For a 100-damage physical hit, 200 Armour prevents ${Math.round(armourReduction(200, 100) * 100)}%; for a 1,000-damage hit, the same Armour prevents ${(armourReduction(200, 1000) * 100).toFixed(1)}%. These examples are calculated by the engine.</p>
 <p>Armour works best against small hits: the same armour stops far less of a big one.</p>
-<p class="formula">Fire, cold and lightning hits: damage × (1 − resistance ÷ 100)</p>
-<p class="formula">Evade chance = evasion ÷ (evasion + 2.5 × (40 + 18 × monster level)), up to 75%</p>
-<p>Evasion can't dodge a boss's telegraphed slams and novas. Blocks stop slams but not novas.</p>`;
+<p class="formula">Fire, cold, lightning and chaos hits: damage × (1 − resistance ÷ 100)</p>
+<p>Evasion depends on monster level and caps at ${Math.round(evadeChance(1e12, 1) * 100)}%. With 1,000 Evasion against a level-50 monster, the engine gives ${(evadeChance(1000, 50) * 100).toFixed(1)}% avoidance.</p>
+<p>Energy Shield recharges ${ES_RECHARGE_PCT}% per second after ${ES_RECHARGE_DELAY_MS / 1000} seconds without a hit. Special skills and modifiers can change these defenses. Heavy boss wind-ups have special avoidance rules; ordinary Evasion alone does not answer them. Blocks stop slams but not novas.</p>`;
 }
 
 // ---------- guides: hand-written pages, with live tables and links dropped in ----------
@@ -725,12 +740,13 @@ const zoneBefore = (z: ZoneDef) => {
 /** A starter plan. The generator refuses a support that doesn't fit its skill, or a gem nobody could reach by this stage. */
 interface Build { classId: string; plays: string; main: string; supports: string[]; extras: string[]; stats: string; rules: string; weapon?: string }
 const BUILDS: Build[] = [
-  { classId: 'warrior', plays: 'Hit hard, soak damage and let Rage build. The safest choice for leaving overnight.', main: 'heavy_strike', supports: ['faster_attacks', 'brutality', 'life_leech'], extras: ['iron_guard', 'war_cry', 'leeching_blow'], stats: 'Life and Armour, then physical damage.', rules: 'Iron Guard on wind-ups, Leeching Blow on low life, and War Cry on channels.' },
-  { classId: 'ranger', plays: 'Attack fast, avoid being hit, and keep Momentum up.', main: 'twin_strike', supports: ['faster_attacks', 'critical_strikes', 'mana_leech'], extras: ['smoke_step', 'feint', 'backstab'], stats: 'Evasion, attack speed and crit.', rules: 'Smoke Step on wind-ups, and Backstab while the target has high life.', weapon: 'Backstab needs a dagger or sword.' },
-  { classId: 'mage', plays: 'Keep your mana high for the most damage, and clear from range.', main: 'spark', supports: ['added_lightning', 'elemental_focus', 'pierce'], extras: ['frost_ward', 'mind_sip', 'shock_nova'], stats: 'Mana, energy shield and elemental damage.', rules: 'Frost Ward on wind-ups, Mind Sip on low mana, and Shock Nova at 3 enemies.', weapon: 'Every skill here needs a wand, staff or sceptre.' },
-  { classId: 'duelist', plays: 'Block and evade to trigger Riposte, and let the counter-attacks do the work.', main: 'twin_strike', supports: ['faster_attacks', 'life_leech', 'brutality'], extras: ['iron_guard', 'parry', 'feint'], stats: 'Evasion and block, then physical damage.', rules: 'Keep a guard on wind-ups, and Parry when life is low.' },
+  { classId: 'warrior', plays: 'Hit hard, maintain defensive gear and let Rage build.', main: 'heavy_strike', supports: ['faster_attacks', 'brutality', 'life_leech'], extras: ['iron_guard', 'war_cry', 'leeching_blow'], stats: 'Life and Armour, then physical damage.', rules: 'Iron Guard on wind-ups, Leeching Blow on low life, and War Cry on channels.' },
+  { classId: 'ranger', plays: 'Shoot fast from a bow, avoid being hit, and keep Momentum up.', main: 'ice_shot', supports: ['faster_attacks', 'added_cold', 'critical_strikes'], extras: ['rain_of_arrows', 'smoke_step', 'barrage'], stats: 'Evasion, attack speed and crit.', rules: 'Smoke Step on wind-ups, and Rain of Arrows at 3 enemies.', weapon: 'Every attack here needs a bow.' },
+  { classId: 'mage', plays: 'Spend and recover Mana steadily to build Mana is Power, and clear from range.', main: 'spark', supports: ['added_lightning', 'elemental_focus', 'faster_casts'], extras: ['frost_ward', 'mind_sip', 'shock_nova'], stats: 'Mana, energy shield and elemental damage.', rules: 'Frost Ward on wind-ups, Mind Sip on low mana, and Shock Nova at 3 enemies. Use Frost Needle until Shock Nova.', weapon: 'Every skill here needs a wand, staff or sceptre.' },
+  { classId: 'duelist', plays: 'Block and evade to trigger Riposte, and let the counter-attacks do the work.', main: 'twin_strike', supports: ['faster_attacks', 'life_leech', 'brutality'], extras: ['iron_guard', 'ground_slam', 'parry'], stats: 'Evasion and block, then physical damage.', rules: 'Iron Guard on wind-ups, Ground Slam at 3 enemies, and Parry when life is low.' },
   { classId: 'templar', plays: 'Take hits on purpose: every one fills Fervor for a healing nova. Your class bonus favours elemental damage.', main: 'infernal_blow', supports: ['added_fire', 'elemental_focus', 'life_leech'], extras: ['heavy_strike', 'iron_guard', 'consecrate'], stats: 'Life, Armour, resistances and elemental damage.', rules: 'Iron Guard on wind-ups. Start on Heavy Strike until Infernal Blow.', weapon: 'Infernal Blow needs a mace, axe, sceptre or staff. Consecrate needs a wand, staff or sceptre.' },
-  { classId: 'shadow', plays: 'Stack poisons and wait for Coup de Grâce. Avoid crit if you want it often, because a normal crit empties Malice.', main: 'poison_dart', supports: ['lingering', 'faster_attacks', 'efficiency'], extras: ['twin_strike', 'feint', 'brine_leech'], stats: 'Evasion, attack speed and ailment damage.', rules: 'Poison Dart while the target has high life, Twin Strike whenever ready, and Brine Leech on low life.' },
+  { classId: 'shadow', plays: 'Stack poisons and wait for Coup de Grâce. Avoid crit if you want it often, because a normal crit empties Malice.', main: 'poison_dart', supports: ['lingering', 'faster_attacks', 'efficiency'], extras: ['rain_of_daggers', 'twin_strike', 'brine_leech'], stats: 'Evasion, attack speed and ailment damage.', rules: 'Rain of Daggers at 3 enemies, Twin Strike whenever ready, and Brine Leech on low life.', weapon: 'Rain of Daggers needs a dagger.' },
+  { classId: 'exile', plays: 'No mechanic and no bonus. From the centre start you hold a Rusted Sword, so play it like a simple Warrior. From another class\'s start, follow that class\'s plan.', main: 'heavy_strike', supports: ['faster_attacks', 'life_leech', 'brutality'], extras: ['ground_slam', 'iron_guard', 'leeching_blow'], stats: 'Life first, then whatever defence your gear rolls.', rules: 'Iron Guard on wind-ups, Ground Slam at 3 enemies, and Leeching Blow on low life.' },
 ];
 
 function buildsBlock(): string {
@@ -758,7 +774,7 @@ function rulesBlock(): string {
   return table(['Rule', 'Value', 'Needs'], (Object.values(RULE_LABELS)).map((r) => [
     esc(r.label),
     r.status ? 'A status' : r.ground ? 'A kind of ground' : r.defaultValue != null ? `Default ${r.defaultValue}${r.unit ?? ''}` : '',
-    r.unlock ? `${esc(RULE_UNLOCK_NAMES[r.unlock])} (War Table level ${stationDef('war_table').levels.findIndex((l) => l.grants?.rules?.includes(r.unlock!)) + 1})${r.act ? `, Act ${r.act}` : ''}` : 'Free',
+    r.unlock && !freshAutomation().rules.includes(r.unlock) ? `${esc(RULE_UNLOCK_NAMES[r.unlock])} (War Table level ${ruleUnlockLevel(r.unlock)})${r.act ? `, Act ${r.act}` : ''}` : 'Free',
   ]));
 }
 
@@ -830,9 +846,8 @@ function xpTool() {
     xp: z.monsters.reduce((sum, m) => sum + monsterXp(makeMonster(m, false)), 0) / z.monsters.length,
   }));
   // how far past or short of an area's range changes XP, from the game's own function
-  const over: number[] = [];
-  for (let n = 1; areaXpMultiplier(200 + n, [200, 200]) > 0; n++) over.push(areaXpMultiplier(200 + n, [200, 200]));
-  const under = [1, 2].map((n) => areaXpMultiplier(200 - n, [200, 200]));
+  const over = OVERLEVEL_XP_PENALTY.map((_, i) => areaXpMultiplier(201 + i, [200, 200]));
+  const under = UNDERLEVEL_XP_BONUS.map((_, i) => areaXpMultiplier(199 - i, [200, 200]));
   const spots = Object.values(SKILLS).filter((s) => s.id !== 'combat' && !s.soon).map((s) => ({
     n: s.name, spots: actionsFor(s.id).filter((a) => !a.soon).map((a) => ({ n: a.name, lvl: a.level, ms: a.intervalMs, xp: a.xp })),
   }));
@@ -857,7 +872,7 @@ function compareTool() {
 
 function ruleTool() {
   const keys = Object.keys(RULE_LABELS) as RuleCondition[];
-  const unlockLevel = (u?: RuleUnlock) => (u ? stationDef('war_table').levels.findIndex((l) => l.grants?.rules?.includes(u)) + 1 : 1);
+  const unlockLevel = (u?: RuleUnlock) => (u ? ruleUnlockLevel(u) : 1);
   const rules = keys.map((id) => {
     const r = RULE_LABELS[id];
     return { id, label: r.label, unit: r.unit, def: r.defaultValue, status: r.status, ground: r.ground, level: unlockLevel(r.unlock), act: r.act };
@@ -871,7 +886,7 @@ function ruleTool() {
       rule: { i: keys.indexOf(g.defaultRule.when), value: g.defaultRule.value },
     };
   });
-  const levels = stationDef('war_table').levels.map((l, i) => ({ level: i + 1, text: l.effect.split(':')[0], slots: l.grants?.ruleSlots }));
+  const levels = stationDef('war_table').levels.map((l, i) => ({ level: i + 1, text: l.effect.split(':')[0], slots: i === 0 ? freshAutomation().ruleSlots : l.grants?.ruleSlots }));
   return tool('rules', { rules, skills, levels, statuses: TARGET_STATUSES.map((s) => s.label), grounds: [...GROUND_IN_PLAY].map((g) => title(g)) });
 }
 

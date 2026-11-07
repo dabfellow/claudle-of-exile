@@ -68,7 +68,7 @@ describe('new skill gems', () => {
       expect(supportFits(sigs[0], def)).toBe(true);
       expect(supportFits(sigs[0], activeGemDef('heavy_strike'))).toBe(false);
     }
-    for (const [attr, n] of [['str', 37], ['dex', 38], ['int', 33]] as const) expect(ACTIVE_GEMS.filter((g) => g.attr === attr)).toHaveLength(n);
+    for (const [attr, n] of [['str', 50], ['dex', 48], ['int', 50]] as const) expect(ACTIVE_GEMS.filter((g) => g.attr === attr)).toHaveLength(n);
   });
 
   it('Pummel strikes three times per use, four with Tavern Brawler', () => {
@@ -144,7 +144,7 @@ describe('new skill gems', () => {
     run(s, ctx, 3000, () => ctx.events.some((e) => e.t === 'skill'));
     expect(s.mana).toBeGreaterThanOrEqual(max * 0.3 - 1);
     expect(activeGemDef('meditate').defaultRule.when).toBe('manaBelow');
-    const rc = { lifePct: 100, manaPct: 20, enemies: 1, targetLifePct: 100, casting: false, channeling: false, boss: false, meterFull: false, targetStatus: new Set<TargetStatus>(), ground: new Set<GroundKind>(), frostbite: 0 };
+    const rc = { lifePct: 100, manaPct: 20, enemies: 1, targetLifePct: 100, casting: false, channeling: false, boss: false, meterFull: false, exertionFull: false, targetStatus: new Set<TargetStatus>(), ground: new Set<GroundKind>(), frostbite: 0 };
     expect(ruleAllows({ when: 'manaBelow', value: 30 }, rc, false)).toBe(true);
     expect(ruleAllows({ when: 'manaBelow', value: 30 }, { ...rc, manaPct: 50 }, false)).toBe(false);
     // target status rules

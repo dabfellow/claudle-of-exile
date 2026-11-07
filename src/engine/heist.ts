@@ -235,7 +235,7 @@ export function heistStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
   // Overtime: the same offline speed as any other skilling
   const offlineBoost = ctx.offline ? 1 + (skillTreeStats(s).offlineSpeed ?? 0) / 100 : 1;
   focusStep(s, ctx, dt);
-  s.action.progress += dt * offlineBoost * focusMult(s);
+  s.action.progress += dt * offlineBoost * focusMult(s) * (ctx.event?.gatheringSpeed ?? 1);
   if (s.action.progress < interval) return;
   s.action.progress -= interval;
   finishRoom(s, ctx, job, d);

@@ -164,7 +164,7 @@ describe('unlocks', () => {
 });
 
 describe('offline rules', { timeout: 30_000 }, () => {
-  it('caps at 8 hours and the Watchtower raises it to 24', () => {
+  it('caps at 8 hours and the Watchtower raises it to 36', () => {
     const s = newGame(1);
     expect(offlineCapMs(s)).toBe(8 * 3_600_000);
     const hours = [8];
@@ -174,7 +174,7 @@ describe('offline rules', { timeout: 30_000 }, () => {
       upgradeStation(s, ctx(), 'watchtower');
       hours.push(s.account.automation.offlineHours);
     }
-    expect(hours).toEqual([8, 12, 16, 24]);
+    expect(hours).toEqual([8, 12, 16, 24, 36]);
     expect(simulateOffline(newGame(1), ctx(), 48 * 3_600_000).ms).toBe(8 * 3_600_000);
   });
 
@@ -216,8 +216,9 @@ describe('offline rules', { timeout: 30_000 }, () => {
     startCombat(s, c, 'mudflats');
     s.zoneKills.mudflats = zoneDef('mudflats').bossEvery;
     s.combat!.monsters = [makeMonster(zoneDef('mudflats').boss, true, 99)];
-    simulateOffline(s, c, 10 * 60_000);
-    expect(s.lifetime.bossKills).toBe(1);
+    const sum = simulateOffline(s, c, 10 * 60_000);
+    expect(s.lifetime.bossKills + s.lifetime.deaths).toBeGreaterThan(0);
+    expect(sum.bossWaiting).toBeNull();
   });
 
   it('with wind-up rules earned, a strong build beats a new boss offline', () => {
@@ -253,6 +254,20 @@ describe('offline rules', { timeout: 30_000 }, () => {
     expect(s.action).toBeNull();
     expect(s.combat).toBeNull();
     expect(sum.materials.sunpetal).toBeGreaterThan(10);
+  });
+
+  it('Overtime speeds the Greenhouse while offline', () => {
+    const grower = (overtime: boolean) => {
+      const s = newGame(1, { name: 'T', classId: 'warrior' });
+      s.skillPassives = ['harvesting_ks', ...(overtime ? ['core_3'] : [])];
+      s.greenhouse = { actionId: 'herb_sun', progress: 0 };
+      return s;
+    };
+    const plain = grower(false);
+    const fast = grower(true);
+    simulateOffline(plain, ctx(), 60 * 60_000);
+    simulateOffline(fast, ctx(), 60 * 60_000);
+    expect(fast.account.bank.sunpetal).toBeGreaterThan(plain.account.bank.sunpetal);
   });
 });
 

@@ -71,23 +71,23 @@ export const STAT_KEYS = [
   'evadeSpeed', 'manaRegenFlat', 'lifeFlaskRecovery', 'manaFlaskRecovery', 'utilityFlaskDuration',
   'bloodPact', 'windDancer', 'mindOverFlesh', 'steadyHand', 'arcaneRecursion', 'bastion', 'energyShield',
   'energyShieldPct', 'esRechargePct',
-  // local mods (docs/design/GEAR.md): change only the item they're on
+  // local mods (docs/GAME.md): change only the item they're on
   'localPhysPct', 'localArmourPct', 'localEvasionPct', 'localEsPct',
   'physLeech', 'elemLeech', 'charXp', 'manaAsEs', 'spellBlock', 'poisonOnHit', 'burnChance',
   // flat damage added to spells at full effectiveness
   'spellFireMin', 'spellFireMax', 'spellColdMin', 'spellColdMax', 'spellLightMin', 'spellLightMax',
-  // class mechanic knobs (docs/design/CLASSES.md): only the class with that mechanic uses them
+  // class mechanic knobs (docs/GAME.md): only the class with that mechanic uses them
   'rageMax', 'rageEffect', 'rageDecay', 'rageRegen', 'rageOnHitTaken', 'endlessFury',
   'ripostePct', 'riposteCooldown', 'riposteHeal', 'riposteCrit', 'riposteBleed', 'perfectForm',
   'momentumMax', 'momentumEffect', 'momentumRetain', 'momentumEvasion', 'perpetualMotion',
-  'maliceMax', 'coupPct', 'maliceCritKeep', 'coupAilment', 'maliceOnHitTaken', 'thousandCuts',
+  'maliceMax', 'coupPct', 'maliceCritKeep', 'coupAilment', 'maliceOnHitTaken', 'thousandCuts', 'maliceOnHit',
   'manaPower', 'manaPowerFull', 'manaPowerEs', 'allOrNothing',
   'fervorPct', 'novaPct', 'novaHeal', 'novaEs', 'saintsSacrifice',
-  // skill modifiers on uniques (docs/design/SKILLS_AND_UNIQUES.md ★): tweak one named skill
+  // skill modifiers on uniques (docs/GAME.md ★): tweak one named skill
   'pummelHits', 'barrageArrows', 'parryBlocks', 'hammerConvert', 'meditateEs', 'infernalSpread',
   // forbidden keystones
   'overclock', 'knifesEdge', 'eternalHunger',
-  // minions (docs/design/MINIONS.md)
+  // minions (docs/GAME.md)
   'minionPct', 'minionLifePct', 'minionSpeedPct',
 ] as const;
 
@@ -103,6 +103,8 @@ export interface RolledMod {
   tier: number;
   values: number[];
   crafted?: boolean;
+  fractured?: boolean;
+  elevated?: boolean;
 }
 
 export interface Item {
@@ -115,11 +117,19 @@ export interface Item {
   suffixes: RolledMod[];
   uniqueId?: string;
   /** Locksmith's Wax: how the item looked when the impression was taken, ready to restore */
-  impression?: Pick<Item, 'rarity' | 'name' | 'prefixes' | 'suffixes' | 'honed'>;
-  /** the one rune slot (docs/design/RUNES.md): a rune id, apart from the modifiers, so no orb touches it */
+  impression?: Pick<Item, 'rarity' | 'name' | 'prefixes' | 'suffixes' | 'honed' | 'fractured' | 'elevated' | 'doomImplicit' | 'voidSlot'>;
+  /** the one rune slot (docs/GAME.md): a rune id, apart from the modifiers, so no orb touches it */
   rune?: string;
   /** Ancient Whetstone: the affix id it last raised. Only counts while that modifier is on the item */
   honed?: string;
+  /** Fractured Orb: the affix id permanently locked onto the item */
+  fractured?: string;
+  /** Exile's Doom Sigil: the affix id elevated to Tier 0 Doom tier */
+  elevated?: string;
+  /** Architect's Doom Sigil: the Doom Implicit modifier on the item */
+  doomImplicit?: string;
+  /** Void Sigil: whether the 7th modifier slot has been unlocked */
+  voidSlot?: boolean;
 }
 
 export type InstillCondition = 'lowLife' | 'lowMana' | 'fullCharges' | 'bossCast' | 'savageHit' | 'elemHit' | 'chaosHit' | 'frostbite';
@@ -143,6 +153,8 @@ export interface FlaskInstance {
 }
 
 export interface Dot {
+  /** Player ailment damage already emitted to the combat log. */
+  reported?: number;
   kind: 'bleed' | 'poison' | 'ignite' | 'burn';
   dps: number;
   remainingMs: number;
@@ -167,6 +179,24 @@ export interface MonsterInstance {
   maxLife: number;
   life: number;
   damage: number;
+  /** Archetype damage is for basic attacks; telegraphed boss damage keeps its old budget. */
+  basicDamageMult?: number;
+  archetype?: import('../data/monsterProfiles').MonsterArchetype;
+  armour?: number;
+  evasion?: number;
+  es?: number;
+  maxEs?: number;
+  esDelayMs?: number;
+  /** Recharge is a stat, not free extra pool: bosses keep their authored ward/recovery mechanics. */
+  esRechargePct?: number;
+  blockChance?: number;
+  spellBlockChance?: number;
+  critChance?: number;
+  critMulti?: number;
+  dotShare?: number;
+  attackAilment?: 'poison' | 'bleed' | 'burn';
+  /** Original stats used for calibration and subsequent pool scaling. */
+  budget?: { life: number; damage: number; attackMs: number; damageType: DamageType };
   dmgType: DamageType;
   /** basic attack or spell: what it's called, which it is, and its attack or cast time */
   attackName: string;
@@ -174,6 +204,16 @@ export interface MonsterInstance {
   attackMs: number;
   attackTimer: number;
   isBoss: boolean;
+  /** PoE-style monster rarity and its visible modifiers. Bosses are unique. */
+  rarity: 'normal' | 'magic' | 'rare' | 'unique';
+  mods: import('../data/monsterMods').MonsterModId[];
+  xpMult: number;
+  lootMult: number;
+  regenPct: number;
+  evasionPen: number;
+  leechPct: number;
+  /** Multiplier for area, chain and piercing hits. */
+  areaTaken: number;
   /** boss mechanics and their timers (ms until the next use) */
   mechanics: BossMechanic[];
   timers: Partial<Record<BossMechanic, number>>;
@@ -244,6 +284,54 @@ export interface MonsterInstance {
   /** ms into the channel, and how many of its pulses have gone off */
   channelMs?: number;
   pulses?: number;
+  /** Doom meter (0–20): fills with hits from doom skills, detonates at 20 as chaos burst */
+  doom?: number;
+  /** ms accumulated since last hit, for doom decay (1 per second without a hit) */
+  doomDecayMs?: number;
+  /** Mark applied by a Mark skill: stacks on every hit, bursts when full */
+  mark?: {
+    kind: string;
+    stacks: number;
+    maxStacks: number;
+    remainingMs: number;
+    burst: { damage: [number, number]; type: DamageType; radius?: number; extraEffect?: string };
+  };
+  /** Map tier identity: Elite pack monster */
+  elite?: boolean;
+  /** Map tier identity: Permanent enrage (30% speed, 40% damage) */
+  permEnrage?: boolean;
+  /** Map tier identity: Twin boss lieutenant or main boss sharing a Life pool */
+  twinOf?: number;
+  isTwin?: boolean;
+  /** Doomed Maps: Revenant monster revives once at 30% Life */
+  revenant?: boolean;
+  /** Doomed Maps: Warded threshold (6s damage immunity at 60% Life) */
+  doomedWardUsed?: boolean;
+  immuneMs?: number;
+  /** Hard Boss: Cracked Fault weak point object (0 damage, shatters to break Ossuar/Crownless plating) */
+  weakPoint?: boolean;
+  weakPointExpireMs?: number;
+  /** Hard Boss: Ossuar plated carapace state */
+  plated?: boolean;
+  platingBreakMs?: number;
+  platingStacks?: number;
+  /** Hard Boss: Mother Vael Choir Singer role */
+  choir?: 'mending' | 'wall' | 'haste';
+  /** Hard Boss: Twin Regents guard and bonded partner uid */
+  guardedMs?: number;
+  regentPartner?: number;
+  /** Hard Boss: The Undertow damage taken during a Deep Call channel */
+  channelDmgTaken?: number;
+  /** Hard Boss: The Crownless current phase (1, 2, 3) */
+  crownlessPhase?: 1 | 2 | 3;
+  /** Uber Boss: The First Exile adapted stance */
+  mirrorStance?: 'melee' | 'projectile' | 'spell';
+  /** Uber Boss: The Architect of Ruin current ruin phase (1..6) */
+  ruinPhase?: number;
+  /** Uber Boss: The Void Sovereign carapace state */
+  voidShielded?: boolean;
+  voidBuildup?: number;
+  voidVulnMs?: number;
 }
 
 /** A curse on a monster, with its numbers already scaled for gem level, supports and bosses. */
@@ -373,6 +461,11 @@ export interface HealOverTime {
 
 export interface CombatRuntime {
   zoneId: string;
+  /** Monster-inflicted ailments, independent from ground and the act-specific Frostbite mechanic. */
+  playerDots?: Dot[];
+  playerChillMs?: number;
+  playerShockMs?: number;
+  playerBuild?: { burn: number; chill: number; shock: number };
   monsters: MonsterInstance[];
   /** the player has sent for the boss; it comes once the field is clear */
   challenged?: boolean;
@@ -484,6 +577,16 @@ export interface CombatRuntime {
   hungerMs: number;
   /** what the character's ascendancy keeps track of in a fight */
   asc: AscendancyRuntime;
+  /** Exertion charge counter (0–5): builds with player hits, spent by Exertion-tagged skills */
+  exertion?: number;
+  /** Active totems placed by totem skills */
+  totems?: { gemId: string; life: number; maxLife: number; remainingMs: number; nextAttackMs: number }[];
+  /** Hard Boss: The Undertow cold tide stacks slowing player actions */
+  tideStacks?: number;
+  /** Hard/Uber Boss: elapsed fight time in ms for the 5-minute escalating enrage */
+  fightElapsedMs?: number;
+  /** Uber Boss: player's most recent skill style for The First Exile's stance adaptation */
+  lastPlayerStyle?: 'melee' | 'projectile' | 'spell';
 }
 
 /** Ascendancy state that lasts as long as a fight (engine/combat.ts). Unused fields stay at zero. */
@@ -512,12 +615,12 @@ export interface AscendancyRuntime {
 /** When a Lightkeeper's stored novas go off on their own. */
 export type NovaRelease = 'full' | 'windup' | 'lifeLow' | 'manual';
 
-/** A character's ascendancy (docs/design/ASCENDANCIES.md). */
+/** A character's ascendancy (docs/GAME.md). */
 export interface AscendancyState {
   id: AscendancyId | null;
   /** allocated nodes; the gate comes free with the choice and isn't listed */
   nodes: string[];
-  /** trials passed: 1 opens the choice, 2 the notables, 3 the capstone */
+  /** trials passed: the first opens the choice; all four grant points with no node-specific locks */
   trials: number;
   /** points earned */
   points: number;
@@ -528,8 +631,8 @@ export interface AscendancyState {
   release: NovaRelease;
 }
 
-/** What a Craft until… activity spends each step: an orb (optionally with a Fossil) or an Essence. */
-export type CraftMethod = { orb: string; fossil?: string | null } | { essence: string };
+/** What a Craft until… activity spends each step: an orb (optionally with a Fossil or Forger's Seal) or an Essence. */
+export type CraftMethod = { orb: string; fossil?: string | null; sealed?: string | null } | { essence: string };
 
 /** When a Craft until… activity stops. `minTier` is an affix tier index (higher is better). */
 export type StopRule = { kind: 'has'; affixId: string; minTier?: number } | { kind: 'twoOf'; affixIds: string[] };
@@ -597,6 +700,8 @@ export interface Settings {
 }
 
 export interface Lifetime {
+  /** Recorded from this update onward; historical death locations were not saved. */
+  deathZones?: Record<string, number>;
   kills: number;
   bossKills: number;
   deaths: number;
@@ -689,10 +794,54 @@ export interface AccountState {
   exileUnlocked: boolean;
   /** some character on the account has beaten the last act, so the Map Device stays awake for all of them */
   campaignDone?: boolean;
+  /** realm-shared map supply (`map_t1`..`map_t10`, `doomed_t1`..`doomed_t5`) */
+  maps?: Record<string, number>;
+  /** realm-shared Sextant slots on the Map Device */
+  sextants?: (SextantSlot | null)[];
+  /** realm-shared Atlas progression and allocated nodes */
+  atlas?: AtlasState;
   /** characters and accounts already folded in, so none counts twice */
   absorbed: string[];
   /** what's been taken for a market step the server hasn't confirmed yet: see engine/market.ts */
   marketHolds?: MarketHold[];
+  /** Stash tab affinities: routes deposited items to the first tab configured for that kind */
+  stashAffinities?: Record<number, StashAffinity>;
+  /** realm-shared map safety and auto-rolling preferences */
+  mapSettings?: MapSettings;
+}
+
+export interface MapSettings {
+  /** modifier ids that the player considers deadly and wishes to reroll */
+  blockedMods: string[];
+  /** whether to automatically spend a Chaos Orb to reroll maps with blocked mods during auto-run or entry */
+  autoRerollChaos: boolean;
+  /** whether to roll normal maps with random danger & reward affixes */
+  rollNormalMaps?: boolean;
+}
+
+export type StashAffinity = 'currency' | 'maps' | 'gems' | 'flasks' | 'gear' | 'contraband';
+
+export interface SextantSlot {
+  modId: string;
+  tier: 'apprentice' | 'journeyman' | 'master';
+  charges: number;
+}
+
+export interface AtlasState {
+  /** tiers (1..10) cleared at least once (+1 pt each) */
+  cleared: number[];
+  /** tiers (1..10) cleared with all unlocked Sextant slots filled (+1 pt each) */
+  slotted: number[];
+  /** tiers (1..10) cleared without dying (+1 pt each) */
+  deathless: number[];
+  /** Doomed Map tiers (1..5) cleared at least once across the realm (+2 pts each) */
+  doomedCleared?: number[];
+  /** Hard Boss ids cleared at least once across the realm (+3 pts each) */
+  hardBossesCleared?: string[];
+  /** Uber Boss zone ids cleared at least once across the realm (+5 pts each) */
+  uberBossesCleared?: string[];
+  /** allocated Atlas node ids */
+  nodes: string[];
 }
 
 /** An item being listed, or a price being paid, on its way to the Player Market. */
@@ -705,7 +854,7 @@ export interface MarketHold {
 }
 
 /** Account data arriving from elsewhere: a pre-account save, a demo, an import. */
-export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'uniqueStash' | 'uniquesSeen' | 'exileUnlocked' | 'campaignDone'>> & Partial<AccountPool>;
+export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'uniqueStash' | 'uniquesSeen' | 'exileUnlocked' | 'campaignDone' | 'maps' | 'sextants' | 'atlas' | 'mapSettings'>> & Partial<AccountPool>;
 
 /** The Stash tabs that hold more than gear. */
 export type AccountPool = Pick<AccountState, 'bank' | 'gems' | 'supportGems' | 'flaskStash'>;
@@ -714,9 +863,25 @@ export type AccountPool = Pick<AccountState, 'bank' | 'gems' | 'supportGems' | '
 export interface MapRun {
   zoneId: string;
   tier: number;
+  /** borrowed campaign area id for visuals and monster roster */
+  areaId?: string;
+  /** legacy theme field, kept for backward compatibility */
   theme: string;
+  /** Doomed Map tier (1..5) and rolled Doomed modifiers when running a Doomed Map */
+  doomedTier?: number;
+  doomedMods?: import('../data/maps').DoomedModId[];
+  /** Rolled normal map modifiers */
+  normalMods?: string[];
   packsLeft: number;
   packsTotal: number;
+  /** pack numbers (1-indexed by packs spawned) that are Elite packs in this run */
+  elitePacks?: number[];
+  /** whether all unlocked Sextant slots were filled when the run opened */
+  slottedFull?: boolean;
+  /** active Sextant modifier ids snapshot for this run */
+  sextantMods?: string[];
+  /** timer for boss arena dangerous ground in T7–8 */
+  groundMs?: number;
   /** game clock when it started */
   startedAt: number;
   /** lifetime deaths when it started: a rise means the run ended in one */
@@ -725,11 +890,11 @@ export interface MapRun {
 }
 
 export interface MapState {
-  /** maps held, by map zone id */
+  /** maps held, synced with the realm's `s.account.maps` */
   stock: Record<string, number>;
   run: MapRun | null;
   /** what auto-run keeps opening */
-  auto: { tier: number; theme: string } | null;
+  auto: { tier: number; doomed?: boolean; theme?: string } | null;
   /** running totals, to judge a loop by; runs and clearMs count finished maps */
   tally: { runs: number; clearMs: number; mapsFound: number; favoured: number };
 }

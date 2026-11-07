@@ -66,7 +66,10 @@ const plainRing = (): Item => ({ uid: 7, baseId: RING, ilvl: 10, rarity: 'normal
 beforeAll(async () => {
   db = new PGlite();
   await db.exec(SUPABASE);
-  await db.exec(readFileSync('docs/ops/market.sql', 'utf8'));
+  const migration = readFileSync('docs/ops/market.sql', 'utf8');
+  await db.exec(migration);
+  // Reapplying the operational migration must preserve the privilege boundary.
+  await db.exec(migration);
   for (const id of [ALICE, BOB, CARA, NEWBIE, ADMIN]) await db.query('insert into auth.users values ($1)', [id]);
   for (const id of [ALICE, BOB, CARA, ADMIN]) await db.query(`insert into characters values ($1, $2, '{"act1Cleared":true}')`, [`c-${id}`, id]);
   await db.query(`insert into characters values ('c-new', $1, '{"act1Cleared":false}')`, [NEWBIE]);
@@ -86,6 +89,14 @@ describe('who can trade', () => {
     await expect(as(null, 'select market_collect()')).rejects.toThrow();
   });
 
+  it('does not let temporary tables replace privileged market state', async () => {
+    const id = await list(ALICE, plainRing());
+    await db.exec('create temporary table market_bans (user_id uuid)');
+    await db.query('insert into public.market_bans (user_id) values ($1)', [BOB]);
+    try { await expect(buy(BOB, id)).rejects.toThrow('banned'); }
+    finally { await db.exec('drop table pg_temp.market_bans'); }
+  });
+
   it('keeps players who have not cleared Act 1 out', async () => {
     await expect(list(NEWBIE, plainRing())).rejects.toThrow('Clear Act 1');
   });
@@ -93,7 +104,7 @@ describe('who can trade', () => {
   it('never lets a player run the inner steps or read the tables', async () => {
     await expect(as(BOB, `select market_send($1, 'gold', 999, null, 'free money', 'standard')`, [BOB])).rejects.toThrow('permission denied');
     await expect(as(BOB, 'select market_settle()')).rejects.toThrow('permission denied');
-    expect(await as(BOB, 'select count(*)::int from market_inbox')).toBe(0);
+    await expect(as(BOB, 'select count(*)::int from market_inbox')).rejects.toThrow('permission denied');
     await expect(as(BOB, 'select market_set_rules($1, $2)', ['x', '{}'])).rejects.toThrow('Admins only');
     await expect(as(BOB, 'select market_admin_list()')).rejects.toThrow('Admins only');
     await expect(as(BOB, 'select market_admin_ban($1, true)', [ALICE])).rejects.toThrow('Admins only');
@@ -101,6 +112,35 @@ describe('who can trade', () => {
 });
 
 describe('buy now', () => {
+  it('refuses null payment fields without changing the listing or delivering goods', async () => {
+    const id = await list(ALICE, plainRing());
+    for (const [currency, amount] of [[null, 1000], ['gold', null], [null, null]]) {
+      await expect(as(BOB, 'select market_buy($1, $2, $3, $4)', [op(), id, currency, amount])).rejects.toThrow("price doesn't match");
+    }
+    expect(await browse(BOB)).toHaveLength(1);
+    expect(await collect(BOB)).toEqual([]);
+    expect(await collect(ALICE)).toEqual([]);
+  });
+
+  it('bounds requests per account and allows trading again after the window', async () => {
+    const id = await list(ALICE, plainRing());
+    for (let i = 0; i < 60; i++) await db.query('insert into market_ops (op_id, user_id) values ($1, $2)', [op(), BOB]);
+    const request = op();
+    await expect(as(BOB, 'select market_buy($1, $2, $3, $4)', [request, id, 'gold', 1000])).rejects.toThrow('Too many market requests');
+    expect(await as(BOB, 'select market_op_done($1)', [request])).toBe(false);
+    expect(await browse(BOB)).toHaveLength(1);
+    await db.query("update market_ops set created_at = now() - interval '2 minutes' where user_id = $1", [BOB]);
+    await as(BOB, 'select market_buy($1, $2, $3, $4)', [request, id, 'gold', 1000]);
+    expect(await collect(BOB)).toHaveLength(1);
+  });
+
+  it('rejects oversized public searches and unknown realms', async () => {
+    await expect(as(null, 'select market_browse(p_text => $1)', ['x'.repeat(201)])).rejects.toThrow('search is too large');
+    await expect(as(null, 'select market_browse(p_offset => 10001)')).rejects.toThrow('search is too large');
+    await expect(as(null, 'select market_browse(p_realm => null)')).rejects.toThrow("market doesn't exist");
+    await expect(as(null, "select market_browse(p_scope => 'unknown')")).rejects.toThrow('Unknown market filter');
+  });
+
   it('pays the seller less 10% and gives the buyer the item', async () => {
     const id = await list(ALICE, plainRing());
     await buy(BOB, id, 1000);
@@ -164,6 +204,13 @@ describe('buy now', () => {
 });
 
 describe('auctions', () => {
+  it('rejects a missing bid currency without creating refunds or changing the auction', async () => {
+    const id = await list(ALICE, plainRing(), 'auction');
+    await expect(as(BOB, 'select market_bid($1,$2,$3,$4)', [op(), id, null, 1000])).rejects.toThrow("price doesn't match");
+    expect((await browse(BOB))[0].high_bid).toBeNull();
+    expect(await collect(BOB)).toEqual([]);
+  });
+
   it('refunds the outbid player and sells to the highest bid at the end', async () => {
     const id = await list(ALICE, plainRing(), 'auction');
     await bid(BOB, id, 1000);

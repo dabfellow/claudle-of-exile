@@ -19,8 +19,8 @@ describe('fishing (coming soon)', () => {
     expect(s.action).toBeNull();
   });
 
-  it('has its own skilling-tree branch, and its level adds no points', () => {
-    expect(SKILL_TREE_NODES.filter((n) => n.branch === 'fishing')).toHaveLength(6);
+  it('has no spendable tree branch, and its level adds no points', () => {
+    expect(SKILL_TREE_NODES.filter((n) => n.branch === 'fishing')).toHaveLength(0);
     const s = newGame(1, { name: 'T', classId: 'warrior' });
     const before = skillTreePoints(s);
     s.skills.fishing = xpForLevel(99);

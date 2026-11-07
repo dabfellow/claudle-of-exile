@@ -19,25 +19,20 @@ export function applyDeathPenalty(s: GameState): number {
   return Math.max(0, loss);
 }
 
-/** Share of xp lost per level above an area's range. */
-const OVERLEVEL_XP_PENALTY = [0.1, 0.2, 0.4, 0.5, 0.8];
+/** Two grace levels, then a quadratic curve from 10% at three to 70% at ten, rounded to whole percentages. */
+export const OVERLEVEL_XP_PENALTY = [0, 0, ...Array.from({ length: 8 }, (_, i) => Math.round(10 + 60 * (i / 7) ** 2) / 100)];
 
-/** Past the end of that list, each further level loses this much more, down to no xp at all. */
-const OVERLEVEL_XP_RAMP = 0.01;
-
-/** Share of xp gained per level below an area's range; the last entry is the most you can get. */
-const UNDERLEVEL_XP_BONUS = [0.1, 0.2];
+/** Distance below the area's lower level; +5% at three, +20% at five, linear between and capped thereafter. */
+export const UNDERLEVEL_XP_BONUS = [0, 0, 0.05, 0.125, 0.2];
 
 /**
- * Kill xp multiplier for your level against an area's range, like PoE. It's what stops a long offline
- * run outlevelling the campaign: past the top of the range, xp falls away toward nothing.
+ * Kill XP multiplier against an area's range: a two-level grace band either side, then capped
+ * bonuses for harder areas and penalties for easier ones. Shared by live and offline kills.
  */
 export function areaXpMultiplier(playerLevel: number, [min, max]: [number, number]): number {
   if (playerLevel > max) {
     const over = playerLevel - max;
-    const steps = OVERLEVEL_XP_PENALTY.length;
-    const penalty = OVERLEVEL_XP_PENALTY[over - 1] ?? OVERLEVEL_XP_PENALTY[steps - 1] + (over - steps) * OVERLEVEL_XP_RAMP;
-    return Math.max(0, 1 - penalty);
+    return 1 - OVERLEVEL_XP_PENALTY[Math.min(over, OVERLEVEL_XP_PENALTY.length) - 1];
   }
   if (playerLevel < min) return 1 + UNDERLEVEL_XP_BONUS[Math.min(min - playerLevel, UNDERLEVEL_XP_BONUS.length) - 1];
   return 1;
@@ -48,6 +43,6 @@ export function areaXpLabel(playerLevel: number, range: [number, number]): strin
   const mult = areaXpMultiplier(playerLevel, range);
   if (mult === 1) return '';
   if (mult === 0) return 'No XP';
-  const pct = Math.round((mult - 1) * 100);
+  const pct = +((mult - 1) * 100).toFixed(1);
   return `${pct > 0 ? '+' : '−'}${Math.abs(pct)}% XP`;
 }

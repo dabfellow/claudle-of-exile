@@ -1,4 +1,4 @@
-import type { EventBoost } from '../data/events';
+import type { EventBoost, EventRow } from '../data/events';
 import type { GameEvent } from './types';
 import type { Rng } from './rng';
 
@@ -12,6 +12,7 @@ export interface Ctx {
   offline?: boolean;
   /** the bonuses of the limited-time events running right now */
   event?: EventBoost | null;
+  eventRows?: EventRow[];
 }
 
 export function makeCtx(rng: Rng, now = 0, sink: GameEvent[] = []): Ctx & { events: GameEvent[] } {

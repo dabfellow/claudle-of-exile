@@ -1,6 +1,6 @@
 /* ==========================================================================
    The Ashen Codex — design tokens and shared components.
-   Spec: docs/design/DESIGN_SYSTEM.md. Components use these tokens, never raw colours.
+   Spec: docs/DEVELOPMENT.md. Components use these tokens, never raw colours.
    ========================================================================== */
 :root {
   /* surfaces */
@@ -39,6 +39,7 @@
   --rare: #e3cf6b;
   --unique: #c97c44;
   --crafted: #b3bcef;
+  --fractured: #d4af37;
   --enchant: #d99a62;
   --currency: #c9b27a;
   --wood: #6b4a2b;
@@ -157,6 +158,212 @@ h3 {
 
 .num {
   font-variant-numeric: tabular-nums;
+}
+
+/* Atlas: a dense, connected passive-tree canvas rather than a stack of cards. */
+.atlas-summary {
+  margin-bottom: var(--s-3);
+}
+
+.atlas-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: var(--s-3);
+  align-items: start;
+}
+
+.atlas-tree-viewport {
+  position: relative;
+  min-height: 680px;
+  max-height: min(74vh, 900px);
+  overflow: auto;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(circle at center, rgba(209, 173, 114, 0.1) 0, rgba(209, 173, 114, 0.025) 22%, transparent 43%),
+    repeating-radial-gradient(circle at center, transparent 0 91px, rgba(209, 173, 114, 0.045) 92px 93px),
+    var(--bg-2);
+  box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.65);
+}
+
+.atlas-tree-canvas {
+  position: relative;
+  width: 1280px;
+  height: 1280px;
+  min-width: 1280px;
+}
+
+.atlas-connections {
+  position: absolute;
+  inset: 0;
+  width: 1280px;
+  height: 1280px;
+  pointer-events: none;
+}
+
+.atlas-connections line {
+  stroke: var(--line-2);
+  stroke-width: 3;
+  opacity: 0.62;
+}
+
+.atlas-connections line.open {
+  stroke: var(--accent-line);
+  opacity: 0.9;
+}
+
+.atlas-connections line.allocated {
+  stroke: var(--accent-2);
+  stroke-width: 5;
+  filter: drop-shadow(0 0 4px var(--accent-glow));
+  opacity: 1;
+}
+
+.atlas-core {
+  position: absolute;
+  left: 640px;
+  top: 640px;
+  width: 116px;
+  height: 116px;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  border: 3px double var(--accent);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--panel-3), var(--bg-2));
+  color: var(--accent-2);
+  box-shadow: 0 0 34px var(--accent-glow), inset 0 0 20px rgba(209, 173, 114, 0.18);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.16em;
+}
+
+.atlas-node {
+  position: absolute;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid var(--line-2);
+  border-radius: 50%;
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: scale var(--dur-fast) var(--ease), border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+
+.atlas-node:hover,
+.atlas-node.selected {
+  z-index: 3;
+  scale: 1.18;
+  border-color: var(--accent-2);
+}
+
+.atlas-node.available {
+  border-color: var(--accent-line);
+  color: var(--accent-2);
+  box-shadow: 0 0 10px var(--accent-glow);
+  animation: atlas-ready 1.8s ease-in-out infinite;
+}
+
+.atlas-node.allocated {
+  border-color: var(--accent-2);
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 0 14px var(--accent-glow);
+}
+
+.atlas-node.notable {
+  width: 45px;
+  height: 45px;
+  border-width: 3px;
+  font-size: var(--fs-md);
+}
+
+.atlas-node.keystone {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  rotate: 45deg;
+  border-width: 3px;
+}
+
+.atlas-node.keystone > span {
+  rotate: -45deg;
+}
+
+.atlas-node.sustain.selected { box-shadow: 0 0 18px var(--cold); }
+.atlas-node.bounty.selected { box-shadow: 0 0 18px var(--rare); }
+.atlas-node.surveying.selected { box-shadow: 0 0 18px var(--magic); }
+.atlas-node.peril.selected { box-shadow: 0 0 18px var(--danger); }
+
+.atlas-wing-label {
+  position: absolute;
+  z-index: 1;
+  width: 190px;
+  text-align: center;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.atlas-wing-label b {
+  display: block;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+}
+
+.atlas-wing-label span {
+  display: block;
+  font-size: var(--fs-2xs);
+}
+
+.atlas-wing-label.sustain { left: 18px; top: 610px; }
+.atlas-wing-label.bounty { right: 18px; top: 610px; }
+.atlas-wing-label.surveying { left: 545px; top: 18px; }
+.atlas-wing-label.peril { left: 545px; bottom: 18px; }
+
+.atlas-inspector {
+  position: sticky;
+  top: var(--s-3);
+  margin: 0;
+  min-height: 190px;
+  border-top: 3px solid var(--accent);
+}
+
+.atlas-inspector.sustain { border-top-color: var(--cold); }
+.atlas-inspector.bounty { border-top-color: var(--rare); }
+.atlas-inspector.surveying { border-top-color: var(--magic); }
+.atlas-inspector.peril { border-top-color: var(--danger); }
+
+.atlas-wing-name {
+  margin-top: var(--s-1);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+@keyframes atlas-ready {
+  50% { box-shadow: 0 0 18px var(--accent-glow); }
+}
+
+@media (max-width: 900px) {
+  .atlas-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .atlas-inspector {
+    position: static;
+    grid-row: 1;
+  }
+
+  .atlas-tree-viewport {
+    min-height: 560px;
+  }
 }
 
 .muted {
@@ -2672,6 +2879,15 @@ h3 {
   color: var(--crafted);
 }
 
+.mod.fractured {
+  color: var(--fractured);
+}
+
+.mod-tier.mod-fractured-badge {
+  color: var(--fractured);
+  font-weight: 600;
+}
+
 .mod.inactive {
   color: var(--dim);
 }
@@ -4048,7 +4264,7 @@ g.tut-hint circle.body {
   align-self: center;
 }
 
-/* ---- battlefield: a half-ring of hexes, the player on the bottom edge (docs/design/BATTLEFIELD.md) ---- */
+/* ---- battlefield: a half-ring of hexes, the player on the bottom edge (docs/GAME.md) ---- */
 .arena-side {
   display: flex;
   flex-direction: column;
@@ -5242,6 +5458,27 @@ img.art.mat-art {
 .rarity-magic { color: var(--magic); }
 .rarity-rare { color: var(--rare); }
 .rarity-unique { color: var(--unique); }
+
+.monster-rarity-magic { border-color: color-mix(in srgb, var(--magic) 65%, var(--line)) !important; }
+.monster-rarity-rare { border-color: color-mix(in srgb, var(--rare) 75%, var(--line)) !important; }
+.monster-rarity-unique { border-color: color-mix(in srgb, var(--unique) 80%, var(--line)) !important; }
+/* a rarity glow on the battlefield token too, so magic, rare and unique stand out at a glance */
+.bf-token.monster-rarity-magic:not(.targeted):not(.martyr):not(.chained) {
+  border-color: color-mix(in srgb, var(--magic) 65%, var(--line));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--magic) 45%, transparent), 0 0 8px color-mix(in srgb, var(--magic) 30%, transparent);
+}
+.bf-token.monster-rarity-rare:not(.targeted):not(.martyr):not(.chained) {
+  border-color: color-mix(in srgb, var(--rare) 75%, var(--line));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rare) 50%, transparent), 0 0 10px color-mix(in srgb, var(--rare) 35%, transparent);
+}
+.bf-token.monster-rarity-unique:not(.targeted):not(.martyr):not(.chained) {
+  border-color: color-mix(in srgb, var(--unique) 80%, var(--line));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--unique) 55%, transparent), 0 0 12px color-mix(in srgb, var(--unique) 40%, transparent);
+}
+.bf-rarity-badge { font-size: 9px; font-weight: 800; flex: none; }
+.monster-mod { color: var(--rare); border-color: color-mix(in srgb, var(--rare) 35%, var(--line)); }
+.monster-mod-list { display: grid; gap: 3px; min-width: 0; font-size: var(--fs-sm); margin: 2px 0; }
+.monster-mod-line { line-height: 1.35; }
 
 .mod.enchant {
   color: var(--enchant);
@@ -7723,3 +7960,20 @@ button.hx-mat:hover {
   align-items: center;
   text-align: center;
 }
+/* Admin diagnostics remain scrollable on narrow screens and never render raw snapshot HTML. */
+.admin-table-wrap { overflow-x: auto; margin: 12px 0; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-table th, .admin-table td { padding: 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+.admin-snapshot, .admin-message-form, .admin-mail { margin-top: 12px; padding: 10px 0; }
+.admin-snapshot summary, .admin-message-form summary, .admin-mail summary { cursor: pointer; }
+.admin-snapshot pre { max-height: 440px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; }
+.admin-event-builder { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end; }
+.admin-event-builder label, .admin-message-form label { display: grid; gap: 5px; font-size: 12px; }
+.admin-message-form .textarea { width: 100%; margin: 10px 0; }
+.admin-message-form .row > label { max-width: 100%; min-width: 0; }
+.admin-message-form select { max-width: 100%; }
+.admin-message-form > .btn { margin-top: 10px; }
+.admin-funnel { display: flex; gap: 8px; overflow-x: auto; }
+.admin-funnel > div { flex: 1; min-width: 76px; display: grid; gap: 8px; text-align: center; padding: 14px 8px; background: var(--bg); border: 1px solid var(--line); }
+.admin-funnel b { font-size: 22px; }
+.admin-funnel span { font-size: 12px; }

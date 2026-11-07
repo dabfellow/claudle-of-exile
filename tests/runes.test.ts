@@ -70,7 +70,7 @@ describe('the skill', () => {
   });
 
   it('has a recipe for every rune, made only of what the game can gather', () => {
-    const recipes = actionsFor('runecarving');
+    const recipes = actionsFor('runecarving').filter((a) => a.id.startsWith('carve_rune_'));
     expect(recipes).toHaveLength(RUNES.length);
     for (const r of RUNES) expect(actionDef(`carve_${r.id}`).outputs).toEqual({ [r.id]: 1 });
     for (const a of recipes) {

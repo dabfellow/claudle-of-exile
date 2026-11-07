@@ -3,7 +3,7 @@ import { useGame } from '../../game';
 import { Badge } from '../components/common';
 import { Icon } from '../components/Icon';
 
-/** Skills that are planned but not built: a teaser list (docs/design/SKILLING_REWORK.md §8). */
+/** Skills that are planned but not built: a teaser list (docs/GAME.md). */
 export function UpcomingSkillsPage() {
   const s = useGame();
   const upcoming = UPCOMING_SKILLS.filter((u) => !u.gate || !s.unlockedZones.includes(u.gate.zone));

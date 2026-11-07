@@ -24,6 +24,8 @@ export function marketRules() {
     ),
     // left out, the server refuses any listing of a no-trade unique
     uniques: Object.fromEntries(UNIQUES.filter((u) => !u.noTrade).map((u) => [u.id, { name: u.name, baseId: u.baseId, mods: u.mods }])),
+    // Only the admin compensation validator uses this catalogue; ordinary listings still use `uniques` above.
+    adminUniques: Object.fromEntries(UNIQUES.map((u) => [u.id, { name: u.name, baseId: u.baseId, mods: u.mods }])),
     runes: RUNES.map((r) => r.id),
     currencies: ['gold', ...CURRENCIES.map((c) => c.id)],
   };

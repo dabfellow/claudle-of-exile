@@ -32,7 +32,7 @@ export function ProgressBar({
   );
 }
 
-// ---------- Ashen Codex building blocks (docs/design/DESIGN_SYSTEM.md) ----------
+// ---------- Ashen Codex building blocks (docs/DEVELOPMENT.md) ----------
 
 /** The title block every page starts with. */
 export function PageHeader({ title, kicker, children, actions }: { title: ReactNode; kicker?: ReactNode; children?: ReactNode; actions?: ReactNode }) {

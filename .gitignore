@@ -7,6 +7,12 @@ tmp/
 # local secrets (Supabase keys etc.)
 .env*.local
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
 
 .cloudflare/
 .wrangler/

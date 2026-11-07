@@ -1,11 +1,14 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { readFileSync } from 'node:fs';
+import { assertPublicEnv } from './scripts/publicEnv';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  assertPublicEnv({ ...loadEnv(mode, process.cwd(), 'VITE_'), ...Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith('VITE_'))) });
+  return ({
   // the Cloudflare plugin builds for Workers; tests run plain Node, so leave it out there
   plugins: [react(), ...(mode === 'test' ? [] : [cloudflare()])],
   // shown on feedback notes and crash reports, so you know which build a player was on
@@ -32,4 +35,5 @@ export default defineConfig(({ mode }) => ({
     environment: 'node',
     include: ['tests/**/*.test.ts'],
   },
-}) as never);
+}) as never;
+});

@@ -34,7 +34,7 @@ export type WeaponFamily = 'mace' | 'axe' | 'sword' | 'dagger' | 'bow' | 'sceptr
 
 export type Attribute = 'str' | 'dex' | 'int';
 
-/** Bases from this level up carry a bonus built-in mod (docs/design/GEAR.md). */
+/** Bases from this level up carry a bonus built-in mod (docs/GAME.md). */
 export const IMPLICIT_LEVEL = 40;
 
 /** A bonus implicit's value at level 40 and at level 60. It keeps climbing at that rate past 60. */
@@ -315,7 +315,7 @@ export const BASES: BaseDef[] = [
   A('raven_spirit_shield', 'Raven Spirit Shield', 'offhand', 47, 'int', 91),
   A('hierophant_ward', "Hierophant's Ward", 'offhand', 54, 'int', 110),
   A('seraph_ward', 'Seraph Ward', 'offhand', 60, 'int', 125),
-  // hybrid tiers to level 60 (docs/design/GEAR.md)
+  // hybrid tiers to level 60 (docs/GAME.md)
   A('studded_round_shield', 'Studded Round Shield', 'offhand', 12, 'str_dex', 36),
   A('wyrmscale_shield', 'Wyrmscale Shield', 'offhand', 24, 'str_dex', 73),
   A('gladiator_buckler', "Gladiator's Buckler", 'offhand', 36, 'str_dex', 115),
@@ -334,7 +334,7 @@ export const BASES: BaseDef[] = [
   A('wraith_shield', 'Wraith Shield', 'offhand', 44, 'dex_int', 150),
   A('umbral_ward', 'Umbral Ward', 'offhand', 52, 'dex_int', 185),
   A('voidwalker_ward', 'Voidwalker Ward', 'offhand', 60, 'dex_int', 220),
-  // tiers to level 80 (docs/design/GEAR.md): pure 67, 74, 80; hybrid 64, 72, 80
+  // tiers to level 80 (docs/GAME.md): pure 67, 74, 80; hybrid 64, 72, 80
   A('colossus_bulwark', 'Colossus Bulwark', 'offhand', 67, 'str', 425),
   A('titan_aegis', 'Titan Aegis', 'offhand', 74, 'str', 485),
   A('godforged_tower_shield', 'Godforged Tower Shield', 'offhand', 80, 'str', 535),
@@ -360,7 +360,7 @@ export const BASES: BaseDef[] = [
   A('hunter_hood', 'Hunter Hood', 'helmet', 16, 'dex', 48),
   A('great_helm', 'Mithril Great Helm', 'helmet', 32, 'str', 115),
   A('shadow_mask', 'Shadow Mask', 'helmet', 32, 'dex', 115),
-  // pure tiers to level 60 (docs/design/GEAR.md): str, dex, int at 8, 24, 40, 47, 54, 60
+  // pure tiers to level 60 (docs/GAME.md): str, dex, int at 8, 24, 40, 47, 54, 60
   A('blackened_sallet', 'Blackened Sallet', 'helmet', 8, 'str', 28),
   A('knight_helm', 'Knight Helm', 'helmet', 24, 'str', 83),
   A('warlord_helm', "Warlord's Helm", 'helmet', 40, 'str', 150),
@@ -388,7 +388,7 @@ export const BASES: BaseDef[] = [
   A('templar_crown', 'Templar Crown', 'helmet', 24, 'str_int', 49),
   A('wayfarer_hood', "Wayfarer's Hood", 'helmet', 8, 'dex_int', 17),
   A('duskweave_cowl', 'Duskweave Cowl', 'helmet', 24, 'dex_int', 49),
-  // hybrid tiers to level 60 (docs/design/GEAR.md)
+  // hybrid tiers to level 60 (docs/GAME.md)
   A('ringmail_coif', 'Ringmail Coif', 'helmet', 16, 'str_dex', 32),
   A('lamellar_helm', 'Lamellar Helm', 'helmet', 32, 'str_dex', 69),
   A('gladiator_helm', "Gladiator's Helm", 'helmet', 40, 'str_dex', 90),
@@ -407,7 +407,7 @@ export const BASES: BaseDef[] = [
   A('wraith_hood', 'Wraith Hood', 'helmet', 47, 'dex_int', 110),
   A('umbral_mask', 'Umbral Mask', 'helmet', 54, 'dex_int', 130),
   A('voidwalker_cowl', 'Voidwalker Cowl', 'helmet', 60, 'dex_int', 150),
-  // tiers to level 80 (docs/design/GEAR.md): 67, 74, 80
+  // tiers to level 80 (docs/GAME.md): 67, 74, 80
   A('colossus_helm', 'Colossus Helm', 'helmet', 67, 'str', 290),
   A('titan_helm', 'Titan Helm', 'helmet', 74, 'str', 325),
   A('godforged_helm', 'Godforged Helm', 'helmet', 80, 'str', 360),
@@ -478,7 +478,7 @@ export const BASES: BaseDef[] = [
   A('wraith_wrap', 'Wraith Wrap', 'body', 47, 'dex_int', 260),
   A('umbral_leathers', 'Umbral Leathers', 'body', 54, 'dex_int', 305),
   A('voidwalker_vestment', 'Voidwalker Vestment', 'body', 60, 'dex_int', 350),
-  // tiers to level 80 (docs/design/GEAR.md): 67, 74, 80
+  // tiers to level 80 (docs/GAME.md): 67, 74, 80
   A('colossus_plate', 'Colossus Plate', 'body', 67, 'str', 675),
   A('titan_plate', 'Titan Plate', 'body', 74, 'str', 765),
   A('godforged_plate', 'Godforged Plate', 'body', 80, 'str', 845),
@@ -544,7 +544,7 @@ export const BASES: BaseDef[] = [
   A('wraith_wraps', 'Wraith Wraps', 'gloves', 44, 'dex_int', 67),
   A('umbral_gloves', 'Umbral Gloves', 'gloves', 52, 'dex_int', 83),
   A('voidwalker_gloves', 'Voidwalker Gloves', 'gloves', 60, 'dex_int', 99),
-  // tiers to level 80 (docs/design/GEAR.md): 64, 72, 80
+  // tiers to level 80 (docs/GAME.md): 64, 72, 80
   A('colossus_gauntlets', 'Colossus Gauntlets', 'gloves', 64, 'str', 180),
   A('titan_gauntlets', 'Titan Gauntlets', 'gloves', 72, 'str', 210),
   A('godforged_gauntlets', 'Godforged Gauntlets', 'gloves', 80, 'str', 240),
@@ -609,7 +609,7 @@ export const BASES: BaseDef[] = [
   A('wraith_boots', 'Wraith Boots', 'boots', 44, 'dex_int', 67),
   A('umbral_boots', 'Umbral Boots', 'boots', 52, 'dex_int', 83),
   A('voidwalker_boots', 'Voidwalker Boots', 'boots', 60, 'dex_int', 99),
-  // tiers to level 80 (docs/design/GEAR.md): 64, 72, 80
+  // tiers to level 80 (docs/GAME.md): 64, 72, 80
   A('colossus_greaves', 'Colossus Greaves', 'boots', 64, 'str', 180),
   A('titan_sabatons', 'Titan Sabatons', 'boots', 72, 'str', 210),
   A('godforged_greaves', 'Godforged Greaves', 'boots', 80, 'str', 240),
@@ -675,11 +675,17 @@ export function baseDef(id: string): BaseDef {
   return b;
 }
 
+export interface UniqueModDef {
+  affixId: string;
+  values?: number[];
+  ranges?: [number, number][];
+}
+
 export interface UniqueDef {
   id: string;
   name: string;
   baseId: string;
-  mods: { affixId: string; values: number[] }[];
+  mods: UniqueModDef[];
   flavour: string;
   /** can't be listed on the Player Market */
   noTrade?: boolean;
@@ -697,604 +703,622 @@ export const UNIQUES: UniqueDef[] = [
   {
     id: 'bloodthirst', name: 'Bloodthirst', baseId: 'rusted_sword', flavour: 'It remembers every throat.',
     mods: [
-      { affixId: 'added_phys', values: [5, 12] },
-      { affixId: 'attack_speed', values: [15] },
-      { affixId: 'life_leech', values: [4] },
+      { affixId: 'added_phys', ranges: [[4, 6], [10, 14]] },
+      { affixId: 'attack_speed', ranges: [[12, 18]] },
+      { affixId: 'life_leech', ranges: [[3, 5]] },
+      { affixId: 'flat_life', ranges: [[-20, -10]] },
     ],
   },
   {
     id: 'emberheart', name: 'Emberheart', baseId: 'plate_vest', flavour: 'A hearth that never cools.',
     mods: [
-      { affixId: 'flat_life', values: [45] },
-      { affixId: 'added_fire', values: [4, 9] },
-      { affixId: 'fire_res', values: [45] },
+      { affixId: 'flat_life', ranges: [[40, 55]] },
+      { affixId: 'added_fire', ranges: [[3, 5], [7, 11]] },
+      { affixId: 'fire_res', ranges: [[35, 50]] },
+      { affixId: 'cold_res', ranges: [[-30, -20]] },
     ],
   },
   {
     id: 'windstep', name: 'Windstep', baseId: 'leather_boots', flavour: 'Never where the blade falls.',
     mods: [
-      { affixId: 'inc_evasion', values: [60] },
-      { affixId: 'item_rarity', values: [30] },
-      { affixId: 'skill_speed', values: [10] },
+      { affixId: 'inc_evasion', ranges: [[50, 70]] },
+      { affixId: 'item_rarity', ranges: [[20, 35]] },
+      { affixId: 'skill_speed', ranges: [[8, 12]] },
     ],
   },
   {
     id: 'alchemists_band', name: "Alchemist's Band", baseId: 'iron_ring', flavour: 'Every drop, a second chance.',
     mods: [
-      { affixId: 'flask_effect', values: [40] },
-      { affixId: 'flask_charges', values: [40] },
+      { affixId: 'flask_effect', ranges: [[30, 45]] },
+      { affixId: 'flask_charges', ranges: [[30, 45]] },
       { affixId: 'u_regen_pct', values: [1] },
+      { affixId: 'chaos_res', ranges: [[-20, -10]] },
     ],
   },
   {
     id: 'iron_bulwark', name: 'The Iron Bulwark', baseId: 'kite_shield', flavour: 'Let them break upon me.',
     mods: [
-      { affixId: 'u_armour_more', values: [40] },
-      { affixId: 'flat_life', values: [60] },
-      { affixId: 'u_speed_more', values: [-10] },
+      { affixId: 'u_armour_more', ranges: [[35, 45]] },
+      { affixId: 'flat_life', ranges: [[50, 70]] },
+      { affixId: 'u_speed_more', ranges: [[-15, -8]] },
     ],
   },
   {
     id: 'starforged_edge', name: 'Starforged Edge', baseId: 'mithril_sabre', flavour: 'Cut from a falling star.',
     mods: [
-      { affixId: 'added_phys', values: [30, 62] },
-      { affixId: 'crit_chance', values: [40] },
-      { affixId: 'crit_multi', values: [45] },
+      { affixId: 'added_phys', ranges: [[25, 35], [55, 70]] },
+      { affixId: 'crit_chance', ranges: [[35, 50]] },
+      { affixId: 'crit_multi', ranges: [[40, 55]] },
+      { affixId: 'flat_life', ranges: [[-30, -15]] },
     ],
   },
   {
     id: 'titans_girth', name: "Titan's Girth", baseId: 'heavy_belt', flavour: 'Mountains bow to no one.',
     mods: [
-      { affixId: 'u_life_more', values: [15] },
-      { affixId: 'all_res', values: [15] },
-      { affixId: 'flask_charges', values: [30] },
+      { affixId: 'u_life_more', ranges: [[12, 18]] },
+      { affixId: 'all_res', ranges: [[12, 18]] },
+      { affixId: 'flask_charges', ranges: [[25, 35]] },
+      { affixId: 'inc_evasion', ranges: [[-20, -10]] },
     ],
   },
 
-  // ---------- class-mechanic uniques (docs/design/SKILLS_AND_UNIQUES.md) ----------
+  // ---------- class-mechanic uniques (docs/GAME.md) ----------
   // skill tweaks marked ★ in the doc wait for the new skills to exist
   {
     id: 'tavern_brawler', name: 'Tavern Brawler', baseId: 'oak_club', flavour: 'Last one standing buys the round.',
     mods: [
-      { affixId: 'added_phys', values: [3, 7] },
-      { affixId: 'attack_speed', values: [8] },
-      { affixId: 'u_rage_max', values: [5] },
+      { affixId: 'added_phys', ranges: [[2, 4], [6, 9]] },
+      { affixId: 'attack_speed', ranges: [[6, 12]] },
+      { affixId: 'u_rage_max', ranges: [[4, 6]] },
+      { affixId: 'accuracy', ranges: [[-120, -80]] },
       { affixId: 'u_pummel_hits', values: [1] },
     ],
   },
   {
     id: 'thornquill', name: 'Thornquill', baseId: 'ash_longbow', flavour: "Plucked from something that didn't want to give it up.",
     mods: [
-      { affixId: 'added_phys', values: [6, 15] },
-      { affixId: 'attack_speed', values: [12] },
-      { affixId: 'u_momentum_max', values: [4] },
+      { affixId: 'added_phys', ranges: [[5, 8], [12, 18]] },
+      { affixId: 'attack_speed', ranges: [[10, 15]] },
+      { affixId: 'u_momentum_max', ranges: [[3, 5]] },
+      { affixId: 'flat_life', ranges: [[-35, -15]] },
       { affixId: 'u_barrage_arrows', values: [1] },
     ],
   },
   {
     id: 'wellspring', name: 'Wellspring', baseId: 'gnarled_staff', flavour: 'Draw deep; the well remembers.',
     mods: [
-      { affixId: 'flat_mana', values: [40] },
-      { affixId: 'mana_regen', values: [40] },
-      { affixId: 'u_mana_power_full', values: [10] },
+      { affixId: 'flat_mana', ranges: [[35, 55]] },
+      { affixId: 'mana_regen', ranges: [[30, 50]] },
+      { affixId: 'u_mana_power_full', ranges: [[8, 15]] },
+      { affixId: 'all_res', ranges: [[-15, -8]] },
     ],
   },
   {
     id: 'rebuttal', name: 'Rebuttal', baseId: 'iron_blade', flavour: 'Every argument has an answer.',
     mods: [
-      { affixId: 'added_phys', values: [4, 9] },
-      { affixId: 'u_riposte_pct', values: [40] },
-      { affixId: 'u_riposte_cooldown', values: [25] },
+      { affixId: 'added_phys', ranges: [[3, 5], [8, 12]] },
+      { affixId: 'u_riposte_pct', ranges: [[30, 50]] },
+      { affixId: 'u_riposte_cooldown', ranges: [[20, 30]] },
+      { affixId: 'inc_armour', ranges: [[-20, -10]] },
       { affixId: 'u_parry_blocks', values: [1] },
     ],
   },
   {
     id: 'ninth_psalm', name: 'The Ninth Psalm', baseId: 'crystal_sceptre', flavour: 'The eight before it were mercy.',
     mods: [
-      { affixId: 'added_light', values: [4, 22] },
-      { affixId: 'u_nova_pct', values: [50] },
-      { affixId: 'u_fervor_pct', values: [20] },
+      { affixId: 'added_light', ranges: [[3, 6], [18, 26]] },
+      { affixId: 'u_nova_pct', ranges: [[40, 60]] },
+      { affixId: 'u_fervor_pct', ranges: [[15, 25]] },
+      { affixId: 'inc_evasion', ranges: [[-25, -15]] },
       { affixId: 'u_hammer_convert', values: [60] },
     ],
   },
   {
     id: 'last_breath', name: 'Last Breath', baseId: 'shadow_kris', flavour: 'Spend it wisely.',
     mods: [
-      { affixId: 'added_phys', values: [8, 20] },
+      { affixId: 'added_phys', ranges: [[6, 10], [16, 24]] },
+      { affixId: 'u_malice_on_hit', ranges: [[1, 4]] },
+      { affixId: 'u_coup_pct', ranges: [[50, 75]] },
       { affixId: 'u_malice_max', values: [-3] },
-      { affixId: 'u_coup_pct', values: [60] },
+      { affixId: 'all_res', ranges: [[-20, -10]] },
     ],
   },
   {
     id: 'second_guess', name: 'The Second Guess', baseId: 'buckler', flavour: 'Doubt is a shield, if you hold it right.',
     mods: [
-      { affixId: 'inc_evasion', values: [40] },
-      { affixId: 'u_block', values: [8] },
+      { affixId: 'inc_evasion', ranges: [[30, 50]] },
+      { affixId: 'u_block', ranges: [[6, 10]] },
+      { affixId: 'attack_speed', ranges: [[-15, -8]] },
       { affixId: 'u_riposte_heal', values: [2] },
     ],
   },
   {
     id: 'bellwether', name: 'Bellwether', baseId: 'kite_shield', flavour: 'It rings before the storm, and after.',
     mods: [
-      { affixId: 'flat_life', values: [50] },
-      { affixId: 'all_res', values: [10] },
-      { affixId: 'u_block', values: [8] },
-      { affixId: 'u_fervor_pct', values: [25] },
+      { affixId: 'flat_life', ranges: [[40, 60]] },
+      { affixId: 'all_res', ranges: [[8, 14]] },
+      { affixId: 'u_block', ranges: [[6, 10]] },
+      { affixId: 'u_fervor_pct', ranges: [[20, 30]] },
     ],
   },
   {
     id: 'old_grudge', name: 'The Old Grudge', baseId: 'tower_shield', flavour: 'Forgive nothing. Forget nothing.',
     mods: [
-      { affixId: 'u_armour_more', values: [25] },
-      { affixId: 'flat_life', values: [70] },
-      { affixId: 'u_rage_on_hit_taken', values: [2] },
+      { affixId: 'u_armour_more', ranges: [[20, 30]] },
+      { affixId: 'flat_life', ranges: [[60, 85]] },
+      { affixId: 'u_rage_on_hit_taken', ranges: [[1, 3]] },
+      { affixId: 'u_speed_more', ranges: [[-15, -8]] },
       { affixId: 'u_rage_regen', values: [0.1] },
     ],
   },
   {
     id: 'castaways_kerchief', name: "Castaway's Kerchief", baseId: 'linen_hood', flavour: 'All you came ashore with.',
     mods: [
-      { affixId: 'all_attributes', values: [8] },
-      { affixId: 'item_rarity', values: [15] },
-      { affixId: 'life_regen', values: [2] },
+      { affixId: 'all_attributes', ranges: [[6, 10]] },
+      { affixId: 'item_rarity', ranges: [[12, 20]] },
+      { affixId: 'life_regen', ranges: [[2, 4]] },
     ],
   },
   {
     id: 'lookouts_hood', name: "Lookout's Hood", baseId: 'hunter_hood', flavour: 'First to see it, first to move.',
     mods: [
-      { affixId: 'flat_life', values: [40] },
-      { affixId: 'accuracy', values: [120] },
-      { affixId: 'light_res', values: [25] },
-      { affixId: 'u_momentum_retain', values: [30] },
+      { affixId: 'flat_life', ranges: [[35, 50]] },
+      { affixId: 'accuracy', ranges: [[100, 150]] },
+      { affixId: 'light_res', ranges: [[20, 30]] },
+      { affixId: 'u_momentum_retain', values: [1] },
     ],
   },
   {
     id: 'mask_of_the_patient', name: 'Mask of the Patient', baseId: 'duskweave_cowl', flavour: 'It does not blink. It waits.',
     mods: [
-      { affixId: 'inc_es', values: [40] },
-      { affixId: 'inc_evasion', values: [40] },
-      { affixId: 'crit_chance', values: [-50] },
-      { affixId: 'u_malice_on_hit_taken', values: [2] },
+      { affixId: 'inc_es', ranges: [[35, 50]] },
+      { affixId: 'inc_evasion', ranges: [[35, 50]] },
+      { affixId: 'crit_chance', ranges: [[-60, -40]] },
+      { affixId: 'u_malice_on_hit_taken', ranges: [[2, 4]] },
     ],
   },
   {
     id: 'stormhide', name: 'Stormhide', baseId: 'studded_brigandine', flavour: 'Tanned from something that bit back.',
     mods: [
-      { affixId: 'flat_life', values: [35] },
-      { affixId: 'inc_armour', values: [40] },
-      { affixId: 'inc_evasion', values: [40] },
+      { affixId: 'flat_life', ranges: [[30, 45]] },
+      { affixId: 'inc_armour', ranges: [[35, 50]] },
+      { affixId: 'inc_evasion', ranges: [[35, 50]] },
+      { affixId: 'light_res', ranges: [[-25, -15]] },
       { affixId: 'u_riposte_bleed', values: [1] },
     ],
   },
   {
     id: 'robe_of_still_waters', name: 'Robe of Still Waters', baseId: 'silken_vestment', flavour: 'Calm water runs the deepest.',
     mods: [
-      { affixId: 'inc_es', values: [50] },
-      { affixId: 'mana_regen', values: [30] },
-      { affixId: 'es_recharge', values: [30] },
+      { affixId: 'inc_es', ranges: [[40, 60]] },
+      { affixId: 'mana_regen', ranges: [[25, 40]] },
+      { affixId: 'es_recharge', ranges: [[25, 40]] },
       { affixId: 'u_meditate_es', values: [20] },
     ],
   },
   {
     id: 'penitents_plate', name: "Penitent's Plate", baseId: 'templar_plate', flavour: 'Every dent a confession.',
     mods: [
-      { affixId: 'flat_life', values: [50] },
-      { affixId: 'inc_es', values: [40] },
-      { affixId: 'all_res', values: [12] },
-      { affixId: 'u_nova_es', values: [10] },
+      { affixId: 'flat_life', ranges: [[45, 60]] },
+      { affixId: 'inc_es', ranges: [[35, 50]] },
+      { affixId: 'all_res', ranges: [[10, 15]] },
+      { affixId: 'u_nova_es', ranges: [[8, 14]] },
     ],
   },
   {
     id: 'quickfingers', name: 'Quickfingers', baseId: 'rawhide_gloves', flavour: 'Faster than the eye, faster than the knife.',
     mods: [
-      { affixId: 'added_phys', values: [1, 4] },
-      { affixId: 'attack_speed', values: [10] },
-      { affixId: 'dexterity', values: [10] },
-      { affixId: 'u_momentum_effect', values: [20] },
+      { affixId: 'added_phys', ranges: [[1, 2], [3, 5]] },
+      { affixId: 'attack_speed', ranges: [[8, 14]] },
+      { affixId: 'dexterity', ranges: [[8, 14]] },
+      { affixId: 'u_momentum_effect', ranges: [[15, 25]] },
+      { affixId: 'flat_life', ranges: [[-20, -10]] },
     ],
   },
   {
     id: 'needleworkers_wraps', name: "Needleworker's Wraps", baseId: 'wayfarer_wraps', flavour: 'A thousand stitches, one cut.',
     mods: [
-      { affixId: 'u_cast_speed', values: [10] },
-      { affixId: 'u_poison_pct', values: [20] },
+      { affixId: 'u_cast_speed', ranges: [[8, 14]] },
+      { affixId: 'u_poison_pct', ranges: [[15, 25]] },
       { affixId: 'u_coup_ailment', values: [1] },
     ],
   },
   {
     id: 'knuckledusters', name: 'Knuckledusters', baseId: 'steel_gauntlets', flavour: 'The knuckles do the talking.',
     mods: [
-      { affixId: 'flat_armour', values: [60] },
-      { affixId: 'attack_speed', values: [10] },
-      { affixId: 'u_rage_effect', values: [25] },
+      { affixId: 'flat_armour', ranges: [[50, 75]] },
+      { affixId: 'attack_speed', ranges: [[8, 14]] },
+      { affixId: 'u_rage_effect', ranges: [[20, 30]] },
+      { affixId: 'dexterity', ranges: [[-20, -10]] },
     ],
   },
   {
     id: 'slippers_of_the_tide', name: 'Slippers of the Tide', baseId: 'wool_shoes', flavour: 'Soft steps, full tides.',
     mods: [
-      { affixId: 'flat_mana', values: [25] },
-      { affixId: 'inc_es', values: [30] },
-      { affixId: 'cold_res', values: [20] },
-      { affixId: 'u_mana_power', values: [5] },
+      { affixId: 'flat_mana', ranges: [[20, 35]] },
+      { affixId: 'inc_es', ranges: [[25, 40]] },
+      { affixId: 'cold_res', ranges: [[15, 25]] },
+      { affixId: 'u_mana_power', ranges: [[4, 8]] },
     ],
   },
   {
     id: 'sidestep', name: 'Sidestep', baseId: 'studded_boots', flavour: 'Not there. Then right there.',
     mods: [
-      { affixId: 'flat_life', values: [30] },
-      { affixId: 'inc_evasion', values: [40] },
-      { affixId: 'u_block', values: [5] },
-      { affixId: 'u_riposte_crit', values: [50] },
+      { affixId: 'flat_life', ranges: [[25, 40]] },
+      { affixId: 'inc_evasion', ranges: [[35, 50]] },
+      { affixId: 'u_block', ranges: [[4, 7]] },
+      { affixId: 'u_riposte_crit', ranges: [[40, 60]] },
     ],
   },
   {
     id: 'windchaser', name: 'Windchaser', baseId: 'shagreen_boots', flavour: "The wind doesn't stop to fight.",
     mods: [
-      { affixId: 'inc_evasion', values: [60] },
-      { affixId: 'light_res', values: [30] },
-      { affixId: 'u_momentum_max', values: [3] },
-      { affixId: 'u_momentum_evasion', values: [3] },
+      { affixId: 'inc_evasion', ranges: [[50, 70]] },
+      { affixId: 'light_res', ranges: [[25, 35]] },
+      { affixId: 'u_momentum_max', ranges: [[2, 4]] },
+      { affixId: 'u_momentum_evasion', ranges: [[2, 4]] },
     ],
   },
   {
     id: 'fishermans_knot', name: "Fisherman's Knot", baseId: 'chain_belt', flavour: 'Tied tight against the tide.',
     mods: [
-      { affixId: 'flat_life', values: [15] },
-      { affixId: 'flask_charges', values: [25] },
-      { affixId: 'item_rarity', values: [10] },
+      { affixId: 'flat_life', ranges: [[12, 20]] },
+      { affixId: 'flask_charges', ranges: [[20, 30]] },
+      { affixId: 'item_rarity', ranges: [[8, 14]] },
     ],
   },
   {
     id: 'herbalists_sash', name: "Herbalist's Sash", baseId: 'leather_belt', flavour: "Pockets full of tomorrow's cures.",
     mods: [
-      { affixId: 'u_life_flask_recovery', values: [30] },
-      { affixId: 'skill_speed', values: [10] },
-      { affixId: 'skill_xp', values: [10] },
+      { affixId: 'u_life_flask_recovery', ranges: [[25, 40]] },
+      { affixId: 'skill_speed', ranges: [[8, 14]] },
+      { affixId: 'skill_xp', ranges: [[8, 14]] },
     ],
   },
   {
     id: 'brawlers_buckle', name: "Brawler's Buckle", baseId: 'heavy_belt', flavour: 'Still swinging at closing time.',
     mods: [
-      { affixId: 'flat_life', values: [60] },
-      { affixId: 'strength', values: [20] },
-      { affixId: 'u_rage_decay', values: [50] },
+      { affixId: 'flat_life', ranges: [[50, 75]] },
+      { affixId: 'strength', ranges: [[16, 25]] },
+      { affixId: 'u_rage_decay', ranges: [[40, 60]] },
     ],
   },
   {
     id: 'ember_of_faith', name: 'Ember of Faith', baseId: 'amber_amulet', flavour: 'A spark kept close to the heart.',
     mods: [
-      { affixId: 'added_fire', values: [3, 7] },
-      { affixId: 'fire_res', values: [25] },
-      { affixId: 'u_nova_heal', values: [30] },
+      { affixId: 'added_fire', ranges: [[2, 4], [5, 9]] },
+      { affixId: 'fire_res', ranges: [[20, 30]] },
+      { affixId: 'u_nova_heal', ranges: [[25, 40]] },
       { affixId: 'u_infernal_spread', values: [1] },
     ],
   },
   {
     id: 'gulls_eye', name: "Gull's Eye", baseId: 'jade_amulet', flavour: 'It sees the glint from miles away.',
     mods: [
-      { affixId: 'accuracy', values: [80] },
-      { affixId: 'crit_chance', values: [20] },
-      { affixId: 'item_rarity', values: [15] },
+      { affixId: 'accuracy', ranges: [[60, 100]] },
+      { affixId: 'crit_chance', ranges: [[16, 25]] },
+      { affixId: 'item_rarity', ranges: [[12, 20]] },
     ],
   },
   {
     id: 'hollow_locket', name: 'The Hollow Locket', baseId: 'onyx_amulet', flavour: 'Something was kept in here. Something hungry.',
     mods: [
-      { affixId: 'crit_multi', values: [25] },
-      { affixId: 'dexterity', values: [15] },
+      { affixId: 'crit_multi', ranges: [[20, 30]] },
+      { affixId: 'dexterity', ranges: [[12, 20]] },
       { affixId: 'u_malice_crit_keep', values: [5] },
     ],
   },
   {
     id: 'barnacle_band', name: 'Barnacle Band', baseId: 'iron_ring', flavour: 'It clung on. So will you.',
     mods: [
-      { affixId: 'flat_armour', values: [25] },
-      { affixId: 'life_regen', values: [2] },
-      { affixId: 'cold_res', values: [15] },
+      { affixId: 'flat_armour', ranges: [[20, 35]] },
+      { affixId: 'life_regen', ranges: [[2, 4]] },
+      { affixId: 'cold_res', ranges: [[12, 20]] },
     ],
   },
   {
     id: 'brimming_band', name: 'Brimming Band', baseId: 'sapphire_ring', flavour: 'Full to the brim, never spilling.',
     mods: [
-      { affixId: 'flat_mana', values: [30] },
-      { affixId: 'mana_regen', values: [25] },
-      { affixId: 'u_mana_power', values: [5] },
+      { affixId: 'flat_mana', ranges: [[25, 40]] },
+      { affixId: 'mana_regen', ranges: [[20, 35]] },
+      { affixId: 'u_mana_power', ranges: [[4, 8]] },
     ],
   },
   {
     id: 'twin_oaths', name: 'Twin Oaths', baseId: 'diamond_ring', flavour: 'Sworn twice, broken never.',
     mods: [
-      { affixId: 'dexterity', values: [15] },
-      { affixId: 'u_riposte_pct', values: [25] },
-      { affixId: 'u_riposte_cooldown', values: [30] },
+      { affixId: 'dexterity', ranges: [[12, 20]] },
+      { affixId: 'u_riposte_pct', ranges: [[20, 35]] },
+      { affixId: 'u_riposte_cooldown', ranges: [[25, 40]] },
     ],
   },
 
-  // ---------- Act 2 (docs/design/ACT2.md) ----------
+  // ---------- Act 2 (docs/GAME.md) ----------
   {
     id: 'sunmane_pelt', name: 'Sunmane Pelt', baseId: 'wyrmscale_hauberk', flavour: 'Still warm.',
     mods: [
-      { affixId: 'flat_life', values: [70] },
-      { affixId: 'inc_armour', values: [50] },
-      { affixId: 'fire_res', values: [40] },
-      { affixId: 'u_rage_on_hit_taken', values: [1] },
+      { affixId: 'flat_life', ranges: [[60, 85]] },
+      { affixId: 'inc_armour', ranges: [[40, 60]] },
+      { affixId: 'fire_res', ranges: [[35, 50]] },
+      { affixId: 'u_rage_on_hit_taken', ranges: [[1, 2]] },
     ],
   },
   {
     id: 'mirage_veil', name: 'Mirage Veil', baseId: 'duskweave_cowl', flavour: 'What it hides was never there.',
     mods: [
-      { affixId: 'inc_evasion', values: [60] },
-      { affixId: 'flat_es', values: [35] },
-      { affixId: 'all_res', values: [10] },
-      { affixId: 'u_malice_on_hit_taken', values: [1] },
+      { affixId: 'inc_evasion', ranges: [[50, 70]] },
+      { affixId: 'flat_es', ranges: [[30, 45]] },
+      { affixId: 'all_res', ranges: [[8, 14]] },
+      { affixId: 'u_malice_on_hit_taken', ranges: [[1, 2]] },
     ],
   },
   {
     id: 'khans_tithe', name: "Khan's Tithe", baseId: 'diamond_ring', flavour: 'Every road pays.',
     mods: [
-      { affixId: 'added_phys', values: [5, 11] },
-      { affixId: 'crit_chance', values: [20] },
-      { affixId: 'item_rarity', values: [25] },
+      { affixId: 'added_phys', ranges: [[4, 6], [9, 14]] },
+      { affixId: 'crit_chance', ranges: [[16, 25]] },
+      { affixId: 'item_rarity', ranges: [[20, 35]] },
     ],
   },
   {
     id: 'kurgan_crown', name: 'The Kurgan Crown', baseId: 'templar_crown', flavour: 'The dead keep their kings.',
     mods: [
-      { affixId: 'flat_life', values: [50] },
-      { affixId: 'flat_es', values: [30] },
-      { affixId: 'cold_res', values: [40] },
-      { affixId: 'u_fervor_pct', values: [20] },
+      { affixId: 'flat_life', ranges: [[40, 60]] },
+      { affixId: 'flat_es', ranges: [[25, 40]] },
+      { affixId: 'cold_res', ranges: [[35, 50]] },
+      { affixId: 'u_fervor_pct', ranges: [[16, 25]] },
     ],
   },
   {
     id: 'stormrider_greaves', name: 'Stormrider Greaves', baseId: 'wyrmscale_boots', flavour: 'Ride ahead of the thunder.',
     mods: [
-      { affixId: 'flat_evasion', values: [110] },
-      { affixId: 'light_res', values: [40] },
-      { affixId: 'u_momentum_effect', values: [20] },
-      { affixId: 'u_momentum_retain', values: [25] },
+      { affixId: 'flat_evasion', ranges: [[90, 130]] },
+      { affixId: 'light_res', ranges: [[35, 50]] },
+      { affixId: 'u_momentum_effect', ranges: [[16, 25]] },
+      { affixId: 'u_momentum_retain', values: [1] },
     ],
   },
   {
     id: 'pyre_heart', name: 'Heart of the Pyre', baseId: 'onyx_amulet', flavour: "It beats slowly. A sloth's revenge is in no hurry.",
     mods: [
-      { affixId: 'added_fire', values: [10, 20] },
-      { affixId: 'inc_elem', values: [25] },
-      { affixId: 'u_cast_speed', values: [10] },
+      { affixId: 'added_fire', ranges: [[8, 12], [16, 24]] },
+      { affixId: 'inc_elem', ranges: [[20, 30]] },
+      { affixId: 'u_cast_speed', ranges: [[8, 14]] },
     ],
   },
 
-  // ---------- Act 3 (docs/design/ACT3.md): one for each class's meter, each with lightning resistance ----------
+  // ---------- Act 3 (docs/GAME.md): one for each class's meter, each with lightning resistance ----------
   {
     id: 'martyrs_shroud', name: "Martyr's Shroud", baseId: 'warlord_plate', flavour: 'They wore it to the end. So will you.',
     mods: [
-      { affixId: 'flat_life', values: [90] },
-      { affixId: 'inc_armour', values: [60] },
-      { affixId: 'light_res', values: [40] },
-      { affixId: 'u_rage_on_hit_taken', values: [2] },
+      { affixId: 'flat_life', ranges: [[80, 110]] },
+      { affixId: 'inc_armour', ranges: [[50, 70]] },
+      { affixId: 'light_res', ranges: [[35, 50]] },
+      { affixId: 'u_rage_on_hit_taken', ranges: [[2, 3]] },
     ],
   },
   {
     id: 'pilgrims_road', name: "The Pilgrim's Road", baseId: 'bonehunter_boots', flavour: 'Worn through, and still walking.',
     mods: [
-      { affixId: 'flat_evasion', values: [130] },
-      { affixId: 'light_res', values: [35] },
-      { affixId: 'u_momentum_effect', values: [25] },
-      { affixId: 'u_momentum_retain', values: [30] },
+      { affixId: 'flat_evasion', ranges: [[110, 150]] },
+      { affixId: 'light_res', ranges: [[30, 45]] },
+      { affixId: 'u_momentum_effect', ranges: [[20, 30]] },
+      { affixId: 'u_momentum_retain', values: [1] },
     ],
   },
   {
     id: 'saints_shard', name: 'Shard of the Saint', baseId: 'onyx_amulet', flavour: 'Some of the holy bones still spark.',
     mods: [
-      { affixId: 'spell_light', values: [12, 34] },
-      { affixId: 'inc_light', values: [30] },
-      { affixId: 'light_res', values: [25] },
-      { affixId: 'u_mana_power', values: [15] },
+      { affixId: 'spell_light', ranges: [[10, 15], [28, 40]] },
+      { affixId: 'inc_light', ranges: [[25, 40]] },
+      { affixId: 'light_res', ranges: [[20, 30]] },
+      { affixId: 'u_mana_power', ranges: [[12, 18]] },
     ],
   },
   {
     id: 'confession_hood', name: 'Hood of the Last Confession', baseId: 'nightshade_cowl', flavour: 'Say it, and it is done.',
     mods: [
-      { affixId: 'inc_evasion', values: [65] },
-      { affixId: 'flat_es', values: [40] },
-      { affixId: 'light_res', values: [30] },
-      { affixId: 'u_coup_pct', values: [35] },
+      { affixId: 'inc_evasion', ranges: [[55, 75]] },
+      { affixId: 'flat_es', ranges: [[35, 50]] },
+      { affixId: 'light_res', ranges: [[25, 35]] },
+      { affixId: 'u_coup_pct', ranges: [[30, 45]] },
     ],
   },
   {
     id: 'halo_of_wrath', name: 'Halo of Wrath', baseId: 'paladin_crown', flavour: 'It was never meant to be kind.',
     mods: [
-      { affixId: 'flat_life', values: [60] },
-      { affixId: 'flat_es', values: [40] },
-      { affixId: 'light_res', values: [40] },
-      { affixId: 'u_nova_pct', values: [30] },
+      { affixId: 'flat_life', ranges: [[50, 75]] },
+      { affixId: 'flat_es', ranges: [[35, 50]] },
+      { affixId: 'light_res', ranges: [[35, 50]] },
+      { affixId: 'u_nova_pct', ranges: [[25, 40]] },
     ],
   },
   {
     id: 'chainbreaker', name: 'Chainbreaker', baseId: 'gladiator_gauntlets', flavour: 'One link at a time.',
     mods: [
-      { affixId: 'flat_life', values: [50] },
-      { affixId: 'attack_speed', values: [10] },
-      { affixId: 'light_res', values: [30] },
+      { affixId: 'flat_life', ranges: [[40, 60]] },
+      { affixId: 'attack_speed', ranges: [[8, 14]] },
+      { affixId: 'light_res', ranges: [[25, 35]] },
       { affixId: 'u_riposte_bleed', values: [1] },
     ],
   },
-  // ---------- Act 4 (docs/design/ACT4.md): one for each class's meter, each with cold resistance ----------
+  // ---------- Act 4 (docs/GAME.md): one for each class's meter, each with cold resistance ----------
   {
     id: 'giants_knuckle', name: "The Giant's Knuckle", baseId: 'dreadsteel_hammer', flavour: 'Cut from the hand of one who was still using it.',
     mods: [
-      { affixId: 'inc_phys', values: [120] },
-      { affixId: 'flat_life', values: [60] },
-      { affixId: 'cold_res', values: [30] },
-      { affixId: 'u_rage_effect', values: [25] },
+      { affixId: 'inc_phys', ranges: [[100, 140]] },
+      { affixId: 'flat_life', ranges: [[50, 75]] },
+      { affixId: 'cold_res', ranges: [[25, 35]] },
+      { affixId: 'u_rage_effect', ranges: [[20, 30]] },
     ],
   },
   {
     id: 'rimewalkers', name: 'Rimewalkers', baseId: 'hawkfeather_boots', flavour: 'They leave no tracks, and neither will you.',
     mods: [
-      { affixId: 'flat_evasion', values: [150] },
-      { affixId: 'cold_res', values: [40] },
-      { affixId: 'u_momentum_max', values: [2] },
-      { affixId: 'u_momentum_evasion', values: [3] },
+      { affixId: 'flat_evasion', ranges: [[130, 170]] },
+      { affixId: 'cold_res', ranges: [[35, 50]] },
+      { affixId: 'u_momentum_max', ranges: [[2, 3]] },
+      { affixId: 'u_momentum_evasion', ranges: [[2, 4]] },
     ],
   },
   {
     id: 'heart_of_winter', name: 'Heart of Winter', baseId: 'onyx_amulet', flavour: 'It beats once a year. You will not like the year it stops.',
     mods: [
-      { affixId: 'spell_cold', values: [14, 38] },
-      { affixId: 'inc_cold', values: [35] },
-      { affixId: 'cold_res', values: [30] },
-      { affixId: 'u_mana_power_full', values: [20] },
+      { affixId: 'spell_cold', ranges: [[12, 16], [32, 44]] },
+      { affixId: 'inc_cold', ranges: [[30, 45]] },
+      { affixId: 'cold_res', ranges: [[25, 35]] },
+      { affixId: 'u_mana_power_full', ranges: [[16, 25]] },
     ],
   },
   {
     id: 'frostgrip', name: 'Frostgrip', baseId: 'wraith_wraps', flavour: 'Whatever you hold goes still.',
     mods: [
-      { affixId: 'flat_es', values: [45] },
-      { affixId: 'attack_speed', values: [10] },
-      { affixId: 'cold_res', values: [35] },
-      { affixId: 'u_malice_on_hit_taken', values: [2] },
+      { affixId: 'flat_es', ranges: [[35, 55]] },
+      { affixId: 'attack_speed', ranges: [[8, 14]] },
+      { affixId: 'cold_res', ranges: [[30, 45]] },
+      { affixId: 'u_malice_on_hit_taken', ranges: [[2, 3]] },
     ],
   },
   {
     id: 'crown_of_the_hollow', name: 'Crown of the Hollow', baseId: 'dreadsteel_helm', flavour: 'Heavy enough to empty a king.',
     mods: [
-      { affixId: 'flat_life', values: [70] },
-      { affixId: 'inc_armour', values: [55] },
-      { affixId: 'cold_res', values: [40] },
-      { affixId: 'u_fervor_pct', values: [30] },
+      { affixId: 'flat_life', ranges: [[60, 85]] },
+      { affixId: 'inc_armour', ranges: [[45, 65]] },
+      { affixId: 'cold_res', ranges: [[35, 50]] },
+      { affixId: 'u_fervor_pct', ranges: [[25, 40]] },
     ],
   },
   {
     id: 'wolfmother_pelt', name: 'Wolfmother’s Pelt', baseId: 'corsair_coat', flavour: 'She let you have it. You should ask why.',
     mods: [
-      { affixId: 'flat_life', values: [100] },
-      { affixId: 'cold_res', values: [40] },
-      { affixId: 'u_riposte_pct', values: [35] },
+      { affixId: 'flat_life', ranges: [[85, 120]] },
+      { affixId: 'cold_res', ranges: [[35, 50]] },
+      { affixId: 'u_riposte_pct', ranges: [[30, 45]] },
       { affixId: 'u_riposte_heal', values: [2] },
     ],
   },
 
-  // ---------- Act 5 (docs/design/ACT5.md): one for each class's meter, each with fire and lightning resistance ----------
+  // ---------- Act 5 (docs/GAME.md): one for each class's meter, each with fire and lightning resistance ----------
   {
     id: 'leviathan_hide', name: 'Leviathan Hide', baseId: 'champion_plate', flavour: 'They flensed it a thousand years ago. It has not finished healing.',
     mods: [
-      { affixId: 'flat_life', values: [120] },
-      { affixId: 'inc_armour', values: [70] },
-      { affixId: 'fire_res', values: [30] },
-      { affixId: 'light_res', values: [30] },
-      { affixId: 'u_rage_on_hit_taken', values: [3] },
+      { affixId: 'flat_life', ranges: [[100, 140]] },
+      { affixId: 'inc_armour', ranges: [[60, 85]] },
+      { affixId: 'fire_res', ranges: [[25, 35]] },
+      { affixId: 'light_res', ranges: [[25, 35]] },
+      { affixId: 'u_rage_on_hit_taken', ranges: [[2, 4]] },
     ],
   },
   {
     id: 'deckwalkers', name: 'Deckwalkers', baseId: 'thornwarden_boots', flavour: 'Sea legs, for a sea that fights back.',
     mods: [
-      { affixId: 'flat_evasion', values: [160] },
-      { affixId: 'fire_res', values: [25] },
-      { affixId: 'light_res', values: [25] },
-      { affixId: 'u_momentum_effect', values: [30] },
-      { affixId: 'u_momentum_retain', values: [35] },
+      { affixId: 'flat_evasion', ranges: [[140, 180]] },
+      { affixId: 'fire_res', ranges: [[20, 30]] },
+      { affixId: 'light_res', ranges: [[20, 30]] },
+      { affixId: 'u_momentum_effect', ranges: [[25, 35]] },
+      { affixId: 'u_momentum_retain', values: [1] },
     ],
   },
   {
     id: 'bosuns_oath', name: "The Bosun's Oath", baseId: 'onyx_amulet', flavour: 'Sworn in salt, kept in fire.',
     mods: [
-      { affixId: 'spell_fire', values: [18, 34] },
-      { affixId: 'spell_light', values: [12, 44] },
-      { affixId: 'fire_res', values: [20] },
-      { affixId: 'light_res', values: [20] },
-      { affixId: 'u_mana_power', values: [20] },
+      { affixId: 'spell_fire', ranges: [[15, 22], [28, 40]] },
+      { affixId: 'spell_light', ranges: [[10, 15], [36, 52]] },
+      { affixId: 'fire_res', ranges: [[16, 25]] },
+      { affixId: 'light_res', ranges: [[16, 25]] },
+      { affixId: 'u_mana_power', ranges: [[16, 25]] },
     ],
   },
   {
     id: 'tide_crown', name: 'Crown of the Slack Tide', baseId: 'umbral_mask', flavour: 'The moment the water stops is the moment it takes you.',
     mods: [
-      { affixId: 'inc_evasion', values: [75] },
-      { affixId: 'flat_es', values: [55] },
-      { affixId: 'fire_res', values: [25] },
-      { affixId: 'light_res', values: [25] },
-      { affixId: 'u_coup_pct', values: [45] },
+      { affixId: 'inc_evasion', ranges: [[65, 85]] },
+      { affixId: 'flat_es', ranges: [[45, 65]] },
+      { affixId: 'fire_res', ranges: [[20, 30]] },
+      { affixId: 'light_res', ranges: [[20, 30]] },
+      { affixId: 'u_coup_pct', ranges: [[35, 55]] },
     ],
   },
   {
     id: 'corposant', name: 'Corposant', baseId: 'hallowed_crown', flavour: 'The fire that burns on the mast and does not burn the mast.',
     mods: [
-      { affixId: 'flat_life', values: [80] },
-      { affixId: 'flat_es', values: [55] },
-      { affixId: 'fire_res', values: [30] },
-      { affixId: 'light_res', values: [30] },
-      { affixId: 'u_nova_pct', values: [40] },
+      { affixId: 'flat_life', ranges: [[70, 95]] },
+      { affixId: 'flat_es', ranges: [[45, 65]] },
+      { affixId: 'fire_res', ranges: [[25, 35]] },
+      { affixId: 'light_res', ranges: [[25, 35]] },
+      { affixId: 'u_nova_pct', ranges: [[30, 50]] },
     ],
   },
   {
     id: 'harpoons_answer', name: "The Harpoon's Answer", baseId: 'bladedancer_gloves', flavour: 'It comes back on the line.',
     mods: [
-      { affixId: 'flat_life', values: [70] },
-      { affixId: 'attack_speed', values: [12] },
-      { affixId: 'fire_res', values: [25] },
-      { affixId: 'light_res', values: [25] },
+      { affixId: 'flat_life', ranges: [[60, 85]] },
+      { affixId: 'attack_speed', ranges: [[10, 15]] },
+      { affixId: 'fire_res', ranges: [[20, 30]] },
+      { affixId: 'light_res', ranges: [[20, 30]] },
       { affixId: 'u_riposte_bleed', values: [1] },
     ],
   },
 
-  // ---------- Act 6 (docs/design/ACT6.md): one for each class's meter, each with all three resistances ----------
+  // ---------- Act 6 (docs/GAME.md): one for each class's meter, each with all three resistances ----------
   {
     id: 'oathbreaker', name: 'Oathbreaker', baseId: 'sunforged_hammer', flavour: 'Sworn on by nine guards. Eight of them left it behind.',
     mods: [
-      { affixId: 'inc_phys', values: [140] },
-      { affixId: 'flat_life', values: [80] },
-      { affixId: 'all_res', values: [15] },
-      { affixId: 'u_rage_max', values: [5] },
-      { affixId: 'u_rage_effect', values: [30] },
+      { affixId: 'inc_phys', ranges: [[120, 160]] },
+      { affixId: 'flat_life', ranges: [[70, 95]] },
+      { affixId: 'all_res', ranges: [[12, 18]] },
+      { affixId: 'u_rage_max', ranges: [[4, 6]] },
+      { affixId: 'u_rage_effect', ranges: [[25, 35]] },
+      { affixId: 'chaos_res', ranges: [[-30, -15]] },
     ],
   },
   {
     id: 'kingsmarch', name: "The King's March", baseId: 'manticore_boots', flavour: 'Forty leagues of white stone, and not one step back.',
     mods: [
-      { affixId: 'flat_evasion', values: [200] },
-      { affixId: 'all_res', values: [15] },
-      { affixId: 'u_momentum_max', values: [4] },
-      { affixId: 'u_momentum_effect', values: [30] },
+      { affixId: 'flat_evasion', ranges: [[175, 230]] },
+      { affixId: 'all_res', ranges: [[12, 18]] },
+      { affixId: 'u_momentum_max', ranges: [[3, 5]] },
+      { affixId: 'u_momentum_effect', ranges: [[25, 35]] },
     ],
   },
   {
     id: 'last_decree', name: 'The Last Decree', baseId: 'seraph_wand', flavour: 'Signed, sealed, and read aloud to an empty room.',
     mods: [
-      { affixId: 'spell_cold', values: [20, 38] },
-      { affixId: 'spell_fire', values: [20, 38] },
-      { affixId: 'all_res', values: [15] },
-      { affixId: 'u_mana_power', values: [25] },
-      { affixId: 'u_mana_power_full', values: [15] },
+      { affixId: 'spell_cold', ranges: [[16, 24], [32, 45]] },
+      { affixId: 'spell_fire', ranges: [[16, 24], [32, 45]] },
+      { affixId: 'all_res', ranges: [[12, 18]] },
+      { affixId: 'u_mana_power', ranges: [[20, 30]] },
+      { affixId: 'u_mana_power_full', ranges: [[12, 20]] },
     ],
   },
   {
     id: 'crownbreaker_mask', name: "Crownbreaker's Mask", baseId: 'voidwalker_cowl', flavour: 'Worn to the coronation. It went badly for everyone else.',
     mods: [
-      { affixId: 'inc_evasion', values: [85] },
-      { affixId: 'flat_es', values: [65] },
-      { affixId: 'all_res', values: [15] },
-      { affixId: 'u_coup_pct', values: [55] },
+      { affixId: 'inc_evasion', ranges: [[75, 100]] },
+      { affixId: 'flat_es', ranges: [[55, 75]] },
+      { affixId: 'all_res', ranges: [[12, 18]] },
+      { affixId: 'u_coup_pct', ranges: [[45, 65]] },
       { affixId: 'u_malice_crit_keep', values: [2] },
     ],
   },
   {
     id: 'hand_of_the_regent', name: 'Hand of the Regent', baseId: 'dragonscale_gauntlets', flavour: 'It signs for the king, and it answers for him too.',
     mods: [
-      { affixId: 'flat_life', values: [85] },
-      { affixId: 'attack_speed', values: [14] },
-      { affixId: 'all_res', values: [15] },
-      { affixId: 'u_riposte_pct', values: [50] },
+      { affixId: 'flat_life', ranges: [[75, 100]] },
+      { affixId: 'attack_speed', ranges: [[12, 18]] },
+      { affixId: 'all_res', ranges: [[12, 18]] },
+      { affixId: 'u_riposte_pct', ranges: [[40, 60]] },
       { affixId: 'u_riposte_heal', values: [2] },
     ],
   },
   {
     id: 'regents_mantle', name: "The Regent's Mantle", baseId: 'archon_regalia', flavour: 'Held in trust, for a king who will not be needing it.',
     mods: [
-      { affixId: 'flat_life', values: [110] },
-      { affixId: 'flat_es', values: [75] },
-      { affixId: 'all_res', values: [15] },
-      { affixId: 'u_nova_pct', values: [45] },
-      { affixId: 'u_nova_heal', values: [35] },
+      { affixId: 'flat_life', ranges: [[95, 130]] },
+      { affixId: 'flat_es', ranges: [[65, 90]] },
+      { affixId: 'all_res', ranges: [[12, 18]] },
+      { affixId: 'u_nova_pct', ranges: [[35, 55]] },
+      { affixId: 'u_nova_heal', ranges: [[28, 42]] },
     ],
   },
 
@@ -1302,18 +1326,18 @@ export const UNIQUES: UniqueDef[] = [
   {
     id: 'unblinking_tome', name: 'The Unblinking Tome', baseId: 'magus_ward', flavour: 'Every page is a reading of you.',
     mods: [
-      { affixId: 'flat_es', values: [45] },
-      { affixId: 'spell_fire', values: [8, 18] },
-      { affixId: 'cast_speed', values: [8] },
-      { affixId: 'fire_res', values: [25] },
+      { affixId: 'flat_es', ranges: [[35, 55]] },
+      { affixId: 'spell_fire', ranges: [[6, 10], [14, 22]] },
+      { affixId: 'cast_speed', ranges: [[6, 12]] },
+      { affixId: 'fire_res', ranges: [[20, 30]] },
     ],
   },
   {
     id: 'briar_key', name: 'The Briar Key', baseId: 'paladin_sceptre', flavour: 'It opens every door in the Sanctum. Not all of them lead out.',
     mods: [
-      { affixId: 'added_phys', values: [18, 36] },
-      { affixId: 'u_nova_pct', values: [35] },
-      { affixId: 'u_nova_heal', values: [25] },
+      { affixId: 'added_phys', ranges: [[15, 22], [30, 44]] },
+      { affixId: 'u_nova_pct', ranges: [[30, 45]] },
+      { affixId: 'u_nova_heal', ranges: [[20, 32]] },
     ],
   },
 
@@ -1330,11 +1354,121 @@ export const UNIQUES: UniqueDef[] = [
   {
     id: 'unbroken_temper', name: 'The Unbroken Temper', baseId: 'onyx_amulet', flavour: 'From the first shore to the Last King, every wound was a prayer, and not one was the last.', noTrade: true,
     mods: [
-      { affixId: 'flat_life', values: [90] },
-      { affixId: 'all_res', values: [15] },
+      { affixId: 'flat_life', ranges: [[80, 105]] },
+      { affixId: 'all_res', ranges: [[12, 18]] },
+      { affixId: 'u_fervor_pct', ranges: [[20, 30]] },
+      { affixId: 'u_nova_heal', ranges: [[25, 40]] },
       { affixId: 'u_regen_pct', values: [1] },
-      { affixId: 'u_fervor_pct', values: [25] },
-      { affixId: 'u_nova_heal', values: [30] },
+    ],
+  },
+
+  // ---------- Hard Bosses (docs/design/HARD_BOSSES.md) ----------
+  {
+    id: 'faultline', name: 'Faultline', baseId: 'colossus_maul', flavour: 'Hit the mountain where the mountain already wants to split.',
+    mods: [
+      { affixId: 'inc_phys', ranges: [[150, 200]] },
+      { affixId: 'added_phys', ranges: [[24, 32], [48, 65]] },
+      { affixId: 'flat_life', ranges: [[80, 110]] },
+      { affixId: 'u_slam_reduction', ranges: [[20, 30]] },
+    ],
+  },
+  {
+    id: 'last_hymn', name: 'Last Hymn', baseId: 'onyx_amulet', flavour: 'When the choir falls silent, the bell keeps ringing.',
+    mods: [
+      { affixId: 'spell_light', ranges: [[14, 18], [42, 55]] },
+      { affixId: 'u_cast_speed', ranges: [[14, 20]] },
+      { affixId: 'light_res', ranges: [[30, 45]] },
+      { affixId: 'u_after_guard_damage', ranges: [[30, 45]] },
+    ],
+  },
+  {
+    id: 'riptide', name: 'Riptide', baseId: 'stagheart_boots', flavour: 'Step into the current and let it carry the blade.',
+    mods: [
+      { affixId: 'flat_evasion', ranges: [[200, 280]] },
+      { affixId: 'movement_speed', ranges: [[20, 30]] },
+      { affixId: 'cold_res', ranges: [[35, 50]] },
+      { affixId: 'u_momentum_effect', ranges: [[30, 45]] },
+      { affixId: 'u_chill_on_hit', values: [1] },
+    ],
+  },
+  {
+    id: 'twinned_crown', name: 'Twinned Crown', baseId: 'sanctum_crown', flavour: 'Two rulers, one circlet, neither willing to yield.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[80, 110]] },
+      { affixId: 'flat_es', ranges: [[60, 85]] },
+      { affixId: 'fire_res', ranges: [[30, 45]] },
+      { affixId: 'cold_res', ranges: [[30, 45]] },
+      { affixId: 'u_repeat_more', ranges: [[16, 25]] },
+    ],
+  },
+  {
+    id: 'the_unwritten', name: 'The Unwritten', baseId: 'empyrean_regalia', flavour: 'No house, no crest, no oath left to break.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[110, 150]] },
+      { affixId: 'flat_es', ranges: [[80, 115]] },
+      { affixId: 'all_attributes', ranges: [[20, 30]] },
+      { affixId: 'all_res', ranges: [[16, 25]] },
+      { affixId: 'u_life_more', ranges: [[10, 15]] },
+    ],
+  },
+
+  // ---------- Uber Bosses (Pinnacle Encounters) ----------
+  {
+    id: 'mirrors_edge', name: "Mirror's Edge", baseId: 'wyrmlord_sword', flavour: 'You fought yourself at the end of the road, and kept the sharper half.',
+    mods: [
+      { affixId: 'inc_phys', ranges: [[180, 240]] },
+      { affixId: 'added_phys', ranges: [[30, 42], [62, 84]] },
+      { affixId: 'attack_speed', ranges: [[18, 26]] },
+      { affixId: 'crit_multi', ranges: [[40, 55]] },
+      { affixId: 'u_riposte_pct', ranges: [[55, 75]] },
+    ],
+  },
+  {
+    id: 'exiles_covenant', name: "The First Exile's Covenant", baseId: 'onyx_amulet', flavour: 'Every path you walked was carved by the one who walked it first.',
+    mods: [
+      { affixId: 'all_attributes', ranges: [[25, 35]] },
+      { affixId: 'all_res', ranges: [[18, 26]] },
+      { affixId: 'u_life_more', ranges: [[12, 18]] },
+      { affixId: 'u_mana_power', ranges: [[25, 35]] },
+    ],
+  },
+  {
+    id: 'architects_compass', name: "Architect's Compass", baseId: 'celestial_ward', flavour: 'Six acts, six ruins, one blueprint.',
+    mods: [
+      { affixId: 'flat_es', ranges: [[100, 145]] },
+      { affixId: 'spell_fire', ranges: [[20, 28], [40, 56]] },
+      { affixId: 'spell_light', ranges: [[15, 22], [50, 70]] },
+      { affixId: 'cast_speed', ranges: [[15, 22]] },
+      { affixId: 'spell_block', ranges: [[10, 15]] },
+    ],
+  },
+  {
+    id: 'ruinforged_mantle', name: 'Ruinforged Mantle', baseId: 'godforged_plate', flavour: 'Built from the load-bearing stones of a fallen empire.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[130, 175]] },
+      { affixId: 'u_armour_more', ranges: [[30, 45]] },
+      { affixId: 'all_res', ranges: [[16, 25]] },
+      { affixId: 'u_slam_reduction', ranges: [[25, 35]] },
+    ],
+  },
+  {
+    id: 'void_crown', name: 'Crown of the Void Sovereign', baseId: 'oblivion_mask', flavour: 'Stare into the rift until the rift kneels.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[95, 130]] },
+      { affixId: 'flat_es', ranges: [[75, 105]] },
+      { affixId: 'chaos_res', ranges: [[35, 50]] },
+      { affixId: 'u_coup_pct', ranges: [[60, 85]] },
+      { affixId: 'u_poison_pct', ranges: [[35, 50]] },
+    ],
+  },
+  {
+    id: 'sovereigns_grasp', name: "Sovereign's Grasp", baseId: 'oblivion_gloves', flavour: 'What the void touches, it keeps.',
+    mods: [
+      { affixId: 'flat_es', ranges: [[65, 90]] },
+      { affixId: 'attack_speed', ranges: [[15, 22]] },
+      { affixId: 'cast_speed', ranges: [[15, 22]] },
+      { affixId: 'chaos_res', ranges: [[30, 45]] },
+      { affixId: 'u_life_leech', ranges: [[3, 5]] },
     ],
   },
 ];

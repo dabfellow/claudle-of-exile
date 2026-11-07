@@ -66,6 +66,9 @@ export function withTutorial(ctx: Ctx, getState: () => GameState): Ctx {
     get event() {
       return ctx.event;
     },
+    get eventRows() {
+      return ctx.eventRows;
+    },
     emit(e) {
       ctx.emit(e);
       tutorialEvent(getState(), wrapped, e);

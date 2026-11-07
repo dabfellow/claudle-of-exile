@@ -11,7 +11,7 @@ import { skillTreeStats } from './skillTree';
 import type { CraftMethod, GameState, Item, StopRule } from './types';
 
 /**
- * Auto-crafting, formerly "Craft until…" (docs/design/SKILLING_REWORK.md §4): an idle activity at the Crafting Bench
+ * Auto-crafting, formerly "Craft until…" (docs/GAME.md): an idle activity at the Crafting Bench
  * (level 5) that spends one orb or Essence per step on an inventory item until a stop rule matches or the materials run out.
  */
 export function ruleMet(item: Item, rule: StopRule): boolean {
@@ -21,13 +21,16 @@ export function ruleMet(item: Item, rule: StopRule): boolean {
 }
 
 function stepReason(s: GameState, uid: number, method: CraftMethod): string | null {
-  return 'essence' in method ? essenceReason(s, method.essence, uid) : orbReason(s, method.orb, uid, method.fossil);
+  return 'essence' in method ? essenceReason(s, method.essence, uid) : orbReason(s, method.orb, uid, method.fossil, method.sealed);
 }
 
 export function methodName(method: CraftMethod): string {
   if ('essence' in method) return essenceDef(method.essence)?.name ?? method.essence;
   const orb = currencyDef(method.orb).name;
-  return method.fossil ? `${orb} + ${fossilDef(method.fossil)?.name}` : orb;
+  const parts = [orb];
+  if (method.fossil) parts.push(fossilDef(method.fossil)?.name ?? method.fossil);
+  if (method.sealed) parts.push("Forger's Seal");
+  return parts.join(' + ');
 }
 
 /** A modifier's text with its numbers blanked, e.g. "+#% to Fire Resistance". */
@@ -73,9 +76,10 @@ function craftOnce(s: GameState, ctx: Ctx): void {
     return;
   }
   const refund = 'orb' in method && chance(ctx.rng, (skillTreeStats(s).patientCrafter ?? 0) / 100);
+  const before = 'orb' in method ? s.account.bank[method.orb] ?? 0 : 0;
   if ('essence' in method) applyEssence(s, ctx, method.essence, uid);
-  else applyOrb(s, ctx, method.orb, uid, method.fossil);
-  if (refund && 'orb' in method) s.account.bank[method.orb] += 1;
+  else applyOrb(s, ctx, method.orb, uid, method.fossil, method.sealed);
+  if (refund && 'orb' in method) s.account.bank[method.orb] += Math.max(0, before - (s.account.bank[method.orb] ?? 0));
   s.action.steps += 1;
   if (ruleMet(item!, rule)) {
     const steps = s.action.steps;

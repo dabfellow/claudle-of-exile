@@ -31,7 +31,7 @@ const CHAR_PACE: [level: number, hours: number][] = [[40, 3], [65, 6], [80, 12],
 
 /**
  * Character level, set by play time: about 3 hours to level 20 on a cubic curve, then each level in a
- * stretch of CHAR_PACE takes the same time. 99 is halfway to 100 in xp (docs/design/BALANCE.md).
+ * stretch of CHAR_PACE takes the same time. 99 is halfway to 100 in xp (docs/DEVELOPMENT.md).
  */
 const CHAR_CURVE: Curve = (() => {
   const totals = [0, 0];

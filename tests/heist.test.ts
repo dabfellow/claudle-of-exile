@@ -63,6 +63,12 @@ describe('Focus on a job', () => {
     expect(focusOf(s)).toBe(0);
   });
 
+  it('uses life-skill speed events for Heist rooms', () => {
+    const plain = underWay();
+    const boosted = underWay();
+    expect(progressAfter(boosted, { ...ctx(), event: { loot: 1, xp: 1, gatheringSpeed: 2 } })).toBe(progressAfter(plain, ctx()) * 2);
+  });
+
   it('carries over when a repeat starts the next job', () => {
     const s = underWay();
     for (let i = 0; i < 4; i++) minigameSwing(s, 'hit');

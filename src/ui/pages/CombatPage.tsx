@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react';
 import { mealDef } from '../../data/cooking';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
+import { monsterMod } from '../../data/monsterMods';
+import { MONSTER_PROFILES } from '../../data/monsterProfiles';
 import { BOSS_FROSTBITE_MAX, BOSS_FROSTBITE_SLOW_PCT, BOSS_NOVA_MULT, BOSS_SLAM_MULT, echoTips, MECHANIC_INFO, nextZones, zoneDef, type MonsterDef } from '../../data/zones';
 import { CELLS, cellRing, GROUND, inReach, minionInWay, monsterGround, PLAYER_SPOT, POSTURES, POSTURE_ORDER, RINGS } from '../../engine/battlefield';
 import {
@@ -40,10 +42,12 @@ import { ascendancyOf } from '../../engine/ascendancy';
 import { flaskCapacity, meterLabel, meterMax, mechanicOf, overflowMax } from '../../engine/mechanics';
 import { classDef } from '../../data/classes';
 import { mealTimeLeft } from '../components/PantryBoard';
+import { DOOMED_MODS, doomedTier, mapTier, normalMapModDef, sextantMod } from '../../data/maps';
+import { stopAutoRun } from '../../engine/maps';
 import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
 import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, Minion, MonsterInstance, Posture, TargetOrder, TargetPriority } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
-import { anyArtUrl, Art, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
+import { anyArtUrl, Art, Badge, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, rulesLabel } from '../components/GemView';
 import { LootPile } from '../components/GroundLoot';
@@ -215,6 +219,9 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
       </div>
       <div className="status-row">
         {c.blocks > 0 && <span className="status good">Block ×{c.blocks}</span>}
+        {(c.playerChillMs ?? 0) > 0 && <span className="status cold">Chilled</span>}
+        {(c.playerShockMs ?? 0) > 0 && <span className="status bad">Shocked</span>}
+        {[...new Set((c.playerDots ?? []).map((dot) => dot.kind))].map((kind) => <span key={kind} className="status bad">{kind[0].toUpperCase() + kind.slice(1)}</span>)}
         {c.evadeMs > 0 && <span className="status good">Evading {(c.evadeMs / 1000).toFixed(1)}s</span>}
         {c.shield > 0 && <span className="status cold">Shield {fmt(c.shield)}</span>}
         {c.ambush && <span className="status good">Mega Crit ready</span>}
@@ -255,26 +262,70 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
   );
 }
 
+/** A monster's rarity as shown to the player: bosses are unique. */
+function rarityOf(m: MonsterInstance): 'normal' | 'magic' | 'rare' | 'unique' {
+  return m.isBoss ? 'unique' : m.rarity ?? 'normal';
+}
+
+const RARITY_LABEL = { normal: 'Normal', magic: 'Magic', rare: 'Rare', unique: 'Unique' } as const;
+
+/** A magic, rare or unique monster's modifiers, each with what it does, in its rarity's colour. */
+function MonsterMods({ m }: { m: MonsterInstance }) {
+  const lines: { name: string; desc: string }[] = [];
+  if (m.mods?.length) {
+    for (const id of m.mods) {
+      const mod = monsterMod(id);
+      if (mod) lines.push({ name: mod.name, desc: mod.desc });
+    }
+  }
+  if (m.hulking) {
+    lines.push({ name: 'Hulking', desc: 'Takes 60% less area, chain and piercing damage' });
+  }
+  if (m.isBoss && m.mechanics?.length) {
+    for (const mech of m.mechanics) {
+      const info = MECHANIC_INFO[mech];
+      if (info) lines.push({ name: info.name, desc: info.tip });
+    }
+  }
+  if (!lines.length) return null;
+  return (
+    <div className="monster-mod-list">
+      {lines.map((l, i) => (
+        <div key={i} className={`monster-mod-line rarity-${rarityOf(m)}`}>
+          <b>{l.name}</b> <span className="muted">{l.desc}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; fx: Fx }) {
   const key = String(m.uid);
   const poison = m.dots.filter((x) => x.kind === 'poison').length;
   return (
-    <div className={`fighter monster ${m.isBoss ? 'boss' : ''} ${target ? 'targeted' : ''} ${shakeClass(fx.shakes[key])} ${critClass(fx.crits[key])}`}>
+    <div className={`fighter monster monster-rarity-${m.rarity ?? 'normal'} ${m.isBoss ? 'boss' : ''} ${target ? 'targeted' : ''} ${shakeClass(fx.shakes[key])} ${critClass(fx.crits[key])}`}>
       <Floaters list={fx.floaters.filter((f) => f.owner === m.uid)} />
       <div className="fighter-head">
         <div className="portrait small" style={{ borderColor: m.isBoss ? 'var(--life)' : undefined }}>
           <Art src={`monsters/${m.defId}`} alt={m.name} cover fallback={<GameIcon name="skull" size={20} color={m.isBoss ? 'var(--life-2)' : DMG_COLOR[m.dmgType]} />} />
         </div>
         <div style={{ minWidth: 0 }}>
-          <div className="fighter-name small">{m.name}</div>
+          <div className={`fighter-name small rarity-${rarityOf(m)}`}>{m.name}</div>
           <div className="muted small" title={m.hulking ? 'Hulking: area, chain and piercing hits do 60% less to it' : undefined}>
-            {m.isBoss ? 'Boss · ' : ''}
+            <span className={`rarity-${rarityOf(m)}`}>{m.isBoss ? 'Boss' : RARITY_LABEL[rarityOf(m)]}</span>
+            {' · '}
             {m.hulking ? 'Hulking · ' : ''}Lv {m.level} · {DMG_NAME[m.dmgType]}
           </div>
         </div>
         {target && <span className="target-pip" title="Current target" />}
       </div>
       <ProgressBar value={Math.max(0, m.life) / m.maxLife} size="md" color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(Math.max(0, m.life))} / ${fmt(m.maxLife)}`} ghost />
+      {(m.maxEs ?? 0) > 0 && <ProgressBar value={(m.es ?? 0) / m.maxEs!} size="md" color="var(--es)" label={`ES ${fmt(m.es ?? 0)} / ${fmt(m.maxEs!)}`} />}
+      {m.archetype && <div className="muted small">{MONSTER_PROFILES[m.archetype].name} · {(m.attackMs / 1000).toFixed(2)}s {m.attackKind}</div>}
+      <div className="muted small">
+        Armour {fmt(m.armour ?? 0)} · Evasion {fmt(m.evasion ?? 0)} · Block {m.blockChance ?? 0}% / Spell block {m.spellBlockChance ?? 0}%
+        {m.attackAilment ? ` · ${m.attackAilment}` : ''}
+      </div>
       {m.wardMax > 0 && <ProgressBar size="md" color="var(--ward)" value={m.ward / m.wardMax} label={`Ward ${fmt(m.ward)} · ${Math.ceil(m.wardMs / 1000)}s`} />}
       {(m.stagger ?? 0) > 0 && <ProgressBar color="var(--accent)" value={m.stagger! / staggerMax(m)} label="Stagger" />}
       {m.casting >= 0 ? (
@@ -297,6 +348,7 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
           <ProgressBar value={m.attackTimer / m.attackMs} color="var(--dim)" className="thin" />
         </div>
       )}
+      <MonsterMods m={m} />
       <div className="status-row">
         {m.chained && <span className="status bad">Chained: can't be hurt</span>}
         {m.martyr && <span className="status">Area and chain skills strike it. Click it to aim anything else</span>}
@@ -332,17 +384,21 @@ function MonsterToken({ m, c, target, locked, fx }: { m: MonsterInstance; c: Com
   if (m.chained) pips.push(["Chained: can't be hurt", 'var(--ward)']);
   return (
     <Tooltip content={<MonsterCard m={m} target={target} fx={fx} />}>
-      <div className={`bf-token ${m.isBoss ? 'boss' : ''} ${m.martyr ? 'martyr' : ''} ${m.chained ? 'chained' : ''} ${target ? 'targeted' : ''} ${locked ? 'locked' : ''} ${m.casting >= 0 ? 'casting' : ''} ${shakeClass(fx.shakes[key])} ${critClass(fx.crits[key])}`}>
+      <div className={`bf-token monster-rarity-${rarityOf(m)} ${m.isBoss ? 'boss' : ''} ${m.martyr ? 'martyr' : ''} ${m.chained ? 'chained' : ''} ${target ? 'targeted' : ''} ${locked ? 'locked' : ''} ${m.casting >= 0 ? 'casting' : ''} ${shakeClass(fx.shakes[key])} ${critClass(fx.crits[key])}`}>
         <Floaters list={fx.floaters.filter((f) => f.owner === m.uid)} />
         <div className="bf-token-head">
           <div className="portrait tiny">
             <Art src={`monsters/${m.defId}`} alt={m.name} cover fallback={<GameIcon name="skull" size={14} color={m.isBoss ? 'var(--life-2)' : DMG_COLOR[m.dmgType]} />} />
           </div>
-          <span className="bf-token-name">{m.name}</span>
+          <span className={`bf-token-name rarity-${rarityOf(m)}`}>{m.name}</span>
+          {m.rarity && m.rarity !== 'normal' && !m.isBoss && (
+            <span className={`bf-rarity-badge rarity-${rarityOf(m)}`}>[{m.rarity[0].toUpperCase()}]</span>
+          )}
           {m.attackKind === 'spell' && !m.isBoss && <span className="bf-ranged" title="Ranged: stops a few rings out and casts from there" />}
           {target && <span className="target-pip" title={locked ? 'Your chosen target (click to release)' : 'Current target'} />}
         </div>
         <ProgressBar value={Math.max(0, m.life) / m.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" />
+        {(m.maxEs ?? 0) > 0 && <ProgressBar value={(m.es ?? 0) / m.maxEs!} color="var(--es)" className="thin" />}
         {m.wardMax > 0 && <ProgressBar color="var(--ward)" value={m.ward / m.wardMax} className="thin" />}
         {(m.stagger ?? 0) > 0 && <ProgressBar color="var(--accent)" value={m.stagger! / staggerMax(m)} className="thin" />}
         {m.casting >= 0 ? (
@@ -503,9 +559,11 @@ function FieldSummary({ s, c }: { s: GameState; c: CombatRuntime }) {
       {focus && (
         <div className="bf-summary-target">
           <span>
-            {focus.name} <span className="dim">· ring {cellRing(focus.cell)}</span>
+            <span className={`rarity-${rarityOf(focus)}`}>{focus.name}</span> <span className="dim">· {RARITY_LABEL[rarityOf(focus)]} · ring {cellRing(focus.cell)}</span>
           </span>
+          <MonsterMods m={focus} />
           <ProgressBar value={Math.max(0, focus.life) / focus.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(Math.max(0, focus.life))} / ${fmt(focus.maxLife)}`} />
+          {(focus.maxEs ?? 0) > 0 && <ProgressBar value={(focus.es ?? 0) / focus.maxEs!} color="var(--es)" label={`ES ${fmt(focus.es ?? 0)} / ${fmt(focus.maxEs!)}`} />}
         </div>
       )}
     </div>
@@ -677,7 +735,7 @@ function FlaskBelt({ s }: { s: GameState }) {
               <div className="flask-liquid" style={{ height: `${(f.charges / flaskCapacity(s, f)) * 100}%` }} />
               {buff && <div className="flask-timer" style={{ width: `${(buff.remainingMs / buff.durationMs) * 100}%` }} />}
               <span className="flask-key">{i + 1}</span>
-              {(f.instill || st.def.kind !== 'utility') && <span className="flask-auto">AUTO</span>}
+              {f.instill && <span className="flask-auto">AUTO</span>}
               <span className="flask-charges">
                 {Math.floor(f.charges)}/{flaskCapacity(s, f)}
               </span>
@@ -689,7 +747,7 @@ function FlaskBelt({ s }: { s: GameState }) {
   );
 }
 
-function StatRow({ label, you, them, good }: { label: string; you: string; them: string; good?: boolean | null }) {
+function StatRow({ label, you, them, good }: { label: string; you: React.ReactNode; them: React.ReactNode; good?: boolean | null }) {
   return (
     <>
       <span className="muted">{label}</span>
@@ -718,7 +776,29 @@ function Matchup({ s, d, bossDef }: { s: GameState; d: Derived; bossDef: Monster
     <div className="matchup">
       <span />
       <span className="matchup-head">You</span>
-      <span className="matchup-head" title={target?.name}>{target?.name ?? 'No target'}</span>
+      <span className={`matchup-head ${target ? `rarity-${rarityOf(target)}` : ''}`} title={target?.name}>
+        {target ? `${target.name} (${RARITY_LABEL[rarityOf(target)]})` : 'No target'}
+      </span>
+      <StatRow
+        label="Rarity"
+        you=""
+        them={
+          target ? (
+            <b className={`rarity-${rarityOf(target)}`}>
+              {target.isBoss ? 'Unique (boss)' : RARITY_LABEL[rarityOf(target)]}
+            </b>
+          ) : (
+            '–'
+          )
+        }
+      />
+      {target && (target.mods?.length || target.hulking || (target.isBoss && target.mechanics?.length)) ? (
+        <>
+          <span className="muted">Modifiers</span>
+          <span />
+          <MonsterMods m={target} />
+        </>
+      ) : null}
       <StatRow
         label="Level"
         you={String(d.combatLevel)}
@@ -773,6 +853,69 @@ function Matchup({ s, d, bossDef }: { s: GameState; d: Derived; bossDef: Monster
   );
 }
 
+function MapCombatBanner() {
+  const s = useGame();
+  const run = s.maps.run;
+  if (!run) return null;
+  const auto = s.maps.auto;
+  const tDef = run.doomedTier ? null : mapTier(run.tier);
+  const dDef = run.doomedTier ? doomedTier(run.doomedTier) : null;
+  const activeSextants = (run.sextantMods ?? []).map((id) => sextantMod(id));
+  const activeDoomed = (run.doomedMods ?? []).map((id) => DOOMED_MODS.find((m) => m.id === id)).filter(Boolean);
+  const activeNormal = (run.normalMods ?? []).map((id) => normalMapModDef(id)).filter(Boolean);
+
+  const hasAnyMods = (tDef && tDef.mod !== 'none') || activeDoomed.length > 0 || activeNormal.length > 0 || activeSextants.length > 0;
+
+  return (
+    <div className="card" style={{ margin: '0 0 12px 0', padding: '10px 14px' }}>
+      <div className="row" style={{ alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <div className="row" style={{ alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Badge tone={dDef ? 'warn' : 'neutral'}>
+            {dDef ? dDef.name : `Map Tier ${run.tier} · ${tDef?.modName}`}
+          </Badge>
+          <span className="dim small num">
+            {run.packsLeft}/{run.packsTotal} packs left{auto ? ' · Auto-run active' : ''}
+          </span>
+        </div>
+        {auto && (
+          <button className="btn sm ghost" onClick={() => game.act((st) => stopAutoRun(st))}>
+            Stop auto-run after this map
+          </button>
+        )}
+      </div>
+
+      {hasAnyMods && (
+        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {tDef && tDef.mod !== 'none' && (
+            <div className="small row" style={{ gap: 6 }}>
+              <Badge tone="warn">Tier Hazard</Badge>
+              <span>{tDef.modDesc}</span>
+            </div>
+          )}
+          {activeDoomed.length > 0 && (
+            <div className="small row" style={{ gap: 6 }}>
+              <Badge tone="warn">Doomed</Badge>
+              <span>{activeDoomed.map((m) => `${m!.name} (${m!.desc})`).join(' · ')}</span>
+            </div>
+          )}
+          {activeNormal.length > 0 && (
+            <div className="small row" style={{ gap: 6 }}>
+              <Badge tone="neutral">Affixes</Badge>
+              <span>{activeNormal.map((m) => `${m!.name} (${m!.desc})`).join(' · ')}</span>
+            </div>
+          )}
+          {activeSextants.length > 0 && (
+            <div className="small row" style={{ gap: 6 }}>
+              <Badge tone="success">Sextant</Badge>
+              <span>{activeSextants.map((m) => `${m.name} (${m.desc})`).join(' · ')}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function CombatPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const d = deriveStats(s);
@@ -811,6 +954,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
   const bossComing = bossCalled(s, zone.id);
   const areaXp = areaXpLabel(characterLevel(s), zone.levelRange);
   const bossHere = c.monsters.some((m) => m.isBoss);
+  const focus = focusTarget(s);
   return (
     <div className="page combat-page">
       <PageHeader
@@ -851,11 +995,17 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {areaXp && `${areaXp} · `}{s.maps.run ? `${s.maps.run.packsLeft}/${s.maps.run.packsTotal} packs left before ${zone.boss.name}` : c.bossFarm ? `Boss farm: ${zone.boss.name}` : bossReady ? `${zone.boss.name} is ready to fight` : `${kills}/${zone.bossEvery} until ${zone.boss.name}`}
       </PageHeader>
 
+      <MapCombatBanner />
+
       <div className={`card arena2 ${zoneArt ? 'has-art' : ''}`} style={{ ['--zone' as string]: zone.color, ['--zone-art' as string]: zoneArt ? `url(${zoneArt})` : undefined }}>
         <div className="arena-side">
           <PlayerCard s={s} d={d} fx={fx} />
           <div className="matchup-card">
-            <div className="target-label">Matchup</div>
+            <div className="target-label">
+              Active Target {focus ? (
+                <>· <span className={`rarity-${rarityOf(focus)}`}>{focus.name} ({focus.isBoss ? 'Unique' : RARITY_LABEL[rarityOf(focus)]})</span></>
+              ) : '· No target'}
+            </div>
             <Matchup s={s} d={d} bossDef={zone.boss} />
           </div>
         </div>

@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+# The default rules missed a historical Google OAuth client secret in a Markdown guide.
+[[rules]]
+id = "google-oauth-client-secret"
+description = "Google OAuth client secret"
+regex = '''GOCSPX-[A-Za-z0-9_-]{20,}'''
+keywords = ["GOCSPX-"]

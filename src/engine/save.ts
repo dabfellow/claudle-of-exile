@@ -184,7 +184,7 @@ const MIGRATIONS: Record<number, Migration> = {
     if ((hideout.bench ?? 1) < 2) hideout.bench = 2;
     raw.hideout = hideout;
   },
-  // the affix pool pass (docs/design/GEAR.md): Item Rarity became a prefix, so move it on existing items
+  // the affix pool pass (docs/GAME.md): Item Rarity became a prefix, so move it on existing items
   17: (raw) => {
     const s = raw as unknown as OldSave;
     const fix = (item: Item | undefined) => {
@@ -199,7 +199,7 @@ const MIGRATIONS: Record<number, Migration> = {
     s.vendor?.stock?.forEach((o) => fix(o.item));
   },
   18: (raw) => {
-    // the battlefield became a half-ring of hexes (docs/design/BATTLEFIELD.md): old cells mean nothing now, so the fight restarts
+    // the battlefield became a half-ring of hexes (docs/GAME.md): old cells mean nothing now, so the fight restarts
     const s = raw as unknown as GameState;
     if (!s.combat) return;
     s.combat.monsters = [];
@@ -322,6 +322,11 @@ const MIGRATIONS: Record<number, Migration> = {
     // Character-tree roads and cluster interiors became shorter. Refund the old graph rather than leave stale nodes.
     raw.passives = [];
     raw.masteries = {};
+  },
+  36: (raw) => {
+    // The skilling tree became a capped specialisation and Fishing's dead branch became Gemcutting.
+    // Refund every skilling point so nobody keeps removed nodes or an over-budget allocation.
+    raw.skillPassives = [];
   },
 };
 

@@ -20,6 +20,8 @@ export interface AffixDef {
   tiers: AffixTier[];
   /** only appears on uniques, never rolls */
   uniqueOnly?: boolean;
+  /** only appears on crafting bench, never rolls */
+  benchOnly?: boolean;
   /** every stat takes the first rolled value ("X% increased Armour and Evasion") */
   linked?: boolean;
 }
@@ -275,6 +277,30 @@ export const AFFIXES: AffixDef[] = [
     stats: ['itemRarity'], weights: { helmet: 60, boots: 60, ring: 60, amulet: 60 },
     tiers: single([[24, 40], [44, 60], [64, 80], [84, 100], [104, 120], [124, 144], [145, 165], [166, 188], [189, 212]]),
   },
+  {
+    id: 'melee_damage', kind: 'prefix', group: 'melee_damage', label: 'Brawling', text: '{0}% increased Melee Damage',
+    stats: ['meleePct'], weights: { attack_weapon: 55, gloves: 45, belt: 30 }, tiers: single(ELEMENT_PCT),
+  },
+  {
+    id: 'projectile_damage', kind: 'prefix', group: 'projectile_damage', label: 'Ballistic', text: '{0}% increased Projectile Damage',
+    stats: ['projectilePct'], weights: { attack_weapon: 45, gloves: 40, amulet: 35 }, tiers: single(ELEMENT_PCT),
+  },
+  {
+    id: 'minion_damage', kind: 'prefix', group: 'minion_damage', label: 'Commanding', text: '{0}% increased Minion Damage',
+    stats: ['minionPct'], weights: { caster_weapon: 55, helmet: 55, amulet: 45 }, tiers: single(ELEMENT_PCT),
+  },
+  {
+    id: 'minion_life', kind: 'prefix', group: 'minion_life', label: 'Shepherding', text: '{0}% increased Minion maximum Life',
+    stats: ['minionLifePct'], weights: { helmet: 55, shield: 45, amulet: 35 }, tiers: single(ELEMENT_PCT),
+  },
+  {
+    id: 'life_flask_recovery', kind: 'prefix', group: 'life_flask_recovery', label: "Surgeon's", text: '{0}% increased Life Flask Recovery',
+    stats: ['lifeFlaskRecovery'], weights: { belt: 70 }, tiers: single(THIRTY),
+  },
+  {
+    id: 'mana_flask_recovery', kind: 'prefix', group: 'mana_flask_recovery', label: "Scholar's", text: '{0}% increased Mana Flask Recovery',
+    stats: ['manaFlaskRecovery'], weights: { belt: 70 }, tiers: single(THIRTY),
+  },
 
   // ---------- suffixes: attack ----------
   {
@@ -379,6 +405,69 @@ export const AFFIXES: AffixDef[] = [
     stats: ['lifeRegen'], weights: { helmet: 60, body: 60, gloves: 60, boots: 60, shield: 60, belt: 60, ring: 60, amulet: 60 },
     tiers: single([[1, 1], [1, 2], [2, 4], [4, 6], [6, 8], [8, 12], [12, 15], [15, 19], [19, 24]]),
   },
+  {
+    id: 'movement_speed', kind: 'suffix', group: 'movement_speed', label: 'of Haste', text: '{0}% increased Movement Speed',
+    stats: ['moveSpeedPct'], weights: { boots: 100 }, tiers: single(SPEED),
+  },
+  {
+    id: 'chaos_res', kind: 'suffix', group: 'chaos_res', label: 'of the Antidote', text: '+{0}% to Chaos Resistance',
+    stats: ['chaosRes'], weights: { helmet: 30, body: 30, gloves: 30, boots: 30, shield: 30, belt: 60, ring: 60, amulet: 60 },
+    tiers: single([[4, 7], [8, 11], [12, 15], [16, 19], [20, 23], [24, 27], [28, 31], [32, 35], [36, 40]]),
+  },
+  {
+    id: 'block_chance', kind: 'suffix', group: 'block_chance', label: 'of Deflection', text: '{0}% chance to Block hits',
+    stats: ['blockChance'], weights: { shield: 70 }, tiers: single([[1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10]]),
+  },
+  {
+    id: 'life_regen_pct', kind: 'suffix', group: 'life_regen_pct', label: 'of Mending', text: 'Regenerate {0}% of Life per second',
+    stats: ['lifeRegenPct'], weights: { body: 35, shield: 35, belt: 45 },
+    tiers: single([[1, 1], [1, 1], [1, 1], [1, 2], [1, 2], [2, 2], [2, 3], [3, 3], [3, 4]]),
+  },
+  {
+    id: 'mana_leech', kind: 'suffix', group: 'mana_leech', label: 'of Drinking', text: '{0}% of Damage Leeched as Mana',
+    stats: ['manaLeech'], weights: { attack_weapon: 35, ring: 25, amulet: 25 },
+    tiers: single([[1, 1], [1, 2], [2, 2], [2, 3], [3, 3], [3, 4], [4, 4], [4, 5], [5, 6]]),
+  },
+  {
+    id: 'cooldown_recovery', kind: 'suffix', group: 'cooldown_recovery', label: 'of Readiness', text: '{0}% increased Cooldown Recovery Rate',
+    stats: ['cooldownRecovery'], weights: { boots: 35, belt: 45 }, tiers: single(SMALL_PCT),
+  },
+  {
+    id: 'guard_duration', kind: 'suffix', group: 'guard_duration', label: 'of Shelter', text: '{0}% increased Guard Skill Duration',
+    stats: ['guardDuration'], weights: { body: 40, shield: 50, belt: 30 }, tiers: single(THIRTY),
+  },
+  {
+    id: 'skill_duration', kind: 'suffix', group: 'skill_duration', label: 'of Persistence', text: '{0}% increased Skill Effect Duration',
+    stats: ['skillDuration'], weights: { helmet: 35, boots: 35, amulet: 45 }, tiers: single(THIRTY),
+  },
+  {
+    id: 'stun_chance', kind: 'suffix', group: 'stun_chance', label: 'of Impact', text: '+{0}% chance to Stun on hit',
+    stats: ['stunChance'], weights: { attack_weapon: 45, gloves: 30 }, tiers: single(THIRTY),
+  },
+  {
+    id: 'stun_duration', kind: 'suffix', group: 'stun_duration', label: 'of Stunning', text: '{0}% increased Stun Duration',
+    stats: ['stunDuration'], weights: { attack_weapon: 40, gloves: 30, belt: 25 }, tiers: single(ELEMENT_PCT),
+  },
+  {
+    id: 'bleed_duration', kind: 'suffix', group: 'ailment_duration', label: 'of Hemorrhage', text: '{0}% longer Bleeding',
+    stats: ['bleedDuration'], weights: { attack_weapon: 35, gloves: 25, ring: 25 }, tiers: single(ELEMENT_PCT),
+  },
+  {
+    id: 'poison_duration', kind: 'suffix', group: 'ailment_duration', label: 'of Venom', text: '{0}% longer Poison',
+    stats: ['poisonDuration'], weights: { attack_weapon: 30, gloves: 25, ring: 25 }, tiers: single(ELEMENT_PCT),
+  },
+  {
+    id: 'ignite_duration', kind: 'suffix', group: 'ailment_duration', label: 'of Immolation', text: '{0}% longer Burn and Ignite',
+    stats: ['igniteDuration'], weights: { caster_weapon: 30, gloves: 25, ring: 25 }, tiers: single(ELEMENT_PCT),
+  },
+  {
+    id: 'minion_speed', kind: 'suffix', group: 'minion_speed', label: 'of the Pack', text: '{0}% increased Minion Attack and Cast Speed',
+    stats: ['minionSpeedPct'], weights: { caster_weapon: 45, helmet: 45, amulet: 35 }, tiers: single(SPEED),
+  },
+  {
+    id: 'utility_flask_duration', kind: 'suffix', group: 'utility_flask_duration', label: 'of Distillation', text: '{0}% increased Utility Flask Duration',
+    stats: ['utilityFlaskDuration'], weights: { belt: 70 }, tiers: single(THIRTY),
+  },
 
   // ---------- suffixes: attributes ----------
   // PoE-style: armour and weapons roll only their own attributes, and not often; jewellery rolls any
@@ -450,8 +539,12 @@ export const AFFIXES: AffixDef[] = [
   U('u_cast_speed', 'suffix', '{0}% increased Cast Speed', 'castSpeedPct'),
   U('u_poison_pct', 'suffix', '{0}% increased Poison Damage', 'poisonPct'),
   U('u_life_flask_recovery', 'suffix', '{0}% increased Life Flask Recovery', 'lifeFlaskRecovery'),
+  U('u_slam_reduction', 'suffix', '{0}% reduced Damage taken from Boss Slams', 'slamReduction'),
+  U('u_after_guard_damage', 'suffix', '{0}% increased Damage while a Guard Skill is active', 'afterGuardDamage'),
+  U('u_chill_on_hit', 'suffix', 'Hits always Chill enemies', 'chillOnHit'),
+  U('u_repeat_more', 'suffix', 'Skills that Repeat deal {0}% more Damage', 'repeatMore'),
 
-  // class-mechanic knobs (docs/design/CLASSES.md): only the class with that mechanic uses them
+  // class-mechanic knobs (docs/GAME.md): only the class with that mechanic uses them
   U('u_rage_max', 'prefix', '+{0} to maximum Rage', 'rageMax'),
   U('u_rage_effect', 'prefix', '{0}% increased effect of Rage', 'rageEffect'),
   U('u_rage_decay', 'suffix', 'Rage decays {0}% slower', 'rageDecay'),
@@ -464,28 +557,41 @@ export const AFFIXES: AffixDef[] = [
   U('u_riposte_bleed', 'suffix', 'Ripostes always cause Bleeding', 'riposteBleed'),
   U('u_momentum_max', 'prefix', '+{0} to maximum Momentum', 'momentumMax'),
   U('u_momentum_effect', 'prefix', '{0}% increased effect of Momentum', 'momentumEffect'),
-  U('u_momentum_retain', 'suffix', 'Taking a hit removes {0}% less Momentum', 'momentumRetain'),
+  U('u_momentum_retain', 'suffix', 'Taking a hit removes 1 less Momentum (minimum 1)', 'momentumRetain'),
   U('u_momentum_evasion', 'suffix', '{0}% increased Evasion Rating per Momentum', 'momentumEvasion'),
   U('u_malice_max', 'prefix', '+{0} to Malice meter size', 'maliceMax'),
   U('u_coup_pct', 'prefix', '{0}% increased Coup de Grâce damage', 'coupPct'),
   U('u_malice_crit_keep', 'suffix', 'Critical strikes leave {0} Malice instead of emptying the meter', 'maliceCritKeep'),
   U('u_coup_ailment', 'suffix', 'Coup de Grâce also Poisons and Ignites', 'coupAilment'),
   U('u_malice_on_hit_taken', 'suffix', 'Gain {0} Malice when you are hit', 'maliceOnHitTaken'),
+  U('u_malice_on_hit', 'prefix', 'Gain +{0} extra Malice per hit', 'maliceOnHit'),
   U('u_mana_power', 'prefix', '+{0}% to the Mana is Power bonus', 'manaPower'),
-  U('u_mana_power_full', 'suffix', 'Mana within {0}% of full counts as full for Mana is Power', 'manaPowerFull'),
+  U('u_mana_power_full', 'suffix', 'Recent Mana spending counts {0}% more toward Mana is Power', 'manaPowerFull'),
   U('u_fervor_pct', 'suffix', '{0}% faster Fervor', 'fervorPct'),
   U('u_nova_pct', 'prefix', '{0}% increased holy nova damage', 'novaPct'),
   U('u_nova_heal', 'suffix', '{0}% increased holy nova healing', 'novaHeal'),
   U('u_nova_es', 'suffix', 'The holy nova restores {0}% of Energy Shield', 'novaEs'),
 
-  // skill modifiers (docs/design/SKILLS_AND_UNIQUES.md ★): each tweaks one named skill gem
+  // skill modifiers (docs/GAME.md ★): each tweaks one named skill gem
   U('u_pummel_hits', 'suffix', 'Pummel strikes {0} additional time', 'pummelHits'),
   U('u_barrage_arrows', 'suffix', 'Barrage fires {0} additional arrow', 'barrageArrows'),
   U('u_parry_blocks', 'suffix', 'Parry blocks {0} additional hit', 'parryBlocks'),
   U('u_hammer_convert', 'suffix', 'Judgement Hammer converts an additional {0}% of physical damage to lightning', 'hammerConvert'),
   U('u_meditate_es', 'suffix', 'Meditate also restores {0}% of Energy Shield', 'meditateEs'),
   U('u_infernal_spread', 'suffix', "Infernal Blow's ignites spread to {0} other enemy", 'infernalSpread'),
+
+  // meta-crafting modifiers (docs/POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md)
+  M('meta_prefixes_cannot_be_changed', 'suffix', 'meta_prefix_lock', 'Prefixes Cannot Be Changed'),
+  M('meta_suffixes_cannot_be_changed', 'prefix', 'meta_suffix_lock', 'Suffixes Cannot Be Changed'),
+  M('meta_multicraft', 'suffix', 'meta_multicraft', 'Can have up to 3 Crafted Modifiers'),
+  M('meta_cannot_roll_attack', 'suffix', 'meta_attack_lock', 'Cannot roll Attack Modifiers'),
+  M('meta_cannot_roll_caster', 'prefix', 'meta_caster_lock', 'Cannot roll Caster Modifiers'),
 ];
+
+/** A bench-only meta mod that never rolls naturally. */
+function M(id: string, kind: AffixDef['kind'], group: string, text: string): AffixDef {
+  return { id, kind, group, label: '', text, benchOnly: true, stats: [], weights: {}, tiers: [{ ilvl: 1, ranges: [] }] };
+}
 
 /** A unique-only mod that sets a single stat. */
 function U(id: string, kind: AffixDef['kind'], text: string, stat: StatKey): AffixDef {

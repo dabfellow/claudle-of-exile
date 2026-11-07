@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AdminInbox } from './AdminInbox';
 import { game } from '../../game';
 import { isCloudAccount } from '../../platform/accounts';
 import { cloudConfigured } from '../../platform/supabase';
@@ -57,7 +58,7 @@ export function FeedbackCard() {
   const send = async () => {
     setBusy(true);
     try {
-      await sendFeedback(kind, message, feedbackContext(game.state, 'settings'));
+      await sendFeedback(kind, message, feedbackContext(game.state, 'settings', game.combatLog.map((line) => line.text)));
       setMessage('');
       game.pushToast('Thanks! Your feedback was sent.', 'good');
     } catch (err) {
@@ -80,10 +81,10 @@ export function FeedbackCard() {
   };
 
   return (
-    <div className="card">
+    <><AdminInbox /><div className="card">
       <div className="card-title">Feedback</div>
       <p className="muted" style={{ marginTop: 0 }}>
-        Found a bug or have an idea? It goes straight to the developer, along with your game version, class, level and area (no name or email).
+        Found a bug or have an idea? Your report includes your character name, gear, skills, passives, combat state and recent combat log for debugging. Signed-in reports are linked to your account so the developer can reply and help recover progress. Only administrators can read them.
       </p>
       <div className="row wrap" style={{ marginBottom: 8 }}>
         <select className="input" value={kind} onChange={(e) => setKind(e.target.value as FeedbackKind)}>
@@ -140,6 +141,6 @@ export function FeedbackCard() {
           Sign in with Google or Discord to leave a review.
         </p>
       )}
-    </div>
+    </div></>
   );
 }

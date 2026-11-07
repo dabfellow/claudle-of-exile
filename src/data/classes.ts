@@ -8,7 +8,7 @@ export interface ClassDef {
   name: string;
   attribute: string;
   region: ClassRegion;
-  /** the class's own combat mechanic (docs/design/CLASSES.md); the Exile has none */
+  /** the class's own combat mechanic (docs/GAME.md); the Exile has none */
   mechanic: Mechanic | null;
   /** challenge class: picks any start node, unlocked by an Act 1 clear */
   challenge?: boolean;
@@ -138,8 +138,8 @@ export const CLASSES: ClassDef[] = [
     desc: 'A poisoner who waits for the perfect moment. Build for low crit to land Coup de Grâce often, or high crit for steady damage.',
     kit: { weapon: 'whittled_dagger', body: 'shabby_jerkin', helmet: 'linen_hood' },
     baseAttributes: { str: 8, dex: 17, int: 17 },
-    bonus: { ailmentPct: 20, evasionPct: 10 },
-    bonusText: ['20% increased damage with ailments', '10% increased Evasion Rating'],
+    bonus: { ailmentPct: 20, evasionPct: 10, moveSpeedPct: 25 },
+    bonusText: ['20% increased damage with ailments', '10% increased Evasion Rating', '25% increased Movement Speed'],
     exileWeapon: 'whittled_dagger',
     starterGems: ['poison_dart', 'rain_of_daggers', 'twin_strike'],
   },

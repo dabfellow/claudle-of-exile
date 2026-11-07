@@ -71,7 +71,7 @@ export const ITEM_ART: Record<string, string> = {
   duskweave_boots: new URL('../assets/items/armor/set-31-legs.png', import.meta.url).href,
   studded_boots: new URL('../assets/items/armor/set-34-legs.png', import.meta.url).href,
   wyrmscale_boots: new URL('../assets/items/armor/set-21-legs.png', import.meta.url).href,
-  // pure tiers to level 60 (docs/design/GEAR.md): one whole gear set per tier, so the pieces match
+  // pure tiers to level 60 (docs/GAME.md): one whole gear set per tier, so the pieces match
   blackened_sallet: new URL('../assets/items/armor/set-13-helmet.png', import.meta.url).href,
   blackened_cuirass: new URL('../assets/items/armor/set-13-body.png', import.meta.url).href,
   blackened_gauntlets: new URL('../assets/items/armor/set-13-gloves.png', import.meta.url).href,
@@ -520,6 +520,26 @@ export const MATERIAL_ART: Record<string, string> = {
   fine_vellum: new URL('../assets/items/consumables/provisions.png', import.meta.url).href,
   gall_ink: new URL('../assets/items/consumables/potion-blue.png', import.meta.url).href,
   sepia_ink: new URL('../assets/items/consumables/potion-red.png', import.meta.url).href,
+  sextant_apprentice: new URL('../assets/items/currency/sn-aether-comet.png', import.meta.url).href,
+  sextant_journeyman: new URL('../assets/items/currency/sn-blessed-orb.png', import.meta.url).href,
+  sextant_master: new URL('../assets/items/currency/sn-void-lance.png', import.meta.url).href,
+  fractured_orb: new URL('../assets/items/currency/sn-holy-flare.png', import.meta.url).href,
+  marrow_key: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
+  bell_key: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
+  abyssal_key: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
+  regent_key: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
+  crownless_key: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
+  marrow_shard: new URL('../assets/items/materials/woshi-iron_ore.png', import.meta.url).href,
+  choir_glass: new URL('../assets/items/materials/woshi-gem.png', import.meta.url).href,
+  black_pearl: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
+  throne_ash: new URL('../assets/items/materials/codespree-character-powder.png', import.meta.url).href,
+  crownless_sigil: new URL('../assets/items/currency/sn-blessed-orb.png', import.meta.url).href,
+  uber_key_1: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
+  uber_key_2: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
+  uber_key_3: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
+  exile_doom_sigil: new URL('../assets/items/currency/sn-holy-flare.png', import.meta.url).href,
+  architect_doom_sigil: new URL('../assets/items/currency/sn-revival.png', import.meta.url).href,
+  void_sigil: new URL('../assets/items/currency/sn-void-lance.png', import.meta.url).href,
 };
 
 /** Currency orbs: mostly SanguineNite round icons, a few loose stand-ins. */
@@ -799,7 +819,7 @@ export const MONSTER_ART: Record<string, string> = {
   priest: new URL('../assets/monsters/craftpix-con39.png', import.meta.url).href,
   ysolde: new URL('../assets/monsters/freesample-a66.jpg', import.meta.url).href,
   // Act 2, by area. Keyed by monster id: a renamed or replaced monster only needs its line changed.
-  // tint-<id> files are recolours of a pack piece (recipes in docs/design/ASSET_MAPPING.md)
+  // tint-<id> files are recolours of a pack piece (recipes in src/assets/CREDITS.md)
   ashjackal: new URL('../assets/monsters/codespree-hyena.png', import.meta.url).href,
   outrider: new URL('../assets/monsters/craftpix-con20.png', import.meta.url).href,
   vulture: new URL('../assets/monsters/tint-vulture.png', import.meta.url).href,
@@ -840,7 +860,7 @@ export const MONSTER_ART: Record<string, string> = {
   ashseer: new URL('../assets/monsters/tint-ashseer.jpg', import.meta.url).href,
   sunpriest: new URL('../assets/monsters/tint-sunpriest.jpg', import.meta.url).href,
   azhar: new URL('../assets/monsters/tint-azhar.png', import.meta.url).href,
-  // Act 3: all recolours of Craftpix and free_sample people (recipes in docs/design/ASSET_MAPPING.md)
+  // Act 3: all recolours of Craftpix and free_sample people (recipes in src/assets/CREDITS.md)
   martyr: new URL('../assets/monsters/tint-martyr.jpg', import.meta.url).href,
   gatewarden: new URL('../assets/monsters/tint-gatewarden.png', import.meta.url).href,
   pilgrimzealot: new URL('../assets/monsters/tint-pilgrimzealot.png', import.meta.url).href,
@@ -892,7 +912,7 @@ export const MONSTER_ART: Record<string, string> = {
   hierophant: new URL('../assets/monsters/tint-hierophant.jpg', import.meta.url).href,
   sacristan: new URL('../assets/monsters/tint-sacristan.png', import.meta.url).href,
   solenne: new URL('../assets/monsters/tint-solenne.jpg', import.meta.url).href,
-  // Act 4: recolours of the pack sprites already in the repo (recipes in docs/design/ASSET_MAPPING.md)
+  // Act 4: recolours of the pack sprites already in the repo (recipes in src/assets/CREDITS.md)
   snowwolf: new URL('../assets/monsters/tint-snowwolf.jpg', import.meta.url).href,
   hillgiant: new URL('../assets/monsters/tint-hillgiant.jpg', import.meta.url).href,
   passtroll: new URL('../assets/monsters/tint-passtroll.png', import.meta.url).href,
@@ -953,7 +973,7 @@ export const MONSTER_ART: Record<string, string> = {
   frozenhusk: new URL('../assets/monsters/tint-frozenhusk.jpg', import.meta.url).href,
   wintervoice: new URL('../assets/monsters/tint-wintervoice.png', import.meta.url).href,
   hollowking: new URL('../assets/monsters/tint-hollowking.jpg', import.meta.url).href,
-  // Act 5: recolours of CodeSpree sea creatures, Craftpix and free_sample (recipes in docs/design/ASSET_MAPPING.md)
+  // Act 5: recolours of CodeSpree sea creatures, Craftpix and free_sample (recipes in src/assets/CREDITS.md)
   pressganger: new URL('../assets/monsters/tint-pressganger.png', import.meta.url).href,
   dockrat: new URL('../assets/monsters/tint-dockrat.png', import.meta.url).href,
   harbourwatch: new URL('../assets/monsters/tint-harbourwatch.png', import.meta.url).href,
@@ -1024,7 +1044,7 @@ export const MONSTER_ART: Record<string, string> = {
   eyepriest: new URL('../assets/monsters/tint-eyepriest.png', import.meta.url).href,
   eyestorm: new URL('../assets/monsters/tint-eyestorm.png', import.meta.url).href,
   caller: new URL('../assets/monsters/tint-caller.jpg', import.meta.url).href,
-  // Act 6: recolours of CodeSpree, Craftpix and free_sample (recipes in docs/design/ASSET_MAPPING.md)
+  // Act 6: recolours of CodeSpree, Craftpix and free_sample (recipes in src/assets/CREDITS.md)
   gatesentry: new URL('../assets/monsters/tint-gatesentry.png', import.meta.url).href,
   banishedhound: new URL('../assets/monsters/tint-banishedhound.png', import.meta.url).href,
   sealclerk: new URL('../assets/monsters/tint-sealclerk.png', import.meta.url).href,

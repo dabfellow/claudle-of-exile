@@ -2,7 +2,7 @@ import type { Rng } from './rng';
 import type { DamageType, Ground, GroundKind, Minion, MonsterInstance, Movement, Posture } from './types';
 
 /**
- * The battlefield (docs/design/BATTLEFIELD.md): a half-ring of pointy-top hexes around the player, who stands on the
+ * The battlefield (docs/GAME.md): a half-ring of pointy-top hexes around the player, who stands on the
  * bottom edge. Axial coordinates with the player at (0, 0); the field is every hex 1–4 steps away on the player's
  * row or above it. A hex's ring is its distance from the player: ring 1 is melee range, ring 4 the edge where
  * monsters walk in. Cells are numbered ring by ring, left to right, so cell 0 is the hex to the player's left.
@@ -250,7 +250,7 @@ export function inReach(m: MonsterInstance): boolean {
 
 /** Still on its way: melee to ring 1, casters to their range, bosses to the middle of the field. */
 function walking(m: MonsterInstance): boolean {
-  if (m.martyr) return false;
+  if (m.martyr || m.weakPoint || m.choir) return false;
   return m.isBoss ? cellRing(m.cell) > BOSS_RING : !inReach(m);
 }
 
@@ -325,7 +325,7 @@ export function pullCloser(monsters: MonsterInstance[], m: MonsterInstance, mini
   return true;
 }
 
-// ---------- minions (docs/design/MINIONS.md) ----------
+// ---------- minions (docs/GAME.md) ----------
 
 /** The most minions on the field at once, from every gem together: as many as a Walk pace sends monsters. */
 export const MINION_CAP = 6;
@@ -343,11 +343,11 @@ export function minionCells(bodies: Body[], near: number, ranged: boolean, rng?:
     .sort((a, b) => rings.indexOf(cellRing(a)) - rings.indexOf(cellRing(b)));
 }
 
-/** Who a minion goes for: the player's clicked target if it can hit it, else the nearest. Martyrs are only for aimed blows, and chains stop everything. */
+/** Who a minion goes for: the player's clicked target if it can hit it, else the nearest. Martyrs and weak points are only for aimed blows, and chains stop everything. */
 export function minionTarget(x: Minion, monsters: MonsterInstance[], lockedUid?: number): MonsterInstance | undefined {
-  const open = monsters.filter((m) => m.life > 0 && !m.dead && !m.martyr && !m.chained);
-  const locked = open.find((m) => m.uid === lockedUid);
+  const locked = monsters.find((m) => m.uid === lockedUid && m.life > 0 && !m.dead && !m.chained);
   if (locked && cellDistance(x.cell, locked.cell) <= x.reach) return locked;
+  const open = monsters.filter((m) => m.life > 0 && !m.dead && !m.martyr && !m.weakPoint && !m.chained);
   return open.sort((a, b) => cellDistance(x.cell, a.cell) - cellDistance(x.cell, b.cell) || a.uid - b.uid)[0];
 }
 
@@ -386,7 +386,7 @@ export function minionInWay(m: MonsterInstance, minions: Minion[]): Minion | und
 
 /** A drifting storm moves a step toward whatever's nearest its centre. */
 export function driftCell(center: number, monsters: MonsterInstance[]): number {
-  const open = monsters.filter((m) => m.life > 0 && !m.dead && !m.chained && !m.martyr);
+  const open = monsters.filter((m) => m.life > 0 && !m.dead && !m.chained && !m.martyr && !m.weakPoint);
   const near = open.sort((a, b) => cellDistance(center, a.cell) - cellDistance(center, b.cell) || a.uid - b.uid)[0];
   if (!near || near.cell === center) return center;
   return neighbors(center).sort((a, b) => cellDistance(a, near.cell) - cellDistance(b, near.cell))[0];
@@ -396,7 +396,7 @@ export function driftCell(center: number, monsters: MonsterInstance[]): number {
 export function drawIn(monsters: MonsterInstance[], minions: Minion[], cells: number[], center: number): void {
   const inside = new Set(cells);
   for (const m of monsters) {
-    if (m.life <= 0 || m.dead || m.isBoss || m.martyr || !inside.has(m.cell) || m.cell === center) continue;
+    if (m.life <= 0 || m.dead || m.isBoss || m.martyr || m.weakPoint || m.choir || !inside.has(m.cell) || m.cell === center) continue;
     const taken = occupied([...monsters, ...minions]);
     const next = neighbors(m.cell).find((j) => inside.has(j) && !taken.has(j) && cellDistance(j, center) < cellDistance(m.cell, center));
     if (next !== undefined) m.cell = next;

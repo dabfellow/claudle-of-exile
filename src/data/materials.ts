@@ -93,6 +93,7 @@ export const CURRENCIES: CurrencyDef[] = [
   cur('annul', 'Orb of Annulment', 'Annul', '#f2f2f2', 'Removes a random modifier from an item.', 1.2, 3, 120),
   cur('exalted', 'Exalted Orb', 'Exalt', '#f7e08a', 'Adds a random modifier to a rare item with room.', 0.5, 3, 300),
   cur('divine', 'Divine Orb', 'Divine', '#ffe9b0', 'Rerolls the values of all modifiers on an item.', 0.6, 3, 250),
+  cur('fractured', 'Fractured Orb', 'Fracture', '#d4af37', 'Permanently locks a random modifier on a rare item with at least 4 modifiers.', 0, 8, 600),
   cur('regret', 'Orb of Regret', 'Regret', '#8fbf7a', 'Refunds one allocated passive skill point.', 4, 1, 10),
   cur('expansion', 'Orb of Expansion', 'Expand', '#c08bff', 'Adds a support socket to a skill gem.', 0.4, 2, 250),
   cur('instill', 'Instilling Orb', 'Instill', '#ff9f5a', 'Makes a flask use itself automatically on a condition.', 1, 4, 200),

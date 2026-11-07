@@ -1,4 +1,5 @@
 import { offlineCapMs } from './automation';
+import { activeEvents, eventBoost } from '../data/events';
 import { clearBossFight } from './combat';
 import type { Ctx } from './context';
 import { tick } from './state';
@@ -46,7 +47,7 @@ export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offl
   const expeditionBefore = { ...s.expedition.tally };
   const bankBefore = { ...s.account.bank };
   let left = ms;
-  const quiet: Ctx = withTutorial({
+  const quietCtx: Ctx = {
     ...ctx,
     offline: true,
     emit(e: GameEvent) {
@@ -63,19 +64,37 @@ export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offl
       else if (e.t === 'craftDone') sum.crafted = e.text;
       else if (e.t === 'info' && e.tone === 'warn') sum.stoppedReason = e.text;
     },
-  }, () => s);
+  };
+  const quiet: Ctx = withTutorial(quietCtx, () => s);
+  const boundaries = (ctx.eventRows ?? []).flatMap((row) => [row.starts_at, row.ends_at])
+    .filter((value): value is string => !!value).map(Date.parse).filter(Number.isFinite).sort((a, b) => a - b);
+  let eventUntil = -Infinity;
+  const nextChunk = (limit: number) => {
+    const now = ctx.now - left;
+    quietCtx.now = now;
+    if (ctx.eventRows && now >= eventUntil) {
+      quietCtx.event = eventBoost(activeEvents(ctx.eventRows, now));
+      eventUntil = boundaries.find((at) => at > now) ?? Infinity;
+    }
+    return Math.min(limit, left, eventUntil > now ? eventUntil - now : Infinity);
+  };
   clearBossFight(s);
   // a press from before you left doesn't get to spend Life past what rules would
   if (s.combat) s.combat.queued = null;
   // a greenhouse keeps growing after combat stops or a job runs out
   while (left > 0 && (s.action || s.greenhouse)) {
-    const chunk = Math.min(1000, left);
+    const chunk = nextChunk(1000);
     tick(s, quiet, chunk);
     left -= chunk;
   }
   // the rest of the time just lets the clock (vendor timer, regen) advance
-  if (left > 0) tick(s, quiet, Math.min(left, 60_000));
-  s.clock += Math.max(0, left - 60_000);
+  let idle = Math.min(left, 60_000);
+  while (idle > 0) {
+    const chunk = nextChunk(idle);
+    tick(s, quiet, chunk);
+    idle -= chunk; left -= chunk;
+  }
+  s.clock += left;
   sum.mapRuns = s.maps.tally.runs - mapsBefore.runs;
   sum.mapsFound = s.maps.tally.mapsFound - mapsBefore.mapsFound;
   sum.mapsDrawn = s.lifetime.mapsDrawn - drawnBefore;

@@ -33,13 +33,21 @@ export function itemStats(item: Item): Partial<Record<StatKey, number>> {
   for (const imp of base.implicits ?? []) add(imp.stat, imp.value);
   for (const m of [...item.prefixes, ...item.suffixes]) {
     const a = affixDef(m.affixId);
+    // Momentum keeping became a flat 1 stack (it was a %): uniques found before then still hold the old % value
+    if (m.affixId === 'u_momentum_retain') { add('momentumRetain', 1); continue; }
     a.stats.forEach((k, i) => add(k, m.values[a.linked ? 0 : i] ?? 0));
+  }
+  if (item.doomImplicit) {
+    if (item.doomImplicit === 'doom_all_res') add('allRes', 16);
+    else if (item.doomImplicit === 'doom_damage') { add('physPct', 20); add('elemPct', 20); }
+    else if (item.doomImplicit === 'doom_max_life') add('lifePct', 10);
+    else if (item.doomImplicit === 'doom_crit') add('critMulti', 35);
   }
   return out;
 }
 
 /**
- * Local mods (docs/design/GEAR.md): on an armour piece or shield, flat and % defence mods change only that
+ * Local mods (docs/GAME.md): on an armour piece or shield, flat and % defence mods change only that
  * piece's own armour, evasion and energy shield. On a weapon, flat and % physical damage change only
  * that weapon's damage. Rings, amulets and belts have no local stats: everything there is global.
  */
@@ -138,10 +146,10 @@ export interface Derived {
 
 export const RES_CAP = 75;
 /** In a fight nobody regenerates by default: life and mana come back from flasks, gear and passives. */
-/** % of max energy shield recharged per second before modifiers */
-export const ES_RECHARGE_PCT = 20;
+/** % of max energy shield recharged per second before modifiers. ES gear should refill meaningfully between swings. */
+export const ES_RECHARGE_PCT = 30;
 /** energy shield starts recharging after this long without being hit */
-export const ES_RECHARGE_DELAY_MS = 2000;
+export const ES_RECHARGE_DELAY_MS = 1000;
 
 /** What each attribute point grants (shown in tooltips too). */
 export const ATTRIBUTE_EFFECTS = {
@@ -182,6 +190,20 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
   addStats(st, cls.bonus);
   addStats(st, mechanicStats(s, st));
   st.itemRarity += MAP_RARITY[(s.account.hideout.map_device ?? 1) - 1] ?? 0;
+  const altarLvl = s.account.hideout.trophy_altar ?? 1;
+  if (altarLvl >= 1) {
+    st.armourPct += 3;
+    st.evasionPct += 3;
+  }
+  if (altarLvl >= 2) {
+    st.manaRegenPct += 5;
+  }
+  if (altarLvl >= 3) {
+    st.allRes += 4;
+  }
+  if (altarLvl >= 4) {
+    st.itemRarity += 10;
+  }
 
   const flaskMult = 1 + st.flaskEffect / 100;
   for (const b of buffs) {
@@ -311,16 +333,16 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   };
 }
 
-/** Fraction of a physical hit prevented by armour (PoE formula, capped at 90%). */
+/** Fraction of a physical hit prevented by armour, capped at 90%. */
 export function armourReduction(armour: number, damage: number): number {
   if (armour <= 0 || damage <= 0) return 0;
-  return Math.min(0.9, armour / (armour + 5 * damage));
+  return Math.min(0.9, armour / (armour + 2 * damage));
 }
 
 export function evadeChance(evasion: number, monsterLevel: number): number {
   if (evasion <= 0) return 0;
   const accuracy = 40 + monsterLevel * 18;
-  return Math.min(0.75, evasion / (evasion + accuracy * 2.5));
+  return Math.min(0.85, evasion / (evasion + accuracy * 1.5));
 }
 
 export function monsterEvasion(level: number): number {
@@ -328,8 +350,8 @@ export function monsterEvasion(level: number): number {
 }
 
 /** PoE-style chance to hit a monster of the given level, clamped to 60–95%. */
-export function hitChance(accuracy: number, monsterLevel: number): number {
-  const eva = monsterEvasion(monsterLevel);
+export function hitChance(accuracy: number, monsterLevel: number, evasion = monsterEvasion(monsterLevel)): number {
+  const eva = evasion;
   const raw = (1.25 * accuracy) / (accuracy + Math.pow(eva * 0.2, 0.9));
   return Math.min(0.95, Math.max(0.6, raw));
 }

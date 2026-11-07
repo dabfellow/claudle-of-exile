@@ -24,7 +24,7 @@ import { deriveStats } from './stats';
 import { challengeName } from './challenge';
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 36;
+export const SAVE_VERSION = 37;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -83,7 +83,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     meal: null,
     keepEating: true,
     smithCatalyst: { fossil: null, resin: null, until: false, salvageMisses: false, salvageFull: false, salvageAll: false },
-    maps: newMapState(),
+    maps: newMapState((account.maps ??= {})),
     heist: newHeistState(),
     expedition: newExpeditionState(),
     vendor: { stock: [], refreshAt: 0 },
@@ -148,7 +148,7 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
   if (s.mana > d.maxMana) s.mana = d.maxMana;
   if (s.es > d.maxEs) s.es = d.maxEs;
   fillOrders(s, ctx);
-  vendorTick(s, ctx.rng);
+  vendorTick(s, ctx.rng, dtMs, ctx.event?.vendorSpeed ?? 1);
   checkAchievements(s, ctx);
   checkCampaignDone(s, ctx);
 }

@@ -8,9 +8,9 @@ import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
 import { allocate, allocateReason, changeMastery, refundReason } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
-import { allocateSkillNode, skillNodeReason, skillTreePoints } from '../src/engine/skillTree';
+import { allocateSkillNode, MAX_SKILL_TREE_POINTS, skillTreePoints } from '../src/engine/skillTree';
 import { actionIntervalMs, startSkillAction } from '../src/engine/skills';
-import { newGame, tick } from '../src/engine/state';
+import { newGame, SAVE_VERSION, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import { deserialize, serialize } from '../src/engine/save';
 import type { GameState } from '../src/engine/types';
@@ -221,15 +221,37 @@ describe('keystones', () => {
 });
 
 describe('skilling tree', () => {
-  it('earns a point per 5 total skill levels and gates deep nodes by level', () => {
+  it('earns a capped point per 10 total skill levels and gates deep nodes by level', () => {
     const s = newGame(1);
-    expect(skillTreePoints(s)).toBe(2);
-    s.skills.mining = xpForLevel(30);
-    // 30 mining + 1 in each of the other ten skills = 40
-    expect(skillTreePoints(s)).toBe(8);
+    expect(skillTreePoints(s)).toBe(1);
+    s.skills.mining = xpForLevel(50);
+    // 50 mining + 1 in each of the other ten skills = 60
+    expect(skillTreePoints(s)).toBe(6);
     for (const id of ['core_0', 'mining_s0', 'mining_s1', 'mining_s2', 'mining_n1']) expect(allocateSkillNode(s, ctx(), id)).toBeNull();
-    expect(skillNodeReason(s, 'mining_ks')).toMatch(/level 50/);
+    expect(allocateSkillNode(s, ctx(), 'mining_ks')).toBeNull();
+    for (const skill of ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as const) {
+      s.skills[skill] = xpForLevel(99);
+    }
+    expect(skillTreePoints(s)).toBe(MAX_SKILL_TREE_POINTS);
     expect(SKILL_TREE_NODES.length).toBeGreaterThanOrEqual(30);
+  });
+
+  it('has one branch for every implemented life skill and none for Fishing', () => {
+    const branches = new Set(SKILL_TREE_NODES.filter((n) => n.branch !== 'core').map((n) => n.branch));
+    for (const skill of ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography']) {
+      expect(branches.has(skill as never), skill).toBe(true);
+      expect(SKILL_TREE_NODES.filter((n) => n.branch === skill)).toHaveLength(6);
+    }
+    expect(branches.has('fishing')).toBe(false);
+  });
+
+  it('refunds the old skilling tree when the specialisation cap arrives', () => {
+    const raw = JSON.parse(serialize(newGame(1)));
+    raw.version = 36;
+    raw.skillPassives = ['core_0', 'fishing_s0', 'mining_s0'];
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.version).toBe(SAVE_VERSION);
+    expect(loaded.skillPassives).toEqual([]);
   });
 
   it('Motherlode doubles ore and slows mining', () => {

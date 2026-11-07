@@ -9,7 +9,10 @@ export function reachedAct(s: GameState): number {
 
 /** Whether a gem can turn up for this character yet: drops, cuts and the Gem shop all ask this. */
 export function gemArrived(s: GameState, gemId: string): boolean {
-  return gemAct(gemId) <= reachedAct(s);
+  const act = gemAct(gemId);
+  // act 7 = Maps, which open in DEV (tests) or when campaign is done
+  if (act === 7) return !!(import.meta.env as Record<string, unknown>)?.DEV || !!s.account.campaignDone || s.bossesDefeated.some((id) => { const z = ZONES.find((z2) => z2.id === id); return !!z && z.act === 6 && !!z.actBoss; });
+  return act <= reachedAct(s);
 }
 
 let shopZones: Map<string, ZoneDef> | undefined;

@@ -1,672 +1,553 @@
-# Milestone Guideline
+# Roadmap and decisions
 
-The one place for what's next, what's planned, what's been decided and what's been done. **[You]** means it needs you,
-not Claude. **Done** on a milestone is what has to be true before moving on. The order is by dependency: pacing rules
-first, because every act is tuned against them.
-
-Last updated 2026-11-05.
-
-**On this page:** [Next steps](#next-steps) · [Milestones](#milestones) · [Decisions](#decisions) ·
-[Other open items](#other-open-items) · [Ideas / later](#ideas--later) · [Done](#done)
+Last updated 2026-11-06. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
-**Where we are:** Milestones 1, 2, 3 and 7, music, all six acts, the Player Market and challenge modes are live as 0.3.20 (deployed 2026-11-02: Unbroken now asks for all six acts without ever dying, and credits characters that already did it; 0.3.19 the same day brought the Unbroken achievement and The Unbroken Temper; 0.3.18 the same day brought map tiers 1 to 10 at monster level 66 to 84; 0.3.17 the same day brought the Exile's centre start, with other classes' starts no longer blocking an Exile; 0.3.16 the same day brought the Stash's Uniques tab; 0.3.15 the same day made retreating to the Hideout refill flasks, and 0.3.14 brought Low Mana, Savage Hit, Elemental Hit and Chaos Hit flask enchantments and the Amethyst Flask; 0.3.13 the same day made the Gem shop a fixed shelf of every gem from the areas you've opened; 0.3.12 brought Instilling Orbs from Act 4, no gem drops, Clear all Lv 1 gems and Gem shop tabs and filters), with the rebuilt player wiki, The Exile's Codex, at /path-of-idle/wiki/, with forked roads in Acts 3–6 and the crafting tutorial. Acts 4–6 went out unsimmed and unplayed. The real-account test is done; the player heads-up is still to
-send. Act 1's cold check and Scorched earth's danger stay as they are, with no playtest planned, until
-you say otherwise.
+Latest confirmed live release: **0.4.2, Smarter Foundations**, deployed 2026-11-05. Six acts, ten themed map tiers, twelve ascendancies, Player Market, challenge modes and the generated wiki are implemented. The former “two acts / Maps preview only / three trials” descriptions are obsolete.
 
-**Latest release:** 0.4.2, Smarter Foundations, deployed 2026-11-05. Essential survival automation is baseline,
-hideout upgrades use smoother refined-component costs, combat has automatic range postures and smarter Mana use,
-and the interface is clearer across phones and common desktop resolutions.
-
-**In order:**
-
-1. **Claude:** build the real Maps (Milestone 8) from [MAPS.md](design/MAPS.md). Beating Act 6 opens the bare Maps preview page, and drawn maps can't be spent yet.
-2. **[You]** Post a heads-up. Live players went from 12 h to 8 h offline, lost offline boss fights and wind-up rules until
-   they earn them, and Act 1 got slower. Also say that six gems moved in 0.3.3 and can lock until their new level.
-3. **[You]** Find a hand-made landscape pack. GegX is AI-generated and is used for the area banners and the title and
-   hideout scenes ([ASSET_MAPPING.md](design/ASSET_MAPPING.md)).
-4. **[You]** Play the Maps preview whenever you like, and say whether the loop is fun. Maps stay post-Act 6 in the real
-   game; the preview is dev and admin only. Try it with `npm run dev`, then Map Device → Dev tools.
+1. Verified removal of default recovery-flask automation: unenchanted flasks require manual click; automated triggers strictly require Instilling Orb enchantments.
+   Security prerequisite: confirm revocation of the historical Google OAuth client secret, confirm the separate account-helper lookup-path changes and perform signed-in isolation/login checks; see SETUP.
+   Owner reports market/admin SQL applied on 2026-11-06; live anonymous Admin access checks pass. Current validation upload and real-account inspection/recovery/mail/event checks remain before release.
+2. Finish and verify the local Maps skill batch, monster rarity/affix and defence work. Monster identity reference budgets, ailments, save checks, and the full test suite (72 suites, 1,250 tests) plus TypeScript checks all pass locally. Existing edits are not evidence of a completed release.
+3. Verify the local Hard Bosses & Uber Bosses layer (Milestone 9) and Maps redesign (plain/shared maps, tier identities, Map Device page, Sextants, Atlas, exclusive drops, Doomed Maps and Cartography rework), both implemented locally.
+4. Investigate player save-loss/range reports before speculative fixes. Retest pacing using the current tree, costs, skills and defences.
+5. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
+6. Non-combat band mastery now has a revised, bounded design below; implementation has not started. Its progression must never gate content.
 
 ## Milestones
 
-| # | Milestone | Status | Waiting on |
-|---|---|---|---|
-| 1 | Automation and offline rules | **Done**, live | – |
-| 2 | Measure the pacing | **Done**, live | – |
-| 3 | Account layer | **Done**, live | – |
-| 4 | Act recipe and Act 2 | **In progress**: pieces merged | Act 1 cold check |
-| 5 | Maps preview | Built, dev only | You playing it |
-| 6 | Act 3 and ascendancies | **Done**, live; not simmed or played through | – |
-| 7 | Acts 4–6 | **Done**, live; not simmed or played through | – |
-| 8 | Maps | **Next**: players reach a bare page after Act 6 | Your go |
-| 9 | Hard mode bosses | Answered: 5 bosses, post-Act 6 | Milestone 8 |
-| 10 | Top-end crafting and hideout | Not started | Milestone 9 |
-| 11 | Long tail | Not started | Milestone 10 |
-| 1.0 | You call it | – | Vibes |
-
-### 1. Automation and offline rules
-- [x] Rule overhaul: per-skill rules, High/Normal/Low priority, and rule slots that unlock.
-- [x] Simple and survival rules are free; the War Table unlocks advanced targeting, a third condition and loot automation.
-- [x] Offline combat stops on death; offline cap starts at 8 h, and the Watchtower raises it toward 24 h.
-- [x] Deploy — done 2026-10-31
-- **Done:** a fresh character has the rules needed to idle bosses safely; death still stops offline combat.
-- Merged 2026-10-30, save v20.
-
-### 2. Measure the pacing
-- [x] Sim knows the rule locks, offline stops and a combat/skilling split.
-- [x] Run against your timeline; Act 1 gap fixed through XP, early drops and late station costs.
-- **Done:** the sim reports game time per milestone, and day 1 lands at a couple of Act 1 stages.
-- Measured: day 1 is 2–4 stages; Act 1 finishes in 2–5.5 days and Act 2 in 2.5–6.5 days. Full results in
-  [BALANCE.md](design/BALANCE.md).
-
-### 3. Account layer
-- [x] Hideout, rule unlocks and offline cap shared by the account; skill levels per character; shared gear stash.
-- [x] Exile unlocked by finishing the campaign.
-- [x] Deploy — done 2026-10-31
-- [x] Every Stash tab shared across the realm, not just gear — done 2026-11-01
-- [x] Test on a real account.
-- [x] Leave the reserved `account` rows out of the Admin stats query ([SETUP.md](ops/SETUP.md)).
-- **Done:** a second character starts with the account's unlocks, its own skills and access to the shared stash.
-- Merged 2026-10-31, save v21.
-
-### 4. Act recipe and Act 2
-- [x] Recipe written as a checklist ([ACT_RECIPE.md](design/ACT_RECIPE.md)), with Act 1 and Act 2 audits and picks.
-- [x] Pack art for Act 2's 40 monsters and 6 uniques.
-- [x] Riders and raiders skill batch, Thieving and Heist, and ground rules — done 2026-10-31
-- Slower Act 2 pacing dropped 2026-10-31 with the pacing targets. The sim showed no gain from ground rules on Azhar, so
-  those fights still need to bite.
-- [x] Split the skill pool and tie gems to acts, keeping existing characters' skills — done 2026-10-31
-- [ ] Act 1 cold resistance check.
-- [ ] Art for the 8 areas (waits on a hand-made landscape pack), and the 13 Act 2 monsters still on loose matches.
-- **Done:** Act 2 is live.
-- Act 2 is already open to players, so changed area ids need handling in saves.
-
-### 5. Maps preview
-- [x] Dev-only slice: Map Device, one tier, two themes, clear and boss runs, consumed per run, auto-run.
-- [ ] **[You]** Play it.
-- **Done:** you've played it and said whether the loop is fun.
-
-### 6. Act 3 and ascendancies
-- [x] Act 3 from the recipe: 10 stages, Martyrs, aim rules, Zealots and blood, Rune-carving ([RUNES.md](design/RUNES.md)) — done 2026-10-31
-- [x] First ascendancy trial at the start of Act 3: 12 ascendancies, each with its own tree tab and points. Exile has
-  none ([ASCENDANCIES.md](design/ASCENDANCIES.md)) — done 2026-10-31
-- [x] Trials 2 and 3 built with Acts 4 and 6, — done 2026-11-01
-- [x] Open Act 3 to players and deploy — done 2026-10-31. Pacing and balance haven't been simmed.
-- [x] Ascendancy points only from a trial's first pass (4, 4, 3), bosses give none, and trials say what they open — done 2026-11-01
-- Tree extended for the extra levels.
-- **Done:** every main class can pick either ascendancy and play it through Act 3.
-
-### 7. Acts 4–6
-- Each from the recipe, growing to 10–20 stages, ending around level 65. Picks are in [ACTS_4_6.md](design/ACTS_4_6.md).
-- [x] Gear base tiers extended to about level 80 (428 bases).
-- [x] Act 4 built: 12 stages, Frostbite, Giants and weight, Archaeology ([ACT4.md](design/ACT4.md)) — done 2026-11-01. Not simmed or played through.
-- [x] Act 5 built: 14 stages, Channels, Tides and summons, Cooking ([ACT5.md](design/ACT5.md)) — done 2026-11-01. Not simmed or played through.
-- [x] Act 6 built: 18 stages, Echoes, Unholy ground, Trial 3 and the ending ([ACT6.md](design/ACT6.md)), The last empire ([ACT6_SKILLS.md](design/ACT6_SKILLS.md)), Cartography ([CARTOGRAPHY.md](design/CARTOGRAPHY.md)) — done 2026-11-01. Not simmed or played through.
-- [x] Open Acts 4–6 to players and deploy, ahead of the real Maps — done 2026-11-01
-- [x] Non-linear roads for Acts 3–6: forks, side areas and an act boss gate ([ACT_RECIPE.md](design/ACT_RECIPE.md) → Roads) — done 2026-11-01. Not simmed; not deployed.
-- **Done:** Acts 4–6 are live and playable through.
-
-### 8. Maps
-- Planned in [MAPS.md](design/MAPS.md): 10 tiers with identity (permanent mod per group + tier-exclusive drops), Sextants, an Atlas tree, Cartography reworked, and Doomed Maps + Uber Bosses as the endgame layer beyond T10.
-- [ ] Plain tiers with identity and the real Map Device page
-  - Levels done and live in 0.3.18, 2026-11-02: 10 tiers at monster level 66–84, drop tables 18–27, item level bonus 14, map drops from level 60 areas. Themes, the shared supply, the area boss and Last King map drops, the save migration, the real page, and the permanent mods + exclusive drops per tier are still to do. Cartography still draws only Tiers 1–3.
-- [x] Fourth ascendancy trial: the first Tier 5 map boss grants the final 2 points; it unlocks no nodes. — done 2026-11-04
-- [ ] Sextants
-- [ ] Atlas tree (including the ~20-point Doomed Maps unlock node)
-- [ ] Tier-exclusive drops: Chaos/Regal/Exalt/Divine scaling by tier, and tier-locked unique pools
-- [ ] Cartography rework
-- [ ] Doomed Maps: five item types (Doomed I–V, monster level 86–94), the Doomed mod pool, Fractured Orb drops, Uber Key drops from bosses, offline support
-- [ ] Uber Bosses: The First Exile (~90), The Architect of Ruin (~93), The Void Sovereign (~96); three key types; chase uniques and Doom Sigils; designed when built
-- **Done:** a character can farm from Tier 1 to Tier 10, through Doomed Maps to Uber Bosses, with Sextants and the Atlas, and auto-run working offline.
-
-### 9. Hard mode bosses
-- Five bosses: Ossuar, Mother Vael, The Undertow, The Twin Regents, The Crownless. Keys from Sextant hunting mods.
-  ([HARD_BOSSES.md](design/HARD_BOSSES.md)).
-- Rules need to be able to aim, and to tell a slam from a channel.
-- **Done:** a top-end character clears them on idle without dying, and the sim can test that.
-
-### 10. Top-end crafting and hideout
-- High level passive nodes, rare materials from skilling and from drops.
-- Forced-mod and past-the-limit crafts.
-- Late hideout upgrades.
-- **Done:** month 6 play works as you described: farming nodes to min-max gear for hard mode bosses.
-
-### 11. Long tail
-- Collection log, masteries, build-defining uniques, the skills arriving around or after Act 6.
-- [x] Challenge modes: Hardcore, Solo Self-Found and Classic as toggles in any mix ([GDD.md](design/GDD.md) §11) — done 2026-11-01. Live in 0.3.4.
-- **Done:** your call.
-
-### 1.0
-You call it. On the day: wipe saves with a clear message.
-
-### After Maps
-Endless content. Not designed yet, and nothing above depends on it.
+| # | Milestone | Current status |
+|---|---|---|
+| 1 | Automation/offline | Released; survival rules and two conditions baseline; flask-default removal verified (strictly requires Instilling) |
+| 2 | Pacing | Monster reference budgets and revised XP bands verified locally; whole-build pacing needs remeasurement |
+| 3 | Account layer | Released; local Admin inspection/recovery/mail overhaul verified; service migration and real-account checks remain |
+| 4 | Act 2 and content recipe | Released; cold-check/art follow-ups remain parked |
+| 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18 |
+| 6 | Act 3 / ascendancies | Released; four trials and 2/2/3/2 points replace original structure |
+| 7 | Acts 4–6 | Released with branching roads and side skills |
+| 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants; Uber bosses remain in Milestone 9 |
+| 9 | Hard bosses / Uber layer | Implemented locally: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
+| 10 | Top-end crafting/hideout | Implemented locally: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
+| 11 | Long tail | Challenge modes and Unique discovery implemented; non-combat action mastery designed, not implemented; collection expansion planned |
+| 1.0 | Launch designation | Owner decides; any save wipe requires a clear announcement |
 
 ## Decisions
 
-What you settled in the 2026-10-30 reset, in your words. The result is written up in [GDD.md](design/GDD.md). Later
-picks are in [ACT_RECIPE.md](design/ACT_RECIPE.md).
+- Builds fight by their rules; manual play can improve results. Combat and skilling compete for one activity. Offline uses the same engine. No pay-to-win; cosmetic monetisation is a later idea.
+- Class starts provide affinities, not exclusive build lanes. Character trees use compact clusters and useful attribute travel. Class mechanic specialisation belongs in ascendancies.
+- Every ascendancy has six notable choices and two capstones; the 2/2/3/2 trial budget supports any three notables and either capstone. No node-specific milestone gates or hard node-count ceiling. Chase items may eventually grant extra nodes/capstones.
+- Vitals/Wind-up/Ground and two rule conditions are baseline. War Table grants advanced rules, a third condition and rarity-based auto-salvage. The latest requested behavior makes flasks manual unless Instilled.
+- Hideout upgrades use refined planks/bars and Boss Trophies rather than thousands of raw materials. Classic converts applicable material costs to Gold.
+- Mana is Power uses four-second spending; Momentum grants Evasion and protected flat losses; Field Tinkering supports low-level gear; postures automate spacing; eligible higher-priority skills reserve Mana 1.5 seconds ahead.
+- Momentum keeping is flat (2026-11-06): each source (uniques, Sure-Footed, Steady Aim, tree node) saves 1 stack per landed hit, minimum loss 1. Old % values on already-found uniques are read as 1. The "Mana within X% of full" unique text was stale; it now says what the code already did (recent spending counts X% more).
+- A dedicated first day should plausibly reach the end of Act 6. Old week/month pacing tables are retired. Level 100 is a long chase; 99 is halfway in XP. Exact class parity is not a substitute for meaningful builds.
+- Combat XP has a two-level grace band outside an area's level range. Harder enemies give +5% at three levels and +20% at five, interpolating between. Easier enemies use a rounded quadratic penalty of 10/11/15/21/30/41/54/70% at three through ten levels, with increasing losses each level. Hold both caps thereafter. This supersedes both the old falloff to zero and the initial piecewise penalty milestones.
+- Fishing is a permanent placeholder/joke. It is not scheduled work.
+- The skilling tree represents specialisation (2026-11-06): one point per ten total levels, capped at 36. It must never become fully completable through ordinary levels; Fishing has no spendable branch, and every implemented life skill has one.
+- Non-combat band mastery is a bonus-only progression track (2026-11-06). It uses no more than 100 explicitly authored identities and never one track per generated item. It must never unlock or block recipes, resources, stations, areas, items or other content. Existing skill-level, campaign and station requirements remain responsible for access. Mastery tuning and ownership defaults below are proposals, not implemented balance changes.
+- Player Market remains browser-simulated with server-validated transactions, not a server-authoritative economy. Keep validation uploads and item/Gold recovery protocols.
+- Offline-earned items/currency remain tradable by explicit owner choice (2026-11-05). Harden market inputs, request limits and permissions, and document residual forging/rollback risks. Do not replace offline trading or claim item provenance from client-owned saves. Public-source review does not authorize destructive history rewrites or branch-policy changes.
+- Internal docs have one home each: GAME for current behavior, DEVELOPMENT for engineering, this file for plans. Published wiki, generated UNIQUES, operations SQL and asset credits remain distinct.
+- Admin diagnostics/actions use database-enforced privileges and audit records; recovery creates a separate character so live uploads cannot overwrite it. Reproductions use a memory-only sandbox with trading disabled. Feedback snapshots are bounded game state, not auth/browser storage; account email and character ownership are resolved server-side. Anonymous demo counters remain approximate, opt out via Do Not Track and never authorize rewards.
+- Monster identities redistribute existing reference effective pools and expected raw basic DPS into player-style defences, damage types, attack speeds, criticals and ailments. Individual build matchups may differ; pack counts, rewards and boss telegraph damage remain intact. Monster ES recharge is a separate stat, with no extra boss heal loop. Exact calibration lives in GAME and the engine.
+- Post-campaign crafting and hideout decisions (2026-11-06, [POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md](POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md)): Fractured Orbs randomly pick an affix (no seal steering); the three Uber Bosses each grant one piece of the Doom Sigil crafting trinity (The First Exile elevates T1 to T0, The Architect of Ruin grants Doom implicits, The Void Sovereign opens a 7th modifier slot); Stash Affinities are a baseline Act 1 convenience; offline map auto-running is supported and enhanced by Watchtower upgrades.
+- Unique items rework (2026-11-06): Campaign unique drop pools scale progressively by zone depth, starting with exactly one unique (`castaways_kerchief`) in the Mud Flats; class-defining trait uniques (Rage, Malice, Fervor, Riposte, Momentum, Mana is Power) drop in mid-to-late campaign zones and maps rather than early Act 1; flat numerical modifiers on uniques feature roll ranges that can be rerolled using Divine Orbs (items with purely fixed mechanics cannot be Divined); and select powerful uniques carry thematic downsides to prevent them from crowding out end-game crafted rares.
 
-Fishing is never being added; the menu's "Soon" entry is a Path of Exile joke and stays.
+### Additional Maps expansion
 
-**Pacing (you, 2026-10-31):** players find the XP rates too slow, so ignore the timeline and pacing targets below,
-including the journey and Milestone 2's numbers. Players feel the level number more than the zones, so levels get
-target times and players set the acts' pace: 1–20 about 3 h, 20–40 about 3 h, 40–65 6 h, 65–80 12 h, 80–95 20 h,
-95–99 20 h, and 99 is halfway to 100 in XP. Area level ranges cap levelling, PoE-style, so a long offline run can't
-outlevel the campaign ([BALANCE.md](design/BALANCE.md) → Knobs).
+The T1–T10 Maps update shipped in **0.3.18 on 2026-11-02**. The redesign below replaces themed maps with plain shared maps, permanent tier mechanics, Sextants, the Atlas tree, Doomed Maps I–V, and full Cartography support; Uber bosses remain separate design/implementation work.
 
-**Day 1 benchmark (you, 2026-11-02):** a hard nonstop day 1 should end around the end of Act 6, like reaching Maps on day 1 in PoE. The sim's `--nonstop --days 1` run checks it. The old day 1 / week 1 targets came from sim bots that didn't use the tree or upgrade weapons.
+- [x] Replace themed maps with plain maps and a shared realm supply; migrate held themed maps by tier. Random campaign act visuals/mechanics provide variation. Keep T1–T10 at levels 66–84. — done 2026-11-06
+- [x] Ensure first-map/top-up sources and real Map Device navigation support progression. Do not call all ten existing tiers unimplemented. — done 2026-11-06
+- [x] Give tier groups permanent danger/reward identities: — done 2026-11-06
 
-**Maps rework (design pass, 2026-11-03):** maps were too bland and easy. The new design, in [MAPS.md](design/MAPS.md):
-- **Tier identity (you):** each tier group has a permanent baked-in mod and tier-exclusive drops. No artificial gates — a strong build can always try a higher tier, but the mod is a real gear check. T1–2 baseline; T3–4 elite packs; T5–6 twin boss; T7–8 dangerous ground; T9 enraged; T10 all three. Tier-locked unique pools and escalating currency from Chaos through Divines by tier group.
-- **Doomed Maps (you):** five separate map items (Doomed I–V, monster level 86–94) that drop from T8–10 once an Atlas tree node (~20 points) is active. Each rolls a random number of mods (2–4, more on higher tiers) from a pool of new mechanics — pre-assembled boss adds, revenant packs, drained belts, searing aftermath, etc. — that don't exist in the Sextant pool. Best source of Divine and Exalted Orbs. Also drop Fractured Orbs (a new Doomed-exclusive currency; exact use settled in Milestone 10). Boss kills have a 10–35% chance of an Uber Key.
-- **Uber Bosses (you):** two separate tiers of bosses. The five hard mode bosses (Milestone 9, Sextant keys) stay. Three Uber Bosses above them reached via Uber Keys from Doomed Map bosses: The First Exile (~90), The Architect of Ruin (~93), The Void Sovereign (~96). Three key types; keys drop from any Doomed Map boss, higher tier better chance. Chase loot: 1–2 build-defining uniques per boss (don't drop anywhere else) plus Doom Sigils (Milestone 10 past-the-limit crafting material). Full mechanics designed when built.
+| Tiers | Planned danger | Planned reward emphasis |
+|---|---|---|
+| 1–2 | Baseline | General drops |
+| 3–4 | Two elite packs: 4× Life, 1.5× Damage, 3× XP, 60% more drops | Reliable Chaos |
+| 5–6 | Twin boss lieutenant at 60% stats with shared Life | First tier-specific unique pool |
+| 7–8 | Dangerous boss ground | Second unique pool and Regal emphasis |
+| 9 | Permanent enrage: 30% speed, 40% damage | Exalted emphasis |
+| 10 | Elite packs, twin boss and enrage | T10 uniques and strong Divine rates |
 
-**Every skill takes time (you, 2026-11-02):** like PoE, no skill is instant. Spells that were instant fired on top of the turn for free, which is why the Mage was so far ahead. Spark and Frost Needle are now spammable main skills with no cooldown, like Twin Strike, and Faster Casts fits any spell that deals damage.
+These rewards describe the intended redesign, not the current earliest drop location of each currency.
 
-**Skill gem reform (you, 2026-11-01):** every act and attribute gets AoE, single target, guard, and a life and a mana source, with leech very weak until Acts 3–4. Drain skills return life or mana, never both, and supports can fill the other half. Arcane Siphon moved to Act 5, the leech supports cost 1.8 times the mana, no new signature supports, and existing gems were sorted where they fit. Existing characters get one The Old Covenant ring; new ones don't ([SKILL_REFORM.md](design/SKILL_REFORM.md)).
+- [x] Sextants: three strengths, one Map Device slot growing to three plus an Atlas slot; rerollable danger/reward/hunting mods with limited run charges (six base). Hunting mods provide hard-boss keys. Auto-run consumes charges offline. Include danger/reward and incompatible-mechanic warnings. — done 2026-11-06
+- [x] Atlas: a connected 100-node radial skill tree with branching Sustain, Bounty, Surveying and Peril paths; up to 70 realm-shared points (30 from normal maps, 2 for each Doomed tier first clear, 3 for each Hard Boss first clear, and 5 for each Uber first clear); free whole-tree and connected leaf respecs. A 20-point unlock (Doomed Horizon) enables Doomed Map drops. — done 2026-11-06
+- [x] Cartography: plain-map recipes, Sextant recipes, continued folios and 3:1 upgrades, extending across T1–T10. Existing map-upgrade tree effects survive the rework. — done 2026-11-06
+- [x] Doomed Maps I–V: monster levels 86/88/90/92/94, packs 65/70/80/90/100 (scaled from 10 at T1 up to 100 at T5 Doomed), with 2 / 2–3 / 3 / 3–4 / 4 mods. Rare T8–T10 drops after the Atlas unlock. Mods: preassembled adds, revenants reviving at 30% Life, unfilled flask belts, permanent low-Life enrage, Hulking packs, four-second burning aftermath, and a six-second ward at 60% boss Life. — done 2026-11-06
+- [x] Doomed rewards: 3.5× T10 Exalted/Divine rates, Fractured Orbs, and Uber Keys at 10/15/20/25/35% per boss by Doomed tier. Three key types are equally weighted; keys are consumed on fight entry. — done 2026-11-06
+- [x] Map modifier safety & bulk farming revamp: Auto-run enabled for Doomed Maps (I–V), per-map modifier rolling, avoidable modifier blacklist with automatic Chaos Orb rerolls during auto-run, normal map affix toggle, and monster pack scaling from 10 at T1 to 100 at Doomed V. — done 2026-11-06
+- [x] Uber bosses: The First Exile (~90, mirrors/adapts to builds), The Architect of Ruin (~93, escalating act-boss cycles), The Void Sovereign (~96, chaos and buildup vulnerability windows). Each has exclusive build-changing uniques and Doom Sigils for future crafting. — done 2026-11-06
 
-**Challenge modes (you, 2026-11-01):** Hardcore deletes the character, Solo Self-Found can't use the Player Market and each one has its own stash, and Classic has no idle skilling but keeps the Crafting Bench. They're toggles, in any mix.
-- Decided for you: an SSF character's hideout and unlocks are its own too, and are deleted with it. Hardcore characters share a stash that outlives them, and each non-SSF mix has its own market. Modes can't be changed after creation. NPC shops stay open to SSF. Heist counts as skilling. Classic pays gold (5 times sale value) for gathered materials in hideout upgrades, since nothing else supplies them in bulk, and skips the Forge, the Alchemy Table, the skilling tree and the tutorial's mining and smithing steps. The two bench recipe achievements that need skilling are waived for Classic. The Exile unlock carries from any mode to the whole account.
+### Hard bosses: implemented locally (2026-11-06)
 
-**Wiki (design pass, 2026-11-01):**
-- Spoilers: B. The wiki is fully public with no login. Boss mechanics, unique drop sources and later acts sit behind click-to-reveal "Spoiler" boxes.
-- Next content: A. Reference pages first (passive notables, life skills and recipes, hideout upgrades, runes and flasks, boss glossary). Guides (automation, formulas) come after.
-- Linking: A. Sidebar and title screen link to the wiki home, and the wiki has its own search. Deep links from item/gem/boss tooltips are later, once the reference pages exist.
-- Decided for you: spoiler boxes cover boss mechanics, unique drop sources and anything from Acts 4–6; the generator marks them automatically from the data, so new content is covered by default. Pages stay in the existing style and generator.
+- [x] Five separate keyed fights (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) run from the Map Device, with keys from Sextant hunting and life-skill crafting, reactive `weakPoint` and `choir` skill aims, manual focus bonuses, five-minute escalating enrage, boss trophy drops, and five exclusive uniques. — done 2026-11-06
 
-**Player Market (design pass, started 2026-11-01):**
-- Access: signed-in accounts only. Guests can see it but can't list or buy, enforced on the server.
-- What trades: A. Gear only. Materials and currency can't be listed.
-- Prices: both. A seller can price in gold or in currency orbs. Orbs move only as payment; they still can't be listed for sale.
-- Cheating: A. Sanity checks. The server refuses impossible items (real base, mods in legal ranges) when they're listed, and you get admin tools to remove listings and ban players from the market. Believable fakes and edited gold can still get through; the server doesn't run the game.
-- Buying: both, the seller determines which. Each listing is either buy now or an auction.
-- Unlock: A. After Act 1 is cleared.
-- Decided for you (auctions and limits): a listing is one or the other, never both. Auctions run 24 hours; a bid is held in the bidder's wallet and returned if they're outbid; a bid in the last 5 minutes adds 5 minutes, so last-second sniping doesn't win. Buy now listings last 7 days, then the item returns to the seller. 20 active listings per player, so nobody floods the market. One market per realm, so a future challenge mode trades separately.
-- Decided for you: each listing has one price in one thing (gold or a single orb type), so listings compare cleanly and search stays simple. The market takes 10% of each sale, rounded down, and that cut disappears, so prices don't run away. A listed item leaves the player's stash and is held on the server until it sells or is cancelled. Each player has a market wallet on the server: sale money, refunds and items land in it, and the game collects it at login and on opening the market. Buying takes the price straight from the player. The browser owns the save, so the server can't safely change a player's gold directly ([MARKET.md](design/MARKET.md)).
-- Decided for you: the next bid must be at least 5% higher. A rebalance that makes an older item fail the sanity check means it can't be listed; saves are wiped at 1.0 anyway.
+| Boss | Encounter proposal | Key / reward proposal |
+|---|---|---|
+| Ossuar (~72) | Physical stone plating; hit a six-second weak point to break plating for ten seconds | Marrow Key; Marrow Shards; Faultline mace |
+| Mother Vael (~75) | Lightning choir adds granting defence, haste or healing; choose the priority add | Bell Key; Choir Glass; Last Hymn amulet |
+| The Undertow (~78) | Cold tide stacks; interrupt or burst through Deep Call | Abyssal Key; Black Pearl; Riptide boots |
+| Twin Regents (~82) | Fire/cold paired bosses; balance Life and switch off guarded targets | Joined Regent key; Throne Ash; Twinned Crown |
+| The Crownless (~86) | Elemental phases combining previous moments with physical slams | Combine other keys; Crownless Sigil; The Unwritten grants another ascendancy's notable |
 
-### Fixed (you, 2026-10-30)
+Roster levels, crafting recipes, moments and unique effects are proposals, not content tables. Acceptance: suitable endgame builds can idle safely, inadequate rules/gear fail, manual answers help earlier, and offline/live behavior agrees. No unrequested balance implementation follows from this document.
 
-- **End state:** months of play to build a top-end character that easily clears all content.
-- **Maps are essential.** They're the endgame and they stay.
-- **The long tail:** "years" comes from a broad mix of reasons to keep playing. Rare drops, expensive crafts and multiple
-  characters are three examples out of many, not the full list.
-- **Art:** asset packs, and they're the real art, not placeholders. No AI art.
-- **Pacing:** needs an overhaul. The current targets don't carry over.
+### Post-campaign crafting and hideout: design in progress
 
-### Skeleton (kept whatever the design becomes)
+Milestone 10 planning and specifications live in [POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md](POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md).
+- [x] Fractured Orbs and natural fractured drops in Doomed Maps I–V: engine support, random affix locking, scouring down to 1-mod magic base, annulment immunity, whetstone protection, impression restore, Bench page integration and gold tooltips. — done 2026-11-06
+- [ ] Doom Sigils from Uber Bosses for past-the-limit modifier crafting (The First Exile = T0 elevated mod, The Architect of Ruin = Doom implicits, The Void Sovereign = 7th modifier slot)
+- [ ] Hard-boss material utility (Marrow Shards, Choir Glass, Black Pearl, Throne Ash, Crownless Sigil) for keys, high-tier bench crafts and station upgrades
+- [ ] Crafting Bench level 6–7: meta-crafts (prefix/suffix locks, multi-craft), seal-integrated auto-crafting
+- [ ] Hideout expansion: Map Device level 5–6, Bench 6–7, Forge 5, Alchemy Table 5, Stash affinities (baseline Act 1), Watchtower 5, and Trophy Altar
 
-This is infrastructure. It doesn't depend on the numbers or the content in it.
+### Non-combat action masteries: design
 
-| Piece | Where |
+**Written 2026-11-06. Status: design only; no mastery engine, UI or save fields have been added.** This is the canonical design document for the feature, kept here to avoid another standalone game document. It is separate from the existing passive-tree mastery choices.
+
+#### Purpose and fixed requirements
+
+Repeatedly using related non-combat actions should make that practical band of work more efficient. Mining Copper or a special Copper seam improves Copper Mining mastery; smelting Copper improves Copper Smelting mastery. Overall Mining/Smithing levels still determine access to higher actions through the existing requirements.
+
+The owner has fixed two requirements:
+
+- **Non-combat only.** Fighting, kills, weapon use, combat gems, minions, boss clears and ascendancies do not earn action mastery or receive direct mastery bonuses.
+- **No mastery-gated unlocks.** No recipe, resource, area, station, item, skill, action mode or reward requires a mastery level. Bonuses grow automatically; there are no locked perk branches, mastery point purchases, prestige requirements or new mastery-threshold rewards.
+
+An action with zero mastery keeps its current baseline behavior. Mastery is not permission to nerf the baseline and sell the old effectiveness back through grinding. Training every obsolete action must not become necessary for access or a global completion bonus.
+
+All other settings below are a recommended initial design. The numbers are deliberately modest and require economy/pacing verification before implementation.
+
+#### Scope and identity
+
+Use explicitly authored, stable mastery-band identities: narrower than a whole profession, but never one track per generated item. Every eligible action/job supplies a `masteryId`; bulk versions resolve to the same id as their single recipe. Do not infer identity from display text or a level calculation, and renaming a label must not reset progression.
+
+The first version must contain no more than **100 total mastery identities**, including Heists. The inventory and UI review must happen before implementation; adding hundreds of generated Smithing bars is not acceptable. Bands should describe work a player can recognise and deliberately practise:
+
+| Activity | Mastery band | What remains controlled by existing systems |
+|---|---|---|
+| Mining, Woodcutting, Foraging | Resource bands: Copper/Iron/Mithril, Ash/Oak/Yew and each herb tier. Special nodes feed their ordinary material's band | Resource access, skill levels and area requirements |
+| Ordinary Thieving | A small set of target/difficulty bands, authored across the campaign rather than one bar per mark | Target availability, material rules and Heist access |
+| Archaeology | Culture/site-family bands; changing strata does not create a fresh track | Depth, standing, special finds and Expedition unlocks |
+| Smithing | Three material bands crossed with broad equipment families (weapons, off-hands, armour and jewellery); smelting and boss-key work use a few separate bands | Exact base access, item level, Forge level and generated base identity |
+| Alchemy | Authored flask and orb bands; single/batch versions share a band | Recipe access, flask type and orb output |
+| Gemcutting | Skill, support, signature and special-cut bands | Gem availability, level restrictions and special outputs |
+| Rune-carving | One band per rune family across its grades | Grade access, rune strength and materials |
+| Cooking | Meal/ingredient bands grouped by tier and purpose | Recipe access, exact meal effect and Alchemy ingredients |
+| Cartography | Materials, Sextant grades and map-tier pairs (T1–2 through T9–10) | Available tiers, campaign access, map supply and required map inputs |
+| Heists | A small set of job/difficulty bands; every resolved room feeds its job's band | Crew, room access, alarm rules and admission costs |
+
+Greenhouse completions use the Foraging band assigned to the underlying action. Repeating and automatic actions use the same identity as their manual equivalents. Future real professions can opt into this model when implemented; mastery does not implement Fletching or activate Fishing placeholders.
+
+Instant item-modification clicks—spending Orbs, applying Essences, taking/restoring impressions, inscriptions and bench modifier clicks—are outside the first version. Timed production recipes are included; an unlimited-speed clicking loop is not a source of practice. Band mastery does not spend skilling-tree points or alter the player's chosen specialisations.
+
+#### Earning practice
+
+Mastery uses its own **practice** counter rather than normal skill XP. Grant practice only when the engine actually resolves a completed action:
+
+`practice gained = the completed action's unmodified base duration in seconds`
+
+For an ordinary action this is `SkillAction.intervalMs / 1000`; for a resolved Heist room it is `HeistJob.roomMs / 1000`. Credit a room once when it resolves, including an alarm outcome after the work was performed; ending the job or collecting the payout grants no second credit. An interrupted or abandoned action that never resolves grants none.
+
+A completed gathering attempt still earns practice if its normal yield roll produces nothing. The work was performed; the mastery system must not add another failure roll. Blocked recipes, missing inputs, full-storage stops and failed starts do not grant completions or practice.
+
+Important invariants:
+
+- Output quantity, double-production procs, rare finds, item value, normal XP and materials conserved do not multiply practice.
+- A batch grants its own nominal duration once, into the base recipe's track. Do not multiply that duration by the batch size again. Compare progress by nominal work, not raw output counts.
+- Gear, Focus, Overtime, speed events and mastery speed can produce more completions per hour and therefore more practice. They do not multiply the practice award again.
+- Normal XP events/bonuses do not directly multiply mastery practice. Explain this distinction in the tooltip; do not advertise it as another normal skill-XP track.
+- Greenhouse only earns practice on actual background completions, at its effective production rate, through the same completion hook. No extra practice-per-second timer.
+- No daily cap, login streak, real-world waiting period, time-of-day requirement or manual-only mastery bonus.
+
+#### Proposed progression curve
+
+Recommended initial cap: displayed mastery level **100**, with **36,000 practice** needed to cap an action. One practice represents one second of nominal work, so this is ten hours of base-duration work, not a ten-hour real-time lock. Effective speed changes the actual time required.
+
+Let `P` be stored practice and `C = 36,000`:
+
+```text
+progress = sqrt(clamp(P / C, 0, 1))
+displayed level = min(100, 1 + floor(99 * progress))
+practice threshold for displayed level L = C * ((L - 1) / 99)^2
+```
+
+| Displayed mastery | Approximate cumulative nominal work |
 |---|---|
-| Game loop, state, offline progress | `src/game.ts`, `engine/state.ts`, `engine/offline.ts` |
-| Save system and migrations, cloud saves, accounts | `engine/save.ts`, `platform/` |
-| Headless sim and bot | `scripts/sim.ts` |
-| Data-driven content (zones, gems, bases, affixes, drops, trees) | `src/data/` |
-| Stat, item, crafting and combat engines | `src/engine/` |
-| UI shell, design system, art import | `src/ui/`, [DESIGN_SYSTEM.md](design/DESIGN_SYSTEM.md), `npm run art` |
-| Hosting, Sentry, Admin page, feedback | [LAUNCH.md](ops/LAUNCH.md) |
+| 1 | Fresh action, no practice |
+| 10 | 5 minutes |
+| 25 | 35 minutes |
+| 50 | 2 hours 27 minutes |
+| 75 | 5 hours 35 minutes |
+| 100 | 10 hours |
 
-The engines stay as code, but what they do is reopened below. Combat's rules can change without rewriting the loop
-around them.
+Bonuses use the continuous `progress` value, not milestone unlocks or the rounded displayed level. The first completion contributes immediately. After the cap, the action keeps working normally; extra practice is not banked for other actions, future caps or prestige purchases.
 
-### Reopened, in the order to settle them
+#### Proposed automatic bonuses
 
-Each decision depends on the ones above it. Numbers tuned before step 2 would just get thrown away.
+All bonus channels are visible from the beginning and grow continuously. There are no rewards revealed or made usable only at levels 25/50/100.
 
-#### 1. The finished game
+| Action profile | Proposed maximum bonuses | Restrictions |
+|---|---|---|
+| Ordinary gathering | +12 percentage points increased action speed; +8% expected ordinary primary yield | Explicit primary-output allowlist; no extra rare-drop rolls |
+| Timed production | +12 percentage points increased action speed; up to 8% expected conservation of eligible ordinary ingredients | No extra equipment/gem/flask/map copies or stronger outputs |
+| Heist jobs | +12 percentage points increased room speed | Does not lower alarms, unlock rooms or conserve entry currency |
 
-**A dedicated player's journey (you, 2026-10-30):**
-- **Day 1:** equip your character with at most some blue crafted gear, that's okay; get through a couple of Act 1 stages.
-- **Week 1:** farm combat or mats to craft or find a good set of rare equipment; partially through Act 3.
-- **Month 1:** finished Act 6 if pushing combat hard, or just starting it if you've done a mix.
-- **Month 3:** farming Maps to get gear and levels for hard mode bosses, for uniques and other rare drops.
-- **Month 6 and beyond:** farming high level passive nodes for rare crafting materials, to min-max crafted gear to
-  easily farm hard mode bosses and endless content.
+At a given action's progress, multiply the listed cap by `progress`. Speed joins the existing increased skill-speed category rather than becoming an additional uncapped more multiplier. Apply only the active action's own mastery. Copper mastery must not improve Mithril mining, smelting, combat or an entire profession.
 
-**Settled:**
-- **Endless content:** a post-Maps thing. Not designed yet, and that's fine for now.
-- **Hard mode bosses:** new bosses. Boss keys drop from monsters or are crafted through skilling.
-- **High level passive nodes:** resource nodes from passive skilling.
-- **Maps:**
-  - **Getting them:** they drop from monsters. Cartography is an optional second route, for crafting them if you want
-    to do something like a huge offline map grind.
-  - **Running one:** a set number of monster packs, then a map boss.
-  - **What makes one better:** a map is just a tier. Sextants in the Map Device add danger and reward. Themes were
-    dropped 2026-11-01 ([MAPS.md](design/MAPS.md)).
-  - **Using them up:** consumed per run, so keeping a supply going is part of the game.
-  - **Idling:** auto-run. Pick a tier, and the device keeps using those maps until none are left.
-- **Top-end character:** clears hard mode bosses and top-tier maps on idle without dying. The sim can test this.
-- **Long-term engagement so far:** rare drops, expensive crafts, multiple characters, collection log (uniques, bosses,
-  map themes, with rewards), Melvor-style masteries, ascendancies, build-defining uniques, shared stash. More can be
-  added. Competing is out: no leaderboards, no seasons.
+Use explicit per-action data to identify eligible ordinary outputs and ingredients. Do not infer eligibility merely from a suffix or from an item having a price. Suggested gathering candidates are the primary ore/log/herb, ordinary Artifact quantities and ordinary stolen Gold. Ordinary production inputs can include ores, logs, herbs, bars, planks, rough gems, ink and vellum where the recipe permits them.
 
-#### 2. The pacing model
-Work backwards from the end state, not forwards from Act 1.
+Protected quantities include rare bonus finds, Uniques, fossils, Essences, Orbs, Seals/Wax, Boss Trophies, keys, Rogue's Markers used for admission, map inputs, Doom Sigils and future chase components. Mastery does not add rolls for these, conserve their required costs, change a drop pool or improve generated affixes, quality, item level or gem requirements. A recipe with no eligible ordinary input receives speed only.
 
-**Settled:**
-- **Daily play:** a mix. Players may need manual inputs for a hard boss or to push maps and zones, especially early on,
-  so they benefit from active play. No check-ins every couple of hours that last 20–40 minutes.
-- **Offline combat:** the game is already influenced a lot by the player being there. Automation can be locked behind
-  hideout upgrades, which limits how good offline combat is.
-- **Offline skilling:** always full speed.
-- **Manual skilling (you, 2026-10-31):** always better than idle. Idle stays as it is; mini-games add up to 45% on top
-  ([SKILLING_REWORK.md](design/SKILLING_REWORK.md) §9).
-- **Offline cap:** starts at 8 hours; a hideout upgrade raises it to 24 over time.
-- **Automation unlocks:** by type of rule. Simple rules like "on cooldown" are free; reactive ones like "when a boss
-  winds up" or "when life is below 40%" unlock later, so bosses stay hard to idle until the smart rules are earned.
-- **Dying offline:** combat stops until you return.
-- **New bosses offline:** baseline wind-up rules let a strong enough build beat new bosses offline.
-- **Character levels:** around 65 at the end of Act 6. Top-end needs maybe level 90; level 100 is a long chase and a rare
-  goal well beyond that.
-- **Combat and skilling:** one at a time, as today. Each offline period is a real choice, which is what separates
-  pushing combat hard from doing a mix.
-- **Skill 99:** keep about the same, ~53 days of nonstop training on the best node.
-- **Slowing the campaign:** measure first. Add rule locks, offline stops and a combat/skilling split to the sim, then fix
-  only the gap left against the timeline.
-- **A typical visit:** you get on to check your offline progress, sort through some loot or start a new skilling
-  thing, spend skill points, check for upgrades, start up something passive and dip.
+The gathering yield bonus applies to the ordinary base quantity after a successful base-yield roll. It does not duplicate the complete result after Motherlode, extra-production procs, rare secondary rolls or other multipliers.
 
-**Still to settle:**
-- Exact hours for each milestone, set from the sim once rule locks, offline stops and the combat/skilling split are in.
-- Current numbers to replace: Act 1 6–10 h, "3–7 days" per act (never defined in hours), Maps at ~1 month. Level 100
-  and skill 99 curves are also in scope; gathering 99 is ~53 days of continuous training
-  ([BALANCE.md](design/BALANCE.md)).
+For integer resources, use stochastic rounding: an extra expected quantity of `0.08` means an 8% chance of one additional eligible unit. For ingredient conservation, calculate the expected saving from the eligible cost remaining after existing rules, round it stochastically, and clamp it between zero and that actual cost. Check affordability through the existing action rules; potential future savings cannot finance a start. Refund mechanics may return only resources actually paid, never mint an extra ingredient from a free/conserved use.
 
-#### 3. The core systems
+This initial tuning gives an unmodified gathering action at most about 21% additional ordinary throughput at cap (1.12 speed × 1.08 yield). Existing increased-speed investment lowers the relative speed gain. Revalidate alongside the skilling tree, events, double-production effects, salvage and market prices; this estimate is not permission to raise every resource's output blindly.
 
-**Settled:**
-- **Battlefield:** keep it. It feels awesome. Positioning, ranges and closing in stay the core of combat; tuning fixes
-  the rough edges.
-- **Manual play:** both. Better decisions (casting skills and drinking flasks at the right moment) and boss moments on
-  hard bosses that only a player can do well at first, like clicking a weak point or picking which add to kill.
-  Reactive rules need a way to handle these for idle clears.
-- **Rules:** per skill, as now, with better priority controls and more rule slots as they unlock.
-- **New skills:** batches by act. Each act brings a themed set of skills and supports, as part of the act recipe.
-- **Classes:** six normal classes. Exile becomes a hard mode, unlocked by finishing the campaign with another character.
-- **Ascendancies:** two per main class, 12 in total, with three trials from Act 3 to Act 6, their own tree tab and
-  points. Exile has none ([ASCENDANCIES.md](design/ASCENDANCIES.md)).
-- **Gear:** extend base tiers to about level 80, so new Maps tiers keep bringing visibly better gear.
-- **Character tree:** keep the current tree and add enough nodes for the extra levels.
-- **Top crafts:** both. Rare materials can force exactly the mod you want at a high price, and can roll past normal limits
-  with a risk of damaging or destroying the item.
-- **New skills:** both timings. One arrives with each act from Act 2 on, and more arrive around or after Act 6.
-- **What new skills do:** each feeds its own game system (Heist or Expedition-style activities) and also produces
-  materials for the crafting economy.
-- **Across characters:**
-  - **Hideout and rule unlocks:** shared by the account. Stations, reactive rules and the offline cap stay unlocked for
-    every character.
-  - **Stash (you, 2026-11-01):** every tab is shared by all characters on an account in the same challenge league. That
-    includes gold; skill bars and flask belts stay with the character.
-  - **Skill levels:** per character.
-  - **Campaign:** true to PoE: every character plays through it.
-  - **Challenge modes:** each has its own separate stash, hideout and unlocks, so it's a true fresh start.
-    - **Hardcore:** when the character dies it's gone for good, with its gear.
-    - **Classic:** no skilling, combat only.
-    - **Exile:** stays an unlockable class in the normal game, and can also be taken into challenge modes.
-    - **Hardcore offline:** your risk. Offline combat works normally, so a setup that fails overnight loses the character.
-- **Rare crafting materials:** rare drops from monsters and map themes in every mode, including Classic. Skilling is the
-  min-max, faster way to get them, but the time investment might edge it out; players should figure that out.
-- **Late-game hideout:** long-term upgrades. High-level stations cost rare materials and give lasting bonuses like better
-  automation, the 24-hour offline cap and more map options.
-- **Balance:** the game doesn't need to be perfectly balanced. If it were, choices wouldn't matter.
+#### Ownership, persistence and recovery
 
-**Where each system stood going in (design settled above; numbers come from the sim):**
+Recommended first version: **character-owned**, matching existing non-combat skill levels. Shared realm bank/stash resources do not share mastery. No realm-wide mastery pool, point spending, transfer to another action or reward for maxing the whole catalogue.
 
-| System | Today | Question | Doc |
-|---|---|---|---|
-| Combat | Hex half-ring, action times, 6 skills with rules | Is this the game? Does idle vs manual match the pillars? | [BATTLEFIELD.md](design/BATTLEFIELD.md) |
-| Skills and supports | Actives and supports, attribute gates, gem levels to 20 | How many, unlocking when; skill bar overhaul | [SKILLS_AND_UNIQUES.md](design/SKILLS_AND_UNIQUES.md) |
-| Classes | 7, each with a mechanic, plus ascendancies planned | Are 7 right for replaying? Do ascendancies exist? | [CLASSES.md](design/CLASSES.md) |
-| Trees | Character tree and skilling tree | Do they survive the new pacing? | [TREES.md](design/TREES.md) |
-| Gear and affixes | 315 bases to level 60 (428 to level 80 since), 9 affix tiers | Does the ladder match the new level range? Numbers were never simmed | [GEAR.md](design/GEAR.md) |
-| Crafting | Orbs, bench, fossils, essences, auto-crafting | Where do "super rare crafts" come from? | [SKILLING_REWORK.md](design/SKILLING_REWORK.md) |
-| Skilling | 5 planned skills on top of the current set | How many does the game need? | [SKILLING_REWORK.md](design/SKILLING_REWORK.md) |
-| Economy and drops | Tiered tables, sim-tuned for Act 1 | Rebuild from the pacing model | [BALANCE.md](design/BALANCE.md) |
-| Town and hideout | Stations, shops, upgrades | What do they do in the late game? | [TOWN.md](design/TOWN.md) |
+Proposed new character state:
 
-#### 4. Content plan
-**The act recipe:**
-- **Size:** acts grow. Early acts stay at about 8 stages and later ones reach 10–20, so the campaign feels like it's
-  getting bigger.
-- **Identity:** a new boss mechanic and resistance check, like Act 2's Scorched earth and fire damage.
-- **Each act also brings:** a themed batch of skills and supports, and from Act 2 on, a new skill.
-- **Levels:** Acts 3–6 cover about 33 to 65.
+```ts
+// Design sketch only; this field does not exist in GameState yet.
+skillingMastery: Record<string, number>; // stable mastery-band id -> accumulated practice
+```
 
-**Act 2 as built:** rebuild from the recipe. Use it as a starting point, and redo anything that doesn't fit. Its 40
-monsters show a skull icon today and need pack art. Finding assets is quick, so it doesn't limit act size.
+Missing entries mean zero. A migration supplies an empty record and preserves all current progression, access and resources. Do not estimate past action practice from overall skill XP or lifetime production totals: they do not identify what was actually trained. Keep stable ids and explicit rename mappings; treat unknown stored ids as inactive data rather than granting a different action a bonus.
 
-#### 5. Live game and transition
-- **Saves:** wiped at the 1.0 launch, with a clear message. Everyone starts fresh.
-- **Live site:** updated as we go. Changes go live in stages, so real players test them early.
-- **1.0:** the game is already live on your site. You decide when to call 1.0, based solely on vibes.
+Persist the counter with the character and use the existing character save/conflict rules. Do not sum two device snapshots of the same counter on load, import or reconciliation. Restores restore the character's recorded mastery; sandbox copies remain memory-only. A Hardcore character loses its mastery with its other character progression on death. SSF uses its own character's counters. Classic has no eligible non-combat actions and receives no mastery benefits.
+
+This remains client-simulated progression with the game's existing trust limitations. A mastery counter is not server proof that an item or currency was legitimately earned.
+
+#### Live, offline and interface behavior
+
+Live play, offline catch-up, background Greenhouse and auto-repeat must call the same completion/award logic. The same completed work earns the same practice in each route. Offline caps and material/storage stops remain unchanged. Clamp practice at the cap and validate finite, non-negative values; do not loop once per second merely to award practice.
+
+On an action/recipe card, show its mastery level, a compact next-level bar and its current bonuses separately from profession XP. A tooltip explains the identity, what counts as work, all possible bonus channels and any protected inputs/outputs. Bulk variants show the same underlying mastery and explain how practice is credited. Locked recipes may show their ordinary access requirements; never display a mastery requirement.
+
+Avoid a toast for every mastery level during long idle runs. Aggregate meaningful changes into offline summaries and an optional activity-log entry. A capped action remains runnable and productive. Existing profession pages should host this information; a new tree, currency shop or mandatory management screen is unnecessary.
+
+#### Implementation work and acceptance criteria — not started
+
+- [ ] Inventory eligible non-combat actions/jobs; assign explicit stable band ids, batch aliases and bonus profiles/allowlists; reject the inventory if it exceeds 100 identities.
+- [ ] Add pure progression/bonus calculations, a character save migration and completion-hook practice awards.
+- [ ] Integrate action-specific speed, ordinary yield and ingredient conservation without changing baseline access or item-generation rules.
+- [ ] Integrate Heist rooms, Greenhouse, auto-repeat, offline summaries, save/import/recovery and sandbox behavior.
+- [ ] Add compact action-card UI and explanatory tooltips; update the current reference/wiki only when the mechanic is implemented.
+- [ ] Verify no content-access check reads mastery; zero-mastery characters retain today's baseline and existing unlock paths.
+- [ ] Verify combat/gem/weapon/kill paths never grant mastery or read its bonuses.
+- [ ] Verify every eligible action has exactly one valid band, generated Smithing bases cannot create new tracks, single/batch aliases share bands, and resolved Heist rooms, empty-yield gathering, cancellation, resource/storage stops and double-production cannot duplicate credit.
+- [ ] Verify equal completed work online/offline, protected inputs/outputs, integer rounding, refund safety, caps, malformed saves and non-additive device reconciliation.
+- [ ] Measure resource inflation, recipe profitability and progression on representative new/endgame characters before accepting the proposed 100-level/10-hour/12%/8% tuning.
+
+The design is ready for review; implementation and final tuning remain future work. No mastery-gated content should be added while filling in those details.
+
+### Maps skill batch: local implementation in progress
+
+- [ ] Verify all 40 active gems, signatures, 40 supports, Maps gating and UI/shop availability against `src/data/gems.ts` and engine behavior.
+- [ ] Finish Marks, Warcry scaling, Totems, Doom, Exertion, chaos bypass/poison and their supports/rules; mere presence of fields/data is insufficient.
+- [ ] Verify every support's stated effect and formula, targeting, expiry, cooldown/cost rules, minion/totem distinction, boss interactions and offline behavior.
+- [ ] Resolve failing Maps-skill tests and update art/wiki before release. Do not mark this complete using ordinary combat tests alone.
+
+The consolidated batch specification is retained below as a proposal. Its initial 1.3× attribute wording is superseded by the 0.4.1 attribute rebalance (demanding gems use 1.15×); use code for actual requirements. Its suggested `'maps'` gating/API names are design intent, not existing API contracts. Definitions that conflict with current data require review rather than silently changing gameplay.
 
 ## Other open items
 
-- [x] Refine class combat flow and idle decision-making: make Mana is Power reward recent spending, make Momentum grant Evasion and lose flat stacks only to meaningful landed hits, let low-level gear consume Arcane Dust instead of basic orbs, replace manual movement pacing with automatic range postures, and reserve Mana for higher-priority skills nearing readiness. — done 2026-11-05
-
-- [x] Rework War Table gating so an idle character has essential survival automation from Act 1 instead of needing manual boss micro. — done 2026-11-05
-  - Baseline kit: Vitals, Wind-up and Ground rules, automatic Life/Mana flask thresholds and two condition slots for each of the six skill-bar positions.
-  - Later War Table rewards: Status and Aim rules, a third condition, then Normal/Magic/Rare auto-salvage.
-  - This supersedes Milestone 1's original decision to gate reactive boss rules.
-
-- [x] Smooth hideout upgrade costs so mid- and late-tier stations do not stop combat progression for multi-day raw-material grinds. — done 2026-11-05
-  - Six recipes refine five logs or ore into planks or bars; first boss kills guarantee a Boss Trophy and repeats have a 25% chance.
-  - War Table level 7 fell from 80,000 Gold, 4,000 Yew Logs, 4,000 Mithril Ore and 100 Rough Gems to 30,000 Gold, 150 Yew Planks, 150 Mithril Bars, 20 Rough Gems and 8 Boss Trophies; every station received the same smoothing pass.
-
-- [x] Recalculate skill-gem attribute requirements so off-attribute gems still demand travel or gear without ordinary level-20 gems requiring 245 attributes. — done 2026-11-04
-
-- [x] Rebuild the character passive tree around compact clusters: keep attributes on shorter travel roads, remove filler inside clusters, put meaningful choices every few points and document the tree's design rules. — done 2026-11-04
-
-- [x] Overhaul the character and ascendancy trees: remove class-only mechanic beelines from the character tree; give each ascendancy six notable paths and two capstones with a normal nine-point three-notable/one-capstone build but no hard node-count limit; remove Act locks; add the fourth trial at Tier 5 Maps. — done 2026-11-04
-
-- [x] Make defences and gear progression matter: PoE-style magic/rare monsters and monster modifiers, with more rewards; a much larger, slot-specific item affix pool so Chaos Orbs are less deterministic. — done 2026-11-03
-
-- [ ] Mage is far ahead early: players report level 60 in a day while other classes take days to reach Act 3. Sims agree: Mage clears Act 1 in about 2h nonstop against 5-17h for the rest. The cause: Spark, Frost Needle and Shock Nova took no time to cast, so all three fired every turn on top of everything else.
-  - [x] Every skill takes time (see Decisions). Mage's Act 1 lead drops from about 4x to under 1.5x in the scenario sim. — done 2026-11-02
-  - [x] Sim bot fills its six slots by job (single target, clear, guard, buff, curse, one for the fight), weighs skills by how much of a pack they hit, and switches weapons for a skill it owns. Exile only runs when named. — done 2026-11-02
-  - [x] Plain area attacks lost their cooldowns (heavy slams keep theirs) and go before other attacks in the cast order; Ground Slam fits swords; Spark and Shock Nova about 20% less damage. Classes now clear about evenly from Act 3 on. — done 2026-11-02
-  - [x] Every class starts with a single target and an area skill; Ranger starts with a Short Bow; new Rain of Daggers (poison, daggers) for the Shadow; Horse Archer's Arc needs a bow; Spark chains 2-5 with gem level. — done 2026-11-02 (only Warrior simmed since)
-  - [ ] Warrior still slowest: Act 1 takes 10h nonstop (Duelist and Templar about 5h), Act 5 by 21h, 19 deaths a day. Early on Heavy Strike is slow (3.9 s), and in the mid game the bot drifts to Backstab and Lacerate, which its Dexterity can't level past 8-9. Backstab deals about 80% weapon damage a second against 45-50% for the other basic attacks.
-    - Backstab 240% → 165% weapon damage; Heavy Strike 3.9 s → 3.3 s and 185% → 280%.
-    - Later Strength single-target attacks raised so each beats a levelled Heavy Strike when it arrives: Pummel, Infernal Blow, Judgement Hammer, Flagellate, Titan's Blow, Shield Crush (you: "I want Warrior one-shotting things").
-    - Warrior now: Act 1 in about 9h nonstop, Act 4 by 22h, 15 deaths a day (Heavy Strike at 370% had Act 1 in 6h). Act 1 is still where it loses the most time.
-    - New Quick Slash (stacking more damage on you) and Rending Cut (stacking physical damage taken on the target), fast sword and axe cuts that build Rage. Warrior: Act 1 in 8h26, Act 5 by 23h. Rending Cut slows Act 1 packs down, as it restacks on every new monster.
-    - Rending Cut set to bosses only, and stacking skills wait at full stacks. All-class nonstop day (bot on its own weapon type): Act 6 done by Mage 6h24, Ranger 15h24, Shadow 19h01; Duelist and Templar reach Act 5, Warrior Act 4. Mage still clears 2-3x faster in Act 1, helped by starting with Frost Needle.
-    - Spark and Frost Needle -40%, Act 1 attacks +40%, later Strength attacks +40% to stay ahead of Heavy Strike. Nonstop day, Act 6 done: Ranger 7h12, Shadow 13h48, Mage 15h50, Duelist 21h32; Templar and Warrior reach Act 5. Mage now stalls in Act 1 (12h, 36 deaths), then flies through Acts 2-6 in 4h. Ranger is the new outlier.
-    - Ranger bow skills -20% (Barrage, Rain of Arrows, Ice Shot). Frost Needle 3-6 per hit: the Mage has about 30% less life, so it needs to kill about 30% faster than the median class at level 1 (8.0 dps against a median of 5.9).
-    - [ ] Why the Strength classes lag: still open. Traces show them on old weapons for long stretches (the Templar keeps a level 19 mace from character level 17 to 39, the Warrior a level 8 sword from 20 to 39), while the Ranger's bow keeps pace. It isn't the base ladder (swords and maces have 12 bases each, like bows; an earlier count was wrong), nor walking (5-8% of the time), nor damage on paper (melee has the highest skill dps in every scenario). Letting the bot wear any sword, axe or mace barely moved it. Next: log which weapons the Warrior sees and why it keeps the old one.
-    - Bone Wand and Quartz Wand retired (no longer drop or sell; owned ones still work), to slow the early Mage: its Act 1 went from 5h35 to 6h59 nonstop.
-    - New bases Bronze Shortsword (4), Bastard Sword (29), Iron Cudgel (6), Studded Mace (16), on spare pack art; Warrior, Duelist and Templar +25% movement speed; Act 2+ Intelligence damage spells -40%. Not simmed yet.
-    - [ ] Plan to bring every class within 1-2 hours of each other per act. Shadow is right (Act 6 at about 14h nonstop, you, 2026-11-02); Mage at 10-11h and Ranger at 12h are too fast. Time per act goes roughly with 1 / clear speed, plus downtime from deaths (each 3 deaths in an area also costs a 20 minute retreat).
-      - Strength classes need about 2x in Acts 2-6: weapons pull their weight through stronger physical damage mods (added 50% on every tier; increased about 50% at the bottom and 20% at the top).
-      - Mage and Ranger clear too fast in the later acts: Hulking monsters from Act 3 on (1 pack in 5 has one: 5x life, 2x damage, half speed, 5x xp, 60% less damage from area, chain and piercing hits) favour heavy single hits over screen clears.
-      - Warrior deaths (18 a day against 6 for the Duelist): more armour from the class bonus, or a little life regeneration. Not done.
-      - Not doing (you): a guaranteed class weapon in the Town Market; there's enough loot already.
-      - Result (nonstop day, Act 6 done): Mage 6h37, Ranger 11h28, Shadow 12h33, Duelist 17h27, Templar 20h13, Warrior 20h16. The Strength classes now finish Act 6. Mage and Ranger ride an Act 1 single-target skill all game (Frost Needle to about 200k dps, Poison Dart likewise), which Hulking monsters don't slow and the later-spell cut doesn't touch.
-      - Frost Needle's three hits each got all of the flat added spell damage from gear; now each gets a third. Poison Dart can't be used with a wand, staff or sceptre (otherwise unchanged, you). Act 6 now: Ranger 11h28, Mage 12h10, Shadow 12h33, Duelist 17h27, Templar 20h13, Warrior 20h16. Mage and Shadow are where you want them; the Strength classes are 5-8h behind.
-      - The Mage still flies through Acts 4-6 on Spark (chains to 5 at full damage) and late wands. Top-tier caster mods trimmed (about -10% at item level 45 to -35% at 80), and spells now grow 12% a gem level tapering to 8% (x2.9 at 20, from x4). Chain hops now deal 15% less each, down to 20% of the full hit (you). Mage after all three: Act 6 at 20h28, but Act 1 takes 11h with 21 deaths, as its only early skills got weaker too. Open: Spark and Frost Needle base damage up about 30% to fix its Act 1. Shipped as is (you).
-    - Spotted in passing: the Ranger's Poison Dart reaches about 200k dps by the end of a nonstop day, far past everything else.
-    - After the Ranger and Frost Needle changes, nonstop day, Act 6 done: Mage 10h50 (Act 1 in 5h35, 11 deaths), Ranger 12h29, Shadow 13h48, Duelist 21h32; Templar and Warrior reach Act 5. The Strength classes are next, once the weapon ladder is settled.
-  - [x] The sim bot keeps each class on its own weapon type. — done 2026-11-02
-  - [x] `npm run sim -- --scenario <preset>` runs every class through a playtest scenario side by side (presets now in `src/dev/presets.ts`). — done 2026-11-02
-
-- [ ] Player Market (live trading between players; named "Player Market" so it isn't confused with the Town Market shop station). Design pass finished 2026-11-01; see Decisions → Player Market and [MARKET.md](design/MARKET.md).
-  - [x] Server: listings, bids and wallet tables, with signed-in-only rules and all-or-nothing buy, bid, cancel and collect actions. — done 2026-11-01
-  - [x] Server: sanity check on listed items (real base, mods in legal ranges). — done 2026-11-01
-  - [x] Auctions: closing at 24 hours, last-minute extension, refunds; buy now expiry at 7 days. — done 2026-11-01
-  - [x] Game: list from the stash, browse and search, buy, bid, my listings, collect from the wallet; unlocks after Act 1, sign-in prompt for guests. — done 2026-11-01
-  - [x] Admin tools: remove a listing, ban a player from the market. — done 2026-11-01
-  - [x] Run `docs/ops/market.sql` in Supabase and ship: live as 0.3.0 "The Market". — done 2026-11-01
-  - [ ] **[You]** Press Upload on Admin → Market, then try a real trade between two accounts. Nothing can be listed until the upload.
-- [x] Player wiki at `/path-of-idle/wiki/`, generated from the game's data by `npm run wiki` on every build: acts and areas, skill and support gems, item bases, uniques, modifiers, currency and materials, classes and ascendancies, plus a hand-written Getting started page (`docs/wiki/`). Linked from the sidebar. 0.2.34 — done 2026-11-01
-- [ ] Wiki rebuild from your spec ([WIKI_SPEC.txt](design/WIKI_SPEC.txt)). Phases are in that file. It says Netlify, but the wiki stays on Cloudflare.
-  - [x] Phase 1: look, home page, sidebar and phone menu, full search, filterable and sortable tables, section links. — done 2026-11-01
-  - [x] Phase 2: a page for each gem, item, unique, currency, area and monster, with game art, cross-links, hover cards, spoiler boxes, a support finder and a link check in the build. The spec's other menu pages are in as placeholders; a file in `docs/wiki/` named for one fills it. — done 2026-11-01
-    - [ ] Later: materials and modifiers have rows with direct links, not pages of their own.
-  - [x] Phase 3: Getting started, checklist, FAQ, glossary, automation guide and rule reference, offline, gathering, farming, walkthrough, boss preparation, loot tables, unlocks, starter builds, patch notes, data version, and reporting through the game's Feedback card. Guides live in `docs/wiki/`, with `{{data:…}}` tables and `{{skill:…}}` links filled from the game. Starter builds aren't playtested. — done 2026-11-01
-    - [ ] **[You]** Read the guides for tone and anything that doesn't match how you see the game.
-  - [x] Phase 4: item comparison, drop calculator, crafting planner, XP and farming planner, rule builder and build planner with share links. Numbers are worked out by the game's own code at build time. Patch history per entry and community features are left out. — done 2026-11-01- [ ] Wiki next, decided in the 2026-11-01 design pass (see Decisions → Wiki), in this order:
-  - [x] Spoiler boxes: click-to-reveal for boss mechanics, unique drop sources and Acts 4–6, applied by the generator. — done 2026-11-01
-  - [ ] Reference pages: passive tree notables, life skills and recipes, hideout upgrades, runes and flasks, boss mechanics glossary.
-  - [ ] A link from the title screen to the wiki home.
-  - [x] Formulas page: Damage and ailments, with its numbers read from the game's code. — done 2026-11-01
-  - [x] Then guides: automation rules guide. — done 2026-11-01
-  - [ ] Later: deep links from in-game tooltips to wiki pages.
-  - [ ] Deploy the wiki (first version is built but not live).
-- [x] Gear sets and skill loadouts, with auto-switching behind the Crafting Bench — done 2026-10-31
-- [x] Art and music sent 2026-10-31 merged: 112 item slots and 4 music tracks. All free itch.io files; you said to assume
-  free public use while the game isn't sold, so recheck if that changes — done 2026-10-31
-- [x] Third unique art sheet: 13 icons on existing uniques, plus 2 new uniques, The Briar Key and The Unblinking Tome (first-pass mods, not balanced). The green potion icon is unused (the belt unique was dropped) — done 2026-11-01
-- [x] Arcane Siphon leech cut: life 25% → 15%, mana 40% → 25% — done 2026-11-01
-- [x] Skill gem reform: 31 new skills, 12 new leech supports, 6 gems moved, and The Old Covenant for existing characters ([SKILL_REFORM.md](design/SKILL_REFORM.md)). Live as 0.3.3. Not simmed — done 2026-11-01
-  - [ ] **[You]** Press Upload on Admin → Market again, so the server also refuses the ring.
-- [ ] Art for the 34 weapon bases that still have none.
-- [ ] Use the Void pack, SBS skies and `MediavelFree.png` UI once something needs them. Originals are in Downloads.
-
-- [x] Ailment rework and chaos damage ([DAMAGE.md](design/DAMAGE.md)): fire burns, cold chills, lightning shocks, chaos poisons; each has a % chance, base 0, from skills and gear; buildup against 40% of the target's life. Burn builds to Ignite, chill to Freeze, shock scales. Poison stays as it is. Chaos is offence only. Not simmed. 0.2.30 — done 2026-11-01
-- [x] Hideout upgrade cards: each station shows what you have now, every tier as a ladder, and the next upgrade with its cost. 0.2.32 — done 2026-11-01
-
-Not tied to a milestone yet. Older balance, Act 2 and skill items restart at their milestone.
-
-### Login
-- [ ] Demo mode and email login: new players get an unsaved demo, email + password joins Google and Discord, and browsers with guest characters keep them ([SETUP.md](ops/SETUP.md)).
-  - Live since 2026-10-30. Email provider is on; Confirm email is still on, so sign-ups need a link and the built-in mailer's hourly limit applies.
-  - **[You]** Test on the live site: sign up, log in, password reset, and demo carryover through email, Google and Discord.
-
-### Town feedback (your walkthrough, 2026-10-25)
-- [ ] More skills to train (Hideout skill list feels thin).
-  - Later: Thieving (Heist), Archaeology (Expedition), Cartography, Fletching, Rune-carving ([SKILLING_REWORK.md](design/SKILLING_REWORK.md) §8). You like all of them; they're listed on the in-game Coming soon page for now.
-- [ ] Side feed (Activity / Combat log / Loot): you're lukewarm on it; revisit later.
-- [ ] Achievements page look: later pass.
-- Art (parked with the other art): trader portrait is too cartoony; materials need more icons.
-- [ ] Skill masteries on the Hideout skill tiles (you: coming later; the skills themselves are with the gathering session).
-
-### Character feedback (your walkthrough, 2026-10-25)
-- [ ] Campaign art pass: you like the continent-map style; it needs real art. The area card is still a poor way to show the info and needs its own art pass.
-- [ ] **[You]** Gem artwork: gems now show plain silhouettes (`GEM_GLYPHS` in `src/ui/assets.ts`); pick which you like or what to replace.
-- [ ] Skill bar auto setup (rules and priority) needs a big overhaul. Needs design with you: more priority control, maybe more.
-- [ ] Support gems limited to some skill types (e.g. only Warcries): not built yet, beyond the current attack/spell/melee fits.
-- [ ] Attack mana costs: with a mana flask the bot is short of mana 0–5% of fight time (Exile 10%), so costs look fine; only matters if you play without a mana flask.
-- [ ] Auto-crafting needs real design work later (you: "way later").
-- Inventory look is with the other session; the Equipment and Bench bag views should improve with it.
-
-### Skill pool (your review, 2026-10-27)
-- [ ] New skill gems for character levels 20–40: nothing unlocks between 16 and Lacerate's 35 (you: paused for now).
-- [ ] Next round of skills and supports: more Dexterity and Intelligence buffs (both buffs today are Strength), and real curses (the old "curse" role on Poison Dart was removed).
-- [x] Str/Dex mana: they should stay mana-hungry, but need a mana leech option (passive tree or support), costs paid with life, or uniques/mana regen to stack, on top of flasks. Mana leech supports and Dexterity drains in the skill gem reform — done 2026-11-01
-- [ ] Ailment overlays on the player while you're taking them: poison a green overlay, bleed a darker red, shock little blue lightning bolts, freeze a ~20% light blue tint over the whole thing.
-- [ ] Battlefield follow-ups ([BATTLEFIELD.md](design/BATTLEFIELD.md) → As built):
-  - Sim rerun on the new field; expect melee to need a buff (closing-in time and movement speed are the first knobs).
-    - 2026-10-28: first run was skewed by sim-bot bugs (now fixed: unusable-skill scoring, never retreating from a walled boss). Clean rerun (new vs old code, seeds 1–2, 14h) still to do; early signs: Mage/Templar faster, a sword-only Duelist's Twin Strike ~⅓ of dual-wield.
-  - Zone side weighting for the gates (`spawnSides`).
-  - You played it: it feels awesome (2026-10-30).
-- [ ] Re-run the sim after the gem scaling and skill buffs below; multi-hit attackers (Barrage, Twin Strike, Pummel) lost damage at high gem levels.
-
-### UI feedback (your walkthrough #2, 2026-10-25) — you test at 1440p and 4K
-- [ ] **[You]** Check the Town: shop prices (~5k magic / ~12k rare at level 24), gem levels (`GEM_LEVELS` in `src/data/gems.ts`), shopkeeper names (Ilsa, Varro, the Gemwright).
-- **[You]** Icons: gathering nodes (Copper Vein, Scorched Seam …) and currency need art; you'll go through icons yourself.
-- Campaign: needs real area art (already above). Map Device: work in progress.
+- [x] Write and review the non-combat band-mastery design, with no mastery-gated unlocks, no more than 100 authored identities, proposed progression/bonuses, persistence/offline behavior and acceptance criteria. Design only; implementation remains unchecked in its section. — done 2026-11-06
+- [x] Overhaul Admin with campaign/demo/death diagnostics, searchable player inspection and audited recovery/compensation, feedback snapshots/replies/filtering/sandbox, and configurable live events/broadcasts. Database migration and frontend verified locally; service installation/deployment remain separate. — done 2026-11-06
+- [x] Apply updated market/admin SQL in Supabase. Owner confirmed both ran; live Admin overview/player/feedback RPCs and backup/mail/audit tables refuse anonymous requests. — done 2026-11-06
+- [ ] Upload current validation rules and verify real-account Admin inspection, backup restore, mail/compensation and scheduled events against the updated frontend. Backups/snapshots are not retroactive; frontend deployment remains pending.
+- [ ] Confirm Google OAuth secret revocation for GitHub alert 2 (historical `docs/AUTH_SETUP.md`, commit `4ba2852afe62`); rotation status unknown. Follow SETUP without placing credentials in git/chat.
+- [ ] Confirm the separate `is_admin` / `admin_stats` lookup-path ALTER statements in SETUP were applied; perform signed-in cross-account/admin isolation and fresh provider login checks. Market/admin file execution is confirmed; local and anonymous tests do not replace signed-in verification.
+- [x] Audit public source/history and available Actions exposure; enable GitHub secret scanning/push protection and implement offline-compatible market/build hardening. Findings and rotation playbook live in DEVELOPMENT/SETUP; pending service actions remain unchecked above. — done 2026-11-05
+- [x] Rebalance area-level combat XP with a two-level grace band and capped bonus/penalty milestones; update labels, calculator and tests. — done 2026-11-05
+- [x] Give monsters distinct player-style damage/defence archetypes while preserving reference effective hit pools and damage budgets; verify campaign, map, rarity and save behavior. Unreleased; remaining combined-worktree failures are recorded below. — done 2026-11-05
+- [x] Consolidate and audit game documentation; replace 40 internal/reference documents with five, preserve published wiki URLs and validate links/generated pages. — done 2026-11-05
+- [ ] Player report: roughly two hours of one signed-in character's progress disappeared. Audit local saves, uploads and merge/transfer reconciliation before changing save behavior.
+- [ ] Player report: Templar appears to encounter fewer enemies. Verify class-independent pack/arrival logic and isolate build/kill-rate effects.
+- [ ] Player report: Twin Strike hits from four tiles away. Audit melee range and closing-in; evaluate melee-only/approach tactics request.
+- [ ] Verify Mana is Power display with Overflow after the spending-window change.
+- [ ] Recheck Warrior/Templar weapon progression, class pacing, high-level Poison Dart scaling and defensive gearing on current code. Old simulations disagree because systems and bots changed.
+- [ ] Real accounts: email sign-up/reset/confirmation, guest carryover, two-device save/realm behavior and Player Market buy/bid/delivery recovery. Verify current Admin → Market rules upload after content changes; no assumption that an old checklist proves current service state.
+- [ ] Player wiki references/guides for trees, runes, flasks, side systems, meals, greenhouse, loadouts, challenge realms, market recovery and Maps. Generated tables currently cover only part of these topics.
+- [ ] Deeper recovery runbooks for cloud conflicts, duplicate-tab transfers, market holds and deliveries. Verify code and actual service behavior.
+- [ ] Art: proper area landscapes, weak stand-ins, reused gem icons and outstanding weapon artwork. Inspect current manifest before quoting old missing-art counts.
+- [ ] Owner checks: guide tone, Town prices/readability, campaign/Map Device UX. Keep Act 1 cold-check/scorch changes parked until requested; the prior decision did not authorise an unsolicited rebalance.
 
 ## Ideas / later
-- Ascendancy chase items: grant a specific notable or capstone without spending trial points, allowing a fourth notable or both capstones. These item-granted nodes must bypass the normal point budget rather than relying on a hard node-count exception.
-- Uniques tab: copies of the same unique share one spot, which shows the first copy and a count; the next copy appears once that one is taken out. Uniques found before the tab existed only show as found once they're in the stash, bag or worn.
-- No monster deals chaos damage yet, so the Amethyst Flask and the Chaos Hit enchantment do nothing until some do. The character sheet doesn't show Chaos Resistance either.
-- Offline, a Warrior in starting gear dies to the Mud Flats boss on most seeds even at level 40, and about half at level 60 (seen 2026-11-02, same before and after that day's changes). Worth finding out what kills them: an overlevelled character farming Act 1 offline shouldn't die there.
-- Melee characters with spells on their bar lost them in 0.3.7 until they equip a caster weapon; worth a line in the player heads-up.
-- Any error while drawing a page blanks the whole game: there's no error screen to catch it. A tab still on an older version also goes blank if a gem it has never heard of reaches the shared account from a newer tab or device, until it's refreshed. Nothing tells an open tab that a new version is out.
-- When browser storage is full, a save throws an error instead of the "keep playing" handling meant for it. The game carries on, but the page can miss a refresh after buying a gem.
-- Hardcore on two devices: a second device still holding a local copy of a dead character can bring it back. Deleted characters would need a cloud marker to stop that.
-- Skill reform: a The Old Covenant moved to the shared stash can be worn by a new character on that account. Life Leech's 1.8 multiplier also raises Life-spending skills' Life cost, and drains cost no mana, so leech supports are free on them. The 31 new skills use reused icons, and none has its own art.
-- War Table survival rules are now baseline, superseding Milestone 1's old offline-boss gate. The pacing impact is not simmed.
-- The sim's `reachable` now pushes unbeaten areas so it walks every branch, but hasn't been run since the roads forked, and its pacing numbers for Acts 3–6 predate them.
-- `TRIAL_ZONES` in `scripts/sim.ts` has `hollowreef`, now one side of a fork; the bot still clears it.
-- Hideout later-tier costs only show on hover, so phones can't see them.
-- Chaos is offence only: no monsters deal it, no player chaos resistance, no chaos skills past Poison Dart, and flat chaos doesn't reach spells ([DAMAGE.md](design/DAMAGE.md)).
-- Ailment numbers (40% threshold, 25% skill chance, ignite 50%, shock 40%) are first guesses, not simmed. Bosses may be near immune to Ignite and Freeze at these thresholds.
-- The game doesn't explain buildup or ailment scaling in-game yet; the wiki's Damage and ailments page does.
-- The reference pages the 2026-11-01 design pass asked for still to come: passive tree notables, life skill recipes, runes and flasks.
-- [DAMAGE.md](design/DAMAGE.md) is out of date: it still lists the ×1.2 caster weapon bonus, says bleed is 40–60%/s (Sanguine Blow is 30%) and says shock raises all damage (it raises hits only, not running damage over time).
-- The wiki's Acts page could collapse by act, as the spec suggests.
-- The Equipment page's DPS is still the Default Attack, not your skills.
-- Act 6 leftovers: `TRIAL_ZONES` in `scripts/sim.ts` has no Act 6 area, the Long Fracture's Frozen ground may slow too hard, the six signature supports use the fallback icon, and vellum and inks use stand-in art.
 
-- Boss farm has no cost or cap, so a strong build gets boss XP (×10), rare-weighted gear and the repeat guaranteed orbs every few seconds, online and offline with wind-up rules (2026-10-31).
-- Loadouts: flasks in gear sets, a quick swap on the combat page, and a boss trigger for auto-switching.
-- Melee starts slow: Warrior, Ranger, Duelist and Templar deal 4–6 DPS in the mudflats against 13–16 for Shadow and Mage (2026-10-31).
-- Riposte heals (Measured Reply, The Second Guess) now fire on landed hits too, so watch whether Duelist sustain gets too strong.
-- Matador and Vanguard lose landed-hit Ripostes on picking, so ascending may feel like a step down until the tree fills in.
-- Level ceiling: XP is at −80% or worse from 46 and gone at 66 until Act 4 arrives (the High Altar tops out at 41), gem XP goes with it, and the bot's area choice doesn't know about either.
-- Level times: the sim's bot reaches 20 at 4h15–7h31, not 3 h; bosses hold it back, not XP, and it doesn't smith or bench-craft. Everything past about 46 is calculated, not measured, and assumes 3,300 kills an hour.
-- "Salvage the rest" on the offline haul works without the Crafting Bench, unlike every other salvage. Left as it was.
-- Add each release to `src/data/news.ts`, which feeds the title screen's News panel.
-- Music: older Safari can't play Ogg, and iPhones ignore page volume, so the slider may act as on/off there (mute still works). Neither tested. Act 3+ and maps past Act 2 reuse the Act 2 track. If this repo ever goes public, ask AlkaKrab first (`src/assets/CREDITS.md`).
-- Endless content: a post-Maps thing, not designed yet.
-- Sim pacing gaps: week 1 onward can't be tested until Act 3 exists; week 1 and month 1 predate the last drop cut; month 3 is two classes on one seed. Smithing, brewing, the bench and second rule slots aren't modelled ([BALANCE.md](design/BALANCE.md)).
-- Two devices at once: the account is now pulled every 30 seconds and merged, but there's no locking, so a few seconds of one device's gold and materials, or an item moved in that window, can be lost or doubled. Tabs in one browser merge exactly (unlocks are always kept).
-- Shared bank: each new or reset character adds its small starting kit (25 gold, a few orbs) to the shared tabs, and gold and materials now help a second character from the start. Not simmed (2026-11-01).
-- Maps preview: map bosses count for boss achievements and give the Tier 7 first-kill reward; `s.maps` stays per character for now, and may belong in the shared stash.
-- Bosses in an open tab: a fresh character can still fight them on simple rules, and auto-flee and instilled flasks react for free. Look again once Milestone 2 measures them.
-- Hard bosses need rules that can aim, and a rule that tells a slam from a channel ([HARD_BOSSES.md](design/HARD_BOSSES.md) → Fit with today's game).
-- Level 80 gear: 41 new weapons and shields use placeholder icons, no level 80 item has been equipped in-game, and Smithing lists 113 more locked actions with the same mithril gap ([GEAR.md](design/GEAR.md)).
-- Stale docs: `ACT2.md` says Act 2 is unreleased, `TREES.md` says ~900 nodes (it's 1,140), the `zones.ts` comment on leave levels matches nothing, and `CLASSES.md` says Exile gets no gameplay rewards.
-- Custom SMTP for Supabase, so Confirm email can go back on and password resets aren't held to the built-in mailer's few emails an hour.
-- Affix pool numbers are a vibe pass, not simmed: 30% leech, ~200% rarity per item, ~294% elemental at item level 80. Re-run the sim and look at sustain and drop rates ([GEAR.md](design/GEAR.md) → Affix pool).
-- Attack speed and crit chance on weapons are still global (PoE has them local); base implicits like a mace's % physical are global too.
-- Uniques with % defence mods (e.g. 40% increased Evasion on boots) became local, so they're weaker than before.
-- Gear above level 34 can't drop until Act 3+; smithing uses mithril for everything from level 22 up; new weapons and shields have placeholder icons ([GEAR.md](design/GEAR.md) → Known gaps).
-- Spells look weak against attacks: Mage and Templar take low-level Lacerate/Backstab over Spark, Fireball and Glacial Lance (sim, 2026-10-26).
-- Cooldowns for attacks so the best one isn't just spammed (you: later).
-- At 1440p/4K pages stop at 1280px wide (`.page` max-width), leaving wide empty margins; consider a wider cap on big screens (your call).
-- The sim (`scripts/sim.ts`) doesn't smith or cut gems, so the Smithing/Gemcutting cost change isn't reflected in balance runs.
-- Campaign screen: move things around and give it art (you: "doesn't look terrible", 2026-10-27; art item is under Character feedback).
-- Bench orb bar: you want more things in the banner clickable later; fossils/essences live under Equipment for now.
-- Quivers don't exist yet; when added they go in the off hand (bows are two-handed today, so that needs a rule).
-- Uniques with "% increased Mana Regeneration" (Wellspring, …) now only scale flat mana regen; give them some flat regen if they feel dead.
-Parked 2026-10-24 until more of the game is built: testing, sim balancing and art.
-- Class balance doesn't need to be exact. Sim notes in [BALANCE.md](design/BALANCE.md) for when it's picked back up:
-  - Warrior missed Act 1 in 14 h on 2 of 3 seeds (33–54 DPS vs 50–100 for others).
-  - Ranger and Duelist ran 10–13 h on some seeds.
-  - Bot now crafts worn gear with basic orbs but still ends with 200–350k gold and 300–460 Chaos.
-- Art comes from asset packs: a final visual pass (area cards, combat screen, phone widths), swapping any loose matches in [ASSET_MAPPING.md](design/ASSET_MAPPING.md) as better pieces turn up.
-- Skilling band Lv 20–40 for Act 2 (Mithril / Yew / Emberroot) isn't built; gathering nodes stop at the Storm Cliffs.
-- Chill now always slows attacks 15% (was 0% without `chillOnHit`); watch whether chilled ground is too strong.
-- Clarity cuts every skill's mana cost, not just spells; split out a spell-only stat if that matters.
-- Skilling bands above Lv 20 (Act 2+), including Chaos / Regal recipes — [SKILLING_REWORK.md](design/SKILLING_REWORK.md).
-- Gemcutting "Prisms" as its force material.
-- Mastery per action (Melvor-style), once higher skilling bands exist.
-- Loot / sell filter rules (post-launch, GDD §7).
-- Cosmetics shop (never pay-to-win).
+- Ascendancy-granting chase gear and other items that bend tree connections; no hard node-count cap.
+- More life-skill bands/recipes, Gemcutting force materials and Fletching. Authored band mastery now has the bounded design above rather than remaining an unspecified idea.
+- Improved auto-crafting/Seals integration, richer loot/sell filters and later crafting beyond current modifier limits.
+- Expanded Unique collection organization, achievements presentation, side-feed revisit and clearer player ailment overlays.
+- Per-gem setup/priority workflow, meaningful specialized support restrictions and more contextual tactics.
+- Wiki pages for individual materials/modifiers, tooltip deep links and entry-specific history if useful.
+- Audit follow-ups (2026-11-06), not acted on: Hair Trigger as specced (crit refills Exertion) plus a guaranteed Exerted crit would loop forever; the code currently has no guaranteed crit and Hair Trigger is description-only, so fix the spec before building it. Also consider: 8s base Mark duration; Act 5 channel bosses' auto timeouts (Hollow Reef, Maelstrom's Eye), possibly by reserving a stun skill's cooldown for its Wind-up rule; Mage Act 1 stall and slow Warrior campaign; an emergency-only floor for unenchanted flasks.
+- Reassess legacy partial stock/cross-device issues, storage-full UI handling, Hardcore resurrection from old copies and loadout partial failures before claiming them fixed.
+- Endless post-Maps content and cosmetic shop remain ideas, not scheduled features.
 
 ## Done
-- [x] 0.4.2 Smarter Foundations deployed successfully. — live 2026-11-05
-- [x] Combat-flow pass: spend-based Mana is Power, Evasion-linked Momentum with flat protected losses, Arcane Dust Field Tinkering for campaign gear, Brawler/Kiter/Cautious range postures, and 1.5-second higher-priority Mana reservation. — done 2026-11-05
-- [x] Automation and hideout-cost overhaul: Vitals, Wind-up and Ground rules plus two condition slots are baseline; recovery flasks self-trigger; later War Table levels grant Status, Aim, a third slot and rarity-by-rarity auto-salvage. Six refining recipes turn logs and ore into planks and bars, bosses award trophies, and every station now has a much smoother component-based cost curve. — done 2026-11-05
-- [x] Mobile and mid-resolution readability pass: larger base UI typography, earlier feed collapse (≤1280), denser 720p shell spacing, and phone nav labels shown (not icon-only), so pages stay legible on phones and 720p/1280p/1440p screens. — done 2026-11-05
-- [x] Gem attribute requirements now scale from 8 to 155 instead of 245; demanding gems use ×1.15 and reach 178 instead of ×1.3 and 318. Off-attribute gems still require passive-tree or gear investment. — done 2026-11-04
-- [x] Compact passive-tree pass: travel nodes fell from 423 to 249 while retaining their attribute role; lines, forks and wheels lost repeated small passives but kept all 198 notables, 90 masteries and 21 keystones. The new design contract records regional overlaps, route-package balancing and future item-based tree bending. Save v36 refunds the changed character tree. — done 2026-11-04
-- [x] Skill tree overhaul: the outer character-tree paths are build-neutral; class-mechanic choices moved into both of their class's ascendancies; each ascendancy has six notable paths and two capstones, all visible after Trial 1. Four trials award 2/2/3/2 points, ending at Tier 5 Maps with nine points for a normal three-notable/one-capstone build and no hard node-count ceiling. Save v35 refunds both trees for clean respecs. — done 2026-11-04
-- [x] Magic packs and rare monsters: rarity-scaled life, damage, XP and loot; 12 visible monster mods including regeneration, leech, resistances, anti-AoE and elemental threats. Added 21 rollable gear affixes, including boots-only movement speed, Chaos resistance and focused melee, projectile, minion, sustain, guard and flask pools. — done 2026-11-03
-- [x] Rule files for other AI assistants: `AGENTS.md` (GPT, Codex and most others), `GEMINI.md` and `.github/copilot-instructions.md`, so they stop bumping the version on every change and add changelog lines to `UPCOMING`. — done 2026-11-03
-- [x] Unbroken achievement: complete all six acts without ever dying on the character (was Act 6 only in 0.3.19), rewards The Unbroken Temper, a no-trade Templar unique amulet (Fervor and holy nova healing) that never drops. Achievements can now hand over a unique (`unique` on the def). Characters already past Act 6 with no deaths earn it on load. — done 2026-11-02
-- [x] Exile centre start: an Exile can start at a new node in the middle of the Crossing (`EXILE_START`, the default pick, with the Rusted Sword and Warrior gems), and can take other classes' start nodes like any other node to path into their areas. Every other class is still blocked by them, the centre one included. 0.3.17 — done 2026-11-02
-- [x] Uniques tab in the Stash: a fixed spot for every unique, by the act that first drops it, with unlimited room (`account.uniqueStash`); stashed uniques file there by themselves, old ones move off gear pages on load, and unfound ones show greyed with their drop areas (`account.uniquesSeen`). A copy saved by an older version (an old tab or device) can't empty the tab when merged. — done 2026-11-02
-- [x] Retreating to the Hideout (or abandoning a map) refills every flask on the belt. Dying doesn't. — done 2026-11-02
-- [x] New Instilling enchantments: Low Mana (below 30%), Savage Hit (one hit of 20%+ of max Life), Elemental Hit, Chaos Hit. New Amethyst Flask (+35% Chaos Resistance, drops from level 18, brewed at Alchemy 30 in the Ship Graveyard); players gain a `chaosRes` stat for it. — done 2026-11-02
-- [x] Gem shop has Skill gems / Support gems tabs and the Skills page's filters (search, attribute, skill type, Fits my skills); the filters live in `ui/components/GemFilters.tsx`. — done 2026-11-02
-- [x] Monsters and bosses no longer drop skill or support gems; the Gem shop is the source. The Stash's Gems tab has a Clear all Lv 1 button (skips gems with Expansion sockets or in a saved skill set, and returns socketed supports). — done 2026-11-02
-- [x] Instilling Orbs drop only from Act 4 on, starting in the Hollow Pass (`areaCurrency` in `data/drops.ts`). The Expedition giant and the Iron Stomach achievement still give them earlier. — done 2026-11-02
-- [x] Class balance pass: cast times for every skill, single-target and area starter skills for every class, a bow for the Ranger, Rain of Daggers, Quick Slash and Rending Cut, faster melee, stronger Strength attacks and physical mods, new sword and mace bases, Hulking monsters, chain falloff, slower spell growth and weaker top caster mods; scenario mode for the sim. Mage Act 1 is still too slow (see Other open items). 0.3.11 — done 2026-11-02
-- [x] Gem shop is a fixed shelf instead of a random few: each act's gems spread over its first areas in level order (never before the area at their level), go on sale as those areas open, and never sell out. Gems above your level show but can't be bought yet; signature supports still need Town Market 2. The gear shops keep their restocks ([TOWN.md](design/TOWN.md)). — done 2026-11-02
-- [x] Versions go up once per release, not every change. Changes collect in `UPCOMING` in `src/data/news.ts` and become that release's news post. `/ship` holds off going live while other sessions are working, and saves the work for the next release. — done 2026-11-02
-- [x] Exiles on the Mage start get a Driftwood Wand instead of the Rusted Sword. 0.3.8 — done 2026-11-01
-- [x] Spells need a wand, staff or sceptre, curses work with anything, the 20% caster bonus is gone, daggers roll no caster mods ([BATTLEFIELD.md](design/BATTLEFIELD.md) §7). Shadow starts with Twin Strike, Templar with Iron Guard. 0.3.7 — done 2026-11-01
-- [x] Gem shop crash fixed: hovering a summon or storm gem blanked the game, and every shop gem's tooltip showed Default Attack's numbers. 0.3.6 — done 2026-11-01
-- [x] Stash screen sorting: the bag and gear pages sort by Recent, Rarity, Slot, Item level, Can equip, Weapon DPS or Defence from a dropdown; DPS and Defence show their number on the tile. Other screens keep their three tabs. 0.3.5, went live with the 0.3.6 deploy — done 2026-11-01
-- [x] Challenge modes: Hardcore, Solo Self-Found and Classic toggles at character creation, in any mix. 0.3.4 — done 2026-11-01
-- [x] Skill gem reform: every act and attribute has AoE, single target, guard and leech ([SKILL_REFORM.md](design/SKILL_REFORM.md)). Save v33 gives existing characters The Old Covenant. 0.3.3 — done 2026-11-01
-- [x] Kills before each area boss now ramp evenly from 10 (Mud Flats) to 80 (Shattered Throne) instead of 15–25; the starter drops moved to kills 1–9 so they finish before the first boss. 0.2.35 — done 2026-11-01
-- [x] Wiki restyled as The Exile's Codex from your ChatGPT prototype: dark stone and gold look, left sidebar, new home page with game art. Content and generation unchanged. Every table sorts by clicking a column heading. Collapsible acts not included. — done 2026-11-01
-- [x] Wiki Damage and ailments page: damage types, how attacks, spells and crits work out, every ailment formula, and defences. — done 2026-11-01
-- [x] Player wiki at `/path-of-idle/wiki/` in a Fandom-style look (dark bar, orange banner, contents sidebar). 0.2.47 — done 2026-11-01
-- [x] `/playtest`, `/build-act` and `/design-pass` skills, plus saved test scenarios in dev builds (`src/dev/scenarios.ts`). — done 2026-11-01
-- [x] Guarded release flow: a `/ship` skill, and `npm run deploy` now refuses uncommitted work, a stale branch or missing login settings, and confirms the live site afterwards. — done 2026-11-01
-- [x] Ascendancy tree can't be filled: trials give 3 each, 9 of 11, so at most three of the four big nodes. Save v32 cuts points back and refunds trees that no longer fit ([ASCENDANCIES.md](design/ASCENDANCIES.md)). 0.2.43 — done 2026-11-01
-- [x] Wellspring replaces Wildcaster: full mana no longer costs damage, and wasted mana fills Overflow into a free Surge ([ASCENDANCIES.md](design/ASCENDANCIES.md)). Tested, not simmed or played. Save v31 resets every Mage who had picked, Alchemists included, to choose again with their points back. 0.2.41, reset 0.2.42 — done 2026-11-01
-- [x] Ascendancy points only from a trial's first pass (4, 4, 3 to fill the 11), bosses give none, and the area card, Tree page and toast say what each trial gives and opens. Save v29 cuts held points to what passed trials give, and refunds a tree that no longer fits ([ASCENDANCIES.md](design/ASCENDANCIES.md)). 0.2.40 — done 2026-11-01
-- [x] Martyrs eased: area and chain skills go for them with no click or rule and count for offline bosses (a spread from a support doesn't count offline yet), and a chained boss shows a notice over the field and "chained" instead of 0 ([ACT3.md](design/ACT3.md)). 0.2.39 — done 2026-11-01
-- [x] Running list of uniques: [UNIQUES.md](UNIQUES.md), generated from the game data by `npm run uniques`, and a test fails if it's stale — done 2026-11-01
-- [x] Tutorial redone around crafting: smith a weapon, Transmute it blue, wield it, then Old Brannoc pays for the Crafting Bench (1,500 gold, 200 logs, 200 ore) and you build it and salvage your old weapon. 14 steps, save v28; steps already settled are passed unpaid, so a second character can't collect the bench kit. In [DESIGN.md](design/DESIGN.md) 0.2.37 — done 2026-11-01
-- [x] Acts 3–6 branch: forks that rejoin, side areas, act bosses that need about 75% of their act, and redrawn act maps with no overlapping labels. 0.2.36 — done 2026-11-01
-- [x] Acts 4, 5 and 6 opened to players. 0.2.33 — done 2026-11-01
-- [x] Hideout upgrade cards replace the station table: a "You have" total, every tier ticked or dimmed, the next upgrade with cost, later costs on hover. 0.2.32 — done 2026-11-01
-- [x] Every Stash tab shared: gold, currency, materials, spare gems and spare flasks moved to the account, per realm, so a challenge league will have its own. Save v27 adds up what each character held; tabs and devices playing at once merge their changes ([TOWN.md](design/TOWN.md)). 0.2.31 — done 2026-11-01
-- [x] Damage written up ([DAMAGE.md](design/DAMAGE.md)). Green upgrade arrows, the Upgrade sort and Pick up upgrades removed; hovering compares an item with what's worn: the items' base numbers, each bar skill's damage per second (with a warning if it would stop working) and character totals, with armour and evasion also as % against your level. Skill damage estimates now count spell gear, ailment modifiers and accuracy, and bleed and ignite don't stack in them, which also feeds the sim bot's skill choices. Not simmed. 0.2.30 — done 2026-11-01
-- [x] One tab per character: opening a character sends any other tab of this browser holding it back to the select screen, after it saves. 0.2.29 — done 2026-11-01
-- [x] Crafting Bench moved to the sidebar's Character group, after Stash. 0.2.28 — done 2026-11-01
-- [x] Act 6 merged to main, closed to players: stages, Echoes, Unholy ground, Trial 3, the ending, The last empire and Cartography. 0.2.26 — done 2026-11-01
-- [x] Acts 4 and 5 merged to main, closed to players: stages, skills, Archaeology and Cooking. 0.2.24 — done 2026-11-01
-- [x] Boss farm: once an area's boss is beaten, Boss farm on its Campaign card or the Combat header brings it back alone 5 seconds after each kill, with its adds and no trash. Fleeing holds the timer, and offline without wind-up rules it stays in hiding and trash comes instead. Bosses have a 50% chance of 1–3 of one gathering material for their level, listed on the Campaign card. Not simmed. 0.2.21 — done 2026-10-31
-- [x] Gear sets and skill loadouts, with gear auto-switching at Crafting Bench level 3 ([TOWN.md](design/TOWN.md#gear-sets-and-skill-loadouts)) — done 2026-10-31
-- [x] Sidebar sorted by purpose: Hideout, then Adventure (Combat, Campaign, Map Device, Town), Character (Equipment, Stash, Skills, Passive Tree), Gathering, Crafting (Crafting Bench and the production skills) and Progress (Achievements, Coming soon). 0.2.19 — done 2026-10-31
-- [x] Mini-games for Thieving (marks and Heists), Smithing, Alchemy, Gemcutting and Rune-carving, a different game each ([SKILLING_REWORK.md](design/SKILLING_REWORK.md) §9). 0.2.18 — done 2026-10-31
-- [x] Combat screen layout (player report): skills and flasks moved into the arena under the field, which shrinks on short screens so they stay in view; Matchup is a fixed size that scrolls on its own, always lists the area boss's abilities, and keeps its rows with no target; status text and the Challenge button no longer reflow the field. The "Target" label is gone from the bar to fit one row. 0.2.17 — done 2026-10-31
-- [x] Duelist feel: Riposte also answers hits that land, at 50% damage, and shows a labelled floater. A starter's ripostes went from 6.7 to 30.7 a minute and DPS from 4.3 to 5.7 (mudflats, 5 seeds). Matador and Vanguard keep their triggers ([CLASSES.md](design/CLASSES.md)). 0.2.16 — done 2026-10-31
-- [x] Area level XP: your level against the area's range sets kill and gem XP (−10, −20, −40, −50, −80%, then 1% more per level to none at 25 over; +10%, then +20% at most below), shown on Campaign and Combat. Replaces the monster level falloff; Act 1's `xpScale` removed. New level curve set by play time; save v25 keeps everyone's level and progress. 0.2.15 — done 2026-10-31
-- [x] Focus raised to 45% with an overflow bar that holds it about 5 seconds; no wait between Mining or Woodcutting swings; weak hits +5%. 0.2.15 — done 2026-10-31
-- [x] Skilling mini-games for Mining, Woodcutting and Foraging: playing builds Focus for up to 30% more speed; idle and offline unchanged. 0.2.14 — done 2026-10-31
-- [x] Event schedules: holidays plus a Double XP event in `src/data/events.ts`; Admin → Events runs each by hand or between two times, and overlapping events use the best bonus of each kind. Replaces `live_event` with `live_events`: run the SQL in [SETUP.md](ops/SETUP.md). 0.2.13 — done 2026-10-31
-- [x] XP per hour readouts update every 2 seconds, still measured over the last 10 minutes. 0.2.12 — done 2026-10-31
-- [x] Limited-time events: Admin → Events turns Halloween (2x XP including gems, every monster's drops rolled twice) on or off with no deploy; needs the `live_event` SQL in [SETUP.md](ops/SETUP.md) run once. 0.2.12 — done 2026-10-31
-- [x] DPS meter shows a 2 second average, held until the next one, instead of a live 10 second figure; The Block's execute now counts. 0.2.11 — done 2026-10-31
-- [x] Gear sell prices up 50% (flasks and materials unchanged; shop prices unaffected). Not simmed. 0.2.10 — done 2026-10-31
-- [x] Combat DPS is now measured (player report): every point of damage dealt to monsters over the last 10 seconds, overkill included. Default Attack DPS stays on Equipment, labelled as such; save v24. 0.2.10 — done 2026-10-31
-- [x] News panel on character select too, since signed-in players skip the title screen. 0.2.10 — done 2026-10-31
-- [x] Salvage by rarity on the ground, offline haul, stash gear pages and stash overflow, matching the bag card. Skips runed gear; uniques ask twice. 0.2.9 — done 2026-10-31
-- [x] Smithing salvage toggles (player report): on the Catalyst panel, "when the bag is full" and "everything I smith" turn new bases into Arcane Dust so smithing doesn't stop at a full bag. Both need the Crafting Bench; a repeat-until hit is kept, on the ground if the bag is full. Salvage all on the ground pile, also bench-only; uniques ask once more. 0.2.8 — done 2026-10-31
-- [x] Before the balance pass: Challenge boss button (a ready boss waits so an area can be farmed; Auto-challenge beside Auto-flee sends it in on its own, online and, with wind-up rules, offline); version number in the sidebar from 0.2.3; more gear on every tier (6–7.5% → 15–18% per kill), basic orbs doubled on tiers 1–2, starter drops (5 bases, 2 Transmutes, 2 Alterations over a new character's first 14 kills); the ground no longer clears on leaving an area or on one death: a second death loses what the first left unclaimed ([TOWN.md](design/TOWN.md)). Sim not rerun. Merged, not deployed — done 2026-10-31
-- [x] Milestone 2: the sim reports game time per milestone; day 1 lands at 2–4 Act 1 stages on both play styles after tuning Act 1 XP, early drops and late station costs ([BALANCE.md](design/BALANCE.md)). Merged, not deployed — done 2026-10-31
-- [x] Gear bases extended to level 80: 113 new, 428 total ([GEAR.md](design/GEAR.md)). Not simmed — done 2026-10-30
-- [x] Act 2 art: all 40 monsters and 6 uniques have pack art, and a test fails if a monster has none ([ASSET_MAPPING.md](design/ASSET_MAPPING.md)) — done 2026-10-30
-- [x] Act recipe written with Act 1 and Act 2 gap tables ([ACT_RECIPE.md](design/ACT_RECIPE.md)) — done 2026-10-30
-- [x] Drafted the 14 ascendancies and 5 hard mode bosses for your calls ([ASCENDANCIES.md](design/ASCENDANCIES.md), [HARD_BOSSES.md](design/HARD_BOSSES.md)) — done 2026-10-30
-- [x] Background music: 10 Medieval Tracks by AlkaKrab, one track each for Act 1, Act 2, hideout and bosses, 9.1 MB in all, streamed on first use; crossfades, starts after the first input, pauses in hidden tabs; volume and mute in Settings, saved per device — done 2026-10-31
-- [x] Docs updated for the reset: GDD rewritten as the current design, built-system docs note what changes, art notes corrected — done 2026-10-30
-- [x] Design reset settled: finished game, pacing, core systems, act recipe, live game, roadmap ([Decisions](#decisions)) — done 2026-10-30
-- [x] Retired docs deleted (AI art prompts, the superseded new content pass) and `npm run art -- --docs` removed — done 2026-10-30
-- [x] Docs condensed: `design/` and `ops/` folders; merged setup, town + stash, and skills + uniques docs; links and code comments updated — done 2026-10-30
-- [x] Support mail tested: mail to support@dabfellow.party lands in Gmail (you) — done 2026-10-30
-- [x] Admin setup: SQL from [SETUP.md](ops/SETUP.md) run, you're in `admins`, Admin page checked with real data (you) — done 2026-10-30
-- [x] Rotated the Google and Discord OAuth client secrets (the old ones in git history are dead); both logins tested on the live site, old Google secret deleted (you) — done 2026-10-30
-- [x] Battlefield redesign ([BATTLEFIELD.md](design/BATTLEFIELD.md)): 34-hex half-ring with you on the bottom edge, 4 rings; every edge hex is a spawn gate; monsters slide between hexes and walk in from past the edge; casters stop at ring 3; skill ranges (melee 1, Lacerate 2, Poison Dart 3, bows/spells whole field) with closing in on monsters out of reach (faster with movement speed; Quicksilver gives 40%); arc / beam / nova area shapes; targeting setting (priority + order) and click-to-target; weapon restrictions on attack skills, spells 20% stronger with a caster weapon; phone-width summary; save v19 restarts fights in progress. Not simmed — done 2026-10-27
-- [x] UI pass 4 (your walkthrough, 2026-10-27): Hideout gear click opens the item menu (take off, to stash, salvage); Combat out of a fight shows only "Pick an area" and life/DPS; "Armour shop" renamed Weapon & Armour shop (it always sold swords, axes, bows); Crafting Bench: orb bar pinned on top, selected item pinned on the left while you scroll, Equipment top right with Auto-crafting and Special crafting (fossils, essences) under it, Bench Crafts beside; Skills page shows the bar like combat (#1–#6 priority), click a skill for a popup with priority, trigger, supports, swap and remove; Smithing split into slot tabs (Weapons … Jewellery) with collapsible tiers, newest tier open — done 2026-10-27
-- [x] Affix pool pass: 9 tiers to item level 80 (top 5 roll); attack/caster weapon tags; local defences and weapon physical, global versions on jewellery only; caster mods (spell damage, flat spell damage at full effectiveness, cast speed, spell crit, element %, mana cost, mana as ES, spell block); hybrid defence mods; ailment mods on jewellery; physical/elemental leech 5–30%; PoE-style attributes; Item Rarity a prefix at 4×; character XP replaces skill XP; life regen halved; % elemental tripled; resistances less dominant on armour; shields only roll their own defences ([GEAR.md](design/GEAR.md) → Affix pool). Not tested, by request — done 2026-10-27
-- [x] Skill pool pass: attack gems scale the whole skill per level (+6% of base each), not each hit; skills tagged `hit` (deals damage) and `cast` (has a cast time), so damage supports don't fit Frost Ward or Meditate, Faster Casts only fits Fireball and Glacial Lance, Lingering no longer fits Parry; gem level needs character level up to 80 at gem level 20 (attributes 8 → 245; Lacerate and Backstab ×1.3); loaded saves drop over-levelled gems back (xp kept) and unsocket supports that no longer fit; Judgement Hammer, Glacial Lance, Frost Needle, Barrage, Pummel, Feint and Ice Shot buffed; Poison Dart is a Main skill ([BALANCE.md](design/BALANCE.md)) — done 2026-10-27
-- [x] Gear dump, part 2: hybrid armour, first hybrid shields, and swords/axes/daggers/sceptres to level 60 (107 new, 315 total), bonus implicits on 40+, matching gear-set art ([GEAR.md](design/GEAR.md)) — done 2026-10-26
-- [x] Gear dump, part 1: pure str/dex/int bases to level 60 (113 new, 208 total): armour, shields, maces, bows, wands, staves, with progressively better base stats and a bonus implicit on everything 40+; new armour tiers use matching gear-set art ([GEAR.md](design/GEAR.md)) — done 2026-10-26
-- [x] Stash tabs no longer jump: every tab shares one panel as tall as the tallest (the Gear pages), so switching keeps the page height and scroll — done 2026-10-26
-- [x] Flasks equip without the Crafting Bench (player report): click a flask slot on the Equipment page to pick a spare or take one off; click a spare in Stash → Flasks to put it on your belt; Lacerate needs level 35; Hideout gear card is the Equipment paper doll — done 2026-10-26
-- [x] Hideout layout B (stats, equipment, quick buttons; land here on load); Town with Magic, Armour and Gem shops; station upgrades unlock tiers with steep costs (Forge, Alchemy Table tiers; Stash pages; Bench built for salvage, auto-crafting last; Town Market stock/restock); Map Device locked until Act 6; gem level requirements and rare level-appropriate drops; save v17 ([TOWN.md](design/TOWN.md), [BALANCE.md](design/BALANCE.md)) — done 2026-10-26
-- [x] Act 1 called balanced (you, 2026-10-26): monsters life ×1.4 / damage ×1.15; most classes 3h40–6h, Warrior ~12h; class balance isn't a goal, finding what works is ([BALANCE.md](design/BALANCE.md)) — done 2026-10-26
-- [x] Skill gems need their own attribute (8 at gem level 1, 44 at 5, 89 at 10, 116 at 13): short of it a gem stops levelling, can't go on the bar, and stops firing; tooltip shows it. Attack gems gain +8% weapon damage per level (was 3%) so a capped off-class attack falls behind. Bot respects requirements and slots instant spells into spare slots — done 2026-10-26
-- [x] Cloud save sync between two browsers on the live site (you: works fine) — done 2026-10-26
-- [x] Smarter sim bot: rebuilds its skill bar from owned gems, best supports, flask belt, mana/utility flask use, crafts worn gear; reports orbs used, out-of-mana time and the final bar. Re-ran all 7 classes (12 h, seed 1) against the old bot ([BALANCE.md](design/BALANCE.md)) — done 2026-10-26
-- [x] Cleanup: off-hand picker compares against the off hand; duplicate `.page.wide` rule removed; offline-boss tests get a 20 s timeout; two dead exports removed; sim gear-swap logic shared — done 2026-10-26
-- [x] Tutorial: skills-are-manual wording, Life Flask then a new Mana Flask step, Mine 9 ore so the cheapest smith (gloves/boots) is reachable, bench wording; save v16 keeps mid-tutorial players on their step. Combat: "Next area" buttons once the area's boss is down. Skill rules: while target is / isn't affected by Bleed, Poison, Ignite, Stun, Freeze, Chill, Shock or Broken armour. Sidebar: Hideout alone on top; Combat, Stash, Campaign, Trader, Equipment, Bench, Skills, Passive Tree; Achievements in its own Progress group at the bottom — done 2026-10-26
-- [x] Hard 0.1 s minimum on every cooldown (`MIN_COOLDOWN_MS`), including Overclock (now "cooldowns drop to the 0.1 s minimum") — done 2026-10-25
-- [x] Most spells are instant with their cooldown as the only limit (Spark, Frost Needle, Frost Ward, Arcane Siphon, Meditate, Shock Nova, Consecrate); Fireball and Glacial Lance keep their wind-up. Mage 6 h sim, seed 7: level 16 and 4,686 kills (was 14 and 3,375) — done 2026-10-25
-- [x] Skill gems start on Manual only (nothing auto-casts by default); the rule editor offers each gem's suggested rule as one click; the sim bot and tests apply the suggested rules; existing saves keep their rules — done 2026-10-25
-- [x] UI pass 3 (your walkthrough #2): Hideout "where to get it" flies out beside the cost panel; belt art fits the belt strip; bag is 2 fixed pages of 30 (Stash, Equipment, Bench) and stash pages are a fixed 80-slot grid, so nothing grows; combat has ringed monster tiles, Matchup in place of Active target, one skills + flasks bar with ground loot under it; Bench and Stash flasks in Life / Mana / Granite / Quicksilver / Diamond / Ruby tabs; Skills page gem lists full width with search, Str/Dex/Int, type and sort filters (supports: "Fits my skills"); Trader's Stall as a shop (awning, shelves by kind, price tags); skilling activities split into tiers (gathering by ore/log/herb, production by 10-level bands); new Coming soon screen — done 2026-10-25
-- [x] Town pass 2: Character banner moved into the Hideout hero; station upgrade cost hidden behind a hover chip (have/need per material, right-click to lock, hover or right-click a material for where to get it, click a source to go there); next unlock shown on each Hideout skill tile; bars with numbers are tall enough to read (top bar, combat, resistances); bag salvage has All normal/magic/rare/unique (click once to select, again to salvage; uniques ask a third time); currency pills no longer slide under the character plate on narrower screens — done 2026-10-25
-- [x] Single-target attacks lost their cooldowns (mana is their limit, PoE-style); guards, buffs, spells and area skills keep theirs and act before attacks on the bar — done 2026-10-25
-- [x] Skilling pass 2: Smithing ×3 materials and 10 s+ per base; Gemcutting is one Skill Gem and one Support Gem recipe from the whole pool, 20–30 s and pricier; Harvesting shown as Foraging; one Skilling sidebar group with a gathering/production line; compact click-to-expand activity cards; Fishing added as a permanent "coming soon" skill with catches and a skilling-tree branch that does nothing; Coming soon page for the five planned skills ([SKILLING_REWORK.md](design/SKILLING_REWORK.md) §8) — done 2026-10-25
-- [x] Character pass 2: zones can wait for a number of this act's bosses (`requires: { after, bosses }`); flat bordered currency/crafting orbs everywhere (pack art dropped); thinner gem rims; taller body armour slot; dual wield swings at the main hand's speed; attack/cast speed shown as ×multipliers; tree rim circle gone, rim nodes glow in class colour and give 1.5× stats; tinted game-icons necklaces and rings for every amulet/ring; click any item (bag, stash, ground, worn) for Equip / To bag / To stash / Salvage; Stash shows your equipment — done 2026-10-25
-- [x] Character pass 1: Campaign is a continent map (one region per act, areas as linked points; a boss can open several areas via `unlocks`); Maps is its own sidebar section with the Map Device page; skill gems are flat bordered tall hexagons, supports 12-sided, with plain silhouettes; clicking an empty socket lists the supports that fit; no natural life/mana regen in fights (flee breather once the field is clear) and you start with a life and a mana flask; main hand + off hand with dual wielding (averaged weapons, 10% more attack speed), shields off hand only, 4 ring slots, new doll layout, flask recovery shown on flasks; Offence panel grouped with dividers; class-mechanic clusters moved to an outer rim of the tree (generic clusters in their old spots, save keeps connected allocations); bench orbs show their art, fossils/essences/resins/shards got icons; Craft until… renamed Auto-crafting and locked behind a new Crafting Bench level 5 — done 2026-10-25
-- [x] Ground loot (50, FIFO, Combat page), bag (60), stash pages (3×80, more for gold, Stash station discounts), offline haul (200), item tiles everywhere, trader "show stash too", bench picks from bag + stash, save migration ([TOWN.md](design/TOWN.md)) — done 2026-10-25
-- [x] Town pass 1: top bar has a centred character plate (crest, name, level, class, life/ES/mana) and a smaller activity box; Hideout title centred as "Hideout", life/DPS chips gone; station cards show the current effect, one "next level" line and cost + Upgrade (description moved to hover); Character level is its own banner above the trade skills; trader quote removed, gold shown with the coin; paid restock doubles in price until the free restock; spare flasks capped at 10 per kind (worst sold, also trimmed on load) — done 2026-10-25
-- [x] Act 2 framework: 8 areas, Scorched earth boss mechanic, drop tiers 6–7, 6 new uniques, preview gating, unlock-on-load for old saves ([ACT2.md](design/ACT2.md)) — done 2026-10-25
-- [x] Zones for Last Breath, The Old Grudge, Brawler's Buckle and Starforged Edge (Act 2) — done 2026-10-25
-- [x] Re-ran the sim since every skill got a cooldown (36 h, seeds 1–2; BALANCE.md) — done 2026-10-25
-- [x] Code tightening: burning ground now kills on the tick the last monster dies; save errors reach Sentry; dead exports removed; "Conqueror of the Coast" no longer counts later acts — done 2026-10-25
-- [x] Fix: "faster Cooldowns", guard cooldown and Arcane Recursion now shorten cooldowns in fights (combat used the base value) — done 2026-10-25
-- [x] Every skill has a cooldown: main 2–3 s, area 4–5 s, Poison Dart 4 s; damage not rebalanced (your call) — done 2026-10-24
-- [x] Combat screen pass: soft ground spots replace the stretched hex tiles, compact field tokens, one labelled "Active target" card, ES/mana/mechanic bars tall enough for their labels — done 2026-10-24
-- [x] Hideout layout pass: stations capped at 3 columns (3×2), two-column skill cards with icon, level, XP bar and exact-XP tooltip — done 2026-10-24
-- [x] SPF record fixed (`v=spf1 include:_spf.mx.cloudflare.net ~all`); Email Routing status is "ready" — done 2026-10-24
-- [x] Sentry project `path-of-idle` (errors only), DSN in `.env.local`, deployed; test error PATH-OF-IDLE-1 received — done 2026-10-24
-- [x] Admin page (stats, feedback inbox, reviews, Sentry errors link), Settings feedback + star review, Sentry wiring — done 2026-10-24
-- [x] Support contact: support@dabfellow.party (Cloudflare Email Routing → Gmail) in the privacy note — done 2026-10-24
-- [x] Art pack licences: all art was bought, no further checking needed (you) — done 2026-10-24
-- [x] Play one character of each class through Act 1 by hand (you: it's fine) — done 2026-10-24
-- [x] Supabase setup and live-domain URLs (you) — done 2026-10-24
-- [x] Build the 15 new actives and their signature supports ([SKILLS_AND_UNIQUES.md](design/SKILLS_AND_UNIQUES.md)): `convert`, `moreVsAiling`, `chillMs`, `restoreManaPct`, `manaBelow` rule, Momentum per hit — done 2026-10-24
-- [x] "Skill modifier" mods and the ★ tweaks on uniques; tooltips grey out other classes' mechanic mods — done 2026-10-24
-- [x] Check every class-mechanic stat on uniques is read (`coupAilment` wasn't; now is) — done 2026-10-24
-- [x] Sim all 7 classes on seeds 1–3 (also covers the action-time recheck) — done 2026-10-24
-- [x] Portrait prompts for Duelist, Templar, Shadow and Exile in `ART_PROMPTS.md` — done 2026-10-24
-- [x] Starter kits for the hybrid classes: checked, current kits kept (hybrid bases start at lvl 8) — done 2026-10-24
-- [x] Improve bot gear scoring: ES and hit chance counted, buys trader upgrades — done 2026-10-24
+
+- [x] Unique items overhaul implemented: campaign unique drop pools scaled by zone depth, starting with exactly 1 unique (`castaways_kerchief`) in the Mud Flats; class-specific trait uniques (Rage, Malice, Fervor, Riposte, Momentum, Mana is Power) moved to mid-to-late campaign zones and maps; flat numerical modifiers feature roll ranges that can be rerolled using Divine Orbs (with items having only fixed mods blocked from Divine use); `last_breath` adds 1–4 extra Malice per hit; thematic downsides added to select powerful uniques (`bloodthirst`, `emberheart`, `alchemists_band`, `tavern_brawler`, `starforged_edge`, `titans_girth`, `stormhide`, `thornquill`, `wellspring`, `rebuttal`, `ninth_psalm`, `oathbreaker`, etc.); Alt inspection shows roll ranges; PostgreSQL market validator updated for unique roll ranges; `docs/UNIQUES.md` regenerated; unit and security tests pass. — done 2026-11-06
+- [x] Skilling-tree specialisation pass: cap the tree at 36 points earned per ten total life-skill levels, replace the unusable Fishing branch with Gemcutting, refund existing allocations safely, apply life-skill speed events to Heists and Overtime to offline Greenhouse growth, and cover the new invariants with focused tests. — done 2026-11-06
+- [x] Non-combat band-mastery design documented in this roadmap: bonus-only, no mastery-gated content, no more than 100 explicitly authored bands, proposed practice curve and modest automatic rewards, exclusions, offline/save/UI behavior and implementation acceptance criteria. No mastery mechanics implemented. — done 2026-11-06
+- [x] Maps redesign implemented (Milestone 8): plain shared maps T1–T10 (`s.account.maps` synced with `s.maps.stock`, migrating legacy themed maps by tier) borrowing random campaign area visuals and boss mechanics; Act 6 level 60+ campaign map drops and Last King 5-map top-up; permanent tier-group danger and reward identities (T3–4 elite packs, T5–6 twin boss with shared Life, T7–8 boss ground hazards, T9 permanent enrage, T10 pinnacle combining all three, plus tier-specific unique pools and currency emphasis); Apprentice/Journeyman/Master Sextants with up to 4 Astrolabe slots and 6-charge Danger/Reward/Both/Hunting modifiers; realm-shared 100-node connected Atlas Tree with up to 70 allocated points across Sustain, Bounty, Surveying and Peril wings, including Unbroken Path and Doomed Horizon keystones; Doomed Maps I–V (levels 86–94, 7 Doomed modifiers, Fractured Orb and Uber Key drops); Cartography T1–T10 map and Sextant recipes; and a dedicated Map Device page (`src/ui/pages/MapDevicePage.tsx`). Atlas and Maps tests pass; `docs/UNIQUES.md` regenerated. Unreleased. — done 2026-11-06
+- [x] Fractured items and Fractured Orbs implemented (Milestone 10A): Fractured Orbs lock one random modifier permanently on rare items with 4+ modifiers; scoured fractured items reduce to a 1-mod Magic item retaining the fractured affix; Annulment cannot remove fractured modifiers; Chaos and Alteration rerolls preserve fractured modifiers; Ancient Whetstones cannot hone fractured modifiers; Locksmith's Wax snapshots and restores fractured status; golden styling in tooltips and Bench page integration. All 9 focused fractured crafting tests pass. — done 2026-11-06
+- [x] Bench Level 6 and meta-crafting implemented (Milestone 10B): Bench station Level 6 upgrade added with meta-crafting perks; "Prefixes Cannot Be Changed" (suffix craft, 2 Divine + 500 Arcane Dust), "Suffixes Cannot Be Changed" (prefix craft, 2 Divine + 500 Arcane Dust), and "Multicraft" (suffix craft, 2 Exalted + 400 Arcane Dust); Scour, Chaos, Annul, Divine, and Alteration operations preserve locked affix pools; Multicraft allows up to 3 crafted modifiers; "Remove crafted" action (1 Scour) strips all crafted modifiers; Forger's Seal auto-crafting support (sealed parameter in CraftMethod); all unit tests pass. — done 2026-11-06
+- [x] Post-campaign station expansions and Stash affinities implemented (Milestone 10C): Map Device Level 5 (+50% Rarity, +2 ilvl, 4th Sextant slot) and Level 6 (Pinnacle Conduit: +2 base Sextant charges, +15% map/key boss bonus); Stash Level 5 (Dedicated Map Storage Tab) and Level 6 (+2 free pages, 8 total); Forge Level 5 (Pinnacle Metallurgy: ilvl 84 cap, +8 ilvl bonus, 10% T1 affix roll); Alchemy Table Level 5 (30% double brew chance, 3:1 orb conversions); Watchtower Level 5 (Autonomous Offline Mapping, 36h cap); Trophy Altar station (Levels 1–4, account-wide Armour/Evasion, Mana regen, all Res, and item Rarity); baseline Act 1 Stash Affinities routing maps, gear, flasks, gems, and currency to designated tabs. — done 2026-11-06
+- [x] Pinnacle crafting, Uber Bosses, and Doom Sigils implemented (Milestone 10D): The First Exile (L90, Crucible) dropping Exile's Doom Sigil (elevates 1 random Tier 1 affix to Tier 0 Doom tier with +30% values); The Architect of Ruin (L93, Ruined Sanctum) dropping Architect's Doom Sigil (imbues 1 Doom Implicit); The Void Sovereign (L96, Void Throne) dropping Void Sigil (unlocks 7th modifier slot on 6-mod rare items); Bench Level 7 Pinnacle Crafts ("Cannot roll Attack Modifiers", "Cannot roll Caster Modifiers"); full lock and impression preservation. All 45 focused crafting, hideout, and pinnacle tests pass. — done 2026-11-06
+
+- [x] Owner confirmed market/admin SQL applied to Supabase; anonymous requests are denied for new Admin overview/player/feedback functions and backup/mail/audit tables. Frontend remains unreleased; signed-in checks and current rules upload remain pending. — done 2026-11-06
+- [x] Admin overhaul implemented: normalized class counts/contiguous levels, campaign funnel/death/demo diagnostics, paginated search including retained deleted characters, server receipt timestamps, raw save inspection, ten restore points and audited idempotent recovery to new characters; feedback snapshots with verified account links, version/type filters and bulk resolve; private replies/compensation inbox (including no-trade Unique replacements); temporary memory-only sandbox; custom modifier events, broadcasts/status/countdowns and offline schedule boundaries. All 88 focused Admin/event/market checks and mocked desktop/mobile browser flows pass; Vite production bundle and wiki generation pass. Full suite: 1,180 pass / eight known failures from other work; typecheck retains only the existing `Derived.moveSpeed` test error. SQL is prepared, not applied live; unreleased. — done 2026-11-06
+- [x] Public repository security pass: GitHub scanning/push protection enabled; local default scan augmented to detect the confirmed historical Google OAuth secret; working-tree and available Actions-log scans found no additional secrets. Market rejects null/invalid payments and duplicate local holds, limits successful paid operations, explicitly restricts database grants and pins privileged lookup paths. Vite rejects unreviewed/privileged browser configuration. All 67 focused security/market tests pass; full suite 1,152 pass / eight existing failures; typecheck retains only the existing `Derived.moveSpeed` test error. Live anonymous probes expose no private rows. Offline trading preserved; secret revocation, SQL application and signed-in live checks remain pending. Unreleased. — done 2026-11-05
+- [x] Area XP now stays neutral within two levels, rewards harder enemies up to +20% and penalizes easier enemies no further than −70%. The penalty was refined to a rounded quadratic curve, with increasingly harsh losses from three to ten levels. Updated player labels, farming guide and bounded wiki calculator sampling/fallback so capped XP cannot hang generation or become zero in the calculator. Four band/label tests and 50 engine/Act 1 tests pass; wiki generation and calculator syntax pass. Unreleased. — done 2026-11-05
+- [x] Monster identities implemented across campaign and Maps: creature profiles, Armour/Evasion/block, Life/ES, elemental/chaos attacks, crits, ailments and varied basic attack intervals. Reference EHP and raw DPS conservation cover every monster, boss, packed copy and combined rarity modifiers. Eleven profile tests and campaign/Maps/offline checks pass; wiki generated. Full suite: 1,140 pass, eight pre-existing failures (Act 2 gem gating/shop, Deathblow timing, Act 5 channel comparison, Primal Roar cooldown metadata, Void Pact hit tag, Mark expiry and gem counts). Typecheck still fails at the pre-existing `tests/mechanics.test.ts:57` movement-stat assertion. Skill-isolation dummies explicitly omit defences; Frostbite integration compares freeze rate per exposure and aggregate survival. Unreleased. — done 2026-11-05
+- [x] Documentation consolidated into GAME, DEVELOPMENT, MILESTONES, SETUP and generated UNIQUES; stale act/pacing/preview claims removed, future specifications/provenance retained, player-wiki factual errors corrected and remaining guide gaps recorded. Internal links and wiki generation pass; art/unique checks pass. Full typecheck remains blocked by the pre-existing `Derived.moveSpeed` test error. Unreleased. — done 2026-11-05
+- [x] Default flask automation removed locally; unenchanted flasks require manual use and automatic use requires Instilling. Relevant tests pass; unreleased. — done 2026-11-05
+- [x] 0.4.2 Smarter Foundations live: baseline survival rules, refined-component station costs, recent-spending Mana, Momentum losses/Evasion, Field Tinkering, postures, Mana reservation and UI scaling. — done 2026-11-05
+- [x] Doc/balance audit fixes: flat Momentum keeping (1 stack per source, min 1; old uniques safe), Mana is Power unique text corrected, Doom 4s decay grace, warcries weight rarer enemies/bosses (1/2/3/5), Brand of Ruin cost typo, The Old Covenant source noted in GAME. New tests pass; UNIQUES regenerated. Full suite still shows the same eight pre-existing failures and `moveSpeed` typecheck error. Unreleased. — done 2026-11-06
+- [x] 0.4.1 gem attribute requirements relaxed; 0.4.0 character and ascendancy trees rebuilt, compact travel, four trials and no milestone-specific node locks. — done 2026-11-04
+- [x] Six acts and branching roads, themed T1–T10 Maps, side skills, runes, meals, loadouts, challenge modes, Player Market, account stash and generated wiki implemented. Earlier release-by-release detail lives in NEWS/git, not a second changelog.
+
+## Retained Maps skill design
+
+This section preserves the unreleased batch's detailed design while eliminating its standalone document. Read the status/corrections above before implementation.
+
+
+
+**Design pass: 2026-11-04.** 40 skill gems + 40 support gems, all unlocking when Maps open (after Act 6 clear). Five
+new mechanics, each with 8 skills and 5 dedicated supports, plus 15 general supports. 15 of the 40 skills deal
+chaos damage.
+
+**Chaos damage rules (new):** bypasses energy shield (hits life directly), resisted by chaos resistance, has a
+chance to poison on hit. These properties require engine work: combat.ts must skip ES when the hit's type is `chaos`,
+and the poison chance must hook into the ailment system.
+
+**Gem levels:** 66 / 70 / 74 / 78, four tiers. Demanding gems use the current 1.15× attribute multiplier; the original 1.3× proposal is retired.
+
+**GEM_ACTS key:** `'maps'` — gate is any Map zone open (`mapOpen(s)` or similar; check `s.maps` stash).
+
+---
+
+### Group 1: Marks
+
+A Mark is attached to one target by a Mark skill. All subsequent hits on that target add 1 Mark stack regardless of
+skill used (max 5). When stacks hit 5, the Mark detonates automatically for the Mark's specific burst effect and
+clears. Mark duration: 6s, refreshed on each stack. A target holds one Mark at a time; applying a new one replaces the
+old regardless of its stacks.
+
+New mechanic needed:
+- `markKind` on `ActiveGemDef.effect` — the type of mark applied. Using such a skill sets `s.combat.monsters[i].mark`.
+- Each hit on a marked monster increments `mark.stacks`; at `mark.maxStacks` (default 5) the detonation fires.
+- Detonation is handled in `combat.ts` using the Mark's stored burst parameters.
+
+| Skill | Attr | Role | Lvl | Chaos? | Does | Signature (+6) |
+|---|---|---|---|---|---|---|
+| **Brand of Ruin** | int | main | 66 | ✓ | 15 mana · 0CD · 3000ms · apply Brand of Ruin mark (5 stacks, bursts for 80–120 chaos, poisons) | **Corrosion:** burst strips 20% chaos resistance for 4s |
+| **Scorched Brand** | int | burst | 68 | | 18 mana · 4s CD · 3000ms · apply Scorched Brand (5 stacks, bursts for 100–150 fire in radius 1) | **Flash Point:** burst ignites for 5s |
+| **Sunder Mark** | str | main | 66 | | 16 mana · 0CD · 3600ms · 160% weapon + apply Sunder Mark (5 stacks, bursts for 200% weapon to all neighbours) | **Exposed:** burst breaks armour |
+| **Void Brand** | int | area | 70 | ✓ | 24 mana · 5s CD · 2400ms · apply Void Brand (5 stacks, bursts for 60–90 chaos to all enemies) | **Nihil:** targets hit have −15% chaos res for 6s |
+| **Fracture** | dex | main | 66 | | 8 mana · 0CD · 2400ms · 100% weapon + apply Fracture Mark (5 stacks, bursts for 80% to all in radius 1) | **Shatter:** burst stuns all hit for 1s |
+| **Marked for Death** | dex | curse | 68 | | 12 mana · 10s CD · 1500ms · curse; enemies take 25% more damage from all sources and Marks on them burst at 4 stacks | **Execute:** marked+cursed enemies burst at 3 stacks |
+| **Shadow Mark** | dex | main | 70 | ✓ | 10 mana · 0CD · 2700ms · 90% weapon, converts 50% to chaos + apply Shadow Mark (5 stacks, bursts for 40–60 chaos, poisons) | **Venom Brand:** burst poison lasts 4s longer |
+| **Martyrdom Brand** | str | guard | 74 | | 15 mana · 10s CD · 1500ms · shield of 35% life for 5s; every hit you receive adds 1 stack to attacker's Mark; at 5 stacks the shield retaliates for 300% the damage absorbed | **Payback:** retaliation hits the whole pack |
+
+---
+
+### Group 2: Warcries
+
+Warcries have a proposed 1500ms cast time, cost 0 mana, have their own cooldown (5–10s), and
+empower the caster based on the number of enemies in combat. No new engine mechanic: "enemies in combat" is
+`s.combat.monsters.filter(m => m.life > 0).length`, readable at cast time. Effects go into the existing buff system.
+
+No new engine type needed beyond reading enemy count at cast. The `warcryPower` = clamped enemy count (1–5 or 1–8
+depending on the skill). Implemented as a weighted count (`WARCRY_WEIGHT` in `combat.ts`): normal 1, magic 2, rare 3,
+unique/boss 5, so a lone boss still fills most of a warcry.
+
+| Skill | Attr | Role | Lvl | Chaos? | Does | Signature (+6) |
+|---|---|---|---|---|---|---|
+| **Battle Cry** | str | buff | 66 | | 0 mana · 6s CD · 1500ms · 4s buff: 25% more damage per nearby enemy (max 5 enemies = +125% more) | **War Drum:** also grants 8 Rage per enemy nearby |
+| **Rallying Cry** | str | sustain | 68 | | 0 mana · 8s CD · 1500ms · recover 5% life per nearby enemy (up to 5 = 25% life instantly) | **Second Wind:** also recovers 10% mana per enemy |
+| **Hunter's Call** | dex | buff | 66 | | 0 mana · 5s CD · 1500ms · 4s buff: 8% attack speed per nearby enemy, max 5 (max +40%), grants Momentum equal to enemies nearby | **Pack Rush:** also grants 20% increased evasion |
+| **Intimidate** | str | curse | 70 | | 0 mana · 8s CD · 1500ms · for 6s, all combat enemies take 15% more damage and have 10% less attack speed | **Dread Shout:** effect scales: +3% more damage per enemy in combat |
+| **Ancestral Call** | str | summon | 72 | | 0 mana · 10s CD · 1500ms · summon 1 Ancestor spirit per 2 enemies nearby (max 3) for 8s; each deals 50% of your weapon damage | **Forebears:** Ancestors also deal 20% of their damage as fire |
+| **Dark Howl** | int | buff | 70 | ✓ | 0 mana · 8s CD · 1500ms · for 6s: spells have a 15% chance per nearby enemy (max 5×15%=75%) to deal their damage as chaos instead (bypasses ES, same total damage) | **Void Voice:** chance to poison when chaos conversion triggers |
+| **Death Rattle** | dex | area | 74 | | 0 mana · 6s CD · 1500ms · for 4s, your next kill causes the corpse to explode for 20% of its max life as physical to all; scales with enemies nearby (×enemy count, max 5×) | **Carnage:** the explosion chains once to the nearest enemy |
+| **Primal Roar** | str | area | 74 | | 0 mana · 10s CD · 1500ms · deal 100% weapon damage to all enemies and stun them for 0.5s per enemy nearby (max 2.5s), gives 10 Stagger on bosses | **Primal Force:** stun also applies −20% damage for its duration |
+
+---
+
+### Group 3: Totems
+
+A Totem is placed at the player's position (front ring of the battlefield), fights autonomously with its own attack,
+has its own life pool, and lasts 20s or until destroyed. One totem active at a time by default. Auto-rule: "When totem
+count is below 1, place it" (similar to minions).
+
+New engine needs:
+- Totems live in a `s.combat.totems[]` array (like `s.combat.minions[]`).
+- Each has `life`, `maxLife`, `gemId`, `attackMs`, and fires its own attack tick.
+- Totem attacks use the player's spell/attack damage stats scaled by a `totemEfficiency` multiplier (0.6 by default).
+- When a Totem dies, `s.combat.totems` shrinks; the bot places a new one when rules allow.
+- `totemCount` rule condition for automation.
+
+| Skill | Attr | Role | Lvl | Chaos? | Does | Signature (+6) |
+|---|---|---|---|---|---|---|
+| **Flame Totem** | int | summon | 66 | | 15 mana · 12s CD · 1500ms · place Flame Totem (20s, fires 12–18 fire every 1.5s at nearest enemy) | **Pyre Totem:** totem also causes burning ground, 2 fire/s to all enemies |
+| **Ice Totem** | int | summon | 68 | | 15 mana · 12s CD · 1500ms · place Ice Totem (20s, fires 10–16 cold at 1.5s, chills) | **Blizzard Totem:** on death or expiry, explodes for 60–90 cold in radius 2 |
+| **Storm Totem** | int | summon | 70 | | 15 mana · 12s CD · 1500ms · place Storm Totem (20s, calls 6–24 lightning to random enemy every 1s, chains once) | **Tempest Totem:** chain hits a second enemy for 50% |
+| **War Totem** | str | summon | 68 | | 18 mana · 12s CD · 1500ms · place War Totem (20s, attacks for 100% physical at 2.5s, single) | **Battle Totem:** each kill by this totem grants you 1 Rage |
+| **Shadow Totem** | dex | summon | 70 | | 15 mana · 12s CD · 1500ms · place Shadow Totem (20s, attacks for 70% at 1.8s, alternates between nearest two enemies, poisons each hit) | **Venom Totem:** poison stacks twice as fast (applies 2 poison on each hit) |
+| **Siege Totem** | str | summon | 72 | | 20 mana · 15s CD · 1500ms · place Siege Totem (25s, fires for 160% physical at 4s, 50% stun, hits in a line through the target) | **Long Siege:** line extends one more ring, hits one additional enemy |
+| **Chaos Totem** | int | summon | 74 | ✓ | 18 mana · 12s CD · 1500ms · place Chaos Totem (20s, fires 10–18 chaos at 1.5s, 20% poison chance; totem attacks bypass ES) | **Corruptor:** totem applies −15% chaos resistance to enemies it hits for 4s |
+| **Void Totem** | int | summon | 76 | ✓ | 22 mana · 12s CD · 1500ms · place Void Totem (20s, fires 15–25 chaos at 2s, 30% poison chance; on each attack has 20% chance to drain 5% life from target as chaos and restore it to you) | **Soul Siphon:** drain chance rises to 40%, restores mana too |
+
+---
+
+### Group 4: Doom
+
+Doom is a stacking debuff on each enemy. Every hit adds 1 Doom (max 20). When Doom reaches 20, it detonates
+automatically, dealing a large chaos burst and clearing the meter. Doom holds for 4 seconds after a Doom hit, then decays at 1 per second when not receiving
+new hits from the player. Specific Doom skills add more Doom per hit or read the meter for scaled damage.
+
+New engine needs:
+- `doom` counter on each `CombatMonster` (0–20).
+- Every hit increments `doom` by 1 (or by the skill's `doomPerHit` override).
+- At 20: fire a doom burst (chaos damage, bypasses ES, based on `DOOM_BURST_BASE` scaling with monster level).
+- Decay: Doom holds for 4 seconds after the last Doom hit (`DOOM_GRACE_MS`), then `doom -= 1` each second. The grace lets 2.4–3.6s casts like Entropy and Doom Bolt build to 20 on one target.
+- `doomLevel` rule condition (e.g. "when doom above 10").
+
+| Skill | Attr | Role | Lvl | Chaos? | Does | Signature (+6) |
+|---|---|---|---|---|---|---|
+| **Doom Bolt** | int | main | 66 | ✓ | 15 mana · 0CD · 3000ms · 20–35 chaos, single; adds 2 Doom (double rate) | **Accelerant:** target with 10+ Doom takes 20% more from this skill |
+| **Void Blast** | int | area | 70 | ✓ | 28 mana · 5s CD · 2400ms · 50–80 chaos, all enemies; adds 3 Doom to all | **Cascade:** if any target had max Doom, its burst propagates 2 Doom to all neighbours |
+| **Doom Strike** | str | main | 68 | ✓ | 10 mana · 0CD · 3600ms · 150% weapon, 50% converted to chaos; adds 2 Doom | **Cursed Blow:** physical portion also adds 1 Doom |
+| **Entropy** | int | main | 66 | ✓ | 12 mana · 0CD · 2400ms · 15–25 chaos, single; adds 1 Doom. Fast spam skill | **Accelerate:** Doom decays 50% slower while this is on the bar |
+| **Doomsday** | int | burst | 76 | ✓ | 40 mana · 10s CD · 3000ms · instantly triggers Doom burst on current target regardless of meter level; burst is 50% more powerful per 5 Doom the target had | **Last Rites:** enemies above 15 Doom receive 150% more from the burst |
+| **Cursed Arrow** | dex | main | 68 | ✓ | 8 mana · 0CD · 2700ms · 90% bow attack, 40% converted to chaos; adds 2 Doom; 20% poison chance | **Marked Arrow:** at 10+ Doom, the hit poisons for double duration |
+| **Shadow Pact** | dex | buff | 72 | | 15 mana · 10s CD · 1500ms · for 6s: you gain 2% more damage for each point of Doom on current target (max 40%) | **Dark Communion:** also gain 1% chaos resistance per Doom point for the duration |
+| **Void Pact** | int | sustain | 74 | ✓ | 0 mana · 12s CD · 1500ms · consume all Doom on current target; heal 2% life per point consumed; if target had max Doom, also recover 20% mana | **Leech Dark:** also gain 1% ES recharge per Doom consumed |
+
+---
+
+### Group 5: Exertion
+
+Exertion is a player-side charge counter (0–5). Every hit the player lands adds 1 Exertion. At 5 stacks, the
+character is Exerted. The next time you use an Exertion-tagged skill while Exerted, it fires its powered version
+and clears the stacks. Exertion decays at 1 per second when out of combat.
+
+New engine needs:
+- `s.combat.exertion` counter (0–5), cleared out of combat.
+- Every hit increments it by 1 (or by skill's `exertionPerHit` override).
+- Exertion skills check `s.combat.exertion >= 5` and branch to their powered version.
+- `exertionFull` rule condition for automation (like `maliceFull`).
+- Exerted skills reset `s.combat.exertion = 0` on use.
+
+| Skill | Attr | Role | Lvl | Chaos? | Does | Signature (+6) |
+|---|---|---|---|---|---|---|
+| **Gut Punch** | str | main | 66 | | 8 mana · 0CD · 2700ms · 110% weapon, single; adds 2 Exertion. Exerted: 200% weapon + hits nearest other enemy for 50% | **Follow-Through:** exerted hit also stuns the second target for 1s |
+| **Quickdraw** | dex | burst | 68 | | 12 mana · 5s CD · 2400ms · 200% bow/projectile. Exerted: 350%, guaranteed crit | **Hair Trigger:** any crit resets Exertion to 0 and immediately counts it as 5 again (ready instantly) |
+| **Charged Strike** | str | main | 70 | | 10 mana · 0CD · 3300ms · 130% physical, 25% stun. Exerted: also stuns all nearby enemies for 1s, 10 Stagger | **Overexertion:** exerted version carries 2 stacks over (resets to 2, not 0) |
+| **Void Surge** | int | main | 70 | ✓ | 18 mana · 0CD · 3000ms · 20–30 chaos, single; bypasses ES. Exerted: 150% more chaos damage + poisons | **Dark Surge:** exerted Void Surge also fires at the nearest second enemy for 50% |
+| **Rend** | dex | main | 68 | | 8 mana · 0CD · 2400ms · 90% weapon, bleeds; adds 1 Exertion. Exerted: bleed lasts 3× longer and spreads to all enemies | **Hemorrhage:** exerted Rend also applies a fresh bleed to all nearby |
+| **Void Wave** | int | area | 72 | ✓ | 16 mana · 3s CD · 3000ms · 20–30 chaos, all enemies. Exerted: fires twice in immediate succession | **Chain Doom:** exerted hits add 2 Doom to all enemies hit |
+| **Soul Rip** | int | burst | 74 | ✓ | 22 mana · 5s CD · 2400ms · 30–45 chaos, single; bypasses ES. Exerted: fires at 3 targets for the same damage | **Soul Drain:** exerted Soul Rip heals 8% life |
+| **Deathblow** | str | main | 72 | | 15 mana · 0CD · 4200ms · 220% physical, single. Exerted: 400% weapon + always crits | **Executioner:** kills with exerted Deathblow instantly grant 5 Exertion (ready again) |
+
+---
+
+### Support gems (40)
+
+#### Mark supports (5)
+
+| Support | Lvl | Fits | Effect |
+|---|---|---|---|
+| **Rapid Marks** | 66 | mark | Marks burst at 4 stacks instead of 5; apply rate is 30% faster |
+| **Volatile Marks** | 68 | mark | Mark bursts deal 60% more damage; burst triggers when the target dies rather than at max stacks (you can still reach max for instant burst) |
+| **Spreading Brand** | 70 | mark | When a Mark bursts, the nearest unmarked enemy inherits 2 stacks of the same Mark |
+| **Persistent Mark** | 68 | mark | Mark duration is 4s longer; stacks do not decay until the mark fully expires |
+| **Cursed Brand** | 72 | mark | Marked targets take 10% more damage from all sources; applying a Mark applies a 2s elemental weakness too |
+
+#### Warcry supports (5)
+
+| Support | Lvl | Fits | Effect |
+|---|---|---|---|
+| **Powerful Voice** | 66 | warcry | Warcry effects count twice as many enemies (effectively doubled for scaling) |
+| **War Drummer** | 68 | warcry | Warcry cooldowns reduced by 30% |
+| **Lingering Shout** | 70 | warcry | Warcry empowerment buffs last 3s longer |
+| **Rally the Fallen** | 68 | warcry | Healing warcries also grant 1% life per corpse in the arena (up to 10%) |
+| **Resounding Cry** | 72 | warcry | Warcry empowerment also applies to Totems if one is active |
+
+#### Totem supports (5)
+
+| Support | Lvl | Fits | Effect |
+|---|---|---|---|
+| **Twin Totems** | 68 | totem | You can have 2 totems active simultaneously; each deals 25% less damage |
+| **Totem Fortify** | 70 | totem | Totem has 100% more life and lasts 10s longer |
+| **Ancestral Bond** | 68 | totem | While a totem is active you deal 20% more damage |
+| **Totem Vanguard** | 72 | totem | Totem taunts enemies for the first 4s of its life (enemies target it first) |
+| **Cascading Totems** | 74 | totem | When a totem dies, it immediately summons a replacement at half life for free |
+
+#### Doom supports (5)
+
+| Support | Lvl | Fits | Effect |
+|---|---|---|---|
+| **Doom Accelerant** | 66 | doom | Hits add 2 Doom instead of 1; Doom decays 50% slower |
+| **Mass Doom** | 70 | doom | Hits add 1 Doom to all enemies in combat (not just the target) |
+| **Doom Echo** | 68 | doom | When a Doom burst triggers, it deals 30% of its damage to all other enemies |
+| **Endless Dread** | 74 | doom | Doom maximum raised to 30; burst is 50% more powerful per extra point above 20 |
+| **Void Hunger** | 72 | doom | Doom bursts have a 30% chance not to clear the meter (keeps stacks, can burst again) |
+
+#### Exertion supports (5)
+
+| Support | Lvl | Fits | Effect |
+|---|---|---|---|
+| **Hasty Exertion** | 66 | exertion | Hits add 2 Exertion instead of 1 |
+| **Overexertion** | 70 | exertion | Exerted version deals 50% more; Exertion resets to 2 (not 0) so you stay semi-ready |
+| **Cascading Force** | 68 | exertion | Exerted kills give 2 Exertion instantly (can chain into another exerted use quickly) |
+| **Exerted Momentum** | 72 | exertion | Exerted uses grant 3 Momentum and 2 Rage |
+| **Violent Release** | 74 | exertion | Exerted uses also deal 50% of their damage to all other enemies |
+
+#### General supports (15, includes rule-benders)
+
+**Rule-bending (5):**
+
+| Support | Lvl | Fits | Effect |
+|---|---|---|---|
+| **Chaos Infusion** | 66 | any damage skill | 40% of this skill's damage is dealt as chaos (bypasses ES); 60% remains as the original type. Total damage unchanged |
+| **Opportunism** | 68 | any hit, not heavy/totem | Changes the trigger: fires when YOU are hit instead of on its rule; 2s internal cooldown |
+| **Chain Reaction** | 70 | any hit, not heavy/totem | On kill, fires once more immediately for free |
+| **Blind Fury** | 70 | any attack or spell | Skill fires 50% faster but only while you are below 50% life (cooldown and attack time both reduced) |
+| **Void Touch** | 72 | any spell | While mana is above 80%, converts the spell to chaos damage (bypasses ES, 15% poison chance); below 80% it fires as normal |
+
+**Amplifiers (10):**
+
+| Support | Lvl | Fits | Effect |
+|---|---|---|---|
+| **Chaos Mastery** | 66 | any chaos skill | 40% more chaos damage |
+| **Vile Efficiency** | 68 | any chaos skill | Chaos skills cost 20% less mana; 15% chance to poison on hit |
+| **Elemental Confluence** | 70 | any spell or elemental attack | If the hit deals fire, cold, and lightning, each is 15% stronger |
+| **Cruel Intent** | 70 | any hit | 35% more damage against enemies below 30% life |
+| **Slaughter** | 72 | any hit | Kills grant 2% more damage for 3s, stacking to 10 times (20% total) |
+| **War-Scarred** | 72 | any attack or spell | 30% more damage while your life is above 85% |
+| **Siege Breaker** | 74 | any hit | 50% more damage against bosses, 20% less against non-bosses |
+| **Void Ward** | 68 | guard or shield | 20% of chaos damage you take is absorbed by the shield before it reaches life |
+| **Momentum Surge** | 70 | any hit | Kills grant 3% increased attack and cast speed for 4s, stacking up to 15 times |
+| **Deep Reserves** | 74 | any skill | 40% more damage if you used this skill in the last 3s (rewards staying on one skill) |
+
+---
+
+### Small calls
+
+- **Totems use player stats** at 60% efficiency (`totemEfficiency = 0.6`). They don't scale with their own gem level beyond the base damage listed.
+- **Warcry timing:** warcries can be queued by automation like any other skill. Their proposed 1500ms action still consumes time; cost is 0 Mana. Default rule: "Whenever ready."
+- **Doom bursts are chaos damage** and bypass ES. Base burst = `50 + monster level × 3` chaos damage.
+- **Exertion rule:** default rule for exertion finishers is "When exertion is full", a new rule condition like `maliceFull`. Builders still use "always" or their own condition.
+- **Marks don't have a default rule** for the mark skill itself (always makes sense); the finisher skills that *benefit from* a mark have `targetHasEffect: 'mark'` as their suggested rule.
+- **No signature for supports.** Same as every act.
+- **Art:** totems, warcries and mark effects need icons. Doom skills share void/purple palette. Exertion uses a yellow-charge visual. All listed in `artManifest.ts → GEM_SYMBOL` when built.

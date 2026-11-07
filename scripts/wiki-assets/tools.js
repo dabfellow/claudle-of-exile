@@ -145,7 +145,7 @@
       pickSkill();
       var out = shell([field('Planning', mode), field('From level', from), field('To level', to), f.area, f.kpm, f.skill, f.spot, field('XP or speed bonus (%)', bonus)]);
       function multAt(level, a) {
-        if (level > a.max) { var m = data.over[level - a.max - 1]; return m == null ? 0 : m; }
+        if (level > a.max) return data.over[Math.min(level - a.max, data.over.length) - 1];
         if (level < a.min) return data.under[Math.min(a.min - level, data.under.length) - 1];
         return 1;
       }

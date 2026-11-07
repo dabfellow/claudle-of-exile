@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { ESSENCES, FOSSILS } from '../../data/craftMats';
+import { ESSENCES, FOSSILS, SEAL } from '../../data/craftMats';
 import { AUTO_CRAFT_BENCH_LEVEL, CRAFT_STEP_MS } from '../../data/hideout';
 import { findItem } from '../../engine/crafting';
 import { stationLevel } from '../../engine/hideout';
 import { affixName, craftUntilReason, methodName, ruleText, startCraftUntil } from '../../engine/craftUntil';
-import { eligibleAffixes, itemName } from '../../engine/items';
+import { allMods, describeMod, eligibleAffixes, itemName } from '../../engine/items';
 import { stopAction } from '../../engine/skills';
 import type { CraftMethod, GameState, Item, StopRule } from '../../engine/types';
 import { game } from '../../game';
@@ -20,6 +20,7 @@ function rollableAffixes(item: Item) {
 export function CraftUntilCard({ s, item }: { s: GameState; item: Item | undefined }) {
   const [method, setMethod] = useState<'alteration' | 'chaos' | 'essence'>('alteration');
   const [fossil, setFossil] = useState('');
+  const [sealed, setSealed] = useState('');
   const [essence, setEssence] = useState('');
   const [affixA, setAffixA] = useState('');
   const [minTier, setMinTier] = useState(0);
@@ -62,7 +63,7 @@ export function CraftUntilCard({ s, item }: { s: GameState; item: Item | undefin
   const affixes = item ? rollableAffixes(item) : [];
   const a = affixes.find((x) => x.id === affixA);
   const tiers = a && item ? a.tiers.map((t, i) => ({ t, i })).filter((x) => x.t.ilvl <= item.ilvl) : [];
-  const craftMethod: CraftMethod = method === 'essence' ? { essence } : { orb: method, fossil: fossil || null };
+  const craftMethod: CraftMethod = method === 'essence' ? { essence } : { orb: method, fossil: fossil || null, sealed: sealed || null };
   const rule: StopRule = affixB ? { kind: 'twoOf', affixIds: [affixA, affixB] } : { kind: 'has', affixId: affixA, minTier };
   const reason = !item
     ? 'Select an item'
@@ -101,17 +102,32 @@ export function CraftUntilCard({ s, item }: { s: GameState; item: Item | undefin
             </select>
           </label>
         ) : (
-          <label>
-            <span className="dim small">With Fossil</span>
-            <select className="input" value={fossil} onChange={(e) => setFossil(e.target.value)}>
-              <option value="">None</option>
-              {FOSSILS.map((f) => (
-                <option key={f.id} value={f.id} disabled={!s.account.bank[f.id]}>
-                  {f.name} ({fmt(s.account.bank[f.id] ?? 0)})
-                </option>
-              ))}
-            </select>
-          </label>
+          <>
+            <label>
+              <span className="dim small">With Fossil</span>
+              <select className="input" value={fossil} onChange={(e) => setFossil(e.target.value)}>
+                <option value="">None</option>
+                {FOSSILS.map((f) => (
+                  <option key={f.id} value={f.id} disabled={!s.account.bank[f.id]}>
+                    {f.name} ({fmt(s.account.bank[f.id] ?? 0)})
+                  </option>
+                ))}
+              </select>
+            </label>
+            {item && allMods(item).length > 0 && (
+              <label>
+                <span className="dim small">With Forger's Seal</span>
+                <select className="input" value={sealed} onChange={(e) => setSealed(e.target.value)}>
+                  <option value="">None</option>
+                  {allMods(item).map((m) => (
+                    <option key={m.affixId} value={m.affixId} disabled={!s.account.bank[SEAL]}>
+                      {describeMod(m)} ({fmt(s.account.bank[SEAL] ?? 0)})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </>
         )}
       </div>
       <div className="catalyst-row">

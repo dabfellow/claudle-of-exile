@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_BY_ID, ACHIEVEMENTS } from '../src/data/achievements';
-import { CARTOGRAPHY_GATE, CHART_MATERIALS, CHART_TIERS, FOLIO_COST, FOLIO_SIZE, MASTER_UPGRADE_MAPS, UPGRADE_MAPS } from '../src/data/cartography';
-import { MAP_DROPS, MAP_THEMES, MAP_TIERS, mapZoneId } from '../src/data/maps';
+import { CARTOGRAPHY_GATE, CHART_MATERIALS, CHART_TIERS, FOLIO_COST, FOLIO_SIZE, MASTER_UPGRADE_MAPS, SEXTANT_RECIPES, UPGRADE_MAPS } from '../src/data/cartography';
+import { MAP_DROPS, MAP_TIERS, mapId } from '../src/data/maps';
 import { actionDef, actionsFor, SKILLS, UPCOMING_SKILLS } from '../src/data/skills';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { actOpen } from '../src/data/zones';
@@ -41,10 +41,10 @@ function run(s: GameState, id: string, times = 1): void {
   skillStep(s, ctx(), actionIntervalMs(s, a, d) * times, d);
 }
 
-const DRAW = 'chart_barrows_t1';
-const UPGRADE = 'chart_barrows_t2';
-const T1 = mapZoneId(1, 'barrows');
-const T2 = mapZoneId(2, 'barrows');
+const DRAW = 'chart_t1';
+const UPGRADE = 'chart_t2';
+const T1 = mapId(1);
+const T2 = mapId(2);
 
 describe('the skill', () => {
   it('is a production skill with a mini-game, a tree branch and tree points', () => {
@@ -86,14 +86,14 @@ describe('the skill', () => {
     }
   });
 
-  // Cartography draws the first tiers only until its rework (docs/design/MAPS.md); the rest come from map runs
-  it('has a recipe for every theme of each tier it draws, and every tier it draws is a real map', () => {
+  it('has a recipe for each map tier 1–10 and each Sextant tier', () => {
     const made = actionsFor('cartography').filter((a) => a.chart);
     for (const tier of CHART_TIERS) {
       expect(MAP_TIERS.some((t) => t.tier === tier.tier)).toBe(true);
-      for (const theme of MAP_THEMES) {
-        expect(made.some((a) => a.chart!.tier === tier.tier && a.chart!.theme === theme.id)).toBe(true);
-      }
+      expect(made.some((a) => a.chart!.tier === tier.tier && a.chart!.qty === 1)).toBe(true);
+    }
+    for (const sex of SEXTANT_RECIPES) {
+      expect(actionsFor('cartography').some((a) => a.outputs?.[sex.id] === 1)).toBe(true);
     }
   });
 });
@@ -102,30 +102,32 @@ describe('recipes', () => {
   it('draws a map into the same stock the Map Device runs from', () => {
     const s = act6();
     run(s, DRAW);
-    expect(mapsHeld(s, 1, 'barrows')).toBe(1);
+    expect(mapsHeld(s, 1)).toBe(1);
     expect(s.account.bank.vellum).toBe(0);
     expect(s.skills.cartography).toBeGreaterThan(xpForLevel(60));
     expect(s.lifetime.mapsDrawn).toBe(1);
-    expect(startMap(s, ctx(), 1, 'barrows')).toBeNull();
+    expect(startMap(s, ctx(), 1)).toBeNull();
     expect(s.maps.stock[T1]).toBe(0);
-    expect(s.maps.run?.zoneId).toBe(T1);
+    expect(s.maps.run?.tier).toBe(1);
   });
 
-  it('turns logs and plants into vellum and ink for it', () => {
-    const s = act6();
+  it('turns logs and plants into vellum and ink for it, and crafts Sextants', () => {
+    const s = act6(60);
     run(s, 'chart_vellum');
     run(s, 'chart_gall_ink');
+    run(s, 'chart_sextant_apprentice');
     expect(s.account.bank.vellum).toBe(1);
     expect(s.account.bank.gall_ink).toBe(1);
+    expect(s.account.bank.sextant_apprentice).toBe(1);
   });
 
   it('upgrades three maps into one of the next tier, and needs all three', () => {
     const s = act6();
     const a = actionDef(UPGRADE);
     give(s, a.inputs!);
-    addMaps(s, 1, 'barrows', UPGRADE_MAPS - 1);
+    addMaps(s, 1, UPGRADE_MAPS - 1);
     expect(actionBlocker(s, a)).toBe('Missing materials');
-    addMaps(s, 1, 'barrows', 1);
+    addMaps(s, 1, 1);
     expect(actionBlocker(s, a)).toBeNull();
     s.account.bank = {};
     run(s, UPGRADE);
@@ -135,7 +137,7 @@ describe('recipes', () => {
 
   it('stops when the lower maps run out, like any other input', () => {
     const s = act6();
-    addMaps(s, 1, 'barrows', UPGRADE_MAPS);
+    addMaps(s, 1, UPGRADE_MAPS);
     run(s, UPGRADE, 3);
     expect(s.maps.stock[T2]).toBe(1);
     expect(s.action).toBeNull();
@@ -144,10 +146,10 @@ describe('recipes', () => {
   it('a folio makes a stack for less per map', () => {
     const s = act6();
     const single = actionDef(DRAW).inputs!;
-    const folio = actionDef('chart_folio_barrows');
+    const folio = actionDef('chart_folio_t1');
     for (const [id, n] of Object.entries(single)) expect(folio.inputs![id]).toBe(n * FOLIO_COST);
     run(s, folio.id);
-    expect(mapsHeld(s, 1, 'barrows')).toBe(FOLIO_SIZE);
+    expect(mapsHeld(s, 1)).toBe(FOLIO_SIZE);
     expect(s.lifetime.mapsDrawn).toBe(FOLIO_SIZE);
   });
 
@@ -158,7 +160,7 @@ describe('recipes', () => {
     startSkillAction(s, ctx(), DRAW);
     const sum = simulateOffline(s, ctx(), actionIntervalMs(s, a, deriveStats(s)) * 20);
     expect(sum.mapsDrawn).toBe(10);
-    expect(mapsHeld(s, 1, 'barrows')).toBe(10);
+    expect(mapsHeld(s, 1)).toBe(10);
   });
 });
 
@@ -167,7 +169,7 @@ describe('the tree', () => {
     const s = act6();
     s.skillPassives.push('cartography_n0');
     run(s, DRAW, 200);
-    expect(mapsHeld(s, 1, 'barrows')).toBeGreaterThan(200);
+    expect(mapsHeld(s, 1)).toBeGreaterThan(200);
   });
 
   it("Surveyor's Eye finds more maps", () => {
@@ -177,7 +179,7 @@ describe('the tree', () => {
       const c = ctx();
       const mon = { level: MAP_DROPS.campaignMinLevel, isBoss: false } as MonsterInstance;
       for (let i = 0; i < 20000; i++) rollMapDrops(s, c, mon);
-      return mapsHeld(s, 1, 'barrows') + mapsHeld(s, 1, 'stormvault');
+      return mapsHeld(s, 1);
     };
     expect(kills('cartography_n1')).toBeGreaterThan(kills());
   });
@@ -188,7 +190,7 @@ describe('the tree', () => {
     const slow = actionIntervalMs(s, a, deriveStats(s));
     s.skillPassives.push('cartography_ks');
     expect(actionIntervalMs(s, a, deriveStats(s))).toBeCloseTo(slow * 1.25);
-    addMaps(s, 1, 'barrows', MASTER_UPGRADE_MAPS);
+    addMaps(s, 1, MASTER_UPGRADE_MAPS);
     run(s, UPGRADE);
     expect(s.maps.stock[T1]).toBe(0);
     expect(s.maps.stock[T2]).toBe(1);
@@ -198,11 +200,11 @@ describe('the tree', () => {
 describe('maps still come from monsters', () => {
   it('a run can find the next tier, so no tier needs Cartography', () => {
     const s = veteran(newGame(1));
-    s.maps.run = { zoneId: T1, tier: 1, theme: 'barrows', packsLeft: 1, packsTotal: 6, startedAt: 0, deaths: 0, bossDown: false };
+    s.maps.run = { zoneId: T1, tier: 1, theme: 'mudflats', packsLeft: 1, packsTotal: 6, startedAt: 0, deaths: 0, bossDown: false };
     const c = ctx();
     for (let i = 0; i < 2000; i++) rollMapDrops(s, c, { level: 28, isBoss: true } as MonsterInstance);
-    const low = mapsHeld(s, 1, 'barrows') + mapsHeld(s, 1, 'stormvault');
-    const high = mapsHeld(s, 2, 'barrows') + mapsHeld(s, 2, 'stormvault');
+    const low = mapsHeld(s, 1);
+    const high = mapsHeld(s, 2);
     expect(high).toBeGreaterThan(0);
     expect(high / (low + high)).toBeCloseTo(MAP_DROPS.tierUp, 1);
   });

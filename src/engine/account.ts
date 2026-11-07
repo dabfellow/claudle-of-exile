@@ -1,13 +1,14 @@
 import { STASH_PAGE_SIZE, STASH_START_PAGES, stationDef } from '../data/hideout';
+import { doomedId, mapId, parseDoomedTier, parseMapTier } from '../data/maps';
 import { STANDARD_REALM } from './challenge';
 import { trimFlaskStash } from './flasks';
 import { createUnique } from './items';
-import type { AccountPool, AccountState, AccountTransfer, AutomationUnlocks, EquipSlot, GameState, Item, Realm, SkillGemInstance } from './types';
+import type { AccountPool, AccountState, AccountTransfer, AtlasState, AutomationUnlocks, EquipSlot, GameState, Item, Realm, SkillGemInstance } from './types';
 
 /**
  * What every character in a realm shares: the hideout, automation unlocks, every Stash tab and the Exile unlock.
  * Stored apart from the characters, and attached to a running game as `s.account`.
- * See docs/design/TOWN.md.
+ * See docs/GAME.md.
  */
 
 /**
@@ -23,18 +24,48 @@ export function freshAutomation(): AutomationUnlocks {
   return { rules: ['vitals', 'windups', 'ground'], ruleSlots: 2, offlineHours: 8 };
 }
 
+export function freshAtlas(): AtlasState {
+  return { cleared: [], slotted: [], deathless: [], doomedCleared: [], hardBossesCleared: [], uberBossesCleared: [], nodes: [] };
+}
+
+/** Normalize any themed (`map_barrows_t1`) or plain map keys into plain `map_t1`..`map_t10` and `doomed_t1`..`doomed_t5`. */
+export function normalizeMapStock(stock: Record<string, number> | undefined): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (!stock) return out;
+  for (const [k, raw] of Object.entries(stock)) {
+    const n = Math.max(0, Math.floor(raw || 0));
+    if (!n) continue;
+    const dTier = parseDoomedTier(k);
+    if (dTier) {
+      const id = doomedId(dTier);
+      out[id] = (out[id] ?? 0) + n;
+      continue;
+    }
+    const tier = parseMapTier(k);
+    if (tier) {
+      const id = mapId(tier);
+      out[id] = (out[id] ?? 0) + n;
+    }
+  }
+  return out;
+}
+
 export function freshAccount(realm: Realm = STANDARD_REALM): AccountState {
   return {
     id: `a${Date.now().toString(36)}${Math.floor(Math.random() * 1e9).toString(36)}`,
     realm,
     rev: 0,
-    hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, watchtower: 1 },
+    hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, watchtower: 1, trophy_altar: 1 },
     automation: freshAutomation(),
     stash: Array.from({ length: STASH_START_PAGES }, () => []),
     overflow: [],
     uniqueStash: [],
     uniquesSeen: [],
     bank: {},
+    maps: {},
+    sextants: [null, null, null, null],
+    atlas: freshAtlas(),
+    mapSettings: { blockedMods: [], autoRerollChaos: true, rollNormalMaps: false },
     gems: [],
     supportGems: [],
     flaskStash: [],
@@ -52,6 +83,18 @@ export function fillAccount(a: AccountState): AccountState {
   a.automation.ruleSlots = Math.max(baseline.ruleSlots, a.automation.ruleSlots);
   a.automation.offlineHours = Math.max(baseline.offlineHours, a.automation.offlineHours);
   a.bank ??= {};
+  a.maps = normalizeMapStock(a.maps);
+  a.sextants ??= [null, null, null, null];
+  while (a.sextants.length < 4) a.sextants.push(null);
+  a.atlas ??= freshAtlas();
+  a.atlas.cleared = [...new Set(a.atlas.cleared ?? [])];
+  a.atlas.slotted = [...new Set(a.atlas.slotted ?? [])];
+  a.atlas.deathless = [...new Set(a.atlas.deathless ?? [])];
+  a.atlas.doomedCleared = [...new Set(a.atlas.doomedCleared ?? [])];
+  a.atlas.hardBossesCleared = [...new Set(a.atlas.hardBossesCleared ?? [])];
+  a.atlas.uberBossesCleared = [...new Set(a.atlas.uberBossesCleared ?? [])];
+  a.atlas.nodes = [...new Set(a.atlas.nodes ?? [])];
+  a.mapSettings ??= { blockedMods: [], autoRerollChaos: true, rollNormalMaps: false };
   a.gems ??= [];
   a.supportGems ??= [];
   a.flaskStash ??= [];
@@ -149,11 +192,23 @@ function mergeUnlocks(a: AccountState, from: AccountTransfer): void {
   }
   a.exileUnlocked ||= !!from.exileUnlocked;
   if (from.campaignDone) a.campaignDone = true;
+  if (from.atlas) {
+    a.atlas ??= freshAtlas();
+    a.atlas.cleared = [...new Set([...a.atlas.cleared, ...(from.atlas.cleared ?? [])])];
+    a.atlas.slotted = [...new Set([...a.atlas.slotted, ...(from.atlas.slotted ?? [])])];
+    a.atlas.deathless = [...new Set([...a.atlas.deathless, ...(from.atlas.deathless ?? [])])];
+    a.atlas.doomedCleared = [...new Set([...(a.atlas.doomedCleared ?? []), ...(from.atlas.doomedCleared ?? [])])];
+    a.atlas.hardBossesCleared = [...new Set([...(a.atlas.hardBossesCleared ?? []), ...(from.atlas.hardBossesCleared ?? [])])];
+    a.atlas.uberBossesCleared = [...new Set([...(a.atlas.uberBossesCleared ?? []), ...(from.atlas.uberBossesCleared ?? [])])];
+    if (!a.atlas.nodes.length && from.atlas.nodes?.length) a.atlas.nodes = [...new Set(from.atlas.nodes)];
+  }
   alignWarTable(a);
 }
 
-function addPool(a: AccountState, from: Partial<AccountPool>): void {
+function addPool(a: AccountState, from: Partial<AccountPool> & { maps?: Record<string, number> }): void {
   for (const [id, n] of Object.entries(from.bank ?? {})) a.bank[id] = (a.bank[id] ?? 0) + n;
+  a.maps ??= {};
+  for (const [id, n] of Object.entries(normalizeMapStock(from.maps))) a.maps[id] = (a.maps[id] ?? 0) + n;
   a.gems.push(...(from.gems ?? []));
   a.supportGems.push(...(from.supportGems ?? []));
   a.flaskStash.push(...(from.flaskStash ?? []));
@@ -214,16 +269,34 @@ function settlePool(s: GameState, a: AccountState): boolean {
   return true;
 }
 
+/** Fold a character's local map stock (including old themed maps) into the realm's shared map supply once. */
+export function settleCharacterMaps(s: GameState, a: AccountState): boolean {
+  a.maps ??= {};
+  const key = `maps:${s.character.id}`;
+  let changed = false;
+  if (s.maps?.stock && s.maps.stock !== a.maps && !a.absorbed.includes(key)) {
+    const folded = normalizeMapStock(s.maps.stock);
+    if (Object.keys(folded).length > 0) {
+      for (const [id, n] of Object.entries(folded)) a.maps[id] = (a.maps[id] ?? 0) + n;
+      a.absorbed.push(key);
+      changed = true;
+    }
+  }
+  if (s.maps) s.maps.stock = a.maps;
+  return changed;
+}
+
 /**
  * Fold in what a character still carries from before the account layer (or from a demo or an import). Each source
  * counts once, so a merge cut short can simply run again. Returns true if the account changed.
  */
 export function settleCharacter(s: GameState, a: AccountState): boolean {
   const pooled = settlePool(s, a);
+  const mapped = settleCharacterMaps(s, a);
   const from = s.unmerged;
-  if (!from) return pooled;
+  if (!from) return pooled || mapped;
   delete s.unmerged;
-  if (a.absorbed.includes(s.character.id) || from.id === a.id) return pooled;
+  if (a.absorbed.includes(s.character.id) || from.id === a.id) return pooled || mapped;
   // an auto-craft running on a stashed item follows it to its new uid
   const job = s.action?.kind === 'craft' ? s.action : null;
   const target = job && [...(from.stash ?? []).flat(), ...(from.overflow ?? []), ...(from.uniqueStash ?? [])].find((i) => i.uid === job.uid);
@@ -284,6 +357,14 @@ export function mergeAccounts(mine: AccountState, base: AccountState, theirs: Ac
     bank[id] = Math.max(0, (theirs.bank[id] ?? 0) + (mine.bank[id] ?? 0) - (base.bank[id] ?? 0));
   }
   mine.bank = bank;
+  const mineMaps = normalizeMapStock(mine.maps);
+  const baseMaps = normalizeMapStock(base.maps);
+  const theirMaps = normalizeMapStock(theirs.maps);
+  const maps: Record<string, number> = { ...theirMaps };
+  for (const id of new Set([...Object.keys(mineMaps), ...Object.keys(baseMaps)])) {
+    maps[id] = Math.max(0, (theirMaps[id] ?? 0) + (mineMaps[id] ?? 0) - (baseMaps[id] ?? 0));
+  }
+  mine.maps = maps;
   // a hold this copy released stays released; one only the other tab has made stays
   const released = new Set((base.marketHolds ?? []).map((h) => h.op));
   const myHolds = new Set((mine.marketHolds ?? []).map((h) => h.op));

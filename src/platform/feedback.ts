@@ -2,6 +2,7 @@ import { characterLevel } from '../engine/character';
 import type { GameState } from '../engine/types';
 import { APP_VERSION } from './errors';
 import { getSupabase } from './supabase';
+import { feedbackSnapshot, type FeedbackSnapshot } from './admin';
 
 /**
  * Player feedback, star reviews and the admin page's data (tables in docs/ops/SETUP.md).
@@ -22,6 +23,9 @@ export interface FeedbackRow {
   context: FeedbackContext;
   status: FeedbackStatus;
   created_at: string;
+  email?: string | null;
+  account_name?: string | null;
+  verified_character_id?: string | null;
 }
 
 export interface ReviewRow {
@@ -32,7 +36,7 @@ export interface ReviewRow {
   updated_at: string;
 }
 
-/** What a feedback note carries besides the text: enough to reproduce a bug, nothing personal. */
+/** Reports may include a game-only snapshot; account email is resolved server-side for administrators. */
 export interface FeedbackContext {
   version: string;
   classId?: string;
@@ -40,9 +44,13 @@ export interface FeedbackContext {
   zone?: string | null;
   page?: string;
   userAgent?: string;
+  characterId?: string;
+  characterName?: string;
+  realm?: string;
+  snapshot?: FeedbackSnapshot;
 }
 
-export function feedbackContext(s: GameState | null, page?: string): FeedbackContext {
+export function feedbackContext(s: GameState | null, page?: string, log?: string[]): FeedbackContext {
   return {
     version: APP_VERSION,
     classId: s?.character.classId,
@@ -50,6 +58,7 @@ export function feedbackContext(s: GameState | null, page?: string): FeedbackCon
     zone: s?.combat?.zoneId ?? null,
     page,
     userAgent: typeof navigator === 'undefined' ? undefined : navigator.userAgent.slice(0, 200),
+    ...(s && log ? { characterId: s.character.id, characterName: s.character.name, realm: s.account.realm, snapshot: feedbackSnapshot(s, log) } : {}),
   };
 }
 
@@ -69,6 +78,13 @@ export async function sendFeedback(kind: FeedbackKind, message: string, context:
   const text = message.trim().slice(0, FEEDBACK_MAX);
   if (!text) throw new Error('Write something first');
   const { error } = await db().from('feedback').insert({ kind, message: text, context });
+  if (error && context.snapshot && ['23514', '42501'].includes(error.code)) {
+    // Older databases cap context at 2KB. Preserve the report if the snapshot migration is not installed yet.
+    const { snapshot: _, ...compact } = context;
+    const retry = await db().from('feedback').insert({ kind, message: text, context: compact });
+    if (retry.error) throw retry.error;
+    return;
+  }
   if (error) throw error;
 }
 
@@ -108,15 +124,19 @@ export interface AdminStats {
   characters: number;
   active_day: number;
   active_week: number;
-  act1_clears: number;
+  act1_clears?: number;
   by_class: Record<string, number>;
   by_level: Record<string, number>;
   feedback_open: number;
   reviews: { count: number; avg: number | null };
+  funnel?: { act: number; count: number }[];
+  maps?: number;
+  death_zones?: Record<string, number>;
+  demos?: Record<string, number>;
 }
 
 export async function adminStats(): Promise<AdminStats> {
-  const { data, error } = await db().rpc('admin_stats');
+  const { data, error } = await db().rpc('admin_overview');
   if (error) throw error;
   if (!data) throw new Error('Not an admin');
   return data as AdminStats;

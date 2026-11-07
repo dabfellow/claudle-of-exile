@@ -1,7 +1,7 @@
 import type { StatKey } from '../engine/types';
 
 /**
- * The character tree (docs/design/TREES.md): six class sectors around a shared centre, PoE-style.
+ * The character tree (docs/GAME.md): six class sectors around a shared centre, PoE-style.
  * Every sector uses the same slot layout (rotated): themed clusters in three bands and two keystones,
  * then a road out to build-neutral rim clusters and a high-cost keystone.
  * Neighbouring sectors are cross-linked so any class can path anywhere.
@@ -9,7 +9,7 @@ import type { StatKey } from '../engine/types';
 export type PassiveKind = 'start' | 'small' | 'travel' | 'notable' | 'mastery' | 'keystone';
 export type ClassRegion = 'str' | 'duelist' | 'dex' | 'shadow' | 'int' | 'templar';
 export type TreeRegion = ClassRegion | 'center' | 'forbidden';
-/** class mechanics (docs/design/CLASSES.md); nodes tagged with one only do something for that class */
+/** class mechanics (docs/GAME.md); nodes tagged with one only do something for that class */
 export type Mechanic = 'rage' | 'riposte' | 'momentum' | 'malice' | 'manaPower' | 'martyr';
 
 type StatMap = Partial<Record<StatKey, number>>;
@@ -73,7 +73,7 @@ const MASTERIES = {
   rarity: [m('10% increased Item Rarity', { itemRarity: 10 }), m('15% increased Flask Charges gained', { flaskCharges: 15 }), m('+5 to all Attributes', { allAttr: 5 })],
   rage: [m('+5 to maximum Rage', { rageMax: 5 }), m('Rage decays 50% slower', { rageDecay: 50 }), m('10% increased Physical Damage', { physPct: 10 })],
   riposte: [m('Ripostes deal 20% increased damage', { ripostePct: 20 }), m('Riposte recovers 20% faster', { riposteCooldown: 20 }), m('+2% chance to Block hits', { blockChance: 2 })],
-  momentum: [m('+2 to maximum Momentum', { momentumMax: 2 }), m('Taking a hit removes 20% less Momentum', { momentumRetain: 20 }), m('4% increased Attack Speed', { attackSpeedPct: 4 })],
+  momentum: [m('+2 to maximum Momentum', { momentumMax: 2 }), m('Taking a hit removes 1 less Momentum (minimum 1)', { momentumRetain: 1 }), m('4% increased Attack Speed', { attackSpeedPct: 4 })],
   malice: [m('Malice meter is 2 smaller', { maliceMax: -2 }), m('25% increased Coup de Grâce damage', { coupPct: 25 }), m('10% increased Critical Strike Chance', { critChancePct: 10 })],
   manaPower: [m('+5% to the Mana is Power bonus', { manaPower: 5 }), m('Recent Mana spending counts 5% more toward Mana is Power', { manaPowerFull: 5 }), m('+25 to maximum Mana', { mana: 25 })],
   martyr: [m('Fervor fills 10% faster', { fervorPct: 10 }), m('The holy nova deals 25% increased damage', { novaPct: 25 }), m('+5% to all Elemental Resistances', { allRes: 5 })],
@@ -144,7 +144,7 @@ interface SectorSpec {
   key: ClassRegion;
   angle: number;
   startName: string;
-  /** start node id (docs/design/CLASSES.md) */
+  /** start node id (docs/GAME.md) */
   start: string;
   travel: StatMap;
   clusters: Record<SlotId, ClusterSpec>;

@@ -10,6 +10,8 @@ import {
   GEAR_SWITCH_BENCH_LEVEL,
   MAP_ILVL,
   MAP_RARITY,
+  META_CRAFT_BENCH_LEVEL,
+  PINNACLE_CRAFT_BENCH_LEVEL,
   SHOP_REFRESH_MIN,
   SHOP_SLOTS,
   STASH_START_PAGES,
@@ -25,7 +27,8 @@ import { hideoutCost, recipeUnlocked } from './challenge';
 import type { Ctx } from './context';
 import { flaskName, flaskValue, rollFlask, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
-import { addRandomMod, createItem, itemName, modCount, sellValue } from './items';
+import { createItem, addRandomMod, itemName, modCount, sellValue } from './items';
+import { topUpKingMaps } from './maps';
 import { gemInShop, gemShopZone } from './progress';
 import { pick, rInt, type Rng } from './rng';
 import type { GameState, Item, Rarity, VendorOffer } from './types';
@@ -54,6 +57,7 @@ export function checkCampaignDone(s: GameState, ctx: Ctx): void {
   const exile = s.account.exileUnlocked ? '' : ', and the Exile can now be created';
   s.account.exileUnlocked = true;
   ctx.emit({ t: 'info', text: `Campaign complete: the Map Device wakes${exile}`, tone: 'good' });
+  topUpKingMaps(s, ctx);
 }
 
 /** Why a station can't be used or upgraded yet, or null. */
@@ -80,16 +84,33 @@ export function stationPerks(s: GameState, id: StationId): string[] {
   switch (id) {
     case 'map_device':
       if (!MAP_RARITY[i]) return ['Portals to unlocked zones'];
-      return [`+${MAP_RARITY[i]}% Item Rarity`, ...(MAP_ILVL[i] ? [`+${MAP_ILVL[i]} item level on drops`] : [])];
+      return [
+        `+${MAP_RARITY[i]}% Item Rarity`,
+        ...(MAP_ILVL[i] ? [`+${MAP_ILVL[i]} item level on drops`] : []),
+        ...(lvl >= 5 ? ['4th Sextant slot unlocked permanently'] : []),
+        ...(lvl >= 6 ? ['Pinnacle Conduit: +15% Map Boss extra Map/Key drop, Sextant +2 base charges'] : []),
+      ];
     case 'stash': {
       const pages = s.account.stash.length;
       const bought = Math.max(0, pages - (STASH_START_PAGES + i));
-      return [`${pages} stash pages${bought ? ` (${bought} bought)` : ''}`];
+      return [
+        `${pages} stash pages${bought ? ` (${bought} bought)` : ''}`,
+        ...(lvl >= 5 ? ['Dedicated Map Storage Tab'] : []),
+        ...(lvl >= 6 ? ['Currency & Fragment Overview Tab'] : []),
+      ];
     }
     case 'forge':
-      return [FORGE_REACH[Math.min(i, 2)], ...(FORGE_ILVL[i] ? [`Smithed bases +${FORGE_ILVL[i]} item level`] : [])];
+      return [
+        FORGE_REACH[Math.min(i, 2)],
+        ...(FORGE_ILVL[i] ? [`Smithed bases +${FORGE_ILVL[i]} item level`] : []),
+        ...(lvl >= 5 ? ['Pinnacle Metallurgy: 10% chance for Tier 1 modifier pre-installed'] : []),
+      ];
     case 'alchemy_table':
-      return [ALCH_REACH[Math.min(i, 2)], ...(ALCH_DOUBLE[i] ? [`${ALCH_DOUBLE[i] * 100}% chance of double output`] : [])];
+      return [
+        ALCH_REACH[Math.min(i, 2)],
+        ...(ALCH_DOUBLE[i] ? [`${Math.round(ALCH_DOUBLE[i] * 100)}% chance of double output`] : []),
+        ...(lvl >= 5 ? ['3:1 orb conversion at the alchemy table'] : []),
+      ];
     case 'bench': {
       if (lvl < BENCH_BUILT_LEVEL) return ['Use orbs on your gear'];
       const open = BENCH_CRAFTS.filter((c) => c.benchLevel <= lvl && recipeUnlocked(s, c.achievement));
@@ -98,6 +119,8 @@ export function stationPerks(s: GameState, id: StationId): string[] {
         `${open.length} of ${BENCH_CRAFTS.length} bench recipes`,
         ...(lvl >= GEAR_SWITCH_BENCH_LEVEL ? ['Gear sets switch on their own'] : []),
         ...(lvl >= AUTO_CRAFT_BENCH_LEVEL ? ['Auto-crafting'] : []),
+        ...(lvl >= META_CRAFT_BENCH_LEVEL ? ['Meta-crafting: lock prefixes/suffixes & multicraft'] : []),
+        ...(lvl >= PINNACLE_CRAFT_BENCH_LEVEL ? ['Pinnacle Crafting: Doom Sigils, Cannot roll Attack/Caster Modifiers'] : []),
       ];
     }
     case 'vendor':
@@ -114,7 +137,18 @@ export function stationPerks(s: GameState, id: StationId): string[] {
       ];
     }
     case 'watchtower':
-      return [`Up to ${s.account.automation.offlineHours} hours offline`];
+      return [
+        `Up to ${s.account.automation.offlineHours} hours offline`,
+        ...(lvl >= 5 ? ['Autonomous Offline Mapping'] : []),
+      ];
+    case 'trophy_altar':
+      return [
+        'Displays boss trophies',
+        '+3% Armour and Evasion realm-wide',
+        ...(lvl >= 2 ? ['+5% increased Mana regeneration rate'] : []),
+        ...(lvl >= 3 ? ['+4% all Elemental Resistances'] : []),
+        ...(lvl >= 4 ? ['+10% Map Boss drop rates and high-tier modifier rolls'] : []),
+      ];
   }
 }
 
@@ -263,7 +297,8 @@ export function rerollVendor(s: GameState, ctx: Ctx): string | null {
   return null;
 }
 
-export function vendorTick(s: GameState, rng: Rng): void {
+export function vendorTick(s: GameState, rng: Rng, elapsed = 0, speed = 1): void {
+  s.vendor.refreshAt -= elapsed * Math.max(0, speed - 1);
   if (s.clock >= s.vendor.refreshAt) refreshVendor(s, rng);
 }
 

@@ -16,6 +16,29 @@ function withItem() {
 }
 
 describe('holding things for the market', () => {
+  it('rejects invalid payments without changing the balance or creating a hold', () => {
+    const s = newGame(1);
+    s.account.bank.gold = 100;
+    for (const amount of [-10, 0, 0.5, NaN, Infinity, 1e12 + 1]) {
+      expect(holdPayment(s, 'bad', 'gold', amount)).toBeTruthy();
+    }
+    expect(holdPayment(s, 'bad', 'constructor', 1)).toBeTruthy();
+    expect(holdPayment(s, '', 'gold', 1)).toBeTruthy();
+    expect(s.account.bank.gold).toBe(100);
+    expect(s.account.marketHolds ?? []).toEqual([]);
+  });
+
+  it('cannot hold a second payment or item under an already pending operation', () => {
+    const { s, it } = withItem();
+    s.account.bank.gold = 100;
+    expect(holdPayment(s, 'same', 'gold', 10)).toBeNull();
+    expect(holdPayment(s, 'same', 'gold', 10)).toBeTruthy();
+    expect(holdItem(s, 'same', it.uid)).toBeTruthy();
+    expect(s.account.bank.gold).toBe(90);
+    expect(s.inventory).toContainEqual(it);
+    expect(s.account.marketHolds).toHaveLength(1);
+  });
+
   it('takes the item at once and keeps it safe until the server answers', () => {
     const { s, it } = withItem();
     expect(holdItem(s, 'a', it.uid)).toBeNull();

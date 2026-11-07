@@ -10,7 +10,8 @@ import { manaFraction, manaPowerMore, mechanicOf, meterMax, recordManaSpent } fr
 import { startNode } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { newGame } from '../src/engine/state';
-import { deriveStats } from '../src/engine/stats';
+import { deriveStats, itemStats } from '../src/engine/stats';
+import { createUnique } from '../src/engine/items';
 import type { GameEvent, GameState } from '../src/engine/types';
 import { veteran, armFor } from './helpers';
 
@@ -49,6 +50,12 @@ describe('classes', () => {
     expect(new Set(six.map((c) => c.mechanic)).size).toBe(6);
     expect(new Set(six.map((c) => c.startNode)).size).toBe(6);
     expect(CLASSES.find((c) => c.id === 'exile')?.mechanic).toBeNull();
+  });
+
+  it('the Shadow has the same movement speed bonus as the other melee classes', () => {
+    const shadow = deriveStats(newGame(1, { name: 't', classId: 'shadow' }));
+    const warrior = deriveStats(newGame(1, { name: 't', classId: 'warrior' }));
+    expect(shadow.raw.moveSpeedPct).toBe(warrior.raw.moveSpeedPct);
   });
 
   it('every Exile start can use its starter gems: the Mage, Ranger and Shadow starts swap the sword for a wand, bow and dagger', () => {
@@ -115,6 +122,22 @@ describe('class mechanics', () => {
     const before = c.mech;
     run(s, ctx, 3000, () => c.mech < before);
     expect(c.mech).toBe(before - 2);
+  });
+
+  it('Momentum keeping saves a flat stack per hit, never below one, even on uniques found before the change', () => {
+    const { s, ctx, dummy } = arena('ranger', 'twin_strike');
+    const hood = createUnique(s, 'lookouts_hood', 30);
+    hood.suffixes.find((m) => m.affixId === 'u_momentum_retain')!.values = [30]; // an old drop's % value
+    expect(itemStats(hood).momentumRetain).toBe(1);
+    s.equipment.helmet = hood;
+    run(s, ctx, 60_000, () => s.combat!.mech >= 10);
+    const c = s.combat!;
+    dummy.attackMs = 100;
+    dummy.damage = 1;
+    s.combat!.evadeMs = 0;
+    const before = c.mech;
+    run(s, ctx, 3000, () => c.mech < before);
+    expect(c.mech).toBe(before - 1);
   });
 
   it('Mana is Power ramps with Mana spent during the last four seconds', () => {

@@ -3,24 +3,27 @@
  * `npm run uniques` rewrites the file; tests/uniques.test.ts fails if it has gone stale.
  */
 import { baseDef, UNIQUES, type UniqueDef } from './bases';
-import { MAP_THEMES } from './maps';
+import { HARD_BOSSES, MAP_UNIQUE_POOLS, UBER_BOSSES } from './maps';
 import { ACTS, ZONES } from './zones';
-import { describeMod } from '../engine/items';
+import { describeUniqueModDef } from '../engine/items';
 
 export const UNIQUE_LIST_PATH = 'docs/UNIQUES.md';
 
-const modLines = (u: UniqueDef) => u.mods.map((m) => describeMod({ affixId: m.affixId, tier: -1, values: m.values }));
+const modLines = (u: UniqueDef) => u.mods.map(describeUniqueModDef);
+const formatMods = (u: UniqueDef) => modLines(u).map((line) => `• ${line}`).join('<br>');
 
-/** Every place a unique drops: its areas, then its Maps. */
+/** Every place a unique drops: its areas, then its Maps tier pool, then Hard/Uber bosses. */
 export function uniqueDropsIn(u: UniqueDef): string[] {
   const zones = ZONES.filter((z) => z.uniques.includes(u.id)).map((z) => `${z.name} (Act ${z.act})`);
-  const maps = MAP_THEMES.filter((t) => t.drop.kind === 'unique' && t.drop.uniqueId === u.id).map((t) => `${t.name} (Map)`);
-  return [...zones, ...maps];
+  const maps = MAP_UNIQUE_POOLS.filter((p) => p.uniques.includes(u.id)).map((p) => `${p.label} (Maps)`);
+  const hard = HARD_BOSSES.filter((b) => b.uniqueId === u.id).map((b) => `${b.name} (Hard Boss)`);
+  const uber = UBER_BOSSES.filter((b) => b.uniques.includes(u.id)).map((b) => `${b.name} (Uber Boss)`);
+  return [...zones, ...maps, ...hard, ...uber];
 }
 
 function row(u: UniqueDef): string {
   const base = baseDef(u.baseId);
-  const cells = [`**${u.name}**<br>*${u.flavour}*`, base.slot, `${base.name} (${base.reqLevel})`, modLines(u).join('<br>'), uniqueDropsIn(u).join(', ') || '—'];
+  const cells = [`**${u.name}**<br>*${u.flavour}*`, base.slot, `${base.name} (${base.reqLevel})`, formatMods(u), uniqueDropsIn(u).join(', ') || '—'];
   return `| ${cells.map((c) => c.replace(/\|/g, '\\|')).join(' | ')} |`;
 }
 
@@ -34,11 +37,14 @@ export function firstAct(u: UniqueDef): number | undefined {
   return acts.length ? Math.min(...acts) : undefined;
 }
 
-/** Every unique under the first act that drops it, in level order, then the Maps-only ones and those with no source. */
+/** Every unique under the first act that drops it, in level order, then the Maps/Pinnacle ones and those with no source. */
 export function uniqueSections(): [string, UniqueDef[]][] {
   const byLevel = (a: UniqueDef, b: UniqueDef) => baseDef(a.baseId).reqLevel - baseDef(b.baseId).reqLevel || a.name.localeCompare(b.name);
   const sorted = [...UNIQUES].sort(byLevel);
-  const fromMaps = (u: UniqueDef) => MAP_THEMES.some((t) => t.drop.kind === 'unique' && t.drop.uniqueId === u.id);
+  const fromMaps = (u: UniqueDef) =>
+    MAP_UNIQUE_POOLS.some((p) => p.uniques.includes(u.id)) ||
+    HARD_BOSSES.some((b) => b.uniqueId === u.id) ||
+    UBER_BOSSES.some((b) => b.uniques.includes(u.id));
   return [
     ...ACTS.map((a): [string, UniqueDef[]] => [`Act ${a.n}: ${a.name}`, sorted.filter((u) => firstAct(u) === a.n)]),
     ['Maps only', sorted.filter((u) => firstAct(u) === undefined && fromMaps(u))],

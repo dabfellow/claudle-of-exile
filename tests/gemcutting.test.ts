@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { activeGemDef, supportGemDef } from '../src/data/gems';
+import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { actionDef, actionsFor } from '../src/data/skills';
 import { makeCtx } from '../src/engine/context';
 import { seeded } from '../src/engine/rng';
@@ -71,6 +72,20 @@ describe('gemcutting', () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
     expect(startSkillAction(s, makeCtx(seeded(1)), 'cut_support')).not.toBeNull();
     expect(actionsFor('gemcutting').length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('has a branch that trades speed for XP and material efficiency', () => {
+    expect(SKILL_TREE_NODES.filter((n) => n.branch === 'gemcutting')).toHaveLength(6);
+    const plain = gemcutter(50);
+    const specialist = gemcutter(50);
+    specialist.skillPassives = ['gemcutting_n0', 'gemcutting_n1', 'gemcutting_ks'];
+    const action = actionDef('cut_skill');
+    expect(actionIntervalMs(specialist, action, deriveStats(specialist))).toBeCloseTo(actionIntervalMs(plain, action, deriveStats(plain)) * 1.2);
+    cut(plain, action.id, 1);
+    cut(specialist, action.id, 1);
+    expect(specialist.account.bank.rough_gem).toBe(plain.account.bank.rough_gem + 1);
+    expect(specialist.account.bank.arcane_dust).toBe(plain.account.bank.arcane_dust + 6);
+    expect(specialist.skills.gemcutting).toBeGreaterThan(plain.skills.gemcutting);
   });
 
   it('a save mid-cut on a removed recipe loads with the action stopped', () => {

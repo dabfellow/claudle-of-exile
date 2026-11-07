@@ -211,6 +211,7 @@ export function DemoBanner() {
       <div>
         <b>Demo</b>
         <span className="dim small"> · your progress is lost when you close or refresh this tab.</span>
+        <span className="dim small"> Anonymous onboarding counters help improve the demo; Do Not Track is respected.</span>
       </div>
       <button className="btn primary sm" onClick={() => game.setAccountForm(true)}>
         Create account
@@ -224,11 +225,12 @@ export function EventBanner() {
   useGame();
   return (
     <>
+      {game.sandbox && <div className="card guest-banner"><b>Admin sandbox — temporary progress</b><button className="btn sm" onClick={() => void game.exit()}>Exit sandbox</button></div>}
       {game.liveEvents.map((event) => (
         <div key={event.id} className="card guest-banner demo-banner">
           <div>
             <b>{event.name} event</b>
-            <span className="dim small"> · {event.blurb}, for a limited time.</span>
+            <span className="dim small"> · {event.banner || event.blurb}</span>
           </div>
         </div>
       ))}

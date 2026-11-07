@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STATIONS } from '../src/data/hideout';
+import { BENCH_CRAFTS, STATIONS } from '../src/data/hideout';
 import { makeCtx } from '../src/engine/context';
 import { stationPerks, upgradeStation } from '../src/engine/hideout';
 import { seeded } from '../src/engine/rng';
@@ -36,9 +36,9 @@ describe('stationPerks', () => {
     const s = fresh();
     expect(stationPerks(s, 'bench')).toEqual(['Use orbs on your gear']);
     upgradeStation(s, makeCtx(seeded(1)), 'bench');
-    expect(stationPerks(s, 'bench')).toContain('4 of 19 bench recipes');
+    expect(stationPerks(s, 'bench')).toContain(`4 of ${BENCH_CRAFTS.length} bench recipes`);
     s.achievements.push('salvager_50');
-    expect(stationPerks(s, 'bench')).toContain('5 of 19 bench recipes');
+    expect(stationPerks(s, 'bench')).toContain(`5 of ${BENCH_CRAFTS.length} bench recipes`);
   });
 
   it('replaces the Town Market numbers and keeps its stock perks', () => {

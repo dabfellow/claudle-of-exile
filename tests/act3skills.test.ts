@@ -12,7 +12,7 @@ import { deserialize, serialize } from '../src/engine/save';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { Dot, GameState, MonsterInstance } from '../src/engine/types';
-import { armFor, veteran } from './helpers';
+import { armFor, trainingDummy, veteran } from './helpers';
 import { unlockEverything } from '../src/engine/automation';
 
 const BATCH = ['flagellate', 'scourge', 'blood_rite', 'blood_ward', 'gash', 'barbed_arrow', 'stigmata', 'blood_lance', 'burnt_offering', 'transfusion'];
@@ -36,7 +36,7 @@ function arena(gem: string, opts: { supports?: string[]; pack?: number; boss?: b
   startCombat(s, ctx, 'cinderroad');
   const monsters: MonsterInstance[] = [];
   for (let i = 0; i < (opts.pack ?? 1); i++) {
-    const m = makeMonster(zoneDef('cinderroad').monsters[0], false, i + 1);
+    const m = trainingDummy(makeMonster(zoneDef('cinderroad').monsters[0], false, i + 1));
     m.life = m.maxLife = 1e7;
     m.attackMs = 1e9;
     m.cell = i;

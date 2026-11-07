@@ -44,14 +44,14 @@ export function skillAim(s: GameState, gem: SkillGemInstance): SkillAim | undefi
   return aimLockReason(s) ? undefined : gem.rules.find((r) => r.aim)?.aim;
 }
 
-/** A skill on the bar that fires by rule, hits, and gets to martyrs: aimed at them, or an area or chain that finds them by itself. */
-function strikesMartyrs(s: GameState): boolean {
+/** A skill on the bar that fires by rule, hits, and reaches an aimed target (martyrs, weak points, choir adds): aimed at them, or an area or chain that finds them by itself. */
+function strikesAim(s: GameState, aim: SkillAim): boolean {
   return s.skillBar.some((g) => {
     if (!g || g.rules[0].when === 'manual') return false;
     const { role, effect } = activeGemDef(g.gemId);
     if (!effect.weaponPct && !effect.base) return false;
     const spreads = (effect.area && effect.area !== 'target') || effect.targets === 'chain' || effect.targets === 'all';
-    return skillAim(s, g) === 'martyrs' || (spreads && role !== 'guard' && role !== 'buff' && role !== 'sustain' && role !== 'summon');
+    return skillAim(s, g) === aim || !!(spreads && role !== 'guard' && role !== 'buff' && role !== 'sustain' && role !== 'summon');
   });
 }
 
@@ -91,7 +91,14 @@ export function rulesBreakChannels(s: GameState, chained = false): boolean {
  */
 export function bossLeftToRules(s: GameState, zone: ZoneDef): boolean {
   const has = (k: BossMechanic) => !!zone.boss.mechanics?.includes(k);
-  return bossesOffline(s) && (!has('martyrs') || strikesMartyrs(s)) && (!has('frostbite') || answersFrostbite(s)) && (!has('channel') || rulesBreakChannels(s, has('martyrs')));
+  return (
+    bossesOffline(s) &&
+    (!has('martyrs') || strikesAim(s, 'martyrs')) &&
+    ((!has('plating') && !has('crownless')) || strikesAim(s, 'weakPoint')) &&
+    ((!has('choir') && !has('crownless')) || strikesAim(s, 'choir')) &&
+    (!has('frostbite') || answersFrostbite(s)) &&
+    (!has('channel') || rulesBreakChannels(s, has('martyrs')))
+  );
 }
 
 export function offlineCapMs(s: GameState): number {

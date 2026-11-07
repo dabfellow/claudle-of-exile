@@ -3,7 +3,7 @@ import type { MaterialDef } from './materials';
 import { describeStat } from './statText';
 
 /**
- * Rune-carving, Act 3's skill (docs/design/RUNES.md): carve a rune from gathered materials, then inscribe it in a
+ * Rune-carving, Act 3's skill (docs/GAME.md): carve a rune from gathered materials, then inscribe it in a
  * piece of gear's one rune slot. The same rune means something different on a weapon, on armour and on jewellery.
  */
 export type RuneReading = 'weapon' | 'armour' | 'jewellery';

@@ -1,7 +1,7 @@
 import type { SkillId } from '../engine/types';
 
 /**
- * The skilling tree (docs/design/TREES.md §2): a shared core and one branch per gathering/production
+ * The skilling tree (docs/GAME.md): a shared core and one branch per gathering/production
  * skill. Points come from total skill level; deeper nodes need a level in that skill.
  */
 export type SkillTreeStat =
@@ -39,6 +39,10 @@ export type SkillTreeStat =
   | 'artifactChance'
   | 'wareDiscount'
   | 'deepSurvey'
+  | 'gemcuttingSpeed'
+  | 'gemcuttingXp'
+  | 'gemDustSave'
+  | 'masterCutter'
   | 'runecarvingSpeed'
   | 'secondStroke'
   | 'deepCuts'
@@ -50,11 +54,7 @@ export type SkillTreeStat =
   | 'cartographySpeed'
   | 'secondCopy'
   | 'mapFind'
-  | 'masterCartographer'
-  | 'fishingSpeed'
-  | 'fishTreasure'
-  | 'biggerFish'
-  | 'theBigOne';
+  | 'masterCartographer';
 
 export type SkillTreeStats = Partial<Record<SkillTreeStat, number>>;
 
@@ -114,15 +114,14 @@ const BRANCHES: BranchSpec[] = [
     keystone: { name: 'Greenhouse', stats: { greenhouse: 20 }, desc: 'Your last Foraging spot keeps growing at 20% speed while you do something else' },
   },
   {
-    // Fishing is coming soon: these stats are summed like any other and read by nothing
-    skill: 'fishing',
+    skill: 'gemcutting',
     angle: 90,
-    small: { name: 'Patient Angler', stats: { fishingSpeed: 5 }, desc: '5% faster Fishing' },
+    small: { name: 'Gem Polisher', stats: { gemcuttingSpeed: 5 }, desc: '5% faster Gemcutting' },
     notables: [
-      { name: 'Lucky Lure', stats: { fishTreasure: 25 }, desc: '25% increased chance to reel in treasure' },
-      { name: 'Bigger Fish', stats: { biggerFish: 10 }, desc: 'Fish you catch are 10% bigger. Nobody will believe you' },
+      { name: 'Clear Lessons', stats: { gemcuttingXp: 15 }, desc: '15% increased Gemcutting XP' },
+      { name: 'Dust Collector', stats: { gemDustSave: 20 }, desc: 'Gemcutting uses 20% less Arcane Dust' },
     ],
-    keystone: { name: 'The One That Got Away', stats: { theBigOne: 1 }, desc: 'Every catch is a Thunder Marlin. Fishing is 1000% slower' },
+    keystone: { name: 'Master Cutter', stats: { masterCutter: 1 }, desc: 'Gemcutting uses one fewer Rough Gem. Gemcutting is 20% slower' },
   },
   {
     skill: 'smithing',

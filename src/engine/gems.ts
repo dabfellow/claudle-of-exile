@@ -126,7 +126,7 @@ export function supportSlots(gem: SkillGemInstance): number {
 
 /** Gems on the skill bar share the character's xp. Levels stall until the character catches up. */
 export function grantGemXp(s: GameState, ctx: Ctx, amount: number, attrs: Attributes = deriveStats(s, []).attributes): void {
-  amount *= ctx.event?.xp ?? 1;
+  amount *= Math.max(ctx.event?.xp ?? 1, ctx.event?.combatXp ?? 1);
   const charLvl = characterLevel(s);
   // a level waits for both the character level and the attribute it needs
   const canReach = (gem: SkillGemInstance, level: number) => charLvl >= gemLevelReq(gem.gemId, level) && !gemAttrReason(attrs, gem, level);

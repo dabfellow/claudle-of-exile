@@ -1,7 +1,7 @@
 import type { MaterialDef } from './materials';
 
 /**
- * Expedition (docs/design/EXPEDITION.md): Archaeology digs sites in the Hollow Peaks for Artifacts, which three merchants
+ * Expedition (docs/GAME.md): Archaeology digs sites in the Hollow Peaks for Artifacts, which three merchants
  * take for currency. A site never runs out and never goes wrong: each one pays better the deeper you've worked it, and
  * what you find down there earns the standing that opens a merchant's better shelves.
  */

@@ -2,7 +2,7 @@ import { BASES, baseDef } from '../src/data/bases';
 import { activeGemDef, gemWeapons } from '../src/data/gems';
 import { createItem } from '../src/engine/items';
 import { seeded } from '../src/engine/rng';
-import type { GameState } from '../src/engine/types';
+import type { GameState, MonsterInstance } from '../src/engine/types';
 import { charXpForLevel } from '../src/engine/xp';
 
 /**
@@ -13,6 +13,19 @@ export function veteran(s: GameState, level = 40): GameState {
   s.skills.combat = charXpForLevel(level);
   s.account.hideout.bench = Math.max(2, s.account.hideout.bench ?? 1);
   return s;
+}
+
+/** Skill-isolation dummy: authored encounters use their real profiles in integration tests. */
+export function trainingDummy(mon: MonsterInstance): MonsterInstance {
+  mon.armour = 0;
+  mon.evasion = undefined;
+  mon.es = mon.maxEs = 0;
+  mon.blockChance = mon.spellBlockChance = 0;
+  mon.archetype = undefined;
+  mon.basicDamageMult = 1;
+  mon.critChance = mon.dotShare = 0;
+  mon.attackAilment = undefined;
+  return mon;
 }
 
 /** Put a weapon the skill can be used with in the main hand (the lowest of its first family), unless the current one already fits. */

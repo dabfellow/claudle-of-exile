@@ -15,6 +15,7 @@ export interface CharacterSummary {
   /** which account it shares: left out on summaries from before challenge modes, which are all standard */
   realm?: Realm;
   act1Cleared?: boolean;
+  mapsStarted?: boolean;
   /** this character has nothing left to hand over to the account */
   handedOver?: boolean;
   combatLevel: number;
@@ -47,6 +48,7 @@ export function summarize(s: GameState): CharacterSummary {
     challenge: s.character.challenge,
     realm: realmOf(s.character),
     act1Cleared: s.bossesDefeated.includes('sanctum'),
+    mapsStarted: !!s.maps.run || s.maps.tally.runs > 0,
     handedOver: !s.unmerged && !s.unpooled,
     combatLevel: characterLevel(s),
     totalLevel: SKILL_IDS.filter((k) => k !== 'combat' && k !== 'fishing').reduce((a, k) => a + levelOf(k, s.skills[k]), 0),

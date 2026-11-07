@@ -104,24 +104,31 @@ describe('flask items', () => {
     expect(s.account.bank.instill).toBe(0);
   });
 
-  it('a Mana flask drinks itself when Mana runs low without an enchantment', () => {
+  it('recovery flasks do not drink themselves without an enchantment', () => {
     const s = newGame(1);
     const c = ctx();
     startCombat(s, c, 'mudflats');
     const cb = s.combat!;
     cb.monsters = [];
     cb.spawnMs = 1e12;
-    const f = s.flaskSlots[1]!;
-    expect(f.flaskId).toBe('mana_small');
-    f.charges = 24;
-    expect(f.instill).toBeNull();
+    const life = s.flaskSlots[0]!;
+    const mana = s.flaskSlots[1]!;
+    expect(life.flaskId).toBe('life_small');
+    expect(mana.flaskId).toBe('mana_small');
+    life.charges = 21;
+    mana.charges = 24;
+    expect(life.instill).toBeNull();
+    expect(mana.instill).toBeNull();
     const d = deriveStats(s);
     s.mana = d.maxMana;
     combatStep(s, c, 50, d);
-    expect(f.charges).toBe(24);
+    expect(life.charges).toBe(21);
+    expect(mana.charges).toBe(24);
+    s.life = d.maxLife * 0.3;
     s.mana = 0;
     combatStep(s, c, 50, d);
-    expect(f.charges).toBe(18);
+    expect(life.charges).toBe(21);
+    expect(mana.charges).toBe(24);
   });
 
   it('retreating to the hideout refills every flask', () => {

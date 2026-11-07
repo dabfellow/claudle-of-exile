@@ -16,7 +16,7 @@ import { connectedWithout, treeAllocateReason } from './passives';
 import type { AscendancyRuntime, AscendancyState, GameState } from './types';
 
 /**
- * Ascendancies (docs/design/ASCENDANCIES.md): the choice, the points and the node tree. What the rules do in a fight
+ * Ascendancies (docs/GAME.md): the choice, the points and the node tree. What the rules do in a fight
  * lives with the mechanics they twist, in engine/mechanics.ts and engine/combat.ts.
  */
 

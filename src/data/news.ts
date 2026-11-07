@@ -10,9 +10,47 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Unique items now roll variable stat ranges that can be rerolled with Divine Orbs, class-defining trait uniques drop in mid-to-late campaign zones and maps, campaign unique drop pools scale progressively starting with a single unique in the Mud Flats, and select uniques feature thematic downsides.',
+  'The Skilling tree is now a 36-point specialisation: Gemcutting replaces the unusable Fishing branch, and existing Skilling trees receive a free refund.',
+  'Life-skill speed events now accelerate Heists, and Overtime now accelerates Greenhouse growth while offline.',
+  'Active map modifiers (Tier hazards, Doomed mechanics, rolled affixes and Sextants) are now displayed in a banner on the Combat screen during map runs.',
+  'The Atlas now offers 70 points: first clears of each Doomed Map tier grant 2, each Hard Boss grants 3, and each Uber Boss grants 5.',
+  'The Doomed Maps tab and Map Device now feature Auto-run and an Avoided Modifiers safety filter, automatically spending Chaos Orbs to reroll deadly affixes during bulk map farming.',
+  'The Atlas is now a connected 100-node skill tree with branching paths, node details, and clear visual links between every choice.',
+  'The wiki\'s starter builds are up to date: the Ranger now uses a bow, the Mage and Duelist plans match their starting skills, and the Exile has a plan of its own.',
+  'Monster packs in maps now scale from 10 packs in Tier 1 normal maps up to 100 packs in Tier 5 Doomed maps.',
+  'Fractured Orbs can now drop in Doomed Maps, permanently locking a random modifier on rare gear with at least four modifiers.',
+  "The Crafting Bench can now reach Level 6, unlocking meta-crafts to protect prefixes or suffixes, craft multiple modifiers, strip crafted mods, and assign Forger's Seals during auto-crafting.",
+  'Hideout stations now expand into post-campaign tiers: Map Device unlocks a 4th Sextant slot and Pinnacle Conduit, Stash features dedicated tab affinities and a Map storage tab, the Forge gains Pinnacle Metallurgy up to item level 84, Alchemy Table unlocks distillation and 3:1 orb conversions, the Watchtower extends to 36-hour offline mapping, and the Trophy Altar grants realm-wide bonuses.',
+  'Pinnacle crafting and Doom Sigils are now live: defeat the three Uber Bosses to earn Exile\'s Doom Sigils (elevate to Tier 0 Doom tier), Architect\'s Doom Sigils (imbue Doom Implicits), and Void Sigils (unlock a 7th modifier slot), alongside Bench Level 7 attack and caster isolation crafts.',
+  'The Crafting Bench UI has been revamped with a live item affix capacity monitor, categorized tabs for bench recipes (with quick filters for Defences, Offense, Attributes, and Meta crafts), dedicated Special Materials management for Doom Sigils, Contraband, Runes, and Essences, and a quick-action Scour button to strip crafted modifiers.',
+  'Bug reports now include build snapshots and recent combat logs, and signed-in players can receive developer replies and compensation in Settings.',
+  'Live events now support custom bonuses and announcements, with clearer schedules and bonuses applied only during their recorded offline time windows.',
+  'Market requests now reject invalid payments and duplicate pending trades, with additional server safeguards against malformed requests and transaction bursts.',
+  'The XP penalty for easier enemies now grows more sharply each level, from 10% at three levels over the area to the 70% cap at ten.',
+  'Combat XP now has a two-level grace band, up to 20% bonus in harder areas, and a maximum 70% penalty in easier areas.',
+  'Monsters now have distinct Armour, Evasion, Energy Shield, block and elemental identities, from slow ice golems to fast poison spiders, balanced around their existing effective pools and damage budgets.',
+  'Wiki guidance now reflects current survival rules, Mana is Power, Momentum and currency sources, and lists both capstones for every ascendancy.',
+  'Life and Mana flasks no longer trigger automatically by default; automatic flask use once again requires an Instilling Orb enchantment.',
+  'Momentum-keeping effects now save one whole stack each when you are hit (a hit always costs at least one), so they always make a difference. Lookout\'s Hood, Stormrider Greaves, The Pilgrim\'s Road, Deckwalkers, Sure-Footed, Steady Aim and the passive tree node all work this way.',
+  'Wellspring, Heart of Winter and The Last Decree now describe what they actually do: recent Mana spending counts more toward Mana is Power.',
+  'Magic packs and rare monsters now roll dangerous modifiers and pay extra experience and loot; the item modifier pool is much larger and more strictly tied to the right gear slots.',
+  'Magic, rare and unique monsters now display their rarity colours, badges and modifiers in the active target screen and on the battlefield.',
+  'Shadow now moves 25% faster, matching the other melee classes and keeping poison and Coup de Grâce attacks flowing.',
+  'Armour, Evasion and Energy Shield are much stronger, while monster damage ramps after Act 1 so maintaining defensive gear matters throughout the campaign.',
+  'Five Hard Bosses (Ossuar, Mother Vael, The Undertow, the Twin Regents and The Crownless) and three Uber Bosses (The First Exile, The Architect of Ruin and The Void Sovereign) can now be challenged from the Map Device using keys, with reactive Weak Point and Choir skill aims, boss trophy crafting materials, Doom Sigils and eleven exclusive unique items.',
+];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.3',
+    date: '6 Nov 2026',
+    title: 'Uncharted Realms',
+    items: [
+      'Maps have been rebuilt: run Tiers 1–10 from a shared realm map pool with tier-group modifiers and exclusive drops, roll Apprentice, Journeyman and Master Sextants on the Map Device, spend up to 30 Atlas Tree points across four branches, scribe all 10 map tiers and Sextants through Cartography, and unlock Doomed Maps I–V beyond Tier 10.',
+    ],
+  },
   {
     version: '0.4.2',
     date: '5 Nov 2026',

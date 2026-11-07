@@ -12,7 +12,7 @@ export type GemAttr = 'str' | 'dex' | 'int';
  * `minion`: it calls minions, whose hits are the skill's damage. `storm`: it leaves a storm on the field, whose strikes
  * are the skill's damage.
  */
-export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'curse' | 'movement' | 'dot' | 'sustain' | 'hit' | 'bleed' | 'blood' | 'heavy' | 'shield' | 'minion' | 'storm';
+export type GemTag = 'attack' | 'spell' | 'melee' | 'projectile' | 'area' | 'chain' | 'duration' | 'guard' | 'buff' | 'curse' | 'movement' | 'dot' | 'sustain' | 'hit' | 'bleed' | 'blood' | 'heavy' | 'shield' | 'minion' | 'storm' | 'mark' | 'warcry' | 'totem' | 'doom' | 'exertion';
 export type SkillRole = 'main' | 'burst' | 'area' | 'guard' | 'buff' | 'curse' | 'sustain' | 'summon';
 
 /** What a skill does when it fires. Numbers are at gem level 1. */
@@ -150,6 +150,34 @@ export interface SkillEffect {
   /** Arcane Siphon: % of damage returned as life / mana */
   leechLife?: number;
   leechMana?: number;
+  /** Mark skill: applies a Mark of this kind to the target; burst fires when stacks reach maxStacks */
+  markKind?: string;
+  /** Parameters for the Mark's burst when stacks fill */
+  markBurst?: { damage: [number, number]; type: DamageType; radius?: number; extraEffect?: string };
+  /** Maximum stacks before this mark bursts (default 5) */
+  markMaxStacks?: number;
+  /** This skill adds Doom to its targets (each hit increments doom by doomPerHit) */
+  addsDoom?: boolean;
+  /** Override for how many Doom each hit adds (default 1 for doom skills) */
+  doomPerHit?: number;
+  /** This is an Exertion-tagged skill: when Exertion >= 5, fires powered version */
+  exertion?: boolean;
+  /** The powered (Exerted) version: overrides from the base effect when exerted */
+  exertedEffect?: { moreDamage?: number; extraTargets?: 'all' | 'nearest'; extraPct?: number };
+  /** How much Exertion this skill's hits add (default 1) */
+  exertionPerHit?: number;
+  /** Totem skill: places a totem rather than attacking directly */
+  totem?: boolean;
+  /** Totem's attack interval in ms */
+  totemAttackMs?: number;
+  /** How long the totem lasts in ms (default 20000) */
+  totemDurationMs?: number;
+  /** Warcry skill: scales its effect with enemies in combat */
+  warcry?: boolean;
+  /** Per-enemy bonus for warcry scaling, capped at maxEnemies */
+  warcryScaling?: { perEnemy?: Partial<Record<StatKey, number>>; moreDamagePerEnemy?: number; maxEnemies: number };
+  /** Base chance to poison on hit for chaos skills (0–1) */
+  poisonChance?: number;
 }
 
 export interface ActiveGemDef {
@@ -181,7 +209,7 @@ export interface ActiveGemDef {
   defaultRule: TacticRule;
 }
 
-/** Weapon families by what they're good for (docs/design/BATTLEFIELD.md §7). */
+/** Weapon families by what they're good for (docs/GAME.md). */
 const SLAM_WEAPONS: WeaponFamily[] = ['mace', 'axe', 'sceptre', 'staff'];
 const STRIKE_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'dagger', 'mace', 'sceptre'];
 const HEAVY_WEAPONS: WeaponFamily[] = ['sword', 'axe', 'mace', 'sceptre', 'staff'];
@@ -211,6 +239,7 @@ export type RuleCondition =
   | 'notActive'
   | 'bossOnly'
   | 'meterFull'
+  | 'exertionFull'
   | 'targetHas'
   | 'targetLacks';
 
@@ -241,9 +270,13 @@ export interface TacticRule {
 }
 
 /** What a rule can aim a skill at. Later moments (a weak point, a choir add) each add their own. */
-export type SkillAim = 'martyrs';
+export type SkillAim = 'martyrs' | 'weakPoint' | 'choir';
 
-export const SKILL_AIMS: { id: SkillAim; label: string }[] = [{ id: 'martyrs', label: 'Chained martyrs' }];
+export const SKILL_AIMS: { id: SkillAim; label: string }[] = [
+  { id: 'martyrs', label: 'Chained martyrs' },
+  { id: 'weakPoint', label: 'Weak points' },
+  { id: 'choir', label: 'Choir adds' },
+];
 
 /** Reactive rules come in groups, each unlocked at the War Table. Rules outside a group are simple and free. */
 export type RuleUnlock = 'vitals' | 'status' | 'ground' | 'windups' | 'aim';
@@ -272,6 +305,7 @@ export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; 
   notActive: { label: 'When its effect is not active' },
   bossOnly: { label: 'Only against bosses' },
   meterFull: { label: 'When your class meter is full (Rage, Malice…)' },
+  exertionFull: { label: 'When Exertion is full' },
   targetHas: { label: 'While target is affected by', status: true, unlock: 'status' },
   targetLacks: { label: "While target isn't affected by", status: true, unlock: 'status' },
 };
@@ -715,7 +749,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     defaultRule: { when: 'notActive' },
   }),
 
-  // ---------- Act 5, Tides and summons (docs/design/MINIONS.md) ----------
+  // ---------- Act 5, Tides and summons (docs/GAME.md) ----------
   A({
     id: 'drowned_thralls', name: 'Drowned Thralls', attr: 'str', role: 'summon', tags: ['attack', 'melee', 'minion', 'hit'],
     manaCost: 18, cooldownMs: 4000, timeMs: 1800, color: '#5a8a7a',
@@ -794,7 +828,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     defaultRule: { when: 'bossOnly' },
   }),
 
-  // ---------- Act 6, The last empire (docs/design/ACT6_SKILLS.md) ----------
+  // ---------- Act 6, The last empire (docs/GAME.md) ----------
   A({
     id: 'worldbreaker', name: 'Worldbreaker', attr: 'str', role: 'area', tags: ['attack', 'melee', 'area', 'hit', 'heavy'],
     manaCost: 26, cooldownMs: 6000, timeMs: 6000, color: '#c84a2a',
@@ -838,7 +872,7 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     defaultRule: { when: 'enemyCasting' },
   }),
 
-  // ---------- Skill reform: drains (docs/design/SKILL_REFORM.md) ----------
+  // ---------- Skill reform: drains (docs/GAME.md) ----------
   A({
     id: 'leeching_blow', name: 'Leeching Blow', attr: 'str', role: 'sustain', tags: ['attack', 'melee', 'sustain', 'hit'],
     manaCost: 0, cooldownMs: 5000, timeMs: 2700, color: '#b85050',
@@ -1060,6 +1094,296 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
     desc: 'One clean, heavy stroke. 30% chance to stun.',
     defaultRule: { when: 'always' },
   }),
+
+  // ---------- Maps skills: Group 1 — Marks ----------
+  A({
+    id: 'brand_of_ruin', name: 'Brand of Ruin', attr: 'int', role: 'main', tags: ['spell', 'hit', 'mark', 'duration'],
+    manaCost: 15, cooldownMs: 0, timeMs: 3000, color: '#7a3a9a',
+    effect: { base: [80, 120], type: 'chaos', targets: 'single', markKind: 'brand_of_ruin', markBurst: { damage: [80, 120], type: 'chaos', extraEffect: 'poison' }, poisonChance: 0.15 },
+    desc: 'Apply Brand of Ruin to the target: a chaos mark that bursts for 80–120 chaos and poisons when it reaches 5 stacks.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'scorched_brand', name: 'Scorched Brand', attr: 'int', role: 'burst', tags: ['spell', 'hit', 'mark', 'duration'],
+    manaCost: 18, cooldownMs: 4000, timeMs: 3000, color: '#d04a2a',
+    effect: { base: [100, 150], type: 'fire', targets: 'single', markKind: 'scorched_brand', markBurst: { damage: [100, 150], type: 'fire', radius: 1 } },
+    desc: 'Apply Scorched Brand: when it reaches 5 stacks it bursts for 100–150 fire in a small radius.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'sunder_mark', name: 'Sunder Mark', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit', 'mark', 'duration'],
+    manaCost: 16, cooldownMs: 0, timeMs: 3600, color: '#c08a4a',
+    effect: { weaponPct: 160, targets: 'single', markKind: 'sunder_mark', markBurst: { damage: [0, 0], type: 'phys', radius: 1, extraEffect: 'armourBreak' } }, weapons: STRIKE_WEAPONS,
+    desc: 'Strike for 160% weapon damage and apply Sunder Mark. At 5 stacks it bursts for 200% to all neighbours and breaks their armour.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'void_brand', name: 'Void Brand', attr: 'int', role: 'area', tags: ['spell', 'hit', 'mark', 'area', 'duration'],
+    manaCost: 24, cooldownMs: 5000, timeMs: 2400, color: '#6a2a8a',
+    effect: { base: [60, 90], type: 'chaos', area: 'splash', radius: 2, markKind: 'void_brand', markBurst: { damage: [60, 90], type: 'chaos', radius: 2 }, poisonChance: 0.10 },
+    desc: 'Apply Void Brand to enemies in an area. At 5 stacks it bursts for 60–90 chaos to all enemies.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'fracture_mark', name: 'Fracture', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'hit', 'mark', 'duration'],
+    manaCost: 8, cooldownMs: 0, timeMs: 2400, color: '#5a9a5a',
+    effect: { weaponPct: 100, targets: 'single', markKind: 'fracture_mark', markBurst: { damage: [0, 0], type: 'phys', radius: 1, extraEffect: 'stun' } }, weapons: STRIKE_WEAPONS,
+    desc: 'Strike for 100% weapon damage and apply Fracture Mark. At 5 stacks it bursts for 80% to all in a small radius and stuns them.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'marked_for_death', name: 'Marked for Death', attr: 'dex', role: 'curse', tags: ['spell', 'curse', 'mark', 'duration'],
+    manaCost: 12, cooldownMs: 10000, timeMs: 1500, color: '#7a4a4a',
+    effect: { area: 'splash', radius: 1, markKind: 'marked_for_death', markBurst: { damage: [0, 0], type: 'phys' }, markMaxStacks: 4, curse: { durationMs: 8000, physTaken: 25 } },
+    desc: 'Curse enemies to take 25% more damage from all sources. Marks on cursed enemies burst at 4 stacks instead of 5.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'shadow_mark', name: 'Shadow Mark', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'hit', 'mark', 'duration'],
+    manaCost: 10, cooldownMs: 0, timeMs: 2700, color: '#6a4a8a',
+    effect: { weaponPct: 90, targets: 'single', convert: { type: 'chaos', pct: 50 }, markKind: 'shadow_mark', markBurst: { damage: [40, 60], type: 'chaos', extraEffect: 'poison' }, poisonChance: 0.15 },
+    desc: 'Strike for 90% weapon damage (50% converted to chaos) and apply Shadow Mark. At 5 stacks it bursts for 40–60 chaos and poisons.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'martyrdom_brand', name: 'Martyrdom Brand', attr: 'str', role: 'guard', tags: ['guard', 'buff', 'mark', 'shield', 'duration'],
+    manaCost: 15, cooldownMs: 10000, timeMs: 1500, color: '#9a7a4a',
+    effect: { shieldPct: 35, buff: { durationMs: 5000 }, markKind: 'martyrdom_brand', markBurst: { damage: [0, 0], type: 'phys' } },
+    desc: 'Raise a shield worth 35% of your life for 5s. Every hit you receive adds 1 stack to your attacker\'s mark; at 5 stacks the shield retaliates for 300% the damage absorbed.',
+    defaultRule: { when: 'enemyCasting' },
+  }),
+
+  // ---------- Maps skills: Group 2 — Warcries ----------
+  A({
+    id: 'battle_cry', name: 'Battle Cry', attr: 'str', role: 'buff', tags: ['buff', 'warcry', 'duration'],
+    manaCost: 0, cooldownMs: 6000, timeMs: 1500, color: '#d04a2a',
+    effect: { warcry: true, buff: { durationMs: 4000, moreDamage: 25 }, warcryScaling: { moreDamagePerEnemy: 25, maxEnemies: 5 } },
+    desc: '4s buff: 25% more damage per nearby enemy (max 5 = +125%).',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'rallying_cry', name: 'Rallying Cry', attr: 'str', role: 'sustain', tags: ['buff', 'warcry'],
+    manaCost: 0, cooldownMs: 8000, timeMs: 1500, color: '#c0784a',
+    effect: { warcry: true, warcryScaling: { perEnemy: { lifeRegenPct: 5 }, maxEnemies: 5 } },
+    desc: 'Recover 5% life per nearby enemy (up to 5 = 25% life instantly).',
+    defaultRule: { when: 'lifeBelow', value: 70 },
+  }),
+  A({
+    id: 'hunters_call', name: "Hunter's Call", attr: 'dex', role: 'buff', tags: ['buff', 'warcry', 'duration'],
+    manaCost: 0, cooldownMs: 5000, timeMs: 1500, color: '#6aba5a',
+    effect: { warcry: true, buff: { durationMs: 4000, stats: { attackSpeedPct: 8 } }, warcryScaling: { perEnemy: { attackSpeedPct: 8 }, maxEnemies: 5 } },
+    desc: '4s buff: 8% attack speed per nearby enemy (max 5 = +40%).',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'intimidate', name: 'Intimidate', attr: 'str', role: 'curse', tags: ['spell', 'curse', 'warcry', 'area', 'duration'],
+    manaCost: 0, cooldownMs: 8000, timeMs: 1500, color: '#b03a3a',
+    effect: { warcry: true, area: 'splash', radius: 10, curse: { durationMs: 6000, dealLess: 10 } },
+    desc: 'For 6s all enemies take 15% more damage and have 10% less attack speed.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'ancestral_call', name: 'Ancestral Call', attr: 'str', role: 'summon', tags: ['buff', 'warcry', 'minion', 'duration'],
+    manaCost: 0, cooldownMs: 10000, timeMs: 1500, color: '#c8a86a',
+    effect: { warcry: true, warcryScaling: { perEnemy: {}, maxEnemies: 6 }, minion: { name: 'Ancestor', art: 'warrior', count: 3, lifePct: 10, attackMs: 2000, reach: 1, durationMs: 8000 } },
+    desc: 'Summon 1 Ancestor spirit per 2 nearby enemies (max 3) for 8s. Each deals 50% weapon damage.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'dark_howl', name: 'Dark Howl', attr: 'int', role: 'buff', tags: ['buff', 'warcry', 'duration'],
+    manaCost: 0, cooldownMs: 8000, timeMs: 1500, color: '#7a3a9a',
+    effect: { warcry: true, buff: { durationMs: 6000, moreDamage: 15 }, warcryScaling: { moreDamagePerEnemy: 15, maxEnemies: 5 }, poisonChance: 0.15 },
+    desc: 'For 6s: spells have a chance per nearby enemy (up to 75%) to deal their damage as chaos (bypasses ES). Can poison.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'death_rattle', name: 'Death Rattle', attr: 'dex', role: 'area', tags: ['buff', 'warcry', 'duration'],
+    manaCost: 0, cooldownMs: 6000, timeMs: 1500, color: '#7a9a3a',
+    effect: { warcry: true, buff: { durationMs: 4000, moreDamage: 20 }, warcryScaling: { moreDamagePerEnemy: 20, maxEnemies: 5 } },
+    desc: 'For 4s: your next kill causes the corpse to explode for 20% of its max life as physical to all, scaling with enemies nearby.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'primal_roar', name: 'Primal Roar', attr: 'str', role: 'area', tags: ['attack', 'area', 'warcry', 'hit'],
+    manaCost: 0, cooldownMs: 10000, timeMs: 1500, color: '#c06a3a',
+    effect: { warcry: true, weaponPct: 100, area: 'splash', radius: 3, stunChance: 0.5, warcryScaling: { perEnemy: {}, maxEnemies: 5 } },
+    desc: 'Deal 100% weapon damage to all enemies and stun them for 0.5s per enemy nearby (max 2.5s).',
+    defaultRule: { when: 'enemiesAtLeast', value: 2 },
+  }),
+
+  // ---------- Maps skills: Group 3 — Totems ----------
+  A({
+    id: 'flame_totem', name: 'Flame Totem', attr: 'int', role: 'summon',     tags: ['spell', 'hit', 'totem', 'duration'],
+    manaCost: 15, cooldownMs: 12000, timeMs: 1500, color: '#d05a2a',
+    effect: { totem: true, base: [12, 18], type: 'fire', totemAttackMs: 1500, totemDurationMs: 20000 },
+    desc: 'Place a Flame Totem for 20s. It fires 12–18 fire damage every 1.5s at the nearest enemy.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'ice_totem', name: 'Ice Totem', attr: 'int', role: 'summon',     tags: ['spell', 'hit', 'totem', 'duration'],
+    manaCost: 15, cooldownMs: 12000, timeMs: 1500, color: '#5a9aba',
+    effect: { totem: true, base: [10, 16], type: 'cold', totemAttackMs: 1500, totemDurationMs: 20000 },
+    desc: 'Place an Ice Totem for 20s. It fires 10–16 cold damage every 1.5s, chilling enemies.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'storm_totem', name: 'Storm Totem', attr: 'int', role: 'summon', tags: ['spell', 'hit', 'totem', 'chain', 'duration'],
+    manaCost: 15, cooldownMs: 12000, timeMs: 1500, color: '#6a7aba',
+    effect: { totem: true, base: [6, 24], type: 'light', totemAttackMs: 1000, totemDurationMs: 20000 },
+    desc: 'Place a Storm Totem for 20s. It calls 6–24 lightning to a random enemy every 1s.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'war_totem', name: 'War Totem', attr: 'str', role: 'summon', tags: ['attack', 'hit', 'totem', 'duration'],
+    manaCost: 18, cooldownMs: 12000, timeMs: 1500, color: '#c04a2a',
+    effect: { totem: true, weaponPct: 100, totemAttackMs: 2500, totemDurationMs: 20000 },
+    desc: 'Place a War Totem for 20s. It attacks for 100% physical every 2.5s.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'shadow_totem', name: 'Shadow Totem', attr: 'dex', role: 'summon', tags: ['attack', 'hit', 'totem', 'dot', 'duration'],
+    manaCost: 15, cooldownMs: 12000, timeMs: 1500, color: '#6a9a5a',
+    effect: { totem: true, base: [8, 14], type: 'phys', totemAttackMs: 1800, totemDurationMs: 20000, ailment: { kind: 'poison', pctPerSec: 20, durationMs: 4000 } },
+    desc: 'Place a Shadow Totem for 20s. It attacks for 70% every 1.8s, alternating between two enemies, poisoning each hit.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'siege_totem', name: 'Siege Totem', attr: 'str', role: 'summon', tags: ['attack', 'hit', 'totem', 'duration'],
+    manaCost: 20, cooldownMs: 15000, timeMs: 1500, color: '#9a7a4a',
+    effect: { totem: true, base: [20, 30], type: 'phys', totemAttackMs: 4000, totemDurationMs: 25000, stunChance: 0.5 },
+    desc: 'Place a Siege Totem for 25s. It fires 160% physical every 4s with 50% stun chance in a line through the target.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'chaos_totem', name: 'Chaos Totem', attr: 'int', role: 'summon', tags: ['spell', 'hit', 'totem', 'duration'],
+    manaCost: 18, cooldownMs: 12000, timeMs: 1500, color: '#7a2a9a',
+    effect: { totem: true, base: [10, 18], type: 'chaos', totemAttackMs: 1500, totemDurationMs: 20000, poisonChance: 0.2 },
+    desc: 'Place a Chaos Totem for 20s. It fires 10–18 chaos every 1.5s with 20% poison chance. Chaos bypasses ES.',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'void_totem', name: 'Void Totem', attr: 'int', role: 'summon', tags: ['spell', 'hit', 'totem', 'duration'],
+    manaCost: 22, cooldownMs: 12000, timeMs: 1500, color: '#5a1a7a',
+    effect: { totem: true, base: [15, 25], type: 'chaos', totemAttackMs: 2000, totemDurationMs: 20000, poisonChance: 0.3 },
+    desc: 'Place a Void Totem for 20s. It fires 15–25 chaos every 2s with 30% poison chance. Each attack has a 20% chance to drain 5% life from the target as chaos.',
+    defaultRule: { when: 'notActive' },
+  }),
+
+  // ---------- Maps skills: Group 4 — Doom ----------
+  A({
+    id: 'doom_bolt', name: 'Doom Bolt', attr: 'int', role: 'main', tags: ['spell', 'hit', 'doom'],
+    manaCost: 15, cooldownMs: 0, timeMs: 3000, color: '#8a3a9a',
+    effect: { base: [20, 35], type: 'chaos', targets: 'single', addsDoom: true, doomPerHit: 2, poisonChance: 0.10 },
+    desc: '20–35 chaos damage, adds 2 Doom (double rate). Doom builds to 20 for a chaos burst.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'void_blast', name: 'Void Blast', attr: 'int', role: 'area', tags: ['spell', 'hit', 'area', 'doom'],
+    manaCost: 28, cooldownMs: 5000, timeMs: 2400, color: '#7a2a9a',
+    effect: { base: [50, 80], type: 'chaos', area: 'splash', radius: 2, addsDoom: true, doomPerHit: 3, poisonChance: 0.10 },
+    desc: '50–80 chaos to all enemies, adds 3 Doom to all.',
+    defaultRule: { when: 'enemiesAtLeast', value: 2 },
+  }),
+  A({
+    id: 'doom_strike', name: 'Doom Strike', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit', 'doom'],
+    manaCost: 10, cooldownMs: 0, timeMs: 3600, color: '#8a3a5a',
+    effect: { weaponPct: 150, targets: 'single', convert: { type: 'chaos', pct: 50 }, addsDoom: true, doomPerHit: 2 }, weapons: HEAVY_WEAPONS,
+    desc: '150% weapon damage, 50% converted to chaos; adds 2 Doom.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'entropy', name: 'Entropy', attr: 'int', role: 'main', tags: ['spell', 'hit', 'doom'],
+    manaCost: 12, cooldownMs: 0, timeMs: 2400, color: '#6a3a7a',
+    effect: { base: [15, 25], type: 'chaos', targets: 'single', addsDoom: true, doomPerHit: 1, poisonChance: 0.10 },
+    desc: '15–25 chaos damage; adds 1 Doom. Fast spam skill.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'doomsday', name: 'Doomsday', attr: 'int', role: 'burst', tags: ['spell', 'hit', 'doom'],
+    manaCost: 40, cooldownMs: 10000, timeMs: 3000, color: '#5a1a7a',
+    effect: { base: [80, 130], type: 'chaos', targets: 'single', addsDoom: true, doomPerHit: 5, poisonChance: 0.15 },
+    desc: 'Instantly triggers a Doom burst on the current target regardless of meter. The burst is 50% more powerful per 5 Doom the target had.',
+    defaultRule: { when: 'bossOnly' },
+  }),
+  A({
+    id: 'cursed_arrow', name: 'Cursed Arrow', attr: 'dex', role: 'main', tags: ['attack', 'projectile', 'hit', 'doom'],
+    manaCost: 8, cooldownMs: 0, timeMs: 2700, color: '#6a9a3a',
+    effect: { weaponPct: 90, targets: 'single', convert: { type: 'chaos', pct: 40 }, addsDoom: true, doomPerHit: 2, ailment: { kind: 'poison', pctPerSec: 15, durationMs: 4000 } }, range: RINGS, weapons: BOW,
+    desc: '90% bow attack, 40% converted to chaos; adds 2 Doom; 20% poison chance.',
+    defaultRule: { when: 'always' },
+  }),
+  A({
+    id: 'shadow_pact', name: 'Shadow Pact', attr: 'dex', role: 'buff', tags: ['buff', 'doom', 'duration'],
+    manaCost: 15, cooldownMs: 10000, timeMs: 1500, color: '#7a5a9a',
+    effect: { buff: { durationMs: 6000, moreDamage: 20 } },
+    desc: 'For 6s: gain 2% more damage for each point of Doom on current target (max 40%).',
+    defaultRule: { when: 'notActive' },
+  }),
+  A({
+    id: 'void_pact', name: 'Void Pact', attr: 'int', role: 'sustain', tags: ['spell', 'sustain', 'doom', 'hit'],
+    manaCost: 0, cooldownMs: 12000, timeMs: 1500, color: '#5a2a7a',
+    effect: { base: [1, 1], type: 'chaos', targets: 'single', restoreManaPct: 5 },
+    desc: 'Consume all Doom on the current target; heal 2% life per point consumed. If target had max Doom, also recover 20% mana.',
+    defaultRule: { when: 'lifeBelow', value: 70 },
+  }),
+
+  // ---------- Maps skills: Group 5 — Exertion ----------
+  A({
+    id: 'gut_punch', name: 'Gut Punch', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit', 'exertion'],
+    manaCost: 8, cooldownMs: 0, timeMs: 2700, color: '#d04a3a',
+    effect: { weaponPct: 110, targets: 'single', exertion: true, exertionPerHit: 2, exertedEffect: { moreDamage: 80, extraTargets: 'nearest', extraPct: 50 } }, weapons: STRIKE_WEAPONS,
+    desc: '110% weapon damage; adds 2 Exertion. Exerted: 200% weapon + hits nearest other enemy for 50%.',
+    defaultRule: { when: 'exertionFull' },
+  }),
+  A({
+    id: 'quickdraw', name: 'Quickdraw', attr: 'dex', role: 'burst', tags: ['attack', 'projectile', 'hit', 'exertion'],
+    manaCost: 12, cooldownMs: 0, timeMs: 2400, color: '#6aba4a',
+    effect: { weaponPct: 200, targets: 'single', crit: 10, exertion: true, exertedEffect: { moreDamage: 75 } }, range: RINGS, weapons: BOW,
+    desc: '200% bow attack. Exerted: 350%, guaranteed crit.',
+    defaultRule: { when: 'exertionFull' },
+  }),
+  A({
+    id: 'charged_strike', name: 'Charged Strike', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit', 'exertion'],
+    manaCost: 10, cooldownMs: 0, timeMs: 3300, color: '#c07a3a',
+    effect: { weaponPct: 130, targets: 'single', stunChance: 0.25, exertion: true, exertedEffect: { moreDamage: 30, extraTargets: 'all' } }, weapons: HEAVY_WEAPONS,
+    desc: '130% physical, 25% stun. Exerted: also stuns all nearby enemies for 1s, 10 Stagger.',
+    defaultRule: { when: 'exertionFull' },
+  }),
+  A({
+    id: 'void_surge', name: 'Void Surge', attr: 'int', role: 'main', tags: ['spell', 'hit', 'exertion'],
+    manaCost: 18, cooldownMs: 0, timeMs: 3000, color: '#8a2a9a',
+    effect: { base: [20, 30], type: 'chaos', targets: 'single', exertion: true, exertedEffect: { moreDamage: 150 }, poisonChance: 0.10 },
+    desc: '20–30 chaos, single; bypasses ES. Exerted: 150% more chaos damage + poisons.',
+    defaultRule: { when: 'exertionFull' },
+  }),
+  A({
+    id: 'rend', name: 'Rend', attr: 'dex', role: 'main', tags: ['attack', 'melee', 'hit', 'dot', 'bleed', 'exertion'],
+    manaCost: 8, cooldownMs: 0, timeMs: 2400, color: '#c0392b',
+    effect: { weaponPct: 90, targets: 'single', exertion: true, exertionPerHit: 1, exertedEffect: { moreDamage: 50 }, ailment: { kind: 'bleed', pctPerSec: 40, durationMs: 4000 } }, weapons: ['sword', 'axe', 'dagger'],
+    desc: '90% weapon, bleeds; adds 1 Exertion. Exerted: bleed lasts 3× longer and spreads to all enemies.',
+    defaultRule: { when: 'exertionFull' },
+  }),
+  A({
+    id: 'void_wave', name: 'Void Wave', attr: 'int', role: 'area', tags: ['spell', 'hit', 'area', 'exertion'],
+    manaCost: 16, cooldownMs: 3000, timeMs: 3000, color: '#6a2a8a',
+    effect: { base: [20, 30], type: 'chaos', area: 'splash', radius: 2, exertion: true, exertedEffect: { moreDamage: 100, extraTargets: 'all' }, poisonChance: 0.10 },
+    desc: '20–30 chaos, all enemies. Exerted: fires twice in immediate succession.',
+    defaultRule: { when: 'exertionFull' },
+  }),
+  A({
+    id: 'soul_rip', name: 'Soul Rip', attr: 'int', role: 'burst', tags: ['spell', 'hit', 'exertion'],
+    manaCost: 22, cooldownMs: 5000, timeMs: 2400, color: '#7a1a9a',
+    effect: { base: [30, 45], type: 'chaos', targets: 'single', exertion: true, exertedEffect: { moreDamage: 50, extraTargets: 'all' }, poisonChance: 0.10 },
+    desc: '30–45 chaos, single; bypasses ES. Exerted: fires at 3 targets for the same damage.',
+    defaultRule: { when: 'exertionFull' },
+  }),
+  A({
+    id: 'deathblow', name: 'Deathblow', attr: 'str', role: 'main', tags: ['attack', 'melee', 'hit', 'heavy', 'exertion'],
+    manaCost: 15, cooldownMs: 0, timeMs: 4800, color: '#c03a2a',
+    effect: { weaponPct: 220, targets: 'single', exertion: true, exertedEffect: { moreDamage: 80 } }, weapons: HEAVY_WEAPONS,
+    desc: '220% physical. Exerted: 400% weapon + always crits.',
+    defaultRule: { when: 'exertionFull' },
+  }),
 ];
 
 // ---------- supports ----------
@@ -1183,6 +1507,28 @@ const GEM_LEVELS: Record<string, number> = {
   goaded: 58, funeral_rites: 58, crowned_storm: 58,
   eternal_ward: 60, reprisal: 60, tribute_of_iron: 60, blood_tax: 60, imperial_vintage: 60,
   succession: 62, imperial_reach: 62,
+  // Maps gems: level 66–78 (char level)
+  brand_of_ruin: 66, sunder_mark: 66, fracture_mark: 66, doom_bolt: 66, entropy: 66, gut_punch: 66,
+  battle_cry: 66, hunters_call: 66, flame_totem: 66,
+  scorched_brand: 68, marked_for_death: 68, doom_strike: 68, cursed_arrow: 68, quickdraw: 68, rend: 68,
+  rallying_cry: 68, ice_totem: 68, war_totem: 68,
+  void_brand: 70, shadow_mark: 70, intimidate: 70, dark_howl: 70, storm_totem: 70, shadow_totem: 70,
+  charged_strike: 70, void_surge: 70, void_blast: 70,
+  ancestral_call: 72, void_wave: 72, deathblow: 72, siege_totem: 72, shadow_pact: 72,
+  martyrdom_brand: 74, chaos_totem: 74, soul_rip: 74, void_pact: 74,
+  death_rattle: 74, primal_roar: 74,
+  doomsday: 76, void_totem: 76,
+  // support gems (level = skill's level + 6 handled by gemReqLevel; explicit for non-signatures)
+  rapid_marks: 66, powerful_voice: 66, doom_accelerant: 66, hasty_exertion: 66,
+  chaos_infusion: 66, chaos_mastery: 66,
+  volatile_marks: 68, persistent_mark: 68, war_drummer: 68, rally_the_fallen: 68,
+  twin_totems: 68, ancestral_bond: 68, totem_vanguard: 68, doom_echo: 68, void_ward: 68,
+  cascading_force: 68, vile_efficiency: 68, opportunism: 68,
+  spreading_brand: 70, cursed_brand: 72, lingering_shout: 70, resounding_cry: 72, totem_fortify: 70,
+  cascading_totems: 74, mass_doom: 70, endless_dread: 74, void_hunger: 72,
+  overexertion: 70, exerted_momentum: 72, violent_release: 74,
+  chain_reaction: 70, blind_fury: 70, void_touch: 72, elemental_confluence: 70,
+  cruel_intent: 70, slaughter: 72, war_scarred: 72, siege_breaker: 74, momentum_surge: 70, deep_reserves: 74,
 };
 
 /**
@@ -1225,6 +1571,28 @@ const GEM_ACTS: Record<string, number> = {
   spoils_of_war: 6, tax_collector: 6, imperial_tribute: 6, shieldwall: 6, shadow_court: 6, executioners_stroke: 6,
   goaded: 6, funeral_rites: 6, crowned_storm: 6, eternal_ward: 6, reprisal: 6, succession: 6, imperial_reach: 6,
   tribute_of_iron: 6, blood_tax: 6, imperial_vintage: 6,
+  // Maps — all 40 skills + signatures + 40 group/general supports
+  brand_of_ruin: 7, scorched_brand: 7, sunder_mark: 7, void_brand: 7, fracture_mark: 7, marked_for_death: 7, shadow_mark: 7, martyrdom_brand: 7,
+  battle_cry: 7, rallying_cry: 7, hunters_call: 7, intimidate: 7, ancestral_call: 7, dark_howl: 7, death_rattle: 7, primal_roar: 7,
+  flame_totem: 7, ice_totem: 7, storm_totem: 7, war_totem: 7, shadow_totem: 7, siege_totem: 7, chaos_totem: 7, void_totem: 7,
+  doom_bolt: 7, void_blast: 7, doom_strike: 7, entropy: 7, doomsday: 7, cursed_arrow: 7, shadow_pact: 7, void_pact: 7,
+  gut_punch: 7, quickdraw: 7, charged_strike: 7, void_surge: 7, rend: 7, void_wave: 7, soul_rip: 7, deathblow: 7,
+  // signatures (all act 7)
+  corrosion: 7, flash_point: 7, exposed: 7, nihil: 7, shatter_burst: 7, execute_mark: 7, venom_brand: 7, payback: 7,
+  war_drum: 7, second_wind: 7, pack_rush: 7, dread_shout: 7, forebears: 7, void_voice: 7, carnage: 7, primal_force: 7,
+  pyre_totem: 7, blizzard_totem: 7, tempest_totem: 7, battle_totem: 7, venom_totem: 7, long_siege: 7, corruptor: 7, soul_siphon: 7,
+  accelerant: 7, cascade: 7, cursed_blow: 7, doom_haste: 7, last_rites: 7, marked_arrow: 7, dark_communion: 7, dark_leech: 7,
+  follow_blow: 7, hair_trigger: 7, overcharge: 7, dark_surge: 7, deep_hemorrhage: 7, chain_doom: 7, dark_drain: 7, executioner: 7,
+  // group supports
+  rapid_marks: 7, volatile_marks: 7, spreading_brand: 7, persistent_mark: 7, cursed_brand: 7,
+  powerful_voice: 7, war_drummer: 7, lingering_shout: 7, rally_the_fallen: 7, resounding_cry: 7,
+  twin_totems: 7, totem_fortify: 7, ancestral_bond: 7, totem_vanguard: 7, cascading_totems: 7,
+  doom_accelerant: 7, mass_doom: 7, doom_echo: 7, endless_dread: 7, void_hunger: 7,
+  hasty_exertion: 7, overexertion: 7, cascading_force: 7, exerted_momentum: 7, violent_release: 7,
+  // general supports
+  chaos_infusion: 7, opportunism: 7, chain_reaction: 7, blind_fury: 7, void_touch: 7,
+  chaos_mastery: 7, vile_efficiency: 7, elemental_confluence: 7, cruel_intent: 7, slaughter: 7,
+  war_scarred: 7, siege_breaker: 7, void_ward: 7, momentum_surge: 7, deep_reserves: 7,
 };
 
 /** The act a skill or support gem arrives with. */
@@ -1392,6 +1760,104 @@ export const SUPPORT_GEMS: SupportGemDef[] = [
   S({ id: 'eternal_ward', name: 'Eternal Ward', attr: 'int', fits: ['shield'], mods: { special: 'eternal', shieldMore: -20, manaMult: 1.3 }, desc: 'The shield has no time limit: it stays until it breaks, even between packs; 20% less shield.' }),
   S({ id: 'funeral_rites', name: 'Funeral Rites', attr: 'str', fits: ['minion'], mods: { special: 'funeral', manaMult: 1.3 }, desc: 'A minion that falls strikes everything next to it for 3 times its hit.' }),
   S({ id: 'crowned_storm', name: 'Crowned Storm', attr: 'int', fits: ['storm'], mods: { special: 'crowned', manaMult: 1.2 }, desc: 'The storm stays around you, over at least 2 rings, instead of on the target.' }),
+
+  // ---------- Maps signatures ----------
+  // Mark signatures
+  S({ id: 'corrosion', name: 'Corrosion', attr: 'int', fits: [], signatureFor: 'brand_of_ruin', mods: { special: 'corrosion' }, desc: "The burst strips 20% chaos resistance for 4s." }),
+  S({ id: 'flash_point', name: 'Flash Point', attr: 'int', fits: [], signatureFor: 'scorched_brand', mods: { special: 'flashpoint' }, desc: 'The burst ignites for 5s.' }),
+  S({ id: 'exposed', name: 'Exposed', attr: 'str', fits: [], signatureFor: 'sunder_mark', mods: { special: 'flay' }, desc: 'The burst breaks armour (+15% damage taken for 4s).' }),
+  S({ id: 'nihil', name: 'Nihil', attr: 'int', fits: [], signatureFor: 'void_brand', mods: { special: 'nihil' }, desc: 'Targets hit by the burst have −15% chaos res for 6s.' }),
+  S({ id: 'shatter_burst', name: 'Shatter Burst', attr: 'dex', fits: [], signatureFor: 'fracture_mark', mods: { special: 'shatter_burst' }, desc: 'The burst stuns all hit for 1s.' }),
+  S({ id: 'execute_mark', name: 'Execute', attr: 'dex', fits: [], signatureFor: 'marked_for_death', mods: { special: 'execute_mark' }, desc: 'Marked+cursed enemies burst at 3 stacks.' }),
+  S({ id: 'venom_brand', name: 'Venom Brand', attr: 'dex', fits: [], signatureFor: 'shadow_mark', mods: { durationPct: 50 }, desc: 'The burst poison lasts 4s longer.' }),
+  S({ id: 'payback', name: 'Payback', attr: 'str', fits: [], signatureFor: 'martyrdom_brand', mods: { special: 'payback' }, desc: 'The retaliation hits the whole pack.' }),
+  // Warcry signatures
+  S({ id: 'war_drum', name: 'War Drum', attr: 'str', fits: [], signatureFor: 'battle_cry', mods: { special: 'war_drum' }, desc: 'Also grants 8 Rage per enemy nearby.' }),
+  S({ id: 'second_wind', name: 'Second Wind', attr: 'str', fits: [], signatureFor: 'rallying_cry', mods: { special: 'second_wind' }, desc: 'Also recovers 10% mana per enemy.' }),
+  S({ id: 'pack_rush', name: 'Pack Rush', attr: 'dex', fits: [], signatureFor: 'hunters_call', mods: { special: 'pack_rush' }, desc: 'Also grants 20% increased evasion.' }),
+  S({ id: 'dread_shout', name: 'Dread Shout', attr: 'str', fits: [], signatureFor: 'intimidate', mods: { curseEffect: 20 }, desc: 'Effect scales: +3% more damage per enemy in combat.' }),
+  S({ id: 'forebears', name: 'Forebears', attr: 'str', fits: [], signatureFor: 'ancestral_call', mods: { special: 'forebears' }, desc: 'Ancestors also deal 20% of their damage as fire.' }),
+  S({ id: 'void_voice', name: 'Void Voice', attr: 'int', fits: [], signatureFor: 'dark_howl', mods: { special: 'void_voice' }, desc: 'Chance to poison when chaos conversion triggers.' }),
+  S({ id: 'carnage', name: 'Carnage', attr: 'dex', fits: [], signatureFor: 'death_rattle', mods: { special: 'carnage' }, desc: 'The explosion chains once to the nearest enemy.' }),
+  S({ id: 'primal_force', name: 'Primal Force', attr: 'str', fits: [], signatureFor: 'primal_roar', mods: { special: 'primal_force' }, desc: 'The stun also applies −20% damage for its duration.' }),
+  // Totem signatures
+  S({ id: 'pyre_totem', name: 'Pyre Totem', attr: 'int', fits: [], signatureFor: 'flame_totem', mods: { special: 'pyre_totem' }, desc: 'The totem also causes burning ground, 2 fire/s to all enemies.' }),
+  S({ id: 'blizzard_totem', name: 'Blizzard Totem', attr: 'int', fits: [], signatureFor: 'ice_totem', mods: { special: 'blizzard_totem' }, desc: 'On death or expiry, explodes for 60–90 cold in a wide radius.' }),
+  S({ id: 'tempest_totem', name: 'Tempest Totem', attr: 'int', fits: [], signatureFor: 'storm_totem', mods: { chains: 1, moreDamage: -15, manaMult: 1.1 }, desc: 'Chain hits a second enemy for 50%.' }),
+  S({ id: 'battle_totem', name: 'Battle Totem', attr: 'str', fits: [], signatureFor: 'war_totem', mods: { special: 'battle_totem' }, desc: 'Each kill by this totem grants you 1 Rage.' }),
+  S({ id: 'venom_totem', name: 'Venom Totem', attr: 'dex', fits: [], signatureFor: 'shadow_totem', mods: { special: 'venom_totem' }, desc: 'Poison stacks twice as fast (applies 2 poison on each hit).' }),
+  S({ id: 'long_siege', name: 'Long Siege', attr: 'str', fits: [], signatureFor: 'siege_totem', mods: { special: 'long_siege' }, desc: 'Line extends one more ring, hits one additional enemy.' }),
+  S({ id: 'corruptor', name: 'Corruptor', attr: 'int', fits: [], signatureFor: 'chaos_totem', mods: { special: 'corruptor' }, desc: 'The totem applies −15% chaos resistance to enemies it hits for 4s.' }),
+  S({ id: 'soul_siphon', name: 'Soul Siphon', attr: 'int', fits: [], signatureFor: 'void_totem', mods: { special: 'soul_siphon' }, desc: 'Drain chance rises to 40%; restores mana too.' }),
+  // Doom signatures
+  S({ id: 'accelerant', name: 'Accelerant', attr: 'int', fits: [], signatureFor: 'doom_bolt', mods: { moreDamage: 20 }, desc: 'Target with 10+ Doom takes 20% more from this skill.' }),
+  S({ id: 'cascade', name: 'Cascade', attr: 'int', fits: [], signatureFor: 'void_blast', mods: { special: 'cascade' }, desc: "If any target had max Doom, its burst propagates 2 Doom to all neighbours." }),
+  S({ id: 'cursed_blow', name: 'Cursed Blow', attr: 'str', fits: [], signatureFor: 'doom_strike', mods: { special: 'cursed_blow' }, desc: 'Physical portion also adds 1 Doom.' }),
+  S({ id: 'doom_haste', name: 'Doom Haste', attr: 'int', fits: [], signatureFor: 'entropy', mods: { special: 'doom_haste' }, desc: 'Doom decays 50% slower while this is on the bar.' }),
+  S({ id: 'last_rites', name: 'Last Rites', attr: 'int', fits: [], signatureFor: 'doomsday', mods: { moreDamage: 150 }, desc: 'Enemies above 15 Doom receive 150% more from the burst.' }),
+  S({ id: 'marked_arrow', name: 'Marked Arrow', attr: 'dex', fits: [], signatureFor: 'cursed_arrow', mods: { special: 'marked_arrow' }, desc: 'At 10+ Doom, the hit poisons for double duration.' }),
+  S({ id: 'dark_communion', name: 'Dark Communion', attr: 'dex', fits: [], signatureFor: 'shadow_pact', mods: { special: 'dark_communion' }, desc: 'Also gain 1% chaos resistance per Doom point for the duration.' }),
+  S({ id: 'dark_leech', name: 'Dark Leech', attr: 'int', fits: [], signatureFor: 'void_pact', mods: { special: 'dark_leech' }, desc: 'Also gain 1% ES recharge per Doom consumed.' }),
+  // Exertion signatures
+  S({ id: 'follow_blow', name: 'Follow Through', attr: 'str', fits: [], signatureFor: 'gut_punch', mods: { special: 'follow_blow' }, desc: 'The exerted hit also stuns the second target for 1s.' }),
+  S({ id: 'hair_trigger', name: 'Hair Trigger', attr: 'dex', fits: [], signatureFor: 'quickdraw', mods: { special: 'hair_trigger' }, desc: 'Any crit resets Exertion to 0 and immediately counts it as 5 again (ready instantly).' }),
+  S({ id: 'overcharge', name: 'Overcharge', attr: 'str', fits: [], signatureFor: 'charged_strike', mods: { special: 'overcharge' }, desc: 'The exerted version carries 2 stacks over (resets to 2, not 0).' }),
+  S({ id: 'dark_surge', name: 'Dark Surge', attr: 'int', fits: [], signatureFor: 'void_surge', mods: { special: 'dark_surge' }, desc: 'Exerted Void Surge also fires at the nearest second enemy for 50%.' }),
+  S({ id: 'deep_hemorrhage', name: 'Hemorrhage', attr: 'dex', fits: [], signatureFor: 'rend', mods: { special: 'hemorrhage_exert' }, desc: 'Exerted Rend also applies a fresh bleed to all nearby.' }),
+  S({ id: 'chain_doom', name: 'Chain Doom', attr: 'int', fits: [], signatureFor: 'void_wave', mods: { special: 'chain_doom' }, desc: 'Exerted hits add 2 Doom to all enemies hit.' }),
+  S({ id: 'dark_drain', name: 'Soul Drain', attr: 'int', fits: [], signatureFor: 'soul_rip', mods: { special: 'dark_drain' }, desc: 'Exerted Soul Rip heals 8% life.' }),
+  S({ id: 'executioner', name: 'Executioner', attr: 'str', fits: [], signatureFor: 'deathblow', mods: { special: 'executioner' }, desc: 'Kills with exerted Deathblow instantly grant 5 Exertion.' }),
+
+  // ---------- Maps group supports ----------
+  // Mark supports (5)
+  S({ id: 'rapid_marks', name: 'Rapid Marks', attr: 'int', fits: ['mark'], mods: { cooldownPct: 30, manaMult: 1.2 }, desc: 'Marks burst at 4 stacks instead of 5; apply rate is 30% faster.' }),
+  S({ id: 'volatile_marks', name: 'Volatile Marks', attr: 'int', fits: ['mark'], mods: { moreDamage: 60, manaMult: 1.3 }, desc: 'Mark bursts deal 60% more damage.' }),
+  S({ id: 'spreading_brand', name: 'Spreading Brand', attr: 'int', fits: ['mark'], mods: { special: 'spreading_brand', manaMult: 1.25 }, desc: 'When a Mark bursts, the nearest unmarked enemy inherits 2 stacks of the same Mark.' }),
+  S({ id: 'persistent_mark', name: 'Persistent Mark', attr: 'int', fits: ['mark'], mods: { durationPct: 50, manaMult: 1.2 }, desc: 'Mark duration is 4s longer; stacks do not decay until the mark fully expires.' }),
+  S({ id: 'cursed_brand', name: 'Cursed Brand', attr: 'int', fits: ['mark'], mods: { moreDamage: 10, manaMult: 1.3 }, desc: 'Marked targets take 10% more damage from all sources.' }),
+  // Warcry supports (5)
+  S({ id: 'powerful_voice', name: 'Powerful Voice', attr: 'str', fits: ['warcry'], mods: { special: 'powerful_voice', manaMult: 1.0 }, desc: 'Warcry effects count twice as many enemies (effectively doubled for scaling).' }),
+  S({ id: 'war_drummer', name: 'War Drummer', attr: 'str', fits: ['warcry'], mods: { cooldownPct: 30, manaMult: 1.0 }, desc: 'Warcry cooldowns reduced by 30%.' }),
+  S({ id: 'lingering_shout', name: 'Lingering Shout', attr: 'str', fits: ['warcry'], mods: { durationPct: 50, manaMult: 1.0 }, desc: 'Warcry empowerment buffs last 3s longer.' }),
+  S({ id: 'rally_the_fallen', name: 'Rally the Fallen', attr: 'str', fits: ['warcry', 'sustain'], mods: { special: 'rally_fallen', manaMult: 1.0 }, desc: 'Healing warcries also grant 1% life per corpse in the arena (up to 10%).' }),
+  S({ id: 'resounding_cry', name: 'Resounding Cry', attr: 'str', fits: ['warcry'], mods: { special: 'resounding_cry', manaMult: 1.0 }, desc: 'Warcry empowerment also applies to Totems if one is active.' }),
+  // Totem supports (5)
+  S({ id: 'twin_totems', name: 'Twin Totems', attr: 'int', fits: ['totem'], mods: { minionCount: 1, moreDamage: -25, manaMult: 1.3 }, desc: 'You can have 2 totems active simultaneously; each deals 25% less damage.' }),
+  S({ id: 'totem_fortify', name: 'Totem Fortify', attr: 'str', fits: ['totem'], mods: { minionLife: 100, durationPct: 50, manaMult: 1.25 }, desc: 'Totem has 100% more life and lasts 10s longer.' }),
+  S({ id: 'ancestral_bond', name: 'Ancestral Bond', attr: 'str', fits: ['totem'], mods: { moreDamage: 20, manaMult: 1.2 }, desc: 'While a totem is active you deal 20% more damage.' }),
+  S({ id: 'totem_vanguard', name: 'Totem Vanguard', attr: 'str', fits: ['totem'], mods: { special: 'totem_vanguard', manaMult: 1.2 }, desc: 'Totem taunts enemies for the first 4s of its life.' }),
+  S({ id: 'cascading_totems', name: 'Cascading Totems', attr: 'int', fits: ['totem'], mods: { special: 'cascading_totems', manaMult: 1.3 }, desc: 'When a totem dies, it immediately summons a replacement at half life for free.' }),
+  // Doom supports (5)
+  S({ id: 'doom_accelerant', name: 'Doom Accelerant', attr: 'int', fits: ['doom'], mods: { special: 'doom_accelerant', manaMult: 1.2 }, desc: 'Hits add 2 Doom instead of 1; Doom decays 50% slower.' }),
+  S({ id: 'mass_doom', name: 'Mass Doom', attr: 'int', fits: ['doom'], mods: { special: 'mass_doom', manaMult: 1.3 }, desc: 'Hits add 1 Doom to all enemies in combat.' }),
+  S({ id: 'doom_echo', name: 'Doom Echo', attr: 'int', fits: ['doom'], mods: { special: 'doom_echo', manaMult: 1.25 }, desc: 'When a Doom burst triggers, it deals 30% of its damage to all other enemies.' }),
+  S({ id: 'endless_dread', name: 'Endless Dread', attr: 'int', fits: ['doom'], mods: { special: 'endless_dread', moreDamage: 50, manaMult: 1.4 }, desc: 'Doom maximum raised to 30; burst is 50% more powerful per extra point above 20.' }),
+  S({ id: 'void_hunger', name: 'Void Hunger', attr: 'int', fits: ['doom'], mods: { special: 'void_hunger', manaMult: 1.3 }, desc: 'Doom bursts have a 30% chance not to clear the meter.' }),
+  // Exertion supports (5)
+  S({ id: 'hasty_exertion', name: 'Hasty Exertion', attr: 'str', fits: ['exertion'], mods: { special: 'hasty_exertion', manaMult: 1.2 }, desc: 'Hits add 2 Exertion instead of 1; Exertion decays 50% slower.' }),
+  S({ id: 'overexertion', name: 'Overexertion', attr: 'str', fits: ['exertion'], mods: { moreDamage: 50, manaMult: 1.3 }, desc: 'Exerted version deals 50% more; Exertion resets to 2 (not 0) so you stay semi-ready.' }),
+  S({ id: 'cascading_force', name: 'Cascading Force', attr: 'dex', fits: ['exertion'], mods: { special: 'cascading_force', manaMult: 1.2 }, desc: 'Exerted kills give 2 Exertion instantly.' }),
+  S({ id: 'exerted_momentum', name: 'Exerted Momentum', attr: 'str', fits: ['exertion'], mods: { special: 'exerted_momentum', manaMult: 1.2 }, desc: 'Exerted uses grant 3 Momentum and 2 Rage.' }),
+  S({ id: 'violent_release', name: 'Violent Release', attr: 'str', fits: ['exertion'], mods: { special: 'violent_release', manaMult: 1.3 }, desc: 'Exerted uses also deal 50% of their damage to all other enemies.' }),
+
+  // ---------- Maps general supports (15) ----------
+  // Rule-bending (5)
+  S({ id: 'chaos_infusion', name: 'Chaos Infusion', attr: 'int', fits: ['hit'], mods: { special: 'chaos_infusion', manaMult: 1.3 }, desc: '40% of this skill\'s damage is dealt as chaos (bypasses ES); 60% remains as the original type.' }),
+  S({ id: 'opportunism', name: 'Opportunism', attr: 'dex', fits: ['hit'], not: ['heavy', 'totem'], mods: { special: 'reprisal', manaMult: 1.3 }, desc: 'Fires when YOU are hit instead of on its rule; 2s internal cooldown.' }),
+  S({ id: 'chain_reaction', name: 'Chain Reaction', attr: 'dex', fits: ['hit'], not: ['heavy', 'totem'], mods: { special: 'succession', manaMult: 1.3 }, desc: 'On kill, fires once more immediately for free.' }),
+  S({ id: 'blind_fury', name: 'Blind Fury', attr: 'str', fits: ['attack', 'spell'], mods: { special: 'blind_fury', manaMult: 1.0 }, desc: 'Skill fires 50% faster but only while you are below 50% life.' }),
+  S({ id: 'void_touch', name: 'Void Touch', attr: 'int', fits: ['spell'], mods: { special: 'void_touch', manaMult: 1.3 }, desc: 'While mana is above 80%, converts the spell to chaos damage (bypasses ES, 15% poison chance).' }),
+  // Amplifiers (10)
+  S({ id: 'chaos_mastery', name: 'Chaos Mastery', attr: 'int', fits: ['hit'], mods: { moreDamage: 40, manaMult: 1.3 }, desc: '40% more chaos damage.' }),
+  S({ id: 'vile_efficiency', name: 'Vile Efficiency', attr: 'int', fits: ['hit'], mods: { manaMult: 0.8 }, desc: 'Chaos skills cost 20% less mana; 15% chance to poison on hit.' }),
+  S({ id: 'elemental_confluence', name: 'Elemental Confluence', attr: 'int', fits: ['spell', 'attack'], mods: { moreElem: 15, manaMult: 1.3 }, desc: 'If the hit deals fire, cold, and lightning, each is 15% stronger.' }),
+  S({ id: 'cruel_intent', name: 'Cruel Intent', attr: 'str', fits: ['hit'], mods: { special: 'gnaw', manaMult: 1.3 }, desc: '35% more damage against enemies below 30% life.' }),
+  S({ id: 'slaughter', name: 'Slaughter', attr: 'dex', fits: ['hit'], mods: { special: 'slaughter', manaMult: 1.2 }, desc: 'Kills grant 2% more damage for 3s, stacking to 10 times.' }),
+  S({ id: 'war_scarred', name: 'War-Scarred', attr: 'str', fits: ['attack', 'spell'], mods: { moreDamage: 30, manaMult: 1.3 }, desc: '30% more damage while your life is above 85%.' }),
+  S({ id: 'siege_breaker', name: 'Siege Breaker', attr: 'str', fits: ['hit'], mods: { moreDamage: 50, manaMult: 1.4 }, desc: '50% more damage against bosses, 20% less against non-bosses.' }),
+  S({ id: 'void_ward', name: 'Void Ward', attr: 'int', fits: ['guard', 'shield'], mods: { shieldMore: 20, manaMult: 1.2 }, desc: '20% of chaos damage you take is absorbed by the shield before it reaches life.' }),
+  S({ id: 'momentum_surge', name: 'Momentum Surge', attr: 'dex', fits: ['hit'], mods: { special: 'slaughter', manaMult: 1.2 }, desc: 'Kills grant 3% increased attack and cast speed for 4s, stacking up to 15 times.' }),
+  S({ id: 'deep_reserves', name: 'Deep Reserves', attr: 'int', fits: ['attack', 'spell', 'guard', 'buff'], mods: { moreDamage: 40, manaMult: 1.3 }, desc: '40% more damage if you used this skill in the last 3s.' }),
 ];
 
 export function activeGemDef(id: string): ActiveGemDef {

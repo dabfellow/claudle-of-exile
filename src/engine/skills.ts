@@ -18,12 +18,12 @@ import { markerBoost } from './heist';
 import { chartDone, hasChartMaps } from './cartography';
 import { focusMult, focusStep } from './minigame';
 import { bagFull, dropItem } from './storage';
-import { allMods, createItem, salvageValue } from './items';
+import { allMods, createItem, eligibleAffixes, salvageValue } from './items';
 import { gemArrived } from './progress';
-import { chance, pick } from './rng';
+import { chance, pick, rInt } from './rng';
 import { skillTreeStats, type TreeStats } from './skillTree';
 import type { Derived } from './stats';
-import type { GameState, Item, SkillId, SmithCatalyst } from './types';
+import type { GameState, Item, RolledMod, SkillId, SmithCatalyst } from './types';
 import { characterLevel } from './character';
 import { levelOf } from './xp';
 
@@ -32,7 +32,7 @@ export function skillLevel(s: GameState, skill: SkillId): number {
 }
 
 export function grantXp(s: GameState, ctx: Ctx, skill: SkillId, amount: number): void {
-  amount *= ctx.event?.xp ?? 1;
+  amount *= Math.max(ctx.event?.xp ?? 1, skill === 'combat' ? ctx.event?.combatXp ?? 1 : ctx.event?.gatheringXp ?? 1);
   const before = levelOf(skill, s.skills[skill]);
   s.skills[skill] += amount;
   ctx.emit({ t: 'xp', skill, amount });
@@ -49,6 +49,7 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
   if (skill === 'archaeology' && t.deepSurvey) return 1.25;
   if (skill === 'cooking' && t.headChef) return 1.25;
   if (skill === 'cartography' && t.masterCartographer) return 1.25;
+  if (skill === 'gemcutting' && t.masterCutter) return 1.2;
   return 1;
 }
 
@@ -58,9 +59,10 @@ export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): numb
   return (a.intervalMs / (1 + speed / 100)) * keystoneSlow(a.skill, t);
 }
 
-/** Smithed gear can't out-level the campaign: capped at the top level of your furthest unlocked area. */
+/** Smithed gear can't out-level the campaign: capped at the top level of your furthest unlocked area (or 84 at Forge L5+). */
 export function smithIlvlCap(s: GameState): number {
-  return Math.max(...ZONES.filter((z) => s.unlockedZones.includes(z.id) && actOpen(z.act)).map((z) => z.levelRange[1]));
+  const baseCap = Math.max(...ZONES.filter((z) => s.unlockedZones.includes(z.id) && actOpen(z.act)).map((z) => z.levelRange[1]));
+  return (s.account.hideout.forge ?? 1) >= 5 ? Math.max(84, baseCap) : baseCap;
 }
 
 /** Item level of a smithed base; `resin` is the bonus from a Resin in the catalyst slot. */
@@ -152,7 +154,12 @@ function inputsToPay(a: SkillAction, t: TreeStats, ctx: Ctx): Record<string, num
     const single = actionDef(a.batchOf).inputs!;
     return Object.fromEntries(Object.entries(single).map(([id, n]) => [id, Math.ceil(n * BULK_BREWER_MULT)]));
   }
-  return { ...a.inputs };
+  const cost = { ...a.inputs };
+  if (a.skill === 'gemcutting') {
+    if (cost.arcane_dust && t.gemDustSave) cost.arcane_dust = Math.ceil(cost.arcane_dust * (1 - t.gemDustSave / 100));
+    if (cost.rough_gem && t.masterCutter) cost.rough_gem = Math.max(0, cost.rough_gem - 1);
+  }
+  return cost;
 }
 
 /** A catalyst you selected ran out: clear it and keep smithing without it. */
@@ -173,6 +180,22 @@ function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats): void {
   // the Fossil only matters (and is only used up) when the base comes out Magic
   const fossil = magic ? cat.fossil : null;
   const item = createItem(s, a.baseId!, smithIlvl(s, resin), magic ? 'magic' : 'normal', ctx.rng, fossil ? modBias(fossil) : undefined);
+  const forgeLvl = s.account.hideout.forge ?? 1;
+  if (forgeLvl >= 5 && chance(ctx.rng, 0.1)) {
+    item.rarity = item.rarity === 'normal' ? 'magic' : item.rarity;
+    const kind = pick(ctx.rng, ['prefix', 'suffix'] as const);
+    const pool = eligibleAffixes(item, kind);
+    if (pool.length) {
+      const affix = pick(ctx.rng, pool);
+      const topIdx = affix.tiers.length - 1;
+      const mod: RolledMod = {
+        affixId: affix.id,
+        tier: topIdx,
+        values: affix.tiers[topIdx].ranges.map(([lo, hi]) => rInt(ctx.rng, lo, hi)),
+      };
+      (kind === 'prefix' ? item.prefixes : item.suffixes).push(mod);
+    }
+  }
   if (fossil && !(t.steadyTemper && chance(ctx.rng, t.steadyTemper / 100))) s.account.bank[fossil] -= 1;
   s.lifetime.itemsSmithed += 1;
 
@@ -279,7 +302,8 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   if (a.gem) cutGem(s, ctx, a, outputs);
   ctx.emit({ t: 'produce', skill: a.skill, outputs, baseId: a.baseId });
   const heartwoodXp = a.skill === 'woodcutting' && t.heartwood ? 0.8 : 1;
-  grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0)) / 100) * heartwoodXp);
+  const branchXp = a.skill === 'gemcutting' ? (t.gemcuttingXp ?? 0) : 0;
+  grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0) + branchXp) / 100) * heartwoodXp);
 }
 
 export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void {
@@ -289,7 +313,7 @@ export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
   // Overtime: skilling is faster while you're away
   const offlineBoost = ctx.offline ? 1 + (skillTreeStats(s).offlineSpeed ?? 0) / 100 : 1;
   focusStep(s, ctx, dt);
-  s.action.progress += dt * offlineBoost * focusMult(s);
+  s.action.progress += dt * offlineBoost * focusMult(s) * (ctx.event?.gatheringSpeed ?? 1);
   while (s.action && s.action.kind === 'skill' && s.action.progress >= interval) {
     const blocker = actionBlocker(s, a);
     if (blocker) {
@@ -310,7 +334,8 @@ export function greenhouseStep(s: GameState, ctx: Ctx, dt: number, d: Derived): 
   if (s.action?.kind === 'skill' && actionDef(s.action.actionId).skill === 'harvesting') return;
   const a = actionDef(g.actionId);
   if (skillLevel(s, 'harvesting') < a.level) return;
-  g.progress += dt * (pct / 100);
+  const offlineBoost = ctx.offline ? 1 + (skillTreeStats(s).offlineSpeed ?? 0) / 100 : 1;
+  g.progress += dt * (pct / 100) * offlineBoost * (ctx.event?.gatheringSpeed ?? 1);
   const interval = actionIntervalMs(s, a, d);
   while (g.progress >= interval) {
     g.progress -= interval;

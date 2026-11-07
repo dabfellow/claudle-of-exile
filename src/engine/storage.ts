@@ -4,9 +4,9 @@ import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { isCraftLocked } from './crafting';
 import { salvageValue } from './items';
-import type { GameState, Item } from './types';
+import type { GameState, Item, StashAffinity } from './types';
 
-// Gear lives in four places: the ground, the bag (`inventory`), the account's stash pages and equipment. See docs/design/TOWN.md.
+// Gear lives in four places: the ground, the bag (`inventory`), the account's stash pages and equipment. See docs/GAME.md.
 
 export function bagFull(s: GameState): boolean {
   return s.inventory.length >= BAG_SIZE;
@@ -61,7 +61,22 @@ export function shelveUnique(s: GameState, item: Item): void {
   seeUnique(s.account, item);
 }
 
-/** Move bag items into a stash page (the given one first, then any page with room); uniques go to the Uniques tab. Returns how many moved. */
+/** Item affinity for stash routing. */
+export function itemAffinity(item: Item): StashAffinity {
+  if (item.baseId?.startsWith('map_') || item.baseId?.startsWith('doomed_')) return 'maps';
+  return 'gear';
+}
+
+export function setStashAffinity(s: GameState, page: number, affinity: StashAffinity | null): void {
+  s.account.stashAffinities ??= {};
+  if (!affinity) {
+    delete s.account.stashAffinities[page];
+  } else {
+    s.account.stashAffinities[page] = affinity;
+  }
+}
+
+/** Move bag items into a stash page (affinity page first, then the given one, then any with room); uniques go to the Uniques tab. Returns how many moved. */
 export function stashItems(s: GameState, ctx: Ctx, uids: number[], page = 0): number {
   const want = new Set(uids);
   const order = [page, ...s.account.stash.map((_, i) => i).filter((i) => i !== page)];
@@ -73,7 +88,9 @@ export function stashItems(s: GameState, ctx: Ctx, uids: number[], page = 0): nu
       n++;
       return false;
     }
-    const target = order.find((p) => stashPageRoom(s, p) > 0);
+    const aff = itemAffinity(i);
+    const affinityPage = Object.entries(s.account.stashAffinities ?? {}).find(([p, a]) => a === aff && stashPageRoom(s, Number(p)) > 0);
+    const target = affinityPage !== undefined ? Number(affinityPage[0]) : order.find((p) => stashPageRoom(s, p) > 0);
     if (target === undefined) return true;
     s.account.stash[target].push(claimOwned(s, i));
     n++;

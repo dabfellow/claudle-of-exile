@@ -2,9 +2,9 @@ import type { SkillId } from '../engine/types';
 import type { MaterialDef } from './materials';
 
 /**
- * Crafting materials from life skills (docs/design/SKILLING_REWORK.md): Fossils bias which mods roll,
+ * Crafting materials from life skills (docs/GAME.md): Fossils bias which mods roll,
  * Essences force one mod, Resin raises the item level of smithed bases, shards fuse into orbs.
- * Contraband from Heist (docs/design/HEIST.md) protects a craft instead of steering it.
+ * Contraband from Heist (docs/GAME.md) protects a craft instead of steering it.
  */
 export interface FossilDef {
   id: string;
@@ -107,6 +107,23 @@ export const CRAFT_MATERIALS: MaterialDef[] = [
   { id: MARKER, name: "Rogue's Marker", kind: 'contraband', color: '#c9a35a', value: 1, desc: 'Pays for Heist jobs and rogues. Earned by Thieving.' },
   { id: SEAL, name: "Forger's Seal", kind: 'contraband', color: '#b5473c', value: 60, desc: 'Spent with an Alteration, Chaos, Annulment or Divine: one modifier you pick is left alone.' },
   { id: WAX, name: "Locksmith's Wax", kind: 'contraband', color: '#d9c48a', value: 90, desc: 'Takes an impression of an item. Restore it any time to put the item back as it was.' },
+  { id: 'fractured_orb', name: 'Fractured Orb', kind: 'trophy', color: '#c08bff', value: 600, desc: 'Dropped in Doomed Maps. Used for top-end fracturing crafts.' },
+  { id: 'marrow_key', name: 'Marrow Key', kind: 'trophy', color: '#b8a890', value: 400, desc: 'Opens the Map Device portal to Ossuar.' },
+  { id: 'bell_key', name: 'Bell Key', kind: 'trophy', color: '#f2d14c', value: 400, desc: 'Opens the Map Device portal to Mother Vael.' },
+  { id: 'abyssal_key', name: 'Abyssal Key', kind: 'trophy', color: '#5f8f9e', value: 400, desc: 'Opens the Map Device portal to The Undertow.' },
+  { id: 'regent_key', name: 'Joined Regent Key', kind: 'trophy', color: '#e2603f', value: 400, desc: 'Opens the Map Device portal to the Twin Regents.' },
+  { id: 'crownless_key', name: 'Crownless Key', kind: 'trophy', color: '#d8c070', value: 1200, desc: 'Forged from all four Hard Boss keys or shards. Opens the Map Device portal to The Crownless.' },
+  { id: 'marrow_shard', name: 'Marrow Shards', kind: 'trophy', color: '#b8a890', value: 500, desc: 'Dropped by Ossuar, the Hollow Mountain. Used for high-tier station upgrades and physical crafts.' },
+  { id: 'choir_glass', name: 'Choir Glass', kind: 'trophy', color: '#f2d14c', value: 500, desc: 'Dropped by Mother Vael, the Last Choir. Used for high-tier station upgrades and caster crafts.' },
+  { id: 'black_pearl', name: 'Black Pearl', kind: 'trophy', color: '#5f8f9e', value: 500, desc: 'Dropped by The Undertow. Used for high-tier station upgrades and speed/cold crafts.' },
+  { id: 'throne_ash', name: 'Throne Ash', kind: 'trophy', color: '#e2603f', value: 500, desc: 'Dropped by The Twin Regents. Used for high-tier station upgrades and elemental/attack crafts.' },
+  { id: 'crownless_sigil', name: 'Crownless Sigil', kind: 'trophy', color: '#d8c070', value: 1500, desc: 'Dropped by The Crownless. Used for pinnacle hideout upgrades and crafts.' },
+  { id: 'uber_key_1', name: 'Uber Key I: The Mirror', kind: 'trophy', color: '#d0569b', value: 1000, desc: 'Dropped by Doomed Map bosses. Opens the portal to The First Exile.' },
+  { id: 'uber_key_2', name: 'Uber Key II: The Ruin', kind: 'trophy', color: '#e85a4f', value: 1000, desc: 'Dropped by Doomed Map bosses. Opens the portal to The Architect of Ruin.' },
+  { id: 'uber_key_3', name: 'Uber Key III: The Void', kind: 'trophy', color: '#9b6dde', value: 1000, desc: 'Dropped by Doomed Map bosses. Opens the portal to The Void Sovereign.' },
+  { id: 'exile_doom_sigil', name: "Exile's Doom Sigil", kind: 'trophy', color: '#e8c25a', value: 2000, desc: 'Dropped by The First Exile. Elevates one Tier 1 modifier on a rare item to Tier 0 Doom Tier.' },
+  { id: 'architect_doom_sigil', name: "Architect's Doom Sigil", kind: 'trophy', color: '#e85a4f', value: 2000, desc: 'Dropped by The Architect of Ruin. Imbues a rare item with a Doom Implicit modifier.' },
+  { id: 'void_sigil', name: 'Void Sigil', kind: 'trophy', color: '#9b6dde', value: 2000, desc: 'Dropped by The Void Sovereign. Unlocks a 7th modifier slot on a rare item.' },
 ];
 
 const FOSSIL_BY_ID: Record<string, FossilDef> = Object.fromEntries(FOSSILS.map((f) => [f.id, f]));

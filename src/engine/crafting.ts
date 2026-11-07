@@ -1,6 +1,6 @@
 import { affixDef } from '../data/affixes';
 import { stashedItems, takeOwned } from './storage';
-import { baseDef } from '../data/bases';
+import { baseDef, uniqueDef } from '../data/bases';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements';
 import { essenceDef, fossilDef, modBias, SEAL, WAX } from '../data/craftMats';
 import { WHETSTONE } from '../data/expedition';
@@ -8,8 +8,8 @@ import { BENCH_BUILT_LEVEL, BENCH_CRAFTS } from '../data/hideout';
 import { recipeUnlocked } from './challenge';
 import type { Ctx } from './context';
 import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, salvageValue, spawnWeight, type ModBias } from './items';
-import { rInt, type Rng } from './rng';
-import { canAfford, hasItem, payCost } from './bank';
+import { pick, rInt, type Rng } from './rng';
+import { canAfford, hasItem, payCraftCost } from './bank';
 import type { GameState, Item, RolledMod } from './types';
 
 export interface OrbDef {
@@ -64,31 +64,195 @@ export const ORBS: Record<string, OrbDef> = {
     },
   },
   annul: {
-    canApply: (i) => notUnique(i) ?? (modCount(i) === 0 ? 'Item has no modifiers' : null),
+    canApply: (i) => {
+      const u = notUnique(i);
+      if (u) return u;
+      if (modCount(i) === 0) return 'Item has no modifiers';
+      const prefixLock = i.suffixes.some((m) => m.affixId === 'meta_prefixes_cannot_be_changed');
+      const suffixLock = i.prefixes.some((m) => m.affixId === 'meta_suffixes_cannot_be_changed');
+      const available = allMods(i).filter((m) => {
+        if (m.fractured) return false;
+        if (prefixLock && affixDef(m.affixId).kind === 'prefix') return false;
+        if (suffixLock && affixDef(m.affixId).kind === 'suffix') return false;
+        return true;
+      });
+      if (allMods(i).every((m) => m.fractured)) return 'Cannot annul: only fractured modifiers remain';
+      if (!available.length) return 'Cannot annul: all eligible modifiers are protected';
+      return null;
+    },
     apply: (i, rng, _bias, keep) => {
-      const mods = allMods(i).filter((m) => m !== keep);
+      const prefixLock = i.suffixes.some((m) => m.affixId === 'meta_prefixes_cannot_be_changed');
+      const suffixLock = i.prefixes.some((m) => m.affixId === 'meta_suffixes_cannot_be_changed');
+      const mods = allMods(i).filter((m) => {
+        if (m === keep || m.fractured) return false;
+        if (prefixLock && affixDef(m.affixId).kind === 'prefix') return false;
+        if (suffixLock && affixDef(m.affixId).kind === 'suffix') return false;
+        return true;
+      });
+      if (!mods.length) return;
       const target = mods[rInt(rng, 0, mods.length - 1)];
       i.prefixes = i.prefixes.filter((m) => m !== target);
       i.suffixes = i.suffixes.filter((m) => m !== target);
     },
   },
   scour: {
-    canApply: (i) => notUnique(i) ?? (i.rarity === 'normal' ? 'Item is already Normal' : null),
+    canApply: (i) => {
+      const u = notUnique(i);
+      if (u) return u;
+      if (i.rarity === 'normal') return 'Item is already Normal';
+      const prefixLock = i.suffixes.some((m) => m.affixId === 'meta_prefixes_cannot_be_changed');
+      const suffixLock = i.prefixes.some((m) => m.affixId === 'meta_suffixes_cannot_be_changed');
+      if (prefixLock && suffixLock) return 'Cannot scour: prefixes and suffixes cannot be changed';
+      if (allMods(i).some((m) => m.fractured) && modCount(i) <= 1) return 'Cannot scour: only the fractured modifier remains';
+      if (prefixLock && i.suffixes.length === 0) return 'Cannot scour: prefixes cannot be changed and no suffixes remain';
+      if (suffixLock && i.prefixes.length === 0) return 'Cannot scour: suffixes cannot be changed and no prefixes remain';
+      return null;
+    },
     apply: (i) => {
-      i.rarity = 'normal';
-      i.name = null;
-      i.prefixes = [];
-      i.suffixes = [];
+      const prefixLock = i.suffixes.some((m) => m.affixId === 'meta_prefixes_cannot_be_changed');
+      const suffixLock = i.prefixes.some((m) => m.affixId === 'meta_suffixes_cannot_be_changed');
+      const frac = allMods(i).find((m) => m.fractured);
+
+      if (prefixLock) {
+        // Prefixes are kept! Suffixes are removed (including the lock itself)
+        i.suffixes = frac && affixDef(frac.affixId).kind === 'suffix' ? [frac] : [];
+        if (i.prefixes.length + i.suffixes.length <= 2) {
+          i.rarity = 'magic';
+          i.name = null;
+        }
+        i.elevated = allMods(i).find((m) => m.elevated)?.affixId;
+        return;
+      }
+
+      if (suffixLock) {
+        // Suffixes are kept! Prefixes are removed (including the lock itself)
+        i.prefixes = frac && affixDef(frac.affixId).kind === 'prefix' ? [frac] : [];
+        if (i.prefixes.length + i.suffixes.length <= 2) {
+          i.rarity = 'magic';
+          i.name = null;
+        }
+        i.elevated = allMods(i).find((m) => m.elevated)?.affixId;
+        return;
+      }
+
+      if (frac) {
+        i.prefixes = i.prefixes.filter((m) => m === frac);
+        i.suffixes = i.suffixes.filter((m) => m === frac);
+        i.rarity = 'magic';
+        i.name = null;
+      } else {
+        i.rarity = 'normal';
+        i.name = null;
+        i.prefixes = [];
+        i.suffixes = [];
+      }
+      i.elevated = allMods(i).find((m) => m.elevated)?.affixId;
     },
   },
   divine: {
-    canApply: (i) => notUnique(i) ?? (modCount(i) === 0 ? 'Item has no modifiers' : null),
+    canApply: (i) => {
+      if (modCount(i) === 0) return 'Item has no modifiers';
+      if (i.rarity === 'unique' && i.uniqueId) {
+        const u = uniqueDef(i.uniqueId);
+        const hasRollable = u.mods.some((m) => m.ranges?.some(([lo, hi]) => lo !== hi));
+        if (!hasRollable) return 'All modifiers on this unique are fixed';
+        return null;
+      }
+      return null;
+    },
     apply: (i, rng, _bias, keep) => {
+      if (i.rarity === 'unique' && i.uniqueId) {
+        const u = uniqueDef(i.uniqueId);
+        for (const m of allMods(i)) {
+          if (m === keep) continue;
+          const uMod = u.mods.find((um) => um.affixId === m.affixId);
+          if (uMod?.ranges?.length) {
+            m.values = uMod.ranges.map(([lo, hi]) => rInt(rng, lo, hi));
+          }
+        }
+        return;
+      }
+      const prefixLock = i.suffixes.some((m) => m.affixId === 'meta_prefixes_cannot_be_changed');
+      const suffixLock = i.prefixes.some((m) => m.affixId === 'meta_suffixes_cannot_be_changed');
       for (const m of allMods(i)) {
         if (m === keep) continue;
+        const kind = affixDef(m.affixId).kind;
+        if (prefixLock && kind === 'prefix') continue;
+        if (suffixLock && kind === 'suffix') continue;
         const a = affixDef(m.affixId);
-        m.values = a.tiers[m.tier].ranges.map(([lo, hi]) => rInt(rng, lo, hi));
+        if (a.tiers[m.tier]?.ranges?.length) {
+          m.values = a.tiers[m.tier].ranges.map(([lo, hi]) => rInt(rng, lo, hi));
+        }
       }
+    },
+  },
+  fractured: {
+    canApply: (i) => {
+      const u = notUnique(i);
+      if (u) return u;
+      if (i.rarity !== 'rare') return 'Item must be Rare';
+      if (i.fractured || allMods(i).some((m) => m.fractured)) return 'Item already has a fractured modifier';
+      const naturalMods = allMods(i).filter((m) => !m.crafted);
+      if (naturalMods.length < 4) return 'Item must have at least 4 natural modifiers';
+      return null;
+    },
+    apply: (i, rng) => {
+      const mods = allMods(i).filter((m) => !m.crafted);
+      const target = mods[rInt(rng, 0, mods.length - 1)];
+      target.fractured = true;
+      i.fractured = target.affixId;
+    },
+  },
+  exile_doom_sigil: {
+    canApply: (i) => {
+      const u = notUnique(i);
+      if (u) return u;
+      if (i.rarity !== 'rare') return 'Item must be Rare';
+      if (i.elevated || allMods(i).some((m) => m.elevated)) return 'Item already has an elevated Tier 0 modifier';
+      const t1Mods = allMods(i).filter((m) => {
+        if (m.crafted) return false;
+        const a = affixDef(m.affixId);
+        return m.tier === a.tiers.length - 1;
+      });
+      if (!t1Mods.length) return 'Item has no Tier 1 natural modifiers to elevate';
+      return null;
+    },
+    apply: (i, rng) => {
+      const t1Mods = allMods(i).filter((m) => {
+        if (m.crafted) return false;
+        const a = affixDef(m.affixId);
+        return m.tier === a.tiers.length - 1;
+      });
+      const target = t1Mods[rInt(rng, 0, t1Mods.length - 1)];
+      target.elevated = true;
+      i.elevated = target.affixId;
+      target.values = target.values.map((v) => Math.max(1, Math.round(v * 1.3)));
+    },
+  },
+  architect_doom_sigil: {
+    canApply: (i) => {
+      const u = notUnique(i);
+      if (u) return u;
+      if (i.rarity !== 'rare') return 'Item must be Rare';
+      if (i.doomImplicit) return 'Item already has a Doom Implicit';
+      return null;
+    },
+    apply: (i, rng) => {
+      const DOOM_IMPLICITS = ['doom_all_res', 'doom_damage', 'doom_max_life', 'doom_crit'];
+      i.doomImplicit = pick(rng, DOOM_IMPLICITS);
+    },
+  },
+  void_sigil: {
+    canApply: (i) => {
+      const u = notUnique(i);
+      if (u) return u;
+      if (i.rarity !== 'rare') return 'Item must be Rare';
+      if (i.voidSlot) return 'Item already has a Void Slot unlocked';
+      if (modCount(i) < 6) return 'Item must have 6 modifiers to unlock the 7th Void Slot';
+      return null;
+    },
+    apply: (i) => {
+      i.voidSlot = true;
     },
   },
 };
@@ -146,10 +310,7 @@ export function applyOrb(s: GameState, ctx: Ctx, orbId: string, uid: number, fos
   const item = findItem(s, uid)!;
   const dust = tinkerDustCost(s, orbId, item);
   ORBS[orbId].apply(item, ctx.rng, fossilId ? modBias(fossilId) : undefined, sealed ? allMods(item).find((m) => m.affixId === sealed) : undefined);
-  if (dust === null) s.account.bank[orbId] -= 1;
-  else s.account.bank.arcane_dust -= dust;
-  if (fossilId) s.account.bank[fossilId] -= 1;
-  if (sealed) s.account.bank[SEAL] -= 1;
+  payCraftCost(s, ctx, { ...(dust === null ? { [orbId]: 1 } : { arcane_dust: dust }), ...(fossilId ? { [fossilId]: 1 } : {}), ...(sealed ? { [SEAL]: 1 } : {}) });
   s.lifetime.orbsUsed += 1;
   ctx.emit({ t: 'craft', text: `${dust === null ? orbId : `${dust} dust`} → ${itemName(item)}`, uid, orbId });
   return null;
@@ -169,9 +330,9 @@ export function takeImpression(s: GameState, ctx: Ctx, uid: number): string | nu
   const reason = impressionReason(s, uid);
   if (reason) return reason;
   const item = findItem(s, uid)!;
-  const { rarity, name, prefixes, suffixes, honed } = item;
-  item.impression = structuredClone({ rarity, name, prefixes, suffixes, honed });
-  s.account.bank[WAX] -= 1;
+  const { rarity, name, prefixes, suffixes, honed, fractured, elevated, doomImplicit, voidSlot } = item;
+  item.impression = structuredClone({ rarity, name, prefixes, suffixes, honed, fractured, elevated, doomImplicit, voidSlot });
+  payCraftCost(s, ctx, { [WAX]: 1 });
   ctx.emit({ t: 'craft', text: `Impression of ${itemName(item)}`, uid });
   return null;
 }
@@ -203,6 +364,7 @@ export function whetstoneReason(s: GameState, uid: number, affixId: string): str
   if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
   const mod = allMods(item).find((m) => m.affixId === affixId);
   if (!mod) return 'That modifier is not on this item';
+  if (mod.fractured) return 'Cannot hone a fractured modifier';
   if (item.honed && allMods(item).some((m) => m.affixId === item.honed)) return 'This item already has a honed modifier';
   if (mod.crafted) return 'Bench crafts cannot be raised';
   const next = affixDef(affixId).tiers[mod.tier + 1];
@@ -220,7 +382,7 @@ export function applyWhetstone(s: GameState, ctx: Ctx, uid: number, affixId: str
   mod.tier += 1;
   item.honed = affixId;
   mod.values = affixDef(affixId).tiers[mod.tier].ranges.map(([lo, hi]) => rInt(ctx.rng, lo, hi));
-  s.account.bank[WHETSTONE] -= 1;
+  payCraftCost(s, ctx, { [WHETSTONE]: 1 });
   s.lifetime.orbsUsed += 1;
   ctx.emit({ t: 'craft', text: `Ancient Whetstone → ${itemName(item)}`, uid });
   return null;
@@ -237,22 +399,27 @@ export function essenceReason(s: GameState, essenceId: string, uid: number): str
   const affix = affixDef(ess.affixId);
   if (spawnWeight(affix, baseDef(item.baseId)) === 0) return 'Cannot roll on this item type';
   if (item.ilvl < affix.tiers[ess.tier].ilvl) return `Requires item level ${affix.tiers[ess.tier].ilvl}`;
+  const frac = allMods(item).find((m) => m.fractured);
+  if (frac && affixDef(frac.affixId).group === affix.group) return 'Item already has this modifier group (fractured)';
+  if (frac && (affix.kind === 'prefix' ? item.prefixes : item.suffixes).some((m) => m.fractured)) return `No room for another ${affix.kind}`;
   return null;
 }
 
-/** Makes the item Magic with the essence's modifier guaranteed; the other slot rolls as usual. */
+/** Makes the item Magic with the essence's modifier guaranteed; the other slot rolls as usual. Preserves fractured mods. */
 export function applyEssence(s: GameState, ctx: Ctx, essenceId: string, uid: number): string | null {
   const reason = essenceReason(s, essenceId, uid);
   if (reason) return reason;
   const ess = essenceDef(essenceId)!;
   const item = findItem(s, uid)!;
+  const frac = allMods(item).find((m) => m.fractured);
   item.rarity = 'magic';
   item.name = null;
   item.prefixes = [];
   item.suffixes = [];
+  if (frac) (affixDef(frac.affixId).kind === 'prefix' ? item.prefixes : item.suffixes).push(frac);
   addFixedMod(item, ess.affixId, ess.tier, ctx.rng);
-  if (ctx.rng.next() < 0.5) addRandomMod(item, ctx.rng);
-  s.account.bank[essenceId] -= 1;
+  if (!frac && ctx.rng.next() < 0.5) addRandomMod(item, ctx.rng);
+  payCraftCost(s, ctx, { [essenceId]: 1 });
   s.lifetime.orbsUsed += 1;
   ctx.emit({ t: 'craft', text: `${ess.name} → ${itemName(item)}`, uid });
   return null;
@@ -266,9 +433,17 @@ export function benchCraftReason(s: GameState, craftId: string, uid: number): st
   if (!recipeUnlocked(s, craft.achievement)) return `Unlock with achievement: ${ACHIEVEMENT_BY_ID[craft.achievement!].name}`;
   if (item.rarity === 'unique') return 'Cannot modify unique items';
   if (item.rarity === 'normal') return 'Item must be Magic or Rare';
-  if (allMods(item).some((m) => m.crafted)) return 'Item already has a crafted modifier';
+
+  // Multicraft allows up to 3 crafted modifiers
+  const hasMulticraft = allMods(item).some((m) => m.affixId === 'meta_multicraft');
+  const maxCrafted = hasMulticraft || craft.affixId === 'meta_multicraft' ? 3 : 1;
+  const craftedCount = allMods(item).filter((m) => m.crafted).length;
+  if (craftedCount >= maxCrafted) {
+    return hasMulticraft ? 'Item already has 3 crafted modifiers' : 'Item already has a crafted modifier';
+  }
+
   const affix = affixDef(craft.affixId);
-  if (spawnWeight(affix, baseDef(item.baseId)) === 0) return 'Cannot be crafted on this item type';
+  if (!affix.benchOnly && spawnWeight(affix, baseDef(item.baseId)) === 0) return 'Cannot be crafted on this item type';
   const list = affix.kind === 'prefix' ? item.prefixes : item.suffixes;
   if (list.length >= maxAffixes(item.rarity)) return `No room for another ${affix.kind}`;
   if (allMods(item).some((m) => affixDef(m.affixId).group === affix.group)) return 'Item already has this modifier type';
@@ -282,11 +457,34 @@ export function benchCraft(s: GameState, ctx: Ctx, craftId: string, uid: number)
   const craft = BENCH_CRAFTS.find((c) => c.id === craftId)!;
   const item = findItem(s, uid)!;
   const affix = affixDef(craft.affixId);
-  payCost(s, craft.cost);
-  const values = affix.tiers[craft.tier].ranges.map(([lo, hi]) => rInt(ctx.rng, lo, hi));
+  payCraftCost(s, ctx, craft.cost);
+  const ranges = affix.tiers[craft.tier]?.ranges;
+  const values = ranges?.length ? ranges.map(([lo, hi]) => rInt(ctx.rng, lo, hi)) : [];
   (affix.kind === 'prefix' ? item.prefixes : item.suffixes).push({ affixId: affix.id, tier: craft.tier, values, crafted: true });
   s.lifetime.benchCrafts += 1;
   ctx.emit({ t: 'craft', text: `Bench craft on ${itemName(item)}`, uid });
+  return null;
+}
+
+export function removeCraftedReason(s: GameState, uid: number): string | null {
+  const item = findItem(s, uid);
+  if (!item) return 'Select an item';
+  if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
+  if (!allMods(item).some((m) => m.crafted)) return 'Item has no crafted modifiers';
+  if (!hasItem(s, 'scour', 1)) return 'Requires 1 Orb of Scouring';
+  return null;
+}
+
+/** Removes all bench-crafted modifiers from an item for 1 Orb of Scouring. */
+export function removeCrafted(s: GameState, ctx: Ctx, uid: number): string | null {
+  const reason = removeCraftedReason(s, uid);
+  if (reason) return reason;
+  const item = findItem(s, uid)!;
+  item.prefixes = item.prefixes.filter((m) => !m.crafted);
+  item.suffixes = item.suffixes.filter((m) => !m.crafted);
+  payCraftCost(s, ctx, { scour: 1 });
+  s.lifetime.orbsUsed += 1;
+  ctx.emit({ t: 'craft', text: `Removed crafted modifiers from ${itemName(item)}`, uid });
   return null;
 }
 

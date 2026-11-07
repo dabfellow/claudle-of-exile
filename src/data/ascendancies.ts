@@ -2,7 +2,7 @@ import type { StatKey } from '../engine/types';
 import type { ClassId } from './classes';
 
 /**
- * Ascendancies (docs/design/ASCENDANCIES.md): two for each main class, none for the Exile. Each is one small tree on
+ * Ascendancies (docs/GAME.md): two for each main class, none for the Exile. Each is one small tree on
  * its own tab. Three paths specialise the chosen ascendancy and three paths specialise the base class mechanic.
  * Every notable costs two points and either capstone costs three; all paths are available after the first trial:
  *
@@ -113,7 +113,7 @@ const CLASS_MECHANICS: Record<Exclude<ClassId, 'exile'>, MechanicSpec> = {
   ranger: {
     branches: [
       { key: 'second_wind', name: 'Second Wind', desc: '+3 to maximum Momentum.', stats: { momentumMax: 3, evasionPct: 10 }, small: { name: 'Motion', stats: { momentumEffect: 5, attackSpeedPct: 1 } } },
-      { key: 'sure_footed', name: 'Sure-Footed', desc: 'Taking a hit removes 25% less Momentum.', stats: { momentumRetain: 25, accuracy: 30 }, small: { name: 'Slipstream', stats: { momentumEffect: 6, evasionPct: 4 } } },
+      { key: 'sure_footed', name: 'Sure-Footed', desc: 'Taking a hit removes 1 less Momentum (minimum 1).', stats: { momentumRetain: 1, accuracy: 30 }, small: { name: 'Slipstream', stats: { momentumEffect: 6, evasionPct: 4 } } },
       { key: 'gathering_storm', name: 'Gathering Storm', desc: '20% increased effect of Momentum.', stats: { momentumEffect: 20, critChancePct: 10 }, small: { name: 'Tailwind', stats: { momentumMax: 1, attackSpeedPct: 2 } } },
     ],
     bridge: { name: 'Always Moving', stats: { momentumEffect: 5 } },
@@ -227,7 +227,7 @@ export const ASCENDANCIES: AscendancyDef[] = ([
     branches: [
       { key: 'head_start', name: 'Head Start', desc: 'Begin each fight with 4 Momentum.', small: { name: 'Patient Draw', stats: { momentumEffect: 5 } } },
       { key: 'pin', name: 'Pin', desc: 'Your hits slow enemies walking in.', small: { name: 'Far Sight', stats: { projectilePct: 8 } } },
-      { key: 'steady_aim', name: 'Steady Aim', desc: 'Taking a hit removes 40% less Momentum.', stats: { momentumRetain: 40 }, small: { name: 'Composed', stats: { accuracy: 25, evasionPct: 5 } } },
+      { key: 'steady_aim', name: 'Steady Aim', desc: 'Taking a hit removes 1 less Momentum (minimum 1).', stats: { momentumRetain: 1 }, small: { name: 'Composed', stats: { accuracy: 25, evasionPct: 5 } } },
     ],
     bridge: { name: 'Windage', stats: { momentumMax: 1, projectilePct: 6 } },
     capstone: { key: 'last_arrow', name: 'Last Arrow', desc: 'At full Momentum your next attack spends it all on a guaranteed crit that hits the whole line to the target.' },

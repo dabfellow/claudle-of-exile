@@ -8,9 +8,11 @@
  *   npm run sim -- --no-flee --no-instill     # auto-flee off, no Instilling Orbs spent
  *   npm run sim -- --scenario act3Boss,midAct1 --minutes 30   # every class in a playtest scenario, side by side
  *
- * The assumptions live at SCHEDULE and awayJob, and are written up in docs/design/BALANCE.md.
+ * The assumptions live at SCHEDULE and awayJob, and are written up in docs/DEVELOPMENT.md.
  */
 import { spawn } from 'node:child_process';
+import { createWriteStream, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { baseDef } from '../src/data/bases';
 import { CLASSES, classDef, type ClassId } from '../src/data/classes';
 import { ACTIVE_GEMS, activeGemDef, gemReqLevel, MAX_GEM_LEVEL, SUPPORT_GEMS, supportGemDef, type GemTag } from '../src/data/gems';
@@ -20,7 +22,7 @@ import { PLAYER_SPOT } from '../src/engine/battlefield';
 import { stationDef, type StationId } from '../src/data/hideout';
 import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { actionsFor, type SkillAction } from '../src/data/skills';
-import { ACTS, actBossZone, actOpen, BOSS_FROSTBITE_MAX, ZONES, zoneDef, type ZoneDef } from '../src/data/zones';
+import { ACTS, actBossZone, actOpen, BOSS_FROSTBITE_MAX, monsterDamage, ZONES, zoneDef, type ZoneDef } from '../src/data/zones';
 import { characterLevel } from '../src/engine/character';
 import { canSpendLife, CLOSE_IN_MS, equipFlask, flaskRecoveryAmount, lockTarget, queueSkill, skillArea, startCombat, useFlask } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
@@ -44,9 +46,10 @@ import { cookingOpen, eatMeal } from '../src/engine/cooking';
 import { inscribeRune, itemRune, runeReason, runesOpen } from '../src/engine/runes';
 import { actionBlocker, skillLevel, startSkillAction } from '../src/engine/skills';
 import { aimLockReason, cleansesFrostbite, grantUnlocks, ruleLockReason, suggestedRule } from '../src/engine/automation';
+import { manaFraction, manaPowerMore } from '../src/engine/mechanics';
 import { monsterGround } from '../src/engine/battlefield';
 import { newGame, tick } from '../src/engine/state';
-import { deriveStats, hitChance, type Derived } from '../src/engine/stats';
+import { armourReduction, deriveStats, evadeChance, hitChance, type Derived } from '../src/engine/stats';
 import type { FlaskInstance, GameEvent, GameState, GroundKind, InstillCondition, Item, SkillGemInstance, SkillId } from '../src/engine/types';
 import { charXpForLevel, levelOf, xpToReach } from '../src/engine/xp';
 
@@ -58,6 +61,11 @@ const opt = (name: string, def: string) => {
 };
 const DAYS = Number(opt('days', '30'));
 const IDLE = flag('idle');
+const HANDS_EVERY = Math.max(1, Number(opt('hands-every', '1')));
+/** Low-maintenance comparison: replace and craft weapons, but leave the starting armour and jewellery alone. */
+const WEAPON_ONLY = flag('weapon-only');
+/** Casual comparison: equip everything, but use the old damage-first valuation instead of building effective health. */
+const CASUAL_GEAR = flag('casual-gear');
 const NONSTOP = flag('nonstop');
 const FLEE = !flag('no-flee');
 const INSTILL = !flag('no-instill');
@@ -121,19 +129,48 @@ const fmt = (ms: number | undefined) => {
  * How much the bot values a character's stats: the best damage skill it owns (attacks scaled by the chance to
  * hit monsters of its level, area skills by how much of a pack they hit), life, energy shield and defences.
  */
-function score(s: GameState, d: Derived): number {
+function bestSkillDps(s: GameState, d: Derived): number {
   const pack = packOf(s);
-  const skillDps = Math.max(
+  return Math.max(
     d.dps,
     ...[...s.skillBar, ...s.account.gems].map((g) => {
       // a skill the weapon can't use is worth nothing (and the bot keeps to its class's weapon type, see offWeapon)
       if (!g || gemUseReason(d.combatLevel, d.attributes, g, d.weaponFamily)) return 0;
-      return gemValue(d, g, pack);
+      return gemValue(d, g, pack, s);
     }),
   );
-  return (
-    skillDps * 3 + d.maxLife + d.maxEs * 0.8 + d.armour * 0.15 + d.evasion * 0.15 + (d.res.fire + d.res.cold + d.res.light) * 1.5 + d.lifeRegen * 5
-  );
+}
+
+function score(s: GameState, d: Derived): number {
+  const skillDps = bestSkillDps(s, d);
+  if (CASUAL_GEAR) {
+    return skillDps * 3 + d.maxLife + d.maxEs * 0.8 + d.armour * 0.15 + d.evasion * 0.15
+      + (d.res.fire + d.res.cold + d.res.light) * 1.5 + d.lifeRegen * 5;
+  }
+  const typical = monsterDamage(d.combatLevel);
+  const physicalTaken = 1 - armourReduction(d.armour, typical);
+  const elementalTaken = (3 - (d.res.fire + d.res.cold + d.res.light) / 100) / 3;
+  const avoidance = 1 - evadeChance(d.evasion, d.combatLevel);
+  const block = 1 - Math.min(75, d.raw.blockChance) / 125; // not every hit is blockable
+  const effectivePool = (d.maxLife + d.maxEs) / (Math.max(0.1, (physicalTaken + elementalTaken * 3) / 4) * avoidance * block);
+  return skillDps * 2 + effectivePool * 2 + d.lifeRegen * 20;
+}
+
+const ignoredArmour = (item: Item) => WEAPON_ONLY && baseDef(item.baseId).slot !== 'weapon';
+
+/** Weapons are the damage decision; other slots are where a maintained character builds its defences. */
+function itemScore(s: GameState, item: Item): number {
+  const d = deriveStats(s, []);
+  return baseDef(item.baseId).slot === 'weapon' ? bestSkillDps(s, d) * 100 + score(s, d) : score(s, d);
+}
+
+function candidateItemScore(before: GameState, after: GameState, item: Item): number {
+  if (baseDef(item.baseId).slot === 'weapon') return itemScore(after, item);
+  const oldDamage = bestSkillDps(before, deriveStats(before, []));
+  const next = deriveStats(after, []);
+  // Defence is not an upgrade if it unequips the weapon, breaks the main skill, or costs a large chunk of damage.
+  if (!CASUAL_GEAR && bestSkillDps(after, next) < oldDamage * 0.999) return -Infinity;
+  return score(after, next);
 }
 
 /** The state with `item` worn in `slot`, the way equip() makes the swap: two-handers and off hands push each other out. */
@@ -162,7 +199,7 @@ function offWeapon(s: GameState, item: Item): boolean {
 
 /** Score after putting `item` in its best slot. */
 function scoreWith(s: GameState, item: Item): number {
-  return Math.max(...slotsFor(item).map((slot) => scoreOf(wearing(s, item, slot))));
+  return Math.max(...slotsFor(item).map((slot) => candidateItemScore(s, wearing(s, item, slot), item)));
 }
 
 /**
@@ -170,7 +207,6 @@ function scoreWith(s: GameState, item: Item): number {
  * set aside, any gear that's an upgrade; with spare gold and nothing worth buying, restock.
  */
 function shop(s: GameState, ctx: Ctx) {
-  const base = scoreOf(s);
   let bought = false;
   const spare = () => (s.account.bank.gold ?? 0) - (nextUpgrade(s)?.cost.gold ?? 0);
   const owned = new Set([...s.skillBar, ...s.account.gems].filter(Boolean).map((g) => g!.gemId));
@@ -180,7 +216,8 @@ function shop(s: GameState, ctx: Ctx) {
     if (newGem && offer.price * 2 <= (s.account.bank.gold ?? 0) && !buyGem(s, ctx, (offer.gemId ?? offer.supportId)!)) bought = true;
   }
   for (const offer of [...s.vendor.stock]) {
-    if (offer.kind !== 'item' || !offer.item || offer.price > spare() || equipReason(s, offer.item) || offWeapon(s, offer.item)) continue;
+    if (offer.kind !== 'item' || !offer.item || ignoredArmour(offer.item) || offer.price > spare() || equipReason(s, offer.item) || offWeapon(s, offer.item)) continue;
+    const base = itemScore(s, offer.item);
     // worth it if it beats what's worn by a clear margin (~1% of the current score)
     if (scoreWith(s, offer.item) - base > Math.max(5, base * 0.01) && !buyOffer(s, ctx, offer.id)) bought = true;
   }
@@ -200,11 +237,11 @@ function sortBag(s: GameState, ctx: Ctx) {
   pickUp(s, ctx, 'ground', s.ground.map((i: Item) => i.uid));
   pickUp(s, ctx, 'offlineHaul', s.offlineHaul.map((i: Item) => i.uid));
   for (const item of [...s.inventory]) {
-    if (equipReason(s, item) || offWeapon(s, item)) continue;
-    const base = scoreOf(s);
+    if (ignoredArmour(item) || equipReason(s, item) || offWeapon(s, item)) continue;
+    const base = itemScore(s, item);
     let best: { slot: ReturnType<typeof slotsFor>[number]; gain: number } | null = null;
     for (const slot of slotsFor(item)) {
-      const gain = scoreOf(wearing(s, item, slot)) - base;
+      const gain = candidateItemScore(s, wearing(s, item, slot), item) - base;
       if (gain > 1 && (!best || gain > best.gain)) best = { slot, gain };
     }
     if (best) equip(s, ctx, item.uid, best.slot);
@@ -218,10 +255,12 @@ function sortBag(s: GameState, ctx: Ctx) {
 }
 
 /** A gem's damage per second as the bot judges it: attacks scaled by the chance to hit monsters of its level. */
-function gemDps(d: Derived, gem: SkillGemInstance): number {
+function gemDps(d: Derived, gem: SkillGemInstance, s?: GameState): number {
   const sum = skillSummary(d, gem);
   const { tags } = sum.nums.def;
-  return sum.perSecond * (tags.includes('attack') && !tags.includes('heavy') ? hitChance(d.accuracy, d.combatLevel) : 1);
+  let dps = sum.perSecond * (tags.includes('attack') && !tags.includes('heavy') ? hitChance(d.accuracy, d.combatLevel) : 1);
+  if (s && tags.includes('spell')) dps *= 1 + manaPowerMore(s, d, manaFraction(s, d)) / 100;
+  return dps;
 }
 
 /**
@@ -248,8 +287,8 @@ function packOf(s: GameState, zoneId = s.combat?.zoneId ?? s.unlockedZones.at(-1
 }
 
 /** What a gem is worth to the bot: half for bosses (one target), half for clearing packs (everything it hits). */
-function gemValue(d: Derived, gem: SkillGemInstance, pack: number): number {
-  return (gemDps(d, gem) * (1 + enemiesHit(skillNumbers(d, gem), pack))) / 2;
+function gemValue(d: Derived, gem: SkillGemInstance, pack: number, s?: GameState): number {
+  return (gemDps(d, gem, s) * (1 + enemiesHit(skillNumbers(d, gem), pack))) / 2;
 }
 
 const DAMAGE_ROLES = new Set(['main', 'burst', 'area', 'summon']);
@@ -286,13 +325,13 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const all = [...owned.values()];
   const role = (g: SkillGemInstance) => activeGemDef(g.gemId).role;
   const pack = packOf(s, zoneId);
-  const bare = (g: SkillGemInstance) => gemValue(d, { ...g, supports: g.supports.map(() => null) }, pack);
+  const bare = (g: SkillGemInstance) => gemValue(d, { ...g, supports: g.supports.map(() => null) }, pack, s);
   const byLevel = (a: SkillGemInstance, b: SkillGemInstance) => b.level - a.level;
   const tagged = (g: SkillGemInstance, tag: GemTag) => activeGemDef(g.gemId).tags.includes(tag);
   const pick = (r: string) => all.filter((g) => role(g) === r).sort(byLevel)[0];
   const strongest = all.filter((g) => DAMAGE_ROLES.has(role(g)) && bare(g) > 0).sort((a, b) => bare(b) - bare(a));
   // one slot each for single target (bosses) and clearing packs (what it hits across a pack)
-  const single = [...strongest].sort((a, b) => gemDps(d, { ...b, supports: [] }) - gemDps(d, { ...a, supports: [] }))[0];
+  const single = [...strongest].sort((a, b) => gemDps(d, { ...b, supports: [] }, s) - gemDps(d, { ...a, supports: [] }, s))[0];
   const clear = strongest.find((g) => g !== single && enemiesHit(skillNumbers(d, g), pack) >= 2);
   const damage = [single, clear].filter((g): g is SkillGemInstance => !!g);
   const mover = strongest.find((g) => tagged(g, 'movement'));
@@ -350,7 +389,7 @@ function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
         let bestDps = -Infinity;
         for (const sup of fits) {
           const trial = { ...g, supports: g.supports.map((x, j) => (j === k ? sup : x)) };
-          const v = gemValue(d, trial, pack);
+          const v = gemValue(d, trial, pack, s);
           if (v > bestDps) {
             bestDps = v;
             best = sup;
@@ -389,7 +428,7 @@ function manageFlasks(s: GameState) {
  */
 function craftGear(s: GameState, ctx: Ctx) {
   for (const item of Object.values(s.equipment)) {
-    if (!item) continue;
+    if (!item || ignoredArmour(item)) continue;
     const plan =
       item.rarity === 'normal' ? ['alchemy', 'transmute'] : item.rarity === 'magic' ? ['augment', 'regal'] : item.rarity === 'rare' ? ['exalted'] : [];
     for (const orb of plan) {
@@ -641,6 +680,14 @@ interface Result {
   finds: number;
   traded: number;
   mealsEaten: number;
+  /** deaths in each zone while playing by hand */
+  deathsByZone: Record<string, number>;
+  /** how many times the 3-death streak triggered a retreat from each zone */
+  retreatsByZone: Record<string, number>;
+  /** game-time when the bot first entered each boss zone while playing */
+  bossFirstAttempt: Record<string, number>;
+  /** DPS and life at the moment each boss first fell */
+  bossStats: Record<string, { dps: number; life: number }>;
 }
 
 function snapshot(s: GameState): Snapshot {
@@ -715,6 +762,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
   const res: Result = {
     classId, seed, profile, levels: {}, bosses: {}, bossLevels: {}, upgrades: {}, checkpoints: {}, trials: {}, deaths: 0, offlineDeaths: 0, kills: 0,
     activeMs: 0, awayCombatMs: 0, awayGatherMs: 0, cappedMs: 0, stoppedMs: 0, finalLevel: 1, bank: {}, bestDps: 0, bestLife: 0, skills: {}, bar: '', orbsUsed: 0, heists: 0, heistAlarms: 0, runesWorn: 0, finds: 0, traded: 0, mealsEaten: 0,
+    deathsByZone: {}, retreatsByZone: {}, bossFirstAttempt: {}, bossStats: {},
   };
   const deathStreak: Record<string, number> = {};
   const tally: Record<string, number> = {};
@@ -739,15 +787,19 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
         if (e.boss && zone && res.bosses[zone] === undefined) {
           res.bosses[zone] = now;
           res.bossLevels[zone] = characterLevel(s);
+          const d = deriveStats(s, []);
+          res.bossStats[zone] = { dps: Math.round(bestSkillDps(s, d)), life: d.maxLife };
         }
       }
       if (e.t === 'death') {
         res.deaths++;
         const zone = s.combat?.zoneId ?? '';
         deathStreak[zone] = (deathStreak[zone] ?? 0) + 1;
+        res.deathsByZone[zone] = (res.deathsByZone[zone] ?? 0) + 1;
         if (deathStreak[zone] >= 3) {
           retreatUntil = now + 20 * MIN;
           deathStreak[zone] = 0;
+          res.retreatsByZone[zone] = (res.retreatsByZone[zone] ?? 0) + 1;
         }
       }
     },
@@ -801,8 +853,11 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
       const open = reachable(s);
       const top = open[open.length - 1];
       const target = now < retreatUntil && open.length > 1 ? open[open.length - 2] : top;
-      if (s.action?.kind !== 'combat' || (s.combat && s.combat.zoneId !== target.id && !s.combat.monsters.length)) startCombat(s, ctx, target.id);
-      if (s.combat && !IDLE) hands(s, ctx, deriveStats(s));
+      if (s.action?.kind !== 'combat' || (s.combat && s.combat.zoneId !== target.id && !s.combat.monsters.length)) {
+        if (!s.bossesDefeated.includes(target.id) && res.bossFirstAttempt[target.id] === undefined) res.bossFirstAttempt[target.id] = now;
+        startCombat(s, ctx, target.id);
+      }
+      if (s.combat && !IDLE && t % (HANDS_EVERY * 1000) === 0) hands(s, ctx, deriveStats(s));
       tick(s, ctx, 1000);
       runTrials();
       if (TRACE && now % HOUR === 0 && now) {
@@ -810,7 +865,7 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
         const w = s.equipment.weapon;
         const main = s.skillBar.find((g) => g && DAMAGE_ROLES.has(activeGemDef(g.gemId).role));
         const at = s.combat?.zoneId ? zoneDef(s.combat.zoneId) : undefined;
-        console.log(`  ${fmt(now)} L${characterLevel(s)} ${at ? `act ${at.act} ${at.name} (L${at.levelRange[0]}-${at.levelRange[1]})` : '-'} · ${w ? `${baseDef(w.baseId).name} i${w.ilvl} ${w.rarity}` : 'no weapon'} · ${main ? `${activeGemDef(main.gemId).name} ${main.level}` : '-'} · skill dps ${Math.round(main ? gemDps(d, main) : 0)} · life ${d.maxLife}`);
+        console.log(`  ${fmt(now)} L${characterLevel(s)} ${at ? `act ${at.act} ${at.name} (L${at.levelRange[0]}-${at.levelRange[1]})` : '-'} · ${w ? `${baseDef(w.baseId).name} i${w.ilvl} ${w.rarity}` : 'no weapon'} · ${main ? `${activeGemDef(main.gemId).name} ${main.level}` : '-'} · skill dps ${Math.round(main ? gemDps(d, main, s) : 0)} · life ${d.maxLife}`);
         console.log('   ', Object.entries(tally).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${Math.round(v)}`).join(' · '));
         for (const k in tally) delete tally[k];
       }
@@ -875,11 +930,11 @@ function runClass(classId: ClassId, seed: number, profile: Profile): Result {
     console.log(`  [${classId}] passives:`, s.passives.join(', '));
     console.log(`  [${classId}] bar:`, s.skillBar.map((g) => g && `${g.gemId}:${g.level}[${g.supports.filter(Boolean).map((x) => x!.supportId).join('+')}]`).join(' | '));
     console.log(`  [${classId}] gear:`, Object.entries(s.equipment).map(([k, i]) => `${k}=${i?.baseId}:${i?.rarity}`).join(' '));
-    console.log(`  [${classId}] life ${d.maxLife} armour ${d.armour} res ${JSON.stringify(d.res)} dps ${d.dps.toFixed(0)}`);
+    console.log(`  [${classId}] life ${d.maxLife} armour ${d.armour} res ${JSON.stringify(d.res)} dps ${bestSkillDps(s, d).toFixed(0)}`);
   }
   res.finalLevel = characterLevel(s);
   res.bank = s.account.bank;
-  res.bestDps = d.dps;
+  res.bestDps = bestSkillDps(s, d);
   res.bestLife = d.maxLife;
   res.skills = Object.fromEntries([...GATHER_SKILLS, 'thieving' as const, 'archaeology' as const, 'runecarving' as const, 'cooking' as const].map((sk) => [sk, levelOf(sk, s.skills[sk])]));
   res.heists = s.heist.tally.jobs;
@@ -981,6 +1036,45 @@ function report(results: Result[]) {
     for (const z of ZONES) {
       if (!actOpen(z.act) || !results.some((r) => r.bosses[z.id] !== undefined)) continue;
       console.log(pad(`${z.act}. ${z.name}`, 28) + byClass.map((runs) => pad(med(runs, (r) => r.bosses[z.id]))).join(''));
+    }
+
+    console.log('\nCharacter level when each boss fell');
+    header('', 28);
+    for (const z of ZONES) {
+      if (!actOpen(z.act) || !results.some((r) => r.bossLevels[z.id] !== undefined)) continue;
+      console.log(pad(`${z.act}. ${z.name}`, 28) + byClass.map((runs) => {
+        const vals = runs.map((r) => r.bossLevels[z.id]).filter((x): x is number => x !== undefined);
+        return pad(vals.length ? `L${Math.round(median(vals))}` : '—');
+      }).join(''));
+    }
+
+    console.log('\nDPS / life when each act boss fell');
+    header('', 28);
+    for (const act of ACTS.filter((a) => actOpen(a.n))) {
+      const z = actBossZone(act.n);
+      if (!z || !results.some((r) => r.bossStats[z.id])) continue;
+      console.log(pad(`Act ${act.n} (${z.boss.name.split(',')[0]})`, 28) + byClass.map((runs) => {
+        const dps = runs.map((r) => r.bossStats[z.id]?.dps).filter((x): x is number => x !== undefined);
+        const life = runs.map((r) => r.bossStats[z.id]?.life).filter((x): x is number => x !== undefined);
+        return pad(dps.length ? `${Math.round(median(dps))}/${Math.round(median(life))}` : '—');
+      }).join(''));
+    }
+
+    console.log('\nBoss walls: time from first try to kill · deaths in zone');
+    header('', 28);
+    for (const z of ZONES) {
+      if (!actOpen(z.act)) continue;
+      const cells = byClass.map((runs) => {
+        const walls = runs.map((r) => r.bosses[z.id] !== undefined && r.bossFirstAttempt[z.id] !== undefined
+          ? r.bosses[z.id] - r.bossFirstAttempt[z.id]
+          : undefined
+        ).filter((x): x is number => x !== undefined);
+        const deaths = median(runs.map((r) => r.deathsByZone[z.id] ?? 0));
+        if (!walls.length && deaths === 0) return null;
+        return `${walls.length ? fmt(median(walls)) : '—'}·${Math.round(deaths)}`;
+      });
+      if (!cells.some((c) => c && c !== '0m·0')) continue;
+      console.log(pad(`${z.act}. ${z.name}`, 28) + cells.map((c) => pad(c ?? '—')).join(''));
     }
 
     console.log('\nTime to character level');
@@ -1137,13 +1231,13 @@ function runScenario(name: string, classId: ClassId, seed: number): ScenarioResu
   manageFlasks(s);
   const d = deriveStats(s, []);
   Object.assign(s, { life: d.maxLife, mana: d.maxMana, es: d.maxEs });
-  const best = s.skillBar.filter((g): g is SkillGemInstance => !!g && DAMAGE_ROLES.has(activeGemDef(g.gemId).role)).sort((a, b) => gemDps(d, b) - gemDps(d, a))[0];
+  const best = s.skillBar.filter((g): g is SkillGemInstance => !!g && DAMAGE_ROLES.has(activeGemDef(g.gemId).role)).sort((a, b) => gemDps(d, b, s) - gemDps(d, a, s))[0];
   Object.assign(res, {
     level: characterLevel(s),
-    dps: Math.round(d.dps),
+    dps: Math.round(bestSkillDps(s, d)),
     life: d.maxLife,
     es: d.maxEs,
-    skillDps: best ? Math.round(gemDps(d, best)) : 0,
+    skillDps: best ? Math.round(gemDps(d, best, s)) : 0,
     skill: best ? `${activeGemDef(best.gemId).name} (${activeGemDef(best.gemId).tags.join(' ')})` : '-',
     bar: s.skillBar.map((g) => (g ? `${activeGemDef(g.gemId).name}[${g.supports.filter(Boolean).map((x) => supportGemDef(x!.supportId).name).join('+')}]` : '-')).join(' '),
   });
@@ -1193,7 +1287,27 @@ function scenarioReport() {
 if (SCENARIOS) scenarioReport();
 else if (JSON_OUT) console.log(JSON.stringify(runClass(classes[0].id, SEEDS[0], PROFILES[0])));
 else {
+  const results = await sweep();
+
+  const ts = new Date().toISOString().slice(0, 16).replace('T', '-').replace(/:/g, '-');
+  const outDir = join(process.cwd(), 'tmp', 'sim-runs');
+  mkdirSync(outDir, { recursive: true });
+  const outPath = join(outDir, `sim-${ts}.txt`);
+  const file = createWriteStream(outPath, { encoding: 'utf8' });
+  const origLog = console.log;
+  console.log = (...args: unknown[]) => {
+    const line = args.map(String).join(' ');
+    origLog(line);
+    file.write(line + '\n');
+  };
+
   const mode = NONSTOP ? 'nonstop' : 'dedicated schedule';
-  console.log(`\nPath of Idle balance sim — ${DAYS} days, ${mode}, ${IDLE ? 'no hands' : 'hands on while playing'}, auto-flee ${FLEE ? 'on' : 'off'}, instilling ${INSTILL ? 'on' : 'off'}, seeds ${SEEDS.join(',')}`);
-  report(await sweep());
+  const gearing = WEAPON_ONLY ? 'weapon upgrades only' : CASUAL_GEAR ? 'casual damage-first gear' : 'defensive gear maintained';
+  const attention = IDLE ? 'no hands' : HANDS_EVERY === 1 ? 'hands on while playing' : `checks every ${HANDS_EVERY}s`;
+  console.log(`\nPath of Idle balance sim — ${DAYS} days, ${mode}, ${attention}, ${gearing}, auto-flee ${FLEE ? 'on' : 'off'}, instilling ${INSTILL ? 'on' : 'off'}, seeds ${SEEDS.join(',')}`);
+  report(results);
+
+  console.log = origLog;
+  await new Promise<void>((resolve) => file.end(resolve));
+  console.log(`\nSaved: ${outPath}`);
 }

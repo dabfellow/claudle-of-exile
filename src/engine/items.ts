@@ -1,6 +1,6 @@
 import { AFFIXES, affixDef, type AffixDef } from '../data/affixes';
-import { BASES, baseDef, obtainable, uniqueDef, type BaseDef } from '../data/bases';
-import { pick, pickWeighted, rInt, type Rng } from './rng';
+import { BASES, baseDef, obtainable, uniqueDef, type BaseDef, type UniqueModDef } from '../data/bases';
+import { mathRng, pick, pickWeighted, rInt, type Rng } from './rng';
 import type { GameState, Item, Rarity, RolledMod } from './types';
 
 export function newUid(s: GameState): number {
@@ -34,20 +34,46 @@ function rollValues(affix: AffixDef, tier: number, rng: Rng): number[] {
   return affix.tiers[tier].ranges.map(([lo, hi]) => rInt(rng, lo, hi));
 }
 
+export function isAttackAffix(a: AffixDef): boolean {
+  if (a.weights.attack_weapon !== undefined && a.weights.attack_weapon > 0 && (!a.weights.caster_weapon || a.weights.caster_weapon === 0)) return true;
+  const attackGroups = new Set(['added_phys', 'inc_phys', 'inc_phys_global', 'added_fire', 'added_cold', 'added_light', 'attack_speed', 'accuracy', 'life_leech', 'bleed_chance']);
+  return attackGroups.has(a.group) || a.stats.some((s) => s.includes('phys') || s.includes('attack') || s === 'accuracy');
+}
+
+export function isCasterAffix(a: AffixDef): boolean {
+  if (a.weights.caster_weapon !== undefined && a.weights.caster_weapon > 0 && (!a.weights.attack_weapon || a.weights.attack_weapon === 0)) return true;
+  const casterGroups = new Set(['inc_spell', 'inc_fire_spell', 'inc_cold_spell', 'inc_light_spell', 'added_spell_phys', 'added_spell_fire', 'added_spell_cold', 'added_spell_light', 'cast_speed', 'spell_crit', 'spell_crit_multi', 'mana_regen']);
+  return casterGroups.has(a.group) || a.stats.some((s) => s.includes('spell') || s.includes('cast'));
+}
+
 /** Affixes that could still roll on this item for the given kind. */
 export function eligibleAffixes(item: Item, kind: 'prefix' | 'suffix', bias?: ModBias): AffixDef[] {
   const base = baseDef(item.baseId);
   const used = new Set([...item.prefixes, ...item.suffixes].map((m) => affixDef(m.affixId).group));
+  const cannotRollAttack = allMods(item).some((m) => m.affixId === 'meta_cannot_roll_attack');
+  const cannotRollCaster = allMods(item).some((m) => m.affixId === 'meta_cannot_roll_caster');
   return AFFIXES.filter(
-    (a) => a.kind === kind && !used.has(a.group) && spawnWeight(a, base, bias) > 0 && a.tiers.length > 0 && a.tiers[0].ilvl <= item.ilvl,
+    (a) =>
+      !a.benchOnly &&
+      a.kind === kind &&
+      !used.has(a.group) &&
+      (!cannotRollAttack || !isAttackAffix(a)) &&
+      (!cannotRollCaster || !isCasterAffix(a)) &&
+      spawnWeight(a, base, bias) > 0 &&
+      a.tiers.length > 0 &&
+      a.tiers[0].ilvl <= item.ilvl,
   );
 }
 
 export function openKinds(item: Item, bias?: ModBias): ('prefix' | 'suffix')[] {
   const max = maxAffixes(item.rarity);
+  const maxP = item.voidSlot ? 4 : max;
+  const maxS = item.voidSlot ? 4 : max;
+  const maxTotal = item.voidSlot ? 7 : max * 2;
+  if (modCount(item) >= maxTotal) return [];
   const kinds: ('prefix' | 'suffix')[] = [];
-  if (item.prefixes.length < max && eligibleAffixes(item, 'prefix', bias).length) kinds.push('prefix');
-  if (item.suffixes.length < max && eligibleAffixes(item, 'suffix', bias).length) kinds.push('suffix');
+  if (item.prefixes.length < maxP && eligibleAffixes(item, 'prefix', bias).length) kinds.push('prefix');
+  if (item.suffixes.length < maxS && eligibleAffixes(item, 'suffix', bias).length) kinds.push('suffix');
   return kinds;
 }
 
@@ -112,17 +138,59 @@ export function itemName(item: Item): string {
   return base.name;
 }
 
-/** Replace all mods on an item for its current rarity. `keep` stays and counts as one of the new rolls (a Forger's Seal). */
+/** Replace all mods on an item for its current rarity. `keep` stays and counts as one of the new rolls (a Forger's Seal). Fractured mods and meta-locks always stay. */
 export function rerollMods(item: Item, rng: Rng, bias?: ModBias, keep?: RolledMod): void {
+  const prefixLock = item.suffixes.some((m) => m.affixId === 'meta_prefixes_cannot_be_changed');
+  const suffixLock = item.prefixes.some((m) => m.affixId === 'meta_suffixes_cannot_be_changed');
+  const frac = allMods(item).find((m) => m.fractured);
+
+  const prevPrefixes = item.prefixes;
+  const prevSuffixes = item.suffixes;
+
   item.prefixes = [];
   item.suffixes = [];
-  if (keep) (affixDef(keep.affixId).kind === 'prefix' ? item.prefixes : item.suffixes).push(keep);
+
+  if (prefixLock) {
+    item.prefixes = [...prevPrefixes];
+  } else if (frac && affixDef(frac.affixId).kind === 'prefix') {
+    item.prefixes.push(frac);
+  }
+
+  if (suffixLock) {
+    item.suffixes = [...prevSuffixes];
+  } else if (frac && affixDef(frac.affixId).kind === 'suffix') {
+    item.suffixes.push(frac);
+  }
+
+  if (keep && !allMods(item).includes(keep)) {
+    (affixDef(keep.affixId).kind === 'prefix' ? item.prefixes : item.suffixes).push(keep);
+  }
+
+  const keptCount = item.prefixes.length + item.suffixes.length;
+
   if (item.rarity === 'magic') {
-    if (!keep) addRandomMod(item, rng, bias);
-    if (rng.next() < 0.5) addRandomMod(item, rng, bias);
+    if (!prefixLock && item.prefixes.length === 0 && openKinds(item, bias).includes('prefix')) {
+      addRandomMod(item, rng, bias);
+    }
+    if (!suffixLock && item.suffixes.length === 0 && openKinds(item, bias).includes('suffix') && (keptCount === 0 || rng.next() < 0.5)) {
+      addRandomMod(item, rng, bias);
+    }
   } else if (item.rarity === 'rare') {
-    const n = rareModCount(rng) - (keep ? 1 : 0);
-    for (let i = 0; i < n; i++) addRandomMod(item, rng, bias);
+    const targetTotal = Math.max(keptCount, rareModCount(rng));
+    let attempts = 0;
+    while (modCount(item) < targetTotal && attempts < 20) {
+      attempts++;
+      const kinds = openKinds(item, bias).filter((k) => (k === 'prefix' ? !prefixLock : !suffixLock));
+      if (!kinds.length) break;
+      const kind = pick(rng, kinds);
+      const base = baseDef(item.baseId);
+      const affix = pickWeighted(rng, eligibleAffixes(item, kind, bias), (a) => spawnWeight(a, base, bias));
+      if (!affix) break;
+      const tiers = affix.tiers.map((t, i) => ({ t, i })).filter((x) => x.t.ilvl <= item.ilvl).slice(-TIER_WINDOW);
+      const chosen = pickWeighted(rng, tiers, (x) => Math.pow(0.7, x.i))!;
+      const mod: RolledMod = { affixId: affix.id, tier: chosen.i, values: rollValues(affix, chosen.i, rng) };
+      (kind === 'prefix' ? item.prefixes : item.suffixes).push(mod);
+    }
     item.name = rareName(item, rng);
   }
 }
@@ -135,8 +203,17 @@ export function createItem(s: GameState, baseId: string, ilvl: number, rarity: R
   return item;
 }
 
-export function createUnique(s: GameState, uniqueId: string, ilvl: number): Item {
+export function createUnique(s: GameState, uniqueId: string, ilvl: number, rng: Rng = mathRng): Item {
   const u = uniqueDef(uniqueId);
+  const rollMod = (m: UniqueModDef): RolledMod => {
+    let values: number[];
+    if (m.ranges && m.ranges.length) {
+      values = m.ranges.map(([lo, hi]) => rInt(rng, lo, hi));
+    } else {
+      values = m.values ? [...m.values] : [];
+    }
+    return { affixId: m.affixId, tier: -1, values };
+  };
   return {
     uid: newUid(s),
     baseId: u.baseId,
@@ -144,8 +221,8 @@ export function createUnique(s: GameState, uniqueId: string, ilvl: number): Item
     rarity: 'unique',
     name: u.name,
     uniqueId,
-    prefixes: u.mods.filter((m) => affixDef(m.affixId).kind === 'prefix').map((m) => ({ affixId: m.affixId, tier: -1, values: [...m.values] })),
-    suffixes: u.mods.filter((m) => affixDef(m.affixId).kind === 'suffix').map((m) => ({ affixId: m.affixId, tier: -1, values: [...m.values] })),
+    prefixes: u.mods.filter((m) => affixDef(m.affixId).kind === 'prefix').map(rollMod),
+    suffixes: u.mods.filter((m) => affixDef(m.affixId).kind === 'suffix').map(rollMod),
   };
 }
 
@@ -159,27 +236,59 @@ export function describeMod(mod: RolledMod): string {
     .replace(/-(\d+)% more/g, '$1% less');
 }
 
+export function describeUniqueModDef(m: UniqueModDef): string {
+  const a = affixDef(m.affixId);
+  if (m.ranges && m.ranges.length) {
+    let t = a.text;
+    const firstRange = m.ranges[0];
+    if (firstRange && firstRange[0] < 0 && firstRange[1] < 0) {
+      const minM = Math.min(Math.abs(firstRange[0]), Math.abs(firstRange[1]));
+      const maxM = Math.max(Math.abs(firstRange[0]), Math.abs(firstRange[1]));
+      const span = minM === maxM ? `${minM}` : `(${minM}–${maxM})`;
+      if (t.includes('% increased')) return t.replace('% increased', '% reduced').replace(/\{0\}/g, span);
+      if (t.includes('% more')) return t.replace('% more', '% less').replace(/\{0\}/g, span);
+      if (t.includes('+{0}')) return t.replace('+{0}', `-${span}`);
+      return t.replace(/\{0\}/g, `-${span}`);
+    }
+    return t.replace(/\{(\d)\}/g, (_, i) => {
+      const r = m.ranges![Number(i)];
+      if (!r) return '#';
+      const [lo, hi] = r;
+      return lo === hi ? `${lo}` : `(${lo}–${hi})`;
+    });
+  }
+  return describeMod({ affixId: m.affixId, tier: -1, values: m.values ?? [] });
+}
+
 /** Modifier text with its tier's value ranges, e.g. "+(11–20) to maximum Life". */
 export function affixRangeText(affixId: string, tier: number): string {
   const a = affixDef(affixId);
-  const ranges = a.tiers[tier].ranges;
+  const ranges = a.tiers[tier]?.ranges;
+  if (!ranges || !ranges.length) return a.text;
   return a.text.replace(/\{(\d)\}/g, (_, i) => {
-    const [lo, hi] = ranges[Number(i)];
+    const r = ranges[Number(i)];
+    if (!r) return '#';
+    const [lo, hi] = r;
     return lo === hi ? `${lo}` : `(${lo}–${hi})`;
   });
 }
 
-/** PoE-style tier label: T1 is the best tier. */
+/** PoE-style tier label: T1 is the best tier, T0 is Doom Tier (elevated). */
 export function tierLabel(mod: RolledMod): string {
+  if (mod.elevated) return 'T0';
   if (mod.tier < 0) return '';
   const a = affixDef(mod.affixId);
+  if (a.benchOnly) return '';
   return `T${a.tiers.length - mod.tier}`;
 }
 
 export function tierRangeText(mod: RolledMod): string {
+  if (mod.elevated) return 'Doom Tier (T0)';
   if (mod.tier < 0) return '';
   const a = affixDef(mod.affixId);
-  return a.tiers[mod.tier].ranges.map(([lo, hi]) => `${lo}–${hi}`).join(' / ');
+  const ranges = a.tiers[mod.tier]?.ranges;
+  if (!ranges || !ranges.length) return '';
+  return ranges.map(([lo, hi]) => `${lo}–${hi}`).join(' / ');
 }
 
 /** Bases that can drop at a given item level. */
