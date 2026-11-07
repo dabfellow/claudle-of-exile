@@ -7,9 +7,9 @@ import { wearFlask } from '../../engine/combat';
 import { salvage } from '../../engine/crafting';
 import { clearableGems, clearLevelOneGems } from '../../engine/gems';
 import { sortFigure, sortItems, type SortKey } from '../../engine/itemSort';
-import { buyStashPage, settleOverflow, stashedItems, stashItems, stashPagePrice, stashPageRoom, takeFromStash } from '../../engine/storage';
+import { buyStashPage, setStashAffinity, settleOverflow, stashedItems, stashItems, stashPagePrice, stashPageRoom, takeFromStash } from '../../engine/storage';
 import { game } from '../../game';
-import type { GameState } from '../../engine/types';
+import type { GameState, StashAffinity } from '../../engine/types';
 import { useGame } from '../../game';
 import { Art, CurrencyAmount, EmptyState, fmt, MatIcon, PageHeader, Tabs, Tooltip, type TabDef } from '../components/common';
 import { FlaskShelf } from '../components/FlaskView';
@@ -27,13 +27,15 @@ type Tab = 'gear' | 'uniques' | 'currency' | 'materials' | 'gems' | 'flasks';
 const CURRENCY_LAYOUT: { label: string; ids: string[] }[] = [
   { label: 'Basic', ids: ['transmute', 'augment', 'alteration', 'scour', 'regret'] },
   { label: 'Rare', ids: ['regal', 'alchemy', 'chaos', 'annul'] },
-  { label: 'Precious', ids: ['exalted', 'divine', 'expansion', 'instill'] },
+  { label: 'Precious', ids: ['exalted', 'divine', 'fractured', 'expansion', 'instill'] },
 ];
 
 const MATERIAL_GROUPS: { label: string; kinds: string[] }[] = [
   { label: 'Ores & Gems', kinds: ['ore', 'gem'] },
+  { label: 'Bars & Planks', kinds: ['component'] },
   { label: 'Logs', kinds: ['log'] },
   { label: 'Herbs', kinds: ['herb'] },
+  { label: 'Boss Trophies & Sigils', kinds: ['trophy'] },
   { label: 'Fossils', kinds: ['fossil'] },
   { label: 'Essences', kinds: ['essence'] },
   { label: 'Resin & Shards', kinds: ['resin', 'shard'] },
@@ -290,27 +292,59 @@ function Overflow({ s }: { s: GameState }) {
   );
 }
 
+const AFFINITIES: { id: StashAffinity | ''; label: string }[] = [
+  { id: '', label: 'None' },
+  { id: 'gear', label: 'Gear' },
+  { id: 'maps', label: 'Maps' },
+  { id: 'currency', label: 'Currency' },
+  { id: 'gems', label: 'Gems' },
+  { id: 'flasks', label: 'Flasks' },
+  { id: 'contraband', label: 'Contraband' },
+];
+
 /** The stash's gear pages: pick a page, click an item to take it back to the bag. */
 function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: (n: number) => void }) {
   const [sort, setSort] = useState<SortKey>('recent');
   const price = stashPagePrice(s);
   const pages = s.account.stash;
   const items = pages[page] ?? [];
+  const currentAffinity = s.account.stashAffinities?.[page] ?? '';
   return (
     <div className="card stash-panel">
       <div className="card-title">
         <div className="stash-pages">
-          {pages.map((p, i) => (
-            <button key={i} className={`stash-page-tab ${i === page ? 'active' : ''}`} onClick={() => setPage(i)} title={`${p.length}/${STASH_PAGE_SIZE}`}>
-              {i + 1}
-              {p.length >= STASH_PAGE_SIZE && <span className="bad"> ●</span>}
-            </button>
-          ))}
+          {pages.map((p, i) => {
+            const aff = s.account.stashAffinities?.[i];
+            return (
+              <button key={i} className={`stash-page-tab ${i === page ? 'active' : ''}`} onClick={() => setPage(i)} title={`${p.length}/${STASH_PAGE_SIZE}${aff ? ` · Affinity: ${aff}` : ''}`}>
+                {i + 1}
+                {aff && <span className="aff-dot" title={`Affinity: ${aff}`}>★</span>}
+                {p.length >= STASH_PAGE_SIZE && <span className="bad"> ●</span>}
+              </button>
+            );
+          })}
           <button className="stash-page-tab buy" disabled={(s.account.bank.gold ?? 0) < price} title={`Buy stash page ${pages.length + 1}`} onClick={() => game.act((st, ctx) => buyStashPage(st, ctx))}>
             + <MatIcon id="gold" size={12} /> {fmt(price)}
           </button>
         </div>
         <span className="grow" />
+        <label className="dim small row" style={{ gap: 6, alignItems: 'center' }}>
+          <span>Affinity</span>
+          <select
+            className="input sm"
+            value={currentAffinity}
+            onChange={(e) => {
+              const val = e.target.value as StashAffinity | '';
+              game.act((st) => setStashAffinity(st, page, val ? val : null));
+            }}
+          >
+            {AFFINITIES.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <StashSort value={sort} onChange={setSort} />
       </div>
       <div className="row wrap" style={{ marginBottom: 10 }}>
