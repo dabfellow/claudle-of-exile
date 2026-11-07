@@ -4,7 +4,7 @@ Last updated 2026-11-07. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.4, Pinnacle of Ruin**, deployed 2026-11-07. Five Hard Bosses and three Uber Bosses with keyed arenas and 11 exclusive uniques (Milestone 9), top-end crafting with Fractured items, Doom Sigils, Bench L6/L7 meta-crafting and Hideout expansions (Milestone 10), monster defences/affixes, and manual recovery-flask default policy are live.
+Latest confirmed live release: **0.4.5, Loot Filters and Journey Polish**, deployed 2026-11-07. Custom loot filters with saveable profiles, Tiered Loot (T1–T5), belt 4-slot loadouts (1 Life, 1 Mana, 2 Utility) with Act 2 Instilling drops, non-combat action mastery, boss refined construction material drops, expanded uniques and unique flasks/maps, and campaign pacing smoothing are live.
 
 1. Security prerequisite: confirm revocation of the historical Google OAuth client secret, confirm the separate account-helper lookup-path changes and perform signed-in isolation/login checks; see SETUP.
    Owner reports market/admin SQL applied on 2026-11-06; live anonymous Admin access checks pass. Current validation upload and real-account inspection/recovery/mail/event checks remain before next release.
