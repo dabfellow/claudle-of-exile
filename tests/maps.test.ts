@@ -346,6 +346,8 @@ describe('maps offline', { timeout: 60_000 }, () => {
     // Offline map runners still need Instilling Orbs now that recovery flasks are manual by default.
     s.flaskSlots[0]!.instill = 'lowLife';
     s.flaskSlots[1]!.instill = 'lowMana';
+    if (s.flaskSlots[2]) s.flaskSlots[2]!.instill = 'savageHit';
+    if (s.flaskSlots[3]) s.flaskSlots[3]!.instill = 'savageHit';
     return s;
   };
 

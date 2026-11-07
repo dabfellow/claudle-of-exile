@@ -21,6 +21,8 @@ import {
   sextantDef,
   sextantMod,
   UBER_BOSSES,
+  UNIQUE_MAPS,
+  uniqueMapDef,
   type AtlasWing,
 } from '../../data/maps';
 import { actOpen, zoneDef } from '../../data/zones';
@@ -30,6 +32,7 @@ import { retreat } from '../../engine/combat';
 import { FINAL_ACT, stationLevel, stationLockReason } from '../../engine/hideout';
 import {
   addDoomedMaps,
+  addUniqueMaps,
   allocateAtlasNode,
   applySextant,
   atlasBonuses,
@@ -58,11 +61,13 @@ import {
   startHardBoss,
   startMap,
   startUberBoss,
+  startUniqueMap,
   stopAutoRun,
   toggleAutoRerollChaos,
   toggleBlockedMod,
   toggleRollNormalMaps,
   totalMapsHeld,
+  uniqueMapHeld,
 } from '../../engine/maps';
 import { game, useGame } from '../../game';
 import { Badge, EmptyState, fmt, fmtTime, GameIcon, MatIcon, PageHeader } from '../components/common';
@@ -86,7 +91,8 @@ function ActiveRunCard({ go }: { go: (p: Page) => void }) {
   const { run, auto } = s.maps;
   if (!run) return null;
   const zone = zoneDef(run.zoneId);
-  const tDef = run.doomedTier ? null : mapTier(run.tier);
+  const uDef = run.uniqueMapId ? uniqueMapDef(run.uniqueMapId) : null;
+  const tDef = run.doomedTier || uDef ? null : mapTier(run.tier);
   const dDef = run.doomedTier ? doomedTier(run.doomedTier) : null;
   const activeSextants = (run.sextantMods ?? []).map((id) => sextantMod(id));
   const activeDoomed = (run.doomedMods ?? []).map((id) => DOOMED_MODS.find((m) => m.id === id)).filter(Boolean);
@@ -96,11 +102,14 @@ function ActiveRunCard({ go }: { go: (p: Page) => void }) {
     <div className="card">
       <div className="row" style={{ alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         <b>{zone.name}</b>
-        <Badge tone={dDef ? 'warn' : 'neutral'}>{dDef ? dDef.name : `Tier ${run.tier} · ${tDef?.modName}`}</Badge>
+        <Badge tone={dDef || uDef ? 'warn' : 'neutral'}>
+          {uDef ? `Unique Map · Tier ${uDef.tier}` : dDef ? dDef.name : `Tier ${run.tier} · ${tDef?.modName}`}
+        </Badge>
         <span className="muted num">
           · {run.packsLeft}/{run.packsTotal} packs left{auto ? ' · auto-run on' : ''}
         </span>
       </div>
+      {uDef && <p className="dim small">{uDef.desc} · {uDef.rewardSummary}</p>}
       {tDef && tDef.mod !== 'none' && <p className="dim small">{tDef.modDesc}</p>}
       {activeSextants.length > 0 && (
         <p className="small">
@@ -691,6 +700,52 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
               );
             })}
           </div>
+
+          <div className="card" style={{ marginTop: 16 }}>
+            <div className="card-title">
+              Unique Maps
+              <span className="grow" />
+              <span className="card-hint">Dropped by Tier 5+ Map Bosses</span>
+            </div>
+            <div className="action-grid">
+              {UNIQUE_MAPS.map((u) => {
+                const held = uniqueMapHeld(s, u.id);
+                const isRunning = run?.uniqueMapId === u.id;
+                return (
+                  <div className={`card ${isRunning ? 'running' : ''}`} key={u.id} style={{ margin: 0 }}>
+                    <div className="row" style={{ alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                      <b className="rar-unique">
+                        {u.name} <span className="muted">· T{u.tier} (Lv {u.level})</span>
+                      </b>
+                      <Badge tone={held > 0 ? 'warn' : 'locked'}>Held: {fmt(held)}</Badge>
+                    </div>
+                    <p className="dim small" style={{ margin: '6px 0' }}>
+                      {u.desc}
+                    </p>
+                    <p className="small" style={{ margin: '4px 0 8px' }}>
+                      <b>Spoils:</b> {u.rewardSummary}
+                    </p>
+                    <p className="dim small" style={{ fontStyle: 'italic', margin: '0 0 8px' }}>
+                      "{u.flavour}"
+                    </p>
+                    <div className="row" style={{ gap: 6 }}>
+                      <button
+                        className="btn sm primary"
+                        disabled={!!run || held <= 0}
+                        onClick={() =>
+                          game.act((st, ctx) => {
+                            if (!startUniqueMap(st, ctx, u.id)) go('combat');
+                          })
+                        }
+                      >
+                        Open {u.name}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </>
       )}
 
@@ -723,6 +778,7 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
                 game.act((st) => {
                   for (const sex of SEXTANTS) addBank(st, sex.id, 5);
                   for (const d of DOOMED_TIERS) addDoomedMaps(st, d.tier, 2);
+                  for (const u of UNIQUE_MAPS) addUniqueMaps(st, u.id, 1);
                 })
               }
             >

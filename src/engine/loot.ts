@@ -4,7 +4,7 @@ import { areaCurrency, BOSS_GATHER_DROP, bossGatherMats, bossTable, dropTable, S
 import { AUTO_SALVAGE_WAR_TABLE_LEVEL, MAP_ILVL } from '../data/hideout';
 import { RUNE_DROP, RUNES } from '../data/runes';
 import { CURRENCIES } from '../data/materials';
-import { rollFlask, stashFlask } from './flasks';
+import { rollFlask, rollUniqueFlask, stashFlask } from './flasks';
 import type { ZoneDef } from '../data/zones';
 import { seeUnique } from './account';
 import { addBank } from './bank';
@@ -12,8 +12,9 @@ import type { Ctx } from './context';
 import { benchBuilt } from './crafting';
 import { stationLevel } from './hideout';
 import { dropItem } from './storage';
-import { createItem, createUnique, droppableBases, salvageValue } from './items';
-import { HARD_BOSSES, UBER_BOSSES } from '../data/maps';
+import { createItem, createUnique, droppableBases, salvageValue, itemMatchesClass } from './items';
+import { shouldSalvageByFilter } from './lootFilter';
+import { HARD_BOSSES, UBER_BOSSES, uniqueMapDef } from '../data/maps';
 import { runModifiers } from './maps';
 import { chance, pick, pickWeighted, rInt } from './rng';
 import type { Derived } from './stats';
@@ -40,7 +41,18 @@ export function placeItem(s: GameState, ctx: Ctx, item: Item): void {
     seeUnique(s.account, item);
   }
   const autoLevel = item.rarity === 'unique' ? Infinity : AUTO_SALVAGE_WAR_TABLE_LEVEL[item.rarity];
-  if (item.rarity !== 'unique' && s.settings.autoSalvage[item.rarity] && benchBuilt(s) && stationLevel(s, 'war_table') >= autoLevel) {
+  const autoByRarity = item.rarity !== 'unique' && s.settings.autoSalvage[item.rarity] && benchBuilt(s) && stationLevel(s, 'war_table') >= autoLevel;
+  const autoByClassFilter = item.rarity !== 'unique' && s.settings.filterOffClassLoot && !itemMatchesClass(s.character.classId, item);
+  
+  let autoByCustomFilter = false;
+  if (item.rarity !== 'unique' && s.settings.activeLootFilterId && s.settings.customLootFilters) {
+    const activeFilter = s.settings.customLootFilters.find((f) => f.id === s.settings.activeLootFilterId);
+    if (activeFilter) {
+      autoByCustomFilter = shouldSalvageByFilter(activeFilter, item, s.character.classId);
+    }
+  }
+
+  if (autoByRarity || autoByClassFilter || autoByCustomFilter) {
     addBank(s, 'arcane_dust', salvageValue(item));
     s.lifetime.salvaged += 1;
     ctx.emit({ t: 'loot', item, salvaged: true });
@@ -49,6 +61,27 @@ export function placeItem(s: GameState, ctx: Ctx, item: Item): void {
   dropItem(s, ctx, item);
   s.lifetime.itemsLooted += 1;
   ctx.emit({ t: 'loot', item });
+}
+
+export function rollItemTier(zone: ZoneDef, isBoss: boolean, isDoomed: boolean, rng: Ctx['rng']): 1 | 2 | 3 | 4 | 5 {
+  if (isDoomed) return rng.next() < 0.4 ? 5 : 4;
+  const tier = zone.tier;
+  if (tier >= 18) {
+    const mapTier = tier - 17;
+    if (mapTier >= 10) {
+      if (isBoss && rng.next() < 0.3) return 5;
+      return rng.next() < 0.6 ? 4 : 3;
+    }
+    if (mapTier >= 7) {
+      if (isBoss && rng.next() < 0.15) return 5;
+      return rng.next() < 0.4 ? 4 : 3;
+    }
+    if (mapTier >= 4) return rng.next() < 0.45 ? 3 : 2;
+    return rng.next() < 0.35 ? 2 : 1;
+  }
+  if (zone.act >= 6) return isBoss && rng.next() < 0.4 ? 2 : 1;
+  if (zone.act >= 4) return isBoss && rng.next() < 0.2 ? 2 : 1;
+  return 1;
 }
 
 /** Everything a monster drops; an event can roll it more than once. */
@@ -76,7 +109,8 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
   };
 
   const lootMult = mon.lootMult ?? 1;
-  const gold = Math.round(rInt(rng, 1, Math.max(1, Math.round(mon.level / 3))) * (mon.isBoss ? 15 : 1) * mon.scale * lootMult);
+  const goldScale = Math.max(0, 1 + d.raw.goldFind / 100) * (s.maps.run?.uniqueMapId === 'umap_vaults' ? 4 : 1);
+  const gold = Math.round(rInt(rng, 1, Math.max(1, Math.round(mon.level / 3))) * (mon.isBoss ? 15 : 1) * mon.scale * lootMult * goldScale);
   addBank(s, 'gold', gold);
   if (zone.act >= CONTRABAND_DROP.firstAct && chance(rng, mon.isBoss ? CONTRABAND_DROP.bossChance : CONTRABAND_DROP.killChance)) giveCurrency(pick(rng, [SEAL, WAX]));
 
@@ -105,6 +139,27 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
       }
     }
 
+    if (s.maps.run?.uniqueMapId) {
+      const uMap = uniqueMapDef(s.maps.run.uniqueMapId);
+      if (uMap) {
+        if (uMap.id === 'umap_vaults') {
+          for (let i = 0; i < 6; i++) giveCurrency(rollCurrency(rng, orbs));
+        }
+        if (uMap.id === 'umap_olmecs') {
+          dropUniqueFlask(s, ctx, ilvl);
+        }
+        if (uMap.id === 'umap_maelstrom') {
+          const sextantCount = rInt(rng, 2, 3);
+          for (let i = 0; i < sextantCount; i++) {
+            giveCurrency(pick(rng, ['sextant_journeyman', 'sextant_master']), 1);
+          }
+        }
+        if (uMap.uniques.length) {
+          placeItem(s, ctx, createUnique(s, pick(rng, uMap.uniques), ilvl, rng));
+        }
+      }
+    }
+
     if (s.maps.run && (s.account.hideout.map_device ?? 1) >= 6 && chance(rng, 0.15)) {
       if (chance(rng, 0.5)) {
         giveCurrency(`map_t${s.maps.run.tier}`, 1);
@@ -118,10 +173,16 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
     if (firstKill || chance(rng, boss.repeatChance)) for (const g of boss.guaranteed) giveCurrency(g.id, g.qty);
     const currencyRolls = boss.currencyRolls + (mapMods?.bossCurrencyRolls ?? 0);
     for (let i = 0; i < currencyRolls; i++) giveCurrency(rollCurrency(rng, orbs));
+    const itemTier = rollItemTier(zone, true, !!s.maps.run?.doomedTier, rng);
     const count = rInt(rng, boss.items[0], boss.items[1]) + (mapMods?.bossExtraItems ?? 0);
     for (let i = 0; i < count; i++) {
-      const base = pick(rng, droppableBases(ilvl));
-      placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, itemRarity, boss.rarity), rng));
+      let pool = droppableBases(ilvl);
+      if (itemTier === 5 && rng.next() < 0.3) {
+        const t5Bases = pool.filter((b) => ['simplex_amulet', 'annointed_belt', 'astral_plate'].includes(b.id));
+        if (t5Bases.length) pool = t5Bases;
+      }
+      const base = pick(rng, pool);
+      placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, itemRarity, boss.rarity), rng, undefined, itemTier));
     }
     if (chance(rng, boss.flaskChance)) dropFlask(s, ctx, ilvl);
     if (zone.uniques.length && chance(rng, boss.uniqueChance * (1 + itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, zone.uniques), ilvl, rng));
@@ -131,6 +192,9 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
       giveCurrency(pick(rng, [...FOSSILS, ...essences]).id, rInt(rng, ...BOSS_CRAFT_MAT.qty));
     }
     if (chance(rng, BOSS_GATHER_DROP.chance)) giveCurrency(pick(rng, bossGatherMats(mon.level)), rInt(rng, ...BOSS_GATHER_DROP.qty));
+    if (zone.act >= 3 && chance(rng, hardBoss || uberBoss ? 0.15 : 0.05)) {
+      dropUniqueFlask(s, ctx, ilvl);
+    }
     return;
   }
 
@@ -142,8 +206,14 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
 
   if (chance(rng, table.currencyChance * mon.scale * lootMult * currencyMult * (1 + itemRarity / 300))) giveCurrency(rollCurrency(rng, orbs));
   if (chance(rng, table.itemChance * mon.scale * lootMult)) {
-    const base = pick(rng, droppableBases(ilvl));
-    placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, itemRarity, table.rarity), rng));
+    const itemTier = rollItemTier(zone, false, !!s.maps.run?.doomedTier, rng);
+    let pool = droppableBases(ilvl);
+    if (itemTier === 5 && rng.next() < 0.2) {
+      const t5Bases = pool.filter((b) => ['simplex_amulet', 'annointed_belt', 'astral_plate'].includes(b.id));
+      if (t5Bases.length) pool = t5Bases;
+    }
+    const base = pick(rng, pool);
+    placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, itemRarity, table.rarity), rng, undefined, itemTier));
   }
   if (chance(rng, table.flaskChance * mon.scale * lootMult)) dropFlask(s, ctx, ilvl);
   if (zone.uniques.length && chance(rng, table.uniqueChance * lootMult * (1 + itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, zone.uniques), ilvl, rng));
@@ -151,6 +221,12 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
 
 function dropFlask(s: GameState, ctx: Ctx, ilvl: number): void {
   const flask = rollFlask(s, ilvl, ctx.rng);
+  stashFlask(s, flask);
+  ctx.emit({ t: 'loot', flask });
+}
+
+export function dropUniqueFlask(s: GameState, ctx: Ctx, ilvl: number, defId?: string): void {
+  const flask = rollUniqueFlask(s, ilvl, ctx.rng, defId);
   stashFlask(s, flask);
   ctx.emit({ t: 'loot', flask });
 }

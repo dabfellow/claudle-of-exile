@@ -384,3 +384,27 @@ export const ASCENDANCY_MAX_POINTS = 9;
 /** Switching costs this many of the rare material, plus an Orb of Regret per node. */
 export const SWITCH_MATERIAL = 'divine';
 export const SWITCH_MATERIAL_COST = 1;
+
+export interface UnwrittenNotableEntry {
+  index: number;
+  ascendancyId: AscendancyId;
+  ascendancyName: string;
+  classId: ClassId;
+  node: AscendancyNode;
+}
+
+/** All 36 signature Ascendancy notables (1-based index 1..36) for The Unwritten unique body armour. */
+export const UNWRITTEN_NOTABLES: UnwrittenNotableEntry[] = ASCENDANCIES.flatMap((a) =>
+  a.signatureNotables.map((node) => ({
+    index: 0,
+    ascendancyId: a.id,
+    ascendancyName: a.name,
+    classId: a.classId,
+    node,
+  })),
+).map((entry, idx) => ({ ...entry, index: idx + 1 }));
+
+export function unwrittenNotableByIndex(idx: number): UnwrittenNotableEntry {
+  const clamped = Math.max(1, Math.min(UNWRITTEN_NOTABLES.length, Math.round(idx || 1)));
+  return UNWRITTEN_NOTABLES[clamped - 1];
+}

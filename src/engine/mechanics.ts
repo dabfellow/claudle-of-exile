@@ -76,12 +76,12 @@ export const BLOOM_MORE = 25;
 
 /** Which mechanic each knob belongs to: on any other class the stat does nothing (tooltips grey it out). */
 export const STAT_MECHANIC: Partial<Record<StatKey, Mechanic>> = {
-  rageMax: 'rage', rageEffect: 'rage', rageDecay: 'rage', rageRegen: 'rage', rageOnHitTaken: 'rage', endlessFury: 'rage',
+  rageMax: 'rage', rageEffect: 'rage', rageDecay: 'rage', rageRegen: 'rage', rageOnHitTaken: 'rage', endlessFury: 'rage', leviathanMend: 'rage',
   ripostePct: 'riposte', riposteCooldown: 'riposte', riposteHeal: 'riposte', riposteCrit: 'riposte', riposteBleed: 'riposte', perfectForm: 'riposte',
-  momentumMax: 'momentum', momentumEffect: 'momentum', momentumRetain: 'momentum', momentumEvasion: 'momentum', perpetualMotion: 'momentum',
-  maliceMax: 'malice', coupPct: 'malice', maliceCritKeep: 'malice', coupAilment: 'malice', maliceOnHitTaken: 'malice', thousandCuts: 'malice', maliceOnHit: 'malice',
+  momentumMax: 'momentum', momentumEffect: 'momentum', momentumRetain: 'momentum', momentumEvasion: 'momentum', perpetualMotion: 'momentum', kingsStride: 'momentum',
+  maliceMax: 'malice', coupPct: 'malice', maliceCritKeep: 'malice', coupAilment: 'malice', maliceOnHitTaken: 'malice', thousandCuts: 'malice', maliceOnHit: 'malice', coupCull: 'malice', slackTideRefund: 'malice',
   manaPower: 'manaPower', manaPowerFull: 'manaPower', manaPowerEs: 'manaPower', allOrNothing: 'manaPower',
-  fervorPct: 'martyr', novaPct: 'martyr', novaHeal: 'martyr', novaEs: 'martyr', saintsSacrifice: 'martyr',
+  fervorPct: 'martyr', novaPct: 'martyr', novaHeal: 'martyr', novaEs: 'martyr', saintsSacrifice: 'martyr', novaShock: 'martyr', corposantSurge: 'martyr',
 };
 
 export function mechanicOf(s: GameState): Mechanic | null {
@@ -237,7 +237,7 @@ export function fervorThreshold(d: Derived): number {
 
 /** Malice: the Coup de Grâce multiplier (a Mega Crit) */
 export function coupMulti(d: Derived): number {
-  return (d.raw.thousandCuts ? 2 : 4) * (1 + d.raw.coupPct / 100);
+  return (d.raw.thousandCuts ? 2 : 4) * (1 + d.raw.coupPct / 100) * (1 + (d.raw.headsmanGuillotine ?? 0) / 100);
 }
 
 /** Mega Crits deal a flat 400%, ignoring critical strike multiplier. */

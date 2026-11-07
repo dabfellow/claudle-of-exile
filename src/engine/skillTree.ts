@@ -1,3 +1,4 @@
+import { affixDef } from '../data/affixes';
 import { SKILLS } from '../data/skills';
 import { SKILL_TREE_BY_ID, SKILL_TREE_START, type SkillTreeStat } from '../data/skillTree';
 import type { Ctx } from './context';
@@ -55,13 +56,43 @@ export function refundSkillNode(s: GameState, ctx: Ctx, id: string): string | nu
 
 export type TreeStats = Partial<Record<SkillTreeStat, number>>;
 
-/** Summed skilling-tree effects (missing keys mean 0). */
+const SKILL_TREE_STAT_SET = new Set<string>([
+  'inputSave', 'offlineSpeed', 'patientCrafter',
+  'miningSpeed', 'gemChance', 'fossilChance', 'motherlode', 'miningYield', 'miningRare', 'miningDouble',
+  'woodcuttingSpeed', 'birdsNest', 'resinChance', 'resinIlvl', 'heartwood', 'woodcuttingYield', 'woodcuttingRare', 'woodcuttingDouble',
+  'harvestingSpeed', 'distiller', 'rareBlooms', 'greenhouse', 'harvestingYield', 'harvestingRare', 'harvestingDouble',
+  'thievingSpeed', 'markerChance', 'alertReduce', 'cleanGetaway', 'thievingYield', 'thievingRare', 'thievingDouble',
+  'archaeologySpeed', 'artifactChance', 'wareDiscount', 'deepSurvey', 'archaeologyYield', 'archaeologyRare', 'archaeologyDouble',
+  'smithingSpeed', 'steadyTemper', 'smithMagic', 'grandmaster', 'smithingQuality', 'smithingSave', 'smithingExtra',
+  'alchemySpeed', 'bulkBrewer', 'qualityBrews', 'transmuter', 'alchemyQuality', 'alchemySave', 'alchemyExtra',
+  'gemcuttingSpeed', 'gemcuttingXp', 'gemDustSave', 'masterCutter', 'gemcuttingQuality', 'gemcuttingSave', 'gemcuttingExtra',
+  'runecarvingSpeed', 'secondStroke', 'deepCuts', 'livingScript', 'runecarvingQuality', 'runecarvingSave', 'runecarvingExtra',
+  'cookingSpeed', 'secondHelping', 'slowSimmer', 'headChef', 'cookingQuality', 'cookingSave', 'cookingExtra',
+  'cartographySpeed', 'secondCopy', 'mapFind', 'masterCartographer', 'cartographyQuality', 'cartographySave', 'cartographyExtra',
+  'allSpeed', 'allYield', 'allRare', 'allDouble', 'allQuality', 'allSave', 'allExtra',
+]);
+
+/** Summed skilling-tree and equipped life-skill gear effects (missing keys mean 0). */
 export function skillTreeStats(s: GameState): TreeStats {
   const out: TreeStats = {};
   for (const id of s.skillPassives ?? []) {
     const n = SKILL_TREE_BY_ID[id];
     if (!n) continue;
     for (const [k, v] of Object.entries(n.stats)) out[k as SkillTreeStat] = (out[k as SkillTreeStat] ?? 0) + (v ?? 0);
+  }
+  if (s.equipment) {
+    for (const item of Object.values(s.equipment)) {
+      if (!item) continue;
+      for (const m of [...item.prefixes, ...item.suffixes]) {
+        const def = affixDef(m.affixId);
+        def.stats.forEach((st, i) => {
+          if (SKILL_TREE_STAT_SET.has(st)) {
+            const k = st as SkillTreeStat;
+            out[k] = (out[k] ?? 0) + (m.values[i] ?? 0);
+          }
+        });
+      }
+    }
   }
   return out;
 }

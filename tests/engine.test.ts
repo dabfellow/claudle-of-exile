@@ -457,7 +457,8 @@ describe('save', () => {
     const c = ctx();
     startSkillAction(s, c, 'cut_ash');
     const sum = simulateOffline(s, c, 60 * 60_000);
-    expect(sum.materials.ash_log).toBe(1200);
+    // Mastery earned during the hour modestly raises ordinary log yield and speed.
+    expect(sum.materials.ash_log).toBe(1252);
     expect(sum.levels.woodcutting).toBeGreaterThan(10);
   });
 });

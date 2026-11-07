@@ -6,6 +6,7 @@ import { CULTURES, digChance, EXPEDITION_GATE, SITES } from './expedition';
 import { MAP_TIERS } from './maps';
 import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
 import { RUNE_FAMILIES, RUNE_GATE, RUNES } from './runes';
+import { masteryForAction, type MasterySpec } from './skillingMastery';
 
 export interface SkillDef {
   id: SkillId;
@@ -71,6 +72,8 @@ export interface SkillAction {
   chart?: { tier: number; qty: number; upgrade?: boolean };
   /** listed but can never be started (every Fishing spot) */
   soon?: boolean;
+  /** Stable non-combat practice band and its explicitly allowed bonuses. */
+  mastery?: MasterySpec;
 }
 
 const gather = (
@@ -388,7 +391,7 @@ export const SKILL_XP_SCALE = 0.3;
 export const ACTIONS: SkillAction[] = [...GATHERING, ...MILLING, ...THIEVING, ...ARCHAEOLOGY, ...FISHING, ...SMELTING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS].map((a) => ({
   ...a,
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
-}));
+})).map((a) => ({ ...a, mastery: masteryForAction(a) }));
 
 const BY_ID: Record<string, SkillAction> = Object.fromEntries(ACTIONS.map((a) => [a.id, a]));
 

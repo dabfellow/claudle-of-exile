@@ -1,4 +1,4 @@
-import { FLASKS, flaskAffixDef, FLASK_AFFIXES, flaskDef, type FlaskAffixDef, type FlaskDef, type FlaskStat } from '../data/flasks';
+import { FLASKS, flaskAffixDef, FLASK_AFFIXES, flaskDef, UNIQUE_FLASKS, type FlaskAffixDef, type FlaskDef, type FlaskStat } from '../data/flasks';
 import { currencyDef } from '../data/materials';
 import type { Ctx } from './context';
 import { accountUid } from './items';
@@ -8,7 +8,16 @@ import type { AccountState, FlaskInstance, FlaskMod, GameState, InstillCondition
 // ---------- creation ----------
 
 export function newFlask(s: GameState, flaskId: string, ilvl = 1): FlaskInstance {
-  return { uid: accountUid(s), flaskId, charges: 0, rarity: 'normal', ilvl, prefixes: [], suffixes: [], instill: null };
+  const def = flaskDef(flaskId);
+  return { uid: accountUid(s), flaskId, charges: 0, rarity: def.unique ? 'unique' : 'normal', ilvl, prefixes: [], suffixes: [], instill: null };
+}
+
+export function rollUniqueFlask(s: GameState, ilvl: number, rng: Rng, flaskId?: string): FlaskInstance {
+  const def = flaskId ? flaskDef(flaskId) : pick(rng, UNIQUE_FLASKS);
+  const f = newFlask(s, def.id, ilvl);
+  f.rarity = 'unique';
+  f.charges = flaskStats(f).maxCharges;
+  return f;
 }
 
 function eligible(f: FlaskInstance, kind: 'prefix' | 'suffix'): FlaskAffixDef[] {
@@ -82,7 +91,7 @@ export function flaskStats(f: FlaskInstance): FlaskStats {
 
 export function flaskName(f: FlaskInstance): string {
   const def = flaskDef(f.flaskId);
-  if (f.rarity === 'normal') return def.name;
+  if (f.rarity === 'normal' || f.rarity === 'unique') return def.name;
   const pre = f.prefixes[0] ? flaskAffixDef(f.prefixes[0].affixId).label + ' ' : '';
   const suf = f.suffixes[0] ? ' ' + flaskAffixDef(f.suffixes[0].affixId).label : '';
   return `${pre}${def.name}${suf}`;
@@ -98,6 +107,7 @@ export function describeFlaskMod(m: FlaskMod): string {
 export function flaskEffectText(f: FlaskInstance): string {
   const st = flaskStats(f);
   const def = st.def;
+  if (def.unique) return def.desc;
   const secs = (st.durationMs / 1000).toFixed(1);
   if (def.heal) return `Recovers ${Math.round(def.heal * st.effectMult)} ${def.kind === 'mana' ? 'Mana' : 'Life'} over ${secs}s`;
   return `${def.desc.replace(/ for [\d.]+s$/, '')} for ${secs}s${st.effectMult > 1 ? ` (${Math.round((st.effectMult - 1) * 100)}% stronger)` : ''}`;
@@ -113,6 +123,7 @@ export function findFlask(s: GameState, uid: number): FlaskInstance | undefined 
 }
 
 export function flaskOrbReason(s: GameState, orb: FlaskOrb, f: FlaskInstance): string | null {
+  if (f.rarity === 'unique') return 'Cannot modify unique flasks';
   if ((s.account.bank[orb] ?? 0) < 1) return `You have no ${currencyDef(orb).name}`;
   const room = f.prefixes.length < 1 || f.suffixes.length < 1;
   switch (orb) {
@@ -172,7 +183,10 @@ export const FLASK_STASH_CAP = 10;
 /** Sell the least valuable spares of any kind over the cap. Returns the gold. */
 export function trimFlaskStash(a: AccountState): number {
   const byKind = new Map<string, FlaskInstance[]>();
-  for (const f of a.flaskStash) byKind.set(f.flaskId, [...(byKind.get(f.flaskId) ?? []), f]);
+  for (const f of a.flaskStash) {
+    if (f.rarity === 'unique') continue;
+    byKind.set(f.flaskId, [...(byKind.get(f.flaskId) ?? []), f]);
+  }
   const sold = new Set<number>();
   for (const list of byKind.values()) {
     if (list.length <= FLASK_STASH_CAP) continue;

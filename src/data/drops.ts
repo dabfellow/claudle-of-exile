@@ -73,7 +73,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
   },
   5: {
     currencyChance: 0.055,
-    currency: { ...BASIC, regal: 8, alchemy: 8, chaos: 6, annul: 1.5, exalted: 0.35, divine: 0.7, expansion: 0.7 },
+    currency: { ...BASIC, regal: 8, alchemy: 8, chaos: 6, annul: 1.5, exalted: 0.35, divine: 0.7, expansion: 0.7, instill: 1.2 },
     itemChance: 0.17,
     rarity: { normal: 55, magic: 33, rare: 12 },
     flaskChance: 0.012,
@@ -82,7 +82,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
   // Act 2 (zones.ts: 5, 5, 6, 6, 6, 7, 7, 7)
   6: {
     currencyChance: 0.055,
-    currency: { ...BASIC, regal: 9, alchemy: 9, chaos: 7, annul: 1.8, exalted: 0.4, divine: 0.8, expansion: 0.8 },
+    currency: { ...BASIC, regal: 9, alchemy: 9, chaos: 7, annul: 1.8, exalted: 0.4, divine: 0.8, expansion: 0.8, instill: 1.5 },
     itemChance: 0.17,
     rarity: { normal: 52, magic: 34, rare: 14 },
     flaskChance: 0.013,
@@ -90,7 +90,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
   },
   7: {
     currencyChance: 0.06,
-    currency: { ...BASIC, regal: 10, alchemy: 10, chaos: 8, annul: 2, exalted: 0.45, divine: 0.9, expansion: 0.9 },
+    currency: { ...BASIC, regal: 10, alchemy: 10, chaos: 8, annul: 2, exalted: 0.45, divine: 0.9, expansion: 0.9, instill: 1.8 },
     itemChance: 0.18,
     rarity: { normal: 50, magic: 34, rare: 16 },
     flaskChance: 0.013,
@@ -99,7 +99,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
   // Act 3 (zones.ts: 7, 8, 8, 8, 8, 9, 9, 9, 9, 9)
   8: {
     currencyChance: 0.06,
-    currency: { ...BASIC, regal: 11, alchemy: 11, chaos: 9, annul: 2.2, exalted: 0.5, divine: 1, expansion: 1 },
+    currency: { ...BASIC, regal: 11, alchemy: 11, chaos: 9, annul: 2.2, exalted: 0.5, divine: 1, expansion: 1, instill: 2.0 },
     itemChance: 0.18,
     rarity: { normal: 48, magic: 35, rare: 17 },
     flaskChance: 0.014,
@@ -280,8 +280,8 @@ export function bossTable(tier: number): BossTable {
   return BOSS_TABLES[tier] ?? BOSS_TABLES[7];
 }
 
-/** Instilling Orbs drop from Act 4 on. Act 4's first area shares tier 9 with Act 3, so the act decides, not the tier. */
-export const INSTILL_FIRST_ACT = 4;
+/** Instilling Orbs drop from Act 2 on. */
+export const INSTILL_FIRST_ACT = 2;
 
 /** The orbs an area's monsters and bosses roll from. */
 export function areaCurrency(zone: { tier: number; act: number }): Record<string, number> {
@@ -289,15 +289,15 @@ export function areaCurrency(zone: { tier: number; act: number }): Record<string
   return zone.act >= INSTILL_FIRST_ACT ? cur : Object.fromEntries(Object.entries(cur).filter(([id]) => id !== 'instill'));
 }
 
-/** A little gathering material from bosses: one kind from the band the boss's level has reached. */
+/** Bosses drop station upgrade & crafting materials so boss farming can sustain hideout upgrades without mandatory life-skilling. */
 export const BOSS_GATHER_DROP = {
-  chance: 0.5,
-  qty: [1, 3] as [number, number],
+  chance: 0.6,
+  qty: [1, 2] as [number, number],
   bands: [
-    { level: 40, mats: ['mithril_ore', 'yew_log', 'voidbloom', 'rough_gem'] },
-    { level: 30, mats: ['mithril_ore', 'yew_log', 'emberroot', 'rough_gem'] },
-    { level: 15, mats: ['iron_ore', 'oak_log', 'frostleaf'] },
-    { level: 1, mats: ['copper_ore', 'ash_log', 'sunpetal'] },
+    { level: 50, mats: ['mithril_ore', 'mithril_bar', 'yew_log', 'yew_plank', 'voidbloom', 'rough_gem', 'arcane_dust'] },
+    { level: 35, mats: ['mithril_ore', 'mithril_bar', 'yew_log', 'yew_plank', 'emberroot', 'rough_gem', 'arcane_dust'] },
+    { level: 20, mats: ['iron_ore', 'iron_bar', 'oak_log', 'oak_plank', 'frostleaf', 'rough_gem'] },
+    { level: 1, mats: ['copper_ore', 'copper_bar', 'ash_log', 'ash_plank', 'sunpetal'] },
   ],
 };
 

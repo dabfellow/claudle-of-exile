@@ -127,7 +127,7 @@ describe('recipes', () => {
     expect(flaskDef('life_sacred').heal).toBeGreaterThan(flaskDef('life_grand').heal!);
     const rng = seeded(3);
     for (let i = 0; i < 300; i++) expect(made).not.toContain(rollFlask(s, 100, rng).flaskId);
-    expect(FLASKS.filter((f) => f.dropLevel === Infinity).map((f) => f.id).sort()).toEqual([...made].sort());
+    expect(FLASKS.filter((f) => f.dropLevel === Infinity && !f.unique).map((f) => f.id).sort()).toEqual([...made].sort());
   });
 });
 

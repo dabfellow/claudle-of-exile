@@ -89,6 +89,30 @@ export const STAT_KEYS = [
   'overclock', 'knifesEdge', 'eternalHunger',
   // minions (docs/GAME.md)
   'minionPct', 'minionLifePct', 'minionSpeedPct',
+  // unique mechanics & gold scaling
+  'clingingHull', 'critGoldScale', 'goldFind', 'slothPyre', 'physCanShock', 'noElemDamage',
+  'unblinkingFlare', 'cannotEvade', 'flaskReel', 'unwrittenNotable', 'blueprintRuin',
+  'voidTouch', 'tectonicRupture', 'mirrorTwin', 'exileEcho', 'voidGaze', 'briarThorns',
+  'novaShock', 'coupCull', 'corposantSurge', 'slackTideRefund', 'leviathanMend', 'kingsStride',
+  // ascendancy BIS unique mechanics
+  'ravagerFrenzy', 'anvilRetaliate', 'longshotSnipe', 'falconerTwin', 'wellspringCascade',
+  'alchemistVolatile', 'matadorGrace', 'vanguardPhalanx', 'flagellantMartyr', 'lightkeeperPrism',
+  'headsmanGuillotine', 'plaguewrightFester',
+  // unique flask stats
+  'karuiBlood', 'laviangaZeroMana', 'lionsRoarMoreMelee', 'bottledFaithCrit', 'dyingSunProj',
+  // life skill stats on gear
+  'inputSave', 'offlineSpeed', 'patientCrafter',
+  'miningSpeed', 'gemChance', 'fossilChance', 'motherlode',
+  'woodcuttingSpeed', 'birdsNest', 'resinChance', 'resinIlvl', 'heartwood',
+  'harvestingSpeed', 'distiller', 'rareBlooms', 'greenhouse',
+  'smithingSpeed', 'steadyTemper', 'smithMagic', 'grandmaster',
+  'alchemySpeed', 'bulkBrewer', 'qualityBrews', 'transmuter',
+  'thievingSpeed', 'markerChance', 'alertReduce', 'cleanGetaway',
+  'archaeologySpeed', 'artifactChance', 'wareDiscount', 'deepSurvey',
+  'gemcuttingSpeed', 'gemcuttingXp', 'gemDustSave', 'masterCutter',
+  'runecarvingSpeed', 'secondStroke', 'deepCuts', 'livingScript',
+  'cookingSpeed', 'secondHelping', 'slowSimmer', 'headChef',
+  'cartographySpeed', 'secondCopy', 'mapFind', 'masterCartographer',
 ] as const;
 
 export type StatKey = (typeof STAT_KEYS)[number];
@@ -130,9 +154,11 @@ export interface Item {
   doomImplicit?: string;
   /** Void Sigil: whether the 7th modifier slot has been unlocked */
   voidSlot?: boolean;
+  /** Tiered loot (1–5): higher tiers feature better mod rolls, higher affix tiers, and natural fractured mods / rare bases at T5 */
+  itemTier?: 1 | 2 | 3 | 4 | 5;
 }
 
-export type InstillCondition = 'lowLife' | 'lowMana' | 'fullCharges' | 'bossCast' | 'savageHit' | 'elemHit' | 'chaosHit' | 'frostbite';
+export type InstillCondition = 'lowLife' | 'lowMana' | 'fullCharges' | 'bossCast' | 'savageHit' | 'elemHit' | 'chaosHit' | 'frostbite' | 'enemyRanged' | 'packStart';
 
 export interface FlaskMod {
   affixId: string;
@@ -143,8 +169,8 @@ export interface FlaskInstance {
   uid: number;
   flaskId: string;
   charges: number;
-  /** flasks are normal or magic (1 prefix + 1 suffix) */
-  rarity: 'normal' | 'magic';
+  /** flasks are normal, magic (1 prefix + 1 suffix), or unique */
+  rarity: 'normal' | 'magic' | 'unique';
   ilvl: number;
   prefixes: FlaskMod[];
   suffixes: FlaskMod[];
@@ -457,10 +483,15 @@ export interface HealOverTime {
   resource: 'life' | 'mana';
   perMs: number;
   remainingMs: number;
+  /** Blood of the Karui: restores full Life when the heal finishes */
+  karuiEndFull?: boolean;
 }
 
 export interface CombatRuntime {
   zoneId: string;
+  /** Architect's Compass / First Exile's Covenant: spell and skill cast counters */
+  spellCount?: number;
+  skillCount?: number;
   /** Monster-inflicted ailments, independent from ground and the act-specific Frostbite mechanic. */
   playerDots?: Dot[];
   playerChillMs?: number;
@@ -688,6 +719,12 @@ export interface Targeting {
 
 export interface Settings {
   autoSalvage: Record<Rarity, boolean>;
+  /** Class loot filter: automatically salvage non-unique gear that does not fit your class attribute/defences */
+  filterOffClassLoot?: boolean;
+  /** Active custom loot filter id, or null if using standard settings */
+  activeLootFilterId?: string | null;
+  /** User-created and preset custom loot filters that can be swapped between */
+  customLootFilters?: import('./lootFilter').CustomLootFilter[];
   reducedMotion: boolean;
   movement: Movement;
   /** Automatic combat spacing; legacy movement remains the low-level pace used by old saves and tests. */
@@ -870,6 +907,8 @@ export interface MapRun {
   /** Doomed Map tier (1..5) and rolled Doomed modifiers when running a Doomed Map */
   doomedTier?: number;
   doomedMods?: import('../data/maps').DoomedModId[];
+  /** Unique Map id when running a Unique Map */
+  uniqueMapId?: string;
   /** Rolled normal map modifiers */
   normalMods?: string[];
   packsLeft: number;
@@ -971,6 +1010,8 @@ export interface GameState {
   tutorial: TutorialState;
   nextUid: number;
   skills: Record<SkillId, number>;
+  /** Character-owned nominal work practiced in explicitly authored non-combat bands. */
+  skillingMastery: Record<string, number>;
   /** the bag you carry (BAG_SIZE) */
   inventory: Item[];
   /** fresh drops waiting to be picked up, oldest first; kept when you leave an area */

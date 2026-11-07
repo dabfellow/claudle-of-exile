@@ -85,14 +85,14 @@ export function PaperDoll({
                     {flaskRecoveryAmount(d, f)}
                   </span>
                 )}
-                {(f.instill || flaskStats(f).def.kind !== 'utility') && <span className="flask-enchanted" title={f.instill ? 'Enchanted: drinks itself' : 'Automatic at low Life or Mana'} />}
+                {f.instill && <span className="flask-enchanted" title={`Enchanted: drinks itself (${f.instill})`} />}
               </button>
             </Tooltip>
           ) : (
             <div
               key={i}
               className={`cell empty-slot flask-cell ${onEmptyFlask ? 'clickable' : ''}`}
-              title={emptyFlaskTitle ?? `Flask slot ${i + 1} (empty)`}
+              title={emptyFlaskTitle ?? (i === 0 ? 'Life Flask (empty)' : i === 1 ? 'Mana Flask (empty)' : `Utility Flask ${i - 1} (empty)`)}
               onClick={onEmptyFlask ? () => onEmptyFlask(i) : undefined}
             >
               <span className="flask-key">{i + 1}</span>

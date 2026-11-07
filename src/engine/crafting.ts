@@ -7,7 +7,7 @@ import { WHETSTONE } from '../data/expedition';
 import { BENCH_BUILT_LEVEL, BENCH_CRAFTS } from '../data/hideout';
 import { recipeUnlocked } from './challenge';
 import type { Ctx } from './context';
-import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, salvageValue, spawnWeight, type ModBias } from './items';
+import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, rollUnwrittenNotableIndex, salvageValue, spawnWeight, type ModBias } from './items';
 import { pick, rInt, type Rng } from './rng';
 import { canAfford, hasItem, payCraftCost } from './bank';
 import type { GameState, Item, RolledMod } from './types';
@@ -310,6 +310,13 @@ export function applyOrb(s: GameState, ctx: Ctx, orbId: string, uid: number, fos
   const item = findItem(s, uid)!;
   const dust = tinkerDustCost(s, orbId, item);
   ORBS[orbId].apply(item, ctx.rng, fossilId ? modBias(fossilId) : undefined, sealed ? allMods(item).find((m) => m.affixId === sealed) : undefined);
+  if (orbId === 'divine' && item.rarity === 'unique') {
+    for (const m of allMods(item)) {
+      if (m.affixId === 'u_unwritten_notable' && m.affixId !== sealed) {
+        m.values = [rollUnwrittenNotableIndex(s.character?.classId, ctx.rng)];
+      }
+    }
+  }
   payCraftCost(s, ctx, { ...(dust === null ? { [orbId]: 1 } : { arcane_dust: dust }), ...(fossilId ? { [fossilId]: 1 } : {}), ...(sealed ? { [SEAL]: 1 } : {}) });
   s.lifetime.orbsUsed += 1;
   ctx.emit({ t: 'craft', text: `${dust === null ? orbId : `${dust} dust`} → ${itemName(item)}`, uid, orbId });

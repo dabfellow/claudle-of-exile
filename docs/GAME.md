@@ -84,6 +84,8 @@ The skilling tree is separate and represents specialisation rather than eventual
 
 Higher actions require the stated skill level, area and sometimes station upgrade. Costs, times, yields and XP come from `src/data/skills.ts`. Production stops when inputs or capacity run out. Smithing item level is capped by campaign progress. Active minigames grant temporary Focus speed up to 45%; offline skilling keeps its ordinary rate and does not earn active Focus. Overtime is a separate offline tree bonus.
 
+Every eligible timed non-combat action and Heist job also builds character-owned mastery in one of 67 stable, authored work bands. Completed work grants its unmodified base duration as practice whether performed live, offline, by auto-repeat or through the Greenhouse; interrupted work grants none. Practice reaches level 100 at 36,000 nominal seconds. Its continuous bonus reaches at most 12 percentage points of increased speed, plus either 8% expected ordinary primary yield for gathering or 8% expected conservation of explicitly eligible ordinary production inputs. Heists receive speed only. Rare and chase rewards, keys, admission costs, maps, item generation and access requirements are never improved or bypassed. Mastery progress and bonuses appear on action and Heist cards, and offline gains are summarized. Sources: `src/data/skillingMastery.ts`, `src/engine/skillingMastery.ts`, `src/engine/skills.ts`, `src/engine/heist.ts`.
+
 | System | Current loop | Source |
 |---|---|---|
 | Mining, Woodcutting, Foraging | Gather ore/logs/herbs; bonus fossils, resins, essences and shards support crafts | `src/data/skills.ts`, `src/data/craftMats.ts` |
@@ -99,7 +101,7 @@ Higher actions require the stated skill level, area and sometimes station upgrad
 
 Runes sit outside ordinary affixes: orbs do not reroll them; Wax impressions do not restore them; replacing one destroys the old rune. They work on uniques. Uninscribed runes and crafting materials are in the shared bank. Forger's Seals protect a selected modifier during supported crafts; Locksmith's Wax records/restores an item's ordinary crafted state. Ancient Whetstones raise one eligible modifier tier, limited by item level and the one-honed-mod rule. Source implementations define exclusions.
 
-Fishing is a permanent joke/placeholder, not a promised future skill. Fletching, per-action mastery and other unimplemented skill ideas remain roadmap material.
+Fishing is a permanent joke/placeholder, not a promised future skill. Fletching and other unimplemented skill ideas remain roadmap material.
 
 ## Gear, crafting, storage and hideout
 

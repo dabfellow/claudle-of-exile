@@ -21,10 +21,13 @@ import { seeded } from './rng';
 import { craftStep } from './craftUntil';
 import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
+import { defaultLootFilters } from './lootFilter';
 import { challengeName } from './challenge';
+export { enterZone } from './combat';
+export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 37;
+export const SAVE_VERSION = 38;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -59,6 +62,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     tutorial: { step: 0, progress: 0, done: false, skipped: false },
     nextUid: 1,
     skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, thieving: 0, archaeology: 0, smithing: 0, alchemy: 0, gemcutting: 0, runecarving: 0, cooking: 0, cartography: 0, fishing: 0 },
+    skillingMastery: {},
     inventory: [],
     ground: [],
     offlineHaul: [],
@@ -87,7 +91,18 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     heist: newHeistState(),
     expedition: newExpeditionState(),
     vendor: { stock: [], refreshAt: 0 },
-    settings: { autoSalvage: { normal: false, magic: false, rare: false, unique: false }, reducedMotion: false, movement: 'walk', posture: 'brawler', autoFlee: true, autoBoss: false, targeting: { priority: 'none', order: 'closest' } },
+    settings: {
+      autoSalvage: { normal: false, magic: false, rare: false, unique: false },
+      filterOffClassLoot: false,
+      activeLootFilterId: null,
+      customLootFilters: defaultLootFilters(),
+      reducedMotion: false,
+      movement: 'walk',
+      posture: 'brawler',
+      autoFlee: true,
+      autoBoss: false,
+      targeting: { priority: 'none', order: 'closest' },
+    },
     lifetime: {
       kills: 0, bossKills: 0, deaths: 0, itemsLooted: 0, orbsUsed: 0, salvaged: 0, flasksDrunk: 0,
       flasksBrewed: 0, mealsEaten: 0, mapsDrawn: 0, itemsSmithed: 0, gathered: 0, benchCrafts: 0, raresFound: 0, uniquesFound: 0,

@@ -34,7 +34,8 @@ describe('gemcutting', () => {
     cut(s, 'cut_skill', 30);
     expect(s.account.gems).toHaveLength(30);
     expect(new Set(s.account.gems.map((g) => activeGemDef(g.gemId).attr)).size).toBe(3);
-    expect(s.account.bank.rough_gem).toBe(10);
+    // Practice earned during the batch can conserve an eligible ordinary input.
+    expect(s.account.bank.rough_gem).toBe(11);
     expect(s.skills.gemcutting).toBeGreaterThan(xpForLevel(1));
   });
 

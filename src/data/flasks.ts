@@ -16,6 +16,9 @@ export interface FlaskDef {
   price: number;
   /** lowest monster level that can drop this flask (Infinity: it never drops and can only be brewed) */
   dropLevel: number;
+  /** true for unique flasks */
+  unique?: boolean;
+  flavour?: string;
 }
 
 export const FLASKS: FlaskDef[] = [
@@ -77,7 +80,40 @@ export const FLASKS: FlaskDef[] = [
     maxCharges: 40, chargesPerUse: 20, durationMs: 4500, buff: { physPct: 40, elemPct: 40 },
     desc: '40% increased Physical and Elemental Damage for 4.5s', price: 1200, dropLevel: Infinity,
   },
+  // ---------- Unique Flasks ----------
+  {
+    id: 'u_flask_karui', name: 'Blood of the Karui', kind: 'life', color: '#c84b31', unique: true,
+    flavour: 'Save your strength for the final blow.',
+    maxCharges: 30, chargesPerUse: 15, durationMs: 2500, heal: 1200, buff: { karuiBlood: 1 },
+    desc: 'Recovers 1200 Life over 2.5s; recovers Full Life when the effect ends', price: 4000, dropLevel: Infinity,
+  },
+  {
+    id: 'u_flask_lavianga', name: "Lavianga's Spirit", kind: 'mana', color: '#3b82f6', unique: true,
+    flavour: 'A clear mind needs no measure.',
+    maxCharges: 36, chargesPerUse: 12, durationMs: 4000, heal: 600, buff: { laviangaZeroMana: 1, castSpeedPct: 30 },
+    desc: 'Recovers 600 Mana over 4s; Skills cost no Mana and +30% Cast Speed during effect', price: 4000, dropLevel: Infinity,
+  },
+  {
+    id: 'u_flask_lions_roar', name: "Lion's Roar", kind: 'utility', color: '#d97706', unique: true,
+    flavour: 'When the king of the steppe speaks, the grass lies flat.',
+    maxCharges: 40, chargesPerUse: 20, durationMs: 5000, buff: { armour: 600, armourPct: 50, lionsRoarMoreMelee: 25 },
+    desc: '+600 Armour, 50% increased Armour and 25% more Melee Physical Damage for 5s', price: 4500, dropLevel: Infinity,
+  },
+  {
+    id: 'u_flask_bottled_faith', name: 'Bottled Faith', kind: 'utility', color: '#f59e0b', unique: true,
+    flavour: 'A drop of the High Altar, stoppered in crystal.',
+    maxCharges: 40, chargesPerUse: 20, durationMs: 5500, buff: { critChancePct: 150, elemPct: 40, bottledFaithCrit: 15 },
+    desc: '150% increased Crit Chance, 40% Elemental Damage and enemies take 15% increased Damage for 5.5s', price: 5000, dropLevel: Infinity,
+  },
+  {
+    id: 'u_flask_dying_sun', name: 'Dying Sun', kind: 'utility', color: '#ef4444', unique: true,
+    flavour: 'Even as it cools, it burns brighter than any hearth.',
+    maxCharges: 40, chargesPerUse: 20, durationMs: 4500, buff: { fireRes: 50, allRes: 20, projectilePct: 35, dyingSunProj: 2 },
+    desc: '+20% All Res, +35% Projectile Damage and Skills fire 2 additional Projectiles for 4.5s', price: 5000, dropLevel: Infinity,
+  },
 ];
+
+export const UNIQUE_FLASKS: FlaskDef[] = FLASKS.filter((f) => f.unique);
 
 export function flaskDef(id: string): FlaskDef {
   const f = FLASKS.find((x) => x.id === id);
@@ -147,6 +183,9 @@ export const INSTILL_CONDITIONS: { id: InstillCondition; label: string; desc: st
   { id: 'elemHit', label: 'Elemental Hit', desc: 'Used automatically when you take a fire, cold or lightning hit' },
   { id: 'chaosHit', label: 'Chaos Hit', desc: 'Used automatically when you take a chaos hit' },
   { id: 'frostbite', label: 'Frostbite', desc: 'Used automatically at 6 Frostbite stacks, which it clears', act: 4 },
+  { id: 'enemyRanged', label: 'Distant Enemy', desc: 'Used automatically when an enemy is outside melee range (great with Fisherman’s Knot)' },
+  { id: 'packStart', label: 'New Pack', desc: 'Used automatically when a new monster wave arrives' },
 ];
 
-export const FLASK_SLOTS = 5;
+export const FLASK_SLOTS = 4;
+export const FLASK_SLOT_TYPES: readonly ('life' | 'mana' | 'utility')[] = ['life', 'mana', 'utility', 'utility'] as const;

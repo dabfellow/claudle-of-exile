@@ -198,7 +198,7 @@ begin
   if jsonb_typeof(item) is distinct from 'object' then return 'not an item'; end if;
   if pg_column_size(item) > 16000 then return 'item too large'; end if;
   for key in select jsonb_object_keys(item) loop
-    if not key = any(array['uid', 'baseId', 'ilvl', 'rarity', 'name', 'prefixes', 'suffixes', 'uniqueId', 'impression', 'rune', 'honed']) then
+    if not key = any(array['uid', 'baseId', 'ilvl', 'rarity', 'name', 'prefixes', 'suffixes', 'uniqueId', 'impression', 'rune', 'honed', 'fractured', 'elevated', 'doomImplicit', 'voidSlot', 'itemTier']) then
       return 'unknown item field';
     end if;
   end loop;

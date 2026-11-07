@@ -2197,6 +2197,31 @@ h3 {
   margin: 0 2px;
 }
 
+.skilling-mastery {
+  display: grid;
+  grid-template-columns: auto minmax(72px, 1fr);
+  align-items: center;
+  gap: 4px 8px;
+  padding: 5px 12px 7px;
+  border-top: 1px solid color-mix(in srgb, var(--accent-2) 16%, transparent);
+}
+
+.skilling-mastery.compact {
+  padding: 4px 0;
+  border-top: 0;
+}
+
+.skilling-mastery-label {
+  color: var(--accent-2);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.skilling-mastery > .dim {
+  grid-column: 1 / -1;
+}
+
 .action-body {
   display: grid;
   gap: 8px;

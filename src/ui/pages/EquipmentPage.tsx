@@ -1,4 +1,6 @@
 import { monsterDamage } from '../../data/zones';
+import { FLASK_SLOT_TYPES } from '../../data/flasks';
+import { flaskStats } from '../../engine/flasks';
 import { equipFlask, unequipFlask } from '../../engine/combat';
 import { useState } from 'react';
 import { equip, equipReason, slotsFor } from '../../engine/equipment';
@@ -168,11 +170,13 @@ function SlotPicker({ s, slot, onDone }: { s: GameState; slot: EquipSlot; onDone
 /** Spare flasks to put in one belt slot, or take the one there off. */
 function FlaskPicker({ s, slot, onDone }: { s: GameState; slot: number; onDone: () => void }) {
   const worn = s.flaskSlots[slot];
+  const targetKind = FLASK_SLOT_TYPES[slot] ?? 'utility';
+  const matching = s.account.flaskStash.filter((f) => flaskStats(f).def.kind === targetKind);
   return (
     <div className="slot-picker">
       <div className="row" style={{ gap: 8 }}>
-        <b className="small">Flask slot {slot + 1}</b>
-        <span className="dim small">{worn ? 'Swap for a spare flask, or take it off' : 'From your spare flasks'}</span>
+        <b className="small">{targetKind === 'life' ? 'Life' : targetKind === 'mana' ? 'Mana' : 'Utility'} Flask slot {slot + 1}</b>
+        <span className="dim small">{worn ? 'Swap for a spare flask, or take it off' : `Choose a ${targetKind} flask`}</span>
         <span className="grow" />
         {worn && (
           <button className="btn sm" onClick={() => (game.act((st) => unequipFlask(st, slot)), onDone())}>
@@ -183,10 +187,10 @@ function FlaskPicker({ s, slot, onDone }: { s: GameState; slot: number; onDone: 
           <Icon name="close" size={12} />
         </button>
       </div>
-      {s.account.flaskStash.length === 0 ? (
-        <div className="dim small">No spare flasks. Brew them with Alchemy, loot them or buy them in Town.</div>
+      {matching.length === 0 ? (
+        <div className="dim small">No spare {targetKind} flasks. Brew them with Alchemy, loot them or buy them in Town.</div>
       ) : (
-        <FlaskShelf flasks={s.account.flaskStash} onPick={(f) => (game.act((st) => equipFlask(st, f.uid, slot)), onDone())} />
+        <FlaskShelf flasks={matching} onPick={(f) => (game.act((st) => equipFlask(st, f.uid, slot)), onDone())} />
       )}
     </div>
   );

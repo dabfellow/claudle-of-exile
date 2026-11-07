@@ -33,8 +33,8 @@ describe('drop tables', () => {
     expect(dropTable(5).rarity.rare).toBeGreaterThan(dropTable(1).rarity.rare);
   });
 
-  it('Instilling Orbs drop from Act 4 on, including its first area', () => {
-    for (const z of ZONES) expect(!!areaCurrency(z).instill, z.id).toBe(z.act >= 4);
+  it('Instilling Orbs drop from Act 2 on, including its first area', () => {
+    for (const z of ZONES) expect(!!areaCurrency(z).instill, z.id).toBe(z.act >= 2);
   });
 
   it('no skilling action makes combat-only orbs', () => {

@@ -6,8 +6,10 @@ import {
   SWITCH_MATERIAL,
   SWITCH_MATERIAL_COST,
   TRIALS,
+  unwrittenNotableByIndex,
   type AscendancyDef,
   type AscendancyId,
+  type AscendancyNode,
   type TrialDef,
 } from '../data/ascendancies';
 import { ACT_PREVIEW, actOpen } from '../data/zones';
@@ -38,8 +40,18 @@ export function ascendancyOf(s: GameState): AscendancyId | null {
   return ascendancyOpen() ? s.ascendancy.id : null;
 }
 
+/** The off-class Ascendancy Notable granted by an equipped 'The Unwritten' regalia, if any. */
+export function unwrittenNodeOf(s: GameState): AscendancyNode | null {
+  const body = s.equipment?.body;
+  if (!body) return null;
+  const mod = [...body.prefixes, ...body.suffixes].find((m) => m.affixId === 'u_unwritten_notable');
+  if (!mod || !mod.values.length) return null;
+  return unwrittenNotableByIndex(mod.values[0]).node;
+}
+
 /** Whether a node is taken. Rule checks in combat ask this with the node's id. */
 export function hasAscNode(s: GameState, id: string): boolean {
+  if (unwrittenNodeOf(s)?.id === id) return true;
   return ascendancyOpen() && s.ascendancy.nodes.includes(id);
 }
 

@@ -96,7 +96,7 @@ export const CURRENCIES: CurrencyDef[] = [
   cur('fractured', 'Fractured Orb', 'Fracture', '#d4af37', 'Permanently locks a random modifier on a rare item with at least 4 modifiers.', 0, 8, 600),
   cur('regret', 'Orb of Regret', 'Regret', '#8fbf7a', 'Refunds one allocated passive skill point.', 4, 1, 10),
   cur('expansion', 'Orb of Expansion', 'Expand', '#c08bff', 'Adds a support socket to a skill gem.', 0.4, 2, 250),
-  cur('instill', 'Instilling Orb', 'Instill', '#ff9f5a', 'Makes a flask use itself automatically on a condition.', 1, 4, 200),
+  cur('instill', 'Instilling Orb', 'Instill', '#ff9f5a', 'Makes a flask use itself automatically on a condition.', 1, 2, 200),
 ];
 
 const ALL = [...MATERIALS, ...CURRENCIES];

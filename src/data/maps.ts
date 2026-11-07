@@ -44,12 +44,12 @@ export const TIER_MOD_RULES = {
 
 /** Tier-locked unique pools (T1+, T3+, T5+, T7+, T9+, T10). Any tier group drops its own pool plus lower map pools. */
 export const MAP_UNIQUE_POOLS: { minTier: number; label: string; uniques: string[] }[] = [
-  { minTier: 1, label: 'Map Tier 1+', uniques: ['castaways_kerchief', 'bloodthirst', 'miners_lament', 'windstep', 'alchemists_band', 'iron_bulwark', 'titans_girth', 'tavern_brawler', 'quickfingers', 'slippers_of_the_tide', 'second_guess', 'bellwether', 'herbalists_sash', 'brawlers_buckle', 'barnacle_band', 'fishermans_knot'] },
-  { minTier: 3, label: 'Map Tier 3+', uniques: ['emberheart', 'stormhide', 'knuckledusters', 'thornquill', 'wellspring', 'rebuttal', 'ninth_psalm', 'gulls_eye', 'ember_of_faith', 'lookouts_hood', 'robe_of_still_waters', 'penitents_plate', 'sidestep', 'windchaser', 'needleworkers_wraps', 'brimming_band'] },
-  { minTier: 5, label: 'Map Tier 5+', uniques: ['stormrider_greaves', 'unblinking_tome', 'briar_key', 'sunmane_pelt', 'mirage_veil', 'khans_tithe', 'kurgan_crown', 'pyre_heart', 'mask_of_the_patient', 'twin_oaths', 'hollow_locket', 'last_breath'] },
-  { minTier: 7, label: 'Map Tier 7+', uniques: ['heart_of_winter', 'giants_knuckle', 'bosuns_oath', 'leviathan_hide', 'martyrs_shroud', 'pilgrims_road', 'saints_shard', 'confession_hood', 'halo_of_wrath', 'chainbreaker', 'rimewalkers', 'frostgrip', 'crown_of_the_hollow', 'wolfmother_pelt'] },
-  { minTier: 9, label: 'Map Tier 9+', uniques: ['deckwalkers', 'tide_crown', 'corposant', 'harpoons_answer'] },
-  { minTier: 10, label: 'Map Tier 10', uniques: ['oathbreaker', 'kingsmarch', 'last_decree', 'crownbreaker_mask', 'hand_of_the_regent', 'regents_mantle', 'starforged_edge'] },
+  { minTier: 1, label: 'Map Tier 1+', uniques: ['castaways_kerchief', 'bloodthirst', 'miners_lament', 'windstep', 'alchemists_band', 'iron_bulwark', 'titans_girth', 'tavern_brawler', 'quickfingers', 'slippers_of_the_tide', 'second_guess', 'bellwether', 'herbalists_sash', 'brawlers_buckle', 'barnacle_band', 'fishermans_knot', 'leveling_weapon', 'leveling_helm', 'leveling_body', 'leveling_gloves', 'leveling_boots', 'leveling_ring', 'delvers_lantern', 'fellers_hatchet', 'heartwood_mantle', 'bloomwarden_gloves', 'chefs_toque', 'hearthfire_ladle'] },
+  { minTier: 3, label: 'Map Tier 3+', uniques: ['emberheart', 'stormhide', 'knuckledusters', 'thornquill', 'wellspring', 'rebuttal', 'ninth_psalm', 'gulls_eye', 'ember_of_faith', 'lookouts_hood', 'robe_of_still_waters', 'penitents_plate', 'sidestep', 'windchaser', 'needleworkers_wraps', 'brimming_band', 'cutpurses_cloak', 'lockpicks_ring', 'surveyors_monocle', 'excavators_trowel', 'forgemasters_apron', 'slagborn_gauntlets', 'apothecaries_gloves', 'transmuters_pendant', 'lapidarys_loupe', 'facet_chisels', 'runesmiths_chisel', 'scriptweaver_wraps', 'navigators_sextant', 'wayfinders_boots'] },
+  { minTier: 5, label: 'Map Tier 5+', uniques: ['stormrider_greaves', 'unblinking_tome', 'briar_key', 'sunmane_pelt', 'mirage_veil', 'khans_tithe', 'kurgan_crown', 'pyre_heart', 'mask_of_the_patient', 'twin_oaths', 'hollow_locket', 'last_breath', 'artisan_tool', 'artisan_helm', 'artisan_body', 'artisan_gloves', 'artisan_boots', 'artisan_ring', 'merchants_signet'] },
+  { minTier: 7, label: 'Map Tier 7+', uniques: ['heart_of_winter', 'giants_knuckle', 'bosuns_oath', 'leviathan_hide', 'martyrs_shroud', 'pilgrims_road', 'saints_shard', 'confession_hood', 'halo_of_wrath', 'chainbreaker', 'rimewalkers', 'frostgrip', 'crown_of_the_hollow', 'wolfmother_pelt', 'greeds_vault'] },
+  { minTier: 9, label: 'Map Tier 9+', uniques: ['deckwalkers', 'tide_crown', 'corposant', 'harpoons_answer', 'asc_ravager_plate', 'asc_anvil_shield', 'asc_longshot_bow', 'asc_falconer_gloves', 'asc_wellspring_focus', 'asc_alchemist_belt'] },
+  { minTier: 10, label: 'Map Tier 10', uniques: ['oathbreaker', 'kingsmarch', 'last_decree', 'crownbreaker_mask', 'hand_of_the_regent', 'regents_mantle', 'starforged_edge', 'asc_matador_body', 'asc_vanguard_shield', 'asc_flagellant_belt', 'asc_lightkeeper_helm', 'asc_headsman_helm', 'asc_plaguewright_dagger'] },
 ];
 
 export function mapTierUniques(tier: number): string[] {
@@ -647,7 +647,7 @@ export function doomedZoneId(tier: number, areaId?: string): string {
 
 /** Is this bank-style id a map rather than a material? */
 export function isMapId(id: string): boolean {
-  return id.startsWith('map_') || id.startsWith('doomed_t');
+  return id.startsWith('map_') || id.startsWith('doomed_t') || id.startsWith('umap_');
 }
 
 /** Extract the plain tier (1..10) from any map id (`map_t1`, `map_barrows_t1`, `map_mudflats_t1`), or null. */
@@ -1199,7 +1199,251 @@ export const UBER_BOSS_ZONES: ZoneDef[] = [
   },
 ];
 
-for (const z of [...HARD_BOSS_ZONES, ...UBER_BOSS_ZONES]) {
+export interface UniqueMapDef {
+  id: 'umap_vaults' | 'umap_cowards_trial' | 'umap_olmecs' | 'umap_maelstrom' | 'umap_grandmasters';
+  name: string;
+  tier: number;
+  level: number;
+  packs: number;
+  flavour: string;
+  desc: string;
+  rewardSummary: string;
+  uniques: string[];
+}
+
+export const UNIQUE_MAPS: UniqueMapDef[] = [
+  {
+    id: 'umap_vaults',
+    name: 'The Vaults of Atziri',
+    tier: 6,
+    level: 76,
+    packs: 18,
+    flavour: 'A queen does not bury her gold to hide it; she buries it so the thieves will dig their own graves.',
+    desc: 'Gilded treasury halls guarded by constructs and cursed coin-strikers. Monsters drop 300% more Gold.',
+    rewardSummary: '300% more Gold, 6 extra Currency rolls & guaranteed Gold-Find Unique',
+    uniques: ['gulls_eye', 'merchants_signet', 'greeds_vault', 'khans_tithe'],
+  },
+  {
+    id: 'umap_cowards_trial',
+    name: "The Coward's Trial",
+    tier: 7,
+    level: 78,
+    packs: 25,
+    flavour: 'Those who fled the battle were locked in the crypt together. Only one door opens.',
+    desc: 'Relentless waves of undead in a sealed catacomb granting 150% more Experience.',
+    rewardSummary: '150% more XP & guaranteed Unique item drop from the Necromancer',
+    uniques: ['kurgan_crown', 'confession_hood', 'martyrs_shroud', 'saints_shard', 'unblinking_tome'],
+  },
+  {
+    id: 'umap_olmecs',
+    name: "Olmec's Sanctum",
+    tier: 8,
+    level: 80,
+    packs: 20,
+    flavour: 'Four faces of stone: one burns, one freezes, one thunders, and one watches.',
+    desc: 'Elemental temple where totemic guardians channel Fire, Cold and Lightning simultaneously.',
+    rewardSummary: 'Guaranteed Unique Flask or Tier 8+ Unique item',
+    uniques: ['pyre_heart', 'heart_of_winter', 'bosuns_oath', 'corposant', 'halo_of_wrath'],
+  },
+  {
+    id: 'umap_maelstrom',
+    name: 'The Maelstrom of Chaos',
+    tier: 9,
+    level: 82,
+    packs: 24,
+    flavour: 'At the bottom of the whirlpool, the water forgets which way is up.',
+    desc: 'Storm-lashed abyssal vortex where monsters deal extra Chaos damage and drop extra Sextants.',
+    rewardSummary: '2–3 Sextants & high chance for Ascendancy Signature Uniques',
+    uniques: ['leviathan_hide', 'tide_crown', 'deckwalkers', 'harpoons_answer', 'asc_wellspring_focus', 'asc_alchemist_belt', 'asc_plaguewright_dagger'],
+  },
+  {
+    id: 'umap_grandmasters',
+    name: 'Hall of the Grandmasters',
+    tier: 10,
+    level: 85,
+    packs: 28,
+    flavour: 'Every name carved into these pillars once stood where you stand now.',
+    desc: 'Pinnacle gallery of immortalised exiles and their Grandmaster.',
+    rewardSummary: 'Guaranteed Ascendancy BIS Unique item',
+    uniques: [
+      'asc_ravager_plate', 'asc_anvil_shield', 'asc_longshot_bow', 'asc_falconer_gloves',
+      'asc_wellspring_focus', 'asc_alchemist_belt', 'asc_matador_body', 'asc_vanguard_shield',
+      'asc_flagellant_belt', 'asc_lightkeeper_helm', 'asc_headsman_helm', 'asc_plaguewright_dagger',
+    ],
+  },
+];
+
+export const UNIQUE_MAP_ZONES: ZoneDef[] = [
+  {
+    id: 'umap_vaults',
+    name: 'The Vaults of Atziri',
+    desc: 'Gilded treasury halls guarded by constructs and cursed coin-strikers.',
+    art: 'kingsmint',
+    color: '#d9a441',
+    act: 6,
+    packSize: [3, 4],
+    tier: 23,
+    ilvlBonus: 14,
+    levelRange: [76, 77],
+    monsters: zoneDef('kingsmint').monsters.map((m) => scaled(m, 1.15, 1.0, 76)),
+    boss: {
+      id: 'boss_umap_vaults',
+      name: 'Aureus, Vault Colossus',
+      level: 77,
+      dmgType: 'fire',
+      lifeMult: 1.5,
+      dmgMult: 1.15,
+      basic: { name: 'Molten Bullion', kind: 'attack', ms: 2600 },
+      slam: { name: 'Vault Door Crash', kind: 'attack', ms: 3300 },
+      nova: { name: 'Shower of Scalding Coin', kind: 'spell', ms: 3700 },
+      mechanics: ['slam', 'nova', 'ward'],
+      novaType: 'fire',
+    },
+    actBoss: false,
+    bossEvery: 18,
+    spawnEveryMs: 4500,
+    uniques: UNIQUE_MAPS[0].uniques,
+    requires: { after: [] },
+  },
+  {
+    id: 'umap_cowards_trial',
+    name: "The Coward's Trial",
+    desc: 'Relentless waves of undead in a sealed catacomb.',
+    art: 'reliquary',
+    color: '#7a689a',
+    act: 3,
+    packSize: [3, 5],
+    tier: 24,
+    ilvlBonus: 14,
+    levelRange: [78, 79],
+    monsters: zoneDef('reliquary').monsters.map((m) => scaled(m, 1.2, 1.05, 78)),
+    boss: {
+      id: 'boss_umap_cowards',
+      name: 'Kadavrus the Undying',
+      level: 79,
+      dmgType: 'cold',
+      lifeMult: 1.65,
+      dmgMult: 1.2,
+      basic: { name: 'Grave Bolt', kind: 'spell', ms: 2500 },
+      slam: { name: 'Ossuary Collapse', kind: 'attack', ms: 3200 },
+      nova: { name: 'Crypt Chill', kind: 'spell', ms: 3600 },
+      mechanics: ['slam', 'nova', 'summon', 'martyrs'],
+      novaType: 'cold',
+    },
+    actBoss: false,
+    bossEvery: 25,
+    spawnEveryMs: 4500,
+    uniques: UNIQUE_MAPS[1].uniques,
+    requires: { after: [] },
+  },
+  {
+    id: 'umap_olmecs',
+    name: "Olmec's Sanctum",
+    desc: 'Elemental temple where totemic guardians channel Fire, Cold and Lightning.',
+    art: 'pyretemple',
+    color: '#c85a32',
+    act: 2,
+    packSize: [2, 4],
+    tier: 25,
+    ilvlBonus: 14,
+    levelRange: [80, 81],
+    monsters: zoneDef('pyretemple').monsters.map((m) => scaled(m, 1.25, 1.1, 80)),
+    boss: {
+      id: 'boss_umap_olmecs',
+      name: 'Olmec, the All-Stone',
+      level: 81,
+      dmgType: 'light',
+      lifeMult: 1.75,
+      dmgMult: 1.25,
+      basic: { name: 'Tri-Elemental Beam', kind: 'spell', ms: 2400 },
+      slam: { name: 'Monolith Drop', kind: 'attack', ms: 3100 },
+      nova: { name: 'Prismatic Awakening', kind: 'spell', ms: 3500 },
+      mechanics: ['slam', 'nova', 'scorch', 'ward'],
+      novaType: 'light',
+    },
+    actBoss: false,
+    bossEvery: 20,
+    spawnEveryMs: 4500,
+    uniques: UNIQUE_MAPS[2].uniques,
+    requires: { after: [] },
+  },
+  {
+    id: 'umap_maelstrom',
+    name: 'The Maelstrom of Chaos',
+    desc: 'Storm-lashed abyssal vortex where the water forgets which way is up.',
+    art: 'maelstrom',
+    color: '#3c5a8a',
+    act: 5,
+    packSize: [3, 5],
+    tier: 26,
+    ilvlBonus: 14,
+    levelRange: [82, 83],
+    monsters: zoneDef('maelstrom').monsters.map((m) => scaled(m, 1.3, 1.15, 82)),
+    boss: {
+      id: 'boss_umap_maelstrom',
+      name: 'Sire of the Maelstrom',
+      level: 83,
+      dmgType: 'chaos',
+      lifeMult: 1.85,
+      dmgMult: 1.3,
+      basic: { name: 'Abyssal Eddy', kind: 'spell', ms: 2300 },
+      slam: { name: 'Trench Crush', kind: 'attack', ms: 3000 },
+      nova: { name: 'Vortex of Chaos', kind: 'spell', ms: 3500 },
+      channel: { name: 'Siren Song of the Pit', kind: 'spell', ms: 5400 },
+      mechanics: ['slam', 'nova', 'channel', 'enrage'],
+      novaType: 'chaos',
+      groundKind: 'stormwater',
+    },
+    actBoss: false,
+    bossEvery: 24,
+    spawnEveryMs: 4500,
+    uniques: UNIQUE_MAPS[3].uniques,
+    requires: { after: [] },
+  },
+  {
+    id: 'umap_grandmasters',
+    name: 'Hall of the Grandmasters',
+    desc: 'Pinnacle gallery of immortalised exiles and their Grandmaster.',
+    art: 'hallofcrowns',
+    color: '#c9a64e',
+    act: 6,
+    packSize: [2, 3],
+    tier: 27,
+    ilvlBonus: 16,
+    levelRange: [85, 86],
+    monsters: zoneDef('hallofcrowns').monsters.map((m) => scaled(m, 1.4, 1.2, 85)),
+    boss: {
+      id: 'boss_umap_grandmasters',
+      name: 'Lord Valerius, First Grandmaster',
+      level: 86,
+      dmgType: 'phys',
+      lifeMult: 2.0,
+      dmgMult: 1.38,
+      basic: { name: 'Grandmaster Riposte', kind: 'attack', ms: 2100 },
+      slam: { name: 'Twelvefold Verdict', kind: 'attack', ms: 3000 },
+      nova: { name: 'Ascendant Tempest', kind: 'spell', ms: 3400 },
+      mechanics: ['slam', 'nova', 'ward', 'enrage'],
+      novaType: 'light',
+    },
+    actBoss: false,
+    bossEvery: 28,
+    spawnEveryMs: 4500,
+    uniques: UNIQUE_MAPS[4].uniques,
+    requires: { after: [] },
+  },
+];
+
+export function uniqueMapDef(id: string): UniqueMapDef {
+  const m = UNIQUE_MAPS.find((x) => x.id === id);
+  if (!m) throw new Error(`Unknown unique map ${id}`);
+  return m;
+}
+
+export function isUniqueMapZone(zoneId: string): boolean {
+  return UNIQUE_MAP_ZONES.some((z) => z.id === zoneId);
+}
+
+for (const z of [...HARD_BOSS_ZONES, ...UBER_BOSS_ZONES, ...UNIQUE_MAP_ZONES]) {
   EXTRA_ZONES.push(z);
 }
 

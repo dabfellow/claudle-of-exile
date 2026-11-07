@@ -26,6 +26,7 @@ import type { Derived } from './stats';
 import type { GameState, Item, RolledMod, SkillId, SmithCatalyst } from './types';
 import { characterLevel } from './character';
 import { levelOf } from './xp';
+import { grantMasteryPractice, masteryConservation, masterySpeed, masteryYield, stochasticRound } from './skillingMastery';
 
 export function skillLevel(s: GameState, skill: SkillId): number {
   return levelOf(skill, s.skills[skill]);
@@ -55,7 +56,7 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
 
 export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): number {
   const t = skillTreeStats(s);
-  let speed = d.skillSpeed + (t.skillSpeed ?? 0) + (t[`${a.skill}Speed` as keyof TreeStats] ?? 0);
+  let speed = d.skillSpeed + (t.skillSpeed ?? 0) + (t[`${a.skill}Speed` as keyof TreeStats] ?? 0) + masterySpeed(s, a.mastery);
   return (a.intervalMs / (1 + speed / 100)) * keystoneSlow(a.skill, t);
 }
 
@@ -147,17 +148,23 @@ function give(s: GameState, outputs: Record<string, number>, id: string, n: numb
 export const BULK_BREWER_MULT = 7.5;
 
 /** Inputs to pay, after Steady Hands and Bulk Brewer. */
-function inputsToPay(a: SkillAction, t: TreeStats, ctx: Ctx): Record<string, number> {
+function inputsToPay(s: GameState, a: SkillAction, t: TreeStats, ctx: Ctx): Record<string, number> {
   if (!a.inputs) return {};
   if (t.inputSave && chance(ctx.rng, t.inputSave / 100)) return {};
+  let cost: Record<string, number>;
   if (a.batchOf && t.bulkBrewer) {
     const single = actionDef(a.batchOf).inputs!;
-    return Object.fromEntries(Object.entries(single).map(([id, n]) => [id, Math.ceil(n * BULK_BREWER_MULT)]));
-  }
-  const cost = { ...a.inputs };
+    cost = Object.fromEntries(Object.entries(single).map(([id, n]) => [id, Math.ceil(n * BULK_BREWER_MULT)]));
+  } else cost = { ...a.inputs };
   if (a.skill === 'gemcutting') {
     if (cost.arcane_dust && t.gemDustSave) cost.arcane_dust = Math.ceil(cost.arcane_dust * (1 - t.gemDustSave / 100));
     if (cost.rough_gem && t.masterCutter) cost.rough_gem = Math.max(0, cost.rough_gem - 1);
+  }
+  const rate = masteryConservation(s, a.mastery);
+  for (const id of a.mastery?.ordinaryInputs ?? []) {
+    const paid = cost[id] ?? 0;
+    if (paid <= 0) continue;
+    cost[id] = Math.max(0, paid - Math.min(paid, stochasticRound(ctx.rng, paid * rate)));
   }
   return cost;
 }
@@ -253,7 +260,7 @@ function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, 
 
 function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   const t = skillTreeStats(s);
-  const cost = inputsToPay(a, t, ctx);
+  const cost = inputsToPay(s, a, t, ctx);
   payCost(s, cost);
   const outputs: Record<string, number> = {};
   const twoForOne = a.skill === 'runecarving' ? t.secondStroke : a.skill === 'cooking' ? t.secondHelping : a.skill === 'cartography' ? t.secondCopy : 0;
@@ -265,6 +272,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   for (const [id, n] of Object.entries(yields ? (a.outputs ?? {}) : {})) {
     let qty = n * mult;
     if (a.skill === 'mining' && id.endsWith('_ore') && t.motherlode) qty *= 2;
+    if (id === a.mastery?.primaryOutput) qty += stochasticRound(ctx.rng, n * masteryYield(s, a.mastery));
     // Transmuter: crafted orbs sometimes come out one tier higher
     const tier = ORB_TIERS.indexOf(id);
     const outId = tier >= 0 && tier < ORB_TIERS.length - 1 && t.transmuter && chance(ctx.rng, t.transmuter / 100) ? ORB_TIERS[tier + 1] : id;
@@ -304,6 +312,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
   const heartwoodXp = a.skill === 'woodcutting' && t.heartwood ? 0.8 : 1;
   const branchXp = a.skill === 'gemcutting' ? (t.gemcuttingXp ?? 0) : 0;
   grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0) + branchXp) / 100) * heartwoodXp);
+  grantMasteryPractice(s, a.mastery, a.intervalMs / 1000);
 }
 
 export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void {

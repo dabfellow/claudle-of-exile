@@ -35,7 +35,7 @@ export function FlaskIcon({ f, size = 34 }: { f: FlaskInstance; size?: number })
 export function FlaskTip({ f, pinned = false }: { f: FlaskInstance; pinned?: boolean }) {
   const st = flaskStats(f);
   const enchant = INSTILL_CONDITIONS.find((c) => c.id === f.instill);
-  const rar = f.rarity === 'magic' ? 'rar-magic' : 'rar-normal';
+  const rar = f.rarity === 'unique' ? 'rar-unique' : f.rarity === 'magic' ? 'rar-magic' : 'rar-normal';
   return (
     <div className={`tip item-tip ${rar}`}>
       <div className="item-tip-head">
@@ -43,12 +43,18 @@ export function FlaskTip({ f, pinned = false }: { f: FlaskInstance; pinned?: boo
       </div>
       <div className="item-tip-body">
         <div className="muted small">
-          {f.rarity === 'magic' ? 'Magic' : 'Normal'} {st.def.kind} flask · Item Level {f.ilvl}
+          {f.rarity === 'unique' ? 'Unique' : f.rarity === 'magic' ? 'Magic' : 'Normal'} {st.def.kind} flask · Item Level {f.ilvl}
         </div>
         <div>{flaskEffectText(f)}</div>
         <div>
           Consumes <b>{st.chargesPerUse}</b> of <b>{st.maxCharges}</b> charges · currently <b>{Math.floor(f.charges)}</b>
         </div>
+        {st.def.flavour && (
+          <>
+            <div className="sep" />
+            <div className="flavour">{st.def.flavour}</div>
+          </>
+        )}
         {(f.prefixes.length > 0 || f.suffixes.length > 0) && <div className="sep" />}
         {[...f.prefixes, ...f.suffixes].map((m) => (
           <div key={m.affixId} className="mod">

@@ -224,7 +224,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 11,
     packSize: [1, 3],
     spawnEveryMs: 15000,
-    uniques: ['barnacle_band', 'fishermans_knot'],
+    uniques: ['barnacle_band', 'fishermans_knot', 'leveling_weapon', 'leveling_boots', 'delvers_lantern'],
   },
   {
     id: 'ashwood', name: 'Ashen Woods', act: 1, tier: 2, levelRange: [7, 10], color: '#9a6a4a',
@@ -239,7 +239,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 12,
     packSize: [2, 4],
     spawnEveryMs: 14000,
-    uniques: ['miners_lament', 'emberheart'],
+    uniques: ['miners_lament', 'emberheart', 'leveling_helm', 'leveling_gloves', 'fellers_hatchet', 'heartwood_mantle'],
   },
   {
     id: 'blackreed', name: 'Blackreed Marsh', act: 1, tier: 2, levelRange: [10, 13], color: '#5d6b3a',
@@ -254,7 +254,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 13,
     packSize: [2, 4],
     spawnEveryMs: 13000,
-    uniques: ['windstep', 'gulls_eye'],
+    uniques: ['windstep', 'gulls_eye', 'leveling_body', 'leveling_ring', 'bloomwarden_gloves'],
   },
   {
     id: 'crypt', name: 'The Sunken Crypt', act: 1, tier: 3, levelRange: [13, 16], color: '#5a7a9a',
@@ -269,7 +269,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 14,
     packSize: [2, 4],
     spawnEveryMs: 12000,
-    uniques: ['iron_bulwark', 'herbalists_sash', 'bloodthirst'],
+    uniques: ['iron_bulwark', 'herbalists_sash', 'bloodthirst', 'chefs_toque', 'hearthfire_ladle'],
   },
   {
     id: 'shipgrave', name: 'The Ship Graveyard', act: 1, tier: 3, levelRange: [16, 19], color: '#7d6a55',
@@ -284,7 +284,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 15,
     packSize: [2, 5],
     spawnEveryMs: 11000,
-    uniques: ['lookouts_hood', 'robe_of_still_waters', 'alchemists_band'],
+    uniques: ['lookouts_hood', 'robe_of_still_waters', 'alchemists_band', 'apothecaries_gloves', 'transmuters_pendant'],
   },
   {
     id: 'stormcliffs', name: 'The Storm Cliffs', act: 1, tier: 4, levelRange: [19, 22], color: '#6a7fa8',
@@ -299,7 +299,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 16,
     packSize: [3, 5],
     spawnEveryMs: 10000,
-    uniques: ['stormhide', 'titans_girth', 'sunmane_pelt'],
+    uniques: ['stormhide', 'titans_girth', 'sunmane_pelt', 'navigators_sextant', 'wayfinders_boots'],
   },
   {
     id: 'sanctum', name: 'The Drowned Sanctum', act: 1, tier: 5, levelRange: [22, 24], color: '#3f6f8f',
@@ -334,7 +334,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 18,
     packSize: [3, 5],
     spawnEveryMs: 10000,
-    uniques: ['brawlers_buckle', 'titans_girth', 'sunmane_pelt'],
+    uniques: ['brawlers_buckle', 'titans_girth', 'sunmane_pelt', 'artisan_boots', 'artisan_ring'],
   },
   {
     id: 'saltflats', name: 'The Saltpan Flats', act: 2, tier: 5, levelRange: [25, 27], color: '#b8b09a',
@@ -349,7 +349,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 19,
     packSize: [3, 5],
     spawnEveryMs: 10000,
-    uniques: ['last_breath', 'mirage_veil'],
+    uniques: ['last_breath', 'mirage_veil', 'lapidarys_loupe', 'facet_chisels'],
   },
   {
     id: 'blackgrass', name: 'The Blackgrass Sea', act: 2, tier: 6, levelRange: [26, 28], color: '#5a5a3a',
@@ -379,7 +379,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 21,
     packSize: [3, 5],
     spawnEveryMs: 10000,
-    uniques: ['old_grudge', 'khans_tithe'],
+    uniques: ['old_grudge', 'khans_tithe', 'merchants_signet', 'chefs_toque', 'hearthfire_ladle'],
   },
   {
     id: 'kurgans', name: 'The Kurgan Fields', act: 2, tier: 6, levelRange: [28, 30], color: '#6f7a8a',
@@ -394,7 +394,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 22,
     packSize: [3, 5],
     spawnEveryMs: 10000,
-    uniques: ['kurgan_crown', 'iron_bulwark'],
+    uniques: ['kurgan_crown', 'iron_bulwark', 'runesmiths_chisel', 'scriptweaver_wraps'],
   },
   {
     id: 'plateau', name: 'The Thunder Plateau', act: 2, tier: 7, levelRange: [29, 31], color: '#6a78a0',
@@ -459,7 +459,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 26,
     packSize: [3, 5],
     spawnEveryMs: 9500,
-    uniques: ['pilgrims_road', 'old_grudge', 'stormhide'],
+    uniques: ['pilgrims_road', 'old_grudge', 'stormhide', 'artisan_helm', 'artisan_gloves'],
   },
   {
     id: 'almsquarter', name: 'The Alms Quarter', act: 3, tier: 8, levelRange: [33, 35], color: '#a89a8a', ilvlBonus: 3,
@@ -475,7 +475,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 27,
     packSize: [3, 5],
     spawnEveryMs: 9500,
-    uniques: ['chainbreaker', 'khans_tithe', 'hollow_locket'],
+    uniques: ['chainbreaker', 'khans_tithe', 'hollow_locket', 'cutpurses_cloak', 'lockpicks_ring', 'merchants_signet'],
   },
   {
     id: 'scourgeyard', name: 'The Scourging Yard', act: 3, tier: 8, levelRange: [34, 36], color: '#8a5a50', ilvlBonus: 3,
@@ -507,7 +507,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 29,
     packSize: [3, 5],
     spawnEveryMs: 9500,
-    uniques: ['confession_hood', 'kurgan_crown', 'hollow_locket', 'briar_key'],
+    uniques: ['confession_hood', 'kurgan_crown', 'hollow_locket', 'briar_key', 'surveyors_monocle', 'excavators_trowel'],
   },
   {
     id: 'bellfoundry', name: 'The Bell Foundry', act: 3, tier: 8, levelRange: [36, 38], color: '#a07a4a', ilvlBonus: 3,
@@ -523,7 +523,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 30,
     packSize: [3, 5],
     spawnEveryMs: 9500,
-    uniques: ['saints_shard', 'pyre_heart', 'stormhide'],
+    uniques: ['saints_shard', 'pyre_heart', 'stormhide', 'forgemasters_apron', 'slagborn_gauntlets', 'artisan_tool', 'artisan_body'],
   },
   {
     id: 'inquisition', name: 'The Hall of Inquisition', act: 3, tier: 9, levelRange: [36, 38], color: '#6a5a7a', ilvlBonus: 3,
@@ -1177,7 +1177,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 71,
     packSize: [3, 5],
     spawnEveryMs: 8000,
-    uniques: ['last_decree', 'crown_of_the_hollow', 'bosuns_oath'],
+    uniques: ['last_decree', 'crown_of_the_hollow', 'bosuns_oath', 'merchants_signet', 'greeds_vault'],
   },
   {
     id: 'hanginggardens', name: 'The Hanging Gardens', act: 6, tier: 16, levelRange: [61, 63], color: '#3f7a4a', ilvlBonus: 14,
@@ -1241,7 +1241,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 75,
     packSize: [3, 5],
     spawnEveryMs: 8000,
-    uniques: ['kingsmarch', 'crownbreaker_mask', 'corposant'],
+    uniques: ['kingsmarch', 'crownbreaker_mask', 'corposant', 'asc_matador_body', 'asc_falconer_gloves', 'asc_alchemist_belt'],
   },
   {
     id: 'kingsreach', name: "The King's Reach", act: 6, tier: 17, levelRange: [63, 65], color: '#3f3050', ilvlBonus: 14,
@@ -1257,7 +1257,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 76,
     packSize: [3, 5],
     spawnEveryMs: 8000,
-    uniques: ['regents_mantle', 'frostgrip', 'halo_of_wrath'],
+    uniques: ['regents_mantle', 'frostgrip', 'halo_of_wrath', 'asc_wellspring_focus', 'asc_lightkeeper_helm', 'asc_longshot_bow'],
   },
   {
     id: 'sunderedhall', name: 'The Sundered Hall', act: 6, tier: 17, levelRange: [64, 65], color: '#50404a', ilvlBonus: 14,
@@ -1273,7 +1273,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 77,
     packSize: [3, 5],
     spawnEveryMs: 8000,
-    uniques: ['oathbreaker', 'kingsmarch', 'hand_of_the_regent'],
+    uniques: ['oathbreaker', 'kingsmarch', 'hand_of_the_regent', 'asc_ravager_plate', 'asc_anvil_shield', 'asc_vanguard_shield'],
   },
   {
     id: 'hallofcrowns', name: 'The Hall of Crowns', act: 6, tier: 17, levelRange: [64, 65], color: '#8a7a2a', ilvlBonus: 14,
@@ -1289,7 +1289,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 78,
     packSize: [3, 5],
     spawnEveryMs: 8000,
-    uniques: ['crownbreaker_mask', 'last_decree', 'crown_of_the_hollow'],
+    uniques: ['crownbreaker_mask', 'last_decree', 'crown_of_the_hollow', 'asc_flagellant_belt', 'asc_headsman_helm', 'asc_plaguewright_dagger'],
   },
   {
     id: 'ninthstair', name: 'The Ninth Stair', act: 6, tier: 17, levelRange: [64, 65], color: '#3a2a3a', ilvlBonus: 14,

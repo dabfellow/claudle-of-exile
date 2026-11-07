@@ -6,6 +6,7 @@ import { SKILL_BAR_SLOTS } from '../data/gems';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
 import { hasAction } from '../data/skills';
+import { FLASK_SLOTS } from '../data/flasks';
 import { ZONES } from '../data/zones';
 import { settleGems } from './gems';
 import { newExpeditionState, settleExpedition } from './expedition';
@@ -16,6 +17,8 @@ import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { AccountPool, AccountTransfer, FlaskInstance, GameState, Item } from './types';
 import { charXpFromOldCurve } from './xp';
+import { settleSkillingMastery } from './skillingMastery';
+import { settleLootFilters } from './lootFilter';
 
 // kept from the game's old name: changing it would orphan every existing save
 export const SAVE_KEY = 'claudle-of-exile-save';
@@ -328,6 +331,10 @@ const MIGRATIONS: Record<number, Migration> = {
     // Refund every skilling point so nobody keeps removed nodes or an over-budget allocation.
     raw.skillPassives = [];
   },
+  37: (raw) => {
+    // Non-combat action mastery starts fresh: old skill XP cannot identify which authored band was practised.
+    raw.skillingMastery = {};
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
@@ -361,11 +368,21 @@ export function deserialize(json: string): GameState {
   }
   const s = raw as unknown as GameState;
   fillAccount(s.account);
+  if (s.flaskSlots) {
+    if (s.flaskSlots.length > FLASK_SLOTS) {
+      const extra = s.flaskSlots.slice(FLASK_SLOTS);
+      s.flaskSlots = s.flaskSlots.slice(0, FLASK_SLOTS);
+      for (const f of extra) if (f) s.account.flaskStash.push(f);
+    }
+    while (s.flaskSlots.length < FLASK_SLOTS) s.flaskSlots.push(null);
+  }
   unlockReachedZones(s);
   settleGems(s);
   settleMaps(s);
   settleHeist(s);
   settleExpedition(s);
+  settleSkillingMastery(s);
+  settleLootFilters(s);
   dropRemovedActions(s);
   return s;
 }

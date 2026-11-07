@@ -25,6 +25,7 @@ import { PantryBoard } from '../components/PantryBoard';
 import { RuneBoard } from '../components/RuneBoard';
 import { SkillMinigame } from '../components/SkillMinigame';
 import { Icon, Orb, Swatch } from '../components/Icon';
+import { MasteryProgress } from '../components/MasteryProgress';
 
 const START_LABEL: Record<SkillId, string> = {
   combat: 'Fight',
@@ -201,6 +202,7 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
         )}
       </div>
       {running && s.action?.kind === 'skill' && <ProgressBar value={s.action.progress / interval} color="var(--success)" className="action-progress" />}
+      {!locked && <MasteryProgress s={s} mastery={a.mastery} compact={!open} />}
 
       {open && (
         <div className="action-body">

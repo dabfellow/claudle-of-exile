@@ -39,15 +39,15 @@ describe('flask items', () => {
 
   it('a spare flask goes into the first empty belt slot, and says so when the belt is full', () => {
     const s = newGame(1);
-    s.flaskSlots = s.flaskSlots.map((f, i) => (i === 1 ? null : f ?? newFlask(s, 'life_small', 1)));
+    s.flaskSlots = [newFlask(s, 'life_small', 1), newFlask(s, 'mana_small', 1), null, newFlask(s, 'granite', 30)];
     const f = newFlask(s, 'granite', 30);
     s.account.flaskStash.push(f);
     expect(wearFlask(s, f.uid)).toBeNull();
-    expect(s.flaskSlots[1]).toBe(f);
+    expect(s.flaskSlots[2]).toBe(f);
     expect(s.account.flaskStash).not.toContain(f);
     const g = newFlask(s, 'granite', 30);
     s.account.flaskStash.push(g);
-    expect(wearFlask(s, g.uid)).toMatch(/full/);
+    expect(wearFlask(s, g.uid)).toMatch(/Utility/);
     expect(s.account.flaskStash).toContain(g);
   });
 

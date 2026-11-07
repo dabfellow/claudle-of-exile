@@ -7,6 +7,7 @@ import { game, useGame } from '../../game';
 import { isCloudAccount } from '../../platform/accounts';
 import { fmt, PageHeader } from '../components/common';
 import { FeedbackCard } from '../components/FeedbackCard';
+import { LootFilterManager } from '../components/LootFilterManager';
 import { useMusicPrefs } from '../music';
 import { AccountBadge, leaveAccount } from '../screens/Screens';
 
@@ -81,6 +82,18 @@ export function SettingsPage() {
             </label>
           ))}
         </div>
+        <div style={{ marginTop: 12 }}>
+          <label className="chip" style={{ cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={!!s.settings.filterOffClassLoot}
+              onChange={(e) => game.act((st) => void (st.settings.filterOffClassLoot = e.target.checked))}
+            />
+            <span>Filter Off-Class Loot</span>{' '}
+            <span className="dim small">Auto-salvage dropped gear that doesn't fit your class attributes or defences</span>
+          </label>
+        </div>
+        <LootFilterManager s={s} />
       </div>
       <div className="card">
         <div className="card-title">Sound</div>

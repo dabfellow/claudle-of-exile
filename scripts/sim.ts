@@ -461,8 +461,8 @@ function spendPassives(s: GameState, ctx: Ctx) {
   }
 }
 
-/** Instilling Orbs go on whatever is on the belt: life when hurt, utility on a boss wind-up (or Frostbite in its areas), mana when full. */
-const INSTILL_FOR: Record<string, InstillCondition> = { life: 'lowLife', utility: 'bossCast', mana: 'fullCharges' };
+/** Instilling Orbs go on whatever is on the belt: life when hurt, utility on a boss wind-up (or Frostbite in its areas), mana when low. */
+const INSTILL_FOR: Record<string, InstillCondition> = { life: 'lowLife', utility: 'bossCast', mana: 'lowMana' };
 
 function instillFlasks(s: GameState, ctx: Ctx) {
   if (!INSTILL) return;

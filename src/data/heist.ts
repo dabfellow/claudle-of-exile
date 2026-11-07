@@ -1,5 +1,6 @@
 import { MARKER, SEAL, WAX } from './craftMats';
 import { SKILL_XP_SCALE } from './skills';
+import { masteryForHeist, type MasterySpec } from './skillingMastery';
 
 /**
  * Heist (docs/GAME.md): Thieving's Markers buy jobs against the Khanate. A job is a run of rooms, each a little
@@ -40,9 +41,13 @@ export interface HeistJob {
   vault: HeistDrop[];
   /** item level of stolen gear (still capped by campaign progress) */
   ilvl: number;
+  mastery?: MasterySpec;
 }
 
-const job = (j: HeistJob): HeistJob => ({ ...j, xp: Math.round(j.xp * SKILL_XP_SCALE * 10) / 10 });
+const job = (j: HeistJob): HeistJob => {
+  const scaled = { ...j, xp: Math.round(j.xp * SKILL_XP_SCALE * 10) / 10 };
+  return { ...scaled, mastery: masteryForHeist(scaled) };
+};
 
 export const HEIST_JOBS: HeistJob[] = [
   job({

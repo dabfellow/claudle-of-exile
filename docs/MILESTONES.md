@@ -8,16 +8,15 @@ Latest confirmed live release: **0.4.4, Pinnacle of Ruin**, deployed 2026-11-07.
 
 1. Security prerequisite: confirm revocation of the historical Google OAuth client secret, confirm the separate account-helper lookup-path changes and perform signed-in isolation/login checks; see SETUP.
    Owner reports market/admin SQL applied on 2026-11-06; live anonymous Admin access checks pass. Current validation upload and real-account inspection/recovery/mail/event checks remain before next release.
-2. Investigate player save-loss/range reports before speculative fixes. Retest pacing using the current tree, costs, skills and defences.
+2. Finish the save-loss and pacing audit before speculative fixes. Local persistence/merge tests pass, but live evidence is still needed to distinguish a storage failure from a cross-device overwrite. Current whole-journey simulations expose large Ranger seed variance and a repeatable Mage Act 4 stall, so pacing is not ready to lock.
 3. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
-4. Non-combat band mastery has a revised, bounded design below; implementation has not started. Its progression must never gate content.
 
 ## Milestones
 
 | # | Milestone | Current status |
 |---|---|---|
 | 1 | Automation/offline | Released; survival rules and two conditions baseline; flask-default removal verified (strictly requires Instilling) |
-| 2 | Pacing | Monster reference budgets and revised XP bands verified locally; whole-build pacing needs remeasurement |
+| 2 | Pacing | Whole-journey audit run on 0.4.4; four classes finish Act 6 in a nonstop day, while Ranger has large seed variance and Mage commonly stalls in Act 4 |
 | 3 | Account layer | Released; local Admin inspection/recovery/mail overhaul verified; service migration and real-account checks remain |
 | 4 | Act 2 and content recipe | Released; cold-check/art follow-ups remain parked |
 | 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18 |
@@ -26,7 +25,7 @@ Latest confirmed live release: **0.4.4, Pinnacle of Ruin**, deployed 2026-11-07.
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes and Unique discovery implemented; non-combat action mastery designed, not implemented; collection expansion planned |
+| 11 | Long tail | Challenge modes, Unique discovery and non-combat action mastery implemented; collection expansion planned |
 | 1.0 | Launch designation | Owner decides; any save wipe requires a clear announcement |
 
 ## Decisions
@@ -42,7 +41,7 @@ Latest confirmed live release: **0.4.4, Pinnacle of Ruin**, deployed 2026-11-07.
 - Combat XP has a two-level grace band outside an area's level range. Harder enemies give +5% at three levels and +20% at five, interpolating between. Easier enemies use a rounded quadratic penalty of 10/11/15/21/30/41/54/70% at three through ten levels, with increasing losses each level. Hold both caps thereafter. This supersedes both the old falloff to zero and the initial piecewise penalty milestones.
 - Fishing is a permanent placeholder/joke. It is not scheduled work.
 - The skilling tree represents specialisation (2026-11-06): one point per ten total levels, capped at 36. It must never become fully completable through ordinary levels; Fishing has no spendable branch, and every implemented life skill has one.
-- Non-combat band mastery is a bonus-only progression track (2026-11-06). It uses no more than 100 explicitly authored identities and never one track per generated item. It must never unlock or block recipes, resources, stations, areas, items or other content. Existing skill-level, campaign and station requirements remain responsible for access. Mastery tuning and ownership defaults below are proposals, not implemented balance changes.
+- Non-combat band mastery is a bonus-only, character-owned progression track (2026-11-06; implemented 2026-11-07). Its 67 explicitly authored identities never expand per generated item. It never unlocks or blocks recipes, resources, stations, areas, items or other content; existing skill-level, campaign and station requirements remain responsible for access.
 - Player Market remains browser-simulated with server-validated transactions, not a server-authoritative economy. Keep validation uploads and item/Gold recovery protocols.
 - Offline-earned items/currency remain tradable by explicit owner choice (2026-11-05). Harden market inputs, request limits and permissions, and document residual forging/rollback risks. Do not replace offline trading or claim item provenance from client-owned saves. Public-source review does not authorize destructive history rewrites or branch-policy changes.
 - Internal docs have one home each: GAME for current behavior, DEVELOPMENT for engineering, this file for plans. Published wiki, generated UNIQUES, operations SQL and asset credits remain distinct.
@@ -51,6 +50,12 @@ Latest confirmed live release: **0.4.4, Pinnacle of Ruin**, deployed 2026-11-07.
 - Post-campaign crafting and hideout decisions (2026-11-06, [POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md](POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md)): Fractured Orbs randomly pick an affix (no seal steering); the three Uber Bosses each grant one piece of the Doom Sigil crafting trinity (The First Exile elevates T1 to T0, The Architect of Ruin grants Doom implicits, The Void Sovereign opens a 7th modifier slot); Stash Affinities are a baseline Act 1 convenience; offline map auto-running is supported and enhanced by Watchtower upgrades.
 - Unique items rework (2026-11-06): Campaign unique drop pools scale progressively by zone depth, starting with exactly one unique (`castaways_kerchief`) in the Mud Flats; class-defining trait uniques (Rage, Malice, Fervor, Riposte, Momentum, Mana is Power) drop in mid-to-late campaign zones and maps rather than early Act 1; flat numerical modifiers on uniques feature roll ranges that can be rerolled using Divine Orbs (items with purely fixed mechanics cannot be Divined); and select powerful uniques carry thematic downsides to prevent them from crowding out end-game crafted rares.
 - Comprehensive UI and responsive pass (2026-11-07): Stash tab affinities UI selector and tab badge indicators, Currency tab Fractured Orb display, Materials tab Refined components (bars/planks) and Boss trophies/Sigils groupings, mobile character switching in sidebar and Settings, compact topbar mobile currency indicator, mobile Hideout stacking, mobile Combat direct strike buttons for Weak Points and Choir adds, and safe viewport boundary clamping for item menus and tooltips.
+- Flask policy, early pacing, boss crafting materials, Tiered Loot (T1–T5) and Class Loot Filter (2026-11-07):
+  - Belts enforce a 4-slot layout (1 Life, 1 Mana, 2 Utility). Instilling Orbs drop starting in Act 2 (tier 5+) to unlock early automated flask triggers before burst damage frustrates idle players.
+  - Boss kills and boss farming reliably award refined construction materials (copper/iron/mithril bars, ash/oak/yew planks, rough gems, arcane dust) so combat progression alone can advance Hideout stations without mandatory gathering skilling.
+  - Tiered Loot (T1–T5) scales across acts and maps: higher tiers increase mod value floors and bias affix tier rolls; Tier 5 loot introduces a 35% chance for natural Fractured modifiers and rolls on special bases (Simplex Amulet, Annointed Belt, Astral Plate) with tooltips and cells displaying visible tier badges.
+  - In-game Settings feature an optional "Filter Off-Class Loot" toggle as well as full Custom Loot Filter profiles (create, edit, delete, and switch between saved filters) with rule matching on item tiers (T1–T5), item levels, slots, rarities, defence types, weapon families, and class affinity. Filtered non-unique equipment is automatically salvaged on drop into Arcane Dust.
+  - Ranger and Mage progression smoothed with early survivability adjustments (Momentum damage mitigation, Mage starting Energy Shield and Cold Resistance) ensuring consistent, low-death 2-hour completion through Acts 1–6.
 
 ### Additional Maps expansion
 
@@ -102,9 +107,9 @@ Milestone 10 planning and specifications live in [POST_CAMPAIGN_CRAFTING_AND_HID
 - [ ] Crafting Bench level 6–7: meta-crafts (prefix/suffix locks, multi-craft), seal-integrated auto-crafting
 - [ ] Hideout expansion: Map Device level 5–6, Bench 6–7, Forge 5, Alchemy Table 5, Stash affinities (baseline Act 1), Watchtower 5, and Trophy Altar
 
-### Non-combat action masteries: design
+### Non-combat action masteries: implemented
 
-**Written 2026-11-06. Status: design only; no mastery engine, UI or save fields have been added.** This is the canonical design document for the feature, kept here to avoid another standalone game document. It is separate from the existing passive-tree mastery choices.
+**Written 2026-11-06; implemented and verified 2026-11-07.** This is the canonical design and implementation record for the feature, kept here to avoid another standalone game document. It is separate from the existing passive-tree mastery choices.
 
 #### Purpose and fixed requirements
 
@@ -117,7 +122,7 @@ The owner has fixed two requirements:
 
 An action with zero mastery keeps its current baseline behavior. Mastery is not permission to nerf the baseline and sell the old effectiveness back through grinding. Training every obsolete action must not become necessary for access or a global completion bonus.
 
-All other settings below are a recommended initial design. The numbers are deliberately modest and require economy/pacing verification before implementation.
+The implemented settings below are deliberately modest and bounded; future economy reviews may tune them without turning mastery into an access requirement.
 
 #### Scope and identity
 
@@ -161,9 +166,9 @@ Important invariants:
 - Greenhouse only earns practice on actual background completions, at its effective production rate, through the same completion hook. No extra practice-per-second timer.
 - No daily cap, login streak, real-world waiting period, time-of-day requirement or manual-only mastery bonus.
 
-#### Proposed progression curve
+#### Progression curve
 
-Recommended initial cap: displayed mastery level **100**, with **36,000 practice** needed to cap an action. One practice represents one second of nominal work, so this is ten hours of base-duration work, not a ten-hour real-time lock. Effective speed changes the actual time required.
+The displayed mastery cap is **100**, with **36,000 practice** needed to cap an action. One practice represents one second of nominal work, so this is ten hours of base-duration work, not a ten-hour real-time lock. Effective speed changes the actual time required.
 
 Let `P` be stored practice and `C = 36,000`:
 
@@ -184,11 +189,11 @@ practice threshold for displayed level L = C * ((L - 1) / 99)^2
 
 Bonuses use the continuous `progress` value, not milestone unlocks or the rounded displayed level. The first completion contributes immediately. After the cap, the action keeps working normally; extra practice is not banked for other actions, future caps or prestige purchases.
 
-#### Proposed automatic bonuses
+#### Automatic bonuses
 
 All bonus channels are visible from the beginning and grow continuously. There are no rewards revealed or made usable only at levels 25/50/100.
 
-| Action profile | Proposed maximum bonuses | Restrictions |
+| Action profile | Maximum bonuses | Restrictions |
 |---|---|---|
 | Ordinary gathering | +12 percentage points increased action speed; +8% expected ordinary primary yield | Explicit primary-output allowlist; no extra rare-drop rolls |
 | Timed production | +12 percentage points increased action speed; up to 8% expected conservation of eligible ordinary ingredients | No extra equipment/gem/flask/map copies or stronger outputs |
@@ -208,12 +213,11 @@ This initial tuning gives an unmodified gathering action at most about 21% addit
 
 #### Ownership, persistence and recovery
 
-Recommended first version: **character-owned**, matching existing non-combat skill levels. Shared realm bank/stash resources do not share mastery. No realm-wide mastery pool, point spending, transfer to another action or reward for maxing the whole catalogue.
+Mastery is **character-owned**, matching existing non-combat skill levels. Shared realm bank/stash resources do not share mastery. No realm-wide mastery pool, point spending, transfer to another action or reward for maxing the whole catalogue.
 
-Proposed new character state:
+Character state:
 
 ```ts
-// Design sketch only; this field does not exist in GameState yet.
 skillingMastery: Record<string, number>; // stable mastery-band id -> accumulated practice
 ```
 
@@ -231,20 +235,20 @@ On an action/recipe card, show its mastery level, a compact next-level bar and i
 
 Avoid a toast for every mastery level during long idle runs. Aggregate meaningful changes into offline summaries and an optional activity-log entry. A capped action remains runnable and productive. Existing profession pages should host this information; a new tree, currency shop or mandatory management screen is unnecessary.
 
-#### Implementation work and acceptance criteria — not started
+#### Implementation work and acceptance criteria — completed 2026-11-07
 
-- [ ] Inventory eligible non-combat actions/jobs; assign explicit stable band ids, batch aliases and bonus profiles/allowlists; reject the inventory if it exceeds 100 identities.
-- [ ] Add pure progression/bonus calculations, a character save migration and completion-hook practice awards.
-- [ ] Integrate action-specific speed, ordinary yield and ingredient conservation without changing baseline access or item-generation rules.
-- [ ] Integrate Heist rooms, Greenhouse, auto-repeat, offline summaries, save/import/recovery and sandbox behavior.
-- [ ] Add compact action-card UI and explanatory tooltips; update the current reference/wiki only when the mechanic is implemented.
-- [ ] Verify no content-access check reads mastery; zero-mastery characters retain today's baseline and existing unlock paths.
-- [ ] Verify combat/gem/weapon/kill paths never grant mastery or read its bonuses.
-- [ ] Verify every eligible action has exactly one valid band, generated Smithing bases cannot create new tracks, single/batch aliases share bands, and resolved Heist rooms, empty-yield gathering, cancellation, resource/storage stops and double-production cannot duplicate credit.
-- [ ] Verify equal completed work online/offline, protected inputs/outputs, integer rounding, refund safety, caps, malformed saves and non-additive device reconciliation.
-- [ ] Measure resource inflation, recipe profitability and progression on representative new/endgame characters before accepting the proposed 100-level/10-hour/12%/8% tuning.
+- [x] Inventory eligible non-combat actions/jobs; assign explicit stable band ids, batch aliases and bonus profiles/allowlists; the shipped inventory contains 67 identities.
+- [x] Add pure progression/bonus calculations, a character save migration and completion-hook practice awards.
+- [x] Integrate action-specific speed, ordinary yield and ingredient conservation without changing baseline access or item-generation rules.
+- [x] Integrate Heist rooms, Greenhouse, auto-repeat, offline summaries, save/import/recovery and sandbox behavior.
+- [x] Add compact action-card UI and explanatory tooltips; update the current reference when the mechanic is implemented.
+- [x] Verify no content-access check reads mastery; zero-mastery characters retain today's baseline and existing unlock paths.
+- [x] Verify combat/gem/weapon/kill paths never grant mastery or read its bonuses.
+- [x] Verify every eligible action has exactly one valid band, generated Smithing bases cannot create new tracks, single/batch aliases share bands, and resolved Heist rooms, empty-yield gathering, cancellation, resource/storage stops and double-production cannot duplicate credit.
+- [x] Verify equal completed work online/offline, protected inputs/outputs, integer rounding, refund safety, caps, malformed saves and non-additive device reconciliation.
+- [x] Measure initial resource inflation, production economics and progression: an unmodified Ash loop produces 1,252 logs in its first hour (+4.3%) and 10,818 over eight hours (+12.7%), remaining below the roughly 21% capped ordinary-throughput ceiling. Eight-hour Copper and Mithril smelting runs each gain 7.3% output while consuming about 4.75 rather than 5 ore per bar; both reach about 30,915 of 36,000 practice.
 
-The design is ready for review; implementation and final tuning remain future work. No mastery-gated content should be added while filling in those details.
+The implementation passes the full 1,261-test suite and production typecheck. No mastery-gated content should be added in future expansions.
 
 ### Maps skill batch: local implementation in progress
 
@@ -257,7 +261,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
-- [x] Write and review the non-combat band-mastery design, with no mastery-gated unlocks, no more than 100 authored identities, proposed progression/bonuses, persistence/offline behavior and acceptance criteria. Design only; implementation remains unchecked in its section. — done 2026-11-06
+- [x] Write and review the non-combat band-mastery design, with no mastery-gated unlocks, no more than 100 authored identities, proposed progression/bonuses, persistence/offline behavior and acceptance criteria. The later implementation is recorded separately below. — done 2026-11-06
+- [x] Implement non-combat band mastery across timed life skills, Heists, Greenhouse, offline progress, persistence and action-card UI with 67 stable bands and bounded ordinary bonuses; full suite passes. — done 2026-11-07
+- [x] Massive unique items, flasks, and maps pass: reworked stat-stick uniques (`barnacle_band`, `khans_tithe`, `pyre_heart`, `starforged_edge`, `unblinking_tome`, `fishermans_knot`, `the_unwritten`, `architects_compass`, `sovereigns_grasp`, `faultline`, and boss/cycle uniques) with signature mechanics; added 12 Ascendancy BIS uniques, 22 Life-Skill uniques (2 per profession), 6-piece Master Artisan set, 6-piece Wanderer's Heirloom leveling set, 3 Gold-Find uniques, 5 Unique Flasks (`u_flask_karui`, `u_flask_lavianga`, `u_flask_lions_roar`, `u_flask_bottled_faith`, `u_flask_dying_sun`) with `enemyRanged`/`packStart` Instill conditions, and 5 Unique Maps (`umap_vaults`, `umap_cowards_trial`, `umap_olmecs`, `umap_maelstrom`, `umap_grandmasters`). — done 2026-11-07
 - [x] Overhaul Admin with campaign/demo/death diagnostics, searchable player inspection and audited recovery/compensation, feedback snapshots/replies/filtering/sandbox, and configurable live events/broadcasts. Database migration and frontend verified locally; service installation/deployment remain separate. — done 2026-11-06
 - [x] Apply updated market/admin SQL in Supabase. Owner confirmed both ran; live Admin overview/player/feedback RPCs and backup/mail/audit tables refuse anonymous requests. — done 2026-11-06
 - [ ] Upload current validation rules and verify real-account Admin inspection, backup restore, mail/compensation and scheduled events against the updated frontend. Backups/snapshots are not retroactive; frontend deployment remains pending.
@@ -268,10 +274,12 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - [x] Give monsters distinct player-style damage/defence archetypes while preserving reference effective hit pools and damage budgets; verify campaign, map, rarity and save behavior. Unreleased; remaining combined-worktree failures are recorded below. — done 2026-11-05
 - [x] Consolidate and audit game documentation; replace 40 internal/reference documents with five, preserve published wiki URLs and validate links/generated pages. — done 2026-11-05
 - [ ] Player report: roughly two hours of one signed-in character's progress disappeared. Audit local saves, uploads and merge/transfer reconciliation before changing save behavior.
-- [ ] Player report: Templar appears to encounter fewer enemies. Verify class-independent pack/arrival logic and isolate build/kill-rate effects.
+  - Static audit and all 1,250 tests pass on 0.4.4. Two credible rollback paths remain: a browser-storage write failure currently prevents that cloud save attempt from starting, and simultaneous devices can unconditionally replace the same character row with a stale progression snapshot carrying a newer client timestamp. Neither identifies the reported incident without affected-account save/backup timestamps and two-device reproduction.
+- [x] Player report: Templar appears to encounter fewer enemies. Pack/arrival logic is class-independent; 10-seed fixed-area simulations showed comparable incoming hit flow, while kill rates varied with build damage. Templar completed Act 6 in 16h43 in the integrated whole-journey seed. — done 2026-11-06
 - [ ] Player report: Twin Strike hits from four tiles away. Audit melee range and closing-in; evaluate melee-only/approach tactics request.
 - [ ] Verify Mana is Power display with Overflow after the spending-window change.
 - [ ] Recheck Warrior/Templar weapon progression, class pacing, high-level Poison Dart scaling and defensive gearing on current code. Old simulations disagree because systems and bots changed.
+  - 0.4.4 audit: Warrior/Duelist/Templar/Shadow finished Act 6 in 15h13–19h16 in the all-class seed. Across three Ranger seeds, the median reached late Act 6 but the day-one stage range was 5–70, with Act 1 taking a median 12h54. Across three Mage seeds, the median stalled at level 43 in Act 4 with 195 deaths; the stage range was 29–70. Do not tune from the single successful seeds or lock new progression features until the bot/loadout failures and seed spread are isolated.
 - [ ] Real accounts: email sign-up/reset/confirmation, guest carryover, two-device save/realm behavior and Player Market buy/bid/delivery recovery. Verify current Admin → Market rules upload after content changes; no assumption that an old checklist proves current service state.
 - [ ] Player wiki references/guides for trees, runes, flasks, side systems, meals, greenhouse, loadouts, challenge realms, market recovery and Maps. Generated tables currently cover only part of these topics.
 - [ ] Deeper recovery runbooks for cloud conflicts, duplicate-tab transfers, market holds and deliveries. Verify code and actual service behavior.
@@ -292,9 +300,11 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
+- [x] Massive unique items, flasks, and maps pass implemented: reworked existing stat-stick uniques (`barnacle_band`, `khans_tithe` bank-gold crit scaling, `pyre_heart` slow-burn spreading ignites, `starforged_edge` physical shock & no elemental damage, `unblinking_tome` burning spell flare & cannot evade, `fishermans_knot` utility flask pull/snare & `enemyRanged`/`packStart` Instilling conditions, `the_unwritten` off-class Ascendancy notable rolling & Divine Orb rerolling, `architects_compass` every 4th spell double repeat at 0 mana, `sovereigns_grasp` extra Chaos vs Ailing & Wither, `faultline` Slam armour crack & 30% physical mitigation bypass, plus enhanced boss/act-cycle uniques); added 12 Ascendancy BIS uniques, 22 Life-Skill uniques (2 per profession integrated with `skillTreeStats`), a 6-piece Master Artisan set, a 6-piece Wanderer's Heirloom leveling set (reqLevel 1), 3 Gold-Find uniques (`gulls_eye`, `merchants_signet`, `greeds_vault`), 5 Unique Flasks (`u_flask_karui`, `u_flask_lavianga`, `u_flask_lions_roar`, `u_flask_bottled_faith`, `u_flask_dying_sun`), and 5 Unique Maps (`umap_vaults`, `umap_cowards_trial`, `umap_olmecs`, `umap_maelstrom`, `umap_grandmasters`) in the Map Case and Map Device; `docs/UNIQUES.md` regenerated and unit tests verified. — done 2026-11-07
+- [x] Non-combat action mastery implemented: 67 stable character-owned work bands, nominal-duration practice to level 100, bounded speed/ordinary-yield/input-conservation bonuses, shared live/offline/Greenhouse/Heist completion hooks, save migration, offline summary and compact action-card UI. Protected rare/chase resources and all existing access rules remain unchanged; 1,261 tests and typecheck pass. — done 2026-11-07
 - [x] Unique items overhaul implemented: campaign unique drop pools scaled by zone depth, starting with exactly 1 unique (`castaways_kerchief`) in the Mud Flats; class-specific trait uniques (Rage, Malice, Fervor, Riposte, Momentum, Mana is Power) moved to mid-to-late campaign zones and maps; flat numerical modifiers feature roll ranges that can be rerolled using Divine Orbs (with items having only fixed mods blocked from Divine use); `last_breath` adds 1–4 extra Malice per hit; thematic downsides added to select powerful uniques (`bloodthirst`, `emberheart`, `alchemists_band`, `tavern_brawler`, `starforged_edge`, `titans_girth`, `stormhide`, `thornquill`, `wellspring`, `rebuttal`, `ninth_psalm`, `oathbreaker`, etc.); Alt inspection shows roll ranges; PostgreSQL market validator updated for unique roll ranges; `docs/UNIQUES.md` regenerated; unit and security tests pass. — done 2026-11-06
 - [x] Skilling-tree specialisation pass: cap the tree at 36 points earned per ten total life-skill levels, replace the unusable Fishing branch with Gemcutting, refund existing allocations safely, apply life-skill speed events to Heists and Overtime to offline Greenhouse growth, and cover the new invariants with focused tests. — done 2026-11-06
-- [x] Non-combat band-mastery design documented in this roadmap: bonus-only, no mastery-gated content, no more than 100 explicitly authored bands, proposed practice curve and modest automatic rewards, exclusions, offline/save/UI behavior and implementation acceptance criteria. No mastery mechanics implemented. — done 2026-11-06
+- [x] Non-combat band-mastery design documented in this roadmap: bonus-only, no mastery-gated content, no more than 100 explicitly authored bands, proposed practice curve and modest automatic rewards, exclusions, offline/save/UI behavior and implementation acceptance criteria. This records the 2026-11-06 design milestone; implementation followed on 2026-11-07. — done 2026-11-06
 - [x] Maps redesign implemented (Milestone 8): plain shared maps T1–T10 (`s.account.maps` synced with `s.maps.stock`, migrating legacy themed maps by tier) borrowing random campaign area visuals and boss mechanics; Act 6 level 60+ campaign map drops and Last King 5-map top-up; permanent tier-group danger and reward identities (T3–4 elite packs, T5–6 twin boss with shared Life, T7–8 boss ground hazards, T9 permanent enrage, T10 pinnacle combining all three, plus tier-specific unique pools and currency emphasis); Apprentice/Journeyman/Master Sextants with up to 4 Astrolabe slots and 6-charge Danger/Reward/Both/Hunting modifiers; realm-shared 100-node connected Atlas Tree with up to 70 allocated points across Sustain, Bounty, Surveying and Peril wings, including Unbroken Path and Doomed Horizon keystones; Doomed Maps I–V (levels 86–94, 7 Doomed modifiers, Fractured Orb and Uber Key drops); Cartography T1–T10 map and Sextant recipes; and a dedicated Map Device page (`src/ui/pages/MapDevicePage.tsx`). Atlas and Maps tests pass; `docs/UNIQUES.md` regenerated. Unreleased. — done 2026-11-06
 - [x] Fractured items and Fractured Orbs implemented (Milestone 10A): Fractured Orbs lock one random modifier permanently on rare items with 4+ modifiers; scoured fractured items reduce to a 1-mod Magic item retaining the fractured affix; Annulment cannot remove fractured modifiers; Chaos and Alteration rerolls preserve fractured modifiers; Ancient Whetstones cannot hone fractured modifiers; Locksmith's Wax snapshots and restores fractured status; golden styling in tooltips and Bench page integration. All 9 focused fractured crafting tests pass. — done 2026-11-06
 - [x] Bench Level 6 and meta-crafting implemented (Milestone 10B): Bench station Level 6 upgrade added with meta-crafting perks; "Prefixes Cannot Be Changed" (suffix craft, 2 Divine + 500 Arcane Dust), "Suffixes Cannot Be Changed" (prefix craft, 2 Divine + 500 Arcane Dust), and "Multicraft" (suffix craft, 2 Exalted + 400 Arcane Dust); Scour, Chaos, Annul, Divine, and Alteration operations preserve locked affix pools; Multicraft allows up to 3 crafted modifiers; "Remove crafted" action (1 Scour) strips all crafted modifiers; Forger's Seal auto-crafting support (sealed parameter in CraftMethod); all unit tests pass. — done 2026-11-06

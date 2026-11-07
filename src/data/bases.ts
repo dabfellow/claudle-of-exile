@@ -632,11 +632,13 @@ export const BASES: BaseDef[] = [
   J('chain_belt', 'Chain Belt', 'belt', 1, [{ stat: 'life', value: 12, text: '+12 to maximum Life' }]),
   J('leather_belt', 'Leather Belt', 'belt', 12, [{ stat: 'life', value: 30, text: '+30 to maximum Life' }]),
   J('heavy_belt', 'Heavy Belt', 'belt', 26, [{ stat: 'armour', value: 80, text: '+80 to Armour' }]),
+  J('annointed_belt', 'Annointed Belt', 'belt', 75, [{ stat: 'allAttr', value: 25, text: '+25 to all Attributes' }]),
 
   J('coral_amulet', 'Coral Amulet', 'amulet', 1, [{ stat: 'lifeRegen', value: 2, text: 'Regenerate 2 Life per second' }]),
   J('amber_amulet', 'Amber Amulet', 'amulet', 10, [{ stat: 'physPct', value: 15, text: '15% increased Physical Damage' }]),
   J('jade_amulet', 'Jade Amulet', 'amulet', 10, [{ stat: 'evasionPct', value: 15, text: '15% increased Evasion Rating' }]),
   J('onyx_amulet', 'Onyx Amulet', 'amulet', 24, [{ stat: 'allRes', value: 10, text: '+10% to all Elemental Resistances' }]),
+  J('simplex_amulet', 'Simplex Amulet', 'amulet', 75, [{ stat: 'allRes', value: 20, text: '+20% to all Elemental Resistances' }]),
 
   J('iron_ring', 'Iron Ring', 'ring', 1, [
     { stat: 'physMin', value: 1, text: 'Adds 1 to 4 Physical Damage' },
@@ -696,7 +698,8 @@ export const UNIQUES: UniqueDef[] = [
     id: 'miners_lament', name: "Miner's Lament", baseId: 'iron_hat', flavour: 'The vein runs deeper than the grave.',
     mods: [
       { affixId: 'flat_life', values: [25] },
-      { affixId: 'skill_speed', values: [15] },
+      { affixId: 'u_mining_speed', values: [20] },
+      { affixId: 'u_gem_chance', values: [40] },
       { affixId: 'skill_xp', values: [12] },
     ],
   },
@@ -750,6 +753,8 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'crit_chance', ranges: [[35, 50]] },
       { affixId: 'crit_multi', ranges: [[40, 55]] },
       { affixId: 'flat_life', ranges: [[-30, -15]] },
+      { affixId: 'u_phys_can_shock', values: [1] },
+      { affixId: 'u_no_elem_damage', values: [1] },
     ],
   },
   {
@@ -965,6 +970,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'flat_life', ranges: [[12, 20]] },
       { affixId: 'flask_charges', ranges: [[20, 30]] },
       { affixId: 'item_rarity', ranges: [[8, 14]] },
+      { affixId: 'u_flask_reel', values: [1] },
     ],
   },
   {
@@ -973,6 +979,8 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_life_flask_recovery', ranges: [[25, 40]] },
       { affixId: 'skill_speed', ranges: [[8, 14]] },
       { affixId: 'skill_xp', ranges: [[8, 14]] },
+      { affixId: 'u_harvesting_yield', ranges: [[12, 20]] },
+      { affixId: 'u_harvesting_rare', ranges: [[8, 14]] },
     ],
   },
   {
@@ -998,6 +1006,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'accuracy', ranges: [[60, 100]] },
       { affixId: 'crit_chance', ranges: [[16, 25]] },
       { affixId: 'item_rarity', ranges: [[12, 20]] },
+      { affixId: 'u_gold_find', ranges: [[25, 40]] },
     ],
   },
   {
@@ -1014,6 +1023,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'flat_armour', ranges: [[20, 35]] },
       { affixId: 'life_regen', ranges: [[2, 4]] },
       { affixId: 'cold_res', ranges: [[12, 20]] },
+      { affixId: 'u_clinging_hull', values: [1] },
     ],
   },
   {
@@ -1057,7 +1067,8 @@ export const UNIQUES: UniqueDef[] = [
     mods: [
       { affixId: 'added_phys', ranges: [[4, 6], [9, 14]] },
       { affixId: 'crit_chance', ranges: [[16, 25]] },
-      { affixId: 'item_rarity', ranges: [[20, 35]] },
+      { affixId: 'u_gold_find', values: [-50] },
+      { affixId: 'u_crit_gold_scale', values: [1] },
     ],
   },
   {
@@ -1084,6 +1095,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'added_fire', ranges: [[8, 12], [16, 24]] },
       { affixId: 'inc_elem', ranges: [[20, 30]] },
       { affixId: 'u_cast_speed', ranges: [[8, 14]] },
+      { affixId: 'u_sloth_pyre', ranges: [[50, 70]] },
     ],
   },
 
@@ -1122,6 +1134,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'flat_es', ranges: [[35, 50]] },
       { affixId: 'light_res', ranges: [[25, 35]] },
       { affixId: 'u_coup_pct', ranges: [[30, 45]] },
+      { affixId: 'u_coup_cull', values: [1] },
     ],
   },
   {
@@ -1131,6 +1144,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'flat_es', ranges: [[35, 50]] },
       { affixId: 'light_res', ranges: [[35, 50]] },
       { affixId: 'u_nova_pct', ranges: [[25, 40]] },
+      { affixId: 'u_nova_shock', values: [1] },
     ],
   },
   {
@@ -1207,6 +1221,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'fire_res', ranges: [[25, 35]] },
       { affixId: 'light_res', ranges: [[25, 35]] },
       { affixId: 'u_rage_on_hit_taken', ranges: [[2, 4]] },
+      { affixId: 'u_leviathan_mend', values: [1] },
     ],
   },
   {
@@ -1237,6 +1252,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'fire_res', ranges: [[20, 30]] },
       { affixId: 'light_res', ranges: [[20, 30]] },
       { affixId: 'u_coup_pct', ranges: [[35, 55]] },
+      { affixId: 'u_slack_tide_refund', values: [1] },
     ],
   },
   {
@@ -1247,6 +1263,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'fire_res', ranges: [[25, 35]] },
       { affixId: 'light_res', ranges: [[25, 35]] },
       { affixId: 'u_nova_pct', ranges: [[30, 50]] },
+      { affixId: 'u_corposant_surge', values: [1] },
     ],
   },
   {
@@ -1279,6 +1296,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'all_res', ranges: [[12, 18]] },
       { affixId: 'u_momentum_max', ranges: [[3, 5]] },
       { affixId: 'u_momentum_effect', ranges: [[25, 35]] },
+      { affixId: 'u_kings_stride', values: [1] },
     ],
   },
   {
@@ -1319,6 +1337,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'all_res', ranges: [[12, 18]] },
       { affixId: 'u_nova_pct', ranges: [[35, 55]] },
       { affixId: 'u_nova_heal', ranges: [[28, 42]] },
+      { affixId: 'u_corposant_surge', values: [1] },
     ],
   },
 
@@ -1330,6 +1349,8 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'spell_fire', ranges: [[6, 10], [14, 22]] },
       { affixId: 'cast_speed', ranges: [[6, 12]] },
       { affixId: 'fire_res', ranges: [[20, 30]] },
+      { affixId: 'u_unblinking_flare', ranges: [[50, 75]] },
+      { affixId: 'u_cannot_evade', values: [1] },
     ],
   },
   {
@@ -1338,6 +1359,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'added_phys', ranges: [[15, 22], [30, 44]] },
       { affixId: 'u_nova_pct', ranges: [[30, 45]] },
       { affixId: 'u_nova_heal', ranges: [[20, 32]] },
+      { affixId: 'u_briar_thorns', ranges: [[35, 50]] },
     ],
   },
 
@@ -1370,6 +1392,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'added_phys', ranges: [[24, 32], [48, 65]] },
       { affixId: 'flat_life', ranges: [[80, 110]] },
       { affixId: 'u_slam_reduction', ranges: [[20, 30]] },
+      { affixId: 'u_tectonic_rupture', ranges: [[25, 35]] },
     ],
   },
   {
@@ -1409,6 +1432,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'all_attributes', ranges: [[20, 30]] },
       { affixId: 'all_res', ranges: [[16, 25]] },
       { affixId: 'u_life_more', ranges: [[10, 15]] },
+      { affixId: 'u_unwritten_notable', ranges: [[1, 36]] },
     ],
   },
 
@@ -1421,6 +1445,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'attack_speed', ranges: [[18, 26]] },
       { affixId: 'crit_multi', ranges: [[40, 55]] },
       { affixId: 'u_riposte_pct', ranges: [[55, 75]] },
+      { affixId: 'u_mirror_twin', ranges: [[20, 30]] },
     ],
   },
   {
@@ -1430,6 +1455,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'all_res', ranges: [[18, 26]] },
       { affixId: 'u_life_more', ranges: [[12, 18]] },
       { affixId: 'u_mana_power', ranges: [[25, 35]] },
+      { affixId: 'u_exile_echo', ranges: [[35, 50]] },
     ],
   },
   {
@@ -1440,6 +1466,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'spell_light', ranges: [[15, 22], [50, 70]] },
       { affixId: 'cast_speed', ranges: [[15, 22]] },
       { affixId: 'spell_block', ranges: [[10, 15]] },
+      { affixId: 'u_blueprint_ruin', values: [1] },
     ],
   },
   {
@@ -1449,6 +1476,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_armour_more', ranges: [[30, 45]] },
       { affixId: 'all_res', ranges: [[16, 25]] },
       { affixId: 'u_slam_reduction', ranges: [[25, 35]] },
+      { affixId: 'u_armour_vs_elem', ranges: [[25, 35]] },
     ],
   },
   {
@@ -1459,6 +1487,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'chaos_res', ranges: [[35, 50]] },
       { affixId: 'u_coup_pct', ranges: [[60, 85]] },
       { affixId: 'u_poison_pct', ranges: [[35, 50]] },
+      { affixId: 'u_void_gaze', ranges: [[20, 30]] },
     ],
   },
   {
@@ -1469,6 +1498,428 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'cast_speed', ranges: [[15, 22]] },
       { affixId: 'chaos_res', ranges: [[30, 45]] },
       { affixId: 'u_life_leech', ranges: [[3, 5]] },
+      { affixId: 'u_void_touch', ranges: [[25, 35]] },
+    ],
+  },
+
+  // ---------- 12 Ascendancy BIS Uniques (1 per Ascendancy) ----------
+  {
+    id: 'asc_ravager_plate', name: 'Bloodiron Carapace', baseId: 'godforged_plate', flavour: 'The deeper the wound, the louder the warcry.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[110, 150]] },
+      { affixId: 'u_rage_max', ranges: [[5, 8]] },
+      { affixId: 'u_life_leech', ranges: [[3, 5]] },
+      { affixId: 'u_asc_ravager', ranges: [[25, 35]] },
+    ],
+  },
+  {
+    id: 'asc_anvil_shield', name: 'Bastion of the Unmoved', baseId: 'godforged_tower_shield', flavour: 'Let the mountain strike the hammer.',
+    mods: [
+      { affixId: 'u_armour_more', ranges: [[25, 40]] },
+      { affixId: 'block_chance', ranges: [[10, 15]] },
+      { affixId: 'all_res', ranges: [[15, 22]] },
+      { affixId: 'u_asc_anvil', ranges: [[25, 40]] },
+    ],
+  },
+  {
+    id: 'asc_longshot_bow', name: 'Horizon String', baseId: 'wildlord_greatbow', flavour: 'Nocked in one valley, buried in the next.',
+    mods: [
+      { affixId: 'inc_phys', ranges: [[150, 200]] },
+      { affixId: 'crit_multi', ranges: [[35, 50]] },
+      { affixId: 'u_momentum_max', ranges: [[3, 5]] },
+      { affixId: 'u_asc_longshot', ranges: [[30, 45]] },
+    ],
+  },
+  {
+    id: 'asc_falconer_gloves', name: 'Skyhunter Talons', baseId: 'wildlord_grips', flavour: 'Two wings, one kill.',
+    mods: [
+      { affixId: 'flat_evasion', ranges: [[140, 190]] },
+      { affixId: 'attack_speed', ranges: [[16, 24]] },
+      { affixId: 'accuracy', ranges: [[180, 260]] },
+      { affixId: 'u_asc_falconer', ranges: [[60, 80]] },
+    ],
+  },
+  {
+    id: 'asc_wellspring_focus', name: 'Font of the Astral Sea', baseId: 'celestial_ward', flavour: 'Drink from the tide between the stars.',
+    mods: [
+      { affixId: 'flat_es', ranges: [[90, 130]] },
+      { affixId: 'flat_mana', ranges: [[100, 150]] },
+      { affixId: 'u_mana_power', ranges: [[25, 35]] },
+      { affixId: 'u_asc_wellspring', ranges: [[25, 35]] },
+    ],
+  },
+  {
+    id: 'asc_alchemist_belt', name: "Crucible's Cord", baseId: 'heavy_belt', flavour: 'Three vials of fire, frost, and lightning.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[75, 105]] },
+      { affixId: 'flask_charges', ranges: [[30, 45]] },
+      { affixId: 'u_ailment_pct', ranges: [[25, 40]] },
+      { affixId: 'u_asc_alchemist', ranges: [[30, 45]] },
+    ],
+  },
+  {
+    id: 'asc_matador_body', name: "Velvet Bullfighter's Coat", baseId: 'wyrmlord_hauberk', flavour: 'A step to the left, and the blade finds the heart.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[90, 125]] },
+      { affixId: 'u_riposte_pct', ranges: [[45, 65]] },
+      { affixId: 'u_riposte_cooldown', ranges: [[30, 45]] },
+      { affixId: 'u_asc_matador', ranges: [[30, 45]] },
+    ],
+  },
+  {
+    id: 'asc_vanguard_shield', name: 'Standard of the Iron Phalanx', baseId: 'wyrmlord_shield', flavour: 'Hold the line, and the line holds you.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[85, 120]] },
+      { affixId: 'block_chance', ranges: [[10, 15]] },
+      { affixId: 'u_slam_reduction', ranges: [[20, 30]] },
+      { affixId: 'u_asc_vanguard', ranges: [[25, 35]] },
+    ],
+  },
+  {
+    id: 'asc_flagellant_belt', name: 'Cord of the Seven Scourges', baseId: 'chain_belt', flavour: 'Each knot is a sin paid in advance.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[95, 135]] },
+      { affixId: 'u_nova_pct', ranges: [[35, 55]] },
+      { affixId: 'u_nova_heal', ranges: [[30, 45]] },
+      { affixId: 'u_asc_flagellant', ranges: [[30, 45]] },
+    ],
+  },
+  {
+    id: 'asc_lightkeeper_helm', name: 'Diadem of the Unbroken Dawn', baseId: 'empyrean_crown', flavour: 'No shadow falls where the beacon stands.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[75, 105]] },
+      { affixId: 'flat_es', ranges: [[65, 95]] },
+      { affixId: 'all_res', ranges: [[16, 24]] },
+      { affixId: 'u_asc_lightkeeper', ranges: [[25, 35]] },
+    ],
+  },
+  {
+    id: 'asc_headsman_helm', name: "The Executioner's Hood", baseId: 'oblivion_mask', flavour: 'The crowd holds its breath; the blade does not.',
+    mods: [
+      { affixId: 'inc_evasion', ranges: [[70, 95]] },
+      { affixId: 'crit_multi', ranges: [[35, 50]] },
+      { affixId: 'u_coup_pct', ranges: [[50, 75]] },
+      { affixId: 'u_asc_headsman', ranges: [[30, 45]] },
+    ],
+  },
+  {
+    id: 'asc_plaguewright_dagger', name: 'Patient Zero', baseId: 'oblivion_fang', flavour: 'One scratch is a plague.',
+    mods: [
+      { affixId: 'inc_phys', ranges: [[130, 175]] },
+      { affixId: 'attack_speed', ranges: [[16, 24]] },
+      { affixId: 'u_poison_pct', ranges: [[40, 60]] },
+      { affixId: 'u_asc_plaguewright', ranges: [[30, 45]] },
+    ],
+  },
+
+  // ---------- 2 Uniques per Life Skill (20 new + Miners Lament & Herbalists Sash = 22) ----------
+  // Mining (2nd item alongside Miner's Lament)
+  {
+    id: 'delvers_lantern', name: "Delver's Lantern", baseId: 'runic_ward', flavour: 'Burns blue when a rich seam is near.',
+    mods: [
+      { affixId: 'flat_es', ranges: [[25, 40]] },
+      { affixId: 'light_res', ranges: [[20, 30]] },
+      { affixId: 'u_mining_yield', ranges: [[15, 25]] },
+      { affixId: 'u_mining_rare', ranges: [[10, 18]] },
+      { affixId: 'u_mining_double', ranges: [[8, 12]] },
+      { affixId: 'u_motherlode', values: [1] },
+    ],
+  },
+  // Woodcutting (2 items)
+  {
+    id: 'fellers_hatchet', name: "Feller's Ironbite", baseId: 'felling_axe', flavour: 'Fells the oak on the second swing.',
+    mods: [
+      { affixId: 'inc_phys', ranges: [[45, 70]] },
+      { affixId: 'u_woodcutting_speed', ranges: [[15, 25]] },
+      { affixId: 'u_woodcutting_yield', ranges: [[15, 25]] },
+    ],
+  },
+  {
+    id: 'heartwood_mantle', name: 'Heartwood Mantle', baseId: 'woodsman_jerkin', flavour: 'Still smells of sap and rain.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[35, 55]] },
+      { affixId: 'cold_res', ranges: [[20, 30]] },
+      { affixId: 'u_woodcutting_rare', ranges: [[12, 20]] },
+      { affixId: 'u_woodcutting_double', ranges: [[8, 14]] },
+    ],
+  },
+  // Harvesting (2nd item alongside Herbalist's Sash)
+  {
+    id: 'bloomwarden_gloves', name: "Bloomwarden's Mitts", baseId: 'woodsman_gloves', flavour: 'Never bruises the petal.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[25, 40]] },
+      { affixId: 'u_harvesting_speed', ranges: [[15, 25]] },
+      { affixId: 'u_harvesting_double', ranges: [[10, 16]] },
+    ],
+  },
+  // Thieving (2 items)
+  {
+    id: 'cutpurses_cloak', name: "Cutpurse's Cloak", baseId: 'shade_garb', flavour: 'Twelve inside pockets, none of them yours.',
+    mods: [
+      { affixId: 'flat_evasion', ranges: [[60, 90]] },
+      { affixId: 'u_thieving_speed', ranges: [[15, 25]] },
+      { affixId: 'u_thieving_yield', ranges: [[15, 25]] },
+    ],
+  },
+  {
+    id: 'lockpicks_ring', name: "Tumbler's Band", baseId: 'iron_ring', flavour: 'Listen for the third click.',
+    mods: [
+      { affixId: 'dexterity', ranges: [[12, 20]] },
+      { affixId: 'u_thieving_rare', ranges: [[12, 20]] },
+      { affixId: 'u_thieving_double', ranges: [[8, 14]] },
+    ],
+  },
+  // Archaeology (2 items)
+  {
+    id: 'surveyors_monocle', name: "Surveyor's Monocle", baseId: 'conjurer_hat', flavour: 'Reads dust the way others read ink.',
+    mods: [
+      { affixId: 'flat_es', ranges: [[25, 40]] },
+      { affixId: 'u_archaeology_speed', ranges: [[15, 25]] },
+      { affixId: 'u_archaeology_rare', ranges: [[12, 20]] },
+    ],
+  },
+  {
+    id: 'excavators_trowel', name: "Relicseeker's Blade", baseId: 'glinting_dagger', flavour: 'Scrape gently; empires are brittle.',
+    mods: [
+      { affixId: 'crit_chance', ranges: [[15, 25]] },
+      { affixId: 'u_archaeology_yield', ranges: [[15, 25]] },
+      { affixId: 'u_archaeology_double', ranges: [[8, 14]] },
+    ],
+  },
+  // Smithing (2 items)
+  {
+    id: 'forgemasters_apron', name: "Forgemaster's Apron", baseId: 'blackened_cuirass', flavour: 'Scorched by a thousand quenching tubs.',
+    mods: [
+      { affixId: 'flat_armour', ranges: [[60, 90]] },
+      { affixId: 'fire_res', ranges: [[25, 35]] },
+      { affixId: 'u_smithing_speed', ranges: [[15, 25]] },
+      { affixId: 'u_smithing_save', ranges: [[8, 14]] },
+    ],
+  },
+  {
+    id: 'slagborn_gauntlets', name: 'Slagborn Grips', baseId: 'steel_gauntlets', flavour: 'Can hold white-hot iron barehanded.',
+    mods: [
+      { affixId: 'strength', ranges: [[15, 25]] },
+      { affixId: 'fire_res', ranges: [[20, 30]] },
+      { affixId: 'u_smithing_quality', ranges: [[15, 25]] },
+      { affixId: 'u_smithing_extra', ranges: [[8, 14]] },
+    ],
+  },
+  // Alchemy (2 items)
+  {
+    id: 'apothecaries_gloves', name: "Apothecary's Stained Gloves", baseId: 'silk_gloves', flavour: 'Purple on the thumb, gold on the palm.',
+    mods: [
+      { affixId: 'flat_es', ranges: [[20, 35]] },
+      { affixId: 'u_alchemy_speed', ranges: [[15, 25]] },
+      { affixId: 'u_alchemy_save', ranges: [[8, 14]] },
+    ],
+  },
+  {
+    id: 'transmuters_pendant', name: "Alembic's Heart", baseId: 'amber_amulet', flavour: 'Distilled thrice and sealed in glass.',
+    mods: [
+      { affixId: 'intelligence', ranges: [[15, 25]] },
+      { affixId: 'flask_charges', ranges: [[15, 25]] },
+      { affixId: 'u_alchemy_quality', ranges: [[15, 25]] },
+      { affixId: 'u_alchemy_extra', ranges: [[8, 14]] },
+    ],
+  },
+  // Gemcutting (2 items)
+  {
+    id: 'lapidarys_loupe', name: "Lapidary's Crown", baseId: 'acolyte_hood', flavour: 'Finds the flaw before the chisel touches stone.',
+    mods: [
+      { affixId: 'flat_es', ranges: [[20, 35]] },
+      { affixId: 'u_gemcutting_speed', ranges: [[15, 25]] },
+      { affixId: 'u_gemcutting_quality', ranges: [[15, 25]] },
+    ],
+  },
+  {
+    id: 'facet_chisels', name: 'Prism-Cutter Grips', baseId: 'wayfarer_wraps', flavour: 'Sixty-four facets, not one a hair off.',
+    mods: [
+      { affixId: 'dexterity', ranges: [[15, 25]] },
+      { affixId: 'u_gemcutting_save', ranges: [[8, 14]] },
+      { affixId: 'u_gemcutting_extra', ranges: [[8, 14]] },
+    ],
+  },
+  // Runecarving (2 items)
+  {
+    id: 'runesmiths_chisel', name: "Runesmith's Sceptre", baseId: 'iron_sceptre', flavour: 'Carves the old tongue into cold stone.',
+    mods: [
+      { affixId: 'inc_elem', ranges: [[20, 30]] },
+      { affixId: 'u_runecarving_speed', ranges: [[15, 25]] },
+      { affixId: 'u_runecarving_quality', ranges: [[15, 25]] },
+    ],
+  },
+  {
+    id: 'scriptweaver_wraps', name: 'Scriptweaver Wraps', baseId: 'acolyte_gloves', flavour: 'The ink glows when the glyph is true.',
+    mods: [
+      { affixId: 'flat_mana', ranges: [[25, 40]] },
+      { affixId: 'u_runecarving_save', ranges: [[8, 14]] },
+      { affixId: 'u_runecarving_extra', ranges: [[8, 14]] },
+    ],
+  },
+  // Cooking (2 items)
+  {
+    id: 'chefs_toque', name: 'Crown of the High Kitchen', baseId: 'linen_hood', flavour: 'None leaves the table hungry.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[30, 50]] },
+      { affixId: 'u_cooking_speed', ranges: [[15, 25]] },
+      { affixId: 'u_cooking_quality', ranges: [[15, 25]] },
+    ],
+  },
+  {
+    id: 'hearthfire_ladle', name: 'Hearthfire Sceptre', baseId: 'bone_sceptre', flavour: 'Simmered since the First Age.',
+    mods: [
+      { affixId: 'fire_res', ranges: [[20, 30]] },
+      { affixId: 'u_cooking_save', ranges: [[8, 14]] },
+      { affixId: 'u_cooking_extra', ranges: [[8, 14]] },
+    ],
+  },
+  // Cartography (2 items)
+  {
+    id: 'navigators_sextant', name: "Navigator's Ward", baseId: 'spirit_shield', flavour: 'Measures the angle between here and nowhere.',
+    mods: [
+      { affixId: 'flat_es', ranges: [[25, 40]] },
+      { affixId: 'u_cartography_speed', ranges: [[15, 25]] },
+      { affixId: 'u_cartography_quality', ranges: [[15, 25]] },
+    ],
+  },
+  {
+    id: 'wayfinders_boots', name: "Chartmaker's Stride", baseId: 'wayfarer_boots', flavour: 'Every league walked is a league drawn.',
+    mods: [
+      { affixId: 'movement_speed', ranges: [[15, 20]] },
+      { affixId: 'u_cartography_save', ranges: [[8, 14]] },
+      { affixId: 'u_cartography_extra', ranges: [[8, 14]] },
+    ],
+  },
+
+  // ---------- 1 Set of General Life Skill Uniques (6-Piece Master Artisan's Regalia) ----------
+  {
+    id: 'artisan_tool', name: "Guildmaster's Gavel", baseId: 'studded_mace', flavour: 'One strike opens the guildhall.',
+    mods: [
+      { affixId: 'skill_speed', ranges: [[15, 22]] },
+      { affixId: 'skill_xp', ranges: [[12, 18]] },
+      { affixId: 'u_all_save', ranges: [[6, 10]] },
+    ],
+  },
+  {
+    id: 'artisan_helm', name: "Guildmaster's Visor", baseId: 'crusader_helm', flavour: 'Clear eyes for fine work.',
+    mods: [
+      { affixId: 'skill_xp', ranges: [[15, 25]] },
+      { affixId: 'u_all_rare', ranges: [[10, 16]] },
+      { affixId: 'u_all_quality', ranges: [[10, 16]] },
+    ],
+  },
+  {
+    id: 'artisan_body', name: "Guildmaster's Coat", baseId: 'ringmail_hauberk', flavour: 'Worn by seven masters of the bench.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[45, 65]] },
+      { affixId: 'skill_speed', ranges: [[12, 18]] },
+      { affixId: 'u_all_yield', ranges: [[12, 20]] },
+      { affixId: 'u_all_extra', ranges: [[6, 10]] },
+      { affixId: 'u_input_save', ranges: [[8, 14]] },
+    ],
+  },
+  {
+    id: 'artisan_gloves', name: "Guildmaster's Dexterous Grips", baseId: 'ringmail_gloves', flavour: 'Steady hands never waste a grain.',
+    mods: [
+      { affixId: 'skill_speed', ranges: [[14, 20]] },
+      { affixId: 'u_all_save', ranges: [[8, 12]] },
+      { affixId: 'u_all_double', ranges: [[6, 10]] },
+    ],
+  },
+  {
+    id: 'artisan_boots', name: "Guildmaster's Sabatons", baseId: 'ringmail_boots', flavour: 'From quarry to forge without pause.',
+    mods: [
+      { affixId: 'movement_speed', ranges: [[15, 22]] },
+      { affixId: 'skill_speed', ranges: [[10, 16]] },
+      { affixId: 'u_all_yield', ranges: [[10, 16]] },
+    ],
+  },
+  {
+    id: 'artisan_ring', name: 'Signet of the Guild', baseId: 'iron_ring', flavour: 'Stamped in wax, honoured in every workshop.',
+    mods: [
+      { affixId: 'skill_xp', ranges: [[12, 20]] },
+      { affixId: 'u_all_yield', ranges: [[8, 14]] },
+      { affixId: 'u_all_quality', ranges: [[8, 14]] },
+    ],
+  },
+
+  // ---------- 1 Set of General Leveling Uniques (6-Piece Wanderer's Heirloom Set, reqLevel 1) ----------
+  {
+    id: 'leveling_weapon', name: "Wanderer's Edge", baseId: 'rusted_sword', flavour: 'Light in the hand, eager for the road.',
+    mods: [
+      { affixId: 'added_phys', ranges: [[6, 10], [14, 20]] },
+      { affixId: 'added_fire', ranges: [[5, 8], [11, 16]] },
+      { affixId: 'attack_speed', ranges: [[15, 22]] },
+      { affixId: 'u_cast_speed', ranges: [[15, 22]] },
+      { affixId: 'u_char_xp', ranges: [[10, 15]] },
+    ],
+  },
+  {
+    id: 'leveling_helm', name: "Wanderer's Crest", baseId: 'iron_hat', flavour: 'Keeps the rain and the arrows off.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[30, 45]] },
+      { affixId: 'all_attributes', ranges: [[10, 16]] },
+      { affixId: 'all_res', ranges: [[12, 18]] },
+      { affixId: 'u_char_xp', ranges: [[10, 15]] },
+    ],
+  },
+  {
+    id: 'leveling_body', name: 'Tabula of the Dawn', baseId: 'simple_robe', flavour: 'Clean cloth waiting for a story.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[40, 60]] },
+      { affixId: 'all_attributes', ranges: [[15, 25]] },
+      { affixId: 'all_res', ranges: [[15, 20]] },
+      { affixId: 'u_mana_cost_red', ranges: [[25, 35]] },
+      { affixId: 'u_char_xp', ranges: [[15, 25]] },
+    ],
+  },
+  {
+    id: 'leveling_gloves', name: "Wanderer's Grips", baseId: 'rawhide_gloves', flavour: 'Broken in on the first mile.',
+    mods: [
+      { affixId: 'added_phys', ranges: [[3, 5], [7, 11]] },
+      { affixId: 'attack_speed', ranges: [[12, 18]] },
+      { affixId: 'u_cast_speed', ranges: [[12, 18]] },
+      { affixId: 'u_life_leech', ranges: [[2, 3]] },
+    ],
+  },
+  {
+    id: 'leveling_boots', name: 'Seven-League Treads', baseId: 'leather_boots', flavour: 'Every stride is three.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[25, 40]] },
+      { affixId: 'movement_speed', ranges: [[25, 35]] },
+      { affixId: 'all_res', ranges: [[10, 15]] },
+      { affixId: 'u_char_xp', ranges: [[10, 15]] },
+    ],
+  },
+  {
+    id: 'leveling_ring', name: "Pathfinder's Loop", baseId: 'iron_ring', flavour: 'Always points home.',
+    mods: [
+      { affixId: 'all_attributes', ranges: [[10, 16]] },
+      { affixId: 'life_regen', ranges: [[4, 8]] },
+      { affixId: 'mana_regen', ranges: [[25, 40]] },
+      { affixId: 'u_mana_cost_red', ranges: [[15, 25]] },
+      { affixId: 'u_char_xp', ranges: [[10, 15]] },
+    ],
+  },
+
+  // ---------- Gold-Drop Uniques (2 new + Gull's Eye = 3 total) ----------
+  {
+    id: 'merchants_signet', name: "Coinlord's Signet", baseId: 'diamond_ring', flavour: 'Gold calls to gold.',
+    mods: [
+      { affixId: 'crit_multi', ranges: [[20, 30]] },
+      { affixId: 'item_rarity', ranges: [[20, 30]] },
+      { affixId: 'u_gold_find', ranges: [[40, 60]] },
+    ],
+  },
+  {
+    id: 'greeds_vault', name: 'Coffer-Plate of Avarice', baseId: 'warlord_plate', flavour: 'Lined with velvet and lead.',
+    mods: [
+      { affixId: 'flat_life', ranges: [[70, 100]] },
+      { affixId: 'inc_armour', ranges: [[60, 90]] },
+      { affixId: 'all_res', ranges: [[12, 18]] },
+      { affixId: 'item_rarity', ranges: [[25, 40]] },
+      { affixId: 'u_gold_find', ranges: [[65, 100]] },
     ],
   },
 ];

@@ -103,6 +103,7 @@ import { applyDeathPenalty, areaXpMultiplier, characterLevel } from './character
 import { bossLeftToRules, castOrder, ruleLockReason, rulesPass, skillAim } from './automation';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
+import { FLASK_SLOT_TYPES } from '../data/flasks';
 import { ailmentNumbers, BURN_MS, BURN_SHARE, chainFalloff, gemChains, gemUseReason, IGNITE_MS, IGNITE_SHARE, grantGemXp, LIFE_RESERVE_PCT, MIN_COOLDOWN_MS, minionStats, skillNumbers, stormStats, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
 import { isKeyedBossZone, TIER_MOD_RULES } from '../data/maps';
@@ -607,7 +608,10 @@ function spawnPack(s: GameState, ctx: Ctx, gate: number): void {
     m.cell = cell;
     c.monsters.push(m);
   });
-  if (cells.length) ctx.emit({ t: 'spawn', name: cells.length > 1 ? `${cells.length} monsters` : c.monsters[c.monsters.length - 1].name, boss: false });
+  if (cells.length) {
+    ctx.emit({ t: 'spawn', name: cells.length > 1 ? `${cells.length} monsters` : c.monsters[c.monsters.length - 1].name, boss: false });
+    triggerInstilled(s, ctx, 'packStart');
+  }
 }
 
 /** The boss walks in through the top gate with its adds at its side. */
@@ -838,7 +842,23 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
   c.buffs.push({ id: f.flaskId, source: 'flask', remainingMs: duration, durationMs: duration, mult: st.effectMult });
   if (st.def.heal) {
     const resource = kind === 'mana' ? 'mana' : 'life';
-    c.heals.push({ resource, perMs: (st.def.heal * effect) / duration, remainingMs: duration });
+    c.heals.push({
+      resource,
+      perMs: (st.def.heal * effect) / duration,
+      remainingMs: duration,
+      karuiEndFull: !!st.def.buff?.karuiBlood || undefined,
+    });
+  }
+  if (kind === 'utility' && d.raw.flaskReel > 0) {
+    for (const m of aliveMonsters(c)) {
+      if (!m.isBoss && !m.martyr && !m.weakPoint) {
+        while (cellRing(m.cell) > 1 && pullCloser(c.monsters, m, army(c)));
+      }
+      m.chillMs = Math.max(m.chillMs, 2000);
+    }
+  }
+  if (kind === 'utility' && st.def.buff?.lionsRoarMoreMelee) {
+    knockBack(c.monsters, army(c));
   }
   s.lifetime.flasksDrunk += 1;
   c.frostbite = 0;
@@ -874,7 +894,19 @@ const SAVAGE_HIT = 0.2;
 
 /** Hit-enchanted flasks answer the hit that just landed on you. */
 function triggerOnHit(s: GameState, ctx: Ctx, d: Derived, taken: number, type: DamageType): void {
-  if (taken >= d.maxLife * SAVAGE_HIT) triggerInstilled(s, ctx, 'savageHit');
+  if (taken >= d.maxLife * SAVAGE_HIT) {
+    triggerInstilled(s, ctx, 'savageHit');
+    if (d.raw.clingingHull > 0 && s.combat) {
+      s.combat.buffs = s.combat.buffs.filter((b) => b.id !== 'clinging_hull');
+      s.combat.buffs.push({
+        id: 'clinging_hull',
+        source: 'skill',
+        remainingMs: 4000,
+        durationMs: 4000,
+        stats: { armourMore: 50, coldRes: 20, moveSpeedPct: -15 },
+      });
+    }
+  }
   if (type === 'fire' || type === 'cold' || type === 'light') triggerInstilled(s, ctx, 'elemHit');
   if (type === 'chaos') triggerInstilled(s, ctx, 'chaosHit');
 }
@@ -1140,6 +1172,8 @@ export function queueSkill(s: GameState, slot: number): string | null {
 
 /** What a skill costs right now, after anything your ascendancy waives. */
 function skillCost(s: GameState, d: Derived, nums: SkillNumbers): number {
+  if (d.raw.laviangaZeroMana > 0) return 0;
+  if (nums.def.tags.includes('spell') && d.raw.blueprintRuin > 0 && ((s.combat?.spellCount ?? 0) + 1) % 4 === 0) return 0;
   if (surgeWaiting(s, d, nums)) return 0;
   if (s.life < d.maxLife / 2 && hasAscNode(s, 'flagellant_ecstasy')) return 0;
   return nums.manaCost;
@@ -1481,15 +1515,25 @@ function rollHit(
 
   // a bow turns every attack into a ranged projectile
   const projectile = def.tags.includes('projectile') || (isAttack && d.ranged);
-  if (def.tags.includes('melee') && !(isAttack && d.ranged)) byType.phys *= 1 + r.meleePct / 100;
+  if (def.tags.includes('melee') && !(isAttack && d.ranged)) {
+    byType.phys *= (1 + r.meleePct / 100) * (1 + (r.lionsRoarMoreMelee ?? 0) / 100);
+  }
   let inc = projectile ? r.projectilePct : 0;
   if (def.tags.includes('spell')) inc += r.spellPct;
   if (inc) for (const t of DAMAGE_TYPES) byType[t] *= 1 + inc / 100;
-  if (mods.noElemental) byType.fire = byType.cold = byType.light = 0;
+  if (mods.noElemental || r.noElemDamage) byType.fire = byType.cold = byType.light = 0;
   const total = DAMAGE_TYPES.reduce((a, t) => a + byType[t], 0);
   for (const x of mods.extras) byType[x.type] += (total * x.pct) / 100;
-  if (r.physAsLight) byType.light += (byType.phys * r.physAsLight) / 100;
+  if (r.physAsLight && !r.noElemDamage) byType.light += (byType.phys * r.physAsLight) / 100;
+  if (r.voidTouch > 0 && hasAilment(mon)) {
+    byType.chaos += ((byType.phys + byType.fire + byType.cold + byType.light) * r.voidTouch) / 100;
+  }
+  if (r.alchemistVolatile > 0 && !r.noElemDamage && c.buffs.some((b) => b.source === 'flask')) {
+    const elemTotal = byType.fire + byType.cold + byType.light;
+    byType.fire += (elemTotal * r.alchemistVolatile) / 100;
+  }
   byType.phys *= 1 + mods.morePhys / 100;
+  if (r.voidGaze > 0) byType.chaos *= 1 + r.voidGaze / 100;
   const highLife = s.life > d.maxLife * 0.8 ? r.highLifeElem : 0;
   for (const t of ['fire', 'cold', 'light'] as const) byType[t] *= (1 + mods.moreElem / 100) * (1 + highLife / 100);
   let more = (1 + mods.moreDamage / 100) * (1 + moreDamageFromBuffs(c) / 100);
@@ -1512,7 +1556,22 @@ function rollHit(
     more *= 2;
     c.misdirect = false;
   }
-  if (isAttack) more *= (1 + rageMore(s, d) / 100) * (1 + longshotMore(s, d, cellRing(mon.cell)) / 100);
+  if (isAttack) {
+    more *= (1 + rageMore(s, d) / 100) * (1 + longshotMore(s, d, cellRing(mon.cell)) / 100);
+    if (r.ravagerFrenzy > 0) {
+      const missingFrac = Math.max(0, 1 - s.life / d.maxLife);
+      more *= 1 + (r.ravagerFrenzy * missingFrac) / 100;
+    }
+    if (r.mirrorTwin > 0 && (c.skillCount ?? 0) % 3 === 0) {
+      more *= 1 + r.mirrorTwin / 100;
+    }
+  }
+  if (projectile && r.longshotSnipe > 0 && cellRing(mon.cell) > 1) {
+    more *= 1 + r.longshotSnipe / 100;
+  }
+  if (!projectile && r.dyingSunProj > 0) {
+    more *= 1 + (r.dyingSunProj * 15) / 100;
+  }
   if (def.tags.includes('spell')) more *= 1 + manaPowerMore(s, d, c.manaFrac) / 100;
   if (surge) more *= 1 + SURGE_MORE / 100;
   if (s.life < d.maxLife / 2 && hasAscNode(s, 'flagellant_mortify')) more *= 1 + MORTIFY_MORE / 100;
@@ -1520,11 +1579,12 @@ function rollHit(
   for (const t of DAMAGE_TYPES) byType[t] *= more;
 
   const spellType = def.effect.type;
+  const bottledBase = r.bottledFaithCrit > 0 ? 2 : 0;
   let critChance = isAttack
-    ? d.critChance * (1 + mods.critChance / 100)
-    : (def.effect.crit ?? 5) * (1 + (r.critChancePct + r.spellCritPct + (spellType === 'light' ? r.lightCrit : 0) + mods.critChance) / 100);
-  if (c.riposting) critChance *= 1 + r.riposteCrit / 100;
-  critChance = r.steadyHand ? 0 : Math.min(95, critChance);
+    ? (d.critChance + bottledBase) * (1 + mods.critChance / 100)
+    : ((def.effect.crit ?? 5) + bottledBase) * (1 + (r.critChancePct + r.spellCritPct + (spellType === 'light' ? r.lightCrit : 0) + mods.critChance) / 100);
+  if (c.riposting) critChance = r.matadorGrace > 0 ? 100 : critChance * (1 + r.riposteCrit / 100);
+  critChance = r.steadyHand ? 0 : Math.min(r.matadorGrace > 0 && c.riposting ? 100 : 95, critChance);
 
   // Mega Crits: a flat 400% that ignores crit multiplier, only from Knife's Edge, Ambush and Coup de Grâce
   const malice = mechanicOf(s) === 'malice';
@@ -1535,7 +1595,7 @@ function rollHit(
   }
   const coup = malice && meterFull(s, d);
   if (coup) {
-    megaMulti = Math.max(megaMulti, coupMulti(d));
+    megaMulti = Math.max(megaMulti, coupMulti(d) * (1 + r.voidGaze / 100));
     c.mech = 0;
     ctx.emit({ t: 'info', text: 'Coup de Grâce!', tone: 'good' });
   }
@@ -1550,7 +1610,7 @@ function rollHit(
     else c.mech = Math.min(c.mech, r.maliceCritKeep);
   }
   if (crit) {
-    let multi = (d.critMulti + mods.critMulti + (isAttack ? 0 : r.spellCritMulti)) / 100;
+    let multi = (d.critMulti + mods.critMulti + (isAttack ? 0 : r.spellCritMulti) + (c.riposting ? r.matadorGrace : 0)) / 100;
     if (mon.life >= mon.maxLife) multi *= 1 + r.critFullLife / 100;
     for (const t of DAMAGE_TYPES) byType[t] *= multi;
   }
@@ -1623,17 +1683,26 @@ export function damageMonster(s: GameState, mon: MonsterInstance, amount: number
 function makeAilment(d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealt: number, a: { kind: Dot['kind']; pctPerSec: number; durationMs: number }): Dot {
   const r = d.raw;
   const { def, mods } = nums;
-  const { pctPerSec, durationMs: duration } = ailmentNumbers(d, nums, a);
+  let { pctPerSec, durationMs: duration } = ailmentNumbers(d, nums, a);
+  let dps = ((dealt * pctPerSec) / 100) * (a.kind === 'bleed' && mon.isBoss ? 1 + r.bleedBossMore / 100 : 1);
+  const isIgnite = a.kind === 'ignite' || a.kind === 'burn';
+  if (isIgnite && r.slothPyre > 0) {
+    duration *= 1.4;
+    dps = (dps * (1 + r.slothPyre / 100)) / 1.4;
+  }
+  if (a.kind === 'poison' && r.plaguewrightFester > 0) {
+    dps *= 1 + r.plaguewrightFester / 100;
+  }
   return {
     kind: a.kind,
-    dps: ((dealt * pctPerSec) / 100) * (a.kind === 'bleed' && mon.isBoss ? 1 + r.bleedBossMore / 100 : 1),
+    dps,
     remainingMs: duration,
     durationMs: duration,
     dealt: 0,
     gemId: def.id,
     burst: mods.specials.has('hemorrhage') ? 0.5 : undefined,
-    spreads: mods.specials.has('virulence') || mods.specials.has('bloodtrail') || undefined,
-    pyre: ((a.kind === 'ignite' || a.kind === 'burn') && mods.specials.has('pyre')) || undefined,
+    spreads: mods.specials.has('virulence') || mods.specials.has('bloodtrail') || (isIgnite && r.slothPyre > 0) || (a.kind === 'poison' && r.plaguewrightFester > 0) || undefined,
+    pyre: (isIgnite && mods.specials.has('pyre')) || undefined,
   };
 }
 
@@ -1718,9 +1787,10 @@ function applyElementAilments(c: CombatRuntime, ctx: Ctx, d: Derived, nums: Skil
       build.chill = 0;
     }
   }
-  if (lands(dealtBy.light, mods.specials.has('staticfield') ? 100 : skill + r.shockChance)) {
+  const shockDmg = dealtBy.light + (r.physCanShock ? dealtBy.phys : 0);
+  if (lands(shockDmg, mods.specials.has('staticfield') ? 100 : skill + r.shockChance + (r.physCanShock && dealtBy.phys > 0 ? 35 : 0))) {
     mon.shockMs = SHOCK_MS * nums.durationMult;
-    build.shock = Math.min(full, build.shock + dealtBy.light);
+    build.shock = Math.min(full, build.shock + shockDmg);
   }
 }
 
@@ -1767,6 +1837,12 @@ function hitMonster(
   const physShare = dealt > 0 ? physPart / dealt : 0;
   const beforeMore = dealt;
   const r = d.raw;
+  if (r.tectonicRupture > 0 && (def.tags.includes('heavy') || def.tags.includes('melee'))) {
+    mon.vulnMs = Math.max(mon.vulnMs, 4000);
+    dealt += (physPart * r.tectonicRupture) / 200;
+  }
+  if (r.voidTouch > 0) dealt += dealtBy.chaos * 0.2;
+  if (r.bottledFaithCrit > 0) dealt *= 1 + r.bottledFaithCrit / 100;
   if (mon.vulnMs > 0) dealt *= 1.15;
   dealt *= 1 + shockPct(mon) / 100;
   if (mods.specials.has('shatterpoint') && mon.chillMs > 0) dealt *= 1.15;
@@ -1797,6 +1873,22 @@ function hitMonster(
     if (mon.channelDmgTaken >= mon.maxLife * 0.1) breakChannel(ctx, mon, c);
   }
   if (coup) afterCoup(s, ctx, d, mon);
+  if (coup && r.slackTideRefund > 0) gainMeter(s, d, 4);
+  if (coup && r.coupCull > 0 && mon.life > 0 && mon.life <= mon.maxLife * 0.12) {
+    c.dealt[c.dealt.length - 1] += Math.max(0, mon.life);
+    mon.life = 0;
+    s.life = Math.min(d.maxLife, s.life + d.maxLife * 0.1);
+    s.es = Math.min(d.maxEs, s.es + d.maxEs * 0.1);
+  }
+  if (coup && r.headsmanGuillotine > 0 && mon.life > 0 && mon.life <= mon.maxLife * 0.15) {
+    c.dealt[c.dealt.length - 1] += Math.max(0, mon.life);
+    mon.life = 0;
+  }
+  if (crit && def.tags.includes('spell') && r.unblinkingFlare > 0 && mon.life > 0 && mon.dots.some((x) => x.kind === 'ignite' || x.kind === 'burn')) {
+    const flare = Math.max(1, Math.round((dealt * r.unblinkingFlare) / 100));
+    damageMonster(s, mon, flare);
+    ctx.emit({ t: 'hit', target: 'monster', amount: flare, crit: true, dmgType: 'fire', monsterUid: mon.uid });
+  }
   if (crit && r.critLeech) s.life = Math.min(d.maxLife, s.life + (dealt * r.critLeech) / 100);
   if (mon.life < 0 && r.overkillHeal) s.life = Math.min(d.maxLife, s.life + (-mon.life * r.overkillHeal) / 100);
   // Permafrost freezes what's already chilled, before this hit chills it again
@@ -1898,7 +1990,7 @@ function hitMonster(
   // chaos skills innate poison chance
   if (e.poisonChance && chance(ctx.rng, e.poisonChance)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_POISON));
   const scale = beforeMore > 0 ? dealt / beforeMore : 0;
-  applyElementAilments(c, ctx, d, nums, mon, { phys: 0, fire: dealtBy.fire * scale, cold: dealtBy.cold * scale, light: dealtBy.light * scale, chaos: 0 }, !!r.chillOnHit, wake);
+  applyElementAilments(c, ctx, d, nums, mon, { phys: dealtBy.phys * scale, fire: dealtBy.fire * scale, cold: dealtBy.cold * scale, light: dealtBy.light * scale, chaos: 0 }, !!r.chillOnHit, wake);
   return dealt;
 }
 
@@ -1988,6 +2080,17 @@ function paySkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: SkillN
     else {
       s.mana -= cost;
       recordManaSpent(s, cost);
+      if (r.wellspringCascade > 0 && cost > 0) {
+        s.es = Math.min(d.maxEs, s.es + (cost * r.wellspringCascade) / 100);
+        c.buffs = c.buffs.filter((b) => b.id !== 'wellspring_cascade');
+        c.buffs.push({
+          id: 'wellspring_cascade',
+          source: 'skill',
+          remainingMs: 4000,
+          durationMs: 4000,
+          moreDamage: r.wellspringCascade,
+        });
+      }
     }
     if (nums.lifeCost) {
       s.life = Math.max(1, s.life - nums.lifeCost);
@@ -2019,7 +2122,16 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   c.using = def.id;
   c.closingUid = undefined;
   c.lastPlayerStyle = def.tags.includes('spell') ? 'spell' : def.tags.includes('projectile') || d.ranged ? 'projectile' : 'melee';
+  c.skillCount = (c.skillCount ?? 0) + 1;
   if (!paid) paySkill(s, ctx, d, slot, nums, manual);
+  if (r.exileEcho > 0 && c.skillCount % 5 === 0) {
+    const echoRaw = (20 + d.combatLevel * 4) * (r.exileEcho / 100) * d.physMult;
+    for (const m of aliveMonsters(c).filter((x) => !shielded(x))) {
+      const amount = Math.max(1, Math.round(monsterMitigation(m, echoRaw, 'phys')));
+      damageMonster(s, m, amount);
+      ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: m.uid });
+    }
+  }
 
   // utility effects
   if (e.blocks) {
@@ -2057,6 +2169,10 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
     if (r.guardArmourPct) {
       c.buffs = c.buffs.filter((b) => b.id !== 'guard_armour');
       c.buffs.push({ id: 'guard_armour', source: 'skill', remainingMs: 3000, durationMs: 3000, stats: { armourPct: r.guardArmourPct } });
+    }
+    if (r.vanguardPhalanx > 0) {
+      c.buffs = c.buffs.filter((b) => b.id !== 'vanguard_phalanx');
+      c.buffs.push({ id: 'vanguard_phalanx', source: 'skill', remainingMs: 6000, durationMs: 6000, stats: { physPct: r.vanguardPhalanx, slamReduction: 15 } });
     }
   }
   if (def.id === 'war_cry' && r.warCryHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.warCryHeal) / 100);
@@ -2158,14 +2274,22 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (def.tags.includes('attack')) stormsAnswer(s, ctx, d);
 
   let passes = 1 + mods.repeats;
+  if (def.tags.includes('spell') && r.blueprintRuin > 0) {
+    c.spellCount = (c.spellCount ?? 0) + 1;
+    c.buffs = c.buffs.filter((b) => b.id !== 'blueprint_ruin');
+    c.buffs.push({ id: 'blueprint_ruin', source: 'skill', remainingMs: 4000, durationMs: 4000, stats: { spellBlock: 10 } });
+    if (c.spellCount % 4 === 0) passes += 2;
+  }
   if (mods.specials.has('aftershock') && chance(ctx.rng, 0.35)) passes += 1;
   if (mods.specials.has('hailstorm') && chance(ctx.rng, 0.3)) passes += 1;
   const volley = mods.specials.has('volley');
+  const isProjSkill = def.tags.includes('projectile') || (def.tags.includes('attack') && d.ranged);
   const hitsPerPass =
     (e.hits ?? 1) +
     (def.id === 'twin_strike' && mods.specials.has('flurry') ? 1 : 0) +
     (def.id === 'pummel' ? r.pummelHits : 0) +
-    (def.id === 'barrage' ? r.barrageArrows + (volley ? 1 : 0) : 0);
+    (def.id === 'barrage' ? r.barrageArrows + (volley ? 1 : 0) : 0) +
+    (isProjSkill ? r.dyingSunProj : 0);
   // Tenderise: each consecutive blow on the same target hits 10% harder
   let lastTarget = -1;
   let streak = 0;
@@ -2407,7 +2531,11 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   const bleed = mon.dots.find((x) => x.kind === 'bleed' && x.spreads && x.remainingMs > 0);
   if (bleed && next) applyDot(next, { ...bleed, dealt: 0 });
   const ignite = mon.dots.find((x) => (x.kind === 'ignite' || x.kind === 'burn') && x.remainingMs > 0);
-  if (d.raw.igniteSpread && ignite && next) applyDot(next, { ...ignite, dealt: 0 });
+  if (ignite && d.raw.slothPyre > 0) {
+    for (const m of aliveMonsters(c)) if (m !== mon) applyDot(m, { ...ignite, dealt: 0 });
+  } else if (d.raw.igniteSpread && ignite && next) {
+    applyDot(next, { ...ignite, dealt: 0 });
+  }
   // Pyre: a burning corpse bursts over the pack
   if (ignite?.pyre) {
     for (const m of aliveMonsters(c).filter((x) => !shielded(x))) {
@@ -2578,18 +2706,39 @@ function martyrFill(s: GameState, ctx: Ctx, d: Derived, raw: number, novaShare =
 function holyNova(s: GameState, ctx: Ctx, d: Derived, filled: number, count: number): void {
   const c = s.combat!;
   const r = d.raw;
-  const dmg = filled * 0.55 * (1 + r.novaPct / 100) * (hasAscNode(s, 'lightkeeper_reserve') ? 1 + RESERVE_MORE * (count - 1) : 1);
+  const dmg =
+    filled *
+    0.55 *
+    (1 + r.novaPct / 100) *
+    (1 + r.lightkeeperPrism / 100) *
+    (hasAscNode(s, 'lightkeeper_reserve') ? 1 + RESERVE_MORE * (count - 1) : 1);
   if (!r.saintsSacrifice) s.life = Math.min(d.maxLife, s.life + count * d.maxLife * 0.22 * (1 + r.novaHeal / 100));
   if (r.novaEs) s.es = Math.min(d.maxEs, s.es + (count * d.maxEs * r.novaEs) / 100);
+  if (r.corposantSurge > 0) {
+    c.buffs = c.buffs.filter((b) => b.id !== 'corposant_surge');
+    c.buffs.push({
+      id: 'corposant_surge',
+      source: 'skill',
+      remainingMs: 4000,
+      durationMs: 4000,
+      stats: { elemPct: 25, castSpeedPct: 15 },
+    });
+  }
   ctx.emit({ t: 'info', text: count > 1 ? `Fervor releases ${count} holy novas!` : 'Fervor releases a holy nova!', tone: 'good' });
   const beacon = hasAscNode(s, 'lightkeeper_beacon');
   const dawn = count >= NOVA_STORE && hasAscNode(s, 'lightkeeper_dawn');
+  const extraPhys = r.briarThorns > 0 ? (d.armour * r.briarThorns) / 100 : 0;
   for (const m of aliveMonsters(c).filter((x) => !shielded(x))) {
-    const amount = Math.max(1, Math.round(monsterMitigation(m, dmg, 'light')));
+    const amount = Math.max(1, Math.round(monsterMitigation(m, dmg, 'light') + (extraPhys > 0 ? monsterMitigation(m, extraPhys, 'phys') : 0)));
     damageMonster(s, m, amount);
     ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'light', monsterUid: m.uid });
     if (beacon) m.vulnMs = Math.max(m.vulnMs, 4000);
     if (dawn) m.stunMs = Math.max(m.stunMs, m.isBoss ? 400 : 1000);
+    if (r.novaShock > 0) {
+      m.shockMs = Math.max(m.shockMs ?? 0, 4000);
+      const build = (m.build ??= { burn: 0, chill: 0, shock: 0 });
+      build.shock = Math.max(build.shock, ailmentThreshold(m) * 0.5);
+    }
   }
   if (dawn) c.asc.dawn = true;
   if (hasAscNode(s, 'lightkeeper_vespers')) {
@@ -2632,6 +2781,14 @@ function novasDue(s: GameState, d: Derived): boolean {
 function selfHarm(s: GameState, ctx: Ctx, d: Derived): void {
   const cost = (d.maxLife * SELF_HARM_PCT) / 100;
   s.life -= cost;
+  if (d.raw.flagellantMartyr > 0 && s.combat) {
+    const rawLash = (d.maxLife * d.raw.flagellantMartyr) / 100;
+    for (const m of aliveMonsters(s.combat).filter((x) => cellRing(x.cell) <= 1 && !shielded(x))) {
+      const amount = Math.max(1, Math.round(monsterMitigation(m, rawLash, 'phys')));
+      damageMonster(s, m, amount);
+      ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: m.uid });
+    }
+  }
   martyrFill(s, ctx, d, cost * SELF_HARM_FERVOR, hasAscNode(s, 'flagellant_scourge') ? SCOURGE_DAMAGE : 1);
 }
 
@@ -2709,7 +2866,12 @@ function hawkStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   const nums = skillNumbers(d, null);
   c.asc.hawking = true;
   const roll = rollHit(s, ctx, d, nums, mon, stoop);
-  if (roll) hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, HAWK_DAMAGE * (stoop ? STOOP_MULT : 1), roll.mega, roll.coup);
+  if (roll) {
+    hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, HAWK_DAMAGE * (stoop ? STOOP_MULT : 1), roll.mega, roll.coup);
+    if (d.raw.falconerTwin > 0 && mon.life > 0) {
+      hitMonster(s, ctx, d, nums, mon, roll.byType, roll.crit, HAWK_DAMAGE * (stoop ? STOOP_MULT : 1) * (d.raw.falconerTwin / 100), roll.mega, roll.coup);
+    }
+  }
   c.asc.hawking = false;
   if (!stoop) return;
   c.mech = 0;
@@ -2805,6 +2967,19 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   if (asc === 'matador') c.asc.streak = hasAscNode(s, 'matador_close_call') ? Math.floor(c.asc.streak / 2) : 0;
   if (c.windup?.goaded) c.actionMs -= c.actionTotal * GOADED_CUT;
   if (asc === 'anvil') anvilAnswer(s, ctx, d, mon);
+  if (r.briarThorns > 0 && mon.life > 0) {
+    const thorns = Math.max(1, Math.round(monsterMitigation(mon, d.armour * 0.1, 'phys')));
+    damageMonster(s, mon, thorns);
+    ctx.emit({ t: 'hit', target: 'monster', amount: thorns, dmgType: 'phys', monsterUid: mon.uid });
+  }
+  if (r.flagellantMartyr > 0) {
+    const rawLash = (d.maxLife * r.flagellantMartyr) / 100;
+    for (const m of aliveMonsters(c).filter((x) => cellRing(x.cell) <= 1 && !shielded(x))) {
+      const amount = Math.max(1, Math.round(monsterMitigation(m, rawLash, 'phys')));
+      damageMonster(s, m, amount);
+      ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: m.uid });
+    }
+  }
   if (mech === 'rage') gainMeter(s, d, r.rageOnHitTaken);
   else if (mech === 'malice') gainMeter(s, d, r.maliceOnHitTaken);
   martyrFill(s, ctx, d, raw);
@@ -2817,6 +2992,10 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   if (c.windup) {
     c.windup.stored = (c.windup.stored ?? 0) + dmg;
     if (c.windup.braced) dmg = Math.max(1, Math.round(dmg * (1 - UNMOVED_LESS / 100)));
+  }
+  if (mech === 'momentum' && (c.mech ?? 0) > 0) {
+    const momentumMitigation = Math.min(25, (c.mech ?? 0) * 1.5);
+    dmg = Math.max(1, Math.round(dmg * (1 - momentumMitigation / 100)));
   }
   const taken = dmg;
   if (kind === 'hit' && mon.archetype) monsterAilments(s, d, mon, dmg, type);
@@ -2895,6 +3074,14 @@ function onBlock(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   const r = d.raw;
   ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
   if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
+  if (r.anvilRetaliate > 0) {
+    const rawRet = (d.armour * r.anvilRetaliate) / 100;
+    for (const m of aliveMonsters(c).filter((x) => cellRing(x.cell) <= 1 && !shielded(x))) {
+      const amount = Math.max(1, Math.round(monsterMitigation(m, rawRet, 'phys')));
+      damageMonster(s, m, amount);
+      ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: m.uid });
+    }
+  }
   if (hasAscNode(s, 'anvil_temper')) anvilAnswer(s, ctx, d, mon);
   if (hasAscNode(s, 'vanguard_stand_fast')) {
     c.buffs = c.buffs.filter((b) => b.id !== 'stand_fast');
@@ -2928,10 +3115,12 @@ function underPlayer(c: CombatRuntime, kind: Ground['kind']): boolean {
 }
 
 /** How fast your actions run: cold ground, Frostbite and Undertow's Tide all drag on them. */
-function actionPace(c: CombatRuntime): number {
+function actionPace(s: GameState, c: CombatRuntime, d: Derived): number {
   const ground = underPlayer(c, 'frozen') ? FROZEN_GROUND_SLOW : underPlayer(c, 'chilled') ? CHILLED_GROUND_SLOW : 1;
   const tideSlow = 1 - Math.min(0.5, ((c.tideStacks ?? 0) * 3) / 100);
-  return ground * (1 - ((c.frostbite ?? 0) * BOSS_FROSTBITE_SLOW_PCT) / 100) * ((c.playerChillMs ?? 0) > 0 ? 1 - CHILL_SLOW_PCT / 100 : 1) * tideSlow;
+  const pace = ground * (1 - ((c.frostbite ?? 0) * BOSS_FROSTBITE_SLOW_PCT) / 100) * ((c.playerChillMs ?? 0) > 0 ? 1 - CHILL_SLOW_PCT / 100 : 1) * tideSlow;
+  if (d.raw.kingsStride > 0 && mechanicOf(s) === 'momentum' && (c.mech ?? 0) >= 3) return Math.max(1, pace);
+  return pace;
 }
 
 /** A movement skill leaves whatever is under you behind: the player stays put on the field, so the hazard goes instead. */
@@ -3325,6 +3514,11 @@ function tickDots(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
         const burst = dot.dealt * dot.burst;
         damageMonster(s, m, burst);
         ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(burst), crit: true, dmgType: 'phys', monsterUid: m.uid });
+      }
+      if (dot.remainingMs <= 0 && (dot.kind === 'ignite' || dot.kind === 'burn') && d.raw.slothPyre > 0) {
+        for (const other of aliveMonsters(c)) {
+          if (other !== m) applyDot(other, { ...dot, remainingMs: dot.durationMs ?? 4000, dealt: 0 });
+        }
       }
     }
     m.dots = m.dots.filter((x) => x.remainingMs > 0);
@@ -3849,6 +4043,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
     if (h.resource === 'mana') gainMana(s, d, h.perMs * t);
     else s.life += h.perMs * t * recovery;
     h.remainingMs -= dt;
+    if (h.remainingMs <= 0 && h.karuiEndFull) s.life = d.maxLife;
   }
   c.heals = c.heals.filter((h) => h.remainingMs > 0);
   const regenPct = c.buffs.reduce((a, b) => a + (b.regenPct ?? 0), 0);
@@ -3875,6 +4070,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
     triggerInstilled(s, ctx, 'lowMana');
   }
   if ((c.frostbite ?? 0) >= BOSS_FROSTBITE_INSTILL_AT) triggerInstilled(s, ctx, 'frostbite');
+  if (aliveMonsters(c).some((m) => cellRing(m.cell) > 1)) triggerInstilled(s, ctx, 'enemyRanged');
   for (let i = 0; i < s.flaskSlots.length; i++) {
     const f = s.flaskSlots[i];
     if (f?.instill === 'fullCharges' && f.charges >= flaskCapacity(s, f) && !flaskActive(s, f.flaskId)) {
@@ -3904,7 +4100,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   // the player's turn (an overheated Overclock sits it out, and so does anyone frozen solid)
   const frozen = (c.frozenMs ?? 0) > 0;
   if (c.overheatMs > 0) c.overheatMs -= dt;
-  else if (!frozen) c.actionMs -= dt * actionPace(c);
+  else if (!frozen) c.actionMs -= dt * actionPace(s, c, d);
   if (c.windup && c.actionMs > 0) guardBreaksIn(s, ctx, d);
   if (c.actionMs <= 0 && !frozen) {
     const landed = !c.windup || landBlow(s, ctx, d);
@@ -4052,16 +4248,33 @@ function classMechanicsStep(s: GameState, ctx: Ctx, d: Derived, dt: number): boo
 export function equipFlask(s: GameState, uid: number, slot: number): void {
   const idx = s.account.flaskStash.findIndex((f) => f.uid === uid);
   if (idx < 0) return;
-  const [f] = s.account.flaskStash.splice(idx, 1);
+  const f = s.account.flaskStash[idx];
+  const kind = flaskStats(f).def.kind;
+  if (FLASK_SLOT_TYPES[slot] && FLASK_SLOT_TYPES[slot] !== kind) {
+    const matching = FLASK_SLOT_TYPES.findIndex((k, i) => k === kind && !s.flaskSlots[i]);
+    if (matching >= 0) slot = matching;
+    else {
+      const firstOfType = FLASK_SLOT_TYPES.findIndex((k) => k === kind);
+      if (firstOfType >= 0) slot = firstOfType;
+    }
+  }
+  s.account.flaskStash.splice(idx, 1);
   const prev = s.flaskSlots[slot];
   if (prev) s.account.flaskStash.push(prev);
   s.flaskSlots[slot] = f;
 }
 
-/** Put a spare flask in the first empty belt slot. Returns why it couldn't, or null. */
+/** Put a spare flask in the first empty belt slot matching its kind (1 Life, 1 Mana, 2 Utility). Returns why it couldn't, or null. */
 export function wearFlask(s: GameState, uid: number): string | null {
-  const slot = s.flaskSlots.findIndex((f) => !f);
-  if (slot < 0) return 'Your belt is full: swap a flask on the Equipment page';
+  const f = s.account.flaskStash.find((x) => x.uid === uid);
+  if (!f) return 'Flask not found';
+  const kind = flaskStats(f).def.kind;
+  const slot = s.flaskSlots.findIndex((curr, idx) => !curr && FLASK_SLOT_TYPES[idx] === kind);
+  if (slot < 0) {
+    if (kind === 'life') return 'Your belt already holds a Life flask';
+    if (kind === 'mana') return 'Your belt already holds a Mana flask';
+    return 'Your belt already holds 2 Utility flasks';
+  }
   equipFlask(s, uid, slot);
   return null;
 }

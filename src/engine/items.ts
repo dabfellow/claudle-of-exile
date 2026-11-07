@@ -1,4 +1,5 @@
 import { AFFIXES, affixDef, type AffixDef } from '../data/affixes';
+import { UNWRITTEN_NOTABLES, unwrittenNotableByIndex } from '../data/ascendancies';
 import { BASES, baseDef, obtainable, uniqueDef, type BaseDef, type UniqueModDef } from '../data/bases';
 import { mathRng, pick, pickWeighted, rInt, type Rng } from './rng';
 import type { GameState, Item, Rarity, RolledMod } from './types';
@@ -30,8 +31,15 @@ export function spawnWeight(affix: AffixDef, base: BaseDef, bias?: ModBias): num
   return w * (bias?.[affix.group] ?? 1);
 }
 
-function rollValues(affix: AffixDef, tier: number, rng: Rng): number[] {
-  return affix.tiers[tier].ranges.map(([lo, hi]) => rInt(rng, lo, hi));
+function rollValues(affix: AffixDef, tier: number, rng: Rng, itemTier?: number): number[] {
+  const minPercent = itemTier && itemTier > 1 ? [0, 0, 0.35, 0.55, 0.75, 0.9][itemTier] ?? 0 : 0;
+  return affix.tiers[tier].ranges.map(([lo, hi]) => {
+    if (hi > lo && minPercent > 0) {
+      const effLo = Math.round(lo + (hi - lo) * minPercent);
+      return rInt(rng, Math.min(effLo, hi), hi);
+    }
+    return rInt(rng, lo, hi);
+  });
 }
 
 export function isAttackAffix(a: AffixDef): boolean {
@@ -90,9 +98,10 @@ export function addRandomMod(item: Item, rng: Rng, bias?: ModBias): boolean {
   if (!affix) return false;
   // only the top TIER_WINDOW tiers the item level allows can roll, so high-level items stop rolling starter tiers
   const tiers = affix.tiers.map((t, i) => ({ t, i })).filter((x) => x.t.ilvl <= item.ilvl).slice(-TIER_WINDOW);
-  // higher tiers are rarer: each step up is ~70% as likely as the one below
-  const chosen = pickWeighted(rng, tiers, (x) => Math.pow(0.7, x.i))!;
-  const mod: RolledMod = { affixId: affix.id, tier: chosen.i, values: rollValues(affix, chosen.i, rng) };
+  // higher tiers are rarer: each step up is ~70% as likely as the one below; higher itemTier biases toward top tiers
+  const expMult = item.itemTier && item.itemTier > 1 ? 0.7 + 0.06 * (item.itemTier - 1) : 0.7;
+  const chosen = pickWeighted(rng, tiers, (x) => Math.pow(expMult, x.i))!;
+  const mod: RolledMod = { affixId: affix.id, tier: chosen.i, values: rollValues(affix, chosen.i, rng, item.itemTier) };
   (kind === 'prefix' ? item.prefixes : item.suffixes).push(mod);
   return true;
 }
@@ -187,27 +196,43 @@ export function rerollMods(item: Item, rng: Rng, bias?: ModBias, keep?: RolledMo
       const affix = pickWeighted(rng, eligibleAffixes(item, kind, bias), (a) => spawnWeight(a, base, bias));
       if (!affix) break;
       const tiers = affix.tiers.map((t, i) => ({ t, i })).filter((x) => x.t.ilvl <= item.ilvl).slice(-TIER_WINDOW);
-      const chosen = pickWeighted(rng, tiers, (x) => Math.pow(0.7, x.i))!;
-      const mod: RolledMod = { affixId: affix.id, tier: chosen.i, values: rollValues(affix, chosen.i, rng) };
+      const expMult = item.itemTier && item.itemTier > 1 ? 0.7 + 0.06 * (item.itemTier - 1) : 0.7;
+      const chosen = pickWeighted(rng, tiers, (x) => Math.pow(expMult, x.i))!;
+      const mod: RolledMod = { affixId: affix.id, tier: chosen.i, values: rollValues(affix, chosen.i, rng, item.itemTier) };
       (kind === 'prefix' ? item.prefixes : item.suffixes).push(mod);
+    }
+    if (item.itemTier === 5 && item.rarity === 'rare' && rng.next() < 0.35) {
+      const all = [...item.prefixes, ...item.suffixes];
+      if (all.length > 0 && !item.fractured) {
+        const picked = pick(rng, all);
+        item.fractured = picked.affixId;
+      }
     }
     item.name = rareName(item, rng);
   }
 }
 
-export function createItem(s: GameState, baseId: string, ilvl: number, rarity: Rarity, rng: Rng, bias?: ModBias): Item {
+export function createItem(s: GameState, baseId: string, ilvl: number, rarity: Rarity, rng: Rng, bias?: ModBias, itemTier?: 1 | 2 | 3 | 4 | 5): Item {
   // random uniques are created via createUnique; a bare 'unique' request rolls a rare instead
   const r: Rarity = rarity === 'unique' ? 'rare' : rarity;
-  const item: Item = { uid: newUid(s), baseId, ilvl, rarity: r, name: null, prefixes: [], suffixes: [] };
+  const item: Item = { uid: newUid(s), baseId, ilvl, rarity: r, name: null, prefixes: [], suffixes: [], itemTier: itemTier ?? 1 };
   rerollMods(item, rng, bias);
   return item;
+}
+
+export function rollUnwrittenNotableIndex(classId: string | undefined, rng: Rng): number {
+  const pool = UNWRITTEN_NOTABLES.filter((e) => e.classId !== classId);
+  const chosen = pick(rng, pool.length ? pool : UNWRITTEN_NOTABLES);
+  return chosen.index;
 }
 
 export function createUnique(s: GameState, uniqueId: string, ilvl: number, rng: Rng = mathRng): Item {
   const u = uniqueDef(uniqueId);
   const rollMod = (m: UniqueModDef): RolledMod => {
     let values: number[];
-    if (m.ranges && m.ranges.length) {
+    if (m.affixId === 'u_unwritten_notable') {
+      values = [rollUnwrittenNotableIndex(s.character?.classId, rng)];
+    } else if (m.ranges && m.ranges.length) {
       values = m.ranges.map(([lo, hi]) => rInt(rng, lo, hi));
     } else {
       values = m.values ? [...m.values] : [];
@@ -227,6 +252,10 @@ export function createUnique(s: GameState, uniqueId: string, ilvl: number, rng: 
 }
 
 export function describeMod(mod: RolledMod): string {
+  if (mod.affixId === 'u_unwritten_notable') {
+    const entry = unwrittenNotableByIndex(mod.values[0] ?? 1);
+    return `The Unwritten Path: Allocates ${entry.node.name} (${entry.ascendancyName}) — ${entry.node.desc ?? ''}`.trim();
+  }
   const a = affixDef(mod.affixId);
   // uniques can carry negative values: "+-3 to X" → "-3 to X", "-50% increased" → "50% reduced"
   return a.text
@@ -237,6 +266,9 @@ export function describeMod(mod: RolledMod): string {
 }
 
 export function describeUniqueModDef(m: UniqueModDef): string {
+  if (m.affixId === 'u_unwritten_notable') {
+    return 'The Unwritten Path: Allocates 1 random Ascendancy Notable from outside your class';
+  }
   const a = affixDef(m.affixId);
   if (m.ranges && m.ranges.length) {
     let t = a.text;
@@ -308,4 +340,43 @@ export function salvageValue(item: Item): number {
 export function sellValue(item: Item): number {
   const r = { normal: 3, magic: 9, rare: 24, unique: 90 }[item.rarity];
   return Math.round(r * (1 + item.ilvl / 8));
+}
+
+/** Check if an item matches a class's weapons, attributes, or defence types. */
+export function itemMatchesClass(classId: string, item: Item): boolean {
+  if (classId === 'exile') return true;
+  const base = baseDef(item.baseId);
+  if (base.slot === 'ring' || base.slot === 'amulet' || base.slot === 'belt') return true;
+
+  const tags = new Set(base.tags);
+  const fam = base.family;
+
+  switch (classId) {
+    case 'warrior':
+      if (fam && !['sword', 'axe', 'mace'].includes(fam)) return false;
+      if (tags.has('dex_armour') || tags.has('int_armour') || tags.has('dex_int_armour')) return false;
+      return true;
+    case 'ranger':
+      if (fam && !['bow', 'sword', 'dagger'].includes(fam)) return false;
+      if (tags.has('str_armour') || tags.has('int_armour') || tags.has('str_int_armour')) return false;
+      return true;
+    case 'mage':
+      if (fam && !['wand', 'sceptre', 'staff'].includes(fam)) return false;
+      if (tags.has('str_armour') || tags.has('dex_armour') || tags.has('str_dex_armour')) return false;
+      return true;
+    case 'duelist':
+      if (fam && !['sword', 'axe', 'mace', 'bow'].includes(fam)) return false;
+      if (tags.has('int_armour')) return false;
+      return true;
+    case 'templar':
+      if (fam && !['mace', 'sceptre', 'staff', 'sword'].includes(fam)) return false;
+      if (tags.has('dex_armour')) return false;
+      return true;
+    case 'shadow':
+      if (fam && !['dagger', 'sword', 'bow', 'wand'].includes(fam)) return false;
+      if (tags.has('str_armour')) return false;
+      return true;
+    default:
+      return true;
+  }
 }

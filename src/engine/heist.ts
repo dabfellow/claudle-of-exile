@@ -13,6 +13,7 @@ import { actionBlocker, grantXp, skillLevel, smithIlvlCap } from './skills';
 import { skillTreeStats } from './skillTree';
 import type { Derived } from './stats';
 import type { GameState, HeistState } from './types';
+import { grantMasteryPractice, masterySpeed } from './skillingMastery';
 
 export function newHeistState(): HeistState {
   return { rogues: {}, crew: [], exits: {}, auto: null, tally: { jobs: 0, alarms: 0 } };
@@ -99,7 +100,7 @@ export function cleanChance(s: GameState, job: HeistJob, rooms: number): number 
 
 export function roomMs(s: GameState, job: HeistJob, d: Derived): number {
   const t = skillTreeStats(s);
-  return (job.roomMs * (1 - crewEffect(s, 'locksmith'))) / (1 + (d.skillSpeed + (t.skillSpeed ?? 0) + (t.thievingSpeed ?? 0)) / 100);
+  return (job.roomMs * (1 - crewEffect(s, 'locksmith'))) / (1 + (d.skillSpeed + (t.skillSpeed ?? 0) + (t.thievingSpeed ?? 0) + masterySpeed(s, job.mastery)) / 100);
 }
 
 /** Share of the take you keep when an alarm goes off. */
@@ -217,6 +218,7 @@ function finishRoom(s: GameState, ctx: Ctx, job: HeistJob, d: Derived): void {
   if (a?.kind !== 'heist') return;
   const t = skillTreeStats(s);
   grantXp(s, ctx, 'thieving', job.xp * (1 + (d.skillXp + (t.skillXp ?? 0)) / 100));
+  grantMasteryPractice(s, job.mastery, job.roomMs / 1000);
   if (chance(ctx.rng, alarmChance(s, job, a.room))) {
     endJob(s, ctx, job, a.take, true);
     return;

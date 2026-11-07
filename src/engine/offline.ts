@@ -32,6 +32,8 @@ export interface OfflineSummary {
   /** Heist jobs finished while you were away, and how many of them tripped an alarm */
   heists: number;
   heistAlarms: number;
+  /** Nominal non-combat practice earned by mastery band while away. */
+  mastery: Record<string, number>;
   /** Logbook finds made while you were away, and standing orders filled */
   finds: number;
   traded: number;
@@ -40,10 +42,11 @@ export interface OfflineSummary {
 /** Run the simulation for time spent away, collecting a summary instead of live events. */
 export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): OfflineSummary {
   const ms = Math.min(elapsedMs, offlineCapMs(s));
-  const sum: OfflineSummary = { ms, xp: {}, levels: {}, materials: {}, items: 0, gems: 0, kills: 0, died: false, diedAfterMs: null, stoppedReason: null, bossWaiting: null, crafted: null, mapRuns: 0, mapsFound: 0, mapsDrawn: 0, heists: 0, heistAlarms: 0, finds: 0, traded: 0 };
+  const sum: OfflineSummary = { ms, xp: {}, levels: {}, materials: {}, items: 0, gems: 0, kills: 0, died: false, diedAfterMs: null, stoppedReason: null, bossWaiting: null, crafted: null, mapRuns: 0, mapsFound: 0, mapsDrawn: 0, heists: 0, heistAlarms: 0, mastery: {}, finds: 0, traded: 0 };
   const mapsBefore = { ...s.maps.tally };
   const drawnBefore = s.lifetime.mapsDrawn;
   const heistsBefore = { ...s.heist.tally };
+  const masteryBefore = { ...s.skillingMastery };
   const expeditionBefore = { ...s.expedition.tally };
   const bankBefore = { ...s.account.bank };
   let left = ms;
@@ -100,6 +103,10 @@ export function simulateOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offl
   sum.mapsDrawn = s.lifetime.mapsDrawn - drawnBefore;
   sum.heists = s.heist.tally.jobs - heistsBefore.jobs;
   sum.heistAlarms = s.heist.tally.alarms - heistsBefore.alarms;
+  for (const [id, practice] of Object.entries(s.skillingMastery)) {
+    const gained = practice - (masteryBefore[id] ?? 0);
+    if (gained > 0) sum.mastery[id] = gained;
+  }
   sum.finds = s.expedition.tally.finds - expeditionBefore.finds;
   sum.traded = s.expedition.tally.traded - expeditionBefore.traded;
   for (const [id, n] of Object.entries(s.account.bank)) {

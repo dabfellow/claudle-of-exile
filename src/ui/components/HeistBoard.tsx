@@ -8,6 +8,7 @@ import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { Badge, Cost, fmt, fmtTime, MatIcon, ProgressBar } from './common';
+import { MasteryProgress } from './MasteryProgress';
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const takeName = (id: string) => (id === GEAR ? 'Stolen rare gear' : materialDef(id).name);
@@ -71,6 +72,7 @@ function JobCard({ s, job }: { s: GameState; job: HeistJob }) {
         <Badge tone="neutral">{job.favours}</Badge>
       </div>
       <p className="dim small">{job.desc}</p>
+      <MasteryProgress s={s} mastery={job.mastery} compact />
       {blocker ? (
         <p className="lock-note small">{blocker}</p>
       ) : (

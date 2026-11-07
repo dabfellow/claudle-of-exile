@@ -35,6 +35,8 @@ import {
   TIER_MOD_RULES,
   UBER_BOSSES,
   UBER_KEYS,
+  UNIQUE_MAPS,
+  uniqueMapDef,
   type AtlasNode,
   type DoomedModId,
   type HardBossDef,
@@ -95,6 +97,9 @@ export function syncMapStock(s: GameState): Record<string, number> {
       delete stock[key];
       continue;
     }
+    if ( UNIQUE_MAPS.some((u) => u.id === key) ) {
+      continue;
+    }
     const dTier = parseDoomedTier(key);
     if (dTier) {
       const id = doomedId(dTier);
@@ -142,6 +147,19 @@ export function addDoomedMaps(s: GameState, tier: number, n: number): string {
   stock[id] = Math.max(0, (stock[id] ?? 0) + n);
   return id;
 }
+
+export function uniqueMapHeld(s: GameState, id: string): number {
+  const stock = syncMapStock(s);
+  return stock[id] ?? 0;
+}
+export const uniqueMapsHeld = uniqueMapHeld;
+
+export function addUniqueMaps(s: GameState, id: string, n: number): string {
+  const stock = syncMapStock(s);
+  stock[id] = Math.max(0, (stock[id] ?? 0) + n);
+  return id;
+}
+export const addUniqueMap = addUniqueMaps;
 
 export function totalMapsHeld(s: GameState): number {
   const stock = syncMapStock(s);
@@ -414,7 +432,10 @@ export function runModifiers(s: GameState): RunModifiers {
 
   let monsterLifeMult = atlas.monsterLifeMult;
   let monsterDmgMult = atlas.monsterDmgMult;
-  const monsterXpDropMult = atlas.monsterXpDropMult;
+  let monsterXpDropMult = atlas.monsterXpDropMult;
+  if (run?.uniqueMapId === 'umap_cowards_trial') {
+    monsterXpDropMult *= 2.5;
+  }
   let currencyPct = atlas.currencyPct;
   let rarityPct = atlas.rarityPct;
   let mapFindPct = atlas.mapFindPct;
@@ -695,6 +716,43 @@ export function startDoomedMap(s: GameState, ctx: Ctx, dTierNum: number): string
   return null;
 }
 
+/** Open a Unique Map from the Map Case. */
+export function startUniqueMap(s: GameState, ctx: Ctx, uniqueMapId: string): string | null {
+  if (s.maps.run) return 'Already in a map';
+  const uDef = uniqueMapDef(uniqueMapId);
+  if (!uDef) return 'Unknown Unique Map';
+  if (uniqueMapHeld(s, uniqueMapId) <= 0) return `No ${uDef.name} in Map Case`;
+  addUniqueMaps(s, uniqueMapId, -1);
+
+  const packs = uDef.packs;
+  const elitePacks = pickElitePacks(ctx, packs, TIER_MOD_RULES.elitePacks);
+
+  s.maps.run = {
+    zoneId: uDef.id,
+    tier: uDef.tier,
+    areaId: uDef.id,
+    theme: uDef.id,
+    uniqueMapId: uDef.id,
+    packsLeft: packs,
+    packsTotal: packs,
+    elitePacks,
+    slottedFull: false,
+    sextantMods: [],
+    startedAt: s.clock,
+    deaths: s.lifetime.deaths,
+    bossDown: false,
+  };
+  enterZone(s, ctx, uDef.id);
+  const d = deriveStats(s);
+  s.life = d.maxLife;
+  s.mana = d.maxMana;
+  s.es = d.maxEs;
+  for (const f of s.flaskSlots) {
+    if (f) f.charges = flaskCapacity(s, f);
+  }
+  return null;
+}
+
 /** Keep using maps of this tier until they run out. Joins the run under way if there is one. */
 export function startAutoRun(s: GameState, ctx: Ctx, tier: number, areaOrTheme?: string): string | null {
   const reason = s.maps.run ? null : startMap(s, ctx, tier, areaOrTheme);
@@ -778,7 +836,11 @@ export function mapStep(s: GameState, ctx: Ctx): void {
   if (!run.bossDown) return;
   m.tally.runs += 1;
   m.tally.clearMs += s.clock - run.startedAt;
-  const label = run.doomedTier ? doomedTier(run.doomedTier).name : `Map Tier ${run.tier}`;
+  const label = run.uniqueMapId
+    ? (uniqueMapDef(run.uniqueMapId)?.name ?? 'Unique Map')
+    : run.doomedTier
+      ? doomedTier(run.doomedTier).name
+      : `Map Tier ${run.tier}`;
   const deathless = s.lifetime.deaths === run.deaths;
   if (!run.doomedTier) {
     recordAtlasClear(s, ctx, run.tier, !!run.slottedFull, deathless);
@@ -905,6 +967,15 @@ export function rollMapDrops(s: GameState, ctx: Ctx, mon: MonsterInstance): void
     ctx.emit({ t: 'info', text: `Found a Doomed Map: ${doomedTier(dTier).name}`, tone: 'good' });
   }
 
+  // Unique Map drops from map bosses
+  if (!run.uniqueMapId && mon.isBoss && run.tier >= 5 && chance(ctx.rng, 0.08 * mapFindMult)) {
+    const eligible = UNIQUE_MAPS.filter((u) => u.tier <= run.tier + 2);
+    const chosen = pick(ctx.rng, eligible.length ? eligible : UNIQUE_MAPS);
+    addUniqueMaps(s, chosen.id, 1);
+    s.maps.tally.mapsFound += 1;
+    ctx.emit({ t: 'info', text: `Found a Unique Map: ${chosen.name}`, tone: 'good' });
+  }
+
   // Inside Doomed Maps: Fractured Orb drops and Uber Key drops on boss kill
   if (run.doomedTier) {
     const fracChance = mon.isBoss ? MAP_DROPS.fracturedBoss : MAP_DROPS.fracturedKill;
@@ -933,7 +1004,11 @@ export function settleMaps(s: GameState): void {
   const run = s.maps.run;
   if (!run) return;
   const validZone = EXTRA_ZONES.some((z) => z.id === run.zoneId);
-  const validMap = run.doomedTier ? DOOMED_TIERS.some((t) => t.tier === run.doomedTier) : hasMap(run.tier, run.theme);
+  const validMap = run.uniqueMapId
+    ? !!uniqueMapDef(run.uniqueMapId)
+    : run.doomedTier
+      ? DOOMED_TIERS.some((t) => t.tier === run.doomedTier)
+      : hasMap(run.tier, run.theme);
   if (!validZone || !validMap) {
     s.maps.run = null;
     s.maps.auto = null;
@@ -969,6 +1044,14 @@ export function devKit(s: GameState, ctx: Ctx, level: number): void {
   }
   for (const slot of ['amulet', 'belt', 'ring1', 'ring2'] as const) give(slot, best((b) => b.slot === (slot.startsWith('ring') ? 'ring' : slot)));
   (['life_sacred', 'mana_sacred'] as const).forEach((id, slot) => {
+    const prev = s.flaskSlots[slot];
+    const f = newFlask(s, id);
+    f.charges = flaskDef(id).maxCharges;
+    if (prev?.instill) f.instill = prev.instill;
+    s.flaskSlots[slot] = f;
+  });
+  (['granite', 'ruby'] as const).forEach((id, i) => {
+    const slot = i + 2;
     const prev = s.flaskSlots[slot];
     const f = newFlask(s, id);
     f.charges = flaskDef(id).maxCharges;

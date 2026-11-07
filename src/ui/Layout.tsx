@@ -652,6 +652,15 @@ export function OfflineModal() {
             <p>{sum.heists} job{sum.heists === 1 ? '' : 's'} done{sum.heistAlarms ? `, ${sum.heistAlarms} of them cut short by an alarm` : ', every one clean'}.</p>
           </div>
         )}
+        {Object.keys(sum.mastery).length > 0 && (
+          <div className="away-alert">
+            <div className="row">
+              <GameIcon name="tree" size={16} />
+              <b>Mastery Practice</b>
+            </div>
+            <p>{Math.round(Object.values(sum.mastery).reduce((total, seconds) => total + seconds, 0) / 60)} minutes of nominal work across {Object.keys(sum.mastery).length} master{Object.keys(sum.mastery).length === 1 ? 'y' : 'ies'}.</p>
+          </div>
+        )}
         {(sum.finds > 0 || sum.traded > 0) && (
           <div className="away-alert">
             <div className="row">
@@ -683,7 +692,7 @@ export function OfflineModal() {
 }
 
 /** Number keys 1-5 drink flasks while in combat. */
-/** Keys 1–5 drink flasks and Q–Y cast skill-bar slots while in combat. */
+/** Keys 1–4 drink flasks (1 Life, 1 Mana, 2 Utility) and Q–Y cast skill-bar slots while in combat. */
 export function useFlaskHotkeys() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -691,7 +700,7 @@ export function useFlaskHotkeys() {
       if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return;
       if (e.ctrlKey || e.metaKey || e.altKey || !game.state.combat) return;
       const n = Number(e.key);
-      if (n >= 1 && n <= 5) {
+      if (n >= 1 && n <= 4) {
         if (!game.state.flaskSlots[n - 1]) return;
         const err = game.act((s, ctx) => useFlask(s, ctx, n - 1));
         if (!err) e.preventDefault();

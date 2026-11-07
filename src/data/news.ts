@@ -12,6 +12,14 @@ export interface NewsEntry {
  */
 export const UPCOMING: string[] = [
   'Screen layouts and menus across the game have been polished for mobile and desktop, adding stash tab affinity controls, missing currency and trophy tabs, responsive Hideout stacking, and priority boss targeting on narrow screens.',
+  'Every non-combat action now builds character-specific mastery, gradually gaining speed plus modest ordinary yields or ingredient savings, with progress shown on action and Heist cards.',
+  'Expanded and reworked Unique Items with signature mechanics across campaign, boss, and pinnacle uniques, plus 12 Ascendancy best-in-slot uniques, 22 profession uniques, a 6-piece Master Artisan set, a 6-piece Wanderer leveling set, 3 Gold-find uniques, 5 Unique Flasks, and 5 Unique Maps.',
+  'Belts now feature dedicated 4-slot loadouts (1 Life, 1 Mana, 2 Utility), and Instilling Orbs drop starting in Act 2 for early flask automation.',
+  'Bosses now drop refined crafting bars, planks, dust, and gems so combat-focused players can upgrade Hideout stations without mandatory gathering.',
+  'Introduced Tiered Loot (T1 to T5) across campaign and map tiers with higher roll ranges, affix tier weighting, and natural fractured mods or special bases like Simplex Amulets and Annointed Belts at Tier 5.',
+  'Added a Filter Off-Class Loot option in Settings to automatically salvage dropped equipment that does not match your class defences or weapon types.',
+  'Smoothed out early campaign progression with Momentum damage mitigation and extra starting survivability for Ranger and Mage.',
+  'Custom Loot Filters: You can now create, edit, save, and switch between custom loot filter profiles with rule criteria for item tiers, defence types, weapon families, rarities, slots, and class affinity.',
 ];
 
 export const NEWS: NewsEntry[] = [

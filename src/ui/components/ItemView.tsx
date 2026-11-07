@@ -75,8 +75,28 @@ export function ItemTip({
         {(item.rarity === 'rare' || item.rarity === 'unique') && <div>{base.name}</div>}
       </div>
       <div className="item-tip-body">
-        <div className="muted small">
-          {RARITY_LABEL[item.rarity]} {base.family ? `${base.twoHanded ? 'two-handed ' : ''}${WEAPON_FAMILIES[base.family].name.toLowerCase()}` : base.slot} · Item Level {item.ilvl}
+        <div className="muted small row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>
+            {RARITY_LABEL[item.rarity]} {base.family ? `${base.twoHanded ? 'two-handed ' : ''}${WEAPON_FAMILIES[base.family].name.toLowerCase()}` : base.slot} · Item Level {item.ilvl}
+          </span>
+          {item.itemTier && item.itemTier > 1 && (
+            <span
+              className={`item-tier-badge tier-${item.itemTier}`}
+              style={{
+                fontSize: 10,
+                fontWeight: 'bold',
+                padding: '1px 5px',
+                borderRadius: 3,
+                textTransform: 'uppercase',
+                border: '1px solid currentColor',
+                color: item.itemTier === 5 ? '#ffd700' : item.itemTier === 4 ? '#d870e0' : item.itemTier === 3 ? '#5ea5ff' : '#4ade80',
+                background: item.itemTier === 5 ? 'rgba(255, 215, 0, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                boxShadow: item.itemTier === 5 ? '0 0 6px rgba(255, 215, 0, 0.4)' : undefined,
+              }}
+            >
+              Tier {item.itemTier}
+            </span>
+          )}
         </div>
         {base.phys && phys && (
           <>
@@ -296,6 +316,23 @@ export function ItemCell({
       >
         <ItemIcon item={item} />
         <span className="ilvl">{item.ilvl}</span>
+        {item.itemTier && item.itemTier > 1 && (
+          <span
+            className="item-cell-tier"
+            style={{
+              position: 'absolute',
+              top: 1,
+              right: 2,
+              fontSize: 9,
+              fontWeight: 800,
+              lineHeight: 1,
+              color: item.itemTier === 5 ? '#ffd700' : item.itemTier === 4 ? '#d870e0' : item.itemTier === 3 ? '#5ea5ff' : '#4ade80',
+              textShadow: '0 0 3px #000, 0 0 5px #000',
+            }}
+          >
+            T{item.itemTier}
+          </span>
+        )}
       </button>
     </Tooltip>
   );

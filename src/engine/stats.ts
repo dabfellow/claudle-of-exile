@@ -7,10 +7,10 @@ import { MAP_RARITY } from '../data/hideout';
 import { ASCENDANCY_BY_ID, ASCENDANCY_NODE_BY_ID } from '../data/ascendancies';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { STAT_KEYS, type Buff, type DamageType, type GameState, type Item, type StatKey, type Stats } from './types';
-import { ascendancyOf } from './ascendancy';
+import { ascendancyOf, unwrittenNodeOf } from './ascendancy';
 import { characterLevel } from './character';
 import { mealStats } from './cooking';
-import { MEGA_CRIT_MULTI, mechanicStats } from './mechanics';
+import { MEGA_CRIT_MULTI, mechanicOf, mechanicStats } from './mechanics';
 import { runeStats } from './runes';
 
 // built once: deriveStats runs every tick, and rebuilding this took most of a sim run
@@ -185,10 +185,19 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
     addStats(st, ASCENDANCY_BY_ID[ascendancy].gate.stats);
     for (const id of s.ascendancy.nodes) addStats(st, ASCENDANCY_NODE_BY_ID[id].stats);
   }
+  const unwritten = unwrittenNodeOf(s);
+  if (unwritten) addStats(st, unwritten.stats);
   const cls = classDef(s.character.classId);
   addStats(st, cls.baseAttributes);
   addStats(st, cls.bonus);
   addStats(st, mechanicStats(s, st));
+  if (st.critGoldScale > 0) {
+    const bankGold = s.account?.bank?.gold ?? 0;
+    st.critMulti += Math.min(50, Math.floor(bankGold / 10000)) * st.critGoldScale;
+  }
+  if (st.leviathanMend > 0 && mechanicOf(s) === 'rage' && (s.combat?.mech ?? 0) >= 10 + st.rageMax) {
+    st.lifeRegenPct += 3;
+  }
   st.itemRarity += MAP_RARITY[(s.account.hideout.map_device ?? 1) - 1] ?? 0;
   const altarLvl = s.account.hideout.trophy_altar ?? 1;
   if (altarLvl >= 1) {
@@ -253,6 +262,9 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     armour += evasion;
     evasion = 0;
   }
+  if (raw.cannotEvade > 0) {
+    evasion = 0;
+  }
   const accuracy = Math.round(2 * combatLevel + raw.accuracy + attributes.dex * A.dex.accuracyPer);
 
   const mainPhys = weaponItem ? weaponPhys(weaponItem) : null;
@@ -260,12 +272,12 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   const wPhys: [number, number] = mainPhys ? (offPhys ? [(mainPhys[0] + offPhys[0]) / 2, (mainPhys[1] + offPhys[1]) / 2] : mainPhys) : [2, 5];
   const physMult = 1 + (raw.physPct + attributes.str * A.str.physPctPer) / 100;
   const elemBase = raw.elemPct + attributes.int * A.int.elemPctPer;
-  const elemMult = 1 + elemBase / 100;
+  const elemMult = raw.noElemDamage > 0 ? 0 : 1 + elemBase / 100;
   const typeMult: Record<DamageType, number> = {
     phys: physMult,
-    fire: 1 + (elemBase + raw.firePct) / 100,
-    cold: 1 + (elemBase + raw.coldPct) / 100,
-    light: 1 + (elemBase + raw.lightPct) / 100,
+    fire: raw.noElemDamage > 0 ? 0 : 1 + (elemBase + raw.firePct) / 100,
+    cold: raw.noElemDamage > 0 ? 0 : 1 + (elemBase + raw.coldPct) / 100,
+    light: raw.noElemDamage > 0 ? 0 : 1 + (elemBase + raw.lightPct) / 100,
     chaos: 1 + raw.chaosPct / 100,
   };
   const hit: Record<DamageType, [number, number]> = {
