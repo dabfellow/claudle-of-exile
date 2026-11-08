@@ -138,13 +138,27 @@ function TreeCanvas<N extends CanvasNode>({
 }) {
   const home = focus ?? { x: 0, y: 0, k: 1 };
   const [view, setView] = useState<View>(home);
+  const viewRef = useRef<View>(home);
+  viewRef.current = view;
+
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const drag = useRef<{ x: number; y: number; vx: number; vy: number; moved: boolean; unit: number } | null>(null);
+  const drag = useRef<{ startX: number; startY: number; vx: number; vy: number; k: number; moved: boolean; unit: number } | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
+  const contentG = useRef<SVGGElement>(null);
+  const rafId = useRef<number | null>(null);
+  const wheelCommitTimer = useRef<number | null>(null);
+
   const clickRef = useRef(onClick);
   clickRef.current = onClick;
   const clamp = (k: number) => Math.min(maxZoom, Math.max(0.4, k));
+
+  const applyTransform = (x: number, y: number, k: number) => {
+    viewRef.current = { x, y, k };
+    if (contentG.current) {
+      contentG.current.setAttribute('transform', `scale(${k}) translate(${x} ${y})`);
+    }
+  };
 
   // Escape key exits fullscreen
   useEffect(() => {
@@ -157,31 +171,53 @@ function TreeCanvas<N extends CanvasNode>({
   }, [isFullscreen]);
 
   /** zoom by `f`, keeping the point under the cursor (or the centre) still */
-  const zoomAt = (f: number, clientX?: number, clientY?: number) =>
-    setView((v) => {
-      const k = clamp(v.k * f);
-      const r = wrap.current?.getBoundingClientRect();
-      if (!r || clientX === undefined || clientY === undefined) return { ...v, k };
-      const unit = size / Math.min(r.width, r.height);
-      const cx = (clientX - r.left - r.width / 2) * unit;
-      const cy = (clientY - r.top - r.height / 2) * unit;
-      return { k, x: v.x + cx / k - cx / v.k, y: v.y + cy / k - cy / v.k };
-    });
+  const zoomAt = (f: number, clientX?: number, clientY?: number) => {
+    const cur = viewRef.current;
+    const k = clamp(cur.k * f);
+    const r = wrap.current?.getBoundingClientRect();
+    if (!r || clientX === undefined || clientY === undefined) {
+      applyTransform(cur.x, cur.y, k);
+      setView({ ...cur, k });
+      return;
+    }
+    const unit = size / Math.min(r.width, r.height);
+    const cx = (clientX - r.left - r.width / 2) * unit;
+    const cy = (clientY - r.top - r.height / 2) * unit;
+    const nextX = cur.x + cx / k - cx / cur.k;
+    const nextY = cur.y + cy / k - cy / cur.k;
+    applyTransform(nextX, nextY, k);
+    setView({ x: nextX, y: nextY, k });
+  };
 
-  const zoomAtRef = useRef(zoomAt);
-  zoomAtRef.current = zoomAt;
-
-  // Native wheel listener on the canvas wrapper
+  // Native wheel listener on the canvas wrapper with rAF throttle & debounced state sync
   useEffect(() => {
     const el = wrap.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      zoomAtRef.current(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY);
+      const r = el.getBoundingClientRect();
+      const unit = size / Math.min(r.width, r.height);
+      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      const cur = viewRef.current;
+      const nextK = clamp(cur.k * factor);
+      const cx = (e.clientX - r.left - r.width / 2) * unit;
+      const cy = (e.clientY - r.top - r.height / 2) * unit;
+      const nextX = cur.x + cx / nextK - cx / cur.k;
+      const nextY = cur.y + cy / nextK - cy / cur.k;
+
+      applyTransform(nextX, nextY, nextK);
+
+      if (wheelCommitTimer.current) clearTimeout(wheelCommitTimer.current);
+      wheelCommitTimer.current = window.setTimeout(() => {
+        setView({ ...viewRef.current });
+      }, 60);
     };
     el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
-  }, []);
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      if (wheelCommitTimer.current) clearTimeout(wheelCommitTimer.current);
+    };
+  }, [size, maxZoom]);
 
   const layer = useMemo(() => {
     const links: [N, N][] = [];
@@ -263,24 +299,61 @@ function TreeCanvas<N extends CanvasNode>({
       className={`tree-wrap ${isFullscreen ? 'is-fullscreen' : ''}`}
       ref={wrap}
       onPointerDown={(e) => {
-        // If clicking on control buttons, don't drag the tree
         if ((e.target as HTMLElement).closest('.tree-controls')) return;
-        const r = wrap.current!.getBoundingClientRect();
-        drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, unit: size / Math.min(r.width, r.height) };
+        const r = wrap.current?.getBoundingClientRect();
+        if (!r) return;
+        const unit = size / Math.min(r.width, r.height);
+        drag.current = {
+          startX: e.clientX,
+          startY: e.clientY,
+          vx: viewRef.current.x,
+          vy: viewRef.current.y,
+          k: viewRef.current.k,
+          moved: false,
+          unit,
+        };
       }}
       onPointerMove={(e) => {
         const dr = drag.current;
         if (!dr) return;
-        const dx = e.clientX - dr.x;
-        const dy = e.clientY - dr.y;
-        if (Math.abs(dx) + Math.abs(dy) > 4) dr.moved = true;
-        if (dr.moved) {
+        const dx = e.clientX - dr.startX;
+        const dy = e.clientY - dr.startY;
+        if (!dr.moved && Math.abs(dx) + Math.abs(dy) > 3) {
+          dr.moved = true;
           setHover(null);
-          setView((v) => ({ ...v, x: dr.vx + (dx * dr.unit) / v.k, y: dr.vy + (dy * dr.unit) / v.k }));
+          wrap.current?.classList.add('is-dragging');
+        }
+        if (!dr.moved) return;
+
+        const nextX = dr.vx + (dx * dr.unit) / dr.k;
+        const nextY = dr.vy + (dy * dr.unit) / dr.k;
+
+        if (rafId.current == null) {
+          rafId.current = requestAnimationFrame(() => {
+            rafId.current = null;
+            applyTransform(nextX, nextY, dr.k);
+          });
         }
       }}
-      onPointerUp={() => setTimeout(() => (drag.current = null), 0)}
+      onPointerUp={() => {
+        if (rafId.current != null) {
+          cancelAnimationFrame(rafId.current);
+          rafId.current = null;
+        }
+        wrap.current?.classList.remove('is-dragging');
+        if (drag.current?.moved) {
+          setView({ ...viewRef.current });
+        }
+        setTimeout(() => {
+          drag.current = null;
+        }, 0);
+      }}
       onPointerCancel={() => {
+        if (rafId.current != null) {
+          cancelAnimationFrame(rafId.current);
+          rafId.current = null;
+        }
+        wrap.current?.classList.remove('is-dragging');
         drag.current = null;
         setHover(null);
       }}
@@ -289,7 +362,7 @@ function TreeCanvas<N extends CanvasNode>({
       }}
     >
       <svg viewBox={`${-size / 2} ${-size / 2} ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
-        <g transform={`scale(${view.k}) translate(${view.x} ${view.y})`}>
+        <g ref={contentG} transform={`scale(${view.k}) translate(${view.x} ${view.y})`}>
           {labels?.map((l) => (
             <text key={l.text} x={l.x} y={l.y} textAnchor="middle" dominantBaseline="middle" fill={l.color} opacity={0.5} fontFamily="Cinzel, serif" fontSize={l.size ?? 24} letterSpacing={5}>
               {l.text}

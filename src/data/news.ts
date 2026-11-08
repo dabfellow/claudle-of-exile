@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Passive tree dragging and wheel zooming are now buttery smooth using high-performance hardware-accelerated transforms and frame batching.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

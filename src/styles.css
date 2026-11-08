@@ -3165,6 +3165,7 @@ h3 {
   cursor: grab;
   touch-action: none;
   user-select: none;
+  contain: layout paint;
 }
 
 .tree-wrap.is-fullscreen {
@@ -3180,8 +3181,19 @@ h3 {
   margin: 0;
 }
 
-.tree-wrap:active {
-  cursor: grabbing;
+.tree-wrap:active,
+.tree-wrap.is-dragging {
+  cursor: grabbing !important;
+}
+
+.tree-wrap.is-dragging .tree-node,
+.tree-wrap.is-dragging text {
+  pointer-events: none !important;
+}
+
+.tree-wrap.is-dragging * {
+  animation-play-state: paused !important;
+  transition: none !important;
 }
 
 .tree-wrap svg {
@@ -3190,9 +3202,14 @@ h3 {
   display: block;
 }
 
+.tree-wrap svg > g {
+  will-change: transform;
+}
+
 .tree-link {
   stroke: var(--line-2);
   stroke-width: 4;
+  pointer-events: none;
 }
 
 .tree-link.on {
@@ -3232,10 +3249,9 @@ h3 {
 .tree-node circle.halo {
   fill: none;
   stroke: var(--region);
-  stroke-width: 2;
+  stroke-width: 3;
   opacity: 0;
   transition: opacity 0.3s;
-  filter: blur(2px);
 }
 
 .tree-node:hover circle.body {
