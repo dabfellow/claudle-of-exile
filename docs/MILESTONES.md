@@ -4,7 +4,7 @@ Last updated 2026-11-08. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.6, The Fuck Avery Update**, deployed 2026-11-08. Passive skill tree 5x overhaul (3,295 nodes) across 7 concentric rings, 3 paired Cosmic Gateways, 6 Doomed Gates, 12 Celestial Forbidden Keystones, 3 saveable tree loadout profiles with cross-linking, triple point economy (Travel, Passive, Mastery), and canvas UI overhaul are live.
+Latest confirmed live release: **0.4.7, Passive Tree Fluidity and Fullscreen**, deployed 2026-11-08. Smooth 60fps panning and zooming via rAF coalescing, lag-free rendering optimization across 3,200+ nodes, and dedicated 100vw × 100vh Fullscreen toggle are live.
 
 1. Security prerequisite: confirm revocation of the historical Google OAuth client secret, confirm the separate account-helper lookup-path changes and perform signed-in isolation/login checks; see SETUP.
    Owner reports market/admin SQL applied on 2026-11-06; live anonymous Admin access checks pass. Current validation upload and real-account inspection/recovery/mail/event checks remain before next release.
