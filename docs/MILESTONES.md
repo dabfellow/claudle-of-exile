@@ -4,7 +4,7 @@ Last updated 2026-11-08. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.9, Passive Tree Readability and Deep Zoom**, deployed 2026-11-08. Passive tree node names and sector headers are crisp and easily readable with dynamic zoom-scaled typography, and max tree zoom is expanded to 24x with smooth mouse wheel navigation.
+Latest confirmed live release: **0.4.10, Passive Tree Zoom and Pan Restoration**, deployed 2026-11-08. Fixed CSS transform override that froze the passive tree in place; full mouse-wheel zoom, button controls, and click-and-drag panning are completely restored.
 
 1. Security prerequisite: confirm revocation of the historical Google OAuth client secret, confirm the separate account-helper lookup-path changes and perform signed-in isolation/login checks; see SETUP.
    Owner reports market/admin SQL applied on 2026-11-06; live anonymous Admin access checks pass. Current validation upload and real-account inspection/recovery/mail/event checks remain before next release.
