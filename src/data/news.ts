@@ -14,6 +14,14 @@ export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.4.11',
+    date: '7 Nov 2026',
+    title: 'Clean Passive Tree Canvas',
+    items: [
+      'Removed node name text clutter from the passive tree canvas for a clean view; hover tooltips provide full details on demand.',
+    ],
+  },
+  {
     version: '0.4.10',
     date: '7 Nov 2026',
     title: 'Passive Tree Zoom and Pan Restoration',
