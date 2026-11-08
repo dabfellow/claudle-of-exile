@@ -936,54 +936,53 @@ function build(): PassiveNode[] {
     if (p['K1.out'] && p.ks1) link(p['K1.out'], p.ks1);
     if (p['R2.out'] && p.doomed) link(p['R2.out'], p.doomed);
 
+    // Band 1 -> Band 2 cluster connections
+    if (p['A1.out'] && p['C.entry']) link(p['A1.out'], p['C.entry']);
+    if (p['I1.out'] && p['D.entry']) link(p['I1.out'], p['D.entry']);
+    if (p['B1.out'] && p['E.entry']) link(p['B1.out'], p['E.entry']);
+
+    // Band 2 -> Band 3 cluster connections
+    if (p['C1.out'] && p['F.entry']) link(p['C1.out'], p['F.entry']);
+    if (p['D1.out'] && p['G.entry']) link(p['D1.out'], p['G.entry']);
+    if (p['E1.out'] && p['H.entry']) link(p['E1.out'], p['H.entry']);
+
     ports[sec.key] = p;
   }
 
-  // --- 4 CONCENTRIC CROSS-SECTOR RINGS (Layer 1 Central Crossing is built above) ---
+  // --- 3 MAIN CONCENTRIC CROSS-SECTOR RINGS ---
+  // Ring 1: Central Crossing Ring (r=260) - built above
+  // Ring 2: Mid Concourse Orbital Ring (r=2310, Band 3 spine_3)
+  // Ring 3: Outermost Rim Ring (r=4300, Band 6 spine_6)
   SECTOR_DEFS.forEach((sec, i) => {
     const next = SECTOR_DEFS[(i + 1) % SECTOR_DEFS.length];
 
-    // Layer 2: Mid-Inner Orbital Ring (r=1700)
-    const sp2A = `${sec.key}_spine_2`;
-    const sp2B = `${next.key}_spine_2`;
-    const id2_1 = `orbit_layer2_${sec.key}_1`;
-    const id2_2 = `orbit_layer2_${sec.key}_2`;
-    const id2_3 = `orbit_layer2_${sec.key}_3`;
-    add({ id: id2_1, name: 'Mid-Inner Orbital Highway', kind: 'highway', region: sec.key, ...polar(1700, sec.angle + 15), stats: sec.travel });
-    add({ id: id2_2, name: 'Mid-Inner Orbital Highway', kind: 'highway', region: 'center', ...polar(1700, sec.angle + 30), stats: { allAttr: 4 } });
-    add({ id: id2_3, name: 'Mid-Inner Orbital Highway', kind: 'highway', region: next.key, ...polar(1700, sec.angle + 45), stats: next.travel });
-    link(sp2A, id2_1);
-    link(id2_1, id2_2);
-    link(id2_2, id2_3);
-    link(id2_3, sp2B);
+    // Ring 2: Mid Concourse Orbital Ring (r=2310)
+    const sp3A = `${sec.key}_spine_3`;
+    const sp3B = `${next.key}_spine_3`;
+    const idMid1 = `orbit_mid_${sec.key}_1`;
+    const idMid2 = `orbit_mid_${sec.key}_2`;
+    const idMid3 = `orbit_mid_${sec.key}_3`;
+    add({ id: idMid1, name: 'Mid Concourse Highway', kind: 'highway', region: sec.key, ...polar(2310, sec.angle + 15), stats: sec.travel });
+    add({ id: idMid2, name: 'Mid Concourse Highway', kind: 'highway', region: 'center', ...polar(2310, sec.angle + 30), stats: { allAttr: 4 } });
+    add({ id: idMid3, name: 'Mid Concourse Highway', kind: 'highway', region: next.key, ...polar(2310, sec.angle + 45), stats: next.travel });
+    link(sp3A, idMid1);
+    link(idMid1, idMid2);
+    link(idMid2, idMid3);
+    link(idMid3, sp3B);
 
-    // Layer 3: Mid-Outer Orbital Ring (r=2950)
-    const sp4A = `${sec.key}_spine_4`;
-    const sp4B = `${next.key}_spine_4`;
-    const id3_1 = `orbit_layer3_${sec.key}_1`;
-    const id3_2 = `orbit_layer3_${sec.key}_2`;
-    const id3_3 = `orbit_layer3_${sec.key}_3`;
-    add({ id: id3_1, name: 'Mid-Outer Orbital Highway', kind: 'highway', region: sec.key, ...polar(2950, sec.angle + 15), stats: sec.travel });
-    add({ id: id3_2, name: 'Mid-Outer Orbital Highway', kind: 'highway', region: 'center', ...polar(2950, sec.angle + 30), stats: { allAttr: 4 } });
-    add({ id: id3_3, name: 'Mid-Outer Orbital Highway', kind: 'highway', region: next.key, ...polar(2950, sec.angle + 45), stats: next.travel });
-    link(sp4A, id3_1);
-    link(id3_1, id3_2);
-    link(id3_2, id3_3);
-    link(id3_3, sp4B);
-
-    // Layer 4: Outermost Rim Ring (r=4300)
+    // Ring 3: Outermost Rim Ring (r=4300)
     const sp6A = `${sec.key}_spine_6`;
     const sp6B = `${next.key}_spine_6`;
-    const id4_1 = `orbit_layer4_${sec.key}_1`;
-    const id4_2 = `orbit_layer4_${sec.key}_2`;
-    const id4_3 = `orbit_layer4_${sec.key}_3`;
-    add({ id: id4_1, name: 'Outer Rim Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle + 15), stats: sec.travel });
-    add({ id: id4_2, name: 'Outer Rim Highway', kind: 'highway', region: 'center', ...polar(4300, sec.angle + 30), stats: { allAttr: 4 } });
-    add({ id: id4_3, name: 'Outer Rim Highway', kind: 'highway', region: next.key, ...polar(4300, sec.angle + 45), stats: next.travel });
-    link(sp6A, id4_1);
-    link(id4_1, id4_2);
-    link(id4_2, id4_3);
-    link(id4_3, sp6B);
+    const idOuter1 = `orbit_outer_${sec.key}_1`;
+    const idOuter2 = `orbit_outer_${sec.key}_2`;
+    const idOuter3 = `orbit_outer_${sec.key}_3`;
+    add({ id: idOuter1, name: 'Outer Rim Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle + 15), stats: sec.travel });
+    add({ id: idOuter2, name: 'Outer Rim Highway', kind: 'highway', region: 'center', ...polar(4300, sec.angle + 30), stats: { allAttr: 4 } });
+    add({ id: idOuter3, name: 'Outer Rim Highway', kind: 'highway', region: next.key, ...polar(4300, sec.angle + 45), stats: next.travel });
+    link(sp6A, idOuter1);
+    link(idOuter1, idOuter2);
+    link(idOuter2, idOuter3);
+    link(idOuter3, sp6B);
 
     // Cross-sector Bridges (cluster edges)
     for (const [a, b] of BRIDGES) {
@@ -1009,6 +1008,21 @@ function build(): PassiveNode[] {
       }
     }
   });
+
+  // Connect visually close nodes (distance <= 140px)
+  // Exclude mastery nodes (strict 1-link rule) and start nodes
+  const nodeList = Object.values(nodes);
+  for (let i = 0; i < nodeList.length; i++) {
+    const a = nodeList[i];
+    if (a.kind === 'mastery' || a.kind === 'start') continue;
+    for (let j = i + 1; j < nodeList.length; j++) {
+      const b = nodeList[j];
+      if (b.kind === 'mastery' || b.kind === 'start') continue;
+      if (Math.hypot(a.x - b.x, a.y - b.y) <= 140) {
+        link(a.id, b.id);
+      }
+    }
+  }
 
   // Cosmic Gateways
   for (const gw of GATEWAYS) {

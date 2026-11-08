@@ -55,10 +55,10 @@ describe('character tree shape', () => {
     expect(count('mastery')).toBe(252);
     expect(count('small')).toBe(828);
     expect(count('travel')).toBe(48);
-    expect(count('highway')).toBe(144);
+    expect(count('highway')).toBe(126);
     expect(count('doomed')).toBe(6);
     expect(count('gateway')).toBe(6);
-    expect(PASSIVE_NODES).toHaveLength(1903);
+    expect(PASSIVE_NODES).toHaveLength(1885);
     // Attribute roads remain important, but interesting destinations now outnumber travel nodes.
     expect(count('travel') + count('highway')).toBeLessThan(count('notable') + count('small'));
 
