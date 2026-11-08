@@ -1,10 +1,10 @@
 # Roadmap and decisions
 
-Last updated 2026-11-07. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-08. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
-Latest confirmed live release: **0.4.5, Loot Filters and Journey Polish**, deployed 2026-11-07. Custom loot filters with saveable profiles, Tiered Loot (T1–T5), belt 4-slot loadouts (1 Life, 1 Mana, 2 Utility) with Act 2 Instilling drops, non-combat action mastery, boss refined construction material drops, expanded uniques and unique flasks/maps, and campaign pacing smoothing are live.
+Latest confirmed live release: **0.4.6, The Fuck Avery Update**, deployed 2026-11-08. Passive skill tree 5x overhaul (3,295 nodes) across 7 concentric rings, 3 paired Cosmic Gateways, 6 Doomed Gates, 12 Celestial Forbidden Keystones, 3 saveable tree loadout profiles with cross-linking, triple point economy (Travel, Passive, Mastery), and canvas UI overhaul are live.
 
 1. Security prerequisite: confirm revocation of the historical Google OAuth client secret, confirm the separate account-helper lookup-path changes and perform signed-in isolation/login checks; see SETUP.
    Owner reports market/admin SQL applied on 2026-11-06; live anonymous Admin access checks pass. Current validation upload and real-account inspection/recovery/mail/event checks remain before next release.
