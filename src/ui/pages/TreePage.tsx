@@ -914,14 +914,6 @@ const CHAR_LABELS: CanvasLabel[] = [
   { text: 'CROSSING', x: 0, y: -110, color: REGION_COLOR.center, size: 80 },
 ];
 
-/** names under notables, keystones and class starts once zoomed in */
-const CHAR_NAMES: CanvasLabel[] = PASSIVE_NODES.filter((n) => n.kind === 'notable' || n.kind === 'keystone' || n.kind === 'start').map((n) => ({
-  text: n.name,
-  x: n.x,
-  y: n.y + (n.kind === 'keystone' ? 50 : n.kind === 'start' ? 44 : 36),
-  color: n.kind === 'keystone' ? 'var(--unique)' : n.kind === 'start' ? REGION_COLOR[n.region] : 'var(--accent-2)',
-  size: n.kind === 'keystone' ? 16 : n.kind === 'start' ? 15 : 14,
-}));
 
 function isProfileUnlocked(id: number, s: GameState): boolean {
   if (id === 1) return true;
@@ -1215,7 +1207,6 @@ function CharacterTree({ s }: { s: GameState }) {
         maxZoom={CHAR_TREE_ZOOM}
         version={`${myStart}|${s.passives.join(',')}|${s.travelPoints}|${s.passivePoints}|${s.masteryPoints}|${query}`}
         focus={{ x: -PASSIVE_BY_ID[myStart].x, y: -PASSIVE_BY_ID[myStart].y, k: 3 }}
-        names={CHAR_NAMES}
         isOn={isOn}
         canTake={canTake}
         matches={matches}
