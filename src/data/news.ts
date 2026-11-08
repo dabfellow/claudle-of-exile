@@ -10,13 +10,19 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Passive tree travel paths drastically shortened with direct arterial highways: no cluster is more than 6 travel steps away.',
-  'Added two intermediate concentric orbital highway rings (Mid-Inner at r=1700 and Mid-Outer at r=2950) connecting all six class sectors.',
-  'Cut total travel nodes across the tree by over 80% to eliminate tedious travel routing.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.13',
+    date: '8 Nov 2026',
+    title: 'Arterial Highways and Orbital Rings',
+    items: [
+      'Passive tree travel paths drastically shortened with direct arterial highways: no cluster is more than 6 travel steps away.',
+      'Added two intermediate concentric orbital highway rings (Mid-Inner at r=1700 and Mid-Outer at r=2950) connecting all six class sectors.',
+      'Cut total travel nodes across the tree by over 80% to eliminate tedious travel routing.',
+    ],
+  },
   {
     version: '0.4.12',
     date: '7 Nov 2026',
