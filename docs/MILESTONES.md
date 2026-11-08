@@ -4,7 +4,7 @@ Last updated 2026-11-08. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.17, Safer Saves, Working Supports and New Guides**, deployed 2026-11-08. Pre-1.0 round 1: cloud-save rollback fixes, 53 Maps supports plus Exertion/Totems working as described, Hard Boss material uses (top hideout upgrade costs to be reviewed in round 2), melee skills blocked with bows, overfill bars, and ten new player guide pages.
+Latest confirmed live release: **0.4.18, Gateway Visual Fix and Organic Tree Shapes**, deployed 2026-11-08. Fixed the Cosmic Gateway regex so only the 6 true portals render as gateways (cleaning up the 24 blue travel approach nodes), switched the passive tree background to a solid slate tone, disabled continuous SVG animations to eliminate pan/zoom GPU lag, and added organic Pokeball, Trident, Winding Trail, and Spiral cluster layouts.
 
 1. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
 2. Finish the Maps skill batch: all support effects now run (2026-11-08, unreleased); boss, offline and whole-build checks remain (see that section).
