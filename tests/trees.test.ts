@@ -54,13 +54,36 @@ describe('character tree shape', () => {
     expect(count('notable')).toBe(582);
     expect(count('mastery')).toBe(252);
     expect(count('small')).toBe(828);
-    expect(count('travel')).toBe(1038);
-    expect(count('highway')).toBe(540);
+    expect(count('travel')).toBe(48);
+    expect(count('highway')).toBe(144);
     expect(count('doomed')).toBe(6);
     expect(count('gateway')).toBe(6);
-    expect(PASSIVE_NODES).toHaveLength(3289);
+    expect(PASSIVE_NODES).toHaveLength(1903);
     // Attribute roads remain important, but interesting destinations now outnumber travel nodes.
-    expect(count('travel')).toBeLessThan(count('notable') + count('small'));
+    expect(count('travel') + count('highway')).toBeLessThan(count('notable') + count('small'));
+
+    // Check travel distance to all notables in each sector (no cluster notable > 6 travels away)
+    const starts = ['class_str', 'class_strdex', 'class_dex', 'class_dexint', 'class_int', 'class_strint'];
+    for (const st of starts) {
+      const reg = PASSIVE_BY_ID[st].region;
+      const dist: Record<string, number> = { [st]: 0 };
+      const q = [st];
+      while (q.length) {
+        const cur = q.shift()!;
+        const d = dist[cur];
+        for (const l of PASSIVE_BY_ID[cur].links) {
+          const isTravel = PASSIVE_BY_ID[l].kind === 'travel' || PASSIVE_BY_ID[l].kind === 'highway';
+          const cost = isTravel ? 1 : 0;
+          if (dist[l] === undefined || dist[l] > d + cost) {
+            dist[l] = d + cost;
+            q.push(l);
+          }
+        }
+      }
+      const sectorNotables = PASSIVE_NODES.filter((n) => n.kind === 'notable' && n.region === reg);
+      const maxD = Math.max(...sectorNotables.map((n) => dist[n.id] ?? 999));
+      expect(maxD).toBeLessThanOrEqual(6);
+    }
     for (const n of PASSIVE_NODES.filter((x) => x.kind === 'mastery')) {
       expect(n.options).toHaveLength(3);
       expect(n.links).toHaveLength(1);

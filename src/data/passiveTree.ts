@@ -383,28 +383,6 @@ const TRAVEL_SPACING = 115;
 
 type End = `${SlotId}.${Port}` | 'hub' | 'ks0' | 'ks1' | 'ksm' | 'doomed';
 
-const PATHS: [End, End][] = [
-  ['hub', 'I.entry'], ['hub', 'A.entry'], ['hub', 'B.entry'],
-  ['A.out', 'A1.entry'], ['B.out', 'B1.entry'], ['I.out', 'I1.entry'],
-  ['A1.out', 'C.entry'], ['I1.out', 'D.entry'], ['B1.out', 'E.entry'],
-  ['C.right', 'D.entry'], ['E.left', 'D.entry'],
-  ['C.out', 'C1.entry'], ['D.out', 'D1.entry'], ['E.out', 'E1.entry'],
-  ['C1.out', 'F.entry'], ['D1.out', 'G.entry'], ['E1.out', 'H.entry'],
-  ['F.out', 'F1.entry'], ['G.out', 'G1.entry'], ['H.out', 'H1.entry'],
-  ['F1.left', 'L.entry'], ['F1.right', 'J.entry'], ['H1.left', 'K.entry'], ['H1.right', 'M.entry'],
-  ['J.out', 'J1.entry'], ['K.out', 'K1.entry'], ['L.out', 'L1.entry'], ['M.out', 'M1.entry'],
-  ['G1.left', 'R1.entry'], ['G1.right', 'R2.entry'],
-  ['L1.out', 'R3.entry'], ['M1.out', 'R4.entry'],
-  ['R3.out', 'R5.entry'], ['R4.out', 'R6.entry'],
-  ['R5.out', 'P1.entry'], ['R1.out', 'P2.entry'], ['R2.out', 'P3.entry'], ['R6.out', 'P4.entry'],
-  ['P1.out', 'S1.entry'], ['P2.out', 'S3.entry'], ['P3.out', 'S4.entry'], ['P4.out', 'S2.entry'],
-  ['S3.out', 'ksm'], ['S4.out', 'ksm'],
-  ['J1.out', 'ks0'], ['L1.right', 'ks0'],
-  ['K1.out', 'ks1'], ['M1.left', 'ks1'],
-  ['R2.out', 'doomed'],
-  ['doomed', 'DG1.entry'], ['doomed', 'DG2.entry'],
-];
-
 const BRIDGES: [End, End][] = [
   ['B.out', 'A.out'],
   ['E.right', 'C.left'],
@@ -831,7 +809,7 @@ function build(): PassiveNode[] {
     add({ id: hub, name: 'Attribute', kind: 'travel', region: sec.key, ...polar(580, sec.angle), stats: sec.travel });
     link(sec.start, hub);
     path(sec.start, `crossing_${sec.key}`, sec.key, sec.travel);
-    path(hub, `crossing_${sec.key}`, sec.key, sec.travel);
+    link(hub, `crossing_${sec.key}`);
 
     const p: Record<string, string> = { hub };
     for (const [slot, def] of Object.entries(SLOTS) as [SlotId, (typeof SLOTS)[SlotId]][]) {
@@ -866,18 +844,168 @@ function build(): PassiveNode[] {
     });
     p.doomed = doomedSpec.id;
 
-    for (const [a, b] of PATHS) {
-      if (p[a] && p[b]) path(p[a], p[b], sec.key, sec.travel);
+    // --- RADIAL SPINE JUNCTIONS ---
+    // hub (r=580): Band 1
+    // spine_2 (r=1700): Band 2 (Layer 2 Orbital Highway)
+    const sp2 = `${sec.key}_spine_2`;
+    add({ id: sp2, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(1700, sec.angle), stats: sec.travel });
+    link(hub, sp2);
+
+    // spine_3 (r=2310): Band 3
+    const sp3 = `${sec.key}_spine_3`;
+    add({ id: sp3, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(2310, sec.angle), stats: sec.travel });
+    link(sp2, sp3);
+
+    // spine_4 (r=2950): Band 4 (Layer 3 Orbital Highway)
+    const sp4 = `${sec.key}_spine_4`;
+    add({ id: sp4, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(2950, sec.angle), stats: sec.travel });
+    link(sp3, sp4);
+
+    // spine_5 (r=3650): Band 5
+    const sp5 = `${sec.key}_spine_5`;
+    add({ id: sp5, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(3650, sec.angle), stats: sec.travel });
+    link(sp4, sp5);
+
+    // spine_6 (r=4300): Band 6 (Layer 4 Orbital Highway)
+    const sp6 = `${sec.key}_spine_6`;
+    add({ id: sp6, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle), stats: sec.travel });
+    link(sp5, sp6);
+
+    // Connect clusters directly to spine (0 extra travel steps)
+    // Band 1 -> hub
+    (['I', 'A', 'B', 'A1', 'B1', 'I1'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(hub, p[`${s}.entry`]));
+    if (p['A.out'] && p['A1.entry']) link(p['A.out'], p['A1.entry']);
+    if (p['B.out'] && p['B1.entry']) link(p['B.out'], p['B1.entry']);
+    if (p['I.out'] && p['I1.entry']) link(p['I.out'], p['I1.entry']);
+
+    // Band 2 -> sp2
+    (['D', 'C', 'E', 'C1', 'D1', 'E1'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(sp2, p[`${s}.entry`]));
+    if (p['C.out'] && p['C1.entry']) link(p['C.out'], p['C1.entry']);
+    if (p['D.out'] && p['D1.entry']) link(p['D.out'], p['D1.entry']);
+    if (p['E.out'] && p['E1.entry']) link(p['E.out'], p['E1.entry']);
+    if (p['C.right'] && p['D.entry']) link(p['C.right'], p['D.entry']);
+    if (p['E.left'] && p['D.entry']) link(p['E.left'], p['D.entry']);
+
+    // Band 3 -> sp3
+    (['G', 'F', 'H', 'F1', 'G1', 'H1'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(sp3, p[`${s}.entry`]));
+    if (p['F.out'] && p['F1.entry']) link(p['F.out'], p['F1.entry']);
+    if (p['G.out'] && p['G1.entry']) link(p['G.out'], p['G1.entry']);
+    if (p['H.out'] && p['H1.entry']) link(p['H.out'], p['H1.entry']);
+
+    // Band 4 -> sp4
+    (['J', 'K', 'L', 'M', 'J1', 'K1', 'L1', 'M1'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(sp4, p[`${s}.entry`]));
+    if (p['J.out'] && p['J1.entry']) link(p['J.out'], p['J1.entry']);
+    if (p['K.out'] && p['K1.entry']) link(p['K.out'], p['K1.entry']);
+    if (p['L.out'] && p['L1.entry']) link(p['L.out'], p['L1.entry']);
+    if (p['M.out'] && p['M1.entry']) link(p['M.out'], p['M1.entry']);
+    if (p['F1.left'] && p['L.entry']) link(p['F1.left'], p['L.entry']);
+    if (p['F1.right'] && p['J.entry']) link(p['F1.right'], p['J.entry']);
+    if (p['H1.left'] && p['K.entry']) link(p['H1.left'], p['K.entry']);
+    if (p['H1.right'] && p['M.entry']) link(p['H1.right'], p['M.entry']);
+
+    // Band 5 -> sp5 & Keystones
+    (['R1', 'R2', 'R3', 'R4', 'R5', 'R6'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(sp5, p[`${s}.entry`]));
+    if (p.ks0) link(sp5, p.ks0);
+    if (p.ks1) link(sp5, p.ks1);
+    if (p['G1.left'] && p['R1.entry']) link(p['G1.left'], p['R1.entry']);
+    if (p['G1.right'] && p['R2.entry']) link(p['G1.right'], p['R2.entry']);
+    if (p['L1.out'] && p['R3.entry']) link(p['L1.out'], p['R3.entry']);
+    if (p['M1.out'] && p['R4.entry']) link(p['M1.out'], p['R4.entry']);
+    if (p['R3.out'] && p['R5.entry']) link(p['R3.out'], p['R5.entry']);
+    if (p['R4.out'] && p['R6.entry']) link(p['R4.out'], p['R6.entry']);
+
+    // Band 6 -> sp6 & ksm & Doomed
+    (['P1', 'P2', 'P3', 'P4', 'S1', 'S2', 'S3', 'S4'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(sp6, p[`${s}.entry`]));
+    if (p.ksm) link(sp6, p.ksm);
+    if (p.doomed) {
+      link(sp6, p.doomed);
+      if (p['DG1.entry']) link(p.doomed, p['DG1.entry']);
+      if (p['DG2.entry']) link(p.doomed, p['DG2.entry']);
     }
+    if (p['R5.out'] && p['P1.entry']) link(p['R5.out'], p['P1.entry']);
+    if (p['R1.out'] && p['P2.entry']) link(p['R1.out'], p['P2.entry']);
+    if (p['R2.out'] && p['P3.entry']) link(p['R2.out'], p['P3.entry']);
+    if (p['R6.out'] && p['P4.entry']) link(p['R6.out'], p['P4.entry']);
+    if (p['P1.out'] && p['S1.entry']) link(p['P1.out'], p['S1.entry']);
+    if (p['P2.out'] && p['S3.entry']) link(p['P2.out'], p['S3.entry']);
+    if (p['P3.out'] && p['S4.entry']) link(p['P3.out'], p['S4.entry']);
+    if (p['P4.out'] && p['S2.entry']) link(p['P4.out'], p['S2.entry']);
+    if (p['S3.out'] && p.ksm) link(p['S3.out'], p.ksm);
+    if (p['S4.out'] && p.ksm) link(p['S4.out'], p.ksm);
+    if (p['J1.out'] && p.ks0) link(p['J1.out'], p.ks0);
+    if (p['K1.out'] && p.ks1) link(p['K1.out'], p.ks1);
+    if (p['R2.out'] && p.doomed) link(p['R2.out'], p.doomed);
+
     ports[sec.key] = p;
   }
 
-  // Cross-sector Bridges
+  // --- 4 CONCENTRIC CROSS-SECTOR RINGS (Layer 1 Central Crossing is built above) ---
   SECTOR_DEFS.forEach((sec, i) => {
     const next = SECTOR_DEFS[(i + 1) % SECTOR_DEFS.length];
+
+    // Layer 2: Mid-Inner Orbital Ring (r=1700)
+    const sp2A = `${sec.key}_spine_2`;
+    const sp2B = `${next.key}_spine_2`;
+    const id2_1 = `orbit_layer2_${sec.key}_1`;
+    const id2_2 = `orbit_layer2_${sec.key}_2`;
+    const id2_3 = `orbit_layer2_${sec.key}_3`;
+    add({ id: id2_1, name: 'Mid-Inner Orbital Highway', kind: 'highway', region: sec.key, ...polar(1700, sec.angle + 15), stats: sec.travel });
+    add({ id: id2_2, name: 'Mid-Inner Orbital Highway', kind: 'highway', region: 'center', ...polar(1700, sec.angle + 30), stats: { allAttr: 4 } });
+    add({ id: id2_3, name: 'Mid-Inner Orbital Highway', kind: 'highway', region: next.key, ...polar(1700, sec.angle + 45), stats: next.travel });
+    link(sp2A, id2_1);
+    link(id2_1, id2_2);
+    link(id2_2, id2_3);
+    link(id2_3, sp2B);
+
+    // Layer 3: Mid-Outer Orbital Ring (r=2950)
+    const sp4A = `${sec.key}_spine_4`;
+    const sp4B = `${next.key}_spine_4`;
+    const id3_1 = `orbit_layer3_${sec.key}_1`;
+    const id3_2 = `orbit_layer3_${sec.key}_2`;
+    const id3_3 = `orbit_layer3_${sec.key}_3`;
+    add({ id: id3_1, name: 'Mid-Outer Orbital Highway', kind: 'highway', region: sec.key, ...polar(2950, sec.angle + 15), stats: sec.travel });
+    add({ id: id3_2, name: 'Mid-Outer Orbital Highway', kind: 'highway', region: 'center', ...polar(2950, sec.angle + 30), stats: { allAttr: 4 } });
+    add({ id: id3_3, name: 'Mid-Outer Orbital Highway', kind: 'highway', region: next.key, ...polar(2950, sec.angle + 45), stats: next.travel });
+    link(sp4A, id3_1);
+    link(id3_1, id3_2);
+    link(id3_2, id3_3);
+    link(id3_3, sp4B);
+
+    // Layer 4: Outermost Rim Ring (r=4300)
+    const sp6A = `${sec.key}_spine_6`;
+    const sp6B = `${next.key}_spine_6`;
+    const id4_1 = `orbit_layer4_${sec.key}_1`;
+    const id4_2 = `orbit_layer4_${sec.key}_2`;
+    const id4_3 = `orbit_layer4_${sec.key}_3`;
+    add({ id: id4_1, name: 'Outer Rim Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle + 15), stats: sec.travel });
+    add({ id: id4_2, name: 'Outer Rim Highway', kind: 'highway', region: 'center', ...polar(4300, sec.angle + 30), stats: { allAttr: 4 } });
+    add({ id: id4_3, name: 'Outer Rim Highway', kind: 'highway', region: next.key, ...polar(4300, sec.angle + 45), stats: next.travel });
+    link(sp6A, id4_1);
+    link(id4_1, id4_2);
+    link(id4_2, id4_3);
+    link(id4_3, sp6B);
+
+    // Cross-sector Bridges (cluster edges)
     for (const [a, b] of BRIDGES) {
       if (ports[sec.key]?.[a] && ports[next.key]?.[b]) {
-        path(ports[sec.key][a], ports[next.key][b], sec.key, { ...sec.travel }, 'highway');
+        const idA = ports[sec.key][a];
+        const idB = ports[next.key][b];
+        const nodeA = nodes[idA];
+        const nodeB = nodes[idB];
+        if (nodeA && nodeB) {
+          const bridgeId = `bridge_${sec.key}_${next.key}_${a.replace('.', '_')}`;
+          add({
+            id: bridgeId,
+            name: 'Orbital Highway',
+            kind: 'highway',
+            region: sec.key,
+            x: Math.round((nodeA.x + nodeB.x) / 2),
+            y: Math.round((nodeA.y + nodeB.y) / 2),
+            stats: sec.travel,
+          });
+          link(idA, bridgeId);
+          link(bridgeId, idB);
+        }
       }
     }
   });
@@ -894,10 +1022,9 @@ function build(): PassiveNode[] {
       gatewayPair: gw.pairId,
       desc: `Cosmic Gateway linked to ${gw.pairId}. Spend 3 travel points to activate conduit.`,
     });
-    // Link to nearest travel node in the outer band
     const near = polar(gw.r, gw.angle);
     const closestNode = Object.values(nodes)
-      .filter((n) => n.kind === 'travel' || n.kind === 'highway')
+      .filter((n) => n.kind === 'highway' || n.kind === 'travel')
       .reduce((a, b) => (Math.hypot(a.x - near.x, a.y - near.y) <= Math.hypot(b.x - near.x, b.y - near.y) ? a : b));
     link(closestNode.id, gw.id);
   }
@@ -915,9 +1042,20 @@ function build(): PassiveNode[] {
     });
     const near = polar(4500, f.angle);
     const from = Object.values(nodes)
-      .filter((n) => n.kind === 'travel' || n.kind === 'highway')
+      .filter((n) => n.kind === 'highway' || n.kind === 'travel')
       .reduce((a, b) => (Math.hypot(a.x - near.x, a.y - near.y) <= Math.hypot(b.x - near.x, b.y - near.y) ? a : b));
-    path(from.id, f.id, 'forbidden', { allAttr: 2 });
+    const spokeId = `spoke_forbidden_${f.id}`;
+    add({
+      id: spokeId,
+      name: 'Forbidden Approach',
+      kind: 'travel',
+      region: 'forbidden',
+      x: Math.round((from.x + nodes[f.id].x) / 2),
+      y: Math.round((from.y + nodes[f.id].y) / 2),
+      stats: { allAttr: 2 },
+    });
+    link(from.id, spokeId);
+    link(spokeId, f.id);
   }
 
   return Object.values(nodes);
