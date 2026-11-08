@@ -4,7 +4,7 @@ Last updated 2026-11-08. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.15, Connecting Rings and Proximity Links**, deployed 2026-11-08. Streamlined the passive tree concentric ring architecture down to exactly three main connecting rings (Inner Crossing at r=260, Mid Concourse at r=2310, and Outer Rim Highway at r=4300) and automatically linked all visually close neighboring clusters and nodes across bands and sectors, eliminating awkward dead-end detours.
+Latest confirmed live release: **0.4.16, Passive Tree Travel Nodes and Ring Reconstruction**, deployed 2026-11-08. Rebuilt passive tree travel corridors with twin arterial highways per sector, three clean concentric connecting rings (r=260, r=2310, r=4300), and rebalanced travel node attributes (+4 primary attribute or +2/+2 hybrid) to match the 3-travel-points-per-level economy.
 
 1. Security prerequisite: confirm revocation of the historical Google OAuth client secret, confirm the separate account-helper lookup-path changes and perform signed-in isolation/login checks; see SETUP.
    Owner reports market/admin SQL applied on 2026-11-06; live anonymous Admin access checks pass. Current validation upload and real-account inspection/recovery/mail/event checks remain before next release.
