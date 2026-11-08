@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Rebuilt the passive skill tree travel lanes and rings with clean spacing (666 travel nodes across the tree) and rebalanced travel node attributes (+4 primary attribute or +2/+2 hybrid) to match the 3-travel-points-per-level economy.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

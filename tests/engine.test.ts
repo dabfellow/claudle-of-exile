@@ -314,10 +314,10 @@ describe('passive tree', () => {
     const s = newGame(1);
     s.skills.combat = charXpForLevel(5);
     const before = deriveStats(s);
-    allocate(s, ctx(), 'str_hub'); // +10 Strength
+    allocate(s, ctx(), 'str_hub'); // +4 Strength
     const after = deriveStats(s);
-    expect(after.attributes.str).toBe(before.attributes.str + 10);
-    expect(after.maxLife).toBe(before.maxLife + 5); // 2 Strength = 1 life
+    expect(after.attributes.str).toBe(before.attributes.str + 4);
+    expect(after.maxLife).toBe(before.maxLife + 2); // 2 Strength = 1 life
   });
 });
 

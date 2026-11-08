@@ -297,12 +297,12 @@ export const GATEWAYS = [
 // ---------- 6 Doomed Gates (5 Passive Points) ----------
 
 export const DOOMED: (KeystoneSpec & { id: string; sec: ClassRegion; angle: number; r: number; debuff: string })[] = [
-  { id: 'doomed_blood_toll', sec: 'str', angle: -80, r: 4200, name: 'Gate of the Blood Toll', stats: { doomedBloodToll: 1 }, debuff: '-25% Maximum Life', desc: '-25% Maximum Life. Unlocks the Colossus Juggernaut Wheel.' },
-  { id: 'doomed_brittle_bones', sec: 'duelist', angle: -20, r: 4200, name: 'Gate of Brittle Bones', stats: { doomedBrittleBones: 1 }, debuff: 'Take 20% increased Physical Damage', desc: 'Take 20% increased Physical Damage. Unlocks the Master of Blades Wheel.' },
-  { id: 'doomed_glass_veil', sec: 'dex', angle: 40, r: 4200, name: 'Gate of Glass Veil', stats: { doomedGlassVeil: 1 }, debuff: 'Armour is set to 0', desc: 'Armour is set to 0. Unlocks the Phantom Mirage Wheel.' },
-  { id: 'doomed_withered_veins', sec: 'shadow', angle: 100, r: 4200, name: 'Gate of Withered Veins', stats: { doomedWitheredVeins: 1 }, debuff: 'Flasks recover 0 Life or Mana', desc: 'Flasks recover 0 Life or Mana. Unlocks the Toxic Apotheosis Wheel.' },
-  { id: 'doomed_shattered_mind', sec: 'int', angle: 160, r: 4200, name: 'Gate of the Shattered Mind', stats: { doomedShatteredMind: 1 }, debuff: 'Skills cost 100% more Mana', desc: 'Skills cost 100% more Mana. Unlocks the Absolute Zero Wheel.' },
-  { id: 'doomed_broken_covenant', sec: 'templar', angle: 220, r: 4200, name: 'Gate of Broken Covenant', stats: { doomedBrokenCovenant: 1 }, debuff: '-30% All Elemental Resistances', desc: '-30% All Elemental Resistances. Unlocks the Divine Bastion Wheel.' },
+  { id: 'doomed_blood_toll', sec: 'str', angle: -90, r: 4780, name: 'Gate of the Blood Toll', stats: { doomedBloodToll: 1 }, debuff: '-25% Maximum Life', desc: '-25% Maximum Life. Unlocks the Colossus Juggernaut Wheel.' },
+  { id: 'doomed_brittle_bones', sec: 'duelist', angle: -30, r: 4780, name: 'Gate of Brittle Bones', stats: { doomedBrittleBones: 1 }, debuff: 'Take 20% increased Physical Damage', desc: 'Take 20% increased Physical Damage. Unlocks the Master of Blades Wheel.' },
+  { id: 'doomed_glass_veil', sec: 'dex', angle: 30, r: 4780, name: 'Gate of Glass Veil', stats: { doomedGlassVeil: 1 }, debuff: 'Armour is set to 0', desc: 'Armour is set to 0. Unlocks the Phantom Mirage Wheel.' },
+  { id: 'doomed_withered_veins', sec: 'shadow', angle: 90, r: 4780, name: 'Gate of Withered Veins', stats: { doomedWitheredVeins: 1 }, debuff: 'Flasks recover 0 Life or Mana', desc: 'Flasks recover 0 Life or Mana. Unlocks the Toxic Apotheosis Wheel.' },
+  { id: 'doomed_shattered_mind', sec: 'int', angle: 150, r: 4780, name: 'Gate of the Shattered Mind', stats: { doomedShatteredMind: 1 }, debuff: 'Skills cost 100% more Mana', desc: 'Skills cost 100% more Mana. Unlocks the Absolute Zero Wheel.' },
+  { id: 'doomed_broken_covenant', sec: 'templar', angle: 210, r: 4780, name: 'Gate of Broken Covenant', stats: { doomedBrokenCovenant: 1 }, debuff: '-30% All Elemental Resistances', desc: '-30% All Elemental Resistances. Unlocks the Divine Bastion Wheel.' },
 ];
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
@@ -324,8 +324,8 @@ const SLOTS: Record<SlotId, { shape: Shape; r: number; a: number }> = {
   A: { shape: 'line', r: 950, a: -18 },
   B: { shape: 'line', r: 950, a: 18 },
   I: { shape: 'wheel', r: 1000, a: 0 },
-  A1: { shape: 'fork', r: 1250, a: -12 },
-  B1: { shape: 'fork', r: 1250, a: 12 },
+  A1: { shape: 'fork', r: 1250, a: -16 },
+  B1: { shape: 'fork', r: 1250, a: 16 },
   I1: { shape: 'fork', r: 1280, a: 0 },
 
   // Band 2: Mid-Inner (r=1550..1850)
@@ -336,13 +336,13 @@ const SLOTS: Record<SlotId, { shape: Shape; r: number; a: number }> = {
   D1: { shape: 'wheel', r: 1860, a: 0 },
   E1: { shape: 'fork', r: 1850, a: 22 },
 
-  // Band 3: Mid (r=2150..2450)
+  // Band 3: Mid (r=2150..2460)
   F: { shape: 'fork', r: 2150, a: -20 },
   G: { shape: 'fork', r: 2160, a: 0 },
   H: { shape: 'fork', r: 2150, a: 20 },
-  F1: { shape: 'fork', r: 2450, a: -14 },
+  F1: { shape: 'fork', r: 2460, a: -17 },
   G1: { shape: 'wheel', r: 2460, a: 0 },
-  H1: { shape: 'fork', r: 2450, a: 14 },
+  H1: { shape: 'fork', r: 2460, a: 17 },
 
   // Band 4: Mid-Outer (r=2750..3100)
   J: { shape: 'line', r: 2750, a: -10 },
@@ -368,32 +368,23 @@ const SLOTS: Record<SlotId, { shape: Shape; r: number; a: number }> = {
   P3: { shape: 'fork', r: 4100, a: 8 },
   P4: { shape: 'wheel', r: 4100, a: 24 },
 
-  // Band 6: Outer God-Tier (r=4400..4650)
-  S1: { shape: 'wheel', r: 4400, a: -18 },
-  S2: { shape: 'wheel', r: 4400, a: 18 },
-  S3: { shape: 'fork', r: 4650, a: -9 },
-  S4: { shape: 'fork', r: 4650, a: 9 },
+  // Band 6: Outer God-Tier (r=4450..4580)
+  S1: { shape: 'wheel', r: 4450, a: -18 },
+  S2: { shape: 'wheel', r: 4450, a: 18 },
+  S3: { shape: 'fork', r: 4560, a: -8 },
+  S4: { shape: 'fork', r: 4560, a: 8 },
 
-  // Band 7: Doomed Gated Clusters (r=5050)
-  DG1: { shape: 'wheel', r: 5050, a: -12 },
-  DG2: { shape: 'wheel', r: 5050, a: 12 },
+  // Band 7: Doomed Gated Clusters (r=5020)
+  DG1: { shape: 'wheel', r: 5020, a: -6.5 },
+  DG2: { shape: 'wheel', r: 5020, a: 6.5 },
 };
 
-const TRAVEL_SPACING = 115;
+const TRAVEL_SPACING = 225;
 
 type End = `${SlotId}.${Port}` | 'hub' | 'ks0' | 'ks1' | 'ksm' | 'doomed';
 
 const BRIDGES: [End, End][] = [
   ['B.out', 'A.out'],
-  ['E.right', 'C.left'],
-  ['E1.right', 'C1.left'],
-  ['M.right', 'L.left'],
-  ['M1.right', 'L1.left'],
-  ['R4.right', 'R3.left'],
-  ['R6.right', 'R5.left'],
-  ['P4.right', 'P1.left'],
-  ['S2.right', 'S1.left'],
-  ['S4.right', 'S3.left'],
 ];
 
 interface SectorSpec {
@@ -470,12 +461,12 @@ function build(): PassiveNode[] {
     if (!nodes[b].links.includes(a)) nodes[b].links.push(a);
   };
 
-  const path = (a: string, b: string, region: TreeRegion, stats: StatMap, kind: 'travel' | 'highway' = 'travel') => {
+  const path = (a: string, b: string, region: TreeRegion, stats: StatMap, kind: 'travel' | 'highway' = 'travel', spacing = TRAVEL_SPACING) => {
     const A = nodes[a];
     const B = nodes[b];
     if (!A || !B) return;
     const dist = Math.hypot(B.x - A.x, B.y - A.y);
-    const steps = Math.max(1, Math.ceil(dist / TRAVEL_SPACING));
+    const steps = Math.max(1, Math.ceil(dist / spacing));
     let prev = a;
     for (let i = 1; i < steps; i++) {
       const f = i / steps;
@@ -494,8 +485,8 @@ function build(): PassiveNode[] {
           const dx = B.x - A.x;
           const dy = B.y - A.y;
           const len = Math.hypot(dx, dy) || 1;
-          nx += Math.round((-dy / len) * 40);
-          ny += Math.round((dx / len) * 40);
+          nx += Math.round((-dy / len) * 44);
+          ny += Math.round((dx / len) * 44);
         }
       }
 
@@ -507,7 +498,7 @@ function build(): PassiveNode[] {
       }
       add({
         id,
-        name: kind === 'highway' ? 'Orbital Highway' : 'Attribute',
+        name: kind === 'highway' ? 'Arterial Highway' : 'Attribute',
         kind,
         region,
         x: nx,
@@ -588,7 +579,7 @@ function build(): PassiveNode[] {
 
   const SECTOR_DEFS: SectorSpec[] = [
     {
-      key: 'str', angle: -90, startName: 'Warrior', start: 'class_str', travel: { str: 10 },
+      key: 'str', angle: -90, startName: 'Warrior', start: 'class_str', travel: { str: 4 },
       clusters: makeSectorClusters('str', { str: 10 }),
       keystones: {
         ks0: { name: 'Unbreakable', stats: { armourMore: 60, attackSpeedMore: -15 }, desc: '60% more Armour. 15% less Attack Speed.' },
@@ -597,7 +588,7 @@ function build(): PassiveNode[] {
       },
     },
     {
-      key: 'duelist', angle: -30, startName: 'Duelist', start: 'class_strdex', travel: { str: 5, dex: 5 },
+      key: 'duelist', angle: -30, startName: 'Duelist', start: 'class_strdex', travel: { str: 2, dex: 2 },
       clusters: makeSectorClusters('duelist', { str: 5, dex: 5 }),
       keystones: {
         ks0: { name: 'Steady Hand', stats: { steadyHand: 1 }, desc: "Your hits always land. You can't deal critical strikes." },
@@ -607,7 +598,7 @@ function build(): PassiveNode[] {
       keystoneIds: { ks0: 'duelist_ks' },
     },
     {
-      key: 'dex', angle: 30, startName: 'Ranger', start: 'class_dex', travel: { dex: 10 },
+      key: 'dex', angle: 30, startName: 'Ranger', start: 'class_dex', travel: { dex: 4 },
       clusters: makeSectorClusters('dex', { dex: 10 }),
       keystones: {
         ks0: { name: 'Glass Edge', stats: { critMulti: 80, lifeMore: -25 }, desc: '+80% Critical Strike Multiplier. 25% less maximum Life.' },
@@ -616,7 +607,7 @@ function build(): PassiveNode[] {
       },
     },
     {
-      key: 'shadow', angle: 90, startName: 'Shadow', start: 'class_dexint', travel: { dex: 5, int: 5 },
+      key: 'shadow', angle: 90, startName: 'Shadow', start: 'class_dexint', travel: { dex: 2, int: 2 },
       clusters: makeSectorClusters('shadow', { dex: 5, int: 5 }),
       keystones: {
         ks0: { name: 'Arcane Recursion', stats: { arcaneRecursion: 1 }, desc: 'Cooldowns recover 40% faster. Skills cost 50% more Mana.' },
@@ -626,7 +617,7 @@ function build(): PassiveNode[] {
       keystoneIds: { ks0: 'shadow_ks' },
     },
     {
-      key: 'int', angle: 150, startName: 'Mage', start: 'class_int', travel: { int: 10 },
+      key: 'int', angle: 150, startName: 'Mage', start: 'class_int', travel: { int: 4 },
       clusters: makeSectorClusters('int', { int: 10 }),
       keystones: {
         ks0: { name: "Alchemist's Covenant", stats: { flaskEffect: 50, flaskCharges: 50, lifeMore: -10 }, desc: '50% increased Flask Effect and Charges gained. 10% less maximum Life.' },
@@ -635,7 +626,7 @@ function build(): PassiveNode[] {
       },
     },
     {
-      key: 'templar', angle: 210, startName: 'Templar', start: 'class_strint', travel: { int: 5, str: 5 },
+      key: 'templar', angle: 210, startName: 'Templar', start: 'class_strint', travel: { int: 2, str: 2 },
       clusters: makeSectorClusters('templar', { int: 5, str: 5 }),
       keystones: {
         ks0: { name: 'Bastion', stats: { bastion: 1 }, desc: 'Your Evasion Rating is converted to Armour.' },
@@ -743,18 +734,10 @@ function build(): PassiveNode[] {
   SECTOR_DEFS[5].clusters.L.id = 'benediction';
   SECTOR_DEFS[5].clusters.M.id = 'stormfaith';
 
-  // Exile Directional Gateways (r=180) pointing outward toward class sectors
-  SECTOR_DEFS.forEach((sec) => {
-    const dirId = `exile_dir_${sec.key}`;
-    const p = polar(180, sec.angle);
-    add({ id: dirId, name: `Exile: ${sec.startName}`, kind: 'travel', region: 'center', x: p.x, y: p.y, stats: { allAttr: 3 } });
-    link(EXILE_START, dirId);
-  });
-
-  // Central Crossing Ring (r=260)
+  // Ring 1: Central Crossing Ring (r=260)
   const ringIds = SECTOR_DEFS.map((sec, i) => {
     const id = `crossing_${sec.key}`;
-    add({ id, name: "Exile's Crossing", kind: 'travel', region: 'center', ...polar(260, sec.angle), stats: { allAttr: 3 } });
+    add({ id, name: "Exile's Crossing", kind: 'travel', region: 'center', ...polar(260, sec.angle), stats: { allAttr: 2 } });
     const nid = `crossing_n${i}`;
     add({ id: nid, name: CROSSING[i][0], kind: 'notable', region: 'center', ...polar(260, sec.angle + 30), stats: CROSSING[i][1] });
     return [id, nid];
@@ -763,44 +746,7 @@ function build(): PassiveNode[] {
     link(id, nid);
     link(nid, ringIds[(i + 1) % ringIds.length][0]);
     link(EXILE_START, id);
-    link(`exile_dir_${SECTOR_DEFS[i].key}`, id);
   });
-
-  // Central Neutral Web (3-tier hexagonal mesh around (0,0) between class sectors)
-  const HEX_ANGLES = [0, 60, 120, 180, 240, 300];
-  for (let ring = 1; ring <= 3; ring++) {
-    const r = ring === 2 ? 260 : ring === 1 ? 130 : 360;
-    if (ring !== 2) {
-      for (const a of HEX_ANGLES) {
-        const id = `center_web_r${ring}_${a}`;
-        add({
-          id,
-          name: 'Neutral Concourse',
-          kind: 'travel',
-          region: 'center',
-          ...polar(r, a),
-          stats: { allAttr: 2, life: 5, mana: 5 },
-        });
-        const prevA = (a - 60 + 360) % 360;
-        link(id, `center_web_r${ring}_${prevA}`);
-      }
-    }
-  }
-
-  // Connect spokes between center rings and crossing ring
-  for (const a of HEX_ANGLES) {
-    const r1Id = `center_web_r1_${a}`;
-    const r3Id = `center_web_r3_${a}`;
-    link(EXILE_START, r1Id);
-
-    const p = polar(260, a);
-    const closestCrossing = Object.values(nodes)
-      .filter((n) => n.region === 'center' && n.kind !== 'start' && n.id.startsWith('crossing_'))
-      .reduce((best, cur) => (Math.hypot(cur.x - p.x, cur.y - p.y) < Math.hypot(best.x - p.x, best.y - p.y) ? cur : best));
-
-    link(r1Id, closestCrossing.id);
-    link(r3Id, closestCrossing.id);
-  }
 
   const ports: Record<string, Record<string, string>> = {};
   for (const sec of SECTOR_DEFS) {
@@ -808,8 +754,7 @@ function build(): PassiveNode[] {
     const hub = `${sec.key}_hub`;
     add({ id: hub, name: 'Attribute', kind: 'travel', region: sec.key, ...polar(580, sec.angle), stats: sec.travel });
     link(sec.start, hub);
-    path(sec.start, `crossing_${sec.key}`, sec.key, sec.travel);
-    link(hub, `crossing_${sec.key}`);
+    path(sec.start, `crossing_${sec.key}`, sec.key, sec.travel, 'travel', 150);
 
     const p: Record<string, string> = { hub };
     for (const [slot, def] of Object.entries(SLOTS) as [SlotId, (typeof SLOTS)[SlotId]][]) {
@@ -819,8 +764,8 @@ function build(): PassiveNode[] {
       for (const [port, id] of Object.entries(got)) p[`${slot}.${port}`] = id;
     }
 
-    // Keystones
-    const KS_AT = { ks0: [3350, -14], ks1: [3350, 14], ksm: [4800, 0] } as const;
+    // Keystones (flanking the central corridor at r=3440, and apex at r=4520)
+    const KS_AT = { ks0: [3440, -7], ks1: [3440, 7], ksm: [4520, 0] } as const;
     for (const k of ['ks0', 'ks1', 'ksm'] as const) {
       const ks = sec.keystones[k];
       const id = sec.keystoneIds?.[k] ?? `${sec.key}_${k}`;
@@ -844,187 +789,218 @@ function build(): PassiveNode[] {
     });
     p.doomed = doomedSpec.id;
 
-    // --- RADIAL SPINE JUNCTIONS ---
-    // hub (r=580): Band 1
-    // spine_2 (r=1700): Band 2 (Layer 2 Orbital Highway)
-    const sp2 = `${sec.key}_spine_2`;
-    add({ id: sp2, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(1700, sec.angle), stats: sec.travel });
-    link(hub, sp2);
+    // --- TWIN RADIAL ARTERIAL HIGHWAYS ---
+    // In Bands 1-3 (r=760..2310), avenues run at a = ±8°..12° between the a=0° center clusters and ±16°..22° wing clusters.
+    // In Bands 4-6 (r=2535..4600), avenues run at a = ±14°..15° between the ±8°..10° inner clusters and ±18°..24° outer clusters.
+    const HW_STOPS: [number, number][] = [
+      [765, 5],     // 0: approach from hub
+      [950, 8],     // 1: Band 1a (A, B, I)
+      [1260, 8],    // 2: Band 1b (A1, B1, I1)
+      [1550, 8],    // 3: Band 2a (C, D, E)
+      [1850, 9],    // 4: Band 2b (C1, D1, E1)
+      [2140, 10],   // 5: Band 3a (F, G, H)
+      [2310, 12],   // 6: Ring 2 Mid Concourse intersection (F1, G1, H1)
+      [2535, 13.5], // 7: Mid-Outer approach
+      [2760, 15],   // 8: Band 4a (J, K, L, M)
+      [3120, 15],   // 9: Band 4b (J1, K1, L1, M1)
+      [3300, 14],   // 10: Cosmic Gateway & ks0/ks1 junction
+      [3500, 14],   // 11: Band 5a (R3, R4)
+      [3820, 14],   // 12: Band 5b (R1, R2, R5, R6)
+      [4100, 15],   // 13: Band 5.5 (P1..P4)
+      [4300, 14],   // 14: Ring 3 Outer Rim intersection (S1, S2)
+      [4600, 14],   // 15: Band 6b (S3, S4)
+      [4900, 14],   // 16: Doomed Gate junction
+      [5200, 10],   // 17: Outer Forbidden approach
+    ];
+    const hwL: string[] = [];
+    const hwR: string[] = [];
+    HW_STOPS.forEach(([r, da], idx) => {
+      const idL = `${sec.key}_hw_L_${idx + 1}`;
+      const idR = `${sec.key}_hw_R_${idx + 1}`;
+      add({ id: idL, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(r, sec.angle - da), stats: sec.travel });
+      add({ id: idR, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(r, sec.angle + da), stats: sec.travel });
+      hwL.push(idL);
+      hwR.push(idR);
+      if (idx === 0) {
+        link(hub, idL);
+        link(hub, idR);
+      } else {
+        link(hwL[idx - 1], idL);
+        link(hwR[idx - 1], idR);
+      }
+    });
 
-    // spine_3 (r=2310): Band 3
-    const sp3 = `${sec.key}_spine_3`;
-    add({ id: sp3, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(2310, sec.angle), stats: sec.travel });
-    link(sp2, sp3);
+    // Mid Concourse center node (r=2310, a=0°) & Outer Rim center node (r=4300, a=0°)
+    const midCenter = `orbit_mid_${sec.key}_c`;
+    add({ id: midCenter, name: 'Mid Concourse Highway', kind: 'highway', region: sec.key, ...polar(2310, sec.angle), stats: sec.travel });
+    const outerCenter = `orbit_outer_${sec.key}_c`;
+    add({ id: outerCenter, name: 'Outer Rim Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle), stats: sec.travel });
 
-    // spine_4 (r=2950): Band 4 (Layer 3 Orbital Highway)
-    const sp4 = `${sec.key}_spine_4`;
-    add({ id: sp4, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(2950, sec.angle), stats: sec.travel });
-    link(sp3, sp4);
+    const connect = (from: string, to: string) => path(from, to, sec.key, sec.travel, 'travel', 260);
 
-    // spine_5 (r=3650): Band 5
-    const sp5 = `${sec.key}_spine_5`;
-    add({ id: sp5, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(3650, sec.angle), stats: sec.travel });
-    link(sp4, sp5);
+    // Band 1 connections (r=950..1280)
+    connect(hub, p['I.entry']);
+    connect(hwL[1], p['A.entry']);
+    connect(hwR[1], p['B.entry']);
+    connect(hwL[1], p['I.entry']);
+    connect(hwR[1], p['I.entry']);
+    connect(hwL[2], p['A1.entry']);
+    connect(hwR[2], p['B1.entry']);
+    connect(hwL[2], p['I1.entry']);
+    connect(hwR[2], p['I1.entry']);
+    link(p['A.out'], p['A1.entry']);
+    link(p['B.out'], p['B1.entry']);
+    link(p['I.out'], p['I1.entry']);
 
-    // spine_6 (r=4300): Band 6 (Layer 4 Orbital Highway)
-    const sp6 = `${sec.key}_spine_6`;
-    add({ id: sp6, name: 'Arterial Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle), stats: sec.travel });
-    link(sp5, sp6);
+    // Band 2 connections (r=1550..1860)
+    connect(hwL[3], p['C.entry']);
+    connect(hwR[3], p['E.entry']);
+    connect(hwL[3], p['D.entry']);
+    connect(hwR[3], p['D.entry']);
+    connect(hwL[4], p['C1.entry']);
+    connect(hwR[4], p['E1.entry']);
+    connect(hwL[4], p['D1.entry']);
+    connect(hwR[4], p['D1.entry']);
+    link(p['I1.out'], p['D.entry']);
+    link(p['C.out'], p['C1.entry']);
+    link(p['D.out'], p['D1.entry']);
+    link(p['E.out'], p['E1.entry']);
 
-    // Connect clusters directly to spine (0 extra travel steps)
-    // Band 1 -> hub
-    (['I', 'A', 'B', 'A1', 'B1', 'I1'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(hub, p[`${s}.entry`]));
-    if (p['A.out'] && p['A1.entry']) link(p['A.out'], p['A1.entry']);
-    if (p['B.out'] && p['B1.entry']) link(p['B.out'], p['B1.entry']);
-    if (p['I.out'] && p['I1.entry']) link(p['I.out'], p['I1.entry']);
+    // Band 3 connections (r=2150..2460) & Ring 2 (r=2310)
+    connect(hwL[5], p['F.entry']);
+    connect(hwR[5], p['H.entry']);
+    connect(hwL[5], p['G.entry']);
+    connect(hwR[5], p['G.entry']);
+    connect(hwL[6], p['F1.entry']);
+    connect(hwR[6], p['H1.entry']);
+    link(midCenter, p['G1.entry']);
+    link(p['D1.out'], p['G.entry']);
+    link(p['F.out'], p['F1.entry']);
+    link(p['G.out'], midCenter);
+    link(p['H.out'], p['H1.entry']);
 
-    // Band 2 -> sp2
-    (['D', 'C', 'E', 'C1', 'D1', 'E1'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(sp2, p[`${s}.entry`]));
-    if (p['C.out'] && p['C1.entry']) link(p['C.out'], p['C1.entry']);
-    if (p['D.out'] && p['D1.entry']) link(p['D.out'], p['D1.entry']);
-    if (p['E.out'] && p['E1.entry']) link(p['E.out'], p['E1.entry']);
-    if (p['C.right'] && p['D.entry']) link(p['C.right'], p['D.entry']);
-    if (p['E.left'] && p['D.entry']) link(p['E.left'], p['D.entry']);
+    // Band 4 connections (r=2750..3150)
+    connect(hwL[8], p['J.entry']);
+    connect(hwL[8], p['L.entry']);
+    connect(hwR[8], p['K.entry']);
+    connect(hwR[8], p['M.entry']);
+    connect(hwL[9], p['J1.entry']);
+    connect(hwL[9], p['L1.entry']);
+    connect(hwR[9], p['K1.entry']);
+    connect(hwR[9], p['M1.entry']);
+    link(p['J.out'], p['J1.entry']);
+    link(p['K.out'], p['K1.entry']);
+    link(p['L.out'], p['L1.entry']);
+    link(p['M.out'], p['M1.entry']);
 
-    // Band 3 -> sp3
-    (['G', 'F', 'H', 'F1', 'G1', 'H1'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(sp3, p[`${s}.entry`]));
-    if (p['F.out'] && p['F1.entry']) link(p['F.out'], p['F1.entry']);
-    if (p['G.out'] && p['G1.entry']) link(p['G.out'], p['G1.entry']);
-    if (p['H.out'] && p['H1.entry']) link(p['H.out'], p['H1.entry']);
+    // Band 5 connections (r=3300..3820) & Keystones ks0/ks1
+    connect(hwL[10], p.ks0);
+    connect(hwR[10], p.ks1);
+    connect(hwL[11], p['R3.entry']);
+    connect(hwR[11], p['R4.entry']);
+    connect(hwL[12], p['R1.entry']);
+    connect(hwL[12], p['R5.entry']);
+    connect(hwR[12], p['R2.entry']);
+    connect(hwR[12], p['R6.entry']);
+    link(p['R3.out'], p['R5.entry']);
+    link(p['R4.out'], p['R6.entry']);
 
-    // Band 4 -> sp4
-    (['J', 'K', 'L', 'M', 'J1', 'K1', 'L1', 'M1'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(sp4, p[`${s}.entry`]));
-    if (p['J.out'] && p['J1.entry']) link(p['J.out'], p['J1.entry']);
-    if (p['K.out'] && p['K1.entry']) link(p['K.out'], p['K1.entry']);
-    if (p['L.out'] && p['L1.entry']) link(p['L.out'], p['L1.entry']);
-    if (p['M.out'] && p['M1.entry']) link(p['M.out'], p['M1.entry']);
-    if (p['F1.left'] && p['L.entry']) link(p['F1.left'], p['L.entry']);
-    if (p['F1.right'] && p['J.entry']) link(p['F1.right'], p['J.entry']);
-    if (p['H1.left'] && p['K.entry']) link(p['H1.left'], p['K.entry']);
-    if (p['H1.right'] && p['M.entry']) link(p['H1.right'], p['M.entry']);
-
-    // Band 5 -> sp5 & Keystones
-    (['R1', 'R2', 'R3', 'R4', 'R5', 'R6'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(sp5, p[`${s}.entry`]));
-    if (p.ks0) link(sp5, p.ks0);
-    if (p.ks1) link(sp5, p.ks1);
-    if (p['G1.left'] && p['R1.entry']) link(p['G1.left'], p['R1.entry']);
-    if (p['G1.right'] && p['R2.entry']) link(p['G1.right'], p['R2.entry']);
-    if (p['L1.out'] && p['R3.entry']) link(p['L1.out'], p['R3.entry']);
-    if (p['M1.out'] && p['R4.entry']) link(p['M1.out'], p['R4.entry']);
-    if (p['R3.out'] && p['R5.entry']) link(p['R3.out'], p['R5.entry']);
-    if (p['R4.out'] && p['R6.entry']) link(p['R4.out'], p['R6.entry']);
-
-    // Band 6 -> sp6 & ksm & Doomed
-    (['P1', 'P2', 'P3', 'P4', 'S1', 'S2', 'S3', 'S4'] as SlotId[]).forEach((s) => p[`${s}.entry`] && link(sp6, p[`${s}.entry`]));
-    if (p.ksm) link(sp6, p.ksm);
-    if (p.doomed) {
-      link(sp6, p.doomed);
-      if (p['DG1.entry']) link(p.doomed, p['DG1.entry']);
-      if (p['DG2.entry']) link(p.doomed, p['DG2.entry']);
-    }
-    if (p['R5.out'] && p['P1.entry']) link(p['R5.out'], p['P1.entry']);
-    if (p['R1.out'] && p['P2.entry']) link(p['R1.out'], p['P2.entry']);
-    if (p['R2.out'] && p['P3.entry']) link(p['R2.out'], p['P3.entry']);
-    if (p['R6.out'] && p['P4.entry']) link(p['R6.out'], p['P4.entry']);
-    if (p['P1.out'] && p['S1.entry']) link(p['P1.out'], p['S1.entry']);
-    if (p['P2.out'] && p['S3.entry']) link(p['P2.out'], p['S3.entry']);
-    if (p['P3.out'] && p['S4.entry']) link(p['P3.out'], p['S4.entry']);
-    if (p['P4.out'] && p['S2.entry']) link(p['P4.out'], p['S2.entry']);
-    if (p['S3.out'] && p.ksm) link(p['S3.out'], p.ksm);
-    if (p['S4.out'] && p.ksm) link(p['S4.out'], p.ksm);
-    if (p['J1.out'] && p.ks0) link(p['J1.out'], p.ks0);
-    if (p['K1.out'] && p.ks1) link(p['K1.out'], p.ks1);
-    if (p['R2.out'] && p.doomed) link(p['R2.out'], p.doomed);
-
-    // Band 1 -> Band 2 cluster connections
-    if (p['A1.out'] && p['C.entry']) link(p['A1.out'], p['C.entry']);
-    if (p['I1.out'] && p['D.entry']) link(p['I1.out'], p['D.entry']);
-    if (p['B1.out'] && p['E.entry']) link(p['B1.out'], p['E.entry']);
-
-    // Band 2 -> Band 3 cluster connections
-    if (p['C1.out'] && p['F.entry']) link(p['C1.out'], p['F.entry']);
-    if (p['D1.out'] && p['G.entry']) link(p['D1.out'], p['G.entry']);
-    if (p['E1.out'] && p['H.entry']) link(p['E1.out'], p['H.entry']);
+    // Band 5.5 & Band 6 connections (r=4100..4900), Ring 3 (r=4300), ksm & Doomed
+    connect(hwL[13], p['P1.entry']);
+    connect(hwL[13], p['P2.entry']);
+    connect(hwR[13], p['P3.entry']);
+    connect(hwR[13], p['P4.entry']);
+    connect(hwL[14], p['S1.entry']);
+    connect(hwR[14], p['S2.entry']);
+    connect(hwL[15], p['S3.entry']);
+    connect(hwR[15], p['S4.entry']);
+    connect(outerCenter, p.ksm);
+    connect(hwL[16], p.doomed);
+    connect(hwR[16], p.doomed);
+    connect(p.doomed, p['DG1.entry']);
+    connect(p.doomed, p['DG2.entry']);
 
     ports[sec.key] = p;
   }
 
   // --- 3 MAIN CONCENTRIC CROSS-SECTOR RINGS ---
   // Ring 1: Central Crossing Ring (r=260) - built above
-  // Ring 2: Mid Concourse Orbital Ring (r=2310, Band 3 spine_3)
-  // Ring 3: Outermost Rim Ring (r=4300, Band 6 spine_6)
+  // Ring 2: Mid Concourse Orbital Ring (r=2310)
+  // Ring 3: Outermost Rim Highway Ring (r=4300)
   SECTOR_DEFS.forEach((sec, i) => {
     const next = SECTOR_DEFS[(i + 1) % SECTOR_DEFS.length];
 
     // Ring 2: Mid Concourse Orbital Ring (r=2310)
-    const sp3A = `${sec.key}_spine_3`;
-    const sp3B = `${next.key}_spine_3`;
+    const midL = `${sec.key}_hw_L_7`;
+    const midC = `orbit_mid_${sec.key}_c`;
+    const midR = `${sec.key}_hw_R_7`;
+    const nextMidL = `${next.key}_hw_L_7`;
+    const midInL = `orbit_mid_${sec.key}_inL`;
+    const midInR = `orbit_mid_${sec.key}_inR`;
+    add({ id: midInL, name: 'Mid Concourse Highway', kind: 'highway', region: sec.key, ...polar(2310, sec.angle - 6), stats: sec.travel });
+    add({ id: midInR, name: 'Mid Concourse Highway', kind: 'highway', region: sec.key, ...polar(2310, sec.angle + 6), stats: sec.travel });
+    link(midL, midInL);
+    link(midInL, midC);
+    link(midC, midInR);
+    link(midInR, midR);
+
     const idMid1 = `orbit_mid_${sec.key}_1`;
     const idMid2 = `orbit_mid_${sec.key}_2`;
     const idMid3 = `orbit_mid_${sec.key}_3`;
-    add({ id: idMid1, name: 'Mid Concourse Highway', kind: 'highway', region: sec.key, ...polar(2310, sec.angle + 15), stats: sec.travel });
-    add({ id: idMid2, name: 'Mid Concourse Highway', kind: 'highway', region: 'center', ...polar(2310, sec.angle + 30), stats: { allAttr: 4 } });
-    add({ id: idMid3, name: 'Mid Concourse Highway', kind: 'highway', region: next.key, ...polar(2310, sec.angle + 45), stats: next.travel });
-    link(sp3A, idMid1);
+    add({ id: idMid1, name: 'Mid Concourse Highway', kind: 'highway', region: sec.key, ...polar(2310, sec.angle + 21), stats: sec.travel });
+    add({ id: idMid2, name: 'Mid Concourse Highway', kind: 'highway', region: 'center', ...polar(2310, sec.angle + 30), stats: { allAttr: 2 } });
+    add({ id: idMid3, name: 'Mid Concourse Highway', kind: 'highway', region: next.key, ...polar(2310, sec.angle + 39), stats: next.travel });
+    link(midR, idMid1);
     link(idMid1, idMid2);
     link(idMid2, idMid3);
-    link(idMid3, sp3B);
+    link(idMid3, nextMidL);
 
     // Ring 3: Outermost Rim Ring (r=4300)
-    const sp6A = `${sec.key}_spine_6`;
-    const sp6B = `${next.key}_spine_6`;
-    const idOuter1 = `orbit_outer_${sec.key}_1`;
-    const idOuter2 = `orbit_outer_${sec.key}_2`;
-    const idOuter3 = `orbit_outer_${sec.key}_3`;
-    add({ id: idOuter1, name: 'Outer Rim Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle + 15), stats: sec.travel });
-    add({ id: idOuter2, name: 'Outer Rim Highway', kind: 'highway', region: 'center', ...polar(4300, sec.angle + 30), stats: { allAttr: 4 } });
-    add({ id: idOuter3, name: 'Outer Rim Highway', kind: 'highway', region: next.key, ...polar(4300, sec.angle + 45), stats: next.travel });
-    link(sp6A, idOuter1);
-    link(idOuter1, idOuter2);
-    link(idOuter2, idOuter3);
-    link(idOuter3, sp6B);
+    const outL = `${sec.key}_hw_L_15`;
+    const outC = `orbit_outer_${sec.key}_c`;
+    const outR = `${sec.key}_hw_R_15`;
+    const nextOutL = `${next.key}_hw_L_15`;
+    const outInL1 = `orbit_outer_${sec.key}_inL1`;
+    const outInL2 = `orbit_outer_${sec.key}_inL2`;
+    const outInR1 = `orbit_outer_${sec.key}_inR1`;
+    const outInR2 = `orbit_outer_${sec.key}_inR2`;
+    add({ id: outInL1, name: 'Outer Rim Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle - 9.3), stats: sec.travel });
+    add({ id: outInL2, name: 'Outer Rim Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle - 4.7), stats: sec.travel });
+    add({ id: outInR1, name: 'Outer Rim Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle + 4.7), stats: sec.travel });
+    add({ id: outInR2, name: 'Outer Rim Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle + 9.3), stats: sec.travel });
+    link(outL, outInL1);
+    link(outInL1, outInL2);
+    link(outInL2, outC);
+    link(outC, outInR1);
+    link(outInR1, outInR2);
+    link(outInR2, outR);
 
-    // Cross-sector Bridges (cluster edges)
+    const idOut1 = `orbit_outer_${sec.key}_1`;
+    const idOut2 = `orbit_outer_${sec.key}_2`;
+    const idOut3 = `orbit_outer_${sec.key}_3`;
+    const idOut4 = `orbit_outer_${sec.key}_4`;
+    const idOut5 = `orbit_outer_${sec.key}_5`;
+    add({ id: idOut1, name: 'Outer Rim Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle + 19.3), stats: sec.travel });
+    add({ id: idOut2, name: 'Outer Rim Highway', kind: 'highway', region: sec.key, ...polar(4300, sec.angle + 24.7), stats: sec.travel });
+    add({ id: idOut3, name: 'Outer Rim Highway', kind: 'highway', region: 'center', ...polar(4300, sec.angle + 30), stats: { allAttr: 2 } });
+    add({ id: idOut4, name: 'Outer Rim Highway', kind: 'highway', region: next.key, ...polar(4300, sec.angle + 35.3), stats: next.travel });
+    add({ id: idOut5, name: 'Outer Rim Highway', kind: 'highway', region: next.key, ...polar(4300, sec.angle + 40.7), stats: next.travel });
+    link(outR, idOut1);
+    link(idOut1, idOut2);
+    link(idOut2, idOut3);
+    link(idOut3, idOut4);
+    link(idOut4, idOut5);
+    link(idOut5, nextOutL);
+
+    // Inner cross-sector bridge (Band 1)
     for (const [a, b] of BRIDGES) {
       if (ports[sec.key]?.[a] && ports[next.key]?.[b]) {
-        const idA = ports[sec.key][a];
-        const idB = ports[next.key][b];
-        const nodeA = nodes[idA];
-        const nodeB = nodes[idB];
-        if (nodeA && nodeB) {
-          const bridgeId = `bridge_${sec.key}_${next.key}_${a.replace('.', '_')}`;
-          add({
-            id: bridgeId,
-            name: 'Orbital Highway',
-            kind: 'highway',
-            region: sec.key,
-            x: Math.round((nodeA.x + nodeB.x) / 2),
-            y: Math.round((nodeA.y + nodeB.y) / 2),
-            stats: sec.travel,
-          });
-          link(idA, bridgeId);
-          link(bridgeId, idB);
-        }
+        path(ports[sec.key][a], ports[next.key][b], sec.key, sec.travel, 'highway', 260);
       }
     }
   });
 
-  // Connect visually close nodes (distance <= 140px)
-  // Exclude mastery nodes (strict 1-link rule) and start nodes
-  const nodeList = Object.values(nodes);
-  for (let i = 0; i < nodeList.length; i++) {
-    const a = nodeList[i];
-    if (a.kind === 'mastery' || a.kind === 'start') continue;
-    for (let j = i + 1; j < nodeList.length; j++) {
-      const b = nodeList[j];
-      if (b.kind === 'mastery' || b.kind === 'start') continue;
-      if (Math.hypot(a.x - b.x, a.y - b.y) <= 140) {
-        link(a.id, b.id);
-      }
-    }
-  }
-
-  // Cosmic Gateways
+  // Cosmic Gateways (r=3300, a=0° in each sector, linked between Left and Right Arterial Highways)
   for (const gw of GATEWAYS) {
     add({
       id: gw.id,
@@ -1036,14 +1012,14 @@ function build(): PassiveNode[] {
       gatewayPair: gw.pairId,
       desc: `Cosmic Gateway linked to ${gw.pairId}. Spend 3 travel points to activate conduit.`,
     });
-    const near = polar(gw.r, gw.angle);
-    const closestNode = Object.values(nodes)
-      .filter((n) => n.kind === 'highway' || n.kind === 'travel')
-      .reduce((a, b) => (Math.hypot(a.x - near.x, a.y - near.y) <= Math.hypot(b.x - near.x, b.y - near.y) ? a : b));
-    link(closestNode.id, gw.id);
+    const sec = SECTOR_DEFS.find((s) => s.angle === gw.angle);
+    if (sec) {
+      path(`${sec.key}_hw_L_11`, gw.id, sec.key, sec.travel, 'travel', 280);
+      path(`${sec.key}_hw_R_11`, gw.id, sec.key, sec.travel, 'travel', 280);
+    }
   }
 
-  // 12 Forbidden Keystones
+  // 12 Forbidden Keystones (r=5400, linked radially to Outer Rim Ring)
   for (const f of FORBIDDEN) {
     add({
       id: f.id,
@@ -1054,22 +1030,20 @@ function build(): PassiveNode[] {
       stats: f.stats,
       desc: f.desc,
     });
-    const near = polar(4500, f.angle);
-    const from = Object.values(nodes)
-      .filter((n) => n.kind === 'highway' || n.kind === 'travel')
-      .reduce((a, b) => (Math.hypot(a.x - near.x, a.y - near.y) <= Math.hypot(b.x - near.x, b.y - near.y) ? a : b));
-    const spokeId = `spoke_forbidden_${f.id}`;
-    add({
-      id: spokeId,
-      name: 'Forbidden Approach',
-      kind: 'travel',
-      region: 'forbidden',
-      x: Math.round((from.x + nodes[f.id].x) / 2),
-      y: Math.round((from.y + nodes[f.id].y) / 2),
-      stats: { allAttr: 2 },
-    });
-    link(from.id, spokeId);
-    link(spokeId, f.id);
+    const normAngle = ((f.angle % 360) + 360) % 360;
+    const matchSec = SECTOR_DEFS.find((s) => ((s.angle % 360) + 360) % 360 === normAngle);
+    if (matchSec) {
+      // Sector-center Forbidden Keystone: approach from the outer arterial highway tips
+      path(`${matchSec.key}_hw_L_18`, f.id, 'forbidden', { allAttr: 2 }, 'travel', 360);
+      path(`${matchSec.key}_hw_R_18`, f.id, 'forbidden', { allAttr: 2 }, 'travel', 360);
+    } else {
+      // Sector-boundary Forbidden Keystone: straight radial road from the Outer Rim Ring midpoint
+      const near = polar(4300, f.angle);
+      const from = Object.values(nodes)
+        .filter((n) => n.kind === 'highway' || n.kind === 'travel')
+        .reduce((a, b) => (Math.hypot(a.x - near.x, a.y - near.y) <= Math.hypot(b.x - near.x, b.y - near.y) ? a : b));
+      path(from.id, f.id, 'forbidden', { allAttr: 2 }, 'travel', 380);
+    }
   }
 
   return Object.values(nodes);

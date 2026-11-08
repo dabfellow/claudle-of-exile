@@ -550,6 +550,7 @@ function BaseShape({ kind, color, on, can, mine = true }: { kind: string; color:
     case 'core':
       return <circle className="body" r={24} style={{ ...style, fill: mine ? `color-mix(in srgb, ${color} 40%, #1c1f28)` : on ? fill : '#15171c', opacity: mine || on || can ? 1 : 0.35 }} />;
     case 'travel':
+    case 'highway':
       return <circle className="body" r={8} style={style} />;
     default:
       return <circle className="body" r={11} style={style} />;
