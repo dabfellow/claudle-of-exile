@@ -10,7 +10,10 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'The passive tree has a new, tighter map: no more long strips of travel nodes. Clusters link straight into their neighbours, across class borders too, in wheels, pokeballs, spirals, tridents and branching lines. Small nodes now carry the attribute bonuses travel nodes used to and are bought with travel points; notables and keystones still use passive points. Masteries now sit on the big three-notable clusters only. The twelve Forbidden keystones ring the edge evenly, and you can take only one of them. Every notable and keystone is unchanged. If your allocated path no longer joins up, your points are refunded in full when you load.',
+  'Every class region now has its own notables instead of the same set six times: each leans into its class (armour and Warcries, Bleed and block, projectiles and Marks, Poison, Curses and Minions, Storms and Doom, Totems and resistances), the borders between classes mix both, and Curses, Totems, Minions, Marks, Warcries, Exertion, Storms and Doom all have clusters to build around. 18 new rule-changing notables, such as Crimson Flood (Bleeds stack twice), Twin Hexes, Ricochet and Beyond the Veil, wait deep in each region. Notables you already hold keep their place but may do something new, and so may mastery picks.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

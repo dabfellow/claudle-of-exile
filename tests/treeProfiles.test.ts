@@ -88,7 +88,7 @@ describe('3-Profile Tree Loadout system', () => {
   describe('backward compatibility in save.ts', () => {
     it('initializes Profile 1 containing existing passives for legacy characters', () => {
       const s = makeState();
-      s.passives = ['duelist_start', 'duelist_life_1'];
+      s.passives = ['str_hub', 't_class_str_crossing_str_1'];
       s.masteries = { duelist_mastery_1: 0 };
       s.skillPassives = ['mining_yield_1', 'woodcutting_yield_1'];
       const atlas = ensureAtlas(s);
@@ -107,7 +107,7 @@ describe('3-Profile Tree Loadout system', () => {
       const loaded = deserialize(JSON.stringify(raw));
       expect(loaded.passiveProfiles).toHaveLength(1);
       expect(loaded.passiveProfiles[0].id).toBe('profile_1');
-      expect(loaded.passiveProfiles[0].passives).toEqual(['duelist_start', 'duelist_life_1']);
+      expect(loaded.passiveProfiles[0].passives).toEqual(['str_hub', 't_class_str_crossing_str_1']);
       expect(loaded.passiveProfiles[0].masteries).toEqual({ duelist_mastery_1: 0 });
       expect(loaded.activePassiveProfile).toBe('profile_1');
 

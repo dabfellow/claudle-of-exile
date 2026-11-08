@@ -104,6 +104,23 @@ export const STAT_KEYS = [
   'gatewaySolar', 'gatewayLunar', 'gatewayAstral', 'gatewayVoid', 'gatewayPrimal', 'gatewayDivine',
   // minions (docs/GAME.md)
   'minionPct', 'minionLifePct', 'minionSpeedPct',
+  // passive tree archetypes (docs/PASSIVE_NOTABLES.md): conditional damage
+  'bossDamagePct', 'cursedDamagePct', 'markedDamagePct', 'chilledDamagePct', 'shockedDamagePct', 'areaPct',
+  'elemAttackPct', 'chaosDotPct', 'twoHandPct', 'oneHandPct', 'shieldDamagePct', 'dualWieldSpeed',
+  'warcryActivePct', 'totemActivePct', 'exertedPct', 'physAsFire',
+  // ...archetype scaling
+  'curseEffect', 'curseDuration', 'minionMax', 'minionTaken', 'totemPct', 'totemLifePct', 'totemSpeedPct',
+  'totemDuration', 'totemMax', 'markPct', 'markDuration', 'warcryEffect', 'warcryCooldown', 'exertionRate',
+  'exertedRefund', 'stormPct', 'stormDuration', 'stormSpeedPct', 'doomPct', 'doomRate', 'poisonSpread',
+  // ...defence
+  'bossTakenReduction', 'highLifeReduction', 'totemActiveReduction', 'stormActiveReduction', 'maxElemRes',
+  // ...the few "more" multipliers (Doomed wheels)
+  'moreMelee', 'moreProjectile', 'morePoison', 'moreMinion', 'moreCold', 'moreStorm', 'moreTotem', 'moreMark',
+  'moreWarcry', 'moreShield',
+  // ...the 18 rule-changing notables
+  'armourVsDot', 'warcryLinger', 'bleedStacks', 'steelTempest', 'ricochet', 'markPersist', 'extraCurse',
+  'minionRevive', 'stormExtra', 'doomHalf', 'totemTaunt', 'resOvercap', 'rupture', 'accuracyCrit',
+  'venomVolley', 'witherDot', 'esSteady', 'holyRetort',
   // unique mechanics & gold scaling
   'clingingHull', 'critGoldScale', 'goldFind', 'slothPyre', 'physCanShock', 'noElemDamage',
   'unblinkingFlare', 'cannotEvade', 'flaskReel', 'unwrittenNotable', 'blueprintRuin',
@@ -342,6 +359,10 @@ export interface MonsterInstance {
   /** Corrosion, Corruptor, Nihil: chaos resistance taken away, for this long */
   chaosShred?: number;
   chaosShredMs?: number;
+  /** Withering Touch: each stack is 5% increased chaos damage taken (up to 10), while the timer runs */
+  wither?: number;
+  witherMs?: number;
+  witherAcc?: number;
   /** Primal Force: deals 20% less damage while this runs */
   weakenMs?: number;
   /** Map tier identity: Elite pack monster */
@@ -439,6 +460,8 @@ export interface Minion {
   /** takes this % of each hit that lands on the player */
   shares?: number;
   taunts?: boolean;
+  /** Grave Pact: it already rose again this pack */
+  risen?: boolean;
   /** ms until its next hit, and until its next step */
   attackMs: number;
   stepMs: number;
@@ -477,6 +500,8 @@ export interface Buff {
   extendMaxMs?: number;
   /** Resounding Cry: this warcry's more damage also empowers your totems */
   resounding?: boolean;
+  /** a Warcry's buff (Warlord's Call keeps these up until the pack falls) */
+  warcry?: boolean;
   /** Void Voice: hits have this % chance to poison while it lasts */
   poisonChance?: number;
   /** Carnage: kills explode onto the nearest enemy while it lasts */
@@ -592,6 +617,12 @@ export interface CombatRuntime {
   /** Counterweight: Parry with its signature is up, and % more damage stored for the next attack */
   counterweight?: boolean;
   counterweightMore?: number;
+  /** Steel Tempest: attacks used this fight */
+  attackCount?: number;
+  /** Holy Retort: damage blocked since your last attack, added to it as fire */
+  retort?: number;
+  /** Grave Pact: minions waiting to rise again (once per pack), with ms left */
+  rising?: { minion: Minion; ms: number }[];
   /** Misdirection: a hit was evaded since the last Feint */
   misdirect?: boolean;
   /** auto-flee has taken over the player's pace, and ms until fleeing loses the next monster */

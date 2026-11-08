@@ -37,6 +37,11 @@ export function pairedGateway(id: string): string | undefined {
   return undefined;
 }
 
+/** The twelve Forbidden keystones on the rim: the tree allows only one at a time. */
+export function isForbidden(node: PassiveNode): boolean {
+  return node.kind === 'keystone' && node.region === 'forbidden';
+}
+
 export function isDoomed(node: PassiveNode): boolean {
   return node.kind === 'doomed' || node.id.startsWith('doomed_') || Object.keys(node.stats).some((key) => key.startsWith('doomed'));
 }
@@ -47,7 +52,8 @@ export function passiveNodeCost(node: PassiveNode): { pool: PassivePointPool; co
   if (node.kind === 'mastery') return { pool: 'masteryPoints', cost: 1 };
   if (isDoomed(node)) return { pool: 'passivePoints', cost: 5 };
   if (node.kind === 'keystone' && node.region === 'forbidden') return { pool: 'passivePoints', cost: 15 };
-  if (node.kind === 'small') return { pool: 'passivePoints', cost: 1 };
+  // small nodes are the paths between clusters (they carry the old travel roads' attributes), so travel points buy them
+  if (node.kind === 'small') return { pool: 'travelPoints', cost: 1 };
   if (node.kind === 'large') return { pool: 'passivePoints', cost: 2 };
   if (node.kind === 'notable') return { pool: 'passivePoints', cost: 3 };
   // Ordinary keystones are not the separately priced Forbidden keystone tier.
@@ -190,6 +196,33 @@ function passiveConnectedWithout(allocated: string[], without: string, start: st
   return [...remaining].every((id) => reached.has(id));
 }
 
+/**
+ * The character tree's roads can move between releases. On load, an allocation that names a node the tree
+ * no longer has, or no longer joins up to its start, is refunded in full; one that still hangs together is kept.
+ * The active tree's points are recounted from level by settlePassivePoints; saved profiles are simply emptied.
+ */
+export function settleTreeLayout(s: GameState): void {
+  if (!s.character) return;
+  const start = startNode(s);
+  const broken = (ids: string[]) =>
+    ids.some((id) => !PASSIVE_BY_ID[id]) ||
+    !passiveConnectedWithout(ids, '', start) ||
+    // more than one Forbidden keystone (allowed before the one-only rule)
+    ids.filter((id) => isForbidden(PASSIVE_BY_ID[id])).length > 1;
+  if (s.passives?.length && broken(s.passives)) {
+    s.passives = [];
+    s.masteries = {};
+    s.passivePointLevel = null;
+    s.passiveQuestPoints = null;
+  }
+  for (const p of s.passiveProfiles ?? []) {
+    if (p.passives.length && broken(p.passives)) {
+      p.passives = [];
+      p.masteries = {};
+    }
+  }
+}
+
 /** Generic "can I take this node" check shared by both trees. */
 export function treeAllocateReason(byId: Links, allocated: string[], start: string, id: string, points: number): string | null {
   if (!byId[id] || id === start) return 'Invalid node';
@@ -205,6 +238,7 @@ export function allocateReason(s: GameState, id: string): string | null {
   // other classes' starts seal off their areas, except to an Exile, who can walk through them
   if (node.kind === 'start' && (s.character.classId !== 'exile' || id === startNode(s))) return 'Invalid node';
   if (s.passives.includes(id)) return 'Already allocated';
+  if (isForbidden(node) && s.passives.some((other) => PASSIVE_BY_ID[other] && isForbidden(PASSIVE_BY_ID[other]))) return 'Only one Forbidden keystone can be taken';
   if (!isPassiveReachable(new Set(s.passives), id, startNode(s))) return 'Must connect to an allocated node or activated Cosmic Gateway';
   settlePassivePoints(s);
   const { pool, cost } = passiveNodeCost(node);

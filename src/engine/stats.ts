@@ -129,6 +129,10 @@ export interface Derived {
   /** the main hand's weapon family (skills can need one), or null bare-handed */
   weaponFamily: WeaponFamily | null;
   dualWield: boolean;
+  /** the main hand takes both hands (bows, staves) */
+  twoHanded: boolean;
+  /** an armour piece (a shield) in the offhand */
+  holdingShield: boolean;
   critChance: number;
   critMulti: number;
   /** chaos isn't resisted yet: nothing deals it to you */
@@ -388,13 +392,18 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     light: [Math.round(raw.spellLightMin * typeMult.light), Math.round(raw.spellLightMax * typeMult.light)],
   };
   // dual wielding swings at the main hand's speed
-  const attackSpeed = (1 + (weapon?.speed ?? 0) / 100) * (1 + raw.attackSpeedPct / 100) * (1 + raw.attackSpeedMore / 100);
+  const attackSpeed = (1 + (weapon?.speed ?? 0) / 100) * (1 + (raw.attackSpeedPct + (dualWield ? raw.dualWieldSpeed : 0)) / 100) * (1 + raw.attackSpeedMore / 100);
   const castSpeed = 1 + raw.castSpeedPct / 100;
   const attackMs = BASE_ATTACK_MS / attackSpeed;
   // Steady Hand: always hit, never crit
   const critChance = raw.steadyHand ? 0 : Math.min(95, both((w) => w.crit ?? 5, (a, b) => (a + b) / 2, 5) * (1 + raw.critChancePct / 100));
   const critMulti = 150 + raw.critMulti;
-  const cap = (v: number) => Math.min(RES_CAP, v + raw.allRes);
+  // the cap can be raised; Beyond the Veil raises it 1% for every 5% over it, up to 5%
+  const cap = (v: number) => {
+    const total = v + raw.allRes;
+    const max = RES_CAP + raw.maxElemRes;
+    return Math.min(max + (raw.resOvercap ? Math.min(5, Math.floor(Math.max(0, total - max) / 5)) : 0), total);
+  };
   const avgHit = Object.values(hit).reduce((a, [lo, hi]) => a + (lo + hi) / 2, 0);
   // Knife's Edge: every hit is a Mega Crit
   const critFactor = raw.knifesEdge ? MEGA_CRIT_MULTI : 1 + (critChance / 100) * (critMulti / 100 - 1);
@@ -424,6 +433,8 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     ranged: weapon?.family === 'bow',
     weaponFamily: weapon?.family ?? null,
     dualWield,
+    twoHanded: !!weapon?.twoHanded,
+    holdingShield: !!s.equipment.offhand && baseDef(s.equipment.offhand.baseId).slot !== 'weapon',
     critChance,
     critMulti,
     res: {

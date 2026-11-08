@@ -12,7 +12,7 @@ import { settleGems } from './gems';
 import { newExpeditionState, settleExpedition } from './expedition';
 import { newHeistState, settleHeist } from './heist';
 import { settleMaps } from './maps';
-import { connectedWithout, settlePassivePoints } from './passives';
+import { connectedWithout, settlePassivePoints, settleTreeLayout } from './passives';
 import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { AccountPool, AccountTransfer, FlaskInstance, GameState, Item } from './types';
@@ -397,6 +397,7 @@ export function deserialize(json: string): GameState {
   settleHeist(s);
   settleExpedition(s);
   settleSkillingMastery(s);
+  settleTreeLayout(s);
   settlePassivePoints(s);
   settleLootFilters(s);
   settleTreeProfiles(s);

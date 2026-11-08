@@ -52,37 +52,22 @@ describe('character tree shape', () => {
     expect(count('start')).toBe(7); // six classes and the Exile's centre
     expect(count('keystone')).toBe(30);
     expect(count('notable')).toBe(582);
-    expect(count('mastery')).toBe(252);
+    expect(count('mastery')).toBe(96); // only the big three-notable clusters carry one
     expect(count('small')).toBe(828);
-    expect(count('travel')).toBe(348);
-    expect(count('highway')).toBe(318);
+    // clusters chain straight into each other: the only travel nodes are round the centre
+    expect(count('travel')).toBe(18);
+    expect(count('highway')).toBe(0);
     expect(count('doomed')).toBe(6);
     expect(count('gateway')).toBe(6);
-    expect(PASSIVE_NODES).toHaveLength(2377);
-    // Attribute roads remain important, but interesting destinations now outnumber travel nodes.
-    expect(count('travel') + count('highway')).toBeLessThan(count('notable') + count('small'));
+    expect(PASSIVE_NODES).toHaveLength(1573);
 
-    // Check travel distance to all notables in each sector (no cluster notable > 21 travels away)
+    // every class reaches all of its own notables, none more than 50 nodes out
     const starts = ['class_str', 'class_strdex', 'class_dex', 'class_dexint', 'class_int', 'class_strint'];
     for (const st of starts) {
       const reg = PASSIVE_BY_ID[st].region;
-      const dist: Record<string, number> = { [st]: 0 };
-      const q = [st];
-      while (q.length) {
-        const cur = q.shift()!;
-        const d = dist[cur];
-        for (const l of PASSIVE_BY_ID[cur].links) {
-          const isTravel = PASSIVE_BY_ID[l].kind === 'travel' || PASSIVE_BY_ID[l].kind === 'highway';
-          const cost = isTravel ? 1 : 0;
-          if (dist[l] === undefined || dist[l] > d + cost) {
-            dist[l] = d + cost;
-            q.push(l);
-          }
-        }
-      }
       const sectorNotables = PASSIVE_NODES.filter((n) => n.kind === 'notable' && n.region === reg);
-      const maxD = Math.max(...sectorNotables.map((n) => dist[n.id] ?? 999));
-      expect(maxD).toBeLessThanOrEqual(21);
+      const maxD = Math.max(...sectorNotables.map((n) => route(st, n.id).length));
+      expect(maxD).toBeLessThanOrEqual(50);
     }
     for (const n of PASSIVE_NODES.filter((x) => x.kind === 'mastery')) {
       expect(n.options).toHaveLength(3);
@@ -103,7 +88,8 @@ describe('character tree shape', () => {
     const ranger = newGame(1, { name: 'r', classId: 'ranger' });
     take(ranger, route('class_dex', 'heavy_arms_n1'));
     expect(ranger.passives).toContain('heavy_arms_n1');
-    expect(deriveStats(ranger, []).raw.physPct).toBeGreaterThan(0);
+    // the Warrior's deep wheel holds Unbroken, a rule-changer any class can walk to
+    expect(deriveStats(ranger, []).raw.armourVsDot).toBeGreaterThan(0);
   });
 
   it('refunds the old graph when compact clusters remove or repurpose nodes', () => {
@@ -115,6 +101,31 @@ describe('character tree shape', () => {
     const loaded = deserialize(JSON.stringify(raw));
     expect(loaded.passives).toEqual([]);
     expect(loaded.masteries).toEqual({});
+  });
+
+  it('keeps an allocation that still connects and refunds one whose roads moved', () => {
+    const s = newGame(1);
+    take(s, route('class_str', 'iron_skin_n'));
+    const kept = [...s.passives];
+    const raw = JSON.parse(serialize(s));
+    expect(deserialize(JSON.stringify(raw)).passives).toEqual(kept);
+    // an old road id the layout no longer has: the whole allocation is refunded, points recounted from level
+    raw.passives = ['t_old_road_1', ...kept];
+    raw.passiveProfiles = [{ id: 'profile_1', name: 'P1', passives: raw.passives, masteries: {} }];
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.passives).toEqual([]);
+    expect(loaded.passiveProfiles[0].passives).toEqual([]);
+    expect(loaded.travelPoints).toBe(240);
+    expect(loaded.passivePoints).toBe(160);
+  });
+
+  it('neighbouring classes link cluster to cluster across their border, well away from the centre', () => {
+    // Warrior walks out to the Duelist's inner edge cluster over the border, without touching the crossing ring
+    const path = route('class_str', 'duelist_A1_n1');
+    expect(path.some((id) => id.startsWith('crossing'))).toBe(false);
+    // somewhere a Warrior cluster node links straight into a Duelist cluster node
+    const full = ['class_str', ...path];
+    expect(full.some((id, i) => i > 0 && PASSIVE_BY_ID[id].region === 'duelist' && PASSIVE_BY_ID[full[i - 1]].region === 'str' && !!PASSIVE_BY_ID[id].cluster)).toBe(true);
   });
 
   it('neighbouring classes can path into each other and everyone reaches the centre quickly', () => {
@@ -150,18 +161,21 @@ describe('masteries', () => {
   it('need the notable and a choice, apply the chosen bonus, and cost regret to change', () => {
     const s = newGame(1);
     s.skills.combat = charXpForLevel(80);
-    expect(allocateReason(s, 'iron_skin_m')).toMatch(/connect/);
-    take(s, route('class_str', 'iron_skin_n'));
-    expect(allocate(s, ctx(), 'iron_skin_m')).toMatch(/Choose/);
+    // the Warrior's armour wheel (only three-notable clusters carry a mastery)
+    expect(allocateReason(s, 'brute_force_m')).toMatch(/connect/);
+    take(s, route('class_str', 'brute_force_n3'));
+    expect(allocate(s, ctx(), 'brute_force_m')).toMatch(/Choose/);
     const before = deriveStats(s, []).raw.armourPct;
-    expect(allocate(s, ctx(), 'iron_skin_m', 0)).toBeNull();
+    expect(allocate(s, ctx(), 'brute_force_m', 0)).toBeNull();
     expect(deriveStats(s, []).raw.armourPct).toBe(before + 15);
-    expect(changeMastery(s, ctx(), 'iron_skin_m', 2)).toMatch(/Regret/);
+    expect(changeMastery(s, ctx(), 'brute_force_m', 2)).toMatch(/Regret/);
     s.account.bank.regret = 2;
-    expect(changeMastery(s, ctx(), 'iron_skin_m', 2)).toBeNull();
+    expect(changeMastery(s, ctx(), 'brute_force_m', 2)).toBeNull();
     expect(deriveStats(s, []).raw.slamReduction).toBe(10);
     // the notable can't be refunded while its mastery depends on it
-    expect(refundReason(s, 'iron_skin_n')).toMatch(/disconnect/);
+    expect(refundReason(s, 'brute_force_n3')).toMatch(/disconnect/);
+    // smaller clusters have no mastery
+    expect(PASSIVE_BY_ID.iron_skin_m).toBeUndefined();
   });
 });
 
@@ -173,9 +187,10 @@ describe('character tree point economy', () => {
     settlePassivePoints(s);
     expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([300, 200, 20]);
     expect(passiveNodeCost(PASSIVE_BY_ID.str_hub)).toEqual({ pool: 'travelPoints', cost: 1 });
-    expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_s1)).toEqual({ pool: 'passivePoints', cost: 1 });
+    // small nodes are the paths between clusters, bought with travel points
+    expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_s1)).toEqual({ pool: 'travelPoints', cost: 1 });
     expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_n)).toEqual({ pool: 'passivePoints', cost: 3 });
-    expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_m)).toEqual({ pool: 'masteryPoints', cost: 1 });
+    expect(passiveNodeCost(PASSIVE_BY_ID.brute_force_m)).toEqual({ pool: 'masteryPoints', cost: 1 });
     expect(passiveNodeCost(PASSIVE_BY_ID.forbidden_overclock)).toEqual({ pool: 'passivePoints', cost: 15 });
   });
 
@@ -195,23 +210,39 @@ describe('character tree point economy', () => {
 });
 
 describe('forbidden keystones', () => {
-  it('sit an equal distance apart and can be reached', () => {
-    // 12 forbidden keystones spaced evenly around the 5400-radius celestial rim
-    const r = Math.hypot(PASSIVE_BY_ID[FORBIDDEN[0].id].x, PASSIVE_BY_ID[FORBIDDEN[0].id].y);
-    expect(r).toBeGreaterThan(5000);
-    const expectedDist = Math.hypot(
-      PASSIVE_BY_ID[FORBIDDEN[0].id].x - PASSIVE_BY_ID[FORBIDDEN[1].id].x,
-      PASSIVE_BY_ID[FORBIDDEN[0].id].y - PASSIVE_BY_ID[FORBIDDEN[1].id].y,
-    );
-    for (let i = 0; i < FORBIDDEN.length; i++) {
-      const a = PASSIVE_BY_ID[FORBIDDEN[i].id];
-      const b = PASSIVE_BY_ID[FORBIDDEN[(i + 1) % FORBIDDEN.length].id];
-      const d = Math.hypot(a.x - b.x, a.y - b.y);
-      expect(Math.abs(d - expectedDist)).toBeLessThan(5);
+  it('sit out past the rim clusters, each hanging straight off a cluster, and can be reached', () => {
+    for (const f of FORBIDDEN) {
+      const n = PASSIVE_BY_ID[f.id];
+      const r = Math.hypot(n.x, n.y);
+      expect(r).toBeGreaterThan(RIM_RADIUS + 500);
+      expect(r).toBeLessThan(RIM_RADIUS + 1300);
+      // no long spokes: one link, straight onto a cluster's small node
+      expect(n.links).toHaveLength(1);
+      expect(PASSIVE_BY_ID[n.links[0]].kind).toBe('small');
     }
     const s = newGame(1, { name: 'r', classId: 'ranger' });
     take(s, route('class_dex', 'forbidden_overclock'));
     expect(s.passives).toContain('forbidden_overclock');
+  });
+
+  it('sit evenly round the rim, 30 degrees apart', () => {
+    const angles = FORBIDDEN.map((f) => (Math.atan2(PASSIVE_BY_ID[f.id].y, PASSIVE_BY_ID[f.id].x) * 180) / Math.PI).sort((a, b) => a - b);
+    angles.forEach((a, i) => expect(Math.abs(((angles[(i + 1) % 12] - a + 360) % 360) - 30)).toBeLessThan(1));
+  });
+
+  it('only one can be taken through the tree, and a save holding two is refunded', () => {
+    const s = newGame(1, { name: 'r', classId: 'ranger' });
+    s.skills.combat = charXpForLevel(100);
+    const walk = (ids: string[]) => { for (const id of ids) if (!s.passives.includes(id)) expect(allocate(s, ctx(), id)).toBeNull(); };
+    walk(route('class_dex', 'forbidden_overclock'));
+    // the nearest other Forbidden keystone
+    const second = FORBIDDEN.map((f) => f.id).filter((id) => id !== 'forbidden_overclock').sort((a, b) => route('class_dex', a).length - route('class_dex', b).length)[0];
+    walk(route('class_dex', second).slice(0, -1));
+    expect(allocateReason(s, second)).toMatch(/Only one Forbidden/);
+    // a save from before the rule with two of them: the allocation is refunded in full on load
+    const raw = JSON.parse(serialize(s));
+    raw.passives = [...raw.passives, second];
+    expect(deserialize(JSON.stringify(raw)).passives).toEqual([]);
   });
 });
 

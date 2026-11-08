@@ -408,6 +408,16 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
   const actionMs = def.timeMs ? (def.timeMs / speed) * (1 + mods.windupPct / 100) : d.raw.overclock ? OVERCLOCK_INSTANT_MS : 0;
   // mana cost grows a little with gem level, like PoE
   const r = d.raw;
+  // passive tree archetype stats (docs/PASSIVE_NOTABLES.md) join the supports' modifiers for skills with that tag
+  const tags = def.tags;
+  if (tags.includes('curse')) mods.curseEffect += r.curseEffect;
+  if (tags.includes('storm')) {
+    mods.stormCount += r.stormExtra ? 1 : 0;
+    mods.stormSpeed += r.stormSpeedPct;
+  }
+  if (tags.includes('minion')) mods.minionCount += r.minionMax;
+  if (tags.includes('shield')) mods.shieldMore += r.moreShield;
+  const archetypeDuration = (tags.includes('curse') ? r.curseDuration : 0) + (tags.includes('storm') ? r.stormDuration : 0);
   const paidInMana = Math.round(
     def.manaCost * (1 + 0.04 * (level - 1)) * mods.manaMult * (1 - r.manaCostReduction / 100) * (r.arcaneRecursion ? 1.5 : 1),
   );
@@ -415,7 +425,7 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
   const bloodPrice = mods.specials.has('bloodprice');
   const lifeCost = Math.round((d.maxLife * (def.effect.lifePct ?? 0) * mods.manaMult) / 100) + (bloodPrice ? Math.max(0, paidInMana) * BLOOD_PRICE_LIFE_PER_MANA : 0);
   const isGuard = def.role === 'guard';
-  const cooldownSpeed = 1 + (r.cooldownRecovery + (isGuard ? r.guardCooldown : 0) + (r.arcaneRecursion ? 40 : 0)) / 100;
+  const cooldownSpeed = 1 + (r.cooldownRecovery + (isGuard ? r.guardCooldown : 0) + (tags.includes('warcry') ? r.warcryCooldown : 0) + (r.arcaneRecursion ? 40 : 0)) / 100;
   return {
     def,
     level,
@@ -425,7 +435,7 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
     // nothing — stats, keystones, resets — ever takes a cooldown below the minimum
     cooldownMs: r.overclock ? MIN_COOLDOWN_MS : Math.max(MIN_COOLDOWN_MS, (def.cooldownMs * (1 - mods.cooldownPct / 100)) / cooldownSpeed),
     actionMs,
-    durationMult: (1 + mods.durationPct / 100) * (1 + (r.skillDuration + (isGuard ? r.guardDuration : 0)) / 100),
+    durationMult: (1 + mods.durationPct / 100) * (1 + (r.skillDuration + (isGuard ? r.guardDuration : 0) + archetypeDuration) / 100),
   };
 }
 

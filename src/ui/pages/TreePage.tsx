@@ -87,6 +87,8 @@ interface CanvasNode {
   x: number;
   y: number;
   links: string[];
+  /** curved links: linked id -> control points [x1, y1, x2, y2] leaving this node */
+  curves?: Record<string, [number, number, number, number]>;
 }
 
 interface CanvasLabel {
@@ -153,13 +155,6 @@ function TreeCanvas<N extends CanvasNode>({
   clickRef.current = onClick;
   const clamp = (k: number) => Math.min(maxZoom, Math.max(0.4, k));
 
-  const applyTransform = (x: number, y: number, k: number) => {
-    viewRef.current = { x, y, k };
-    if (contentG.current) {
-      contentG.current.setAttribute('transform', `scale(${k}) translate(${x} ${y})`);
-    }
-  };
-
   // Escape key exits fullscreen
   useEffect(() => {
     if (!isFullscreen) return;
@@ -176,7 +171,7 @@ function TreeCanvas<N extends CanvasNode>({
     const k = clamp(cur.k * f);
     const r = wrap.current?.getBoundingClientRect();
     if (!r || clientX === undefined || clientY === undefined) {
-      applyTransform(cur.x, cur.y, k);
+      viewRef.current = { ...cur, k };
       setView({ ...cur, k });
       return;
     }
@@ -185,36 +180,67 @@ function TreeCanvas<N extends CanvasNode>({
     const cy = (clientY - r.top - r.height / 2) * unit;
     const nextX = cur.x + cx / k - cx / cur.k;
     const nextY = cur.y + cy / k - cy / cur.k;
-    applyTransform(nextX, nextY, k);
+    viewRef.current = { x: nextX, y: nextY, k };
     setView({ x: nextX, y: nextY, k });
   };
 
-  // Native wheel listener on the canvas wrapper with rAF throttle & debounced state sync
+  // Native wheel listener on the canvas wrapper with rAF throttle
   useEffect(() => {
     const el = wrap.current;
     if (!el) return;
+
+    let wheelRaf: number | null = null;
+    let pendingK: number | null = null;
+    let pendingX: number | null = null;
+    let pendingY: number | null = null;
+
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const r = el.getBoundingClientRect();
       const unit = size / Math.min(r.width, r.height);
       const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-      const cur = viewRef.current;
-      const nextK = clamp(cur.k * factor);
+
+      const curK = pendingK ?? viewRef.current.k;
+      const curX = pendingX ?? viewRef.current.x;
+      const curY = pendingY ?? viewRef.current.y;
+
+      const nextK = clamp(curK * factor);
       const cx = (e.clientX - r.left - r.width / 2) * unit;
       const cy = (e.clientY - r.top - r.height / 2) * unit;
-      const nextX = cur.x + cx / nextK - cx / cur.k;
-      const nextY = cur.y + cy / nextK - cy / cur.k;
+      const nextX = curX + cx / nextK - cx / curK;
+      const nextY = curY + cy / nextK - cy / curK;
 
-      applyTransform(nextX, nextY, nextK);
+      pendingK = nextK;
+      pendingX = nextX;
+      pendingY = nextY;
+      viewRef.current = { x: nextX, y: nextY, k: nextK };
+
+      el.classList.add('is-zooming');
+
+      if (wheelRaf === null) {
+        wheelRaf = requestAnimationFrame(() => {
+          wheelRaf = null;
+          if (pendingK !== null && pendingX !== null && pendingY !== null) {
+            const nv = { x: pendingX, y: pendingY, k: pendingK };
+            pendingK = null;
+            pendingX = null;
+            pendingY = null;
+            setView(nv);
+          }
+        });
+      }
 
       if (wheelCommitTimer.current) clearTimeout(wheelCommitTimer.current);
       wheelCommitTimer.current = window.setTimeout(() => {
-        setView({ ...viewRef.current });
-      }, 60);
+        el.classList.remove('is-zooming');
+      }, 100);
     };
+
     el.addEventListener('wheel', onWheel, { passive: false });
+
     return () => {
       el.removeEventListener('wheel', onWheel);
+      if (wheelRaf !== null) cancelAnimationFrame(wheelRaf);
       if (wheelCommitTimer.current) clearTimeout(wheelCommitTimer.current);
     };
   }, [size, maxZoom]);
@@ -222,13 +248,26 @@ function TreeCanvas<N extends CanvasNode>({
   const layer = useMemo(() => {
     const links: [N, N][] = [];
     for (const n of nodes) for (const l of n.links) if (n.id < l && byId[l]) links.push([n, byId[l]]);
+
+    let inactivePath = '';
+    const activeLines: ReactNode[] = [];
+
+    for (const [a, b] of links) {
+      const on = isOn(a.id) && isOn(b.id);
+      const can = !on && ((isOn(a.id) && canTake(b.id)) || (isOn(b.id) && canTake(a.id)));
+      const c = a.curves?.[b.id];
+      const d = c ? `M${a.x},${a.y}C${c[0]},${c[1]} ${c[2]},${c[3]} ${b.x},${b.y}` : `M${a.x},${a.y}L${b.x},${b.y}`;
+      if (on || can) {
+        activeLines.push(<path key={`${a.id}-${b.id}`} className={`tree-link ${on ? 'on' : 'can'}`} d={d} />);
+      } else {
+        inactivePath += d;
+      }
+    }
+
     return (
       <>
-        {links.map(([a, b]) => {
-          const on = isOn(a.id) && isOn(b.id);
-          const can = !on && ((isOn(a.id) && canTake(b.id)) || (isOn(b.id) && canTake(a.id)));
-          return <line key={`${a.id}-${b.id}`} className={`tree-link ${on ? 'on' : can ? 'can' : ''}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
-        })}
+        {inactivePath && <path className="tree-link" d={inactivePath} />}
+        {activeLines}
         {nodes.map((n) => {
           const on = isOn(n.id);
           const can = canTake(n.id);
@@ -241,8 +280,7 @@ function TreeCanvas<N extends CanvasNode>({
               className={`tree-node ${on ? 'on' : ''} ${can ? 'can' : ''} ${isMatched ? 'match' : ''}`}
               transform={`translate(${n.x} ${n.y})`}
               style={{
-                opacity: dim ? 0.18 : 1,
-                filter: dim ? 'grayscale(80%) brightness(0.6)' : undefined,
+                opacity: dim ? 0.2 : 1,
               }}
               onMouseMove={(e) => {
                 if (drag.current?.moved) return;
@@ -328,10 +366,12 @@ function TreeCanvas<N extends CanvasNode>({
         const nextX = dr.vx + (dx * dr.unit) / dr.k;
         const nextY = dr.vy + (dy * dr.unit) / dr.k;
 
+        viewRef.current = { x: nextX, y: nextY, k: dr.k };
+
         if (rafId.current == null) {
           rafId.current = requestAnimationFrame(() => {
             rafId.current = null;
-            applyTransform(nextX, nextY, dr.k);
+            setView({ x: nextX, y: nextY, k: dr.k });
           });
         }
       }}
@@ -387,11 +427,11 @@ function TreeCanvas<N extends CanvasNode>({
           −
         </button>
         {focus && (
-          <button className="btn sm" onClick={() => setView(home)} title="Center on your starting location">
+          <button className="btn sm" onClick={() => { viewRef.current = home; setView(home); }} title="Center on your starting location">
             Home
           </button>
         )}
-        <button className="btn sm" onClick={() => setView({ x: 0, y: 0, k: 1 })} title="View whole tree">
+        <button className="btn sm" onClick={() => { const whole = { x: 0, y: 0, k: 1 }; viewRef.current = whole; setView(whole); }} title="View whole tree">
           {focus ? 'Whole tree' : 'Reset'}
         </button>
         <button
@@ -525,7 +565,7 @@ function BaseShape({ kind, color, on, can, mine = true }: { kind: string; color:
     case 'keystone':
       return (
         <>
-          <circle className="halo" r={32} style={{ ['--region' as string]: color }} />
+          {on && <circle className="halo" r={32} style={{ ['--region' as string]: color }} />}
           <rect className="body" x={-22} y={-22} width={44} height={44} rx={7} transform="rotate(45)" style={style} />
           <circle r={9} fill={on ? color : '#2a2e38'} />
         </>
@@ -533,7 +573,7 @@ function BaseShape({ kind, color, on, can, mine = true }: { kind: string; color:
     case 'notable':
       return (
         <>
-          <circle className="halo" r={24} style={{ ['--region' as string]: color }} />
+          {on && <circle className="halo" r={24} style={{ ['--region' as string]: color }} />}
           <circle className="body" r={17} style={style} />
           <circle r={8} fill={on ? color : '#2a2e38'} />
         </>
@@ -541,7 +581,7 @@ function BaseShape({ kind, color, on, can, mine = true }: { kind: string; color:
     case 'mastery':
       return (
         <>
-          <circle className="halo" r={20} style={{ ['--region' as string]: 'var(--accent)' }} />
+          {on && <circle className="halo" r={20} style={{ ['--region' as string]: 'var(--accent)' }} />}
           <polygon className="body" points={hexPoints(15)} style={{ ...style, fill: on ? 'color-mix(in srgb, var(--accent) 45%, #2a2010)' : '#1c1f28' }} />
           <polygon points={hexPoints(6)} fill={on ? 'var(--accent-2)' : '#3a3f4c'} />
         </>
@@ -654,6 +694,7 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
           </span>
         </div>
         {n.desc && <div className="mod celestial-desc">{n.desc}</div>}
+        <div className="dim" style={{ marginTop: 4, fontSize: 'var(--fs-xs)' }}>Only one Forbidden keystone can be taken.</div>
         <StatDeltas before={before} after={after} />
         <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
           {reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to allocate (15 Passive Points)')}

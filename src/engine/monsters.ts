@@ -9,7 +9,12 @@ export const monsterReference = (level: number) => ({ hit: monsterLife(level) / 
 export function monsterMitigation(mon: MonsterInstance, amount: number, type: DamageType, penetration = 0, dot = false): number {
   if (type === 'phys') return dot ? amount : amount * (1 - armourReduction((mon.armour ?? 0) * (mon.vulnMs > 0 ? 0.5 : 1), amount));
   const shred = type === 'chaos' && (mon.chaosShredMs ?? 0) > 0 ? (mon.chaosShred ?? 0) : 0;
-  return amount * (1 - Math.min(75, mon.res[type] - penetration - shred) / 100);
+  return amount * (1 - Math.min(75, mon.res[type] - penetration - shred) / 100) * (type === 'chaos' ? witherTaken(mon) : 1);
+}
+
+/** Wither: 5% increased chaos damage taken per stack while it lasts. */
+export function witherTaken(mon: MonsterInstance): number {
+  return (mon.witherMs ?? 0) > 0 ? 1 + 0.05 * (mon.wither ?? 0) : 1;
 }
 
 /** Incoming reference damage per raw point, before the Life/ES split. */
