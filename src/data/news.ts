@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Passive tree now features three clean main concentric connecting rings (inner, mid, and outer) and connects visually close neighboring clusters directly.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.15',
+    date: '8 Nov 2026',
+    title: 'Connecting Rings and Proximity Links',
+    items: [
+      'Passive tree now features three clean main concentric connecting rings (inner, mid, and outer) and connects visually close neighboring clusters directly.',
+    ],
+  },
   {
     version: '0.4.14',
     date: '8 Nov 2026',
