@@ -14,6 +14,14 @@ export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.4.10',
+    date: '7 Nov 2026',
+    title: 'Passive Tree Zoom and Pan Restoration',
+    items: [
+      'Fixed an issue that froze the passive tree in place; full mouse-wheel zoom, button controls, and click-and-drag panning are completely restored.',
+    ],
+  },
+  {
     version: '0.4.9',
     date: '7 Nov 2026',
     title: 'Passive Tree Readability and Deep Zoom',
