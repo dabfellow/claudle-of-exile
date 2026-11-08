@@ -337,10 +337,18 @@ const MIGRATIONS: Record<number, Migration> = {
     raw.skillingMastery = {};
   },
   38: (raw) => {
-    // Rebuild unspent balances from level, Act quest bosses and the exact cost of kept allocations.
-    // Null checkpoints survive default merging and tell settlePassivePoints this is a pre-economy save.
+    // 5x Passive tree overhaul: reset all character passives and masteries across all loadout profiles so players start fresh.
+    raw.passives = [];
+    raw.masteries = {};
     raw.passivePointLevel = null;
     raw.passiveQuestPoints = null;
+    raw.characterTreeOverhaul = 2;
+    if (Array.isArray(raw.passiveProfiles)) {
+      for (const p of raw.passiveProfiles as Record<string, unknown>[]) {
+        p.passives = [];
+        p.masteries = {};
+      }
+    }
   },
 };
 

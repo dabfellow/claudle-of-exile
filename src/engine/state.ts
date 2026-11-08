@@ -27,7 +27,7 @@ export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 38;
+export const SAVE_VERSION = 39;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -84,6 +84,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     passiveQuestPoints: 0,
     passives: [],
     masteries: {},
+    characterTreeOverhaul: 2,
     ascendancy: newAscendancyState(),
     skillPassives: [],
     passiveProfiles: [{ id: 'profile_1', name: 'Profile 1', passives: [], masteries: {} }],

@@ -71,6 +71,19 @@ function actQuestPoints(s: Pick<GameState, 'bossesDefeated'>): number {
 
 /** Credit level and Act-boss awards. Missing checkpoints identify a pre-economy save. */
 export function settlePassivePoints(s: GameState): void {
+  if ((s as any).characterTreeOverhaul !== 2) {
+    s.passives = [];
+    s.masteries = {};
+    s.passivePointLevel = null;
+    s.passiveQuestPoints = null;
+    if (s.passiveProfiles) {
+      for (const p of s.passiveProfiles) {
+        p.passives = [];
+        p.masteries = {};
+      }
+    }
+    (s as any).characterTreeOverhaul = 2;
+  }
   const level = characterLevel(s);
   const quests = actQuestPoints(s);
   if (!Number.isFinite(s.passivePointLevel) || !Number.isFinite(s.passiveQuestPoints)) {

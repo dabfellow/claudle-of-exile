@@ -1090,6 +1090,8 @@ export interface GameState {
   passivePointLevel: number;
   /** Act quest-boss point awards already credited. */
   passiveQuestPoints: number;
+  /** Version tracking for the 5x passive tree overhaul reset */
+  characterTreeOverhaul?: number;
   passives: string[];
   /** chosen bonus (0–2) for each allocated mastery */
   masteries: Record<string, number>;

@@ -6,7 +6,7 @@ import { zoneDef } from '../src/data/zones';
 import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
-import { allocate, allocateReason, changeMastery, passiveNodeCost, refund, refundReason, settlePassivePoints } from '../src/engine/passives';
+import { allocate, allocateReason, changeMastery, passiveNodeCost, refund, refundReason, settlePassivePoints, startNode } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { allocateSkillNode, MAX_SKILL_TREE_POINTS, skillTreePoints } from '../src/engine/skillTree';
 import { actionIntervalMs, startSkillAction } from '../src/engine/skills';
@@ -290,6 +290,37 @@ describe('skilling tree', () => {
     const loaded = deserialize(JSON.stringify(raw));
     expect(loaded.version).toBe(SAVE_VERSION);
     expect(loaded.skillPassives).toEqual([]);
+  });
+
+  it('resets old character passives and all 3 loadouts on legacy save', () => {
+    const raw = JSON.parse(serialize(newGame(1, { name: 'Magey', classId: 'mage' })));
+    raw.version = 38;
+    delete raw.characterTreeOverhaul;
+    raw.passives = ['c_old_impossible_1', 'c_old_impossible_2'];
+    raw.masteries = { c_old_mastery: 1 };
+    raw.passiveProfiles = [
+      { id: 'profile_1', name: 'P1', passives: ['c_old_impossible_1'], masteries: {} },
+      { id: 'profile_2', name: 'P2', passives: ['c_old_impossible_2'], masteries: {} },
+      { id: 'profile_3', name: 'P3', passives: ['c_old_impossible_1'], masteries: {} },
+    ];
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.version).toBe(SAVE_VERSION);
+    expect(loaded.passives).toEqual([]);
+    expect(loaded.masteries).toEqual({});
+    expect(loaded.passiveProfiles[0].passives).toEqual([]);
+    expect(loaded.passiveProfiles[1].passives).toEqual([]);
+    expect(loaded.passiveProfiles[2].passives).toEqual([]);
+    expect(loaded.travelPoints).toBeGreaterThan(0);
+    expect(loaded.passivePoints).toBeGreaterThan(0);
+
+    // Can allocate adjacent node from mage start
+    const mageStart = PASSIVE_BY_ID[startNode(loaded)];
+    expect(mageStart).toBeDefined();
+    const adjacent = mageStart.links[0];
+    expect(adjacent).toBeDefined();
+    const err = allocate(loaded, ctx(), adjacent);
+    expect(err).toBeNull();
+    expect(loaded.passives).toContain(adjacent);
   });
 
   it('Motherlode doubles ore and slows mining', () => {

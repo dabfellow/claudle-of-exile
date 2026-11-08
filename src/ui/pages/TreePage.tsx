@@ -213,7 +213,10 @@ function TreeCanvas<N extends CanvasNode>({
                 setHover({ id: n.id, x: e.clientX, y: e.clientY });
               }}
               onMouseLeave={() => setHover((h) => (h?.id === n.id ? null : h))}
-              onClick={() => !drag.current?.moved && clickRef.current(n)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!drag.current?.moved) clickRef.current(n);
+              }}
             >
               {renderNode(n, on, can)}
             </g>
@@ -262,11 +265,6 @@ function TreeCanvas<N extends CanvasNode>({
       onPointerDown={(e) => {
         // If clicking on control buttons, don't drag the tree
         if ((e.target as HTMLElement).closest('.tree-controls')) return;
-        try {
-          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-        } catch {
-          // ignore
-        }
         const r = wrap.current!.getBoundingClientRect();
         drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, unit: size / Math.min(r.width, r.height) };
       }}
@@ -281,20 +279,8 @@ function TreeCanvas<N extends CanvasNode>({
           setView((v) => ({ ...v, x: dr.vx + (dx * dr.unit) / v.k, y: dr.vy + (dy * dr.unit) / v.k }));
         }
       }}
-      onPointerUp={(e) => {
-        try {
-          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        } catch {
-          // ignore
-        }
-        setTimeout(() => (drag.current = null), 0);
-      }}
-      onPointerCancel={(e) => {
-        try {
-          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        } catch {
-          // ignore
-        }
+      onPointerUp={() => setTimeout(() => (drag.current = null), 0)}
+      onPointerCancel={() => {
         drag.current = null;
         setHover(null);
       }}
@@ -1094,15 +1080,27 @@ function CharacterTree({ s }: { s: GameState }) {
     if (n.kind === 'start' && (n.id === myStart || s.character.classId !== 'exile')) return;
     if (refundMode) {
       if (allocated.has(n.id)) {
-        game.act((st, ctx) => refund(st, ctx, n.id));
+        game.act((st, ctx) => {
+          const err = refund(st, ctx, n.id);
+          if (err) ctx.emit({ t: 'info', text: err });
+        });
       } else {
         game.act((_, ctx) => ctx.emit({ t: 'info', text: `${n.name} is not allocated` }));
       }
       return;
     }
     if (n.kind === 'mastery' && (allocated.has(n.id) || canTake(n.id))) return setPicker(n);
-    if (allocated.has(n.id)) game.act((st, ctx) => refund(st, ctx, n.id));
-    else game.act((st, ctx) => allocate(st, ctx, n.id));
+    if (allocated.has(n.id)) {
+      game.act((st, ctx) => {
+        const err = refund(st, ctx, n.id);
+        if (err) ctx.emit({ t: 'info', text: err });
+      });
+    } else {
+      game.act((st, ctx) => {
+        const err = allocate(st, ctx, n.id);
+        if (err) ctx.emit({ t: 'info', text: err });
+      });
+    }
   };
 
   return (

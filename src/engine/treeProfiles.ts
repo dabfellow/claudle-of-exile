@@ -34,6 +34,21 @@ export function isProfileUnlocked(s: GameState, profileId: string | number): boo
 
 /** Ensure tree profile arrays and active IDs exist on GameState. */
 export function settleTreeProfiles(s: GameState): void {
+  // If character tree has not been reset for the 5x overhaul, wipe all allocations on character and all loadouts
+  if ((s as any).characterTreeOverhaul !== 2) {
+    s.passives = [];
+    s.masteries = {};
+    s.passivePointLevel = null;
+    s.passiveQuestPoints = null;
+    if (s.passiveProfiles) {
+      for (const p of s.passiveProfiles) {
+        p.passives = [];
+        p.masteries = {};
+      }
+    }
+    (s as any).characterTreeOverhaul = 2;
+  }
+
   if (!s.passiveProfiles || s.passiveProfiles.length === 0) {
     s.passiveProfiles = [
       {
