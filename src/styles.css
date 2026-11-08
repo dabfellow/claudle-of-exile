@@ -7149,8 +7149,8 @@ img.art.mat-art {
   font-family: Cinzel, serif;
   paint-order: stroke;
   stroke: var(--bg-2);
-  stroke-width: 4px;
   pointer-events: none;
+  font-weight: 600;
 }
 
 /* --- Cosmic Gateways --- */

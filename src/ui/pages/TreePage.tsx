@@ -221,16 +221,34 @@ function TreeCanvas<N extends CanvasNode>({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `version` stands in for everything drawn
   }, [version, nodes, byId, matches]);
 
-  const showNames = view.k >= Math.min(2.8, maxZoom * 0.4);
+  // Names show up once zoomed in to at least 1.8x, and dynamically scale to stay clear and readable
+  const showNames = view.k >= 1.8;
+  const unit = wrap.current ? size / Math.min(wrap.current.clientWidth || 800, wrap.current.clientHeight || 760) : size / 760;
   const nameLayer = useMemo(
     () =>
       showNames &&
-      names?.map((l) => (
-        <text key={`${l.text}@${l.x},${l.y}`} className="tree-name" x={l.x} y={l.y} textAnchor="middle" fill={l.color} fontSize={l.size ?? 15}>
-          {l.text}
-        </text>
-      )),
-    [showNames, names],
+      names?.map((l) => {
+        // Target an on-screen readable size (13-16px) across any zoom factor
+        const targetScreenPx = l.size ?? 14;
+        const fontSvgSize = Math.max(12, Math.round((targetScreenPx * unit) / view.k));
+        const strokeSvgWidth = Math.max(2, Math.round((3 * unit) / view.k));
+        const offsetY = Math.round((28 * unit) / view.k);
+        return (
+          <text
+            key={`${l.text}@${l.x},${l.y}`}
+            className="tree-name"
+            x={l.x}
+            y={l.y + offsetY}
+            textAnchor="middle"
+            fill={l.color}
+            fontSize={fontSvgSize}
+            strokeWidth={strokeSvgWidth}
+          >
+            {l.text}
+          </text>
+        );
+      }),
+    [showNames, names, view.k, unit],
   );
 
   const hovered = hover && byId[hover.id];
@@ -866,15 +884,15 @@ function searchMatches(query: string, nodes: { id: string; name: string; text: s
 }
 
 const CHAR_TREE_SIZE = 12000;
-const CHAR_TREE_ZOOM = 7.5;
+const CHAR_TREE_ZOOM = 24;
 
 const CHAR_LABELS: CanvasLabel[] = [
   ...CLASS_SECTORS.map((c) => {
     const a = (c.angle * Math.PI) / 180;
-    return { text: c.name.toUpperCase(), x: Math.round(2120 * Math.cos(a)), y: Math.round(2120 * Math.sin(a)), color: REGION_COLOR[c.key], size: 64 };
+    return { text: c.name.toUpperCase(), x: Math.round(2120 * Math.cos(a)), y: Math.round(2120 * Math.sin(a)), color: REGION_COLOR[c.key], size: 160 };
   }),
   // just above the Exile's centre start, inside the ring
-  { text: 'CROSSING', x: 0, y: -110, color: REGION_COLOR.center, size: 30 },
+  { text: 'CROSSING', x: 0, y: -110, color: REGION_COLOR.center, size: 80 },
 ];
 
 /** names under notables, keystones and class starts once zoomed in */
@@ -883,7 +901,7 @@ const CHAR_NAMES: CanvasLabel[] = PASSIVE_NODES.filter((n) => n.kind === 'notabl
   x: n.x,
   y: n.y + (n.kind === 'keystone' ? 50 : n.kind === 'start' ? 44 : 36),
   color: n.kind === 'keystone' ? 'var(--unique)' : n.kind === 'start' ? REGION_COLOR[n.region] : 'var(--accent-2)',
-  size: n.kind === 'notable' ? 14 : 18,
+  size: n.kind === 'keystone' ? 16 : n.kind === 'start' ? 15 : 14,
 }));
 
 function isProfileUnlocked(id: number, s: GameState): boolean {
