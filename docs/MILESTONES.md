@@ -4,7 +4,7 @@ Last updated 2026-11-08. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.12, Passive Tree Reset and Allocation Fix**, deployed 2026-11-08. Reset all character passive allocations across all three tree profiles so old builds start fresh on the new 5x tree with all points refunded, and fixed node click interaction so clicking reachable passive nodes allocates immediately.
+Latest confirmed live release: **0.4.13, Arterial Highways and Orbital Rings**, deployed 2026-11-08. Shortened passive tree travel paths with radial arterial highways (guaranteeing no cluster is more than 3–6 travel steps from class start), added two intermediate concentric orbital highway rings (Mid-Inner at r=1700 and Mid-Outer at r=2950) connecting all six class sectors, and cut total travel nodes across the tree by over 80%.
 
 1. Security prerequisite: confirm revocation of the historical Google OAuth client secret, confirm the separate account-helper lookup-path changes and perform signed-in isolation/login checks; see SETUP.
    Owner reports market/admin SQL applied on 2026-11-06; live anonymous Admin access checks pass. Current validation upload and real-account inspection/recovery/mail/event checks remain before next release.
