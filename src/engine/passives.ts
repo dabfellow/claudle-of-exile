@@ -86,7 +86,7 @@ export function settlePassivePoints(s: GameState): void {
   }
   const level = characterLevel(s);
   const quests = actQuestPoints(s);
-  if (!Number.isFinite(s.passivePointLevel) || !Number.isFinite(s.passiveQuestPoints)) {
+  if (s.passivePointLevel === null || s.passiveQuestPoints === null || !Number.isFinite(s.passivePointLevel) || !Number.isFinite(s.passiveQuestPoints)) {
     const spent = spentPoints(s);
     s.travelPoints = Math.max(0, level * 3 - spent.travelPoints);
     s.passivePoints = Math.max(0, level * 2 + quests - spent.passivePoints);

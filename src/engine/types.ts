@@ -1087,9 +1087,9 @@ export interface GameState {
   /** Unspent character-tree currency for mastery choices. */
   masteryPoints: number;
   /** Last character level whose tree-point awards were credited. */
-  passivePointLevel: number;
+  passivePointLevel: number | null;
   /** Act quest-boss point awards already credited. */
-  passiveQuestPoints: number;
+  passiveQuestPoints: number | null;
   /** Version tracking for the 5x passive tree overhaul reset */
   characterTreeOverhaul?: number;
   passives: string[];
