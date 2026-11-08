@@ -140,10 +140,7 @@ function TreeCanvas<N extends CanvasNode>({
   const [view, setView] = useState<View>(home);
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const drag = useRef<{ x: number; y: number; vx: number; vy: number; moved: boolean; unit: number } | null>(null);
-  const rafId = useRef<number | null>(null);
-  const nextView = useRef<View | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const clickRef = useRef(onClick);
   clickRef.current = onClick;
@@ -171,7 +168,7 @@ function TreeCanvas<N extends CanvasNode>({
       return { k, x: v.x + cx / k - cx / v.k, y: v.y + cy / k - cy / v.k };
     });
 
-  // Native wheel listener for smooth non-blocking zooming
+  // Native wheel listener on the canvas wrapper
   useEffect(() => {
     const el = wrap.current;
     if (!el) return;
@@ -239,14 +236,11 @@ function TreeCanvas<N extends CanvasNode>({
   const hovered = hover && byId[hover.id];
   return (
     <div
-      className={`tree-wrap ${isFullscreen ? 'is-fullscreen' : ''} ${isDragging ? 'is-dragging' : ''}`}
+      className={`tree-wrap ${isFullscreen ? 'is-fullscreen' : ''}`}
       ref={wrap}
       onPointerDown={(e) => {
-        try {
-          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-        } catch {
-          // ignore
-        }
+        // If clicking on control buttons, don't drag the tree
+        if ((e.target as HTMLElement).closest('.tree-controls')) return;
         const r = wrap.current!.getBoundingClientRect();
         drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, unit: size / Math.min(r.width, r.height) };
       }}
@@ -255,64 +249,20 @@ function TreeCanvas<N extends CanvasNode>({
         if (!dr) return;
         const dx = e.clientX - dr.x;
         const dy = e.clientY - dr.y;
-        if (Math.abs(dx) + Math.abs(dy) > 4) {
-          if (!dr.moved) {
-            dr.moved = true;
-            setIsDragging(true);
-            setHover(null);
-          }
-        }
+        if (Math.abs(dx) + Math.abs(dy) > 4) dr.moved = true;
         if (dr.moved) {
-          nextView.current = {
-            ...view,
-            x: dr.vx + (dx * dr.unit) / view.k,
-            y: dr.vy + (dy * dr.unit) / view.k,
-          };
-          if (rafId.current === null) {
-            rafId.current = requestAnimationFrame(() => {
-              rafId.current = null;
-              if (nextView.current) {
-                setView(nextView.current);
-              }
-            });
-          }
+          setHover(null);
+          setView((v) => ({ ...v, x: dr.vx + (dx * dr.unit) / v.k, y: dr.vy + (dy * dr.unit) / v.k }));
         }
       }}
-      onPointerUp={(e) => {
-        try {
-          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        } catch {
-          // ignore
-        }
-        if (rafId.current !== null) {
-          cancelAnimationFrame(rafId.current);
-          rafId.current = null;
-        }
-        if (nextView.current) {
-          setView(nextView.current);
-          nextView.current = null;
-        }
-        setIsDragging(false);
-        setTimeout(() => (drag.current = null), 0);
-      }}
-      onPointerCancel={(e) => {
-        try {
-          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        } catch {
-          // ignore
-        }
-        if (rafId.current !== null) {
-          cancelAnimationFrame(rafId.current);
-          rafId.current = null;
-        }
+      onPointerUp={() => setTimeout(() => (drag.current = null), 0)}
+      onPointerCancel={() => {
         drag.current = null;
-        setIsDragging(false);
         setHover(null);
       }}
       onPointerLeave={() => {
-        if (!drag.current) {
-          setHover(null);
-        }
+        drag.current = null;
+        setHover(null);
       }}
     >
       <svg viewBox={`${-size / 2} ${-size / 2} ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
@@ -326,7 +276,7 @@ function TreeCanvas<N extends CanvasNode>({
           {nameLayer}
         </g>
       </svg>
-      {hovered && !isDragging &&
+      {hovered &&
         createPortal(
           <div className="tooltip-layer" style={tipPosition(hover.x, hover.y)}>
             {tip(hovered)}

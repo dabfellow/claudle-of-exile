@@ -3180,19 +3180,6 @@ h3 {
   margin: 0;
 }
 
-.tree-wrap.is-dragging {
-  cursor: grabbing !important;
-}
-
-.tree-wrap.is-dragging * {
-  pointer-events: none !important;
-}
-
-.tree-wrap.is-dragging .tree-controls,
-.tree-wrap.is-dragging .tree-controls * {
-  pointer-events: auto !important;
-}
-
 .tree-wrap:active {
   cursor: grabbing;
 }
@@ -3270,6 +3257,13 @@ h3 {
   top: 12px;
   display: flex;
   gap: 6px;
+  z-index: 20;
+}
+
+.tree-controls button {
+  position: relative;
+  z-index: 21;
+  pointer-events: auto;
 }
 
 /* stash / vendor */
