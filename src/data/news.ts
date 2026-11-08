@@ -14,6 +14,16 @@ export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.4.18',
+    date: '8 Nov 2026',
+    title: 'Gateway Visual Fix and Organic Tree Shapes',
+    items: [
+      'Fixed Cosmic Gateway detection so only the 6 intended portals render as gateways instead of all approach roads.',
+      'Replaced the passive skill tree background with a solid slate tone and removed looping SVG animations to eliminate pan and zoom stutter.',
+      'Added organic cluster layouts including Pokeballs, Tridents, Winding Trails, and Spirals to bring structural variety and texture to passive clusters.',
+    ],
+  },
+  {
     version: '0.4.17',
     date: '8 Nov 2026',
     title: 'Safer Saves, Working Supports and New Guides',
