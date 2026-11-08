@@ -6962,11 +6962,6 @@ img.art.mat-art {
   height: min(74vh, 820px);
 }
 
-.tree-canvas-root {
-  will-change: transform;
-  transform: translateZ(0);
-}
-
 /* --- Top Bar & Profile Manager --- */
 .tree-top-bar {
   display: flex;

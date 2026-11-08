@@ -168,17 +168,20 @@ function TreeCanvas<N extends CanvasNode>({
       return { k, x: v.x + cx / k - cx / v.k, y: v.y + cy / k - cy / v.k };
     });
 
+  const zoomAtRef = useRef(zoomAt);
+  zoomAtRef.current = zoomAt;
+
   // Native wheel listener on the canvas wrapper
   useEffect(() => {
     const el = wrap.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY);
+      zoomAtRef.current(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY);
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  });
+  }, []);
 
   const layer = useMemo(() => {
     const links: [N, N][] = [];
@@ -259,6 +262,11 @@ function TreeCanvas<N extends CanvasNode>({
       onPointerDown={(e) => {
         // If clicking on control buttons, don't drag the tree
         if ((e.target as HTMLElement).closest('.tree-controls')) return;
+        try {
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
         const r = wrap.current!.getBoundingClientRect();
         drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, unit: size / Math.min(r.width, r.height) };
       }}
@@ -273,18 +281,29 @@ function TreeCanvas<N extends CanvasNode>({
           setView((v) => ({ ...v, x: dr.vx + (dx * dr.unit) / v.k, y: dr.vy + (dy * dr.unit) / v.k }));
         }
       }}
-      onPointerUp={() => setTimeout(() => (drag.current = null), 0)}
-      onPointerCancel={() => {
+      onPointerUp={(e) => {
+        try {
+          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
+        setTimeout(() => (drag.current = null), 0);
+      }}
+      onPointerCancel={(e) => {
+        try {
+          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
         drag.current = null;
         setHover(null);
       }}
       onPointerLeave={() => {
-        drag.current = null;
-        setHover(null);
+        if (!drag.current) setHover(null);
       }}
     >
       <svg viewBox={`${-size / 2} ${-size / 2} ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
-        <g className="tree-canvas-root" transform={`scale(${view.k}) translate(${view.x} ${view.y})`} style={{ willChange: 'transform', transformOrigin: '0 0' }}>
+        <g transform={`scale(${view.k}) translate(${view.x} ${view.y})`}>
           {labels?.map((l) => (
             <text key={l.text} x={l.x} y={l.y} textAnchor="middle" dominantBaseline="middle" fill={l.color} opacity={0.5} fontFamily="Cinzel, serif" fontSize={l.size ?? 24} letterSpacing={5}>
               {l.text}
