@@ -14,6 +14,15 @@ export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.4.12',
+    date: '7 Nov 2026',
+    title: 'Passive Tree Reset and Allocation Fix',
+    items: [
+      'Reset all character passive allocations across all three tree profiles so old builds start fresh on the new 5x tree layout with all points refunded.',
+      'Fixed node click interaction so clicking reachable passive nodes and mastery sockets allocates them immediately.',
+    ],
+  },
+  {
     version: '0.4.11',
     date: '7 Nov 2026',
     title: 'Clean Passive Tree Canvas',
