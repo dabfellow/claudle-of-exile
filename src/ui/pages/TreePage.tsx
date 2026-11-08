@@ -139,11 +139,25 @@ function TreeCanvas<N extends CanvasNode>({
   const home = focus ?? { x: 0, y: 0, k: 1 };
   const [view, setView] = useState<View>(home);
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const drag = useRef<{ x: number; y: number; vx: number; vy: number; moved: boolean; unit: number } | null>(null);
+  const rafId = useRef<number | null>(null);
+  const nextView = useRef<View | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const clickRef = useRef(onClick);
   clickRef.current = onClick;
   const clamp = (k: number) => Math.min(maxZoom, Math.max(0.4, k));
+
+  // Escape key exits fullscreen
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isFullscreen]);
 
   /** zoom by `f`, keeping the point under the cursor (or the centre) still */
   const zoomAt = (f: number, clientX?: number, clientY?: number) =>
@@ -157,7 +171,7 @@ function TreeCanvas<N extends CanvasNode>({
       return { k, x: v.x + cx / k - cx / v.k, y: v.y + cy / k - cy / v.k };
     });
 
-  // a native listener so the wheel zooms the tree instead of scrolling the page
+  // Native wheel listener for smooth non-blocking zooming
   useEffect(() => {
     const el = wrap.current;
     if (!el) return;
@@ -193,9 +207,11 @@ function TreeCanvas<N extends CanvasNode>({
               style={{
                 opacity: dim ? 0.18 : 1,
                 filter: dim ? 'grayscale(80%) brightness(0.6)' : undefined,
-                transition: 'opacity 0.25s, filter 0.25s',
               }}
-              onMouseMove={(e) => setHover({ id: n.id, x: e.clientX, y: e.clientY })}
+              onMouseMove={(e) => {
+                if (drag.current?.moved) return;
+                setHover({ id: n.id, x: e.clientX, y: e.clientY });
+              }}
               onMouseLeave={() => setHover((h) => (h?.id === n.id ? null : h))}
               onClick={() => !drag.current?.moved && clickRef.current(n)}
             >
@@ -223,7 +239,7 @@ function TreeCanvas<N extends CanvasNode>({
   const hovered = hover && byId[hover.id];
   return (
     <div
-      className="tree-wrap"
+      className={`tree-wrap ${isFullscreen ? 'is-fullscreen' : ''} ${isDragging ? 'is-dragging' : ''}`}
       ref={wrap}
       onPointerDown={(e) => {
         try {
@@ -239,10 +255,27 @@ function TreeCanvas<N extends CanvasNode>({
         if (!dr) return;
         const dx = e.clientX - dr.x;
         const dy = e.clientY - dr.y;
-        if (Math.abs(dx) + Math.abs(dy) > 4) dr.moved = true;
+        if (Math.abs(dx) + Math.abs(dy) > 4) {
+          if (!dr.moved) {
+            dr.moved = true;
+            setIsDragging(true);
+            setHover(null);
+          }
+        }
         if (dr.moved) {
-          setHover(null);
-          setView((v) => ({ ...v, x: dr.vx + (dx * dr.unit) / v.k, y: dr.vy + (dy * dr.unit) / v.k }));
+          nextView.current = {
+            ...view,
+            x: dr.vx + (dx * dr.unit) / view.k,
+            y: dr.vy + (dy * dr.unit) / view.k,
+          };
+          if (rafId.current === null) {
+            rafId.current = requestAnimationFrame(() => {
+              rafId.current = null;
+              if (nextView.current) {
+                setView(nextView.current);
+              }
+            });
+          }
         }
       }}
       onPointerUp={(e) => {
@@ -251,6 +284,15 @@ function TreeCanvas<N extends CanvasNode>({
         } catch {
           // ignore
         }
+        if (rafId.current !== null) {
+          cancelAnimationFrame(rafId.current);
+          rafId.current = null;
+        }
+        if (nextView.current) {
+          setView(nextView.current);
+          nextView.current = null;
+        }
+        setIsDragging(false);
         setTimeout(() => (drag.current = null), 0);
       }}
       onPointerCancel={(e) => {
@@ -259,12 +301,18 @@ function TreeCanvas<N extends CanvasNode>({
         } catch {
           // ignore
         }
+        if (rafId.current !== null) {
+          cancelAnimationFrame(rafId.current);
+          rafId.current = null;
+        }
         drag.current = null;
+        setIsDragging(false);
         setHover(null);
       }}
       onPointerLeave={() => {
-        drag.current = null;
-        setHover(null);
+        if (!drag.current) {
+          setHover(null);
+        }
       }}
     >
       <svg viewBox={`${-size / 2} ${-size / 2} ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
@@ -278,7 +326,7 @@ function TreeCanvas<N extends CanvasNode>({
           {nameLayer}
         </g>
       </svg>
-      {hovered &&
+      {hovered && !isDragging &&
         createPortal(
           <div className="tooltip-layer" style={tipPosition(hover.x, hover.y)}>
             {tip(hovered)}
@@ -286,22 +334,29 @@ function TreeCanvas<N extends CanvasNode>({
           document.body,
         )}
       <div className="tree-controls">
-        <button className="btn sm" onClick={() => zoomAt(1.25)}>
+        <button className="btn sm" onClick={() => zoomAt(1.25)} title="Zoom in">
           +
         </button>
-        <button className="btn sm" onClick={() => zoomAt(1 / 1.25)}>
+        <button className="btn sm" onClick={() => zoomAt(1 / 1.25)} title="Zoom out">
           −
         </button>
         {focus && (
-          <button className="btn sm" onClick={() => setView(home)}>
+          <button className="btn sm" onClick={() => setView(home)} title="Center on your starting location">
             Home
           </button>
         )}
-        <button className="btn sm" onClick={() => setView({ x: 0, y: 0, k: 1 })}>
+        <button className="btn sm" onClick={() => setView({ x: 0, y: 0, k: 1 })} title="View whole tree">
           {focus ? 'Whole tree' : 'Reset'}
         </button>
+        <button
+          className={`btn sm ${isFullscreen ? 'primary' : 'ghost'}`}
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          title={isFullscreen ? 'Exit Fullscreen (Esc)' : 'Expand to Fullscreen'}
+        >
+          {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
+        </button>
       </div>
-      <div className="tree-legend">Drag to pan · scroll to zoom · click to allocate</div>
+      <div className="tree-legend">Drag to pan · scroll to zoom · click to allocate {isFullscreen && '· Esc to exit fullscreen'}</div>
     </div>
   );
 }
