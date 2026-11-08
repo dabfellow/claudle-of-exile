@@ -3188,7 +3188,7 @@ h3 {
   height: min(72vh, 760px);
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
-  background: radial-gradient(circle at 50% 50%, var(--panel), var(--bg-2) 70%);
+  background: #0b0d12;
   overflow: hidden;
   cursor: grab;
   touch-action: none;
@@ -7211,27 +7211,15 @@ img.art.mat-art {
   cursor: pointer;
 }
 
-.gateway-node circle.gateway-pulse-outer {
-  fill: none;
-  stroke: #00f0ff;
-  stroke-width: 1.5;
-  opacity: 0.6;
-  animation: gatewayPulse 2.4s ease-out infinite;
-}
-
+.gateway-node circle.gateway-pulse-outer,
 .gateway-node circle.gateway-pulse-inner {
-  fill: none;
-  stroke: #00f0ff;
-  stroke-width: 1.5;
-  opacity: 0.8;
-  animation: gatewayPulse 2.4s ease-out 1.2s infinite;
+  display: none;
 }
 
 .gateway-node circle.gateway-bg {
   fill: #031525;
   stroke: #00f0ff;
   stroke-width: 2.5;
-  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.7));
 }
 
 .gateway-node circle.gateway-ring {
@@ -7239,8 +7227,6 @@ img.art.mat-art {
   stroke: #00f0ff;
   stroke-width: 2;
   stroke-dasharray: 6 4;
-  animation: gatewaySpin 12s linear infinite;
-  transform-origin: center;
 }
 
 .gateway-node circle.gateway-inner-ring {
@@ -7248,13 +7234,10 @@ img.art.mat-art {
   stroke: #70f8ff;
   stroke-width: 1.5;
   stroke-dasharray: 4 3;
-  animation: gatewaySpinReverse 8s linear infinite;
-  transform-origin: center;
 }
 
 .gateway-node circle.gateway-core {
   fill: #00f0ff;
-  filter: drop-shadow(0 0 6px #00f0ff);
 }
 
 .gateway-node circle.gateway-dot {
@@ -7264,7 +7247,6 @@ img.art.mat-art {
 .gateway-node.on circle.gateway-bg {
   fill: #052a42;
   stroke: #38f9d7;
-  filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.9));
 }
 
 .gateway-tip {
@@ -7302,25 +7284,18 @@ img.art.mat-art {
 }
 
 .doomed-node polygon.doomed-aura {
-  fill: rgba(255, 30, 60, 0.12);
-  stroke: #ff2a4b;
-  stroke-width: 1;
-  stroke-dasharray: 4 3;
-  animation: doomedAura 3s ease-in-out infinite alternate;
-  transform-origin: center;
+  display: none;
 }
 
 .doomed-node polygon.doomed-diamond {
   fill: #1c0508;
   stroke: #e6203a;
   stroke-width: 2.5;
-  filter: drop-shadow(0 0 10px rgba(230, 32, 58, 0.6));
 }
 
 .doomed-node.on polygon.doomed-diamond {
   fill: #3b0910;
   stroke: #ff3b56;
-  filter: drop-shadow(0 0 16px rgba(255, 59, 86, 0.9));
 }
 
 .doomed-node polygon.doomed-inner-diamond {
@@ -7331,14 +7306,12 @@ img.art.mat-art {
 
 .doomed-node path.doomed-skull {
   fill: #ff6b81;
-  filter: drop-shadow(0 0 4px #ff2a4b);
 }
 
 .doomed-warning-badge rect {
   fill: #240508;
   stroke: #ff3b56;
   stroke-width: 1.2;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
 }
 
 .doomed-warning-badge text {
@@ -7351,7 +7324,6 @@ img.art.mat-art {
 
 .doomed-tip {
   border-color: rgba(255, 42, 75, 0.4) !important;
-  box-shadow: 0 0 16px rgba(255, 42, 75, 0.2);
 }
 
 .doomed-warning-box {
@@ -7381,36 +7353,20 @@ img.art.mat-art {
   cursor: pointer;
 }
 
-.celestial-star-node circle.celestial-halo {
-  fill: none;
-  stroke: #ff3d9a;
-  stroke-width: 1.5;
-  stroke-dasharray: 4 4;
-  opacity: 0.6;
-  animation: celestialSpin 24s linear infinite;
-  transform-origin: center;
-}
-
+.celestial-star-node circle.celestial-halo,
 .celestial-star-node circle.celestial-inner-halo {
-  fill: none;
-  stroke: #ff77c2;
-  stroke-width: 1.2;
-  opacity: 0.5;
-  animation: celestialSpin 16s linear reverse infinite;
-  transform-origin: center;
+  display: none;
 }
 
 .celestial-star-node polygon.celestial-star-outer {
   fill: #1f0815;
   stroke: #ff2d8d;
   stroke-width: 2.5;
-  filter: drop-shadow(0 0 12px rgba(255, 45, 141, 0.7));
 }
 
 .celestial-star-node.on polygon.celestial-star-outer {
   fill: #3a0d27;
   stroke: #ff66b2;
-  filter: drop-shadow(0 0 20px rgba(255, 61, 154, 0.95));
 }
 
 .celestial-star-node polygon.celestial-star-inner {
@@ -7421,7 +7377,6 @@ img.art.mat-art {
 
 .celestial-star-node circle.celestial-core {
   fill: #ff3d9a;
-  filter: drop-shadow(0 0 8px #ff3d9a);
 }
 
 .celestial-star-node circle.celestial-spark {

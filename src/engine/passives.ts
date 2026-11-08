@@ -18,7 +18,7 @@ function gatewayStat(node: PassiveNode): string | undefined {
 }
 
 export function isCosmicGateway(node: PassiveNode): boolean {
-  return node.kind === 'gateway' || !!node.gatewayPair || !!gatewayStat(node) || /(?:cosmic[_ -]?)?gateway/i.test(`${node.id} ${node.name}`);
+  return node.kind === 'gateway' || !!node.gatewayPair || !!gatewayStat(node);
 }
 
 /** Resolve explicit gateway metadata first, then the six named conduit pairs used by the tree. */

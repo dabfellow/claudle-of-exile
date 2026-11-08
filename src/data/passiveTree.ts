@@ -238,7 +238,7 @@ export const MASTERIES: Record<string, MasteryOption[]> = {
 };
 
 type MasteryTheme = keyof typeof MASTERIES;
-type Shape = 'line' | 'fork' | 'wheel';
+type Shape = 'line' | 'trail' | 'fork' | 'trident' | 'wheel' | 'pokeball' | 'spiral';
 type Port = 'entry' | 'out' | 'left' | 'right';
 
 export interface ClusterSpec {
@@ -551,6 +551,17 @@ function build(): PassiveNode[] {
       mastery(at(45, 50 * side), n);
       return { entry: ids[0], out: n, left: n, right: n };
     }
+
+    if (shape === 'trail') {
+      // Winding snake / trail: 2 smalls curving out, ending in a notable
+      const s1 = node('small', at(-55, -20 * side));
+      const s2 = node('small', at(5, 25 * side));
+      const n = node('notable', at(65, -10 * side));
+      chain([s1, s2, n]);
+      mastery(at(50, 45 * side), n);
+      return { entry: s1, out: n, left: s2, right: n };
+    }
+
     if (shape === 'fork') {
       const entry = node('small', at(-65, 0));
       const arm = (s: number) => {
@@ -565,6 +576,59 @@ function build(): PassiveNode[] {
       return { entry, out: right, left, right };
     }
 
+    if (shape === 'trident') {
+      // Trident: 3 prongs from an entry node: left arm, center notable prong, right arm
+      const entry = node('small', at(-65, 0));
+      const leftSmall = node('small', at(-10, -50));
+      const leftN = node('notable', at(55, -65));
+      chain([entry, leftSmall, leftN]);
+
+      const midSmall = node('small', at(0, 0));
+      chain([entry, midSmall]);
+
+      const rightN = node('notable', at(60, 55));
+      chain([entry, rightN]);
+
+      mastery(at(65, 0), leftN);
+      return { entry, out: rightN, left: leftN, right: rightN };
+    }
+
+    if (shape === 'pokeball') {
+      // Pokeball: outer ring with a bisecting central chord through to a notable
+      // Ring has 6 peripheral nodes, center chord connects entry -> central notable -> rim
+      const s1 = node('small', at(-85, 0)); // entry
+      const s2 = node('small', at(-42, -74));
+      const n1 = node('notable', at(42, -74));
+      const s3 = node('small', at(85, 0)); // far rim
+      const n2 = node('notable', at(42, 74));
+      const s4 = node('small', at(-42, 74));
+      // Outer rim
+      chain([s1, s2, n1, s3, n2, s4, s1]);
+
+      // Bisecting chord: central notable in the center of the pokeball
+      const nCenter = node('notable', at(0, 0));
+      link(s1, nCenter);
+      link(nCenter, s3);
+      mastery(at(0, -42), nCenter);
+
+      return { entry: s1, left: s2, out: s3, right: s4 };
+    }
+
+    if (shape === 'spiral') {
+      // Spiral / Nautilus: curling inward towards the central notable & mastery
+      const s1 = node('small', at(-90, 20)); // entry
+      const s2 = node('small', at(-50, -65));
+      const n1 = node('notable', at(35, -75));
+      const s3 = node('small', at(85, -15));
+      const n2 = node('notable', at(55, 60));
+      const s4 = node('small', at(-10, 65));
+      const nCenter = node('notable', at(0, 0)); // inner spiral eye
+      chain([s1, s2, n1, s3, n2, s4, nCenter]);
+      mastery(at(-40, 15), nCenter);
+      return { entry: s1, left: s2, out: n2, right: s4 };
+    }
+
+    // Standard 7-node wheel
     const ring = Array.from({ length: 7 }, (_, i) => {
       const a = rad(180 + i * (360 / 7));
       return node(i === 2 || i === 4 || i === 5 ? 'notable' : 'small', at(Math.cos(a) * 85, Math.sin(a) * 85));
