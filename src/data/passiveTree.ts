@@ -469,7 +469,7 @@ const makeSectorClusters = (secKey: string, travel: StatMap): Record<SlotId, Clu
   R5: c(`${secKey}_R5`, 'projectile', ['Deadeye Mark', { projectilePct: 10 }], ['Piercing Volley', { projectilePct: 30, extraChains: 1 }], ['Sniper Nest', { projectilePct: 25, critMulti: 18 }], ['Eagle Sight', { accuracy: 120, critChancePct: 20 }]),
   R6: c(`${secKey}_R6`, 'accuracy', ['Flawless Aim', { accuracy: 40 }], ['True Strike', { accuracy: 120, critChancePct: 20 }], ['Deadly Range', { critMulti: 20, accuracy: 80 }], ['Targeting Array', { dexSkillSpeed: 8, projectilePct: 20 }]),
 
-  P1: c(`${secKey}_P1`, 'cold', ['Glacial Shard', { coldPct: 12 }], ['Permafrost', { coldPct: 30, chillOnHit: 20 }], ['Hypothermic Surge', { coldCrit: 25, critMulti: 20 }], ['Absolute Bulwark', { shieldEffect: 30, energyShield: 40 }]),
+  P1: c(`${secKey}_P1`, 'cold', ['Glacial Shard', { coldPct: 12 }], ['Permafrost', { coldPct: 30, chillOnHit: 20 }], ['Hypothermic Surge', { critChancePct: 25, critMulti: 20 }], ['Absolute Bulwark', { shieldEffect: 30, energyShield: 40 }]),
   P2: c(`${secKey}_P2`, 'bleed', ['Crimson Strike', { bleedPct: 12 }], ['Crimson Dance', { bleedPct: 35, bleedBossMore: 25 }], ['Exsanguinate', { bleedDuration: 30, physPct: 15 }]),
   P3: c(`${secKey}_P3`, 'fire', ['Molten Surge', { firePct: 12 }], ['Cauterize', { firePct: 35, ignitePct: 40 }], ['Thermal Shock', { elemPct: 20, igniteDuration: 30 }]),
   P4: c(`${secKey}_P4`, 'light', ['Conductive Current', { lightPct: 12 }], ['Arcing Nova', { lightPct: 35, extraChains: 1 }], ['Voltsurge', { lightCrit: 25, chainMore: 15 }], ['Storm Shield', { extraBlocks: 1, energyShield: 35 }]),
