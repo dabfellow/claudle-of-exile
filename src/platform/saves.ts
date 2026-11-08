@@ -22,6 +22,14 @@ export interface CharacterSummary {
   totalLevel: number;
   createdAt: number;
   lastPlayed: number;
+  /** the game session that wrote this cloud row (cloud rows only), so a save whose reply was lost can recognise its own write */
+  savedBy?: string;
+}
+
+/** The cloud version a browser's local copy grew from: the server's stamp for that row, and that version's save time. */
+export interface SyncBase {
+  stamp: string;
+  savedAt: number;
 }
 
 /** Where characters live. Async so a cloud implementation can share the interface. */
@@ -122,15 +130,49 @@ export class LocalSaveStore implements SaveStore {
     return raw ? deserialize(raw) : null;
   }
 
-  /** Writes synchronously before resolving, so it is safe to call from beforeunload. */
+  /**
+   * Writes synchronously before resolving, so it is safe to call from beforeunload.
+   * A full or blocked browser storage rejects the promise rather than throwing, so callers' `.catch` sees it.
+   */
   save(s: GameState): Promise<void> {
-    this.writeSync(s);
-    return Promise.resolve();
+    try {
+      this.writeSync(s);
+      return Promise.resolve();
+    } catch (err) {
+      return Promise.reject(err);
+    }
   }
 
   async remove(id: string): Promise<void> {
     this.storage.removeItem(this.charKey(id));
+    this.storage.removeItem(this.syncKey(id));
     this.writeIndex(this.readIndex().filter((c) => c.id !== id));
+  }
+
+  private syncKey(id: string) {
+    return `coe-${this.accountId}-sync-${id}`;
+  }
+
+  /** Which cloud version this browser's copy of a character grew from (cloud accounts only). */
+  syncBase(id: string): SyncBase | null {
+    try {
+      return JSON.parse(this.storage.getItem(this.syncKey(id)) ?? 'null') as SyncBase | null;
+    } catch {
+      return null;
+    }
+  }
+
+  setSyncBase(id: string, base: SyncBase): void {
+    this.storage.setItem(this.syncKey(id), JSON.stringify(base));
+  }
+
+  /** Keeps a copy that lost to another device's save, so it can still be recovered by hand. One per character. */
+  keepConflict(s: GameState): void {
+    this.storage.setItem(`coe-${this.accountId}-conflict-${s.character.id}`, serialize(s));
+  }
+
+  conflictCopy(id: string): string | null {
+    return this.storage.getItem(`coe-${this.accountId}-conflict-${id}`);
   }
 
   async loadAccount(realm: Realm = STANDARD_REALM): Promise<AccountState | null> {
@@ -146,10 +188,14 @@ export class LocalSaveStore implements SaveStore {
     return null;
   }
 
-  /** Synchronous like save(), so an item never leaves the stash without reaching the bag. */
+  /** Synchronous like save(), so an item never leaves the stash without reaching the bag. Rejects, like save(), if storage is full. */
   saveAccount(a: AccountState): Promise<void> {
-    this.storage.setItem(this.accountKey(a.realm), JSON.stringify(a));
-    return Promise.resolve();
+    try {
+      this.storage.setItem(this.accountKey(a.realm), JSON.stringify(a));
+      return Promise.resolve();
+    } catch (err) {
+      return Promise.reject(err);
+    }
   }
 
   async removeAccount(realm: Realm = STANDARD_REALM): Promise<void> {
@@ -226,31 +272,88 @@ export interface CharacterRow {
 export const ACCOUNT_ROW_PREFIX = 'account:';
 const ACCOUNT_CLASS = 'account';
 
-/** The handful of table operations the cloud store needs (Supabase in the app, in-memory in tests). */
+/**
+ * The handful of table operations the cloud store needs (Supabase in the app, in-memory in tests).
+ * `stamp` is the row's `updated_at` as the server stored it: it changes on every write, so it identifies a version.
+ */
 export interface CharacterTable {
   list(): Promise<{ id: string; summary: CharacterSummary }[]>;
-  get(id: string): Promise<{ save: unknown } | null>;
-  upsert(row: CharacterRow): Promise<void>;
+  get(id: string): Promise<{ save: unknown; summary?: CharacterSummary; updated_at?: string } | null>;
+  /** The row's current version and summary, without the (large) save, or null if there is no row. */
+  head(id: string): Promise<{ stamp: string; summary: CharacterSummary } | null>;
+  /** Writes the row whatever is there (a brand-new character, or the account row). Returns the stored version. */
+  upsert(row: CharacterRow): Promise<string>;
+  /** Writes over the row only if it is still at version `stamp`. Returns the new version, or null if it has moved on or is gone. */
+  replace(row: CharacterRow, stamp: string): Promise<string | null>;
   remove(id: string): Promise<void>;
 }
 
 export type SyncStatus = 'synced' | 'saving' | 'offline';
 
+function sessionId(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `s${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+}
+
 /**
  * Characters saved to the cloud, with a local copy in browser storage so a slow or failed
- * request never loses progress. Whichever copy is newer wins when loading.
+ * request never loses progress.
+ *
+ * A character upload only replaces the cloud copy it grew from. If another device (or a stale tab) has saved
+ * since, the upload is refused rather than putting older progress over newer, whatever the clocks say.
+ * Loading takes the local copy only when it grew from the current cloud version.
  */
 export class CloudSaveStore implements SaveStore {
   status: SyncStatus = 'synced';
   onStatus?: (s: SyncStatus) => void;
+  /** Another device saved this character after this session last synced it: this session stops uploading it. */
+  onConflict?: (id: string) => void;
   private inFlight = new Map<string, Promise<void>>();
   private queued = new Map<string, () => CharacterRow>();
+  /** this session's view of each character's cloud version; the browser's stored copy is the fallback */
+  private bases = new Map<string, SyncBase>();
+  private conflicted = new Set<string>();
+  private readonly session = sessionId();
+  private localFailReported = false;
 
   constructor(
     private table: CharacterTable,
     private cache: LocalSaveStore,
     private userId: string,
   ) {}
+
+  /** The browser's own copy couldn't be written (storage full or blocked): say so once, and keep saving to the cloud. */
+  private localFailed = (err: unknown) => {
+    if (this.localFailReported) return;
+    this.localFailReported = true;
+    reportError(err, { where: 'saveLocal' });
+  };
+
+  private base(id: string): SyncBase | null {
+    return this.bases.get(id) ?? this.cache.syncBase(id);
+  }
+
+  private setBase(id: string, base: SyncBase) {
+    this.bases.set(id, base);
+    try {
+      this.cache.setSyncBase(id, base);
+    } catch (err) {
+      // storage full: this session still remembers it
+      this.localFailed(err);
+    }
+  }
+
+  /** A row this session wrote itself (its reply may have been lost), no newer than what it is about to write. */
+  private ownRow(head: { summary: CharacterSummary } | null, row: CharacterRow) {
+    return !!head && head.summary?.savedBy === this.session && head.summary.lastPlayed <= row.summary.lastPlayed;
+  }
+
+  private conflict(id: string) {
+    if (this.conflicted.has(id)) return;
+    this.conflicted.add(id);
+    this.queued.delete(id);
+    reportError(new Error('Cloud save refused: another device saved this character first'), { where: 'saveConflict', id });
+    this.onConflict?.(id);
+  }
 
   private accountRow(realm: Realm) {
     return `${ACCOUNT_ROW_PREFIX}${realm}:${this.userId}`;
@@ -281,37 +384,101 @@ export class CloudSaveStore implements SaveStore {
 
   async load(id: string): Promise<GameState | null> {
     const local = await this.cache.load(id);
-    let remote: GameState | null = null;
+    let row: Awaited<ReturnType<CharacterTable['get']>> = null;
     try {
-      const row = await this.table.get(id);
-      remote = row ? deserialize(JSON.stringify(row.save)) : null;
+      row = await this.table.get(id);
       this.setStatus('synced');
     } catch {
+      // offline: play the local copy; the next save checks the cloud before writing over it
       this.setStatus('offline');
+      return local;
     }
-    if (remote && (!local || remote.lastSaved >= local.lastSaved)) {
-      await this.cache.save(remote);
-      return remote;
+    this.conflicted.delete(id);
+    const remote = row ? deserialize(JSON.stringify(row.save)) : null;
+    if (!row || !remote) {
+      if (local) void this.save(local);
+      return local;
     }
-    // the local copy is newer (or the only one): push it up
-    if (local) void this.save(local);
-    return local;
+    const stamp = row.updated_at;
+    const base = this.base(id);
+    let useLocal: boolean;
+    if (!local) useLocal = false;
+    else if (!stamp || !base) useLocal = local.lastSaved > remote.lastSaved; // no version on record yet (saves from before this check)
+    else if (base.stamp === stamp) useLocal = local.lastSaved > base.savedAt; // nobody else has saved since this browser last synced
+    else useLocal = false; // another device saved since: its copy wins, whatever the clocks say
+    if (stamp) this.setBase(id, { stamp, savedAt: remote.lastSaved });
+    if (useLocal) {
+      void this.save(local!);
+      return local;
+    }
+    if (local && base && stamp && base.stamp !== stamp && local.lastSaved > base.savedAt) {
+      // both devices played on from the same save: keep the losing copy rather than silently drop it
+      try {
+        this.cache.keepConflict(local);
+      } catch (err) {
+        this.localFailed(err);
+      }
+      reportError(new Error('Cloud save conflict: kept the cloud copy'), { where: 'loadConflict', id, localSaved: local.lastSaved, cloudSaved: remote.lastSaved });
+    }
+    await this.cache.save(remote).catch(this.localFailed);
+    return remote;
   }
 
-  /** Writes the local copy immediately, then uploads; overlapping saves collapse into one. */
+  /** Writes the local copy immediately, then uploads; overlapping saves collapse into one. A failed local write still uploads. */
   save(s: GameState): Promise<void> {
-    void this.cache.save(s);
-    return this.upload(s.character.id, () => ({
-      id: s.character.id,
-      name: s.character.name,
-      class_id: s.character.classId,
-      summary: summarize(s),
-      save: JSON.parse(serialize(s)),
-      updated_at: new Date(s.lastSaved).toISOString(),
-    }));
+    this.cache.save(s).catch(this.localFailed);
+    return this.upload(
+      s.character.id,
+      () => ({
+        id: s.character.id,
+        name: s.character.name,
+        class_id: s.character.classId,
+        summary: { ...summarize(s), savedBy: this.session },
+        save: JSON.parse(serialize(s)),
+        updated_at: new Date(s.lastSaved).toISOString(),
+      }),
+      (row) => this.writeCharacter(row),
+    );
   }
 
-  private upload(id: string, row: () => CharacterRow): Promise<void> {
+  /** Replaces the cloud copy only if it is still the version this session last saw. Returns false if refused. */
+  private async writeCharacter(row: CharacterRow): Promise<boolean> {
+    const id = row.id;
+    if (this.conflicted.has(id)) return false;
+    let base = this.base(id);
+    if (!base) {
+      const head = await this.table.head(id);
+      if (!head) {
+        this.setBase(id, { stamp: await this.table.upsert(row), savedAt: row.summary.lastPlayed });
+        return true;
+      }
+      // a cloud copy this session never loaded: don't write over it blind
+      if (!this.ownRow(head, row)) {
+        this.conflict(id);
+        return false;
+      }
+      base = { stamp: head.stamp, savedAt: head.summary.lastPlayed };
+    }
+    let stamp = await this.table.replace(row, base.stamp);
+    if (stamp === null) {
+      // maybe our own last write landed but its reply was lost
+      const head = await this.table.head(id);
+      if (head && head.stamp !== base.stamp && this.ownRow(head, row)) stamp = await this.table.replace(row, head.stamp);
+      else if (head && head.stamp === base.stamp) {
+        // the row is still at our version, so the version match itself failed: don't stop saving over it
+        reportError(new Error('Cloud save version match failed'), { where: 'saveStamp', id, stamp: base.stamp });
+        stamp = await this.table.upsert(row);
+      }
+    }
+    if (stamp === null) {
+      this.conflict(id);
+      return false;
+    }
+    this.setBase(id, { stamp, savedAt: row.summary.lastPlayed });
+    return true;
+  }
+
+  private upload(id: string, row: () => CharacterRow, write: (row: CharacterRow) => Promise<boolean | string>): Promise<void> {
     if (this.inFlight.has(id)) {
       this.queued.set(id, row);
       return this.inFlight.get(id)!;
@@ -319,8 +486,8 @@ export class CloudSaveStore implements SaveStore {
     const run = async (make: () => CharacterRow): Promise<void> => {
       this.setStatus('saving');
       try {
-        await this.table.upsert(make());
-        this.setStatus('synced');
+        // a refused write leaves the progress in this browser only, which is what 'offline' tells the player
+        this.setStatus((await write(make())) === false ? 'offline' : 'synced');
       } catch {
         this.setStatus('offline');
       }
@@ -337,6 +504,8 @@ export class CloudSaveStore implements SaveStore {
   async remove(id: string): Promise<void> {
     await this.table.remove(id);
     await this.cache.remove(id);
+    this.bases.delete(id);
+    this.conflicted.delete(id);
   }
 
   /** Same rule as a character, except that the newer copy also takes every unlock from the older one. */
@@ -352,7 +521,7 @@ export class CloudSaveStore implements SaveStore {
     }
     if (remote && (!local || remote.rev >= local.rev)) {
       const merged = local ? reconcileAccounts(remote, local) : remote;
-      await this.cache.saveAccount(merged);
+      await this.cache.saveAccount(merged).catch(this.localFailed);
       return merged;
     }
     if (!local) return null;
@@ -374,17 +543,22 @@ export class CloudSaveStore implements SaveStore {
     }
   }
 
+  /** The account merges by `rev` and unlocks rather than versions (see loadAccount), so it keeps a plain write. */
   saveAccount(a: AccountState): Promise<void> {
-    void this.cache.saveAccount(a);
+    this.cache.saveAccount(a).catch(this.localFailed);
     const id = this.accountRow(a.realm);
-    return this.upload(id, () => ({
+    return this.upload(
       id,
-      name: 'Account',
-      class_id: ACCOUNT_CLASS,
-      summary: { id, name: 'Account', classId: 'warrior', combatLevel: 0, totalLevel: 0, createdAt: 0, lastPlayed: 0 },
-      save: JSON.parse(JSON.stringify(a)),
-      updated_at: new Date().toISOString(),
-    }));
+      () => ({
+        id,
+        name: 'Account',
+        class_id: ACCOUNT_CLASS,
+        summary: { id, name: 'Account', classId: 'warrior', combatLevel: 0, totalLevel: 0, createdAt: 0, lastPlayed: 0 },
+        save: JSON.parse(JSON.stringify(a)),
+        updated_at: new Date().toISOString(),
+      }),
+      (row) => this.table.upsert(row),
+    );
   }
 
   async removeAccount(realm: Realm = STANDARD_REALM): Promise<void> {

@@ -1,4 +1,4 @@
-import { ACTIVE_GEMS, activeGemDef, DEFAULT_ATTACK, SKILL_BAR_SLOTS, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
+import { ACTIVE_GEMS, activeGemDef, DEFAULT_ATTACK, gemReqLevel, SKILL_BAR_SLOTS, supportGemDef, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
 import { isHardcore } from './challenge';
 import { groundAtRisk, groundOnDeath } from './storage';
 import {
@@ -174,7 +174,7 @@ import {
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
 import { gemsArrivingAt } from './hideout';
 import { openReachedZones } from './progress';
-import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, Minion, MonsterInstance, Movement, Posture, Storm, TargetPriority, Targeting } from './types';
+import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, Minion, MonsterInstance, Movement, Posture, SkillGemInstance, Storm, TargetPriority, Targeting } from './types';
 
 export const SPAWN_DELAY_MS = 900;
 /** closing in on a monster out of reach takes this long, shortened by movement speed */
@@ -992,9 +992,21 @@ export function lockTarget(s: GameState, uid: number): void {
 /** How many rings out a skill reaches: its own range, else melee attacks 1 (bows and a wand's basic attack shoot) and the rest the whole field. */
 export function skillRange(d: Derived, def: ActiveGemDef): number {
   if (def.range) return def.range;
-  if (!def.tags.includes('attack') || def.tags.includes('projectile') || d.ranged) return RINGS;
+  if (def.tags.includes('melee')) return 1;
+  if (!def.tags.includes('attack') || def.tags.includes('projectile') || (d.ranged && !def.tags.includes('melee'))) return RINGS;
   if (def.id === DEFAULT_ATTACK.id && d.weaponFamily === 'wand') return RINGS;
   return 1;
+}
+
+/** Why a skill gem cannot be used right now (level/attr/weapon mismatch, or melee attack with a bow). */
+export function skillBlockedReason(d: Derived, gem: SkillGemInstance): string | null {
+  const reason = gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily);
+  if (reason) return reason;
+  const def = activeGemDef(gem.gemId);
+  if (d.weaponFamily === 'bow' && def.tags.includes('melee')) {
+    return 'Melee skills cannot be used with a bow';
+  }
+  return null;
 }
 
 /** A hit with an area or a chain: it goes for martyrs by itself, with no click or rule. */
@@ -1257,7 +1269,7 @@ export function chooseSkill(s: GameState, d: Derived): SkillChoice {
     const gem = s.skillBar[slot];
     const nums = skillNumbers(d, gem);
     c.queued = null;
-    if (gem && ready(s, d, slot, nums, true) && !gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) {
+    if (gem && ready(s, d, slot, nums, true) && !skillBlockedReason(d, gem)) {
       const got = consider(slot, nums, true);
       if (got) return got;
       // out of reach: keep it queued while you close in
@@ -1271,7 +1283,7 @@ export function chooseSkill(s: GameState, d: Derived): SkillChoice {
     let reserved = 0;
     for (const slot of order.slice(0, position)) {
       const gem = s.skillBar[slot]!;
-      if (c.cooldowns[slot] > MANA_LOOKAHEAD_MS || gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) continue;
+      if (c.cooldowns[slot] > MANA_LOOKAHEAD_MS || skillBlockedReason(d, gem)) continue;
       const nums = skillNumbers(d, gem);
       if (triggered(nums) || stackedUp(c, gem.gemId) || !rulesPass(s, gem.rules, (r) => ruleAllows(r, rc, skillIsActive(c, gem.gemId)))) continue;
       reserved += skillCost(s, d, nums);
@@ -1280,7 +1292,7 @@ export function chooseSkill(s: GameState, d: Derived): SkillChoice {
   };
   for (const [position, i] of order.entries()) {
     const gem = s.skillBar[i]!;
-    if (gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) continue;
+    if (skillBlockedReason(d, gem)) continue;
     const nums = skillNumbers(d, gem);
     if (triggered(nums) || !ready(s, d, i, nums) || stackedUp(c, gem.gemId) || !rulesPass(s, gem.rules, (r) => ruleAllows(r, rc, skillIsActive(c, gem.gemId)))) continue;
     if (!d.raw.overclock && !d.raw.bloodPact && s.mana - skillCost(s, d, nums) < reservedBefore(position)) continue;
@@ -1337,7 +1349,7 @@ function fireSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Skill
 function fireTriggered(s: GameState, ctx: Ctx, d: Derived, special: 'reprisal' | 'succession'): void {
   const c = s.combat!;
   s.skillBar.forEach((gem, slot) => {
-    if (!gem || gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) return;
+    if (!gem || skillBlockedReason(d, gem)) return;
     const nums = skillNumbers(d, gem);
     if (!nums.mods.specials.has(special) || !ready(s, d, slot, nums)) return;
     if (fireSkill(s, ctx, d, slot, nums, false)) c.cooldowns[slot] = Math.max(c.cooldowns[slot], TRIGGER_COOLDOWN_MS);
@@ -1350,7 +1362,7 @@ function callSpells(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers): voi
   const absolute = nums.mods.specials.has('absolute');
   c.decreeMult = nums.def.effect.decree! / 100;
   s.skillBar.forEach((gem, slot) => {
-    if (!gem || gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) return;
+    if (!gem || skillBlockedReason(d, gem)) return;
     const called = skillNumbers(d, gem);
     const { def } = called;
     if (def.effect.decree || !def.tags.includes('spell') || !def.tags.includes('hit') || (c.cooldowns[slot] > 0 && !absolute)) return;
@@ -1406,7 +1418,7 @@ function landBlow(s: GameState, ctx: Ctx, d: Derived): boolean {
   const gem = s.skillBar[slot]!;
   const nums = skillNumbers(d, gem);
   const aim = skillAim(s, gem);
-  const held = c.monsters.find((m) => m.uid === w.targetUid && m.life > 0 && cellRing(m.cell) <= skillRange(d, nums.def));
+  const held = c.monsters.find((m) => m.uid === w.targetUid && m.life > 0 && (cellRing(m.cell) <= skillRange(d, nums.def) || !!m.martyr || !!m.weakPoint || !!m.choir));
   const found = held ? { mon: held, closeIn: false } : skillTarget(s, d, nums, aim);
   if (!found) {
     c.actionTotal = IDLE_MS;
@@ -1436,7 +1448,7 @@ function guardBreaksIn(s: GameState, ctx: Ctx, d: Derived): void {
   let rc: RuleContext | undefined;
   for (const i of castOrder(s)) {
     const gem = s.skillBar[i]!;
-    if (activeGemDef(gem.gemId).role !== 'guard' || gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily)) continue;
+    if (activeGemDef(gem.gemId).role !== 'guard' || skillBlockedReason(d, gem)) continue;
     const nums = skillNumbers(d, gem);
     const manual = c.queued === i;
     if (!ready(s, d, i, nums, manual)) continue;
@@ -1521,9 +1533,9 @@ function rollHit(
     }
   }
 
-  // a bow turns every attack into a ranged projectile
-  const projectile = def.tags.includes('projectile') || (isAttack && d.ranged);
-  if (def.tags.includes('melee') && !(isAttack && d.ranged)) {
+  // a bow turns every non-melee attack into a ranged projectile
+  const projectile = def.tags.includes('projectile') || (isAttack && d.ranged && !def.tags.includes('melee'));
+  if (def.tags.includes('melee')) {
     byType.phys *= (1 + r.meleePct / 100) * (1 + (r.lionsRoarMoreMelee ?? 0) / 100);
   }
   let inc = projectile ? r.projectilePct : 0;
@@ -1543,6 +1555,15 @@ function rollHit(
   }
   if (r.abyssalPact > 0) {
     byType.chaos += (byType.phys + byType.fire + byType.cold + byType.light) * 0.3;
+  }
+  // Void Touch: a spell cast above 80% Mana turns wholly to chaos. Chaos Infusion: 40% of the hit does
+  const toChaos = mods.specials.has('void_touch') && def.tags.includes('spell') && s.mana > d.maxMana * 0.8 ? 1 : mods.specials.has('chaos_infusion') ? 0.4 : 0;
+  if (toChaos) {
+    for (const t of ['phys', 'fire', 'cold', 'light'] as const) {
+      const moved = byType[t] * toChaos;
+      byType[t] -= moved;
+      byType.chaos += moved;
+    }
   }
   if (r.voidTouch > 0 && hasAilment(mon)) {
     byType.chaos += ((byType.phys + byType.fire + byType.cold + byType.light) * r.voidTouch) / 100;
@@ -1829,13 +1850,56 @@ function hitMonster(
   coup = false,
   wake = false,
 ): number {
-  const c = s.combat!;
-  const { def, mods } = nums;
-  const e = def.effect;
   if (mon.chained || (mon.immuneMs ?? 0) > 0) {
     ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: 'phys', blocked: true, monsterUid: mon.uid });
     return 0;
   }
+  const dealt = landHit(s, ctx, d, nums, mon, byType, crit, factor, mega, coup, wake);
+  if (dealt > 0) afterSupportHit(s, ctx, d, nums, mon, crit, dealt);
+  return dealt;
+}
+
+/** What a skill's supports do once one of its hits has landed (src/data/gems.ts `special`). */
+function afterSupportHit(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance, crit: boolean, dealt: number): void {
+  const c = s.combat!;
+  const { def, mods } = nums;
+  if (mon.life <= 0 && !mon.dead) creditKill(s, nums);
+  // Hair Trigger: a crit refills Exertion (at most once a second, so Exerted crits can't chain forever)
+  if (crit && (c.hairTriggerMs ?? 0) <= 0 && barHas(s, d, 'hair_trigger')) {
+    c.exertion = 5;
+    c.hairTriggerMs = HAIR_TRIGGER_MS;
+  }
+  if (mon.life <= 0) return;
+  if (mods.specials.has('primal_force') && mon.stunMs > 0) mon.weakenMs = Math.max(mon.weakenMs ?? 0, mon.stunMs);
+  if (mods.specials.has('chain_doom') && c.exerting) addDoom(s, ctx, d, mon, 2, mods.specials);
+  // Void Touch: a chaos spell sometimes poisons. Void Voice: so does any hit while Dark Howl's echo lasts
+  const buffPoison = c.buffs.reduce((a, b) => Math.max(a, b.poisonChance ?? 0), 0);
+  const touch = mods.specials.has('void_touch') && def.tags.includes('spell') ? 15 : 0;
+  if ((touch || buffPoison) && chance(ctx.rng, Math.max(touch, buffPoison) / 100)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_POISON));
+  // Dark Leech: Void Pact eats the target's Doom for Energy Shield
+  if (mods.specials.has('dark_leech') && (mon.doom ?? 0) > 0) {
+    s.es = Math.min(d.maxEs, s.es + (d.maxEs * mon.doom!) / 100);
+    mon.doom = 0;
+  }
+}
+
+/** The hit itself, past immunity: mitigation, damage, ailments and on-hit effects. Returns the damage dealt. */
+function landHit(
+  s: GameState,
+  ctx: Ctx,
+  d: Derived,
+  nums: SkillNumbers,
+  mon: MonsterInstance,
+  byType: ByType,
+  crit: boolean,
+  factor: number,
+  mega: boolean,
+  coup: boolean,
+  wake: boolean,
+): number {
+  const c = s.combat!;
+  const { def, mods } = nums;
+  const e = def.effect;
   const block = def.tags.includes('attack') ? mon.blockChance : mon.spellBlockChance;
   if (block && chance(ctx.rng, Math.min(75, block) / 100)) {
     ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: mainType(byType), blocked: true, monsterUid: mon.uid });
@@ -1957,25 +2021,23 @@ function hitMonster(
 
   // Maps mechanics — Doom, Marks, Exertion
   // Exertion builds on every player hit (not minion/hawk hits)
-  if (!c.asc.hawking) c.exertion = Math.min(5, (c.exertion ?? 0) + (e.exertionPerHit ?? 1));
-  // Doom: only doom-tagged skills add doom
-  if (e.addsDoom && mon.life > 0) {
-    mon.doomDecayMs = 0;
-    mon.doom = Math.min(20, (mon.doom ?? 0) + (e.doomPerHit ?? 1));
-    if (mon.doom >= 20) {
-      const burstDmg = Math.round(50 + mon.level * 3);
-      damageMonster(s, mon, monsterMitigation(mon, burstDmg, 'chaos'), false, 1);
-      ctx.emit({ t: 'hit', target: 'monster', amount: burstDmg, dmgType: 'chaos', monsterUid: mon.uid });
-      mon.doom = 0;
-    }
-  }
-  // Marks: any hit on a marked monster increments its stacks
-  if (mon.mark && mon.life > 0) {
-    mon.mark.stacks++;
-    mon.mark.remainingMs = 6000;
-    if (mon.mark.stacks >= mon.mark.maxStacks) {
+  if (!c.asc.hawking) c.exertion = Math.min(5, (c.exertion ?? 0) + (e.exertionPerHit ?? 1) + (mods.specials.has('hasty_exertion') ? 1 : 0));
+  // Doom: only doom-tagged skills add doom. Doom Accelerant adds one more; Cursed Blow's physical half adds one too
+  if (e.addsDoom) addDoom(s, ctx, d, mon, (e.doomPerHit ?? 1) + (mods.specials.has('doom_accelerant') ? 1 : 0) + (mods.specials.has('cursed_blow') && physPart > 0 ? 1 : 0), mods.specials);
+  // Marks: any hit on a marked monster increments its stacks. Execute bursts a cursed target's mark at 3
+  const mark = mon.mark;
+  if (mark && mon.life > 0) {
+    mark.stacks++;
+    mark.remainingMs = 6000;
+    const need = mark.specials?.includes('execute_mark') && mon.curse ? Math.min(3, mark.maxStacks) : mark.maxStacks;
+    if (mark.stacks >= need) {
       fireMarkBurst(s, ctx, d, mon);
       mon.mark = undefined;
+      // Spreading Brand: the nearest unmarked enemy picks the mark up with two stacks
+      if (mark.specials?.includes('spreading_brand')) {
+        const next = chainFrom(mon, [mon, ...aliveMonsters(c).filter((m) => m !== mon && !m.mark && !shielded(m))], 1)[1];
+        if (next) next.mark = { ...mark, stacks: 2, remainingMs: 6000 };
+      }
     }
   }
 
@@ -2018,7 +2080,8 @@ function hitMonster(
     applyDot(mon, makeAilment(d, nums, mon, dealt, COUP_IGNITE));
   }
   if (e.ailment) {
-    const a = e.ailment;
+    // Marked Arrow: on a target with 10+ Doom, the poison lasts twice as long
+    const a = mods.specials.has('marked_arrow') && e.ailment.kind === 'poison' && (mon.doom ?? 0) >= 10 ? { ...e.ailment, durationMs: e.ailment.durationMs * 2 } : e.ailment;
     const dot = makeAilment(d, nums, mon, dealt, a);
     applyDot(mon, dot);
     if (a.kind === 'bleed' && mods.specials.has('arterial')) {
@@ -2087,30 +2150,199 @@ function addStagger(ctx: Ctx, d: Derived, mon: MonsterInstance, amount: number, 
   ctx.emit({ t: 'bossPhase', name: mon.name, text: 'staggers under the weight!' });
 }
 
-/** Fire a Mark's burst when it reaches max stacks. */
+/** Fire a Mark's burst when it reaches max stacks. Supports on the gem that laid it change the burst (src/data/gems.ts). */
 function fireMarkBurst(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): void {
   const c = s.combat!;
   const mark = mon.mark!;
-  const { damage, type, radius, extraEffect } = mark.burst;
+  const sp = new Set(mark.specials ?? []);
+  const { damage, type, extraEffect } = mark.burst;
+  const radius = sp.has('shatter_burst') ? Math.max(2, mark.burst.radius ?? 0) : mark.burst.radius;
   const [lo, hi] = damage;
   const baseDmg = rInt(ctx.rng, lo, hi);
   const typM = type === 'phys' ? d.typeMult.phys : (d.typeMult[type as 'fire' | 'cold' | 'light' | 'chaos'] ?? 1);
-  const targets = radius
-    ? [mon, ...aliveMonsters(c).filter((m) => m !== mon && new Set(areaCells('splash', mon.cell, radius)).has(m.cell))]
-    : [mon];
+  const cells = radius ? new Set(areaCells('splash', mon.cell, radius)) : null;
+  const targets = cells ? [mon, ...aliveMonsters(c).filter((m) => m !== mon && cells.has(m.cell))] : [mon];
   for (const t of targets) {
-    if (shielded(t)) continue;
+    if (shielded(t) || baseDmg <= 0) continue;
     const resisted = Math.max(1, Math.round(monsterMitigation(t, baseDmg * typM, type)));
     damageMonster(s, t, resisted, false, type === 'chaos' ? 1 : 0);
     ctx.emit({ t: 'hit', target: 'monster', amount: resisted, dmgType: type, monsterUid: t.uid });
   }
   if (extraEffect === 'armourBreak') for (const t of targets) t.vulnMs = 4000;
-  if (extraEffect === 'stun') for (const t of targets) t.stunMs = Math.max(t.stunMs, 1000);
-  if (extraEffect === 'ignite') {
-    for (const t of targets) applyDot(t, { kind: 'ignite', dps: (baseDmg * 10) / 100, remainingMs: 5000, durationMs: 5000, dealt: 0, gemId: mark.kind });
+  if (extraEffect === 'stun' || sp.has('shatter_burst')) for (const t of targets) t.stunMs = Math.max(t.stunMs, sp.has('shatter_burst') && !t.isBoss ? 2000 : 1000);
+  if (extraEffect === 'ignite' || sp.has('flashpoint')) {
+    for (const t of targets) applyDot(t, { kind: 'ignite', dps: (baseDmg * typM * 10) / 100, remainingMs: 5000, durationMs: 5000, dealt: 0, gemId: mark.kind });
   }
   if (extraEffect === 'poison') for (const t of targets) applyDot(t, { kind: 'poison', dps: (baseDmg * 20) / 100, remainingMs: 4000, durationMs: 4000, dealt: 0, gemId: mark.kind });
   if (extraEffect === 'chaos_res_strip') for (const t of targets) t.res.chaos = Math.max(t.res.chaos - 20, -100);
+  if (sp.has('corrosion')) for (const t of targets) shredChaos(t, 20, 4000);
+  if (sp.has('nihil')) for (const t of targets) shredChaos(t, 15, 6000);
+  // Execute: weakened enemies fall outright; anything tougher loses a tenth of the Life it's already missing
+  if (sp.has('execute_mark')) {
+    for (const t of targets) {
+      if (shielded(t) || t.life <= 0) continue;
+      if (!t.isBoss && t.life <= t.maxLife * EXECUTE_AT) {
+        c.dealt[c.dealt.length - 1] += t.life;
+        ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(t.life), dmgType: 'phys', monsterUid: t.uid });
+        t.life = 0;
+      } else {
+        const amount = Math.max(1, Math.round((t.maxLife - t.life) * EXECUTE_MISSING));
+        damageMonster(s, t, amount);
+        ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: t.uid });
+      }
+    }
+  }
+  // Payback: the brand pays back half of its shield to the whole pack
+  if (sp.has('payback') && c.shieldMax) {
+    for (const t of aliveMonsters(c)) {
+      if (shielded(t)) continue;
+      const amount = Math.max(1, Math.round(monsterMitigation(t, c.shieldMax * PAYBACK_SHARE * d.typeMult.phys, 'phys')));
+      damageMonster(s, t, amount);
+      ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: t.uid });
+    }
+  }
+}
+
+// ---------- Maps support effects: the `special` of a support gem in src/data/gems.ts ----------
+
+/** Execute: a non-boss at or under this share of Life dies to the burst; anything else loses this share of its missing Life. */
+export const EXECUTE_AT = 0.2;
+export const EXECUTE_MISSING = 0.1;
+/** Payback: the Martyrdom Brand burst deals this share of the brand's shield to every enemy */
+export const PAYBACK_SHARE = 0.5;
+/** Endless Dread: Doom reaches this high, and each point past the usual 20 makes the burst this much stronger */
+export const ENDLESS_DOOM_MAX = 30;
+export const ENDLESS_DOOM_PER_POINT = 0.5;
+/** Hair Trigger can refill Exertion from a crit at most this often */
+export const HAIR_TRIGGER_MS = 1000;
+
+/** Corrosion, Corruptor, Nihil: take chaos resistance away for a while. The strongest holds; the timer refreshes. */
+function shredChaos(mon: MonsterInstance, pct: number, ms: number): void {
+  if ((mon.chaosShredMs ?? 0) <= 0) mon.chaosShred = 0;
+  mon.chaosShred = Math.max(mon.chaosShred ?? 0, pct);
+  mon.chaosShredMs = Math.max(mon.chaosShredMs ?? 0, ms);
+}
+
+/** Whether a usable skill on the bar carries this support special (effects that work "while it's on the bar"). */
+function barHas(s: GameState, d: Derived, special: string): boolean {
+  return s.skillBar.some((g) => g?.supports.some((x) => x && gemReqLevel(x.supportId) <= d.combatLevel && supportGemDef(x.supportId).mods.special === special));
+}
+
+/** Doom: add to an enemy's meter. Full, it bursts for chaos damage. `specials` are the supports of the skill adding it. */
+function addDoom(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, amount: number, specials: Set<string>, spread = true): void {
+  if (mon.life <= 0 || amount <= 0 || shielded(mon)) return;
+  const c = s.combat!;
+  const max = specials.has('endless_dread') ? ENDLESS_DOOM_MAX : 20;
+  mon.doomDecayMs = 0;
+  mon.doom = Math.min(max, (mon.doom ?? 0) + amount);
+  if (mon.doom < max) return;
+  const burstDmg = Math.round((50 + mon.level * 3) * (1 + ENDLESS_DOOM_PER_POINT * (max - 20)));
+  const dealt = monsterMitigation(mon, burstDmg, 'chaos');
+  damageMonster(s, mon, dealt, false, 1);
+  ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(dealt), dmgType: 'chaos', monsterUid: mon.uid });
+  // Void Hunger: sometimes the meter stays all but full, so the next Doom bursts it again
+  mon.doom = specials.has('void_hunger') && chance(ctx.rng, 0.3) ? max - 1 : 0;
+  if (specials.has('doom_echo')) {
+    for (const m of aliveMonsters(c)) {
+      if (m === mon || shielded(m)) continue;
+      const echo = Math.max(1, Math.round(monsterMitigation(m, burstDmg * 0.3, 'chaos')));
+      damageMonster(s, m, echo, false, 1);
+      ctx.emit({ t: 'hit', target: 'monster', amount: echo, dmgType: 'chaos', monsterUid: m.uid });
+    }
+  }
+  if (spread && specials.has('cascade')) {
+    const near = new Set(areaCells('splash', mon.cell, 1));
+    for (const m of aliveMonsters(c)) if (m !== mon && near.has(m.cell)) addDoom(s, ctx, d, m, 2, specials, false);
+  }
+}
+
+/** A skill's hit (not a minion's or totem's) took this enemy's last Life. */
+function creditKill(s: GameState, nums: SkillNumbers): void {
+  const c = s.combat!;
+  const { mods } = nums;
+  if (mods.specials.has('cascading_force') && c.exerting) c.exertion = Math.min(5, (c.exertion ?? 0) + 2);
+  if (mods.specials.has('slaughter')) {
+    const prev = c.buffs.find((b) => b.id === 'slaughter');
+    const stacks = Math.min(10, (prev?.stacks ?? 0) + 1);
+    c.buffs = c.buffs.filter((b) => b !== prev);
+    c.buffs.push({ id: 'slaughter', source: 'skill', remainingMs: 3000, durationMs: 3000, stacks, moreDamage: 2 * stacks });
+  }
+}
+
+/**
+ * Totems: each attacks the nearest enemy on its own timer, with its gem's poison and the supports it was placed with.
+ * A totem whose time is up (or that Totem Vanguard's taunt wore down) ends.
+ */
+function totemStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
+  const c = s.combat!;
+  const alive = aliveMonsters(c);
+  const ended: NonNullable<CombatRuntime['totems']> = [];
+  c.totems = c.totems!.filter((t) => {
+    t.remainingMs -= dt;
+    if (t.tauntMs) t.tauntMs = Math.max(0, t.tauntMs - dt);
+    if (t.life > 0 && t.remainingMs > 0) return true;
+    ended.push(t);
+    return false;
+  });
+  for (const t of ended) totemEnds(s, ctx, d, t);
+  // Resounding Cry: those warcries' more damage carries over to totems
+  const resounding = 1 + c.buffs.reduce((a, b) => a + (b.resounding ? (b.moreDamage ?? 0) : 0), 0) / 100;
+  for (const totem of c.totems) {
+    totem.nextAttackMs -= dt;
+    if (totem.nextAttackMs > 0) continue;
+    const target = alive[0];
+    if (!target) { totem.nextAttackMs = 1000; continue; }
+    const nums = callerNumbers(s, d, totem.gemId);
+    if (!nums) { totem.life = 0; continue; }
+    const sp = new Set(totem.specials ?? []);
+    const e = nums.def.effect;
+    const totemEff = 0.6;
+    const [lo, hi] = e.base ?? [5, 10];
+    const type = (e.type ?? 'fire') as DamageType;
+    const typMult = type === 'phys' ? d.typeMult.phys : (d.typeMult[type as 'fire' | 'cold' | 'light' | 'chaos'] ?? 1);
+    // Long Siege: the shot carries on to the next enemy
+    const targets = sp.has('long_siege') && alive[1] ? [target, alive[1]] : [target];
+    for (const m of targets) {
+      if (m.life <= 0 || shielded(m)) continue;
+      const tDmg = Math.max(1, Math.round(monsterMitigation(m, rInt(ctx.rng, lo, hi) * totemEff * typMult * resounding, type)));
+      damageMonster(s, m, tDmg, false, type === 'chaos' ? 1 : 0);
+      ctx.emit({ t: 'hit', target: 'monster', amount: tDmg, dmgType: type, monsterUid: m.uid });
+      // its gem's poison (Venom Totem: twice) and chaos poison chance
+      if (e.ailment?.kind === 'poison') for (let i = 0; i < (sp.has('venom_totem') ? 2 : 1); i++) applyDot(m, makeAilment(d, nums, m, tDmg, e.ailment));
+      if (e.poisonChance && chance(ctx.rng, e.poisonChance)) applyDot(m, makeAilment(d, nums, m, tDmg, GEAR_POISON));
+      if (sp.has('corruptor')) shredChaos(m, 15, 4000);
+      if (sp.has('pyre_totem')) layGround(c.ground, m.cell, 'burning', tDmg * 0.25, 3000);
+      // Soul Siphon: some hits drain Life and Mana back to you
+      if (sp.has('soul_siphon') && chance(ctx.rng, 0.4)) {
+        s.life = Math.min(d.maxLife, s.life + d.maxLife * 0.02);
+        gainMana(s, d, d.maxMana * 0.02);
+      }
+      if (sp.has('battle_totem') && m.life <= 0 && mechanicOf(s) === 'rage') gainMeter(s, d, 1);
+    }
+    totem.nextAttackMs = e.totemAttackMs ?? 1500;
+  }
+}
+
+/** A totem's time ran out or it was destroyed: Blizzard Totem explodes, Cascading Totems puts up one replacement. */
+function totemEnds(s: GameState, ctx: Ctx, d: Derived, totem: NonNullable<CombatRuntime['totems']>[number]): void {
+  const c = s.combat!;
+  const sp = new Set(totem.specials ?? []);
+  const nums = callerNumbers(s, d, totem.gemId);
+  if (!nums) return;
+  if (sp.has('blizzard_totem')) {
+    const [lo, hi] = nums.def.effect.base ?? [5, 10];
+    for (const m of aliveMonsters(c)) {
+      if (shielded(m)) continue;
+      const amount = Math.max(1, Math.round(monsterMitigation(m, rInt(ctx.rng, lo, hi) * 4 * d.typeMult.cold, 'cold')));
+      damageMonster(s, m, amount);
+      ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'cold', monsterUid: m.uid });
+      m.chillMs = Math.max(m.chillMs, CHILL_MS);
+    }
+  }
+  if (sp.has('cascading_totems') && !totem.replacement) {
+    const life = Math.round(totem.maxLife / 2);
+    (c.totems ??= []).push({ ...totem, life, maxLife: life, remainingMs: (nums.def.effect.totemDurationMs ?? 20000) / 2, nextAttackMs: 0, tauntMs: 0, replacement: true });
+  }
 }
 
 /** Follow Through: what a killing blow had to spare lands on the nearest enemy. */
@@ -2188,7 +2420,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   const r = d.raw;
   c.using = def.id;
   c.closingUid = undefined;
-  c.lastPlayerStyle = def.tags.includes('spell') ? 'spell' : def.tags.includes('projectile') || d.ranged ? 'projectile' : 'melee';
+  c.lastPlayerStyle = def.tags.includes('spell') ? 'spell' : def.tags.includes('projectile') || (d.ranged && !def.tags.includes('melee')) ? 'projectile' : 'melee';
   c.skillCount = (c.skillCount ?? 0) + 1;
   if (!paid) paySkill(s, ctx, d, slot, nums, manual);
   if (r.exileEcho > 0 && c.skillCount % 5 === 0) {
@@ -2249,11 +2481,22 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (e.warcry && e.warcryScaling) {
     // tougher enemies count as several, so a warcry still matters against a lone boss
     const weight = aliveMonsters(c).reduce((sum, m) => sum + WARCRY_WEIGHT[m.isBoss ? 'unique' : m.rarity], 0);
-    warcryScale = Math.max(1, Math.min(e.warcryScaling.maxEnemies, weight));
+    // Powerful Voice: every enemy counts twice
+    warcryScale = Math.max(1, Math.min(e.warcryScaling.maxEnemies, weight * (mods.specials.has('powerful_voice') ? 2 : 1)));
   }
-  // Exertion: when skill is exertion-tagged and exertion is full, power up and reset
-  const exerted = e.exertion && (c.exertion ?? 0) >= 5;
-  if (exerted) c.exertion = 0;
+  // War Drum: Rage for every enemy within two rings
+  if (mods.specials.has('war_drum') && mechanicOf(s) === 'rage') gainMeter(s, d, 8 * aliveMonsters(c).filter((m) => cellRing(m.cell) <= 2).length);
+  // Exertion: when skill is exertion-tagged and exertion is full, it fires Exerted (its hits read c.exerting)
+  const exerted = !!e.exertion && (c.exertion ?? 0) >= 5;
+  c.exerting = exerted;
+  if (exerted) {
+    c.exertion = mods.specials.has('overcharge') ? 2 : 0;
+    if (mods.specials.has('exerted_momentum')) {
+      if (mechanicOf(s) === 'momentum') gainMeter(s, d, 3);
+      if (mechanicOf(s) === 'rage') gainMeter(s, d, 2);
+    }
+    if (mods.specials.has('dark_drain')) s.life = Math.min(d.maxLife, s.life + d.maxLife * 0.08);
+  }
   // Mark application: set the mark on the aimed target (or first alive monster)
   if (e.markKind && e.markBurst) {
     const markTarget = aimed ?? aliveMonsters(c)[0];
@@ -2264,16 +2507,31 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         maxStacks: e.markMaxStacks ?? 5,
         remainingMs: 6000,
         burst: e.markBurst,
+        specials: mods.specials.size ? [...mods.specials] : undefined,
       };
     }
   }
+  // Mass Doom: every enemy in the fight takes a point of Doom
+  if (mods.specials.has('mass_doom')) for (const m of aliveMonsters(c)) addDoom(s, ctx, d, m, 1, mods.specials);
   // Totem placement
   if (e.totem) {
     const totemLife = 300 + d.combatLevel * 10;
     const totems = (c.totems ??= []);
     // by default one totem at a time; replace existing
     totems.length = 0;
-    totems.push({ gemId: def.id, life: totemLife, maxLife: totemLife, remainingMs: e.totemDurationMs ?? 20000, nextAttackMs: e.totemAttackMs ?? 1500 });
+    totems.push({
+      gemId: def.id,
+      life: totemLife,
+      maxLife: totemLife,
+      remainingMs: e.totemDurationMs ?? 20000,
+      nextAttackMs: e.totemAttackMs ?? 1500,
+      specials: mods.specials.size ? [...mods.specials] : undefined,
+      tauntMs: mods.specials.has('totem_vanguard') ? 4000 : undefined,
+    });
+  }
+  // Rally the Fallen: a healing warcry also restores 1% Life per recent corpse, up to 10%
+  if (mods.specials.has('rally_fallen') && e.warcry && e.warcryScaling?.perEnemy && 'lifeRegenPct' in e.warcryScaling.perEnemy) {
+    s.life = Math.min(d.maxLife, s.life + (d.maxLife * Math.min(10, c.corpses ?? 0)) / 100);
   }
 
   if (e.buff) {
@@ -2289,7 +2547,19 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       remainingMs: dur,
       durationMs: dur,
       stacks,
-      stats: { ...own, ...(mods.specials.has('galerider') && { cooldownRecovery: 25 }), ...(mods.specials.has('overflow') && { manaCostReduction: 25 }), ...(mods.specials.has('bloodoath') && { lifeLeech: 3 }), ...(mods.specials.has('immovable') && { stunDuration: 50 }) },
+      stats: {
+        ...own,
+        ...(mods.specials.has('galerider') && { cooldownRecovery: 25 }),
+        ...(mods.specials.has('overflow') && { manaCostReduction: 25 }),
+        ...(mods.specials.has('bloodoath') && { lifeLeech: 3 }),
+        ...(mods.specials.has('immovable') && { stunDuration: 50 }),
+        ...(mods.specials.has('pack_rush') && { evasionPct: (own.evasionPct ?? 0) + 20 }),
+        // Dark Communion: 1% chaos resistance per point of Doom on the most Doomed enemy
+        ...(mods.specials.has('dark_communion') && { chaosRes: (own.chaosRes ?? 0) + Math.max(0, ...aliveMonsters(c).map((m) => m.doom ?? 0)) }),
+      },
+      resounding: mods.specials.has('resounding_cry') || undefined,
+      poisonChance: mods.specials.has('void_voice') ? 20 : undefined,
+      carnage: mods.specials.has('carnage') || undefined,
       outpace: e.buff.outpace,
       moreDamage: e.buff.moreDamage ? (e.buff.moreDamage + (level - 1)) * (stacks ?? 1) * warcryScale : undefined,
       regenPct: (e.buff.regenPct ?? 0) + (mods.specials.has('rally') ? 2 : 0) || undefined,
@@ -2350,7 +2620,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (mods.specials.has('aftershock') && chance(ctx.rng, 0.35)) passes += 1;
   if (mods.specials.has('hailstorm') && chance(ctx.rng, 0.3)) passes += 1;
   const volley = mods.specials.has('volley');
-  const isProjSkill = def.tags.includes('projectile') || (def.tags.includes('attack') && d.ranged);
+  const isProjSkill = def.tags.includes('projectile') || (def.tags.includes('attack') && d.ranged && !def.tags.includes('melee'));
   const hitsPerPass =
     (e.hits ?? 1) +
     (def.id === 'twin_strike' && mods.specials.has('flurry') ? 1 : 0) +
@@ -2431,6 +2701,16 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         const line = new Set(areaCells('beam', target.cell));
         targets = [...targets, ...alive.filter((m) => !targets.includes(m) && line.has(m.cell) && cellRing(m.cell) <= cellRing(target!.cell))];
       }
+      // Exerted: the powered version's extra targets, then the supports that reach further (side hits deal a share)
+      const side: [MonsterInstance, number][] = [];
+      if (exerted) {
+        const x = e.exertedEffect;
+        if (x?.extraTargets === 'all') targets = [...targets, ...alive.filter((m) => !targets.includes(m))];
+        const nearestPct = x?.extraTargets === 'nearest' ? (x.extraPct ?? 100) : mods.specials.has('dark_surge') ? 50 : 0;
+        const nearest = nearestPct ? chainFrom(target, [target, ...alive.filter((m) => !targets.includes(m))], 1)[1] : undefined;
+        if (nearest) side.push([nearest, nearestPct / 100]);
+        if (mods.specials.has('violent_release')) for (const m of alive) if (!targets.includes(m) && m !== nearest) side.push([m, 0.5]);
+      }
       streak = target.uid === lastTarget ? streak + 1 : 0;
       lastTarget = target.uid;
       const tender = mods.specials.has('tenderise') ? 1 + 0.1 * streak : 1;
@@ -2444,10 +2724,13 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         continue;
       }
       const aim = target;
+      const exertMult = exerted ? 1 + (e.exertedEffect?.moreDamage ?? 0) / 100 : 1;
+      let aimDealt = 0;
       targets.forEach((m, i) => {
         // each hop deals 15% less than the one before, never under 20% (chainFalloff); "more damage per chain" adds back
         const chainMult = chained ? chainFalloff(i) * (1 + (((mods.specials.has('overload') ? 20 : 0) + r.chainMore) / 100) * i) : 1;
-        const dealt = hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * chainMult * tender, roll.mega, roll.coup, wake);
+        const dealt = hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * chainMult * tender * exertMult, roll.mega, roll.coup, wake);
+        if (m === aim) aimDealt = dealt;
         if (e.drag && pass === 0) dragIn(c, m, nums);
         if (ground && !grounded && m === aim) {
           grounded = true;
@@ -2456,6 +2739,17 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         }
         if (m === aim && m.life < 0 && mods.specials.has('followthrough')) carryOverkill(s, ctx, m);
       });
+      for (const [m, share] of side) {
+        if (m.life <= 0) continue;
+        hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * tender * exertMult * share, roll.mega, roll.coup, wake);
+        // Follow Through: the second target is stunned too
+        if (mods.specials.has('follow_blow') && share < 1 && m === side[0][0]) m.stunMs = Math.max(m.stunMs, m.isBoss ? 500 : 1000);
+      }
+      // Hemorrhage: an Exerted Rend opens a fresh bleed on everything next to its target
+      if (exerted && mods.specials.has('hemorrhage_exert') && e.ailment && aimDealt > 0) {
+        const near = new Set(areaCells('splash', aim.cell, 1));
+        for (const m of aliveMonsters(c)) if (m !== aim && near.has(m.cell) && !shielded(m)) applyDot(m, makeAilment(d, nums, m, aimDealt, e.ailment));
+      }
       // Verdict arcs off stunned targets, Splinter shatters off chilled ones, Shockwave off anything
       const arc = mods.specials.has('verdict') && stunned ? 0.5 : mods.specials.has('splinter') && chilled ? 0.4 : mods.specials.has('shockwave') ? 0.3 : 0;
       if (arc) {
@@ -2586,6 +2880,16 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   if (mon.isTwin) return;
   ctx.emit({ t: 'kill', name: mon.name, boss: mon.isBoss });
   c.hungerMs = HUNGER_MS;
+  c.corpses = Math.min(10, (c.corpses ?? 0) + 1);
+  // Carnage: while Death Rattle lasts, the fallen burst onto the nearest enemy for a tenth of their Life
+  if (c.buffs.some((b) => b.carnage)) {
+    const next = chainFrom(mon, [mon, ...aliveMonsters(c).filter((m) => m !== mon && !shielded(m))], 1)[1];
+    if (next) {
+      const amount = Math.max(1, Math.round(monsterMitigation(next, mon.maxLife * 0.1, 'phys')));
+      damageMonster(s, next, amount);
+      ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: next.uid });
+    }
+  }
   ascendancyKill(s, mon);
   s.lifetime.kills += 1;
   const xp = monsterXp(mon) * areaXpMultiplier(characterLevel(s), zone.levelRange);
@@ -3028,6 +3332,14 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     raw *= 0.85;
   }
   if (mon.curse) raw *= 1 - mon.curse.dealLess / 100;
+  if ((mon.weakenMs ?? 0) > 0) raw *= 0.8;
+  // Totem Vanguard: while it taunts, the totem takes plain hits in your place
+  const taunting = kind === 'hit' ? c.totems?.find((t) => (t.tauntMs ?? 0) > 0 && t.life > 0) : undefined;
+  if (taunting) {
+    taunting.life -= Math.max(1, Math.round(mitigate(d, raw, type)));
+    ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
+    return;
+  }
   if (mon.dots.some((x) => x.kind === 'poison')) raw *= 1 - r.poisonWeaken / 100;
   if (kind === 'slam') raw *= 1 - r.slamReduction / 100;
   if (underPlayer(c, 'shocked')) raw *= SHOCKED_GROUND_TAKEN;
@@ -3466,6 +3778,7 @@ function minionStrike(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, x:
 /** A hit on a minion, through your armour and resistances: it shares your defences, but can't evade or block. */
 function hurtMinion(ctx: Ctx, d: Derived, mon: MonsterInstance, x: Minion, raw: number, type: DamageType): void {
   if (mon.curse) raw *= 1 - mon.curse.dealLess / 100;
+  if ((mon.weakenMs ?? 0) > 0) raw *= 0.8;
   const amount = Math.max(1, Math.round(mitigate(d, raw, type) * (1 - (x.tough ?? 0) / 100)));
   x.life -= amount;
   ctx.emit({ t: 'hit', target: 'minion', amount, dmgType: type, monsterUid: x.uid });
@@ -4292,7 +4605,9 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
       reapDead(s, ctx, d);
       if (!s.combat || !c.monsters.length) return true;
       if (choice.nums.actionMs <= 0) continue;
-      const time = choice.nums.actionMs / (1 + 0.06 * c.flurryStacks);
+      // Blind Fury: 50% faster while you're under half Life
+      const fury = choice.nums.mods.specials.has('blind_fury') && s.life < d.maxLife * 0.5 ? 1.5 : 1;
+      const time = choice.nums.actionMs / (1 + 0.06 * c.flurryStacks) / fury;
       c.actionTotal = time;
       c.actionMs = Math.max(c.actionMs + time, time * 0.5);
       break;
@@ -4310,34 +4625,24 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   if (!c.monsters.length) return true;
 
   // Maps mechanics ticks: doom decay, mark expiry, totem attacks
+  // Doom Haste and Doom Accelerant on the bar: Doom holds 50% longer and fades half as fast
+  const doomSlow = aliveMonsters(c).some((m) => m.doom) && (barHas(s, d, 'doom_haste') || barHas(s, d, 'doom_accelerant'));
   for (const m of aliveMonsters(c)) {
     if (m.doom && m.doom > 0) {
       // Doom holds for a grace period after the last Doom hit, then fades by 1 each second
       m.doomDecayMs = (m.doomDecayMs ?? 0) + dt;
-      if (m.doomDecayMs >= DOOM_GRACE_MS) { m.doom = Math.max(0, m.doom - 1); m.doomDecayMs -= 1000; }
+      if (m.doomDecayMs >= DOOM_GRACE_MS * (doomSlow ? 1.5 : 1)) { m.doom = Math.max(0, m.doom - 1); m.doomDecayMs -= doomSlow ? 2000 : 1000; }
     }
     if (m.mark) { m.mark.remainingMs -= dt; if (m.mark.remainingMs <= 0) m.mark = undefined; }
+    if (m.chaosShredMs) m.chaosShredMs = Math.max(0, m.chaosShredMs - dt);
+    if (m.weakenMs) m.weakenMs = Math.max(0, m.weakenMs - dt);
   }
-  if (c.totems?.length) {
-    const alive = aliveMonsters(c);
-    c.totems = c.totems.filter((t) => { t.remainingMs -= dt; return t.life > 0 && t.remainingMs > 0; });
-    for (const totem of c.totems) {
-      totem.nextAttackMs -= dt;
-      if (totem.nextAttackMs > 0) continue;
-      const target = alive[0];
-      if (!target) { totem.nextAttackMs = 1000; continue; }
-      const nums = callerNumbers(s, d, totem.gemId);
-      if (!nums) { totem.life = 0; continue; }
-      const totemEff = 0.6;
-      const [lo, hi] = nums.def.effect.base ?? [5, 10];
-      const type = (nums.def.effect.type ?? 'fire') as DamageType;
-      const typMult = type === 'phys' ? d.typeMult.phys : (d.typeMult[type as 'fire' | 'cold' | 'light' | 'chaos'] ?? 1);
-      const tDmg = Math.max(1, Math.round(monsterMitigation(target, rInt(ctx.rng, lo, hi) * totemEff * typMult, type)));
-      damageMonster(s, target, tDmg, false, type === 'chaos' ? 1 : 0);
-      ctx.emit({ t: 'hit', target: 'monster', amount: tDmg, dmgType: type, monsterUid: target.uid });
-      totem.nextAttackMs = nums.def.effect.totemAttackMs ?? 1500;
-    }
+  if (c.hairTriggerMs) c.hairTriggerMs = Math.max(0, c.hairTriggerMs - dt);
+  if (c.corpses) {
+    c.corpseFadeMs = (c.corpseFadeMs ?? 0) + dt;
+    if (c.corpseFadeMs >= 2000) { c.corpses -= 1; c.corpseFadeMs = 0; }
   }
+  if (c.totems?.length) totemStep(s, ctx, d, dt);
 
   // the monsters' turn
   advanceMonsters(c.monsters, dt, new Set(c.ground.filter((g) => g.cell >= 0).map((g) => g.cell)), army(c));
@@ -4380,7 +4685,7 @@ function classMechanicsStep(s: GameState, ctx: Ctx, d: Derived, dt: number): boo
   if (mech === 'rage' && !fighting && !r.endlessFury && !rampaging(s)) c.mech = Math.max(0, c.mech - (RAGE_DECAY_PER_S * (1 - Math.min(100, r.rageDecay) / 100) * dt) / 1000);
   if (mech === 'momentum' && r.perpetualMotion) c.mech = Math.max(0, c.mech - dt / 1000);
   // Exertion decays out of combat at 1 per second
-  if (!fighting && c.exertion) c.exertion = Math.max(0, c.exertion - dt / 1000);
+  if (!fighting && c.exertion) c.exertion = Math.max(0, c.exertion - dt / (barHas(s, d, 'hasty_exertion') ? 2000 : 1000));
 
   if (r.overclock && fighting && c.overheatMs <= 0) {
     c.heatMs += dt;

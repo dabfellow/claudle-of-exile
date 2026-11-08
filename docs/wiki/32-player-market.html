@@ -1,0 +1,23 @@
+<!-- checked 0.4.16 -->
+<h1>Player Market</h1>
+<p>The Player Market trades equipment between signed-in players. You may browse before unlocking trade; listing, buying and bidding open after any character in that realm clears Act 1. SSF characters and unsaved demo characters cannot trade.</p>
+
+<h2 id="listings">Listings and auctions</h2>
+<ul>
+  <li><strong>Buy now:</strong> the listed price buys immediately and the listing lasts 7 days.</li>
+  <li><strong>Auction:</strong> lasts 24 hours. The first bid must meet the starting price; later bids must rise by at least 5%, rounded up, or by 1 when that is larger.</li>
+  <li>You may have up to {{data:market-listings}} active listings. The market takes {{data:market-cut}}% of a sale, rounded down from the cut.</li>
+  <li>An auction with a bid cannot be cancelled. No-trade Unique items cannot be listed.</li>
+</ul>
+<p>Prices can use Gold or a supported currency orb. Listings are separate in Standard, Hardcore, Classic and their combinations.</p>
+
+<h2 id="deliveries">Where purchases and proceeds go</h2>
+<p>Sale proceeds, refunds and bought items wait in your market wallet until the game collects them, normally when you sign in or open the Player Market. Currency goes to the shared bank. A Unique goes to the unlimited Uniques tab; other gear goes to the first Stash page with room, then to overflow. A full stash cannot delete a market delivery.</p>
+
+<h2 id="recovery">If the connection drops</h2>
+<p>Before a listing, purchase or bid is sent, the game removes the item or payment from normal storage and records a local <strong>hold</strong>. This prevents you from spending it twice while the request is uncertain.</p>
+<p>If the server refuses the request, the hold is refunded. If the reply is lost, the hold stays safe: the next market sync asks whether that exact request completed. A completed request releases the hold and collects its delivery; a request the server never completed is refunded. Do not reset or replace the save while a market request is pending, because the hold is part of that realm's saved data.</p>
+
+<h2 id="limits">What the market can guarantee</h2>
+<p>The server validates listings and settles each trade as one transaction, but the game simulation and saves remain client-owned. Offline-earned goods are tradable. The market checks that an item is legal; it is not a server-authoritative record of how every item was earned.</p>
+

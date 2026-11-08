@@ -14,6 +14,21 @@ export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.4.17',
+    date: '8 Nov 2026',
+    title: 'Safer Saves, Working Supports and New Guides',
+    items: [
+      'Cloud saves are safer: a full browser storage no longer stops your progress reaching the cloud, and a device left open on an older save can no longer overwrite newer progress from another device.',
+      'Maps support gems: 53 supports that did nothing beyond their numbers now work as described, including Hair Trigger, War Drum, Venom Totem and Endless Dread. Some descriptions were rewritten to say exactly what they do.',
+      'Exertion skills now really fire their Exerted version when Exertion is full: more damage, and extra targets where the skill says so.',
+      'Totems now apply their poison, and Ancestral Call’s Ancestors now deal the 50% weapon damage they promise.',
+      'Hard Boss trophies now have uses: new high-tier Crafting Bench recipes, and the top hideout upgrades (Map Device, Forge, Alchemy Table, Crafting Bench, Watchtower, Trophy Altar) take a few of them.',
+      'Melee skills like Twin Strike can no longer be used with a bow, and always reach one ring.',
+      'Bars that go past their maximum, like Overflow Mana and stacking buffs, now show an overfill strip and a ×count instead of just looking full.',
+      'New player guide pages: passive tree, runes, flasks, side systems, meals, Greenhouse, loadouts, challenge realms, Player Market, and Maps and the Atlas.',
+    ],
+  },
+  {
     version: '0.4.16',
     date: '8 Nov 2026',
     title: 'Passive Tree Travel Nodes and Ring Reconstruction',

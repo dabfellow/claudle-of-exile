@@ -13,14 +13,22 @@ import { BASES, UNIQUES, WEAPON_FAMILIES, baseDef, attributeReq, type BaseDef, t
 import { CLASSES } from '../src/data/classes';
 import { TRIALS } from '../src/data/ascendancies';
 import { BOSS_TABLES, DROP_TABLES, areaCurrency, bossTable } from '../src/data/drops';
-import { INSTILL_CONDITIONS } from '../src/data/flasks';
+import { FLASKS, FLASK_AFFIXES, INSTILL_CONDITIONS } from '../src/data/flasks';
 import { ACTIVE_GEMS, MAX_GEM_LEVEL, MAX_SUPPORT_SLOTS, RULE_LABELS, RULE_UNLOCK_NAMES, SKILL_BAR_SLOTS, SUPPORT_GEMS, TARGET_STATUSES, activeGemDef, gemAct, gemReqLevel, gemWeapons, type ActiveGemDef, type RuleCondition, type RuleUnlock, type SupportGemDef } from '../src/data/gems';
 import { OFFLINE_HAUL_CAP, STATIONS, stationDef, type StationId } from '../src/data/hideout';
 import { CURRENCIES, MATERIALS, type CurrencyDef } from '../src/data/materials';
 import { MONSTER_MODS } from '../src/data/monsterMods';
 import { MONSTER_PROFILES } from '../src/data/monsterProfiles';
+import { MEALS, MEAL_MS } from '../src/data/cooking';
+import { CULTURES, FIND_HOURS, SITES, STRATA } from '../src/data/expedition';
+import { ALARM_KEEPS, CREW_SLOT_LEVELS, HEIST_JOBS, MAX_ROGUE_RANK, ROGUES, STEALTH_FLOOR } from '../src/data/heist';
+import { ATLAS_NODES, ATLAS_POINT_CAP, DOOMED_MODS, DOOMED_TIERS, MAP_TIERS, NORMAL_MAP_MODS, SEXTANTS, SEXTANT_BASE_CHARGES, SEXTANT_MODS } from '../src/data/maps';
 import { NEWS } from '../src/data/news';
+import { PASSIVE_NODES } from '../src/data/passiveTree';
+import { RESONANCE_PER_PIECE, RUNE_FAMILIES, RUNE_GRADES, RUNE_READINGS, runeEffect } from '../src/data/runes';
+import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { SKILLS, actionsFor } from '../src/data/skills';
+import { describeStat } from '../src/data/statText';
 import { ACTS, MECHANIC_INFO, ZONES, type MonsterDef, type ZoneDef } from '../src/data/zones';
 import { GROUND_IN_PLAY, cleansesFrostbite, ruleUnlockLevel } from '../src/engine/automation';
 import { freshAutomation } from '../src/engine/account';
@@ -30,8 +38,13 @@ import {
   MONSTER_OWN_RES, MONSTER_RARITY, SHOCK_MAX_PCT, SHOCK_MIN_PCT, SHOCK_MS, makeMonster, monsterXp,
 } from '../src/engine/combat';
 import { itemFigures } from '../src/engine/compare';
+import { HEAD_CHEF_MORE } from '../src/engine/cooking';
 import { ATTACK_PCT_PER_LEVEL, BURN_MS, BURN_SHARE, IGNITE_MS, IGNITE_SHARE, LIFE_RESERVE_PCT, SPELL_ADDED_EFFECTIVENESS, gemAttrReq, gemLevelReq, spellBaseAt, spellGrowth, supportFits, weaponPctAt } from '../src/engine/gems';
 import { affixRangeText, createUnique, describeUniqueModDef, spawnWeight } from '../src/engine/items';
+import { MARKET_CUT_PCT, MARKET_MAX_LISTINGS } from '../src/engine/market';
+import { passiveNodeCost } from '../src/engine/passives';
+import { MAX_SKILL_TREE_POINTS } from '../src/engine/skillTree';
+import { MASTERY_CAP, MASTERY_CONSERVE_MAX, MASTERY_SPEED_MAX, MASTERY_YIELD_MAX } from '../src/engine/skillingMastery';
 import type { GameState, Item } from '../src/engine/types';
 import { xpToReach } from '../src/engine/xp';
 import { CURRENCY_ART, GEM_GLYPHS, ITEM_ART, MONSTER_ART, UNIQUE_ART, ZONE_ART } from '../src/ui/assets';
@@ -96,6 +109,16 @@ const PLANNED: Omit<Section, 'art'>[] = [
   { slug: 'patch-notes', name: 'Patch notes', group: UPDATES, icon: '✉', blurb: 'What changed in each version.' },
   { slug: 'data-version', name: 'Data version', group: UPDATES, icon: '#', blurb: 'Which game version this wiki was built from.' },
   { slug: 'report', name: 'Report incorrect information', group: UPDATES, icon: '!', blurb: 'Tell us when something here is wrong.' },
+  { slug: 'passive-tree', name: 'Passive tree', group: CHARACTERS, icon: '+', blurb: 'Points, paths, Masteries, Gateways and tree profiles.' },
+  { slug: 'runes', name: 'Runes', group: EQUIPMENT, icon: 'R', blurb: 'Rune families, grades, readings and resonance.' },
+  { slug: 'flasks', name: 'Flasks and Instilling', group: EQUIPMENT, icon: 'F', blurb: 'Flask bases, magic modifiers and automatic triggers.' },
+  { slug: 'meals', name: 'Meals and cooking', group: EQUIPMENT, icon: 'M', blurb: 'Combat meals, automatic re-eating and cooking bonuses.' },
+  { slug: 'maps-atlas', name: 'Maps, Atlas and Sextants', group: WORLD, icon: 'X', blurb: 'The map endgame, Atlas points, Sextants and Doomed Maps.' },
+  { slug: 'challenge-realms', name: 'Challenge realms', group: WORLD, icon: 'C', blurb: 'Hardcore, Solo Self-Found, Classic and shared realms.' },
+  { slug: 'player-market', name: 'Player Market', group: WORLD, icon: '$', blurb: 'Trading, auctions, deliveries and interrupted-request recovery.' },
+  { slug: 'side-systems', name: 'Side systems', group: IDLE, icon: 'S', blurb: 'Life-skill specialisation, work mastery, Heists and Expedition.' },
+  { slug: 'greenhouse', name: 'Greenhouse', group: IDLE, icon: 'G', blurb: 'Grow herbs in the background while another activity runs.' },
+  { slug: 'loadouts', name: 'Loadouts', group: IDLE, icon: 'L', blurb: 'Save gear, skill bars and linked tree profiles.' },
 ];
 const NAV_GROUPS = [CHARACTERS, EQUIPMENT, WORLD, IDLE, TOOLS, UPDATES];
 /** Game art the home page shows, copied next to the wiki pages. */
@@ -905,6 +928,82 @@ function buildTool() {
   });
 }
 
+function passiveCostsBlock(): string {
+  const groups = new Map<string, { kind: string; pool: string; cost: number; count: number }>();
+  for (const node of PASSIVE_NODES.filter((n) => n.kind !== 'start')) {
+    const price = passiveNodeCost(node);
+    const key = `${node.kind}:${price.pool}:${price.cost}`;
+    const row = groups.get(key) ?? { kind: title(node.kind), pool: price.pool === 'travelPoints' ? 'Travel' : price.pool === 'masteryPoints' ? 'Mastery' : 'Passive', cost: price.cost, count: 0 };
+    row.count += 1;
+    groups.set(key, row);
+  }
+  return table(['Node type', 'Point pool', 'Cost', 'Nodes'], [...groups.values()].sort((a, b) => a.pool.localeCompare(b.pool) || a.cost - b.cost).map((r) => [esc(r.kind), r.pool, String(r.cost), String(r.count)]));
+}
+
+function runeFamiliesBlock(): string {
+  return table(['Family', ...RUNE_READINGS.map((r) => r.label)], RUNE_FAMILIES.map((family) => [
+    esc(family.name),
+    ...RUNE_READINGS.map((reading) => RUNE_GRADES.map((grade) => describeStat(runeEffect({ id: '', name: '', family, grade }, reading.id).stat, runeEffect({ id: '', name: '', family, grade }, reading.id).value)).join('<br>')),
+  ]));
+}
+
+function runeGradesBlock(): string {
+  return table(['Grade', 'Rune-carving level', 'Minimum item level', 'Time', 'XP'], RUNE_GRADES.map((g) => [esc(g.name), String(g.level), String(g.ilvl), secs(g.intervalMs), String(g.xp)]));
+}
+
+function flaskBasesBlock(): string {
+  return table(['Flask', 'Belt slot', 'Charges', 'Per use', 'Effect', 'Drops from'], FLASKS.map((f) => [
+    esc(f.name), title(f.kind), String(f.maxCharges), String(f.chargesPerUse), esc(f.desc), Number.isFinite(f.dropLevel) ? `Monster level ${f.dropLevel}+` : (f.unique ? 'Special drop only' : 'Brew only'),
+  ]));
+}
+
+function flaskAffixesBlock(): string {
+  return table(['Modifier', 'Type', 'Fits', 'Tiers by item level'], FLASK_AFFIXES.map((a) => [
+    esc(a.text.replace('{0}', 'X')), title(a.kind), a.for.map(title).join(', '), a.tiers.map((t) => `${t.ilvl}+: ${Math.abs(t.range[0])}-${Math.abs(t.range[1])}%`).join('<br>'),
+  ]));
+}
+
+function mealsBlock(): string {
+  return table(['Meal', 'Effect'], MEALS.map((m) => [esc(m.name), Object.entries(m.stats).map(([k, v]) => esc(describeStat(k as any, v))).join('<br>')]));
+}
+
+function skillBranchesBlock(): string {
+  const branches = [...new Set(SKILL_TREE_NODES.map((n) => n.branch).filter((b) => b !== 'core' && b !== 'fishing'))];
+  return table(['Branch', 'Level 15', 'Level 30', 'Level 50 keystone'], branches.map((branch) => {
+    const nodes = SKILL_TREE_NODES.filter((n) => n.branch === branch);
+    const at = (level: number) => nodes.find((n) => n.req?.level === level);
+    return [esc(SKILLS[branch as keyof typeof SKILLS]?.name ?? title(branch)), ...[15, 30, 50].map((level) => { const n = at(level); return n ? `<strong>${esc(n.name)}</strong><br>${esc(n.desc)}` : ''; })];
+  }));
+}
+
+function heistsBlock(): string {
+  return table(['Job', 'Level', 'Rooms', 'Room time', 'Markers', 'Alarm per room', 'Favours'], HEIST_JOBS.map((j) => [esc(j.name), String(j.level), String(j.rooms), secs(j.roomMs), String(j.cost), `${j.alert}% x room`, esc(j.favours)]));
+}
+
+function roguesBlock(): string {
+  return table(['Rogue', 'Hire level', 'Each rank'], ROGUES.map((r) => [esc(r.name), String(r.level), `${Math.round(r.perRank * 100)}% ${esc(r.effect)}`]));
+}
+
+function expeditionBlock(): string {
+  return table(['Site', 'Culture', 'Level', 'Base artifact rate', 'Finds'], SITES.map((s) => [esc(s.name), esc(CULTURES.find((c) => c.id === s.culture)?.name ?? s.culture), String(s.level), `${s.rate}/hour`, s.finds.map(esc).join('<br>')]));
+}
+
+function mapTiersBlock(): string {
+  return table(['Tier', 'Level', 'Packs', 'Permanent danger', 'Reward identity'], MAP_TIERS.map((m) => [String(m.tier), String(m.level), String(m.packs), `<strong>${esc(m.modName)}</strong><br>${esc(m.modDesc)}`, esc(m.rewardDesc)]));
+}
+
+function normalMapModsBlock(): string {
+  return table(['Modifier', 'Danger', 'Reward'], NORMAL_MAP_MODS.map((m) => [esc(m.name), esc(m.dangerDesc), esc(m.rewardDesc)]));
+}
+
+function sextantsBlock(): string {
+  return SEXTANTS.map((s) => `<h3>${esc(s.name)}</h3><p>${esc(s.desc)}</p>${table(['Possible modifier', 'Effect'], SEXTANT_MODS.filter((m) => m.tier === s.tier).map((m) => [esc(m.name), esc(m.desc)]))}`).join('');
+}
+
+function doomedBlock(): string {
+  return table(['Map', 'Level', 'Packs', 'Rolled modifiers', 'Uber-key chance'], DOOMED_TIERS.map((d) => [esc(d.name), String(d.level), String(d.packs), d.modCount[0] === d.modCount[1] ? String(d.modCount[0]) : `${d.modCount[0]}-${d.modCount[1]}`, pct(d.keyChance)]));
+}
+
 const GUIDE_DATA: Record<string, () => string> = {
   'tool-drop': dropTool,
   'tool-craft': craftTool,
@@ -922,6 +1021,40 @@ const GUIDE_DATA: Record<string, () => string> = {
   instill: () => table(['Condition', 'What it does'], INSTILL_CONDITIONS.map((c) => [esc(c.label), esc(c.desc)])),
   'life-reserve': () => String(LIFE_RESERVE_PCT),
   'haul-cap': () => String(OFFLINE_HAUL_CAP),
+  'passive-costs': passiveCostsBlock,
+  'rune-families': runeFamiliesBlock,
+  'rune-grades': runeGradesBlock,
+  'rune-resonance': () => String(RESONANCE_PER_PIECE * 100),
+  'flask-bases': flaskBasesBlock,
+  'flask-affixes': flaskAffixesBlock,
+  'meal-length': () => String(MEAL_MS / 60000),
+  'meal-head-chef': () => String(HEAD_CHEF_MORE),
+  meals: mealsBlock,
+  'skill-branches': skillBranchesBlock,
+  heists: heistsBlock,
+  rogues: roguesBlock,
+  expedition: expeditionBlock,
+  'skill-point-cap': () => String(MAX_SKILL_TREE_POINTS),
+  'mastery-cap-hours': () => String(MASTERY_CAP / 3600),
+  'mastery-speed': () => String(MASTERY_SPEED_MAX),
+  'mastery-yield': () => String(MASTERY_YIELD_MAX * 100),
+  'mastery-conserve': () => String(MASTERY_CONSERVE_MAX * 100),
+  'heist-keeps': () => String(ALARM_KEEPS * 100),
+  'heist-stealth-floor': () => String(STEALTH_FLOOR * 100),
+  'rogue-rank-cap': () => String(MAX_ROGUE_RANK),
+  'crew-slots': () => CREW_SLOT_LEVELS.join(', '),
+  'expedition-hours': () => FIND_HOURS.join(', '),
+  'expedition-strata': () => STRATA.join(', '),
+  'map-tiers': mapTiersBlock,
+  'normal-map-mods': normalMapModsBlock,
+  sextants: sextantsBlock,
+  'sextant-runs': () => String(SEXTANT_BASE_CHARGES),
+  'atlas-nodes': () => String(ATLAS_NODES.length),
+  'atlas-cap': () => String(ATLAS_POINT_CAP),
+  'doomed-tiers': doomedBlock,
+  'doomed-mods': () => table(['Modifier', 'Effect'], DOOMED_MODS.map((m) => [esc(m.name), esc(m.desc)])),
+  'market-cut': () => String(MARKET_CUT_PCT),
+  'market-listings': () => String(MARKET_MAX_LISTINGS),
   trials: () => table(['Trial', 'Place', 'Points', 'Result'], TRIALS.map((t) => [String(t.n), t.zoneId ? ent(U.area(t.zoneId)) : esc(t.name), String(t.points), esc(t.result)])),
   production: () => table(['Skill', 'What it does', 'Recipes'], Object.values(SKILLS).filter((s) => s.group === 'production').map((s) => [esc(s.name), esc(s.desc), String(actionsFor(s.id).length)])),
   drops: () => table(['Tier', 'First area', 'Currency', 'Item', 'Rare share', 'Flask', 'Unique'], Object.entries(DROP_TABLES).map(([tier, t]) => {

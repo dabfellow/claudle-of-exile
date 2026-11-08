@@ -26,13 +26,26 @@ class MemoryStorage implements Storage {
   }
 }
 
-/** In-memory stand-in for the Supabase `characters` table. */
+/** In-memory stand-in for the Supabase `characters` table; like the server, it stamps `updated_at` on every write. */
 class MemoryTable implements CharacterTable {
   rows = new Map<string, CharacterRow>();
   down = false;
+  /** the next write lands, but its reply never arrives */
+  loseReply = false;
   upserts = 0;
+  private n = 0;
   private check() {
     if (this.down) throw new Error('network down');
+  }
+  private write(row: CharacterRow): string {
+    this.upserts++;
+    const stamp = `v${++this.n}`;
+    this.rows.set(row.id, { ...structuredClone(row), updated_at: stamp });
+    if (this.loseReply) {
+      this.loseReply = false;
+      throw new Error('reply lost');
+    }
+    return stamp;
   }
   async list() {
     this.check();
@@ -41,12 +54,23 @@ class MemoryTable implements CharacterTable {
   async get(id: string) {
     this.check();
     const r = this.rows.get(id);
-    return r ? { save: r.save } : null;
+    return r ? { save: r.save, summary: r.summary, updated_at: r.updated_at } : null;
+  }
+  async head(id: string) {
+    this.check();
+    const r = this.rows.get(id);
+    return r ? { stamp: r.updated_at!, summary: r.summary } : null;
   }
   async upsert(row: CharacterRow) {
     this.check();
-    this.upserts++;
-    this.rows.set(row.id, structuredClone(row));
+    return this.write(row);
+  }
+  /** the version match never succeeds, as if the server compared stamps in another format */
+  brokenMatch = false;
+  async replace(row: CharacterRow, stamp: string) {
+    this.check();
+    if (this.brokenMatch || this.rows.get(row.id)?.updated_at !== stamp) return null;
+    return this.write(row);
   }
   async remove(id: string) {
     this.check();
@@ -152,6 +176,153 @@ describe('cloud saves', () => {
     await cloud.loadAccount();
     await new Promise((r) => setTimeout(r, 0));
     expect(([...table.rows.values()][0].save as AccountState).rev).toBe(3);
+  });
+
+  it('still saves to the cloud when browser storage is full', async () => {
+    const table = new MemoryTable();
+    const storage = new MemoryStorage();
+    const cache = new LocalSaveStore(storage, 'cloud-u1', false);
+    const cloud = new CloudSaveStore(table, cache, 'u1');
+    const s = newGame(1, { name: 'Fay', classId: 'mage' });
+    await cloud.save(s);
+    storage.setItem = () => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    };
+    s.clock = 777;
+    s.lastSaved += 5_000;
+    await expect(cloud.save(s)).resolves.toBeUndefined();
+    expect((table.rows.get(s.character.id)?.save as { clock: number }).clock).toBe(777);
+    expect(cloud.status).toBe('synced');
+    const a = freshAccount();
+    a.hideout.forge = 2;
+    await cloud.saveAccount(a);
+    expect([...table.rows.values()].some((r) => (r.save as AccountState).hideout?.forge === 2)).toBe(true);
+  });
+
+  it('a full browser storage rejects a local save instead of throwing', async () => {
+    const storage = new MemoryStorage();
+    const local = new LocalSaveStore(storage, 'guest-1', false);
+    storage.setItem = () => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    };
+    let thrown = false;
+    let p: Promise<void> | undefined;
+    try {
+      p = local.save(newGame(1, { name: 'Gil', classId: 'warrior' }));
+    } catch {
+      thrown = true;
+    }
+    expect(thrown).toBe(false);
+    await expect(p).rejects.toThrow();
+    await expect(local.saveAccount(freshAccount())).rejects.toThrow();
+  });
+
+  describe('two devices', () => {
+    const devices = async () => {
+      const table = new MemoryTable();
+      const device = () => {
+        const cache = new LocalSaveStore(new MemoryStorage(), 'cloud-u1', false);
+        return { cache, cloud: new CloudSaveStore(table, cache, 'u1') };
+      };
+      const a = device();
+      const b = device();
+      const s = newGame(1, { name: 'Hal', classId: 'ranger' });
+      await a.cloud.save(s);
+      return { table, a, b, id: s.character.id };
+    };
+    const clockIn = (table: MemoryTable, id: string) => (table.rows.get(id)?.save as { clock: number }).clock;
+
+    it('a stale device cannot overwrite newer progress, even with a newer timestamp', async () => {
+      const { table, a, b, id } = await devices();
+      const onA = (await a.cloud.load(id))!;
+      const onB = (await b.cloud.load(id))!;
+      onB.clock = 7_200_000; // two hours played on B
+      onB.lastSaved += 60_000;
+      await b.cloud.save(onB);
+      const refused: string[] = [];
+      a.cloud.onConflict = (cid) => refused.push(cid);
+      onA.clock = 1_000; // A wakes from the morning, stamped later than B
+      onA.lastSaved += 120_000;
+      await a.cloud.save(onA);
+      expect(clockIn(table, id)).toBe(7_200_000);
+      expect(a.cloud.status).toBe('offline');
+      expect(refused).toEqual([id]);
+      // later saves from that session stay refused
+      onA.lastSaved += 1_000;
+      await a.cloud.save(onA);
+      expect(clockIn(table, id)).toBe(7_200_000);
+    });
+
+    it('reopening on the stale device takes the cloud copy and keeps its own as a backup', async () => {
+      const { table, a, b, id } = await devices();
+      const onA = (await a.cloud.load(id))!;
+      const onB = (await b.cloud.load(id))!;
+      onB.clock = 7_200_000;
+      onB.lastSaved += 60_000;
+      await b.cloud.save(onB);
+      onA.clock = 1_000;
+      onA.lastSaved += 120_000;
+      await a.cloud.save(onA);
+      const reopened = await a.cloud.load(id);
+      expect(reopened?.clock).toBe(7_200_000);
+      expect(JSON.parse(a.cache.conflictCopy(id)!).clock).toBe(1_000);
+      // and A can save normally again from the copy it now holds
+      reopened!.clock += 10;
+      reopened!.lastSaved += 1_000;
+      await a.cloud.save(reopened!);
+      expect(clockIn(table, id)).toBe(7_200_010);
+      expect(a.cloud.status).toBe('synced');
+    });
+
+    it('takes turns cleanly: each device picks up where the other left off', async () => {
+      const { table, a, b, id } = await devices();
+      const onB = (await b.cloud.load(id))!;
+      onB.clock = 500;
+      onB.lastSaved += 1_000;
+      await b.cloud.save(onB);
+      const onA = (await a.cloud.load(id))!;
+      expect(onA.clock).toBe(500);
+      onA.clock = 900;
+      onA.lastSaved += 1_000;
+      await a.cloud.save(onA);
+      expect(clockIn(table, id)).toBe(900);
+      expect((await b.cloud.load(id))?.clock).toBe(900);
+    });
+
+    it('does not write blind over a cloud copy it never loaded', async () => {
+      const { table, b, id } = await devices();
+      const stale = newGame(1, { id, name: 'Hal', classId: 'ranger' });
+      stale.lastSaved = Date.now() + 1e9;
+      await b.cloud.save(stale);
+      expect(table.rows.get(id)?.save).not.toEqual(JSON.parse(JSON.stringify({ ...stale, account: undefined })));
+      expect(b.cloud.status).toBe('offline');
+    });
+
+    it('keeps saving if the version match itself is broken', async () => {
+      const { table, a, id } = await devices();
+      const s = (await a.cloud.load(id))!;
+      table.brokenMatch = true;
+      s.clock = 30;
+      s.lastSaved += 1_000;
+      await a.cloud.save(s);
+      expect(clockIn(table, id)).toBe(30);
+      expect(a.cloud.status).toBe('synced');
+    });
+
+    it('a save whose reply was lost does not block the next one', async () => {
+      const { table, a, id } = await devices();
+      const s = (await a.cloud.load(id))!;
+      s.clock = 10;
+      s.lastSaved += 1_000;
+      table.loseReply = true;
+      await a.cloud.save(s);
+      expect(a.cloud.status).toBe('offline');
+      s.clock = 20;
+      s.lastSaved += 1_000;
+      await a.cloud.save(s);
+      expect(clockIn(table, id)).toBe(20);
+      expect(a.cloud.status).toBe('synced');
+    });
   });
 
   it('moves guest characters onto an account, keeping names unique', async () => {

@@ -31,15 +31,16 @@ import {
   useFlask,
   ailmentThreshold,
   shockPct,
+  skillBlockedReason,
 } from '../../engine/combat';
 import { aimLockReason, ruleUnlockLevel, skillAim } from '../../engine/automation';
 import { areaXpLabel, characterLevel } from '../../engine/character';
 import { mealEffectText } from '../../engine/cooking';
 import { flaskStats } from '../../engine/flasks';
-import { gemUseReason, MIN_COOLDOWN_MS, skillNumbers } from '../../engine/gems';
+import { MIN_COOLDOWN_MS, skillNumbers } from '../../engine/gems';
 import { ASCENDANCY_BY_ID } from '../../data/ascendancies';
 import { ascendancyOf } from '../../engine/ascendancy';
-import { flaskCapacity, meterLabel, meterMax, mechanicOf, overflowMax } from '../../engine/mechanics';
+import { flaskCapacity, MANA_POWER_FULL_SPEND, meterLabel, meterMax, mechanicOf, overflowMax, streakCap } from '../../engine/mechanics';
 import { classDef } from '../../data/classes';
 import { mealTimeLeft } from '../components/PantryBoard';
 import { DOOMED_MODS, doomedTier, mapTier, normalMapModDef, sextantMod } from '../../data/maps';
@@ -155,7 +156,24 @@ const critClass = (n?: number) => (n ? (n % 2 ? 'crit-a' : 'crit-b') : '');
 function MechanicMeter({ s, d, c }: { s: GameState; d: Derived; c: CombatRuntime }) {
   const cls = classDef(s.character.classId);
   const asc = ascendancyOf(s);
-  const max = asc === 'wellspring' ? overflowMax(d) : meterMax(mechanicOf(s), d.raw);
+  const mech = mechanicOf(s);
+  let max = 0;
+  let val = 0;
+  if (asc === 'wellspring') {
+    max = overflowMax(d);
+    val = max > 0 ? (c.mech ?? 0) / max : 0;
+  } else if (mech === 'manaPower') {
+    const manaTarget = (d.maxMana * MANA_POWER_FULL_SPEND) / (1 + Math.max(0, d.raw.manaPowerFull) / 100);
+    const spent = c.manaSpent?.reduce((sum, p) => sum + p.amount, 0) ?? 0;
+    max = manaTarget;
+    val = manaTarget > 0 ? spent / manaTarget : 0;
+  } else if (mech === 'riposte' && asc === 'matador') {
+    max = streakCap(s);
+    val = max > 0 ? (c.asc.streak ?? 0) / max : 0;
+  } else {
+    max = meterMax(mech, d.raw);
+    val = max > 0 ? (c.mech ?? 0) / max : 0;
+  }
   const label = meterLabel(s, d);
   return (
     <>
@@ -168,7 +186,7 @@ function MechanicMeter({ s, d, c }: { s: GameState; d: Derived; c: CombatRuntime
         }
       >
         {max > 0 ? (
-          <ProgressBar value={Math.min(1, (c.mech ?? 0) / max)} size="md" color={cls.color} label={label} />
+          <ProgressBar value={val} size="md" color={cls.color} label={label} />
         ) : (
           <div className="mechanic-line" style={{ color: cls.color }}>
             {label}
@@ -208,7 +226,15 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
       )}
       <div className="life-stack">
         <ProgressBar value={s.life / d.maxLife} size="lg" color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} ghost />
-        {c.shield > 0 && <div className="shield-bar" style={{ width: `${Math.min(1, c.shield / d.maxLife) * 100}%` }} title={`Shield ${fmt(c.shield)}`} />}
+        {c.shield > 0 && (
+          <div
+            className={`shield-bar ${c.shield > d.maxLife ? 'overfill' : ''}`}
+            style={{ width: `${Math.min(1, c.shield / d.maxLife) * 100}%` }}
+            title={`Shield ${fmt(c.shield)}`}
+          >
+            {c.shield > d.maxLife && <span className="shield-overfill">×{(c.shield / d.maxLife).toFixed(1)}</span>}
+          </div>
+        )}
       </div>
       <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} size="md" color="linear-gradient(90deg, var(--mana), var(--mana-2))" label={`${fmt(s.mana)} / ${fmt(d.maxMana)}`} />
       {mechanicOf(s) && <MechanicMeter s={s} d={d} c={c} />}
@@ -253,7 +279,7 @@ function PlayerCard({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
           const color = b.source === 'flask' ? flaskDef(b.id).color : 'var(--accent)';
           return (
             <span key={`${b.source}-${b.id}`} className="buff" style={{ ['--flask' as string]: color }}>
-              {name} {(b.remainingMs / 1000).toFixed(1)}s
+              {name} {b.stacks && b.stacks > 1 ? `×${b.stacks} ` : ''}{(b.remainingMs / 1000).toFixed(1)}s
             </span>
           );
         })}
@@ -680,7 +706,7 @@ export function SkillBar({ s, d, fx }: { s: GameState; d: Derived; fx?: Fx }) {
         const cd = nums.cooldownMs > MIN_COOLDOWN_MS ? (c?.cooldowns[i] ?? 0) : 0;
         const cdPct = nums.cooldownMs ? cd / nums.cooldownMs : 0;
         const noMana = s.mana < nums.manaCost || !canSpendLife(s, d, nums.lifeCost, false);
-        const unusable = gemUseReason(d.combatLevel, d.attributes, gem, d.weaponFamily);
+        const unusable = skillBlockedReason(d, gem);
         const flashed = fx?.usedSlot?.slot === i ? fx.usedSlot.n : 0;
         return (
           <Tooltip key={i} content={<GemTip gem={gem} state={s} />}>

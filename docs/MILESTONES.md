@@ -6,10 +6,11 @@ Last updated 2026-11-08. Current implementation: [GAME.md](GAME.md). Engineering
 
 Latest confirmed live release: **0.4.16, Passive Tree Travel Nodes and Ring Reconstruction**, deployed 2026-11-08. Rebuilt passive tree travel corridors with twin arterial highways per sector, three clean concentric connecting rings (r=260, r=2310, r=4300), and rebalanced travel node attributes (+4 primary attribute or +2/+2 hybrid) to match the 3-travel-points-per-level economy.
 
-1. Security prerequisite: confirm revocation of the historical Google OAuth client secret, confirm the separate account-helper lookup-path changes and perform signed-in isolation/login checks; see SETUP.
-   Owner reports market/admin SQL applied on 2026-11-06; live anonymous Admin access checks pass. Current validation upload and real-account inspection/recovery/mail/event checks remain before next release.
-2. Finish the save-loss and pacing audit before speculative fixes. Local persistence/merge tests pass, but live evidence is still needed to distinguish a storage failure from a cross-device overwrite. Current whole-journey simulations expose large Ranger seed variance and a repeatable Mage Act 4 stall, so pacing is not ready to lock.
-3. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
+1. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
+2. Finish the Maps skill batch: all support effects now run (2026-11-08, unreleased); boss, offline and whole-build checks remain (see that section).
+3. Pacing audit: whole-journey simulations expose large Ranger seed variance and a repeatable Mage Act 4 stall, so pacing is not ready to lock.
+4. Plan the 1.0 wipe and the Legacy area (see Decisions).
+5. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
 
 ## Milestones
 
@@ -17,7 +18,7 @@ Latest confirmed live release: **0.4.16, Passive Tree Travel Nodes and Ring Reco
 |---|---|---|
 | 1 | Automation/offline | Released; survival rules and two conditions baseline; flask-default removal verified (strictly requires Instilling) |
 | 2 | Pacing | Whole-journey audit run on 0.4.4; four classes finish Act 6 in a nonstop day, while Ranger has large seed variance and Mage commonly stalls in Act 4 |
-| 3 | Account layer | Released; local Admin inspection/recovery/mail overhaul verified; service migration and real-account checks remain |
+| 3 | Account layer | Released; Admin overhaul, service SQL, OAuth secret revocation and signed-in checks confirmed by owner 2026-11-08; save-rollback fixes unreleased |
 | 4 | Act 2 and content recipe | Released; cold-check/art follow-ups remain parked |
 | 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18 |
 | 6 | Act 3 / ascendancies | Released; four trials and 2/2/3/2 points replace original structure |
@@ -26,10 +27,12 @@ Latest confirmed live release: **0.4.16, Passive Tree Travel Nodes and Ring Reco
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
 | 11 | Long tail | Challenge modes, Unique discovery and non-combat action mastery implemented; collection expansion planned |
-| 1.0 | Launch designation | Owner decides; any save wipe requires a clear announcement |
+| 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
 
+- 1.0 is a fresh wipe (2026-11-08): everyone starts new characters at 1.0. Existing saves are not deleted. They move to a Legacy area, reached from character select, which runs at 1.0 rates. No new Legacy characters can be made. Legacy has no trading: the Market is hidden there, and nothing crosses between Legacy and 1.0 in either direction (recorded in the Launch Guide).
+- Cloud character saves only replace the version they grew from (2026-11-08). The server's own `updated_at` stamp is the version, so device clocks don't matter. When two devices have both played on from one save, the cloud copy wins, and the losing local copy is kept in that browser (`coe-<account>-conflict-<id>`) and reported. A failed browser-storage write no longer stops the cloud upload.
 - Passive Tree Travel Node Architecture & Attribute Rebalance (2026-11-08): Replaced the single centerline spine (which cut over `a = 0°` clusters `I, I1, D, D1, G, G1`) and the `<= 140px` brute-force proximity linker (which drew 7-pointed heptagrams inside every wheel cluster) with twin radial arterial highways per sector (`a = ±8°..15°`), clean `path()` cluster approaches, and smooth circular highway rings at `r = 260`, `r = 2310`, and `r = 4300` (666 total travel/highway nodes across the 2,377-node tree, with >50px minimum clearance between every link segment and unlinked node). Rebalanced travel/highway node attributes from `+10` (`+5/+5`) down to `+4` primary attribute (`+2/+2` hybrid, `+2 allAttr` on central/orbital junctions) to match the 3-travel-points-per-level budget and level 80 gear/gem attribute requirements, and rendered `highway` nodes at travel node size (`r = 8`).
 - Passive Tree Pan/Zoom Performance Overhaul (2026-11-08): Decoupled continuous dragging and wheel zooming from React component re-renders using direct SVG transform updates batched via requestAnimationFrame with debounced state synchronization. Optimized CSS rendering by isolating the canvas with CSS containment, adding will-change transform hints, pausing animations and transitions during drag, making passive links non-interactive for hit-testing, and replacing software raster blur on node halos with vector stroke outlines.
 - Passive Tree Arterial Highways & Orbital Ring Layers (2026-11-08): Replaced linear cluster daisy chains with radial arterial spine junctions per sector and direct cluster links, guaranteeing no cluster is more than 3–6 travel steps from its class start. Added two concentric intermediate orbital highway rings (Mid-Inner at r=1700 and Mid-Outer at r=2950) connecting all six class sectors across the tree alongside the existing Inner Crossing (r=260) and Outer Rim (r=4300). Cut total travel nodes across the tree by over 80% (from 1,578 down to 192 nodes), completely eliminating travel fatigue while preserving all notable names, stats, masteries, keystones, and doomed debuffs.
@@ -104,14 +107,15 @@ These rewards describe the intended redesign, not the current earliest drop loca
 
 Roster levels, crafting recipes, moments and unique effects are proposals, not content tables. Acceptance: suitable endgame builds can idle safely, inadequate rules/gear fail, manual answers help earlier, and offline/live behavior agrees. No unrequested balance implementation follows from this document.
 
-### Post-campaign crafting and hideout: design in progress
+### Post-campaign crafting and hideout: implemented
 
 Milestone 10 planning and specifications live in [POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md](POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md).
 - [x] Fractured Orbs and natural fractured drops in Doomed Maps I–V: engine support, random affix locking, scouring down to 1-mod magic base, annulment immunity, whetstone protection, impression restore, Bench page integration and gold tooltips. — done 2026-11-06
-- [ ] Doom Sigils from Uber Bosses for past-the-limit modifier crafting (The First Exile = T0 elevated mod, The Architect of Ruin = Doom implicits, The Void Sovereign = 7th modifier slot)
-- [ ] Hard-boss material utility (Marrow Shards, Choir Glass, Black Pearl, Throne Ash, Crownless Sigil) for keys, high-tier bench crafts and station upgrades
-- [ ] Crafting Bench level 6–7: meta-crafts (prefix/suffix locks, multi-craft), seal-integrated auto-crafting
-- [ ] Hideout expansion: Map Device level 5–6, Bench 6–7, Forge 5, Alchemy Table 5, Stash affinities (baseline Act 1), Watchtower 5, and Trophy Altar
+- [x] Doom Sigils from Uber Bosses for past-the-limit modifier crafting (The First Exile = T0 elevated mod, The Architect of Ruin = Doom implicits, The Void Sovereign = 7th modifier slot) — done 2026-11-06
+- [x] Hard-boss materials drop from their bosses and craft the Crownless Key (Smithing 70) — done 2026-11-06
+- [x] Hard-boss materials in high-tier bench crafts and station upgrades: seven Bench 6–7 crafts (one or two per trophy's theme, tiers 4–5) and the top level of Map Device, Forge, Alchemy Table, Crafting Bench, Watchtower and Trophy Altar now take them; `tests/bossMaterials.test.ts`. Unreleased. — done 2026-11-08
+- [x] Crafting Bench level 6–7: meta-crafts (prefix/suffix locks, multi-craft), seal-integrated auto-crafting, Bench 7 pinnacle crafts — done 2026-11-06
+- [x] Hideout expansion: Map Device level 5–6, Bench 6–7, Forge 5, Alchemy Table 5, Stash affinities (baseline Act 1), Watchtower 5, and Trophy Altar — done 2026-11-06
 
 ### Non-combat action masteries: implemented
 
@@ -260,7 +264,9 @@ The implementation passes the full 1,261-test suite and production typecheck. No
 
 - [ ] Verify all 40 active gems, signatures, 40 supports, Maps gating and UI/shop availability against `src/data/gems.ts` and engine behavior.
 - [ ] Finish Marks, Warcry scaling, Totems, Doom, Exertion, chaos bypass/poison and their supports/rules; mere presence of fields/data is insufficient.
+- [x] Implement every Maps support `special` in the engine: all 135 are now read (53 were missing). Supporting fixes: Exertion skills now actually fire their Exerted version (more damage and extra targets were computed but never used); totems now apply their gem's poison; Ancestral Call's Ancestors now deal the 50% weapon damage their description promised. Where a description named something that didn't exist (Payback's "retaliation", Carnage's "explosion", Soul Siphon's "drain"), it now says what the support does. 41 tests in `tests/mapsupports.test.ts`. Unreleased. — done 2026-11-08
 - [ ] Verify every support's stated effect and formula, targeting, expiry, cooldown/cost rules, minion/totem distinction, boss interactions and offline behavior.
+  - Remaining after 2026-11-08: the effects above are tested one at a time in small fights. Boss interactions, offline runs and a whole-build playtest are still unchecked.
 - [ ] Resolve failing Maps-skill tests and update art/wiki before release. Do not mark this complete using ordinary combat tests alone.
 
 The consolidated batch specification is retained below as a proposal. Its initial 1.3× attribute wording is superseded by the 0.4.1 attribute rebalance (demanding gems use 1.15×); use code for actual requirements. Its suggested `'maps'` gating/API names are design intent, not existing API contracts. Definitions that conflict with current data require review rather than silently changing gameplay.
@@ -272,15 +278,17 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - [x] Massive unique items, flasks, and maps pass: reworked stat-stick uniques (`barnacle_band`, `khans_tithe`, `pyre_heart`, `starforged_edge`, `unblinking_tome`, `fishermans_knot`, `the_unwritten`, `architects_compass`, `sovereigns_grasp`, `faultline`, and boss/cycle uniques) with signature mechanics; added 12 Ascendancy BIS uniques, 22 Life-Skill uniques (2 per profession), 6-piece Master Artisan set, 6-piece Wanderer's Heirloom leveling set, 3 Gold-Find uniques, 5 Unique Flasks (`u_flask_karui`, `u_flask_lavianga`, `u_flask_lions_roar`, `u_flask_bottled_faith`, `u_flask_dying_sun`) with `enemyRanged`/`packStart` Instill conditions, and 5 Unique Maps (`umap_vaults`, `umap_cowards_trial`, `umap_olmecs`, `umap_maelstrom`, `umap_grandmasters`). — done 2026-11-07
 - [x] Overhaul Admin with campaign/demo/death diagnostics, searchable player inspection and audited recovery/compensation, feedback snapshots/replies/filtering/sandbox, and configurable live events/broadcasts. Database migration and frontend verified locally; service installation/deployment remain separate. — done 2026-11-06
 - [x] Apply updated market/admin SQL in Supabase. Owner confirmed both ran; live Admin overview/player/feedback RPCs and backup/mail/audit tables refuse anonymous requests. — done 2026-11-06
-- [ ] Upload current validation rules and verify real-account Admin inspection, backup restore, mail/compensation and scheduled events against the updated frontend. Backups/snapshots are not retroactive; frontend deployment remains pending.
-- [ ] Confirm Google OAuth secret revocation for GitHub alert 2 (historical `docs/AUTH_SETUP.md`, commit `4ba2852afe62`); rotation status unknown. Follow SETUP without placing credentials in git/chat.
-- [ ] Confirm the separate `is_admin` / `admin_stats` lookup-path ALTER statements in SETUP were applied; perform signed-in cross-account/admin isolation and fresh provider login checks. Market/admin file execution is confirmed; local and anonymous tests do not replace signed-in verification.
+- [x] Upload current validation rules and verify real-account Admin inspection, backup restore, mail/compensation and scheduled events against the updated frontend. Owner confirmed the Admin page works. — done 2026-11-08
+- [x] Confirm Google OAuth secret revocation for GitHub alert 2 (historical `docs/AUTH_SETUP.md`, commit `4ba2852afe62`). Owner confirmed. — done 2026-11-08
+- [x] Confirm the separate `is_admin` / `admin_stats` lookup-path ALTER statements in SETUP were applied; perform signed-in cross-account/admin isolation and fresh provider login checks. Owner confirmed the admin SQL and signed-in checks. — done 2026-11-08
 - [x] Audit public source/history and available Actions exposure; enable GitHub secret scanning/push protection and implement offline-compatible market/build hardening. Findings and rotation playbook live in DEVELOPMENT/SETUP; pending service actions remain unchecked above. — done 2026-11-05
 - [x] Rebalance area-level combat XP with a two-level grace band and capped bonus/penalty milestones; update labels, calculator and tests. — done 2026-11-05
 - [x] Give monsters distinct player-style damage/defence archetypes while preserving reference effective hit pools and damage budgets; verify campaign, map, rarity and save behavior. Unreleased; remaining combined-worktree failures are recorded below. — done 2026-11-05
 - [x] Consolidate and audit game documentation; replace 40 internal/reference documents with five, preserve published wiki URLs and validate links/generated pages. — done 2026-11-05
 - [ ] Player report: roughly two hours of one signed-in character's progress disappeared. Audit local saves, uploads and merge/transfer reconciliation before changing save behavior.
   - Static audit and all 1,250 tests pass on 0.4.4. Two credible rollback paths remain: a browser-storage write failure currently prevents that cloud save attempt from starting, and simultaneous devices can unconditionally replace the same character row with a stale progression snapshot carrying a newer client timestamp. Neither identifies the reported incident without affected-account save/backup timestamps and two-device reproduction.
+  - [x] Both rollback paths fixed in `src/platform/saves.ts` and `supabaseTable.ts`: a failed browser write still uploads, and an upload only replaces the cloud version it grew from (see Decisions). Seven new two-device and storage-full tests; 1,301 tests and typecheck pass. Unreleased. — done 2026-11-08
+  - Remaining: a live two-device check after release. Also wire `CloudSaveStore.onConflict` in `src/game.ts` so a refused device returns to character select with a message; until then it shows "Offline — saving locally".
 - [x] Player report: Templar appears to encounter fewer enemies. Pack/arrival logic is class-independent; 10-seed fixed-area simulations showed comparable incoming hit flow, while kill rates varied with build damage. Templar completed Act 6 in 16h43 in the integrated whole-journey seed. — done 2026-11-06
 - [ ] Player report: Twin Strike hits from four tiles away. Audit melee range and closing-in; evaluate melee-only/approach tactics request.
 - [ ] Verify Mana is Power display with Overflow after the spending-window change.
@@ -303,8 +311,18 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - Audit follow-ups (2026-11-06), not acted on: Hair Trigger as specced (crit refills Exertion) plus a guaranteed Exerted crit would loop forever; the code currently has no guaranteed crit and Hair Trigger is description-only, so fix the spec before building it. Also consider: 8s base Mark duration; Act 5 channel bosses' auto timeouts (Hollow Reef, Maelstrom's Eye), possibly by reserving a stun skill's cooldown for its Wind-up rule; Mage Act 1 stall and slow Warrior campaign; an emergency-only floor for unenchanted flasks.
 - Reassess legacy partial stock/cross-device issues, storage-full UI handling, Hardcore resurrection from old copies and loadout partial failures before claiming them fixed.
 - Endless post-Maps content and cosmetic shop remain ideas, not scheduled features.
+- Save follow-ups (2026-11-08), not acted on: the shared account row (stash, hideout) still uses a plain write, merged by `rev` and unlocks. A character deleted on one device (including a Hardcore death) stays playable locally on another, whose uploads are now refused instead of bringing it back.
+- Unmerged work saved from removed worktrees (2026-11-08), kept as local commits on their old branches:
+  - `claude/combat-reload-bug-48a5da`: reloading mid-fight puts you back in the area rested with the field cleared, instead of mid-hit (`freshField`, player report from 2026-10-31). Not on main; worth porting.
+  - `claude/player-stats-admin-panel-6aaef2`: Admin → Players tab with per-character lifetime tracking (time per activity, XP per skill, damage, gem uses, deaths by zone) and `docs/ops/stats.sql`. Not on main; it predates the Admin overhaul, so it needs rebuilding rather than merging.
+  - `claude/cooking-sidebar-removal-705430`: show Cooking in the sidebar from the start. Small; owner call.
+  - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Save-rollback fixes: a failed browser save no longer skips the cloud save, and a stale device can no longer overwrite newer cloud progress, whatever its clock says. Unreleased. — done 2026-11-08
+- [x] Owner service checks confirmed: OAuth secret revoked, admin SQL applied, signed-in checks and Admin page verified. — done 2026-11-08
+- [x] Removed 19 old worktrees in `.claude/worktrees`; their uncommitted changes are kept as local commits on their branches (see Ideas / later). — done 2026-11-08
 
 - [x] Split the character passive tree into Travel, Passive, and Mastery point economies, including tiered allocation/refund costs, PoE-style mastery prerequisites and uniqueness, Act-boss awards, and Cosmic Gateway bridge activation. — done 2026-11-07
 

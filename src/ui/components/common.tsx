@@ -22,12 +22,28 @@ export function ProgressBar({
   ghost?: boolean;
   className?: string;
 }) {
-  const pct = `${Math.max(0, Math.min(1, value)) * 100}%`;
+  const isOverfill = value > 1;
+  const basePct = `${Math.max(0, Math.min(1, value)) * 100}%`;
+  const overfillRatio = value > 1 ? value - 1 : 0;
+  const rawPct = Math.min(1, overfillRatio > 1 ? (overfillRatio % 1 || 1) : overfillRatio) * 100;
+  const overfillPct = `${Math.round(rawPct * 100) / 100}%`;
+  const multiplier = value >= 2 ? Math.floor(value) : undefined;
   return (
-    <div className={`bar ${size ?? ''} ${label !== undefined ? 'labelled' : ''} ${className}`}>
-      {ghost && <div className="bar-ghost" style={{ width: pct }} />}
-      <div className={`bar-fill ${smooth ? 'smooth' : ''}`} style={{ width: pct, background: color }} />
-      {label !== undefined && <div className="bar-label">{label}</div>}
+    <div className={`bar ${size ?? ''} ${label !== undefined ? 'labelled' : ''} ${isOverfill ? 'overfill' : ''} ${className}`}>
+      {ghost && <div className="bar-ghost" style={{ width: basePct }} />}
+      <div className={`bar-fill ${smooth ? 'smooth' : ''}`} style={{ width: basePct, background: color }} />
+      {isOverfill && <div className="bar-overfill" style={{ width: overfillPct }} />}
+      {label !== undefined && (
+        <div className="bar-label">
+          {label}
+          {multiplier !== undefined && <span className="bar-multiplier">{`×${multiplier}`}</span>}
+        </div>
+      )}
+      {label === undefined && multiplier !== undefined && (
+        <div className="bar-label">
+          <span className="bar-multiplier">{`×${multiplier}`}</span>
+        </div>
+      )}
     </div>
   );
 }

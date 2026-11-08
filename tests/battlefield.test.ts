@@ -1,4 +1,7 @@
+import { createElement } from 'react';
+import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { ProgressBar } from '../src/ui/components/common';
 import { zoneDef } from '../src/data/zones';
 import {
   areaCells,
@@ -15,7 +18,8 @@ import {
   POSTURES,
   RINGS,
 } from '../src/engine/battlefield';
-import { aliveMonsters, combatStep, currentMovement, lockTarget, makeMonster, setMovement, setPosture, startCombat } from '../src/engine/combat';
+import { aliveMonsters, combatStep, currentMovement, lockTarget, makeMonster, setMovement, setPosture, skillBlockedReason, skillRange, startCombat } from '../src/engine/combat';
+import { activeGemDef, DEFAULT_ATTACK } from '../src/data/gems';
 import { createSkillGem, createSupportGem, gemUseReason } from '../src/engine/gems';
 import { createItem } from '../src/engine/items';
 import { makeCtx } from '../src/engine/context';
@@ -367,5 +371,56 @@ describe('range, closing in and targeting', () => {
     expect(c.events.some((e) => e.t === 'skill')).toBe(false);
     // the bow's default attack still shoots it
     expect(hurt(mons)).toEqual([true]);
+  });
+
+  it('melee skills keep 1 ring range and cannot be used with a bow', () => {
+    const { s, c } = skirmish('twin_strike', [0]);
+    s.equipment.weapon = createItem(s, 'short_bow', 1, 'normal', seeded(1));
+    const d = deriveStats(s);
+    expect(d.ranged).toBe(true);
+
+    // Twin Strike is melee: its range is 1, not the whole field
+    const twinDef = activeGemDef('twin_strike');
+    expect(skillRange(d, twinDef)).toBe(1);
+
+    // Melee attacks without specific weapon list (like leeching blow) also stay 1 ring
+    const leechDef = activeGemDef('leeching_blow');
+    expect(skillRange(d, leechDef)).toBe(1);
+
+    // Default attack with a bow is ranged and reaches all rings
+    expect(skillRange(d, DEFAULT_ATTACK)).toBe(RINGS);
+
+    // Twin Strike cannot be used with a bow
+    expect(skillBlockedReason(d, s.skillBar[0]!)).toBeTruthy();
+
+    // Even if a melee gem has no weapons constraint, skillBlockedReason blocks melee attacks with a bow
+    s.skillBar[0] = createSkillGem(s, 'leeching_blow');
+    expect(skillBlockedReason(d, s.skillBar[0]!)).toBe('Melee skills cannot be used with a bow');
+
+    // Neither fires in combat with a bow equipped
+    for (let t = 0; t < 4000; t += 50) combatStep(s, c, 50, deriveStats(s));
+    expect(c.events.some((e) => e.t === 'skill' && e.gemId === 'leeching_blow')).toBe(false);
+  });
+});
+
+describe('combat resource bars and overfill', () => {
+  it('renders overfill segment and multipliers when values exceed 100%', () => {
+    // Normal progress
+    const normalHtml = renderToString(createElement(ProgressBar, { value: 0.75, label: '75 / 100' }));
+    expect(normalHtml).toContain('width:75%');
+    expect(normalHtml).not.toContain('bar-overfill');
+    expect(normalHtml).not.toContain('bar-multiplier');
+
+    // Overfill between 1.0 and 2.0
+    const overfillHtml = renderToString(createElement(ProgressBar, { value: 1.4, label: '140 / 100' }));
+    expect(overfillHtml).toContain('bar-overfill');
+    expect(overfillHtml).toContain('width:40%');
+    expect(overfillHtml).not.toContain('bar-multiplier');
+
+    // Overfill >= 2.0 has multiplier badge
+    const multiHtml = renderToString(createElement(ProgressBar, { value: 2.5, label: '250 / 100' }));
+    expect(multiHtml).toContain('bar-overfill');
+    expect(multiHtml).toContain('bar-multiplier');
+    expect(multiHtml).toContain('×2');
   });
 });

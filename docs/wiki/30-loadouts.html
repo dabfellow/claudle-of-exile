@@ -1,0 +1,20 @@
+<!-- checked 0.4.16 -->
+<h1>Loadouts</h1>
+<p>Loadouts save a character's equipment or skill bar so you can move between combat, gathering and production setups without rebuilding them by hand.</p>
+
+<h2 id="gear">Gear sets</h2>
+<p>A gear set remembers the exact item in every equipment slot, by item identity. Applying it pulls those items from your bag or stash. Empty slots in the saved set are emptied too. Items that come off go to the bag, then to the stash if the bag is full.</p>
+<p>If an item is missing, cannot be worn, or its attribute requirements depend on another piece that still cannot be equipped, the switch completes as far as it can and reports what was left off. Bulk salvage skips gear referenced by a saved set.</p>
+
+<h2 id="skills">Skill-bar sets</h2>
+<p>A skill set remembers the exact active gems, socketed supports, automation rules and priority in every bar slot. Applying one moves the needed gems and supports from the shared gem storage. Missing or unusable gems are left out. A skill's cooldown follows that gem, so changing sets cannot reset it.</p>
+
+<h2 id="automatic">Automatic gear switching</h2>
+<p>Crafting Bench level 3 lets you assign a gear set to each activity: Combat or any life skill. The set switches once when the activity changes. Heists count as Thieving. Auto-crafting does not change gear. Manual changes remain until you start a different activity.</p>
+
+<h2 id="vitals">Life, Mana and Energy Shield</h2>
+<p>A gear swap keeps the same percentage of maximum Life, Mana and Energy Shield before and after the change. Switching to a higher-Life set does not heal you, and switching back from skilling gear does not leave you at the old raw amount.</p>
+
+<h2 id="profiles">Tree-profile links</h2>
+<p>Character passive profiles can link one gear set and one skill-bar set. Switching to that profile applies the linked sets too. Loadouts and tree profiles belong to the character, not the shared realm.</p>
+

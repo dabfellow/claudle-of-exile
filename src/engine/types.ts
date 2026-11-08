@@ -336,7 +336,14 @@ export interface MonsterInstance {
     maxStacks: number;
     remainingMs: number;
     burst: { damage: [number, number]; type: DamageType; radius?: number; extraEffect?: string };
+    /** the special effects of the supports on the gem that laid it, read when it bursts */
+    specials?: string[];
   };
+  /** Corrosion, Corruptor, Nihil: chaos resistance taken away, for this long */
+  chaosShred?: number;
+  chaosShredMs?: number;
+  /** Primal Force: deals 20% less damage while this runs */
+  weakenMs?: number;
   /** Map tier identity: Elite pack monster */
   elite?: boolean;
   /** Map tier identity: Permanent enrage (30% speed, 40% damage) */
@@ -468,6 +475,12 @@ export interface Buff {
   esRegenPct?: number;
   /** Blood Frenzy: kills extend the buff, up to this long */
   extendMaxMs?: number;
+  /** Resounding Cry: this warcry's more damage also empowers your totems */
+  resounding?: boolean;
+  /** Void Voice: hits have this % chance to poison while it lasts */
+  poisonChance?: number;
+  /** Carnage: kills explode onto the nearest enemy while it lasts */
+  carnage?: boolean;
   /** Tailwind: hazards under you burn out as if you were running */
   outpace?: boolean;
   /** flask buffs: the flask's own effect multiplier */
@@ -627,8 +640,15 @@ export interface CombatRuntime {
   asc: AscendancyRuntime;
   /** Exertion charge counter (0–5): builds with player hits, spent by Exertion-tagged skills */
   exertion?: number;
-  /** Active totems placed by totem skills */
-  totems?: { gemId: string; life: number; maxLife: number; remainingMs: number; nextAttackMs: number }[];
+  /** the skill being used right now fired Exerted (its hits read this) */
+  exerting?: boolean;
+  /** Hair Trigger: time before a crit can refill Exertion again */
+  hairTriggerMs?: number;
+  /** Rally the Fallen: recent kills (one fades every two seconds), and the time toward the next fading */
+  corpses?: number;
+  corpseFadeMs?: number;
+  /** Active totems placed by totem skills. `specials` are its gem's supports; `tauntMs` is Totem Vanguard's taunt left. */
+  totems?: { gemId: string; life: number; maxLife: number; remainingMs: number; nextAttackMs: number; specials?: string[]; tauntMs?: number; replacement?: boolean }[];
   /** Hard Boss: The Undertow cold tide stacks slowing player actions */
   tideStacks?: number;
   /** Hard/Uber Boss: elapsed fight time in ms for the 5-minute escalating enrage */

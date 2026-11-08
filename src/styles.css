@@ -1374,6 +1374,34 @@ h3 {
   text-shadow: 0 1px 2px #000;
 }
 
+.bar-overfill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.8));
+  border-radius: inherit;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+  mix-blend-mode: screen;
+  transition: width 0.12s linear;
+}
+
+.bar.overfill {
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
+}
+
+.bar-multiplier {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: var(--r-pill);
+  background: rgba(10, 10, 15, 0.85);
+  color: #fff;
+  font-size: 0.85em;
+  font-weight: 800;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
 .bar.lg .bar-label {
   font-size: var(--fs-xs);
 }
@@ -4876,6 +4904,20 @@ g.tut-hint circle.body {
   background: linear-gradient(90deg, var(--cold), var(--text));
   box-shadow: 0 0 8px var(--cold);
   transition: width 0.2s;
+}
+
+.shield-bar.overfill {
+  box-shadow: 0 0 10px var(--cold), 0 0 4px #fff;
+}
+
+.shield-overfill {
+  position: absolute;
+  right: 0;
+  top: -14px;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--cold);
+  text-shadow: 0 0 4px #000;
 }
 
 .action-line {

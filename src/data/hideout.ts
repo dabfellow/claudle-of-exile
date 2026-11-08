@@ -38,7 +38,7 @@ export const STATIONS: StationDef[] = [
       { cost: { gold: 1500, iron_bar: 20, oak_plank: 15, rough_gem: 4 }, effect: '+20% Item Rarity' },
       { cost: { gold: 5000, mithril_bar: 30, yew_plank: 20, rough_gem: 10, boss_trophy: 5 }, effect: '+35% Item Rarity, +1 item level on drops' },
       { cost: { gold: 25000, mithril_bar: 40, yew_plank: 20, rough_gem: 15, boss_trophy: 6 }, effect: '+50% Item Rarity, +2 item level on drops, 4th Sextant slot unlocked permanently' },
-      { cost: { gold: 75000, mithril_bar: 80, yew_plank: 40, rough_gem: 30, boss_trophy: 15 }, effect: 'Pinnacle Conduit: 15% chance for Map Bosses to drop an extra Map or Key; Sextant modifiers gain +2 base charges' },
+      { cost: { gold: 75000, mithril_bar: 80, yew_plank: 40, rough_gem: 30, boss_trophy: 15, throne_ash: 3, crownless_sigil: 1 }, effect: 'Pinnacle Conduit: 15% chance for Map Bosses to drop an extra Map or Key; Sextant modifiers gain +2 base charges' },
     ],
   },
   {
@@ -61,7 +61,7 @@ export const STATIONS: StationDef[] = [
       { cost: { gold: 1500, copper_bar: 50, ash_plank: 25 }, effect: 'Smith iron-tier bases (level 10–21)' },
       { cost: { gold: 7000, iron_bar: 70, oak_plank: 35, boss_trophy: 2 }, effect: 'Smith mithril-tier bases (level 22+)' },
       { cost: { gold: 22000, mithril_bar: 80, yew_plank: 40, rough_gem: 12, boss_trophy: 6 }, effect: 'Masterwork: smithed bases +5 item level' },
-      { cost: { gold: 35000, mithril_bar: 100, yew_plank: 50, boss_trophy: 8 }, effect: 'Pinnacle Metallurgy: smithed bases +8 item level (up to ilvl 84); 10% chance to roll a random Tier 1 modifier' },
+      { cost: { gold: 35000, mithril_bar: 100, yew_plank: 50, boss_trophy: 8, marrow_shard: 5 }, effect: 'Pinnacle Metallurgy: smithed bases +8 item level (up to ilvl 84); 10% chance to roll a random Tier 1 modifier' },
     ],
   },
   {
@@ -72,7 +72,7 @@ export const STATIONS: StationDef[] = [
       { cost: { gold: 1500, sunpetal: 150, ash_plank: 20 }, effect: 'Brew recipes up to Alchemy level 19' },
       { cost: { gold: 7000, frostleaf: 200, rough_gem: 6, boss_trophy: 2 }, effect: 'Brew every recipe' },
       { cost: { gold: 22000, emberroot: 180, voidbloom: 40, boss_trophy: 6 }, effect: '20% chance of double output' },
-      { cost: { gold: 35000, voidbloom: 200, rough_gem: 20, boss_trophy: 8 }, effect: 'Elixirs and Distillation: 30% chance of double output, and 3:1 orb conversion at the table' },
+      { cost: { gold: 35000, voidbloom: 200, rough_gem: 20, boss_trophy: 8, black_pearl: 5 }, effect: 'Elixirs and Distillation: 30% chance of double output, and 3:1 orb conversion at the table' },
     ],
   },
   {
@@ -85,7 +85,7 @@ export const STATIONS: StationDef[] = [
       { cost: { gold: 18000, arcane_dust: 600, mithril_bar: 35, rough_gem: 12, boss_trophy: 5 }, effect: 'Top-tier bench recipes (each also needs its achievement)' },
       { cost: { gold: 50000, arcane_dust: 1200, mithril_bar: 70, rough_gem: 25, boss_trophy: 10 }, effect: 'Auto-crafting: spend orbs until a modifier rolls, even offline' },
       { cost: { gold: 100000, arcane_dust: 2500, mithril_bar: 100, rough_gem: 40, boss_trophy: 15 }, effect: 'Meta-crafting: Lock Prefixes, Lock Suffixes, and Multicraft' },
-      { cost: { gold: 120000, arcane_dust: 3500, mithril_bar: 120, rough_gem: 50, boss_trophy: 20 }, effect: 'Pinnacle Crafting: Doom Sigils, Cannot roll Attack / Caster Modifiers' },
+      { cost: { gold: 120000, arcane_dust: 3500, mithril_bar: 120, rough_gem: 50, boss_trophy: 20, choir_glass: 3, crownless_sigil: 1 }, effect: 'Pinnacle Crafting: Doom Sigils, Cannot roll Attack / Caster Modifiers' },
     ],
   },
   {
@@ -119,7 +119,7 @@ export const STATIONS: StationDef[] = [
       { cost: { gold: 2000, ash_plank: 50, copper_bar: 50 }, effect: 'Up to 12 hours offline', grants: { offlineHours: 12 } },
       { cost: { gold: 10000, oak_plank: 120, iron_bar: 120, boss_trophy: 3 }, effect: 'Up to 16 hours offline', grants: { offlineHours: 16 } },
       { cost: { gold: 50000, yew_plank: 250, mithril_bar: 250, rough_gem: 30, boss_trophy: 10 }, effect: 'Up to 24 hours offline', grants: { offlineHours: 24 } },
-      { cost: { gold: 80000, yew_plank: 300, mithril_bar: 300, rough_gem: 35, boss_trophy: 15 }, effect: 'Autonomous Offline Mapping: up to 36 hours offline', grants: { offlineHours: 36 } },
+      { cost: { gold: 80000, yew_plank: 300, mithril_bar: 300, rough_gem: 35, boss_trophy: 15, black_pearl: 3 }, effect: 'Autonomous Offline Mapping: up to 36 hours offline', grants: { offlineHours: 36 } },
     ],
   },
   {
@@ -129,7 +129,7 @@ export const STATIONS: StationDef[] = [
       { cost: {}, effect: 'Displays boss trophies; +3% Armour and Evasion realm-wide' },
       { cost: { gold: 15000, mithril_bar: 30, yew_plank: 30, boss_trophy: 5 }, effect: '+5% increased Mana regeneration rate' },
       { cost: { gold: 45000, mithril_bar: 60, yew_plank: 60, rough_gem: 20, boss_trophy: 10 }, effect: '+4% all Elemental Resistances' },
-      { cost: { gold: 90000, mithril_bar: 100, yew_plank: 100, rough_gem: 40, boss_trophy: 20 }, effect: '+10% increased Map Boss drop rates and high-tier modifier rolls' },
+      { cost: { gold: 90000, mithril_bar: 100, yew_plank: 100, rough_gem: 40, boss_trophy: 20, marrow_shard: 3, choir_glass: 3, black_pearl: 3, throne_ash: 3 }, effect: '+10% increased Map Boss drop rates and high-tier modifier rolls' },
     ],
   },
 ];
@@ -204,4 +204,12 @@ export const BENCH_CRAFTS: BenchCraft[] = [
   { id: 'bc_multicraft', benchLevel: 6, affixId: 'meta_multicraft', tier: 0, cost: { exalted: 2, arcane_dust: 400 } },
   { id: 'bc_cannot_roll_attack', benchLevel: 7, achievement: 'crafter_250', affixId: 'meta_cannot_roll_attack', tier: 0, cost: { divine: 1, arcane_dust: 1000 } },
   { id: 'bc_cannot_roll_caster', benchLevel: 7, achievement: 'crafter_250', affixId: 'meta_cannot_roll_caster', tier: 0, cost: { divine: 1, arcane_dust: 1000 } },
+  // Hard Boss trophies: high-tier crafts, one per boss's theme (the trophy's own description says which)
+  { id: 'bc_boss_phys', benchLevel: 6, affixId: 'added_phys', tier: 5, cost: { marrow_shard: 1, arcane_dust: 300, gold: 5000 } },
+  { id: 'bc_boss_spell', benchLevel: 6, affixId: 'spell_damage', tier: 5, cost: { choir_glass: 1, arcane_dust: 300, gold: 5000 } },
+  { id: 'bc_boss_cast_speed', benchLevel: 6, affixId: 'cast_speed', tier: 4, cost: { choir_glass: 1, arcane_dust: 300, gold: 5000 } },
+  { id: 'bc_boss_attack_speed', benchLevel: 6, affixId: 'attack_speed', tier: 4, cost: { black_pearl: 1, arcane_dust: 300, gold: 5000 } },
+  { id: 'bc_boss_cold', benchLevel: 6, affixId: 'added_cold', tier: 5, cost: { black_pearl: 1, arcane_dust: 300, gold: 5000 } },
+  { id: 'bc_boss_elem', benchLevel: 6, affixId: 'inc_elem', tier: 5, cost: { throne_ash: 1, arcane_dust: 300, gold: 5000 } },
+  { id: 'bc_boss_crit_multi', benchLevel: 7, affixId: 'crit_multi', tier: 5, cost: { crownless_sigil: 1, arcane_dust: 600, gold: 10000 } },
 ];
