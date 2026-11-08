@@ -14,6 +14,15 @@ export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.4.9',
+    date: '7 Nov 2026',
+    title: 'Passive Tree Readability and Deep Zoom',
+    items: [
+      'Passive tree node names and sector headers are now crisp and easily readable with dynamic zoom-scaled typography.',
+      'Expanded maximum tree zoom from 7.5x to 24x for deep cluster inspection with smooth mouse wheel navigation.',
+    ],
+  },
+  {
     version: '0.4.8',
     date: '7 Nov 2026',
     title: 'Passive Tree Controls and Zoom Fix',
