@@ -86,7 +86,22 @@ export const STAT_KEYS = [
   // skill modifiers on uniques (docs/GAME.md ★): tweak one named skill
   'pummelHits', 'barrageArrows', 'parryBlocks', 'hammerConvert', 'meditateEs', 'infernalSpread',
   // forbidden keystones
-  'overclock', 'knifesEdge', 'eternalHunger',
+  'overclock', 'knifesEdge', 'eternalHunger', 'chaosInoculation', 'abyssalPact', 'bloodGodsFrenzy',
+  'ironReflexes', 'glancingBlows', 'soulTether', 'anarchistsGambit', 'deathsDoor', 'echoesOfTheVoid',
+  // doomed node debuffs
+  'doomedBloodToll', 'doomedBrittleBones', 'doomedGlassVeil', 'doomedWitheredVeins', 'doomedShatteredMind', 'doomedBrokenCovenant',
+  // passive tree puzzle stats & gear synergies
+  'cryoShatter', 'glacialBulwark', 'hypothermicCrit', 'permafrostConvert', 'aegisWard', 'ghostDance',
+  'divineFlesh', 'recoupPct', 'defianceLowLife', 'runicConductor', 'masterArtisan', 'heavyArmorer',
+  'jeweledHorizon', 'alchemicalCatalyst',
+  'chaosInoculation', 'abyssalPact', 'bloodGodsFrenzy', 'ironReflexes', 'glancingBlows', 'soulTether', 'anarchistsGambit', 'deathsDoor', 'echoesOfTheVoid',
+  // doomed node debuffs
+  'doomedBloodToll', 'doomedBrittleBones', 'doomedGlassVeil', 'doomedWitheredVeins', 'doomedShatteredMind', 'doomedBrokenCovenant',
+  // puzzle & playstyle archetype stats
+  'cryoShatter', 'glacialBulwark', 'hypothermicCrit', 'permafrostConvert', 'aegisWard', 'ghostDance', 'divineFlesh', 'recoupPct',
+  'defianceLowLife', 'runicConductor', 'masterArtisan', 'heavyArmorer', 'jeweledHorizon', 'alchemicalCatalyst',
+  // cosmic gateways
+  'gatewaySolar', 'gatewayLunar', 'gatewayAstral', 'gatewayVoid', 'gatewayPrimal', 'gatewayDivine',
   // minions (docs/GAME.md)
   'minionPct', 'minionLifePct', 'minionSpeedPct',
   // unique mechanics & gold scaling
@@ -577,6 +592,8 @@ export interface CombatRuntime {
   frostbite?: number;
   /** frozen solid: no actions until this runs out */
   frozenMs?: number;
+  /** stunned by enemy crit under Anarchist's Gambit: no actions until this runs out */
+  playerStunMs?: number;
   groundAcc: number;
   groundTimer: number;
   /** the player's minions and storms; both stay on the field between packs, and neither survives leaving the area */
@@ -734,6 +751,21 @@ export interface Settings {
   /** a ready boss comes on its own instead of waiting to be challenged */
   autoBoss: boolean;
   targeting: Targeting;
+  activePassiveProfileId?: number;
+  passiveProfiles?: PassiveProfile[];
+}
+
+export interface PassiveProfile {
+  id: number;
+  name: string;
+  passives: string[];
+  masteries: Record<string, number>;
+  linkedGearId: number | null;
+  linkedSkillId: number | null;
+  linkedAtlas: string | null;
+  crossLinkGear: boolean;
+  crossLinkSkills: boolean;
+  crossLinkAtlas: boolean;
 }
 
 export interface Lifetime {
@@ -936,6 +968,8 @@ export interface MapState {
   auto: { tier: number; doomed?: boolean; theme?: string } | null;
   /** running totals, to judge a loop by; runs and clearMs count finished maps */
   tally: { runs: number; clearMs: number; mapsFound: number; favoured: number };
+  /** highest normal map tier cleared */
+  highestTier?: number;
 }
 
 /** Archaeology's Expedition (engine/expedition.ts). A dig is a plain skill action: this is what outlasts it. */
@@ -994,6 +1028,16 @@ export interface Loadouts {
   lastActivity: SkillId | null;
 }
 
+export interface TreeProfile {
+  id: string; // 'profile_1' | 'profile_2' | 'profile_3'
+  name: string;
+  passives: string[];
+  masteries: Record<string, number>;
+  linkedEquipment?: number; // 0, 1, 2 (index of equipment loadout)
+  linkedAtlas?: string;     // atlas profile id
+  linkedSkilling?: string;  // skilling profile id
+}
+
 export interface GameState {
   version: number;
   /** the shared account block; a running game holds the live one, and saves leave it out */
@@ -1036,12 +1080,33 @@ export interface GameState {
   combat: CombatRuntime | null;
   zoneKills: Record<string, number>;
   unlockedZones: string[];
+  /** Unspent character-tree currency for roads and Cosmic Gateways. */
+  travelPoints: number;
+  /** Unspent character-tree currency for combat passives and keystones. */
+  passivePoints: number;
+  /** Unspent character-tree currency for mastery choices. */
+  masteryPoints: number;
+  /** Last character level whose tree-point awards were credited. */
+  passivePointLevel: number;
+  /** Act quest-boss point awards already credited. */
+  passiveQuestPoints: number;
   passives: string[];
   /** chosen bonus (0–2) for each allocated mastery */
   masteries: Record<string, number>;
   ascendancy: AscendancyState;
   /** allocated skilling-tree nodes */
   skillPassives: string[];
+  /** Passive tree loadout profiles (1–3) */
+  passiveProfiles: TreeProfile[];
+  activePassiveProfile: string;
+  /** Atlas tree loadout profiles (1–3) */
+  atlasProfiles: TreeProfile[];
+  activeAtlasProfile: string;
+  /** Life skills tree loadout profiles (1–3) */
+  skillingProfiles: TreeProfile[];
+  activeSkillingProfile: string;
+  /** campaign act progression */
+  campaign?: { act: number };
   /** completed achievement ids */
   achievements: string[];
   /** areas whose boss has been killed at least once */

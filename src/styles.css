@@ -6939,16 +6939,191 @@ img.art.mat-art {
   }
 }
 
-/* ============ passive trees (v2) ============ */
+/* ============ passive trees (v2 & 5x overhaul) ============ */
 .tree-wrap {
   height: min(74vh, 820px);
+  contain: layout paint;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.tree-canvas-root {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* --- Top Bar & Profile Manager --- */
+.tree-top-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tree-profile-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tree-profile-tabs {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 3px;
+  gap: 3px;
+}
+
+.tree-profile-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: var(--fs-sm);
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.tree-profile-tab:hover:not(.locked) {
+  color: var(--text);
+  background: var(--panel);
+}
+
+.tree-profile-tab.active {
+  color: var(--accent-2);
+  background: var(--panel);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.tree-profile-tab.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tree-lock-icon {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.tree-settings-btn {
+  padding: 5px 10px;
+  font-size: var(--fs-xs);
+}
+
+.linked-badge {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #70f8ff;
+  font-size: var(--fs-xs);
+  padding: 4px 10px;
+  border-radius: 999px;
+  transition: all 0.15s ease;
+}
+
+.linked-badge:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+}
+
+.linked-badge-empty {
+  border: 1px dashed var(--line-2);
+  color: var(--dim);
+  font-size: var(--fs-xs);
+  padding: 4px 10px;
+  border-radius: 999px;
+  transition: all 0.15s ease;
+}
+
+.linked-badge-empty:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* --- Currency Bar & Point Trackers --- */
+.tree-currency-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-point-cyan {
+  background: rgba(0, 210, 224, 0.12);
+  border: 1px solid #00d2e0;
+  color: #00f0ff;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+}
+
+.chip-point-gold {
+  background: rgba(229, 184, 92, 0.12);
+  border: 1px solid #e5b85c;
+  color: #ffd700;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.35);
+}
+
+.chip-point-purple {
+  background: rgba(171, 104, 255, 0.12);
+  border: 1px solid #ab68ff;
+  color: #c084fc;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  text-shadow: 0 0 8px rgba(171, 104, 255, 0.35);
+}
+
+.chip-regret {
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+}
+
+.btn-refund-toggle {
+  transition: all 0.2s ease;
+}
+
+.btn-refund-toggle.active {
+  background: #d93848 !important;
+  border-color: #ff5264 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(217, 56, 72, 0.6) !important;
+}
+
+/* --- Search & Matching Nodes Highlight --- */
+.tree-node.match {
+  filter: drop-shadow(0 0 12px rgba(255, 220, 60, 0.95)) drop-shadow(0 0 24px rgba(255, 200, 30, 0.65)) !important;
 }
 
 .tree-node.match circle.body,
 .tree-node.match polygon.body,
-.tree-node.match rect.body {
-  stroke: var(--text) !important;
-  stroke-width: 4 !important;
+.tree-node.match rect.body,
+.tree-node.match .gateway-bg,
+.tree-node.match .doomed-diamond,
+.tree-node.match .celestial-star-outer,
+.tree-node.match .mastery-hex-outer {
+  stroke: #ffe066 !important;
+  stroke-width: 4.5px !important;
 }
 
 .tree-search {
@@ -6961,6 +7136,338 @@ img.art.mat-art {
   stroke: var(--bg-2);
   stroke-width: 4px;
   pointer-events: none;
+}
+
+/* --- Cosmic Gateways --- */
+.gateway-node {
+  cursor: pointer;
+}
+
+.gateway-node circle.gateway-pulse-outer {
+  fill: none;
+  stroke: #00f0ff;
+  stroke-width: 1.5;
+  opacity: 0.6;
+  animation: gatewayPulse 2.4s ease-out infinite;
+}
+
+.gateway-node circle.gateway-pulse-inner {
+  fill: none;
+  stroke: #00f0ff;
+  stroke-width: 1.5;
+  opacity: 0.8;
+  animation: gatewayPulse 2.4s ease-out 1.2s infinite;
+}
+
+.gateway-node circle.gateway-bg {
+  fill: #031525;
+  stroke: #00f0ff;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.7));
+}
+
+.gateway-node circle.gateway-ring {
+  fill: none;
+  stroke: #00f0ff;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  animation: gatewaySpin 12s linear infinite;
+  transform-origin: center;
+}
+
+.gateway-node circle.gateway-inner-ring {
+  fill: none;
+  stroke: #70f8ff;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  animation: gatewaySpinReverse 8s linear infinite;
+  transform-origin: center;
+}
+
+.gateway-node circle.gateway-core {
+  fill: #00f0ff;
+  filter: drop-shadow(0 0 6px #00f0ff);
+}
+
+.gateway-node circle.gateway-dot {
+  fill: #ffffff;
+}
+
+.gateway-node.on circle.gateway-bg {
+  fill: #052a42;
+  stroke: #38f9d7;
+  filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.9));
+}
+
+.gateway-tip {
+  border-color: rgba(0, 240, 255, 0.4) !important;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.2);
+}
+
+.gateway-conduit-box {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  margin: 8px 0;
+}
+
+.gateway-dest-label {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.gateway-dest-name {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: #00f0ff;
+  margin-top: 2px;
+}
+
+.conduit-prompt {
+  color: #00f0ff !important;
+}
+
+/* --- Doomed Gates --- */
+.doomed-node {
+  cursor: pointer;
+}
+
+.doomed-node polygon.doomed-aura {
+  fill: rgba(255, 30, 60, 0.12);
+  stroke: #ff2a4b;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  animation: doomedAura 3s ease-in-out infinite alternate;
+  transform-origin: center;
+}
+
+.doomed-node polygon.doomed-diamond {
+  fill: #1c0508;
+  stroke: #e6203a;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 10px rgba(230, 32, 58, 0.6));
+}
+
+.doomed-node.on polygon.doomed-diamond {
+  fill: #3b0910;
+  stroke: #ff3b56;
+  filter: drop-shadow(0 0 16px rgba(255, 59, 86, 0.9));
+}
+
+.doomed-node polygon.doomed-inner-diamond {
+  fill: #2c080d;
+  stroke: #a01525;
+  stroke-width: 1.5;
+}
+
+.doomed-node path.doomed-skull {
+  fill: #ff6b81;
+  filter: drop-shadow(0 0 4px #ff2a4b);
+}
+
+.doomed-warning-badge rect {
+  fill: #240508;
+  stroke: #ff3b56;
+  stroke-width: 1.2;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+}
+
+.doomed-warning-badge text {
+  fill: #ff8597;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+.doomed-tip {
+  border-color: rgba(255, 42, 75, 0.4) !important;
+  box-shadow: 0 0 16px rgba(255, 42, 75, 0.2);
+}
+
+.doomed-warning-box {
+  background: rgba(255, 30, 60, 0.1);
+  border: 1px solid #ff3b56;
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  margin: 8px 0;
+}
+
+.doomed-warning-title {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: #ff6b81;
+  letter-spacing: 0.5px;
+}
+
+.doomed-warning-text {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: #ff99aa;
+  margin-top: 2px;
+}
+
+/* --- Celestial Forbidden Keystones --- */
+.celestial-star-node {
+  cursor: pointer;
+}
+
+.celestial-star-node circle.celestial-halo {
+  fill: none;
+  stroke: #ff3d9a;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  opacity: 0.6;
+  animation: celestialSpin 24s linear infinite;
+  transform-origin: center;
+}
+
+.celestial-star-node circle.celestial-inner-halo {
+  fill: none;
+  stroke: #ff77c2;
+  stroke-width: 1.2;
+  opacity: 0.5;
+  animation: celestialSpin 16s linear reverse infinite;
+  transform-origin: center;
+}
+
+.celestial-star-node polygon.celestial-star-outer {
+  fill: #1f0815;
+  stroke: #ff2d8d;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 12px rgba(255, 45, 141, 0.7));
+}
+
+.celestial-star-node.on polygon.celestial-star-outer {
+  fill: #3a0d27;
+  stroke: #ff66b2;
+  filter: drop-shadow(0 0 20px rgba(255, 61, 154, 0.95));
+}
+
+.celestial-star-node polygon.celestial-star-inner {
+  fill: #3b0925;
+  stroke: #ff85c8;
+  stroke-width: 1.5;
+}
+
+.celestial-star-node circle.celestial-core {
+  fill: #ff3d9a;
+  filter: drop-shadow(0 0 8px #ff3d9a);
+}
+
+.celestial-star-node circle.celestial-spark {
+  fill: #ffffff;
+}
+
+.celestial-tip {
+  border-color: rgba(255, 61, 154, 0.4) !important;
+  box-shadow: 0 0 16px rgba(255, 61, 154, 0.2);
+}
+
+.celestial-desc {
+  color: #ff85c8;
+  font-weight: 500;
+}
+
+/* --- Mastery Sockets --- */
+.mastery-socket-node {
+  cursor: pointer;
+}
+
+.mastery-socket-node circle.mastery-halo {
+  fill: none;
+  stroke: #a855f7;
+  stroke-width: 2;
+  opacity: 0;
+  filter: blur(2px);
+  transition: opacity 0.3s;
+}
+
+.mastery-socket-node polygon.mastery-hex-outer {
+  fill: #14161d;
+  stroke: #a855f7;
+  stroke-width: 2.5;
+  transition: fill 0.2s, stroke 0.2s;
+}
+
+.mastery-socket-node.on polygon.mastery-hex-outer {
+  fill: #2d124d;
+  stroke: #c084fc;
+  filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.8));
+}
+
+.mastery-socket-node.on circle.mastery-halo {
+  opacity: 0.8;
+}
+
+.mastery-socket-node.can polygon.mastery-hex-outer {
+  stroke: #e9d5ff;
+}
+
+.mastery-socket-node polygon.mastery-hex-inner {
+  fill: none;
+  stroke: #7e22ce;
+  stroke-width: 1.2;
+}
+
+.mastery-socket-node polygon.mastery-gem {
+  fill: #a855f7;
+}
+
+.mastery-socket-node.on polygon.mastery-gem {
+  fill: #e9d5ff;
+  filter: drop-shadow(0 0 6px #c084fc);
+}
+
+/* Keyframes */
+@keyframes gatewayPulse {
+  0% {
+    r: 16px;
+    opacity: 0.9;
+  }
+  100% {
+    r: 36px;
+    opacity: 0;
+  }
+}
+
+@keyframes gatewaySpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gatewaySpinReverse {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes doomedAura {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.12);
+    opacity: 0.9;
+  }
+}
+
+@keyframes celestialSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .tree-key {

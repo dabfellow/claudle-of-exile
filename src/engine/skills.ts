@@ -27,6 +27,7 @@ import type { GameState, Item, RolledMod, SkillId, SmithCatalyst } from './types
 import { characterLevel } from './character';
 import { levelOf } from './xp';
 import { grantMasteryPractice, masteryConservation, masterySpeed, masteryYield, stochasticRound } from './skillingMastery';
+import { settlePassivePoints } from './passives';
 
 export function skillLevel(s: GameState, skill: SkillId): number {
   return levelOf(skill, s.skills[skill]);
@@ -38,7 +39,10 @@ export function grantXp(s: GameState, ctx: Ctx, skill: SkillId, amount: number):
   s.skills[skill] += amount;
   ctx.emit({ t: 'xp', skill, amount });
   const after = levelOf(skill, s.skills[skill]);
-  if (after > before) ctx.emit({ t: 'levelup', skill, level: after });
+  if (after > before) {
+    if (skill === 'combat') settlePassivePoints(s);
+    ctx.emit({ t: 'levelup', skill, level: after });
+  }
 }
 
 /** How much slower a skill's keystone makes it (Motherlode, Grandmaster Smith, Transmuter). */

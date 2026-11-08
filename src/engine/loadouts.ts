@@ -78,7 +78,7 @@ export function skillSetActive(s: GameState, set: SkillSet): boolean {
 }
 
 /** Life, mana and shield stay at the same share of their maximums across a swap, so skilling gear doesn't start a fight half dead. */
-function keepingVitals(s: GameState, swap: () => void): void {
+export function keepingVitals(s: GameState, swap: () => void): void {
   const before = deriveStats(s);
   const share = { life: s.life / before.maxLife, mana: before.maxMana ? s.mana / before.maxMana : 1, es: before.maxEs ? s.es / before.maxEs : 0 };
   swap();

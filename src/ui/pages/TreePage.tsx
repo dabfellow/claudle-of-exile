@@ -15,6 +15,7 @@ import { CLASS_SECTORS, PASSIVE_BY_ID, PASSIVE_NODES, REGION_NAMES, type Passive
 import { SKILL_TREE_BY_ID, SKILL_TREE_NODES, SKILL_TREE_START, type SkillTreeNode } from '../../data/skillTree';
 import { SKILLS } from '../../data/skills';
 import { describeStats } from '../../data/statText';
+import { ZONES } from '../../data/zones';
 import {
   allocateAscNode,
   ascendancyPointsLeft,
@@ -31,10 +32,24 @@ import {
 } from '../../engine/ascendancy';
 import { ruleLockReason } from '../../engine/automation';
 import { isClassic } from '../../engine/challenge';
-import { allocate, allocateReason, changeMastery, pointsLeft, refund, refundReason, startNode, totalPoints } from '../../engine/passives';
+import { applyGearSet, applySkillSet } from '../../engine/loadouts';
+import {
+  allocate,
+  allocateReason,
+  changeMastery,
+  isCosmicGateway,
+  isDoomed,
+  pairedGateway,
+  passiveNodeCost,
+  pointsLeft,
+  refund,
+  refundReason,
+  settlePassivePoints,
+  startNode,
+} from '../../engine/passives';
 import { allocateSkillNode, refundSkillNode, refundSkillNodeReason, skillNodeReason, skillPointsLeft, skillTreePoints } from '../../engine/skillTree';
 import { deriveStats, passiveStats, type Derived } from '../../engine/stats';
-import type { GameState, NovaRelease, SkillId, TargetOrder, TargetPriority } from '../../engine/types';
+import type { GameState, NovaRelease, PassiveProfile, SkillId, TargetOrder, TargetPriority } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { PageHeader, Tabs } from '../components/common';
 import { ORDERS, PRIORITIES } from './CombatPage';
@@ -128,7 +143,7 @@ function TreeCanvas<N extends CanvasNode>({
   const wrap = useRef<HTMLDivElement>(null);
   const clickRef = useRef(onClick);
   clickRef.current = onClick;
-  const clamp = (k: number) => Math.min(maxZoom, Math.max(0.8, k));
+  const clamp = (k: number) => Math.min(maxZoom, Math.max(0.4, k));
 
   /** zoom by `f`, keeping the point under the cursor (or the centre) still */
   const zoomAt = (f: number, clientX?: number, clientY?: number) =>
@@ -156,7 +171,7 @@ function TreeCanvas<N extends CanvasNode>({
 
   const layer = useMemo(() => {
     const links: [N, N][] = [];
-    for (const n of nodes) for (const l of n.links) if (n.id < l) links.push([n, byId[l]]);
+    for (const n of nodes) for (const l of n.links) if (n.id < l && byId[l]) links.push([n, byId[l]]);
     return (
       <>
         {links.map(([a, b]) => {
@@ -167,14 +182,19 @@ function TreeCanvas<N extends CanvasNode>({
         {nodes.map((n) => {
           const on = isOn(n.id);
           const can = canTake(n.id);
-          const dim = matches && !matches.has(n.id);
+          const isMatched = matches?.has(n.id);
+          const dim = matches !== null && !isMatched;
           return (
             <g
               key={n.id}
               data-tut={tutId?.(n.id)}
-              className={`tree-node ${on ? 'on' : ''} ${can ? 'can' : ''} ${matches?.has(n.id) ? 'match' : ''}`}
+              className={`tree-node ${on ? 'on' : ''} ${can ? 'can' : ''} ${isMatched ? 'match' : ''}`}
               transform={`translate(${n.x} ${n.y})`}
-              style={{ opacity: dim ? 0.25 : 1 }}
+              style={{
+                opacity: dim ? 0.18 : 1,
+                filter: dim ? 'grayscale(80%) brightness(0.6)' : undefined,
+                transition: 'opacity 0.25s, filter 0.25s',
+              }}
               onMouseMove={(e) => setHover({ id: n.id, x: e.clientX, y: e.clientY })}
               onMouseLeave={() => setHover((h) => (h?.id === n.id ? null : h))}
               onClick={() => !drag.current?.moved && clickRef.current(n)}
@@ -186,9 +206,9 @@ function TreeCanvas<N extends CanvasNode>({
       </>
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `version` stands in for everything drawn
-  }, [version, nodes, byId]);
+  }, [version, nodes, byId, matches]);
 
-  const showNames = view.k >= maxZoom * 0.55;
+  const showNames = view.k >= Math.min(2.8, maxZoom * 0.4);
   const nameLayer = useMemo(
     () =>
       showNames &&
@@ -206,6 +226,11 @@ function TreeCanvas<N extends CanvasNode>({
       className="tree-wrap"
       ref={wrap}
       onPointerDown={(e) => {
+        try {
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
         const r = wrap.current!.getBoundingClientRect();
         drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, unit: size / Math.min(r.width, r.height) };
       }}
@@ -220,14 +245,30 @@ function TreeCanvas<N extends CanvasNode>({
           setView((v) => ({ ...v, x: dr.vx + (dx * dr.unit) / v.k, y: dr.vy + (dy * dr.unit) / v.k }));
         }
       }}
-      onPointerUp={() => setTimeout(() => (drag.current = null), 0)}
+      onPointerUp={(e) => {
+        try {
+          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
+        setTimeout(() => (drag.current = null), 0);
+      }}
+      onPointerCancel={(e) => {
+        try {
+          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
+        drag.current = null;
+        setHover(null);
+      }}
       onPointerLeave={() => {
         drag.current = null;
         setHover(null);
       }}
     >
       <svg viewBox={`${-size / 2} ${-size / 2} ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
-        <g transform={`scale(${view.k}) translate(${view.x} ${view.y})`}>
+        <g className="tree-canvas-root" transform={`scale(${view.k}) translate(${view.x} ${view.y})`} style={{ willChange: 'transform', transformOrigin: '0 0' }}>
           {labels?.map((l) => (
             <text key={l.text} x={l.x} y={l.y} textAnchor="middle" dominantBaseline="middle" fill={l.color} opacity={0.5} fontFamily="Cinzel, serif" fontSize={l.size ?? 24} letterSpacing={5}>
               {l.text}
@@ -286,8 +327,93 @@ function hexPoints(r: number): string {
   }).join(' ');
 }
 
+function starPoints(numPoints: number, innerR: number, outerR: number): string {
+  const points: string[] = [];
+  const step = Math.PI / numPoints;
+  for (let i = 0; i < 2 * numPoints; i++) {
+    const r = i % 2 === 0 ? outerR : innerR;
+    const a = i * step - Math.PI / 2;
+    points.push(`${Math.round(r * Math.cos(a))},${Math.round(r * Math.sin(a))}`);
+  }
+  return points.join(' ');
+}
+
+function GatewayShape({ on, can }: { on: boolean; can: boolean }) {
+  return (
+    <g className={`gateway-node ${on ? 'on' : ''} ${can ? 'can' : ''}`}>
+      <circle className="gateway-pulse-outer" r={32} />
+      <circle className="gateway-pulse-inner" r={24} />
+      <circle className="gateway-bg body" r={20} />
+      <circle className="gateway-ring" r={20} />
+      <circle className="gateway-inner-ring" r={14} />
+      <circle className="gateway-core" r={8} />
+      <circle className="gateway-dot" r={3} />
+    </g>
+  );
+}
+
+function DoomedShape({ on, can }: { on: boolean; can: boolean }) {
+  return (
+    <g className={`doomed-node ${on ? 'on' : ''} ${can ? 'can' : ''}`}>
+      <polygon className="doomed-aura" points="0,-32 32,0 0,32 -32,0" />
+      <polygon className="doomed-diamond body" points="0,-24 24,0 0,24 -24,0" />
+      <polygon className="doomed-inner-diamond" points="0,-16 16,0 0,16 -16,0" />
+      <path
+        className="doomed-skull"
+        d="M -6,-7 C -6,-12 6,-12 6,-7 C 6,-4 5,-2 4,-1 L 4,3 L -4,3 L -4,-1 C -5,-2 -6,-4 -6,-7 Z M -4,-7 A 1.5 1.5 0 1 0 -1,-7 A 1.5 1.5 0 1 0 -4,-7 M 1,-7 A 1.5 1.5 0 1 0 4,-7 A 1.5 1.5 0 1 0 1,-7"
+      />
+      <g className="doomed-warning-badge" transform="translate(0, -36)">
+        <rect x={-52} y={-10} width={104} height={18} rx={4} />
+        <text x={0} y={2.5} textAnchor="middle">
+          ⚠ PERMANENT DEBUFF
+        </text>
+      </g>
+    </g>
+  );
+}
+
+function CelestialStarShape({ on, can }: { on: boolean; can: boolean }) {
+  return (
+    <g className={`celestial-star-node ${on ? 'on' : ''} ${can ? 'can' : ''}`}>
+      <circle className="celestial-halo" r={42} />
+      <circle className="celestial-inner-halo" r={32} />
+      <polygon className="celestial-star-outer body" points={starPoints(8, 18, 38)} />
+      <polygon className="celestial-star-inner" points={starPoints(8, 10, 24)} />
+      <circle className="celestial-core" r={8} />
+      <circle className="celestial-spark" r={3} />
+    </g>
+  );
+}
+
+function MasterySocketShape({ on, can }: { on: boolean; can: boolean }) {
+  return (
+    <g className={`mastery-socket-node ${on ? 'on' : ''} ${can ? 'can' : ''}`}>
+      <circle className="mastery-halo" r={22} />
+      <polygon className="mastery-hex-outer body" points={hexPoints(17)} />
+      <polygon className="mastery-hex-inner" points={hexPoints(11)} />
+      <polygon className="mastery-gem" points={hexPoints(6)} />
+    </g>
+  );
+}
+
 function NodeShape(props: { kind: string; color: string; on: boolean; can: boolean; mine?: boolean }) {
   return <BaseShape {...props} />;
+}
+
+function PassiveNodeShape({ node, color, on, can, mine }: { node: PassiveNode; color: string; on: boolean; can: boolean; mine?: boolean }) {
+  if (isCosmicGateway(node)) {
+    return <GatewayShape on={on} can={can} />;
+  }
+  if (isDoomed(node)) {
+    return <DoomedShape on={on} can={can} />;
+  }
+  if (node.kind === 'keystone' && node.region === 'forbidden') {
+    return <CelestialStarShape on={on} can={can} />;
+  }
+  if (node.kind === 'mastery') {
+    return <MasterySocketShape on={on} can={can} />;
+  }
+  return <BaseShape kind={node.kind} color={color} on={on} can={can} mine={mine} />;
 }
 
 function BaseShape({ kind, color, on, can, mine = true }: { kind: string; color: string; on: boolean; can: boolean; mine?: boolean }) {
@@ -331,6 +457,27 @@ function BaseShape({ kind, color, on, can, mine = true }: { kind: string; color:
 
 // ---------- character tree ----------
 
+const DOOMED_DEBUFFS: Record<string, string> = {
+  doomed_blood_toll: '-25% Maximum Life',
+  doomed_brittle_bones: 'Take 20% increased Physical Damage',
+  doomed_glass_veil: 'Armour is set to 0',
+  doomed_withered_veins: 'Flasks recover 0 Life or Mana',
+  doomed_shattered_mind: 'Skills cost 100% more Mana',
+  doomed_broken_covenant: '-30% All Elemental Resistances',
+};
+
+function doomedDebuffText(n: PassiveNode): string {
+  if ((n as { debuff?: string }).debuff) return (n as { debuff?: string }).debuff!;
+  if (DOOMED_DEBUFFS[n.id]) return DOOMED_DEBUFFS[n.id];
+  for (const [key, val] of Object.entries(n.stats)) {
+    if (key.startsWith('doomed')) {
+      const name = key.replace('doomed', '').replace(/([A-Z])/g, ' $1').trim();
+      return `Permanent penalty: ${name} (${val})`;
+    }
+  }
+  return 'Permanent penalty to build defense/offense';
+}
+
 function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
   const allocated = s.passives.includes(n.id);
   // an Exile can walk through other classes' starts, so those get the normal node tip
@@ -342,15 +489,87 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
   const next = allocated ? s.passives.filter((x) => x !== n.id) : [...s.passives, n.id];
   const after = n.kind === 'mastery' ? before : deriveStats({ ...s, passives: next }, []);
   const chosen = n.kind === 'mastery' ? s.masteries[n.id] : undefined;
-  return (
-    <div className="tip" style={{ minWidth: 240, maxWidth: 320 }}>
-      <div className="tip-title" style={{ color: n.kind === 'keystone' ? 'var(--unique)' : n.kind === 'notable' || n.kind === 'mastery' ? 'var(--accent-2)' : 'var(--text)' }}>
-        {n.name}
-        <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 'var(--fs-xs)' }}>
-          {n.kind} · {REGION_NAMES[n.region]}
-        </span>
+
+  // 1. Cosmic Gateway
+  if (isCosmicGateway(n)) {
+    const pairId = pairedGateway(n.id) ?? (n as { pairId?: string }).pairId;
+    const pairNode = pairId ? PASSIVE_BY_ID[pairId] : undefined;
+    const destName = pairNode?.name ?? (pairId ? pairId.replace('gateway_', 'Gateway ').toUpperCase() : 'Paired Gateway');
+    return (
+      <div className="tip gateway-tip" style={{ minWidth: 260, maxWidth: 340 }}>
+        <div className="tip-title" style={{ color: '#00f0ff' }}>
+          🌌 {n.name}
+          <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 'var(--fs-xs)' }}>
+            Cosmic Gateway
+          </span>
+        </div>
+        <div className="gateway-conduit-box">
+          <div className="gateway-dest-label">Destination:</div>
+          <div className="gateway-dest-name">⇄ {destName}</div>
+        </div>
+        <div className="mod">
+          Bypasses physical tree distance. Both sides connect when activated.
+        </div>
+        <div className={allocated ? 'good' : 'conduit-prompt'} style={{ marginTop: 8, fontSize: 'var(--fs-xs)', fontWeight: 600 }}>
+          {allocated ? `Conduit Active · Linked to ${destName}` : (reason ?? 'Activate Conduit (3 Travel Pts)')}
+        </div>
       </div>
-      {n.kind === 'mastery' ? (
+    );
+  }
+
+  // 2. Doomed Gate
+  if (isDoomed(n)) {
+    const debuff = doomedDebuffText(n);
+    return (
+      <div className="tip doomed-tip" style={{ minWidth: 260, maxWidth: 340 }}>
+        <div className="tip-title" style={{ color: '#ff3b56' }}>
+          ☠ {n.name}
+          <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 'var(--fs-xs)' }}>
+            Doomed Gate
+          </span>
+        </div>
+        <div className="doomed-warning-box">
+          <div className="doomed-warning-title">⚠ PERMANENT DEBUFF</div>
+          <div className="doomed-warning-text">{debuff}</div>
+        </div>
+        {n.desc && <div className="mod">{n.desc}</div>}
+        <StatDeltas before={before} after={after} />
+        <div className={reason ? 'warn' : allocated ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
+          {reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to breach Doomed Gate')}
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Celestial Forbidden Keystone
+  if (n.kind === 'keystone' && n.region === 'forbidden') {
+    return (
+      <div className="tip celestial-tip" style={{ minWidth: 260, maxWidth: 340 }}>
+        <div className="tip-title" style={{ color: '#ff66b2' }}>
+          ✧ {n.name}
+          <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 'var(--fs-xs)' }}>
+            Celestial Forbidden Keystone
+          </span>
+        </div>
+        {n.desc && <div className="mod celestial-desc">{n.desc}</div>}
+        <StatDeltas before={before} after={after} />
+        <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
+          {reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to allocate (15 Passive Points)')}
+        </div>
+      </div>
+    );
+  }
+
+  // 4. Mastery
+  if (n.kind === 'mastery') {
+    return (
+      <div className="tip mastery-tip" style={{ minWidth: 260, maxWidth: 340 }}>
+        <div className="tip-title" style={{ color: '#c084fc' }}>
+          ⬡ {n.name}
+          <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 'var(--fs-xs)' }}>
+            Mastery Socket
+          </span>
+        </div>
         <div className="mastery-tip">
           {n.options!.map((o, i) => (
             <div key={i} className={`mod ${chosen === i ? 'chosen' : ''}`}>
@@ -359,23 +578,34 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
             </div>
           ))}
           <div className="dim" style={{ fontSize: 'var(--fs-xs)', marginTop: 4 }}>
-            {allocated ? 'Click to change your pick (1 Orb of Regret) or refund.' : 'Click to choose one bonus.'}
+            {allocated ? 'Click to change your pick (1 Orb of Regret) or refund.' : 'Click to choose one bonus (1 Mastery Point).'}
           </div>
         </div>
-      ) : (
-        <>
-          {(n.desc ? [n.desc] : describeStats(n.stats)).map((l) => (
-            <div key={l} className="mod">
-              {l}
-            </div>
-          ))}
-          <StatDeltas before={before} after={after} />
-        </>
-      )}
+        <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
+          {n.kind === 'mastery' && !allocated && !reason
+            ? 'Click to pick a bonus'
+            : (reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to allocate'))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="tip" style={{ minWidth: 240, maxWidth: 320 }}>
+      <div className="tip-title" style={{ color: n.kind === 'keystone' ? 'var(--unique)' : n.kind === 'notable' ? 'var(--accent-2)' : 'var(--text)' }}>
+        {n.name}
+        <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 'var(--fs-xs)' }}>
+          {n.kind} · {REGION_NAMES[n.region]}
+        </span>
+      </div>
+      {(n.desc ? [n.desc] : describeStats(n.stats)).map((l) => (
+        <div key={l} className="mod">
+          {l}
+        </div>
+      ))}
+      <StatDeltas before={before} after={after} />
       <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
-        {n.kind === 'mastery' && !allocated && !reason
-          ? 'Click to pick a bonus'
-          : (reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to allocate'))}
+        {reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to allocate')}
       </div>
     </div>
   );
@@ -414,8 +644,9 @@ function MasteryPicker({ s, n, onClose }: { s: GameState; n: PassiveNode; onClos
   const regret = s.account.bank.regret ?? 0;
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="card modal" onClick={(e) => e.stopPropagation()}>
+      <div className="card modal mastery-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
         <div className="card-title">
+          <span style={{ color: '#c084fc', marginRight: 6 }}>⬡</span>
           {n.name}
           <span className="grow" />
           <button className="btn sm ghost" onClick={onClose}>
@@ -423,7 +654,7 @@ function MasteryPicker({ s, n, onClose }: { s: GameState; n: PassiveNode; onClos
           </button>
         </div>
         <p className="muted" style={{ marginTop: 0, fontSize: 'var(--fs-sm)' }}>
-          {allocated ? `Changing your pick costs 1 Orb of Regret (you have ${regret}).` : 'Pick one bonus. You can change it later for an Orb of Regret.'}
+          {allocated ? `Changing your pick costs 1 Orb of Regret (you have ${regret}).` : 'Pick one mastery bonus for 1 Mastery Point. You can change it later for an Orb of Regret.'}
         </p>
         <div className="grid" style={{ gap: 8 }}>
           {n.options!.map((o, i) => (
@@ -437,7 +668,7 @@ function MasteryPicker({ s, n, onClose }: { s: GameState; n: PassiveNode; onClos
               }}
             >
               <span className="mastery-mark">{chosen === i ? '◆' : '◇'}</span>
-              {o.label}
+              <span>{o.label}</span>
             </button>
           ))}
         </div>
@@ -461,14 +692,176 @@ function MasteryPicker({ s, n, onClose }: { s: GameState; n: PassiveNode; onClos
   );
 }
 
-function searchMatches(query: string, nodes: { id: string; name: string; text: string[] }[]): Set<string> | null {
-  const q = query.trim().toLowerCase();
-  if (q.length < 2) return null;
-  return new Set(nodes.filter((n) => n.name.toLowerCase().includes(q) || n.text.some((t) => t.toLowerCase().includes(q))).map((n) => n.id));
+function ProfileSettingsModal({
+  s,
+  profile,
+  onSave,
+  onClose,
+}: {
+  s: GameState;
+  profile: PassiveProfile;
+  onSave: (updated: PassiveProfile) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(profile.name);
+  const [crossLinkGear, setCrossLinkGear] = useState(profile.crossLinkGear ?? false);
+  const [linkedGearId, setLinkedGearId] = useState<number | null>(profile.linkedGearId ?? null);
+  const [crossLinkSkills, setCrossLinkSkills] = useState(profile.crossLinkSkills ?? false);
+  const [linkedSkillId, setLinkedSkillId] = useState<number | null>(profile.linkedSkillId ?? null);
+  const [crossLinkAtlas, setCrossLinkAtlas] = useState(profile.crossLinkAtlas ?? false);
+  const [linkedAtlas, setLinkedAtlas] = useState<string | null>(profile.linkedAtlas ?? 'Atlas Bossing');
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="card modal profile-settings-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
+        <div className="card-title">
+          Profile Settings: {profile.name}
+          <span className="grow" />
+          <button className="btn sm ghost" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="grid" style={{ gap: 14, marginTop: 10 }}>
+          <div>
+            <label className="small muted" style={{ display: 'block', marginBottom: 4 }}>
+              Profile Name
+            </label>
+            <input
+              className="input wide"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Profile 1, Bossing Crit, Map Clear"
+            />
+          </div>
+
+          <div className="profile-crosslink-section">
+            <div className="small" style={{ fontWeight: 600, color: 'var(--accent)', marginBottom: 8 }}>
+              Cross-linked Loadouts
+            </div>
+
+            <div className="crosslink-row" style={{ display: 'grid', gap: 6, marginBottom: 12 }}>
+              <label className="row" style={{ gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={crossLinkGear}
+                  onChange={(e) => setCrossLinkGear(e.target.checked)}
+                />
+                <span>Link Gear Set</span>
+              </label>
+              {crossLinkGear && (
+                <select
+                  className="input sm"
+                  value={linkedGearId ?? ''}
+                  onChange={(e) => setLinkedGearId(e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="">(Select Gear Set)</option>
+                  {s.loadouts.gear.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
+                  ))}
+                  {s.loadouts.gear.length === 0 && <option value="" disabled>No gear sets saved yet</option>}
+                </select>
+              )}
+            </div>
+
+            <div className="crosslink-row" style={{ display: 'grid', gap: 6, marginBottom: 12 }}>
+              <label className="row" style={{ gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={crossLinkSkills}
+                  onChange={(e) => setCrossLinkSkills(e.target.checked)}
+                />
+                <span>Link Skill Bar</span>
+              </label>
+              {crossLinkSkills && (
+                <select
+                  className="input sm"
+                  value={linkedSkillId ?? ''}
+                  onChange={(e) => setLinkedSkillId(e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="">(Select Skill Loadout)</option>
+                  {s.loadouts.skills.map((sk) => (
+                    <option key={sk.id} value={sk.id}>
+                      {sk.name}
+                    </option>
+                  ))}
+                  {s.loadouts.skills.length === 0 && <option value="" disabled>No skill loadouts saved yet</option>}
+                </select>
+              )}
+            </div>
+
+            <div className="crosslink-row" style={{ display: 'grid', gap: 6 }}>
+              <label className="row" style={{ gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={crossLinkAtlas}
+                  onChange={(e) => setCrossLinkAtlas(e.target.checked)}
+                />
+                <span>Link Atlas Strategy</span>
+              </label>
+              {crossLinkAtlas && (
+                <select
+                  className="input sm"
+                  value={linkedAtlas ?? ''}
+                  onChange={(e) => setLinkedAtlas(e.target.value || null)}
+                >
+                  <option value="Atlas Bossing">Atlas Bossing</option>
+                  <option value="Atlas Mapping">Atlas Mapping</option>
+                  <option value="Atlas Sustain">Atlas Sustain</option>
+                  <option value="Atlas Peril">Atlas Peril (Doomed)</option>
+                </select>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="row" style={{ marginTop: 20, justifyContent: 'flex-end', gap: 8 }}>
+          <button className="btn sm ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className="btn sm"
+            onClick={() => {
+              onSave({
+                ...profile,
+                name: name.trim() || profile.name,
+                crossLinkGear,
+                linkedGearId: crossLinkGear ? linkedGearId : null,
+                crossLinkSkills,
+                linkedSkillId: crossLinkSkills ? linkedSkillId : null,
+                crossLinkAtlas,
+                linkedAtlas: crossLinkAtlas ? linkedAtlas : null,
+              });
+              onClose();
+            }}
+          >
+            Save Profile
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-const CHAR_TREE_SIZE = 5700;
-const CHAR_TREE_ZOOM = 5;
+function searchMatches(query: string, nodes: { id: string; name: string; text: string[]; kind?: string; region?: string }[]): Set<string> | null {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return null;
+  return new Set(
+    nodes
+      .filter(
+        (n) =>
+          n.name.toLowerCase().includes(q) ||
+          (n.kind && n.kind.toLowerCase().includes(q)) ||
+          (n.region && n.region.toLowerCase().includes(q)) ||
+          n.text.some((t) => t.toLowerCase().includes(q))
+      )
+      .map((n) => n.id)
+  );
+}
+
+const CHAR_TREE_SIZE = 12000;
+const CHAR_TREE_ZOOM = 7.5;
 
 const CHAR_LABELS: CanvasLabel[] = [
   ...CLASS_SECTORS.map((c) => {
@@ -488,15 +881,176 @@ const CHAR_NAMES: CanvasLabel[] = PASSIVE_NODES.filter((n) => n.kind === 'notabl
   size: n.kind === 'notable' ? 14 : 18,
 }));
 
+function isProfileUnlocked(id: number, s: GameState): boolean {
+  if (id === 1) return true;
+  if (id === 2) return ZONES.some((z) => z.act >= 5 && s.unlockedZones.includes(z.id));
+  if (id === 3) {
+    return Boolean(
+      (s.account.atlas?.cleared && s.account.atlas.cleared.some((t) => t >= 5)) ||
+      (s.maps?.run && s.maps.run.tier >= 5) ||
+      (s.account.maps && Object.keys(s.account.maps).some((k) => parseInt(k.replace(/\D/g, ''), 10) >= 5)) ||
+      (s.maps?.stock && Object.keys(s.maps.stock).some((k) => parseInt(k.replace(/\D/g, ''), 10) >= 5))
+    );
+  }
+  return false;
+}
+
 function CharacterTree({ s }: { s: GameState }) {
   const [query, setQuery] = useState('');
   const [picker, setPicker] = useState<PassiveNode | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [refundMode, setRefundMode] = useState(false);
+
+  const initialProfiles = useMemo((): PassiveProfile[] => {
+    if (s.settings?.passiveProfiles && s.settings.passiveProfiles.length === 3) {
+      return s.settings.passiveProfiles;
+    }
+    return [
+      {
+        id: 1,
+        name: 'Profile 1',
+        passives: [...s.passives],
+        masteries: { ...s.masteries },
+        linkedGearId: s.loadouts.gear[0]?.id ?? null,
+        linkedSkillId: s.loadouts.skills[0]?.id ?? null,
+        linkedAtlas: 'Atlas Bossing',
+        crossLinkGear: true,
+        crossLinkSkills: false,
+        crossLinkAtlas: true,
+      },
+      {
+        id: 2,
+        name: 'Profile 2',
+        passives: [],
+        masteries: {},
+        linkedGearId: s.loadouts.gear[1]?.id ?? null,
+        linkedSkillId: s.loadouts.skills[1]?.id ?? null,
+        linkedAtlas: 'Atlas Mapping',
+        crossLinkGear: false,
+        crossLinkSkills: false,
+        crossLinkAtlas: false,
+      },
+      {
+        id: 3,
+        name: 'Profile 3',
+        passives: [],
+        masteries: {},
+        linkedGearId: null,
+        linkedSkillId: null,
+        linkedAtlas: null,
+        crossLinkGear: false,
+        crossLinkSkills: false,
+        crossLinkAtlas: false,
+      },
+    ];
+  }, [s.settings?.passiveProfiles, s.passives, s.masteries, s.loadouts.gear, s.loadouts.skills]);
+
+  const [profiles, setProfiles] = useState<PassiveProfile[]>(initialProfiles);
+  const activeProfileId = s.settings?.activePassiveProfileId ?? 1;
+  const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? profiles[0];
+
+  const switchProfile = (targetId: number) => {
+    if (targetId === activeProfileId) return;
+    if (!isProfileUnlocked(targetId, s)) {
+      const lockMsg = targetId === 2 ? 'Profile 2 unlocks in Act 5!' : 'Profile 3 unlocks at Tier 5 Maps!';
+      game.act((_, ctx) => ctx.emit({ t: 'info', text: lockMsg }));
+      return;
+    }
+    game.act((st, ctx) => {
+      st.settings ??= {} as GameState['settings'];
+      st.settings.passiveProfiles ??= profiles;
+      // 1. Save current passives into current profile
+      const updatedProfiles = (st.settings.passiveProfiles ?? profiles).map((p) =>
+        p.id === activeProfileId ? { ...p, passives: [...st.passives], masteries: { ...st.masteries } } : p
+      );
+      const target = updatedProfiles.find((p) => p.id === targetId);
+      if (!target) return;
+      // 2. Load target profile passives (or copy current if target was never set)
+      if (target.passives.length > 0) {
+        st.passives = [...target.passives];
+        st.masteries = { ...target.masteries };
+      } else {
+        target.passives = [...st.passives];
+        target.masteries = { ...st.masteries };
+      }
+      settlePassivePoints(st);
+      st.settings.activePassiveProfileId = targetId;
+      st.settings.passiveProfiles = updatedProfiles;
+
+      // 3. Cross-linking
+      if (target.crossLinkGear && target.linkedGearId != null) {
+        applyGearSet(st, ctx, target.linkedGearId);
+      }
+      if (target.crossLinkSkills && target.linkedSkillId != null) {
+        applySkillSet(st, target.linkedSkillId);
+      }
+
+      setProfiles(updatedProfiles);
+      ctx.emit({ t: 'info', text: `Switched to ${target.name}`, tone: 'good' });
+    });
+  };
+
+  const handleSaveProfile = (updated: PassiveProfile) => {
+    game.act((st) => {
+      st.settings ??= {} as GameState['settings'];
+      const list = (st.settings.passiveProfiles ?? profiles).map((p) => (p.id === updated.id ? updated : p));
+      st.settings.passiveProfiles = list;
+      setProfiles(list);
+    });
+  };
+
+  const linkedBadges = useMemo(() => {
+    const parts: string[] = [];
+    if (activeProfile.crossLinkGear && activeProfile.linkedGearId != null) {
+      const gearName = s.loadouts.gear.find((g) => g.id === activeProfile.linkedGearId)?.name ?? 'Gear 1';
+      parts.push(gearName);
+    }
+    if (activeProfile.crossLinkSkills && activeProfile.linkedSkillId != null) {
+      const skillName = s.loadouts.skills.find((sk) => sk.id === activeProfile.linkedSkillId)?.name ?? 'Skills 1';
+      parts.push(skillName);
+    }
+    if (activeProfile.crossLinkAtlas && activeProfile.linkedAtlas) {
+      parts.push(activeProfile.linkedAtlas);
+    }
+    return parts;
+  }, [activeProfile, s.loadouts.gear, s.loadouts.skills]);
+
+  // Point calculations
+  settlePassivePoints(s);
+  const spent = useMemo(() => {
+    const sp = { travel: 0, passive: 0, mastery: 0 };
+    for (const id of s.passives) {
+      const node = PASSIVE_BY_ID[id];
+      if (!node) continue;
+      const price = passiveNodeCost(node);
+      if (price.pool === 'travelPoints') sp.travel += price.cost;
+      else if (price.pool === 'masteryPoints') sp.mastery += price.cost;
+      else sp.passive += price.cost;
+    }
+    return sp;
+  }, [s.passives]);
+
+  const totalTravel = s.travelPoints + spent.travel;
+  const totalPassive = s.passivePoints + spent.passive;
+  const totalMastery = s.masteryPoints + spent.mastery;
+
   const myStart = startNode(s);
   const allocated = new Set(s.passives);
   const isOn = (id: string) => id === myStart || allocated.has(id);
   const canTake = (id: string) => !isOn(id) && allocateReason(s, id) === null;
+
   const searchable = useMemo(
-    () => PASSIVE_NODES.map((n) => ({ id: n.id, name: n.name, text: n.options ? n.options.map((o) => o.label) : n.desc ? [n.desc] : describeStats(n.stats) })),
+    () =>
+      PASSIVE_NODES.map((n) => {
+        const texts: string[] = [];
+        if (n.options) texts.push(...n.options.map((o) => o.label));
+        if (n.desc) texts.push(n.desc);
+        texts.push(...describeStats(n.stats));
+        if (isDoomed(n)) texts.push(doomedDebuffText(n), 'doomed', 'debuff');
+        if (isCosmicGateway(n)) texts.push('cosmic gateway', 'portal', 'conduit');
+        if (n.region === 'forbidden') texts.push('forbidden', 'celestial');
+        return { id: n.id, name: n.name, kind: n.kind, region: REGION_NAMES[n.region], text: texts };
+      }),
     [],
   );
   const matches = searchMatches(query, searchable);
@@ -504,6 +1058,14 @@ function CharacterTree({ s }: { s: GameState }) {
 
   const click = (n: PassiveNode) => {
     if (n.kind === 'start' && (n.id === myStart || s.character.classId !== 'exile')) return;
+    if (refundMode) {
+      if (allocated.has(n.id)) {
+        game.act((st, ctx) => refund(st, ctx, n.id));
+      } else {
+        game.act((_, ctx) => ctx.emit({ t: 'info', text: `${n.name} is not allocated` }));
+      }
+      return;
+    }
     if (n.kind === 'mastery' && (allocated.has(n.id) || canTake(n.id))) return setPicker(n);
     if (allocated.has(n.id)) game.act((st, ctx) => refund(st, ctx, n.id));
     else game.act((st, ctx) => allocate(st, ctx, n.id));
@@ -511,31 +1073,117 @@ function CharacterTree({ s }: { s: GameState }) {
 
   return (
     <>
-      <div className="row wrap">
-        <span className={`chip ${pointsLeft(s) > 0 ? 'good' : ''}`} style={{ fontSize: 14 }}>
-          {pointsLeft(s)} / {totalPoints(s)} points left
-        </span>
-        <span className="chip">{s.account.bank.regret ?? 0} Orbs of Regret</span>
-        <span className="spacer" />
-        <input className="input tree-search" placeholder="Search nodes (e.g. armour, poison)" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <div className="tree-top-bar">
+        {/* Row 1: Profile Manager & Active Linked Loadout Badges */}
+        <div className="tree-profile-row">
+          <div className="tree-profile-tabs">
+            {[1, 2, 3].map((num) => {
+              const prof = profiles.find((p) => p.id === num) ?? { id: num, name: `Profile ${num}` };
+              const unlocked = isProfileUnlocked(num, s);
+              const isActive = num === activeProfileId;
+              return (
+                <button
+                  key={num}
+                  className={`tree-profile-tab ${isActive ? 'active' : ''} ${!unlocked ? 'locked' : ''}`}
+                  onClick={() => switchProfile(num)}
+                  title={!unlocked ? (num === 2 ? 'Unlocks at Act 5' : 'Unlocks at Tier 5 Maps') : `Switch to ${prof.name}`}
+                >
+                  {prof.name}
+                  {!unlocked && <span className="tree-lock-icon">🔒</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            className="btn sm ghost tree-settings-btn"
+            onClick={() => setSettingsOpen(true)}
+            title="Profile settings and cross-linking"
+          >
+            ⚙ Settings
+          </button>
+
+          <span className="spacer" />
+
+          {linkedBadges.length > 0 ? (
+            <span
+              className="chip linked-badge"
+              onClick={() => setSettingsOpen(true)}
+              title="Click to edit profile loadout links"
+              style={{ cursor: 'pointer' }}
+            >
+              Linked: {linkedBadges.join(', ')}
+            </span>
+          ) : (
+            <span
+              className="chip dim linked-badge-empty"
+              onClick={() => setSettingsOpen(true)}
+              title="Click to configure loadout linking"
+              style={{ cursor: 'pointer' }}
+            >
+              + Link Loadouts
+            </span>
+          )}
+        </div>
+
+        {/* Row 2: Point Trackers & Search & Controls */}
+        <div className="tree-currency-row">
+          <span className="chip chip-point-cyan" title="Used for travel attribute roads and Cosmic Gateways">
+            Travel Points: {s.travelPoints} / {totalTravel}
+          </span>
+          <span className="chip chip-point-gold" title="Used for small passives, notables, keystones, and doomed gates">
+            Passive Points: {s.passivePoints} / {totalPassive}
+          </span>
+          <span className="chip chip-point-purple" title="Used for cluster mastery sockets">
+            Mastery Points: {s.masteryPoints} / {totalMastery}
+          </span>
+
+          <span className="chip chip-regret">{s.account.bank.regret ?? 0} Orbs of Regret</span>
+
+          <button
+            className={`btn sm ${refundMode ? 'danger active btn-refund-toggle' : 'ghost btn-refund-toggle'}`}
+            onClick={() => setRefundMode(!refundMode)}
+            title={refundMode ? 'Click to exit refund mode' : 'Click to enter refund mode: click allocated nodes to refund them'}
+          >
+            {refundMode ? '✓ Refund Mode Active' : 'Refund'}
+          </button>
+
+          <span className="spacer" />
+
+          <div className="row" style={{ gap: 4 }}>
+            <input
+              className="input tree-search"
+              placeholder="Search nodes (e.g. armour, poison, gateway)"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {query && (
+              <button className="btn sm ghost" onClick={() => setQuery('')}>
+                ×
+              </button>
+            )}
+          </div>
+        </div>
       </div>
+
       <TreeCanvas
         nodes={PASSIVE_NODES}
         byId={PASSIVE_BY_ID}
         size={CHAR_TREE_SIZE}
         maxZoom={CHAR_TREE_ZOOM}
-        version={`${myStart}|${s.passives.join(',')}|${pointsLeft(s)}|${query}`}
+        version={`${myStart}|${s.passives.join(',')}|${s.travelPoints}|${s.passivePoints}|${s.masteryPoints}|${query}`}
         focus={{ x: -PASSIVE_BY_ID[myStart].x, y: -PASSIVE_BY_ID[myStart].y, k: 3 }}
         names={CHAR_NAMES}
         isOn={isOn}
         canTake={canTake}
         matches={matches}
         labels={CHAR_LABELS}
-        renderNode={(n, on, can) => <NodeShape kind={n.kind} color={REGION_COLOR[n.region]} on={on} can={can} mine={n.id === myStart} />}
+        renderNode={(n, on, can) => <PassiveNodeShape node={n} color={REGION_COLOR[n.region]} on={on} can={can} mine={n.id === myStart} />}
         tip={(n) => <CharacterNodeTip s={s} n={n} />}
         onClick={click}
         tutId={(id) => (s.passives.length === 0 && canTake(id) ? 'tree-start' : undefined)}
       />
+
       <div className="tree-key">
         <span>
           <svg width="18" height="18" viewBox="-12 -12 24 24">
@@ -551,9 +1199,9 @@ function CharacterTree({ s }: { s: GameState }) {
         </span>
         <span>
           <svg width="22" height="22" viewBox="-14 -14 28 28">
-            <polygon points={hexPoints(11)} fill="#1c1f28" stroke="var(--accent)" strokeWidth="3" />
+            <polygon points={hexPoints(11)} fill="#1c1f28" stroke="#a855f7" strokeWidth="2.5" />
           </svg>
-          Mastery (pick 1 of 3)
+          Mastery Socket
         </span>
         <span>
           <svg width="24" height="24" viewBox="-16 -16 32 32">
@@ -562,13 +1210,33 @@ function CharacterTree({ s }: { s: GameState }) {
           Keystone
         </span>
         <span>
+          <svg width="24" height="24" viewBox="-16 -16 32 32">
+            <circle r="12" fill="#031525" stroke="#00f0ff" strokeWidth="2" strokeDasharray="3 3" />
+            <circle r="5" fill="#00f0ff" />
+          </svg>
+          Cosmic Gateway
+        </span>
+        <span>
+          <svg width="24" height="24" viewBox="-16 -16 32 32">
+            <polygon points="0,-12 12,0 0,12 -12,0" fill="#1c0508" stroke="#ff2a4b" strokeWidth="2" />
+          </svg>
+          Doomed Gate
+        </span>
+        <span>
+          <svg width="24" height="24" viewBox="-16 -16 32 32">
+            <polygon points={starPoints(8, 6, 13)} fill="#1f0815" stroke="#ff3d9a" strokeWidth="2" />
+          </svg>
+          Celestial Keystone
+        </span>
+        <span>
           <svg width="22" height="22" viewBox="-14 -14 28 28">
             <circle r="12" fill="none" stroke="var(--accent-2)" strokeWidth="2" strokeDasharray="4 3" />
             <circle r="7" fill="#1c1f28" stroke="#4a5060" strokeWidth="2.5" />
           </svg>
-          Class mechanic (Rage, Momentum, …)
+          Class mechanic
         </span>
       </div>
+
       <div className="card">
         <div className="card-title">Bonuses from your tree</div>
         {totals.length === 0 ? (
@@ -584,6 +1252,7 @@ function CharacterTree({ s }: { s: GameState }) {
         )}
       </div>
       {picker && <MasteryPicker s={s} n={picker} onClose={() => setPicker(null)} />}
+      {settingsOpen && <ProfileSettingsModal s={s} profile={activeProfile} onSave={handleSaveProfile} onClose={() => setSettingsOpen(false)} />}
     </>
   );
 }

@@ -221,6 +221,70 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
       if (def.buff) addStats(st, def.buff, flaskMult * (b.mult ?? 1));
     } else if (b.stats) addStats(st, b.stats);
   }
+
+  // Gear synergies
+  if (st.runicConductor > 0) {
+    const runeCount = Object.values(s.equipment).filter((item) => item?.rune).length;
+    st.elemPct += 2 * runeCount;
+  }
+  if (st.heavyArmorer > 0 && s.equipment.body) {
+    const bodyDef = itemDefences(s.equipment.body);
+    st.armour += Math.round(bodyDef.armour * 0.5);
+    st.evasion += Math.round(bodyDef.evasion * 0.5);
+    st.energyShield += Math.round(bodyDef.energyShield * 0.5);
+    for (const imp of baseDef(s.equipment.body.baseId).implicits ?? []) {
+      st[imp.stat] += Math.round(imp.value * 0.5);
+    }
+  }
+  if (st.jeweledHorizon > 0) {
+    for (const item of Object.values(s.equipment)) {
+      if (!item) continue;
+      const base = baseDef(item.baseId);
+      if (base.slot === 'ring' || base.slot === 'amulet') {
+        for (const imp of base.implicits ?? []) {
+          st[imp.stat] += Math.round(imp.value * 0.4 * 100) / 100;
+        }
+      }
+    }
+  }
+  if (st.masterArtisan > 0) {
+    for (const item of Object.values(s.equipment)) {
+      if (!item) continue;
+      for (const m of [...item.prefixes, ...item.suffixes]) {
+        if (!m.crafted) continue;
+        const a = affixDef(m.affixId);
+        a.stats.forEach((k, i) => {
+          if (!LOCAL_DEFENCE_KEYS.includes(k) && !LOCAL_WEAPON_KEYS.includes(k)) {
+            st[k] += Math.round((m.values[a.linked ? 0 : i] ?? 0) * 0.25);
+          }
+        });
+      }
+    }
+  }
+  if (st.alchemicalCatalyst > 0 && buffs.some((b) => b.source === 'flask')) {
+    st.elemPct += 15;
+    st.attackSpeedPct += 10;
+    st.castSpeedPct += 10;
+  }
+
+  // Doomed debuffs in raw stats
+  if (st.doomedShatteredMind > 0) {
+    st.manaCostReduction -= 100;
+  }
+  if (st.doomedBrokenCovenant > 0) {
+    st.allRes -= 30;
+    st.chaosRes -= 30;
+  }
+
+  // Glancing Blows: doubles blockChance, raises max block cap to 90%
+  if (st.glancingBlows > 0) {
+    st.blockChance = Math.min(90, st.blockChance * 2);
+    st.spellBlock = Math.min(90, st.spellBlock * 2);
+  }
+  if (st.chaosInoculation > 0) {
+    st.chaosRes = 100;
+  }
+
   return st;
 }
 
@@ -243,27 +307,57 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   };
   const A = ATTRIBUTE_EFFECTS;
 
-  // Knife's Edge: life is capped at 1
-  const maxLife = raw.knifesEdge ? 1 : Math.max(
+  // Knife's Edge / Chaos Inoculation: life is capped at 1; Doomed Blood Toll: -25% Life
+  const bloodTollMult = raw.doomedBloodToll > 0 ? 0.75 : 1;
+  const maxLife = raw.knifesEdge || raw.chaosInoculation ? 1 : Math.max(
     1,
     Math.round(
-      (60 + 12 * (combatLevel - 1) + raw.life + attributes.str * A.str.lifePer) * (1 + raw.lifePct / 100) * (1 + raw.lifeMore / 100),
+      (60 + 12 * (combatLevel - 1) + raw.life + attributes.str * A.str.lifePer) * (1 + raw.lifePct / 100) * (1 + raw.lifeMore / 100) * bloodTollMult,
     ),
   );
+  if (raw.bloodGodsFrenzy > 0) {
+    const missingFrac = maxLife > 0 ? Math.max(0, Math.min(1, 1 - (s.life ?? maxLife) / maxLife)) : 0;
+    const bonusDmg = Math.round(missingFrac * 200);
+    raw.physPct += bonusDmg;
+    raw.elemPct += bonusDmg;
+    raw.chaosPct += bonusDmg;
+    if ((s.life ?? maxLife) <= maxLife * 0.2) {
+      raw.attackSpeedPct += 100;
+      raw.castSpeedPct += 100;
+    }
+    raw.lifeRegenPct -= 5;
+  }
+  if (raw.defianceLowLife > 0 && (s.life ?? maxLife) <= maxLife * 0.35) {
+    raw.armourPct += 40;
+    raw.evasionPct += 40;
+    raw.lifeRegenPct += 3;
+  }
   // Blood Pact: no mana at all
   const maxMana = raw.bloodPact
     ? 0
     : Math.max(0, Math.round((30 + 6 * (combatLevel - 1) + raw.mana + attributes.int * A.int.manaPer) * (1 + raw.manaPct / 100)));
-  // mana gained as extra energy shield isn't scaled by increased energy shield
-  const maxEs = Math.round(raw.energyShield * (1 + (raw.energyShieldPct + attributes.int * A.int.esPctPer) / 100) + (maxMana * raw.manaAsEs) / 100);
+  // mana gained as extra energy shield isn't scaled by increased energy shield; Chaos Inoculation grants +100% More ES
+  const ciEsMult = raw.chaosInoculation > 0 ? 2 : 1;
+  let maxEs = Math.round((raw.energyShield * (1 + (raw.energyShieldPct + attributes.int * A.int.esPctPer) / 100) + (maxMana * raw.manaAsEs) / 100) * ciEsMult);
   let armour = Math.round(raw.armour * (1 + raw.armourPct / 100) * (1 + raw.armourMore / 100));
   let evasion = Math.round(raw.evasion * (1 + (raw.evasionPct + attributes.dex * A.dex.evasionPctPer) / 100));
   if (raw.bastion) {
     armour += evasion;
     evasion = 0;
   }
+  if (raw.ironReflexes > 0) {
+    armour += Math.round(evasion * 1.5);
+    evasion = 0;
+  }
   if (raw.cannotEvade > 0) {
     evasion = 0;
+  }
+  if (raw.doomedGlassVeil > 0) {
+    armour = 0;
+  }
+  if (raw.echoesOfTheVoid > 0) {
+    armour = 0;
+    maxEs = 0;
   }
   const accuracy = Math.round(2 * combatLevel + raw.accuracy + attributes.dex * A.dex.accuracyPer);
 
@@ -332,7 +426,12 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     dualWield,
     critChance,
     critMulti,
-    res: { fire: cap(raw.fireRes), cold: cap(raw.coldRes), light: cap(raw.lightRes), chaos: Math.min(RES_CAP, raw.chaosRes) },
+    res: {
+      fire: cap(raw.fireRes),
+      cold: cap(raw.coldRes),
+      light: cap(raw.lightRes),
+      chaos: raw.chaosInoculation > 0 ? 100 : Math.min(RES_CAP + (raw.divineFlesh > 0 ? 10 : 0), raw.chaosRes),
+    },
     leechPct: raw.lifeLeech,
     itemRarity: raw.itemRarity,
     skillSpeed: raw.skillSpeed,

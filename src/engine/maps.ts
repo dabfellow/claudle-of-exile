@@ -77,7 +77,7 @@ export function mapsOpen(s: GameState): boolean {
 }
 
 export function newMapState(stock: Record<string, number> = {}): MapState {
-  return { stock, run: null, auto: null, tally: { runs: 0, clearMs: 0, mapsFound: 0, favoured: 0 } };
+  return { stock, run: null, auto: null, tally: { runs: 0, clearMs: 0, mapsFound: 0, favoured: 0 }, highestTier: 0 };
 }
 
 /**
@@ -796,6 +796,7 @@ export function onMapFieldLost(s: GameState): void {
 
 /** Record Atlas completion points for a finished map tier. */
 function recordAtlasClear(s: GameState, ctx: Ctx, tier: number, slottedFull: boolean, deathless: boolean): void {
+  s.maps.highestTier = Math.max(s.maps.highestTier ?? 0, tier);
   const a = ensureAtlas(s);
   let gained = 0;
   if (!a.cleared.includes(tier)) {

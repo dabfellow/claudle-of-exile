@@ -10,7 +10,12 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'The character tree now uses separate Travel, Passive, and Mastery points, with costly node tiers and Cosmic Gateways that bridge distant parts of the tree.',
+  'Passive, Atlas, and Life Skills trees now support 3 saveable loadout profiles with equipment and tree cross-linking, unlocked in Act 5 and Tier 5 maps.',
+  'The passive tree UI has been overhauled with smooth 12,000px zooming, profile management with gear and Atlas cross-linking, triple currency point counters, and dedicated visual rendering for Cosmic Gateways, Doomed Gates, and Celestial Keystones.',
+  'The character passive skill tree is expanded to over 3,200 nodes with a central neutral concourse, fanned sector webs, 12 Celestial Forbidden Keystones, 6 high-stakes Doomed Gates, and deep puzzle wheels for defensive and offensive archetypes.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

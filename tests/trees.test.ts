@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { EXILE_START, PASSIVE_BY_ID, PASSIVE_NODES, RIM_RADIUS } from '../src/data/passiveTree';
+import { EXILE_START, FORBIDDEN, PASSIVE_BY_ID, PASSIVE_NODES, RIM_RADIUS } from '../src/data/passiveTree';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { actionDef } from '../src/data/skills';
 import { zoneDef } from '../src/data/zones';
 import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
-import { allocate, allocateReason, changeMastery, refundReason } from '../src/engine/passives';
+import { allocate, allocateReason, changeMastery, passiveNodeCost, refund, refundReason, settlePassivePoints } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { allocateSkillNode, MAX_SKILL_TREE_POINTS, skillTreePoints } from '../src/engine/skillTree';
 import { actionIntervalMs, startSkillAction } from '../src/engine/skills';
@@ -50,14 +50,17 @@ describe('character tree shape', () => {
   it('matches the agreed layout', () => {
     const count = (k: string) => PASSIVE_NODES.filter((n) => n.kind === k).length;
     expect(count('start')).toBe(7); // six classes and the Exile's centre
-    expect(count('keystone')).toBe(21);
-    expect(count('notable')).toBe(198);
-    expect(count('mastery')).toBe(90);
-    expect(count('small')).toBe(282);
-    expect(count('travel')).toBe(249);
-    expect(PASSIVE_NODES).toHaveLength(847);
+    expect(count('keystone')).toBe(30);
+    expect(count('notable')).toBe(582);
+    expect(count('mastery')).toBe(252);
+    expect(count('small')).toBe(828);
+    expect(count('travel')).toBe(1038);
+    expect(count('highway')).toBe(540);
+    expect(count('doomed')).toBe(6);
+    expect(count('gateway')).toBe(6);
+    expect(PASSIVE_NODES).toHaveLength(3289);
     // Attribute roads remain important, but interesting destinations now outnumber travel nodes.
-    expect(count('travel')).toBeLessThan(count('notable') + count('mastery'));
+    expect(count('travel')).toBeLessThan(count('notable') + count('small'));
     for (const n of PASSIVE_NODES.filter((x) => x.kind === 'mastery')) {
       expect(n.options).toHaveLength(3);
       expect(n.links).toHaveLength(1);
@@ -139,19 +142,54 @@ describe('masteries', () => {
   });
 });
 
-describe('forbidden keystones', () => {
-  const ids = ['forbidden_overclock', 'forbidden_knifes_edge', 'forbidden_eternal_hunger'];
+describe('character tree point economy', () => {
+  it('credits separate level pools, caps mastery awards, and prices each node tier', () => {
+    const s = newGame(1);
+    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([3, 2, 0]);
+    s.skills.combat = charXpForLevel(100);
+    settlePassivePoints(s);
+    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([300, 200, 20]);
+    expect(passiveNodeCost(PASSIVE_BY_ID.str_hub)).toEqual({ pool: 'travelPoints', cost: 1 });
+    expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_s1)).toEqual({ pool: 'passivePoints', cost: 1 });
+    expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_n)).toEqual({ pool: 'passivePoints', cost: 3 });
+    expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_m)).toEqual({ pool: 'masteryPoints', cost: 1 });
+    expect(passiveNodeCost(PASSIVE_BY_ID.forbidden_overclock)).toEqual({ pool: 'passivePoints', cost: 15 });
+  });
 
+  it('spends and refunds the exact pool cost and credits Act quest bosses once', () => {
+    const s = newGame(1);
+    expect(allocate(s, ctx(), 'str_hub')).toBeNull();
+    expect(s.travelPoints).toBe(2);
+    s.account.bank.regret = 1;
+    expect(refund(s, ctx(), 'str_hub')).toBeNull();
+    expect(s.travelPoints).toBe(3);
+    s.bossesDefeated.push('sanctum');
+    settlePassivePoints(s);
+    expect(s.passivePoints).toBe(3);
+    settlePassivePoints(s);
+    expect(s.passivePoints).toBe(3);
+  });
+});
+
+describe('forbidden keystones', () => {
   it('sit an equal distance apart and can be reached', () => {
-    const [a, b, c] = ids.map((id) => PASSIVE_BY_ID[id]);
-    const ab = Math.hypot(a.x - b.x, a.y - b.y);
-    expect(Math.abs(ab - Math.hypot(b.x - c.x, b.y - c.y))).toBeLessThan(3);
-    expect(Math.abs(ab - Math.hypot(c.x - a.x, c.y - a.y))).toBeLessThan(3);
+    // 12 forbidden keystones spaced evenly around the 5400-radius celestial rim
+    const r = Math.hypot(PASSIVE_BY_ID[FORBIDDEN[0].id].x, PASSIVE_BY_ID[FORBIDDEN[0].id].y);
+    expect(r).toBeGreaterThan(5000);
+    const expectedDist = Math.hypot(
+      PASSIVE_BY_ID[FORBIDDEN[0].id].x - PASSIVE_BY_ID[FORBIDDEN[1].id].x,
+      PASSIVE_BY_ID[FORBIDDEN[0].id].y - PASSIVE_BY_ID[FORBIDDEN[1].id].y,
+    );
+    for (let i = 0; i < FORBIDDEN.length; i++) {
+      const a = PASSIVE_BY_ID[FORBIDDEN[i].id];
+      const b = PASSIVE_BY_ID[FORBIDDEN[(i + 1) % FORBIDDEN.length].id];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      expect(Math.abs(d - expectedDist)).toBeLessThan(5);
+    }
     const s = newGame(1, { name: 'r', classId: 'ranger' });
     take(s, route('class_dex', 'forbidden_overclock'));
     expect(s.passives).toContain('forbidden_overclock');
   });
-
 });
 
 describe('keystones', () => {

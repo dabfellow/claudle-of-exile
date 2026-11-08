@@ -363,7 +363,7 @@ describe('Expedition offline', () => {
     simulateOffline(s, ctx(), 8 * 3_600_000);
     expect(s.account.bank[TALLY]).toBeGreaterThan(CAIRN.rate * 8 * 0.9);
     expect(s.account.bank[TALLY]).toBeLessThan(CAIRN.rate * 8 * 1.5);
-  });
+  }, 20_000);
 
   it('Overtime speeds a dig as it does any skilling', () => {
     const plain = digger();

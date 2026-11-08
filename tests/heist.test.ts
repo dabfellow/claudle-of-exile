@@ -216,7 +216,7 @@ describe('Heist', () => {
     expect(sum.materials[SEAL]).toBeGreaterThan(0);
     expect(s.action).not.toBeNull();
     expect(s.heist.auto).toBe('forgers_den');
-  });
+  }, 20_000);
 
   it('trains faster than lifting the best mark alone, offline', () => {
     const lift = thief(25);

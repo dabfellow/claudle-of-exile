@@ -111,6 +111,7 @@ import { rollLoot } from './loot';
 import { mapPackLeft, onMapFieldLost, onMapPack, recordAtlasBossClear, rollMapDrops, runModifiers, topUpKingMaps } from './maps';
 import { chance, pick, rInt } from './rng';
 import { grantXp } from './skills';
+import { settlePassivePoints } from './passives';
 import {
   ANVIL_THORNS_PCT,
   ANVIL_THORNS_PER_RAGE,
@@ -801,7 +802,10 @@ function postureStep(s: GameState, ctx: Ctx, dt: number): void {
 
 /** Damage a monster hit does to the player after mitigation. */
 export function mitigate(d: Derived, raw: number, type: DamageType): number {
-  if (type === 'phys') return Math.max(1, Math.round(raw * (1 - armourReduction(d.armour, raw))));
+  if (type === 'phys') {
+    const brittle = d.raw.doomedBrittleBones > 0 ? 1.2 : 1;
+    return Math.max(1, Math.round(raw * (1 - armourReduction(d.armour, raw)) * brittle));
+  }
   const res = d.res[type];
   return Math.max(1, Math.round(raw * (1 - res / 100)));
 }
@@ -822,7 +826,10 @@ function flaskPotency(d: Derived, f: FlaskInstance): number {
 
 /** Life or mana one drink recovers for this character, or 0 for a utility flask. */
 export function flaskRecoveryAmount(d: Derived, f: FlaskInstance): number {
-  const heal = flaskStats(f).def.heal;
+  if (d.raw.doomedWitheredVeins > 0) return 0;
+  const st = flaskStats(f);
+  if (st.def.kind === 'life' && d.raw.bloodGodsFrenzy > 0) return 0;
+  const heal = st.def.heal;
   return heal ? Math.round(heal * flaskPotency(d, f)) : 0;
 }
 
@@ -833,14 +840,15 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
   const st = flaskStats(f);
   if (f.charges < st.chargesPerUse) return 'Not enough charges';
   const d = deriveStats(s);
-  f.charges -= st.chargesPerUse;
   const kind = st.def.kind;
+  if (kind === 'life' && d.raw.bloodGodsFrenzy > 0) return 'Life flasks are disabled';
+  f.charges -= st.chargesPerUse;
   const effect = flaskPotency(d, f);
   const duration = st.durationMs * (kind === 'utility' ? 1 + d.raw.utilityFlaskDuration / 100 : 1);
   const c = s.combat;
   c.buffs = c.buffs.filter((b) => !(b.source === 'flask' && b.id === f.flaskId));
   c.buffs.push({ id: f.flaskId, source: 'flask', remainingMs: duration, durationMs: duration, mult: st.effectMult });
-  if (st.def.heal) {
+  if (st.def.heal && d.raw.doomedWitheredVeins <= 0) {
     const resource = kind === 'mana' ? 'mana' : 'life';
     c.heals.push({
       resource,
@@ -1525,6 +1533,17 @@ function rollHit(
   const total = DAMAGE_TYPES.reduce((a, t) => a + byType[t], 0);
   for (const x of mods.extras) byType[x.type] += (total * x.pct) / 100;
   if (r.physAsLight && !r.noElemDamage) byType.light += (byType.phys * r.physAsLight) / 100;
+  if (r.permafrostConvert > 0 && !r.noElemDamage) {
+    const movedPhys = byType.phys * 0.5;
+    byType.phys -= movedPhys;
+    byType.cold += movedPhys;
+    const movedFire = byType.fire * 0.5;
+    byType.fire -= movedFire;
+    byType.cold += movedFire;
+  }
+  if (r.abyssalPact > 0) {
+    byType.chaos += (byType.phys + byType.fire + byType.cold + byType.light) * 0.3;
+  }
   if (r.voidTouch > 0 && hasAilment(mon)) {
     byType.chaos += ((byType.phys + byType.fire + byType.cold + byType.light) * r.voidTouch) / 100;
   }
@@ -1580,9 +1599,10 @@ function rollHit(
 
   const spellType = def.effect.type;
   const bottledBase = r.bottledFaithCrit > 0 ? 2 : 0;
+  const hypoBonus = r.hypothermicCrit > 0 && (mon.chillMs > 0 || mon.frozenMs > 0) ? 50 : 0;
   let critChance = isAttack
-    ? (d.critChance + bottledBase) * (1 + mods.critChance / 100)
-    : ((def.effect.crit ?? 5) + bottledBase) * (1 + (r.critChancePct + r.spellCritPct + (spellType === 'light' ? r.lightCrit : 0) + mods.critChance) / 100);
+    ? (d.critChance + bottledBase) * (1 + (mods.critChance + hypoBonus) / 100)
+    : ((def.effect.crit ?? 5) + bottledBase) * (1 + (r.critChancePct + r.spellCritPct + (spellType === 'light' ? r.lightCrit : 0) + mods.critChance + hypoBonus) / 100);
   if (c.riposting) critChance = r.matadorGrace > 0 ? 100 : critChance * (1 + r.riposteCrit / 100);
   critChance = r.steadyHand ? 0 : Math.min(r.matadorGrace > 0 && c.riposting ? 100 : 95, critChance);
 
@@ -1610,7 +1630,8 @@ function rollHit(
     else c.mech = Math.min(c.mech, r.maliceCritKeep);
   }
   if (crit) {
-    let multi = (d.critMulti + mods.critMulti + (isAttack ? 0 : r.spellCritMulti) + (c.riposting ? r.matadorGrace : 0)) / 100;
+    const hypoMulti = r.hypothermicCrit > 0 && (mon.chillMs > 0 || mon.frozenMs > 0) ? 30 : 0;
+    let multi = (d.critMulti + mods.critMulti + hypoMulti + (isAttack ? 0 : r.spellCritMulti) + (c.riposting ? r.matadorGrace : 0)) / 100;
     if (mon.life >= mon.maxLife) multi *= 1 + r.critFullLife / 100;
     for (const t of DAMAGE_TYPES) byType[t] *= multi;
   }
@@ -1857,8 +1878,16 @@ function hitMonster(
   if (mon.mirrorStance && mon.mirrorStance === c.lastPlayerStyle) dealt *= 0.7;
   if (mon.voidShielded && (mon.voidVulnMs ?? 0) <= 0) dealt *= 0.4;
   if ((mon.voidVulnMs ?? 0) > 0) dealt *= 1.35;
+  // Death's Door: when target is above 70% Life, monster takes 35% less damage
+  if (r.deathsDoor > 0 && mon.life > mon.maxLife * 0.7) dealt *= 0.65;
+  const wasChilledOrFrozen = mon.chillMs > 0 || mon.frozenMs > 0;
   dealt = Math.max(1, Math.round(dealt));
   damageMonster(s, mon, dealt, true, beforeMore > 0 ? dealtBy.chaos / beforeMore : 0);
+  // Death's Door: instant cull on any monster/boss below 30% Life
+  if (r.deathsDoor > 0 && mon.life > 0 && mon.life <= mon.maxLife * 0.3) {
+    c.dealt[c.dealt.length - 1] += Math.max(0, mon.life);
+    mon.life = 0;
+  }
   if (mon.voidShielded && (mon.voidVulnMs ?? 0) <= 0 && mon.life > 0) {
     mon.voidBuildup = (mon.voidBuildup ?? 0) + (e.addsDoom ? 2 : 1);
     if (mon.voidBuildup >= 15) {
@@ -1888,6 +1917,28 @@ function hitMonster(
     const flare = Math.max(1, Math.round((dealt * r.unblinkingFlare) / 100));
     damageMonster(s, mon, flare);
     ctx.emit({ t: 'hit', target: 'monster', amount: flare, crit: true, dmgType: 'fire', monsterUid: mon.uid });
+  }
+  // Anarchist's Gambit: 30% chance on hit to trigger Elemental Cataclysm (500% area burst + Freeze, Shock, Ignite)
+  if (r.anarchistsGambit > 0 && chance(ctx.rng, 0.3)) {
+    const cataclysmCells = new Set(areaCells('splash', mon.cell, 2));
+    const cataclysmTargets = [mon, ...aliveMonsters(c).filter((m) => m !== mon && !shielded(m) && cataclysmCells.has(m.cell))];
+    const cataclysmDmg = Math.max(1, Math.round(dealt * 5));
+    for (const m of cataclysmTargets) {
+      if (m.life > 0) {
+        damageMonster(s, m, cataclysmDmg);
+        ctx.emit({ t: 'hit', target: 'monster', amount: cataclysmDmg, crit: true, dmgType: 'fire', monsterUid: m.uid });
+      }
+      m.chillMs = Math.max(m.chillMs, CHILL_MS);
+      m.frozenMs = Math.max(m.frozenMs, m.isBoss ? BOSS_FREEZE_MS : FREEZE_MS);
+      m.shockMs = Math.max(m.shockMs ?? 0, SHOCK_MS);
+      const b = (m.build ??= { burn: 0, chill: 0, shock: 0 });
+      b.shock = Math.max(b.shock, ailmentThreshold(m));
+      applyDot(m, makeAilment(d, nums, m, cataclysmDmg, { kind: 'ignite', pctPerSec: IGNITE_SHARE / (IGNITE_MS / 1000), durationMs: IGNITE_MS }));
+      if (r.deathsDoor > 0 && m.life > 0 && m.life <= m.maxLife * 0.3) {
+        c.dealt[c.dealt.length - 1] += Math.max(0, m.life);
+        m.life = 0;
+      }
+    }
   }
   if (crit && r.critLeech) s.life = Math.min(d.maxLife, s.life + (dealt * r.critLeech) / 100);
   if (mon.life < 0 && r.overkillHeal) s.life = Math.min(d.maxLife, s.life + (-mon.life * r.overkillHeal) / 100);
@@ -1928,8 +1979,9 @@ function hitMonster(
     }
   }
 
-  // leech
-  const lifeLeech = d.leechPct + mods.lifeLeech + (e.leechLife ?? 0) + r.physLeech * physShare + r.elemLeech * (1 - physShare);
+  // leech (Blood God's Frenzy grants instant leech below 20% Life)
+  const frenzyInstantLeech = r.bloodGodsFrenzy > 0 && s.life <= d.maxLife * 0.2;
+  const lifeLeech = d.leechPct + mods.lifeLeech + (e.leechLife ?? 0) + r.physLeech * physShare + r.elemLeech * (1 - physShare) + (frenzyInstantLeech ? Math.max(5, d.leechPct) : 0);
   if (lifeLeech > 0) {
     const gain = (dealt * lifeLeech) / 100;
     const overflow = s.life + gain - d.maxLife;
@@ -1991,6 +2043,21 @@ function hitMonster(
   if (e.poisonChance && chance(ctx.rng, e.poisonChance)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_POISON));
   const scale = beforeMore > 0 ? dealt / beforeMore : 0;
   applyElementAilments(c, ctx, d, nums, mon, { phys: dealtBy.phys * scale, fire: dealtBy.fire * scale, cold: dealtBy.cold * scale, light: dealtBy.light * scale, chaos: 0 }, !!r.chillOnHit, wake);
+  // Cryo-Shatter: critical strikes on chilled/frozen enemies trigger a cold explosion dealing 20% target max life
+  if (crit && r.cryoShatter > 0 && (wasChilledOrFrozen || mon.chillMs > 0 || mon.frozenMs > 0)) {
+    const shatterCells = new Set(areaCells('splash', mon.cell, 1));
+    const shatterTargets = [mon, ...aliveMonsters(c).filter((m) => m !== mon && !shielded(m) && shatterCells.has(m.cell))];
+    for (const m of shatterTargets) {
+      if (m.life <= 0) continue;
+      const shatterDmg = Math.max(1, Math.round(monsterMitigation(m, mon.maxLife * 0.2, 'cold')));
+      damageMonster(s, m, shatterDmg);
+      ctx.emit({ t: 'hit', target: 'monster', amount: shatterDmg, crit: true, dmgType: 'cold', monsterUid: m.uid });
+      if (r.deathsDoor > 0 && m.life > 0 && m.life <= m.maxLife * 0.3) {
+        c.dealt[c.dealt.length - 1] += Math.max(0, m.life);
+        m.life = 0;
+      }
+    }
+  }
   return dealt;
 }
 
@@ -2323,10 +2390,20 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   const reaches = riptide && shape === 'target' && chains > 0;
   const echo = riptide && !widens && !reaches;
   if (echo) passes += 1;
+  const voidEcho = r.echoesOfTheVoid > 0 && (def.tags.includes('attack') || def.tags.includes('spell'));
+  if (voidEcho) passes += 1;
   const radius = widens ? (e.radius ?? (shape === 'nova' ? 2 : 1)) + 1 : e.radius;
 
   for (let pass = 0; pass < passes; pass++) {
-    const passMult = echo && pass === passes - 1 ? RIPTIDE_ECHO : pass === 0 ? 1 : (mods.repeatDamage / 100) * (1 + r.repeatMore / 100);
+    const isVoidEchoPass = voidEcho && pass === passes - 1;
+    const isRiptideEchoPass = echo && pass === (voidEcho ? passes - 2 : passes - 1);
+    const passMult = isVoidEchoPass
+      ? 0.8 * (1 + r.repeatMore / 100)
+      : isRiptideEchoPass
+        ? RIPTIDE_ECHO
+        : pass === 0
+          ? 1
+          : (mods.repeatDamage / 100) * (1 + r.repeatMore / 100);
     for (let h = 0; h < hitsPerPass; h++) {
       // the target died mid-skill: the next one in reach takes the rest
       if (!target || target.life <= 0) {
@@ -2515,7 +2592,26 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   grantXp(s, ctx, 'combat', xp * (1 + d.charXp / 100));
   grantGemXp(s, ctx, xp, d.attributes);
   gainCharges(s, mon.isBoss ? 8 : 1, d);
-  rollLoot(s, ctx, mon, zone, d);
+  const deathsDoorBonus = d.raw.deathsDoor > 0 && (mon.isBoss || (mon.lootMult ?? 1) > 1);
+  const prevLootMult = mon.lootMult;
+  const goldBefore = s.account?.bank?.gold ?? 0;
+  let lootCtx = ctx;
+  if (deathsDoorBonus) {
+    mon.lootMult = (mon.lootMult ?? 1) * 1.5;
+    if (mon.isBoss) {
+      lootCtx = { ...ctx, event: { xp: ctx.event?.xp ?? 1, ...ctx.event, loot: (ctx.event?.loot ?? 1) * 1.5 } };
+    }
+  }
+  rollLoot(s, lootCtx, mon, zone, d);
+  if (deathsDoorBonus && s.account?.bank) {
+    mon.lootMult = prevLootMult;
+    const goldGained = (s.account.bank.gold ?? 0) - goldBefore;
+    if (goldGained > 0) {
+      const baseGold = Math.round(goldGained / 1.5);
+      const extraGold = baseGold * 2 - goldGained;
+      if (extraGold > 0) s.account.bank.gold = (s.account.bank.gold ?? 0) + extraGold;
+    }
+  }
   rollMapDrops(s, ctx, mon);
 
   // Doomed Map Searing Aftermath: packs leave Burning Ground for 4s on death
@@ -2580,6 +2676,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
       // Unbroken: the Last King, by a character that has never died
       if (zone.id === 'shatteredthrone' && s.lifetime.deaths === 0) s.lifetime.act6Deathless = 1;
       s.bossesDefeated.push(zone.id);
+      if (zone.actBoss) settlePassivePoints(s);
       if (zone.actBoss) ctx.emit({ t: 'actComplete', act: zone.act });
       onBossFirstKill(s, ctx, zone.id);
     }
@@ -2909,6 +3006,7 @@ function onEvade(s: GameState, d: Derived): void {
   const r = d.raw;
   c.misdirect = true;
   if (r.evadeHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.evadeHeal) / 100);
+  if (r.ghostDance > 0 && d.maxEs > 0) s.es = Math.min(d.maxEs, s.es + Math.max(1, Math.round(d.evasion * 0.03)));
   if (r.evadeSpeed) {
     c.buffs = c.buffs.filter((b) => b.id !== 'evade_speed');
     c.buffs.push({ id: 'evade_speed', source: 'skill', remainingMs: 4000, durationMs: 4000, stats: { attackSpeedPct: r.evadeSpeed } });
@@ -2920,6 +3018,15 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   const c = s.combat!;
   const r = d.raw;
   const isCast = kind !== 'hit';
+  if (r.ironReflexes > 0) critical = false;
+  if (r.deathsDoor > 0 && mon.life > mon.maxLife * 0.7) raw *= 1.2;
+  if (
+    r.glacialBulwark > 0 &&
+    (type === 'phys' || type === 'cold') &&
+    (mon.chillMs > 0 || mon.frozenMs > 0 || (c.playerChillMs ?? 0) > 0 || underPlayer(c, 'chilled') || underPlayer(c, 'frozen'))
+  ) {
+    raw *= 0.85;
+  }
   if (mon.curse) raw *= 1 - mon.curse.dealLess / 100;
   if (mon.dots.some((x) => x.kind === 'poison')) raw *= 1 - r.poisonWeaken / 100;
   if (kind === 'slam') raw *= 1 - r.slamReduction / 100;
@@ -2944,13 +3051,14 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     onBlock(s, ctx, d, mon, raw, type, isCast);
     return;
   }
-  // staves: a flat chance to block, capped at 75%
-  if (r.blockChance > 0 && kind !== 'nova' && chance(ctx.rng, Math.min(75, r.blockChance) / 100)) {
+  const blockCap = r.glancingBlows > 0 ? 90 : 75;
+  // staves: a flat chance to block, capped at 75% (or 90% with Glancing Blows)
+  if (r.blockChance > 0 && kind !== 'nova' && chance(ctx.rng, Math.min(blockCap, r.blockChance) / 100)) {
     onBlock(s, ctx, d, mon, raw, type, isCast);
     return;
   }
   // spell block: any monster spell, telegraphed novas included
-  if (r.spellBlock > 0 && (kind === 'nova' || (kind === 'hit' && mon.attackKind === 'spell')) && chance(ctx.rng, Math.min(75, r.spellBlock) / 100)) {
+  if (r.spellBlock > 0 && (kind === 'nova' || (kind === 'hit' && mon.attackKind === 'spell')) && chance(ctx.rng, Math.min(blockCap, r.spellBlock) / 100)) {
     onBlock(s, ctx, d, mon, raw, type, isCast);
     return;
   }
@@ -2972,6 +3080,11 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     damageMonster(s, mon, thorns);
     ctx.emit({ t: 'hit', target: 'monster', amount: thorns, dmgType: 'phys', monsterUid: mon.uid });
   }
+  if (r.ironReflexes > 0 && mon.life > 0) {
+    const thorns = Math.max(1, Math.round(monsterMitigation(mon, raw * 0.5, 'phys')));
+    damageMonster(s, mon, thorns);
+    ctx.emit({ t: 'hit', target: 'monster', amount: thorns, dmgType: 'phys', monsterUid: mon.uid });
+  }
   if (r.flagellantMartyr > 0) {
     const rawLash = (d.maxLife * r.flagellantMartyr) / 100;
     for (const m of aliveMonsters(c).filter((x) => cellRing(x.cell) <= 1 && !shielded(x))) {
@@ -2984,7 +3097,9 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   else if (mech === 'malice') gainMeter(s, d, r.maliceOnHitTaken);
   martyrFill(s, ctx, d, raw);
   let dmg: number;
-  if (type !== 'phys' && r.armourVsElem) {
+  if (r.divineFlesh > 0 && (type === 'fire' || type === 'cold' || type === 'light')) {
+    dmg = Math.round(mitigate(d, raw * 0.5, type) + mitigate(d, raw * 0.5, 'chaos'));
+  } else if (type !== 'phys' && r.armourVsElem) {
     const p = r.armourVsElem / 100;
     dmg = Math.round(mitigate(d, raw * (1 - p), type) + mitigate(d, raw * p, 'phys'));
   } else dmg = mitigate(d, raw, type);
@@ -3049,7 +3164,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   // energy shield soaks what's left after mitigation, and any hit that lands delays its recharge
   c.esDelayMs = ES_RECHARGE_DELAY_MS;
   let toEs = 0;
-  if (type !== 'chaos' && s.es > 0 && dmg > 0) {
+  if ((type !== 'chaos' || r.divineFlesh > 0) && s.es > 0 && dmg > 0) {
     toEs = Math.min(s.es, dmg);
     s.es -= toEs;
     dmg -= toEs;
@@ -3062,6 +3177,20 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   s.life -= dmg;
   if ((mon.leechPct ?? 0) > 0 && dmg > 0) mon.life = Math.min(mon.maxLife, mon.life + (dmg * mon.leechPct) / 100);
   ctx.emit({ t: 'hit', target: 'player', amount: dmg, dmgType: type, crit: critical || undefined, absorbed: absorbed || undefined, es: Math.round(toEs) || undefined, monsterUid: mon.uid });
+  const totalTaken = dmg + Math.round(toEs) + absorbed;
+  if (r.soulTether > 0 && totalTaken > 0 && mon.life > 0) {
+    const trueDmg = Math.max(1, Math.round(totalTaken * 0.5));
+    mon.life -= trueDmg;
+    ctx.emit({ t: 'hit', target: 'monster', amount: trueDmg, dmgType: 'chaos', monsterUid: mon.uid });
+  }
+  if (r.recoupPct > 0 && taken > 0 && s.life > 0) {
+    const totalRecoup = (taken * r.recoupPct) / 100;
+    c.heals.push({ resource: 'life', perMs: totalRecoup / 4000, remainingMs: 4000 });
+  }
+  if (r.anarchistsGambit > 0 && critical && s.life > 0) {
+    c.playerStunMs = Math.max(c.playerStunMs ?? 0, 1000);
+    c.frozenMs = Math.max(c.frozenMs ?? 0, 1000);
+  }
   if (isCast && s.life > 0 && hasAscNode(s, 'anvil_shatter')) c.mech = meterMax('rage', d.raw);
   if (s.life > 0) riposte(s, ctx, d, mon, 'landed');
   if (s.life > 0) fireTriggered(s, ctx, d, 'reprisal');
@@ -3072,8 +3201,40 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
 function onBlock(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: number, type: DamageType, isCast: boolean): void {
   const c = s.combat!;
   const r = d.raw;
-  ctx.emit({ t: 'hit', target: 'player', amount: 0, dmgType: type, blocked: true, monsterUid: mon.uid });
+  let blockedDmg = 0;
+  if (r.glancingBlows > 0) {
+    const glancingRaw = raw * 0.65;
+    let dmg = mitigate(d, glancingRaw, type);
+    if (type !== 'phys') dmg = Math.max(1, Math.round(dmg * (1 - r.elemTakenReduction / 100)));
+    let absorbed = 0;
+    if (c.shield > 0) {
+      absorbed = Math.min(c.shield, dmg);
+      c.shield -= absorbed;
+      dmg -= absorbed;
+    }
+    let toEs = 0;
+    if ((type !== 'chaos' || r.divineFlesh > 0) && s.es > 0 && dmg > 0) {
+      toEs = Math.min(s.es, dmg);
+      s.es -= toEs;
+      dmg -= toEs;
+    }
+    if (r.mindOverFlesh && s.mana > 0) {
+      const fromMana = Math.min(s.mana, (dmg * r.mindOverFlesh) / 100);
+      s.mana -= fromMana;
+      dmg = Math.round(dmg - fromMana);
+    }
+    s.life -= dmg;
+    blockedDmg = dmg;
+    const totalTaken = dmg + Math.round(toEs) + absorbed;
+    if (r.soulTether > 0 && totalTaken > 0 && mon.life > 0) {
+      const trueDmg = Math.max(1, Math.round(totalTaken * 0.5));
+      mon.life -= trueDmg;
+      ctx.emit({ t: 'hit', target: 'monster', amount: trueDmg, dmgType: 'chaos', monsterUid: mon.uid });
+    }
+  }
+  ctx.emit({ t: 'hit', target: 'player', amount: blockedDmg, dmgType: type, blocked: true, monsterUid: mon.uid });
   if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
+  if (r.aegisWard > 0 && d.maxEs > 0) s.es = Math.min(d.maxEs, s.es + Math.max(1, Math.round(d.armour * 0.02)));
   if (r.anvilRetaliate > 0) {
     const rawRet = (d.armour * r.anvilRetaliate) / 100;
     for (const m of aliveMonsters(c).filter((x) => cellRing(x.cell) <= 1 && !shielded(x))) {
@@ -3569,9 +3730,10 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
     return;
   }
   const choirHaste = mon.isBoss && s.combat?.monsters.some((m) => m.choir === 'haste' && m.life > 0) ? 1.3 : 1;
-  if (mon.isBoss && bossCasts(s, ctx, d, mon, dt * choirHaste)) return;
+  const tetherSpeed = d.raw.soulTether > 0 ? 1.5 : 1;
+  if (mon.isBoss && bossCasts(s, ctx, d, mon, dt * choirHaste * tetherSpeed)) return;
   const enrageSpeed = mon.permEnrage ? TIER_MOD_RULES.enrageSpeed : BOSS_ENRAGE_SPEED;
-  const speed = (mon.enraged ? enrageSpeed : 1) * choirHaste * (d.raw.overclock ? 1.6 : 1) * (1 - (mon.curse?.slow ?? 0) / 100);
+  const speed = (mon.enraged ? enrageSpeed : 1) * choirHaste * tetherSpeed * (d.raw.overclock ? 1.6 : 1) * (1 - (mon.curse?.slow ?? 0) / 100);
   const chill = Math.min(60, CHILL_SLOW_PCT + d.raw.chillOnHit) / 100;
   mon.attackTimer += (mon.chillMs > 0 ? dt * (1 - chill) : dt) * speed;
   if (mon.attackTimer >= mon.attackMs) {
@@ -4034,6 +4196,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   c.evadeMs = Math.max(0, c.evadeMs - dt);
   if (c.groundProofMs) c.groundProofMs = Math.max(0, c.groundProofMs - dt);
   if (c.frozenMs) c.frozenMs = Math.max(0, c.frozenMs - dt);
+  if (c.playerStunMs) c.playerStunMs = Math.max(0, c.playerStunMs - dt);
   if (c.frostbite && !c.monsters.some((m) => m.life > 0 && m.mechanics.includes('frostbite'))) c.frostbite = 0;
   if (classMechanicsStep(s, ctx, d, dt)) return true;
 
@@ -4049,8 +4212,8 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   const regenPct = c.buffs.reduce((a, b) => a + (b.regenPct ?? 0), 0);
   const regen = d.lifeRegen + (d.maxLife * regenPct) / 100;
   const regenned = s.life + ((regen > 0 ? regen * recovery : regen) * dt) / 1000;
-  // a draining buff (Berserk) never kills you by itself
-  s.life = Math.min(d.maxLife, regenPct < 0 ? Math.max(Math.min(s.life, 1), regenned) : regenned);
+  // a draining buff (Berserk or Blood God's Frenzy) never kills you by itself
+  s.life = Math.min(d.maxLife, regen < 0 || regenPct < 0 ? Math.max(Math.min(s.life, 1), regenned) : regenned);
   const esRegenPct = c.buffs.reduce((a, b) => a + (b.esRegenPct ?? 0), 0);
   if (esRegenPct) s.es = Math.min(d.maxEs, s.es + (d.maxEs * esRegenPct * dt) / 100000);
   gainMana(s, d, (d.manaRegen * dt) / 1000);
@@ -4097,8 +4260,8 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   // burning ground can finish you off even as the last monster falls
   if (checkDeath(s, ctx, d) || !c.monsters.length) return true;
 
-  // the player's turn (an overheated Overclock sits it out, and so does anyone frozen solid)
-  const frozen = (c.frozenMs ?? 0) > 0;
+  // the player's turn (an overheated Overclock sits it out, and so does anyone frozen solid or stunned)
+  const frozen = (c.frozenMs ?? 0) > 0 || (c.playerStunMs ?? 0) > 0;
   if (c.overheatMs > 0) c.overheatMs -= dt;
   else if (!frozen) c.actionMs -= dt * actionPace(s, c, d);
   if (c.windup && c.actionMs > 0) guardBreaksIn(s, ctx, d);

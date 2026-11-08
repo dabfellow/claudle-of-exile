@@ -12,13 +12,14 @@ import { settleGems } from './gems';
 import { newExpeditionState, settleExpedition } from './expedition';
 import { newHeistState, settleHeist } from './heist';
 import { settleMaps } from './maps';
-import { connectedWithout } from './passives';
+import { connectedWithout, settlePassivePoints } from './passives';
 import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { AccountPool, AccountTransfer, FlaskInstance, GameState, Item } from './types';
 import { charXpFromOldCurve } from './xp';
 import { settleSkillingMastery } from './skillingMastery';
 import { settleLootFilters } from './lootFilter';
+import { settleTreeProfiles } from './treeProfiles';
 
 // kept from the game's old name: changing it would orphan every existing save
 export const SAVE_KEY = 'claudle-of-exile-save';
@@ -335,6 +336,12 @@ const MIGRATIONS: Record<number, Migration> = {
     // Non-combat action mastery starts fresh: old skill XP cannot identify which authored band was practised.
     raw.skillingMastery = {};
   },
+  38: (raw) => {
+    // Rebuild unspent balances from level, Act quest bosses and the exact cost of kept allocations.
+    // Null checkpoints survive default merging and tell settlePassivePoints this is a pre-economy save.
+    raw.passivePointLevel = null;
+    raw.passiveQuestPoints = null;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */
@@ -382,7 +389,9 @@ export function deserialize(json: string): GameState {
   settleHeist(s);
   settleExpedition(s);
   settleSkillingMastery(s);
+  settlePassivePoints(s);
   settleLootFilters(s);
+  settleTreeProfiles(s);
   dropRemovedActions(s);
   return s;
 }
