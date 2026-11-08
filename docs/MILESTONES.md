@@ -4,7 +4,7 @@ Last updated 2026-11-08. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.18, Gateway Visual Fix and Organic Tree Shapes**, deployed 2026-11-08. Fixed the Cosmic Gateway regex so only the 6 true portals render as gateways (cleaning up the 24 blue travel approach nodes), switched the passive tree background to a solid slate tone, disabled continuous SVG animations to eliminate pan/zoom GPU lag, and added organic Pokeball, Trident, Winding Trail, and Spiral cluster layouts.
+Latest confirmed live release: **0.4.19, A New Passive Tree**, deployed 2026-11-08. The character tree is a tidy, evenly spaced web of clusters chained straight into each other (1,573 nodes, no travel strips, curved links, fun cluster shapes), every region has its own archetype notables plus 18 rule-changers, small nodes carry attributes and cost travel points, masteries only on three-notable clusters, and the twelve Forbidden keystones ring the rim evenly with only one allowed at a time.
 
 1. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
 2. Finish the Maps skill batch: all support effects now run (2026-11-08, unreleased); boss, offline and whole-build checks remain (see that section).
