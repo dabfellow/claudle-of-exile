@@ -10,14 +10,20 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'The Quartermaster now offers level-scaled Off, Soft, Strict, Very strict and Uber loot presets with category overrides.',
-  'Custom loot rules can match slots, rarity, item level, modifiers, modifier tiers, filled rune sockets and value, then show, hide, highlight, sound or auto-salvage the drop.',
-  'Custom rule lists can be shared with a paste code, and existing custom filters and War Table salvage upgrades carry over automatically.',
-  'Ground loot, time-away finds and stashed gear now share the same filter highlights, while hidden drops can be revealed by loosening the filter.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.24',
+    date: '9 Nov 2026',
+    title: 'Loot, Sorted Your Way',
+    items: [
+      'The Quartermaster now offers level-scaled Off, Soft, Strict, Very strict and Uber loot presets with category overrides.',
+      'Custom loot rules can match slots, rarity, item level, modifiers, modifier tiers, filled rune sockets and value, then show, hide, highlight, sound or auto-salvage the drop.',
+      'Custom rule lists can be shared with a paste code, and existing custom filters and War Table salvage upgrades carry over automatically.',
+      'Ground loot, time-away finds and stashed gear now share the same filter highlights, while hidden drops can be revealed by loosening the filter.',
+    ],
+  },
   {
     version: '0.4.23',
     date: '9 Nov 2026',
