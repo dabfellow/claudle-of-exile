@@ -16,8 +16,13 @@ export const NEWS: NewsEntry[] = [
   {
     version: '0.4.23',
     date: '9 Nov 2026',
-    title: 'Achievements, Events and Mastery',
+    title: 'Achievements, Events and Mini-games',
     items: [
+      'Every life-skill mini-game, Heist included, now has a small gold double zone. Hit it and the action makes twice as much the next time it finishes.',
+      'The Alchemy mini-game now runs left to right instead of up and down.',
+      'Foraging is easier: herbs are bigger and wilt more slowly. Pick one while it glows gold for a double.',
+      'Gemcutting is easier: the facets are bigger and the stone takes longer to settle.',
+      'Crafting Bench recipes no longer need achievements. Upgrading the Bench unlocks them.',
       'Achievements grew from 43 to 129, across the campaign, combat, bosses, Maps, crafting, life skills and challenge modes.',
       'Achievement rewards now make you stronger: extra Passive points, Atlas points, stash tabs, offline hours and small permanent bonuses such as +2% Item Rarity.',
       'Six new uniques can only be earned from achievements, such as Ironvow for finishing the campaign on Hardcore and Self-Made for doing it Solo Self-Found.',

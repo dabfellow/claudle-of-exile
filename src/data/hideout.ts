@@ -81,8 +81,8 @@ export const STATIONS: StationDef[] = [
     levels: [
       { cost: {}, effect: 'Not built: use orbs on your gear' },
       { cost: { gold: 1500, ash_plank: 30, copper_bar: 30 }, effect: 'Built: salvage gear, Life & Resistance crafts' },
-      { cost: { gold: 6000, arcane_dust: 250, iron_bar: 25, rough_gem: 5, boss_trophy: 2 }, effect: 'More bench recipes (each also needs its achievement), and gear sets can switch on their own' },
-      { cost: { gold: 18000, arcane_dust: 600, mithril_bar: 35, rough_gem: 12, boss_trophy: 5 }, effect: 'Top-tier bench recipes (each also needs its achievement)' },
+      { cost: { gold: 6000, arcane_dust: 250, iron_bar: 25, rough_gem: 5, boss_trophy: 2 }, effect: 'More bench recipes, and gear sets can switch on their own' },
+      { cost: { gold: 18000, arcane_dust: 600, mithril_bar: 35, rough_gem: 12, boss_trophy: 5 }, effect: 'Top-tier bench recipes' },
       { cost: { gold: 50000, arcane_dust: 1200, mithril_bar: 70, rough_gem: 25, boss_trophy: 10 }, effect: 'Auto-crafting: spend orbs until a modifier rolls, even offline' },
       { cost: { gold: 100000, arcane_dust: 2500, mithril_bar: 100, rough_gem: 40, boss_trophy: 15 }, effect: 'Meta-crafting: Lock Prefixes, Lock Suffixes, and Multicraft' },
       { cost: { gold: 120000, arcane_dust: 3500, mithril_bar: 120, rough_gem: 50, boss_trophy: 20, choir_glass: 3, crownless_sigil: 1 }, effect: 'Pinnacle Crafting: Doom Sigils, Cannot roll Attack / Caster Modifiers' },
@@ -170,9 +170,8 @@ export const AUTO_SALVAGE_WAR_TABLE_LEVEL: Record<'normal' | 'magic' | 'rare', n
 
 export interface BenchCraft {
   id: string;
+  /** the Bench level alone unlocks a recipe */
   benchLevel: number;
-  /** achievement that unlocks this recipe (on top of the bench level) */
-  achievement?: string;
   affixId: string;
   /** tier index of the affix to craft */
   tier: number;
@@ -184,26 +183,26 @@ export const BENCH_CRAFTS: BenchCraft[] = [
   { id: 'bc_fire', benchLevel: 2, affixId: 'fire_res', tier: 1, cost: { gold: 50, arcane_dust: 6 } },
   { id: 'bc_cold', benchLevel: 2, affixId: 'cold_res', tier: 1, cost: { gold: 50, arcane_dust: 6 } },
   { id: 'bc_light', benchLevel: 2, affixId: 'light_res', tier: 1, cost: { gold: 50, arcane_dust: 6 } },
-  { id: 'bc_mana', benchLevel: 2, achievement: 'salvager_50', affixId: 'flat_mana', tier: 1, cost: { gold: 60, arcane_dust: 8 } },
-  { id: 'bc_speed', benchLevel: 3, achievement: 'slayer_1000', affixId: 'attack_speed', tier: 2, cost: { gold: 200, arcane_dust: 20 } },
-  { id: 'bc_phys', benchLevel: 3, achievement: 'boss_10', affixId: 'added_phys', tier: 2, cost: { gold: 200, arcane_dust: 20 } },
-  { id: 'bc_armour', benchLevel: 3, achievement: 'crafter_25', affixId: 'inc_armour', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
-  { id: 'bc_evasion', benchLevel: 3, achievement: 'crafter_25', affixId: 'inc_evasion', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
-  { id: 'bc_flask_charges', benchLevel: 3, achievement: 'flask_100', affixId: 'flask_charges', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
-  { id: 'bc_skill_speed', benchLevel: 3, achievement: 'total_50', affixId: 'skill_speed', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
-  { id: 'bc_str', benchLevel: 3, achievement: 'smith_100', affixId: 'strength', tier: 2, cost: { gold: 120, arcane_dust: 12 } },
-  { id: 'bc_dex', benchLevel: 3, achievement: 'smith_100', affixId: 'dexterity', tier: 2, cost: { gold: 120, arcane_dust: 12 } },
-  { id: 'bc_int', benchLevel: 3, achievement: 'smith_100', affixId: 'intelligence', tier: 2, cost: { gold: 120, arcane_dust: 12 } },
-  { id: 'bc_accuracy', benchLevel: 3, achievement: 'level_25', affixId: 'accuracy', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
-  { id: 'bc_crit', benchLevel: 4, achievement: 'crafter_250', affixId: 'crit_chance', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
-  { id: 'bc_multi', benchLevel: 4, achievement: 'crafter_250', affixId: 'crit_multi', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
-  { id: 'bc_rarity', benchLevel: 4, achievement: 'unique_find', affixId: 'item_rarity', tier: 2, cost: { gold: 400, arcane_dust: 35 } },
-  { id: 'bc_elem', benchLevel: 4, achievement: 'bench_10', affixId: 'inc_elem', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
+  { id: 'bc_mana', benchLevel: 2, affixId: 'flat_mana', tier: 1, cost: { gold: 60, arcane_dust: 8 } },
+  { id: 'bc_speed', benchLevel: 3, affixId: 'attack_speed', tier: 2, cost: { gold: 200, arcane_dust: 20 } },
+  { id: 'bc_phys', benchLevel: 3, affixId: 'added_phys', tier: 2, cost: { gold: 200, arcane_dust: 20 } },
+  { id: 'bc_armour', benchLevel: 3, affixId: 'inc_armour', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
+  { id: 'bc_evasion', benchLevel: 3, affixId: 'inc_evasion', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
+  { id: 'bc_flask_charges', benchLevel: 3, affixId: 'flask_charges', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
+  { id: 'bc_skill_speed', benchLevel: 3, affixId: 'skill_speed', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
+  { id: 'bc_str', benchLevel: 3, affixId: 'strength', tier: 2, cost: { gold: 120, arcane_dust: 12 } },
+  { id: 'bc_dex', benchLevel: 3, affixId: 'dexterity', tier: 2, cost: { gold: 120, arcane_dust: 12 } },
+  { id: 'bc_int', benchLevel: 3, affixId: 'intelligence', tier: 2, cost: { gold: 120, arcane_dust: 12 } },
+  { id: 'bc_accuracy', benchLevel: 3, affixId: 'accuracy', tier: 2, cost: { gold: 150, arcane_dust: 15 } },
+  { id: 'bc_crit', benchLevel: 4, affixId: 'crit_chance', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
+  { id: 'bc_multi', benchLevel: 4, affixId: 'crit_multi', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
+  { id: 'bc_rarity', benchLevel: 4, affixId: 'item_rarity', tier: 2, cost: { gold: 400, arcane_dust: 35 } },
+  { id: 'bc_elem', benchLevel: 4, affixId: 'inc_elem', tier: 3, cost: { gold: 500, arcane_dust: 40 } },
   { id: 'bc_prefix_lock', benchLevel: 6, affixId: 'meta_prefixes_cannot_be_changed', tier: 0, cost: { divine: 2, arcane_dust: 500 } },
   { id: 'bc_suffix_lock', benchLevel: 6, affixId: 'meta_suffixes_cannot_be_changed', tier: 0, cost: { divine: 2, arcane_dust: 500 } },
   { id: 'bc_multicraft', benchLevel: 6, affixId: 'meta_multicraft', tier: 0, cost: { exalted: 2, arcane_dust: 400 } },
-  { id: 'bc_cannot_roll_attack', benchLevel: 7, achievement: 'crafter_250', affixId: 'meta_cannot_roll_attack', tier: 0, cost: { divine: 1, arcane_dust: 1000 } },
-  { id: 'bc_cannot_roll_caster', benchLevel: 7, achievement: 'crafter_250', affixId: 'meta_cannot_roll_caster', tier: 0, cost: { divine: 1, arcane_dust: 1000 } },
+  { id: 'bc_cannot_roll_attack', benchLevel: 7, affixId: 'meta_cannot_roll_attack', tier: 0, cost: { divine: 1, arcane_dust: 1000 } },
+  { id: 'bc_cannot_roll_caster', benchLevel: 7, affixId: 'meta_cannot_roll_caster', tier: 0, cost: { divine: 1, arcane_dust: 1000 } },
   // Hard Boss trophies: high-tier crafts, one per boss's theme (the trophy's own description says which)
   { id: 'bc_boss_phys', benchLevel: 6, affixId: 'added_phys', tier: 5, cost: { marrow_shard: 1, arcane_dust: 300, gold: 5000 } },
   { id: 'bc_boss_spell', benchLevel: 6, affixId: 'spell_damage', tier: 5, cost: { choir_glass: 1, arcane_dust: 300, gold: 5000 } },

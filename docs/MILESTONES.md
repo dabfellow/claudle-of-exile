@@ -55,6 +55,10 @@ Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2
   - Loot filters: **both, layered**. Players first see strictness presets (Off, Soft, Strict, Very strict, Uber) that scale with level, plus per-category overrides ("always show rings with life", "hide normal gear", "highlight T1 mods"). A "custom rules" tab underneath holds a full ordered rule list: conditions (slot, rarity, item level, specific mods, mod tiers, sockets, value) → show, hide, highlight colour, sound or auto-salvage, shareable as a code.
   - Decided for the owner: Crafting Bench recipes no longer need achievements (owner's note "no achievements required"); the Bench level alone unlocks them.
   - Decided for the owner: every mini-game gets a small inner double zone that doubles that action's output; Alchemy's mini-game turns horizontal; Foraging and Gemcutting get wider zones and slower markers.
+    - Built 2026-11-09, small calls made in the build: gold marks the double zone everywhere. Bar games (Mining, Woodcutting, Cooking, Alchemy) use the middle third of the bright zone; Alchemy needs at least half of its 1.25 s hold in the gold. Smithing: within 45 ms of the beat. Rune-carving: two thirds of the stroke within 6 units of the line. Foraging: a bloom window, 30–55% of a herb's life, when it glows gold. Lock, gem and dig (the sequence games, Heist's lock included): finish within the first 40% of the timer, shown as a gold end on a draining bar. Cartography: find it within 3 soundings.
+    - A double is one waiting flag on the running action (more doubles don't stack) and is used up on the next finish; offline finishes never double. It doubles every output of that finish (bonus drops, flasks, maps, a second smithed base with its own catalysts, a second cut gem), not XP or inputs. Heist: that room's gold and drop rolls come twice.
+    - Foraging: herbs 44 → 58 px, life 2.2 → 3.4 s, one every 1.3 s. Gemcutting: facets 46 → 62 px, stone settles in 5.2 s (was 3.5).
+    - No save migration: the flag is a new optional field, so old saves load without it (tested).
   - Decided for the owner: holiday dates are computed in code (no outside calendar service) and switch on automatically, each can be turned off in Admin; Admin can stack events, schedule weekend events and set any start/end; overlapping bonuses add.
 - Achievements build (2026-11-09), small calls made while building the Round 2 design:
   - 129 achievements in eight sections: Campaign, Combat, Bosses, Maps, Crafting & loot, Life skills, Character, Challenge modes. All 43 old ids kept; some moved section (acts to Campaign, flasks to Combat/Life skills, Exile ones to Challenge).
@@ -358,7 +362,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - [ ] Build: hideout milestone tiers (~3 more per station, each a new unlock plus a stat bump, endgame-gated top tiers; Map Device → Atlas tree, Stash cheaper tabs and ground-loot storage, Forge gear-tier chance).
   - [ ] Build: War Table / Quartermaster split; auto flee (first, cheap), auto challenge and auto next zone (moves on once the area's boss is down) behind War Table upgrades.
   - [x] Build: per-task mastery, 120 unbuffed hours to max, with save migration from bands and bigger max bonuses. — done 2026-11-09
-  - [ ] Build: mini-games (inner double zone on all, horizontal Alchemy, easier Foraging and Gemcutting); Bench recipes drop achievement requirements.
+  - [x] Build: mini-games (inner double zone on all, horizontal Alchemy, easier Foraging and Gemcutting); Bench recipes drop achievement requirements. Played at phone and desktop sizes in headless Chromium. — done 2026-11-09
   - [x] Build: 100+ per-character achievements with play-changing rewards. 129 achievements, 6 new achievement-only uniques; checked in headless Chromium at phone and desktop sizes. See Decisions "Achievements build". — done 2026-11-09
   - [ ] Build: layered loot filters (presets + overrides, custom rules tab, share codes).
   - [x] Build: events calendar (computed holidays, Admin toggles, stacking, weekend and custom windows). Calls under Decisions "Round 2 design pass". — done 2026-11-09
@@ -387,6 +391,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 ## Done
 
 - [x] Achievements expanded from 43 to 129 per-character achievements with play-changing rewards: Passive and Atlas points, realm stash tabs, offline hours, permanent bonuses and six new achievement-only uniques. Old saves migrate (save version 43) and get what they already meet on load. — done 2026-11-09
+
+- [x] Mini-game rework: a gold double zone on every life-skill mini-game and Heist, horizontal Alchemy, easier Foraging and Gemcutting; Crafting Bench recipes need only the Bench level. — done 2026-11-09
 
 - [x] Events calendar: holidays (incl. Easter and Thanksgiving) worked out in code and switched on by themselves, Admin holiday switches, weekend events, bonuses that add when events overlap, and a Hideout Events card with on now / coming up. Checked in headless Chromium at phone and desktop sizes. — done 2026-11-09
 
