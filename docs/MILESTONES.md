@@ -4,7 +4,7 @@ Last updated 2026-11-09. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2026-11-09. Launch Guide Round 2 screen fixes from three sessions: phone tutorial/combat fixes, two-step character create, tooltips/toasts/pinned currencies, faster offline catch-up, Hideout/Campaign/Map Device reworks, page polish, Admin black-screen and compensation fixes, Player Market closed.
+Latest confirmed live release: **0.4.23, Achievements, Events and Mini-games**, deployed 2026-11-09. Round 2 builds: 129 achievements with play-changing rewards, events calendar, per-task life-skill mastery, mini-game double zones and Bench recipes without achievements. Before it, 0.4.22 (Round 2 screen fixes).
 
 1. Finish the remaining Launch Guide Round 2 builds. Per-task life-skill mastery is complete and unreleased; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
