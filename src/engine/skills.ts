@@ -16,7 +16,7 @@ import { createSkillGem, createSupportGem } from './gems';
 import { digDone } from './expedition';
 import { markerBoost } from './heist';
 import { chartDone, hasChartMaps } from './cartography';
-import { focusMult, focusStep } from './minigame';
+import { focusMult, focusStep, takeDouble } from './minigame';
 import { bagFull, dropItem } from './storage';
 import { allMods, createItem, eligibleAffixes, salvageValue } from './items';
 import { gemArrived } from './progress';
@@ -244,7 +244,7 @@ function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, 
   if (kind === 'skill') {
     const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => findable(g.id)));
     s.account.gems.push(createSkillGem(s, def.id));
-    outputs[def.id] = 1;
+    outputs[def.id] = (outputs[def.id] ?? 0) + 1;
     ctx.emit({ t: 'loot', gemId: def.id });
     return;
   }
@@ -258,18 +258,20 @@ function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, 
   }
   const def = pick(ctx.rng, pool);
   s.account.supportGems.push(createSupportGem(s, def.id));
-  outputs[def.id] = 1;
+  outputs[def.id] = (outputs[def.id] ?? 0) + 1;
   ctx.emit({ t: 'loot', supportId: def.id });
 }
 
-function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
+/** `focusDouble`: a mini-game double-zone hit, so everything this finish makes comes twice. */
+function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDouble = false): void {
   const t = skillTreeStats(s);
   const cost = inputsToPay(s, a, t, ctx);
   payCost(s, cost);
   const outputs: Record<string, number> = {};
   const twoForOne = a.skill === 'runecarving' ? t.secondStroke : a.skill === 'cooking' ? t.secondHelping : a.skill === 'cartography' ? t.secondCopy : 0;
   const double = a.skill === 'alchemy' ? chance(ctx.rng, ALCH_DOUBLE[(s.account.hideout.alchemy_table ?? 1) - 1]) : !!twoForOne && chance(ctx.rng, twoForOne / 100);
-  const mult = double ? 2 : 1;
+  const focusMultiple = focusDouble ? 2 : 1;
+  const mult = (double ? 2 : 1) * focusMultiple;
 
   // alternate nodes trade some of their base material for a better secondary
   const yields = a.outputChance === undefined || chance(ctx.rng, a.outputChance);
@@ -290,14 +292,15 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
     const boost = b.id === 'rough_gem' ? t.gemChance : fossilDef(b.id) ? t.fossilChance : resinDef(b.id) ? t.resinChance : b.id === MARKER ? markerBoost(s) : 0;
     if (!chance(ctx.rng, b.chance * (1 + (boost ?? 0) / 100))) continue;
     const upgrade = essenceDef(b.id)?.upgrade;
-    give(s, outputs, upgrade && t.distiller && chance(ctx.rng, t.distiller / 100) ? upgrade : b.id, b.qty);
+    give(s, outputs, upgrade && t.distiller && chance(ctx.rng, t.distiller / 100) ? upgrade : b.id, b.qty * focusMultiple);
   }
   if (a.skill === 'woodcutting' && t.birdsNest && chance(ctx.rng, t.birdsNest / 100)) give(s, outputs, pick(ctx.rng, HERB_TIERS.slice(0, 2)), 1);
 
   if (a.skill === 'archaeology') digDone(s, ctx, a, outputs);
   if (a.chart) chartDone(s, a, mult, Object.keys(cost).length > 0, outputs);
 
-  if (a.baseId) smithBase(s, ctx, a, t);
+  // a doubled base is a second full base, catalysts and all; a Craft-until stop on the first ends it there
+  if (a.baseId) for (let i = 0; i < focusMultiple && s.action?.kind === 'skill'; i++) smithBase(s, ctx, a, t);
   if (a.flaskId) {
     s.lifetime.flasksBrewed += mult;
     for (let i = 0; i < mult; i++) {
@@ -311,7 +314,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived): void {
     }
     outputs[a.flaskId] = mult;
   }
-  if (a.gem) cutGem(s, ctx, a, outputs);
+  if (a.gem) for (let i = 0; i < focusMultiple; i++) cutGem(s, ctx, a, outputs);
   ctx.emit({ t: 'produce', skill: a.skill, outputs, baseId: a.baseId });
   const heartwoodXp = a.skill === 'woodcutting' && t.heartwood ? 0.8 : 1;
   const branchXp = a.skill === 'gemcutting' ? (t.gemcuttingXp ?? 0) : 0;
@@ -335,7 +338,7 @@ export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
       return;
     }
     s.action.progress -= interval;
-    complete(s, ctx, a, d);
+    complete(s, ctx, a, d, takeDouble(s, ctx));
   }
 }
 

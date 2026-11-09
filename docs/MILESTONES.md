@@ -53,6 +53,10 @@ Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2
   - Loot filters: **both, layered**. Players first see strictness presets (Off, Soft, Strict, Very strict, Uber) that scale with level, plus per-category overrides ("always show rings with life", "hide normal gear", "highlight T1 mods"). A "custom rules" tab underneath holds a full ordered rule list: conditions (slot, rarity, item level, specific mods, mod tiers, sockets, value) → show, hide, highlight colour, sound or auto-salvage, shareable as a code.
   - Decided for the owner: Crafting Bench recipes no longer need achievements (owner's note "no achievements required"); the Bench level alone unlocks them.
   - Decided for the owner: every mini-game gets a small inner double zone that doubles that action's output; Alchemy's mini-game turns horizontal; Foraging and Gemcutting get wider zones and slower markers.
+    - Built 2026-11-09, small calls made in the build: gold marks the double zone everywhere. Bar games (Mining, Woodcutting, Cooking, Alchemy) use the middle third of the bright zone; Alchemy needs at least half of its 1.25 s hold in the gold. Smithing: within 45 ms of the beat. Rune-carving: two thirds of the stroke within 6 units of the line. Foraging: a bloom window, 30–55% of a herb's life, when it glows gold. Lock, gem and dig (the sequence games, Heist's lock included): finish within the first 40% of the timer, shown as a gold end on a draining bar. Cartography: find it within 3 soundings.
+    - A double is one waiting flag on the running action (more doubles don't stack) and is used up on the next finish; offline finishes never double. It doubles every output of that finish (bonus drops, flasks, maps, a second smithed base with its own catalysts, a second cut gem), not XP or inputs. Heist: that room's gold and drop rolls come twice.
+    - Foraging: herbs 44 → 58 px, life 2.2 → 3.4 s, one every 1.3 s. Gemcutting: facets 46 → 62 px, stone settles in 5.2 s (was 3.5).
+    - No save migration: the flag is a new optional field, so old saves load without it (tested).
   - Decided for the owner: holiday dates are computed in code (no outside calendar service) and switch on automatically, each can be turned off in Admin; Admin can stack events, schedule weekend events and set any start/end; overlapping bonuses add.
 - Player Market removed for 1.0 (2026-11-09): the server can't tell an earned item from an edited save, and making it cheat-proof would mean moving inventories onto the server. The Market is hidden; pending deliveries stay collectable. It can return if inventories ever move server-side.
 - 1.0 is a fresh wipe (2026-11-08): everyone starts new characters at 1.0. Existing saves are not deleted. They move to a Legacy area, reached from character select, which runs at 1.0 rates. No new Legacy characters can be made. Legacy has no trading: the Market is hidden there, and nothing crosses between Legacy and 1.0 in either direction (recorded in the Launch Guide).
@@ -342,7 +346,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - [ ] Build: hideout milestone tiers (~3 more per station, each a new unlock plus a stat bump, endgame-gated top tiers; Map Device → Atlas tree, Stash cheaper tabs and ground-loot storage, Forge gear-tier chance).
   - [ ] Build: War Table / Quartermaster split; auto flee (first, cheap), auto challenge and auto next zone (moves on once the area's boss is down) behind War Table upgrades.
   - [ ] Build: per-task mastery, 120 unbuffed hours to max, with save migration from bands and bigger max bonuses.
-  - [ ] Build: mini-games (inner double zone on all, horizontal Alchemy, easier Foraging and Gemcutting); Bench recipes drop achievement requirements.
+  - [x] Build: mini-games (inner double zone on all, horizontal Alchemy, easier Foraging and Gemcutting); Bench recipes drop achievement requirements. Played at phone and desktop sizes in headless Chromium. — done 2026-11-09
   - [ ] Build: 100+ per-character achievements with play-changing rewards.
   - [ ] Build: layered loot filters (presets + overrides, custom rules tab, share codes).
   - [ ] Build: events calendar (computed holidays, Admin toggles, stacking, weekend and custom windows).
@@ -368,6 +372,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Mini-game rework: a gold double zone on every life-skill mini-game and Heist, horizontal Alchemy, easier Foraging and Gemcutting; Crafting Bench recipes need only the Bench level. — done 2026-11-09
 
 - [x] Spread the seven major offensive families across distant passive-tree regions while preserving class starts, every authored cluster, cluster shapes and total node counts; added a concentration regression test. Released in 0.4.21. — done 2026-11-08
 

@@ -1,13 +1,10 @@
 import { useMemo, useState } from 'react';
 import { stashedItems } from '../../engine/storage';
 import { affixDef } from '../../data/affixes';
-import { ACHIEVEMENT_BY_ID } from '../../data/achievements';
 import { ESSENCES, FOSSILS, fossilDef, SEAL, WAX } from '../../data/craftMats';
 import { WHETSTONE } from '../../data/expedition';
 import { runeDef, RUNES } from '../../data/runes';
 import { BENCH_CRAFTS } from '../../data/hideout';
-import { achievementProgress } from '../../engine/achievements';
-import { recipeUnlocked } from '../../engine/challenge';
 import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { actOpen } from '../../data/zones';
 import { hasItem } from '../../engine/bank';
@@ -42,7 +39,7 @@ import { affixRangeText, allMods, describeMod, itemName, maxAffixes, salvageValu
 import { inscribeRune, runeReason, runeText } from '../../engine/runes';
 import type { FlaskInstance, GameState, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Badge, EmptyState, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tabs, Tooltip, type TabDef } from '../components/common';
+import { Badge, EmptyState, fmt, GameIcon, MatIcon, PageHeader, Tabs, Tooltip, type TabDef } from '../components/common';
 import { BENCH_MATERIAL_GROUPS, BenchMaterialSummary, CostHave, MaterialChoices } from '../components/BenchMaterials';
 import '../round2-session3.css';
 import { CraftUntilCard } from '../components/CraftUntilCard';
@@ -507,25 +504,6 @@ export function BenchPage() {
                           const a = affixDef(b.affixId);
                           const preview = affixRangeText(a.id, b.tier);
                           const reason = item ? benchCraftReason(s, b.id, item.uid) : 'Select an item';
-                          if (b.achievement && !recipeUnlocked(s, b.achievement)) {
-                            const ach = ACHIEVEMENT_BY_ID[b.achievement];
-                            const p = achievementProgress(s, b.achievement);
-                            return (
-                              <div key={b.id} className="mat bench-locked" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                                <span className="mod crafted small">{preview}</span>
-                                <span className="row" style={{ gap: 6 }}>
-                                  <Badge tone="locked">Locked</Badge>
-                                  <span className="dim small">
-                                    {ach.name}: {ach.desc}
-                                  </span>
-                                </span>
-                                <ProgressBar value={p.value / p.target} color="var(--accent)" />
-                                <span className="dim small num">
-                                  {fmt(p.value)} / {fmt(p.target)}
-                                </span>
-                              </div>
-                            );
-                          }
                           return (
                             <div key={b.id} className="mat" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
                               <span className="mod crafted small">{preview}</span>

@@ -10,7 +10,13 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Every life-skill mini-game, Heist included, now has a small gold double zone. Hit it and the action makes twice as much the next time it finishes.',
+  'The Alchemy mini-game now runs left to right instead of up and down.',
+  'Foraging is easier: herbs are bigger and wilt more slowly. Pick one while it glows gold for a double.',
+  'Gemcutting is easier: the facets are bigger and the stone takes longer to settle.',
+  'Crafting Bench recipes no longer need achievements. Upgrading the Bench unlocks them.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

@@ -737,10 +737,11 @@ export type CraftMethod = { orb: string; fossil?: string | null; sealed?: string
 export type StopRule = { kind: 'has'; affixId: string; minTier?: number } | { kind: 'twoOf'; affixIds: string[] };
 
 export type Action =
-  | { kind: 'skill'; actionId: string; progress: number; focus?: number }
+  /** `double`: a mini-game hit in its double zone, so the next finish pays out twice */
+  | { kind: 'skill'; actionId: string; progress: number; focus?: number; double?: boolean }
   | { kind: 'combat'; zoneId: string }
   | { kind: 'craft'; uid: number; method: CraftMethod; rule: StopRule; progress: number; steps: number }
-  | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number>; focus?: number }
+  | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number>; focus?: number; double?: boolean }
   | null;
 
 /** Smithing catalyst slot: a Fossil biases the roll of a Magic base, Resin raises item level. */

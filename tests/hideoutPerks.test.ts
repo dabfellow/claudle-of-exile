@@ -32,13 +32,12 @@ describe('stationPerks', () => {
     expect(stationPerks(s, 'war_table')).toEqual(['Rules: Simple, Vitals, Wind-up, Ground, Status, Aim', '2 rule slots per skill']);
   });
 
-  it('counts only bench recipes you can actually craft', () => {
+  it('counts the bench recipes its level opens', () => {
     const s = fresh();
     expect(stationPerks(s, 'bench')).toEqual(['Use orbs on your gear']);
     upgradeStation(s, makeCtx(seeded(1)), 'bench');
-    expect(stationPerks(s, 'bench')).toContain(`4 of ${BENCH_CRAFTS.length} bench recipes`);
-    s.achievements.push('salvager_50');
-    expect(stationPerks(s, 'bench')).toContain(`5 of ${BENCH_CRAFTS.length} bench recipes`);
+    const open = BENCH_CRAFTS.filter((c) => c.benchLevel <= 2).length;
+    expect(stationPerks(s, 'bench')).toContain(`${open} of ${BENCH_CRAFTS.length} bench recipes`);
   });
 
   it('replaces the Town Market numbers and keeps its stock perks', () => {

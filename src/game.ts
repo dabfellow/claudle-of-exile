@@ -1,6 +1,5 @@
 import { ACHIEVEMENT_BY_ID } from './data/achievements';
 import { TRIALS } from './data/ascendancies';
-import { BENCH_CRAFTS } from './data/hideout';
 import { useEffect, useSyncExternalStore } from 'react';
 import { flaskDef } from './data/flasks';
 import { SKILLS } from './data/skills';
@@ -1091,9 +1090,7 @@ class GameStore {
       }
       case 'achievement': {
         const a = ACHIEVEMENT_BY_ID[e.id];
-        const recipes = BENCH_CRAFTS.filter((b) => b.achievement === e.id).length;
-        const extra = recipes ? ` — ${recipes} bench recipe${recipes > 1 ? 's' : ''} unlocked` : '';
-        this.addFeed(`Achievement: ${a.name}${extra}`, 'good');
+        this.addFeed(`Achievement: ${a.name}`, 'good');
         this.pushToast(`Achievement unlocked: ${a.name}`, 'good');
         break;
       }

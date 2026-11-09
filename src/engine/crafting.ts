@@ -1,11 +1,9 @@
 import { affixDef } from '../data/affixes';
 import { stashedItems, takeOwned } from './storage';
 import { baseDef, uniqueDef } from '../data/bases';
-import { ACHIEVEMENT_BY_ID } from '../data/achievements';
 import { essenceDef, fossilDef, modBias, SEAL, WAX } from '../data/craftMats';
 import { WHETSTONE } from '../data/expedition';
 import { BENCH_BUILT_LEVEL, BENCH_CRAFTS } from '../data/hideout';
-import { recipeUnlocked } from './challenge';
 import type { Ctx } from './context';
 import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, rollUnwrittenNotableIndex, salvageValue, spawnWeight, type ModBias } from './items';
 import { pick, rInt, type Rng } from './rng';
@@ -437,7 +435,6 @@ export function benchCraftReason(s: GameState, craftId: string, uid: number): st
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
   if ((s.account.hideout.bench ?? 1) < craft.benchLevel) return `Requires Crafting Bench level ${craft.benchLevel}`;
-  if (!recipeUnlocked(s, craft.achievement)) return `Unlock with achievement: ${ACHIEVEMENT_BY_ID[craft.achievement!].name}`;
   if (item.rarity === 'unique') return 'Cannot modify unique items';
   if (item.rarity === 'normal') return 'Item must be Magic or Rare';
 

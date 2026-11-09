@@ -23,7 +23,7 @@ import { currencyDef } from '../data/materials';
 import { actBossZone, actOpen, ZONES, type ZoneDef } from '../data/zones';
 import { grantUnlocks } from './automation';
 import { addBank, canAfford, payCost } from './bank';
-import { hideoutCost, recipeUnlocked } from './challenge';
+import { hideoutCost } from './challenge';
 import type { Ctx } from './context';
 import { flaskName, flaskValue, rollFlask, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
@@ -113,7 +113,7 @@ export function stationPerks(s: GameState, id: StationId): string[] {
       ];
     case 'bench': {
       if (lvl < BENCH_BUILT_LEVEL) return ['Use orbs on your gear'];
-      const open = BENCH_CRAFTS.filter((c) => c.benchLevel <= lvl && recipeUnlocked(s, c.achievement));
+      const open = BENCH_CRAFTS.filter((c) => c.benchLevel <= lvl);
       return [
         'Salvage gear',
         `${open.length} of ${BENCH_CRAFTS.length} bench recipes`,

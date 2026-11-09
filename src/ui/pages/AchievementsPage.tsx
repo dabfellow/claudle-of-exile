@@ -1,21 +1,13 @@
-import { affixDef } from '../../data/affixes';
 import { ACHIEVEMENTS, CATEGORY_NAMES, type AchievementCategory, type AchievementDef } from '../../data/achievements';
 import { uniqueDef } from '../../data/bases';
-import { BENCH_CRAFTS } from '../../data/hideout';
 import { materialDef } from '../../data/materials';
 import { achievementProgress } from '../../engine/achievements';
 import { isClassic } from '../../engine/challenge';
-import { affixRangeText } from '../../engine/items';
 import type { GameState } from '../../engine/types';
 import { useGame } from '../../game';
 import { Badge, fmt, GameIcon, MatIcon, PageHeader, ProgressBar } from '../components/common';
 
 const CATEGORIES = Object.keys(CATEGORY_NAMES) as AchievementCategory[];
-
-/** Bench recipes this achievement unlocks. */
-function benchUnlocks(id: string) {
-  return BENCH_CRAFTS.filter((b) => b.achievement === id);
-}
 
 /** Circular badge: a progress ring while in progress, a filled gold medal once complete. */
 function Medallion({ pct, done }: { pct: number; done: boolean }) {
@@ -34,7 +26,6 @@ function Medallion({ pct, done }: { pct: number; done: boolean }) {
 
 function AchievementCard({ s, a }: { s: GameState; a: AchievementDef }) {
   const p = achievementProgress(s, a.id);
-  const recipes = benchUnlocks(a.id);
   const pct = Math.min(1, p.value / p.target);
   return (
     <div className={`card achievement ${p.done ? 'done' : ''}`}>
@@ -54,7 +45,7 @@ function AchievementCard({ s, a }: { s: GameState; a: AchievementDef }) {
           </span>
         </div>
       )}
-      {(a.reward || a.unique || recipes.length > 0) && (
+      {(a.reward || a.unique) && (
         <div className="achievement-rewards">
           {Object.entries(a.reward ?? {}).map(([id, n]) => (
             <span key={id} className="io-item" title={materialDef(id).name}>
@@ -66,11 +57,6 @@ function AchievementCard({ s, a }: { s: GameState; a: AchievementDef }) {
               {uniqueDef(a.unique).name}
             </span>
           )}
-          {recipes.map((b) => (
-            <span key={b.id} className="io-item mod crafted" title={`Crafting Bench level ${b.benchLevel} recipe`}>
-              Bench: {affixRangeText(affixDef(b.affixId).id, b.tier)}
-            </span>
-          ))}
         </div>
       )}
     </div>
