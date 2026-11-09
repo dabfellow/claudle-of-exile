@@ -41,6 +41,12 @@ export function materialSources(id: string): Source[] {
   if (rune && rune.grade.grade <= RUNE_DROP.maxGrade) out.push({ label: 'Monster drops', detail: 'rare, from Act 3 on', page: 'campaign' });
   if (id === 'gold') out.push({ label: 'Monster drops', page: 'campaign' }, { label: 'Selling in Town', page: 'vendor' });
   if (id === 'arcane_dust') out.push({ label: 'Salvaging gear', detail: 'Stash or Equipment', page: 'stash' });
+  if (['marrow_shard', 'choir_glass', 'black_pearl', 'throne_ash', 'crownless_sigil'].includes(id)) {
+    out.push({ label: 'Hard Boss drops', detail: 'Map Device keyed fights', page: 'maps' });
+  }
+  if (['exile_doom_sigil', 'architect_doom_sigil', 'void_sigil', 'uber_key_1', 'uber_key_2', 'uber_key_3'].includes(id)) {
+    out.push({ label: 'Uber Boss drops', detail: 'Map Device pinnacle fights', page: 'maps' });
+  }
   if (FOSSIL_IDS.has(id) || ESSENCE_IDS.has(id)) out.push({ label: 'Area bosses', detail: 'about half of boss kills', page: 'campaign' });
   const kind = materialDef(id).kind;
   if (kind === 'currency') out.push({ label: 'Monster drops', page: 'campaign' }, { label: 'Magic shop in Town', page: 'vendor' });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP } from '../../data/hideout';
+import { BAG_SIZE, groundCap, offlineHaulCap } from '../../data/hideout';
 import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
 import { groundAtRisk, pickUp, salvagePile, type Pile } from '../../engine/storage';
 import { evaluateLootFilter } from '../../engine/lootFilter';
@@ -8,17 +8,15 @@ import { game } from '../../game';
 import { ItemTiles, SalvageByRarity } from './Inventory';
 import { openItemMenu } from './ItemMenu';
 
-const PILES: Record<Pile, { title: string; cap: number; hint: string; empty: string }> = {
+const PILES: Record<Pile, { title: string; hint: (cap: number) => string; empty: string }> = {
   ground: {
     title: 'On the ground',
-    cap: GROUND_CAP,
-    hint: 'Newest first. Past 50, the oldest drop is lost. Stays when you leave an area; die twice without picking it up and it is lost.',
+    hint: (cap) => `Newest first. Past ${cap}, the oldest drop is lost. Stays when you leave an area; die twice without picking it up and it is lost.`,
     empty: 'Gear that drops shows up here for you to pick up.',
   },
   offlineHaul: {
     title: 'Found while you were away',
-    cap: OFFLINE_HAUL_CAP,
-    hint: 'Newest first. Stays until you pick it up or salvage it.',
+    hint: () => 'Newest first. Stays until you pick it up or salvage it.',
     empty: '',
   },
 };
@@ -26,6 +24,8 @@ const PILES: Record<Pile, { title: string; cap: number; hint: string; empty: str
 /** A pile of dropped gear: click to pick up into the bag. */
 export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
   const info = PILES[pile];
+  const stashLvl = s.account.hideout.stash ?? 1;
+  const cap = pile === 'ground' ? groundCap(stashLvl) : offlineHaulCap(stashLvl);
   const allItems = [...s[pile]].reverse();
   const items = allItems.filter((item) => evaluateLootFilter(s, item).visible);
   const hidden = allItems.length - items.length;
@@ -45,7 +45,7 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
       <div className="card-title">
         {info.title}
         <span className="muted num" style={{ fontFamily: 'var(--font)', fontSize: 12 }}>
-          {items.length}/{info.cap}
+          {items.length}/{cap}
         </span>
         <span className="grow" />
         <span className={`card-hint num ${bagFull ? 'bad' : ''}`}>
@@ -53,7 +53,7 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
         </span>
       </div>
       <div className="row wrap" style={{ marginBottom: 10 }}>
-        <span className="dim small">{info.hint}</span>
+        <span className="dim small">{info.hint(cap)}</span>
         {hidden > 0 && <span className="dim small">{hidden} hidden by your Quartermaster filter</span>}
         {atRisk > 0 && <span className="bad small">{atRisk} lost if you die again</span>}
         <span className="spacer" />

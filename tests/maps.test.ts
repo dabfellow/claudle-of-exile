@@ -223,6 +223,7 @@ describe('maps', () => {
     mapStep(s, c);
     expect(atlasPointsEarned(s)).toBe(3);
     expect(atlasPointsLeft(s)).toBe(3);
+    s.account.hideout.map_device = 2;
     expect(allocateAtlasNode(s, 'sustain_1')).toBeNull();
     expect(atlasPointsLeft(s)).toBe(2);
     expect(refundAtlas(s)).toBeNull();
@@ -232,6 +233,7 @@ describe('maps', () => {
   it('Unbroken Path refunds a map when you die in it', () => {
     const s = newGame(1);
     const c = ctx();
+    s.account.hideout.map_device = 2;
     s.account.atlas = { cleared: [1, 2, 3, 4], slotted: [], deathless: [], nodes: ['peril_1', 'peril_2', 'peril_3', 'peril_notable'] };
     addMaps(s, 2, 1);
     startMap(s, c, 2, 'mudflats');

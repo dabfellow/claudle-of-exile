@@ -322,7 +322,7 @@ describe('passive tree', () => {
 });
 
 describe('hideout', () => {
-  it('upgrades consume materials; a Stash upgrade adds a free page that does not raise the page price', () => {
+  it('upgrades consume materials; a Stash upgrade adds a free page that gets bought pages 10% cheaper', () => {
     const s = newGame(1);
     const c = ctx();
     expect(upgradeStation(s, c, 'stash')).toMatch(/materials/);
@@ -334,7 +334,7 @@ describe('hideout', () => {
     expect(upgradeStation(s, c, 'stash')).toBeNull();
     expect(s.account.bank.ash_plank).toBe(0);
     expect(s.account.stash.length).toBe(pages + 1);
-    expect(stashPagePrice(s)).toBe(price);
+    expect(stashPagePrice(s)).toBe(Math.round(price * 0.9));
   });
 
   it('the Map Device stays locked until Act 6, and production stations gate recipe tiers', () => {

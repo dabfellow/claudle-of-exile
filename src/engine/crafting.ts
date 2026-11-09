@@ -3,7 +3,7 @@ import { stashedItems, takeOwned } from './storage';
 import { baseDef, uniqueDef } from '../data/bases';
 import { essenceDef, fossilDef, modBias, SEAL, WAX } from '../data/craftMats';
 import { WHETSTONE } from '../data/expedition';
-import { BENCH_BUILT_LEVEL, BENCH_CRAFTS } from '../data/hideout';
+import { BENCH_BUILT_LEVEL, BENCH_CRAFTS, type BenchCraft } from '../data/hideout';
 import type { Ctx } from './context';
 import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, rollUnwrittenNotableIndex, salvageValue, spawnWeight, type ModBias } from './items';
 import { pick, rInt, type Rng } from './rng';
@@ -430,6 +430,21 @@ export function applyEssence(s: GameState, ctx: Ctx, essenceId: string, uid: num
   return null;
 }
 
+export function benchCraftCost(s: GameState, craft: BenchCraft): Record<string, number> {
+  const benchLvl = s.account.hideout.bench ?? 1;
+  if (benchLvl < 8) return craft.cost;
+  const out: Record<string, number> = {};
+  for (const [id, rawN] of Object.entries(craft.cost)) {
+    const n = Number(rawN);
+    if (id === 'gold' || id === 'arcane_dust') {
+      out[id] = Math.max(1, Math.round(n * 0.75));
+    } else {
+      out[id] = n;
+    }
+  }
+  return out;
+}
+
 export function benchCraftReason(s: GameState, craftId: string, uid: number): string | null {
   const craft = BENCH_CRAFTS.find((c) => c.id === craftId)!;
   const item = findItem(s, uid);
@@ -438,12 +453,12 @@ export function benchCraftReason(s: GameState, craftId: string, uid: number): st
   if (item.rarity === 'unique') return 'Cannot modify unique items';
   if (item.rarity === 'normal') return 'Item must be Magic or Rare';
 
-  // Multicraft allows up to 3 crafted modifiers
+  // Multicraft allows up to 3 crafted modifiers; Bench level 9 allows 2
   const hasMulticraft = allMods(item).some((m) => m.affixId === 'meta_multicraft');
-  const maxCrafted = hasMulticraft || craft.affixId === 'meta_multicraft' ? 3 : 1;
+  const maxCrafted = hasMulticraft || craft.affixId === 'meta_multicraft' ? 3 : (s.account.hideout.bench ?? 1) >= 9 ? 2 : 1;
   const craftedCount = allMods(item).filter((m) => m.crafted).length;
   if (craftedCount >= maxCrafted) {
-    return hasMulticraft ? 'Item already has 3 crafted modifiers' : 'Item already has a crafted modifier';
+    return hasMulticraft ? 'Item already has 3 crafted modifiers' : maxCrafted > 1 ? `Item already has ${maxCrafted} crafted modifiers` : 'Item already has a crafted modifier';
   }
 
   const affix = affixDef(craft.affixId);
@@ -451,7 +466,7 @@ export function benchCraftReason(s: GameState, craftId: string, uid: number): st
   const list = affix.kind === 'prefix' ? item.prefixes : item.suffixes;
   if (list.length >= maxAffixes(item.rarity)) return `No room for another ${affix.kind}`;
   if (allMods(item).some((m) => affixDef(m.affixId).group === affix.group)) return 'Item already has this modifier type';
-  if (!canAfford(s, craft.cost)) return 'Not enough materials';
+  if (!canAfford(s, benchCraftCost(s, craft))) return 'Not enough materials';
   return null;
 }
 
@@ -461,7 +476,7 @@ export function benchCraft(s: GameState, ctx: Ctx, craftId: string, uid: number)
   const craft = BENCH_CRAFTS.find((c) => c.id === craftId)!;
   const item = findItem(s, uid)!;
   const affix = affixDef(craft.affixId);
-  payCraftCost(s, ctx, craft.cost);
+  payCraftCost(s, ctx, benchCraftCost(s, craft));
   const ranges = affix.tiers[craft.tier]?.ranges;
   const values = ranges?.length ? ranges.map(([lo, hi]) => rInt(ctx.rng, lo, hi)) : [];
   (affix.kind === 'prefix' ? item.prefixes : item.suffixes).push({ affixId: affix.id, tier: craft.tier, values, crafted: true });
@@ -475,19 +490,21 @@ export function removeCraftedReason(s: GameState, uid: number): string | null {
   if (!item) return 'Select an item';
   if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
   if (!allMods(item).some((m) => m.crafted)) return 'Item has no crafted modifiers';
-  if (!hasItem(s, 'scour', 1)) return 'Requires 1 Orb of Scouring';
+  if ((s.account.hideout.bench ?? 1) < 10 && !hasItem(s, 'scour', 1)) return 'Requires 1 Orb of Scouring';
   return null;
 }
 
-/** Removes all bench-crafted modifiers from an item for 1 Orb of Scouring. */
+/** Removes all bench-crafted modifiers from an item (free at Bench Level 10, or for 1 Orb of Scouring). */
 export function removeCrafted(s: GameState, ctx: Ctx, uid: number): string | null {
   const reason = removeCraftedReason(s, uid);
   if (reason) return reason;
   const item = findItem(s, uid)!;
   item.prefixes = item.prefixes.filter((m) => !m.crafted);
   item.suffixes = item.suffixes.filter((m) => !m.crafted);
-  payCraftCost(s, ctx, { scour: 1 });
-  s.lifetime.orbsUsed += 1;
+  if ((s.account.hideout.bench ?? 1) < 10) {
+    payCraftCost(s, ctx, { scour: 1 });
+    s.lifetime.orbsUsed += 1;
+  }
   ctx.emit({ t: 'craft', text: `Removed crafted modifiers from ${itemName(item)}`, uid });
   return null;
 }

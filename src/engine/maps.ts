@@ -54,6 +54,7 @@ import { bossLeftToRules, suggestedRule } from './automation';
 import { addBank } from './bank';
 import { enterZone } from './combat';
 import type { Ctx } from './context';
+import { MAP_DEVICE_ATLAS_LEVEL } from '../data/hideout';
 import { FINAL_ACT, campaignComplete, stationLevel } from './hideout';
 import { flaskDef } from '../data/flasks';
 import { newFlask } from './flasks';
@@ -247,6 +248,7 @@ export function hasAtlasNode(s: GameState, id: string): boolean {
 }
 
 export function canAllocateAtlasNode(s: GameState, id: string): string | null {
+  if (stationLevel(s, 'map_device') < MAP_DEVICE_ATLAS_LEVEL) return 'Requires Map Device Level 2 to unlock the Atlas';
   const a = ensureAtlas(s);
   if (a.nodes.includes(id)) return 'Already allocated';
   const node = ATLAS_NODES.find((n) => n.id === id);
@@ -302,6 +304,25 @@ export interface AtlasBonuses {
 }
 
 export function atlasBonuses(s: GameState): AtlasBonuses {
+  if (stationLevel(s, 'map_device') < MAP_DEVICE_ATLAS_LEVEL) {
+    return {
+      mapFindPct: 0,
+      tierUpBonus: 0,
+      bossExtraMapChance: 0,
+      currencyPct: 0,
+      rarityPct: 0,
+      bossExtraItems: 0,
+      bossCurrencyRolls: 0,
+      sextantCharges: 0,
+      sextantRewardEffectPct: 0,
+      extraPacks: 0,
+      monsterLifeMult: 1,
+      monsterDmgMult: 1,
+      monsterXpDropMult: 1,
+      unbrokenPath: false,
+      doomedUnlocked: false,
+    };
+  }
   const has = (id: string) => hasAtlasNode(s, id);
   let mapFindPct = 0;
   let tierUpBonus = 0;
@@ -378,7 +399,8 @@ export function applySextant(s: GameState, ctx: Ctx, slotIndex: number, sextantI
   if ((s.account.bank[def.id] ?? 0) <= 0) return `No ${def.name} in stash`;
   const pool = SEXTANT_MODS.filter((m) => m.tier === def.tier);
   const mod = pick(ctx.rng, pool);
-  const charges = SEXTANT_BASE_CHARGES + atlasBonuses(s).sextantCharges + (stationLevel(s, 'map_device') >= 6 ? 2 : 0);
+  const mapDevLvl = stationLevel(s, 'map_device');
+  const charges = SEXTANT_BASE_CHARGES + atlasBonuses(s).sextantCharges + (mapDevLvl >= 7 ? 5 : mapDevLvl >= 6 ? 2 : 0);
   addBank(s, def.id, -1);
   const arr = ensureSextants(s);
   arr[slotIndex] = { modId: mod.id, tier: def.tier, charges };
@@ -926,8 +948,10 @@ export function rollMapDrops(s: GameState, ctx: Ctx, mon: MonsterInstance): void
 
   if (!run || !mods) return;
 
-  // Cartographer's Horizon notable: 25% chance for map bosses to drop an additional map
-  if (mon.isBoss && atlas.bossExtraMapChance > 0 && chance(ctx.rng, atlas.bossExtraMapChance)) {
+  // Cartographer's Horizon notable / Map Device L6+: chance for map bosses to drop an additional map
+  const mapDevLvl = stationLevel(s, 'map_device');
+  const extraMapChance = (atlas.bossExtraMapChance ?? 0) + (mapDevLvl >= 6 ? 0.15 : 0);
+  if (mon.isBoss && extraMapChance > 0 && chance(ctx.rng, extraMapChance)) {
     const tier = droppedTier(s, ctx, run.tier);
     addMaps(s, tier, 1);
     s.maps.tally.mapsFound += 1;
@@ -966,12 +990,22 @@ export function rollMapDrops(s: GameState, ctx: Ctx, mon: MonsterInstance): void
     s.maps.tally.favoured += 1;
   }
 
-  // Doomed Horizon: T8–T10 map bosses can drop Doomed Maps
-  if (!run.doomedTier && mon.isBoss && run.tier >= 8 && atlas.doomedUnlocked && chance(ctx.rng, MAP_DROPS.doomedBoss)) {
+  // Doomed Horizon / Map Device L8+: T8–T10 map bosses can drop Doomed Maps
+  const doomedChance = MAP_DROPS.doomedBoss * (mapDevLvl >= 8 ? 1.25 : 1);
+  if (!run.doomedTier && mon.isBoss && run.tier >= 8 && (atlas.doomedUnlocked || mapDevLvl >= 8) && chance(ctx.rng, doomedChance)) {
     const maxDoomed = run.tier === 8 ? 2 : run.tier === 9 ? 4 : 5;
     const dTier = rInt(ctx.rng, 1, maxDoomed);
     addDoomedMaps(s, dTier, 1);
     ctx.emit({ t: 'info', text: `Found a Doomed Map: ${doomedTier(dTier).name}`, tone: 'good' });
+  }
+
+  // Apex Riftgate: Map Device Level 9 grants 15% chance on Map Bosses to drop a random Uber Key
+  if (!run.doomedTier && mon.isBoss && mapDevLvl >= 9 && chance(ctx.rng, 0.15)) {
+    const uberKeys = ['uber_key_1', 'uber_key_2', 'uber_key_3'];
+    const chosenKey = pick(ctx.rng, uberKeys);
+    addBank(s, chosenKey, 1);
+    ctx.emit({ t: 'loot', currencyId: chosenKey, qty: 1 });
+    ctx.emit({ t: 'info', text: 'Apex Riftgate: Map Boss dropped an Uber Key!', tone: 'good' });
   }
 
   // Unique Map drops from map bosses

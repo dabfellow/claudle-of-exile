@@ -17,6 +17,7 @@ import {
   BENCH_UNBUILT,
   benchBuilt,
   benchCraft,
+  benchCraftCost,
   benchCraftReason,
   essenceReason,
   FIELD_TINKER_ILVL,
@@ -316,8 +317,8 @@ export function BenchPage() {
             {item && allMods(item).some((m) => m.crafted) && (
               <button
                 className="btn sm danger"
-                disabled={!hasItem(s, 'scour', 1)}
-                title={hasItem(s, 'scour', 1) ? 'Remove all crafted modifiers for 1 Orb of Scouring' : 'Requires 1 Orb of Scouring'}
+                disabled={benchLvl < 10 && !hasItem(s, 'scour', 1)}
+                title={benchLvl >= 10 ? 'Remove all crafted modifiers freely (Bench Level 10)' : hasItem(s, 'scour', 1) ? 'Remove all crafted modifiers for 1 Orb of Scouring' : 'Requires 1 Orb of Scouring'}
                 onClick={() => {
                   const err = game.act((st, ctx) => removeCrafted(st, ctx, item.uid));
                   if (!err) {
@@ -326,7 +327,7 @@ export function BenchPage() {
                   }
                 }}
               >
-                <MatIcon id="scour" size={13} /> Remove Crafted (1 Scour)
+                {benchLvl < 10 && <MatIcon id="scour" size={13} />} {benchLvl >= 10 ? 'Remove Crafted (Free)' : 'Remove Crafted (1 Scour)'}
               </button>
             )}
           </div>
@@ -511,7 +512,7 @@ export function BenchPage() {
                                 <span className="dim small">{a.kind}</span>
                                 {b.benchLevel >= 6 && <Badge tone="gold">L{b.benchLevel}</Badge>}
                               </div>
-                              <CostHave cost={b.cost} have={s.account.bank} />
+                              <CostHave cost={benchCraftCost(s, b)} have={s.account.bank} />
                               <button className="btn sm" disabled={!!reason} title={reason ?? ''} onClick={() => craft(b.id)}>
                                 {reason && item ? reason : 'Craft'}
                               </button>

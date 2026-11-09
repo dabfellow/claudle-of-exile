@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { uniqueDef } from '../../data/bases';
-import { stationDef } from '../../data/hideout';
+import { MAP_DEVICE_ATLAS_LEVEL, stationDef } from '../../data/hideout';
 import {
   ATLAS_NODES,
   ATLAS_DOOMED_CLEAR_POINTS,
@@ -875,6 +875,7 @@ function BossesPanel({ loaded, onLoad }: { loaded: Loaded | null; onLoad: (l: Lo
 
 function AtlasPanel() {
   const s = useGame();
+  const atlasUnlocked = stationLevel(s, 'map_device') >= MAP_DEVICE_ATLAS_LEVEL;
   const atlas = ensureAtlas(s);
   const earned = atlasPointsEarned(s);
   const left = atlasPointsLeft(s);
@@ -894,6 +895,18 @@ function AtlasPanel() {
     viewport.scrollLeft = (viewport.scrollWidth - viewport.clientWidth) / 2;
     viewport.scrollTop = (viewport.scrollHeight - viewport.clientHeight) / 2;
   }, []);
+
+  if (!atlasUnlocked) {
+    return (
+      <div className="card" style={{ padding: '36px 16px', textAlign: 'center' }}>
+        <h3>Atlas of the Realm</h3>
+        <p className="dim" style={{ maxWidth: 460, margin: '8px auto 16px' }}>
+          The Atlas tree is dormant. Upgrade your Map Device to Level 2 in your Hideout to awaken the Atlas tree and attune your realm's maps.
+        </p>
+        <Badge tone="locked">Requires Map Device Level 2</Badge>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -1028,11 +1041,12 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
       if (d) setLoaded(d);
     }
   };
+  const atlasUnlocked = stationLevel(s, 'map_device') >= MAP_DEVICE_ATLAS_LEVEL;
   const tabs: { id: DeviceTab; label: string; count: ReactNode }[] = [
     { id: 'maps', label: 'Maps', count: fmt(totalHeld) },
     { id: 'doomed', label: 'Doomed', count: fmt(totalDoomed) },
     { id: 'bosses', label: 'Bosses', count: fmt(totalKeys) },
-    { id: 'atlas', label: 'Atlas', count: `${earned}/${ATLAS_POINT_CAP}` },
+    { id: 'atlas', label: 'Atlas', count: atlasUnlocked ? `${earned}/${ATLAS_POINT_CAP}` : <Badge tone="locked">Lv 2</Badge> },
   ];
 
   return (

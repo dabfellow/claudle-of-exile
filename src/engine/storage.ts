@@ -1,4 +1,4 @@
-import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP, STASH_PAGE_GROWTH, STASH_PAGE_PRICE, STASH_PAGE_SIZE } from '../data/hideout';
+import { BAG_SIZE, groundCap, offlineHaulCap, STASH_PAGE_GROWTH, STASH_PAGE_PRICE, STASH_PAGE_SIZE } from '../data/hideout';
 import { claimOwned, freeStashPages, seeUnique } from './account';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
@@ -16,7 +16,8 @@ export function bagFull(s: GameState): boolean {
 export function dropItem(s: GameState, ctx: Ctx, item: Item): void {
   const pile = ctx.offline ? s.offlineHaul : s.ground;
   pile.push(item);
-  const cap = ctx.offline ? OFFLINE_HAUL_CAP : GROUND_CAP;
+  const stashLvl = s.account.hideout.stash ?? 1;
+  const cap = ctx.offline ? offlineHaulCap(stashLvl) : groundCap(stashLvl);
   if (pile.length > cap) pile.splice(0, pile.length - cap);
 }
 
@@ -138,10 +139,13 @@ export function settleOverflow(s: GameState): number {
   return before - a.overflow.length;
 }
 
-/** Gold for the next stash page. Pages the Stash station or achievements gave you don't count toward the price. */
+/** Gold for the next stash page. Pages the Stash station or achievements gave you don't count toward the price. Stash station levels reduce price by 10% each. */
 export function stashPagePrice(s: GameState): number {
   const bought = Math.max(0, s.account.stash.length - freeStashPages(s.account));
-  return Math.round(STASH_PAGE_PRICE * STASH_PAGE_GROWTH ** bought);
+  const basePrice = Math.round(STASH_PAGE_PRICE * STASH_PAGE_GROWTH ** bought);
+  const stashLvl = s.account.hideout.stash ?? 1;
+  const discount = Math.min(0.8, (stashLvl - 1) * 0.1);
+  return Math.max(10, Math.round(basePrice * (1 - discount)));
 }
 
 export function buyStashPage(s: GameState, ctx: Ctx): string | null {

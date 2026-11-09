@@ -19,9 +19,9 @@ describe('stationPerks', () => {
   it('adds stash pages up, and notes the bought ones', () => {
     const s = fresh();
     upgradeStation(s, makeCtx(seeded(1)), 'stash');
-    expect(stationPerks(s, 'stash')).toEqual(['4 stash pages']);
+    expect(stationPerks(s, 'stash')).toEqual(['4 stash pages', 'Stash tabs 10% cheaper']);
     s.account.stash.push([]);
-    expect(stationPerks(s, 'stash')).toEqual(['5 stash pages (1 bought)']);
+    expect(stationPerks(s, 'stash')).toEqual(['5 stash pages (1 bought)', 'Stash tabs 10% cheaper']);
   });
 
   it('lists every rule earned at the War Table, not just the latest', () => {

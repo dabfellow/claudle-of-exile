@@ -50,10 +50,13 @@ export function RuneBoard() {
   const worn = Object.values(s.equipment).filter((i): i is Item => !!i);
   const inscribed = worn.filter((i) => itemRune(i));
   const best = Math.max(1, ...RUNES.filter((r) => s.account.bank[r.id] || inscribed.some((i) => itemRune(i) === r)).map((r) => r.grade.grade));
+  const runeBoardLvl = s.account.hideout.rune_board ?? 1;
+  const resPct = Math.round((runeBoardLvl >= 5 ? 0.15 : runeBoardLvl >= 3 ? 0.1 : runeBoardLvl >= 2 ? 0.07 : RESONANCE_PER_PIECE) * 100);
+  const bonusPct = runeBoardLvl >= 6 ? 60 : runeBoardLvl >= 5 ? 40 : runeBoardLvl >= 4 ? 25 : runeBoardLvl >= 3 ? 15 : 0;
   return (
     <>
       <div className="callout skill-note">
-        Inscribe runes at the Crafting Bench. Every piece of gear has one rune slot, uniques too. No orb touches it. Each other piece wearing the same family makes a rune <b>{Math.round(RESONANCE_PER_PIECE * 100)}%</b> stronger.
+        Inscribe runes at the Crafting Bench. Every piece of gear has one rune slot, uniques too. No orb touches it. Each other piece wearing the same family makes a rune <b>{resPct}%</b> stronger (Rune Board Level {runeBoardLvl}{bonusPct > 0 ? ` · +${bonusPct}% rune potency` : ''}).
       </div>
       <div className="card">
         <div className="card-title">

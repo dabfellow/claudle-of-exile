@@ -20,7 +20,7 @@ import { focusMult, focusStep, takeDouble } from './minigame';
 import { bagFull, dropItem } from './storage';
 import { allMods, createItem, eligibleAffixes, salvageValue } from './items';
 import { gemArrived } from './progress';
-import { chance, pick, rInt } from './rng';
+import { chance, pick, rInt, type Rng } from './rng';
 import { skillTreeStats, type TreeStats } from './skillTree';
 import type { Derived } from './stats';
 import type { GameState, Item, RolledMod, SkillId, SmithCatalyst } from './types';
@@ -64,10 +64,12 @@ export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): numb
   return (a.intervalMs / (1 + speed / 100)) * keystoneSlow(a.skill, t);
 }
 
-/** Smithed gear can't out-level the campaign: capped at the top level of your furthest unlocked area (or 84 at Forge L5+). */
+/** Smithed gear can't out-level the campaign: capped at the top level of your furthest unlocked area (or 84–90 at Forge L5–8). */
 export function smithIlvlCap(s: GameState): number {
   const baseCap = Math.max(...ZONES.filter((z) => s.unlockedZones.includes(z.id) && actOpen(z.act)).map((z) => z.levelRange[1]));
-  return (s.account.hideout.forge ?? 1) >= 5 ? Math.max(84, baseCap) : baseCap;
+  const lvl = s.account.hideout.forge ?? 1;
+  const hideoutCap = lvl >= 8 ? 90 : lvl >= 7 ? 88 : lvl >= 6 ? 86 : lvl >= 5 ? 84 : 0;
+  return Math.max(hideoutCap, baseCap);
 }
 
 /** Item level of a smithed base; `resin` is the bonus from a Resin in the catalyst slot. */
@@ -164,6 +166,13 @@ function inputsToPay(s: GameState, a: SkillAction, t: TreeStats, ctx: Ctx): Reco
     if (cost.arcane_dust && t.gemDustSave) cost.arcane_dust = Math.ceil(cost.arcane_dust * (1 - t.gemDustSave / 100));
     if (cost.rough_gem && t.masterCutter) cost.rough_gem = Math.max(0, cost.rough_gem - 1);
   }
+  if (a.skill === 'runecarving' && (s.account.hideout.rune_board ?? 1) >= 2) {
+    for (const id of Object.keys(cost)) {
+      if ((fossilDef(id) || essenceDef(id)) && chance(ctx.rng, 0.10)) {
+        delete cost[id];
+      }
+    }
+  }
   const rate = masteryConservation(s, a.mastery);
   for (const id of a.mastery?.ordinaryInputs ?? []) {
     const paid = cost[id] ?? 0;
@@ -180,6 +189,31 @@ function catalystRanOut(s: GameState, ctx: Ctx, slot: 'fossil' | 'resin'): void 
   ctx.emit({ t: 'info', text: `Out of ${slot === 'fossil' ? fossilDef(id)?.name : resinDef(id)?.name}: smithing without it` });
 }
 
+export function rollForgeItemTier(forgeLvl: number, rng: Rng): 1 | 2 | 3 | 4 | 5 {
+  if (forgeLvl >= 8) {
+    const r = rng.next();
+    if (r < 0.05) return 5;
+    if (r < 0.20) return 4;
+    if (r < 0.45) return 3;
+    if (r < 0.75) return 2;
+    return 1;
+  }
+  if (forgeLvl >= 7) {
+    const r = rng.next();
+    if (r < 0.10) return 4;
+    if (r < 0.30) return 3;
+    if (r < 0.60) return 2;
+    return 1;
+  }
+  if (forgeLvl >= 6) {
+    const r = rng.next();
+    if (r < 0.10) return 3;
+    if (r < 0.35) return 2;
+    return 1;
+  }
+  return 1;
+}
+
 /** Smithing: the base, steered by the catalyst slot. Repeat-until stops the action on a hit. */
 function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats): void {
   if (s.smithCatalyst.resin && !hasItem(s, s.smithCatalyst.resin, 1)) catalystRanOut(s, ctx, 'resin');
@@ -190,9 +224,11 @@ function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats): void {
   const magic = t.grandmaster || (t.smithMagic && chance(ctx.rng, t.smithMagic / 100));
   // the Fossil only matters (and is only used up) when the base comes out Magic
   const fossil = magic ? cat.fossil : null;
-  const item = createItem(s, a.baseId!, smithIlvl(s, resin), magic ? 'magic' : 'normal', ctx.rng, fossil ? modBias(fossil) : undefined);
   const forgeLvl = s.account.hideout.forge ?? 1;
-  if (forgeLvl >= 5 && chance(ctx.rng, 0.1)) {
+  const itemTier = rollForgeItemTier(forgeLvl, ctx.rng);
+  const item = createItem(s, a.baseId!, smithIlvl(s, resin), magic ? 'magic' : 'normal', ctx.rng, fossil ? modBias(fossil) : undefined, itemTier);
+  const t1Chance = forgeLvl >= 8 ? 0.25 : forgeLvl >= 7 ? 0.15 : forgeLvl >= 5 ? 0.10 : 0;
+  if (t1Chance > 0 && chance(ctx.rng, t1Chance)) {
     item.rarity = item.rarity === 'normal' ? 'magic' : item.rarity;
     const kind = pick(ctx.rng, ['prefix', 'suffix'] as const);
     const pool = eligibleAffixes(item, kind);
@@ -269,9 +305,17 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   payCost(s, cost);
   const outputs: Record<string, number> = {};
   const twoForOne = a.skill === 'runecarving' ? t.secondStroke : a.skill === 'cooking' ? t.secondHelping : a.skill === 'cartography' ? t.secondCopy : 0;
-  const double = a.skill === 'alchemy' ? chance(ctx.rng, ALCH_DOUBLE[(s.account.hideout.alchemy_table ?? 1) - 1]) : !!twoForOne && chance(ctx.rng, twoForOne / 100);
+  const alchLvl = s.account.hideout.alchemy_table ?? 1;
+  const double = a.skill === 'alchemy' ? chance(ctx.rng, ALCH_DOUBLE[alchLvl - 1]) : !!twoForOne && chance(ctx.rng, twoForOne / 100);
   const focusMultiple = focusDouble ? 2 : 1;
   const mult = (double ? 2 : 1) * focusMultiple;
+
+  if (a.skill === 'alchemy' && alchLvl >= 7 && chance(ctx.rng, 0.15)) {
+    for (const [id, n] of Object.entries(cost)) {
+      addBank(s, id, n);
+    }
+    ctx.emit({ t: 'info', text: 'Transmutative Mastery: refunded ingredients!', tone: 'good' });
+  }
 
   // alternate nodes trade some of their base material for a better secondary
   const yields = a.outputChance === undefined || chance(ctx.rng, a.outputChance);
@@ -279,9 +323,10 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
     let qty = n * mult;
     if (a.skill === 'mining' && id.endsWith('_ore') && t.motherlode) qty *= 2;
     if (id === a.mastery?.primaryOutput) qty += stochasticRound(ctx.rng, n * masteryYield(s, a.mastery));
-    // Transmuter: crafted orbs sometimes come out one tier higher
+    // Transmuter / Alchemy table L8: crafted orbs sometimes come out one tier higher
     const tier = ORB_TIERS.indexOf(id);
-    const outId = tier >= 0 && tier < ORB_TIERS.length - 1 && t.transmuter && chance(ctx.rng, t.transmuter / 100) ? ORB_TIERS[tier + 1] : id;
+    const alchElevate = a.skill === 'alchemy' && alchLvl >= 8 && chance(ctx.rng, 0.1);
+    const outId = tier >= 0 && tier < ORB_TIERS.length - 1 && ((t.transmuter && chance(ctx.rng, t.transmuter / 100)) || alchElevate) ? ORB_TIERS[tier + 1] : id;
     give(s, outputs, outId, qty);
     if (a.skill === 'mining' || a.skill === 'woodcutting' || a.skill === 'harvesting') s.lifetime.gathered += qty;
     if (a.skill === 'woodcutting' && t.heartwood) give(s, outputs, 'arcane_dust', qty);

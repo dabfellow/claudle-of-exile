@@ -32,19 +32,30 @@ function worn(s: GameState): Item[] {
 /** Resonance and Deep Cuts: how much of its written value a family's runes give right now. */
 export function runeMult(s: GameState, family: string): number {
   const t = skillTreeStats(s);
+  const runeBoardLvl = s.account.hideout.rune_board ?? 1;
   const pieces = worn(s).filter((i) => itemRune(i)?.family.id === family).length;
-  const perPiece = RESONANCE_PER_PIECE * (t.livingScript ? 2 : 1);
-  return (1 + Math.max(0, pieces - 1) * perPiece) * (1 + (t.deepCuts ?? 0) / 100);
+  const baseResonance = runeBoardLvl >= 5 ? 0.15 : runeBoardLvl >= 3 ? 0.1 : runeBoardLvl >= 2 ? 0.07 : RESONANCE_PER_PIECE;
+  const perPiece = baseResonance * (t.livingScript ? 2 : 1);
+  const boardBonusPct = runeBoardLvl >= 6 ? 60 : runeBoardLvl >= 5 ? 40 : runeBoardLvl >= 4 ? 25 : runeBoardLvl >= 3 ? 15 : 0;
+  return (1 + Math.max(0, pieces - 1) * perPiece) * (1 + (t.deepCuts ?? 0) / 100) * (1 + boardBonusPct / 100);
 }
 
 /** What every rune on your gear adds. Kept apart from an item's mods: a rune is never local, and no orb reads it. */
 export function runeStats(s: GameState): Partial<Record<StatKey, number>> {
   const out: Partial<Record<StatKey, number>> = {};
+  const runes = worn(s).map(itemRune).filter(Boolean);
   for (const item of worn(s)) {
     const rune = itemRune(item);
     if (!rune) continue;
     const e = runeEffect(rune, readingOf(item));
     out[e.stat] = (out[e.stat] ?? 0) + e.value * runeMult(s, rune.family.id);
+  }
+  const runeBoardLvl = s.account.hideout.rune_board ?? 1;
+  if (runeBoardLvl >= 4 && runes.length >= 3) {
+    out.allRes = (out.allRes ?? 0) + 2;
+  }
+  if (runeBoardLvl >= 6) {
+    out.allRes = (out.allRes ?? 0) + 5;
   }
   return out;
 }

@@ -38,6 +38,7 @@ const STATION_ICON: Record<StationId, string> = {
   quartermaster: 'stash',
   watchtower: 'clock',
   trophy_altar: 'trophy',
+  rune_board: 'runecarving',
 };
 
 export function Embers() {
@@ -558,7 +559,7 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
 function StationLedger({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const classic = isClassic(s);
-  const stations = STATIONS.filter((st) => !classic || (st.id !== 'forge' && st.id !== 'alchemy_table'));
+  const stations = STATIONS.filter((st) => !classic || (st.id !== 'forge' && st.id !== 'alchemy_table' && st.id !== 'rune_board'));
   const ready = stations.filter((st) => {
     const cost = nextUpgradeCost(s, st.id);
     return !stationLockReason(s, st.id) && !!cost && canAfford(s, cost);

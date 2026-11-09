@@ -84,7 +84,7 @@ describe('Phase 3: Endgame Hideout Station Upgrades', () => {
     // Upgrade to L6
     expect(upgradeStation(s, c, 'stash')).toBeNull();
     expect(stationLevel(s, 'stash')).toBe(6);
-    expect(s.account.stash.length).toBe(pagesBefore + 2);
+    expect(s.account.stash.length).toBe(pagesBefore + 5);
   });
 
   it('Forge upgrades to Level 5 unlocking Pinnacle Metallurgy (ilvl 84 cap and +8 ilvl bonus)', () => {

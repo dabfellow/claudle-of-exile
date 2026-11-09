@@ -8,20 +8,24 @@ import {
   BENCH_CRAFTS,
   FORGE_ILVL,
   GEAR_SWITCH_BENCH_LEVEL,
+  groundCap,
   MAP_ILVL,
   MAP_RARITY,
+  MASTER_ARTISAN_BENCH_LEVEL,
   META_CRAFT_BENCH_LEVEL,
+  offlineHaulCap,
+  OMNIPOTENT_BENCH_LEVEL,
   PINNACLE_CRAFT_BENCH_LEVEL,
   SHOP_REFRESH_MIN,
   SHOP_SLOTS,
-  STASH_START_PAGES,
   stationDef,
+  TRANSCENDENT_BENCH_LEVEL,
   type StationId,
 } from '../data/hideout';
 import type { RuleUnlock } from '../data/gems';
 import { currencyDef } from '../data/materials';
 import { actBossZone, actOpen, ZONES, type ZoneDef } from '../data/zones';
-import { achievementTabs } from './account';
+import { achievementTabs, ensureStashPages, freeStashPages } from './account';
 import { grantUnlocks, offlineHours } from './automation';
 import { addBank, canAfford, payCost } from './bank';
 import { hideoutCost } from './challenge';
@@ -32,6 +36,7 @@ import { createItem, addRandomMod, itemName, modCount, sellValue } from './items
 import { topUpKingMaps } from './maps';
 import { gemInShop, gemShopZone } from './progress';
 import { pick, rInt, type Rng } from './rng';
+import { runesOpen } from './runes';
 import type { GameState, Item, Rarity, VendorOffer } from './types';
 import { characterLevel } from './character';
 import { bagFull, takeOwned } from './storage';
@@ -64,6 +69,7 @@ export function checkCampaignDone(s: GameState, ctx: Ctx): void {
 /** Why a station can't be used or upgraded yet, or null. */
 export function stationLockReason(s: GameState, id: StationId): string | null {
   if (id === 'map_device' && !campaignComplete(s)) return `Unlocks once Act ${FINAL_ACT} is beaten`;
+  if (id === 'rune_board' && !runesOpen(s)) return 'Unlocks once Act 3 is reached (City of Saints)';
   return null;
 }
 
@@ -88,17 +94,27 @@ export function stationPerks(s: GameState, id: StationId): string[] {
       return [
         `+${MAP_RARITY[i]}% Item Rarity`,
         ...(MAP_ILVL[i] ? [`+${MAP_ILVL[i]} item level on drops`] : []),
+        ...(lvl >= 2 ? ['Atlas of the Realm unlocked'] : []),
         ...(lvl >= 5 ? ['4th Sextant slot unlocked permanently'] : []),
         ...(lvl >= 6 ? ['Pinnacle Conduit: +15% Map Boss extra Map/Key drop, Sextant +2 base charges'] : []),
+        ...(lvl >= 7 ? ['Void Influx: Sextant modifiers gain +5 base charges'] : []),
+        ...(lvl >= 8 ? ['Doomed Attunement: +25% Doomed Map drop chance from Tier 8–10 Map Bosses'] : []),
+        ...(lvl >= 9 ? ['Apex Riftgate: Map Bosses have 15% chance to drop a random Uber Key'] : []),
       ];
     case 'stash': {
       const pages = s.account.stash.length;
       const earned = achievementTabs(s.account);
-      const bought = Math.max(0, pages - (STASH_START_PAGES + i) - earned);
+      const free = freeStashPages(s.account);
+      const bought = Math.max(0, pages - free);
+      const discountPct = Math.min(80, i * 10);
       return [
         `${pages} stash pages${bought ? ` (${bought} bought)` : ''}${earned ? ` (${earned} from achievements)` : ''}`,
+        ...(discountPct > 0 ? [`Stash tabs ${discountPct}% cheaper`] : []),
         ...(lvl >= 5 ? ['Dedicated Map Storage Tab'] : []),
         ...(lvl >= 6 ? ['Currency & Fragment Overview Tab'] : []),
+        ...(lvl >= 7 ? [`Ground-loot storage: ${groundCap(lvl)} ground cap, ${offlineHaulCap(lvl)} offline haul cap`] : []),
+        ...(lvl >= 8 ? ['Grand Vault: +2 free stash pages'] : []),
+        ...(lvl >= 9 ? ['Transcendent Reliquary: +3 free stash pages'] : []),
       ];
     }
     case 'forge':
@@ -106,12 +122,17 @@ export function stationPerks(s: GameState, id: StationId): string[] {
         FORGE_REACH[Math.min(i, 2)],
         ...(FORGE_ILVL[i] ? [`Smithed bases +${FORGE_ILVL[i]} item level`] : []),
         ...(lvl >= 5 ? ['Pinnacle Metallurgy: 10% chance for Tier 1 modifier pre-installed'] : []),
+        ...(lvl >= 6 ? ["Artificer's Temper: 35% chance to roll Tier 2+ gear"] : []),
+        ...(lvl >= 7 ? ['Sovereign Smelting: 50% chance for Tier 2+ gear (25% Tier 3+), 15% T1 mod'] : []),
+        ...(lvl >= 8 ? ['Doom-Forged Crucible: 65% chance for Tier 2+ gear (35% T3+, 15% T4+, 5% T5), 25% T1 mod'] : []),
       ];
     case 'alchemy_table':
       return [
         ALCH_REACH[Math.min(i, 2)],
         ...(ALCH_DOUBLE[i] ? [`${Math.round(ALCH_DOUBLE[i] * 100)}% chance of double output`] : []),
         ...(lvl >= 5 ? ['3:1 orb conversion at the alchemy table'] : []),
+        ...(lvl >= 7 ? ['Transmutative Mastery: 15% chance to refund all ingredients'] : []),
+        ...(lvl >= 8 ? ["Philosopher's Crucible: 10% chance to elevate crafted orbs"] : []),
       ];
     case 'bench': {
       if (lvl < BENCH_BUILT_LEVEL) return ['Use orbs on your gear'];
@@ -123,10 +144,20 @@ export function stationPerks(s: GameState, id: StationId): string[] {
         ...(lvl >= AUTO_CRAFT_BENCH_LEVEL ? ['Auto-crafting'] : []),
         ...(lvl >= META_CRAFT_BENCH_LEVEL ? ['Meta-crafting: lock prefixes/suffixes & multicraft'] : []),
         ...(lvl >= PINNACLE_CRAFT_BENCH_LEVEL ? ['Pinnacle Crafting: Doom Sigils, Cannot roll Attack/Caster Modifiers'] : []),
+        ...(lvl >= MASTER_ARTISAN_BENCH_LEVEL ? ['Master Artisan: 25% reduced crafting dust/gold costs, Tier 6 crafts'] : []),
+        ...(lvl >= TRANSCENDENT_BENCH_LEVEL ? ['Transcendent Artificer: 2 crafted mods without Multicraft'] : []),
+        ...(lvl >= OMNIPOTENT_BENCH_LEVEL ? ['Omnipotent Crucible: free crafted modifier removal, Void bench crafts'] : []),
       ];
     }
     case 'vendor':
-      return [`${SHOP_SLOTS[i]} wares per shop`, `Restock every ${SHOP_REFRESH_MIN[i]} min`, ...SHOP_PERKS[i]];
+      return [
+        `${SHOP_SLOTS[i]} wares per shop`,
+        `Restock every ${SHOP_REFRESH_MIN[i]} min`,
+        ...SHOP_PERKS[Math.min(i, SHOP_PERKS.length - 1)],
+        ...(lvl >= 5 ? ['Chance for Tier 2+ gear in shops'] : []),
+        ...(lvl >= 6 ? ['Shops can stock Divine and Exalted Orbs'] : []),
+        ...(lvl >= 7 ? ['High chance for Tier 3+ gear'] : []),
+      ];
     case 'war_table': {
       const { rules, ruleSlots } = s.account.automation;
       return [
@@ -142,6 +173,9 @@ export function stationPerks(s: GameState, id: StationId): string[] {
       return [
         `Up to ${offlineHours(s)} hours offline${offlineHours(s) > s.account.automation.offlineHours ? ` (${offlineHours(s) - s.account.automation.offlineHours} from achievements)` : ''}`,
         ...(lvl >= 5 ? ['Autonomous Offline Mapping'] : []),
+        ...(lvl >= 6 ? ['Vigil of the Horizon: up to 48 hours offline'] : []),
+        ...(lvl >= 7 ? ['Starlight Sentinel: up to 60 hours offline'] : []),
+        ...(lvl >= 8 ? ['Eternal Bastion: up to 72 hours offline'] : []),
       ];
     case 'trophy_altar':
       return [
@@ -150,6 +184,18 @@ export function stationPerks(s: GameState, id: StationId): string[] {
         ...(lvl >= 2 ? ['+5% increased Mana regeneration rate'] : []),
         ...(lvl >= 3 ? ['+4% all Elemental Resistances'] : []),
         ...(lvl >= 4 ? ['+10% Map Boss drop rates and high-tier modifier rolls'] : []),
+        ...(lvl >= 5 ? ['Monolith of the Fallen: +6% all Attributes and +5% Armour/Evasion realm-wide'] : []),
+        ...(lvl >= 6 ? ['Shrine of the Void: +5% Maximum Life realm-wide'] : []),
+        ...(lvl >= 7 ? ['Hall of the Immortals: +6% all Elemental Resistances and +15% Item Rarity realm-wide'] : []),
+      ];
+    case 'rune_board':
+      return [
+        'Attune carved runes on gear',
+        `+${lvl >= 5 ? 15 : lvl >= 3 ? 10 : lvl >= 2 ? 7 : 5}% resonance per matching piece`,
+        ...(lvl >= 2 ? ['10% chance to not consume flavour material when carving'] : []),
+        ...(lvl >= 3 ? [`+${lvl >= 6 ? 60 : lvl >= 5 ? 40 : lvl >= 4 ? 25 : 15}% increased effect for all carved runes`] : []),
+        ...(lvl >= 4 ? ['+2% all Elemental Resistances while wearing 3+ runes'] : []),
+        ...(lvl >= 6 ? ['Apex Transcendence: +5% all Elemental Resistances realm-wide'] : []),
       ];
   }
 }
@@ -167,7 +213,7 @@ export function upgradeStation(s: GameState, ctx: Ctx, id: StationId): string | 
   ctx.emit({ t: 'info', text: `${stationDef(id).name} upgraded to level ${lvl}`, tone: 'good' });
   ctx.emit({ t: 'stationUpgraded', id, level: lvl });
   if (id === 'vendor') refreshVendor(s, ctx.rng);
-  if (id === 'stash') s.account.stash.push([]);
+  if (id === 'stash') ensureStashPages(s.account);
   return null;
 }
 
@@ -193,7 +239,8 @@ export function shopItemPrice(item: Item): number {
 function shopItem(s: GameState, rng: Rng, lvl: number, bases: BaseDef[], ilvl: number): VendorOffer['item'] {
   const base = pick(rng, bases);
   const rarity: Rarity = lvl >= 2 && rng.next() < 0.35 ? 'rare' : 'magic';
-  const item = createItem(s, base.id, ilvl, rarity, rng);
+  const itemTier = lvl >= 7 ? (rng.next() < 0.4 ? 3 : 2) : lvl >= 5 ? (rng.next() < 0.35 ? 2 : 1) : 1;
+  const item = createItem(s, base.id, ilvl, rarity, rng, undefined, itemTier as 1 | 2 | 3 | 4 | 5);
   // magic shop gear is never a bare one-mod roll
   if (rarity === 'magic' && modCount(item) < 2) addRandomMod(item, rng);
   return item;
@@ -211,7 +258,12 @@ export function refreshVendor(s: GameState, rng: Rng): void {
   const add = (o: Omit<VendorOffer, 'id'>) => stock.push({ ...o, id: id++ } as VendorOffer);
 
   // Magic shop: caster weapons and jewellery, flasks, orbs
-  const currencyPool = lvl >= 3 ? ['transmute', 'augment', 'alteration', 'alchemy', 'regal', 'chaos', 'scour', 'regret'] : ['transmute', 'augment', 'alteration', 'scour', 'regret'];
+  const currencyPool =
+    lvl >= 6
+      ? ['transmute', 'augment', 'alteration', 'alchemy', 'regal', 'chaos', 'exalted', 'divine', 'scour', 'regret']
+      : lvl >= 3
+      ? ['transmute', 'augment', 'alteration', 'alchemy', 'regal', 'chaos', 'scour', 'regret']
+      : ['transmute', 'augment', 'alteration', 'scour', 'regret'];
   for (let i = 0; i < slots; i++) {
     const roll = rng.next();
     if (roll < 0.45) {

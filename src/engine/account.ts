@@ -1,5 +1,5 @@
 import { perkTotals } from '../data/achievements';
-import { STASH_PAGE_SIZE, STASH_START_PAGES, stationDef } from '../data/hideout';
+import { MAP_DEVICE_ATLAS_LEVEL, STASH_FREE_PAGES, STASH_PAGE_SIZE, STASH_START_PAGES, stationDef } from '../data/hideout';
 import { doomedId, mapId, parseDoomedTier, parseMapTier } from '../data/maps';
 import { STANDARD_REALM } from './challenge';
 import { trimFlaskStash } from './flasks';
@@ -56,7 +56,7 @@ export function freshAccount(realm: Realm = STANDARD_REALM): AccountState {
     id: `a${Date.now().toString(36)}${Math.floor(Math.random() * 1e9).toString(36)}`,
     realm,
     rev: 0,
-    hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, quartermaster: 1, watchtower: 1, trophy_altar: 1 },
+    hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, quartermaster: 1, watchtower: 1, trophy_altar: 1, rune_board: 1 },
     automation: freshAutomation(),
     stash: Array.from({ length: STASH_START_PAGES }, () => []),
     overflow: [],
@@ -83,6 +83,10 @@ export function fillAccount(a: AccountState): AccountState {
   if (a.hideout) {
     a.hideout.quartermaster ??= Math.max(1, Math.min(4, oldWarTable - 3));
     a.hideout.war_table = Math.min(4, oldWarTable);
+    a.hideout.rune_board ??= 1;
+    if (((a.atlas?.nodes?.length ?? 0) > 0 || (a.atlas?.cleared?.length ?? 0) > 0 || a.campaignDone) && (a.hideout.map_device ?? 1) < MAP_DEVICE_ATLAS_LEVEL) {
+      a.hideout.map_device = MAP_DEVICE_ATLAS_LEVEL;
+    }
   }
   const baseline = freshAutomation();
   a.automation ??= baseline;
@@ -116,9 +120,10 @@ export function achievementTabs(a: Pick<AccountState, 'achievementRewards'>): nu
   return perkTotals(a.achievementRewards ?? []).stashTabs;
 }
 
-/** Stash pages that came free: the starting ones, one per Stash station level, and achievement tabs. */
+/** Stash pages that came free: the starting ones, per Stash station level, and achievement tabs. */
 export function freeStashPages(a: Pick<AccountState, 'hideout' | 'achievementRewards'>): number {
-  return STASH_START_PAGES + ((a.hideout.stash ?? 1) - 1) + achievementTabs(a);
+  const lvl = Math.min(STASH_FREE_PAGES.length, Math.max(1, a.hideout?.stash ?? 1));
+  return STASH_FREE_PAGES[lvl - 1] + achievementTabs(a);
 }
 
 /** Every free page is there, so an achievement tab merged in from another copy isn't lost. */

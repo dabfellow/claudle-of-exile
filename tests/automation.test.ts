@@ -164,7 +164,7 @@ describe('unlocks', () => {
 });
 
 describe('offline rules', { timeout: 30_000 }, () => {
-  it('caps at 8 hours and the Watchtower raises it to 36', () => {
+  it('caps at 8 hours and the Watchtower raises it to 72', () => {
     const s = newGame(1);
     expect(offlineCapMs(s)).toBe(8 * 3_600_000);
     const hours = [8];
@@ -174,7 +174,7 @@ describe('offline rules', { timeout: 30_000 }, () => {
       upgradeStation(s, ctx(), 'watchtower');
       hours.push(s.account.automation.offlineHours);
     }
-    expect(hours).toEqual([8, 12, 16, 24, 36]);
+    expect(hours).toEqual([8, 12, 16, 24, 36, 48, 60, 72]);
     expect(simulateOffline(newGame(1), ctx(), 48 * 3_600_000).ms).toBe(8 * 3_600_000);
   });
 

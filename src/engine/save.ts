@@ -390,6 +390,18 @@ const MIGRATIONS: Record<number, Migration> = {
       settings.activeLootFilterId = null;
     }
   },
+  44: (raw) => {
+    // Hideout milestone tiers: protect existing Atlas users and ensure rune_board is initialized
+    const acct = raw.account as Record<string, unknown> | undefined;
+    if (acct) {
+      const hideout = (acct.hideout ??= {}) as Record<string, number>;
+      hideout.rune_board ??= 1;
+      const atlas = acct.atlas as { nodes?: string[]; cleared?: number[] } | undefined;
+      if (((atlas?.nodes?.length ?? 0) > 0 || (atlas?.cleared?.length ?? 0) > 0 || acct.campaignDone) && (hideout.map_device ?? 1) < 2) {
+        hideout.map_device = 2;
+      }
+    }
+  },
 };
 
 /**
