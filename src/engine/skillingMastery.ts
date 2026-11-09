@@ -2,11 +2,11 @@ import type { MasterySpec } from '../data/skillingMastery';
 import type { Rng } from './rng';
 import type { GameState } from './types';
 
-export const MASTERY_CAP = 36_000;
+export const MASTERY_CAP = 120 * 60 * 60;
 export const MASTERY_MAX_LEVEL = 100;
-export const MASTERY_SPEED_MAX = 12;
-export const MASTERY_YIELD_MAX = 0.08;
-export const MASTERY_CONSERVE_MAX = 0.08;
+export const MASTERY_SPEED_MAX = 20;
+export const MASTERY_YIELD_MAX = 0.15;
+export const MASTERY_CONSERVE_MAX = 0.15;
 
 export function masteryPractice(s: GameState, id: string): number {
   const value = s.skillingMastery[id];
@@ -43,7 +43,7 @@ export function masteryConservation(s: GameState, mastery?: MasterySpec): number
   return mastery?.profile === 'production' ? MASTERY_CONSERVE_MAX * masteryProgress(s, mastery.id) : 0;
 }
 
-/** Credit nominal work once, clamped at ten hours. Returns practice actually added. */
+/** Credit nominal work once, clamped at 120 hours. Returns practice actually added. */
 export function grantMasteryPractice(s: GameState, mastery: MasterySpec | undefined, seconds: number): number {
   if (!mastery || !Number.isFinite(seconds) || seconds <= 0) return 0;
   const before = masteryPractice(s, mastery.id);

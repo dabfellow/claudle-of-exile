@@ -6,11 +6,12 @@ Last updated 2026-11-09. Current implementation: [GAME.md](GAME.md). Engineering
 
 Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2026-11-09. Launch Guide Round 2 screen fixes from three sessions: phone tutorial/combat fixes, two-step character create, tooltips/toasts/pinned currencies, faster offline catch-up, Hideout/Campaign/Map Device reworks, page polish, Admin black-screen and compensation fixes, Player Market closed.
 
-1. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
-2. Finish the Maps skill batch: all support effects now run (2026-11-08, unreleased); boss, offline and whole-build checks remain (see that section).
-3. Pacing audit: whole-journey simulations expose large Ranger seed variance and a repeatable Mage Act 4 stall, so pacing is not ready to lock.
-4. Plan the 1.0 wipe and the Legacy area (see Decisions).
-5. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
+1. Finish the remaining Launch Guide Round 2 builds. Per-task life-skill mastery is complete and unreleased; the other Build items remain below.
+2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
+3. Finish the Maps skill batch: all support effects now run (2026-11-08, unreleased); boss, offline and whole-build checks remain (see that section).
+4. Pacing audit: whole-journey simulations expose large Ranger seed variance and a repeatable Mage Act 4 stall, so pacing is not ready to lock.
+5. Plan the 1.0 wipe and the Legacy area (see Decisions).
+6. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
 
 ## Milestones
 
@@ -26,7 +27,7 @@ Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and non-combat action mastery implemented; collection expansion planned |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion planned |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
@@ -49,6 +50,7 @@ Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2
     - Auto next zone: **when the area is done**. Once the area's boss is down and the next area is open, it travels there; auto flee pulls the character back if it gets too hot.
     - Auto flee: **first and cheap**, the War Table's first upgrade at Act 1 materials, so new and Hardcore players have it within the first hour.
   - Mastery goes **per task**, not per band: every action and recipe has its own track (bulk versions share their single recipe's). Owner: "max mastery should take days to hit, on something like 5 days of grinding it." Set to 120 hours of unbuffed work per task (was 10 hours per band). This supersedes the 100-identity limit in the band-mastery design below. Decided for the owner: max-level bonuses rise to match the longer grind; mastery still never gates content.
+    - Build small calls: stable tracks use the authored action/recipe id, and each Heist job is its own task. Max mastery grants 20% action speed and 15% ordinary yield or eligible ingredient conservation. Version 41 saves copy each old band's completion percentage to every replacement task that band benefited (10-hour practice is multiplied by 12 for the 120-hour cap), preserving every old level and bonus; old band counters remain inert for forward compatibility.
   - Achievements: 100+ (from 43). Rewards **change play**: achievement-only uniques, an extra passive or Atlas point, an extra stash tab, permanent small bonuses (+2% rarity, +1 offline hour). "Chasing achievements becomes part of getting stronger." Earned **per character**: Hardcore and SSF characters prove it again. Decided for the owner: the stash is shared per realm, so a stash-tab reward is added once, the first time any character in that realm earns it.
   - Loot filters: **both, layered**. Players first see strictness presets (Off, Soft, Strict, Very strict, Uber) that scale with level, plus per-category overrides ("always show rings with life", "hide normal gear", "highlight T1 mods"). A "custom rules" tab underneath holds a full ordered rule list: conditions (slot, rarity, item level, specific mods, mod tiers, sockets, value) → show, hide, highlight colour, sound or auto-salvage, shareable as a code.
   - Decided for the owner: Crafting Bench recipes no longer need achievements (owner's note "no achievements required"); the Bench level alone unlocks them.
@@ -61,6 +63,13 @@ Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2
   - Bonuses are worked out from the earned list each time (not stored), so changing a reward later fixes itself on every save. The realm keeps a list of achievements whose realm reward it already has (`achievementRewards`), and achievement tabs never raise the price of the next bought page.
   - On load, any achievement a character already meets is granted quietly, with one summary toast. Map counters (highest Doomed tier, Unique Maps) are filled from bosses the character has already beaten; rare kills start at zero.
   - Challenge-mode achievements only count on that kind of character. Classic still doesn't see Life skill achievements.
+- Events calendar build (2026-11-09):
+    - Events calendar build calls (2026-11-09), all in `src/data/events.ts`. Holidays run midnight to midnight **UTC**, the same moment for every player: New Year 31 Dec–2 Jan, Valentine's 13–15 Feb, Easter Good Friday–Easter Monday, Summer 20–26 Jun (solstice week), Halloween 29 Oct–1 Nov, Thanksgiving (US, fourth Thursday of November) Thursday–Sunday, Christmas 23–26 Dec. All keep the existing double XP and double loot.
+    - Stacking adds the bonus parts (+100% and +100% = ×3). A narrow bonus includes the broad one running beside it (Christmas ×2 XP plus a ×2 combat-XP event = ×3 combat XP). Crafting-cost savings add too, but never past half off (the engine's existing floor).
+    - Weekend events run **Friday 18:00 to Monday 06:00 UTC**, so Europe gets Friday evening and the Americas get Sunday evening. A "Weekends only" event repeats every weekend between its start and end; no end means every weekend.
+    - Switching a holiday off is lasting (it skips every year until switched back on). Stopping a holiday while it's running also switches it off, or it would start straight back up. A switched-off holiday can still be started by hand.
+    - Players see "On now" and the next 4 events on a Hideout Events card. The top banner shows how long is left, plus a one-line heads-up when an event starts within 3 days, so the top of the screen isn't permanently taken up.
+    - Two new `live_events` columns (`holiday_off`, `weekends`) in `docs/ops/events.sql`. Before it runs, holidays still work. Only the two new Admin switches report that the update is needed.
 - Player Market removed for 1.0 (2026-11-09): the server can't tell an earned item from an edited save, and making it cheat-proof would mean moving inventories onto the server. The Market is hidden; pending deliveries stay collectable. It can return if inventories ever move server-side.
 - 1.0 is a fresh wipe (2026-11-08): everyone starts new characters at 1.0. Existing saves are not deleted. They move to a Legacy area, reached from character select, which runs at 1.0 rates. No new Legacy characters can be made. Legacy has no trading: the Market is hidden there, and nothing crosses between Legacy and 1.0 in either direction (recorded in the Launch Guide).
 - Cloud character saves only replace the version they grew from (2026-11-08). The server's own `updated_at` stamp is the version, so device clocks don't matter. When two devices have both played on from one save, the cloud copy wins, and the losing local copy is kept in that browser (`coe-<account>-conflict-<id>`) and reported. A failed browser-storage write no longer stops the cloud upload.
@@ -83,7 +92,7 @@ Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2
 - Combat XP has a two-level grace band outside an area's level range. Harder enemies give +5% at three levels and +20% at five, interpolating between. Easier enemies use a rounded quadratic penalty of 10/11/15/21/30/41/54/70% at three through ten levels, with increasing losses each level. Hold both caps thereafter. This supersedes both the old falloff to zero and the initial piecewise penalty milestones.
 - Fishing is a permanent placeholder/joke. It is not scheduled work.
 - The skilling tree represents specialisation (2026-11-06): one point per ten total levels, capped at 36. It must never become fully completable through ordinary levels; Fishing has no spendable branch, and every implemented life skill has one.
-- Non-combat band mastery is a bonus-only, character-owned progression track (2026-11-06; implemented 2026-11-07). Its 67 explicitly authored identities never expand per generated item. It never unlocks or blocks recipes, resources, stations, areas, items or other content; existing skill-level, campaign and station requirements remain responsible for access.
+- Non-combat mastery is a bonus-only, character-owned progression track (2026-11-06; implemented 2026-11-07; superseded per task 2026-11-09). Every timed action, recipe and Heist job now has its own track, with bulk recipes sharing their single version. It never unlocks or blocks recipes, resources, stations, areas, items or other content; existing skill-level, campaign and station requirements remain responsible for access.
 - Player Market remains browser-simulated with server-validated transactions, not a server-authoritative economy. Keep validation uploads and item/Gold recovery protocols.
 - Offline-earned items/currency remain tradable by explicit owner choice (2026-11-05). Harden market inputs, request limits and permissions, and document residual forging/rollback risks. Do not replace offline trading or claim item provenance from client-owned saves. Public-source review does not authorize destructive history rewrites or branch-policy changes.
 - Internal docs have one home each: GAME for current behavior, DEVELOPMENT for engineering, this file for plans. Published wiki, generated UNIQUES, operations SQL and asset credits remain distinct.
@@ -158,7 +167,7 @@ Milestone 10 planning and specifications live in [POST_CAMPAIGN_CRAFTING_AND_HID
 
 #### Purpose and fixed requirements
 
-Repeatedly using related non-combat actions should make that practical band of work more efficient. Mining Copper or a special Copper seam improves Copper Mining mastery; smelting Copper improves Copper Smelting mastery. Overall Mining/Smithing levels still determine access to higher actions through the existing requirements.
+Repeatedly using a non-combat task should make that exact work more efficient. Mining Copper and mining a special Copper seam have separate tracks; smelting Copper has another. Overall Mining/Smithing levels still determine access to higher actions through the existing requirements.
 
 The owner has fixed two requirements:
 
@@ -171,9 +180,9 @@ The implemented settings below are deliberately modest and bounded; future econo
 
 #### Scope and identity
 
-Use explicitly authored, stable mastery-band identities: narrower than a whole profession, but never one track per generated item. Every eligible action/job supplies a `masteryId`; bulk versions resolve to the same id as their single recipe. Do not infer identity from display text or a level calculation, and renaming a label must not reset progression.
+Use explicitly authored, stable task identities. Every eligible action, timed recipe and Heist job supplies a `masteryId`; bulk versions resolve to the same id as their single recipe. Do not infer identity from display text or a level calculation, and renaming a label must not reset progression. The former 100-identity limit and broad work bands are superseded.
 
-The first version must contain no more than **100 total mastery identities**, including Heists. The inventory and UI review must happen before implementation; adding hundreds of generated Smithing bars is not acceptable. Bands should describe work a player can recognise and deliberately practise:
+The old band inventory below is historical; each listed action and recipe now has its own track:
 
 | Activity | Mastery band | What remains controlled by existing systems |
 |---|---|---|
@@ -188,9 +197,9 @@ The first version must contain no more than **100 total mastery identities**, in
 | Cartography | Materials, Sextant grades and map-tier pairs (T1–2 through T9–10) | Available tiers, campaign access, map supply and required map inputs |
 | Heists | A small set of job/difficulty bands; every resolved room feeds its job's band | Crew, room access, alarm rules and admission costs |
 
-Greenhouse completions use the Foraging band assigned to the underlying action. Repeating and automatic actions use the same identity as their manual equivalents. Future real professions can opt into this model when implemented; mastery does not implement Fletching or activate Fishing placeholders.
+Greenhouse completions use the task track assigned to the underlying action. Repeating and automatic actions use the same identity as their manual equivalents. Future real professions can opt into this model when implemented; mastery does not implement Fletching or activate Fishing placeholders.
 
-Instant item-modification clicks—spending Orbs, applying Essences, taking/restoring impressions, inscriptions and bench modifier clicks—are outside the first version. Timed production recipes are included; an unlimited-speed clicking loop is not a source of practice. Band mastery does not spend skilling-tree points or alter the player's chosen specialisations.
+Instant item-modification clicks—spending Orbs, applying Essences, taking/restoring impressions, inscriptions and bench modifier clicks—are outside the system. Timed production recipes are included; an unlimited-speed clicking loop is not a source of practice. Task mastery does not spend skilling-tree points or alter the player's chosen specialisations.
 
 #### Earning practice
 
@@ -213,9 +222,9 @@ Important invariants:
 
 #### Progression curve
 
-The displayed mastery cap is **100**, with **36,000 practice** needed to cap an action. One practice represents one second of nominal work, so this is ten hours of base-duration work, not a ten-hour real-time lock. Effective speed changes the actual time required.
+The displayed mastery cap is **100**, with **432,000 practice** needed to cap a task. One practice represents one second of nominal work, so this is 120 hours of base-duration work, not a real-time lock. Effective speed changes the actual time required.
 
-Let `P` be stored practice and `C = 36,000`:
+Let `P` be stored practice and `C = 432,000`:
 
 ```text
 progress = sqrt(clamp(P / C, 0, 1))
@@ -226,11 +235,11 @@ practice threshold for displayed level L = C * ((L - 1) / 99)^2
 | Displayed mastery | Approximate cumulative nominal work |
 |---|---|
 | 1 | Fresh action, no practice |
-| 10 | 5 minutes |
-| 25 | 35 minutes |
-| 50 | 2 hours 27 minutes |
-| 75 | 5 hours 35 minutes |
-| 100 | 10 hours |
+| 10 | 1 hour |
+| 25 | 7 hours 3 minutes |
+| 50 | 29 hours 24 minutes |
+| 75 | 67 hours 3 minutes |
+| 100 | 120 hours |
 
 Bonuses use the continuous `progress` value, not milestone unlocks or the rounded displayed level. The first completion contributes immediately. After the cap, the action keeps working normally; extra practice is not banked for other actions, future caps or prestige purchases.
 
@@ -240,9 +249,9 @@ All bonus channels are visible from the beginning and grow continuously. There a
 
 | Action profile | Maximum bonuses | Restrictions |
 |---|---|---|
-| Ordinary gathering | +12 percentage points increased action speed; +8% expected ordinary primary yield | Explicit primary-output allowlist; no extra rare-drop rolls |
-| Timed production | +12 percentage points increased action speed; up to 8% expected conservation of eligible ordinary ingredients | No extra equipment/gem/flask/map copies or stronger outputs |
-| Heist jobs | +12 percentage points increased room speed | Does not lower alarms, unlock rooms or conserve entry currency |
+| Ordinary gathering | +20 percentage points increased action speed; +15% expected ordinary primary yield | Explicit primary-output allowlist; no extra rare-drop rolls |
+| Timed production | +20 percentage points increased action speed; up to 15% expected conservation of eligible ordinary ingredients | No extra equipment/gem/flask/map copies or stronger outputs |
+| Heist jobs | +20 percentage points increased room speed | Does not lower alarms, unlock rooms or conserve entry currency |
 
 At a given action's progress, multiply the listed cap by `progress`. Speed joins the existing increased skill-speed category rather than becoming an additional uncapped more multiplier. Apply only the active action's own mastery. Copper mastery must not improve Mithril mining, smelting, combat or an entire profession.
 
@@ -252,9 +261,9 @@ Protected quantities include rare bonus finds, Uniques, fossils, Essences, Orbs,
 
 The gathering yield bonus applies to the ordinary base quantity after a successful base-yield roll. It does not duplicate the complete result after Motherlode, extra-production procs, rare secondary rolls or other multipliers.
 
-For integer resources, use stochastic rounding: an extra expected quantity of `0.08` means an 8% chance of one additional eligible unit. For ingredient conservation, calculate the expected saving from the eligible cost remaining after existing rules, round it stochastically, and clamp it between zero and that actual cost. Check affordability through the existing action rules; potential future savings cannot finance a start. Refund mechanics may return only resources actually paid, never mint an extra ingredient from a free/conserved use.
+For integer resources, use stochastic rounding: an extra expected quantity of `0.15` means a 15% chance of one additional eligible unit. For ingredient conservation, calculate the expected saving from the eligible cost remaining after existing rules, round it stochastically, and clamp it between zero and that actual cost. Check affordability through the existing action rules; potential future savings cannot finance a start. Refund mechanics may return only resources actually paid, never mint an extra ingredient from a free/conserved use.
 
-This initial tuning gives an unmodified gathering action at most about 21% additional ordinary throughput at cap (1.12 speed × 1.08 yield). Existing increased-speed investment lowers the relative speed gain. Revalidate alongside the skilling tree, events, double-production effects, salvage and market prices; this estimate is not permission to raise every resource's output blindly.
+This tuning gives an unmodified gathering action at most 38% additional ordinary throughput at cap (1.20 speed × 1.15 yield). Existing increased-speed investment lowers the relative speed gain. Revalidate alongside the skilling tree, events, double-production effects and salvage; this estimate is not permission to raise every resource's output blindly.
 
 #### Ownership, persistence and recovery
 
@@ -263,7 +272,7 @@ Mastery is **character-owned**, matching existing non-combat skill levels. Share
 Character state:
 
 ```ts
-skillingMastery: Record<string, number>; // stable mastery-band id -> accumulated practice
+skillingMastery: Record<string, number>; // stable mastery-task id -> accumulated practice
 ```
 
 Missing entries mean zero. A migration supplies an empty record and preserves all current progression, access and resources. Do not estimate past action practice from overall skill XP or lifetime production totals: they do not identify what was actually trained. Keep stable ids and explicit rename mappings; treat unknown stored ids as inactive data rather than granting a different action a bonus.
@@ -348,11 +357,12 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - [x] Design pass: hideout station tiers, War Table split and auto unlocks, per-task mastery, mini-game changes, 100+ achievements, loot filters, events calendar (see Decisions "Round 2 design pass"). — done 2026-11-09
   - [ ] Build: hideout milestone tiers (~3 more per station, each a new unlock plus a stat bump, endgame-gated top tiers; Map Device → Atlas tree, Stash cheaper tabs and ground-loot storage, Forge gear-tier chance).
   - [ ] Build: War Table / Quartermaster split; auto flee (first, cheap), auto challenge and auto next zone (moves on once the area's boss is down) behind War Table upgrades.
-  - [ ] Build: per-task mastery, 120 unbuffed hours to max, with save migration from bands and bigger max bonuses.
+  - [x] Build: per-task mastery, 120 unbuffed hours to max, with save migration from bands and bigger max bonuses. — done 2026-11-09
   - [ ] Build: mini-games (inner double zone on all, horizontal Alchemy, easier Foraging and Gemcutting); Bench recipes drop achievement requirements.
   - [x] Build: 100+ per-character achievements with play-changing rewards. 129 achievements, 6 new achievement-only uniques; checked in headless Chromium at phone and desktop sizes. See Decisions "Achievements build". — done 2026-11-09
   - [ ] Build: layered loot filters (presets + overrides, custom rules tab, share codes).
-  - [ ] Build: events calendar (computed holidays, Admin toggles, stacking, weekend and custom windows).
+  - [x] Build: events calendar (computed holidays, Admin toggles, stacking, weekend and custom windows). Calls under Decisions "Round 2 design pass". — done 2026-11-09
+    - Owner to do once: run `docs/ops/events.sql` in Supabase (SQL Editor → New query → paste → Run). Until then holidays still run; only Admin's holiday on/off switch and "Weekends only" box ask for it.
 
 ## Ideas / later
 
@@ -376,7 +386,11 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-- [x] Achievements expanded from 43 to 129 per-character achievements with play-changing rewards: Passive and Atlas points, realm stash tabs, offline hours, permanent bonuses and six new achievement-only uniques. Old saves migrate (save version 42) and get what they already meet on load. — done 2026-11-09
+- [x] Achievements expanded from 43 to 129 per-character achievements with play-changing rewards: Passive and Atlas points, realm stash tabs, offline hours, permanent bonuses and six new achievement-only uniques. Old saves migrate (save version 43) and get what they already meet on load. — done 2026-11-09
+
+- [x] Events calendar: holidays (incl. Easter and Thanksgiving) worked out in code and switched on by themselves, Admin holiday switches, weekend events, bonuses that add when events overlap, and a Hideout Events card with on now / coming up. Checked in headless Chromium at phone and desktop sizes. — done 2026-11-09
+
+- [x] Replaced life-skill mastery bands with one 120-hour track per action, recipe and Heist job (bulk recipes share their single version), raised max bonuses to 20% speed and 15% ordinary yield/conservation, and migrated old band progress without lowering any task's old mastery percentage. — done 2026-11-09
 
 - [x] Spread the seven major offensive families across distant passive-tree regions while preserving class starts, every authored cluster, cluster shapes and total node counts; added a concentration regression test. Released in 0.4.21. — done 2026-11-08
 

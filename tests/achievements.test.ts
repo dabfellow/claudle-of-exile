@@ -140,13 +140,13 @@ describe('earning rewards', () => {
 });
 
 describe('older characters', () => {
-  /** A character as version 41 saved it: no new counters, and only the old achievements. */
+  /** A character as version 42 saved it: no new counters, and only the old achievements. */
   function v41() {
     const s = atLevel(55);
     s.achievements = ['level_10', 'level_25'];
     s.bossesDefeated.push('map_doomed_sanctum_t3', 'map_doomed_t1', 'umap_vaults');
     const raw = JSON.parse(serialize(s));
-    raw.version = 41;
+    raw.version = 42;
     for (const k of ['rareKills', 'doomedBest', 'uniqueMaps']) delete raw.lifetime[k];
     return JSON.stringify(raw);
   }

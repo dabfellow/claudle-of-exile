@@ -25,7 +25,7 @@ import { MAPS_PREVIEW } from './engine/maps';
 import { checkAdmin } from './platform/feedback';
 import { readAdminMail, recordDemo, sandboxState, type AdminMail } from './platform/admin';
 import { fetchEventRows, saveEventRow } from './platform/events';
-import { activeEvents, eventBoost, type EventRow, type LiveEvent } from './data/events';
+import { activeEvents, eventBoost, eventCalendar, type EventRow, type LiveEvent } from './data/events';
 import { getSupabase } from './platform/supabase';
 import { supabaseCharacters } from './platform/supabaseTable';
 import { errorText } from './platform/feedback';
@@ -199,6 +199,11 @@ class GameStore {
     this.baseCtx.event = eventBoost(live);
     this.baseCtx.eventRows = this.eventRows;
     if (changed) this.notify();
+  }
+
+  /** What is running now and what is coming up, holidays included. */
+  eventCalendar(now = Date.now()) {
+    return eventCalendar(this.eventRows, now);
   }
 
   /** A failed read keeps what we knew, so a dropped connection doesn't end an event. */

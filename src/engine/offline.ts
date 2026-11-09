@@ -1,5 +1,5 @@
 import { offlineCapMs } from './automation';
-import { activeEvents, eventBoost } from '../data/events';
+import { activeEvents, eventBoost, eventChangeTimes } from '../data/events';
 import { clearBossFight } from './combat';
 import type { Ctx } from './context';
 import { tick } from './state';
@@ -32,7 +32,7 @@ export interface OfflineSummary {
   /** Heist jobs finished while you were away, and how many of them tripped an alarm */
   heists: number;
   heistAlarms: number;
-  /** Nominal non-combat practice earned by mastery band while away. */
+  /** Nominal non-combat practice earned by mastery task while away. */
   mastery: Record<string, number>;
   /** Logbook finds made while you were away, and standing orders filled */
   finds: number;
@@ -128,8 +128,8 @@ export function startOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offline
   // taken now, so a slice that runs later still sees the clock and events as they were when you came back
   const backAt = ctx.now;
   const eventRows = ctx.eventRows;
-  const boundaries = (eventRows ?? []).flatMap((row) => [row.starts_at, row.ends_at])
-    .filter((value): value is string => !!value).map(Date.parse).filter(Number.isFinite).sort((a, b) => a - b);
+  // holidays and weekend events start and stop on their own, so the slices are cut there too
+  const boundaries = eventRows ? eventChangeTimes(eventRows, backAt - ms, backAt) : [];
   let eventUntil = -Infinity;
   const nextChunk = (limit: number) => {
     const now = backAt - left;

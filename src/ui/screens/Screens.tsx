@@ -14,6 +14,7 @@ import { isCloudAccount, type AuthProviderId } from '../../platform/accounts';
 import { errorText } from '../../platform/feedback';
 import type { CharacterSummary } from '../../platform/saves';
 import { Icon } from '../components/Icon';
+import { fmtUntil, SOON_MS } from '../components/EventCalendar';
 import { Embers } from '../pages/HideoutPage';
 
 function ago(ms: number): string {
@@ -223,17 +224,25 @@ export function DemoBanner() {
 /** Shown while an event is running. */
 export function EventBanner() {
   useGame();
+  const now = Date.now();
+  const { live, upcoming } = game.eventCalendar(now);
+  const soon = upcoming.find((t) => t.start !== null && t.start - now <= SOON_MS);
   return (
     <>
       {game.sandbox && <div className="card guest-banner"><b>Admin sandbox — temporary progress</b><button className="btn sm" onClick={() => void game.exit()}>Exit sandbox</button></div>}
-      {game.liveEvents.map((event) => (
+      {live.map(({ event, end }) => (
         <div key={event.id} className="card guest-banner demo-banner">
           <div>
             <b>{event.name} event</b>
-            <span className="dim small"> · {event.banner || event.blurb}</span>
+            <span className="dim small"> · {event.banner || event.blurb}{end !== null ? ` · ends in ${fmtUntil(end - now)}` : ''}</span>
           </div>
         </div>
       ))}
+      {soon && (
+        <div className="event-soon dim small">
+          Coming up: <b>{soon.event.name}</b> in {fmtUntil(soon.start! - now)} · {soon.event.blurb}
+        </div>
+      )}
     </>
   );
 }

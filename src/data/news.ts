@@ -17,6 +17,13 @@ export const UPCOMING: string[] = [
   'Each character earns its own achievements, so Hardcore and SSF characters prove them again. Atlas points and stash tabs are shared, so each lands once per realm.',
   'Achievements you already meet are granted with their rewards the next time you load a character.',
   'The Achievements page shows your total bonuses at the top and can show only the ones still to do.',
+  'Holiday events now start and end by themselves each year: New Year, Valentine\'s Day, Easter, Summer, Halloween, Thanksgiving and Christmas.',
+  'Events that run at the same time now add their bonuses together: two Double XP events give triple XP.',
+  'The Hideout has an Events card showing what\'s on now and what\'s coming next, and the event banner shows how long is left.',
+  'A heads-up line appears at the top of the screen when an event starts within 3 days.',
+  'Some events can now run every weekend, Friday evening to Monday morning (UTC).',
+  'Every life-skill action, recipe and Heist job now has its own mastery track (bulk recipes share their single version); mastery takes 120 hours to max and now reaches 20% action speed plus 15% ordinary yield or ingredient conservation.',
+  'Existing mastery progress carries over at the same percentage to every task its old band benefited.',
 ];
 
 export const NEWS: NewsEntry[] = [
