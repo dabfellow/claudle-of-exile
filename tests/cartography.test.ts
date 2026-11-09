@@ -219,7 +219,8 @@ describe('the mini-game', () => {
 
   it('is clean inside the limit, weak on the last sounding, and a miss past it', () => {
     expect(surveyResult(false, 1)).toBeNull();
-    expect(surveyResult(true, 3)).toBe('hit');
+    expect(surveyResult(true, 3)).toBe('double');
+    expect(surveyResult(true, 4)).toBe('hit');
     expect(surveyResult(true, SURVEY_SOUNDINGS)).toBe('weak');
     expect(surveyResult(false, SURVEY_SOUNDINGS)).toBe('miss');
   });

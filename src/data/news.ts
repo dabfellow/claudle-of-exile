@@ -15,6 +15,18 @@ export const UPCOMING: string[] = [
   'Custom loot rules can match slots, rarity, item level, modifiers, modifier tiers, filled rune sockets and value, then show, hide, highlight, sound or auto-salvage the drop.',
   'Custom rule lists can be shared with a paste code, and existing custom filters and War Table salvage upgrades carry over automatically.',
   'Ground loot, time-away finds and stashed gear now share the same filter highlights, while hidden drops can be revealed by loosening the filter.',
+  'Every life-skill mini-game, Heist included, now has a small gold double zone. Hit it and the action makes twice as much the next time it finishes.',
+  'The Alchemy mini-game now runs left to right instead of up and down.',
+  'Foraging is easier: herbs are bigger and wilt more slowly. Pick one while it glows gold for a double.',
+  'Gemcutting is easier: the facets are bigger and the stone takes longer to settle.',
+  'Crafting Bench recipes no longer need achievements. Upgrading the Bench unlocks them.',
+  'Holiday events now start and end by themselves each year: New Year, Valentine\'s Day, Easter, Summer, Halloween, Thanksgiving and Christmas.',
+  'Events that run at the same time now add their bonuses together: two Double XP events give triple XP.',
+  'The Hideout has an Events card showing what\'s on now and what\'s coming next, and the event banner shows how long is left.',
+  'A heads-up line appears at the top of the screen when an event starts within 3 days.',
+  'Some events can now run every weekend, Friday evening to Monday morning (UTC).',
+  'Every life-skill action, recipe and Heist job now has its own mastery track (bulk recipes share their single version); mastery takes 120 hours to max and now reaches 20% action speed plus 15% ordinary yield or ingredient conservation.',
+  'Existing mastery progress carries over at the same percentage to every task its old band benefited.',
 ];
 
 export const NEWS: NewsEntry[] = [

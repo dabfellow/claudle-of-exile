@@ -5,7 +5,9 @@ import { TRIALS } from '../data/ascendancies';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
-import { hasAction } from '../data/skills';
+import { ACTIONS, hasAction } from '../data/skills';
+import { HEIST_JOBS } from '../data/heist';
+import { legacyMasteryForAction, legacyMasteryForHeist } from '../data/skillingMastery';
 import { FLASK_SLOTS } from '../data/flasks';
 import { ZONES } from '../data/zones';
 import { settleGems } from './gems';
@@ -17,7 +19,7 @@ import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { AccountPool, AccountTransfer, FlaskInstance, GameState, Item } from './types';
 import { charXpFromOldCurve } from './xp';
-import { settleSkillingMastery } from './skillingMastery';
+import { MASTERY_CAP, settleSkillingMastery } from './skillingMastery';
 import { migrateLegacyLootFilters, settleLootFilters } from './lootFilter';
 import { settleTreeProfiles } from './treeProfiles';
 
@@ -362,6 +364,23 @@ const MIGRATIONS: Record<number, Migration> = {
     raw.passiveQuestPoints = null;
   },
   41: (raw) => {
+    // Bands used to benefit every task in the band. Preserve that benefit by giving every replacement task
+    // the same completion percentage: the old ten-hour cap therefore becomes 120 hours on each task.
+    const old = raw.skillingMastery && typeof raw.skillingMastery === 'object' && !Array.isArray(raw.skillingMastery)
+      ? raw.skillingMastery as Record<string, unknown>
+      : {};
+    const converted: Record<string, unknown> = { ...old };
+    const carry = (oldId: string | undefined, newId: string | undefined) => {
+      if (!oldId || !newId) return;
+      const practice = old[oldId];
+      if (typeof practice !== 'number' || !Number.isFinite(practice) || practice <= 0) return;
+      converted[newId] = Math.max(typeof converted[newId] === 'number' ? converted[newId] as number : 0, Math.min(MASTERY_CAP, practice * (MASTERY_CAP / 36_000)));
+    };
+    for (const action of ACTIONS) carry(legacyMasteryForAction(action)?.id, action.mastery?.id);
+    for (const job of HEIST_JOBS) carry(legacyMasteryForHeist(job).id, job.mastery?.id);
+    raw.skillingMastery = converted;
+  },
+  42: (raw) => {
     // Profile-style loot filters became one layered filter. Carry the active profile's ordered intent forward.
     const settings = raw.settings as GameState['settings'] | undefined;
     if (settings && !settings.lootFilter) {

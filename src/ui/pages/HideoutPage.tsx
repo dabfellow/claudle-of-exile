@@ -18,6 +18,7 @@ import { levelOf, maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
 import { Badge, Cost, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, sceneStyle, Tooltip } from '../components/common';
 import { Fold } from '../components/Fold';
+import { EventsCard } from '../components/EventCalendar';
 import { openItemMenu } from '../components/ItemMenu';
 import { materialSources } from '../components/materialSources';
 import { PaperDoll } from '../components/PaperDoll';
@@ -100,6 +101,7 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
         {!classic && <LifeSkillsCard go={go} training={training} />}
       </div>
       <StationLedger go={go} />
+      <EventsCard />
       <GoToBar go={go} />
     </div>
   );

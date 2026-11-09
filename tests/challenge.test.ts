@@ -3,7 +3,7 @@ import { STATIONS } from '../src/data/hideout';
 import { ACTIONS } from '../src/data/skills';
 import { HEIST_JOBS } from '../src/data/heist';
 import { freshAccount } from '../src/engine/account';
-import { CLASSIC_BLOCK, challengeName, classicCost, realmFor, recipeUnlocked, soloRealm } from '../src/engine/challenge';
+import { CLASSIC_BLOCK, challengeName, classicCost, realmFor, soloRealm } from '../src/engine/challenge';
 import { zoneDef } from '../src/data/zones';
 import { makeMonster, startCombat } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
@@ -148,12 +148,6 @@ describe('Classic', () => {
     expect(nextUpgradeCost(s, 'bench')).toEqual({ gold: 4500 });
     expect(upgradeStation(s, ctxFor(), 'bench')).toBeNull();
     expect(s.account.hideout.bench).toBe(2);
-  });
-
-  it('opens the bench recipes tied to skilling achievements', () => {
-    expect(recipeUnlocked(classic(), 'smith_100')).toBe(true);
-    expect(recipeUnlocked(classic(), 'slayer_1000')).toBe(false);
-    expect(recipeUnlocked(made({}), 'smith_100')).toBe(false);
   });
 
   it('skips the tutorial steps that need skilling and pays the bench step in gold', () => {

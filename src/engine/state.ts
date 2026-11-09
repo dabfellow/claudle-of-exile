@@ -27,7 +27,7 @@ export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 42;
+export const SAVE_VERSION = 43;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;

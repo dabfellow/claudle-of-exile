@@ -257,6 +257,8 @@ create policy "admins add live events" on public.live_events for insert with che
 create policy "admins change live events" on public.live_events for update using (public.is_admin());
 ```
 
+Then run [events.sql](events.sql) the same way. It adds the holiday on/off switch and weekend events. Holidays (New Year, Valentine's, Easter, Summer, Halloween, Thanksgiving, Christmas) start and end by themselves on dates worked out in the game's code; nothing needs adding to the table for them.
+
 ### Player Market
 
 The Player Market is implemented. A fresh environment needs the admin step above, followed by:

@@ -79,7 +79,7 @@ describe('loot-filter save migration', () => {
       rules: [{ id: 'old-rule', name: 'Keep rare rings', slots: ['ring'], rarities: ['rare'], minTier: 3, minIlvl: 70, matchClass: true }],
     }];
     const raw = JSON.parse(serialize(s));
-    raw.version = 41;
+    raw.version = 42;
     delete raw.settings.lootFilter;
 
     const loaded = deserialize(JSON.stringify(raw));

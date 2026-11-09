@@ -1,6 +1,5 @@
 import { ACHIEVEMENT_BY_ID } from './data/achievements';
 import { TRIALS } from './data/ascendancies';
-import { BENCH_CRAFTS } from './data/hideout';
 import { useEffect, useSyncExternalStore } from 'react';
 import { flaskDef } from './data/flasks';
 import { SKILLS } from './data/skills';
@@ -24,7 +23,7 @@ import { MAPS_PREVIEW } from './engine/maps';
 import { checkAdmin } from './platform/feedback';
 import { readAdminMail, recordDemo, sandboxState, type AdminMail } from './platform/admin';
 import { fetchEventRows, saveEventRow } from './platform/events';
-import { activeEvents, eventBoost, type EventRow, type LiveEvent } from './data/events';
+import { activeEvents, eventBoost, eventCalendar, type EventRow, type LiveEvent } from './data/events';
 import { getSupabase } from './platform/supabase';
 import { supabaseCharacters } from './platform/supabaseTable';
 import { errorText } from './platform/feedback';
@@ -219,6 +218,11 @@ class GameStore {
     this.baseCtx.event = eventBoost(live);
     this.baseCtx.eventRows = this.eventRows;
     if (changed) this.notify();
+  }
+
+  /** What is running now and what is coming up, holidays included. */
+  eventCalendar(now = Date.now()) {
+    return eventCalendar(this.eventRows, now);
   }
 
   /** A failed read keeps what we knew, so a dropped connection doesn't end an event. */
@@ -1113,9 +1117,7 @@ class GameStore {
       }
       case 'achievement': {
         const a = ACHIEVEMENT_BY_ID[e.id];
-        const recipes = BENCH_CRAFTS.filter((b) => b.achievement === e.id).length;
-        const extra = recipes ? ` — ${recipes} bench recipe${recipes > 1 ? 's' : ''} unlocked` : '';
-        this.addFeed(`Achievement: ${a.name}${extra}`, 'good');
+        this.addFeed(`Achievement: ${a.name}`, 'good');
         this.pushToast(`Achievement unlocked: ${a.name}`, 'good');
         break;
       }

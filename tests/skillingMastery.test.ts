@@ -34,13 +34,13 @@ function start(id: string, amount = 1_000_000) {
 }
 
 describe('non-combat action mastery', () => {
-  it('has one explicit bounded band on every eligible action and Heist job', () => {
+  it('has one track per eligible task, with only bulk recipes sharing', () => {
     const eligible = ACTIONS.filter((a) => a.skill !== 'fishing' && !a.soon);
     expect(eligible.every((a) => !!a.mastery)).toBe(true);
     expect(HEIST_JOBS.every((j) => !!j.mastery)).toBe(true);
     const ids = new Set([...eligible.map((a) => a.mastery!.id), ...HEIST_JOBS.map((j) => j.mastery!.id)]);
-    expect(ids.size).toBe(67);
-    expect(ids.size).toBeLessThanOrEqual(100);
+    const tasks = new Set([...eligible.map((a) => a.batchOf ?? a.id), ...HEIST_JOBS.map((j) => `heist.${j.id}`)]);
+    expect(ids.size).toBe(tasks.size);
     expect(ACTIONS.filter((a) => a.skill === 'combat' || a.skill === 'fishing').every((a) => !a.mastery)).toBe(true);
   });
 
@@ -74,7 +74,7 @@ describe('non-combat action mastery', () => {
     const trained = newGame(1);
     trained.skillingMastery[a.mastery!.id] = MASTERY_CAP;
     const base = actionIntervalMs(plain, a, deriveStats(plain));
-    expect(actionIntervalMs(trained, a, deriveStats(trained))).toBeCloseTo(base / 1.12);
+    expect(actionIntervalMs(trained, a, deriveStats(trained))).toBeCloseTo(base / 1.2);
 
     const left = start('mine_copper');
     const right = start('mine_copper');
@@ -106,16 +106,17 @@ describe('non-combat action mastery', () => {
     key.s.skillingMastery[key.a.mastery!.id] = MASTERY_CAP;
     const keyCtx = makeCtx(zero);
     skillStep(key.s, keyCtx, actionIntervalMs(key.s, key.a, deriveStats(key.s)), deriveStats(key.s));
-    expect(key.s.account.bank.mithril_bar).toBe(1);
+    expect(key.s.account.bank.mithril_bar).toBe(2);
     expect(key.s.account.bank.dense_fossil).toBe(0);
     expect(key.s.account.bank.serrated_fossil).toBe(0);
   });
 
-  it('shares authored bands across aliases without creating one track per generated item', () => {
+  it('shares bulk recipe tracks but keeps every other action and recipe separate', () => {
     expect(actionDef('orb_transmute').mastery!.id).toBe(actionDef('orb_transmute_x10').mastery!.id);
-    expect(actionDef('carve_rune_ember_1').mastery!.id).toBe(actionDef('carve_rune_ember_4').mastery!.id);
-    const weaponBands = new Set(ACTIONS.filter((a) => a.baseId && a.level < 10).map((a) => a.mastery!.id));
-    expect(weaponBands.size).toBeLessThanOrEqual(4);
+    expect(actionDef('carve_rune_ember_1').mastery!.id).not.toBe(actionDef('carve_rune_ember_4').mastery!.id);
+    const weapons = ACTIONS.filter((a) => a.baseId && a.level < 10);
+    expect(new Set(weapons.map((a) => a.mastery!.id)).size).toBe(weapons.length);
+    expect(new Set(HEIST_JOBS.map((j) => j.mastery!.id)).size).toBe(HEIST_JOBS.length);
   });
 
   it('awards each resolved Heist room once, including an alarm outcome', () => {
@@ -167,5 +168,24 @@ describe('non-combat action mastery', () => {
     delete raw.skillingMastery;
     raw.version = 37;
     expect(deserialize(JSON.stringify(raw)).skillingMastery).toEqual({});
+  });
+
+  it('migrates each old band percentage onto every task it previously benefited', () => {
+    const raw = JSON.parse(serialize(newGame(1)));
+    raw.version = 41;
+    raw.skillingMastery = {
+      'mining.copper': 18_000,
+      'alchemy.orbs': 9_000,
+      'heist.street': 36_000,
+    };
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.skillingMastery[actionDef('mine_copper').mastery!.id]).toBe(MASTERY_CAP / 2);
+    expect(loaded.skillingMastery[actionDef('mine_scorched').mastery!.id]).toBe(MASTERY_CAP / 2);
+    expect(loaded.skillingMastery[actionDef('mine_iron').mastery!.id]).toBeUndefined();
+    expect(loaded.skillingMastery[actionDef('orb_transmute').mastery!.id]).toBe(MASTERY_CAP / 4);
+    expect(actionDef('orb_transmute_x10').mastery!.id).toBe(actionDef('orb_transmute').mastery!.id);
+    expect(loaded.skillingMastery[HEIST_JOBS[0].mastery!.id]).toBe(MASTERY_CAP);
+    expect(loaded.skillingMastery[HEIST_JOBS[1].mastery!.id]).toBe(MASTERY_CAP);
+    expect(loaded.skillingMastery[HEIST_JOBS[3].mastery!.id]).toBeUndefined();
   });
 });

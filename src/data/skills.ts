@@ -72,7 +72,7 @@ export interface SkillAction {
   chart?: { tier: number; qty: number; upgrade?: boolean };
   /** listed but can never be started (every Fishing spot) */
   soon?: boolean;
-  /** Stable non-combat practice band and its explicitly allowed bonuses. */
+  /** Stable per-task non-combat practice track and its explicitly allowed bonuses. */
   mastery?: MasterySpec;
 }
 

@@ -18,7 +18,14 @@ const FOCUS_DRAIN_PER_SEC = 0.1;
 export const CHARGE_MIN = 0.5;
 export const CHARGE_ZONE_WIDTH = 0.12;
 
+/**
+ * The double zone: a small gold zone inside each game's bright one. Landing in it counts as a
+ * clean hit and also doubles what the running action makes the next time it finishes.
+ */
+export const DOUBLE_SHARE = 1 / 3;
+
 /** Smithing: how far off the beat a strike can land and still count. */
+const STRIKE_DOUBLE_MS = 45;
 const STRIKE_HIT_MS = 120;
 const STRIKE_WEAK_MS = 260;
 
@@ -26,26 +33,39 @@ const STRIKE_WEAK_MS = 260;
 export const SURVEY_COLS = 7;
 export const SURVEY_ROWS = 4;
 export const SURVEY_SOUNDINGS = 5;
+/** Finding it in this many soundings or fewer is a double. */
+export const SURVEY_DOUBLE = 3;
 
 const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'];
 
-export type SwingResult = 'hit' | 'weak' | 'miss';
+export type SwingResult = 'double' | 'hit' | 'weak' | 'miss';
 
 export function hasMinigame(skill: SkillId): boolean {
   return MANUAL_SKILLS.includes(skill);
 }
 
+/** Where the double zone starts inside a zone `width` wide that starts at `zone`: the middle third. */
+export function doubleZoneStart(zone: number, width: number): number {
+  return zone + (width * (1 - DOUBLE_SHARE)) / 2;
+}
+
+/** Is `at` inside the double zone of a zone `width` wide starting at `zone`? */
+export function inDoubleZone(at: number, zone: number, width: number): boolean {
+  const start = doubleZoneStart(zone, width);
+  return at >= start && at <= start + width * DOUBLE_SHARE;
+}
+
 /** How a released swing landed, or null when it was let go too early to count. */
 export function chargeResult(charge: number, zone: number): SwingResult | null {
   if (charge >= zone + CHARGE_ZONE_WIDTH) return 'miss';
-  if (charge >= zone) return 'hit';
+  if (charge >= zone) return inDoubleZone(charge, zone, CHARGE_ZONE_WIDTH) ? 'double' : 'hit';
   return charge >= CHARGE_MIN ? 'weak' : null;
 }
 
 /** How a strike landed against the beat. */
 export function strikeResult(offMs: number): SwingResult {
   const off = Math.abs(offMs);
-  return off <= STRIKE_HIT_MS ? 'hit' : off <= STRIKE_WEAK_MS ? 'weak' : 'miss';
+  return off <= STRIKE_DOUBLE_MS ? 'double' : off <= STRIKE_HIT_MS ? 'hit' : off <= STRIKE_WEAK_MS ? 'weak' : 'miss';
 }
 
 /** Steps between two tiles of the survey grid: what a sounding shows. */
@@ -53,9 +73,9 @@ export function surveyDistance(a: number, b: number): number {
   return Math.abs((a % SURVEY_COLS) - (b % SURVEY_COLS)) + Math.abs(Math.floor(a / SURVEY_COLS) - Math.floor(b / SURVEY_COLS));
 }
 
-/** How a survey ended after `taken` soundings, or null while it's still going. The last sounding is only a weak find. */
+/** How a survey ended after `taken` soundings, or null while it's still going. A quick find is a double; the last sounding is only a weak find. */
 export function surveyResult(found: boolean, taken: number): SwingResult | null {
-  if (found) return taken < SURVEY_SOUNDINGS ? 'hit' : 'weak';
+  if (found) return taken <= SURVEY_DOUBLE ? 'double' : taken < SURVEY_SOUNDINGS ? 'hit' : 'weak';
   return taken >= SURVEY_SOUNDINGS ? 'miss' : null;
 }
 
@@ -83,8 +103,23 @@ export function focusMult(s: GameState): number {
 export function minigameSwing(s: GameState, result: SwingResult): void {
   const a = manualAction(s);
   if (!a) return;
-  const change = result === 'hit' ? FOCUS_HIT : result === 'weak' ? FOCUS_WEAK : -FOCUS_MISS;
+  const change = result === 'hit' || result === 'double' ? FOCUS_HIT : result === 'weak' ? FOCUS_WEAK : -FOCUS_MISS;
   a.focus = Math.min(1 + FOCUS_OVERFLOW, Math.max(0, (a.focus ?? 0) + change));
+  // one double waits for the next finish: more doubles before it lands don't stack
+  if (result === 'double') a.double = true;
+}
+
+/** Is a double waiting on the running action? */
+export function doubleReady(s: GameState): boolean {
+  return !!manualAction(s)?.double;
+}
+
+/** Use up the waiting double as the action finishes: true when this finish pays out twice. Never offline. */
+export function takeDouble(s: GameState, ctx: Ctx): boolean {
+  const a = manualAction(s);
+  if (!a?.double) return false;
+  a.double = false;
+  return !ctx.offline;
 }
 
 /** Focus drains while you're here, and is gone once you're away. */

@@ -48,10 +48,3 @@ export function classicCost(cost: Record<string, number>): Record<string, number
 export function hideoutCost(s: GameState, cost: Record<string, number>): Record<string, number> {
   return isClassic(s) ? classicCost(cost) : cost;
 }
-
-/** Bench recipes gated behind skilling achievements are open to Classic from the start, since it can't earn them. */
-const SKILLING_ACHIEVEMENTS = new Set(['total_50', 'smith_100']);
-
-export function recipeUnlocked(s: GameState, achievement: string | undefined): boolean {
-  return !achievement || s.achievements.includes(achievement) || (isClassic(s) && SKILLING_ACHIEVEMENTS.has(achievement));
-}

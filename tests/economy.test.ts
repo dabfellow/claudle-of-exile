@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ACHIEVEMENTS } from '../src/data/achievements';
 import { areaCurrency, bossTable, COMBAT_ONLY_CURRENCY, dropTable } from '../src/data/drops';
 import { SUPPORT_GEMS } from '../src/data/gems';
-import { BENCH_CRAFTS } from '../src/data/hideout';
 import { ACTIONS, actionDef } from '../src/data/skills';
 import { ZONES, zoneDef } from '../src/data/zones';
 import { checkAchievements } from '../src/engine/achievements';
@@ -112,21 +110,17 @@ describe('achievements', () => {
     expect(s.account.bank.gold).toBe(gold + 100);
   });
 
-  it('every gated bench recipe points at a real achievement', () => {
-    const ids = new Set(ACHIEVEMENTS.map((a) => a.id));
-    for (const b of BENCH_CRAFTS) if (b.achievement) expect(ids.has(b.achievement)).toBe(true);
-  });
-
-  it('bench recipes need their achievement', () => {
+  it('bench recipes need only the bench level, no achievement', () => {
     const s = fresh();
-    s.account.hideout.bench = 4;
+    s.account.hideout.bench = 2;
     s.account.bank.gold = 1e6;
     s.account.bank.arcane_dust = 1e6;
     const item = createItem(s, 'rusted_sword', 30, 'magic', seeded(3));
     s.inventory.push(item);
-    expect(benchCraftReason(s, 'bc_speed', item.uid)).toMatch(/achievement/);
-    s.achievements.push('slayer_1000');
-    expect(benchCraftReason(s, 'bc_speed', item.uid)).not.toMatch(/achievement/);
+    expect(s.achievements).not.toContain('slayer_1000');
+    expect(benchCraftReason(s, 'bc_speed', item.uid)).toMatch(/Bench level 3/);
+    s.account.hideout.bench = 3;
+    expect(benchCraftReason(s, 'bc_speed', item.uid) ?? '').not.toMatch(/Bench level|achievement/);
   });
 
   it('salvaging counts toward Scrapper', () => {

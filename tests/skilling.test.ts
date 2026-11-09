@@ -130,7 +130,7 @@ describe('skilling mini-games', () => {
   });
 
   it('scores a strike by how close it is to the beat', () => {
-    expect(strikeResult(0)).toBe('hit');
+    expect(strikeResult(0)).toBe('double');
     expect(strikeResult(-100)).toBe('hit');
     expect(strikeResult(200)).toBe('weak');
     expect(strikeResult(-200)).toBe('weak');
@@ -140,7 +140,8 @@ describe('skilling mini-games', () => {
   it('scores a released swing by where it landed', () => {
     expect(chargeResult(0.3, 0.7)).toBeNull();
     expect(chargeResult(0.6, 0.7)).toBe('weak');
-    expect(chargeResult(0.75, 0.7)).toBe('hit');
+    expect(chargeResult(0.71, 0.7)).toBe('hit');
+    expect(chargeResult(0.76, 0.7)).toBe('double');
     expect(chargeResult(0.9, 0.7)).toBe('miss');
   });
 });

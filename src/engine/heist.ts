@@ -7,7 +7,7 @@ import { CLASSIC_BLOCK, isClassic } from './challenge';
 import type { Ctx } from './context';
 import { createItem, droppableBases } from './items';
 import { placeItem } from './loot';
-import { focusMult, focusStep } from './minigame';
+import { focusMult, focusStep, takeDouble } from './minigame';
 import { chance, pick } from './rng';
 import { actionBlocker, grantXp, skillLevel, smithIlvlCap } from './skills';
 import { skillTreeStats } from './skillTree';
@@ -223,9 +223,13 @@ function finishRoom(s: GameState, ctx: Ctx, job: HeistJob, d: Derived): void {
     endJob(s, ctx, job, a.take, true);
     return;
   }
-  addTake(a.take, 'gold', job.gold * a.room);
-  rollDrops(ctx, a.take, job.drops, a.room);
-  if (a.room === job.rooms) rollDrops(ctx, a.take, job.vault, 1);
+  // a mini-game double: this room's loot comes twice (gold doubled, every drop rolled twice)
+  const times = takeDouble(s, ctx) ? 2 : 1;
+  for (let i = 0; i < times; i++) {
+    addTake(a.take, 'gold', job.gold * a.room);
+    rollDrops(ctx, a.take, job.drops, a.room);
+    if (a.room === job.rooms) rollDrops(ctx, a.take, job.vault, 1);
+  }
   if (a.room >= a.lastRoom) endJob(s, ctx, job, a.take, false);
   else a.room += 1;
 }
