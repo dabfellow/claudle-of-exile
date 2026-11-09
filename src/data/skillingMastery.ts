@@ -6,7 +6,7 @@ import type { SkillAction } from './skills';
 export type MasteryProfile = 'gathering' | 'production' | 'heist';
 
 export interface MasterySpec {
-  /** Stable authored band id. Labels and action names may change without resetting practice. */
+  /** Stable task id. Bulk recipes use the id of their single-recipe counterpart. */
   id: string;
   name: string;
   profile: MasteryProfile;
@@ -32,8 +32,8 @@ const gathering = (id: string, name: string, primaryOutput: string) => spec(id, 
 
 const materialName = (id: string) => id.split('_').map((x) => x[0].toUpperCase() + x.slice(1)).join(' ');
 
-/** Explicit, bounded mastery identity for every eligible timed action. */
-export function masteryForAction(a: SkillAction): MasterySpec | undefined {
+/** The shipped band identity, retained only so version 41 saves can migrate without losing progress. */
+export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined {
   if (a.skill === 'combat' || a.skill === 'fishing' || a.soon) return undefined;
   const out = outputOf(a);
 
@@ -107,12 +107,29 @@ export function masteryForAction(a: SkillAction): MasterySpec | undefined {
       return production(`cartography.maps.${low}_${low + 1}`, `Map Tiers ${low}–${low + 1}`, a);
     }
   }
-  throw new Error(`Eligible action ${a.id} has no mastery band`);
+  throw new Error(`Eligible action ${a.id} has no legacy mastery band`);
 }
 
-/** Heist rooms use three authored difficulty bands, never one track per generated reward. */
-export function masteryForHeist(job: HeistJob): MasterySpec {
+/** The shipped Heist band identity, retained only for the version 41 save migration. */
+export function legacyMasteryForHeist(job: HeistJob): MasterySpec {
   const band = job.level < 20 ? 'street' : job.level < 45 ? 'khanate' : 'royal';
   const name = band === 'street' ? 'Street Heists' : band === 'khanate' ? 'Khanate Heists' : 'Royal Heists';
   return spec(`heist.${band}`, name, 'heist');
+}
+
+/** One stable track per action or recipe. A bulk recipe shares its single recipe's track. */
+export function masteryForAction(a: SkillAction): MasterySpec | undefined {
+  if (a.skill === 'combat' || a.skill === 'fishing' || a.soon) return undefined;
+  const id = a.batchOf ?? a.id;
+  const name = a.batchOf ? a.name.replace(/\s+×\d+$/u, '') : a.name;
+  const out = outputOf(a);
+  if (a.skill === 'mining' || a.skill === 'harvesting' || a.skill === 'thieving' || a.skill === 'archaeology' || (a.skill === 'woodcutting' && !a.inputs)) {
+    return gathering(`task.${id}`, name, a.skill === 'thieving' ? 'gold' : out);
+  }
+  return production(`task.${id}`, name, a);
+}
+
+/** Each authored Heist job is a task; its rooms all advance that job's track. */
+export function masteryForHeist(job: HeistJob): MasterySpec {
+  return spec(`task.heist.${job.id}`, job.name, 'heist');
 }

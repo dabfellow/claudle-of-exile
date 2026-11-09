@@ -183,7 +183,7 @@ describe('offline rules', { timeout: 30_000 }, () => {
     const c = ctx();
     startSkillAction(s, c, 'cut_ash');
     // The full offline window is simulated: earned mastery gradually increases its output.
-    expect(simulateOffline(s, c, 8 * 3_600_000).materials.ash_log).toBe(10818);
+    expect(simulateOffline(s, c, 8 * 3_600_000).materials.ash_log).toBe(10186);
   });
 
   const strong = () => {
