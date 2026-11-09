@@ -10,7 +10,14 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Achievements grew from 43 to 129, across the campaign, combat, bosses, Maps, crafting, life skills and challenge modes.',
+  'Achievement rewards now make you stronger: extra Passive points, Atlas points, stash tabs, offline hours and small permanent bonuses such as +2% Item Rarity.',
+  'Six new uniques can only be earned from achievements, such as Ironvow for finishing the campaign on Hardcore and Self-Made for doing it Solo Self-Found.',
+  'Each character earns its own achievements, so Hardcore and SSF characters prove them again. Atlas points and stash tabs are shared, so each lands once per realm.',
+  'Achievements you already meet are granted with their rewards the next time you load a character.',
+  'The Achievements page shows your total bonuses at the top and can show only the ones still to do.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

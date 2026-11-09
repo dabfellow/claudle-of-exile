@@ -1384,6 +1384,65 @@ export const UNIQUES: UniqueDef[] = [
     ],
   },
 
+  // ---------- more achievement rewards (src/data/achievements.ts): never drop, can't be traded ----------
+  {
+    id: 'trophy_takers_stride', name: "Trophy-Taker's Stride", baseId: 'gryphon_boots', flavour: 'Five heads on the wall, and the boots still itch to walk.', noTrade: true,
+    mods: [
+      { affixId: 'movement_speed', ranges: [[25, 30]] },
+      { affixId: 'flat_life', ranges: [[60, 80]] },
+      { affixId: 'item_rarity', ranges: [[20, 30]] },
+      { affixId: 'u_slam_reduction', ranges: [[20, 30]] },
+    ],
+  },
+  {
+    id: 'crown_of_the_unmade', name: 'Crown of the Unmade', baseId: 'sanctum_crown', flavour: 'Worn by no king, because every king who could wear it is gone.', noTrade: true,
+    mods: [
+      { affixId: 'u_life_more', ranges: [[6, 8]] },
+      { affixId: 'all_res', ranges: [[15, 20]] },
+      { affixId: 'chaos_res', ranges: [[20, 25]] },
+      { affixId: 'cooldown_recovery', ranges: [[15, 20]] },
+    ],
+  },
+  {
+    id: 'journeymans_satchel', name: "Journeyman's Satchel", baseId: 'heavy_belt', flavour: 'Every pocket holds a tool, and every tool remembers the hand.', noTrade: true,
+    mods: [
+      { affixId: 'skill_speed', ranges: [[12, 15]] },
+      { affixId: 'skill_xp', ranges: [[15, 20]] },
+      { affixId: 'flat_life', ranges: [[40, 60]] },
+      { affixId: 'flask_charges', ranges: [[20, 30]] },
+    ],
+  },
+  {
+    id: 'ironvow', name: 'Ironvow', baseId: 'titan_plate', flavour: 'One life, sworn once, kept to the end.', noTrade: true,
+    mods: [
+      { affixId: 'flat_life', ranges: [[100, 130]] },
+      { affixId: 'u_life_more', ranges: [[8, 10]] },
+      { affixId: 'u_armour_more', ranges: [[15, 20]] },
+      { affixId: 'elem_taken', ranges: [[6, 8]] },
+      { affixId: 'u_regen_pct', values: [1] },
+    ],
+  },
+  {
+    id: 'self_made', name: 'Self-Made', baseId: 'diamond_ring', flavour: 'No trade, no gift, no help. Only what you found.', noTrade: true,
+    mods: [
+      { affixId: 'all_attributes', ranges: [[12, 18]] },
+      { affixId: 'item_rarity', ranges: [[25, 35]] },
+      { affixId: 'inc_life', ranges: [[6, 10]] },
+      { affixId: 'attack_speed', ranges: [[6, 8]] },
+      { affixId: 'cast_speed', ranges: [[6, 8]] },
+    ],
+  },
+  {
+    id: 'old_way_grips', name: 'Grips of the Old Way', baseId: 'bladedancer_gloves', flavour: 'Before the crafts and the trades, there was a sword and a hand to hold it.', noTrade: true,
+    mods: [
+      { affixId: 'added_phys', ranges: [[8, 12], [16, 22]] },
+      { affixId: 'attack_speed', ranges: [[12, 16]] },
+      { affixId: 'crit_multi', ranges: [[20, 28]] },
+      { affixId: 'flat_life', ranges: [[60, 80]] },
+      { affixId: 'u_life_leech', values: [1] },
+    ],
+  },
+
   // ---------- Hard Bosses (docs/design/HARD_BOSSES.md) ----------
   {
     id: 'faultline', name: 'Faultline', baseId: 'colossus_maul', flavour: 'Hit the mountain where the mountain already wants to split.',

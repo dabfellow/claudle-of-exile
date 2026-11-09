@@ -1,3 +1,4 @@
+import { perkTotals } from '../data/achievements';
 import { classDef } from '../data/classes';
 import { PASSIVE_BY_ID, PASSIVE_NODES, type MasteryOption, type PassiveNode } from '../data/passiveTree';
 import { ZONES } from '../data/zones';
@@ -75,8 +76,9 @@ function spentPoints(s: Pick<GameState, 'passives'>): Record<PassivePointPool, n
   return spent;
 }
 
-function actQuestPoints(s: Pick<GameState, 'bossesDefeated'>): number {
-  return ZONES.filter((zone) => zone.actBoss && s.bossesDefeated.includes(zone.id)).length;
+/** Passive points from beating act bosses, plus those achievements grant. */
+function actQuestPoints(s: Pick<GameState, 'bossesDefeated' | 'achievements'>): number {
+  return ZONES.filter((zone) => zone.actBoss && s.bossesDefeated.includes(zone.id)).length + perkTotals(s.achievements ?? []).passivePoints;
 }
 
 /** Credit level and Act-boss awards. Missing checkpoints identify a pre-economy save. */

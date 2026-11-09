@@ -2,6 +2,7 @@
  * The running list of unique items, docs/UNIQUES.md, rendered from the game data.
  * `npm run uniques` rewrites the file; tests/uniques.test.ts fails if it has gone stale.
  */
+import { ACHIEVEMENT_BY_ID } from './achievements';
 import { baseDef, UNIQUES, type UniqueDef } from './bases';
 import { HARD_BOSSES, MAP_UNIQUE_POOLS, UBER_BOSSES } from './maps';
 import { ACTS, ZONES } from './zones';
@@ -18,7 +19,12 @@ export function uniqueDropsIn(u: UniqueDef): string[] {
   const maps = MAP_UNIQUE_POOLS.filter((p) => p.uniques.includes(u.id)).map((p) => `${p.label} (Maps)`);
   const hard = HARD_BOSSES.filter((b) => b.uniqueId === u.id).map((b) => `${b.name} (Hard Boss)`);
   const uber = UBER_BOSSES.filter((b) => b.uniques.includes(u.id)).map((b) => `${b.name} (Uber Boss)`);
-  return [...zones, ...maps, ...hard, ...uber];
+  return [...zones, ...maps, ...hard, ...uber, ...achievementSources(u)];
+}
+
+/** Achievements that hand this unique over. */
+function achievementSources(u: UniqueDef): string[] {
+  return Object.values(ACHIEVEMENT_BY_ID).filter((a) => a.unique === u.id).map((a) => `${a.name} (Achievement)`);
 }
 
 function row(u: UniqueDef): string {
@@ -48,7 +54,8 @@ export function uniqueSections(): [string, UniqueDef[]][] {
   return [
     ...ACTS.map((a): [string, UniqueDef[]] => [`Act ${a.n}: ${a.name}`, sorted.filter((u) => firstAct(u) === a.n)]),
     ['Maps only', sorted.filter((u) => firstAct(u) === undefined && fromMaps(u))],
-    ['No drop source yet', sorted.filter((u) => firstAct(u) === undefined && !fromMaps(u))],
+    ['Achievement rewards', sorted.filter((u) => firstAct(u) === undefined && !fromMaps(u) && achievementSources(u).length)],
+    ['No drop source yet', sorted.filter((u) => firstAct(u) === undefined && !fromMaps(u) && !achievementSources(u).length)],
   ];
 }
 

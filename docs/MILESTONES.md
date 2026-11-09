@@ -54,6 +54,13 @@ Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2
   - Decided for the owner: Crafting Bench recipes no longer need achievements (owner's note "no achievements required"); the Bench level alone unlocks them.
   - Decided for the owner: every mini-game gets a small inner double zone that doubles that action's output; Alchemy's mini-game turns horizontal; Foraging and Gemcutting get wider zones and slower markers.
   - Decided for the owner: holiday dates are computed in code (no outside calendar service) and switch on automatically, each can be turned off in Admin; Admin can stack events, schedule weekend events and set any start/end; overlapping bonuses add.
+- Achievements build (2026-11-09), small calls made while building the Round 2 design:
+  - 129 achievements in eight sections: Campaign, Combat, Bosses, Maps, Crafting & loot, Life skills, Character, Challenge modes. All 43 old ids kept; some moved section (acts to Campaign, flasks to Combat/Life skills, Exile ones to Challenge).
+  - Reward budget across all of them: +8 Passive points (act conquerors 2/4/6, Unbroken, all four Trials, level 90, all Uber Bosses, Hardcore SSF campaign), +4 offline hours, about +19% Item Rarity in total plus small Gold find, Experience, Life, resistance, life-skill and flask bonuses, 7 achievement-only uniques (Unbroken Temper plus six new), +4 Atlas points and +3 stash tabs for the realm.
+  - Atlas points are realm rewards like stash tabs, since the Atlas is shared: added once per realm. They go past the usual 70-point cap, so they still matter at the top.
+  - Bonuses are worked out from the earned list each time (not stored), so changing a reward later fixes itself on every save. The realm keeps a list of achievements whose realm reward it already has (`achievementRewards`), and achievement tabs never raise the price of the next bought page.
+  - On load, any achievement a character already meets is granted quietly, with one summary toast. Map counters (highest Doomed tier, Unique Maps) are filled from bosses the character has already beaten; rare kills start at zero.
+  - Challenge-mode achievements only count on that kind of character. Classic still doesn't see Life skill achievements.
 - Player Market removed for 1.0 (2026-11-09): the server can't tell an earned item from an edited save, and making it cheat-proof would mean moving inventories onto the server. The Market is hidden; pending deliveries stay collectable. It can return if inventories ever move server-side.
 - 1.0 is a fresh wipe (2026-11-08): everyone starts new characters at 1.0. Existing saves are not deleted. They move to a Legacy area, reached from character select, which runs at 1.0 rates. No new Legacy characters can be made. Legacy has no trading: the Market is hidden there, and nothing crosses between Legacy and 1.0 in either direction (recorded in the Launch Guide).
 - Cloud character saves only replace the version they grew from (2026-11-08). The server's own `updated_at` stamp is the version, so device clocks don't matter. When two devices have both played on from one save, the cloud copy wins, and the losing local copy is kept in that browser (`coe-<account>-conflict-<id>`) and reported. A failed browser-storage write no longer stops the cloud upload.
@@ -343,7 +350,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - [ ] Build: War Table / Quartermaster split; auto flee (first, cheap), auto challenge and auto next zone (moves on once the area's boss is down) behind War Table upgrades.
   - [ ] Build: per-task mastery, 120 unbuffed hours to max, with save migration from bands and bigger max bonuses.
   - [ ] Build: mini-games (inner double zone on all, horizontal Alchemy, easier Foraging and Gemcutting); Bench recipes drop achievement requirements.
-  - [ ] Build: 100+ per-character achievements with play-changing rewards.
+  - [x] Build: 100+ per-character achievements with play-changing rewards. 129 achievements, 6 new achievement-only uniques; checked in headless Chromium at phone and desktop sizes. See Decisions "Achievements build". — done 2026-11-09
   - [ ] Build: layered loot filters (presets + overrides, custom rules tab, share codes).
   - [ ] Build: events calendar (computed holidays, Admin toggles, stacking, weekend and custom windows).
 
@@ -368,6 +375,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Achievements expanded from 43 to 129 per-character achievements with play-changing rewards: Passive and Atlas points, realm stash tabs, offline hours, permanent bonuses and six new achievement-only uniques. Old saves migrate (save version 42) and get what they already meet on load. — done 2026-11-09
 
 - [x] Spread the seven major offensive families across distant passive-tree regions while preserving class starts, every authored cluster, cluster shapes and total node counts; added a concentration regression test. Released in 0.4.21. — done 2026-11-08
 

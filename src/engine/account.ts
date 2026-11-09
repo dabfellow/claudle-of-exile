@@ -1,3 +1,4 @@
+import { perkTotals } from '../data/achievements';
 import { STASH_PAGE_SIZE, STASH_START_PAGES, stationDef } from '../data/hideout';
 import { doomedId, mapId, parseDoomedTier, parseMapTier } from '../data/maps';
 import { STANDARD_REALM } from './challenge';
@@ -98,8 +99,25 @@ export function fillAccount(a: AccountState): AccountState {
   a.gems ??= [];
   a.supportGems ??= [];
   a.flaskStash ??= [];
+  a.achievementRewards = [...new Set(a.achievementRewards ?? [])];
   fileUniques(a);
+  ensureStashPages(a);
   return a;
+}
+
+/** Free stash tabs the realm has from achievements. */
+export function achievementTabs(a: Pick<AccountState, 'achievementRewards'>): number {
+  return perkTotals(a.achievementRewards ?? []).stashTabs;
+}
+
+/** Stash pages that came free: the starting ones, one per Stash station level, and achievement tabs. */
+export function freeStashPages(a: Pick<AccountState, 'hideout' | 'achievementRewards'>): number {
+  return STASH_START_PAGES + ((a.hideout.stash ?? 1) - 1) + achievementTabs(a);
+}
+
+/** Every free page is there, so an achievement tab merged in from another copy isn't lost. */
+export function ensureStashPages(a: AccountState): void {
+  while (a.stash.length < freeStashPages(a)) a.stash.push([]);
 }
 
 /**
@@ -154,8 +172,8 @@ export function claimOwned(s: GameState, item: Item): Item {
   return item;
 }
 
-function pagesBought(hideout: Record<string, number>, pages: number): number {
-  return Math.max(0, pages - STASH_START_PAGES - ((hideout.stash ?? 1) - 1));
+function pagesBought(hideout: Record<string, number>, pages: number, rewards: string[] = []): number {
+  return Math.max(0, pages - freeStashPages({ hideout, achievementRewards: rewards }));
 }
 
 /**
@@ -191,6 +209,7 @@ function mergeUnlocks(a: AccountState, from: AccountTransfer): void {
     };
   }
   a.exileUnlocked ||= !!from.exileUnlocked;
+  a.achievementRewards = [...new Set([...(a.achievementRewards ?? []), ...(from.achievementRewards ?? [])])];
   if (from.campaignDone) a.campaignDone = true;
   if (from.atlas) {
     a.atlas ??= freshAtlas();
@@ -219,9 +238,9 @@ function addPool(a: AccountState, from: Partial<AccountPool> & { maps?: Record<s
 export function absorbAccount(a: AccountState, from: AccountTransfer): void {
   const pages = from.stash ?? [];
   // every page anyone paid for is kept; free pages come from the Stash station, so its highest level counts once
-  const bought = pagesBought(a.hideout, a.stash.length) + pagesBought(from.hideout ?? {}, pages.length);
+  const bought = pagesBought(a.hideout, a.stash.length, a.achievementRewards) + pagesBought(from.hideout ?? {}, pages.length, from.achievementRewards);
   mergeUnlocks(a, from);
-  const total = STASH_START_PAGES + (a.hideout.stash - 1) + bought;
+  const total = freeStashPages(a) + bought;
   while (a.stash.length < total) a.stash.push([]);
   // each page lands on the same page where it can, so a single character's stash looks exactly as it did
   pages.forEach((page, i) => {
@@ -323,6 +342,7 @@ export function reconcileAccounts(newer: AccountState, older: AccountState): Acc
   newer.uniqueStash = tabOf(newer, older);
   newer.uniquesSeen = [...new Set([...newer.uniquesSeen, ...older.uniquesSeen])];
   newer.nextUid = Math.max(newer.nextUid, older.nextUid);
+  ensureStashPages(newer);
   return newer;
 }
 
@@ -377,6 +397,7 @@ export function mergeAccounts(mine: AccountState, base: AccountState, theirs: Ac
   mine.uniqueStash = mergeList(mine, mine.uniqueStash, base.uniqueStash, tabOf(theirs, base));
   const pages = Math.max(mine.stash.length, theirs.stash.length);
   mine.stash = Array.from({ length: pages }, (_, i) => mergeList(mine, mine.stash[i] ?? [], base.stash[i] ?? [], theirs.stash[i] ?? []));
+  ensureStashPages(mine);
 }
 
 /** A character bundled with the account, for an export or for a demo moving to a real account. */
