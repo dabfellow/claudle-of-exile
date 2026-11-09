@@ -1,24 +1,29 @@
 import { useMemo, type ReactNode } from 'react';
 import { classDef } from '../../data/classes';
+import { heistJob } from '../../data/heist';
 import { STATIONS, type StationDef, type StationId } from '../../data/hideout';
 import { materialDef } from '../../data/materials';
 import { actionDef, actionsFor, SKILLS, type SkillAction } from '../../data/skills';
+import { zoneDef } from '../../data/zones';
 import { canAfford } from '../../engine/bank';
 import { hideoutCost, isClassic, isSolo } from '../../engine/challenge';
 import { skillSummary } from '../../engine/gems';
 import { nextUpgradeCost, stationLevel, stationLockReason, stationPerks, upgradeStation } from '../../engine/hideout';
 import { pointsLeft } from '../../engine/passives';
+import { actionIntervalMs } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import { cartographyOpen } from '../../engine/cartography';
 import { SKILL_IDS, type GameState, type SkillId } from '../../engine/types';
 import { levelOf, maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
-import { Badge, Cost, fmt, GameIcon, MatIcon, ProgressBar, sceneStyle, Tooltip } from '../components/common';
+import { Badge, Cost, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, sceneStyle, Tooltip } from '../components/common';
+import { Fold } from '../components/Fold';
 import { openItemMenu } from '../components/ItemMenu';
 import { materialSources } from '../components/materialSources';
 import { PaperDoll } from '../components/PaperDoll';
 import type { Page } from '../Layout';
 import { Crest } from '../screens/Screens';
+import '../round2-session2.css';
 
 const STATION_ICON: Record<StationId, string> = {
   map_device: 'map',
@@ -64,31 +69,41 @@ function nextUnlock(skill: SkillId, lvl: number): SkillAction | null {
 /** What's being trained right now: a skill, the character (fighting), or nothing. */
 function trainingNow(s: GameState): SkillId | null {
   if (s.action?.kind === 'skill') return actionDef(s.action.actionId).skill;
+  if (s.action?.kind === 'heist') return 'thieving';
   return s.action?.kind === 'combat' ? 'combat' : null;
 }
 
-/** The Hideout is home: who you are and what you wear up top, where to go next, then the stations and skills. */
+/** The life skills shown at home, in the game's own order. */
+function lifeSkills(s: GameState, group: 'gathering' | 'production'): SkillId[] {
+  return SKILL_IDS.filter((id) => id !== 'combat' && SKILLS[id].group === group && (id !== 'cartography' || cartographyOpen(s)));
+}
+
+/**
+ * The Hideout is home: who you are up top (with your vitals), your stats, gear and life skills side by side,
+ * then the station upgrades, with a bar of shortcuts pinned along the bottom.
+ */
 export function HideoutPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const training = trainingNow(s);
+  const classic = isClassic(s);
   return (
     <div className="page hideout">
       <div className="card hideout-scene hideout-hero" style={sceneStyle('scenes/hideout')}>
         <Embers />
         <CharacterBanner training={training === 'combat'} onClick={() => go('combat')} />
       </div>
-      <div className="home-top">
+      <div className={`home-top ${classic ? 'no-skills' : ''}`}>
         <StatsCard go={go} />
         <GearCard go={go} />
-        <QuickNav go={go} />
+        {!classic && <LifeSkillsCard go={go} training={training} />}
       </div>
       <StationLedger go={go} />
-      {!isClassic(s) && <SkillDials go={go} training={training} />}
+      <GoToBar go={go} />
     </div>
   );
 }
 
-/** The character's own level, set apart from the trade skills. */
+/** The character's own level, set apart from the trade skills, with the numbers that keep you alive. */
 function CharacterBanner({ training, onClick }: { training: boolean; onClick: () => void }) {
   const s = useGame();
   const xp = s.skills.combat;
@@ -97,6 +112,8 @@ function CharacterBanner({ training, onClick }: { training: boolean; onClick: ()
   const span = xpToReach('combat', lvl + 1) - floor;
   const progress = progressOf('combat', xp);
   const c = classDef(s.character.classId);
+  const d = deriveStats(s, []);
+  const res = (n: number) => <b className={n >= 75 ? 'good' : n < 0 ? 'bad' : ''}>{n}%</b>;
   return (
     <button className={`card char-banner ${training ? 'running' : ''}`} style={{ ['--class' as string]: c.color }} onClick={onClick}>
       <Crest classId={s.character.classId} size={72} />
@@ -113,24 +130,45 @@ function CharacterBanner({ training, onClick }: { training: boolean; onClick: ()
         <small>Level</small>
         <b className="num">{lvl}</b>
       </span>
+      <span className="char-vitals" aria-label="Vitals and defences">
+        <span className="char-vital life" title="Maximum Life">
+          <small>Life</small>
+          <b className="num">{fmt(d.maxLife)}</b>
+        </span>
+        {d.maxEs > 0 && (
+          <span className="char-vital es" title="Maximum Energy Shield">
+            <small>Energy Shield</small>
+            <b className="num">{fmt(d.maxEs)}</b>
+          </span>
+        )}
+        <span className="char-vital mana" title="Maximum Mana">
+          <small>Mana</small>
+          <b className="num">{fmt(d.maxMana)}</b>
+        </span>
+        <span className="char-vital" title="Armour">
+          <small>Armour</small>
+          <b className="num">{fmt(d.armour)}</b>
+        </span>
+        <span className="char-vital" title="Evasion">
+          <small>Evasion</small>
+          <b className="num">{fmt(d.evasion)}</b>
+        </span>
+        <span className="char-vital res" title="Fire, Cold and Lightning resistance (75% is the cap)">
+          <small>Resists</small>
+          <span className="num">
+            <span style={{ color: 'var(--fire)' }}>{res(d.res.fire)}</span> <span style={{ color: 'var(--cold)' }}>{res(d.res.cold)}</span> <span style={{ color: 'var(--light)' }}>{res(d.res.light)}</span>
+          </span>
+        </span>
+      </span>
     </button>
   );
 }
 
-function HomeCard({ title, onOpen, children, className = '' }: { title: string; onOpen?: () => void; children: ReactNode; className?: string }) {
+function OpenButton({ onClick }: { onClick: () => void }) {
   return (
-    <div className={`card home-card ${className}`}>
-      <div className="card-title">
-        {title}
-        <span className="grow" />
-        {onOpen && (
-          <button className="btn sm ghost" onClick={onOpen}>
-            Open →
-          </button>
-        )}
-      </div>
-      {children}
-    </div>
+    <button className="btn sm ghost" onClick={onClick}>
+      Open →
+    </button>
   );
 }
 
@@ -152,7 +190,7 @@ function StatsCard({ go }: { go: (p: Page) => void }) {
     ['Crit chance', `${d.critChance.toFixed(1)}%`],
   ];
   return (
-    <HomeCard title="Character" onOpen={() => go('equipment')}>
+    <Fold id="home-character" title="Character" className="home-card" actions={<OpenButton onClick={() => go('equipment')} />}>
       <div className="home-stats">
         {rows.map(([label, value]) => (
           <div key={label} className="home-stat">
@@ -175,7 +213,7 @@ function StatsCard({ go }: { go: (p: Page) => void }) {
           </span>
         </div>
       </div>
-    </HomeCard>
+    </Fold>
   );
 }
 
@@ -185,40 +223,149 @@ function StatsCard({ go }: { go: (p: Page) => void }) {
 function GearCard({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   return (
-    <HomeCard title="Equipment" onOpen={() => go('equipment')} className="home-doll">
+    <Fold id="home-equipment" title="Equipment" className="home-card home-doll" actions={<OpenButton onClick={() => go('equipment')} />}>
       <PaperDoll s={s} onItem={(_, it) => openItemMenu(it.uid)} onEmpty={() => go('equipment')} onFlask={() => go('equipment')} />
-    </HomeCard>
+    </Fold>
+  );
+}
+
+// ---------- life skills ----------
+
+/** What's running right now, if it's a life skill: its name, the skill it trains and how far along it is. */
+function NowRunning({ go }: { go: (p: Page) => void }) {
+  const s = useGame();
+  const d = deriveStats(s);
+  let skill: SkillId | null = null;
+  let title = '';
+  let sub = '';
+  let progress = 0;
+  if (s.action?.kind === 'skill') {
+    const a = actionDef(s.action.actionId);
+    const interval = actionIntervalMs(s, a, d);
+    skill = a.skill;
+    title = `${SKILLS[a.skill].verb}: ${a.name}`;
+    sub = `${fmtTime(Math.max(0, interval - s.action.progress))} left`;
+    progress = s.action.progress / interval;
+  } else if (s.action?.kind === 'heist') {
+    skill = 'thieving';
+    title = `Heist: ${heistJob(s.action.jobId).name}`;
+    sub = `Room ${s.action.room} of ${s.action.lastRoom}`;
+  }
+  if (!skill) {
+    const elsewhere = s.action?.kind === 'combat' && s.combat ? `You're fighting in ${zoneDef(s.combat.zoneId).name}.` : s.action?.kind === 'craft' ? "You're crafting at the bench." : "You're idle.";
+    return (
+      <div className="hl-now idle">
+        <GameIcon name="clock" size={16} color="var(--dim)" />
+        <span>
+          <b>No life skill running.</b> <span className="dim">{elsewhere} Pick a skill below to start one.</span>
+        </span>
+      </div>
+    );
+  }
+  const color = SKILLS[skill].color;
+  const lvl = levelOf(skill, s.skills[skill]);
+  return (
+    <button className="hl-now" style={{ ['--skill' as string]: color }} onClick={() => go(skill!)}>
+      <span className="hl-now-icon">
+        <GameIcon name={skill} size={20} color={color} />
+      </span>
+      <span className="hl-now-body">
+        <span className="hl-now-kicker">
+          Running now · {SKILLS[skill].name} {lvl}
+        </span>
+        <b>{title}</b>
+        <ProgressBar value={progress} color={color} smooth />
+        <span className="dim small num">{sub}</span>
+      </span>
+    </button>
+  );
+}
+
+/** One life skill as a row: level, progress to the next, and the next thing it unlocks. */
+function SkillRow({ id, s, running, go }: { id: SkillId; s: GameState; running: boolean; go: (p: Page) => void }) {
+  const xp = s.skills[id];
+  const lvl = levelOf(id, xp);
+  const floor = xpToReach(id, lvl);
+  const progress = progressOf(id, xp);
+  const maxed = lvl >= maxLevelOf(id);
+  const next = nextUnlock(id, lvl);
+  const color = SKILLS[id].color;
+  return (
+    <Tooltip
+      content={
+        <div className="tip">
+          <div className="tip-title">{SKILLS[id].name}</div>
+          <div className="num">{maxed ? 'Max level' : `${fmt(Math.floor(xp - floor))} / ${fmt(xpToReach(id, lvl + 1) - floor)} XP to level ${lvl + 1}`}</div>
+          {next && (
+            <div className="dim small">
+              Next unlock: {next.name} at Lv {next.level}
+            </div>
+          )}
+        </div>
+      }
+    >
+      <button className={`hl-skill ${running ? 'running' : ''} ${SKILLS[id].soon ? 'is-soon' : ''}`} style={{ ['--skill' as string]: color }} onClick={() => go(id)}>
+        <GameIcon name={id} size={16} color={color} />
+        <span className="hl-skill-name">{SKILLS[id].name}</span>
+        <b className="hl-skill-lvl num">{lvl}</b>
+        <span className="hl-skill-bar">
+          <span style={{ width: `${Math.round(progress * 100)}%` }} />
+        </span>
+        <span className="hl-skill-next dim">{SKILLS[id].soon ? 'Coming soon' : next ? `${next.name} · Lv ${next.level}` : 'All unlocked'}</span>
+      </button>
+    </Tooltip>
+  );
+}
+
+function LifeSkillsCard({ go, training }: { go: (p: Page) => void; training: SkillId | null }) {
+  const s = useGame();
+  return (
+    <Fold id="home-skills" title="Life skills" className="home-card home-skills">
+      <NowRunning go={go} />
+      {(['gathering', 'production'] as const).map((group) => (
+        <div key={group} className="hl-group">
+          <div className="io-label">{group === 'gathering' ? 'Gathering' : 'Production'}</div>
+          <div className="hl-skills">
+            {lifeSkills(s, group).map((id) => (
+              <SkillRow key={id} id={id} s={s} running={training === id} go={go} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </Fold>
   );
 }
 
 // ---------- where to go ----------
 
-function QuickNav({ go }: { go: (p: Page) => void }) {
+/** Shortcuts to every page you use from home, pinned along the bottom of the page. */
+function GoToBar({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const points = pointsLeft(s);
   const loot = s.ground.length + s.offlineHaul.length;
-  const links: { page: Page; label: string; icon: string; badge?: ReactNode }[] = [
-    { page: 'stash', label: 'Stash', icon: 'stash', badge: <span className="nav-badge">{s.inventory.length}</span> },
-    { page: 'vendor', label: 'Town', icon: 'vendor' },
-    { page: 'equipment', label: 'Equipment', icon: 'equipment' },
-    { page: 'bench', label: 'Crafting Bench', icon: 'bench' },
-    { page: 'skills', label: 'Skills', icon: 'gems' },
-    { page: 'tree', label: 'Passive Tree', icon: 'tree', badge: points > 0 ? <span className="nav-badge hot">+{points}</span> : undefined },
-    { page: 'campaign', label: 'Campaign', icon: 'campaign' },
-    { page: 'combat', label: 'Combat', icon: 'combat', badge: loot > 0 ? <span className="nav-badge loot">{loot}</span> : undefined },
+  const links: { page: Page; label: string; short: string; icon: string; badge?: ReactNode }[] = [
+    { page: 'combat', label: 'Combat', short: 'Combat', icon: 'combat', badge: loot > 0 ? <span className="nav-badge loot">{loot}</span> : undefined },
+    { page: 'campaign', label: 'Campaign', short: 'Acts', icon: 'campaign' },
+    { page: 'stash', label: 'Stash', short: 'Stash', icon: 'stash', badge: s.inventory.length > 0 ? <span className="nav-badge">{s.inventory.length}</span> : undefined },
+    { page: 'equipment', label: 'Equipment', short: 'Gear', icon: 'equipment' },
+    { page: 'skills', label: 'Skills', short: 'Skills', icon: 'gems' },
+    { page: 'tree', label: 'Passive Tree', short: 'Tree', icon: 'tree', badge: points > 0 ? <span className="nav-badge hot">+{points}</span> : undefined },
+    { page: 'bench', label: 'Crafting Bench', short: 'Bench', icon: 'bench' },
+    { page: 'vendor', label: 'Town', short: 'Town', icon: 'vendor' },
   ];
   return (
-    <HomeCard title="Go to" className="home-nav-card">
-      <div className="home-nav">
-        {links.map((l) => (
-          <button key={l.page} className="home-nav-btn" onClick={() => go(l.page)}>
+    <nav className="home-goto" aria-label="Go to">
+      {links.map((l) => (
+        <button key={l.page} className="home-goto-btn" onClick={() => go(l.page)} title={l.label}>
+          <span className="home-goto-icon">
             <GameIcon name={l.icon} size={18} />
-            <span>{l.label}</span>
             {l.badge}
-          </button>
-        ))}
-      </div>
-    </HomeCard>
+          </span>
+          <span className="home-goto-label long">{l.label}</span>
+          <span className="home-goto-label short">{l.short}</span>
+        </button>
+      ))}
+    </nav>
   );
 }
 
@@ -281,7 +428,7 @@ function HaveNeed({ cost, have, go }: { cost: Record<string, number>; have: Reco
 type TierState = 'done' | 'next' | 'later';
 
 /** One step of a station's ladder. Later tiers show their cost on hover. */
-function Tier({ n, effect, cost, state, have, children }: { n: number; effect: string; cost: Record<string, number>; state: TierState; have: Record<string, number>; children?: ReactNode }) {
+function Tier({ n, effect, cost, state, have }: { n: number; effect: string; cost: Record<string, number>; state: TierState; have: Record<string, number> }) {
   const later = state === 'later' && Object.keys(cost).length > 0;
   return (
     <li className={`hx-tier ${state}`}>
@@ -301,12 +448,20 @@ function Tier({ n, effect, cost, state, have, children }: { n: number; effect: s
         ) : (
           <span>{effect}</span>
         )}
-        {children}
       </div>
     </li>
   );
 }
 
+/** How many of a cost's materials you're still short of. */
+function shortBy(cost: Record<string, number>, have: Record<string, number>): number {
+  return Object.entries(cost).filter(([id, n]) => (have[id] ?? 0) < n).length;
+}
+
+/**
+ * A station: what it gives you now, then the next upgrade on its own with its cost and button,
+ * and the whole ladder folded away underneath.
+ */
 function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
   const s = useGame();
   const lvl = stationLevel(s, st.id);
@@ -314,8 +469,10 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
   const cost = nextUpgradeCost(s, st.id);
   const affordable = !locked && !!cost && canAfford(s, cost);
   const hasPage = !locked && st.page !== 'hideout';
+  const next = st.levels[lvl];
+  const short = cost ? shortBy(cost, s.account.bank) : 0;
   return (
-    <div className={`card hx-station ${affordable ? 'ready' : ''} ${locked ? 'locked' : ''}`} style={{ ['--station' as string]: st.color }}>
+    <div className={`card hx-station ${affordable ? 'ready' : ''} ${locked ? 'locked' : ''} ${!cost && !locked ? 'maxed' : ''}`} style={{ ['--station' as string]: st.color }}>
       <div className="hx-station-head" title={st.desc}>
         <span className="hx-station-icon">
           <GameIcon name={STATION_ICON[st.id]} size={18} color={locked ? 'var(--dim)' : st.color} />
@@ -330,18 +487,24 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
           </span>
         </span>
         <span className="grow" />
-        {!cost && <Badge tone="gold">Max</Badge>}
+        {affordable && <Badge tone="success">Ready</Badge>}
+        {!cost && !locked && <Badge tone="gold">Max</Badge>}
         {hasPage && (
           <button className="btn sm ghost" onClick={() => go(st.page as Page)}>
             Open →
           </button>
         )}
       </div>
-      <div className="hx-have">
-        <div className="io-label">{locked ? 'Locked' : 'You have'}</div>
-        {locked ? (
+      {locked ? (
+        <div className="hx-have">
+          <div className="io-label">
+            <GameIcon name="lock" size={11} /> Locked
+          </div>
           <div className="dim small">{locked}</div>
-        ) : (
+        </div>
+      ) : (
+        <div className="hx-have">
+          <div className="io-label">You have</div>
           <div className="hx-perks">
             {stationPerks(s, st.id).map((p) => (
               <span key={p} className="hx-perk">
@@ -349,25 +512,35 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
               </span>
             ))}
           </div>
-        )}
-      </div>
-      <ol className="hx-tiers">
-        {st.levels.map((tier, i) => {
-          const state: TierState = locked || i > lvl ? 'later' : i < lvl ? 'done' : 'next';
-          return (
-            <Tier key={i} n={i + 1} effect={tier.effect} cost={hideoutCost(s, tier.cost)} state={state} have={s.account.bank}>
-              {state === 'next' && (
-                <div className="hx-tier-buy">
-                  <HaveNeed cost={hideoutCost(s, tier.cost)} have={s.account.bank} go={go} />
-                  <button data-tut={`upgrade-${st.id}`} className={`btn sm ${affordable ? 'primary' : ''}`} disabled={!affordable} title={affordable ? `Upgrade to level ${lvl + 1}` : 'Not enough materials'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id))}>
-                    Upgrade
-                  </button>
-                </div>
-              )}
-            </Tier>
-          );
-        })}
-      </ol>
+        </div>
+      )}
+      {!locked && cost && next && (
+        <div className={`hx-next ${affordable ? 'ready' : ''}`}>
+          <div className="hx-next-head">
+            <span className="io-label">Next · Level {lvl + 1}</span>
+            <span className="grow" />
+            <span className={`small ${affordable ? 'good' : 'dim'}`}>{affordable ? 'You can afford this' : `Short of ${short} material${short === 1 ? '' : 's'}`}</span>
+          </div>
+          <div className="hx-next-effect">{next.effect}</div>
+          <div className="hx-next-buy">
+            <HaveNeed cost={cost} have={s.account.bank} go={go} />
+            <button data-tut={`upgrade-${st.id}`} className={`btn sm ${affordable ? 'primary' : ''}`} disabled={!affordable} title={affordable ? `Upgrade to level ${lvl + 1}` : 'Not enough materials'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id))}>
+              Upgrade
+            </button>
+          </div>
+        </div>
+      )}
+      <details className="hx-ladder">
+        <summary>
+          All {st.levels.length} levels <span className="dim">· hover a later one for its cost</span>
+        </summary>
+        <ol className="hx-tiers">
+          {st.levels.map((tier, i) => {
+            const state: TierState = locked || i > lvl ? 'later' : i < lvl ? 'done' : 'next';
+            return <Tier key={i} n={i + 1} effect={tier.effect} cost={hideoutCost(s, tier.cost)} state={state} have={s.account.bank} />;
+          })}
+        </ol>
+      </details>
     </div>
   );
 }
@@ -375,77 +548,27 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
 function StationLedger({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const classic = isClassic(s);
+  const stations = STATIONS.filter((st) => !classic || (st.id !== 'forge' && st.id !== 'alchemy_table'));
+  const ready = stations.filter((st) => {
+    const cost = nextUpgradeCost(s, st.id);
+    return !stationLockReason(s, st.id) && !!cost && canAfford(s, cost);
+  }).length;
   return (
-    <div className="hx-stations-wrap">
-      <div className="dim small">Stations and their unlocks {isSolo(s) ? 'are this character\'s alone' : 'are shared by all your characters in this mode'}. Hover a later tier to see its cost.</div>
+    <Fold
+      id="home-upgrades"
+      title={
+        <>
+          Upgrades {ready > 0 && <Badge tone="success">{ready} ready</Badge>}
+        </>
+      }
+      className="hx-stations-wrap"
+    >
+      <div className="dim small hx-stations-note">Stations and their unlocks {isSolo(s) ? "are this character's alone" : 'are shared by all your characters in this mode'}. Each card shows what the station gives you now and its next upgrade.</div>
       <div className="hx-stations">
-        {STATIONS.filter((st) => !classic || (st.id !== 'forge' && st.id !== 'alchemy_table')).map((st) => (
+        {stations.map((st) => (
           <StationCard key={st.id} st={st} go={go} />
         ))}
       </div>
-    </div>
-  );
-}
-
-// ---------- skills ----------
-
-function SkillDials({ go, training }: { go: (p: Page) => void; training: SkillId | null }) {
-  const s = useGame();
-  return (
-    <div className="card">
-      <div className="hx-dials-wrap">
-        {(['gathering', 'production'] as const).map((group) => (
-          <div key={group} className="hx-dial-group">
-            <div className="io-label">{group === 'gathering' ? 'Gathering' : 'Production'}</div>
-            <div className="hx-dials">
-              {SKILL_IDS.filter((id) => id !== 'combat' && SKILLS[id].group === group && (id !== 'cartography' || cartographyOpen(s))).map((id) => (
-                <SkillDial key={id} id={id} s={s} running={training === id} go={go} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** A ring with the level in the middle: one trade skill. */
-function SkillDial({ id, s, running, go }: { id: SkillId; s: GameState; running: boolean; go: (p: Page) => void }) {
-  const xp = s.skills[id];
-  const lvl = levelOf(id, xp);
-  const floor = xpToReach(id, lvl);
-  const progress = progressOf(id, xp);
-  const maxed = lvl >= maxLevelOf(id);
-  const next = nextUnlock(id, lvl);
-  const r = 26;
-  const c = 2 * Math.PI * r;
-  const color = SKILLS[id].color;
-  return (
-    <Tooltip
-      content={
-        <div className="tip">
-          <div className="tip-title">{SKILLS[id].name}</div>
-          <div className="num">{maxed ? 'Max level' : `${fmt(Math.floor(xp - floor))} / ${fmt(xpToReach(id, lvl + 1) - floor)} XP to level ${lvl + 1}`}</div>
-          {next && (
-            <div className="dim small">
-              Next unlock: {next.name} at Lv {next.level}
-            </div>
-          )}
-        </div>
-      }
-    >
-      <button className={`hx-dial ${running ? 'running' : ''}`} style={{ ['--skill' as string]: color }} onClick={() => go(id)}>
-        <svg viewBox="0 0 64 64" className="hx-dial-ring" aria-hidden>
-          <circle cx="32" cy="32" r={r} className="hx-dial-track" />
-          <circle cx="32" cy="32" r={r} className="hx-dial-fill" strokeDasharray={`${c * progress} ${c}`} transform="rotate(-90 32 32)" />
-        </svg>
-        <span className="hx-dial-center">
-          <GameIcon name={id} size={16} color={color} />
-          <b className="num">{lvl}</b>
-        </span>
-        <span className="hx-dial-name">{SKILLS[id].name}</span>
-        <span className="hx-dial-next dim">{SKILLS[id].soon ? 'Coming soon' : next ? `${next.name} · ${next.level}` : 'All unlocked'}</span>
-      </button>
-    </Tooltip>
+    </Fold>
   );
 }

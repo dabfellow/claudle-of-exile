@@ -7,6 +7,11 @@
  * The presets themselves are in presets.ts, which the balance sim shares.
  */
 import { BASES } from '../data/bases';
+import { DOOMED_TIERS, SEXTANTS, UNIQUE_MAPS } from '../data/maps';
+import { ZONES } from '../data/zones';
+import { addBank } from '../engine/bank';
+import { FINAL_ACT } from '../engine/hideout';
+import { addDoomedMaps, addUniqueMaps, grantBossKeys, grantMaps } from '../engine/maps';
 import { createItem } from '../engine/items';
 import { seeded } from '../engine/rng';
 import { MARKET_UNLOCK_BOSS } from '../engine/market';
@@ -17,6 +22,22 @@ import { applySetup, PRESETS as SHARED, setupLevel, setupZone, type Setup } from
 
 const PRESETS: Record<string, Setup> = {
   ...SHARED,
+  /** the campaign beaten, with maps of every kind, Sextants and boss keys to open them with */
+  maps: {
+    classId: 'duelist',
+    level: 80,
+    prepare: (s) => {
+      s.unlockedZones = ZONES.filter((z) => z.act <= FINAL_ACT).map((z) => z.id);
+      s.bossesDefeated = [...s.unlockedZones];
+      grantMaps(s, 3);
+      for (const sex of SEXTANTS) addBank(s, sex.id, 4);
+      for (const d of DOOMED_TIERS) addDoomedMaps(s, d.tier, 1);
+      for (const u of UNIQUE_MAPS) addUniqueMaps(s, u.id, 1);
+      grantBossKeys(s, 1);
+      addBank(s, 'chaos', 60);
+      s.account.hideout.map_device = 4;
+    },
+  },
   /** signed in as far as the Player Market can tell, against a pretend server */
   market: {
     level: 30,

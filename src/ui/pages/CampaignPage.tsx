@@ -2,8 +2,9 @@ import { trialAt } from '../../engine/ascendancy';
 import { uniqueDef } from '../../data/bases';
 import { areaCurrency, bossGatherMats, bossTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
-import { useState } from 'react';
-import { ACT_REGIONS, actMapPoint, actRegion, CONTINENT_SIZE, LABEL_LINE_HEIGHT, LABEL_SIDE, labelAnchor, labelLines, regionPath, regionViewBox, ZONE_POS, type ActRegion } from '../../data/continent';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { ACT_MAPS, smoothPath, WORLD_MAP, type MapPoint } from '../../data/campaignMap';
+import { LABEL_SIDE, labelLines, ZONE_POS } from '../../data/continent';
 import { actBossZone, actOpen, ACTS, bossesNeeded, isSideArea, MECHANIC_INFO, roadsInto, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
 import { FINAL_ACT } from '../../engine/hideout';
 import { bossesBeatenInAct, zoneLockText } from '../../engine/progress';
@@ -11,8 +12,10 @@ import { areaXpLabel, characterLevel } from '../../engine/character';
 import { BOSS_RESPAWN_MS, bossIsNext, canBossFarm, startCombat, toggleBossFarm } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
+import { ActTerrain, WorldTerrain } from '../components/CampaignTerrain';
 import { anyArtUrl, Badge, EmptyState, GameIcon, MatIcon, PageHeader, ProgressBar, sceneStyle } from '../components/common';
 import type { Page } from '../Layout';
+import '../round2-session2.css';
 
 /** How risky an area looks for your current level. */
 function danger(s: GameState, z: ZoneDef): { label: string; cls: string } {
@@ -173,152 +176,243 @@ function defaultZone(s: GameState, act: number): string {
   return [...zones].reverse().find((z) => s.unlockedZones.includes(z.id))?.id ?? zones[0]?.id ?? '';
 }
 
-
 function zoneState(s: GameState, z: ZoneDef): 'current' | 'cleared' | 'open' | 'locked' {
   if (s.combat?.zoneId === z.id) return 'current';
   if (s.bossesDefeated.includes(z.id)) return 'cleared';
   return s.unlockedZones.includes(z.id) ? 'open' : 'locked';
 }
 
-/** The whole continent: one region per act. Open acts can be picked. */
-function ContinentMap({ s, act, onPick }: { s: GameState; act: number; onPick: (n: number) => void }) {
-  const hereZone = s.combat ? ZONE_POS[s.combat.zoneId] : undefined;
+function actProgress(s: GameState, act: number): { cleared: number; total: number; done: boolean } {
+  const zones = zonesInAct(act);
+  const boss = actBossZone(act);
+  return { cleared: zones.filter((z) => s.bossesDefeated.includes(z.id)).length, total: zones.length, done: !!boss && s.bossesDefeated.includes(boss.id) };
+}
+
+/** Places a marker at a point given in percent of its picture. */
+const at = ([x, y]: MapPoint): CSSProperties => ({ left: `${x}%`, top: `${y}%` });
+
+// ---------- level 1: the world ----------
+
+/** Every act on one zoomed-out map, joined by the rough trail the campaign takes. Pick an act to go in. */
+function WorldMap({ s, onOpen }: { s: GameState; onOpen: (act: number) => void }) {
+  const cur = currentAct(s);
+  const here = s.combat ? ZONE_POS[s.combat.zoneId] : undefined;
   return (
-    <svg className="continent" viewBox={`0 0 ${CONTINENT_SIZE.w} ${CONTINENT_SIZE.h}`} role="img" aria-label="Map of the continent">
-      <defs>
-        <pattern id="sea-waves" width="40" height="18" patternUnits="userSpaceOnUse">
-          <path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="var(--line)" strokeWidth="1" opacity="0.5" />
-        </pattern>
-      </defs>
-      <rect className="continent-sea" width={CONTINENT_SIZE.w} height={CONTINENT_SIZE.h} />
-      <rect width={CONTINENT_SIZE.w} height={CONTINENT_SIZE.h} fill="url(#sea-waves)" />
-      {ACT_REGIONS.map((r) => {
-        const a = ACTS.find((x) => x.n === r.act)!;
-        const open = actOpen(r.act);
-        return (
-          <g
-            key={r.act}
-            className={`continent-region ${open ? 'open' : 'locked'} ${r.act === act ? 'selected' : ''}`}
-            onClick={() => open && onPick(r.act)}
-            role={open ? 'button' : undefined}
-          >
-            <title>{open ? `Act ${a.n}: ${a.name}` : `Act ${a.n}: ${a.name} (not open yet)`}</title>
-            <path d={regionPath(r)} />
-            <text x={r.label[0]} y={r.label[1] - 14} className="continent-act">
-              ACT {a.n}
-            </text>
-            <text x={r.label[0]} y={r.label[1] + 6} className="continent-name">
-              {open ? a.name : '???'}
-            </text>
-          </g>
-        );
-      })}
-      {ZONES.filter((z) => actOpen(z.act) && ZONE_POS[z.id]).map((z) => {
-        const [x, y] = ZONE_POS[z.id];
-        return <circle key={z.id} className={`continent-dot ${zoneState(s, z)}`} cx={x} cy={y} r={4} />;
-      })}
-      {hereZone && <circle className="continent-here" cx={hereZone[0]} cy={hereZone[1]} r={9} />}
-    </svg>
+    <div className="card cmap-card">
+      <div className="cmap-world" style={{ aspectRatio: WORLD_MAP.aspect }}>
+        {WORLD_MAP.image ? <img className="ct-svg" src={WORLD_MAP.image} alt="" /> : <WorldTerrain isOpen={actOpen} selected={cur} onPick={onOpen} here={here} />}
+        <svg className="cmap-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+          <path className="cmap-trail-under" d={smoothPath(WORLD_MAP.trail)} />
+          <path className="cmap-trail" d={smoothPath(WORLD_MAP.trail)} />
+        </svg>
+        {ACTS.map((a) => {
+          const pos = WORLD_MAP.labels[a.n];
+          if (!pos) return null;
+          const open = actOpen(a.n);
+          const pr = actProgress(s, a.n);
+          return (
+            <button key={a.n} className={`cmap-act-label ${open ? '' : 'locked'} ${a.n === cur ? 'current' : ''} ${pr.done ? 'done' : ''}`} style={at(pos)} disabled={!open} onClick={() => onOpen(a.n)} title={open ? `Open Act ${a.n}: ${a.name}` : `Act ${a.n} isn't open yet`}>
+              <small>
+                Act {a.n}
+                {pr.done && ' ✓'}
+              </small>
+              <b>{open ? a.name.replace(/^The /, '') : '???'}</b>
+              {open && pr.total > 0 && (
+                <span className="cmap-act-label-progress num">
+                  {pr.cleared}/{pr.total}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
-const nodeRadius = (z: ZoneDef) => (z.actBoss ? 13 : isSideArea(z) ? 9 : 11);
-
-/** A region's outline as drawn on another act's close-up map. */
-function stretchedPath(on: ActRegion, r: ActRegion): string {
-  return regionPath({ ...r, points: r.points.map((p) => actMapPoint(on, p)) });
-}
-
-/** One act up close: its areas as points on the roads their bosses open, with side areas drawn smaller. */
-function ActMap({ s, act, selected, onSelect }: { s: GameState; act: number; selected: string; onSelect: (id: string) => void }) {
-  const region = actRegion(act);
-  if (!region) return null;
-  const zones = zonesInAct(act).filter((z) => ZONE_POS[z.id]);
+/** The same acts as a list: big tap targets, with progress and where you are. */
+function ActList({ s, onOpen }: { s: GameState; onOpen: (act: number) => void }) {
+  const cur = currentAct(s);
   return (
-    <svg className="act-map" viewBox={regionViewBox(region)} role="img" aria-label={`Areas of Act ${act}`}>
-      <rect className="continent-sea" x={-100} y={-100} width={CONTINENT_SIZE.w + 200} height={CONTINENT_SIZE.h * 3} />
-      {ACT_REGIONS.map((r) => (
-        <path key={r.act} d={stretchedPath(region, r)} className={`act-map-region ${r.act === act ? 'this' : ''}`} />
-      ))}
-      {zones.flatMap((z) =>
-        roadsInto(z)
-          .filter((from) => ZONE_POS[from])
-          .map((from) => {
-            const [x1, y1] = actMapPoint(region, ZONE_POS[from]);
-            const [x2, y2] = actMapPoint(region, ZONE_POS[z.id]);
-            const walked = s.unlockedZones.includes(z.id) && s.bossesDefeated.includes(from);
-            return <line key={`${from}-${z.id}`} className={`act-road ${walked ? 'walked' : ''} ${isSideArea(z) ? 'side' : ''}`} x1={x1} y1={y1} x2={x2} y2={y2} />;
-          }),
-      )}
-      {zones.map((z) => {
-        const [x, y] = actMapPoint(region, ZONE_POS[z.id]);
-        const side = isSideArea(z);
-        const r = nodeRadius(z);
-        const lines = labelLines(z.name);
-        const label = labelAnchor(LABEL_SIDE[z.id] ?? 'below', r, lines.length);
-        const need = bossesNeeded(z) - bossesBeatenInAct(s, act);
+    <div className="cmap-acts">
+      {ACTS.map((a) => {
+        const open = actOpen(a.n);
+        const pr = actProgress(s, a.n);
+        const reached = zonesInAct(a.n).some((z) => s.unlockedZones.includes(z.id));
         return (
-          <g
-            key={z.id}
-            className={`act-node ${zoneState(s, z)} ${z.id === selected ? 'selected' : ''}`}
-            transform={`translate(${x} ${y})`}
-            onClick={() => onSelect(z.id)}
-            role="button"
-            style={{ ['--zone' as string]: z.color }}
-          >
-            <title>{s.unlockedZones.includes(z.id) ? z.name : `${z.name}: ${zoneLockText(s, z)}`}</title>
-            <circle className="act-node-ring" r={r} />
-            <circle className="act-node-core" r={z.actBoss ? 8 : side ? 5 : 6.5} />
-            {need > 0 && (
-              <text y={3.5} className="act-node-gate">
-                {need}
-              </text>
+          <button key={a.n} className={`card cmap-act-card ${open ? '' : 'locked'} ${a.n === cur ? 'current' : ''}`} disabled={!open} onClick={() => onOpen(a.n)}>
+            <span className="cmap-act-num num">{a.n}</span>
+            <span className="cmap-act-body">
+              <b>{open ? a.name : 'Coming soon'}</b>
+              {open && pr.total > 0 && <ProgressBar value={pr.cleared / pr.total} color={pr.done ? 'var(--success)' : undefined} />}
+              <span className="dim small">
+                {!open ? 'Not open yet' : pr.done ? 'Complete' : reached ? `${pr.cleared} of ${pr.total} bosses beaten` : 'Not reached yet'}
+                {open && !a.open && ' · preview'}
+              </span>
+            </span>
+            {a.n === cur && s.combat && (
+              <Badge tone="success" live>
+                Here
+              </Badge>
             )}
-            <text className="act-node-name" textAnchor={label.anchor}>
-              {lines.map((line, i) => (
-                <tspan key={line} x={label.x} y={label.y + i * LABEL_LINE_HEIGHT}>
-                  {line}
-                </tspan>
-              ))}
-            </text>
-          </g>
+          </button>
         );
       })}
-    </svg>
+    </div>
+  );
+}
+
+// ---------- level 2: one act ----------
+
+const nodeKind = (z: ZoneDef) => (z.actBoss ? 'is-boss' : isSideArea(z) ? 'is-side' : 'is-main');
+
+/** One act up close: its landscape, the roads its bosses open (with their bends), and every area on them. */
+function ActCloseUp({ s, act, selected, onSelect }: { s: GameState; act: number; selected: string; onSelect: (id: string) => void }) {
+  const data = ACT_MAPS[act];
+  const scroller = useRef<HTMLDivElement>(null);
+  const keepClear = useMemo(() => (data ? [...Object.values(data.zones), ...Object.values(data.roads).flat(), ...data.entries.map((e) => e.at)] : []), [data]);
+  // on a phone, the map is wider than the screen: start with the chosen area in view
+  useEffect(() => {
+    const box = scroller.current;
+    const node = box?.querySelector<HTMLElement>('.cmap-node.selected');
+    if (box && node && box.scrollWidth > box.clientWidth) box.scrollLeft = node.offsetLeft - box.clientWidth / 2;
+  }, [act]);
+  if (!data) return null;
+  const zones = zonesInAct(act).filter((z) => data.zones[z.id]);
+  const unlocked = (id: string) => s.unlockedZones.includes(id);
+  const roads = zones.flatMap((z) =>
+    roadsInto(z)
+      .filter((from) => data.zones[from])
+      .map((from) => ({
+        key: `${from}>${z.id}`,
+        d: smoothPath([data.zones[from], ...(data.roads[`${from}>${z.id}`] ?? []), data.zones[z.id]]),
+        walked: unlocked(z.id) && s.bossesDefeated.includes(from),
+        side: isSideArea(z),
+      })),
+  );
+  const entries = data.entries
+    .filter((e) => data.zones[e.to])
+    .map((e) => ({ key: `${e.from}>${e.to}`, d: smoothPath([e.at, data.zones[e.to]]), walked: unlocked(e.to), side: false }));
+  // dense acts get a wider map that scrolls sideways on narrow screens
+  const minWidth = zones.length > 12 ? 620 : zones.length > 9 ? 520 : 0;
+  return (
+    <div className="cmap-act-scroll" ref={scroller}>
+      <div className="cmap-act" style={{ aspectRatio: data.aspect, minWidth: minWidth || undefined, ['--aspect' as string]: data.aspect }}>
+        {data.image ? <img className="ct-svg" src={data.image} alt="" /> : <ActTerrain act={act} keepClear={keepClear} />}
+        <svg className="cmap-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+          {[...entries, ...roads].map((r) => (
+            <g key={r.key} className={`cmap-road ${r.walked ? 'walked' : ''} ${r.side ? 'side' : ''}`}>
+              <path className="cmap-road-under" d={r.d} />
+              <path className="cmap-road-line" d={r.d} />
+            </g>
+          ))}
+        </svg>
+        {zones.map((z) => {
+          const state = zoneState(s, z);
+          const need = bossesNeeded(z) - bossesBeatenInAct(s, act);
+          const trial = trialAt(s, z.id);
+          const trialOpen = !!trial && s.ascendancy.trials < trial.n;
+          return (
+            <button
+              key={z.id}
+              className={`cmap-node ${state} ${nodeKind(z)} ${z.id === selected ? 'selected' : ''}`}
+              style={{ ...at(data.zones[z.id]), ['--zone' as string]: z.color }}
+              onClick={() => onSelect(z.id)}
+              title={unlocked(z.id) ? z.name : `${z.name}: ${zoneLockText(s, z)}`}
+              aria-label={z.name}
+            >
+              <span className="cmap-node-dot">
+                {need > 0 ? <b className="num">{need}</b> : z.actBoss ? <GameIcon name="skull" size={13} /> : state === 'cleared' ? '✓' : null}
+              </span>
+              {trialOpen && (
+                <span className="cmap-node-trial" title={`Ascendancy trial ${trial!.n}`}>
+                  <GameIcon name="trophy" size={10} />
+                </span>
+              )}
+              <span className={`cmap-node-name ${LABEL_SIDE[z.id] ?? 'below'}`}>
+                {labelLines(z.name).map((line) => (
+                  <span key={line}>{line}</span>
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** What the marks on an act's map mean. */
+function ActLegend() {
+  return (
+    <div className="cmap-legend dim small">
+      <span>
+        <i className="cmap-key current" /> You are here
+      </span>
+      <span>
+        <i className="cmap-key cleared" /> Boss beaten
+      </span>
+      <span>
+        <i className="cmap-key open" /> Open
+      </span>
+      <span>
+        <i className="cmap-key locked" /> Locked
+      </span>
+      <span>
+        <i className="cmap-key gate">3</i> Bosses needed first
+      </span>
+      <span>
+        <GameIcon name="trophy" size={11} /> Trial
+      </span>
+    </div>
   );
 }
 
 export function CampaignPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
-  const [act, setAct] = useState(() => currentAct(s));
+  // nothing to choose between until a second act opens, so a new character goes straight into Act 1
+  const reachedActs = new Set(ZONES.filter((z) => s.unlockedZones.includes(z.id) && actOpen(z.act)).map((z) => z.act)).size;
+  const [act, setAct] = useState<number | null>(() => (reachedActs <= 1 ? currentAct(s) : null));
   const [zoneId, setZoneId] = useState(() => defaultZone(s, currentAct(s)));
-  const pickAct = (n: number) => {
+  const openAct = (n: number) => {
     setAct(n);
     setZoneId(defaultZone(s, n));
   };
+
+  if (act === null) {
+    return (
+      <div className="page">
+        <PageHeader title="Campaign">The road the campaign takes across the continent. Pick an act to see its areas up close.</PageHeader>
+        <WorldMap s={s} onOpen={openAct} />
+        <ActList s={s} onOpen={openAct} />
+      </div>
+    );
+  }
+
   const current = ACTS.find((a) => a.n === act)!;
   const open = actOpen(act);
   const zones = zonesInAct(act);
-  const cleared = zones.filter((z) => s.bossesDefeated.includes(z.id)).length;
-  const bossZone = actBossZone(act);
-  const done = !!bossZone && s.bossesDefeated.includes(bossZone.id);
+  const { cleared, done } = actProgress(s, act);
   const next = ACTS.find((a) => a.n === act + 1);
   const zone = zones.find((z) => z.id === zoneId);
   return (
     <div className="page">
-      <PageHeader title="Campaign">Pick an act on the map, then an area. Each boss opens the roads ahead. From Act 3 they fork, and each act boss waits until you've beaten most of its act's bosses, so which ones you skip is up to you.</PageHeader>
-      <div className="card continent-card">
-        <ContinentMap s={s} act={act} onPick={pickAct} />
-      </div>
-      <div className="section-head" style={{ margin: 0 }}>
+      <PageHeader title="Campaign">Each boss opens the roads ahead. From Act 3 they fork, and each act boss waits until you've beaten most of its act's bosses, so which ones you skip is up to you.</PageHeader>
+      <div className="cmap-act-head">
+        <button className="btn sm" onClick={() => setAct(null)}>
+          ← World map
+        </button>
         <h2>
-          Act {current.n}: {current.name}
+          <small>Act {current.n}</small> {current.name}
         </h2>
         {open && !current.open && <Badge tone="locked">Preview</Badge>}
-        {zones.length > 0 && <ProgressBar value={cleared / zones.length} color={done ? 'var(--success)' : undefined} />}
+        <span className="grow" />
         {zones.length > 0 && (
-          <span className="dim small num">
-            {cleared}/{zones.length} bosses defeated
+          <span className="cmap-act-progress">
+            <ProgressBar value={cleared / zones.length} color={done ? 'var(--success)' : undefined} />
+            <span className="dim small num">
+              {cleared}/{zones.length} bosses defeated
+            </span>
           </span>
         )}
       </div>
@@ -334,7 +428,7 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
                 : `Act ${current.n + 1} arrives in a future update — until then, farm these areas for better gear, push your skills and fill your stash.`}
           </p>
           {next && actOpen(next.n) && (
-            <button className="btn primary" style={{ alignSelf: 'flex-start' }} onClick={() => pickAct(next.n)}>
+            <button className="btn primary" style={{ alignSelf: 'flex-start' }} onClick={() => openAct(next.n)}>
               On to Act {next.n}
             </button>
           )}
@@ -348,8 +442,9 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
         </div>
       ) : (
         <div className="act-layout">
-          <div className="card act-map-card">
-            <ActMap s={s} act={act} selected={zoneId} onSelect={setZoneId} />
+          <div className="card cmap-card">
+            <ActCloseUp s={s} act={act} selected={zoneId} onSelect={setZoneId} />
+            <ActLegend />
           </div>
           {zone && <AreaCard s={s} z={zone} go={go} />}
         </div>
