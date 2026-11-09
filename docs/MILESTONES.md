@@ -4,7 +4,7 @@ Last updated 2026-11-09. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.21, Plan Before You Commit**, deployed 2026-11-08. Passive nodes now preview before allocation or refund, level rewards are 2 Travel / 1 Passive, and major offensive themes are distributed across distant tree regions.
+Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2026-11-09. Launch Guide Round 2 screen fixes from three sessions: phone tutorial/combat fixes, two-step character create, tooltips/toasts/pinned currencies, faster offline catch-up, Hideout/Campaign/Map Device reworks, page polish, Admin black-screen and compensation fixes, Player Market closed.
 
 1. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
 2. Finish the Maps skill batch: all support effects now run (2026-11-08, unreleased); boss, offline and whole-build checks remain (see that section).
