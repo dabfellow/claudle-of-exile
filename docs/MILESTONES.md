@@ -378,11 +378,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-<<<<<<< HEAD
 - [x] Events calendar: holidays (incl. Easter and Thanksgiving) worked out in code and switched on by themselves, Admin holiday switches, weekend events, bonuses that add when events overlap, and a Hideout Events card with on now / coming up. Checked in headless Chromium at phone and desktop sizes. — done 2026-11-09
-=======
+
 - [x] Replaced life-skill mastery bands with one 120-hour track per action, recipe and Heist job (bulk recipes share their single version), raised max bonuses to 20% speed and 15% ordinary yield/conservation, and migrated old band progress without lowering any task's old mastery percentage. — done 2026-11-09
->>>>>>> origin/main
 
 - [x] Spread the seven major offensive families across distant passive-tree regions while preserving class starts, every authored cluster, cluster shapes and total node counts; added a concentration regression test. Released in 0.4.21. — done 2026-11-08
 
