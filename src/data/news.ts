@@ -10,7 +10,10 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Every life-skill action, recipe and Heist job now has its own mastery track (bulk recipes share their single version); mastery takes 120 hours to max and now reaches 20% action speed plus 15% ordinary yield or ingredient conservation.',
+  'Existing mastery progress carries over at the same percentage to every task its old band benefited.',
+];
 
 export const NEWS: NewsEntry[] = [
   {
