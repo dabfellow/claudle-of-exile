@@ -343,7 +343,7 @@ describe('martyrs', () => {
 describe('aim rules', () => {
   it('wait for the War Table, between the second and third rule slots', () => {
     const s = newGame(1);
-    expect(ruleUnlockLevel('aim')).toBe(ruleUnlockLevel('ground') + 2);
+    expect(ruleUnlockLevel('aim')).toBe(ruleUnlockLevel('ground') + 4);
     expect(setRule(s, 0, 0, AIM)).toMatch(`Aim rules: War Table level ${ruleUnlockLevel('aim')}`);
     expect(setAim(s, 0, 'martyrs')).toMatch(/War Table/);
     expect(setAim(s, 0, undefined)).toBeNull();

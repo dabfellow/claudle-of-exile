@@ -123,6 +123,7 @@ export function grantUnlocks(s: GameState, grant: StationGrant | undefined): voi
 /** Everything every station can give, for the sim and tests that aren't about earning it. */
 export function unlockEverything(s: GameState): void {
   for (const st of STATIONS) st.levels.forEach((l) => grantUnlocks(s, l.grants));
+  s.account.hideout.war_table = Math.max(s.account.hideout.war_table ?? 1, stationDef('war_table').levels.length);
 }
 
 /** The gem's suggested rule, or Whenever ready while that one is locked. */

@@ -45,6 +45,7 @@ import {
   BOSS_FROSTBITE_SHATTER,
   BOSS_FROSTBITE_SLOW_PCT,
   zoneDef,
+  nextZones,
   type BossMechanic,
   type MonsterDef,
   echoMechanics,
@@ -172,7 +173,7 @@ import {
   exertionFull,
 } from './mechanics';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
-import { gemsArrivingAt } from './hideout';
+import { autoChallengeUnlocked, autoFleeUnlocked, autoNextZoneUnlocked, gemsArrivingAt } from './hideout';
 import { openReachedZones } from './progress';
 import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, Minion, MonsterInstance, Movement, Posture, SkillGemInstance, Storm, TargetPriority, Targeting } from './types';
 
@@ -515,7 +516,7 @@ export function aliveMonsters(c: CombatRuntime): MonsterInstance[] {
 
 /** A ready boss waits to be challenged, so an area can be farmed for as long as you like. A map's boss or keyed arena boss always comes. */
 export function bossCalled(s: GameState, zoneId: string): boolean {
-  return bossIsNext(s, zoneId) && (s.maps.run?.zoneId === zoneId || isKeyedBossZone(zoneId) || s.settings.autoBoss || !!s.combat?.challenged);
+  return bossIsNext(s, zoneId) && (s.maps.run?.zoneId === zoneId || isKeyedBossZone(zoneId) || (s.settings.autoBoss && autoChallengeUnlocked(s)) || !!s.combat?.challenged);
 }
 
 /** Send for the boss: it comes once the field is clear. */
@@ -773,6 +774,19 @@ function shakeOff(s: GameState, ctx: Ctx, dt: number): void {
   if (!c.monsters.length) onMapFieldLost(s);
 }
 
+/** Auto next zone (a War Table upgrade): once this area's boss is down and the way on is open, move on. Fleeing still wins. */
+export function autoNextZoneStep(s: GameState, ctx: Ctx): void {
+  const c = s.combat;
+  if (!c || !s.settings.autoNextZone || !autoNextZoneUnlocked(s)) return;
+  if (s.maps.run || c.fleeing || c.bossFarm || c.challenged || c.monsters.some((m) => m.isBoss)) return;
+  const zone = zoneDef(c.zoneId);
+  if (isKeyedBossZone(zone.id) || !s.bossesDefeated.includes(zone.id)) return;
+  const open = nextZones(zone.id).filter((z) => s.unlockedZones.includes(z.id));
+  const next = open.find((z) => !s.bossesDefeated.includes(z.id));
+  if (!next) return;
+  enterZone(s, ctx, next.id);
+}
+
 /** Auto-flee: on low life, back off until healed, then go back to the chosen pace. */
 function autoFlee(s: GameState, ctx: Ctx, d: Derived): void {
   const c = s.combat!;
@@ -780,7 +794,7 @@ function autoFlee(s: GameState, ctx: Ctx, d: Derived): void {
   const lifeFlasksEmpty = s.flaskSlots
     .filter((f) => f && flaskStats(f).def.kind === 'life')
     .every((f) => f!.charges < flaskStats(f!).chargesPerUse);
-  const enabled = s.settings.autoFlee || (cautious && lifeFlasksEmpty);
+  const enabled = (s.settings.autoFlee && autoFleeUnlocked(s)) || (cautious && lifeFlasksEmpty);
   if (!enabled) c.fleeing = false;
   else if (!c.fleeing && s.life < d.maxLife * AUTO_FLEE_AT && c.monsters.length && (!cautious || lifeFlasksEmpty)) {
     c.fleeing = true;

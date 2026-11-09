@@ -12,6 +12,8 @@ import { charXpForLevel } from '../src/engine/xp';
 export function veteran(s: GameState, level = 40): GameState {
   s.skills.combat = charXpForLevel(level);
   s.account.hideout.bench = Math.max(2, s.account.hideout.bench ?? 1);
+  // auto flee is the War Table's first upgrade
+  s.account.hideout.war_table = Math.max(2, s.account.hideout.war_table ?? 1);
   return s;
 }
 

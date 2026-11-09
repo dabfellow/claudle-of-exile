@@ -67,6 +67,7 @@ describe('challenging a boss', () => {
     const s = strong();
     const c = ctx();
     s.settings.autoBoss = true;
+    s.account.hideout.war_table = 8;
     s.zoneKills.mudflats = zoneDef('mudflats').bossEvery;
     startCombat(s, c, 'mudflats');
     run(s, c, 10_000);

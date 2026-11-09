@@ -185,6 +185,7 @@ describe('offline progress and bosses', { timeout: 20_000 }, () => {
     s.tutorial.done = true;
     // This test is about offline boss farming, not whether a bare character survives the new rare packs.
     s.skills.combat = charXpForLevel(60);
+    s.account.hideout.war_table = 2;
     return s;
   };
 
@@ -207,6 +208,7 @@ describe('offline progress and bosses', { timeout: 20_000 }, () => {
       s.bossesDefeated = ['mudflats'];
       s.account.automation.rules.push('windups');
       s.settings.autoBoss = true;
+      s.account.hideout.war_table = 8;
       const c = ctx(seed);
       startCombat(s, c, 'mudflats');
       const sum = simulateOffline(s, c, 30 * 60_000);

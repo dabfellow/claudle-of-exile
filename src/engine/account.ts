@@ -56,7 +56,7 @@ export function freshAccount(realm: Realm = STANDARD_REALM): AccountState {
     id: `a${Date.now().toString(36)}${Math.floor(Math.random() * 1e9).toString(36)}`,
     realm,
     rev: 0,
-    hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, quartermaster: 1, watchtower: 1, trophy_altar: 1, rune_board: 1 },
+    hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, war_table_tiers: 1, quartermaster: 1, watchtower: 1, trophy_altar: 1, rune_board: 1 },
     automation: freshAutomation(),
     stash: Array.from({ length: STASH_START_PAGES }, () => []),
     overflow: [],
@@ -81,8 +81,15 @@ export function fillAccount(a: AccountState): AccountState {
   // Loot handling moved out of the War Table. Preserve every salvage tier already paid for.
   const oldWarTable = a.hideout?.war_table ?? 1;
   if (a.hideout) {
-    a.hideout.quartermaster ??= Math.max(1, Math.min(4, oldWarTable - 3));
-    a.hideout.war_table = Math.min(4, oldWarTable);
+    if (a.hideout.quartermaster === undefined) {
+      a.hideout.quartermaster = Math.max(1, Math.min(4, oldWarTable - 3));
+      a.hideout.war_table = Math.min(4, oldWarTable);
+    }
+    // The War Table gained tiers for auto flee, auto challenge and auto next zone. Whoever played before that keeps the first two.
+    if (a.hideout.war_table_tiers === undefined) {
+      a.hideout.war_table_tiers = 1;
+      a.autosKept = true;
+    }
     a.hideout.rune_board ??= 1;
     if (((a.atlas?.nodes?.length ?? 0) > 0 || (a.atlas?.cleared?.length ?? 0) > 0 || a.campaignDone) && (a.hideout.map_device ?? 1) < MAP_DEVICE_ATLAS_LEVEL) {
       a.hideout.map_device = MAP_DEVICE_ATLAS_LEVEL;
@@ -220,6 +227,7 @@ function mergeUnlocks(a: AccountState, from: AccountTransfer): void {
     };
   }
   a.exileUnlocked ||= !!from.exileUnlocked;
+  a.autosKept ||= !!(from as { autosKept?: boolean }).autosKept;
   a.achievementRewards = [...new Set([...(a.achievementRewards ?? []), ...(from.achievementRewards ?? [])])];
   if (from.campaignDone) a.campaignDone = true;
   if (from.atlas) {

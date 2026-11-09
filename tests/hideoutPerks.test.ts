@@ -29,7 +29,7 @@ describe('stationPerks', () => {
     const ctx = makeCtx(seeded(1));
     upgradeStation(s, ctx, 'war_table');
     upgradeStation(s, ctx, 'war_table');
-    expect(stationPerks(s, 'war_table')).toEqual(['Rules: Simple, Vitals, Wind-up, Ground, Status, Aim', '2 rule slots per skill']);
+    expect(stationPerks(s, 'war_table')).toEqual(['Rules: Simple, Vitals, Wind-up, Ground, Status', '2 rule slots per skill', 'Battlefield: Auto flee']);
   });
 
   it('counts the bench recipes its level opens', () => {

@@ -804,6 +804,8 @@ export interface Settings {
   autoFlee: boolean;
   /** a ready boss comes on its own instead of waiting to be challenged */
   autoBoss: boolean;
+  /** travel to the next area once this area's boss is down */
+  autoNextZone?: boolean;
   targeting: Targeting;
   activePassiveProfileId?: number;
   passiveProfiles?: PassiveProfile[];
@@ -904,6 +906,8 @@ export interface AccountState {
   rev: number;
   hideout: Record<string, number>;
   automation: AutomationUnlocks;
+  /** from before the War Table sold auto flee and auto challenge: keeps both without the upgrades */
+  autosKept?: boolean;
   /** stash pages of gear, STASH_PAGE_SIZE each */
   stash: Item[][];
   /** items that didn't fit when stashes were merged: they can only be taken out */

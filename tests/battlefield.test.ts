@@ -151,6 +151,7 @@ describe('battlefield', () => {
   it('auto-flee takes over on low life and hands back once healed', () => {
     const { s, c } = idler('walk');
     s.settings.autoFlee = true;
+    s.account.hideout.war_table = 8;
     run(s, c, 3000);
     s.life = 1;
     combatStep(s, c, 50, deriveStats(s));

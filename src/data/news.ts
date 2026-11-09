@@ -14,6 +14,7 @@ export const UPCOMING: string[] = [
   'Every hideout station has three or more new tiers, each with a new unlock and a stat bump, with the top tiers gated behind Hard Boss and Uber materials and big gold costs.',
   'The Atlas tree now unlocks at Map Device level 2, and players who already use it keep it.',
   'Stash upgrades make bought tabs 10% cheaper per level and add ground-loot storage; the Forge can now smith higher-tier gear; the new Rune Board station boosts carved runes.',
+  'The War Table now sells Emergency flee (its first, cheap upgrade), Auto-challenge and a new Auto next zone that moves you on once the area boss is down; everyone who already had flee and challenge keeps them.',
 ];
 
 export const NEWS: NewsEntry[] = [

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { autoChallengeUnlocked, autoFleeUnlocked, autoNextZoneUnlocked } from '../../engine/hideout';
 import { mealDef } from '../../data/cooking';
 import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
@@ -679,11 +680,14 @@ function MovementBar({ s }: { s: GameState }) {
           ))}
         </select>
       </label>
-      <label className="bf-auto" title="Emergency fallback: below 35% Life, flee until you're back above 90%. Cautious posture also waits for Life flasks to empty.">
-        <input type="checkbox" checked={s.settings.autoFlee} onChange={(e) => game.act((st) => void (st.settings.autoFlee = e.target.checked))} /> Emergency flee
+      <label className={`bf-auto${autoFleeUnlocked(s) ? '' : ' locked'}`} title={autoFleeUnlocked(s) ? "Emergency fallback: below 35% Life, flee until you're back above 90%. Cautious posture also waits for Life flasks to empty." : 'Unlocked by the first War Table upgrade'}>
+        <input type="checkbox" disabled={!autoFleeUnlocked(s)} checked={autoFleeUnlocked(s) && s.settings.autoFlee} onChange={(e) => game.act((st) => void (st.settings.autoFlee = e.target.checked))} /> Emergency flee
       </label>
-      <label className="bf-auto" title="A ready boss comes on its own, instead of waiting for you to challenge it">
-        <input type="checkbox" checked={s.settings.autoBoss} onChange={(e) => game.act((st) => void (st.settings.autoBoss = e.target.checked))} /> Auto-challenge
+      <label className={`bf-auto${autoChallengeUnlocked(s) ? '' : ' locked'}`} title={autoChallengeUnlocked(s) ? 'A ready boss comes on its own, instead of waiting for you to challenge it' : 'Unlocked by a War Table upgrade'}>
+        <input type="checkbox" disabled={!autoChallengeUnlocked(s)} checked={autoChallengeUnlocked(s) && s.settings.autoBoss} onChange={(e) => game.act((st) => void (st.settings.autoBoss = e.target.checked))} /> Auto-challenge
+      </label>
+      <label className={`bf-auto${autoNextZoneUnlocked(s) ? '' : ' locked'}`} title={autoNextZoneUnlocked(s) ? "Once this area's boss is down and the next area is open, travel there. Emergency flee still pulls you back." : 'Unlocked by a War Table upgrade'}>
+        <input type="checkbox" disabled={!autoNextZoneUnlocked(s)} checked={autoNextZoneUnlocked(s) && !!s.settings.autoNextZone} onChange={(e) => game.act((st) => void (st.settings.autoNextZone = e.target.checked))} /> Auto next zone
       </label>
     </div>
   );

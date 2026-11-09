@@ -157,18 +157,18 @@ describe('War Table', () => {
     return a;
   };
 
-  it('starts with wind-ups, ground rules and two slots, then grants the third slot at level 4', () => {
+  it('starts with wind-ups, ground rules and two slots, then grants the third slot at level 7', () => {
     expect(windupsAt()).toBe(1);
     expect(groundAt()).toBe(1);
     expect(freshAccount().automation.ruleSlots).toBe(2);
-    expect(stationDef('war_table').levels[3].grants).toEqual({ ruleSlots: 3 });
+    expect(stationDef('war_table').levels[6].grants).toEqual({ ruleSlots: 3 });
   });
 
   it('gives an old level 2 table wind-ups, at the same level', () => {
     const a = account(2, ['vitals'], 1);
     alignWarTable(a);
     expect(a.hideout.war_table).toBe(2);
-    expect(a.automation.rules).toEqual(['vitals', 'windups', 'ground', 'status']);
+    expect(a.automation.rules).toEqual(['vitals', 'windups', 'ground']);
     expect(a.automation.ruleSlots).toBe(2);
   });
 
@@ -176,7 +176,8 @@ describe('War Table', () => {
     const a = account(3, ['vitals', 'status'], 2);
     alignWarTable(a);
     expect(a.hideout.war_table).toBe(3);
-    expect(a.automation.rules).toEqual(expect.arrayContaining(['windups', 'ground', 'aim']));
+    expect(a.automation.rules).toEqual(expect.arrayContaining(['windups', 'ground', 'status']));
+    expect(a.automation.rules).not.toContain('aim');
     expect(a.automation.ruleSlots).toBe(2);
     alignWarTable(a);
     expect(a.hideout.war_table).toBe(3);
@@ -185,14 +186,14 @@ describe('War Table', () => {
   it('moves the third rule slot too', () => {
     const a = account(5, ['vitals', 'status', 'windups'], 3);
     alignWarTable(a);
-    expect(a.hideout.war_table).toBe(5);
+    expect(a.hideout.war_table).toBe(7);
   });
 
   it('leaves a new table alone', () => {
     const a = account(2, ['vitals', 'windups'], 1);
     alignWarTable(a);
     expect(a.hideout.war_table).toBe(2);
-    expect(a.automation.rules).toEqual(['vitals', 'windups', 'ground', 'status']);
+    expect(a.automation.rules).toEqual(['vitals', 'windups', 'ground']);
     const fresh = freshAccount();
     alignWarTable(fresh);
     expect(fresh.hideout.war_table).toBe(1);

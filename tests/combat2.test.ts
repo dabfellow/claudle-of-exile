@@ -435,6 +435,7 @@ describe('combat 2.0', () => {
     const s = newGame(1);
     const c = ctx();
     s.settings.autoBoss = true;
+    s.account.hideout.war_table = 8;
     s.zoneKills.mudflats = 99;
     startCombat(s, c, 'mudflats');
     tick(s, c, 1000);

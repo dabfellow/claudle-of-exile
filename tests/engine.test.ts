@@ -269,6 +269,7 @@ describe('combat', () => {
   it('a fresh character can idle zone 1 trash until the boss appears', () => {
     for (const seed of [1, 2, 3]) {
       const s = newGame(seed);
+      s.account.hideout.war_table = 2;
       const c = ctx(seed);
       startCombat(s, c, 'mudflats');
       for (let t = 0; t < 10 * 60_000 && s.combat; t += 1000) tick(s, c, 1000);
@@ -280,6 +281,7 @@ describe('combat', () => {
     const s = newGame(1);
     const c = ctx();
     s.settings.autoBoss = true;
+    s.account.hideout.war_table = 8;
     s.zoneKills.mudflats = 15;
     startCombat(s, c, 'mudflats');
     s.life = 1;

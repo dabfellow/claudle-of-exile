@@ -2,6 +2,9 @@ import { BASES, obtainable, type BaseDef } from '../data/bases';
 import { ACTIVE_GEMS, activeGemDef, gemReqLevel, SUPPORT_GEMS, supportGemDef } from '../data/gems';
 import {
   ALCH_DOUBLE,
+  AUTO_CHALLENGE_WAR_TABLE_LEVEL,
+  AUTO_FLEE_WAR_TABLE_LEVEL,
+  AUTO_NEXT_ZONE_WAR_TABLE_LEVEL,
   AUTO_SALVAGE_QUARTERMASTER_LEVEL,
   AUTO_CRAFT_BENCH_LEVEL,
   BENCH_BUILT_LEVEL,
@@ -43,6 +46,18 @@ import { bagFull, takeOwned } from './storage';
 
 export function stationLevel(s: GameState, id: StationId): number {
   return s.account.hideout[id] ?? 1;
+}
+
+export function autoFleeUnlocked(s: GameState): boolean {
+  return !!s.account.autosKept || stationLevel(s, 'war_table') >= AUTO_FLEE_WAR_TABLE_LEVEL;
+}
+
+export function autoChallengeUnlocked(s: GameState): boolean {
+  return !!s.account.autosKept || stationLevel(s, 'war_table') >= AUTO_CHALLENGE_WAR_TABLE_LEVEL;
+}
+
+export function autoNextZoneUnlocked(s: GameState): boolean {
+  return stationLevel(s, 'war_table') >= AUTO_NEXT_ZONE_WAR_TABLE_LEVEL;
 }
 
 /** Maps come after the campaign, PoE-style: the Map Device wakes once the last act's boss is beaten. */
@@ -160,14 +175,24 @@ export function stationPerks(s: GameState, id: StationId): string[] {
       ];
     case 'war_table': {
       const { rules, ruleSlots } = s.account.automation;
+      const autos: string[] = [];
+      if (autoFleeUnlocked(s)) autos.push('Auto flee');
+      if (autoChallengeUnlocked(s)) autos.push('Auto-challenge');
+      if (lvl >= AUTO_NEXT_ZONE_WAR_TABLE_LEVEL) autos.push('Auto next zone');
       return [
         `Rules: ${['Simple', ...rules.map((r) => RULE_NAMES[r])].join(', ')}`,
         `${ruleSlots} rule slot${ruleSlots > 1 ? 's' : ''} per skill`,
+        ...(autos.length ? [`Battlefield: ${autos.join(', ')}`] : []),
       ];
     }
     case 'quartermaster': {
       const salvage = Object.entries(AUTO_SALVAGE_QUARTERMASTER_LEVEL).filter(([, required]) => lvl >= required).map(([rarity]) => rarity[0].toUpperCase() + rarity.slice(1));
-      return ['Layered loot presets', 'Category overrides', 'Ordered custom rules and share codes', ...(salvage.length ? [`Auto-salvage: ${salvage.join(', ')}`] : [])];
+      return [
+        'Layered loot presets',
+        'Category overrides',
+        'Ordered custom rules and share codes',
+        ...(salvage.length ? [`Auto-salvage: ${salvage.join(', ')}`] : []),
+      ];
     }
     case 'watchtower':
       return [

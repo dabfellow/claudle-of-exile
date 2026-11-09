@@ -131,6 +131,7 @@ describe('spending Life', () => {
     expect(LIFE_RESERVE_PCT / 100).toBeGreaterThan(AUTO_FLEE_AT);
     const { s, ctx, d } = arena('blood_rite');
     s.settings.autoFlee = true;
+    s.account.hideout.war_table = 8;
     s.combat!.cooldowns[0] = 0;
     for (let i = 0; i < 12; i++) {
       s.combat!.cooldowns[0] = 0;

@@ -71,10 +71,10 @@ describe('rule locks', () => {
     const s = newGame(1);
     expect(bossesOffline(s)).toBe(true);
     expect(ruleLockReason(s, 'targetHas')).not.toBeNull();
-    upgradeTo(s, 'war_table', 2);
+    upgradeTo(s, 'war_table', 3);
     expect(ruleLockReason(s, 'targetHas')).toBeNull();
     expect(s.account.automation.rules).not.toContain('aim');
-    upgradeTo(s, 'war_table', 3);
+    upgradeTo(s, 'war_table', 5);
     expect(s.account.automation.rules).toContain('aim');
   });
 
@@ -106,7 +106,7 @@ describe('rule slots', () => {
     expect(ruleSlots(s)).toBe(2);
     expect(setRule(s, 0, 1, { when: 'bossOnly' })).toBeNull();
     expect(setRule(s, 0, 2, { when: 'notActive' })).toMatch(/No free rule slot/);
-    upgradeTo(s, 'war_table', 4);
+    upgradeTo(s, 'war_table', 7);
     expect(ruleSlots(s)).toBe(3);
     inFight(s, [dummy()]);
     expect(chooseSkill(s, deriveStats(s)).slot).toBe(-1);
@@ -148,10 +148,10 @@ describe('unlocks', () => {
     const s = newGame(1);
     upgradeTo(s, 'war_table', stationDef('war_table').levels.length);
     upgradeTo(s, 'watchtower', 4);
-    expect(s.account.automation).toEqual({ rules: ['vitals', 'windups', 'ground', 'status', 'aim'], ruleSlots: 3, offlineHours: 24 });
+    expect(s.account.automation).toEqual({ rules: ['vitals', 'windups', 'ground', 'status', 'aim'], ruleSlots: 4, offlineHours: 24 });
     s.account.hideout.war_table = 1;
     const back = s;
-    expect(back.account.automation.ruleSlots).toBe(3);
+    expect(back.account.automation.ruleSlots).toBe(4);
     expect(bossesOffline(back)).toBe(true);
   });
 
@@ -201,6 +201,7 @@ describe('offline rules', { timeout: 30_000 }, () => {
       const s = strong();
       s.bossesDefeated = beaten;
       s.settings.autoBoss = true;
+      s.account.hideout.war_table = 4;
       const c = ctx();
       startCombat(s, c, 'mudflats');
       const sum = simulateOffline(s, c, 30 * 60_000);
@@ -227,6 +228,7 @@ describe('offline rules', { timeout: 30_000 }, () => {
     const won = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some((seed) => {
       const s = strong();
       s.settings.autoBoss = true;
+      s.account.hideout.war_table = 4;
       upgradeTo(s, 'war_table', ruleUnlockLevel('windups'));
       const c = ctx(seed);
       startCombat(s, c, 'mudflats');

@@ -12,6 +12,7 @@ const fighter = () => {
   const s = newGame(1, { name: 'T', classId: 'warrior' });
   s.tutorial.done = true;
   s.skills.combat = charXpForLevel(20);
+  s.account.hideout.war_table = 2;
   return s;
 };
 

@@ -1960,3 +1960,4 @@ img.ct-svg {
     animation: none;
   }
 }
+.bf-auto.locked { opacity: 0.5; }

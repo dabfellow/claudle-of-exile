@@ -10,7 +10,7 @@ import { createSkillGem } from './gems';
 import type { Ctx } from './context';
 import { checkAchievements } from './achievements';
 import { mealStep } from './cooking';
-import { combatStep } from './combat';
+import { autoNextZoneStep, combatStep } from './combat';
 import { fillOrders, newExpeditionState } from './expedition';
 import { heistAutoStep, heistStep, newHeistState } from './heist';
 import { checkCampaignDone, refreshVendor, vendorTick } from './hideout';
@@ -166,6 +166,7 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
     if (s.combat) {
       mealStep(s, ctx, step);
       if (combatStep(s, ctx, step, d)) d = deriveStats(s);
+      autoNextZoneStep(s, ctx);
       if (s.fallen) return;
     } else {
       s.life = Math.min(d.maxLife, s.life + d.maxLife * TOWN_REGEN * (step / 1000));
