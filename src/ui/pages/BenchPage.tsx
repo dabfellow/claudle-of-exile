@@ -11,7 +11,7 @@ import { recipeUnlocked } from '../../engine/challenge';
 import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { actOpen } from '../../data/zones';
 import { hasItem } from '../../engine/bank';
-import { currencyDef } from '../../data/materials';
+import { currencyDef, materialDef } from '../../data/materials';
 import { equipFlask, unequipFlask } from '../../engine/combat';
 import {
   applyEssence,
@@ -42,7 +42,9 @@ import { affixRangeText, allMods, describeMod, itemName, maxAffixes, salvageValu
 import { inscribeRune, runeReason, runeText } from '../../engine/runes';
 import type { FlaskInstance, GameState, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Badge, Cost, EmptyState, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tabs, Tooltip, type TabDef } from '../components/common';
+import { Badge, EmptyState, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tabs, Tooltip, type TabDef } from '../components/common';
+import { BENCH_MATERIAL_GROUPS, BenchMaterialSummary, CostHave, MaterialChoices } from '../components/BenchMaterials';
+import '../round2-session3.css';
 import { CraftUntilCard } from '../components/CraftUntilCard';
 import { FlaskShelf, FlaskTip } from '../components/FlaskView';
 import { ItemTip } from '../components/ItemView';
@@ -53,6 +55,9 @@ const ORB_ORDER = ['transmute', 'augment', 'alteration', 'regal', 'alchemy', 'ch
 const PINNACLE_SIGILS = ['exile_doom_sigil', 'architect_doom_sigil', 'void_sigil'];
 
 type BenchTab = 'bench_recipes' | 'special_crafts' | 'auto_craft' | 'flasks';
+
+/** Where more of a material family comes from, as the bench's material list says it. */
+const groupSource = (id: string) => BENCH_MATERIAL_GROUPS.find((g) => g.id === id)?.source.toLowerCase() ?? 'the world';
 type BenchCraftCategory = 'all' | 'defences' | 'offense' | 'attributes' | 'meta';
 
 /** Orbs, enchanting and belt slots for the selected flask. */
@@ -211,7 +216,8 @@ export function BenchPage() {
     const err = game.act((st, ctx) => applyOrb(st, ctx, orbId, item.uid, f, kept));
     if (!err) {
       setFlash((n) => n + 1);
-      const text = [currencyDef(orbId).name, f && fossilDef(f)!.name, kept && "Forger's Seal"].filter(Boolean).join(' + ');
+      // the Doom Sigils are trophies, not currencies, so name them from the material list
+      const text = [materialDef(orbId).name, f && fossilDef(f)!.name, kept && "Forger's Seal"].filter(Boolean).join(' + ');
       setHistory((h) => [{ id: Date.now() + Math.random(), text, name: itemName(item), rarity: item.rarity }, ...h].slice(0, 12));
       if (f && (s.account.bank[f] ?? 0) <= 1) setFossil(null);
       if (kept) setSeal(null);
@@ -375,6 +381,15 @@ export function BenchPage() {
         })}
       </div>
 
+      <BenchMaterialSummary
+        s={s}
+        onOpen={(group) => {
+          setActiveTab(group === 'dust' ? 'bench_recipes' : 'special_crafts');
+          // after the tab renders, bring that family's section into view
+          setTimeout(() => document.getElementById(`bench-mats-${group}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+        }}
+      />
+
       <div className="bench-layout">
         {/* Left pinned item view */}
         <aside className="bench-side">
@@ -446,9 +461,14 @@ export function BenchPage() {
           {activeTab === 'bench_recipes' && (
             <div className="bench-upper">
               <div className="bench-crafts-col">
-                <div className="card">
+                <div className="card" id="bench-mats-dust">
                   <div className="card-title">
                     Bench Crafts
+                    <span className="r2-cost-item">
+                      <MatIcon id="arcane_dust" size={12} /> <b className="num">{fmt(s.account.bank.arcane_dust ?? 0)}</b>
+                      <span className="dim">dust</span>
+                      <MatIcon id="gold" size={12} /> <b className="num">{fmt(s.account.bank.gold ?? 0)}</b>
+                    </span>
                     <span className="grow" />
                     <span className="card-hint">
                       {item && allMods(item).some((m) => m.affixId === 'meta_multicraft')
@@ -513,7 +533,7 @@ export function BenchPage() {
                                 <span className="dim small">{a.kind}</span>
                                 {b.benchLevel >= 6 && <Badge tone="gold">L{b.benchLevel}</Badge>}
                               </div>
-                              <Cost cost={b.cost} have={s.account.bank} />
+                              <CostHave cost={b.cost} have={s.account.bank} />
                               <button className="btn sm" disabled={!!reason} title={reason ?? ''} onClick={() => craft(b.id)}>
                                 {reason && item ? reason : 'Craft'}
                               </button>
@@ -546,18 +566,20 @@ export function BenchPage() {
           {activeTab === 'special_crafts' && (
             <div className="bench-upper">
               <div className="bench-crafts-col" style={{ gap: 14 }}>
-                {/* Pinnacle Doom Sigils */}
-                <div className="card">
+                {/* Pinnacle Doom Sigils: endgame, so they sit last, and stay a single line until you own one */}
+                <div className="card" style={{ order: 9 }}>
                   <div className="card-title">
                     Pinnacle Doom Sigils
                     <span className="grow" />
                     <span className="card-hint">Dropped by Uber Pinnacle Bosses</span>
                   </div>
-                  <div className="grid" style={{ gap: 10 }}>
+                  {ownedPinnacleSigils.length === 0 && <div className="dim small">You have none yet. Doom Sigils drop from the Uber Pinnacle Bosses in Maps.</div>}
+                  <div className="grid" style={{ gap: 10, display: ownedPinnacleSigils.length ? undefined : 'none' }}>
                     <div className="row wrap" style={{ gap: 8 }}>
                       {PINNACLE_SIGILS.map((sigilId) => {
                         const count = s.account.bank[sigilId] ?? 0;
-                        const c = currencyDef(sigilId);
+                        // Doom Sigils are trophies, not currencies: currencyDef has no entry for them
+                        const c = materialDef(sigilId);
                         const reason = item ? orbReason(s, sigilId, item.uid) : 'Select an item';
                         return (
                           <div key={sigilId} className="card" style={{ flex: '1 1 240px', padding: 10, background: 'var(--panel-2)' }}>
@@ -569,7 +591,7 @@ export function BenchPage() {
                             </div>
                             <div className="dim small" style={{ marginBottom: 8, minHeight: 36 }}>{c.desc}</div>
                             <button className="btn sm" disabled={!!reason} title={reason ?? ''} onClick={() => use(sigilId)} style={{ width: '100%' }}>
-                              {reason && item ? reason : `Apply ${c.short}`}
+                              {reason && item ? reason : 'Apply'}
                             </button>
                           </div>
                         );
@@ -583,10 +605,11 @@ export function BenchPage() {
                   <div className="card-title">Contraband & Catalysts</div>
                   <div className="grid" style={{ gap: 12 }}>
                     {/* Forger's Seal */}
-                    <div>
+                    <div id="bench-mats-contraband">
                       <div className="section-label">
                         Forger's Seal ×{seals} · Pick a modifier to protect from the next Alteration, Chaos, Annulment, or Divine
                       </div>
+                      {seals === 0 && <div className="dim small">You have no Forger's Seals. They come from {groupSource('contraband')}.</div>}
                       <div className="fossil-chips" style={{ marginTop: 4 }}>
                         {item && allMods(item).length ? (
                           allMods(item).map((m) => (
@@ -631,31 +654,34 @@ export function BenchPage() {
                     </div>
 
                     {/* Fossils */}
-                    <div>
+                    <div id="bench-mats-fossils">
                       <div className="section-label">Fossils · Select a fossil to bias modifier weights on the next roll</div>
-                      {fossils.length > 0 ? (
-                        <div className="fossil-chips" style={{ marginTop: 4 }}>
-                          {fossils.map((f) => (
+                      <MaterialChoices
+                        s={s}
+                        ids={FOSSILS.map((f) => f.id)}
+                        source={groupSource('fossils')}
+                        render={(id, n) => {
+                          const f = fossilDef(id)!;
+                          return (
                             <button
-                              key={f.id}
-                              className={`btn sm ${fossil === f.id ? 'selected' : ''}`}
+                              key={id}
+                              className={`btn sm ${fossil === id ? 'selected' : ''}`}
                               title={`${f.desc}. Used up with the next modifier roll.`}
-                              onClick={() => setFossil(fossil === f.id ? null : f.id)}
+                              onClick={() => setFossil(fossil === id ? null : id)}
                             >
-                              <MatIcon id={f.id} size={12} /> {f.name.replace(' Fossil', '')} <span className="dim">×{s.account.bank[f.id]}</span>
+                              <MatIcon id={id} size={12} /> {f.name.replace(' Fossil', '')} <span className="dim">×{fmt(n)}</span>
                             </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="dim small">No fossils in bank. Fossils drop from Mining and Delve-style areas.</div>
-                      )}
+                          );
+                        }}
+                      />
                     </div>
 
                     {/* Ancient Whetstone */}
-                    <div>
+                    <div id="bench-mats-whetstones">
                       <div className="section-label">
                         Ancient Whetstones ×{whetstones} · Raise one modifier tier within item level limits
                       </div>
+                      {whetstones === 0 && <div className="dim small">You have no Ancient Whetstones. They come from {groupSource('whetstones')}.</div>}
                       <div className="fossil-chips" style={{ marginTop: 4 }}>
                         {item && allMods(item).length ? (
                           allMods(item).map((m) => {
@@ -684,53 +710,57 @@ export function BenchPage() {
                 <div className="card">
                   <div className="card-title">Runes & Essences</div>
                   <div className="grid" style={{ gap: 12 }}>
-                    <div>
+                    <div id="bench-mats-runes">
                       <div className="section-label">Runes · Inscribe a permanent socket bonus</div>
-                      {runes.length > 0 ? (
-                        <div className="fossil-chips" style={{ marginTop: 4 }}>
-                          {runes.map((r) => {
-                            const reason = item ? runeReason(s, r.id, item.uid) : 'Select an item';
-                            return (
-                              <button
-                                key={r.id}
-                                data-rune={r.id}
-                                className="btn sm"
-                                disabled={!!reason}
-                                title={reason ?? runeText(r, item!)}
-                                onClick={() => inscribe(r.id)}
-                              >
-                                <MatIcon id={r.id} size={12} /> {r.name} <span className="dim">×{s.account.bank[r.id]}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="dim small">No inscribed runes available in your bank.</div>
-                      )}
+                      <MaterialChoices
+                        s={s}
+                        ids={RUNES.map((r) => r.id)}
+                        source={groupSource('runes')}
+                        render={(id, n) => {
+                          const r = runeDef(id)!;
+                          const reason = item ? runeReason(s, id, item.uid) : 'Select an item';
+                          return (
+                            <button key={id} data-rune={id} className="btn sm" disabled={!!reason} title={reason ?? runeText(r, item!)} onClick={() => inscribe(id)}>
+                              <MatIcon id={id} size={12} /> {r.name} <span className="dim">×{fmt(n)}</span>
+                            </button>
+                          );
+                        }}
+                      />
                     </div>
 
-                    <div>
+                    <div id="bench-mats-essences">
                       <div className="section-label">Essences · Imbue an item as Magic with a guaranteed modifier</div>
-                      {essences.length > 0 ? (
-                        <div className="fossil-chips" style={{ marginTop: 4 }}>
-                          {essences.map((e) => {
-                            const reason = item ? essenceReason(s, e.id, item.uid) : 'Select an item';
-                            return (
-                              <button
-                                key={e.id}
-                                className="btn sm"
-                                disabled={!!reason}
-                                title={reason ?? affixRangeText(e.affixId, e.tier)}
-                                onClick={() => essence(e.id)}
-                              >
-                                <MatIcon id={e.id} size={12} /> {e.name} <span className="dim">×{s.account.bank[e.id]}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="dim small">No essences available in your bank.</div>
-                      )}
+                      <MaterialChoices
+                        s={s}
+                        ids={ESSENCES.map((e) => e.id)}
+                        source={groupSource('essences')}
+                        render={(id, n) => {
+                          const e = ESSENCES.find((x) => x.id === id)!;
+                          const reason = item ? essenceReason(s, id, item.uid) : 'Select an item';
+                          return (
+                            <button key={id} className="btn sm" disabled={!!reason} title={reason ?? affixRangeText(e.affixId, e.tier)} onClick={() => essence(id)}>
+                              <MatIcon id={id} size={12} /> {e.name} <span className="dim">×{fmt(n)}</span>
+                            </button>
+                          );
+                        }}
+                      />
+                    </div>
+
+                    <div id="bench-mats-resins">
+                      <div className="section-label">Resins and orb shards · used elsewhere, shown here so you know what you hold</div>
+                      <div className="fossil-chips" style={{ marginTop: 4 }}>
+                        {[...BENCH_MATERIAL_GROUPS.find((g) => g.id === 'resins')!.ids, ...BENCH_MATERIAL_GROUPS.find((g) => g.id === 'shards')!.ids].map((id) => (
+                          <span key={id} className={`r2-mat-chip ${s.account.bank[id] ? '' : 'none'}`} title={materialDef(id).desc ?? ''}>
+                            <MatIcon id={id} size={12} />
+                            <span className="r2-mat-name">{materialDef(id).name}</span>
+                            <b className="num">{fmt(s.account.bank[id] ?? 0)}</b>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="dim small" style={{ marginTop: 4 }}>
+                        Resins raise the item level of bases you smith (Smithing's Catalyst). Every 20 shards fuse into an orb at Alchemy.
+                      </div>
+                      <span id="bench-mats-shards" />
                     </div>
                   </div>
                 </div>

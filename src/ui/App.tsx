@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { game, useGame } from '../game';
 import { PinDock } from './components/common';
 import { ItemMenuHost } from './components/ItemMenu';
@@ -21,9 +21,11 @@ import { TraderPage } from './pages/TraderPage';
 import { TreePage } from './pages/TreePage';
 import { AccountModal, AccountScreen, CharacterCreate, CharacterSelect, DemoBanner, EventBanner, FallenScreen, IntroModal, NewPasswordModal, TitleScreen } from './screens/Screens';
 import { AdminMailNotice } from './components/AdminInbox';
+import { PageErrorBoundary } from './components/PageErrorBoundary';
+import { AdminPage } from './pages/AdminPage';
 
-// admins only: kept out of the main bundle
-const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
+// Admin is in the main bundle on purpose. As a separate lazy chunk it went black whenever a release landed while the
+// game was open: the old chunk file was gone, and the failed load took the whole app down. It's a few kB.
 
 function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
   switch (page) {
@@ -56,13 +58,7 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
     case 'settings':
       return <SettingsPage />;
     case 'admin':
-      return game.isAdmin ? (
-        <Suspense fallback={<p className="dim">Loading…</p>}>
-          <AdminPage />
-        </Suspense>
-      ) : (
-        <SettingsPage />
-      );
+      return game.isAdmin ? <AdminPage /> : <SettingsPage />;
     default:
       return <SkillPage key={page} skill={page} />;
   }
@@ -88,7 +84,9 @@ function GameScreen() {
         <DemoBanner />
         <EventBanner />
         {page !== 'settings' && <AdminMailNotice open={() => go('settings')} />}
-        <Content key={page} page={page} go={go} />
+        <PageErrorBoundary key={page} where={`page:${page}`} onLeave={() => go('hideout')}>
+          <Content page={page} go={go} />
+        </PageErrorBoundary>
       </main>
       <Feed />
       <XpBar />

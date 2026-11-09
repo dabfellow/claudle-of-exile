@@ -6,8 +6,6 @@ import { materialDef } from '../data/materials';
 import { actionDef, SKILLS } from '../data/skills';
 import { zoneDef } from '../data/zones';
 import { queueSkill, retreat, useFlask } from '../engine/combat';
-import { cartographyOpen } from '../engine/cartography';
-import { cookingOpen } from '../engine/cooking';
 import { findItem } from '../engine/crafting';
 import { methodName } from '../engine/craftUntil';
 import { alarmChance, roomMs } from '../engine/heist';
@@ -30,7 +28,10 @@ import { PinnedCurrencies } from './components/CurrencyPins';
 import { QuestTracker } from './components/QuestTracker';
 import { ChallengeTag, Crest } from './screens/Screens';
 import { APP_VERSION } from '../platform/errors';
-import { isClassic, isSolo } from '../engine/challenge';
+import { isClassic } from '../engine/challenge';
+import { MARKET_OPEN } from '../platform/market';
+import { marketInNav } from './marketWindDown';
+import { skillLock } from './skillLock';
 
 export type Page =
   | 'hideout'
@@ -70,7 +71,8 @@ const NAV: { label: string; items: NavEntry[] }[] = [
       { page: 'campaign', label: 'Campaign', icon: 'campaign' },
       { page: 'maps', label: 'Map Device', icon: 'map' },
       { page: 'vendor', label: 'Town', icon: 'vendor' },
-      { page: 'market', label: 'Player Market', icon: 'vendor' },
+      // closed for 1.0: listed only while you still have something on it (see marketWindDown)
+      { page: 'market', label: MARKET_OPEN ? 'Player Market' : 'Market (closing)', icon: 'vendor' },
     ],
   },
   {
@@ -145,8 +147,10 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
       {NAV.filter((g) => !isClassic(s) || (g.label !== 'Gathering' && g.label !== 'Crafting')).map((g) => (
         <div className={`nav-group ${g.label ? '' : 'unlabelled'}`} key={g.label || 'top'}>
           {g.label && <div className="nav-label">{g.label}</div>}
-          {g.items.filter((it) => (it.page !== 'cooking' || cookingOpen(s)) && (it.page !== 'cartography' || cartographyOpen(s)) && (it.page !== 'market' || !isSolo(s))).map((it) => {
+          {g.items.filter((it) => it.page !== 'market' || marketInNav(s)).map((it) => {
             const lvl = it.skill ? levelOf(it.skill, s.skills[it.skill]) : null;
+            // life skills you can't use yet are still listed, with a lock, and open on a page saying how to unlock them
+            const locked = it.skill && it.skill !== 'combat' ? skillLock(s, it.skill) : null;
             const isActive = it.skill && it.skill === active;
             const color = it.skill ? SKILLS[it.skill].color : 'var(--muted)';
             return (
@@ -157,7 +161,15 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
                 </span>
                 <span className="nav-name">{it.label}</span>
                 {isActive && <span className="nav-active-dot" />}
-                {it.skill && SKILLS[it.skill].soon ? <span className="nav-badge">Soon</span> : lvl !== null && <span className="nav-badge">{lvl}</span>}
+                {it.skill && SKILLS[it.skill].soon ? (
+                  <span className="nav-badge">Soon</span>
+                ) : locked ? (
+                  <span className="nav-badge" title={`Unlocks at ${locked}`}>
+                    <GameIcon name="lock" size={10} />
+                  </span>
+                ) : (
+                  lvl !== null && <span className="nav-badge">{lvl}</span>
+                )}
                 {it.page === 'tree' && points > 0 && <span className="nav-badge hot">+{points}</span>}
                 {it.page === 'stash' && <span className="nav-badge" title="Items in your bag">{s.inventory.length}</span>}
                 {it.page === 'combat' && s.ground.length + s.offlineHaul.length > 0 && <span className="nav-badge loot" title="Loot waiting to be picked up">{s.ground.length + s.offlineHaul.length}</span>}

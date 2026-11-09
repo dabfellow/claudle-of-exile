@@ -6,8 +6,10 @@ import { currencyDef, MATERIALS } from '../../data/materials';
 import { characterLevel } from '../../engine/character';
 import { flaskName, flaskValue, sellFlasks } from '../../engine/flasks';
 import { buyGem, buyOffer, gemShopOffers, nextGemShopArea, offerName, rerollCost, rerollVendor, sellItems, sellMaterial, stationLevel } from '../../engine/hideout';
-import { sellValue } from '../../engine/items';
-import type { GameState, Rarity, ShopId, VendorOffer } from '../../engine/types';
+import { itemName, sellValue } from '../../engine/items';
+import { defaultSlot, equipReason } from '../../engine/equipment';
+import type { EquipSlot, GameState, Item, Rarity, ShopId, VendorOffer } from '../../engine/types';
+import '../round2-session3.css';
 import { baseDef } from '../../data/bases';
 import { game, useGame } from '../../game';
 import { Art, EmptyState, fmt, fmtTime, GameIcon, MatIcon, PixelArt, Tabs, Tooltip } from '../components/common';
@@ -58,6 +60,25 @@ const SHOPS: { id: ShopId; name: string; keeper: string; blurb: string; portrait
     ],
   },
 ];
+
+const SLOT_NAME: Record<string, string> = {
+  weapon: 'weapon',
+  offhand: 'off hand',
+  helmet: 'helmet',
+  body: 'body armour',
+  gloves: 'gloves',
+  boots: 'boots',
+  belt: 'belt',
+  amulet: 'amulet',
+  ring: 'ring',
+};
+const slotLabel = (item: Item) => {
+  try {
+    return SLOT_NAME[baseDef(item.baseId).slot] ?? 'equipment';
+  } catch {
+    return 'equipment';
+  }
+};
 
 const KIND_LABEL: Record<VendorOffer['kind'], string> = {
   item: 'Equipment',
@@ -112,6 +133,48 @@ function nameClass(o: VendorOffer): string {
   return '';
 }
 
+/** What you wear where a shop item would go, so you can weigh it up before buying. */
+function WornNow({ s, item }: { s: GameState; item: Item }) {
+  let slot: EquipSlot;
+  try {
+    slot = defaultSlot(s, item);
+  } catch {
+    return null;
+  }
+  const worn = s.equipment[slot];
+  const why = equipReason(s, item);
+  return (
+    <span className="r2-offer-worn">
+      {why ? (
+        <span className="r2-offer-warn">{why}</span>
+      ) : worn ? (
+        <Tooltip content={<ItemTip item={worn} state={s} />}>
+          <span>
+            Wearing <b className={`rarity-${worn.rarity}`}>{itemName(worn)}</b>
+          </span>
+        </Tooltip>
+      ) : (
+        <span className="r2-offer-good">Slot empty: an easy upgrade</span>
+      )}
+    </span>
+  );
+}
+
+/** For a gem: how many you already have, and for a support, which skills on your bar it would fit. */
+function GemOwned({ s, o }: { s: GameState; o: VendorOffer }) {
+  if (o.gemId) {
+    const n = s.account.gems.filter((g) => g.gemId === o.gemId).length + s.skillBar.filter((g) => g?.gemId === o.gemId).length;
+    return <span className="r2-offer-worn">{n ? `You have ${n}` : <span className="r2-offer-good">New to you</span>}</span>;
+  }
+  const n = s.account.supportGems.filter((g) => g.supportId === o.supportId).length + s.skillBar.reduce((a, g) => a + (g?.supports.filter((x) => x?.supportId === o.supportId).length ?? 0), 0);
+  const fits = s.skillBar.flatMap((b, i) => (b && !supportReason(b, o.supportId!) ? [i] : []));
+  return (
+    <span className="r2-offer-worn">
+      {n ? `You have ${n}` : 'New to you'} · {fits.length ? `fits ${fits.map((i) => activeGemDef(s.skillBar[i]!.gemId).name).join(', ')}` : 'fits nothing on your bar'}
+    </span>
+  );
+}
+
 function OfferCard({ s, o, gold }: { s: GameState; o: VendorOffer; gold: number }) {
   const afford = gold >= o.price;
   const full = o.kind === 'item' && bagFull(s);
@@ -125,10 +188,17 @@ function OfferCard({ s, o, gold }: { s: GameState; o: VendorOffer; gold: number 
         </div>
         <div className="offer-text">
           <b className={nameClass(o)}>{offerName(o)}</b>
-          <span className="offer-kind">{o.item ? `${o.item.rarity[0].toUpperCase()}${o.item.rarity.slice(1)} ${KIND_LABEL[o.kind].toLowerCase()}` : KIND_LABEL[o.kind]}</span>
+          <span className="offer-kind">
+            {o.item ? `${o.item.rarity[0].toUpperCase()}${o.item.rarity.slice(1)} ${slotLabel(o.item)} · item level ${o.item.ilvl}` : KIND_LABEL[o.kind]}
+          </span>
+          {o.item && <WornNow s={s} item={o.item} />}
+          {gem && <GemOwned s={s} o={o} />}
         </div>
-        <span className={`price-tag ${afford ? '' : 'short'}`}>
-          <MatIcon id="gold" size={14} /> {fmt(o.price)}
+        <span className="r2-offer-price">
+          <span className={`price-tag ${afford ? '' : 'short'}`}>
+            <MatIcon id="gold" size={14} /> {fmt(o.price)}
+          </span>
+          {!afford && <span className="r2-offer-short">{fmt(o.price - gold)} short</span>}
         </span>
         <button
           className={`btn sm ${afford && !full && !needLevel ? 'primary' : ''}`}
@@ -405,7 +475,7 @@ export function TraderPage() {
   const lvl = stationLevel(s, 'vendor');
   const shop = SHOPS.find((x) => x.id === tab);
   return (
-    <div className="page">
+    <div className="page r2-shop">
       <div className="card npc-panel shopfront">
         <div className="awning" aria-hidden />
         <div className="npc-portrait">

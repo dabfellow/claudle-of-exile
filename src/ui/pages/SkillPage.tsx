@@ -26,6 +26,8 @@ import { RuneBoard } from '../components/RuneBoard';
 import { SkillMinigame } from '../components/SkillMinigame';
 import { Icon, Orb, Swatch } from '../components/Icon';
 import { MasteryProgress } from '../components/MasteryProgress';
+import { skillLock } from '../skillLock';
+import '../round2-session3.css';
 
 const START_LABEL: Record<SkillId, string> = {
   combat: 'Fight',
@@ -416,7 +418,46 @@ function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
   return tiers;
 }
 
+/** A life skill you can't use yet: what it does and how to open it, in place of its activities. */
+function LockedSkill({ skill, place }: { skill: SkillId; place: string }) {
+  const def = SKILLS[skill];
+  return (
+    <div className="page">
+      <div className="card skill-hero" style={{ ['--skill' as string]: def.color }}>
+        <div className="skill-hero-icon">
+          <GameIcon name={skill} size={32} color={def.color} />
+        </div>
+        <div className="skill-hero-text" style={{ minWidth: 0 }}>
+          <span className="page-kicker">Skilling</span>
+          <h1>
+            {def.name} <Badge tone="locked">Locked</Badge>
+          </h1>
+          <p>{def.desc}</p>
+        </div>
+      </div>
+      <div className="card r2-locked-skill">
+        <GameIcon name="lock" size={28} color="var(--dim)" />
+        <div>
+          <b>
+            {def.name} unlocks when you reach {place}.
+          </b>
+          <p className="muted small" style={{ margin: '4px 0 0' }}>
+            Carry on through the campaign from the Campaign page. Once {place} is open, {def.name} is ready to train here.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SkillPage({ skill }: { skill: SkillId }) {
+  const s = useGame();
+  const lockedAt = skillLock(s, skill);
+  if (lockedAt) return <LockedSkill skill={skill} place={lockedAt} />;
+  return <OpenSkillPage skill={skill} />;
+}
+
+function OpenSkillPage({ skill }: { skill: SkillId }) {
   const s = useGame();
   const level = skillLevel(s, skill);
   const actions = actionsFor(skill);

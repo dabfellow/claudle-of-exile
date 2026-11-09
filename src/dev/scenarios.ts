@@ -12,6 +12,9 @@ import { ZONES } from '../data/zones';
 import { addBank } from '../engine/bank';
 import { FINAL_ACT } from '../engine/hideout';
 import { addDoomedMaps, addUniqueMaps, grantBossKeys, grantMaps } from '../engine/maps';
+import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
+import { CURRENCIES, MATERIALS } from '../data/materials';
+import { createSkillGem, createSupportGem } from '../engine/gems';
 import { createItem } from '../engine/items';
 import { seeded } from '../engine/rng';
 import { MARKET_UNLOCK_BOSS } from '../engine/market';
@@ -36,6 +39,28 @@ const PRESETS: Record<string, Setup> = {
       grantBossKeys(s, 1);
       addBank(s, 'chaos', 60);
       s.account.hideout.map_device = 4;
+    },
+  },
+  /** a full gem bag and a stocked stash and bank, for the Skills, Stash, Bench and Town pages */
+  wellStocked: {
+    classId: 'ranger',
+    level: 45,
+    prepare: (s) => {
+      const rng = seeded(7);
+      for (const g of ACTIVE_GEMS.slice(0, 18)) s.account.gems.push(createSkillGem(s, g.id, 1 + Math.floor(rng.next() * 12)));
+      for (const g of SUPPORT_GEMS.filter((x) => !x.signatureFor).slice(0, 24)) s.account.supportGems.push(createSupportGem(s, g.id));
+      const bases = BASES.filter((b) => b.reqLevel <= 45 && !b.retired);
+      const rarities = ['normal', 'magic', 'rare', 'rare'] as const;
+      if (!s.account.stash.length) s.account.stash.push([]);
+      for (let i = 0; i < 40; i++) {
+        const item = createItem(s, bases[(i * 7) % bases.length].id, 20 + (i % 25), rarities[i % 4], rng);
+        item.uid = s.account.nextUid++;
+        s.account.stash[0].push(item);
+      }
+      for (let i = 0; i < 12; i++) s.inventory.push(createItem(s, bases[(i * 11) % bases.length].id, 40, rarities[(i + 1) % 4], rng));
+      for (const c of CURRENCIES) s.account.bank[c.id] = 3 + Math.floor(rng.next() * 40);
+      for (const m of MATERIALS.slice(0, 30)) s.account.bank[m.id] = Math.floor(rng.next() * 200);
+      s.account.bank.gold = 25_000;
     },
   },
   /** signed in as far as the Player Market can tell, against a pretend server */

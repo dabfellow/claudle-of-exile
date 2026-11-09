@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { classDef, type ClassId } from '../../data/classes';
-import { classBreakdown, levelBreakdown } from '../../platform/admin';
+import { classBreakdown, findPlayers, levelBreakdown, type PlayerRow } from '../../platform/admin';
+import { marketRules } from '../../data/marketRules';
+import { fmt, fmtTime } from '../components/common';
+import { PageErrorBoundary } from '../components/PageErrorBoundary';
+import '../round2-session3.css';
 import { PlayerInspector } from '../components/AdminOperations';
 import { AdminFeedback } from '../components/AdminFeedback';
 import { AdminEvents } from '../components/AdminEvents';
@@ -55,13 +59,16 @@ export function AdminPage() {
           <p className="dim small">Apply docs/ops/admin.sql after the setup and market SQL, and add your account to the admins table.</p>
         </div>
       )}
-      {tab === 'overview' && !error && <Overview stats={stats} />}
-      {tab === 'events' && <AdminEvents />}
-      {tab === 'players' && <PlayerInspector initialId={inspectId} />}
-      {tab === 'market' && <MarketTab />}
-      {tab === 'feedback' && <AdminFeedback onChange={loadStats} onInspect={(id) => { setInspectId(id); setTab('players'); }} />}
-      {tab === 'reviews' && <ReviewsTab />}
-      {tab === 'errors' && <ErrorsTab />}
+      {/* a crash in one tab shows its message here instead of blanking the game */}
+      <PageErrorBoundary key={tab} where={`admin:${tab}`}>
+        {tab === 'overview' && !error && <Overview stats={stats} onInspect={(id) => { setInspectId(id); setTab('players'); }} onTab={setTab} />}
+        {tab === 'events' && <AdminEvents />}
+        {tab === 'players' && <PlayerInspector initialId={inspectId} />}
+        {tab === 'market' && <MarketTab />}
+        {tab === 'feedback' && <AdminFeedback onChange={loadStats} onInspect={(id) => { setInspectId(id); setTab('players'); }} />}
+        {tab === 'reviews' && <ReviewsTab />}
+        {tab === 'errors' && <ErrorsTab />}
+      </PageErrorBoundary>
     </div>
   );
 }
@@ -95,25 +102,127 @@ function Bars({ rows }: { rows: [string, number][] }) {
   );
 }
 
-function Overview({ stats }: { stats: AdminStats | null }) {
+/** The overview's extra figures, from the 2026-11-09 admin.sql: missing on a database that hasn't run it yet. */
+type OverviewStats = AdminStats & {
+  by_realm?: Record<string, number>;
+  last_seen?: { day: number; week: number; month: number; older: number };
+  signups_by_day?: { day: string; count: number }[];
+  playtime_hours?: number;
+  median_level?: number | null;
+  feedback_week?: number;
+};
+
+const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : Number(v) || 0);
+const pct = (n: number, of: number) => (of > 0 ? `${Math.round((n / of) * 100)}%` : '—');
+const realmName = (id: string) => ({ standard: 'Standard', hardcore: 'Hardcore', classic: 'Classic', 'hardcore-classic': 'Hardcore Classic' })[id] ?? (id.startsWith('ssf') ? 'Solo Self-Found' : id);
+
+/** The latest cloud saves, newest first: who's playing right now and where. */
+function RecentPlayers({ onInspect }: { onInspect: (id: string) => void }) {
+  const [rows, setRows] = useState<PlayerRow[] | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    findPlayers('', 0).then((r) => setRows(r.slice(0, 12)), (e) => setError(errorText(e)));
+  }, []);
+  return (
+    <div className="card">
+      <div className="card-title">
+        Latest saves
+        <span className="grow" />
+        <span className="card-hint">Newest first · click a name to inspect</span>
+      </div>
+      {error && <p className="warn small">{error}</p>}
+      {!rows && !error && <p className="dim small">Loading…</p>}
+      {rows && !rows.length && <p className="dim small">No cloud characters yet.</p>}
+      {rows && rows.length > 0 && (
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Character</th>
+                <th>Build</th>
+                <th>Realm</th>
+                <th>Where</th>
+                <th>Played</th>
+                <th>Saved</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id}>
+                  <td>
+                    <button className="linklike" onClick={() => onInspect(row.id)}>
+                      <b>{row.name}</b>
+                    </button>
+                    {row.deleted && <span className="warn small"> · deleted</span>}
+                  </td>
+                  <td>
+                    {row.class_id} · lv {num(row.summary?.combatLevel) || '?'}
+                  </td>
+                  <td>{realmName(row.summary?.realm ?? 'standard')}</td>
+                  <td>{row.zone || 'Town'}</td>
+                  <td>{fmtTime(num(row.playtime_ms))}</td>
+                  <td>{when(row.updated_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Overview({ stats, onInspect, onTab }: { stats: OverviewStats | null; onInspect: (id: string) => void; onTab: (t: Tab) => void }) {
   if (!stats) return <p className="dim">Loading…</p>;
-  const classes = classBreakdown(stats.by_class).map(([id, n]) => [
+  const classes = classBreakdown(stats.by_class ?? {}).map(([id, n]) => [
     ['warrior','duelist','ranger','shadow','mage','templar','exile'].includes(id) ? classDef(id as ClassId).name : id, n,
   ] as [string, number]);
-  const levels = levelBreakdown(stats.by_level);
+  const levels = levelBreakdown(stats.by_level ?? {});
+  const chars = num(stats.characters);
+  const funnel = [['Created', chars], ...(stats.funnel ?? []).map((r) => [`Act ${r.act}`, num(r.count)]), ['Maps T1+', num(stats.maps)]] as [string, number][];
+  const seen = stats.last_seen;
+  const signups = stats.signups_by_day ?? [];
   return (
     <>
-      <div className="card"><div className="card-title">Campaign progression</div>
-        <div className="admin-funnel">{[['Created',stats.characters],...(stats.funnel ?? []).map((r) => [`Act ${r.act}`,r.count]),['Maps T1+',stats.maps ?? 0]].map(([label,n]) => <div key={label}><b>{n}</b><span>{label}</span></div>)}</div>
-        <p className="dim small">Current cloud characters and their recorded milestones.</p>
-      </div>
       <div className="admin-stats">
-        <Stat label="Accounts" value={stats.accounts} sub={`+${stats.new_accounts_week} this week`} />
-        <Stat label="Players with a character" value={stats.players} />
-        <Stat label="Characters" value={stats.characters} />
-        <Stat label="Active today" value={stats.active_day} sub={`${stats.active_week} this week`} />
-        <Stat label="Average review" value={stats.reviews.avg ? `${stats.reviews.avg}★` : '—'} sub={`${stats.reviews.count} reviews`} />
+        <Stat label="Accounts" value={fmt(num(stats.accounts))} sub={`+${num(stats.new_accounts_week)} this week`} />
+        <Stat label="Players with a character" value={fmt(num(stats.players))} sub={`${pct(num(stats.players), num(stats.accounts))} of accounts`} />
+        <Stat label="Characters" value={fmt(chars)} sub={stats.median_level != null ? `median level ${Math.round(num(stats.median_level))}` : undefined} />
+        <Stat label="Active today" value={fmt(num(stats.active_day))} sub={`${num(stats.active_week)} this week · ${pct(num(stats.active_week), num(stats.players))} of players`} />
+        {stats.playtime_hours != null && <Stat label="Time played" value={`${fmt(num(stats.playtime_hours))} h`} sub="simulated, all characters" />}
+        <button className="admin-stat linklike" onClick={() => onTab('feedback')} title="Open the feedback inbox">
+          <div className="admin-stat-value">{num(stats.feedback_open)}</div>
+          <div className="admin-stat-label">Unread feedback</div>
+          {stats.feedback_week != null && <div className="dim small">{num(stats.feedback_week)} sent this week</div>}
+        </button>
+        <Stat label="Average review" value={stats.reviews?.avg ? `${stats.reviews.avg}★` : '—'} sub={`${num(stats.reviews?.count)} reviews`} />
       </div>
+      <div className="card"><div className="card-title">Campaign progression</div>
+        <div className="admin-funnel">{funnel.map(([label, n]) => <div key={label}><b>{fmt(n)}</b><span>{label}</span><span className="dim small">{label === 'Created' ? '' : pct(n, chars)}</span></div>)}</div>
+        <p className="dim small">Current cloud characters and their recorded milestones; percentages are of all characters.</p>
+      </div>
+      {(seen || signups.length > 0) && (
+        <div className="admin-two">
+          {seen && (
+            <div className="card"><div className="card-title">Players by last save</div>
+              <Bars rows={[['Today', num(seen.day)], ['1–7 days ago', num(seen.week)], ['8–30 days ago', num(seen.month)], ['Longer', num(seen.older)]]} />
+              <p className="dim small">Each player counted once, by their most recent cloud save.</p>
+            </div>
+          )}
+          {signups.length > 0 && (
+            <div className="card"><div className="card-title">New accounts, last 14 days</div>
+              <Bars rows={signups.map((d) => [new Date(d.day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), num(d.count)] as [string, number])} />
+            </div>
+          )}
+        </div>
+      )}
+      {!seen && <p className="dim small">Run the updated docs/ops/admin.sql for last-seen, sign-up, realm and playtime figures here.</p>}
+      <RecentPlayers onInspect={onInspect} />
+      {stats.by_realm && Object.keys(stats.by_realm).length > 0 && (
+        <div className="card"><div className="card-title">Characters by realm</div>
+          <Bars rows={Object.entries(stats.by_realm).map(([id, n]) => [realmName(id), num(n)] as [string, number]).sort((a, b) => b[1] - a[1])} />
+        </div>
+      )}
       <div className="admin-two">
         <div className="card"><div className="card-title">Top death zones</div><Bars rows={Object.entries(stats.death_zones ?? {}).sort((a,b) => b[1]-a[1])} /><p className="dim small">Locations are recorded from this update onward; old saves only contain total deaths.</p></div>
         <div className="card"><div className="card-title">Anonymous demo counters (last 30 days)</div><Bars rows={[
@@ -148,10 +257,7 @@ function MarketTab() {
   useEffect(load, [load]);
 
   const act = (step: Promise<void>) => step.then(load, (e) => setError(errorText(e)));
-  const upload = async () => {
-    const { marketRules } = await import('../../data/marketRules');
-    await act(uploadMarketRules(APP_VERSION, marketRules()));
-  };
+  const upload = () => act(uploadMarketRules(APP_VERSION, marketRules()));
 
   return (
     <>

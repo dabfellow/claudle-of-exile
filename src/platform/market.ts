@@ -6,6 +6,13 @@ import { getSupabase } from './supabase';
 
 /** The Player Market's server calls (docs/ops/market.sql). Every step is one all-or-nothing function there. */
 
+/**
+ * Closed for 1.0 (2026-11-09): the server can't tell an earned item from an edited save. While it's false there's no
+ * browsing, selling or bidding; players with something still on the market get a page to collect and cancel, and
+ * Admin → Market keeps working. Flip it back to reopen.
+ */
+export const MARKET_OPEN = false;
+
 export type MarketMode = 'buy' | 'auction';
 export type MarketScope = 'all' | 'mine' | 'bids';
 

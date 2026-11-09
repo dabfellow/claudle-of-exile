@@ -40,8 +40,9 @@ import {
 import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { EmptyState, PageHeader, ProgressBar, Tooltip } from '../components/common';
-import { GemFilters, GemKindChips, kindMatches, type GemKind } from '../components/GemFilters';
+import { EmptyState, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
+import { GEM_KINDS, GemFilters, kindMatches, type GemKind } from '../components/GemFilters';
+import '../round2-session3.css';
 import { GemIcon, GemTip, rulesLabel, ruleText, SupportTip } from '../components/GemView';
 import { Icon } from '../components/Icon';
 import { SkillSets } from '../components/Loadouts';
@@ -189,39 +190,38 @@ function CastOrder({ s }: { s: GameState }) {
   );
 }
 
-/** Opened from an empty socket: the loose supports that fit this skill, then the ones that would if you had them. */
-function SocketPicker({ s, gem, index, onDone }: { s: GameState; gem: SkillGemInstance; index: number; onDone: () => void }) {
+/**
+ * The supports for the skill being set up, always in view under its sockets: the loose ones that fit, one click to
+ * socket, then the ones that would fit if you found them.
+ */
+function SupportsForSkill({ s, gem, socket }: { s: GameState; gem: SkillGemInstance; socket: number | null }) {
   const act = activeGemDef(gem.gemId);
   const owned = s.account.supportGems.filter((g) => !supportReason(gem, g.supportId));
   // one entry per kind, even when several copies are in the bag
-  const ownedKinds = [...new Map(owned.map((g) => [g.supportId, g])).values()];
+  const ownedKinds = [...new Map(owned.map((g) => [g.supportId, g])).values()].sort((a, b) => supportGemDef(a.supportId).name.localeCompare(supportGemDef(b.supportId).name));
+  const copies = (id: string) => s.account.supportGems.filter((g) => g.supportId === id).length;
   const missing = SUPPORT_GEMS.filter((d) => supportFits(d, act) && gemArrived(s, d.id) && !s.account.supportGems.some((g) => g.supportId === d.id) && !gem.supports.some((x) => x?.supportId === d.id));
+  const slots = supportSlots(gem);
+  const firstEmpty = Array.from({ length: slots }, (_, i) => i).find((i) => !gem.supports[i]);
+  const target = socket !== null && !gem.supports[socket] ? socket : firstEmpty;
   return (
-    <div className="socket-picker" onClick={(e) => e.stopPropagation()}>
-      <div className="row" style={{ gap: 8 }}>
-        <b className="small">Supports for {act.name}</b>
-        <span className="grow" />
-        <button className="btn sm ghost" title="Close" onClick={onDone}>
-          <Icon name="close" size={12} />
-        </button>
+    <div className="r2-fit-list">
+      <div className="r2-fit-head">
+        <b className="small">Your supports that fit {act.name}</b>
+        <span className="dim small">{target === undefined ? 'All sockets are full: click a socketed support to take it out first.' : 'Click one to socket it.'}</span>
       </div>
       {ownedKinds.length === 0 && <div className="dim small">None of your loose support gems fit this skill.</div>}
-      <div className="socket-picker-list">
+      <div className="gem-bag r2-gem-grid">
         {ownedKinds.map((g) => {
           const def = supportGemDef(g.supportId);
+          const n = copies(g.supportId);
           return (
             <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
-              <button
-                className="gem-card"
-                onClick={() => {
-                  game.act((st) => socketSupport(st, gem.uid, g.uid, index));
-                  onDone();
-                }}
-              >
-                <GemIcon def={def} size={28} support />
-                <span>
+              <button className="gem-card" disabled={target === undefined} onClick={() => game.act((st) => socketSupport(st, gem.uid, g.uid, target!))}>
+                <GemIcon def={def} size={26} support />
+                <span className="r2-gem-text">
                   <b>{def.name}</b>
-                  {def.signatureFor && <span className="dim"> · signature</span>}
+                  {(def.signatureFor || n > 1) && <span className="dim small">{[def.signatureFor && 'Signature', n > 1 && `×${n}`].filter(Boolean).join(' · ')}</span>}
                 </span>
               </button>
             </Tooltip>
@@ -229,10 +229,8 @@ function SocketPicker({ s, gem, index, onDone }: { s: GameState; gem: SkillGemIn
         })}
       </div>
       {missing.length > 0 && (
-        <>
-          <div className="dim small" style={{ marginTop: 8 }}>
-            Also fits, not found yet
-          </div>
+        <details className="r2-missing">
+          <summary className="dim small">Also fits, not found yet ({missing.length})</summary>
           <div className="socket-picker-list">
             {missing.map((def) => (
               <Tooltip key={def.id} content={<SupportTip supportId={def.id} />}>
@@ -243,7 +241,7 @@ function SocketPicker({ s, gem, index, onDone }: { s: GameState; gem: SkillGemIn
               </Tooltip>
             ))}
           </div>
-        </>
+        </details>
       )}
     </div>
   );
@@ -329,8 +327,8 @@ function Sockets({ s, gem, pickedSupport, onPlaced }: { s: GameState; gem: Skill
               key={i}
               className={`socket ${canDrop ? 'target' : ''} ${openSocket === i ? 'open' : ''}`}
               disabled={!!pickedDef && !canDrop}
-              title={pickedDef ? (fitReason ?? 'Socket here') : 'Show the supports that fit'}
-              onClick={() => (canDrop ? drop(i) : setOpenSocket(openSocket === i ? null : i))}
+              title={pickedDef ? (fitReason ?? 'Socket here') : 'The next support you pick goes here'}
+              onClick={() => (canDrop ? drop(i) : setOpenSocket(i))}
             >
               <span className="socket-hole" />
               <span className="dim">{pickedDef ? (fitReason ?? 'Socket here') : 'Empty socket'}</span>
@@ -343,7 +341,7 @@ function Sockets({ s, gem, pickedSupport, onPlaced }: { s: GameState; gem: Skill
           </button>
         )}
       </div>
-      {openSocket !== null && !gem.supports[openSocket] && <SocketPicker s={s} gem={gem} index={openSocket} onDone={() => setOpenSocket(null)} />}
+      <SupportsForSkill s={s} gem={gem} socket={openSocket} />
     </>
   );
 }
@@ -496,7 +494,9 @@ export function SkillGemsPage() {
   const [gemSort, setGemSort] = useState<'level' | 'name'>('level');
   const [supSearch, setSupSearch] = useState('');
   const [supAttr, setSupAttr] = useState<GemAttr | null>(null);
-  const [supFits, setSupFits] = useState(false);
+  /** '' for any skill, or the bar slot a support has to fit */
+  const [supFit, setSupFit] = useState('');
+  const [bagTab, setBagTab] = useState<'skills' | 'supports'>('skills');
   const [openSlot, setOpenSlot] = useState<number | null>(null);
   const clear = () => {
     setPickedGem(null);
@@ -511,11 +511,13 @@ export function SkillGemsPage() {
       return kindMatches(def, gemKind) && (!gemAttr || def.attr === gemAttr) && has(def.name, gemSearch);
     })
     .sort((a, b) => (gemSort === 'level' ? b.level - a.level || byName(a.gemId, b.gemId) : byName(a.gemId, b.gemId) || b.level - a.level));
-  const fitsBar = (supportId: string) => s.skillBar.some((b) => b && !supportReason(b, supportId));
+  /** the bar slots a loose support would fit */
+  const fitKeys = (supportId: string) => s.skillBar.flatMap((b, i) => (b && !supportReason(b, supportId) ? [i] : []));
+  const fitSlot = supFit === '' || !s.skillBar[Number(supFit)] ? null : Number(supFit);
   const supports = s.account.supportGems
     .filter((g) => {
       const def = supportGemDef(g.supportId);
-      return (!supAttr || def.attr === supAttr) && (!supFits || fitsBar(g.supportId)) && has(def.name, supSearch);
+      return (!supAttr || def.attr === supAttr) && (fitSlot === null || fitKeys(g.supportId).includes(fitSlot)) && has(def.name, supSearch);
     })
     .sort((a, b) => supportGemDef(a.supportId).name.localeCompare(supportGemDef(b.supportId).name));
 
@@ -561,94 +563,144 @@ export function SkillGemsPage() {
         />
       )}
 
-      <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)', alignItems: 'start' }}>
-        <div className="card">
-          <div className="card-title">
-            Skill gems
-            <span className="muted num small">
-              {gems.length}/{s.account.gems.length}
-            </span>
-            <span className="grow" />
-            <span className="card-hint">
-              Click one, then a slot above
-            </span>
-          </div>
-          {s.account.gems.length > 0 && (
-            <GemFilters search={gemSearch} setSearch={setGemSearch} attr={gemAttr} setAttr={setGemAttr}>
-              <GemKindChips kind={gemKind} setKind={setGemKind} />
-              <div className="gem-chips">
-                <button className={`gem-chip ${gemSort === 'level' ? 'active' : ''}`} onClick={() => setGemSort('level')}>
-                  By level
-                </button>
-                <button className={`gem-chip ${gemSort === 'name' ? 'active' : ''}`} onClick={() => setGemSort('name')}>
-                  A–Z
-                </button>
-              </div>
-            </GemFilters>
-          )}
-          {s.account.gems.length === 0 && <EmptyState small>No spare skill gems. Buy them at the Gem shop.</EmptyState>}
-          {s.account.gems.length > 0 && gems.length === 0 && <div className="dim small">No gems match these filters.</div>}
-          <div className="gem-bag">
-            {gems.map((g) => (
-              <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
-                <button
-                  className={`gem-card ${pickedGem === g.uid ? 'selected' : ''} ${gemUseReason(d.combatLevel, d.attributes, g) ? 'nofit' : ''}`}
-                  onClick={() => (setPickedSupport(null), setPickedGem(pickedGem === g.uid ? null : g.uid))}
-                >
-                  <GemIcon def={activeGemDef(g.gemId)} size={34} />
-                  <span>
-                    <b>{activeGemDef(g.gemId).name}</b>
-                    <span className="dim"> Lv {g.level}</span>
-                  </span>
-                </button>
-              </Tooltip>
-            ))}
-          </div>
+      <div className="card r2-gem-bag">
+        <div className="card-title">
+          Gem bag
+          <span className="grow" />
+          <span className="card-hint">{bagTab === 'skills' ? 'Pick a skill gem, then a slot on the bar' : 'Pick a support, then a skill on the bar'}</span>
         </div>
-        <div className="card">
-          <div className="card-title">
-            Support gems
-            <span className="muted num small">
-              {supports.length}/{s.account.supportGems.length}
-            </span>
-            <span className="grow" />
-            <span className="card-hint">
-              Click one, then a skill on the bar
-            </span>
-          </div>
-          {s.account.supportGems.length > 0 && (
-            <GemFilters search={supSearch} setSearch={setSupSearch} attr={supAttr} setAttr={setSupAttr}>
-              <div className="gem-chips">
-                <button className={`gem-chip ${supFits ? 'active' : ''}`} onClick={() => setSupFits(!supFits)} title="Only supports that fit a skill on your bar">
-                  Fits my skills
-                </button>
-              </div>
-            </GemFilters>
-          )}
-          {s.account.supportGems.length === 0 && <EmptyState small>No loose support gems yet.</EmptyState>}
-          {s.account.supportGems.length > 0 && supports.length === 0 && <div className="dim small">No supports match these filters.</div>}
-          <div className="gem-bag">
-            {supports.map((g) => {
-              const def = supportGemDef(g.supportId);
-              const fitsAny = fitsBar(g.supportId);
+        <Tabs
+          tabs={[
+            { id: 'skills', label: 'Skill gems', count: s.account.gems.length },
+            { id: 'supports', label: 'Support gems', count: s.account.supportGems.length },
+          ]}
+          value={bagTab}
+          onChange={setBagTab}
+        />
+        {bagTab === 'skills' && (
+          <>
+            {s.account.gems.length > 0 && (
+              <GemFilters search={gemSearch} setSearch={setGemSearch} attr={gemAttr} setAttr={setGemAttr}>
+                <select className="input r2-gem-select" aria-label="Skill type" value={gemKind} onChange={(e) => setGemKind(e.target.value as GemKind)}>
+                  {GEM_KINDS.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.id === 'all' ? 'Every type' : k.label}
+                    </option>
+                  ))}
+                </select>
+                <select className="input r2-gem-select" aria-label="Sort" value={gemSort} onChange={(e) => setGemSort(e.target.value as 'level' | 'name')}>
+                  <option value="level">Highest level first</option>
+                  <option value="name">A–Z</option>
+                </select>
+              </GemFilters>
+            )}
+            {s.account.gems.length === 0 && <EmptyState small>No spare skill gems. Buy them at the Town's Gem shop.</EmptyState>}
+            {s.account.gems.length > 0 && gems.length === 0 && <div className="dim small">No gems match these filters.</div>}
+            {GEM_GROUPS.map((group) => {
+              const list = gems.filter((g) => gemGroup(activeGemDef(g.gemId)) === group.id);
+              if (!list.length) return null;
               return (
-                <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
-                  <button
-                    className={`gem-card ${pickedSupport === g.uid ? 'selected' : ''} ${fitsAny ? '' : 'nofit'}`}
-                    onClick={() => (setPickedGem(null), setPickedSupport(pickedSupport === g.uid ? null : g.uid))}
-                  >
-                    <GemIcon def={def} size={30} support />
-                    <span>
-                      <b>{def.name}</b>
-                      {def.signatureFor && <span className="dim"> · {activeGemDef(def.signatureFor).name}</span>}
-                    </span>
-                  </button>
-                </Tooltip>
+                <section key={group.id} className="r2-gem-section">
+                  <div className="r2-gem-section-head">
+                    {group.label} <span className="dim num">{list.length}</span>
+                  </div>
+                  <div className="gem-bag r2-gem-grid">
+                    {list.map((g) => {
+                      const reason = gemUseReason(d.combatLevel, d.attributes, g);
+                      return (
+                        <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
+                          <button
+                            className={`gem-card ${pickedGem === g.uid ? 'selected' : ''} ${reason ? 'nofit' : ''}`}
+                            onClick={() => (setPickedSupport(null), setPickedGem(pickedGem === g.uid ? null : g.uid))}
+                          >
+                            <GemIcon def={activeGemDef(g.gemId)} size={30} />
+                            <span className="r2-gem-text">
+                              <b>{activeGemDef(g.gemId).name}</b>
+                              <span className="dim small">Lv {g.level}{reason ? ` · ${reason}` : ''}</span>
+                            </span>
+                          </button>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </section>
               );
             })}
-          </div>
-        </div>
+          </>
+        )}
+        {bagTab === 'supports' && (
+          <>
+            {s.account.supportGems.length > 0 && (
+              <GemFilters search={supSearch} setSearch={setSupSearch} attr={supAttr} setAttr={setSupAttr}>
+                <select className="input r2-gem-select" aria-label="Fits" value={supFit} onChange={(e) => setSupFit(e.target.value)}>
+                  <option value="">Any skill</option>
+                  {s.skillBar.map((b, i) =>
+                    b ? (
+                      <option key={i} value={String(i)}>
+                        Fits {SKILL_KEYS[i]} · {activeGemDef(b.gemId).name}
+                      </option>
+                    ) : null,
+                  )}
+                </select>
+              </GemFilters>
+            )}
+            {s.account.supportGems.length === 0 && <EmptyState small>No loose support gems yet. Gemcutting and the Town's Gem shop make them.</EmptyState>}
+            {s.account.supportGems.length > 0 && supports.length === 0 && <div className="dim small">No supports match these filters.</div>}
+            {[
+              { id: 'fit', label: 'Fit a skill on your bar', list: supports.filter((g) => fitKeys(g.supportId).length > 0) },
+              { id: 'nofit', label: "Don't fit anything on your bar", list: supports.filter((g) => fitKeys(g.supportId).length === 0) },
+            ].map((group) =>
+              group.list.length ? (
+                <section key={group.id} className="r2-gem-section">
+                  <div className="r2-gem-section-head">
+                    {group.label} <span className="dim num">{group.list.length}</span>
+                  </div>
+                  <div className="gem-bag r2-gem-grid">
+                    {group.list.map((g) => {
+                      const def = supportGemDef(g.supportId);
+                      const keys = fitKeys(g.supportId);
+                      return (
+                        <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
+                          <button
+                            className={`gem-card ${pickedSupport === g.uid ? 'selected' : ''} ${keys.length ? '' : 'nofit'}`}
+                            onClick={() => (setPickedGem(null), setPickedSupport(pickedSupport === g.uid ? null : g.uid))}
+                          >
+                            <GemIcon def={def} size={28} support />
+                            <span className="r2-gem-text">
+                              <b>{def.name}</b>
+                              {def.signatureFor ? <span className="dim small">Signature · {activeGemDef(def.signatureFor).name}</span> : null}
+                            </span>
+                            {keys.length > 0 && (
+                              <span className="r2-fit-keys" title={`Fits ${keys.map((k) => activeGemDef(s.skillBar[k]!.gemId).name).join(', ')}`}>
+                                {keys.map((k) => (
+                                  <span key={k} className="r2-key">
+                                    {SKILL_KEYS[k]}
+                                  </span>
+                                ))}
+                              </span>
+                            )}
+                          </button>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </section>
+              ) : null,
+            )}
+          </>
+        )}
       </div>
     </div>
   );
+}
+
+const GEM_GROUPS = [
+  { id: 'attack', label: 'Attacks' },
+  { id: 'spell', label: 'Spells' },
+  { id: 'utility', label: 'Guards, buffs and curses' },
+] as const;
+
+function gemGroup(def: ReturnType<typeof activeGemDef>): (typeof GEM_GROUPS)[number]['id'] {
+  if (kindMatches(def, 'utility')) return 'utility';
+  return def.tags.includes('spell') ? 'spell' : 'attack';
 }

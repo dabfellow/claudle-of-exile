@@ -100,7 +100,10 @@ begin
   select coalesce(jsonb_agg(to_jsonb(q)),'[]') into result from (
     select c.data->>'id' as id,u.id as user_id,c.data->>'name' as name,lower(trim(c.data->>'class_id')) as class_id,
       c.data->'summary' as summary,c.data->>'updated_at' as updated_at,c.deleted,
-      u.email,c.data->'save'->'combat'->>'zoneId' as zone,admin_number(c.data->'save'->>'clock') as playtime_ms
+      u.email,c.data->'save'->'combat'->>'zoneId' as zone,admin_number(c.data->'save'->>'clock') as playtime_ms,
+      admin_number(c.data->'save'->'lifetime'->>'deaths') as deaths,
+      (select count(*) from jsonb_array_elements_text(case when jsonb_typeof(c.data->'save'->'bossesDefeated')='array' then c.data->'save'->'bossesDefeated' else '[]'::jsonb end) b
+        where b in ('sanctum','burningthrone','highaltar','giantsthrone','maelstrom','shatteredthrone')) as acts
     from candidates c join auth.users u on u.id::text=c.data->>'user_id'
     where p_search='' or position(lower(p_search) in lower((c.data->>'name')||' '||coalesce(u.email,'')||' '||(c.data->>'id')||' '||u.id::text))>0
     order by (c.data->>'updated_at')::timestamptz desc,c.data->>'id' limit 50 offset p_offset
@@ -266,6 +269,15 @@ begin
     'death_zones',(select coalesce(jsonb_object_agg(zone,n),'{}') from (select z.key zone,sum(admin_number(z.value)) n from death_sources c cross join lateral jsonb_each_text(case when jsonb_typeof(c.save->'lifetime'->'deathZones')='object' then c.save->'lifetime'->'deathZones' else '{}'::jsonb end) z group by z.key order by n desc limit 10) q),
     'demos',(select coalesce(jsonb_object_agg(event,n),'{}') from (select event,count(*) n from demo_counters where created_at>now()-interval '30 days' group by event) q),
     'feedback_open',(select count(*) from feedback where status='new'),
+    'feedback_week',(select count(*) from feedback where created_at>now()-interval '7 days'),
+    'by_realm',(select coalesce(jsonb_object_agg(realm,n),'{}') from (select coalesce(summary->>'realm','standard') realm,count(*) n from chars group by 1) q),
+    'last_seen',(select jsonb_build_object('day',count(*) filter (where age<interval '1 day'),'week',count(*) filter (where age>=interval '1 day' and age<interval '7 days'),
+      'month',count(*) filter (where age>=interval '7 days' and age<interval '30 days'),'older',count(*) filter (where age>=interval '30 days'))
+      from (select now()-max(updated_at) age from chars group by user_id) q),
+    'signups_by_day',(select jsonb_agg(jsonb_build_object('day',d::date,'count',(select count(*) from auth.users u where u.created_at>=d and u.created_at<d+interval '1 day')) order by d)
+      from generate_series(date_trunc('day',now())-interval '13 days',date_trunc('day',now()),interval '1 day') d),
+    'playtime_hours',(select round(coalesce(sum(admin_number(save->>'clock')),0)/3600000.0,1) from chars),
+    'median_level',(select percentile_cont(0.5) within group (order by admin_number(summary->>'combatLevel')) from chars),
     'reviews',(select jsonb_build_object('count',count(*),'avg',round(avg(stars)::numeric,1)) from reviews)
   ) into result;
   return result;

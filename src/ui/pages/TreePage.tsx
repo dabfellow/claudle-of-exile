@@ -195,6 +195,57 @@ function TreeCanvas<N extends CanvasNode>({
     setView({ x: nextX, y: nextY, k });
   };
 
+  // Two-finger pinch on touch screens: zoom by the change in finger spread, around the point between them,
+  // and pan with that point, drawn once per frame like the wheel and drag
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ dist: number; cx: number; cy: number; view: View; unit: number; left: number; top: number; w: number; h: number } | null>(null);
+  const pinchRaf = useRef<number | null>(null);
+  const twoFingers = () => {
+    const [a, b] = [...pointers.current.values()];
+    return { dist: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  };
+  const startPinch = (r: DOMRect) => {
+    const f = twoFingers();
+    const unit = size / Math.min(r.width, r.height);
+    pinch.current = { dist: f.dist, cx: f.x, cy: f.y, view: { ...viewRef.current }, unit, left: r.left, top: r.top, w: r.width, h: r.height };
+    // the first finger's drag is over, and must not turn into a click when it lifts
+    if (drag.current) drag.current.moved = true;
+    else drag.current = { startX: f.x, startY: f.y, vx: viewRef.current.x, vy: viewRef.current.y, k: viewRef.current.k, moved: true, unit };
+    setHover(null);
+    wrap.current?.classList.add('is-zooming');
+  };
+  const movePinch = () => {
+    const p = pinch.current;
+    if (!p || pointers.current.size < 2) return;
+    const f = twoFingers();
+    const k = clamp(p.view.k * (f.dist / p.dist));
+    // the tree point that was under the fingers' midpoint stays under it
+    const c0x = (p.cx - p.left - p.w / 2) * p.unit;
+    const c0y = (p.cy - p.top - p.h / 2) * p.unit;
+    const c1x = (f.x - p.left - p.w / 2) * p.unit;
+    const c1y = (f.y - p.top - p.h / 2) * p.unit;
+    viewRef.current = { x: p.view.x + c1x / k - c0x / p.view.k, y: p.view.y + c1y / k - c0y / p.view.k, k };
+    if (pinchRaf.current == null) {
+      pinchRaf.current = requestAnimationFrame(() => {
+        pinchRaf.current = null;
+        setView({ ...viewRef.current });
+      });
+    }
+  };
+  const endPinch = () => {
+    if (pointers.current.size >= 2) return;
+    pinch.current = null;
+    if (pinchRaf.current != null) cancelAnimationFrame(pinchRaf.current);
+    pinchRaf.current = null;
+    wrap.current?.classList.remove('is-zooming');
+    setView({ ...viewRef.current });
+    // a finger still down carries on as a drag from where it is now, without a jump
+    const rest = [...pointers.current.values()][0];
+    if (rest && drag.current) Object.assign(drag.current, { startX: rest.x, startY: rest.y, vx: viewRef.current.x, vy: viewRef.current.y, k: viewRef.current.k, moved: true });
+    else setTimeout(() => { drag.current = null; }, 0);
+  };
+  useEffect(() => () => { if (pinchRaf.current != null) cancelAnimationFrame(pinchRaf.current); }, []);
+
   // Native wheel listener on the canvas wrapper with rAF throttle
   useEffect(() => {
     const el = wrap.current;
@@ -205,19 +256,18 @@ function TreeCanvas<N extends CanvasNode>({
     let pendingX: number | null = null;
     let pendingY: number | null = null;
 
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
+    /** zoom by `factor` around a screen point, batched into one render per frame */
+    const zoomBy = (factor: number, clientX: number, clientY: number) => {
       const r = el.getBoundingClientRect();
       const unit = size / Math.min(r.width, r.height);
-      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
 
       const curK = pendingK ?? viewRef.current.k;
       const curX = pendingX ?? viewRef.current.x;
       const curY = pendingY ?? viewRef.current.y;
 
       const nextK = clamp(curK * factor);
-      const cx = (e.clientX - r.left - r.width / 2) * unit;
-      const cy = (e.clientY - r.top - r.height / 2) * unit;
+      const cx = (clientX - r.left - r.width / 2) * unit;
+      const cy = (clientY - r.top - r.height / 2) * unit;
       const nextX = curX + cx / nextK - cx / curK;
       const nextY = curY + cy / nextK - cy / curK;
 
@@ -247,10 +297,39 @@ function TreeCanvas<N extends CanvasNode>({
       }, 100);
     };
 
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      // a trackpad pinch arrives as many small wheel events with ctrlKey set, a mouse notch as one big one,
+      // so the zoom follows the size of each step instead of a fixed jump per event
+      const px = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
+      const rate = e.ctrlKey ? 0.01 : 0.0015;
+      const factor = Math.exp(Math.max(-0.5, Math.min(0.5, -px * rate)));
+      if (factor !== 1) zoomBy(factor, e.clientX, e.clientY);
+    };
+
+    // Safari on a Mac sends pinches as gesture events rather than ctrl+wheel
+    let gestureScale = 1;
+    type Gesture = UIEvent & { scale: number; clientX: number; clientY: number };
+    const onGestureStart = (e: Event) => {
+      e.preventDefault();
+      gestureScale = 1;
+    };
+    const onGestureChange = (e: Event) => {
+      e.preventDefault();
+      const g = e as Gesture;
+      if (!g.scale) return;
+      zoomBy(g.scale / gestureScale, g.clientX, g.clientY);
+      gestureScale = g.scale;
+    };
+
     el.addEventListener('wheel', onWheel, { passive: false });
+    el.addEventListener('gesturestart', onGestureStart);
+    el.addEventListener('gesturechange', onGestureChange);
 
     return () => {
       el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('gesturestart', onGestureStart);
+      el.removeEventListener('gesturechange', onGestureChange);
       if (wheelRaf !== null) cancelAnimationFrame(wheelRaf);
       if (wheelCommitTimer.current) clearTimeout(wheelCommitTimer.current);
     };
@@ -352,6 +431,13 @@ function TreeCanvas<N extends CanvasNode>({
         const r = wrap.current?.getBoundingClientRect();
         if (!r) return;
         const unit = size / Math.min(r.width, r.height);
+        pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pointers.current.size === 2) {
+          // second finger down: pinch instead of drag, and never count it as a click
+          startPinch(r);
+          return;
+        }
+        if (pointers.current.size > 2) return;
         drag.current = {
           startX: e.clientX,
           startY: e.clientY,
@@ -363,6 +449,11 @@ function TreeCanvas<N extends CanvasNode>({
         };
       }}
       onPointerMove={(e) => {
+        if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pinch.current) {
+          movePinch();
+          return;
+        }
         const dr = drag.current;
         if (!dr) return;
         const dx = e.clientX - dr.startX;
@@ -386,7 +477,12 @@ function TreeCanvas<N extends CanvasNode>({
           });
         }
       }}
-      onPointerUp={() => {
+      onPointerUp={(e) => {
+        pointers.current.delete(e.pointerId);
+        if (pinch.current) {
+          endPinch();
+          return;
+        }
         if (rafId.current != null) {
           cancelAnimationFrame(rafId.current);
           rafId.current = null;
@@ -399,7 +495,12 @@ function TreeCanvas<N extends CanvasNode>({
           drag.current = null;
         }, 0);
       }}
-      onPointerCancel={() => {
+      onPointerCancel={(e) => {
+        pointers.current.delete(e.pointerId);
+        if (pinch.current) {
+          endPinch();
+          return;
+        }
         if (rafId.current != null) {
           cancelAnimationFrame(rafId.current);
           rafId.current = null;
