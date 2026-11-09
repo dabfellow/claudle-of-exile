@@ -4,7 +4,7 @@ Last updated 2026-11-08. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.19, A New Passive Tree**, deployed 2026-11-08. The character tree is a tidy, evenly spaced web of clusters chained straight into each other (1,573 nodes, no travel strips, curved links, fun cluster shapes), every region has its own archetype notables plus 18 rule-changers, small nodes carry attributes and cost travel points, masteries only on three-notable clusters, and the twelve Forbidden keystones ring the rim evenly with only one allowed at a time.
+Latest confirmed live release: **0.4.20, Sharper Passive Choices**, deployed 2026-11-08. The passive tree now has a painted class-coloured backdrop, six class-tailored general starting areas, a recalculated 2 Travel / 3 Passive points per-level split, and Doomed Gates with much harsher sacrifices protecting substantially stronger reward wheels.
 
 1. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
 2. Finish the Maps skill batch: all support effects now run (2026-11-08, unreleased); boss, offline and whole-build checks remain (see that section).
@@ -341,11 +341,11 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-- [x] Made every Doomed Gate penalty harsher and substantially strengthened all twelve reward wheels behind them, including a minimum 35% more multiplier on each wheel's landmark notable. Tests cover all six penalties and the reward floor. Unreleased. — done 2026-11-08
+- [x] Made every Doomed Gate penalty harsher and substantially strengthened all twelve reward wheels behind them, including a minimum 35% more multiplier on each wheel's landmark notable. Tests cover all six penalties and the reward floor. Released in 0.4.20. — done 2026-11-08
 
-- [x] Recalculated character-tree level awards against the compact graph and changed the split from 3 Travel / 2 Passive to 2 Travel / 3 Passive, preserving five ordinary points per level. Existing saves recount both pools without losing allocations. Unreleased. — done 2026-11-08
+- [x] Recalculated character-tree level awards against the compact graph and changed the split from 3 Travel / 2 Passive to 2 Travel / 3 Passive, preserving five ordinary points per level. Existing saves recount both pools without losing allocations. Released in 0.4.20. — done 2026-11-08
 
-- [x] Replaced the copied passive-tree starting area with six general-purpose class-tailored sets; Mage Mana regeneration is now in its first wheel and Life regeneration is outside its starting package. Focused tree/notable tests pass. Unreleased. — done 2026-11-08
+- [x] Replaced the copied passive-tree starting area with six general-purpose class-tailored sets; Mage Mana regeneration is now in its first wheel and Life regeneration is outside its starting package. Focused tree/notable tests pass. Released in 0.4.20. — done 2026-11-08
 
 - [x] Passive tree handcrafted rebuild: fixed-coordinate layout file, Borderland Roads and bridging clusters on every class border, two ring roads, clean cluster shapes; all cluster/notable/keystone ids and stats kept; broken allocations refunded on load. Tests and build pass; not yet checked in a browser. Unreleased. — done 2026-11-08
 - [x] Save-rollback fixes: a failed browser save no longer skips the cloud save, and a stale device can no longer overwrite newer cloud progress, whatever its clock says. Unreleased. — done 2026-11-08
