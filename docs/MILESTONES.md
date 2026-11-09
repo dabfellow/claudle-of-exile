@@ -4,7 +4,7 @@ Last updated 2026-11-08. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.20, Sharper Passive Choices**, deployed 2026-11-08. The passive tree now has a painted class-coloured backdrop, six class-tailored general starting areas, a recalculated 2 Travel / 3 Passive points per-level split, and Doomed Gates with much harsher sacrifices protecting substantially stronger reward wheels.
+Latest confirmed live release: **0.4.21, Plan Before You Commit**, deployed 2026-11-08. Passive nodes now preview before allocation or refund, level rewards are 2 Travel / 1 Passive, and major offensive themes are distributed across distant tree regions.
 
 1. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
 2. Finish the Maps skill batch: all support effects now run (2026-11-08, unreleased); boss, offline and whole-build checks remain (see that section).
@@ -52,8 +52,8 @@ Latest confirmed live release: **0.4.20, Sharper Passive Choices**, deployed 202
 - Builds fight by their rules; manual play can improve results. Combat and skilling compete for one activity. Offline uses the same engine. No pay-to-win; cosmetic monetisation is a later idea.
 - Class starts provide affinities, not exclusive build lanes. Character trees use compact clusters and useful attribute travel. Class mechanic specialisation belongs in ascendancies.
 - Character-tree level awards (2026-11-08): the compact cluster graph keeps five ordinary points per level but splits them into **2 Travel and 3 Passive**, replacing 3/2. An audit of shortest home-region paths found median costs of 18–22 Travel and 9–13 Passive before taking nearby optional buffs; ordinary clusters use about 47% as many Travel as Passive points (44% across the whole priced tree). The 2/3 split funds the route while leaving Passive points for its useful notables. Act-boss and Mastery awards are unchanged. Existing characters are recounted without losing valid allocations.
-- Passive-point correction (2026-11-08, unreleased): playtesting showed that 3 Passive Points per level erased meaningful choices by funding a full notable every level. Level rewards are now **2 Travel and 1 Passive**; Act-boss and Mastery awards are unchanged. Existing allocations remain, while surplus unspent points are recounted at the lower rate.
-- Passive-theme distribution (2026-11-08, unreleased): starting packages and inner class identities stay intact, but selected outer and border clusters trade places so Cold, Fire, Lightning, Chaos, Bleed, Poison and Projectile each appear in at least four class regions, with no region holding more than 60% of any family. A structural test enforces both limits.
+- Passive-point correction (2026-11-08, released in 0.4.21): playtesting showed that 3 Passive Points per level erased meaningful choices by funding a full notable every level. Level rewards are now **2 Travel and 1 Passive**; Act-boss and Mastery awards are unchanged. Existing allocations remain, while surplus unspent points are recounted at the lower rate.
+- Passive-theme distribution (2026-11-08, released in 0.4.21): starting packages and inner class identities stay intact, but selected outer and border clusters trade places so Cold, Fire, Lightning, Chaos, Bleed, Poison and Projectile each appear in at least four class regions, with no region holding more than 60% of any family. A structural test enforces both limits.
 - Doomed Gate risk/reward (2026-11-08): all six permanent penalties became severe commitments—40% less Life, 35% more Physical Damage taken, zero Armour/ES, no Flask use, 150% increased Mana costs, or −50% Elemental/Chaos Resistances. In return, all 36 notables and the small nodes in the twelve gated wheels were strengthened; their twelve archetype multipliers are now 35–55% more, with the supporting offence, defence and recovery raised alongside them.
 - Every ascendancy has six notable choices and two capstones; the 2/2/3/2 trial budget supports any three notables and either capstone. No node-specific milestone gates or hard node-count ceiling. Chase items may eventually grant extra nodes/capstones.
 - Vitals/Wind-up/Ground and two rule conditions are baseline. War Table grants advanced rules, a third condition and rarity-based auto-salvage. The latest requested behavior makes flasks manual unless Instilled.
@@ -343,11 +343,11 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-- [x] Spread the seven major offensive families across distant passive-tree regions while preserving class starts, every authored cluster, cluster shapes and total node counts; added a concentration regression test. Unreleased. — done 2026-11-08
+- [x] Spread the seven major offensive families across distant passive-tree regions while preserving class starts, every authored cluster, cluster shapes and total node counts; added a concentration regression test. Released in 0.4.21. — done 2026-11-08
 
-- [x] Reduced level-up Passive Points from 3 to 1 while retaining 2 Travel Points, preserving existing allocations and recounting only surplus unspent points for existing characters. Unreleased. — done 2026-11-08
+- [x] Reduced level-up Passive Points from 3 to 1 while retaining 2 Travel Points, preserving existing allocations and recounting only surplus unspent points for existing characters. Released in 0.4.21. — done 2026-11-08
 
-- [x] Added a persistent passive-node preview with separate Allocate and Refund confirmation buttons, so touchscreens can inspect safely and desktop players can compare choices before committing. Unreleased. — done 2026-11-08
+- [x] Added a persistent passive-node preview with separate Allocate and Refund confirmation buttons, so touchscreens can inspect safely and desktop players can compare choices before committing. Released in 0.4.21. — done 2026-11-08
 
 - [x] Made every Doomed Gate penalty harsher and substantially strengthened all twelve reward wheels behind them, including a minimum 35% more multiplier on each wheel's landmark notable. Tests cover all six penalties and the reward floor. Released in 0.4.20. — done 2026-11-08
 
