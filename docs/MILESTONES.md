@@ -4,9 +4,9 @@ Last updated 2026-11-09. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.23, Achievements, Events and Mini-games**, deployed 2026-11-09. Round 2 builds: 129 achievements with play-changing rewards, events calendar, per-task life-skill mastery, mini-game double zones and Bench recipes without achievements. Before it, 0.4.22 (Round 2 screen fixes).
+Latest confirmed live release: **0.4.24, Loot, Sorted Your Way**, deployed 2026-11-09. Round 2 builds: layered Quartermaster loot filters, 129 achievements with play-changing rewards, events calendar, per-task life-skill mastery, mini-game double zones and Bench recipes without achievements. Before it, 0.4.23 (Achievements, Events and Mini-games).
 
-1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are complete and unreleased; the other Build items remain below.
+1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are released; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
 3. Finish the Maps skill batch: all support effects now run (2026-11-08, unreleased); boss, offline and whole-build checks remain (see that section).
 4. Pacing audit: whole-journey simulations expose large Ranger seed variance and a repeatable Mage Act 4 stall, so pacing is not ready to lock.
@@ -391,7 +391,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-- [x] Built layered Quartermaster loot filters with level-scaled presets, category overrides, ordered conditions/actions, stash and ground highlights, safe share codes, time-away handling and old-save migration. — done 2026-11-09
+- [x] Built layered Quartermaster loot filters with level-scaled presets, category overrides, ordered conditions/actions, stash and ground highlights, safe share codes, time-away handling and old-save migration. Released in 0.4.24. — done 2026-11-09
 
 - [x] Achievements expanded from 43 to 129 per-character achievements with play-changing rewards: Passive and Atlas points, realm stash tabs, offline hours, permanent bonuses and six new achievement-only uniques. Old saves migrate (save version 43) and get what they already meet on load. — done 2026-11-09
 
