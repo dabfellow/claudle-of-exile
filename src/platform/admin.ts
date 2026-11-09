@@ -17,6 +17,9 @@ export interface PlayerRow {
   id: string; user_id: string; name: string; class_id: string; email: string | null;
   summary: CharacterSummary; updated_at: string; zone: string | null; playtime_ms: number;
   deleted?: boolean;
+  /** act bosses beaten and lifetime deaths: from the 2026-11-09 admin.sql, missing before it runs */
+  acts?: number;
+  deaths?: number;
 }
 export interface Inspection {
   character: { id: string; user_id: string; name: string; save: GameState; summary: CharacterSummary; updated_at: string };
@@ -29,7 +32,27 @@ export const inspectPlayer = (id: string) => adminCall<Inspection>('admin_inspec
 export const restoreBackup = (id: number, op: string, reason: string) => adminCall<string>('admin_restore', { p_backup: id, p_op: op, p_reason: reason });
 export const resolveBefore = (version: string) => adminCall<number>('admin_resolve_before', { p_version: version });
 export const adminFeedback = (status: string, kind: string, version: string) => adminCall<FeedbackRow[]>('admin_feedback', { p_status: status, p_kind: kind, p_version: version });
-export const sendAdminMessage = (args: { op: string; user: string; realm: string; message: string; feedback?: number; resolve?: boolean; currency?: string; amount?: number; item?: Item }) =>
+/**
+ * A gift item as the server's validator wants it: no uid (the player's game gives it one), and no item tier when it's
+ * the plain tier 1, which every item without one already is. Databases that ran market.sql before tiered loot
+ * (2026-11-07) refuse `itemTier` as an unknown field, which is why item compensation failed while currency worked.
+ */
+export function compensationItem(item: Item): Partial<Item> {
+  const gift: Partial<Item> = { ...item };
+  delete gift.uid;
+  if ((gift.itemTier ?? 1) === 1) delete gift.itemTier;
+  for (const key of Object.keys(gift) as (keyof Item)[]) if (gift[key] === undefined) delete gift[key];
+  return gift;
+}
+
+/** The server's reason a gift was refused, with what to do about it. */
+export function compensationHint(message: string): string | null {
+  if (/unknown item field/i.test(message)) return 'The live database has an older item checker. Run docs/ops/market.sql in the Supabase SQL editor (it is safe to run again), then send again.';
+  if (/unknown (item base|unique|modifier|rune)|no item rules/i.test(message)) return "The server's item rules are older than this build. Press \"Upload item rules\" above, then send again.";
+  return null;
+}
+
+export const sendAdminMessage = (args: { op: string; user: string; realm: string; message: string; feedback?: number; resolve?: boolean; currency?: string; amount?: number; item?: Partial<Item> }) =>
   adminCall<void>('admin_message', { p_op: args.op, p_user: args.user, p_realm: args.realm, p_message: args.message,
     p_feedback: args.feedback ?? null, p_resolve: args.resolve ?? false, p_currency: args.currency ?? null, p_amount: args.amount ?? null, p_item: args.item ?? null });
 

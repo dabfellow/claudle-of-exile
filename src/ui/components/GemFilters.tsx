@@ -9,10 +9,10 @@ export const GEM_KINDS: { id: GemKind; label: string }[] = [
   { id: 'area', label: 'Area' },
   { id: 'utility', label: 'Guards & buffs' },
 ];
-const ATTRS: { id: GemAttr; label: string }[] = [
-  { id: 'str', label: 'Str' },
-  { id: 'dex', label: 'Dex' },
-  { id: 'int', label: 'Int' },
+const ATTRS: { id: GemAttr; label: string; name: string }[] = [
+  { id: 'str', label: 'Str', name: 'Strength' },
+  { id: 'dex', label: 'Dex', name: 'Dexterity' },
+  { id: 'int', label: 'Int', name: 'Intelligence' },
 ];
 
 export function kindMatches(def: ActiveGemDef, kind: GemKind): boolean {
@@ -40,10 +40,16 @@ export function GemFilters({
 }) {
   return (
     <div className="gem-filters">
-      <input className="input gem-search" placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} />
-      <div className="gem-chips">
+      <input className="input gem-search" type="search" placeholder="Search by name" aria-label="Search by name" value={search} onChange={(e) => setSearch(e.target.value)} />
+      <div className="gem-chips" role="group" aria-label="Attribute">
         {ATTRS.map((a) => (
-          <button key={a.id} className={`gem-chip attr-${a.id} ${attr === a.id ? 'active' : ''}`} onClick={() => setAttr(attr === a.id ? null : a.id)}>
+          <button
+            key={a.id}
+            className={`gem-chip attr-${a.id} ${attr === a.id ? 'active' : ''}`}
+            title={attr === a.id ? 'Show every attribute' : `Only ${a.name} gems`}
+            aria-pressed={attr === a.id}
+            onClick={() => setAttr(attr === a.id ? null : a.id)}
+          >
             {a.label}
           </button>
         ))}

@@ -6,7 +6,8 @@ import { stashedItems } from '../../engine/storage';
 import type { GameState, Item, ItemSlotType, Rarity } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { errorText } from '../../platform/feedback';
-import { marketApi, type MarketFilters, type MarketListing, type MarketMode, type MarketScope } from '../../platform/market';
+import { MARKET_OPEN, marketApi, type MarketFilters, type MarketListing, type MarketMode, type MarketScope } from '../../platform/market';
+import { refreshMarketLeftovers } from '../marketWindDown';
 import { Badge, EmptyState, fmt, fmtTime, MatIcon, PageHeader, Tabs, Tooltip } from '../components/common';
 import { Orb } from '../components/Icon';
 import { ItemTiles } from '../components/Inventory';
@@ -225,10 +226,74 @@ function ScopeSection({ s, scope, heading, empty }: { s: GameState; scope: Marke
     <div className="card">
       <div className="card-title">
         {heading}
-        {scope === 'mine' && rows && <span className="dim small"> · {rows.length} of {MARKET_MAX_LISTINGS}</span>}
+        {scope === 'mine' && rows && MARKET_OPEN && <span className="dim small"> · {rows.length} of {MARKET_MAX_LISTINGS}</span>}
       </div>
-      <Listings s={s} rows={rows} error={error} load={() => void load()} empty={empty} />
+      <Listings
+        s={s}
+        rows={rows}
+        error={error}
+        load={() => {
+          void load();
+          // the sidebar drops the closing market once nothing of yours is left on it
+          void refreshMarketLeftovers();
+        }}
+        empty={empty}
+      />
       {more && <button className="btn sm" onClick={more}>Show more</button>}
+    </div>
+  );
+}
+
+/**
+ * The market while it's closed (MARKET_OPEN): nothing to browse, sell or bid on, only a way to get back what's still
+ * there. Deliveries also arrive by themselves each time a character loads.
+ */
+function MarketClosing({ s }: { s: GameState }) {
+  const access = game.marketAccess;
+  const holds = s.account.marketHolds?.length ?? 0;
+  const [busy, setBusy] = useState(false);
+  const collect = async () => {
+    setBusy(true);
+    // a delivery adds to the bank or gives an item a new id, so either moving means something arrived
+    const before = JSON.stringify(s.account.bank) + s.account.nextUid;
+    await game.marketSync();
+    setBusy(false);
+    if (JSON.stringify(game.state.account.bank) + game.state.account.nextUid === before) game.pushToast('Nothing is waiting for you right now', 'info');
+    void refreshMarketLeftovers();
+  };
+  return (
+    <div className="page">
+      <PageHeader title="Player Market" kicker="Closed">
+        The Player Market is closed for now. Nothing of yours is lost: collect anything waiting for you and take down your listings here. Auctions that already
+        have a bid run to their end, and the item or your refund arrives the same way.
+      </PageHeader>
+      {access === 'guest' ? (
+        <div className="card muted">Sign in to the account you traded on to collect what the market is holding for you.</div>
+      ) : (
+        <>
+          <div className="card">
+            <div className="card-title">
+              Waiting for you
+              <span className="grow" />
+              <button className="btn sm primary" disabled={busy} onClick={() => void collect()}>
+                {busy ? 'Collecting…' : 'Collect deliveries'}
+              </button>
+            </div>
+            <p className="muted small" style={{ margin: 0 }}>
+              Gold from sales, refunds, items from cancelled or ended listings, and auctions you won. They go to your bank and stash, and are also collected for
+              you whenever you load a character in this realm.
+            </p>
+            {holds > 0 && (
+              <p className="dim small" style={{ marginBottom: 0 }}>
+                {holds} market {holds === 1 ? 'step is' : 'steps are'} still waiting on the server. {holds === 1 ? 'It settles' : 'They settle'} by itself, and anything
+                that didn't go through comes back to you.
+              </p>
+            )}
+          </div>
+          <ScopeSection s={s} scope="mine" heading="Your listings" empty="You have nothing up for sale." />
+          <ScopeSection s={s} scope="bids" heading="Auctions you're winning" empty="You aren't winning any auctions." />
+        </>
+      )}
     </div>
   );
 }
@@ -240,6 +305,7 @@ export function MarketPage() {
   const [tab, setTab] = useState<'browse' | 'sell' | 'mine'>('browse');
   useEffect(() => void game.marketSync(), []);
   if (access === 'solo') return <div className="page card muted">Solo Self-Found characters can't use the Player Market.</div>;
+  if (!MARKET_OPEN) return <MarketClosing s={s} />;
   return (
     <div className="page">
       <PageHeader

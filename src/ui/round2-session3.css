@@ -1,0 +1,453 @@
+﻿/* Round 2, session 3: Skills, Equipment, Bench, Stash, Town, Settings, Tree, life skills, Admin and Market.
+   New rules only; imported from the pages that use them. */
+
+/* ---------- Skills page ---------- */
+
+.r2-gem-bag .tabs {
+  margin-bottom: 12px;
+}
+
+.r2-gem-select {
+  width: auto;
+  min-width: 0;
+  max-width: 240px;
+  font-size: var(--fs-xs);
+}
+
+.r2-gem-section + .r2-gem-section {
+  margin-top: 14px;
+}
+
+.r2-gem-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.app .r2-gem-grid {
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+}
+
+.app .r2-gem-grid .gem-card {
+  min-height: 44px;
+}
+
+.r2-gem-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.r2-gem-text b {
+  overflow-wrap: anywhere;
+}
+
+.r2-gem-text .small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* which bar slots a loose support fits, as the keys that cast them */
+.r2-fit-keys {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.r2-key {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--line-2);
+  background: var(--bg);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* the slot setup's support list, always open under the sockets */
+.r2-fit-list {
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg-2);
+}
+
+.r2-fit-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 8px;
+}
+
+.r2-fit-list .gem-card:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.r2-missing {
+  margin-top: 8px;
+}
+
+.r2-missing summary {
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .app .r2-gem-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .app .r2-gem-grid .gem-card {
+    gap: 6px;
+    padding: 5px 7px;
+    font-size: var(--fs-xs);
+  }
+  .app .r2-gem-bag .gem-filters {
+    gap: 6px;
+  }
+  .app .r2-gem-bag .gem-search {
+    width: 100%;
+  }
+  .app .skill-btn.setup {
+    min-height: 118px;
+  }
+  .app .slot-modal {
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+}
+
+/* ---------- Crafting Bench: what you own ---------- */
+
+.r2-mat-summary-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.r2-mat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-xs);
+}
+
+button.r2-mat-chip:not(:disabled) {
+  cursor: pointer;
+}
+
+button.r2-mat-chip:not(:disabled):hover {
+  border-color: var(--accent);
+}
+
+.r2-mat-chip.none {
+  opacity: 0.5;
+}
+
+.r2-mat-name {
+  color: var(--muted);
+}
+
+.r2-mat-missing {
+  margin-top: 6px;
+}
+
+.r2-mat-missing summary {
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+.r2-cost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.r2-cost-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+}
+
+.r2-cost-item b {
+  color: var(--success);
+}
+
+.r2-cost-item.short b {
+  color: var(--life-2);
+}
+
+.card-title .r2-cost-item {
+  font-weight: 400;
+  margin-left: 8px;
+}
+
+@media (max-width: 700px) {
+  .app .r2-mat-summary .card-hint {
+    display: none;
+  }
+}
+
+/* ---------- Stash: search and filters ---------- */
+
+.r2-stash-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.r2-stash-filters input[type='search'] {
+  flex: 1 1 200px;
+  min-width: 0;
+  max-width: 320px;
+}
+
+.r2-stash-filters select.input {
+  width: auto;
+}
+
+.r2-stash-hits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.r2-stash-gem-search {
+  width: 160px;
+}
+
+@media (max-width: 700px) {
+  .app .r2-stash-filters input[type='search'] {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  /* two materials a row on a phone, not one tall card each */
+  .app .stash-panel .material-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .app .stash-panel .material-tile {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  .app .stash-panel .material-tile img {
+    width: 28px;
+    height: 28px;
+  }
+  .app .stash-panel .material-name {
+    font-size: var(--fs-xs);
+    overflow-wrap: anywhere;
+  }
+  .app .stash-panel .material-tile b {
+    font-size: var(--fs-sm);
+  }
+}
+
+/* ---------- Town shops ---------- */
+
+.r2-offer-worn {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+.r2-offer-warn {
+  color: var(--life-2);
+}
+
+.r2-offer-good {
+  color: var(--success);
+}
+
+.r2-offer-price {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.r2-offer-short {
+  font-size: var(--fs-2xs);
+  color: var(--life-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* on a phone each offer is one row: art, name, price and button, instead of a tall card */
+@media (max-width: 700px) {
+  .app .r2-shop .shelf-goods {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .app .r2-shop .offer-card {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'art text price'
+      'art text buy';
+    justify-items: stretch;
+    align-items: center;
+    gap: 4px 10px;
+    padding: 8px 10px;
+    text-align: left;
+  }
+  .app .r2-shop .offer-card:hover {
+    transform: none;
+  }
+  .app .r2-shop .offer-art {
+    grid-area: art;
+    width: 48px;
+    height: 48px;
+  }
+  .app .r2-shop .offer-text {
+    grid-area: text;
+  }
+  .app .r2-shop .r2-offer-price {
+    grid-area: price;
+    align-items: flex-end;
+  }
+  .app .r2-shop .price-tag {
+    margin-top: 0;
+  }
+  .app .r2-shop .offer-card .btn {
+    grid-area: buy;
+    width: auto;
+    min-width: 72px;
+  }
+  .app .r2-shop .npc-panel .npc-aside {
+    display: none;
+  }
+  /* clear the awning, so the kicker isn't drawn over it */
+  .app .r2-shop .npc-panel.shopfront {
+    padding-top: 44px;
+  }
+}
+
+/* ---------- Settings: a bar of tabs along the top ---------- */
+
+.r2-settings-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: 0 calc(-1 * var(--s-2));
+  padding: 0 var(--s-2);
+  background: var(--bg);
+}
+
+.app .r2-settings-tabs .tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.app .r2-settings-tabs .tab {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* long checkbox labels wrap instead of running off a phone screen */
+.app .r2-settings label.chip {
+  max-width: 100%;
+  height: auto;
+  flex-wrap: wrap;
+  white-space: normal;
+}
+
+/* ---------- Locked life skills ---------- */
+
+.r2-locked-skill {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+/* ---------- Admin ---------- */
+
+button.linklike {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+button.linklike:hover b {
+  text-decoration: underline;
+}
+
+button.admin-stat.linklike {
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+button.admin-stat.linklike:hover {
+  border-color: var(--accent);
+}
+
+.r2-admin-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px 14px;
+  margin: 8px 0;
+  font-size: var(--fs-sm);
+}
+
+.r2-admin-summary span {
+  color: var(--dim);
+  font-size: var(--fs-xs);
+  display: block;
+}
+
+@media (max-width: 700px) {
+  .app .admin-table th,
+  .app .admin-table td {
+    padding: 6px 6px;
+    font-size: var(--fs-xs);
+  }
+}
+
+/* ---------- Equipment: a taller belt strip, its art fitted inside rather than cropped ---------- */
+
+.app .doll-slot.slot-belt {
+  height: calc(var(--u) * 0.95);
+}
+
+.app .doll-slot.slot-belt .doll-label {
+  bottom: -19px;
+}
+
+.app .doll-slot.slot-belt .cell img.art.pack-art {
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  object-fit: contain;
+}

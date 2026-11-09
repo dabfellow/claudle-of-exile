@@ -6,8 +6,10 @@ import { marketRules } from '../src/data/marketRules';
 import { newGame } from '../src/engine/state';
 import { serialize } from '../src/engine/save';
 import { summarize } from '../src/platform/saves';
-import { UNIQUES } from '../src/data/bases';
-import { createUnique } from '../src/engine/items';
+import { BASES, UNIQUES } from '../src/data/bases';
+import { createItem, createUnique } from '../src/engine/items';
+import { seeded } from '../src/engine/rng';
+import { compensationItem } from '../src/platform/admin';
 
 const ALICE='00000000-0000-0000-0000-00000000000a';
 const BOB='00000000-0000-0000-0000-00000000000b';
@@ -73,6 +75,11 @@ describe('admin operations privilege boundary',()=>{
     expect(stats.characters).toBe(2); expect(stats.by_class).toEqual({warrior:2});
     expect(stats.funnel).toEqual([1,2,3,4,5,6].map((act)=>({act,count:2})));
     expect(stats.death_zones).toEqual({mudflats:4});
+    const more=await as<{by_realm:Record<string,number>;last_seen:{day:number};signups_by_day:unknown[];playtime_hours:number}>(ADMIN,'select admin_overview()');
+    expect(more.by_realm).toEqual({standard:2}); expect(more.last_seen.day).toBe(2); expect(more.signups_by_day).toHaveLength(14);
+    expect(Number(more.playtime_hours)).toBeGreaterThan(0);
+    const rows=await as<{acts:number;deaths:number}[]>(ADMIN,'select admin_players()');
+    expect(rows.every((r)=>Number(r.acts)===6)).toBe(true);
   });
 
   it('searches names and email, and tolerates malformed client diagnostic numbers',async()=>{
@@ -171,6 +178,21 @@ describe('admin operations privilege boundary',()=>{
     expect(deliveries[0].item.uniqueId).toBe(unique.id);
     await expect(as(ALICE,"select market_list($1,$2,'buy','gold',100)",[op(),JSON.stringify(gift)])).rejects.toThrow();
   });
+
+  it('delivers a compensation item made from any base the admin picker offers',async()=>{
+    // stripped the way the Admin page sends it, so a database from before tiered loot accepts it too
+    expect(Object.keys(compensationItem(createItem(newGame(),BASES[0].id,80,'normal',seeded(1))))).not.toContain('itemTier');
+    for(const base of BASES.filter((b)=>!b.retired)) {
+      const gift=compensationItem(createItem(newGame(),base.id,80,'normal',seeded(1)));
+      await as(ADMIN,"select admin_message($1,$2,'standard','Replace lost item',p_item=>$3)",[op(),ALICE,JSON.stringify(gift)]);
+    }
+    for(const unique of UNIQUES) {
+      const gift=createUnique(newGame(),unique.id,80,seeded(2));
+      await as(ADMIN,"select admin_message($1,$2,'standard','Replace lost unique',p_item=>$3)",[op(),ALICE,JSON.stringify(gift)]);
+    }
+    const deliveries=await as<{item:{baseId:string}}[]>(ALICE,"select market_collect('standard')");
+    expect(deliveries.length).toBe(BASES.filter((b)=>!b.retired).length+UNIQUES.length);
+  },60000);
 
   it('filters reports and bulk resolves by numeric version without swallowing unknown versions',async()=>{
     for(const version of ['0.3.9','0.3.20','0.4.0','dev','999999999999999999999.0.0']) await db.query("insert into feedback(user_id,kind,message,context) values($1,'bug','Test',$2)",[ALICE,JSON.stringify({version})]);

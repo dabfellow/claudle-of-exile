@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from 'react';
+import { baseDef } from '../../data/bases';
 import { activeGemDef, supportGemDef } from '../../data/gems';
+import { allMods, describeMod, itemName } from '../../engine/items';
 import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
 import { STASH_PAGE_SIZE } from '../../data/hideout';
 import { challengeName, isSolo } from '../../engine/challenge';
@@ -9,7 +11,8 @@ import { clearableGems, clearLevelOneGems } from '../../engine/gems';
 import { sortFigure, sortItems, type SortKey } from '../../engine/itemSort';
 import { buyStashPage, setStashAffinity, settleOverflow, stashedItems, stashItems, stashPagePrice, stashPageRoom, takeFromStash } from '../../engine/storage';
 import { game } from '../../game';
-import type { GameState, StashAffinity } from '../../engine/types';
+import type { GameState, Item, Rarity, StashAffinity } from '../../engine/types';
+import '../round2-session3.css';
 import { useGame } from '../../game';
 import { Art, CurrencyAmount, EmptyState, fmt, MatIcon, PageHeader, Tabs, Tooltip, type TabDef } from '../components/common';
 import { FlaskShelf } from '../components/FlaskView';
@@ -99,6 +102,8 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const [tab, setTab] = useState<Tab>('gear');
   const [page, setPage] = useState(0);
+  const [gemSearch, setGemSearch] = useState('');
+  const gemHit = (name: string) => name.toLowerCase().includes(gemSearch.trim().toLowerCase());
   const here = Math.min(page, s.account.stash.length - 1);
   const tabs: TabDef<Tab>[] = [
     { id: 'gear', label: 'Gear', count: stashedItems(s).length - s.account.uniqueStash.length },
@@ -159,27 +164,17 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
         </StashTab>
 
         <StashTab on={tab === 'materials'}>
-          <div className="card stash-panel">
-            {MATERIAL_GROUPS.map((g) => (
-              <div key={g.label} className="currency-group">
-                <div className="section-label">{g.label}</div>
-                <div className="material-grid">
-                  {MATERIALS.filter((m) => g.kinds.includes(m.kind)).map((m) => (
-                    <MaterialTile key={m.id} s={s} id={m.id} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          <MaterialsPanel s={s} />
         </StashTab>
 
         <StashTab on={tab === 'gems'}>
           <div className="card stash-panel">
-            <div className="row">
+            <div className="row wrap">
               <div className="section-label" style={{ margin: 0 }}>
                 On your skill bar
               </div>
               <span className="spacer" />
+              <input className="input sm r2-stash-gem-search" type="search" placeholder="Search gems" aria-label="Search gems" value={gemSearch} onChange={(e) => setGemSearch(e.target.value)} />
               <button className="btn sm" onClick={() => go('skills')}>
                 Manage skills
               </button>
@@ -214,7 +209,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
             </div>
             {s.account.gems.length === 0 && <EmptyState small>No spare skill gems. Buy them at the Gem shop.</EmptyState>}
             <div className="gem-bag">
-              {s.account.gems.map((g) => (
+              {s.account.gems.filter((g) => gemHit(activeGemDef(g.gemId).name)).map((g) => (
                 <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
                   <div className="gem-card">
                     <GemIcon def={activeGemDef(g.gemId)} size={30} />
@@ -228,7 +223,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
             <div className="section-label">Support gems ({s.account.supportGems.length})</div>
             {s.account.supportGems.length === 0 && <EmptyState small>No loose support gems. Buy them at the Gem shop or cut them with Gemcutting.</EmptyState>}
             <div className="gem-bag">
-              {s.account.supportGems.map((g) => (
+              {s.account.supportGems.filter((g) => gemHit(supportGemDef(g.supportId).name)).map((g) => (
                 <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
                   <div className="gem-card">
                     <GemIcon def={supportGemDef(g.supportId)} size={26} support />
@@ -254,6 +249,49 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
           </div>
         </StashTab>
       </div>
+    </div>
+  );
+}
+
+/** Every material by family, with a search and a switch to hide the ones you have none of. */
+function MaterialsPanel({ s }: { s: GameState }) {
+  const [search, setSearch] = useState('');
+  const [ownedOnly, setOwnedOnly] = useState(false);
+  const [group, setGroup] = useState('');
+  const q = search.trim().toLowerCase();
+  const groups = MATERIAL_GROUPS.filter((g) => !group || g.label === group)
+    .map((g) => ({
+      ...g,
+      list: MATERIALS.filter((m) => g.kinds.includes(m.kind) && (!ownedOnly || (s.account.bank[m.id] ?? 0) > 0) && (!q || m.name.toLowerCase().includes(q))),
+    }))
+    .filter((g) => g.list.length);
+  return (
+    <div className="card stash-panel">
+      <div className="r2-stash-filters">
+        <input className="input" type="search" placeholder="Search materials" aria-label="Search materials" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <select className="input sm" aria-label="Kind" value={group} onChange={(e) => setGroup(e.target.value)}>
+          <option value="">Every kind</option>
+          {MATERIAL_GROUPS.map((g) => (
+            <option key={g.label} value={g.label}>
+              {g.label}
+            </option>
+          ))}
+        </select>
+        <button className={`gem-chip ${ownedOnly ? 'active' : ''}`} aria-pressed={ownedOnly} onClick={() => setOwnedOnly(!ownedOnly)}>
+          Only ones I have
+        </button>
+      </div>
+      {!groups.length && <EmptyState small>No materials match.</EmptyState>}
+      {groups.map((g) => (
+        <div key={g.label} className="currency-group">
+          <div className="section-label">{g.label}</div>
+          <div className="material-grid">
+            {g.list.map((m) => (
+              <MaterialTile key={m.id} s={s} id={m.id} />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -302,13 +340,61 @@ const AFFINITIES: { id: StashAffinity | ''; label: string }[] = [
   { id: 'contraband', label: 'Contraband' },
 ];
 
+const SLOT_FILTERS: { id: string; label: string }[] = [
+  { id: '', label: 'Any slot' },
+  { id: 'weapon', label: 'Weapons' },
+  { id: 'offhand', label: 'Off hands' },
+  { id: 'helmet', label: 'Helmets' },
+  { id: 'body', label: 'Body armour' },
+  { id: 'gloves', label: 'Gloves' },
+  { id: 'boots', label: 'Boots' },
+  { id: 'belt', label: 'Belts' },
+  { id: 'amulet', label: 'Amulets' },
+  { id: 'ring', label: 'Rings' },
+];
+const GEAR_RARITIES: Rarity[] = ['normal', 'magic', 'rare'];
+
+/** Everything a search can hit on an item: its name, its base and every modifier line. */
+function itemText(item: Item): string {
+  let base = '';
+  try {
+    base = baseDef(item.baseId).name;
+  } catch {
+    // a base from a newer build: the name still matches
+  }
+  return [itemName(item), base, ...allMods(item).map((m) => describeMod(m))].join('\n').toLowerCase();
+}
+
 /** The stash's gear pages: pick a page, click an item to take it back to the bag. */
 function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: (n: number) => void }) {
   const [sort, setSort] = useState<SortKey>('recent');
+  const [search, setSearch] = useState('');
+  const [slot, setSlot] = useState('');
+  const [rarity, setRarity] = useState<Rarity | null>(null);
+  const [everyPage, setEveryPage] = useState(true);
   const price = stashPagePrice(s);
   const pages = s.account.stash;
   const items = pages[page] ?? [];
   const currentAffinity = s.account.stashAffinities?.[page] ?? '';
+  const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const filtering = words.length > 0 || !!slot || !!rarity;
+  const matches = (i: Item) => {
+    if (rarity && i.rarity !== rarity) return false;
+    if (slot) {
+      try {
+        if (baseDef(i.baseId).slot !== slot) return false;
+      } catch {
+        return false;
+      }
+    }
+    if (!words.length) return true;
+    const text = itemText(i);
+    return words.every((w) => text.includes(w));
+  };
+  const pageOf = new Map<number, number>();
+  pages.forEach((p, n) => p.forEach((i) => pageOf.set(i.uid, n)));
+  const shown = !filtering ? items : (everyPage ? pages.flat() : items).filter(matches);
+  const perPage = filtering ? pages.map((p) => p.filter(matches).length) : [];
   return (
     <div className="card stash-panel">
       <div className="card-title">
@@ -347,6 +433,60 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
         </label>
         <StashSort value={sort} onChange={setSort} />
       </div>
+      <div className="r2-stash-filters">
+        <input className="input" type="search" placeholder="Search names and modifiers" aria-label="Search names and modifiers" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <select className="input sm" aria-label="Slot" value={slot} onChange={(e) => setSlot(e.target.value)}>
+          {SLOT_FILTERS.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.label}
+            </option>
+          ))}
+        </select>
+        <div className="gem-chips" role="group" aria-label="Rarity">
+          {GEAR_RARITIES.map((r) => (
+            <button key={r} className={`gem-chip ${rarity === r ? 'active' : ''}`} aria-pressed={rarity === r} onClick={() => setRarity(rarity === r ? null : r)}>
+              <span style={{ color: `var(--${r})` }}>{r[0].toUpperCase() + r.slice(1)}</span>
+            </button>
+          ))}
+        </div>
+        {filtering && (
+          <>
+            <div className="gem-chips" role="group" aria-label="Where to look">
+              <button className={`gem-chip ${everyPage ? 'active' : ''}`} onClick={() => setEveryPage(true)}>
+                Every page
+              </button>
+              <button className={`gem-chip ${everyPage ? '' : 'active'}`} onClick={() => setEveryPage(false)}>
+                This page
+              </button>
+            </div>
+            <button
+              className="btn sm ghost"
+              onClick={() => {
+                setSearch('');
+                setSlot('');
+                setRarity(null);
+              }}
+            >
+              Clear
+            </button>
+          </>
+        )}
+      </div>
+      {filtering && (
+        <div className="r2-stash-hits dim small">
+          {shown.length} {shown.length === 1 ? 'match' : 'matches'}
+          {everyPage ? ' across your stash' : ` on page ${page + 1}`}
+          {everyPage &&
+            perPage.some((n) => n > 0) &&
+            perPage.map((n, i) =>
+              n ? (
+                <button key={i} className={`stash-page-tab ${i === page ? 'active' : ''}`} title={`Go to page ${i + 1}`} onClick={() => setPage(i)}>
+                  Page {i + 1} · {n}
+                </button>
+              ) : null,
+            )}
+        </div>
+      )}
       <div className="row wrap" style={{ marginBottom: 10 }}>
         <span className="dim small">
           Page {page + 1} ·{' '}
@@ -374,7 +514,18 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
           Take all
         </button>
       </div>
-      <ItemTiles s={s} items={sortItems(items, sort, s)} slots={STASH_PAGE_SIZE} figure={(i) => sortFigure(i, sort)} onClick={(i) => openItemMenu(i.uid)} />
+      {filtering ? (
+        <ItemTiles
+          s={s}
+          items={sortItems(shown, sort, s)}
+          empty="Nothing in your stash matches."
+          // across pages, each tile says which page it sits on
+          figure={(i) => (everyPage ? `p${(pageOf.get(i.uid) ?? 0) + 1}` : sortFigure(i, sort))}
+          onClick={(i) => openItemMenu(i.uid)}
+        />
+      ) : (
+        <ItemTiles s={s} items={sortItems(items, sort, s)} slots={STASH_PAGE_SIZE} figure={(i) => sortFigure(i, sort)} onClick={(i) => openItemMenu(i.uid)} />
+      )}
     </div>
   );
 }
