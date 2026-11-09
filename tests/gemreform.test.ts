@@ -83,6 +83,6 @@ describe('The Old Covenant', () => {
     expect(holdItem(s, 'op', ring.uid)).toBe("That item can't be traded");
     expect(rings(s)).toBe(1);
     expect(marketRules().uniques.old_covenant).toBeUndefined();
-    expect(UNIQUES.filter((u) => u.noTrade).map((u) => u.id)).toEqual(['old_covenant', 'unbroken_temper']);
+    expect(UNIQUES.filter((u) => u.noTrade).map((u) => u.id)).toEqual(['old_covenant', 'unbroken_temper', 'trophy_takers_stride', 'crown_of_the_unmade', 'journeymans_satchel', 'ironvow', 'self_made', 'old_way_grips']);
   });
 });

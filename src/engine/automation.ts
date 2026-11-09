@@ -1,3 +1,4 @@
+import { perkTotals } from '../data/achievements';
 import { activeGemDef, RULE_LABELS, RULE_UNLOCK_NAMES, type ActiveGemDef, type RuleCondition, type RuleUnlock, type SkillAim, type SkillPriority, type TacticRule } from '../data/gems';
 import { STATIONS, stationDef, type StationGrant } from '../data/hideout';
 import { actOpen, ZONES, type BossMechanic, type ZoneDef } from '../data/zones';
@@ -101,8 +102,13 @@ export function bossLeftToRules(s: GameState, zone: ZoneDef): boolean {
   );
 }
 
+/** Hours of offline progress: the realm's War Table unlocks plus this character's achievement hours. */
+export function offlineHours(s: GameState): number {
+  return s.account.automation.offlineHours + perkTotals(s.achievements).offlineHours;
+}
+
 export function offlineCapMs(s: GameState): number {
-  return s.account.automation.offlineHours * 60 * 60 * 1000;
+  return offlineHours(s) * 60 * 60 * 1000;
 }
 
 /** A station level's unlocks. They only ever add up. */

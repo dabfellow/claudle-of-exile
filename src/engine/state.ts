@@ -27,7 +27,7 @@ export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 43;
+export const SAVE_VERSION = 44;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -120,6 +120,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     lifetime: {
       kills: 0, bossKills: 0, deaths: 0, itemsLooted: 0, orbsUsed: 0, salvaged: 0, flasksDrunk: 0,
       flasksBrewed: 0, mealsEaten: 0, mapsDrawn: 0, itemsSmithed: 0, gathered: 0, benchCrafts: 0, raresFound: 0, uniquesFound: 0,
+      rareKills: 0, doomedBest: 0, uniqueMaps: [],
     },
     clock: 0,
     lastSaved: Date.now(),

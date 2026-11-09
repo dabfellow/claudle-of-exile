@@ -2,7 +2,7 @@
 
 Generated from the game data; run `npm run uniques` after changing a unique, instead of editing this file.
 
-129 uniques, each under the first act that drops it.
+135 uniques, each under the first act that drops it.
 
 ## Act 1: The Drowned Coast (35)
 
@@ -166,9 +166,20 @@ Generated from the game data; run `npm run uniques` after changing a unique, ins
 | **Sovereign's Grasp**<br>*What the void touches, it keeps.* | gloves | Oblivion Gloves (80) | • +(65–90) to maximum Energy Shield<br>• (15–22)% increased Attack Speed<br>• (15–22)% increased Cast Speed<br>• +(30–45)% to Chaos Resistance<br>• (3–5)% of Damage Leeched as Life<br>• Touch of the Void: Gain (25–35)% of Physical and Elemental Damage as extra Chaos Damage against Ailing enemies; Hits Wither enemies (+20% Chaos Damage taken) | The Void Sovereign (Uber Boss) |
 | **The Unwritten**<br>*No house, no crest, no oath left to break.* | body | Empyrean Regalia (80) | • +(110–150) to maximum Life<br>• +(80–115) to maximum Energy Shield<br>• +(20–30) to all Attributes<br>• +(16–25)% to all Elemental Resistances<br>• (10–15)% more maximum Life<br>• The Unwritten Path: Allocates 1 random Ascendancy Notable from outside your class | The Crownless (Hard Boss) |
 
-## No drop source yet (2)
+## Achievement rewards (7)
+
+| Unique | Slot | Base (req. level) | Mods | Drops in |
+| --- | --- | --- | --- | --- |
+| **Self-Made**<br>*No trade, no gift, no help. Only what you found.* | ring | Diamond Ring (24) | • +(12–18) to all Attributes<br>• (25–35)% increased Rarity of Items found<br>• (6–10)% increased maximum Life<br>• (6–8)% increased Attack Speed<br>• (6–8)% increased Cast Speed | Self-Made (Achievement) |
+| **The Unbroken Temper**<br>*From the first shore to the Last King, every wound was a prayer, and not one was the last.* | amulet | Onyx Amulet (24) | • +(80–105) to maximum Life<br>• +(12–18)% to all Elemental Resistances<br>• (20–30)% faster Fervor<br>• (25–40)% increased holy nova healing<br>• Regenerate 1% of Life per second | Unbroken (Achievement) |
+| **Journeyman's Satchel**<br>*Every pocket holds a tool, and every tool remembers the hand.* | belt | Heavy Belt (26) | • (12–15)% increased Gathering and Crafting Speed<br>• (15–20)% increased Skill Experience<br>• +(40–60) to maximum Life<br>• (20–30)% increased Flask Charges gained | Master of Every Craft (Achievement) |
+| **Grips of the Old Way**<br>*Before the crafts and the trades, there was a sword and a hand to hold it.* | gloves | Bladedancer Gloves (52) | • Adds (8–12) to (16–22) Physical Damage<br>• (12–16)% increased Attack Speed<br>• +(20–28)% to Critical Strike Multiplier<br>• +(60–80) to maximum Life<br>• 1% of Damage Leeched as Life | The Old Way (Achievement) |
+| **Trophy-Taker's Stride**<br>*Five heads on the wall, and the boots still itch to walk.* | boots | Gryphon Boots (64) | • (25–30)% increased Movement Speed<br>• +(60–80) to maximum Life<br>• (20–30)% increased Rarity of Items found<br>• (20–30)% reduced Damage taken from Boss Slams | Trophy Taker (Achievement) |
+| **Crown of the Unmade**<br>*Worn by no king, because every king who could wear it is gone.* | helmet | Sanctum Crown (74) | • (6–8)% more maximum Life<br>• +(15–20)% to all Elemental Resistances<br>• +(20–25)% to Chaos Resistance<br>• (15–20)% increased Cooldown Recovery Rate | Nothing Left to Fear (Achievement) |
+| **Ironvow**<br>*One life, sworn once, kept to the end.* | body | Titan Plate (74) | • +(100–130) to maximum Life<br>• (8–10)% more maximum Life<br>• (15–20)% more Armour<br>• (6–8)% reduced Elemental Damage taken<br>• Regenerate 1% of Life per second | Ironvow (Achievement) |
+
+## No drop source yet (1)
 
 | Unique | Slot | Base (req. level) | Mods | Drops in |
 | --- | --- | --- | --- | --- |
 | **The Old Covenant**<br>*Given to those who were here before the tide turned.* | ring | Iron Ring (1) | • 3% of Damage Leeched as Life<br>• 2% of Damage Leeched as Mana | — |
-| **The Unbroken Temper**<br>*From the first shore to the Last King, every wound was a prayer, and not one was the last.* | amulet | Onyx Amulet (24) | • +(80–105) to maximum Life<br>• +(12–18)% to all Elemental Resistances<br>• (20–30)% faster Fervor<br>• (25–40)% increased holy nova healing<br>• Regenerate 1% of Life per second | — |

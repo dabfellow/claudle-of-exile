@@ -7923,6 +7923,24 @@ img.art.mat-art {
   font-size: var(--fs-xs);
 }
 
+/* lasting rewards (points, tabs, bonuses, uniques) stand out from currency */
+.io-item.ach-perk {
+  color: var(--accent);
+  border-color: var(--accent-line);
+}
+
+.io-item.ach-perk.unique-name {
+  color: var(--unique);
+  cursor: help;
+}
+
+.ach-bonuses {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: var(--s-2);
+}
+
 .area-drops {
   display: flex;
   flex-direction: column;

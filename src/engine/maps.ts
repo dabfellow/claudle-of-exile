@@ -1,3 +1,4 @@
+import { perkTotals } from '../data/achievements';
 import { BASES, obtainable, type BaseDef } from '../data/bases';
 import { classDef } from '../data/classes';
 import { FOSSILS } from '../data/craftMats';
@@ -204,7 +205,8 @@ export function atlasPointsEarned(s: GameState): number {
     + (a.doomedCleared?.length ?? 0) * ATLAS_DOOMED_CLEAR_POINTS
     + (a.hardBossesCleared?.length ?? 0) * ATLAS_HARD_BOSS_CLEAR_POINTS
     + (a.uberBossesCleared?.length ?? 0) * ATLAS_UBER_BOSS_CLEAR_POINTS;
-  return Math.min(ATLAS_POINT_CAP, total);
+  // achievement Atlas points are extra: they go past the cap
+  return Math.min(ATLAS_POINT_CAP, total) + perkTotals(s.account.achievementRewards ?? []).atlasPoints;
 }
 
 /** Realm-first Hard and Uber Boss clears award the Atlas's post-map points. */
@@ -847,6 +849,10 @@ export function mapStep(s: GameState, ctx: Ctx): void {
     recordAtlasClear(s, ctx, run.tier, !!run.slottedFull, deathless);
   } else {
     recordDoomedAtlasClear(s, ctx, run.doomedTier);
+    s.lifetime.doomedBest = Math.max(s.lifetime.doomedBest ?? 0, run.doomedTier);
+  }
+  if (run.uniqueMapId && !(s.lifetime.uniqueMaps ?? []).includes(run.uniqueMapId)) {
+    s.lifetime.uniqueMaps = [...(s.lifetime.uniqueMaps ?? []), run.uniqueMapId];
   }
   m.run = null;
   ctx.emit({ t: 'info', text: `${label} cleared`, tone: 'good' });

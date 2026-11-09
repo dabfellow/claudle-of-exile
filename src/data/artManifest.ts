@@ -494,6 +494,12 @@ const UNIQUE_DESC: Record<string, string> = {
   pyre_heart: 'a black onyx pendant shaped like a heart with a small flame burning inside it',
   old_covenant: 'a worn iron band with two thin lines, one red and one blue, twisted around it',
   unbroken_temper: 'a black onyx heart on an iron chain, a red glow pulsing behind one long crack that never spread',
+  trophy_takers_stride: 'tall leather boots hung with small bone and tooth trophies on cords at the ankles',
+  crown_of_the_unmade: 'an empty silver crown with its jewels missing, only dark sockets left where they sat',
+  journeymans_satchel: 'a thick leather belt with many small pouches and tools tucked into loops',
+  ironvow: 'heavy dark iron plate armour with a single oath engraved across the chest',
+  self_made: 'a plain hand-hammered silver ring with a rough uncut stone',
+  old_way_grips: 'worn leather-and-steel sword gloves, the palms dark and polished from years of use',
 };
 
 const ATTR_GEM = { str: 'red', dex: 'green', int: 'blue' } as const;

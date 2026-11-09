@@ -1,5 +1,5 @@
-import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP, STASH_PAGE_GROWTH, STASH_PAGE_PRICE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
-import { claimOwned, seeUnique } from './account';
+import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP, STASH_PAGE_GROWTH, STASH_PAGE_PRICE, STASH_PAGE_SIZE } from '../data/hideout';
+import { claimOwned, freeStashPages, seeUnique } from './account';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
 import { isCraftLocked } from './crafting';
@@ -138,10 +138,9 @@ export function settleOverflow(s: GameState): number {
   return before - a.overflow.length;
 }
 
-/** Gold for the next stash page. Pages the Stash station gave you don't count toward the price. */
+/** Gold for the next stash page. Pages the Stash station or achievements gave you don't count toward the price. */
 export function stashPagePrice(s: GameState): number {
-  const free = (s.account.hideout.stash ?? 1) - 1;
-  const bought = Math.max(0, s.account.stash.length - STASH_START_PAGES - free);
+  const bought = Math.max(0, s.account.stash.length - freeStashPages(s.account));
   return Math.round(STASH_PAGE_PRICE * STASH_PAGE_GROWTH ** bought);
 }
 

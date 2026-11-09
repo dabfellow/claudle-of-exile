@@ -61,6 +61,14 @@ Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2
     - Foraging: herbs 44 → 58 px, life 2.2 → 3.4 s, one every 1.3 s. Gemcutting: facets 46 → 62 px, stone settles in 5.2 s (was 3.5).
     - No save migration: the flag is a new optional field, so old saves load without it (tested).
   - Decided for the owner: holiday dates are computed in code (no outside calendar service) and switch on automatically, each can be turned off in Admin; Admin can stack events, schedule weekend events and set any start/end; overlapping bonuses add.
+- Achievements build (2026-11-09), small calls made while building the Round 2 design:
+  - 129 achievements in eight sections: Campaign, Combat, Bosses, Maps, Crafting & loot, Life skills, Character, Challenge modes. All 43 old ids kept; some moved section (acts to Campaign, flasks to Combat/Life skills, Exile ones to Challenge).
+  - Reward budget across all of them: +8 Passive points (act conquerors 2/4/6, Unbroken, all four Trials, level 90, all Uber Bosses, Hardcore SSF campaign), +4 offline hours, about +19% Item Rarity in total plus small Gold find, Experience, Life, resistance, life-skill and flask bonuses, 7 achievement-only uniques (Unbroken Temper plus six new), +4 Atlas points and +3 stash tabs for the realm.
+  - Atlas points are realm rewards like stash tabs, since the Atlas is shared: added once per realm. They go past the usual 70-point cap, so they still matter at the top.
+  - Bonuses are worked out from the earned list each time (not stored), so changing a reward later fixes itself on every save. The realm keeps a list of achievements whose realm reward it already has (`achievementRewards`), and achievement tabs never raise the price of the next bought page.
+  - On load, any achievement a character already meets is granted quietly, with one summary toast. Map counters (highest Doomed tier, Unique Maps) are filled from bosses the character has already beaten; rare kills start at zero.
+  - Challenge-mode achievements only count on that kind of character. Classic still doesn't see Life skill achievements.
+- Events calendar build (2026-11-09):
     - Events calendar build calls (2026-11-09), all in `src/data/events.ts`. Holidays run midnight to midnight **UTC**, the same moment for every player: New Year 31 Dec–2 Jan, Valentine's 13–15 Feb, Easter Good Friday–Easter Monday, Summer 20–26 Jun (solstice week), Halloween 29 Oct–1 Nov, Thanksgiving (US, fourth Thursday of November) Thursday–Sunday, Christmas 23–26 Dec. All keep the existing double XP and double loot.
     - Stacking adds the bonus parts (+100% and +100% = ×3). A narrow bonus includes the broad one running beside it (Christmas ×2 XP plus a ×2 combat-XP event = ×3 combat XP). Crafting-cost savings add too, but never past half off (the engine's existing floor).
     - Weekend events run **Friday 18:00 to Monday 06:00 UTC**, so Europe gets Friday evening and the Americas get Sunday evening. A "Weekends only" event repeats every weekend between its start and end; no end means every weekend.
@@ -356,7 +364,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - [ ] Build: War Table / Quartermaster split; auto flee (first, cheap), auto challenge and auto next zone (moves on once the area's boss is down) behind War Table upgrades.
   - [x] Build: per-task mastery, 120 unbuffed hours to max, with save migration from bands and bigger max bonuses. — done 2026-11-09
   - [x] Build: mini-games (inner double zone on all, horizontal Alchemy, easier Foraging and Gemcutting); Bench recipes drop achievement requirements. Played at phone and desktop sizes in headless Chromium. — done 2026-11-09
-  - [ ] Build: 100+ per-character achievements with play-changing rewards.
+  - [x] Build: 100+ per-character achievements with play-changing rewards. 129 achievements, 6 new achievement-only uniques; checked in headless Chromium at phone and desktop sizes. See Decisions "Achievements build". — done 2026-11-09
   - [x] Build: layered loot filters (presets + overrides, custom rules tab, share codes). Tested at phone and desktop sizes; old filter saves migrate and time-away loot uses the same evaluator. — done 2026-11-09
   - [x] Build: events calendar (computed holidays, Admin toggles, stacking, weekend and custom windows). Calls under Decisions "Round 2 design pass". — done 2026-11-09
     - Owner to do once: run `docs/ops/events.sql` in Supabase (SQL Editor → New query → paste → Run). Until then holidays still run; only Admin's holiday on/off switch and "Weekends only" box ask for it.
@@ -384,6 +392,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 ## Done
 
 - [x] Built layered Quartermaster loot filters with level-scaled presets, category overrides, ordered conditions/actions, stash and ground highlights, safe share codes, time-away handling and old-save migration. — done 2026-11-09
+
+- [x] Achievements expanded from 43 to 129 per-character achievements with play-changing rewards: Passive and Atlas points, realm stash tabs, offline hours, permanent bonuses and six new achievement-only uniques. Old saves migrate (save version 43) and get what they already meet on load. — done 2026-11-09
 
 - [x] Mini-game rework: a gold double zone on every life-skill mini-game and Heist, horizontal Alchemy, easier Foraging and Gemcutting; Crafting Bench recipes need only the Bench level. — done 2026-11-09
 

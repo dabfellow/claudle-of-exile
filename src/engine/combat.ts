@@ -3031,7 +3031,8 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   }
   ascendancyKill(s, mon);
   s.lifetime.kills += 1;
-  const xp = monsterXp(mon) * areaXpMultiplier(characterLevel(s), zone.levelRange);
+  if (!mon.isBoss && mon.rarity === 'rare') s.lifetime.rareKills = (s.lifetime.rareKills ?? 0) + 1;
+  const xp =monsterXp(mon) * areaXpMultiplier(characterLevel(s), zone.levelRange);
   grantXp(s, ctx, 'combat', xp * (1 + d.charXp / 100));
   grantGemXp(s, ctx, xp, d.attributes);
   gainCharges(s, mon.isBoss ? 8 : 1, d);

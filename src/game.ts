@@ -1,6 +1,8 @@
 import { ACHIEVEMENT_BY_ID } from './data/achievements';
 import { TRIALS } from './data/ascendancies';
+import { uniqueDef } from './data/bases';
 import { useEffect, useSyncExternalStore } from 'react';
+import { perkText, settleAchievements } from './engine/achievements';
 import { flaskDef } from './data/flasks';
 import { SKILLS } from './data/skills';
 import { ACTS, actOpen, ZONES } from './data/zones';
@@ -624,6 +626,10 @@ class GameStore {
     s.account = this.realm;
     settleCharacter(s, this.realm);
     if (giveKeepsake(s)) this.pushToast('Skill gems were re-sorted, so early leech moved. The Old Covenant is in your bag to make up for it.', 'good');
+    // achievements added since this character last played, which it already meets, come with their rewards now
+    const earned = settleAchievements(s);
+    if (earned.length === 1) this.pushToast(`Achievement unlocked: ${ACHIEVEMENT_BY_ID[earned[0]].name}`, 'good');
+    else if (earned.length > 1) this.pushToast(`${earned.length} achievements unlocked from your progress so far. See Achievements for their rewards.`, 'good');
   }
 
   /** Save and leave the current character for the select screen. */
@@ -1117,7 +1123,8 @@ class GameStore {
       }
       case 'achievement': {
         const a = ACHIEVEMENT_BY_ID[e.id];
-        this.addFeed(`Achievement: ${a.name}`, 'good');
+        const perks = [...perkText(a.perks ?? {}), ...(a.unique ? [`${uniqueDef(a.unique).name} is in your bag`] : [])];
+        this.addFeed(`Achievement: ${a.name}${perks.length ? ` — ${perks.join(', ')}` : ''}`, 'good');
         this.pushToast(`Achievement unlocked: ${a.name}`, 'good');
         break;
       }

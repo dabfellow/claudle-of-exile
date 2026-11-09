@@ -21,7 +21,8 @@ import {
 import type { RuleUnlock } from '../data/gems';
 import { currencyDef } from '../data/materials';
 import { actBossZone, actOpen, ZONES, type ZoneDef } from '../data/zones';
-import { grantUnlocks } from './automation';
+import { achievementTabs } from './account';
+import { grantUnlocks, offlineHours } from './automation';
 import { addBank, canAfford, payCost } from './bank';
 import { hideoutCost } from './challenge';
 import type { Ctx } from './context';
@@ -92,9 +93,10 @@ export function stationPerks(s: GameState, id: StationId): string[] {
       ];
     case 'stash': {
       const pages = s.account.stash.length;
-      const bought = Math.max(0, pages - (STASH_START_PAGES + i));
+      const earned = achievementTabs(s.account);
+      const bought = Math.max(0, pages - (STASH_START_PAGES + i) - earned);
       return [
-        `${pages} stash pages${bought ? ` (${bought} bought)` : ''}`,
+        `${pages} stash pages${bought ? ` (${bought} bought)` : ''}${earned ? ` (${earned} from achievements)` : ''}`,
         ...(lvl >= 5 ? ['Dedicated Map Storage Tab'] : []),
         ...(lvl >= 6 ? ['Currency & Fragment Overview Tab'] : []),
       ];
@@ -138,7 +140,7 @@ export function stationPerks(s: GameState, id: StationId): string[] {
     }
     case 'watchtower':
       return [
-        `Up to ${s.account.automation.offlineHours} hours offline`,
+        `Up to ${offlineHours(s)} hours offline${offlineHours(s) > s.account.automation.offlineHours ? ` (${offlineHours(s) - s.account.automation.offlineHours} from achievements)` : ''}`,
         ...(lvl >= 5 ? ['Autonomous Offline Mapping'] : []),
       ];
     case 'trophy_altar':

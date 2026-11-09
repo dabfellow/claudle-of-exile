@@ -7,7 +7,7 @@ import { openItemMenu } from './ItemMenu';
 import { ItemIcon } from './ItemView';
 
 /** The generator's section names, as players see them. */
-const SECTION_LABEL: Record<string, string> = { 'Maps only': 'Maps', 'No drop source yet': 'Other' };
+const SECTION_LABEL: Record<string, string> = { 'Maps only': 'Maps', 'Achievement rewards': 'Achievements', 'No drop source yet': 'Other' };
 
 /**
  * The Uniques tab: a fixed spot for every unique in the game, by the act that first drops it. A stashed unique sits in
@@ -71,7 +71,7 @@ function UniqueSpot({ s, u, items, status }: { s: GameState; u: UniqueDef; items
             {u.flavour}
           </div>
           <div className="small" style={{ marginTop: 4 }}>
-            {drops.length ? `Drops in ${drops.join(', ')}` : 'Not found in areas or Maps'}
+            {drops.length ? `${drops.every((d) => d.endsWith('(Achievement)')) ? 'Reward for' : 'Drops in'} ${drops.join(', ')}` : 'Not found in areas or Maps'}
           </div>
           <div className="dim small">{status}</div>
         </div>

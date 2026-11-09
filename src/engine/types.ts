@@ -846,6 +846,12 @@ export interface Lifetime {
   exileBareKills?: number;
   /** Unbroken achievement: 1 once the Last King falls to a character that has never died */
   act6Deathless?: number;
+  /** rare (non-boss) monsters slain */
+  rareKills?: number;
+  /** highest Doomed Map tier this character has cleared */
+  doomedBest?: number;
+  /** Unique Map ids this character has cleared */
+  uniqueMaps?: string[];
 }
 
 export interface CharacterInfo {
@@ -933,6 +939,11 @@ export interface AccountState {
   stashAffinities?: Record<number, StashAffinity>;
   /** realm-shared map safety and auto-rolling preferences */
   mapSettings?: MapSettings;
+  /**
+   * Achievements whose realm reward (Atlas points, stash tabs) has been added. A character earns its own achievements,
+   * but these rewards are shared, so each is added once, the first time any character in the realm earns it.
+   */
+  achievementRewards?: string[];
 }
 
 export interface MapSettings {
@@ -979,7 +990,7 @@ export interface MarketHold {
 }
 
 /** Account data arriving from elsewhere: a pre-account save, a demo, an import. */
-export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'uniqueStash' | 'uniquesSeen' | 'exileUnlocked' | 'campaignDone' | 'maps' | 'sextants' | 'atlas' | 'mapSettings'>> & Partial<AccountPool>;
+export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'uniqueStash' | 'uniquesSeen' | 'exileUnlocked' | 'campaignDone' | 'maps' | 'sextants' | 'atlas' | 'mapSettings' | 'achievementRewards'>> & Partial<AccountPool>;
 
 /** The Stash tabs that hold more than gear. */
 export type AccountPool = Pick<AccountState, 'bank' | 'gems' | 'supportGems' | 'flaskStash'>;

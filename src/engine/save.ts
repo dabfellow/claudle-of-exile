@@ -9,6 +9,7 @@ import { ACTIONS, hasAction } from '../data/skills';
 import { HEIST_JOBS } from '../data/heist';
 import { legacyMasteryForAction, legacyMasteryForHeist } from '../data/skillingMastery';
 import { FLASK_SLOTS } from '../data/flasks';
+import { UNIQUE_MAPS } from '../data/maps';
 import { ZONES } from '../data/zones';
 import { settleGems } from './gems';
 import { newExpeditionState, settleExpedition } from './expedition';
@@ -380,7 +381,8 @@ const MIGRATIONS: Record<number, Migration> = {
     for (const job of HEIST_JOBS) carry(legacyMasteryForHeist(job).id, job.mastery?.id);
     raw.skillingMastery = converted;
   },
-  42: (raw) => {
+  42: backfillAchievementCounters,
+  43: (raw) => {
     // Profile-style loot filters became one layered filter. Carry the active profile's ordered intent forward.
     const settings = raw.settings as GameState['settings'] | undefined;
     if (settings && !settings.lootFilter) {
@@ -389,6 +391,21 @@ const MIGRATIONS: Record<number, Migration> = {
     }
   },
 };
+
+/**
+ * 100+ achievements arrived, with new counters. A Doomed or Unique Map boss this character has beaten is already in
+ * its `bossesDefeated`, so those clears count from the start; rare kills were never counted, so they start at 0.
+ * Achievements the character now meets are granted, with rewards, when it next loads (engine/achievements.ts).
+ */
+export function backfillAchievementCounters(raw: Record<string, unknown>): void {
+  const lifetime = (raw.lifetime ??= {}) as Record<string, unknown>;
+  const beaten = Array.isArray(raw.bossesDefeated) ? (raw.bossesDefeated as string[]) : [];
+  const doomedTiers = beaten.map((id) => /^map_doomed_(?:.+_)?t(\d+)$/.exec(id)).filter(Boolean).map((m) => Number(m![1]));
+  lifetime.doomedBest = Math.max(Number(lifetime.doomedBest) || 0, ...doomedTiers);
+  const uniqueMaps = new Set([...(Array.isArray(lifetime.uniqueMaps) ? (lifetime.uniqueMaps as string[]) : []), ...beaten.filter((id) => UNIQUE_MAPS.some((m) => m.id === id))]);
+  lifetime.uniqueMaps = [...uniqueMaps];
+  lifetime.rareKills = Number(lifetime.rareKills) || 0;
+}
 
 /** Top-level object fields whose defaults get merged under saved values. */
 const MERGE_KEYS = new Set(['skills', 'settings', 'lifetime', 'vendor', 'tutorial', 'masteries', 'smithCatalyst']);
