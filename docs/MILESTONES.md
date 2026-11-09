@@ -54,6 +54,12 @@ Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2
   - Decided for the owner: Crafting Bench recipes no longer need achievements (owner's note "no achievements required"); the Bench level alone unlocks them.
   - Decided for the owner: every mini-game gets a small inner double zone that doubles that action's output; Alchemy's mini-game turns horizontal; Foraging and Gemcutting get wider zones and slower markers.
   - Decided for the owner: holiday dates are computed in code (no outside calendar service) and switch on automatically, each can be turned off in Admin; Admin can stack events, schedule weekend events and set any start/end; overlapping bonuses add.
+    - Events calendar build calls (2026-11-09), all in `src/data/events.ts`. Holidays run midnight to midnight **UTC**, the same moment for every player: New Year 31 Dec–2 Jan, Valentine's 13–15 Feb, Easter Good Friday–Easter Monday, Summer 20–26 Jun (solstice week), Halloween 29 Oct–1 Nov, Thanksgiving (US, fourth Thursday of November) Thursday–Sunday, Christmas 23–26 Dec. All keep the existing double XP and double loot.
+    - Stacking adds the bonus parts (+100% and +100% = ×3). A narrow bonus includes the broad one running beside it (Christmas ×2 XP plus a ×2 combat-XP event = ×3 combat XP). Crafting-cost savings add too, but never past half off (the engine's existing floor).
+    - Weekend events run **Friday 18:00 to Monday 06:00 UTC**, so Europe gets Friday evening and the Americas get Sunday evening. A "Weekends only" event repeats every weekend between its start and end; no end means every weekend.
+    - Switching a holiday off is lasting (it skips every year until switched back on). Stopping a holiday while it's running also switches it off, or it would start straight back up. A switched-off holiday can still be started by hand.
+    - Players see "On now" and the next 4 events on a Hideout Events card. The top banner shows how long is left, plus a one-line heads-up when an event starts within 3 days, so the top of the screen isn't permanently taken up.
+    - Two new `live_events` columns (`holiday_off`, `weekends`) in `docs/ops/events.sql`. Before it runs, holidays still work. Only the two new Admin switches report that the update is needed.
 - Player Market removed for 1.0 (2026-11-09): the server can't tell an earned item from an edited save, and making it cheat-proof would mean moving inventories onto the server. The Market is hidden; pending deliveries stay collectable. It can return if inventories ever move server-side.
 - 1.0 is a fresh wipe (2026-11-08): everyone starts new characters at 1.0. Existing saves are not deleted. They move to a Legacy area, reached from character select, which runs at 1.0 rates. No new Legacy characters can be made. Legacy has no trading: the Market is hidden there, and nothing crosses between Legacy and 1.0 in either direction (recorded in the Launch Guide).
 - Cloud character saves only replace the version they grew from (2026-11-08). The server's own `updated_at` stamp is the version, so device clocks don't matter. When two devices have both played on from one save, the cloud copy wins, and the losing local copy is kept in that browser (`coe-<account>-conflict-<id>`) and reported. A failed browser-storage write no longer stops the cloud upload.
@@ -345,7 +351,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - [ ] Build: mini-games (inner double zone on all, horizontal Alchemy, easier Foraging and Gemcutting); Bench recipes drop achievement requirements.
   - [ ] Build: 100+ per-character achievements with play-changing rewards.
   - [ ] Build: layered loot filters (presets + overrides, custom rules tab, share codes).
-  - [ ] Build: events calendar (computed holidays, Admin toggles, stacking, weekend and custom windows).
+  - [x] Build: events calendar (computed holidays, Admin toggles, stacking, weekend and custom windows). Calls under Decisions "Round 2 design pass". — done 2026-11-09
+    - Owner to do once: run `docs/ops/events.sql` in Supabase (SQL Editor → New query → paste → Run). Until then holidays still run; only Admin's holiday on/off switch and "Weekends only" box ask for it.
 
 ## Ideas / later
 
@@ -368,6 +375,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Events calendar: holidays (incl. Easter and Thanksgiving) worked out in code and switched on by themselves, Admin holiday switches, weekend events, bonuses that add when events overlap, and a Hideout Events card with on now / coming up. Checked in headless Chromium at phone and desktop sizes. — done 2026-11-09
 
 - [x] Spread the seven major offensive families across distant passive-tree regions while preserving class starts, every authored cluster, cluster shapes and total node counts; added a concentration regression test. Released in 0.4.21. — done 2026-11-08
 

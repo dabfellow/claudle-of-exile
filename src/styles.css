@@ -8669,3 +8669,30 @@ button.hx-mat:hover {
 .admin-funnel > div { flex: 1; min-width: 76px; display: grid; gap: 8px; text-align: center; padding: 14px 8px; background: var(--bg); border: 1px solid var(--line); }
 .admin-funnel b { font-size: 22px; }
 .admin-funnel span { font-size: 12px; }
+
+/* events calendar: the Hideout card and the banner's "coming up" line */
+.event-soon {
+  margin: 0 0 var(--s-4);
+  padding: 6px 12px;
+  border-left: 2px solid var(--accent);
+}
+.events-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.events-list li {
+  display: block;
+  min-width: 0;
+}
+.events-list .badge {
+  margin-left: 6px;
+}
+.events-sub {
+  margin: 12px 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}

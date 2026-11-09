@@ -10,7 +10,13 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Holiday events now start and end by themselves each year: New Year, Valentine\'s Day, Easter, Summer, Halloween, Thanksgiving and Christmas.',
+  'Events that run at the same time now add their bonuses together: two Double XP events give triple XP.',
+  'The Hideout has an Events card showing what\'s on now and what\'s coming next, and the event banner shows how long is left.',
+  'A heads-up line appears at the top of the screen when an event starts within 3 days.',
+  'Some events can now run every weekend, Friday evening to Monday morning (UTC).',
+];
 
 export const NEWS: NewsEntry[] = [
   {
