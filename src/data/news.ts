@@ -16,6 +16,8 @@ export const UPCOMING: string[] = [
   'The Hideout has an Events card showing what\'s on now and what\'s coming next, and the event banner shows how long is left.',
   'A heads-up line appears at the top of the screen when an event starts within 3 days.',
   'Some events can now run every weekend, Friday evening to Monday morning (UTC).',
+  'Every life-skill action, recipe and Heist job now has its own mastery track (bulk recipes share their single version); mastery takes 120 hours to max and now reaches 20% action speed plus 15% ordinary yield or ingredient conservation.',
+  'Existing mastery progress carries over at the same percentage to every task its old band benefited.',
 ];
 
 export const NEWS: NewsEntry[] = [

@@ -32,7 +32,7 @@ export interface OfflineSummary {
   /** Heist jobs finished while you were away, and how many of them tripped an alarm */
   heists: number;
   heistAlarms: number;
-  /** Nominal non-combat practice earned by mastery band while away. */
+  /** Nominal non-combat practice earned by mastery task while away. */
   mastery: Record<string, number>;
   /** Logbook finds made while you were away, and standing orders filled */
   finds: number;
