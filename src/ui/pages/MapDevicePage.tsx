@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { uniqueDef } from '../../data/bases';
 import { stationDef } from '../../data/hideout';
 import {
@@ -24,6 +24,9 @@ import {
   UNIQUE_MAPS,
   uniqueMapDef,
   type AtlasWing,
+  type HardBossDef,
+  type UberBossDef,
+  type UniqueMapDef,
 } from '../../data/maps';
 import { actOpen, zoneDef } from '../../data/zones';
 import { bossesOffline } from '../../engine/automation';
@@ -69,13 +72,18 @@ import {
   totalMapsHeld,
   uniqueMapHeld,
 } from '../../engine/maps';
+import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { Badge, EmptyState, fmt, fmtTime, GameIcon, MatIcon, PageHeader } from '../components/common';
+import { TIER_ART, tierColor, zoneArt } from '../components/mapLook';
 import type { Page } from '../Layout';
+import '../round2-session2.css';
 
 const HOUR = 60 * 60 * 1000;
 /** the test kit sits this far above a tier: it has no passives spent, so it needs the margin */
 const DEV_KIT_LEVELS = 14;
+/** how long the device takes to open a portal before the fight page takes over */
+const OPEN_MS = 900;
 
 type DeviceTab = 'maps' | 'doomed' | 'bosses' | 'atlas';
 
@@ -86,7 +94,124 @@ const WING_TITLES: Record<AtlasWing, { title: string; subtitle: string }> = {
   peril: { title: 'Peril', subtitle: 'Higher monster danger for greater yield, Unbroken Path, and Doomed Horizon' },
 };
 
-function ActiveRunCard({ go }: { go: (p: Page) => void }) {
+/** What sits in the device, ready to open. */
+type Loaded =
+  | { kind: 'tier'; tier: number }
+  | { kind: 'unique'; id: UniqueMapDef['id'] }
+  | { kind: 'doomed'; tier: number }
+  | { kind: 'hard'; id: HardBossDef['id'] }
+  | { kind: 'uber'; tier: UberBossDef['tier'] };
+
+const sameLoaded = (a: Loaded, b: Loaded) => JSON.stringify(a) === JSON.stringify(b);
+
+const UNIQUE_ART: Record<UniqueMapDef['id'], string> = { umap_vaults: 'kingsmint', umap_cowards_trial: 'crypt', umap_olmecs: 'pyretemple', umap_maelstrom: 'maelstrom', umap_grandmasters: 'hallofcrowns' };
+const artFor = zoneArt;
+
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
+
+/** The device's face for what's loaded: its art, colour, short mark and name. */
+function face(l: Loaded): { art?: string; color: string; mark: string; name: string; kicker: string } {
+  switch (l.kind) {
+    case 'tier':
+      return { art: artFor(TIER_ART[l.tier - 1]), color: tierColor(l.tier), mark: String(l.tier), name: `Map Tier ${l.tier}`, kicker: mapTier(l.tier).modName };
+    case 'unique': {
+      const u = uniqueMapDef(l.id);
+      return { art: artFor(UNIQUE_ART[l.id]), color: 'var(--unique)', mark: `T${u.tier}`, name: u.name, kicker: 'Unique map' };
+    }
+    case 'doomed': {
+      const d = doomedTier(l.tier);
+      return { art: artFor('shatteredthrone'), color: '#c0433b', mark: ROMAN[l.tier], name: d.name, kicker: 'Doomed map' };
+    }
+    case 'hard': {
+      const hb = HARD_BOSSES.find((b) => b.id === l.id)!;
+      return { art: undefined, color: '#d0675b', mark: '☠', name: hb.arenaName, kicker: hb.name };
+    }
+    case 'uber': {
+      const ub = UBER_BOSSES.find((b) => b.tier === l.tier)!;
+      return { art: undefined, color: '#b06ad0', mark: ROMAN[l.tier], name: ub.arenaName, kicker: ub.name };
+    }
+  }
+}
+
+// ---------- the device itself ----------
+
+/** The rune rings, the portal in the middle and the four Sextant orbs round it. */
+function DeviceRing({ loaded, state, slot, onSlot }: { loaded: Loaded | null; state: 'idle' | 'loaded' | 'opening' | 'open'; slot: number | null; onSlot: (i: number) => void }) {
+  const s = useGame();
+  const f = loaded ? face(loaded) : null;
+  const slots = sextantSlots(s);
+  const sextants = ensureSextants(s);
+  return (
+    <div className={`md-device ${state}`} style={{ ['--portal' as string]: f?.color ?? 'var(--accent)' }}>
+      <svg className="md-runes outer" viewBox="0 0 200 200" aria-hidden>
+        <circle cx="100" cy="100" r="96" />
+        {Array.from({ length: 24 }, (_, i) => (
+          <text key={i} x="100" y="12" transform={`rotate(${i * 15} 100 100)`}>
+            {'ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃ'[i % 12]}
+          </text>
+        ))}
+      </svg>
+      <svg className="md-runes inner" viewBox="0 0 200 200" aria-hidden>
+        <circle cx="100" cy="100" r="80" strokeDasharray="2 6" />
+        <circle cx="100" cy="100" r="72" />
+      </svg>
+      <div className="md-portal" style={f?.art ? ({ ['--art' as string]: `url(${f.art})` } as CSSProperties) : undefined}>
+        <span className="md-portal-swirl" />
+        <span className="md-portal-mark">{state === 'open' ? <GameIcon name="combat" size={30} /> : f ? f.mark : <GameIcon name="map" size={28} />}</span>
+      </div>
+      <span className="md-flash" />
+      {[0, 1, 2, 3].map((i) => {
+        const open = i < slots;
+        const sx = sextants[i];
+        const mod = sx ? sextantMod(sx.modId) : null;
+        return (
+          <button
+            key={i}
+            className={`md-orb o${i} ${open ? '' : 'locked'} ${mod ? 'active' : ''} ${slot === i ? 'selected' : ''} ${sx ? sx.tier : ''}`}
+            onClick={() => onSlot(i)}
+            title={!open ? `Sextant slot ${i + 1}: locked` : mod ? `${mod.name}: ${mod.desc} (${sx!.charges} runs left)` : `Sextant slot ${i + 1}: empty`}
+            aria-label={`Sextant slot ${i + 1}`}
+          >
+            {!open ? <GameIcon name="lock" size={12} /> : mod ? <b className="num">{sx!.charges}</b> : <span className="md-orb-empty">+</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** One fact about a map, as a small labelled tile. */
+function Fact({ label, children, tone }: { label: string; children: ReactNode; tone?: string }) {
+  return (
+    <span className={`md-fact ${tone ?? ''}`}>
+      <small>{label}</small>
+      <b>{children}</b>
+    </span>
+  );
+}
+
+/** The three Atlas marks a tier can earn. */
+function AtlasMarks({ tier }: { tier: number }) {
+  const s = useGame();
+  const atlas = ensureAtlas(s);
+  const marks: [string, boolean][] = [
+    ['Cleared', atlas.cleared.includes(tier)],
+    ['Sextant-slotted', atlas.slotted.includes(tier)],
+    ['Deathless', atlas.deathless.includes(tier)],
+  ];
+  return (
+    <span className="md-marks">
+      {marks.map(([label, on]) => (
+        <span key={label} className={`md-mark ${on ? 'on' : ''}`} title={`${label}: ${on ? 'done' : 'not yet'} (+1 Atlas point)`}>
+          {on ? '✓' : '○'} {label}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** The running map: where it is, what it rolled and how far along it is. */
+function RunInfo({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const { run, auto } = s.maps;
   if (!run) return null;
@@ -94,45 +219,66 @@ function ActiveRunCard({ go }: { go: (p: Page) => void }) {
   const uDef = run.uniqueMapId ? uniqueMapDef(run.uniqueMapId) : null;
   const tDef = run.doomedTier || uDef ? null : mapTier(run.tier);
   const dDef = run.doomedTier ? doomedTier(run.doomedTier) : null;
-  const activeSextants = (run.sextantMods ?? []).map((id) => sextantMod(id));
-  const activeDoomed = (run.doomedMods ?? []).map((id) => DOOMED_MODS.find((m) => m.id === id)).filter(Boolean);
-  const activeNormal = (run.normalMods ?? []).map((id) => normalMapModDef(id)).filter(Boolean);
-
+  const mods = [
+    ...(run.sextantMods ?? []).map((id) => ({ ...sextantMod(id), group: 'Sextant' })),
+    ...(run.doomedMods ?? []).map((id) => DOOMED_MODS.find((m) => m.id === id)).filter((m) => !!m).map((m) => ({ ...m!, group: 'Doomed' })),
+    ...(run.normalMods ?? []).map((id) => normalMapModDef(id)).filter((m) => !!m).map((m) => ({ ...m!, group: 'Rolled' })),
+  ];
+  // the same rule the tier cards' Auto-run used: the running tier (or Doomed tier) can be switched to auto-run
+  const canAuto = !uDef && (run.doomedTier ? !(auto?.tier === run.doomedTier && !!auto?.doomed) : auto?.tier !== run.tier);
   return (
-    <div className="card">
-      <div className="row" style={{ alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <b>{zone.name}</b>
-        <Badge tone={dDef || uDef ? 'warn' : 'neutral'}>
-          {uDef ? `Unique Map · Tier ${uDef.tier}` : dDef ? dDef.name : `Tier ${run.tier} · ${tDef?.modName}`}
-        </Badge>
-        <span className="muted num">
-          · {run.packsLeft}/{run.packsTotal} packs left{auto ? ' · auto-run on' : ''}
+    <div className="md-info">
+      <span className="md-kicker">The portal is open</span>
+      <h2 className="md-title">{zone.name}</h2>
+      <div className="row wrap" style={{ gap: 6 }}>
+        <Badge tone={dDef || uDef ? 'warn' : 'neutral'}>{uDef ? `Unique Map · Tier ${uDef.tier}` : dDef ? dDef.name : `Tier ${run.tier} · ${tDef?.modName}`}</Badge>
+        {auto && <Badge tone="success">Auto-run on</Badge>}
+      </div>
+      <div className="md-packs">
+        <span className="md-packs-bar">
+          <span style={{ width: `${(1 - run.packsLeft / Math.max(1, run.packsTotal)) * 100}%` }} />
+        </span>
+        <span className="dim small num">
+          {run.packsLeft}/{run.packsTotal} packs left
         </span>
       </div>
-      {uDef && <p className="dim small">{uDef.desc} · {uDef.rewardSummary}</p>}
-      {tDef && tDef.mod !== 'none' && <p className="dim small">{tDef.modDesc}</p>}
-      {activeSextants.length > 0 && (
-        <p className="small">
-          <b>Sextants:</b> {activeSextants.map((m) => `${m.name} (${m.desc})`).join(' · ')}
-        </p>
+      {uDef && <p className="dim small md-desc">{uDef.desc} · {uDef.rewardSummary}</p>}
+      {tDef && tDef.mod !== 'none' && <p className="dim small md-desc">{tDef.modDesc}</p>}
+      {mods.length > 0 && (
+        <div className="md-mods">
+          {mods.map((m, i) => (
+            <span key={`${m.id}-${i}`} className={`md-mod ${m.group.toLowerCase()}`} title={`${m.group}: ${m.desc}`}>
+              {m.name}
+            </span>
+          ))}
+        </div>
       )}
-      {activeDoomed.length > 0 && (
-        <p className="small">
-          <b>Doomed modifiers:</b> {activeDoomed.map((m) => `${m!.name} (${m!.desc})`).join(' · ')}
-        </p>
+      {mods.length > 0 && (
+        <details className="md-more">
+          <summary>What the modifiers do</summary>
+          {mods.map((m, i) => (
+            <div key={`${m.id}-${i}`} className="small">
+              <b>{m.name}</b> <span className="dim">({m.group})</span>: {m.desc}
+            </div>
+          ))}
+        </details>
       )}
-      {activeNormal.length > 0 && (
-        <p className="small">
-          <b>Rolled map modifiers:</b> {activeNormal.map((m) => `${m!.name} (${m!.desc})`).join(' · ')}
-        </p>
-      )}
-      <div className="row" style={{ gap: 8, marginTop: 8 }}>
+      <div className="md-actions">
         <button className="btn primary" onClick={() => go('combat')}>
           Watch the fight
         </button>
         {auto && (
           <button className="btn" onClick={() => game.act((st) => stopAutoRun(st))}>
             Stop after this run
+          </button>
+        )}
+        {canAuto && (
+          <button
+            className="btn"
+            title="Keep running this tier until your maps of it run out"
+            onClick={() => game.act((st, ctx) => (run.doomedTier ? startDoomedAutoRun(st, ctx, run.doomedTier) : startAutoRun(st, ctx, run.tier)))}
+          >
+            Auto-run
           </button>
         )}
         <button className="btn danger" onClick={() => game.act((st) => retreat(st))}>
@@ -143,90 +289,587 @@ function ActiveRunCard({ go }: { go: (p: Page) => void }) {
   );
 }
 
-function SextantPanel() {
+/** A keyed boss arena in progress. */
+function ArenaInfo({ go }: { go: (p: Page) => void }) {
+  const s = useGame();
+  return (
+    <div className="md-info">
+      <span className="md-kicker">Keyed arena open</span>
+      <h2 className="md-title">{zoneDef(s.combat!.zoneId).name}</h2>
+      <div className="md-actions">
+        <button className="btn primary" onClick={() => go('combat')}>
+          Watch the fight
+        </button>
+        <button className="btn danger" onClick={() => game.act((st) => retreat(st))}>
+          Abandon (key lost)
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** What's loaded: its facts, and the buttons that open it. */
+function LoadedInfo({ loaded, onOpen }: { loaded: Loaded; onOpen: (open: () => boolean | void, toCombat: boolean) => void }) {
+  const s = useGame();
+  const { run, auto } = s.maps;
+  const atlas = ensureAtlas(s);
+  const f = face(loaded);
+  let facts: ReactNode = null;
+  let body: ReactNode = null;
+  let actions: ReactNode = null;
+  if (loaded.kind === 'tier') {
+    const tier = mapTier(loaded.tier);
+    const held = mapsHeld(s, loaded.tier);
+    const isAuto = auto?.tier === loaded.tier;
+    facts = (
+      <>
+        <Fact label="Monster level">{tier.level}</Fact>
+        <Fact label="Packs">{tier.packs}</Fact>
+        <Fact label="Held" tone={held > 0 ? '' : 'bad'}>
+          {fmt(held)}
+        </Fact>
+      </>
+    );
+    body = (
+      <>
+        <p className="small md-desc">
+          <Badge tone={tier.mod === 'none' ? 'neutral' : 'warn'}>{tier.modName}</Badge> {tier.modDesc}
+        </p>
+        <p className="dim small md-desc">Favours {tier.rewardDesc}.</p>
+        <AtlasMarks tier={loaded.tier} />
+      </>
+    );
+    actions = (
+      <>
+        <button className="btn primary md-open" disabled={!!run || held <= 0} onClick={() => onOpen(() => game.act((st, ctx) => startMap(st, ctx, loaded.tier)) === null, false)}>
+          Open map
+        </button>
+        <button className="btn" disabled={isAuto || (run ? run.tier !== loaded.tier || !!run.doomedTier : held <= 0)} onClick={() => game.act((st, ctx) => startAutoRun(st, ctx, loaded.tier))}>
+          Auto-run
+        </button>
+      </>
+    );
+  } else if (loaded.kind === 'unique') {
+    const u = uniqueMapDef(loaded.id);
+    const held = uniqueMapHeld(s, u.id);
+    facts = (
+      <>
+        <Fact label="Tier">{u.tier}</Fact>
+        <Fact label="Monster level">{u.level}</Fact>
+        <Fact label="Held" tone={held > 0 ? '' : 'bad'}>
+          {fmt(held)}
+        </Fact>
+      </>
+    );
+    body = (
+      <>
+        <p className="small md-desc">{u.desc}</p>
+        <p className="small md-desc">
+          <b>Spoils:</b> {u.rewardSummary}
+        </p>
+        <p className="dim small md-desc md-flavour">"{u.flavour}"</p>
+      </>
+    );
+    actions = (
+      <button
+        className="btn primary md-open"
+        disabled={!!run || held <= 0}
+        onClick={() => {
+          let ok = false;
+          game.act((st, ctx) => {
+            ok = !startUniqueMap(st, ctx, u.id);
+          });
+          onOpen(() => ok, true);
+        }}
+      >
+        Open {u.name}
+      </button>
+    );
+  } else if (loaded.kind === 'doomed') {
+    const d = doomedTier(loaded.tier);
+    const held = doomedHeld(s, d.tier);
+    const isAuto = auto?.tier === d.tier && !!auto?.doomed;
+    const modsText = d.modCount[0] === d.modCount[1] ? `${d.modCount[0]}` : `${d.modCount[0]}–${d.modCount[1]}`;
+    facts = (
+      <>
+        <Fact label="Monster level">{d.level}</Fact>
+        <Fact label="Packs">{d.packs}</Fact>
+        <Fact label="Modifiers">{modsText}</Fact>
+        <Fact label="Uber Key">{Math.round(d.keyChance * 100)}%</Fact>
+        <Fact label="Held" tone={held > 0 ? '' : 'bad'}>
+          {fmt(held)}
+        </Fact>
+      </>
+    );
+    body = <p className="dim small md-desc">{atlas.doomedCleared?.includes(d.tier) ? 'Atlas reward claimed.' : `+${ATLAS_DOOMED_CLEAR_POINTS} Atlas points on first clear.`}</p>;
+    actions = (
+      <>
+        <button className="btn primary md-open" disabled={!!run || held <= 0} onClick={() => onOpen(() => game.act((st, ctx) => startDoomedMap(st, ctx, d.tier)) === null, false)}>
+          Open {d.name}
+        </button>
+        <button className="btn" disabled={isAuto || (run ? run.doomedTier !== d.tier : held <= 0)} onClick={() => game.act((st, ctx) => startDoomedAutoRun(st, ctx, d.tier))}>
+          Auto-run
+        </button>
+      </>
+    );
+  } else if (loaded.kind === 'hard') {
+    const hb = HARD_BOSSES.find((b) => b.id === loaded.id)!;
+    const uniq = uniqueDef(hb.uniqueId);
+    const held = s.account.bank[hb.keyId] ?? 0;
+    const defeated = s.bossesDefeated.includes(hb.zoneId);
+    const blocker = canStartHardBoss(s, hb.id);
+    facts = (
+      <>
+        <Fact label="Boss level">{hb.level}</Fact>
+        <Fact label={hb.keyName} tone={held > 0 ? '' : 'bad'}>
+          <MatIcon id={hb.keyId} size={13} /> {fmt(held)}
+        </Fact>
+        <Fact label="Status" tone={defeated ? 'good' : ''}>
+          {defeated ? 'Defeated' : 'Undefeated'}
+        </Fact>
+      </>
+    );
+    body = (
+      <>
+        <p className="small md-desc">{hb.mechanicSummary}</p>
+        <details className="md-more">
+          <summary>How to fight it, and the spoils</summary>
+          <p className="dim small">
+            <b>Rule & Aim Hint:</b> {hb.ruleHint}
+          </p>
+          <p className="dim small">
+            <b>Spoils:</b> <MatIcon id={hb.trophyId} size={12} /> {hb.trophyName} (100%) · <b>{uniq.name}</b> ({defeated ? '35%' : '100% first kill'}) ·{' '}
+            {atlas.hardBossesCleared?.includes(hb.id) ? 'Atlas reward claimed' : `+${ATLAS_HARD_BOSS_CLEAR_POINTS} Atlas points`}
+          </p>
+        </details>
+      </>
+    );
+    actions = (
+      <button
+        className="btn primary md-open"
+        disabled={!!blocker}
+        title={blocker ?? `Consume 1 ${hb.keyName} to open ${hb.arenaName}`}
+        onClick={() => {
+          let ok = false;
+          game.act((st, ctx) => {
+            ok = !startHardBoss(st, ctx, hb.id);
+          });
+          onOpen(() => ok, true);
+        }}
+      >
+        Open {hb.arenaName}
+      </button>
+    );
+  } else {
+    const ub = UBER_BOSSES.find((b) => b.tier === loaded.tier)!;
+    const uniqs = ub.uniques.map((id) => uniqueDef(id));
+    const held = s.account.bank[ub.keyId] ?? 0;
+    const defeated = s.bossesDefeated.includes(ub.zoneId);
+    const blocker = canStartUberBoss(s, ub.tier);
+    facts = (
+      <>
+        <Fact label="Boss level">{ub.level}</Fact>
+        <Fact label={ub.keyName} tone={held > 0 ? '' : 'bad'}>
+          <MatIcon id={ub.keyId} size={13} /> {fmt(held)}
+        </Fact>
+        <Fact label="Status" tone={defeated ? 'good' : ''}>
+          {defeated ? 'Defeated' : 'Undefeated'}
+        </Fact>
+      </>
+    );
+    body = (
+      <>
+        <p className="small md-desc">{ub.mechanicSummary}</p>
+        <details className="md-more">
+          <summary>Spoils</summary>
+          <p className="dim small">
+            <MatIcon id={ub.sigilId} size={12} /> {ub.sigilName} (100%) · {uniqs.map((u) => u.name).join(' / ')} ({defeated ? '35%' : '100% first kill'}) ·{' '}
+            {atlas.uberBossesCleared?.includes(ub.zoneId) ? 'Atlas reward claimed' : `+${ATLAS_UBER_BOSS_CLEAR_POINTS} Atlas points`}
+          </p>
+        </details>
+      </>
+    );
+    actions = (
+      <button
+        className="btn primary md-open"
+        disabled={!!blocker}
+        title={blocker ?? `Consume 1 ${ub.keyName} to open ${ub.arenaName}`}
+        onClick={() => {
+          let ok = false;
+          game.act((st, ctx) => {
+            ok = !startUberBoss(st, ctx, ub.tier);
+          });
+          onOpen(() => ok, true);
+        }}
+      >
+        Open {ub.arenaName}
+      </button>
+    );
+  }
+  return (
+    <div className="md-info" style={{ ['--portal' as string]: f.color }}>
+      <span className="md-kicker">{f.kicker}</span>
+      <h2 className="md-title">{f.name}</h2>
+      <div className="md-facts">{facts}</div>
+      {body}
+      <div className="md-actions">{actions}</div>
+    </div>
+  );
+}
+
+/** The Sextant on one slot, and the buttons that roll a new one onto it. */
+function SextantSlotPanel({ idx, onClose }: { idx: number; onClose: () => void }) {
   const s = useGame();
   const slots = sextantSlots(s);
-  const sextants = ensureSextants(s);
-  const devLvl = stationLevel(s, 'map_device');
+  const slot = ensureSextants(s)[idx];
+  const mod = slot ? sextantMod(slot.modId) : null;
+  const sDef = slot ? sextantDef(slot.tier) : null;
+  const open = idx < slots;
+  return (
+    <div className="md-slot-panel">
+      <div className="row" style={{ alignItems: 'center', gap: 8 }}>
+        <b>Sextant slot {idx + 1}</b>
+        {!open ? (
+          <Badge tone="locked">{idx === 3 ? 'Atlas: Fourth Astrolabe' : idx === 2 ? 'Map Device Lv 4' : 'Map Device Lv 2'}</Badge>
+        ) : mod && slot ? (
+          <Badge tone="success">{slot.charges} runs left</Badge>
+        ) : (
+          <Badge tone="neutral">Empty</Badge>
+        )}
+        <span className="grow" />
+        <button className="btn sm ghost" onClick={onClose} aria-label="Close">
+          ✕
+        </button>
+      </div>
+      {open && (
+        <>
+          {mod && sDef ? (
+            <div className="small">
+              <b>{mod.name}</b> <span className="dim">({sDef.name} · Tier {mod.minMapTier}+)</span>
+              <div className="dim">{mod.desc}</div>
+            </div>
+          ) : (
+            <p className="dim small" style={{ margin: 0 }}>
+              No Sextant modifier active in this slot.
+            </p>
+          )}
+          <div className="row wrap" style={{ gap: 6 }}>
+            {SEXTANTS.map((sex) => {
+              const have = s.account.bank[sex.id] ?? 0;
+              return (
+                <button key={sex.id} className="btn sm" disabled={have <= 0} title={sex.desc} onClick={() => game.act((st, ctx) => applySextant(st, ctx, idx, sex.id))}>
+                  <MatIcon id={sex.id} size={13} /> Roll {sex.tier[0].toUpperCase() + sex.tier.slice(1)} ({have})
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** The Sextants you hold and how many slots are working, under the device. */
+function AstrolabeSummary() {
+  const s = useGame();
+  const slots = sextantSlots(s);
+  const active = ensureSextants(s).slice(0, slots).filter((x) => !!x).length;
+  return (
+    <div className="md-astro">
+      <span className="md-astro-title">
+        Sextants <span className="dim num">{active}/{slots} slots active</span>
+      </span>
+      {SEXTANTS.map((sex) => (
+        <span key={sex.id} className="md-astro-stock" title={`${sex.name}: ${sex.desc}`}>
+          <MatIcon id={sex.id} size={14} />
+          <b className="num">{fmt(s.account.bank[sex.id] ?? 0)}</b>
+          <span className="dim">T{sex.minMapTier}+</span>
+        </span>
+      ))}
+      <span className="dim small md-astro-help">
+        Tap an orb round the device to roll a Sextant onto it: a modifier for {6 + atlasBonuses(s).sextantCharges} map runs. Map Device Lv {stationLevel(s, 'map_device')}
+        {hasAtlasNode(s, 'survey_notable') ? ' + Fourth Astrolabe' : ''}.
+      </span>
+    </div>
+  );
+}
+
+/** The device and what's loaded in it (or the portal you've opened), with the Sextant astrolabe round it. */
+function DeviceStage({ loaded, picked, onOpened, go }: { loaded: Loaded | null; picked: boolean; onOpened: () => void; go: (p: Page) => void }) {
+  const s = useGame();
+  const [opening, setOpening] = useState(false);
+  const [slot, setSlot] = useState<number | null>(null);
+  const timer = useRef<number>();
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const inArena = !s.maps.run && !!s.combat && isKeyedBossZone(s.combat.zoneId);
+  const running = !!s.maps.run || inArena;
+  const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  /** open the portal: the device flares while the run starts, then the fight page takes over if this one goes there */
+  const onOpen = (open: () => boolean | void, toCombat: boolean) => {
+    const ok = open();
+    if (!ok) return;
+    onOpened();
+    setOpening(true);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(
+      () => {
+        setOpening(false);
+        if (toCombat) go('combat');
+      },
+      reduced ? 0 : OPEN_MS,
+    );
+  };
+  const runLoaded: Loaded | null = s.maps.run
+    ? s.maps.run.uniqueMapId
+      ? { kind: 'unique', id: s.maps.run.uniqueMapId as UniqueMapDef['id'] }
+      : s.maps.run.doomedTier
+        ? { kind: 'doomed', tier: s.maps.run.doomedTier }
+        : { kind: 'tier', tier: s.maps.run.tier }
+    : null;
+  const shown = runLoaded ?? loaded;
+  const state = opening ? 'opening' : running ? 'open' : shown ? 'loaded' : 'idle';
+  return (
+    <div className="card md-stage" style={{ ['--portal' as string]: shown ? face(shown).color : 'var(--accent)' }}>
+      <div className="md-stage-device">
+        <DeviceRing loaded={shown} state={state} slot={slot} onSlot={(i) => setSlot(slot === i ? null : i)} />
+        {slot !== null && <SextantSlotPanel idx={slot} onClose={() => setSlot(null)} />}
+      </div>
+      <div className="md-stage-info">
+        {s.maps.run ? <RunInfo go={go} /> : inArena ? <ArenaInfo go={go} /> : loaded ? <LoadedInfo loaded={loaded} onOpen={onOpen} /> : <EmptyState title="Nothing loaded">Pick a map below to load it into the device.</EmptyState>}
+        {running && picked && loaded && !(runLoaded && sameLoaded(loaded, runLoaded)) && (
+          <div className="md-next">
+            <span className="md-next-label">Loaded next</span>
+            <LoadedInfo loaded={loaded} onOpen={onOpen} />
+          </div>
+        )}
+        <AstrolabeSummary />
+      </div>
+    </div>
+  );
+}
+
+// ---------- the maps you can load ----------
+
+/** A map as a portal card: its painted face, tier and how many you hold. Click to load it into the device. */
+function PortalCard({ art, color, mark, title, sub, held, badge, selected, running, onClick, extra }: { art?: string; color: string; mark: string; title: ReactNode; sub?: ReactNode; held: number; badge?: ReactNode; selected: boolean; running?: boolean; onClick: () => void; extra?: ReactNode }) {
+  return (
+    <button className={`md-card ${selected ? 'selected' : ''} ${held > 0 ? '' : 'empty'} ${running ? 'running' : ''}`} style={{ ['--portal' as string]: color, ...(art ? { ['--art' as string]: `url(${art})` } : {}) }} onClick={onClick}>
+      <span className="md-card-art" />
+      <span className="md-card-mark">{mark}</span>
+      <span className="md-card-held num" title="Held">
+        ×{fmt(held)}
+      </span>
+      <span className="md-card-body">
+        <b className="md-card-title">{title}</b>
+        {sub && <span className="md-card-sub">{sub}</span>}
+        {badge}
+        {extra}
+      </span>
+      {running && <span className="md-card-running">Open now</span>}
+    </button>
+  );
+}
+
+function TierCards({ loaded, onLoad }: { loaded: Loaded | null; onLoad: (l: Loaded) => void }) {
+  const s = useGame();
+  const { run } = s.maps;
+  const atlas = ensureAtlas(s);
+  return (
+    <div className="md-cards">
+      {MAP_TIERS.map((t) => {
+        const l: Loaded = { kind: 'tier', tier: t.tier };
+        const marks = [atlas.cleared.includes(t.tier), atlas.slotted.includes(t.tier), atlas.deathless.includes(t.tier)];
+        return (
+          <PortalCard
+            key={t.tier}
+            art={artFor(TIER_ART[t.tier - 1])}
+            color={tierColor(t.tier)}
+            mark={String(t.tier)}
+            title={`Tier ${t.tier}`}
+            sub={`Lv ${t.level} · ${t.packs} packs`}
+            held={mapsHeld(s, t.tier)}
+            badge={<span className={`md-card-mod ${t.mod === 'none' ? '' : 'warn'}`}>{t.modName}</span>}
+            extra={
+              <span className="md-card-pips" title="Atlas: cleared · Sextant-slotted · deathless">
+                {marks.map((on, i) => (
+                  <i key={i} className={on ? 'on' : ''} />
+                ))}
+              </span>
+            }
+            selected={!!loaded && sameLoaded(loaded, l)}
+            running={!!run && !run.doomedTier && !run.uniqueMapId && run.tier === t.tier}
+            onClick={() => onLoad(l)}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function UniqueCards({ loaded, onLoad }: { loaded: Loaded | null; onLoad: (l: Loaded) => void }) {
+  const s = useGame();
+  return (
+    <div className="md-cards">
+      {UNIQUE_MAPS.map((u) => {
+        const l: Loaded = { kind: 'unique', id: u.id };
+        return (
+          <PortalCard
+            key={u.id}
+            art={artFor(UNIQUE_ART[u.id])}
+            color="var(--unique)"
+            mark={`T${u.tier}`}
+            title={<span className="rar-unique">{u.name}</span>}
+            sub={`Lv ${u.level} · ${u.packs} packs`}
+            held={uniqueMapHeld(s, u.id)}
+            selected={!!loaded && sameLoaded(loaded, l)}
+            running={s.maps.run?.uniqueMapId === u.id}
+            onClick={() => onLoad(l)}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function MapSafetyPanel({ isDoomed }: { isDoomed: boolean }) {
+  const s = useGame();
+  const cfg = ensureMapSettings(s);
+  const chaos = s.account.bank.chaos ?? 0;
+  const mods = isDoomed ? DOOMED_MODS : NORMAL_MAP_MODS;
+  const avoided = mods.filter((m) => cfg.blockedMods.includes(m.id)).length;
 
   return (
-    <div className="card">
-      <div className="card-title">
-        Sextant Astrolabe
-        <span className="grow" />
-        <span className="card-hint">
-          {slots}/4 slots open (Map Device Lv {devLvl}
-          {hasAtlasNode(s, 'survey_notable') ? ' + Fourth Astrolabe' : ''})
+    <details className="card md-safety">
+      <summary>
+        <b>{isDoomed ? 'Doomed modifier safety & auto-roll' : 'Map modifiers & auto-roll safety'}</b>
+        <span className="md-safety-sum dim small">
+          {!isDoomed && (cfg.rollNormalMaps ? 'Random affixes on · ' : 'Random affixes off · ')}
+          {avoided} avoided · auto-reroll {cfg.autoRerollChaos ? 'on' : 'off'} · <MatIcon id="chaos" size={12} /> {fmt(chaos)}
         </span>
-      </div>
-      <p className="dim small" style={{ marginTop: 0 }}>
-        Roll a Sextant onto a slot to add a modifier for {6 + atlasBonuses(s).sextantCharges} map runs. Each eligible map run consumes 1 charge from active slots.
+      </summary>
+      <p className="dim small" style={{ marginTop: 8 }}>
+        Blacklist deadly modifiers you wish to avoid. When an avoided modifier rolls on entry or during auto-run, the Map Device automatically spends 1 Chaos Orb to reroll the map (up to 5 attempts per run).
       </p>
-      <div className="row" style={{ gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-        {SEXTANTS.map((sex) => (
-          <span key={sex.id} className="small" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <MatIcon id={sex.id} size={14} />
-            <span>{sex.name}:</span>
-            <b className="num">{fmt(s.account.bank[sex.id] ?? 0)}</b>
-            <span className="dim">(T{sex.minMapTier}+)</span>
+
+      {!isDoomed && (
+        <div style={{ marginBottom: 10 }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input type="checkbox" checked={!!cfg.rollNormalMaps} onChange={() => game.act((st) => toggleRollNormalMaps(st))} />
+            <span>
+              <b>Roll Random Affixes on Normal Maps</b> <span className="dim small">(Adds 2–3 dangerous modifiers for extra packs, currency and item rarity)</span>
+            </span>
+          </label>
+        </div>
+      )}
+
+      <div style={{ marginBottom: 10 }}>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+          <input type="checkbox" checked={cfg.autoRerollChaos} onChange={() => game.act((st) => toggleAutoRerollChaos(st))} />
+          <span>
+            <b>Auto-Reroll with Chaos Orbs if an avoided modifier rolls</b> <span className="dim small">(Spends 1 Chaos Orb per reroll attempt)</span>
           </span>
-        ))}
+        </label>
       </div>
-      <div className="action-grid">
-        {[0, 1, 2, 3].map((idx) => {
-          const unlocked = idx < slots;
-          const slot = sextants[idx];
-          const mod = slot ? sextantMod(slot.modId) : null;
-          const sDef = slot ? sextantDef(slot.tier) : null;
+
+      <div className="small dim" style={{ marginBottom: 6 }}>
+        <b>Avoided modifiers (click to toggle blacklist):</b>
+      </div>
+      <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+        {mods.map((m) => {
+          const blocked = cfg.blockedMods.includes(m.id);
           return (
-            <div key={idx} className={`card ${unlocked ? '' : 'locked'}`} style={{ margin: 0 }}>
-              <div className="row" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                <b>Slot {idx + 1}</b>
-                {!unlocked ? (
-                  <Badge tone="locked">{idx === 3 ? 'Atlas: Fourth Astrolabe' : idx === 2 ? 'Map Device Lv 4' : 'Map Device Lv 2'}</Badge>
-                ) : mod && slot ? (
-                  <Badge tone="success">{slot.charges} runs left</Badge>
-                ) : (
-                  <Badge tone="neutral">Empty</Badge>
-                )}
-              </div>
-              {unlocked && (
-                <>
-                  {mod && sDef ? (
-                    <div style={{ margin: '6px 0' }}>
-                      <div>
-                        <b>{mod.name}</b> <span className="dim small">({sDef.name} · Tier {mod.minMapTier}+)</span>
-                      </div>
-                      <div className="dim small">{mod.desc}</div>
-                    </div>
-                  ) : (
-                    <p className="dim small" style={{ margin: '6px 0' }}>
-                      No Sextant modifier active in this slot.
-                    </p>
-                  )}
-                  <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-                    {SEXTANTS.map((sex) => {
-                      const have = s.account.bank[sex.id] ?? 0;
-                      return (
-                        <button
-                          key={sex.id}
-                          className="btn sm"
-                          disabled={have <= 0}
-                          title={sex.desc}
-                          onClick={() => game.act((st, ctx) => applySextant(st, ctx, idx, sex.id))}
-                        >
-                          Roll {sex.tier[0].toUpperCase() + sex.tier.slice(1)} ({have})
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
+            <button key={m.id} className={`gem-chip sm md-avoid ${blocked ? 'active blocked' : ''}`} title={m.desc} onClick={() => game.act((st) => toggleBlockedMod(st, m.id))}>
+              {blocked ? '✕ Avoid: ' : '+ Allow: '} {m.name}
+            </button>
           );
         })}
       </div>
-    </div>
+    </details>
+  );
+}
+
+function DoomedPanel({ loaded, onLoad }: { loaded: Loaded | null; onLoad: (l: Loaded) => void }) {
+  const s = useGame();
+  const unlocked = hasAtlasNode(s, 'atlas_doomed');
+  return (
+    <>
+      <div className="callout skill-note">
+        <b>Doomed Maps (I–V)</b> roll 2–4 dangerous realm modifiers at once, scale up to 100 monster packs, drop currency at 3.5× Tier 10 Exalted and Divine rates, can drop <b>Fractured Orbs</b>, and their bosses can drop <b>Uber Boss Keys</b>.{' '}
+        {!unlocked && 'Allocate the Doomed Horizon keystone on the Atlas Tree (20 Atlas points earned) so Tier 8–10 map bosses can drop Doomed Maps.'}
+      </div>
+      <div className="md-cards">
+        {DOOMED_TIERS.map((d) => {
+          const l: Loaded = { kind: 'doomed', tier: d.tier };
+          return (
+            <PortalCard
+              key={d.tier}
+              art={artFor('shatteredthrone')}
+              color="#c0433b"
+              mark={ROMAN[d.tier]}
+              title={d.name}
+              sub={`Lv ${d.level} · ${d.packs} packs`}
+              held={doomedHeld(s, d.tier)}
+              selected={!!loaded && sameLoaded(loaded, l)}
+              running={!!s.maps.run?.doomedTier && s.maps.run.doomedTier === d.tier}
+              onClick={() => onLoad(l)}
+            />
+          );
+        })}
+      </div>
+      <MapSafetyPanel isDoomed={true} />
+    </>
+  );
+}
+
+function BossesPanel({ loaded, onLoad }: { loaded: Loaded | null; onLoad: (l: Loaded) => void }) {
+  const s = useGame();
+  return (
+    <>
+      <div className="callout skill-note">
+        <b>Hard Mode Bosses (Lv 72–86)</b> are opened with keys dropped by Map bosses (boosted by the <b>Boss Key Hunt</b> Sextant) or crafted with life skills. Each kill guarantees its boss trophy material and drops its exclusive unique on first clear (35% on repeat kills). Combine all four keys or trophies at Smithing Lv 85 to challenge <b>The Crownless</b>.
+      </div>
+      <div className="md-cards">
+        {HARD_BOSSES.map((hb) => {
+          const l: Loaded = { kind: 'hard', id: hb.id };
+          return (
+            <PortalCard
+              key={hb.id}
+              color="#d0675b"
+              mark="☠"
+              title={hb.name}
+              sub={`${hb.arenaName} · Lv ${hb.level}`}
+              held={s.account.bank[hb.keyId] ?? 0}
+              badge={s.bossesDefeated.includes(hb.zoneId) ? <span className="md-card-mod good">✓ Defeated</span> : <span className="md-card-mod">Guaranteed unique</span>}
+              selected={!!loaded && sameLoaded(loaded, l)}
+              running={s.combat?.zoneId === hb.zoneId}
+              onClick={() => onLoad(l)}
+            />
+          );
+        })}
+      </div>
+      <div className="callout skill-note">
+        <b>Uber Bosses (Lv 91–97)</b> are the realm’s pinnacle encounters, opened with Uber Keys dropped by <b>Doomed Map I–V</b> bosses. Each kill guarantees its exclusive <b>Doom Sigil</b> and drops its build-defining unique on first clear (35% on repeat kills).
+      </div>
+      <div className="md-cards">
+        {UBER_BOSSES.map((ub) => {
+          const l: Loaded = { kind: 'uber', tier: ub.tier };
+          return (
+            <PortalCard
+              key={ub.zoneId}
+              color="#b06ad0"
+              mark={ROMAN[ub.tier]}
+              title={ub.name}
+              sub={`${ub.arenaName} · Lv ${ub.level}`}
+              held={s.account.bank[ub.keyId] ?? 0}
+              badge={s.bossesDefeated.includes(ub.zoneId) ? <span className="md-card-mod good">✓ Defeated</span> : <span className="md-card-mod">Guaranteed unique</span>}
+              selected={!!loaded && sameLoaded(loaded, l)}
+              running={s.combat?.zoneId === ub.zoneId}
+              onClick={() => onLoad(l)}
+            />
+          );
+        })}
+      </div>
+    </>
   );
 }
 
@@ -265,12 +908,15 @@ function AtlasPanel() {
             </button>
           )}
         </div>
-        <p className="dim small" style={{ marginBottom: 4 }}>
-          Each Map Tier 1–10 awards up to 3 Atlas points across your realm: <b>+1</b> for first clear ({atlas.cleared.length}/10), <b>+1</b> for clearing with all unlocked Sextant slots filled ({atlas.slotted.length}/10), and <b>+1</b> for a deathless clear ({atlas.deathless.length}/10). Choose a connected route from any of the four central starting nodes.
-        </p>
-        <p className="dim small" style={{ margin: '4px 0' }}>
-          Endgame first clears award the other 40 points: <b>+{ATLAS_DOOMED_CLEAR_POINTS}</b> per Doomed tier ({atlas.doomedCleared?.length ?? 0}/5), <b>+{ATLAS_HARD_BOSS_CLEAR_POINTS}</b> per Hard Boss ({atlas.hardBossesCleared?.length ?? 0}/5), and <b>+{ATLAS_UBER_BOSS_CLEAR_POINTS}</b> per Uber Boss ({atlas.uberBossesCleared?.length ?? 0}/3).
-        </p>
+        <details className="md-more">
+          <summary>How Atlas points are earned</summary>
+          <p className="dim small" style={{ marginBottom: 4 }}>
+            Each Map Tier 1–10 awards up to 3 Atlas points across your realm: <b>+1</b> for first clear ({atlas.cleared.length}/10), <b>+1</b> for clearing with all unlocked Sextant slots filled ({atlas.slotted.length}/10), and <b>+1</b> for a deathless clear ({atlas.deathless.length}/10). Choose a connected route from any of the four central starting nodes.
+          </p>
+          <p className="dim small" style={{ margin: '4px 0' }}>
+            Endgame first clears award the other 40 points: <b>+{ATLAS_DOOMED_CLEAR_POINTS}</b> per Doomed tier ({atlas.doomedCleared?.length ?? 0}/5), <b>+{ATLAS_HARD_BOSS_CLEAR_POINTS}</b> per Hard Boss ({atlas.hardBossesCleared?.length ?? 0}/5), and <b>+{ATLAS_UBER_BOSS_CLEAR_POINTS}</b> per Uber Boss ({atlas.uberBossesCleared?.length ?? 0}/3).
+          </p>
+        </details>
       </div>
       <div className="atlas-layout">
         <div ref={treeViewport} className="atlas-tree-viewport" aria-label="Atlas skill tree">
@@ -279,15 +925,19 @@ function AtlasPanel() {
               {ATLAS_NODES.filter((node) => !node.requires?.length).map((node) => (
                 <line key={`root-${node.id}`} x1="640" y1="640" x2={node.x} y2={node.y} className={atlas.nodes.includes(node.id) ? 'allocated' : 'open'} />
               ))}
-              {ATLAS_NODES.flatMap((node) => (node.requires ?? []).map((requiredId) => {
-                const required = ATLAS_NODES.find((candidate) => candidate.id === requiredId);
-                if (!required) return null;
-                const allocated = atlas.nodes.includes(node.id) && atlas.nodes.includes(requiredId);
-                const open = atlas.nodes.includes(requiredId) && !atlas.nodes.includes(node.id);
-                return <line key={`${requiredId}-${node.id}`} x1={required.x} y1={required.y} x2={node.x} y2={node.y} className={allocated ? 'allocated' : open ? 'open' : ''} />;
-              }))}
+              {ATLAS_NODES.flatMap((node) =>
+                (node.requires ?? []).map((requiredId) => {
+                  const required = ATLAS_NODES.find((candidate) => candidate.id === requiredId);
+                  if (!required) return null;
+                  const allocated = atlas.nodes.includes(node.id) && atlas.nodes.includes(requiredId);
+                  const open = atlas.nodes.includes(requiredId) && !atlas.nodes.includes(node.id);
+                  return <line key={`${requiredId}-${node.id}`} x1={required.x} y1={required.y} x2={node.x} y2={node.y} className={allocated ? 'allocated' : open ? 'open' : ''} />;
+                }),
+              )}
             </svg>
-            <div className="atlas-core" aria-hidden="true"><span>ATLAS</span></div>
+            <div className="atlas-core" aria-hidden="true">
+              <span>ATLAS</span>
+            </div>
             {(Object.keys(WING_TITLES) as AtlasWing[]).map((wing) => (
               <div key={wing} className={`atlas-wing-label ${wing}`}>
                 <b>{WING_TITLES[wing].title}</b>
@@ -322,21 +972,11 @@ function AtlasPanel() {
           <div className="atlas-wing-name">{WING_TITLES[selected.wing].title}</div>
           <p>{selected.desc}</p>
           {selectedAllocated ? (
-            <button
-              className="btn sm"
-              disabled={!!refundDependent}
-              title={refundDependent ? `Required by ${refundDependent.name}` : 'Refund this Atlas point'}
-              onClick={() => game.act((st) => refundAtlas(st, selected.id))}
-            >
+            <button className="btn sm" disabled={!!refundDependent} title={refundDependent ? `Required by ${refundDependent.name}` : 'Refund this Atlas point'} onClick={() => game.act((st) => refundAtlas(st, selected.id))}>
               {refundDependent ? `Required by ${refundDependent.name}` : 'Refund Point'}
             </button>
           ) : (
-            <button
-              className="btn sm primary"
-              disabled={!!selectedBlocker}
-              title={selectedBlocker ?? 'Spend 1 Atlas point'}
-              onClick={() => game.act((st) => allocateAtlasNode(st, selected.id))}
-            >
+            <button className="btn sm primary" disabled={!!selectedBlocker} title={selectedBlocker ?? 'Spend 1 Atlas point'} onClick={() => game.act((st) => allocateAtlasNode(st, selected.id))}>
               {selectedBlocker ?? 'Allocate Point'}
             </button>
           )}
@@ -346,305 +986,74 @@ function AtlasPanel() {
   );
 }
 
-function MapSafetyPanel({ isDoomed }: { isDoomed: boolean }) {
-  const s = useGame();
-  const cfg = ensureMapSettings(s);
-  const chaos = s.account.bank.chaos ?? 0;
-  const mods = isDoomed ? DOOMED_MODS : NORMAL_MAP_MODS;
-
-  return (
-    <div className="card" style={{ marginBottom: 16 }}>
-      <div className="card-title">
-        {isDoomed ? 'Doomed Modifier Safety & Auto-Roll' : 'Map Modifiers & Auto-Roll Safety'}
-        <span className="grow" />
-        <span className="card-hint">
-          <MatIcon id="chaos" size={14} /> <b className="num">{fmt(chaos)}</b> Chaos Orbs in stash
-        </span>
-      </div>
-      <p className="dim small" style={{ marginTop: 0 }}>
-        Blacklist deadly modifiers you wish to avoid. When an avoided modifier rolls on entry or during auto-run, the Map Device automatically spends 1 Chaos Orb to reroll the map (up to 5 attempts per run).
-      </p>
-
-      {!isDoomed && (
-        <div style={{ marginBottom: 10 }}>
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={!!cfg.rollNormalMaps}
-              onChange={() => game.act((st) => toggleRollNormalMaps(st))}
-            />
-            <span>
-              <b>Roll Random Affixes on Normal Maps</b>{' '}
-              <span className="dim small">(Adds 2–3 dangerous modifiers for extra packs, currency and item rarity)</span>
-            </span>
-          </label>
-        </div>
-      )}
-
-      <div style={{ marginBottom: 10 }}>
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-          <input
-            type="checkbox"
-            checked={cfg.autoRerollChaos}
-            onChange={() => game.act((st) => toggleAutoRerollChaos(st))}
-          />
-          <span>
-            <b>Auto-Reroll with Chaos Orbs if an avoided modifier rolls</b>{' '}
-            <span className="dim small">(Spends 1 Chaos Orb per reroll attempt)</span>
-          </span>
-        </label>
-      </div>
-
-      <div style={{ marginTop: 8 }}>
-        <div className="small dim" style={{ marginBottom: 6 }}>
-          <b>Avoided modifiers (click to toggle blacklist):</b>
-        </div>
-        <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-          {mods.map((m) => {
-            const blocked = cfg.blockedMods.includes(m.id);
-            return (
-              <button
-                key={m.id}
-                className={`gem-chip sm ${blocked ? 'active' : ''}`}
-                style={{
-                  borderColor: blocked ? 'var(--danger, #e0584f)' : undefined,
-                  background: blocked ? 'rgba(224, 88, 79, 0.15)' : undefined,
-                  color: blocked ? '#ff8077' : undefined,
-                }}
-                title={m.desc}
-                onClick={() => game.act((st) => toggleBlockedMod(st, m.id))}
-              >
-                {blocked ? '✕ Avoid: ' : '+ Allow: '} {m.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
+/** The first thing to show in the device on a tab: the highest map you hold of its kind, else the first. */
+function defaultLoaded(s: GameState, tab: DeviceTab): Loaded | null {
+  if (tab === 'maps') {
+    const held = [...MAP_TIERS].reverse().find((t) => mapsHeld(s, t.tier) > 0);
+    return { kind: 'tier', tier: held?.tier ?? 1 };
+  }
+  if (tab === 'doomed') {
+    const held = [...DOOMED_TIERS].reverse().find((d) => doomedHeld(s, d.tier) > 0);
+    return { kind: 'doomed', tier: held?.tier ?? 1 };
+  }
+  if (tab === 'bosses') {
+    const hb = HARD_BOSSES.find((b) => (s.account.bank[b.keyId] ?? 0) > 0) ?? HARD_BOSSES[0];
+    return { kind: 'hard', id: hb.id };
+  }
+  return null;
 }
 
-function DoomedPanel() {
-  const s = useGame();
-  const { run, auto } = s.maps;
-  const atlas = ensureAtlas(s);
-  const unlocked = hasAtlasNode(s, 'atlas_doomed');
-
-  return (
-    <>
-      <div className="callout skill-note">
-        <b>Doomed Maps (I–V)</b> roll 2–4 dangerous realm modifiers at once, scale up to 100 monster packs, drop currency at 3.5× Tier 10 Exalted and Divine rates, can drop <b>Fractured Orbs</b>, and their bosses can drop <b>Uber Boss Keys</b>.{' '}
-        {!unlocked && 'Allocate the Doomed Horizon keystone on the Atlas Tree (20 Atlas points earned) so Tier 8–10 map bosses can drop Doomed Maps.'}
-      </div>
-
-      <MapSafetyPanel isDoomed={true} />
-
-      <div className="action-grid">
-        {DOOMED_TIERS.map((d) => {
-          const held = doomedHeld(s, d.tier);
-          const isRunning = run && !!run.doomedTier && run.doomedTier === d.tier;
-          const isAuto = auto?.tier === d.tier && !!auto?.doomed;
-          const modsText = d.modCount[0] === d.modCount[1] ? `${d.modCount[0]} modifiers` : `${d.modCount[0]}–${d.modCount[1]} modifiers`;
-          return (
-            <div className={`card ${isRunning ? 'running' : ''}`} key={d.tier} style={{ margin: 0 }}>
-              <div className="row" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                <b>{d.name}</b>
-                <Badge tone={held > 0 ? 'warn' : 'neutral'}>Held: {fmt(held)}</Badge>
-              </div>
-              <p className="dim small" style={{ margin: '6px 0' }}>
-                Monster level {d.level} · {d.packs} packs · Rolls {modsText} · {Math.round(d.keyChance * 100)}% Uber Key chance · {atlas.doomedCleared?.includes(d.tier) ? 'Atlas reward claimed' : `+${ATLAS_DOOMED_CLEAR_POINTS} Atlas points on first clear`}
-              </p>
-              <div className="row" style={{ gap: 6 }}>
-                <button
-                  className="btn sm primary"
-                  disabled={!!run || held <= 0}
-                  onClick={() => game.act((st, ctx) => startDoomedMap(st, ctx, d.tier))}
-                >
-                  Open {d.name}
-                </button>
-                <button
-                  className="btn sm"
-                  disabled={isAuto || (run ? run.doomedTier !== d.tier : held <= 0)}
-                  onClick={() => game.act((st, ctx) => startDoomedAutoRun(st, ctx, d.tier))}
-                >
-                  Auto-run
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </>
-  );
-}
-
-function BossesPanel({ go }: { go: (p: Page) => void }) {
-  const s = useGame();
-  const atlas = ensureAtlas(s);
-  const inKeyedArena = s.combat && isKeyedBossZone(s.combat.zoneId);
-
-  return (
-    <>
-      {inKeyedArena && (
-        <div className="card">
-          <div className="row" style={{ alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-            <div>
-              <b>{zoneDef(s.combat!.zoneId).name}</b> · <Badge tone="warn">Keyed Arena Active</Badge>
-            </div>
-            <div className="row" style={{ gap: 8 }}>
-              <button className="btn primary sm" onClick={() => go('combat')}>
-                Watch the fight
-              </button>
-              <button className="btn danger sm" onClick={() => game.act((st) => retreat(st))}>
-                Abandon (key lost)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="callout skill-note">
-        <b>Hard Mode Bosses (Lv 72–86)</b> are opened with keys dropped by Map bosses (boosted by the <b>Boss Key Hunt</b> Sextant) or crafted with life skills. Each kill guarantees its boss trophy material and drops its exclusive unique on first clear (35% on repeat kills). Combine all four keys or trophies at Smithing Lv 85 to challenge <b>The Crownless</b>.
-      </div>
-      <div className="action-grid" style={{ marginBottom: 16 }}>
-        {HARD_BOSSES.map((hb) => {
-          const uniq = uniqueDef(hb.uniqueId);
-          const held = s.account.bank[hb.keyId] ?? 0;
-          const defeated = s.bossesDefeated.includes(hb.zoneId);
-          const blocker = canStartHardBoss(s, hb.id);
-          return (
-            <div className="card" key={hb.id} style={{ margin: 0 }}>
-              <div className="row" style={{ alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                <b>
-                  {hb.name} <span className="muted">· Lv {hb.level}</span>
-                </b>
-                <Badge tone={held > 0 ? 'neutral' : 'locked'}>
-                  <MatIcon id={hb.keyId} size={13} /> {hb.keyName}: {fmt(held)}
-                </Badge>
-              </div>
-              <div className="small dim" style={{ marginTop: 2 }}>
-                {hb.arenaName} · {defeated ? <span className="good">✓ Defeated</span> : '○ Undefeated (Guaranteed Unique)'}
-              </div>
-              <p className="small" style={{ margin: '6px 0' }}>
-                {hb.mechanicSummary}
-              </p>
-              <p className="dim small" style={{ margin: '4px 0' }}>
-                <b>Rule & Aim Hint:</b> {hb.ruleHint}
-              </p>
-              <p className="dim small" style={{ margin: '4px 0 8px' }}>
-                <b>Spoils:</b> <MatIcon id={hb.trophyId} size={12} /> {hb.trophyName} (100%) · <b>{uniq.name}</b> ({defeated ? '35%' : '100% first kill'}) · {atlas.hardBossesCleared?.includes(hb.id) ? 'Atlas reward claimed' : `+${ATLAS_HARD_BOSS_CLEAR_POINTS} Atlas points`}
-              </p>
-              <div className="row">
-                <button
-                  className="btn sm primary"
-                  disabled={!!blocker}
-                  title={blocker ?? `Consume 1 ${hb.keyName} to open ${hb.arenaName}`}
-                  onClick={() =>
-                    game.act((st, ctx) => {
-                      if (!startHardBoss(st, ctx, hb.id)) go('combat');
-                    })
-                  }
-                >
-                  Open {hb.arenaName}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="callout skill-note">
-        <b>Uber Bosses (Lv 91–97)</b> are the realm’s pinnacle encounters, opened with Uber Keys dropped by <b>Doomed Map I–V</b> bosses. Each kill guarantees its exclusive <b>Doom Sigil</b> and drops its build-defining unique on first clear (35% on repeat kills).
-      </div>
-      <div className="action-grid">
-        {UBER_BOSSES.map((ub) => {
-          const uniqs = ub.uniques.map((id) => uniqueDef(id));
-          const held = s.account.bank[ub.keyId] ?? 0;
-          const defeated = s.bossesDefeated.includes(ub.zoneId);
-          const blocker = canStartUberBoss(s, ub.tier);
-          return (
-            <div className="card" key={ub.zoneId} style={{ margin: 0 }}>
-              <div className="row" style={{ alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                <b>
-                  {ub.name} <span className="muted">· Lv {ub.level}</span>
-                </b>
-                <Badge tone={held > 0 ? 'warn' : 'locked'}>
-                  <MatIcon id={ub.keyId} size={13} /> {ub.keyName}: {fmt(held)}
-                </Badge>
-              </div>
-              <div className="small dim" style={{ marginTop: 2 }}>
-                {ub.arenaName} · {defeated ? <span className="good">✓ Defeated</span> : '○ Undefeated (Guaranteed Unique)'}
-              </div>
-              <p className="small" style={{ margin: '6px 0' }}>
-                {ub.mechanicSummary}
-              </p>
-              <p className="dim small" style={{ margin: '4px 0 8px' }}>
-                <b>Spoils:</b> <MatIcon id={ub.sigilId} size={12} /> {ub.sigilName} (100%) ·{' '}
-                {uniqs.map((u) => u.name).join(' / ')} ({defeated ? '35%' : '100% first kill'}) · {atlas.uberBossesCleared?.includes(ub.zoneId) ? 'Atlas reward claimed' : `+${ATLAS_UBER_BOSS_CLEAR_POINTS} Atlas points`}
-              </p>
-              <div className="row">
-                <button
-                  className="btn sm primary"
-                  disabled={!!blocker}
-                  title={blocker ?? `Consume 1 ${ub.keyName} to open ${ub.arenaName}`}
-                  onClick={() =>
-                    game.act((st, ctx) => {
-                      if (!startUberBoss(st, ctx, ub.tier)) go('combat');
-                    })
-                  }
-                >
-                  Open {ub.arenaName}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </>
-  );
-}
+const TAB_KINDS: Record<DeviceTab, Loaded['kind'][]> = { maps: ['tier', 'unique'], doomed: ['doomed'], bosses: ['hard', 'uber'], atlas: [] };
 
 function MapDeviceContent({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const [tab, setTab] = useState<DeviceTab>('maps');
-  const { run, auto, tally } = s.maps;
-  const atlas = ensureAtlas(s);
+  const [loaded, setLoaded] = useState<Loaded | null>(() => defaultLoaded(s, 'maps'));
+  // a map picked by hand while a portal is open is shown under it, ready for when the run ends
+  const [picked, setPicked] = useState(false);
+  const load = (l: Loaded) => {
+    setLoaded(l);
+    setPicked(true);
+  };
+  const { run, tally } = s.maps;
   const earned = atlasPointsEarned(s);
   const left = atlasPointsLeft(s);
   const totalHeld = totalMapsHeld(s);
   const totalDoomed = DOOMED_TIERS.reduce((sum, d) => sum + doomedHeld(s, d.tier), 0);
-  const totalKeys =
-    HARD_BOSSES.reduce((sum, hb) => sum + (s.account.bank[hb.keyId] ?? 0), 0) +
-    UBER_BOSSES.reduce((sum, ub) => sum + (s.account.bank[ub.keyId] ?? 0), 0);
+  const totalKeys = HARD_BOSSES.reduce((sum, hb) => sum + (s.account.bank[hb.keyId] ?? 0), 0) + UBER_BOSSES.reduce((sum, ub) => sum + (s.account.bank[ub.keyId] ?? 0), 0);
+  const pickTab = (t: DeviceTab) => {
+    setTab(t);
+    if (!loaded || !TAB_KINDS[t].includes(loaded.kind)) {
+      const d = defaultLoaded(s, t);
+      if (d) setLoaded(d);
+    }
+  };
+  const tabs: { id: DeviceTab; label: string; count: ReactNode }[] = [
+    { id: 'maps', label: 'Maps', count: fmt(totalHeld) },
+    { id: 'doomed', label: 'Doomed', count: fmt(totalDoomed) },
+    { id: 'bosses', label: 'Bosses', count: fmt(totalKeys) },
+    { id: 'atlas', label: 'Atlas', count: `${earned}/${ATLAS_POINT_CAP}` },
+  ];
 
   return (
-    <div className="page">
+    <div className="page md-page">
       <PageHeader title="Map Device" actions={MAPS_PREVIEW.enabled ? <Badge tone="neutral">Dev preview</Badge> : undefined}>
-        Maps are shared across your realm. Each run borrows a campaign area’s visuals, monsters and boss mechanics at random, and adds its tier’s permanent danger and reward identity.
+        Load a map into the device and open a portal. Maps are shared across your realm. Each run borrows a campaign area’s visuals, monsters and boss mechanics at random, and adds its tier’s permanent danger and reward identity.
       </PageHeader>
 
-      <ActiveRunCard go={go} />
+      {tab !== 'atlas' && <DeviceStage loaded={loaded} picked={picked} onOpened={() => setPicked(false)} go={go} />}
 
-      <div className="smith-tabs" style={{ marginBottom: 12 }}>
-        <button className={`gem-chip ${tab === 'maps' ? 'active' : ''}`} onClick={() => setTab('maps')}>
-          Map Tiers (T1–T10) <span className="dim num">{fmt(totalHeld)}</span>
-        </button>
-        <button className={`gem-chip ${tab === 'doomed' ? 'active' : ''}`} onClick={() => setTab('doomed')}>
-          Doomed Maps (I–V) <span className="dim num">{fmt(totalDoomed)}</span>
-        </button>
-        <button className={`gem-chip ${tab === 'bosses' ? 'active' : ''}`} onClick={() => setTab('bosses')}>
-          Bosses & Ubers <span className="dim num">{fmt(totalKeys)}</span>
-        </button>
-        <button className={`gem-chip ${tab === 'atlas' ? 'active' : ''}`} onClick={() => setTab('atlas')}>
-          Atlas Tree <span className="dim num">{earned}/{ATLAS_POINT_CAP}</span>
-          {left > 0 && <Badge tone="success">+{left}</Badge>}
-        </button>
+      <div className="md-tabs" role="tablist">
+        {tabs.map((t) => (
+          <button key={t.id} role="tab" aria-selected={tab === t.id} className={`md-tab ${tab === t.id ? 'active' : ''}`} onClick={() => pickTab(t.id)}>
+            {t.label} <span className="dim num">{t.count}</span>
+            {t.id === 'atlas' && left > 0 && <Badge tone="success">+{left}</Badge>}
+          </button>
+        ))}
       </div>
 
       {tab === 'maps' && (
         <>
-          <SextantPanel />
-          <MapSafetyPanel isDoomed={false} />
           {totalHeld <= 0 && !run && (
             <div className="card">
               <EmptyState icon={<GameIcon name="map" size={32} color="var(--dim)" />} title="No maps held">
@@ -652,117 +1061,38 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
               </EmptyState>
             </div>
           )}
-          <div className="action-grid">
-            {MAP_TIERS.map((tier) => {
-              const held = mapsHeld(s, tier.tier);
-              const cleared = atlas.cleared.includes(tier.tier);
-              const slotted = atlas.slotted.includes(tier.tier);
-              const deathless = atlas.deathless.includes(tier.tier);
-              const isRunning = run && !run.doomedTier && run.tier === tier.tier;
-              const isAuto = auto?.tier === tier.tier;
-              return (
-                <div className={`card ${isRunning ? 'running' : ''}`} key={tier.tier} style={{ margin: 0 }}>
-                  <div className="row" style={{ alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                    <b>
-                      Map Tier {tier.tier} <span className="muted">· Lv {tier.level}</span>
-                    </b>
-                    <Badge tone={held > 0 ? 'neutral' : 'locked'}>Held: {fmt(held)}</Badge>
-                  </div>
-                  <div className="small" style={{ marginTop: 4 }}>
-                    <Badge tone={tier.mod === 'none' ? 'neutral' : 'warn'}>{tier.modName}</Badge>{' '}
-                    <span className="dim">{tier.packs} packs · Favours {tier.rewardDesc}</span>
-                  </div>
-                  <p className="dim small" style={{ margin: '6px 0' }}>
-                    {tier.modDesc}
-                  </p>
-                  <div className="row small dim" style={{ gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                    <span className={cleared ? 'good' : ''}>{cleared ? '✓' : '○'} Cleared</span>
-                    <span className={slotted ? 'good' : ''}>{slotted ? '✓' : '○'} Sextant-slotted</span>
-                    <span className={deathless ? 'good' : ''}>{deathless ? '✓' : '○'} Deathless</span>
-                  </div>
-                  <div className="row" style={{ gap: 6 }}>
-                    <button
-                      className="btn sm primary"
-                      disabled={!!run || held <= 0}
-                      onClick={() => game.act((st, ctx) => startMap(st, ctx, tier.tier))}
-                    >
-                      Open map
-                    </button>
-                    <button
-                      className="btn sm"
-                      disabled={isAuto || (run ? run.tier !== tier.tier || !!run.doomedTier : held <= 0)}
-                      onClick={() => game.act((st, ctx) => startAutoRun(st, ctx, tier.tier))}
-                    >
-                      Auto-run
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+          <TierCards loaded={loaded} onLoad={load} />
+          <div className="md-section-head">
+            <h3>Unique Maps</h3>
+            <span className="dim small">Dropped by Tier 5+ Map Bosses</span>
           </div>
-
-          <div className="card" style={{ marginTop: 16 }}>
-            <div className="card-title">
-              Unique Maps
-              <span className="grow" />
-              <span className="card-hint">Dropped by Tier 5+ Map Bosses</span>
-            </div>
-            <div className="action-grid">
-              {UNIQUE_MAPS.map((u) => {
-                const held = uniqueMapHeld(s, u.id);
-                const isRunning = run?.uniqueMapId === u.id;
-                return (
-                  <div className={`card ${isRunning ? 'running' : ''}`} key={u.id} style={{ margin: 0 }}>
-                    <div className="row" style={{ alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                      <b className="rar-unique">
-                        {u.name} <span className="muted">· T{u.tier} (Lv {u.level})</span>
-                      </b>
-                      <Badge tone={held > 0 ? 'warn' : 'locked'}>Held: {fmt(held)}</Badge>
-                    </div>
-                    <p className="dim small" style={{ margin: '6px 0' }}>
-                      {u.desc}
-                    </p>
-                    <p className="small" style={{ margin: '4px 0 8px' }}>
-                      <b>Spoils:</b> {u.rewardSummary}
-                    </p>
-                    <p className="dim small" style={{ fontStyle: 'italic', margin: '0 0 8px' }}>
-                      "{u.flavour}"
-                    </p>
-                    <div className="row" style={{ gap: 6 }}>
-                      <button
-                        className="btn sm primary"
-                        disabled={!!run || held <= 0}
-                        onClick={() =>
-                          game.act((st, ctx) => {
-                            if (!startUniqueMap(st, ctx, u.id)) go('combat');
-                          })
-                        }
-                      >
-                        Open {u.name}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <UniqueCards loaded={loaded} onLoad={load} />
+          <MapSafetyPanel isDoomed={false} />
         </>
       )}
 
-      {tab === 'doomed' && <DoomedPanel />}
-      {tab === 'bosses' && <BossesPanel go={go} />}
+      {tab === 'doomed' && <DoomedPanel loaded={loaded} onLoad={load} />}
+      {tab === 'bosses' && <BossesPanel loaded={loaded} onLoad={load} />}
       {tab === 'atlas' && <AtlasPanel />}
 
-      <div className="card">
-        <b>Totals</b>
-        <p>
-          {tally.runs} runs{tally.runs ? ` · ${fmtTime(tally.clearMs / tally.runs)} average` : ''} · {tally.mapsFound} maps found · {tally.favoured} special drops
-        </p>
-        <p className="dim">
-          {bossesOffline(s)
-            ? 'Wind-up rules on: map bosses whose mechanics your rules answer are fought offline.'
-            : 'No wind-up rules: offline auto-run stops at the first map boss, which waits for you.'}
-        </p>
+      <div className="md-totals">
+        <span>
+          <b className="num">{tally.runs}</b> runs
+        </span>
+        {tally.runs > 0 && (
+          <span>
+            <b className="num">{fmtTime(tally.clearMs / tally.runs)}</b> average
+          </span>
+        )}
+        <span>
+          <b className="num">{tally.mapsFound}</b> maps found
+        </span>
+        <span>
+          <b className="num">{tally.favoured}</b> special drops
+        </span>
+        <span className="dim small md-totals-note">
+          {bossesOffline(s) ? 'Wind-up rules on: map bosses whose mechanics your rules answer are fought offline.' : 'No wind-up rules: offline auto-run stops at the first map boss, which waits for you.'}
+        </span>
       </div>
 
       {MAPS_PREVIEW.enabled && (
@@ -817,14 +1147,19 @@ export function MapDevicePage({ go }: { go: (p: Page) => void }) {
       <PageHeader title="Map Device" actions={locked ? <Badge tone="locked">Locked</Badge> : undefined}>
         {device.desc}
       </PageHeader>
-      <div className="card">
-        <EmptyState icon={<GameIcon name="lock" size={32} color="var(--dim)" />} title="Maps are sealed">
-          Maps come after the campaign: the Map Device wakes once you beat Act {FINAL_ACT}. {!actOpen(FINAL_ACT) && `Act ${FINAL_ACT} isn't out yet.`}
-        </EmptyState>
-        <div className="row" style={{ justifyContent: 'center' }}>
-          <button className="btn" onClick={() => go('campaign')}>
-            Back to the Campaign
-          </button>
+      <div className="card md-stage sealed">
+        <div className="md-stage-device">
+          <DeviceRing loaded={null} state="idle" slot={null} onSlot={() => undefined} />
+        </div>
+        <div className="md-stage-info">
+          <EmptyState icon={<GameIcon name="lock" size={32} color="var(--dim)" />} title="Maps are sealed">
+            Maps come after the campaign: the Map Device wakes once you beat Act {FINAL_ACT}. {!actOpen(FINAL_ACT) && `Act ${FINAL_ACT} isn't out yet.`}
+          </EmptyState>
+          <div className="row" style={{ justifyContent: 'center' }}>
+            <button className="btn" onClick={() => go('campaign')}>
+              Back to the Campaign
+            </button>
+          </div>
         </div>
       </div>
     </div>

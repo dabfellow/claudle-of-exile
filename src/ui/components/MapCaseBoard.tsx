@@ -1,17 +1,31 @@
+import type { CSSProperties, ReactNode } from 'react';
 import { DOOMED_TIERS, MAP_TIERS, SEXTANTS, UNIQUE_MAPS } from '../../data/maps';
 import { cartographyOpen } from '../../engine/cartography';
 import { stationLockReason } from '../../engine/hideout';
 import { doomedHeld, mapsHeld, uniqueMapHeld } from '../../engine/maps';
 import { useGame } from '../../game';
-import { fmt, GameIcon, MatIcon } from './common';
+import { fmt, MatIcon } from './common';
+import { TIER_ART, tierColor, zoneArt } from './mapLook';
+import '../round2-session2.css';
+
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
+
+/** One kind of map in the case: its mark, how many you have and its name. */
+function Tile({ mark, count, name, color, art, title }: { mark: ReactNode; count: number; name: ReactNode; color: string; art?: string; title?: string }) {
+  return (
+    <div className={`mc-tile ${count > 0 ? '' : 'empty'}`} style={{ ['--portal' as string]: color, ...(art ? { ['--art' as string]: `url(${art})` } : {}) } as CSSProperties} title={title}>
+      <span className="mc-tile-mark">{mark}</span>
+      <b className="mc-tile-count num">×{fmt(count)}</b>
+      <span className="mc-tile-name">{name}</span>
+    </div>
+  );
+}
 
 /** Cartography's own panel: every map and Sextant your realm holds, however you came by it. */
 export function MapCaseBoard() {
   const s = useGame();
   if (!cartographyOpen(s)) return <div className="callout skill-note">Nothing out here has ever been worth mapping. Reach Act 6 to start.</div>;
   const locked = stationLockReason(s, 'map_device');
-  const anyDoomed = DOOMED_TIERS.some((d) => doomedHeld(s, d.tier) > 0);
-  const anyUnique = UNIQUE_MAPS.some((u) => uniqueMapHeld(s, u.id) > 0);
   return (
     <>
       <div className="callout skill-note">
@@ -24,40 +38,25 @@ export function MapCaseBoard() {
           <span className="grow" />
           <span className="card-hint">{s.lifetime.mapsDrawn} drawn</span>
         </div>
-        <ul className="ingredients">
+        <div className="mc-tiles">
           {MAP_TIERS.map((tier) => (
-            <li key={tier.tier}>
-              <GameIcon name="map" size={13} />
-              <span className="ing-name">
-                Map Tier {tier.tier} <span className="dim small">· Lv {tier.level} · {tier.modName}</span>
-              </span>
-              <span className="ing-qty num">{fmt(mapsHeld(s, tier.tier))}</span>
-            </li>
+            <Tile key={tier.tier} mark={tier.tier} count={mapsHeld(s, tier.tier)} name={`Lv ${tier.level} · ${tier.modName}`} color={tierColor(tier.tier)} art={zoneArt(TIER_ART[tier.tier - 1])} title={`Map Tier ${tier.tier}: ${tier.modDesc}`} />
           ))}
-          {anyDoomed &&
-            DOOMED_TIERS.filter((d) => doomedHeld(s, d.tier) > 0).map((d) => (
-              <li key={`doomed-${d.tier}`}>
-                <GameIcon name="map" size={13} color="var(--danger)" />
-                <span className="ing-name">{d.name}</span>
-                <span className="ing-qty num">{fmt(doomedHeld(s, d.tier))}</span>
-              </li>
-            ))}
-          {anyUnique &&
-            UNIQUE_MAPS.filter((u) => uniqueMapHeld(s, u.id) > 0).map((u) => (
-              <li key={u.id}>
-                <GameIcon name="map" size={13} color="var(--unique)" />
-                <span className="ing-name rar-unique">{u.name}</span>
-                <span className="ing-qty num">{fmt(uniqueMapHeld(s, u.id))}</span>
-              </li>
-            ))}
+          {DOOMED_TIERS.filter((d) => doomedHeld(s, d.tier) > 0).map((d) => (
+            <Tile key={`doomed-${d.tier}`} mark={ROMAN[d.tier]} count={doomedHeld(s, d.tier)} name={d.name} color="#c0433b" art={zoneArt('shatteredthrone')} />
+          ))}
+          {UNIQUE_MAPS.filter((u) => uniqueMapHeld(s, u.id) > 0).map((u) => (
+            <Tile key={u.id} mark={`T${u.tier}`} count={uniqueMapHeld(s, u.id)} name={<span className="rar-unique">{u.name}</span>} color="var(--unique)" title={u.desc} />
+          ))}
+        </div>
+        <div className="mc-sextants">
           {SEXTANTS.map((sex) => (
-            <li key={sex.id}>
-              <MatIcon id={sex.id} size={13} />
-              <span className="ing-name">{sex.name}</span>
-              <span className="ing-qty num">{fmt(s.account.bank[sex.id] ?? 0)}</span>
-            </li>
+            <span key={sex.id} title={sex.desc}>
+              <MatIcon id={sex.id} size={14} />
+              {sex.name} <b className="num">{fmt(s.account.bank[sex.id] ?? 0)}</b>
+            </span>
           ))}
-        </ul>
+        </div>
       </div>
     </>
   );
