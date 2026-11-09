@@ -3,7 +3,8 @@ import type { ClassRegion, ClusterSpec } from './passiveTree';
 
 /**
  * What every cluster on the character tree holds (docs/PASSIVE_NOTABLES.md). Slots are placed by passiveTreeLayout.ts.
- * - Shared basics: the same 23 notables in every region, nearest the start and around the Gateway.
+ * - Starts: 13 broad notables tailored to each class's natural offence, defence and resource.
+ * - Shared basics: 10 universal notables farther from the start and around the Gateway.
  * - Home: each region's own archetypes, including its 2 rule-changers (★) and the Doomed wheels' "more" (◆).
  * - Borders: the five clusters on each side of a border mix both neighbours' themes; each border has one rule-changer.
  * Cluster sizes are fixed by slot: wheels hold 3 notables, forks/loops/diamonds 2, lines 1. Ids don't depend on names.
@@ -15,24 +16,71 @@ type Spec = Omit<ClusterSpec, 'id'>;
 const n = (name: string, stats: StatMap): N => [name, stats];
 const c = (mastery: ClusterSpec['mastery'], small: N, ...notables: N[]): Spec => ({ mastery, small, notables });
 
-const SHARED = (travel: StatMap): Record<string, Spec> => ({
-  I: c('life', n('Combat Stance', { ...travel, life: 6 }),
-    n('Hardy Constitution', { life: 30, lifePct: 6 }),
-    n('Weathered', { allRes: 10 }),
-    n('Second Wind', { lifeFlaskRecovery: 20, flaskCharges: 10 })),
-  A: c('armour', n('Toughness', { armourPct: 6, evasionPct: 6 }), n('Thick Skin', { armourPct: 20, evasionPct: 20, energyShieldPct: 20 })),
-  B: c('speed', n('Tempo', { attackSpeedPct: 2, castSpeedPct: 2 }), n('Quick Hands', { attackSpeedPct: 6, castSpeedPct: 6 })),
-  A1: c('crit', n('Precision', { critChancePct: 8 }), n('Keen Eye', { critChancePct: 20, accuracy: 60 }), n('Killer Instinct', { critMulti: 15 })),
-  B1: c('resist', n('Wards', { allRes: 3 }), n('Purity', { allRes: 8, chaosRes: 10 }), n('Mending', { lifeRegenPct: 1 })),
-  I1: c('mana', n('Focus', { manaRegenPct: 8 }), n('Clear Mind', { manaRegenPct: 20, manaCostReduction: 8 }), n('Fleet', { moveSpeedPct: 5, attackSpeedPct: 4 })),
-  D: c('life', n('Drive', { life: 8 }), n('Battle Hardened', { physPct: 12, elemPct: 12, life: 15 }), n('Deep Breath', { mana: 20, manaRegenPct: 10 })),
+const STARTING: Record<ClassRegion, Record<string, Spec>> = {
+  str: {
+    I: c('life', n('Warrior Training', { life: 8, armourPct: 4 }), n('Hardy Constitution', { life: 30, lifePct: 6 }), n('Weathered', { allRes: 10 }), n('Second Wind', { lifeFlaskRecovery: 20, flaskCharges: 10 })),
+    A: c('armour', n('Toughness', { armourPct: 8 }), n('Thick Skin', { armourPct: 25 })),
+    B: c('speed', n('Warrior Tempo', { attackSpeedPct: 2 }), n('Heavy Rhythm', { attackSpeedPct: 6, physPct: 8 })),
+    A1: c('crit', n('Weapon Practice', { accuracy: 30 }), n('Keen Eye', { critChancePct: 20, accuracy: 60 }), n('Killer Instinct', { critMulti: 15 })),
+    B1: c('resist', n('Iron Wards', { allRes: 3 }), n('Weather the Blow', { allRes: 8, armourPct: 10 }), n('Mending', { lifeRegenPct: 1 })),
+    I1: c('mana', n('Measured Blows', { manaRegenPct: 6 }), n('Tireless Strikes', { manaRegenPct: 15, manaCostReduction: 8 }), n('March', { moveSpeedPct: 4, attackSpeedPct: 4 })),
+    D: c('phys', n('Battle Drive', { life: 8 }), n('Battle Hardened', { physPct: 15, life: 15 }), n('Deep Breath', { mana: 20, manaRegenPct: 10 })),
+  },
+  duelist: {
+    I: c('life', n('Duelist Training', { life: 6, armourPct: 3, evasionPct: 3 }), n('Conditioning', { life: 25, lifePct: 5 }), n('Poise', { armourPct: 12, evasionPct: 12 }), n('Second Wind', { lifeFlaskRecovery: 15, flaskCharges: 15 })),
+    A: c('armour', n('Guarded Footwork', { armourPct: 4, evasionPct: 4 }), n('Balanced Defence', { armourPct: 18, evasionPct: 18 })),
+    B: c('speed', n('Duelist Tempo', { attackSpeedPct: 2 }), n('Quick Hands', { attackSpeedPct: 8 })),
+    A1: c('accuracy', n('Blade Practice', { accuracy: 35 }), n('Measured Aim', { accuracy: 100, critChancePct: 15 }), n('Killer Instinct', { critMulti: 15 })),
+    B1: c('block', n('Ready Guard', { blockChance: 1 }), n('Parry Stance', { blockChance: 3, allRes: 5 }), n('Recover', { lifeLeech: 0.5 })),
+    I1: c('mana', n('Efficient Form', { manaRegenPct: 8 }), n('Economy of Motion', { manaRegenPct: 15, manaCostReduction: 10 }), n('Fleet', { moveSpeedPct: 5, attackSpeedPct: 4 })),
+    D: c('phys', n('Fighting Form', { life: 6 }), n('Martial Training', { physPct: 12, attackSpeedPct: 4, life: 12 }), n('Deep Breath', { mana: 20, manaRegenPct: 10 })),
+  },
+  dex: {
+    I: c('evasion', n('Ranger Training', { life: 5, evasionPct: 6 }), n('Survivalist', { life: 25, evasionPct: 15 }), n('Weatherwise', { allRes: 8, evasionPct: 8 }), n('Field Supplies', { lifeFlaskRecovery: 15, flaskCharges: 15 })),
+    A: c('evasion', n('Light Step', { evasionPct: 8 }), n('Elusive Form', { evasionPct: 25, moveSpeedPct: 3 })),
+    B: c('speed', n('Ranger Tempo', { attackSpeedPct: 3 }), n('Quick Hands', { attackSpeedPct: 8, moveSpeedPct: 2 })),
+    A1: c('accuracy', n('Target Practice', { accuracy: 40 }), n('Keen Eye', { accuracy: 120, critChancePct: 15 }), n('Killer Instinct', { critMulti: 15 })),
+    B1: c('resist', n('Trail Wards', { allRes: 3 }), n('Weatherproof', { allRes: 8, chaosRes: 8 }), n('Field Dressing', { lifeFlaskRecovery: 20 })),
+    I1: c('mana', n('Steady Draw', { manaRegenPct: 8 }), n('Efficient Technique', { manaRegenPct: 18, manaCostReduction: 8 }), n('Fleet', { moveSpeedPct: 6, attackSpeedPct: 3 })),
+    D: c('projectile', n('Hunter Drive', { life: 6 }), n('Honed Offence', { physPct: 10, elemPct: 10, accuracy: 60 }), n('Deep Quiver', { mana: 20, manaRegenPct: 10 })),
+  },
+  shadow: {
+    I: c('evasion', n('Shadow Training', { life: 4, mana: 6, evasionPct: 3, energyShieldPct: 3 }), n('Dark Vitality', { life: 20, energyShield: 20 }), n('Veiled', { allRes: 8, evasionPct: 10 }), n('Prepared Escape', { flaskCharges: 15, moveSpeedPct: 3 })),
+    A: c('es', n('Ghostly Form', { evasionPct: 4, energyShieldPct: 4 }), n('Shadowed Defence', { evasionPct: 18, energyShieldPct: 18 })),
+    B: c('speed', n('Shadow Tempo', { attackSpeedPct: 2, castSpeedPct: 2 }), n('Quick Hands', { attackSpeedPct: 6, castSpeedPct: 6 })),
+    A1: c('crit', n('Killing Intent', { critChancePct: 8 }), n('Keen Eye', { critChancePct: 20, accuracy: 60 }), n('Killer Instinct', { critMulti: 18 })),
+    B1: c('resist', n('Dark Wards', { allRes: 3 }), n('Night Ward', { allRes: 7, chaosRes: 12 }), n('Fade Away', { esRechargePct: 20, moveSpeedPct: 3 })),
+    I1: c('mana', n('Focus', { manaRegenPct: 10 }), n('Clear Mind', { manaRegenPct: 20, manaCostReduction: 8 }), n('Fleet Casting', { moveSpeedPct: 4, castSpeedPct: 4 })),
+    D: c('spell', n('Cunning Drive', { mana: 8 }), n('Versatile Offence', { physPct: 10, elemPct: 10, critChancePct: 10 }), n('Deep Breath', { mana: 25, manaRegenPct: 12 })),
+  },
+  int: {
+    I: c('mana', n('Mage Training', { mana: 8, energyShieldPct: 4 }), n('Deep Thoughts', { mana: 30, manaRegenPct: 15 }), n('Arcane Ward', { energyShield: 25, allRes: 8 }), n('Enduring Focus', { manaFlaskRecovery: 20, manaCostReduction: 5 })),
+    A: c('es', n('Arcane Defence', { energyShieldPct: 8 }), n('Energy Barrier', { energyShieldPct: 25, energyShield: 20 })),
+    B: c('cast', n('Casting Tempo', { castSpeedPct: 2 }), n('Quick Casting', { castSpeedPct: 8 })),
+    A1: c('crit', n('Spell Precision', { critChancePct: 8 }), n('Focused Spellcraft', { critChancePct: 20, spellPct: 8 }), n('Arcane Instinct', { spellCritMulti: 18 })),
+    B1: c('resist', n('Elemental Wards', { allRes: 3 }), n('Prismatic Ward', { allRes: 10 }), n('Unbroken Focus', { esRechargePct: 30 })),
+    I1: c('mana', n('Mana Flow', { manaRegenPct: 10 }), n('Clear Mind', { manaRegenPct: 25, manaCostReduction: 10 }), n('Mobile Casting', { moveSpeedPct: 4, castSpeedPct: 4 })),
+    D: c('spell', n('Arcane Drive', { mana: 10 }), n('Spellcraft', { spellPct: 15, elemPct: 10 }), n('Deep Reserves', { mana: 30, manaRegenPct: 12 })),
+  },
+  templar: {
+    I: c('resist', n('Templar Training', { life: 5, mana: 5, armourPct: 2, energyShieldPct: 2 }), n('Devout Constitution', { life: 25, mana: 20 }), n('Faithful Ward', { allRes: 10 }), n('Sacred Provisions', { lifeFlaskRecovery: 10, manaFlaskRecovery: 10, flaskCharges: 10 })),
+    A: c('armour', n('Sacred Defence', { armourPct: 4, energyShieldPct: 4 }), n('Vestments of Faith', { armourPct: 18, energyShieldPct: 18 })),
+    B: c('speed', n('Templar Tempo', { attackSpeedPct: 1, castSpeedPct: 1 }), n('Righteous Haste', { attackSpeedPct: 5, castSpeedPct: 5 })),
+    A1: c('elemental', n('Elemental Practice', { elemPct: 5 }), n('Elemental Focus', { elemPct: 15, accuracy: 50 }), n('Sacred Force', { critMulti: 12, allRes: 5 })),
+    B1: c('resist', n('Sacred Wards', { allRes: 4 }), n('Purity', { allRes: 10, chaosRes: 8 }), n('Mending Light', { lifeRegenPct: 0.5, manaRegenPct: 10 })),
+    I1: c('mana', n('Meditation', { manaRegenPct: 8 }), n('Clear Mind', { manaRegenPct: 20, manaCostReduction: 8 }), n('Purposeful Step', { moveSpeedPct: 4, castSpeedPct: 3 })),
+    D: c('elemental', n('Righteous Drive', { life: 5, mana: 5 }), n('Battle Priest', { physPct: 8, elemPct: 12, life: 12 }), n('Deep Faith', { mana: 20, manaRegenPct: 10, allRes: 4 })),
+  },
+};
+
+const SHARED: Record<string, Spec> = {
   G: c('life', n('Endurance', { lifePct: 2 }), n('Stout Heart', { lifePct: 8 }), n('Hold the Line', { allRes: 6, armourPct: 15, evasionPct: 15 })),
   J: c('rarity', n('Versatility', { allAttr: 3 }), n('Well Rounded', { allAttr: 10 })),
   K: c('flask', n('Provisions', { flaskCharges: 5 }), n('Deep Pockets', { flaskCharges: 15, utilityFlaskDuration: 15 })),
   J1: c('critMulti', n('Lethality', { critMulti: 5 }), n('Finishing Blow', { lowLifeDamage: 15 }), n('Steady Aim', { accuracy: 100, critChancePct: 10 })),
   K1: c('defiance', n('Grit', { life: 8 }), n('Second Skin', { recoupPct: 10 }), n('Brace', { slamReduction: 8 })),
   R2: c('guard', n('Guard', { blockChance: 1 }), n('Shieldbearer', { blockChance: 4 }), n('Lasting Guard', { guardDuration: 20, guardCooldown: 10 })),
-});
+};
 
 const HOME: Record<ClassRegion, Record<string, Spec>> = {
   str: {
@@ -74,14 +122,14 @@ const HOME: Record<ClassRegion, Record<string, Spec>> = {
       n('Titan Blood', { lifeRegenPct: 1, life: 30 })),
     S3: c('exertion', n('Unyielding Exertion', { exertedPct: 10 }), n('Overexert', { exertedPct: 40 }), n('Pressure', { exertionRate: 20, attackSpeedPct: 5 })),
     S4: c('melee', n('Earthbreaker', { meleePct: 10 }), n('Cataclysmic Strike', { meleePct: 35, stunChance: 15 }), n('Shatter Ground', { areaPct: 20, stunnedVuln: 10 })),
-    DG1: c('melee', n('God-Tier Power', { physPct: 20, lifePct: 6 }),
-      n('Apotheosis of Strength', { moreMelee: 30 }),
-      n('Immovable Object', { armourPct: 50, slamReduction: 20 }),
-      n('Earth Shatterer', { stunChance: 25, stunnedVuln: 25 })),
-    DG2: c('warcry', n('Warlord Ascendant', { warcryEffect: 10, life: 20 }),
-      n('Thunderous Command', { moreWarcry: 20 }),
-      n('Endless Exertion', { exertionRate: 40, exertedRefund: 1 }),
-      n('Bloodsworn', { life: 60, lifePct: 15 })),
+    DG1: c('melee', n('God-Tier Power', { physPct: 30, lifePct: 10 }),
+      n('Apotheosis of Strength', { moreMelee: 45 }),
+      n('Immovable Object', { armourPct: 75, slamReduction: 30 }),
+      n('Earth Shatterer', { stunChance: 35, stunnedVuln: 40 })),
+    DG2: c('warcry', n('Warlord Ascendant', { warcryEffect: 15, life: 40 }),
+      n('Thunderous Command', { moreWarcry: 35 }),
+      n('Endless Exertion', { exertionRate: 60, exertedRefund: 1 }),
+      n('Bloodsworn', { life: 100, lifePct: 25 })),
   },
   duelist: {
     C: c('speed', n('Bladework', { oneHandPct: 6 }),
@@ -122,14 +170,14 @@ const HOME: Record<ClassRegion, Record<string, Spec>> = {
       n('Bastion of Steel', { shieldDamagePct: 10, armourPct: 20 })),
     S3: c('bleed', n('Arena', { bleedPct: 6 }), n('Bloodsport', { bleedVuln: 10 }), n('Pit Fighter', { life: 50, bleedPct: 10 })),
     S4: c('block', n('Gladiator', { blockChance: 1 }), n('Heavy Shield', { blockChance: 4, blockHeal: 2 }), n('Shield Charge', { afterGuardDamage: 20, guardArmourPct: 20 })),
-    DG1: c('speed', n('God-Tier Steel', { attackSpeedPct: 8, physPct: 15 }),
-      n('Thousand Cuts', { attackSpeedMore: 25 }),
-      n('Bleed Them Dry', { bleedPct: 40, bossDamagePct: 15 }),
-      n('Edge Dancer', { blockChance: 6, evasionPct: 20 })),
-    DG2: c('block', n('Iron Gladiator', { blockChance: 2, armourPct: 15 }),
-      n('Unbreakable Guard', { armourMore: 20, blockHeal: 5 }),
-      n('Shieldbreaker', { stunnedVuln: 30 }),
-      n('Arena Champion', { physPct: 15, elemPct: 15, armourPct: 15 })),
+    DG1: c('speed', n('God-Tier Steel', { attackSpeedPct: 12, physPct: 25 }),
+      n('Thousand Cuts', { attackSpeedMore: 40 }),
+      n('Bleed Them Dry', { bleedPct: 60, bossDamagePct: 25 }),
+      n('Edge Dancer', { blockChance: 10, evasionPct: 35 })),
+    DG2: c('block', n('Iron Gladiator', { blockChance: 4, armourPct: 25 }),
+      n('Unbreakable Guard', { armourMore: 35, blockHeal: 8 }),
+      n('Shieldbreaker', { stunnedVuln: 45 }),
+      n('Arena Champion', { physPct: 25, elemPct: 25, armourPct: 30 })),
   },
   dex: {
     C: c('projectile', n('Fletching', { projectilePct: 8 }),
@@ -170,14 +218,14 @@ const HOME: Record<ClassRegion, Record<string, Spec>> = {
       n('Trail Rations', { lifeRegenPct: 1 })),
     S3: c('projectile', n('Quiver', { projectilePct: 6 }), n('Heavy Quiver', { physMin: 4, physMax: 8 }), n('Arrow Rain', { areaPct: 20 })),
     S4: c('evasion', n('Acrobat', { evasionPct: 6 }), n('Tumble', { slamReduction: 8, evasionPct: 10 }), n('Catlike', { evadeSpeed: 10 })),
-    DG1: c('projectile', n('God-Tier Aim', { projectilePct: 20, evasionPct: 10 }),
-      n('Spectral Volley', { moreProjectile: 25 }),
-      n('Unseen', { evasionPct: 40 }),
-      n('Mirror Step', { evadeHeal: 5, evadeSpeed: 10 })),
-    DG2: c('mark', n('Apex Predator', { markPct: 15, moveSpeedPct: 3 }),
-      n('Killing Mark', { moreMark: 40 }),
-      n('Relentless Hunt', { overkillHeal: 5, moveSpeedPct: 10 }),
-      n("Predator's Instinct", { markedDamagePct: 15, critChancePct: 25 })),
+    DG1: c('projectile', n('God-Tier Aim', { projectilePct: 30, evasionPct: 15 }),
+      n('Spectral Volley', { moreProjectile: 40 }),
+      n('Unseen', { evasionPct: 65 }),
+      n('Mirror Step', { evadeHeal: 8, evadeSpeed: 15 })),
+    DG2: c('mark', n('Apex Predator', { markPct: 25, moveSpeedPct: 5 }),
+      n('Killing Mark', { moreMark: 55 }),
+      n('Relentless Hunt', { overkillHeal: 8, moveSpeedPct: 15 }),
+      n("Predator's Instinct", { markedDamagePct: 25, critChancePct: 40 })),
   },
   shadow: {
     C: c('poison', n('Venom', { poisonPct: 8 }),
@@ -218,14 +266,14 @@ const HOME: Record<ClassRegion, Record<string, Spec>> = {
       n('Septic', { poisonPct: 15, bossDamagePct: 10 })),
     S3: c('spell', n('Spellblade', { spellPct: 6 }), n('Arcane Edge', { spellPct: 15, physPct: 15 }), n('Swift Casting', { castSpeedPct: 6 })),
     S4: c('minion', n('Puppeteer', { minionLifePct: 8 }), n('Bound Servants', { minionLifePct: 25 }), n('Sacrificial Lamb', { minionTaken: 10, overkillHeal: 3 })),
-    DG1: c('poison', n('Toxic Apotheosis', { poisonPct: 20, chaosRes: 10 }),
-      n('Plague Incarnate', { morePoison: 30 }),
-      n('Venom Bloom', { poisonSpread: 1 }),
-      n('Noxious Aura', { chaosPct: 20, chaosDotPct: 10 })),
-    DG2: c('minion', n('Grave Lord', { minionPct: 15, curseEffect: 5 }),
-      n('Army of One', { moreMinion: 25 }),
-      n('Bone Throne', { minionTaken: 20, life: 30 }),
-      n('Malevolence', { curseEffect: 25 })),
+    DG1: c('poison', n('Toxic Apotheosis', { poisonPct: 30, chaosRes: 15 }),
+      n('Plague Incarnate', { morePoison: 45 }),
+      n('Venom Bloom', { poisonSpread: 1, poisonPct: 25 }),
+      n('Noxious Aura', { chaosPct: 35, chaosDotPct: 25 })),
+    DG2: c('minion', n('Grave Lord', { minionPct: 25, curseEffect: 10 }),
+      n('Army of One', { moreMinion: 40 }),
+      n('Bone Throne', { minionTaken: 30, life: 50 }),
+      n('Malevolence', { curseEffect: 40 })),
   },
   int: {
     C: c('fire', n('Pyromancy', { firePct: 8 }),
@@ -266,14 +314,14 @@ const HOME: Record<ClassRegion, Record<string, Spec>> = {
       n('Elemental Aegis', { elemTakenReduction: 5 })),
     S3: c('es', n('Arcane Ward', { energyShield: 10 }), n('Aegis Ward', { aegisWard: 1, energyShield: 35 }), n('Mind Shield', { manaAsEs: 10 })),
     S4: c('cast', n('Cataclysm', { spellCritMulti: 6 }), n('Spell Cataclysm', { spellCritMulti: 25 }), n('Overload', { areaPct: 20 })),
-    DG1: c('cold', n('Absolute Zero', { coldPct: 20, shieldEffect: 10 }),
-      n('Deep Freeze', { moreCold: 30 }),
-      n('Frozen Heart', { shieldEffect: 30 }),
-      n('Hypothermia', { chilledDamagePct: 15 })),
-    DG2: c('storm', n('Stormbringer', { stormPct: 15, doomPct: 10 }),
-      n('Living Storm', { moreStorm: 30 }),
-      n('Endless Doom', { doomRate: 30 }),
-      n('Eye of Ruin', { spellCritMulti: 20, critChancePct: 20 })),
+    DG1: c('cold', n('Absolute Zero', { coldPct: 30, shieldEffect: 15 }),
+      n('Deep Freeze', { moreCold: 45 }),
+      n('Frozen Heart', { shieldEffect: 50 }),
+      n('Hypothermia', { chilledDamagePct: 25 })),
+    DG2: c('storm', n('Stormbringer', { stormPct: 25, doomPct: 20 }),
+      n('Living Storm', { moreStorm: 45 }),
+      n('Endless Doom', { doomRate: 50 }),
+      n('Eye of Ruin', { spellCritMulti: 35, critChancePct: 35 })),
   },
   templar: {
     C: c('resist', n('Devotion', { allRes: 3 }),
@@ -314,14 +362,14 @@ const HOME: Record<ClassRegion, Record<string, Spec>> = {
       n('Radiance', { blockHeal: 4 })),
     S3: c('defiance', n('Martyrdom', { life: 10 }), n("Martyr's Resolve", { defianceLowLife: 1 }), n('Sacrifice', { recoupPct: 20 })),
     S4: c('fire', n('Pyre of Faith', { firePct: 6 }), n('Holy Flame', { firePct: 15, elemAttackPct: 10 }), n('Purging Fire', { ignitePct: 20 })),
-    DG1: c('resist', n('Divine Bastion', { allRes: 10, shieldEffect: 10 }),
-      n('Aegis of Heaven', { moreShield: 20 }),
-      n('Perfect Faith', { maxElemRes: 3 }),
-      n('Sanctum', { lifeRegenPct: 2 })),
-    DG2: c('totem', n('Ancestral Host', { totemPct: 15, totemLifePct: 15 }),
-      n('Spirit Army', { moreTotem: 30 }),
-      n('Eternal Totems', { totemDuration: 50 }),
-      n('Ancestral Blessing', { totemActivePct: 15 })),
+    DG1: c('resist', n('Divine Bastion', { allRes: 15, shieldEffect: 15 }),
+      n('Aegis of Heaven', { moreShield: 35 }),
+      n('Perfect Faith', { maxElemRes: 5 }),
+      n('Sanctum', { lifeRegenPct: 3.5 })),
+    DG2: c('totem', n('Ancestral Host', { totemPct: 25, totemLifePct: 25 }),
+      n('Spirit Army', { moreTotem: 45 }),
+      n('Eternal Totems', { totemDuration: 75 }),
+      n('Ancestral Blessing', { totemActivePct: 25 })),
   },
 };
 
@@ -542,10 +590,10 @@ const BORDERS: { right: Record<string, Spec>; left: Record<string, Spec> }[] = [
 const ORDER: ClassRegion[] = ['str', 'duelist', 'dex', 'shadow', 'int', 'templar'];
 
 /** Every cluster slot's contents for one region, with `${region}_${slot}` ids (the old named ids are applied after). */
-export function regionClusters(region: ClassRegion, travel: StatMap): Record<string, ClusterSpec> {
+export function regionClusters(region: ClassRegion, _travel: StatMap): Record<string, ClusterSpec> {
   const i = ORDER.indexOf(region);
   const own = BORDERS[i].right;
   const prev = BORDERS[(i + ORDER.length - 1) % ORDER.length].left;
-  const all = { ...SHARED(travel), ...HOME[region], ...own, ...prev };
+  const all = { ...STARTING[region], ...SHARED, ...HOME[region], ...own, ...prev };
   return Object.fromEntries(Object.entries(all).map(([slot, spec]) => [slot, { id: `${region}_${slot}`, ...spec }]));
 }

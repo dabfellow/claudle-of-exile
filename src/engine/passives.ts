@@ -7,6 +7,10 @@ import type { GameState } from './types';
 
 export type PassivePointPool = 'travelPoints' | 'passivePoints' | 'masteryPoints';
 
+/** Five ordinary character-tree points per level, weighted toward the costly Notables beside each path. */
+export const TRAVEL_POINTS_PER_LEVEL = 2;
+export const PASSIVE_POINTS_PER_LEVEL = 3;
+
 const GATEWAY_STAT_PAIRS: Record<string, string> = {
   gatewaySolar: 'gatewayLunar', gatewayLunar: 'gatewaySolar',
   gatewayAstral: 'gatewayVoid', gatewayVoid: 'gatewayAstral',
@@ -94,8 +98,8 @@ export function settlePassivePoints(s: GameState): void {
   const quests = actQuestPoints(s);
   if (s.passivePointLevel === null || s.passiveQuestPoints === null || !Number.isFinite(s.passivePointLevel) || !Number.isFinite(s.passiveQuestPoints)) {
     const spent = spentPoints(s);
-    s.travelPoints = Math.max(0, level * 3 - spent.travelPoints);
-    s.passivePoints = Math.max(0, level * 2 + quests - spent.passivePoints);
+    s.travelPoints = Math.max(0, level * TRAVEL_POINTS_PER_LEVEL - spent.travelPoints);
+    s.passivePoints = Math.max(0, level * PASSIVE_POINTS_PER_LEVEL + quests - spent.passivePoints);
     s.masteryPoints = Math.max(0, Math.min(20, Math.floor(level / 5)) - spent.masteryPoints);
     s.passivePointLevel = level;
     s.passiveQuestPoints = quests;
@@ -103,8 +107,8 @@ export function settlePassivePoints(s: GameState): void {
   }
   const gained = Math.max(0, level - s.passivePointLevel);
   if (gained) {
-    s.travelPoints += gained * 3;
-    s.passivePoints += gained * 2;
+    s.travelPoints += gained * TRAVEL_POINTS_PER_LEVEL;
+    s.passivePoints += gained * PASSIVE_POINTS_PER_LEVEL;
     const before = Math.min(20, Math.floor(s.passivePointLevel / 5));
     const after = Math.min(20, Math.floor(level / 5));
     s.masteryPoints += Math.max(0, after - before);

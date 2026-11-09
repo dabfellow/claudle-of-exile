@@ -117,6 +117,7 @@ function TreeCanvas<N extends CanvasNode>({
   labels,
   names,
   tutId,
+  backdrop,
 }: {
   nodes: N[];
   byId: Record<string, N>;
@@ -137,6 +138,8 @@ function TreeCanvas<N extends CanvasNode>({
   names?: CanvasLabel[];
   /** tutorial highlight id for a node, if any */
   tutId?: (id: string) => string | undefined;
+  /** a picture drawn behind the tree, in tree coordinates, so it pans and zooms with the map */
+  backdrop?: { href: string; x: number; y: number; width: number; height: number };
 }) {
   const home = focus ?? { x: 0, y: 0, k: 1 };
   const [view, setView] = useState<View>(home);
@@ -334,7 +337,7 @@ function TreeCanvas<N extends CanvasNode>({
   const hovered = hover && byId[hover.id];
   return (
     <div
-      className={`tree-wrap ${isFullscreen ? 'is-fullscreen' : ''}`}
+      className={`tree-wrap ${isFullscreen ? 'is-fullscreen' : ''} ${backdrop ? 'has-backdrop' : ''}`}
       ref={wrap}
       onPointerDown={(e) => {
         if ((e.target as HTMLElement).closest('.tree-controls')) return;
@@ -403,6 +406,21 @@ function TreeCanvas<N extends CanvasNode>({
     >
       <svg viewBox={`${-size / 2} ${-size / 2} ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
         <g ref={contentG} transform={`scale(${view.k}) translate(${view.x} ${view.y})`}>
+          {backdrop && (
+            <>
+              {/* the square picture's edges fade out, so no straight edge shows round the circle */}
+              <defs>
+                <radialGradient id="tree-backdrop-fade-g">
+                  <stop offset="0.9" stopColor="#fff" />
+                  <stop offset="1" stopColor="#000" />
+                </radialGradient>
+                <mask id="tree-backdrop-fade">
+                  <rect x={backdrop.x} y={backdrop.y} width={backdrop.width} height={backdrop.height} fill="url(#tree-backdrop-fade-g)" />
+                </mask>
+              </defs>
+              <image className="tree-backdrop" href={backdrop.href} x={backdrop.x} y={backdrop.y} width={backdrop.width} height={backdrop.height} preserveAspectRatio="none" mask="url(#tree-backdrop-fade)" />
+            </>
+          )}
           {labels?.map((l) => (
             <text key={l.text} x={l.x} y={l.y} textAnchor="middle" dominantBaseline="middle" fill={l.color} opacity={0.5} fontFamily="Cinzel, serif" fontSize={l.size ?? 24} letterSpacing={5}>
               {l.text}
@@ -600,12 +618,12 @@ function BaseShape({ kind, color, on, can, mine = true }: { kind: string; color:
 // ---------- character tree ----------
 
 const DOOMED_DEBUFFS: Record<string, string> = {
-  doomed_blood_toll: '-25% Maximum Life',
-  doomed_brittle_bones: 'Take 20% increased Physical Damage',
-  doomed_glass_veil: 'Armour is set to 0',
-  doomed_withered_veins: 'Flasks recover 0 Life or Mana',
-  doomed_shattered_mind: 'Skills cost 100% more Mana',
-  doomed_broken_covenant: '-30% All Elemental Resistances',
+  doomed_blood_toll: '40% less Maximum Life',
+  doomed_brittle_bones: 'Take 35% more Physical Damage',
+  doomed_glass_veil: 'Armour and Energy Shield are set to 0',
+  doomed_withered_veins: 'Flasks cannot be used',
+  doomed_shattered_mind: 'Skills cost 150% more Mana',
+  doomed_broken_covenant: '-50% to all Elemental and Chaos Resistances',
 };
 
 function doomedDebuffText(n: PassiveNode): string {
@@ -1006,6 +1024,19 @@ function searchMatches(query: string, nodes: { id: string; name: string; text: s
 const CHAR_TREE_SIZE = 12000;
 const CHAR_TREE_ZOOM = 24;
 
+/**
+ * The picture behind the character tree. Its circle's centre sits at (626, 606) in the 1254px image and its
+ * twelve rim stars 590px out; it's scaled so that centre is the Exile's start and the stars sit on the
+ * Forbidden keystones.
+ */
+const CHAR_BACKDROP = (() => {
+  const IMAGE = 1254, CX = 626.2, CY = 606.0, STARS = 590.3;
+  const forbidden = PASSIVE_NODES.filter((n) => n.region === 'forbidden');
+  const ring = forbidden.reduce((t, n) => t + Math.hypot(n.x, n.y), 0) / forbidden.length;
+  const k = ring / STARS;
+  return { href: new URL('../../assets/scenes/tree-backdrop.webp', import.meta.url).href, x: -CX * k, y: -CY * k, width: IMAGE * k, height: IMAGE * k };
+})();
+
 const CHAR_LABELS: CanvasLabel[] = [
   ...CLASS_SECTORS.map((c) => {
     const a = (c.angle * Math.PI) / 180;
@@ -1328,6 +1359,7 @@ function CharacterTree({ s }: { s: GameState }) {
         tip={(n) => <CharacterNodeTip s={s} n={n} />}
         onClick={click}
         tutId={(id) => (s.passives.length === 0 && canTake(id) ? 'tree-start' : undefined)}
+        backdrop={CHAR_BACKDROP}
       />
 
       <div className="tree-key">

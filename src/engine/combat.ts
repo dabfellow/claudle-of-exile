@@ -805,7 +805,7 @@ function postureStep(s: GameState, ctx: Ctx, dt: number): void {
 /** Damage a monster hit does to the player after mitigation. */
 export function mitigate(d: Derived, raw: number, type: DamageType): number {
   if (type === 'phys') {
-    const brittle = d.raw.doomedBrittleBones > 0 ? 1.2 : 1;
+    const brittle = d.raw.doomedBrittleBones > 0 ? 1.35 : 1;
     return Math.max(1, Math.round(raw * (1 - armourReduction(d.armour, raw)) * brittle));
   }
   const res = d.res[type];
@@ -842,6 +842,7 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
   const st = flaskStats(f);
   if (f.charges < st.chargesPerUse) return 'Not enough charges';
   const d = deriveStats(s);
+  if (d.raw.doomedWitheredVeins > 0) return 'Flasks are disabled by Withered Veins';
   const kind = st.def.kind;
   if (kind === 'life' && d.raw.bloodGodsFrenzy > 0) return 'Life flasks are disabled';
   f.charges -= st.chargesPerUse;

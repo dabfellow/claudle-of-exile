@@ -273,11 +273,11 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
 
   // Doomed debuffs in raw stats
   if (st.doomedShatteredMind > 0) {
-    st.manaCostReduction -= 100;
+    st.manaCostReduction -= 150;
   }
   if (st.doomedBrokenCovenant > 0) {
-    st.allRes -= 30;
-    st.chaosRes -= 30;
+    st.allRes -= 50;
+    st.chaosRes -= 50;
   }
 
   // Glancing Blows: doubles blockChance, raises max block cap to 90%
@@ -311,8 +311,8 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   };
   const A = ATTRIBUTE_EFFECTS;
 
-  // Knife's Edge / Chaos Inoculation: life is capped at 1; Doomed Blood Toll: -25% Life
-  const bloodTollMult = raw.doomedBloodToll > 0 ? 0.75 : 1;
+  // Knife's Edge / Chaos Inoculation: life is capped at 1; Doomed Blood Toll: 40% less Life
+  const bloodTollMult = raw.doomedBloodToll > 0 ? 0.6 : 1;
   const maxLife = raw.knifesEdge || raw.chaosInoculation ? 1 : Math.max(
     1,
     Math.round(
@@ -358,6 +358,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   }
   if (raw.doomedGlassVeil > 0) {
     armour = 0;
+    maxEs = 0;
   }
   if (raw.echoesOfTheVoid > 0) {
     armour = 0;

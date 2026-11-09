@@ -4,7 +4,7 @@ What every notable on the character tree does, generated from `src/data/passiveN
 
 **Markers:** ★ rule-changer (18, pure upside) · ◆ a "more" multiplier (the Doomed wheels) · ⚙ a class mechanic (one per region).
 **Where:** *inner* is next to the class start, *middle* is around the class name, *outer* is past the Cosmic Gateway, *rim* is near the Outer Rim ring, *Doomed* is behind the Doomed Gate.
-**Each region** has 96 notables: 23 shared basics, 47 home notables and 26 on its two borders. Wheels hold 3 notables, forks/loops/diamonds 2, lines 1.
+**Each region** has 96 notables: 13 class-tailored starting notables, 10 shared basics, 47 home notables and 26 on its two borders. Wheels hold 3 notables, forks/loops/diamonds 2, lines 1.
 
 ## The 18 rule-changers
 
@@ -29,17 +29,25 @@ What every notable on the character tree does, generated from `src/data/passiveN
 | Templar–Warrior border | Holy Retort | Holy Retort: After you block, your next attack adds the blocked damage as Fire Damage |
 | Templar, rim | Beyond the Veil | Beyond the Veil: Every 5% Elemental Resistance over the cap raises that maximum by 1% (up to +5%) |
 
-## Shared basics (the same in every region)
+## Tailored starting areas
+
+The seven inner clusters use broad bonuses rather than narrow archetype mechanics, but they are no longer copied six times. Their leanings are:
+
+| Start | First wheel | Other nearby general buffs |
+|---|---|---|
+| Warrior | **Hardy Constitution**: Life; **Weathered**: resistances; **Second Wind**: Life Flask recovery | Armour, attack speed, Physical Damage, accuracy, Life regeneration and Mana efficiency |
+| Duelist | **Conditioning**: Life; **Poise**: Armour and Evasion; **Second Wind**: flask recovery | Balanced Armour/Evasion, attack speed, accuracy, Block, Life Leech and Mana efficiency |
+| Ranger | **Survivalist**: Life and Evasion; **Weatherwise**: resistances and Evasion; **Field Supplies**: flask recovery | Evasion, movement and attack speed, accuracy, resistances, Physical/Elemental Damage and Mana efficiency |
+| Shadow | **Dark Vitality**: Life and Energy Shield; **Veiled**: resistances and Evasion; **Prepared Escape**: flask charges and movement | Evasion/ES, attack/cast speed, Criticals, Chaos Resistance, ES recharge and Mana efficiency |
+| Mage | **Deep Thoughts**: Mana and Mana regeneration; **Arcane Ward**: Energy Shield and resistances; **Enduring Focus**: Mana Flask recovery and cheaper skills | Energy Shield, cast speed, spell Criticals, resistances, ES recharge, Spell/Elemental Damage and more Mana regeneration |
+| Templar | **Devout Constitution**: Life and Mana; **Faithful Ward**: resistances; **Sacred Provisions**: Life/Mana Flask recovery | Armour/ES, attack/cast speed, Elemental Damage, resistances, mixed Life/Mana recovery and Mana efficiency |
+
+The Mage's first wheel uses the Mana mastery. It has no Life-regeneration node in its starting package; Mana regeneration is available immediately.
+
+## Shared basics (farther from the start)
 
 | Slot | Where | Cluster | Notables |
 |---|---|---|---|
-| I | inner | Combat Stance | **Hardy Constitution**: +30 to maximum Life, 6% increased maximum Life<br>**Weathered**: +10% to all Elemental Resistances<br>**Second Wind**: 20% increased Life Flask recovery, 10% increased Flask Charges gained |
-| A | inner | Toughness | **Thick Skin**: 20% increased Armour, 20% increased Evasion Rating, 20% increased Energy Shield |
-| B | inner | Tempo | **Quick Hands**: 6% increased Attack Speed, 6% increased Cast Speed |
-| A1 | inner | Precision | **Keen Eye**: 20% increased Critical Strike Chance, +60 to Accuracy Rating<br>**Killer Instinct**: +15% to Critical Strike Multiplier |
-| B1 | inner | Wards | **Purity**: +8% to all Elemental Resistances, +10% to Chaos Resistance<br>**Mending**: Regenerate 1% of Life per second |
-| I1 | inner | Focus | **Clear Mind**: 20% increased Mana Regeneration, 8% reduced Mana Costs<br>**Fleet**: 5% increased Movement Speed, 4% increased Attack Speed |
-| D | inner | Drive | **Battle Hardened**: 12% increased Physical Damage, 12% increased Elemental Damage, +15 to maximum Life<br>**Deep Breath**: +20 to maximum Mana, 10% increased Mana Regeneration |
 | G | middle | Endurance | **Stout Heart**: 8% increased maximum Life<br>**Hold the Line**: +6% to all Elemental Resistances, 15% increased Armour, 15% increased Evasion Rating |
 | J | outer | Versatility | **Well Rounded**: +10 to all Attributes |
 | K | outer | Provisions | **Deep Pockets**: 15% increased Flask Charges gained, 15% longer Utility Flasks |
@@ -68,8 +76,8 @@ What every notable on the character tree does, generated from `src/data/passiveN
 | S2 | rim | Colossus | **Colossus**: +20 to Strength, 8% increased maximum Life<br>**Mountain's Root**: 10% less damage taken from boss wind-ups, 15% increased Armour<br>**Titan Blood**: Regenerate 1% of Life per second, +30 to maximum Life |
 | S3 | rim | Unyielding Exertion | **Overexert**: 40% increased Damage with Exerted skills<br>**Pressure**: 20% increased Exertion gained, 5% increased Attack Speed |
 | S4 | rim | Earthbreaker | **Cataclysmic Strike**: 35% increased Physical Damage with melee skills, +15% chance to Stun on hit<br>**Shatter Ground**: 20% increased Area Damage, 10% more damage against Stunned enemies |
-| DG1 | Doomed | God-Tier Power | ◆ **Apotheosis of Strength**: 30% more Melee Damage<br>**Immovable Object**: 50% increased Armour, 20% less damage taken from boss wind-ups<br>**Earth Shatterer**: +25% chance to Stun on hit, 25% more damage against Stunned enemies |
-| DG2 | Doomed | Warlord Ascendant | ◆ **Thunderous Command**: 20% more Damage while a Warcry is active<br>**Endless Exertion**: 40% increased Exertion gained, Kills with Exerted skills grant 1 Exertion<br>**Bloodsworn**: +60 to maximum Life, 15% increased maximum Life |
+| DG1 | Doomed | God-Tier Power | ◆ **Apotheosis of Strength**: 45% more Melee Damage<br>**Immovable Object**: 75% increased Armour, 30% less damage taken from boss wind-ups<br>**Earth Shatterer**: +35% chance to Stun on hit, 40% more damage against Stunned enemies |
+| DG2 | Doomed | Warlord Ascendant | ◆ **Thunderous Command**: 35% more Damage while a Warcry is active<br>**Endless Exertion**: 60% increased Exertion gained, Kills with Exerted skills grant 1 Exertion<br>**Bloodsworn**: +100 to maximum Life, 25% increased maximum Life |
 
 ## Duelist (home)
 
@@ -92,8 +100,8 @@ What every notable on the character tree does, generated from `src/data/passiveN
 | S2 | rim | Fortress | **Shield Master**: 5% chance to Block hits, +80 to Armour<br>**Unshakable**: 2% chance to Block hits, Guard skills block 1 additional hit<br>**Bastion of Steel**: 10% increased Damage while holding a Shield, 20% increased Armour |
 | S3 | rim | Arena | **Bloodsport**: 10% more damage against Bleeding enemies<br>**Pit Fighter**: +50 to maximum Life, 10% increased Bleed Damage |
 | S4 | rim | Gladiator | **Heavy Shield**: 4% chance to Block hits, Blocking a hit restores 2% of Life<br>**Shield Charge**: 20% more damage on your next hit after using a guard skill, Guard skills also grant 20% increased Armour for 3s |
-| DG1 | Doomed | God-Tier Steel | ◆ **Thousand Cuts**: 25% more Attack Speed<br>**Bleed Them Dry**: 40% increased Bleed Damage, 15% increased Damage against bosses and rare enemies<br>**Edge Dancer**: 6% chance to Block hits, 20% increased Evasion Rating |
-| DG2 | Doomed | Iron Gladiator | ◆ **Unbreakable Guard**: 20% more Armour, Blocking a hit restores 5% of Life<br>**Shieldbreaker**: 30% more damage against Stunned enemies<br>**Arena Champion**: 15% increased Physical Damage, 15% increased Elemental Damage, 15% increased Armour |
+| DG1 | Doomed | God-Tier Steel | ◆ **Thousand Cuts**: 40% more Attack Speed<br>**Bleed Them Dry**: 60% increased Bleed Damage, 25% increased Damage against bosses and rare enemies<br>**Edge Dancer**: 10% chance to Block hits, 35% increased Evasion Rating |
+| DG2 | Doomed | Iron Gladiator | ◆ **Unbreakable Guard**: 35% more Armour, Blocking a hit restores 8% of Life<br>**Shieldbreaker**: 45% more damage against Stunned enemies<br>**Arena Champion**: 25% increased Physical Damage, 25% increased Elemental Damage, 30% increased Armour |
 
 ## Ranger (home)
 
@@ -116,8 +124,8 @@ What every notable on the character tree does, generated from `src/data/passiveN
 | S2 | rim | Wanderer | **Wanderlust**: 10% increased Movement Speed, +20 to Dexterity<br>**Long Road**: 30% longer Utility Flasks<br>**Trail Rations**: Regenerate 1% of Life per second |
 | S3 | rim | Quiver | **Heavy Quiver**: +4 to minimum Physical Damage with attacks, +8 to maximum Physical Damage with attacks<br>**Arrow Rain**: 20% increased Area Damage |
 | S4 | rim | Acrobat | **Tumble**: 8% less damage taken from boss wind-ups, 10% increased Evasion Rating<br>**Catlike**: 10% increased Attack Speed for 4s after you evade |
-| DG1 | Doomed | God-Tier Aim | ◆ **Spectral Volley**: 25% more Projectile Damage<br>**Unseen**: 40% increased Evasion Rating<br>**Mirror Step**: Evading a hit restores 5% of Life, 10% increased Attack Speed for 4s after you evade |
-| DG2 | Doomed | Apex Predator | ◆ **Killing Mark**: 40% more Mark burst Damage<br>**Relentless Hunt**: Overkill damage heals you for 5% of it, 10% increased Movement Speed<br>**Predator's Instinct**: 15% increased Damage against Marked enemies, 25% increased Critical Strike Chance |
+| DG1 | Doomed | God-Tier Aim | ◆ **Spectral Volley**: 40% more Projectile Damage<br>**Unseen**: 65% increased Evasion Rating<br>**Mirror Step**: Evading a hit restores 8% of Life, 15% increased Attack Speed for 4s after you evade |
+| DG2 | Doomed | Apex Predator | ◆ **Killing Mark**: 55% more Mark burst Damage<br>**Relentless Hunt**: Overkill damage heals you for 8% of it, 15% increased Movement Speed<br>**Predator's Instinct**: 25% increased Damage against Marked enemies, 40% increased Critical Strike Chance |
 
 ## Shadow (home)
 
@@ -140,8 +148,8 @@ What every notable on the character tree does, generated from `src/data/passiveN
 | S2 | rim | Toxicologist | **Toxic Strength**: 20% increased Poison Damage<br>**Paralysing Venom**: Poisoned enemies deal 8% less damage<br>**Septic**: 15% increased Poison Damage, 10% increased Damage against bosses and rare enemies |
 | S3 | rim | Spellblade | **Arcane Edge**: 15% increased Spell Damage, 15% increased Physical Damage<br>**Swift Casting**: 6% increased Cast Speed |
 | S4 | rim | Puppeteer | **Bound Servants**: 25% increased Minion Life<br>**Sacrificial Lamb**: Minions take 10% less Damage, Overkill damage heals you for 3% of it |
-| DG1 | Doomed | Toxic Apotheosis | ◆ **Plague Incarnate**: 30% more Poison Damage<br>**Venom Bloom**: Poisons spread to an adjacent enemy when the target dies<br>**Noxious Aura**: 20% increased Chaos Damage, 10% increased Chaos Damage over Time |
-| DG2 | Doomed | Grave Lord | ◆ **Army of One**: 25% more Minion Damage<br>**Bone Throne**: Minions take 20% less Damage, +30 to maximum Life<br>**Malevolence**: 25% increased Effect of your Curses |
+| DG1 | Doomed | Toxic Apotheosis | ◆ **Plague Incarnate**: 45% more Poison Damage<br>**Venom Bloom**: Poisons spread to an adjacent enemy when the target dies, 25% increased Poison Damage<br>**Noxious Aura**: 35% increased Chaos Damage, 25% increased Chaos Damage over Time |
+| DG2 | Doomed | Grave Lord | ◆ **Army of One**: 40% more Minion Damage<br>**Bone Throne**: Minions take 30% less Damage, +50 to maximum Life<br>**Malevolence**: 40% increased Effect of your Curses |
 
 ## Mage (home)
 
@@ -164,8 +172,8 @@ What every notable on the character tree does, generated from `src/data/passiveN
 | S2 | rim | Elementalist | **Apotheosis of Elements**: 25% increased Elemental Damage<br>**Thermal Shock**: 25% longer Bleed, Poison and Ignite<br>**Elemental Aegis**: 5% reduced elemental damage taken |
 | S3 | rim | Arcane Ward | **Aegis Ward**: Aegis Ward: Blocking a hit restores Energy Shield equal to 2% of your Armour, +35 to maximum Energy Shield<br>**Mind Shield**: Gain 10% of maximum Mana as extra maximum Energy Shield |
 | S4 | rim | Cataclysm | **Spell Cataclysm**: +25% to Critical Strike Multiplier with Spells<br>**Overload**: 20% increased Area Damage |
-| DG1 | Doomed | Absolute Zero | ◆ **Deep Freeze**: 30% more Cold Damage<br>**Frozen Heart**: 30% stronger absorb Shields<br>**Hypothermia**: 15% increased Damage against Chilled or Frozen enemies |
-| DG2 | Doomed | Stormbringer | ◆ **Living Storm**: 30% more Storm Damage<br>**Endless Doom**: 30% increased Doom built<br>**Eye of Ruin**: +20% to Critical Strike Multiplier with Spells, 20% increased Critical Strike Chance |
+| DG1 | Doomed | Absolute Zero | ◆ **Deep Freeze**: 45% more Cold Damage<br>**Frozen Heart**: 50% stronger absorb Shields<br>**Hypothermia**: 25% increased Damage against Chilled or Frozen enemies |
+| DG2 | Doomed | Stormbringer | ◆ **Living Storm**: 45% more Storm Damage<br>**Endless Doom**: 50% increased Doom built<br>**Eye of Ruin**: +35% to Critical Strike Multiplier with Spells, 35% increased Critical Strike Chance |
 
 ## Templar (home)
 
@@ -188,8 +196,8 @@ What every notable on the character tree does, generated from `src/data/passiveN
 | S2 | rim | Bulwark of Faith | **Divine Bulwark**: 25% stronger absorb Shields<br>**Unshaken**: 10% reduced Damage taken while above 80% Life<br>**Radiance**: Blocking a hit restores 4% of Life |
 | S3 | rim | Martyrdom | **Martyr's Resolve**: Defiance: 1% more Damage and +30% Armour & Evasion while below 50% Life<br>**Sacrifice**: 20% of Damage taken from hits is Recouped as Life over 4 seconds |
 | S4 | rim | Pyre of Faith | **Holy Flame**: 15% increased Fire Damage, 10% increased Elemental Damage with Attacks<br>**Purging Fire**: 20% increased Burn and Ignite Damage |
-| DG1 | Doomed | Divine Bastion | ◆ **Aegis of Heaven**: 20% more absorb Shield strength<br>**Perfect Faith**: +3% to maximum Elemental Resistances<br>**Sanctum**: Regenerate 2% of Life per second |
-| DG2 | Doomed | Ancestral Host | ◆ **Spirit Army**: 30% more Totem Damage<br>**Eternal Totems**: 50% increased Totem Duration<br>**Ancestral Blessing**: 15% increased Damage while you have a Totem |
+| DG1 | Doomed | Divine Bastion | ◆ **Aegis of Heaven**: 35% more absorb Shield strength<br>**Perfect Faith**: +5% to maximum Elemental Resistances<br>**Sanctum**: Regenerate 3.5% of Life per second |
+| DG2 | Doomed | Ancestral Host | ◆ **Spirit Army**: 45% more Totem Damage<br>**Eternal Totems**: 75% increased Totem Duration<br>**Ancestral Blessing**: 25% increased Damage while you have a Totem |
 
 ## Borders
 

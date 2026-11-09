@@ -351,12 +351,12 @@ export const GATEWAYS = [
 // ---------- 6 Doomed Gates (5 Passive Points) ----------
 
 export const DOOMED: (KeystoneSpec & { id: string; sec: ClassRegion; debuff: string })[] = [
-  { id: 'doomed_blood_toll', sec: 'str', name: 'Gate of the Blood Toll', stats: { doomedBloodToll: 1 }, debuff: '-25% Maximum Life', desc: '-25% Maximum Life. Unlocks the Colossus Juggernaut Wheel.' },
-  { id: 'doomed_brittle_bones', sec: 'duelist', name: 'Gate of Brittle Bones', stats: { doomedBrittleBones: 1 }, debuff: 'Take 20% increased Physical Damage', desc: 'Take 20% increased Physical Damage. Unlocks the Master of Blades Wheel.' },
-  { id: 'doomed_glass_veil', sec: 'dex', name: 'Gate of Glass Veil', stats: { doomedGlassVeil: 1 }, debuff: 'Armour is set to 0', desc: 'Armour is set to 0. Unlocks the Phantom Mirage Wheel.' },
-  { id: 'doomed_withered_veins', sec: 'shadow', name: 'Gate of Withered Veins', stats: { doomedWitheredVeins: 1 }, debuff: 'Flasks recover 0 Life or Mana', desc: 'Flasks recover 0 Life or Mana. Unlocks the Toxic Apotheosis Wheel.' },
-  { id: 'doomed_shattered_mind', sec: 'int', name: 'Gate of the Shattered Mind', stats: { doomedShatteredMind: 1 }, debuff: 'Skills cost 100% more Mana', desc: 'Skills cost 100% more Mana. Unlocks the Absolute Zero Wheel.' },
-  { id: 'doomed_broken_covenant', sec: 'templar', name: 'Gate of Broken Covenant', stats: { doomedBrokenCovenant: 1 }, debuff: '-30% All Elemental Resistances', desc: '-30% All Elemental Resistances. Unlocks the Divine Bastion Wheel.' },
+  { id: 'doomed_blood_toll', sec: 'str', name: 'Gate of the Blood Toll', stats: { doomedBloodToll: 1 }, debuff: '40% less Maximum Life', desc: '40% less Maximum Life. Unlocks two greatly empowered Warrior wheels.' },
+  { id: 'doomed_brittle_bones', sec: 'duelist', name: 'Gate of Brittle Bones', stats: { doomedBrittleBones: 1 }, debuff: 'Take 35% more Physical Damage', desc: 'Take 35% more Physical Damage. Unlocks two greatly empowered Duelist wheels.' },
+  { id: 'doomed_glass_veil', sec: 'dex', name: 'Gate of Glass Veil', stats: { doomedGlassVeil: 1 }, debuff: 'Armour and Energy Shield are set to 0', desc: 'Armour and Energy Shield are set to 0. Unlocks two greatly empowered Ranger wheels.' },
+  { id: 'doomed_withered_veins', sec: 'shadow', name: 'Gate of Withered Veins', stats: { doomedWitheredVeins: 1 }, debuff: 'Flasks cannot be used', desc: 'Flasks cannot be used. Unlocks two greatly empowered Shadow wheels.' },
+  { id: 'doomed_shattered_mind', sec: 'int', name: 'Gate of the Shattered Mind', stats: { doomedShatteredMind: 1 }, debuff: 'Skills cost 150% more Mana', desc: 'Skills cost 150% more Mana. Unlocks two greatly empowered Mage wheels.' },
+  { id: 'doomed_broken_covenant', sec: 'templar', name: 'Gate of Broken Covenant', stats: { doomedBrokenCovenant: 1 }, debuff: '-50% to all Elemental and Chaos Resistances', desc: '-50% to all Elemental and Chaos Resistances. Unlocks two greatly empowered Templar wheels.' },
 ];
 
 const rad = (deg: number) => (deg * Math.PI) / 180;

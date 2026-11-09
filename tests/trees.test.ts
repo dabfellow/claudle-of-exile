@@ -3,10 +3,10 @@ import { EXILE_START, FORBIDDEN, PASSIVE_BY_ID, PASSIVE_NODES, RIM_RADIUS } from
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { actionDef } from '../src/data/skills';
 import { zoneDef } from '../src/data/zones';
-import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
+import { combatStep, makeMonster, mitigate, startCombat, useFlask } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
-import { allocate, allocateReason, changeMastery, passiveNodeCost, refund, refundReason, settlePassivePoints, startNode } from '../src/engine/passives';
+import { allocate, allocateReason, changeMastery, PASSIVE_POINTS_PER_LEVEL, passiveNodeCost, refund, refundReason, settlePassivePoints, startNode, TRAVEL_POINTS_PER_LEVEL } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { allocateSkillNode, MAX_SKILL_TREE_POINTS, skillTreePoints } from '../src/engine/skillTree';
 import { actionIntervalMs, startSkillAction } from '../src/engine/skills';
@@ -115,8 +115,8 @@ describe('character tree shape', () => {
     const loaded = deserialize(JSON.stringify(raw));
     expect(loaded.passives).toEqual([]);
     expect(loaded.passiveProfiles[0].passives).toEqual([]);
-    expect(loaded.travelPoints).toBe(240);
-    expect(loaded.passivePoints).toBe(160);
+    expect(loaded.travelPoints).toBe(160);
+    expect(loaded.passivePoints).toBe(240);
   });
 
   it('neighbouring classes link cluster to cluster across their border, well away from the centre', () => {
@@ -136,6 +136,35 @@ describe('character tree shape', () => {
     expect(w.passives).toContain('duelists_edge_n');
     expect(r.passives).toContain('duelists_edge_n');
     expect(route('class_int', 'crossing_n0').length).toBeLessThanOrEqual(8);
+  });
+
+  it('gives every class its own broad starting buffs and puts Mana first for the Mage', () => {
+    expect([
+      PASSIVE_BY_ID.warpath_n1.name,
+      PASSIVE_BY_ID.footwork_n1.name,
+      PASSIVE_BY_ID.fletching_n1.name,
+      PASSIVE_BY_ID.killing_intent_n1.name,
+      PASSIVE_BY_ID.arcana_n1.name,
+      PASSIVE_BY_ID.devotion_n1.name,
+    ]).toEqual(['Hardy Constitution', 'Conditioning', 'Survivalist', 'Dark Vitality', 'Deep Thoughts', 'Devout Constitution']);
+
+    const mageDistances = new Map<string, number>([['class_int', 0]]);
+    const queue = ['class_int'];
+    while (queue.length) {
+      const id = queue.shift()!;
+      for (const next of PASSIVE_BY_ID[id].links) {
+        if (mageDistances.has(next) || PASSIVE_BY_ID[next].kind === 'start') continue;
+        mageDistances.set(next, mageDistances.get(id)! + 1);
+        queue.push(next);
+      }
+    }
+    const nearest = (stat: 'manaRegenPct' | 'lifeRegenPct') => Math.min(
+      ...PASSIVE_NODES.filter((n) => (n.stats[stat] ?? 0) > 0).map((n) => mageDistances.get(n.id) ?? Infinity),
+    );
+    expect(PASSIVE_BY_ID.arcana_n1.stats.manaRegenPct).toBeGreaterThan(0);
+    expect(PASSIVE_BY_ID.arcana_m.options?.some((o) => (o.stats.manaRegenPct ?? 0) > 0)).toBe(true);
+    expect(PASSIVE_BY_ID.arcana_m.options?.some((o) => (o.stats.lifeRegenPct ?? 0) > 0)).toBe(false);
+    expect(nearest('manaRegenPct')).toBeLessThan(nearest('lifeRegenPct'));
   });
 
   it("lets an Exile start in the centre and walk through other classes' starts; everyone else stays blocked", () => {
@@ -182,10 +211,11 @@ describe('masteries', () => {
 describe('character tree point economy', () => {
   it('credits separate level pools, caps mastery awards, and prices each node tier', () => {
     const s = newGame(1);
-    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([3, 2, 0]);
+    expect([TRAVEL_POINTS_PER_LEVEL, PASSIVE_POINTS_PER_LEVEL]).toEqual([2, 3]);
+    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([2, 3, 0]);
     s.skills.combat = charXpForLevel(100);
     settlePassivePoints(s);
-    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([300, 200, 20]);
+    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([200, 300, 20]);
     expect(passiveNodeCost(PASSIVE_BY_ID.str_hub)).toEqual({ pool: 'travelPoints', cost: 1 });
     // small nodes are the paths between clusters, bought with travel points
     expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_s1)).toEqual({ pool: 'travelPoints', cost: 1 });
@@ -197,15 +227,29 @@ describe('character tree point economy', () => {
   it('spends and refunds the exact pool cost and credits Act quest bosses once', () => {
     const s = newGame(1);
     expect(allocate(s, ctx(), 'str_hub')).toBeNull();
-    expect(s.travelPoints).toBe(2);
+    expect(s.travelPoints).toBe(1);
     s.account.bank.regret = 1;
     expect(refund(s, ctx(), 'str_hub')).toBeNull();
-    expect(s.travelPoints).toBe(3);
+    expect(s.travelPoints).toBe(2);
     s.bossesDefeated.push('sanctum');
     settlePassivePoints(s);
-    expect(s.passivePoints).toBe(3);
+    expect(s.passivePoints).toBe(4);
     settlePassivePoints(s);
-    expect(s.passivePoints).toBe(3);
+    expect(s.passivePoints).toBe(4);
+  });
+
+  it('recalculates existing characters to the new split without removing allocations', () => {
+    const raw = JSON.parse(serialize(newGame(1)));
+    raw.version = 39;
+    raw.skills.combat = charXpForLevel(10);
+    raw.travelPoints = 30;
+    raw.passivePoints = 20;
+    raw.passivePointLevel = 10;
+    raw.passives = ['str_hub'];
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.version).toBe(SAVE_VERSION);
+    expect(loaded.passives).toEqual(['str_hub']);
+    expect([loaded.travelPoints, loaded.passivePoints]).toEqual([19, 30]);
   });
 });
 
@@ -243,6 +287,56 @@ describe('forbidden keystones', () => {
     const raw = JSON.parse(serialize(s));
     raw.passives = [...raw.passives, second];
     expect(deserialize(JSON.stringify(raw)).passives).toEqual([]);
+  });
+});
+
+describe('doomed gates', () => {
+  it('imposes the harsher permanent penalties', () => {
+    const blood = newGame(1);
+    const fullLife = deriveStats(blood).maxLife;
+    blood.passives.push('doomed_blood_toll');
+    expect(deriveStats(blood).maxLife).toBe(Math.round(fullLife * 0.6));
+
+    const brittle = newGame(1);
+    const normalPhysicalHit = mitigate(deriveStats(brittle), 100, 'phys');
+    brittle.passives.push('doomed_brittle_bones');
+    expect(mitigate(deriveStats(brittle), 100, 'phys') / normalPhysicalHit).toBeCloseTo(1.35, 1);
+
+    const glass = newGame(1);
+    const defenceBuff = [{ id: 'test', source: 'skill' as const, remainingMs: 1000, durationMs: 1000, stats: { armour: 100, energyShield: 100 } }];
+    expect(deriveStats(glass, defenceBuff).armour).toBeGreaterThan(0);
+    expect(deriveStats(glass, defenceBuff).maxEs).toBeGreaterThan(0);
+    glass.passives.push('doomed_glass_veil');
+    expect(deriveStats(glass, defenceBuff)).toMatchObject({ armour: 0, maxEs: 0 });
+
+    const withered = newGame(1);
+    const c = ctx();
+    startCombat(withered, c, 'mudflats');
+    withered.passives.push('doomed_withered_veins');
+    expect(useFlask(withered, c, 0)).toMatch(/disabled/);
+
+    const shattered = newGame(1);
+    const normalReduction = deriveStats(shattered).raw.manaCostReduction;
+    shattered.passives.push('doomed_shattered_mind');
+    expect(deriveStats(shattered).raw.manaCostReduction).toBe(normalReduction - 150);
+
+    const covenant = newGame(1);
+    const normal = deriveStats(covenant).raw;
+    covenant.passives.push('doomed_broken_covenant');
+    const doomed = deriveStats(covenant).raw;
+    expect(doomed.allRes).toBe(normal.allRes - 50);
+    expect(doomed.chaosRes).toBe(normal.chaosRes - 50);
+  });
+
+  it('makes all twelve reward wheels substantially stronger', () => {
+    const rewardNotables = PASSIVE_NODES.filter((n) => n.kind === 'notable' && /_DG[12]$/.test(n.cluster ?? ''));
+    const moreNotables = rewardNotables.filter((n) => Object.keys(n.stats).some((key) => /^more[A-Z]/.test(key) || /More$/.test(key)));
+    expect(rewardNotables).toHaveLength(36);
+    expect(moreNotables).toHaveLength(12);
+    expect(Math.min(...moreNotables.flatMap((n) => Object.entries(n.stats).filter(([key]) => /^more[A-Z]/.test(key) || /More$/.test(key)).map(([, value]) => value!)))).toBeGreaterThanOrEqual(35);
+    expect(PASSIVE_NODES.find((n) => n.name === 'Bloodsworn')?.stats).toMatchObject({ life: 100, lifePct: 25 });
+    expect(PASSIVE_NODES.find((n) => n.name === 'Killing Mark')?.stats.moreMark).toBe(55);
+    expect(PASSIVE_NODES.find((n) => n.name === 'Perfect Faith')?.stats.maxElemRes).toBe(5);
   });
 });
 

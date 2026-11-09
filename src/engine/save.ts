@@ -350,6 +350,12 @@ const MIGRATIONS: Record<number, Migration> = {
       }
     }
   },
+  39: (raw) => {
+    // The compact cluster graph needs fewer pathing points and more points for the Notables beside those paths.
+    // Recount both pools from level and current spending on load; allocations themselves remain untouched.
+    raw.passivePointLevel = null;
+    raw.passiveQuestPoints = null;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

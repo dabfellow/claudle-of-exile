@@ -10,7 +10,12 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'The passive tree now sits on a painted backdrop: a dim arcane circle tinted in each class\'s colour, with a star marking each Forbidden keystone.',
+  'Each class now has its own general-purpose starting passives, tailored to its natural offence, defence and resource; the Mage reaches Mana regeneration immediately instead of finding Life regeneration first.',
+  'Character levels now grant 2 Travel Points and 3 Passive Points instead of 3 Travel and 2 Passive, so reaching clusters and taking their useful buffs stay in balance.',
+  'Doomed Gates now demand far harsher permanent sacrifices, but every notable in the twelve wheels behind them is substantially stronger.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

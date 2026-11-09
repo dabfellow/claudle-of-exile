@@ -3209,6 +3209,15 @@ h3 {
   margin: 0;
 }
 
+/* with a backdrop picture, the space round it matches the picture's own starfield edge */
+.tree-wrap.has-backdrop {
+  background: #060606;
+}
+
+.tree-backdrop {
+  pointer-events: none;
+}
+
 .tree-wrap:active,
 .tree-wrap.is-zooming,
 .tree-wrap.is-dragging {

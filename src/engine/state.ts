@@ -27,7 +27,7 @@ export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 39;
+export const SAVE_VERSION = 40;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -77,8 +77,8 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     combat: null,
     zoneKills: {},
     unlockedZones: ['mudflats'],
-    travelPoints: 3,
-    passivePoints: 2,
+    travelPoints: 2,
+    passivePoints: 3,
     masteryPoints: 0,
     passivePointLevel: 1,
     passiveQuestPoints: 0,
