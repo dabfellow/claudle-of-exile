@@ -510,7 +510,7 @@ const NAME_RE = /^[A-Za-z][A-Za-z '-]{1,15}$/;
 
 const CHALLENGE_TOGGLES: { id: keyof ChallengeFlags; name: string; desc: string }[] = [
   { id: 'hardcore', name: 'Hardcore', desc: 'One death deletes this character and everything it carries, even while you are away.' },
-  { id: 'ssf', name: 'Solo Self-Found', desc: 'No Player Market. This character gets a stash and hideout of its own, shared with nobody.' },
+  { id: 'ssf', name: 'Solo Self-Found', desc: 'This character gets a stash and hideout of its own, shared with nobody.' },
   { id: 'classic', name: 'Classic', desc: 'No gathering or crafting skills, just combat. The Crafting Bench still works, and hideout upgrades cost gold instead.' },
 ];
 

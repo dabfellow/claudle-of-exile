@@ -10,7 +10,38 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'The tutorial quest no longer covers the button it asks you to press on phones, and a "Show me" button scrolls to it.',
+  'Creating a character is now two steps: choose your class, then pick a name and challenge modes.',
+  'On phones, Combat keeps your target\'s life, your Life/ES/Mana, skills and flasks in one strip at the bottom of the screen.',
+  'On phones, tapping a skill or flask just uses it; press and hold to see its tooltip.',
+  'On desktop, tooltips appear beside what you\'re hovering instead of on top of it.',
+  'The target panel no longer squeezes a boss\'s abilities into a narrow column.',
+  'Pop-up messages sit out of the way in a corner (the top on phones), and you can click one to dismiss it.',
+  'The top bar no longer shows a fixed currency list: pin up to 5 currencies (gold included) from the Stash\'s Currency tab.',
+  'Coming back after a long time away no longer freezes the game: a progress screen shows while your time away is played out, and it\'s about twice as fast.',
+  'The game version now shows at the end of the menu bar on phones.',
+  'The Hideout banner now shows your Life, Mana, Energy Shield, Armour, Evasion and resistances at a glance.',
+  'On phones, every Hideout section can be folded away, and it stays the way you left it.',
+  'Your life skills, and whatever one is running right now, now sit beside your stats and gear in the Hideout.',
+  'Hideout shortcuts now live in a bar pinned along the bottom of the page.',
+  'Each Hideout station now leads with its next upgrade, what it costs and whether you can afford it; the full ladder folds away.',
+  'The Campaign now opens on a map of the whole continent; pick an act to see its areas up close along winding roads.',
+  'The Map Device is now a portal you load maps into, with an opening animation, painted map cards and Sextant orbs around the device.',
+  'The Cartography map case now shows your maps as tier tiles.',
+  'The Skills page is tidier: one gem bag with Skill and Support tabs, gems grouped by type, and each support shows which skills on your bar it fits.',
+  'Setting up a skill now lists every support you own that fits it, one click to socket.',
+  'The belt slot on the Equipment page is bigger and its art no longer pokes out.',
+  'The Crafting Bench shows what you own of every crafting material, where more comes from, and have/need on bench costs.',
+  'Fixed the Crafting Bench\'s Special Materials tab turning the screen black.',
+  'Stash gear can be searched by name and modifier, filtered by slot and rarity, and searched across every page at once; materials can be searched and filtered too.',
+  'Town shops show what you\'re wearing in that slot, whether you can use an item, how much gold you\'re short, and how many of a gem you already have; offers fit phones better.',
+  'Settings is split into tabs along the top: Game, Loot filters, Display, Sound, Account and Feedback.',
+  'Trackpad pinch zooms the passive tree smoothly, and two-finger pinch now works on phones.',
+  'Cooking, Cartography and other locked life skills always show in the sidebar, with a page saying how to unlock them.',
+  'If a page ever crashes, it now shows what went wrong with a way back instead of a black screen.',
+  'The Player Market is closed for 1.0. If you still have listings or items waiting, a "Market (closing)" page lets you collect them and cancel listings.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

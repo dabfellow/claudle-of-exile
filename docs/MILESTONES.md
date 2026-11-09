@@ -1,6 +1,6 @@
 # Roadmap and decisions
 
-Last updated 2026-11-08. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-09. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
@@ -43,6 +43,18 @@ Latest confirmed live release: **0.4.21, Plan Before You Commit**, deployed 2026
 
 - Passive Tree Zero-Lag Zoom (2026-11-08): Fixed the wheel zoom lag by throttling wheel transforms via requestAnimationFrame, applying `.is-zooming` to suppress pointer hit-testing during scroll gestures, batching inactive links into a single SVG path element, and removing style transitions and filters on node elements.
 
+- Round 2 design pass (2026-11-09), from the owner's screen review in the Launch Guide:
+  - Hideout tiers: **milestone tiers**. Each station gets about 3 more tiers, and every one unlocks something new (owner's examples: a Map Device tier unlocks the Atlas tree; Stash tabs 10% cheaper each rank and ground-loot storage; Forge better gear-tier chance) plus a stat bump. "Every upgrade is an event you save up for." The new top tiers are **endgame gated**: Hard Boss and Uber materials plus large gold, so finishing the hideout is a months-long goal.
+  - War Table split (owner: "one for battlefield and skills and another for the rest"): the **War Table** keeps skill rules and battlefield automation; a new **Quartermaster** takes auto-salvage and loot handling. Both use milestone tiers. Auto flee, auto challenge and the new auto next zone sit behind War Table upgrades.
+    - Auto next zone: **when the area is done**. Once the area's boss is down and the next area is open, it travels there; auto flee pulls the character back if it gets too hot.
+    - Auto flee: **first and cheap**, the War Table's first upgrade at Act 1 materials, so new and Hardcore players have it within the first hour.
+  - Mastery goes **per task**, not per band: every action and recipe has its own track (bulk versions share their single recipe's). Owner: "max mastery should take days to hit, on something like 5 days of grinding it." Set to 120 hours of unbuffed work per task (was 10 hours per band). This supersedes the 100-identity limit in the band-mastery design below. Decided for the owner: max-level bonuses rise to match the longer grind; mastery still never gates content.
+  - Achievements: 100+ (from 43). Rewards **change play**: achievement-only uniques, an extra passive or Atlas point, an extra stash tab, permanent small bonuses (+2% rarity, +1 offline hour). "Chasing achievements becomes part of getting stronger." Earned **per character**: Hardcore and SSF characters prove it again. Decided for the owner: the stash is shared per realm, so a stash-tab reward is added once, the first time any character in that realm earns it.
+  - Loot filters: **both, layered**. Players first see strictness presets (Off, Soft, Strict, Very strict, Uber) that scale with level, plus per-category overrides ("always show rings with life", "hide normal gear", "highlight T1 mods"). A "custom rules" tab underneath holds a full ordered rule list: conditions (slot, rarity, item level, specific mods, mod tiers, sockets, value) → show, hide, highlight colour, sound or auto-salvage, shareable as a code.
+  - Decided for the owner: Crafting Bench recipes no longer need achievements (owner's note "no achievements required"); the Bench level alone unlocks them.
+  - Decided for the owner: every mini-game gets a small inner double zone that doubles that action's output; Alchemy's mini-game turns horizontal; Foraging and Gemcutting get wider zones and slower markers.
+  - Decided for the owner: holiday dates are computed in code (no outside calendar service) and switch on automatically, each can be turned off in Admin; Admin can stack events, schedule weekend events and set any start/end; overlapping bonuses add.
+- Player Market removed for 1.0 (2026-11-09): the server can't tell an earned item from an edited save, and making it cheat-proof would mean moving inventories onto the server. The Market is hidden; pending deliveries stay collectable. It can return if inventories ever move server-side.
 - 1.0 is a fresh wipe (2026-11-08): everyone starts new characters at 1.0. Existing saves are not deleted. They move to a Legacy area, reached from character select, which runs at 1.0 rates. No new Legacy characters can be made. Legacy has no trading: the Market is hidden there, and nothing crosses between Legacy and 1.0 in either direction (recorded in the Launch Guide).
 - Cloud character saves only replace the version they grew from (2026-11-08). The server's own `updated_at` stamp is the version, so device clocks don't matter. When two devices have both played on from one save, the cloud copy wins, and the losing local copy is kept in that browser (`coe-<account>-conflict-<id>`) and reported. A failed browser-storage write no longer stops the cloud upload.
 - Passive Tree Travel Node Architecture & Attribute Rebalance (2026-11-08): Replaced the single centerline spine (which cut over `a = 0°` clusters `I, I1, D, D1, G, G1`) and the `<= 140px` brute-force proximity linker (which drew 7-pointed heptagrams inside every wheel cluster) with twin radial arterial highways per sector (`a = ±8°..15°`), clean `path()` cluster approaches, and smooth circular highway rings at `r = 260`, `r = 2310`, and `r = 4300` (666 total travel/highway nodes across the 2,377-node tree, with >50px minimum clearance between every link segment and unlinked node). Rebalanced travel/highway node attributes from `+10` (`+5/+5`) down to `+4` primary attribute (`+2/+2` hybrid, `+2 allAttr` on central/orbital junctions) to match the 3-travel-points-per-level budget and level 80 gear/gem attribute requirements, and rendered `highway` nodes at travel node size (`r = 8`).
@@ -320,6 +332,20 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - [ ] Deeper recovery runbooks for cloud conflicts, duplicate-tab transfers, market holds and deliveries. Verify code and actual service behavior.
 - [ ] Art: proper area landscapes, weak stand-ins, reused gem icons and outstanding weapon artwork. Inspect current manifest before quoting old missing-art counts.
 - [ ] Owner checks: guide tone, Town prices/readability, campaign/Map Device UX. Keep Act 1 cold-check/scorch changes parked until requested; the prior decision did not authorise an unsolicited rebalance.
+- [ ] Launch Guide Round 2 (owner's screen review, 2026-11-09). Full list and notes: Launch Guide "Round 2 plan". Three parallel sessions started 2026-11-09:
+  - [x] Session 1, first hour and combat: tutorial pop-up on phones, class-first character create, phone combat layout, tooltips, toasts, top bar pins, offline catch-up sliced and ~2x faster. Checked in headless Chromium at phone and desktop sizes; Account screen not checked (needs cloud sign-in). — done 2026-11-09
+  - [x] Session 2, big page reworks: Hideout, Campaign world/act maps, Map Device portal. Campaign maps are drawn in SVG (no map art in the packs); editable path data and a one-line image swap in `src/data/campaignMap.ts`. — done 2026-11-09
+  - [x] Session 3, page polish and Admin: gems, belt, bench materials (and a Special Materials black-screen crash), stash filters, Trader, Settings tabs, tree trackpad/touch pinch, locked life skills listed, page crash guard, Player Market closed (`MARKET_OPEN` in `src/platform/market.ts`). — done 2026-11-09
+    - Admin black screen: Admin was lazy-loaded, so opening it after a newer release fetched a file that no longer existed. Now bundled. Compensation items were refused because the live item checker predates `itemTier`; the client now strips it.
+    - Owner to check with real data: Admin Overview/Players/Inspect, and send a compensation item from a normal base and a unique. Optional SQL: re-run `docs/ops/market.sql`, then `docs/ops/admin.sql` (new Overview figures), then Admin → Market → "Upload from this build".
+  - [x] Design pass: hideout station tiers, War Table split and auto unlocks, per-task mastery, mini-game changes, 100+ achievements, loot filters, events calendar (see Decisions "Round 2 design pass"). — done 2026-11-09
+  - [ ] Build: hideout milestone tiers (~3 more per station, each a new unlock plus a stat bump, endgame-gated top tiers; Map Device → Atlas tree, Stash cheaper tabs and ground-loot storage, Forge gear-tier chance).
+  - [ ] Build: War Table / Quartermaster split; auto flee (first, cheap), auto challenge and auto next zone (moves on once the area's boss is down) behind War Table upgrades.
+  - [ ] Build: per-task mastery, 120 unbuffed hours to max, with save migration from bands and bigger max bonuses.
+  - [ ] Build: mini-games (inner double zone on all, horizontal Alchemy, easier Foraging and Gemcutting); Bench recipes drop achievement requirements.
+  - [ ] Build: 100+ per-character achievements with play-changing rewards.
+  - [ ] Build: layered loot filters (presets + overrides, custom rules tab, share codes).
+  - [ ] Build: events calendar (computed holidays, Admin toggles, stacking, weekend and custom windows).
 
 ## Ideas / later
 
