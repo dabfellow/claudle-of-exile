@@ -28,7 +28,7 @@ describe('hideout overhaul', () => {
         }
       }
     }
-    expect(STATIONS.find((s) => s.id === 'war_table')!.levels[6].cost).toEqual({
+    expect(STATIONS.find((s) => s.id === 'quartermaster')!.levels[3].cost).toEqual({
       gold: 30000,
       yew_plank: 150,
       mithril_bar: 150,
@@ -37,16 +37,16 @@ describe('hideout overhaul', () => {
     });
   });
 
-  it('moves loot auto-salvage into the later War Table levels', () => {
+  it('keeps loot auto-salvage in the Quartermaster levels', () => {
     const s = newGame(1);
     const c = makeCtx(seeded(1));
     s.account.hideout.bench = 2;
     s.settings.autoSalvage.normal = true;
-    s.account.hideout.war_table = 4;
+    s.account.hideout.quartermaster = 1;
     placeItem(s, c, createItem(s, 'rusted_sword', 1, 'normal', c.rng));
     expect(s.ground).toHaveLength(1);
     const dust = s.account.bank.arcane_dust ?? 0;
-    s.account.hideout.war_table = 5;
+    s.account.hideout.quartermaster = 2;
     placeItem(s, c, createItem(s, 'rusted_sword', 1, 'normal', c.rng));
     expect(s.ground).toHaveLength(1);
     expect(s.account.bank.arcane_dust).toBeGreaterThan(dust);

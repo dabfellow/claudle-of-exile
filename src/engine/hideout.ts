@@ -2,7 +2,7 @@ import { BASES, obtainable, type BaseDef } from '../data/bases';
 import { ACTIVE_GEMS, activeGemDef, gemReqLevel, SUPPORT_GEMS, supportGemDef } from '../data/gems';
 import {
   ALCH_DOUBLE,
-  AUTO_SALVAGE_WAR_TABLE_LEVEL,
+  AUTO_SALVAGE_QUARTERMASTER_LEVEL,
   AUTO_CRAFT_BENCH_LEVEL,
   BENCH_BUILT_LEVEL,
   BENCH_CRAFTS,
@@ -127,14 +127,14 @@ export function stationPerks(s: GameState, id: StationId): string[] {
       return [`${SHOP_SLOTS[i]} wares per shop`, `Restock every ${SHOP_REFRESH_MIN[i]} min`, ...SHOP_PERKS[i]];
     case 'war_table': {
       const { rules, ruleSlots } = s.account.automation;
-      const salvage = Object.entries(AUTO_SALVAGE_WAR_TABLE_LEVEL)
-        .filter(([, required]) => lvl >= required)
-        .map(([rarity]) => rarity[0].toUpperCase() + rarity.slice(1));
       return [
         `Rules: ${['Simple', ...rules.map((r) => RULE_NAMES[r])].join(', ')}`,
         `${ruleSlots} rule slot${ruleSlots > 1 ? 's' : ''} per skill`,
-        ...(salvage.length ? [`Auto-salvage: ${salvage.join(', ')}`] : []),
       ];
+    }
+    case 'quartermaster': {
+      const salvage = Object.entries(AUTO_SALVAGE_QUARTERMASTER_LEVEL).filter(([, required]) => lvl >= required).map(([rarity]) => rarity[0].toUpperCase() + rarity.slice(1));
+      return ['Layered loot presets', 'Category overrides', 'Ordered custom rules and share codes', ...(salvage.length ? [`Auto-salvage: ${salvage.join(', ')}`] : [])];
     }
     case 'watchtower':
       return [

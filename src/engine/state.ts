@@ -21,13 +21,13 @@ import { seeded } from './rng';
 import { craftStep } from './craftUntil';
 import { greenhouseStep, skillStep } from './skills';
 import { deriveStats } from './stats';
-import { defaultLootFilters } from './lootFilter';
+import { defaultLayeredLootFilter, defaultLootFilters } from './lootFilter';
 import { challengeName } from './challenge';
 export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 41;
+export const SAVE_VERSION = 42;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -109,6 +109,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
       filterOffClassLoot: false,
       activeLootFilterId: null,
       customLootFilters: defaultLootFilters(),
+      lootFilter: defaultLayeredLootFilter(),
       reducedMotion: false,
       movement: 'walk',
       posture: 'brawler',

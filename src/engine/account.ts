@@ -55,7 +55,7 @@ export function freshAccount(realm: Realm = STANDARD_REALM): AccountState {
     id: `a${Date.now().toString(36)}${Math.floor(Math.random() * 1e9).toString(36)}`,
     realm,
     rev: 0,
-    hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, watchtower: 1, trophy_altar: 1 },
+    hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, quartermaster: 1, watchtower: 1, trophy_altar: 1 },
     automation: freshAutomation(),
     stash: Array.from({ length: STASH_START_PAGES }, () => []),
     overflow: [],
@@ -77,6 +77,12 @@ export function freshAccount(realm: Realm = STANDARD_REALM): AccountState {
 
 /** An account saved before the shared tabs arrived. Accounts carry no version, so this is safe on any copy. */
 export function fillAccount(a: AccountState): AccountState {
+  // Loot handling moved out of the War Table. Preserve every salvage tier already paid for.
+  const oldWarTable = a.hideout?.war_table ?? 1;
+  if (a.hideout) {
+    a.hideout.quartermaster ??= Math.max(1, Math.min(4, oldWarTable - 3));
+    a.hideout.war_table = Math.min(4, oldWarTable);
+  }
   const baseline = freshAutomation();
   a.automation ??= baseline;
   a.automation.rules = [...new Set([...baseline.rules, ...a.automation.rules])];

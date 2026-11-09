@@ -6013,6 +6013,47 @@ img.art.mat-art {
 }
 
 /* item tiles: the one way gear is listed (bag, stash, ground, trader) */
+.item-tile.loot-highlight {
+  border-color: var(--loot-highlight);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--loot-highlight) 70%, transparent), 0 0 12px color-mix(in srgb, var(--loot-highlight) 32%, transparent);
+}
+
+/* Quartermaster: layered loot filters */
+.quartermaster-station { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
+.quartermaster-station > summary { cursor: pointer; color: var(--accent); font-weight: 700; }
+.loot-filter-manager { margin-top: 12px; min-width: 0; }
+.quartermaster-auto { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,.12); }
+.loot-filter-tabs { margin: 14px 0 10px; }
+.loot-preset-grid { display: grid; grid-template-columns: repeat(5, minmax(110px, 1fr)); gap: 8px; }
+.loot-preset { display: grid; gap: 4px; min-height: 86px; padding: 10px; text-align: left; color: var(--text); border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,.16); cursor: pointer; }
+.loot-preset span { color: var(--dim); font-size: 11px; line-height: 1.35; }
+.loot-preset.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.loot-overrides { display: grid; gap: 8px; }
+.loot-override { display: flex; align-items: flex-start; gap: 9px; padding: 9px; border: 1px solid var(--border); border-radius: 7px; cursor: pointer; }
+.loot-override span { display: grid; gap: 2px; }
+.loot-override small { color: var(--dim); }
+.loot-override.active { border-color: var(--accent); }
+.loot-rule-list { display: grid; gap: 8px; margin: 10px 0 16px; }
+.loot-rule { border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,.13); overflow: hidden; }
+.loot-rule > summary { display: flex; align-items: center; gap: 8px; padding: 10px; cursor: pointer; list-style: none; }
+.loot-rule > summary::-webkit-details-marker { display: none; }
+.loot-rule-order { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: var(--bg); background: var(--accent); font-weight: 800; }
+.loot-rule-body { display: grid; gap: 12px; padding: 0 10px 10px; border-top: 1px solid var(--border); }
+.loot-rule-body label { display: grid; gap: 4px; color: var(--dim); font-size: 11px; }
+.loot-rule-body .chip { display: flex; }
+.loot-condition { display: grid; gap: 7px; }
+.loot-condition-grid { display: grid; grid-template-columns: repeat(3, minmax(100px, 1fr)); gap: 8px; }
+.loot-rule-actions { border-top: 1px solid var(--border); padding-top: 9px; }
+.loot-share { display: grid; gap: 8px; border-top: 1px solid var(--border); padding-top: 10px; }
+.loot-share h4, .loot-share p { margin: 0; }
+.loot-share textarea { width: 100%; resize: vertical; font-family: monospace; font-size: 10px; }
+
+@media (max-width: 760px) {
+  .loot-preset-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .loot-preset:last-child { grid-column: 1 / -1; }
+  .loot-condition-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .quartermaster-station .loot-filter-manager { margin-left: -4px; margin-right: -4px; }
+}
 .item-tiles {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));

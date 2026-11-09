@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BAG_SIZE, GROUND_CAP, OFFLINE_HAUL_CAP } from '../../data/hideout';
 import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
 import { groundAtRisk, pickUp, salvagePile, type Pile } from '../../engine/storage';
+import { evaluateLootFilter } from '../../engine/lootFilter';
 import type { GameState } from '../../engine/types';
 import { game } from '../../game';
 import { ItemTiles, SalvageByRarity } from './Inventory';
@@ -25,7 +26,9 @@ const PILES: Record<Pile, { title: string; cap: number; hint: string; empty: str
 /** A pile of dropped gear: click to pick up into the bag. */
 export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
   const info = PILES[pile];
-  const items = [...s[pile]].reverse();
+  const allItems = [...s[pile]].reverse();
+  const items = allItems.filter((item) => evaluateLootFilter(s, item).visible);
+  const hidden = allItems.length - items.length;
   const take = (uids: number[]) => game.act((st, ctx) => void pickUp(st, ctx, pile, uids));
   const bagFull = s.inventory.length >= BAG_SIZE;
   const atRisk = pile === 'ground' ? groundAtRisk(s) : 0;
@@ -51,6 +54,7 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
       </div>
       <div className="row wrap" style={{ marginBottom: 10 }}>
         <span className="dim small">{info.hint}</span>
+        {hidden > 0 && <span className="dim small">{hidden} hidden by your Quartermaster filter</span>}
         {atRisk > 0 && <span className="bad small">{atRisk} lost if you die again</span>}
         <span className="spacer" />
         <button className="btn sm primary" disabled={!items.length || bagFull} onClick={() => take(items.map((i) => i.uid))}>

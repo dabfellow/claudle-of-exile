@@ -6,6 +6,7 @@ import { equipReason } from '../../engine/equipment';
 import { itemName } from '../../engine/items';
 import { sortFigure, sortItems, STASH_SORTS, type SortKey } from '../../engine/itemSort';
 import { inGearSet } from '../../engine/loadouts';
+import { evaluateLootFilter } from '../../engine/lootFilter';
 import type { GameState, Item, Rarity } from '../../engine/types';
 import { game } from '../../game';
 import { Tooltip } from './common';
@@ -34,10 +35,12 @@ export function ItemTile({
   figure?: string | null;
 }) {
   const locked = equipReason(s, item) !== null;
+  const filtered = evaluateLootFilter(s, item);
   return (
     <Tooltip content={<ItemTip item={item} state={s} />}>
       <button
-        className={`item-tile rar-${item.rarity} ${selected ? 'selected' : ''} ${marked ? 'marked' : ''} ${locked ? 'cant-equip' : ''}`}
+        className={`item-tile rar-${item.rarity} ${filtered.highlightColor ? 'loot-highlight' : ''} ${selected ? 'selected' : ''} ${marked ? 'marked' : ''} ${locked ? 'cant-equip' : ''}`}
+        style={filtered.highlightColor ? { ['--loot-highlight' as string]: filtered.highlightColor } : undefined}
         onClick={onClick}
         onContextMenu={(e) => {
           e.preventDefault();

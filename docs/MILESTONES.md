@@ -11,6 +11,7 @@ Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2
 3. Pacing audit: whole-journey simulations expose large Ranger seed variance and a repeatable Mage Act 4 stall, so pacing is not ready to lock.
 4. Plan the 1.0 wipe and the Legacy area (see Decisions).
 5. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
+6. Continue Launch Guide Round 2 builds; layered loot filters are complete, with the other build items tracked below.
 
 ## Milestones
 
@@ -51,6 +52,7 @@ Latest confirmed live release: **0.4.22, Every Screen, Looked Over**, deployed 2
   - Mastery goes **per task**, not per band: every action and recipe has its own track (bulk versions share their single recipe's). Owner: "max mastery should take days to hit, on something like 5 days of grinding it." Set to 120 hours of unbuffed work per task (was 10 hours per band). This supersedes the 100-identity limit in the band-mastery design below. Decided for the owner: max-level bonuses rise to match the longer grind; mastery still never gates content.
   - Achievements: 100+ (from 43). Rewards **change play**: achievement-only uniques, an extra passive or Atlas point, an extra stash tab, permanent small bonuses (+2% rarity, +1 offline hour). "Chasing achievements becomes part of getting stronger." Earned **per character**: Hardcore and SSF characters prove it again. Decided for the owner: the stash is shared per realm, so a stash-tab reward is added once, the first time any character in that realm earns it.
   - Loot filters: **both, layered**. Players first see strictness presets (Off, Soft, Strict, Very strict, Uber) that scale with level, plus per-category overrides ("always show rings with life", "hide normal gear", "highlight T1 mods"). A "custom rules" tab underneath holds a full ordered rule list: conditions (slot, rarity, item level, specific mods, mod tiers, sockets, value) → show, hide, highlight colour, sound or auto-salvage, shareable as a code.
+    - Build calls (2026-11-09): custom rules are first-match, top-to-bottom, and sit above overrides and the preset. Presets only hide; salvage remains an explicit action. Uniques can be highlighted or sounded but never hidden or auto-salvaged. Hidden drops remain in their ground/time-away pile and reappear when the filter is loosened. "Sockets" means the gear's filled rune socket in the current one-socket item system. Filter sounds play for online drops, not a backlog of time-away finds. Share codes contain only the ordered custom rules, replace that list only after strict validation, and are capped at 100 rules / 50,000 characters. Existing War Table salvage levels 5–7 become Quartermaster levels 2–4, and old active profile filters keep their matching order and prior salvage access.
   - Decided for the owner: Crafting Bench recipes no longer need achievements (owner's note "no achievements required"); the Bench level alone unlocks them.
   - Decided for the owner: every mini-game gets a small inner double zone that doubles that action's output; Alchemy's mini-game turns horizontal; Foraging and Gemcutting get wider zones and slower markers.
   - Decided for the owner: holiday dates are computed in code (no outside calendar service) and switch on automatically, each can be turned off in Admin; Admin can stack events, schedule weekend events and set any start/end; overlapping bonuses add.
@@ -344,7 +346,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - [ ] Build: per-task mastery, 120 unbuffed hours to max, with save migration from bands and bigger max bonuses.
   - [ ] Build: mini-games (inner double zone on all, horizontal Alchemy, easier Foraging and Gemcutting); Bench recipes drop achievement requirements.
   - [ ] Build: 100+ per-character achievements with play-changing rewards.
-  - [ ] Build: layered loot filters (presets + overrides, custom rules tab, share codes).
+  - [x] Build: layered loot filters (presets + overrides, custom rules tab, share codes). Tested at phone and desktop sizes; old filter saves migrate and time-away loot uses the same evaluator. — done 2026-11-09
   - [ ] Build: events calendar (computed holidays, Admin toggles, stacking, weekend and custom windows).
 
 ## Ideas / later
@@ -368,6 +370,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Built layered Quartermaster loot filters with level-scaled presets, category overrides, ordered conditions/actions, stash and ground highlights, safe share codes, time-away handling and old-save migration. — done 2026-11-09
 
 - [x] Spread the seven major offensive families across distant passive-tree regions while preserving class starts, every authored cluster, cluster shapes and total node counts; added a concentration regression test. Released in 0.4.21. — done 2026-11-08
 

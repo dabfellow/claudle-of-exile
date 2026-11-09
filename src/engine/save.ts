@@ -18,7 +18,7 @@ import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { AccountPool, AccountTransfer, FlaskInstance, GameState, Item } from './types';
 import { charXpFromOldCurve } from './xp';
 import { settleSkillingMastery } from './skillingMastery';
-import { settleLootFilters } from './lootFilter';
+import { migrateLegacyLootFilters, settleLootFilters } from './lootFilter';
 import { settleTreeProfiles } from './treeProfiles';
 
 // kept from the game's old name: changing it would orphan every existing save
@@ -360,6 +360,14 @@ const MIGRATIONS: Record<number, Migration> = {
     // Passive rewards fell from three per level to one. Recount unspent pools without removing allocations.
     raw.passivePointLevel = null;
     raw.passiveQuestPoints = null;
+  },
+  41: (raw) => {
+    // Profile-style loot filters became one layered filter. Carry the active profile's ordered intent forward.
+    const settings = raw.settings as GameState['settings'] | undefined;
+    if (settings && !settings.lootFilter) {
+      settings.lootFilter = migrateLegacyLootFilters(settings);
+      settings.activeLootFilterId = null;
+    }
   },
 };
 

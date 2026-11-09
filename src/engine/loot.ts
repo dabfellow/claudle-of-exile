@@ -1,7 +1,7 @@
 import { BOSS_CRAFT_MAT, CONTRABAND_DROP, ESSENCES, FOSSILS, SEAL, WAX } from '../data/craftMats';
 import { WHETSTONE, WHETSTONE_DROP } from '../data/expedition';
 import { areaCurrency, BOSS_GATHER_DROP, bossGatherMats, bossTable, dropTable, STARTER_DROPS, type RarityWeights } from '../data/drops';
-import { AUTO_SALVAGE_WAR_TABLE_LEVEL, MAP_ILVL } from '../data/hideout';
+import { AUTO_SALVAGE_QUARTERMASTER_LEVEL, MAP_ILVL } from '../data/hideout';
 import { RUNE_DROP, RUNES } from '../data/runes';
 import { CURRENCIES } from '../data/materials';
 import { rollFlask, rollUniqueFlask, stashFlask } from './flasks';
@@ -13,7 +13,7 @@ import { benchBuilt } from './crafting';
 import { stationLevel } from './hideout';
 import { dropItem } from './storage';
 import { createItem, createUnique, droppableBases, salvageValue, itemMatchesClass } from './items';
-import { shouldSalvageByFilter } from './lootFilter';
+import { evaluateLootFilter, shouldSalvageByFilter } from './lootFilter';
 import { HARD_BOSSES, UBER_BOSSES, uniqueMapDef } from '../data/maps';
 import { runModifiers } from './maps';
 import { chance, pick, pickWeighted, rInt } from './rng';
@@ -40,17 +40,14 @@ export function placeItem(s: GameState, ctx: Ctx, item: Item): void {
     s.lifetime.uniquesFound += 1;
     seeUnique(s.account, item);
   }
-  const autoLevel = item.rarity === 'unique' ? Infinity : AUTO_SALVAGE_WAR_TABLE_LEVEL[item.rarity];
-  const autoByRarity = item.rarity !== 'unique' && s.settings.autoSalvage[item.rarity] && benchBuilt(s) && stationLevel(s, 'war_table') >= autoLevel;
+  const autoLevel = item.rarity === 'unique' ? Infinity : AUTO_SALVAGE_QUARTERMASTER_LEVEL[item.rarity];
+  const autoByRarity = item.rarity !== 'unique' && s.settings.autoSalvage[item.rarity] && benchBuilt(s) && stationLevel(s, 'quartermaster') >= autoLevel;
   const autoByClassFilter = item.rarity !== 'unique' && s.settings.filterOffClassLoot && !itemMatchesClass(s.character.classId, item);
   
-  let autoByCustomFilter = false;
-  if (item.rarity !== 'unique' && s.settings.activeLootFilterId && s.settings.customLootFilters) {
-    const activeFilter = s.settings.customLootFilters.find((f) => f.id === s.settings.activeLootFilterId);
-    if (activeFilter) {
-      autoByCustomFilter = shouldSalvageByFilter(activeFilter, item, s.character.classId);
-    }
-  }
+  const filterResult = evaluateLootFilter(s, item);
+  const activeLegacy = s.settings.customLootFilters?.find((filter) => filter.id === s.settings.activeLootFilterId);
+  const legacySalvage = !!activeLegacy && shouldSalvageByFilter(activeLegacy, item, s.character.classId);
+  const autoByCustomFilter = legacySalvage || (filterResult.autoSalvage && (filterResult.salvageWithoutUnlock || (benchBuilt(s) && stationLevel(s, 'quartermaster') >= autoLevel)));
 
   if (autoByRarity || autoByClassFilter || autoByCustomFilter) {
     addBank(s, 'arcane_dust', salvageValue(item));
@@ -60,7 +57,7 @@ export function placeItem(s: GameState, ctx: Ctx, item: Item): void {
   }
   dropItem(s, ctx, item);
   s.lifetime.itemsLooted += 1;
-  ctx.emit({ t: 'loot', item });
+  ctx.emit({ t: 'loot', item, filterSound: filterResult.sound && !ctx.offline });
 }
 
 export function rollItemTier(zone: ZoneDef, isBoss: boolean, isDoomed: boolean, rng: Ctx['rng']): 1 | 2 | 3 | 4 | 5 {

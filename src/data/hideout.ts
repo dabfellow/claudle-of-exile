@@ -1,6 +1,6 @@
 import type { RuleUnlock } from './gems';
 
-export type StationId = 'stash' | 'forge' | 'alchemy_table' | 'bench' | 'vendor' | 'map_device' | 'war_table' | 'watchtower' | 'trophy_altar';
+export type StationId = 'stash' | 'forge' | 'alchemy_table' | 'bench' | 'vendor' | 'map_device' | 'war_table' | 'quartermaster' | 'watchtower' | 'trophy_altar';
 
 /** What a station level adds to the automation unlocks for good. */
 export interface StationGrant {
@@ -106,6 +106,13 @@ export const STATIONS: StationDef[] = [
       { cost: { gold: 750, ash_plank: 15, copper_bar: 15 }, effect: 'Status rules', grants: { rules: ['status'] } },
       { cost: { gold: 2000, oak_plank: 25, iron_bar: 25 }, effect: "Aim rules: a skill's rule can send it at special targets", grants: { rules: ['aim'] } },
       { cost: { gold: 4000, oak_plank: 40, iron_bar: 40, rough_gem: 4 }, effect: 'A 3rd rule slot per skill', grants: { ruleSlots: 3 } },
+    ],
+  },
+  {
+    id: 'quartermaster', name: 'Quartermaster', page: 'hideout', color: '#d6a84b',
+    desc: 'Controls what dropped gear is shown, highlighted or salvaged. Open the station to build layered loot filters.',
+    levels: [
+      { cost: {}, effect: 'Level-scaled loot presets, category overrides and shareable custom rules' },
       { cost: { gold: 7000, oak_plank: 60, iron_bar: 60, rough_gem: 6 }, effect: 'Auto-salvage Normal drops' },
       { cost: { gold: 12000, oak_plank: 80, iron_bar: 80, rough_gem: 8, boss_trophy: 3 }, effect: 'Auto-salvage Magic drops' },
       { cost: { gold: 30000, yew_plank: 150, mithril_bar: 150, rough_gem: 20, boss_trophy: 8 }, effect: 'Auto-salvage Rare drops' },
@@ -165,8 +172,8 @@ export const PINNACLE_CRAFT_BENCH_LEVEL = 7;
 export const CRAFT_STEP_MS = 1500;
 /** The Crafting Bench level that lets a gear set go on by itself when an activity starts. Sets themselves are free. */
 export const GEAR_SWITCH_BENCH_LEVEL = 3;
-/** War Table tiers that allow each loot rarity to be auto-salvaged. */
-export const AUTO_SALVAGE_WAR_TABLE_LEVEL: Record<'normal' | 'magic' | 'rare', number> = { normal: 5, magic: 6, rare: 7 };
+/** Quartermaster tiers that allow each loot rarity to be auto-salvaged. */
+export const AUTO_SALVAGE_QUARTERMASTER_LEVEL: Record<'normal' | 'magic' | 'rare', number> = { normal: 2, magic: 3, rare: 4 };
 
 export interface BenchCraft {
   id: string;

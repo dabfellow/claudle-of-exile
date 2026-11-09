@@ -21,6 +21,7 @@ import { Fold } from '../components/Fold';
 import { openItemMenu } from '../components/ItemMenu';
 import { materialSources } from '../components/materialSources';
 import { PaperDoll } from '../components/PaperDoll';
+import { LootFilterManager } from '../components/LootFilterManager';
 import type { Page } from '../Layout';
 import { Crest } from '../screens/Screens';
 import '../round2-session2.css';
@@ -33,6 +34,7 @@ const STATION_ICON: Record<StationId, string> = {
   bench: 'bench',
   vendor: 'vendor',
   war_table: 'combat',
+  quartermaster: 'stash',
   watchtower: 'clock',
   trophy_altar: 'trophy',
 };
@@ -541,6 +543,12 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
           })}
         </ol>
       </details>
+      {st.id === 'quartermaster' && (
+        <details className="quartermaster-station">
+          <summary>Open loot filters</summary>
+          <LootFilterManager s={s} />
+        </details>
+      )}
     </div>
   );
 }

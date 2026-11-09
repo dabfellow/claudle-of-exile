@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { AUTO_SALVAGE_WAR_TABLE_LEVEL } from '../../data/hideout';
-import { stationLevel } from '../../engine/hideout';
 import { exportSave, importSave } from '../../engine/save';
 import { newGame } from '../../engine/state';
 import { game, useGame } from '../../game';
@@ -8,7 +6,6 @@ import { isCloudAccount } from '../../platform/accounts';
 import { cloudConfigured } from '../../platform/supabase';
 import { fmt, PageHeader, Tabs } from '../components/common';
 import { FeedbackCard } from '../components/FeedbackCard';
-import { LootFilterManager } from '../components/LootFilterManager';
 import { useMusicPrefs } from '../music';
 import { AccountBadge, leaveAccount } from '../screens/Screens';
 import '../round2-session3.css';
@@ -176,33 +173,13 @@ function GameTab() {
 }
 
 function LootTab() {
-  const s = useGame();
   return (
     <div className="card">
-      <div className="card-title">Loot filter</div>
+      <div className="card-title">Loot filters moved to the Quartermaster</div>
       <p className="muted" style={{ marginTop: 0 }}>
-        Automatically salvage dropped items of these rarities into Arcane Dust. Uniques are always kept.
+        Open the Quartermaster station in your Hideout to choose a level-scaled preset, add category overrides, build ordered custom rules, or paste a shared filter code.
       </p>
-      <div className="row wrap">
-        {(['normal', 'magic', 'rare'] as const).map((r) => (
-          <label key={r} className="chip" style={{ cursor: stationLevel(s, 'war_table') >= AUTO_SALVAGE_WAR_TABLE_LEVEL[r] ? 'pointer' : 'not-allowed' }}>
-            <input
-              type="checkbox"
-              checked={s.settings.autoSalvage[r]}
-              disabled={stationLevel(s, 'war_table') < AUTO_SALVAGE_WAR_TABLE_LEVEL[r]}
-              onChange={(e) => game.act((st) => void (st.settings.autoSalvage[r] = e.target.checked))}
-            />
-            <span style={{ color: `var(--${r})` }}>{r[0].toUpperCase() + r.slice(1)}</span> <span className="dim small">War Table {AUTO_SALVAGE_WAR_TABLE_LEVEL[r]}</span>
-          </label>
-        ))}
-      </div>
-      <div style={{ marginTop: 12 }}>
-        <label className="chip" style={{ cursor: 'pointer' }}>
-          <input type="checkbox" checked={!!s.settings.filterOffClassLoot} onChange={(e) => game.act((st) => void (st.settings.filterOffClassLoot = e.target.checked))} />
-          <span>Filter Off-Class Loot</span> <span className="dim small">Auto-salvage dropped gear that doesn't fit your class attributes or defences</span>
-        </label>
-      </div>
-      <LootFilterManager s={s} />
+      <span className="chip">Hideout → Quartermaster → Open loot filters</span>
     </div>
   );
 }

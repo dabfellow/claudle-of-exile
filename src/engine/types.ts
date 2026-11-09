@@ -793,6 +793,8 @@ export interface Settings {
   activeLootFilterId?: string | null;
   /** User-created and preset custom loot filters that can be swapped between */
   customLootFilters?: import('./lootFilter').CustomLootFilter[];
+  /** Level-scaled preset, category overrides and ordered custom loot rules. */
+  lootFilter?: import('./lootFilter').LayeredLootFilter;
   reducedMotion: boolean;
   movement: Movement;
   /** Automatic combat spacing; legacy movement remains the low-level pace used by old saves and tests. */
@@ -1209,7 +1211,7 @@ export type GameEvent =
   | { t: 'kill'; name: string; boss: boolean }
   | { t: 'spawn'; name: string; boss: boolean }
   | { t: 'death'; xpLost: number }
-  | { t: 'loot'; item?: Item; currencyId?: string; qty?: number; salvaged?: boolean; gemId?: string; supportId?: string; flask?: FlaskInstance }
+  | { t: 'loot'; item?: Item; currencyId?: string; qty?: number; salvaged?: boolean; gemId?: string; supportId?: string; flask?: FlaskInstance; filterSound?: boolean }
   | { t: 'levelup'; skill: SkillId; level: number }
   | { t: 'xp'; skill: SkillId; amount: number }
   | { t: 'produce'; skill: SkillId; outputs: Record<string, number>; baseId?: string }
