@@ -804,6 +804,8 @@ export interface Settings {
   targeting: Targeting;
   activePassiveProfileId?: number;
   passiveProfiles?: PassiveProfile[];
+  /** currencies shown in the top bar, pinned from the Stash (at most 5); none when missing */
+  pinnedCurrencies?: string[];
 }
 
 export interface PassiveProfile {

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { activeGemDef, supportGemDef } from '../../data/gems';
-import { currencyDef, MATERIALS, materialDef } from '../../data/materials';
+import { MATERIALS, materialDef } from '../../data/materials';
 import { STASH_PAGE_SIZE } from '../../data/hideout';
 import { challengeName, isSolo } from '../../engine/challenge';
 import { wearFlask } from '../../engine/combat';
@@ -14,17 +14,19 @@ import { useGame } from '../../game';
 import { Art, CurrencyAmount, EmptyState, fmt, MatIcon, PageHeader, Tabs, Tooltip, type TabDef } from '../components/common';
 import { FlaskShelf } from '../components/FlaskView';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
-import { Orb, Swatch } from '../components/Icon';
+import { Swatch } from '../components/Icon';
 import { Inventory, ItemTiles, SalvageByRarity, StashSort } from '../components/Inventory';
 import { PaperDoll } from '../components/PaperDoll';
 import { UniqueShelf } from '../components/UniqueShelf';
 import type { Page } from '../Layout';
 import { openItemMenu } from '../components/ItemMenu';
+import { CurrencyPinHint, CurrencySlot } from '../components/CurrencyPins';
 
 type Tab = 'gear' | 'uniques' | 'currency' | 'materials' | 'gems' | 'flasks';
 
-/** The currency tab has a fixed place for every orb, like a real stash tab. */
+/** The currency tab has a fixed place for every orb, like a real stash tab. Gold sits there too, so it can be pinned to the top bar. */
 const CURRENCY_LAYOUT: { label: string; ids: string[] }[] = [
+  { label: 'Gold', ids: ['gold'] },
   { label: 'Basic', ids: ['transmute', 'augment', 'alteration', 'scour', 'regret'] },
   { label: 'Rare', ids: ['regal', 'alchemy', 'chaos', 'annul'] },
   { label: 'Precious', ids: ['exalted', 'divine', 'fractured', 'expansion', 'instill'] },
@@ -46,32 +48,6 @@ const MATERIAL_GROUPS: { label: string; kinds: string[] }[] = [
   { label: 'Vellum & Ink', kinds: ['chart'] },
   { label: 'Other', kinds: ['dust'] },
 ];
-
-function CurrencySlot({ s, id }: { s: GameState; id: string }) {
-  const def = currencyDef(id);
-  const n = s.account.bank[id] ?? 0;
-  return (
-    <Tooltip
-      content={
-        <div className="tip">
-          <div className="tip-title" style={{ color: 'var(--currency)' }}>
-            {def.name}
-          </div>
-          <div>{def.desc}</div>
-          <div className="dim small" style={{ marginTop: 4 }}>
-            Worth about {def.value} gold to the trader
-          </div>
-        </div>
-      }
-    >
-      <div className={`currency-slot ${n > 0 ? '' : 'none'}`} style={{ ['--orb' as string]: def.color }}>
-        <Orb color={def.color} size={40} glow={n > 0} />
-        <span className="currency-count num">{fmt(n)}</span>
-        <span className="currency-name">{def.short}</span>
-      </div>
-    </Tooltip>
-  );
-}
 
 function MaterialTile({ s, id }: { s: GameState; id: string }) {
   const def = materialDef(id);
@@ -145,6 +121,7 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
 
         <StashTab on={tab === 'currency'}>
           <div className="card stash-panel">
+            <CurrencyPinHint s={s} />
             {CURRENCY_LAYOUT.map((g) => (
               <div key={g.label} className="currency-group">
                 <div className="section-label">{g.label}</div>

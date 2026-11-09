@@ -567,9 +567,14 @@ export function FallenScreen() {
   );
 }
 
+/**
+ * Two steps, so nobody names a character before choosing what it is: pick a class, then Next to the name and
+ * challenge modes, then Begin. Back on the second step returns to the classes with everything kept.
+ */
 export function CharacterCreate() {
   useGame();
-  const [classId, setClassId] = useState<ClassId>('warrior');
+  const [step, setStep] = useState<'class' | 'name'>('class');
+  const [classId, setClassId] = useState<ClassId | null>(null);
   const [exileStart, setExileStart] = useState(EXILE_START);
   const [challenge, setChallenge] = useState<ChallengeFlags>({});
   const [name, setName] = useState('');
@@ -581,14 +586,102 @@ export function CharacterCreate() {
       : game.nameTaken(trimmed)
         ? 'You already have a character with that name'
         : null;
-  const valid = !!trimmed && !error;
-  const cls = classDef(classId);
-  const begin = () => game.create(trimmed, classId, classId === 'exile' ? exileStart : undefined, challenge);
+  const valid = !!classId && !!trimmed && !error;
+  const cls = classId ? classDef(classId) : null;
+  const begin = () => classId && game.create(trimmed, classId, classId === 'exile' ? exileStart : undefined, challenge);
+  const toTop = () => window.scrollTo({ top: 0 });
+
+  if (step === 'name' && cls) {
+    return (
+      <ScreenShell wide>
+        <div className="row create-head">
+          <div>
+            <div className="create-step">Step 2 of 2</div>
+            <h2 style={{ fontSize: 20 }}>Name your {cls.name.toLowerCase()}</h2>
+          </div>
+          <span className="spacer" />
+          <button className="btn ghost sm" onClick={() => (setStep('class'), toTop())}>
+            ‹ Back to classes
+          </button>
+        </div>
+        <div className="card create-chosen" style={{ ['--class' as string]: cls.color }}>
+          <Crest classId={cls.id} size={56} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="class-name">{cls.name}</div>
+            <div className="class-attr" style={{ marginTop: 0 }}>
+              {cls.challenge ? 'Challenge class' : cls.attribute}
+            </div>
+            <div className="class-tag">{cls.tagline}</div>
+          </div>
+        </div>
+        {cls.id === 'exile' && (
+          <div className="card">
+            <div className="section-label" style={{ marginBottom: 8 }}>
+              Start on the passive tree as
+            </div>
+            <div className="row wrap" style={{ gap: 8 }}>
+              <button
+                className={`btn sm ${exileStart === EXILE_START ? 'primary' : ''}`}
+                title={`Starter gems: ${startClass('exile', EXILE_START).starterGems.map((g) => activeGemDef(g).name).join(', ')}`}
+                onClick={() => setExileStart(EXILE_START)}
+              >
+                Centre
+              </button>
+              {CLASSES.filter((c) => !c.challenge).map((c) => (
+                <button
+                  key={c.id}
+                  className={`btn sm ${exileStart === c.startNode ? 'primary' : ''}`}
+                  title={`Starter gems: ${c.starterGems.map((g) => activeGemDef(g).name).join(', ')}`}
+                  onClick={() => setExileStart(c.startNode)}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+            <div className="dim small" style={{ marginTop: 6 }}>
+              {exileStart === EXILE_START
+                ? `You begin in the middle of the tree with the ${startClass('exile', exileStart).name}'s starter gems.`
+                : `You begin at the ${startClass('exile', exileStart).name}'s tree start with their starter gems.`}{' '}
+              Other classes' starts don't block an Exile, so you can path into any class's area. Your character's skills start fresh.
+            </div>
+          </div>
+        )}
+        <div className="card create-bar" style={{ ['--class' as string]: cls.color }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <input
+              className="input lg"
+              placeholder={`Name your ${cls.name.toLowerCase()}`}
+              value={name}
+              maxLength={16}
+              autoFocus
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && valid && begin()}
+            />
+            <div className={error ? 'warn' : 'dim'} style={{ fontSize: 'var(--fs-xs)', marginTop: 4, minHeight: 16 }}>
+              {error ?? 'This is the name the world will forget.'}
+            </div>
+          </div>
+        </div>
+        <ChallengeCard value={challenge} onChange={setChallenge} />
+        <div className="create-actions">
+          <button className="btn ghost lg" onClick={() => (setStep('class'), toTop())}>
+            ‹ Back
+          </button>
+          <button className="btn primary lg" disabled={!valid} onClick={begin}>
+            Begin
+          </button>
+        </div>
+      </ScreenShell>
+    );
+  }
 
   return (
     <ScreenShell wide>
-      <div className="row">
-        <h2 style={{ fontSize: 20 }}>Create a character</h2>
+      <div className="row create-head">
+        <div>
+          <div className="create-step">Step 1 of 2</div>
+          <h2 style={{ fontSize: 20 }}>Choose your class</h2>
+        </div>
         <span className="spacer" />
         {game.characters.length > 0 && (
           <button className="btn ghost sm" onClick={() => game.setScreen('select')}>
@@ -664,57 +757,21 @@ export function CharacterCreate() {
           );
         })}
       </div>
-      {classId === 'exile' && (
-        <div className="card">
-          <div className="section-label" style={{ marginBottom: 8 }}>
-            Start on the passive tree as
-          </div>
-          <div className="row wrap" style={{ gap: 8 }}>
-            <button
-              className={`btn sm ${exileStart === EXILE_START ? 'primary' : ''}`}
-              title={`Starter gems: ${startClass('exile', EXILE_START).starterGems.map((g) => activeGemDef(g).name).join(', ')}`}
-              onClick={() => setExileStart(EXILE_START)}
-            >
-              Centre
-            </button>
-            {CLASSES.filter((c) => !c.challenge).map((c) => (
-              <button
-                key={c.id}
-                className={`btn sm ${exileStart === c.startNode ? 'primary' : ''}`}
-                title={`Starter gems: ${c.starterGems.map((g) => activeGemDef(g).name).join(', ')}`}
-                onClick={() => setExileStart(c.startNode)}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
-          <div className="dim small" style={{ marginTop: 6 }}>
-            {exileStart === EXILE_START
-              ? `You begin in the middle of the tree with the ${startClass('exile', exileStart).name}'s starter gems.`
-              : `You begin at the ${startClass('exile', exileStart).name}'s tree start with their starter gems.`}{' '}
-            Other classes' starts don't block an Exile, so you can path into any class's area. Your character's skills start fresh.
-          </div>
+      {/* held at the bottom of the screen, so Next is always in reach however far down the classes you are */}
+      <div className="card create-next" style={cls ? { ['--class' as string]: cls.color } : undefined}>
+        {cls ? <Crest classId={cls.id} size={40} /> : null}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {cls ? (
+            <>
+              <b>{cls.name}</b>
+              <div className="dim small">{cls.tagline}</div>
+            </>
+          ) : (
+            <span className="muted">Choose a class to continue.</span>
+          )}
         </div>
-      )}
-      <ChallengeCard value={challenge} onChange={setChallenge} />
-      <div className="card create-bar" style={{ ['--class' as string]: cls.color }}>
-        <Crest classId={classId} size={44} />
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <input
-            className="input lg"
-            placeholder={`Name your ${cls.name.toLowerCase()}`}
-            value={name}
-            maxLength={16}
-            autoFocus
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && valid && begin()}
-          />
-          <div className={error ? 'warn' : 'dim'} style={{ fontSize: 'var(--fs-xs)', marginTop: 4, minHeight: 16 }}>
-            {error ?? 'This is the name the world will forget.'}
-          </div>
-        </div>
-        <button className="btn primary lg" disabled={!valid} onClick={begin}>
-          Begin
+        <button className="btn primary lg" disabled={!cls} onClick={() => (setStep('name'), toTop())}>
+          Next ›
         </button>
       </div>
     </ScreenShell>

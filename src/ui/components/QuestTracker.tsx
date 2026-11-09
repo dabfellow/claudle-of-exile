@@ -21,10 +21,23 @@ function useHighlights(ids: string[], enabled: boolean) {
   );
 }
 
+/** Scroll to what the quest wants pressed: something on the page before a sidebar link to another page. */
+function showTarget(ids: string[]) {
+  const visible = ids
+    .flatMap((id) => [...document.querySelectorAll<HTMLElement>(`[data-tut="${id}"]`)])
+    .filter((el) => el.getClientRects().length > 0);
+  const el = visible.find((e) => !e.dataset.tut?.startsWith('nav-')) ?? visible[0];
+  el?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+}
+
+/**
+ * The tutorial's current quest. Wide screens show it at the top of the right-hand feed; narrower ones
+ * (`floating`) show it at the top of the page itself, in the flow, so it never sits over the button it asks you to press.
+ */
 export function QuestTracker({ floating }: { floating?: boolean }) {
   const s = useGame();
   const step = game.showIntro ? null : currentStep(s);
-  // both copies render (feed + floating for narrow screens); only the feed copy drives highlights
+  // both copies render (feed + page for narrow screens); only the feed copy drives highlights
   useHighlights(step ? step.highlight : [], !floating);
   if (!step) return null;
   const index = s.tutorial.step;
@@ -60,6 +73,11 @@ export function QuestTracker({ floating }: { floating?: boolean }) {
           <span className="num muted">
             {s.tutorial.progress}/{step.target}
           </span>
+        )}
+        {step.highlight.length > 0 && (
+          <button className="btn sm quest-show" title="Scroll to what to press next" onClick={() => showTarget(step.highlight)}>
+            Show me
+          </button>
         )}
       </div>
       {step.target > 1 && <ProgressBar value={s.tutorial.progress / step.target} color="var(--accent)" smooth />}

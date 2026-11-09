@@ -1,0 +1,392 @@
+/*
+ * 1.0 review fixes (tooltips, toasts, quest tracker, top bar, combat on phones, character creation).
+ * This file loads before styles.css, so rules that override an existing one start with `html` to win the tie.
+ */
+
+/* ============ tooltips ============ */
+/* a long press shows the tooltip: don't let the phone select text or pop its own menu instead */
+.tip-anchor {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html .tooltip-layer {
+  max-width: calc(100vw - 16px);
+}
+
+html .tooltip-layer .tip {
+  max-width: min(340px, calc(100vw - 16px));
+}
+
+/* ============ toasts: a corner of the screen, click to clear ============ */
+html .toasts {
+  left: auto;
+  right: 16px;
+  bottom: 52px; /* clear of the xp bar */
+  transform: none;
+  align-items: flex-end;
+  width: auto;
+  max-width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+html .toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  padding: 7px 10px 7px 14px;
+  border-radius: var(--r);
+  font: inherit;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+html .toast:hover {
+  background: var(--panel);
+}
+
+.toast-text {
+  min-width: 0;
+}
+
+.toast-x {
+  flex: none;
+  color: var(--dim);
+  font-size: 16px;
+  line-height: 1;
+}
+
+@media (max-width: 860px) {
+  /* phones: along the top, over the activity bar, so it never covers a button you're about to press */
+  html .toasts {
+    top: calc(6px + env(safe-area-inset-top, 0px));
+    bottom: auto;
+    right: 8px;
+    left: 8px;
+    max-width: none;
+    align-items: stretch;
+    gap: 4px;
+  }
+  html .toast {
+    padding: 6px 10px;
+    font-size: var(--fs-xs);
+    justify-content: space-between;
+  }
+  html .toast .toast-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ============ top bar: pinned currencies only ============ */
+.topbar-pins {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+html .topbar-pins .currency-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+html .topbar-pins .currency-strip .chip {
+  display: inline-flex;
+}
+
+/* with only what you chose up there, there's room to say which orb is which */
+html .topbar-pins .currency-strip .chip .dim {
+  display: inline;
+}
+
+/* a pinned orb in the Stash's Currency tab */
+html .currency-slot {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+html .currency-slot.pinned {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent) inset;
+}
+
+.currency-pin {
+  position: absolute;
+  top: 6px;
+  left: 7px;
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.currency-pin-hint {
+  margin-bottom: var(--s-2);
+}
+
+.nav-version-mobile {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  /* nothing pinned: the character plate takes the whole second row */
+  html .topbar-pins:not(:has(.currency-strip)) {
+    display: none;
+  }
+  html .topbar:not(:has(.topbar-pins .currency-strip)) .char-plate {
+    grid-column: 1 / -1;
+  }
+  /* something pinned: its own row under the plate, scrolling sideways if it's long */
+  html .topbar-pins {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+  html .char-plate-body {
+    flex: 1;
+  }
+  .nav-version-mobile {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: var(--fs-2xs);
+    color: var(--dim);
+    white-space: nowrap;
+  }
+}
+
+/* ============ tutorial quest ============ */
+/* without the right-hand feed, the quest sits at the top of the page in the flow: it can't cover what it points at */
+@media (max-width: 1280px) {
+  html .quest.floating {
+    display: flex;
+    position: static;
+    width: auto;
+    max-width: 1280px;
+    margin: 0 auto var(--s-4);
+    box-shadow: none;
+    z-index: auto;
+  }
+}
+
+@media (max-width: 860px) {
+  html .quest.floating {
+    padding: 10px;
+    gap: 6px;
+  }
+  html .quest.floating .quest-portrait {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+html .quest-objective {
+  align-items: center;
+}
+
+html .quest-show {
+  flex: none;
+  min-height: 0;
+  padding: 2px 10px;
+}
+
+/* ============ combat ============ */
+/* even value columns: long modifier text wraps inside them instead of stretching one */
+html .matchup {
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.matchup-mods {
+  grid-column: 2 / -1;
+  min-width: 0;
+}
+
+/* the phone strip (CombatDock): off on wider screens, which show the field with the skill bar under it */
+.combat-dock {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  /* held at the bottom of the screen while the rest of the fight scrolls under it */
+  .combat-dock {
+    position: sticky;
+    /* flush with the bottom of the scrolling area, past the page's own bottom padding */
+    bottom: calc(-1 * var(--s-4));
+    z-index: 20;
+    display: grid;
+    gap: 6px;
+    margin: 0 calc(-1 * var(--s-3));
+    border-radius: var(--r) var(--r) 0 0;
+    padding: 8px var(--s-3) 10px;
+    border-top: 1px solid var(--line-2);
+    background: var(--panel);
+    box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.45);
+  }
+  /* the dock has the skills and flasks: no second copy under the field */
+  html .combat-page .action-bar {
+    display: none;
+  }
+  .dock-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: var(--fs-xs);
+  }
+  .dock-name {
+    flex: 0 1 38%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+  }
+  .dock-warning .dock-name {
+    flex-basis: 60%;
+  }
+  .dock-warning .bar {
+    flex: 1;
+  }
+  .dock-bars {
+    flex: 1;
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+  .dock-vitals {
+    align-items: end;
+  }
+  .dock-vitals .dock-bars.mana {
+    flex: 0 0 34%;
+  }
+  /* the fight's own buttons, smaller, so the field starts higher */
+  html .combat-page .page-head .page-actions .btn {
+    min-height: 0;
+    padding: 6px 10px;
+    font-size: var(--fs-sm);
+  }
+  .combat-dock .bar.labelled {
+    height: 16px;
+  }
+  .combat-dock .bar-label {
+    font-size: var(--fs-2xs);
+  }
+  /* six skills in one row: icon, name, cooldown */
+  html .combat-dock .skill-bar {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+  }
+  html .combat-dock .skill-btn {
+    min-height: 0;
+    padding: 4px 2px 3px;
+    gap: 1px;
+  }
+  html .combat-dock .skill-btn.empty {
+    min-height: 52px;
+  }
+  html .combat-dock .skill-gem .gem-icon {
+    width: 24px !important;
+    height: 28px !important;
+  }
+  html .combat-dock .slot-key,
+  html .combat-dock .skill-meta,
+  html .combat-dock .skill-rule {
+    display: none;
+  }
+  html .combat-dock .skill-btn.unusable .skill-rule {
+    display: none;
+  }
+  html .combat-dock .skill-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+  }
+  /* flasks in one row, short and wide */
+  html .combat-dock .flask-belt {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 4px;
+  }
+  html .combat-dock .flask {
+    width: auto;
+    height: 38px;
+    border-radius: 8px;
+    padding: 2px 4px;
+  }
+  html .combat-dock .flask-charges {
+    font-size: var(--fs-2xs);
+  }
+}
+
+/* ============ character creation: class, then name ============ */
+/* clip rather than hide, so the Next bar can stick to the bottom of the window */
+html .screen {
+  overflow: clip;
+}
+
+.create-head {
+  align-items: flex-end;
+}
+
+.create-step {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+html .create-chosen {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-color: var(--class);
+}
+
+html .create-next {
+  position: sticky;
+  bottom: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+  border-color: color-mix(in srgb, var(--class, var(--line-2)) 70%, var(--line));
+}
+
+.create-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.create-actions .btn.primary {
+  min-width: 160px;
+}
+
+@media (max-width: 480px) {
+  html .create-next {
+    padding: 10px 12px;
+  }
+  html .create-next .dim {
+    display: none;
+  }
+}
+
+/* ============ catch-up on time away ============ */
+html .catch-up .modal {
+  display: grid;
+  gap: var(--s-4);
+}

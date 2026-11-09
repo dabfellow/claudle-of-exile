@@ -90,6 +90,34 @@ export function passiveStats(ids: string[], masteries: Record<string, number> = 
   return st;
 }
 
+/**
+ * The same totals as passiveStats, holding only the stats the tree touches, and remembered while the tree is unchanged.
+ * rawStats runs every 50 ms step of a fight, and adding the full stat list each time took most of an offline catch-up.
+ * Each stat is summed node by node in the same order, so the numbers come out exactly the same.
+ */
+let passiveCache: { key: string; stats: Readonly<Partial<Record<StatKey, number>>> } | null = null;
+
+function passiveTotals(ids: string[], masteries: Record<string, number> = {}): Readonly<Partial<Record<StatKey, number>>> {
+  let key = ids.join(',');
+  for (const id of ids) if (PASSIVE_BY_ID[id]?.kind === 'mastery') key += `|${id}=${masteries[id] ?? -1}`;
+  if (passiveCache?.key === key) return passiveCache.stats;
+  const out: Partial<Record<StatKey, number>> = {};
+  const add = (from: Partial<Record<StatKey, number>>) => {
+    for (const k in from) out[k as StatKey] = (out[k as StatKey] ?? 0) + (from[k as StatKey] ?? 0);
+  };
+  for (const id of ids) {
+    const n = PASSIVE_BY_ID[id];
+    if (!n) continue;
+    add(n.stats);
+    if (n.kind === 'mastery') {
+      const opt = n.options?.[masteries[id] ?? -1];
+      if (opt) add(opt.stats);
+    }
+  }
+  passiveCache = { key, stats: Object.freeze(out) };
+  return passiveCache.stats;
+}
+
 export interface Attributes {
   str: number;
   dex: number;
@@ -183,7 +211,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
   }
   addStats(st, runeStats(s));
   addStats(st, mealStats(s));
-  addStats(st, passiveStats(s.passives, s.masteries));
+  addStats(st, passiveTotals(s.passives, s.masteries));
   const ascendancy = ascendancyOf(s);
   if (ascendancy) {
     addStats(st, ASCENDANCY_BY_ID[ascendancy].gate.stats);

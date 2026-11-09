@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { classDef } from '../data/classes';
 import { CRAFT_STEP_MS } from '../data/hideout';
 import { heistJob } from '../data/heist';
@@ -25,7 +25,8 @@ import { itemName } from '../engine/items';
 import { GemIcon } from './components/GemView';
 import { ItemIcon, ItemTip } from './components/ItemView';
 import { SKILL_KEYS } from './pages/SkillGemsPage';
-import { CurrencyAmount, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tooltip } from './components/common';
+import { fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tooltip } from './components/common';
+import { PinnedCurrencies } from './components/CurrencyPins';
 import { QuestTracker } from './components/QuestTracker';
 import { ChallengeTag, Crest } from './screens/Screens';
 import { APP_VERSION } from '../platform/errors';
@@ -182,9 +183,9 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
         </div>
         <button className="nav-item nav-switch-mobile" title="Switch character" onClick={() => game.exit()}>
           <span className="nav-icon">
-            <GameIcon name="combat" size={16} />
+            <Crest classId={s.character.classId} size={22} />
           </span>
-          <span className="nav-name">Switch</span>
+          <span className="nav-name">Switch character</span>
         </button>
         <a className="nav-item" href="/path-of-idle/wiki/" target="_blank" rel="noopener" style={{ textDecoration: 'none' }}>
           <span className="nav-icon">
@@ -206,12 +207,12 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
             <span className="nav-name">Admin</span>
           </button>
         )}
+        {/* phones hide the brand block, so the version (which tells you a refresh picked up the new build) goes here */}
+        <span className="nav-version-mobile">v{APP_VERSION}</span>
       </div>
     </nav>
   );
 }
-
-const STRIP = ['gold', 'chaos', 'exalted', 'divine'];
 
 export function TopBar({ go }: { go: (p: Page) => void }) {
   const s = useGame();
@@ -307,10 +308,9 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
           </div>
         </div>
       </div>
-      <div className="currency-strip">
-        {STRIP.map((id) => (
-          <CurrencyAmount key={id} id={id} amount={s.account.bank[id] ?? 0} label={id === 'gold' ? 'gold' : materialDef(id).name.split(' ')[0]} />
-        ))}
+      {/* only what you pinned from the Stash's Currency tab; the box stays so the character plate keeps the middle */}
+      <div className="topbar-pins">
+        <PinnedCurrencies s={s} />
       </div>
     </header>
   );
@@ -481,14 +481,18 @@ export function Feed() {
   );
 }
 
+/** Level-ups, unlocks and warnings, tucked in a corner (the top of a phone screen). Click one to clear it. */
 export function Toasts() {
   useGame();
   return (
-    <div className="toasts">
+    <div className="toasts" aria-live="polite">
       {game.toasts.map((t) => (
-        <div key={t.id} className={`toast ${t.tone}`}>
-          {t.text}
-        </div>
+        <button key={t.id} type="button" className={`toast ${t.tone}`} title="Dismiss" onClick={() => game.dismissToast(t.id)}>
+          <span className="toast-text">{t.text}</span>
+          <span className="toast-x" aria-hidden>
+            ×
+          </span>
+        </button>
       ))}
     </div>
   );
@@ -503,8 +507,26 @@ function awayLabel(ms: number): string {
   return m % 60 ? `${plural(h, 'hour')} ${plural(m % 60, 'minute')}` : plural(h, 'hour');
 }
 
+/** While a long absence is simulated in slices: how far it's got. Nothing can be changed until it's done. */
+function CatchUp({ progress }: { progress: number }) {
+  return (
+    <div className="modal-backdrop catch-up">
+      <div className="card modal away" role="status" aria-live="polite">
+        <div className="away-head">
+          <div className="away-kicker">The Exile Returns</div>
+          <h2>Catching up on your time away</h2>
+          <div className="muted">Playing out everything that happened while you were gone…</div>
+        </div>
+        <ProgressBar value={progress} size="md" color="var(--accent)" label={`${Math.floor(progress * 100)}%`} />
+      </div>
+    </div>
+  );
+}
+
 export function OfflineModal() {
   useGame();
+  const catchUp = useSyncExternalStore(game.subscribeCatchUp, () => game.catchUpProgress());
+  if (catchUp !== null) return <CatchUp progress={catchUp} />;
   const sum = game.offline;
   if (!sum) return null;
   const xp = Object.entries(sum.xp).filter(([, n]) => (n ?? 0) > 0) as [SkillId, number][];

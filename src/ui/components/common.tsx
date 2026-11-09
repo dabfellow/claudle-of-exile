@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
+// loads before styles.css (main.tsx imports the app first), so its overrides start with `html` to win ties
+import '../round2-session1.css';
 import { createPortal } from 'react-dom';
 import { isCurrency, materialDef } from '../../data/materials';
 import { GAME_ICONS, KIBYRA, packArtIsPixel, packArtUrl } from '../assets';
@@ -194,9 +196,64 @@ export function useAltKey(): boolean {
   );
 }
 
+/** How long a finger has to rest on something before its tooltip shows. */
+export const HOLD_MS = 450;
+/** A finger that drifts further than this is scrolling, not holding. */
+const HOLD_SLOP_PX = 10;
+const TIP_GAP = 10;
+const TIP_MARGIN = 8;
+
+interface Box {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/** The screen box of what a tooltip is attached to. A display: contents wrapper has no box of its own, so it's the union of its children's. */
+function anchorBox(el: Element | null): Box | null {
+  if (!el) return null;
+  const parts = getComputedStyle(el).display === 'contents' ? Array.from(el.children) : [el];
+  let box: Box | null = null;
+  for (const part of parts) {
+    const r = part.getBoundingClientRect();
+    if (!r.width && !r.height) continue;
+    box = box
+      ? { left: Math.min(box.left, r.left), top: Math.min(box.top, r.top), right: Math.max(box.right, r.right), bottom: Math.max(box.bottom, r.bottom) }
+      : { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+  }
+  return box;
+}
+
 /**
- * Hover tooltip rendered in a fixed layer that follows the cursor.
- * Holding Alt keeps it open where it is, even after the cursor leaves.
+ * Where a tooltip of size w × h goes: beside the thing it explains, never over it, and always on screen.
+ * With a mouse it tries the right, then the left, then below and above; for a finger, above first, where the hand isn't.
+ */
+export function placeTip(a: Box, w: number, h: number, touch: boolean, vw = window.innerWidth, vh = window.innerHeight): { left: number; top: number } {
+  const clampX = (x: number) => Math.max(TIP_MARGIN, Math.min(x, vw - w - TIP_MARGIN));
+  const clampY = (y: number) => Math.max(TIP_MARGIN, Math.min(y, vh - h - TIP_MARGIN));
+  const sides = {
+    right: { room: vw - TIP_MARGIN - (a.right + TIP_GAP), need: w, at: () => ({ left: a.right + TIP_GAP, top: clampY(a.top) }) },
+    left: { room: a.left - TIP_GAP - TIP_MARGIN, need: w, at: () => ({ left: a.left - TIP_GAP - w, top: clampY(a.top) }) },
+    below: { room: vh - TIP_MARGIN - (a.bottom + TIP_GAP), need: h, at: () => ({ left: clampX(a.left), top: a.bottom + TIP_GAP }) },
+    above: { room: a.top - TIP_GAP - TIP_MARGIN, need: h, at: () => ({ left: clampX(a.left), top: a.top - TIP_GAP - h }) },
+  };
+  const order: (keyof typeof sides)[] = touch ? ['above', 'below', 'right', 'left'] : ['right', 'left', 'below', 'above'];
+  for (const side of order) if (sides[side].room >= sides[side].need) return sides[side].at();
+  // nowhere it fits whole: the side with the most room, kept on screen
+  const best = order.reduce((b, side) => (sides[side].room / sides[side].need > sides[b].room / sides[b].need ? side : b));
+  const p = sides[best].at();
+  return { left: clampX(p.left), top: clampY(p.top) };
+}
+
+/** The one tooltip a finger is holding open, so pressing another closes it. */
+let closeTouchTip: (() => void) | null = null;
+
+/**
+ * Tooltip rendered in a fixed layer beside what it's attached to.
+ * Mouse: shows on hover; holding Alt keeps it open where it is, even after the cursor leaves.
+ * Touch: press and hold to show it (the tap doesn't count as a click then); the next touch anywhere closes it.
+ * A plain tap does what the thing normally does, without a tooltip.
  */
 export function Tooltip({
   content,
@@ -210,65 +267,128 @@ export function Tooltip({
   /** wrap in an SVG <g> instead of a <span> (for use inside <svg>) */
   svg?: boolean;
 }) {
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [open, setOpen] = useState<null | 'mouse' | 'touch'>(null);
   const [hovering, setHovering] = useState(false);
   const alt = useAltKey();
-  const ref = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ w: 0, h: 0 });
+  const wrapRef = useRef<HTMLElement & SVGGElement>(null);
+  const layerRef = useRef<HTMLDivElement>(null);
+  const [place, setPlace] = useState<{ left: number; top: number } | null>(null);
+  const hold = useRef<{ timer: number; x: number; y: number } | null>(null);
+  /** a hold just opened the tooltip: the click that follows the finger lifting isn't a click */
+  const swallowClick = useRef(false);
 
   // when Alt is released after the cursor left, close it
   useEffect(() => {
-    if (!alt && !hovering && pos) setPos(null);
-  }, [alt, hovering, pos]);
+    if (open === 'mouse' && !alt && !hovering) setOpen(null);
+  }, [alt, hovering, open]);
 
-  useEffect(() => {
-    if (pos && ref.current) {
-      const r = ref.current.getBoundingClientRect();
-      if (r.width !== size.w || r.height !== size.h) setSize({ w: r.width, h: r.height });
+  // sit beside the anchor; measured before paint, and again whenever the content or the anchor moves
+  useLayoutEffect(() => {
+    if (!open) {
+      if (place) setPlace(null);
+      return;
     }
+    const a = anchorBox(wrapRef.current);
+    const r = layerRef.current?.getBoundingClientRect();
+    if (!a || !r) return;
+    const p = placeTip(a, r.width, r.height, open === 'touch');
+    if (!place || Math.abs(p.left - place.left) > 0.5 || Math.abs(p.top - place.top) > 0.5) setPlace(p);
   });
 
-  let left = 0;
-  let top = 0;
-  if (pos) {
-    left = pos.x + 16;
-    top = pos.y + 16;
-    if (left + size.w > window.innerWidth - 8) left = pos.x - size.w - 12;
-    if (left < 8) left = 8;
-    if (top + size.h > window.innerHeight - 8) top = Math.max(8, window.innerHeight - size.h - 8);
-    if (top < 8) top = 8;
-  }
+  // a touch tooltip closes on the next touch anywhere; a mouse one when the page scrolls under it
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(null);
+    if (open === 'touch') {
+      closeTouchTip?.();
+      closeTouchTip = close;
+      // the finger that opened it is still down: listen from the next press on
+      const onDown = () => close();
+      const t = window.setTimeout(() => window.addEventListener('pointerdown', onDown, true), 0);
+      return () => {
+        window.clearTimeout(t);
+        window.removeEventListener('pointerdown', onDown, true);
+        if (closeTouchTip === close) closeTouchTip = null;
+      };
+    }
+    const onScroll = () => {
+      if (!altDown) close();
+    };
+    window.addEventListener('scroll', onScroll, true);
+    return () => window.removeEventListener('scroll', onScroll, true);
+  }, [open]);
 
-  const frozen = alt && !hovering;
+  useEffect(() => () => void (hold.current && window.clearTimeout(hold.current.timer)), []);
+
+  const cancelHold = () => {
+    if (hold.current) window.clearTimeout(hold.current.timer);
+    hold.current = null;
+  };
+
+  const frozen = alt && !hovering && open === 'mouse';
   const layer =
-    pos &&
+    open &&
     createPortal(
-      <div className={`tooltip-layer ${frozen ? 'frozen' : ''}`} style={{ left, top }} ref={ref}>
+      <div
+        className={`tooltip-layer ${frozen ? 'frozen' : ''} ${open === 'touch' ? 'touch' : ''}`}
+        style={place ? { left: place.left, top: place.top } : { left: 0, top: 0, visibility: 'hidden' }}
+        ref={layerRef}
+      >
         {content}
       </div>,
       document.body,
     );
   const handlers = {
-    onMouseMove: (e: React.MouseEvent) => {
-      setHovering(true);
-      // with Alt held the tooltip stays put so you can read it
-      if (!altDown || !pos) setPos({ x: e.clientX, y: e.clientY });
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.pointerType !== 'mouse') {
+        const h = hold.current;
+        if (h && Math.hypot(e.clientX - h.x, e.clientY - h.y) > HOLD_SLOP_PX) cancelHold();
+        return;
+      }
+      if (!hovering) setHovering(true);
+      if (open !== 'mouse') setOpen('mouse');
     },
-    onMouseLeave: () => {
+    onPointerLeave: (e: React.PointerEvent) => {
+      if (e.pointerType !== 'mouse') return;
       setHovering(false);
-      if (!altDown) setPos(null);
+      if (!altDown && open === 'mouse') setOpen(null);
+    },
+    onPointerDown: (e: React.PointerEvent) => {
+      if (e.pointerType === 'mouse') return;
+      swallowClick.current = false;
+      cancelHold();
+      const timer = window.setTimeout(() => {
+        hold.current = null;
+        swallowClick.current = true;
+        setOpen('touch');
+      }, HOLD_MS);
+      hold.current = { timer, x: e.clientX, y: e.clientY };
+    },
+    onPointerUp: cancelHold,
+    onPointerCancel: cancelHold,
+    onClickCapture: (e: React.MouseEvent) => {
+      if (!swallowClick.current) return;
+      swallowClick.current = false;
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    // a long press is the tooltip, not the right-click menu (pin, item actions) it would be on some phones
+    onContextMenuCapture: (e: React.MouseEvent) => {
+      if (!hold.current && open !== 'touch') return;
+      e.preventDefault();
+      e.stopPropagation();
     },
   };
   if (svg) {
     return (
-      <g {...handlers}>
+      <g ref={wrapRef} className="tip-anchor" {...handlers}>
         {children}
         {layer}
       </g>
     );
   }
   return (
-    <span style={{ display: 'contents', ...style }} {...handlers}>
+    <span ref={wrapRef} className="tip-anchor" style={{ display: 'contents', ...style }} {...handlers}>
       {children}
       {layer}
     </span>

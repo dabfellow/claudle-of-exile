@@ -824,8 +824,10 @@ function Matchup({ s, d, bossDef }: { s: GameState; d: Derived; bossDef: Monster
       {target && (target.mods?.length || target.hulking || (target.isBoss && target.mechanics?.length)) ? (
         <>
           <span className="muted">Modifiers</span>
-          <span />
-          <MonsterMods m={target} />
+          {/* the two value columns together: in one narrow column each word sat on its own line */}
+          <div className="matchup-mods">
+            <MonsterMods m={target} />
+          </div>
         </>
       ) : null}
       <StatRow
@@ -878,6 +880,61 @@ function Matchup({ s, d, bossDef }: { s: GameState; d: Derived; bossDef: Monster
           <b>{target.attackName}:</b> leaves {GROUND[monsterGround(target, target.dmgType)].name.toLowerCase()} under you for a few seconds. Run or Flee to step out of it faster.
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Phones: everything you act on mid-fight in one strip held at the bottom of the screen, so nobody has to scroll
+ * to see whether to drink, guard or interrupt. Your target's life and any wind-up, your Life, Energy Shield and
+ * Mana, then your skills and flasks. Tap to use; press and hold for the tooltip. Hidden on wider screens.
+ */
+function CombatDock({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
+  const c = s.combat!;
+  const alive = aliveMonsters(c);
+  const focus = focusTarget(s);
+  const caster = alive.find((m) => m.casting >= 0 && m.castKind);
+  return (
+    <div className="combat-dock" aria-label="Fight controls">
+      {caster ? (
+        <div className="dock-row dock-warning">
+          <span className="dock-name bad">
+            ⚠ {caster.name}: {caster.casts[caster.castKind!].name}
+          </span>
+          <ProgressBar className="cast-bar" value={1 - caster.casting / caster.castTotal} />
+        </div>
+      ) : null}
+      <div className="dock-row">
+        {focus ? (
+          <>
+            <span className={`dock-name rarity-${rarityOf(focus)}`}>
+              {focus.name}
+              {alive.length > 1 && <span className="dim"> +{alive.length - 1}</span>}
+            </span>
+            <span className="dock-bars">
+              {(focus.maxEs ?? 0) > 0 && <ProgressBar className="thin" value={(focus.es ?? 0) / focus.maxEs!} color="var(--es)" />}
+              <ProgressBar
+                value={Math.max(0, focus.life) / focus.maxLife}
+                color="linear-gradient(90deg, var(--life), var(--life-2))"
+                label={`${fmt(Math.max(0, focus.life))} / ${fmt(focus.maxLife)}`}
+              />
+            </span>
+          </>
+        ) : (
+          <span className="dock-name dim">{alive.length ? `${alive.length} on the field` : 'Searching for monsters…'}</span>
+        )}
+      </div>
+      <div className="dock-row dock-vitals">
+        <span className="dock-bars">
+          {d.maxEs > 0 && <ProgressBar className="thin" value={s.es / d.maxEs} color="linear-gradient(90deg, var(--es), var(--es-2))" />}
+          <ProgressBar value={s.life / d.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(s.life)} / ${fmt(d.maxLife)}${c.shield > 0 ? ` +${fmt(c.shield)}` : ''}`} ghost />
+        </span>
+        <span className="dock-bars mana">
+          <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} color="linear-gradient(90deg, var(--mana), var(--mana-2))" label={fmt(s.mana)} />
+        </span>
+      </div>
+      <SkillBar s={s} d={d} fx={fx} />
+      <FlaskBelt s={s} />
     </div>
   );
 }
@@ -1065,6 +1122,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
 
       {s.offlineHaul.length > 0 && <LootPile s={s} pile="offlineHaul" />}
       <LootPile s={s} pile="ground" />
+      <CombatDock s={s} d={d} fx={fx} />
     </div>
   );
 }

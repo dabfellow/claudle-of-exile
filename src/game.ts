@@ -11,7 +11,7 @@ import { itemName } from './engine/items';
 import { alignWarTable, fillAccount, freshAccount, giveKeepsake, mergeAccounts, settleCharacter } from './engine/account';
 import { realmFor, realmOf, soloRealm, STANDARD_REALM } from './engine/challenge';
 import { characterLevel } from './engine/character';
-import { MIN_OFFLINE_MS, simulateOffline, type OfflineSummary } from './engine/offline';
+import { mergeOffline, MIN_OFFLINE_MS, startOffline, type OfflineRun, type OfflineSummary } from './engine/offline';
 import { mathRng } from './engine/rng';
 import type { ClassId } from './data/classes';
 import { rewardText, TUTORIAL_STEPS } from './data/tutorial';
@@ -82,6 +82,20 @@ const AUTOSAVE_MS = 10_000;
 const ACCOUNT_PULL_MS = 30_000;
 /** frames further apart than this (tab hidden, laptop asleep) are treated as offline time */
 const BACKGROUND_MS = 5 * 60_000;
+/** how long each slice of a catch-up on time away runs before the page gets a frame */
+const CATCH_UP_SLICE_MS = 30;
+
+/** Run `fn` as soon as the page has had a chance to draw. A message channel isn't slowed down in a background tab the way timers are. */
+const nextSlice: (fn: () => void) => void = (() => {
+  if (typeof MessageChannel === 'undefined') return (fn: () => void) => void setTimeout(fn, 0);
+  const channel = new MessageChannel();
+  const queue: (() => void)[] = [];
+  channel.port1.onmessage = () => queue.shift()?.();
+  return (fn: () => void) => {
+    queue.push(fn);
+    channel.port2.postMessage(null);
+  };
+})();
 
 export type Screen = 'boot' | 'title' | 'menu' | 'select' | 'create' | 'game' | 'fallen';
 
@@ -120,6 +134,9 @@ class GameStore {
   lootLog: LootLine[] = [];
   toasts: Toast[] = [];
   offline: OfflineSummary | null = null;
+  /** a long catch-up on time away, running in slices */
+  private catchUp: OfflineRun | null = null;
+  private catchUpListeners = new Set<() => void>();
   /** recent xp gains, for the xp/hour readout */
   xpLog: { at: number; skill: SkillId; amount: number }[] = [];
   private xpRates = new Map<SkillId, { at: number; rate: number }>();
@@ -631,6 +648,8 @@ class GameStore {
     this.combatLog = [];
     this.lootLog = [];
     this.offline = null;
+    // a catch-up still running for the character being left is dropped (its save was kept as it was)
+    this.catchUp = null;
     this.screen = 'game';
     this.startLoop();
     this.notify();
@@ -787,6 +806,8 @@ class GameStore {
     this.lastFrame = performance.now();
     this.lastSave = performance.now();
     const step = () => {
+      // a catch-up is running in slices; the time it takes is played once it's done
+      if (this.catchUp) return;
       const now = performance.now();
       const dt = now - this.lastFrame;
       this.lastFrame = now;
@@ -811,18 +832,56 @@ class GameStore {
     this.runOffline(ms);
   }
 
+  /**
+   * Catch up on time away. A long absence takes a while to simulate, so it runs in slices between frames
+   * behind a progress screen (catchUpProgress) instead of freezing the page. The result is the same either way.
+   */
   private runOffline(ms: number) {
+    if (this.catchUp) return;
     this.baseCtx.now = Date.now();
     const hadAction = !!this.state.action;
-    const sum = simulateOffline(this.state, this.ctx, ms);
-    if (this.account?.provider === 'demo' && this.state.bossesDefeated.includes('sanctum')) void recordDemo('demo_act1_boss_killed');
-    if (this.state.fallen && this.loop) return void this.bury(this.state);
-    if (hadAction && sum.ms >= MIN_OFFLINE_MS) this.offline = sum;
+    const state = this.state;
+    const run = startOffline(state, this.ctx, ms);
+    const done = () => {
+      this.catchUp = null;
+      this.catchUpListeners.forEach((l) => l());
+      // the character was left (or swapped) mid-way: nothing to report
+      if (this.state !== state) return;
+      const sum = run.summary;
+      if (this.account?.provider === 'demo' && state.bossesDefeated.includes('sanctum')) void recordDemo('demo_act1_boss_killed');
+      if (state.fallen && this.loop) return void this.bury(state);
+      if (hadAction && sum.ms >= MIN_OFFLINE_MS) this.offline = this.offline ? mergeOffline(this.offline, sum) : sum;
+      this.notify();
+    };
+    // short absences finish in one go, as before
+    if (run.step(CATCH_UP_SLICE_MS)) return done();
+    this.catchUp = run;
     this.notify();
+    const slice = () => {
+      if (this.catchUp !== run) return;
+      if (this.state !== state) return done();
+      if (run.step(CATCH_UP_SLICE_MS)) return done();
+      this.catchUpListeners.forEach((l) => l());
+      nextSlice(slice);
+    };
+    nextSlice(slice);
   }
+
+  /** The catch-up in progress, if any: 0 to 1, or null when there isn't one. */
+  catchUpProgress(): number | null {
+    return this.catchUp ? this.catchUp.progress : null;
+  }
+
+  /** Re-render just the catch-up screen as it advances, without redrawing the game under it every slice. */
+  subscribeCatchUp = (fn: () => void) => {
+    this.catchUpListeners.add(fn);
+    return () => this.catchUpListeners.delete(fn);
+  };
 
   save() {
     if (this.screen !== 'game' || !this.saves) return;
+    // half caught up: keep the last save, so leaving now catches up on the whole absence next time
+    if (this.catchUp) return;
     this.lastSave = performance.now();
     this.state.lastSaved = Date.now();
     this.saves.save(this.state).catch((err) => {
@@ -887,6 +946,8 @@ class GameStore {
 
   /** Run a state change; a returned string is shown as an error toast. */
   act<T>(fn: (s: GameState, ctx: Ctx) => T): T {
+    // nothing changes mid catch-up (hotkeys, say), or the result would differ from one unbroken run
+    if (this.catchUp) return undefined as T;
     const result = fn(this.state, this.ctx);
     if (typeof result === 'string' && result) this.pushToast(result, 'warn');
     // the stash and the bag have to be written together, or a crash could lose or copy an item
@@ -902,6 +963,12 @@ class GameStore {
       this.toasts = this.toasts.filter((x) => x !== t);
       this.notify();
     }, 3200);
+    this.notify();
+  }
+
+  /** Click a toast to clear it before it fades on its own. */
+  dismissToast(id: number) {
+    this.toasts = this.toasts.filter((t) => t.id !== id);
     this.notify();
   }
 

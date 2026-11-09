@@ -84,6 +84,7 @@ function GameScreen() {
       <Sidebar page={page} go={go} />
       <TopBar go={go} />
       <main className="main" ref={mainRef}>
+        <QuestTracker floating />
         <DemoBanner />
         <EventBanner />
         {page !== 'settings' && <AdminMailNotice open={() => go('settings')} />}
@@ -93,7 +94,6 @@ function GameScreen() {
       <XpBar />
       <PinDock />
       <ItemMenuHost />
-      <QuestTracker floating />
       <OfflineModal />
       <IntroModal />
       <AccountModal />
