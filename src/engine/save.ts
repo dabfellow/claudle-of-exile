@@ -356,6 +356,11 @@ const MIGRATIONS: Record<number, Migration> = {
     raw.passivePointLevel = null;
     raw.passiveQuestPoints = null;
   },
+  40: (raw) => {
+    // Passive rewards fell from three per level to one. Recount unspent pools without removing allocations.
+    raw.passivePointLevel = null;
+    raw.passiveQuestPoints = null;
+  },
 };
 
 /** Top-level object fields whose defaults get merged under saved values. */

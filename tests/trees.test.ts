@@ -47,6 +47,33 @@ function route(start: string, target: string): string[] {
 }
 
 describe('character tree shape', () => {
+  it('spreads major damage themes across the tree instead of stacking them in one class wedge', () => {
+    const families: Record<string, string[]> = {
+      cold: ['coldPct', 'chilledDamagePct', 'chillOnHit', 'moreCold', 'glacialBulwark'],
+      fire: ['firePct', 'ignitePct', 'physAsFire', 'moreFire'],
+      lightning: ['lightPct', 'lightCrit', 'physAsLight', 'shockedDamagePct'],
+      chaos: ['chaosPct', 'chaosDotPct', 'witherDot', 'moreChaos'],
+      bleed: ['bleedPct', 'bleedOnHit', 'bleedVuln', 'rupture'],
+      poison: ['poisonPct', 'poisonOnHit', 'poisonWeaken', 'morePoison', 'poisonSpread'],
+      projectile: ['projectilePct', 'moreProjectile', 'extraChains'],
+    };
+
+    for (const [family, keys] of Object.entries(families)) {
+      const clusters = new Map<string, string>();
+      for (const node of PASSIVE_NODES) {
+        if (node.cluster && keys.some((key) => Number((node.stats as Record<string, number | undefined>)[key] ?? 0) !== 0)) {
+          clusters.set(node.cluster, node.region);
+        }
+      }
+      const regionCounts = [...clusters.values()].reduce<Record<string, number>>((counts, region) => {
+        counts[region] = (counts[region] ?? 0) + 1;
+        return counts;
+      }, {});
+      expect(Object.keys(regionCounts).length, `${family} region spread`).toBeGreaterThanOrEqual(4);
+      expect(Math.max(...Object.values(regionCounts)) / clusters.size, `${family} concentration`).toBeLessThanOrEqual(0.6);
+    }
+  });
+
   it('matches the agreed layout', () => {
     const count = (k: string) => PASSIVE_NODES.filter((n) => n.kind === k).length;
     expect(count('start')).toBe(7); // six classes and the Exile's centre
@@ -116,7 +143,7 @@ describe('character tree shape', () => {
     expect(loaded.passives).toEqual([]);
     expect(loaded.passiveProfiles[0].passives).toEqual([]);
     expect(loaded.travelPoints).toBe(160);
-    expect(loaded.passivePoints).toBe(240);
+    expect(loaded.passivePoints).toBe(80);
   });
 
   it('neighbouring classes link cluster to cluster across their border, well away from the centre', () => {
@@ -211,11 +238,11 @@ describe('masteries', () => {
 describe('character tree point economy', () => {
   it('credits separate level pools, caps mastery awards, and prices each node tier', () => {
     const s = newGame(1);
-    expect([TRAVEL_POINTS_PER_LEVEL, PASSIVE_POINTS_PER_LEVEL]).toEqual([2, 3]);
-    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([2, 3, 0]);
+    expect([TRAVEL_POINTS_PER_LEVEL, PASSIVE_POINTS_PER_LEVEL]).toEqual([2, 1]);
+    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([2, 1, 0]);
     s.skills.combat = charXpForLevel(100);
     settlePassivePoints(s);
-    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([200, 300, 20]);
+    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([200, 100, 20]);
     expect(passiveNodeCost(PASSIVE_BY_ID.str_hub)).toEqual({ pool: 'travelPoints', cost: 1 });
     // small nodes are the paths between clusters, bought with travel points
     expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_s1)).toEqual({ pool: 'travelPoints', cost: 1 });
@@ -233,9 +260,9 @@ describe('character tree point economy', () => {
     expect(s.travelPoints).toBe(2);
     s.bossesDefeated.push('sanctum');
     settlePassivePoints(s);
-    expect(s.passivePoints).toBe(4);
+    expect(s.passivePoints).toBe(2);
     settlePassivePoints(s);
-    expect(s.passivePoints).toBe(4);
+    expect(s.passivePoints).toBe(2);
   });
 
   it('recalculates existing characters to the new split without removing allocations', () => {
@@ -249,7 +276,7 @@ describe('character tree point economy', () => {
     const loaded = deserialize(JSON.stringify(raw));
     expect(loaded.version).toBe(SAVE_VERSION);
     expect(loaded.passives).toEqual(['str_hub']);
-    expect([loaded.travelPoints, loaded.passivePoints]).toEqual([19, 30]);
+    expect([loaded.travelPoints, loaded.passivePoints]).toEqual([19, 10]);
   });
 });
 

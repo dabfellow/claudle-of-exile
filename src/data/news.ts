@@ -10,7 +10,11 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Passive tree nodes now open a persistent preview before spending or refunding anything, with a separate confirmation button that works safely on touchscreens.',
+  'Character levels now grant 1 Passive Point instead of 3, while keeping 2 Travel Points so routes remain usable and major upgrades require real choices.',
+  'Cold, Fire, Lightning, Chaos, Bleed, Poison, and Projectile clusters are now spread across distant parts of the passive tree instead of being packed into one class wedge.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

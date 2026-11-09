@@ -118,6 +118,9 @@ function TreeCanvas<N extends CanvasNode>({
   names,
   tutId,
   backdrop,
+  selectedId,
+  selection,
+  interactionHint,
 }: {
   nodes: N[];
   byId: Record<string, N>;
@@ -140,6 +143,11 @@ function TreeCanvas<N extends CanvasNode>({
   tutId?: (id: string) => string | undefined;
   /** a picture drawn behind the tree, in tree coordinates, so it pans and zooms with the map */
   backdrop?: { href: string; x: number; y: number; width: number; height: number };
+  /** persistently highlighted node, used by touch-friendly inspection */
+  selectedId?: string | null;
+  /** persistent details/actions for the selected node */
+  selection?: ReactNode;
+  interactionHint?: string;
 }) {
   const home = focus ?? { x: 0, y: 0, k: 1 };
   const [view, setView] = useState<View>(home);
@@ -280,7 +288,7 @@ function TreeCanvas<N extends CanvasNode>({
             <g
               key={n.id}
               data-tut={tutId?.(n.id)}
-              className={`tree-node ${on ? 'on' : ''} ${can ? 'can' : ''} ${isMatched ? 'match' : ''}`}
+              className={`tree-node ${on ? 'on' : ''} ${can ? 'can' : ''} ${isMatched ? 'match' : ''} ${selectedId === n.id ? 'selected' : ''}`}
               transform={`translate(${n.x} ${n.y})`}
               style={{
                 opacity: dim ? 0.2 : 1,
@@ -302,7 +310,7 @@ function TreeCanvas<N extends CanvasNode>({
       </>
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `version` stands in for everything drawn
-  }, [version, nodes, byId, matches]);
+  }, [version, nodes, byId, matches, selectedId]);
 
   // Names show up once zoomed in to at least 1.8x, and dynamically scale to stay clear and readable
   const showNames = view.k >= 1.8;
@@ -340,7 +348,7 @@ function TreeCanvas<N extends CanvasNode>({
       className={`tree-wrap ${isFullscreen ? 'is-fullscreen' : ''} ${backdrop ? 'has-backdrop' : ''}`}
       ref={wrap}
       onPointerDown={(e) => {
-        if ((e.target as HTMLElement).closest('.tree-controls')) return;
+        if ((e.target as HTMLElement).closest('.tree-controls, .tree-selection-panel')) return;
         const r = wrap.current?.getBoundingClientRect();
         if (!r) return;
         const unit = size / Math.min(r.width, r.height);
@@ -437,6 +445,7 @@ function TreeCanvas<N extends CanvasNode>({
           </div>,
           document.body,
         )}
+      {selection}
       <div className="tree-controls">
         <button className="btn sm" onClick={() => zoomAt(1.25)} title="Zoom in">
           +
@@ -460,7 +469,7 @@ function TreeCanvas<N extends CanvasNode>({
           {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
         </button>
       </div>
-      <div className="tree-legend">Drag to pan · scroll to zoom · click to allocate {isFullscreen && '· Esc to exit fullscreen'}</div>
+      <div className="tree-legend">{interactionHint ?? 'Drag to pan · scroll to zoom · click to allocate'} {isFullscreen && '· Esc to exit fullscreen'}</div>
     </div>
   );
 }
@@ -671,7 +680,7 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
           Bypasses physical tree distance. Both sides connect when activated.
         </div>
         <div className={allocated ? 'good' : 'conduit-prompt'} style={{ marginTop: 8, fontSize: 'var(--fs-xs)', fontWeight: 600 }}>
-          {allocated ? `Conduit Active · Linked to ${destName}` : (reason ?? 'Activate Conduit (3 Travel Pts)')}
+          {allocated ? `Conduit active · linked to ${destName}` : (reason ?? 'Ready to activate · 4 Travel Points')}
         </div>
       </div>
     );
@@ -695,7 +704,7 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
         {n.desc && <div className="mod">{n.desc}</div>}
         <StatDeltas before={before} after={after} />
         <div className={reason ? 'warn' : allocated ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
-          {reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to breach Doomed Gate')}
+          {reason ?? (allocated ? 'Allocated · refundable for 1 Orb of Regret' : 'Ready to breach · 5 Passive Points')}
         </div>
       </div>
     );
@@ -715,7 +724,7 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
         <div className="dim" style={{ marginTop: 4, fontSize: 'var(--fs-xs)' }}>Only one Forbidden keystone can be taken.</div>
         <StatDeltas before={before} after={after} />
         <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
-          {reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to allocate (15 Passive Points)')}
+          {reason ?? (allocated ? 'Allocated · refundable for 1 Orb of Regret' : 'Ready to allocate · 15 Passive Points')}
         </div>
       </div>
     );
@@ -739,13 +748,13 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
             </div>
           ))}
           <div className="dim" style={{ fontSize: 'var(--fs-xs)', marginTop: 4 }}>
-            {allocated ? 'Click to change your pick (1 Orb of Regret) or refund.' : 'Click to choose one bonus (1 Mastery Point).'}
+            {allocated ? 'Change this pick for 1 Orb of Regret, or refund it.' : 'Choose one bonus for 1 Mastery Point.'}
           </div>
         </div>
         <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
           {n.kind === 'mastery' && !allocated && !reason
-            ? 'Click to pick a bonus'
-            : (reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to allocate'))}
+            ? 'Ready to choose a bonus'
+            : (reason ?? (allocated ? 'Allocated · refundable for 1 Orb of Regret' : 'Ready to allocate'))}
         </div>
       </div>
     );
@@ -766,9 +775,75 @@ function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
       ))}
       <StatDeltas before={before} after={after} />
       <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
-        {reason ?? (allocated ? 'Click to refund (1 Orb of Regret)' : 'Click to allocate')}
+        {reason ?? (allocated ? 'Allocated · refundable for 1 Orb of Regret' : `Ready to allocate · ${pointPriceLabel(n)}`)}
       </div>
     </div>
+  );
+}
+
+function pointPriceLabel(n: PassiveNode): string {
+  const price = passiveNodeCost(n);
+  const pool = price.pool === 'travelPoints' ? 'Travel' : price.pool === 'masteryPoints' ? 'Mastery' : 'Passive';
+  return `${price.cost} ${pool} Point${price.cost === 1 ? '' : 's'}`;
+}
+
+function CharacterNodeSelection({
+  s,
+  n,
+  refundMode,
+  onClose,
+  onMastery,
+}: {
+  s: GameState;
+  n: PassiveNode;
+  refundMode: boolean;
+  onClose: () => void;
+  onMastery: () => void;
+}) {
+  const allocated = s.passives.includes(n.id);
+  const fixedStart = n.kind === 'start' && (n.id === startNode(s) || s.character.classId !== 'exile');
+  const reason = fixedStart ? 'Starting points cannot be changed' : allocated ? refundReason(s, n.id) : allocateReason(s, n.id);
+  const actionLabel = allocated
+    ? 'Refund node · 1 Orb of Regret'
+    : n.kind === 'mastery'
+      ? 'Choose mastery bonus'
+      : `${isDoomed(n) ? 'Breach gate' : isCosmicGateway(n) ? 'Activate conduit' : 'Allocate node'} · ${pointPriceLabel(n)}`;
+
+  const confirm = () => {
+    if (n.kind === 'mastery' && !allocated) {
+      onMastery();
+      return;
+    }
+    game.act((st, ctx) => {
+      const err = allocated ? refund(st, ctx, n.id) : allocate(st, ctx, n.id);
+      if (err) ctx.emit({ t: 'info', text: err });
+    });
+  };
+
+  return (
+    <section className="tree-selection-panel" role="dialog" aria-label={`${n.name} node preview`}>
+      <div className="tree-selection-head">
+        <span>Node preview</span>
+        <button className="btn sm ghost" onClick={onClose} aria-label="Close node preview">×</button>
+      </div>
+      <CharacterNodeTip s={s} n={n} />
+      {!fixedStart && (
+        <div className="tree-selection-actions">
+          {n.kind === 'mastery' && allocated && (
+            <button className="btn sm ghost" onClick={onMastery}>Change mastery</button>
+          )}
+          <button
+            className={`btn sm ${allocated ? 'danger' : ''}`}
+            disabled={!!reason || (refundMode && !allocated)}
+            title={refundMode && !allocated ? 'Refund mode only acts on allocated nodes' : (reason ?? '')}
+            onClick={confirm}
+          >
+            {actionLabel}
+          </button>
+        </div>
+      )}
+      {refundMode && !allocated && !fixedStart && <div className="warn tree-selection-mode-note">Refund mode is active. Select an allocated node to refund it.</div>}
+    </section>
   );
 }
 
@@ -1064,6 +1139,7 @@ function isProfileUnlocked(id: number, s: GameState): boolean {
 function CharacterTree({ s }: { s: GameState }) {
   const [query, setQuery] = useState('');
   const [picker, setPicker] = useState<PassiveNode | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [refundMode, setRefundMode] = useState(false);
 
@@ -1122,6 +1198,7 @@ function CharacterTree({ s }: { s: GameState }) {
       game.act((_, ctx) => ctx.emit({ t: 'info', text: lockMsg }));
       return;
     }
+    setSelectedId(null);
     game.act((st, ctx) => {
       st.settings ??= {} as GameState['settings'];
       st.settings.passiveProfiles ??= profiles;
@@ -1221,32 +1298,10 @@ function CharacterTree({ s }: { s: GameState }) {
   );
   const matches = searchMatches(query, searchable);
   const totals = describeStats(Object.fromEntries(Object.entries(passiveStats(s.passives, s.masteries)).filter(([, v]) => v)));
+  const selected = selectedId ? PASSIVE_BY_ID[selectedId] : undefined;
 
   const click = (n: PassiveNode) => {
-    if (n.kind === 'start' && (n.id === myStart || s.character.classId !== 'exile')) return;
-    if (refundMode) {
-      if (allocated.has(n.id)) {
-        game.act((st, ctx) => {
-          const err = refund(st, ctx, n.id);
-          if (err) ctx.emit({ t: 'info', text: err });
-        });
-      } else {
-        game.act((_, ctx) => ctx.emit({ t: 'info', text: `${n.name} is not allocated` }));
-      }
-      return;
-    }
-    if (n.kind === 'mastery' && (allocated.has(n.id) || canTake(n.id))) return setPicker(n);
-    if (allocated.has(n.id)) {
-      game.act((st, ctx) => {
-        const err = refund(st, ctx, n.id);
-        if (err) ctx.emit({ t: 'info', text: err });
-      });
-    } else {
-      game.act((st, ctx) => {
-        const err = allocate(st, ctx, n.id);
-        if (err) ctx.emit({ t: 'info', text: err });
-      });
-    }
+    setSelectedId(n.id);
   };
 
   return (
@@ -1321,7 +1376,7 @@ function CharacterTree({ s }: { s: GameState }) {
           <button
             className={`btn sm ${refundMode ? 'danger active btn-refund-toggle' : 'ghost btn-refund-toggle'}`}
             onClick={() => setRefundMode(!refundMode)}
-            title={refundMode ? 'Click to exit refund mode' : 'Click to enter refund mode: click allocated nodes to refund them'}
+            title={refundMode ? 'Click to exit refund mode' : 'Click to enter refund mode, then select an allocated node'}
           >
             {refundMode ? '✓ Refund Mode Active' : 'Refund'}
           </button>
@@ -1358,6 +1413,17 @@ function CharacterTree({ s }: { s: GameState }) {
         renderNode={(n, on, can) => <PassiveNodeShape node={n} color={REGION_COLOR[n.region]} on={on} can={can} mine={n.id === myStart} />}
         tip={(n) => <CharacterNodeTip s={s} n={n} />}
         onClick={click}
+        selectedId={selectedId}
+        selection={selected ? (
+          <CharacterNodeSelection
+            s={s}
+            n={selected}
+            refundMode={refundMode}
+            onClose={() => setSelectedId(null)}
+            onMastery={() => setPicker(selected)}
+          />
+        ) : null}
+        interactionHint="Drag to pan · scroll to zoom · click a node to preview"
         tutId={(id) => (s.passives.length === 0 && canTake(id) ? 'tree-start' : undefined)}
         backdrop={CHAR_BACKDROP}
       />

@@ -7,9 +7,9 @@ import type { GameState } from './types';
 
 export type PassivePointPool = 'travelPoints' | 'passivePoints' | 'masteryPoints';
 
-/** Five ordinary character-tree points per level, weighted toward the costly Notables beside each path. */
+/** Two pathing points and one build-defining point per character level. */
 export const TRAVEL_POINTS_PER_LEVEL = 2;
-export const PASSIVE_POINTS_PER_LEVEL = 3;
+export const PASSIVE_POINTS_PER_LEVEL = 1;
 
 const GATEWAY_STAT_PAIRS: Record<string, string> = {
   gatewaySolar: 'gatewayLunar', gatewayLunar: 'gatewaySolar',

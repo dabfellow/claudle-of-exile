@@ -110,7 +110,7 @@ describe('migrating to the account', () => {
   };
 
   it('is the current version, and leaves a lone character exactly as it was', () => {
-    expect(SAVE_VERSION).toBe(40);
+    expect(SAVE_VERSION).toBe(41);
     const s = newGame(1);
     const item = sword(s);
     const { a, s: loaded } = settle(v20(s, { hideout: { stash: 2, bench: 3 }, rules: ['vitals'], slots: 2, hours: 12, stash: [[], [item], [], []] }));

@@ -587,6 +587,43 @@ const BORDERS: { right: Record<string, Spec>; left: Record<string, Spec> }[] = [
   },
 ];
 
+/*
+ * Deep-tree themes deliberately cross class lines. Starts and inner identity clusters stay put, while
+ * outer/home and border clusters trade places so an element or ailment never lives in one contiguous
+ * wedge. Keep these as swaps: every authored cluster remains on the tree and every region keeps the
+ * same number and shape of clusters.
+ */
+function swapHome(a: ClassRegion, aSlot: string, b: ClassRegion, bSlot: string): void {
+  const held = HOME[a][aSlot];
+  HOME[a][aSlot] = HOME[b][bSlot];
+  HOME[b][bSlot] = held;
+}
+
+function swapBorder(a: number, aSide: 'right' | 'left', aSlot: string, b: number, bSide: 'right' | 'left', bSlot: string): void {
+  const held = BORDERS[a][aSide][aSlot];
+  BORDERS[a][aSide][aSlot] = BORDERS[b][bSide][bSlot];
+  BORDERS[b][bSide][bSlot] = held;
+}
+
+// Elements: cold reaches Warrior, fire reaches Ranger/Shadow, and lightning reaches Duelist/Ranger.
+swapHome('int', 'E', 'str', 'P3');
+swapHome('int', 'C', 'dex', 'C');
+swapHome('templar', 'S4', 'shadow', 'S4');
+swapHome('int', 'L1', 'duelist', 'L1');
+swapHome('templar', 'R4', 'dex', 'R4');
+
+// Ailments and weapon themes: seed distant wedges instead of filling a single class border.
+swapHome('shadow', 'S2', 'str', 'S2');
+swapHome('dex', 'R3', 'templar', 'R3');
+swapHome('dex', 'S3', 'str', 'S3');
+swapHome('dex', 'L1', 'shadow', 'L1');
+
+// Border exchanges break up the large Chaos, Bleed and Poison blocks without touching starting areas.
+swapBorder(3, 'right', 'M', 0, 'right', 'M');
+swapBorder(3, 'right', 'R6', 1, 'right', 'M');
+swapBorder(0, 'left', 'F1', 4, 'right', 'E1');
+swapBorder(2, 'left', 'F1', 4, 'left', 'F1');
+
 const ORDER: ClassRegion[] = ['str', 'duelist', 'dex', 'shadow', 'int', 'templar'];
 
 /** Every cluster slot's contents for one region, with `${region}_${slot}` ids (the old named ids are applied after). */
