@@ -4,7 +4,7 @@ Last updated 2026-11-09. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.24, Loot, Sorted Your Way**, deployed 2026-11-09. Round 2 builds: layered Quartermaster loot filters, 129 achievements with play-changing rewards, events calendar, per-task life-skill mastery, mini-game double zones and Bench recipes without achievements. Before it, 0.4.23 (Achievements, Events and Mini-games).
+Latest confirmed live release: **0.4.25, Hideout Milestones and War Table Autos**, deployed 2026-11-09: new tiers for every hideout station plus a Rune Board, and auto flee, auto challenge and auto next zone behind War Table upgrades. Before it, 0.4.24 (Loot, Sorted Your Way). Round 2 builds: layered Quartermaster loot filters, 129 achievements with play-changing rewards, events calendar, per-task life-skill mastery, mini-game double zones and Bench recipes without achievements. Before it, 0.4.23 (Achievements, Events and Mini-games).
 
 1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are released; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
