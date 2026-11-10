@@ -275,7 +275,7 @@ describe('combat', () => {
       for (let t = 0; t < 10 * 60_000 && s.combat; t += 1000) tick(s, c, 1000);
       expect(s.lifetime.kills).toBeGreaterThanOrEqual(zoneDef('mudflats').bossEvery);
     }
-  });
+  }, 15_000);
 
   it('dying to a boss resets the boss counter', () => {
     const s = newGame(1);

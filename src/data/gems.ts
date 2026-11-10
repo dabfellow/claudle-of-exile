@@ -1215,9 +1215,9 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   // ---------- Maps skills: Group 3 — Totems ----------
   A({
     id: 'flame_totem', name: 'Flame Totem', attr: 'int', role: 'summon',     tags: ['spell', 'hit', 'totem', 'duration'],
-    manaCost: 15, cooldownMs: 12000, timeMs: 1500, color: '#d05a2a',
-    effect: { totem: true, base: [12, 18], type: 'fire', totemAttackMs: 1500, totemDurationMs: 20000 },
-    desc: 'Place a Flame Totem for 20s. It fires 12–18 fire damage every 1.5s at the nearest enemy.',
+    manaCost: 8, cooldownMs: 12000, timeMs: 1200, color: '#d05a2a',
+    effect: { totem: true, base: [4, 7], type: 'fire', totemAttackMs: 1500, totemDurationMs: 20000 },
+    desc: 'Place a Flame Totem for 20s. It fires 4–7 fire damage every 1.5s at the nearest enemy.',
     defaultRule: { when: 'notActive' },
   }),
   A({
@@ -1236,9 +1236,9 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   }),
   A({
     id: 'war_totem', name: 'War Totem', attr: 'str', role: 'summon', tags: ['attack', 'hit', 'totem', 'duration'],
-    manaCost: 18, cooldownMs: 12000, timeMs: 1500, color: '#c04a2a',
-    effect: { totem: true, weaponPct: 100, totemAttackMs: 2500, totemDurationMs: 20000 },
-    desc: 'Place a War Totem for 20s. It attacks for 100% physical every 2.5s.',
+    manaCost: 12, cooldownMs: 12000, timeMs: 1500, color: '#c04a2a',
+    effect: { totem: true, weaponPct: 80, totemAttackMs: 2500, totemDurationMs: 20000 },
+    desc: 'Place a War Totem for 20s. It attacks for 80% physical every 2.5s.',
     defaultRule: { when: 'notActive' },
   }),
   A({
@@ -1250,9 +1250,9 @@ export const ACTIVE_GEMS: ActiveGemDef[] = [
   }),
   A({
     id: 'siege_totem', name: 'Siege Totem', attr: 'str', role: 'summon', tags: ['attack', 'hit', 'totem', 'duration'],
-    manaCost: 20, cooldownMs: 15000, timeMs: 1500, color: '#9a7a4a',
-    effect: { totem: true, base: [20, 30], type: 'phys', totemAttackMs: 4000, totemDurationMs: 25000, stunChance: 0.5 },
-    desc: 'Place a Siege Totem for 25s. It fires 160% physical every 4s with 50% stun chance in a line through the target.',
+    manaCost: 16, cooldownMs: 15000, timeMs: 1500, color: '#9a7a4a',
+    effect: { totem: true, base: [16, 24], type: 'phys', totemAttackMs: 4000, totemDurationMs: 25000, stunChance: 0.5 },
+    desc: 'Place a Siege Totem for 25s. It fires 16–24 physical damage every 4s with 50% stun chance in a line through the target.',
     defaultRule: { when: 'notActive' },
   }),
   A({
@@ -1461,7 +1461,7 @@ const GEM_LEVELS: Record<string, number> = {
   // every class starts with a single target and an area skill, so those (Ice Shot, Frost Needle, Ground Slam, Rain
   // of Arrows, Rain of Daggers) need level 1
   quick_slash: 2, rending_cut: 3, war_cry: 4,
-  pummel: 6, feint: 6, leeching_blow: 6, brine_leech: 6, mind_sip: 6,
+  pummel: 6, feint: 6, flame_totem: 6, leeching_blow: 6, brine_leech: 6, mind_sip: 6,
   shock_nova: 8,
   barrage: 10, infernal_blow: 10,
   berserk: 12, consecrate: 12, meditate: 12,
@@ -1472,7 +1472,7 @@ const GEM_LEVELS: Record<string, number> = {
   tailwind: 22, arcane_surge: 22,
   vulnerability: 24, hobble: 24,
   elemental_weakness: 26, enfeeble: 26,
-  flagellate: 32, gash: 32, barbed_arrow: 32,
+  flagellate: 32, gash: 32, barbed_arrow: 32, war_totem: 32,
   scourge: 34, blood_rite: 34, blood_lance: 34,
   lacerate: 35,
   blood_ward: 36, stigmata: 36, burnt_offering: 36,
@@ -1486,7 +1486,7 @@ const GEM_LEVELS: Record<string, number> = {
   squall: 52, thunderhead: 52, whirlpool: 52, undertow_grip: 52, lamprey_hook: 52, barnacle_shell: 52, spray_screen: 52, tide_barrier: 52, drowning_bolt: 52,
   barnacle_brute: 54, drowned_bell: 54,
   leviathan: 56,
-  worldbreaker: 58, gale_of_knives: 58, eye_of_the_storm: 58, siege_shot: 58,
+  worldbreaker: 58, gale_of_knives: 58, eye_of_the_storm: 58, siege_shot: 58, siege_totem: 58,
   last_legion: 60, death_warrant: 60, spoils_of_war: 60, tax_collector: 60, imperial_tribute: 60, shieldwall: 60, shadow_court: 60, executioners_stroke: 60,
   royal_decree: 62,
   // supports
@@ -1510,12 +1510,12 @@ const GEM_LEVELS: Record<string, number> = {
   succession: 62, imperial_reach: 62,
   // Maps gems: level 66–78 (char level)
   brand_of_ruin: 66, sunder_mark: 66, fracture_mark: 66, doom_bolt: 66, entropy: 66, gut_punch: 66,
-  battle_cry: 66, hunters_call: 66, flame_totem: 66,
+  battle_cry: 66, hunters_call: 66,
   scorched_brand: 68, marked_for_death: 68, doom_strike: 68, cursed_arrow: 68, quickdraw: 68, rend: 68,
-  rallying_cry: 68, ice_totem: 68, war_totem: 68,
+  rallying_cry: 68, ice_totem: 68,
   void_brand: 70, shadow_mark: 70, intimidate: 70, dark_howl: 70, storm_totem: 70, shadow_totem: 70,
   charged_strike: 70, void_surge: 70, void_blast: 70,
-  ancestral_call: 72, void_wave: 72, deathblow: 72, siege_totem: 72, shadow_pact: 72,
+  ancestral_call: 72, void_wave: 72, deathblow: 72, shadow_pact: 72,
   martyrdom_brand: 74, chaos_totem: 74, soul_rip: 74, void_pact: 74,
   death_rattle: 74, primal_roar: 74,
   doomsday: 76, void_totem: 76,
@@ -1546,7 +1546,7 @@ const GEM_ACTS: Record<string, number> = {
   raiders_due: 2, horsefly_shot: 2, cinder_draw: 2, saddle_drop: 2, ash_veil: 2, horse_archers_arc: 2,
   surefoot: 2, fresh_horses: 2, trample: 2, wide_hex: 2, deep_hex: 2,
   // Act 3, Zealots and blood
-  lacerate: 3,
+  lacerate: 3, war_totem: 3,
   flagellate: 3, scourge: 3, blood_rite: 3, blood_ward: 3,
   gash: 3, barbed_arrow: 3, stigmata: 3,
   blood_lance: 3, burnt_offering: 3, transfusion: 3,
@@ -1568,20 +1568,20 @@ const GEM_ACTS: Record<string, number> = {
   savage_crew: 5, hardened_crew: 5, full_muster: 5, gale_force: 5, stormfront: 5,
   salt_thirst: 5, ebb: 5, undertow_of_thought: 5,
   // Act 6, The last empire
-  worldbreaker: 6, last_legion: 6, death_warrant: 6, gale_of_knives: 6, royal_decree: 6, eye_of_the_storm: 6, siege_shot: 6,
+  worldbreaker: 6, last_legion: 6, death_warrant: 6, gale_of_knives: 6, royal_decree: 6, eye_of_the_storm: 6, siege_shot: 6, siege_totem: 6,
   spoils_of_war: 6, tax_collector: 6, imperial_tribute: 6, shieldwall: 6, shadow_court: 6, executioners_stroke: 6,
   goaded: 6, funeral_rites: 6, crowned_storm: 6, eternal_ward: 6, reprisal: 6, succession: 6, imperial_reach: 6,
   tribute_of_iron: 6, blood_tax: 6, imperial_vintage: 6,
   // Maps — all 40 skills + signatures + 40 group/general supports
   brand_of_ruin: 7, scorched_brand: 7, sunder_mark: 7, void_brand: 7, fracture_mark: 7, marked_for_death: 7, shadow_mark: 7, martyrdom_brand: 7,
   battle_cry: 7, rallying_cry: 7, hunters_call: 7, intimidate: 7, ancestral_call: 7, dark_howl: 7, death_rattle: 7, primal_roar: 7,
-  flame_totem: 7, ice_totem: 7, storm_totem: 7, war_totem: 7, shadow_totem: 7, siege_totem: 7, chaos_totem: 7, void_totem: 7,
+  ice_totem: 7, storm_totem: 7, shadow_totem: 7, chaos_totem: 7, void_totem: 7,
   doom_bolt: 7, void_blast: 7, doom_strike: 7, entropy: 7, doomsday: 7, cursed_arrow: 7, shadow_pact: 7, void_pact: 7,
   gut_punch: 7, quickdraw: 7, charged_strike: 7, void_surge: 7, rend: 7, void_wave: 7, soul_rip: 7, deathblow: 7,
   // signatures (all act 7)
   corrosion: 7, flash_point: 7, exposed: 7, nihil: 7, shatter_burst: 7, execute_mark: 7, venom_brand: 7, payback: 7,
   war_drum: 7, second_wind: 7, pack_rush: 7, dread_shout: 7, forebears: 7, void_voice: 7, carnage: 7, primal_force: 7,
-  pyre_totem: 7, blizzard_totem: 7, tempest_totem: 7, battle_totem: 7, venom_totem: 7, long_siege: 7, corruptor: 7, soul_siphon: 7,
+  blizzard_totem: 7, tempest_totem: 7, venom_totem: 7, corruptor: 7, soul_siphon: 7,
   accelerant: 7, cascade: 7, cursed_blow: 7, doom_haste: 7, last_rites: 7, marked_arrow: 7, dark_communion: 7, dark_leech: 7,
   follow_blow: 7, hair_trigger: 7, overcharge: 7, dark_surge: 7, deep_hemorrhage: 7, chain_doom: 7, dark_drain: 7, executioner: 7,
   // group supports

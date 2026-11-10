@@ -2418,8 +2418,11 @@ function totemStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
     const sp = new Set(totem.specials ?? []);
     const e = nums.def.effect;
     const totemEff = 0.6 * (1 + d.raw.totemPct / 100) * (1 + d.raw.moreTotem / 100);
-    const [lo, hi] = e.base ?? [5, 10];
-    const type = (e.type ?? 'fire') as DamageType;
+    const pct = e.weaponPct ? weaponPctAt(nums.def, nums.level) / 100 : 0;
+    const [lo, hi] = e.weaponPct
+      ? [Math.max(1, Math.round(d.hit.phys[0] * pct)), Math.max(1, Math.round(d.hit.phys[1] * pct))]
+      : spellBaseAt(nums.def, nums.level);
+    const type: DamageType = (e.type ?? (e.weaponPct ? 'phys' : 'fire')) as DamageType;
     const typMult = type === 'phys' ? d.typeMult.phys : (d.typeMult[type as 'fire' | 'cold' | 'light' | 'chaos'] ?? 1);
     // Long Siege: the shot carries on to the next enemy
     const targets = sp.has('long_siege') && alive[1] ? [target, alive[1]] : [target];

@@ -52,14 +52,14 @@ function run(s: GameState, ctx: ReturnType<typeof makeCtx>, ms: number, until?: 
 // ---------- Gem metadata ----------
 
 describe('Maps gems metadata', () => {
-  it('all 40 skill gems have act 7', () => {
+  it('endgame maps skill gems have act 7', () => {
     const skillIds = [
       'brand_of_ruin', 'scorched_brand', 'sunder_mark', 'void_brand', 'fracture_mark',
       'marked_for_death', 'shadow_mark', 'martyrdom_brand',
       'battle_cry', 'rallying_cry', 'hunters_call', 'intimidate', 'ancestral_call',
       'dark_howl', 'death_rattle', 'primal_roar',
-      'flame_totem', 'ice_totem', 'storm_totem', 'war_totem', 'shadow_totem',
-      'siege_totem', 'chaos_totem', 'void_totem',
+      'ice_totem', 'storm_totem', 'shadow_totem',
+      'chaos_totem', 'void_totem',
       'doom_bolt', 'void_blast', 'doom_strike', 'entropy', 'doomsday', 'cursed_arrow',
       'shadow_pact', 'void_pact',
       'gut_punch', 'quickdraw', 'charged_strike', 'void_surge', 'rend', 'void_wave',
@@ -68,6 +68,12 @@ describe('Maps gems metadata', () => {
     for (const id of skillIds) {
       expect(gemAct(id), `${id} should be act 7`).toBe(7);
     }
+  });
+
+  it('scaled down totems unlock in Acts 1, 3 and 6', () => {
+    expect(gemAct('flame_totem')).toBe(1);
+    expect(gemAct('war_totem')).toBe(3);
+    expect(gemAct('siege_totem')).toBe(6);
   });
 
   it('marks gems have mark tag', () => {
@@ -327,6 +333,16 @@ describe('Totem placement and attacks', () => {
     // Still only 1 totem (replaced)
     expect(s.combat?.totems?.length ?? 0).toBe(1);
   });
+
+  it('war totem attacks with weapon physical damage', () => {
+    const { s, ctx, dummy } = arena('war_totem');
+    run(s, ctx, 3000, () => (s.combat?.totems?.length ?? 0) > 0);
+    expect(s.combat?.totems?.length ?? 0).toBe(1);
+    const before = dummy.life;
+    run(s, ctx, 5000);
+    expect(dummy.life).toBeLessThan(before);
+    expect(ctx.events.some((e) => e.t === 'hit' && e.dmgType === 'phys')).toBe(true);
+  });
 });
 
 // ---------- Warcry mechanic ----------
@@ -370,7 +386,7 @@ describe('Warcry scales with enemy count', () => {
 describe('Maps gems availability', () => {
   it('maps gems have act 7', () => {
     expect(gemAct('doom_bolt')).toBe(7);
-    expect(gemAct('flame_totem')).toBe(7);
+    expect(gemAct('ice_totem')).toBe(7);
     expect(gemAct('battle_cry')).toBe(7);
   });
 
