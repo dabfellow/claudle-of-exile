@@ -4,7 +4,7 @@ Last updated 2026-11-10. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.28, Pinnacle Combat Corrections**, deployed 2026-11-10: The Crownless's phase mechanics now run at their stated timing, executions keep shared-life bosses together, and Soul Tether and autonomous attacks follow normal combat protections. Before it, 0.4.27 (Passive Tree Profiles Fixed).
+Latest confirmed live release: **0.4.29, Mobile Navigation Fix**, deployed 2026-11-10: on phones, the navigation stays at the top while the page and passive tree scroll within the game. Before it, 0.4.28 (Pinnacle Combat Corrections).
 
 1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are released; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
