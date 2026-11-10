@@ -4,7 +4,7 @@ Last updated 2026-11-10. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.26, Totems Across the Campaign**, deployed 2026-11-09: Flame Totem (Act 1), War Totem (Act 3), and Siege Totem (Act 6) unlock during the campaign alongside their signature supports, allowing totem builds while leveling. Before it, 0.4.25 (Hideout Milestones and War Table Autos).
+Latest confirmed live release: **0.4.28, Pinnacle Combat Corrections**, deployed 2026-11-10: The Crownless's phase mechanics now run at their stated timing, executions keep shared-life bosses together, and Soul Tether and autonomous attacks follow normal combat protections. Before it, 0.4.27 (Passive Tree Profiles Fixed).
 
 1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are released; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
