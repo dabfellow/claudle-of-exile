@@ -3453,6 +3453,33 @@ h3 {
   stroke-width: 5px !important;
 }
 
+/* keyboard cursor: a ring round the node the arrow keys are on, shown only while the tree has focus */
+.tree-kb-focus {
+  fill: none;
+  stroke: #6ad3ff;
+  stroke-width: 6px;
+  stroke-dasharray: 14 8;
+  pointer-events: none;
+}
+
+.tree-wrap:focus {
+  outline: none;
+}
+
+.tree-wrap:focus-visible {
+  outline: 2px solid #6ad3ff;
+  outline-offset: -2px;
+}
+
+.tree-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .tree-legend {
   position: absolute;
   left: 14px;

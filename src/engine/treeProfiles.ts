@@ -1,6 +1,7 @@
 import type { Ctx } from './context';
-import { applyGearSet, keepingVitals } from './loadouts';
+import { applyGearSet, applySkillSet, keepingVitals } from './loadouts';
 import { ensureAtlas } from './maps';
+import { settlePassivePoints, spentPoints } from './passives';
 import { reachedAct } from './progress';
 import { seeded } from './rng';
 import type { GameState, TreeProfile } from './types';
@@ -21,15 +22,55 @@ export function isProfileUnlocked(s: GameState, profileId: string | number): boo
   const id = normalizeProfileId(profileId);
   if (id === 'profile_1') return true;
   if (id === 'profile_2') {
-    const act = (s as any).campaign?.act ?? reachedAct(s);
+    const act = Math.max((s as any).campaign?.act ?? 0, reachedAct(s));
     return act >= 5;
   }
   if (id === 'profile_3') {
     const highestMapTier = (s.maps as any)?.highestTier ?? 0;
     const atlasCleared = s.account?.atlas?.cleared ?? [];
-    return highestMapTier >= 5 || atlasCleared.some((t: number) => t >= 5);
+    const tierOf = (key: string) => parseInt(key.replace(/\D/g, ''), 10);
+    return (
+      highestMapTier >= 5 ||
+      atlasCleared.some((t: number) => t >= 5) ||
+      (s.maps?.run?.tier ?? 0) >= 5 ||
+      Object.keys(s.account?.maps ?? {}).some((k) => tierOf(k) >= 5) ||
+      Object.keys(s.maps?.stock ?? {}).some((k) => tierOf(k) >= 5)
+    );
   }
   return false;
+}
+
+/**
+ * The Tree page used to keep its own copy of the three profiles in settings. Fold that copy into the engine's
+ * profiles (once) so nothing a player saved is lost, then drop it so only one list remains.
+ * Runs before settleTreeLayout on load, so imported allocations get the same sanity check as any other.
+ */
+export function migrateSettingsProfiles(s: GameState): void {
+  const legacy = s.settings?.passiveProfiles;
+  const legacyActive = s.settings?.activePassiveProfileId;
+  if (s.settings) {
+    delete s.settings.passiveProfiles;
+    delete s.settings.activePassiveProfileId;
+  }
+  // the 5x tree reset empties every saved allocation anyway
+  if (!legacy || (s as any).characterTreeOverhaul !== 2) return;
+  s.passiveProfiles ??= [];
+  const activeId = normalizeProfileId(legacyActive ?? s.activePassiveProfile ?? 'profile_1');
+  for (const old of legacy) {
+    const id = normalizeProfileId(old.id);
+    let p = s.passiveProfiles.find((x) => x.id === id);
+    if (!p) {
+      p = { id, name: old.name, passives: [], masteries: {} };
+      s.passiveProfiles.push(p);
+    }
+    p.name = old.name || p.name;
+    // the profile in use is whatever is on the character right now
+    p.passives = id === activeId ? [...(s.passives ?? [])] : [...old.passives];
+    p.masteries = id === activeId ? { ...(s.masteries ?? {}) } : { ...old.masteries };
+    if (old.crossLinkGear && old.linkedGearId != null) p.linkedEquipment = old.linkedGearId;
+    if (old.crossLinkSkills && old.linkedSkillId != null) p.linkedSkillBar = old.linkedSkillId;
+  }
+  s.activePassiveProfile = activeId;
 }
 
 /** Ensure tree profile arrays and active IDs exist on GameState. */
@@ -167,21 +208,16 @@ export function switchPassiveProfile(
   }
 
   // Activate target profile
-  keepingVitals(s, () => {
-    s.passives = [...target.passives];
-    s.masteries = { ...target.masteries };
-  });
+  keepingVitals(s, () => swapPassives(s, target.passives, target.masteries));
   s.activePassiveProfile = normId;
 
   const actualCtx = ctx ?? dummyCtx();
   actualCtx.emit?.({ t: 'info', text: `Switched to ${target.name}` });
 
   // Cross-linking
-  if (target.linkedEquipment !== undefined) {
-    const gearSet = s.loadouts.gear[target.linkedEquipment] ?? s.loadouts.gear.find((g) => g.id === target.linkedEquipment);
-    if (gearSet) {
-      applyGearSet(s, actualCtx, gearSet.id);
-    }
+  applyGearLink(s, actualCtx, target.linkedEquipment);
+  if (target.linkedSkillBar !== undefined && s.loadouts.skills.some((x) => x.id === target.linkedSkillBar)) {
+    applySkillSet(s, target.linkedSkillBar);
   }
 
   if (target.linkedAtlas) {
@@ -193,6 +229,33 @@ export function switchPassiveProfile(
   }
 
   return null;
+}
+
+/** Wear the linked gear set, matched by the set's id. A set that has since been deleted is skipped. */
+function applyGearLink(s: GameState, ctx: Ctx, gearId: number | undefined): void {
+  if (gearId === undefined || !s.loadouts.gear.some((g) => g.id === gearId)) return;
+  applyGearSet(s, ctx, gearId);
+}
+
+/**
+ * Put a saved allocation on the character without changing how many points the character owns in total:
+ * what the old allocation cost goes back into the pools and what the new one costs comes out.
+ * (Swapping the lists alone left the pools as they were, so points were duplicated or lost.)
+ */
+function swapPassives(s: GameState, passives: string[], masteries: Record<string, number>): void {
+  settlePassivePoints(s);
+  const before = spentPoints(s);
+  const total = {
+    travelPoints: s.travelPoints + before.travelPoints,
+    passivePoints: s.passivePoints + before.passivePoints,
+    masteryPoints: s.masteryPoints + before.masteryPoints,
+  };
+  s.passives = [...passives];
+  s.masteries = { ...masteries };
+  const after = spentPoints(s);
+  s.travelPoints = Math.max(0, total.travelPoints - after.travelPoints);
+  s.passivePoints = Math.max(0, total.passivePoints - after.passivePoints);
+  s.masteryPoints = Math.max(0, total.masteryPoints - after.masteryPoints);
 }
 
 /** Save/update a Character Passive Tree profile */
@@ -214,13 +277,17 @@ export function savePassiveProfile(
     };
     s.passiveProfiles.push(p);
   } else {
-    p.passives = [...s.passives];
-    p.masteries = { ...s.masteries };
+    // only the profile in use mirrors the live tree; renaming another one must not overwrite it
+    if (p.id === s.activePassiveProfile) {
+      p.passives = [...s.passives];
+      p.masteries = { ...s.masteries };
+    }
     if (name !== undefined) p.name = name;
   }
 
   if (links) {
     if ('linkedEquipment' in links) p.linkedEquipment = links.linkedEquipment;
+    if ('linkedSkillBar' in links) p.linkedSkillBar = links.linkedSkillBar;
     if ('linkedAtlas' in links) p.linkedAtlas = links.linkedAtlas;
     if ('linkedSkilling' in links) p.linkedSkilling = links.linkedSkilling;
   }
@@ -276,12 +343,7 @@ export function switchAtlasProfile(
   const actualCtx = ctx ?? dummyCtx();
   actualCtx.emit?.({ t: 'info', text: `Switched Atlas to ${target.name}` });
 
-  if (target.linkedEquipment !== undefined) {
-    const gearSet = s.loadouts.gear[target.linkedEquipment] ?? s.loadouts.gear.find((g) => g.id === target.linkedEquipment);
-    if (gearSet) {
-      applyGearSet(s, actualCtx, gearSet.id);
-    }
-  }
+  applyGearLink(s, actualCtx, target.linkedEquipment);
 
   if ((target as any).linkedPassive) {
     switchPassiveProfile(s, actualCtx, (target as any).linkedPassive, visitSet);
@@ -374,12 +436,7 @@ export function switchSkillingProfile(
   const actualCtx = ctx ?? dummyCtx();
   actualCtx.emit?.({ t: 'info', text: `Switched Life Skills to ${target.name}` });
 
-  if (target.linkedEquipment !== undefined) {
-    const gearSet = s.loadouts.gear[target.linkedEquipment] ?? s.loadouts.gear.find((g) => g.id === target.linkedEquipment);
-    if (gearSet) {
-      applyGearSet(s, actualCtx, gearSet.id);
-    }
-  }
+  applyGearLink(s, actualCtx, target.linkedEquipment);
 
   if ((target as any).linkedPassive) {
     switchPassiveProfile(s, actualCtx, (target as any).linkedPassive, visitSet);
