@@ -3,7 +3,7 @@ import { HARD_BOSSES, UBER_BOSSES } from '../src/data/maps';
 import { BOSS_KEY_CRAFTS } from '../src/data/skills';
 import { zoneDef } from '../src/data/zones';
 import { bossLeftToRules, unlockEverything } from '../src/engine/automation';
-import { combatStep, lockTarget, targetOrder } from '../src/engine/combat';
+import { combatStep, lockTarget, makeMonster, setMonsterLife, startCombat, targetOrder } from '../src/engine/combat';
 import type { Ctx } from '../src/engine/context';
 import { atlasPointsEarned, canStartHardBoss, canStartUberBoss, devKit, startHardBoss, startUberBoss } from '../src/engine/maps';
 import { seeded } from '../src/engine/rng';
@@ -163,6 +163,41 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
     expect(allItems.some((it) => it.uniqueId === 'twinned_crown')).toBe(true);
   });
 
+  it('keeps shared-life map twins together when an execution kills either one', () => {
+    const s = unlockEndgame();
+    const ctx = makeCtx(20);
+    s.account.bank.regent_key = 1;
+    startHardBoss(s, ctx, 'twin_regents');
+    const d = deriveStats(s);
+    for (let i = 0; i < 20 && (s.combat?.monsters.filter((m) => m.isBoss).length ?? 0) < 2; i++) {
+      combatStep(s, ctx, 100, d);
+    }
+    const [solis, luna] = s.combat!.monsters.filter((m) => m.isBoss);
+    solis.twinOf = luna.uid;
+    luna.twinOf = solis.uid;
+    setMonsterLife(s, solis, 0);
+    expect(luna.life).toBe(0);
+  });
+
+  it('does not let Soul Tether hurt a protected boss', () => {
+    const s = newGame(1, { name: 'Tether', classId: 'warrior' });
+    const ctx = makeCtx(21);
+    startCombat(s, ctx, 'mudflats');
+    const c = s.combat!;
+    const boss = makeMonster(zoneDef('mudflats').monsters[0], true, 1);
+    c.monsters = [boss];
+    boss.chained = true;
+    boss.attackMs = 1;
+    boss.attackTimer = 0;
+    c.spawnMs = 1e12;
+    const d = deriveStats(s);
+    d.raw.soulTether = 1;
+    const life = boss.life;
+    combatStep(s, ctx, 100, d);
+    expect(s.life).toBeLessThan(d.maxLife);
+    expect(boss.life).toBe(life);
+  });
+
   it('handles The Crownless 3-phase transitions', () => {
     const s = unlockEndgame();
     const ctx = makeCtx(23);
@@ -190,6 +225,46 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
     combatStep(s, ctx, 100, d);
     expect(boss.crownlessPhase).toBe(3);
     expect(s.combat!.monsters.some((m) => m.choir)).toBe(false);
+  });
+
+  it('runs Crownless phase mechanics only in their intended phases', () => {
+    const s = unlockEndgame();
+    const ctx = makeCtx(24);
+    s.account.bank.crownless_key = 1;
+    startHardBoss(s, ctx, 'crownless');
+    const d = deriveStats(s);
+    for (let i = 0; i < 20 && !s.combat?.monsters.some((m) => m.isBoss); i++) {
+      combatStep(s, ctx, 100, d);
+    }
+    const boss = s.combat!.monsters.find((m) => m.isBoss)!;
+
+    // Phase 1 has plating, but never Choir adds. Keep the demo character alive
+    // and the boss in phase 1 while its first Fault opens.
+    for (let i = 0; i < 50 && !s.combat?.monsters.some((m) => m.weakPoint); i++) {
+      s.life = d.maxLife;
+      boss.life = boss.maxLife;
+      combatStep(s, ctx, 100, d);
+    }
+    const fault = s.combat!.monsters.find((m) => m.weakPoint)!;
+    expect(fault).toBeDefined();
+    for (let i = 0; i < 20; i++) {
+      s.life = d.maxLife;
+      boss.life = boss.maxLife;
+      combatStep(s, ctx, 100, d);
+    }
+    expect(s.combat!.monsters.some((m) => m.choir)).toBe(false);
+
+    // A Fault is available for the full advertised six seconds, not three.
+    for (let i = 0; i < 39; i++) {
+      s.life = d.maxLife;
+      boss.life = boss.maxLife;
+      combatStep(s, ctx, 100, d);
+    }
+    expect(s.combat!.monsters.some((m) => m.uid === fault.uid && m.weakPoint)).toBe(true);
+    s.life = d.maxLife;
+    boss.life = boss.maxLife;
+    combatStep(s, ctx, 100, d);
+    expect(s.combat!.monsters.some((m) => m.uid === fault.uid && m.weakPoint)).toBe(false);
   });
 
   it('handles Uber Bosses (First Exile, Architect of Ruin, Void Sovereign) and guaranteed Doom Sigil drops', () => {

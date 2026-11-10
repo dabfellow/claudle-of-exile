@@ -133,6 +133,13 @@ describe('Exertion: the powered version', () => {
     firstUse(s, ctx, 'charged_strike');
     expect(s.combat!.exertion).toBeGreaterThanOrEqual(2);
   });
+
+  it('does not leave an Exerted state for autonomous attacks', () => {
+    const { s, ctx } = arena('gut_punch');
+    s.combat!.exerting = true;
+    run(s, ctx, 50);
+    expect(s.combat!.exerting).toBe(false);
+  });
 });
 
 describe('Doom supports', () => {

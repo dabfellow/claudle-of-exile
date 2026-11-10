@@ -1796,6 +1796,15 @@ export function damageMonster(s: GameState, mon: MonsterInstance, amount: number
   }
 }
 
+/** Set a monster's Life for an execution while keeping a shared-life twin in lockstep. */
+export function setMonsterLife(s: GameState, mon: MonsterInstance, life: number): void {
+  mon.life = life;
+  if (mon.twinOf && s.combat) {
+    const twin = s.combat.monsters.find((m) => m.uid === mon.twinOf);
+    if (twin) twin.life = life;
+  }
+}
+
 /** A damage-over-time ailment from a hit, with the player's ailment modifiers. */
 function makeAilment(d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealt: number, a: { kind: Dot['kind']; pctPerSec: number; durationMs: number }): Dot {
   const r = d.raw;
@@ -2041,7 +2050,7 @@ function landHit(
   if (coup && mon.life < mon.maxLife / 2 && hasAscNode(s, 'headsman_sharp_axe')) dealt *= 1 + SHARP_AXE_MORE / 100;
   if (mon.plated && (mon.platingBreakMs ?? 0) <= 0) dealt *= 0.35;
   if ((mon.guardedMs ?? 0) > 0) dealt *= 0.2;
-  if (mon.isBoss && mon.mechanics.includes('choir') && c.monsters.some((m) => m.choir === 'wall' && m.life > 0)) dealt *= 0.6;
+  if (mon.isBoss && (mon.mechanics.includes('choir') || (mon.mechanics.includes('crownless') && mon.crownlessPhase === 2)) && c.monsters.some((m) => m.choir === 'wall' && m.life > 0)) dealt *= 0.6;
   if (mon.mirrorStance && mon.mirrorStance === c.lastPlayerStyle) dealt *= 0.7;
   if (mon.voidShielded && (mon.voidVulnMs ?? 0) <= 0) dealt *= 0.4;
   if ((mon.voidVulnMs ?? 0) > 0) dealt *= 1.35;
@@ -2053,7 +2062,7 @@ function landHit(
   // Death's Door: instant cull on any monster/boss below 30% Life
   if (r.deathsDoor > 0 && mon.life > 0 && mon.life <= mon.maxLife * 0.3) {
     c.dealt[c.dealt.length - 1] += Math.max(0, mon.life);
-    mon.life = 0;
+    setMonsterLife(s, mon, 0);
   }
   if (mon.voidShielded && (mon.voidVulnMs ?? 0) <= 0 && mon.life > 0) {
     mon.voidBuildup = (mon.voidBuildup ?? 0) + (e.addsDoom ? 2 : 1);
@@ -2072,13 +2081,13 @@ function landHit(
   if (coup && r.slackTideRefund > 0) gainMeter(s, d, 4);
   if (coup && r.coupCull > 0 && mon.life > 0 && mon.life <= mon.maxLife * 0.12) {
     c.dealt[c.dealt.length - 1] += Math.max(0, mon.life);
-    mon.life = 0;
+    setMonsterLife(s, mon, 0);
     s.life = Math.min(d.maxLife, s.life + d.maxLife * 0.1);
     s.es = Math.min(d.maxEs, s.es + d.maxEs * 0.1);
   }
   if (coup && r.headsmanGuillotine > 0 && mon.life > 0 && mon.life <= mon.maxLife * 0.15) {
     c.dealt[c.dealt.length - 1] += Math.max(0, mon.life);
-    mon.life = 0;
+    setMonsterLife(s, mon, 0);
   }
   if (crit && def.tags.includes('spell') && r.unblinkingFlare > 0 && mon.life > 0 && mon.dots.some((x) => x.kind === 'ignite' || x.kind === 'burn')) {
     const flare = Math.max(1, Math.round((dealt * r.unblinkingFlare) / 100));
@@ -2103,7 +2112,7 @@ function landHit(
       applyDot(m, makeAilment(d, nums, m, cataclysmDmg, { kind: 'ignite', pctPerSec: IGNITE_SHARE / (IGNITE_MS / 1000), durationMs: IGNITE_MS }));
       if (r.deathsDoor > 0 && m.life > 0 && m.life <= m.maxLife * 0.3) {
         c.dealt[c.dealt.length - 1] += Math.max(0, m.life);
-        m.life = 0;
+        setMonsterLife(s, m, 0);
       }
     }
   }
@@ -2232,7 +2241,7 @@ function landHit(
       ctx.emit({ t: 'hit', target: 'monster', amount: shatterDmg, crit: true, dmgType: 'cold', monsterUid: m.uid });
       if (r.deathsDoor > 0 && m.life > 0 && m.life <= m.maxLife * 0.3) {
         c.dealt[c.dealt.length - 1] += Math.max(0, m.life);
-        m.life = 0;
+        setMonsterLife(s, m, 0);
       }
     }
   }
@@ -2304,7 +2313,7 @@ function fireMarkBurst(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance)
       if (!t.isBoss && t.life <= t.maxLife * EXECUTE_AT) {
         c.dealt[c.dealt.length - 1] += t.life;
         ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(t.life), dmgType: 'phys', monsterUid: t.uid });
-        t.life = 0;
+        setMonsterLife(s, t, 0);
       } else {
         const amount = Math.max(1, Math.round((t.maxLife - t.life) * EXECUTE_MISSING));
         damageMonster(s, t, amount);
@@ -2396,6 +2405,7 @@ function creditKill(s: GameState, nums: SkillNumbers): void {
  */
 function totemStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   const c = s.combat!;
+  c.exerting = false;
   const alive = aliveMonsters(c);
   const ended: NonNullable<CombatRuntime['totems']> = [];
   c.totems = c.totems!.filter((t) => {
@@ -3369,7 +3379,7 @@ function afterCoup(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): vo
   if (asc === 'headsman') {
     if (!mon.isBoss && mon.life < mon.maxLife * THE_BLOCK_AT && hasAscNode(s, 'headsman_the_block')) {
       c.dealt[c.dealt.length - 1] += Math.max(0, mon.life);
-      mon.life = 0;
+      setMonsterLife(s, mon, 0);
     }
     if (mon.life <= 0) c.mech = Math.max(c.mech, meterMax('malice', d.raw) / 2);
     else if (hasAscNode(s, 'headsman_marked')) mon.vulnMs = Math.max(mon.vulnMs, 6000);
@@ -3415,6 +3425,7 @@ export function hawkTarget(s: GameState): MonsterInstance | undefined {
 
 function hawkStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   const c = s.combat!;
+  c.exerting = false;
   c.asc.hawkMs -= dt;
   if (c.asc.hawkMs > 0) return;
   const mon = hawkTarget(s);
@@ -3656,7 +3667,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   const totalTaken = dmg + Math.round(toEs) + absorbed;
   if (r.soulTether > 0 && totalTaken > 0 && mon.life > 0) {
     const trueDmg = Math.max(1, Math.round(totalTaken * 0.5));
-    mon.life -= trueDmg;
+    damageMonster(s, mon, trueDmg);
     ctx.emit({ t: 'hit', target: 'monster', amount: trueDmg, dmgType: 'chaos', monsterUid: mon.uid });
   }
   if (r.recoupPct > 0 && taken > 0 && s.life > 0) {
@@ -3706,7 +3717,7 @@ function onBlock(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     const totalTaken = dmg + Math.round(toEs) + absorbed;
     if (r.soulTether > 0 && totalTaken > 0 && mon.life > 0) {
       const trueDmg = Math.max(1, Math.round(totalTaken * 0.5));
-      mon.life -= trueDmg;
+      damageMonster(s, mon, trueDmg);
       ctx.emit({ t: 'hit', target: 'monster', amount: trueDmg, dmgType: 'chaos', monsterUid: mon.uid });
     }
   }
@@ -3956,6 +3967,7 @@ function hurtMinion(ctx: Ctx, d: Derived, mon: MonsterInstance, x: Minion, raw: 
  */
 function minionStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   const c = s.combat!;
+  c.exerting = false;
   // Grave Pact: the fallen rise again, if their gem is still on the bar and there's room
   if (c.rising?.length) {
     for (const r of c.rising) r.ms -= dt;
@@ -4062,6 +4074,7 @@ function stormsAnswer(s: GameState, ctx: Ctx, d: Derived): void {
 /** Storms run their course whether or not anything is on the field, and go if their gem leaves the bar. */
 function stormStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   const c = s.combat!;
+  c.exerting = false;
   if (!c.storms?.length) return;
   for (const st of c.storms) {
     st.remainingMs -= dt;

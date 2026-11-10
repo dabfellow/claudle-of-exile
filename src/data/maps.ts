@@ -1029,7 +1029,7 @@ export const HARD_BOSS_ZONES: ZoneDef[] = [
       slam: { name: 'Shatter the Line', kind: 'attack', ms: 3000 },
       nova: { name: 'Triune Storm', kind: 'spell', ms: 3400 },
       channel: { name: 'Deep Call', kind: 'spell', ms: 5200 },
-      mechanics: ['slam', 'nova', 'crownless', 'plating', 'choir', 'channel', 'enrage'],
+      mechanics: ['slam', 'nova', 'crownless', 'channel', 'enrage'],
       novaType: 'light',
     },
     actBoss: false,

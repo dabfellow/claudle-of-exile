@@ -1,6 +1,6 @@
 # Roadmap and decisions
 
-Last updated 2026-11-09. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-10. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
@@ -392,6 +392,10 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Player reports: executions now keep twin bosses' shared Life synchronized; Exerted bonuses apply only to the player skill that spent the charges; and Soul Tether respects protected bosses. — done 2026-11-10
+
+- [x] Player report: The Crownless no longer runs its Cracked Fault and Choir mechanics twice per tick; Faults stay open for 6 seconds, and the Choir starts only at 66% life. — done 2026-11-10
 
 - [x] Built layered Quartermaster loot filters with level-scaled presets, category overrides, ordered conditions/actions, stash and ground highlights, safe share codes, time-away handling and old-save migration. Released in 0.4.24. — done 2026-11-09
 
