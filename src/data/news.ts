@@ -17,6 +17,15 @@ export const UPCOMING: string[] = [
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.4.27',
+    date: '10 Nov 2026',
+    title: 'Passive Tree Profiles Fixed',
+    items: [
+      'Passive tree profiles no longer duplicate or lose points when you switch between them, and profile gear and skill-bar links now work.',
+      'The passive tree can be used from the keyboard: Tab to it, arrow keys to move, Enter to select, plus and minus to zoom.',
+    ],
+  },
+  {
     version: '0.4.26',
     date: '9 Nov 2026',
     title: 'Totems Across the Campaign',

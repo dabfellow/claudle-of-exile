@@ -65,7 +65,7 @@ export function passiveNodeCost(node: PassiveNode): { pool: PassivePointPool; co
   return { pool: 'passivePoints', cost: 1 };
 }
 
-function spentPoints(s: Pick<GameState, 'passives'>): Record<PassivePointPool, number> {
+export function spentPoints(s: Pick<GameState, 'passives'>): Record<PassivePointPool, number> {
   const spent = { travelPoints: 0, passivePoints: 0, masteryPoints: 0 };
   for (const id of s.passives) {
     const node = PASSIVE_BY_ID[id];

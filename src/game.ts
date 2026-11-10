@@ -16,7 +16,7 @@ import { mergeOffline, MIN_OFFLINE_MS, startOffline, type OfflineRun, type Offli
 import { mathRng } from './engine/rng';
 import type { ClassId } from './data/classes';
 import { rewardText, TUTORIAL_STEPS } from './data/tutorial';
-import { serializeBundle } from './engine/save';
+import { NewerSaveError, serializeBundle } from './engine/save';
 import { newCharacterId, newGame, tick } from './engine/state';
 import { tutorialPage, withTutorial } from './engine/tutorial';
 import { AppAccounts, isCloudAccount, type Account, type AuthProviderId } from './platform/accounts';
@@ -409,7 +409,14 @@ class GameStore {
     let merged = 0;
     for (const c of this.characters) {
       if (c.handedOver) continue;
-      const s = await saves.load(c.id);
+      let s: GameState | null;
+      try {
+        s = await saves.load(c.id);
+      } catch (err) {
+        // saved by a newer version than this page: leave it alone, entering it explains why
+        if (err instanceof NewerSaveError) continue;
+        throw err;
+      }
       if (!s) continue;
       const realm = realmOf(s.character);
       const home = realm === STANDARD_REALM ? this.realm : ((await saves.loadAccount(realm)) ?? freshAccount(realm));
@@ -548,7 +555,16 @@ class GameStore {
   async enter(id: string) {
     // first, so the load below sees what the other tab saved on its way out
     await this.tabs.claim(id);
-    const s = await this.saves?.load(id);
+    let s: GameState | null | undefined;
+    try {
+      s = await this.saves?.load(id);
+    } catch (err) {
+      if (err instanceof NewerSaveError) {
+        this.pushToast('This character was saved by a newer version of the game. Refresh the page to update.', 'bad');
+        return;
+      }
+      throw err;
+    }
     if (!s) {
       this.pushToast('That character could not be loaded', 'bad');
       return;

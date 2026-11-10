@@ -223,6 +223,26 @@ drop policy if exists "anyone can send feedback" on public.feedback;
 create policy "anyone can send feedback" on public.feedback for insert to anon,authenticated
   with check(status='new' and (user_id is null or user_id=auth.uid()) and pg_column_size(context)<=262144);
 
+-- Feedback can't be used to fill the database: each signed-in player may send 10 an hour, guests (who can't be
+-- told apart) 30 an hour between them, and the table stops accepting new rows at 20000. Runs as the table owner
+-- because players can't read the table, so a count as the player would always be zero.
+alter table public.feedback drop constraint if exists feedback_message_size;
+alter table public.feedback add constraint feedback_message_size check(char_length(message)<=5000) not valid;
+create or replace function public.feedback_limit() returns trigger language plpgsql security definer set search_path=public,pg_temp as $$
+begin
+  if (select count(*) from feedback) >= 20000 then raise exception 'Feedback is full right now. Please try again later.'; end if;
+  if new.user_id is not null then
+    if (select count(*) from feedback where user_id=new.user_id and created_at>now()-interval '1 hour') >= 10 then
+      raise exception 'You have sent a lot of feedback this hour. Please try again later.';
+    end if;
+  elsif (select count(*) from feedback where user_id is null and created_at>now()-interval '1 hour') >= 30 then
+    raise exception 'Too much feedback is coming in right now. Please try again later, or sign in to send it.';
+  end if;
+  return new;
+end $$;
+drop trigger if exists feedback_limit on public.feedback;
+create trigger feedback_limit before insert on public.feedback for each row execute function public.feedback_limit();
+
 create or replace function public.admin_feedback(p_status text default 'all',p_kind text default 'all',p_version text default 'all') returns jsonb
 language plpgsql stable security definer set search_path=public,pg_temp as $$
 declare result jsonb;
@@ -283,6 +303,7 @@ begin
   return result;
 end $$;
 
+revoke all on function public.feedback_limit() from public,anon,authenticated;
 revoke all on function public.admin_require(),public.admin_number(text),public.admin_version(text),public.admin_backup_save(),public.admin_stamp_save(),public.admin_log_event(),public.admin_players(text,int),public.admin_inspect(text),public.admin_restore(bigint,uuid,text),public.admin_message(uuid,uuid,text,text,bigint,boolean,text,bigint,jsonb),public.record_demo(uuid,text),public.admin_feedback(text,text,text),public.admin_resolve_before(text),public.admin_overview() from public,anon,authenticated;
 grant execute on function public.admin_players(text,int),public.admin_inspect(text),public.admin_restore(bigint,uuid,text),public.admin_message(uuid,uuid,text,text,bigint,boolean,text,bigint,jsonb),public.admin_feedback(text,text,text),public.admin_resolve_before(text),public.admin_overview() to authenticated;
 grant execute on function public.record_demo(uuid,text) to anon,authenticated;

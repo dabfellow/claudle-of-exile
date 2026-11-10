@@ -22,7 +22,7 @@ import type { AccountPool, AccountTransfer, FlaskInstance, GameState, Item } fro
 import { charXpFromOldCurve } from './xp';
 import { MASTERY_CAP, settleSkillingMastery } from './skillingMastery';
 import { migrateLegacyLootFilters, settleLootFilters } from './lootFilter';
-import { settleTreeProfiles } from './treeProfiles';
+import { migrateSettingsProfiles, settleTreeProfiles } from './treeProfiles';
 
 // kept from the game's old name: changing it would orphan every existing save
 export const SAVE_KEY = 'claudle-of-exile-save';
@@ -432,11 +432,24 @@ export function serializeBundle(s: GameState): string {
   return JSON.stringify(bundleCharacter(s));
 }
 
+/**
+ * Thrown when a save was written by a newer version of the game than this page is running.
+ * Loading it would skip changes this page doesn't know about and then stamp it with an older version
+ * when saved, so the page refuses and asks for a refresh instead.
+ */
+export class NewerSaveError extends Error {
+  constructor(public readonly saveVersion: number) {
+    super(`This save is from a newer version of the game (${saveVersion}, this page is ${SAVE_VERSION}). Refresh the page to update.`);
+    this.name = 'NewerSaveError';
+  }
+}
+
 /** Loads a character with an empty account: the caller attaches the real one. */
 export function deserialize(json: string): GameState {
   const raw = JSON.parse(json) as Record<string, unknown>;
   raw.account ??= freshAccount();
   let v = typeof raw.version === 'number' ? raw.version : 0;
+  if (v > SAVE_VERSION) throw new NewerSaveError(v);
   while (v < SAVE_VERSION) {
     MIGRATIONS[v]?.(raw);
     v++;
@@ -464,6 +477,7 @@ export function deserialize(json: string): GameState {
   settleHeist(s);
   settleExpedition(s);
   settleSkillingMastery(s);
+  migrateSettingsProfiles(s);
   settleTreeLayout(s);
   settlePassivePoints(s);
   settleLootFilters(s);

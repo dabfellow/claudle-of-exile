@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ASCENDANCY_NODE_BY_ID,
@@ -15,7 +15,6 @@ import { CLASS_SECTORS, PASSIVE_BY_ID, PASSIVE_NODES, REGION_NAMES, type Passive
 import { SKILL_TREE_BY_ID, SKILL_TREE_NODES, SKILL_TREE_START, type SkillTreeNode } from '../../data/skillTree';
 import { SKILLS } from '../../data/skills';
 import { describeStats } from '../../data/statText';
-import { ZONES } from '../../data/zones';
 import {
   allocateAscNode,
   ascendancyPointsLeft,
@@ -32,7 +31,7 @@ import {
 } from '../../engine/ascendancy';
 import { ruleLockReason } from '../../engine/automation';
 import { isClassic } from '../../engine/challenge';
-import { applyGearSet, applySkillSet } from '../../engine/loadouts';
+import { isProfileUnlocked, normalizeProfileId, savePassiveProfile, switchPassiveProfile } from '../../engine/treeProfiles';
 import {
   allocate,
   allocateReason,
@@ -49,7 +48,7 @@ import {
 } from '../../engine/passives';
 import { allocateSkillNode, refundSkillNode, refundSkillNodeReason, skillNodeReason, skillPointsLeft, skillTreePoints } from '../../engine/skillTree';
 import { deriveStats, passiveStats, type Derived } from '../../engine/stats';
-import type { GameState, NovaRelease, PassiveProfile, SkillId, TargetOrder, TargetPriority } from '../../engine/types';
+import type { GameState, NovaRelease, SkillId, TreeProfile, TargetOrder, TargetPriority } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { PageHeader, Tabs } from '../components/common';
 import { ORDERS, PRIORITIES } from './CombatPage';
@@ -165,6 +164,88 @@ function TreeCanvas<N extends CanvasNode>({
   const clickRef = useRef(onClick);
   clickRef.current = onClick;
   const clamp = (k: number) => Math.min(maxZoom, Math.max(0.4, k));
+
+  // Keyboard: the canvas takes focus, arrow keys move a cursor from node to node, Enter acts like a click
+  const [kbId, setKbId] = useState<string | null>(null);
+  const [kbActive, setKbActive] = useState(false);
+  const kbNode = kbId ? byId[kbId] : undefined;
+  const describeNode = (n: N): string => {
+    const info = n as unknown as { name?: string; kind?: string };
+    const state = isOn(n.id) ? 'taken' : canTake(n.id) ? 'available' : 'locked';
+    return `${info.name ?? n.id}${info.kind ? `, ${info.kind}` : ''}, ${state}`;
+  };
+  /** the nearest node roughly in a direction, preferring one the cursor's node is joined to */
+  const nodeToward = (from: N, dx: number, dy: number): N | null => {
+    let best: N | null = null;
+    let bestScore = Infinity;
+    for (const n of nodes) {
+      if (n.id === from.id) continue;
+      const vx = n.x - from.x;
+      const vy = n.y - from.y;
+      const dist = Math.hypot(vx, vy);
+      if (!dist) continue;
+      const along = (vx * dx + vy * dy) / dist;
+      if (along < 0.5) continue; // within about 60 degrees of the key's direction
+      const score = dist * (2 - along) * (from.links.includes(n.id) ? 0.4 : 1);
+      if (score < bestScore) {
+        best = n;
+        bestScore = score;
+      }
+    }
+    return best;
+  };
+  const keepInView = (n: N) => {
+    const v = viewRef.current;
+    const limit = (size / 2) * 0.75;
+    if (Math.abs(v.k * (n.x + v.x)) <= limit && Math.abs(v.k * (n.y + v.y)) <= limit) return;
+    const next = { x: -n.x, y: -n.y, k: v.k };
+    viewRef.current = next;
+    setView(next);
+  };
+  const startingNode = (): N | null => {
+    if (selectedId && byId[selectedId]) return byId[selectedId];
+    const v = viewRef.current;
+    let best: N | null = null;
+    let bestDist = Infinity;
+    for (const n of nodes) {
+      const d = Math.hypot(n.x + v.x, n.y + v.y);
+      if (d < bestDist) {
+        best = n;
+        bestDist = d;
+      }
+    }
+    return best;
+  };
+  const onTreeKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget || e.altKey || e.ctrlKey || e.metaKey) return;
+    const arrows: Record<string, [number, number]> = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    const arrow = arrows[e.key];
+    if (arrow) {
+      e.preventDefault();
+      const from = kbNode ?? startingNode();
+      if (!from) return;
+      const to = kbNode ? nodeToward(from, arrow[0], arrow[1]) ?? from : from;
+      setKbId(to.id);
+      keepInView(to);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const n = kbNode ?? startingNode();
+      if (n) {
+        setKbId(n.id);
+        clickRef.current(n);
+      }
+    } else if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      zoomAt(1.25);
+    } else if (e.key === '-' || e.key === '_') {
+      e.preventDefault();
+      zoomAt(1 / 1.25);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      viewRef.current = home;
+      setView(home);
+    }
+  };
 
   // Escape key exits fullscreen
   useEffect(() => {
@@ -426,6 +507,16 @@ function TreeCanvas<N extends CanvasNode>({
     <div
       className={`tree-wrap ${isFullscreen ? 'is-fullscreen' : ''} ${backdrop ? 'has-backdrop' : ''}`}
       ref={wrap}
+      tabIndex={0}
+      role="application"
+      aria-label="Skill tree. Arrow keys move between nodes, Enter selects, plus and minus zoom, Home recentres."
+      onKeyDown={onTreeKey}
+      onFocus={(e) => {
+        if (e.target === e.currentTarget) setKbActive(true);
+      }}
+      onBlur={(e) => {
+        if (e.target === e.currentTarget) setKbActive(false);
+      }}
       onPointerDown={(e) => {
         if ((e.target as HTMLElement).closest('.tree-controls, .tree-selection-panel')) return;
         const r = wrap.current?.getBoundingClientRect();
@@ -537,8 +628,12 @@ function TreeCanvas<N extends CanvasNode>({
           ))}
           {layer}
           {nameLayer}
+          {kbActive && kbNode && <circle className="tree-kb-focus" cx={kbNode.x} cy={kbNode.y} r={46} />}
         </g>
       </svg>
+      <div className="tree-sr-only" aria-live="polite">
+        {kbActive && kbNode ? describeNode(kbNode) : ''}
+      </div>
       {hovered &&
         createPortal(
           <div className="tooltip-layer" style={tipPosition(hover.x, hover.y)}>
@@ -546,6 +641,23 @@ function TreeCanvas<N extends CanvasNode>({
           </div>,
           document.body,
         )}
+      {kbActive &&
+        kbNode &&
+        !hovered &&
+        wrap.current &&
+        (() => {
+          // the node's tooltip, at the node, for someone moving by keyboard
+          const r = wrap.current.getBoundingClientRect();
+          const u = size / Math.min(r.width, r.height);
+          const sx = r.left + r.width / 2 + (view.k * (kbNode.x + view.x)) / u;
+          const sy = r.top + r.height / 2 + (view.k * (kbNode.y + view.y)) / u;
+          return createPortal(
+            <div className="tooltip-layer" style={tipPosition(sx, sy)}>
+              {tip(kbNode)}
+            </div>,
+            document.body,
+          );
+        })()}
       {selection}
       <div className="tree-controls">
         <button className="btn sm" onClick={() => zoomAt(1.25)} title="Zoom in">
@@ -570,7 +682,7 @@ function TreeCanvas<N extends CanvasNode>({
           {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
         </button>
       </div>
-      <div className="tree-legend">{interactionHint ?? 'Drag to pan · scroll to zoom · click to allocate'} {isFullscreen && '· Esc to exit fullscreen'}</div>
+      <div className="tree-legend">{interactionHint ?? 'Drag to pan · scroll to zoom · click to allocate'} · Keyboard: Tab here, arrows move, Enter selects {isFullscreen && '· Esc to exit fullscreen'}</div>
     </div>
   );
 }
@@ -1036,17 +1148,17 @@ function ProfileSettingsModal({
   onClose,
 }: {
   s: GameState;
-  profile: PassiveProfile;
-  onSave: (updated: PassiveProfile) => void;
+  profile: TreeProfile;
+  onSave: (name: string, links: Pick<TreeProfile, 'linkedEquipment' | 'linkedSkillBar' | 'linkedAtlas'>) => void;
   onClose: () => void;
 }) {
   const [name, setName] = useState(profile.name);
-  const [crossLinkGear, setCrossLinkGear] = useState(profile.crossLinkGear ?? false);
-  const [linkedGearId, setLinkedGearId] = useState<number | null>(profile.linkedGearId ?? null);
-  const [crossLinkSkills, setCrossLinkSkills] = useState(profile.crossLinkSkills ?? false);
-  const [linkedSkillId, setLinkedSkillId] = useState<number | null>(profile.linkedSkillId ?? null);
-  const [crossLinkAtlas, setCrossLinkAtlas] = useState(profile.crossLinkAtlas ?? false);
-  const [linkedAtlas, setLinkedAtlas] = useState<string | null>(profile.linkedAtlas ?? 'Atlas Bossing');
+  const [crossLinkGear, setCrossLinkGear] = useState(profile.linkedEquipment !== undefined);
+  const [linkedGearId, setLinkedGearId] = useState<number | null>(profile.linkedEquipment ?? null);
+  const [crossLinkSkills, setCrossLinkSkills] = useState(profile.linkedSkillBar !== undefined);
+  const [linkedSkillId, setLinkedSkillId] = useState<number | null>(profile.linkedSkillBar ?? null);
+  const [crossLinkAtlas, setCrossLinkAtlas] = useState(profile.linkedAtlas !== undefined);
+  const [linkedAtlas, setLinkedAtlas] = useState<string | null>(profile.linkedAtlas ?? 'profile_1');
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -1143,10 +1255,11 @@ function ProfileSettingsModal({
                   value={linkedAtlas ?? ''}
                   onChange={(e) => setLinkedAtlas(e.target.value || null)}
                 >
-                  <option value="Atlas Bossing">Atlas Bossing</option>
-                  <option value="Atlas Mapping">Atlas Mapping</option>
-                  <option value="Atlas Sustain">Atlas Sustain</option>
-                  <option value="Atlas Peril">Atlas Peril (Doomed)</option>
+                  {s.atlasProfiles.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
                 </select>
               )}
             </div>
@@ -1160,15 +1273,10 @@ function ProfileSettingsModal({
           <button
             className="btn sm"
             onClick={() => {
-              onSave({
-                ...profile,
-                name: name.trim() || profile.name,
-                crossLinkGear,
-                linkedGearId: crossLinkGear ? linkedGearId : null,
-                crossLinkSkills,
-                linkedSkillId: crossLinkSkills ? linkedSkillId : null,
-                crossLinkAtlas,
-                linkedAtlas: crossLinkAtlas ? linkedAtlas : null,
+              onSave(name.trim() || profile.name, {
+                linkedEquipment: crossLinkGear && linkedGearId != null ? linkedGearId : undefined,
+                linkedSkillBar: crossLinkSkills && linkedSkillId != null ? linkedSkillId : undefined,
+                linkedAtlas: crossLinkAtlas && linkedAtlas ? linkedAtlas : undefined,
               });
               onClose();
             }}
@@ -1223,20 +1331,6 @@ const CHAR_LABELS: CanvasLabel[] = [
 ];
 
 
-function isProfileUnlocked(id: number, s: GameState): boolean {
-  if (id === 1) return true;
-  if (id === 2) return ZONES.some((z) => z.act >= 5 && s.unlockedZones.includes(z.id));
-  if (id === 3) {
-    return Boolean(
-      (s.account.atlas?.cleared && s.account.atlas.cleared.some((t) => t >= 5)) ||
-      (s.maps?.run && s.maps.run.tier >= 5) ||
-      (s.account.maps && Object.keys(s.account.maps).some((k) => parseInt(k.replace(/\D/g, ''), 10) >= 5)) ||
-      (s.maps?.stock && Object.keys(s.maps.stock).some((k) => parseInt(k.replace(/\D/g, ''), 10) >= 5))
-    );
-  }
-  return false;
-}
-
 function CharacterTree({ s }: { s: GameState }) {
   const [query, setQuery] = useState('');
   const [picker, setPicker] = useState<PassiveNode | null>(null);
@@ -1244,120 +1338,47 @@ function CharacterTree({ s }: { s: GameState }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [refundMode, setRefundMode] = useState(false);
 
-  const initialProfiles = useMemo((): PassiveProfile[] => {
-    if (s.settings?.passiveProfiles && s.settings.passiveProfiles.length === 3) {
-      return s.settings.passiveProfiles;
-    }
-    return [
-      {
-        id: 1,
-        name: 'Profile 1',
-        passives: [...s.passives],
-        masteries: { ...s.masteries },
-        linkedGearId: s.loadouts.gear[0]?.id ?? null,
-        linkedSkillId: s.loadouts.skills[0]?.id ?? null,
-        linkedAtlas: 'Atlas Bossing',
-        crossLinkGear: true,
-        crossLinkSkills: false,
-        crossLinkAtlas: true,
-      },
-      {
-        id: 2,
-        name: 'Profile 2',
-        passives: [],
-        masteries: {},
-        linkedGearId: s.loadouts.gear[1]?.id ?? null,
-        linkedSkillId: s.loadouts.skills[1]?.id ?? null,
-        linkedAtlas: 'Atlas Mapping',
-        crossLinkGear: false,
-        crossLinkSkills: false,
-        crossLinkAtlas: false,
-      },
-      {
-        id: 3,
-        name: 'Profile 3',
-        passives: [],
-        masteries: {},
-        linkedGearId: null,
-        linkedSkillId: null,
-        linkedAtlas: null,
-        crossLinkGear: false,
-        crossLinkSkills: false,
-        crossLinkAtlas: false,
-      },
-    ];
-  }, [s.settings?.passiveProfiles, s.passives, s.masteries, s.loadouts.gear, s.loadouts.skills]);
+  // The engine owns the profiles (GameState.passiveProfiles); this page only shows them and asks the engine to switch.
+  const profiles = s.passiveProfiles;
+  const activeProfileId = normalizeProfileId(s.activePassiveProfile);
+  const profileNumbers = [1, 2, 3];
+  const activeProfile: TreeProfile =
+    profiles.find((p) => p.id === activeProfileId) ?? { id: activeProfileId, name: 'Profile 1', passives: [], masteries: {} };
 
-  const [profiles, setProfiles] = useState<PassiveProfile[]>(initialProfiles);
-  const activeProfileId = s.settings?.activePassiveProfileId ?? 1;
-  const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? profiles[0];
-
-  const switchProfile = (targetId: number) => {
+  const switchProfile = (num: number) => {
+    const targetId = `profile_${num}`;
     if (targetId === activeProfileId) return;
-    if (!isProfileUnlocked(targetId, s)) {
-      const lockMsg = targetId === 2 ? 'Profile 2 unlocks in Act 5!' : 'Profile 3 unlocks at Tier 5 Maps!';
+    if (!isProfileUnlocked(s, targetId)) {
+      const lockMsg = num === 2 ? 'Profile 2 unlocks in Act 5!' : 'Profile 3 unlocks at Tier 5 Maps!';
       game.act((_, ctx) => ctx.emit({ t: 'info', text: lockMsg }));
       return;
     }
     setSelectedId(null);
     game.act((st, ctx) => {
-      st.settings ??= {} as GameState['settings'];
-      st.settings.passiveProfiles ??= profiles;
-      // 1. Save current passives into current profile
-      const updatedProfiles = (st.settings.passiveProfiles ?? profiles).map((p) =>
-        p.id === activeProfileId ? { ...p, passives: [...st.passives], masteries: { ...st.masteries } } : p
-      );
-      const target = updatedProfiles.find((p) => p.id === targetId);
-      if (!target) return;
-      // 2. Load target profile passives (or copy current if target was never set)
-      if (target.passives.length > 0) {
-        st.passives = [...target.passives];
-        st.masteries = { ...target.masteries };
-      } else {
-        target.passives = [...st.passives];
-        target.masteries = { ...st.masteries };
-      }
-      settlePassivePoints(st);
-      st.settings.activePassiveProfileId = targetId;
-      st.settings.passiveProfiles = updatedProfiles;
-
-      // 3. Cross-linking
-      if (target.crossLinkGear && target.linkedGearId != null) {
-        applyGearSet(st, ctx, target.linkedGearId);
-      }
-      if (target.crossLinkSkills && target.linkedSkillId != null) {
-        applySkillSet(st, target.linkedSkillId);
-      }
-
-      setProfiles(updatedProfiles);
-      ctx.emit({ t: 'info', text: `Switched to ${target.name}`, tone: 'good' });
+      const why = switchPassiveProfile(st, ctx, targetId);
+      if (why) ctx.emit({ t: 'info', text: why, tone: 'warn' });
     });
   };
 
-  const handleSaveProfile = (updated: PassiveProfile) => {
+  const handleSaveProfile = (name: string, links: Pick<TreeProfile, 'linkedEquipment' | 'linkedSkillBar' | 'linkedAtlas'>) => {
     game.act((st) => {
-      st.settings ??= {} as GameState['settings'];
-      const list = (st.settings.passiveProfiles ?? profiles).map((p) => (p.id === updated.id ? updated : p));
-      st.settings.passiveProfiles = list;
-      setProfiles(list);
+      savePassiveProfile(st, activeProfileId, name, links);
     });
   };
 
   const linkedBadges = useMemo(() => {
     const parts: string[] = [];
-    if (activeProfile.crossLinkGear && activeProfile.linkedGearId != null) {
-      const gearName = s.loadouts.gear.find((g) => g.id === activeProfile.linkedGearId)?.name ?? 'Gear 1';
-      parts.push(gearName);
+    if (activeProfile.linkedEquipment !== undefined) {
+      parts.push(s.loadouts.gear.find((g) => g.id === activeProfile.linkedEquipment)?.name ?? 'Gear set');
     }
-    if (activeProfile.crossLinkSkills && activeProfile.linkedSkillId != null) {
-      const skillName = s.loadouts.skills.find((sk) => sk.id === activeProfile.linkedSkillId)?.name ?? 'Skills 1';
-      parts.push(skillName);
+    if (activeProfile.linkedSkillBar !== undefined) {
+      parts.push(s.loadouts.skills.find((sk) => sk.id === activeProfile.linkedSkillBar)?.name ?? 'Skill bar');
     }
-    if (activeProfile.crossLinkAtlas && activeProfile.linkedAtlas) {
-      parts.push(activeProfile.linkedAtlas);
+    if (activeProfile.linkedAtlas) {
+      parts.push(s.atlasProfiles.find((a) => a.id === activeProfile.linkedAtlas)?.name ?? 'Atlas');
     }
     return parts;
-  }, [activeProfile, s.loadouts.gear, s.loadouts.skills]);
+  }, [activeProfile, s.loadouts.gear, s.loadouts.skills, s.atlasProfiles]);
 
   // Point calculations
   settlePassivePoints(s);
@@ -1411,10 +1432,10 @@ function CharacterTree({ s }: { s: GameState }) {
         {/* Row 1: Profile Manager & Active Linked Loadout Badges */}
         <div className="tree-profile-row">
           <div className="tree-profile-tabs">
-            {[1, 2, 3].map((num) => {
-              const prof = profiles.find((p) => p.id === num) ?? { id: num, name: `Profile ${num}` };
-              const unlocked = isProfileUnlocked(num, s);
-              const isActive = num === activeProfileId;
+            {profileNumbers.map((num) => {
+              const prof = profiles.find((p) => p.id === `profile_${num}`) ?? { name: `Profile ${num}` };
+              const unlocked = isProfileUnlocked(s, `profile_${num}`);
+              const isActive = `profile_${num}` === activeProfileId;
               return (
                 <button
                   key={num}

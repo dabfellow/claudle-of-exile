@@ -807,6 +807,7 @@ export interface Settings {
   /** travel to the next area once this area's boss is down */
   autoNextZone?: boolean;
   targeting: Targeting;
+  /** Legacy: the Tree page's old private copy of the profiles. Folded into GameState.passiveProfiles on load. */
   activePassiveProfileId?: number;
   passiveProfiles?: PassiveProfile[];
   /** currencies shown in the top bar, pinned from the Stash (at most 5); none when missing */
@@ -1104,7 +1105,8 @@ export interface TreeProfile {
   name: string;
   passives: string[];
   masteries: Record<string, number>;
-  linkedEquipment?: number; // 0, 1, 2 (index of equipment loadout)
+  linkedEquipment?: number; // id of a gear set in loadouts.gear
+  linkedSkillBar?: number;  // id of a skill loadout in loadouts.skills
   linkedAtlas?: string;     // atlas profile id
   linkedSkilling?: string;  // skilling profile id
 }
