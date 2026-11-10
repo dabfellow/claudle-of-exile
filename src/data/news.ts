@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Flame Totem (Act 1), War Totem (Act 3), and Siege Totem (Act 6) now unlock during the campaign alongside their signature supports, allowing totem builds while leveling.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.26',
+    date: '9 Nov 2026',
+    title: 'Totems Across the Campaign',
+    items: [
+      'Flame Totem (Act 1), War Totem (Act 3), and Siege Totem (Act 6) now unlock during the campaign alongside their signature supports, allowing totem builds while leveling.',
+    ],
+  },
   {
     version: '0.4.25',
     date: '9 Nov 2026',
