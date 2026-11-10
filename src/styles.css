@@ -7174,7 +7174,22 @@ img.art.mat-art {
 }
 
 @media (max-width: 860px) {
+  /* Keep the game shell anchored to the phone viewport. The content pane is
+     the only vertical scroller, so the horizontal navigation stays in place. */
+  html,
+  body,
+  #root {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
   .app {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas: 'top' 'side' 'main' 'xp';
@@ -7186,6 +7201,9 @@ img.art.mat-art {
     border-right: 0;
     border-bottom: 1px solid var(--line);
     scrollbar-width: none;
+    flex: none;
+    min-height: 0;
+    z-index: 6;
   }
   .brand,
   .nav-label,
@@ -7261,6 +7279,9 @@ img.art.mat-art {
   }
   .main {
     padding: var(--s-4) var(--s-3);
+    min-height: 0;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
   }
   .page {
     gap: var(--s-4);

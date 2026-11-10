@@ -397,6 +397,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
+- [x] Player report: on phones, the game stays within the viewport so the navigation remains at the top while the page and passive tree scroll in their own panel. — done 2026-11-10
+
 - [x] Player reports: executions now keep twin bosses' shared Life synchronized; Exerted bonuses apply only to the player skill that spent the charges; and Soul Tether respects protected bosses. — done 2026-11-10
 
 - [x] Player report: The Crownless no longer runs its Cracked Fault and Choir mechanics twice per tick; Faults stay open for 6 seconds, and the Choir starts only at 66% life. — done 2026-11-10
