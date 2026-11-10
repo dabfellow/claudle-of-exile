@@ -371,9 +371,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - [x] Build: events calendar (computed holidays, Admin toggles, stacking, weekend and custom windows). Calls under Decisions "Round 2 design pass". — done 2026-11-09
     - Owner to do once: run `docs/ops/events.sql` in Supabase (SQL Editor → New query → paste → Run). Until then holidays still run; only Admin's holiday on/off switch and "Weekends only" box ask for it.
 
-- [x] Review fixes (2026-11-09): passive tree profiles now run on one engine copy (`src/engine/treeProfiles.ts`; the Tree page's private copy in settings is folded in on load) and switching keeps the character's total points; old tab refuses a save from a newer version (`NewerSaveError`); keyboard use of the passive tree (Tab to the tree, arrows, Enter, +/-, Home); feedback cap in `docs/ops/admin.sql`. — done 2026-11-09
-  - [ ] Owner: re-run `docs/ops/admin.sql` in Supabase (feedback cap: 10 an hour per player, 30 an hour for guests, 20,000 total).
-  - [ ] Owner: check email confirmation is switched on in the Supabase dashboard (Authentication, Providers, Email).
+- [x] Review fixes (2026-11-09): passive tree profiles now run on one engine copy (`src/engine/treeProfiles.ts`; the Tree page's private copy in settings is folded in on load) and switching keeps the character's total points; old tab refuses a save from a newer version (`NewerSaveError`); keyboard use of the passive tree (Tab to the tree, arrows, Enter, +/-, Home); feedback cap in `docs/ops/admin.sql`. — done 2026-11-09, live in 0.4.27 on 2026-11-10
+  - [x] Feedback cap applied to Supabase (10 an hour per player, 30 an hour for guests, 20,000 total) and Confirm email checked on by the owner. — done 2026-11-10
   - Profile switching now follows the engine's rule: not during a fight (Town or Hideout only). The old page let you switch anytime.
 
 ## Ideas / later
