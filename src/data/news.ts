@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Clicking a node on the passive tree works again, so you can allocate with the mouse or a tap.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.31',
+    date: '11 Nov 2026',
+    title: 'Passive Tree Clicks Fixed',
+    items: [
+      'Clicking a node on the passive tree works again, so you can allocate with the mouse or a tap.',
+    ],
+  },
   {
     version: '0.4.30',
     date: '10 Nov 2026',
