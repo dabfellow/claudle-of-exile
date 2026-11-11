@@ -530,7 +530,6 @@ function TreeCanvas<N extends CanvasNode>({
         if ((e.target as HTMLElement).closest('.tree-controls, .tree-selection-panel')) return;
         const r = wrap.current?.getBoundingClientRect();
         if (!r) return;
-        e.currentTarget.setPointerCapture(e.pointerId);
         const unit = size / Math.min(r.width, r.height);
         pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (pointers.current.size === 2) {
@@ -562,6 +561,9 @@ function TreeCanvas<N extends CanvasNode>({
         const dy = e.clientY - dr.startY;
         if (!dr.moved && Math.abs(dx) + Math.abs(dy) > 3) {
           dr.moved = true;
+          // the canvas takes hold of the pointer only once a drag starts, so the drag carries on outside it.
+          // Taking hold on press would send the click to the canvas instead of the node under the cursor.
+          e.currentTarget.setPointerCapture(e.pointerId);
           setHover(null);
           wrap.current?.classList.add('is-dragging');
         }
