@@ -51,6 +51,7 @@ import { deriveStats, passiveStats, type Derived } from '../../engine/stats';
 import type { GameState, NovaRelease, SkillId, TreeProfile, TargetOrder, TargetPriority } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { PageHeader, Tabs } from '../components/common';
+import { boundedTreeView, type TreeBounds, type TreeView as View } from '../treeView';
 import { ORDERS, PRIORITIES } from './CombatPage';
 
 const REGION_COLOR: Record<TreeRegion, string> = {
@@ -97,8 +98,6 @@ interface CanvasLabel {
   color: string;
   size?: number;
 }
-
-type View = { x: number; y: number; k: number };
 
 function TreeCanvas<N extends CanvasNode>({
   nodes,
@@ -148,14 +147,25 @@ function TreeCanvas<N extends CanvasNode>({
   selection?: ReactNode;
   interactionHint?: string;
 }) {
-  const home = focus ?? { x: 0, y: 0, k: 1 };
+  const contentBounds = useMemo<TreeBounds>(() => {
+    if (!nodes.length) return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    const edge = 100;
+    return {
+      minX: Math.min(...nodes.map((n) => n.x)) - edge,
+      maxX: Math.max(...nodes.map((n) => n.x)) + edge,
+      minY: Math.min(...nodes.map((n) => n.y)) - edge,
+      maxY: Math.max(...nodes.map((n) => n.y)) + edge,
+    };
+  }, [nodes]);
+  const boundView = (next: View) => boundedTreeView(next, size, contentBounds);
+  const home = boundView(focus ?? { x: 0, y: 0, k: 1 });
   const [view, setView] = useState<View>(home);
   const viewRef = useRef<View>(home);
   viewRef.current = view;
 
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const drag = useRef<{ startX: number; startY: number; vx: number; vy: number; k: number; moved: boolean; unit: number } | null>(null);
+  const drag = useRef<{ startX: number; startY: number; vx: number; vy: number; k: number; moved: boolean; unit: number; pageOverflowY: number } | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const contentG = useRef<SVGGElement>(null);
   const rafId = useRef<number | null>(null);
@@ -198,7 +208,7 @@ function TreeCanvas<N extends CanvasNode>({
     const v = viewRef.current;
     const limit = (size / 2) * 0.75;
     if (Math.abs(v.k * (n.x + v.x)) <= limit && Math.abs(v.k * (n.y + v.y)) <= limit) return;
-    const next = { x: -n.x, y: -n.y, k: v.k };
+    const next = boundView({ x: -n.x, y: -n.y, k: v.k });
     viewRef.current = next;
     setView(next);
   };
@@ -263,17 +273,17 @@ function TreeCanvas<N extends CanvasNode>({
     const k = clamp(cur.k * f);
     const r = wrap.current?.getBoundingClientRect();
     if (!r || clientX === undefined || clientY === undefined) {
-      viewRef.current = { ...cur, k };
-      setView({ ...cur, k });
+      const next = boundView({ ...cur, k });
+      viewRef.current = next;
+      setView(next);
       return;
     }
     const unit = size / Math.min(r.width, r.height);
     const cx = (clientX - r.left - r.width / 2) * unit;
     const cy = (clientY - r.top - r.height / 2) * unit;
-    const nextX = cur.x + cx / k - cx / cur.k;
-    const nextY = cur.y + cy / k - cy / cur.k;
-    viewRef.current = { x: nextX, y: nextY, k };
-    setView({ x: nextX, y: nextY, k });
+    const next = boundView({ x: cur.x + cx / k - cx / cur.k, y: cur.y + cy / k - cy / cur.k, k });
+    viewRef.current = next;
+    setView(next);
   };
 
   // Two-finger pinch on touch screens: zoom by the change in finger spread, around the point between them,
@@ -291,7 +301,7 @@ function TreeCanvas<N extends CanvasNode>({
     pinch.current = { dist: f.dist, cx: f.x, cy: f.y, view: { ...viewRef.current }, unit, left: r.left, top: r.top, w: r.width, h: r.height };
     // the first finger's drag is over, and must not turn into a click when it lifts
     if (drag.current) drag.current.moved = true;
-    else drag.current = { startX: f.x, startY: f.y, vx: viewRef.current.x, vy: viewRef.current.y, k: viewRef.current.k, moved: true, unit };
+    else drag.current = { startX: f.x, startY: f.y, vx: viewRef.current.x, vy: viewRef.current.y, k: viewRef.current.k, moved: true, unit, pageOverflowY: 0 };
     setHover(null);
     wrap.current?.classList.add('is-zooming');
   };
@@ -305,7 +315,7 @@ function TreeCanvas<N extends CanvasNode>({
     const c0y = (p.cy - p.top - p.h / 2) * p.unit;
     const c1x = (f.x - p.left - p.w / 2) * p.unit;
     const c1y = (f.y - p.top - p.h / 2) * p.unit;
-    viewRef.current = { x: p.view.x + c1x / k - c0x / p.view.k, y: p.view.y + c1y / k - c0y / p.view.k, k };
+    viewRef.current = boundView({ x: p.view.x + c1x / k - c0x / p.view.k, y: p.view.y + c1y / k - c0y / p.view.k, k });
     if (pinchRaf.current == null) {
       pinchRaf.current = requestAnimationFrame(() => {
         pinchRaf.current = null;
@@ -322,7 +332,7 @@ function TreeCanvas<N extends CanvasNode>({
     setView({ ...viewRef.current });
     // a finger still down carries on as a drag from where it is now, without a jump
     const rest = [...pointers.current.values()][0];
-    if (rest && drag.current) Object.assign(drag.current, { startX: rest.x, startY: rest.y, vx: viewRef.current.x, vy: viewRef.current.y, k: viewRef.current.k, moved: true });
+    if (rest && drag.current) Object.assign(drag.current, { startX: rest.x, startY: rest.y, vx: viewRef.current.x, vy: viewRef.current.y, k: viewRef.current.k, moved: true, pageOverflowY: 0 });
     else setTimeout(() => { drag.current = null; }, 0);
   };
   useEffect(() => () => { if (pinchRaf.current != null) cancelAnimationFrame(pinchRaf.current); }, []);
@@ -349,13 +359,12 @@ function TreeCanvas<N extends CanvasNode>({
       const nextK = clamp(curK * factor);
       const cx = (clientX - r.left - r.width / 2) * unit;
       const cy = (clientY - r.top - r.height / 2) * unit;
-      const nextX = curX + cx / nextK - cx / curK;
-      const nextY = curY + cy / nextK - cy / curK;
+      const next = boundView({ x: curX + cx / nextK - cx / curK, y: curY + cy / nextK - cy / curK, k: nextK });
 
-      pendingK = nextK;
-      pendingX = nextX;
-      pendingY = nextY;
-      viewRef.current = { x: nextX, y: nextY, k: nextK };
+      pendingK = next.k;
+      pendingX = next.x;
+      pendingY = next.y;
+      viewRef.current = next;
 
       el.classList.add('is-zooming');
 
@@ -521,6 +530,7 @@ function TreeCanvas<N extends CanvasNode>({
         if ((e.target as HTMLElement).closest('.tree-controls, .tree-selection-panel')) return;
         const r = wrap.current?.getBoundingClientRect();
         if (!r) return;
+        e.currentTarget.setPointerCapture(e.pointerId);
         const unit = size / Math.min(r.width, r.height);
         pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (pointers.current.size === 2) {
@@ -537,6 +547,7 @@ function TreeCanvas<N extends CanvasNode>({
           k: viewRef.current.k,
           moved: false,
           unit,
+          pageOverflowY: 0,
         };
       }}
       onPointerMove={(e) => {
@@ -556,20 +567,30 @@ function TreeCanvas<N extends CanvasNode>({
         }
         if (!dr.moved) return;
 
-        const nextX = dr.vx + (dx * dr.unit) / dr.k;
-        const nextY = dr.vy + (dy * dr.unit) / dr.k;
+        const raw = { x: dr.vx + (dx * dr.unit) / dr.k, y: dr.vy + (dy * dr.unit) / dr.k, k: dr.k };
+        const next = boundView(raw);
 
-        viewRef.current = { x: nextX, y: nextY, k: dr.k };
+        // A phone swipe that has reached the tree's top or bottom carries on through the page.
+        // Track only the newly added overflow because raw is measured from the drag's original point.
+        const overflowY = raw.y - next.y;
+        if (!isFullscreen && window.matchMedia('(max-width: 860px)').matches && overflowY !== dr.pageOverflowY) {
+          const page = wrap.current?.closest<HTMLElement>('.main');
+          if (page) page.scrollTop -= ((overflowY - dr.pageOverflowY) * dr.k) / dr.unit;
+        }
+        dr.pageOverflowY = overflowY;
+
+        viewRef.current = next;
 
         if (rafId.current == null) {
           rafId.current = requestAnimationFrame(() => {
             rafId.current = null;
-            setView({ x: nextX, y: nextY, k: dr.k });
+            setView({ ...viewRef.current });
           });
         }
       }}
       onPointerUp={(e) => {
         pointers.current.delete(e.pointerId);
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
         if (pinch.current) {
           endPinch();
           return;
@@ -588,6 +609,7 @@ function TreeCanvas<N extends CanvasNode>({
       }}
       onPointerCancel={(e) => {
         pointers.current.delete(e.pointerId);
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
         if (pinch.current) {
           endPinch();
           return;
@@ -671,7 +693,7 @@ function TreeCanvas<N extends CanvasNode>({
             Home
           </button>
         )}
-        <button className="btn sm" onClick={() => { const whole = { x: 0, y: 0, k: 1 }; viewRef.current = whole; setView(whole); }} title="View whole tree">
+        <button className="btn sm" onClick={() => { const whole = boundView({ x: 0, y: 0, k: 1 }); viewRef.current = whole; setView(whole); }} title="View whole tree">
           {focus ? 'Whole tree' : 'Reset'}
         </button>
         <button

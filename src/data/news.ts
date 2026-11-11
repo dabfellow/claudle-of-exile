@@ -10,7 +10,10 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'The current activity strip is hidden on phones, leaving more room for the game and navigation.',
+  'Passive and skill trees now stop at their outer edges, and dragging past the top or bottom on a phone continues scrolling the page.',
+];
 
 export const NEWS: NewsEntry[] = [
   {
