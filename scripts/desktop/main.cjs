@@ -32,13 +32,19 @@ async function openLab() {
     release.source = { ...release.source, eventRows, checkedAt: new Date().toISOString() };
     return release.source;
   });
-  protocol.handle('poi-lab', request => {
+  protocol.handle('poi-lab', async request => {
     const url = new URL(request.url);
     if (url.host !== 'app') return new Response('Not found', { status: 404 });
     const file = resolve(release.renderer, '.' + decodeURIComponent(url.pathname));
     const rel = relative(release.renderer, file);
     if (rel.startsWith('..') || isAbsolute(rel)) return new Response('Forbidden', { status: 403 });
-    return net.fetch(pathToFileURL(file).href);
+    const response = await net.fetch(pathToFileURL(file).href);
+    if (url.pathname === `/${release.manifest.entry}`) {
+      const headers = new Headers(response.headers);
+      headers.set('Content-Type', 'text/html; charset=utf-8');
+      return new Response(response.body, { status: response.status, headers });
+    }
+    return response;
   });
   await window.loadURL(`poi-lab://app/${release.manifest.entry}`);
 }

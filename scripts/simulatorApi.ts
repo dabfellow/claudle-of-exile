@@ -17,6 +17,9 @@ export async function generateSimulatorApi(version: string, game: { entry: strin
     if (!('output' in output)) throw new Error('Simulator renderer did not produce a bundle');
     for (const file of output.output) files[file.fileName] = file.type === 'chunk' ? Buffer.from(file.code) : typeof file.source === 'string' ? Buffer.from(file.source) : file.source;
   }
+  // Plain-text transport prevents CDN HTML/beacon injection from altering the signed bytes.
+  files['simulator.page.txt'] = files['simulator.html'];
+  delete files['simulator.html'];
   const runtime = await esbuild({ entryPoints: ['src/simulator/runtime.ts'], bundle: true, write: false, format: 'esm', platform: 'browser', target: 'es2022', minify: true,
     define: { __APP_VERSION__: JSON.stringify(version), 'import.meta.env': JSON.stringify({ DEV: false, PROD: true }) },
   });
@@ -30,7 +33,7 @@ export async function generateSimulatorApi(version: string, game: { entry: strin
   const env = { ...loadEnv(mode, process.cwd(), 'VITE_'), ...Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith('VITE_'))) };
   assertPublicEnv(env);
   const eventFeed = env.VITE_SUPABASE_URL && env.VITE_SUPABASE_ANON_KEY ? { url: `${env.VITE_SUPABASE_URL.replace(/\/$/, '')}/rest/v1/live_events?select=*`, publicKey: env.VITE_SUPABASE_ANON_KEY } : null;
-  const manifest = { schemaVersion: 1, gameVersion: version, releaseId, basePath, entry: 'simulator.html', runtime: 'runtime.js', catalog: 'catalog.json', game, artifacts, eventFeed };
+  const manifest = { schemaVersion: 1, gameVersion: version, releaseId, basePath, entry: 'simulator.page.txt', runtime: 'runtime.js', catalog: 'catalog.json', game, artifacts, eventFeed };
   const published: Record<string, Uint8Array> = { [`${SIM_API}/manifest.json`]: Buffer.from(JSON.stringify(manifest)) };
   for (const [path, data] of Object.entries(files)) published[`${basePath.slice(1)}${path}`] = data;
   return { manifest, files: published };
