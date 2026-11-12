@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Chained bosses are much easier: every skill and minion now goes for Chained Martyrs by itself, and martyrs take damage from everything, including ailments and ground. No clicks or rules needed.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.33',
+    date: '11 Nov 2026',
+    title: 'Easier Chained Bosses',
+    items: [
+      'Chained bosses are much easier: every skill and minion now goes for Chained Martyrs by itself, and martyrs take damage from everything, including ailments and ground. No clicks or rules needed.',
+    ],
+  },
   {
     version: '0.4.32',
     date: '11 Nov 2026',
