@@ -330,6 +330,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 - [x] Fix mobile zone-map scroll trapping and let the navigation and health/mana header scroll out of view. — done 2026-11-12
   - Reproduced the original trapped swipe using a campaign-complete level-80 character in Act 3. Touch gestures now scroll through the map to the page, sideways map movement still works, and travelling resets combat to the top. Checked 390×844 and 360×640 phone layouts and the unchanged desktop scrolling layout. All 1,453 tests and typecheck pass. Standard Vite preview timed out; browser checks used an isolated bundle of the real game with fallback art and no music. Live in 0.4.37 on 2026-11-12.
+- [x] Fix phones being unable to scroll the character select, title and new-character screens (regression from 0.4.37's page lock). — done 2026-11-12
 
 - [x] Fix wiki-listed Maps gems missing from the Gem shop after campaign completion. — done 2026-11-12
   - Restored 37 skill gems and 77 supports to the post-campaign shelf. Reproduced through a saved level-90 campaign-complete character; every wiki-listed gem can be purchased, with campaign, level and signature-support upgrade restrictions preserved. All 1,453 tests, typecheck and wiki generation pass. Browser preview could not connect, so an on-screen playtest remains unverified. Live in 0.4.36 on 2026-11-12.
