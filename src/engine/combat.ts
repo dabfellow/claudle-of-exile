@@ -1040,15 +1040,16 @@ function spreads(d: Derived, nums: SkillNumbers): boolean {
 export function skillTarget(s: GameState, d: Derived, nums: SkillNumbers, ruleAim?: SkillAim): { mon: MonsterInstance; closeIn: boolean } | null {
   const c = s.combat!;
   const range = skillRange(d, nums.def);
-  const autoAim: SkillAim | undefined = spreads(d, nums)
-    ? c.monsters.some((m) => m.martyr && m.life > 0)
-      ? 'martyrs'
-      : c.monsters.some((m) => m.weakPoint && m.life > 0)
+  // every skill goes for martyrs by itself, so a chained boss never needs a click or a rule
+  const autoAim: SkillAim | undefined = c.monsters.some((m) => m.martyr && m.life > 0)
+    ? 'martyrs'
+    : spreads(d, nums)
+      ? c.monsters.some((m) => m.weakPoint && m.life > 0)
         ? 'weakPoint'
         : c.monsters.some((m) => m.choir && m.life > 0)
           ? 'choir'
           : 'martyrs'
-    : undefined;
+      : undefined;
   const aim = ruleAim ?? autoAim;
   const order = targetOrder(s, aim);
   // the chains hold a martyr or weak point in reach of any skill: adds and a summoning boss could otherwise wall melee off from it
@@ -1756,9 +1757,9 @@ function applyDot(mon: Pick<MonsterInstance, 'dots'>, dot: Dot, cap = 1): void {
   else if (dot.dps >= existing.dps) Object.assign(existing, dot);
 }
 
-/** A chained boss takes nothing; a martyr or weak point takes nothing but a blow aimed at it, so ailments, ground and novas pass it by. */
+/** A chained boss takes nothing; a weak point takes nothing but a blow aimed at it, so ailments, ground and novas pass it by. Martyrs take everything. */
 function shielded(mon: MonsterInstance): boolean {
-  return !!mon.chained || !!mon.martyr || !!mon.weakPoint || (mon.immuneMs ?? 0) > 0;
+  return !!mon.chained || !!mon.weakPoint || (mon.immuneMs ?? 0) > 0;
 }
 
 /** The DPS meter shows the average over one window, and holds it until the next window ends. */
@@ -1780,7 +1781,7 @@ function tickDpsMeter(c: CombatRuntime, dt: number): void {
 
 /** Take life from a monster, through its ward first. */
 export function damageMonster(s: GameState, mon: MonsterInstance, amount: number, direct = false, chaosShare = 0): void {
-  if (mon.chained || (mon.immuneMs ?? 0) > 0 || ((mon.martyr || mon.weakPoint) && !direct)) return;
+  if (mon.chained || (mon.immuneMs ?? 0) > 0 || (mon.weakPoint && !direct)) return;
   const dealt = s.combat?.dealt;
   if (dealt) dealt[dealt.length - 1] += amount;
   if (mon.curse?.warrant) mon.curse.owed = (mon.curse.owed ?? 0) + amount;

@@ -6,7 +6,7 @@ import { BOSS_TABLES, bossTable, DROP_TABLES, dropTable } from '../src/data/drop
 import type { TacticRule } from '../src/data/gems';
 import { ACT_PREVIEW, ACTS, actBossZone, actOpen, BOSS_MARTYR_COUNT, nextZones, zoneDef, zonesInAct, type ZoneDef } from '../src/data/zones';
 import { bossLeftToRules, GROUND_IN_PLAY, ruleLockReason, ruleUnlockLevel, skillAim, unlockEverything } from '../src/engine/automation';
-import { chooseSkill, combatStep, focusTarget, lockTarget, makeMonster, retreat, ruleContext, skillTarget, startCombat, targetOrder } from '../src/engine/combat';
+import { chooseSkill, combatStep, lockTarget, makeMonster, retreat, ruleContext, skillTarget, startCombat, targetOrder } from '../src/engine/combat';
 import { EDGE_CELLS, FRONT_CELL } from '../src/engine/battlefield';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem, setAim, setRule, skillNumbers } from '../src/engine/gems';
@@ -235,31 +235,31 @@ describe('martyrs', () => {
     }
   });
 
-  it('skills go for the boss, and a chained boss shrugs off the hit', () => {
+  it('a chained boss shrugs off a hit clicked at it', () => {
     const s = fighter(['heavy_strike']);
     const { boss, c } = chained(s);
+    lockTarget(s, boss.uid);
     s.combat!.actionMs = 0;
     for (let t = 0; t < 30_000; t += 50) combatStep(s, c, 50, deriveStats(s));
     expect(boss.life).toBe(boss.maxLife);
     expect(c.events.some((e) => e.t === 'hit' && e.target === 'monster' && e.monsterUid === boss.uid && e.blocked)).toBe(true);
   });
 
-  it('nobody targets a martyr by accident, so single hits and ailments pass it by', () => {
+  it('martyrs take ailments and ground like anything else', () => {
     const s = fighter(['heavy_strike']);
-    const { boss, martyrs, c } = chained(s);
-    expect(targetOrder(s).some((m) => m.martyr)).toBe(false);
-    expect(focusTarget(s)).toBe(boss);
-    const lives = martyrs().map((m) => m.life);
-    martyrs()[0].cell = boss.cell + 1;
-    s.combat!.actionMs = 0;
-    martyrs()[0].dots.push({ kind: 'bleed', dps: 1e6, remainingMs: 5000, durationMs: 5000, dealt: 0, gemId: 'x' });
-    s.combat!.ground.push({ cell: martyrs()[1].cell, kind: 'burning', dps: 1e6, remainingMs: 5000, durationMs: 5000 });
-    for (let t = 0; t < 8000; t += 50) combatStep(s, c, 50, deriveStats(s));
-    expect(martyrs().map((m) => m.life)).toEqual(lives);
+    const { martyrs, c } = chained(s);
+    s.combat!.actionMs = 1e12;
+    const [a, b] = martyrs();
+    const lives = [a.life, b.life];
+    a.dots.push({ kind: 'bleed', dps: 1e6, remainingMs: 5000, durationMs: 5000, dealt: 0, gemId: 'x' });
+    s.combat!.ground.push({ cell: b.cell, kind: 'burning', dps: 1e6, remainingMs: 5000, durationMs: 5000 });
+    for (let t = 0; t < 2000; t += 50) combatStep(s, c, 50, deriveStats(s));
+    expect(a.life).toBeLessThan(lives[0]);
+    expect(b.life).toBeLessThan(lives[1]);
   });
 
-  it('area and chain skills go for martyrs with no click or rule', () => {
-    for (const id of ['ground_slam', 'spark']) {
+  it('every skill goes for martyrs with no click or rule', () => {
+    for (const id of ['ground_slam', 'spark', 'heavy_strike']) {
       const s = fighter([id]);
       const { martyrs } = chained(s);
       const nums = skillNumbers(deriveStats(s), s.skillBar[0]);
@@ -370,7 +370,7 @@ describe('aim rules', () => {
     const { boss, martyrs } = chained(s);
     const nums = skillNumbers(deriveStats(s), s.skillBar[0]);
     expect(skillTarget(s, deriveStats(s), nums, 'martyrs')!.mon.martyr).toBe(true);
-    expect(skillTarget(s, deriveStats(s), nums)!.mon).toBe(boss);
+    expect(skillTarget(s, deriveStats(s), nums)!.mon.martyr).toBe(true);
     s.combat!.monsters = s.combat!.monsters.filter((m) => !m.martyr);
     expect(skillTarget(s, deriveStats(s), nums, 'martyrs')!.mon).toBe(boss);
     expect(martyrs()).toHaveLength(0);
@@ -418,11 +418,8 @@ describe('a martyr boss, by rule alone', { timeout: 60_000 }, () => {
     expect(bossFight(fighter(['ground_slam'])).won).toBe(true);
   });
 
-  it("can't be beaten by a single-target skill without one: it never loses a point of life", () => {
-    const fight = bossFight(fighter(['heavy_strike']));
-    expect(fight.won).toBe(false);
-    expect(fight.boss!.life).toBe(fight.boss!.maxLife);
-    expect(fight.boss!.chained).toBe(true);
+  it('falls to a single-target skill with no rule at all', () => {
+    expect(bossFight(fighter(['heavy_strike'])).won).toBe(true);
   });
 
   it('the Pilgrim Gate needs no aim at all', () => {

@@ -3404,6 +3404,33 @@ h3 {
   stroke-dasharray: 8 6;
 }
 
+/* a route lined up to buy, not yet confirmed */
+.tree-link.pending {
+  stroke: #6ad3ff;
+  stroke-width: 5;
+  stroke-dasharray: 12 6;
+}
+
+.tree-node.pending {
+  filter: drop-shadow(0 0 8px rgba(106, 211, 255, 0.85));
+}
+
+.tree-node.pending .body {
+  stroke: #6ad3ff !important;
+  fill: color-mix(in srgb, #6ad3ff 25%, #1c1f28) !important;
+}
+
+.tree-plan-costs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-weight: 600;
+}
+
+.tree-plan-highlights {
+  margin-top: 8px;
+}
+
 .tree-node {
   cursor: pointer;
 }

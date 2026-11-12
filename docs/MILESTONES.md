@@ -378,6 +378,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - [x] Feedback cap applied to Supabase (10 an hour per player, 30 an hour for guests, 20,000 total) and Confirm email checked on by the owner. — done 2026-11-10
   - Profile switching now follows the engine's rule: not during a fight (Town or Hideout only). The old page let you switch anytime.
 
+- [x] Passive tree route planning: clicking a node lines up the shortest route to it (`passiveRoute` in `src/engine/passives.ts`), shown in blue with its cost and stat changes; more clicks extend it, clicking a planned node cuts it back, Confirm buys it all and Cancel drops it. Routes never pass through keystones, masteries or Doomed Gates. Masteries, refunds and owned nodes keep the single-node preview. Skilling tree unchanged. — done 2026-11-11, live in 0.4.32 on 2026-11-11
+
 ## Ideas / later
 
 - Tree web follow-ups (2026-11-08): the tree is 1,573 nodes (71% of 2,208); the 50% target would mean cutting about 30 clusters and their notables, which needs a call on which. Paths now run through clusters, so keystones sit 26–49 nodes from a class start (was 14–20) and some routes must take a notable on the way; check if that feels too slow. The two point pools were audited and changed to 2 Travel / 3 Passive per level; playtest whether the calculated split feels right.
@@ -402,8 +404,11 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 - [x] Built the standalone Windows Balance Lab and simulator API. The updated client downloads only the published engine/data, verifies the game and artifacts, and refreshes event settings before runs. Release verification remains tracked above. — done 2026-11-12
 
+- [x] Chained bosses made idle-friendly: every skill and minion auto-targets martyrs, and martyrs take all damage (ailments, ground, novas). — done 2026-11-11, live in 0.4.33 on 2026-11-11
+- [x] Passive tree route planning with Confirm / Cancel. — done 2026-11-11
 - [x] Mobile follow-up: removed the current activity strip, bounded every tree at its outer nodes, and passes vertical dragging beyond a tree edge into page scrolling. — done 2026-11-10
 
+- [x] Player report: clicking a passive tree node did nothing since 0.4.30. The canvas took hold of the pointer on press, so the click never reached the node; it now takes hold only once a drag starts. Checked in the browser with a mouse (click, allocate, drag from a node); not checked on a real phone. The type check now uses the ES2022 library (`tsconfig.json`), since tests and sims call `.at()` and a fresh copy would not build. — done 2026-11-11, live in 0.4.31
 - [x] Player report: on phones, the game stays within the viewport so the navigation remains at the top while the page and passive tree scroll in their own panel. — done 2026-11-10
 
 - [x] Player reports: executions now keep twin bosses' shared Life synchronized; Exerted bonuses apply only to the player skill that spent the charges; and Soul Tether respects protected bosses. — done 2026-11-10

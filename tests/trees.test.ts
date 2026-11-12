@@ -6,7 +6,7 @@ import { zoneDef } from '../src/data/zones';
 import { combatStep, makeMonster, mitigate, startCombat, useFlask } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
-import { allocate, allocateReason, changeMastery, PASSIVE_POINTS_PER_LEVEL, passiveNodeCost, refund, refundReason, settlePassivePoints, startNode, TRAVEL_POINTS_PER_LEVEL } from '../src/engine/passives';
+import { allocate, allocateReason, changeMastery, PASSIVE_POINTS_PER_LEVEL, passiveNodeCost, passiveRoute, refund, refundReason, settlePassivePoints, startNode, TRAVEL_POINTS_PER_LEVEL } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { allocateSkillNode, MAX_SKILL_TREE_POINTS, skillTreePoints } from '../src/engine/skillTree';
 import { actionIntervalMs, startSkillAction } from '../src/engine/skills';
@@ -117,6 +117,22 @@ describe('character tree shape', () => {
     expect(ranger.passives).toContain('heavy_arms_n1');
     // the Warrior's deep wheel holds Unbroken, a rule-changer any class can walk to
     expect(deriveStats(ranger, []).raw.armourVsDot).toBeGreaterThan(0);
+  });
+
+  it('plans a route to a far node that can be bought in order, extending from an earlier plan', () => {
+    const s = newGame(1);
+    s.skills.combat = charXpForLevel(80);
+    const first = passiveRoute(s, 'iron_skin_n')!;
+    expect(first.at(-1)).toBe('iron_skin_n');
+    expect(first.length).toBe(route('class_str', 'iron_skin_n').length);
+    // a second click extends from the planned nodes rather than starting over
+    const target = PASSIVE_BY_ID.iron_skin_n.links.find((l) => !first.includes(l) && PASSIVE_BY_ID[l].kind === 'small');
+    if (target) expect(passiveRoute(s, target, first)).toEqual([target]);
+    // never walks through a keystone, mastery or Doomed Gate on the way
+    for (const id of first.slice(0, -1)) expect(['keystone', 'mastery', 'doomed']).not.toContain(PASSIVE_BY_ID[id].kind);
+    take(s, first);
+    expect(s.passives).toContain('iron_skin_n');
+    expect(passiveRoute(s, 'iron_skin_n')).toBeNull();
   });
 
   it('refunds the old graph when compact clusters remove or repurpose nodes', () => {
