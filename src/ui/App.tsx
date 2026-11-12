@@ -70,6 +70,8 @@ function GameScreen() {
   useFlaskHotkeys();
   const mainRef = useRef<HTMLElement>(null);
   useEffect(() => {
+    // On phones the whole shell scrolls, including navigation and vitals.
+    mainRef.current?.closest('.app')?.scrollTo({ top: 0 });
     mainRef.current?.scrollTo({ top: 0 });
     game.visitPage(page);
   }, [page]);

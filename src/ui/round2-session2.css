@@ -884,7 +884,8 @@ img.ct-svg {
 .cmap-act-scroll {
   overflow: auto;
   max-height: 760px;
-  overscroll-behavior: contain;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
 }
 
 /* roads between areas */

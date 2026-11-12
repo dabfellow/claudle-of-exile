@@ -6,6 +6,8 @@ Last updated 2026-11-12. Current implementation: [GAME.md](GAME.md). Engineering
 
 Latest confirmed live release: **0.4.36, Missing Maps Gems Restored**, deployed 2026-11-12. The Gem shop now stocks all 37 Maps skills and 77 supports after campaign completion, preserving level and signature-support upgrade requirements. Wiki entries identify Maps instead of Act 7. All 1,453 tests and the production build passed; the live version and login configuration were confirmed. Browser playtest remains unverified because the preview could not connect; no long simulations were run.
 
+Mobile navigation/vitals scrolling and the campaign-map scroll-trap fix are verified locally and await release (2026-11-12).
+
 1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are released; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
 3. Finish the Maps skill batch: all support effects now run (2026-11-08, unreleased); boss, offline and whole-build checks remain (see that section).
@@ -326,6 +328,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Fix mobile zone-map scroll trapping and let the navigation and health/mana header scroll out of view. — done 2026-11-12
+  - Reproduced the original trapped swipe using a campaign-complete level-80 character in Act 3. Touch gestures now scroll through the map to the page, sideways map movement still works, and travelling resets combat to the top. Checked 390×844 and 360×640 phone layouts and the unchanged desktop scrolling layout. All 1,453 tests and typecheck pass. Standard Vite preview timed out; browser checks used an isolated bundle of the real game with fallback art and no music. Unreleased.
+
 - [x] Fix wiki-listed Maps gems missing from the Gem shop after campaign completion. — done 2026-11-12
   - Restored 37 skill gems and 77 supports to the post-campaign shelf. Reproduced through a saved level-90 campaign-complete character; every wiki-listed gem can be purchased, with campaign, level and signature-support upgrade restrictions preserved. All 1,453 tests, typecheck and wiki generation pass. Browser preview could not connect, so an on-screen playtest remains unverified. Live in 0.4.36 on 2026-11-12.
 
@@ -408,6 +413,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Mobile navigation and health/mana header scroll out of view; campaign-map swipes can continue onto the page. Verified touch scrolling and zone travel at two phone sizes, desktop layout, all 1,453 tests and typecheck. — done 2026-11-12, unreleased
 
 - [x] Fixed the missing Maps Gem shop shelf (37 skills and 77 supports); wiki entries now identify Maps instead of Act 7. Full test suite, typecheck and wiki generation pass; browser preview unavailable. — done 2026-11-12, live in 0.4.36
 
