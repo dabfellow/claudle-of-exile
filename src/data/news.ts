@@ -10,9 +10,15 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = ['On mobile, the character select and other start screens scroll again.'];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.38',
+    date: '12 Nov 2026',
+    title: 'Character Select Scrolls Again',
+    items: ['On mobile, the character select and other start screens scroll again.'],
+  },
   {
     version: '0.4.37',
     date: '12 Nov 2026',
