@@ -4,7 +4,7 @@ Last updated 2026-11-12. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.30, Mobile Tree Scrolling**, deployed 2026-11-10: phones hide the current-activity strip, trees stop at their outer nodes, and dragging beyond a vertical tree edge continues scrolling the page. Before it, 0.4.29 (Mobile Navigation Fix).
+Latest confirmed live release: **0.4.34, Live Simulator API**, deployed 2026-11-12. The API publishes the same engine/data as the game; the updated desktop runner verifies the published files and current events, shows LIVE GAME 0.4.34, and retains saved loadouts. All 1,450 tests passed. Long live-connected simulation runs were not retested during release.
 
 1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are released; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
@@ -18,7 +18,7 @@ Latest confirmed live release: **0.4.30, Mobile Tree Scrolling**, deployed 2026-
 | # | Milestone | Current status |
 |---|---|---|
 | 1 | Automation/offline | Released; survival rules and two conditions baseline; flask-default removal verified (strictly requires Instilling) |
-| 2 | Pacing | Whole-journey audit run on 0.4.4; four classes finish Act 6 in a nonstop day, while Ranger has large seed variance and Mage commonly stalls in Act 4 |
+| 2 | Pacing | Live-source desktop simulator/API released in 0.4.34; pacing audit remains open. Whole-journey audit on 0.4.4 found large Ranger seed variance and a common Mage Act 4 stall |
 | 3 | Account layer | Released; Admin overhaul, service SQL, OAuth secret revocation and signed-in checks confirmed by owner 2026-11-08; save-rollback fixes unreleased |
 | 4 | Act 2 and content recipe | Released; cold-check/art follow-ups remain parked |
 | 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18 |
@@ -324,8 +324,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
-- [ ] Publish the simulator API and verify the installed desktop runner against the live release.
-  - Built locally: release-bound manifest, executable runtime, editor catalog, live-event feed and isolated desktop app. API integrity, all seven classes and 48 focused tests pass; deployment and installed-app checks remain.
+- [x] Publish the simulator API and verify the installed desktop runner against the live release. — done 2026-11-12, live in 0.4.34
+  - The deployed game, all six release artifacts and five current event rows verified successfully. The updated installed runner shows LIVE GAME 0.4.34; the user's saved setup was restored and completed old runs exported to Downloads/poi-sim-comparison.json. The unfinished 600-hour old-source run was stopped for installation. All 1,450 tests passed; no long post-update run was performed. HTML is transported as verified plain text to prevent hosting script injection, then rendered locally in the sandboxed app.
 
 - [x] Passive tree notable pass (design settled and list approved 2026-11-08, see Decisions "Notable pass"). Unreleased; not yet checked in a browser. — done 2026-11-08
   - Contents live in `src/data/passiveNotables.ts`; [PASSIVE_NOTABLES.md](PASSIVE_NOTABLES.md) is generated from it (player text). ~70 new stats in `src/engine/types.ts` (archetype scaling, conditional damage, Doomed-wheel "more", 18 rule flags), wired through `gems.ts` skillNumbers, `combat.ts` and `stats.ts`; new masteries for warcry, exertion, curse, minion, totem, mark, storm, Doom and chaos.
@@ -401,6 +401,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Released Live Simulator API 0.4.34 and updated the installed desktop runner. Published engine/catalog/app files and current event settings verified; live version display and saved-loadout restoration checked in the actual Windows app. — done 2026-11-12
 
 - [x] Built the standalone Windows Balance Lab and simulator API. The updated client downloads only the published engine/data, verifies the game and artifacts, and refreshes event settings before runs. Release verification remains tracked above. — done 2026-11-12
 
