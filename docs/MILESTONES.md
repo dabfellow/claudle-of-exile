@@ -399,6 +399,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
+- [x] Chained bosses made idle-friendly: every skill and minion auto-targets martyrs, and martyrs take all damage (ailments, ground, novas). — done 2026-11-11
 - [x] Passive tree route planning with Confirm / Cancel. — done 2026-11-11
 - [x] Mobile follow-up: removed the current activity strip, bounded every tree at its outer nodes, and passes vertical dragging beyond a tree edge into page scrolling. — done 2026-11-10
 
