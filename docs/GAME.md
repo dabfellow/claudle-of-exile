@@ -52,7 +52,7 @@ Brawler, Kiter and Cautious postures control spacing and movement. Kiter pushes 
 
 **Flask status:** 0.4.2 automatically used unenchanted recovery flasks at low resources. The pending local change removes that default: manual use or an Instilling Orb enchantment is required. Charges refill on kills; utility effects and recovery have their own charge and duration rules. Enchantment conditions are defined in `src/data/flasks.ts`; crafting lives in `src/engine/flasks.ts`.
 
-Skill gems reach level 20. Standard attribute requirements scale from 8 to 155, with demanding gems reaching 178. Requirements still make off-attribute gems an investment. Supports fit by tags/effects or an explicit skill restriction. The Gem shop stocks reachable gems; monsters do not drop skill/support gems. Gemcutting is another source. Sources: `src/data/gems.ts`, `src/engine/gems.ts`, `src/engine/hideout.ts`.
+Skill gems reach level 20. Standard attribute requirements scale from 8 to 155, with demanding gems reaching 178. Requirements still make off-attribute gems an investment. Supports fit by tags/effects or an explicit skill restriction. The Gem shop stocks reachable campaign gems and adds Maps gems after campaign completion; signature supports still require Town Market level 2 and purchases still require the gem's character level. Monsters do not drop skill/support gems. Gemcutting is another source. Sources: `src/data/gems.ts`, `src/engine/gems.ts`, `src/engine/hideout.ts`.
 
 ## Damage, defence and summons
 

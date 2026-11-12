@@ -52,7 +52,7 @@ const SHOPS: { id: ShopId; name: string; keeper: string; blurb: string; portrait
     id: 'gems',
     name: 'Gem shop',
     keeper: 'The Gemwright',
-    blurb: 'Every skill and support gem from the areas you’ve opened, and it never sells out. Each new area brings a few more.',
+    blurb: 'Every skill and support gem from the areas you’ve opened, and it never sells out. Each new area brings a few more; completing the campaign adds the Maps gems.',
     icon: 'gemcutting',
     shelves: [
       { label: 'Skill gems', match: (o) => o.kind === 'gem' },

@@ -304,7 +304,7 @@ function skillEntry(g: ActiveGemDef) {
     `<p>${esc(g.desc)}</p>
 ${facts([
     ['Required level', String(gemReqLevel(g.id))],
-    ['First appears', `Act ${gemAct(g.id)}`],
+    ['First appears', gemAct(g.id) === 7 ? 'Maps (after completing the campaign)' : `Act ${gemAct(g.id)}`],
     ['Mana cost', String(g.manaCost)],
     ['Cooldown', secs(g.cooldownMs)],
     ['Attack or cast time', secs(g.timeMs)],
@@ -330,7 +330,7 @@ function supportEntry(g: SupportGemDef) {
     `<p>${esc(g.desc)}</p>
 ${facts([
     ['Required level', String(gemReqLevel(g.id))],
-    ['First appears', `Act ${gemAct(g.id)}`],
+    ['First appears', gemAct(g.id) === 7 ? 'Maps (after completing the campaign)' : `Act ${gemAct(g.id)}`],
     ['Fits', esc(supportFitsText(g))],
   ])}
 <h2 id="skills">Skills it fits (${fits.length})</h2>${entList(fits.map((a) => U.skill(a.id)))}`);

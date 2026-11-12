@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { activeGemDef, gemAct, supportGemDef } from '../src/data/gems';
+import { ACTIVE_GEMS, SUPPORT_GEMS, activeGemDef, gemAct, supportGemDef } from '../src/data/gems';
+import { buyGem, gemShopOffers } from '../src/engine/hideout';
+import { ZONES } from '../src/data/zones';
+import { deserialize, serialize } from '../src/engine/save';
 import { unlockEverything } from '../src/engine/automation';
 import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
@@ -384,6 +387,53 @@ describe('Warcry scales with enemy count', () => {
 // ---------- GEM_ACTS for maps ----------
 
 describe('Maps gems availability', () => {
+  const campaignCharacter = () => {
+    const s = veteran(newGame(1, { name: 'Maps veteran', classId: 'mage' }), 90);
+    s.unlockedZones = ZONES.map((z) => z.id);
+    s.bossesDefeated = [...s.unlockedZones];
+    s.account.campaignDone = true;
+    s.account.hideout.vendor = 2;
+    s.account.bank.gold = 1e7;
+    const loaded = deserialize(serialize(s));
+    loaded.account = s.account; // Accounts are saved separately and reattached when entering a character.
+    return loaded;
+  };
+
+  it('stocks every wiki-listed gem for a returning campaign-complete character and lets them buy each one', () => {
+    const s = campaignCharacter();
+    const ids = gemShopOffers(s).map((o) => o.gemId ?? o.supportId);
+    const missing = [...ACTIVE_GEMS, ...SUPPORT_GEMS].filter((g) => !ids.includes(g.id));
+    expect(missing.map((g) => g.name)).toEqual([]);
+    const ctx = makeCtx(seeded(1));
+    for (const g of [...ACTIVE_GEMS, ...SUPPORT_GEMS]) expect(buyGem(s, ctx, g.id), g.id).toBeNull();
+  });
+
+  it('keeps Maps gems locked before the final campaign boss, regardless of level or open areas', () => {
+    const s = campaignCharacter();
+    s.account.campaignDone = false;
+    s.bossesDefeated = s.bossesDefeated.filter((id) => !ZONES.some((z) => z.id === id && z.act === 6 && z.actBoss));
+    expect(gemShopOffers(s).some((o) => gemAct((o.gemId ?? o.supportId)!) === 7)).toBe(false);
+    expect(buyGem(s, makeCtx(seeded(1)), 'doom_bolt')).toBe('Not on sale');
+  });
+
+  it('unlocks Maps gems from a recorded final-boss kill and keeps signature supports behind Town Market 2', () => {
+    const s = campaignCharacter();
+    s.account.campaignDone = false;
+    s.account.hideout.vendor = 1;
+    const ids = gemShopOffers(s).map((o) => o.gemId ?? o.supportId);
+    expect(ids).toContain('doom_bolt');
+    expect(ids).toContain('chaos_mastery');
+    expect(ids).not.toContain('accelerant');
+  });
+
+  it('honours shared account campaign completion and still requires the purchase level', () => {
+    const s = campaignCharacter();
+    s.bossesDefeated = [];
+    s.skills.combat = 0;
+    expect(gemShopOffers(s).some((o) => o.gemId === 'doom_bolt')).toBe(true);
+    expect(buyGem(s, makeCtx(seeded(1)), 'doom_bolt')).toMatch(/Needs level/);
+  });
+
   it('maps gems have act 7', () => {
     expect(gemAct('doom_bolt')).toBe(7);
     expect(gemAct('ice_totem')).toBe(7);

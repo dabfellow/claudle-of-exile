@@ -326,6 +326,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Fix wiki-listed Maps gems missing from the Gem shop after campaign completion. — done 2026-11-12
+  - Restored 37 skill gems and 77 supports to the post-campaign shelf. Reproduced through a saved level-90 campaign-complete character; every wiki-listed gem can be purchased, with campaign, level and signature-support upgrade restrictions preserved. All 1,453 tests, typecheck and wiki generation pass. Browser preview could not connect, so an on-screen playtest remains unverified. Unreleased.
+
 - [x] Publish the simulator API and verify the installed desktop runner against the live release. — done 2026-11-12, live in 0.4.34
   - The deployed game, all six release artifacts and five current event rows verified successfully. The updated installed runner shows LIVE GAME 0.4.34; the user's saved setup was restored and completed old runs exported to Downloads/poi-sim-comparison.json. The unfinished 600-hour old-source run was stopped for installation. All 1,450 tests passed; no long post-update run was performed. HTML is transported as verified plain text to prevent hosting script injection, then rendered locally in the sandboxed app.
 
@@ -405,6 +408,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Fixed the missing Maps Gem shop shelf (37 skills and 77 supports); wiki entries now identify Maps instead of Act 7. Full test suite, typecheck and wiki generation pass; browser preview unavailable. — done 2026-11-12, unreleased
 
 - [x] Released all pending checkout changes as 0.4.35: global level-gated ordinary unique drops, longer levelling with existing character progress preserved, damaged-save loading and Trophy Altar fixes. Retained all live 0.4.34 simulator and earlier game changes. All 1,449 tests and production build passed; live game version, login configuration and simulator API version confirmed. — done 2026-11-12
 

@@ -11,8 +11,13 @@ export function reachedAct(s: GameState): number {
 export function gemArrived(s: GameState, gemId: string): boolean {
   const act = gemAct(gemId);
   // act 7 = Maps, which open in DEV (tests) or when campaign is done
-  if (act === 7) return !!(import.meta.env as Record<string, unknown>)?.DEV || !!s.account.campaignDone || s.bossesDefeated.some((id) => { const z = ZONES.find((z2) => z2.id === id); return !!z && z.act === 6 && !!z.actBoss; });
+  if (act === 7) return !!(import.meta.env as Record<string, unknown>)?.DEV || mapsGemsUnlocked(s);
   return act <= reachedAct(s);
+}
+
+/** Maps have no campaign area to assign to the shop; completing the campaign opens their shelf. */
+function mapsGemsUnlocked(s: GameState): boolean {
+  return !!s.account.campaignDone || ZONES.some((z) => z.act === 6 && z.actBoss && s.bossesDefeated.includes(z.id));
 }
 
 let shopZones: Map<string, ZoneDef> | undefined;
@@ -41,8 +46,9 @@ export function gemShopZone(gemId: string): ZoneDef | undefined {
   return shopZones.get(gemId);
 }
 
-/** Whether the Gem shop sells this gem yet: its area is open. */
+/** Whether the Gem shop sells this gem yet: its area is open, or the campaign is complete for Maps gems. */
 export function gemInShop(s: GameState, gemId: string): boolean {
+  if (gemAct(gemId) === 7) return mapsGemsUnlocked(s);
   const z = gemShopZone(gemId);
   return !!z && s.unlockedZones.includes(z.id);
 }
