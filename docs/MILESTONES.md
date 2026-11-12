@@ -4,7 +4,7 @@ Last updated 2026-11-12. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.34, Live Simulator API**, deployed 2026-11-12. The API publishes the same engine/data as the game; the updated desktop runner verifies the published files and current events, shows LIVE GAME 0.4.34, and retains saved loadouts. All 1,450 tests passed. Long live-connected simulation runs were not retested during release.
+Latest confirmed live release: **0.4.35, Unique Drops and Longer Levelling**, deployed 2026-11-12. All pending checkout changes are released: ordinary uniques now use level-gated global drops, character levelling takes longer while existing progress is preserved, damaged character saves no longer block account loading, and Trophy Altar level 4 grants its stated Map-Boss rewards. The live game version, login configuration and simulator API version were verified; all 1,449 tests and the production build passed. No manual browser playtest or long simulation runs were performed during this release.
 
 1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are released; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
@@ -329,7 +329,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - [x] Publish the simulator API and verify the installed desktop runner against the live release. — done 2026-11-12, live in 0.4.34
   - The deployed game, all six release artifacts and five current event rows verified successfully. The updated installed runner shows LIVE GAME 0.4.34; the user's saved setup was restored and completed old runs exported to Downloads/poi-sim-comparison.json. The unfinished 600-hour old-source run was stopped for installation. All 1,450 tests passed; no long post-update run was performed. HTML is transported as verified plain text to prevent hosting script injection, then rendered locally in the sandboxed app.
 
-- [x] Rework ordinary unique drops into a low-weight, level-gated global pool; preserve achievement and encounter-exclusive uniques. Every ordinary unique joins at its base requirement, and the collection shows that level instead of zone lists. — done 2026-11-10
+- [x] Rework ordinary unique drops into a low-weight, level-gated global pool; preserve achievement and encounter-exclusive uniques. Every ordinary unique joins at its base requirement, and the collection shows that level instead of zone lists. — done 2026-11-10, live in 0.4.35 on 2026-11-12
 
 - [x] Passive tree notable pass (design settled and list approved 2026-11-08, see Decisions "Notable pass"). Unreleased; not yet checked in a browser. — done 2026-11-08
   - Contents live in `src/data/passiveNotables.ts`; [PASSIVE_NOTABLES.md](PASSIVE_NOTABLES.md) is generated from it (player text). ~70 new stats in `src/engine/types.ts` (archetype scaling, conditional damage, Doomed-wheel "more", 18 rule flags), wired through `gems.ts` skillNumbers, `combat.ts` and `stats.ts`; new masteries for warcry, exertion, curse, minion, totem, mark, storm, Doom and chaos.
@@ -406,7 +406,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-- [x] Prepared all pending game changes for release 0.4.35: global level-gated ordinary unique drops, longer levelling with existing character progress preserved, damaged-save loading and Trophy Altar fixes. Retained all live 0.4.34 simulator and earlier game changes. Release verification pending. — done 2026-11-12
+- [x] Released all pending checkout changes as 0.4.35: global level-gated ordinary unique drops, longer levelling with existing character progress preserved, damaged-save loading and Trophy Altar fixes. Retained all live 0.4.34 simulator and earlier game changes. All 1,449 tests and production build passed; live game version, login configuration and simulator API version confirmed. — done 2026-11-12
+
+- [x] Released ordinary unique drops rework: low-weight global pool gated by base item requirements, with achievement rewards and encounter trophies kept exclusive. — done 2026-11-12, live in 0.4.35
 
 - [x] Extended the full character XP curve by 3.4× so the measured 440-hour trip to level 100 becomes roughly 1,500 fighting hours (about 75 days at 20 hours per day), including a real slowdown from levels 1–80 while preserving the 99-halfway rule and existing characters' level/progress. — done 2026-11-10
 
