@@ -98,7 +98,7 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
   const ilvl = mon.level + (zone.ilvlBonus ?? 0) + MAP_ILVL[stationLevel(s, 'map_device') - 1];
   const giveCurrency = (id: string, qty = 1) => {
     if (CURRENCY_ORBS.has(id)) {
-      const amount = qty * Math.max(ctx.event?.loot ?? 1, ctx.event?.currencyDrops ?? 1) / (ctx.event?.loot ?? 1);
+      const amount = qty * Math.max(ctx.event?.loot ?? 1, ctx.event?.currencyDrops ?? 1) / (ctx.event?.loot ?? 1) * (ctx.simulation?.currencyDrops ?? 1);
       qty = Math.floor(amount) + (amount % 1 > 0 && rng.next() < amount % 1 ? 1 : 0);
     }
     addBank(s, id, qty);

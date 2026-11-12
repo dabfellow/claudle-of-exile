@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'The desktop simulator can load the live game rules, engine and current events through a versioned game API.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

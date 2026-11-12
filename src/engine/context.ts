@@ -13,6 +13,8 @@ export interface Ctx {
   /** the bonuses of the limited-time events running right now */
   event?: EventBoost | null;
   eventRows?: EventRow[];
+  /** Private balance-tool experiments; absent during normal gameplay. */
+  simulation?: { currencyDrops: number };
 }
 
 export function makeCtx(rng: Rng, now = 0, sink: GameEvent[] = []): Ctx & { events: GameEvent[] } {

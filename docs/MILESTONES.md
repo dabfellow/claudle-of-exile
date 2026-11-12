@@ -1,6 +1,6 @@
 # Roadmap and decisions
 
-Last updated 2026-11-10. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-12. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
@@ -324,6 +324,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [ ] Publish the simulator API and verify the installed desktop runner against the live release.
+  - Built locally: release-bound manifest, executable runtime, editor catalog, live-event feed and isolated desktop app. API integrity, all seven classes and 48 focused tests pass; deployment and installed-app checks remain.
+
 - [x] Passive tree notable pass (design settled and list approved 2026-11-08, see Decisions "Notable pass"). Unreleased; not yet checked in a browser. — done 2026-11-08
   - Contents live in `src/data/passiveNotables.ts`; [PASSIVE_NOTABLES.md](PASSIVE_NOTABLES.md) is generated from it (player text). ~70 new stats in `src/engine/types.ts` (archetype scaling, conditional damage, Doomed-wheel "more", 18 rule flags), wired through `gems.ts` skillNumbers, `combat.ts` and `stats.ts`; new masteries for warcry, exertion, curse, minion, totem, mark, storm, Doom and chaos.
   - Build adjustments to the approved draft: Warlord's Call became "Warcries last until the pack falls" (warcries already counted every enemy); Twin Hexes merges the earlier curse's effect into the new one; Perfect Rhythm gives 1% increased crit chance per 100 Accuracy once you can't miss; Grave Pact is once per pack. A few novel draft effects without an engine stat were mapped to the closest real stat (see the generated doc).
@@ -396,6 +399,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Built the standalone Windows Balance Lab and simulator API. The updated client downloads only the published engine/data, verifies the game and artifacts, and refreshes event settings before runs. Release verification remains tracked above. — done 2026-11-12
 
 - [x] Mobile follow-up: removed the current activity strip, bounded every tree at its outer nodes, and passes vertical dragging beyond a tree edge into page scrolling. — done 2026-11-10
 
