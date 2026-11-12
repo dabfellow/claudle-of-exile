@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'On mobile, navigation and health/mana bars scroll out of the way, and swiping over the zone map can continue scrolling the page.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.37',
+    date: '12 Nov 2026',
+    title: 'Mobile Scrolling Fixes',
+    items: [
+      'On mobile, navigation and health/mana bars scroll out of the way, and swiping over the zone map can continue scrolling the page.',
+    ],
+  },
   {
     version: '0.4.36',
     date: '12 Nov 2026',
