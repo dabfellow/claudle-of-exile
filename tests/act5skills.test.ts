@@ -264,12 +264,12 @@ describe('minions', () => {
     expect(allIn.some((y) => y.cell === before)).toBe(true);
   });
 
-  it("minions don't touch martyrs or a chained boss", () => {
+  it("minions go for martyrs, and don't touch a chained boss", () => {
     const { s, ctx, dummy, monsters } = summon('boarding_party', { pack: 2, cells: [6, 8] });
     dummy.martyr = true;
     monsters[1].chained = true;
     run(s, ctx, 5000);
-    expect(damaged(dummy)).toBe(false);
+    expect(damaged(dummy)).toBe(true);
     expect(damaged(monsters[1])).toBe(false);
   });
 

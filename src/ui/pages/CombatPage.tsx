@@ -34,7 +34,6 @@ import {
   shockPct,
   skillBlockedReason,
 } from '../../engine/combat';
-import { aimLockReason, ruleUnlockLevel, skillAim } from '../../engine/automation';
 import { areaXpLabel, characterLevel } from '../../engine/character';
 import { mealEffectText } from '../../engine/cooking';
 import { flaskStats } from '../../engine/flasks';
@@ -613,17 +612,14 @@ export const ORDERS: { id: TargetOrder; label: string }[] = [
   { id: 'highest', label: 'Highest life' },
 ];
 
-/** While a boss is chained, why your hits do nothing and every way past it. Laid over the field, so it never moves the hexes, and clicks pass through to the martyrs. */
-function ChainedNotice({ s, c }: { s: GameState; c: CombatRuntime }) {
+/** While a boss is chained, why your hits do nothing. Laid over the field, so it never moves the hexes, and clicks pass through to the martyrs. */
+function ChainedNotice({ c }: { c: CombatRuntime }) {
   const boss = c.monsters.find((m) => m.chained);
   if (!boss) return null;
-  const locked = aimLockReason(s);
-  const aimed = s.skillBar.some((g) => g && skillAim(s, g));
   return (
     <div className="chained-anchor">
       <div className="callout bad chained-notice">
-        <b>{boss.name} is chained and can't be hurt.</b> Kill its martyrs first: area and chain skills strike them, or click one
-        {aimed ? '.' : locked ? ` (a rule can do it from War Table level ${ruleUnlockLevel('aim')}).` : ", or set a skill's rule to aim at them."}
+        <b>{boss.name} is chained and can't be hurt</b> until its martyrs die. Your skills and minions go for them by themselves.
       </div>
     </div>
   );
@@ -1101,7 +1097,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         </div>
         <div className="bf-wrap">
           <MovementBar s={s} />
-          <ChainedNotice s={s} c={c} />
+          <ChainedNotice c={c} />
           <Battlefield s={s} c={c} fx={fx} />
           <FieldSummary s={s} c={c} />
           <div className="action-bar">

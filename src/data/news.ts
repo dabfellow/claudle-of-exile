@@ -19,6 +19,38 @@ export const UPCOMING: string[] = [
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.4.34',
+    date: '12 Nov 2026',
+    title: 'Live Simulator API',
+    items: [
+      'The desktop simulator can load the live game rules, engine and current events through a versioned game API.',
+    ],
+  },
+  {
+    version: '0.4.33',
+    date: '11 Nov 2026',
+    title: 'Easier Chained Bosses',
+    items: [
+      'Chained bosses are much easier: every skill and minion now goes for Chained Martyrs by itself, and martyrs take damage from everything, including ailments and ground. No clicks or rules needed.',
+    ],
+  },
+  {
+    version: '0.4.32',
+    date: '11 Nov 2026',
+    title: 'Passive Tree Route Planning',
+    items: [
+      'Clicking a passive tree node now plans the shortest route to it. Click more nodes to extend it, then Confirm to spend the points or Cancel to undo.',
+    ],
+  },
+  {
+    version: '0.4.31',
+    date: '11 Nov 2026',
+    title: 'Passive Tree Clicks Fixed',
+    items: [
+      'Clicking a node on the passive tree works again, so you can allocate with the mouse or a tap.',
+    ],
+  },
+  {
     version: '0.4.30',
     date: '10 Nov 2026',
     title: 'Mobile Tree Scrolling',

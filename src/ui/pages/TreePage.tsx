@@ -40,9 +40,11 @@ import {
   isDoomed,
   pairedGateway,
   passiveNodeCost,
+  passiveRoute,
   pointsLeft,
   refund,
   refundReason,
+  routeCost,
   settlePassivePoints,
   startNode,
 } from '../../engine/passives';
@@ -119,6 +121,7 @@ function TreeCanvas<N extends CanvasNode>({
   selectedId,
   selection,
   interactionHint,
+  pending,
 }: {
   nodes: N[];
   byId: Record<string, N>;
@@ -146,6 +149,8 @@ function TreeCanvas<N extends CanvasNode>({
   /** persistent details/actions for the selected node */
   selection?: ReactNode;
   interactionHint?: string;
+  /** nodes lined up to buy but not yet confirmed; include them in `version` */
+  pending?: Set<string>;
 }) {
   const contentBounds = useMemo<TreeBounds>(() => {
     if (!nodes.length) return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
@@ -434,11 +439,14 @@ function TreeCanvas<N extends CanvasNode>({
 
     for (const [a, b] of links) {
       const on = isOn(a.id) && isOn(b.id);
-      const can = !on && ((isOn(a.id) && canTake(b.id)) || (isOn(b.id) && canTake(a.id)));
+      const aPlan = !!pending?.has(a.id);
+      const bPlan = !!pending?.has(b.id);
+      const planned = !on && (aPlan || bPlan) && (aPlan || isOn(a.id)) && (bPlan || isOn(b.id));
+      const can = !on && !planned && ((isOn(a.id) && canTake(b.id)) || (isOn(b.id) && canTake(a.id)));
       const c = a.curves?.[b.id];
       const d = c ? `M${a.x},${a.y}C${c[0]},${c[1]} ${c[2]},${c[3]} ${b.x},${b.y}` : `M${a.x},${a.y}L${b.x},${b.y}`;
-      if (on || can) {
-        activeLines.push(<path key={`${a.id}-${b.id}`} className={`tree-link ${on ? 'on' : 'can'}`} d={d} />);
+      if (on || planned || can) {
+        activeLines.push(<path key={`${a.id}-${b.id}`} className={`tree-link ${on ? 'on' : planned ? 'pending' : 'can'}`} d={d} />);
       } else {
         inactivePath += d;
       }
@@ -457,7 +465,7 @@ function TreeCanvas<N extends CanvasNode>({
             <g
               key={n.id}
               data-tut={tutId?.(n.id)}
-              className={`tree-node ${on ? 'on' : ''} ${can ? 'can' : ''} ${isMatched ? 'match' : ''} ${selectedId === n.id ? 'selected' : ''}`}
+              className={`tree-node ${on ? 'on' : ''} ${can ? 'can' : ''} ${isMatched ? 'match' : ''} ${selectedId === n.id ? 'selected' : ''} ${pending?.has(n.id) ? 'pending' : ''}`}
               transform={`translate(${n.x} ${n.y})`}
               style={{
                 opacity: dim ? 0.2 : 1,
@@ -479,7 +487,7 @@ function TreeCanvas<N extends CanvasNode>({
       </>
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `version` stands in for everything drawn
-  }, [version, nodes, byId, matches, selectedId]);
+  }, [version, nodes, byId, matches, selectedId, pending]);
 
   // Names show up once zoomed in to at least 1.8x, and dynamically scale to stay clear and readable
   const showNames = view.k >= 1.8;
@@ -530,7 +538,6 @@ function TreeCanvas<N extends CanvasNode>({
         if ((e.target as HTMLElement).closest('.tree-controls, .tree-selection-panel')) return;
         const r = wrap.current?.getBoundingClientRect();
         if (!r) return;
-        e.currentTarget.setPointerCapture(e.pointerId);
         const unit = size / Math.min(r.width, r.height);
         pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (pointers.current.size === 2) {
@@ -562,6 +569,9 @@ function TreeCanvas<N extends CanvasNode>({
         const dy = e.clientY - dr.startY;
         if (!dr.moved && Math.abs(dx) + Math.abs(dy) > 3) {
           dr.moved = true;
+          // the canvas takes hold of the pointer only once a drag starts, so the drag carries on outside it.
+          // Taking hold on press would send the click to the canvas instead of the node under the cursor.
+          e.currentTarget.setPointerCapture(e.pointerId);
           setHover(null);
           wrap.current?.classList.add('is-dragging');
         }
@@ -882,13 +892,20 @@ function doomedDebuffText(n: PassiveNode): string {
   return 'Permanent penalty to build defense/offense';
 }
 
-function CharacterNodeTip({ s, n }: { s: GameState; n: PassiveNode }) {
+function CharacterNodeTip({ s, n, plan = [] }: { s: GameState; n: PassiveNode; plan?: string[] }) {
   const allocated = s.passives.includes(n.id);
   // an Exile can walk through other classes' starts, so those get the normal node tip
   if (n.kind === 'start' && (n.id === startNode(s) || s.character.classId !== 'exile')) {
     return <div className="tip">{n.id === startNode(s) ? `${n.name} start — your starting point` : `${n.name} start (another class)`}</div>;
   }
-  const reason = allocated ? refundReason(s, n.id) : allocateReason(s, n.id);
+  let reason = allocated ? refundReason(s, n.id) : allocateReason(s, n.id);
+  if (!allocated && n.kind !== 'mastery') {
+    if (plan.includes(n.id)) reason = 'Planned · click to cut the route back to before this node';
+    else if (reason?.startsWith('Must connect')) {
+      const route = passiveRoute(s, n.id, plan);
+      if (route) reason = `Click to plan a route here · ${route.length} node${route.length === 1 ? '' : 's'}`;
+    }
+  }
   const before = deriveStats(s, []);
   const next = allocated ? s.passives.filter((x) => x !== n.id) : [...s.passives, n.id];
   const after = n.kind === 'mastery' ? before : deriveStats({ ...s, passives: next }, []);
@@ -1078,6 +1095,51 @@ function CharacterNodeSelection({
         </div>
       )}
       {refundMode && !allocated && !fixedStart && <div className="warn tree-selection-mode-note">Refund mode is active. Select an allocated node to refund it.</div>}
+    </section>
+  );
+}
+
+const POOL_LABEL = { travelPoints: 'Travel', passivePoints: 'Passive', masteryPoints: 'Mastery' } as const;
+
+/** The route lined up to buy: its cost, what it changes, and Confirm / Cancel. */
+function PlannedRoutePanel({ s, plan, onConfirm, onCancel }: { s: GameState; plan: string[]; onConfirm: () => void; onCancel: () => void }) {
+  const cost = routeCost(plan);
+  const pools = (Object.keys(cost) as (keyof typeof cost)[]).filter((p) => cost[p] > 0);
+  const short = pools.filter((p) => cost[p] > s[p]);
+  const before = deriveStats(s, []);
+  const after = deriveStats({ ...s, passives: [...s.passives, ...plan] }, []);
+  const highlights = plan.map((id) => PASSIVE_BY_ID[id]).filter((n) => n && n.kind !== 'small' && n.kind !== 'travel' && n.kind !== 'highway');
+  const shortText = short.length ? `Not enough ${short.map((p) => POOL_LABEL[p]).join(' or ')} Points` : null;
+  return (
+    <section className="tree-selection-panel tree-plan-panel" role="dialog" aria-label="Planned route">
+      <div className="tree-selection-head">
+        <span>Planned route · {plan.length} node{plan.length === 1 ? '' : 's'}</span>
+      </div>
+      <div className="tree-plan-costs">
+        {pools.map((p) => (
+          <span key={p} className={short.includes(p) ? 'bad' : ''}>
+            {cost[p]} {POOL_LABEL[p]} <span className="dim">(have {s[p]})</span>
+          </span>
+        ))}
+      </div>
+      {highlights.length > 0 && (
+        <div className="tree-plan-highlights">
+          {highlights.map((n) => (
+            <div key={n.id} className="mod">
+              {n.name} <span className="dim">· {isDoomed(n) ? 'Doomed Gate' : isCosmicGateway(n) ? 'Cosmic Gateway' : n.kind}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <StatDeltas before={before} after={after} />
+      {shortText && <div className="warn tree-selection-mode-note">{shortText}. Cancel, or click a planned node to cut the route back.</div>}
+      <div className="tree-selection-actions">
+        <button className="btn sm ghost" onClick={onCancel}>Cancel</button>
+        <button className="btn sm primary" disabled={!!shortText} title={shortText ?? ''} onClick={onConfirm}>
+          Confirm
+        </button>
+      </div>
+      <div className="dim tree-selection-mode-note">Click more nodes to extend the route, or a planned node to cut it back.</div>
     </section>
   );
 }
@@ -1359,6 +1421,8 @@ function CharacterTree({ s }: { s: GameState }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [refundMode, setRefundMode] = useState(false);
+  /** nodes lined up to buy, in order; nothing is spent until Confirm */
+  const [planState, setPlan] = useState<string[]>([]);
 
   // The engine owns the profiles (GameState.passiveProfiles); this page only shows them and asks the engine to switch.
   const profiles = s.passiveProfiles;
@@ -1376,6 +1440,7 @@ function CharacterTree({ s }: { s: GameState }) {
       return;
     }
     setSelectedId(null);
+    setPlan([]);
     game.act((st, ctx) => {
       const why = switchPassiveProfile(st, ctx, targetId);
       if (why) ctx.emit({ t: 'info', text: why, tone: 'warn' });
@@ -1444,8 +1509,43 @@ function CharacterTree({ s }: { s: GameState }) {
   const totals = describeStats(Object.fromEntries(Object.entries(passiveStats(s.passives, s.masteries)).filter(([, v]) => v)));
   const selected = selectedId ? PASSIVE_BY_ID[selectedId] : undefined;
 
+  // anything bought elsewhere since it was planned drops out of the plan
+  const plan = planState.filter((id) => !allocated.has(id));
+  const pending = useMemo(() => new Set(plan), [plan.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const click = (n: PassiveNode) => {
-    setSelectedId(n.id);
+    const at = plan.indexOf(n.id);
+    if (at >= 0) {
+      // clicking a planned node cuts the route back to just before it
+      setPlan(plan.slice(0, at));
+      setSelectedId(null);
+      return;
+    }
+    // refunds, masteries and owned nodes keep the single-node preview
+    if (refundMode || allocated.has(n.id) || n.id === myStart || n.kind === 'mastery') {
+      setSelectedId(n.id);
+      return;
+    }
+    const route = passiveRoute(s, n.id, plan);
+    if (!route) {
+      setSelectedId(n.id); // shows why it can't be reached
+      return;
+    }
+    setPlan([...plan, ...route]);
+    setSelectedId(null);
+  };
+
+  const confirmPlan = () => {
+    game.act((st, ctx) => {
+      for (const id of plan) {
+        const err = allocate(st, ctx, id);
+        if (err) {
+          ctx.emit({ t: 'info', text: `${PASSIVE_BY_ID[id]?.name ?? id}: ${err}`, tone: 'warn' });
+          break;
+        }
+      }
+    });
+    setPlan([]);
   };
 
   return (
@@ -1548,14 +1648,15 @@ function CharacterTree({ s }: { s: GameState }) {
         byId={PASSIVE_BY_ID}
         size={CHAR_TREE_SIZE}
         maxZoom={CHAR_TREE_ZOOM}
-        version={`${myStart}|${s.passives.join(',')}|${s.travelPoints}|${s.passivePoints}|${s.masteryPoints}|${query}`}
+        version={`${myStart}|${s.passives.join(',')}|${s.travelPoints}|${s.passivePoints}|${s.masteryPoints}|${query}|${plan.join(',')}`}
+        pending={pending}
         focus={{ x: -PASSIVE_BY_ID[myStart].x, y: -PASSIVE_BY_ID[myStart].y, k: 3 }}
         isOn={isOn}
         canTake={canTake}
         matches={matches}
         labels={CHAR_LABELS}
         renderNode={(n, on, can) => <PassiveNodeShape node={n} color={REGION_COLOR[n.region]} on={on} can={can} mine={n.id === myStart} />}
-        tip={(n) => <CharacterNodeTip s={s} n={n} />}
+        tip={(n) => <CharacterNodeTip s={s} n={n} plan={plan} />}
         onClick={click}
         selectedId={selectedId}
         selection={selected ? (
@@ -1566,8 +1667,10 @@ function CharacterTree({ s }: { s: GameState }) {
             onClose={() => setSelectedId(null)}
             onMastery={() => setPicker(selected)}
           />
+        ) : plan.length > 0 ? (
+          <PlannedRoutePanel s={s} plan={plan} onConfirm={confirmPlan} onCancel={() => setPlan([])} />
         ) : null}
-        interactionHint="Drag to pan · scroll to zoom · click a node to preview"
+        interactionHint="Drag to pan · scroll to zoom · click a node to plan a route there"
         tutId={(id) => (s.passives.length === 0 && canTake(id) ? 'tree-start' : undefined)}
         backdrop={CHAR_BACKDROP}
       />

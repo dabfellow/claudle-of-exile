@@ -343,12 +343,12 @@ export function minionCells(bodies: Body[], near: number, ranged: boolean, rng?:
     .sort((a, b) => rings.indexOf(cellRing(a)) - rings.indexOf(cellRing(b)));
 }
 
-/** Who a minion goes for: the player's clicked target if it can hit it, else the nearest. Martyrs and weak points are only for aimed blows, and chains stop everything. */
+/** Who a minion goes for: the player's clicked target if it can hit it, else martyrs first, else the nearest. Weak points are only for aimed blows, and chains stop everything. */
 export function minionTarget(x: Minion, monsters: MonsterInstance[], lockedUid?: number): MonsterInstance | undefined {
   const locked = monsters.find((m) => m.uid === lockedUid && m.life > 0 && !m.dead && !m.chained);
   if (locked && cellDistance(x.cell, locked.cell) <= x.reach) return locked;
-  const open = monsters.filter((m) => m.life > 0 && !m.dead && !m.martyr && !m.weakPoint && !m.chained);
-  return open.sort((a, b) => cellDistance(x.cell, a.cell) - cellDistance(x.cell, b.cell) || a.uid - b.uid)[0];
+  const open = monsters.filter((m) => m.life > 0 && !m.dead && !m.weakPoint && !m.chained);
+  return open.sort((a, b) => Number(!a.martyr) - Number(!b.martyr) || cellDistance(x.cell, a.cell) - cellDistance(x.cell, b.cell) || a.uid - b.uid)[0];
 }
 
 /** A step toward a cell over free hexes, staying on the leash. */

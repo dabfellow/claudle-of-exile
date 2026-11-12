@@ -258,6 +258,82 @@ export function allocateReason(s: GameState, id: string): string | null {
   return null;
 }
 
+/**
+ * The shortest chain of nodes to buy, in order, that joins `target` to what is already owned (`s.passives`
+ * plus `planned`, nodes the player has lined up but not yet bought). Each node in the result connects to the
+ * ones before it, so they can be allocated one by one. A gateway on the way opens its paired end for free.
+ * Masteries, keystones, Doomed Gates and other classes' starts are never walked through, only ended on, so a
+ * route never takes a permanent debuff or a build-defining keystone the player didn't click.
+ * Returns null when there is no way there.
+ */
+export function passiveRoute(s: GameState, target: string, planned: string[] = []): string[] | null {
+  const goal = PASSIVE_BY_ID[target];
+  if (!goal) return null;
+  const start = startNode(s);
+  const owned = new Set([...s.passives, ...planned]);
+  if (target === start || owned.has(target)) return null;
+  const exile = s.character.classId === 'exile';
+  const passable = (id: string) => {
+    const n = PASSIVE_BY_ID[id];
+    if (!n || owned.has(id) || id === start) return false;
+    if (n.kind === 'start') return exile;
+    return n.kind !== 'mastery' && n.kind !== 'keystone' && !isDoomed(n);
+  };
+  const enterable = (id: string) => id === target || passable(id);
+
+  // 0-1 search: buying a node costs one step, stepping through a gateway to its paired end costs nothing
+  const parent = new Map<string, string | null>();
+  const free = new Set<string>();
+  const queue: string[] = [];
+  const reach = (id: string) => {
+    if (parent.has(id)) return;
+    parent.set(id, null);
+    free.add(id);
+    queue.unshift(id);
+  };
+  reach(start);
+  for (const id of owned) {
+    reach(id);
+    const pair = pairedGateway(id);
+    if (pair) reach(pair);
+  }
+  if (free.has(target)) return [target];
+  while (queue.length) {
+    const cur = queue.shift()!;
+    if (cur === target) break;
+    if (!free.has(cur)) {
+      const pair = pairedGateway(cur);
+      if (pair && !parent.has(pair)) {
+        parent.set(pair, cur);
+        free.add(pair);
+        queue.unshift(pair);
+      }
+    }
+    if (!free.has(cur) && !passable(cur)) continue;
+    for (const link of PASSIVE_BY_ID[cur]?.links ?? []) {
+      if (parent.has(link) || !enterable(link)) continue;
+      parent.set(link, cur);
+      queue.push(link);
+    }
+  }
+  if (!parent.has(target)) return null;
+  const route: string[] = [];
+  for (let id: string | null = target; id !== null; id = parent.get(id) ?? null) {
+    if (id === target || !free.has(id)) route.unshift(id);
+  }
+  return route;
+}
+
+/** What a list of nodes costs from each point pool. */
+export function routeCost(ids: string[]): Record<PassivePointPool, number> {
+  const cost = { travelPoints: 0, passivePoints: 0, masteryPoints: 0 };
+  for (const id of ids) {
+    const node = PASSIVE_BY_ID[id];
+    if (node) cost[passiveNodeCost(node).pool] += passiveNodeCost(node).cost;
+  }
+  return cost;
+}
+
 function masteryOptionKey(option: MasteryOption): string {
   return option.label.trim().toLocaleLowerCase();
 }

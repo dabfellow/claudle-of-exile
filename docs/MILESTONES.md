@@ -4,7 +4,7 @@ Last updated 2026-11-12. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.33, Easier Chained Bosses**, verified against the live site's published JavaScript on 2026-11-12. The local checkout still says 0.4.30 and must not be treated as the live balance source. The simulator API is implemented locally and awaits deployment.
+Latest confirmed live release: **0.4.34, Live Simulator API**, deployed 2026-11-12. The API publishes the same engine/data as the game; the updated desktop runner verifies the published files and current events, shows LIVE GAME 0.4.34, and retains saved loadouts. All 1,450 tests passed. Long live-connected simulation runs were not retested during release.
 
 1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are released; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
@@ -18,7 +18,7 @@ Latest confirmed live release: **0.4.33, Easier Chained Bosses**, verified again
 | # | Milestone | Current status |
 |---|---|---|
 | 1 | Automation/offline | Released; survival rules and two conditions baseline; flask-default removal verified (strictly requires Instilling) |
-| 2 | Pacing | Whole-journey audit run on 0.4.4; four classes finish Act 6 in a nonstop day, while Ranger has large seed variance and Mage commonly stalls in Act 4 |
+| 2 | Pacing | Live-source desktop simulator/API released in 0.4.34; pacing audit remains open. Whole-journey audit on 0.4.4 found large Ranger seed variance and a common Mage Act 4 stall |
 | 3 | Account layer | Released; Admin overhaul, service SQL, OAuth secret revocation and signed-in checks confirmed by owner 2026-11-08; save-rollback fixes unreleased |
 | 4 | Act 2 and content recipe | Released; cold-check/art follow-ups remain parked |
 | 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18 |
@@ -326,13 +326,11 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
-- [ ] Publish the simulator API with the next game release and verify the installed desktop app against it.
-  - 2026-11-12: API and updated desktop package implemented locally; not deployed or installed over the old client yet. Manifest/catalog/runtime are generated with the game, downloads verify their hashes against the published game entry, and current events are read before each run. The updated client no longer reads the checkout or falls back to bundled values. Production build, built-artifact integrity/runtime check for all seven classes, typecheck with ES2022 libraries, and 48 focused tests pass.
+- [x] Publish the simulator API and verify the installed desktop runner against the live release. — done 2026-11-12, live in 0.4.34
+  - The deployed game, all six release artifacts and five current event rows verified successfully. The updated installed runner shows LIVE GAME 0.4.34; the user's saved setup was restored and completed old runs exported to Downloads/poi-sim-comparison.json. The unfinished 600-hour old-source run was stopped for installation. All 1,450 tests passed; no long post-update run was performed. HTML is transported as verified plain text to prevent hosting script injection, then rendered locally in the sandboxed app.
 
-- [x] Build a standalone Windows character simulator with current game values, all classes, gear/loadouts, passive tree, competent player controls and isolated XP/drop-rate experiments. — done 2026-11-12
-  - Installed **Path of Idle Balance Lab** with desktop and Start menu shortcuts. Rebuilds current local source at startup; experiments run in an isolated worker. Packaged desktop startup and a real baseline run verified; 42 focused simulator/event tests pass. Automatic progression currently follows campaign areas; heuristic competence is not a guarantee of optimal builds. No game balance or player saves changed.
+- [x] Rework ordinary unique drops into a low-weight, level-gated global pool; preserve achievement and encounter-exclusive uniques. Every ordinary unique joins at its base requirement, and the collection shows that level instead of zone lists. — done 2026-11-10
 
-- [x] Rework ordinary unique drops into a low-weight, level-gated global pool; preserve achievement and encounter-exclusive uniques. Every ordinary unique joins at its base requirement, and the collection shows that level instead of zone lists. Typecheck and focused unique/achievement tests pass. The full suite currently has two unrelated failures in the in-progress XP-curve and passive-tree migration work. — done 2026-11-10
 - [x] Passive tree notable pass (design settled and list approved 2026-11-08, see Decisions "Notable pass"). Unreleased; not yet checked in a browser. — done 2026-11-08
   - Contents live in `src/data/passiveNotables.ts`; [PASSIVE_NOTABLES.md](PASSIVE_NOTABLES.md) is generated from it (player text). ~70 new stats in `src/engine/types.ts` (archetype scaling, conditional damage, Doomed-wheel "more", 18 rule flags), wired through `gems.ts` skillNumbers, `combat.ts` and `stats.ts`; new masteries for warcry, exertion, curse, minion, totem, mark, storm, Doom and chaos.
   - Build adjustments to the approved draft: Warlord's Call became "Warcries last until the pack falls" (warcries already counted every enemy); Twin Hexes merges the earlier curse's effect into the new one; Perfect Rhythm gives 1% increased crit chance per 100 Accuracy once you can't miss; Grave Pact is once per pack. A few novel draft effects without an engine stat were mapped to the closest real stat (see the generated doc).
@@ -384,6 +382,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - [x] Feedback cap applied to Supabase (10 an hour per player, 30 an hour for guests, 20,000 total) and Confirm email checked on by the owner. — done 2026-11-10
   - Profile switching now follows the engine's rule: not during a fight (Town or Hideout only). The old page let you switch anytime.
 
+- [x] Passive tree route planning: clicking a node lines up the shortest route to it (`passiveRoute` in `src/engine/passives.ts`), shown in blue with its cost and stat changes; more clicks extend it, clicking a planned node cuts it back, Confirm buys it all and Cancel drops it. Routes never pass through keystones, masteries or Doomed Gates. Masteries, refunds and owned nodes keep the single-node preview. Skilling tree unchanged. — done 2026-11-11, live in 0.4.32 on 2026-11-11
+
 ## Ideas / later
 
 - Tree web follow-ups (2026-11-08): the tree is 1,573 nodes (71% of 2,208); the 50% target would mean cutting about 30 clusters and their notables, which needs a call on which. Paths now run through clusters, so keystones sit 26–49 nodes from a class start (was 14–20) and some routes must take a notable on the way; check if that feels too slow. The two point pools were audited and changed to 2 Travel / 3 Passive per level; playtest whether the calculated split feels right.
@@ -406,14 +406,17 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-- [x] Built the simulator API and desktop live-release client locally: immutable engine/catalog/app artifacts, manifest tied to the actual game-file hash, current event feed, and stale/corrupt/missing-release rejection. Release and installed-app verification remain open above. — done 2026-11-12
-
-- [x] Installed standalone Windows Balance Lab with desktop/Start menu shortcuts, current-source refresh, shared player bot, class/build/loadout editors and isolated XP/drop-rate comparisons. Verified an actual run inside the packaged app and 42 focused tests. — done 2026-11-12
-
 - [x] Extended the full character XP curve by 3.4× so the measured 440-hour trip to level 100 becomes roughly 1,500 fighting hours (about 75 days at 20 hours per day), including a real slowdown from levels 1–80 while preserving the 99-halfway rule and existing characters' level/progress. — done 2026-11-10
 
+- [x] Released Live Simulator API 0.4.34 and updated the installed desktop runner. Published engine/catalog/app files and current event settings verified; live version display and saved-loadout restoration checked in the actual Windows app. — done 2026-11-12
+
+- [x] Built the standalone Windows Balance Lab and simulator API. The updated client downloads only the published engine/data, verifies the game and artifacts, and refreshes event settings before runs. Release verification remains tracked above. — done 2026-11-12
+
+- [x] Chained bosses made idle-friendly: every skill and minion auto-targets martyrs, and martyrs take all damage (ailments, ground, novas). — done 2026-11-11, live in 0.4.33 on 2026-11-11
+- [x] Passive tree route planning with Confirm / Cancel. — done 2026-11-11
 - [x] Mobile follow-up: removed the current activity strip, bounded every tree at its outer nodes, and passes vertical dragging beyond a tree edge into page scrolling. — done 2026-11-10
 
+- [x] Player report: clicking a passive tree node did nothing since 0.4.30. The canvas took hold of the pointer on press, so the click never reached the node; it now takes hold only once a drag starts. Checked in the browser with a mouse (click, allocate, drag from a node); not checked on a real phone. The type check now uses the ES2022 library (`tsconfig.json`), since tests and sims call `.at()` and a fresh copy would not build. — done 2026-11-11, live in 0.4.31
 - [x] Player report: on phones, the game stays within the viewport so the navigation remains at the top while the page and passive tree scroll in their own panel. — done 2026-11-10
 
 - [x] Player reports: executions now keep twin bosses' shared Life synchronized; Exerted bonuses apply only to the player skill that spent the charges; and Soul Tether respects protected bosses. — done 2026-11-10
