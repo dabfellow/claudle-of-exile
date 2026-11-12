@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Maps skill and support gems now appear in the Gem shop after completing the campaign.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.36',
+    date: '12 Nov 2026',
+    title: 'Missing Maps Gems Restored',
+    items: [
+      'Maps skill and support gems now appear in the Gem shop after completing the campaign.',
+    ],
+  },
   {
     version: '0.4.35',
     date: '12 Nov 2026',
