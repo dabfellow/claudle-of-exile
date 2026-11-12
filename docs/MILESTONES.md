@@ -406,6 +406,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
+- [x] Prepared all pending game changes for release 0.4.35: global level-gated ordinary unique drops, longer levelling with existing character progress preserved, damaged-save loading and Trophy Altar fixes. Retained all live 0.4.34 simulator and earlier game changes. Release verification pending. — done 2026-11-12
+
 - [x] Extended the full character XP curve by 3.4× so the measured 440-hour trip to level 100 becomes roughly 1,500 fighting hours (about 75 days at 20 hours per day), including a real slowdown from levels 1–80 while preserving the 99-halfway rule and existing characters' level/progress. — done 2026-11-10
 
 - [x] Released Live Simulator API 0.4.34 and updated the installed desktop runner. Published engine/catalog/app files and current event settings verified; live version display and saved-loadout restoration checked in the actual Windows app. — done 2026-11-12
