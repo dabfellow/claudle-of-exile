@@ -71,7 +71,7 @@ function UniqueSpot({ s, u, items, status }: { s: GameState; u: UniqueDef; items
             {u.flavour}
           </div>
           <div className="small" style={{ marginTop: 4 }}>
-            {drops.length ? `${drops.every((d) => d.endsWith('(Achievement)')) ? 'Reward for' : 'Drops in'} ${drops.join(', ')}` : 'Not found in areas or Maps'}
+            {drops.length ? `${drops.every((d) => d.endsWith('(Achievement)')) ? 'Reward for' : 'Found from'} ${drops.join(', ')}` : 'No source yet'}
           </div>
           <div className="dim small">{status}</div>
         </div>

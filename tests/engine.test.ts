@@ -37,9 +37,11 @@ describe('xp curve', () => {
   });
 
   it('character level uses its own longer curve', () => {
-    expect(charXpForLevel(2)).toBe(68);
+    expect(charXpForLevel(2)).toBe(231);
     expect(charLevelForXp(charXpForLevel(15))).toBe(15);
     expect(charXpForLevel(100)).toBeCloseTo(charXpForLevel(99) * 2, -1);
+    expect(charXpForLevel(80)).toBe(35415936);
+    expect(charXpForLevel(100)).toBe(272073792);
   });
 
   it('every character level costs at least as much as the one before', () => {
@@ -54,6 +56,15 @@ describe('xp curve', () => {
     expect(charXpFromOldCurve(old(42))).toBe(charXpForLevel(42));
     expect(charXpFromOldCurve((old(42) + old(43)) / 2)).toBeCloseTo((charXpForLevel(42) + charXpForLevel(43)) / 2, 0);
     expect(charXpFromOldCurve(old(100) + 5000)).toBe(charXpForLevel(100));
+  });
+
+  it('keeps a level 99 character at level 99 when the character curve changes', () => {
+    const s = newGame(1);
+    s.version = 45;
+    s.skills.combat = 40010852;
+    const loaded = deserialize(serialize(s));
+    expect(loaded.skills.combat).toBe(charXpForLevel(99));
+    expect(charLevelForXp(loaded.skills.combat)).toBe(99);
   });
 });
 

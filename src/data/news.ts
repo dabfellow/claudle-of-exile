@@ -10,7 +10,12 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'The desktop simulator can load the live game rules, engine and current events through a versioned game API.',
+  'Ordinary unique items can now drop anywhere once you reach their level, while boss trophies and achievement rewards remain special.',
+  'A damaged old character save no longer prevents the rest of your account from opening, and Trophy Altar level 4 now grants its stated Map-Boss rewards.',
+  'Character levelling now takes longer from the beginning, making level 100 roughly a two-to-three-month goal for a dedicated player.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

@@ -15,6 +15,7 @@ import { dropItem } from './storage';
 import { createItem, createUnique, droppableBases, salvageValue, itemMatchesClass } from './items';
 import { evaluateLootFilter, shouldSalvageByFilter } from './lootFilter';
 import { HARD_BOSSES, UBER_BOSSES, uniqueMapDef } from '../data/maps';
+import { worldDropUniques } from '../data/uniqueDrops';
 import { runModifiers } from './maps';
 import { chance, pick, pickWeighted, rInt } from './rng';
 import type { Derived } from './stats';
@@ -81,6 +82,11 @@ export function rollItemTier(zone: ZoneDef, isBoss: boolean, isDoomed: boolean, 
   return 1;
 }
 
+/** Trophy Altar level 4 gives rare Map drops a 10% chance to use the strongest modifier-roll tier. */
+export function mapRareItemTier(s: GameState, rarity: Rarity, itemTier: 1 | 2 | 3 | 4 | 5, rng: Ctx['rng']): 1 | 2 | 3 | 4 | 5 {
+  return s.maps.run && stationLevel(s, 'trophy_altar') >= 4 && rarity === 'rare' && chance(rng, 0.1) ? 5 : itemTier;
+}
+
 /** Everything a monster drops; an event can roll it more than once. */
 export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, d: Derived): void {
   const rolls = ctx.event?.loot ?? 1;
@@ -94,11 +100,13 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
   const orbs = areaCurrency(zone);
   const mapMods = s.maps.run ? runModifiers(s) : null;
   const itemRarity = d.itemRarity + (mapMods?.rarityPct ?? 0);
+  const altarLevel = stationLevel(s, 'trophy_altar');
+  const altarMapBoss = !!s.maps.run && mon.isBoss && altarLevel >= 4;
   const currencyMult = 1 + (mapMods?.currencyPct ?? 0) / 100;
   const ilvl = mon.level + (zone.ilvlBonus ?? 0) + MAP_ILVL[stationLevel(s, 'map_device') - 1];
   const giveCurrency = (id: string, qty = 1) => {
     if (CURRENCY_ORBS.has(id)) {
-      const amount = qty * Math.max(ctx.event?.loot ?? 1, ctx.event?.currencyDrops ?? 1) / (ctx.event?.loot ?? 1);
+      const amount = qty * Math.max(ctx.event?.loot ?? 1, ctx.event?.currencyDrops ?? 1) / (ctx.event?.loot ?? 1) * (ctx.simulation?.currencyDrops ?? 1);
       qty = Math.floor(amount) + (amount % 1 > 0 && rng.next() < amount % 1 ? 1 : 0);
     }
     addBank(s, id, qty);
@@ -171,7 +179,8 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
     const currencyRolls = boss.currencyRolls + (mapMods?.bossCurrencyRolls ?? 0);
     for (let i = 0; i < currencyRolls; i++) giveCurrency(rollCurrency(rng, orbs));
     const itemTier = rollItemTier(zone, true, !!s.maps.run?.doomedTier, rng);
-    const count = rInt(rng, boss.items[0], boss.items[1]) + (mapMods?.bossExtraItems ?? 0);
+    // Trophy Altar 4 grants a 10% additional item drop from Map Bosses.
+    const count = rInt(rng, boss.items[0], boss.items[1]) + (mapMods?.bossExtraItems ?? 0) + (altarMapBoss && chance(rng, 0.1) ? 1 : 0);
     for (let i = 0; i < count; i++) {
       let pool = droppableBases(ilvl);
       if (itemTier === 5 && rng.next() < 0.3) {
@@ -179,10 +188,13 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
         if (t5Bases.length) pool = t5Bases;
       }
       const base = pick(rng, pool);
-      placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, itemRarity, boss.rarity), rng, undefined, itemTier));
+      const rarity = rollRarity(rng, itemRarity, boss.rarity);
+      const rolledTier = mapRareItemTier(s, rarity, itemTier, rng);
+      placeItem(s, ctx, createItem(s, base.id, ilvl, rarity, rng, undefined, rolledTier));
     }
     if (chance(rng, boss.flaskChance)) dropFlask(s, ctx, ilvl);
-    if (zone.uniques.length && chance(rng, boss.uniqueChance * (1 + itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, zone.uniques), ilvl, rng));
+    const bossUniques = worldDropUniques(ilvl);
+    if (bossUniques.length && chance(rng, boss.uniqueChance * (1 + itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, bossUniques).id, ilvl, rng));
     if (chance(rng, BOSS_CRAFT_MAT.chance)) {
       // Greater Essences only from the later Act 1 areas
       const essences = ESSENCES.filter((e) => e.tier === 0 || zone.levelRange[0] >= 12);
@@ -210,10 +222,13 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
       if (t5Bases.length) pool = t5Bases;
     }
     const base = pick(rng, pool);
-    placeItem(s, ctx, createItem(s, base.id, ilvl, rollRarity(rng, itemRarity, table.rarity), rng, undefined, itemTier));
+    const rarity = rollRarity(rng, itemRarity, table.rarity);
+    const rolledTier = mapRareItemTier(s, rarity, itemTier, rng);
+    placeItem(s, ctx, createItem(s, base.id, ilvl, rarity, rng, undefined, rolledTier));
   }
   if (chance(rng, table.flaskChance * mon.scale * lootMult)) dropFlask(s, ctx, ilvl);
-  if (zone.uniques.length && chance(rng, table.uniqueChance * lootMult * (1 + itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, zone.uniques), ilvl, rng));
+  const worldUniques = worldDropUniques(ilvl);
+  if (worldUniques.length && chance(rng, table.uniqueChance * lootMult * (1 + itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, worldUniques).id, ilvl, rng));
 }
 
 function dropFlask(s: GameState, ctx: Ctx, ilvl: number): void {

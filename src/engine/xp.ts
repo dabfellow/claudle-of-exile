@@ -27,35 +27,51 @@ const SKILL_CURVE: Curve = (() => {
 const charXpPerHour = (l: number) => 2640 * (5 + 3 * l);
 
 /** Hours of play from the previous stop to each level, up from level 20. */
-const CHAR_PACE: [level: number, hours: number][] = [[40, 3], [65, 6], [80, 12], [95, 20], [99, 20]];
+const PREVIOUS_CHAR_PACE: [level: number, hours: number][] = [[40, 3], [65, 6], [80, 12], [95, 20], [99, 20]];
 
-/**
- * Character level, set by play time: about 3 hours to level 20 on a cubic curve, then each level in a
- * stretch of CHAR_PACE takes the same time. 99 is halfway to 100 in xp (docs/DEVELOPMENT.md).
- */
-const CHAR_CURVE: Curve = (() => {
+function buildCharCurve(pace: [level: number, hours: number][]): Curve {
   const totals = [0, 0];
   for (let l = 2; l <= 20; l++) totals.push(18 * Math.pow(l - 1, 3) + 50 * (l - 1));
   let from = 20;
-  for (const [to, hours] of CHAR_PACE) {
+  for (const [to, hours] of pace) {
     for (let l = from; l < to; l++) totals.push(totals[l] + (charXpPerHour(l) * hours) / (to - from));
     from = to;
   }
   totals.push(totals[99] * 2);
   return buildCurve(100, (l) => totals[l]);
+}
+
+const PREVIOUS_CHAR_CURVE = buildCharCurve(PREVIOUS_CHAR_PACE);
+
+/**
+ * Scale the whole previous curve evenly so every part of levelling slows down without changing its shape.
+ * 99 remains halfway to 100 in xp (docs/DEVELOPMENT.md).
+ */
+const CHAR_CURVE: Curve = (() => {
+  const table = PREVIOUS_CHAR_CURVE.table.map((xp) => Math.floor(xp * 3.4));
+  table[100] = table[99] * 2;
+  return { max: 100, table };
 })();
 
 /** The character curve before 0.2.13, for saves written on it. */
 const OLD_CHAR_XP = (l: number) => 36 * Math.pow(l - 1, 3) + 100 * (l - 1);
 
-/** Xp from the old character curve, moved to the same level and progress on this one. */
-export function charXpFromOldCurve(xp: number): number {
+function remapCharacterXp(xp: number, fromXp: (level: number) => number, to: Curve): number {
   let l = 1;
-  while (l < 100 && xp >= OLD_CHAR_XP(l + 1)) l++;
-  if (l >= 100) return CHAR_CURVE.table[100];
-  const part = (xp - OLD_CHAR_XP(l)) / (OLD_CHAR_XP(l + 1) - OLD_CHAR_XP(l));
-  return CHAR_CURVE.table[l] + part * (CHAR_CURVE.table[l + 1] - CHAR_CURVE.table[l]);
+  while (l < 100 && xp >= fromXp(l + 1)) l++;
+  if (l >= 100) return to.table[100];
+  const part = (xp - fromXp(l)) / (fromXp(l + 1) - fromXp(l));
+  return to.table[l] + part * (to.table[l + 1] - to.table[l]);
 }
+
+/** Xp from the pre-0.2.13 cubic curve, moved to the same level and progress on the current curve. */
+export const charXpFromOldCurve = (xp: number): number => remapCharacterXp(xp, OLD_CHAR_XP, CHAR_CURVE);
+
+/** The same old-curve conversion as migration 24 originally performed, before the late-game rebalance. */
+export const charXpFromOldCurveV24 = (xp: number): number => remapCharacterXp(xp, OLD_CHAR_XP, PREVIOUS_CHAR_CURVE);
+
+/** Preserve level and progress for characters saved on the previous character curve. */
+export const charXpFromPreviousCurve = (xp: number): number => remapCharacterXp(xp, (l) => PREVIOUS_CHAR_CURVE.table[l], CHAR_CURVE);
 
 function curveFor(skill: SkillId): Curve {
   return skill === 'combat' ? CHAR_CURVE : SKILL_CURVE;

@@ -415,7 +415,9 @@ class GameStore {
       } catch (err) {
         // saved by a newer version than this page: leave it alone, entering it explains why
         if (err instanceof NewerSaveError) continue;
-        throw err;
+        // A damaged legacy character must not prevent the rest of the account from opening.
+        reportError(err, { where: 'openRealm', characterId: c.id });
+        continue;
       }
       if (!s) continue;
       const realm = realmOf(s.character);

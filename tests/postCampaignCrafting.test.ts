@@ -5,6 +5,7 @@ import { makeCtx } from '../src/engine/context';
 import { applyOrb, benchCraft, benchCraftReason, orbReason } from '../src/engine/crafting';
 import { stationLevel, stationPerks, upgradeStation } from '../src/engine/hideout';
 import { createItem, eligibleAffixes, modCount, openKinds, tierLabel } from '../src/engine/items';
+import { mapRareItemTier } from '../src/engine/loot';
 import { canStartUberBoss, sextantSlots, startUberBoss } from '../src/engine/maps';
 import { seeded } from '../src/engine/rng';
 import { smithIlvlCap } from '../src/engine/skills';
@@ -122,11 +123,15 @@ describe('Phase 3: Endgame Hideout Station Upgrades', () => {
     const d3 = deriveStats(s);
     expect(d3.res.fire).toBe(d1.res.fire + 4);
 
-    // Upgrade to L4 (+10% rarity)
+    // Upgrade to L4 (Map Boss rewards)
     expect(upgradeStation(s, c, 'trophy_altar')).toBeNull();
     expect(stationLevel(s, 'trophy_altar')).toBe(4);
     const d4 = deriveStats(s);
-    expect(d4.itemRarity).toBe(d3.itemRarity + 10);
+    expect(d4.itemRarity).toBe(d3.itemRarity);
+
+    s.maps.run = {} as NonNullable<GameState['maps']['run']>;
+    expect(mapRareItemTier(s, 'rare', 1, { next: () => 0 })).toBe(5);
+    expect(mapRareItemTier(s, 'magic', 1, { next: () => 0 })).toBe(1);
   });
 
   it('Stash Affinities routes items to specifically tagged tabs', () => {

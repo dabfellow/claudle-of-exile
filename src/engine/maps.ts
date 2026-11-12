@@ -23,7 +23,6 @@ import {
   MAP_TIERS,
   mapId,
   mapTier,
-  mapTierUniques,
   mapZoneId,
   NORMAL_MAP_MODS,
   normalMapModDef,
@@ -48,6 +47,7 @@ import {
   type SextantTier,
   type UberBossDef,
 } from '../data/maps';
+import { worldDropUniques } from '../data/uniqueDrops';
 import { actOpen, EXTRA_ZONES, ZONES, zoneDef, type BossMechanic, type ZoneDef } from '../data/zones';
 import { freshAtlas } from './account';
 import { bossLeftToRules, suggestedRule } from './automation';
@@ -975,11 +975,10 @@ export function rollMapDrops(s: GameState, ctx: Ctx, mon: MonsterInstance): void
     s.maps.tally.favoured += qty;
   }
   if (mods.hunts.has('unique') && mon.isBoss && chance(ctx.rng, 0.2)) {
-    const pool = mapTierUniques(run.tier);
-    const fallback = MAP_TIERS.flatMap((t) => mapTierUniques(t.tier));
-    const uniqueId = pick(ctx.rng, pool.length ? pool : fallback);
-    if (uniqueId) {
-      placeItem(s, ctx, createUnique(s, uniqueId, mon.level, ctx.rng));
+    const pool = worldDropUniques(mon.level);
+    const unique = pick(ctx.rng, pool);
+    if (unique) {
+      placeItem(s, ctx, createUnique(s, unique.id, mon.level, ctx.rng));
       s.maps.tally.favoured += 1;
     }
   }

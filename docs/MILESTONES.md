@@ -1,10 +1,10 @@
 # Roadmap and decisions
 
-Last updated 2026-11-10. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-12. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
-Latest confirmed live release: **0.4.30, Mobile Tree Scrolling**, deployed 2026-11-10: phones hide the current-activity strip, trees stop at their outer nodes, and dragging beyond a vertical tree edge continues scrolling the page. Before it, 0.4.29 (Mobile Navigation Fix).
+Latest confirmed live release: **0.4.33, Easier Chained Bosses**, verified against the live site's published JavaScript on 2026-11-12. The local checkout still says 0.4.30 and must not be treated as the live balance source. The simulator API is implemented locally and awaits deployment.
 
 1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are released; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
@@ -31,6 +31,8 @@ Latest confirmed live release: **0.4.30, Mobile Tree Scrolling**, deployed 2026-
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Unique drops rework (design, 2026-11-10): ordinary uniques use one low-weight global pool and can drop once the monster's item level reaches its base item's requirement. They no longer belong to hand-picked area or Map-tier pools. Achievement rewards and Hard Boss, Uber Boss, and Unique Map trophy uniques remain exclusive to their earned or encounter source.
 
 - Campaign Totem leveling unlock (2026-11-09): To allow players to use the totem passive nodes during campaign leveling, scaled down and moved 3 totem skills and their signature supports into the campaign: Flame Totem (Act 1, level 6, base 4–7 fire damage), War Totem (Act 3, level 32, 80% weapon physical damage), and Siege Totem (Act 6, level 58, base 16–24 physical damage). Their signature supports (Pyre Totem, Battle Totem, Long Siege) unlock alongside them at reqLevel + 6. The other 5 totems and all group totem supports remain endgame Maps unlocks.
 
@@ -95,7 +97,7 @@ Latest confirmed live release: **0.4.30, Mobile Tree Scrolling**, deployed 2026-
 - Hideout upgrades use refined planks/bars and Boss Trophies rather than thousands of raw materials. Classic converts applicable material costs to Gold.
 - Mana is Power uses four-second spending; Momentum grants Evasion and protected flat losses; Field Tinkering supports low-level gear; postures automate spacing; eligible higher-priority skills reserve Mana 1.5 seconds ahead.
 - Momentum keeping is flat (2026-11-06): each source (uniques, Sure-Footed, Steady Aim, tree node) saves 1 stack per landed hit, minimum loss 1. Old % values on already-found uniques are read as 1. The "Mana within X% of full" unique text was stale; it now says what the code already did (recent spending counts X% more).
-- A dedicated first day should plausibly reach the end of Act 6. Old week/month pacing tables are retired. Level 100 is a long chase; 99 is halfway in XP. Exact class parity is not a substitute for meaningful builds.
+- The whole character curve, including levels 1–80 and the campaign, is 3.4 times longer than the former curve. Level 100 should take roughly two to three months for a dedicated player fighting about 20 hours a day, and 99 remains halfway in XP. Exact class parity is not a substitute for meaningful builds.
 - Combat XP has a two-level grace band outside an area's level range. Harder enemies give +5% at three levels and +20% at five, interpolating between. Easier enemies use a rounded quadratic penalty of 10/11/15/21/30/41/54/70% at three through ten levels, with increasing losses each level. Hold both caps thereafter. This supersedes both the old falloff to zero and the initial piecewise penalty milestones.
 - Fishing is a permanent placeholder/joke. It is not scheduled work.
 - The skilling tree represents specialisation (2026-11-06): one point per ten total levels, capped at 36. It must never become fully completable through ordinary levels; Fishing has no spendable branch, and every implemented life skill has one.
@@ -324,6 +326,13 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [ ] Publish the simulator API with the next game release and verify the installed desktop app against it.
+  - 2026-11-12: API and updated desktop package implemented locally; not deployed or installed over the old client yet. Manifest/catalog/runtime are generated with the game, downloads verify their hashes against the published game entry, and current events are read before each run. The updated client no longer reads the checkout or falls back to bundled values. Production build, built-artifact integrity/runtime check for all seven classes, typecheck with ES2022 libraries, and 48 focused tests pass.
+
+- [x] Build a standalone Windows character simulator with current game values, all classes, gear/loadouts, passive tree, competent player controls and isolated XP/drop-rate experiments. — done 2026-11-12
+  - Installed **Path of Idle Balance Lab** with desktop and Start menu shortcuts. Rebuilds current local source at startup; experiments run in an isolated worker. Packaged desktop startup and a real baseline run verified; 42 focused simulator/event tests pass. Automatic progression currently follows campaign areas; heuristic competence is not a guarantee of optimal builds. No game balance or player saves changed.
+
+- [x] Rework ordinary unique drops into a low-weight, level-gated global pool; preserve achievement and encounter-exclusive uniques. Every ordinary unique joins at its base requirement, and the collection shows that level instead of zone lists. Typecheck and focused unique/achievement tests pass. The full suite currently has two unrelated failures in the in-progress XP-curve and passive-tree migration work. — done 2026-11-10
 - [x] Passive tree notable pass (design settled and list approved 2026-11-08, see Decisions "Notable pass"). Unreleased; not yet checked in a browser. — done 2026-11-08
   - Contents live in `src/data/passiveNotables.ts`; [PASSIVE_NOTABLES.md](PASSIVE_NOTABLES.md) is generated from it (player text). ~70 new stats in `src/engine/types.ts` (archetype scaling, conditional damage, Doomed-wheel "more", 18 rule flags), wired through `gems.ts` skillNumbers, `combat.ts` and `stats.ts`; new masteries for warcry, exertion, curse, minion, totem, mark, storm, Doom and chaos.
   - Build adjustments to the approved draft: Warlord's Call became "Warcries last until the pack falls" (warcries already counted every enemy); Twin Hexes merges the earlier curse's effect into the new one; Perfect Rhythm gives 1% increased crit chance per 100 Accuracy once you can't miss; Grave Pact is once per pack. A few novel draft effects without an engine stat were mapped to the closest real stat (see the generated doc).
@@ -397,6 +406,12 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
+- [x] Built the simulator API and desktop live-release client locally: immutable engine/catalog/app artifacts, manifest tied to the actual game-file hash, current event feed, and stale/corrupt/missing-release rejection. Release and installed-app verification remain open above. — done 2026-11-12
+
+- [x] Installed standalone Windows Balance Lab with desktop/Start menu shortcuts, current-source refresh, shared player bot, class/build/loadout editors and isolated XP/drop-rate comparisons. Verified an actual run inside the packaged app and 42 focused tests. — done 2026-11-12
+
+- [x] Extended the full character XP curve by 3.4× so the measured 440-hour trip to level 100 becomes roughly 1,500 fighting hours (about 75 days at 20 hours per day), including a real slowdown from levels 1–80 while preserving the 99-halfway rule and existing characters' level/progress. — done 2026-11-10
+
 - [x] Mobile follow-up: removed the current activity strip, bounded every tree at its outer nodes, and passes vertical dragging beyond a tree edge into page scrolling. — done 2026-11-10
 
 - [x] Player report: on phones, the game stays within the viewport so the navigation remains at the top while the page and passive tree scroll in their own panel. — done 2026-11-10
@@ -404,6 +419,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - [x] Player reports: executions now keep twin bosses' shared Life synchronized; Exerted bonuses apply only to the player skill that spent the charges; and Soul Tether respects protected bosses. — done 2026-11-10
 
 - [x] Player report: The Crownless no longer runs its Cracked Fault and Choir mechanics twice per tick; Faults stay open for 6 seconds, and the Choir starts only at 66% life. — done 2026-11-10
+
+- [x] Player reports: an unreadable old character no longer stops a signed-in account opening while pending handovers run; Trophy Altar level 4 now grants its stated 10% extra Map-Boss item drop chance and 10% rare Map-item high-tier modifier-roll chance, rather than Item Rarity. — done 2026-11-10
 
 - [x] Built layered Quartermaster loot filters with level-scaled presets, category overrides, ordered conditions/actions, stash and ground highlights, safe share codes, time-away handling and old-save migration. Released in 0.4.24. — done 2026-11-09
 

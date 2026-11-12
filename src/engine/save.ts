@@ -19,7 +19,7 @@ import { connectedWithout, settlePassivePoints, settleTreeLayout } from './passi
 import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { AccountPool, AccountTransfer, FlaskInstance, GameState, Item } from './types';
-import { charXpFromOldCurve } from './xp';
+import { charXpFromOldCurveV24, charXpFromPreviousCurve } from './xp';
 import { MASTERY_CAP, settleSkillingMastery } from './skillingMastery';
 import { migrateLegacyLootFilters, settleLootFilters } from './lootFilter';
 import { migrateSettingsProfiles, settleTreeProfiles } from './treeProfiles';
@@ -261,7 +261,7 @@ const MIGRATIONS: Record<number, Migration> = {
   24: (raw) => {
     // the character curve changed: everyone keeps their level and progress
     const skills = raw.skills as Record<string, number> | undefined;
-    if (skills?.combat) skills.combat = charXpFromOldCurve(skills.combat);
+    if (skills?.combat) skills.combat = charXpFromOldCurveV24(skills.combat);
   },
   25: (raw) => {
     // Archaeology and Expedition arrived: everyone starts at level 1 with nothing dug, and the sites wait for Act 4
@@ -401,6 +401,11 @@ const MIGRATIONS: Record<number, Migration> = {
         hideout.map_device = 2;
       }
     }
+  },
+  45: (raw) => {
+    // Levelling became a two-to-three-month chase. Keep every character's level and progress.
+    const skills = raw.skills as Record<string, number> | undefined;
+    if (skills?.combat) skills.combat = charXpFromPreviousCurve(skills.combat);
   },
 };
 

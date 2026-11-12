@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { UNIQUES, uniqueDef } from '../src/data/bases';
 import { UNIQUE_FLASKS } from '../src/data/flasks';
-import { MAP_UNIQUE_POOLS, UNIQUE_MAPS, uniqueMapDef } from '../src/data/maps';
+import { UNIQUE_MAPS, uniqueMapDef } from '../src/data/maps';
 import { renderUniqueList, UNIQUE_LIST_PATH } from '../src/data/uniqueList';
-import { zoneDef } from '../src/data/zones';
+import { isWorldDropUnique, uniqueDropLevel, worldDropUniques } from '../src/data/uniqueDrops';
 import { unwrittenNodeOf } from '../src/engine/ascendancy';
 import { enterZone, useFlask } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
@@ -30,34 +30,13 @@ describe('the unique items list', () => {
 });
 
 describe('unique item drop progression and campaign balance', () => {
-  it('Act 1 Zone 1 (mudflats) drops exactly 1 unique', () => {
-    const mudflats = zoneDef('mudflats');
-    expect(mudflats.uniques).toHaveLength(1);
-    expect(mudflats.uniques).toEqual(['castaways_kerchief']);
-  });
-
-  it('early Act 1 zones do not drop class-specific trait uniques', () => {
-    const classTraitUniques = [
-      'bloodthirst', 'titans_girth', 'ragefire_treads', // rage
-      'last_breath', 'cowl_of_whispers', 'shadowdance', // malice
-      'fervent_dawn', 'penitent_path', // fervor
-      'rebuttal', 'iron_aegis', 'bastion_core', // riposte
-      'stride_of_clarity', 'windstrider', 'tempest_gale', // momentum
-      'archmages_fountain', 'mind_over_iron', // mana is power
-    ];
-
-    const earlyAct1Zones = ['mudflats', 'brinecaves', 'ashwood', 'blackreed'];
-    for (const zid of earlyAct1Zones) {
-      const z = zoneDef(zid);
-      for (const traitUnique of classTraitUniques) {
-        expect(z.uniques, `${zid} should not drop ${traitUnique}`).not.toContain(traitUnique);
-      }
+  it('puts ordinary uniques into one equal-weight pool at their base requirement', () => {
+    const world = UNIQUES.filter(isWorldDropUnique);
+    expect(world.length).toBeGreaterThan(100);
+    for (const unique of world) expect(worldDropUniques(uniqueDropLevel(unique))).toContainEqual(unique);
+    for (const unique of world.filter((u) => uniqueDropLevel(u) > 1)) {
+      expect(worldDropUniques(uniqueDropLevel(unique) - 1)).not.toContainEqual(unique);
     }
-  });
-
-  it('map unique tiers contain the majority of unique drop pools', () => {
-    const allMapUniques = new Set(MAP_UNIQUE_POOLS.flatMap((p) => p.uniques));
-    expect(allMapUniques.size).toBeGreaterThan(30);
   });
 });
 

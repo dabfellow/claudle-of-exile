@@ -244,9 +244,6 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
   if (altarLvl >= 3) {
     st.allRes += 4;
   }
-  if (altarLvl >= 4) {
-    st.itemRarity += 10;
-  }
   if (altarLvl >= 5) {
     st.allAttr += 6;
     st.armourPct += 5;
