@@ -399,7 +399,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 - [x] Mobile follow-up: removed the current activity strip, bounded every tree at its outer nodes, and passes vertical dragging beyond a tree edge into page scrolling. — done 2026-11-10
 
-- [x] Player report: clicking a passive tree node did nothing since 0.4.30. The canvas took hold of the pointer on press, so the click never reached the node; it now takes hold only once a drag starts. Checked in the browser with a mouse (click, allocate, drag from a node); not checked on a real phone. Unreleased. — done 2026-11-11
+- [x] Player report: clicking a passive tree node did nothing since 0.4.30. The canvas took hold of the pointer on press, so the click never reached the node; it now takes hold only once a drag starts. Checked in the browser with a mouse (click, allocate, drag from a node); not checked on a real phone. The type check now uses the ES2022 library (`tsconfig.json`), since tests and sims call `.at()` and a fresh copy would not build. — done 2026-11-11, live in 0.4.31
 - [x] Player report: on phones, the game stays within the viewport so the navigation remains at the top while the page and passive tree scroll in their own panel. — done 2026-11-10
 
 - [x] Player reports: executions now keep twin bosses' shared Life synchronized; Exerted bonuses apply only to the player skill that spent the charges; and Soul Tether respects protected bosses. — done 2026-11-10
