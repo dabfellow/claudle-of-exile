@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Clicking a passive tree node now plans the shortest route to it. Click more nodes to extend it, then Confirm to spend the points or Cancel to undo.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.32',
+    date: '11 Nov 2026',
+    title: 'Passive Tree Route Planning',
+    items: [
+      'Clicking a passive tree node now plans the shortest route to it. Click more nodes to extend it, then Confirm to spend the points or Cancel to undo.',
+    ],
+  },
   {
     version: '0.4.31',
     date: '11 Nov 2026',
