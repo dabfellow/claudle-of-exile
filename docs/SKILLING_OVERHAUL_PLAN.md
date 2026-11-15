@@ -1,6 +1,6 @@
 # Skilling overhaul: phased build plan
 
-Written 2026-11-15. **Phases 00–14 are live in 0.4.39 and Phase 17 in 0.4.40; Phases 15–16 were merged with Phase 17 for 0.4.41. Phase 18 (whole-overhaul acceptance) is next.** Implementation contract: [SKILLING_OVERHAUL_SPEC.md](SKILLING_OVERHAUL_SPEC.md).
+Written 2026-11-15. **Phases 00–14 are live in 0.4.39 and Phase 17 in 0.4.40; Phases 15–16 are live in 0.4.41. Phase 18 (whole-overhaul acceptance) is next.** Implementation contract: [SKILLING_OVERHAUL_SPEC.md](SKILLING_OVERHAUL_SPEC.md).
 
 Design: [SKILLING_OVERHAUL.md](SKILLING_OVERHAUL.md). Tracking: [MILESTONES.md](MILESTONES.md). Current behavior: [GAME.md](GAME.md). This plan organizes the reference; illustrative examples and draft recipes remain distinct from owner decisions.
 
@@ -36,7 +36,7 @@ Replace the current handoff after each phase. Keep lasting decisions in the spec
 
 **Current handoff (2026-11-15, Phases 15–17 merged):**
 
-- **Phase/status:** Phases 15 (GPT) and 16 (Gemini) existed only as uncommitted work in the main checkout; they were merged onto the live Phase 17 branch for 0.4.41. Phases 00–17 are complete. Phase 18 can start.
+- **Phase/status:** Phases 15 (GPT) and 16 (Gemini) existed only as uncommitted work in the main checkout; they were merged onto Phase 17 and are live in 0.4.41. Phases 00–17 are complete. Phase 18 can start.
 - **Merge decisions:** in `onBlock`, Worldheart reduces the post-mitigation hit once before The Buried Grudge stores prevented damage and before Debt of Stone splits the remainder; in `takeHit` Worldheart applies before the Debt split; Debt's deferred tranches (`tickDebt`) are never reduced again. The Grudge shockwave goes through `damageMonster`, so Sum multiplies it once (the shown number is scaled to match). Sheet DPS applies Choir's zero before Sum. Glancing Blows now scales post-mitigation damage (Phase 15 change kept).
 - **Checks:** see the release entry in `MILESTONES.md`. Browser playtest of the merged build not run.
 - **Incomplete/blockers:** none for the merge. Phase 18 should playtest the Worldheart + Debt of Stone, Worldheart + Buried Grudge and Sum + Grudge pairings in a realistic build.
