@@ -4,9 +4,9 @@ Last updated 2026-11-15. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.37, Mobile Scrolling Fixes**, deployed 2026-11-12. On phones, navigation and the health/mana header scroll out of view, and campaign-map swipes can continue onto the page. Touch scrolling and zone travel were checked at two phone sizes, with desktop scrolling preserved. All 1,453 tests and the production build passed; the live version and login configuration were confirmed. Browser checks used an isolated real-game bundle with fallback art and no music because the regular preview timed out; no long simulations were run.
+Latest confirmed live release: **0.4.39, Skilling Overhaul and Independent Professions**, deployed 2026-11-15. Independent life-skill progression, projects, deterministic resources, craftable tools, and exclusive weapon projects (Woundmaker, Winter’s Pyre, The Homecoming) are live. All 1,629 tests in 100 files, build, and wiki generation passed; deployment confirmed at https://dabfellow.party/path-of-idle/.
 
-Mobile navigation/vitals scrolling and the campaign-map scroll-trap fix are live in 0.4.37 (2026-11-12).
+Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
 1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are released; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
@@ -14,8 +14,7 @@ Mobile navigation/vitals scrolling and the campaign-map scroll-trap fix are live
 4. Pacing audit: whole-journey simulations expose large Ranger seed variance and a repeatable Mage Act 4 stall, so pacing is not ready to lock.
 5. Plan the 1.0 wipe and the Legacy area (see Decisions).
 6. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
-7. Phases 00–14 of the [skilling overhaul build plan](SKILLING_OVERHAUL_PLAN.md) are complete locally/unreleased (2026-11-15): foundations, Mining, Woodcutting, Smithing, equipment checkpoint, Foraging/Greenhouse, Alchemy, Cooking, Gemcutting, Rune-carving, Thieving/Heist, Archaeology, Cartography and crafted weapons. Level-only marks, deterministic 1 Marker every 10 mark completions, clean exit milestone progression, equipment category targeting with ilvl capped by min(job.ilvl, Thieving level + 10), Occult Treasury job with Treasury Fragments per room and clean vault/12-room Oath Fragments, Borrowed Tomorrow jackpot with safe delivery, Claim Borrowed Tomorrow and Assemble Stolen Oath projects, readable UI previews, and live/offline parity verified; evidence in specification §§13–23. Phase 15 (Defence and recovery uniques) may start. No shipping requested.
-8. Requested Phases 12–14 are also complete locally/unreleased (2026-11-15): independent restoration/discovery progression, exclusive Artisans' Reliquary chart and finished encounter, and Woundmaker, Winter's Pyre and The Homecoming with exclusive projects and working effects. Noncombat restoration, eligible encounter victory and all three crafted weapon builds were checked in the running game; live/offline/cost/save checks pass. Phases 15–18 remain open. No shipping requested.
+7. Phase 15 (Defence and recovery uniques) of the skilling overhaul may start. Phases 00–14 are live in 0.4.39 (2026-11-15).
 
 ## Milestones
 
@@ -31,7 +30,7 @@ Mobile navigation/vitals scrolling and the campaign-map scroll-trap fix are live
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–14 complete locally/unreleased (2026-11-15): professions through Thieving/Heist, Archaeology, Cartography/Reliquary and three crafted weapon uniques verified. Phase 15 Defence and recovery uniques next; 15–18 still open |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–14 released in 0.4.39 (2026-11-15): professions through Thieving/Heist, Archaeology, Cartography/Reliquary and three crafted weapon uniques live. Phase 15 Defence and recovery uniques next; 15–18 still open |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
