@@ -10,12 +10,18 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Five exclusive defence and recovery uniques — Borrowed Tomorrow, The Buried Grudge, Witchglass, The Still Heart, and Debt of Stone — can now be acquired through Archaeology, Alchemy, Smithing, and Thieving.',
-  'Rune-carvers can now inscribe Hands of the Forgotten Choir and Hollow Circuit onto crafted gear.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.41',
+    date: '15 Nov 2026',
+    title: 'Defence and Rune-carved Uniques',
+    items: [
+      'Five exclusive defence and recovery uniques — Borrowed Tomorrow, The Buried Grudge, Witchglass, The Still Heart, and Debt of Stone — can now be acquired through Archaeology, Alchemy, Smithing, and Thieving.',
+      'Rune-carvers can now inscribe Hands of the Forgotten Choir and Hollow Circuit onto crafted gear.',
+    ],
+  },
   {
     version: '0.4.40',
     date: '15 Nov 2026',
