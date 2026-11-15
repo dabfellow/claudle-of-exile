@@ -15,16 +15,119 @@ import { addDoomedMaps, addUniqueMaps, grantBossKeys, grantMaps } from '../engin
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
 import { CURRENCIES, MATERIALS } from '../data/materials';
 import { createSkillGem, createSupportGem } from '../engine/gems';
-import { createItem } from '../engine/items';
+import { addFixedMod, createItem } from '../engine/items';
 import { seeded } from '../engine/rng';
 import { MARKET_UNLOCK_BOSS } from '../engine/market';
 import { game } from '../game';
 import { setMarketStandIn } from '../platform/market';
 import { fakeMarket } from './fakeMarket';
+import { xpForLevel } from '../engine/xp';
 import { applySetup, PRESETS as SHARED, setupLevel, setupZone, type Setup } from './presets';
+
+/** Ordinary attribute jewellery a campaign build can keep while replacing an outdated weapon. */
+function smithingAttributes(s: Parameters<NonNullable<Setup['prepare']>>[0]) {
+  const rng = seeded(8);
+  const item = createItem(s, 'coral_amulet', 20, 'normal', rng);
+  item.rarity = 'rare';
+  for (const id of ['strength', 'dexterity', 'intelligence']) addFixedMod(item, id, 1, { next: () => 0.999999 });
+  addFixedMod(item, 'flat_life', 1, rng);
+  s.equipment.amulet = item;
+}
 
 const PRESETS: Record<string, Setup> = {
   ...SHARED,
+  foragingStarter: {
+    classId: 'ranger', level: 1, zone: 'mudflats',
+    prepare: (s) => { s.skills.combat = 0; s.skills.harvesting = 0; s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.account.bank = {}; },
+  },
+  foragingGreenhouse: {
+    classId: 'ranger', level: 1, zone: 'mudflats',
+    prepare: (s) => {
+      s.skills.combat = 0; s.skills.harvesting = xpForLevel(90); s.skills.alchemy = xpForLevel(30); s.skills.cooking = xpForLevel(30);
+      s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.account.bank = {}; s.account.hideout.alchemy_table = 3;
+      s.skillPassives = ['skill_core', 'core_2', 'harvesting_s0', 'harvesting_s1', 'harvesting_s2', 'harvesting_n0', 'harvesting_ks'];
+      s.professionProgress.work.harvesting = 100;
+      s.professionProgress.counters['foraging.seed.moon_bloom'] = 99;
+      s.professionProgress.counters['foraging.bloom.moon_bloom'] = 59;
+    },
+  },
+  smithingMelee: {
+    classId: 'warrior', level: 20, zone: 'crypt',
+    prepare: (s) => {
+      s.combat = null; s.action = null; s.skills.smithing = xpForLevel(18);
+      s.skills.mining = xpForLevel(15); s.skills.woodcutting = xpForLevel(15);
+      s.account.hideout.forge = 2; s.account.bank = {}; s.inventory = [];
+      s.equipment.weapon = createItem(s, 'felling_axe', 10, 'normal', seeded(3));
+      smithingAttributes(s);
+      s.account.bank = { iron_ore: 42, oak_log: 18, iron_bar: 2, oak_plank: 1 };
+    },
+  },
+  smithingBow: {
+    classId: 'ranger', level: 20, zone: 'crypt',
+    prepare: (s) => {
+      s.combat = null; s.action = null; s.skills.smithing = xpForLevel(16);
+      s.skills.mining = xpForLevel(15); s.skills.woodcutting = xpForLevel(15);
+      s.account.hideout.forge = 2; s.account.bank = {}; s.inventory = [];
+      s.equipment.weapon = createItem(s, 'hunting_bow', 8, 'normal', seeded(3));
+      smithingAttributes(s);
+      s.account.bank = { iron_ore: 42, oak_log: 18, iron_bar: 2, oak_plank: 1 };
+    },
+  },
+  smithingCaster: {
+    classId: 'mage', level: 20, zone: 'crypt',
+    prepare: (s) => {
+      s.combat = null; s.action = null; s.skills.smithing = xpForLevel(15);
+      s.skills.mining = xpForLevel(15); s.skills.woodcutting = xpForLevel(15);
+      s.account.hideout.forge = 2; s.account.bank = {}; s.inventory = [];
+      s.equipment.weapon = createItem(s, 'bone_wand', 7, 'normal', seeded(3));
+      smithingAttributes(s);
+      s.account.bank = { iron_ore: 42, oak_log: 18, iron_bar: 2, oak_plank: 1 };
+    },
+  },
+  smithingNoncombat: {
+    level: 1,
+    prepare: (s) => {
+      s.combat = null; s.action = null; s.skills.combat = 0;
+      s.skills.smithing = xpForLevel(90); s.skills.mining = xpForLevel(90); s.skills.woodcutting = xpForLevel(90);
+      s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.account.hideout.forge = 3;
+      s.professionProgress.work.smithing = 60; s.professionProgress.work.woodcutting = 100;
+      s.account.bank = { copper_bar: 10, iron_bar: 10, ash_plank: 5, oak_plank: 5 };
+      s.inventory = [];
+    },
+  },
+  woodcuttingStarter: {
+    level: 1,
+    prepare: (s) => { s.skills.combat = 0; s.skills.woodcutting = 0; s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.account.bank = {}; },
+  },
+  woodcuttingAdvanced: {
+    level: 1,
+    prepare: (s) => {
+      s.skills.combat = 0; s.skills.woodcutting = xpForLevel(90); s.skills.smithing = xpForLevel(15);
+      s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.professionProgress.work.woodcutting = 100;
+      for (const wood of ['ironwood', 'ancient', 'spirit', 'worldwood']) s.professionProgress.discoveries[`wood_${wood}_survey`] = true;
+      s.account.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
+      s.professionProgress.counters['wood.heartwood.survey'] = 29;
+      s.professionProgress.counters['wood.cycles.cut_resin_oak'] = 4;
+    },
+  },
+  miningStarter: {
+    level: 1,
+    prepare: (s) => { s.skills.combat = 0; s.skills.mining = 0; s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.account.bank = {}; },
+  },
+  miningAdvanced: {
+    level: 1,
+    prepare: (s) => {
+      s.skills.combat = 0; s.skills.mining = xpForLevel(90); s.skills.smithing = xpForLevel(30); s.skills.runecarving = xpForLevel(30);
+      s.unlockedZones = ['mudflats']; s.bossesDefeated = [];
+      s.professionProgress.work.mining = 100;
+      for (const metal of ['iron', 'mithril', 'adamant', 'star', 'void', 'world']) s.professionProgress.discoveries[`prospect_${metal}`] = true;
+      s.account.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
+      s.professionProgress.counters['mining.fossils'] = 11;
+      s.professionProgress.counters['mining.crystal_shard'] = 29;
+      s.professionProgress.counters['mining.mineral_fragment'] = 59;
+      s.professionProgress.counters['mining.stone_fragment'] = 59;
+    },
+  },
   /** the campaign beaten, with maps of every kind, Sextants and boss keys to open them with */
   maps: {
     classId: 'duelist',

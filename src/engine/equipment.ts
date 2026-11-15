@@ -11,6 +11,7 @@ export const RING_SLOTS: EquipSlot[] = ['ring1', 'ring2', 'ring3', 'ring4'];
 /** Where an item can go. Shields only fit the off-hand; one-handed weapons fit either hand. */
 export function slotsFor(item: Item): EquipSlot[] {
   const base = baseDef(item.baseId);
+  if (base.projectOnly) return ['weapon'];
   if (base.slot === 'ring') return RING_SLOTS;
   if (base.slot === 'weapon' && !base.twoHanded) return ['weapon', 'offhand'];
   return [base.slot];

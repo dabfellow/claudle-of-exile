@@ -8,7 +8,7 @@ import { zoneDef } from '../../data/zones';
 import { canAfford } from '../../engine/bank';
 import { hideoutCost, isClassic, isSolo } from '../../engine/challenge';
 import { skillSummary } from '../../engine/gems';
-import { nextUpgradeCost, stationLevel, stationLockReason, stationPerks, upgradeStation } from '../../engine/hideout';
+import { nextUpgradeCost, professionStationRoute, stationLevel, stationLockReason, stationPerks, upgradeStation } from '../../engine/hideout';
 import { pointsLeft } from '../../engine/passives';
 import { actionIntervalMs } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
@@ -72,6 +72,7 @@ function nextUnlock(skill: SkillId, lvl: number): SkillAction | null {
 
 /** What's being trained right now: a skill, the character (fighting), or nothing. */
 function trainingNow(s: GameState): SkillId | null {
+  if (s.action?.kind === 'project') return s.professionProgress.activeProject?.project.skill ?? null;
   if (s.action?.kind === 'skill') return actionDef(s.action.actionId).skill;
   if (s.action?.kind === 'heist') return 'thieving';
   return s.action?.kind === 'combat' ? 'combat' : null;
@@ -251,6 +252,12 @@ function NowRunning({ go }: { go: (p: Page) => void }) {
     title = `${SKILLS[a.skill].verb}: ${a.name}`;
     sub = `${fmtTime(Math.max(0, interval - s.action.progress))} left`;
     progress = s.action.progress / interval;
+  } else if (s.action?.kind === 'project' && s.professionProgress.activeProject) {
+    const run = s.professionProgress.activeProject;
+    skill = run.project.skill;
+    title = `Project: ${run.project.name}`;
+    sub = run.stopReason ?? `${fmtTime(run.project.durationMs - run.elapsedMs)} base work left`;
+    progress = run.elapsedMs / run.project.durationMs;
   } else if (s.action?.kind === 'heist') {
     skill = 'thieving';
     title = `Heist: ${heistJob(s.action.jobId).name}`;
@@ -469,6 +476,7 @@ function shortBy(cost: Record<string, number>, have: Record<string, number>): nu
  */
 function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
   const s = useGame();
+  const route = professionStationRoute(s, st.id);
   const lvl = stationLevel(s, st.id);
   const locked = stationLockReason(s, st.id);
   const cost = nextUpgradeCost(s, st.id);
@@ -535,6 +543,13 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
           </div>
         </div>
       )}
+        {route && <div className="hx-next">
+          <div className="io-label">Profession route · alternative payment</div>
+          <p className="small">{route.requirement}. Gold comes from Thieving; bars from Smithing; planks from Woodcutting.</p>
+          <HaveNeed cost={route.cost} have={s.account.bank} go={go} />
+          <button className="btn sm" disabled={!!route.reason || !canAfford(s, route.cost)} title={route.reason ?? 'Pay this cost instead of the original upgrade cost'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id, 'profession'))}>Upgrade through profession</button>
+          {route.reason && <p className="small muted">{route.reason}</p>}
+        </div>}
       <details className="hx-ladder">
         <summary>
           All {st.levels.length} levels <span className="dim">· hover a later one for its cost</span>

@@ -137,6 +137,7 @@ export function rareName(item: Item, rng: Rng): string {
 /** Full display name for an item. */
 export function itemName(item: Item): string {
   const base = baseDef(item.baseId);
+  if (base.projectOnly && item.name) return item.name;
   if (item.rarity === 'unique' && item.uniqueId) return uniqueDef(item.uniqueId).name;
   if (item.rarity === 'rare') return item.name ?? base.name;
   if (item.rarity === 'magic') {

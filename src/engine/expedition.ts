@@ -6,13 +6,17 @@ import type { Ctx } from './context';
 import { chance } from './rng';
 import { skillTreeStats } from './skillTree';
 import type { ExpeditionState, GameState } from './types';
+import { relicFragment } from '../data/archaeology';
+import { awardProtectedProgress, recordDiscovery } from './professions';
+import { canAfford, payCost } from './bank';
+import { CLASSIC_BLOCK, isClassic } from './challenge';
 
 export function newExpeditionState(): ExpeditionState {
   return { dug: {}, shelves: {}, orders: {}, tally: { finds: 0, traded: 0 } };
 }
 
-export function expeditionOpen(s: GameState): boolean {
-  return s.unlockedZones.includes(EXPEDITION_GATE.zone);
+export function expeditionOpen(_s: GameState): boolean {
+  return true;
 }
 
 // ---------- the digs ----------
@@ -55,10 +59,29 @@ export function digDone(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<
     outputs[id] = (outputs[id] ?? 0) + got;
   }
   const before = siteStratum(s, site);
+  const key = `archaeology.fragments.${site.culture}`;
+  const count = (s.professionProgress.counters[key] ?? 0) + 1;
+  s.professionProgress.counters[key] = count;
+  if (count % 60 === 0) awardProtectedProgress(s, ctx, relicFragment(site.culture), 1);
   s.expedition.dug[site.id] = (s.expedition.dug[site.id] ?? 0) + (skillTreeStats(s).deepSurvey ? 2 : 1);
   if (siteStratum(s, site) === before) return;
   s.expedition.tally.finds += 1;
+  recordDiscovery(s, ctx, `expedition.${site.id}.${before}`);
   ctx.emit({ t: 'info', text: `${site.name}: you unearthed ${site.finds[before]}. ${cultureDef(site.culture).merchant} will want to see this`, tone: 'good' });
+}
+
+/** Voluntary full-price exchange; it never awards standing or profession bonuses. */
+export function exchangeFragments(s: GameState, ctx: Ctx, culture: CultureId): string | null {
+  if (isClassic(s)) return CLASSIC_BLOCK;
+  if (s.fallen) return 'This character has fallen';
+  const c = cultureDef(culture);
+  if (!c) return 'Unknown culture';
+  const cost = { [relicFragment(culture)]: 5 };
+  if (!canAfford(s, cost)) return 'Needs 5 matching relic fragments';
+  payCost(s, cost);
+  addBank(s, c.artifact, 25);
+  ctx.emit({ t: 'produce', skill: 'archaeology', outputs: { [c.artifact]: 25 } });
+  return null;
 }
 
 // ---------- the merchants ----------
@@ -135,4 +158,9 @@ export function settleExpedition(s: GameState): void {
   const e = s.expedition;
   for (const [culture, id] of Object.entries(e.orders)) if (!hasWare(id)) delete e.orders[culture as CultureId];
   for (const id of Object.keys(e.shelves)) if (!hasWare(id)) delete e.shelves[id];
+  for (const site of SITES) {
+    const dug = e.dug[site.id] ?? 0;
+    if (dug > 0 || (s.action?.kind === 'skill' && s.action.actionId === site.id)) s.professionProgress.legacyAccess[site.id] = true;
+    findDigs(site).forEach((n, i) => { if (dug >= n) s.professionProgress.discoveries[`expedition.${site.id}.${i}`] = true; });
+  }
 }

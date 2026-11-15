@@ -24,8 +24,10 @@ export interface HeistJob {
   favours: string;
   /** Thieving level needed */
   level: number;
-  /** campaign area that must be unlocked first */
-  area: string;
+  /** campaign area that must be unlocked first (legacy saves) */
+  area?: string;
+  /** prior clean exit milestone requirement */
+  requires?: string;
   rooms: number;
   roomMs: number;
   /** Markers to set the job up */
@@ -58,53 +60,60 @@ export const HEIST_JOBS: HeistJob[] = [
     vault: [{ id: 'gold', chance: 1, qty: 150 }],
   }),
   job({
-    id: 'salt_tithe', name: 'The Salt Tithe', level: 8, area: 'saltflats', rooms: 4, roomMs: 35000, cost: 16, alert: 6, xp: 110, gold: 30, ilvl: 25,
+    id: 'salt_tithe', name: 'The Salt Tithe', level: 8, area: 'saltflats', requires: 'heist_clean_cinder_toll', rooms: 4, roomMs: 35000, cost: 16, alert: 6, xp: 110, gold: 30, ilvl: 25,
     desc: 'Every salt wagon pays the Khan a tenth. The tally house keeps it, and the names of who owes what.',
     favours: "Rogue's Markers",
     drops: [{ id: MARKER, chance: 0.4, qty: 1 }],
     vault: [{ id: MARKER, chance: 1, qty: 12 }],
   }),
   job({
-    id: 'forgers_den', name: "The Forger's Den", level: 14, area: 'blackgrass', rooms: 4, roomMs: 40000, cost: 24, alert: 7, xp: 240, gold: 60, ilvl: 26,
+    id: 'forgers_den', name: "The Forger's Den", level: 14, area: 'blackgrass', requires: 'heist_clean_cinder_toll', rooms: 4, roomMs: 40000, cost: 24, alert: 7, xp: 240, gold: 60, ilvl: 26,
     desc: 'A tent deep in the blackgrass where the Khanate paymasters have their writs and seals cut.',
     favours: "Forger's Seals",
     drops: [{ id: SEAL, chance: 0.02, qty: 1 }, { id: MARKER, chance: 0.1, qty: 1 }],
     vault: [{ id: SEAL, chance: 0.35, qty: 1 }],
   }),
   job({
-    id: 'last_wagon', name: 'The Last Wagon', level: 20, area: 'caravan', rooms: 5, roomMs: 40000, cost: 30, alert: 7, xp: 310, gold: 80, ilvl: 29,
+    id: 'last_wagon', name: 'The Last Wagon', level: 20, area: 'caravan', requires: 'heist_clean_salt_tithe', rooms: 5, roomMs: 40000, cost: 30, alert: 7, xp: 310, gold: 80, ilvl: 29,
     desc: "One strongwagon at Caravan's End never burned. The raiders have been arguing over its lock ever since.",
     favours: 'Stolen rare gear',
     drops: [{ id: GEAR, chance: 0.02, qty: 1 }, { id: MARKER, chance: 0.1, qty: 1 }],
     vault: [{ id: GEAR, chance: 0.6, qty: 1 }],
   }),
   job({
-    id: 'barrow_cache', name: 'The Barrow Cache', level: 28, area: 'kurgans', rooms: 5, roomMs: 45000, cost: 38, alert: 8, xp: 560, gold: 110, ilvl: 30,
+    id: 'barrow_cache', name: 'The Barrow Cache', level: 28, area: 'kurgans', requires: 'heist_clean_salt_tithe', rooms: 5, roomMs: 45000, cost: 38, alert: 8, xp: 560, gold: 110, ilvl: 30,
     desc: 'Khanate grave-wardens seal their dead in with lamp wax, and hide their pay behind the dead.',
     favours: "Locksmith's Wax",
     drops: [{ id: WAX, chance: 0.02, qty: 1 }, { id: MARKER, chance: 0.1, qty: 1 }],
     vault: [{ id: WAX, chance: 0.5, qty: 1 }],
   }),
   job({
-    id: 'remounts', name: "The Khan's Remounts", level: 36, area: 'plateau', rooms: 5, roomMs: 50000, cost: 46, alert: 8, xp: 740, gold: 150, ilvl: 31,
+    id: 'remounts', name: "The Khan's Remounts", level: 36, area: 'plateau', requires: 'heist_clean_last_wagon', rooms: 5, roomMs: 50000, cost: 46, alert: 8, xp: 740, gold: 150, ilvl: 31,
     desc: 'The storm riders stable their spare horses on the plateau, with the coin to pay for them.',
     favours: 'Regal Orbs',
     drops: [{ id: 'regal', chance: 0.02, qty: 1 }, { id: MARKER, chance: 0.1, qty: 1 }],
     vault: [{ id: 'regal', chance: 0.6, qty: 1 }, { id: GEAR, chance: 0.3, qty: 1 }],
   }),
   job({
-    id: 'pyre_vault', name: 'The Pyre Vault', level: 45, area: 'pyretemple', rooms: 6, roomMs: 50000, cost: 56, alert: 8, xp: 860, gold: 200, ilvl: 32,
+    id: 'pyre_vault', name: 'The Pyre Vault', level: 45, area: 'pyretemple', requires: 'heist_clean_last_wagon', rooms: 6, roomMs: 50000, cost: 56, alert: 8, xp: 860, gold: 200, ilvl: 32,
     desc: 'What the faithful give to the fire, the priests take out again by night and lock under the altar.',
     favours: "Seals and Wax",
     drops: [{ id: SEAL, chance: 0.01, qty: 1 }, { id: WAX, chance: 0.008, qty: 1 }, { id: MARKER, chance: 0.1, qty: 1 }],
     vault: [{ id: SEAL, chance: 0.35, qty: 1 }, { id: WAX, chance: 0.3, qty: 1 }],
   }),
   job({
-    id: 'khans_tribute', name: "The Khan's Tribute", level: 55, area: 'burningthrone', rooms: 7, roomMs: 50000, cost: 70, alert: 8, xp: 1150, gold: 280, ilvl: 33,
+    id: 'khans_tribute', name: "The Khan's Tribute", level: 55, area: 'burningthrone', requires: 'heist_clean_pyre_vault', rooms: 7, roomMs: 50000, cost: 70, alert: 8, xp: 1150, gold: 280, ilvl: 33,
     desc: 'Everything the Khanate ever took on its way west, heaped up under the Burning Throne.',
     favours: 'A bit of everything',
     drops: [{ id: SEAL, chance: 0.008, qty: 1 }, { id: WAX, chance: 0.006, qty: 1 }, { id: 'regal', chance: 0.008, qty: 1 }, { id: MARKER, chance: 0.12, qty: 1 }],
     vault: [{ id: SEAL, chance: 0.5, qty: 1 }, { id: WAX, chance: 0.4, qty: 1 }, { id: 'regal', chance: 0.5, qty: 1 }, { id: GEAR, chance: 0.6, qty: 1 }],
+  }),
+  job({
+    id: 'occult_treasury', name: 'The Occult Treasury', level: 65, area: 'burningthrone', requires: 'heist_clean_khans_tribute', rooms: 6, roomMs: 60000, cost: 80, alert: 8, xp: 250, gold: 250, ilvl: 75,
+    desc: 'The Khanate’s innermost vault of occult relics and forbidden tribute.',
+    favours: 'Arcane Dust & Occult Relics',
+    drops: [{ id: MARKER, chance: 0.1, qty: 1 }, { id: 'arcane_dust', chance: 0.25, qty: 5 }],
+    vault: [{ id: 'gold', chance: 1, qty: 2000 }, { id: 'arcane_dust', chance: 1, qty: 50 }],
   }),
 ];
 

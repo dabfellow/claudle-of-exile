@@ -9,6 +9,7 @@ import { alarmChance, alarmKeeps, bestMark, cleanChance, crewSlots, heistStep, j
 import { allMods, createItem, modCount } from '../src/engine/items';
 import { focusOf, minigameSwing } from '../src/engine/minigame';
 import { simulateOffline } from '../src/engine/offline';
+import { settleProfessionProgress } from '../src/engine/professions';
 import { seeded, type Rng } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { startSkillAction, stopAction } from '../src/engine/skills';
@@ -29,6 +30,7 @@ function thief(level = 1, markers = 0): GameState {
   s.unlockedZones.push(...ACT2);
   s.skills.thieving = xpForLevel(level);
   s.account.bank[MARKER] = markers;
+  settleProfessionProgress(s, true);
   return s;
 }
 
@@ -90,18 +92,19 @@ describe('Thieving', () => {
     expect(SKILLS.thieving.soon).toBeUndefined();
     for (const a of actionsFor('thieving')) {
       expect(a.inputs).toBeUndefined();
-      expect(ACT2).toContain(a.area);
+      expect(a.area).toBeUndefined();
     }
     for (const j of HEIST_JOBS) expect(ACT2).toContain(j.area);
   });
 
-  it('stays locked until the Cinder Road, and opens there', () => {
+  it('opens marks independently and milestones govern Heist progression', () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
-    expect(startSkillAction(s, ctx(), 'mark_peddler')).toMatch(/Cinder Road/);
-    expect(jobBlocker(s, heistJob('cinder_toll'))).toMatch(/Cinder Road/);
-    s.unlockedZones.push('cinderroad');
     expect(startSkillAction(s, ctx(), 'mark_peddler')).toBeNull();
     expect(jobBlocker(s, heistJob('cinder_toll'))).toBeNull();
+    s.skills.thieving = xpForLevel(8);
+    expect(jobBlocker(s, heistJob('salt_tithe'))).toMatch(/The Cinder Toll/);
+    s.professionProgress.discoveries['heist_clean_cinder_toll'] = true;
+    expect(jobBlocker(s, heistJob('salt_tithe'))).toBeNull();
   });
 
   it('gives gold and Rogue\'s Markers offline at full speed', () => {

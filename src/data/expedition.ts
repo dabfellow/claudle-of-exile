@@ -169,6 +169,9 @@ export function hasWare(id: string): boolean {
 }
 
 export const EXPEDITION_MATERIALS: MaterialDef[] = [
+  ...CULTURES.map((c): MaterialDef => ({ id: `${c.id === 'surveyor' ? 'survey' : c.id}_relic_fragment`, name: `${c.name} Relic Fragment`, kind: 'component', color: c.color, value: 0, desc: 'One every 60 matching digs, even at bedrock. Restore equipment or save for later projects; optionally exchange five for 25 matching artifacts. No standing from exchanges.' })),
+  { id: 'restored_taboo_tablet', name: 'Restored Taboo Tablet', kind: 'component', color: '#d0a040', value: 0, desc: 'Restored after the first Adit discovery; component for the later Second Heresy project.' },
+  { id: 'convergence_relic', name: 'Convergence Relic', kind: 'component', color: '#a8c8f8', value: 0, desc: 'Restored after the first Heart discovery; component for the later Sum of All Things project.' },
   ...CULTURES.map((c): MaterialDef => ({ id: c.artifact, name: c.artifactName, kind: 'artifact', color: c.color, value: 1, desc: `${c.merchant} trades these for goods. Dug up by Archaeology.` })),
   { id: WHETSTONE, name: 'Ancient Whetstone', kind: 'artifact', color: '#a8c8f8', value: 150, desc: 'Raises one modifier you pick by one tier, as far as the item level allows. One per item.' },
 ];

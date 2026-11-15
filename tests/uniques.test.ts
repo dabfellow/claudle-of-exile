@@ -195,7 +195,7 @@ describe('overhauled and expanded uniques, flasks, and maps', () => {
   });
 
   it('defines 5 Unique Maps and opens them through the Map Device', () => {
-    expect(UNIQUE_MAPS).toHaveLength(5);
+    expect(UNIQUE_MAPS).toHaveLength(6);
     const s = newGame(1);
     const ctx = makeCtx(seeded(10));
     addUniqueMaps(s, 'umap_vaults', 2);

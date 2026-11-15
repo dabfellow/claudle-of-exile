@@ -126,7 +126,7 @@ describe('opening an act', () => {
     // a save from a preview build that already holds the area
     loaded.unlockedZones.push('cinderroad');
     expect(startCombat(loaded, ctx(), 'cinderroad')).toBeTruthy();
-    expect(smithIlvlCap(loaded)).toBe(zoneDef('sanctum').levelRange[1]);
+    expect(smithIlvlCap(loaded)).toBe(21); // Forge 1, independent of open campaign data
   });
 
   it('beating Ysolde opens the Cinder Road', () => {

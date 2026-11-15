@@ -13,6 +13,12 @@ export interface OfflineSummary {
   xp: Partial<Record<SkillId, number>>;
   levels: Partial<Record<SkillId, number>>;
   materials: Record<string, number>;
+  /** Gross production is separate from bank deltas (which also include ingredient spending). */
+  ordinaryOutput?: Record<string, number>;
+  discoveries?: string[];
+  protectedProgress?: Record<string, number>;
+  projects?: Record<string, number>;
+  projectWork?: Record<string, number>;
   items: number;
   gems: number;
   kills: number;
@@ -74,6 +80,11 @@ export function mergeOffline(into: OfflineSummary, more: OfflineSummary): Offlin
     xp: add(into.xp, more.xp),
     levels: { ...into.levels, ...more.levels },
     materials: add(into.materials, more.materials) as Record<string, number>,
+    ordinaryOutput: add(into.ordinaryOutput ?? {}, more.ordinaryOutput ?? {}) as Record<string, number>,
+    discoveries: [...new Set([...(into.discoveries ?? []), ...(more.discoveries ?? [])])],
+    protectedProgress: add(into.protectedProgress ?? {}, more.protectedProgress ?? {}) as Record<string, number>,
+    projects: add(into.projects ?? {}, more.projects ?? {}) as Record<string, number>,
+    projectWork: add(into.projectWork ?? {}, more.projectWork ?? {}) as Record<string, number>,
     items: into.items + more.items,
     gems: into.gems + more.gems,
     kills: into.kills + more.kills,
@@ -105,11 +116,24 @@ export function startOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offline
   const masteryBefore = { ...s.skillingMastery };
   const expeditionBefore = { ...s.expedition.tally };
   const bankBefore = { ...s.account.bank };
+  sum.ordinaryOutput = {};
+  sum.discoveries = [];
+  sum.protectedProgress = {};
+  sum.projects = {};
+  sum.projectWork = {};
   let left = ms;
   const quietCtx: Ctx = {
     ...ctx,
     offline: true,
     emit(e: GameEvent) {
+      if (e.t === 'produce') {
+        for (const [id, n] of Object.entries(e.outputs)) sum.ordinaryOutput![id] = (sum.ordinaryOutput![id] ?? 0) + n;
+      }
+      if (e.t === 'profession') {
+        if (e.category === 'discovery' && !sum.discoveries!.includes(e.id)) sum.discoveries!.push(e.id);
+        const target = e.category === 'progress' ? sum.protectedProgress : e.category === 'project' ? sum.projects : e.category === 'work' ? sum.projectWork : null;
+        if (target) target[e.id] = (target[e.id] ?? 0) + e.amount;
+      }
       if (e.t === 'xp') sum.xp[e.skill] = (sum.xp[e.skill] ?? 0) + e.amount;
       else if (e.t === 'levelup') sum.levels[e.skill] = e.level;
       else if (e.t === 'loot' && e.item && !e.salvaged) sum.items++;

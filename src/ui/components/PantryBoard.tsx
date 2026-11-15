@@ -1,5 +1,5 @@
 import { INGREDIENTS, mealDef, MEALS } from '../../data/cooking';
-import { cookingOpen, eatMeal, mealEffectText, mealLength, mealReason } from '../../engine/cooking';
+import { cookingOpen, eatMeal, formatDurationMs, mealEffectText, mealLength, mealReason, mealSupplySupportedMs } from '../../engine/cooking';
 import { game, useGame } from '../../game';
 import { fmt, MatIcon } from './common';
 
@@ -11,30 +11,35 @@ export function mealTimeLeft(ms: number): string {
 /** Cooking's own panel: what you've eaten, and every dish you have to eat. */
 export function PantryBoard() {
   const s = useGame();
-  if (!cookingOpen(s)) return <div className="callout skill-note">There's no galley fire this far inland. Reach Act 5 to start.</div>;
+  if (!cookingOpen(s)) return null;
   const dishes = MEALS.filter((m) => s.account.bank[m.id]);
   const ingredients = INGREDIENTS.filter((m) => s.account.bank[m.id]);
+  const activeDef = s.meal ? mealDef(s.meal.id) : null;
+  const activeSupportedMs = s.meal ? mealSupplySupportedMs(s, s.meal.id) : 0;
   return (
     <>
       <div className="callout skill-note">
-        A meal lasts <b>{mealLength(s) / 60_000} minutes</b> of fighting, online or offline, and waits for you the rest of the time. Flask ingredients go into Alchemy's strongest recipes.
+        A meal fills your one meal slot. Combat dishes run down while fighting; skilling dishes run down during relevant active work. Both wait for you the rest of the time. Switching meals replaces remaining time with the new dish's full duration.
       </div>
       <div className="card">
         <div className="card-title">
           Pantry
           <span className="grow" />
-          <label className="check card-hint" title="When a meal runs out in a fight, eat another of the same. This is what keeps a long night fed.">
+          <label className="check card-hint" title="When a meal runs out, eat another of the same automatically from the bank. Stops when empty.">
             <input type="checkbox" checked={s.keepEating} onChange={(e) => game.act((st) => void (st.keepEating = e.target.checked))} />
-            Keep eating
+            Keep eating (stops when empty)
           </label>
         </div>
         <div className="row wrap" style={{ gap: 6 }}>
-          {s.meal ? (
+          {s.meal && activeDef ? (
             <>
               <MatIcon id={s.meal.id} size={16} />
-              <b style={{ color: mealDef(s.meal.id).color }}>{mealDef(s.meal.id).name}</b>
-              <span className="dim small">{mealTimeLeft(s.meal.remainingMs)} left</span>
+              <b style={{ color: activeDef.color }}>{activeDef.name}</b>
+              <span className="dim small">({mealTimeLeft(s.meal.remainingMs)} left{s.keepEating && activeSupportedMs > s.meal.remainingMs ? ` · ${formatDurationMs(activeSupportedMs)} total supply` : ''})</span>
               <span className="small">{mealEffectText(s, s.meal.id)}</span>
+              <span className="dim small" style={{ marginLeft: 4 }}>
+                [{activeDef.skillingTarget === 'gathering' ? 'Active Gathering' : activeDef.skillingTarget === 'production' ? 'Active Production' : 'Combat'}]
+              </span>
             </>
           ) : (
             <span className="dim small">Nothing eaten. Cook something, then eat it here.</span>
@@ -42,12 +47,15 @@ export function PantryBoard() {
         </div>
         {dishes.map((m) => {
           const reason = mealReason(s, m.id);
+          const supplyMs = mealSupplySupportedMs(s, m.id);
+          const targetBadge = m.skillingTarget === 'gathering' ? 'Gathering' : m.skillingTarget === 'production' ? 'Production' : 'Combat';
           return (
-            <div key={m.id} className="row wrap" style={{ gap: 6, marginTop: 6 }}>
+            <div key={m.id} className="row wrap" style={{ gap: 6, marginTop: 6, alignItems: 'center' }}>
               <MatIcon id={m.id} size={16} />
               <span>
                 {m.name} <span className="dim num">×{fmt(s.account.bank[m.id])}</span>
               </span>
+              <span className="dim small">[{targetBadge} · {formatDurationMs(mealLength(s, m.id))}{supplyMs > 0 ? ` · ${formatDurationMs(supplyMs)} supply` : ''}]</span>
               <span className="small">{mealEffectText(s, m.id)}</span>
               <span className="spacer" />
               <button className="btn sm" disabled={!!reason} title={reason ?? m.desc} onClick={() => game.act((st, ctx) => eatMeal(st, ctx, m.id))}>

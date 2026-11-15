@@ -57,27 +57,28 @@ describe('the skill', () => {
     expect(skillTreePoints(s)).toBeGreaterThan(before);
   });
 
-  it('is shut until Act 6, however high the skill', () => {
+  it('manufactures independently of Act 6', () => {
     const s = veteran(newGame(1));
     s.skills.cartography = xpForLevel(60);
-    expect(cartographyOpen(s)).toBe(false);
+    expect(cartographyOpen(s)).toBe(true);
     for (const a of actionsFor('cartography')) {
-      expect(a.gate).toBe(CARTOGRAPHY_GATE);
-      expect(actionBlocker(s, a)).toBe('Reach Act 6 to unlock');
+      expect(a.gate).toBeUndefined();
+      expect(actionBlocker(s, a)).toBe(a.level > 60 ? `Requires Cartography level ${a.level}` : 'Missing materials');
     }
     s.unlockedZones.push(CARTOGRAPHY_GATE.zone);
     expect(cartographyOpen(s)).toBe(true);
   });
 
-  it('stays on the Coming soon page until the gate opens, and its achievements wait for the act', () => {
-    expect(UPCOMING_SKILLS.find((u) => u.name === 'Cartography')?.gate).toBe(CARTOGRAPHY_GATE);
+  it('leaves Coming soon while keeping existing achievement sources', () => {
+    expect(UPCOMING_SKILLS.find((u) => u.name === 'Cartography')).toBeUndefined();
     expect(ACHIEVEMENT_BY_ID.maps_drawn_25.act).toBe(6);
     expect(ACHIEVEMENTS.some((a) => a.id === 'maps_drawn_25')).toBe(actOpen(6));
   });
 
   it('only spends what can be gathered, found or drawn', () => {
     const own = new Set(CHART_MATERIALS.map((m) => m.id));
-    const made = new Set(actionsFor('cartography').flatMap((a) => Object.keys(a.outputs ?? {})));
+    const made = new Set(actionsFor('cartography').flatMap((a) => Object.keys({ ...a.outputs, ...a.protectedOutputs })));
+    for (const id of ['chart_survey_fragment', 'reliquary_fragment', 'atlas_survey_record']) made.add(id); // Covered by Phase 13 source-hook tests.
     expect([...own].filter((id) => !made.has(id))).toEqual([]);
     const elsewhere = new Set(['alchemy', 'mining', 'woodcutting', 'harvesting'].flatMap((k) => actionsFor(k as 'mining').flatMap((a) => [...Object.keys(a.outputs ?? {}), ...(a.bonus ?? []).map((b) => b.id)])));
     elsewhere.add('arcane_dust');

@@ -19,7 +19,7 @@ export function uniqueDropsIn(u: UniqueDef): string[] {
   const hard = HARD_BOSSES.filter((b) => b.uniqueId === u.id).map((b) => `${b.name} (Hard Boss)`);
   const uber = UBER_BOSSES.filter((b) => b.uniques.includes(u.id)).map((b) => `${b.name} (Uber Boss)`);
   const uniqueMaps = UNIQUE_MAPS.filter((m) => m.uniques.includes(u.id)).map((m) => `${m.name} (Unique Map)`);
-  return [...world, ...hard, ...uber, ...uniqueMaps, ...achievementSources(u)];
+  return [...world, ...hard, ...uber, ...uniqueMaps, ...achievementSources(u), ...(u.projectSource ? [u.projectSource] : [])];
 }
 
 /** Achievements that hand this unique over. */
@@ -44,9 +44,10 @@ export function uniqueSections(): [string, UniqueDef[]][] {
   const fromBoss = (u: UniqueDef) => HARD_BOSSES.some((b) => b.uniqueId === u.id) || UBER_BOSSES.some((b) => b.uniques.includes(u.id));
   return [
     ['World drops', sorted.filter(isWorldDropUnique)],
+    ['Profession projects', sorted.filter((u) => !!u.projectSource)],
     ['Boss trophies', sorted.filter(fromBoss)],
     ['Achievement rewards', sorted.filter((u) => !fromBoss(u) && achievementSources(u).length)],
-    ['No drop source yet', sorted.filter((u) => !isWorldDropUnique(u) && !fromBoss(u) && !achievementSources(u).length)],
+    ['No drop source yet', sorted.filter((u) => !u.projectSource && !isWorldDropUnique(u) && !fromBoss(u) && !achievementSources(u).length)],
   ];
 }
 

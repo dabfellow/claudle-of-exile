@@ -1,19 +1,73 @@
-import { COOKING_GATE, MEAL_MS, mealDef } from '../data/cooking';
+import { INGREDIENTS, MEAL_MS, mealDef, MEALS } from '../data/cooking';
+import { actionDef, type SkillAction } from '../data/skills';
 import { describeStat } from '../data/statText';
 import type { Ctx } from './context';
 import { skillTreeStats } from './skillTree';
-import type { GameState, StatKey } from './types';
+import type { GameState, SkillId, StatKey } from './types';
 
 /** Head Chef: how much stronger meals are. */
 export const HEAD_CHEF_MORE = 30;
 
-export function cookingOpen(s: GameState): boolean {
-  return s.unlockedZones.includes(COOKING_GATE.zone);
+export const GATHERING_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology'];
+export const PRODUCTION_SKILLS: SkillId[] = ['smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'];
+
+export function cookingOpen(_s: GameState): boolean {
+  return true;
 }
 
-/** How long a meal lasts for this character, in time spent fighting. */
-export function mealLength(s: GameState): number {
-  return MEAL_MS * (1 + (skillTreeStats(s).slowSimmer ?? 0) / 100);
+/** How long a meal lasts for this character. Base duration varies by dish (30m ordinary, 60m signature/feast). */
+export function mealLength(s: GameState, id?: string): number {
+  const mealId = id ?? s.meal?.id;
+  const base = (mealId ? mealDef(mealId).durationMs : undefined) ?? MEAL_MS;
+  return base * (1 + (skillTreeStats(s).slowSimmer ?? 0) / 100);
+}
+
+/** Total duration supported by the player's current bank supply of this dish plus remaining active time. */
+export function mealSupplySupportedMs(s: GameState, id: string): number {
+  const inBank = s.account.bank[id] ?? 0;
+  const currentLeft = s.meal?.id === id ? Math.max(0, s.meal.remainingMs) : 0;
+  return currentLeft + inBank * mealLength(s, id);
+}
+
+export function formatDurationMs(ms: number): string {
+  const totalMins = Math.round(ms / 60_000);
+  if (totalMins < 60) return `${totalMins}m`;
+  const hours = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
+/** Whether the active meal's duration clock is running right now. */
+export function isMealClockRunning(s: GameState): boolean {
+  if (!s.meal) return false;
+  const def = mealDef(s.meal.id);
+  if (!def.skillingTarget) {
+    return Boolean(s.combat);
+  }
+  if (def.skillingTarget === 'gathering') {
+    if (s.action?.kind === 'skill') {
+      const skill = actionDef(s.action.actionId).skill;
+      return GATHERING_SKILLS.includes(skill);
+    }
+    if (s.action?.kind === 'heist') return true;
+    if (s.action?.kind === 'project') {
+      const proj = s.professionProgress.activeProject?.project;
+      return proj ? GATHERING_SKILLS.includes(proj.skill) : false;
+    }
+    return false;
+  }
+  if (def.skillingTarget === 'production') {
+    if (s.action?.kind === 'skill') {
+      const skill = actionDef(s.action.actionId).skill;
+      return PRODUCTION_SKILLS.includes(skill);
+    }
+    if (s.action?.kind === 'project') {
+      const proj = s.professionProgress.activeProject?.project;
+      return proj ? PRODUCTION_SKILLS.includes(proj.skill) : false;
+    }
+    return false;
+  }
+  return false;
 }
 
 /** A dish's stats for this character, with Head Chef applied. */
@@ -40,7 +94,7 @@ export function mealReason(s: GameState, id: string): string | null {
 function serve(s: GameState, id: string, leftover = 0): void {
   s.account.bank[id] -= 1;
   s.lifetime.mealsEaten += 1;
-  s.meal = { id, remainingMs: mealLength(s) + leftover };
+  s.meal = { id, remainingMs: mealLength(s, id) + leftover };
 }
 
 /** Eat a dish from the bank. One meal at a time: a different dish replaces what's left of the last. */
@@ -52,7 +106,7 @@ export function eatMeal(s: GameState, ctx: Ctx, id: string): string | null {
   return null;
 }
 
-/** The clock runs while you fight, offline too, and Keep eating serves the next one so a long night stays fed. */
+/** The clock runs while you fight or do relevant active skilling, and Keep eating serves the next one on expiry. */
 export function mealStep(s: GameState, ctx: Ctx, dt: number): void {
   if (!s.meal) return;
   s.meal.remainingMs -= dt;
@@ -64,4 +118,67 @@ export function mealStep(s: GameState, ctx: Ctx, dt: number): void {
   }
   s.meal = null;
   ctx.emit({ t: 'info', text: `The ${mealDef(id).name} wore off` });
+}
+
+export const COOKING_CATEGORIES: { id: string; label: string }[] = [
+  { id: 'survival', label: 'Survival Meals' },
+  { id: 'resources', label: 'Resource Meals' },
+  { id: 'damage', label: 'Damage Meals' },
+  { id: 'gathering', label: 'Gathering Food' },
+  { id: 'production', label: 'Production Food' },
+  { id: 'reagents', label: 'Reagents & Ingredients' },
+];
+
+export function cookingCategory(a: SkillAction): string {
+  const outId = Object.keys(a.outputs ?? a.protectedOutputs ?? {})[0];
+  if (!outId) return 'reagents';
+  if (outId === 'binding_stock' || INGREDIENTS.some((i) => i.id === outId)) return 'reagents';
+  const meal = MEALS.find((m) => m.id === outId);
+  return meal?.category ?? 'survival';
+}
+
+export function cookingPreview(s: GameState, a: SkillAction): string[] {
+  if (a.skill !== 'cooking') return [];
+  const outId = Object.keys(a.outputs ?? a.protectedOutputs ?? {})[0];
+  if (!outId) return [];
+  const lines: string[] = [];
+
+  if (outId === 'binding_stock') {
+    lines.push('Special reagent: project material for future assemblies; not edible.');
+    lines.push('Protected output: 1:1 guaranteed yield; cannot be conserved, refunded or duplicated.');
+    const inBank = s.account.bank[outId] ?? 0;
+    if (inBank > 0) lines.push(`Stock: ${inBank} in bank.`);
+    return lines;
+  }
+
+  const ing = INGREDIENTS.find((i) => i.id === outId);
+  if (ing) {
+    lines.push(`Flask ingredient: ${ing.desc}`);
+    const inBank = s.account.bank[outId] ?? 0;
+    if (inBank > 0) lines.push(`Stock: ${inBank} in bank.`);
+    return lines;
+  }
+
+  const meal = MEALS.find((m) => m.id === outId);
+  if (!meal) return lines;
+
+  const targetLabel = meal.skillingTarget === 'gathering'
+    ? 'relevant active gathering & thieving work'
+    : meal.skillingTarget === 'production'
+    ? 'relevant active production work'
+    : 'time spent fighting';
+  const durMs = mealLength(s, meal.id);
+  const supplyMs = mealSupplySupportedMs(s, meal.id);
+  const inBank = s.account.bank[meal.id] ?? 0;
+  const catLabel = meal.category ? meal.category[0].toUpperCase() + meal.category.slice(1) : 'Consumable';
+
+  lines.push(`[${catLabel}] Effect: ${mealEffectText(s, meal.id)}.`);
+  lines.push(`Duration: ${formatDurationMs(durMs)} of ${targetLabel}.`);
+  lines.push(`Re-eating: fills your one meal slot. When 'Keep eating' is enabled, 1 meal is eaten on expiry and stops when bank stock is empty.`);
+  lines.push(`Pantry stock: ${inBank} on hand (${formatDurationMs(supplyMs)} supply).`);
+  if (meal.protected) {
+    lines.push('Protected dish: 1:1 guaranteed yield; cannot be conserved or doubled.');
+  }
+
+  return lines;
 }

@@ -1,8 +1,7 @@
 import { MARKER } from '../../data/craftMats';
 import { GEAR, HEIST_JOBS, heistJob, MAX_ROGUE_RANK, rogueRankCost, ROGUES, type HeistJob, type RogueDef } from '../../data/heist';
 import { materialDef } from '../../data/materials';
-import { zoneDef } from '../../data/zones';
-import { alarmChance, alarmKeeps, bestMark, cleanChance, crewSlots, jobBlocker, jobCost, jobExit, rankUpRogue, rogueReason, roomMs, setJobExit, startHeist, stopHeistRepeat, toggleCrew } from '../../engine/heist';
+import { alarmChance, alarmKeeps, bestMark, cleanChance, crewSlots, heistGearTargetPool, jobBlocker, jobCost, jobExit, rankUpRogue, rogueReason, roomMs, setJobExit, setJobGearTarget, startHeist, stopHeistRepeat, toggleCrew, type HeistGearCategory } from '../../engine/heist';
 import { stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
@@ -64,11 +63,17 @@ function JobCard({ s, job }: { s: GameState; job: HeistJob }) {
   const short = (s.account.bank[MARKER] ?? 0) < cost;
   const setExit = (room: number) => game.act((st) => setJobExit(st, job.id, room));
   const pay = job.vault.map((d) => takeName(d.id));
+  const hasGear = job.drops.some((d) => d.id === GEAR) || job.vault.some((d) => d.id === GEAR);
+  const gearPool = hasGear ? heistGearTargetPool(s, job) : null;
+  const setGearTarget = (cat: HeistGearCategory) => game.act((st) => setJobGearTarget(st, job.id, cat));
+  const cleanMilestone = s.professionProgress.discoveries[`heist_clean_${job.id}`];
+
   return (
     <div className={`card action-card ${running ? 'running' : ''} ${blocker ? 'locked' : ''}`}>
       <div className="row">
         <b>{job.name}</b>
         <span className="spacer" />
+        {cleanMilestone && <Badge tone="success">Clean Exit</Badge>}
         <Badge tone="neutral">{job.favours}</Badge>
       </div>
       <p className="dim small">{job.desc}</p>
@@ -92,9 +97,32 @@ function JobCard({ s, job }: { s: GameState; job: HeistJob }) {
             <b className="num">{exit}</b>
             <button className="btn sm ghost" disabled={exit >= job.rooms} onClick={() => setExit(exit + 1)} aria-label="One room more">+</button>
             <span className="dim">
-              {pct(cleanChance(s, job, exit))} clean{exit >= job.rooms ? ` · vault: ${pay.join(', ')}` : ' · no vault'}
+              {pct(cleanChance(s, job, exit))} clean · alarm keeps {pct(alarmKeeps(s))}{exit >= job.rooms ? ` · vault: ${pay.join(', ')}` : ' · no vault'}
             </span>
           </div>
+          {gearPool && (
+            <div className="row wrap small" style={{ marginTop: 6, gap: 4, alignItems: 'center' }}>
+              <span className="dim">Target:</span>
+              {(['all', 'weapon', 'armour', 'jewellery'] as const).map((cat) => (
+                <button
+                  key={cat}
+                  className={`btn sm ${gearPool.category === cat ? 'selected' : 'ghost'}`}
+                  style={{ padding: '2px 6px', fontSize: '0.75rem' }}
+                  onClick={() => setGearTarget(cat)}
+                >
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </button>
+              ))}
+              <span className="dim" style={{ fontSize: '0.75rem' }}>
+                ({gearPool.bases.length} bases, ilvl {gearPool.ilvl})
+              </span>
+            </div>
+          )}
+          {job.id === 'occult_treasury' && (
+            <div className="small dim" style={{ marginTop: 6, fontSize: '0.75rem', lineHeight: 1.3 }}>
+              Treasury Fragments: 1 per completed room (+4 on clean vault). Oath Fragments: 1 on clean vault, 1 every 12 rooms ({(s.professionProgress?.counters?.['thieving.treasury_rooms'] ?? 0) % 12}/12). Clean vault rolls 0.5% Borrowed Tomorrow jackpot.
+            </div>
+          )}
           <div className="row" style={{ marginTop: 8 }}>
             {running ? (
               <button className="btn sm" onClick={() => game.act((st) => stopAction(st))}>
@@ -153,13 +181,15 @@ export function HeistBoard() {
   const shown = next ? [...open, next] : open;
   const mark = bestMark(s);
   const casing = !!s.heist.auto && s.action?.kind === 'skill';
-  if (!s.unlockedZones.includes(HEIST_JOBS[0].area)) {
-    return <div className="callout skill-note">The Khanate's roads start at {zoneDef(HEIST_JOBS[0].area).name}, in Act 2. Reach them to start thieving.</div>;
-  }
   return (
     <>
       <div className="callout skill-note">
-        Marks pay gold and Rogue's Markers. Markers set up Heists: each room is richer and riskier, and the vault is in the last one. You have <b className="num">{fmt(s.account.bank[MARKER] ?? 0)}</b> Markers.
+        Marks pay gold and Rogue's Markers (including 1 guaranteed Marker every 10 mark completions). Markers set up Heists: each room is richer and riskier, and the vault is in the last one. If short on Markers, repeats safely case the job on the best mark until funded. You have <b className="num">{fmt(s.account.bank[MARKER] ?? 0)}</b> Markers.
+        {((s.account.bank.treasury_fragment ?? 0) > 0 || (s.account.bank.oath_fragment ?? 0) > 0) && (
+          <div style={{ marginTop: 4 }}>
+            Treasury reserves: <b className="num">{fmt(s.account.bank.treasury_fragment ?? 0)}</b> Treasury Fragments · <b className="num">{fmt(s.account.bank.oath_fragment ?? 0)}</b> Oath Fragments
+          </div>
+        )}
       </div>
       {casing && mark && (
         <div className="callout skill-note">

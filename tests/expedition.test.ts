@@ -45,25 +45,24 @@ describe('Archaeology', () => {
     expect(UPCOMING_SKILLS.some((u) => u.name === 'Archaeology')).toBe(false);
   });
 
-  it('waits for Act 4, and stays shut for a save that finished Act 3', () => {
+  it('opens independent digging and trading without Act 4', () => {
     const s = newGame(1, { name: 'A', classId: 'warrior' });
     s.skills.archaeology = 1e7;
-    expect(expeditionOpen(s)).toBe(false);
-    for (const a of actionsFor('archaeology')) expect(actionBlocker(s, a)).toMatch(/Act 4/);
-    expect(startSkillAction(s, ctx(), 'dig_cairn')).toMatch(/Act 4/);
-    expect(s.action?.kind).not.toBe('skill');
-    expect(wareReason(s, 'giant_regal')).toMatch(/Act 4/);
+    expect(expeditionOpen(s)).toBe(true);
+    expect(actionBlocker(s, actionDef('dig_cutting'))).toMatch(/Requires the first discovery at Giant's Cairn/);
+    expect(startSkillAction(s, ctx(), 'dig_cairn')).toBeNull();
+    expect(s.action?.kind).toBe('skill');
+    expect(wareReason(s, 'giant_regal') ?? '').not.toMatch(/Act 4/);
     s.unlockedZones.push(EXPEDITION_GATE.zone);
     expect(expeditionOpen(s)).toBe(true);
     expect(actionBlocker(s, actionDef('dig_cairn'))).toBeNull();
   });
 
-  it('every site takes no inputs and is gated on hollowpass', () => {
+  it('every site takes no inputs or campaign gate', () => {
     expect(EXPEDITION_GATE.zone).toBe('hollowpass');
-    expect(actionsFor('archaeology')).toHaveLength(SITES.length);
-    for (const a of actionsFor('archaeology')) {
+    for (const a of SITES.map((x) => actionDef(x.id))) {
       expect(a.inputs).toBeUndefined();
-      expect(a.gate).toEqual(EXPEDITION_GATE);
+      expect(a.gate).toBeUndefined();
       expect(a.area).toBeUndefined();
       expect(a.outputChance).toBeLessThanOrEqual(1);
     }
@@ -130,6 +129,7 @@ describe('sites', () => {
   it('keeps every site\'s depth when you leave it', () => {
     const s = digger(30);
     s.expedition.dug.dig_cairn = findDigs(CAIRN)[1];
+    s.expedition.dug.dig_cutting = findDigs(siteOf('dig_cutting')!)[0];
     startSkillAction(s, ctx(), 'dig_barrow');
     dig(s, ctx());
     expect(siteStratum(s, CAIRN)).toBe(2);

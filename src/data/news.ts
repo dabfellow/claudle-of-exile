@@ -10,7 +10,21 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Heist jobs now unlock through Thieving clean exits, marks pay a guaranteed Marker every 10 completions, gear targets can specify weapons, armour or jewellery, and The Occult Treasury offers Treasury Fragments and Borrowed Tomorrow claims.',
+  'Rune-carving now progresses through practice accomplishments, offers signature Wayfarer and Channeler inscriptions, and previews slot effects and resonance before carving.',
+  'Gemcutting adds targeted family cuts, exact gem cutting, gem recycling for Arcane Dust, Exceptional and Convergence crystal polishing, and the craftable Lapidary’s Chisel.',
+  'Smithing can now complete Woundmaker, Winter’s Pyre and The Homecoming through exclusive projects, with their bleed, cold-ignite and returning-arrow powers and drawbacks.',
+  'Cartographers can craft an exclusive Artisans’ Reliquary chart, earn dependable survey components, and inspect map and Sextant supplies while encounter access still requires the campaign.',
+  'Cooking adds affordable purpose-grouped meals, gatherer and artisan skilling food, signature dishes, feast projects and binding stock with independent level 1 entry.',
+  'Archaeology discoveries now open further digs and restorations, with a restored resistance shield, dependable relic fragments, artifact sifting and optional duplicate exchanges.',
+  'Alchemy adds targeted Life, Mana, Defence and Utility flask brewing including the Medium Mana Flask, readable currency crafting and special reagent distillations.',
+  'Foraging adds abundant and concentrated herb patches, dependable rotating essences, protected Moon and Star blooms, seed discoveries for explicit Greenhouse planting, and a craftable Seedkeeper’s Sickle.',
+  'Smithing now offers gear with two guaranteed useful stats, separately crafted alloys and frames, and the Wayfarer’s Hammer for faster Smithing, without campaign requirements.',
+  'Woodcutting adds advanced timber, guaranteed resin stands, dependable ancient heartwood refinement and a craftable Heartwood Hatchet.',
+  'Mining adds prospecting, advanced metals, rich/crystal/fossil deposits, dependable project fragments and a craftable Prospector’s Pick.',
+  'Professions now progress independently of the campaign, with skilling routes for essential stations and saved projects that safely reserve inputs and deliver rewards once.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

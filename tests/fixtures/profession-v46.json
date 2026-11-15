@@ -1,0 +1,6690 @@
+{
+  "source": "Version 46 engine at commit 62192b9; simulated busy skiller, not a player export",
+  "account": {
+    "id": "amwf0ky8lddok7t",
+    "realm": "standard",
+    "rev": 0,
+    "hideout": {
+      "map_device": 1,
+      "stash": 1,
+      "forge": 6,
+      "alchemy_table": 5,
+      "bench": 1,
+      "vendor": 1,
+      "war_table": 1,
+      "war_table_tiers": 1,
+      "quartermaster": 1,
+      "watchtower": 1,
+      "trophy_altar": 1,
+      "rune_board": 3
+    },
+    "automation": {
+      "rules": [
+        "vitals",
+        "windups",
+        "ground"
+      ],
+      "ruleSlots": 2,
+      "offlineHours": 8
+    },
+    "stash": [
+      [],
+      [],
+      [],
+      []
+    ],
+    "overflow": [],
+    "uniqueStash": [],
+    "uniquesSeen": [],
+    "bank": {
+      "gold": 5067,
+      "copper_ore": 525,
+      "copper_bar": 29,
+      "sunpetal": 131,
+      "ash_plank": 17,
+      "expansion": 1,
+      "exalted": 1
+    },
+    "maps": {},
+    "sextants": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "atlas": {
+      "cleared": [],
+      "slotted": [],
+      "deathless": [],
+      "doomedCleared": [],
+      "hardBossesCleared": [],
+      "uberBossesCleared": [],
+      "nodes": []
+    },
+    "mapSettings": {
+      "blockedMods": [],
+      "autoRerollChaos": true,
+      "rollNormalMaps": false
+    },
+    "gems": [],
+    "supportGems": [],
+    "flaskStash": [],
+    "nextUid": 1927903445000,
+    "exileUnlocked": false,
+    "absorbed": [],
+    "achievementRewards": [
+      "total_300"
+    ]
+  },
+  "ordinary": {
+    "version": 46,
+    "character": {
+      "id": "legacy-busy-skiller",
+      "name": "Old Copper",
+      "classId": "ranger",
+      "createdAt": 1794576614997
+    },
+    "tutorial": {
+      "step": 0,
+      "progress": 0,
+      "done": false,
+      "skipped": false
+    },
+    "nextUid": 69,
+    "skills": {
+      "combat": 0,
+      "mining": 61635,
+      "woodcutting": 0,
+      "harvesting": 61635,
+      "thieving": 61635,
+      "archaeology": 61635,
+      "smithing": 61635,
+      "alchemy": 61635,
+      "gemcutting": 0,
+      "runecarving": 61635,
+      "cooking": 0,
+      "cartography": 0,
+      "fishing": 0
+    },
+    "skillingMastery": {
+      "task.smelt_copper": 12345.5,
+      "task.heist.cinder_toll": 2345,
+      "future.unknown": 71
+    },
+    "inventory": [
+      {
+        "uid": 9,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Doom Circle",
+        "prefixes": [
+          {
+            "affixId": "flat_evasion",
+            "tier": 1,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "spell_damage",
+            "tier": 3,
+            "values": [
+              56
+            ]
+          },
+          {
+            "affixId": "added_light",
+            "tier": 1,
+            "values": [
+              2,
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_regen",
+            "tier": 1,
+            "values": [
+              28
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 10,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rune Band",
+        "prefixes": [
+          {
+            "affixId": "inc_ignite",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "added_light",
+            "tier": 2,
+            "values": [
+              3,
+              15
+            ]
+          },
+          {
+            "affixId": "flat_evasion",
+            "tier": 1,
+            "values": [
+              25
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chill_chance",
+            "tier": 0,
+            "values": [
+              3
+            ]
+          },
+          {
+            "affixId": "light_res",
+            "tier": 0,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 11,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Grim Spiral",
+        "prefixes": [
+          {
+            "affixId": "inc_phys_global",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "inc_es_global",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 1,
+            "values": [
+              4,
+              9
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "fire_res",
+            "tier": 0,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "dexterity",
+            "tier": 0,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 12,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Corpse Band",
+        "prefixes": [
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "flat_evasion",
+            "tier": 2,
+            "values": [
+              50
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 1,
+            "values": [
+              3,
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "life_leech",
+            "tier": 3,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "chill_chance",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "mana_regen_flat",
+            "tier": 2,
+            "values": [
+              3
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 13,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Mind Circle",
+        "prefixes": [
+          {
+            "affixId": "item_rarity",
+            "tier": 0,
+            "values": [
+              36
+            ]
+          },
+          {
+            "affixId": "spell_cold",
+            "tier": 2,
+            "values": [
+              5,
+              8
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "accuracy",
+            "tier": 1,
+            "values": [
+              36
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 1,
+            "values": [
+              21
+            ]
+          },
+          {
+            "affixId": "poison_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 14,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Vengeance Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_ignite",
+            "tier": 1,
+            "values": [
+              16
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 2,
+            "values": [
+              32
+            ]
+          },
+          {
+            "affixId": "spell_cold",
+            "tier": 0,
+            "values": [
+              1,
+              3
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 3,
+            "values": [
+              29
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 15,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Hate Band",
+        "prefixes": [
+          {
+            "affixId": "inc_poison",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "inc_chaos",
+            "tier": 2,
+            "values": [
+              22
+            ]
+          },
+          {
+            "affixId": "inc_evasion_global",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "fire_res",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 16,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Mind Knot",
+        "prefixes": [
+          {
+            "affixId": "added_cold",
+            "tier": 0,
+            "values": [
+              1,
+              4
+            ]
+          },
+          {
+            "affixId": "inc_light",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_cost",
+            "tier": 0,
+            "values": [
+              3
+            ]
+          },
+          {
+            "affixId": "poison_duration",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 17,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Havoc Knot",
+        "prefixes": [
+          {
+            "affixId": "inc_phys_global",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 2,
+            "values": [
+              39
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chill_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "spell_crit_multi",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          },
+          {
+            "affixId": "fire_res",
+            "tier": 2,
+            "values": [
+              23
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 18,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Blood Band",
+        "prefixes": [
+          {
+            "affixId": "added_phys",
+            "tier": 0,
+            "values": [
+              3,
+              7
+            ]
+          },
+          {
+            "affixId": "inc_evasion_global",
+            "tier": 1,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "cold_res",
+            "tier": 0,
+            "values": [
+              8
+            ]
+          },
+          {
+            "affixId": "life_regen",
+            "tier": 0,
+            "values": [
+              1
+            ]
+          },
+          {
+            "affixId": "mana_regen_flat",
+            "tier": 2,
+            "values": [
+              3
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 19,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Wrath Knot",
+        "prefixes": [
+          {
+            "affixId": "spell_fire",
+            "tier": 1,
+            "values": [
+              3,
+              7
+            ]
+          },
+          {
+            "affixId": "spell_light",
+            "tier": 0,
+            "values": [
+              1,
+              4
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_leech",
+            "tier": 0,
+            "values": [
+              1
+            ]
+          },
+          {
+            "affixId": "ignite_chance",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 20,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Storm Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_es_global",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          },
+          {
+            "affixId": "inc_light",
+            "tier": 0,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "spell_light",
+            "tier": 0,
+            "values": [
+              1,
+              4
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "ignite_chance",
+            "tier": 0,
+            "values": [
+              3
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 21,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Skull Turn",
+        "prefixes": [
+          {
+            "affixId": "spell_damage",
+            "tier": 2,
+            "values": [
+              40
+            ]
+          },
+          {
+            "affixId": "spell_cold",
+            "tier": 2,
+            "values": [
+              5,
+              9
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "bleed_duration",
+            "tier": 1,
+            "values": [
+              17
+            ]
+          },
+          {
+            "affixId": "cast_speed",
+            "tier": 0,
+            "values": [
+              3
+            ]
+          },
+          {
+            "affixId": "intelligence",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 22,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Gloom Knot",
+        "prefixes": [
+          {
+            "affixId": "item_rarity",
+            "tier": 3,
+            "values": [
+              97
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 3,
+            "values": [
+              26
+            ]
+          },
+          {
+            "affixId": "chaos_res",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "fire_res",
+            "tier": 2,
+            "values": [
+              21
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 23,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Dusk Turn",
+        "prefixes": [
+          {
+            "affixId": "spell_fire",
+            "tier": 3,
+            "values": [
+              8,
+              17
+            ]
+          },
+          {
+            "affixId": "inc_mana",
+            "tier": 2,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "bleed_chance",
+            "tier": 3,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "ignite_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "light_res",
+            "tier": 3,
+            "values": [
+              28
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 24,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Wrath Spiral",
+        "prefixes": [
+          {
+            "affixId": "added_fire",
+            "tier": 0,
+            "values": [
+              1,
+              4
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "shock_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "all_res",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "chaos_res",
+            "tier": 1,
+            "values": [
+              8
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 25,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Oblivion Loop",
+        "prefixes": [
+          {
+            "affixId": "added_fire",
+            "tier": 1,
+            "values": [
+              3,
+              7
+            ]
+          },
+          {
+            "affixId": "spell_fire",
+            "tier": 2,
+            "values": [
+              5,
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 3,
+            "values": [
+              29
+            ]
+          },
+          {
+            "affixId": "life_leech",
+            "tier": 2,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 26,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Empyrean Circle",
+        "prefixes": [
+          {
+            "affixId": "spell_light",
+            "tier": 0,
+            "values": [
+              1,
+              5
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 2,
+            "values": [
+              33
+            ]
+          },
+          {
+            "affixId": "es_and_mana",
+            "tier": 1,
+            "values": [
+              7,
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 0,
+            "values": [
+              8
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 27,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Vengeance Band",
+        "prefixes": [
+          {
+            "affixId": "inc_poison",
+            "tier": 2,
+            "values": [
+              22
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              19
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "shock_chance",
+            "tier": 3,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 0,
+            "values": [
+              16
+            ]
+          },
+          {
+            "affixId": "cold_res",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 28,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Knot",
+        "prefixes": [
+          {
+            "affixId": "flat_mana",
+            "tier": 2,
+            "values": [
+              32
+            ]
+          },
+          {
+            "affixId": "item_rarity",
+            "tier": 0,
+            "values": [
+              32
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chill_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "spell_crit",
+            "tier": 2,
+            "values": [
+              40
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 29,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Grim Knot",
+        "prefixes": [
+          {
+            "affixId": "added_light",
+            "tier": 1,
+            "values": [
+              2,
+              10
+            ]
+          },
+          {
+            "affixId": "spell_fire",
+            "tier": 1,
+            "values": [
+              2,
+              8
+            ]
+          },
+          {
+            "affixId": "inc_cold",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "cast_speed",
+            "tier": 3,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 30,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Dusk Circle",
+        "prefixes": [
+          {
+            "affixId": "inc_ignite",
+            "tier": 1,
+            "values": [
+              17
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              16
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chaos_res",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "chill_chance",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 31,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Spiral",
+        "prefixes": [
+          {
+            "affixId": "added_phys",
+            "tier": 1,
+            "values": [
+              4,
+              11
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              17
+            ]
+          },
+          {
+            "affixId": "flat_es",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_regen",
+            "tier": 1,
+            "values": [
+              29
+            ]
+          },
+          {
+            "affixId": "intelligence",
+            "tier": 2,
+            "values": [
+              18
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 32,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Empyrean Band",
+        "prefixes": [
+          {
+            "affixId": "inc_light",
+            "tier": 3,
+            "values": [
+              33
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 1,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "intelligence",
+            "tier": 2,
+            "values": [
+              21
+            ]
+          },
+          {
+            "affixId": "elem_leech",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 33,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Vengeance Turn",
+        "prefixes": [
+          {
+            "affixId": "flat_es",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 2,
+            "values": [
+              5,
+              11
+            ]
+          },
+          {
+            "affixId": "inc_ailment",
+            "tier": 0,
+            "values": [
+              8
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "poison_chance",
+            "tier": 2,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "life_regen",
+            "tier": 3,
+            "values": [
+              4
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 34,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Vengeance Band",
+        "prefixes": [
+          {
+            "affixId": "inc_armour_global",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "inc_bleed",
+            "tier": 3,
+            "values": [
+              29
+            ]
+          },
+          {
+            "affixId": "inc_ignite",
+            "tier": 2,
+            "values": [
+              23
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "accuracy",
+            "tier": 1,
+            "values": [
+              35
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 35,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Grim Knot",
+        "prefixes": [
+          {
+            "affixId": "flat_life",
+            "tier": 2,
+            "values": [
+              27
+            ]
+          },
+          {
+            "affixId": "inc_phys_global",
+            "tier": 0,
+            "values": [
+              8
+            ]
+          },
+          {
+            "affixId": "added_phys",
+            "tier": 1,
+            "values": [
+              3,
+              13
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 3,
+            "values": [
+              28
+            ]
+          },
+          {
+            "affixId": "attack_speed",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "spell_crit_multi",
+            "tier": 2,
+            "values": [
+              21
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 36,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Bramble Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_ignite",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "cold_res",
+            "tier": 1,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "chaos_res",
+            "tier": 0,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "poison_chance",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 37,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Circle",
+        "prefixes": [
+          {
+            "affixId": "inc_ignite",
+            "tier": 3,
+            "values": [
+              30
+            ]
+          },
+          {
+            "affixId": "inc_elem",
+            "tier": 3,
+            "values": [
+              88
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "ailment_duration",
+            "tier": 3,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "mana_cost",
+            "tier": 0,
+            "values": [
+              2
+            ]
+          },
+          {
+            "affixId": "fire_res",
+            "tier": 3,
+            "values": [
+              24
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 38,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Ash Circle",
+        "prefixes": [
+          {
+            "affixId": "inc_es_global",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "bleed_chance",
+            "tier": 1,
+            "values": [
+              6
+            ]
+          },
+          {
+            "affixId": "dexterity",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          },
+          {
+            "affixId": "cold_res",
+            "tier": 2,
+            "values": [
+              20
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 39,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rune Band",
+        "prefixes": [
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              13
+            ]
+          },
+          {
+            "affixId": "added_fire",
+            "tier": 1,
+            "values": [
+              3,
+              6
+            ]
+          },
+          {
+            "affixId": "flat_life",
+            "tier": 0,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 40,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Kraken Loop",
+        "prefixes": [
+          {
+            "affixId": "spell_light",
+            "tier": 1,
+            "values": [
+              1,
+              10
+            ]
+          },
+          {
+            "affixId": "added_light",
+            "tier": 0,
+            "values": [
+              1,
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chill_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "chaos_res",
+            "tier": 3,
+            "values": [
+              17
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 41,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Hate Circle",
+        "prefixes": [
+          {
+            "affixId": "inc_bleed",
+            "tier": 1,
+            "values": [
+              18
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 2,
+            "values": [
+              7,
+              13
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "spell_crit",
+            "tier": 0,
+            "values": [
+              28
+            ]
+          },
+          {
+            "affixId": "fire_res",
+            "tier": 2,
+            "values": [
+              21
+            ]
+          },
+          {
+            "affixId": "dexterity",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 42,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Hate Spiral",
+        "prefixes": [
+          {
+            "affixId": "added_phys",
+            "tier": 0,
+            "values": [
+              2,
+              5
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 3,
+            "values": [
+              23
+            ]
+          },
+          {
+            "affixId": "chill_chance",
+            "tier": 1,
+            "values": [
+              8
+            ]
+          },
+          {
+            "affixId": "bleed_chance",
+            "tier": 3,
+            "values": [
+              12
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 43,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Grim Knot",
+        "prefixes": [
+          {
+            "affixId": "added_chaos",
+            "tier": 3,
+            "values": [
+              11,
+              21
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "added_fire",
+            "tier": 2,
+            "values": [
+              6,
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "crit_multi",
+            "tier": 2,
+            "values": [
+              20
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 44,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Mind Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_armour_global",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          },
+          {
+            "affixId": "inc_chaos",
+            "tier": 0,
+            "values": [
+              9
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 1,
+            "values": [
+              4,
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chaos_res",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "all_res",
+            "tier": 2,
+            "values": [
+              11
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 45,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Empyrean Loop",
+        "prefixes": [
+          {
+            "affixId": "inc_armour_global",
+            "tier": 3,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "added_cold",
+            "tier": 0,
+            "values": [
+              2,
+              4
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "fire_res",
+            "tier": 2,
+            "values": [
+              19
+            ]
+          },
+          {
+            "affixId": "accuracy",
+            "tier": 1,
+            "values": [
+              33
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 46,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Ash Knot",
+        "prefixes": [
+          {
+            "affixId": "inc_bleed",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          },
+          {
+            "affixId": "flat_es",
+            "tier": 3,
+            "values": [
+              33
+            ]
+          },
+          {
+            "affixId": "added_phys",
+            "tier": 2,
+            "values": [
+              6,
+              23
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "intelligence",
+            "tier": 3,
+            "values": [
+              26
+            ]
+          },
+          {
+            "affixId": "ailment_duration",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 47,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Sol Circle",
+        "prefixes": [
+          {
+            "affixId": "inc_fire",
+            "tier": 0,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "inc_elem",
+            "tier": 1,
+            "values": [
+              48
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "cold_res",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "light_res",
+            "tier": 1,
+            "values": [
+              16
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 48,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Viper Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_fire",
+            "tier": 2,
+            "values": [
+              19
+            ]
+          },
+          {
+            "affixId": "flat_life",
+            "tier": 1,
+            "values": [
+              12
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 1,
+            "values": [
+              17
+            ]
+          },
+          {
+            "affixId": "chill_chance",
+            "tier": 2,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 49,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Gloom Band",
+        "prefixes": [
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              19
+            ]
+          },
+          {
+            "affixId": "item_rarity",
+            "tier": 2,
+            "values": [
+              71
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "dexterity",
+            "tier": 0,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 1,
+            "values": [
+              27
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 50,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Mind Spiral",
+        "prefixes": [
+          {
+            "affixId": "inc_elem",
+            "tier": 0,
+            "values": [
+              33
+            ]
+          },
+          {
+            "affixId": "spell_fire",
+            "tier": 0,
+            "values": [
+              2,
+              2
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "fire_res",
+            "tier": 1,
+            "values": [
+              14
+            ]
+          },
+          {
+            "affixId": "light_res",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 51,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Circle",
+        "prefixes": [
+          {
+            "affixId": "added_chaos",
+            "tier": 1,
+            "values": [
+              5,
+              7
+            ]
+          },
+          {
+            "affixId": "inc_fire",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "added_light",
+            "tier": 1,
+            "values": [
+              2,
+              10
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 3,
+            "values": [
+              25
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 52,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Dread Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_phys_global",
+            "tier": 1,
+            "values": [
+              9
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 3,
+            "values": [
+              10,
+              24
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "poison_duration",
+            "tier": 0,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 0,
+            "values": [
+              17
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 53,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Havoc Band",
+        "prefixes": [
+          {
+            "affixId": "inc_ailment",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "bleed_duration",
+            "tier": 1,
+            "values": [
+              16
+            ]
+          },
+          {
+            "affixId": "dexterity",
+            "tier": 1,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "accuracy",
+            "tier": 3,
+            "values": [
+              116
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 54,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Viper Knot",
+        "prefixes": [
+          {
+            "affixId": "added_chaos",
+            "tier": 1,
+            "values": [
+              3,
+              7
+            ]
+          },
+          {
+            "affixId": "added_fire",
+            "tier": 3,
+            "values": [
+              9,
+              20
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "poison_chance",
+            "tier": 1,
+            "values": [
+              8
+            ]
+          },
+          {
+            "affixId": "intelligence",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 55,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Bramble Band",
+        "prefixes": [
+          {
+            "affixId": "inc_elem",
+            "tier": 0,
+            "values": [
+              35
+            ]
+          },
+          {
+            "affixId": "inc_ignite",
+            "tier": 1,
+            "values": [
+              18
+            ]
+          },
+          {
+            "affixId": "inc_light",
+            "tier": 1,
+            "values": [
+              15
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 56,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Viper Band",
+        "prefixes": [
+          {
+            "affixId": "inc_evasion_global",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 1,
+            "values": [
+              22
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 0,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 0,
+            "values": [
+              14
+            ]
+          },
+          {
+            "affixId": "cold_res",
+            "tier": 1,
+            "values": [
+              17
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 57,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Corpse Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_elem",
+            "tier": 2,
+            "values": [
+              67
+            ]
+          },
+          {
+            "affixId": "spell_cold",
+            "tier": 1,
+            "values": [
+              3,
+              7
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "bleed_duration",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          },
+          {
+            "affixId": "shock_chance",
+            "tier": 2,
+            "values": [
+              11
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 58,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Empyrean Spiral",
+        "prefixes": [
+          {
+            "affixId": "inc_phys_global",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "item_rarity",
+            "tier": 3,
+            "values": [
+              96
+            ]
+          },
+          {
+            "affixId": "inc_bleed",
+            "tier": 1,
+            "values": [
+              20
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_regen",
+            "tier": 2,
+            "values": [
+              30
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 59,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Hate Band",
+        "prefixes": [
+          {
+            "affixId": "added_light",
+            "tier": 2,
+            "values": [
+              2,
+              20
+            ]
+          },
+          {
+            "affixId": "inc_mana",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "inc_elem",
+            "tier": 3,
+            "values": [
+              105
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "poison_duration",
+            "tier": 2,
+            "values": [
+              23
+            ]
+          },
+          {
+            "affixId": "bleed_chance",
+            "tier": 1,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 60,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Oblivion Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_fire",
+            "tier": 0,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "inc_ignite",
+            "tier": 2,
+            "values": [
+              23
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_cost",
+            "tier": 0,
+            "values": [
+              2
+            ]
+          },
+          {
+            "affixId": "dexterity",
+            "tier": 2,
+            "values": [
+              20
+            ]
+          },
+          {
+            "affixId": "all_res",
+            "tier": 2,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 61,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Band",
+        "prefixes": [
+          {
+            "affixId": "added_light",
+            "tier": 1,
+            "values": [
+              2,
+              10
+            ]
+          },
+          {
+            "affixId": "added_cold",
+            "tier": 1,
+            "values": [
+              4,
+              6
+            ]
+          },
+          {
+            "affixId": "added_phys",
+            "tier": 0,
+            "values": [
+              2,
+              8
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "crit_multi",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "poison_chance",
+            "tier": 1,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 62,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Morbid Circle",
+        "prefixes": [
+          {
+            "affixId": "spell_cold",
+            "tier": 0,
+            "values": [
+              1,
+              2
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "shock_chance",
+            "tier": 1,
+            "values": [
+              8
+            ]
+          },
+          {
+            "affixId": "crit_multi",
+            "tier": 3,
+            "values": [
+              26
+            ]
+          },
+          {
+            "affixId": "elem_leech",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 63,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Corpse Spiral",
+        "prefixes": [
+          {
+            "affixId": "inc_phys_global",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "added_phys",
+            "tier": 0,
+            "values": [
+              2,
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 1,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "mana_cost",
+            "tier": 3,
+            "values": [
+              8
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 64,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Morbid Spiral",
+        "prefixes": [
+          {
+            "affixId": "inc_light",
+            "tier": 0,
+            "values": [
+              9
+            ]
+          },
+          {
+            "affixId": "added_cold",
+            "tier": 1,
+            "values": [
+              3,
+              6
+            ]
+          },
+          {
+            "affixId": "spell_light",
+            "tier": 0,
+            "values": [
+              1,
+              3
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "ailment_duration",
+            "tier": 1,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 65,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Skull Turn",
+        "prefixes": [
+          {
+            "affixId": "added_fire",
+            "tier": 1,
+            "values": [
+              3,
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_cost",
+            "tier": 1,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "cold_res",
+            "tier": 1,
+            "values": [
+              16
+            ]
+          },
+          {
+            "affixId": "bleed_chance",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 66,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rune Loop",
+        "prefixes": [
+          {
+            "affixId": "flat_es",
+            "tier": 2,
+            "values": [
+              21
+            ]
+          },
+          {
+            "affixId": "inc_chaos",
+            "tier": 3,
+            "values": [
+              34
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 0,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 1,
+            "values": [
+              28
+            ]
+          },
+          {
+            "affixId": "attack_speed",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 67,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Band",
+        "prefixes": [
+          {
+            "affixId": "spell_fire",
+            "tier": 2,
+            "values": [
+              6,
+              12
+            ]
+          },
+          {
+            "affixId": "inc_es_global",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "inc_light",
+            "tier": 2,
+            "values": [
+              24
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_regen_flat",
+            "tier": 0,
+            "values": [
+              1
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 68,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Kraken Loop",
+        "prefixes": [
+          {
+            "affixId": "inc_mana",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "spell_fire",
+            "tier": 1,
+            "values": [
+              3,
+              5
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "cold_res",
+            "tier": 3,
+            "values": [
+              27
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          },
+          {
+            "affixId": "intelligence",
+            "tier": 1,
+            "values": [
+              12
+            ]
+          }
+        ],
+        "itemTier": 1
+      }
+    ],
+    "ground": [],
+    "offlineHaul": [],
+    "equipment": {
+      "weapon": {
+        "uid": 1,
+        "baseId": "short_bow",
+        "ilvl": 1,
+        "rarity": "normal",
+        "name": null,
+        "prefixes": [],
+        "suffixes": [],
+        "itemTier": 1
+      },
+      "body": {
+        "uid": 2,
+        "baseId": "shabby_jerkin",
+        "ilvl": 1,
+        "rarity": "normal",
+        "name": null,
+        "prefixes": [],
+        "suffixes": [],
+        "itemTier": 1
+      },
+      "boots": {
+        "uid": 3,
+        "baseId": "leather_boots",
+        "ilvl": 1,
+        "rarity": "normal",
+        "name": null,
+        "prefixes": [],
+        "suffixes": [],
+        "itemTier": 1
+      }
+    },
+    "flaskSlots": [
+      {
+        "uid": 1927903444992,
+        "flaskId": "life_small",
+        "charges": 21,
+        "rarity": "normal",
+        "ilvl": 1,
+        "prefixes": [],
+        "suffixes": [],
+        "instill": null
+      },
+      {
+        "uid": 1927903444993,
+        "flaskId": "mana_small",
+        "charges": 24,
+        "rarity": "normal",
+        "ilvl": 1,
+        "prefixes": [],
+        "suffixes": [],
+        "instill": null
+      },
+      null,
+      null
+    ],
+    "skillBar": [
+      {
+        "uid": 1927903444994,
+        "gemId": "ice_shot",
+        "level": 1,
+        "xp": 0,
+        "supports": [
+          null
+        ],
+        "extraSlots": 0,
+        "rules": [
+          {
+            "when": "manual"
+          }
+        ],
+        "priority": "normal"
+      },
+      {
+        "uid": 1927903444995,
+        "gemId": "rain_of_arrows",
+        "level": 1,
+        "xp": 0,
+        "supports": [
+          null
+        ],
+        "extraSlots": 0,
+        "rules": [
+          {
+            "when": "manual"
+          }
+        ],
+        "priority": "normal"
+      },
+      {
+        "uid": 1927903444996,
+        "gemId": "smoke_step",
+        "level": 1,
+        "xp": 0,
+        "supports": [
+          null
+        ],
+        "extraSlots": 0,
+        "rules": [
+          {
+            "when": "manual"
+          }
+        ],
+        "priority": "normal"
+      },
+      null,
+      null,
+      null
+    ],
+    "loadouts": {
+      "gear": [],
+      "skills": [],
+      "auto": {},
+      "lastActivity": "smithing"
+    },
+    "action": {
+      "kind": "skill",
+      "actionId": "smelt_copper",
+      "progress": 1234
+    },
+    "life": 88.07350000000007,
+    "mana": 35,
+    "es": 0,
+    "combat": null,
+    "zoneKills": {},
+    "unlockedZones": [
+      "mudflats",
+      "brinecaves",
+      "ashwood",
+      "blackreed",
+      "crypt",
+      "shipgrave",
+      "stormcliffs",
+      "sanctum",
+      "cinderroad",
+      "saltflats",
+      "blackgrass",
+      "caravan",
+      "kurgans",
+      "plateau",
+      "pyretemple",
+      "burningthrone",
+      "pilgrimgate",
+      "almsquarter",
+      "scourgeyard",
+      "reliquary",
+      "bellfoundry",
+      "inquisition",
+      "penitentstair",
+      "choirloft",
+      "saintswalk",
+      "highaltar",
+      "hollowpass",
+      "screefields",
+      "howlingfells",
+      "glasslake",
+      "bonequarry",
+      "icevault",
+      "mammothroad",
+      "hangingglacier",
+      "steading",
+      "longhall",
+      "kingsstair",
+      "giantsthrone"
+    ],
+    "travelPoints": 2,
+    "passivePoints": 1,
+    "masteryPoints": 0,
+    "passivePointLevel": 1,
+    "passiveQuestPoints": 0,
+    "passives": [],
+    "masteries": {},
+    "characterTreeOverhaul": 2,
+    "ascendancy": {
+      "id": null,
+      "nodes": [],
+      "trials": 0,
+      "points": 0,
+      "carry": 0,
+      "hawk": {
+        "priority": "none",
+        "order": "closest"
+      },
+      "release": "full"
+    },
+    "skillPassives": [],
+    "passiveProfiles": [
+      {
+        "id": "profile_1",
+        "name": "Profile 1",
+        "passives": [],
+        "masteries": {}
+      }
+    ],
+    "activePassiveProfile": "profile_1",
+    "atlasProfiles": [
+      {
+        "id": "profile_1",
+        "name": "Profile 1",
+        "passives": [],
+        "masteries": {}
+      }
+    ],
+    "activeAtlasProfile": "profile_1",
+    "skillingProfiles": [
+      {
+        "id": "profile_1",
+        "name": "Profile 1",
+        "passives": [],
+        "masteries": {}
+      }
+    ],
+    "activeSkillingProfile": "profile_1",
+    "campaign": {
+      "act": 1
+    },
+    "achievements": [
+      "total_50",
+      "total_150",
+      "total_300"
+    ],
+    "bossesDefeated": [],
+    "greenhouse": {
+      "actionId": "herb_frost",
+      "progress": 1234.5
+    },
+    "meal": null,
+    "keepEating": true,
+    "smithCatalyst": {
+      "fossil": null,
+      "resin": null,
+      "until": false,
+      "salvageMisses": false,
+      "salvageFull": false,
+      "salvageAll": false
+    },
+    "maps": {
+      "stock": {},
+      "run": null,
+      "auto": null,
+      "tally": {
+        "runs": 0,
+        "clearMs": 0,
+        "mapsFound": 0,
+        "favoured": 0
+      },
+      "highestTier": 0
+    },
+    "heist": {
+      "rogues": {
+        "lookout": 2
+      },
+      "crew": [
+        "lookout"
+      ],
+      "exits": {
+        "cinder_toll": 2
+      },
+      "auto": null,
+      "tally": {
+        "jobs": 0,
+        "alarms": 0
+      }
+    },
+    "expedition": {
+      "dug": {
+        "dig_cairn": 19207
+      },
+      "shelves": {},
+      "orders": {
+        "giant": "giant_regal"
+      },
+      "tally": {
+        "finds": 2,
+        "traded": 1
+      }
+    },
+    "vendor": {
+      "stock": [
+        {
+          "shop": "magic",
+          "kind": "flask",
+          "flask": {
+            "uid": 1927903444997,
+            "flaskId": "mana_small",
+            "charges": 30,
+            "rarity": "magic",
+            "ilvl": 2,
+            "prefixes": [
+              {
+                "affixId": "f_capacity",
+                "value": 25
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "f_speed",
+                "value": -17
+              }
+            ],
+            "instill": null
+          },
+          "price": 84,
+          "id": 1
+        },
+        {
+          "shop": "magic",
+          "kind": "flask",
+          "flask": {
+            "uid": 1927903444998,
+            "flaskId": "mana_small",
+            "charges": 24,
+            "rarity": "magic",
+            "ilvl": 2,
+            "prefixes": [],
+            "suffixes": [
+              {
+                "affixId": "f_gain",
+                "value": 24
+              }
+            ],
+            "instill": null
+          },
+          "price": 84,
+          "id": 2
+        },
+        {
+          "shop": "magic",
+          "kind": "item",
+          "item": {
+            "uid": 4,
+            "baseId": "coral_amulet",
+            "ilvl": 2,
+            "rarity": "magic",
+            "name": null,
+            "prefixes": [
+              {
+                "affixId": "spell_light",
+                "tier": 0,
+                "values": [
+                  1,
+                  4
+                ]
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "life_leech",
+                "tier": 0,
+                "values": [
+                  5
+                ]
+              }
+            ],
+            "itemTier": 1
+          },
+          "price": 413,
+          "id": 3
+        },
+        {
+          "shop": "magic",
+          "kind": "flask",
+          "flask": {
+            "uid": 1927903444999,
+            "flaskId": "mana_small",
+            "charges": 24,
+            "rarity": "normal",
+            "ilvl": 2,
+            "prefixes": [],
+            "suffixes": [],
+            "instill": null
+          },
+          "price": 48,
+          "id": 4
+        },
+        {
+          "shop": "armour",
+          "kind": "item",
+          "item": {
+            "uid": 5,
+            "baseId": "iron_hat",
+            "ilvl": 2,
+            "rarity": "magic",
+            "name": null,
+            "prefixes": [
+              {
+                "affixId": "inc_armour",
+                "tier": 0,
+                "values": [
+                  18
+                ]
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "mana_regen",
+                "tier": 0,
+                "values": [
+                  15
+                ]
+              }
+            ],
+            "itemTier": 1
+          },
+          "price": 413,
+          "id": 5
+        },
+        {
+          "shop": "armour",
+          "kind": "item",
+          "item": {
+            "uid": 6,
+            "baseId": "iron_gauntlets",
+            "ilvl": 2,
+            "rarity": "magic",
+            "name": null,
+            "prefixes": [
+              {
+                "affixId": "melee_damage",
+                "tier": 0,
+                "values": [
+                  9
+                ]
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "attack_speed",
+                "tier": 0,
+                "values": [
+                  4
+                ]
+              }
+            ],
+            "itemTier": 1
+          },
+          "price": 413,
+          "id": 6
+        },
+        {
+          "shop": "armour",
+          "kind": "item",
+          "item": {
+            "uid": 7,
+            "baseId": "leather_boots",
+            "ilvl": 2,
+            "rarity": "magic",
+            "name": null,
+            "prefixes": [
+              {
+                "affixId": "flat_evasion",
+                "tier": 0,
+                "values": [
+                  12
+                ]
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "movement_speed",
+                "tier": 0,
+                "values": [
+                  4
+                ]
+              }
+            ],
+            "itemTier": 1
+          },
+          "price": 413,
+          "id": 7
+        },
+        {
+          "shop": "armour",
+          "kind": "item",
+          "item": {
+            "uid": 8,
+            "baseId": "linen_hood",
+            "ilvl": 2,
+            "rarity": "magic",
+            "name": null,
+            "prefixes": [
+              {
+                "affixId": "flat_es",
+                "tier": 0,
+                "values": [
+                  7
+                ]
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "mana_as_es",
+                "tier": 0,
+                "values": [
+                  3
+                ]
+              }
+            ],
+            "itemTier": 1
+          },
+          "price": 413,
+          "id": 8
+        }
+      ],
+      "refreshAt": 600000
+    },
+    "settings": {
+      "autoSalvage": {
+        "normal": false,
+        "magic": false,
+        "rare": false,
+        "unique": false
+      },
+      "filterOffClassLoot": false,
+      "activeLootFilterId": null,
+      "customLootFilters": [
+        {
+          "id": "class_gear_only",
+          "name": "Class Gear Only",
+          "mode": "keep",
+          "rules": [
+            {
+              "id": "r1",
+              "name": "Class Weapons & Defences",
+              "matchClass": true
+            },
+            {
+              "id": "r2",
+              "name": "Jewellery (All Classes)",
+              "slots": [
+                "amulet",
+                "ring",
+                "belt"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "endgame_rares",
+          "name": "Endgame Rares (T3+)",
+          "mode": "keep",
+          "rules": [
+            {
+              "id": "r1",
+              "name": "High Tier Rares",
+              "rarities": [
+                "rare"
+              ],
+              "minTier": 3
+            },
+            {
+              "id": "r2",
+              "name": "High Item Level Bases (75+)",
+              "minIlvl": 75
+            },
+            {
+              "id": "r3",
+              "name": "Jewellery",
+              "slots": [
+                "amulet",
+                "ring",
+                "belt"
+              ],
+              "rarities": [
+                "rare"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "salvage_junk",
+          "name": "Salvage Normal & Magic Weapons",
+          "mode": "salvage",
+          "rules": [
+            {
+              "id": "r1",
+              "name": "Normal & Magic Weapons",
+              "slots": [
+                "weapon"
+              ],
+              "rarities": [
+                "normal",
+                "magic"
+              ]
+            }
+          ]
+        }
+      ],
+      "lootFilter": {
+        "preset": "off",
+        "overrides": {
+          "life_rings": "preset",
+          "normal_gear": "preset",
+          "top_tier_mods": "preset"
+        },
+        "rules": []
+      },
+      "reducedMotion": false,
+      "movement": "walk",
+      "posture": "brawler",
+      "autoFlee": true,
+      "autoBoss": false,
+      "targeting": {
+        "priority": "none",
+        "order": "closest"
+      }
+    },
+    "lifetime": {
+      "kills": 0,
+      "bossKills": 0,
+      "deaths": 0,
+      "itemsLooted": 0,
+      "orbsUsed": 0,
+      "salvaged": 0,
+      "flasksDrunk": 0,
+      "flasksBrewed": 0,
+      "mealsEaten": 0,
+      "mapsDrawn": 0,
+      "itemsSmithed": 0,
+      "gathered": 0,
+      "benchCrafts": 0,
+      "raresFound": 0,
+      "uniquesFound": 0,
+      "rareKills": 0,
+      "doomedBest": 0,
+      "uniqueMaps": []
+    },
+    "clock": 1234,
+    "lastSaved": 1794576614997
+  },
+  "heist": {
+    "version": 46,
+    "character": {
+      "id": "legacy-busy-skiller",
+      "name": "Old Copper",
+      "classId": "ranger",
+      "createdAt": 1794576614997
+    },
+    "tutorial": {
+      "step": 0,
+      "progress": 0,
+      "done": false,
+      "skipped": false
+    },
+    "nextUid": 69,
+    "skills": {
+      "combat": 0,
+      "mining": 61635,
+      "woodcutting": 0,
+      "harvesting": 61635,
+      "thieving": 61635,
+      "archaeology": 61635,
+      "smithing": 61635,
+      "alchemy": 61635,
+      "gemcutting": 0,
+      "runecarving": 61635,
+      "cooking": 0,
+      "cartography": 0,
+      "fishing": 0
+    },
+    "skillingMastery": {
+      "task.smelt_copper": 12345.5,
+      "task.heist.cinder_toll": 2345,
+      "future.unknown": 71
+    },
+    "inventory": [
+      {
+        "uid": 9,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Doom Circle",
+        "prefixes": [
+          {
+            "affixId": "flat_evasion",
+            "tier": 1,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "spell_damage",
+            "tier": 3,
+            "values": [
+              56
+            ]
+          },
+          {
+            "affixId": "added_light",
+            "tier": 1,
+            "values": [
+              2,
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_regen",
+            "tier": 1,
+            "values": [
+              28
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 10,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rune Band",
+        "prefixes": [
+          {
+            "affixId": "inc_ignite",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "added_light",
+            "tier": 2,
+            "values": [
+              3,
+              15
+            ]
+          },
+          {
+            "affixId": "flat_evasion",
+            "tier": 1,
+            "values": [
+              25
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chill_chance",
+            "tier": 0,
+            "values": [
+              3
+            ]
+          },
+          {
+            "affixId": "light_res",
+            "tier": 0,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 11,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Grim Spiral",
+        "prefixes": [
+          {
+            "affixId": "inc_phys_global",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "inc_es_global",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 1,
+            "values": [
+              4,
+              9
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "fire_res",
+            "tier": 0,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "dexterity",
+            "tier": 0,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 12,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Corpse Band",
+        "prefixes": [
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "flat_evasion",
+            "tier": 2,
+            "values": [
+              50
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 1,
+            "values": [
+              3,
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "life_leech",
+            "tier": 3,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "chill_chance",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "mana_regen_flat",
+            "tier": 2,
+            "values": [
+              3
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 13,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Mind Circle",
+        "prefixes": [
+          {
+            "affixId": "item_rarity",
+            "tier": 0,
+            "values": [
+              36
+            ]
+          },
+          {
+            "affixId": "spell_cold",
+            "tier": 2,
+            "values": [
+              5,
+              8
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "accuracy",
+            "tier": 1,
+            "values": [
+              36
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 1,
+            "values": [
+              21
+            ]
+          },
+          {
+            "affixId": "poison_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 14,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Vengeance Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_ignite",
+            "tier": 1,
+            "values": [
+              16
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 2,
+            "values": [
+              32
+            ]
+          },
+          {
+            "affixId": "spell_cold",
+            "tier": 0,
+            "values": [
+              1,
+              3
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 3,
+            "values": [
+              29
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 15,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Hate Band",
+        "prefixes": [
+          {
+            "affixId": "inc_poison",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "inc_chaos",
+            "tier": 2,
+            "values": [
+              22
+            ]
+          },
+          {
+            "affixId": "inc_evasion_global",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "fire_res",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 16,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Mind Knot",
+        "prefixes": [
+          {
+            "affixId": "added_cold",
+            "tier": 0,
+            "values": [
+              1,
+              4
+            ]
+          },
+          {
+            "affixId": "inc_light",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_cost",
+            "tier": 0,
+            "values": [
+              3
+            ]
+          },
+          {
+            "affixId": "poison_duration",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 17,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Havoc Knot",
+        "prefixes": [
+          {
+            "affixId": "inc_phys_global",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 2,
+            "values": [
+              39
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chill_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "spell_crit_multi",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          },
+          {
+            "affixId": "fire_res",
+            "tier": 2,
+            "values": [
+              23
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 18,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Blood Band",
+        "prefixes": [
+          {
+            "affixId": "added_phys",
+            "tier": 0,
+            "values": [
+              3,
+              7
+            ]
+          },
+          {
+            "affixId": "inc_evasion_global",
+            "tier": 1,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "cold_res",
+            "tier": 0,
+            "values": [
+              8
+            ]
+          },
+          {
+            "affixId": "life_regen",
+            "tier": 0,
+            "values": [
+              1
+            ]
+          },
+          {
+            "affixId": "mana_regen_flat",
+            "tier": 2,
+            "values": [
+              3
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 19,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Wrath Knot",
+        "prefixes": [
+          {
+            "affixId": "spell_fire",
+            "tier": 1,
+            "values": [
+              3,
+              7
+            ]
+          },
+          {
+            "affixId": "spell_light",
+            "tier": 0,
+            "values": [
+              1,
+              4
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_leech",
+            "tier": 0,
+            "values": [
+              1
+            ]
+          },
+          {
+            "affixId": "ignite_chance",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 20,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Storm Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_es_global",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          },
+          {
+            "affixId": "inc_light",
+            "tier": 0,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "spell_light",
+            "tier": 0,
+            "values": [
+              1,
+              4
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "ignite_chance",
+            "tier": 0,
+            "values": [
+              3
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 21,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Skull Turn",
+        "prefixes": [
+          {
+            "affixId": "spell_damage",
+            "tier": 2,
+            "values": [
+              40
+            ]
+          },
+          {
+            "affixId": "spell_cold",
+            "tier": 2,
+            "values": [
+              5,
+              9
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "bleed_duration",
+            "tier": 1,
+            "values": [
+              17
+            ]
+          },
+          {
+            "affixId": "cast_speed",
+            "tier": 0,
+            "values": [
+              3
+            ]
+          },
+          {
+            "affixId": "intelligence",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 22,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Gloom Knot",
+        "prefixes": [
+          {
+            "affixId": "item_rarity",
+            "tier": 3,
+            "values": [
+              97
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 3,
+            "values": [
+              26
+            ]
+          },
+          {
+            "affixId": "chaos_res",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "fire_res",
+            "tier": 2,
+            "values": [
+              21
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 23,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Dusk Turn",
+        "prefixes": [
+          {
+            "affixId": "spell_fire",
+            "tier": 3,
+            "values": [
+              8,
+              17
+            ]
+          },
+          {
+            "affixId": "inc_mana",
+            "tier": 2,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "bleed_chance",
+            "tier": 3,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "ignite_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "light_res",
+            "tier": 3,
+            "values": [
+              28
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 24,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Wrath Spiral",
+        "prefixes": [
+          {
+            "affixId": "added_fire",
+            "tier": 0,
+            "values": [
+              1,
+              4
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "shock_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "all_res",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "chaos_res",
+            "tier": 1,
+            "values": [
+              8
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 25,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Oblivion Loop",
+        "prefixes": [
+          {
+            "affixId": "added_fire",
+            "tier": 1,
+            "values": [
+              3,
+              7
+            ]
+          },
+          {
+            "affixId": "spell_fire",
+            "tier": 2,
+            "values": [
+              5,
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 3,
+            "values": [
+              29
+            ]
+          },
+          {
+            "affixId": "life_leech",
+            "tier": 2,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 26,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Empyrean Circle",
+        "prefixes": [
+          {
+            "affixId": "spell_light",
+            "tier": 0,
+            "values": [
+              1,
+              5
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 2,
+            "values": [
+              33
+            ]
+          },
+          {
+            "affixId": "es_and_mana",
+            "tier": 1,
+            "values": [
+              7,
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 0,
+            "values": [
+              8
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 27,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Vengeance Band",
+        "prefixes": [
+          {
+            "affixId": "inc_poison",
+            "tier": 2,
+            "values": [
+              22
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              19
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "shock_chance",
+            "tier": 3,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 0,
+            "values": [
+              16
+            ]
+          },
+          {
+            "affixId": "cold_res",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 28,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Knot",
+        "prefixes": [
+          {
+            "affixId": "flat_mana",
+            "tier": 2,
+            "values": [
+              32
+            ]
+          },
+          {
+            "affixId": "item_rarity",
+            "tier": 0,
+            "values": [
+              32
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chill_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "spell_crit",
+            "tier": 2,
+            "values": [
+              40
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 29,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Grim Knot",
+        "prefixes": [
+          {
+            "affixId": "added_light",
+            "tier": 1,
+            "values": [
+              2,
+              10
+            ]
+          },
+          {
+            "affixId": "spell_fire",
+            "tier": 1,
+            "values": [
+              2,
+              8
+            ]
+          },
+          {
+            "affixId": "inc_cold",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "cast_speed",
+            "tier": 3,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 30,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Dusk Circle",
+        "prefixes": [
+          {
+            "affixId": "inc_ignite",
+            "tier": 1,
+            "values": [
+              17
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              16
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chaos_res",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "chill_chance",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 31,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Spiral",
+        "prefixes": [
+          {
+            "affixId": "added_phys",
+            "tier": 1,
+            "values": [
+              4,
+              11
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              17
+            ]
+          },
+          {
+            "affixId": "flat_es",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_regen",
+            "tier": 1,
+            "values": [
+              29
+            ]
+          },
+          {
+            "affixId": "intelligence",
+            "tier": 2,
+            "values": [
+              18
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 32,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Empyrean Band",
+        "prefixes": [
+          {
+            "affixId": "inc_light",
+            "tier": 3,
+            "values": [
+              33
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 1,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "intelligence",
+            "tier": 2,
+            "values": [
+              21
+            ]
+          },
+          {
+            "affixId": "elem_leech",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 33,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Vengeance Turn",
+        "prefixes": [
+          {
+            "affixId": "flat_es",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 2,
+            "values": [
+              5,
+              11
+            ]
+          },
+          {
+            "affixId": "inc_ailment",
+            "tier": 0,
+            "values": [
+              8
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "poison_chance",
+            "tier": 2,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "life_regen",
+            "tier": 3,
+            "values": [
+              4
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 34,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Vengeance Band",
+        "prefixes": [
+          {
+            "affixId": "inc_armour_global",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "inc_bleed",
+            "tier": 3,
+            "values": [
+              29
+            ]
+          },
+          {
+            "affixId": "inc_ignite",
+            "tier": 2,
+            "values": [
+              23
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "accuracy",
+            "tier": 1,
+            "values": [
+              35
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 35,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Grim Knot",
+        "prefixes": [
+          {
+            "affixId": "flat_life",
+            "tier": 2,
+            "values": [
+              27
+            ]
+          },
+          {
+            "affixId": "inc_phys_global",
+            "tier": 0,
+            "values": [
+              8
+            ]
+          },
+          {
+            "affixId": "added_phys",
+            "tier": 1,
+            "values": [
+              3,
+              13
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 3,
+            "values": [
+              28
+            ]
+          },
+          {
+            "affixId": "attack_speed",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "spell_crit_multi",
+            "tier": 2,
+            "values": [
+              21
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 36,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Bramble Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_ignite",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "cold_res",
+            "tier": 1,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "chaos_res",
+            "tier": 0,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "poison_chance",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 37,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Circle",
+        "prefixes": [
+          {
+            "affixId": "inc_ignite",
+            "tier": 3,
+            "values": [
+              30
+            ]
+          },
+          {
+            "affixId": "inc_elem",
+            "tier": 3,
+            "values": [
+              88
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "ailment_duration",
+            "tier": 3,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "mana_cost",
+            "tier": 0,
+            "values": [
+              2
+            ]
+          },
+          {
+            "affixId": "fire_res",
+            "tier": 3,
+            "values": [
+              24
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 38,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Ash Circle",
+        "prefixes": [
+          {
+            "affixId": "inc_es_global",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "bleed_chance",
+            "tier": 1,
+            "values": [
+              6
+            ]
+          },
+          {
+            "affixId": "dexterity",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          },
+          {
+            "affixId": "cold_res",
+            "tier": 2,
+            "values": [
+              20
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 39,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rune Band",
+        "prefixes": [
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              13
+            ]
+          },
+          {
+            "affixId": "added_fire",
+            "tier": 1,
+            "values": [
+              3,
+              6
+            ]
+          },
+          {
+            "affixId": "flat_life",
+            "tier": 0,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 40,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Kraken Loop",
+        "prefixes": [
+          {
+            "affixId": "spell_light",
+            "tier": 1,
+            "values": [
+              1,
+              10
+            ]
+          },
+          {
+            "affixId": "added_light",
+            "tier": 0,
+            "values": [
+              1,
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chill_chance",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "chaos_res",
+            "tier": 3,
+            "values": [
+              17
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 41,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Hate Circle",
+        "prefixes": [
+          {
+            "affixId": "inc_bleed",
+            "tier": 1,
+            "values": [
+              18
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 2,
+            "values": [
+              7,
+              13
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "spell_crit",
+            "tier": 0,
+            "values": [
+              28
+            ]
+          },
+          {
+            "affixId": "fire_res",
+            "tier": 2,
+            "values": [
+              21
+            ]
+          },
+          {
+            "affixId": "dexterity",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 42,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Hate Spiral",
+        "prefixes": [
+          {
+            "affixId": "added_phys",
+            "tier": 0,
+            "values": [
+              2,
+              5
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 3,
+            "values": [
+              23
+            ]
+          },
+          {
+            "affixId": "chill_chance",
+            "tier": 1,
+            "values": [
+              8
+            ]
+          },
+          {
+            "affixId": "bleed_chance",
+            "tier": 3,
+            "values": [
+              12
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 43,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Grim Knot",
+        "prefixes": [
+          {
+            "affixId": "added_chaos",
+            "tier": 3,
+            "values": [
+              11,
+              21
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "added_fire",
+            "tier": 2,
+            "values": [
+              6,
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "crit_multi",
+            "tier": 2,
+            "values": [
+              20
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 44,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Mind Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_armour_global",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          },
+          {
+            "affixId": "inc_chaos",
+            "tier": 0,
+            "values": [
+              9
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 1,
+            "values": [
+              4,
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "chaos_res",
+            "tier": 0,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "all_res",
+            "tier": 2,
+            "values": [
+              11
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 45,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Empyrean Loop",
+        "prefixes": [
+          {
+            "affixId": "inc_armour_global",
+            "tier": 3,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "added_cold",
+            "tier": 0,
+            "values": [
+              2,
+              4
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "fire_res",
+            "tier": 2,
+            "values": [
+              19
+            ]
+          },
+          {
+            "affixId": "accuracy",
+            "tier": 1,
+            "values": [
+              33
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 46,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Ash Knot",
+        "prefixes": [
+          {
+            "affixId": "inc_bleed",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          },
+          {
+            "affixId": "flat_es",
+            "tier": 3,
+            "values": [
+              33
+            ]
+          },
+          {
+            "affixId": "added_phys",
+            "tier": 2,
+            "values": [
+              6,
+              23
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "intelligence",
+            "tier": 3,
+            "values": [
+              26
+            ]
+          },
+          {
+            "affixId": "ailment_duration",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 47,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Sol Circle",
+        "prefixes": [
+          {
+            "affixId": "inc_fire",
+            "tier": 0,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "inc_elem",
+            "tier": 1,
+            "values": [
+              48
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "cold_res",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "light_res",
+            "tier": 1,
+            "values": [
+              16
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 48,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Viper Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_fire",
+            "tier": 2,
+            "values": [
+              19
+            ]
+          },
+          {
+            "affixId": "flat_life",
+            "tier": 1,
+            "values": [
+              12
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 1,
+            "values": [
+              17
+            ]
+          },
+          {
+            "affixId": "chill_chance",
+            "tier": 2,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 49,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Gloom Band",
+        "prefixes": [
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              19
+            ]
+          },
+          {
+            "affixId": "item_rarity",
+            "tier": 2,
+            "values": [
+              71
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "dexterity",
+            "tier": 0,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 1,
+            "values": [
+              27
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 50,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Mind Spiral",
+        "prefixes": [
+          {
+            "affixId": "inc_elem",
+            "tier": 0,
+            "values": [
+              33
+            ]
+          },
+          {
+            "affixId": "spell_fire",
+            "tier": 0,
+            "values": [
+              2,
+              2
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "fire_res",
+            "tier": 1,
+            "values": [
+              14
+            ]
+          },
+          {
+            "affixId": "light_res",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 51,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Circle",
+        "prefixes": [
+          {
+            "affixId": "added_chaos",
+            "tier": 1,
+            "values": [
+              5,
+              7
+            ]
+          },
+          {
+            "affixId": "inc_fire",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "added_light",
+            "tier": 1,
+            "values": [
+              2,
+              10
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 3,
+            "values": [
+              25
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 52,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Dread Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_phys_global",
+            "tier": 1,
+            "values": [
+              9
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 0,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "added_chaos",
+            "tier": 3,
+            "values": [
+              10,
+              24
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "poison_duration",
+            "tier": 0,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 0,
+            "values": [
+              17
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 53,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Havoc Band",
+        "prefixes": [
+          {
+            "affixId": "inc_ailment",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "bleed_duration",
+            "tier": 1,
+            "values": [
+              16
+            ]
+          },
+          {
+            "affixId": "dexterity",
+            "tier": 1,
+            "values": [
+              15
+            ]
+          },
+          {
+            "affixId": "accuracy",
+            "tier": 3,
+            "values": [
+              116
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 54,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Viper Knot",
+        "prefixes": [
+          {
+            "affixId": "added_chaos",
+            "tier": 1,
+            "values": [
+              3,
+              7
+            ]
+          },
+          {
+            "affixId": "added_fire",
+            "tier": 3,
+            "values": [
+              9,
+              20
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "poison_chance",
+            "tier": 1,
+            "values": [
+              8
+            ]
+          },
+          {
+            "affixId": "intelligence",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 55,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Bramble Band",
+        "prefixes": [
+          {
+            "affixId": "inc_elem",
+            "tier": 0,
+            "values": [
+              35
+            ]
+          },
+          {
+            "affixId": "inc_ignite",
+            "tier": 1,
+            "values": [
+              18
+            ]
+          },
+          {
+            "affixId": "inc_light",
+            "tier": 1,
+            "values": [
+              15
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 56,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Viper Band",
+        "prefixes": [
+          {
+            "affixId": "inc_evasion_global",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "flat_mana",
+            "tier": 1,
+            "values": [
+              22
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 0,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 0,
+            "values": [
+              14
+            ]
+          },
+          {
+            "affixId": "cold_res",
+            "tier": 1,
+            "values": [
+              17
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 57,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Corpse Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_elem",
+            "tier": 2,
+            "values": [
+              67
+            ]
+          },
+          {
+            "affixId": "spell_cold",
+            "tier": 1,
+            "values": [
+              3,
+              7
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "bleed_duration",
+            "tier": 1,
+            "values": [
+              13
+            ]
+          },
+          {
+            "affixId": "shock_chance",
+            "tier": 2,
+            "values": [
+              11
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 58,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Empyrean Spiral",
+        "prefixes": [
+          {
+            "affixId": "inc_phys_global",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "item_rarity",
+            "tier": 3,
+            "values": [
+              96
+            ]
+          },
+          {
+            "affixId": "inc_bleed",
+            "tier": 1,
+            "values": [
+              20
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_regen",
+            "tier": 2,
+            "values": [
+              30
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 59,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Hate Band",
+        "prefixes": [
+          {
+            "affixId": "added_light",
+            "tier": 2,
+            "values": [
+              2,
+              20
+            ]
+          },
+          {
+            "affixId": "inc_mana",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "inc_elem",
+            "tier": 3,
+            "values": [
+              105
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "poison_duration",
+            "tier": 2,
+            "values": [
+              23
+            ]
+          },
+          {
+            "affixId": "bleed_chance",
+            "tier": 1,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 60,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Oblivion Turn",
+        "prefixes": [
+          {
+            "affixId": "inc_fire",
+            "tier": 0,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "inc_ignite",
+            "tier": 2,
+            "values": [
+              23
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_cost",
+            "tier": 0,
+            "values": [
+              2
+            ]
+          },
+          {
+            "affixId": "dexterity",
+            "tier": 2,
+            "values": [
+              20
+            ]
+          },
+          {
+            "affixId": "all_res",
+            "tier": 2,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 61,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Band",
+        "prefixes": [
+          {
+            "affixId": "added_light",
+            "tier": 1,
+            "values": [
+              2,
+              10
+            ]
+          },
+          {
+            "affixId": "added_cold",
+            "tier": 1,
+            "values": [
+              4,
+              6
+            ]
+          },
+          {
+            "affixId": "added_phys",
+            "tier": 0,
+            "values": [
+              2,
+              8
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "crit_multi",
+            "tier": 0,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "poison_chance",
+            "tier": 1,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 62,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Morbid Circle",
+        "prefixes": [
+          {
+            "affixId": "spell_cold",
+            "tier": 0,
+            "values": [
+              1,
+              2
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "shock_chance",
+            "tier": 1,
+            "values": [
+              8
+            ]
+          },
+          {
+            "affixId": "crit_multi",
+            "tier": 3,
+            "values": [
+              26
+            ]
+          },
+          {
+            "affixId": "elem_leech",
+            "tier": 0,
+            "values": [
+              6
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 63,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Corpse Spiral",
+        "prefixes": [
+          {
+            "affixId": "inc_phys_global",
+            "tier": 1,
+            "values": [
+              11
+            ]
+          },
+          {
+            "affixId": "added_phys",
+            "tier": 0,
+            "values": [
+              2,
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "strength",
+            "tier": 1,
+            "values": [
+              12
+            ]
+          },
+          {
+            "affixId": "mana_cost",
+            "tier": 3,
+            "values": [
+              8
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 64,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Morbid Spiral",
+        "prefixes": [
+          {
+            "affixId": "inc_light",
+            "tier": 0,
+            "values": [
+              9
+            ]
+          },
+          {
+            "affixId": "added_cold",
+            "tier": 1,
+            "values": [
+              3,
+              6
+            ]
+          },
+          {
+            "affixId": "spell_light",
+            "tier": 0,
+            "values": [
+              1,
+              3
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "ailment_duration",
+            "tier": 1,
+            "values": [
+              9
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 65,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Skull Turn",
+        "prefixes": [
+          {
+            "affixId": "added_fire",
+            "tier": 1,
+            "values": [
+              3,
+              6
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_cost",
+            "tier": 1,
+            "values": [
+              4
+            ]
+          },
+          {
+            "affixId": "cold_res",
+            "tier": 1,
+            "values": [
+              16
+            ]
+          },
+          {
+            "affixId": "bleed_chance",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 66,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rune Loop",
+        "prefixes": [
+          {
+            "affixId": "flat_es",
+            "tier": 2,
+            "values": [
+              21
+            ]
+          },
+          {
+            "affixId": "inc_chaos",
+            "tier": 3,
+            "values": [
+              34
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "light_res",
+            "tier": 0,
+            "values": [
+              7
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 1,
+            "values": [
+              28
+            ]
+          },
+          {
+            "affixId": "attack_speed",
+            "tier": 1,
+            "values": [
+              7
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 67,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Rapture Band",
+        "prefixes": [
+          {
+            "affixId": "spell_fire",
+            "tier": 2,
+            "values": [
+              6,
+              12
+            ]
+          },
+          {
+            "affixId": "inc_es_global",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "inc_light",
+            "tier": 2,
+            "values": [
+              24
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "mana_regen_flat",
+            "tier": 0,
+            "values": [
+              1
+            ]
+          }
+        ],
+        "itemTier": 1
+      },
+      {
+        "uid": 68,
+        "baseId": "iron_ring",
+        "ilvl": 25,
+        "rarity": "rare",
+        "name": "Kraken Loop",
+        "prefixes": [
+          {
+            "affixId": "inc_mana",
+            "tier": 0,
+            "values": [
+              5
+            ]
+          },
+          {
+            "affixId": "spell_fire",
+            "tier": 1,
+            "values": [
+              3,
+              5
+            ]
+          }
+        ],
+        "suffixes": [
+          {
+            "affixId": "cold_res",
+            "tier": 3,
+            "values": [
+              27
+            ]
+          },
+          {
+            "affixId": "mana_regen",
+            "tier": 0,
+            "values": [
+              10
+            ]
+          },
+          {
+            "affixId": "intelligence",
+            "tier": 1,
+            "values": [
+              12
+            ]
+          }
+        ],
+        "itemTier": 1
+      }
+    ],
+    "ground": [],
+    "offlineHaul": [],
+    "equipment": {
+      "weapon": {
+        "uid": 1,
+        "baseId": "short_bow",
+        "ilvl": 1,
+        "rarity": "normal",
+        "name": null,
+        "prefixes": [],
+        "suffixes": [],
+        "itemTier": 1
+      },
+      "body": {
+        "uid": 2,
+        "baseId": "shabby_jerkin",
+        "ilvl": 1,
+        "rarity": "normal",
+        "name": null,
+        "prefixes": [],
+        "suffixes": [],
+        "itemTier": 1
+      },
+      "boots": {
+        "uid": 3,
+        "baseId": "leather_boots",
+        "ilvl": 1,
+        "rarity": "normal",
+        "name": null,
+        "prefixes": [],
+        "suffixes": [],
+        "itemTier": 1
+      }
+    },
+    "flaskSlots": [
+      {
+        "uid": 1927903444992,
+        "flaskId": "life_small",
+        "charges": 21,
+        "rarity": "normal",
+        "ilvl": 1,
+        "prefixes": [],
+        "suffixes": [],
+        "instill": null
+      },
+      {
+        "uid": 1927903444993,
+        "flaskId": "mana_small",
+        "charges": 24,
+        "rarity": "normal",
+        "ilvl": 1,
+        "prefixes": [],
+        "suffixes": [],
+        "instill": null
+      },
+      null,
+      null
+    ],
+    "skillBar": [
+      {
+        "uid": 1927903444994,
+        "gemId": "ice_shot",
+        "level": 1,
+        "xp": 0,
+        "supports": [
+          null
+        ],
+        "extraSlots": 0,
+        "rules": [
+          {
+            "when": "manual"
+          }
+        ],
+        "priority": "normal"
+      },
+      {
+        "uid": 1927903444995,
+        "gemId": "rain_of_arrows",
+        "level": 1,
+        "xp": 0,
+        "supports": [
+          null
+        ],
+        "extraSlots": 0,
+        "rules": [
+          {
+            "when": "manual"
+          }
+        ],
+        "priority": "normal"
+      },
+      {
+        "uid": 1927903444996,
+        "gemId": "smoke_step",
+        "level": 1,
+        "xp": 0,
+        "supports": [
+          null
+        ],
+        "extraSlots": 0,
+        "rules": [
+          {
+            "when": "manual"
+          }
+        ],
+        "priority": "normal"
+      },
+      null,
+      null,
+      null
+    ],
+    "loadouts": {
+      "gear": [],
+      "skills": [],
+      "auto": {},
+      "lastActivity": "smithing"
+    },
+    "action": {
+      "kind": "heist",
+      "jobId": "cinder_toll",
+      "room": 2,
+      "lastRoom": 3,
+      "progress": 12345,
+      "take": {
+        "gold": 31,
+        "rogue_marker": 2
+      },
+      "focus": 0.25
+    },
+    "life": 88.07350000000007,
+    "mana": 35,
+    "es": 0,
+    "combat": null,
+    "zoneKills": {},
+    "unlockedZones": [
+      "mudflats",
+      "brinecaves",
+      "ashwood",
+      "blackreed",
+      "crypt",
+      "shipgrave",
+      "stormcliffs",
+      "sanctum",
+      "cinderroad",
+      "saltflats",
+      "blackgrass",
+      "caravan",
+      "kurgans",
+      "plateau",
+      "pyretemple",
+      "burningthrone",
+      "pilgrimgate",
+      "almsquarter",
+      "scourgeyard",
+      "reliquary",
+      "bellfoundry",
+      "inquisition",
+      "penitentstair",
+      "choirloft",
+      "saintswalk",
+      "highaltar",
+      "hollowpass",
+      "screefields",
+      "howlingfells",
+      "glasslake",
+      "bonequarry",
+      "icevault",
+      "mammothroad",
+      "hangingglacier",
+      "steading",
+      "longhall",
+      "kingsstair",
+      "giantsthrone"
+    ],
+    "travelPoints": 2,
+    "passivePoints": 1,
+    "masteryPoints": 0,
+    "passivePointLevel": 1,
+    "passiveQuestPoints": 0,
+    "passives": [],
+    "masteries": {},
+    "characterTreeOverhaul": 2,
+    "ascendancy": {
+      "id": null,
+      "nodes": [],
+      "trials": 0,
+      "points": 0,
+      "carry": 0,
+      "hawk": {
+        "priority": "none",
+        "order": "closest"
+      },
+      "release": "full"
+    },
+    "skillPassives": [],
+    "passiveProfiles": [
+      {
+        "id": "profile_1",
+        "name": "Profile 1",
+        "passives": [],
+        "masteries": {}
+      }
+    ],
+    "activePassiveProfile": "profile_1",
+    "atlasProfiles": [
+      {
+        "id": "profile_1",
+        "name": "Profile 1",
+        "passives": [],
+        "masteries": {}
+      }
+    ],
+    "activeAtlasProfile": "profile_1",
+    "skillingProfiles": [
+      {
+        "id": "profile_1",
+        "name": "Profile 1",
+        "passives": [],
+        "masteries": {}
+      }
+    ],
+    "activeSkillingProfile": "profile_1",
+    "campaign": {
+      "act": 1
+    },
+    "achievements": [
+      "total_50",
+      "total_150",
+      "total_300"
+    ],
+    "bossesDefeated": [],
+    "greenhouse": {
+      "actionId": "herb_frost",
+      "progress": 1234.5
+    },
+    "meal": null,
+    "keepEating": true,
+    "smithCatalyst": {
+      "fossil": null,
+      "resin": null,
+      "until": false,
+      "salvageMisses": false,
+      "salvageFull": false,
+      "salvageAll": false
+    },
+    "maps": {
+      "stock": {},
+      "run": null,
+      "auto": null,
+      "tally": {
+        "runs": 0,
+        "clearMs": 0,
+        "mapsFound": 0,
+        "favoured": 0
+      },
+      "highestTier": 0
+    },
+    "heist": {
+      "rogues": {
+        "lookout": 2
+      },
+      "crew": [
+        "lookout"
+      ],
+      "exits": {
+        "cinder_toll": 2
+      },
+      "auto": "cinder_toll",
+      "tally": {
+        "jobs": 0,
+        "alarms": 0
+      }
+    },
+    "expedition": {
+      "dug": {
+        "dig_cairn": 19207
+      },
+      "shelves": {},
+      "orders": {
+        "giant": "giant_regal"
+      },
+      "tally": {
+        "finds": 2,
+        "traded": 1
+      }
+    },
+    "vendor": {
+      "stock": [
+        {
+          "shop": "magic",
+          "kind": "flask",
+          "flask": {
+            "uid": 1927903444997,
+            "flaskId": "mana_small",
+            "charges": 30,
+            "rarity": "magic",
+            "ilvl": 2,
+            "prefixes": [
+              {
+                "affixId": "f_capacity",
+                "value": 25
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "f_speed",
+                "value": -17
+              }
+            ],
+            "instill": null
+          },
+          "price": 84,
+          "id": 1
+        },
+        {
+          "shop": "magic",
+          "kind": "flask",
+          "flask": {
+            "uid": 1927903444998,
+            "flaskId": "mana_small",
+            "charges": 24,
+            "rarity": "magic",
+            "ilvl": 2,
+            "prefixes": [],
+            "suffixes": [
+              {
+                "affixId": "f_gain",
+                "value": 24
+              }
+            ],
+            "instill": null
+          },
+          "price": 84,
+          "id": 2
+        },
+        {
+          "shop": "magic",
+          "kind": "item",
+          "item": {
+            "uid": 4,
+            "baseId": "coral_amulet",
+            "ilvl": 2,
+            "rarity": "magic",
+            "name": null,
+            "prefixes": [
+              {
+                "affixId": "spell_light",
+                "tier": 0,
+                "values": [
+                  1,
+                  4
+                ]
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "life_leech",
+                "tier": 0,
+                "values": [
+                  5
+                ]
+              }
+            ],
+            "itemTier": 1
+          },
+          "price": 413,
+          "id": 3
+        },
+        {
+          "shop": "magic",
+          "kind": "flask",
+          "flask": {
+            "uid": 1927903444999,
+            "flaskId": "mana_small",
+            "charges": 24,
+            "rarity": "normal",
+            "ilvl": 2,
+            "prefixes": [],
+            "suffixes": [],
+            "instill": null
+          },
+          "price": 48,
+          "id": 4
+        },
+        {
+          "shop": "armour",
+          "kind": "item",
+          "item": {
+            "uid": 5,
+            "baseId": "iron_hat",
+            "ilvl": 2,
+            "rarity": "magic",
+            "name": null,
+            "prefixes": [
+              {
+                "affixId": "inc_armour",
+                "tier": 0,
+                "values": [
+                  18
+                ]
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "mana_regen",
+                "tier": 0,
+                "values": [
+                  15
+                ]
+              }
+            ],
+            "itemTier": 1
+          },
+          "price": 413,
+          "id": 5
+        },
+        {
+          "shop": "armour",
+          "kind": "item",
+          "item": {
+            "uid": 6,
+            "baseId": "iron_gauntlets",
+            "ilvl": 2,
+            "rarity": "magic",
+            "name": null,
+            "prefixes": [
+              {
+                "affixId": "melee_damage",
+                "tier": 0,
+                "values": [
+                  9
+                ]
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "attack_speed",
+                "tier": 0,
+                "values": [
+                  4
+                ]
+              }
+            ],
+            "itemTier": 1
+          },
+          "price": 413,
+          "id": 6
+        },
+        {
+          "shop": "armour",
+          "kind": "item",
+          "item": {
+            "uid": 7,
+            "baseId": "leather_boots",
+            "ilvl": 2,
+            "rarity": "magic",
+            "name": null,
+            "prefixes": [
+              {
+                "affixId": "flat_evasion",
+                "tier": 0,
+                "values": [
+                  12
+                ]
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "movement_speed",
+                "tier": 0,
+                "values": [
+                  4
+                ]
+              }
+            ],
+            "itemTier": 1
+          },
+          "price": 413,
+          "id": 7
+        },
+        {
+          "shop": "armour",
+          "kind": "item",
+          "item": {
+            "uid": 8,
+            "baseId": "linen_hood",
+            "ilvl": 2,
+            "rarity": "magic",
+            "name": null,
+            "prefixes": [
+              {
+                "affixId": "flat_es",
+                "tier": 0,
+                "values": [
+                  7
+                ]
+              }
+            ],
+            "suffixes": [
+              {
+                "affixId": "mana_as_es",
+                "tier": 0,
+                "values": [
+                  3
+                ]
+              }
+            ],
+            "itemTier": 1
+          },
+          "price": 413,
+          "id": 8
+        }
+      ],
+      "refreshAt": 600000
+    },
+    "settings": {
+      "autoSalvage": {
+        "normal": false,
+        "magic": false,
+        "rare": false,
+        "unique": false
+      },
+      "filterOffClassLoot": false,
+      "activeLootFilterId": null,
+      "customLootFilters": [
+        {
+          "id": "class_gear_only",
+          "name": "Class Gear Only",
+          "mode": "keep",
+          "rules": [
+            {
+              "id": "r1",
+              "name": "Class Weapons & Defences",
+              "matchClass": true
+            },
+            {
+              "id": "r2",
+              "name": "Jewellery (All Classes)",
+              "slots": [
+                "amulet",
+                "ring",
+                "belt"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "endgame_rares",
+          "name": "Endgame Rares (T3+)",
+          "mode": "keep",
+          "rules": [
+            {
+              "id": "r1",
+              "name": "High Tier Rares",
+              "rarities": [
+                "rare"
+              ],
+              "minTier": 3
+            },
+            {
+              "id": "r2",
+              "name": "High Item Level Bases (75+)",
+              "minIlvl": 75
+            },
+            {
+              "id": "r3",
+              "name": "Jewellery",
+              "slots": [
+                "amulet",
+                "ring",
+                "belt"
+              ],
+              "rarities": [
+                "rare"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "salvage_junk",
+          "name": "Salvage Normal & Magic Weapons",
+          "mode": "salvage",
+          "rules": [
+            {
+              "id": "r1",
+              "name": "Normal & Magic Weapons",
+              "slots": [
+                "weapon"
+              ],
+              "rarities": [
+                "normal",
+                "magic"
+              ]
+            }
+          ]
+        }
+      ],
+      "lootFilter": {
+        "preset": "off",
+        "overrides": {
+          "life_rings": "preset",
+          "normal_gear": "preset",
+          "top_tier_mods": "preset"
+        },
+        "rules": []
+      },
+      "reducedMotion": false,
+      "movement": "walk",
+      "posture": "brawler",
+      "autoFlee": true,
+      "autoBoss": false,
+      "targeting": {
+        "priority": "none",
+        "order": "closest"
+      }
+    },
+    "lifetime": {
+      "kills": 0,
+      "bossKills": 0,
+      "deaths": 0,
+      "itemsLooted": 0,
+      "orbsUsed": 0,
+      "salvaged": 0,
+      "flasksDrunk": 0,
+      "flasksBrewed": 0,
+      "mealsEaten": 0,
+      "mapsDrawn": 0,
+      "itemsSmithed": 0,
+      "gathered": 0,
+      "benchCrafts": 0,
+      "raresFound": 0,
+      "uniquesFound": 0,
+      "rareKills": 0,
+      "doomedBest": 0,
+      "uniqueMaps": []
+    },
+    "clock": 1234,
+    "lastSaved": 1794576614997
+  }
+}

@@ -23,6 +23,8 @@ import { charXpFromOldCurveV24, charXpFromPreviousCurve } from './xp';
 import { MASTERY_CAP, settleSkillingMastery } from './skillingMastery';
 import { migrateLegacyLootFilters, settleLootFilters } from './lootFilter';
 import { migrateSettingsProfiles, settleTreeProfiles } from './treeProfiles';
+import { settleProfessionProgress } from './professions';
+import { settleForagingSeeds } from './foraging';
 
 // kept from the game's old name: changing it would orphan every existing save
 export const SAVE_KEY = 'claudle-of-exile-save';
@@ -407,6 +409,7 @@ const MIGRATIONS: Record<number, Migration> = {
     const skills = raw.skills as Record<string, number> | undefined;
     if (skills?.combat) skills.combat = charXpFromPreviousCurve(skills.combat);
   },
+  46: (raw) => { settleProfessionProgress(raw as unknown as GameState, true); },
 };
 
 /**
@@ -482,6 +485,8 @@ export function deserialize(json: string): GameState {
   settleHeist(s);
   settleExpedition(s);
   settleSkillingMastery(s);
+  settleProfessionProgress(s);
+  settleForagingSeeds(s);
   migrateSettingsProfiles(s);
   settleTreeLayout(s);
   settlePassivePoints(s);

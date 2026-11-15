@@ -52,6 +52,7 @@ import { actOpen, EXTRA_ZONES, ZONES, zoneDef, type BossMechanic, type ZoneDef }
 import { freshAtlas } from './account';
 import { bossLeftToRules, suggestedRule } from './automation';
 import { addBank } from './bank';
+import { awardProtectedProgress } from './professions';
 import { enterZone } from './combat';
 import type { Ctx } from './context';
 import { MAP_DEVICE_ATLAS_LEVEL } from '../data/hideout';
@@ -390,6 +391,11 @@ export function sextantSlots(s: GameState): number {
   return base + (hasAtlasNode(s, 'survey_notable') ? 1 : 0);
 }
 
+export function sextantCharges(s: GameState): number {
+  const level = stationLevel(s, 'map_device');
+  return SEXTANT_BASE_CHARGES + atlasBonuses(s).sextantCharges + (level >= 7 ? 5 : level >= 6 ? 2 : 0);
+}
+
 /** Apply a Sextant from the bank to a Map Device slot, rolling a modifier for 6+ map runs. */
 export function applySextant(s: GameState, ctx: Ctx, slotIndex: number, sextantId: string): string | null {
   const slots = sextantSlots(s);
@@ -399,8 +405,7 @@ export function applySextant(s: GameState, ctx: Ctx, slotIndex: number, sextantI
   if ((s.account.bank[def.id] ?? 0) <= 0) return `No ${def.name} in stash`;
   const pool = SEXTANT_MODS.filter((m) => m.tier === def.tier);
   const mod = pick(ctx.rng, pool);
-  const mapDevLvl = stationLevel(s, 'map_device');
-  const charges = SEXTANT_BASE_CHARGES + atlasBonuses(s).sextantCharges + (mapDevLvl >= 7 ? 5 : mapDevLvl >= 6 ? 2 : 0);
+  const charges = sextantCharges(s);
   addBank(s, def.id, -1);
   const arr = ensureSextants(s);
   arr[slotIndex] = { modId: mod.id, tier: def.tier, charges };
@@ -689,6 +694,7 @@ function enterMap(s: GameState, ctx: Ctx, tier: number, areaOrTheme?: string): v
 
 /** Run one map by hand. */
 export function startMap(s: GameState, ctx: Ctx, tier: number, areaOrTheme?: string): string | null {
+  if (!mapsOpen(s)) return 'Complete Act 6 to use the Map Device';
   if (s.maps.run) return 'Already in a map';
   if (mapsHeld(s, tier) <= 0) return 'No maps of that tier';
   enterMap(s, ctx, tier, areaOrTheme);
@@ -742,6 +748,7 @@ export function startDoomedMap(s: GameState, ctx: Ctx, dTierNum: number): string
 
 /** Open a Unique Map from the Map Case. */
 export function startUniqueMap(s: GameState, ctx: Ctx, uniqueMapId: string): string | null {
+  if (!mapsOpen(s)) return 'Complete Act 6 to use the Map Device';
   if (s.maps.run) return 'Already in a map';
   const uDef = uniqueMapDef(uniqueMapId);
   if (!uDef) return 'Unknown Unique Map';
@@ -859,6 +866,18 @@ export function mapStep(s: GameState, ctx: Ctx): void {
     return;
   }
   if (!run.bossDown) return;
+  if (run.uniqueMapId) {
+    awardProtectedProgress(s, ctx, 'reliquary_fragment', 1);
+    if (run.uniqueMapId === 'umap_artisans_reliquary') {
+      for (const [id, n] of Object.entries({ rough_gem: 10, arcane_dust: 100 })) {
+        addBank(s, id, n); ctx.emit({ t: 'loot', currencyId: id, qty: n });
+      }
+    }
+  } else if (!run.doomedTier && run.tier === 10) {
+    const n = (s.professionProgress.counters['cartography.t10Wins'] ?? 0) + 1;
+    s.professionProgress.counters['cartography.t10Wins'] = n;
+    if (n % 10 === 0) awardProtectedProgress(s, ctx, 'atlas_survey_record', 1);
+  }
   m.tally.runs += 1;
   m.tally.clearMs += s.clock - run.startedAt;
   const label = run.uniqueMapId
@@ -1009,8 +1028,9 @@ export function rollMapDrops(s: GameState, ctx: Ctx, mon: MonsterInstance): void
 
   // Unique Map drops from map bosses
   if (!run.uniqueMapId && mon.isBoss && run.tier >= 5 && chance(ctx.rng, 0.08 * mapFindMult)) {
-    const eligible = UNIQUE_MAPS.filter((u) => u.tier <= run.tier + 2);
-    const chosen = pick(ctx.rng, eligible.length ? eligible : UNIQUE_MAPS);
+    const dropPool = UNIQUE_MAPS.filter((u) => !u.craftedOnly);
+    const eligible = dropPool.filter((u) => u.tier <= run.tier + 2);
+    const chosen = pick(ctx.rng, eligible.length ? eligible : dropPool);
     addUniqueMaps(s, chosen.id, 1);
     s.maps.tally.mapsFound += 1;
     ctx.emit({ t: 'info', text: `Found a Unique Map: ${chosen.name}`, tone: 'good' });

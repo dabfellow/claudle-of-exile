@@ -1,7 +1,9 @@
 import { CULTURES, cultureDef, EXPEDITION_GATE, FIND_HOURS, MAX_STANDING, SITES, STRATA, type CultureDef, type SiteDef, type WareDef } from '../../data/expedition';
 import { materialDef } from '../../data/materials';
 import { artifactsPerDig, buyWare, expeditionOpen, setOrder, shelvesFor, siteStratum, standing, stratumProgress, warePrice, wareLeft, wareReason } from '../../engine/expedition';
-import { actionIntervalMs, skillLevel } from '../../engine/skills';
+import { actionBlocker, actionIntervalMs, skillLevel } from '../../engine/skills';
+import { exchangeFragments } from '../../engine/expedition';
+import { relicFragment } from '../../data/archaeology';
 import { actionDef } from '../../data/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
@@ -13,7 +15,8 @@ function SitePage({ s, site }: { s: GameState; site: SiteDef }) {
   const stratum = siteStratum(s, site);
   const { progress, digsLeft } = stratumProgress(s, site);
   const interval = actionIntervalMs(s, actionDef(site.id), deriveStats(s));
-  const open = skillLevel(s, 'archaeology') >= site.level;
+  const reason = actionBlocker(s, actionDef(site.id));
+  const open = !reason;
   const digging = s.action?.kind === 'skill' && s.action.actionId === site.id;
   return (
     <div className={`card action-card ${digging ? 'running' : ''} ${open ? '' : 'locked'}`}>
@@ -42,7 +45,7 @@ function SitePage({ s, site }: { s: GameState; site: SiteDef }) {
           </ul>
         </>
       ) : (
-        <p className="lock-note small">Requires Archaeology level {site.level}</p>
+        <p className="lock-note small">{reason}</p>
       )}
     </div>
   );
@@ -89,6 +92,8 @@ function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
       <p className="dim small">
         {culture.deals}, for <MatIcon id={culture.artifact} size={12} /> {culture.artifactName}. You have <b className="num">{fmt(s.account.bank[culture.artifact] ?? 0)}</b>.
       </p>
+      <p className="small">Relic fragments: {s.account.bank[relicFragment(culture.id)] ?? 0}. One every 60 matching digs; {60 - (s.professionProgress.counters[`archaeology.fragments.${culture.id}`] ?? 0) % 60} digs until the next. Fragments remain available at bedrock, for restorations or exchange.</p>
+      <button className="btn sm" disabled={(s.account.bank[relicFragment(culture.id)] ?? 0) < 5} onClick={() => game.act((st, ctx) => exchangeFragments(st, ctx, culture.id))}>Exchange 5 fragments for 25 artifacts</button>
       {open.map((w) => (
         <WareRow key={w.id} s={s} culture={culture} w={w} />
       ))}
@@ -114,7 +119,7 @@ export function ExpeditionBoard() {
   return (
     <>
       <div className="callout skill-note">
-        Digs need nothing and can't go wrong. A site pays more the deeper you work it, and never runs out. Every find raises your standing with the people who left it, and that opens their merchant's better shelves.
+        Start at Giant's Cairn. Its first find opens the Cutting and Colossus; the Cutting opens Barrow and Adit; Barrow opens the Heart, at their listed levels. Finds at 4, 16 and 48 base hours raise standing and artifact yield. Keep discoveries forever. Restore a Surveyor's Guard after the first Cairn find: five Survey fragments, 50 Giant Tallies and five Copper Bars. Choose its resistance below. Sifting guarantees artifacts without advancing finds or standing. Later relics prepare pinnacle components; The Buried Grudge is a later project.
       </div>
       <section>
         <div className="section-head">

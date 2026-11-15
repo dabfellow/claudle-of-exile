@@ -6,6 +6,9 @@ const signed = (more: string, less: string) => (v: number) => `${Math.abs(v)}% $
 
 /** Human-readable text for one stat line, used by tree nodes, masteries and tooltips. */
 const TEXT: Partial<Record<StatKey, (v: number) => string>> = {
+  woundmaker: () => 'Bleeds stack up to 8; 60% less hit damage; cannot critically strike',
+  wintersPyre: () => 'Cold damage can ignite; 100% more ignite damage; cannot chill or freeze; deal no fire or lightning damage except cold-sourced ignites',
+  homecoming: () => 'One arrow per attack, overriding additional arrows; arrows return after 0.5 seconds',
   life: flat('to maximum Life'),
   lifePct: pct('increased maximum Life'),
   lifeMore: signed('more maximum Life', 'less maximum Life'),
@@ -40,6 +43,10 @@ const TEXT: Partial<Record<StatKey, (v: number) => string>> = {
   chaosRes: (v) => `+${v}% to Chaos Resistance`,
   itemRarity: pct('increased Item Rarity'),
   skillSpeed: pct('faster gathering and production'),
+  gatheringSpeed: pct('increased Gathering & Thieving speed'),
+  productionSpeed: pct('increased Production speed'),
+  miningSpeed: pct('increased Mining speed'),
+  gemcuttingSpeed: pct('increased Gemcutting speed'),
   skillXp: pct('increased Skill Experience'),
   flaskEffect: pct('increased Flask Effect'),
   flaskCharges: pct('increased Flask Charges gained'),

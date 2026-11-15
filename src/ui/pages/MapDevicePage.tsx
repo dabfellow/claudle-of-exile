@@ -104,7 +104,7 @@ type Loaded =
 
 const sameLoaded = (a: Loaded, b: Loaded) => JSON.stringify(a) === JSON.stringify(b);
 
-const UNIQUE_ART: Record<UniqueMapDef['id'], string> = { umap_vaults: 'kingsmint', umap_cowards_trial: 'crypt', umap_olmecs: 'pyretemple', umap_maelstrom: 'maelstrom', umap_grandmasters: 'hallofcrowns' };
+const UNIQUE_ART: Record<UniqueMapDef['id'], string> = { umap_artisans_reliquary: 'reliquary', umap_vaults: 'kingsmint', umap_cowards_trial: 'crypt', umap_olmecs: 'pyretemple', umap_maelstrom: 'maelstrom', umap_grandmasters: 'hallofcrowns' };
 const artFor = zoneArt;
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];

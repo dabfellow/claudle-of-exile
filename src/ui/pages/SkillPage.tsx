@@ -2,18 +2,20 @@ import { useCallback, useState } from 'react';
 import { baseDef } from '../../data/bases';
 import { FOSSILS, fossilDef, RESINS } from '../../data/craftMats';
 import { flaskDef } from '../../data/flasks';
-import { ACTIVE_GEMS, SUPPORT_GEMS } from '../../data/gems';
+import { ACTIVE_GEMS, activeGemDef, SUPPORT_GEMS, supportGemDef } from '../../data/gems';
 import { materialDef } from '../../data/materials';
 import { isMapId } from '../../data/maps';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { zoneDef } from '../../data/zones';
-import { upgradeCost } from '../../engine/cartography';
+import { cartographyPreview, upgradeCost } from '../../engine/cartography';
 import { mapsHeld } from '../../engine/maps';
 import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
-import { actionBlocker, actionIntervalMs, actionPlaceNeeded, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
+import { actionBlocker, actionIntervalMs, actionPlaceNeeded, gemCutPool, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
-import { gemArrived } from '../../engine/progress';
+import { ProjectBoard } from '../components/ProjectBoard';
+import { weaponComponentPreview } from '../../engine/weaponProjects';
+import { hasAccomplishment } from '../../engine/professions';
 import type { GameState } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
@@ -27,6 +29,16 @@ import { SkillMinigame } from '../components/SkillMinigame';
 import { Icon, Orb, Swatch } from '../components/Icon';
 import { MasteryProgress } from '../components/MasteryProgress';
 import { skillLock } from '../skillLock';
+import { miningAccessHint, miningPreview } from '../../engine/mining';
+import { woodcuttingAccessHint, woodcuttingPreview } from '../../engine/woodcutting';
+import { smithingPreview } from '../../engine/smithing';
+import { foragingAccessHint, foragingPreview, greenhousePlantReason, plantGreenhouse } from '../../engine/foraging';
+import { alchemyPreview } from '../../engine/alchemy';
+import { alchemyCategory, ALCHEMY_CATEGORIES } from '../../data/alchemy';
+import { COOKING_CATEGORIES, cookingCategory, cookingPreview } from '../../engine/cooking';
+import { GEM_FAMILY_NAMES, GEMCUTTING_CATEGORIES, gemcuttingCategory } from '../../data/gemcutting';
+import { gemcuttingPreview, gemFamilyPool, getUnequippedGems, selectGemForRecycle } from '../../engine/gemcutting';
+import { RUNECARVING_CATEGORIES, runecarvingCategory, runecarvingPreview } from '../../engine/runes';
 import '../round2-session3.css';
 
 const START_LABEL: Record<SkillId, string> = {
@@ -58,15 +70,33 @@ function outputName(id: string): string {
 
 /** What a gemcutting recipe can produce, e.g. "Random support gem (1 of 24)". */
 function gemOutputText(s: GameState, gem: NonNullable<SkillAction['gem']>): string {
-  if (gem.kind === 'signature') return 'Signature support for a skill you own';
-  const pool = (gem.kind === 'skill' ? ACTIVE_GEMS : SUPPORT_GEMS.filter((g) => !g.signatureFor)).filter((g) => gemArrived(s, g.id));
-  return `Random ${gem.kind} gem (1 of ${pool.length})`;
+  if (gem.kind === 'family' && gem.family) {
+    const pool = gemFamilyPool(s, gem.family);
+    return `${GEM_FAMILY_NAMES[gem.family]} (1 of ${pool.length})`;
+  }
+  if (gem.kind === 'exact' && gem.exactId) {
+    const isAct = ACTIVE_GEMS.some((g) => g.id === gem.exactId);
+    const name = isAct ? activeGemDef(gem.exactId).name : supportGemDef(gem.exactId).name;
+    return `${name} (exact gem)`;
+  }
+  if (gem.kind === 'skill' || gem.kind === 'support' || gem.kind === 'signature') {
+    const pool = gemCutPool(s, gem.kind);
+    return `Random ${gem.kind} gem (1 of ${pool.length})`;
+  }
+  return 'Gem';
 }
 
 /** What an activity produces, as rows that line up with the ingredient list. */
 function OutputRows({ s, a }: { s: GameState; a: SkillAction }) {
+  const wood = a.woodcutting;
+  const periodic: [string, string][] = wood && wood.mode !== 'ordinary' ? [
+    [`${wood.wood}_log`, '×1 every 2 completions'],
+    ...(wood.mode === 'resin' ? [[`${wood.wood}_resin`, '×1 every 5 completions'] as [string, string]] : [['heartwood_fragment', '×1 every 30 completions; 1% extra'] as [string, string]]),
+  ] : wood && ['ancient', 'spirit', 'worldwood'].includes(wood.wood) ? [['heartwood_fragment', '×1 every 60 completions; 1% extra']] : [];
   return (
     <ul className="ingredients outputs">
+      {periodic.map(([id, text]) => <li key={id}><MatIcon id={id} size={12} /><span className="ing-name">{materialDef(id).name}</span><span className="ing-qty num">{text}</span></li>)}
+      {Object.entries(a.protectedOutputs ?? {}).map(([id, n]) => <li key={id}><MatIcon id={id} size={12} /><span className="ing-name">{materialDef(id).name}</span><span className="ing-qty num">×{n} · protected</span></li>)}
       {Object.entries(a.outputs ?? {}).map(([id, n]) => (
         <li key={id}>
           <MatIcon id={id} size={12} />
@@ -118,7 +148,7 @@ function ActionArt({ a, locked, running }: { a: SkillAction; locked: boolean; ru
   if (a.baseId) return <Art src={`items/${a.baseId}`} alt={baseDef(a.baseId).name} size={32} fallback={<Icon name={baseDef(a.baseId).slot} size={20} color={a.color} />} />;
   if (a.gem) return <GameIcon name="gemcutting" size={20} color={a.color} />;
   if (a.chart) return <GameIcon name="map" size={20} color={a.color} />;
-  if (a.skill === 'cooking' || a.skill === 'cartography') return <MatIcon id={Object.keys(a.outputs!)[0]} size={22} />;
+  if (a.skill === 'cooking' || a.skill === 'cartography') return <MatIcon id={Object.keys(a.outputs ?? a.protectedOutputs ?? {})[0]} size={22} />;
   if (a.flaskId || a.skill === 'alchemy') return <Orb color={a.color} size={18} glow={running} />;
   return <Swatch color={a.color} size={16} />;
 }
@@ -133,7 +163,8 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
   const running = s.action?.kind === 'skill' && s.action.actionId === a.id;
   const place = actionPlaceNeeded(s, a);
   const areaLocked = !!place;
-  const locked = !!a.soon || level < a.level || areaLocked;
+  const prospect = s.professionProgress.legacyAccess[a.id] ? null : miningAccessHint(s, a) ?? woodcuttingAccessHint(s, a) ?? foragingAccessHint(s, a);
+  const locked = !!a.soon || level < a.level || areaLocked || !!prospect;
   const interval = actionIntervalMs(s, a, d);
   const blocker = actionBlocker(s, a);
   const [pops, setPops] = useState<{ id: number; text: string }[]>([]);
@@ -153,7 +184,7 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
   useGameEvent(onEvent);
 
   const missing = blocker === 'Missing materials';
-  const lockText = a.soon ? 'Coming soon' : place ? `Reach ${place}` : `Lv ${a.level}`;
+  const lockText = a.soon ? 'Coming soon' : place ? `Reach ${place}` : level < a.level ? `Lv ${a.level}` : prospect ?? `Lv ${a.level}`;
 
   return (
     <div
@@ -199,7 +230,7 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
             title={blocker ?? ''}
             onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, a.id))}
           >
-            {missing ? 'Missing' : blocker ? 'Full' : START_LABEL[a.skill]}
+            {missing ? 'Missing' : blocker === 'Inventory full' ? 'Full' : blocker ? 'Locked' : START_LABEL[a.skill]}
           </button>
         )}
       </div>
@@ -208,6 +239,42 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
 
       {open && (
         <div className="action-body">
+          {miningPreview(s, a).map((line) => <p className="muted" key={line}>{line}</p>)}
+          {woodcuttingPreview(s, a).map((line) => <p className="muted" key={line}>{line}</p>)}
+          {foragingPreview(s, a).map((line) => <p className="muted" key={line}>{line}</p>)}
+          {alchemyPreview(s, a).map((line) => <p className="muted" key={line}>{line}</p>)}
+          {cookingPreview(s, a).map((line) => <p className="muted" key={line}>{line}</p>)}
+          {gemcuttingPreview(s, a).map((line) => <p className="muted" key={line}>{line}</p>)}
+          {runecarvingPreview(s, a).map((line) => <p className="muted" key={line}>{line}</p>)}
+          {smithingPreview(a, a.skill === 'archaeology' ? Math.min(45, skillLevel(s, 'archaeology')) : smithIlvl(s)).map((line) => <p className="muted" key={line}>{line}</p>)}
+          {cartographyPreview(s, a).map((line) => <p className="muted" key={line}>{line}</p>)}
+          {weaponComponentPreview(s, a).map((line) => <p className="muted" key={line}>{line}</p>)}
+          {a.id === 'recycle_gem' && (
+            <div style={{ marginTop: 8, marginBottom: 8 }}>
+              <label style={{ fontSize: '0.85rem', display: 'block', marginBottom: 4 }}>
+                Select unequipped gem to recycle:
+              </label>
+              <select
+                className="input"
+                value={s.selectedGemRecycleUid ?? ''}
+                onChange={(e) => {
+                  const uid = e.target.value ? Number(e.target.value) : null;
+                  game.act((st) => selectGemForRecycle(st, uid));
+                }}
+                style={{ maxWidth: '100%', padding: '4px 8px' }}
+              >
+                <option value="">-- Choose an unequipped gem --</option>
+                {getUnequippedGems(s).map((g) => (
+                  <option key={g.uid} value={g.uid}>
+                    {g.name} ({g.kind === 'skill' ? `Skill Lvl ${g.level ?? 1}` : 'Support'}) [UID {g.uid}]
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {a.purpose && <p className="muted">Supplies cover {Math.floor(Math.min(...Object.entries(a.inputs!).map(([id, n]) => (s.account.bank[id] ?? 0) / n)))} craft(s). This start makes one item and stops. Needs one free inventory slot; full storage stops before payment.</p>}
+          {blocker && blocker !== 'Missing materials' && <p className="muted">{blocker}</p>}
+          {prospect && <p className="muted">{prospect}</p>}
           {locked && (
             <div className="action-meta num">
               <span>Lv {a.level}</span>
@@ -259,7 +326,7 @@ function CatalystPanel() {
           </select>
         </label>
         <label>
-          <span className="dim small">Resin (raises item level, capped by campaign progress)</span>
+          <span className="dim small">Resin (raises item level, capped by Forge level)</span>
           <select className="input" value={cat.resin ?? ''} onChange={(e) => set({ resin: e.target.value || null })}>
             <option value="">None</option>
             {RESINS.map((r) => (
@@ -386,7 +453,7 @@ const SMITH_TABS: { id: string; label: string; slots: string[] }[] = [
 ];
 
 function smithTab(a: SkillAction): string {
-  if (a.outputs && !a.baseId) return 'materials';
+  if ((a.outputs || a.protectedOutputs) && !a.baseId) return 'materials';
   const slot = a.baseId ? baseDef(a.baseId).slot : '';
   return SMITH_TABS.find((x) => x.slots.includes(slot))?.id ?? 'weapon';
 }
@@ -403,8 +470,44 @@ interface Tier {
  */
 function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
   const tiers: Tier[] = [];
+  if (skill === 'alchemy') {
+    for (const cat of ALCHEMY_CATEGORIES) {
+      const catActions = actions.filter((a) => alchemyCategory(a) === cat.id);
+      if (catActions.length > 0) {
+        tiers.push({ key: cat.id, label: cat.label, actions: catActions });
+      }
+    }
+    return tiers;
+  }
+  if (skill === 'cooking') {
+    for (const cat of COOKING_CATEGORIES) {
+      const catActions = actions.filter((a) => cookingCategory(a) === cat.id);
+      if (catActions.length > 0) {
+        tiers.push({ key: cat.id, label: cat.label, actions: catActions });
+      }
+    }
+    return tiers;
+  }
+  if (skill === 'gemcutting') {
+    for (const cat of GEMCUTTING_CATEGORIES) {
+      const catActions = actions.filter((a) => gemcuttingCategory(a) === cat.id);
+      if (catActions.length > 0) {
+        tiers.push({ key: cat.id, label: cat.label, actions: catActions });
+      }
+    }
+    return tiers;
+  }
+  if (skill === 'runecarving') {
+    for (const cat of RUNECARVING_CATEGORIES) {
+      const catActions = actions.filter((a) => runecarvingCategory(a) === cat.id);
+      if (catActions.length > 0) {
+        tiers.push({ key: cat.id, label: cat.label, actions: catActions });
+      }
+    }
+    return tiers;
+  }
   for (const a of actions) {
-    const out = a.outputs ? Object.keys(a.outputs)[0] : undefined;
+    const out = a.mining ? `${a.mining.metal}_ore` : a.id === 'mill_heartwood' || a.woodcutting?.mode === 'heartwood' ? 'ancient_heartwood' : a.woodcutting ? `${a.woodcutting.wood}_log` : a.foraging ? a.foraging.plant : a.outputs ? Object.keys(a.outputs)[0] : undefined;
     const band = Math.floor(a.level / 10) * 10;
     // every mark pays gold, so Thieving reads by level like production
     const key = SKILLS[skill].group === 'gathering' && skill !== 'thieving' && out ? out : `band-${band}`;
@@ -450,25 +553,27 @@ function LockedSkill({ skill, place }: { skill: SkillId; place: string }) {
   );
 }
 
-export function SkillPage({ skill }: { skill: SkillId }) {
+export function SkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) => void }) {
   const s = useGame();
   const lockedAt = skillLock(s, skill);
   if (lockedAt) return <LockedSkill skill={skill} place={lockedAt} />;
-  return <OpenSkillPage skill={skill} />;
+  return <OpenSkillPage skill={skill} go={go} />;
 }
 
-function OpenSkillPage({ skill }: { skill: SkillId }) {
+function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) => void }) {
   const s = useGame();
   const level = skillLevel(s, skill);
   const actions = actionsFor(skill);
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [onlyUnlocked, setOnlyUnlocked] = useState(false);
   const [tab, setTab] = useState(SMITH_TABS[0].id);
+  const [purpose, setPurpose] = useState('bases');
   // tier groups the player opened or closed; untouched ones follow tierOpenByDefault
   const [tierToggled, setTierToggled] = useState<Set<string>>(new Set());
-  const isUnlocked = (a: SkillAction) => !a.soon && a.level <= level && !actionPlaceNeeded(s, a);
+  const isUnlocked = (a: SkillAction) => !a.soon && a.level <= level && !actionPlaceNeeded(s, a) && (!!s.professionProgress.legacyAccess[a.id] || ((!a.accomplishments || a.accomplishments.every((id) => hasAccomplishment(s, id))) && !miningAccessHint(s, a) && !woodcuttingAccessHint(s, a) && !foragingAccessHint(s, a)));
   const tabbed = skill === 'smithing';
-  const inTab = tabbed ? actions.filter((a) => smithTab(a) === tab) : actions;
+  const selectedActions = tabbed ? actions.filter((a) => !a.baseId || (purpose === 'bases' ? !a.purpose : a.purpose?.id === purpose)) : actions;
+  const inTab = tabbed ? selectedActions.filter((a) => smithTab(a) === tab) : selectedActions;
   const shown = onlyUnlocked ? inTab.filter(isUnlocked) : inTab;
   const tiers = tiersOf(skill, shown);
   // smithing opens only the newest tier you can make; other skills open everything
@@ -482,7 +587,7 @@ function OpenSkillPage({ skill }: { skill: SkillId }) {
       else n.add(k);
       return n;
     });
-  const unlocked = actions.filter(isUnlocked).length;
+  const unlocked = selectedActions.filter(isUnlocked).length;
   const allOpen = shown.length > 0 && shown.every((a) => open.has(a.id));
   const toggle = (id: string) =>
     setOpen((o) => {
@@ -495,13 +600,39 @@ function OpenSkillPage({ skill }: { skill: SkillId }) {
   return (
     <div className="page">
       <SkillHeader skill={skill} />
+      {skill === 'harvesting' && <div className="card">
+        <h3>Greenhouse</h3>
+        <p>Allocate the Greenhouse keystone in the Foraging tree using ordinary skilling points; no combat or station purchase required. Starting Foraging still remembers that spot. Discovered seeds let you explicitly choose a plant below.</p>
+        <p className="muted">Your plant grows at 20% speed while you do anything else, pauses during all foreground Foraging, and keeps its progress while paused. Switching plants resets its partial cycle. No manual doubles or passive early seed rolls. Materials have unlimited storage.</p>
+        <label>Plant{' '}<select aria-label="Greenhouse plant" value={s.greenhouse?.actionId ?? ''} onChange={(e) => game.act((state) => plantGreenhouse(state, e.target.value))}>
+          <option value="">Choose a learned plant</option>
+          {actionsFor('harvesting').map((a) => {
+            const reason = greenhousePlantReason(s, a);
+            return <option key={a.id} value={a.id} disabled={!!reason}>{a.name}{reason ? ` · ${reason}` : ''}</option>;
+          })}
+        </select></label>
+        <p className="muted">{s.greenhouse ? `Remembered plant: ${actionsFor('harvesting').find((a) => a.id === s.greenhouse!.actionId)?.name}. Stored cycle progress: ${(s.greenhouse.progress / 1000).toFixed(1)} seconds. Background pauses while you forage.` : 'No plant remembered yet.'}</p>
+      </div>}
+      <ProjectBoard skill={skill} go={go} />
       <SkillMinigame skill={skill} />
       {skill === 'smithing' && (
         <div className="callout skill-note">
           Smithed bases are item level <b>{smithIlvl(s, resinBonus(s))}</b> — higher item level unlocks better modifier tiers when crafting.
+          {' '}Purpose gear uses item level <b>{smithIlvl(s)}</b> without catalysts. Strength follows Smithing and Forge level (caps 21 / 45 / 90), independently of combat; equip requirements remain.
         </div>
       )}
       {skill === 'smithing' && <CatalystPanel />}
+      {skill === 'smithing' && <label>Equipment purpose{' '}
+        <select value={purpose} onChange={(e) => setPurpose(e.target.value)}>
+          <option value="bases">Cheap bases · existing catalysts</option>
+          <option value="physical">Physical · added and increased physical damage</option>
+          <option value="protection">Protection · life and local defence</option>
+          <option value="resistance_fire">Fire resistance · life and fire resistance</option>
+          <option value="resistance_cold">Cold resistance · life and cold resistance</option>
+          <option value="resistance_light">Lightning resistance · life and lightning resistance</option>
+          <option value="resource">Resource · mana, spells or energy shield</option>
+        </select>
+      </label>}
       {skill === 'alchemy' && <div className="callout skill-note">Salvage unwanted items at the Crafting Bench for Arcane Dust, then transmute it into orbs here.</div>}
       {skill === 'gemcutting' && (
         <div className="callout skill-note">
@@ -522,7 +653,7 @@ function OpenSkillPage({ skill }: { skill: SkillId }) {
         <div className="section-head">
           <h3>Activities</h3>
           <span className="dim small">
-            {unlocked} of {actions.length} unlocked{tabbed && ' · click a tier to open or close it'}
+            {unlocked} of {selectedActions.length} unlocked{tabbed && ' · click a tier to open or close it'}
           </span>
           <span className="spacer" />
           {inTab.length > 8 && (
@@ -537,7 +668,7 @@ function OpenSkillPage({ skill }: { skill: SkillId }) {
         {tabbed && (
           <div className="smith-tabs">
             {SMITH_TABS.map((x) => {
-              const list = actions.filter((a) => smithTab(a) === x.id);
+              const list = selectedActions.filter((a) => smithTab(a) === x.id);
               return (
                 <button key={x.id} data-tut={`smith-tab-${x.id}`} className={`gem-chip ${tab === x.id ? 'active' : ''}`} onClick={() => setTab(x.id)}>
                   {x.label}{' '}

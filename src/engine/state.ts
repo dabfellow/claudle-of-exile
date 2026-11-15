@@ -9,7 +9,7 @@ import { newFlask } from './flasks';
 import { createSkillGem } from './gems';
 import type { Ctx } from './context';
 import { checkAchievements } from './achievements';
-import { mealStep } from './cooking';
+import { isMealClockRunning, mealStep } from './cooking';
 import { autoNextZoneStep, combatStep } from './combat';
 import { fillOrders, newExpeditionState } from './expedition';
 import { heistAutoStep, heistStep, newHeistState } from './heist';
@@ -20,6 +20,7 @@ import { mapStep, newMapState } from './maps';
 import { seeded } from './rng';
 import { craftStep } from './craftUntil';
 import { greenhouseStep, skillStep } from './skills';
+import { advanceProject, newProfessionProgress } from './professions';
 import { deriveStats } from './stats';
 import { defaultLayeredLootFilter, defaultLootFilters } from './lootFilter';
 import { challengeName } from './challenge';
@@ -27,7 +28,7 @@ export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 46;
+export const SAVE_VERSION = 47;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -63,6 +64,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     nextUid: 1,
     skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, thieving: 0, archaeology: 0, smithing: 0, alchemy: 0, gemcutting: 0, runecarving: 0, cooking: 0, cartography: 0, fishing: 0 },
     skillingMastery: {},
+    professionProgress: newProfessionProgress(),
     inventory: [],
     ground: [],
     offlineHaul: [],
@@ -159,12 +161,13 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
     remaining -= step;
     s.clock += step;
     if (s.action?.kind === 'skill') skillStep(s, ctx, step, d);
+    if (s.action?.kind === 'project') advanceProject(s, ctx, step);
     if (s.action?.kind === 'craft') craftStep(s, ctx, step);
     if (s.action?.kind === 'heist') heistStep(s, ctx, step, d);
     heistAutoStep(s);
     greenhouseStep(s, ctx, step, d);
+    if (isMealClockRunning(s)) mealStep(s, ctx, step);
     if (s.combat) {
-      mealStep(s, ctx, step);
       if (combatStep(s, ctx, step, d)) d = deriveStats(s);
       autoNextZoneStep(s, ctx);
       if (s.fallen) return;

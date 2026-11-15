@@ -3,7 +3,7 @@ import { siteOf } from './expedition';
 import type { HeistJob } from './heist';
 import type { SkillAction } from './skills';
 
-export type MasteryProfile = 'gathering' | 'production' | 'heist';
+export type MasteryProfile = 'gathering' | 'production' | 'heist' | 'project';
 
 export interface MasterySpec {
   /** Stable task id. Bulk recipes use the id of their single-recipe counterpart. */
@@ -19,13 +19,15 @@ export interface MasterySpec {
 /** Inputs mastery may conserve. Valuable/chase materials are deliberately absent. */
 const ORDINARY_INPUTS = new Set([
   'copper_ore', 'iron_ore', 'mithril_ore', 'ash_log', 'oak_log', 'yew_log',
+  'adamant_ore', 'star_ore', 'void_ore', 'world_ore',
+  'ironwood_log', 'ancient_log', 'spirit_log', 'worldwood_log',
   'sunpetal', 'frostleaf', 'emberroot', 'voidbloom', 'copper_bar', 'iron_bar', 'mithril_bar',
   'ash_plank', 'oak_plank', 'yew_plank', 'rough_gem', 'arcane_dust',
   'vellum', 'fine_vellum', 'gall_ink', 'sepia_ink',
 ]);
 
 const spec = (id: string, name: string, profile: MasteryProfile, extra: Partial<MasterySpec> = {}): MasterySpec => ({ id, name, profile, ...extra });
-const outputOf = (a: SkillAction) => Object.keys(a.outputs ?? {})[0];
+const outputOf = (a: SkillAction) => Object.keys(a.outputs ?? {})[0] ?? (a.mining ? `${a.mining.metal}_ore` : a.woodcutting ? `${a.woodcutting.wood}_log` : '');
 const ordinaryInputs = (a: SkillAction) => Object.keys(a.inputs ?? {}).filter((id) => ORDINARY_INPUTS.has(id));
 const production = (id: string, name: string, a: SkillAction) => spec(id, name, 'production', { ordinaryInputs: ordinaryInputs(a) });
 const gathering = (id: string, name: string, primaryOutput: string) => spec(id, name, 'gathering', { primaryOutput });
@@ -34,6 +36,9 @@ const materialName = (id: string) => id.split('_').map((x) => x[0].toUpperCase()
 
 /** The shipped band identity, retained only so version 41 saves can migrate without losing progress. */
 export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined {
+  if (['cut_exceptional', 'prepare_return_inscription', 'prepare_choir_inscription', 'prepare_circuit_inscription', 'inscribe_convergence', 'polish_exceptional', 'recycle_gem'].includes(a.id)) return undefined;
+  if (a.id.startsWith('cut_family_') || a.id.startsWith('cut_exact_')) return undefined;
+  if (a.id === 'chart_endgame_atlas') return undefined;
   if (a.skill === 'combat' || a.skill === 'fishing' || a.soon) return undefined;
   const out = outputOf(a);
 
@@ -58,7 +63,7 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
   }
   if (a.skill === 'archaeology') {
     const culture = siteOf(a.id)?.culture;
-    if (!culture) throw new Error(`Archaeology action ${a.id} has no culture mastery`);
+    if (!culture) return undefined; // These recipes did not exist in the old band-based saves.
     return gathering(`archaeology.${culture}`, `${materialName(culture)} Archaeology`, out);
   }
   if (a.skill === 'smithing') {
@@ -122,6 +127,7 @@ export function masteryForAction(a: SkillAction): MasterySpec | undefined {
   if (a.skill === 'combat' || a.skill === 'fishing' || a.soon) return undefined;
   const id = a.batchOf ?? a.id;
   const name = a.batchOf ? a.name.replace(/\s+×\d+$/u, '') : a.name;
+  if (a.protectedOutputs) return spec(`task.${id}`, name, 'project');
   const out = outputOf(a);
   if (a.skill === 'mining' || a.skill === 'harvesting' || a.skill === 'thieving' || a.skill === 'archaeology' || (a.skill === 'woodcutting' && !a.inputs)) {
     return gathering(`task.${id}`, name, a.skill === 'thieving' ? 'gold' : out);

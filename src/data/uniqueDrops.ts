@@ -5,7 +5,7 @@
  */
 import { ACHIEVEMENTS } from './achievements';
 import { baseDef, UNIQUES, type UniqueDef } from './bases';
-import { HARD_BOSSES, UBER_BOSSES } from './maps';
+import { HARD_BOSSES, UBER_BOSSES, UNIQUE_MAPS } from './maps';
 
 const EXCLUSIVE_UNIQUE_IDS = new Set([
   ...ACHIEVEMENTS.flatMap((achievement) => achievement.unique ? [achievement.unique] : []),
@@ -19,10 +19,18 @@ export function uniqueDropLevel(unique: UniqueDef): number {
 }
 
 export function isWorldDropUnique(unique: UniqueDef): boolean {
-  return !EXCLUSIVE_UNIQUE_IDS.has(unique.id);
+  return !unique.projectSource && !EXCLUSIVE_UNIQUE_IDS.has(unique.id);
 }
 
 /** Equal weights: rarity changes the chance to roll a unique, not which eligible unique wins. */
 export function worldDropUniques(itemLevel: number): UniqueDef[] {
   return UNIQUES.filter((unique) => isWorldDropUnique(unique) && uniqueDropLevel(unique) <= itemLevel);
+}
+
+/** The crafted destination cannot substitute for the older maps' trophy encounters. */
+export function encounterWorldDropUniques(itemLevel: number, uniqueMapId?: string): UniqueDef[] {
+  const pool = worldDropUniques(itemLevel);
+  if (uniqueMapId !== 'umap_artisans_reliquary') return pool;
+  const trophies = new Set(UNIQUE_MAPS.filter((m) => !m.craftedOnly).flatMap((m) => m.uniques));
+  return pool.filter((u) => !trophies.has(u.id));
 }

@@ -879,7 +879,7 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
       if (!m.isBoss && !m.martyr && !m.weakPoint) {
         while (cellRing(m.cell) > 1 && pullCloser(c.monsters, m, army(c)));
       }
-      m.chillMs = Math.max(m.chillMs, 2000);
+      if (!d.raw.wintersPyre) m.chillMs = Math.max(m.chillMs, 2000);
     }
   }
   if (kind === 'utility' && st.def.buff?.lionsRoarMoreMelee) {
@@ -900,13 +900,14 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
 function alchemistDrink(s: GameState, ctx: Ctx, d: Derived, effectMult: number): void {
   const c = s.combat!;
   if (hasAscNode(s, 'alchemist_tonic')) s.mana = Math.min(d.maxMana, s.mana + d.maxMana * TONIC_MANA);
+  if (d.raw.wintersPyre) return;
   const target = focusTarget(s);
   if (!target) return;
   const burst = FLASK_BURST_PER_LEVEL * d.combatLevel * (1 + d.flaskEffect / 100) * effectMult * d.typeMult.fire * (1 + manaPowerMore(s, d, manaFraction(s, d)) / 100);
   const near = hasAscNode(s, 'alchemist_volatile_mix') ? new Set(neighbors(target.cell)) : new Set<number>();
   for (const m of aliveMonsters(c)) {
     if (m !== target && !near.has(m.cell)) continue;
-    const amount = Math.max(1, Math.round(monsterMitigation(m, burst, 'fire')));
+    const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(m, burst, 'fire'))));
     damageMonster(s, m, amount);
     ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'fire', monsterUid: m.uid });
   }
@@ -1676,6 +1677,7 @@ function rollHit(
   if (s.life < d.maxLife / 2 && hasAscNode(s, 'flagellant_mortify')) more *= 1 + MORTIFY_MORE / 100;
   if (hasAscNode(s, 'alchemist_philosophers_draught')) more *= 1 + (DRAUGHT_MORE * c.buffs.filter((b) => b.source === 'flask').length) / 100;
   for (const t of DAMAGE_TYPES) byType[t] *= more;
+  if (r.wintersPyre) byType.fire = byType.light = 0;
 
   const spellType = def.effect.type;
   const bottledBase = r.bottledFaithCrit > 0 ? 2 : 0;
@@ -1701,11 +1703,11 @@ function rollHit(
     c.mech = 0;
     ctx.emit({ t: 'info', text: 'Coup de Grâce!', tone: 'good' });
   }
-  if (megaMulti) {
+  if (megaMulti && !r.woundmaker) {
     for (const t of DAMAGE_TYPES) byType[t] *= megaMulti;
     return { byType, crit: true, mega: true, coup };
   }
-  const crit = sureCrit || chance(ctx.rng, critChance / 100);
+  const crit = !r.woundmaker && (sureCrit || chance(ctx.rng, critChance / 100));
   if (malice) {
     // a normal crit empties the meter (unless a passive says otherwise); every other hit fills it
     if (!crit || r.thousandCuts) gainMeter(s, d, 1 + (r.maliceOnHit ?? 0));
@@ -1731,6 +1733,7 @@ function isProjectileHit(d: Derived, def: ActiveGemDef): boolean {
 
 /** `cap`: how many bleeds of this kind may run at once (Crimson Flood: 2); past it, the weakest is replaced. */
 function applyDot(mon: Pick<MonsterInstance, 'dots'>, dot: Dot, cap = 1): void {
+  if (dot.dps <= 0) return;
   if (dot.kind === 'poison') {
     mon.dots.push(dot);
     return;
@@ -1739,7 +1742,7 @@ function applyDot(mon: Pick<MonsterInstance, 'dots'>, dot: Dot, cap = 1): void {
     const bleeds = mon.dots.filter((x) => x.kind === 'bleed');
     if (bleeds.length < cap) mon.dots.push(dot);
     else {
-      const weakest = bleeds.reduce((a, b) => (b.dps < a.dps ? b : a));
+      const weakest = bleeds.reduce((a, b) => (b.dps < a.dps || (cap === 8 && b.dps === a.dps && b.remainingMs < a.remainingMs) ? b : a));
       if (dot.dps >= weakest.dps) Object.assign(weakest, dot);
     }
     return;
@@ -1779,6 +1782,11 @@ function tickDpsMeter(c: CombatRuntime, dt: number): void {
   if (c.dealt.length > 2) c.dealt.splice(0, c.dealt.length - 2);
 }
 
+/** Auxiliary hits share Woundmaker's delivery penalty; ongoing ailments keep their seed. */
+function secondaryHitDamage(d: Derived, amount: number): number {
+  return d.raw.woundmaker ? amount * 0.4 : amount;
+}
+
 /** Take life from a monster, through its ward first. */
 export function damageMonster(s: GameState, mon: MonsterInstance, amount: number, direct = false, chaosShare = 0): void {
   if (mon.chained || (mon.immuneMs ?? 0) > 0 || (mon.weakPoint && !direct)) return;
@@ -1807,12 +1815,13 @@ export function setMonsterLife(s: GameState, mon: MonsterInstance, life: number)
 }
 
 /** A damage-over-time ailment from a hit, with the player's ailment modifiers. */
-function makeAilment(d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealt: number, a: { kind: Dot['kind']; pctPerSec: number; durationMs: number }): Dot {
+function makeAilment(d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealt: number, a: { kind: Dot['kind']; pctPerSec: number; durationMs: number }, coldSource = false): Dot {
   const r = d.raw;
   const { def, mods } = nums;
   let { pctPerSec, durationMs: duration } = ailmentNumbers(d, nums, a);
   let dps = ((dealt * pctPerSec) / 100) * (a.kind === 'bleed' && mon.isBoss ? 1 + r.bleedBossMore / 100 : 1);
   const isIgnite = a.kind === 'ignite' || a.kind === 'burn';
+  if (r.wintersPyre && isIgnite) dps = coldSource ? dps * 2 : 0;
   if (isIgnite && r.slothPyre > 0) {
     duration *= 1.4;
     dps = (dps * (1 + r.slothPyre / 100)) / 1.4;
@@ -1825,6 +1834,7 @@ function makeAilment(d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealt
   const treeSpread = a.kind === 'poison' && (r.poisonSpread > 0 || r.venomVolley > 0);
   return {
     kind: a.kind,
+    coldSource: coldSource || undefined,
     dps,
     remainingMs: duration,
     durationMs: duration,
@@ -1881,7 +1891,7 @@ export function shockPct(mon: MonsterInstance): number {
 }
 
 /** Fire burns, cold chills, lightning shocks: each rolls on its own, and what lands builds toward the next stage. */
-function applyElementAilments(c: CombatRuntime, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealtBy: ByType, chillBonus: boolean, sure: boolean): void {
+function applyElementAilments(c: CombatRuntime, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealtBy: ByType, chillBonus: boolean, sure: boolean, coldIgnite = 0): void {
   const { def, mods } = nums;
   const e = def.effect;
   const r = d.raw;
@@ -1889,6 +1899,9 @@ function applyElementAilments(c: CombatRuntime, ctx: Ctx, d: Derived, nums: Skil
   const lands = (amount: number, pct: number) => amount > 0 && (sure || (pct > 0 && chance(ctx.rng, pct / 100)));
   const build = (mon.build ??= { burn: 0, chill: 0, shock: 0 });
   const full = ailmentThreshold(mon);
+  if (r.wintersPyre && lands(coldIgnite, skill + r.burnChance)) {
+    applyDot(mon, makeAilment(d, nums, mon, coldIgnite, { kind: 'ignite', pctPerSec: IGNITE_SHARE / (IGNITE_MS / 1000), durationMs: IGNITE_MS }, true));
+  }
   if (lands(dealtBy.fire, skill + r.burnChance)) {
     const burn = makeAilment(d, nums, mon, dealtBy.fire, { kind: 'burn', pctPerSec: BURN_SHARE / (BURN_MS / 1000), durationMs: BURN_MS });
     const spread = (dot: Dot) => {
@@ -1909,7 +1922,7 @@ function applyElementAilments(c: CombatRuntime, ctx: Ctx, d: Derived, nums: Skil
       build.burn = 0;
     }
   }
-  if (lands(dealtBy.cold, e.chillMs || chillBonus ? 100 : skill + r.chillChance)) {
+  if (!r.wintersPyre && lands(dealtBy.cold, e.chillMs || chillBonus ? 100 : skill + r.chillChance)) {
     mon.chillMs = Math.max(mon.chillMs, (e.chillMs ?? CHILL_MS) * nums.durationMult);
     build.chill += dealtBy.cold;
     if (build.chill >= full) {
@@ -1938,6 +1951,8 @@ function hitMonster(
   coup = false,
   wake = false,
 ): number {
+  const path = s.combat?.arrowPath;
+  if (path && !s.combat?.returningArrow && !path.includes(mon.uid)) path.push(mon.uid);
   if (mon.chained || (mon.immuneMs ?? 0) > 0) {
     ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: 'phys', blocked: true, monsterUid: mon.uid });
     return 0;
@@ -1946,13 +1961,13 @@ function hitMonster(
   if (dealt > 0) afterSupportHit(s, ctx, d, nums, mon, crit, dealt);
   const c = s.combat!;
   // Steel Tempest: this 5th attack also hits every other enemy in its reach
-  if (tempestGem === nums.def.id) {
+  if (!c.returningArrow && tempestGem === nums.def.id) {
     tempestGem = null;
     const reach = skillRange(d, nums.def);
     for (const m of aliveMonsters(c)) if (m !== mon && !shielded(m) && cellRing(m.cell) <= reach) hitMonster(s, ctx, d, nums, m, byType, crit, factor, mega, coup);
   }
   // Ricochet: a projectile that kills carries on to the next enemy (once)
-  if (d.raw.ricochet && !ricocheting && mon.life <= 0 && isProjectileHit(d, nums.def)) {
+  if (!c.returningArrow && d.raw.ricochet && !ricocheting && mon.life <= 0 && isProjectileHit(d, nums.def)) {
     const next = chainFrom(mon, [mon, ...aliveMonsters(c).filter((m) => m !== mon && !shielded(m))], 1)[1];
     if (next) {
       ricocheting = true;
@@ -2034,6 +2049,7 @@ function landHit(
   // the physical share of the hit, for physical vs elemental leech
   const physShare = dealt > 0 ? physPart / dealt : 0;
   const beforeMore = dealt;
+  if (d.raw.wintersPyre && beforeMore <= 0) return 0;
   const r = d.raw;
   if (r.tectonicRupture > 0 && (def.tags.includes('heavy') || def.tags.includes('melee'))) {
     mon.vulnMs = Math.max(mon.vulnMs, 4000);
@@ -2058,6 +2074,9 @@ function landHit(
   // Death's Door: when target is above 70% Life, monster takes 35% less damage
   if (r.deathsDoor > 0 && mon.life > mon.maxLife * 0.7) dealt *= 0.65;
   const wasChilledOrFrozen = mon.chillMs > 0 || mon.frozenMs > 0;
+  const coldIgniteScale = beforeMore > 0 ? dealt / beforeMore : 0;
+  const bleedSeed = r.woundmaker ? physPart * (beforeMore > 0 ? dealt / beforeMore : 0) : dealt;
+  if (r.woundmaker) dealt *= .4;
   dealt = Math.max(1, Math.round(dealt));
   damageMonster(s, mon, dealt, true, beforeMore > 0 ? dealtBy.chaos / beforeMore : 0);
   // Death's Door: instant cull on any monster/boss below 30% Life
@@ -2090,22 +2109,22 @@ function landHit(
     c.dealt[c.dealt.length - 1] += Math.max(0, mon.life);
     setMonsterLife(s, mon, 0);
   }
-  if (crit && def.tags.includes('spell') && r.unblinkingFlare > 0 && mon.life > 0 && mon.dots.some((x) => x.kind === 'ignite' || x.kind === 'burn')) {
+  if (!r.wintersPyre && crit && def.tags.includes('spell') && r.unblinkingFlare > 0 && mon.life > 0 && mon.dots.some((x) => x.kind === 'ignite' || x.kind === 'burn')) {
     const flare = Math.max(1, Math.round((dealt * r.unblinkingFlare) / 100));
     damageMonster(s, mon, flare);
     ctx.emit({ t: 'hit', target: 'monster', amount: flare, crit: true, dmgType: 'fire', monsterUid: mon.uid });
   }
   // Anarchist's Gambit: 30% chance on hit to trigger Elemental Cataclysm (500% area burst + Freeze, Shock, Ignite)
-  if (r.anarchistsGambit > 0 && chance(ctx.rng, 0.3)) {
+  if (!r.wintersPyre && r.anarchistsGambit > 0 && chance(ctx.rng, 0.3)) {
     const cataclysmCells = new Set(areaCells('splash', mon.cell, 2));
     const cataclysmTargets = [mon, ...aliveMonsters(c).filter((m) => m !== mon && !shielded(m) && cataclysmCells.has(m.cell))];
-    const cataclysmDmg = Math.max(1, Math.round(dealt * 5));
+    const cataclysmDmg = secondaryHitDamage(d, Math.max(1, Math.round(dealt * 5)));
     for (const m of cataclysmTargets) {
       if (m.life > 0) {
         damageMonster(s, m, cataclysmDmg);
-        ctx.emit({ t: 'hit', target: 'monster', amount: cataclysmDmg, crit: true, dmgType: 'fire', monsterUid: m.uid });
+        ctx.emit({ t: 'hit', target: 'monster', amount: cataclysmDmg, crit: !r.woundmaker, dmgType: 'fire', monsterUid: m.uid });
       }
-      m.chillMs = Math.max(m.chillMs, CHILL_MS);
+      if (!d.raw.wintersPyre) m.chillMs = Math.max(m.chillMs, CHILL_MS);
       m.frozenMs = Math.max(m.frozenMs, m.isBoss ? BOSS_FREEZE_MS : FREEZE_MS);
       m.shockMs = Math.max(m.shockMs ?? 0, SHOCK_MS);
       const b = (m.build ??= { burn: 0, chill: 0, shock: 0 });
@@ -2120,11 +2139,11 @@ function landHit(
   if (crit && r.critLeech) s.life = Math.min(d.maxLife, s.life + (dealt * r.critLeech) / 100);
   if (mon.life < 0 && r.overkillHeal) s.life = Math.min(d.maxLife, s.life + (-mon.life * r.overkillHeal) / 100);
   // Permafrost freezes what's already chilled, before this hit chills it again
-  if (mods.specials.has('permafrost') && mon.chillMs > 0) mon.frozenMs = Math.max(mon.frozenMs, mon.isBoss ? 600 : 1500);
-  if (crit && mods.specials.has('shatterpoint')) mon.chillMs = Math.max(mon.chillMs, 3000);
+  if (!r.wintersPyre && mods.specials.has('permafrost') && mon.chillMs > 0) mon.frozenMs = Math.max(mon.frozenMs, mon.isBoss ? 600 : 1500);
+  if (!r.wintersPyre && crit && mods.specials.has('shatterpoint')) mon.chillMs = Math.max(mon.chillMs, 3000);
   if (mods.specials.has('twist')) {
     for (const x of mon.dots) x.remainingMs = Math.max(x.remainingMs, x.durationMs ?? 0);
-    if (mon.chillMs > 0) mon.chillMs = Math.max(mon.chillMs, 3000);
+    if (!r.wintersPyre && mon.chillMs > 0) mon.chillMs = Math.max(mon.chillMs, 3000);
   }
   ctx.emit({ t: 'hit', target: 'monster', amount: dealt, crit, mega: mega || undefined, riposte: c.riposting || undefined, dmgType: mainType(byType), monsterUid: mon.uid });
   // Rage and Momentum count every hit dealt, so multi-hit and area skills fill them fastest
@@ -2179,11 +2198,11 @@ function landHit(
     // Rupture: the stun tears its Bleeds open, dealing what they had left at once
     if (r.rupture) {
       const bleeds = mon.dots.filter((x) => x.kind === 'bleed');
-      const left = bleeds.reduce((a, x) => a + (bleedDps(mon, x) * x.remainingMs) / 1000, 0);
+      const left = secondaryHitDamage(d, bleeds.reduce((a, x) => a + (bleedDps(mon, x) * x.remainingMs) / 1000, 0));
       if (left > 0 && !shielded(mon)) {
         mon.dots = mon.dots.filter((x) => x.kind !== 'bleed');
         damageMonster(s, mon, left);
-        ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(left), crit: true, dmgType: 'phys', monsterUid: mon.uid });
+        ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(left), crit: !r.woundmaker, dmgType: 'phys', monsterUid: mon.uid });
       }
     }
   }
@@ -2205,8 +2224,8 @@ function landHit(
   if (e.ailment) {
     // Marked Arrow: on a target with 10+ Doom, the poison lasts twice as long
     const a = mods.specials.has('marked_arrow') && e.ailment.kind === 'poison' && (mon.doom ?? 0) >= 10 ? { ...e.ailment, durationMs: e.ailment.durationMs * 2 } : e.ailment;
-    const dot = makeAilment(d, nums, mon, dealt, a);
-    applyDot(mon, dot, r.bleedStacks ? 2 : 1);
+    const dot = makeAilment(d, nums, mon, a.kind === 'bleed' ? bleedSeed : dealt, a);
+    applyDot(mon, dot, r.woundmaker ? 8 : r.bleedStacks ? 2 : 1);
     if (a.kind === 'bleed' && mods.specials.has('arterial')) {
       const near = new Set(neighbors(mon.cell));
       for (const other of aliveMonsters(c)) if (other !== mon && near.has(other.cell)) applyDot(other, { ...dot });
@@ -2216,12 +2235,12 @@ function landHit(
     const duration = 4000 * (1 + (r.ailmentDuration + r.bleedDuration) / 100) + r.bleedDurationFlat;
     applyDot(mon, {
       kind: 'bleed',
-      dps: ((dealt * 20) / 100) * (1 + (r.bleedPct + r.ailmentPct) / 100) * (1 + mods.moreBleed / 100) * (mon.isBoss ? 1 + r.bleedBossMore / 100 : 1),
+      dps: ((bleedSeed * 20) / 100) * (1 + (r.bleedPct + r.ailmentPct) / 100) * (1 + mods.moreBleed / 100) * (mon.isBoss ? 1 + r.bleedBossMore / 100 : 1),
       remainingMs: duration,
       durationMs: duration,
       dealt: 0,
       gemId: def.id,
-    }, r.bleedStacks ? 2 : 1);
+    }, r.woundmaker ? 8 : r.bleedStacks ? 2 : 1);
   }
   // Venom Volley: projectiles always poison
   if (r.venomVolley && isProjectileHit(d, def)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_POISON));
@@ -2230,7 +2249,8 @@ function landHit(
   // chaos skills innate poison chance
   if (e.poisonChance && chance(ctx.rng, e.poisonChance)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_POISON));
   const scale = beforeMore > 0 ? dealt / beforeMore : 0;
-  applyElementAilments(c, ctx, d, nums, mon, { phys: dealtBy.phys * scale, fire: dealtBy.fire * scale, cold: dealtBy.cold * scale, light: dealtBy.light * scale, chaos: 0 }, !!r.chillOnHit, wake);
+  const coldIgnite = r.wintersPyre ? monsterMitigation(mon, byType.cold * factor * glance, 'fire', mon.curse?.resPen ?? 0) * coldIgniteScale : 0;
+  applyElementAilments(c, ctx, d, nums, mon, { phys: dealtBy.phys * scale, fire: dealtBy.fire * scale, cold: dealtBy.cold * scale, light: dealtBy.light * scale, chaos: 0 }, !!r.chillOnHit, wake, coldIgnite);
   // Cryo-Shatter: critical strikes on chilled/frozen enemies trigger a cold explosion dealing 20% target max life
   if (crit && r.cryoShatter > 0 && (wasChilledOrFrozen || mon.chillMs > 0 || mon.frozenMs > 0)) {
     const shatterCells = new Set(areaCells('splash', mon.cell, 1));
@@ -2293,14 +2313,14 @@ function fireMarkBurst(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance)
   const cells = radius ? new Set(areaCells('splash', mon.cell, radius)) : null;
   const targets = cells ? [mon, ...aliveMonsters(c).filter((m) => m !== mon && cells.has(m.cell))] : [mon];
   for (const t of targets) {
-    if (shielded(t) || baseDmg <= 0) continue;
-    const resisted = Math.max(1, Math.round(monsterMitigation(t, baseDmg * typM, type)));
+    if (shielded(t) || baseDmg <= 0 || (d.raw.wintersPyre && (type === 'fire' || type === 'light'))) continue;
+    const resisted = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(t, baseDmg * typM, type))));
     damageMonster(s, t, resisted, false, type === 'chaos' ? 1 : 0);
     ctx.emit({ t: 'hit', target: 'monster', amount: resisted, dmgType: type, monsterUid: t.uid });
   }
   if (extraEffect === 'armourBreak') for (const t of targets) t.vulnMs = 4000;
   if (extraEffect === 'stun' || sp.has('shatter_burst')) for (const t of targets) t.stunMs = Math.max(t.stunMs, sp.has('shatter_burst') && !t.isBoss ? 2000 : 1000);
-  if (extraEffect === 'ignite' || sp.has('flashpoint')) {
+  if (!d.raw.wintersPyre && (extraEffect === 'ignite' || sp.has('flashpoint'))) {
     for (const t of targets) applyDot(t, { kind: 'ignite', dps: (baseDmg * typM * 10) / 100, remainingMs: 5000, durationMs: 5000, dealt: 0, gemId: mark.kind });
   }
   if (extraEffect === 'poison') for (const t of targets) applyDot(t, { kind: 'poison', dps: (baseDmg * 20) / 100, remainingMs: 4000, durationMs: 4000, dealt: 0, gemId: mark.kind });
@@ -2316,7 +2336,7 @@ function fireMarkBurst(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance)
         ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(t.life), dmgType: 'phys', monsterUid: t.uid });
         setMonsterLife(s, t, 0);
       } else {
-        const amount = Math.max(1, Math.round((t.maxLife - t.life) * EXECUTE_MISSING));
+      const amount = secondaryHitDamage(d, Math.max(1, Math.round((t.maxLife - t.life) * EXECUTE_MISSING)));
         damageMonster(s, t, amount);
         ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: t.uid });
       }
@@ -2326,7 +2346,7 @@ function fireMarkBurst(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance)
   if (sp.has('payback') && c.shieldMax) {
     for (const t of aliveMonsters(c)) {
       if (shielded(t)) continue;
-      const amount = Math.max(1, Math.round(monsterMitigation(t, c.shieldMax * PAYBACK_SHARE * d.typeMult.phys, 'phys')));
+      const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(t, c.shieldMax * PAYBACK_SHARE * d.typeMult.phys, 'phys'))));
       damageMonster(s, t, amount);
       ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: t.uid });
     }
@@ -2367,7 +2387,7 @@ function addDoom(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, amoun
   mon.doom = Math.min(max, (mon.doom ?? 0) + amount * (1 + d.raw.doomRate / 100));
   if (mon.doom < max) return;
   const burstDmg = Math.round((50 + mon.level * 3) * (1 + ENDLESS_DOOM_PER_POINT * (max - 20)) * (1 + d.raw.doomPct / 100));
-  const dealt = monsterMitigation(mon, burstDmg, 'chaos');
+  const dealt = secondaryHitDamage(d, monsterMitigation(mon, burstDmg, 'chaos'));
   damageMonster(s, mon, dealt, false, 1);
   ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(dealt), dmgType: 'chaos', monsterUid: mon.uid });
   // Void Hunger: sometimes the meter stays all but full, so the next Doom bursts it again
@@ -2376,7 +2396,7 @@ function addDoom(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, amoun
   if (specials.has('doom_echo')) {
     for (const m of aliveMonsters(c)) {
       if (m === mon || shielded(m)) continue;
-      const echo = Math.max(1, Math.round(monsterMitigation(m, burstDmg * 0.3, 'chaos')));
+      const echo = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(m, burstDmg * 0.3, 'chaos'))));
       damageMonster(s, m, echo, false, 1);
       ctx.emit({ t: 'hit', target: 'monster', amount: echo, dmgType: 'chaos', monsterUid: m.uid });
     }
@@ -2438,15 +2458,15 @@ function totemStep(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
     // Long Siege: the shot carries on to the next enemy
     const targets = sp.has('long_siege') && alive[1] ? [target, alive[1]] : [target];
     for (const m of targets) {
-      if (m.life <= 0 || shielded(m)) continue;
-      const tDmg = Math.max(1, Math.round(monsterMitigation(m, rInt(ctx.rng, lo, hi) * totemEff * typMult * resounding, type)));
+      if (m.life <= 0 || shielded(m) || (d.raw.wintersPyre && (type === 'fire' || type === 'light'))) continue;
+      const tDmg = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(m, rInt(ctx.rng, lo, hi) * totemEff * typMult * resounding, type))));
       damageMonster(s, m, tDmg, false, type === 'chaos' ? 1 : 0);
       ctx.emit({ t: 'hit', target: 'monster', amount: tDmg, dmgType: type, monsterUid: m.uid });
       // its gem's poison (Venom Totem: twice) and chaos poison chance
       if (e.ailment?.kind === 'poison') for (let i = 0; i < (sp.has('venom_totem') ? 2 : 1); i++) applyDot(m, makeAilment(d, nums, m, tDmg, e.ailment));
       if (e.poisonChance && chance(ctx.rng, e.poisonChance)) applyDot(m, makeAilment(d, nums, m, tDmg, GEAR_POISON));
       if (sp.has('corruptor')) shredChaos(m, 15, 4000);
-      if (sp.has('pyre_totem')) layGround(c.ground, m.cell, 'burning', tDmg * 0.25, 3000);
+      if (!d.raw.wintersPyre && sp.has('pyre_totem')) layGround(c.ground, m.cell, 'burning', tDmg * 0.25, 3000);
       // Soul Siphon: some hits drain Life and Mana back to you
       if (sp.has('soul_siphon') && chance(ctx.rng, 0.4)) {
         s.life = Math.min(d.maxLife, s.life + d.maxLife * 0.02);
@@ -2468,10 +2488,10 @@ function totemEnds(s: GameState, ctx: Ctx, d: Derived, totem: NonNullable<Combat
     const [lo, hi] = nums.def.effect.base ?? [5, 10];
     for (const m of aliveMonsters(c)) {
       if (shielded(m)) continue;
-      const amount = Math.max(1, Math.round(monsterMitigation(m, rInt(ctx.rng, lo, hi) * 4 * d.typeMult.cold, 'cold')));
+      const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(m, rInt(ctx.rng, lo, hi) * 4 * d.typeMult.cold, 'cold'))));
       damageMonster(s, m, amount);
       ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'cold', monsterUid: m.uid });
-      m.chillMs = Math.max(m.chillMs, CHILL_MS);
+      if (!d.raw.wintersPyre) m.chillMs = Math.max(m.chillMs, CHILL_MS);
     }
   }
   if (sp.has('cascading_totems') && !totem.replacement) {
@@ -2566,7 +2586,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (r.exileEcho > 0 && c.skillCount % 5 === 0) {
     const echoRaw = (20 + d.combatLevel * 4) * (r.exileEcho / 100) * d.physMult;
     for (const m of aliveMonsters(c).filter((x) => !shielded(x))) {
-      const amount = Math.max(1, Math.round(monsterMitigation(m, echoRaw, 'phys')));
+      const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(m, echoRaw, 'phys'))));
       damageMonster(s, m, amount);
       ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: m.uid });
     }
@@ -2771,7 +2791,10 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (mods.specials.has('hailstorm') && chance(ctx.rng, 0.3)) passes += 1;
   const volley = mods.specials.has('volley');
   const isProjSkill = def.tags.includes('projectile') || (def.tags.includes('attack') && d.ranged && !def.tags.includes('melee'));
-  const hitsPerPass =
+  const homecoming = !!r.homecoming && d.ranged && def.tags.includes('attack') && isProjSkill;
+  const returnState = homecoming ? { ...s, combat: { ...c, asc: { ...c.asc }, buffs: structuredClone(c.buffs) } } : undefined;
+  if (homecoming) c.arrowPath = [];
+  const hitsPerPass = homecoming ? 1 :
     (e.hits ?? 1) +
     (def.id === 'twin_strike' && mods.specials.has('flurry') ? 1 : 0) +
     (def.id === 'pummel' ? r.pummelHits : 0) +
@@ -2780,7 +2803,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   // Tenderise: each consecutive blow on the same target hits 10% harder
   let lastTarget = -1;
   let streak = 0;
-  const shape = skillArea(nums);
+  const shape = homecoming && skillArea(nums) !== 'beam' ? 'target' : skillArea(nums);
   // Inferno's blast scorches the ground around the target
   let ground = mods.specials.has('inferno')
     ? { kind: 'burning' as const, pctPerSec: 25, durationMs: 3000, area: 'splash' as const }
@@ -2813,6 +2836,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   const voidEcho = r.echoesOfTheVoid > 0 && (def.tags.includes('attack') || def.tags.includes('spell'));
   if (voidEcho) passes += 1;
   const radius = widens ? (e.radius ?? (shape === 'nova' ? 2 : 1)) + 1 : e.radius;
+  if (homecoming) passes = 1;
 
   for (let pass = 0; pass < passes; pass++) {
     const isVoidEchoPass = voidEcho && pass === passes - 1;
@@ -2853,7 +2877,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       }
       // Exerted: the powered version's extra targets, then the supports that reach further (side hits deal a share)
       const side: [MonsterInstance, number][] = [];
-      if (exerted) {
+      if (exerted && !homecoming) {
         const x = e.exertedEffect;
         if (x?.extraTargets === 'all') targets = [...targets, ...alive.filter((m) => !targets.includes(m))];
         const nearestPct = x?.extraTargets === 'nearest' ? (x.extraPct ?? 100) : mods.specials.has('dark_surge') ? 50 : 0;
@@ -2867,6 +2891,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       const stunned = target.stunMs > 0;
       const chilled = target.chillMs > 0;
       if (mods.specials.has('cheapshot') && stunned) c.asc.sureCrit = true;
+      if (homecoming) for (const m of targets) if (!c.arrowPath!.includes(m.uid)) c.arrowPath!.push(m.uid);
       // a blow you waited for doesn't miss
       const roll = rollHit(s, ctx, d, nums, target, c.asc.sureCrit || def.tags.includes('heavy') || (volley && h === hitsPerPass - 1), surge);
       if (!roll) {
@@ -2882,7 +2907,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         const dealt = hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * chainMult * tender * exertMult, roll.mega, roll.coup, wake);
         if (m === aim) aimDealt = dealt;
         if (e.drag && pass === 0) dragIn(c, m, nums);
-        if (ground && !grounded && m === aim) {
+        if (ground && !grounded && m === aim && !(r.wintersPyre && (ground.kind === 'burning' || ground.kind === 'shocked'))) {
           grounded = true;
           const dps = (dealt * ground.pctPerSec) / 100;
           for (const cell of areaCells(ground.area ?? 'target', aim.cell)) layGround(c.ground, cell, ground.kind, dps, ground.durationMs * nums.durationMult);
@@ -2902,13 +2927,46 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       }
       // Verdict arcs off stunned targets, Splinter shatters off chilled ones, Shockwave off anything
       const arc = mods.specials.has('verdict') && stunned ? 0.5 : mods.specials.has('splinter') && chilled ? 0.4 : mods.specials.has('shockwave') ? 0.3 : 0;
-      if (arc) {
+      if (arc && !homecoming) {
         const others = chainFrom(target, aliveMonsters(c).filter((m) => !targets.includes(m) && !m.martyr), 2).slice(1);
         if (others.length && pass === 0) ctx.emit({ t: 'area', gemId: def.id, cells: others.map((m) => m.cell) });
         for (const m of others) hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * arc);
       }
     }
   }
+  if (homecoming && returnState) {
+    const saved = returnState.combat;
+    (c.pendingArrows ??= []).push({ remainingMs: 500, derived: structuredClone(d),
+      numbers: { ...structuredClone(nums), mods: { ...structuredClone(mods), specials: [...mods.specials] } },
+      targetUids: [...new Set(c.arrowPath)].reverse(),
+      actor: structuredClone({ character: s.character, ascendancy: s.ascendancy, life: returnState.life, mana: returnState.mana, settings: s.settings }),
+      offence: structuredClone({ asc: saved.asc, ambush: saved.ambush, empowered: saved.empowered, counterweightMore: saved.counterweightMore,
+        shield: saved.shield, retort: saved.retort, storedDamage: saved.storedDamage, buffs: saved.buffs, manaFrac: saved.manaFrac,
+        riposting: saved.riposting, decreeMult: saved.decreeMult, misdirect: saved.misdirect, skillCount: saved.skillCount, mech: saved.mech, mechDamage: saved.mechDamage }),
+    });
+    delete c.arrowPath;
+  }
+}
+
+/** At impact, return legs roll independently against surviving saved targets, using the original offence. */
+function returnArrows(s: GameState, ctx: Ctx, dt: number): void {
+  const c = s.combat!;
+  if (!c.pendingArrows?.length) return;
+  const due = (c.pendingArrows ?? []).filter((arrow) => (arrow.remainingMs -= dt) <= 0);
+  c.pendingArrows = (c.pendingArrows ?? []).filter((arrow) => arrow.remainingMs > 0);
+  c.returningArrow = true;
+  for (const arrow of due) {
+    const nums = { ...arrow.numbers, mods: { ...arrow.numbers.mods, specials: new Set(arrow.numbers.mods.specials) } };
+    const actor = { ...s, ...arrow.actor, combat: { ...c, ...structuredClone(arrow.offence) } };
+    for (const uid of arrow.targetUids) {
+      const mon = c.monsters.find((m) => m.uid === uid && m.life > 0 && !m.dead);
+      if (!mon) continue;
+      const roll = rollHit(actor, ctx, arrow.derived, nums, mon);
+      if (!roll) ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: 'phys', evaded: true, monsterUid: mon.uid });
+      else hitMonster(s, ctx, arrow.derived, nums, mon, roll.byType, roll.crit, 1, roll.mega, roll.coup);
+    }
+  }
+  c.returningArrow = false;
 }
 
 /** Curses are this much weaker on bosses, and grow this many % with each gem level. */
@@ -2980,8 +3038,9 @@ function collectDebt(s: GameState, ctx: Ctx, mon: MonsterInstance, payer: Monste
   const debt = ((curse.owed ?? 0) * curse.warrant) / 100;
   if (debt < 1 || !payer) return;
   const pay = (m: MonsterInstance, amount: number) => {
+    amount = secondaryHitDamage(deriveStats(s), amount);
     damageMonster(s, m, amount);
-    ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(amount), crit: true, dmgType: 'phys', monsterUid: m.uid });
+    ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(amount), crit: !deriveStats(s).raw.woundmaker, dmgType: 'phys', monsterUid: m.uid });
   };
   pay(payer, debt);
   if (!curse.collective) return;
@@ -3052,7 +3111,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   if (c.buffs.some((b) => b.carnage)) {
     const next = chainFrom(mon, [mon, ...aliveMonsters(c).filter((m) => m !== mon && !shielded(m))], 1)[1];
     if (next) {
-      const amount = Math.max(1, Math.round(monsterMitigation(next, mon.maxLife * 0.1, 'phys')));
+      const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(next, mon.maxLife * 0.1, 'phys'))));
       damageMonster(s, next, amount);
       ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: next.uid });
     }
@@ -3105,7 +3164,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
     applyDot(next, { ...ignite, dealt: 0 });
   }
   // Pyre: a burning corpse bursts over the pack
-  if (ignite?.pyre) {
+  if (ignite?.pyre && !d.raw.wintersPyre) {
     for (const m of aliveMonsters(c).filter((x) => !shielded(x))) {
       const amount = Math.max(1, Math.round(monsterMitigation(m, mon.maxLife * 0.1, 'fire')));
       damageMonster(s, m, amount);
@@ -3298,7 +3357,9 @@ function holyNova(s: GameState, ctx: Ctx, d: Derived, filled: number, count: num
   const dawn = count >= NOVA_STORE && hasAscNode(s, 'lightkeeper_dawn');
   const extraPhys = r.briarThorns > 0 ? (d.armour * r.briarThorns) / 100 : 0;
   for (const m of aliveMonsters(c).filter((x) => !shielded(x))) {
-    const amount = Math.max(1, Math.round(monsterMitigation(m, dmg, 'light') + (extraPhys > 0 ? monsterMitigation(m, extraPhys, 'phys') : 0)));
+    const rawAmount = (r.wintersPyre ? 0 : monsterMitigation(m, dmg, 'light')) + (extraPhys > 0 ? monsterMitigation(m, extraPhys, 'phys') : 0);
+    if (rawAmount <= 0) continue;
+    const amount = secondaryHitDamage(d, Math.max(1, Math.round(rawAmount)));
     damageMonster(s, m, amount);
     ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'light', monsterUid: m.uid });
     if (beacon) m.vulnMs = Math.max(m.vulnMs, 4000);
@@ -3353,7 +3414,7 @@ function selfHarm(s: GameState, ctx: Ctx, d: Derived): void {
   if (d.raw.flagellantMartyr > 0 && s.combat) {
     const rawLash = (d.maxLife * d.raw.flagellantMartyr) / 100;
     for (const m of aliveMonsters(s.combat).filter((x) => cellRing(x.cell) <= 1 && !shielded(x))) {
-      const amount = Math.max(1, Math.round(monsterMitigation(m, rawLash, 'phys')));
+      const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(m, rawLash, 'phys'))));
       damageMonster(s, m, amount);
       ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: m.uid });
     }
@@ -3367,7 +3428,7 @@ function anvilAnswer(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): 
   const ring1 = aliveMonsters(c).filter((m) => cellRing(m.cell) === 1).length;
   gainMeter(s, d, 1 + (hasAscNode(s, 'anvil_hold_the_line') ? HOLD_THE_LINE_RAGE * ring1 : 0));
   if (mon.life <= 0) return;
-  const amount = Math.max(1, Math.round(monsterMitigation(mon, d.armour * (ANVIL_THORNS_PCT / 100) * (1 + ANVIL_THORNS_PER_RAGE * c.mech), 'phys')));
+  const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(mon, d.armour * (ANVIL_THORNS_PCT / 100) * (1 + ANVIL_THORNS_PER_RAGE * c.mech), 'phys'))));
   damageMonster(s, mon, amount);
   ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: mon.uid });
   if (meterFull(s, d) && hasAscNode(s, 'anvil_unmoved')) mon.stunMs = Math.max(mon.stunMs, mon.isBoss ? 400 : 1000);
@@ -3389,9 +3450,9 @@ function afterCoup(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): vo
   // a burst deals everything its ailments had left, all at once
   const kinds = new Set(mon.dots.map((x) => x.kind)).size;
   const left = mon.dots.reduce((a, x) => a + (x.dps * x.remainingMs) / 1000, 0);
-  const burst = Math.round(left * (hasAscNode(s, 'plaguewright_bloom') ? 1 + (BLOOM_MORE * kinds) / 100 : 1));
+  const burst = secondaryHitDamage(d, Math.round(left * (hasAscNode(s, 'plaguewright_bloom') ? 1 + (BLOOM_MORE * kinds) / 100 : 1)));
   damageMonster(s, mon, burst);
-  ctx.emit({ t: 'hit', target: 'monster', amount: burst, crit: true, dmgType: 'phys', monsterUid: mon.uid });
+  ctx.emit({ t: 'hit', target: 'monster', amount: burst, crit: !d.raw.woundmaker, dmgType: 'phys', monsterUid: mon.uid });
   if (hasAscNode(s, 'plaguewright_pandemic')) {
     const ring = cellRing(mon.cell);
     for (const m of aliveMonsters(c)) if (m !== mon && Math.abs(cellRing(m.cell) - ring) <= 1) for (const x of mon.dots) applyDot(m, { ...x, dealt: 0 });
@@ -3564,19 +3625,19 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   if (c.windup?.goaded) c.actionMs -= c.actionTotal * GOADED_CUT;
   if (asc === 'anvil') anvilAnswer(s, ctx, d, mon);
   if (r.briarThorns > 0 && mon.life > 0) {
-    const thorns = Math.max(1, Math.round(monsterMitigation(mon, d.armour * 0.1, 'phys')));
+    const thorns = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(mon, d.armour * 0.1, 'phys'))));
     damageMonster(s, mon, thorns);
     ctx.emit({ t: 'hit', target: 'monster', amount: thorns, dmgType: 'phys', monsterUid: mon.uid });
   }
   if (r.ironReflexes > 0 && mon.life > 0) {
-    const thorns = Math.max(1, Math.round(monsterMitigation(mon, raw * 0.5, 'phys')));
+    const thorns = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(mon, raw * 0.5, 'phys'))));
     damageMonster(s, mon, thorns);
     ctx.emit({ t: 'hit', target: 'monster', amount: thorns, dmgType: 'phys', monsterUid: mon.uid });
   }
   if (r.flagellantMartyr > 0) {
     const rawLash = (d.maxLife * r.flagellantMartyr) / 100;
     for (const m of aliveMonsters(c).filter((x) => cellRing(x.cell) <= 1 && !shielded(x))) {
-      const amount = Math.max(1, Math.round(monsterMitigation(m, rawLash, 'phys')));
+      const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(m, rawLash, 'phys'))));
       damageMonster(s, m, amount);
       ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: m.uid });
     }
@@ -3621,12 +3682,12 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     absorbed = Math.min(c.shield, dmg);
     c.shield -= absorbed;
     dmg -= absorbed;
-    if (c.shield <= 0 && c.glacial) {
+    if (c.shield <= 0 && c.glacial && !r.wintersPyre) {
       mon.frozenMs = 2000;
       c.glacial = false;
     }
     if (c.shield <= 0 && c.barbedWard) {
-      const reflected = monsterMitigation(mon, c.barbedWard, 'phys');
+      const reflected = secondaryHitDamage(d, monsterMitigation(mon, c.barbedWard, 'phys'));
       damageMonster(s, mon, reflected);
       ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(reflected), dmgType: 'phys', monsterUid: mon.uid });
       c.barbedWard = undefined;
@@ -3641,8 +3702,8 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     }
     if (c.shield <= 0 && c.radiance) {
       for (const m of aliveMonsters(c)) {
-        if (shielded(m)) continue;
-        const radiance = monsterMitigation(m, c.radiance, 'light');
+        if (shielded(m) || r.wintersPyre) continue;
+        const radiance = secondaryHitDamage(d, monsterMitigation(m, c.radiance, 'light'));
         damageMonster(s, m, radiance);
         ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(radiance), dmgType: 'light', monsterUid: m.uid });
       }
@@ -3728,7 +3789,7 @@ function onBlock(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   if (r.anvilRetaliate > 0) {
     const rawRet = (d.armour * r.anvilRetaliate) / 100;
     for (const m of aliveMonsters(c).filter((x) => cellRing(x.cell) <= 1 && !shielded(x))) {
-      const amount = Math.max(1, Math.round(monsterMitigation(m, rawRet, 'phys')));
+      const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(m, rawRet, 'phys'))));
       damageMonster(s, m, amount);
       ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: m.uid });
     }
@@ -3813,10 +3874,11 @@ function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
     }
     for (const m of aliveMonsters(c)) {
       if (m.cell !== g.cell || shielded(m)) continue;
+      if (d.raw.wintersPyre && (type === 'fire' || type === 'light')) continue;
       const dmg = monsterMitigation(m, (g.dps * t) / 1000, type, 0, true);
       damageMonster(s, m, dmg, false, type === 'chaos' ? 1 : 0);
       m.dotAcc += dmg;
-      if (g.kind === 'chilled') m.chillMs = Math.max(m.chillMs, 500);
+      if (!d.raw.wintersPyre && g.kind === 'chilled') m.chillMs = Math.max(m.chillMs, 500);
       if (g.kind === 'shocked') m.vulnMs = Math.max(m.vulnMs, 500);
     }
     g.remainingMs -= dt;
@@ -4183,15 +4245,16 @@ function tickDots(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
     } else if (m.witherMs) m.witherMs = Math.max(0, m.witherMs - dt);
     for (const dot of m.dots) {
       const t = Math.min(dt, dot.remainingMs);
-      const dmg = shielded(m) ? 0 : (bleedDps(m, dot) * t * (dot.kind === 'poison' ? witherTaken(m) : 1)) / 1000;
+      const prohibited = d.raw.wintersPyre && (dot.kind === 'ignite' || dot.kind === 'burn') && !dot.coldSource;
+      const dmg = shielded(m) || prohibited ? 0 : (bleedDps(m, dot) * t * (dot.kind === 'poison' ? witherTaken(m) : 1)) / 1000;
       damageMonster(s, m, dmg, false, dot.kind === 'poison' ? 1 : 0);
       m.dotAcc += dmg;
       dot.dealt += dmg;
       dot.remainingMs -= dt;
       if (dot.remainingMs <= 0 && dot.burst && dot.dealt > 0) {
-        const burst = dot.dealt * dot.burst;
+        const burst = secondaryHitDamage(d, dot.dealt * dot.burst);
         damageMonster(s, m, burst);
-        ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(burst), crit: true, dmgType: 'phys', monsterUid: m.uid });
+        ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(burst), crit: !d.raw.woundmaker, dmgType: 'phys', monsterUid: m.uid });
       }
       if (dot.remainingMs <= 0 && (dot.kind === 'ignite' || dot.kind === 'burn') && d.raw.slothPyre > 0) {
         for (const other of aliveMonsters(c)) {
@@ -4694,6 +4757,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
     c.fightElapsedMs = (c.fightElapsedMs ?? 0) + dt;
   }
   tickDpsMeter(c, dt);
+  returnArrows(s, ctx, dt);
   tickPlayerAilments(s, ctx, d, dt);
   if (checkDeath(s, ctx, d)) return true;
 

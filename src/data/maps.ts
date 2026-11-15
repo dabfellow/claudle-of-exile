@@ -1200,7 +1200,8 @@ export const UBER_BOSS_ZONES: ZoneDef[] = [
 ];
 
 export interface UniqueMapDef {
-  id: 'umap_vaults' | 'umap_cowards_trial' | 'umap_olmecs' | 'umap_maelstrom' | 'umap_grandmasters';
+  id: 'umap_vaults' | 'umap_cowards_trial' | 'umap_olmecs' | 'umap_maelstrom' | 'umap_grandmasters' | 'umap_artisans_reliquary';
+  craftedOnly?: boolean;
   name: string;
   tier: number;
   level: number;
@@ -1272,6 +1273,11 @@ export const UNIQUE_MAPS: UniqueMapDef[] = [
     ],
   },
 ];
+
+UNIQUE_MAPS.push({ id: 'umap_artisans_reliquary', name: "Artisans' Reliquary", tier: 7, level: 78, packs: 20,
+  craftedOnly: true, flavour: 'Every careful hand leaves something behind.',
+  desc: 'A chart made in Cartography. Twenty packs and a guardian with a visible slam and dangerous ground. The chart is consumed on entry.',
+  rewardSummary: '1 Reliquary Fragment, 10 Rough Gems, 100 Arcane Dust on victory, plus ordinary T7 loot. No existing Unique Map trophies.', uniques: [] });
 
 export const UNIQUE_MAP_ZONES: ZoneDef[] = [
   {
@@ -1432,6 +1438,14 @@ export const UNIQUE_MAP_ZONES: ZoneDef[] = [
     requires: { after: [] },
   },
 ];
+
+const reliquaryTier = mapTier(7);
+const reliquaryZone = buildMapZone('umap_artisans_reliquary', "Artisans' Reliquary", 'A sanctuary of unfinished work.', 7,
+  reliquaryTier.dropTier, 78, 20, reliquaryTier.lifeScale, reliquaryTier.dmgScale, zoneDef('reliquary'), []);
+reliquaryZone.uniques = [];
+reliquaryZone.boss = { ...reliquaryZone.boss, id: 'boss_artisans_reliquary', name: 'The Reliquary Guardian', mechanics: ['slam'],
+  basic: { name: 'Stone Hand', kind: 'attack', ms: 2600 }, slam: { name: 'Artisan’s Judgement', kind: 'attack', ms: 3300 } };
+UNIQUE_MAP_ZONES.push(reliquaryZone);
 
 export function uniqueMapDef(id: string): UniqueMapDef {
   const m = UNIQUE_MAPS.find((x) => x.id === id);

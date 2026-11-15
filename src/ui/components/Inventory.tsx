@@ -52,7 +52,7 @@ export function ItemTile({
         </span>
         {inGearSet(s, item.uid) && <span className="item-tile-set" title="In a gear set: bulk salvage skips it">Set</span>}
         <span className={`item-tile-name rarity-${item.rarity}`}>
-          {item.rarity === 'unique' ? itemName(item) : baseDef(item.baseId).name}
+          {item.rarity === 'unique' || baseDef(item.baseId).projectOnly ? itemName(item) : baseDef(item.baseId).name}
         </span>
         <span className="item-tile-meta">
           {slotLabel(item)} · {figure ?? `i${item.ilvl}`}

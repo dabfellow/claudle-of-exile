@@ -15,7 +15,7 @@ import { dropItem } from './storage';
 import { createItem, createUnique, droppableBases, salvageValue, itemMatchesClass } from './items';
 import { evaluateLootFilter, shouldSalvageByFilter } from './lootFilter';
 import { HARD_BOSSES, UBER_BOSSES, uniqueMapDef } from '../data/maps';
-import { worldDropUniques } from '../data/uniqueDrops';
+import { encounterWorldDropUniques } from '../data/uniqueDrops';
 import { runModifiers } from './maps';
 import { chance, pick, pickWeighted, rInt } from './rng';
 import type { Derived } from './stats';
@@ -193,7 +193,7 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
       placeItem(s, ctx, createItem(s, base.id, ilvl, rarity, rng, undefined, rolledTier));
     }
     if (chance(rng, boss.flaskChance)) dropFlask(s, ctx, ilvl);
-    const bossUniques = worldDropUniques(ilvl);
+    const bossUniques = encounterWorldDropUniques(ilvl, s.maps.run?.uniqueMapId);
     if (bossUniques.length && chance(rng, boss.uniqueChance * (1 + itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, bossUniques).id, ilvl, rng));
     if (chance(rng, BOSS_CRAFT_MAT.chance)) {
       // Greater Essences only from the later Act 1 areas
@@ -227,7 +227,7 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
     placeItem(s, ctx, createItem(s, base.id, ilvl, rarity, rng, undefined, rolledTier));
   }
   if (chance(rng, table.flaskChance * mon.scale * lootMult)) dropFlask(s, ctx, ilvl);
-  const worldUniques = worldDropUniques(ilvl);
+  const worldUniques = encounterWorldDropUniques(ilvl, s.maps.run?.uniqueMapId);
   if (worldUniques.length && chance(rng, table.uniqueChance * lootMult * (1 + itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, worldUniques).id, ilvl, rng));
 }
 

@@ -77,6 +77,13 @@ const SMALL_PCT: [number, number][] = [[2, 3], [4, 5], [6, 7], [8, 9], [10, 11],
 const THIRTY: [number, number][] = [[3, 5], [6, 8], [9, 11], [12, 14], [15, 17], [18, 20], [21, 23], [24, 26], [27, 30]];
 
 export const AFFIXES: AffixDef[] = [
+  { id: 'profession_speed_smithing', kind: 'suffix', group: 'profession_speed', label: 'of Smithing', text: '{0}% increased Smithing speed', stats: ['smithingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
+  { id: 'profession_speed_mining', kind: 'suffix', group: 'profession_speed', label: 'of Prospecting', text: '{0}% increased Mining speed', stats: ['miningSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
+  { id: 'profession_speed_woodcutting', kind: 'suffix', group: 'profession_speed', label: 'of Woodcutting', text: '{0}% increased Woodcutting speed', stats: ['woodcuttingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
+  { id: 'profession_speed_harvesting', kind: 'suffix', group: 'profession_speed', label: 'of Foraging', text: '{0}% increased Foraging speed', stats: ['harvestingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
+  { id: 'profession_speed_alchemy', kind: 'suffix', group: 'profession_speed', label: 'of Brewing', text: '{0}% increased Alchemy speed', stats: ['alchemySpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
+  { id: 'profession_speed_cooking', kind: 'suffix', group: 'profession_speed', label: 'of Cooking', text: '{0}% increased Cooking speed', stats: ['cookingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
+  { id: 'profession_speed_gemcutting', kind: 'suffix', group: 'profession_speed', label: 'of Gemcutting', text: '{0}% increased Gemcutting speed', stats: ['gemcuttingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
   // ---------- prefixes: attack damage ----------
   {
     // local on weapons (adds to the weapon's own damage), global on rings, gloves and amulets
@@ -724,6 +731,10 @@ export const AFFIXES: AffixDef[] = [
   U('u_all_save', 'suffix', '{0}% chance to preserve Crafting Inputs', 'inputSave'),
   U('u_all_double', 'suffix', '{0}% chance to carve a second Rune for free', 'secondStroke'),
 
+  U('u_woundmaker', 'suffix', 'Bleeds stack up to 8; 60% less hit damage; cannot critically strike', 'woundmaker'),
+  U('u_winters_pyre', 'suffix', 'Cold damage can ignite; 100% more ignite damage; cannot chill or freeze; deal no Fire or Lightning Damage except cold-sourced ignites', 'wintersPyre'),
+  U('u_homecoming', 'suffix', 'One arrow per attack, overriding additional arrows; arrows return after 0.5 seconds', 'homecoming'),
+  U('u_borrowed_tomorrow', 'suffix', 'Wearer life leech is instant; no life regeneration or flask life recovery', 'borrowedTomorrow'),
   // meta-crafting modifiers (docs/POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md)
   M('meta_prefixes_cannot_be_changed', 'suffix', 'meta_prefix_lock', 'Prefixes Cannot Be Changed'),
   M('meta_suffixes_cannot_be_changed', 'prefix', 'meta_suffix_lock', 'Suffixes Cannot Be Changed'),

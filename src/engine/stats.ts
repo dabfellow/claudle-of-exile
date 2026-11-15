@@ -169,6 +169,8 @@ export interface Derived {
   leechPct: number;
   itemRarity: number;
   skillSpeed: number;
+  gatheringSpeed: number;
+  productionSpeed: number;
   skillXp: number;
   charXp: number;
   flaskEffect: number;
@@ -436,7 +438,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   const castSpeed = 1 + raw.castSpeedPct / 100;
   const attackMs = BASE_ATTACK_MS / attackSpeed;
   // Steady Hand: always hit, never crit
-  const critChance = raw.steadyHand ? 0 : Math.min(95, both((w) => w.crit ?? 5, (a, b) => (a + b) / 2, 5) * (1 + raw.critChancePct / 100));
+  const critChance = raw.steadyHand || raw.woundmaker ? 0 : Math.min(95, both((w) => w.crit ?? 5, (a, b) => (a + b) / 2, 5) * (1 + raw.critChancePct / 100));
   const critMulti = 150 + raw.critMulti;
   // the cap can be raised; Beyond the Veil raises it 1% for every 5% over it, up to 5%
   const cap = (v: number) => {
@@ -446,7 +448,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   };
   const avgHit = Object.values(hit).reduce((a, [lo, hi]) => a + (lo + hi) / 2, 0);
   // Knife's Edge: every hit is a Mega Crit
-  const critFactor = raw.knifesEdge ? MEGA_CRIT_MULTI : 1 + (critChance / 100) * (critMulti / 100 - 1);
+  const critFactor = raw.knifesEdge && !raw.woundmaker ? MEGA_CRIT_MULTI : 1 + (critChance / 100) * (critMulti / 100 - 1);
 
   return {
     raw,
@@ -486,12 +488,14 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     leechPct: raw.lifeLeech,
     itemRarity: raw.itemRarity,
     skillSpeed: raw.skillSpeed,
+    gatheringSpeed: raw.gatheringSpeed,
+    productionSpeed: raw.productionSpeed,
     skillXp: raw.skillXp,
     charXp: raw.charXp,
     flaskEffect: raw.flaskEffect,
     flaskCharges: raw.flaskCharges,
     avgHit,
-    dps: ((avgHit * 1000) / attackMs) * critFactor * (raw.steadyHand || raw.knifesEdge ? 1 : hitChance(accuracy, combatLevel)),
+    dps: ((avgHit * 1000) / attackMs) * critFactor * (raw.woundmaker ? .4 : 1) * (raw.steadyHand || raw.knifesEdge ? 1 : hitChance(accuracy, combatLevel)),
   };
 }
 

@@ -108,18 +108,47 @@ export interface RuneDef {
   name: string;
   family: RuneFamilyDef;
   grade: RuneGradeDef;
+  reads?: Record<RuneReading, { stat: StatKey; value: number }>;
 }
 
 export const RUNES: RuneDef[] = RUNE_GRADES.flatMap((grade) =>
   RUNE_FAMILIES.map((family) => ({ id: `rune_${family.id}_${grade.grade}`, name: `${grade.name} ${family.name} Rune`, family, grade })),
 );
 
-const RUNE_BY_ID: Record<string, RuneDef> = Object.fromEntries(RUNES.map((r) => [r.id, r]));
+export const SIGNATURE_RUNES: RuneDef[] = [
+  {
+    id: 'rune_signature_wayfarer',
+    name: "Wayfarer's Rune",
+    family: RUNE_FAMILIES.find((f) => f.id === 'stone')!,
+    grade: { grade: 5, name: 'Signature', level: 55, ilvl: 45, intervalMs: 1_800_000, xp: 360, inputs: {}, flavour: 0 },
+    reads: {
+      weapon: { stat: 'gatheringSpeed', value: 6 },
+      armour: { stat: 'allRes', value: 4 },
+      jewellery: { stat: 'manaPct', value: 6 },
+    },
+  },
+  {
+    id: 'rune_signature_channel',
+    name: "Channeler's Rune",
+    family: RUNE_FAMILIES.find((f) => f.id === 'storm')!,
+    grade: { grade: 5, name: 'Signature', level: 65, ilvl: 45, intervalMs: 1_800_000, xp: 480, inputs: {}, flavour: 0 },
+    reads: {
+      weapon: { stat: 'castSpeedPct', value: 8 },
+      armour: { stat: 'energyShieldPct', value: 8 },
+      jewellery: { stat: 'manaRegenPct', value: 10 },
+    },
+  },
+];
+
+export const ALL_RUNES: RuneDef[] = [...RUNES, ...SIGNATURE_RUNES];
+
+const RUNE_BY_ID: Record<string, RuneDef> = Object.fromEntries(ALL_RUNES.map((r) => [r.id, r]));
 
 export const runeDef = (id: string): RuneDef | undefined => RUNE_BY_ID[id];
 
 /** What this rune gives in this reading, before Resonance and Deep Cuts. */
 export function runeEffect(rune: RuneDef, reading: RuneReading): { stat: StatKey; value: number } {
+  if (rune.reads) return rune.reads[reading];
   const r = rune.family.reads[reading];
   return { stat: r.stat, value: r.values[rune.grade.grade - 1] };
 }
@@ -133,7 +162,7 @@ export const RESONANCE_PER_PIECE = 0.05;
 /** Combat finds the two lowest grades, rarely, from Act 3 on: the skill is the faster route, never the only one. */
 export const RUNE_DROP = { bossChance: 0.2, killChance: 0.0005, firstAct: 3, maxGrade: 2 };
 
-export const RUNE_MATERIALS: MaterialDef[] = RUNES.map((r) => ({
+export const RUNE_MATERIALS: MaterialDef[] = ALL_RUNES.map((r) => ({
   id: r.id,
   name: r.name,
   kind: 'rune',

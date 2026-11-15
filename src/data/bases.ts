@@ -28,6 +28,8 @@ export interface BaseDef {
   twoHanded?: boolean;
   /** no longer drops or sells (`obtainable`), but items already made on it keep working */
   retired?: boolean;
+  /** Available only through a profession project, never random loot/shops/cheap bases. */
+  projectOnly?: boolean;
 }
 
 export type WeaponFamily = 'mace' | 'axe' | 'sword' | 'dagger' | 'bow' | 'sceptre' | 'wand' | 'staff';
@@ -648,6 +650,9 @@ export const BASES: BaseDef[] = [
   J('sapphire_ring', 'Sapphire Ring', 'ring', 8, [{ stat: 'coldRes', value: 25, text: '+25% to Cold Resistance' }]),
   J('topaz_ring', 'Topaz Ring', 'ring', 8, [{ stat: 'lightRes', value: 25, text: '+25% to Lightning Resistance' }]),
   J('diamond_ring', 'Diamond Ring', 'ring', 24, [{ stat: 'critChancePct', value: 25, text: '25% increased Critical Strike Chance' }]),
+  { id: 'profession_hammer', name: 'Profession Tool', slot: 'weapon', reqLevel: 1, tags: ['weapon'], phys: [1, 2], speed: 0, crit: 0, projectOnly: true },
+  { ...W('overhaul_great_axe', 'Relic Great Axe', 'axe', 60, [50, 101], 5, 5), twoHanded: true, projectOnly: true },
+  { ...J('overhaul_treasury_amulet', 'Relic Treasury Amulet', 'amulet', 60, []), projectOnly: true },
 ];
 
 /**
@@ -657,7 +662,7 @@ export const BASES: BaseDef[] = [
 for (const id of ['bone_wand', 'quartz_wand']) BASES.find((b) => b.id === id)!.retired = true;
 
 /** Whether a base can still be found: drops, the shops and crafting new items skip retired ones. */
-export const obtainable = (b: BaseDef) => !b.retired;
+export const obtainable = (b: BaseDef) => !b.retired && !b.projectOnly;
 
 const BY_ID: Record<string, BaseDef> = Object.fromEntries(BASES.map((b) => [b.id, b]));
 
@@ -691,6 +696,8 @@ export interface UniqueDef {
   flavour: string;
   /** can't be listed on the Player Market */
   noTrade?: boolean;
+  /** Exclusive completed profession route; excluded from every ordinary drop roll. */
+  projectSource?: string;
 }
 
 export const UNIQUES: UniqueDef[] = [
@@ -1982,6 +1989,17 @@ export const UNIQUES: UniqueDef[] = [
     ],
   },
 ];
+
+UNIQUES.push(
+  { id: 'woundmaker', name: 'Woundmaker', baseId: 'overhaul_great_axe', projectSource: 'Smithing 60, Forge 3: Woundmaker project',
+    flavour: 'The wound remembers every blow.', mods: [{ affixId: 'u_woundmaker', values: [1] }] },
+  { id: 'winters_pyre', name: "Winter's Pyre", baseId: 'seraph_staff', projectSource: "Smithing 65, Forge 3: Winter's Pyre project",
+    flavour: 'Even the coldest memory can burn.', mods: [{ affixId: 'u_winters_pyre', values: [1] }] },
+  { id: 'the_homecoming', name: 'The Homecoming', baseId: 'manticore_greatbow', projectSource: 'Smithing 65, Forge 3: The Homecoming project',
+    flavour: 'An arrow always knows the way back.', mods: [{ affixId: 'u_homecoming', values: [1] }] },
+  { id: 'borrowed_tomorrow', name: 'Borrowed Tomorrow', baseId: 'overhaul_treasury_amulet', projectSource: 'Thieving 65: Borrowed Tomorrow heist treasure claim or Occult Treasury vault jackpot',
+    flavour: 'Every second bought on credit comes due.', mods: [{ affixId: 'u_borrowed_tomorrow', values: [1] }] },
+);
 
 export function uniqueDef(id: string): UniqueDef {
   const u = UNIQUES.find((x) => x.id === id);

@@ -58,12 +58,12 @@ describe('the skill', () => {
     expect(skillTreePoints(s)).toBeGreaterThan(before);
   });
 
-  it('waits for the first area of Act 3, which needs no zone data to name', () => {
+  it('opens independently of Act 3 while retaining material requirements', () => {
     const s = veteran(newGame(1));
     const a = actionsFor('runecarving')[0];
     expect(RUNE_GATE.zone).toBe('pilgrimgate');
-    expect(runesOpen(s)).toBe(false);
-    expect(actionBlocker(s, a)).toBe('Reach Act 3 to unlock');
+    expect(runesOpen(s)).toBe(true);
+    expect(actionBlocker(s, a)).toBe('Missing materials');
     s.unlockedZones.push(RUNE_GATE.zone);
     expect(runesOpen(s)).toBe(true);
     expect(actionBlocker(s, a)).toBe('Missing materials');

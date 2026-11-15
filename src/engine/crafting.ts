@@ -282,6 +282,7 @@ export function findItem(s: GameState, uid: number): Item | undefined {
 export function orbReason(s: GameState, orbId: string, uid: number, fossilId?: string | null, sealed?: string | null): string | null {
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
+  if (baseDef(item.baseId).projectOnly && item.rarity !== 'unique') return 'Profession tools have fixed modifiers; use the rune slot to customise';
   const dust = tinkerDustCost(s, orbId, item);
   if (!hasItem(s, orbId, 1) && dust === null) {
     if (item.ilvl <= FIELD_TINKER_ILVL && TINKER_DUST_COST[orbId] && !benchBuilt(s)) return 'Build the Crafting Bench to tinker with Arcane Dust';
@@ -398,6 +399,7 @@ export function essenceReason(s: GameState, essenceId: string, uid: number): str
   const item = findItem(s, uid);
   if (!ess) return 'Unknown essence';
   if (!item) return 'Select an item';
+  if (baseDef(item.baseId).projectOnly) return 'Profession tools have fixed modifiers; use the rune slot to customise';
   if (!hasItem(s, essenceId, 1)) return 'You have none';
   if (item.rarity === 'unique') return 'Cannot modify unique items';
   if (item.rarity !== 'normal' && item.rarity !== 'magic') return 'Item must be Normal or Magic';
@@ -449,6 +451,7 @@ export function benchCraftReason(s: GameState, craftId: string, uid: number): st
   const craft = BENCH_CRAFTS.find((c) => c.id === craftId)!;
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
+  if (baseDef(item.baseId).projectOnly) return 'Profession tools have fixed modifiers; use the rune slot to customise';
   if ((s.account.hideout.bench ?? 1) < craft.benchLevel) return `Requires Crafting Bench level ${craft.benchLevel}`;
   if (item.rarity === 'unique') return 'Cannot modify unique items';
   if (item.rarity === 'normal') return 'Item must be Magic or Rare';

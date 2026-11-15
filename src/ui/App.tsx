@@ -60,7 +60,7 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
     case 'admin':
       return game.isAdmin ? <AdminPage /> : <SettingsPage />;
     default:
-      return <SkillPage key={page} skill={page} />;
+      return <SkillPage key={page} skill={page} go={go} />;
   }
 }
 

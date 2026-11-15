@@ -68,13 +68,18 @@ export interface ResinDef {
   id: string;
   name: string;
   color: string;
-  /** item levels added to a smithed base (still capped by campaign progress) */
+  /** item levels added to a smithed base (capped by Forge level) */
   ilvl: number;
 }
 
 export const RESINS: ResinDef[] = [
   { id: 'ash_resin', name: 'Ash Resin', color: '#d9b15a', ilvl: 2 },
   { id: 'oak_resin', name: 'Oak Resin', color: '#b07a2c', ilvl: 4 },
+  { id: 'yew_resin', name: 'Yew Resin', color: '#98694a', ilvl: 3 },
+  { id: 'ironwood_resin', name: 'Ironwood Resin', color: '#8ca8a0', ilvl: 3 },
+  { id: 'ancient_resin', name: 'Ancient Resin', color: '#c49b60', ilvl: 4 },
+  { id: 'spirit_resin', name: 'Spirit Resin', color: '#a5bdf0', ilvl: 5 },
+  { id: 'worldwood_resin', name: 'Worldwood Resin', color: '#6ed5a9', ilvl: 6 },
 ];
 
 /** Every gathering action has a small chance at its skill's orb shard; Alchemy fuses them. */
@@ -100,7 +105,7 @@ export const CONTRABAND_DROP = { bossChance: 0.12, killChance: 0.0006, firstAct:
 export const CRAFT_MATERIALS: MaterialDef[] = [
   ...FOSSILS.map((f): MaterialDef => ({ id: f.id, name: f.name, kind: 'fossil', color: f.color, value: 15, desc: `${f.desc}. Use with an orb or when smithing.` })),
   ...ESSENCES.map((e): MaterialDef => ({ id: e.id, name: e.name, kind: 'essence', color: e.color, value: e.tier ? 20 : 8, desc: 'Makes an item Magic with one guaranteed modifier.' })),
-  ...RESINS.map((r): MaterialDef => ({ id: r.id, name: r.name, kind: 'resin', color: r.color, value: r.ilvl * 3, desc: `+${r.ilvl} item level on a smithed base (capped by campaign progress).` })),
+  ...RESINS.map((r): MaterialDef => ({ id: r.id, name: r.name, kind: 'resin', color: r.color, value: r.ilvl * 3, desc: `+${r.ilvl} item level on a smithed base (capped by Forge level).` })),
   { id: 'aug_shard', name: 'Augmentation Shard', kind: 'shard', color: '#5f8de0', value: 0, desc: `${SHARDS_PER_ORB} fuse into an Orb of Augmentation.` },
   { id: 'trans_shard', name: 'Transmutation Shard', kind: 'shard', color: '#7fb2ff', value: 0, desc: `${SHARDS_PER_ORB} fuse into an Orb of Transmutation.` },
   { id: 'alt_shard', name: 'Alteration Shard', kind: 'shard', color: '#9fd2ff', value: 0, desc: `${SHARDS_PER_ORB} fuse into an Orb of Alteration.` },

@@ -6,7 +6,6 @@ import { ALCH_DOUBLE, FORGE_ILVL } from '../data/hideout';
 import { baseDef } from '../data/bases';
 import { HERB_TIERS, ORB_TIERS } from '../data/skillTree';
 import { actionDef, SKILLS, type SkillAction } from '../data/skills';
-import { actOpen, ZONES, zoneDef } from '../data/zones';
 import { addBank, canAfford, hasItem, payCost } from './bank';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
 import type { Ctx } from './context';
@@ -15,19 +14,25 @@ import { newFlask, rerollMagic, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { digDone } from './expedition';
 import { markerBoost } from './heist';
-import { chartDone, hasChartMaps } from './cartography';
+import { cartographyDone, chartDone, hasChartMaps } from './cartography';
 import { focusMult, focusStep, takeDouble } from './minigame';
 import { bagFull, dropItem } from './storage';
 import { allMods, createItem, eligibleAffixes, salvageValue } from './items';
-import { gemArrived } from './progress';
 import { chance, pick, rInt, type Rng } from './rng';
 import { skillTreeStats, type TreeStats } from './skillTree';
 import type { Derived } from './stats';
 import type { GameState, Item, RolledMod, SkillId, SmithCatalyst } from './types';
-import { characterLevel } from './character';
+import { awardProfessionProgress, awardProtectedProgress, professionAccessReason, recordDiscovery } from './professions';
 import { levelOf } from './xp';
 import { grantMasteryPractice, masteryConservation, masterySpeed, masteryYield, stochasticRound } from './skillingMastery';
 import { settlePassivePoints } from './passives';
+import { miningAccessHint, miningDone } from './mining';
+import { woodcuttingAccessHint, woodcuttingDone } from './woodcutting';
+import { createPurposeItem } from './smithing';
+import { foragingDone } from './foraging';
+import { weaponComponentProgress } from './weaponProjects';
+import { gemFamilyPool, gemcuttingAccessHint, isGemEquipped, recycleGemExecution } from './gemcutting';
+import { runecarvingAccessHint, runecarvingDone } from './runes';
 
 export function skillLevel(s: GameState, skill: SkillId): number {
   return levelOf(skill, s.skills[skill]);
@@ -58,18 +63,21 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
   return 1;
 }
 
+const GATHERING_SET = new Set<SkillId>(['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology']);
+const PRODUCTION_SET = new Set<SkillId>(['smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography']);
+
 export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): number {
   const t = skillTreeStats(s);
-  let speed = d.skillSpeed + (t.skillSpeed ?? 0) + (t[`${a.skill}Speed` as keyof TreeStats] ?? 0) + masterySpeed(s, a.mastery);
+  const mealGathering = GATHERING_SET.has(a.skill) ? (d.gatheringSpeed ?? 0) : 0;
+  const mealProduction = PRODUCTION_SET.has(a.skill) ? (d.productionSpeed ?? 0) : 0;
+  let speed = d.skillSpeed + mealGathering + mealProduction + (t.skillSpeed ?? 0) + (t[`${a.skill}Speed` as keyof TreeStats] ?? 0) + masterySpeed(s, a.mastery);
   return (a.intervalMs / (1 + speed / 100)) * keystoneSlow(a.skill, t);
 }
 
-/** Smithed gear can't out-level the campaign: capped at the top level of your furthest unlocked area (or 84–90 at Forge L5–8). */
+/** Manufacturing strength follows the profession and necessary station, independently of combat. */
 export function smithIlvlCap(s: GameState): number {
-  const baseCap = Math.max(...ZONES.filter((z) => s.unlockedZones.includes(z.id) && actOpen(z.act)).map((z) => z.levelRange[1]));
   const lvl = s.account.hideout.forge ?? 1;
-  const hideoutCap = lvl >= 8 ? 90 : lvl >= 7 ? 88 : lvl >= 6 ? 86 : lvl >= 5 ? 84 : 0;
-  return Math.max(hideoutCap, baseCap);
+  return lvl >= 3 ? 90 : lvl === 2 ? 45 : 21;
 }
 
 /** Item level of a smithed base; `resin` is the bonus from a Resin in the catalyst slot. */
@@ -91,6 +99,8 @@ export function setSmithCatalyst(s: GameState, patch: Partial<SmithCatalyst>): v
 
 /** The Forge or Alchemy Table level a production recipe needs; gathering only needs the skill level. */
 export function stationLevelFor(a: SkillAction): { station: 'forge' | 'alchemy_table'; level: number } | null {
+  if (a.forge) return { station: 'forge', level: a.forge };
+  if (a.alchemyTable) return { station: 'alchemy_table', level: a.alchemyTable };
   if (a.baseId) {
     const req = baseDef(a.baseId).reqLevel;
     return { station: 'forge', level: req < 10 ? 1 : req < 22 ? 2 : 3 };
@@ -100,9 +110,7 @@ export function stationLevelFor(a: SkillAction): { station: 'forge' | 'alchemy_t
 }
 
 /** Where you still have to get to before this action opens, or null if you're there. */
-export function actionPlaceNeeded(s: GameState, a: SkillAction): string | null {
-  if (a.area && !s.unlockedZones.includes(a.area)) return zoneDef(a.area).name;
-  if (a.gate && !s.unlockedZones.includes(a.gate.zone)) return a.gate.label;
+export function actionPlaceNeeded(_s: GameState, _a: SkillAction): string | null {
   return null;
 }
 
@@ -118,10 +126,35 @@ export function actionBlocker(s: GameState, a: SkillAction): string | null {
   const place = actionPlaceNeeded(s, a);
   if (place) return `Reach ${place} to unlock`;
   if (skillLevel(s, a.skill) < a.level) return `Requires ${SKILLS[a.skill].name} level ${a.level}`;
+  if (a.accomplishments && !s.professionProgress.legacyAccess[a.id]) {
+    const mining = miningAccessHint(s, a);
+    if (mining) return mining;
+    const wood = woodcuttingAccessHint(s, a);
+    if (wood) return wood;
+    const gem = gemcuttingAccessHint(s, a);
+    if (gem) return gem;
+    const rune = runecarvingAccessHint(s, a);
+    if (rune) return rune;
+    const access = professionAccessReason(s, { skill: a.skill, level: a.level, accomplishments: a.accomplishments });
+    if (access) return access;
+  }
   const st = stationLevelFor(a);
   if (st && (s.account.hideout[st.station] ?? 1) < st.level) return `Needs ${st.station === 'forge' ? 'Forge' : 'Alchemy Table'} level ${st.level}`;
   if ((a.inputs && !canAfford(s, a.inputs)) || !hasChartMaps(s, a)) return 'Missing materials';
-  if (a.baseId && bagFull(s) && !salvagesBases(s)) return 'Inventory full';
+  if (a.baseId && bagFull(s) && (a.purpose || !salvagesBases(s))) return 'Inventory full';
+  if (a.id === 'recycle_gem') {
+    if (s.selectedGemRecycleUid == null) return 'Select a gem to recycle';
+    const gem = [...s.account.gems, ...s.account.supportGems].find((g) => g.uid === s.selectedGemRecycleUid);
+    if (!gem) return 'Gem not found';
+    if (isGemEquipped(s, s.selectedGemRecycleUid)) return 'Cannot recycle equipped gem';
+  }
+  if (a.gem) {
+    if (a.gem.kind === 'family' && a.gem.family) {
+      if (!gemFamilyPool(s, a.gem.family).length) return 'No eligible gems';
+    } else if (a.gem.kind === 'skill' || a.gem.kind === 'support' || a.gem.kind === 'signature') {
+      if (!gemCutPool(s, a.gem.kind).length) return 'No eligible gems';
+    }
+  }
   return null;
 }
 
@@ -156,7 +189,15 @@ export const BULK_BREWER_MULT = 7.5;
 /** Inputs to pay, after Steady Hands and Bulk Brewer. */
 function inputsToPay(s: GameState, a: SkillAction, t: TreeStats, ctx: Ctx): Record<string, number> {
   if (!a.inputs) return {};
-  if (t.inputSave && chance(ctx.rng, t.inputSave / 100)) return {};
+  if (a.protectedOutputs || (a.skill === 'archaeology' && a.purpose)) return { ...a.inputs };
+  if (a.gem) {
+    if (t.inputSave && chance(ctx.rng, t.inputSave / 100)) {
+      return {
+        ...(a.inputs.rough_gem ? { rough_gem: 1 } : {}),
+        ...(a.inputs.arcane_dust ? { arcane_dust: 6 } : {}),
+      };
+    }
+  } else if (t.inputSave && chance(ctx.rng, t.inputSave / 100)) return {};
   let cost: Record<string, number>;
   if (a.batchOf && t.bulkBrewer) {
     const single = actionDef(a.batchOf).inputs!;
@@ -165,6 +206,10 @@ function inputsToPay(s: GameState, a: SkillAction, t: TreeStats, ctx: Ctx): Reco
   if (a.skill === 'gemcutting') {
     if (cost.arcane_dust && t.gemDustSave) cost.arcane_dust = Math.ceil(cost.arcane_dust * (1 - t.gemDustSave / 100));
     if (cost.rough_gem && t.masterCutter) cost.rough_gem = Math.max(0, cost.rough_gem - 1);
+    if (a.gem) {
+      if (cost.rough_gem !== undefined) cost.rough_gem = Math.max(1, cost.rough_gem);
+      if (cost.arcane_dust !== undefined) cost.arcane_dust = Math.max(6, cost.arcane_dust);
+    }
   }
   if (a.skill === 'runecarving' && (s.account.hideout.rune_board ?? 1) >= 2) {
     for (const id of Object.keys(cost)) {
@@ -178,6 +223,10 @@ function inputsToPay(s: GameState, a: SkillAction, t: TreeStats, ctx: Ctx): Reco
     const paid = cost[id] ?? 0;
     if (paid <= 0) continue;
     cost[id] = Math.max(0, paid - Math.min(paid, stochasticRound(ctx.rng, paid * rate)));
+  }
+  if (a.gem) {
+    if (cost.rough_gem !== undefined) cost.rough_gem = Math.max(1, cost.rough_gem);
+    if (cost.arcane_dust !== undefined) cost.arcane_dust = Math.max(6, cost.arcane_dust);
   }
   return cost;
 }
@@ -274,41 +323,76 @@ export function fossilHit(item: Item, fossilId: string): boolean {
 }
 
 /** Gemcutting: a random gem of the recipe's kind. Signature supports favour skills you own. */
-function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, number>): void {
-  const { kind } = a.gem!;
-  const findable = (id: string) => gemReqLevel(id) <= characterLevel(s) && gemArrived(s, id);
-  if (kind === 'skill') {
-    const def = pick(ctx.rng, ACTIVE_GEMS.filter((g) => findable(g.id)));
-    s.account.gems.push(createSkillGem(s, def.id));
-    outputs[def.id] = (outputs[def.id] ?? 0) + 1;
-    ctx.emit({ t: 'loot', gemId: def.id });
-    return;
-  }
-  // only gems you're high enough level to use; signatures you can't use yet fall back to any you can
+export function gemCutPool(s: GameState, kind: 'skill' | 'support' | 'signature') {
+  const findable = (id: string) => gemReqLevel(id) <= Math.max(1, skillLevel(s, 'gemcutting'));
+  if (kind === 'skill') return ACTIVE_GEMS.filter((g) => findable(g.id));
   let pool = SUPPORT_GEMS.filter((g) => (kind === 'signature' ? !!g.signatureFor : !g.signatureFor) && findable(g.id));
-  if (!pool.length) pool = SUPPORT_GEMS.filter((g) => !g.signatureFor && findable(g.id));
   if (kind === 'signature') {
     const owned = new Set([...s.skillBar, ...s.account.gems].filter(Boolean).map((g) => g!.gemId));
     const mine = pool.filter((g) => owned.has(g.signatureFor!));
     if (mine.length) pool = mine;
   }
-  const def = pick(ctx.rng, pool);
+  return pool;
+}
+
+function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, number>): void {
+  const { kind, family, exactId } = a.gem!;
+  if (kind === 'exact' && exactId) {
+    const isAct = ACTIVE_GEMS.some((g) => g.id === exactId);
+    if (isAct) {
+      s.account.gems.push(createSkillGem(s, exactId));
+      outputs[exactId] = (outputs[exactId] ?? 0) + 1;
+      ctx.emit({ t: 'loot', gemId: exactId });
+      return;
+    }
+    s.account.supportGems.push(createSupportGem(s, exactId));
+    outputs[exactId] = (outputs[exactId] ?? 0) + 1;
+    ctx.emit({ t: 'loot', supportId: exactId });
+    return;
+  }
+
+  let def: { id: string } | undefined;
+  if (kind === 'family' && family) {
+    const pool = gemFamilyPool(s, family);
+    def = pick<{ id: string }>(ctx.rng, pool);
+  } else if (kind === 'skill' || kind === 'support' || kind === 'signature') {
+    def = pick<{ id: string }>(ctx.rng, gemCutPool(s, kind));
+  }
+  if (!def) return;
+
+  const isSkill = ACTIVE_GEMS.some((g) => g.id === def!.id);
+  if (isSkill) {
+    s.account.gems.push(createSkillGem(s, def.id));
+    outputs[def.id] = (outputs[def.id] ?? 0) + 1;
+    ctx.emit({ t: 'loot', gemId: def.id });
+    return;
+  }
   s.account.supportGems.push(createSupportGem(s, def.id));
   outputs[def.id] = (outputs[def.id] ?? 0) + 1;
   ctx.emit({ t: 'loot', supportId: def.id });
 }
 
 /** `focusDouble`: a mini-game double-zone hit, so everything this finish makes comes twice. */
-function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDouble = false): void {
+function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDouble = false, foreground = true): void {
   const t = skillTreeStats(s);
   const cost = inputsToPay(s, a, t, ctx);
   payCost(s, cost);
   const outputs: Record<string, number> = {};
+  if (a.id === 'recycle_gem') {
+    recycleGemExecution(s, ctx, outputs);
+    return;
+  }
   const twoForOne = a.skill === 'runecarving' ? t.secondStroke : a.skill === 'cooking' ? t.secondHelping : a.skill === 'cartography' ? t.secondCopy : 0;
   const alchLvl = s.account.hideout.alchemy_table ?? 1;
   const double = a.skill === 'alchemy' ? chance(ctx.rng, ALCH_DOUBLE[alchLvl - 1]) : !!twoForOne && chance(ctx.rng, twoForOne / 100);
   const focusMultiple = focusDouble ? 2 : 1;
   const mult = (double ? 2 : 1) * focusMultiple;
+  const miningOutput = foreground ? miningDone(s, ctx, a) : {};
+  const woodOutput = foreground ? woodcuttingDone(s, ctx, a) : {};
+  foragingDone(s, ctx, a, foreground);
+  if (foreground) cartographyDone(s, ctx, a);
+  if (foreground) weaponComponentProgress(s, ctx, a);
+  if (foreground) runecarvingDone(s, ctx, a);
 
   if (a.skill === 'alchemy' && alchLvl >= 7 && chance(ctx.rng, 0.15)) {
     for (const [id, n] of Object.entries(cost)) {
@@ -319,7 +403,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
 
   // alternate nodes trade some of their base material for a better secondary
   const yields = a.outputChance === undefined || chance(ctx.rng, a.outputChance);
-  for (const [id, n] of Object.entries(yields ? (a.outputs ?? {}) : {})) {
+  for (const [id, n] of Object.entries(yields ? { ...a.outputs, ...miningOutput, ...woodOutput } : {})) {
     let qty = n * mult;
     if (a.skill === 'mining' && id.endsWith('_ore') && t.motherlode) qty *= 2;
     if (id === a.mastery?.primaryOutput) qty += stochasticRound(ctx.rng, n * masteryYield(s, a.mastery));
@@ -343,9 +427,29 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
 
   if (a.skill === 'archaeology') digDone(s, ctx, a, outputs);
   if (a.chart) chartDone(s, a, mult, Object.keys(cost).length > 0, outputs);
+  if (a.skill === 'thieving') {
+    s.professionProgress.counters['thieving.markers'] = (s.professionProgress.counters['thieving.markers'] ?? 0) + 1;
+    if ((s.professionProgress.counters['thieving.markers'] % 10) === 0) {
+      awardProtectedProgress(s, ctx, MARKER, 1);
+      outputs[MARKER] = (outputs[MARKER] ?? 0) + 1;
+    }
+  }
 
   // a doubled base is a second full base, catalysts and all; a Craft-until stop on the first ends it there
-  if (a.baseId) for (let i = 0; i < focusMultiple && s.action?.kind === 'skill'; i++) smithBase(s, ctx, a, t);
+  if (a.purpose) {
+    const item = createPurposeItem(s, a, a.skill === 'archaeology' ? Math.min(45, skillLevel(s, 'archaeology')) : smithIlvl(s), ctx.rng);
+    s.inventory.push(item);
+    s.lifetime.itemsSmithed += 1;
+    ctx.emit({ t: 'loot', item });
+    ctx.emit({ t: 'info', text: `${a.name}: guaranteed equipment complete. Stopped.`, tone: 'good' });
+    s.action = null;
+  } else if (a.baseId) for (let i = 0; i < focusMultiple && s.action?.kind === 'skill'; i++) {
+    if (i > 0 && bagFull(s) && !salvagesBases(s)) {
+      ctx.emit({ t: 'info', text: `${a.name}: extra equipment suppressed because inventory is full`, tone: 'warn' });
+      break;
+    }
+    smithBase(s, ctx, a, t);
+  }
   if (a.flaskId) {
     s.lifetime.flasksBrewed += mult;
     for (let i = 0; i < mult; i++) {
@@ -365,6 +469,11 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   const branchXp = a.skill === 'gemcutting' ? (t.gemcuttingXp ?? 0) : 0;
   grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0) + branchXp) / 100) * heartwoodXp);
   grantMasteryPractice(s, a.mastery, a.intervalMs / 1000);
+  if (foreground) {
+    awardProfessionProgress(s, a.skill, a.batch ?? (a.chart?.qty ?? 1));
+    for (const [id, n] of Object.entries(a.protectedOutputs ?? {})) awardProtectedProgress(s, ctx, id, n);
+    if (a.discovery) recordDiscovery(s, ctx, a.discovery);
+  }
 }
 
 export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void {
@@ -400,6 +509,6 @@ export function greenhouseStep(s: GameState, ctx: Ctx, dt: number, d: Derived): 
   const interval = actionIntervalMs(s, a, d);
   while (g.progress >= interval) {
     g.progress -= interval;
-    complete(s, ctx, a, d);
+    complete(s, ctx, a, d, false, false);
   }
 }

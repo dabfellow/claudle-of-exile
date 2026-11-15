@@ -3,7 +3,7 @@ import { stashedItems } from '../../engine/storage';
 import { affixDef } from '../../data/affixes';
 import { ESSENCES, FOSSILS, fossilDef, SEAL, WAX } from '../../data/craftMats';
 import { WHETSTONE } from '../../data/expedition';
-import { runeDef, RUNES } from '../../data/runes';
+import { ALL_RUNES, runeDef } from '../../data/runes';
 import { BENCH_CRAFTS } from '../../data/hideout';
 import { INSTILL_CONDITIONS } from '../../data/flasks';
 import { actOpen } from '../../data/zones';
@@ -37,7 +37,7 @@ import {
 import { applyFlaskOrb, enchantFlask, findFlask, flaskOrbReason, FLASK_ORBS } from '../../engine/flasks';
 import { stationLevel } from '../../engine/hideout';
 import { affixRangeText, allMods, describeMod, itemName, maxAffixes, salvageValue } from '../../engine/items';
-import { inscribeRune, runeReason, runeText } from '../../engine/runes';
+import { inscribeRune, runeInscriptionPreview, runeReason } from '../../engine/runes';
 import type { FlaskInstance, GameState, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { Badge, EmptyState, fmt, GameIcon, MatIcon, PageHeader, Tabs, Tooltip, type TabDef } from '../components/common';
@@ -189,6 +189,7 @@ export function BenchPage() {
   const [seal, setSeal] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<BenchTab>('bench_recipes');
   const [craftCategory, setCraftCategory] = useState<BenchCraftCategory>('all');
+  const [inspectedRune, setInspectedRune] = useState<string | null>(null);
 
   const item = uid !== null ? findItem(s, uid) : undefined;
   const benchLvl = stationLevel(s, 'bench');
@@ -269,7 +270,7 @@ export function BenchPage() {
 
   const essences = ESSENCES.filter((e) => s.account.bank[e.id]);
   const fossils = FOSSILS.filter((f) => s.account.bank[f.id]);
-  const runes = RUNES.filter((r) => s.account.bank[r.id]);
+  const runes = ALL_RUNES.filter((r) => s.account.bank[r.id]);
   const seals = s.account.bank[SEAL] ?? 0;
   const waxes = s.account.bank[WAX] ?? 0;
   const contraband = seals > 0 || waxes > 0 || !!item?.impression;
@@ -693,18 +694,39 @@ export function BenchPage() {
                       <div className="section-label">Runes · Inscribe a permanent socket bonus</div>
                       <MaterialChoices
                         s={s}
-                        ids={RUNES.map((r) => r.id)}
+                        ids={ALL_RUNES.map((r) => r.id)}
                         source={groupSource('runes')}
                         render={(id, n) => {
                           const r = runeDef(id)!;
                           const reason = item ? runeReason(s, id, item.uid) : 'Select an item';
+                          const preview = runeInscriptionPreview(s, id, item ?? null);
                           return (
-                            <button key={id} data-rune={id} className="btn sm" disabled={!!reason} title={reason ?? runeText(r, item!)} onClick={() => inscribe(id)}>
+                            <button
+                              key={id}
+                              data-rune={id}
+                              className="btn sm"
+                              disabled={!!reason}
+                              title={reason ? `${reason}\n\n${preview.join('\n')}` : preview.join('\n')}
+                              onMouseEnter={() => setInspectedRune(id)}
+                              onFocus={() => setInspectedRune(id)}
+                              onClick={() => {
+                                setInspectedRune(id);
+                                inscribe(id);
+                              }}
+                            >
                               <MatIcon id={id} size={12} /> {r.name} <span className="dim">×{fmt(n)}</span>
                             </button>
                           );
                         }}
                       />
+                      {inspectedRune && (
+                        <div className="callout" style={{ marginTop: 8 }}>
+                          <div style={{ fontWeight: 'bold', marginBottom: 4 }}>{runeDef(inspectedRune)?.name} Preview</div>
+                          {runeInscriptionPreview(s, inspectedRune, item ?? null).map((line) => (
+                            <div key={line} className="small muted">{line}</div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div id="bench-mats-essences">

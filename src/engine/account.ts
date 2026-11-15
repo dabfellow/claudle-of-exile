@@ -5,6 +5,7 @@ import { STANDARD_REALM } from './challenge';
 import { trimFlaskStash } from './flasks';
 import { createUnique } from './items';
 import type { AccountPool, AccountState, AccountTransfer, AtlasState, AutomationUnlocks, EquipSlot, GameState, Item, Realm, SkillGemInstance } from './types';
+import { settleProfessionRealmEvidence } from './professions';
 
 /**
  * What every character in a realm shares: the hideout, automation unlocks, every Stash tab and the Exile unlock.
@@ -331,17 +332,21 @@ export function settleCharacterMaps(s: GameState, a: AccountState): boolean {
 export function settleCharacter(s: GameState, a: AccountState): boolean {
   const pooled = settlePool(s, a);
   const mapped = settleCharacterMaps(s, a);
+  const finish = (changed: boolean) => {
+    settleProfessionRealmEvidence(s, a);
+    return changed;
+  };
   const from = s.unmerged;
-  if (!from) return pooled || mapped;
+  if (!from) return finish(pooled || mapped);
   delete s.unmerged;
-  if (a.absorbed.includes(s.character.id) || from.id === a.id) return pooled || mapped;
+  if (a.absorbed.includes(s.character.id) || from.id === a.id) return finish(pooled || mapped);
   // an auto-craft running on a stashed item follows it to its new uid
   const job = s.action?.kind === 'craft' ? s.action : null;
   const target = job && [...(from.stash ?? []).flat(), ...(from.overflow ?? []), ...(from.uniqueStash ?? [])].find((i) => i.uid === job.uid);
   absorbAccount(a, from);
   if (job && target) job.uid = target.uid;
   a.absorbed.push(s.character.id);
-  return true;
+  return finish(true);
 }
 
 /** Hand a character from before the skill reform its keepsake, once. Returns whether it did. */

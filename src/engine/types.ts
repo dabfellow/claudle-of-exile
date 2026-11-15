@@ -1,4 +1,6 @@
 import type { StationId } from '../data/hideout';
+import type { Derived } from './stats';
+import type { SkillNumbers, CombinedMods } from './gems';
 import type { AscendancyId } from '../data/ascendancies';
 import type { ClassId } from '../data/classes';
 import type { CultureId } from '../data/expedition';
@@ -53,10 +55,11 @@ export type Tag =
 
 /** Every stat a character can have. Add new ones here; Stats and the stat engine pick them up. */
 export const STAT_KEYS = [
+  'woundmaker', 'wintersPyre', 'homecoming', 'borrowedTomorrow',
   'life', 'lifePct', 'lifeMore', 'lifeRegen', 'lifeRegenPct', 'lifeLeech', 'manaLeech', 'physMin', 'physMax', 'physPct',
   'fireMin', 'fireMax', 'coldMin', 'coldMax', 'lightMin', 'lightMax', 'chaosMin', 'chaosMax', 'chaosPct', 'chillChance', 'shockChance', 'elemPct', 'attackSpeedPct', 'moveSpeedPct',
   'attackSpeedMore', 'critChancePct', 'critMulti', 'armour', 'armourPct', 'armourMore', 'evasion',
-  'evasionPct', 'fireRes', 'coldRes', 'lightRes', 'allRes', 'chaosRes', 'itemRarity', 'skillSpeed', 'skillXp',
+  'evasionPct', 'fireRes', 'coldRes', 'lightRes', 'allRes', 'chaosRes', 'itemRarity', 'skillSpeed', 'skillXp', 'miningSpeed',
   'flaskEffect', 'flaskCharges', 'str', 'dex', 'int', 'allAttr', 'accuracy', 'mana', 'manaPct',
   'manaRegenPct', 'castSpeedPct', 'firePct', 'coldPct', 'lightPct', 'bleedPct', 'poisonPct', 'ignitePct',
   'ailmentPct', 'ailmentDuration', 'bleedDuration', 'poisonDuration', 'igniteDuration', 'bleedDurationFlat',
@@ -144,6 +147,7 @@ export const STAT_KEYS = [
   'gemcuttingSpeed', 'gemcuttingXp', 'gemDustSave', 'masterCutter',
   'runecarvingSpeed', 'secondStroke', 'deepCuts', 'livingScript',
   'cookingSpeed', 'secondHelping', 'slowSimmer', 'headChef',
+  'gatheringSpeed', 'productionSpeed',
   'cartographySpeed', 'secondCopy', 'mapFind', 'masterCartographer',
 ] as const;
 
@@ -211,6 +215,8 @@ export interface FlaskInstance {
 }
 
 export interface Dot {
+  /** Winter's Pyre exception: this ignite was seeded by cold, never generic fire. */
+  coldSource?: boolean;
   /** Player ailment damage already emitted to the combat log. */
   reported?: number;
   kind: 'bleed' | 'poison' | 'ignite' | 'burn';
@@ -541,6 +547,16 @@ export interface HealOverTime {
 }
 
 export interface CombatRuntime {
+  pendingArrows?: {
+    remainingMs: number;
+    derived: Derived;
+    numbers: Omit<SkillNumbers, 'mods'> & { mods: Omit<CombinedMods, 'specials'> & { specials: string[] } };
+    targetUids: number[];
+    actor: Pick<GameState, 'character' | 'ascendancy' | 'life' | 'mana' | 'settings'>;
+    offence: Pick<CombatRuntime, 'asc' | 'ambush' | 'empowered' | 'counterweightMore' | 'shield' | 'retort' | 'storedDamage' | 'buffs' | 'manaFrac' | 'riposting' | 'decreeMult' | 'misdirect' | 'skillCount' | 'mech' | 'mechDamage'>;
+  }[];
+  returningArrow?: boolean;
+  arrowPath?: number[];
   zoneId: string;
   /** Architect's Compass / First Exile's Covenant: spell and skill cast counters */
   spellCount?: number;
@@ -737,6 +753,7 @@ export type CraftMethod = { orb: string; fossil?: string | null; sealed?: string
 export type StopRule = { kind: 'has'; affixId: string; minTier?: number } | { kind: 'twoOf'; affixIds: string[] };
 
 export type Action =
+  | { kind: 'project'; runId: number }
   /** `double`: a mini-game hit in its double zone, so the next finish pays out twice */
   | { kind: 'skill'; actionId: string; progress: number; focus?: number; double?: boolean }
   | { kind: 'combat'; zoneId: string }
@@ -1067,6 +1084,8 @@ export interface HeistState {
   auto: string | null;
   /** running totals: jobs finished, and how many of those ended in an alarm */
   tally: { jobs: number; alarms: number };
+  /** equipment target category per job ('all' | 'weapon' | 'armour' | 'jewellery') */
+  targets?: Record<string, 'all' | 'weapon' | 'armour' | 'jewellery'>;
 }
 
 /** A saved doll: what each slot holds, by item uid. A slot left out comes off when the set goes on. */
@@ -1129,6 +1148,7 @@ export interface GameState {
   skills: Record<SkillId, number>;
   /** Character-owned nominal work practiced in explicitly authored non-combat bands. */
   skillingMastery: Record<string, number>;
+  professionProgress: import('./professions').ProfessionProgress;
   /** the bag you carry (BAG_SIZE) */
   inventory: Item[];
   /** fresh drops waiting to be picked up, oldest first; kept when you leave an area */
@@ -1192,6 +1212,7 @@ export interface GameState {
   meal: { id: string; remainingMs: number } | null;
   /** when a meal runs out, eat another of the same from the bank */
   keepEating: boolean;
+  selectedGemRecycleUid?: number | null;
   smithCatalyst: SmithCatalyst;
   /** `rerolls`: paid restocks since the last free one (raises the price) */
   vendor: { stock: VendorOffer[]; refreshAt: number; rerolls?: number };
@@ -1203,6 +1224,7 @@ export interface GameState {
 }
 
 export type GameEvent =
+  | { t: 'profession'; category: 'discovery' | 'progress' | 'project' | 'spending' | 'work'; id: string; amount: number; materials?: Record<string, number> }
   | {
       t: 'hit';
       target: 'player' | 'monster' | 'minion';

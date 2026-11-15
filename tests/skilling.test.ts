@@ -191,7 +191,7 @@ describe('essences', () => {
     s.account.bank.essence_embers_2 = 1;
     s.account.bank.essence_haste_2 = 1;
     expect(essenceReason(s, 'essence_embers_2', ring(s, 5).uid)).toMatch(/item level 8/);
-    const base = BASES.find((b) => spawnWeight(affixDef('attack_speed'), b) === 0)!;
+    const base = BASES.find((b) => !b.projectOnly && spawnWeight(affixDef('attack_speed'), b) === 0)!;
     const other = createItem(s, base.id, 20, 'normal', seeded(1));
     s.inventory.push(other);
     expect(essenceReason(s, 'essence_haste_2', other.uid)).toBe('Cannot roll on this item type');
@@ -278,7 +278,7 @@ describe('auto-crafting', () => {
 });
 
 describe('smithing catalysts', () => {
-  it('Resin raises item level but never past the campaign cap', () => {
+  it('Resin raises item level but never past the station cap', () => {
     const s = player();
     s.account.bank = { ...s.account.bank, copper_ore: 100, rough_gem: 100, ash_resin: 5 };
     setSmithCatalyst(s, { resin: 'ash_resin' });
@@ -288,7 +288,7 @@ describe('smithing catalysts', () => {
 
     s.skills.smithing = xpForLevel(30);
     run(s, 'smith_iron_ring', 1);
-    expect(s.inventory.at(-1)!.ilvl).toBe(10); // Ashen Woods tops out at 10
+    expect(s.inventory.at(-1)!.ilvl).toBe(21); // Forge 1 strength cap
   });
 
   it('a Fossil is only used when the base comes out Magic', () => {

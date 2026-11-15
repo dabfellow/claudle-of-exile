@@ -1,19 +1,30 @@
-import { CREW_SLOT_LEVELS, ALARM_KEEPS, GEAR, GETAWAY_COST_MULT, hasHeistJob, heistJob, MAX_ALARM, MAX_ROGUE_RANK, rogueDef, rogueRankCost, ROGUES, STEALTH_FLOOR, STEALTH_PER_LEVEL, type HeistDrop, type HeistJob, type RogueSkill } from '../data/heist';
+import { CREW_SLOT_LEVELS, ALARM_KEEPS, GEAR, GETAWAY_COST_MULT, hasHeistJob, HEIST_JOBS, heistJob, MAX_ALARM, MAX_ROGUE_RANK, rogueDef, rogueRankCost, ROGUES, STEALTH_FLOOR, STEALTH_PER_LEVEL, type HeistDrop, type HeistJob, type RogueSkill } from '../data/heist';
 import { MARKER } from '../data/craftMats';
 import { actionsFor, type SkillAction } from '../data/skills';
-import { zoneDef } from '../data/zones';
+import type { BaseDef } from '../data/bases';
+import { seeUnique } from './account';
 import { addBank, canAfford, payCost } from './bank';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
 import type { Ctx } from './context';
-import { createItem, droppableBases } from './items';
+import { createItem, createUnique, droppableBases } from './items';
 import { placeItem } from './loot';
 import { focusMult, focusStep, takeDouble } from './minigame';
+import { awardProtectedProgress, recordDiscovery } from './professions';
 import { chance, pick } from './rng';
-import { actionBlocker, grantXp, skillLevel, smithIlvlCap } from './skills';
+import { actionBlocker, grantXp, skillLevel } from './skills';
 import { skillTreeStats } from './skillTree';
 import type { Derived } from './stats';
+import { bagFull } from './storage';
 import type { GameState, HeistState } from './types';
 import { grantMasteryPractice, masterySpeed } from './skillingMastery';
+
+export type HeistGearCategory = 'all' | 'weapon' | 'armour' | 'jewellery';
+
+export function baseCategory(b: BaseDef): 'weapon' | 'armour' | 'jewellery' {
+  if (b.slot === 'weapon') return 'weapon';
+  if (b.slot === 'ring' || b.slot === 'amulet' || b.slot === 'belt') return 'jewellery';
+  return 'armour';
+}
 
 export function newHeistState(): HeistState {
   return { rogues: {}, crew: [], exits: {}, auto: null, tally: { jobs: 0, alarms: 0 } };
@@ -100,7 +111,7 @@ export function cleanChance(s: GameState, job: HeistJob, rooms: number): number 
 
 export function roomMs(s: GameState, job: HeistJob, d: Derived): number {
   const t = skillTreeStats(s);
-  return (job.roomMs * (1 - crewEffect(s, 'locksmith'))) / (1 + (d.skillSpeed + (t.skillSpeed ?? 0) + (t.thievingSpeed ?? 0) + masterySpeed(s, job.mastery)) / 100);
+  return (job.roomMs * (1 - crewEffect(s, 'locksmith'))) / (1 + (d.skillSpeed + (d.gatheringSpeed ?? 0) + (t.skillSpeed ?? 0) + (t.thievingSpeed ?? 0) + masterySpeed(s, job.mastery)) / 100);
 }
 
 /** Share of the take you keep when an alarm goes off. */
@@ -120,8 +131,12 @@ export function setJobExit(s: GameState, jobId: string, room: number): void {
 
 export function jobBlocker(s: GameState, job: HeistJob): string | null {
   if (isClassic(s)) return CLASSIC_BLOCK;
-  if (!s.unlockedZones.includes(job.area)) return `Reach ${zoneDef(job.area).name} to unlock`;
   if (skillLevel(s, 'thieving') < job.level) return `Requires Thieving level ${job.level}`;
+  if (job.requires && !s.professionProgress.discoveries[job.requires] && !s.professionProgress.legacyAccess[`heist.${job.id}`]) {
+    const prev = HEIST_JOBS.find((j) => job.requires === `heist_clean_${j.id}`);
+    const name = prev ? prev.name : 'prior heist';
+    return `Complete a clean exit from ${name} to unlock`;
+  }
   return null;
 }
 
@@ -175,13 +190,28 @@ function addTake(take: Record<string, number>, id: string, n: number): void {
 }
 
 function rollDrops(ctx: Ctx, take: Record<string, number>, drops: HeistDrop[], mult: number): void {
-  for (const d of drops) if (chance(ctx.rng, d.chance * mult)) addTake(take, d.id, d.qty);
+  for (const d of drops) if (chance(ctx.rng, Math.min(1, d.chance * mult))) addTake(take, d.id, d.qty);
 }
 
-/** Stolen gear is a rare of the job's level, never past what the campaign has opened. */
+export function heistGearTargetPool(s: GameState, job: HeistJob): { bases: BaseDef[]; ilvl: number; category: HeistGearCategory } {
+  const thievingLvl = skillLevel(s, 'thieving');
+  const ilvl = Math.min(job.ilvl, thievingLvl + 10);
+  const category = (s.heist.targets?.[job.id] ?? 'all') as HeistGearCategory;
+  const allBases = droppableBases(ilvl);
+  const filtered = category === 'all' ? allBases : allBases.filter((b) => baseCategory(b) === category);
+  return { bases: filtered.length > 0 ? filtered : allBases, ilvl, category };
+}
+
+export function setJobGearTarget(s: GameState, jobId: string, target: HeistGearCategory): void {
+  if (!s.heist.targets) s.heist.targets = {};
+  s.heist.targets[jobId] = target;
+}
+
+/** Stolen gear is a rare of the job's level, capped by min(job.ilvl, Thieving level + 10). */
 function stealGear(s: GameState, ctx: Ctx, job: HeistJob): void {
-  const ilvl = Math.min(job.ilvl, smithIlvlCap(s));
-  placeItem(s, ctx, createItem(s, pick(ctx.rng, droppableBases(ilvl)).id, ilvl, 'rare', ctx.rng));
+  const { bases, ilvl } = heistGearTargetPool(s, job);
+  const base = pick(ctx.rng, bases);
+  placeItem(s, ctx, createItem(s, base.id, ilvl, 'rare', ctx.rng));
 }
 
 /** Bank the take. On an alarm each thing is kept at the share `keep`, so a lone Seal is a coin flip and not a loss. */
@@ -200,7 +230,28 @@ function payOut(s: GameState, ctx: Ctx, job: HeistJob, take: Record<string, numb
 
 function endJob(s: GameState, ctx: Ctx, job: HeistJob, take: Record<string, number>, alarm: boolean): void {
   s.heist.tally.jobs += 1;
-  if (alarm) s.heist.tally.alarms += 1;
+  const completedRoom = s.action?.kind === 'heist' ? s.action.room : 0;
+  if (alarm) {
+    s.heist.tally.alarms += 1;
+  } else {
+    recordDiscovery(s, ctx, `heist_clean_${job.id}`);
+    if (job.id === 'occult_treasury' && completedRoom >= job.rooms) {
+      awardProtectedProgress(s, ctx, 'treasury_fragment', 4);
+      awardProtectedProgress(s, ctx, 'oath_fragment', 1);
+      if (chance(ctx.rng, 0.005)) {
+        const item = createUnique(s, 'borrowed_tomorrow', 80, ctx.rng);
+        s.lifetime.uniquesFound += 1;
+        seeUnique(s.account, item);
+        if (!bagFull(s)) {
+          s.inventory.push(item);
+        } else {
+          s.account.overflow.push(item);
+        }
+        ctx.emit({ t: 'loot', item });
+        ctx.emit({ t: 'info', text: 'Occult Treasury jackpot! Borrowed Tomorrow recovered.', tone: 'good' });
+      }
+    }
+  }
   payOut(s, ctx, job, take, alarm ? alarmKeeps(s) : 1);
   // an alarm is a bad night, not a stop: the tone stays plain so it never reads as work halted
   ctx.emit({ t: 'info', text: alarm ? `${job.name}: the alarm went up. You got out with part of the take` : `${job.name}: clean getaway`, ...(alarm ? {} : { tone: 'good' as const }) });
@@ -219,6 +270,13 @@ function finishRoom(s: GameState, ctx: Ctx, job: HeistJob, d: Derived): void {
   const t = skillTreeStats(s);
   grantXp(s, ctx, 'thieving', job.xp * (1 + (d.skillXp + (t.skillXp ?? 0)) / 100));
   grantMasteryPractice(s, job.mastery, job.roomMs / 1000);
+  if (job.id === 'occult_treasury') {
+    awardProtectedProgress(s, ctx, 'treasury_fragment', 1);
+    s.professionProgress.counters['thieving.treasury_rooms'] = (s.professionProgress.counters['thieving.treasury_rooms'] ?? 0) + 1;
+    if ((s.professionProgress.counters['thieving.treasury_rooms'] % 12) === 0) {
+      awardProtectedProgress(s, ctx, 'oath_fragment', 1);
+    }
+  }
   if (chance(ctx.rng, alarmChance(s, job, a.room))) {
     endJob(s, ctx, job, a.take, true);
     return;

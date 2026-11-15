@@ -43,6 +43,7 @@ import { runesOpen } from './runes';
 import type { GameState, Item, Rarity, VendorOffer } from './types';
 import { characterLevel } from './character';
 import { bagFull, takeOwned } from './storage';
+import { professionAccessReason } from './professions';
 
 export function stationLevel(s: GameState, id: StationId): number {
   return s.account.hideout[id] ?? 1;
@@ -92,6 +93,19 @@ export function nextUpgradeCost(s: GameState, id: StationId): Record<string, num
   const def = stationDef(id);
   const lvl = stationLevel(s, id);
   return lvl >= def.levels.length ? null : hideoutCost(s, def.levels[lvl].cost);
+}
+
+/** Alternative payment only for necessary profession tiers; the original route remains available. */
+export function professionStationRoute(s: GameState, id: StationId) {
+  const next = stationLevel(s, id) + 1;
+  if ((id !== 'forge' && id !== 'alchemy_table') || next > 3) return null;
+  const skill = id === 'forge' ? 'smithing' : 'alchemy';
+  const level = id === 'forge' ? (next === 2 ? 10 : 22) : (next === 2 ? 8 : 18);
+  const cycles = next === 2 ? 20 : 60;
+  const cost: Record<string, number> = id === 'forge'
+    ? next === 2 ? { gold: 300, copper_bar: 10, ash_plank: 5 } : { gold: 1200, iron_bar: 20, oak_plank: 10 }
+    : next === 2 ? { gold: 300, sunpetal: 40, ash_plank: 5 } : { gold: 1200, frostleaf: 60, iron_bar: 10 };
+  return { cost, requirement: `${skill === 'smithing' ? 'Smithing' : 'Alchemy'} ${level} and ${cycles} completed cycles`, reason: professionAccessReason(s, { skill, level, accomplishments: [`${skill}_work_${cycles}`] }) };
 }
 
 const RULE_NAMES: Record<RuleUnlock, string> = { vitals: 'Vitals', status: 'Status', ground: 'Ground', windups: 'Wind-up', aim: 'Aim' };
@@ -225,10 +239,13 @@ export function stationPerks(s: GameState, id: StationId): string[] {
   }
 }
 
-export function upgradeStation(s: GameState, ctx: Ctx, id: StationId): string | null {
+export function upgradeStation(s: GameState, ctx: Ctx, id: StationId, route: 'original' | 'profession' = 'original'): string | null {
   const locked = stationLockReason(s, id);
   if (locked) return locked;
-  const cost = nextUpgradeCost(s, id);
+  const alternative = route === 'profession' ? professionStationRoute(s, id) : null;
+  if (route === 'profession' && !alternative) return 'No profession route for this tier';
+  if (alternative?.reason) return alternative.reason;
+  const cost = alternative?.cost ?? nextUpgradeCost(s, id);
   if (!cost) return 'Already at max level';
   if (!canAfford(s, cost)) return 'Not enough materials';
   payCost(s, cost);

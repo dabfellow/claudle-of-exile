@@ -86,11 +86,11 @@ describe('clearing level 1 gems', () => {
   });
 });
 
-describe('area-gated gathering', () => {
-  it('locks nodes and recipes until their area is reached', () => {
+describe('independent gathering', () => {
+  it('uses skill levels instead of campaign areas', () => {
     const s = fresh();
     s.skills.mining = 1e9;
-    expect(actionBlocker(s, actionDef('mine_iron'))).toMatch(/^Reach /);
+    expect(actionBlocker(s, actionDef('mine_iron'))).toBeNull();
     s.unlockedZones.push('ashwood');
     expect(actionBlocker(s, actionDef('mine_iron'))).toBeNull();
   });

@@ -32,6 +32,7 @@ import { isClassic } from '../engine/challenge';
 import { MARKET_OPEN } from '../platform/market';
 import { marketInNav } from './marketWindDown';
 import { skillLock } from './skillLock';
+import { professionProgressLabel } from '../engine/professions';
 
 export type Page =
   | 'hideout'
@@ -117,6 +118,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
 ];
 
 function activeSkill(s: GameState): SkillId | null {
+  if (s.action?.kind === 'project') return s.professionProgress.activeProject?.project.skill ?? null;
   if (s.action?.kind === 'skill') return actionDef(s.action.actionId).skill;
   if (s.action?.kind === 'combat') return 'combat';
   if (s.action?.kind === 'heist') return 'thieving';
@@ -244,6 +246,13 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
     progress = s.action.progress / interval;
     color = sk.color;
     target = a.skill;
+  } else if (s.action?.kind === 'project' && s.professionProgress.activeProject) {
+    const run = s.professionProgress.activeProject;
+    title = `Project: ${run.project.name}`;
+    sub = run.stopReason ?? `${fmtTime(run.project.durationMs - run.elapsedMs)} base work left`;
+    progress = run.elapsedMs / run.project.durationMs;
+    target = run.project.skill;
+    color = SKILLS[run.project.skill].color;
   } else if (s.action?.kind === 'craft') {
     const item = findItem(s, s.action.uid);
     title = `Crafting: ${item ? itemName(item) : 'item'}`;
@@ -337,7 +346,7 @@ export function XpBar() {
   const next = xpToReach('combat', lvl + 1);
   const pct = progressOf('combat', xp);
   const rate = game.xpPerHour('combat');
-  const training = s.action?.kind === 'skill' ? actionDef(s.action.actionId).skill : s.action?.kind === 'heist' ? 'thieving' : null;
+  const training = s.action?.kind === 'skill' ? actionDef(s.action.actionId).skill : s.action?.kind === 'heist' ? 'thieving' : s.action?.kind === 'project' ? s.professionProgress.activeProject?.project.skill ?? null : null;
   const [pops, setPops] = useState<{ id: number; text: string; x: number }[]>([]);
   const [pulse, setPulse] = useState(0);
   const [levelUp, setLevelUp] = useState(0);
@@ -602,7 +611,7 @@ export function OfflineModal() {
         {spoils && (
           <>
             <div className="away-divider" />
-            <div className="away-section">{fought ? 'Spoils of Battle' : 'Spoils'}</div>
+            <div className="away-section">{fought ? 'Spoils of Battle' : 'Net storage gains'}</div>
             <div className="away-spoils">
               {mats.map(([id, n]) => (
                 <div key={id} className="away-spoil">
@@ -616,7 +625,7 @@ export function OfflineModal() {
                   <GameIcon name="stash" size={20} color="var(--accent)" />
                   <b className="num">{sum.items}</b>
                   <span>Items Found</span>
-                  <span className="dim small">waiting on the Combat page</span>
+                  <span className="dim small">in your bag or waiting on the Combat page</span>
                 </div>
               )}
               {sum.gems > 0 && (
@@ -630,6 +639,18 @@ export function OfflineModal() {
           </>
         )}
 
+        {Object.keys(sum.ordinaryOutput ?? {}).length > 0 && <div className="away-alert">
+          <b>Ordinary production · before spending</b>
+          {Object.entries(sum.ordinaryOutput ?? {}).map(([id, n]) => <p key={id}>{id.replaceAll('_', ' ')}: +{fmt(n)}</p>)}
+        </div>}
+        {Object.keys(sum.protectedProgress ?? {}).length > 0 && <div className="away-alert">
+          <b>Protected progress</b>
+          {Object.entries(sum.protectedProgress ?? {}).map(([id, n]) => <p key={id}>{materialDef(id).name}: +{fmt(n)}</p>)}
+        </div>}
+        {(sum.discoveries?.length ?? 0) > 0 && <div className="away-alert"><b>Discoveries</b><p>{sum.discoveries!.map(professionProgressLabel).join(', ')}</p></div>}
+        {Object.keys(sum.projects ?? {}).length > 0 && <div className="away-alert"><b>Completed projects</b>{Object.entries(sum.projects ?? {}).map(([id, n]) => <p key={id}>{professionProgressLabel(id)} ×{n}</p>)}</div>}
+        {Object.keys(sum.projectWork ?? {}).length > 0 && <div className="away-alert"><b>Project work</b>{Object.entries(sum.projectWork ?? {}).map(([id, n]) => <p key={id}>{professionProgressLabel(id)}: {Math.round(n / 1000)}s base work</p>)}</div>}
+        {Object.values(sum.materials).some((n) => n < 0) && <div className="away-alert"><b>Net materials spent</b>{Object.entries(sum.materials).filter(([, n]) => n < 0).map(([id, n]) => <p key={id}>{materialDef(id).name}: {fmt(n)}</p>)}</div>}
         {sum.died && (
           <div className="away-alert bad">
             <div className="row">

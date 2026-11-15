@@ -12,8 +12,8 @@ import { charXpForLevel } from '../src/engine/xp';
 const ctx = (seed = 1) => makeCtx(seeded(seed));
 
 describe('weapon families', () => {
-  it('gives every weapon base a family, its attributes and its built-in mod', () => {
-    const weapons = BASES.filter((b) => b.slot === 'weapon');
+  it('gives every combat weapon base a family, its attributes and its built-in mod', () => {
+    const weapons = BASES.filter((b) => b.slot === 'weapon' && !b.projectOnly);
     for (const b of weapons) {
       expect(b.family, b.id).toBeDefined();
       const fam = WEAPON_FAMILIES[b.family!];
@@ -25,7 +25,7 @@ describe('weapon families', () => {
   });
 
   it('only staves and bows are two-handed', () => {
-    for (const b of BASES.filter((x) => x.slot === 'weapon')) expect(!!b.twoHanded, b.id).toBe(b.family === 'staff' || b.family === 'bow');
+    for (const b of BASES.filter((x) => x.slot === 'weapon')) expect(!!b.twoHanded, b.id).toBe(b.family === 'staff' || b.family === 'bow' || b.id === 'overhaul_great_axe');
   });
 
   it('bows make attacks ranged; wands add spell damage', () => {

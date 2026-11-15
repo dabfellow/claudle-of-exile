@@ -28,6 +28,9 @@ import { PASSIVE_NODES } from '../src/data/passiveTree';
 import { RESONANCE_PER_PIECE, RUNE_FAMILIES, RUNE_GRADES, RUNE_READINGS, runeEffect } from '../src/data/runes';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { SKILLS, actionsFor } from '../src/data/skills';
+import { miningPreview } from '../src/engine/mining';
+import { woodcuttingPreview } from '../src/engine/woodcutting';
+import { foragingPreview } from '../src/engine/foraging';
 import { describeStat } from '../src/data/statText';
 import { ACTS, MECHANIC_INFO, ZONES, type MonsterDef, type ZoneDef } from '../src/data/zones';
 import { GROUND_IN_PLAY, cleansesFrostbite, ruleUnlockLevel } from '../src/engine/automation';
@@ -808,7 +811,8 @@ function gatheringBlock(): string {
       const zone = a.area ?? a.gate?.zone;
       const out = Object.entries(a.outputs ?? {}).map(([id, n]) => `${n} ${matName(id)}`).join(', ');
       const extra = (a.bonus ?? []).map((b) => `${matName(b.id)} ${pct(b.chance)}`).join(', ');
-      return [esc(a.name), String(a.level), secs(a.intervalMs), Math.round(perHour * a.xp).toLocaleString('en'), esc(out), pct(a.outputChance ?? 1), esc(extra), zone && ENTITIES.has(U.area(zone)) ? ent(U.area(zone)) : 'From the start'];
+      const details = [...miningPreview({ professionProgress: { counters: {} } }, a), ...woodcuttingPreview({ professionProgress: { counters: {} } }, a), ...foragingPreview({ professionProgress: { counters: {}, discoveries: {} } } as any, a)].join(' ');
+      return [esc(a.name), String(a.level), secs(a.intervalMs), Math.round(perHour * a.xp).toLocaleString('en'), esc(out), pct(a.outputChance ?? 1), esc([extra, details].filter(Boolean).join(' ')), a.accomplishments?.length ? esc(`Level + ${a.accomplishments.join(', ')} (${a.skill === 'woodcutting' ? a.id === 'cut_heartwood' ? '100 Woodcutting completions' : '100 ordinary cycles of the preceding wood' : a.skill === 'harvesting' ? '100 Foraging completions' : '100 ordinary cycles of the preceding metal'})`) : zone && ENTITIES.has(U.area(zone)) ? ent(U.area(zone)) : 'Skill level'];
     });
     return `<h3 id="${s.id}">${esc(s.name)}</h3><p>${esc(s.desc)}</p>${table(['Spot', 'Level', 'Time', 'XP per hour', 'Gives', 'Yield', 'Extra finds', 'Opens with'], rows)}`;
   }).join('');
@@ -851,12 +855,12 @@ function craftTool() {
   const crafting = Object.values(SKILLS).filter((s) => s.group === 'production');
   const recipes = crafting.flatMap((s) => actionsFor(s.id).filter((a) => !a.soon).map((a) => {
     const zone = a.area ? ENTITIES.get(U.area(a.area))?.name : a.gate?.label;
-    const out = a.baseId ? baseDef(a.baseId).name : a.gem ? `a random ${a.gem.kind} gem` : Object.entries(a.outputs ?? {}).map(([id, n]) => `${n} ${matName(id)}`).join(', ');
+    const out = a.baseId ? `${baseDef(a.baseId).name}${a.purpose ? ' (one rare, two guaranteed modifiers; see game preview)' : ''}` : a.gem ? `a random ${a.gem.kind} gem` : Object.entries({ ...a.outputs, ...a.protectedOutputs }).map(([id, n]) => `${n} ${matName(id)}${a.protectedOutputs?.[id] ? ' (protected)' : ''}`).join(', ');
     return {
       n: a.name, skill: s.name, skillName: s.name, lvl: a.level, ms: a.intervalMs, xp: a.xp,
       in: Object.fromEntries(Object.entries(a.inputs ?? {}).map(([id, n]) => [matName(id), n])),
       out: out || (a.flaskId ? 'a flask' : ''),
-      where: zone ? `${zone} open` : '',
+      where: a.forge ? `Forge ${a.forge}; skill level; full protected costs` : a.purpose ? `Forge ${a.level < 10 ? 1 : a.level < 22 ? 2 : 3}; skill level; free bag slot; stops after one` : zone ? `${zone} open` : '',
     };
   }));
   return tool('craft', { skills: crafting.map((s) => s.name), recipes });

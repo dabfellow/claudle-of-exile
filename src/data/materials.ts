@@ -3,6 +3,8 @@ import { COOKING_MATERIALS } from './cooking';
 import { CRAFT_MATERIALS } from './craftMats';
 import { EXPEDITION_MATERIALS } from './expedition';
 import { RUNE_MATERIALS } from './runes';
+import { MINING_METALS } from './mining';
+import { WOODS } from './woodcutting';
 
 export type MaterialKind = 'ore' | 'log' | 'component' | 'trophy' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'rune' | 'artifact' | 'ingredient' | 'food' | 'chart' | 'currency' | 'gold' | 'fish';
 
@@ -18,12 +20,37 @@ export interface MaterialDef {
 }
 
 export const MATERIALS: MaterialDef[] = [
+  { id: 'exceptional_crystal', name: 'Exceptional Crystal', kind: 'component', color: '#d0569b', value: 0, desc: 'Gemcutting 60: cut 10 Mining Crystal Shards and 5 Rough Gems into one protected crystal. Used by Winter’s Pyre and later projects.' },
+  { id: 'convergence_crystal', name: 'Convergence Crystal', kind: 'component', color: '#4fc1a6', value: 0, desc: 'Gemcutting 85: polish an Exceptional Crystal with Arcane Dust into a flawless convergence crystal. Component for the Sum of All Things pinnacle project.' },
+  { id: 'inscription_fragment', name: 'Inscription Fragment', kind: 'component', color: '#6fa8ff', value: 0, desc: 'One every 20 ordinary grade 2+ rune completions plus 1% extra, counted once despite manual bonus copies. Ten and a Keen grade 3 rune make a Return Inscription.' },
+  { id: 'return_inscription', name: 'Return Inscription', kind: 'component', color: '#6fa8ff', value: 0, desc: 'Rune-carving 65: 10 Inscription Fragments + 1 Keen grade 3 rune. Two are used in The Homecoming project.' },
+  { id: 'choir_inscription', name: 'Choir Inscription', kind: 'component', color: '#d6453d', value: 0, desc: 'Rune-carving 70: 10 Inscription Fragments + 1 Blood grade 3 rune. Protected component for later profession projects.' },
+  { id: 'circuit_inscription', name: 'Circuit Inscription', kind: 'component', color: '#f2d14c', value: 0, desc: 'Rune-carving 70: 10 Inscription Fragments + 1 Storm grade 3 rune. Protected component for later profession projects.' },
+  { id: 'convergence_inscription', name: 'Convergence Inscription', kind: 'component', color: '#9b8e7e', value: 0, desc: 'Rune-carving 90: 5 Inscription Fragments + 1 Stone grade 4 rune. Protected component for the Sum of All Things pinnacle project.' },
+  { id: 'treasury_fragment', name: 'Treasury Fragment', kind: 'component', color: '#c9a35a', value: 0, desc: 'Awarded for completing rooms in The Occult Treasury. 120 fragments claim Borrowed Tomorrow at Thieving 65.' },
+  { id: 'oath_fragment', name: 'Oath Fragment', kind: 'component', color: '#e8c25a', value: 0, desc: 'Awarded from clean Occult Treasury vaults and every 12 completed rooms. Five assemble a Stolen Oath Seal at Thieving 75.' },
+  { id: 'stolen_oath_seal', name: 'Stolen Oath Seal', kind: 'component', color: '#f7e08a', value: 0, desc: 'Thieving 75: assembled from 5 Oath Fragments. Protected component for The Second Heresy pinnacle project.' },
   { id: 'gold', name: 'Gold', kind: 'gold', color: '#e8c25a', value: 1 },
 
   { id: 'copper_ore', name: 'Copper Ore', kind: 'ore', color: '#c8743f', value: 2 },
   { id: 'iron_ore', name: 'Iron Ore', kind: 'ore', color: '#9aa3ad', value: 5 },
   { id: 'mithril_ore', name: 'Mithril Ore', kind: 'ore', color: '#6fc3d8', value: 12 },
   { id: 'rough_gem', name: 'Rough Gem', kind: 'gem', color: '#d0569b', value: 25 },
+  ...MINING_METALS.slice(3).map((m): MaterialDef => ({ id: `${m.id}_ore`, name: `${m.name} Ore`, kind: 'ore', color: m.color, value: 0, desc: `Smelt 5 into one ${m.name} Bar in Smithing at level ${m.level}; select refining separately.` })),
+  ...MINING_METALS.slice(3).map((m): MaterialDef => ({ id: `${m.id}_bar`, name: `${m.name} Bar`, kind: 'component', color: m.color, value: 0, desc: `${m.name} Ore refined in Smithing. Adamant feeds Stone Alloy; other advanced bars are stock for later projects. Finished uniques remain unavailable.` })),
+  ...([
+    ['tempered_alloy', 'Tempered Alloy', 'Two Iron Bars and one Copper Bar; used by Woundmaker and The Homecoming projects.'],
+    ['wound_alloy', 'Wound Alloy', 'Five Mithril Bars, two Copper Bars and ten Mineral Fragments; makes Convergence Frames and Woundmaker.'],
+    ['stone_alloy', 'Stone Alloy', 'Five Adamant Bars, two Iron Bars and ten Stone Fragments; makes Convergence Frames and later defensive projects.'],
+    ['heartwood_frame', 'Heartwood Frame', 'One Ancient Heartwood and five Yew Planks; used by Winter’s Pyre and The Homecoming, and saved for later defensive projects.'],
+    ['convergence_frame', 'Convergence Frame', 'One Wound Alloy, one Stone Alloy and one Ancient Heartwood; stock for the later Sum of All Things.'],
+    ['prepared_glass', 'Prepared Glass', 'Three Rough Gems and ten Sunpetal refined at Alchemy Table 3. Stock for later flask projects; recipes not available yet.'],
+    ['moon_distillate', 'Moon Distillate', 'Two Moon Blooms and ten Frostleaf refined at Alchemy Table 3. Stock for later nature projects; recipes not available yet.'],
+    ['star_distillate', 'Star Distillate', 'Two Star Blooms and ten Voidbloom refined at Alchemy Table 3. Stock for later nature projects; recipes not available yet.'],
+  ] as const).map(([id, name, desc]): MaterialDef => ({ id, name, kind: 'component', color: '#d6b67b', value: 0, desc: `${desc} Protected full-cost refinement; unfinished unique recipes remain unavailable.` })),
+  { id: 'crystal_shard', name: 'Crystal Shard', kind: 'component', color: '#d0569b', value: 0, desc: 'Crystal deposits: one every 30 cycles, plus 1% extra. Gemcutting 60 cuts ten shards and five Rough Gems into one Exceptional Crystal for Winter’s Pyre.' },
+  { id: 'mineral_fragment', name: 'Mineral Fragment', kind: 'component', color: '#6fc3d8', value: 0, desc: 'Mithril+ ordinary/crystal/fossil deposits: one every 60 eligible cycles, plus 1% extra. Saved for future Wound Alloy and project frames.' },
+  { id: 'stone_fragment', name: 'Stone Fragment', kind: 'component', color: '#8ca8c0', value: 0, desc: 'Adamant+ ordinary/crystal/fossil deposits: one every 60 eligible cycles, plus 1% extra. Saved for future Stone Alloy and project frames.' },
 
   { id: 'copper_bar', name: 'Copper Bar', kind: 'component', color: '#c8743f', value: 10, desc: 'Smelted from Copper Ore for hideout construction.' },
   { id: 'iron_bar', name: 'Iron Bar', kind: 'component', color: '#9aa3ad', value: 25, desc: 'Smelted from Iron Ore for hideout construction.' },
@@ -32,6 +59,12 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'ash_log', name: 'Ash Log', kind: 'log', color: '#b89a72', value: 2 },
   { id: 'oak_log', name: 'Oak Log', kind: 'log', color: '#8a6338', value: 5 },
   { id: 'yew_log', name: 'Yew Log', kind: 'log', color: '#6b3d2c', value: 12 },
+  ...WOODS.slice(3).flatMap((w): MaterialDef[] => [
+    { id: `${w.id}_log`, name: `${w.name} Log`, kind: 'log', color: w.color, value: 0, desc: 'Refine five into one matching plank. Stock for future Smithing bow, staff and defensive components; component recipes not available yet.' },
+    { id: `${w.id}_plank`, name: `${w.name} Plank`, kind: 'component', color: w.color, value: 0, desc: 'Refined timber for future Smithing bow, staff and defensive components; component recipes not available yet.' },
+  ]),
+  { id: 'heartwood_fragment', name: 'Heartwood Fragment', kind: 'component', color: '#c49b60', value: 0, desc: 'Ancient Heartwood Survey: one every 30 cycles, plus 1% extra. Ancient+ ordinary trees: one every 60 cycles. Refine 20 into Ancient Heartwood; future signature runes also use fragments.' },
+  { id: 'ancient_heartwood', name: 'Ancient Heartwood', kind: 'component', color: '#c49b60', value: 0, desc: 'Refined from 20 Heartwood Fragments. Smithing makes Heartwood Frames at level 45/Forge 3, or Convergence Frames at level 85/Forge 3. Finished unique recipes remain unavailable.' },
 
   { id: 'ash_plank', name: 'Ash Plank', kind: 'component', color: '#b89a72', value: 10, desc: 'Cut from Ash Logs for hideout construction.' },
   { id: 'oak_plank', name: 'Oak Plank', kind: 'component', color: '#8a6338', value: 25, desc: 'Cut from Oak Logs for hideout construction.' },
@@ -42,6 +75,8 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'frostleaf', name: 'Frostleaf', kind: 'herb', color: '#7fc8f8', value: 5 },
   { id: 'emberroot', name: 'Emberroot', kind: 'herb', color: '#e2603f', value: 10 },
   { id: 'voidbloom', name: 'Voidbloom', kind: 'herb', color: '#9b6dde', value: 20 },
+  { id: 'moon_bloom', name: 'Moon Bloom', kind: 'herb', color: '#b3d7fa', value: 0, desc: 'Moon Bloom Patch: one every 60 cycles plus 1% extra. Greenhouse grows the same material at its background rate. Stock for later distillates, signature meals and binding stock; recipes not yet available.' },
+  { id: 'star_bloom', name: 'Star Bloom', kind: 'herb', color: '#d4a9ff', value: 0, desc: 'Star Bloom Patch: one every 60 cycles plus 1% extra. Greenhouse grows the same material at its background rate. Stock for later distillates, signature meals and feasts; recipes not yet available.' },
 
   // Fishing is coming soon: nothing can catch these yet
   { id: 'mudskipper', name: 'Mudskipper', kind: 'fish', color: '#8a7b5a', value: 2 },

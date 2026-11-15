@@ -1,11 +1,19 @@
 import type { SkillId } from '../engine/types';
+import { GEMCUTTING_EXPANSION_ACTIONS, type GemFamily } from './gemcutting';
+import { WEAPON_COMPONENT_ACTIONS } from './weaponProjects';
+import { ARCHAEOLOGY_RECIPES, SITE_DISCOVERY } from './archaeology';
+import { MINING_ACTIONS, type MiningDeposit } from './mining';
+import { WOODCUTTING_ACTIONS, type WoodcuttingSource } from './woodcutting';
+import { FORAGING_ACTIONS, foragingSource, type ForagingSource } from './foraging';
+import { ALCHEMY_EXPANSION_ACTIONS } from './alchemy';
+import { purposeRecipes, SMITH_COMPONENTS, type SmithPurpose } from './smithing';
 import { BASES, type BaseDef } from './bases';
 import { CARTOGRAPHY_GATE, CHART_TIERS, FOLIO_COST, FOLIO_LEVEL, FOLIO_SIZE, SEXTANT_RECIPES } from './cartography';
 import { COOKING_GATE } from './cooking';
 import { CULTURES, digChance, EXPEDITION_GATE, SITES } from './expedition';
 import { MAP_TIERS } from './maps';
 import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
-import { RUNE_FAMILIES, RUNE_GATE, RUNES } from './runes';
+import { RUNE_FAMILIES, RUNES } from './runes';
 import { masteryForAction, type MasterySpec } from './skillingMastery';
 
 export interface SkillDef {
@@ -21,24 +29,23 @@ export interface SkillDef {
 
 export const SKILLS: Record<SkillId, SkillDef> = {
   combat: { id: 'combat', name: 'Character', group: 'combat', color: '#e0a640', verb: 'Fighting', desc: 'Your character level: raises Life and Mana and grants passive points.' },
-  mining: { id: 'mining', name: 'Mining', group: 'gathering', color: '#c8743f', verb: 'Mining', desc: 'Dig ore and gems for Smithing.' },
-  woodcutting: { id: 'woodcutting', name: 'Woodcutting', group: 'gathering', color: '#6fae4a', verb: 'Chopping', desc: 'Fell trees for hafts, frames and flask stoppers.' },
+  mining: { id: 'mining', name: 'Mining', group: 'gathering', color: '#c8743f', verb: 'Mining', desc: 'Prospect deeper metals. Choose ordinary ore, rich metal, crystal or fossil deposits; save dependable fragments for future projects.' },
+  woodcutting: { id: 'woodcutting', name: 'Woodcutting', group: 'gathering', color: '#6fae4a', verb: 'Chopping', desc: 'Choose timber, guaranteed resin or ancient heartwood. Refine materials for Smithing, construction and future equipment frames.' },
   // id kept as `harvesting` so saves, tree nodes and the Greenhouse don't need migrating
   harvesting: { id: 'harvesting', name: 'Foraging', group: 'gathering', color: '#d9b84a', verb: 'Foraging', desc: 'Pick herbs off the ground for Alchemy.' },
   thieving: { id: 'thieving', name: 'Thieving', group: 'gathering', color: '#c9a35a', verb: 'Thieving', desc: "Lift purses for gold and Rogue's Markers, then spend them on Heists against the Khanate." },
   archaeology: { id: 'archaeology', name: 'Archaeology', group: 'gathering', color: '#b0784a', verb: 'Digging', desc: 'Dig sites in the Hollow Peaks for Artifacts, then trade them with the merchants of the Expedition for currency.' },
-  smithing: { id: 'smithing', name: 'Smithing', group: 'production', color: '#b8b8c8', verb: 'Smithing', desc: 'Forge equipment bases. Higher level → higher item level.' },
+  smithing: { id: 'smithing', name: 'Smithing', group: 'production', color: '#b8b8c8', verb: 'Smithing', desc: 'Keep cheap bases for crafting, or choose purpose gear with two guaranteed useful stats. Select smelting, alloys, frames and equipment assembly separately.' },
   alchemy: { id: 'alchemy', name: 'Alchemy', group: 'production', color: '#9b6dde', verb: 'Brewing', desc: 'Brew flasks and transmute dust into orbs.' },
   gemcutting: { id: 'gemcutting', name: 'Gemcutting', group: 'production', color: '#4fc1a6', verb: 'Cutting', desc: 'Cut rough gems into skill and support gems.' },
   runecarving: { id: 'runecarving', name: 'Rune-carving', group: 'production', color: '#6fa8ff', verb: 'Carving', desc: 'Carve old materials into runes, then inscribe them in the rune slot on your gear.' },
   cooking: { id: 'cooking', name: 'Cooking', group: 'production', color: '#e08a4a', verb: 'Cooking', desc: 'Cook gathered plants into meals, and into the strongest flask ingredients for Alchemy.' },
-  cartography: { id: 'cartography', name: 'Cartography', group: 'production', color: '#8a7ad8', verb: 'Drawing', desc: 'Draw maps of the theme you want and upgrade them to higher tiers, ready for the Map Device.' },
+  cartography: { id: 'cartography', name: 'Cartography', group: 'production', color: '#8a7ad8', verb: 'Drawing', desc: 'Draw maps and upgrade them to higher tiers, ready for the Map Device.' },
   fishing: { id: 'fishing', name: 'Fishing', group: 'gathering', color: '#4fa3d9', verb: 'Fishing', desc: 'Cast a line into the waters of Wraeclast.', soon: true },
 };
 
 /** Planned skills shown on the Coming soon page. One with a `gate` is built, and leaves the page once that area opens. */
 export const UPCOMING_SKILLS: { name: string; theme: string; icon: string; color: string; desc: string; gate?: { zone: string } }[] = [
-  { name: 'Cartography', theme: 'Maps', icon: 'map', color: '#8a7ad8', desc: 'Draw and upgrade maps for the Map Device.', gate: CARTOGRAPHY_GATE },
   { name: 'Fletching', theme: 'Quivers', icon: 'woodcutting', color: '#7fae6a', desc: 'Turn logs into shafts and shafts into quivers.' },
 ];
 
@@ -54,10 +61,14 @@ export interface SkillAction {
   bonus?: { id: string; chance: number; qty: number }[];
   /** smithing: produces an item base */
   baseId?: string;
+  /** One selected rare with two advertised guarantees; independent of catalysts/salvage. */
+  purpose?: SmithPurpose;
+  forge?: number;
+  alchemyTable?: number;
   /** alchemy: produces a flask */
   flaskId?: string;
-  /** gemcutting: produces a random gem of this kind */
-  gem?: { kind: 'skill' | 'support' | 'signature' };
+  /** gemcutting: produces a random gem of this kind or a targeted family/exact cut */
+  gem?: { kind: 'skill' | 'support' | 'signature' | 'family' | 'exact'; family?: GemFamily; exactId?: string };
   color: string;
   /** campaign area that must be unlocked first */
   area?: string;
@@ -74,6 +85,14 @@ export interface SkillAction {
   soon?: boolean;
   /** Stable per-task non-combat practice track and its explicitly allowed bonuses. */
   mastery?: MasterySpec;
+  /** Per nominal foreground completion, excluded from every ordinary yield/manual loop. */
+  protectedOutputs?: Record<string, number>;
+  discovery?: string;
+  foraging?: ForagingSource;
+  /** Character accomplishments; old eligible actions may retain a legacy access flag. */
+  accomplishments?: string[];
+  mining?: MiningDeposit;
+  woodcutting?: WoodcuttingSource;
 }
 
 const gather = (
@@ -141,26 +160,27 @@ const MILLING: SkillAction[] = [
   { id: 'mill_yew', skill: 'woodcutting', name: 'Cut Yew Planks', level: 30, intervalMs: 4000, xp: 42, inputs: { yew_log: 5 }, outputs: { yew_plank: 1 }, color: '#6b3d2c', area: 'shipgrave' },
 ];
 
-const mark = (id: string, name: string, level: number, intervalMs: number, xp: number, gold: number, marker: number, area: string, color: string, extra: SkillAction['bonus'] = []): SkillAction => ({
-  id, skill: 'thieving', name, level, intervalMs, xp, outputs: { gold }, bonus: [{ id: MARKER, chance: marker, qty: 1 }, ...extra], color, area,
+const mark = (id: string, name: string, level: number, intervalMs: number, xp: number, gold: number, marker: number, color: string, extra: SkillAction['bonus'] = []): SkillAction => ({
+  id, skill: 'thieving', name, level, intervalMs, xp, outputs: { gold }, bonus: [{ id: MARKER, chance: marker, qty: 1 }, ...extra], color,
 });
 
-/** Marks: no inputs, like a gathering node, and each Act 2 area adds some. A fence's mark trades its purse for Markers. */
+/** Marks: no inputs, level-only gathering. A fence's mark trades its purse for Markers. */
 const THIEVING: SkillAction[] = [
-  mark('mark_peddler', 'Road Peddler', 1, 3000, 7, 3, 0.12, 'cinderroad', '#a0603a'),
-  mark('mark_hauler', 'Salt Hauler', 6, 3500, 11, 6, 0.14, 'saltflats', '#b8b09a'),
-  { ...mark('mark_runner', "Fence's Runner", 9, 3500, 12, 6, 0.3, 'saltflats', '#c9a35a'), outputChance: ALT_YIELD },
-  mark('mark_outrider', 'Khanate Outrider', 13, 3500, 16, 10, 0.16, 'blackgrass', '#7a7a4a'),
-  mark('mark_factor', 'Caravan Factor', 19, 4000, 22, 18, 0.18, 'caravan', '#b08a5a', [{ id: SEAL, chance: 0.002, qty: 1 }]),
-  { ...mark('mark_quartermaster', 'Khanate Quartermaster', 23, 4000, 24, 18, 0.4, 'caravan', '#d0a860'), outputChance: ALT_YIELD },
-  mark('mark_warden', 'Barrow Warden', 28, 4000, 28, 30, 0.2, 'kurgans', '#6f7a8a', [{ id: WAX, chance: 0.002, qty: 1 }]),
-  mark('mark_collector', 'Tax Collector', 35, 4500, 34, 48, 0.22, 'plateau', '#6a78a0'),
-  mark('mark_acolyte', 'Pyre Acolyte', 42, 5000, 41, 75, 0.25, 'pyretemple', '#c0502a', [{ id: SEAL, chance: 0.003, qty: 1 }, { id: WAX, chance: 0.002, qty: 1 }]),
-  mark('mark_steward', "Khan's Steward", 52, 5000, 46, 110, 0.28, 'burningthrone', '#e0702a', [{ id: SEAL, chance: 0.004, qty: 1 }, { id: WAX, chance: 0.003, qty: 1 }]),
+  mark('mark_peddler', 'Road Peddler', 1, 3000, 7, 3, 0.12, '#a0603a'),
+  mark('mark_hauler', 'Salt Hauler', 6, 3500, 11, 6, 0.14, '#b8b09a'),
+  { ...mark('mark_runner', "Fence's Runner", 9, 3500, 12, 6, 0.3, '#c9a35a'), outputChance: ALT_YIELD },
+  mark('mark_outrider', 'Khanate Outrider', 13, 3500, 16, 10, 0.16, '#7a7a4a'),
+  mark('mark_factor', 'Caravan Factor', 19, 4000, 22, 18, 0.18, '#b08a5a', [{ id: SEAL, chance: 0.002, qty: 1 }]),
+  { ...mark('mark_quartermaster', 'Khanate Quartermaster', 23, 4000, 24, 18, 0.4, '#d0a860'), outputChance: ALT_YIELD },
+  mark('mark_warden', 'Barrow Warden', 28, 4000, 28, 30, 0.2, '#6f7a8a', [{ id: WAX, chance: 0.002, qty: 1 }]),
+  mark('mark_collector', 'Tax Collector', 35, 4500, 34, 48, 0.22, '#6a78a0'),
+  mark('mark_acolyte', 'Pyre Acolyte', 42, 5000, 41, 75, 0.25, '#c0502a', [{ id: SEAL, chance: 0.003, qty: 1 }, { id: WAX, chance: 0.002, qty: 1 }]),
+  mark('mark_steward', "Khan's Steward", 52, 5000, 46, 110, 0.28, '#e0702a', [{ id: SEAL, chance: 0.004, qty: 1 }, { id: WAX, chance: 0.003, qty: 1 }]),
 ];
 
 /** Digs: no inputs and nothing to go wrong. Most of a dig is dirt, so `outputChance` is how often it turns up an Artifact. */
 const ARCHAEOLOGY: SkillAction[] = SITES.map((x) => ({
+  accomplishments: SITE_DISCOVERY[x.id] ? [`expedition.${SITE_DISCOVERY[x.id]}.0`] : [],
   id: x.id,
   skill: 'archaeology' as const,
   name: x.name,
@@ -210,7 +230,7 @@ function smithInputs(b: BaseDef): Record<string, number> {
  */
 const SMITH_COST_MULT = 3;
 
-const SMITHING: SkillAction[] = BASES.map((b) => ({
+const SMITHING: SkillAction[] = BASES.filter((b) => !b.projectOnly).map((b) => ({
   id: `smith_${b.id}`,
   skill: 'smithing' as const,
   name: b.name,
@@ -281,45 +301,101 @@ const BATCHES: SkillAction[] = ALCHEMY.filter((a) => a.outputs && !a.flaskId).ma
 /** Cut gems are a slow, costly pick from the whole pool: drops and the trader stay the main source. */
 const GEMCUTTING: SkillAction[] = [
   { id: 'cut_skill', skill: 'gemcutting', name: 'Skill Gem', level: 1, intervalMs: 20000, xp: 50, inputs: { rough_gem: 3, arcane_dust: 30 }, gem: { kind: 'skill' }, color: '#6fa8ff' },
-  { id: 'cut_support', skill: 'gemcutting', name: 'Support Gem', level: 10, intervalMs: 25000, xp: 90, inputs: { rough_gem: 4, arcane_dust: 40, frostleaf: 4 }, gem: { kind: 'support' }, color: '#5fbf6a', area: 'ashwood' },
-  { id: 'cut_signature', skill: 'gemcutting', name: 'Signature Support Gem', level: 25, intervalMs: 30000, xp: 160, inputs: { rough_gem: 6, arcane_dust: 60, emberroot: 5 }, gem: { kind: 'signature' }, color: '#e0a640', area: 'crypt' },
-  { id: 'cut_expansion', skill: 'gemcutting', name: 'Orb of Expansion', level: 45, intervalMs: 30000, xp: 250, inputs: { rough_gem: 8, arcane_dust: 40, voidbloom: 4 }, outputs: { expansion: 1 }, color: '#c08bff', area: 'stormcliffs' },
+  { id: 'cut_support', skill: 'gemcutting', name: 'Support Gem', level: 10, intervalMs: 25000, xp: 90, inputs: { rough_gem: 4, arcane_dust: 40, frostleaf: 4 }, gem: { kind: 'support' }, color: '#5fbf6a' },
+  { id: 'cut_signature', skill: 'gemcutting', name: 'Signature Support Gem', level: 25, intervalMs: 30000, xp: 160, inputs: { rough_gem: 6, arcane_dust: 60, emberroot: 5 }, gem: { kind: 'signature' }, color: '#e0a640' },
+  { id: 'cut_expansion', skill: 'gemcutting', name: 'Orb of Expansion', level: 45, intervalMs: 30000, xp: 250, inputs: { rough_gem: 8, arcane_dust: 40, voidbloom: 4 }, outputs: { expansion: 1 }, color: '#c08bff' },
+  ...GEMCUTTING_EXPANSION_ACTIONS,
 ];
 
 /** One recipe per rune. Later families in a grade open two levels apart, so there's always a next one to reach. */
-const RUNECARVING: SkillAction[] = RUNES.map((r) => {
-  const flavour = r.grade.grade <= 2 ? r.family.flavour.low : r.family.flavour.high;
-  return {
-    id: `carve_${r.id}`,
-    skill: 'runecarving' as const,
-    name: r.name,
-    level: r.grade.level + RUNE_FAMILIES.indexOf(r.family) * 2,
-    intervalMs: r.grade.intervalMs,
-    xp: r.grade.xp,
-    inputs: { ...r.grade.inputs, [flavour]: r.grade.flavour },
-    outputs: { [r.id]: 1 },
-    color: r.family.color,
-    gate: RUNE_GATE,
-  };
-});
+const RUNECARVING: SkillAction[] = [
+  ...RUNES.map((r) => {
+    const flavour = r.grade.grade <= 2 ? r.family.flavour.low : r.family.flavour.high;
+    return {
+      id: `carve_${r.id}`,
+      skill: 'runecarving' as const,
+      name: r.name,
+      level: r.grade.level + RUNE_FAMILIES.indexOf(r.family) * 2,
+      intervalMs: r.grade.intervalMs,
+      xp: r.grade.xp,
+      inputs: { ...r.grade.inputs, [flavour]: r.grade.flavour },
+      outputs: { [r.id]: 1 },
+      accomplishments: r.grade.grade >= 2 ? [`rune_${r.family.id}_grade_${r.grade.grade - 1}_practice`] : undefined,
+      color: r.family.color,
+    };
+  }),
+  {
+    id: 'prepare_return_inscription',
+    skill: 'runecarving',
+    name: 'Prepare Return Inscription',
+    level: 65,
+    intervalMs: 60000,
+    xp: 120,
+    inputs: { inscription_fragment: 10, rune_keen_3: 1 },
+    protectedOutputs: { return_inscription: 1 },
+    color: '#6fa8ff',
+  },
+  {
+    id: 'prepare_choir_inscription',
+    skill: 'runecarving',
+    name: 'Prepare Choir Inscription',
+    level: 70,
+    intervalMs: 60000,
+    xp: 150,
+    inputs: { inscription_fragment: 10, rune_blood_3: 1 },
+    protectedOutputs: { choir_inscription: 1 },
+    color: '#d6453d',
+  },
+  {
+    id: 'prepare_circuit_inscription',
+    skill: 'runecarving',
+    name: 'Prepare Circuit Inscription',
+    level: 70,
+    intervalMs: 60000,
+    xp: 150,
+    inputs: { inscription_fragment: 10, rune_storm_3: 1 },
+    protectedOutputs: { circuit_inscription: 1 },
+    color: '#f2d14c',
+  },
+  {
+    id: 'inscribe_convergence',
+    skill: 'runecarving',
+    name: 'Inscribe Convergence',
+    level: 90,
+    intervalMs: 120000,
+    xp: 300,
+    inputs: { inscription_fragment: 5, rune_stone_4: 1 },
+    protectedOutputs: { convergence_inscription: 1 },
+    color: '#9b8e7e',
+  },
+];
 
 const cook = (id: string, name: string, level: number, intervalMs: number, xp: number, inputs: Record<string, number>, color: string): SkillAction => ({
-  id: `cook_${id}`, skill: 'cooking', name, level, intervalMs, xp, inputs, outputs: { [id]: 1 }, color, gate: COOKING_GATE,
+  id: `cook_${id}`, skill: 'cooking', name, level, intervalMs, xp, inputs, outputs: { [id]: 1 }, color,
+});
+
+const cookProtected = (id: string, name: string, level: number, intervalMs: number, xp: number, inputs: Record<string, number>, color: string): SkillAction => ({
+  id: `cook_${id}`, skill: 'cooking', name, level, intervalMs, xp, inputs, protectedOutputs: { [id]: 1 }, color,
 });
 
 /** Plants in, a meal or a flask ingredient out. Never fish: the fish have not been told. */
 const COOKING: SkillAction[] = [
-  cook('meal_porridge', 'Sunpetal Porridge', 1, 4000, 12, { sunpetal: 6, ash_log: 1 }, '#f2c94c'),
-  cook('meal_broth', 'Frostleaf Broth', 6, 4000, 18, { frostleaf: 4, sunpetal: 4 }, '#7fc8f8'),
-  cook('meal_hash', "Forager's Hash", 10, 4500, 26, { frostleaf: 6, sunpetal: 6, oak_log: 1 }, '#a8b860'),
+  cook('meal_porridge', 'Sunpetal Porridge', 1, 4000, 12, { sunpetal: 3 }, '#f2c94c'),
+  cook('meal_broth', 'Frostleaf Broth', 6, 4000, 18, { frostleaf: 2, sunpetal: 2 }, '#7fc8f8'),
+  cook('meal_hash', "Forager's Hash", 10, 4500, 26, { frostleaf: 3, sunpetal: 3 }, '#a8b860'),
+  cook('meal_gatherer', "Gatherer's Ration", 10, 5000, 30, { sunpetal: 4, frostleaf: 2 }, '#68b04d'),
   cook('frost_extract', 'Frostleaf Extract', 15, 5000, 34, { frostleaf: 12, essence_frost_2: 1 }, '#7fc8f8'),
-  cook('meal_chilli', 'Emberroot Chilli', 20, 5000, 42, { emberroot: 6, frostleaf: 3 }, '#e2603f'),
-  cook('meal_chowder', 'Stormwatch Chowder', 26, 5500, 55, { emberroot: 8, essence_storm_2: 1 }, '#d8c070'),
+  cook('meal_chilli', 'Emberroot Chilli', 20, 5000, 42, { emberroot: 3, frostleaf: 2 }, '#e2603f'),
+  cook('meal_artisan', "Artisan's Lunch", 20, 6000, 50, { frostleaf: 3, emberroot: 3 }, '#c28546'),
+  cook('meal_chowder', 'Stormwatch Chowder', 26, 5500, 55, { emberroot: 4, frostleaf: 2 }, '#d8c070'),
   cook('ember_reduction', 'Emberroot Reduction', 30, 6000, 70, { emberroot: 14, essence_vitality_2: 1 }, '#e2603f'),
-  cook('meal_roast', 'Slow Root Roast', 35, 6000, 80, { emberroot: 10, yew_log: 2 }, '#b0603a'),
-  cook('meal_curry', 'Voidbloom Curry', 40, 7000, 100, { voidbloom: 6, emberroot: 4 }, '#9b6dde'),
+  cook('meal_roast', 'Slow Root Roast', 35, 6000, 80, { emberroot: 5, yew_log: 1 }, '#b0603a'),
+  cook('meal_curry', 'Voidbloom Curry', 40, 7000, 100, { voidbloom: 3, emberroot: 2 }, '#9b6dde'),
   cook('void_distillate', 'Voidbloom Distillate', 45, 8000, 125, { voidbloom: 12, essence_haste_2: 1 }, '#9b6dde'),
-  cook('meal_table', "Captain's Table", 50, 10000, 170, { voidbloom: 10, emberroot: 6, essence_vitality_2: 1, yew_log: 2 }, '#e0a640'),
+  cook('meal_table', "Captain's Table", 50, 10000, 170, { voidbloom: 5, emberroot: 3, sunpetal: 3, yew_log: 1 }, '#e0a640'),
+  cookProtected('meal_moon_signature', 'Moonfall Consommé', 50, 60000, 300, { moon_bloom: 1, frostleaf: 10 }, '#82aaff'),
+  cookProtected('binding_stock', 'Binding Stock', 55, 30000, 250, { moon_bloom: 1, emberroot: 10, sunpetal: 10 }, '#c29d62'),
+  cookProtected('meal_star_signature', 'Starlight Banquet', 65, 60000, 400, { star_bloom: 1, voidbloom: 10 }, '#ffd700'),
 ];
 
 const sheet = (id: string, name: string, level: number, intervalMs: number, xp: number, inputs: Record<string, number>, color: string): SkillAction => ({
@@ -366,6 +442,8 @@ const SEXTANT_CHARTS: SkillAction[] = SEXTANT_RECIPES.map((r) =>
 
 /** Logs into vellum, plants into ink, and both into plain maps and Sextants. */
 const CARTOGRAPHY: SkillAction[] = [
+  { id: 'chart_endgame_atlas', name: 'Complete Atlas Chart', skill: 'cartography', level: 85, intervalMs: 120_000, xp: 1000,
+    inputs: { fine_vellum: 10, sepia_ink: 5, sextant_master: 1, atlas_survey_record: 1 }, protectedOutputs: { completed_atlas_chart: 1 }, color: '#a89ae8' },
   sheet('vellum', 'Vellum', 1, 3500, 10, { ash_log: 4 }, '#d8c8a0'),
   sheet('gall_ink', 'Gall Ink', 4, 4000, 14, { sunpetal: 3, iron_ore: 1 }, '#46506a'),
   sheet('fine_vellum', 'Fine Vellum', 15, 5000, 40, { oak_log: 5, vellum: 2 }, '#f0e4c4'),
@@ -388,8 +466,15 @@ export const BOSS_KEY_CRAFTS: SkillAction[] = [
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-export const ACTIONS: SkillAction[] = [...GATHERING, ...MILLING, ...THIEVING, ...ARCHAEOLOGY, ...FISHING, ...SMELTING, ...SMITHING, ...ALCHEMY, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS].map((a) => ({
+const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...MILLING, ...THIEVING, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...SMITHING, ...purposeRecipes(SMITHING), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
+/** Historical access evidence used only by save migration. */
+const ALL_AUTHORED_ACTIONS = [...AUTHORED_ACTIONS, ...WEAPON_COMPONENT_ACTIONS.filter((extra) => !AUTHORED_ACTIONS.some((a) => a.id === extra.id))];
+export const LEGACY_ACTION_PLACES = Object.fromEntries(ALL_AUTHORED_ACTIONS.map((a) => [a.id, { area: a.area, gate: a.gate }]));
+export const ACTIONS: SkillAction[] = ALL_AUTHORED_ACTIONS.map(({ area: _area, gate: _gate, ...a }) => ({
   ...a,
+  mining: a.mining ?? (['mine_copper', 'mine_iron', 'mine_mithril'].includes(a.id) ? { metal: a.id.slice(5), mode: 'ordinary' as const } : undefined),
+  woodcutting: a.woodcutting ?? (['cut_ash', 'cut_oak', 'cut_yew'].includes(a.id) ? { wood: a.id.slice(4), mode: 'ordinary' as const } : undefined),
+  foraging: a.foraging ?? foragingSource(a),
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
 })).map((a) => ({ ...a, mastery: masteryForAction(a) }));
 

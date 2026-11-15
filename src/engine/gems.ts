@@ -547,25 +547,35 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
   let phys = 0;
   let elem = 0;
   let fire = 0;
+  let cold = 0;
+  let chaos = 0;
   if (isAttack) {
     const pct = weaponPctAt(def, level) / 100;
     phys = ((d.hit.phys[0] + d.hit.phys[1]) / 2) * pct;
     elem = (['fire', 'cold', 'light', 'chaos'] as const).reduce((a, t) => a + ((d.hit[t][0] + d.hit[t][1]) / 2) * pct, 0);
     fire = ((d.hit.fire[0] + d.hit.fire[1]) / 2) * pct;
+    cold = ((d.hit.cold[0] + d.hit.cold[1]) / 2) * pct;
+    chaos = ((d.hit.chaos[0] + d.hit.chaos[1]) / 2) * pct;
     if (e.convert) {
       const moved = phys * (Math.min(100, e.convert.pct + (def.id === 'judgement_hammer' ? r.hammerConvert : 0)) / 100);
       phys -= moved;
       elem += (moved / d.physMult) * d.typeMult[e.convert.type];
       if (e.convert.type === 'fire') fire += (moved / d.physMult) * d.typeMult.fire;
+      if (e.convert.type === 'cold') cold += (moved / d.physMult) * d.typeMult.cold;
+      if (e.convert.type === 'chaos') chaos += (moved / d.physMult) * d.typeMult.chaos;
     }
   } else {
     const [lo, hi] = spellBaseAt(def, level);
     elem = ((lo + hi) / 2 + (nums.lifeCost * (e.lifeToDamage ?? 0)) / 100) * d.typeMult[e.type ?? 'fire'];
+    if (e.type === 'cold') cold = elem;
+    if (e.type === 'chaos') chaos = elem;
     for (const t of ['fire', 'cold', 'light'] as const) {
       elem += (((d.hit[t][0] + d.hit[t][1]) / 2) * SPELL_ADDED_EFFECTIVENESS + (d.spellHit[t][0] + d.spellHit[t][1]) / 2) * (e.addedShare ?? 1);
+      if (t === 'cold') cold += (((d.hit[t][0] + d.hit[t][1]) / 2) * SPELL_ADDED_EFFECTIVENESS + (d.spellHit[t][0] + d.spellHit[t][1]) / 2) * (e.addedShare ?? 1);
     }
     if (e.type === 'fire') fire = elem;
   }
+  if (r.wintersPyre) { elem = cold + chaos; fire = cold; }
   const fireShare = phys + elem > 0 ? fire / (phys + elem) : 0;
   const ranged = isAttack && d.ranged;
   if (def.tags.includes('melee') && !ranged) phys *= 1 + r.meleePct / 100;
@@ -573,9 +583,9 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
   phys *= inc;
   elem *= inc;
   if (mods.noElemental) elem = 0;
-  const extra = mods.extras.reduce((a, x) => a + x.pct, 0) / 100;
+  const extra = mods.extras.filter((x) => !r.wintersPyre || (x.type !== 'fire' && x.type !== 'light')).reduce((a, x) => a + x.pct, 0) / 100;
   elem += (phys + elem) * extra;
-  elem += (phys * r.physAsLight) / 100;
+  if (!r.wintersPyre) elem += (phys * r.physAsLight) / 100;
   phys *= 1 + mods.morePhys / 100;
   elem *= 1 + mods.moreElem / 100;
   let hit = (phys + elem) * (1 + mods.moreDamage / 100);
@@ -583,18 +593,19 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
     ? d.critChance * (1 + mods.critChance / 100)
     : (e.crit ?? 5) * (1 + (r.critChancePct + r.spellCritPct + (e.type === 'light' ? r.lightCrit : 0) + mods.critChance) / 100);
   const critMulti = d.critMulti + mods.critMulti + (isAttack ? 0 : r.spellCritMulti);
-  hit *= 1 + ((r.steadyHand ? 0 : Math.min(95, critChance)) / 100) * (critMulti / 100 - 1);
+  hit *= 1 + ((r.steadyHand || r.woundmaker ? 0 : Math.min(95, critChance)) / 100) * (critMulti / 100 - 1);
   if (isAttack && !r.steadyHand && !r.knifesEdge) hit *= hitChance(d.accuracy, d.combatLevel);
   const extraHits = (def.id === 'pummel' ? r.pummelHits : 0) + (def.id === 'barrage' ? r.barrageArrows + (mods.specials.has('volley') ? 1 : 0) : 0);
-  const hits = ((e.hits ?? 1) + extraHits) * (1 + (mods.repeats * mods.repeatDamage) / 100);
+  const hits = r.homecoming && isAttack && d.ranged ? 2 : ((e.hits ?? 1) + extraHits) * (1 + (mods.repeats * mods.repeatDamage) / 100);
   const ailment = e.ailment ? ailmentNumbers(d, nums, e.ailment) : null;
   // burns and the ignites they build to come to a steady share of the fire dealt, as often as they're applied
   const burn = ailmentNumbers(d, nums, { kind: 'burn', pctPerSec: 100, durationMs: 1000 });
   const burnChance = Math.min(100, (e.ailmentChance ?? 0) + r.burnChance) / 100;
-  const burnShare = burnChance * fireShare * ((BURN_SHARE + IGNITE_SHARE) / 100) * (burn.pctPerSec / 100) * (burn.durationMs / 1000);
+  const burnShare = burnChance * fireShare * ((r.wintersPyre ? IGNITE_SHARE * 2 : BURN_SHARE + IGNITE_SHARE) / 100) * (burn.pctPerSec / 100) * (burn.durationMs / 1000);
   // an ailment works from the whole hit, so what it adds is a share of the hit
   const ailmentShare = (ailment ? (ailment.pctPerSec / 100) * (ailment.durationMs / 1000) : 0) + burnShare;
-  const perUse = hit * hits * (1 + ailmentShare);
+  const hitPenalty = r.woundmaker ? .4 : 1;
+  const perUse = hit * hits * (hitPenalty + ailmentShare);
   // what a minion or storm does keeps going after the cast: its damage per second is how often it strikes, not how often you press
   if (e.minion) {
     const m = minionStats(d, nums);
@@ -609,5 +620,5 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
   const dotPerSecond = !ailment || e.ailment!.kind === 'poison'
     ? (hit * hits * ailmentShare * 1000) / time
     : hit * (ailment.pctPerSec / 100) * Math.min(1, ailment.durationMs / time);
-  return { perUse, perSecond: (hit * hits * 1000) / time + dotPerSecond, nums };
+  return { perUse, perSecond: (hit * hitPenalty * hits * 1000) / time + dotPerSecond, nums };
 }
