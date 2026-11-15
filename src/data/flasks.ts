@@ -18,6 +18,8 @@ export interface FlaskDef {
   dropLevel: number;
   /** true for unique flasks */
   unique?: boolean;
+  /** available only through exclusive profession projects */
+  projectOnly?: boolean;
   flavour?: string;
 }
 
@@ -111,9 +113,21 @@ export const FLASKS: FlaskDef[] = [
     maxCharges: 40, chargesPerUse: 20, durationMs: 4500, buff: { fireRes: 50, allRes: 20, projectilePct: 35, dyingSunProj: 2 },
     desc: '+20% All Res, +35% Projectile Damage and Skills fire 2 additional Projectiles for 4.5s', price: 5000, dropLevel: Infinity,
   },
+  {
+    id: 'u_flask_witchglass', name: 'Witchglass', kind: 'utility', color: '#9b59b6', unique: true, projectOnly: true,
+    flavour: 'Through a dark lens, even fire runs black.',
+    maxCharges: 40, chargesPerUse: 20, durationMs: 5000, buff: { witchglassActive: 1 },
+    desc: '100% of Elemental Damage converted to Chaos Damage; cannot inflict Elemental Ailments for 5s', price: 5000, dropLevel: Infinity,
+  },
+  {
+    id: 'u_flask_still_heart', name: 'The Still Heart', kind: 'life', color: '#992d22', unique: true, projectOnly: true,
+    flavour: 'A heart at peace beats for no one.',
+    maxCharges: 40, chargesPerUse: 20, durationMs: 6000, heal: 1800, buff: { stillHeartActive: 1 },
+    desc: 'Recovers 1800 Life over 6s, continuing at full life; cannot leech or regenerate Life during effect', price: 5000, dropLevel: Infinity,
+  },
 ];
 
-export const UNIQUE_FLASKS: FlaskDef[] = FLASKS.filter((f) => f.unique);
+export const UNIQUE_FLASKS: FlaskDef[] = FLASKS.filter((f) => f.unique && !f.projectOnly);
 
 export function flaskDef(id: string): FlaskDef {
   const f = FLASKS.find((x) => x.id === id);

@@ -15,6 +15,7 @@ import { levelOf } from './xp';
 import { addUniqueMaps } from './maps';
 import { dishStats } from './cooking';
 import { seeUnique } from './account';
+import { newFlask, flaskStats, stashFlask } from './flasks';
 import type { AccountState, GameEvent, GameState, Item, SkillId } from './types';
 
 export interface ProjectRun {
@@ -169,16 +170,29 @@ export function awardProtectedProgress(s: GameState, ctx: Ctx, id: string, amoun
   ctx.emit({ t: 'profession', category: 'progress', id, amount });
 }
 
+export function isEligibleProjectBase(def: ProfessionProject, item: Item, s: GameState): boolean {
+  if (isCraftLocked(s, item.uid)) return false;
+  if (def.baseNonUnique && item.rarity === 'unique') return false;
+  if (def.baseId && item.baseId !== def.baseId) return false;
+  if (def.baseIds && !def.baseIds.includes(item.baseId)) return false;
+  if (def.baseMinIlvl && item.ilvl < def.baseMinIlvl) return false;
+  return true;
+}
+
 export function projectPreview(s: GameState, id: string, uid?: number) {
   const def = professionProject(id);
   if (!def) return { project: undefined, reason: 'Unknown project', notes: [] };
+  const needsBase = !!(def.baseId || def.baseIds);
+  const eligibleItem = needsBase
+    ? (uid != null ? s.inventory.find((i) => i.uid === uid && isEligibleProjectBase(def, i, s)) : s.inventory.find((i) => isEligibleProjectBase(def, i, s)))
+    : undefined;
   const reason = professionAccessReason(s, def)
     ?? (s.professionProgress.activeProject ? 'Finish or cancel the current project first' : null)
     ?? (!def.repeatable && s.professionProgress.projects[id]?.completed ? 'Already completed' : null)
     ?? (!canAfford(s, def.inputs) ? 'Missing materials' : null)
-    ?? (def.baseId && !s.inventory.some((i) => i.uid === uid && i.baseId === def.baseId && !isCraftLocked(s, i.uid)) ? 'Choose an unlocked required base from your inventory' : null);
+    ?? (needsBase && !eligibleItem ? 'Choose an unlocked required base from your inventory' : null);
   const notes: string[] = [];
-  if (def.baseId) {
+  if (needsBase) {
     notes.push('Consumes base completely: removes affixes, impression, and rune; creates unique with a new UID.');
   }
   return { project: def, reason, notes };
@@ -190,7 +204,11 @@ export function startProject(s: GameState, ctx: Ctx, id: string, repeats = 1, ui
   const def = preview.project!;
   if (!Number.isSafeInteger(repeats) || repeats < 1 || repeats > 100 || (!def.repeatable && repeats !== 1)) return 'Choose 1–100 repeats for a repeatable project';
   if (s.account.realm !== realmOf(s.character)) return 'Project belongs to a different realm';
-  const item = def.baseId ? s.inventory.find((i) => i.uid === uid)! : undefined;
+  const needsBase = !!(def.baseId || def.baseIds);
+  const item = needsBase
+    ? (uid != null ? s.inventory.find((i) => i.uid === uid && isEligibleProjectBase(def, i, s)) : s.inventory.find((i) => isEligibleProjectBase(def, i, s)))
+    : undefined;
+  if (needsBase && !item) return 'Choose an unlocked required base from your inventory';
   const project = structuredClone(def);
   const escrow = { ...def.inputs };
   payCost(s, escrow);
@@ -259,6 +277,9 @@ export function completeProject(s: GameState, ctx: Ctx, runId: number): string |
   if (def.reward.category === 'equipment') {
     const r = def.reward;
     const item = r.uniqueId ? createUnique(s, r.uniqueId, r.ilvl, ctx.rng) : createItem(s, r.baseId, r.ilvl, r.rarity, ctx.rng);
+    if (r.uniqueId && run.item && def.baseIds?.includes(run.item.baseId)) {
+      item.baseId = run.item.baseId;
+    }
     if (r.fixedSuffixes) {
       item.prefixes = [];
       item.suffixes = structuredClone(r.fixedSuffixes);
@@ -267,6 +288,15 @@ export function completeProject(s: GameState, ctx: Ctx, runId: number): string |
     s.inventory.push(item);
     seeUnique(s.account, item);
     events.push({ t: 'loot', item });
+  } else if (def.reward.category === 'flask') {
+    const r = def.reward;
+    const f = newFlask(s, r.flaskId, r.ilvl);
+    f.rarity = 'unique';
+    f.charges = flaskStats(f).maxCharges;
+    stashFlask(s, f);
+    s.account.uniquesSeen ??= [];
+    if (r.uniqueId && !s.account.uniquesSeen.includes(r.uniqueId)) s.account.uniquesSeen.push(r.uniqueId);
+    events.push({ t: 'loot', flask: f } as unknown as GameEvent);
   } else if (def.reward.category === 'chart') {
     addUniqueMaps(s, def.reward.id, 1);
     events.push({ t: 'loot', currencyId: def.reward.id, qty: 1 });

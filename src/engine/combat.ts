@@ -868,10 +868,18 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
   c.buffs.push({ id: f.flaskId, source: 'flask', remainingMs: duration, durationMs: duration, mult: st.effectMult });
   if (st.def.heal && d.raw.doomedWitheredVeins <= 0) {
     const resource = kind === 'mana' ? 'mana' : 'life';
+    if (f.flaskId === 'u_flask_still_heart') {
+      c.heals = c.heals.filter((h) => !(h.isFlask && h.flaskId === f.flaskId));
+    }
+    if (resource === 'life' && d.raw.borrowedTomorrow > 0) {
+      ctx.emit({ t: 'info', text: 'Borrowed Tomorrow blocks Life recovery from flasks.', tone: 'warn' });
+    }
     c.heals.push({
       resource,
       perMs: (st.def.heal * effect) / duration,
       remainingMs: duration,
+      isFlask: true,
+      flaskId: f.flaskId,
       karuiEndFull: !!st.def.buff?.karuiBlood || undefined,
     });
   }
@@ -1679,6 +1687,13 @@ function rollHit(
   if (hasAscNode(s, 'alchemist_philosophers_draught')) more *= 1 + (DRAUGHT_MORE * c.buffs.filter((b) => b.source === 'flask').length) / 100;
   for (const t of DAMAGE_TYPES) byType[t] *= more;
   if (r.wintersPyre) byType.fire = byType.light = 0;
+  if (r.witchglassActive > 0) {
+    const elem = byType.fire + byType.cold + byType.light;
+    byType.chaos += elem;
+    byType.fire = 0;
+    byType.cold = 0;
+    byType.light = 0;
+  }
 
   const spellType = def.effect.type;
   const bottledBase = r.bottledFaithCrit > 0 ? 2 : 0;
@@ -1725,6 +1740,11 @@ function rollHit(
 
 function mainType(byType: ByType): DamageType {
   return DAMAGE_TYPES.reduce((best, t) => (byType[t] > byType[best] ? t : best), 'phys' as DamageType);
+}
+
+const SLAM_SKILLS = new Set(['ground_slam', 'avalanche', 'titans_blow', 'worldbreaker', 'deathblow']);
+export function isSlamSkill(gemId: string): boolean {
+  return SLAM_SKILLS.has(gemId);
 }
 
 /** A skill hit counts as a projectile: projectile skills, and non-melee attacks from a bow. */
@@ -1899,6 +1919,7 @@ export function shockPct(mon: MonsterInstance): number {
 
 /** Fire burns, cold chills, lightning shocks: each rolls on its own, and what lands builds toward the next stage. */
 function applyElementAilments(c: CombatRuntime, ctx: Ctx, d: Derived, nums: SkillNumbers, mon: MonsterInstance, dealtBy: ByType, chillBonus: boolean, sure: boolean, coldIgnite = 0): void {
+  if (d.raw.witchglassActive > 0) return;
   const { def, mods } = nums;
   const e = def.effect;
   const r = d.raw;
@@ -2084,6 +2105,10 @@ function landHit(
   const coldIgniteScale = beforeMore > 0 ? dealt / beforeMore : 0;
   const bleedSeed = r.woundmaker ? physPart * (beforeMore > 0 ? dealt / beforeMore : 0) : dealt;
   if (r.woundmaker) dealt *= .4;
+  if (r.handsForgottenChoir > 0) {
+    ctx.emit({ t: 'hit', target: 'monster', amount: 0, dmgType: mainType(byType), monsterUid: mon.uid });
+    return 0;
+  }
   dealt = Math.max(1, Math.round(dealt));
   damageMonster(s, mon, dealt, true, beforeMore > 0 ? dealtBy.chaos / beforeMore : 0);
   // Death's Door: instant cull on any monster/boss below 30% Life
@@ -2116,13 +2141,13 @@ function landHit(
     c.dealt[c.dealt.length - 1] += Math.max(0, mon.life);
     setMonsterLife(s, mon, 0);
   }
-  if (!r.wintersPyre && crit && def.tags.includes('spell') && r.unblinkingFlare > 0 && mon.life > 0 && mon.dots.some((x) => x.kind === 'ignite' || x.kind === 'burn')) {
+  if (r.witchglassActive <= 0 && !r.wintersPyre && crit && def.tags.includes('spell') && r.unblinkingFlare > 0 && mon.life > 0 && mon.dots.some((x) => x.kind === 'ignite' || x.kind === 'burn')) {
     const flare = Math.max(1, Math.round((dealt * r.unblinkingFlare) / 100));
     damageMonster(s, mon, flare);
     ctx.emit({ t: 'hit', target: 'monster', amount: flare, crit: true, dmgType: 'fire', monsterUid: mon.uid });
   }
   // Anarchist's Gambit: 30% chance on hit to trigger Elemental Cataclysm (500% area burst + Freeze, Shock, Ignite)
-  if (!r.wintersPyre && r.anarchistsGambit > 0 && chance(ctx.rng, 0.3)) {
+  if (r.witchglassActive <= 0 && !r.wintersPyre && r.anarchistsGambit > 0 && chance(ctx.rng, 0.3)) {
     const cataclysmCells = new Set(areaCells('splash', mon.cell, 2));
     const cataclysmTargets = [mon, ...aliveMonsters(c).filter((m) => m !== mon && !shielded(m) && cataclysmCells.has(m.cell))];
     const cataclysmDmg = secondaryHitDamage(d, Math.max(1, Math.round(dealt * 5)));
@@ -2143,14 +2168,27 @@ function landHit(
       }
     }
   }
-  if (crit && r.critLeech) s.life = Math.min(d.maxLife, s.life + (dealt * r.critLeech) / 100);
+  const canLeechLife = r.stillHeartActive <= 0;
+  if (crit && r.critLeech && canLeechLife) {
+    let gain = (dealt * r.critLeech) / 100;
+    if (r.borrowedTomorrow > 0) {
+      const now = s.clock;
+      c.instantLeechLog = (c.instantLeechLog ?? []).filter((e) => now - e.time < 1000);
+      const usedInWindow = c.instantLeechLog.reduce((sum, e) => sum + e.amount, 0);
+      const windowRemaining = Math.max(0, 0.20 * d.maxLife - usedInWindow);
+      const hitCapped = Math.min(gain, 0.10 * d.maxLife);
+      gain = Math.min(hitCapped, windowRemaining);
+      if (gain > 0) c.instantLeechLog.push({ time: now, amount: gain });
+    }
+    s.life = Math.min(d.maxLife, s.life + gain);
+  }
   if (mon.life < 0 && r.overkillHeal) s.life = Math.min(d.maxLife, s.life + (-mon.life * r.overkillHeal) / 100);
   // Permafrost freezes what's already chilled, before this hit chills it again
-  if (!r.wintersPyre && mods.specials.has('permafrost') && mon.chillMs > 0) mon.frozenMs = Math.max(mon.frozenMs, mon.isBoss ? 600 : 1500);
-  if (!r.wintersPyre && crit && mods.specials.has('shatterpoint')) mon.chillMs = Math.max(mon.chillMs, 3000);
+  if (r.witchglassActive <= 0 && !r.wintersPyre && mods.specials.has('permafrost') && mon.chillMs > 0) mon.frozenMs = Math.max(mon.frozenMs, mon.isBoss ? 600 : 1500);
+  if (r.witchglassActive <= 0 && !r.wintersPyre && crit && mods.specials.has('shatterpoint')) mon.chillMs = Math.max(mon.chillMs, 3000);
   if (mods.specials.has('twist')) {
     for (const x of mon.dots) x.remainingMs = Math.max(x.remainingMs, x.durationMs ?? 0);
-    if (!r.wintersPyre && mon.chillMs > 0) mon.chillMs = Math.max(mon.chillMs, 3000);
+    if (r.witchglassActive <= 0 && !r.wintersPyre && mon.chillMs > 0) mon.chillMs = Math.max(mon.chillMs, 3000);
   }
   ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(dealt * sumOfAllMultiplier(s)), crit, mega: mega || undefined, riposte: c.riposting || undefined, dmgType: mainType(byType), monsterUid: mon.uid });
   // Rage and Momentum count every hit dealt, so multi-hit and area skills fill them fastest
@@ -2182,9 +2220,18 @@ function landHit(
 
   // leech (Blood God's Frenzy grants instant leech below 20% Life)
   const frenzyInstantLeech = r.bloodGodsFrenzy > 0 && s.life <= d.maxLife * 0.2;
-  const lifeLeech = d.leechPct + mods.lifeLeech + (e.leechLife ?? 0) + r.physLeech * physShare + r.elemLeech * (1 - physShare) + (frenzyInstantLeech ? Math.max(5, d.leechPct) : 0);
+  const lifeLeech = canLeechLife ? (d.leechPct + mods.lifeLeech + (e.leechLife ?? 0) + r.physLeech * physShare + r.elemLeech * (1 - physShare) + (frenzyInstantLeech ? Math.max(5, d.leechPct) : 0)) : 0;
   if (lifeLeech > 0) {
-    const gain = (dealt * lifeLeech) / 100;
+    let gain = (dealt * lifeLeech) / 100;
+    if (r.borrowedTomorrow > 0) {
+      const now = s.clock;
+      c.instantLeechLog = (c.instantLeechLog ?? []).filter((e) => now - e.time < 1000);
+      const usedInWindow = c.instantLeechLog.reduce((sum, e) => sum + e.amount, 0);
+      const windowRemaining = Math.max(0, 0.20 * d.maxLife - usedInWindow);
+      const hitCapped = Math.min(gain, 0.10 * d.maxLife);
+      gain = Math.min(hitCapped, windowRemaining);
+      if (gain > 0) c.instantLeechLog.push({ time: now, amount: gain });
+    }
     const overflow = s.life + gain - d.maxLife;
     s.life = Math.min(d.maxLife, s.life + gain);
     if (overflow > 0 && mods.specials.has('soultap')) {
@@ -2226,7 +2273,7 @@ function landHit(
   // ailments
   if (coup && r.coupAilment) {
     applyDot(mon, makeAilment(d, nums, mon, dealt, COUP_POISON));
-    applyDot(mon, makeAilment(d, nums, mon, dealt, COUP_IGNITE));
+    if (r.witchglassActive <= 0) applyDot(mon, makeAilment(d, nums, mon, dealt, COUP_IGNITE));
   }
   if (e.ailment) {
     // Marked Arrow: on a target with 10+ Doom, the poison lasts twice as long
@@ -2256,8 +2303,10 @@ function landHit(
   // chaos skills innate poison chance
   if (e.poisonChance && chance(ctx.rng, e.poisonChance)) applyDot(mon, makeAilment(d, nums, mon, dealt, GEAR_POISON));
   const scale = beforeMore > 0 ? dealt / beforeMore : 0;
-  const coldIgnite = r.wintersPyre ? monsterMitigation(mon, byType.cold * factor * glance, 'fire', mon.curse?.resPen ?? 0) * coldIgniteScale : 0;
-  applyElementAilments(c, ctx, d, nums, mon, { phys: dealtBy.phys * scale, fire: dealtBy.fire * scale, cold: dealtBy.cold * scale, light: dealtBy.light * scale, chaos: 0 }, !!r.chillOnHit, wake, coldIgnite);
+  const coldIgnite = (r.wintersPyre && r.witchglassActive <= 0) ? monsterMitigation(mon, byType.cold * factor * glance, 'fire', mon.curse?.resPen ?? 0) * coldIgniteScale : 0;
+  if (r.witchglassActive <= 0) {
+    applyElementAilments(c, ctx, d, nums, mon, { phys: dealtBy.phys * scale, fire: dealtBy.fire * scale, cold: dealtBy.cold * scale, light: dealtBy.light * scale, chaos: 0 }, !!r.chillOnHit, wake, coldIgnite);
+  }
   // Cryo-Shatter: critical strikes on chilled/frozen enemies trigger a cold explosion dealing 20% target max life
   if (crit && r.cryoShatter > 0 && (wasChilledOrFrozen || mon.chillMs > 0 || mon.frozenMs > 0)) {
     const shatterCells = new Set(areaCells('splash', mon.cell, 1));
@@ -2338,19 +2387,19 @@ function fireMarkBurst(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance)
   if (sp.has('execute_mark')) {
     for (const t of targets) {
       if (shielded(t) || t.life <= 0) continue;
-      if (!t.isBoss && t.life <= t.maxLife * EXECUTE_AT) {
+      if (!t.isBoss && t.life <= t.maxLife * EXECUTE_AT && d.raw.handsForgottenChoir <= 0) {
         c.dealt[c.dealt.length - 1] += t.life;
         ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(t.life), dmgType: 'phys', monsterUid: t.uid });
         setMonsterLife(s, t, 0);
-      } else {
-      const amount = secondaryHitDamage(d, Math.max(1, Math.round((t.maxLife - t.life) * EXECUTE_MISSING)));
+      } else if (d.raw.handsForgottenChoir <= 0) {
+        const amount = secondaryHitDamage(d, Math.max(1, Math.round((t.maxLife - t.life) * EXECUTE_MISSING)));
         damageMonster(s, t, amount);
         ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: t.uid });
       }
     }
   }
   // Payback: the brand pays back half of its shield to the whole pack
-  if (sp.has('payback') && c.shieldMax) {
+  if (sp.has('payback') && c.shieldMax && d.raw.handsForgottenChoir <= 0) {
     for (const t of aliveMonsters(c)) {
       if (shielded(t)) continue;
       const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(t, c.shieldMax * PAYBACK_SHARE * d.typeMult.phys, 'phys'))));
@@ -2684,19 +2733,25 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
   if (e.totem) {
     const totemLife = Math.round((300 + d.combatLevel * 10) * (1 + r.totemLifePct / 100));
     const totems = (c.totems ??= []);
-    // one totem at a time (more with the tree's maximum Totems); a new one replaces the oldest
-    while (totems.length >= 1 + r.totemMax) totems.shift();
+    const maxTotems = 1 + r.totemMax + (mods.specials.has('twin_totems') || totems.some((t) => t.specials?.includes('twin_totems')) ? 1 : 0);
     const totemMs = (e.totemDurationMs ?? 20000) * (1 + r.totemDuration / 100);
-    totems.push({
-      gemId: def.id,
-      life: totemLife,
-      maxLife: totemLife,
-      remainingMs: totemMs,
-      nextAttackMs: e.totemAttackMs ?? 1500,
-      specials: mods.specials.size ? [...mods.specials] : undefined,
-      // Ancestral Bond: it taunts for as long as it stands
-      tauntMs: r.totemTaunt ? totemMs : mods.specials.has('totem_vanguard') ? 4000 : undefined,
-    });
+    const spawns = r.handsForgottenChoir > 0 ? 2 : 1;
+    for (let i = 0; i < spawns; i++) {
+      while (totems.length >= maxTotems) {
+        const removed = totems.shift()!;
+        totemEnds(s, ctx, d, removed);
+      }
+      totems.push({
+        gemId: def.id,
+        life: totemLife,
+        maxLife: totemLife,
+        remainingMs: totemMs,
+        nextAttackMs: e.totemAttackMs ?? 1500,
+        specials: mods.specials.size ? [...mods.specials] : undefined,
+        // Ancestral Bond: it taunts for as long as it stands
+        tauntMs: r.totemTaunt ? totemMs : mods.specials.has('totem_vanguard') ? 4000 : undefined,
+      });
+    }
   }
   // Rally the Fallen: a healing warcry also restores 1% Life per recent corpse, up to 10%
   if (mods.specials.has('rally_fallen') && e.warcry && e.warcryScaling?.perEnemy && 'lifeRegenPct' in e.warcryScaling.perEnemy) {
@@ -2908,6 +2963,10 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       const aim = target;
       const exertMult = exerted ? 1 + (e.exertedEffect?.moreDamage ?? 0) / 100 : 1;
       let aimDealt = 0;
+      const isSlam = isSlamSkill(def.id);
+      const validSlamTargets = isSlam && r.theBuriedGrudge > 0 && (s.buriedGrudgeCharge ?? 0) > 0 ? targets.filter((m) => m.life > 0 && !shielded(m)) : [];
+      const storedGrudge = validSlamTargets.length > 0 ? (s.buriedGrudgeCharge ?? 0) : 0;
+      if (storedGrudge > 0) s.buriedGrudgeCharge = 0;
       targets.forEach((m, i) => {
         // each hop deals 15% less than the one before, never under 20% (chainFalloff); "more damage per chain" adds back
         const chainMult = chained ? chainFalloff(i) * (1 + (((mods.specials.has('overload') ? 20 : 0) + r.chainMore) / 100) * i) : 1;
@@ -2921,6 +2980,15 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         }
         if (m === aim && m.life < 0 && mods.specials.has('followthrough')) carryOverkill(s, ctx, m);
       });
+      if (storedGrudge > 0 && validSlamTargets.length > 0 && r.handsForgottenChoir <= 0) {
+        const perTarget = storedGrudge / validSlamTargets.length;
+        for (const m of validSlamTargets) {
+          const shockwaveDmg = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(m, perTarget, 'phys'))));
+          // damageMonster applies The Sum of All Things once; the number shown matches what lands
+          damageMonster(s, m, shockwaveDmg);
+          ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(shockwaveDmg * sumOfAllMultiplier(s)), dmgType: 'phys', monsterUid: m.uid });
+        }
+      }
       for (const [m, share] of side) {
         if (m.life <= 0) continue;
         hitMonster(s, ctx, d, nums, m, roll.byType, roll.crit, passMult * tender * exertMult * share, roll.mega, roll.coup, wake);
@@ -3260,7 +3328,9 @@ function reapDead(s: GameState, ctx: Ctx, d: Derived): void {
   if (!c.monsters.length && !c.windup) c.using = null;
 }
 
-function die(s: GameState, ctx: Ctx, d: Derived): void {
+export function die(s: GameState, ctx: Ctx, d: Derived): void {
+  s.buriedGrudgeCharge = 0;
+  s.debtQueue = [];
   s.lifetime.deaths += 1;
   const deathZone = s.combat?.zoneId;
   if (deathZone) (s.lifetime.deathZones ??= {})[deathZone] = (s.lifetime.deathZones?.[deathZone] ?? 0) + 1;
@@ -3281,6 +3351,28 @@ function die(s: GameState, ctx: Ctx, d: Derived): void {
   if (!ctx.offline && lost) ctx.emit({ t: 'info', text: `${lost} unclaimed ${lost === 1 ? 'item' : 'items'} lost on the ground`, tone: 'warn' });
   else if (!ctx.offline && groundAtRisk(s)) ctx.emit({ t: 'info', text: 'Pick up your loot: die again and it is lost', tone: 'warn' });
   leaveCombat(s);
+}
+
+/** Debt of Stone: deferred hit damage ticks evenly over its remaining duration as direct life loss (no second mitigation). */
+export function tickDebt(s: GameState, ctx: Ctx, dt: number, d: Derived): void {
+  if (!s.debtQueue || s.debtQueue.length === 0) return;
+  let totalLoss = 0;
+  for (let i = s.debtQueue.length - 1; i >= 0; i--) {
+    const tranche = s.debtQueue[i];
+    const stepMs = Math.min(tranche.remainingMs, dt);
+    const loss = tranche.perMs * stepMs;
+    totalLoss += loss;
+    tranche.remainingMs -= stepMs;
+    if (tranche.remainingMs <= 0) {
+      s.debtQueue.splice(i, 1);
+    }
+  }
+  if (totalLoss > 0) {
+    s.life -= totalLoss;
+    if (s.life <= 0) {
+      die(s, ctx, d);
+    }
+  }
 }
 
 // ---------- incoming damage ----------
@@ -3434,7 +3526,7 @@ function anvilAnswer(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): 
   const c = s.combat!;
   const ring1 = aliveMonsters(c).filter((m) => cellRing(m.cell) === 1).length;
   gainMeter(s, d, 1 + (hasAscNode(s, 'anvil_hold_the_line') ? HOLD_THE_LINE_RAGE * ring1 : 0));
-  if (mon.life <= 0) return;
+  if (mon.life <= 0 || d.raw.handsForgottenChoir > 0) return;
   const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(mon, d.armour * (ANVIL_THORNS_PCT / 100) * (1 + ANVIL_THORNS_PER_RAGE * c.mech), 'phys'))));
   damageMonster(s, mon, amount);
   ctx.emit({ t: 'hit', target: 'monster', amount, dmgType: 'phys', monsterUid: mon.uid });
@@ -3631,17 +3723,17 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   if (asc === 'matador') c.asc.streak = hasAscNode(s, 'matador_close_call') ? Math.floor(c.asc.streak / 2) : 0;
   if (c.windup?.goaded) c.actionMs -= c.actionTotal * GOADED_CUT;
   if (asc === 'anvil') anvilAnswer(s, ctx, d, mon);
-  if (r.briarThorns > 0 && mon.life > 0) {
+  if (r.briarThorns > 0 && mon.life > 0 && r.handsForgottenChoir <= 0) {
     const thorns = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(mon, d.armour * 0.1, 'phys'))));
     damageMonster(s, mon, thorns);
     ctx.emit({ t: 'hit', target: 'monster', amount: thorns, dmgType: 'phys', monsterUid: mon.uid });
   }
-  if (r.ironReflexes > 0 && mon.life > 0) {
+  if (r.ironReflexes > 0 && mon.life > 0 && r.handsForgottenChoir <= 0) {
     const thorns = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(mon, raw * 0.5, 'phys'))));
     damageMonster(s, mon, thorns);
     ctx.emit({ t: 'hit', target: 'monster', amount: thorns, dmgType: 'phys', monsterUid: mon.uid });
   }
-  if (r.flagellantMartyr > 0) {
+  if (r.flagellantMartyr > 0 && r.handsForgottenChoir <= 0) {
     const rawLash = (d.maxLife * r.flagellantMartyr) / 100;
     for (const m of aliveMonsters(c).filter((x) => cellRing(x.cell) <= 1 && !shielded(x))) {
       const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(m, rawLash, 'phys'))));
@@ -3671,6 +3763,12 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   // Worldheart: 30% less damage taken, once. Ailments below seed from this reduced hit, so their ticks aren't reduced again.
   if (r.worldheart > 0) dmg = Math.max(1, Math.round(dmg * WORLDHEART_TAKEN));
   const taken = dmg;
+  if (r.debtOfStone > 0 && dmg > 0) {
+    const deferred = dmg * 0.5;
+    dmg -= deferred;
+    s.debtQueue = s.debtQueue ?? [];
+    s.debtQueue.push({ remainingMs: 4000, totalAmount: deferred, perMs: deferred / 4000 });
+  }
   if (kind === 'hit' && mon.archetype) monsterAilments(s, d, mon, dmg, type);
   if (mech === 'momentum' && !r.perpetualMotion && (c.momentumHitGraceMs ?? 0) <= 0) {
     const stacks = taken >= d.maxLife * 0.15 ? 4 : 2;
@@ -3696,9 +3794,11 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
       c.glacial = false;
     }
     if (c.shield <= 0 && c.barbedWard) {
-      const reflected = secondaryHitDamage(d, monsterMitigation(mon, c.barbedWard, 'phys'));
-      damageMonster(s, mon, reflected);
-      ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(reflected), dmgType: 'phys', monsterUid: mon.uid });
+      if (r.handsForgottenChoir <= 0) {
+        const reflected = secondaryHitDamage(d, monsterMitigation(mon, c.barbedWard, 'phys'));
+        damageMonster(s, mon, reflected);
+        ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(reflected), dmgType: 'phys', monsterUid: mon.uid });
+      }
       c.barbedWard = undefined;
     }
     if (c.shield <= 0 && c.recoil) {
@@ -3710,11 +3810,13 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
       }
     }
     if (c.shield <= 0 && c.radiance) {
-      for (const m of aliveMonsters(c)) {
-        if (shielded(m) || r.wintersPyre) continue;
-        const radiance = secondaryHitDamage(d, monsterMitigation(m, c.radiance, 'light'));
-        damageMonster(s, m, radiance);
-        ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(radiance), dmgType: 'light', monsterUid: m.uid });
+      if (r.handsForgottenChoir <= 0) {
+        for (const m of aliveMonsters(c)) {
+          if (shielded(m) || r.wintersPyre) continue;
+          const radiance = secondaryHitDamage(d, monsterMitigation(m, c.radiance, 'light'));
+          damageMonster(s, m, radiance);
+          ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(radiance), dmgType: 'light', monsterUid: m.uid });
+        }
       }
       c.radiance = undefined;
     }
@@ -3736,7 +3838,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   if ((mon.leechPct ?? 0) > 0 && dmg > 0) mon.life = Math.min(mon.maxLife, mon.life + (dmg * mon.leechPct) / 100);
   ctx.emit({ t: 'hit', target: 'player', amount: dmg, dmgType: type, crit: critical || undefined, absorbed: absorbed || undefined, es: Math.round(toEs) || undefined, monsterUid: mon.uid });
   const totalTaken = dmg + Math.round(toEs) + absorbed;
-  if (r.soulTether > 0 && totalTaken > 0 && mon.life > 0) {
+  if (r.soulTether > 0 && totalTaken > 0 && mon.life > 0 && r.handsForgottenChoir <= 0) {
     const trueDmg = Math.max(1, Math.round(totalTaken * 0.5));
     damageMonster(s, mon, trueDmg);
     ctx.emit({ t: 'hit', target: 'monster', amount: trueDmg, dmgType: 'chaos', monsterUid: mon.uid });
@@ -3762,11 +3864,31 @@ function onBlock(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   // Holy Retort: the blocked blow comes back as fire on your next attack
   if (r.holyRetort) c.retort = (c.retort ?? 0) + raw;
   let blockedDmg = 0;
-  if (r.glancingBlows > 0) {
-    const glancingRaw = raw * 0.65;
-    let dmg = mitigate(d, glancingRaw, type);
-    if (type !== 'phys') dmg = Math.max(1, Math.round(dmg * (1 - r.elemTakenReduction / 100)));
-    if (r.worldheart > 0) dmg = Math.max(1, Math.round(dmg * WORLDHEART_TAKEN));
+  let postMitigation = mitigate(d, raw, type);
+  if (type !== 'phys') postMitigation = Math.max(1, Math.round(postMitigation * (1 - r.elemTakenReduction / 100)));
+  // Worldheart applies once, before the Grudge stores prevented damage and before Debt of Stone splits the hit.
+  if (r.worldheart > 0) postMitigation = Math.max(1, Math.round(postMitigation * WORLDHEART_TAKEN));
+
+  const damageFraction = r.theBuriedGrudge > 0
+    ? (r.glancingBlows > 0 ? 0.65 : 0.50)
+    : (r.glancingBlows > 0 ? 0.65 : 0);
+
+  const preventedFraction = 1 - damageFraction;
+
+  if (r.theBuriedGrudge > 0 && preventedFraction > 0) {
+    const prevented = postMitigation * preventedFraction;
+    const maxStorage = 3 * d.maxLife;
+    s.buriedGrudgeCharge = Math.min(maxStorage, (s.buriedGrudgeCharge ?? 0) + prevented);
+  }
+
+  if (damageFraction > 0) {
+    let dmg = postMitigation * damageFraction;
+    if (r.debtOfStone > 0 && dmg > 0) {
+      const deferred = dmg * 0.5;
+      dmg -= deferred;
+      s.debtQueue = s.debtQueue ?? [];
+      s.debtQueue.push({ remainingMs: 4000, totalAmount: deferred, perMs: deferred / 4000 });
+    }
     let absorbed = 0;
     if (c.shield > 0) {
       absorbed = Math.min(c.shield, dmg);
@@ -3784,10 +3906,11 @@ function onBlock(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
       s.mana -= fromMana;
       dmg = Math.round(dmg - fromMana);
     }
+    dmg = Math.round(dmg);
     s.life -= dmg;
     blockedDmg = dmg;
     const totalTaken = dmg + Math.round(toEs) + absorbed;
-    if (r.soulTether > 0 && totalTaken > 0 && mon.life > 0) {
+    if (r.soulTether > 0 && totalTaken > 0 && mon.life > 0 && r.handsForgottenChoir <= 0) {
       const trueDmg = Math.max(1, Math.round(totalTaken * 0.5));
       damageMonster(s, mon, trueDmg);
       ctx.emit({ t: 'hit', target: 'monster', amount: trueDmg, dmgType: 'chaos', monsterUid: mon.uid });
@@ -3796,7 +3919,7 @@ function onBlock(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
   ctx.emit({ t: 'hit', target: 'player', amount: blockedDmg, dmgType: type, blocked: true, monsterUid: mon.uid });
   if (r.blockHeal) s.life = Math.min(d.maxLife, s.life + (d.maxLife * r.blockHeal) / 100);
   if (r.aegisWard > 0 && d.maxEs > 0) s.es = Math.min(d.maxEs, s.es + Math.max(1, Math.round(d.armour * 0.02)));
-  if (r.anvilRetaliate > 0) {
+  if (r.anvilRetaliate > 0 && r.handsForgottenChoir <= 0) {
     const rawRet = (d.armour * r.anvilRetaliate) / 100;
     for (const m of aliveMonsters(c).filter((x) => cellRing(x.cell) <= 1 && !shielded(x))) {
       const amount = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(m, rawRet, 'phys'))));
@@ -4770,6 +4893,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   tickDpsMeter(c, dt);
   returnArrows(s, ctx, dt);
   tickPlayerAilments(s, ctx, d, dt);
+  tickDebt(s, ctx, dt, d);
   if (checkDeath(s, ctx, d)) return true;
 
   // timers, buffs and recovery. Warlord's Call: Warcries hold while the pack still stands
@@ -4797,18 +4921,24 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   for (const h of c.heals) {
     const t = Math.min(dt, h.remainingMs);
     if (h.resource === 'mana') gainMana(s, d, h.perMs * t);
-    else s.life += h.perMs * t * recovery;
+    else if (!(h.isFlask && d.raw.borrowedTomorrow > 0)) s.life += h.perMs * t * recovery;
     h.remainingMs -= dt;
     if (h.remainingMs <= 0 && h.karuiEndFull) s.life = d.maxLife;
   }
   c.heals = c.heals.filter((h) => h.remainingMs > 0);
   const regenPct = c.buffs.reduce((a, b) => a + (b.regenPct ?? 0), 0);
-  const regen = d.lifeRegen + (d.maxLife * regenPct) / 100;
+  let regen = d.lifeRegen + (d.maxLife * regenPct) / 100;
+  if (d.raw.borrowedTomorrow > 0 || d.raw.stillHeartActive > 0) {
+    regen = Math.min(0, regen);
+  }
   const regenned = s.life + ((regen > 0 ? regen * recovery : regen) * dt) / 1000;
   // a draining buff (Berserk or Blood God's Frenzy) never kills you by itself
   s.life = Math.min(d.maxLife, regen < 0 || regenPct < 0 ? Math.max(Math.min(s.life, 1), regenned) : regenned);
   const esRegenPct = c.buffs.reduce((a, b) => a + (b.esRegenPct ?? 0), 0);
   if (esRegenPct) s.es = Math.min(d.maxEs, s.es + (d.maxEs * esRegenPct * dt) / 100000);
+  if (d.esRecovery > 0 && d.maxEs > 0) {
+    s.es = Math.min(d.maxEs, s.es + (d.esRecovery * recovery * dt) / 1000);
+  }
   gainMana(s, d, (d.manaRegen * dt) / 1000);
   // there's no natural regen in a fight, so a flight that has shaken off every monster is a breather
   if (c.fleeing && !c.monsters.length) {
@@ -4817,7 +4947,7 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   }
   c.esDelayMs = Math.max(0, c.esDelayMs - dt);
   // Unbroken Ward: being hit only slows the recharge to half
-  if (c.esDelayMs <= 0 || d.raw.esSteady) s.es = Math.min(d.maxEs, s.es + (d.esRecharge * dt * (c.esDelayMs > 0 ? 0.5 : 1)) / 1000);
+  if ((c.esDelayMs <= 0 || d.raw.esSteady) && d.esRecharge > 0) s.es = Math.min(d.maxEs, s.es + (d.esRecharge * dt * (c.esDelayMs > 0 ? 0.5 : 1)) / 1000);
 
   // instilled flasks
   if (s.life < d.maxLife * 0.5) {
@@ -4924,7 +5054,14 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
     c.corpseFadeMs = (c.corpseFadeMs ?? 0) + dt;
     if (c.corpseFadeMs >= 2000) { c.corpses -= 1; c.corpseFadeMs = 0; }
   }
-  if (c.totems?.length) totemStep(s, ctx, d, dt);
+  if (c.totems?.length) {
+    const maxTotems = 1 + d.raw.totemMax + (c.totems.some((t) => t.specials?.includes('twin_totems')) ? 1 : 0);
+    while (c.totems.length > maxTotems) {
+      const removed = c.totems.shift()!;
+      totemEnds(s, ctx, d, removed);
+    }
+    if (c.totems.length) totemStep(s, ctx, d, dt);
+  }
 
   // the monsters' turn
   advanceMonsters(c.monsters, dt, new Set(c.ground.filter((g) => g.cell >= 0).map((g) => g.cell)), army(c));

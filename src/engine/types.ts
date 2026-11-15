@@ -55,7 +55,8 @@ export type Tag =
 
 /** Every stat a character can have. Add new ones here; Stats and the stat engine pick them up. */
 export const STAT_KEYS = [
-  'woundmaker', 'wintersPyre', 'homecoming', 'borrowedTomorrow', 'secondHeresy', 'worldheart', 'sumOfAllMore',
+  'woundmaker', 'wintersPyre', 'homecoming', 'borrowedTomorrow', 'theBuriedGrudge', 'debtOfStone', 'witchglassActive', 'stillHeartActive',
+  'handsForgottenChoir', 'hollowCircuit', 'secondHeresy', 'worldheart', 'sumOfAllMore',
   'life', 'lifePct', 'lifeMore', 'lifeRegen', 'lifeRegenPct', 'lifeLeech', 'manaLeech', 'physMin', 'physMax', 'physPct',
   'fireMin', 'fireMax', 'coldMin', 'coldMax', 'lightMin', 'lightMax', 'chaosMin', 'chaosMax', 'chaosPct', 'chillChance', 'shockChance', 'elemPct', 'attackSpeedPct', 'moveSpeedPct',
   'attackSpeedMore', 'critChancePct', 'critMulti', 'armour', 'armourPct', 'armourMore', 'evasion',
@@ -544,6 +545,8 @@ export interface HealOverTime {
   remainingMs: number;
   /** Blood of the Karui: restores full Life when the heal finishes */
   karuiEndFull?: boolean;
+  isFlask?: boolean;
+  flaskId?: string;
 }
 
 export interface CombatRuntime {
@@ -590,6 +593,8 @@ export interface CombatRuntime {
   queued: number | null;
   buffs: Buff[];
   heals: HealOverTime[];
+  /** Borrowed Tomorrow / Blood God's Frenzy: rolling 1s window instant leech log */
+  instantLeechLog?: { time: number; amount: number }[];
   shield: number;
   shieldMax: number;
   /** ms until energy shield starts recharging (reset by every hit taken) */
@@ -1170,6 +1175,10 @@ export interface GameState {
   mana: number;
   /** energy shield: soaks damage before life and recharges once you stop being hit */
   es: number;
+  /** The Buried Grudge: stored damage prevented by block (up to 300% max Life) */
+  buriedGrudgeCharge?: number;
+  /** Debt of Stone: incoming hit damage deferred evenly over 4s */
+  debtQueue?: { remainingMs: number; totalAmount: number; perMs: number }[];
   combat: CombatRuntime | null;
   zoneKills: Record<string, number>;
   unlockedZones: string[];

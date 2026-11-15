@@ -2009,6 +2009,14 @@ UNIQUES.push(
     flavour: 'Beneath every mountain, something is still beating.', mods: [{ affixId: 'u_worldheart', values: [1] }] },
   { id: 'the_sum_of_all_things', name: 'The Sum of All Things', baseId: 'overhaul_plain_amulet', projectSource: 'Rune-carving 90, Rune Board: The Sum of All Things project (all eleven professions and every endgame encounter)',
     flavour: 'Everything you ever made, weighed at once.', mods: [{ affixId: 'u_sum_of_all', ranges: [[1, 200]] }] },
+  { id: 'the_buried_grudge', name: 'The Buried Grudge', baseId: 'sunforged_bulwark', projectSource: 'Archaeology 65: The Buried Grudge restoration project',
+    flavour: 'The stone breaks before it bends, and remembers what broke it.', mods: [{ affixId: 'u_the_buried_grudge', values: [1] }] },
+  { id: 'debt_of_stone', name: 'Debt of Stone', baseId: 'sunforged_plate', projectSource: 'Smithing 70, Forge 3: Debt of Stone project',
+    flavour: 'The earth takes what it gave, grain by grain.', mods: [{ affixId: 'u_debt_of_stone', values: [1] }] },
+  { id: 'hands_forgotten_choir', name: 'Hands of the Forgotten Choir', baseId: 'seraph_gloves', projectSource: 'Rune-carving 70, Rune Board 1: Hands of the Forgotten Choir project',
+    flavour: 'Their voices sing what the hands can no longer speak.', mods: [{ affixId: 'u_hands_forgotten_choir', values: [1] }] },
+  { id: 'hollow_circuit', name: 'Hollow Circuit', baseId: 'diamond_ring', projectSource: 'Rune-carving 70, Rune Board 1: Hollow Circuit project',
+    flavour: 'The current flows where thought once lingered.', mods: [{ affixId: 'u_hollow_circuit', values: [1] }] },
 );
 
 export function uniqueDef(id: string): UniqueDef {

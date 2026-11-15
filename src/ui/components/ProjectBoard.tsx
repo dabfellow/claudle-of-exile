@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { PROFESSION_PROJECTS } from '../../data/professionProjects';
 import { materialDef } from '../../data/materials';
 import { baseDef } from '../../data/bases';
+import { flaskDef } from '../../data/flasks';
 import { uniqueMapDef } from '../../data/maps';
-import { cancelProject, projectPreview, resumeProject, startProject } from '../../engine/professions';
+import { cancelProject, isEligibleProjectBase, projectPreview, resumeProject, startProject } from '../../engine/professions';
 import type { SkillId } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { ProgressBar } from './common';
@@ -12,6 +13,7 @@ import { MasteryProgress } from './MasteryProgress';
 export function ProjectBoard({ skill, go }: { skill: SkillId; go?: (skill: SkillId) => void }) {
   const s = useGame();
   const [repeats, setRepeats] = useState(1);
+  const [selectedBases, setSelectedBases] = useState<Record<string, number>>({});
   const projects = PROFESSION_PROJECTS.filter((p) => p.skill === skill);
   const run = s.professionProgress.activeProject;
   if (!projects.length && run?.project.skill !== skill) return null;
@@ -27,7 +29,10 @@ export function ProjectBoard({ skill, go }: { skill: SkillId; go?: (skill: Skill
       <button className="btn sm" onClick={() => game.act((st) => cancelProject(st))}>{run.status === 'return' ? 'Collect original base' : 'Cancel and return inputs'}</button>
     </div>}
     {projects.map((p) => {
-      const preview = projectPreview(s, p.id);
+      const needsBase = !!(p.baseId || p.baseIds);
+      const eligibleBases = needsBase ? s.inventory.filter((i) => isEligibleProjectBase(p, i, s)) : [];
+      const selectedUid = selectedBases[p.id] ?? eligibleBases[0]?.uid;
+      const preview = projectPreview(s, p.id, selectedUid);
       const reason = preview.reason;
       const supply = Math.min(...Object.entries(p.inputs).map(([id, n]) => Math.floor((s.account.bank[id] ?? 0) / n)));
       return <div key={p.id} className="callout">
@@ -36,10 +41,23 @@ export function ProjectBoard({ skill, go }: { skill: SkillId; go?: (skill: Skill
         <p>{p.use}</p>
         {preview.notes?.map((n) => <p key={n} className="warn small">{n}</p>)}
         <p>Cost per run: {Object.entries(p.inputs).map(([id, n]) => `${n} ${materialDef(id).name}`).join(', ')}. Supplies cover {supply} run(s).</p>
-        <p>Produces: {p.reward.category === 'progress' ? Object.entries(p.reward.materials).map(([id, n]) => `${n} ${materialDef(id).name}`).join(', ') : p.reward.category === 'chart' ? uniqueMapDef(p.reward.id).name : p.reward.name ?? baseDef(p.reward.baseId).name}. {p.reward.category === 'equipment' ? 'Full inventory pauses delivery with inputs reserved.' : 'Materials and maps use shared storage with no slot limit.'} Stops after the selected runs, or when inputs run out.</p>
+        <p>Produces: {p.reward.category === 'progress' ? Object.entries(p.reward.materials).map(([id, n]) => `${n} ${materialDef(id).name}`).join(', ') : p.reward.category === 'chart' ? uniqueMapDef(p.reward.id).name : p.reward.category === 'flask' ? flaskDef(p.reward.flaskId).name : p.reward.name ?? baseDef(p.reward.baseId).name}. {p.reward.category === 'equipment' ? 'Full inventory pauses delivery with inputs reserved.' : p.reward.category === 'flask' ? 'Delivered directly to your Flask Stash.' : 'Materials and maps use shared storage with no slot limit.'} Stops after the selected runs, or when inputs run out.</p>
         <p className="small">Sources: {p.sources.map((source) => <button className="btn sm ghost" key={source.label} onClick={() => go?.(source.skill)}>{source.label}</button>)} · Completed: {s.professionProgress.projects[p.id]?.completed ?? 0}{p.discovery && s.professionProgress.discoveries[p.discovery] ? ' · Discovered' : ''}</p>
+        {needsBase && <p><label>Base item:{' '}
+          <select
+            aria-label={`${p.name} base`}
+            value={selectedUid ?? ''}
+            onChange={(e) => setSelectedBases((prev) => ({ ...prev, [p.id]: Number(e.target.value) }))}
+          >
+            {eligibleBases.length === 0 ? <option value="">No eligible base in inventory</option> : eligibleBases.map((i) => (
+              <option key={i.uid} value={i.uid}>
+                {i.name || baseDef(i.baseId).name} (ilvl {i.ilvl}, {i.rarity})
+              </option>
+            ))}
+          </select>
+        </label></p>}
         {p.repeatable && <label>Runs <input aria-label={`${p.name} runs`} type="number" min={1} max={100} value={repeats} onChange={(e) => setRepeats(Math.max(1, Math.min(100, Number(e.target.value) || 1)))} /></label>}{' '}
-        <button className="btn sm primary" disabled={!!reason} title={reason ?? ''} onClick={() => game.act((st, ctx) => startProject(st, ctx, p.id, repeats))}>Start project</button>
+        <button className="btn sm primary" disabled={!!reason} title={reason ?? ''} onClick={() => game.act((st, ctx) => startProject(st, ctx, p.id, repeats, selectedUid))}>Start project</button>
         {reason && <p className="small muted">{reason}</p>}
       </div>;
     })}

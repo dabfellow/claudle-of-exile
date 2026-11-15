@@ -3,7 +3,8 @@ import type { Item, SkillId } from '../engine/types';
 export type ProjectReward =
   | { category: 'chart'; id: string }
   | { category: 'progress'; materials: Record<string, number> }
-  | { category: 'equipment'; baseId: string; ilvl: number; rarity: Item['rarity']; name?: string; uniqueId?: string; fixedSuffixes?: Item['suffixes'] };
+  | { category: 'equipment'; baseId: string; ilvl: number; rarity: Item['rarity']; name?: string; uniqueId?: string; fixedSuffixes?: Item['suffixes'] }
+  | { category: 'flask'; flaskId: string; ilvl: number; rarity: 'unique'; name?: string; uniqueId?: string };
 
 export interface ProfessionRequirement {
   skill: SkillId;
@@ -25,6 +26,9 @@ export interface ProfessionProject extends ProfessionRequirement {
   repeatable?: boolean;
   /** An inscription may escrow one inventory item. It is unavailable to every other item operation. */
   baseId?: string;
+  baseIds?: string[];
+  baseMinIlvl?: number;
+  baseNonUnique?: boolean;
   sources: { label: string; skill: SkillId }[];
   use: string;
 }
@@ -241,6 +245,174 @@ PROFESSION_PROJECTS.push({
     { label: 'Doomed Maps (Fractured Orb, guaranteed every ten victories), all five Hard Bosses and all three Ubers', skill: 'combat' },
   ],
   use: `One amulet: (1–200)% more Damage, a whole number rolled evenly. It multiplies your hits, ailments, minions and totems once. A low roll is still a finished craft. An ordinary Divine Orb rerolls it (the same number can come up again); no second full recipe needed. ${PINNACLE_NOTE}`,
+});
+
+PROFESSION_PROJECTS.push({
+  id: 'the_buried_grudge',
+  version: 1,
+  name: 'Restore The Buried Grudge',
+  skill: 'archaeology',
+  level: 65,
+  accomplishments: ['expedition.dig_colossus.0'],
+  durationMs: 7_200_000,
+  xp: 1500,
+  inputs: { giant_relic_fragment: 40, giant_tally: 100, stone_alloy: 2 },
+  reward: {
+    category: 'equipment',
+    baseId: 'sunforged_bulwark',
+    ilvl: 80,
+    rarity: 'unique',
+    name: 'The Buried Grudge',
+    uniqueId: 'the_buried_grudge',
+  },
+  repeatable: true,
+  sources: [
+    { label: 'Dig The Cairn & The Colossus for Giant Relic Fragments and Giant Tallies', skill: 'archaeology' },
+    { label: 'Smelt Stone Alloy from Adamant, Iron and Stone Fragments', skill: 'smithing' },
+  ],
+  use: 'Blocked hits take 50% of post-mitigation damage. Store prevented damage up to 300% max Life to unleash in a physical shockwave on your next slam. Fixed unique, item level 80, combat level 60 to equip. One normal rune slot.',
+});
+
+PROFESSION_PROJECTS.push({
+  id: 'witchglass',
+  version: 1,
+  name: 'Witchglass',
+  skill: 'alchemy',
+  level: 65,
+  station: { id: 'alchemy_table', level: 3 },
+  durationMs: 3_600_000,
+  xp: 1200,
+  inputs: { moon_distillate: 5, star_distillate: 2, prepared_glass: 5 },
+  reward: {
+    category: 'flask',
+    flaskId: 'u_flask_witchglass',
+    ilvl: 80,
+    rarity: 'unique',
+    name: 'Witchglass',
+    uniqueId: 'witchglass',
+  },
+  repeatable: true,
+  sources: [
+    { label: 'Distill Moon and Star Blooms at Alchemy Table 3', skill: 'alchemy' },
+    { label: 'Refine Prepared Glass from Rough Gems and Sunpetals at Alchemy Table 3', skill: 'alchemy' },
+  ],
+  use: 'One Witchglass utility flask: 100% of elemental damage converted to chaos while active; cannot inflict elemental ailments. 5s duration, 20 of 40 charges per use. Unique flask; can be instilled.',
+});
+
+PROFESSION_PROJECTS.push({
+  id: 'the_still_heart',
+  version: 1,
+  name: 'The Still Heart',
+  skill: 'alchemy',
+  level: 60,
+  station: { id: 'alchemy_table', level: 3 },
+  durationMs: 3_600_000,
+  xp: 1200,
+  inputs: { moon_distillate: 6, ember_reduction: 10, prepared_glass: 3 },
+  reward: {
+    category: 'flask',
+    flaskId: 'u_flask_still_heart',
+    ilvl: 80,
+    rarity: 'unique',
+    name: 'The Still Heart',
+    uniqueId: 'the_still_heart',
+  },
+  repeatable: true,
+  sources: [
+    { label: 'Distill Moon Blooms at Alchemy Table 3', skill: 'alchemy' },
+    { label: 'Cook Emberroot Reduction from Emberroots and Vitality Essences', skill: 'cooking' },
+    { label: 'Refine Prepared Glass at Alchemy Table 3', skill: 'alchemy' },
+  ],
+  use: 'One The Still Heart life flask: recovers 1800 Life over 6s, continuing at full life. Cannot leech or regenerate life during effect. Replaces active recovery on reuse. 20 of 40 charges per use. Borrowed Tomorrow blocks its life recovery entirely.',
+});
+
+PROFESSION_PROJECTS.push({
+  id: 'debt_of_stone',
+  version: 1,
+  name: 'Debt of Stone',
+  skill: 'smithing',
+  level: 70,
+  station: { id: 'forge', level: 3 },
+  accomplishments: ['smithing_work_100'],
+  durationMs: 7_200_000,
+  xp: 1800,
+  inputs: { stone_alloy: 4, adamant_bar: 20, heartwood_frame: 1 },
+  reward: {
+    category: 'equipment',
+    baseId: 'sunforged_plate',
+    ilvl: 80,
+    rarity: 'unique',
+    name: 'Debt of Stone',
+    uniqueId: 'debt_of_stone',
+  },
+  repeatable: true,
+  sources: [
+    { label: 'Smelt Stone Alloy from Adamant, Iron and Stone Fragments', skill: 'smithing' },
+    { label: 'Smelt Adamant Bars from Adamant Ore', skill: 'smithing' },
+    { label: 'Assemble Heartwood Frames from Ancient Heartwood and Yew Planks', skill: 'smithing' },
+  ],
+  use: '50% of incoming hit damage deferred evenly over 4s; cannot gain Energy Shield. Fixed unique, item level 80, combat level 60 to equip. One normal rune slot.',
+});
+
+PROFESSION_PROJECTS.push({
+  id: 'hands_forgotten_choir',
+  version: 1,
+  name: 'Hands of the Forgotten Choir',
+  skill: 'runecarving',
+  level: 70,
+  station: { id: 'rune_board', level: 1 },
+  accomplishments: ['runecarving_work_100'],
+  durationMs: 7_200_000,
+  xp: 1800,
+  inputs: { choir_inscription: 2, exceptional_crystal: 1 },
+  baseIds: ['hierophant_gloves', 'seraph_gloves'],
+  baseNonUnique: true,
+  reward: {
+    category: 'equipment',
+    baseId: 'seraph_gloves',
+    ilvl: 80,
+    rarity: 'unique',
+    name: 'Hands of the Forgotten Choir',
+    uniqueId: 'hands_forgotten_choir',
+  },
+  repeatable: true,
+  sources: [
+    { label: 'Prepare Choir Inscriptions from Inscription Fragments and Blood Grade 3', skill: 'runecarving' },
+    { label: 'Cut Exceptional Crystals from Mining Crystal Shards and Rough Gems', skill: 'gemcutting' },
+    { label: 'Crafted Hierophant’s Gloves or Seraph Gloves', skill: 'smithing' },
+  ],
+  use: 'Totem skills place two at once; +2 maximum active totems; you cannot deal damage yourself. Inscribes crafted Hierophant’s Gloves or Seraph Gloves, completely consuming the base into a new unique.',
+});
+
+PROFESSION_PROJECTS.push({
+  id: 'hollow_circuit',
+  version: 1,
+  name: 'Hollow Circuit',
+  skill: 'runecarving',
+  level: 70,
+  station: { id: 'rune_board', level: 1 },
+  accomplishments: ['runecarving_work_100'],
+  durationMs: 7_200_000,
+  xp: 1800,
+  inputs: { circuit_inscription: 2, exceptional_crystal: 2 },
+  baseId: 'diamond_ring',
+  baseMinIlvl: 45,
+  baseNonUnique: true,
+  reward: {
+    category: 'equipment',
+    baseId: 'diamond_ring',
+    ilvl: 80,
+    rarity: 'unique',
+    name: 'Hollow Circuit',
+    uniqueId: 'hollow_circuit',
+  },
+  repeatable: true,
+  sources: [
+    { label: 'Prepare Circuit Inscriptions from Inscription Fragments and Storm Grade 3', skill: 'runecarving' },
+    { label: 'Cut Exceptional Crystals from Mining Crystal Shards and Rough Gems', skill: 'gemcutting' },
+    { label: 'Crafted Diamond Ring of item level 45+', skill: 'smithing' },
+  ],
+  use: '100% of would-be Mana regeneration recovers Energy Shield instead; no Mana regeneration or natural Energy Shield recharge. Inscribes a crafted Diamond Ring of item level 45+, completely consuming the base into a new unique.',
 });
 
 export const professionProject = (id: string) => PROFESSION_PROJECTS.find((p) => p.id === id);

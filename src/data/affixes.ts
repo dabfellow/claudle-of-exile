@@ -738,6 +738,12 @@ export const AFFIXES: AffixDef[] = [
   U('u_second_heresy', 'suffix', 'Allows one additional Forbidden keystone', 'secondHeresy'),
   U('u_worldheart', 'suffix', '30% less Damage taken', 'worldheart'),
   U('u_sum_of_all', 'suffix', '{0}% more Damage', 'sumOfAllMore'),
+  U('u_the_buried_grudge', 'suffix', 'Blocked hits take 50% damage; store prevented damage up to 300% max Life to unleash in a shockwave on your next slam', 'theBuriedGrudge'),
+  U('u_debt_of_stone', 'suffix', '50% of incoming hit damage deferred evenly over 4s; cannot gain Energy Shield', 'debtOfStone'),
+  U('u_witchglass', 'suffix', '100% of Elemental Damage converted to Chaos Damage; cannot inflict Elemental Ailments', 'witchglassActive'),
+  U('u_the_still_heart', 'suffix', 'Recovers 1800 Life over 6s, continuing at full life; cannot leech or regenerate Life during effect', 'stillHeartActive'),
+  U('u_hands_forgotten_choir', 'suffix', 'Totem skills place two at once; +2 maximum active totems; you cannot deal damage yourself', 'handsForgottenChoir'),
+  U('u_hollow_circuit', 'suffix', '100% of would-be Mana regeneration recovers Energy Shield instead; no Mana regeneration or natural Energy Shield recharge', 'hollowCircuit'),
   // meta-crafting modifiers (docs/POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md)
   M('meta_prefixes_cannot_be_changed', 'suffix', 'meta_prefix_lock', 'Prefixes Cannot Be Changed'),
   M('meta_suffixes_cannot_be_changed', 'prefix', 'meta_suffix_lock', 'Suffixes Cannot Be Changed'),

@@ -784,6 +784,8 @@ export const FLASK_ART: Record<string, string> = {
   u_flask_lions_roar: new URL('../assets/ui/decorations/bottle-grey.png', import.meta.url).href,
   u_flask_bottled_faith: new URL('../assets/items/consumables/potion-green.png', import.meta.url).href,
   u_flask_dying_sun: new URL('../assets/items/flasks/tint-ruby.png', import.meta.url).href,
+  u_flask_witchglass: new URL('../assets/items/flasks/tint-amethyst.png', import.meta.url).href,
+  u_flask_still_heart: new URL('../assets/items/consumables/potion-red-shelf.png', import.meta.url).href,
 };
 
 /** Monsters: CodeSpree beings and Craftpix avatars (64px pixel art), free_sample portraits (painted JPG). */

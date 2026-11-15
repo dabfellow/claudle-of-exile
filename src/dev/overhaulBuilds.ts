@@ -4,9 +4,11 @@ import { devKit } from '../engine/maps';
 import type { Ctx } from '../engine/context';
 import type { GameState } from '../engine/types';
 import { createSkillGem, createSupportGem } from '../engine/gems';
-import { createItem, addFixedMod } from '../engine/items';
+import { createItem, addFixedMod, createUnique } from '../engine/items';
+import { newFlask } from '../engine/flasks';
+import { flaskDef } from '../data/flasks';
 import { baseDef } from '../data/bases';
-import { xpForLevel } from '../engine/xp';
+import { charXpForLevel, xpForLevel } from '../engine/xp';
 
 /** Ordinary rare kit and legally purchased nearby nodes, no altered combat stats. */
 export function prepareReliquaryMapper(s: GameState, ctx: Ctx) {
@@ -101,4 +103,98 @@ export function prepareThiefKit(s: GameState, _ctx: Ctx) {
   s.account.bank.marker = 500;
   s.account.bank.treasury_fragment = 120;
   s.account.bank.oath_fragment = 5;
+}
+
+export function prepareDefenceBuild(s: GameState, ctx: Ctx, id: string) {
+  devKit(s, ctx, 92);
+  buyNearbyPassives(s, ctx);
+  for (const slot of ['helmet', 'body', 'gloves', 'boots', 'offhand', 'amulet'] as const) {
+    const previous = s.equipment[slot]; if (!previous) continue;
+    const base = baseDef(previous.baseId), item = createItem(s, base.id, 80, 'normal', ctx.rng);
+    const str = base.tags.includes('str_armour'), dex = base.tags.includes('dex_armour'), int = base.tags.includes('int_armour');
+    const defence = str && dex ? 'inc_armour_evasion' : str && int ? 'inc_armour_es' : dex && int ? 'inc_evasion_es' : str ? 'inc_armour' : dex ? 'inc_evasion' : 'inc_es';
+    item.rarity = 'rare';
+    for (const affix of ['flat_life', defence, 'fire_res', 'cold_res', 'light_res']) addFixedMod(item, affix, 8, ctx.rng);
+    s.equipment[slot] = item;
+  }
+  s.skillBar.fill(null);
+  const slamG = createSkillGem(s, 'ground_slam');
+  slamG.level = 20; slamG.rules = [{ when: 'always' }]; s.skillBar[0] = slamG;
+  slamG.extraSlots = 1; slamG.supports = ['life_leech', 'mana_leech', 'faster_attacks'].map((support) => createSupportGem(s, support));
+
+  if (id === 'borrowed_tomorrow' || id === 'combo_borrowed_still_heart') {
+    s.equipment.amulet = createUnique(s, 'borrowed_tomorrow', 80, ctx.rng);
+  }
+  if (id === 'the_buried_grudge' || id === 'combo_grudge_debt') {
+    s.equipment.offhand = createUnique(s, 'the_buried_grudge', 80, ctx.rng);
+  }
+  if (id === 'debt_of_stone' || id === 'combo_grudge_debt') {
+    s.equipment.body = createUnique(s, 'debt_of_stone', 80, ctx.rng);
+  }
+  if (id === 'witchglass' || id === 'combo_pyre_witchglass') {
+    const wf = newFlask(s, 'u_flask_witchglass');
+    wf.charges = flaskDef('u_flask_witchglass').maxCharges;
+    s.flaskSlots[2] = wf;
+  }
+  if (id === 'the_still_heart' || id === 'combo_borrowed_still_heart') {
+    const shf = newFlask(s, 'u_flask_still_heart');
+    shf.charges = flaskDef('u_flask_still_heart').maxCharges;
+    s.flaskSlots[0] = shf;
+  }
+  if (id === 'combo_pyre_witchglass') {
+    s.equipment.weapon = createUnique(s, 'winters_pyre', 80, ctx.rng);
+    const ice = createSkillGem(s, 'frost_needle');
+    ice.level = 20; ice.rules = [{ when: 'always' }];
+    ice.extraSlots = 1; ice.supports = ['chain', 'mana_leech', 'life_leech'].map((support) => createSupportGem(s, support));
+    s.skillBar[0] = ice;
+  }
+  s.flaskSlots[0]!.instill = 'lowLife'; s.flaskSlots[1]!.instill = 'lowMana';
+  s.account.hideout.war_table = 5;
+}
+
+export function prepareRuneUniqueBuild(s: GameState, ctx: Ctx, id: 'hands_forgotten_choir' | 'hollow_circuit' | 'combo_choir_circuit'): void {
+  s.character.classId = 'templar';
+  s.skills.combat = charXpForLevel(80);
+  s.skills.runecarving = xpForLevel(80);
+  s.account.hideout.rune_board = 1;
+  const rng = ctx.rng;
+
+  devKit(s, ctx, 80);
+  buyNearbyPassives(s, ctx);
+
+  s.equipment.body = createItem(s, 'seraph_raiment', 80, 'rare', rng);
+  s.equipment.helmet = createItem(s, 'seraph_circlet', 80, 'rare', rng);
+  s.equipment.boots = createItem(s, 'seraph_sandals', 80, 'rare', rng);
+  s.equipment.gloves = createItem(s, 'seraph_gloves', 80, 'rare', rng);
+  s.equipment.weapon = createItem(s, 'seraph_staff', 80, 'rare', rng);
+  s.equipment.ring1 = createItem(s, 'diamond_ring', 80, 'rare', rng);
+  s.equipment.ring2 = createItem(s, 'ruby_ring', 80, 'rare', rng);
+  s.equipment.amulet = createItem(s, 'amber_amulet', 80, 'rare', rng);
+  s.equipment.belt = createItem(s, 'heavy_belt', 80, 'rare', rng);
+
+  addFixedMod(s.equipment.amulet, 'mana_regen_flat', 8, rng);
+
+  s.skillBar.fill(null);
+  const totemG = createSkillGem(s, 'flame_totem');
+  totemG.level = 20; totemG.rules = [{ when: 'always' }];
+  totemG.extraSlots = 1;
+  totemG.supports = ['faster_casts', 'mana_leech'].map((support) => createSupportGem(s, support));
+  s.skillBar[0] = totemG;
+
+  const hitG = createSkillGem(s, 'heavy_strike');
+  hitG.level = 20; hitG.rules = [{ when: 'always' }];
+  hitG.extraSlots = 1;
+  hitG.supports = ['faster_attacks'].map((support) => createSupportGem(s, support));
+  s.skillBar[1] = hitG;
+
+  if (id === 'hands_forgotten_choir' || id === 'combo_choir_circuit') {
+    s.equipment.gloves = createUnique(s, 'hands_forgotten_choir', 80, rng);
+  }
+  if (id === 'hollow_circuit' || id === 'combo_choir_circuit') {
+    s.equipment.ring1 = createUnique(s, 'hollow_circuit', 80, rng);
+  }
+
+  s.flaskSlots[0]!.instill = 'lowLife';
+  s.flaskSlots[1]!.instill = 'lowMana';
+  s.account.hideout.war_table = 5;
 }

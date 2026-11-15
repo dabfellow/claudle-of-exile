@@ -137,6 +137,8 @@ export interface Derived {
   maxEs: number;
   /** energy shield recharged per second once recharge has started */
   esRecharge: number;
+  /** continuous energy shield recovery per second from converted mana regeneration (Hollow Circuit) */
+  esRecovery: number;
   armour: number;
   evasion: number;
   hit: Record<DamageType, [number, number]>;
@@ -268,6 +270,9 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
   }
 
   // Gear synergies
+  if (s.equipment.offhand?.uniqueId !== 'the_buried_grudge') {
+    s.buriedGrudgeCharge = 0;
+  }
   if (st.runicConductor > 0) {
     const runeCount = Object.values(s.equipment).filter((item) => item?.rune).length;
     st.elemPct += 2 * runeCount;
@@ -405,6 +410,13 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     armour = 0;
     maxEs = 0;
   }
+  if (raw.debtOfStone > 0) {
+    maxEs = 0;
+    s.es = 0;
+  }
+  if (raw.handsForgottenChoir > 0) {
+    raw.totemMax += 2;
+  }
   const accuracy = Math.round(2 * combatLevel + raw.accuracy + attributes.dex * A.dex.accuracyPer);
 
   const mainPhys = weaponItem ? weaponPhys(weaponItem) : null;
@@ -450,6 +462,12 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   // Knife's Edge: every hit is a Mega Crit
   const critFactor = raw.knifesEdge && !raw.woundmaker ? MEGA_CRIT_MULTI : 1 + (critChance / 100) * (critMulti / 100 - 1);
 
+  // as in PoE, increased regeneration rate scales every regeneration source
+  const wouldBeManaRegen = maxMana ? raw.manaRegenFlat * (1 + raw.manaRegenPct / 100) : 0;
+  const esRecovery = raw.hollowCircuit && maxEs > 0 ? Math.max(0, wouldBeManaRegen) : 0;
+  const manaRegen = raw.hollowCircuit ? Math.min(0, wouldBeManaRegen) : wouldBeManaRegen;
+  const esRecharge = raw.hollowCircuit ? 0 : ((maxEs * ES_RECHARGE_PCT) / 100) * (1 + raw.esRechargePct / 100);
+
   return {
     raw,
     combatLevel,
@@ -458,10 +476,10 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     maxLife,
     lifeRegen: raw.lifeRegen + (maxLife * raw.lifeRegenPct) / 100,
     maxMana,
-    // as in PoE, increased regeneration rate scales every regeneration source
-    manaRegen: maxMana ? raw.manaRegenFlat * (1 + raw.manaRegenPct / 100) : 0,
+    manaRegen,
     maxEs,
-    esRecharge: ((maxEs * ES_RECHARGE_PCT) / 100) * (1 + raw.esRechargePct / 100),
+    esRecharge,
+    esRecovery,
     armour,
     evasion,
     hit,
@@ -495,7 +513,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     flaskEffect: raw.flaskEffect,
     flaskCharges: raw.flaskCharges,
     avgHit,
-    dps: ((avgHit * 1000) / attackMs) * critFactor * (raw.woundmaker ? .4 : 1) * (raw.steadyHand || raw.knifesEdge ? 1 : hitChance(accuracy, combatLevel)) * (1 + raw.sumOfAllMore / 100),
+    dps: ((avgHit * 1000) / attackMs) * critFactor * (raw.woundmaker ? .4 : 1) * (raw.handsForgottenChoir ? 0 : 1) * (raw.steadyHand || raw.knifesEdge ? 1 : hitChance(accuracy, combatLevel)) * (1 + raw.sumOfAllMore / 100),
   };
 }
 

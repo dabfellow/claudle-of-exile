@@ -1,7 +1,7 @@
 import { game } from '../game';
 import type { scenario } from './scenarios';
 import { MAPS_PREVIEW, startUniqueMap } from '../engine/maps';
-import { prepareGemcuttingSkiller, prepareReliquaryMapper, prepareRunecarverKit, prepareThiefKit, prepareWeaponBuild } from './overhaulBuilds';
+import { prepareDefenceBuild, prepareGemcuttingSkiller, prepareReliquaryMapper, prepareRuneUniqueBuild, prepareRunecarverKit, prepareThiefKit, prepareWeaponBuild } from './overhaulBuilds';
 import { professionProject } from '../data/professionProjects';
 import { equip } from '../engine/equipment';
 import { startCombat } from '../engine/combat';
@@ -47,6 +47,12 @@ export function mountOverhaulPlaytest(load: typeof scenario) {
     ['Skiller missing support', async () => { await load({ classId: 'warrior', level: 25 }); game.act(prepareGemcuttingSkiller); }],
     ['Runic gear customization', async () => { await load({ classId: 'duelist', level: 50 }); game.act(prepareRunecarverKit); }],
     ['Thief Heist kit', async () => { await load({ classId: 'shadow', level: 75 }); game.act(prepareThiefKit); }],
+    ['Defence: Grudge + Debt', () => game.act((s, ctx) => prepareDefenceBuild(s, ctx, 'combo_grudge_debt'))],
+    ['Defence: Borrowed + Still Heart', () => game.act((s, ctx) => prepareDefenceBuild(s, ctx, 'combo_borrowed_still_heart'))],
+    ['Defence: Pyre + Witchglass', () => game.act((s, ctx) => prepareDefenceBuild(s, ctx, 'combo_pyre_witchglass'))],
+    ['Runic: Forgotten Choir', () => game.act((s, ctx) => prepareRuneUniqueBuild(s, ctx, 'hands_forgotten_choir'))],
+    ['Runic: Hollow Circuit', () => game.act((s, ctx) => prepareRuneUniqueBuild(s, ctx, 'hollow_circuit'))],
+    ['Runic: Choir + Circuit', () => game.act((s, ctx) => prepareRuneUniqueBuild(s, ctx, 'combo_choir_circuit'))],
     ['Away 4 hours', () => game.simulateAway(14_400_000)],
     ['Away 20 minutes', () => game.simulateAway(1_200_000)],
     ['Away 1 minute', () => game.simulateAway(60_000)],

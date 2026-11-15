@@ -2,7 +2,7 @@
 
 Generated from the game data; run `npm run uniques` after changing a unique, instead of editing this file.
 
-142 uniques, with ordinary items listed by world-drop level.
+146 uniques, with ordinary items listed by world-drop level.
 
 ## World drops (116)
 
@@ -125,11 +125,15 @@ Generated from the game data; run `npm run uniques` after changing a unique, ins
 | **The Executioner's Hood**<br>*The crowd holds its breath; the blade does not.* | helmet | Oblivion Mask (80) | • (70–95)% increased Evasion Rating<br>• +(35–50)% to Critical Strike Multiplier<br>• (50–75)% increased Coup de Grâce damage<br>• Headsman: Coup de Grâce refunds 50% of Malice against Bosses and executes enemies below (30–45)% Life | World drop (level 80+), Hall of the Grandmasters (Unique Map) |
 | **Velvet Bullfighter's Coat**<br>*A step to the left, and the blade finds the heart.* | body | Wyrmlord Hauberk (80) | • +(90–125) to maximum Life<br>• (45–65)% increased Riposte damage<br>• (30–45)% faster Riposte recovery<br>• Matador: Evades grant +2 Streak instead of +1, and Ripostes deal +(30–45)% more Damage per Streak | World drop (level 80+), Hall of the Grandmasters (Unique Map) |
 
-## Profession projects (7)
+## Profession projects (11)
 
 | Unique | Slot | Base (req. level) | Mods | Drops in |
 | --- | --- | --- | --- | --- |
+| **Hollow Circuit**<br>*The current flows where thought once lingered.* | ring | Diamond Ring (24) | • 100% of would-be Mana regeneration recovers Energy Shield instead; no Mana regeneration or natural Energy Shield recharge | Rune-carving 70, Rune Board 1: Hollow Circuit project |
 | **Borrowed Tomorrow**<br>*Every second bought on credit comes due.* | amulet | Relic Treasury Amulet (60) | • Wearer life leech is instant; no life regeneration or flask life recovery | Thieving 65: Borrowed Tomorrow heist treasure claim or Occult Treasury vault jackpot |
+| **Debt of Stone**<br>*The earth takes what it gave, grain by grain.* | body | Sunforged Plate (60) | • 50% of incoming hit damage deferred evenly over 4s; cannot gain Energy Shield | Smithing 70, Forge 3: Debt of Stone project |
+| **Hands of the Forgotten Choir**<br>*Their voices sing what the hands can no longer speak.* | gloves | Seraph Gloves (60) | • Totem skills place two at once; +2 maximum active totems; you cannot deal damage yourself | Rune-carving 70, Rune Board 1: Hands of the Forgotten Choir project |
+| **The Buried Grudge**<br>*The stone breaks before it bends, and remembers what broke it.* | offhand | Sunforged Bulwark (60) | • Blocked hits take 50% damage; store prevented damage up to 300% max Life to unleash in a shockwave on your next slam | Archaeology 65: The Buried Grudge restoration project |
 | **The Homecoming**<br>*An arrow always knows the way back.* | weapon | Manticore Greatbow (60) | • One arrow per attack, overriding additional arrows; arrows return after 0.5 seconds | Smithing 65, Forge 3: The Homecoming project |
 | **Winter's Pyre**<br>*Even the coldest memory can burn.* | weapon | Seraph Staff (60) | • Cold damage can ignite; 100% more ignite damage; cannot chill or freeze; deal no Fire or Lightning Damage except cold-sourced ignites | Smithing 65, Forge 3: Winter's Pyre project |
 | **Woundmaker**<br>*The wound remembers every blow.* | weapon | Relic Great Axe (60) | • Bleeds stack up to 8; 60% less hit damage; cannot critically strike | Smithing 60, Forge 3: Woundmaker project |

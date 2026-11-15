@@ -10,7 +10,7 @@ import { createSkillGem } from './gems';
 import type { Ctx } from './context';
 import { checkAchievements } from './achievements';
 import { isMealClockRunning, mealStep } from './cooking';
-import { autoNextZoneStep, combatStep } from './combat';
+import { autoNextZoneStep, combatStep, tickDebt } from './combat';
 import { fillOrders, newExpeditionState } from './expedition';
 import { heistAutoStep, heistStep, newHeistState } from './heist';
 import { checkCampaignDone, refreshVendor, vendorTick } from './hideout';
@@ -77,6 +77,8 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     life: 60,
     mana: 30,
     es: 0,
+    buriedGrudgeCharge: 0,
+    debtQueue: [],
     combat: null,
     zoneKills: {},
     unlockedZones: ['mudflats'],
@@ -175,9 +177,14 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
       autoNextZoneStep(s, ctx);
       if (s.fallen) return;
     } else {
-      s.life = Math.min(d.maxLife, s.life + d.maxLife * TOWN_REGEN * (step / 1000));
+      tickDebt(s, ctx, step, d);
+      if (d.raw.borrowedTomorrow <= 0 && d.raw.stillHeartActive <= 0) {
+        s.life = Math.min(d.maxLife, s.life + d.maxLife * TOWN_REGEN * (step / 1000));
+      }
       s.mana = Math.min(d.maxMana, s.mana + d.maxMana * TOWN_REGEN * (step / 1000));
-      s.es = Math.min(d.maxEs, s.es + d.maxEs * TOWN_REGEN * (step / 1000));
+      if (d.raw.debtOfStone <= 0) {
+        s.es = Math.min(d.maxEs, s.es + d.maxEs * TOWN_REGEN * (step / 1000));
+      }
     }
     mapStep(s, ctx);
   }

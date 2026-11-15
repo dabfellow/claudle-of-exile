@@ -1,6 +1,6 @@
 # Skilling overhaul: phased build plan
 
-Written 2026-11-15. **Phases 00–14 are live in 0.4.39; Phase 17 (pinnacle chase projects) is live in 0.4.40. Phases 15, 16 and 18 remain open; Phase 15 (Defence and recovery uniques) is next.** Implementation contract: [SKILLING_OVERHAUL_SPEC.md](SKILLING_OVERHAUL_SPEC.md).
+Written 2026-11-15. **Phases 00–14 are live in 0.4.39 and Phase 17 in 0.4.40; Phases 15–16 were merged with Phase 17 for 0.4.41. Phase 18 (whole-overhaul acceptance) is next.** Implementation contract: [SKILLING_OVERHAUL_SPEC.md](SKILLING_OVERHAUL_SPEC.md).
 
 Design: [SKILLING_OVERHAUL.md](SKILLING_OVERHAUL.md). Tracking: [MILESTONES.md](MILESTONES.md). Current behavior: [GAME.md](GAME.md). This plan organizes the reference; illustrative examples and draft recipes remain distinct from owner decisions.
 
@@ -34,24 +34,31 @@ Replace the current handoff after each phase. Keep lasting decisions in the spec
 - Tests and actual in-game checks performed, with results.
 - Incomplete work/blockers and exact commands or reproduction steps.
 
-**Current handoff (2026-11-15, Phase 17):**
+**Current handoff (2026-11-15, Phases 15–17 merged):**
 
-- **Phase/status:** Phase 17 (pinnacle chase projects) complete with automated verification, released live in 0.4.40 (2026-11-15) at the owner's request. It was built out of order: Phases 15 and 16 are still open, and Phase 15 can start next.
+- **Phase/status:** Phases 15 (GPT) and 16 (Gemini) existed only as uncommitted work in the main checkout; they were merged onto the live Phase 17 branch for 0.4.41. Phases 00–17 are complete. Phase 18 can start.
+- **Merge decisions:** in `onBlock`, Worldheart reduces the post-mitigation hit once before The Buried Grudge stores prevented damage and before Debt of Stone splits the remainder; in `takeHit` Worldheart applies before the Debt split; Debt's deferred tranches (`tickDebt`) are never reduced again. The Grudge shockwave goes through `damageMonster`, so Sum multiplies it once (the shown number is scaled to match). Sheet DPS applies Choir's zero before Sum. Glancing Blows now scales post-mitigation damage (Phase 15 change kept).
+- **Checks:** see the release entry in `MILESTONES.md`. Browser playtest of the merged build not run.
+- **Incomplete/blockers:** none for the merge. Phase 18 should playtest the Worldheart + Debt of Stone, Worldheart + Buried Grudge and Sum + Grudge pairings in a realistic build.
+
+**Previous handoff (Phase 17):**
+
+- **Phase/status:** Phase 17 (pinnacle chase projects) complete with automated verification, released live in 0.4.40 (2026-11-15) at the owner's request. It was built out of order, before Phases 15 and 16 were merged.
 - **Changed files:** new `src/engine/pinnacles.ts`, `tests/pinnacleProjects.test.ts`; modified `src/engine/passives.ts`, `src/engine/equipment.ts`, `src/engine/state.ts`, `src/engine/save.ts`, `src/engine/treeProfiles.ts`, `src/engine/combat.ts`, `src/engine/stats.ts`, `src/engine/crafting.ts`, `src/engine/maps.ts`, `src/engine/types.ts`, `src/data/affixes.ts`, `src/data/bases.ts`, `src/data/statText.ts`, `src/data/professionProjects.ts`, `src/data/skills.ts`, `src/data/cartography.ts`, `src/data/skillingMastery.ts`, `src/data/news.ts`, `tests/trees.test.ts`, `tests/cartography.test.ts`, `docs/UNIQUES.md`, `docs/GAME.md`, this plan, the specification (§24) and `docs/MILESTONES.md`.
 - **Stable interfaces:** unique/project IDs `the_second_heresy`, `worldheart`, `the_sum_of_all_things`; bases `overhaul_plain_ring|belt|amulet`; stats `secondHeresy`, `worldheart`, `sumOfAllMore`; `forbiddenAllowance`, `settleForbiddenAllowance`, `forbiddenTaken`, `sumOfAllMultiplier`, `WORLDHEART_TAKEN`; `damageMonster(..., prescaled)`; materials `world_core_fragment`, `doom_key_fragment`; actions `forge_uber_key_1|2|3`; counters `maps.doomedSinceOrb`, `maps.eligibleSinceDoomed`.
 - **Compatibility for Phase 15:** Debt of Stone's split must take the post-Worldheart hit in `takeHit` and its deferred tranches must skip Worldheart. A Buried Grudge shockwave dealt through `damageMonster` gets Sum's multiplier once automatically; do not scale it again. Borrowed Tomorrow now equips as an amulet (`slotsFor` fix).
 - **Checks:** 1,658 tests / 101 files, `npx tsc --noEmit`, `npm run build`, `npm run uniques` and `git diff --check` all pass. Browser playtest not run.
 - **Incomplete/blockers:** browser playtest of the three acquisitions; Debt/Grudge pairings once Phase 15 exists.
 
-**Previous handoff (Phase 11):**
+**Earlier handoff (Phase 16):**
 
-- **Phase/status:** Phase 11 (Thieving and Heist) complete locally/unreleased. Earlier Phase 00–10 and 12–14 work preserved. Phases 15–18 remain open; Phase 15 (Defence and recovery uniques) is next. Package 0.4.37, save 47 and profession schema 1 unchanged. No ship authorized.
-- **Changed files:** modified `src/data/materials.ts`, `src/data/affixes.ts`, `src/data/bases.ts`, `src/data/professionProjects.ts`, `src/data/skills.ts`, `src/data/heist.ts`, `src/engine/types.ts`, `src/engine/skills.ts`, `src/engine/heist.ts`, `src/engine/professions.ts`, `src/ui/components/HeistBoard.tsx`, `src/dev/overhaulBuilds.ts`, `src/dev/overhaulPlaytest.ts`, `src/data/news.ts`, `docs/UNIQUES.md`, `docs/SKILLING_OVERHAUL_SPEC.md`, `docs/SKILLING_OVERHAUL_PLAN.md`, `docs/MILESTONES.md`, `tests/heist.test.ts`, new `tests/heistOverhaul.test.ts`. Lasting details/evidence are under specification §23.
-- **Stable interfaces:** `treasury_fragment`, `oath_fragment`, `stolen_oath_seal`, `overhaul_treasury_amulet`, `borrowed_tomorrow` (unique & project), `assemble_oath` (project), `occult_treasury` (job), `heist_clean_<jobId>` (milestones), `setJobGearTarget`, `heistGearTargetPool`, `baseCategory`, `targets` on `HeistState`.
-- **Compatibility:** Deterministic 1 Marker every 10 mark completions using `professionProgress.counters['thieving.markers']`. Milestone clean exit progression for jobs preserves backward compatibility via `legacyAccess['heist.' + job.id]`. Equipment targeting ilvl capped at `min(job.ilvl, Thieving level + 10)`. Occult Treasury awards protected Treasury Fragments per room and clean vault/12-room Oath Fragments with safe delivery of jackpot into overflow.
-- **Dependency hooks for Phase 15:** Borrowed Tomorrow base, project, and 0.5% clean vault roll exist. Phase 15 will implement the combat mechanics for Borrowed Tomorrow, The Buried Grudge, Witchglass, The Still Heart, and Debt of Stone.
-- **Checks:** All 1,629 automated tests pass; `npx tsc --noEmit` passes with 0 errors; `npm run build` passes; `git diff --check` passes with 0 errors. Browser tests skipped per user directive. Playtest scenario 'Thief Heist kit' verified.
-- **Incomplete/blockers:** No blockers in Phase 11. Phase 15 (Defence and recovery uniques) can start immediately. No commit, version bump, push, or deployment.
+- **Phase/status:** Phase 16 (Rune-carved uniques) complete locally/unreleased. Earlier Phase 00–15 work preserved. Phases 17–18 remain open; Phase 17 (Pinnacle chase projects) is next. Package 0.4.39, save 47 and profession schema 1 unchanged. No ship authorized.
+- **Changed files:** modified `src/engine/types.ts`, `src/data/affixes.ts`, `src/data/bases.ts`, `src/data/materials.ts`, `src/data/professionProjects.ts`, `src/data/statText.ts`, `src/engine/combat.ts`, `src/engine/professions.ts`, `src/engine/stats.ts`, `src/ui/components/ProjectBoard.tsx`, `src/dev/overhaulBuilds.ts`, `src/dev/overhaulPlaytest.ts`, `src/data/news.ts`, `docs/UNIQUES.md`, `docs/SKILLING_OVERHAUL_SPEC.md`, `docs/SKILLING_OVERHAUL_PLAN.md`, `docs/MILESTONES.md`, new `tests/runeUniques.test.ts`. Lasting details/evidence are under specification §28.
+- **Stable interfaces:** `hands_forgotten_choir` (Rune-carving 70 / Rune Board 1 project inscribing crafted `hierophant_gloves` or `seraph_gloves`; places 2 totems at once; +2 max active totems; suppresses personal damage, ailments, thorns/reflection, and Grudge shockwaves; excess pruned on unequip), `hollow_circuit` (Rune-carving 70 / Rune Board 1 project inscribing crafted `diamond_ring` ilvl >= 45; 100% would-be mana regen converted to continuous ES recovery; mana regen = 0; natural ES recharge = 0; negative mana regen remains degeneration; alternative mana recovery permitted; Debt of Stone maxEs = 0 zeroes ES recovery without falling back to mana).
+- **Compatibility:** Crafted-item inscription projects escrow base on start, return on cancel, and consume into unique UID on completion. Totem damage ownership and offensive scaling preserved while wearer direct/thorns/shockwave damage is suppressed.
+- **Dependency hooks for Phase 17:** Phase 17 will implement The Second Heresy, Worldheart, and The Sum of All Things with exactly one explicit modifier each, multi-mechanic recipes, and all eleven professions for the amulet.
+- **Checks:** All 1,689 automated tests pass (102 test files); `npx tsc --noEmit` passes with 0 errors; `npm run build` passes; `git diff --check` passes with 0 errors. Playtest scenarios 'Runic: Forgotten Choir', 'Runic: Hollow Circuit', 'Runic: Choir + Circuit' verified.
+- **Incomplete/blockers:** No blockers in Phase 16. Phase 17 (Pinnacle chase projects) can start immediately. No commit, version bump, push, or deployment.
 
 ## Phase overview
 
@@ -293,7 +300,7 @@ Implement Phase 14 only from docs/SKILLING_OVERHAUL_PLAN.md. Read AGENTS.md, the
 
 ## Phase 15 — Defence and recovery uniques
 
-- [ ] Complete and verify Phase 15.
+- [x] Complete and verify Phase 15. — done 2026-11-15; Borrowed Tomorrow, The Buried Grudge, Witchglass, The Still Heart, and Debt of Stone implemented with complete exclusive routes, contracts, tests, pairings, and live/offline build simulations. Evidence under specification "Phase 15 verification". Continue to Phase 16 as requested; no ship.
 
 Deliver **Borrowed Tomorrow, The Buried Grudge, Witchglass, The Still Heart and Debt of Stone**, including their acquisition routes. Implement instant-leech limits/exclusions, actual prevented-block storage, shockwave consumption, conversion/ailment rules, recovery persisting at full life and once-mitigated delayed damage. Specifically check Borrowed Tomorrow + The Still Heart, Winter's Pyre + Witchglass, and blocking/Buried Grudge + Debt of Stone.
 
@@ -307,7 +314,7 @@ Implement Phase 15 only from docs/SKILLING_OVERHAUL_PLAN.md. Read AGENTS.md, the
 
 ## Phase 16 — Rune-carved uniques
 
-- [ ] Complete and verify Phase 16.
+- [x] Complete and verify Phase 16. — done 2026-11-15; Hands of the Forgotten Choir and Hollow Circuit delivered through crafted-item inscriptions, with complete exclusive routes, contracts, tests, and live/offline build simulations. Evidence under specification "Phase 16 verification". Continue to Phase 17 as requested; no ship.
 
 Deliver **Hands of the Forgotten Choir and Hollow Circuit** by inscribing crafted gear. Totems keep damage ownership/scaling while personal damage is forbidden; verify simultaneous placement, limits and supports. Convert would-be mana regeneration into continuous ES recovery, disabling mana regeneration and natural ES recharge while preserving permitted alternative mana sources. Test loadout swaps/unequipping.
 
@@ -321,7 +328,7 @@ Implement Phase 16 only from docs/SKILLING_OVERHAUL_PLAN.md. Read AGENTS.md, the
 
 ## Phase 17 — Pinnacle chase projects
 
-- [x] Complete and verify Phase 17. — done 2026-11-15 (automated verification; browser playtest not run; Debt of Stone/Buried Grudge pairings wait for Phase 15)
+- [x] Complete and verify Phase 17. — done 2026-11-15 (automated verification; browser playtest not run; Debt of Stone/Buried Grudge pairings wired when Phases 15–16 were merged)
 
 Deliver **The Second Heresy, Worldheart and The Sum of All Things**. Exactly one specified explicit modifier each, no extra affix package or drawback. Finish dependable component hooks spanning at least three actual endgame mechanics per project. The amulet takes small contributions from all eleven professions and every listed endgame mechanic, including each named Hard/Uber Boss currency. Follow the Phase00 owner decision: **only The Sum of All Things is Divinable**; ordinary Divine rerolls do not require another whole recipe. The other twelve are fixed. Follow the specification's Seal/Wax rules; the reference's full-recipe-only reroll draft is superseded.
 
