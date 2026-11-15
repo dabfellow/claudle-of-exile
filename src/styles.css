@@ -7223,6 +7223,15 @@ img.art.mat-art {
     grid-template-rows: auto auto 1fr;
     grid-template-areas: 'top' 'side' 'main';
   }
+  /* The title, account, character select and create screens sit outside
+     .app, so with the page locked above they need their own scroll area. */
+  html .screen {
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
   .sidebar {
     flex-direction: row;
     overflow-x: auto;

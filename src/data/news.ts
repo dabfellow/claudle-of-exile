@@ -28,6 +28,12 @@ export const UPCOMING: string[] = [
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '0.4.38',
+    date: '12 Nov 2026',
+    title: 'Character Select Scrolls Again',
+    items: ['On mobile, the character select and other start screens scroll again.'],
+  },
+  {
     version: '0.4.37',
     date: '12 Nov 2026',
     title: 'Mobile Scrolling Fixes',
