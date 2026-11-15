@@ -67,7 +67,7 @@ function debtHit(worldheart: boolean) {
   mon.attackMs = 50;
   mon.attackTimer = 50;
   step(s, c, 100);
-  return { s, c, tranche: s.debtQueue[0] };
+  return { s, c, tranche: s.debtQueue![0] };
 }
 
 /** One fully blocked monster hit; returns the stored Grudge charge. */
@@ -91,7 +91,7 @@ describe('Worldheart with Debt of Stone', () => {
 
   it('deferred ticks are not reduced by Worldheart a second time', () => {
     const { s, c } = debtHit(true);
-    const before = s.life, owed = s.debtQueue.reduce((a, t) => a + t.perMs * Math.min(t.remainingMs, 1000), 0);
+    const before = s.life, owed = (s.debtQueue ?? []).reduce((a, t) => a + t.perMs * Math.min(t.remainingMs, 1000), 0);
     tickDebt(s, c, 1000, deriveStats(s));
     expect(before - s.life).toBeCloseTo(owed, 4);
   });
