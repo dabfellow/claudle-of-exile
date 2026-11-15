@@ -4,7 +4,7 @@ Last updated 2026-11-15. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.39, Skilling Overhaul and Independent Professions**, deployed 2026-11-15. Independent life-skill progression, projects, deterministic resources, craftable tools, and exclusive weapon projects (Woundmaker, Winter’s Pyre, The Homecoming) are live. All 1,629 tests in 100 files, build, and wiki generation passed; deployment confirmed at https://dabfellow.party/path-of-idle/.
+Latest confirmed live release: **0.4.40, Pinnacle Uniques**, deployed 2026-11-15 (The Second Heresy, Worldheart, The Sum of All Things). Previous: **0.4.39, Skilling Overhaul and Independent Professions**, deployed 2026-11-15. Independent life-skill progression, projects, deterministic resources, craftable tools, and exclusive weapon projects (Woundmaker, Winter’s Pyre, The Homecoming) are live. All 1,629 tests in 100 files, build, and wiki generation passed; deployment confirmed at https://dabfellow.party/path-of-idle/.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
@@ -14,7 +14,7 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 4. Pacing audit: whole-journey simulations expose large Ranger seed variance and a repeatable Mage Act 4 stall, so pacing is not ready to lock.
 5. Plan the 1.0 wipe and the Legacy area (see Decisions).
 6. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
-7. Phase 15 (Defence and recovery uniques) of the skilling overhaul may start. Phases 00–14 are live in 0.4.39 (2026-11-15); Phase 17 (pinnacle chase projects) was built ahead of 15–16 and pushed 2026-11-15 for the next release.
+7. Phase 15 (Defence and recovery uniques) of the skilling overhaul may start. Phases 00–14 are live in 0.4.39 (2026-11-15); Phase 17 (pinnacle chase projects) was built ahead of 15–16 and is live in 0.4.40 (2026-11-15).
 
 ## Milestones
 
@@ -30,7 +30,7 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–14 released in 0.4.39 (2026-11-15): professions through Thieving/Heist, Archaeology, Cartography/Reliquary and three crafted weapon uniques live. Phase 17 pinnacle projects (The Second Heresy, Worldheart, The Sum of All Things) pushed 2026-11-15, awaiting release. Phase 15 Defence and recovery uniques next; 15, 16 and 18 still open |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–14 released in 0.4.39 (2026-11-15): professions through Thieving/Heist, Archaeology, Cartography/Reliquary and three crafted weapon uniques live. Phase 17 pinnacle projects (The Second Heresy, Worldheart, The Sum of All Things) live in 0.4.40 (2026-11-15). Phase 15 Defence and recovery uniques next; 15, 16 and 18 still open |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
