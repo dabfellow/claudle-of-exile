@@ -5,13 +5,15 @@ import { deriveStats } from './stats';
 import type { EquipSlot, GameState, Item } from './types';
 import { characterLevel } from './character';
 import { isCraftLocked } from './crafting';
+import { settleForbiddenAllowance } from './passives';
 
 export const RING_SLOTS: EquipSlot[] = ['ring1', 'ring2', 'ring3', 'ring4'];
 
 /** Where an item can go. Shields only fit the off-hand; one-handed weapons fit either hand. */
 export function slotsFor(item: Item): EquipSlot[] {
   const base = baseDef(item.baseId);
-  if (base.projectOnly) return ['weapon'];
+  // profession tools stay in the main hand; project-made jewellery uses its ordinary slot
+  if (base.projectOnly && base.slot === 'weapon') return ['weapon'];
   if (base.slot === 'ring') return RING_SLOTS;
   if (base.slot === 'weapon' && !base.twoHanded) return ['weapon', 'offhand'];
   return [base.slot];
@@ -64,6 +66,7 @@ export function equip(s: GameState, ctx: Ctx, uid: number, slot?: EquipSlot): st
   }
   s.equipment[target] = item;
   ctx.emit({ t: 'equip', uid });
+  settleForbiddenAllowance(s, ctx);
   return null;
 }
 
@@ -73,5 +76,6 @@ export function unequip(s: GameState, slot: EquipSlot): string | null {
   if (bagFull(s)) return 'Inventory full';
   delete s.equipment[slot];
   s.inventory.push(item);
+  settleForbiddenAllowance(s);
   return null;
 }

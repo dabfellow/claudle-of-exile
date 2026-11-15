@@ -16,6 +16,7 @@ import { heistAutoStep, heistStep, newHeistState } from './heist';
 import { checkCampaignDone, refreshVendor, vendorTick } from './hideout';
 import { createItem } from './items';
 import { autoSwitchGear, newLoadouts } from './loadouts';
+import { settleForbiddenAllowance } from './passives';
 import { mapStep, newMapState } from './maps';
 import { seeded } from './rng';
 import { craftStep } from './craftUntil';
@@ -154,6 +155,8 @@ export function giveStarterGems(s: GameState): void {
 export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
   if (s.fallen) return;
   autoSwitchGear(s, ctx);
+  // any gear change (sets, linked profiles, swaps) settles The Second Heresy's allowance before stats are read
+  settleForbiddenAllowance(s, ctx);
   let d = deriveStats(s);
   let remaining = dtMs;
   while (remaining > 0) {

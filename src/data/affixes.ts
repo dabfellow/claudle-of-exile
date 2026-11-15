@@ -735,6 +735,9 @@ export const AFFIXES: AffixDef[] = [
   U('u_winters_pyre', 'suffix', 'Cold damage can ignite; 100% more ignite damage; cannot chill or freeze; deal no Fire or Lightning Damage except cold-sourced ignites', 'wintersPyre'),
   U('u_homecoming', 'suffix', 'One arrow per attack, overriding additional arrows; arrows return after 0.5 seconds', 'homecoming'),
   U('u_borrowed_tomorrow', 'suffix', 'Wearer life leech is instant; no life regeneration or flask life recovery', 'borrowedTomorrow'),
+  U('u_second_heresy', 'suffix', 'Allows one additional Forbidden keystone', 'secondHeresy'),
+  U('u_worldheart', 'suffix', '30% less Damage taken', 'worldheart'),
+  U('u_sum_of_all', 'suffix', '{0}% more Damage', 'sumOfAllMore'),
   // meta-crafting modifiers (docs/POST_CAMPAIGN_CRAFTING_AND_HIDEOUT.md)
   M('meta_prefixes_cannot_be_changed', 'suffix', 'meta_prefix_lock', 'Prefixes Cannot Be Changed'),
   M('meta_suffixes_cannot_be_changed', 'prefix', 'meta_suffix_lock', 'Suffixes Cannot Be Changed'),

@@ -2,7 +2,7 @@
 
 Generated from the game data; run `npm run uniques` after changing a unique, instead of editing this file.
 
-139 uniques, with ordinary items listed by world-drop level.
+142 uniques, with ordinary items listed by world-drop level.
 
 ## World drops (116)
 
@@ -125,7 +125,7 @@ Generated from the game data; run `npm run uniques` after changing a unique, ins
 | **The Executioner's Hood**<br>*The crowd holds its breath; the blade does not.* | helmet | Oblivion Mask (80) | • (70–95)% increased Evasion Rating<br>• +(35–50)% to Critical Strike Multiplier<br>• (50–75)% increased Coup de Grâce damage<br>• Headsman: Coup de Grâce refunds 50% of Malice against Bosses and executes enemies below (30–45)% Life | World drop (level 80+), Hall of the Grandmasters (Unique Map) |
 | **Velvet Bullfighter's Coat**<br>*A step to the left, and the blade finds the heart.* | body | Wyrmlord Hauberk (80) | • +(90–125) to maximum Life<br>• (45–65)% increased Riposte damage<br>• (30–45)% faster Riposte recovery<br>• Matador: Evades grant +2 Streak instead of +1, and Ripostes deal +(30–45)% more Damage per Streak | World drop (level 80+), Hall of the Grandmasters (Unique Map) |
 
-## Profession projects (4)
+## Profession projects (7)
 
 | Unique | Slot | Base (req. level) | Mods | Drops in |
 | --- | --- | --- | --- | --- |
@@ -133,6 +133,9 @@ Generated from the game data; run `npm run uniques` after changing a unique, ins
 | **The Homecoming**<br>*An arrow always knows the way back.* | weapon | Manticore Greatbow (60) | • One arrow per attack, overriding additional arrows; arrows return after 0.5 seconds | Smithing 65, Forge 3: The Homecoming project |
 | **Winter's Pyre**<br>*Even the coldest memory can burn.* | weapon | Seraph Staff (60) | • Cold damage can ignite; 100% more ignite damage; cannot chill or freeze; deal no Fire or Lightning Damage except cold-sourced ignites | Smithing 65, Forge 3: Winter's Pyre project |
 | **Woundmaker**<br>*The wound remembers every blow.* | weapon | Relic Great Axe (60) | • Bleeds stack up to 8; 60% less hit damage; cannot critically strike | Smithing 60, Forge 3: Woundmaker project |
+| **The Second Heresy**<br>*One sin is a mistake. Two is a doctrine.* | ring | Pinnacle Ring (80) | • Allows one additional Forbidden keystone | Rune-carving 85, Rune Board: The Second Heresy project (Crownless Sigil, Stolen Oath Seal, Restored Taboo Tablet) |
+| **The Sum of All Things**<br>*Everything you ever made, weighed at once.* | amulet | Pinnacle Amulet (80) | • (1–200)% more Damage | Rune-carving 90, Rune Board: The Sum of All Things project (all eleven professions and every endgame encounter) |
+| **Worldheart**<br>*Beneath every mountain, something is still beating.* | belt | Pinnacle Belt (80) | • 30% less Damage taken | Smithing 90, Forge 3: Worldheart project (World Core Fragments, Reliquary Fragment, Architect's Doom Sigil) |
 
 ## Boss trophies (11)
 

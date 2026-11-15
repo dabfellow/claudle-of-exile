@@ -4,6 +4,7 @@ import { PASSIVE_BY_ID, PASSIVE_NODES, type MasteryOption, type PassiveNode } fr
 import { ZONES } from '../data/zones';
 import { characterLevel } from './character';
 import type { Ctx } from './context';
+import { MAX_FORBIDDEN_ALLOWANCE, forbiddenAllowance } from './pinnacles';
 import type { GameState } from './types';
 
 export type PassivePointPool = 'travelPoints' | 'passivePoints' | 'masteryPoints';
@@ -42,7 +43,7 @@ export function pairedGateway(id: string): string | undefined {
   return undefined;
 }
 
-/** The twelve Forbidden keystones on the rim: the tree allows only one at a time. */
+/** The twelve Forbidden keystones on the rim: the tree allows one at a time, two while The Second Heresy is worn. */
 export function isForbidden(node: PassiveNode): boolean {
   return node.kind === 'keystone' && node.region === 'forbidden';
 }
@@ -213,8 +214,8 @@ export function settleTreeLayout(s: GameState): void {
   const broken = (ids: string[]) =>
     ids.some((id) => !PASSIVE_BY_ID[id]) ||
     !passiveConnectedWithout(ids, '', start) ||
-    // more than one Forbidden keystone (allowed before the one-only rule)
-    ids.filter((id) => isForbidden(PASSIVE_BY_ID[id])).length > 1;
+    // more Forbidden keystones than any loadout can hold; the worn-item allowance is settled separately once gear is known
+    ids.filter((id) => isForbidden(PASSIVE_BY_ID[id])).length > MAX_FORBIDDEN_ALLOWANCE;
   if (s.passives?.length && broken(s.passives)) {
     s.passives = [];
     s.masteries = {};
@@ -227,6 +228,75 @@ export function settleTreeLayout(s: GameState): void {
       p.masteries = {};
     }
   }
+}
+
+export function forbiddenTaken(ids: string[]): number {
+  return ids.filter((id) => PASSIVE_BY_ID[id] && isForbidden(PASSIVE_BY_ID[id])).length;
+}
+
+/** The allocated nodes that still join up to the start, walking allocated links and opened gateway ends. */
+function connectedAllocation(allocated: string[], start: string): Set<string> {
+  const remaining = new Set(allocated);
+  const reached = new Set<string>();
+  const visited = new Set([start]);
+  const queue = [start];
+  while (queue.length) {
+    const cur = queue.pop()!;
+    for (const link of PASSIVE_BY_ID[cur]?.links ?? []) {
+      if (remaining.has(link) && !visited.has(link)) {
+        visited.add(link);
+        reached.add(link);
+        queue.push(link);
+      }
+    }
+    if (remaining.has(cur) && PASSIVE_BY_ID[cur] && isCosmicGateway(PASSIVE_BY_ID[cur])) {
+      const pair = pairedGateway(cur);
+      if (pair && !visited.has(pair)) {
+        visited.add(pair);
+        if (remaining.has(pair)) reached.add(pair);
+        queue.push(pair);
+      }
+    }
+  }
+  return reached;
+}
+
+/**
+ * The Second Heresy's allowance (docs/SKILLING_OVERHAUL_SPEC.md §6): after gear, load or profile changes, keep the
+ * earliest allocated Forbidden keystones up to what the worn gear allows. Each excess keystone is removed and its
+ * actual point cost refunded; anything only it held up is then refunded too, and unrelated valid nodes stay.
+ * Returns the names of the refunded nodes.
+ */
+export function settleForbiddenAllowance(s: GameState, ctx?: Ctx): string[] {
+  if (!s.character || !s.passives?.length) return [];
+  const allowance = forbiddenAllowance(s);
+  const forbidden = s.passives.filter((id) => PASSIVE_BY_ID[id] && isForbidden(PASSIVE_BY_ID[id]));
+  if (forbidden.length <= allowance) return [];
+  settlePassivePoints(s);
+  const removed = new Set(forbidden.slice(allowance));
+  let kept = s.passives.filter((id) => !removed.has(id));
+  const linked = connectedAllocation(kept, startNode(s));
+  for (const id of kept) if (!linked.has(id)) removed.add(id);
+  kept = kept.filter((id) => !removed.has(id));
+  // a mastery whose cluster lost its only Notable goes too
+  for (const id of kept) {
+    const node = PASSIVE_BY_ID[id];
+    if (node?.kind === 'mastery' && !kept.some((other) => PASSIVE_BY_ID[other]?.cluster === node.cluster && PASSIVE_BY_ID[other]?.kind === 'notable')) removed.add(id);
+  }
+  const names: string[] = [];
+  for (const id of s.passives) {
+    if (!removed.has(id)) continue;
+    const node = PASSIVE_BY_ID[id];
+    if (node) {
+      const price = passiveNodeCost(node);
+      s[price.pool] += price.cost;
+      names.push(node.name);
+    }
+    delete s.masteries[id];
+  }
+  s.passives = s.passives.filter((id) => !removed.has(id));
+  ctx?.emit({ t: 'info', text: `Forbidden keystone allowance is ${allowance}: refunded ${names.join(', ')}`, tone: 'warn' });
+  return names;
 }
 
 /** Generic "can I take this node" check shared by both trees. */
@@ -244,7 +314,9 @@ export function allocateReason(s: GameState, id: string): string | null {
   // other classes' starts seal off their areas, except to an Exile, who can walk through them
   if (node.kind === 'start' && (s.character.classId !== 'exile' || id === startNode(s))) return 'Invalid node';
   if (s.passives.includes(id)) return 'Already allocated';
-  if (isForbidden(node) && s.passives.some((other) => PASSIVE_BY_ID[other] && isForbidden(PASSIVE_BY_ID[other]))) return 'Only one Forbidden keystone can be taken';
+  if (isForbidden(node) && forbiddenTaken(s.passives) >= forbiddenAllowance(s)) {
+    return forbiddenAllowance(s) > 1 ? 'Only two Forbidden keystones can be taken, even with The Second Heresy' : 'Only one Forbidden keystone can be taken';
+  }
   if (!isPassiveReachable(new Set(s.passives), id, startNode(s))) return 'Must connect to an allocated node or activated Cosmic Gateway';
   settlePassivePoints(s);
   const { pool, cost } = passiveNodeCost(node);

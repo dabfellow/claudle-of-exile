@@ -79,6 +79,7 @@ describe('the skill', () => {
     const own = new Set(CHART_MATERIALS.map((m) => m.id));
     const made = new Set(actionsFor('cartography').flatMap((a) => Object.keys({ ...a.outputs, ...a.protectedOutputs })));
     for (const id of ['chart_survey_fragment', 'reliquary_fragment', 'atlas_survey_record']) made.add(id); // Covered by Phase 13 source-hook tests.
+    for (const id of ['world_core_fragment', 'doom_key_fragment']) made.add(id); // Doomed boss hooks, covered by pinnacleProjects tests.
     expect([...own].filter((id) => !made.has(id))).toEqual([]);
     const elsewhere = new Set(['alchemy', 'mining', 'woodcutting', 'harvesting'].flatMap((k) => actionsFor(k as 'mining').flatMap((a) => [...Object.keys(a.outputs ?? {}), ...(a.bonus ?? []).map((b) => b.id)])));
     elsewhere.add('arcane_dust');

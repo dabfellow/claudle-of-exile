@@ -55,7 +55,7 @@ export type Tag =
 
 /** Every stat a character can have. Add new ones here; Stats and the stat engine pick them up. */
 export const STAT_KEYS = [
-  'woundmaker', 'wintersPyre', 'homecoming', 'borrowedTomorrow',
+  'woundmaker', 'wintersPyre', 'homecoming', 'borrowedTomorrow', 'secondHeresy', 'worldheart', 'sumOfAllMore',
   'life', 'lifePct', 'lifeMore', 'lifeRegen', 'lifeRegenPct', 'lifeLeech', 'manaLeech', 'physMin', 'physMax', 'physPct',
   'fireMin', 'fireMax', 'coldMin', 'coldMax', 'lightMin', 'lightMax', 'chaosMin', 'chaosMax', 'chaosPct', 'chillChance', 'shockChance', 'elemPct', 'attackSpeedPct', 'moveSpeedPct',
   'attackSpeedMore', 'critChancePct', 'critMulti', 'armour', 'armourPct', 'armourMore', 'evasion',

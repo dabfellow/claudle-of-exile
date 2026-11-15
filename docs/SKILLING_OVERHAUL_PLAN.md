@@ -1,6 +1,6 @@
 # Skilling overhaul: phased build plan
 
-Written 2026-11-15. **Phases 00–14 complete locally/unreleased. Phases 15–18 remain open; Phase 15 (Defence and recovery uniques) is next.** Implementation contract: [SKILLING_OVERHAUL_SPEC.md](SKILLING_OVERHAUL_SPEC.md).
+Written 2026-11-15. **Phases 00–14 are live in 0.4.39; Phase 17 (pinnacle chase projects) is complete and pushed for the next release. Phases 15, 16 and 18 remain open; Phase 15 (Defence and recovery uniques) is next.** Implementation contract: [SKILLING_OVERHAUL_SPEC.md](SKILLING_OVERHAUL_SPEC.md).
 
 Design: [SKILLING_OVERHAUL.md](SKILLING_OVERHAUL.md). Tracking: [MILESTONES.md](MILESTONES.md). Current behavior: [GAME.md](GAME.md). This plan organizes the reference; illustrative examples and draft recipes remain distinct from owner decisions.
 
@@ -34,7 +34,16 @@ Replace the current handoff after each phase. Keep lasting decisions in the spec
 - Tests and actual in-game checks performed, with results.
 - Incomplete work/blockers and exact commands or reproduction steps.
 
-**Current handoff (2026-11-15):**
+**Current handoff (2026-11-15, Phase 17):**
+
+- **Phase/status:** Phase 17 (pinnacle chase projects) complete with automated verification, committed and pushed to `main` at the owner's request; not yet in a numbered release (package still 0.4.39). It was built out of order: Phases 15 and 16 are still open, and Phase 15 can start next.
+- **Changed files:** new `src/engine/pinnacles.ts`, `tests/pinnacleProjects.test.ts`; modified `src/engine/passives.ts`, `src/engine/equipment.ts`, `src/engine/state.ts`, `src/engine/save.ts`, `src/engine/treeProfiles.ts`, `src/engine/combat.ts`, `src/engine/stats.ts`, `src/engine/crafting.ts`, `src/engine/maps.ts`, `src/engine/types.ts`, `src/data/affixes.ts`, `src/data/bases.ts`, `src/data/statText.ts`, `src/data/professionProjects.ts`, `src/data/skills.ts`, `src/data/cartography.ts`, `src/data/skillingMastery.ts`, `src/data/news.ts`, `tests/trees.test.ts`, `tests/cartography.test.ts`, `docs/UNIQUES.md`, `docs/GAME.md`, this plan, the specification (§24) and `docs/MILESTONES.md`.
+- **Stable interfaces:** unique/project IDs `the_second_heresy`, `worldheart`, `the_sum_of_all_things`; bases `overhaul_plain_ring|belt|amulet`; stats `secondHeresy`, `worldheart`, `sumOfAllMore`; `forbiddenAllowance`, `settleForbiddenAllowance`, `forbiddenTaken`, `sumOfAllMultiplier`, `WORLDHEART_TAKEN`; `damageMonster(..., prescaled)`; materials `world_core_fragment`, `doom_key_fragment`; actions `forge_uber_key_1|2|3`; counters `maps.doomedSinceOrb`, `maps.eligibleSinceDoomed`.
+- **Compatibility for Phase 15:** Debt of Stone's split must take the post-Worldheart hit in `takeHit` and its deferred tranches must skip Worldheart. A Buried Grudge shockwave dealt through `damageMonster` gets Sum's multiplier once automatically; do not scale it again. Borrowed Tomorrow now equips as an amulet (`slotsFor` fix).
+- **Checks:** 1,658 tests / 101 files, `npx tsc --noEmit`, `npm run build`, `npm run uniques` and `git diff --check` all pass. Browser playtest not run.
+- **Incomplete/blockers:** browser playtest of the three acquisitions; Debt/Grudge pairings once Phase 15 exists.
+
+**Previous handoff (Phase 11):**
 
 - **Phase/status:** Phase 11 (Thieving and Heist) complete locally/unreleased. Earlier Phase 00–10 and 12–14 work preserved. Phases 15–18 remain open; Phase 15 (Defence and recovery uniques) is next. Package 0.4.37, save 47 and profession schema 1 unchanged. No ship authorized.
 - **Changed files:** modified `src/data/materials.ts`, `src/data/affixes.ts`, `src/data/bases.ts`, `src/data/professionProjects.ts`, `src/data/skills.ts`, `src/data/heist.ts`, `src/engine/types.ts`, `src/engine/skills.ts`, `src/engine/heist.ts`, `src/engine/professions.ts`, `src/ui/components/HeistBoard.tsx`, `src/dev/overhaulBuilds.ts`, `src/dev/overhaulPlaytest.ts`, `src/data/news.ts`, `docs/UNIQUES.md`, `docs/SKILLING_OVERHAUL_SPEC.md`, `docs/SKILLING_OVERHAUL_PLAN.md`, `docs/MILESTONES.md`, `tests/heist.test.ts`, new `tests/heistOverhaul.test.ts`. Lasting details/evidence are under specification §23.
@@ -312,7 +321,7 @@ Implement Phase 16 only from docs/SKILLING_OVERHAUL_PLAN.md. Read AGENTS.md, the
 
 ## Phase 17 — Pinnacle chase projects
 
-- [ ] Complete and verify Phase 17.
+- [x] Complete and verify Phase 17. — done 2026-11-15 (automated verification; browser playtest not run; Debt of Stone/Buried Grudge pairings wait for Phase 15)
 
 Deliver **The Second Heresy, Worldheart and The Sum of All Things**. Exactly one specified explicit modifier each, no extra affix package or drawback. Finish dependable component hooks spanning at least three actual endgame mechanics per project. The amulet takes small contributions from all eleven professions and every listed endgame mechanic, including each named Hard/Uber Boss currency. Follow the Phase00 owner decision: **only The Sum of All Things is Divinable**; ordinary Divine rerolls do not require another whole recipe. The other twelve are fixed. Follow the specification's Seal/Wax rules; the reference's full-recipe-only reroll draft is superseded.
 

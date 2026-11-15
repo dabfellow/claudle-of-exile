@@ -444,6 +444,11 @@ const SEXTANT_CHARTS: SkillAction[] = SEXTANT_RECIPES.map((r) =>
 const CARTOGRAPHY: SkillAction[] = [
   { id: 'chart_endgame_atlas', name: 'Complete Atlas Chart', skill: 'cartography', level: 85, intervalMs: 120_000, xp: 1000,
     inputs: { fine_vellum: 10, sepia_ink: 5, sextant_master: 1, atlas_survey_record: 1 }, protectedOutputs: { completed_atlas_chart: 1 }, color: '#a89ae8' },
+  // dependable Uber access: ten Doom Key Fragments (one per Doomed victory) forge the chosen existing key
+  ...([['uber_key_1', 'The Mirror', '#d0569b'], ['uber_key_2', 'The Ruin', '#e85a4f'], ['uber_key_3', 'The Void', '#9b6dde']] as const).map(([key, name, color]): SkillAction => ({
+    id: `forge_${key}`, name: `Forge Uber Key: ${name}`, skill: 'cartography', level: 85, intervalMs: 60_000, xp: 500,
+    inputs: { doom_key_fragment: 10 }, protectedOutputs: { [key]: 1 }, color,
+  })),
   sheet('vellum', 'Vellum', 1, 3500, 10, { ash_log: 4 }, '#d8c8a0'),
   sheet('gall_ink', 'Gall Ink', 4, 4000, 14, { sunpetal: 3, iron_ore: 1 }, '#46506a'),
   sheet('fine_vellum', 'Fine Vellum', 15, 5000, 40, { oak_log: 5, vellum: 2 }, '#f0e4c4'),

@@ -14,7 +14,7 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 4. Pacing audit: whole-journey simulations expose large Ranger seed variance and a repeatable Mage Act 4 stall, so pacing is not ready to lock.
 5. Plan the 1.0 wipe and the Legacy area (see Decisions).
 6. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
-7. Phase 15 (Defence and recovery uniques) of the skilling overhaul may start. Phases 00–14 are live in 0.4.39 (2026-11-15).
+7. Phase 15 (Defence and recovery uniques) of the skilling overhaul may start. Phases 00–14 are live in 0.4.39 (2026-11-15); Phase 17 (pinnacle chase projects) was built ahead of 15–16 and pushed 2026-11-15 for the next release.
 
 ## Milestones
 
@@ -30,7 +30,7 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–14 released in 0.4.39 (2026-11-15): professions through Thieving/Heist, Archaeology, Cartography/Reliquary and three crafted weapon uniques live. Phase 15 Defence and recovery uniques next; 15–18 still open |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–14 released in 0.4.39 (2026-11-15): professions through Thieving/Heist, Archaeology, Cartography/Reliquary and three crafted weapon uniques live. Phase 17 pinnacle projects (The Second Heresy, Worldheart, The Sum of All Things) pushed 2026-11-15, awaiting release. Phase 15 Defence and recovery uniques next; 15, 16 and 18 still open |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
@@ -363,8 +363,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
     - Questions 1–8 decided: mostly build-defining treasures, with some powerful specialists; exceptional powers come with meaningful drawbacks to build around. Ten accepted concepts: Woundmaker, Winter's Pyre, Borrowed Tomorrow, The Buried Grudge, Witchglass, The Still Heart, The Homecoming, Debt of Stone, Hands of the Forgotten Choir and Hollow Circuit. The Tyrant's Seal and Crown of the Last Servant were not selected. Full concepts saved in SKILLING_OVERHAUL.md; no gameplay changes.
   - [x] Specify the ten accepted uniques' exact fixed effects, equip requirements, profession/station unlocks, ingredients, project costs, rates and interactions in SKILLING_OVERHAUL_SPEC.md; implementation/realistic checks remain below. — done 2026-11-13
   - [x] Add three single-effect pinnacle chase unique designs with recipes spanning at least three endgame mechanics, including one broad-range project using a little from everything. The Second Heresy, Worldheart and The Sum of All Things recorded with draft effects and source baskets. — done 2026-11-12
-  - [ ] Specify and build the three pinnacle chase recipes and effects: dependable source components, final quantities/unlocks, wide-roll reforging and currency interactions, Forbidden allocation settlement and correct damage/recovery interactions. Verify completion and costs in live/offline play; regenerate UNIQUES when game data is added.
-    - Specification complete 2026-11-13 in SKILLING_OVERHAUL_SPEC.md; build and live/offline verification remain undone. Only Sum permits Divine rerolls, by the owner's Phase00 decision; the full-recipe-only draft is superseded.
+  - [x] Specify and build the three pinnacle chase recipes and effects: dependable source components, final quantities/unlocks, wide-roll reforging and currency interactions, Forbidden allocation settlement and correct damage/recovery interactions. Verify completion and costs in live/offline play; regenerate UNIQUES when game data is added. — done 2026-11-15
+    - Phase 17 built and verified by automated tests (spec §24): all three recipes, one explicit effect each, Doomed/Uber/drought supply hooks, Sum-only one-Divine rerolls, Forbidden settlement and once-only multipliers. Browser playtest not run; Debt of Stone/Buried Grudge pairings wait for Phase 15.
   - [ ] Build the accepted unique items and their exclusive crafting, Heist and restoration routes alongside the required skilling systems; add player-facing collection/source information and verify realistic builds, live/offline rewards and preserved existing sources.
 
 - [x] Fix mobile zone-map scroll trapping and let the navigation and health/mana header scroll out of view. — done 2026-11-12
@@ -456,6 +456,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Completed skilling overhaul Phase 17 (2026-11-15): The Second Heresy (second Forbidden keystone with latest-first refund on removal, load and profile change), Worldheart (30% less damage taken, once) and The Sum of All Things (uniform 1–200% more damage, multiplied once for hits, ailments, minions and totems; one-Divine rerolls; Seal refused) with full multi-mechanic recipes. Doomed bosses give World Core and Doom Key Fragments; ten fragments forge a chosen Uber Key; Fractured Orb and Doomed Map drought guarantees. Also fixed project-made amulets (Borrowed Tomorrow) equipping into the weapon slot. 1,658 tests, typecheck and build pass; UNIQUES regenerated. Browser playtest not run.
 
 - [x] Completed skilling overhaul Phase 14: all three exclusive weapon projects, source/collection previews and fixed unique effects. Verified realistic crafted builds in live/offline combat, storage-safe delivery, bleed application/cap/no crits, cold ignite scaling/prohibitions and one-arrow independent return timing; UNIQUES regenerated. Local/unreleased; no version bump or shipping. — done 2026-11-15
 

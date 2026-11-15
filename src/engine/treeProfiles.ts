@@ -1,7 +1,7 @@
 import type { Ctx } from './context';
 import { applyGearSet, applySkillSet, keepingVitals } from './loadouts';
 import { ensureAtlas } from './maps';
-import { settlePassivePoints, spentPoints } from './passives';
+import { settleForbiddenAllowance, settlePassivePoints, spentPoints } from './passives';
 import { reachedAct } from './progress';
 import { seeded } from './rng';
 import type { GameState, TreeProfile } from './types';
@@ -227,6 +227,9 @@ export function switchPassiveProfile(
   if (target.linkedSkilling) {
     switchSkillingProfile(s, actualCtx, target.linkedSkilling, visitSet);
   }
+
+  // a profile never carries The Second Heresy's allowance: it is checked against what is worn now
+  settleForbiddenAllowance(s, actualCtx);
 
   return null;
 }

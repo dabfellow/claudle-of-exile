@@ -847,6 +847,40 @@ function recordAtlasClear(s: GameState, ctx: Ctx, tier: number, slottedFull: boo
   }
 }
 
+/** Saved counters for the pinnacle supply guarantees (docs/SKILLING_OVERHAUL_SPEC.md §8). */
+export const ORB_DROUGHT = 'maps.doomedSinceOrb';
+export const DOOMED_DROUGHT = 'maps.eligibleSinceDoomed';
+const DROUGHT_RUNS = 10;
+
+/**
+ * A victorious Doomed Map final boss: one World Core Fragment and one Doom Key Fragment, and a Fractured Orb if ten
+ * victories in a row saw none drop. Runs once per settled run, never per reload or loot roll.
+ */
+function doomedVictorySupply(s: GameState, ctx: Ctx): void {
+  awardProtectedProgress(s, ctx, 'world_core_fragment', 1);
+  awardProtectedProgress(s, ctx, 'doom_key_fragment', 1);
+  const counters = s.professionProgress.counters;
+  counters[ORB_DROUGHT] = (counters[ORB_DROUGHT] ?? 0) + 1;
+  if (counters[ORB_DROUGHT] >= DROUGHT_RUNS) {
+    counters[ORB_DROUGHT] = 0;
+    addBank(s, 'fractured_orb', 1);
+    ctx.emit({ t: 'loot', currencyId: 'fractured_orb', qty: 1 });
+    ctx.emit({ t: 'info', text: 'Ten Doomed victories without a Fractured Orb: one is guaranteed', tone: 'good' });
+  }
+}
+
+/** Doomed access holders: ten T8–T10 normal boss victories without a Doomed Map guarantee a Doomed Map I. */
+function doomedMapDrought(s: GameState, ctx: Ctx, tier: number): void {
+  if (tier < 8 || !(atlasBonuses(s).doomedUnlocked || stationLevel(s, 'map_device') >= 8)) return;
+  const counters = s.professionProgress.counters;
+  counters[DOOMED_DROUGHT] = (counters[DOOMED_DROUGHT] ?? 0) + 1;
+  if (counters[DOOMED_DROUGHT] >= DROUGHT_RUNS) {
+    counters[DOOMED_DROUGHT] = 0;
+    addDoomedMaps(s, 1, 1);
+    ctx.emit({ t: 'info', text: `Ten Map boss victories without a Doomed Map: found ${doomedTier(1).name}`, tone: 'good' });
+  }
+}
+
 /** Runs once per game step: moves on from a finished run, or notices one that ended in a death or a retreat. */
 export function mapStep(s: GameState, ctx: Ctx): void {
   const m = s.maps;
@@ -857,6 +891,8 @@ export function mapStep(s: GameState, ctx: Ctx): void {
     const auto = !!m.auto;
     const refund = died && !run.doomedTier && atlasBonuses(s).unbrokenPath;
     if (refund) addMaps(s, run.tier, 1);
+    // an orb dropped in a run that then failed: the drought simply restarts from zero
+    if ((s.professionProgress.counters[ORB_DROUGHT] ?? 0) < 0) s.professionProgress.counters[ORB_DROUGHT] = 0;
     m.run = null;
     m.auto = null;
     if (died || auto) {
@@ -873,10 +909,15 @@ export function mapStep(s: GameState, ctx: Ctx): void {
         addBank(s, id, n); ctx.emit({ t: 'loot', currencyId: id, qty: n });
       }
     }
-  } else if (!run.doomedTier && run.tier === 10) {
-    const n = (s.professionProgress.counters['cartography.t10Wins'] ?? 0) + 1;
-    s.professionProgress.counters['cartography.t10Wins'] = n;
-    if (n % 10 === 0) awardProtectedProgress(s, ctx, 'atlas_survey_record', 1);
+  } else if (run.doomedTier) {
+    doomedVictorySupply(s, ctx);
+  } else {
+    if (run.tier === 10) {
+      const n = (s.professionProgress.counters['cartography.t10Wins'] ?? 0) + 1;
+      s.professionProgress.counters['cartography.t10Wins'] = n;
+      if (n % 10 === 0) awardProtectedProgress(s, ctx, 'atlas_survey_record', 1);
+    }
+    doomedMapDrought(s, ctx, run.tier);
   }
   m.tally.runs += 1;
   m.tally.clearMs += s.clock - run.startedAt;
@@ -1014,6 +1055,7 @@ export function rollMapDrops(s: GameState, ctx: Ctx, mon: MonsterInstance): void
     const maxDoomed = run.tier === 8 ? 2 : run.tier === 9 ? 4 : 5;
     const dTier = rInt(ctx.rng, 1, maxDoomed);
     addDoomedMaps(s, dTier, 1);
+    s.professionProgress.counters[DOOMED_DROUGHT] = 0;
     ctx.emit({ t: 'info', text: `Found a Doomed Map: ${doomedTier(dTier).name}`, tone: 'good' });
   }
 
@@ -1041,6 +1083,8 @@ export function rollMapDrops(s: GameState, ctx: Ctx, mon: MonsterInstance): void
     const fracChance = mon.isBoss ? MAP_DROPS.fracturedBoss : MAP_DROPS.fracturedKill;
     if (chance(ctx.rng, fracChance)) {
       addBank(s, 'fractured_orb', 1);
+      // a real drop ends the drought; the guarantee counts victories since the last one
+      s.professionProgress.counters[ORB_DROUGHT] = -1;
       ctx.emit({ t: 'loot', currencyId: 'fractured_orb', qty: 1 });
       s.maps.tally.favoured += 1;
     }

@@ -176,6 +176,7 @@ import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitCha
 import { autoChallengeUnlocked, autoFleeUnlocked, autoNextZoneUnlocked, gemsArrivingAt } from './hideout';
 import { openReachedZones } from './progress';
 import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, Minion, MonsterInstance, Movement, Posture, SkillGemInstance, Storm, TargetPriority, Targeting } from './types';
+import { sumOfAllMultiplier, WORLDHEART_TAKEN } from './pinnacles';
 
 export const SPAWN_DELAY_MS = 900;
 /** closing in on a monster out of reach takes this long, shortened by movement speed */
@@ -1787,12 +1788,18 @@ function secondaryHitDamage(d: Derived, amount: number): number {
   return d.raw.woundmaker ? amount * 0.4 : amount;
 }
 
-/** Take life from a monster, through its ward first. */
-export function damageMonster(s: GameState, mon: MonsterInstance, amount: number, direct = false, chaosShare = 0): void {
+/**
+ * Take life from a monster, through its ward first. Every source of the wearer's damage (hits, ailments, minions,
+ * totems, triggers) ends here, so The Sum of All Things multiplies it exactly once at this point. Ailments seed from
+ * the hit before this, so they are not multiplied twice. `prescaled` marks damage that already carries it (overkill).
+ */
+export function damageMonster(s: GameState, mon: MonsterInstance, amount: number, direct = false, chaosShare = 0, prescaled = false): void {
   if (mon.chained || (mon.immuneMs ?? 0) > 0 || (mon.weakPoint && !direct)) return;
+  // a Death Warrant debt is paid back through here, so it records what the hit was before the multiplier
+  if (mon.curse?.warrant) mon.curse.owed = (mon.curse.owed ?? 0) + (prescaled ? amount / sumOfAllMultiplier(s) : amount);
+  if (!prescaled) amount *= sumOfAllMultiplier(s);
   const dealt = s.combat?.dealt;
   if (dealt) dealt[dealt.length - 1] += amount;
-  if (mon.curse?.warrant) mon.curse.owed = (mon.curse.owed ?? 0) + amount;
   if (mon.ward > 0) {
     const absorbed = Math.min(mon.ward, amount);
     mon.ward -= absorbed;
@@ -2145,7 +2152,7 @@ function landHit(
     for (const x of mon.dots) x.remainingMs = Math.max(x.remainingMs, x.durationMs ?? 0);
     if (!r.wintersPyre && mon.chillMs > 0) mon.chillMs = Math.max(mon.chillMs, 3000);
   }
-  ctx.emit({ t: 'hit', target: 'monster', amount: dealt, crit, mega: mega || undefined, riposte: c.riposting || undefined, dmgType: mainType(byType), monsterUid: mon.uid });
+  ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(dealt * sumOfAllMultiplier(s)), crit, mega: mega || undefined, riposte: c.riposting || undefined, dmgType: mainType(byType), monsterUid: mon.uid });
   // Rage and Momentum count every hit dealt, so multi-hit and area skills fill them fastest
   if (mechanicOf(s) === 'rage' && ascendancyOf(s) !== 'anvil') gainMeter(s, d, def.tags.includes('heavy') ? HEAVY_RAGE : 1);
   if (mechanicOf(s) === 'momentum' && def.tags.includes('attack') && (!c.asc.hawking || hasAscNode(s, 'falconer_bond'))) gainMeter(s, d, 1);
@@ -2504,7 +2511,7 @@ function totemEnds(s: GameState, ctx: Ctx, d: Derived, totem: NonNullable<Combat
 function carryOverkill(s: GameState, ctx: Ctx, mon: MonsterInstance): void {
   const next = chainFrom(mon, aliveMonsters(s.combat!).filter((m) => !shielded(m)), 1)[1];
   if (!next) return;
-  damageMonster(s, next, -mon.life);
+  damageMonster(s, next, -mon.life, false, 0, true);
   ctx.emit({ t: 'hit', target: 'monster', amount: Math.round(-mon.life), dmgType: 'phys', monsterUid: next.uid });
 }
 
@@ -3661,6 +3668,8 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     const momentumMitigation = Math.min(25, (c.mech ?? 0) * 1.5);
     dmg = Math.max(1, Math.round(dmg * (1 - momentumMitigation / 100)));
   }
+  // Worldheart: 30% less damage taken, once. Ailments below seed from this reduced hit, so their ticks aren't reduced again.
+  if (r.worldheart > 0) dmg = Math.max(1, Math.round(dmg * WORLDHEART_TAKEN));
   const taken = dmg;
   if (kind === 'hit' && mon.archetype) monsterAilments(s, d, mon, dmg, type);
   if (mech === 'momentum' && !r.perpetualMotion && (c.momentumHitGraceMs ?? 0) <= 0) {
@@ -3757,6 +3766,7 @@ function onBlock(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     const glancingRaw = raw * 0.65;
     let dmg = mitigate(d, glancingRaw, type);
     if (type !== 'phys') dmg = Math.max(1, Math.round(dmg * (1 - r.elemTakenReduction / 100)));
+    if (r.worldheart > 0) dmg = Math.max(1, Math.round(dmg * WORLDHEART_TAKEN));
     let absorbed = 0;
     if (c.shield > 0) {
       absorbed = Math.min(c.shield, dmg);
@@ -3865,6 +3875,7 @@ function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
     if (g.cell === PLAYER_SPOT) {
       let dmg = groundProof(c) ? 0 : (g.dps * t) / 1000;
       if (type !== 'phys') dmg *= (1 - d.res[type] / 100) * (1 - d.raw.elemTakenReduction / 100);
+      if (d.raw.worldheart > 0) dmg *= WORLDHEART_TAKEN;
       const toEs = Math.min(s.es, dmg);
       s.es -= toEs;
       s.life -= dmg - toEs;

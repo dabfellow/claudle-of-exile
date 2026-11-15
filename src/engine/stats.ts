@@ -495,7 +495,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     flaskEffect: raw.flaskEffect,
     flaskCharges: raw.flaskCharges,
     avgHit,
-    dps: ((avgHit * 1000) / attackMs) * critFactor * (raw.woundmaker ? .4 : 1) * (raw.steadyHand || raw.knifesEdge ? 1 : hitChance(accuracy, combatLevel)),
+    dps: ((avgHit * 1000) / attackMs) * critFactor * (raw.woundmaker ? .4 : 1) * (raw.steadyHand || raw.knifesEdge ? 1 : hitChance(accuracy, combatLevel)) * (1 + raw.sumOfAllMore / 100),
   };
 }
 

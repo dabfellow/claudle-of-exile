@@ -183,4 +183,64 @@ PROFESSION_PROJECTS.push({
   use: 'One Stolen Oath Seal. Protected component for The Second Heresy pinnacle project. Fixed cost; no manual double or input conservation.',
 });
 
+/**
+ * The three pinnacle chase projects (docs/SKILLING_OVERHAUL_SPEC.md §§6–8): each spans at least three endgame
+ * activities, grants a fixed item level 90 unique with exactly one explicit effect, and is repeatable with fresh inputs.
+ */
+const PINNACLE_NOTE = 'Item level 90, combat level 80 to equip. One normal rune slot. Full protected costs; no manual double or input conservation.';
+PROFESSION_PROJECTS.push({
+  id: 'the_second_heresy', version: 1, name: 'The Second Heresy', skill: 'runecarving', level: 85,
+  station: { id: 'rune_board', level: 1 }, accomplishments: ['runecarving_work_100'], repeatable: true,
+  durationMs: 3_600_000, xp: 2400,
+  inputs: { crownless_sigil: 1, stolen_oath_seal: 1, restored_taboo_tablet: 1, inscription_fragment: 5 },
+  reward: { category: 'equipment', baseId: 'overhaul_plain_ring', ilvl: 90, rarity: 'unique', name: 'The Second Heresy', uniqueId: 'the_second_heresy' },
+  sources: [
+    { label: 'Hard Boss: defeat the Crownless King for a Crownless Sigil', skill: 'combat' },
+    { label: 'Heist: Occult Treasury Oath Fragments assemble a Stolen Oath Seal', skill: 'thieving' },
+    { label: 'Expedition: restore a Taboo Tablet after the first Adit discovery', skill: 'archaeology' },
+    { label: 'Inscription Fragments from grade 2+ rune carving', skill: 'runecarving' },
+  ],
+  use: `One ring: allows one additional Forbidden keystone. Two copies still allow only two. Removing it refunds the newest excess keystone. Fixed effect; no Divine reroll. ${PINNACLE_NOTE}`,
+}, {
+  id: 'worldheart', version: 1, name: 'Worldheart', skill: 'smithing', level: 90,
+  station: { id: 'forge', level: 3 }, accomplishments: ['smithing_work_100'], repeatable: true,
+  durationMs: 3_600_000, xp: 2400,
+  inputs: { world_core_fragment: 3, reliquary_fragment: 1, architect_doom_sigil: 1, world_bar: 5 },
+  reward: { category: 'equipment', baseId: 'overhaul_plain_belt', ilvl: 90, rarity: 'unique', name: 'Worldheart', uniqueId: 'worldheart' },
+  sources: [
+    { label: 'Doomed Maps: one World Core Fragment per final boss victory', skill: 'combat' },
+    { label: 'Unique Maps: one Reliquary Fragment per final boss victory', skill: 'cartography' },
+    { label: "Uber: defeat the Architect of Ruin (Doom Key Fragments forge the key) for an Architect's Doom Sigil", skill: 'combat' },
+    { label: 'World Bars smelted from World Ore', skill: 'smithing' },
+  ],
+  use: `One belt: 30% less Damage taken from hits and damage over time, applied once. Fixed effect; no Divine reroll. ${PINNACLE_NOTE}`,
+}, {
+  id: 'the_sum_of_all_things', version: 1, name: 'The Sum of All Things', skill: 'runecarving', level: 90,
+  station: { id: 'rune_board', level: 1 }, accomplishments: ['runecarving_work_100'], repeatable: true,
+  durationMs: 7_200_000, xp: 3000,
+  inputs: {
+    completed_atlas_chart: 1, reliquary_fragment: 1, fractured_orb: 1,
+    marrow_shard: 1, choir_glass: 1, black_pearl: 1, throne_ash: 1, crownless_sigil: 1,
+    exile_doom_sigil: 1, architect_doom_sigil: 1, void_sigil: 1,
+    stolen_oath_seal: 1, convergence_relic: 1, convergence_frame: 1, star_distillate: 1,
+    binding_stock: 1, convergence_crystal: 1, convergence_inscription: 1,
+  },
+  reward: { category: 'equipment', baseId: 'overhaul_plain_amulet', ilvl: 90, rarity: 'unique', name: 'The Sum of All Things', uniqueId: 'the_sum_of_all_things' },
+  sources: [
+    { label: 'Mining ore, fragments and crystal shards (frame and crystal)', skill: 'mining' },
+    { label: 'Ancient Heartwood (Convergence Frame)', skill: 'woodcutting' },
+    { label: 'Convergence Frame from Wound and Stone Alloy', skill: 'smithing' },
+    { label: 'Moon and Star Blooms, grown or foraged', skill: 'harvesting' },
+    { label: 'Star Distillate', skill: 'alchemy' },
+    { label: 'Binding Stock', skill: 'cooking' },
+    { label: 'Convergence Crystal polished from an Exceptional Crystal', skill: 'gemcutting' },
+    { label: 'Convergence Inscription and the final assembly', skill: 'runecarving' },
+    { label: 'Stolen Oath Seal from the Occult Treasury', skill: 'thieving' },
+    { label: 'Convergence Relic restored after the first Heart discovery', skill: 'archaeology' },
+    { label: 'Completed Atlas Chart (ten T10 Map wins) and a Reliquary Fragment (Unique Map)', skill: 'cartography' },
+    { label: 'Doomed Maps (Fractured Orb, guaranteed every ten victories), all five Hard Bosses and all three Ubers', skill: 'combat' },
+  ],
+  use: `One amulet: (1–200)% more Damage, a whole number rolled evenly. It multiplies your hits, ailments, minions and totems once. A low roll is still a finished craft. An ordinary Divine Orb rerolls it (the same number can come up again); no second full recipe needed. ${PINNACLE_NOTE}`,
+});
+
 export const professionProject = (id: string) => PROFESSION_PROJECTS.find((p) => p.id === id);

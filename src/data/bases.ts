@@ -653,6 +653,10 @@ export const BASES: BaseDef[] = [
   { id: 'profession_hammer', name: 'Profession Tool', slot: 'weapon', reqLevel: 1, tags: ['weapon'], phys: [1, 2], speed: 0, crit: 0, projectOnly: true },
   { ...W('overhaul_great_axe', 'Relic Great Axe', 'axe', 60, [50, 101], 5, 5), twoHanded: true, projectOnly: true },
   { ...J('overhaul_treasury_amulet', 'Relic Treasury Amulet', 'amulet', 60, []), projectOnly: true },
+  // pinnacle bases: no implicit, so each unique's single explicit effect is all it carries
+  { ...J('overhaul_plain_ring', 'Pinnacle Ring', 'ring', 80, []), projectOnly: true },
+  { ...J('overhaul_plain_belt', 'Pinnacle Belt', 'belt', 80, []), projectOnly: true },
+  { ...J('overhaul_plain_amulet', 'Pinnacle Amulet', 'amulet', 80, []), projectOnly: true },
 ];
 
 /**
@@ -1999,6 +2003,12 @@ UNIQUES.push(
     flavour: 'An arrow always knows the way back.', mods: [{ affixId: 'u_homecoming', values: [1] }] },
   { id: 'borrowed_tomorrow', name: 'Borrowed Tomorrow', baseId: 'overhaul_treasury_amulet', projectSource: 'Thieving 65: Borrowed Tomorrow heist treasure claim or Occult Treasury vault jackpot',
     flavour: 'Every second bought on credit comes due.', mods: [{ affixId: 'u_borrowed_tomorrow', values: [1] }] },
+  { id: 'the_second_heresy', name: 'The Second Heresy', baseId: 'overhaul_plain_ring', projectSource: 'Rune-carving 85, Rune Board: The Second Heresy project (Crownless Sigil, Stolen Oath Seal, Restored Taboo Tablet)',
+    flavour: 'One sin is a mistake. Two is a doctrine.', mods: [{ affixId: 'u_second_heresy', values: [1] }] },
+  { id: 'worldheart', name: 'Worldheart', baseId: 'overhaul_plain_belt', projectSource: "Smithing 90, Forge 3: Worldheart project (World Core Fragments, Reliquary Fragment, Architect's Doom Sigil)",
+    flavour: 'Beneath every mountain, something is still beating.', mods: [{ affixId: 'u_worldheart', values: [1] }] },
+  { id: 'the_sum_of_all_things', name: 'The Sum of All Things', baseId: 'overhaul_plain_amulet', projectSource: 'Rune-carving 90, Rune Board: The Sum of All Things project (all eleven professions and every endgame encounter)',
+    flavour: 'Everything you ever made, weighed at once.', mods: [{ affixId: 'u_sum_of_all', ranges: [[1, 200]] }] },
 );
 
 export function uniqueDef(id: string): UniqueDef {

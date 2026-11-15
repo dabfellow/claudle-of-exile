@@ -58,9 +58,11 @@ export const SEXTANT_RECIPES: SextantRecipe[] = [
 export const CHART_MATERIALS: MaterialDef[] = [
   ...([
     ['chart_survey_fragment', 'Chart Survey Fragment', 'One per 30 ordinary Cartography completions plus 1% extra. Twenty make an Artisans’ Reliquary chart.'],
-    ['reliquary_fragment', 'Reliquary Fragment', 'One per victorious Unique Map final boss. Stock for later Worldheart and Sum projects.'],
+    ['reliquary_fragment', 'Reliquary Fragment', 'One per victorious Unique Map final boss. One goes into Worldheart and one into The Sum of All Things.'],
     ['atlas_survey_record', 'Atlas Survey Record', 'One per ten successful normal T10 Map final bosses. No allocated Atlas points are consumed.'],
-    ['completed_atlas_chart', 'Completed Atlas Chart', 'Assembled from an Atlas Survey Record, Fine Vellum, Sepia Ink and a Master Sextant; stock for the later Sum project.'],
+    ['completed_atlas_chart', 'Completed Atlas Chart', 'Assembled from an Atlas Survey Record, Fine Vellum, Sepia Ink and a Master Sextant. One goes into The Sum of All Things.'],
+    ['world_core_fragment', 'World Core Fragment', 'One per victorious Doomed Map final boss, any tier. Three go into Worldheart.'],
+    ['doom_key_fragment', 'Doom Key Fragment', 'One per victorious Doomed Map final boss. Ten forge an Uber Key of your choice at Cartography 85.'],
   ] as const).map(([id, name, desc]): MaterialDef => ({ id, name, desc, kind: 'component', color: '#a89ae8', value: 0 })),
   { id: 'vellum', name: 'Vellum', kind: 'chart', color: '#d8c8a0', value: 12, desc: 'Scraped thin and pressed flat. Every map starts here.' },
   { id: 'gall_ink', name: 'Gall Ink', kind: 'chart', color: '#46506a', value: 15, desc: 'Black, and it bites into the page.' },

@@ -317,7 +317,7 @@ describe('forbidden keystones', () => {
     angles.forEach((a, i) => expect(Math.abs(((angles[(i + 1) % 12] - a + 360) % 360) - 30)).toBeLessThan(1));
   });
 
-  it('only one can be taken through the tree, and a save holding two is refunded', () => {
+  it('only one can be taken through the tree, and a save holding two keeps the first and refunds the second', () => {
     const s = newGame(1, { name: 'r', classId: 'ranger' });
     s.skills.combat = charXpForLevel(100);
     const walk = (ids: string[]) => { for (const id of ids) if (!s.passives.includes(id)) expect(allocate(s, ctx(), id)).toBeNull(); };
@@ -326,10 +326,14 @@ describe('forbidden keystones', () => {
     const second = FORBIDDEN.map((f) => f.id).filter((id) => id !== 'forbidden_overclock').sort((a, b) => route('class_dex', a).length - route('class_dex', b).length)[0];
     walk(route('class_dex', second).slice(0, -1));
     expect(allocateReason(s, second)).toMatch(/Only one Forbidden/);
-    // a save from before the rule with two of them: the allocation is refunded in full on load
+    // a save holding two without The Second Heresy: the later one is refunded on load, the rest of the tree stays
+    const kept = [...s.passives];
     const raw = JSON.parse(serialize(s));
     raw.passives = [...raw.passives, second];
-    expect(deserialize(JSON.stringify(raw)).passives).toEqual([]);
+    raw.passivePoints -= 15;
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.passives).toEqual(kept);
+    expect(loaded.passivePoints).toBe(s.passivePoints);
   });
 });
 

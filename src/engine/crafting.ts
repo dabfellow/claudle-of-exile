@@ -9,6 +9,7 @@ import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, ope
 import { pick, rInt, type Rng } from './rng';
 import { canAfford, hasItem, payCraftCost } from './bank';
 import type { GameState, Item, RolledMod } from './types';
+import { SUM_OF_ALL } from './pinnacles';
 
 export interface OrbDef {
   canApply(item: Item): string | null;
@@ -299,6 +300,8 @@ export function orbReason(s: GameState, orbId: string, uid: number, fossilId?: s
     if (!hasItem(s, SEAL, 1)) return "Out of Forger's Seals";
     if (!allMods(item).some((m) => m.affixId === sealed)) return 'That modifier is not on this item';
     if (orbId === 'annul' && modCount(item) < 2) return 'The Seal leaves nothing to remove';
+    // The Sum of All Things has one modifier: sealing it would leave a Divine nothing to reroll
+    if (orbId === 'divine' && item.uniqueId === SUM_OF_ALL) return 'The Seal leaves nothing to reroll';
   }
   return ORBS[orbId].canApply(item);
 }

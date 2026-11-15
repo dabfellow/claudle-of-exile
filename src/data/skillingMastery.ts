@@ -38,7 +38,7 @@ const materialName = (id: string) => id.split('_').map((x) => x[0].toUpperCase()
 export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined {
   if (['cut_exceptional', 'prepare_return_inscription', 'prepare_choir_inscription', 'prepare_circuit_inscription', 'inscribe_convergence', 'polish_exceptional', 'recycle_gem'].includes(a.id)) return undefined;
   if (a.id.startsWith('cut_family_') || a.id.startsWith('cut_exact_')) return undefined;
-  if (a.id === 'chart_endgame_atlas') return undefined;
+  if (a.id === 'chart_endgame_atlas' || a.id.startsWith('forge_uber_key')) return undefined;
   if (a.skill === 'combat' || a.skill === 'fishing' || a.soon) return undefined;
   const out = outputOf(a);
 
