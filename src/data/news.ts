@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Three pinnacle uniques can now be crafted: The Second Heresy (a second Forbidden keystone), Worldheart (30% less damage taken) and The Sum of All Things (1–200% more damage, rerollable with a Divine Orb). Doomed Map bosses now give World Core and Doom Key Fragments, ten Doom Key Fragments forge an Uber Key of your choice in Cartography, and long dry spells guarantee a Fractured Orb or a Doomed Map.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.40',
+    date: '15 Nov 2026',
+    title: 'Pinnacle Uniques',
+    items: [
+      'Three pinnacle uniques can now be crafted: The Second Heresy (a second Forbidden keystone), Worldheart (30% less damage taken) and The Sum of All Things (1–200% more damage, rerollable with a Divine Orb). Doomed Map bosses now give World Core and Doom Key Fragments, ten Doom Key Fragments forge an Uber Key of your choice in Cartography, and long dry spells guarantee a Fractured Orb or a Doomed Map.',
+    ],
+  },
   {
     version: '0.4.39',
     date: '15 Nov 2026',
