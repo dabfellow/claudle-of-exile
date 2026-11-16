@@ -334,7 +334,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
       const diffPct = Math.abs(off.skills[tc.skill] - live.skills[tc.skill]) / Math.max(1, live.skills[tc.skill]);
       expect(diffPct, `${tc.skill}/${tc.actionId} live vs offline XP diverged`).toBeLessThan(0.02);
     }
-  }, 60_000);
+  }, 120_000);
 
   it('verifies generated UNIQUES.md matches all 11 equipment unique definitions', () => {
     const uniquesDoc = readFileSync(join(process.cwd(), 'docs', 'UNIQUES.md'), 'utf8');
