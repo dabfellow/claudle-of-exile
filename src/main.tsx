@@ -7,6 +7,7 @@ import { App } from './ui/App';
 import { startMusic } from './ui/music';
 import './styles.css';
 
+const initialSearch = location.search;
 void initErrorReporting();
 void game.boot();
 startMusic();
@@ -22,8 +23,8 @@ if (import.meta.env.DEV) {
     });
   void import('./dev/scenarios').then(({ scenario }) => {
     (window as unknown as { scenario: typeof scenario }).scenario = scenario;
-    if (location.search.includes('overhaulPlaytest')) void import('./dev/overhaulPlaytest').then(({ mountOverhaulPlaytest }) => mountOverhaulPlaytest(scenario));
-    if (location.search.includes('phase06')) {
+    if (initialSearch.includes('overhaulPlaytest')) void import('./dev/overhaulPlaytest').then(({ mountOverhaulPlaytest }) => mountOverhaulPlaytest(scenario));
+    if (initialSearch.includes('phase06')) {
       const panel = document.createElement('div');
       panel.style.cssText = 'position:fixed;bottom:0;right:0;z-index:99999;background:#182129;padding:8px;max-width:680px;color:white';
       const errors: string[] = [];

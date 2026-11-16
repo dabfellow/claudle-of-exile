@@ -4,6 +4,7 @@ import { MAPS_PREVIEW, startUniqueMap } from '../engine/maps';
 import { prepareDefenceBuild, prepareGemcuttingSkiller, prepareReliquaryMapper, prepareRuneUniqueBuild, prepareRunecarverKit, prepareThiefKit, prepareWeaponBuild } from './overhaulBuilds';
 import { professionProject } from '../data/professionProjects';
 import { equip } from '../engine/equipment';
+import { createUnique } from '../engine/items';
 import { startCombat } from '../engine/combat';
 import { xpForLevel } from '../engine/xp';
 
@@ -53,6 +54,9 @@ export function mountOverhaulPlaytest(load: typeof scenario) {
     ['Runic: Forgotten Choir', () => game.act((s, ctx) => prepareRuneUniqueBuild(s, ctx, 'hands_forgotten_choir'))],
     ['Runic: Hollow Circuit', () => game.act((s, ctx) => prepareRuneUniqueBuild(s, ctx, 'hollow_circuit'))],
     ['Runic: Choir + Circuit', () => game.act((s, ctx) => prepareRuneUniqueBuild(s, ctx, 'combo_choir_circuit'))],
+    ['Pinnacle: Worldheart + Debt', () => game.act((s, ctx) => { prepareDefenceBuild(s, ctx, 'debt_of_stone'); s.equipment.belt = createUnique(s, 'worldheart', 90, ctx.rng); })],
+    ['Pinnacle: Worldheart + Grudge', () => game.act((s, ctx) => { prepareDefenceBuild(s, ctx, 'the_buried_grudge'); s.equipment.belt = createUnique(s, 'worldheart', 90, ctx.rng); })],
+    ['Pinnacle: Sum + Grudge', () => game.act((s, ctx) => { prepareDefenceBuild(s, ctx, 'the_buried_grudge'); s.equipment.amulet = createUnique(s, 'the_sum_of_all_things', 90, ctx.rng); })],
     ['Away 4 hours', () => game.simulateAway(14_400_000)],
     ['Away 20 minutes', () => game.simulateAway(1_200_000)],
     ['Away 1 minute', () => game.simulateAway(60_000)],

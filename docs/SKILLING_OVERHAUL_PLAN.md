@@ -1,6 +1,6 @@
 # Skilling overhaul: phased build plan
 
-Written 2026-11-15. **Phases 00–14 are live in 0.4.39 and Phase 17 in 0.4.40; Phases 15–16 are live in 0.4.41. Phase 18 (whole-overhaul acceptance) is next.** Implementation contract: [SKILLING_OVERHAUL_SPEC.md](SKILLING_OVERHAUL_SPEC.md).
+Written 2026-11-15. **All Phases 00–18 are complete and verified.** Implementation contract: [SKILLING_OVERHAUL_SPEC.md](SKILLING_OVERHAUL_SPEC.md).
 
 Design: [SKILLING_OVERHAUL.md](SKILLING_OVERHAUL.md). Tracking: [MILESTONES.md](MILESTONES.md). Current behavior: [GAME.md](GAME.md). This plan organizes the reference; illustrative examples and draft recipes remain distinct from owner decisions.
 
@@ -34,12 +34,12 @@ Replace the current handoff after each phase. Keep lasting decisions in the spec
 - Tests and actual in-game checks performed, with results.
 - Incomplete work/blockers and exact commands or reproduction steps.
 
-**Current handoff (2026-11-15, Phases 15–17 merged):**
+**Current handoff (2026-11-15, Phase 18 complete):**
 
-- **Phase/status:** Phases 15 (GPT) and 16 (Gemini) existed only as uncommitted work in the main checkout; they were merged onto Phase 17 and are live in 0.4.41. Phases 00–17 are complete. Phase 18 can start.
-- **Merge decisions:** in `onBlock`, Worldheart reduces the post-mitigation hit once before The Buried Grudge stores prevented damage and before Debt of Stone splits the remainder; in `takeHit` Worldheart applies before the Debt split; Debt's deferred tranches (`tickDebt`) are never reduced again. The Grudge shockwave goes through `damageMonster`, so Sum multiplies it once (the shown number is scaled to match). Sheet DPS applies Choir's zero before Sum. Glancing Blows now scales post-mitigation damage (Phase 15 change kept).
-- **Checks:** see the release entry in `MILESTONES.md`. Browser playtest of the merged build not run.
-- **Incomplete/blockers:** none for the merge. Phase 18 should playtest the Worldheart + Debt of Stone, Worldheart + Buried Grudge and Sum + Grudge pairings in a realistic build.
+- **Phase/status:** Phase 18 (whole-overhaul acceptance) complete and verified. All Phases 00–18 of the skilling overhaul are complete.
+- **Changed files:** new `tests/overhaulAcceptance.test.ts` (7 acceptance tests covering 11 professions, 7 tools, 2 signatures, 2 feasts, Reliquary, 13 uniques, full ingredient source graph, market/trade IDs, old-save migration, Classic restrictions, and 8h live/offline parity across all 11 professions); fixed `src/main.tsx` (`initialSearch` captured before `game.boot()` strips query params for `?overhaulPlaytest`); added Pinnacle pairing buttons to `src/dev/overhaulPlaytest.ts`; updated `docs/GAME.md`, `docs/wiki/{09-gathering,14-progression,25-runes,26-flasks,27-side-systems,28-meals,33-maps-atlas}.html`, `docs/UNIQUES.md`, `docs/SKILLING_OVERHAUL_SPEC.md` (§25), `docs/MILESTONES.md`, and `src/data/news.ts`.
+- **Checks:** Full `npm test`, `npx tsc --noEmit`, `npm run build` (including `npm run wiki`), and `npm run uniques` verified; browser playtest verified desktop (1280×800) & phone (390×844) flows, independent level-1 professions, Smithing/Project Board, `Defence: Grudge + Debt`, `Runic: Choir + Circuit`, `Pinnacle: Worldheart + Debt`, `Pinnacle: Worldheart + Grudge`, `Pinnacle: Sum + Grudge`, and `Away 4 hours` return summary with 0 JS errors.
+- **Incomplete/blockers:** None. Ready to ship.
 
 **Previous handoff (Phase 17):**
 
@@ -344,7 +344,7 @@ Implement Phase 17 only from docs/SKILLING_OVERHAUL_PLAN.md. Read AGENTS.md, the
 
 ## Phase 18 — Whole-overhaul acceptance
 
-- [ ] Complete and verify Phase 18.
+- [x] Complete and verify Phase 18. — done 2026-11-15; full acceptance suite (`tests/overhaulAcceptance.test.ts`), ingredient source graph, 11-profession 8h live/offline parity, 13 unique routes, old-save/Classic/market checks, desktop/phone browser playtests (including Pinnacle + Defence/Rune pairings), and wiki/GAME alignment verified in specification §25.
 
 Audit the reference against delivered content: no profession, tool/signature/feast/chart project or accepted unique silently disappears. Run complete noncombat/campaign-upgrade journeys, representative overnight tasks across all eleven professions and all thirteen acquisition routes. Trace each required ingredient to an actual source. Verify new IDs under existing trading rules without changing ownership/market policy. Exercise realistic old saves with progressed mastery, discoveries, crew/factions, stations and partial work; respect affected Classic/challenge restrictions.
 
