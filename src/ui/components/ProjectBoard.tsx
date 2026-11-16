@@ -78,7 +78,7 @@ function RewardArt({ reward }: { reward: ProjectReward }) {
 function RewardOutcome({ reward }: { reward: ProjectReward }) {
   if (reward.category === 'equipment') {
     const base = baseDef(reward.baseId);
-    const u = reward.uniqueId ? UNIQUES.find((x) => x.id === reward.uniqueId) ?? null : null;
+    const u = reward.uniqueId ? uniqueDef(reward.uniqueId) : null;
     const name = reward.name ?? u?.name ?? base.name;
     const rarClass = `rar-${reward.rarity}`;
     const slotDesc = base.family ? `${base.twoHanded ? 'Two-handed ' : ''}${WEAPON_FAMILIES[base.family]?.name ?? base.slot}` : base.slot;
