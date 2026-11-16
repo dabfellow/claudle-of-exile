@@ -416,3 +416,87 @@ PROFESSION_PROJECTS.push({
 });
 
 export const professionProject = (id: string) => PROFESSION_PROJECTS.find((p) => p.id === id);
+
+export interface ProfessionTheme {
+  title: string;
+  singular: string;
+  startLabel: string;
+}
+
+export const PROFESSION_THEMES: Record<SkillId, ProfessionTheme> = {
+  smithing: {
+    title: 'Forge Masterworks',
+    singular: 'masterwork',
+    startLabel: 'Begin masterwork',
+  },
+  mining: {
+    title: 'Mining Prospects',
+    singular: 'prospect',
+    startLabel: 'Begin prospect',
+  },
+  woodcutting: {
+    title: 'Timberworks',
+    singular: 'timberwork',
+    startLabel: 'Begin timberwork',
+  },
+  harvesting: {
+    title: 'Cultivations',
+    singular: 'cultivation',
+    startLabel: 'Begin cultivation',
+  },
+  alchemy: {
+    title: 'Great Works',
+    singular: 'great work',
+    startLabel: 'Begin Great Work',
+  },
+  cooking: {
+    title: 'Feasts & Banquets',
+    singular: 'feast',
+    startLabel: 'Prepare feast',
+  },
+  gemcutting: {
+    title: 'Lapidary Works',
+    singular: 'lapidary work',
+    startLabel: 'Begin lapidary work',
+  },
+  cartography: {
+    title: 'Survey Expeditions',
+    singular: 'survey expedition',
+    startLabel: 'Chart expedition',
+  },
+  runecarving: {
+    title: 'Runic Inscriptions',
+    singular: 'inscription',
+    startLabel: 'Begin inscription',
+  },
+  thieving: {
+    title: 'Underworld Schemes',
+    singular: 'scheme',
+    startLabel: 'Execute scheme',
+  },
+  archaeology: {
+    title: 'Relic Restorations',
+    singular: 'restoration',
+    startLabel: 'Restore relic',
+  },
+  fishing: {
+    title: 'Deep Expeditions',
+    singular: 'expedition',
+    startLabel: 'Begin expedition',
+  },
+  combat: {
+    title: 'Campaigns',
+    singular: 'campaign',
+    startLabel: 'Begin campaign',
+  },
+};
+
+export function professionTheme(skill: SkillId): ProfessionTheme {
+  return (
+    PROFESSION_THEMES[skill] ?? {
+      title: 'Special Undertakings',
+      singular: 'undertaking',
+      startLabel: 'Begin undertaking',
+    }
+  );
+}

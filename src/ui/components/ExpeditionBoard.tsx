@@ -107,7 +107,7 @@ function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
 }
 
 /** Archaeology's other half: the Logbook of every site's depth, and the merchants who take what comes up. */
-export function ExpeditionBoard() {
+export function ExpeditionBoard({ view = 'all' }: { view?: 'all' | 'sites' | 'merchants' }) {
   const s = useGame();
   if (!expeditionOpen(s)) {
     return <div className="callout skill-note">The dig sites are up in the Hollow Peaks, in {EXPEDITION_GATE.label}. Reach them to start digging.</div>;
@@ -119,32 +119,36 @@ export function ExpeditionBoard() {
   return (
     <>
       <div className="callout skill-note">
-        Start at Giant's Cairn. Its first find opens the Cutting and Colossus; the Cutting opens Barrow and Adit; Barrow opens the Heart, at their listed levels. Finds at 4, 16 and 48 base hours raise standing and artifact yield. Keep discoveries forever. Restore a Surveyor's Guard after the first Cairn find: five Survey fragments, 50 Giant Tallies and five Copper Bars. Choose its resistance below. Sifting guarantees artifacts without advancing finds or standing. Later relics prepare pinnacle components; The Buried Grudge is a later project.
+        Start at Giant's Cairn. Its first find opens the Cutting and Colossus; the Cutting opens Barrow and Adit; Barrow opens the Heart, at their listed levels. Finds at 4, 16 and 48 base hours raise standing and artifact yield. Keep discoveries forever. Restore a Surveyor's Guard after the first Cairn find: five Survey fragments, 50 Giant Tallies and five Copper Bars. Choose its resistance below. Sifting guarantees artifacts without advancing finds or standing. Later relics prepare pinnacle components; The Buried Grudge is a later masterwork restoration.
       </div>
-      <section>
-        <div className="section-head">
-          <h3>Logbook</h3>
-          <span className="dim small">
-            {found} of {SITES.length * FIND_HOURS.length} found
-          </span>
-        </div>
-        <div className="action-grid">
-          {shown.map((x) => (
-            <SitePage key={x.id} s={s} site={x} />
-          ))}
-        </div>
-      </section>
-      <section>
-        <div className="section-head">
-          <h3>Merchants</h3>
-          <span className="dim small">{fmt(s.expedition.tally.traded)} traded · the emptier a shelf, the dearer it gets</span>
-        </div>
-        <div className="card-grid" style={{ ['--card-min' as string]: '340px', gap: 8 }}>
-          {CULTURES.map((c) => (
-            <MerchantCard key={c.id} s={s} culture={c} />
-          ))}
-        </div>
-      </section>
+      {(view === 'all' || view === 'sites') && (
+        <section>
+          <div className="section-head">
+            <h3>Logbook</h3>
+            <span className="dim small">
+              {found} of {SITES.length * FIND_HOURS.length} found
+            </span>
+          </div>
+          <div className="action-grid">
+            {shown.map((x) => (
+              <SitePage key={x.id} s={s} site={x} />
+            ))}
+          </div>
+        </section>
+      )}
+      {(view === 'all' || view === 'merchants') && (
+        <section>
+          <div className="section-head">
+            <h3>Merchants</h3>
+            <span className="dim small">{fmt(s.expedition.tally.traded)} traded · the emptier a shelf, the dearer it gets</span>
+          </div>
+          <div className="card-grid" style={{ ['--card-min' as string]: '340px', gap: 8 }}>
+            {CULTURES.map((c) => (
+              <MerchantCard key={c.id} s={s} culture={c} />
+            ))}
+          </div>
+        </section>
+      )}
     </>
   );
 }

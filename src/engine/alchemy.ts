@@ -45,7 +45,7 @@ export function alchemyPreview(s: GameState, a: SkillAction): string[] {
     const def = materialDef(outKey);
     lines.push(`Special reagent: ${def.name}. ${def.desc ?? ''}`);
     lines.push('Protected full-cost refinement: exactly one material per completion. Yield bonuses, input conservation and manual doubles cannot multiply it.');
-    lines.push('Stock for future projects; recipes not yet available. Unlimited material storage.');
+    lines.push('Stock for future Great Works; recipes not yet available. Unlimited material storage.');
     return lines;
   }
 

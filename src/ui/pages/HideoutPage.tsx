@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { classDef } from '../../data/classes';
 import { heistJob } from '../../data/heist';
+import { professionTheme } from '../../data/professionProjects';
 import { STATIONS, type StationDef, type StationId } from '../../data/hideout';
 import { materialDef } from '../../data/materials';
 import { actionDef, actionsFor, SKILLS, type SkillAction } from '../../data/skills';
@@ -255,7 +256,9 @@ function NowRunning({ go }: { go: (p: Page) => void }) {
   } else if (s.action?.kind === 'project' && s.professionProgress.activeProject) {
     const run = s.professionProgress.activeProject;
     skill = run.project.skill;
-    title = `Project: ${run.project.name}`;
+    const theme = professionTheme(skill);
+    const category = theme.singular.charAt(0).toUpperCase() + theme.singular.slice(1);
+    title = `${category}: ${run.project.name}`;
     sub = run.stopReason ?? `${fmtTime(run.project.durationMs - run.elapsedMs)} base work left`;
     progress = run.elapsedMs / run.project.durationMs;
   } else if (s.action?.kind === 'heist') {

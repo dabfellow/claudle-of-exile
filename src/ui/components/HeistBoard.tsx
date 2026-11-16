@@ -173,7 +173,7 @@ function RogueCard({ s, rogue }: { s: GameState; rogue: RogueDef }) {
 }
 
 /** Thieving's other half: pick a job and how deep to go, set a crew, and let it repeat. */
-export function HeistBoard() {
+export function HeistBoard({ view = 'all' }: { view?: 'all' | 'jobs' | 'crew' }) {
   const s = useGame();
   const { tally } = s.heist;
   const open = HEIST_JOBS.filter((j) => !jobBlocker(s, j));
@@ -183,46 +183,52 @@ export function HeistBoard() {
   const casing = !!s.heist.auto && s.action?.kind === 'skill';
   return (
     <>
-      <div className="callout skill-note">
-        Marks pay gold and Rogue's Markers (including 1 guaranteed Marker every 10 mark completions). Markers set up Heists: each room is richer and riskier, and the vault is in the last one. If short on Markers, repeats safely case the job on the best mark until funded. You have <b className="num">{fmt(s.account.bank[MARKER] ?? 0)}</b> Markers.
-        {((s.account.bank.treasury_fragment ?? 0) > 0 || (s.account.bank.oath_fragment ?? 0) > 0) && (
-          <div style={{ marginTop: 4 }}>
-            Treasury reserves: <b className="num">{fmt(s.account.bank.treasury_fragment ?? 0)}</b> Treasury Fragments · <b className="num">{fmt(s.account.bank.oath_fragment ?? 0)}</b> Oath Fragments
-          </div>
-        )}
-      </div>
-      {casing && mark && (
+      {view !== 'crew' && (
+        <div className="callout skill-note">
+          Marks pay gold and Rogue's Markers (including 1 guaranteed Marker every 10 mark completions). Markers set up Heists: each room is richer and riskier, and the vault is in the last one. If short on Markers, repeats safely case the job on the best mark until funded. You have <b className="num">{fmt(s.account.bank[MARKER] ?? 0)}</b> Markers.
+          {((s.account.bank.treasury_fragment ?? 0) > 0 || (s.account.bank.oath_fragment ?? 0) > 0) && (
+            <div style={{ marginTop: 4 }}>
+              Treasury reserves: <b className="num">{fmt(s.account.bank.treasury_fragment ?? 0)}</b> Treasury Fragments · <b className="num">{fmt(s.account.bank.oath_fragment ?? 0)}</b> Oath Fragments
+            </div>
+          )}
+        </div>
+      )}
+      {view !== 'crew' && casing && mark && (
         <div className="callout skill-note">
           Casing {heistJob(s.heist.auto!).name}: lifting purses until you have <b className="num">{jobCost(s, heistJob(s.heist.auto!))}</b> Markers, then the job starts on its own.
         </div>
       )}
-      <JobRunning s={s} />
-      <section>
-        <div className="section-head">
-          <h3>Heists</h3>
-          <span className="dim small">
-            {tally.jobs} done · {tally.alarms} alarms
-          </span>
-        </div>
-        <div className="action-grid">
-          {shown.map((j) => (
-            <JobCard key={j.id} s={s} job={j} />
-          ))}
-        </div>
-      </section>
-      <section>
-        <div className="section-head">
-          <h3>Crew</h3>
-          <span className="dim small">
-            {s.heist.crew.length} of {crewSlots(s)} places · paid in Markers and gold
-          </span>
-        </div>
-        <div className="card-grid" style={{ ['--card-min' as string]: '220px', gap: 8 }}>
-          {ROGUES.map((r) => (
-            <RogueCard key={r.id} s={s} rogue={r} />
-          ))}
-        </div>
-      </section>
+      {view !== 'crew' && <JobRunning s={s} />}
+      {(view === 'all' || view === 'jobs') && (
+        <section>
+          <div className="section-head">
+            <h3>Heists</h3>
+            <span className="dim small">
+              {tally.jobs} done · {tally.alarms} alarms
+            </span>
+          </div>
+          <div className="action-grid">
+            {shown.map((j) => (
+              <JobCard key={j.id} s={s} job={j} />
+            ))}
+          </div>
+        </section>
+      )}
+      {(view === 'all' || view === 'crew') && (
+        <section>
+          <div className="section-head">
+            <h3>Crew</h3>
+            <span className="dim small">
+              {s.heist.crew.length} of {crewSlots(s)} places · paid in Markers and gold
+            </span>
+          </div>
+          <div className="card-grid" style={{ ['--card-min' as string]: '220px', gap: 8 }}>
+            {ROGUES.map((r) => (
+              <RogueCard key={r.id} s={s} rogue={r} />
+            ))}
+          </div>
+        </section>
+      )}
     </>
   );
 }

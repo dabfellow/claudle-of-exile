@@ -1,15 +1,18 @@
 import { useCallback, useState } from 'react';
 import { baseDef } from '../../data/bases';
-import { FOSSILS, fossilDef, RESINS } from '../../data/craftMats';
+import { FOSSILS, fossilDef, MARKER, RESINS } from '../../data/craftMats';
 import { flaskDef } from '../../data/flasks';
 import { ACTIVE_GEMS, activeGemDef, SUPPORT_GEMS, supportGemDef } from '../../data/gems';
+import { HEIST_JOBS, heistJob } from '../../data/heist';
 import { materialDef } from '../../data/materials';
 import { isMapId } from '../../data/maps';
+import { CULTURES, SITES } from '../../data/expedition';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { zoneDef } from '../../data/zones';
 import { cartographyPreview, upgradeCost } from '../../engine/cartography';
 import { mapsHeld } from '../../engine/maps';
 import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
+import { crewSlots, jobBlocker, jobCost } from '../../engine/heist';
 import { actionBlocker, actionIntervalMs, actionPlaceNeeded, gemCutPool, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
@@ -464,12 +467,81 @@ interface Tier {
   actions: SkillAction[];
 }
 
+const THIEVING_TABS: { id: string; label: string }[] = [
+  { id: 'marks', label: 'Street Marks' },
+  { id: 'heists', label: 'Heist Operations' },
+  { id: 'crew', label: 'Rogue Crew' },
+];
+
+const ARCHAEOLOGY_TABS: { id: string; label: string }[] = [
+  { id: 'sites', label: 'Excavation Sites' },
+  { id: 'merchants', label: 'Culture Merchants' },
+];
+
+const ALCHEMY_TABS: { id: string; label: string }[] = [
+  { id: 'all', label: 'All Recipes' },
+  ...ALCHEMY_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
+];
+
+const COOKING_TABS: { id: string; label: string }[] = [
+  { id: 'all', label: 'All Dishes' },
+  ...COOKING_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
+];
+
+const GEMCUTTING_TABS: { id: string; label: string }[] = [
+  { id: 'all', label: 'All Cuts' },
+  ...GEMCUTTING_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
+];
+
+const RUNECARVING_TABS: { id: string; label: string }[] = [
+  { id: 'all', label: 'All Runes' },
+  ...RUNECARVING_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
+];
+
+const HARVESTING_TABS: { id: string; label: string }[] = [
+  { id: 'forage', label: 'Wild Foraging' },
+  { id: 'greenhouse', label: 'Greenhouse' },
+];
+
+function getSkillTabs(skill: SkillId): { id: string; label: string }[] | null {
+  if (skill === 'smithing') return SMITH_TABS;
+  if (skill === 'thieving') return THIEVING_TABS;
+  if (skill === 'archaeology') return ARCHAEOLOGY_TABS;
+  if (skill === 'alchemy') return ALCHEMY_TABS;
+  if (skill === 'cooking') return COOKING_TABS;
+  if (skill === 'gemcutting') return GEMCUTTING_TABS;
+  if (skill === 'runecarving') return RUNECARVING_TABS;
+  if (skill === 'harvesting') return HARVESTING_TABS;
+  return null;
+}
+
+function defaultSkillTab(skill: SkillId): string {
+  if (skill === 'smithing') return SMITH_TABS[0].id;
+  if (skill === 'thieving') return 'marks';
+  if (skill === 'archaeology') return 'sites';
+  if (skill === 'harvesting') return 'forage';
+  return 'all';
+}
+
 /**
  * Activities split into tiers: gathering by the material a node mainly gives (Copper, Iron, …),
  * production by bands of ten levels.
  */
 function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
   const tiers: Tier[] = [];
+  if (skill === 'thieving') {
+    const groups: Tier[] = [
+      { key: 'street', label: 'Street Targets (Lv 1–16)', actions: [] },
+      { key: 'civic', label: 'Civic & Wealthy (Lv 24–40)', actions: [] },
+      { key: 'underworld', label: 'Underworld Figures (Lv 48+)', actions: [] },
+    ];
+    for (const a of actions) {
+      if (a.level <= 16) groups[0].actions.push(a);
+      else if (a.level <= 40) groups[1].actions.push(a);
+      else groups[2].actions.push(a);
+    }
+    return groups.filter((g) => g.actions.length > 0);
+  }
   if (skill === 'alchemy') {
     for (const cat of ALCHEMY_CATEGORIES) {
       const catActions = actions.filter((a) => alchemyCategory(a) === cat.id);
@@ -509,8 +581,7 @@ function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
   for (const a of actions) {
     const out = a.mining ? `${a.mining.metal}_ore` : a.id === 'mill_heartwood' || a.woodcutting?.mode === 'heartwood' ? 'ancient_heartwood' : a.woodcutting ? `${a.woodcutting.wood}_log` : a.foraging ? a.foraging.plant : a.outputs ? Object.keys(a.outputs)[0] : undefined;
     const band = Math.floor(a.level / 10) * 10;
-    // every mark pays gold, so Thieving reads by level like production
-    const key = SKILLS[skill].group === 'gathering' && skill !== 'thieving' && out ? out : `band-${band}`;
+    const key = SKILLS[skill].group === 'gathering' && out ? out : `band-${band}`;
     let t = tiers.find((x) => x.key === key);
     if (!t) {
       t = { key, label: key.startsWith('band-') ? `Tier ${band / 10 + 1}` : materialDef(out!).name, actions: [] };
@@ -566,14 +637,31 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
   const actions = actionsFor(skill);
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [onlyUnlocked, setOnlyUnlocked] = useState(false);
-  const [tab, setTab] = useState(SMITH_TABS[0].id);
+  const [skillTabs, setSkillTabs] = useState<Record<string, string>>({});
+  const tab = skillTabs[skill] ?? defaultSkillTab(skill);
+  const setTab = (t: string) => setSkillTabs((prev) => ({ ...prev, [skill]: t }));
   const [purpose, setPurpose] = useState('bases');
   // tier groups the player opened or closed; untouched ones follow tierOpenByDefault
   const [tierToggled, setTierToggled] = useState<Set<string>>(new Set());
   const isUnlocked = (a: SkillAction) => !a.soon && a.level <= level && !actionPlaceNeeded(s, a) && (!!s.professionProgress.legacyAccess[a.id] || ((!a.accomplishments || a.accomplishments.every((id) => hasAccomplishment(s, id))) && !miningAccessHint(s, a) && !woodcuttingAccessHint(s, a) && !foragingAccessHint(s, a)));
+
+  const tabs = getSkillTabs(skill);
   const tabbed = skill === 'smithing';
   const selectedActions = tabbed ? actions.filter((a) => !a.baseId || (purpose === 'bases' ? !a.purpose : a.purpose?.id === purpose)) : actions;
-  const inTab = tabbed ? selectedActions.filter((a) => smithTab(a) === tab) : selectedActions;
+
+  let inTab = selectedActions;
+  if (skill === 'smithing') {
+    inTab = selectedActions.filter((a) => smithTab(a) === tab);
+  } else if (skill === 'alchemy' && tab !== 'all') {
+    inTab = selectedActions.filter((a) => alchemyCategory(a) === tab);
+  } else if (skill === 'cooking' && tab !== 'all') {
+    inTab = selectedActions.filter((a) => cookingCategory(a) === tab);
+  } else if (skill === 'gemcutting' && tab !== 'all') {
+    inTab = selectedActions.filter((a) => gemcuttingCategory(a) === tab);
+  } else if (skill === 'runecarving' && tab !== 'all') {
+    inTab = selectedActions.filter((a) => runecarvingCategory(a) === tab);
+  }
+
   const shown = onlyUnlocked ? inTab.filter(isUnlocked) : inTab;
   const tiers = tiersOf(skill, shown);
   // smithing opens only the newest tier you can make; other skills open everything
@@ -597,24 +685,70 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
       return n;
     });
 
+  const showActivities =
+    skill !== 'archaeology' &&
+    !(skill === 'thieving' && tab !== 'marks') &&
+    !(skill === 'harvesting' && tab === 'greenhouse');
+
   return (
     <div className="page">
       <SkillHeader skill={skill} />
-      {skill === 'harvesting' && <div className="card">
-        <h3>Greenhouse</h3>
-        <p>Allocate the Greenhouse keystone in the Foraging tree using ordinary skilling points; no combat or station purchase required. Starting Foraging still remembers that spot. Discovered seeds let you explicitly choose a plant below.</p>
-        <p className="muted">Your plant grows at 20% speed while you do anything else, pauses during all foreground Foraging, and keeps its progress while paused. Switching plants resets its partial cycle. No manual doubles or passive early seed rolls. Materials have unlimited storage.</p>
-        <label>Plant{' '}<select aria-label="Greenhouse plant" value={s.greenhouse?.actionId ?? ''} onChange={(e) => game.act((state) => plantGreenhouse(state, e.target.value))}>
-          <option value="">Choose a learned plant</option>
-          {actionsFor('harvesting').map((a) => {
-            const reason = greenhousePlantReason(s, a);
-            return <option key={a.id} value={a.id} disabled={!!reason}>{a.name}{reason ? ` · ${reason}` : ''}</option>;
-          })}
-        </select></label>
-        <p className="muted">{s.greenhouse ? `Remembered plant: ${actionsFor('harvesting').find((a) => a.id === s.greenhouse!.actionId)?.name}. Stored cycle progress: ${(s.greenhouse.progress / 1000).toFixed(1)} seconds. Background pauses while you forage.` : 'No plant remembered yet.'}</p>
-      </div>}
-      <ProjectBoard skill={skill} go={go} />
       <SkillMinigame skill={skill} />
+
+      {tabs && (
+        <div className="smith-tabs" style={{ marginTop: 8 }}>
+          {tabs.map((x) => {
+            let countText = '';
+            if (skill === 'smithing') {
+              const list = selectedActions.filter((a) => smithTab(a) === x.id);
+              countText = `${list.filter(isUnlocked).length}/${list.length}`;
+            } else if (skill === 'thieving') {
+              if (x.id === 'marks') countText = `${selectedActions.filter(isUnlocked).length}/${selectedActions.length}`;
+              else if (x.id === 'heists') countText = `${HEIST_JOBS.filter((j) => !jobBlocker(s, j)).length}/${HEIST_JOBS.length}`;
+              else if (x.id === 'crew') countText = `${s.heist.crew.length}/${crewSlots(s)}`;
+            } else if (skill === 'archaeology') {
+              if (x.id === 'sites') countText = `${SITES.filter((site) => site.level <= level).length}/${SITES.length}`;
+              else if (x.id === 'merchants') countText = `${CULTURES.length}`;
+            } else if (skill === 'alchemy' || skill === 'cooking' || skill === 'gemcutting' || skill === 'runecarving') {
+              if (x.id !== 'all') {
+                const list = skill === 'alchemy' ? selectedActions.filter((a) => alchemyCategory(a) === x.id)
+                  : skill === 'cooking' ? selectedActions.filter((a) => cookingCategory(a) === x.id)
+                  : skill === 'gemcutting' ? selectedActions.filter((a) => gemcuttingCategory(a) === x.id)
+                  : selectedActions.filter((a) => runecarvingCategory(a) === x.id);
+                countText = `${list.filter(isUnlocked).length}/${list.length}`;
+              }
+            }
+            return (
+              <button
+                key={x.id}
+                data-tut={`skill-tab-${x.id}`}
+                className={`gem-chip ${tab === x.id ? 'active' : ''}`}
+                onClick={() => setTab(x.id)}
+              >
+                {x.label}
+                {countText && <span className="dim num" style={{ marginLeft: 5 }}>{countText}</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {skill === 'harvesting' && tab === 'greenhouse' && (
+        <div className="card">
+          <h3>Greenhouse</h3>
+          <p>Allocate the Greenhouse keystone in the Foraging tree using ordinary skilling points; no combat or station purchase required. Starting Foraging still remembers that spot. Discovered seeds let you explicitly choose a plant below.</p>
+          <p className="muted">Your plant grows at 20% speed while you do anything else, pauses during all foreground Foraging, and keeps its progress while paused. Switching plants resets its partial cycle. No manual doubles or passive early seed rolls. Materials have unlimited storage.</p>
+          <label>Plant{' '}<select aria-label="Greenhouse plant" value={s.greenhouse?.actionId ?? ''} onChange={(e) => game.act((state) => plantGreenhouse(state, e.target.value))}>
+            <option value="">Choose a learned plant</option>
+            {actionsFor('harvesting').map((a) => {
+              const reason = greenhousePlantReason(s, a);
+              return <option key={a.id} value={a.id} disabled={!!reason}>{a.name}{reason ? ` · ${reason}` : ''}</option>;
+            })}
+          </select></label>
+          <p className="muted">{s.greenhouse ? `Remembered plant: ${actionsFor('harvesting').find((a) => a.id === s.greenhouse!.actionId)?.name}. Stored cycle progress: ${(s.greenhouse.progress / 1000).toFixed(1)} seconds. Background pauses while you forage.` : 'No plant remembered yet.'}</p>
+        </div>
+      )}
+
       {skill === 'smithing' && (
         <div className="callout skill-note">
           Smithed bases are item level <b>{smithIlvl(s, resinBonus(s))}</b> — higher item level unlocks better modifier tiers when crafting.
@@ -639,8 +773,44 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
           Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b>{fmt(s.account.bank.rough_gem ?? 0)}</b> Rough Gems.
         </div>
       )}
-      {skill === 'thieving' && <HeistBoard />}
-      {skill === 'archaeology' && <ExpeditionBoard />}
+
+      {skill === 'thieving' && tab === 'marks' && (
+        <>
+          {s.action?.kind === 'heist' && (
+            <div className="callout" style={{ borderColor: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span>
+                <b>Heist in progress:</b> {heistJob(s.action.jobId).name} · Room {s.action.room} of {s.action.lastRoom}
+              </span>
+              <button className="btn sm" onClick={() => setTab('heists')}>
+                View Heist
+              </button>
+            </div>
+          )}
+          {s.heist.auto && s.action?.kind === 'skill' && (
+            <div className="callout" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span>
+                <b>Casing {heistJob(s.heist.auto).name}:</b> lifting purses until you have <b className="num">{jobCost(s, heistJob(s.heist.auto))}</b> Markers
+              </span>
+              <button className="btn sm ghost" onClick={() => setTab('heists')}>
+                View Heist
+              </button>
+            </div>
+          )}
+          <div className="callout skill-note">
+            Marks pay gold and Rogue's Markers (including 1 guaranteed Marker every 10 mark completions). Markers fund Heist Operations. You have <b className="num">{fmt(s.account.bank[MARKER] ?? 0)}</b> Markers.
+            {((s.account.bank.treasury_fragment ?? 0) > 0 || (s.account.bank.oath_fragment ?? 0) > 0) && (
+              <div style={{ marginTop: 4 }}>
+                Treasury reserves: <b className="num">{fmt(s.account.bank.treasury_fragment ?? 0)}</b> Treasury Fragments · <b className="num">{fmt(s.account.bank.oath_fragment ?? 0)}</b> Oath Fragments
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {skill === 'thieving' && tab === 'heists' && <HeistBoard view="jobs" />}
+      {skill === 'thieving' && tab === 'crew' && <HeistBoard view="crew" />}
+
+      {skill === 'archaeology' && <ExpeditionBoard view={tab as 'sites' | 'merchants'} />}
       {skill === 'runecarving' && <RuneBoard />}
       {skill === 'cooking' && <PantryBoard />}
       {skill === 'cartography' && <MapCaseBoard />}
@@ -649,70 +819,60 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
           Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.
         </div>
       )}
-      <section>
-        <div className="section-head">
-          <h3>Activities</h3>
-          <span className="dim small">
-            {unlocked} of {selectedActions.length} unlocked{tabbed && ' · click a tier to open or close it'}
-          </span>
-          <span className="spacer" />
-          {inTab.length > 8 && (
-            <button className="btn sm ghost" onClick={() => setOnlyUnlocked((v) => !v)}>
-              {onlyUnlocked ? 'Show all' : 'Unlocked only'}
+
+      {showActivities && (
+        <section>
+          <div className="section-head">
+            <h3>{skill === 'thieving' ? 'Street Marks' : 'Activities'}</h3>
+            <span className="dim small">
+              {unlocked} of {selectedActions.length} unlocked{tabbed && ' · click a tier to open or close it'}
+            </span>
+            <span className="spacer" />
+            {inTab.length > 8 && (
+              <button className="btn sm ghost" onClick={() => setOnlyUnlocked((v) => !v)}>
+                {onlyUnlocked ? 'Show all' : 'Unlocked only'}
+              </button>
+            )}
+            <button className="btn sm ghost" onClick={() => setOpen(allOpen ? new Set() : new Set(shown.map((a) => a.id)))}>
+              {allOpen ? 'Collapse all' : 'Expand all'}
             </button>
-          )}
-          <button className="btn sm ghost" onClick={() => setOpen(allOpen ? new Set() : new Set(shown.map((a) => a.id)))}>
-            {allOpen ? 'Collapse all' : 'Expand all'}
-          </button>
-        </div>
-        {tabbed && (
-          <div className="smith-tabs">
-            {SMITH_TABS.map((x) => {
-              const list = selectedActions.filter((a) => smithTab(a) === x.id);
+          </div>
+          <div className={`tier-list ${tabbed ? 'spaced' : ''}`}>
+            {tiers.map((t) => {
+              const lo = Math.min(...t.actions.map((a) => a.level));
+              const hi = Math.max(...t.actions.map((a) => a.level));
+              const got = t.actions.filter(isUnlocked).length;
+              const isOpen = tierOpen(t.key);
               return (
-                <button key={x.id} data-tut={`smith-tab-${x.id}`} className={`gem-chip ${tab === x.id ? 'active' : ''}`} onClick={() => setTab(x.id)}>
-                  {x.label}{' '}
-                  <span className="dim num">
-                    {list.filter(isUnlocked).length}/{list.length}
-                  </span>
-                </button>
+                <div key={t.key} className={`tier-group ${got ? '' : 'locked'} ${isOpen ? '' : 'closed'}`}>
+                  <div
+                    className={`tier-head ${tabbed ? 'clickable' : ''}`}
+                    onClick={tabbed ? () => toggleTier(t.key) : undefined}
+                    title={tabbed ? (isOpen ? 'Hide this tier' : 'Show this tier') : undefined}
+                  >
+                    {tabbed && <span className="action-chevron tier-chevron">{isOpen ? '▾' : '▸'}</span>}
+                    <span className="tier-name">{t.label}</span>
+                    <span className="tier-range">{lo === hi ? `Lv ${lo}` : `Lv ${lo}–${hi}`}</span>
+                    <span className="tier-rule" />
+                    <span className="dim small num">
+                      {got}/{t.actions.length} unlocked
+                    </span>
+                  </div>
+                  {isOpen && (
+                    <div className="action-grid">
+                      {t.actions.map((a) => (
+                        <ActionCard key={a.id} a={a} level={level} open={open.has(a.id)} onToggle={() => toggle(a.id)} />
+                      ))}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
-        )}
-        <div className={`tier-list ${tabbed ? 'spaced' : ''}`}>
-          {tiers.map((t) => {
-            const lo = Math.min(...t.actions.map((a) => a.level));
-            const hi = Math.max(...t.actions.map((a) => a.level));
-            const got = t.actions.filter(isUnlocked).length;
-            const isOpen = tierOpen(t.key);
-            return (
-              <div key={t.key} className={`tier-group ${got ? '' : 'locked'} ${isOpen ? '' : 'closed'}`}>
-                <div
-                  className={`tier-head ${tabbed ? 'clickable' : ''}`}
-                  onClick={tabbed ? () => toggleTier(t.key) : undefined}
-                  title={tabbed ? (isOpen ? 'Hide this tier' : 'Show this tier') : undefined}
-                >
-                  {tabbed && <span className="action-chevron tier-chevron">{isOpen ? '▾' : '▸'}</span>}
-                  <span className="tier-name">{t.label}</span>
-                  <span className="tier-range">{lo === hi ? `Lv ${lo}` : `Lv ${lo}–${hi}`}</span>
-                  <span className="tier-rule" />
-                  <span className="dim small num">
-                    {got}/{t.actions.length} unlocked
-                  </span>
-                </div>
-                {isOpen && (
-                  <div className="action-grid">
-                    {t.actions.map((a) => (
-                      <ActionCard key={a.id} a={a} level={level} open={open.has(a.id)} onToggle={() => toggle(a.id)} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
+        </section>
+      )}
+
+      <ProjectBoard skill={skill} go={go} />
     </div>
   );
 }

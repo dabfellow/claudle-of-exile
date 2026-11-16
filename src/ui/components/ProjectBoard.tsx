@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PROFESSION_PROJECTS } from '../../data/professionProjects';
+import { PROFESSION_PROJECTS, professionTheme } from '../../data/professionProjects';
 import { materialDef } from '../../data/materials';
 import { baseDef } from '../../data/bases';
 import { flaskDef } from '../../data/flasks';
@@ -17,9 +17,10 @@ export function ProjectBoard({ skill, go }: { skill: SkillId; go?: (skill: Skill
   const projects = PROFESSION_PROJECTS.filter((p) => p.skill === skill);
   const run = s.professionProgress.activeProject;
   if (!projects.length && run?.project.skill !== skill) return null;
+  const theme = professionTheme(skill);
   return <section className="card">
-    <h3>Projects</h3>
-    <p className="muted small">Inputs are set aside in full when you start. Projects use your activity slot. Stop pauses work; cancel returns inputs and discards progress. Protected rewards cannot double or conserve inputs.</p>
+    <h3>{theme.title}</h3>
+    <p className="muted small">Inputs are set aside in full when you start. This {theme.singular} uses your activity slot. Stop pauses work; cancel returns inputs and discards progress. Protected rewards cannot double or conserve inputs.</p>
     {run?.project.skill === skill && <div className="callout">
       <b>{run.project.name}</b> · {Math.ceil(Math.max(0, run.project.durationMs - run.elapsedMs) / 1000)}s base work left · {run.remaining} run(s) remaining
       <ProgressBar value={run.elapsedMs / run.project.durationMs} />
@@ -57,7 +58,7 @@ export function ProjectBoard({ skill, go }: { skill: SkillId; go?: (skill: Skill
           </select>
         </label></p>}
         {p.repeatable && <label>Runs <input aria-label={`${p.name} runs`} type="number" min={1} max={100} value={repeats} onChange={(e) => setRepeats(Math.max(1, Math.min(100, Number(e.target.value) || 1)))} /></label>}{' '}
-        <button className="btn sm primary" disabled={!!reason} title={reason ?? ''} onClick={() => game.act((st, ctx) => startProject(st, ctx, p.id, repeats, selectedUid))}>Start project</button>
+        <button className="btn sm primary" disabled={!!reason} title={reason ?? ''} onClick={() => game.act((st, ctx) => startProject(st, ctx, p.id, repeats, selectedUid))}>{theme.startLabel}</button>
         {reason && <p className="small muted">{reason}</p>}
       </div>;
     })}
