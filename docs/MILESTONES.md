@@ -4,11 +4,7 @@ Last updated 2026-11-16. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.47, Ashen Codex World Map**, deployed 2026-11-16. The illustrated atlas and general campaign trail are live, with readable act labels and scrolling on narrow screens. All 105 test files / 1,735 tests passed; deployment confirmed live version and login configuration. Desktop/phone visual playtest remains unverified because the local preview timed out. Previous release: 0.4.46 below.
-
-World-map road correction (2026-11-16): implemented against the owner's annotated route; connected forks replace the parallel return trail. Typecheck, five campaign-map tests and desktop/phone in-game checks pass. Unreleased.
-
-Latest confirmed live release: **0.4.46, Mastery Tooltips and Action Card Polish**, deployed 2026-11-16 (redesigned skilling mastery tooltips into structured cards with baseline bonuses and milestone perks, stripped obsolete placeholder blurbs from gathering/crafting action cards, and removed the idle manual focus prompt box from inactive skill pages; 105 test files / 1,735 tests confirmed live at https://dabfellow.party/path-of-idle/). Previous: **0.4.45, Masterwork Interactivity and Direct Skilling Access**, **0.4.44, Skilling Mastery Overhaul and Interactive Workbenches**, **0.4.43, Skilling Layouts and Themed Undertakings**, **0.4.42, Skilling Overhaul Acceptance and Wiki Update**, **0.4.41, Defence and Rune-carved Uniques**, **0.4.40, Pinnacle Uniques**.
+Latest confirmed live release: **0.4.48, Dedicated Masterwork Tabs and Mastery Batches**, deployed 2026-11-16 (dedicated Masterworks tab on each profession screen, separate production mastery batches at Lv 15/90, visual percentage drop rates on gathering action cards, connected world-map road network with 50% opacity routes and sailing lanes, and mastery Focus bonuses for skilling minigames; 106 test files / 1,746 tests confirmed live at https://dabfellow.party/path-of-idle/). Previous: **0.4.47, Ashen Codex World Map**, **0.4.46, Mastery Tooltips and Action Card Polish**, **0.4.45, Masterwork Interactivity and Direct Skilling Access**, **0.4.44, Skilling Mastery Overhaul and Interactive Workbenches**, **0.4.43, Skilling Layouts and Themed Undertakings**, **0.4.42, Skilling Overhaul Acceptance and Wiki Update**, **0.4.41, Defence and Rune-carved Uniques**, **0.4.40, Pinnacle Uniques**.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
@@ -27,13 +23,10 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 13. Inactive Minigame Callout Removal: completed (2026-11-16); removed the static "Start an activity and play it by hand..." prompt box from skill pages when that skill is inactive, keeping the UI clean until an activity with manual focus is running. All tests pass.
 14. Skilling Minigame Mastery Bonus: completed (2026-11-16); added +0.01% permanent maximum Focus speed bonus to skilling minigames for each mastery level earned across all things in that skill, with UI tooltips reflecting the increased maximum. All tests pass.
 
-15. Mastery Batches: completed (2026-11-16, unreleased) across suitable ordinary production. 5× crafts unlock at recipe mastery 15 in 2× time; 50× crafts unlock at mastery 90 in 10× time (5× production speed). Both share the single craft's mastery rate per second. Typecheck and all 106 test files verified; browser preview timed out, so visual playtest remains unverified.
-
-16. Percentage Drops on Gathering Nodes: completed (2026-11-16, unreleased); replaced deterministic cycle counters ("1 in X completions") and countdown text across Woodcutting (resins, fragments), Mining (fossils, rough gems, fragments), and Foraging (essences, rare blooms) with native percentage chances rendered directly on the action cards. All 106 test files / 1,746 tests pass.
-
-17. Ashen Codex world map: artwork integrated and released as 0.4.47; route correction now follows the owner's annotated roads and forks (2026-11-16, unreleased). Desktop/phone visual playtests pass.
-
-18. Dedicated Masterworks Tab: completed (2026-11-16, unreleased); moved profession masterworks (ProjectBoard) from the bottom of every skilling page into their own dedicated "Masterworks" tab on each profession screen, keeping standard activities clean and unbloated while providing direct access and an active project indicator. All 106 test files / 1,746 tests pass.
+15. Mastery Batches: released in 0.4.48 across suitable ordinary production. 5× crafts unlock at recipe mastery 15 in 2× time; 50× crafts unlock at mastery 90 in 10× time (5× production speed). Both share the single craft's mastery rate per second.
+16. Percentage Drops on Gathering Nodes: released in 0.4.48; replaced deterministic cycle counters ("1 in X completions") and countdown text across Woodcutting (resins, fragments), Mining (fossils, rough gems, fragments), and Foraging (essences, rare blooms) with native percentage chances rendered directly on the action cards.
+17. Ashen Codex world map: artwork integrated and released in 0.4.47; route network correction following the owner's annotated roads, forks and 50% opacity land/sea lanes released in 0.4.48. Desktop/phone visual playtests pass.
+18. Dedicated Masterworks Tab: released in 0.4.48; moved profession masterworks (ProjectBoard) from the bottom of every skilling page into their own dedicated "Masterworks" tab on each profession screen, keeping standard activities clean and unbloated while providing direct access and an active project indicator. All 106 test files / 1,746 tests pass.
 
 ## Milestones
 
