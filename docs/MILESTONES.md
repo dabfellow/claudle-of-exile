@@ -1,10 +1,10 @@
 # Roadmap and decisions
 
-Last updated 2026-11-15. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-16. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
-Latest confirmed live release: **0.4.44, Skilling Mastery Overhaul and Interactive Workbenches**, deployed 2026-11-15 (implemented milestone-based thematic mastery across all 11 professions with Lv 25/50/75/100 thresholds, sub-category recipe personalities, animated live proc callouts, offline summary breakdowns, and hybrid completionist synergies; removed mastery tracking from masterwork undertakings and excavation sites; overhauled project boards into interactive workbench cards with visual item art, stock checks, and quick run presets; 105 test files / 1,733 tests confirmed live at https://dabfellow.party/path-of-idle/). Previous: **0.4.43, Skilling Layouts and Themed Undertakings**, **0.4.42, Skilling Overhaul Acceptance and Wiki Update**, **0.4.41, Defence and Rune-carved Uniques**, **0.4.40, Pinnacle Uniques**.
+Latest confirmed live release: **0.4.45, Masterwork Interactivity and Direct Skilling Access**, deployed 2026-11-16 (clickable ingredient rows on profession workbenches linking directly to gathering/refining skills, eliminated redundant duplicate mod/ilvl lines from project descriptions, direct level-based unlocking of Mining/Woodcutting/Foraging/Gemcutting actions removing double-gating prospecting cycles, and fixed Alchemy flask workbench crash; 105 test files / 1,735 tests confirmed live at https://dabfellow.party/path-of-idle/). Previous: **0.4.44, Skilling Mastery Overhaul and Interactive Workbenches**, **0.4.43, Skilling Layouts and Themed Undertakings**, **0.4.42, Skilling Overhaul Acceptance and Wiki Update**, **0.4.41, Defence and Rune-carved Uniques**, **0.4.40, Pinnacle Uniques**.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
