@@ -49,10 +49,7 @@ export function woodcuttingPreview(s: { professionProgress: { counters: Record<s
   }
   if (source?.mode === 'heartwood') lines.push(`Targeted heartwood: one Yew Log every second completion (next in ${left(`cycles.${a.id}`, 2)}). One Heartwood Fragment every 30 survey cycles (next in ${left('heartwood.survey', 30)}), plus 1% extra per cycle. Refine 20 fragments into 1 Ancient Heartwood separately. At base speed, at most 80 minutes cutting + 30 seconds milling; no combat or jackpot required.`);
   if (source?.mode === 'ordinary') {
-    lines.push('Timber-focused: one log each cycle. Refine five matching logs into one plank in a separately selected task.');
     if (tier >= 4) lines.push(`Incidental heartwood: one fragment every 60 Ancient/Spirit/Worldwood ordinary cycles (next in ${left('heartwood.timber', 60)}), plus 1% extra. Targeted Ancient Heartwood Survey is faster.`);
   }
-  if (source?.mode === 'heartwood' || (source?.mode === 'ordinary' && tier >= 4)) lines.push('Fragments are protected from yield/manual doubles. Counters persist across eligible sources and reloads. Unlimited material storage.');
-  lines.push(tier < 3 ? 'Logs supply Smithing bases and purpose gear, flask brewing, runes and charts. Planks supply purpose gear, construction and tools; Yew Planks also feed Heartwood Frames at Smithing 45/Forge 3. Final equipment assembly stays in Smithing.' : 'Logs refine into matching planks; advanced logs/planks are stock for later Smithing projects. Final gear assembly stays in Smithing.');
   return lines;
 }

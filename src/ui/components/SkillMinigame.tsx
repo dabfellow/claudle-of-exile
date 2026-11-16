@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { actionDef, SKILLS } from '../../data/skills';
-import { doubleReady, focusMult, focusOf, hasMinigame, MAX_FOCUS_SPEED, minigameSwing, overflowOf, type SwingResult } from '../../engine/minigame';
+import { doubleReady, focusMult, focusOf, hasMinigame, minigameSwing, overflowOf, type SwingResult } from '../../engine/minigame';
 import type { GameState, SkillId } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { ProgressBar } from './common';
@@ -35,7 +35,7 @@ export function SkillMinigame({ skill }: { skill: SkillId }) {
   const s = useGame();
   const [result, setResult] = useState<{ id: number; r: SwingResult } | null>(null);
   if (!hasMinigame(skill)) return null;
-  if (runningSkill(s) !== skill) return <div className="callout skill-note">Start an activity and play it by hand to work up to {Math.round(MAX_FOCUS_SPEED * 100)}% faster than leaving it to idle.</div>;
+  if (runningSkill(s) !== skill) return null;
 
   const onSwing = (r: SwingResult) => {
     game.act((st) => minigameSwing(st, r));

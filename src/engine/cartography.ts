@@ -22,10 +22,9 @@ export function cartographyDone(s: GameState, ctx: Ctx, a: SkillAction): void {
 
 export function cartographyPreview(s: GameState, a: SkillAction): string[] {
   if (a.skill !== 'cartography') return [];
-  const source = ['Vellum: Ash/Oak Woodcutting. Ink: Sunpetal/Emberroot Foraging, Iron Mining and Arcane Dust from salvaging crafted or found gear.'];
   const sex = SEXTANTS.find((x) => a.outputs?.[x.id]);
   const supply = a.inputs ? Math.min(...Object.entries(a.inputs).map(([id, n]) => Math.floor((s.account.bank[id] ?? 0) / n)), a.chart?.upgrade ? Math.floor(mapsHeld(s, a.chart.tier - 1) / upgradeCost(s, a)) : Infinity) : 0;
-  return [...source, `Supplies cover ${supply} completion(s)${a.chart ? ` and ${supply * a.chart.qty} maps before yield bonuses` : ''}.`,
+  return [`Supplies cover ${supply} completion(s)${a.chart ? ` and ${supply * a.chart.qty} maps before yield bonuses` : ''}.`,
     ...(a.chart?.upgrade ? [`Uses ${upgradeCost(s, a)} Tier ${a.chart.tier - 1} maps per completion. Full map cost is never conserved.`] : []),
     ...(sex ? [sex.desc, `Six base charges; your current Map Device and Atlas give ${sextantCharges(s)} charges. Roll pool:`, ...SEXTANT_MODS.filter((m) => m.tier === sex.tier).map((m) => `${m.name}: ${m.desc}`)] : []),
     `Survey fragment in ${30 - (s.professionProgress.counters['cartography.survey'] ?? 0) % 30} ordinary completions, plus 1% extra. A folio counts once for fragments and five times for work. Manual copies never add fragment progress. Maps wait for campaign Map Device access.`];

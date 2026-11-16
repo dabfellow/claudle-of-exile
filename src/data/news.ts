@@ -10,7 +10,11 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Removed generic supply and usage blurbs from gathering and crafting action cards to keep action details clean and concise.',
+  'Redesigned the skilling mastery tooltip into a structured layout with clear level progress, baseline bonuses, and milestone cards.',
+  'Removed idle manual focus prompt box from inactive skill pages.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

@@ -18,6 +18,9 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 8. Skilling Mastery Thematic Overhaul: completed (2026-11-15); implemented milestone-based thematic mastery across all 11 professions with Lv 25/50/75/100 thresholds, sub-category recipe personalities, animated live proc callouts, offline summary breakdowns, and hybrid completionist synergies. All 105 test files / 1,733 tests and typecheck pass.
 9. Skilling Action Access: completed (2026-11-15); removed double-gating from ordinary skilling actions. Mining veins/deposits, Woodcutting trees/stands, Foraging blooms, and Gemcutting exact cuts unlock directly at their required skill level, removing redundant cycle counts and prospecting/survey gates. All tests and typecheck pass.
 10. Masterwork Workbench Interactivity: completed (2026-11-15); made required material rows directly clickable with inline source skill navigation, and eliminated redundant unique item mod and ilvl repetitions from project descriptions. All tests pass.
+11. Action Card Blurb Cleanup: completed (2026-11-16); stripped generic, static supply/usage tutorial blurbs from gathering and crafting action cards (Mining, Woodcutting, Foraging, Cartography, Smithing) while keeping dynamic cycle progress counters, discovery trackers, and input coverage cleanly visible. All tests pass.
+12. Mastery Tooltip Redesign: completed (2026-11-16); converted the skilling mastery tooltip from a single run-on sentence into a rich, structured layout featuring level progress, baseline speed/yield/conservation scaling, and individual milestone cards (Lv 25/50/75/100) with unlock status, scope tags, and descriptions. All tests pass.
+13. Inactive Minigame Callout Removal: completed (2026-11-16); removed the static "Start an activity and play it by hand..." prompt box from skill pages when that skill is inactive, keeping the UI clean until an activity with manual focus is running. All tests pass.
 
 ## Milestones
 
@@ -37,6 +40,12 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Inactive Minigame Callout Removal (2026-11-16): Removed the static callout box ("Start an activity and play it by hand to work up to 45% faster than leaving it to idle") shown below skill actions when no activity in that skill is currently running. The manual focus minigame card renders only while an action in that skill is actively executing.
+
+- Mastery Tooltip Redesign (2026-11-16): Replaced the unformatted single-sentence native tooltip on skilling mastery bars with a rich, structured `MasteryTip` layout. Features a header with task name, current level, and practice progress; a baseline bonus summary (+% action speed, ordinary yield/conservation, eligible ingredients); and dedicated milestone cards for Lv 25, 50, 75, and 100 with unlock badges, Task vs Global scope labels, and effect descriptions.
+
+- Action Card Blurb Cleanup (2026-11-16): Removed legacy static flavor/tutorial blurbs (such as "Ore supplies current Smithing bases...", "Logs supply Smithing bases...", "Choose each use in Alchemy, Cooking or Rune-carving yourself", and craft component disclaimers) across Mining, Woodcutting, Foraging, Cartography, and Smithing action cards. Action card body text is reserved for actionable dynamic mechanics (fragment/fossil/seed counters, extraction/heartwood modes, and input requirements).
 
 - Masterwork Workbench Interactivity and Description Cleanliness (2026-11-15): Required material rows on profession workbenches now link directly to their source skills with interactive hover and inline skill chips (and missing base alerts link to crafting skills), removing the separate redundant sources footer bar. Project description banners suppress redundant item affix and item level text already displayed on the live Crafted Outcome preview card.
 

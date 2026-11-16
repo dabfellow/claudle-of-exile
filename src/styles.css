@@ -2435,6 +2435,153 @@ h3 {
   gap: 4px 8px;
 }
 
+/* ============ Mastery Tooltip Layout ============ */
+.mastery-tip {
+  min-width: 290px;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.mastery-tip-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.mastery-tip-title {
+  font-weight: 700;
+  font-size: var(--fs-md);
+  color: var(--accent-2);
+  line-height: 1.2;
+}
+
+.mastery-tip-level {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--fg);
+}
+
+.mastery-tip-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mastery-tip-heading {
+  font-size: 0.70rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.mastery-tip-bonuses {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 6px;
+  border-left: 2px solid var(--accent-2);
+}
+
+.mastery-tip-bonus-line {
+  font-size: 0.78rem;
+  color: var(--fg);
+}
+
+.mastery-tip-milestones {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mastery-tip-milestone {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 7px;
+  border-radius: var(--r);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.mastery-tip-milestone.unlocked {
+  background: color-mix(in srgb, var(--accent-2) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent-2) 32%, transparent);
+}
+
+.mastery-tip-milestone.global.unlocked {
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  border-color: color-mix(in srgb, var(--gold) 32%, transparent);
+}
+
+.mastery-tip-milestone-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.mastery-tip-milestone-name {
+  color: var(--fg);
+}
+
+.mastery-tip-milestone.unlocked .mastery-tip-milestone-name {
+  color: var(--accent-2);
+}
+
+.mastery-tip-milestone.global.unlocked .mastery-tip-milestone-name {
+  color: var(--gold);
+}
+
+.mastery-tip-scope {
+  font-size: 0.65rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.mastery-tip-scope.global {
+  background: color-mix(in srgb, var(--gold) 15%, transparent);
+  color: var(--gold);
+}
+
+.mastery-tip-status {
+  font-size: 0.70rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mastery-tip-status.unlocked {
+  color: var(--accent-2);
+}
+
+.mastery-tip-status.locked {
+  color: var(--muted);
+}
+
+.mastery-tip-milestone-desc {
+  font-size: 0.73rem;
+  color: var(--muted);
+  line-height: 1.35;
+  padding-left: 2px;
+}
+
+.mastery-tip-milestone.unlocked .mastery-tip-milestone-desc {
+  color: var(--fg);
+}
+
 .action-body {
   display: grid;
   gap: 8px;

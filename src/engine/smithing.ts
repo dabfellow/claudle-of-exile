@@ -43,7 +43,7 @@ export function createPurposeItem(s: GameState, a: SkillAction, ilvl: number, rn
 }
 
 export function smithingPreview(a: SkillAction, ilvl: number): string[] {
-  if (!a.purpose) return SMITH_COMPONENT_USES[a.id] ? [SMITH_COMPONENT_USES[a.id], 'Full listed inputs; exactly one protected component per cycle. No conservation or doubled output. Select the next task yourself.'] : [];
+  if (!a.purpose) return SMITH_COMPONENT_USES[a.id] ? [SMITH_COMPONENT_USES[a.id]] : [];
   return [
     `One rare, item level ${ilvl}, four modifiers. Stops after one; kept regardless of salvage settings. Resin and fossil slots are not used.`,
     ...purposeGuarantees(a, ilvl).map(({ affix, ranges }) => `Guaranteed minimum: ${affix.text.replace(/\{(\d+)\}/g, (_, i) => String(ranges[Number(i)][0]))}`),

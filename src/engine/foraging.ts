@@ -1,4 +1,4 @@
-import { foragingSource, HERBS, seedId } from '../data/foraging';
+import { foragingSource, seedId } from '../data/foraging';
 import { actionsFor, type SkillAction } from '../data/skills';
 import { materialDef } from '../data/materials';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
@@ -62,12 +62,10 @@ export function foragingPreview(s: GameState, a: SkillAction): string[] {
   if (!source) return [];
   const c = s.professionProgress.counters;
   const left = (key: string, n: number) => n - ((c[key] ?? 0) % n);
-  const lines = [HERBS.find((h) => h.id === source.plant)?.use ?? 'Protected blooms for later Alchemy distillates, signature meals and nature projects. Those recipes are not available yet. Grown and foraged blooms are the same material.'];
+  const lines: string[] = [];
   if (source.mode === 'abundant') lines.push('Herb supply: 2 herbs in 1.5× ordinary time. No essence, bloom or seed progress.');
-  else lines.push(`${s.professionProgress.discoveries[seedId(source.plant)] ? 'Seed learned' : `Seed discovery: ${Math.min(100, c[`foraging.seed.${source.plant}`] ?? 0)}/100 completions; 1% early chance per foreground cycle`}. Ordinary and concentrated sources share seed progress; bonuses never add cycles.`);
-  if (source.essences) lines.push(`Guaranteed essence every 12 cycles (next in ${left(`foraging.essence.${a.id}`, 12)}): ${source.essences.map((id) => materialDef(id).name).join(' / ')}${source.essences.length > 1 ? ', alternating' : ''}. For Rune-carving and Cooking flask ingredients. Protected from yield and manual doubles.`);
-  if (source.mode === 'bloom') lines.push(`One ${materialDef(source.plant).name} every 60 cycles (next in ${left(`foraging.bloom.${source.plant}`, 60)}), plus 1% extra per cycle. Protected from yield/manual doubles. Greenhouse shares this bounded counter at its slower rate.`);
-  lines.push('Unlimited material storage. Choose each use in Alchemy, Cooking or Rune-carving yourself.');
+  if (source.essences) lines.push(`Guaranteed essence every 12 cycles (next in ${left(`foraging.essence.${a.id}`, 12)}): ${source.essences.map((id) => materialDef(id).name).join(' / ')}${source.essences.length > 1 ? ', alternating' : ''}.`);
+  if (source.mode === 'bloom') lines.push(`One ${materialDef(source.plant).name} every 60 cycles (next in ${left(`foraging.bloom.${source.plant}`, 60)}), plus 1% extra per cycle.`);
   return lines;
 }
 

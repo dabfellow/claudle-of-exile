@@ -50,9 +50,6 @@ export function miningPreview(s: { professionProgress: { counters: Record<string
   }
   if (mode !== 'rich' && tier >= 2) lines.push(`Mineral Fragment in ${left('mineral_fragment', 60)} eligible cycles (every 60); also 1% extra. Smithing 60/Forge 3 makes Wound Alloy for Convergence Frames and later unique projects.`);
   if (mode !== 'rich' && tier >= 3) lines.push(`Stone Fragment in ${left('stone_fragment', 60)} eligible cycles (every 60); also 1% extra. Smithing 70/Forge 3 makes Stone Alloy for Convergence Frames and later defensive projects.`);
-  if (tier >= 3) lines.push(`${MINING_METALS[tier].name} Ore: select Smithing refinement at level ${MINING_METALS[tier].level}, five ore per bar. Adamant Bars feed Stone Alloy; other advanced bars are stock for later projects.`);
-  else lines.push('Ore supplies current Smithing bases and construction bars. Copper and iron also remain ingredients of future alloys.');
-  if (mode !== 'rich' && (tier >= 2 || mode === 'crystal')) lines.push('Project fragments are protected: yield bonuses and manual doubles do not multiply them. Counters carry across eligible deposits and reloads. Materials have no storage-slot limit.');
   return lines;
 }
 
