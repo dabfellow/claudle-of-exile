@@ -17,8 +17,7 @@ export interface MiningDeposit {
 
 /** XP here is raw, before skills.ts applies its existing 0.3 scale once. */
 export const MINING_ACTIONS: SkillAction[] = MINING_METALS.slice(1).flatMap((m, index) => {
-  const accomplishments = [`prospect_${m.id}`];
-  const base = { skill: 'mining' as const, level: m.level, color: m.color, accomplishments };
+  const base = { skill: 'mining' as const, level: m.level, color: m.color };
   const ordinary: SkillAction[] = index >= 2 ? [{
     ...base, id: `mine_${m.id}`, name: `${m.name} Vein`, intervalMs: m.ms, xp: m.xp,
     outputs: { [`${m.id}_ore`]: 1 }, mining: { metal: m.id, mode: 'ordinary' },

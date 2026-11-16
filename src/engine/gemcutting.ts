@@ -7,7 +7,6 @@ import { addBank } from './bank';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
 import { characterLevel } from './character';
 import type { Ctx } from './context';
-import { hasAccomplishment } from './professions';
 import { skillLevel } from './skills';
 import { deriveStats } from './stats';
 import type { GameState } from './types';
@@ -18,12 +17,8 @@ export function gemFamilyPool(s: GameState, family: GemFamily): (ActiveGemDef | 
   return staticFamilyPool(family).filter((g) => gemReqLevel(g.id) <= maxLvl);
 }
 
-/** Access hint for exact gem cutting requiring 30 completed Gemcutting cycles. */
-export function gemcuttingAccessHint(s: GameState, a: SkillAction): string | null {
-  if (a.accomplishments?.includes('gemcutting_work_30') && !hasAccomplishment(s, 'gemcutting_work_30')) {
-    const done = s.professionProgress?.work?.gemcutting ?? 0;
-    return `Requires 30 completed Gemcutting cycles (${done}/30)`;
-  }
+/** Access hint for exact gem cutting. */
+export function gemcuttingAccessHint(_s: GameState, _a: SkillAction): string | null {
   return null;
 }
 

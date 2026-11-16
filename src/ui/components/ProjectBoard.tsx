@@ -5,6 +5,7 @@ import { baseDef, uniqueDef, WEAPON_FAMILIES } from '../../data/bases';
 import { flaskDef } from '../../data/flasks';
 import { uniqueMapDef } from '../../data/maps';
 import { affixDef } from '../../data/affixes';
+import { SKILLS } from '../../data/skills';
 import { cancelProject, hasAccomplishment, isEligibleProjectBase, projectPreview, resumeProject, startProject } from '../../engine/professions';
 import { levelOf } from '../../engine/xp';
 import { describeUniqueModDef } from '../../engine/items';
@@ -12,6 +13,7 @@ import type { GameState, SkillId } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { anyArtUrl, Badge, fmt, fmtTime, MatIcon, ProgressBar } from './common';
 import { Icon } from './Icon';
+import { cleanProjectDesc, resolveBaseSource, resolveMaterialSource } from './projectHelpers';
 
 function getSkillIcon(skill: SkillId): string {
   switch (skill) {
@@ -76,7 +78,7 @@ function RewardArt({ reward }: { reward: ProjectReward }) {
 function RewardOutcome({ reward }: { reward: ProjectReward }) {
   if (reward.category === 'equipment') {
     const base = baseDef(reward.baseId);
-    const u = reward.uniqueId ? uniqueDef(reward.uniqueId) : null;
+    const u = reward.uniqueId ? UNIQUES.find((x) => x.id === reward.uniqueId) ?? null : null;
     const name = reward.name ?? u?.name ?? base.name;
     const rarClass = `rar-${reward.rarity}`;
     const slotDesc = base.family ? `${base.twoHanded ? 'Two-handed ' : ''}${WEAPON_FAMILIES[base.family]?.name ?? base.slot}` : base.slot;
@@ -116,8 +118,8 @@ function RewardOutcome({ reward }: { reward: ProjectReward }) {
 
   if (reward.category === 'flask') {
     const f = flaskDef(reward.flaskId);
-    const u = reward.uniqueId ? uniqueDef(reward.uniqueId) : null;
-    const name = reward.name ?? u?.name ?? f.name;
+    const name = reward.name ?? f.name;
+    const kindLabel = f.kind.charAt(0).toUpperCase() + f.kind.slice(1);
 
     return (
       <div className="project-reward-card rar-unique">
@@ -125,17 +127,13 @@ function RewardOutcome({ reward }: { reward: ProjectReward }) {
           <span className="project-reward-name rar-unique">{name}</span>
           <Badge tone="gold">ilvl {reward.ilvl}</Badge>
         </div>
-        <div className="dim small">{f.name} · {f.desc || 'Utility Flask'}</div>
-        {u?.mods && (
-          <div className="project-reward-mods">
-            {u.mods.map((m, idx) => (
-              <div key={idx} className="project-reward-mod-line">
-                {describeUniqueModDef(m)}
-              </div>
-            ))}
-            {u.flavour && <div className="project-reward-mod-line unique-flavour">"{u.flavour}"</div>}
-          </div>
-        )}
+        <div className="dim small">
+          Unique {kindLabel} Flask · {f.chargesPerUse} of {f.maxCharges} charges
+        </div>
+        <div className="project-reward-mods">
+          <div className="project-reward-mod-line">{f.desc}</div>
+          {f.flavour && <div className="project-reward-mod-line unique-flavour">"{f.flavour}"</div>}
+        </div>
         <div className="project-reward-delivery">
           <Icon name="alchemy" size={12} /> Delivered directly to Flask Stash
         </div>
@@ -233,6 +231,11 @@ function ProjectCard({
   const isReady = !reason && (p.repeatable ? repeats <= supply : supply >= 1);
   const isLocked = !hasSkillLvl || !hasStation || !hasAcc;
 
+  const desc = cleanProjectDesc(p);
+  const mappedSourceLabels = new Set<string>();
+  const baseSource = needsBase ? resolveBaseSource(p) : undefined;
+  if (baseSource) mappedSourceLabels.add(baseSource.label);
+
   const baseLabel = p.baseId
     ? baseDef(p.baseId).name
     : p.baseIds
@@ -304,7 +307,7 @@ function ProjectCard({
       </div>
 
       {/* Description / Lore */}
-      <div className="project-desc-panel">{p.use}</div>
+      {desc && <div className="project-desc-panel">{desc}</div>}
 
       {/* Warnings / Notes */}
       {preview.notes?.map((note) => (
@@ -332,13 +335,42 @@ function ProjectCard({
               const totalCost = costPerRun * repeats;
               const bankCount = s.account.bank[id] ?? 0;
               const isMissing = bankCount < totalCost;
+              const source = resolveMaterialSource(id, p.sources);
+              if (source) mappedSourceLabels.add(source.label);
+
+              const isClickable = Boolean(source && go);
+              const clickTitle = source
+                ? `${source.label} · Click to jump to ${SKILLS[source.skill]?.name ?? source.skill}`
+                : materialDef(id).name;
+
               return (
-                <div key={id} className={`project-input-row ${isMissing ? 'missing' : ''}`}>
+                <div
+                  key={id}
+                  className={`project-input-row ${isMissing ? 'missing' : ''} ${isClickable ? 'clickable' : ''}`}
+                  role={isClickable ? 'button' : undefined}
+                  tabIndex={isClickable ? 0 : undefined}
+                  onClick={() => {
+                    if (isClickable && source) go?.(source.skill);
+                  }}
+                  onKeyDown={(e) => {
+                    if (isClickable && source && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      go?.(source.skill);
+                    }
+                  }}
+                  title={clickTitle}
+                >
                   <div className="project-input-info">
                     <MatIcon id={id} size={16} />
                     <span className="project-input-name" title={materialDef(id).name}>
                       {materialDef(id).name}
                     </span>
+                    {source && (
+                      <span className="project-input-source-chip" title={source.label}>
+                        <Icon name={getSkillIcon(source.skill)} size={11} />
+                        <span className="dim">↗</span>
+                      </span>
+                    )}
                   </div>
                   <span className={`project-input-amounts ${isMissing ? 'insufficient' : 'sufficient'}`}>
                     {fmt(bankCount)} / {fmt(totalCost)}
@@ -370,7 +402,21 @@ function ProjectCard({
                 </select>
               ) : (
                 <div className="project-base-missing-alert">
-                  ⚠️ No eligible <b>{baseLabel}</b> in inventory{p.baseMinIlvl ? ` (ilvl ${p.baseMinIlvl}+)` : ''}.
+                  <div>
+                    ⚠️ No eligible <b>{baseLabel}</b> in inventory{p.baseMinIlvl ? ` (ilvl ${p.baseMinIlvl}+)` : ''}.
+                  </div>
+                  {baseSource && go && (
+                    <button
+                      type="button"
+                      className="project-base-jump-btn"
+                      onClick={() => go(baseSource.skill)}
+                      title={baseSource.label}
+                    >
+                      <Icon name={getSkillIcon(baseSource.skill)} size={11} />
+                      <span>{baseSource.label}</span>
+                      <span className="dim">↗</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -390,24 +436,28 @@ function ProjectCard({
         </div>
       </div>
 
-      {/* Sources & Gathering Navigation */}
-      {p.sources.length > 0 && (
-        <div className="project-sources-bar">
-          <span>Sources:</span>
-          {p.sources.map((source) => (
-            <button
-              key={source.label}
-              className="project-source-chip"
-              onClick={() => go?.(source.skill)}
-              title={`Switch to ${source.skill}`}
-            >
-              <Icon name={getSkillIcon(source.skill)} size={12} />
-              <span>{source.label}</span>
-              <span className="dim">↗</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Sources & Gathering Navigation (only unmapped general sources) */}
+      {(() => {
+        const unmappedSources = p.sources.filter((src) => !mappedSourceLabels.has(src.label));
+        if (unmappedSources.length === 0) return null;
+        return (
+          <div className="project-sources-bar">
+            <span>Sources:</span>
+            {unmappedSources.map((source) => (
+              <button
+                key={source.label}
+                className="project-source-chip"
+                onClick={() => go?.(source.skill)}
+                title={`Switch to ${source.skill}`}
+              >
+                <Icon name={getSkillIcon(source.skill)} size={12} />
+                <span>{source.label}</span>
+                <span className="dim">↗</span>
+              </button>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Action Footer */}
       <div className="project-footer">

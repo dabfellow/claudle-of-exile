@@ -38,10 +38,7 @@ describe('Phase 06 Foraging and Greenhouse', () => {
   it('opens every patch and the existing keystone without combat, seeds or new stations', () => {
     const s = advanced();
     for (const a of actionsFor('harvesting')) expect(actionBlocker(s, a)).toBeNull();
-    s.professionProgress.work.harvesting = 0;
-    expect(actionBlocker(s, actionDef('herb_moon'))).toMatch(/harvesting work 100/);
     cycles(s, 'herb_sun', 100);
-    expect(actionBlocker(s, actionDef('herb_moon'))).toBeNull();
     greenhouse(s);
     expect(plantGreenhouse(s, 'herb_sun')).toBeNull();
     expect(s.skills.combat).toBe(0); expect(s.bossesDefeated).toEqual([]);

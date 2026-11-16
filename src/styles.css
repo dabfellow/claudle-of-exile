@@ -9409,6 +9409,47 @@ button.hx-mat:hover {
   background: var(--danger-soft);
 }
 
+.project-input-row.clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--dur-fast), border-color var(--dur-fast);
+}
+
+.project-input-row.clickable:hover {
+  background: var(--panel-2);
+  border-color: var(--accent-line);
+}
+
+.project-input-row.clickable.missing:hover {
+  background: color-mix(in srgb, var(--danger) 22%, var(--panel-2));
+  border-color: var(--danger);
+}
+
+.project-input-row.clickable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.project-input-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--fs-2xs);
+  padding: 1px 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  color: var(--dim);
+  margin-left: 2px;
+  flex-shrink: 0;
+  transition: border-color var(--dur-fast), color var(--dur-fast);
+}
+
+.project-input-row.clickable:hover .project-input-source-chip {
+  color: var(--accent-2);
+  border-color: var(--accent-line);
+}
+
 .project-input-info {
   display: flex;
   align-items: center;
@@ -9459,9 +9500,33 @@ button.hx-mat:hover {
 }
 
 .project-base-missing-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   font-size: var(--fs-xs);
   color: var(--bad);
   line-height: 1.35;
+}
+
+.project-base-jump-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 2px 6px;
+  font-size: var(--fs-2xs);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+}
+
+.project-base-jump-btn:hover {
+  background: var(--panel-2);
+  border-color: var(--accent-line);
+  color: var(--accent-2);
 }
 
 .project-arrow-col {

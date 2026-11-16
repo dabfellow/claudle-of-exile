@@ -32,14 +32,7 @@ export function foragingDone(s: GameState, ctx: Ctx, a: SkillAction, foreground:
   }
 }
 
-export function foragingAccessHint(s: GameState, a: SkillAction): string | null {
-  if (s.professionProgress.legacyAccess[a.id]) return null;
-  if (a.accomplishments?.includes('harvesting_work_100')) {
-    const work = s.professionProgress.work.harvesting ?? 0;
-    if (work < 100 && !s.professionProgress.legacyAccess.harvesting_work_100) {
-      return `Complete Foraging work ${work}/100 times`;
-    }
-  }
+export function foragingAccessHint(_s: GameState, _a: SkillAction): string | null {
   return null;
 }
 

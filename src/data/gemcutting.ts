@@ -135,7 +135,6 @@ const EXACT_ACTIONS: SkillAction[] = [
     intervalMs: 60000,
     xp: 200,
     inputs: { rough_gem: 12, arcane_dust: 100 },
-    accomplishments: ['gemcutting_work_30'],
     gem: { kind: 'exact', exactId: g.id },
     color: g.attr === 'str' ? '#e05848' : g.attr === 'dex' ? '#58c060' : '#4fa0e0',
   })),
@@ -149,7 +148,6 @@ const EXACT_ACTIONS: SkillAction[] = [
       intervalMs: 60000,
       xp: 200,
       inputs: { rough_gem: 12, arcane_dust: 100 },
-      accomplishments: ['gemcutting_work_30'],
       gem: { kind: 'exact', exactId: g.id },
       color: isSig ? '#e0a640' : g.attr === 'str' ? '#e05848' : g.attr === 'dex' ? '#58c060' : '#4fa0e0',
     };

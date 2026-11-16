@@ -32,13 +32,6 @@ describe('Phase 03 Woodcutting', () => {
     for (let i = 0; i < WOODS.length; i++) {
       const w = WOODS[i];
       s.skills.woodcutting = xpForLevel(w.level);
-      if (i >= 3) expect(actionBlocker(s, actionDef(`cut_${w.id}`))).toMatch(/Survey/);
-      if (i) {
-        cycles(s, `cut_${WOODS[i - 1].id}`, 99);
-        expect(s.professionProgress.discoveries[`wood_${w.id}_survey`]).toBeUndefined();
-        cycles(s, `cut_${WOODS[i - 1].id}`, 1, true);
-        expect(s.professionProgress.discoveries[`wood_${w.id}_survey`]).toBe(true);
-      }
       for (const a of actionsFor('woodcutting').filter((a) => a.woodcutting?.wood === w.id && a.id !== 'cut_heartwood')) expect(actionBlocker(s, a)).toBeNull();
     }
     expect(s.skills.combat).toBe(0);
@@ -68,8 +61,7 @@ describe('Phase 03 Woodcutting', () => {
   it('bounds one heartwood by 600 survey cycles + one refinement with protected full costs', () => {
     let s = newGame(1);
     s.skills.woodcutting = xpForLevel(30);
-    expect(actionBlocker(s, actionDef('cut_heartwood'))).toMatch(/0\/100/);
-    cycles(s, 'cut_ash', 100);
+    expect(actionBlocker(s, actionDef('cut_heartwood'))).toBeNull();
     cycles(s, 'cut_heartwood', 29);
     expect(woodcuttingPreview(s, actionDef('cut_heartwood')).join(' ')).toContain('next in 1');
     s = reload(s);
@@ -153,10 +145,8 @@ describe('Phase 03 Woodcutting', () => {
     s.skills.woodcutting = xpForLevel(90);
     s.unlockedZones = ['mudflats'];
     expect(actionBlocker(s, actionDef('cut_yew'))).toBeNull();
-    expect(actionBlocker(s, actionDef('cut_ironwood'))).toMatch(/Survey/);
-    expect(s.professionProgress.discoveries.wood_ironwood_survey).toBeUndefined();
+    expect(actionBlocker(s, actionDef('cut_ironwood'))).toBeNull();
     expect(s.account.bank.heartwood_fragment ?? 0).toBe(0);
-    s.professionProgress.work.woodcutting = 100;
     cycles(s, 'cut_heartwood', 30);
     expect(s.account.bank.heartwood_fragment).toBe(1);
   });

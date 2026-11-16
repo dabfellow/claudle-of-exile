@@ -3,7 +3,7 @@ import { resinDef } from '../data/craftMats';
 import type { SkillAction } from '../data/skills';
 import type { Ctx } from './context';
 import type { GameState } from './types';
-import { awardProtectedProgress, recordDiscovery } from './professions';
+import { awardProtectedProgress } from './professions';
 import { chance } from './rng';
 
 export function woodcuttingDone(s: GameState, ctx: Ctx, a: SkillAction): Record<string, number> {
@@ -13,11 +13,7 @@ export function woodcuttingDone(s: GameState, ctx: Ctx, a: SkillAction): Record<
   const c = s.professionProgress.counters;
   const count = (key: string) => c[`wood.${key}`] = (c[`wood.${key}`] ?? 0) + 1;
   const outputs: Record<string, number> = {};
-  if (mode === 'ordinary') {
-    const n = count(`survey.${wood}`);
-    const next = WOODS[tier + 1];
-    if (next && n >= 100) recordDiscovery(s, ctx, `wood_${next.id}_survey`);
-  } else {
+  if (mode !== 'ordinary') {
     const n = count(`cycles.${a.id}`);
     if (n % 2 === 0) outputs[`${wood}_log`] = 1;
     if (mode === 'resin' && n % 5 === 0) outputs[`${wood}_resin`] = 1;
@@ -32,16 +28,7 @@ export function woodcuttingDone(s: GameState, ctx: Ctx, a: SkillAction): Record<
   return outputs;
 }
 
-export function woodcuttingAccessHint(s: GameState, a: SkillAction): string | null {
-  if (s.professionProgress.legacyAccess[a.id]) return null;
-  const missing = a.accomplishments?.find((id) => id.startsWith('wood_') && !s.professionProgress.discoveries[id]);
-  if (missing) {
-    const tier = WOODS.findIndex((w) => `wood_${w.id}_survey` === missing);
-    const previous = WOODS[tier - 1];
-    return `Survey: complete ordinary ${previous.name} Tree ${Math.min(100, s.professionProgress.counters[`wood.survey.${previous.id}`] ?? 0)}/100 times`;
-  }
-  if (a.id === 'cut_heartwood' && (s.professionProgress.work.woodcutting ?? 0) < 100 && !s.professionProgress.legacyAccess.woodcutting_work_100)
-    return `Complete Woodcutting work ${s.professionProgress.work.woodcutting ?? 0}/100 times`;
+export function woodcuttingAccessHint(_s: GameState, _a: SkillAction): string | null {
   return null;
 }
 
@@ -63,8 +50,6 @@ export function woodcuttingPreview(s: { professionProgress: { counters: Record<s
   if (source?.mode === 'heartwood') lines.push(`Targeted heartwood: one Yew Log every second completion (next in ${left(`cycles.${a.id}`, 2)}). One Heartwood Fragment every 30 survey cycles (next in ${left('heartwood.survey', 30)}), plus 1% extra per cycle. Refine 20 fragments into 1 Ancient Heartwood separately. At base speed, at most 80 minutes cutting + 30 seconds milling; no combat or jackpot required.`);
   if (source?.mode === 'ordinary') {
     lines.push('Timber-focused: one log each cycle. Refine five matching logs into one plank in a separately selected task.');
-    const next = WOODS[tier + 1];
-    if (next) lines.push(`Survey: ${Math.min(100, c[`wood.survey.${w.id}`] ?? 0)}/100 ordinary ${w.name} cycles toward ${next.name} (Woodcutting ${next.level}). Existing Oak/Yew remain level-only.`);
     if (tier >= 4) lines.push(`Incidental heartwood: one fragment every 60 Ancient/Spirit/Worldwood ordinary cycles (next in ${left('heartwood.timber', 60)}), plus 1% extra. Targeted Ancient Heartwood Survey is faster.`);
   }
   if (source?.mode === 'heartwood' || (source?.mode === 'ordinary' && tier >= 4)) lines.push('Fragments are protected from yield/manual doubles. Counters persist across eligible sources and reloads. Unlimited material storage.');

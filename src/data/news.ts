@@ -10,7 +10,11 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Fixed a crash when viewing unique flask projects on the Alchemy workbench.',
+  'Mining, Woodcutting, Foraging, and Gemcutting actions now unlock directly upon reaching their required skill level, removing redundant cycle counts and prospecting gates.',
+  'Required materials on masterwork workbenches can now be clicked to jump directly to their source, and redundant stat repetitions have been removed from project descriptions.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

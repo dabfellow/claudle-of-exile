@@ -34,6 +34,6 @@ export const FORAGING_ACTIONS: SkillAction[] = [
   ...([{ plant: 'moon_bloom', id: 'herb_moon', name: 'Moon Bloom', level: 45, ms: 6000, xp: 18, herb: 'frostleaf', color: '#b3d7fa' },
     { plant: 'star_bloom', id: 'herb_star', name: 'Star Bloom', level: 60, ms: 7000, xp: 24, herb: 'voidbloom', color: '#d4a9ff' }]).map((b): SkillAction => ({
       id: b.id, skill: 'harvesting', name: `${b.name} Patch`, level: b.level, intervalMs: b.ms, xp: b.xp / 0.3, color: b.color,
-      accomplishments: ['harvesting_work_100'], outputs: { [b.herb]: 1 }, foraging: { plant: b.plant, mode: 'bloom' },
+      outputs: { [b.herb]: 1 }, foraging: { plant: b.plant, mode: 'bloom' },
     })),
 ];

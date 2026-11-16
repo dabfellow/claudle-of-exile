@@ -16,6 +16,8 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 6. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
 7. Skilling overhaul Phases 00–18 are complete (2026-11-15). Phase 18 whole-overhaul acceptance verified all 11 professions, 7 tools, 2 signatures, 2 feasts, Artisans' Reliquary, all 13 exclusive uniques, ingredient source graph, 8h live/offline parity, old-save migration, Classic/market rules, desktop/phone browser playtests (including Pinnacle + Defence/Rune pairings), and updated GAME/wiki docs.
 8. Skilling Mastery Thematic Overhaul: completed (2026-11-15); implemented milestone-based thematic mastery across all 11 professions with Lv 25/50/75/100 thresholds, sub-category recipe personalities, animated live proc callouts, offline summary breakdowns, and hybrid completionist synergies. All 105 test files / 1,733 tests and typecheck pass.
+9. Skilling Action Access: completed (2026-11-15); removed double-gating from ordinary skilling actions. Mining veins/deposits, Woodcutting trees/stands, Foraging blooms, and Gemcutting exact cuts unlock directly at their required skill level, removing redundant cycle counts and prospecting/survey gates. All tests and typecheck pass.
+10. Masterwork Workbench Interactivity: completed (2026-11-15); made required material rows directly clickable with inline source skill navigation, and eliminated redundant unique item mod and ilvl repetitions from project descriptions. All tests pass.
 
 ## Milestones
 
@@ -35,6 +37,10 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Masterwork Workbench Interactivity and Description Cleanliness (2026-11-15): Required material rows on profession workbenches now link directly to their source skills with interactive hover and inline skill chips (and missing base alerts link to crafting skills), removing the separate redundant sources footer bar. Project description banners suppress redundant item affix and item level text already displayed on the live Crafted Outcome preview card.
+
+- Skilling Action Access (2026-11-15): Removed double-gating from ordinary skilling actions. Mining veins/deposits, Woodcutting trees/stands, Foraging blooms, and Gemcutting exact cuts now unlock directly upon reaching their required skill level, removing redundant cycle counters (Prospecting, Woodcutting Surveys, and work_100/work_30 accomplishment gates).
 
 - Skilling Mastery Overhaul Topic 3 (2026-11-15): Recipe Personalities and Feedback. Decided B for 3a (Sub-category recipe personalities tailored to item roles: e.g. Life/Mana flasks gain extra charge capacity, utility flasks gain duration, currency brewing gains elevation/discount chances; standard ores gain vein strikes while rare cosmic ores gain geodes and crystal fragments). Decided A for 3b (Milestone badges 25/50/75/100 on action cards, lively proc callouts in active skilling, and detailed proc tallies in offline return summaries).
 

@@ -20,7 +20,7 @@ export function materialSources(id: string): Source[] {
   const out: Source[] = [];
   for (const a of ACTIONS) {
     if (a.soon || a.batchOf) continue;
-    const made = a.outputs?.[id];
+    const made = a.outputs?.[id] || a.protectedOutputs?.[id];
     const bonus = a.bonus?.find((b) => b.id === id);
     if (!made && !bonus) continue;
     out.push({

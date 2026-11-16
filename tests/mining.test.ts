@@ -38,14 +38,6 @@ describe('Phase 02 Mining', () => {
     for (let i = 0; i < MINING_METALS.length; i++) {
       const m = MINING_METALS[i];
       s.skills.mining = xpForLevel(m.level);
-      if (i >= 3) expect(actionBlocker(s, actionDef(`mine_${m.id}`))).toMatch(/Prospect/);
-      if (i) {
-        const previous = MINING_METALS[i - 1];
-        cycles(s, `mine_${previous.id}`, 99);
-        expect(s.professionProgress.discoveries[`prospect_${m.id}`]).toBeUndefined();
-        cycles(s, `mine_${previous.id}`, 1, true);
-        expect(s.professionProgress.discoveries[`prospect_${m.id}`]).toBe(true);
-      }
       for (const a of actionsFor('mining').filter((a) => a.mining?.metal === m.id)) expect(actionBlocker(s, a)).toBeNull();
     }
     expect(s.skills.combat).toBe(0);

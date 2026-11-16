@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { BAG_SIZE } from '../src/data/hideout';
+import { flaskDef } from '../src/data/flasks';
 import { PROFESSION_PROJECTS, type ProfessionProject } from '../src/data/professionProjects';
 import { ACTIONS, actionDef, actionsFor } from '../src/data/skills';
 import { newGame, tick } from '../src/engine/state';
@@ -20,6 +21,7 @@ import { skillLock } from '../src/ui/skillLock';
 import { realmOf } from '../src/engine/challenge';
 import { readFileSync } from 'node:fs';
 import type { AccountState } from '../src/engine/types';
+import { cleanProjectDesc, resolveBaseSource, resolveMaterialSource } from '../src/ui/components/projectHelpers';
 
 const ctx = () => makeCtx(seeded(123));
 const reload = (s: ReturnType<typeof newGame>) => {
@@ -314,6 +316,19 @@ describe('ordinary completion boundaries and return summaries', () => {
     expect(mergeOffline(first, second).discoveries).toEqual(['smithing_copper_supply']);
     expect(s.account.bank.copper_bar).toBe(10);
   });
+
+  it('validates all profession project rewards can be resolved without crashing', () => {
+    for (const p of PROFESSION_PROJECTS) {
+      const r = p.reward;
+      if (r.category === 'flask') {
+        expect(() => {
+          const f = flaskDef(r.flaskId);
+          expect(f).toBeDefined();
+          expect(f.desc).toBeTruthy();
+        }).not.toThrow();
+      }
+    }
+  });
 });
 
 describe('pre-overhaul serialized compatibility', () => {
@@ -352,5 +367,43 @@ describe('pre-overhaul serialized compatibility', () => {
     expect(again.professionProgress.discoveries.seed_frostleaf).toBe(true);
     expect(again.professionProgress.legacyAccess.smithing_work_60).toBe(true);
     expect(again.professionProgress).toEqual(s.professionProgress);
+  });
+
+  it('resolves clickable material sources and eliminates redundant unique mod descriptions', () => {
+    const debt = PROFESSION_PROJECTS.find((p) => p.id === 'debt_of_stone')!;
+    expect(debt).toBeDefined();
+
+    // Check material source resolution
+    const stoneAlloySrc = resolveMaterialSource('stone_alloy', debt.sources);
+    expect(stoneAlloySrc).toBeDefined();
+    expect(stoneAlloySrc?.skill).toBe('smithing');
+    expect(stoneAlloySrc?.label).toMatch(/Stone Alloy/i);
+
+    const adamantBarSrc = resolveMaterialSource('adamant_bar', debt.sources);
+    expect(adamantBarSrc).toBeDefined();
+    expect(adamantBarSrc?.skill).toBe('smithing');
+    expect(adamantBarSrc?.label).toMatch(/Adamant Bar/i);
+
+    const heartwoodSrc = resolveMaterialSource('heartwood_frame', debt.sources);
+    expect(heartwoodSrc).toBeDefined();
+    expect(heartwoodSrc?.skill).toBe('smithing');
+    expect(heartwoodSrc?.label).toMatch(/Heartwood Frame/i);
+
+    // Check description cleaning: strips duplicate unique mod verbatim
+    const cleanedDebt = cleanProjectDesc(debt);
+    expect(cleanedDebt).toBeDefined();
+    expect(cleanedDebt).not.toContain('50% of incoming hit damage deferred');
+    expect(cleanedDebt).not.toContain('item level 80');
+    expect(cleanedDebt).toContain('Combat level 60 to equip');
+    expect(cleanedDebt).toContain('One normal rune slot');
+
+    // Check Hands of the Forgotten Choir base source and description
+    const choir = PROFESSION_PROJECTS.find((p) => p.id === 'hands_forgotten_choir')!;
+    expect(choir).toBeDefined();
+    const baseSrc = resolveBaseSource(choir);
+    expect(baseSrc?.skill).toBe('smithing');
+    const cleanedChoir = cleanProjectDesc(choir);
+    expect(cleanedChoir).not.toContain('Totem skills place two at once');
+    expect(cleanedChoir).toContain('completely consuming the base into a new unique');
   });
 });

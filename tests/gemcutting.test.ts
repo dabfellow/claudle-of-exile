@@ -6,7 +6,6 @@ import { PROFESSION_PROJECTS } from '../src/data/professionProjects';
 import type { Ctx } from '../src/engine/context';
 import { equip } from '../src/engine/equipment';
 import {
-  gemcuttingAccessHint,
   gemcuttingPreview,
   getUnequippedGems,
   isGemEquipped,
@@ -140,24 +139,15 @@ describe('Gemcutting: targeted family pools', () => {
 });
 
 describe('Gemcutting: exact gem cutting', () => {
-  it('requires gemcutting_work_30 accomplishment before opening', () => {
+  it('opens exact gem cutting at its required level', () => {
     const s = newGame(1);
     s.skills.gemcutting = xpForLevel(50);
 
     const action = actionDef('cut_exact_heavy_strike');
     expect(action.level).toBe(20);
-    expect(action.accomplishments).toContain('gemcutting_work_30');
+    expect(action.accomplishments).toBeUndefined();
 
     give(s, { rough_gem: 20, arcane_dust: 200 });
-    expect(actionBlocker(s, action)).toBe('Requires 30 completed Gemcutting cycles (0/30)');
-    expect(gemcuttingAccessHint(s, action)).toBe('Requires 30 completed Gemcutting cycles (0/30)');
-
-    // Award 29 cycles
-    awardProfessionProgress(s, 'gemcutting', 29);
-    expect(actionBlocker(s, action)).toBe('Requires 30 completed Gemcutting cycles (29/30)');
-
-    // Award 30th cycle
-    awardProfessionProgress(s, 'gemcutting', 1);
     expect(actionBlocker(s, action)).toBeNull();
   });
 
