@@ -198,9 +198,9 @@ function WorldMap({ s, onOpen }: { s: GameState; onOpen: (act: number) => void }
   const cur = currentAct(s);
   const here = s.combat ? ZONE_POS[s.combat.zoneId] : undefined;
   return (
-    <div className="card cmap-card">
+    <div className="card cmap-card cmap-world-scroll">
       <div className="cmap-world" style={{ aspectRatio: WORLD_MAP.aspect }}>
-        {WORLD_MAP.image ? <img className="ct-svg" src={WORLD_MAP.image} alt="" /> : <WorldTerrain isOpen={actOpen} selected={cur} onPick={onOpen} here={here} />}
+        {WORLD_MAP.image ? <img className="ct-svg" src={WORLD_MAP.image} alt="Ashen Codex world atlas showing the six campaign regions" /> : <WorldTerrain isOpen={actOpen} selected={cur} onPick={onOpen} here={here} />}
         <svg className="cmap-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
           <path className="cmap-trail-under" d={smoothPath(WORLD_MAP.trail)} />
           <path className="cmap-trail" d={smoothPath(WORLD_MAP.trail)} />

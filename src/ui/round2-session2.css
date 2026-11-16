@@ -545,6 +545,19 @@
   user-select: none;
 }
 
+.card.cmap-world-scroll {
+  overflow-x: auto;
+}
+
+.cmap-world {
+  min-width: 640px;
+}
+
+.cmap-world .cmap-act-label {
+  background: rgba(20, 17, 12, 0.82);
+  border-color: rgba(203, 180, 137, 0.45);
+}
+
 .ct-svg,
 .cmap-overlay {
   position: absolute;

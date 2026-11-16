@@ -24,6 +24,8 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
 ## Milestones
 
+Ashen Codex world-map illustration and general campaign route integrated 2026-11-16; desktop/phone visual verification remains pending (see Other open items).
+
 | # | Milestone | Current status |
 |---|---|---|
 | 1 | Automation/offline | Released; survival rules and two conditions baseline; flask-default removal verified (strictly requires Instilling) |
@@ -381,6 +383,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [ ] Playtest the integrated Ashen Codex world map on desktop and phone (2026-11-16).
+  - Latest v6 artwork compressed to a 454 KB WebP, world aspect/labels/general trail aligned, readable label backgrounds and horizontal scrolling on narrow screens. Typecheck, four campaign-map tests and Vite client build pass. Local preview accepted connections but returned no page, including without the hosting plugin. Existing act close-ups and zone progression are unchanged.
+
 - [x] Skilling Mastery Thematic Overhaul: overhaul task mastery with 25/50/75/100 milestone perks, sub-category recipe personalities, animated proc callouts, and hybrid synergy. — done 2026-11-15
   - Topic 1 decided 2026-11-15: 1–100 progression kept with 25/50/75/100 milestone perks and modest background speed/yield baseline.
   - Topic 2 decided 2026-11-15: Hybrid synergy (Lv 25/50 task perks, Lv 75/100 global profession traits). Gathering/Thieving focus on dynamic procs/jackpot moments; Crafting/Production focus on systemic quality, charges, and rule enhancements.
@@ -495,6 +500,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Created and integrated the Ashen Codex world-map painting, refined through the owner's annotated art revisions, with general paths across all six campaign regions and readable clickable act labels. Source images/prompts saved under `output/imagegen/`; runtime asset in `src/assets/maps/`. Typecheck, four campaign-map tests and client build pass; visual playtest pending above. — done 2026-11-16
 
 - [x] Completed skilling overhaul Phase 17 (2026-11-15): The Second Heresy (second Forbidden keystone with latest-first refund on removal, load and profile change), Worldheart (30% less damage taken, once) and The Sum of All Things (uniform 1–200% more damage, multiplied once for hits, ailments, minions and totems; one-Divine rerolls; Seal refused) with full multi-mechanic recipes. Doomed bosses give World Core and Doom Key Fragments; ten fragments forge a chosen Uber Key; Fractured Orb and Doomed Map drought guarantees. Also fixed project-made amulets (Borrowed Tomorrow) equipping into the weapon slot. 1,658 tests, typecheck and build pass; UNIQUES regenerated. Browser playtest not run.
 

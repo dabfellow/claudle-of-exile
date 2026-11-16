@@ -8,8 +8,8 @@
  * - ACT_MAPS has one close-up per act: where each area sits, the bends in each road between two areas
  *   (keyed 'from>to', drawn as a smooth curve through the bends), and where roads from the act before come in.
  *
- * There's no painted top-down map art in the asset packs yet, so the pictures are drawn by the game from the
- * continent outline in data/continent.ts. To use a painting instead, drop the file in src/assets/maps/, set
+ * The world uses the Ashen Codex painting; act close-ups are drawn from data/continent.ts.
+ * To use a painting for a close-up, drop the file in src/assets/maps/, set
  * `image` (as in the example below) and set `aspect` to the picture's width ÷ height, then nudge the points
  * here until the line follows the roads in the picture:
  *   image: new URL('../assets/maps/act1.webp', import.meta.url).href,
@@ -42,30 +42,39 @@ export interface ActMapData {
 }
 
 export const WORLD_MAP: WorldMapData = {
-  aspect: 1000 / 640,
+  aspect: 1536 / 1024,
+  image: new URL('../assets/maps/ashen-codex-world.webp', import.meta.url).href,
   labels: {
-    1: [18.5, 73.4],
-    2: [44.5, 53.9],
-    3: [70, 82],
-    4: [45.5, 23.4],
-    5: [73, 50],
-    6: [74.5, 8.6],
+    1: [13, 51],
+    2: [31, 39],
+    3: [78, 93],
+    4: [34, 9],
+    5: [72, 44],
+    6: [85, 5],
   },
   trail: [
-    // Act 1: up the coast from the Mud Flats to the Drowned Sanctum
-    [19, 82.8], [13, 51.6], [26.5, 35.9],
-    // Act 2: across the steppe to the Burning Throne
-    [34, 46.9], [45, 59.4], [54, 73.4],
-    // Act 3: through the city to the High Altar
-    [53, 85.9], [65, 85.2], [80, 76.6],
-    // the long road north to the peaks
-    [58, 52], [36, 38],
-    // Act 4: up the range to the Giant's Throne
-    [31.8, 29.7], [44.5, 19.5], [50.5, 9.7],
-    // Act 5: down to the harbour and round the sea to the Maelstrom
-    [60, 37.5], [71.7, 57], [67, 50.8],
-    // Act 6: in by the Exile's Gate, up to the Shattered Throne
-    [65.5, 26.9], [76.5, 22.7], [89, 17.2],
+    // Act 1: western shallows, woods and marsh, wreck bay, then the drowned sanctum.
+    [12, 31], [15, 43], [23, 54], [19, 59], [17, 63],
+    [19, 71], [13, 77], [11, 83], [19, 88],
+    // Act 2: inland below the plateau, across the plains to the volcanic high ground.
+    [27, 86], [30, 79], [29, 69], [34, 63], [37, 58],
+    [31, 50], [25, 46], [34, 44], [39, 48], [45, 51], [44, 43],
+    // Act 3: follow the eastern inland road south and cross the bridge into the holy city.
+    [49, 48], [51, 55], [48, 62], [48, 69], [52, 77],
+    [56, 82], [61, 84], [67, 85], [71, 81], [76, 77],
+    // Return north on the inland road, with a separate lane to keep the journey readable.
+    [68, 78], [59, 78], [54, 72], [51, 64], [53, 55],
+    [52, 46], [50, 37], [47, 32],
+    // Act 4: pass and quarry, frozen lake, then the summit's visible switchbacks.
+    [39, 33], [35, 28], [42, 28], [49, 26], [52, 21],
+    [48, 19], [45, 17], [49, 14], [46, 11], [50, 8], [49, 5],
+    // Act 5: descend east of the glacier to the harbour; sail through the open bay.
+    [57, 9], [62, 18], [61, 27], [59, 33], [61, 41],
+    [66, 46], [70, 51], [65, 56], [74, 61], [83, 58],
+    [86, 63], [80, 67], [86, 71], [91, 67],
+    // Act 6: return to the capital's shore gate, then climb its inhabited terraces.
+    [94, 57], [96, 47], [93, 39], [87, 36], [83, 32],
+    [77, 31], [75, 26], [79, 22], [86, 19], [91, 15], [90, 9],
   ],
 };
 

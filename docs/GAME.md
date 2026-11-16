@@ -25,6 +25,8 @@ Character XP, life-skill XP and gem XP are separate. The whole character curve i
 
 ## Campaign and Maps
 
+The campaign world view uses the Ashen Codex illustrated atlas, with a separate general journey overlay and clickable act labels positioned over its six regions. On narrow screens the world map scrolls horizontally to keep the artwork and labels readable. Act close-ups retain their existing zone markers and branching roads; the world illustration does not change unlocks or travel rules. Sources: `src/data/campaignMap.ts`, `src/ui/pages/CampaignPage.tsx`.
+
 All six acts are open. The campaign graph includes prerequisite bosses, forks and side areas; it is not one linear list. Sources: `src/data/zones.ts`, `src/data/continent.ts`, `src/engine/progress.ts`.
 
 | Act | Region | Distinctive mechanic | New life skill |
