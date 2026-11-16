@@ -10,13 +10,19 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Excavation sites and masterwork profession projects no longer track task mastery.',
-  'Masterwork project panels now feature interactive workbench cards with visual material stock checks, reward previews, quick run presets, and clear requirement badges.',
-  'Masteries have been overhauled with 25, 50, 75, and 100 milestone perks, unique skill-specific procs, and global profession traits.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.44',
+    date: '15 Nov 2026',
+    title: 'Skilling Mastery Overhaul and Interactive Workbenches',
+    items: [
+      'Excavation sites and masterwork profession projects no longer track task mastery.',
+      'Masterwork project panels now feature interactive workbench cards with visual material stock checks, reward previews, quick run presets, and clear requirement badges.',
+      'Masteries have been overhauled with 25, 50, 75, and 100 milestone perks, unique skill-specific procs, and global profession traits.',
+    ],
+  },
   {
     version: '0.4.43',
     date: '15 Nov 2026',
