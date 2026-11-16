@@ -29,11 +29,11 @@ export const FORAGING_ACTIONS: SkillAction[] = [
     { id: `herb_abundant_${h.id}`, skill: 'harvesting', name: `Abundant ${h.name} Patch`, level: h.level, intervalMs: h.ms * 1.5, xp: h.xp * 1.5, color: h.color,
       outputs: { [h.id]: 2 }, foraging: { plant: h.id, mode: 'abundant' } },
     { id: `herb_concentrated_${h.id}`, skill: 'harvesting', name: `Concentrated ${h.name} Patch`, level: h.level + 5, intervalMs: h.ms * 2, xp: h.xp * 2, color: h.color,
-      outputs: { [h.id]: 1 }, foraging: { plant: h.id, mode: 'concentrated', essences: h.essences } },
+      outputs: { [h.id]: 1 }, bonus: h.essences.map((id) => ({ id, chance: +(0.0833 / h.essences.length).toFixed(4), qty: 1 })), foraging: { plant: h.id, mode: 'concentrated', essences: h.essences } },
   ]),
   ...([{ plant: 'moon_bloom', id: 'herb_moon', name: 'Moon Bloom', level: 45, ms: 6000, xp: 18, herb: 'frostleaf', color: '#b3d7fa' },
     { plant: 'star_bloom', id: 'herb_star', name: 'Star Bloom', level: 60, ms: 7000, xp: 24, herb: 'voidbloom', color: '#d4a9ff' }]).map((b): SkillAction => ({
       id: b.id, skill: 'harvesting', name: `${b.name} Patch`, level: b.level, intervalMs: b.ms, xp: b.xp / 0.3, color: b.color,
-      outputs: { [b.herb]: 1 }, foraging: { plant: b.plant, mode: 'bloom' },
+      outputs: { [b.herb]: 1 }, bonus: [{ id: b.plant, chance: 0.025, qty: 1 }], foraging: { plant: b.plant, mode: 'bloom' },
     })),
 ];

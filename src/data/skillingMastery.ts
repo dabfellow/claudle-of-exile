@@ -276,6 +276,7 @@ export function findMasterySpecById(id: string): MasterySpec | undefined {
 
 /** The shipped band identity, retained only so version 41 saves can migrate without losing progress. */
 export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined {
+  if (a.batchMastery) return undefined; // The shared single-craft track is migrated once.
   if (['cut_exceptional', 'prepare_return_inscription', 'prepare_choir_inscription', 'prepare_circuit_inscription', 'inscribe_convergence', 'polish_exceptional', 'recycle_gem'].includes(a.id)) return undefined;
   if (a.id.startsWith('cut_family_') || a.id.startsWith('cut_exact_')) return undefined;
   if (a.id === 'chart_endgame_atlas' || a.id.startsWith('forge_uber_key')) return undefined;

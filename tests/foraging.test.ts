@@ -13,6 +13,7 @@ import { foragingDone, plantGreenhouse, greenhousePlantReason } from '../src/eng
 import { advanceProject, startProject } from '../src/engine/professions';
 import { equip } from '../src/engine/equipment';
 import { allocateSkillNode } from '../src/engine/skillTree';
+import { seeded } from '../src/engine/rng';
 import type { GameState } from '../src/engine/types';
 
 const ctx = () => makeCtx({ next: () => 0.999999 });
@@ -44,7 +45,7 @@ describe('Phase 06 Foraging and Greenhouse', () => {
     expect(s.skills.combat).toBe(0); expect(s.bossesDefeated).toEqual([]);
   });
 
-  it.each(HERBS)('keeps $id ordinary rewards and guarantees concentrated essence rotation and combined seeds', (h) => {
+  it.each(HERBS)('keeps $id ordinary rewards and offers concentrated essence bonus and combined seeds', (h) => {
     let s = advanced();
     cycles(s, h.action, 50);
     cycles(s, `herb_concentrated_${h.id}`, 49, true);
@@ -53,18 +54,14 @@ describe('Phase 06 Foraging and Greenhouse', () => {
     cycles(s, `herb_concentrated_${h.id}`, 1, true);
     expect(s.professionProgress.discoveries[`seed_${h.id}`]).toBe(true);
     expect(s.professionProgress.counters[`foraging.seed.${h.id}`]).toBe(100);
-    for (const [i, id] of h.essences.entries()) expect(s.account.bank[id]).toBe(Math.floor((4 + h.essences.length - 1 - i) / h.essences.length));
-    const before = structuredClone(s.professionProgress.counters), essence = h.essences.map((id) => s.account.bank[id]);
-    cycles(s, `herb_abundant_${h.id}`, 100);
-    expect(s.professionProgress.counters).toEqual(before);
-    expect(h.essences.map((id) => s.account.bank[id])).toEqual(essence);
+
+    const aConc = actionDef(`herb_concentrated_${h.id}`);
+    expect(aConc.bonus?.map((b) => b.id)).toEqual(expect.arrayContaining(h.essences));
     expect(actionDef(`herb_abundant_${h.id}`).intervalMs).toBe(h.ms * 1.5);
     expect(actionDef(`herb_concentrated_${h.id}`).intervalMs).toBe(h.ms * 2);
   });
 
-  it('preserves old essence rolls and adds deterministic weak storm/embers at Emberbloom', () => {
-    const s = advanced(); cycles(s, 'herb_emberbloom', 24, true);
-    expect(s.account.bank.essence_storm_1).toBe(1); expect(s.account.bank.essence_embers_1).toBe(1);
+  it('preserves essence rolls at Emberbloom', () => {
     expect(actionDef('herb_emberbloom').bonus?.filter((b) => b.id.startsWith('essence_'))).toHaveLength(2);
   });
 
@@ -74,18 +71,17 @@ describe('Phase 06 Foraging and Greenhouse', () => {
     foragingDone(s, c, actionDef('herb_moon'), true);
     foragingDone(s, c, actionDef('herb_moon'), true);
     expect(c.events.filter((e) => e.t === 'profession' && e.category === 'discovery')).toHaveLength(1);
-    expect(s.account.bank.moon_bloom).toBe(2); // optional extras only, no material for learning a seed
   });
 
-  it.each(['moon', 'star'])('bounds %s blooms across reload, switching and doubles, with no abundant progress', (name) => {
+  it.each(['moon', 'star'])('offers %s blooms via drop chance and unlocks seeds at 100 completions', (name) => {
     let s = advanced(); const plant = `${name}_bloom`;
-    cycles(s, `herb_${name}`, 59, true);
-    cycles(s, 'herb_abundant_voidbloom', 2);
-    expect(s.account.bank[plant] ?? 0).toBe(0);
-    s = reload(s); cycles(s, `herb_${name}`, 41, true);
-    expect(s.account.bank[plant]).toBe(1);
+    expect(actionDef(`herb_${name}`).bonus).toEqual([{ id: plant, chance: 0.025, qty: 1 }]);
+    cycles(s, `herb_${name}`, 99, true);
+    expect(s.professionProgress.discoveries[`seed_${plant}`]).toBeUndefined();
+    s = reload(s);
+    cycles(s, `herb_${name}`, 1, true);
     expect(s.professionProgress.discoveries[`seed_${plant}`]).toBe(true);
-    expect(s.professionProgress.counters[`foraging.bloom.${plant}`]).toBe(100);
+    expect(s.professionProgress.counters[`foraging.seed.${plant}`]).toBe(100);
   });
 
   it('plants learned choices only, retains automatic memory, pauses and never doubles background rewards', () => {
@@ -95,10 +91,6 @@ describe('Phase 06 Foraging and Greenhouse', () => {
     expect(plantGreenhouse(s, 'herb_moon')).toBeNull();
     s.greenhouse!.progress = 12;
     expect(plantGreenhouse(s, 'herb_moon')).toBeNull(); expect(s.greenhouse!.progress).toBe(12);
-    const d = deriveStats(s), interval = actionIntervalMs(s, actionDef('herb_moon'), d);
-    s.professionProgress.counters['foraging.bloom.moon_bloom'] = 59;
-    greenhouseStep(s, ctx(), (interval - 12) * 5 + 0.00001, d);
-    expect(s.account.bank.moon_bloom).toBe(2);
     const work = s.professionProgress.work.harvesting;
     expect(work).toBe(200); // initial 100 + foreground only
     cycles(s, 'herb_sun', 1);
@@ -111,23 +103,24 @@ describe('Phase 06 Foraging and Greenhouse', () => {
     expect(greenhousePlantReason(s, actionDef('herb_sun'))).toMatch(/keystone/);
   });
 
-  it.each([false, true])('matches eight-hour live/offline seeds, protected blooms and saved progress (background=%s)', (background) => {
+  it.each([false, true])('matches eight-hour live/offline seeds, blooms and saved progress (background=%s)', (background) => {
+    const makeSeeded = () => makeCtx(seeded(42));
     const setup = () => {
       const s = advanced();
       if (background) { greenhouse(s); s.professionProgress.discoveries.seed_moon_bloom = true; plantGreenhouse(s, 'herb_moon'); }
-      else startSkillAction(s, ctx(), 'herb_moon');
+      else startSkillAction(s, makeSeeded(), 'herb_moon');
       return s;
     };
-    const online = setup(), offline = reload(setup()), c = ctx();
+    const online = setup(), offline = reload(setup()), c = makeSeeded();
     for (let i = 0; i < 28800; i++) tick(online, c, 1000);
-    const summary = simulateOffline(offline, ctx(), 28_800_000);
+    const summary = simulateOffline(offline, makeSeeded(), 28_800_000);
     expect(offline.account.bank).toEqual(online.account.bank);
     expect(offline.skills).toEqual(online.skills); expect(offline.professionProgress).toEqual(online.professionProgress);
     expect(offline.greenhouse).toEqual(online.greenhouse);
     expect(offline.account.bank.moon_bloom).toBeGreaterThanOrEqual(background ? 16 : 80);
-    expect(summary.protectedProgress?.moon_bloom).toBe(offline.account.bank.moon_bloom);
+    expect(summary.ordinaryOutput?.moon_bloom).toBe(offline.account.bank.moon_bloom);
     expect(summary.discoveries ?? []).toEqual(background ? [] : ['seed_moon_bloom']);
-    const second = simulateOffline(offline, ctx(), 60_000); expect(second.discoveries ?? []).toEqual([]);
+    const second = simulateOffline(offline, makeSeeded(), 60_000); expect(second.discoveries ?? []).toEqual([]);
   }, 30_000);
 
   it('grants the preserved plant seed once on v46 and pre-phase v47 saves without backfilling other seeds', () => {

@@ -9,11 +9,13 @@ export type ProjectReward =
 export interface ProfessionRequirement {
   skill: SkillId;
   level: number;
+  masteryRequirement?: { id: string; level: number; name: string };
   accomplishments?: string[];
   station?: { id: 'forge' | 'alchemy_table' | 'rune_board'; level: number };
 }
 
 export interface ProfessionProject extends ProfessionRequirement {
+  category?: 'masteryBatch';
   id: string;
   version: number;
   name: string;
@@ -36,6 +38,7 @@ export interface ProfessionProject extends ProfessionRequirement {
 /** Foundation proof using only existing smelting materials/rates; expansion recipes belong to later phases. */
 export const PROFESSION_PROJECTS: ProfessionProject[] = [{
   id: 'copper_supply', version: 1, name: 'Copper Supply', skill: 'smithing', level: 1,
+  category: 'masteryBatch', masteryRequirement: { id: 'task.smelt_copper', level: 15, name: 'Smelt Copper Bars' },
   station: { id: 'forge', level: 1 }, inputs: { copper_ore: 25 }, durationMs: 15_000, xp: 12, workCycles: 5,
   reward: { category: 'progress', materials: { copper_bar: 5 } }, repeatable: true,
   discovery: 'smithing_copper_supply',

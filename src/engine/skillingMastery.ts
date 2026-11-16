@@ -111,6 +111,19 @@ export function stochasticRound(rng: Rng, value: number): number {
   return whole + (fraction > 0 && rng.next() < fraction ? 1 : 0);
 }
 
+/** Sum of all mastery levels earned (practice > 0) across all things in a specific skill. */
+export function totalMasteryLevels(s: GameState, skill: string): number {
+  if (!s.skillingMastery || typeof s.skillingMastery !== 'object') return 0;
+  let total = 0;
+  for (const [id, practice] of Object.entries(s.skillingMastery)) {
+    if (!Number.isFinite(practice) || practice <= 0) continue;
+    const spec = findMasterySpecById(id);
+    if (!spec || spec.skill !== skill) continue;
+    total += masteryLevelFromPractice(practice);
+  }
+  return total;
+}
+
 /** Clamp malformed values while preserving unknown stable ids as inactive data. */
 export function settleSkillingMastery(s: GameState): void {
   if (!s.skillingMastery || typeof s.skillingMastery !== 'object' || Array.isArray(s.skillingMastery)) s.skillingMastery = {};

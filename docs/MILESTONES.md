@@ -4,6 +4,8 @@ Last updated 2026-11-16. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
+World-map road correction (2026-11-16): implemented against the owner's annotated route; connected forks replace the parallel return trail. Typecheck, five campaign-map tests and desktop/phone in-game checks pass. Unreleased.
+
 Latest confirmed live release: **0.4.46, Mastery Tooltips and Action Card Polish**, deployed 2026-11-16 (redesigned skilling mastery tooltips into structured cards with baseline bonuses and milestone perks, stripped obsolete placeholder blurbs from gathering/crafting action cards, and removed the idle manual focus prompt box from inactive skill pages; 105 test files / 1,735 tests confirmed live at https://dabfellow.party/path-of-idle/). Previous: **0.4.45, Masterwork Interactivity and Direct Skilling Access**, **0.4.44, Skilling Mastery Overhaul and Interactive Workbenches**, **0.4.43, Skilling Layouts and Themed Undertakings**, **0.4.42, Skilling Overhaul Acceptance and Wiki Update**, **0.4.41, Defence and Rune-carved Uniques**, **0.4.40, Pinnacle Uniques**.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
@@ -21,6 +23,15 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 11. Action Card Blurb Cleanup: completed (2026-11-16); stripped generic, static supply/usage tutorial blurbs from gathering and crafting action cards (Mining, Woodcutting, Foraging, Cartography, Smithing) while keeping dynamic cycle progress counters, discovery trackers, and input coverage cleanly visible. All tests pass.
 12. Mastery Tooltip Redesign: completed (2026-11-16); converted the skilling mastery tooltip from a single run-on sentence into a rich, structured layout featuring level progress, baseline speed/yield/conservation scaling, and individual milestone cards (Lv 25/50/75/100) with unlock status, scope tags, and descriptions. All tests pass.
 13. Inactive Minigame Callout Removal: completed (2026-11-16); removed the static "Start an activity and play it by hand..." prompt box from skill pages when that skill is inactive, keeping the UI clean until an activity with manual focus is running. All tests pass.
+14. Skilling Minigame Mastery Bonus: completed (2026-11-16); added +0.01% permanent maximum Focus speed bonus to skilling minigames for each mastery level earned across all things in that skill, with UI tooltips reflecting the increased maximum. All tests pass.
+
+15. Mastery Batches: completed (2026-11-16, unreleased) across suitable ordinary production. 5× crafts unlock at recipe mastery 15 in 2× time; 50× crafts unlock at mastery 90 in 10× time (5× production speed). Both share the single craft's mastery rate per second. Typecheck and all 106 test files verified; browser preview timed out, so visual playtest remains unverified.
+
+16. Percentage Drops on Gathering Nodes: completed (2026-11-16, unreleased); replaced deterministic cycle counters ("1 in X completions") and countdown text across Woodcutting (resins, fragments), Mining (fossils, rough gems, fragments), and Foraging (essences, rare blooms) with native percentage chances rendered directly on the action cards. All 106 test files / 1,746 tests pass.
+
+17. Ashen Codex world map: artwork integrated and released as 0.4.47; route correction now follows the owner's annotated roads and forks (2026-11-16, unreleased). Desktop/phone visual playtests pass.
+
+18. Dedicated Masterworks Tab: completed (2026-11-16, unreleased); moved profession masterworks (ProjectBoard) from the bottom of every skilling page into their own dedicated "Masterworks" tab on each profession screen, keeping standard activities clean and unbloated while providing direct access and an active project indicator. All 106 test files / 1,746 tests pass.
 
 ## Milestones
 
@@ -36,10 +47,18 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–18 complete, verified, and live in 0.4.42 (2026-11-15) |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–18 complete, verified, and live in 0.4.42 (2026-11-15). Production mastery batches implemented and verified, unreleased (2026-11-16) |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Grounded world-atlas revision (2026-11-16): Owner approved rebuilding connected geology and drainage before surface detail; locate cities at useful harbours/crossings, vary coastal complexity, reduce oversized special landmarks, leave ordinary open country, and use thinner selective ink with much less artificial paper distress. Revised art saved as `output/imagegen/ashen-codex-world-atlas-1800s-v2.png`; game integration and overlay alignment pending.
+
+- World-map scale and style (2026-11-16): Owner wants the world view much farther zoomed out and less detailed, like an 1800s geographic atlas. Preserve the six regions' geographic arrangement, use small settlement footprints and restrained terrain marks; local scenic detail belongs in act close-ups. First artwork draft saved as `output/imagegen/ashen-codex-world-atlas-1800s-v1.png`; replacing the game asset and aligning overlays remains pending.
+
+- Mastery Batches (2026-11-16, expanded after initial Copper-only implementation): All suitable ordinary production recipes get a separate Mastery Batches category. Matching recipe mastery 15 unlocks 5× inputs/output/XP in 2× time; mastery 90 unlocks 50× inputs/output/XP in 10× time (5× production speed, as clarified by the user). Mastery practice scales with nominal batch duration, preserving the single craft's mastery rate per second. Equipment, maps, keys, protected rare components and multi-profession Masterworks keep existing pacing. Legacy discounted Alchemy ×10 recipes and already paid Copper Supply project runs are preserved.
+
+- Skilling Minigame Mastery Bonus (2026-11-16): Added +0.01% (+0.0001) permanent maximum Focus speed bonus to each skilling minigame for every mastery level earned across all tasks/recipes in that skill, raising the max Focus speed cap beyond the baseline 45%. The minigame UI displays the updated live Focus speed and provides a tooltip showing the exact permanent max cap.
 
 - Inactive Minigame Callout Removal (2026-11-16): Removed the static callout box ("Start an activity and play it by hand to work up to 45% faster than leaving it to idle") shown below skill actions when no activity in that skill is currently running. The manual focus minigame card renders only while an action in that skill is actively executing.
 
@@ -381,6 +400,24 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Give masterworks their own tab on each profession screen instead of bloating the bottom of every page. — done 2026-11-16
+  - Added a dedicated "Masterworks" tab to each profession screen that has projects, showing the number of unlocked undertakings and an active running indicator. Hidden the ProjectBoard from default activity views and hidden ordinary activity/batch sections while on the Masterworks tab. Typecheck and test suite verified. Unreleased.
+
+- [ ] Produce detailed Ashen Codex act-map illustrations, beginning with Act 1's eight-zone Drowned Coast (2026-11-16).
+  - Act 1 first artwork produced and visually inspected: `output/imagegen/ashen-codex-act-1-drowned-coast-v1.png`, with full prompt alongside. Portrait 1024×1536, all eight zone environments, continuous coastal terrain and physical paths, matching the approved world atlas. Labels, markers and dotted routes excluded. Further acts and game integration pending; no release.
+
+- [x] Replace the world-map journey line with a connected road network traced against the owner's annotated route. — done 2026-11-16
+  - Original-image pixel traces, shared forks, no duplicated return lane or improvised sea loops. Typecheck and five campaign-map tests pass. Played the real Campaign page with a campaign-complete demo character at desktop 1440×1200 and phone 390×844: reviewed the network, opened Act 4, returned to the world, scrolled to the eastern regions on phone; no console errors. Screenshots: `output/playtest/world-roads-desktop.jpg`, `output/playtest/world-roads-phone.jpg`. No release/version change.
+
+- [x] Playtest the integrated Ashen Codex world map on desktop and phone. — done 2026-11-16
+  - Verified with the revised road network on a campaign-complete demo character: desktop 1440×1200, phone 390×844, act navigation, horizontal phone scrolling and empty error console. Preview ran from a clean dependency install in the isolated release checkout; test-only scenario hook removed and server stopped. Existing act close-ups and progression are unchanged. Evidence in `output/playtest/world-roads-desktop.jpg` and `output/playtest/world-roads-phone.jpg`.
+
+- [x] Expand Mastery Batches across suitable ordinary production recipes: 5× at mastery 15 in 2× time; 50× at mastery 90 in 10× time (5× production speed). Share the single craft’s mastery rate per second. — done 2026-11-16
+  - Typecheck and all 106 test files verified (1,745 tests passed in the full run; the final batch test fixture was corrected and all 9 batch tests passed on rerun). Protected rare components, maps, keys, equipment and masterworks remain excluded. Browser navigation timed out; visual playtest remains unverified.
+
+- [x] Separate 5× mastery batches from masterworks and require matching craft mastery 15. — done 2026-11-16
+  - Implemented for Copper Supply, with its mastery reward shown in the matching craft tooltip. Typecheck and profession tests pass; full suite had one admin timeout that passed on targeted rerun. Browser preview was unreachable, so visual playtest remains unverified.
+
 - [x] Skilling Mastery Thematic Overhaul: overhaul task mastery with 25/50/75/100 milestone perks, sub-category recipe personalities, animated proc callouts, and hybrid synergy. — done 2026-11-15
   - Topic 1 decided 2026-11-15: 1–100 progression kept with 25/50/75/100 milestone perks and modest background speed/yield baseline.
   - Topic 2 decided 2026-11-15: Hybrid synergy (Lv 25/50 task perks, Lv 75/100 global profession traits). Gathering/Thieving focus on dynamic procs/jackpot moments; Crafting/Production focus on systemic quality, charges, and rule enhancements.
@@ -495,6 +532,34 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Produced the grounded world-atlas revision: a dominant connected northern mountain system, broad lowlands, clearer drainage, small settlement plans at estuaries/crossings, quieter mixed coastline, understated islands and lighter paper treatment. Image and full built-in generation prompt saved under `output/imagegen/ashen-codex-world-atlas-1800s-v2*`; artwork only, no release. — done 2026-11-16
+
+- [x] Produced a new distant nineteenth-century world-atlas art draft following the owner's revised direction. Image and full built-in generation prompt saved under `output/imagegen/ashen-codex-world-atlas-1800s-v1*`; no game integration or release. — done 2026-11-16
+
+- [x] Produced the first detailed Drowned Coast act-map artwork, covering the eight Act 1 zone environments in the Ashen Codex atlas style. Image and full generation prompt saved under `output/imagegen/ashen-codex-act-1-drowned-coast-v1*`. Artwork only; game integration pending. — done 2026-11-16
+
+- [x] Set the entire world-map trail overlay (land roads, sailing lanes, outlines and sea destination dots) to 50% opacity as requested. — done 2026-11-16
+
+- [x] Added dotted Sunless Sea sailing lanes from the harbour/coastal approach to destination dots at the Drowned Fleet, Brimstone Isle, Leviathan's Rib and maelstrom. Typecheck, five map-network tests and in-game campaign-complete visual check pass with no console errors. Evidence: `output/playtest/world-map-sailing.jpg`. Unreleased. — done 2026-11-16
+
+- [x] Replaced the world map's continuous itinerary with a connected road network traced from the owner's annotation, using shared fork coordinates and direct pixel interpolation to avoid curves cutting across terrain. Desktop/phone in-game checks and typecheck/five map tests pass. — done 2026-11-16
+
+- [x] Integrated the finished Ashen Codex painting into the campaign world map and aligned the general journey across all six regions, with readable act labels and a separate route overlay. Typecheck, four campaign-map tests and client build pass; visual playtest pending above. No release or version change. — done 2026-11-16
+
+- [x] Applied ten owner-annotated map edits: open plains, forest, fewer western sea rocks, fishing hut, lavish gold district, clearer glacier, bandit hideout, poor village, ominous mine and active lava/vents scorching the forest edge. Saved `output/imagegen/ashen-codex-world-map-v5.png` and full prompt; no game integration or release. — done 2026-11-16
+
+- [x] Revised world-map terrain to remove repetitive zigzag/corrugated ridges and blanket texture, using broader organic hills, open plains, softer marsh transitions and selective hatching while retaining cities and landmarks. Saved `output/imagegen/ashen-codex-world-map-v4.png` and full prompt; no game integration or release. — done 2026-11-16
+
+- [x] Applied six owner-annotated world-map revisions: grand northeastern capital, fuller southeastern city, engineered summit stair and temple, varied central terrain, removal of the marked volcanic island and submerged structure. Saved `output/imagegen/ashen-codex-world-map-v3.png` and full prompt; no game integration or release. — done 2026-11-16
+
+- [x] Revised the Ashen Codex world-map art against the owner's current campaign layout: City of Saints in the southeast, connected terrain, additional campaign landmarks and sparse irregular fields replacing the repetitive farm grid. Route-free image and full prompt saved as `output/imagegen/ashen-codex-world-map-v2*`; no game integration or release. — done 2026-11-16
+
+- [x] Expanded ordinary production mastery batches to materials, plank refining, meals, runes, flasks and gem cuts. Mastery 15: 5× output/costs/XP in 2× time; mastery 90: 50× in 10× time. Shared single-craft mastery rate, safe per-gem cost floors, save/load and live/offline parity verified; existing discounted Alchemy batches and paid Copper Supply runs preserved. Typecheck and all test files verified; visual preview unavailable. — done 2026-11-16
+
+- [x] Moved Copper Supply into Mastery Batches, unlocked by Smelt Copper Bars mastery 15; retained costs, output, duration and XP, and reserved Masterworks for multi-profession crafts. Typecheck and relevant tests pass; browser preview unavailable. — done 2026-11-16
+
+- [x] Generated an Ashen Codex world-map illustration covering all six campaign acts, grounded in the act geography; saved the image and generation prompt under `output/imagegen/` for review. Labels and gameplay markers are left out; no game integration or release. — done 2026-11-16
 
 - [x] Completed skilling overhaul Phase 17 (2026-11-15): The Second Heresy (second Forbidden keystone with latest-first refund on removal, load and profile change), Worldheart (30% less damage taken, once) and The Sum of All Things (uniform 1–200% more damage, multiplied once for hits, ailments, minions and totems; one-Divine rerolls; Seal refused) with full multi-mechanic recipes. Doomed bosses give World Core and Doom Key Fragments; ten fragments forge a chosen Uber Key; Fractured Orb and Doomed Map drought guarantees. Also fixed project-made amulets (Borrowed Tomorrow) equipping into the weapon slot. 1,658 tests, typecheck and build pass; UNIQUES regenerated. Browser playtest not run.
 

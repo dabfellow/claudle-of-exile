@@ -10,7 +10,15 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Profession masterworks now have their own dedicated tab on each skill screen instead of appearing at the bottom of every page.',
+  'Woodcutting, Mining, and Foraging activities now display visual percentage drop rates for secondary resources and project fragments on their cards, replacing cycle counters and countdown text.',
+  'Subtle dotted sailing lanes and destination markers at 50% opacity now connect the Sunless Sea harbour, wreck fleet, Brimstone Isle, Leviathan’s Rib and maelstrom on the world map.',
+  'World-map paths now follow the drawn roads and meet at shared forks instead of doubling back on parallel trails, with all land and sailing routes shown at 50% opacity.',
+  'The world map now uses the Ashen Codex illustrated atlas, with campaign paths following its coast, mountains, sea and cities.',
+  'Ordinary production recipes now unlock separate Mastery Batches: 5× crafts at mastery 15 in 2× time, and 50× crafts at mastery 90 in 10× time, with full material costs and the same mastery gain per second as single crafts.',
+  'Skilling minigames now gain +0.01% permanent maximum Focus speed bonus for each mastery level earned across that skill.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

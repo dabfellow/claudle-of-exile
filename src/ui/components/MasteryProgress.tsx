@@ -1,5 +1,6 @@
 import type { MasterySpec } from '../../data/skillingMastery';
 import { materialDef } from '../../data/materials';
+import { ACTIONS } from '../../data/skills';
 import {
   MASTERY_CONSERVE_MAX,
   MASTERY_MAX_LEVEL,
@@ -68,6 +69,16 @@ export function MasteryTip({ s, mastery }: { s: GameState; mastery: MasterySpec 
           </div>
         )}
       </div>
+
+      {ACTIONS.filter((a) => a.batchMastery && a.mastery?.id === mastery.id).map((a) => (
+        <div key={a.id} className="mastery-tip-section">
+          <div className="mastery-tip-heading">Mastery {a.batchMastery} Reward</div>
+          <div className={`mastery-tip-milestone ${level >= a.batchMastery! ? 'unlocked' : 'locked'}`}>
+            <b>{a.name}</b> · {level >= a.batchMastery! ? 'Unlocked' : 'Locked'}
+            <div className="mastery-tip-milestone-desc">Unlocks a {a.batch}× craft in Mastery Batches, with full costs and the single craft’s mastery rate.</div>
+          </div>
+        </div>
+      ))}
 
       {(mastery.milestones?.length ?? 0) > 0 && (
         <div className="mastery-tip-section">

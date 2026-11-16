@@ -11,6 +11,7 @@ import { bagFull } from './storage';
 import { grantXp } from './skills';
 import { isCraftLocked } from './crafting';
 import { levelOf } from './xp';
+import { masteryLevel } from './skillingMastery';
 import { addUniqueMaps } from './maps';
 import { dishStats } from './cooking';
 import { seeUnique } from './account';
@@ -56,6 +57,7 @@ export function settleProfessionProgress(s: GameState, legacy = false): void {
   if (!legacy) return;
   // Preserve evidence as access, never invent completed cycles, XP or fragment rewards.
   for (const a of ACTIONS) {
+    if (a.batchMastery) continue; // These unlock through real mastery, never legacy access evidence.
     // New Woodcutting surveys did not exist in legacy saves; do not invent their access evidence.
     if ((a.skill === 'woodcutting' || a.skill === 'harvesting') && a.accomplishments?.length) continue;
     const place = LEGACY_ACTION_PLACES[a.id];
@@ -120,6 +122,9 @@ export function professionAccessReason(s: GameState, req: ProfessionRequirement)
   if (isClassic(s)) return CLASSIC_BLOCK;
   if (s.fallen) return 'This character has fallen';
   if (levelOf(req.skill, s.skills[req.skill]) < req.level) return `Requires ${req.skill} level ${req.level}`;
+  if (req.masteryRequirement && masteryLevel(s, req.masteryRequirement.id) < req.masteryRequirement.level) {
+    return `Requires ${req.masteryRequirement.name} mastery ${req.masteryRequirement.level}`;
+  }
   const missing = req.accomplishments?.find((id) => !hasAccomplishment(s, id));
   if (missing) {
     const site = SITES.find((x) => missing === `expedition.${x.id}.0`);

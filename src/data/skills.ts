@@ -15,6 +15,7 @@ import { MAP_TIERS } from './maps';
 import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
 import { RUNE_FAMILIES, RUNES } from './runes';
 import { masteryForAction, type MasterySpec } from './skillingMastery';
+import { masteryBatches } from './masteryBatches';
 
 export interface SkillDef {
   id: SkillId;
@@ -79,6 +80,8 @@ export interface SkillAction {
   /** batch recipe: makes this many at once; `batchOf` is the single recipe it scales */
   batch?: number;
   batchOf?: string;
+  /** Mastery reward batch; old discounted Alchemy ×10 recipes are independent. */
+  batchMastery?: number;
   /** cartography: makes `qty` maps, into the shared map supply. An upgrade also uses up maps of the tier below */
   chart?: { tier: number; qty: number; upgrade?: boolean };
   /** listed but can never be started (every Fishing spot) */
@@ -117,7 +120,7 @@ const GATHERING: SkillAction[] = [
   { ...gather('mining', 'mine_storm', 'Storm-struck Vein', 17, 4000, 20, 'iron_ore', '#f2d14c', [{ id: 'metallic_fossil', chance: 0.08, qty: 1 }]), outputChance: ALT_YIELD, area: 'ashwood' },
   { ...gather('mining', 'mine_jagged', 'Jagged Vein', 19, 4000, 22, 'iron_ore', '#c9c9d3', [{ id: 'serrated_fossil', chance: 0.08, qty: 1 }]), outputChance: ALT_YIELD, area: 'ashwood' },
   { ...gather('mining', 'mine_gem', 'Glimmering Geode', 22, 5000, 30, 'rough_gem', '#d0569b'), area: 'crypt' },
-  { ...gather('mining', 'mine_mithril', 'Mithril Vein', 30, 4000, 38, 'mithril_ore', '#6fc3d8', [{ id: 'rough_gem', chance: 0.05, qty: 1 }]), area: 'shipgrave' },
+  { ...gather('mining', 'mine_mithril', 'Mithril Vein', 30, 4000, 38, 'mithril_ore', '#6fc3d8', [{ id: 'rough_gem', chance: 0.05, qty: 1 }, { id: 'mineral_fragment', chance: 0.025, qty: 1 }]), area: 'shipgrave' },
 
   gather('woodcutting', 'cut_ash', 'Ash Tree', 1, 3000, 7, 'ash_log', '#b89a72', [{ id: 'ash_resin', chance: 0.03, qty: 1 }]),
   { ...gather('woodcutting', 'cut_ley', 'Ley-touched Ash', 8, 3500, 10, 'ash_log', '#b9a7ff', [{ id: 'arcane_dust', chance: 1, qty: 1 }, { id: 'ash_resin', chance: 0.04, qty: 1 }]), outputChance: ALT_YIELD },
@@ -481,7 +484,7 @@ export const ACTIONS: SkillAction[] = ALL_AUTHORED_ACTIONS.map(({ area: _area, g
   woodcutting: a.woodcutting ?? (['cut_ash', 'cut_oak', 'cut_yew'].includes(a.id) ? { wood: a.id.slice(4), mode: 'ordinary' as const } : undefined),
   foraging: a.foraging ?? foragingSource(a),
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
-})).map((a) => ({ ...a, mastery: masteryForAction(a) }));
+})).map((a) => ({ ...a, mastery: masteryForAction(a) })).flatMap((a) => [a, ...masteryBatches(a)]);
 
 const BY_ID: Record<string, SkillAction> = Object.fromEntries(ACTIONS.map((a) => [a.id, a]));
 

@@ -5,6 +5,7 @@ import { ACTIONS, actionDef } from '../src/data/skills';
 import { ZONES } from '../src/data/zones';
 import { makeCtx } from '../src/engine/context';
 import { alarmChance, heistStep, roomMs } from '../src/engine/heist';
+import { focusMult, maxFocusSpeed } from '../src/engine/minigame';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded, type Rng } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -16,6 +17,7 @@ import {
   masteryLevel,
   masteryProgress,
   masteryThreshold,
+  totalMasteryLevels,
   unlockedMilestones,
 } from '../src/engine/skillingMastery';
 import { newGame, tick } from '../src/engine/state';
@@ -282,5 +284,47 @@ describe('non-combat action mastery', () => {
     const summary = simulateOffline(away.s, away.ctx, 60_000);
     expect(summary.masteryProcs).toBeDefined();
     expect(Object.keys(summary.masteryProcs!).length).toBeGreaterThan(0);
+  });
+
+  it('increases skilling minigame max focus speed by 0.01% per mastery level in that skill', () => {
+    const s = newGame(1);
+    const copper = actionDef('mine_copper').mastery!;
+    const iron = actionDef('mine_iron').mastery!;
+    const ash = actionDef('cut_ash').mastery!;
+
+    // Initial state: no practice -> max focus speed is baseline 45% (0.45)
+    expect(totalMasteryLevels(s, 'mining')).toBe(0);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.45);
+
+    // Practice > 0 at level 1 adds 1 level (+0.01% -> +0.0001)
+    s.skillingMastery[copper.id] = 10;
+    expect(totalMasteryLevels(s, 'mining')).toBe(1);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.45 + 0.0001);
+
+    // Copper at Level 50 adds 50 levels (+0.50% -> +0.005)
+    s.skillingMastery[copper.id] = masteryThreshold(50);
+    expect(totalMasteryLevels(s, 'mining')).toBe(50);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.45 + 0.005);
+
+    // Copper at Level 100 adds 100 levels (+1.00% -> +0.01)
+    s.skillingMastery[copper.id] = MASTERY_CAP;
+    expect(totalMasteryLevels(s, 'mining')).toBe(100);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.46);
+
+    // Adding Iron at Level 75 adds 75 levels (total 175 levels -> +1.75%)
+    s.skillingMastery[iron.id] = masteryThreshold(75);
+    expect(totalMasteryLevels(s, 'mining')).toBe(175);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.45 + 0.0175);
+
+    // Unrelated skill (woodcutting) masteries don't affect mining minigame
+    s.skillingMastery[ash.id] = MASTERY_CAP;
+    expect(totalMasteryLevels(s, 'mining')).toBe(175);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.45 + 0.0175);
+    expect(totalMasteryLevels(s, 'woodcutting')).toBe(100);
+    expect(maxFocusSpeed(s, 'woodcutting')).toBeCloseTo(0.46);
+
+    // focusMult reflects the increased max speed when focus is full
+    s.action = { kind: 'skill', actionId: 'mine_copper', progress: 0, focus: 1 };
+    expect(focusMult(s)).toBeCloseTo(1 + 0.45 + 0.0175);
   });
 });

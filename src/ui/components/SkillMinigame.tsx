@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { actionDef, SKILLS } from '../../data/skills';
-import { doubleReady, focusMult, focusOf, hasMinigame, minigameSwing, overflowOf, type SwingResult } from '../../engine/minigame';
+import { doubleReady, focusMult, focusOf, hasMinigame, maxFocusSpeed, minigameSwing, overflowOf, type SwingResult } from '../../engine/minigame';
 import type { GameState, SkillId } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { ProgressBar } from './common';
@@ -59,7 +59,12 @@ export function SkillMinigame({ skill }: { skill: SkillId }) {
         <span className={`minigame-double ${doubleReady(s) ? 'ready' : ''}`} title={DOUBLE_HINT}>
           ×2
         </span>
-        <span className="num small">+{Math.round((focusMult(s) - 1) * 100)}% speed</span>
+        <span
+          className="num small"
+          title={`Max focus speed: +${(maxFocusSpeed(s, skill) * 100).toFixed(2).replace(/\.?0+$/, '')}% (+0.01% per mastery level in ${SKILLS[skill].name})`}
+        >
+          +{Math.round((focusMult(s, skill) - 1) * 100)}% speed
+        </span>
         {result && (
           <span key={result.id} className={`minigame-result ${result.r}`}>
             {RESULT_TEXT[result.r]}

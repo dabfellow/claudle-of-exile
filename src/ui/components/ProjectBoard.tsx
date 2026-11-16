@@ -8,6 +8,7 @@ import { affixDef } from '../../data/affixes';
 import { SKILLS } from '../../data/skills';
 import { cancelProject, hasAccomplishment, isEligibleProjectBase, projectPreview, resumeProject, startProject } from '../../engine/professions';
 import { levelOf } from '../../engine/xp';
+import { masteryLevel } from '../../engine/skillingMastery';
 import { describeUniqueModDef } from '../../engine/items';
 import type { GameState, SkillId } from '../../engine/types';
 import { game, useGame } from '../../game';
@@ -221,6 +222,7 @@ function ProjectCard({
   const hasStation = !p.station || stationLvl >= p.station.level;
 
   const hasAcc = !p.accomplishments?.length || p.accomplishments.every((id) => hasAccomplishment(s, id));
+  const hasMastery = !p.masteryRequirement || masteryLevel(s, p.masteryRequirement.id) >= p.masteryRequirement.level;
 
   const completed = s.professionProgress.projects[p.id]?.completed ?? 0;
   const discovered = !!(p.discovery && s.professionProgress.discoveries[p.discovery]);
@@ -229,7 +231,7 @@ function ProjectCard({
   const rarSlotClass = rewardRarity ? `rar-${rewardRarity}` : '';
 
   const isReady = !reason && (p.repeatable ? repeats <= supply : supply >= 1);
-  const isLocked = !hasSkillLvl || !hasStation || !hasAcc;
+  const isLocked = !hasSkillLvl || !hasStation || !hasAcc || !hasMastery;
 
   const desc = cleanProjectDesc(p);
   const mappedSourceLabels = new Set<string>();
@@ -253,6 +255,11 @@ function ProjectCard({
           <div className="project-title-info">
             <div className={`project-card-name ${rarSlotClass}`}>{p.name}</div>
             <div className="project-card-badges">
+              {p.masteryRequirement && (
+                <Badge tone={hasMastery ? 'success' : 'locked'} title={`${p.masteryRequirement.name}: mastery ${masteryLevel(s, p.masteryRequirement.id)}/${p.masteryRequirement.level}`}>
+                  {p.masteryRequirement.name} · Mastery {p.masteryRequirement.level}
+                </Badge>
+              )}
               <Badge tone={hasSkillLvl ? 'success' : 'locked'} title={`Requires ${p.skill} level ${p.level}`}>
                 Lvl {p.level}
               </Badge>
@@ -531,15 +538,25 @@ function ProjectCard({
 }
 
 export function ProjectBoard({ skill, go }: { skill: SkillId; go?: (skill: SkillId) => void }) {
+  return <>
+    <ProjectCategoryBoard skill={skill} go={go} category="masteryBatch" />
+    <ProjectCategoryBoard skill={skill} go={go} />
+  </>;
+}
+
+function ProjectCategoryBoard({ skill, go, category }: { skill: SkillId; go?: (skill: SkillId) => void; category?: 'masteryBatch' }) {
   const s = useGame();
   const [filter, setFilter] = useState<'all' | 'ready' | 'completed'>('all');
 
-  const projects = useMemo(() => PROFESSION_PROJECTS.filter((p) => p.skill === skill), [skill]);
-  const run = s.professionProgress.activeProject;
+  const projects = useMemo(() => PROFESSION_PROJECTS.filter((p) => p.skill === skill && p.category === category), [skill, category]);
+  const activeRun = s.professionProgress.activeProject;
+  // Resolve the category from current data so older saved batches appear on the right board.
+  const runCategory = activeRun && (PROFESSION_PROJECTS.find((p) => p.id === activeRun.project.id) ?? activeRun.project).category;
+  const run = activeRun?.project.skill === skill && runCategory === category ? activeRun : undefined;
 
-  if (!projects.length && run?.project.skill !== skill) return null;
-
-  const theme = professionTheme(skill);
+  const theme = category === 'masteryBatch'
+    ? { title: 'Mastery Batches', singular: 'batch', startLabel: 'Begin batch' }
+    : professionTheme(skill);
   const skillIcon = getSkillIcon(skill);
 
   const readyCount = useMemo(() => {
@@ -571,6 +588,9 @@ export function ProjectBoard({ skill, go }: { skill: SkillId; go?: (skill: Skill
     return projects;
   }, [projects, filter, s]);
 
+  // Keep old paid Copper Supply runs resumable, but new batches use ordinary craft actions.
+  if ((!projects.length || category === 'masteryBatch') && !run) return null;
+
   return (
     <section className="card project-board-section">
       {/* Board Header */}
@@ -583,7 +603,7 @@ export function ProjectBoard({ skill, go }: { skill: SkillId; go?: (skill: Skill
         </div>
 
         <div className="project-board-summary">
-          <Badge tone="neutral">{projects.length} Total Projects</Badge>
+          <Badge tone="neutral">{projects.length} Total {category === 'masteryBatch' ? 'Batches' : 'Projects'}</Badge>
           {readyCount > 0 && <Badge tone="success">{readyCount} Ready to Craft</Badge>}
           {completedCount > 0 && <Badge tone="gold">{completedCount} Completed</Badge>}
         </div>
@@ -593,7 +613,8 @@ export function ProjectBoard({ skill, go }: { skill: SkillId; go?: (skill: Skill
       <div className="project-board-desc-banner">
         <Icon name="book" size={16} style={{ flexShrink: 0, marginTop: 1, color: 'var(--accent)' }} />
         <div>
-          <b>Workbench Rules:</b> Inputs are safely reserved in escrow upon starting. Undertakings occupy your active
+          {category === 'masteryBatch' && <><b>Mastery Reward:</b> Unlock each 5× batch at mastery 15 in its matching craft. </>}
+          <b>Workbench Rules:</b> Inputs are safely reserved in escrow upon starting. Crafts occupy your active
           action slot. Pausing preserves progress; cancelling returns all reserved inputs in full.
         </div>
       </div>
@@ -680,7 +701,7 @@ export function ProjectBoard({ skill, go }: { skill: SkillId; go?: (skill: Skill
 
       {/* Project Cards List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
-        {filteredProjects.map((p) => (
+        {filteredProjects.filter((p) => p.category !== 'masteryBatch').map((p) => (
           <ProjectCard key={p.id} p={p} s={s} go={go} theme={theme} />
         ))}
       </div>

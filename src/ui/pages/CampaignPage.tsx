@@ -4,6 +4,7 @@ import { areaCurrency, bossGatherMats, bossTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ACT_MAPS, smoothPath, WORLD_MAP, type MapPoint } from '../../data/campaignMap';
+import { WORLD_MAP_SIZE, WORLD_ROADS, WORLD_ROAD_NODES, WORLD_SEA_ROUTES, WORLD_SEA_STOPS, worldRoadPath } from '../../data/worldMapRoads';
 import { LABEL_SIDE, labelLines, ZONE_POS } from '../../data/continent';
 import { actBossZone, actOpen, ACTS, bossesNeeded, isSideArea, MECHANIC_INFO, roadsInto, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
 import { FINAL_ACT } from '../../engine/hideout';
@@ -193,17 +194,26 @@ const at = ([x, y]: MapPoint): CSSProperties => ({ left: `${x}%`, top: `${y}%` }
 
 // ---------- level 1: the world ----------
 
-/** Every act on one zoomed-out map, joined by the rough trail the campaign takes. Pick an act to go in. */
+/** Every act on one atlas, with roads traced on the artwork and joined at shared forks. */
 function WorldMap({ s, onOpen }: { s: GameState; onOpen: (act: number) => void }) {
   const cur = currentAct(s);
   const here = s.combat ? ZONE_POS[s.combat.zoneId] : undefined;
   return (
-    <div className="card cmap-card">
+    <div className="card cmap-card cmap-world-scroll">
       <div className="cmap-world" style={{ aspectRatio: WORLD_MAP.aspect }}>
-        {WORLD_MAP.image ? <img className="ct-svg" src={WORLD_MAP.image} alt="" /> : <WorldTerrain isOpen={actOpen} selected={cur} onPick={onOpen} here={here} />}
-        <svg className="cmap-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-          <path className="cmap-trail-under" d={smoothPath(WORLD_MAP.trail)} />
-          <path className="cmap-trail" d={smoothPath(WORLD_MAP.trail)} />
+        {WORLD_MAP.image ? <img className="ct-svg" src={WORLD_MAP.image} alt="Ashen Codex world atlas showing the six campaign regions" /> : <WorldTerrain isOpen={actOpen} selected={cur} onPick={onOpen} here={here} />}
+        <svg className="cmap-overlay" viewBox={`0 0 ${WORLD_MAP_SIZE.join(' ')}`} preserveAspectRatio="none" aria-hidden>
+          <g opacity="0.5">
+          {WORLD_ROADS.map((road, i) => <path key={`under-${i}`} className="cmap-trail-under" d={worldRoadPath(road)} />)}
+          {WORLD_ROADS.map((road, i) => <path key={i} className="cmap-trail" d={worldRoadPath(road)} />)}
+          {WORLD_SEA_ROUTES.map((road, i) => (
+            <g key={`sail-${i}`}>
+              <path className="cmap-trail-under cmap-sailing-under" d={smoothPath([WORLD_ROAD_NODES[road.from], ...road.via, WORLD_ROAD_NODES[road.to]])} />
+              <path className="cmap-trail cmap-sailing" d={smoothPath([WORLD_ROAD_NODES[road.from], ...road.via, WORLD_ROAD_NODES[road.to]])} />
+            </g>
+          ))}
+          {WORLD_SEA_STOPS.map((id) => <circle key={id} className="cmap-sea-stop" cx={WORLD_ROAD_NODES[id][0]} cy={WORLD_ROAD_NODES[id][1]} r="5" />)}
+          </g>
         </svg>
         {ACTS.map((a) => {
           const pos = WORLD_MAP.labels[a.n];

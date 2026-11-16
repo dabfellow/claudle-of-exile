@@ -15,17 +15,18 @@ export interface WoodcuttingSource { wood: string; mode: 'ordinary' | 'resin' | 
 export const WOODCUTTING_ACTIONS: SkillAction[] = [
   ...WOODS.flatMap((w, i): SkillAction[] => {
     const base = { skill: 'woodcutting' as const, level: w.level, color: w.color };
+    const fragmentBonus = i >= 4 ? [{ id: 'heartwood_fragment', chance: 0.025, qty: 1 }] : undefined;
     return [
       ...(i >= 3 ? [{ ...base, id: `cut_${w.id}`, name: `${w.name} Tree`, intervalMs: w.ms, xp: w.xp,
-        outputs: { [`${w.id}_log`]: 1 }, woodcutting: { wood: w.id, mode: 'ordinary' as const } }] : []),
+        outputs: { [`${w.id}_log`]: 1 }, bonus: fragmentBonus, woodcutting: { wood: w.id, mode: 'ordinary' as const } }] : []),
       { ...base, id: `cut_resin_${w.id}`, name: `${w.name} Resin Stand`, intervalMs: w.ms * 1.5, xp: w.xp * 1.5,
-        outputs: {}, woodcutting: { wood: w.id, mode: 'resin' } },
+        outputs: { [`${w.id}_log`]: 1 }, outputChance: 0.5, bonus: [{ id: `${w.id}_resin`, chance: 0.2, qty: 1 }], woodcutting: { wood: w.id, mode: 'resin' } },
       ...(i >= 3 ? [{ ...base, id: `mill_${w.id}`, name: `Cut ${w.name} Planks`, intervalMs: w.ms, xp: [8, 12, 16, 20][i - 3] / 0.3,
         inputs: { [`${w.id}_log`]: 5 }, outputs: { [`${w.id}_plank`]: 1 } }] : []),
     ];
   }),
   { id: 'cut_heartwood', skill: 'woodcutting', name: 'Ancient Heartwood Survey', level: 30, intervalMs: 8000, xp: 40,
-    color: '#c49b60', outputs: {}, woodcutting: { wood: 'yew', mode: 'heartwood' } },
+    color: '#c49b60', outputs: { yew_log: 1 }, outputChance: 0.5, bonus: [{ id: 'heartwood_fragment', chance: 0.04, qty: 1 }], woodcutting: { wood: 'yew', mode: 'heartwood' } },
   { id: 'mill_heartwood', skill: 'woodcutting', name: 'Refine Ancient Heartwood', level: 30, intervalMs: 30000, xp: 100,
     color: '#c49b60', inputs: { heartwood_fragment: 20 }, protectedOutputs: { ancient_heartwood: 1 } },
 ];

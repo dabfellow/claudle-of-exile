@@ -93,11 +93,11 @@ export function inscribeRune(s: GameState, ctx: Ctx, runeId: string, uid: number
 
 export function runecarvingDone(s: GameState, _ctx: Ctx, a: SkillAction): void {
   if (a.skill !== 'runecarving') return;
-  const m = /^carve_rune_([^_]+)_(\d+)$/.exec(a.id);
+  const m = /^carve_rune_([^_]+)_(\d+)$/.exec(a.batchOf ?? a.id);
   if (m) {
     const [, family, grade] = m;
     const key = `rune.${family}.${grade}`;
-    s.professionProgress.counters[key] = (s.professionProgress.counters[key] ?? 0) + 1;
+    s.professionProgress.counters[key] = (s.professionProgress.counters[key] ?? 0) + (a.batchMastery ? a.batch! : 1);
   }
 }
 

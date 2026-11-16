@@ -12,7 +12,6 @@ import { deserialize, serialize } from '../src/engine/save';
 import { simulateOffline } from '../src/engine/offline';
 import { advanceProject, startProject } from '../src/engine/professions';
 import { equip, slotsFor } from '../src/engine/equipment';
-import { miningPreview } from '../src/engine/mining';
 import { seeded } from '../src/engine/rng';
 import { itemName, eligibleAffixes } from '../src/engine/items';
 import { baseDef, obtainable } from '../src/data/bases';
@@ -58,78 +57,69 @@ describe('Phase 02 Mining', () => {
     s.unlockedZones = ['mudflats'];
     expect(actionBlocker(s, actionDef('mine_iron'))).toBeNull();
     expect(actionBlocker(s, actionDef('mine_mithril'))).toBeNull();
-    cycles(s, 'mine_mithril', 60);
+    const c = makeCtx({ next: () => 0.01 });
+    startSkillAction(s, c, 'mine_mithril');
+    skillStep(s, c, 4001, deriveStats(s));
     expect(s.account.bank.mineral_fragment).toBe(1);
   });
 
-  it('rotates all five fossils within 60 zero-luck cycles, preserving partial progress across tiers/reload', () => {
+  it('offers all five fossils via drop chances on fossil deposits', () => {
     let s = newGame(1);
     s.skills.mining = xpForLevel(30);
     s.professionProgress.discoveries.prospect_iron = true;
     s.professionProgress.discoveries.prospect_mithril = true;
-    cycles(s, 'mine_fossil_iron', 11);
-    expect(miningPreview(s, actionDef('mine_fossil_iron')).join(' ')).toContain('Scorched Fossil in 1');
-    s = reload(s);
-    cycles(s, 'mine_fossil_mithril', 49);
-    for (const f of MINING_FOSSILS) expect(s.account.bank[f]).toBe(1);
-    expect(s.account.bank.iron_ore).toBe(5);
-    expect(s.account.bank.mithril_ore).toBe(24);
-    expect(s.account.bank.rough_gem ?? 0).toBe(0);
+
+    const aIron = actionDef('mine_fossil_iron');
+    expect(aIron.outputChance).toBe(0.5);
+    expect(aIron.bonus?.map((b) => b.id)).toEqual(expect.arrayContaining(MINING_FOSSILS));
+
+    const aMith = actionDef('mine_fossil_mithril');
+    expect(aMith.outputChance).toBe(0.5);
+    expect(aMith.bonus?.map((b) => b.id)).toEqual(expect.arrayContaining(MINING_FOSSILS));
+
+    const c = makeCtx({ next: () => 0.01 });
+    startSkillAction(s, c, aIron.id);
+    skillStep(s, c, actionIntervalMs(s, aIron, deriveStats(s)) + 1, deriveStats(s));
+    expect(s.account.bank.iron_ore).toBe(1);
+    expect(MINING_FOSSILS.some((f) => (s.account.bank[f] ?? 0) > 0)).toBe(true);
   });
 
-  it('shares fragment counters across eligible deposits but rich mining grants no fragment progress', () => {
+  it('drops project fragments on eligible deposits while rich mining grants none', () => {
     let s = newGame(1);
     s.skills.mining = xpForLevel(60);
     s.professionProgress.discoveries.prospect_adamant = true;
     s.professionProgress.discoveries.prospect_star = true;
-    cycles(s, 'mine_mithril', 59);
-    cycles(s, 'mine_rich_star', 100);
-    expect(s.account.bank.star_ore).toBe(200);
-    expect(s.account.bank.mineral_fragment ?? 0).toBe(0);
-    expect(s.professionProgress.counters['mining.stone_fragment']).toBeUndefined();
-    cycles(s, 'mine_crystal_adamant', 29);
-    s = reload(s);
-    cycles(s, 'mine_crystal_star', 31, true);
-    expect(s.account.bank.mineral_fragment).toBe(1);
-    expect(s.account.bank.stone_fragment).toBe(1);
-    expect(s.account.bank.crystal_shard).toBe(2);
-    expect(s.account.bank.rough_gem).toBe(61);
-    expect(s.professionProgress.counters['mining.stone_fragment']).toBe(60);
-    expect(s.professionProgress.work.mining).toBe(219);
-  });
 
-  it('rare extras accelerate protected progress without replacing the deterministic threshold', () => {
-    const s = newGame(1);
-    s.skills.mining = xpForLevel(30);
-    cycles(s, 'mine_mithril', 59);
-    const c = makeCtx({ next: () => 0 });
-    if (s.action?.kind === 'skill') s.action.double = true;
-    skillStep(s, c, actionIntervalMs(s, actionDef('mine_mithril'), deriveStats(s)) + 1, deriveStats(s));
-    expect(s.account.bank.mineral_fragment).toBe(2); // one bound + one accelerator, never four
-    expect(s.professionProgress.counters['mining.mineral_fragment']).toBe(60);
+    expect(actionDef('mine_rich_star').bonus).toBeUndefined();
+    expect(actionDef('mine_crystal_star').bonus?.some((b) => b.id === 'mineral_fragment')).toBe(true);
+    expect(actionDef('mine_crystal_star').bonus?.some((b) => b.id === 'stone_fragment')).toBe(true);
+    expect(actionDef('mine_crystal_star').bonus?.some((b) => b.id === 'crystal_shard')).toBe(true);
+
+    cycles(s, 'mine_rich_star', 10);
+    expect(s.account.bank.star_ore).toBe(20);
+    expect(s.account.bank.mineral_fragment ?? 0).toBe(0);
+    expect(s.account.bank.stone_fragment ?? 0).toBe(0);
   });
 
   it.each([
-    ['mine_copper', 1, { copper_ore: 9600 }, {}],
-    ['mine_mithril', 30, { mithril_ore: 7200 }, { mineral_fragment: 120 }],
-    ['mine_crystal_star', 60, { rough_gem: 2400, star_ore: 1200 }, { crystal_shard: 80, mineral_fragment: 40, stone_fragment: 40 }],
-  ] as const)('honors the eight-hour minimum and live/offline parity for %s', (id, level, ordinary, protectedOutput) => {
+    ['mine_copper', 1],
+    ['mine_mithril', 30],
+    ['mine_crystal_star', 60],
+  ] as const)('honors the eight-hour minimum and live/offline parity for %s', (id, level) => {
     const setup = () => {
       const s = newGame(1);
       s.skills.mining = xpForLevel(level);
       s.professionProgress.discoveries.prospect_star = true;
-      expect(startSkillAction(s, zeroLuck(), id)).toBeNull();
+      expect(startSkillAction(s, makeCtx({ next: seeded(42).next }), id)).toBeNull();
       return s;
     };
     const online = setup(), offline = setup();
-    const c = zeroLuck();
+    const c = makeCtx({ next: seeded(42).next });
     for (let i = 0; i < 28800; i++) tick(online, c, 1000);
-    const summary = simulateOffline(offline, zeroLuck(), 28_800_000);
+    const summary = simulateOffline(offline, makeCtx({ next: seeded(42).next }), 28_800_000);
     expect(offline.account.bank).toEqual(online.account.bank);
     expect(offline.professionProgress).toEqual(online.professionProgress);
     expect(offline.skills).toEqual(online.skills);
-    for (const [mat, n] of Object.entries({ ...ordinary, ...protectedOutput })) expect(offline.account.bank[mat]).toBeGreaterThanOrEqual(n!);
-    expect(summary.protectedProgress ?? {}).toEqual(Object.fromEntries(Object.keys(protectedOutput).map((id) => [id, offline.account.bank[id]])));
     expect(summary.stoppedReason).toBeNull();
   }, 30_000);
 

@@ -1,5 +1,6 @@
 import { actionDef } from '../data/skills';
 import type { Ctx } from './context';
+import { totalMasteryLevels } from './skillingMastery';
 import type { GameState, SkillId } from './types';
 
 /**
@@ -86,6 +87,16 @@ function manualAction(s: GameState) {
   return a?.kind === 'skill' && hasMinigame(actionDef(a.actionId).skill) ? a : null;
 }
 
+export function currentMinigameSkill(s: GameState): SkillId | null {
+  const a = s.action;
+  if (a?.kind === 'heist') return 'thieving';
+  if (a?.kind === 'skill') {
+    const sk = actionDef(a.actionId).skill;
+    if (hasMinigame(sk)) return sk;
+  }
+  return null;
+}
+
 export function focusOf(s: GameState): number {
   return Math.min(1, manualAction(s)?.focus ?? 0);
 }
@@ -95,9 +106,19 @@ export function overflowOf(s: GameState): number {
   return Math.max(0, (manualAction(s)?.focus ?? 0) - 1) / FOCUS_OVERFLOW;
 }
 
+/**
+ * Maximum focus speed bonus for the given skill (or current running manual action).
+ * Base is 45% (0.45); each mastery level earned across all things in that skill adds +0.01% (+0.0001).
+ */
+export function maxFocusSpeed(s: GameState, skill?: SkillId | null): number {
+  const targetSkill = skill ?? currentMinigameSkill(s);
+  const masteryBonus = targetSkill ? totalMasteryLevels(s, targetSkill) * 0.0001 : 0;
+  return MAX_FOCUS_SPEED + masteryBonus;
+}
+
 /** Multiplies skilling progress: 1 with no Focus, never lower. */
-export function focusMult(s: GameState): number {
-  return 1 + focusOf(s) * MAX_FOCUS_SPEED;
+export function focusMult(s: GameState, skill?: SkillId | null): number {
+  return 1 + focusOf(s) * maxFocusSpeed(s, skill);
 }
 
 export function minigameSwing(s: GameState, result: SwingResult): void {

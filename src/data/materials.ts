@@ -48,9 +48,9 @@ export const MATERIALS: MaterialDef[] = [
     ['moon_distillate', 'Moon Distillate', 'Two Moon Blooms and ten Frostleaf refined at Alchemy Table 3. Used by Witchglass and The Still Heart projects.'],
     ['star_distillate', 'Star Distillate', 'Two Star Blooms and ten Voidbloom refined at Alchemy Table 3. Used by the Witchglass project.'],
   ] as const).map(([id, name, desc]): MaterialDef => ({ id, name, kind: 'component', color: '#d6b67b', value: 0, desc: `${desc} Protected full-cost refinement; unfinished unique recipes remain unavailable.` })),
-  { id: 'crystal_shard', name: 'Crystal Shard', kind: 'component', color: '#d0569b', value: 0, desc: 'Crystal deposits: one every 30 cycles, plus 1% extra. Gemcutting 60 cuts ten shards and five Rough Gems into one Exceptional Crystal for Winter’s Pyre.' },
-  { id: 'mineral_fragment', name: 'Mineral Fragment', kind: 'component', color: '#6fc3d8', value: 0, desc: 'Mithril+ ordinary/crystal/fossil deposits: one every 60 eligible cycles, plus 1% extra. Saved for future Wound Alloy and project frames.' },
-  { id: 'stone_fragment', name: 'Stone Fragment', kind: 'component', color: '#8ca8c0', value: 0, desc: 'Adamant+ ordinary/crystal/fossil deposits: one every 60 eligible cycles, plus 1% extra. Saved for future Stone Alloy and project frames.' },
+  { id: 'crystal_shard', name: 'Crystal Shard', kind: 'component', color: '#d0569b', value: 0, desc: 'Found from Crystal deposits. Gemcutting 60 cuts ten shards and five Rough Gems into one Exceptional Crystal for Winter’s Pyre.' },
+  { id: 'mineral_fragment', name: 'Mineral Fragment', kind: 'component', color: '#6fc3d8', value: 0, desc: 'Found from Mithril+ deposits. Saved for future Wound Alloy and project frames.' },
+  { id: 'stone_fragment', name: 'Stone Fragment', kind: 'component', color: '#8ca8c0', value: 0, desc: 'Found from Adamant+ deposits. Saved for future Stone Alloy and project frames.' },
 
   { id: 'copper_bar', name: 'Copper Bar', kind: 'component', color: '#c8743f', value: 10, desc: 'Smelted from Copper Ore for hideout construction.' },
   { id: 'iron_bar', name: 'Iron Bar', kind: 'component', color: '#9aa3ad', value: 25, desc: 'Smelted from Iron Ore for hideout construction.' },
@@ -63,7 +63,7 @@ export const MATERIALS: MaterialDef[] = [
     { id: `${w.id}_log`, name: `${w.name} Log`, kind: 'log', color: w.color, value: 0, desc: 'Refine five into one matching plank. Stock for future Smithing bow, staff and defensive components; component recipes not available yet.' },
     { id: `${w.id}_plank`, name: `${w.name} Plank`, kind: 'component', color: w.color, value: 0, desc: 'Refined timber for future Smithing bow, staff and defensive components; component recipes not available yet.' },
   ]),
-  { id: 'heartwood_fragment', name: 'Heartwood Fragment', kind: 'component', color: '#c49b60', value: 0, desc: 'Ancient Heartwood Survey: one every 30 cycles, plus 1% extra. Ancient+ ordinary trees: one every 60 cycles. Refine 20 into Ancient Heartwood; future signature runes also use fragments.' },
+  { id: 'heartwood_fragment', name: 'Heartwood Fragment', kind: 'component', color: '#c49b60', value: 0, desc: 'Found from Ancient Heartwood Surveys and ancient timber. Refine 20 into Ancient Heartwood; future signature runes also use fragments.' },
   { id: 'ancient_heartwood', name: 'Ancient Heartwood', kind: 'component', color: '#c49b60', value: 0, desc: 'Refined from 20 Heartwood Fragments. Smithing makes Heartwood Frames at level 45/Forge 3, or Convergence Frames at level 85/Forge 3. Finished unique recipes remain unavailable.' },
 
   { id: 'ash_plank', name: 'Ash Plank', kind: 'component', color: '#b89a72', value: 10, desc: 'Cut from Ash Logs for hideout construction.' },
@@ -75,8 +75,8 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'frostleaf', name: 'Frostleaf', kind: 'herb', color: '#7fc8f8', value: 5 },
   { id: 'emberroot', name: 'Emberroot', kind: 'herb', color: '#e2603f', value: 10 },
   { id: 'voidbloom', name: 'Voidbloom', kind: 'herb', color: '#9b6dde', value: 20 },
-  { id: 'moon_bloom', name: 'Moon Bloom', kind: 'herb', color: '#b3d7fa', value: 0, desc: 'Moon Bloom Patch: one every 60 cycles plus 1% extra. Greenhouse grows the same material at its background rate. Stock for later distillates, signature meals and binding stock; recipes not yet available.' },
-  { id: 'star_bloom', name: 'Star Bloom', kind: 'herb', color: '#d4a9ff', value: 0, desc: 'Star Bloom Patch: one every 60 cycles plus 1% extra. Greenhouse grows the same material at its background rate. Stock for later distillates, signature meals and feasts; recipes not yet available.' },
+  { id: 'moon_bloom', name: 'Moon Bloom', kind: 'herb', color: '#b3d7fa', value: 0, desc: 'Gathered from Moon Bloom Patches or grown in the Greenhouse. Stock for later distillates, signature meals and binding stock.' },
+  { id: 'star_bloom', name: 'Star Bloom', kind: 'herb', color: '#d4a9ff', value: 0, desc: 'Gathered from Star Bloom Patches or grown in the Greenhouse. Stock for later distillates, signature meals and feasts.' },
 
   // Fishing is coming soon: nothing can catch these yet
   { id: 'mudskipper', name: 'Mudskipper', kind: 'fish', color: '#8a7b5a', value: 2 },

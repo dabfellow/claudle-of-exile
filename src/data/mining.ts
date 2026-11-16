@@ -17,15 +17,49 @@ export interface MiningDeposit {
 
 /** XP here is raw, before skills.ts applies its existing 0.3 scale once. */
 export const MINING_ACTIONS: SkillAction[] = MINING_METALS.slice(1).flatMap((m, index) => {
+  const tier = index + 1; // 1 = iron, 2 = mithril, 3 = adamant, 4 = star, 5 = void, 6 = world
   const base = { skill: 'mining' as const, level: m.level, color: m.color };
+  const fragments = [
+    ...(tier >= 2 ? [{ id: 'mineral_fragment', chance: 0.025, qty: 1 }] : []),
+    ...(tier >= 3 ? [{ id: 'stone_fragment', chance: 0.025, qty: 1 }] : []),
+  ];
   const ordinary: SkillAction[] = index >= 2 ? [{
     ...base, id: `mine_${m.id}`, name: `${m.name} Vein`, intervalMs: m.ms, xp: m.xp,
-    outputs: { [`${m.id}_ore`]: 1 }, mining: { metal: m.id, mode: 'ordinary' },
+    outputs: { [`${m.id}_ore`]: 1 }, bonus: fragments.length ? fragments : undefined, mining: { metal: m.id, mode: 'ordinary' },
   }] : [];
-  return [...ordinary, ...(['rich', 'crystal', 'fossil'] as const).map((mode): SkillAction => ({
-    ...base, id: `mine_${mode}_${m.id}`, name: `${m.name} ${mode === 'rich' ? 'Rich Deposit' : mode === 'crystal' ? 'Crystal Deposit' : 'Fossil Deposit'}`,
-    intervalMs: m.ms * (mode === 'crystal' ? 2 : 1.5), xp: m.xp * (mode === 'crystal' ? 2 : 1.5),
-    outputs: mode === 'rich' ? { [`${m.id}_ore`]: 2 } : mode === 'crystal' ? { rough_gem: 1 } : {},
-    mining: { metal: m.id, mode },
-  }))];
+  return [...ordinary, ...(['rich', 'crystal', 'fossil'] as const).map((mode): SkillAction => {
+    let outputs: Record<string, number> = {};
+    let outputChance: number | undefined = undefined;
+    let bonus: { id: string; chance: number; qty: number }[] | undefined = undefined;
+
+    if (mode === 'rich') {
+      outputs = { [`${m.id}_ore`]: 2 };
+    } else if (mode === 'crystal') {
+      outputs = { rough_gem: 1 };
+      bonus = [
+        { id: `${m.id}_ore`, chance: 0.5, qty: 1 },
+        { id: 'crystal_shard', chance: 0.04, qty: 1 },
+        ...fragments,
+      ];
+    } else if (mode === 'fossil') {
+      outputs = { [`${m.id}_ore`]: 1 };
+      outputChance = 0.5;
+      bonus = [
+        ...MINING_FOSSILS.map((id) => ({ id, chance: 0.0167, qty: 1 })),
+        ...fragments,
+      ];
+    }
+
+    return {
+      ...base,
+      id: `mine_${mode}_${m.id}`,
+      name: `${m.name} ${mode === 'rich' ? 'Rich Deposit' : mode === 'crystal' ? 'Crystal Deposit' : 'Fossil Deposit'}`,
+      intervalMs: m.ms * (mode === 'crystal' ? 2 : 1.5),
+      xp: m.xp * (mode === 'crystal' ? 2 : 1.5),
+      outputs,
+      outputChance,
+      bonus,
+      mining: { metal: m.id, mode },
+    };
+  })];
 });

@@ -14,6 +14,7 @@ import { advanceProject, cancelProject, completeProject, hasAccomplishment, reco
 import { professionStationRoute, stationLockReason, upgradeStation } from '../src/engine/hideout';
 import { deriveStats } from '../src/engine/stats';
 import { xpForLevel } from '../src/engine/xp';
+import { masteryThreshold } from '../src/engine/skillingMastery';
 import { createItem } from '../src/engine/items';
 import { orbReason } from '../src/engine/crafting';
 import { equip } from '../src/engine/equipment';
@@ -30,7 +31,7 @@ const reload = (s: ReturnType<typeof newGame>) => {
   settleCharacter(loaded, loaded.account);
   return loaded;
 };
-const funded = () => { const s = newGame(1); s.account.bank.copper_ore = 100; return s; };
+const funded = () => { const s = newGame(1); s.account.bank.copper_ore = 100; s.skillingMastery['task.smelt_copper'] = masteryThreshold(15); return s; };
 const equipmentProject: ProfessionProject = {
   id: 'test_equipment', version: 1, name: 'Test equipment', skill: 'smithing', level: 1,
   inputs: { copper_ore: 25 }, durationMs: 1000, xp: 12,
@@ -99,6 +100,22 @@ describe('independent profession foundations', () => {
 });
 
 describe('atomic paid project lifecycle', () => {
+  it('unlocks the separate Copper Supply batch only at mastery 15 of its matching craft', () => {
+    const s = funded();
+    s.skills.smithing = xpForLevel(99);
+    s.skillingMastery['task.smelt_iron'] = masteryThreshold(100);
+    s.skillingMastery['task.smelt_copper'] = masteryThreshold(15) - 1;
+    expect(startProject(s, ctx(), 'copper_supply')).toBe('Requires Smelt Copper Bars mastery 15');
+    expect(s.account.bank.copper_ore).toBe(100);
+    s.skillingMastery['task.smelt_copper'] = masteryThreshold(15);
+    s.skills.smithing = 0;
+    expect(startProject(s, ctx(), 'copper_supply')).toBeNull();
+    expect(s.professionProgress.activeProject?.project.category).toBe('masteryBatch');
+    expect(s.professionProgress.activeProject?.escrow).toEqual({ copper_ore: 25 });
+    advanceProject(s, ctx(), 15_000);
+    expect(s.account.bank.copper_bar).toBe(5);
+  });
+
   it('reserves the full nominal cost before work and rejects a second start', () => {
     const s = funded();
     const c = ctx();

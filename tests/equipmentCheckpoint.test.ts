@@ -361,7 +361,8 @@ describe('Phase 05 Equipment Checkpoint', () => {
       expect(away.skills[skill]).toBeGreaterThanOrEqual(minXp);
       if (fragmentId && minFragments) {
         expect(away.account.bank[fragmentId]).toBeGreaterThanOrEqual(minFragments);
-        expect(offlineSummary.protectedProgress?.[fragmentId]).toBeGreaterThanOrEqual(minFragments);
+        const recorded = offlineSummary.protectedProgress?.[fragmentId] ?? offlineSummary.ordinaryOutput?.[fragmentId];
+        expect(recorded).toBeGreaterThanOrEqual(minFragments);
       }
 
       // Return summary accurately records gross output and XP

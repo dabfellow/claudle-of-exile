@@ -13,16 +13,22 @@ import { deserialize, serialize } from '../src/engine/save';
 import { simulateOffline } from '../src/engine/offline';
 import { advanceProject, startProject } from '../src/engine/professions';
 import { equip } from '../src/engine/equipment';
-import { woodcuttingPreview } from '../src/engine/woodcutting';
+import { seeded } from '../src/engine/rng';
 import type { GameState } from '../src/engine/types';
 
 const zeroLuck = () => makeCtx({ next: () => 0.999999 });
+const maxLuck = () => makeCtx({ next: () => 0.000001 });
 function cycles(s: GameState, id: string, n: number, double = false) {
   const c = zeroLuck(), a = actionDef(id);
   expect(startSkillAction(s, c, id)).toBeNull();
   if (s.action?.kind === 'skill') s.action.double = double;
   for (let i = 0; i < n; i++) skillStep(s, c, actionIntervalMs(s, a, deriveStats(s)) - (s.action?.kind === 'skill' ? s.action.progress : 0) + 0.00001, deriveStats(s));
   return c;
+}
+function cyclesWith(s: GameState, c: ReturnType<typeof makeCtx>, id: string, n: number) {
+  const a = actionDef(id);
+  expect(startSkillAction(s, c, id)).toBeNull();
+  for (let i = 0; i < n; i++) skillStep(s, c, actionIntervalMs(s, a, deriveStats(s)) - (s.action?.kind === 'skill' ? s.action.progress : 0) + 0.00001, deriveStats(s));
 }
 const reload = (s: GameState) => { const account = structuredClone(s.account); s = deserialize(serialize(s)); s.account = account; return s; };
 
@@ -39,18 +45,27 @@ describe('Phase 03 Woodcutting', () => {
     expect(s.bossesDefeated).toEqual([]);
   });
 
-  it.each(WOODS)('guarantees $name resin every five cycles, logs every two and separately selected refinement', (w) => {
+  it.each(WOODS)('drops $name resin and logs via percentage chances and separately selected refinement', (w) => {
     let s = newGame(1);
     s.skills.woodcutting = xpForLevel(w.level);
     s.professionProgress.discoveries[`wood_${w.id}_survey`] = true;
+    const a = actionDef(`cut_resin_${w.id}`);
+    expect(a.outputChance).toBe(0.5);
+    expect(a.bonus).toEqual([{ id: `${w.id}_resin`, chance: 0.2, qty: 1 }]);
+
+    // With zero luck, chance rolls do not trigger
     cycles(s, `cut_resin_${w.id}`, 4);
     expect(s.account.bank[`${w.id}_resin`] ?? 0).toBe(0);
+    expect(s.account.bank[`${w.id}_log`] ?? 0).toBe(0);
+
+    // With lucky roll, both drop
     s = reload(s);
-    cycles(s, `cut_resin_${w.id}`, 6);
-    expect(s.account.bank[`${w.id}_resin`]).toBe(2);
-    expect(s.account.bank[`${w.id}_log`]).toBe(5);
-    expect(s.professionProgress.counters[`wood.survey.${w.id}`]).toBeUndefined();
-    expect(s.account.bank.heartwood_fragment ?? 0).toBe(0);
+    s.action = null;
+    cyclesWith(s, makeCtx({ next: () => 0.1 }), a.id, 1);
+    expect(s.account.bank[`${w.id}_resin`]).toBe(1);
+    expect(s.account.bank[`${w.id}_log`]).toBe(1);
+
+    s.account.bank[`${w.id}_log`] = 5;
     cycles(s, `mill_${w.id}`, 1);
     expect(s.account.bank[`${w.id}_plank`]).toBe(1);
     expect(s.account.bank[`${w.id}_log`]).toBe(0);
@@ -58,17 +73,15 @@ describe('Phase 03 Woodcutting', () => {
     expect(s.action).toBeNull();
   });
 
-  it('bounds one heartwood by 600 survey cycles + one refinement with protected full costs', () => {
+  it('bounds one heartwood by refinement with protected full costs', () => {
     let s = newGame(1);
     s.skills.woodcutting = xpForLevel(30);
     expect(actionBlocker(s, actionDef('cut_heartwood'))).toBeNull();
-    cycles(s, 'cut_heartwood', 29);
-    expect(woodcuttingPreview(s, actionDef('cut_heartwood')).join(' ')).toContain('next in 1');
-    s = reload(s);
-    cycles(s, 'cut_heartwood', 571, true);
-    expect(s.account.bank.heartwood_fragment).toBe(20);
-    expect(s.professionProgress.counters['wood.heartwood.survey']).toBe(600);
-    expect(s.account.bank.ancient_heartwood ?? 0).toBe(0);
+    const a = actionDef('cut_heartwood');
+    expect(a.outputChance).toBe(0.5);
+    expect(a.bonus).toEqual([{ id: 'heartwood_fragment', chance: 0.04, qty: 1 }]);
+
+    s.account.bank.heartwood_fragment = 20;
     // Even maximum ordinary conservation/manual output must not create free protected refinements.
     s.skillingMastery['task.mill_heartwood'] = 432000;
     s.skillPassives.push('core_steady');
@@ -86,49 +99,48 @@ describe('Phase 03 Woodcutting', () => {
     expect(s.account.bank.ancient_heartwood).toBe(2);
   });
 
-  it('shares incidental progress across ancient timber/reload but keeps the faster survey counter separate', () => {
+  it('drops heartwood fragments from survey and high tier timber', () => {
     let s = newGame(1);
     s.skills.woodcutting = xpForLevel(90);
     s.professionProgress.work.woodcutting = 100;
     for (const w of WOODS) s.professionProgress.discoveries[`wood_${w.id}_survey`] = true;
-    cycles(s, 'cut_ancient', 59);
-    cycles(s, 'cut_heartwood', 29);
-    cycles(s, 'cut_resin_worldwood', 100);
-    expect(s.account.bank.heartwood_fragment ?? 0).toBe(0);
-    s = reload(s);
-    cycles(s, 'cut_spirit', 1, true);
+
+    expect(actionDef('cut_heartwood').bonus).toEqual([{ id: 'heartwood_fragment', chance: 0.04, qty: 1 }]);
+    expect(actionDef('cut_ancient').bonus).toEqual([{ id: 'heartwood_fragment', chance: 0.025, qty: 1 }]);
+    expect(actionDef('cut_spirit').bonus).toEqual([{ id: 'heartwood_fragment', chance: 0.025, qty: 1 }]);
+    expect(actionDef('cut_worldwood').bonus).toEqual([{ id: 'heartwood_fragment', chance: 0.025, qty: 1 }]);
+
+    const cLucky = maxLuck();
+    startSkillAction(s, cLucky, 'cut_heartwood');
+    skillStep(s, cLucky, 8001, deriveStats(s));
     expect(s.account.bank.heartwood_fragment).toBe(1);
-    cycles(s, 'cut_heartwood', 1, true);
+
+    startSkillAction(s, cLucky, 'cut_ancient');
+    skillStep(s, cLucky, 6001, deriveStats(s));
     expect(s.account.bank.heartwood_fragment).toBe(2);
-    const c = makeCtx({ next: () => 0 });
-    s.professionProgress.counters['wood.heartwood.survey'] = 59;
-    skillStep(s, c, 8001, deriveStats(s));
-    expect(s.account.bank.heartwood_fragment).toBe(4); // one threshold + one optional extra
   });
 
   it.each([
-    ['cut_ash', 1, { ash_log: 9600 }, {}],
-    ['cut_resin_oak', 15, { oak_log: 2742, oak_resin: 1097 }, {}],
-    ['cut_heartwood', 30, { yew_log: 1800 }, { heartwood_fragment: 120 }],
-    ['cut_ancient', 60, { ancient_log: 4800 }, { heartwood_fragment: 80 }],
-  ] as const)('matches actual eight-hour live/offline output for %s', (id, level, ordinary, protectedOutput) => {
+    ['cut_ash', 1],
+    ['cut_resin_oak', 15],
+    ['cut_heartwood', 30],
+    ['cut_ancient', 60],
+  ] as const)('matches actual eight-hour live/offline output for %s', (id, level) => {
     const setup = () => {
       const s = newGame(1);
       s.skills.woodcutting = xpForLevel(level);
       s.professionProgress.work.woodcutting = 100;
       s.professionProgress.discoveries.wood_ancient_survey = true;
-      expect(startSkillAction(s, zeroLuck(), id)).toBeNull();
+      expect(startSkillAction(s, makeCtx({ next: seeded(42).next }), id)).toBeNull();
       return s;
     };
     const online = setup(), offline = setup();
-    const c = zeroLuck();
+    const c = makeCtx({ next: seeded(42).next });
     for (let i = 0; i < 28800; i++) tick(online, c, 1000);
-    const summary = simulateOffline(offline, zeroLuck(), 28_800_000);
+    const summary = simulateOffline(offline, makeCtx({ next: seeded(42).next }), 28_800_000);
     expect(offline.account.bank).toEqual(online.account.bank);
     expect(offline.skills).toEqual(online.skills);
     expect(offline.professionProgress).toEqual(online.professionProgress);
-    for (const [mat, n] of Object.entries({ ...ordinary, ...protectedOutput })) expect(offline.account.bank[mat]).toBeGreaterThanOrEqual(n!);
-    expect(summary.protectedProgress ?? {}).toEqual(Object.fromEntries(Object.keys(protectedOutput).map((id) => [id, offline.account.bank[id]])));
     expect(summary.stoppedReason).toBeNull();
   }, 30_000);
 
@@ -147,7 +159,9 @@ describe('Phase 03 Woodcutting', () => {
     expect(actionBlocker(s, actionDef('cut_yew'))).toBeNull();
     expect(actionBlocker(s, actionDef('cut_ironwood'))).toBeNull();
     expect(s.account.bank.heartwood_fragment ?? 0).toBe(0);
-    cycles(s, 'cut_heartwood', 30);
+    const c = maxLuck();
+    startSkillAction(s, c, 'cut_heartwood');
+    skillStep(s, c, 8001, deriveStats(s));
     expect(s.account.bank.heartwood_fragment).toBe(1);
   });
 
@@ -182,8 +196,7 @@ describe('Phase 03 Woodcutting', () => {
     s.skills.smithing = xpForLevel(15);
     for (const w of WOODS) s.professionProgress.discoveries[`wood_${w.id}_survey`] = true;
     for (const r of RESINS) {
-      const wood = r.id.replace('_resin', '');
-      cycles(s, `cut_resin_${wood}`, 5);
+      s.account.bank[r.id] = 1;
       s.account.bank.copper_ore = 100;
       s.account.bank.ash_log = 100;
       setSmithCatalyst(s, { resin: r.id });

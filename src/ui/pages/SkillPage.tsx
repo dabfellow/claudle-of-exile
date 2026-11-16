@@ -17,8 +17,9 @@ import { actionBlocker, actionIntervalMs, actionPlaceNeeded, gemCutPool, resinBo
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
 import { ProjectBoard } from '../components/ProjectBoard';
+import { PROFESSION_PROJECTS } from '../../data/professionProjects';
 import { weaponComponentPreview } from '../../engine/weaponProjects';
-import { hasAccomplishment } from '../../engine/professions';
+import { hasAccomplishment, professionAccessReason } from '../../engine/professions';
 import type { GameState } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
@@ -32,6 +33,8 @@ import { SkillMinigame } from '../components/SkillMinigame';
 import { Icon, Orb, Swatch } from '../components/Icon';
 import { MasteryProgress } from '../components/MasteryProgress';
 import { skillLock } from '../skillLock';
+import { masteryLevel } from '../../engine/skillingMastery';
+import { MASTERY_BATCH_TIERS } from '../../data/masteryBatches';
 import { miningAccessHint, miningPreview } from '../../engine/mining';
 import { woodcuttingAccessHint, woodcuttingPreview } from '../../engine/woodcutting';
 import { smithingPreview } from '../../engine/smithing';
@@ -91,14 +94,8 @@ function gemOutputText(s: GameState, gem: NonNullable<SkillAction['gem']>): stri
 
 /** What an activity produces, as rows that line up with the ingredient list. */
 function OutputRows({ s, a }: { s: GameState; a: SkillAction }) {
-  const wood = a.woodcutting;
-  const periodic: [string, string][] = wood && wood.mode !== 'ordinary' ? [
-    [`${wood.wood}_log`, '×1 every 2 completions'],
-    ...(wood.mode === 'resin' ? [[`${wood.wood}_resin`, '×1 every 5 completions'] as [string, string]] : [['heartwood_fragment', '×1 every 30 completions; 1% extra'] as [string, string]]),
-  ] : wood && ['ancient', 'spirit', 'worldwood'].includes(wood.wood) ? [['heartwood_fragment', '×1 every 60 completions; 1% extra']] : [];
   return (
     <ul className="ingredients outputs">
-      {periodic.map(([id, text]) => <li key={id}><MatIcon id={id} size={12} /><span className="ing-name">{materialDef(id).name}</span><span className="ing-qty num">{text}</span></li>)}
       {Object.entries(a.protectedOutputs ?? {}).map(([id, n]) => <li key={id}><MatIcon id={id} size={12} /><span className="ing-name">{materialDef(id).name}</span><span className="ing-qty num">×{n} · protected</span></li>)}
       {Object.entries(a.outputs ?? {}).map(([id, n]) => (
         <li key={id}>
@@ -118,14 +115,14 @@ function OutputRows({ s, a }: { s: GameState; a: SkillAction }) {
         <li>
           <Orb color={flaskDef(a.flaskId).color} size={11} />
           <span className="ing-name">{flaskDef(a.flaskId).name}</span>
-          <span className="ing-qty num">×1</span>
+          <span className="ing-qty num">×{a.batchMastery ? a.batch : 1}</span>
         </li>
       )}
       {a.gem && (
         <li>
           <GameIcon name="gemcutting" size={13} color={a.color} />
           <span className="ing-name">{gemOutputText(s, a.gem)}</span>
-          <span className="ing-qty num">×1</span>
+          <span className="ing-qty num">×{a.batchMastery ? a.batch : 1}</span>
         </li>
       )}
       {a.chart && (
@@ -135,13 +132,17 @@ function OutputRows({ s, a }: { s: GameState; a: SkillAction }) {
           <span className="ing-qty num">×{a.chart.qty}</span>
         </li>
       )}
-      {a.bonus?.map((b) => (
-        <li key={b.id} className="bonus">
-          <MatIcon id={b.id} size={12} />
-          <span className="ing-name">{materialDef(b.id).name}</span>
-          <span className="ing-qty num">{b.chance < 0.01 ? `${+(b.chance * 100).toFixed(1)}%` : `${Math.round(b.chance * 100)}%`} chance</span>
-        </li>
-      ))}
+      {a.bonus?.map((b) => {
+        const pct = +(b.chance * 100).toFixed(1);
+        const text = pct % 1 === 0 ? `${Math.round(pct)}% chance` : `${pct}% chance`;
+        return (
+          <li key={b.id} className="bonus">
+            <MatIcon id={b.id} size={12} />
+            <span className="ing-name">{materialDef(b.id).name}</span>
+            <span className="ing-qty num">{text}</span>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -167,7 +168,8 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
   const place = actionPlaceNeeded(s, a);
   const areaLocked = !!place;
   const prospect = s.professionProgress.legacyAccess[a.id] ? null : miningAccessHint(s, a) ?? woodcuttingAccessHint(s, a) ?? foragingAccessHint(s, a);
-  const locked = !!a.soon || level < a.level || areaLocked || !!prospect;
+  const masteryLocked = !!a.batchMastery && masteryLevel(s, a.mastery!.id) < a.batchMastery;
+  const locked = !!a.soon || level < a.level || areaLocked || !!prospect || masteryLocked;
   const interval = actionIntervalMs(s, a, d);
   const blocker = actionBlocker(s, a);
   const [pops, setPops] = useState<{ id: number; text: string }[]>([]);
@@ -187,7 +189,7 @@ function ActionCard({ a, level, open, onToggle }: { a: SkillAction; level: numbe
   useGameEvent(onEvent);
 
   const missing = blocker === 'Missing materials';
-  const lockText = a.soon ? 'Coming soon' : place ? `Reach ${place}` : level < a.level ? `Lv ${a.level}` : prospect ?? `Lv ${a.level}`;
+  const lockText = a.soon ? 'Coming soon' : place ? `Reach ${place}` : level < a.level ? `Lv ${a.level}` : masteryLocked ? `Mastery ${a.batchMastery} required` : prospect ?? `Lv ${a.level}`;
 
   return (
     <div
@@ -504,15 +506,26 @@ const HARVESTING_TABS: { id: string; label: string }[] = [
 ];
 
 function getSkillTabs(skill: SkillId): { id: string; label: string }[] | null {
-  if (skill === 'smithing') return SMITH_TABS;
-  if (skill === 'thieving') return THIEVING_TABS;
-  if (skill === 'archaeology') return ARCHAEOLOGY_TABS;
-  if (skill === 'alchemy') return ALCHEMY_TABS;
-  if (skill === 'cooking') return COOKING_TABS;
-  if (skill === 'gemcutting') return GEMCUTTING_TABS;
-  if (skill === 'runecarving') return RUNECARVING_TABS;
-  if (skill === 'harvesting') return HARVESTING_TABS;
-  return null;
+  let baseTabs: { id: string; label: string }[] | null = null;
+  if (skill === 'smithing') baseTabs = SMITH_TABS;
+  else if (skill === 'thieving') baseTabs = THIEVING_TABS;
+  else if (skill === 'archaeology') baseTabs = ARCHAEOLOGY_TABS;
+  else if (skill === 'alchemy') baseTabs = ALCHEMY_TABS;
+  else if (skill === 'cooking') baseTabs = COOKING_TABS;
+  else if (skill === 'gemcutting') baseTabs = GEMCUTTING_TABS;
+  else if (skill === 'runecarving') baseTabs = RUNECARVING_TABS;
+  else if (skill === 'harvesting') baseTabs = HARVESTING_TABS;
+  else if (skill === 'cartography') baseTabs = [{ id: 'charts', label: 'Map Case' }];
+  else if (skill === 'mining') baseTabs = [{ id: 'all', label: 'Mining' }];
+  else if (skill === 'woodcutting') baseTabs = [{ id: 'all', label: 'Woodcutting' }];
+
+  const hasProjects = PROFESSION_PROJECTS.some((p) => p.skill === skill && p.category !== 'masteryBatch');
+  if (!baseTabs && !hasProjects) return null;
+  const list = baseTabs ? [...baseTabs] : [];
+  if (hasProjects) {
+    list.push({ id: 'masterworks', label: 'Masterworks' });
+  }
+  return list;
 }
 
 function defaultSkillTab(skill: SkillId): string {
@@ -520,6 +533,7 @@ function defaultSkillTab(skill: SkillId): string {
   if (skill === 'thieving') return 'marks';
   if (skill === 'archaeology') return 'sites';
   if (skill === 'harvesting') return 'forage';
+  if (skill === 'cartography') return 'charts';
   return 'all';
 }
 
@@ -634,11 +648,14 @@ export function SkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId)
 function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) => void }) {
   const s = useGame();
   const level = skillLevel(s, skill);
-  const actions = actionsFor(skill);
+  const allActions = actionsFor(skill);
+  const actions = allActions.filter((a) => !a.batchMastery);
+  const batches = allActions.filter((a) => a.batchMastery);
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [onlyUnlocked, setOnlyUnlocked] = useState(false);
   const [skillTabs, setSkillTabs] = useState<Record<string, string>>({});
-  const tab = skillTabs[skill] ?? defaultSkillTab(skill);
+  const activeSkillProject = s.professionProgress.activeProject?.project.skill === skill && s.professionProgress.activeProject?.project.category !== 'masteryBatch';
+  const tab = skillTabs[skill] ?? (activeSkillProject ? 'masterworks' : defaultSkillTab(skill));
   const setTab = (t: string) => setSkillTabs((prev) => ({ ...prev, [skill]: t }));
   const [purpose, setPurpose] = useState('bases');
   // tier groups the player opened or closed; untouched ones follow tierOpenByDefault
@@ -686,7 +703,9 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
     });
 
   const showActivities =
+    tab !== 'masterworks' &&
     skill !== 'archaeology' &&
+    skill !== 'cartography' &&
     !(skill === 'thieving' && tab !== 'marks') &&
     !(skill === 'harvesting' && tab === 'greenhouse');
 
@@ -699,7 +718,13 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
         <div className="smith-tabs" style={{ marginTop: 8 }}>
           {tabs.map((x) => {
             let countText = '';
-            if (skill === 'smithing') {
+            let isActiveProject = false;
+            if (x.id === 'masterworks') {
+              const projects = PROFESSION_PROJECTS.filter((p) => p.skill === skill && p.category !== 'masteryBatch');
+              const unlockedProjects = projects.filter((p) => !professionAccessReason(s, p)).length;
+              countText = `${unlockedProjects}/${projects.length}`;
+              isActiveProject = s.professionProgress.activeProject?.project.skill === skill && s.professionProgress.activeProject?.project.category !== 'masteryBatch';
+            } else if (skill === 'smithing') {
               const list = selectedActions.filter((a) => smithTab(a) === x.id);
               countText = `${list.filter(isUnlocked).length}/${list.length}`;
             } else if (skill === 'thieving') {
@@ -717,6 +742,10 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
                   : selectedActions.filter((a) => runecarvingCategory(a) === x.id);
                 countText = `${list.filter(isUnlocked).length}/${list.length}`;
               }
+            } else if (skill === 'mining' || skill === 'woodcutting') {
+              if (x.id === 'all') {
+                countText = `${selectedActions.filter(isUnlocked).length}/${selectedActions.length}`;
+              }
             }
             return (
               <button
@@ -727,6 +756,20 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
               >
                 {x.label}
                 {countText && <span className="dim num" style={{ marginLeft: 5 }}>{countText}</span>}
+                {isActiveProject && (
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: 'var(--gold)',
+                      marginLeft: 6,
+                      verticalAlign: 'middle',
+                    }}
+                    title="Active project running"
+                  />
+                )}
               </button>
             );
           })}
@@ -810,10 +853,10 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
       {skill === 'thieving' && tab === 'heists' && <HeistBoard view="jobs" />}
       {skill === 'thieving' && tab === 'crew' && <HeistBoard view="crew" />}
 
-      {skill === 'archaeology' && <ExpeditionBoard view={tab as 'sites' | 'merchants'} />}
-      {skill === 'runecarving' && <RuneBoard />}
-      {skill === 'cooking' && <PantryBoard />}
-      {skill === 'cartography' && <MapCaseBoard />}
+      {skill === 'archaeology' && tab !== 'masterworks' && <ExpeditionBoard view={tab as 'sites' | 'merchants'} />}
+      {skill === 'runecarving' && tab !== 'masterworks' && <RuneBoard />}
+      {skill === 'cooking' && tab !== 'masterworks' && <PantryBoard />}
+      {skill === 'cartography' && tab !== 'masterworks' && <MapCaseBoard />}
       {skill === 'fishing' && (
         <div className="callout skill-note">
           Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.
@@ -872,7 +915,23 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
         </section>
       )}
 
-      <ProjectBoard skill={skill} go={go} />
+      {tab === 'masterworks' && <ProjectBoard skill={skill} go={go} />}
+      {tab !== 'masterworks' && batches.length > 0 && (
+        <section className="card">
+          <h3>Mastery Batches</h3>
+          <p className="dim small">Full material costs and outputs. Each batch shares its single craft’s mastery and earns practice at the same rate per second.</p>
+          {MASTERY_BATCH_TIERS.map((tier) => (
+            <details key={tier.mastery} open={tier.mastery === 15}>
+              <summary>Mastery {tier.mastery} · {tier.size}× crafts · {tier.time}× time · {tier.size / tier.time}× speed</summary>
+              <div className="action-grid">
+                {batches.filter((a) => a.batchMastery === tier.mastery && (!onlyUnlocked || (isUnlocked(a) && masteryLevel(s, a.mastery!.id) >= tier.mastery))).map((a) => (
+                  <ActionCard key={a.id} a={a} level={level} open={open.has(a.id)} onToggle={() => toggle(a.id)} />
+                ))}
+              </div>
+            </details>
+          ))}
+        </section>
+      )}
     </div>
   );
 }

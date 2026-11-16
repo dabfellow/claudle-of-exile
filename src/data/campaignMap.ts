@@ -1,15 +1,15 @@
 /**
- * Where things sit on the Campaign page's maps. This is the one file to edit to move a line or a label so it
- * fits the art.
+ * Where labels and act areas sit on the Campaign page's maps. World-road traces live in worldMapRoads.ts.
  *
- * Every point is [x, y] in percent of its picture: [0, 0] is the top-left corner, [100, 100] the bottom-right.
+ * Labels and act close-up points use percentages. World roads are traced in original image pixels
+ * in worldMapRoads.ts so that their shared forks sit precisely on the painting.
  *
- * - WORLD_MAP is the zoomed-out map of every act: where each act's name sits and the rough trail between them.
+ * - WORLD_MAP is the zoomed-out map of every act: the painting and each act's name.
  * - ACT_MAPS has one close-up per act: where each area sits, the bends in each road between two areas
  *   (keyed 'from>to', drawn as a smooth curve through the bends), and where roads from the act before come in.
  *
- * There's no painted top-down map art in the asset packs yet, so the pictures are drawn by the game from the
- * continent outline in data/continent.ts. To use a painting instead, drop the file in src/assets/maps/, set
+ * The world uses the Ashen Codex painting; act close-ups are drawn from data/continent.ts.
+ * To use a painting for a close-up, drop the file in src/assets/maps/, set
  * `image` (as in the example below) and set `aspect` to the picture's width ÷ height, then nudge the points
  * here until the line follows the roads in the picture:
  *   image: new URL('../assets/maps/act1.webp', import.meta.url).href,
@@ -24,8 +24,6 @@ export interface WorldMapData {
   image?: string;
   /** where each act's name sits */
   labels: Record<number, MapPoint>;
-  /** the rough trail the campaign takes, start to finish */
-  trail: MapPoint[];
 }
 
 export interface ActMapData {
@@ -42,31 +40,16 @@ export interface ActMapData {
 }
 
 export const WORLD_MAP: WorldMapData = {
-  aspect: 1000 / 640,
+  aspect: 1536 / 1024,
+  image: new URL('../assets/maps/ashen-codex-world.webp', import.meta.url).href,
   labels: {
-    1: [18.5, 73.4],
-    2: [44.5, 53.9],
-    3: [70, 82],
-    4: [45.5, 23.4],
-    5: [73, 50],
-    6: [74.5, 8.6],
+    1: [13, 51],
+    2: [31, 39],
+    3: [78, 93],
+    4: [34, 9],
+    5: [72, 44],
+    6: [85, 5],
   },
-  trail: [
-    // Act 1: up the coast from the Mud Flats to the Drowned Sanctum
-    [19, 82.8], [13, 51.6], [26.5, 35.9],
-    // Act 2: across the steppe to the Burning Throne
-    [34, 46.9], [45, 59.4], [54, 73.4],
-    // Act 3: through the city to the High Altar
-    [53, 85.9], [65, 85.2], [80, 76.6],
-    // the long road north to the peaks
-    [58, 52], [36, 38],
-    // Act 4: up the range to the Giant's Throne
-    [31.8, 29.7], [44.5, 19.5], [50.5, 9.7],
-    // Act 5: down to the harbour and round the sea to the Maelstrom
-    [60, 37.5], [71.7, 57], [67, 50.8],
-    // Act 6: in by the Exile's Gate, up to the Shattered Throne
-    [65.5, 26.9], [76.5, 22.7], [89, 17.2],
-  ],
 };
 
 export const ACT_MAPS: Record<number, ActMapData> = {

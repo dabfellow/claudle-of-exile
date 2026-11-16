@@ -1,9 +1,8 @@
 import { foragingSource, seedId } from '../data/foraging';
 import { actionsFor, type SkillAction } from '../data/skills';
-import { materialDef } from '../data/materials';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
 import type { Ctx } from './context';
-import { awardProtectedProgress, recordDiscovery } from './professions';
+import { recordDiscovery } from './professions';
 import { chance } from './rng';
 import { skillTreeStats } from './skillTree';
 import { levelOf } from './xp';
@@ -18,17 +17,6 @@ export function foragingDone(s: GameState, ctx: Ctx, a: SkillAction, foreground:
     const key = `foraging.seed.${source.plant}`;
     c[key] = (c[key] ?? 0) + 1;
     if (!s.professionProgress.discoveries[seedId(source.plant)] && (c[key] >= 100 || (foreground && chance(ctx.rng, 0.01)))) recordDiscovery(s, ctx, seedId(source.plant));
-  }
-  if (source.essences) {
-    const key = `foraging.essence.${a.id}`;
-    const n = c[key] = (c[key] ?? 0) + 1;
-    if (n % 12 === 0) awardProtectedProgress(s, ctx, source.essences[(n / 12 - 1) % source.essences.length], 1);
-  }
-  if (source.mode === 'bloom') {
-    const key = `foraging.bloom.${source.plant}`;
-    const n = c[key] = (c[key] ?? 0) + 1;
-    const qty = (n % 60 === 0 ? 1 : 0) + (chance(ctx.rng, 0.01) ? 1 : 0);
-    if (qty) awardProtectedProgress(s, ctx, source.plant, qty);
   }
 }
 
@@ -57,16 +45,8 @@ export function plantGreenhouse(s: GameState, actionId: string): string | null {
   return null;
 }
 
-export function foragingPreview(s: GameState, a: SkillAction): string[] {
-  const source = foragingSource(a);
-  if (!source) return [];
-  const c = s.professionProgress.counters;
-  const left = (key: string, n: number) => n - ((c[key] ?? 0) % n);
-  const lines: string[] = [];
-  if (source.mode === 'abundant') lines.push('Herb supply: 2 herbs in 1.5× ordinary time. No essence, bloom or seed progress.');
-  if (source.essences) lines.push(`Guaranteed essence every 12 cycles (next in ${left(`foraging.essence.${a.id}`, 12)}): ${source.essences.map((id) => materialDef(id).name).join(' / ')}${source.essences.length > 1 ? ', alternating' : ''}.`);
-  if (source.mode === 'bloom') lines.push(`One ${materialDef(source.plant).name} every 60 cycles (next in ${left(`foraging.bloom.${source.plant}`, 60)}), plus 1% extra per cycle.`);
-  return lines;
+export function foragingPreview(_s: GameState, _a: SkillAction): string[] {
+  return [];
 }
 
 /** Phase-47 saves predate seed choices too; run once without resetting plant or progress. */

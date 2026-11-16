@@ -68,7 +68,7 @@ describe('the skill', () => {
     const s = veteran(newGame(1));
     s.skills.cooking = xpForLevel(65);
     expect(cookingOpen(s)).toBe(true);
-    for (const a of actionsFor('cooking')) {
+    for (const a of actionsFor('cooking').filter((a) => !a.batchMastery)) {
       expect(a.gate).toBeUndefined();
       expect(actionBlocker(s, a)).toBe('Missing materials');
     }

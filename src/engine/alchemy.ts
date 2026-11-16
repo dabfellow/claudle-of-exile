@@ -63,7 +63,9 @@ export function alchemyPreview(s: GameState, a: SkillAction): string[] {
   const t = skillTreeStats(s);
   const alchLvl = s.account.hideout.alchemy_table ?? 1;
 
-  if (a.batch) {
+  if (a.batchMastery) {
+    lines.push(`Mastery ${a.batchMastery} batch: ${a.batch}× output at full ${a.batch}× input cost. Shares the single craft's mastery rate per second.`);
+  } else if (a.batch) {
     const mult = t.bulkBrewer ? 7.5 : 8.5;
     const discount = t.bulkBrewer ? '25%' : '15%';
     lines.push(`Batch recipe: produces 10 orbs at ${mult}× input cost (${discount} material discount).`);

@@ -545,6 +545,19 @@
   user-select: none;
 }
 
+.card.cmap-world-scroll {
+  overflow-x: auto;
+}
+
+.cmap-world {
+  min-width: 640px;
+}
+
+.cmap-world .cmap-act-label {
+  background: rgba(20, 17, 12, 0.82);
+  border-color: rgba(203, 180, 137, 0.45);
+}
+
 .ct-svg,
 .cmap-overlay {
   position: absolute;
@@ -724,6 +737,25 @@ img.ct-svg {
   stroke: #e6c894;
   stroke-width: 2.2;
   stroke-dasharray: 2 7;
+}
+
+/* Sailing lanes and their destination dots. */
+.cmap-sailing {
+  stroke: #e6d6ac;
+  stroke-width: 2;
+  stroke-dasharray: 1 8;
+}
+
+.cmap-sailing-under {
+  stroke-width: 4;
+  opacity: 0.35;
+}
+
+.cmap-sea-stop {
+  fill: #f2dc9e;
+  stroke: #28231b;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 
 /* act names on the world map */

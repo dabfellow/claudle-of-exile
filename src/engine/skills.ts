@@ -23,7 +23,7 @@ import type { Derived } from './stats';
 import type { GameState, Item, RolledMod, SkillId, SmithCatalyst } from './types';
 import { awardProfessionProgress, awardProtectedProgress, professionAccessReason, recordDiscovery } from './professions';
 import { levelOf } from './xp';
-import { globalMasteryBonuses, grantMasteryPractice, masteryConservation, masterySpeed, masteryYield, stochasticRound, unlockedMilestones } from './skillingMastery';
+import { globalMasteryBonuses, grantMasteryPractice, masteryConservation, masteryLevel, masterySpeed, masteryYield, stochasticRound, unlockedMilestones } from './skillingMastery';
 import { settlePassivePoints } from './passives';
 import { miningAccessHint, miningDone } from './mining';
 import { woodcuttingAccessHint, woodcuttingDone } from './woodcutting';
@@ -125,6 +125,9 @@ export function actionBlocker(s: GameState, a: SkillAction): string | null {
   const place = actionPlaceNeeded(s, a);
   if (place) return `Reach ${place} to unlock`;
   if (skillLevel(s, a.skill) < a.level) return `Requires ${SKILLS[a.skill].name} level ${a.level}`;
+  if (a.batchMastery && masteryLevel(s, `task.${a.batchOf}`) < a.batchMastery) {
+    return `Requires ${actionDef(a.batchOf!).name} mastery ${a.batchMastery}`;
+  }
   if (a.accomplishments && !s.professionProgress.legacyAccess[a.id]) {
     const mining = miningAccessHint(s, a);
     if (mining) return mining;
@@ -188,6 +191,14 @@ export const BULK_BREWER_MULT = 7.5;
 /** Inputs to pay, after Steady Hands and Bulk Brewer. */
 function inputsToPay(s: GameState, a: SkillAction, t: TreeStats, ctx: Ctx): Record<string, number> {
   if (!a.inputs) return {};
+  if (a.batchMastery && a.gem) {
+    // Keep per-gem discounts and minimum costs identical to crafting the singles.
+    const cost: Record<string, number> = {};
+    for (let i = 0; i < a.batch!; i++) {
+      for (const [id, n] of Object.entries(inputsToPay(s, actionDef(a.batchOf!), t, ctx))) cost[id] = (cost[id] ?? 0) + n;
+    }
+    return cost;
+  }
   if (a.protectedOutputs || (a.skill === 'archaeology' && a.purpose)) return { ...a.inputs };
   if (a.gem) {
     if (t.inputSave && chance(ctx.rng, t.inputSave / 100)) {
@@ -198,7 +209,7 @@ function inputsToPay(s: GameState, a: SkillAction, t: TreeStats, ctx: Ctx): Reco
     }
   } else if (t.inputSave && chance(ctx.rng, t.inputSave / 100)) return {};
   let cost: Record<string, number>;
-  if (a.batchOf && t.bulkBrewer) {
+  if (a.batchOf && !a.batchMastery && t.bulkBrewer) {
     const single = actionDef(a.batchOf).inputs!;
     cost = Object.fromEntries(Object.entries(single).map(([id, n]) => [id, Math.ceil(n * BULK_BREWER_MULT)]));
   } else cost = { ...a.inputs };
@@ -502,13 +513,14 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
     smithBase(s, ctx, a, t);
   }
   if (a.flaskId) {
-    s.lifetime.flasksBrewed += mult;
+    const flaskCount = mult * (a.batchMastery ? a.batch! : 1);
+    s.lifetime.flasksBrewed += flaskCount;
     const chargesMilestone = unlockedMilestones(s, a.mastery).find((m) => m.kind === 'flask_charges');
     const durMilestone = unlockedMilestones(s, a.mastery).find((m) => m.kind === 'flask_duration');
     const globalCharges = globalMasteryBonuses(s, 'alchemy').extra.flask_charges ?? 0;
     const extraCharges = (chargesMilestone ? chargesMilestone.value : 0) + globalCharges;
     const extraDuration = durMilestone ? durMilestone.value : 0;
-    for (let i = 0; i < mult; i++) {
+    for (let i = 0; i < flaskCount; i++) {
       const f = newFlask(s, a.flaskId, skillLevel(s, 'alchemy'));
       if (t.qualityBrews && chance(ctx.rng, t.qualityBrews / 100)) {
         f.rarity = 'magic';
@@ -519,9 +531,9 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
       f.charges = flaskStats(f).maxCharges;
       stashFlask(s, f);
     }
-    outputs[a.flaskId] = mult;
+    outputs[a.flaskId] = flaskCount;
   }
-  if (a.gem) for (let i = 0; i < focusMultiple; i++) cutGem(s, ctx, a, outputs);
+  if (a.gem) for (let i = 0; i < focusMultiple * (a.batchMastery ? a.batch! : 1); i++) cutGem(s, ctx, a, outputs);
   ctx.emit({ t: 'produce', skill: a.skill, outputs, baseId: a.baseId });
   const heartwoodXp = a.skill === 'woodcutting' && t.heartwood ? 0.8 : 1;
   const branchXp = a.skill === 'gemcutting' ? (t.gemcuttingXp ?? 0) : 0;

@@ -97,7 +97,7 @@ describe('Phase 07 Alchemy', () => {
   });
 
   it('categorizes recipes into Life, Mana, Defence, Utility, Special Reagents, and Currency', () => {
-    const actions = actionsFor('alchemy');
+    const actions = actionsFor('alchemy').filter((a) => !a.batchMastery);
     const life = actions.filter((a) => alchemyCategory(a) === 'life');
     const mana = actions.filter((a) => alchemyCategory(a) === 'mana');
     const defence = actions.filter((a) => alchemyCategory(a) === 'defence');

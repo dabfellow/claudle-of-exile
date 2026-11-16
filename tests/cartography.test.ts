@@ -61,7 +61,7 @@ describe('the skill', () => {
     const s = veteran(newGame(1));
     s.skills.cartography = xpForLevel(60);
     expect(cartographyOpen(s)).toBe(true);
-    for (const a of actionsFor('cartography')) {
+    for (const a of actionsFor('cartography').filter((a) => !a.batchMastery)) {
       expect(a.gate).toBeUndefined();
       expect(actionBlocker(s, a)).toBe(a.level > 60 ? `Requires Cartography level ${a.level}` : 'Missing materials');
     }
