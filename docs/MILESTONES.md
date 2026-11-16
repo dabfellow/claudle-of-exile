@@ -4,6 +4,8 @@ Last updated 2026-11-16. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
+Latest confirmed live release: **0.4.47, Ashen Codex World Map**, deployed 2026-11-16. The illustrated atlas and general campaign trail are live, with readable act labels and scrolling on narrow screens. All 105 test files / 1,735 tests passed; deployment confirmed live version and login configuration. Desktop/phone visual playtest remains unverified because the local preview timed out. Previous release: 0.4.46 below.
+
 World-map road correction (2026-11-16): implemented against the owner's annotated route; connected forks replace the parallel return trail. Typecheck, five campaign-map tests and desktop/phone in-game checks pass. Unreleased.
 
 Latest confirmed live release: **0.4.46, Mastery Tooltips and Action Card Polish**, deployed 2026-11-16 (redesigned skilling mastery tooltips into structured cards with baseline bonuses and milestone perks, stripped obsolete placeholder blurbs from gathering/crafting action cards, and removed the idle manual focus prompt box from inactive skill pages; 105 test files / 1,735 tests confirmed live at https://dabfellow.party/path-of-idle/). Previous: **0.4.45, Masterwork Interactivity and Direct Skilling Access**, **0.4.44, Skilling Mastery Overhaul and Interactive Workbenches**, **0.4.43, Skilling Layouts and Themed Undertakings**, **0.4.42, Skilling Overhaul Acceptance and Wiki Update**, **0.4.41, Defence and Rune-carved Uniques**, **0.4.40, Pinnacle Uniques**.
@@ -34,6 +36,8 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 18. Dedicated Masterworks Tab: completed (2026-11-16, unreleased); moved profession masterworks (ProjectBoard) from the bottom of every skilling page into their own dedicated "Masterworks" tab on each profession screen, keeping standard activities clean and unbloated while providing direct access and an active project indicator. All 106 test files / 1,746 tests pass.
 
 ## Milestones
+
+Ashen Codex world-map illustration and general campaign route integrated 2026-11-16; desktop/phone visual verification remains pending (see Other open items).
 
 | # | Milestone | Current status |
 |---|---|---|
@@ -532,6 +536,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Created and integrated the Ashen Codex world-map painting, refined through the owner's annotated art revisions, with general paths across all six campaign regions and readable clickable act labels. Source images/prompts saved under `output/imagegen/`; runtime asset in `src/assets/maps/`. Typecheck, four campaign-map tests and client build pass; visual playtest pending above. — done 2026-11-16
 
 - [x] Produced the grounded world-atlas revision: a dominant connected northern mountain system, broad lowlands, clearer drainage, small settlement plans at estuaries/crossings, quieter mixed coastline, understated islands and lighter paper treatment. Image and full built-in generation prompt saved under `output/imagegen/ashen-codex-world-atlas-1800s-v2*`; artwork only, no release. — done 2026-11-16
 
