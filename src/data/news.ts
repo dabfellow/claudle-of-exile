@@ -10,12 +10,18 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Skilling pages are now cleanly sectioned with category tabs and streamlined layouts, including dedicated views for Street Marks, Heist Operations, and Rogue Crew.',
-  'Profession undertakings are now located at the bottom of each skill page, with on-theme craft names like Forge Masterworks, Great Works, Feasts & Banquets, Runic Inscriptions, and Underworld Schemes.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.43',
+    date: '15 Nov 2026',
+    title: 'Skilling Layouts and Themed Undertakings',
+    items: [
+      'Skilling pages are now cleanly sectioned with category tabs and streamlined layouts, including dedicated views for Street Marks, Heist Operations, and Rogue Crew.',
+      'Profession undertakings are now located at the bottom of each skill page, with on-theme craft names like Forge Masterworks, Great Works, Feasts & Banquets, Runic Inscriptions, and Underworld Schemes.',
+    ],
+  },
   {
     version: '0.4.42',
     date: '15 Nov 2026',
