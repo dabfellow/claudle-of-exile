@@ -4,7 +4,7 @@ Last updated 2026-11-15. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.42, Skilling Overhaul Acceptance and Wiki Update**, deployed 2026-11-15 (Phases 00–18 complete; 105 test files / 1,729 tests, build, and 1,422-page wiki confirmed live at https://dabfellow.party/path-of-idle/). Previous: **0.4.41, Defence and Rune-carved Uniques**, **0.4.40, Pinnacle Uniques**, **0.4.39, Skilling Overhaul and Independent Professions**.
+Latest confirmed live release: **0.4.43, Skilling Layouts and Themed Undertakings**, deployed 2026-11-15 (repositioned undertakings to the bottom of all skills pages with on-theme craft names; sectioned crowded professions with dedicated category tabs; Heist split into Street Marks, Heist Operations, and Rogue Crew; duplicate generic Archaeology activities removed; 105 test files / 1,729 tests confirmed live at https://dabfellow.party/path-of-idle/). Previous: **0.4.42, Skilling Overhaul Acceptance and Wiki Update**, **0.4.41, Defence and Rune-carved Uniques**, **0.4.40, Pinnacle Uniques**.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
