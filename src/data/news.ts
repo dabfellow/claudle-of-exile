@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Updated the player wiki with the complete skilling overhaul, independent Heist progression, and all thirteen exclusive unique projects.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.42',
+    date: '15 Nov 2026',
+    title: 'Skilling Overhaul Acceptance and Wiki Update',
+    items: [
+      'Updated the player wiki with the complete skilling overhaul, independent Heist progression, and all thirteen exclusive unique projects.',
+    ],
+  },
   {
     version: '0.4.41',
     date: '15 Nov 2026',
