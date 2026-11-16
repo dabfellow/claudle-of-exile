@@ -15,6 +15,7 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 5. Plan the 1.0 wipe and the Legacy area (see Decisions).
 6. Fill the player-guide gaps listed in GAME; each should be source-backed and built with the wiki.
 7. Skilling overhaul Phases 00–18 are complete (2026-11-15). Phase 18 whole-overhaul acceptance verified all 11 professions, 7 tools, 2 signatures, 2 feasts, Artisans' Reliquary, all 13 exclusive uniques, ingredient source graph, 8h live/offline parity, old-save migration, Classic/market rules, desktop/phone browser playtests (including Pinnacle + Defence/Rune pairings), and updated GAME/wiki docs.
+8. Skilling Mastery Thematic Overhaul: completed (2026-11-15); implemented milestone-based thematic mastery across all 11 professions with Lv 25/50/75/100 thresholds, sub-category recipe personalities, animated live proc callouts, offline summary breakdowns, and hybrid completionist synergies. All 105 test files / 1,733 tests and typecheck pass.
 
 ## Milestones
 
@@ -34,6 +35,16 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Skilling Mastery Overhaul Topic 3 (2026-11-15): Recipe Personalities and Feedback. Decided B for 3a (Sub-category recipe personalities tailored to item roles: e.g. Life/Mana flasks gain extra charge capacity, utility flasks gain duration, currency brewing gains elevation/discount chances; standard ores gain vein strikes while rare cosmic ores gain geodes and crystal fragments). Decided A for 3b (Milestone badges 25/50/75/100 on action cards, lively proc callouts in active skilling, and detailed proc tallies in offline return summaries).
+
+- Skilling Mastery Overhaul Topic 2 (2026-11-15): Scope and Mechanics Style. Decided B for 2a (Hybrid Milestone Synergy: Lv 25/50 provide task-specific perks; Lv 75/100 grant small permanent profession-wide traits to reward completionism). Decided the split model for 2b: Gathering & Thieving adopt dynamic proc-based and jackpot mechanics (Vein Strikes / instant multi-swings, geode/fossil discoveries, lucky pockets, heist alert dips), while Production & Crafting adopt systemic quality and rule enhancements (higher minimum affix tiers on gear, bonus flask charges/durations, extended meal buff timers, catalyst potency, free batch conservations).
+
+- Skilling Mastery Overhaul Topic 1 (2026-11-15): Thematic Milestone Overhaul. Decided A for both 1a and 1b. Mastery retains its 1–100 progression per task with modest baseline scaling (action speed and ordinary yield/conservation capped lower as a background chassis, e.g. 10%), while crossing key milestone thresholds (Lv 25, 50, 75, 100) unlocks distinct, flavorful mechanical perks unique to that profession (e.g. vein strikes, extra charges, alarm suppression, extended feast buffs).
+
+- Masterwork Project UI Overhaul (2026-11-15): redesigned the profession project panels (ProjectBoard) from walls of dense text into interactive, video-game style workbenches. Added visual item art and category badges, distinct level/station/accomplishment requirement badges, split inputs-to-outcome recipe grid with stock indicators and missing-materials highlights, rich reward cards previewing exact unique affixes/mods, base item picker with clear missing-base alerts, material source chips with direct skill navigation, run stepper with quick 1/5/10/Max preset buttons, and an Active Undertaking workbench banner with animated progress and escrowed item display.
+
+- Skilling Mastery Scope (2026-11-15): removed mastery tracking and speed scaling from profession masterwork projects (undertakings) and archaeology excavation sites. Projects and excavation sites are milestone and limited-completion progression paths (few completions / stratum discoveries), rather than repetitive actions meant to be farmed to mastery level 100 (120 hours).
 
 - Skilling UI and Profession Undertakings (2026-11-15): repositioned profession projects to the bottom of each skill page below primary activities, and renamed them with on-theme craft titles and action verbs (Smithing: Forge Masterworks / Begin masterwork, Mining: Mining Prospects, Woodcutting: Timberworks, Foraging: Cultivations, Alchemy: Great Works, Cooking: Feasts & Banquets, Gemcutting: Lapidary Works, Cartography: Survey Expeditions, Rune-carving: Runic Inscriptions, Thieving: Underworld Schemes, Archaeology: Relic Restorations). Reorganized crowded profession views into dedicated category tabs modeled on Woodcutting: Thieving now features Street Marks (sectioned into Street Targets Lv 1–16, Civic & Wealthy Lv 24–40, and Underworld Figures Lv 48+), Heist Operations (with active run tracker and casing notes), and Rogue Crew (crew capacity, ranks, and toggles); Archaeology cleanly separates Excavation Sites from Culture Merchants and removes duplicate generic activity cards; Alchemy, Cooking, Gemcutting, and Rune-carving add category filter chips; Harvesting separates Wild Foraging from the Greenhouse.
 
@@ -354,6 +365,11 @@ The implementation passes the full 1,261-test suite and production typecheck. No
 The consolidated batch specification is retained below as a proposal. Its initial 1.3× attribute wording is superseded by the 0.4.1 attribute rebalance (demanding gems use 1.15×); use code for actual requirements. Its suggested `'maps'` gating/API names are design intent, not existing API contracts. Definitions that conflict with current data require review rather than silently changing gameplay.
 
 ## Other open items
+
+- [x] Skilling Mastery Thematic Overhaul: overhaul task mastery with 25/50/75/100 milestone perks, sub-category recipe personalities, animated proc callouts, and hybrid synergy. — done 2026-11-15
+  - Topic 1 decided 2026-11-15: 1–100 progression kept with 25/50/75/100 milestone perks and modest background speed/yield baseline.
+  - Topic 2 decided 2026-11-15: Hybrid synergy (Lv 25/50 task perks, Lv 75/100 global profession traits). Gathering/Thieving focus on dynamic procs/jackpot moments; Crafting/Production focus on systemic quality, charges, and rule enhancements.
+  - Topic 3 decided 2026-11-15: Sub-category recipe personalities (charges/recovery for Life/Mana flasks, duration for Utility, elevation/discount for currency, vein strikes for metals, geodes for cosmic ores) with visual milestone badges, live proc callouts, and offline summary tallies.
 
 - [ ] Build the skilling overhaul from [SKILLING_OVERHAUL.md](SKILLING_OVERHAUL.md): specify recipes/unlocks/rewards, establish independent access and equipment crafting, then deepen each profession.
   - Reference saved 2026-11-12; agreed direction and all eleven profession proposals recorded. Phases 00–08 and requested 12–14 complete locally/unreleased (2026-11-15); broader 09–11 and 15–18 remain pending.

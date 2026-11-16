@@ -213,6 +213,10 @@ export interface FlaskInstance {
   suffixes: FlaskMod[];
   /** enchantment from an Instilling Orb: use automatically on this condition */
   instill: InstillCondition | null;
+  /** Alchemy mastery bonus: expanded charge reservoir */
+  extraCharges?: number;
+  /** Alchemy mastery bonus: prolonged duration */
+  extraDurationPct?: number;
 }
 
 export interface Dot {
@@ -1233,6 +1237,7 @@ export interface GameState {
 }
 
 export type GameEvent =
+  | { t: 'masteryProc'; proc: string; text: string; taskName?: string }
   | { t: 'profession'; category: 'discovery' | 'progress' | 'project' | 'spending' | 'work'; id: string; amount: number; materials?: Record<string, number> }
   | {
       t: 'hit';

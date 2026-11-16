@@ -8,7 +8,6 @@ import { CLASSIC_BLOCK, isClassic, realmOf } from './challenge';
 import type { Ctx } from './context';
 import { createItem, createUnique } from './items';
 import { bagFull } from './storage';
-import { grantMasteryPractice, masterySpeed } from './skillingMastery';
 import { grantXp } from './skills';
 import { isCraftLocked } from './crafting';
 import { levelOf } from './xp';
@@ -307,7 +306,6 @@ export function completeProject(s: GameState, ctx: Ctx, runId: number): string |
   p.projects[def.id] = { completed: (p.projects[def.id]?.completed ?? 0) + 1 };
   delete p.activeProject;
   if (s.action?.kind === 'project' && s.action.runId === runId) s.action = null;
-  grantMasteryPractice(s, { id: `task.project_${def.id}`, name: def.name, profile: 'project' }, def.durationMs / 1000);
   awardProfessionProgress(s, def.skill, def.workCycles ?? 1);
   // Emit only after the run is irrevocably settled, including against synchronous listeners.
   grantXp(s, commitCtx, def.skill, def.xp);
@@ -335,7 +333,7 @@ export function advanceProject(s: GameState, ctx: Ctx, dt: number): void {
       if (isGathering && stats.gatheringSpeed) mealBonus = stats.gatheringSpeed / 100;
       if (isProduction && stats.productionSpeed) mealBonus = stats.productionSpeed / 100;
     }
-    const speed = 1 + mealBonus + masterySpeed(s, { id: `task.project_${run.project.id}`, name: run.project.name, profile: 'project' }) / 100;
+    const speed = 1 + mealBonus;
     const before = run.elapsedMs;
     run.elapsedMs = Math.min(run.project.durationMs, run.elapsedMs + dt * speed);
     if (run.elapsedMs > before) ctx.emit({ t: 'profession', category: 'work', id: run.project.id, amount: run.elapsedMs - before });

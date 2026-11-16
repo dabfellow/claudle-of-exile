@@ -1,7 +1,8 @@
 import { INGREDIENTS, MEAL_MS, mealDef, MEALS } from '../data/cooking';
-import { actionDef, type SkillAction } from '../data/skills';
+import { ACTIONS, actionDef, type SkillAction } from '../data/skills';
 import { describeStat } from '../data/statText';
 import type { Ctx } from './context';
+import { globalMasteryBonuses, unlockedMilestones } from './skillingMastery';
 import { skillTreeStats } from './skillTree';
 import type { GameState, SkillId, StatKey } from './types';
 
@@ -19,7 +20,17 @@ export function cookingOpen(_s: GameState): boolean {
 export function mealLength(s: GameState, id?: string): number {
   const mealId = id ?? s.meal?.id;
   const base = (mealId ? mealDef(mealId).durationMs : undefined) ?? MEAL_MS;
-  return base * (1 + (skillTreeStats(s).slowSimmer ?? 0) / 100);
+  let masteryBonusPct = 0;
+  if (mealId) {
+    const act = ACTIONS.find((a) => a.outputs && a.outputs[mealId]);
+    if (act?.mastery) {
+      for (const m of unlockedMilestones(s, act.mastery)) {
+        if (m.kind === 'meal_duration') masteryBonusPct += m.value;
+      }
+    }
+  }
+  masteryBonusPct += globalMasteryBonuses(s, 'cooking').extra.meal_duration ?? 0;
+  return base * (1 + (skillTreeStats(s).slowSimmer ?? 0 + masteryBonusPct) / 100);
 }
 
 /** Total duration supported by the player's current bank supply of this dish plus remaining active time. */

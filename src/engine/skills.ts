@@ -1,6 +1,5 @@
 import { affixDef } from '../data/affixes';
 import { essenceDef, fossilDef, MARKER, modBias, resinDef } from '../data/craftMats';
-import { flaskDef } from '../data/flasks';
 import { ACTIVE_GEMS, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
 import { ALCH_DOUBLE, FORGE_ILVL } from '../data/hideout';
 import { baseDef } from '../data/bases';
@@ -10,7 +9,7 @@ import { addBank, canAfford, hasItem, payCost } from './bank';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
 import type { Ctx } from './context';
 import { benchBuilt } from './crafting';
-import { newFlask, rerollMagic, stashFlask } from './flasks';
+import { flaskStats, newFlask, rerollMagic, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { digDone } from './expedition';
 import { markerBoost } from './heist';
@@ -24,7 +23,7 @@ import type { Derived } from './stats';
 import type { GameState, Item, RolledMod, SkillId, SmithCatalyst } from './types';
 import { awardProfessionProgress, awardProtectedProgress, professionAccessReason, recordDiscovery } from './professions';
 import { levelOf } from './xp';
-import { grantMasteryPractice, masteryConservation, masterySpeed, masteryYield, stochasticRound } from './skillingMastery';
+import { globalMasteryBonuses, grantMasteryPractice, masteryConservation, masterySpeed, masteryYield, stochasticRound, unlockedMilestones } from './skillingMastery';
 import { settlePassivePoints } from './passives';
 import { miningAccessHint, miningDone } from './mining';
 import { woodcuttingAccessHint, woodcuttingDone } from './woodcutting';
@@ -225,8 +224,10 @@ function inputsToPay(s: GameState, a: SkillAction, t: TreeStats, ctx: Ctx): Reco
     cost[id] = Math.max(0, paid - Math.min(paid, stochasticRound(ctx.rng, paid * rate)));
   }
   if (a.gem) {
+    const dustMilestone = unlockedMilestones(s, a.mastery).find((m) => m.kind === 'dust_retention');
+    const dustFloor = dustMilestone ? 4 : 6;
     if (cost.rough_gem !== undefined) cost.rough_gem = Math.max(1, cost.rough_gem);
-    if (cost.arcane_dust !== undefined) cost.arcane_dust = Math.max(6, cost.arcane_dust);
+    if (cost.arcane_dust !== undefined) cost.arcane_dust = Math.max(dustFloor, cost.arcane_dust);
   }
   return cost;
 }
@@ -269,10 +270,15 @@ function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats): void {
   if (s.smithCatalyst.fossil && !hasItem(s, s.smithCatalyst.fossil, 1)) catalystRanOut(s, ctx, 'fossil');
   const cat = s.smithCatalyst;
   const resin = resinBonus(s);
-  if (cat.resin) s.account.bank[cat.resin] -= 1;
+  const catSave = unlockedMilestones(s, a.mastery).find((m) => m.kind === 'catalyst_save');
+  const savedResin = catSave && chance(ctx.rng, catSave.value);
+  if (savedResin) ctx.emit({ t: 'masteryProc', proc: catSave.name, text: `✦ ${catSave.name}! Conserved resin`, taskName: a.name });
+  if (cat.resin && !savedResin) s.account.bank[cat.resin] -= 1;
   const magic = t.grandmaster || (t.smithMagic && chance(ctx.rng, t.smithMagic / 100));
   // the Fossil only matters (and is only used up) when the base comes out Magic
   const fossil = magic ? cat.fossil : null;
+  const savedFossil = catSave && chance(ctx.rng, catSave.value);
+  if (savedFossil && fossil) ctx.emit({ t: 'masteryProc', proc: catSave.name, text: `✦ ${catSave.name}! Conserved fossil`, taskName: a.name });
   const forgeLvl = s.account.hideout.forge ?? 1;
   const itemTier = rollForgeItemTier(forgeLvl, ctx.rng);
   const item = createItem(s, a.baseId!, smithIlvl(s, resin), magic ? 'magic' : 'normal', ctx.rng, fossil ? modBias(fossil) : undefined, itemTier);
@@ -292,7 +298,7 @@ function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats): void {
       (kind === 'prefix' ? item.prefixes : item.suffixes).push(mod);
     }
   }
-  if (fossil && !(t.steadyTemper && chance(ctx.rng, t.steadyTemper / 100))) s.account.bank[fossil] -= 1;
+  if (fossil && !savedFossil && !(t.steadyTemper && chance(ctx.rng, t.steadyTemper / 100))) s.account.bank[fossil] -= 1;
   s.lifetime.itemsSmithed += 1;
 
   const repeating = cat.until && !!cat.fossil;
@@ -425,6 +431,51 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   }
   if (a.skill === 'woodcutting' && t.birdsNest && chance(ctx.rng, t.birdsNest / 100)) give(s, outputs, pick(ctx.rng, HERB_TIERS.slice(0, 2)), 1);
 
+  // Thematic Mastery Milestone Procs
+  const milestones = unlockedMilestones(s, a.mastery);
+  for (const m of milestones) {
+    if (m.kind === 'vein_strike' && chance(ctx.rng, m.value)) {
+      const primary = a.mastery?.primaryOutput;
+      if (primary) {
+        give(s, outputs, primary, 1);
+        ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Instant extra strike`, taskName: a.name });
+      }
+    } else if (m.kind === 'rare_find' && m.outputId && chance(ctx.rng, m.value)) {
+      give(s, outputs, m.outputId, 1);
+      ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Rare discovery`, taskName: a.name });
+    } else if (m.kind === 'sleight_of_hand' && chance(ctx.rng, m.value)) {
+      const gold = outputs.gold ?? 0;
+      if (gold > 0) {
+        give(s, outputs, 'gold', gold);
+        ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Pickpocket jackpot`, taskName: a.name });
+      }
+    } else if (m.kind === 'smuggled_stash' && chance(ctx.rng, m.value)) {
+      give(s, outputs, MARKER, 1);
+      ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Smuggled markers`, taskName: a.name });
+    } else if (m.kind === 'feast_bounty' && chance(ctx.rng, m.value)) {
+      for (const [outId, outCount] of Object.entries(a.outputs ?? {})) {
+        give(s, outputs, outId, outCount);
+      }
+      ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Double yield`, taskName: a.name });
+    } else if (m.kind === 'glyph_echo' && chance(ctx.rng, m.value)) {
+      if (m.id.includes('echo')) {
+        awardProtectedProgress(s, ctx, 'inscription_fragment', 1);
+        give(s, outputs, 'inscription_fragment', 1);
+        ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Inscription fragment`, taskName: a.name });
+      } else {
+        for (const [outId, outCount] of Object.entries(a.outputs ?? {})) {
+          give(s, outputs, outId, outCount);
+        }
+        ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Double rune carved`, taskName: a.name });
+      }
+    } else if (m.kind === 'flawless_facet' && chance(ctx.rng, m.value)) {
+      for (const [outId, outCount] of Object.entries(a.outputs ?? {})) {
+        give(s, outputs, outId, outCount);
+      }
+      ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Flawless facet cut`, taskName: a.name });
+    }
+  }
+
   if (a.skill === 'archaeology') digDone(s, ctx, a, outputs);
   if (a.chart) chartDone(s, a, mult, Object.keys(cost).length > 0, outputs);
   if (a.skill === 'thieving') {
@@ -452,13 +503,20 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   }
   if (a.flaskId) {
     s.lifetime.flasksBrewed += mult;
+    const chargesMilestone = unlockedMilestones(s, a.mastery).find((m) => m.kind === 'flask_charges');
+    const durMilestone = unlockedMilestones(s, a.mastery).find((m) => m.kind === 'flask_duration');
+    const globalCharges = globalMasteryBonuses(s, 'alchemy').extra.flask_charges ?? 0;
+    const extraCharges = (chargesMilestone ? chargesMilestone.value : 0) + globalCharges;
+    const extraDuration = durMilestone ? durMilestone.value : 0;
     for (let i = 0; i < mult; i++) {
       const f = newFlask(s, a.flaskId, skillLevel(s, 'alchemy'));
       if (t.qualityBrews && chance(ctx.rng, t.qualityBrews / 100)) {
         f.rarity = 'magic';
         rerollMagic(f, ctx.rng);
       }
-      f.charges = flaskDef(a.flaskId).maxCharges;
+      if (extraCharges > 0) f.extraCharges = extraCharges;
+      if (extraDuration > 0) f.extraDurationPct = extraDuration;
+      f.charges = flaskStats(f).maxCharges;
       stashFlask(s, f);
     }
     outputs[a.flaskId] = mult;

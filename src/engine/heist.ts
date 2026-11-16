@@ -16,7 +16,7 @@ import { skillTreeStats } from './skillTree';
 import type { Derived } from './stats';
 import { bagFull } from './storage';
 import type { GameState, HeistState } from './types';
-import { grantMasteryPractice, masterySpeed } from './skillingMastery';
+import { grantMasteryPractice, hasMilestone, masterySpeed } from './skillingMastery';
 
 export type HeistGearCategory = 'all' | 'weapon' | 'armour' | 'jewellery';
 
@@ -99,7 +99,8 @@ function alertMult(s: GameState, job: HeistJob): number {
 
 /** Chance of an alarm in this room (1-based). */
 export function alarmChance(s: GameState, job: HeistJob, room: number): number {
-  return Math.min(MAX_ALARM, (job.alert / 100) * room * alertMult(s, job));
+  const reduction = hasMilestone(s, job.mastery, 50) ? 0.85 : 1;
+  return Math.min(MAX_ALARM, (job.alert / 100) * room * alertMult(s, job) * reduction);
 }
 
 /** Chance of walking out clean after this many rooms. */

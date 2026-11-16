@@ -4,6 +4,7 @@ import { SMITH_COMPONENT_USES } from '../data/smithing';
 import type { SkillAction } from '../data/skills';
 import { createItem, eligibleAffixes, addFixedMod, spawnWeight, rareName } from './items';
 import { pickWeighted, rInt, type Rng } from './rng';
+import { hasMilestone } from './skillingMastery';
 import type { GameState, Item } from './types';
 
 /** The same tier/minima are used by both the preview and actual delivery. */
@@ -20,9 +21,12 @@ export function purposeGuarantees(a: SkillAction, ilvl: number) {
 export function createPurposeItem(s: GameState, a: SkillAction, ilvl: number, rng: Rng): Item {
   const item = createItem(s, a.baseId!, ilvl, 'normal', rng);
   item.rarity = 'rare';
+  const mastersEdge = hasMilestone(s, a.mastery, 50);
+  const masterArmorer = hasMilestone(s, a.mastery, 100);
+  if (masterArmorer) item.itemTier = 2;
   for (const { affix, tier, ranges } of purposeGuarantees(a, ilvl)) {
     item[affix.kind === 'prefix' ? 'prefixes' : 'suffixes'].push({
-      affixId: affix.id, tier, values: ranges.map(([lo, hi]) => rInt(rng, lo, hi)),
+      affixId: affix.id, tier, values: ranges.map(([lo, hi]) => mastersEdge ? hi : rInt(rng, lo, hi)),
     });
   }
   // One further prefix and suffix, using ordinary weights and tier-window probabilities.

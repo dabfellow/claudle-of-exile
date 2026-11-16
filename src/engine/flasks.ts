@@ -81,9 +81,9 @@ export function flaskStats(f: FlaskInstance): FlaskStats {
   const def = flaskDef(f.flaskId);
   return {
     def,
-    maxCharges: Math.round(def.maxCharges * (1 + total(f, 'capacity') / 100)),
+    maxCharges: Math.round(def.maxCharges * (1 + total(f, 'capacity') / 100)) + (f.extraCharges ?? 0),
     chargesPerUse: Math.max(1, Math.round(def.chargesPerUse * (1 - total(f, 'saving') / 100))),
-    durationMs: Math.round(def.durationMs * (1 + total(f, 'duration') / 100)),
+    durationMs: Math.round(def.durationMs * (1 + (total(f, 'duration') + (f.extraDurationPct ?? 0)) / 100)),
     effectMult: 1 + total(f, 'recovery') / 100,
     gainMult: 1 + total(f, 'gain') / 100,
   };

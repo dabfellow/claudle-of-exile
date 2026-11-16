@@ -639,6 +639,10 @@ export function OfflineModal() {
           </>
         )}
 
+        {Object.keys(sum.masteryProcs ?? {}).length > 0 && <div className="away-alert">
+          <b>Thematic Mastery Triggers</b>
+          {Object.entries(sum.masteryProcs ?? {}).map(([name, count]) => <p key={name}>✦ {name}: {count} trigger{count === 1 ? '' : 's'}</p>)}
+        </div>}
         {Object.keys(sum.ordinaryOutput ?? {}).length > 0 && <div className="away-alert">
           <b>Ordinary production · before spending</b>
           {Object.entries(sum.ordinaryOutput ?? {}).map(([id, n]) => <p key={id}>{id.replaceAll('_', ' ')}: +{fmt(n)}</p>)}

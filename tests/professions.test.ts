@@ -118,6 +118,7 @@ describe('atomic paid project lifecycle', () => {
     expect(away.account.bank).toEqual(live.account.bank);
     expect(away.skills).toEqual(live.skills);
     expect(away.skillingMastery).toEqual(live.skillingMastery);
+    expect(live.skillingMastery['task.project_copper_supply']).toBeUndefined();
     expect(away.professionProgress).toEqual(live.professionProgress);
     expect(sum.protectedProgress).toEqual({ copper_bar: 10 });
     expect(sum.projects).toEqual({ copper_supply: 2 });

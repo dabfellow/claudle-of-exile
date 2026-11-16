@@ -1,19 +1,22 @@
 import { describe, expect, it } from 'vitest';
+import { SITES, siteOf } from '../src/data/expedition';
 import { HEIST_JOBS } from '../src/data/heist';
 import { ACTIONS, actionDef } from '../src/data/skills';
 import { ZONES } from '../src/data/zones';
 import { makeCtx } from '../src/engine/context';
-import { heistStep, roomMs } from '../src/engine/heist';
+import { alarmChance, heistStep, roomMs } from '../src/engine/heist';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded, type Rng } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { actionBlocker, actionIntervalMs, skillStep, startSkillAction, stopAction } from '../src/engine/skills';
 import {
-  MASTERY_CAP,
+  globalMasteryBonuses,
   grantMasteryPractice,
+  MASTERY_CAP,
   masteryLevel,
   masteryProgress,
   masteryThreshold,
+  unlockedMilestones,
 } from '../src/engine/skillingMastery';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
@@ -35,13 +38,14 @@ function start(id: string, amount = 1_000_000) {
 
 describe('non-combat action mastery', () => {
   it('has one track per eligible task, with only bulk recipes sharing', () => {
-    const eligible = ACTIONS.filter((a) => a.skill !== 'fishing' && !a.soon);
+    const eligible = ACTIONS.filter((a) => a.skill !== 'fishing' && !a.soon && !siteOf(a.id));
     expect(eligible.every((a) => !!a.mastery)).toBe(true);
     expect(HEIST_JOBS.every((j) => !!j.mastery)).toBe(true);
     const ids = new Set([...eligible.map((a) => a.mastery!.id), ...HEIST_JOBS.map((j) => j.mastery!.id)]);
     const tasks = new Set([...eligible.map((a) => a.batchOf ?? a.id), ...HEIST_JOBS.map((j) => `heist.${j.id}`)]);
     expect(ids.size).toBe(tasks.size);
-    expect(ACTIONS.filter((a) => a.skill === 'combat' || a.skill === 'fishing').every((a) => !a.mastery)).toBe(true);
+    expect(ACTIONS.filter((a) => a.skill === 'combat' || a.skill === 'fishing' || !!siteOf(a.id)).every((a) => !a.mastery)).toBe(true);
+    expect(SITES.every((site) => !actionDef(site.id).mastery)).toBe(true);
   });
 
   it('uses the authored curve, caps safely, and preserves unknown ids', () => {
@@ -74,7 +78,7 @@ describe('non-combat action mastery', () => {
     const trained = newGame(1);
     trained.skillingMastery[a.mastery!.id] = MASTERY_CAP;
     const base = actionIntervalMs(plain, a, deriveStats(plain));
-    expect(actionIntervalMs(trained, a, deriveStats(trained))).toBeCloseTo(base / 1.2);
+    expect(actionIntervalMs(trained, a, deriveStats(trained))).toBeCloseTo(base / 1.12);
 
     const left = start('mine_copper');
     const right = start('mine_copper');
@@ -84,11 +88,20 @@ describe('non-combat action mastery', () => {
   });
 
   it('only adds stochastic ordinary gathering yield and never duplicates rare rolls', () => {
+    // Before milestone unlocks (level 20)
+    const sub = start('mine_copper');
+    sub.s.skillingMastery[sub.a.mastery!.id] = masteryThreshold(20);
+    const subCtx = makeCtx(zero);
+    skillStep(sub.s, subCtx, actionIntervalMs(sub.s, sub.a, deriveStats(sub.s)), deriveStats(sub.s));
+    expect(sub.s.account.bank.copper_ore).toBe(2); // one base, one stochastic extra
+    expect(sub.s.account.bank.rough_gem).toBe(1); // rare roll is exactly one
+
+    // At MASTERY_CAP (level 100), unlocked Vein Strike and Dense Seam milestone procs activate
     const { s, a } = start('mine_copper');
     s.skillingMastery[a.mastery!.id] = MASTERY_CAP;
     const ctx = makeCtx(zero);
     skillStep(s, ctx, actionIntervalMs(s, a, deriveStats(s)), deriveStats(s));
-    expect(s.account.bank.copper_ore).toBe(2); // one base, one 8% stochastic extra
+    expect(s.account.bank.copper_ore).toBe(4); // base + stochastic + Vein Strike proc + Dense Seam proc
     expect(s.account.bank.rough_gem).toBe(1); // the rare roll is still exactly one
   });
 
@@ -98,7 +111,7 @@ describe('non-combat action mastery', () => {
     const ctx = makeCtx(zero);
     skillStep(s, ctx, actionIntervalMs(s, a, deriveStats(s)), deriveStats(s));
     expect(s.account.bank.copper_ore).toBe(1); // stochastic save of one from the five paid
-    expect(s.account.bank.copper_bar).toBe(1);
+    expect(s.account.bank.copper_bar).toBe(2); // Lv 50 Pure Slag milestone procs double bar output
 
     const key = start('smith_marrow_key', 8);
     key.s.account.bank.dense_fossil = 2;
@@ -106,7 +119,7 @@ describe('non-combat action mastery', () => {
     key.s.skillingMastery[key.a.mastery!.id] = MASTERY_CAP;
     const keyCtx = makeCtx(zero);
     skillStep(key.s, keyCtx, actionIntervalMs(key.s, key.a, deriveStats(key.s)), deriveStats(key.s));
-    expect(key.s.account.bank.mithril_bar).toBe(2);
+    expect(key.s.account.bank.mithril_bar).toBe(1); // 12% conservation of 8 bars saves 1 bar
     expect(key.s.account.bank.dense_fossil).toBe(0);
     expect(key.s.account.bank.serrated_fossil).toBe(0);
   });
@@ -187,5 +200,87 @@ describe('non-combat action mastery', () => {
     expect(loaded.skillingMastery[HEIST_JOBS[0].mastery!.id]).toBe(MASTERY_CAP);
     expect(loaded.skillingMastery[HEIST_JOBS[1].mastery!.id]).toBe(MASTERY_CAP);
     expect(loaded.skillingMastery[HEIST_JOBS[3].mastery!.id]).toBeUndefined();
+  });
+
+  it('unlocks 25, 50, 75, 100 milestone perks with sub-category personalities', () => {
+    const s = newGame(1);
+    const ore = actionDef('mine_copper').mastery!;
+    const cosmic = actionDef('mine_crystal_star').mastery!;
+    const lifeFlask = actionDef('brew_life_small').mastery!;
+    const utilFlask = actionDef('brew_granite').mastery!;
+
+    // Milestone counts
+    expect(ore.milestones.length).toBe(4);
+    expect(ore.milestones.map((m) => m.level)).toEqual([25, 50, 75, 100]);
+
+    // Sub-category personalities
+    expect(lifeFlask.milestones[0].kind).toBe('flask_charges');
+    expect(utilFlask.milestones[0].kind).toBe('flask_duration');
+    expect(cosmic.milestones[0].name).toBe('Astral Strike');
+    expect(ore.milestones[0].name).toBe('Vein Strike');
+
+    // Threshold unlocking
+    expect(unlockedMilestones(s, ore).length).toBe(0);
+    s.skillingMastery[ore.id] = masteryThreshold(25);
+    expect(unlockedMilestones(s, ore).length).toBe(1);
+    expect(unlockedMilestones(s, ore)[0].name).toBe('Vein Strike');
+
+    s.skillingMastery[ore.id] = masteryThreshold(50);
+    expect(unlockedMilestones(s, ore).length).toBe(2);
+
+    s.skillingMastery[ore.id] = masteryThreshold(75);
+    expect(unlockedMilestones(s, ore).length).toBe(3);
+    expect(unlockedMilestones(s, ore)[2].scope).toBe('global');
+
+    s.skillingMastery[ore.id] = MASTERY_CAP;
+    expect(unlockedMilestones(s, ore).length).toBe(4);
+  });
+
+  it('aggregates global profession perks from 75/100 milestones across that skill', () => {
+    const s = newGame(1);
+    const copper = actionDef('mine_copper').mastery!;
+    const iron = actionDef('mine_iron').mastery!;
+
+    expect(globalMasteryBonuses(s, 'mining').speed).toBe(0);
+
+    // Lv 75 on copper gives +2% global mining speed
+    s.skillingMastery[copper.id] = masteryThreshold(75);
+    expect(globalMasteryBonuses(s, 'mining').speed).toBe(2);
+
+    // Lv 75 on iron adds another +2% global mining speed (total 4%)
+    s.skillingMastery[iron.id] = masteryThreshold(75);
+    expect(globalMasteryBonuses(s, 'mining').speed).toBe(4);
+
+    // Unrelated skill is unaffected
+    expect(globalMasteryBonuses(s, 'woodcutting').speed).toBe(0);
+  });
+
+  it('applies recipe personality bonuses to flasks, heist alarms, and meal durations', () => {
+    const s = newGame(1);
+    const life = actionDef('brew_life_small');
+    const job = HEIST_JOBS[0];
+
+    // Heist Lv 50 alarm mitigation
+    const baseAlarm = alarmChance(s, job, 1);
+    s.skillingMastery[job.mastery!.id] = masteryThreshold(50);
+    const mitigatedAlarm = alarmChance(s, job, 1);
+    expect(mitigatedAlarm).toBeCloseTo(baseAlarm * 0.85);
+
+    // Alchemy Life flask extra charges
+    s.skillingMastery[life.mastery!.id] = masteryThreshold(25);
+    const { s: brewState, ctx, a } = start('brew_life_small', 100);
+    brewState.skillingMastery[life.mastery!.id] = masteryThreshold(25);
+    skillStep(brewState, ctx, actionIntervalMs(brewState, a, deriveStats(brewState)), deriveStats(brewState));
+    const crafted = brewState.account.flaskStash.find((f) => f.flaskId === 'life_small');
+    expect(crafted).toBeDefined();
+    expect(crafted!.extraCharges).toBe(1);
+  });
+
+  it('records thematic mastery milestone procs in offline summaries', () => {
+    const away = start('mine_copper');
+    away.s.skillingMastery[away.a.mastery!.id] = MASTERY_CAP;
+    const summary = simulateOffline(away.s, away.ctx, 60_000);
+    expect(summary.masteryProcs).toBeDefined();
+    expect(Object.keys(summary.masteryProcs!).length).toBeGreaterThan(0);
   });
 });

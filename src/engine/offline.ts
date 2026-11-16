@@ -40,6 +40,8 @@ export interface OfflineSummary {
   heistAlarms: number;
   /** Nominal non-combat practice earned by mastery task while away. */
   mastery: Record<string, number>;
+  /** Thematic mastery milestone procs triggered while away. */
+  masteryProcs?: Record<string, number>;
   /** Logbook finds made while you were away, and standing orders filled */
   finds: number;
   traded: number;
@@ -99,6 +101,7 @@ export function mergeOffline(into: OfflineSummary, more: OfflineSummary): Offlin
     heists: into.heists + more.heists,
     heistAlarms: into.heistAlarms + more.heistAlarms,
     mastery: add(into.mastery, more.mastery) as Record<string, number>,
+    masteryProcs: add(into.masteryProcs ?? {}, more.masteryProcs ?? {}) as Record<string, number>,
     finds: into.finds + more.finds,
     traded: into.traded + more.traded,
   };
@@ -126,6 +129,10 @@ export function startOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offline
     ...ctx,
     offline: true,
     emit(e: GameEvent) {
+      if (e.t === 'masteryProc') {
+        sum.masteryProcs = sum.masteryProcs ?? {};
+        sum.masteryProcs[e.proc] = (sum.masteryProcs[e.proc] ?? 0) + 1;
+      }
       if (e.t === 'produce') {
         for (const [id, n] of Object.entries(e.outputs)) sum.ordinaryOutput![id] = (sum.ordinaryOutput![id] ?? 0) + n;
       }
