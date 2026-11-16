@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'The world map now uses the Ashen Codex illustrated atlas, with campaign paths following its coast, mountains, sea and cities.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.4.47',
+    date: '16 Nov 2026',
+    title: 'Ashen Codex World Map',
+    items: [
+      'The world map now uses the Ashen Codex illustrated atlas, with campaign paths following its coast, mountains, sea and cities.',
+    ],
+  },
   {
     version: '0.4.46',
     date: '16 Nov 2026',
