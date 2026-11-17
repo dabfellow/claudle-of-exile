@@ -10,27 +10,21 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Excavation sites in Archaeology now have Dig and Stop buttons, and a new Restoration & Sifting tab lets you restore relics and sift artifacts.',
-  'Skill combat rules, targeting, and Greenhouse planting now use thematic interactive selectors instead of plain dropdowns, and menus across the game now feature dark fantasy styling.',
-  'Mastery batch crafts now appear directly alongside ordinary activities once unlocked, rather than in a separate section at the bottom of the page.',
-  'Smelting bars and crafting wooden gear (staves, wands, bows, robes) are now separated into dedicated Smelting and Woodcrafting skills alongside Forging, with refined material inputs and distinct hideout workbenches.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
   {
     version: '0.4.48',
     date: '16 Nov 2026',
-    title: 'Dedicated Masterwork Tabs and Mastery Batches',
+    title: 'Skilling Overhaul and UI Enhancements',
     items: [
-      'Profession masterworks now have their own dedicated tab on each skill screen instead of appearing at the bottom of every page.',
-      'Ordinary production recipes now unlock separate Mastery Batches: 5× crafts at mastery 15 in 2× time, and 50× crafts at mastery 90 in 10× time, with full material costs and the same mastery gain per second as single crafts.',
-      'Woodcutting, Mining, and Foraging activities now display visual percentage drop rates for secondary resources and project fragments on their cards, replacing cycle counters and countdown text.',
-      'World-map paths now follow the drawn roads and meet at shared forks instead of doubling back on parallel trails, with all land and sailing routes shown at 50% opacity.',
-      'Subtle dotted sailing lanes and destination markers at 50% opacity now connect the Sunless Sea harbour, wreck fleet, Brimstone Isle, Leviathan’s Rib and maelstrom on the world map.',
-      'Skilling minigames now gain +0.01% permanent maximum Focus speed bonus for each mastery level earned across that skill.',
+      'Excavation sites in Archaeology now have Dig and Stop buttons, and a new Restoration & Sifting tab lets you restore relics and sift artifacts.',
+      'Skill combat rules, targeting, and Greenhouse planting now use thematic interactive selectors instead of plain dropdowns, and menus across the game now feature dark fantasy styling.',
+      'Mastery batch crafts now appear directly alongside ordinary activities once unlocked.',
+      'Smelting bars and crafting wooden gear (staves, wands, bows, robes) are now separated into dedicated Smelting and Woodcrafting skills alongside Forging, with refined material inputs and distinct hideout workbenches.',
     ],
   },
+
   {
     version: '0.4.47',
     date: '16 Nov 2026',
