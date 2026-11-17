@@ -145,6 +145,24 @@ function generateMilestones(skill: string, taskId: string, _taskName: string, _o
     ];
   }
 
+  if (skill === 'smelting') {
+    return [
+      { level: 25, id: mid(25, 'crucible'), name: 'Efficient Crucible', desc: '10% chance to smelt without consuming secondary flux', scope: 'task', kind: 'catalyst_save', value: 0.10 },
+      { level: 50, id: mid(50, 'slag'), name: 'Pure Slag', desc: '10% chance to produce double metal bars', scope: 'task', kind: 'feast_bounty', value: 0.10 },
+      { level: 75, id: mid(75, 'speed'), name: "Crucible Heat", desc: '+2% global Smelting speed', scope: 'global', kind: 'global_speed', value: 2 },
+      { level: 100, id: mid(100, 'reclaim'), name: 'Slag Reclamation', desc: '+2% global ore conservation', scope: 'global', kind: 'global_conserve', value: 0.02 },
+    ];
+  }
+
+  if (skill === 'woodcrafting') {
+    return [
+      { level: 25, id: mid(25, 'grain'), name: 'Timber Grain', desc: '15% chance to conserve resins/materials used', scope: 'task', kind: 'catalyst_save', value: 0.15 },
+      { level: 50, id: mid(50, 'carve'), name: "Carver's Art", desc: 'Guarantees higher minimum affix tier floor', scope: 'task', kind: 'affix_floor', value: 1 },
+      { level: 75, id: mid(75, 'speed'), name: 'Swift Shavings', desc: '+2% global Woodcrafting speed', scope: 'global', kind: 'global_speed', value: 2 },
+      { level: 100, id: mid(100, 'woodmaster'), name: 'Master Woodcrafter', desc: '+10% base defence or damage rolls', scope: 'global', kind: 'affix_floor', value: 10 },
+    ];
+  }
+
   if (skill === 'smithing') {
     if (taskId.includes('smelt')) {
       return [
@@ -307,18 +325,30 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
     if (!culture) return undefined; // These recipes did not exist in the old band-based saves.
     return gathering(`archaeology.${culture}`, `${materialName(culture)} Archaeology`, a.skill, out, a);
   }
-  if (a.skill === 'smithing') {
+  if (a.skill === 'smelting') {
     if (a.id.startsWith('smelt_')) {
       const material = a.id.slice('smelt_'.length);
       return production(`smithing.smelt.${material}`, `${materialName(material)} Smelting`, a.skill, a);
     }
+    return production(`smelting.${a.id}`, a.name, a.skill, a);
+  }
+  if (a.skill === 'woodcrafting') {
+    if (a.baseId) {
+      const b = baseDef(a.baseId);
+      const material = b.reqLevel < 10 ? 'ash' : b.reqLevel < 22 ? 'oak' : 'yew';
+      const family = b.slot === 'weapon' ? 'weapons' : b.slot === 'offhand' ? 'offhands' : 'garments';
+      return production(`woodcrafting.${material}.${family}`, `${materialName(material)} ${materialName(family)}`, a.skill, a);
+    }
+    return production(`woodcrafting.${a.id}`, a.name, a.skill, a);
+  }
+  if (a.skill === 'smithing') {
     if (a.baseId) {
       const b = baseDef(a.baseId);
       const material = b.reqLevel < 10 ? 'copper' : b.reqLevel < 22 ? 'iron' : 'mithril';
       const family = b.slot === 'weapon' ? 'weapons' : b.slot === 'offhand' ? 'offhands' : b.slot === 'ring' || b.slot === 'amulet' ? 'jewellery' : 'armour';
       return production(`smithing.${material}.${family}`, `${materialName(material)} ${materialName(family)}`, a.skill, a);
     }
-    return production('keys.smithing', 'Key Smithing', a.skill, a);
+    return production('keys.smithing', 'Key Forging', a.skill, a);
   }
   if (a.skill === 'alchemy') {
     if (a.id === 'brew_abyssal_key') return production('keys.alchemy', 'Key Alchemy', a.skill, a);

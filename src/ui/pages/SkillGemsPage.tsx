@@ -10,9 +10,7 @@ import {
   TARGET_STATUSES,
   type GemAttr,
   type RuleCondition,
-  type SkillAim,
   type TacticRule,
-  type TargetStatus,
 } from '../../data/gems';
 import { actOpen } from '../../data/zones';
 import { gemArrived } from '../../engine/progress';
@@ -49,94 +47,305 @@ import { SkillSets } from '../components/Loadouts';
 
 export const SKILL_KEYS = ['Q', 'W', 'E', 'R', 'T', 'Y'];
 
-/** One rule slot. Locked rules stay in the list, greyed, so you can see what the War Table teaches. */
+const RULE_CATEGORIES: { id: string; label: string; icon: string; conditions: RuleCondition[] }[] = [
+  {
+    id: 'cadence',
+    label: 'Cadence & Triggers',
+    icon: '⚡',
+    conditions: ['always', 'manual', 'meterFull', 'exertionFull', 'notActive'],
+  },
+  {
+    id: 'vitals',
+    label: 'Vitals & Pools',
+    icon: '🛡️',
+    conditions: ['lifeBelow', 'lifeAbove', 'manaBelow', 'manaAbove'],
+  },
+  {
+    id: 'enemies',
+    label: 'Enemies & Bosses',
+    icon: '👹',
+    conditions: ['bossOnly', 'enemyCasting', 'enemyChannels', 'enemiesAtLeast', 'targetLifeAbove'],
+  },
+  {
+    id: 'conditions',
+    label: 'Status & Ground',
+    icon: '🩸',
+    conditions: ['targetHas', 'targetLacks', 'onGround', 'frostbite'],
+  },
+];
+
+function conditionGlyph(c: RuleCondition): string {
+  for (const cat of RULE_CATEGORIES) {
+    if (cat.conditions.includes(c)) return cat.icon;
+  }
+  return '⚔️';
+}
+
+function RuleConditionModal({
+  s,
+  current,
+  extra,
+  onSelect,
+  onClose,
+}: {
+  s: GameState;
+  current: RuleCondition;
+  extra: boolean;
+  onSelect: (c: RuleCondition) => void;
+  onClose: () => void;
+}) {
+  const [category, setCategory] = useState<string>('all');
+  const allConditions = (Object.keys(RULE_LABELS) as RuleCondition[]).filter(
+    (k) => (!extra || (k !== 'always' && k !== 'manual')) && (!RULE_LABELS[k].act || actOpen(RULE_LABELS[k].act))
+  );
+
+  const filtered = category === 'all'
+    ? allConditions
+    : allConditions.filter((k) => RULE_CATEGORIES.find((c) => c.id === category)?.conditions.includes(k));
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="card modal rule-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="card-title">
+          <span>Choose Combat Rule Trigger</span>
+          <span className="grow" />
+          <button className="btn sm ghost" title="Close" onClick={onClose}>
+            <Icon name="close" size={12} />
+          </button>
+        </div>
+        <div className="rule-modal-categories">
+          <button
+            type="button"
+            className={`chip sm ${category === 'all' ? 'active' : ''}`}
+            onClick={() => setCategory('all')}
+          >
+            All Conditions
+          </button>
+          {RULE_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              className={`chip sm ${category === cat.id ? 'active' : ''}`}
+              onClick={() => setCategory(cat.id)}
+            >
+              {cat.icon} {cat.label}
+            </button>
+          ))}
+        </div>
+        <div className="rule-modal-grid">
+          {filtered.map((k) => {
+            const reason = ruleLockReason(s, k);
+            const isSelected = current === k;
+            return (
+              <button
+                key={k}
+                type="button"
+                className={`rule-opt-card ${isSelected ? 'active' : ''}`}
+                disabled={!!reason}
+                onClick={() => {
+                  onSelect(k);
+                  onClose();
+                }}
+              >
+                <div className="rule-opt-title">
+                  <span>{conditionGlyph(k)}</span>
+                  <b>{RULE_LABELS[k].label}</b>
+                </div>
+                {reason ? (
+                  <span className="chip bad xs" style={{ marginTop: 2 }}>{reason}</span>
+                ) : (
+                  <span className="dim xs">Available trigger</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** One rule slot. Categorized button opens the condition picker; values and status options use interactive chips. */
 function RuleSlot({ s, slot, index, rule, extra }: { s: GameState; slot: number; index: number; rule: TacticRule; extra: boolean }) {
+  const [picking, setPicking] = useState(false);
   const meta = RULE_LABELS[rule.when];
   const locked = ruleLockReason(s, rule.when);
-  const options = (Object.keys(RULE_LABELS) as RuleCondition[]).filter((k) => (!extra || (k !== 'always' && k !== 'manual')) && (!RULE_LABELS[k].act || actOpen(RULE_LABELS[k].act)));
   const set = (next: TacticRule) => game.act((st) => setRule(st, slot, index, { ...next, aim: rule.aim }));
+
+  const stepVal = (delta: number) => {
+    const cur = rule.value ?? meta.defaultValue ?? 0;
+    const max = meta.max ?? (meta.unit === '%' ? 100 : 5);
+    const next = Math.max(0, Math.min(max, cur + delta));
+    set({ when: rule.when, value: next });
+  };
+
   return (
-    <div className="rule-editor">
-      <select
-        className="input"
-        value={rule.when}
-        onChange={(e) => {
-          const when = e.target.value as RuleCondition;
-          set({ when, value: RULE_LABELS[when].defaultValue, status: RULE_LABELS[when].status ? 'bleeding' : undefined, ground: RULE_LABELS[when].ground ? 'burning' : undefined });
-        }}
-      >
-        {options.map((k) => (
-          <option key={k} value={k} disabled={!!ruleLockReason(s, k)}>
-            {RULE_LABELS[k].label}
-            {ruleLockReason(s, k) ? ' (locked)' : ''}
-          </option>
-        ))}
-      </select>
-      {meta.status && (
-        <select className="input" value={rule.status ?? 'bleeding'} onChange={(e) => set({ when: rule.when, status: e.target.value as TargetStatus })}>
-          {TARGET_STATUSES.map((x) => (
-            <option key={x.id} value={x.id}>
-              {x.label}
-            </option>
-          ))}
-        </select>
-      )}
-      {meta.ground && (
-        <select className="input" value={rule.ground ?? 'burning'} onChange={(e) => set({ when: rule.when, ground: e.target.value as GroundKind })}>
-          {(Object.keys(GROUND) as GroundKind[]).map((k) => (
-            <option key={k} value={k} disabled={!GROUND_IN_PLAY.has(k)}>
-              {GROUND[k].name}
-              {GROUND_IN_PLAY.has(k) ? '' : ' (nothing lays this yet)'}
-            </option>
-          ))}
-        </select>
-      )}
-      {meta.unit !== undefined && (
-        <span className="row" style={{ gap: 4 }}>
-          <input
-            className="input"
-            type="number"
-            min={0}
-            max={meta.max ?? (meta.unit === '%' ? 100 : 5)}
-            value={rule.value ?? meta.defaultValue}
-            onChange={(e) => set({ when: rule.when, value: Number(e.target.value) })}
-            style={{ width: 64 }}
-          />
-          <span className="dim">{meta.unit}</span>
-        </span>
-      )}
-      {locked && <span className="chip bad">{locked}</span>}
-      {extra && (
-        <button className="btn sm ghost" title="Remove this rule" onClick={() => game.act((st) => removeRule(st, slot, index))}>
-          <Icon name="close" size={12} />
+    <div className="rule-card">
+      <div className="rule-head">
+        {extra && <span className="chip dim xs" style={{ fontWeight: 700 }}>AND</span>}
+        <button
+          type="button"
+          className={`rule-condition-btn ${locked ? 'is-locked' : ''}`}
+          onClick={() => setPicking(true)}
+          title="Click to choose a rule trigger condition"
+        >
+          <span className="glyph">{conditionGlyph(rule.when)}</span>
+          <b>{RULE_LABELS[rule.when].label}</b>
+          <span className="arrow">▾</span>
         </button>
+        {locked && <span className="chip bad xs">{locked}</span>}
+        <span className="grow" />
+        {extra && (
+          <button className="btn sm ghost" title="Remove this rule" onClick={() => game.act((st) => removeRule(st, slot, index))}>
+            <Icon name="close" size={12} />
+          </button>
+        )}
+      </div>
+
+      {(meta.status || meta.ground || meta.unit !== undefined) && (
+        <div className="rule-params">
+          {meta.status && (
+            <div className="rule-chip-group">
+              <span className="dim small">Target status:</span>
+              <div className="row wrap" style={{ gap: 4 }}>
+                {TARGET_STATUSES.map((x) => (
+                  <button
+                    key={x.id}
+                    type="button"
+                    className={`chip sm status-chip status-${x.id} ${rule.status === x.id ? 'active' : ''}`}
+                    onClick={() => set({ when: rule.when, status: x.id })}
+                  >
+                    {x.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {meta.ground && (
+            <div className="rule-chip-group">
+              <span className="dim small">Standing on:</span>
+              <div className="row wrap" style={{ gap: 4 }}>
+                {(Object.keys(GROUND) as GroundKind[]).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    disabled={!GROUND_IN_PLAY.has(k)}
+                    className={`chip sm ground-chip ground-${k} ${rule.ground === k ? 'active' : ''}`}
+                    onClick={() => set({ when: rule.when, ground: k })}
+                    title={GROUND_IN_PLAY.has(k) ? '' : 'Nothing lays this yet'}
+                  >
+                    {GROUND[k].name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {meta.unit !== undefined && (
+            <div className="rule-stepper-row">
+              <span className="dim small">Threshold:</span>
+              <div className="row" style={{ gap: 4, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="btn sm ghost"
+                  disabled={(rule.value ?? meta.defaultValue ?? 0) <= 0}
+                  onClick={() => stepVal(meta.unit === '%' ? -10 : -1)}
+                >
+                  -
+                </button>
+                <input
+                  className="input sm rule-num-input"
+                  type="number"
+                  min={0}
+                  max={meta.max ?? (meta.unit === '%' ? 100 : 5)}
+                  value={rule.value ?? meta.defaultValue}
+                  onChange={(e) => set({ when: rule.when, value: Number(e.target.value) })}
+                />
+                <button
+                  type="button"
+                  className="btn sm ghost"
+                  disabled={(rule.value ?? meta.defaultValue ?? 0) >= (meta.max ?? (meta.unit === '%' ? 100 : 5))}
+                  onClick={() => stepVal(meta.unit === '%' ? 10 : 1)}
+                >
+                  +
+                </button>
+                <span className="dim small">{meta.unit}</span>
+                {meta.unit === '%' && (
+                  <div className="row" style={{ gap: 3, marginLeft: 6 }}>
+                    {[25, 50, 75].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        className={`chip xs ${rule.value === pct ? 'active' : ''}`}
+                        onClick={() => set({ when: rule.when, value: pct })}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {picking && (
+        <RuleConditionModal
+          s={s}
+          current={rule.when}
+          extra={extra}
+          onSelect={(when) => {
+            set({
+              when,
+              value: RULE_LABELS[when].defaultValue,
+              status: RULE_LABELS[when].status ? 'bleeding' : undefined,
+              ground: RULE_LABELS[when].ground ? 'burning' : undefined,
+            });
+          }}
+          onClose={() => setPicking(false)}
+        />
       )}
     </div>
   );
 }
 
-/** Where the skill's rules send it. Guards and buffs don't hit anyone, so they have no aim. */
+/** Where the skill's rules send it. Rendered as tactile aim chips instead of a dropdown. */
 function RuleAim({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGemInstance }) {
   const { weaponPct, base } = activeGemDef(gem.gemId).effect;
   if (!weaponPct && !base) return null;
   const locked = aimLockReason(s);
+  const currentAim = gem.rules.find((r) => r.aim)?.aim;
+
   return (
-    <div className="rule-editor">
-      <span className="dim small">Aim at</span>
-      <select
-        className="input"
-        value={gem.rules.find((r) => r.aim)?.aim ?? ''}
-        disabled={!!locked}
-        onChange={(e) => game.act((st) => setAim(st, slot, (e.target.value || undefined) as SkillAim | undefined))}
-      >
-        <option value="">The usual target</option>
-        {SKILL_AIMS.map((x) => (
-          <option key={x.id} value={x.id}>
-            {x.label}
-          </option>
-        ))}
-      </select>
-      {locked && <span className="chip bad">{locked}</span>}
+    <div className="rule-aim-panel">
+      <span className="dim small" style={{ fontWeight: 600 }}>Aim at:</span>
+      <div className="row wrap" style={{ gap: 4 }}>
+        <button
+          type="button"
+          className={`chip sm aim-chip ${!currentAim ? 'active' : ''}`}
+          disabled={!!locked}
+          onClick={() => game.act((st) => setAim(st, slot, undefined))}
+        >
+          Usual target
+        </button>
+        {SKILL_AIMS.map((x) => {
+          const active = currentAim === x.id;
+          return (
+            <button
+              key={x.id}
+              type="button"
+              className={`chip sm aim-chip ${active ? 'active' : ''}`}
+              disabled={!!locked}
+              onClick={() => game.act((st) => setAim(st, slot, x.id))}
+            >
+              {x.label}
+            </button>
+          );
+        })}
+      </div>
+      {locked && <span className="chip bad xs">{locked}</span>}
     </div>
   );
 }
@@ -146,17 +355,16 @@ function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGe
   const manual = gem.rules[0].when === 'manual';
   const canAdd = !manual && gem.rules.length < ruleSlots(s);
   return (
-    <>
-      {gem.rules.map((rule, i) => (
-        <div key={i}>
-          {i > 0 && <div className="rule-join">and</div>}
-          <RuleSlot s={s} slot={slot} index={i} rule={rule} extra={i > 0} />
-        </div>
-      ))}
+    <div className="rule-editor-wrapper">
+      <div className="rule-cards-list">
+        {gem.rules.map((rule, i) => (
+          <RuleSlot key={i} s={s} slot={slot} index={i} rule={rule} extra={i > 0} />
+        ))}
+      </div>
       <RuleAim s={s} slot={slot} gem={gem} />
-      <div className="rule-editor">
+      <div className="rule-editor" style={{ marginTop: 8 }}>
         {canAdd && (
-          <button className="btn sm" title="Fire only when this rule passes too" onClick={() => game.act((st) => setRule(st, slot, gem.rules.length, { when: 'bossOnly' }))}>
+          <button className="btn sm primary" title="Fire only when this rule passes too" onClick={() => game.act((st) => setRule(st, slot, gem.rules.length, { when: 'bossOnly' }))}>
             + Add a rule
           </button>
         )}
@@ -170,7 +378,7 @@ function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGe
           {gem.rules.length} of {ruleSlots(s)} rule slots
         </span>
       </div>
-    </>
+    </div>
   );
 }
 

@@ -63,7 +63,7 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
 }
 
 const GATHERING_SET = new Set<SkillId>(['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology']);
-const PRODUCTION_SET = new Set<SkillId>(['smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography']);
+const PRODUCTION_SET = new Set<SkillId>(['smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography']);
 
 export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): number {
   const t = skillTreeStats(s);
@@ -96,13 +96,21 @@ export function setSmithCatalyst(s: GameState, patch: Partial<SmithCatalyst>): v
   s.smithCatalyst = { ...s.smithCatalyst, ...patch };
 }
 
-/** The Forge or Alchemy Table level a production recipe needs; gathering only needs the skill level. */
-export function stationLevelFor(a: SkillAction): { station: 'forge' | 'alchemy_table'; level: number } | null {
-  if (a.forge) return { station: 'forge', level: a.forge };
+const STATION_LABELS: Record<string, string> = {
+  forge: 'Forge',
+  smelter: 'Smelter',
+  woodcrafting_bench: 'Woodcrafting Bench',
+  alchemy_table: 'Alchemy Table',
+};
+
+/** The station level a production recipe needs; gathering only needs the skill level. */
+export function stationLevelFor(a: SkillAction): { station: 'forge' | 'smelter' | 'woodcrafting_bench' | 'alchemy_table'; level: number } | null {
+  if (a.forge) return { station: a.skill === 'smelting' ? 'smelter' : a.skill === 'woodcrafting' ? 'woodcrafting_bench' : 'forge', level: a.forge };
   if (a.alchemyTable) return { station: 'alchemy_table', level: a.alchemyTable };
   if (a.baseId) {
     const req = baseDef(a.baseId).reqLevel;
-    return { station: 'forge', level: req < 10 ? 1 : req < 22 ? 2 : 3 };
+    const station = a.skill === 'woodcrafting' ? 'woodcrafting_bench' : 'forge';
+    return { station, level: req < 10 ? 1 : req < 22 ? 2 : 3 };
   }
   if (a.skill === 'alchemy') return { station: 'alchemy_table', level: a.level < 10 ? 1 : a.level < 20 ? 2 : 3 };
   return null;
@@ -141,7 +149,7 @@ export function actionBlocker(s: GameState, a: SkillAction): string | null {
     if (access) return access;
   }
   const st = stationLevelFor(a);
-  if (st && (s.account.hideout[st.station] ?? 1) < st.level) return `Needs ${st.station === 'forge' ? 'Forge' : 'Alchemy Table'} level ${st.level}`;
+  if (st && (s.account.hideout[st.station] ?? 1) < st.level) return `Needs ${STATION_LABELS[st.station] ?? st.station} level ${st.level}`;
   if ((a.inputs && !canAfford(s, a.inputs)) || !hasChartMaps(s, a)) return 'Missing materials';
   if (a.baseId && bagFull(s) && (a.purpose || !salvagesBases(s))) return 'Inventory full';
   if (a.id === 'recycle_gem') {

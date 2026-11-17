@@ -100,7 +100,9 @@ const NAV: { label: string; items: NavEntry[] }[] = [
   {
     label: 'Crafting',
     items: [
-      { page: 'smithing', label: 'Smithing', icon: 'smithing', skill: 'smithing' },
+      { page: 'smelting', label: 'Smelting', icon: 'smelting', skill: 'smelting' },
+      { page: 'smithing', label: 'Forging', icon: 'smithing', skill: 'smithing' },
+      { page: 'woodcrafting', label: 'Woodcrafting', icon: 'woodcrafting', skill: 'woodcrafting' },
       { page: 'alchemy', label: 'Alchemy', icon: 'alchemy', skill: 'alchemy' },
       { page: 'gemcutting', label: 'Gemcutting', icon: 'gemcutting', skill: 'gemcutting' },
       { page: 'runecarving', label: 'Rune-carving', icon: 'runecarving', skill: 'runecarving' },

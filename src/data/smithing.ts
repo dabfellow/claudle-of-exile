@@ -23,18 +23,15 @@ export function purposeRecipes(cheap: SkillAction[]): SkillAction[] {
     if (has('caster_weapon')) purposes.push({ id: 'resource', guarantees: ['flat_mana', 'spell_damage'] });
     else if (has('int_armour')) purposes.push({ id: 'resource', guarantees: ['es_and_mana', defence] });
     else if (jewellery) purposes.push({ id: 'resource', guarantees: ['flat_mana', 'mana_regen'] });
-    const tier = b.reqLevel < 10 ? 0 : b.reqLevel < 22 ? 1 : 2;
     const inputs = Object.fromEntries(Object.entries(a.inputs!).map(([id, n]) => [id, n * 2]));
-    inputs[`${['copper', 'iron', 'mithril'][tier]}_bar`] = 2;
-    if (Object.keys(a.inputs!).some((id) => id.endsWith('_log'))) inputs[`${['ash', 'oak', 'yew'][tier]}_plank`] = 1;
     return purposes.filter((p) => p.guarantees.every((id) => {
       const affix = affixDef(id);
       return !affix.benchOnly && !affix.uniqueOnly && b.tags.some((tag) => (affix.weights[tag] ?? 0) > 0);
     })).map((purpose): SkillAction => ({
-      id: `purpose_${purpose.id}_${b.id}`, skill: 'smithing', baseId: b.id, purpose,
+      id: `purpose_${purpose.id}_${b.id}`, skill: a.skill, baseId: b.id, purpose,
       name: `${({ physical: 'Physical', protection: 'Protection', resource: 'Resource', resistance_fire: 'Fire resistance', resistance_cold: 'Cold resistance', resistance_light: 'Lightning resistance' } as Record<string, string>)[purpose.id]} · ${b.name}`,
       level: a.level, intervalMs: 60_000 + 2000 * b.reqLevel, xp: (18 + 1.8 * b.reqLevel) / 0.3,
-      inputs: { ...inputs }, color: '#d6b67b',
+      inputs: { ...inputs }, color: a.skill === 'woodcrafting' ? '#9c7a4c' : '#d6b67b',
     }));
   });
 }
@@ -42,19 +39,19 @@ export function purposeRecipes(cheap: SkillAction[]): SkillAction[] {
 /** Raw XP is scaled once by skills.ts, matching the existing refinement ladder. */
 export const SMITH_COMPONENTS: SkillAction[] = [
   ...MINING_METALS.slice(3).map((m): SkillAction => ({
-    id: `smelt_${m.id}`, skill: 'smithing', name: `Smelt ${m.name} Bars`, level: m.level,
+    id: `smelt_${m.id}`, skill: 'smelting', name: `Smelt ${m.name} Bars`, level: m.level,
     intervalMs: m.ms, xp: [8, 12, 16, 20][(m.level - 45) / 15] / 0.3,
     inputs: { [`${m.id}_ore`]: 5 }, outputs: { [`${m.id}_bar`]: 1 }, color: m.color,
   })),
   ...([
-    ['alloy_tempered', 'Tempered Alloy', 15, 2, 15, 18, { iron_bar: 2, copper_bar: 1 }, 'tempered_alloy'],
-    ['alloy_wound', 'Wound Alloy', 60, 3, 60, 120, { mithril_bar: 5, copper_bar: 2, mineral_fragment: 10 }, 'wound_alloy'],
-    ['alloy_stone', 'Stone Alloy', 70, 3, 60, 150, { adamant_bar: 5, iron_bar: 2, stone_fragment: 10 }, 'stone_alloy'],
-    ['frame_heartwood', 'Heartwood Frame', 45, 3, 60, 90, { ancient_heartwood: 1, yew_plank: 5 }, 'heartwood_frame'],
-    ['frame_convergence', 'Convergence Frame', 85, 3, 120, 300, { wound_alloy: 1, stone_alloy: 1, ancient_heartwood: 1 }, 'convergence_frame'],
-  ] as [string, string, number, number, number, number, Record<string, number>, string][]).map(([id, name, level, forge, seconds, xp, inputs, output]): SkillAction => ({
-    id, name: `Make ${name}`, skill: 'smithing', level, forge, intervalMs: seconds * 1000, xp: xp / 0.3,
-    inputs, protectedOutputs: { [output]: 1 }, color: '#d6b67b',
+    ['alloy_tempered', 'Tempered Alloy', 15, 2, 15, 18, { iron_bar: 2, copper_bar: 1 }, 'tempered_alloy', 'smelting' as const],
+    ['alloy_wound', 'Wound Alloy', 60, 3, 60, 120, { mithril_bar: 5, copper_bar: 2, mineral_fragment: 10 }, 'wound_alloy', 'smelting' as const],
+    ['alloy_stone', 'Stone Alloy', 70, 3, 60, 150, { adamant_bar: 5, iron_bar: 2, stone_fragment: 10 }, 'stone_alloy', 'smelting' as const],
+    ['frame_heartwood', 'Heartwood Frame', 45, 3, 60, 90, { ancient_heartwood: 1, yew_plank: 5 }, 'heartwood_frame', 'woodcrafting' as const],
+    ['frame_convergence', 'Convergence Frame', 85, 3, 120, 300, { wound_alloy: 1, stone_alloy: 1, ancient_heartwood: 1 }, 'convergence_frame', 'woodcrafting' as const],
+  ] as [string, string, number, number, number, number, Record<string, number>, string, 'smelting' | 'woodcrafting'][]).map(([id, name, level, forge, seconds, xp, inputs, output, skill]): SkillAction => ({
+    id, name: `Make ${name}`, skill, level, forge, intervalMs: seconds * 1000, xp: xp / 0.3,
+    inputs, protectedOutputs: { [output]: 1 }, color: skill === 'woodcrafting' ? '#9c7a4c' : '#d6b67b',
   })),
 ];
 

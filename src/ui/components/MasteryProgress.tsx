@@ -75,7 +75,7 @@ export function MasteryTip({ s, mastery }: { s: GameState; mastery: MasterySpec 
           <div className="mastery-tip-heading">Mastery {a.batchMastery} Reward</div>
           <div className={`mastery-tip-milestone ${level >= a.batchMastery! ? 'unlocked' : 'locked'}`}>
             <b>{a.name}</b> · {level >= a.batchMastery! ? 'Unlocked' : 'Locked'}
-            <div className="mastery-tip-milestone-desc">Unlocks a {a.batch}× craft in Mastery Batches, with full costs and the single craft’s mastery rate.</div>
+            <div className="mastery-tip-milestone-desc">Unlocks a {a.batch}× batch craft with full costs and the single craft’s mastery rate.</div>
           </div>
         </div>
       ))}

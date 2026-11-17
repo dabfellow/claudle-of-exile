@@ -36,7 +36,9 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   harvesting: { id: 'harvesting', name: 'Foraging', group: 'gathering', color: '#d9b84a', verb: 'Foraging', desc: 'Pick herbs off the ground for Alchemy.' },
   thieving: { id: 'thieving', name: 'Thieving', group: 'gathering', color: '#c9a35a', verb: 'Thieving', desc: "Lift purses for gold and Rogue's Markers, then spend them on Heists against the Khanate." },
   archaeology: { id: 'archaeology', name: 'Archaeology', group: 'gathering', color: '#b0784a', verb: 'Digging', desc: 'Dig sites in the Hollow Peaks for Artifacts, then trade them with the merchants of the Expedition for currency.' },
-  smithing: { id: 'smithing', name: 'Smithing', group: 'production', color: '#b8b8c8', verb: 'Smithing', desc: 'Keep cheap bases for crafting, or choose purpose gear with two guaranteed useful stats. Select smelting, alloys, frames and equipment assembly separately.' },
+  smelting: { id: 'smelting', name: 'Smelting', group: 'production', color: '#d07a3a', verb: 'Smelting', desc: 'Smelt mined ores into pure metal bars and blend defensive alloys in the crucible.' },
+  smithing: { id: 'smithing', name: 'Forging', group: 'production', color: '#b8b8c8', verb: 'Forging', desc: 'Hammer refined metal bars into martial weapons, shields, plate armour, and jewellery.' },
+  woodcrafting: { id: 'woodcrafting', name: 'Woodcrafting', group: 'production', color: '#9c7a4c', verb: 'Woodcrafting', desc: 'Carve harvested logs and refined timber into staves, wands, bows, cloth robes, and leather gear.' },
   alchemy: { id: 'alchemy', name: 'Alchemy', group: 'production', color: '#9b6dde', verb: 'Brewing', desc: 'Brew flasks and transmute dust into orbs.' },
   gemcutting: { id: 'gemcutting', name: 'Gemcutting', group: 'production', color: '#4fc1a6', verb: 'Cutting', desc: 'Cut rough gems into skill and support gems.' },
   runecarving: { id: 'runecarving', name: 'Rune-carving', group: 'production', color: '#6fa8ff', verb: 'Carving', desc: 'Carve old materials into runes, then inscribe them in the rune slot on your gear.' },
@@ -205,51 +207,64 @@ const FISHING: SkillAction[] = [
   { ...gather('fishing', 'fish_storm', 'Stormcliff Surf', 40, 5000, 50, 'thunder_marlin', '#f2d14c', [{ id: 'tasalio_scale', chance: 0.001, qty: 1 }]), soon: true },
 ];
 
+export function isWoodcraftBase(b: BaseDef): boolean {
+  if (b.slot === 'weapon' && (b.family === 'bow' || b.family === 'wand' || b.family === 'staff')) return true;
+  if (b.slot === 'offhand' && !b.tags.includes('str_armour')) return true;
+  if (b.tags.includes('armour') && !b.tags.includes('str_armour') && (b.tags.includes('dex_armour') || b.tags.includes('int_armour'))) return true;
+  return false;
+}
+
+export function equipmentSkill(b: BaseDef): 'smithing' | 'woodcrafting' {
+  return isWoodcraftBase(b) ? 'woodcrafting' : 'smithing';
+}
+
 function smithInputs(b: BaseDef): Record<string, number> {
   const tier = b.reqLevel < 10 ? 0 : b.reqLevel < 22 ? 1 : 2;
-  const ore = ['copper_ore', 'iron_ore', 'mithril_ore'][tier];
-  const log = ['ash_log', 'oak_log', 'yew_log'][tier];
+  const bar = ['copper_bar', 'iron_bar', 'mithril_bar'][tier];
+  const plank = ['ash_plank', 'oak_plank', 'yew_plank'][tier];
+  const wood = isWoodcraftBase(b);
   const size: Record<string, [number, number]> = {
-    weapon: [5, 2],
-    offhand: [5, 3],
-    helmet: [4, 1],
-    body: [7, 2],
-    gloves: [3, 1],
-    boots: [3, 1],
-    belt: [3, 2],
-    amulet: [2, 0],
-    ring: [2, 0],
+    weapon: [3, 1],
+    offhand: [3, 2],
+    helmet: [2, 1],
+    body: [4, 1],
+    gloves: [2, 1],
+    boots: [2, 1],
+    belt: [2, 1],
+    amulet: [1, 0],
+    ring: [1, 0],
   };
-  const [o, l] = size[b.slot];
-  const inputs: Record<string, number> = { [ore]: (o + tier * 2) * SMITH_COST_MULT };
-  if (l > 0) inputs[log] = (l + tier) * SMITH_COST_MULT;
+  const [pri, sec] = size[b.slot];
+  const inputs: Record<string, number> = {};
+  if (wood) {
+    const woodPri = b.slot === 'weapon' ? 1 : pri;
+    inputs[plank] = woodPri + tier;
+    if (sec > 0) inputs[bar] = sec;
+  } else {
+    inputs[bar] = pri + tier;
+    if (sec > 0) inputs[plank] = sec;
+  }
   if (b.slot === 'amulet' || b.slot === 'ring') inputs.rough_gem = 1 + tier;
   return inputs;
 }
 
-/**
- * Smithing is a slow, costly way to get a base: a weapon is ~45 s of mining and chopping plus
- * a 10 s forge, so drops stay the main source and smithing is for targeting a specific base.
- */
-const SMITH_COST_MULT = 3;
-
-const SMITHING: SkillAction[] = BASES.filter((b) => !b.projectOnly).map((b) => ({
+const EQUIPMENT_ACTIONS: SkillAction[] = BASES.filter((b) => !b.projectOnly).map((b) => ({
   id: `smith_${b.id}`,
-  skill: 'smithing' as const,
+  skill: equipmentSkill(b),
   name: b.name,
   level: Math.max(1, b.reqLevel),
   intervalMs: 10000 + b.reqLevel * 100,
   xp: 24 + b.reqLevel * 6,
   inputs: smithInputs(b),
   baseId: b.id,
-  color: '#b8b8c8',
+  color: isWoodcraftBase(b) ? '#9c7a4c' : '#b8b8c8',
 }));
 
 /** Construction bars give gathered ore a deliberate refining step before it becomes a station upgrade. */
 const SMELTING: SkillAction[] = [
-  { id: 'smelt_copper', skill: 'smithing', name: 'Smelt Copper Bars', level: 1, intervalMs: 3000, xp: 8, inputs: { copper_ore: 5 }, outputs: { copper_bar: 1 }, color: '#c8743f' },
-  { id: 'smelt_iron', skill: 'smithing', name: 'Smelt Iron Bars', level: 15, intervalMs: 3500, xp: 20, inputs: { iron_ore: 5 }, outputs: { iron_bar: 1 }, color: '#9aa3ad', area: 'ashwood' },
-  { id: 'smelt_mithril', skill: 'smithing', name: 'Smelt Mithril Bars', level: 30, intervalMs: 4000, xp: 42, inputs: { mithril_ore: 5 }, outputs: { mithril_bar: 1 }, color: '#6fc3d8', area: 'shipgrave' },
+  { id: 'smelt_copper', skill: 'smelting', name: 'Smelt Copper Bars', level: 1, intervalMs: 3000, xp: 8, inputs: { copper_ore: 5 }, outputs: { copper_bar: 1 }, color: '#c8743f' },
+  { id: 'smelt_iron', skill: 'smelting', name: 'Smelt Iron Bars', level: 15, intervalMs: 3500, xp: 20, inputs: { iron_ore: 5 }, outputs: { iron_bar: 1 }, color: '#9aa3ad', area: 'ashwood' },
+  { id: 'smelt_mithril', skill: 'smelting', name: 'Smelt Mithril Bars', level: 30, intervalMs: 4000, xp: 42, inputs: { mithril_ore: 5 }, outputs: { mithril_bar: 1 }, color: '#6fc3d8', area: 'shipgrave' },
 ];
 
 const ALCHEMY: SkillAction[] = [
@@ -474,7 +489,7 @@ export const BOSS_KEY_CRAFTS: SkillAction[] = [
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...MILLING, ...THIEVING, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...SMITHING, ...purposeRecipes(SMITHING), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
+const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...MILLING, ...THIEVING, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
 /** Historical access evidence used only by save migration. */
 const ALL_AUTHORED_ACTIONS = [...AUTHORED_ACTIONS, ...WEAPON_COMPONENT_ACTIONS.filter((extra) => !AUTHORED_ACTIONS.some((a) => a.id === extra.id))];
 export const LEGACY_ACTION_PLACES = Object.fromEntries(ALL_AUTHORED_ACTIONS.map((a) => [a.id, { area: a.area, gate: a.gate }]));

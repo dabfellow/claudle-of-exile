@@ -27,6 +27,10 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 16. Percentage Drops on Gathering Nodes: released in 0.4.48; replaced deterministic cycle counters ("1 in X completions") and countdown text across Woodcutting (resins, fragments), Mining (fossils, rough gems, fragments), and Foraging (essences, rare blooms) with native percentage chances rendered directly on the action cards.
 17. Ashen Codex world map: artwork integrated and released in 0.4.47; route network correction following the owner's annotated roads, forks and 50% opacity land/sea lanes released in 0.4.48. Desktop/phone visual playtests pass.
 18. Dedicated Masterworks Tab: released in 0.4.48; moved profession masterworks (ProjectBoard) from the bottom of every skilling page into their own dedicated "Masterworks" tab on each profession screen, keeping standard activities clean and unbloated while providing direct access and an active project indicator. All 106 test files / 1,746 tests pass.
+19. Archaeology Dig Buttons and Restoration Tab: completed (2026-11-16); added Dig/Stop action buttons and real-time dig progress bars directly to excavation site cards in the Archaeology Logbook, and added a dedicated Restoration & Sifting tab with full action cards for sifting artifacts and restoring historical relics (Surveyor's Guard, Taboo Tablet, Convergence Relic). All tests pass.
+20. Thematic UI Dropdowns & Selectors: completed (2026-11-16); styled standard select menus across the entire game with dark fantasy styling, slate stone gradients, and glowing gold chevrons; moved Skill Combat Rules out of native dropdowns into categorized trigger pickers, tactile ailment chips, ground chips, and stepper controls; replaced Combat page targeting dropdowns with a compact interactive targeting popover; and redesigned the Greenhouse in Foraging into an interactive conservatory plot and crop cards with live cycle progress, seed discovery states, and direct planting buttons. All tests pass.
+21. In-line Mastery Batches: completed (2026-11-16); kept 5× and 50× mastery batch crafts directly in line with ordinary activities and hidden until unlocked by their required mastery level, removing the separate bottom card and ensuring Cartography production activities remain accessible. All tests and typecheck pass.
+22. Production Skill Separation (Smelting, Forging, Woodcrafting): completed (2026-11-16); split the monolithic Smithing discipline into three dedicated 1–100 production disciplines: Smelting (bars & alloys at the Smelter), Forging (martial weapons, shields, plate armour, jewellery at the Forge), and Woodcrafting (staves, wands, bows, bucklers, robes, leather armour at the Woodcrafting Bench). Updated refining pipelines with bars and planks, added dedicated Lv 15 profession tools (Smelter's Tongs, Wayfarer's Hammer, Carver's Drawknife) and a Lv 60 Master Artisan hybrid upgrade, integrated distinct hideout stations, established mastery milestones, and implemented full backward-compatible save migration parity. All 106 test files / 1,748 tests pass.
 
 ## Milestones
 
@@ -48,6 +52,33 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Kingdom lore Topic 4 (2026-11-16): Owner chose B for new arrivals: exile has become a disguised death sentence. The larger kingdom knows the exile kingdom has collapsed and abandons people offshore or on its most dangerous beaches. The player survives a landing intended to kill them. The player's individual offence or reason for exile remains open.
+
+- Kingdom lore Topic 3 (2026-11-16): Owner chose B for the capital's rulers: the rebellion expelled the foreign agents, but its leaders became the new rulers and kept emergency powers for thirty years. Some believe rationing and force are holding the kingdom together; others have grown wealthy from the arrangement. Older inhabitants remember these rulers as heroes, creating divided loyalties. Their individual identities and the larger kingdom's current actions remain open.
+
+- Friends as lore characters (2026-11-16): Owner wants friends represented as characters in the kingdom's lore. Sir Broden, also known as "keyzersoze", "johney depp", and "lemmestun uponyou", is a coastal knight who escorts food wagons between the wreck shores and starving districts. His armour is repaired with ship steel and he carries a heavy hammer, hence "Lemmestun Uponyou". Different settlements know him by different names. His knightly order collapsed during the war, but he still keeps its oath. Owner accepted this background and requested a future NPC quest chain awarding a unique item; quest details and the unique remain undecided.
+
+- Kingdom lore Topic 2 (2026-11-16): Owner chose B: the exiles unknowingly built their kingdom over an older power. During the conflict thirty years before the player's arrival, war damaged the places keeping that power contained, and supernatural effects have slowly spread outward since. This is the smaller supernatural thread leading toward the Uber bosses; the power's identity and individual boss connections remain open.
+
+- Kingdom lore Topic 1 (2026-11-16): Owner chose war, neglect and hunger as the foundation of the kingdom's devastation, "with a bit of B to lead into the ubers": a smaller supernatural element leads into the Uber bosses. The supernatural cause, who unleashed it, and its connection to individual bosses remain undecided.
+
+- Kingdom lore foundation (2026-11-16, owner's premise): People cast out by their original society built a noteworthy kingdom on the exile continent over hundreds of years. The larger kingdom refuses to recognize it and sent people to infiltrate the High Council so a select elite would rule the exiles. The exiles discovered this and planned to attack back; this was thirty years before the player's arrival. By the player's arrival, commerce and trade have broken down, a small amount of food is produced in the capital and distributed to districts, and poorer inhabitants depend mainly on cargo washed ashore by rough seas and offshore whirlpools, unless roaming bandits take it. What happened during the intervening thirty years, and the precise cause of the landscape's devastation, remain open. Landscape proposals are under discussion, not approved changes to game geography or artwork.
+
+- Production Skill Separation Topic 3 (2026-11-16): Stations, Tools, and Save Migration.
+  - 3a: Dedicated stations for each discipline: Smelter / Furnace (Smelting), Forge / Anvil (Forging), and Woodcrafting Bench (Woodcrafting), each with independent non-combat upgrade paths (Levels 1–3).
+  - 3b: Dedicated tools early at Lv 15 (Smelter's Tongs, Wayfarer's Hammer, Carver's Drawknife each +8% speed to their skill), with higher-tier masterwork project tools combining speeds across production skills (e.g. Master Artisan's Multi-Tool).
+  - 3c: Full grandfathering for existing player saves: existing Smithing level/XP maps to Smelting, Forging, and Woodcrafting, preserving player progression and recipe access without loss.
+
+- Production Skill Separation Topic 2 (2026-11-16): Skill Names, Gear Scope, and Input Flow. Decided Option A across all three questions:
+  - 2a: Skill names are **Smelting** (bars & alloys), **Forging** (metal gear & jewellery), and **Woodcrafting** (staves, wands, bows, organic gear).
+  - 2b: True refining pipeline: Forging requires smelted metal bars and components; Woodcrafting requires harvested logs and refined planks.
+  - 2c: Split equipment by material/archetype: Heavy plate armour and metal weapons (swords, axes, maces, daggers) stay in Forging along with jewellery (bars + gems); cloth robes, leather/evasion armours, staves, wands, and bows move to Woodcrafting.
+
+- Production Skill Separation Topic 1 (2026-11-16): Smelting, Forging, and Woodcrafting Separation. Decided Option A across all three questions:
+  - 1a: Split into full standalone 1–100 professions on the sidebar with their own level, XP, masteries, and tool slots.
+  - 1b: Dedicated Woodcrafting skill for wooden equipment (staves, wands, bows).
+  - 1c: Dedicated Smelting skill for refining ores into metal bars and casting alloys, separating metallurgical refining from finished equipment forging.
 
 - Grounded world-atlas revision (2026-11-16): Owner approved rebuilding connected geology and drainage before surface detail; locate cities at useful harbours/crossings, vary coastal complexity, reduce oversized special landmarks, leave ordinary open country, and use thinner selective ink with much less artificial paper distress. Revised art saved as `output/imagegen/ashen-codex-world-atlas-1800s-v2.png`; game integration and overlay alignment pending.
 
@@ -396,6 +427,19 @@ The implementation passes the full 1,261-test suite and production typecheck. No
 The consolidated batch specification is retained below as a proposal. Its initial 1.3× attribute wording is superseded by the 0.4.1 attribute rebalance (demanding gems use 1.15×); use code for actual requirements. Its suggested `'maps'` gating/API names are design intent, not existing API contracts. Definitions that conflict with current data require review rather than silently changing gameplay.
 
 ## Other open items
+
+- [ ] Add Sir Broden as an NPC with a quest chain awarding a unique item (requested 2026-11-16).
+  - Accepted background and aliases are in Decisions. Design the quest chain and unique reward before implementation; current request is to record the future work.
+
+- [ ] Develop the exile kingdom's landscape and founding lore from the owner's premise (2026-11-16).
+  - Foundation recorded in Decisions; discussing how the thirty years of collapse appear in the landscape. No artwork or game changes yet.
+
+- [ ] Separate Production Skills into Smelting, Forging, and Woodcrafting:
+  - [ ] 1. Core Data & Types: add `smelting` and `woodcrafting` to `SkillId`, register skill definitions, metadata, colors, and navigation icons.
+  - [ ] 2. Activity & Recipe Split: move bar/alloy smelting to Smelting; move staves, wands, bows, robes, and leather/hybrid armours to Woodcrafting; keep metal weapons, plate armour, and jewellery in Forging; update equipment recipes to consume refined metal bars and wooden planks.
+  - [ ] 3. Hideout Stations: expand hideout stations to feature the Smelter / Furnace (Smelting), Forge / Anvil (Forging), and Woodcrafting Bench (Woodcrafting) with independent Lv 1–3 non-combat progression.
+  - [ ] 4. Profession Tools: add Lv 15 craftable tools (Smelter's Tongs, Wayfarer's Hammer, Carver's Drawknife each +8% speed) and high-tier hybrid tools that combine speeds across production skills.
+  - [ ] 5. Save Migration & Verification: grandfather existing player saves with full Smithing parity across Smelting, Forging, and Woodcrafting; update mastery tracks, UI tabs, and test suites.
 
 - [x] Give masterworks their own tab on each profession screen instead of bloating the bottom of every page. — done 2026-11-16
   - Added a dedicated "Masterworks" tab to each profession screen that has projects, showing the number of unlocked undertakings and an active running indicator. Hidden the ProjectBoard from default activity views and hidden ordinary activity/batch sections while on the Masterworks tab. Typecheck and test suite verified. Unreleased.

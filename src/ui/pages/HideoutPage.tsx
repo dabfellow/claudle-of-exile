@@ -32,6 +32,8 @@ const STATION_ICON: Record<StationId, string> = {
   map_device: 'map',
   stash: 'stash',
   forge: 'forge',
+  smelter: 'forge',
+  woodcrafting_bench: 'woodcutting',
   alchemy_table: 'alchemy',
   bench: 'bench',
   vendor: 'vendor',

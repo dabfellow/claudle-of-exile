@@ -484,6 +484,7 @@ export function deserialize(json: string): GameState {
   settleMaps(s);
   settleHeist(s);
   settleExpedition(s);
+  settleProductionSkills(s);
   settleSkillingMastery(s);
   settleProfessionProgress(s);
   settleForagingSeeds(s);
@@ -495,6 +496,22 @@ export function deserialize(json: string): GameState {
   settleTreeProfiles(s);
   dropRemovedActions(s);
   return s;
+}
+
+/** Grandfather existing player saves with full Smithing parity across Smelting and Woodcrafting. */
+export function settleProductionSkills(s: GameState): void {
+  if (s.skills?.smithing) {
+    if (s.skills.smelting === undefined || s.skills.smelting === 0) {
+      s.skills.smelting = s.skills.smithing;
+    }
+    if (s.skills.woodcrafting === undefined || s.skills.woodcrafting === 0) {
+      s.skills.woodcrafting = s.skills.smithing;
+    }
+  }
+  if (s.account?.hideout?.forge) {
+    s.account.hideout.smelter ??= Math.min(3, s.account.hideout.forge);
+    s.account.hideout.woodcrafting_bench ??= Math.min(3, s.account.hideout.forge);
+  }
 }
 
 /**

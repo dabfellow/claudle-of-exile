@@ -149,6 +149,6 @@ describe('Phase 02 Mining', () => {
     expect(materialDef('crystal_shard').desc).toMatch(/Exceptional Crystal/);
     for (const id of ['mineral_fragment', 'stone_fragment']) expect(materialDef(id).desc).toMatch(/future/);
     expect(materialDef('world_ore').desc).toMatch(/Smelt 5/);
-    expect(actionsFor('smithing').some((a) => a.id === 'smelt_adamant')).toBe(true); // Phase 04 supplies refinement.
+    expect(actionsFor('smelting').some((a) => a.id === 'smelt_adamant')).toBe(true); // Phase 04 supplies refinement.
   });
 });

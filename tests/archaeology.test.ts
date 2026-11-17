@@ -76,4 +76,14 @@ describe('Phase 12 restoration', () => {
     expect(actionBlocker(old, actionDef('dig_heart'))).toBeNull();
     expect(actionBlocker(old, actionDef('restore_convergence_relic'))).toBeTruthy();
   });
+
+  it('allows starting and stopping dig actions directly', () => {
+    const s = make();
+    expect(actionBlocker(s, actionDef('dig_cairn'))).toBeNull();
+    expect(startSkillAction(s, ctx(), 'dig_cairn')).toBeNull();
+    expect(s.action?.kind).toBe('skill');
+    expect(s.action && 'actionId' in s.action && s.action.actionId).toBe('dig_cairn');
+    s.action = null;
+    expect(s.action).toBeNull();
+  });
 });

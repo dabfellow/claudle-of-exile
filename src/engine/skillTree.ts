@@ -7,7 +7,7 @@ import type { GameState } from './types';
 import { levelOf } from './xp';
 
 // Fishing is left out: it is always level 1 and would only nudge the point count
-const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as const;
+const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as const;
 
 export const MAX_SKILL_TREE_POINTS = 36;
 
@@ -63,7 +63,7 @@ const SKILL_TREE_STAT_SET = new Set<string>([
   'harvestingSpeed', 'distiller', 'rareBlooms', 'greenhouse', 'harvestingYield', 'harvestingRare', 'harvestingDouble',
   'thievingSpeed', 'markerChance', 'alertReduce', 'cleanGetaway', 'thievingYield', 'thievingRare', 'thievingDouble',
   'archaeologySpeed', 'artifactChance', 'wareDiscount', 'deepSurvey', 'archaeologyYield', 'archaeologyRare', 'archaeologyDouble',
-  'smithingSpeed', 'steadyTemper', 'smithMagic', 'grandmaster', 'smithingQuality', 'smithingSave', 'smithingExtra',
+  'smithingSpeed', 'smeltingSpeed', 'woodcraftingSpeed', 'steadyTemper', 'smithMagic', 'grandmaster', 'smithingQuality', 'smithingSave', 'smithingExtra',
   'alchemySpeed', 'bulkBrewer', 'qualityBrews', 'transmuter', 'alchemyQuality', 'alchemySave', 'alchemyExtra',
   'gemcuttingSpeed', 'gemcuttingXp', 'gemDustSave', 'masterCutter', 'gemcuttingQuality', 'gemcuttingSave', 'gemcuttingExtra',
   'runecarvingSpeed', 'secondStroke', 'deepCuts', 'livingScript', 'runecarvingQuality', 'runecarvingSave', 'runecarvingExtra',

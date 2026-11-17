@@ -625,6 +625,64 @@ function ChainedNotice({ c }: { c: CombatRuntime }) {
   );
 }
 
+function TargetingSelector({ targeting }: { targeting: { priority: TargetPriority; order: TargetOrder } }) {
+  const [open, setOpen] = useState(false);
+  const prio = PRIORITIES.find((p) => p.id === targeting.priority) ?? PRIORITIES[0];
+  const ord = ORDERS.find((o) => o.id === targeting.order) ?? ORDERS[0];
+
+  return (
+    <div className="bf-target-container">
+      <button
+        type="button"
+        className={`bf-target-toggle ${open ? 'active' : ''}`}
+        onClick={() => setOpen(!open)}
+        title="Who your skills target. Click to configure priorities and order."
+      >
+        <span className="dim">Target:</span>
+        <b>{prio.label}</b> · {ord.label}
+        <span className="dim small">▾</span>
+      </button>
+      {open && (
+        <div className="bf-target-popover" onClick={(e) => e.stopPropagation()}>
+          <div className="bf-target-section">
+            <span className="dim small" style={{ fontWeight: 600 }}>Priority:</span>
+            <div className="row wrap" style={{ gap: 4, marginTop: 4 }}>
+              {PRIORITIES.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`chip sm ${targeting.priority === p.id ? 'active' : ''}`}
+                  onClick={() => game.act((st) => void (st.settings.targeting = { ...st.settings.targeting, priority: p.id }))}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="bf-target-section" style={{ marginTop: 8 }}>
+            <span className="dim small" style={{ fontWeight: 600 }}>Order:</span>
+            <div className="row wrap" style={{ gap: 4, marginTop: 4 }}>
+              {ORDERS.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  className={`chip sm ${targeting.order === o.id ? 'active' : ''}`}
+                  onClick={() => game.act((st) => void (st.settings.targeting = { ...st.settings.targeting, order: o.id }))}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="row" style={{ justifyContent: 'flex-end', marginTop: 8 }}>
+            <button type="button" className="btn sm ghost" onClick={() => setOpen(false)}>Done</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Automatic range posture, what the field will do next, and who your skills go for. */
 function MovementBar({ s }: { s: GameState }) {
   const c = s.combat!;
@@ -660,22 +718,7 @@ function MovementBar({ s }: { s: GameState }) {
       <span className="dim bf-status" title={status}>
         {c.fleeing ? <span className="status bad">Auto-fleeing</span> : status}
       </span>
-      <label className="bf-target" title="Who your skills go for. Click a monster on the field to pick it yourself.">
-        <select className="input sm" value={targeting.priority} onChange={(e) => game.act((st) => void (st.settings.targeting = { ...st.settings.targeting, priority: e.target.value as TargetPriority }))}>
-          {PRIORITIES.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.label}
-            </option>
-          ))}
-        </select>
-        <select className="input sm" value={targeting.order} onChange={(e) => game.act((st) => void (st.settings.targeting = { ...st.settings.targeting, order: e.target.value as TargetOrder }))}>
-          {ORDERS.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <TargetingSelector targeting={targeting} />
       <label className={`bf-auto${autoFleeUnlocked(s) ? '' : ' locked'}`} title={autoFleeUnlocked(s) ? "Emergency fallback: below 35% Life, flee until you're back above 90%. Cautious posture also waits for Life flasks to empty." : 'Unlocked by the first War Table upgrade'}>
         <input type="checkbox" disabled={!autoFleeUnlocked(s)} checked={autoFleeUnlocked(s) && s.settings.autoFlee} onChange={(e) => game.act((st) => void (st.settings.autoFlee = e.target.checked))} /> Emergency flee
       </label>

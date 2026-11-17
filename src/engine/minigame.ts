@@ -37,7 +37,7 @@ export const SURVEY_SOUNDINGS = 5;
 /** Finding it in this many soundings or fewer is a double. */
 export const SURVEY_DOUBLE = 3;
 
-const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'];
+const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'];
 
 export type SwingResult = 'double' | 'hit' | 'weak' | 'miss';
 

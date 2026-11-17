@@ -194,11 +194,14 @@ describe('Phase 03 Woodcutting', () => {
     const s = newGame(1), c = zeroLuck();
     s.skills.woodcutting = xpForLevel(90);
     s.skills.smithing = xpForLevel(15);
+    s.skills.woodcrafting = xpForLevel(15);
     for (const w of WOODS) s.professionProgress.discoveries[`wood_${w.id}_survey`] = true;
     for (const r of RESINS) {
       s.account.bank[r.id] = 1;
       s.account.bank.copper_ore = 100;
+      s.account.bank.copper_bar = 100;
       s.account.bank.ash_log = 100;
+      s.account.bank.ash_plank = 100;
       setSmithCatalyst(s, { resin: r.id });
       expect(resinBonus(s)).toBe(r.ilvl);
       const ilvl = smithIlvl(s, resinBonus(s));
@@ -221,6 +224,6 @@ describe('Phase 03 Woodcutting', () => {
     expect(deriveStats(s).skillSpeed).toBe(0);
     expect(materialDef('ancient_heartwood').desc).toMatch(/Smithing makes Heartwood Frames/);
     expect(actionsFor('woodcutting').some((a) => a.baseId)).toBe(false);
-    expect(actionsFor('smithing').some((a) => a.id === 'frame_heartwood')).toBe(true); // Phase 04 owns assembly.
+    expect(actionsFor('woodcrafting').some((a) => a.id === 'frame_heartwood')).toBe(true); // Phase 04 owns assembly.
   });
 });

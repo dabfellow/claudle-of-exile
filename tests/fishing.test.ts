@@ -35,8 +35,8 @@ describe('fishing (coming soon)', () => {
 });
 
 describe('skilling rebalance', () => {
-  it('smithing a weapon costs at least 15 ore and takes 10 s or more', () => {
-    const a = actionsFor('smithing').find((x) => x.baseId && x.level === 1 && (x.inputs?.copper_ore ?? 0) >= 15);
+  it('smithing a weapon costs at least 15 ore (as bars) and takes 10 s or more', () => {
+    const a = actionsFor('smithing').find((x) => x.baseId && x.level === 1 && ((x.inputs?.copper_bar ?? 0) * 5 >= 15 || (x.inputs?.copper_ore ?? 0) >= 15));
     expect(a).toBeDefined();
     expect(a!.intervalMs).toBeGreaterThanOrEqual(10000);
   });

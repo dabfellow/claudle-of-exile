@@ -11,7 +11,7 @@ export interface ProfessionRequirement {
   level: number;
   masteryRequirement?: { id: string; level: number; name: string };
   accomplishments?: string[];
-  station?: { id: 'forge' | 'alchemy_table' | 'rune_board'; level: number };
+  station?: { id: 'forge' | 'smelter' | 'woodcrafting_bench' | 'alchemy_table' | 'rune_board'; level: number };
 }
 
 export interface ProfessionProject extends ProfessionRequirement {
@@ -79,6 +79,27 @@ export const PROFESSION_PROJECTS: ProfessionProject[] = [{
   reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Wayfarer's Hammer", fixedSuffixes: [{ affixId: 'profession_speed_smithing', tier: 0, values: [8] }] },
   sources: [{ label: 'Mine Copper and Iron, then select smelting', skill: 'mining' }, { label: 'Cut Ash and Oak, then select plank refinement', skill: 'woodcutting' }],
   use: 'One fixed magic main-hand tool: 8% increased Smithing speed only. Level 1 to equip; one normal rune slot. Full listed costs, one tool, no conservation or doubled claims. No automatic task switching.',
+}, {
+  id: 'tool_smelter_tongs', version: 1, name: "Smelter's Tongs", skill: 'smelting', level: 15,
+  accomplishments: ['smelting_work_20'], station: { id: 'smelter', level: 2 }, durationMs: 600_000, xp: 180, repeatable: true,
+  inputs: { copper_bar: 15, iron_bar: 5, ash_log: 10 },
+  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Smelter's Tongs", fixedSuffixes: [{ affixId: 'profession_speed_smelting', tier: 0, values: [8] }] },
+  sources: [{ label: 'Mine Copper and Iron', skill: 'mining' }, { label: 'Smelt bars', skill: 'smelting' }],
+  use: 'One fixed magic main-hand tool: 8% increased Smelting speed only. Level 1 to equip; one normal rune slot.',
+}, {
+  id: 'tool_carver_drawknife', version: 1, name: "Carver's Drawknife", skill: 'woodcrafting', level: 15,
+  accomplishments: ['woodcrafting_work_20'], station: { id: 'woodcrafting_bench', level: 2 }, durationMs: 600_000, xp: 180, repeatable: true,
+  inputs: { ash_plank: 10, oak_plank: 10, copper_bar: 5 },
+  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Carver's Drawknife", fixedSuffixes: [{ affixId: 'profession_speed_woodcrafting', tier: 0, values: [8] }] },
+  sources: [{ label: 'Cut Ash and Oak, then select plank refinement', skill: 'woodcutting' }, { label: 'Smelt Copper Bars', skill: 'smelting' }],
+  use: 'One fixed magic main-hand tool: 8% increased Woodcrafting speed only. Level 1 to equip; one normal rune slot.',
+}, {
+  id: 'tool_master_artisan', version: 1, name: "Master Artisan's Omni-Hammer", skill: 'smithing', level: 60,
+  accomplishments: ['smithing_work_60'], station: { id: 'forge', level: 3 }, durationMs: 1_800_000, xp: 600, repeatable: true,
+  inputs: { tempered_alloy: 5, wound_alloy: 2, heartwood_frame: 2, exceptional_crystal: 1 },
+  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Master Artisan's Omni-Hammer", fixedSuffixes: [{ affixId: 'profession_speed_artisan', tier: 0, values: [12] }] },
+  sources: [{ label: 'Cast alloys in Smelting', skill: 'smelting' }, { label: 'Carve frames in Woodcrafting', skill: 'woodcrafting' }],
+  use: 'High-tier hybrid tool: +12% Production speed across all crafting disciplines (Forging, Smelting, and Woodcrafting). Level 1 to equip; one normal rune slot.',
 }, {
   id: 'tool_cooking', version: 1, name: 'Hearth Spoon', skill: 'cooking', level: 30,
   accomplishments: ['cooking_work_100'], durationMs: 1_200_000, xp: 360, repeatable: true,
@@ -431,6 +452,16 @@ export const PROFESSION_THEMES: Record<SkillId, ProfessionTheme> = {
     title: 'Forge Masterworks',
     singular: 'masterwork',
     startLabel: 'Begin masterwork',
+  },
+  smelting: {
+    title: 'Foundry Castings',
+    singular: 'casting',
+    startLabel: 'Begin casting',
+  },
+  woodcrafting: {
+    title: 'Woodcraft Carvings',
+    singular: 'carving',
+    startLabel: 'Begin carving',
   },
   mining: {
     title: 'Mining Prospects',

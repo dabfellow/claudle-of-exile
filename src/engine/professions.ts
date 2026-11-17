@@ -146,6 +146,9 @@ export function professionAccessReason(s: GameState, req: ProfessionRequirement)
 
 export function awardProfessionProgress(s: GameState, skill: SkillId, cycles = 1): void {
   s.professionProgress.work[skill] = (s.professionProgress.work[skill] ?? 0) + cycles;
+  if (skill === 'smelting' || skill === 'woodcrafting') {
+    s.professionProgress.work.smithing = (s.professionProgress.work.smithing ?? 0) + cycles;
+  }
 }
 
 export function recordDiscovery(s: GameState, ctx: Ctx, id: string): boolean {
@@ -334,7 +337,7 @@ export function advanceProject(s: GameState, ctx: Ctx, dt: number): void {
     if (s.meal) {
       const stats = dishStats(s, s.meal.id);
       const isGathering = (['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology'] as SkillId[]).includes(run.project.skill);
-      const isProduction = (['smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as SkillId[]).includes(run.project.skill);
+      const isProduction = (['smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as SkillId[]).includes(run.project.skill);
       if (isGathering && stats.gatheringSpeed) mealBonus = stats.gatheringSpeed / 100;
       if (isProduction && stats.productionSpeed) mealBonus = stats.productionSpeed / 100;
     }

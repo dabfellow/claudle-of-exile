@@ -1,6 +1,6 @@
 import type { RuleUnlock } from './gems';
 
-export type StationId = 'stash' | 'forge' | 'alchemy_table' | 'bench' | 'vendor' | 'map_device' | 'war_table' | 'quartermaster' | 'watchtower' | 'trophy_altar' | 'rune_board';
+export type StationId = 'stash' | 'forge' | 'smelter' | 'woodcrafting_bench' | 'alchemy_table' | 'bench' | 'vendor' | 'map_device' | 'war_table' | 'quartermaster' | 'watchtower' | 'trophy_altar' | 'rune_board';
 
 /** What a station level adds to the automation unlocks for good. */
 export interface StationGrant {
@@ -60,17 +60,35 @@ export const STATIONS: StationDef[] = [
     ],
   },
   {
-    id: 'forge', name: 'Forge', page: 'smithing', color: '#d07a3a',
-    desc: 'Where bases are hammered out. Each upgrade opens the next tier of bases and improves smithed gear tiers.',
+    id: 'forge', name: 'Forge', page: 'smithing', color: '#b8b8c8',
+    desc: 'Where martial gear is hammered out. Each upgrade opens the next tier of martial bases and improves forged gear tiers.',
     levels: [
-      { cost: {}, effect: 'Smith copper-tier bases (level 1–9)' },
-      { cost: { gold: 1500, copper_bar: 50, ash_plank: 25 }, effect: 'Smith iron-tier bases (level 10–21)' },
-      { cost: { gold: 7000, iron_bar: 70, oak_plank: 35, boss_trophy: 2 }, effect: 'Smith mithril-tier bases (level 22+)' },
-      { cost: { gold: 22000, mithril_bar: 80, yew_plank: 40, rough_gem: 12, boss_trophy: 6 }, effect: 'Masterwork: smithed bases +5 item level' },
-      { cost: { gold: 35000, mithril_bar: 100, yew_plank: 50, boss_trophy: 8, marrow_shard: 5 }, effect: 'Pinnacle Metallurgy: smithed bases +8 item level (up to ilvl 84); 10% chance to roll a random Tier 1 modifier' },
-      { cost: { gold: 80000, mithril_bar: 120, yew_plank: 60, boss_trophy: 20, marrow_shard: 5 }, effect: "Artificer's Temper: smithed bases +10 item level (up to ilvl 86); 35% chance to roll Tier 2+ gear" },
-      { cost: { gold: 220000, mithril_bar: 160, yew_plank: 80, throne_ash: 4, crownless_sigil: 2 }, effect: 'Sovereign Smelting: smithed bases +12 item level (up to ilvl 88); 50% chance for Tier 2+ gear (25% Tier 3+), 15% chance for a random Tier 1 modifier' },
-      { cost: { gold: 500000, mithril_bar: 200, yew_plank: 100, exile_doom_sigil: 2, architect_doom_sigil: 2, void_sigil: 1 }, effect: 'Doom-Forged Crucible: smithed bases +14 item level (up to ilvl 90); 65% chance for Tier 2+ gear (35% Tier 3+, 15% Tier 4+, 5% Tier 5), 25% chance for a random Tier 1 modifier' },
+      { cost: {}, effect: 'Forge copper-tier bases (level 1–9)' },
+      { cost: { gold: 1500, copper_bar: 50, ash_plank: 25 }, effect: 'Forge iron-tier bases (level 10–21)' },
+      { cost: { gold: 7000, iron_bar: 70, oak_plank: 35, boss_trophy: 2 }, effect: 'Forge mithril-tier bases (level 22+)' },
+      { cost: { gold: 22000, mithril_bar: 80, yew_plank: 40, rough_gem: 12, boss_trophy: 6 }, effect: 'Masterwork: forged bases +5 item level' },
+      { cost: { gold: 35000, mithril_bar: 100, yew_plank: 50, boss_trophy: 8, marrow_shard: 5 }, effect: 'Pinnacle Metallurgy: forged bases +8 item level (up to ilvl 84); 10% chance to roll a random Tier 1 modifier' },
+      { cost: { gold: 80000, mithril_bar: 120, yew_plank: 60, boss_trophy: 20, marrow_shard: 5 }, effect: "Artificer's Temper: forged bases +10 item level (up to ilvl 86); 35% chance to roll Tier 2+ gear" },
+      { cost: { gold: 220000, mithril_bar: 160, yew_plank: 80, throne_ash: 4, crownless_sigil: 2 }, effect: 'Sovereign Smelting: forged bases +12 item level (up to ilvl 88); 50% chance for Tier 2+ gear (25% Tier 3+), 15% chance for a random Tier 1 modifier' },
+      { cost: { gold: 500000, mithril_bar: 200, yew_plank: 100, exile_doom_sigil: 2, architect_doom_sigil: 2, void_sigil: 1 }, effect: 'Doom-Forged Crucible: forged bases +14 item level (up to ilvl 90); 65% chance for Tier 2+ gear (35% Tier 3+, 15% Tier 4+, 5% Tier 5), 25% chance for a random Tier 1 modifier' },
+    ],
+  },
+  {
+    id: 'smelter', name: 'Smelter', page: 'smelting', color: '#d07a3a',
+    desc: 'Intense furnace and crucible for melting raw ores into pure bars and refining specialized alloys.',
+    levels: [
+      { cost: {}, effect: 'Smelt copper-tier bars (level 1–14)' },
+      { cost: { gold: 1500, copper_bar: 40, ash_plank: 30 }, effect: 'Smelt iron-tier bars and tempered alloys (level 15–29)' },
+      { cost: { gold: 7000, iron_bar: 60, oak_plank: 40, boss_trophy: 2 }, effect: 'Smelt mithril, deep-earth bars and advanced alloys' },
+    ],
+  },
+  {
+    id: 'woodcrafting_bench', name: 'Woodcrafting Bench', page: 'woodcrafting', color: '#9c7a4c',
+    desc: 'Carpenter bench and vices for carving staves, wands, bows, and crafting garments.',
+    levels: [
+      { cost: {}, effect: 'Craft ash-tier staves, bows and garments (level 1–9)' },
+      { cost: { gold: 1500, ash_plank: 40, copper_bar: 20 }, effect: 'Craft oak-tier staves, bows and garments (level 10–21)' },
+      { cost: { gold: 7000, oak_plank: 60, iron_bar: 30, boss_trophy: 2 }, effect: 'Craft yew-tier and masterwork staves, bows and garments (level 22+)' },
     ],
   },
   {

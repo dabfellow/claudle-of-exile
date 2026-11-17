@@ -4026,6 +4026,83 @@ h3 {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+select,
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--bg-2);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23d1ad72' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 13px 13px;
+  padding: 6px 32px 6px 11px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  cursor: pointer;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+select:hover,
+select.input:hover {
+  border-color: var(--accent-line);
+  color: var(--accent-2);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 8px rgba(209, 173, 114, 0.2);
+}
+
+select:focus,
+select.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft), 0 0 10px var(--accent-glow);
+  outline: none;
+}
+
+select.sm,
+select.input.sm {
+  padding: 4px 26px 4px 8px;
+  font-size: var(--fs-xs);
+  background-position: right 8px center;
+  background-size: 11px 11px;
+}
+
+select:disabled,
+select.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--line);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23666666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+select option {
+  background-color: #14181f;
+  color: var(--text);
+  padding: 8px 12px;
+  font-family: inherit;
+}
+
+select option:checked {
+  background-color: #242c38;
+  color: var(--accent-2);
+  font-weight: 600;
+}
+
+select option:disabled {
+  color: var(--dim);
+  opacity: 0.5;
+}
+
+select optgroup {
+  background-color: #0e1116;
+  color: var(--accent);
+  font-weight: 700;
+  padding: 6px 8px;
+}
+
 .input.textarea {
   display: block;
   width: 100%;
@@ -4738,6 +4815,343 @@ g.tut-hint circle.body {
 .rule-editor select.input {
   max-width: 220px;
   font-size: var(--fs-xs);
+}
+
+/* Combat Rule Editor */
+.rule-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.rule-card:hover {
+  border-color: var(--line);
+}
+
+.rule-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.rule-condition-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(180deg, #1b2027 0%, #11151b 100%);
+  border: 1px solid var(--line-2);
+  color: var(--text);
+  padding: 5px 12px;
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rule-condition-btn:hover {
+  border-color: var(--accent-line);
+  color: var(--accent-2);
+  box-shadow: 0 0 8px rgba(209, 173, 114, 0.2);
+}
+
+.rule-condition-btn.is-locked {
+  opacity: 0.6;
+  border-color: var(--danger);
+}
+
+.rule-condition-btn .glyph {
+  color: var(--accent);
+}
+
+.rule-condition-btn .arrow {
+  color: var(--accent);
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+.rule-params {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.rule-chip-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip.status-chip,
+.chip.ground-chip,
+.chip.aim-chip {
+  cursor: pointer;
+  background: #14181f;
+  border: 1px solid var(--line-2);
+  color: var(--muted);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.chip.status-chip:hover,
+.chip.ground-chip:hover,
+.chip.aim-chip:hover {
+  border-color: var(--accent-line);
+  color: var(--text);
+}
+
+.chip.status-chip.active,
+.chip.ground-chip.active,
+.chip.aim-chip.active {
+  background: var(--panel-2);
+  border-color: var(--accent);
+  color: var(--accent-2);
+  box-shadow: 0 0 6px rgba(209, 173, 114, 0.25);
+  font-weight: 600;
+}
+
+.chip.status-chip.status-bleeding.active {
+  border-color: var(--life-2);
+  color: #ff998f;
+  box-shadow: 0 0 6px rgba(208, 103, 91, 0.3);
+}
+
+.chip.status-chip.status-poisoned.active {
+  border-color: var(--poison);
+  color: #bbf082;
+  box-shadow: 0 0 6px rgba(159, 194, 106, 0.3);
+}
+
+.chip.status-chip.status-ignited.active {
+  border-color: var(--fire);
+  color: #ffaa7d;
+  box-shadow: 0 0 6px rgba(224, 122, 76, 0.3);
+}
+
+.chip.status-chip.status-chilled.active {
+  border-color: var(--cold);
+  color: #aae0ff;
+  box-shadow: 0 0 6px rgba(127, 200, 248, 0.3);
+}
+
+.chip.status-chip.status-shocked.active {
+  border-color: var(--lightning);
+  color: #fff28f;
+  box-shadow: 0 0 6px rgba(238, 219, 104, 0.3);
+}
+
+.rule-stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rule-num-input {
+  width: 52px !important;
+  text-align: center;
+  padding: 3px 6px !important;
+}
+
+.rule-aim-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  margin-top: 4px;
+}
+
+/* Rule condition picker modal */
+.rule-modal {
+  max-width: 580px;
+  width: 95vw;
+}
+
+.rule-modal-categories {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.rule-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.rule-opt-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rule-opt-card:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--panel-2);
+  box-shadow: 0 0 8px rgba(209, 173, 114, 0.2);
+}
+
+.rule-opt-card.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-2);
+}
+
+.rule-opt-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--line);
+}
+
+.rule-opt-title {
+  font-weight: 600;
+  font-size: var(--fs-xs);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Combat Page Targeting */
+.bf-target-container {
+  position: relative;
+  display: inline-flex;
+}
+
+.bf-target-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  color: var(--text);
+  padding: 3px 10px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bf-target-toggle:hover,
+.bf-target-toggle.active {
+  border-color: var(--accent-line);
+  color: var(--accent-2);
+  box-shadow: 0 0 6px rgba(209, 173, 114, 0.15);
+}
+
+.bf-target-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  min-width: 280px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  border-radius: var(--r);
+  padding: 10px 12px;
+}
+
+/* Greenhouse Conservatory */
+.greenhouse-conservatory {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.greenhouse-plot-card {
+  background: linear-gradient(180deg, #131a15 0%, #0d120f 100%);
+  border: 1px solid #273e2d;
+  border-radius: var(--r);
+  padding: 14px 16px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.greenhouse-plot-empty {
+  border-style: dashed;
+  border-color: var(--line-2);
+  background: var(--bg-2);
+}
+
+.greenhouse-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.greenhouse-crop-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  transition: all 0.15s ease;
+}
+
+.greenhouse-crop-card:hover {
+  border-color: var(--line);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.greenhouse-crop-card.active {
+  border-color: #558b6e;
+  background: linear-gradient(180deg, #17241b 0%, #111b14 100%);
+  box-shadow: 0 0 10px rgba(85, 139, 110, 0.25);
+}
+
+.greenhouse-crop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.greenhouse-crop-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fs-xs);
+}
+
+.greenhouse-crop-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: auto;
 }
 
 .gem-bag {

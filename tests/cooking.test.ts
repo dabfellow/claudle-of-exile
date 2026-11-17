@@ -374,8 +374,9 @@ describe('Phase 08 Cooking', () => {
     const currentMineInterval = actionIntervalMs(s, mineCopper, { ...dArtisan, productionSpeed: 0 } as any);
     expect(actionIntervalMs(s, mineCopper, dArtisan)).toBe(currentMineInterval);
 
-    // Clock check: while smithing, artisan meal clock ticks
+    // Clock check: while smelting/smithing, artisan meal clock ticks
     s.skills.smithing = xpForLevel(20);
+    s.skills.smelting = xpForLevel(20);
     s.account.bank.iron_ore = 100;
     expect(startSkillAction(s, ctx(), 'smelt_iron')).toBeNull();
     expect(isMealClockRunning(s)).toBe(true);

@@ -22,7 +22,13 @@ import type { GameState } from '../src/engine/types';
 const ctx = () => makeCtx({ next: () => 0.999999 });
 const reload = (s: GameState) => { const account = structuredClone(s.account); s = deserialize(serialize(s)); s.account = account; return s; };
 function smith(level = 90, forge = 3) {
-  const s = newGame(1); s.skills.smithing = xpForLevel(level); s.account.hideout.forge = forge;
+  const s = newGame(1);
+  s.skills.smithing = xpForLevel(level);
+  s.skills.smelting = xpForLevel(level);
+  s.skills.woodcrafting = xpForLevel(level);
+  s.account.hideout.forge = forge;
+  s.account.hideout.smelter = Math.min(3, forge);
+  s.account.hideout.woodcrafting_bench = Math.min(3, forge);
   return s;
 }
 function finish(s: GameState, id: string, double = false) {
@@ -56,9 +62,15 @@ describe('Phase 04 Smithing', () => {
       }
     };
     const metal = supplier < 30 ? 'iron' : 'mithril', wood = supplier < 30 ? 'oak' : 'yew';
-    doCycles(`mine_${metal}`, a.inputs![`${metal}_ore`] + 10);
-    doCycles(`cut_${wood}`, a.inputs![`${wood}_log`] + 5);
-    doCycles(`smelt_${metal}`, 2); doCycles(`mill_${wood}`, 1); doCycles(id, 1);
+    const barsNeeded = a.inputs![`${metal}_bar`] ?? 0;
+    const planksNeeded = a.inputs![`${wood}_plank`] ?? 0;
+    const oreNeeded = (a.inputs![`${metal}_ore`] ?? 0) + barsNeeded * 5;
+    const logsNeeded = (a.inputs![`${wood}_log`] ?? 0) + planksNeeded * 5;
+    doCycles(`mine_${metal}`, oreNeeded + 10);
+    doCycles(`cut_${wood}`, logsNeeded + 5);
+    if (barsNeeded > 0) doCycles(`smelt_${metal}`, barsNeeded);
+    if (planksNeeded > 0) doCycles(`mill_${wood}`, planksNeeded);
+    doCycles(id, 1);
     expect(equip(s, c, s.inventory.at(-1)!.uid)).toBeNull();
     const after = deriveStats(s);
     if (purpose === 'physical') expect(after.hit.phys[0] + after.hit.phys[1]).toBeGreaterThan(before.hit.phys[0] + before.hit.phys[1]);
@@ -68,7 +80,7 @@ describe('Phase 04 Smithing', () => {
   });
   it('keeps every cheap base and expands only compatible obtainable purpose pairs', () => {
     for (const b of BASES.filter((b) => !b.projectOnly)) expect(actionDef(`smith_${b.id}`).baseId).toBe(b.id);
-    const purposes = actionsFor('smithing').filter((a) => a.purpose);
+    const purposes = [...actionsFor('smithing'), ...actionsFor('woodcrafting')].filter((a) => a.purpose);
     expect(purposes.length).toBeGreaterThan(500);
     for (const a of purposes) {
       const b = baseDef(a.baseId!);
@@ -99,7 +111,7 @@ describe('Phase 04 Smithing', () => {
 
   it('delivers all advertised pairs/minimums and exactly four legal mods across every base and RNG endpoint', () => {
     const s = smith();
-    for (const a of actionsFor('smithing').filter((a) => a.purpose)) for (const value of [0, 0.999999]) {
+    for (const a of [...actionsFor('smithing'), ...actionsFor('woodcrafting')].filter((a) => a.purpose)) for (const value of [0, 0.999999]) {
       const item = createPurposeItem(s, a, Math.max(a.level, 45), { next: () => value });
       const mods = allMods(item);
       expect(item.rarity).toBe('rare');
@@ -121,7 +133,7 @@ describe('Phase 04 Smithing', () => {
     const s = smith(90, 1);
     expect(smithIlvl(s, 6)).toBe(21);
     s.account.hideout.forge = 2; expect(smithIlvl(s, 6)).toBe(45);
-    s.account.hideout.forge = 3; expect(smithIlvl(s, 6)).toBe(90);
+    s.account.hideout.forge = 3; s.account.hideout.woodcrafting_bench = 3; expect(smithIlvl(s, 6)).toBe(90);
     s.account.bank = { ...actionDef('purpose_physical_yew_recurve').inputs };
     finish(s, 'purpose_physical_yew_recurve');
     expect(s.inventory.at(-1)!.ilvl).toBe(90);
@@ -172,7 +184,7 @@ describe('Phase 04 Smithing', () => {
     skillStep(s, ctx(), 200_000, deriveStats(s)); expect(s.action).toBeNull();
     expect(s.inventory).toHaveLength(60); expect(a.mastery?.profile).toBe('project');
     const locked = smith(a.level, raw.forge! - 1); locked.account.bank = { ...a.inputs! };
-    expect(actionBlocker(locked, a)).toMatch(/Forge/);
+    expect(actionBlocker(locked, a)).toMatch(/Forge|Smelter|Woodcrafting Bench/);
   });
 
   it('offers all four advanced smelts at Forge 1 with exact ladder XP/costs', () => {
@@ -191,7 +203,7 @@ describe('Phase 04 Smithing', () => {
     const summary = simulateOffline(away, makeCtx(seeded(42)), 120_000);
     expect(away.inventory).toEqual(live.inventory); expect(away.account.bank).toEqual(live.account.bank);
     expect(away.skills).toEqual(live.skills); expect(away.professionProgress).toEqual(live.professionProgress);
-    expect(summary.items).toBe(1); expect(away.action).toBeNull(); expect(summary.xp.smithing).toBeCloseTo(a.xp);
+    expect(summary.items).toBe(1); expect(away.action).toBeNull(); expect(summary.xp[a.skill]).toBeCloseTo(a.xp);
   });
 
   it('completes the actual early hammer with cancel/refund, full-bag ready/reload and duplicate protection', () => {
@@ -206,9 +218,9 @@ describe('Phase 04 Smithing', () => {
     expect(completeProject(s, ctx(), runId)).toBeNull(); expect(completeProject(s, ctx(), runId)).toBe('Project already settled');
     const tool = s.inventory.at(-1)!; expect(tool.name).toBe("Wayfarer's Hammer");
     expect(tool.suffixes).toEqual([{ affixId: 'profession_speed_smithing', tier: 0, values: [8] }]);
-    const interval = actionIntervalMs(s, actionDef('smelt_iron'), deriveStats(s));
+    const interval = actionIntervalMs(s, actionDef('smith_rusted_sword'), deriveStats(s));
     expect(equip(s, ctx(), tool.uid)).toBeNull();
-    expect(actionIntervalMs(s, actionDef('smelt_iron'), deriveStats(s))).toBeCloseTo(interval / 1.08);
+    expect(actionIntervalMs(s, actionDef('smith_rusted_sword'), deriveStats(s))).toBeCloseTo(interval / 1.08);
     expect(s.skills.combat).toBe(0); expect(s.professionProgress.projects[p.id].completed).toBe(1);
     for (const id of Object.keys(p.inputs)) expect(s.account.bank[id]).toBe(0);
   });

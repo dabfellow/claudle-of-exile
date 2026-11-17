@@ -98,14 +98,19 @@ export function nextUpgradeCost(s: GameState, id: StationId): Record<string, num
 /** Alternative payment only for necessary profession tiers; the original route remains available. */
 export function professionStationRoute(s: GameState, id: StationId) {
   const next = stationLevel(s, id) + 1;
-  if ((id !== 'forge' && id !== 'alchemy_table') || next > 3) return null;
-  const skill = id === 'forge' ? 'smithing' : 'alchemy';
-  const level = id === 'forge' ? (next === 2 ? 10 : 22) : (next === 2 ? 8 : 18);
+  if ((id !== 'forge' && id !== 'alchemy_table' && id !== 'smelter' && id !== 'woodcrafting_bench') || next > 3) return null;
+  const skill = id === 'forge' ? 'smithing' : id === 'smelter' ? 'smelting' : id === 'woodcrafting_bench' ? 'woodcrafting' : 'alchemy';
+  const level = id === 'forge' || id === 'smelter' || id === 'woodcrafting_bench' ? (next === 2 ? 10 : 22) : (next === 2 ? 8 : 18);
   const cycles = next === 2 ? 20 : 60;
-  const cost: Record<string, number> = id === 'forge'
+  const cost: Record<string, number> = id === 'smelter'
+    ? next === 2 ? { gold: 300, copper_bar: 10, ash_log: 10 } : { gold: 1200, iron_bar: 20, oak_log: 20 }
+    : id === 'woodcrafting_bench'
+    ? next === 2 ? { gold: 300, ash_plank: 10, copper_bar: 5 } : { gold: 1200, oak_plank: 20, iron_bar: 10 }
+    : id === 'forge'
     ? next === 2 ? { gold: 300, copper_bar: 10, ash_plank: 5 } : { gold: 1200, iron_bar: 20, oak_plank: 10 }
     : next === 2 ? { gold: 300, sunpetal: 40, ash_plank: 5 } : { gold: 1200, frostleaf: 60, iron_bar: 10 };
-  return { cost, requirement: `${skill === 'smithing' ? 'Smithing' : 'Alchemy'} ${level} and ${cycles} completed cycles`, reason: professionAccessReason(s, { skill, level, accomplishments: [`${skill}_work_${cycles}`] }) };
+  const skillLabel = id === 'forge' ? 'Smithing' : id === 'smelter' ? 'Smelting' : id === 'woodcrafting_bench' ? 'Woodcrafting' : 'Alchemy';
+  return { cost, requirement: `${skillLabel} ${level} and ${cycles} completed cycles`, reason: professionAccessReason(s, { skill, level, accomplishments: [`${skill}_work_${cycles}`] }) };
 }
 
 const RULE_NAMES: Record<RuleUnlock, string> = { vitals: 'Vitals', status: 'Status', ground: 'Ground', windups: 'Wind-up', aim: 'Aim' };
@@ -154,6 +159,14 @@ export function stationPerks(s: GameState, id: StationId): string[] {
         ...(lvl >= 6 ? ["Artificer's Temper: 35% chance to roll Tier 2+ gear"] : []),
         ...(lvl >= 7 ? ['Sovereign Smelting: 50% chance for Tier 2+ gear (25% Tier 3+), 15% T1 mod'] : []),
         ...(lvl >= 8 ? ['Doom-Forged Crucible: 65% chance for Tier 2+ gear (35% T3+, 15% T4+, 5% T5), 25% T1 mod'] : []),
+      ];
+    case 'smelter':
+      return [
+        ['Smelt copper-tier bars', 'Smelt iron-tier bars and tempered alloys', 'Smelt mithril and advanced alloys'][Math.min(i, 2)],
+      ];
+    case 'woodcrafting_bench':
+      return [
+        ['Craft ash-tier staves and garments', 'Craft oak-tier staves and garments', 'Craft yew-tier and masterwork staves and garments'][Math.min(i, 2)],
       ];
     case 'alchemy_table':
       return [

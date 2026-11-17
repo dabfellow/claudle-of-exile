@@ -23,7 +23,7 @@ function prepared(id: string, level: number) {
 
 describe('production mastery batches', () => {
   it('covers ordinary production in every crafting profession without batching protected progress, keys, maps or gear', () => {
-    for (const skill of ['smithing', 'woodcutting', 'alchemy', 'cooking', 'runecarving', 'gemcutting', 'cartography']) {
+    for (const skill of ['smelting', 'woodcutting', 'alchemy', 'cooking', 'runecarving', 'gemcutting', 'cartography']) {
       expect(ACTIONS.some((a) => a.skill === skill && a.batchMastery)).toBe(true);
     }
     for (const a of ACTIONS.filter((a) => a.batchMastery)) {
@@ -108,5 +108,15 @@ describe('production mastery batches', () => {
     const loaded = deserialize(serialize(s));
     expect(loaded.action).toEqual(s.action);
     expect(loaded.skillingMastery).toEqual(s.skillingMastery);
+  });
+
+  it('positions mastery batches immediately following their single craft in the action list', () => {
+    for (const a of ACTIONS.filter((x) => x.batchMastery)) {
+      const all = ACTIONS.filter((x) => x.skill === a.skill);
+      const singleIdx = all.findIndex((x) => x.id === a.batchOf);
+      const batchIdx = all.findIndex((x) => x.id === a.id);
+      expect(singleIdx).toBeGreaterThanOrEqual(0);
+      expect(batchIdx).toBeGreaterThan(singleIdx);
+    }
   });
 });

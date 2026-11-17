@@ -108,9 +108,13 @@ describe('Phase 05 Equipment Checkpoint', () => {
       s.character.classId = classId;
       s.skills.combat = charXpForLevel(combatLvl);
       s.skills.smithing = xpForLevel(Math.max(a.level, supplierLvl));
+      s.skills.smelting = xpForLevel(Math.max(a.level, supplierLvl));
+      s.skills.woodcrafting = xpForLevel(Math.max(a.level, supplierLvl));
       s.skills.mining = xpForLevel(supplierLvl);
       s.skills.woodcutting = xpForLevel(supplierLvl);
       s.account.hideout.forge = reqForge;
+      s.account.hideout.smelter = Math.min(3, reqForge);
+      s.account.hideout.woodcrafting_bench = Math.min(3, reqForge);
       s.account.bank = {};
       s.inventory = [];
 
@@ -243,8 +247,9 @@ describe('Phase 05 Equipment Checkpoint', () => {
       expect(upgradeStation(s, c, 'forge', 'profession')).toBeNull();
       expect(s.account.hideout.forge).toBe(2);
 
-      // 5. Level Smithing to 15
+      // 5. Level Smithing and Smelting to 15
       s.skills.smithing = xpForLevel(15);
+      s.skills.smelting = xpForLevel(15);
 
       // 6. Gather materials for Wayfarer's Hammer:
       // Costs: copper_bar 10, iron_bar 10, ash_plank 5, oak_plank 5
@@ -276,14 +281,14 @@ describe('Phase 05 Equipment Checkpoint', () => {
       expect(tool.suffixes).toEqual([{ affixId: 'profession_speed_smithing', tier: 0, values: [8] }]);
 
       // 8. Equip the tool on combat 1 character with 0 combat XP
-      const ironSmeltIntervalBefore = actionIntervalMs(s, actionDef('smelt_iron'), deriveStats(s));
+      const smithIntervalBefore = actionIntervalMs(s, actionDef('smith_rusted_sword'), deriveStats(s));
       expect(equip(s, c, tool.uid)).toBeNull();
       expect(s.equipment.weapon?.name).toBe("Wayfarer's Hammer");
 
       // Verify 8% speed bonus applies to Smithing actions (speed bonuses add with task mastery)
-      const ironSmeltIntervalAfter = actionIntervalMs(s, actionDef('smelt_iron'), deriveStats(s));
-      expect(ironSmeltIntervalAfter).toBeCloseTo(ironSmeltIntervalBefore / 1.08, 0);
-      expect(ironSmeltIntervalAfter).toBeLessThan(ironSmeltIntervalBefore);
+      const smithIntervalAfter = actionIntervalMs(s, actionDef('smith_rusted_sword'), deriveStats(s));
+      expect(smithIntervalAfter).toBeCloseTo(smithIntervalBefore / 1.08, 0);
+      expect(smithIntervalAfter).toBeLessThan(smithIntervalBefore);
 
       // Total gathering + refining + project <= 25 minutes
       const totalTimeMin = (gatherElapsedMs + hammerProject.durationMs) / 60_000;
@@ -424,7 +429,9 @@ describe('Phase 05 Equipment Checkpoint', () => {
     it('holds completed equipment project in ready state when inventory is full and delivers once space is cleared', () => {
       const s = newGame(1);
       s.skills.smithing = xpForLevel(15);
+      s.skills.smelting = xpForLevel(15);
       s.account.hideout.forge = 2;
+      s.account.hideout.smelter = 2;
       s.professionProgress.work.smithing = 20;
 
       const p = PROFESSION_PROJECTS.find((p) => p.id === 'tool_wayfarer_hammer')!;
@@ -465,7 +472,9 @@ describe('Phase 05 Equipment Checkpoint', () => {
     it('cancels active project, refunds exact escrow to bank, and grants no XP or mastery', () => {
       const s = newGame(1);
       s.skills.smithing = xpForLevel(15);
+      s.skills.smelting = xpForLevel(15);
       s.account.hideout.forge = 2;
+      s.account.hideout.smelter = 2;
       s.professionProgress.work.smithing = 20;
       const p = PROFESSION_PROJECTS.find((p) => p.id === 'tool_wayfarer_hammer')!;
       s.account.bank = { ...p.inputs };
@@ -487,7 +496,9 @@ describe('Phase 05 Equipment Checkpoint', () => {
     it('stops safely when inputs run out during refining, with clear message and intact balances', () => {
       const s = newGame(1);
       s.skills.smithing = xpForLevel(15);
+      s.skills.smelting = xpForLevel(15);
       s.account.hideout.forge = 2;
+      s.account.hideout.smelter = 2;
       s.account.bank = { iron_ore: 7 }; // Can afford 1 smelt (5 ore), but not 2
 
       const a = actionDef('smelt_iron');

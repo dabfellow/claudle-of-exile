@@ -20,6 +20,10 @@ function getSkillIcon(skill: SkillId): string {
   switch (skill) {
     case 'smithing':
       return 'forge';
+    case 'smelting':
+      return 'forge';
+    case 'woodcrafting':
+      return 'woodcutting';
     case 'mining':
       return 'mining';
     case 'woodcutting':

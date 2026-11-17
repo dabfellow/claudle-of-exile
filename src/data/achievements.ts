@@ -41,7 +41,7 @@ export interface AchievementDef {
   act?: number;
 }
 
-const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as const;
+const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as const;
 const totalSkillLevel = (s: GameState) => SKILLING.reduce((a, k) => a + levelOf(k, s.skills[k]), 0);
 const skillLevel = (k: SkillId) => (s: GameState) => levelOf(k, s.skills[k]);
 const topSkillLevel = (s: GameState) => Math.max(...SKILLING.map((k) => levelOf(k, s.skills[k])));
@@ -64,7 +64,9 @@ const SKILL_FIFTY: [SkillId, string, number?][] = [
   ['harvesting', 'Green Thumb'],
   ['thieving', 'Light Fingers'],
   ['archaeology', 'Dust and Bones'],
+  ['smelting', 'Crucible Master'],
   ['smithing', 'Tempered'],
+  ['woodcrafting', 'Master Woodcarver'],
   ['alchemy', 'Steady Hand'],
   ['gemcutting', 'Flawless Facet'],
   ['runecarving', 'Runewright', 3],
@@ -84,7 +86,7 @@ const BOSS_TITLES: Record<string, string> = {
 };
 const SKILL_NAME: Record<string, string> = {
   mining: 'Mining', woodcutting: 'Woodcutting', harvesting: 'Foraging', thieving: 'Thieving', archaeology: 'Archaeology',
-  smithing: 'Smithing', alchemy: 'Alchemy', gemcutting: 'Gemcutting', runecarving: 'Rune-carving', cooking: 'Cooking', cartography: 'Cartography',
+  smelting: 'Smelting', smithing: 'Forging', woodcrafting: 'Woodcrafting', alchemy: 'Alchemy', gemcutting: 'Gemcutting', runecarving: 'Rune-carving', cooking: 'Cooking', cartography: 'Cartography',
 };
 
 const ALL: AchievementDef[] = [

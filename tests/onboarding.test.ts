@@ -126,8 +126,10 @@ describe('tutorial', () => {
     for (const c of CLASSES) {
       const smith = actionDef(`smith_${c.kit.weapon}`);
       expect(smith.level).toBe(1);
-      expect(smith.inputs!.copper_ore).toBeLessThanOrEqual(mine.target);
-      expect(smith.inputs!.ash_log).toBeLessThanOrEqual(mine.reward.ash_log);
+      const bars = smith.inputs!.copper_bar ?? 0;
+      const planks = smith.inputs!.ash_plank ?? 0;
+      expect(bars * 5).toBeLessThanOrEqual(mine.target);
+      expect(planks * 5).toBeLessThanOrEqual(mine.reward.ash_log);
     }
   });
 

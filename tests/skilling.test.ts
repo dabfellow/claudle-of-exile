@@ -280,7 +280,7 @@ describe('auto-crafting', () => {
 describe('smithing catalysts', () => {
   it('Resin raises item level but never past the station cap', () => {
     const s = player();
-    s.account.bank = { ...s.account.bank, copper_ore: 100, rough_gem: 100, ash_resin: 5 };
+    s.account.bank = { ...s.account.bank, copper_ore: 100, copper_bar: 100, rough_gem: 100, ash_resin: 5 };
     setSmithCatalyst(s, { resin: 'ash_resin' });
     run(s, 'smith_iron_ring', 1);
     expect(s.inventory.at(-1)!.ilvl).toBe(3);
@@ -293,7 +293,7 @@ describe('smithing catalysts', () => {
 
   it('a Fossil is only used when the base comes out Magic', () => {
     const s = player();
-    s.account.bank = { ...s.account.bank, copper_ore: 100, rough_gem: 100, scorched_fossil: 5 };
+    s.account.bank = { ...s.account.bank, copper_ore: 100, copper_bar: 100, rough_gem: 100, scorched_fossil: 5 };
     setSmithCatalyst(s, { fossil: 'scorched_fossil' });
     run(s, 'smith_iron_ring', 3);
     expect(s.account.bank.scorched_fossil).toBe(5);
@@ -306,7 +306,7 @@ describe('smithing catalysts', () => {
     const s = player();
     s.skills.smithing = xpForLevel(20);
     s.skillPassives = ['smithing_ks'];
-    s.account.bank = { ...s.account.bank, copper_ore: 10000, rough_gem: 10000, scorched_fossil: 1000 };
+    s.account.bank = { ...s.account.bank, copper_ore: 10000, copper_bar: 10000, rough_gem: 10000, scorched_fossil: 1000 };
     setSmithCatalyst(s, { fossil: 'scorched_fossil', until: true, salvageMisses: true });
     run(s, 'smith_iron_ring', 500);
     expect(s.action).toBeNull();
@@ -318,7 +318,7 @@ describe('smithing catalysts', () => {
   function smith(full = false): GameState {
     const s = player();
     s.account.hideout.bench = BENCH_BUILT_LEVEL;
-    s.account.bank = { ...s.account.bank, copper_ore: 10000, rough_gem: 10000 };
+    s.account.bank = { ...s.account.bank, copper_ore: 10000, copper_bar: 10000, rough_gem: 10000 };
     if (full) while (s.inventory.length < BAG_SIZE) ring(s);
     return s;
   }

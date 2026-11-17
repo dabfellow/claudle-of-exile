@@ -10,7 +10,12 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Excavation sites in Archaeology now have Dig and Stop buttons, and a new Restoration & Sifting tab lets you restore relics and sift artifacts.',
+  'Skill combat rules, targeting, and Greenhouse planting now use thematic interactive selectors instead of plain dropdowns, and menus across the game now feature dark fantasy styling.',
+  'Mastery batch crafts now appear directly alongside ordinary activities once unlocked, rather than in a separate section at the bottom of the page.',
+  'Smelting bars and crafting wooden gear (staves, wands, bows, robes) are now separated into dedicated Smelting and Woodcrafting skills alongside Forging, with refined material inputs and distinct hideout workbenches.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

@@ -24,6 +24,8 @@ export type SkillTreeStat =
   | 'rareBlooms'
   | 'greenhouse'
   | 'smithingSpeed'
+  | 'smeltingSpeed'
+  | 'woodcraftingSpeed'
   | 'steadyTemper'
   | 'smithMagic'
   | 'grandmaster'

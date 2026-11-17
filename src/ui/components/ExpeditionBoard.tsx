@@ -1,7 +1,7 @@
 import { CULTURES, cultureDef, EXPEDITION_GATE, FIND_HOURS, MAX_STANDING, SITES, STRATA, type CultureDef, type SiteDef, type WareDef } from '../../data/expedition';
 import { materialDef } from '../../data/materials';
 import { artifactsPerDig, buyWare, expeditionOpen, setOrder, shelvesFor, siteStratum, standing, stratumProgress, warePrice, wareLeft, wareReason } from '../../engine/expedition';
-import { actionBlocker, actionIntervalMs, skillLevel } from '../../engine/skills';
+import { actionBlocker, actionIntervalMs, skillLevel, startSkillAction, stopAction } from '../../engine/skills';
 import { exchangeFragments } from '../../engine/expedition';
 import { relicFragment } from '../../data/archaeology';
 import { actionDef } from '../../data/skills';
@@ -20,19 +20,45 @@ function SitePage({ s, site }: { s: GameState; site: SiteDef }) {
   const digging = s.action?.kind === 'skill' && s.action.actionId === site.id;
   return (
     <div className={`card action-card ${digging ? 'running' : ''} ${open ? '' : 'locked'}`}>
-      <div className="row">
+      <div className="row" style={{ alignItems: 'center', gap: 8 }}>
         <b>{site.name}</b>
+        <span className="dim small num">Lv {site.level}</span>
         <span className="spacer" />
         <Badge tone="neutral">{STRATA[stratum]}</Badge>
+        {open ? (
+          digging ? (
+            <button className="btn sm" onClick={() => game.act((st) => stopAction(st))}>
+              Stop
+            </button>
+          ) : (
+            <button
+              className="btn sm primary"
+              onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, site.id))}
+            >
+              Dig
+            </button>
+          )
+        ) : (
+          <button className="btn sm" disabled title={reason ?? ''}>
+            Locked
+          </button>
+        )}
       </div>
       <p className="dim small">{site.desc}</p>
       {open ? (
         <>
           <ProgressBar value={progress} color={site.color} />
+          {digging && s.action?.kind === 'skill' && (
+            <ProgressBar value={s.action.progress / interval} color="var(--success)" className="action-progress" />
+          )}
           <div className="row wrap small" style={{ marginTop: 6 }}>
             <span>
               <MatIcon id={cultureDef(site.culture).artifact} size={12} /> <span className="num">{fmt(Math.round((artifactsPerDig(s, site) * 3_600_000) / interval))}</span> an hour
             </span>
+            <span className="dim">·</span>
+            <span className="dim">{(interval / 1000).toFixed(1)}s</span>
+            <span className="dim">·</span>
+            <span className="dim">{actionDef(site.id).xp} XP</span>
             <span className="dim">·</span>
             <span className="dim">{digsLeft ? `next find in about ${fmtTime(digsLeft * interval)}` : 'worked to the bottom'}</span>
           </div>

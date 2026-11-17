@@ -7,8 +7,8 @@ import type { CultureId } from '../data/expedition';
 import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
 
-export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'archaeology' | 'smithing' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'fishing';
-export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'fishing'];
+export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'archaeology' | 'smelting' | 'smithing' | 'woodcrafting' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'fishing';
+export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'fishing'];
 
 export type Rarity = 'normal' | 'magic' | 'rare' | 'unique';
 
@@ -142,6 +142,7 @@ export const STAT_KEYS = [
   'woodcuttingSpeed', 'birdsNest', 'resinChance', 'resinIlvl', 'heartwood',
   'harvestingSpeed', 'distiller', 'rareBlooms', 'greenhouse',
   'smithingSpeed', 'steadyTemper', 'smithMagic', 'grandmaster',
+  'smeltingSpeed', 'woodcraftingSpeed',
   'alchemySpeed', 'bulkBrewer', 'qualityBrews', 'transmuter',
   'thievingSpeed', 'markerChance', 'alertReduce', 'cleanGetaway',
   'archaeologySpeed', 'artifactChance', 'wareDiscount', 'deepSurvey',

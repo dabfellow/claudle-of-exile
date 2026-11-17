@@ -78,6 +78,9 @@ const THIRTY: [number, number][] = [[3, 5], [6, 8], [9, 11], [12, 14], [15, 17],
 
 export const AFFIXES: AffixDef[] = [
   { id: 'profession_speed_smithing', kind: 'suffix', group: 'profession_speed', label: 'of Smithing', text: '{0}% increased Smithing speed', stats: ['smithingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
+  { id: 'profession_speed_smelting', kind: 'suffix', group: 'profession_speed', label: 'of Smelting', text: '{0}% increased Smelting speed', stats: ['smeltingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
+  { id: 'profession_speed_woodcrafting', kind: 'suffix', group: 'profession_speed', label: 'of Woodcrafting', text: '{0}% increased Woodcrafting speed', stats: ['woodcraftingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
+  { id: 'profession_speed_artisan', kind: 'suffix', group: 'profession_speed', label: 'of the Master Artisan', text: '{0}% increased Production speed', stats: ['productionSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[12, 12]] }] },
   { id: 'profession_speed_mining', kind: 'suffix', group: 'profession_speed', label: 'of Prospecting', text: '{0}% increased Mining speed', stats: ['miningSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
   { id: 'profession_speed_woodcutting', kind: 'suffix', group: 'profession_speed', label: 'of Woodcutting', text: '{0}% increased Woodcutting speed', stats: ['woodcuttingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
   { id: 'profession_speed_harvesting', kind: 'suffix', group: 'profession_speed', label: 'of Foraging', text: '{0}% increased Foraging speed', stats: ['harvestingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
