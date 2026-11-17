@@ -1,6 +1,6 @@
 # Roadmap and decisions
 
-Last updated 2026-11-16. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-17. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
@@ -52,6 +52,78 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Kingdom lore Topic 38 (2026-11-17): Owner chose A for the Creep's extent within Orvessa: Veyrath is its only established foothold. Elsewhere in Orvessa, people regard it as a distant exile problem. Kroten's shipments could carry it beyond Veyrath; no outbreak elsewhere in Orvessa is established. Jojo Land's separate infestation remains author-level background lore with no confirmed contact or transmission history.
+
+- Kingdom lore Topic 37 (2026-11-17): Owner chose A for why Dabtopia is unaffected: the Creep has never reached it, and distance has protected it so far. Trade creates a possible route for arrival, whether or not anyone recognizes the danger. No natural immunity or protective ward is established. Actual transmission methods and any future spread remain undecided; this is background lore only.
+
+- Kingdom lore Topic 36 (2026-11-17): Owner chose A for contact with Dabtopia: limited but established contact with Orvessa through long voyages, occasional trade and visitors. People know Dabtopia is free of the Creep, though reaching it is difficult. This does not establish a safe route out of Veyrath or change its sea confinement. Why Dabtopia is unaffected and its political relationships remain undecided.
+
+- Kingdom lore Topic 35 (2026-11-17, owner's option C): Orvessa has not made contact with Jojo Land because the distance is too vast for current technology. Jojo Land being completely overrun by the Creep is author-level world lore, not a confirmed report available to Orvessa. Do not establish refugees, expeditions, earlier contact, lost communications or secret Kroten reports from Jojo Land. Whether Orvessa knows the region exists at all remains undecided.
+
+- Kingdom lore Topic 34 (2026-11-17, owner's clarification): Kroten wants to exploit the Creep's overgrown resources to amass a major army and rule surrounding nations. It is only the fifth-largest kingdom in the world; the measure of size is unspecified. This is the agreed objective rather than a requirement to adopt every experiment proposed in options A and B. Particular military applications remain undecided.
+
+- Wider world geography (2026-11-17): The world has three regions. **Orvessa** is the working name supplied for the region containing Kroten and Veyrath. **Dabtopia** is entirely free of the Creep. **Jojo Land** has been completely overrun by it. These are background lore only, with no impact on gameplay, playable geography, balance or existing game content. The world's own name, regional borders and how the Creep reached Jojo Land remain undecided.
+
+- Exile kingdom working name (2026-11-17): **Veyrath**, supplied at the owner's request for a WIP name. Provisional naming for lore discussion; no game labels or existing place names changed, and no in-world etymology established.
+
+- Kingdom lore Topic 33 (2026-11-17): Owner chose A for what Veyrath's rulers believe they are allowing: research toward a cure. Kroten promises to restore farmland and make the seas safe. The rulers conceal the arrangement because admitting dependence on their former enemy would threaten their authority. Players uncover how far Kroten's actual work departs from those promises. What individual rulers later learn, ignore or conceal remains undecided.
+
+- Kingdom lore Topic 32 (2026-11-17): Owner chose B for Kroten's purpose in its secret dealings: access to the Creep. Kroten seeks affected materials, specimens and research, hoping to use the power while containing its dangers. Players discover that some apparently humanitarian deliveries support research expeditions. The experiments, researchers and extent of the exile rulers' knowledge remain undecided.
+
+- Kingdom lore Topic 31 (2026-11-17): Owner chose B for the exile rulers' knowledge of safe passage: Kroten conceals the mechanism from them. They know Kroten's ships cross safely but accept its conditions without understanding why. The player can uncover knowledge denied even to the capital's leaders. This distinguishes their knowledge of the damaged containment from knowledge of Kroten's shipboard devices.
+
+- Kingdom lore Topic 30 (2026-11-17): Owner chose A for the safe-passage mechanism: Kroten's ships carry devices built from the stolen plans that reproduce a small part of the containment, holding the sea's influence away from each vessel. Players can discover a device concealed below deck and recognize its construction from inland ruins. The devices' materials, limits and operation remain undecided; no player crafting or travel mechanic is established.
+
+- Kingdom lore Topic 29 (2026-11-17): Owner chose B for how Kroten acquired the old knowledge: during its infiltration, agents discovered surviving accounts of the containment and secretly sent the records home. Players trace the theft through council archives and descendants of those involved. How those records survived locally, why their importance was overlooked and the precise safe-passage method remain undecided.
+
+- Kingdom lore Topic 28 (2026-11-17): Owner chose A for Kroten's safe passage: Kroten secretly preserved old knowledge, and its ships carry something that allows passage through the containment's influence. Players can uncover how Kroten acquired that knowledge and why the exile kingdom lost it. The carried object or material, how it works and Kroten's source of knowledge remain undecided; a bargain with a power beneath the continent is not established.
+
+- Kingdom lore Topic 27 (2026-11-17): Owner chose A for the First Exile's role in the original catastrophe: already changing under the power's influence, they helped contain it and chose to seal themselves beneath the land to protect the home they had founded. The guardian stories preserve a genuine sacrifice, while their purpose continued twisting during confinement. Their exact present reach and connection to the sea remain undecided.
+
+- Kingdom lore Topic 26 (2026-11-17): Owner chose B for the containment's builders: the early exiles encountered the older power, suffered its effects and contained it. Later generations preserved comforting founding stories while the structures' purpose was forgotten; the founding legends omit a catastrophe. This clarifies Topic 2: the power predates the exile kingdom, but its containment was built by the early exiles, not an established separate ancient civilization. Who rewrote the history, whether the omission was deliberate and the First Exile's exact role in the containment remain undecided.
+
+- Kingdom lore Topic 25 (2026-11-17): Owner chose B for the Void Sovereign's original purpose: ending the suffering caused by the Creep's relentless growth and transformation. Under the power's influence, that purpose became erasing everything capable of suffering, leaving perfect stillness. Players find places where the Creep has stopped and nothing else lives. The Sovereign's identity, methods and exact relationship with the other Ubers remain undecided.
+
+- Kingdom lore Topic 24 (2026-11-17): Owner chose B for the Architect of Ruin's original purpose: repairing the ancient containment after understanding the wartime damage. Under the power's influence, restoring the original design became an obsession pursued at any cost, including tearing apart communities built from salvaged containment pieces. Players uncover a genuine rescue effort that became monstrous. The Architect's identity, methods and how much restoration is genuinely necessary remain undecided.
+
+- Kingdom lore Topic 23 (2026-11-17): Owner chose B for how people remember the First Exile: a guardian believed to remain beneath the land. People leave offerings and credit them with protecting the kingdom. Some communities remain devoted even as that "protection" becomes frightening. Specific rituals, the extent of this belief and what worshippers know about the transformation remain undecided.
+
+- Kingdom lore Topic 22 (2026-11-17): Owner chose A for the First Exile's original purpose: giving the rejected a home where nobody could be cast out again. Under the power's influence, belonging became possession: everyone who reaches the land belongs to it forever. Players discover how that founding promise became terrifying. Whether the First Exile causes the sea's imprisonment, why Kroten's ships pass freely and the timing of the First Exile's transformation remain undecided.
+
+- Kingdom lore Topic 21 (2026-11-17): Owner chose B for how the Creep changes those drawing on its power: their purpose gradually consumes them, and original intentions harden into monstrous obsessions. A protector preventing anyone from leaving and a healer sustaining people through horrific changes are illustrative examples, not assigned identities or a fixed roster. Players uncover the personal intentions behind these transformations, informing the histories of the Ubers. Specific histories and physical manifestations remain undecided.
+
+- Kingdom lore Topic 20 (2026-11-17): Owner chose A for the capital's field workers: people are bound to work for their rations. Families receive food and shelter in exchange for compulsory shifts, and leaving means losing the household's allowance. Workers may depend on the arrangement, resent it or both. District labour quotas are not established.
+
+- Kingdom lore Topic 19 (2026-11-17): Owner chose A for the capital's remaining food production: constant labour holds the Creep back. Workers clear roots, dredge channels and burn affected growth under guard, requiring enormous effort to keep even a small area productive. The workers' recruitment, conditions and ability to leave remain undecided; no protective ward or special immunity is established.
+
+- Kingdom lore Topic 18 (2026-11-17): Owner chose B for why abundance has not ended the famine: the Creep destroys reliable farming. Fields briefly produce enormous harvests, then roots choke waterways and aggressive growth overwhelms surrounding land. Communities receive short-lived windfalls while losing the farms they depended on. Harmful food or changes caused by eating it are not established by this decision.
+
+- Kingdom lore Topic 17 (2026-11-17): Owner chose A for recognizable signs of the Creep: life grows strangely abundant, crops ripen out of season, wounds close unusually quickly and animals grow larger. Later the growth becomes distorted and difficult to stop. These initially useful effects explain why starving communities welcome it. This establishes lore and visual direction, not new crop, healing or animal gameplay mechanics.
+
+- Kingdom lore Topic 16 (2026-11-17): Owner chose **The Creep** as the everyday name for the spreading supernatural changes. Farmers, sailors and guards use it for effects on both land and sea, connecting those dangers before the player learns their cause; example usage: "The Creep's reached the wells." Its specific recognizable signs remain undecided.
+
+- Kingdom lore Topic 15 (2026-11-17): Owner chose B for public understanding of the supernatural changes: everyone knows something is spreading, people share a common name for it and recognize its signs, but disagree about its origin. Communities already take precautions, some useful and others desperate superstition. The common name, recognizable signs and specific precautions remain undecided.
+
+- Kingdom lore Topic 14 (2026-11-17): Owner chose A for the official explanation of Kroten's safe passage: port authorities claim Kroten alone has superior vessels, charts and experienced crews capable of surviving the crossing. Players can gradually find evidence that seamanship does not explain the difference. The true reason for safe passage remains undecided.
+
+- Kingdom lore Topic 13 (2026-11-17, owner's clarification): Owner chose B: ships attempting to leave go out and do not come back. Passage is sold with the danger reflected in its cost; departure is unsafe. People doubt the missing ships made it out, but desperation drives attempts and some believe escape works. The guards have stopped sending men on the return boats. The public has no confirmed account of the missing ships' fate; do not establish survivors, returning wreckage or a specific attack without a further decision. The port controllers' knowledge from Topic 12 remains distinct from public uncertainty.
+
+- Kingdom lore Topic 12 (2026-11-17, owner's answer): On land, people believe escape is possible if they can afford passage, but this is a scam run by those controlling the few active ports. The port controllers know the forces affecting the land have crept into the sea, where unknown forces prevent ships from leaving. Ships belonging to the larger kingdom can nevertheless move freely between the lands. The larger kingdom is provisionally named **Kroten**. Why its ships can pass, how the sea prevents other departures and what happens to attempted escapees remain undecided; do not assume Kroten controls the force.
+
+- Kingdom lore Topic 11 (2026-11-16): Owner chose A for resistance at the player's arrival: small local groups pursue different aims, including protecting food deliveries, exposing officials or seeking revenge. Thirty years of betrayal have left them distrustful of one another. The player builds relationships across these groups and encounters conflicting methods. Individual groups, their names and any gameplay choice system remain undesigned.
+
+- Kingdom lore Topic 10 (2026-11-16): Owner chose B for the larger kingdom's present role: it quietly deals with the former rebel rulers. Secret arrangements provide selected elites with supplies or protection while restoring the larger kingdom's influence. Some shortages and safe shipping routes are deliberate, creating evidence for the player to investigate. The participants, exact terms and extent of these arrangements remain open.
+
+- Kingdom lore Topic 9 (2026-11-16): Owner chose A for the power's first appearance in communities: it initially seems useful, such as restoring a failing crop, healing an injured worker or empowering a village defender. Harmful consequences emerge later, leaving some communities dependent on benefits they know are dangerous. These examples establish the pattern, not a fixed list of effects or new gameplay mechanics.
+
+- Kingdom lore Topic 8 (2026-11-16): Owner chose B for the imprisoned power: the containment held a power once used to gain extraordinary abilities, which changes those who use it. Those most deeply transformed became the beings encountered as Ubers. The player can discover each being's history, motives, what they gained and what it cost them, and why the power was sealed away. The power's identity, the timing of individual transformations and each existing Uber's precise connection remain open.
+
+- Kingdom lore Topic 7 (2026-11-16): Owner chose A for the rulers' knowledge: reports eventually revealed what had been dismantled, and the rulers suppressed the evidence because admitting responsibility could destroy their remaining authority. The player encounters silenced witnesses, altered records and guarded ruins. How much the rulers understand about the ancient power itself remains open.
+
+- Kingdom lore Topic 6 (2026-11-16): Owner chose A for the containment's damage: ancient structures whose purpose had been forgotten were dismantled for stone and metal to supply wartime fortifications and weapons. People understood the damage only when strange events began around the dismantled sites. Reused pieces are scattered across the kingdom, letting the player gradually recognize their origin in familiar structures and objects. Individual sites and affected items remain undecided.
+
+- Kingdom lore Topic 5 (2026-11-16): Owner chose B for everyday rule: the rulers' control fades beyond the capital. Districts receive irregular food deliveries, while outlying villages largely fend for themselves. Local captains, bandits and surviving community leaders determine what happens, so council decrees carry different weight from settlement to settlement.
 
 - Kingdom lore Topic 4 (2026-11-16): Owner chose B for new arrivals: exile has become a disguised death sentence. The larger kingdom knows the exile kingdom has collapsed and abandons people offshore or on its most dangerous beaches. The player survives a landing intended to kill them. The player's individual offence or reason for exile remains open.
 
@@ -950,3 +1022,5 @@ New engine needs:
 - **Marks don't have a default rule** for the mark skill itself (always makes sense); the finisher skills that *benefit from* a mark have `targetHasEffect: 'mark'` as their suggested rule.
 - **No signature for supports.** Same as every act.
 - **Art:** totems, warcries and mark effects need icons. Doom skills share void/purple palette. Exertion uses a yellow-charge visual. All listed in `artManifest.ts → GEM_SYMBOL` when built.
+
+- [ ] Implement Thieving Overhaul (Rogue Classes, Progression, Talent Trees, Tactical Loop) <!-- done 2026-11-17 -->
