@@ -10,12 +10,18 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Rogue Roster overhaul: 12-rogue crew selection, talent trees, and tactical heist loop.',
-  'Travel Points are gone: everything on the passive tree now uses Passive Points (2 per level), and every ordinary node costs 1. Doomed Gates and Forbidden keystones keep their price. Existing characters keep every node they have taken; unspent points are recounted.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: "0.5.1",
+    date: "18 Nov 2026",
+    title: "One Tree, One Currency",
+    items: [
+      'Travel Points are gone: everything on the passive tree now uses Passive Points (2 per level), and every ordinary node costs 1. Doomed Gates and Forbidden keystones keep their price. Existing characters keep every node they have taken; unspent points are recounted.',
+      'Rogue Roster overhaul: 12-rogue crew selection, talent trees, and tactical heist loop.',
+    ],
+  },
   {
     version: "0.5.0",
     date: "18 Nov 2026",
