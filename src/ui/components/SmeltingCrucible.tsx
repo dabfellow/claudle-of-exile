@@ -1,7 +1,5 @@
 import { useState, type ReactNode } from 'react';
 import type { SkillAction } from '../../data/skills';
-import { useGame } from '../../game';
-import { GameIcon, MatIcon } from './common';
 import './profession-workbench.css';
 
 export interface CrucibleProps {
