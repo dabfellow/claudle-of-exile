@@ -1,8 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { actionDef, SKILLS, type SkillAction } from '../../data/skills';
-import { actionBlocker, actionIntervalMs } from '../../engine/skills';
-import { deriveStats } from '../../engine/stats';
-import type { SkillId } from '../../engine/types';
+import type { SkillAction } from '../../data/skills';
 import { useGame } from '../../game';
 import { GameIcon, MatIcon } from './common';
 import './profession-workbench.css';
@@ -13,12 +10,8 @@ export interface CrucibleProps {
   isUnlocked: (action: SkillAction) => boolean;
 }
 
-export function SmeltingCrucible({ groups, renderAction, isUnlocked }: CrucibleProps) {
-  const s = useGame();
+export function SmeltingCrucible({ groups, renderAction }: CrucibleProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const actions = groups.flatMap((g) => g.actions);
-  const selected = actions.find((a) => a.id === selectedId) ?? actions[0];
-  const d = deriveStats(s);
 
   return (
     <div className="profession-workspace profession-smelting">
