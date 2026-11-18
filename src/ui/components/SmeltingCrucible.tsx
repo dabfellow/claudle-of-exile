@@ -12,6 +12,8 @@ export interface CrucibleProps {
 
 export function SmeltingCrucible({ groups, renderAction }: CrucibleProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const actions = groups.flatMap((g) => g.actions);
+  const selected = actions.find((a) => a.id === selectedId) ?? actions[0];
 
   return (
     <div className="profession-workspace profession-smelting">
@@ -23,7 +25,7 @@ export function SmeltingCrucible({ groups, renderAction }: CrucibleProps) {
               <div className="profession-activity-list">
                 {group.actions.map((a) => (
                   <button 
-                    className={`profession-activity ${selected.id === a.id ? 'selected' : ''}`} 
+                    className={`profession-activity ${selected?.id === a.id ? 'selected' : ''}`} 
                     key={a.id} 
                     onClick={() => setSelectedId(a.id)}
                   >
@@ -37,7 +39,7 @@ export function SmeltingCrucible({ groups, renderAction }: CrucibleProps) {
       </section>
       <section className="profession-station">
         <div className="profession-station-body">
-          {renderAction(selected)}
+          {selected && renderAction(selected)}
         </div>
       </section>
     </div>
