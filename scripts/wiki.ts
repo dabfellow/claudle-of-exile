@@ -378,7 +378,7 @@ ${similar.length ? `<h2 id="similar">Similar bases</h2>${entList(similar.map((o)
 }
 
 function uniqueEntry(u: UniqueDef) {
-  const zones = OPEN_ZONES.filter((z) => z.uniques.includes(u.id));
+  const zones = OPEN_ZONES.filter((z) => (z.uniques ?? []).includes(u.id));
   const base = baseDef(u.baseId);
   entry('uniques', U.unique(u.id), `unique ${base.name}`,
     chip('Unique', 'gold') + chip(title(base.slot)) + (u.noTrade ? chip("Can't be traded") : ''),
