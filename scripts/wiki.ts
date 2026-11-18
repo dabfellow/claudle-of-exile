@@ -540,7 +540,7 @@ function itemsPage(): string {
 function uniquesPage(): string {
   const cards = UNIQUES.map((u) => {
     const mods = uniqueMods(u).map((m) => `<li>${esc(m)}</li>`).join('');
-    const where = OPEN_ZONES.filter((z) => z.uniques.includes(u.id));
+    const where = OPEN_ZONES.filter((z) => (z.uniques ?? []).includes(u.id));
     return `<section class="card" id="${u.id}"><h3>${ent(U.unique(u.id))} <small>${ent(U.item(u.baseId))}, level ${baseDef(u.baseId).reqLevel}</small></h3><ul>${mods}</ul><p class="quote">${esc(u.flavour)}</p>${where.length ? spoiler('drop areas', openZonesText(where)) : ''}</section>`;
   });
   return `<h1>Unique items</h1><p>${UNIQUES.length} uniques.</p>${cards.join('')}`;
@@ -842,7 +842,7 @@ function tool(name: string, data: unknown): string {
   return `<div class="tool" data-tool="${name}"></div><script type="application/json" id="tool-data">${json}</script><script src="${BASE_URL}tools.js" defer></script><noscript><p>This tool needs JavaScript.</p></noscript>`;
 }
 
-const ZONE_DROPS = () => OPEN_ZONES.map((z) => ({ n: z.name, act: z.act, tier: z.tier, cur: Object.fromEntries(Object.entries(areaCurrency(z)).map(([id, w]) => [matName(id), w])), u:z.uniques.flatMap((id) => UNIQUES.find((u) => u.id === id)?.name ?? []) }));
+const ZONE_DROPS = () => OPEN_ZONES.map((z) => ({ n: z.name, act: z.act, tier: z.tier, cur: Object.fromEntries(Object.entries(areaCurrency(z)).map(([id, w]) => [matName(id), w])), u: (z.uniques ?? []).flatMap((id) => UNIQUES.find((u) => u.id === id)?.name ?? []) }));
 
 function dropTool() {
   const tiers = Object.fromEntries(Object.entries(DROP_TABLES).map(([k, t]) => [k, {
