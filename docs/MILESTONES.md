@@ -757,7 +757,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-- [x] Merged Travel Points into Passive Points (2 per level) and set every ordinary tree node to cost 1; Gateways (4), Doomed Gates (5) and Forbidden keystones (15) unchanged. Save migration 48 recounts existing characters without removing allocations. — done 2026-11-18
+- [x] Merged Travel Points into Passive Points (2 per level) and set every ordinary tree node to cost 1; Gateways (4), Doomed Gates (5) and Forbidden keystones (15) unchanged. Save migration 48 recounts existing characters without removing allocations. — done 2026-11-18 (live in 0.5.1)
 
 - All profession workspaces implemented, browser-verified on desktop/phone and deployed as 0.4.49 with live login confirmation. — done 2026-11-17
 
