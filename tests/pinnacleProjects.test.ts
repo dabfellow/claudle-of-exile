@@ -182,7 +182,7 @@ describe('Phase 17 The Second Heresy', () => {
   }
   const total = (s: GameState) => {
     const spent = spentPoints(s);
-    return s.travelPoints + s.passivePoints + s.masteryPoints + spent.travelPoints + spent.passivePoints + spent.masteryPoints;
+    return s.passivePoints + s.masteryPoints + spent.passivePoints + spent.masteryPoints;
   };
 
   it('allows exactly one extra Forbidden keystone, even with two copies, and keeps node prices', () => {

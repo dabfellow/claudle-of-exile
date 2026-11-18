@@ -12,6 +12,7 @@ export interface NewsEntry {
  */
 export const UPCOMING: string[] = [
   'Thieving overhaul: 12 specialists, rogue crew selection, and tactical heist choices.',
+  'Travel Points are gone: everything on the passive tree now uses Passive Points (2 per level), and every ordinary node costs 1. Doomed Gates and Forbidden keystones keep their price. Existing characters keep every node they have taken; unspent points are recounted.',
 ];
 
 export const NEWS: NewsEntry[] = [

@@ -934,7 +934,7 @@ function CharacterNodeTip({ s, n, plan = [] }: { s: GameState; n: PassiveNode; p
           Bypasses physical tree distance. Both sides connect when activated.
         </div>
         <div className={allocated ? 'good' : 'conduit-prompt'} style={{ marginTop: 8, fontSize: 'var(--fs-xs)', fontWeight: 600 }}>
-          {allocated ? `Conduit active · linked to ${destName}` : (reason ?? 'Ready to activate · 4 Travel Points')}
+          {allocated ? `Conduit active · linked to ${destName}` : (reason ?? 'Ready to activate · 4 Passive Points')}
         </div>
       </div>
     );
@@ -1037,7 +1037,7 @@ function CharacterNodeTip({ s, n, plan = [] }: { s: GameState; n: PassiveNode; p
 
 function pointPriceLabel(n: PassiveNode): string {
   const price = passiveNodeCost(n);
-  const pool = price.pool === 'travelPoints' ? 'Travel' : price.pool === 'masteryPoints' ? 'Mastery' : 'Passive';
+  const pool = price.pool === 'masteryPoints' ? 'Mastery' : 'Passive';
   return `${price.cost} ${pool} Point${price.cost === 1 ? '' : 's'}`;
 }
 
@@ -1101,7 +1101,7 @@ function CharacterNodeSelection({
   );
 }
 
-const POOL_LABEL = { travelPoints: 'Travel', passivePoints: 'Passive', masteryPoints: 'Mastery' } as const;
+const POOL_LABEL = { passivePoints: 'Passive', masteryPoints: 'Mastery' } as const;
 
 /** The route lined up to buy: its cost, what it changes, and Confirm / Cancel. */
 function PlannedRoutePanel({ s, plan, onConfirm, onCancel }: { s: GameState; plan: string[]; onConfirm: () => void; onCancel: () => void }) {
@@ -1472,19 +1472,17 @@ function CharacterTree({ s }: { s: GameState }) {
   // Point calculations
   settlePassivePoints(s);
   const spent = useMemo(() => {
-    const sp = { travel: 0, passive: 0, mastery: 0 };
+    const sp = { passive: 0, mastery: 0 };
     for (const id of s.passives) {
       const node = PASSIVE_BY_ID[id];
       if (!node) continue;
       const price = passiveNodeCost(node);
-      if (price.pool === 'travelPoints') sp.travel += price.cost;
-      else if (price.pool === 'masteryPoints') sp.mastery += price.cost;
+      if (price.pool === 'masteryPoints') sp.mastery += price.cost;
       else sp.passive += price.cost;
     }
     return sp;
   }, [s.passives]);
 
-  const totalTravel = s.travelPoints + spent.travel;
   const totalPassive = s.passivePoints + spent.passive;
   const totalMastery = s.masteryPoints + spent.mastery;
 
@@ -1607,10 +1605,7 @@ function CharacterTree({ s }: { s: GameState }) {
 
         {/* Row 2: Point Trackers & Search & Controls */}
         <div className="tree-currency-row">
-          <span className="chip chip-point-cyan" title="Used for travel attribute roads and Cosmic Gateways">
-            Travel Points: {s.travelPoints} / {totalTravel}
-          </span>
-          <span className="chip chip-point-gold" title="Used for small passives, notables, keystones, and doomed gates">
+          <span className="chip chip-point-gold" title="Used for every node except masteries. Most nodes cost 1.">
             Passive Points: {s.passivePoints} / {totalPassive}
           </span>
           <span className="chip chip-point-purple" title="Used for cluster mastery sockets">
@@ -1650,7 +1645,7 @@ function CharacterTree({ s }: { s: GameState }) {
         byId={PASSIVE_BY_ID}
         size={CHAR_TREE_SIZE}
         maxZoom={CHAR_TREE_ZOOM}
-        version={`${myStart}|${s.passives.join(',')}|${s.travelPoints}|${s.passivePoints}|${s.masteryPoints}|${query}|${plan.join(',')}`}
+        version={`${myStart}|${s.passives.join(',')}|${s.passivePoints}|${s.masteryPoints}|${query}|${plan.join(',')}`}
         pending={pending}
         focus={{ x: -PASSIVE_BY_ID[myStart].x, y: -PASSIVE_BY_ID[myStart].y, k: 3 }}
         isOn={isOn}

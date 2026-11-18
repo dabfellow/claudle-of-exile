@@ -6,7 +6,7 @@ import { zoneDef } from '../src/data/zones';
 import { combatStep, makeMonster, mitigate, startCombat, useFlask } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem } from '../src/engine/gems';
-import { allocate, allocateReason, changeMastery, PASSIVE_POINTS_PER_LEVEL, passiveNodeCost, passiveRoute, refund, refundReason, settlePassivePoints, startNode, TRAVEL_POINTS_PER_LEVEL } from '../src/engine/passives';
+import { allocate, allocateReason, changeMastery, PASSIVE_POINTS_PER_LEVEL, passiveNodeCost, passiveRoute, refund, refundReason, settlePassivePoints, startNode } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
 import { allocateSkillNode, MAX_SKILL_TREE_POINTS, skillTreePoints } from '../src/engine/skillTree';
 import { actionIntervalMs, startSkillAction } from '../src/engine/skills';
@@ -158,8 +158,7 @@ describe('character tree shape', () => {
     const loaded = deserialize(JSON.stringify(raw));
     expect(loaded.passives).toEqual([]);
     expect(loaded.passiveProfiles[0].passives).toEqual([]);
-    expect(loaded.travelPoints).toBe(160);
-    expect(loaded.passivePoints).toBe(80);
+    expect(loaded.passivePoints).toBe(160);
   });
 
   it('neighbouring classes link cluster to cluster across their border, well away from the centre', () => {
@@ -252,36 +251,41 @@ describe('masteries', () => {
 });
 
 describe('character tree point economy', () => {
-  it('credits separate level pools, caps mastery awards, and prices each node tier', () => {
+  it('credits one passive pool, caps mastery awards, and prices each node tier', () => {
     const s = newGame(1);
-    expect([TRAVEL_POINTS_PER_LEVEL, PASSIVE_POINTS_PER_LEVEL]).toEqual([2, 1]);
-    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([2, 1, 0]);
+    expect(PASSIVE_POINTS_PER_LEVEL).toBe(2);
+    expect([s.passivePoints, s.masteryPoints]).toEqual([2, 0]);
     s.skills.combat = charXpForLevel(100);
     settlePassivePoints(s);
-    expect([s.travelPoints, s.passivePoints, s.masteryPoints]).toEqual([200, 100, 20]);
-    expect(passiveNodeCost(PASSIVE_BY_ID.str_hub)).toEqual({ pool: 'travelPoints', cost: 1 });
-    // small nodes are the paths between clusters, bought with travel points
-    expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_s1)).toEqual({ pool: 'travelPoints', cost: 1 });
-    expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_n)).toEqual({ pool: 'passivePoints', cost: 3 });
-    expect(passiveNodeCost(PASSIVE_BY_ID.brute_force_m)).toEqual({ pool: 'masteryPoints', cost: 1 });
+    expect([s.passivePoints, s.masteryPoints]).toEqual([200, 20]);
+    // every ordinary node costs one Passive Point
+    expect(passiveNodeCost(PASSIVE_BY_ID.str_hub)).toEqual({ pool: 'passivePoints', cost: 1 });
+    expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_s1)).toEqual({ pool: 'passivePoints', cost: 1 });
+    expect(passiveNodeCost(PASSIVE_BY_ID.iron_skin_n)).toEqual({ pool: 'passivePoints', cost: 1 });
+    for (const n of PASSIVE_NODES.filter((n) => ['travel', 'highway', 'small', 'large', 'notable'].includes(n.kind))) {
+      expect(passiveNodeCost(n), n.id).toEqual({ pool: 'passivePoints', cost: 1 });
+    }
+    // the expensive ones keep their price
+    expect(passiveNodeCost(PASSIVE_BY_ID.doomed_blood_toll)).toEqual({ pool: 'passivePoints', cost: 5 });
     expect(passiveNodeCost(PASSIVE_BY_ID.forbidden_overclock)).toEqual({ pool: 'passivePoints', cost: 15 });
+    expect(passiveNodeCost(PASSIVE_BY_ID.brute_force_m)).toEqual({ pool: 'masteryPoints', cost: 1 });
   });
 
   it('spends and refunds the exact pool cost and credits Act quest bosses once', () => {
     const s = newGame(1);
     expect(allocate(s, ctx(), 'str_hub')).toBeNull();
-    expect(s.travelPoints).toBe(1);
+    expect(s.passivePoints).toBe(1);
     s.account.bank.regret = 1;
     expect(refund(s, ctx(), 'str_hub')).toBeNull();
-    expect(s.travelPoints).toBe(2);
+    expect(s.passivePoints).toBe(2);
     s.bossesDefeated.push('sanctum');
     settlePassivePoints(s);
-    expect(s.passivePoints).toBe(2);
+    expect(s.passivePoints).toBe(3);
     settlePassivePoints(s);
-    expect(s.passivePoints).toBe(2);
+    expect(s.passivePoints).toBe(3);
   });
 
-  it('recalculates existing characters to the new split without removing allocations', () => {
+  it('merges old Travel Points into Passive Points without removing allocations', () => {
     const raw = JSON.parse(serialize(newGame(1)));
     raw.version = 39;
     raw.skills.combat = 13572; // level 10 on the character curve used by version 39
@@ -292,7 +296,8 @@ describe('character tree point economy', () => {
     const loaded = deserialize(JSON.stringify(raw));
     expect(loaded.version).toBe(SAVE_VERSION);
     expect(loaded.passives).toEqual(['str_hub']);
-    expect([loaded.travelPoints, loaded.passivePoints]).toEqual([19, 10]);
+    expect((loaded as any).travelPoints).toBeUndefined();
+    expect(loaded.passivePoints).toBe(19);
   });
 });
 
@@ -505,7 +510,6 @@ describe('skilling tree', () => {
     expect(loaded.passiveProfiles[0].passives).toEqual([]);
     expect(loaded.passiveProfiles[1].passives).toEqual([]);
     expect(loaded.passiveProfiles[2].passives).toEqual([]);
-    expect(loaded.travelPoints).toBeGreaterThan(0);
     expect(loaded.passivePoints).toBeGreaterThan(0);
 
     // Can allocate adjacent node from mage start

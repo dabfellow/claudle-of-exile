@@ -646,6 +646,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
+- [x] Merged Travel Points into Passive Points (2 per level) and set every ordinary tree node to cost 1; Gateways (4), Doomed Gates (5) and Forbidden keystones (15) unchanged. Save migration 47 recounts existing characters without removing allocations. — done 2026-11-17
+
 - [x] Created and integrated the Ashen Codex world-map painting, refined through the owner's annotated art revisions, with general paths across all six campaign regions and readable clickable act labels. Source images/prompts saved under `output/imagegen/`; runtime asset in `src/assets/maps/`. Typecheck, four campaign-map tests and client build pass; visual playtest pending above. — done 2026-11-16
 
 - [x] Produced the grounded world-atlas revision: a dominant connected northern mountain system, broad lowlands, clearer drainage, small settlement plans at estuaries/crossings, quieter mixed coastline, understated islands and lighter paper treatment. Image and full built-in generation prompt saved under `output/imagegen/ashen-codex-world-atlas-1800s-v2*`; artwork only, no release. — done 2026-11-16

@@ -1187,9 +1187,7 @@ export interface GameState {
   combat: CombatRuntime | null;
   zoneKills: Record<string, number>;
   unlockedZones: string[];
-  /** Unspent character-tree currency for roads and Cosmic Gateways. */
-  travelPoints: number;
-  /** Unspent character-tree currency for combat passives and keystones. */
+  /** Unspent character-tree currency for every node except masteries. */
   passivePoints: number;
   /** Unspent character-tree currency for mastery choices. */
   masteryPoints: number;

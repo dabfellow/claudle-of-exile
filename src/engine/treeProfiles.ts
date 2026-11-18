@@ -249,14 +249,12 @@ function swapPassives(s: GameState, passives: string[], masteries: Record<string
   settlePassivePoints(s);
   const before = spentPoints(s);
   const total = {
-    travelPoints: s.travelPoints + before.travelPoints,
     passivePoints: s.passivePoints + before.passivePoints,
     masteryPoints: s.masteryPoints + before.masteryPoints,
   };
   s.passives = [...passives];
   s.masteries = { ...masteries };
   const after = spentPoints(s);
-  s.travelPoints = Math.max(0, total.travelPoints - after.travelPoints);
   s.passivePoints = Math.max(0, total.passivePoints - after.passivePoints);
   s.masteryPoints = Math.max(0, total.masteryPoints - after.masteryPoints);
 }

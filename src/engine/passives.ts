@@ -7,11 +7,10 @@ import type { Ctx } from './context';
 import { MAX_FORBIDDEN_ALLOWANCE, forbiddenAllowance } from './pinnacles';
 import type { GameState } from './types';
 
-export type PassivePointPool = 'travelPoints' | 'passivePoints' | 'masteryPoints';
+export type PassivePointPool = 'passivePoints' | 'masteryPoints';
 
-/** Two pathing points and one build-defining point per character level. */
-export const TRAVEL_POINTS_PER_LEVEL = 2;
-export const PASSIVE_POINTS_PER_LEVEL = 1;
+/** Two Passive Points per character level; every ordinary node costs one. */
+export const PASSIVE_POINTS_PER_LEVEL = 2;
 
 const GATEWAY_STAT_PAIRS: Record<string, string> = {
   gatewaySolar: 'gatewayLunar', gatewayLunar: 'gatewaySolar',
@@ -53,21 +52,16 @@ export function isDoomed(node: PassiveNode): boolean {
 }
 
 export function passiveNodeCost(node: PassiveNode): { pool: PassivePointPool; cost: number } {
-  if (isCosmicGateway(node)) return { pool: 'travelPoints', cost: 4 };
-  if (node.kind === 'travel' || node.kind === 'highway') return { pool: 'travelPoints', cost: 1 };
+  if (isCosmicGateway(node)) return { pool: 'passivePoints', cost: 4 };
   if (node.kind === 'mastery') return { pool: 'masteryPoints', cost: 1 };
   if (isDoomed(node)) return { pool: 'passivePoints', cost: 5 };
   if (node.kind === 'keystone' && node.region === 'forbidden') return { pool: 'passivePoints', cost: 15 };
-  // small nodes are the paths between clusters (they carry the old travel roads' attributes), so travel points buy them
-  if (node.kind === 'small') return { pool: 'travelPoints', cost: 1 };
-  if (node.kind === 'large') return { pool: 'passivePoints', cost: 2 };
-  if (node.kind === 'notable') return { pool: 'passivePoints', cost: 3 };
-  // Ordinary keystones are not the separately priced Forbidden keystone tier.
+  // Every ordinary node (roads, small, large, notable, keystone) costs one Passive Point.
   return { pool: 'passivePoints', cost: 1 };
 }
 
 export function spentPoints(s: Pick<GameState, 'passives'>): Record<PassivePointPool, number> {
-  const spent = { travelPoints: 0, passivePoints: 0, masteryPoints: 0 };
+  const spent = { passivePoints: 0, masteryPoints: 0 };
   for (const id of s.passives) {
     const node = PASSIVE_BY_ID[id];
     if (!node) continue;
@@ -101,7 +95,6 @@ export function settlePassivePoints(s: GameState): void {
   const quests = actQuestPoints(s);
   if (s.passivePointLevel === null || s.passiveQuestPoints === null || !Number.isFinite(s.passivePointLevel) || !Number.isFinite(s.passiveQuestPoints)) {
     const spent = spentPoints(s);
-    s.travelPoints = Math.max(0, level * TRAVEL_POINTS_PER_LEVEL - spent.travelPoints);
     s.passivePoints = Math.max(0, level * PASSIVE_POINTS_PER_LEVEL + quests - spent.passivePoints);
     s.masteryPoints = Math.max(0, Math.min(20, Math.floor(level / 5)) - spent.masteryPoints);
     s.passivePointLevel = level;
@@ -110,7 +103,6 @@ export function settlePassivePoints(s: GameState): void {
   }
   const gained = Math.max(0, level - s.passivePointLevel);
   if (gained) {
-    s.travelPoints += gained * TRAVEL_POINTS_PER_LEVEL;
     s.passivePoints += gained * PASSIVE_POINTS_PER_LEVEL;
     const before = Math.min(20, Math.floor(s.passivePointLevel / 5));
     const after = Math.min(20, Math.floor(level / 5));
@@ -127,12 +119,12 @@ export function settlePassivePoints(s: GameState): void {
 export function totalPoints(s: GameState): number {
   settlePassivePoints(s);
   const spent = spentPoints(s);
-  return s.travelPoints + s.passivePoints + s.masteryPoints + spent.travelPoints + spent.passivePoints + spent.masteryPoints;
+  return s.passivePoints + s.masteryPoints + spent.passivePoints + spent.masteryPoints;
 }
 
 export function pointsLeft(s: GameState): number {
   settlePassivePoints(s);
-  return s.travelPoints + s.passivePoints + s.masteryPoints;
+  return s.passivePoints + s.masteryPoints;
 }
 
 export function startNode(s: GameState): string {
@@ -321,7 +313,7 @@ export function allocateReason(s: GameState, id: string): string | null {
   settlePassivePoints(s);
   const { pool, cost } = passiveNodeCost(node);
   if (s[pool] < cost) {
-    const label = pool === 'travelPoints' ? 'travel' : pool === 'masteryPoints' ? 'mastery' : 'passive';
+    const label = pool === 'masteryPoints' ? 'mastery' : 'passive';
     return `Requires ${cost} ${label} point${cost === 1 ? '' : 's'}`;
   }
   if (node.kind === 'mastery' && !s.passives.some((other) => PASSIVE_BY_ID[other]?.cluster === node.cluster && PASSIVE_BY_ID[other]?.kind === 'notable')) {
@@ -398,7 +390,7 @@ export function passiveRoute(s: GameState, target: string, planned: string[] = [
 
 /** What a list of nodes costs from each point pool. */
 export function routeCost(ids: string[]): Record<PassivePointPool, number> {
-  const cost = { travelPoints: 0, passivePoints: 0, masteryPoints: 0 };
+  const cost = { passivePoints: 0, masteryPoints: 0 };
   for (const id of ids) {
     const node = PASSIVE_BY_ID[id];
     if (node) cost[passiveNodeCost(node).pool] += passiveNodeCost(node).cost;

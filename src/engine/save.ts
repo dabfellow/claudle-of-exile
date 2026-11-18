@@ -410,6 +410,13 @@ const MIGRATIONS: Record<number, Migration> = {
     if (skills?.combat) skills.combat = charXpFromPreviousCurve(skills.combat);
   },
   46: (raw) => { settleProfessionProgress(raw as unknown as GameState, true); },
+  47: (raw) => {
+    // Travel Points merged into Passive Points and ordinary nodes all cost 1. Recount the one pool from level
+    // and current spending on load, so cheaper nodes refund the difference; allocations stay put.
+    delete raw.travelPoints;
+    raw.passivePointLevel = null;
+    raw.passiveQuestPoints = null;
+  },
 };
 
 /**
