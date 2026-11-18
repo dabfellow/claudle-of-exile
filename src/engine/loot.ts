@@ -197,7 +197,7 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
     if (bossUniques.length && chance(rng, boss.uniqueChance * (1 + itemRarity / 100))) {
       // Use standard weighted drop for boss uniques as well
       const unique = pickWeighted(rng, bossUniques, u => u.weight);
-      placeItem(s, ctx, createUnique(s, unique.id, ilvl, rng));
+      if (unique) placeItem(s, ctx, createUnique(s, unique.id, ilvl, rng));
     }
     if (chance(rng, BOSS_CRAFT_MAT.chance)) {
       // Greater Essences only from the later Act 1 areas

@@ -101,7 +101,7 @@ export interface ZoneDef {
   spawnEveryMs: number;
   /** items here roll this many levels above the monster that dropped them */
   ilvlBonus?: number;
-  uniques: string[];
+  uniques?: string[];
   /**
    * What opens this area. `after`: areas whose boss opens the road here, any one of them will do
    * (defaults to the area before it in ZONES; [] for none). `bosses`: also needs this many of this act's
