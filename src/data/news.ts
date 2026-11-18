@@ -16,6 +16,14 @@ export const UPCOMING: string[] = [
 
 export const NEWS: NewsEntry[] = [
   {
+    version: "0.5.0",
+    date: "18 Nov 2026",
+    title: "RuneQuest",
+    items: [
+      "Implemented a tiered weighting system for all unique items, making some significantly rarer and more sought-after than others.",
+    ],
+  },
+  {
     version: '0.4.49',
     date: '17 Nov 2026',
     title: 'Profession Workspaces',
@@ -1036,3 +1044,4 @@ export const NEWS: NewsEntry[] = [
     ],
   },
 ];
+
