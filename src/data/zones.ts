@@ -101,7 +101,7 @@ export interface ZoneDef {
   spawnEveryMs: number;
   /** items here roll this many levels above the monster that dropped them */
   ilvlBonus?: number;
-  uniques?: string[];
+  uniques: string[];
   /**
    * What opens this area. `after`: areas whose boss opens the road here, any one of them will do
    * (defaults to the area before it in ZONES; [] for none). `bosses`: also needs this many of this act's
@@ -213,6 +213,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 10,
     packSize: [1, 3],
     spawnEveryMs: 18000,
+  uniques: [],
   },
   {
     id: 'brinecaves', name: "The Salvage Caves", act: 1, tier: 1, levelRange: [4, 7], color: '#4f8a8b',
@@ -227,6 +228,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 11,
     packSize: [1, 3],
     spawnEveryMs: 15000,
+  uniques: [],
   },
   {
     id: 'ashwood', name: "The Charred Copse", act: 1, tier: 2, levelRange: [7, 10], color: '#9a6a4a',
@@ -241,6 +243,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 12,
     packSize: [2, 4],
     spawnEveryMs: 14000,
+  uniques: [],
   },
   {
     id: 'blackreed', name: "Blackfen Reaches", act: 1, tier: 2, levelRange: [10, 13], color: '#5d6b3a',
@@ -255,6 +258,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 13,
     packSize: [2, 4],
     spawnEveryMs: 13000,
+  uniques: [],
   },
   {
     id: 'crypt', name: "The Tidebound Vault", act: 1, tier: 3, levelRange: [13, 16], color: '#5a7a9a',
@@ -269,6 +273,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 14,
     packSize: [2, 4],
     spawnEveryMs: 12000,
+  uniques: [],
   },
   {
     id: 'shipgrave', name: "The Wreck Claims", act: 1, tier: 3, levelRange: [16, 19], color: '#7d6a55',
@@ -283,6 +288,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 15,
     packSize: [2, 5],
     spawnEveryMs: 11000,
+  uniques: [],
   },
   {
     id: 'stormcliffs', name: "The Lookout Cliffs", act: 1, tier: 4, levelRange: [19, 22], color: '#6a7fa8',
@@ -297,6 +303,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 16,
     packSize: [3, 5],
     spawnEveryMs: 10000,
+  uniques: [],
   },
   {
     id: 'sanctum', name: "The Drowned Storehouse", act: 1, tier: 5, levelRange: [22, 24], color: '#3f6f8f',
@@ -312,6 +319,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 17,
     packSize: [3, 5],
     spawnEveryMs: 10000,
+  uniques: [],
   },
 
   // ---------------- Act 2: The Broken Roads ----------------
@@ -329,6 +337,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 18,
     packSize: [3, 5],
     spawnEveryMs: 10000,
+  uniques: [],
   },
   {
     id: 'saltflats', name: "The Saltpan Crossing", act: 2, tier: 5, levelRange: [25, 27], color: '#b8b09a',
@@ -343,6 +352,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 19,
     packSize: [3, 5],
     spawnEveryMs: 10000,
+  uniques: [],
   },
   {
     id: 'blackgrass', name: "The Rootbound Verge", act: 2, tier: 6, levelRange: [26, 28], color: '#5a5a3a',
@@ -357,6 +367,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 20,
     packSize: [3, 5],
     spawnEveryMs: 10000,
+  uniques: [],
   },
   {
     id: 'caravan', name: "Wayfarer's Post", act: 2, tier: 6, levelRange: [27, 29], color: '#b08a5a',
@@ -372,6 +383,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 21,
     packSize: [3, 5],
     spawnEveryMs: 10000,
+  uniques: [],
   },
   {
     // Act 3 begins on the existing onward road; stable IDs preserve completed journeys.
@@ -387,6 +399,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 22,
     packSize: [3, 5],
     spawnEveryMs: 10000,
+  uniques: [],
   },
   {
     id: 'plateau', name: "Greyford Heights", act: 3, tier: 7, levelRange: [29, 31], color: '#6a78a0',
@@ -401,6 +414,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 23,
     packSize: [3, 5],
     spawnEveryMs: 9500,
+  uniques: [],
   },
   {
     id: 'pyretemple', name: "The Expedition Depot", act: 3, tier: 7, levelRange: [30, 32], color: '#c0502a',
@@ -415,6 +429,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 24,
     packSize: [3, 5],
     spawnEveryMs: 9500,
+  uniques: [],
   },
   {
     id: 'burningthrone', name: "The Delegation Chambers", act: 3, tier: 7, levelRange: [31, 32], color: '#e0702a',
@@ -430,6 +445,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 25,
     packSize: [3, 5],
     spawnEveryMs: 9500,
+  uniques: [],
   },
 
   // ---------------- Act 4: The City That Stayed ----------------
@@ -448,6 +464,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 26,
     packSize: [3, 5],
     spawnEveryMs: 9500,
+  uniques: [],
   },
   {
     id: 'almsquarter', name: "The Shelter Quarter", act: 4, tier: 8, levelRange: [33, 35], color: '#a89a8a', ilvlBonus: 3,
@@ -463,6 +480,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 27,
     packSize: [3, 5],
     spawnEveryMs: 9500,
+  uniques: [],
   },
   {
     id: 'scourgeyard', name: "The Rootbound Courtyards", act: 4, tier: 8, levelRange: [34, 36], color: '#8a5a50', ilvlBonus: 3,
@@ -478,6 +496,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 28,
     packSize: [3, 5],
     spawnEveryMs: 9500,
+  uniques: [],
   },
   {
     id: 'reliquary', name: "The Civic Vaults", act: 4, tier: 8, levelRange: [35, 37], color: '#7a7a9a', ilvlBonus: 3,
@@ -493,6 +512,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 29,
     packSize: [3, 5],
     spawnEveryMs: 9500,
+  uniques: [],
   },
   {
     id: 'bellfoundry', name: "The Bell Foundry", act: 4, tier: 8, levelRange: [36, 38], color: '#a07a4a', ilvlBonus: 3,
@@ -508,6 +528,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 30,
     packSize: [3, 5],
     spawnEveryMs: 9500,
+  uniques: [],
   },
   {
     id: 'inquisition', name: "The Records Hall", act: 4, tier: 9, levelRange: [36, 38], color: '#6a5a7a', ilvlBonus: 3,
@@ -523,6 +544,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 31,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'penitentstair', name: "The Rootbound Steps", act: 4, tier: 9, levelRange: [37, 39], color: '#8a8a7a', ilvlBonus: 3,
@@ -538,6 +560,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 32,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'choirloft', name: "Eastmere Landing", act: 4, tier: 9, levelRange: [38, 40], color: '#9a9ac0', ilvlBonus: 3,
@@ -553,6 +576,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 33,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'saintswalk', name: "The Old Processional", act: 4, tier: 9, levelRange: [39, 41], color: '#c0b080', ilvlBonus: 3,
@@ -568,6 +592,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 34,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'highaltar', name: "The Overgrown Forum", act: 4, tier: 9, levelRange: [40, 41], color: '#e0d8a0', ilvlBonus: 3,
@@ -584,6 +609,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 35,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
 
   // ---------- Act 5: The Mountain Research Facility ----------------
@@ -603,6 +629,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 36,
     packSize: [1, 2],
     spawnEveryMs: 12000,
+  uniques: [],
   },
   {
     id: 'screefields', name: "The Scree Workings", act: 5, tier: 10, levelRange: [41, 43], color: '#9a9a94', ilvlBonus: 7,
@@ -618,6 +645,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 37,
     packSize: [1, 2],
     spawnEveryMs: 12000,
+  uniques: [],
   },
   {
     id: 'howlingfells', name: "The Howling Fells", act: 5, tier: 10, levelRange: [42, 44], color: '#7f93a8', ilvlBonus: 7,
@@ -633,6 +661,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 38,
     packSize: [1, 2],
     spawnEveryMs: 12000,
+  uniques: [],
   },
   {
     id: 'glasslake', name: "The Glass Reservoir", act: 5, tier: 10, levelRange: [43, 45], color: '#a0c8d8', ilvlBonus: 7,
@@ -648,6 +677,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 39,
     packSize: [1, 2],
     spawnEveryMs: 12000,
+  uniques: [],
   },
   {
     id: 'bonequarry', name: "The Containment Quarry", act: 5, tier: 10, levelRange: [43, 45], color: '#c8bfa8', ilvlBonus: 7,
@@ -663,6 +693,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 40,
     packSize: [1, 2],
     spawnEveryMs: 11500,
+  uniques: [],
   },
   {
     id: 'icevault', name: "The Cold Specimen Vault", act: 5, tier: 10, levelRange: [44, 46], color: '#6a9ac8', ilvlBonus: 7,
@@ -678,6 +709,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 41,
     packSize: [1, 2],
     spawnEveryMs: 11500,
+  uniques: [],
   },
   {
     id: 'mammothroad', name: "The Heavy Haul Road", act: 5, tier: 11, levelRange: [44, 46], color: '#a08a70', ilvlBonus: 7,
@@ -693,6 +725,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 42,
     packSize: [1, 2],
     spawnEveryMs: 11500,
+  uniques: [],
   },
   {
     id: 'hangingglacier', name: "The Hanging Glacier", act: 5, tier: 11, levelRange: [45, 47], color: '#b8d8e8', ilvlBonus: 7,
@@ -708,6 +741,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 43,
     packSize: [1, 2],
     spawnEveryMs: 11500,
+  uniques: [],
   },
   {
     id: 'steading', name: "Cairnwatch Service Yard", act: 5, tier: 11, levelRange: [46, 48], color: '#8a8078', ilvlBonus: 7,
@@ -723,6 +757,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 44,
     packSize: [1, 2],
     spawnEveryMs: 11000,
+  uniques: [],
   },
   {
     id: 'longhall', name: "The Specimen Hall", act: 5, tier: 11, levelRange: [47, 48], color: '#907050', ilvlBonus: 7,
@@ -738,6 +773,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 46,
     packSize: [1, 2],
     spawnEveryMs: 11000,
+  uniques: [],
   },
   {
     id: 'kingsstair', name: "The Institute Ascent", act: 5, tier: 11, levelRange: [48, 49], color: '#a0b0c0', ilvlBonus: 7,
@@ -753,6 +789,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 47,
     packSize: [1, 2],
     spawnEveryMs: 11000,
+  uniques: [],
   },
   {
     id: 'giantsthrone', name: "The Containment Laboratory", act: 5, tier: 11, levelRange: [48, 49], color: '#d8e8f0', ilvlBonus: 7,
@@ -769,6 +806,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 48,
     packSize: [1, 2],
     spawnEveryMs: 11000,
+  uniques: [],
   },
 
   // ---------------- Act 6: The Capital's Promise ----------------
@@ -788,6 +826,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 49,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'wreckline', name: "The Bonded Warehouses", act: 6, tier: 12, levelRange: [49, 51], color: '#6a4a3a', ilvlBonus: 10,
@@ -803,6 +842,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 50,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'cinderkey', name: "The Furnace Ward", act: 6, tier: 12, levelRange: [50, 52], color: '#a0482a', ilvlBonus: 10,
@@ -818,6 +858,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 51,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'squallbanks', name: "The Canal Locks", act: 6, tier: 12, levelRange: [51, 53], color: '#4f6f8f', ilvlBonus: 10,
@@ -833,6 +874,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 52,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'lampgulf', name: "The Lantern Canal", act: 6, tier: 13, levelRange: [51, 53], color: '#2f5f6a', ilvlBonus: 10,
@@ -848,6 +890,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 53,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'drownedfleet', name: "The Kroten Anchorage", act: 6, tier: 13, levelRange: [52, 54], color: '#50606a', ilvlBonus: 10,
@@ -863,6 +906,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 54,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'brimstone', name: "The Refining Annex", act: 6, tier: 13, levelRange: [52, 54], color: '#b0702a', ilvlBonus: 10,
@@ -878,6 +922,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 55,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'hollowreef', name: "The Submerged Works", act: 6, tier: 13, levelRange: [53, 55], color: '#8a5a6a', ilvlBonus: 10,
@@ -893,6 +938,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 56,
     packSize: [3, 5],
     spawnEveryMs: 9000,
+  uniques: [],
   },
   {
     id: 'thunderhead', name: "The Guarded Causeway", act: 6, tier: 14, levelRange: [54, 56], color: '#46506f', ilvlBonus: 10,
@@ -908,6 +954,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 57,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'leviathanrib', name: "The Great Conservatory", act: 6, tier: 14, levelRange: [54, 56], color: '#a09a8a', ilvlBonus: 10,
@@ -923,6 +970,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 58,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'blackcurrent', name: "The Processional Canal", act: 6, tier: 14, levelRange: [55, 57], color: '#26323f', ilvlBonus: 10,
@@ -938,6 +986,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 59,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'voicetrench', name: "The Research Hearings", act: 6, tier: 14, levelRange: [55, 57], color: '#3a3a5a', ilvlBonus: 10,
@@ -953,6 +1002,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 60,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'lightless', name: "The Sealed Research Ward", act: 6, tier: 14, levelRange: [56, 57], color: '#14181f', ilvlBonus: 10,
@@ -968,6 +1018,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 61,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'maelstrom', name: "The Failing Containment", act: 6, tier: 14, levelRange: [56, 57], color: '#1e2a3f', ilvlBonus: 10,
@@ -984,6 +1035,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 62,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
 
   // ---------------- Act 7: The Guardian Beneath ----------------
@@ -1001,6 +1053,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 63,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'kingsroad', name: "The Buried Processional", act: 7, tier: 15, levelRange: [57, 59], color: '#8a7a5a', ilvlBonus: 14,
@@ -1016,6 +1069,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 64,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'tithefields', name: "The Root Cellars", act: 7, tier: 15, levelRange: [58, 60], color: '#9a8a3a', ilvlBonus: 14,
@@ -1031,6 +1085,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 65,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'fortobedience', name: "The Buried Garrison", act: 7, tier: 15, levelRange: [59, 61], color: '#5a5f66', ilvlBonus: 14,
@@ -1046,6 +1101,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 66,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'bannerfield', name: "The Muster Vault", act: 7, tier: 15, levelRange: [59, 61], color: '#7a3a3a', ilvlBonus: 14,
@@ -1061,6 +1117,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 67,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'assizes', name: "The Oath Tribunal", act: 7, tier: 15, levelRange: [60, 62], color: '#4a4a6a', ilvlBonus: 14,
@@ -1076,6 +1133,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 68,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'lowercity', name: "The Buried Quarter", act: 7, tier: 16, levelRange: [60, 62], color: '#6a4a3f', ilvlBonus: 14,
@@ -1091,6 +1149,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 69,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'dryaqueduct', name: "The Buried Aqueduct", act: 7, tier: 16, levelRange: [60, 62], color: '#7a8a9a', ilvlBonus: 14,
@@ -1106,6 +1165,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 70,
     packSize: [3, 5],
     spawnEveryMs: 8500,
+  uniques: [],
   },
   {
     id: 'kingsmint', name: "The Seal Foundry", act: 7, tier: 16, levelRange: [61, 63], color: '#b0903a', ilvlBonus: 14,
@@ -1121,6 +1181,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 71,
     packSize: [3, 5],
     spawnEveryMs: 8000,
+  uniques: [],
   },
   {
     id: 'hanginggardens', name: "The Unchecked Garden", act: 7, tier: 16, levelRange: [61, 63], color: '#3f7a4a', ilvlBonus: 14,
@@ -1136,6 +1197,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 72,
     packSize: [3, 5],
     spawnEveryMs: 8000,
+  uniques: [],
   },
   {
     id: 'burnedarchive', name: "The Founding Archive", act: 7, tier: 16, levelRange: [62, 64], color: '#5a3a2a', ilvlBonus: 14,
@@ -1151,6 +1213,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 73,
     packSize: [3, 5],
     spawnEveryMs: 8000,
+  uniques: [],
   },
   {
     id: 'longfracture', name: "The Broken Seal", act: 7, tier: 16, levelRange: [62, 64], color: '#2f3f5f', ilvlBonus: 14,
@@ -1166,6 +1229,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 74,
     packSize: [3, 5],
     spawnEveryMs: 8000,
+  uniques: [],
   },
   {
     id: 'driftingquarter', name: "The Preserved Refuge", act: 7, tier: 17, levelRange: [63, 65], color: '#6f6a8f', ilvlBonus: 14,
@@ -1181,6 +1245,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 75,
     packSize: [3, 5],
     spawnEveryMs: 8000,
+  uniques: [],
   },
   {
     id: 'kingsreach', name: "The Guardian's Reach", act: 7, tier: 17, levelRange: [63, 65], color: '#3f3050', ilvlBonus: 14,
@@ -1196,6 +1261,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 76,
     packSize: [3, 5],
     spawnEveryMs: 8000,
+  uniques: [],
   },
   {
     id: 'sunderedhall', name: "The Hall of Sacrifice", act: 7, tier: 17, levelRange: [64, 65], color: '#50404a', ilvlBonus: 14,
@@ -1211,6 +1277,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 77,
     packSize: [3, 5],
     spawnEveryMs: 8000,
+  uniques: [],
   },
   {
     id: 'hallofcrowns', name: "The Founders Tombs", act: 7, tier: 17, levelRange: [64, 65], color: '#8a7a2a', ilvlBonus: 14,
@@ -1226,6 +1293,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 78,
     packSize: [3, 5],
     spawnEveryMs: 8000,
+  uniques: [],
   },
   {
     id: 'ninthstair', name: "The Ninth Descent", act: 7, tier: 17, levelRange: [64, 65], color: '#3a2a3a', ilvlBonus: 14,
@@ -1241,6 +1309,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 79,
     packSize: [3, 5],
     spawnEveryMs: 8000,
+  uniques: [],
   },
   {
     id: 'shatteredthrone', name: "The First Seal", act: 7, tier: 17, levelRange: [64, 65], color: '#1f1a2a', ilvlBonus: 14,
@@ -1257,6 +1326,7 @@ export const ZONES: ZoneDef[] = [
     bossEvery: 80,
     packSize: [3, 5],
     spawnEveryMs: 8000,
+  uniques: [],
   },
 ];
 

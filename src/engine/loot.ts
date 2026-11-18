@@ -196,7 +196,7 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
     const bossUniques = encounterWorldDropUniques(ilvl, s.maps.run?.uniqueMapId);
     if (bossUniques.length && chance(rng, boss.uniqueChance * (1 + itemRarity / 100))) {
       // Use standard weighted drop for boss uniques as well
-      const unique = pickWeighted(rng, bossUniques, u => u.weight);
+      const unique = pickWeighted(rng, bossUniques, u => u?.weight ?? 100);
       if (unique) placeItem(s, ctx, createUnique(s, unique.id, ilvl, rng));
     }
     if (chance(rng, BOSS_CRAFT_MAT.chance)) {
@@ -233,7 +233,7 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
   if (chance(rng, table.flaskChance * mon.scale * lootMult)) dropFlask(s, ctx, ilvl);
   const worldUniques = encounterWorldDropUniques(ilvl, s.maps.run?.uniqueMapId);
   if (worldUniques.length && chance(rng, table.uniqueChance * lootMult * (1 + itemRarity / 100))) {
-    const unique = pickWeighted(rng, worldUniques, u => u.weight);
+    const unique = pickWeighted(rng, worldUniques, u => u?.weight ?? 100);
     placeItem(s, ctx, createUnique(s, unique.id, ilvl, rng));
   }
 }
