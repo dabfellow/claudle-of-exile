@@ -234,7 +234,7 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
   const worldUniques = encounterWorldDropUniques(ilvl, s.maps.run?.uniqueMapId);
   if (worldUniques.length && chance(rng, table.uniqueChance * lootMult * (1 + itemRarity / 100))) {
     const unique = pickWeighted(rng, worldUniques, u => u?.weight ?? 100);
-    placeItem(s, ctx, createUnique(s, unique.id, ilvl, rng));
+    if (unique) placeItem(s, ctx, createUnique(s, unique.id, ilvl, rng));
   }
 }
 
