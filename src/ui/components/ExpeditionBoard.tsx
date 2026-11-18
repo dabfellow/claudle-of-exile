@@ -5,6 +5,7 @@ import { actionBlocker, actionIntervalMs, skillLevel, startSkillAction, stopActi
 import { exchangeFragments } from '../../engine/expedition';
 import { relicFragment } from '../../data/archaeology';
 import { actionDef } from '../../data/skills';
+import { useState } from 'react';
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
@@ -135,6 +136,7 @@ function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
 /** Archaeology's other half: the Logbook of every site's depth, and the merchants who take what comes up. */
 export function ExpeditionBoard({ view = 'all' }: { view?: 'all' | 'sites' | 'merchants' }) {
   const s = useGame();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   if (!expeditionOpen(s)) {
     return <div className="callout skill-note">The dig sites are up in the Hollow Peaks, in {EXPEDITION_GATE.label}. Reach them to start digging.</div>;
   }
@@ -142,6 +144,8 @@ export function ExpeditionBoard({ view = 'all' }: { view?: 'all' | 'sites' | 'me
   const next = SITES.find((x) => x.level > level);
   const shown = SITES.filter((x) => x.level <= level || x === next);
   const found = SITES.reduce((a, x) => a + siteStratum(s, x), 0);
+  const activeId = s.action?.kind === 'skill' ? s.action.actionId : null;
+  const selected = shown.find((site) => site.id === selectedId) ?? shown.find((site) => site.id === activeId) ?? shown[0];
   return (
     <>
       <div className="callout skill-note">
@@ -155,10 +159,9 @@ export function ExpeditionBoard({ view = 'all' }: { view?: 'all' | 'sites' | 'me
               {found} of {SITES.length * FIND_HOURS.length} found
             </span>
           </div>
-          <div className="action-grid">
-            {shown.map((x) => (
-              <SitePage key={x.id} s={s} site={x} />
-            ))}
+          <div className="expedition-fieldbook">
+            <nav className="profession-site-index" aria-label="Excavation sites"><h3>Field index</h3>{shown.map((site) => <button key={site.id} className={selected?.id === site.id ? 'selected' : ''} aria-pressed={selected?.id === site.id} onClick={() => setSelectedId(site.id)}><span>{site.name}</span><small>Lv {site.level}</small></button>)}</nav>
+            <div className="excavation-tray">{selected && <SitePage key={selected.id} s={s} site={selected} />}</div>
           </div>
         </section>
       )}

@@ -11,11 +11,29 @@ export interface NewsEntry {
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
 export const UPCOMING: string[] = [
-  'Thieving overhaul: 12 specialists, rogue crew selection, and tactical heist choices.',
+  'Rogue Roster overhaul: 12-rogue crew selection, talent trees, and tactical heist loop.',
   'Travel Points are gone: everything on the passive tree now uses Passive Points (2 per level), and every ordinary node costs 1. Doomed Gates and Forbidden keystones keep their price. Existing characters keep every node they have taken; unspent points are recounted.',
 ];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: "0.5.0",
+    date: "18 Nov 2026",
+    title: "RuneQuest",
+    items: [
+      "Implemented a tiered weighting system for all unique items, making some significantly rarer and more sought-after than others.",
+    ],
+  },
+  {
+    version: '0.4.49',
+    date: '17 Nov 2026',
+    title: 'Profession Workspaces',
+    items: [
+      'Thieving now has a dark target ledger and parchment dossier, with rewards, mastery and lockpicking Focus together beside your selected mark.',
+      'Professions now have their own compact themed workspaces, with activity selectors, live recipes, mastery and Focus together; Woodcutting also has a separate Planks tab.',
+      'Thieving overhaul: 12 specialists, rogue crew selection, and tactical heist choices.',
+    ],
+  },
   {
     version: '0.4.48',
     date: '16 Nov 2026',
@@ -1027,3 +1045,4 @@ export const NEWS: NewsEntry[] = [
     ],
   },
 ];
+

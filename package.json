@@ -1,42 +1,42 @@
 {
-  "name": "path-of-idle",
-  "private": true,
-  "version": "0.4.48",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "wiki": "vite-node scripts/wiki.ts",
-    "build": "npm run wiki && tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "sim": "vite-node scripts/sim.ts",
-    "simulator": "electron scripts/desktop/main.cjs",
-    "simulator:renderer": "vite build --config scripts/simulator.vite.ts",
-    "simulator:package": "node scripts/desktop/package.mjs",
-    "art": "vite-node scripts/art.ts",
-    "uniques": "vite-node scripts/uniques.ts",
-    "deploy": "node scripts/deploy.mjs"
-  },
-  "dependencies": {
-    "@sentry/browser": "^8.55.1",
-    "@supabase/supabase-js": "^2.118.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@cloudflare/vite-plugin": "^2.0.0-beta.v.4",
-    "@electric-sql/pglite": "^0.5.14",
-    "@electron/packager": "^20.3.0",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.3",
-    "cf": "^1.0.0-beta.21",
-    "electron": "^45.3.1",
-    "esbuild": "^0.28.2",
-    "sharp": "^0.33.5",
-    "typescript": "~5.6.3",
-    "vite": "^7.3.7",
-    "vitest": "^3.2.7"
-  }
+    "name":  "path-of-idle",
+    "private":  true,
+    "version":  "0.5.0",
+    "type":  "module",
+    "scripts":  {
+                    "dev":  "vite",
+                    "wiki":  "vite-node scripts/wiki.ts",
+                    "build":  "npm run wiki \u0026\u0026 tsc --noEmit \u0026\u0026 vite build",
+                    "preview":  "vite preview",
+                    "test":  "vitest run",
+                    "test:watch":  "vitest",
+                    "sim":  "vite-node scripts/sim.ts",
+                    "simulator":  "electron scripts/desktop/main.cjs",
+                    "simulator:renderer":  "vite build --config scripts/simulator.vite.ts",
+                    "simulator:package":  "node scripts/desktop/package.mjs",
+                    "art":  "vite-node scripts/art.ts",
+                    "uniques":  "vite-node scripts/uniques.ts",
+                    "deploy":  "node scripts/deploy.mjs"
+                },
+    "dependencies":  {
+                         "@sentry/browser":  "^8.55.1",
+                         "@supabase/supabase-js":  "^2.118.0",
+                         "react":  "^18.3.1",
+                         "react-dom":  "^18.3.1"
+                     },
+    "devDependencies":  {
+                            "@cloudflare/vite-plugin":  "^2.0.0-beta.v.4",
+                            "@electric-sql/pglite":  "^0.5.14",
+                            "@electron/packager":  "^20.3.0",
+                            "@types/react":  "^18.3.12",
+                            "@types/react-dom":  "^18.3.1",
+                            "@vitejs/plugin-react":  "^4.3.3",
+                            "cf":  "^1.0.0-beta.21",
+                            "electron":  "^45.3.1",
+                            "esbuild":  "^0.28.2",
+                            "sharp":  "^0.33.5",
+                            "typescript":  "~5.6.3",
+                            "vite":  "^7.3.7",
+                            "vitest":  "^3.2.7"
+                        }
 }

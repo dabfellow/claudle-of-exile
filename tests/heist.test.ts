@@ -27,6 +27,9 @@ const ACT2 = ['cinderroad', 'saltflats', 'blackgrass', 'caravan', 'kurgans', 'pl
 
 function thief(level = 1, markers = 0): GameState {
   const s = newGame(1, { name: 'T', classId: 'warrior' });
+  // Legacy saves exercise the original numeric crew until settleHeist migrates them.
+  delete s.heist.roster;
+  s.heist.crew = [];
   s.unlockedZones.push(...ACT2);
   s.skills.thieving = xpForLevel(level);
   s.account.bank[MARKER] = markers;
@@ -384,7 +387,8 @@ describe('saves', () => {
     expect(s.version).toBe(SAVE_VERSION);
     expect(s.skills.thieving).toBe(0);
     expect(levelOf('thieving', s.skills.thieving)).toBe(1);
-    expect(s.heist).toEqual({ rogues: {}, crew: [], exits: {}, auto: null, tally: { jobs: 0, alarms: 0 } });
+    expect(s.heist.roster?.infiltrator.level).toBe(1);
+    expect(s.heist.crew).toHaveLength(3);
     expect(startSkillAction(s, makeCtx(seeded(1)), 'mark_peddler')).toBeNull();
   });
 

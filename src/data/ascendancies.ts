@@ -372,9 +372,9 @@ export interface TrialDef {
 
 /** What each trial grants, the first time it's passed: the only source of ascendancy points. Nodes never have act locks. */
 export const TRIALS: TrialDef[] = [
-  { n: 1, zoneId: 'pilgrimgate', name: 'The Pilgrim Gate', place: 'Act 3', points: 2, result: 'Choose your ascendancy; its entire tree is visible and you can afford one notable.' },
-  { n: 2, zoneId: 'giantsthrone', name: "The Giants' Throne", place: 'Act 4', points: 2, result: 'You can now afford two notables.' },
-  { n: 3, zoneId: 'exilesgate', name: "The Exiles' Gate", place: 'Act 6', points: 3, result: 'With two notables, you can now reach either capstone.' },
+  { n: 1, zoneId: 'pilgrimgate', name: 'Harrowgate Approach', place: 'Act 4', points: 2, result: 'Choose your ascendancy; its entire tree is visible and you can afford one notable.' },
+  { n: 2, zoneId: 'giantsthrone', name: 'The Containment Test', place: 'Act 5', points: 2, result: 'You can now afford two notables.' },
+  { n: 3, zoneId: 'exilesgate', name: 'The Buried Gate', place: 'Act 7', points: 3, result: 'With two notables, you can now reach either capstone.' },
   { n: 4, mapTier: 5, name: 'Tier 5 Maps', place: 'Maps', points: 2, result: 'The normal nine-point budget now supports three notables and one capstone.' },
 ];
 

@@ -62,7 +62,7 @@ export function autoNextZoneUnlocked(s: GameState): boolean {
 }
 
 /** Maps come after the campaign, PoE-style: the Map Device wakes once the last act's boss is beaten. */
-export const FINAL_ACT = 6;
+export const FINAL_ACT = 7;
 
 /** Any character beating the last act counts for the account. A save carried over from a preview build counts for nothing while the act is closed. */
 export function campaignComplete(s: GameState): boolean {

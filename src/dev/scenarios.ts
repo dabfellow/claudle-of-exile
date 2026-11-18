@@ -36,6 +36,27 @@ function smithingAttributes(s: Parameters<NonNullable<Setup['prepare']>>[0]) {
 
 const PRESETS: Record<string, Setup> = {
   ...SHARED,
+  thievingStarter: {
+    classId: 'shadow', level: 1,
+    prepare: (s) => {
+      s.combat = null; s.action = null;
+      s.skills.thieving = 0;
+      s.account.bank.gold = 0;
+      s.account.bank.rogues_marker = 13;
+      s.professionProgress.counters['thieving.markers'] = 3;
+    },
+  },
+  rogueRoster: {
+    classId: 'ranger', level: 60, zone: 'caravan',
+    prepare: (s) => {
+      s.combat = null; s.action = null;
+      s.skills.thieving = xpForLevel(60);
+      s.account.bank.gold = 100000;
+      s.account.bank.rogues_marker = 1000;
+      s.heist.crew = ['bruiser', 'locksmith', 'lookout'];
+      for (const rogue of Object.values(s.heist.roster!)) rogue.level = 60;
+    },
+  },
   foragingStarter: {
     classId: 'ranger', level: 1, zone: 'mudflats',
     prepare: (s) => { s.skills.combat = 0; s.skills.harvesting = 0; s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.account.bank = {}; },

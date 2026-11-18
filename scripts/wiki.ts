@@ -21,7 +21,8 @@ import { MONSTER_MODS } from '../src/data/monsterMods';
 import { MONSTER_PROFILES } from '../src/data/monsterProfiles';
 import { MEALS, MEAL_MS } from '../src/data/cooking';
 import { CULTURES, FIND_HOURS, SITES, STRATA } from '../src/data/expedition';
-import { ALARM_KEEPS, CREW_SLOT_LEVELS, HEIST_JOBS, MAX_ROGUE_RANK, ROGUES, STEALTH_FLOOR } from '../src/data/heist';
+import { ALARM_KEEPS, HEIST_JOBS, STEALTH_FLOOR } from '../src/data/heist';
+import { ROGUES } from '../src/data/rogues';
 import { ATLAS_NODES, ATLAS_POINT_CAP, DOOMED_MODS, DOOMED_TIERS, MAP_TIERS, NORMAL_MAP_MODS, SEXTANTS, SEXTANT_BASE_CHARGES, SEXTANT_MODS } from '../src/data/maps';
 import { NEWS } from '../src/data/news';
 import { PASSIVE_NODES } from '../src/data/passiveTree';
@@ -377,7 +378,7 @@ ${similar.length ? `<h2 id="similar">Similar bases</h2>${entList(similar.map((o)
 }
 
 function uniqueEntry(u: UniqueDef) {
-  const zones = OPEN_ZONES.filter((z) => z.uniques.includes(u.id));
+  const zones = OPEN_ZONES.filter((z) => (z.uniques ?? []).includes(u.id));
   const base = baseDef(u.baseId);
   entry('uniques', U.unique(u.id), `unique ${base.name}`,
     chip('Unique', 'gold') + chip(title(base.slot)) + (u.noTrade ? chip("Can't be traded") : ''),
@@ -409,7 +410,7 @@ function areaEntry(z: ZoneDef, i: number) {
   const before = z.requires?.after ?? (i > 0 ? [OPEN_ZONES[i - 1].id] : []);
   const opens = OPEN_ZONES.filter((o, n) => (o.requires?.after ?? (n > 0 ? [OPEN_ZONES[n - 1].id] : [])).includes(z.id));
   const gems = ACTIVE_GEMS.filter((g) => gemAct(g.id) === z.act && gemReqLevel(g.id) >= z.levelRange[0] && gemReqLevel(g.id) <= z.levelRange[1]);
-  const uniques = z.uniques.filter((id) => UNIQUES.some((u) => u.id === id));
+  const uniques = (z.uniques ?? []).filter((id) => UNIQUES.some((u) => u.id === id));
   const body = `<p>${esc(z.desc)}</p>
 ${facts([
     ['Act', `<a href="${BASE_URL}acts/#act-${z.act}">Act ${z.act}: ${esc(ACTS.find((a) => a.n === z.act)!.name)}</a>`],
@@ -539,7 +540,7 @@ function itemsPage(): string {
 function uniquesPage(): string {
   const cards = UNIQUES.map((u) => {
     const mods = uniqueMods(u).map((m) => `<li>${esc(m)}</li>`).join('');
-    const where = OPEN_ZONES.filter((z) => z.uniques.includes(u.id));
+    const where = OPEN_ZONES.filter((z) => (z.uniques ?? []).includes(u.id));
     return `<section class="card" id="${u.id}"><h3>${ent(U.unique(u.id))} <small>${ent(U.item(u.baseId))}, level ${baseDef(u.baseId).reqLevel}</small></h3><ul>${mods}</ul><p class="quote">${esc(u.flavour)}</p>${where.length ? spoiler('drop areas', openZonesText(where)) : ''}</section>`;
   });
   return `<h1>Unique items</h1><p>${UNIQUES.length} uniques.</p>${cards.join('')}`;
@@ -841,7 +842,7 @@ function tool(name: string, data: unknown): string {
   return `<div class="tool" data-tool="${name}"></div><script type="application/json" id="tool-data">${json}</script><script src="${BASE_URL}tools.js" defer></script><noscript><p>This tool needs JavaScript.</p></noscript>`;
 }
 
-const ZONE_DROPS = () => OPEN_ZONES.map((z) => ({ n: z.name, act: z.act, tier: z.tier, cur: Object.fromEntries(Object.entries(areaCurrency(z)).map(([id, w]) => [matName(id), w])), u:z.uniques.flatMap((id) => UNIQUES.find((u) => u.id === id)?.name ?? []) }));
+const ZONE_DROPS = () => OPEN_ZONES.map((z) => ({ n: z.name, act: z.act, tier: z.tier, cur: Object.fromEntries(Object.entries(areaCurrency(z)).map(([id, w]) => [matName(id), w])), u: (z.uniques ?? []).flatMap((id) => UNIQUES.find((u) => u.id === id)?.name ?? []) }));
 
 function dropTool() {
   const tiers = Object.fromEntries(Object.entries(DROP_TABLES).map(([k, t]) => [k, {
@@ -985,7 +986,7 @@ function heistsBlock(): string {
 }
 
 function roguesBlock(): string {
-  return table(['Rogue', 'Hire level', 'Each rank'], ROGUES.map((r) => [esc(r.name), String(r.level), `${Math.round(r.perRank * 100)}% ${esc(r.effect)}`]));
+  return table(['Rogue', 'Class', 'Primary specialty', 'Secondary bonuses', 'Signature'], ROGUES.map((r) => [esc(r.name), esc(r.class), esc(r.primary), r.secondary.map(esc).join(', '), `${esc(r.talentTree[9].name)}: ${esc(r.talentTree[9].effect)}`]));
 }
 
 function expeditionBlock(): string {
@@ -1045,8 +1046,6 @@ const GUIDE_DATA: Record<string, () => string> = {
   'mastery-conserve': () => String(MASTERY_CONSERVE_MAX * 100),
   'heist-keeps': () => String(ALARM_KEEPS * 100),
   'heist-stealth-floor': () => String(STEALTH_FLOOR * 100),
-  'rogue-rank-cap': () => String(MAX_ROGUE_RANK),
-  'crew-slots': () => CREW_SLOT_LEVELS.join(', '),
   'expedition-hours': () => FIND_HOURS.join(', '),
   'expedition-strata': () => STRATA.join(', '),
   'map-tiers': mapTiersBlock,

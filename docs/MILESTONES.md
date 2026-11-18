@@ -4,7 +4,9 @@ Last updated 2026-11-17. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Latest confirmed live release: **0.4.48, Dedicated Masterwork Tabs and Mastery Batches**, deployed 2026-11-16 (dedicated Masterworks tab on each profession screen, separate production mastery batches at Lv 15/90, visual percentage drop rates on gathering action cards, connected world-map road network with 50% opacity routes and sailing lanes, and mastery Focus bonuses for skilling minigames; 106 test files / 1,746 tests confirmed live at https://dabfellow.party/path-of-idle/). Previous: **0.4.47, Ashen Codex World Map**, **0.4.46, Mastery Tooltips and Action Card Polish**, **0.4.45, Masterwork Interactivity and Direct Skilling Access**, **0.4.44, Skilling Mastery Overhaul and Interactive Workbenches**, **0.4.43, Skilling Layouts and Themed Undertakings**, **0.4.42, Skilling Overhaul Acceptance and Wiki Update**, **0.4.41, Defence and Rune-carved Uniques**, **0.4.40, Pinnacle Uniques**.
+Lore planning: the owner's main campaign and ongoing mapping direction are developed in [STORY.md](STORY.md), now with a proposed seven-act campaign and mapping endgame; review the narrative structure before assigning quests or changing existing acts.
+
+Latest confirmed live release: **0.4.49, Profession Workspaces**, deployed 2026-11-17. Approved Thieving ledger/dossier, Woodcutting with a separate Planks tab, and distinct compact workspaces for all other implemented professions. Desktop/phone browser checks, all 106 release-source test files / 1,748 tests, typecheck and production build pass; live version and login confirmed at https://dabfellow.party/path-of-idle/. See [SKILLING_UI.md](SKILLING_UI.md). Previous: **0.4.48, Dedicated Masterwork Tabs and Mastery Batches**, **0.4.47, Ashen Codex World Map**, **0.4.46, Mastery Tooltips and Action Card Polish**.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
@@ -32,6 +34,12 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 21. In-line Mastery Batches: completed (2026-11-16); kept 5× and 50× mastery batch crafts directly in line with ordinary activities and hidden until unlocked by their required mastery level, removing the separate bottom card and ensuring Cartography production activities remain accessible. All tests and typecheck pass.
 22. Production Skill Separation (Smelting, Forging, Woodcrafting): completed (2026-11-16); split the monolithic Smithing discipline into three dedicated 1–100 production disciplines: Smelting (bars & alloys at the Smelter), Forging (martial weapons, shields, plate armour, jewellery at the Forge), and Woodcrafting (staves, wands, bows, bucklers, robes, leather armour at the Woodcrafting Bench). Updated refining pipelines with bars and planks, added dedicated Lv 15 profession tools (Smelter's Tongs, Wayfarer's Hammer, Carver's Drawknife) and a Lv 60 Master Artisan hybrid upgrade, integrated distinct hideout stations, established mastery milestones, and implemented full backward-compatible save migration parity. All 106 test files / 1,748 tests pass.
 
+23. Rogue Roster Overhaul: completed, unreleased (2026-11-17); 12 specialists, three-person crew, room XP, 10-point talent trees, 5,000-gold/two-heist mentor training, vault profiles and scouting/Bypass/Greed choices. Old rogue ranks migrate to Field Mastery; repeat/offline jobs remain supported. All 107 test files / 1,763 tests, typecheck and production build pass; desktop browser verified roster, talents, paid training, scouting, Bypass and Greed with no console errors. Phone layout not playtested.
+
+24. Thieving ledger and dossier: released in 0.4.49 (2026-11-17); approved dark target ledger beside a parchment dossier, using existing portraits and CSS materials. Connected target browsing/start/stop, level locks, reward chances, live XP/progress, mastery, guaranteed Markers and Focus; retained Heists, crew and Masterworks. Starter/veteran desktop and 390px phone browser checks pass, including a successful Focus sequence, live rewards and no horizontal overflow.
+
+25. Profession redesign batch: released in 0.4.49 (2026-11-17). Every implemented profession has its own restrained workspace; Woodcutting includes the approved stand selector, timber station, plain Focus marker/Swing button and separate Planks tab. Existing recipes, batches, access rules and specialist systems retained. All 106 release-source test files / 1,748 tests, typecheck, build and desktop/phone checks pass.
+
 ## Milestones
 
 Ashen Codex world-map illustration and general campaign route integrated 2026-11-16; desktop/phone visual verification remains pending (see Other open items).
@@ -48,10 +56,104 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–18 complete, verified, and live in 0.4.42 (2026-11-15). Production mastery batches implemented and verified, unreleased (2026-11-16) |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–18 live in 0.4.42; production mastery batches live in 0.4.48; all profession UI redesigns live in 0.4.49 (2026-11-17). Additional rogue roster/tactical Heist changes remain unreleased |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Capital prosperity/map revision (2026-11-17): Owner wants Caer Veyr grander and more lavish, noting people live relatively well there. Created and visually inspected `output/imagegen/veyrath-detailed-story-map-v7-capital.png` with a compact citadel, intact city walls, prosperous districts, formal grounds and modest gold accents. Relative capital prosperity does not remove compulsory field labour or outlying deprivation. Exact built-in edit prompt saved alongside; no runtime changes.
+
+- Veyrath scale and material touchups (2026-11-17): Owner requested reading the Interconnectd article on the "plastic AI look" and touching up the map, then added that towns should fit the map's scale. Read the article and adapted its physical-material/imperfection suggestions to cartography. Generated and visually inspected `output/imagegen/veyrath-detailed-story-map-v6-atlas.png`: substantially smaller settlement/harbor drawings, retained geographic detail and labels, varied ink/watercolor/paper treatment. Exact built-in edit prompt and source link saved alongside. Illustrative cartography, not measured street-scale geography; no runtime changes.
+
+- Full Veyrath atlas style revision (2026-11-17): Owner liked the fullness of the ink map but requested the older style. Generated and visually inspected `output/imagegen/veyrath-detailed-story-map-v5-atlas.png`, combining the populated ink composition and corrected Harrowgate with the earlier muted atlas palette, clean border and finer lines. Exact built-in edit prompt saved alongside; no runtime changes.
+
+- Harrowgate map architecture correction (2026-11-17): Owner circled buildings merging into terrain. Created and visually inspected `output/imagegen/veyrath-detailed-story-map-v4-ink.png`, separating the ruined structures and gate from the ground and removing the annotation. Exact built-in edit prompt saved alongside. Artwork-only correction.
+
+- Veyrath ink-and-quill redraw (2026-11-17): Owner rejected the simplified cities and supplied a raw ink-and-quill template: rough mountain cross-hatching, jagged coasts, aged torn-edge parchment with physical grain and small ink splatters, crowded slightly chaotic composition and no smooth digital shading. Generated and visually inspected `output/imagegen/veyrath-detailed-story-map-v3-ink.png`, using the original detailed v1 as reference and restoring characterful settlement drawings while retaining the field-pattern correction. Exact prompt saved alongside; no runtime changes.
+
+- Detailed map simplification (2026-11-17): Owner requested simpler cities/towns and reconsideration of crop fields, finding v1 too artificial. Created and visually inspected `output/imagegen/veyrath-detailed-story-map-v2.png`: small overhead settlement footprints replace oversized scenic cities, repeated crop grids are removed in favour of sparse irregular remnants and open country, and named locations/roads are retained. Exact built-in edit prompt saved alongside. No runtime changes.
+
+- Detailed Veyrath story atlas (2026-11-17): Owner requested towns, notable story locations and peripheral places outside the campaign. Created and visually inspected `output/imagegen/veyrath-detailed-story-map-v1.png`. Working main locations: Brinewick / Winnie's Refuge on the Wreck Coast, Wayfarer's Post, Greyford, overgrown Harrowgate, Eastmere, Cairnwatch Institute, Caer Veyr / Ration Fields and The First Seal beneath the capital. Peripheral locations and geographic notes are in [VEYRATH-MAP.md](VEYRATH-MAP.md). Names and placements are proposals; no runtime locations or game changes. Exact built-in generation prompt saved alongside artwork.
+
+- Standalone Veyrath clarification (2026-11-17): Owner clarified the preceding request meant an image of just Veyrath, not enlargement of its territory in the regional view. Created and visually inspected `output/imagegen/veyrath-standalone-atlas-v1.png`, framing the exile landmass and immediate offshore islands alone in the atlas style. The preceding v4 regional enlargement is not an approved geographic size change. Exact built-in generation prompt saved alongside; no game integration.
+
+- Veyrath map enlargement (2026-11-17): Owner requested enlarging Veyrath within the circled southwestern area while retaining the regional zoom. Generated and visually inspected `output/imagegen/orvessa-continental-overview-v4.png`: enlarged the recognizable exile landmass, removed annotations and retained the expanded Kroten territory and full regional framing. Exact built-in edit prompt saved alongside. Artwork only; no runtime changes.
+
+- Kroten territorial correction (2026-11-17): Owner clarified that Kroten is already a large kingdom and marked its intended extent across the broad southwestern/south-central mainland, incorporating the existing southern peninsula. This replaces the small coastal-territory depiction in earlier drafts. Generated and visually inspected `output/imagegen/orvessa-continental-overview-v3.png` with a continuous expanded frontier, centered Kroten label, subtle territorial wash and no red annotations. Geography outside the territorial edit retained; full built-in edit prompt saved alongside. Artwork only, no runtime changes.
+
+- Orvessa map scale revision (2026-11-17): Owner supplied a US-wide geographic map as the desired zoom reference. Created `output/imagegen/orvessa-continental-overview-v2.png`, reducing local detail and settlement depiction, using broader terrain/forest regions and a smaller Veyrath within the larger regional composition. Retained the antique atlas style and only the Orvessa, Kroten and Veyrath labels. Reference is for scale, not Earth's geography or modern UI. Exact built-in generation prompt saved alongside; no runtime changes.
+
+- Orvessa continental overview artwork (2026-11-17): Owner requested updating the world map to a continental overview of the region. Generated `output/imagegen/orvessa-continental-overview-v1.png` using the approved Veyrath atlas as a reference, preserving its recognizable coastline at reduced scale and placing it offshore southwest of a larger mainland with Kroten on the facing southern coast. Named labels are Orvessa, Veyrath and Kroten; Dabtopia and Jojo Land are outside this view. Mainland terrain, relative placements and faint boundaries are visual proposals, not finalized political geography. Full built-in image-generation prompt saved alongside. Artwork only; runtime campaign map and navigation remain unchanged.
+
+- Campaign act breakdown proposal (2026-11-17): At the owner's request, `docs/STORY.md` now proposes seven narrative acts: The Wreck Coast; The Broken Roads; In the Capital's Wake; The City That Stayed; The Mountain Research Facility; The Capital's Promise; The Guardian Beneath. Mapping follows as The Unfinished Maps. This is a proposed structure independent of the existing six implemented acts; no content relocation, levels, bosses or gameplay changes are authorized by the outline itself. Act count and titles await the owner's review.
+
+- Main storyline direction (2026-11-17, owner's outline): The player washes ashore, joins a community, helps people, clears paths and establishes outposts. Diverted supplies prompt pursuit of a capital-connected official/delegation through a larger town, arriving just too late. Local work yields gear, gold and Creep clues. Carrying something onward requires crossing a much larger established city overtaken by the Creep, still occupied by survivors and people refusing to leave. Evidence leads through a mountain research facility to the capital, where experiments are escaping control and Kroten's dealings become clear. Beneath the city the player finds the First Exile alive through intense infestation and defeats them. The Creep stops growing in Veyrath but does not retreat. Ongoing mapping charts other lands and fights entrenched infestation indefinitely as an ultimately unwinnable eradication effort. Narrative treatment and unresolved continuity are in [STORY.md](STORY.md). No gameplay changes requested. This supplies the main arc instead of choosing either earlier Topic 60 proposal.
+
+- Kingdom lore Topic 59 (2026-11-17): Owner chose A for the rival salvage crew's claim: they secured ropes, cleared access to the wreck and lost equipment doing it, so they consider their recovery work grounds for ownership despite Winnie's purchase. Resolution remains open. Owner clarified that these opening-job details are low priority: the lore interview should now focus on establishing the main storyline rather than individual quest logistics.
+
+- Kingdom lore Topic 58 (2026-11-17): Owner chose A for the danger in the player's first salvage job: another salvage crew has already reached the wreck and does not recognize Winnie's purchased claim. The encounter introduces competing coastal rules about ownership of washed-up cargo. The crew's identity, specific ownership customs and resolution remain undecided.
+
+- Kingdom lore Topic 57 (2026-11-17): Owner chose A for Winnie's first job for the player: recover a cache from a wreck. Winnie has bought a claim to cargo not yet brought ashore, and the player must reach it before the tide or another salvage crew. The cache's contents, wreck location and other claimants remain undecided. This is an opening-story plan, not an implemented quest.
+
+- Kingdom lore Topic 56 (2026-11-17, revised after owner's correction): Owner chose B for how Winnie discusses the cellar business: need-to-know. The player receives instructions for particular deliveries, while Winnie keeps clients and arrangements private until more trust is earned. Owner rejected the assumption that the player would call Winnie out over stolen goods; recognition does not establish objection, demands for restitution or a moral confrontation. Neither response proposed in the discarded version of Topic 56 is established. Winnie is referred to as he/him by the owner.
+
+- Kingdom lore Topic 55 (2026-11-17): Owner chose A for the bargain helping supply Winnie's refuge: Winnie stores stolen goods without asking questions, and smugglers pay in food to use the former inn's cellars. Players may recognize possessions belonging to people they have helped elsewhere. Specific smugglers, goods and incidents remain undecided. This supplements the refuge's reliance on district food deliveries rather than establishing that cellar payments cover every need.
+
+- Kingdom lore Topic 54 (2026-11-17): Owner chose B for Winnie's defining commitment: "Everyone under this roof gets fed." Winnie will steal, threaten or strike ugly bargains to keep the refuge's kitchen running. This earns residents' loyalty while pushing costs onto people outside the refuge. Unconditional refusal to surrender residents, proposed in option A, is not established. Particular bargains and victims remain undecided.
+
+- Thieving screen direction (2026-11-17): Owner chose the dark target ledger with a parchment selected-target dossier and an inset lockpicking Focus panel. Keep the existing restrained dark game shell; use small existing portraits, icons and CSS materials instead of large AI-painted scenes. This implementation changes presentation and action access, with existing gameplay balance retained.
+
+- Kingdom lore Topic 53 (2026-11-17): Owner chose A for Winnie's refuge: a crowded former inn with shared rooms, patched roofs and a common kitchen surrounding a courtyard where deals are struck. The player gets to know regular residents and notices when familiar faces disappear. The refuge's name, specific residents and reasons for any disappearances remain undecided.
+
+- Kingdom lore Topic 52 (2026-11-17): Owner chose B for the player's sponsor: **Winnie**, the refuge keeper. Winnie needs someone to retrieve supplies and settle obligations beyond the refuge's walls. The player receives a bed under Winnie's protection alongside people with debts and secrets of their own. This confirms Winnie's refuge-keeper role from the provisional friend roster; specific opening jobs and the refuge's name remain undecided.
+
+- Kingdom lore Topic 51 (2026-11-17): Owner chose B for why the player's sponsor vouches for them: the sponsor needs someone willing to take risks. The player receives shelter and protection in exchange for help with dangerous work. Affection and loyalty may develop, but the relationship begins as a practical bargain. The sponsor's identity and the initial work remain undecided.
+
+- Kingdom lore Topic 50 (2026-11-17): Owner chose A for accepting new arrivals: a resident must vouch for a newcomer, offering shelter and answering for their early conduct. The player can learn who took that risk for them and why others refuse to sponsor arrivals. The player's sponsor, their motive and the limits of a sponsor's responsibility remain undecided.
+
+- Kingdom lore Topic 49 (2026-11-17): Owner chose A for the settlements' usual punishment: restitution and obligation. Offenders repay losses through goods, labour or dangerous work for the community. People may carry old debts for years, and others may exploit what they owe. Limits on obligations and treatment of unpayable debts remain undecided; no player debt mechanic is established.
+
+- Kingdom lore Topic 48 (2026-11-17): Owner chose A for how settlements enforce their local codes: those involved bring cases before residents, witnesses speak, debts are weighed and respected locals settle disputes publicly. This is rough justice shaped by reputation, grudges and willingness to testify. Specific hearing customs, penalties and individual adjudicators remain undecided.
+
+- Kingdom lore Topic 47 (2026-11-17): Owner chose A as the common settlement arrangement, with patron-controlled settlements as exceptions. Most settlements hold together through negotiated local codes covering food, shelter, debts and violence; enforcement can be harsh, and residents depend on neighbours respecting the rules despite mutual distrust. Exceptional settlements depend on powerful patrons for protection and supplies. Particular codes, enforcement practices and patrons remain undecided.
+
+- Kingdom lore Topic 46 (2026-11-17): Owner chose B for the friend-inspired characters' connections: they have separate lives across Veyrath and belong to their own communities. Some know one another through work or reputation, allowing the player to encounter a wider cross-section of the kingdom. They are not established as a single former crew. Particular relationships and community placements remain undecided; the earlier draft roles remain provisional.
+
+- Kingdom lore Topic 45 (2026-11-17): Owner chose B for the supply clerk's code: "You honour the deal." The clerk knowingly processes bribes and crooked shipments, but the settlement fulfilled its obligations and was owed its food. Breaking that agreement motivates the clerk to share evidence. No friend character has yet been assigned this clerk's identity.
+
+- Friend-character roster expansion (2026-11-17): Owner requested all readable people in the supplied group-list screenshot be added as characters alongside Sir Broden. Covered names are not identifiable and remain unassigned. The following are assistant-authored draft lore roles, not implemented NPCs, quests or final character histories. Display handles are preserved; titles are provisional. These characters should have individual codes and genuine faults, following the owner's exile morality direction:
+  - **Premedicated**: an apothecary who treats anyone who reaches the table, but buys stolen medicine and charges wealthy patients extortionate prices.
+  - **Primerfalls**: a former siege engineer who repairs district waterworks, finances the work through sabotage contracts, and refuses to destroy a working well.
+  - **SinShadows299**: a burglar and information broker who sells stolen secrets but never reveals the location of someone who sheltered them.
+  - **TheRageDread**: a feared mercenary captain who collects debts through violence but honours a surrender once accepted.
+  - **whaaaaleeee**: a wreck-diver who claims valuable cargo before others can reach it, but gives drinking water found aboard to the shore settlement.
+  - **JoJoBiggens**: a dockside prizefighter and enforcer who takes crooked work but refuses to fix a fight once spectators have placed their bets.
+  - **Winnie**: a keeper of an illicit refuge who profits from stolen goods but forbids violence against anyone admitted under its roof.
+  - **Widdow**: a contract killer who refuses a second payment to betray an existing client, even when the client deserves it.
+  - **BrenBren**: a forger of ration papers and travel permits who charges heavily but honours every document personally guaranteed.
+  - **extremelygnar**: a dangerous cliff-route guide and contraband runner who takes reckless routes but never abandons a paying traveller.
+  - **avreyc**: a fence dealing in stolen heirlooms who returns identifiable burial keepsakes to surviving families.
+  - **ATD**: a quartermaster running a protection racket who keeps a protected district's emergency stores intact even when selling them would be lucrative.
+  - **フェニックス** (Phoenix): a fire-setter hired to clear Creep growth and destroy property who always leaves an escape route for occupants.
+  - **JoshO**: a smuggler who bribes officials and carries illicit cargo but refuses to sell passage out of Veyrath when unable to deliver it.
+  - **G4RR.**: a former road bandit who now escorts caravans for payment and considers taking a client's cargo an unforgivable betrayal.
+  - These are fictional characters inspired by friends' handles, not claims about the real people. Individual exile reasons, appearances, affiliations and gameplay roles remain open.
+
+- Exile character morality (2026-11-17, owner's direction): Do not portray the exiles collectively as innocent or good people. Those sentenced to exile were sent away for a reason; whether that reason was justified is open. The owner's comparison is One Piece pirates: people who may steal, loot and commit real wrongs while maintaining personal morals, loyalties and codes. Kindness to the player does not erase wrongdoing, and opposition to Kroten does not establish virtue. Apply this to characterization rather than copying characters or lore from that series. This does not establish that locally born descendants were personally sentenced to exile.
+
+- Kingdom lore Topic 44 (2026-11-17): Owner chose B for the player's help tracing the diverted shipment: a district supply clerk noticed deliveries disappearing from the books and quietly kept records. Sharing the evidence risks the clerk's position and household rations. The clerk's identity, history and personal code remain undecided. Broden is not assigned the shipment-investigation role proposed in option A.
+
+- Kingdom lore Topic 43 (2026-11-17): Owner chose B for the missing food delivery: an official redirected it to a Kroten research expedition under orders disguised as an ordinary delay. Following the shipment gives the player their first evidence of the secret arrangement. The official, expedition location and specific evidence remain undecided; the discovery does not establish that the player immediately learns Kroten's true research objectives.
+
+- Kingdom lore Topic 42 (2026-11-17): Owner chose A for the first threat to the settlement that shelters the player: its food delivery never arrives and reserves are running out. The player follows the supply road to learn why, encountering people dependent on the delivery and those deciding where supplies go. The reason for the missing delivery remains undecided.
+
+- Rogue roster implementation details (2026-11-17): all twelve rogues available with three crew slots; 25 XP per completed room, next level costs current level × 100 XP, level cap 100. Field success caps at +20 percentage points at Lv 10. Talent points begin at Lv 15 then every five levels, capped at ten; four specialty passives, five Greed gold talents, then signature. One spent ability per rogue per heist; primary signature bypasses are free, Lookout signature reveals rooms. Mentor training teaches an additional primary specialty after two finished jobs (alarms count, abandon does not), with 5,000 gold charged on enrollment. These fill unspecified tuning in the requested overhaul and do not change unrelated professions or campaign systems.
+
+- Kingdom lore Topic 41 (2026-11-17): Owner chose A for the player's initial motivation beyond survival: a settlement takes the player in, then is threatened by a failed food delivery or dangerous outbreak. Helping the people who helped them leads toward the kingdom's larger secrets. The settlement, its inhabitants and which specific threat starts the investigation remain undecided; no campaign or quest implementation is requested in this lore pass.
+
+- Kingdom lore Topic 40 (2026-11-17): Owner chose B for Kroten's understanding of concentration-based spread: its researchers have not recognized the pattern. Early successes appear convincing because effects take time to emerge. The player can connect evidence that Kroten still treats as isolated failures. This does not establish an outbreak outside Veyrath or change Topic 38; specific incidents and research locations remain undecided.
+
+- Kingdom lore Topic 39 (2026-11-17): Owner chose B for how the Creep establishes itself somewhere new: it needs a sustained concentration. Individual samples remain contained, but stockpiles of affected resources eventually change surrounding ground and water. Research stores and supply depots can therefore become dangerous. Concentration thresholds, timing and specific handling methods remain undesigned; this is lore, not an inventory, stash or resource gameplay mechanic.
 
 - Kingdom lore Topic 38 (2026-11-17): Owner chose A for the Creep's extent within Orvessa: Veyrath is its only established foothold. Elsewhere in Orvessa, people regard it as a distant exile problem. Kroten's shipments could carry it beyond Veyrath; no outbreak elsewhere in Orvessa is established. Jojo Land's separate infestation remains author-level background lore with no confirmed contact or transmission history.
 
@@ -500,10 +602,19 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Implement and ship the approved Woodcutting design and the remaining profession redesigns. — done 2026-11-17
+  - Existing recipes, locks, mastery, Focus, batches, secondary systems and Masterworks connected; desktop and phone checks pass. Live in 0.4.49.
+
+- [x] Build the approved Thieving dark ledger and parchment dossier screen. — done 2026-11-17
+  - Targets, live rewards/progress, mastery, guaranteed Markers and Focus connected; Heists, crew and Masterworks retained. Starter/veteran desktop and phone browser checks verified.
+
+- [x] Implement Thieving Overhaul (Rogue Classes, Progression, Talent Trees, Tactical Loop). — done 2026-11-17
+
 - [ ] Add Sir Broden as an NPC with a quest chain awarding a unique item (requested 2026-11-16).
   - Accepted background and aliases are in Decisions. Design the quest chain and unique reward before implementation; current request is to record the future work.
 
 - [ ] Develop the exile kingdom's landscape and founding lore from the owner's premise (2026-11-16).
+  - Main campaign and mapping arc supplied by owner and developed into `docs/STORY.md` (2026-11-17). Proposed connective narrative awaits review; existing act alignment, overseas access and campaign/Uber First Exile continuity remain open.
   - Foundation recorded in Decisions; discussing how the thirty years of collapse appear in the landscape. No artwork or game changes yet.
 
 - [ ] Separate Production Skills into Smelting, Forging, and Woodcrafting:
@@ -646,7 +757,17 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-- [x] Merged Travel Points into Passive Points (2 per level) and set every ordinary tree node to cost 1; Gateways (4), Doomed Gates (5) and Forbidden keystones (15) unchanged. Save migration 47 recounts existing characters without removing allocations. — done 2026-11-17
+- [x] Merged Travel Points into Passive Points (2 per level) and set every ordinary tree node to cost 1; Gateways (4), Doomed Gates (5) and Forbidden keystones (15) unchanged. Save migration 48 recounts existing characters without removing allocations. — done 2026-11-18
+
+- All profession workspaces implemented, browser-verified on desktop/phone and deployed as 0.4.49 with live login confirmation. — done 2026-11-17
+
+- [x] Created and visually inspected a detailed Veyrath atlas with the main-story settlements, physical road network, mountain research facility, capital/underground containment callout and peripheral places. Saved artwork, exact generation prompt and a working location gazetteer in `docs/VEYRATH-MAP.md`. Artwork only. — done 2026-11-17
+
+- [x] Created and visually inspected the Orvessa continental overview, showing Veyrath and Kroten in a wider nineteenth-century atlas composition. Saved artwork and exact prompt under `output/imagegen/orvessa-continental-overview-v1*`. Labels and Veyrath's silhouette checked; game integration not part of this artwork pass. — done 2026-11-17
+
+- Thieving ledger and parchment dossier implemented and verified on desktop and phone, with existing targets, mastery, Focus and Heist systems connected. — done 2026-11-17 (live in 0.4.49)
+
+- [x] Implemented the 12-rogue roster and three-person tactical crew, Field Mastery and talent progression, mentor training, vault profiles, scouting, Bypass and Greed, plus old-save migration and player/wiki guidance. All 1,763 tests and production build pass; desktop browser verified actual controls and state, no console errors. Screenshot: `output/playtest/rogue-roster.png`. Unreleased. — done 2026-11-17
 
 - [x] Created and integrated the Ashen Codex world-map painting, refined through the owner's annotated art revisions, with general paths across all six campaign regions and readable clickable act labels. Source images/prompts saved under `output/imagegen/`; runtime asset in `src/assets/maps/`. Typecheck, four campaign-map tests and client build pass; visual playtest pending above. — done 2026-11-16
 
@@ -1024,5 +1145,3 @@ New engine needs:
 - **Marks don't have a default rule** for the mark skill itself (always makes sense); the finisher skills that *benefit from* a mark have `targetHasEffect: 'mark'` as their suggested rule.
 - **No signature for supports.** Same as every act.
 - **Art:** totems, warcries and mark effects need icons. Doom skills share void/purple palette. Exertion uses a yellow-charge visual. All listed in `artManifest.ts → GEM_SYMBOL` when built.
-
-- [ ] Implement Thieving Overhaul (Rogue Classes, Progression, Talent Trees, Tactical Loop) <!-- done 2026-11-17 -->

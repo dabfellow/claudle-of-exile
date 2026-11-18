@@ -41,18 +41,19 @@ export interface ActMapData {
 
 export const WORLD_MAP: WorldMapData = {
   aspect: 1536 / 1024,
-  image: new URL('../assets/maps/ashen-codex-world.webp', import.meta.url).href,
+  image: new URL('../assets/maps/veyrath-world.webp', import.meta.url).href,
   labels: {
-    1: [13, 51],
-    2: [31, 39],
-    3: [78, 93],
-    4: [34, 9],
-    5: [72, 44],
-    6: [85, 5],
+    1: [12, 64],
+    2: [25, 55],
+    3: [34, 43],
+    4: [56, 61],
+    5: [54, 18],
+    6: [86, 29],
+    7: [88, 44],
   },
 };
 
-export const ACT_MAPS: Record<number, ActMapData> = {
+const LEGACY_ACT_MAPS: Record<number, ActMapData> = {
   1: {
     // The Drowned Coast
     aspect: 0.615,
@@ -251,6 +252,56 @@ export const ACT_MAPS: Record<number, ActMapData> = {
     entries: [{ from: 'maelstrom', to: 'exilesgate', at: [25.3, 100] }],
   },
 };
+
+/** Country-map regions: geographic scopes, not new travel prerequisites. The final chapter is below Caer Veyr. */
+export const VEYRATH_REGIONS = [
+  { act: 1, color: '#477f8c', place: 'Brinewick and the Wreck Coast', points: '7,60 19,55 25,61 26,74 16,82 6,73' },
+  { act: 2, color: '#aa7c3e', place: 'The supply roads and Wayfarer’s Post', points: '18,54 24,46 34,48 36,58 26,65 20,62' },
+  { act: 3, color: '#8b794a', place: 'Greyford and the expedition depots', points: '27,42 36,39 43,44 43,53 34,56 26,49' },
+  { act: 4, color: '#718a48', place: 'Harrowgate and the road to Eastmere', points: '42,46 57,43 60,52 58,63 70,69 72,78 57,79 45,64 42,55' },
+  { act: 5, color: '#687c9a', place: 'The northern passes and Cairnwatch Institute', points: '34,14 53,8 67,20 66,34 53,39 42,36 37,26' },
+  { act: 6, color: '#b49642', place: 'Caer Veyr, its growing grounds and harbour', points: '69,20 83,18 91,25 91,34 81,37 72,32' },
+  { act: 7, color: '#8e668c', place: 'The First Seal beneath Caer Veyr', points: '83,39 93,39 94,49 84,49' },
+];
+
+const ACT_IMAGES: Record<number, string> = {
+  1: new URL('../assets/maps/veyrath-act-1.webp', import.meta.url).href,
+  2: new URL('../assets/maps/veyrath-act-2.webp', import.meta.url).href,
+  3: new URL('../assets/maps/veyrath-act-3.webp', import.meta.url).href,
+  4: new URL('../assets/maps/veyrath-act-4.webp', import.meta.url).href,
+  5: new URL('../assets/maps/veyrath-act-5.webp', import.meta.url).href,
+  6: new URL('../assets/maps/veyrath-act-6.webp', import.meta.url).href,
+  7: new URL('../assets/maps/veyrath-act-7.webp', import.meta.url).href,
+};
+
+/** Keep established save IDs and branching roads while regrouping the journey into seven chapters. */
+function chapterMap(act: number, source: number, ids?: string[]): ActMapData {
+  const old = LEGACY_ACT_MAPS[source];
+  const zones = Object.fromEntries(Object.entries(old.zones).filter(([id]) => !ids || ids.includes(id)));
+  return {
+    aspect: 1.5,
+    image: ACT_IMAGES[act],
+    zones,
+    roads: Object.fromEntries(Object.entries(old.roads).filter(([key]) => key.split('>').every((id) => id in zones))),
+    entries: old.entries.filter((entry) => entry.to in zones),
+  };
+}
+
+export const ACT_MAPS: Record<number, ActMapData> = {
+  1: chapterMap(1, 1),
+  2: chapterMap(2, 2, ['cinderroad', 'saltflats', 'blackgrass', 'caravan']),
+  3: chapterMap(3, 2, ['kurgans', 'plateau', 'pyretemple', 'burningthrone']),
+  4: chapterMap(4, 3),
+  5: chapterMap(5, 4),
+  6: chapterMap(6, 5),
+  7: chapterMap(7, 6),
+};
+ACT_MAPS[2].zones = { cinderroad: [19, 78], saltflats: [39, 58], blackgrass: [63, 43], caravan: [78, 25] };
+ACT_MAPS[2].roads = {};
+ACT_MAPS[2].entries = [{ from: 'sanctum', to: 'cinderroad', at: [4, 92] }];
+ACT_MAPS[3].zones = { kurgans: [22, 75], plateau: [30, 34], pyretemple: [69, 28], burningthrone: [77, 71] };
+ACT_MAPS[3].roads = {};
+ACT_MAPS[3].entries = [{ from: 'caravan', to: 'kurgans', at: [4, 83] }];
 
 /** A smooth SVG path through points (in the same units as the points), passing through every one of them. */
 export function smoothPath(pts: MapPoint[]): string {

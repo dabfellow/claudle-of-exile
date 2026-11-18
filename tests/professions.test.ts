@@ -371,9 +371,12 @@ describe('pre-overhaul serialized compatibility', () => {
     const again = reload(reload(s));
     expect(again.skills).toEqual({ ...raw.skills, smelting: raw.skills.smithing, woodcrafting: raw.skills.smithing });
     expect(again.skillingMastery).toEqual(raw.skillingMastery);
-    expect(again.action).toEqual(raw.action);
+    expect(again.action).toMatchObject(raw.action);
+    expect(again.action).toEqual(s.action);
     expect(again.greenhouse).toEqual(raw.greenhouse);
-    expect(again.heist).toEqual(raw.heist);
+    expect(again.heist).toMatchObject({ rogues: raw.heist.rogues, exits: raw.heist.exits, auto: raw.heist.auto, tally: raw.heist.tally });
+    expect(again.heist).toEqual(s.heist);
+    expect(again.heist.roster?.lookout.level).toBe(4);
     expect(again.expedition).toEqual(raw.expedition);
     expect(again.inventory).toEqual(raw.inventory);
     expect(again.account.bank).toEqual(fixture.account.bank);

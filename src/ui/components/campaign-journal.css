@@ -1,0 +1,15 @@
+.campaign-journal { margin-top: 16px; }
+.campaign-journal-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.campaign-journal-heading h3 { margin: 4px 0 0; }
+.campaign-journal-current { padding-top: 12px; }
+.campaign-journal-current h4 { margin: 0 0 8px; color: var(--accent); }
+.campaign-journal-dialogue { color: var(--muted); line-height: 1.6; max-width: 80ch; }
+.campaign-journal-objective { font-weight: 600; }
+.campaign-journal-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.campaign-journal-actions .btn { white-space: normal; }
+.campaign-journal-record { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px; }
+.campaign-journal-record summary { cursor: pointer; color: var(--muted); }
+.campaign-journal-record ol { padding-left: 22px; }
+.campaign-journal-record li { margin: 12px 0; }
+.campaign-journal-record li p { color: var(--muted); line-height: 1.5; margin: 4px 0; max-width: 80ch; }
+@media (max-width: 520px) { .campaign-journal-actions { align-items: stretch; flex-direction: column; } }

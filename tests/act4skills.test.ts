@@ -74,10 +74,10 @@ const lost = (m: MonsterInstance) => m.maxLife - m.life;
 describe('the Giants and weight batch', () => {
   it('arrives with Act 4, past the Act 3 gems, and its signatures with it', () => {
     for (const id of [...BATCH, ...SUPPORTS]) {
-      expect(gemAct(id), id).toBe(4);
+      expect(gemAct(id), id).toBe(5);
       expect(gemReqLevel(id), id).toBeGreaterThanOrEqual(40);
     }
-    for (const id of BATCH) expect(gemAct(SUPPORT_GEMS.find((x) => x.signatureFor === id)!.id), id).toBe(4);
+    for (const id of BATCH) expect(gemAct(SUPPORT_GEMS.find((x) => x.signatureFor === id)!.id), id).toBe(5);
   });
 
   it('every new skill has a signature that fits only it', () => {
@@ -93,7 +93,7 @@ describe('the Giants and weight batch', () => {
     const s = veteran(newGame(1), 60);
     s.unlockedZones = ['mudflats', 'cinderroad'];
     for (const id of [...BATCH, ...SUPPORTS]) expect(gemArrived(s, id), id).toBe(false);
-    const act4 = { ...ZONES[0], id: 'test_act4', act: 4 };
+    const act4 = { ...ZONES[0], id: 'test_act4', act: 5 };
     ZONES.push(act4);
     s.unlockedZones = [...s.unlockedZones, act4.id];
     for (const id of [...BATCH, ...SUPPORTS]) expect(gemArrived(s, id), id).toBe(true);

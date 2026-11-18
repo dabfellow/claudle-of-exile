@@ -1,0 +1,219 @@
+/* Quiet, material-led places to work. All decoration is CSS or existing small icons. */
+.page.profession-page { gap: 18px; --gold: var(--accent); }
+html .profession-page .profession-header { display: flex; gap: 20px; align-items: center; padding: 18px 22px; border-color: color-mix(in srgb, var(--profession) 25%, #30383b); background: linear-gradient(110deg, #202426, #171c1f); }
+.profession-header-icon { display: grid; place-items: center; flex: 0 0 54px; height: 54px; border: 1px solid #5c5a49; border-radius: 5px; }
+.profession-header-text { flex: 1; }
+.profession-header h1 { margin: 0 0 5px; font-size: 26px; }
+.profession-header-text p { margin: 0; font: 10px Georgia, serif; text-transform: uppercase; letter-spacing: .15em; color: #b4ad9c; }
+.profession-header .xp { display: grid; gap: 7px; flex: 0 1 310px; }
+.profession-header .level-num { display: flex; align-items: baseline; gap: 8px; font-size: 23px; color: var(--profession); }
+.profession-header .level-num small { font-size: 11px; color: var(--muted); }
+.profession-header .xp-meta { display: flex; font-size: 10px; color: var(--muted); }
+html .profession-page > .smith-tabs { margin-top: 0 !important; border-bottom: 1px solid #383d3c; gap: 12px; padding-bottom: 0; }
+html .profession-page > .smith-tabs .gem-chip { background: none; border: 0; border-radius: 0; padding: 10px 8px; color: #aaa79f; font: 12px Georgia, serif; }
+html .profession-page > .smith-tabs .gem-chip.active { color: #e1d8c5; box-shadow: inset 0 -2px var(--profession); }
+.profession-workspace { display: grid; grid-template-columns: minmax(260px, .85fr) minmax(0, 1.15fr); gap: 20px; align-items: start; }
+html .profession-catalogue.card { padding: 15px; min-width: 0; background: #191e21; border: 1px solid #343c3c; }
+.profession-catalogue-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; margin-bottom: 10px; border-bottom: 1px solid #41443b; }
+.profession-catalogue-head h2 { font: 16px Georgia, serif; margin: 0; color: #d1c7b1; text-transform: capitalize; }
+.profession-catalogue-head .check { font-size: 11px; white-space: nowrap; }
+.profession-groups { display: flex; flex-direction: column; gap: 7px; }
+.profession-group { border: 1px solid #333c3d; border-radius: 5px; overflow: hidden; background: #1b2124; }
+.profession-group.selected { border-color: color-mix(in srgb, var(--profession) 60%, #3d433c); }
+.profession-group-head { display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 12px; width: 100%; text-align: left; color: #d3d1c6; cursor: pointer; }
+.profession-group.selected > .profession-group-head { background: color-mix(in srgb, var(--profession) 15%, #202622); }
+.profession-group-head b { font-size: 13px; font-weight: 500; }
+.profession-group-head small { display: block; margin-top: 5px; font-size: 10px; color: #9da39b; }
+.profession-specimen { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; }
+.profession-activity-list { padding: 4px 8px 8px; max-height: 360px; overflow-y: auto; }
+.profession-activity { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: 1px solid transparent; border-radius: 4px; background: none; padding: 9px 8px; color: #c8cbbf; cursor: pointer; }
+.profession-activity.selected { border-color: var(--profession); background: #ffffff07; }
+.profession-activity.locked { color: #858d8f; }
+.profession-activity > span:not(.game-icon) { min-width: 0; }
+.profession-activity b { font-size: 12px; font-weight: 500; overflow-wrap: anywhere; }
+.profession-activity small { display: block; font-size: 10px; color: #959b94; margin-top: 4px; }
+.profession-group-head:hover, .profession-activity:hover { background-color: #ffffff08; }
+.profession-group-head:focus-visible, .profession-activity:focus-visible, .profession-return:focus-visible { outline: 2px solid var(--profession); outline-offset: -2px; }
+.profession-station { min-width: 0; border: 1px solid #5b5a46; border-radius: 6px; overflow: hidden; background: #1a2023; }
+.profession-station-rail { display: flex; justify-content: space-between; gap: 10px; padding: 12px 18px; color: #d8ceb9; background: #32382f; border-bottom: 1px solid #5d644d; font: 12px Georgia, serif; text-transform: capitalize; }
+.profession-station-rail .num { font-size: 11px; }
+.profession-station-body { padding: 18px; }
+.profession-workpiece { display: flex; align-items: center; gap: 18px; margin-bottom: 15px; padding-bottom: 16px; border-bottom: 1px solid #41473e; }
+.profession-workpiece > div:last-child { min-width: 0; }
+.profession-workpiece h2 { margin: 8px 0; font: 21px/1.3 Georgia, serif; color: #e3d8bd; }
+.profession-eyebrow { font-size: 9px; text-transform: uppercase; letter-spacing: .13em; color: #9d9e90; }
+.profession-readout { display: flex; flex-wrap: wrap; gap: 16px; color: #9fa69b; font-size: 11px; margin-bottom: 14px; }
+.profession-readout b { color: #d1cebb; font-weight: 500; }
+.profession-readout .working { color: var(--profession); }
+.profession-motif { position: relative; display: grid; place-items: center; flex: 0 0 74px; height: 74px; color: var(--profession); }
+.profession-motif > .game-icon, .profession-motif > svg { position: relative; z-index: 1; }
+.profession-motif > i { position: absolute; inset: 8px; border: 1px solid currentColor; opacity: .45; }
+.profession-motif > i:nth-child(2) { inset: 15px; }
+.profession-motif > i:nth-child(3) { inset: 22px; }
+html .profession-station .action-card { padding: 0; border: 0; box-shadow: none; margin: 0; background: none; display: flex; flex-direction: column; }
+.profession-station .action-card .action-toggle { display: none; }
+.profession-station .action-card .action-head { order: 2; display: flex; justify-content: stretch; margin: 12px 0; }
+.profession-station .action-card .action-head > .btn { min-height: 40px; width: 100%; font: 14px Georgia, serif; letter-spacing: .05em; background: color-mix(in srgb, var(--profession) 35%, #252c25); border-color: color-mix(in srgb, var(--profession) 65%, #494b3d); color: #eee5cf; }
+.profession-station .action-card .action-body { order: 1; padding: 0; border: 0; }
+.profession-station .action-card .action-body > p { font-size: 11px; line-height: 1.65; }
+.profession-station .action-card .action-section { padding: 10px 0; margin: 0; border-top: 1px solid #3c433d; }
+.profession-station .action-card .io-label { font: 10px Georgia, serif; letter-spacing: .12em; margin-bottom: 8px; }
+.profession-station .action-card .ingredients { margin: 0; }
+.profession-station .action-card .ingredients li { font-size: 12px; padding-block: 5px; }
+.profession-station .action-card .action-progress { order: 3; }
+.profession-station .action-card .skilling-mastery { order: 4; margin-top: 14px; border-top: 1px solid #3c433d; padding-top: 12px; }
+.profession-station .action-card > .tip-anchor { order: 4; }
+.profession-station .action-card .action-meta { margin: 4px 0; }
+.profession-station .action-card > .pop { z-index: 3; }
+html .profession-station .minigame { margin: 16px 0 0; padding: 14px; background: #151b1e; border: 1px solid #414c43; box-shadow: none; }
+.profession-station .minigame .card-title { display: block; font: 14px Georgia, serif; }
+.profession-station .minigame .card-hint { display: block; margin-top: 7px; font: 11px/1.5 sans-serif; }
+.profession-station .minigame-foot { flex-wrap: wrap; }
+.profession-station .minigame-bars { min-width: 90px; }
+.mini-woodcutting .mini-swing { display: block; min-width: 110px; margin: 10px auto 0; }
+.profession-return { background: none; border: 0; border-bottom: 1px dotted #7d8862; color: #b8bd9b; font-size: 11px; padding: 10px 0 2px; text-align: left; cursor: pointer; }
+.profession-empty { color: var(--muted); }
+/* Woodcutting: grouped tree stand and cut timber, matching the approved mockup. */
+.profession-woodcutting .profession-station-rail { background: repeating-linear-gradient(3deg, transparent 0 10px, #241b1119 11px 12px), linear-gradient(90deg, #57402c, #715236, #4e3d2d); border-color: #8e704c; }
+.motif-rings { border: 5px solid #7a5730; border-radius: 48% 52% 47% 53%; color: #805b34; background: #c5a26e; }
+.motif-rings > i { border-width: 2px; border-radius: 47% 53% 50% 48%; opacity: .8; }
+.motif-rings > .game-icon { display: none; }
+.profession-woodcutting .profession-activity-list { border-top: 1px solid #415039; }
+/* Mining: an exposed survey face, with strata rather than a recipe book. */
+.profession-mining .profession-catalogue { border-left: 4px solid #775338; }
+.profession-mining .profession-group { border-radius: 1px; }
+.profession-mining .profession-station { border-radius: 2px; border-top: 4px solid #8c623e; }
+.profession-mining .profession-station-rail { background: #332c27; border-color: #614a38; }
+.profession-mining .profession-station-body { background: linear-gradient(175deg, transparent 37%, #ad74420c 37% 38%, transparent 38% 64%, #ad74420a 64% 65%, transparent 65%); }
+.motif-strata > i { border-inline: 0; transform: rotate(-14deg); inset: 10px 2px; }
+.motif-strata > i:nth-child(2) { inset: 25px 2px; }
+.motif-strata > i:nth-child(3) { inset: 33px 2px; }
+/* Foraging: labeled specimens around a soft green gathering tray. */
+.profession-harvesting .profession-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.profession-harvesting .profession-group.selected { grid-column: 1 / -1; }
+.profession-harvesting .profession-group-head { padding: 12px 8px; }
+.profession-harvesting .profession-station { border-color: #657452; }
+.profession-harvesting .profession-station-rail { background: #2b392b; }
+.motif-leaf > i { border-radius: 90% 0 90% 0; transform: rotate(-30deg); }
+/* Smelting: a charge manifest and a banked furnace, with restrained ember accents. */
+.profession-smelting .profession-station { border-radius: 4px 4px 16px 16px; border-top: 5px solid #754931; }
+.profession-smelting .profession-station-rail { background: #392a23; border-color: #684834; }
+.profession-smelting .profession-station-body { background: radial-gradient(ellipse at bottom, #c96b2112, transparent 65%); }
+.profession-smelting .profession-group-head { border-bottom: 1px solid #453c31; }
+.profession-smelting .profession-workspace { grid-template-columns: minmax(0, 1fr); }
+.profession-smelting .profession-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+.profession-smelting .profession-group.selected { grid-column: 1 / -1; }
+.profession-smelting .profession-station-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 24px; }
+.profession-smelting .profession-workpiece, .profession-smelting .profession-readout { grid-column: 1 / -1; }
+.profession-smelting .profession-station .minigame { align-self: start; margin-top: 0; }
+.motif-crucible > i { border-radius: 2px 2px 45% 45%; border-top-width: 4px; }
+/* Forging: squared steel patterns and an anvil work surface with measured edges. */
+.profession-smithing .profession-station { border-radius: 1px; border-color: #656872; }
+.profession-smithing .profession-station-rail { background: #33373c; border-color: #646872; }
+.profession-smithing .profession-workpiece { background: repeating-linear-gradient(90deg, #acb6c80c 0 1px, transparent 1px 16px); padding: 12px; border: 1px solid #485059; }
+.profession-smithing .profession-group-head { border-left: 2px solid #4b5156; }
+.motif-anvil > i { border-style: dashed; inset: 5px; }
+/* Woodcrafting: clamped templates on a ruled carving mat. */
+.profession-woodcrafting .profession-station-rail { background: #4a3b2c; border-color: #80694a; }
+.profession-woodcrafting .profession-workpiece { border-inline: 5px solid #67563d; padding-inline: 12px; background: repeating-linear-gradient(0deg, transparent 0 15px, #a78e6b0b 15px 16px); }
+.motif-timber > i { inset: 13px 2px; border-radius: 3px; transform: rotate(-9deg); }
+.motif-timber > i:nth-child(2) { inset: 23px 2px; }
+.motif-timber > i:nth-child(3) { display: none; }
+/* Alchemy: a quiet formula index, bottle silhouette and reagent bench. */
+.profession-alchemy .profession-catalogue { border-left: 5px solid #61546f; }
+.profession-alchemy .profession-group-head { font-family: Georgia, serif; }
+.profession-alchemy .profession-station-rail { background: #342f3d; border-color: #61526f; }
+.profession-alchemy .profession-workpiece { border-bottom-style: dashed; }
+.profession-alchemy .profession-workspace { grid-template-columns: minmax(240px, .65fr) minmax(0, 1.35fr); }
+.profession-alchemy .profession-station-body { border-left: 5px double #655974; }
+.motif-flask > i { inset: 18px 11px 3px; border-radius: 10% 10% 45% 45%; background: #9477a518; }
+.motif-flask > i:nth-child(2) { inset: 3px 26px 45px; border-radius: 2px; }
+.motif-flask > i:nth-child(3) { display: none; }
+/* Gemcutting: little specimen compartments and a precise faceted cutting jig. */
+.profession-gemcutting .profession-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.profession-gemcutting .profession-group.selected { grid-column: 1 / -1; }
+.profession-gemcutting .profession-group-head { flex-wrap: wrap; }
+.profession-gemcutting .profession-station-rail { background: #243b37; border-color: #427d70; }
+.profession-gemcutting .profession-station { border-color: #46675f; }
+.motif-facet > i { inset: 12px; transform: rotate(45deg); }
+.motif-facet > i:nth-child(2) { inset: 22px; }
+.motif-facet > i:nth-child(3) { transform: rotate(0); border-style: dashed; }
+/* Rune-carving: stone tablets arranged above a slate with inset borders. */
+.profession-runecarving .profession-workspace { grid-template-columns: minmax(0, 1fr); }
+.profession-runecarving .profession-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.profession-runecarving .profession-group.selected { grid-column: 1 / -1; }
+.profession-runecarving .profession-station { border-radius: 2px; border: 3px double #52677d; }
+.profession-runecarving .profession-station-rail { background: #29323f; }
+.profession-runecarving .profession-station-body { box-shadow: inset 0 0 0 5px #202a32; }
+.motif-rune > i { inset: 3px 12px; border: 3px double currentColor; border-radius: 9px 9px 2px 2px; }
+.motif-rune > i:nth-child(2), .motif-rune > i:nth-child(3) { display: none; }
+/* Cooking: a menu of recipes beside a broad hearth and a warm worktop. */
+.profession-cooking .profession-workspace { grid-template-columns: minmax(240px, .7fr) minmax(0, 1.3fr); }
+.profession-cooking .profession-catalogue { border-color: #5a4c3c; }
+.profession-cooking .profession-group { border: 0; border-bottom: 1px dashed #63543f; border-radius: 0; background: none; }
+.profession-cooking .profession-station-rail { background: #4c3829; border-color: #7d5b3d; }
+.profession-cooking .profession-workpiece { border-bottom: 2px solid #6a4e32; }
+.motif-hearth > i { border-radius: 50% 50% 2px 2px; border-width: 3px; }
+.motif-hearth > i:nth-child(2) { border-bottom: 4px solid currentColor; inset: 30px 2px 0; border-radius: 0; }
+.motif-hearth > i:nth-child(3) { display: none; }
+/* Cartography: a chart index and faint survey grid; no illustrated map background. */
+.profession-cartography .profession-station-body { background-image: linear-gradient(#aeb6bf07 1px, transparent 1px), linear-gradient(90deg, #aeb6bf07 1px, transparent 1px); background-size: 24px 24px; }
+.profession-cartography .profession-station-rail { background: #34313e; border-color: #625977; }
+.profession-cartography .profession-workspace { grid-template-columns: minmax(0, 1fr); }
+.profession-cartography .profession-groups { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
+.profession-cartography .profession-group.selected { grid-column: 1 / -1; }
+.profession-cartography .mc-tiles .mc-tile { background-image: none; min-height: 75px; }
+.motif-compass > i { border-radius: 50%; }
+.motif-compass > i:nth-child(2) { border-radius: 0; transform: rotate(45deg); }
+/* Archaeology: paper site index, framed strata and dark restoration trays. */
+.profession-archaeology .profession-station-rail { background: #564230; border-color: #8a6b4c; }
+.profession-archaeology .expedition-fieldbook { display: grid; grid-template-columns: minmax(200px, .6fr) minmax(0, 1.4fr); gap: 18px; align-items: start; }
+.profession-site-index { padding: 16px; border: 1px solid #a18a63; border-radius: 3px; background: #c4b18d; color: #382f23; }
+.profession-site-index h3 { color: #453523; margin: 0 0 14px; font: 17px Georgia, serif; }
+.profession-site-index button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left; color: #463b29; background: none; border: 0; border-bottom: 1px solid #87745255; padding: 12px 5px; font-size: 12px; cursor: pointer; }
+.profession-site-index button.selected { color: #221a11; background: #e9d6af60; box-shadow: inset 3px 0 #806443; }
+.profession-site-index small { font-size: 10px; white-space: nowrap; }
+.profession-archaeology .excavation-tray > .action-card { border-top: 4px solid #806346; }
+.motif-find > i { inset: 7px; transform: rotate(-8deg); border-style: dashed; }
+.motif-find > i:nth-child(2) { inset: 19px; transform: rotate(8deg); border-style: solid; }
+.motif-find > i:nth-child(3) { display: none; }
+/* Secondary systems stay available without dominating the active work area. */
+.profession-supplies { border: 1px solid #3b4241; border-radius: 5px; padding: 12px 16px; }
+.profession-supplies > summary { cursor: pointer; color: #c8bfaa; font: 13px Georgia, serif; }
+.profession-supplies[open] > summary { margin-bottom: 16px; }
+.profession-supplies .callout { font-size: 11px; }
+.profession-page .catalyst-panel { margin: 0; }
+@container (max-width: 900px) {
+  .profession-workspace { grid-template-columns: minmax(230px, .85fr) minmax(0, 1.15fr); gap: 14px; }
+  .profession-catalogue-head { align-items: start; flex-wrap: wrap; }
+  .profession-station-body { padding: 14px; }
+  .profession-workpiece { gap: 12px; }
+  .profession-workpiece h2 { font-size: 19px; }
+  .profession-harvesting .profession-groups, .profession-gemcutting .profession-groups { grid-template-columns: minmax(0, 1fr); }
+  .profession-header { flex-wrap: wrap; }
+  .profession-header .xp { flex: 1 1 220px; }
+}
+@container (max-width: 700px) {
+  .profession-workspace, .profession-cooking .profession-workspace, .profession-alchemy .profession-workspace, .profession-archaeology .expedition-fieldbook { grid-template-columns: minmax(0, 1fr); }
+  .profession-smelting .profession-station-body { display: block; }
+  .profession-smelting .profession-station .minigame { margin-top: 16px; }
+  .profession-smelting .profession-groups, .profession-cartography .profession-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .profession-runecarving .profession-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .profession-header-text { flex-basis: calc(100% - 75px); }
+  .profession-header .xp { flex-basis: 100%; }
+  .profession-header h1 { font-size: 23px; }
+  .profession-workpiece h2 { font-size: 21px; }
+}
+@container (max-width: 400px) {
+  html .profession-page .profession-header { padding: 14px; gap: 12px; }
+  .profession-header-icon { flex-basis: 40px; height: 44px; }
+  .profession-header-text { flex-basis: calc(100% - 55px); }
+  .profession-header h1 { font-size: 20px; }
+  .profession-workpiece { align-items: start; }
+  .profession-motif { flex-basis: 56px; height: 56px; }
+  .profession-workpiece h2 { font-size: 18px; }
+  .profession-runecarving .profession-groups { grid-template-columns: minmax(0, 1fr); }
+  .profession-runecarving .profession-group.selected { grid-column: auto; }
+  .profession-smelting .profession-groups, .profession-cartography .profession-groups { grid-template-columns: minmax(0, 1fr); }
+  .profession-smelting .profession-group.selected, .profession-cartography .profession-group.selected { grid-column: auto; }
+}

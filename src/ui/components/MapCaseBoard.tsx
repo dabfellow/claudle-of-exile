@@ -24,13 +24,13 @@ function Tile({ mark, count, name, color, art, title }: { mark: ReactNode; count
 /** Cartography's own panel: every map and Sextant your realm holds, however you came by it. */
 export function MapCaseBoard() {
   const s = useGame();
-  if (!cartographyOpen(s)) return <div className="callout skill-note">Nothing out here has ever been worth mapping. Reach Act 6 to start.</div>;
+  if (!cartographyOpen(s)) return <div className="callout skill-note">Reach the buried routes beneath Caer Veyr in Act 7 to start charting maps.</div>;
   const locked = stationLockReason(s, 'map_device');
   return (
     <>
       <div className="callout skill-note">
         Maps are shared across your realm. Draw Tier 1 maps here, combine three of a tier into the next tier up, or craft Sextants for the Map Device.{' '}
-        {locked ? "The Map Device won't wake until Act 6 is beaten: what you draw now waits in the case." : 'Auto-run at the Map Device runs one tier until its stock runs out.'}
+        {locked ? 'The Map Device wakes after the First Exile falls in Act 7. Your charts will be ready in the case.' : 'Auto-run at the Map Device runs one tier until its stock runs out.'}
       </div>
       <div className="card">
         <div className="card-title">

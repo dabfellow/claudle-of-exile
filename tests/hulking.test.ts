@@ -48,9 +48,10 @@ function hitWith(gem: string, hulking: boolean): number {
 }
 
 describe('Hulking monsters', () => {
-  it('turn up from Act 3 on, never before', () => {
+  it('turn up from Harrowgate in Act 4 on, never before', () => {
     expect(hulksIn(ZONES.find((z) => z.act === 1)!.id)).toBe(0);
-    expect(hulksIn(ZONES.find((z) => z.act === 3)!.id)).toBeGreaterThan(0);
+    expect(hulksIn(ZONES.find((z) => z.act === 3)!.id)).toBe(0);
+    expect(hulksIn(ZONES.find((z) => z.act === 4)!.id)).toBeGreaterThan(0);
   });
 
   it('are worth more xp', () => {

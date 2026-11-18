@@ -77,8 +77,8 @@ export function rollItemTier(zone: ZoneDef, isBoss: boolean, isDoomed: boolean, 
     if (mapTier >= 4) return rng.next() < 0.45 ? 3 : 2;
     return rng.next() < 0.35 ? 2 : 1;
   }
-  if (zone.act >= 6) return isBoss && rng.next() < 0.4 ? 2 : 1;
-  if (zone.act >= 4) return isBoss && rng.next() < 0.2 ? 2 : 1;
+  if (zone.act >= 7) return isBoss && rng.next() < 0.4 ? 2 : 1;
+  if (zone.act >= 5) return isBoss && rng.next() < 0.2 ? 2 : 1;
   return 1;
 }
 
@@ -119,9 +119,9 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
   addBank(s, 'gold', gold);
   if (zone.act >= CONTRABAND_DROP.firstAct && chance(rng, mon.isBoss ? CONTRABAND_DROP.bossChance : CONTRABAND_DROP.killChance)) giveCurrency(pick(rng, [SEAL, WAX]));
 
-  if (zone.act >= WHETSTONE_DROP.firstAct && chance(rng, mon.isBoss ? WHETSTONE_DROP.bossChance : WHETSTONE_DROP.killChance)) giveCurrency(WHETSTONE);
+  if (zone.act >= WHETSTONE_DROP.firstAct + 1 && chance(rng, mon.isBoss ? WHETSTONE_DROP.bossChance : WHETSTONE_DROP.killChance)) giveCurrency(WHETSTONE);
 
-  if (zone.act >= RUNE_DROP.firstAct && chance(rng, mon.isBoss ? RUNE_DROP.bossChance : RUNE_DROP.killChance)) giveCurrency(pick(rng, RUNES.filter((r) => r.grade.grade <= RUNE_DROP.maxGrade)).id);
+  if (zone.act >= RUNE_DROP.firstAct + 1 && chance(rng, mon.isBoss ? RUNE_DROP.bossChance : RUNE_DROP.killChance)) giveCurrency(pick(rng, RUNES.filter((r) => r.grade.grade <= RUNE_DROP.maxGrade)).id);
 
   if (mon.isBoss) {
     const finalBoss = !s.combat?.monsters.some((m) => m.isBoss && m !== mon && m.life > 0);
@@ -194,14 +194,18 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
     }
     if (chance(rng, boss.flaskChance)) dropFlask(s, ctx, ilvl);
     const bossUniques = encounterWorldDropUniques(ilvl, s.maps.run?.uniqueMapId);
-    if (bossUniques.length && chance(rng, boss.uniqueChance * (1 + itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, bossUniques).id, ilvl, rng));
+    if (bossUniques.length && chance(rng, boss.uniqueChance * (1 + itemRarity / 100))) {
+      // Use standard weighted drop for boss uniques as well
+      const unique = pickWeighted(rng, bossUniques, u => u?.weight ?? 100);
+      if (unique) placeItem(s, ctx, createUnique(s, unique.id, ilvl, rng));
+    }
     if (chance(rng, BOSS_CRAFT_MAT.chance)) {
       // Greater Essences only from the later Act 1 areas
       const essences = ESSENCES.filter((e) => e.tier === 0 || zone.levelRange[0] >= 12);
       giveCurrency(pick(rng, [...FOSSILS, ...essences]).id, rInt(rng, ...BOSS_CRAFT_MAT.qty));
     }
     if (chance(rng, BOSS_GATHER_DROP.chance)) giveCurrency(pick(rng, bossGatherMats(mon.level)), rInt(rng, ...BOSS_GATHER_DROP.qty));
-    if (zone.act >= 3 && chance(rng, hardBoss || uberBoss ? 0.15 : 0.05)) {
+    if (zone.act >= 4 && chance(rng, hardBoss || uberBoss ? 0.15 : 0.05)) {
       dropUniqueFlask(s, ctx, ilvl);
     }
     return;
@@ -228,7 +232,10 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
   }
   if (chance(rng, table.flaskChance * mon.scale * lootMult)) dropFlask(s, ctx, ilvl);
   const worldUniques = encounterWorldDropUniques(ilvl, s.maps.run?.uniqueMapId);
-  if (worldUniques.length && chance(rng, table.uniqueChance * lootMult * (1 + itemRarity / 100))) placeItem(s, ctx, createUnique(s, pick(rng, worldUniques).id, ilvl, rng));
+  if (worldUniques.length && chance(rng, table.uniqueChance * lootMult * (1 + itemRarity / 100))) {
+    const unique = pickWeighted(rng, worldUniques, u => u?.weight ?? 100);
+    if (unique) placeItem(s, ctx, createUnique(s, unique.id, ilvl, rng));
+  }
 }
 
 function dropFlask(s: GameState, ctx: Ctx, ilvl: number): void {

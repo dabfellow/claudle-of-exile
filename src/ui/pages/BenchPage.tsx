@@ -102,7 +102,7 @@ function FlaskCraft({ s, f, onCraft }: { s: GameState; f: FlaskInstance; onCraft
                 key={c.id}
                 className={`btn sm ${f.instill === c.id ? 'active' : ''}`}
                 disabled={instills < 1 || f.instill === c.id}
-                title={instills < 1 ? 'Instilling Orbs drop from Act 4 on' : c.desc}
+                title={instills < 1 ? 'Instilling Orbs drop from Act 5 on' : c.desc}
                 onClick={() => run(game.act((st, ctx) => enchantFlask(st, ctx, f.uid, c.id)))}
               >
                 {c.label}

@@ -63,10 +63,10 @@ const dotDps = (m: MonsterInstance) => m.dots.find((x) => x.kind === 'bleed')?.d
 describe('the Zealots and blood batch', () => {
   it('arrives with Act 3, past the Act 2 gems, and its signatures with it', () => {
     for (const id of [...BATCH, ...SUPPORTS]) {
-      expect(gemAct(id), id).toBe(3);
+      expect(gemAct(id), id).toBe(4);
       expect(gemReqLevel(id), id).toBeGreaterThanOrEqual(32);
     }
-    for (const id of BATCH) expect(gemAct(SUPPORT_GEMS.find((x) => x.signatureFor === id)!.id), id).toBe(3);
+    for (const id of BATCH) expect(gemAct(SUPPORT_GEMS.find((x) => x.signatureFor === id)!.id), id).toBe(4);
   });
 
   it('every new skill has a signature that fits only it', () => {
@@ -82,7 +82,7 @@ describe('the Zealots and blood batch', () => {
     const s = veteran(newGame(1), 60);
     s.unlockedZones = ['mudflats', 'cinderroad'];
     for (const id of [...BATCH, ...SUPPORTS]) expect(gemArrived(s, id), id).toBe(false);
-    const act3 = { ...ZONES[0], id: 'test_act3', act: 3 };
+    const act3 = { ...ZONES[0], id: 'test_act3', act: 4 };
     ZONES.push(act3);
     s.unlockedZones = [...s.unlockedZones, act3.id];
     for (const id of [...BATCH, ...SUPPORTS]) expect(gemArrived(s, id), id).toBe(true);

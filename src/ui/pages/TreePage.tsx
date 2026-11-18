@@ -1437,7 +1437,7 @@ function CharacterTree({ s }: { s: GameState }) {
     const targetId = `profile_${num}`;
     if (targetId === activeProfileId) return;
     if (!isProfileUnlocked(s, targetId)) {
-      const lockMsg = num === 2 ? 'Profile 2 unlocks in Act 5!' : 'Profile 3 unlocks at Tier 5 Maps!';
+      const lockMsg = num === 2 ? 'Profile 2 unlocks in Act 6!' : 'Profile 3 unlocks at Tier 5 Maps!';
       game.act((_, ctx) => ctx.emit({ t: 'info', text: lockMsg }));
       return;
     }
@@ -1563,7 +1563,7 @@ function CharacterTree({ s }: { s: GameState }) {
                   key={num}
                   className={`tree-profile-tab ${isActive ? 'active' : ''} ${!unlocked ? 'locked' : ''}`}
                   onClick={() => switchProfile(num)}
-                  title={!unlocked ? (num === 2 ? 'Unlocks at Act 5' : 'Unlocks at Tier 5 Maps') : `Switch to ${prof.name}`}
+                  title={!unlocked ? (num === 2 ? 'Unlocks at Act 6' : 'Unlocks at Tier 5 Maps') : `Switch to ${prof.name}`}
                 >
                   {prof.name}
                   {!unlocked && <span className="tree-lock-icon">🔒</span>}

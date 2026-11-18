@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACTIVE_GEMS, SUPPORT_GEMS, activeGemDef, gemAct, supportGemDef } from '../src/data/gems';
+import { ACTIVE_GEMS, SUPPORT_GEMS, activeGemDef, gemAct, MAPS_GEM_ACT, supportGemDef } from '../src/data/gems';
 import { buyGem, gemShopOffers } from '../src/engine/hideout';
 import { ZONES } from '../src/data/zones';
 import { deserialize, serialize } from '../src/engine/save';
@@ -69,14 +69,14 @@ describe('Maps gems metadata', () => {
       'soul_rip', 'deathblow',
     ];
     for (const id of skillIds) {
-      expect(gemAct(id), `${id} should be act 7`).toBe(7);
+      expect(gemAct(id), `${id} should be on the Maps shelf`).toBe(MAPS_GEM_ACT);
     }
   });
 
   it('scaled down totems unlock in Acts 1, 3 and 6', () => {
     expect(gemAct('flame_totem')).toBe(1);
-    expect(gemAct('war_totem')).toBe(3);
-    expect(gemAct('siege_totem')).toBe(6);
+    expect(gemAct('war_totem')).toBe(4);
+    expect(gemAct('siege_totem')).toBe(7);
   });
 
   it('marks gems have mark tag', () => {
@@ -411,8 +411,8 @@ describe('Maps gems availability', () => {
   it('keeps Maps gems locked before the final campaign boss, regardless of level or open areas', () => {
     const s = campaignCharacter();
     s.account.campaignDone = false;
-    s.bossesDefeated = s.bossesDefeated.filter((id) => !ZONES.some((z) => z.id === id && z.act === 6 && z.actBoss));
-    expect(gemShopOffers(s).some((o) => gemAct((o.gemId ?? o.supportId)!) === 7)).toBe(false);
+    s.bossesDefeated = s.bossesDefeated.filter((id) => id !== 'shatteredthrone');
+    expect(gemShopOffers(s).some((o) => gemAct((o.gemId ?? o.supportId)!) === MAPS_GEM_ACT)).toBe(false);
     expect(buyGem(s, makeCtx(seeded(1)), 'doom_bolt')).toBe('Not on sale');
   });
 
@@ -434,15 +434,15 @@ describe('Maps gems availability', () => {
     expect(buyGem(s, makeCtx(seeded(1)), 'doom_bolt')).toMatch(/Needs level/);
   });
 
-  it('maps gems have act 7', () => {
-    expect(gemAct('doom_bolt')).toBe(7);
-    expect(gemAct('ice_totem')).toBe(7);
-    expect(gemAct('battle_cry')).toBe(7);
+  it('maps gems use a shelf distinct from campaign Act 7', () => {
+    expect(gemAct('doom_bolt')).toBe(MAPS_GEM_ACT);
+    expect(gemAct('ice_totem')).toBe(MAPS_GEM_ACT);
+    expect(gemAct('battle_cry')).toBe(MAPS_GEM_ACT);
   });
 
-  it('maps support gems have act 7', () => {
-    expect(gemAct('rapid_marks')).toBe(7);
-    expect(gemAct('chaos_mastery')).toBe(7);
-    expect(gemAct('twin_totems')).toBe(7);
+  it('maps supports use a shelf distinct from campaign Act 7', () => {
+    expect(gemAct('rapid_marks')).toBe(MAPS_GEM_ACT);
+    expect(gemAct('chaos_mastery')).toBe(MAPS_GEM_ACT);
+    expect(gemAct('twin_totems')).toBe(MAPS_GEM_ACT);
   });
 });

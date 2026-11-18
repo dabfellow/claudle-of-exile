@@ -11,8 +11,8 @@ import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 
 const ATTRS = ['str', 'dex', 'int'] as const;
-const ACTS = [1, 2, 3, 4, 5, 6];
-const inCell = (act: number, attr: string) => ACTIVE_GEMS.filter((g) => gemAct(g.id) === act && g.attr === attr);
+const ACTS = [1, 2, 4, 5, 6, 7];
+const inCell = (act: number, attr: string) => ACTIVE_GEMS.filter((g) => (gemAct(g.id) === act || (act === 2 && gemAct(g.id) === 3)) && g.attr === attr);
 const covers = (act: number, attr: string, stat: 'lifeLeech' | 'manaLeech') =>
   SUPPORT_GEMS.some((g) => !g.signatureFor && g.mods[stat] && gemAct(g.id) <= act && (act <= 2 || (g.attr === attr && gemAct(g.id) === act)));
 

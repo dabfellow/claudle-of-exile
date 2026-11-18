@@ -1,4 +1,4 @@
-import { ACTIVE_GEMS, gemAct, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
+import { ACTIVE_GEMS, gemAct, gemReqLevel, MAPS_GEM_ACT, SUPPORT_GEMS } from '../data/gems';
 import { actOpen, bossesNeeded, roadsInto, ZONES, type ZoneDef } from '../data/zones';
 import type { GameState } from './types';
 
@@ -10,14 +10,14 @@ export function reachedAct(s: GameState): number {
 /** Whether a gem can turn up for this character yet: drops, cuts and the Gem shop all ask this. */
 export function gemArrived(s: GameState, gemId: string): boolean {
   const act = gemAct(gemId);
-  // act 7 = Maps, which open in DEV (tests) or when campaign is done
-  if (act === 7) return !!(import.meta.env as Record<string, unknown>)?.DEV || mapsGemsUnlocked(s);
+  if (act === MAPS_GEM_ACT) return !!(import.meta.env as Record<string, unknown>)?.DEV || mapsGemsUnlocked(s);
   return act <= reachedAct(s);
 }
 
 /** Maps have no campaign area to assign to the shop; completing the campaign opens their shelf. */
 function mapsGemsUnlocked(s: GameState): boolean {
-  return !!s.account.campaignDone || ZONES.some((z) => z.act === 6 && z.actBoss && s.bossesDefeated.includes(z.id));
+  // Stable finale ID also recognizes characters that completed the former six-act campaign.
+  return !!s.account.campaignDone || s.bossesDefeated.includes('shatteredthrone');
 }
 
 let shopZones: Map<string, ZoneDef> | undefined;
@@ -39,7 +39,8 @@ export function gemShopZone(gemId: string): ZoneDef | undefined {
         const lvl = gemReqLevel(id);
         const rank = Math.floor((levels.indexOf(lvl) * spread) / levels.length);
         const fit = zones.findIndex((z) => z.levelRange[1] >= lvl);
-        shopZones.set(id, zones[Math.max(rank, fit < 0 ? zones.length - 1 : fit)]);
+        const later = fit < 0 ? ZONES.find((z) => z.act > act && z.levelRange[1] >= lvl) : undefined;
+        shopZones.set(id, later ?? zones[Math.max(rank, fit < 0 ? zones.length - 1 : fit)]);
       }
     }
   }
@@ -48,7 +49,7 @@ export function gemShopZone(gemId: string): ZoneDef | undefined {
 
 /** Whether the Gem shop sells this gem yet: its area is open, or the campaign is complete for Maps gems. */
 export function gemInShop(s: GameState, gemId: string): boolean {
-  if (gemAct(gemId) === 7) return mapsGemsUnlocked(s);
+  if (gemAct(gemId) === MAPS_GEM_ACT) return mapsGemsUnlocked(s);
   const z = gemShopZone(gemId);
   return !!z && s.unlockedZones.includes(z.id);
 }

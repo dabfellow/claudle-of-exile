@@ -295,7 +295,7 @@ export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; 
   enemyCasting: { label: 'When an enemy winds up', unlock: 'windups' },
   enemyChannels: { label: 'When an enemy channels', unlock: 'windups' },
   onGround: { label: 'While standing on', ground: true, unlock: 'ground' },
-  frostbite: { label: 'When Frostbite reaches', unit: ' stacks', defaultValue: 5, max: 9, unlock: 'vitals', act: 4 },
+  frostbite: { label: 'When Frostbite reaches', unit: ' stacks', defaultValue: 5, max: 9, unlock: 'vitals', act: 5 },
   lifeBelow: { label: 'When life below', unit: '%', defaultValue: 50, unlock: 'vitals' },
   lifeAbove: { label: 'When life above', unit: '%', defaultValue: 60, unlock: 'vitals' },
   manaAbove: { label: 'When mana above', unit: '%', defaultValue: 40 },
@@ -1596,10 +1596,18 @@ const GEM_ACTS: Record<string, number> = {
   war_scarred: 7, siege_breaker: 7, void_ward: 7, momentum_surge: 7, deep_reserves: 7,
 };
 
-/** The act a skill or support gem arrives with. */
+/** Maps are a separate shelf after the seven campaign acts, never campaign Act 7. */
+export const MAPS_GEM_ACT = 8;
+
+/** The story act a skill or support gem arrives with. Existing gem ownership is unaffected. */
 export function gemAct(id: string): number {
   const sig = SUPPORT_GEMS.find((g) => g.id === id)?.signatureFor;
-  return GEM_ACTS[sig ?? id] ?? 1;
+  const base = sig ?? id;
+  const original = GEM_ACTS[base] ?? 1;
+  if (original === 7) return MAPS_GEM_ACT;
+  // The old inland chapter is now Broken Roads followed by Greyford. Later batches follow their story locations.
+  if (original === 2) return gemReqLevel(base) <= 29 ? 2 : 3;
+  return original >= 3 ? original + 1 : original;
 }
 
 /**
