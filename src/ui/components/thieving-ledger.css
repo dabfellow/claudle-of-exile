@@ -1,0 +1,117 @@
+/* Thieving: a quiet ledger beside a paper dossier. No large artwork assets. */
+.page.thieving-page { gap: 18px; --gold: var(--accent); }
+.thief-header { display: flex; align-items: center; gap: 22px; padding: 22px 24px; background: linear-gradient(110deg, #202321, #161a1d); border-color: #45443a; }
+.thief-emblem { display: grid; place-items: center; color: var(--gold); width: 58px; height: 58px; border: 1px solid #62553b; border-radius: 6px; flex-shrink: 0; }
+.thief-heading { flex: 1; }
+.thief-heading h1 { margin: 0 0 5px; font-size: 28px; }
+.thief-heading > span { font-family: var(--font-display, Georgia, serif); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #b3aa96; }
+.thief-xp { display: grid; gap: 8px; flex: 0 1 300px; color: var(--muted); }
+.thief-xp b { font-size: 22px; color: var(--gold); margin: 0 4px; }
+.thief-marker-total { display: flex; align-items: center; gap: 12px; padding-left: 22px; border-left: 1px solid #444139; }
+.thief-marker-total b { display: block; color: var(--gold); font: 26px Georgia, serif; }
+.thief-marker-total span { display: block; color: #b3aa96; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+.thieving-page > .smith-tabs { margin-top: 0 !important; }
+.thieving-page > .smith-tabs { border-bottom: 1px solid #3e403a; gap: 12px; padding-bottom: 0; }
+.thieving-page > .smith-tabs .gem-chip { background: none; border: 0; border-radius: 0; padding: 11px 8px; color: #aaa79f; font-family: Georgia, serif; }
+.thieving-page > .smith-tabs .gem-chip.active { background: none; color: #e1d2ae; box-shadow: inset 0 -2px #96654b; }
+.thief-workspace { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.thief-ledger { margin: 0; padding: 18px; min-width: 0; background: linear-gradient(140deg, #1c2021, #15191b); border-color: #3b3d39; }
+.thief-ledger-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 16px; border-bottom: 1px solid #49473d; }
+.thief-ledger-title h2 { margin: 0; font-size: 17px; }
+.thief-group { margin-top: 14px; }
+.thief-group-heading { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 2px; background: none; color: #c7bfad; border: 0; text-align: left; cursor: pointer; font-size: 12px; }
+.thief-group-heading b { font: 14px Georgia, serif; }
+.thief-level-range { color: var(--dim); font-size: 10px; }
+.thief-columns, .thief-target { display: grid; grid-template-columns: minmax(0, 2.7fr) repeat(3, minmax(0, .65fr)) minmax(0, .8fr); align-items: center; column-gap: 6px; }
+.thief-columns { padding: 10px 8px; border-bottom: 1px solid #49473d; margin-bottom: 7px; color: #a9a18f; text-transform: uppercase; font: 10px Georgia, serif; letter-spacing: .04em; }
+.thief-columns > :not(:first-child) { text-align: center; }
+.thief-target { width: 100%; min-height: 64px; margin: 6px 0; padding: 9px 8px; border: 1px solid #333a3b; border-radius: 5px; background: #1c2124; color: #ddd5c5; cursor: pointer; text-align: left; font-size: 12px; transition: border-color .12s, background .12s; }
+.thief-target:hover { background: #272c2d; border-color: #766342; }
+.thief-target.selected { border-color: #bc9b57; background: linear-gradient(100deg, #343025, #222625); box-shadow: inset 3px 0 #bc9b57; }
+.thief-target.locked { color: #929597; }
+.thief-target-name { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.thief-target-name b { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.thief-target-name > span:not(.thief-portrait) { min-width: 0; }
+.thief-working { display: block; font-size: 10px; color: #91ad96; margin-top: 3px; }
+.thief-cell { text-align: center; font-size: 12px; }
+.thief-mastery-number { color: #c5ab72; }
+.thief-portrait { display: inline-grid; place-items: center; width: 38px; height: 42px; flex-shrink: 0; border: 1px solid #665e4e; border-radius: 3px; overflow: hidden; background: #282b29; color: #b8a879; }
+.thief-portrait img { object-fit: cover; width: 100%; height: 100%; filter: grayscale(.85) sepia(.2); }
+html .thieving-page .thief-portrait img { filter: grayscale(1) sepia(.2); }
+.thief-portrait.large { width: 68px; height: 78px; }
+.thief-marker-note { border-top: 1px solid #49473d; margin-top: 20px; padding-top: 16px; color: #aaa493; font-size: 11px; }
+.thief-marker-note .row { gap: 7px; margin-bottom: 10px; flex-wrap: wrap; }
+.thief-marker-note b { font-weight: 500; }
+.thief-marker-note p { line-height: 1.6; margin: 10px 0 0; }
+.thief-dossier { position: relative; min-width: 0; padding: 26px 22px 20px; border: 1px solid #a48c62; border-radius: 5px; color: #342d24; background: radial-gradient(ellipse at 15% 20%, #f2e5c940, transparent 65%), radial-gradient(ellipse at 95% 80%, #8a6e411a, transparent 60%), linear-gradient(105deg, #c9b58f, #dfcfac 45%, #d1bf9b); box-shadow: inset 0 0 0 4px #dfcfaa, inset 0 0 0 5px #9c82565c, 2px 3px 0 #756345, 4px 5px 0 #352f26; }
+.thief-paper-clip { position: absolute; top: -11px; left: 30px; width: 38px; height: 17px; border: 1px solid #6e552f; border-radius: 3px; background: linear-gradient(#ac9157, #c3aa73 55%, #8e703f); box-shadow: 0 2px 2px #342d2438; }
+.thief-paper-clip::before { content: ''; position: absolute; width: 11px; height: 12px; border: 2px solid #9d824b; border-radius: 6px 6px 2px 2px; top: -10px; left: 11px; background: #202326; }
+.thief-dossier-heading { display: flex; align-items: center; gap: 14px; }
+.thief-dossier-heading > div { min-width: 0; }
+.thief-dossier-heading h2 { color: #422a25; font: bold 24px/1.15 Georgia, serif; margin: 7px 0 10px; }
+.thief-dossier-kicker { text-transform: uppercase; font-size: 10px; letter-spacing: .1em; color: #66553b; }
+.thief-dossier-heading .num { font-size: 11px; }
+.thief-rewards { border-block: 1px solid #8d785b70; padding: 12px 0 8px; margin-top: 16px; }
+.thief-rewards h3 { margin: 0 0 14px; color: #4d3e2b; font: 12px Georgia, serif; letter-spacing: .13em; text-transform: uppercase; }
+.thief-reward { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 13px; flex-wrap: wrap; }
+.thief-reward b { font-weight: 600; }
+.thief-reward .num { font-size: 11px; }
+.thief-reward-note { color: #65553d; font-size: 10px; line-height: 1.6; margin: 12px 0 0; }
+.thief-dossier-action { padding: 14px 0; border-bottom: 1px solid #8d785b70; }
+.thief-dossier .thief-pickpocket { width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; min-height: 42px; border: 1px solid #672f2b; border-radius: 4px; background: linear-gradient(#713f39, #512c29); color: #ecdcba; box-shadow: inset 0 0 0 2px #bd9c6526; font: 14px Georgia, serif; letter-spacing: .08em; }
+.thief-dossier .thief-pickpocket:hover:not(:disabled) { background: #804b40; border-color: #946942; }
+.thief-dossier .thief-pickpocket:disabled { opacity: .5; cursor: not-allowed; }
+.thief-attempt { display: flex; justify-content: space-between; gap: 10px; margin: 13px 0 7px; font-size: 11px; }
+.thief-blocker { display: flex; gap: 6px; align-items: center; font-size: 12px; margin: 0 0 12px; }
+.thief-return { background: none; border: 0; border-bottom: 1px dotted #675035; color: #543e28; font-size: 11px; padding: 8px 0 2px; cursor: pointer; text-align: left; }
+.thief-dossier-mastery { padding: 12px 0; }
+.thief-dossier .skilling-mastery { padding: 0; margin: 0; border: 0; background: transparent; }
+.thief-dossier .skilling-mastery-label { color: #473823; }
+.thief-dossier .mastery-pip { color: #675135; background: #b4a07c; border-color: #a18b66; }
+.thief-dossier .mastery-pip.unlocked { background: #64502f; color: #edddba; }
+.thief-next-perk { display: inline-block; font-size: 11px; color: #5c482e; margin-top: 10px; }
+.thief-focus { color: #d2ccbd; --skill: #c9a35a; }
+.thief-focus .minigame { background: #222629; border: 1px solid #45443b; padding: 14px; margin: 0; }
+.thief-focus .card-title { display: block; font: 15px Georgia, serif; color: #ddd1b6; }
+.thief-focus .card-hint { display: block; margin-top: 5px; font: 11px/1.4 var(--font-body, sans-serif); color: #a6a39a; }
+.thief-focus .mini-lock { height: 66px; padding: 8px; gap: 12px; background: #181c1e; }
+.thief-focus .mini-pin { position: relative; width: 100%; max-width: 44px; justify-self: center; border-radius: 5px; border: 1px solid #8b7142; background: linear-gradient(90deg, #4d4029, #927640 40%, #a68a51 60%, #4a3d28); box-shadow: inset 0 0 0 3px #211d16a6; }
+.thief-focus .mini-pin::after { content: ''; position: absolute; left: 35%; right: 35%; height: 2px; top: 45%; background: #282319; box-shadow: 0 5px #282319; }
+.thief-focus .mini-pin.lit { background: #f1d48a; box-shadow: 0 0 10px #ddb45299; border-color: #ffe9b8; }
+.thief-focus .mini-pin.set { background: #657b55; border-color: #a8b38b; }
+.thief-focus .minigame-foot { flex-wrap: wrap; }
+.thief-focus .minigame-bars { min-width: 80px; }
+.thief-target:focus-visible, .thief-group-heading:focus-visible, .thief-return:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+@container (max-width: 1000px) {
+  .thief-header { flex-wrap: wrap; gap: 16px; }
+  .thief-xp { flex: 1 1 230px; }
+  .thief-marker-total { padding-left: 12px; }
+  .thief-workspace { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; }
+  .thief-ledger { padding: 12px; }
+  .thief-dossier { padding: 23px 16px 16px; }
+  .thief-level-range { display: none; }
+  .thief-target-name { gap: 6px; }
+  .thief-target .thief-portrait { width: 28px; height: 34px; }
+}
+@container (max-width: 760px) {
+  .thief-workspace { grid-template-columns: minmax(0, 1fr); }
+  .thief-heading h1 { font-size: 24px; }
+  .thief-emblem { width: 44px; height: 44px; }
+  .thief-header { padding: 16px; }
+  .thief-heading { flex-basis: calc(100% - 70px); }
+  .thief-xp { flex-basis: 170px; }
+  .thief-marker-total b { font-size: 22px; }
+  .thief-marker-total span { max-width: 80px; }
+}
+@container (max-width: 420px) {
+  .thief-header { gap: 12px; }
+  .thief-marker-total { border-left: 0; padding-left: 0; }
+  .thief-columns, .thief-target { grid-template-columns: minmax(0, 2.3fr) repeat(3, minmax(0, .6fr)) minmax(0, .75fr); gap: 3px; }
+  .thief-columns { font-size: 9px; padding-inline: 5px; }
+  .thief-target { padding-inline: 5px; }
+  .thief-target .thief-portrait { display: none; }
+  .thief-cell { font-size: 10px; }
+  .thief-target-name b { font-size: 11px; }
+  .thief-dossier-heading h2 { font-size: 22px; }
+  .thief-portrait.large { width: 52px; height: 64px; }
+}

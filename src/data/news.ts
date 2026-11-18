@@ -11,6 +11,8 @@ export interface NewsEntry {
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
 export const UPCOMING: string[] = [
+  'Thieving now has a dark target ledger and parchment dossier, with rewards, mastery and lockpicking Focus together beside your selected mark.',
+  'Professions now have their own compact themed workspaces, with activity selectors, live recipes, mastery and Focus together; Woodcutting also has a separate Planks tab.',
   'Thieving overhaul: 12 specialists, rogue crew selection, and tactical heist choices.',
 ];
 

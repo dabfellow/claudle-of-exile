@@ -4,6 +4,8 @@ Last updated 2026-11-17. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
+Profession UI redesign is complete and verified (2026-11-17), pending release: approved Thieving and Woodcutting screens plus distinct themed workspaces for every other implemented profession. Desktop starts, Focus, batches, specialist panels and 390px phone layouts checked; all 106 test files / 1,748 tests and typecheck pass. See [SKILLING_UI.md](SKILLING_UI.md).
+
 Latest confirmed live release: **0.4.48, Dedicated Masterwork Tabs and Mastery Batches**, deployed 2026-11-16 (dedicated Masterworks tab on each profession screen, separate production mastery batches at Lv 15/90, visual percentage drop rates on gathering action cards, connected world-map road network with 50% opacity routes and sailing lanes, and mastery Focus bonuses for skilling minigames; 106 test files / 1,746 tests confirmed live at https://dabfellow.party/path-of-idle/). Previous: **0.4.47, Ashen Codex World Map**, **0.4.46, Mastery Tooltips and Action Card Polish**, **0.4.45, Masterwork Interactivity and Direct Skilling Access**, **0.4.44, Skilling Mastery Overhaul and Interactive Workbenches**, **0.4.43, Skilling Layouts and Themed Undertakings**, **0.4.42, Skilling Overhaul Acceptance and Wiki Update**, **0.4.41, Defence and Rune-carved Uniques**, **0.4.40, Pinnacle Uniques**.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
@@ -48,10 +50,12 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–18 complete, verified, and live in 0.4.42 (2026-11-15). Production mastery batches implemented and verified, unreleased (2026-11-16) |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–18 complete, verified, and live in 0.4.42 (2026-11-15). Production mastery batches implemented and verified, unreleased (2026-11-16). All profession UI redesigns complete and verified, pending release (2026-11-17) |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Profession redesign direction (2026-11-17): Owner approved Thieving's dark ledger/parchment dossier and Woodcutting's grouped tree stand, restrained timber panel and separate Planks tab. Apply that minimalist, readable, game-like approach to all professions, giving each its own material treatment and layout. Use existing icons and CSS motifs rather than large generated scenes. Preserve existing actions, rewards, mastery, Focus, unlocks and production balance.
 
 - Kingdom lore Topic 38 (2026-11-17): Owner chose A for the Creep's extent within Orvessa: Veyrath is its only established foothold. Elsewhere in Orvessa, people regard it as a distant exile problem. Kroten's shipments could carry it beyond Veyrath; no outbreak elsewhere in Orvessa is established. Jojo Land's separate infestation remains author-level background lore with no confirmed contact or transmission history.
 
@@ -500,6 +504,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Implement the approved profession redesign batch. — done 2026-11-17
+  - Thieving ledger/dossier, Woodcutting with separate Planks tab, and distinct compact workspaces for Mining, Foraging, Smelting, Forging, Woodcrafting, Alchemy, Gemcutting, Rune-carving, Cooking, Cartography and Archaeology. Existing engine rules and secondary systems retained; desktop and phone checks pass. Release pending.
+
 - [ ] Add Sir Broden as an NPC with a quest chain awarding a unique item (requested 2026-11-16).
   - Accepted background and aliases are in Decisions. Design the quest chain and unique reward before implementation; current request is to record the future work.
 
@@ -645,6 +652,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- All profession screens redesigned with restrained, distinct material treatments; live actions, rewards, mastery, batches, Focus, secondary panels and Masterworks connected and verified. — done 2026-11-17 (release pending)
 
 - [x] Created and integrated the Ashen Codex world-map painting, refined through the owner's annotated art revisions, with general paths across all six campaign regions and readable clickable act labels. Source images/prompts saved under `output/imagegen/`; runtime asset in `src/assets/maps/`. Typecheck, four campaign-map tests and client build pass; visual playtest pending above. — done 2026-11-16
 

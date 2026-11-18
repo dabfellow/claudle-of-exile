@@ -202,10 +202,13 @@ function WoodcuttingGame({ onSwing }: { onSwing: OnSwing }) {
   useSpace(chop);
 
   return (
-    <button className="mini-bar" aria-label="Swing your axe" onPointerDown={chop}>
-      <Zone at={zone} width={WOOD_ZONE} />
-      <div className="mini-marker" ref={marker} />
-    </button>
+      <div className="mini-woodcutting">
+        <button className="mini-bar" aria-label="Swing your axe" onPointerDown={chop}>
+          <Zone at={zone} width={WOOD_ZONE} />
+          <div className="mini-marker" ref={marker} />
+        </button>
+        <button className="btn mini-swing" onPointerDown={chop} onKeyDown={(e) => { if (e.key === 'Enter' && !e.repeat) { e.preventDefault(); chop(); } }}>Swing</button>
+      </div>
   );
 }
 
@@ -397,7 +400,7 @@ function ThievingGame({ onSwing }: { onSwing: OnSwing }) {
     <div className="mini-timed">
       <div className={`mini-lock ${picking ? 'picking' : ''}`}>
         {[...Array(PINS).keys()].map((pin) => (
-          <button key={pin} className={`mini-pin ${lit === pin ? 'lit' : ''} ${lock.order.slice(0, picked).includes(pin) ? 'set' : ''}`} aria-label={`Pin ${pin + 1}`} onPointerDown={() => pick(pin)} />
+          <button key={pin} className={`mini-pin ${lit === pin ? 'lit' : ''} ${lock.order.slice(0, picked).includes(pin) ? 'set' : ''}`} aria-label={`Pin ${pin + 1}`} onPointerDown={() => pick(pin)} onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); pick(pin); } }} />
         ))}
       </div>
       {picking ? <Patience key={lock.id} ms={LOCK_PATIENCE_MS} /> : <span className="mini-patience idle" aria-hidden />}
