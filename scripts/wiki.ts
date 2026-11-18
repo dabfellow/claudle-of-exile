@@ -410,7 +410,7 @@ function areaEntry(z: ZoneDef, i: number) {
   const before = z.requires?.after ?? (i > 0 ? [OPEN_ZONES[i - 1].id] : []);
   const opens = OPEN_ZONES.filter((o, n) => (o.requires?.after ?? (n > 0 ? [OPEN_ZONES[n - 1].id] : [])).includes(z.id));
   const gems = ACTIVE_GEMS.filter((g) => gemAct(g.id) === z.act && gemReqLevel(g.id) >= z.levelRange[0] && gemReqLevel(g.id) <= z.levelRange[1]);
-  const uniques = z.uniques.filter((id) => UNIQUES.some((u) => u.id === id));
+  const uniques = (z.uniques ?? []).filter((id) => UNIQUES.some((u) => u.id === id));
   const body = `<p>${esc(z.desc)}</p>
 ${facts([
     ['Act', `<a href="${BASE_URL}acts/#act-${z.act}">Act ${z.act}: ${esc(ACTS.find((a) => a.n === z.act)!.name)}</a>`],
