@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Rogue Roster overhaul: 12-rogue crew selection, talent trees, and tactical heist loop.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

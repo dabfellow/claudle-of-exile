@@ -21,7 +21,8 @@ import { MONSTER_MODS } from '../src/data/monsterMods';
 import { MONSTER_PROFILES } from '../src/data/monsterProfiles';
 import { MEALS, MEAL_MS } from '../src/data/cooking';
 import { CULTURES, FIND_HOURS, SITES, STRATA } from '../src/data/expedition';
-import { ALARM_KEEPS, CREW_SLOT_LEVELS, HEIST_JOBS, MAX_ROGUE_RANK, ROGUES, STEALTH_FLOOR } from '../src/data/heist';
+import { ALARM_KEEPS, HEIST_JOBS, STEALTH_FLOOR } from '../src/data/heist';
+import { ROGUES } from '../src/data/rogues';
 import { ATLAS_NODES, ATLAS_POINT_CAP, DOOMED_MODS, DOOMED_TIERS, MAP_TIERS, NORMAL_MAP_MODS, SEXTANTS, SEXTANT_BASE_CHARGES, SEXTANT_MODS } from '../src/data/maps';
 import { NEWS } from '../src/data/news';
 import { PASSIVE_NODES } from '../src/data/passiveTree';
@@ -985,7 +986,7 @@ function heistsBlock(): string {
 }
 
 function roguesBlock(): string {
-  return table(['Rogue', 'Hire level', 'Each rank'], ROGUES.map((r) => [esc(r.name), String(r.level), `${Math.round(r.perRank * 100)}% ${esc(r.effect)}`]));
+  return table(['Rogue', 'Class', 'Primary specialty', 'Secondary bonuses', 'Signature'], ROGUES.map((r) => [esc(r.name), esc(r.class), esc(r.primary), r.secondary.map(esc).join(', '), `${esc(r.talentTree[9].name)}: ${esc(r.talentTree[9].effect)}`]));
 }
 
 function expeditionBlock(): string {
@@ -1045,8 +1046,6 @@ const GUIDE_DATA: Record<string, () => string> = {
   'mastery-conserve': () => String(MASTERY_CONSERVE_MAX * 100),
   'heist-keeps': () => String(ALARM_KEEPS * 100),
   'heist-stealth-floor': () => String(STEALTH_FLOOR * 100),
-  'rogue-rank-cap': () => String(MAX_ROGUE_RANK),
-  'crew-slots': () => CREW_SLOT_LEVELS.join(', '),
   'expedition-hours': () => FIND_HOURS.join(', '),
   'expedition-strata': () => STRATA.join(', '),
   'map-tiers': mapTiersBlock,

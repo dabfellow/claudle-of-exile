@@ -356,7 +356,7 @@ export function monsterXp(mon: MonsterInstance): number {
  * of xp, and area and chain hits mostly glance off it. It rewards a heavy single-target blow over a screen-clearing
  * spell, so skills that only clear can't race through the later acts.
  */
-export const HULKING = { fromAct: 3, chance: 0.2, life: 5, damage: 2, xp: 5, slow: 2, areaTaken: 0.4 };
+export const HULKING = { fromAct: 4, chance: 0.2, life: 5, damage: 2, xp: 5, slow: 2, areaTaken: 0.4 };
 
 function makeHulking(m: MonsterInstance): void {
   m.hulking = true;

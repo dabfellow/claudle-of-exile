@@ -74,10 +74,10 @@ function fakeMinion(cell: number, over: Partial<Minion> = {}): Minion {
 describe('the Tides and summons batch', () => {
   it('arrives with Act 5, and its signatures with it', () => {
     for (const id of [...BATCH, ...SUPPORTS]) {
-      expect(gemAct(id), id).toBe(5);
+      expect(gemAct(id), id).toBe(6);
       expect(gemReqLevel(id), id).toBeGreaterThanOrEqual(50);
     }
-    for (const id of BATCH) expect(gemAct(SUPPORT_GEMS.find((x) => x.signatureFor === id)!.id), id).toBe(5);
+    for (const id of BATCH) expect(gemAct(SUPPORT_GEMS.find((x) => x.signatureFor === id)!.id), id).toBe(6);
   });
 
   it('every new skill has a signature that fits only it', () => {

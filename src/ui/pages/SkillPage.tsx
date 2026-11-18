@@ -31,6 +31,7 @@ import { PantryBoard } from '../components/PantryBoard';
 import { RuneBoard } from '../components/RuneBoard';
 import { SkillMinigame } from '../components/SkillMinigame';
 import { ThievingHeader, ThievingLedger } from '../components/ThievingLedger';
+import { SmeltingCrucible } from '../components/SmeltingCrucible';
 import { ProfessionWorkbench, PROFESSION_THEMES } from '../components/ProfessionWorkbench';
 import { Icon, Orb, Swatch } from '../components/Icon';
 import { MasteryProgress } from '../components/MasteryProgress';
@@ -1063,10 +1064,11 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
         </div>
       )}
 
-      {showActivities && (
-        <ProfessionWorkbench key={`${skill}:${tab}:${purpose}`} skill={skill} groups={tiers} isUnlocked={isUnlocked}
-          renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />
-      )}
+      {showActivities && (skill === 'smelting' ? (
+        <SmeltingCrucible groups={tiers} isUnlocked={isUnlocked} renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />
+      ) : (
+        <ProfessionWorkbench key={`${skill}:${tab}:${purpose}`} skill={skill} groups={tiers} isUnlocked={isUnlocked} renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />
+      ))}
 
       {skill === 'runecarving' && tab !== 'masterworks' && <details className="profession-supplies"><summary>Equipped runes & resonance reference</summary><RuneBoard /></details>}
       {skill === 'cooking' && tab !== 'masterworks' && <details className="profession-supplies"><summary>Pantry & active meal</summary><PantryBoard /></details>}

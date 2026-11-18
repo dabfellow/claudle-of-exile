@@ -22,8 +22,9 @@ export function isProfileUnlocked(s: GameState, profileId: string | number): boo
   const id = normalizeProfileId(profileId);
   if (id === 'profile_1') return true;
   if (id === 'profile_2') {
-    const act = Math.max((s as any).campaign?.act ?? 0, reachedAct(s));
-    return act >= 5;
+    const legacyAct = (s as any).campaign?.act ?? 0;
+    const act = Math.max(legacyAct >= 2 ? legacyAct + 1 : legacyAct, reachedAct(s));
+    return act >= 6;
   }
   if (id === 'profile_3') {
     const highestMapTier = (s.maps as any)?.highestTier ?? 0;

@@ -694,7 +694,7 @@ function enterMap(s: GameState, ctx: Ctx, tier: number, areaOrTheme?: string): v
 
 /** Run one map by hand. */
 export function startMap(s: GameState, ctx: Ctx, tier: number, areaOrTheme?: string): string | null {
-  if (!mapsOpen(s)) return 'Complete Act 6 to use the Map Device';
+  if (!mapsOpen(s)) return `Complete Act ${FINAL_ACT} to use the Map Device`;
   if (s.maps.run) return 'Already in a map';
   if (mapsHeld(s, tier) <= 0) return 'No maps of that tier';
   enterMap(s, ctx, tier, areaOrTheme);
@@ -748,7 +748,7 @@ export function startDoomedMap(s: GameState, ctx: Ctx, dTierNum: number): string
 
 /** Open a Unique Map from the Map Case. */
 export function startUniqueMap(s: GameState, ctx: Ctx, uniqueMapId: string): string | null {
-  if (!mapsOpen(s)) return 'Complete Act 6 to use the Map Device';
+  if (!mapsOpen(s)) return `Complete Act ${FINAL_ACT} to use the Map Device`;
   if (s.maps.run) return 'Already in a map';
   const uDef = uniqueMapDef(uniqueMapId);
   if (!uDef) return 'Unknown Unique Map';

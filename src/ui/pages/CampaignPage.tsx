@@ -3,9 +3,8 @@ import { uniqueDef } from '../../data/bases';
 import { areaCurrency, bossGatherMats, bossTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { ACT_MAPS, smoothPath, WORLD_MAP, type MapPoint } from '../../data/campaignMap';
-import { WORLD_MAP_SIZE, WORLD_ROADS, WORLD_ROAD_NODES, WORLD_SEA_ROUTES, WORLD_SEA_STOPS, worldRoadPath } from '../../data/worldMapRoads';
-import { LABEL_SIDE, labelLines, ZONE_POS } from '../../data/continent';
+import { ACT_MAPS, smoothPath, VEYRATH_REGIONS, WORLD_MAP, type MapPoint } from '../../data/campaignMap';
+import { LABEL_SIDE, labelLines } from '../../data/continent';
 import { actBossZone, actOpen, ACTS, bossesNeeded, isSideArea, MECHANIC_INFO, roadsInto, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
 import { FINAL_ACT } from '../../engine/hideout';
 import { bossesBeatenInAct, zoneLockText } from '../../engine/progress';
@@ -17,6 +16,8 @@ import { ActTerrain, WorldTerrain } from '../components/CampaignTerrain';
 import { anyArtUrl, Badge, EmptyState, GameIcon, MatIcon, PageHeader, ProgressBar, sceneStyle } from '../components/common';
 import type { Page } from '../Layout';
 import '../round2-session2.css';
+import '../components/veyrath-atlas.css';
+import { CampaignJournal } from '../components/CampaignJournal';
 
 /** How risky an area looks for your current level. */
 function danger(s: GameState, z: ZoneDef): { label: string; cls: string } {
@@ -197,23 +198,18 @@ const at = ([x, y]: MapPoint): CSSProperties => ({ left: `${x}%`, top: `${y}%` }
 /** Every act on one atlas, with roads traced on the artwork and joined at shared forks. */
 function WorldMap({ s, onOpen }: { s: GameState; onOpen: (act: number) => void }) {
   const cur = currentAct(s);
-  const here = s.combat ? ZONE_POS[s.combat.zoneId] : undefined;
+  const [showRegions, setShowRegions] = useState(true);
   return (
+    <section className="veyrath-atlas" aria-label="Veyrath world map">
+      <div className="veyrath-atlas-toolbar">
+        <div><h2>Veyrath</h2><p className="dim small">Seven acts across the exile kingdom. Select a numbered region to explore its roads.</p></div>
+        <button className="btn sm" aria-pressed={showRegions} onClick={() => setShowRegions((value) => !value)}>{showRegions ? 'Hide act regions' : 'Show act regions'}</button>
+      </div>
     <div className="card cmap-card cmap-world-scroll">
       <div className="cmap-world" style={{ aspectRatio: WORLD_MAP.aspect }}>
-        {WORLD_MAP.image ? <img className="ct-svg" src={WORLD_MAP.image} alt="Ashen Codex world atlas showing the six campaign regions" /> : <WorldTerrain isOpen={actOpen} selected={cur} onPick={onOpen} here={here} />}
-        <svg className="cmap-overlay" viewBox={`0 0 ${WORLD_MAP_SIZE.join(' ')}`} preserveAspectRatio="none" aria-hidden>
-          <g opacity="0.5">
-          {WORLD_ROADS.map((road, i) => <path key={`under-${i}`} className="cmap-trail-under" d={worldRoadPath(road)} />)}
-          {WORLD_ROADS.map((road, i) => <path key={i} className="cmap-trail" d={worldRoadPath(road)} />)}
-          {WORLD_SEA_ROUTES.map((road, i) => (
-            <g key={`sail-${i}`}>
-              <path className="cmap-trail-under cmap-sailing-under" d={smoothPath([WORLD_ROAD_NODES[road.from], ...road.via, WORLD_ROAD_NODES[road.to]])} />
-              <path className="cmap-trail cmap-sailing" d={smoothPath([WORLD_ROAD_NODES[road.from], ...road.via, WORLD_ROAD_NODES[road.to]])} />
-            </g>
-          ))}
-          {WORLD_SEA_STOPS.map((id) => <circle key={id} className="cmap-sea-stop" cx={WORLD_ROAD_NODES[id][0]} cy={WORLD_ROAD_NODES[id][1]} r="5" />)}
-          </g>
+        {WORLD_MAP.image ? <img className="ct-svg" src={WORLD_MAP.image} alt="Veyrath atlas showing Brinewick, Greyford, Harrowgate, Cairnwatch and Caer Veyr" /> : <WorldTerrain isOpen={actOpen} selected={cur} onPick={onOpen} />}
+        <svg className={`cmap-overlay veyrath-regions ${showRegions ? '' : 'is-hidden'}`} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+          {VEYRATH_REGIONS.map((region) => <polygon key={region.act} points={region.points} className={region.act === cur ? 'is-current' : ''} style={{ ['--region' as string]: region.color }} />)}
         </svg>
         {ACTS.map((a) => {
           const pos = WORLD_MAP.labels[a.n];
@@ -221,22 +217,14 @@ function WorldMap({ s, onOpen }: { s: GameState; onOpen: (act: number) => void }
           const open = actOpen(a.n);
           const pr = actProgress(s, a.n);
           return (
-            <button key={a.n} className={`cmap-act-label ${open ? '' : 'locked'} ${a.n === cur ? 'current' : ''} ${pr.done ? 'done' : ''}`} style={at(pos)} disabled={!open} onClick={() => onOpen(a.n)} title={open ? `Open Act ${a.n}: ${a.name}` : `Act ${a.n} isn't open yet`}>
-              <small>
-                Act {a.n}
-                {pr.done && ' ✓'}
-              </small>
-              <b>{open ? a.name.replace(/^The /, '') : '???'}</b>
-              {open && pr.total > 0 && (
-                <span className="cmap-act-label-progress num">
-                  {pr.cleared}/{pr.total}
-                </span>
-              )}
+            <button key={a.n} className={`cmap-act-label veyrath-act-pin ${open ? '' : 'locked'} ${a.n === cur ? 'current' : ''} ${pr.done ? 'done' : ''}`} style={at(pos)} disabled={!open} onClick={() => onOpen(a.n)} aria-label={`Act ${a.n}: ${a.name}`} title={open ? `Act ${a.n}: ${a.name}${a.n === 7 ? ' — beneath Caer Veyr' : ''}` : `Act ${a.n} isn't open yet`}>
+              <small>ACT</small><b>{a.n}</b>{pr.done && <span className="veyrath-pin-done">✓</span>}
             </button>
           );
         })}
       </div>
     </div>
+    </section>
   );
 }
 
@@ -392,9 +380,10 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
   if (act === null) {
     return (
       <div className="page">
-        <PageHeader title="Campaign">The road the campaign takes across the continent. Pick an act to see its areas up close.</PageHeader>
+      <PageHeader title="Campaign">Find your place in Veyrath, follow the missing supplies and uncover what lies beneath the capital.</PageHeader>
         <WorldMap s={s} onOpen={openAct} />
         <ActList s={s} onOpen={openAct} />
+        <CampaignJournal onSelectZone={(id) => { openAct(zoneDef(id).act); setZoneId(id); }} />
       </div>
     );
   }
@@ -407,7 +396,7 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
   const zone = zones.find((z) => z.id === zoneId);
   return (
     <div className="page">
-      <PageHeader title="Campaign">Each boss opens the roads ahead. From Act 3 they fork, and each act boss waits until you've beaten most of its act's bosses, so which ones you skip is up to you.</PageHeader>
+      <PageHeader title="Campaign">Each boss opens the roads ahead. Later routes branch, letting you choose which dangers to face before the act's final encounter.</PageHeader>
       <div className="cmap-act-head">
         <button className="btn sm" onClick={() => setAct(null)}>
           ← World map
@@ -426,6 +415,7 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
           </span>
         )}
       </div>
+      <CampaignJournal chapter={act} onSelectZone={(id) => { openAct(zoneDef(id).act); setZoneId(id); }} />
       {done && (
         <div className="card act-complete">
           <h3>Act {current.n} complete</h3>

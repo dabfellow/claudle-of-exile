@@ -702,6 +702,7 @@ export interface UniqueDef {
   noTrade?: boolean;
   /** Exclusive completed profession route; excluded from every ordinary drop roll. */
   projectSource?: string;
+  weight?: number;
 }
 
 export const UNIQUES: UniqueDef[] = [
@@ -713,6 +714,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_gem_chance', values: [40] },
       { affixId: 'skill_xp', values: [12] },
     ],
+    weight: 100,
   },
   {
     id: 'bloodthirst', name: 'Bloodthirst', baseId: 'rusted_sword', flavour: 'It remembers every throat.',
@@ -722,6 +724,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'life_leech', ranges: [[3, 5]] },
       { affixId: 'flat_life', ranges: [[-20, -10]] },
     ],
+    weight: 100,
   },
   {
     id: 'emberheart', name: 'Emberheart', baseId: 'plate_vest', flavour: 'A hearth that never cools.',
@@ -731,6 +734,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'fire_res', ranges: [[35, 50]] },
       { affixId: 'cold_res', ranges: [[-30, -20]] },
     ],
+    weight: 50,
   },
   {
     id: 'windstep', name: 'Windstep', baseId: 'leather_boots', flavour: 'Never where the blade falls.',
@@ -739,6 +743,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'item_rarity', ranges: [[20, 35]] },
       { affixId: 'skill_speed', ranges: [[8, 12]] },
     ],
+    weight: 50,
   },
   {
     id: 'alchemists_band', name: "Alchemist's Band", baseId: 'iron_ring', flavour: 'Every drop, a second chance.',
@@ -748,6 +753,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_regen_pct', values: [1] },
       { affixId: 'chaos_res', ranges: [[-20, -10]] },
     ],
+    weight: 50,
   },
   {
     id: 'iron_bulwark', name: 'The Iron Bulwark', baseId: 'kite_shield', flavour: 'Let them break upon me.',
@@ -756,6 +762,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'flat_life', ranges: [[50, 70]] },
       { affixId: 'u_speed_more', ranges: [[-15, -8]] },
     ],
+    weight: 50,
   },
   {
     id: 'starforged_edge', name: 'Starforged Edge', baseId: 'mithril_sabre', flavour: 'Cut from a falling star.',
@@ -767,6 +774,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_phys_can_shock', values: [1] },
       { affixId: 'u_no_elem_damage', values: [1] },
     ],
+    weight: 20,
   },
   {
     id: 'titans_girth', name: "Titan's Girth", baseId: 'heavy_belt', flavour: 'Mountains bow to no one.',
@@ -776,6 +784,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'flask_charges', ranges: [[25, 35]] },
       { affixId: 'inc_evasion', ranges: [[-20, -10]] },
     ],
+    weight: 20,
   },
 
   // ---------- class-mechanic uniques (docs/GAME.md) ----------
@@ -789,6 +798,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'accuracy', ranges: [[-120, -80]] },
       { affixId: 'u_pummel_hits', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'thornquill', name: 'Thornquill', baseId: 'ash_longbow', flavour: "Plucked from something that didn't want to give it up.",
@@ -799,6 +809,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'flat_life', ranges: [[-35, -15]] },
       { affixId: 'u_barrage_arrows', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'wellspring', name: 'Wellspring', baseId: 'gnarled_staff', flavour: 'Draw deep; the well remembers.',
@@ -808,6 +819,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_mana_power_full', ranges: [[8, 15]] },
       { affixId: 'all_res', ranges: [[-15, -8]] },
     ],
+    weight: 100,
   },
   {
     id: 'rebuttal', name: 'Rebuttal', baseId: 'iron_blade', flavour: 'Every argument has an answer.',
@@ -818,6 +830,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'inc_armour', ranges: [[-20, -10]] },
       { affixId: 'u_parry_blocks', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'ninth_psalm', name: 'The Ninth Psalm', baseId: 'crystal_sceptre', flavour: 'The eight before it were mercy.',
@@ -828,6 +841,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'inc_evasion', ranges: [[-25, -15]] },
       { affixId: 'u_hammer_convert', values: [60] },
     ],
+    weight: 100,
   },
   {
     id: 'last_breath', name: 'Last Breath', baseId: 'shadow_kris', flavour: 'Spend it wisely.',
@@ -838,6 +852,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_malice_max', values: [-3] },
       { affixId: 'all_res', ranges: [[-20, -10]] },
     ],
+    weight: 100,
   },
   {
     id: 'second_guess', name: 'The Second Guess', baseId: 'buckler', flavour: 'Doubt is a shield, if you hold it right.',
@@ -847,6 +862,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'attack_speed', ranges: [[-15, -8]] },
       { affixId: 'u_riposte_heal', values: [2] },
     ],
+    weight: 100,
   },
   {
     id: 'bellwether', name: 'Bellwether', baseId: 'kite_shield', flavour: 'It rings before the storm, and after.',
@@ -856,6 +872,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_block', ranges: [[6, 10]] },
       { affixId: 'u_fervor_pct', ranges: [[20, 30]] },
     ],
+    weight: 100,
   },
   {
     id: 'old_grudge', name: 'The Old Grudge', baseId: 'tower_shield', flavour: 'Forgive nothing. Forget nothing.',
@@ -866,6 +883,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_speed_more', ranges: [[-15, -8]] },
       { affixId: 'u_rage_regen', values: [0.1] },
     ],
+    weight: 100,
   },
   {
     id: 'castaways_kerchief', name: "Castaway's Kerchief", baseId: 'linen_hood', flavour: 'All you came ashore with.',
@@ -874,6 +892,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'item_rarity', ranges: [[12, 20]] },
       { affixId: 'life_regen', ranges: [[2, 4]] },
     ],
+    weight: 100,
   },
   {
     id: 'lookouts_hood', name: "Lookout's Hood", baseId: 'hunter_hood', flavour: 'First to see it, first to move.',
@@ -883,6 +902,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'light_res', ranges: [[20, 30]] },
       { affixId: 'u_momentum_retain', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'mask_of_the_patient', name: 'Mask of the Patient', baseId: 'duskweave_cowl', flavour: 'It does not blink. It waits.',
@@ -892,6 +912,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'crit_chance', ranges: [[-60, -40]] },
       { affixId: 'u_malice_on_hit_taken', ranges: [[2, 4]] },
     ],
+    weight: 100,
   },
   {
     id: 'stormhide', name: 'Stormhide', baseId: 'studded_brigandine', flavour: 'Tanned from something that bit back.',
@@ -902,6 +923,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'light_res', ranges: [[-25, -15]] },
       { affixId: 'u_riposte_bleed', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'robe_of_still_waters', name: 'Robe of Still Waters', baseId: 'silken_vestment', flavour: 'Calm water runs the deepest.',
@@ -911,6 +933,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'es_recharge', ranges: [[25, 40]] },
       { affixId: 'u_meditate_es', values: [20] },
     ],
+    weight: 100,
   },
   {
     id: 'penitents_plate', name: "Penitent's Plate", baseId: 'templar_plate', flavour: 'Every dent a confession.',
@@ -920,6 +943,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'all_res', ranges: [[10, 15]] },
       { affixId: 'u_nova_es', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   {
     id: 'quickfingers', name: 'Quickfingers', baseId: 'rawhide_gloves', flavour: 'Faster than the eye, faster than the knife.',
@@ -930,6 +954,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_momentum_effect', ranges: [[15, 25]] },
       { affixId: 'flat_life', ranges: [[-20, -10]] },
     ],
+    weight: 100,
   },
   {
     id: 'needleworkers_wraps', name: "Needleworker's Wraps", baseId: 'wayfarer_wraps', flavour: 'A thousand stitches, one cut.',
@@ -938,6 +963,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_poison_pct', ranges: [[15, 25]] },
       { affixId: 'u_coup_ailment', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'knuckledusters', name: 'Knuckledusters', baseId: 'steel_gauntlets', flavour: 'The knuckles do the talking.',
@@ -947,6 +973,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_rage_effect', ranges: [[20, 30]] },
       { affixId: 'dexterity', ranges: [[-20, -10]] },
     ],
+    weight: 100,
   },
   {
     id: 'slippers_of_the_tide', name: 'Slippers of the Tide', baseId: 'wool_shoes', flavour: 'Soft steps, full tides.',
@@ -956,6 +983,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'cold_res', ranges: [[15, 25]] },
       { affixId: 'u_mana_power', ranges: [[4, 8]] },
     ],
+    weight: 100,
   },
   {
     id: 'sidestep', name: 'Sidestep', baseId: 'studded_boots', flavour: 'Not there. Then right there.',
@@ -965,6 +993,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_block', ranges: [[4, 7]] },
       { affixId: 'u_riposte_crit', ranges: [[40, 60]] },
     ],
+    weight: 100,
   },
   {
     id: 'windchaser', name: 'Windchaser', baseId: 'shagreen_boots', flavour: "The wind doesn't stop to fight.",
@@ -974,6 +1003,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_momentum_max', ranges: [[2, 4]] },
       { affixId: 'u_momentum_evasion', ranges: [[2, 4]] },
     ],
+    weight: 100,
   },
   {
     id: 'fishermans_knot', name: "Fisherman's Knot", baseId: 'chain_belt', flavour: 'Tied tight against the tide.',
@@ -983,6 +1013,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'item_rarity', ranges: [[8, 14]] },
       { affixId: 'u_flask_reel', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'herbalists_sash', name: "Herbalist's Sash", baseId: 'leather_belt', flavour: "Pockets full of tomorrow's cures.",
@@ -993,6 +1024,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_harvesting_yield', ranges: [[12, 20]] },
       { affixId: 'u_harvesting_rare', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   {
     id: 'brawlers_buckle', name: "Brawler's Buckle", baseId: 'heavy_belt', flavour: 'Still swinging at closing time.',
@@ -1001,6 +1033,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'strength', ranges: [[16, 25]] },
       { affixId: 'u_rage_decay', ranges: [[40, 60]] },
     ],
+    weight: 100,
   },
   {
     id: 'ember_of_faith', name: 'Ember of Faith', baseId: 'amber_amulet', flavour: 'A spark kept close to the heart.',
@@ -1010,6 +1043,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_nova_heal', ranges: [[25, 40]] },
       { affixId: 'u_infernal_spread', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'gulls_eye', name: "Gull's Eye", baseId: 'jade_amulet', flavour: 'It sees the glint from miles away.',
@@ -1019,6 +1053,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'item_rarity', ranges: [[12, 20]] },
       { affixId: 'u_gold_find', ranges: [[25, 40]] },
     ],
+    weight: 100,
   },
   {
     id: 'hollow_locket', name: 'The Hollow Locket', baseId: 'onyx_amulet', flavour: 'Something was kept in here. Something hungry.',
@@ -1027,6 +1062,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'dexterity', ranges: [[12, 20]] },
       { affixId: 'u_malice_crit_keep', values: [5] },
     ],
+    weight: 100,
   },
   {
     id: 'barnacle_band', name: 'Barnacle Band', baseId: 'iron_ring', flavour: 'It clung on. So will you.',
@@ -1036,6 +1072,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'cold_res', ranges: [[12, 20]] },
       { affixId: 'u_clinging_hull', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'brimming_band', name: 'Brimming Band', baseId: 'sapphire_ring', flavour: 'Full to the brim, never spilling.',
@@ -1044,6 +1081,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'mana_regen', ranges: [[20, 35]] },
       { affixId: 'u_mana_power', ranges: [[4, 8]] },
     ],
+    weight: 100,
   },
   {
     id: 'twin_oaths', name: 'Twin Oaths', baseId: 'diamond_ring', flavour: 'Sworn twice, broken never.',
@@ -1052,6 +1090,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_riposte_pct', ranges: [[20, 35]] },
       { affixId: 'u_riposte_cooldown', ranges: [[25, 40]] },
     ],
+    weight: 100,
   },
 
   // ---------- Act 2 (docs/GAME.md) ----------
@@ -1063,6 +1102,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'fire_res', ranges: [[35, 50]] },
       { affixId: 'u_rage_on_hit_taken', ranges: [[1, 2]] },
     ],
+    weight: 100,
   },
   {
     id: 'mirage_veil', name: 'Mirage Veil', baseId: 'duskweave_cowl', flavour: 'What it hides was never there.',
@@ -1072,6 +1112,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'all_res', ranges: [[8, 14]] },
       { affixId: 'u_malice_on_hit_taken', ranges: [[1, 2]] },
     ],
+    weight: 100,
   },
   {
     id: 'khans_tithe', name: "Khan's Tithe", baseId: 'diamond_ring', flavour: 'Every road pays.',
@@ -1081,6 +1122,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_gold_find', values: [-50] },
       { affixId: 'u_crit_gold_scale', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'kurgan_crown', name: 'The Kurgan Crown', baseId: 'templar_crown', flavour: 'The dead keep their kings.',
@@ -1090,6 +1132,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'cold_res', ranges: [[35, 50]] },
       { affixId: 'u_fervor_pct', ranges: [[16, 25]] },
     ],
+    weight: 100,
   },
   {
     id: 'stormrider_greaves', name: 'Stormrider Greaves', baseId: 'wyrmscale_boots', flavour: 'Ride ahead of the thunder.',
@@ -1099,6 +1142,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_momentum_effect', ranges: [[16, 25]] },
       { affixId: 'u_momentum_retain', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'pyre_heart', name: 'Heart of the Pyre', baseId: 'onyx_amulet', flavour: "It beats slowly. A sloth's revenge is in no hurry.",
@@ -1108,6 +1152,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_cast_speed', ranges: [[8, 14]] },
       { affixId: 'u_sloth_pyre', ranges: [[50, 70]] },
     ],
+    weight: 100,
   },
 
   // ---------- Act 3 (docs/GAME.md): one for each class's meter, each with lightning resistance ----------
@@ -1119,6 +1164,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'light_res', ranges: [[35, 50]] },
       { affixId: 'u_rage_on_hit_taken', ranges: [[2, 3]] },
     ],
+    weight: 100,
   },
   {
     id: 'pilgrims_road', name: "The Pilgrim's Road", baseId: 'bonehunter_boots', flavour: 'Worn through, and still walking.',
@@ -1128,6 +1174,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_momentum_effect', ranges: [[20, 30]] },
       { affixId: 'u_momentum_retain', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'saints_shard', name: 'Shard of the Saint', baseId: 'onyx_amulet', flavour: 'Some of the holy bones still spark.',
@@ -1137,6 +1184,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'light_res', ranges: [[20, 30]] },
       { affixId: 'u_mana_power', ranges: [[12, 18]] },
     ],
+    weight: 100,
   },
   {
     id: 'confession_hood', name: 'Hood of the Last Confession', baseId: 'nightshade_cowl', flavour: 'Say it, and it is done.',
@@ -1147,6 +1195,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_coup_pct', ranges: [[30, 45]] },
       { affixId: 'u_coup_cull', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'halo_of_wrath', name: 'Halo of Wrath', baseId: 'paladin_crown', flavour: 'It was never meant to be kind.',
@@ -1157,6 +1206,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_nova_pct', ranges: [[25, 40]] },
       { affixId: 'u_nova_shock', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'chainbreaker', name: 'Chainbreaker', baseId: 'gladiator_gauntlets', flavour: 'One link at a time.',
@@ -1166,6 +1216,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'light_res', ranges: [[25, 35]] },
       { affixId: 'u_riposte_bleed', values: [1] },
     ],
+    weight: 100,
   },
   // ---------- Act 4 (docs/GAME.md): one for each class's meter, each with cold resistance ----------
   {
@@ -1176,6 +1227,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'cold_res', ranges: [[25, 35]] },
       { affixId: 'u_rage_effect', ranges: [[20, 30]] },
     ],
+    weight: 100,
   },
   {
     id: 'rimewalkers', name: 'Rimewalkers', baseId: 'hawkfeather_boots', flavour: 'They leave no tracks, and neither will you.',
@@ -1185,6 +1237,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_momentum_max', ranges: [[2, 3]] },
       { affixId: 'u_momentum_evasion', ranges: [[2, 4]] },
     ],
+    weight: 100,
   },
   {
     id: 'heart_of_winter', name: 'Heart of Winter', baseId: 'onyx_amulet', flavour: 'It beats once a year. You will not like the year it stops.',
@@ -1194,6 +1247,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'cold_res', ranges: [[25, 35]] },
       { affixId: 'u_mana_power_full', ranges: [[16, 25]] },
     ],
+    weight: 100,
   },
   {
     id: 'frostgrip', name: 'Frostgrip', baseId: 'wraith_wraps', flavour: 'Whatever you hold goes still.',
@@ -1203,6 +1257,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'cold_res', ranges: [[30, 45]] },
       { affixId: 'u_malice_on_hit_taken', ranges: [[2, 3]] },
     ],
+    weight: 100,
   },
   {
     id: 'crown_of_the_hollow', name: 'Crown of the Hollow', baseId: 'dreadsteel_helm', flavour: 'Heavy enough to empty a king.',
@@ -1212,6 +1267,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'cold_res', ranges: [[35, 50]] },
       { affixId: 'u_fervor_pct', ranges: [[25, 40]] },
     ],
+    weight: 100,
   },
   {
     id: 'wolfmother_pelt', name: 'Wolfmother’s Pelt', baseId: 'corsair_coat', flavour: 'She let you have it. You should ask why.',
@@ -1221,6 +1277,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_riposte_pct', ranges: [[30, 45]] },
       { affixId: 'u_riposte_heal', values: [2] },
     ],
+    weight: 100,
   },
 
   // ---------- Act 5 (docs/GAME.md): one for each class's meter, each with fire and lightning resistance ----------
@@ -1234,6 +1291,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_rage_on_hit_taken', ranges: [[2, 4]] },
       { affixId: 'u_leviathan_mend', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'deckwalkers', name: 'Deckwalkers', baseId: 'thornwarden_boots', flavour: 'Sea legs, for a sea that fights back.',
@@ -1244,6 +1302,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_momentum_effect', ranges: [[25, 35]] },
       { affixId: 'u_momentum_retain', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'bosuns_oath', name: "The Bosun's Oath", baseId: 'onyx_amulet', flavour: 'Sworn in salt, kept in fire.',
@@ -1254,6 +1313,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'light_res', ranges: [[16, 25]] },
       { affixId: 'u_mana_power', ranges: [[16, 25]] },
     ],
+    weight: 100,
   },
   {
     id: 'tide_crown', name: 'Crown of the Slack Tide', baseId: 'umbral_mask', flavour: 'The moment the water stops is the moment it takes you.',
@@ -1265,6 +1325,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_coup_pct', ranges: [[35, 55]] },
       { affixId: 'u_slack_tide_refund', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'corposant', name: 'Corposant', baseId: 'hallowed_crown', flavour: 'The fire that burns on the mast and does not burn the mast.',
@@ -1276,6 +1337,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_nova_pct', ranges: [[30, 50]] },
       { affixId: 'u_corposant_surge', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'harpoons_answer', name: "The Harpoon's Answer", baseId: 'bladedancer_gloves', flavour: 'It comes back on the line.',
@@ -1286,6 +1348,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'light_res', ranges: [[20, 30]] },
       { affixId: 'u_riposte_bleed', values: [1] },
     ],
+    weight: 100,
   },
 
   // ---------- Act 6 (docs/GAME.md): one for each class's meter, each with all three resistances ----------
@@ -1299,6 +1362,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_rage_effect', ranges: [[25, 35]] },
       { affixId: 'chaos_res', ranges: [[-30, -15]] },
     ],
+    weight: 100,
   },
   {
     id: 'kingsmarch', name: "The King's March", baseId: 'manticore_boots', flavour: 'Forty leagues of white stone, and not one step back.',
@@ -1309,6 +1373,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_momentum_effect', ranges: [[25, 35]] },
       { affixId: 'u_kings_stride', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'last_decree', name: 'The Last Decree', baseId: 'seraph_wand', flavour: 'Signed, sealed, and read aloud to an empty room.',
@@ -1319,6 +1384,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_mana_power', ranges: [[20, 30]] },
       { affixId: 'u_mana_power_full', ranges: [[12, 20]] },
     ],
+    weight: 100,
   },
   {
     id: 'crownbreaker_mask', name: "Crownbreaker's Mask", baseId: 'voidwalker_cowl', flavour: 'Worn to the coronation. It went badly for everyone else.',
@@ -1329,6 +1395,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_coup_pct', ranges: [[45, 65]] },
       { affixId: 'u_malice_crit_keep', values: [2] },
     ],
+    weight: 100,
   },
   {
     id: 'hand_of_the_regent', name: 'Hand of the Regent', baseId: 'dragonscale_gauntlets', flavour: 'It signs for the king, and it answers for him too.',
@@ -1339,6 +1406,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_riposte_pct', ranges: [[40, 60]] },
       { affixId: 'u_riposte_heal', values: [2] },
     ],
+    weight: 100,
   },
   {
     id: 'regents_mantle', name: "The Regent's Mantle", baseId: 'archon_regalia', flavour: 'Held in trust, for a king who will not be needing it.',
@@ -1350,6 +1418,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_nova_heal', ranges: [[28, 42]] },
       { affixId: 'u_corposant_surge', values: [1] },
     ],
+    weight: 100,
   },
 
   // ---------- from the third art pack: a key and a book ----------
@@ -1363,6 +1432,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_unblinking_flare', ranges: [[50, 75]] },
       { affixId: 'u_cannot_evade', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'briar_key', name: 'The Briar Key', baseId: 'paladin_sceptre', flavour: 'It opens every door in the Sanctum. Not all of them lead out.',
@@ -1372,6 +1442,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_nova_heal', ranges: [[20, 32]] },
       { affixId: 'u_briar_thorns', ranges: [[35, 50]] },
     ],
+    weight: 100,
   },
 
   // ---------- keepsake for characters from before the skill reform: never drops, can't be traded ----------
@@ -1381,6 +1452,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_life_leech', values: [3] },
       { affixId: 'u_mana_leech', values: [2] },
     ],
+    weight: 100,
   },
 
   // ---------- reward for the Unbroken achievement (all six acts without ever dying): never drops, can't be traded ----------
@@ -1393,6 +1465,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_nova_heal', ranges: [[25, 40]] },
       { affixId: 'u_regen_pct', values: [1] },
     ],
+    weight: 100,
   },
 
   // ---------- more achievement rewards (src/data/achievements.ts): never drop, can't be traded ----------
@@ -1404,6 +1477,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'item_rarity', ranges: [[20, 30]] },
       { affixId: 'u_slam_reduction', ranges: [[20, 30]] },
     ],
+    weight: 100,
   },
   {
     id: 'crown_of_the_unmade', name: 'Crown of the Unmade', baseId: 'sanctum_crown', flavour: 'Worn by no king, because every king who could wear it is gone.', noTrade: true,
@@ -1413,6 +1487,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'chaos_res', ranges: [[20, 25]] },
       { affixId: 'cooldown_recovery', ranges: [[15, 20]] },
     ],
+    weight: 100,
   },
   {
     id: 'journeymans_satchel', name: "Journeyman's Satchel", baseId: 'heavy_belt', flavour: 'Every pocket holds a tool, and every tool remembers the hand.', noTrade: true,
@@ -1422,6 +1497,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'flat_life', ranges: [[40, 60]] },
       { affixId: 'flask_charges', ranges: [[20, 30]] },
     ],
+    weight: 100,
   },
   {
     id: 'ironvow', name: 'Ironvow', baseId: 'titan_plate', flavour: 'One life, sworn once, kept to the end.', noTrade: true,
@@ -1432,6 +1508,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'elem_taken', ranges: [[6, 8]] },
       { affixId: 'u_regen_pct', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'self_made', name: 'Self-Made', baseId: 'diamond_ring', flavour: 'No trade, no gift, no help. Only what you found.', noTrade: true,
@@ -1442,6 +1519,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'attack_speed', ranges: [[6, 8]] },
       { affixId: 'cast_speed', ranges: [[6, 8]] },
     ],
+    weight: 100,
   },
   {
     id: 'old_way_grips', name: 'Grips of the Old Way', baseId: 'bladedancer_gloves', flavour: 'Before the crafts and the trades, there was a sword and a hand to hold it.', noTrade: true,
@@ -1452,6 +1530,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'flat_life', ranges: [[60, 80]] },
       { affixId: 'u_life_leech', values: [1] },
     ],
+    weight: 100,
   },
 
   // ---------- Hard Bosses (docs/design/HARD_BOSSES.md) ----------
@@ -1464,6 +1543,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_slam_reduction', ranges: [[20, 30]] },
       { affixId: 'u_tectonic_rupture', ranges: [[25, 35]] },
     ],
+    weight: 100,
   },
   {
     id: 'last_hymn', name: 'Last Hymn', baseId: 'onyx_amulet', flavour: 'When the choir falls silent, the bell keeps ringing.',
@@ -1473,6 +1553,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'light_res', ranges: [[30, 45]] },
       { affixId: 'u_after_guard_damage', ranges: [[30, 45]] },
     ],
+    weight: 100,
   },
   {
     id: 'riptide', name: 'Riptide', baseId: 'stagheart_boots', flavour: 'Step into the current and let it carry the blade.',
@@ -1483,6 +1564,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_momentum_effect', ranges: [[30, 45]] },
       { affixId: 'u_chill_on_hit', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'twinned_crown', name: 'Twinned Crown', baseId: 'sanctum_crown', flavour: 'Two rulers, one circlet, neither willing to yield.',
@@ -1493,6 +1575,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'cold_res', ranges: [[30, 45]] },
       { affixId: 'u_repeat_more', ranges: [[16, 25]] },
     ],
+    weight: 100,
   },
   {
     id: 'the_unwritten', name: 'The Unwritten', baseId: 'empyrean_regalia', flavour: 'No house, no crest, no oath left to break.',
@@ -1504,6 +1587,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_life_more', ranges: [[10, 15]] },
       { affixId: 'u_unwritten_notable', ranges: [[1, 36]] },
     ],
+    weight: 100,
   },
 
   // ---------- Uber Bosses (Pinnacle Encounters) ----------
@@ -1517,6 +1601,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_riposte_pct', ranges: [[55, 75]] },
       { affixId: 'u_mirror_twin', ranges: [[20, 30]] },
     ],
+    weight: 100,
   },
   {
     id: 'exiles_covenant', name: "The First Exile's Covenant", baseId: 'onyx_amulet', flavour: 'Every path you walked was carved by the one who walked it first.',
@@ -1527,6 +1612,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_mana_power', ranges: [[25, 35]] },
       { affixId: 'u_exile_echo', ranges: [[35, 50]] },
     ],
+    weight: 100,
   },
   {
     id: 'architects_compass', name: "Architect's Compass", baseId: 'celestial_ward', flavour: 'Six acts, six ruins, one blueprint.',
@@ -1538,6 +1624,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'spell_block', ranges: [[10, 15]] },
       { affixId: 'u_blueprint_ruin', values: [1] },
     ],
+    weight: 100,
   },
   {
     id: 'ruinforged_mantle', name: 'Ruinforged Mantle', baseId: 'godforged_plate', flavour: 'Built from the load-bearing stones of a fallen empire.',
@@ -1548,6 +1635,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_slam_reduction', ranges: [[25, 35]] },
       { affixId: 'u_armour_vs_elem', ranges: [[25, 35]] },
     ],
+    weight: 100,
   },
   {
     id: 'void_crown', name: 'Crown of the Void Sovereign', baseId: 'oblivion_mask', flavour: 'Stare into the rift until the rift kneels.',
@@ -1559,6 +1647,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_poison_pct', ranges: [[35, 50]] },
       { affixId: 'u_void_gaze', ranges: [[20, 30]] },
     ],
+    weight: 100,
   },
   {
     id: 'sovereigns_grasp', name: "Sovereign's Grasp", baseId: 'oblivion_gloves', flavour: 'What the void touches, it keeps.',
@@ -1570,6 +1659,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_life_leech', ranges: [[3, 5]] },
       { affixId: 'u_void_touch', ranges: [[25, 35]] },
     ],
+    weight: 100,
   },
 
   // ---------- 12 Ascendancy BIS Uniques (1 per Ascendancy) ----------
@@ -1581,6 +1671,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_life_leech', ranges: [[3, 5]] },
       { affixId: 'u_asc_ravager', ranges: [[25, 35]] },
     ],
+    weight: 100,
   },
   {
     id: 'asc_anvil_shield', name: 'Bastion of the Unmoved', baseId: 'godforged_tower_shield', flavour: 'Let the mountain strike the hammer.',
@@ -1590,6 +1681,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'all_res', ranges: [[15, 22]] },
       { affixId: 'u_asc_anvil', ranges: [[25, 40]] },
     ],
+    weight: 100,
   },
   {
     id: 'asc_longshot_bow', name: 'Horizon String', baseId: 'wildlord_greatbow', flavour: 'Nocked in one valley, buried in the next.',
@@ -1599,6 +1691,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_momentum_max', ranges: [[3, 5]] },
       { affixId: 'u_asc_longshot', ranges: [[30, 45]] },
     ],
+    weight: 100,
   },
   {
     id: 'asc_falconer_gloves', name: 'Skyhunter Talons', baseId: 'wildlord_grips', flavour: 'Two wings, one kill.',
@@ -1608,6 +1701,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'accuracy', ranges: [[180, 260]] },
       { affixId: 'u_asc_falconer', ranges: [[60, 80]] },
     ],
+    weight: 100,
   },
   {
     id: 'asc_wellspring_focus', name: 'Font of the Astral Sea', baseId: 'celestial_ward', flavour: 'Drink from the tide between the stars.',
@@ -1617,6 +1711,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_mana_power', ranges: [[25, 35]] },
       { affixId: 'u_asc_wellspring', ranges: [[25, 35]] },
     ],
+    weight: 100,
   },
   {
     id: 'asc_alchemist_belt', name: "Crucible's Cord", baseId: 'heavy_belt', flavour: 'Three vials of fire, frost, and lightning.',
@@ -1626,6 +1721,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_ailment_pct', ranges: [[25, 40]] },
       { affixId: 'u_asc_alchemist', ranges: [[30, 45]] },
     ],
+    weight: 100,
   },
   {
     id: 'asc_matador_body', name: "Velvet Bullfighter's Coat", baseId: 'wyrmlord_hauberk', flavour: 'A step to the left, and the blade finds the heart.',
@@ -1635,6 +1731,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_riposte_cooldown', ranges: [[30, 45]] },
       { affixId: 'u_asc_matador', ranges: [[30, 45]] },
     ],
+    weight: 100,
   },
   {
     id: 'asc_vanguard_shield', name: 'Standard of the Iron Phalanx', baseId: 'wyrmlord_shield', flavour: 'Hold the line, and the line holds you.',
@@ -1644,6 +1741,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_slam_reduction', ranges: [[20, 30]] },
       { affixId: 'u_asc_vanguard', ranges: [[25, 35]] },
     ],
+    weight: 100,
   },
   {
     id: 'asc_flagellant_belt', name: 'Cord of the Seven Scourges', baseId: 'chain_belt', flavour: 'Each knot is a sin paid in advance.',
@@ -1653,6 +1751,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_nova_heal', ranges: [[30, 45]] },
       { affixId: 'u_asc_flagellant', ranges: [[30, 45]] },
     ],
+    weight: 100,
   },
   {
     id: 'asc_lightkeeper_helm', name: 'Diadem of the Unbroken Dawn', baseId: 'empyrean_crown', flavour: 'No shadow falls where the beacon stands.',
@@ -1662,6 +1761,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'all_res', ranges: [[16, 24]] },
       { affixId: 'u_asc_lightkeeper', ranges: [[25, 35]] },
     ],
+    weight: 100,
   },
   {
     id: 'asc_headsman_helm', name: "The Executioner's Hood", baseId: 'oblivion_mask', flavour: 'The crowd holds its breath; the blade does not.',
@@ -1671,6 +1771,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_coup_pct', ranges: [[50, 75]] },
       { affixId: 'u_asc_headsman', ranges: [[30, 45]] },
     ],
+    weight: 100,
   },
   {
     id: 'asc_plaguewright_dagger', name: 'Patient Zero', baseId: 'oblivion_fang', flavour: 'One scratch is a plague.',
@@ -1680,6 +1781,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_poison_pct', ranges: [[40, 60]] },
       { affixId: 'u_asc_plaguewright', ranges: [[30, 45]] },
     ],
+    weight: 100,
   },
 
   // ---------- 2 Uniques per Life Skill (20 new + Miners Lament & Herbalists Sash = 22) ----------
@@ -1694,6 +1796,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_mining_double', ranges: [[8, 12]] },
       { affixId: 'u_motherlode', values: [1] },
     ],
+    weight: 100,
   },
   // Woodcutting (2 items)
   {
@@ -1703,6 +1806,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_woodcutting_speed', ranges: [[15, 25]] },
       { affixId: 'u_woodcutting_yield', ranges: [[15, 25]] },
     ],
+    weight: 100,
   },
   {
     id: 'heartwood_mantle', name: 'Heartwood Mantle', baseId: 'woodsman_jerkin', flavour: 'Still smells of sap and rain.',
@@ -1712,6 +1816,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_woodcutting_rare', ranges: [[12, 20]] },
       { affixId: 'u_woodcutting_double', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   // Harvesting (2nd item alongside Herbalist's Sash)
   {
@@ -1721,6 +1826,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_harvesting_speed', ranges: [[15, 25]] },
       { affixId: 'u_harvesting_double', ranges: [[10, 16]] },
     ],
+    weight: 100,
   },
   // Thieving (2 items)
   {
@@ -1730,6 +1836,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_thieving_speed', ranges: [[15, 25]] },
       { affixId: 'u_thieving_yield', ranges: [[15, 25]] },
     ],
+    weight: 100,
   },
   {
     id: 'lockpicks_ring', name: "Tumbler's Band", baseId: 'iron_ring', flavour: 'Listen for the third click.',
@@ -1738,6 +1845,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_thieving_rare', ranges: [[12, 20]] },
       { affixId: 'u_thieving_double', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   // Archaeology (2 items)
   {
@@ -1747,6 +1855,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_archaeology_speed', ranges: [[15, 25]] },
       { affixId: 'u_archaeology_rare', ranges: [[12, 20]] },
     ],
+    weight: 100,
   },
   {
     id: 'excavators_trowel', name: "Relicseeker's Blade", baseId: 'glinting_dagger', flavour: 'Scrape gently; empires are brittle.',
@@ -1755,6 +1864,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_archaeology_yield', ranges: [[15, 25]] },
       { affixId: 'u_archaeology_double', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   // Smithing (2 items)
   {
@@ -1765,6 +1875,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_smithing_speed', ranges: [[15, 25]] },
       { affixId: 'u_smithing_save', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   {
     id: 'slagborn_gauntlets', name: 'Slagborn Grips', baseId: 'steel_gauntlets', flavour: 'Can hold white-hot iron barehanded.',
@@ -1774,6 +1885,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_smithing_quality', ranges: [[15, 25]] },
       { affixId: 'u_smithing_extra', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   // Alchemy (2 items)
   {
@@ -1783,6 +1895,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_alchemy_speed', ranges: [[15, 25]] },
       { affixId: 'u_alchemy_save', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   {
     id: 'transmuters_pendant', name: "Alembic's Heart", baseId: 'amber_amulet', flavour: 'Distilled thrice and sealed in glass.',
@@ -1792,6 +1905,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_alchemy_quality', ranges: [[15, 25]] },
       { affixId: 'u_alchemy_extra', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   // Gemcutting (2 items)
   {
@@ -1801,6 +1915,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_gemcutting_speed', ranges: [[15, 25]] },
       { affixId: 'u_gemcutting_quality', ranges: [[15, 25]] },
     ],
+    weight: 100,
   },
   {
     id: 'facet_chisels', name: 'Prism-Cutter Grips', baseId: 'wayfarer_wraps', flavour: 'Sixty-four facets, not one a hair off.',
@@ -1809,6 +1924,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_gemcutting_save', ranges: [[8, 14]] },
       { affixId: 'u_gemcutting_extra', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   // Runecarving (2 items)
   {
@@ -1818,6 +1934,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_runecarving_speed', ranges: [[15, 25]] },
       { affixId: 'u_runecarving_quality', ranges: [[15, 25]] },
     ],
+    weight: 100,
   },
   {
     id: 'scriptweaver_wraps', name: 'Scriptweaver Wraps', baseId: 'acolyte_gloves', flavour: 'The ink glows when the glyph is true.',
@@ -1826,6 +1943,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_runecarving_save', ranges: [[8, 14]] },
       { affixId: 'u_runecarving_extra', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   // Cooking (2 items)
   {
@@ -1835,6 +1953,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_cooking_speed', ranges: [[15, 25]] },
       { affixId: 'u_cooking_quality', ranges: [[15, 25]] },
     ],
+    weight: 100,
   },
   {
     id: 'hearthfire_ladle', name: 'Hearthfire Sceptre', baseId: 'bone_sceptre', flavour: 'Simmered since the First Age.',
@@ -1843,6 +1962,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_cooking_save', ranges: [[8, 14]] },
       { affixId: 'u_cooking_extra', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   // Cartography (2 items)
   {
@@ -1852,6 +1972,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_cartography_speed', ranges: [[15, 25]] },
       { affixId: 'u_cartography_quality', ranges: [[15, 25]] },
     ],
+    weight: 100,
   },
   {
     id: 'wayfinders_boots', name: "Chartmaker's Stride", baseId: 'wayfarer_boots', flavour: 'Every league walked is a league drawn.',
@@ -1860,6 +1981,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_cartography_save', ranges: [[8, 14]] },
       { affixId: 'u_cartography_extra', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
 
   // ---------- 1 Set of General Life Skill Uniques (6-Piece Master Artisan's Regalia) ----------
@@ -1870,6 +1992,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'skill_xp', ranges: [[12, 18]] },
       { affixId: 'u_all_save', ranges: [[6, 10]] },
     ],
+    weight: 100,
   },
   {
     id: 'artisan_helm', name: "Guildmaster's Visor", baseId: 'crusader_helm', flavour: 'Clear eyes for fine work.',
@@ -1878,6 +2001,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_all_rare', ranges: [[10, 16]] },
       { affixId: 'u_all_quality', ranges: [[10, 16]] },
     ],
+    weight: 100,
   },
   {
     id: 'artisan_body', name: "Guildmaster's Coat", baseId: 'ringmail_hauberk', flavour: 'Worn by seven masters of the bench.',
@@ -1888,6 +2012,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_all_extra', ranges: [[6, 10]] },
       { affixId: 'u_input_save', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
   {
     id: 'artisan_gloves', name: "Guildmaster's Dexterous Grips", baseId: 'ringmail_gloves', flavour: 'Steady hands never waste a grain.',
@@ -1896,6 +2021,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_all_save', ranges: [[8, 12]] },
       { affixId: 'u_all_double', ranges: [[6, 10]] },
     ],
+    weight: 100,
   },
   {
     id: 'artisan_boots', name: "Guildmaster's Sabatons", baseId: 'ringmail_boots', flavour: 'From quarry to forge without pause.',
@@ -1904,6 +2030,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'skill_speed', ranges: [[10, 16]] },
       { affixId: 'u_all_yield', ranges: [[10, 16]] },
     ],
+    weight: 100,
   },
   {
     id: 'artisan_ring', name: 'Signet of the Guild', baseId: 'iron_ring', flavour: 'Stamped in wax, honoured in every workshop.',
@@ -1912,6 +2039,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_all_yield', ranges: [[8, 14]] },
       { affixId: 'u_all_quality', ranges: [[8, 14]] },
     ],
+    weight: 100,
   },
 
   // ---------- 1 Set of General Leveling Uniques (6-Piece Wanderer's Heirloom Set, reqLevel 1) ----------
@@ -1924,6 +2052,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_cast_speed', ranges: [[15, 22]] },
       { affixId: 'u_char_xp', ranges: [[10, 15]] },
     ],
+    weight: 100,
   },
   {
     id: 'leveling_helm', name: "Wanderer's Crest", baseId: 'iron_hat', flavour: 'Keeps the rain and the arrows off.',
@@ -1933,6 +2062,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'all_res', ranges: [[12, 18]] },
       { affixId: 'u_char_xp', ranges: [[10, 15]] },
     ],
+    weight: 100,
   },
   {
     id: 'leveling_body', name: 'Tabula of the Dawn', baseId: 'simple_robe', flavour: 'Clean cloth waiting for a story.',
@@ -1943,6 +2073,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_mana_cost_red', ranges: [[25, 35]] },
       { affixId: 'u_char_xp', ranges: [[15, 25]] },
     ],
+    weight: 100,
   },
   {
     id: 'leveling_gloves', name: "Wanderer's Grips", baseId: 'rawhide_gloves', flavour: 'Broken in on the first mile.',
@@ -1952,6 +2083,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_cast_speed', ranges: [[12, 18]] },
       { affixId: 'u_life_leech', ranges: [[2, 3]] },
     ],
+    weight: 100,
   },
   {
     id: 'leveling_boots', name: 'Seven-League Treads', baseId: 'leather_boots', flavour: 'Every stride is three.',
@@ -1961,6 +2093,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'all_res', ranges: [[10, 15]] },
       { affixId: 'u_char_xp', ranges: [[10, 15]] },
     ],
+    weight: 100,
   },
   {
     id: 'leveling_ring', name: "Pathfinder's Loop", baseId: 'iron_ring', flavour: 'Always points home.',
@@ -1971,6 +2104,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'u_mana_cost_red', ranges: [[15, 25]] },
       { affixId: 'u_char_xp', ranges: [[10, 15]] },
     ],
+    weight: 100,
   },
 
   // ---------- Gold-Drop Uniques (2 new + Gull's Eye = 3 total) ----------
@@ -1981,6 +2115,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'item_rarity', ranges: [[20, 30]] },
       { affixId: 'u_gold_find', ranges: [[40, 60]] },
     ],
+    weight: 100,
   },
   {
     id: 'greeds_vault', name: 'Coffer-Plate of Avarice', baseId: 'warlord_plate', flavour: 'Lined with velvet and lead.',
@@ -1991,6 +2126,7 @@ export const UNIQUES: UniqueDef[] = [
       { affixId: 'item_rarity', ranges: [[25, 40]] },
       { affixId: 'u_gold_find', ranges: [[65, 100]] },
     ],
+    weight: 100,
   },
 ];
 

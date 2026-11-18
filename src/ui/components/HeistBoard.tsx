@@ -1,12 +1,15 @@
 import { MARKER } from '../../data/craftMats';
-import { GEAR, HEIST_JOBS, heistJob, MAX_ROGUE_RANK, rogueRankCost, ROGUES, type HeistJob, type RogueDef } from '../../data/heist';
+import { GEAR, HEIST_JOBS, heistJob, type HeistJob } from '../../data/heist';
+import { ROGUES, SPECIALTIES, rogueLevelXp, talentPoints, type Rogue } from '../../data/rogues';
+import { activeCrew, chooseTactic, learnTalent, matchesRoom, roomRevealed, roomSpecialty, scoutRoom, tacticReason, trainReason, trainRogue, vaultProfile } from '../../engine/rogues';
+import { useState } from 'react';
 import { materialDef } from '../../data/materials';
-import { alarmChance, alarmKeeps, bestMark, cleanChance, crewSlots, heistGearTargetPool, jobBlocker, jobCost, jobExit, rankUpRogue, rogueReason, roomMs, setJobExit, setJobGearTarget, startHeist, stopHeistRepeat, toggleCrew, type HeistGearCategory } from '../../engine/heist';
+import { alarmChance, alarmKeeps, bestMark, cleanChance, crewSlots, heistGearTargetPool, jobBlocker, jobCost, jobExit, roomMs, setJobExit, setJobGearTarget, startHeist, stopHeistRepeat, toggleCrew, type HeistGearCategory } from '../../engine/heist';
 import { stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Badge, Cost, fmt, fmtTime, MatIcon, ProgressBar } from './common';
+import { Badge, fmt, fmtTime, MatIcon, ProgressBar } from './common';
 import { MasteryProgress } from './MasteryProgress';
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -29,6 +32,25 @@ function JobRunning({ s }: { s: GameState }) {
         Room <b className="num">{a.room}</b> of <b className="num">{a.lastRoom}</b> · <b className="num">{pct(alarmChance(s, job, a.room))}</b> chance of an alarm · an alarm keeps {pct(alarmKeeps(s))} of the take
       </p>
       <ProgressBar value={a.progress / interval} color="var(--success)" />
+      <div className="callout" style={{ marginTop: 8 }}>
+        <b>{roomRevealed(s) ? roomSpecialty(job, a.room) : 'Unscouted room'}</b>
+        {!roomRevealed(s) && <button className="btn sm" title="Adds up to 3 seconds; Threat Reveal reduces this time" onClick={() => game.act(scoutRoom)}>Scout room</button>}
+        {a.tactic ? <p className="small">{a.tactic === 'bypass' ? 'Bypass: skip safely; room loot left behind, vault retained.' : 'Greed: bonus loot, +15 percentage points of alarm risk.'}</p> : roomRevealed(s) && (
+          <>
+            <p className="dim small">Continue normally, or spend a matching rogue’s ability. Each rogue has one use per heist. Bypass skips safely and leaves room loot; Greed adds 50% room gold and drop chance with +15 percentage points alarm risk.</p>
+            {activeCrew(s).filter((id) => matchesRoom(s, id, roomSpecialty(job, a.room))).map((id) => (
+              <div key={id} className="row wrap small" style={{ marginTop: 4 }}>
+                <span>{ROGUES.find((r) => r.id === id)?.name}</span>
+                {(['bypass', 'greed'] as const).map((tactic) => {
+                  const reason = tacticReason(s, id, tactic, job);
+                  return <button key={tactic} className="btn sm" title={reason ?? ''} disabled={!!reason} onClick={() => game.act((st) => chooseTactic(st, id, tactic, job))}>{tactic === 'bypass' ? 'Bypass' : 'Greed'}</button>;
+                })}
+              </div>
+            ))}
+            {!activeCrew(s).some((id) => matchesRoom(s, id, roomSpecialty(job, a.room))) && <p className="dim small">No matching specialty in this crew.</p>}
+          </>
+        )}
+      </div>
       <div className="row wrap" style={{ marginTop: 8 }}>
         <span className="dim small">Take so far:</span>
         {Object.entries(a.take).length ? (
@@ -67,6 +89,8 @@ function JobCard({ s, job }: { s: GameState; job: HeistJob }) {
   const gearPool = hasGear ? heistGearTargetPool(s, job) : null;
   const setGearTarget = (cat: HeistGearCategory) => game.act((st) => setJobGearTarget(st, job.id, cat));
   const cleanMilestone = s.professionProgress.discoveries[`heist_clean_${job.id}`];
+  const profile = vaultProfile(job);
+  const crewReady = s.heist.crew.length === 3;
 
   return (
     <div className={`card action-card ${running ? 'running' : ''} ${blocker ? 'locked' : ''}`}>
@@ -77,6 +101,7 @@ function JobCard({ s, job }: { s: GameState; job: HeistJob }) {
         <Badge tone="neutral">{job.favours}</Badge>
       </div>
       <p className="dim small">{job.desc}</p>
+      <div className="row wrap small"><Badge tone="neutral">{profile.layout}</Badge><span>Tier {profile.tier} · Threat {profile.threat} · {job.rooms} rooms</span></div>
       <MasteryProgress s={s} mastery={job.mastery} compact />
       {blocker ? (
         <p className="lock-note small">{blocker}</p>
@@ -129,8 +154,8 @@ function JobCard({ s, job }: { s: GameState; job: HeistJob }) {
                 Stop
               </button>
             ) : (
-              <button className="btn sm primary" title={short ? 'You will lift purses until you can pay' : ''} onClick={() => game.act((st, ctx) => startHeist(st, ctx, job.id))}>
-                {short ? 'Case the job' : 'Run on repeat'}
+              <button className="btn sm primary" disabled={!crewReady} title={!crewReady ? 'Select three available rogues' : short ? 'You will lift purses until you can pay' : ''} onClick={() => game.act((st, ctx) => startHeist(st, ctx, job.id))}>
+                {!crewReady ? 'Select a crew of 3' : short ? 'Case the job' : 'Run on repeat'}
               </button>
             )}
           </div>
@@ -140,34 +165,43 @@ function JobCard({ s, job }: { s: GameState; job: HeistJob }) {
   );
 }
 
-function RogueCard({ s, rogue }: { s: GameState; rogue: RogueDef }) {
-  const rank = s.heist.rogues[rogue.id] ?? 0;
+function RogueCard({ s, rogue }: { s: GameState; rogue: Rogue }) {
+  const [specialty, setSpecialty] = useState(SPECIALTIES.find((x) => x !== rogue.primary)!);
+  const r = s.heist.roster?.[rogue.id];
+  if (!r) return null;
   const onCrew = s.heist.crew.includes(rogue.id);
-  const reason = rogueReason(s, rogue.id);
-  const effect = Math.round(rogue.perRank * 100);
+  const running = s.action?.kind === 'heist';
+  const reason = trainReason(s, rogue.id, specialty);
   return (
     <div className="mat" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
       <span className="row">
-        <b>{rogue.name}</b>
+        <b>{rogue.name} · {rogue.class}</b>
         <span className="spacer" />
-        {rank > 0 && <Badge tone={onCrew ? 'success' : 'neutral'}>Rank {rank}</Badge>}
+        <Badge tone={onCrew ? 'success' : 'neutral'}>Lv {r.level}</Badge>
       </span>
       <span className="dim small">
-        {effect}% {rogue.effect} per rank{rank ? ` (${effect * rank}% now)` : ''}
+        <b>{rogue.primary}</b><br />Bonus: {rogue.secondary.join(' · ')}
       </span>
-      {rank < MAX_ROGUE_RANK && <Cost cost={rogueRankCost(rank + 1)} have={s.account.bank} />}
+      <span className="small dim">Field Mastery: {r.xp}/{rogueLevelXp(r.level)} XP · +{Math.min(10, r.level) * 2}% matching room success · 25 XP per completed room</span>
+      <ProgressBar value={r.level === 100 ? 1 : r.xp / rogueLevelXp(r.level)} color="var(--success)" />
       <span className="row">
-        {rank < MAX_ROGUE_RANK && (
-          <button className="btn sm" disabled={!!reason} title={reason ?? ''} onClick={() => game.act((st, ctx) => rankUpRogue(st, ctx, rogue.id))}>
-            {rank ? 'Train' : 'Hire'}
-          </button>
-        )}
-        {rank > 0 && (
-          <button className={`btn sm ${onCrew ? 'selected' : ''}`} onClick={() => game.act((st) => toggleCrew(st, rogue.id))}>
+          <button disabled={running || !!r.training} className={`btn sm ${onCrew ? 'selected' : ''}`} onClick={() => game.act((st) => toggleCrew(st, rogue.id))}>
             {onCrew ? 'On the crew' : 'Bring along'}
           </button>
-        )}
       </span>
+      {r.mastered.length > 0 && <span className="small">Mentored: {r.mastered.join(', ')}</span>}
+      {r.training ? <p className="small">Training {r.training.specialty}: unavailable for {r.training.remaining} more completed heists.</p> : <>
+        <label className="small">Mentor specialty<select aria-label={`${rogue.name} mentor specialty`} value={specialty} onChange={(e) => setSpecialty(e.target.value)}>{SPECIALTIES.filter((x) => x !== rogue.primary).map((x) => <option key={x}>{x}</option>)}</select></label>
+        <button className="btn sm" disabled={!!reason} title={reason ?? 'Unavailable for two completed heists'} onClick={() => game.act((st) => trainRogue(st, rogue.id, specialty))}>Mentor training · 5,000 gold</button>
+      </>}
+      <details>
+        <summary className="small">Talent tree · {r.talents.length}/10 · {talentPoints(r)} points available</summary>
+        <p className="dim small">One point every five levels after Lv 10; first at Lv 15. Learn in order.</p>
+        {rogue.talentTree.map((node) => <div key={node.id} style={{ marginTop: 6 }}>
+          <button className={`btn sm ${r.talents.includes(node.id) ? 'selected' : ''}`} disabled={running || node.id !== r.talents.length + 1 || talentPoints(r) < 1} onClick={() => game.act((st) => learnTalent(st, rogue.id, node.id))}>{r.talents.includes(node.id) ? '✓ ' : ''}{node.name}</button>
+          <div className="dim small">Tier {node.tier} · {node.effect}</div>
+        </div>)}
+      </details>
     </div>
   );
 }
@@ -219,9 +253,10 @@ export function HeistBoard({ view = 'all' }: { view?: 'all' | 'jobs' | 'crew' })
           <div className="section-head">
             <h3>Crew</h3>
             <span className="dim small">
-              {s.heist.crew.length} of {crewSlots(s)} places · paid in Markers and gold
+              {s.heist.crew.length} of {crewSlots(s)} places · 12 specialists
             </span>
           </div>
+          <p className="small dim">Crew build: {s.heist.crew.map((id) => ROGUES.find((r) => r.id === id)?.primary).join(' · ')}. Selecting a fourth rogue replaces the first. Crew and talents stay fixed during a heist.</p>
           <div className="card-grid" style={{ ['--card-min' as string]: '220px', gap: 8 }}>
             {ROGUES.map((r) => (
               <RogueCard key={r.id} s={s} rogue={r} />

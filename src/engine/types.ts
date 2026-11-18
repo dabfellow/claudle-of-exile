@@ -768,7 +768,7 @@ export type Action =
   | { kind: 'skill'; actionId: string; progress: number; focus?: number; double?: boolean }
   | { kind: 'combat'; zoneId: string }
   | { kind: 'craft'; uid: number; method: CraftMethod; rule: StopRule; progress: number; steps: number }
-  | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number>; focus?: number; double?: boolean }
+  | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number>; focus?: number; double?: boolean; crew?: string[]; spent?: string[]; tactic?: 'bypass' | 'greed'; tacticRogue?: string; scouted?: number }
   | null;
 
 /** Smithing catalyst slot: a Fossil biases the roll of a Magic base, Resin raises item level. */
@@ -911,6 +911,11 @@ export interface TutorialState {
   progress: number;
   done: boolean;
   skipped: boolean;
+}
+
+/** Explicit main-story interactions; combat evidence remains in bossesDefeated. */
+export interface CampaignQuestState {
+  completed: string[];
 }
 
 /** What the account has earned for automation. One-way: nothing ever takes these back. */
@@ -1084,6 +1089,7 @@ export interface ExpeditionState {
 
 /** Thieving's Heist board (engine/heist.ts). The job under way lives on `action`, so anything else you start ends it. */
 export interface HeistState {
+  roster?: Record<string, import('../data/rogues').RogueProgress>;
   /** rank of every rogue hired */
   rogues: Record<string, number>;
   /** rogues on the crew, up to crewSlots() */
@@ -1154,6 +1160,7 @@ export interface GameState {
   /** a Hardcore character has died here: nothing runs again, and the game deletes it */
   fallen?: { zoneId: string | null; offline: boolean };
   tutorial: TutorialState;
+  campaignQuests: CampaignQuestState;
   nextUid: number;
   skills: Record<SkillId, number>;
   /** Character-owned nominal work practiced in explicitly authored non-combat bands. */

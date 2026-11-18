@@ -25,6 +25,7 @@ import { migrateLegacyLootFilters, settleLootFilters } from './lootFilter';
 import { migrateSettingsProfiles, settleTreeProfiles } from './treeProfiles';
 import { settleProfessionProgress } from './professions';
 import { settleForagingSeeds } from './foraging';
+import { newCampaignQuestState, settleCampaignQuests } from './campaignQuests';
 
 // kept from the game's old name: changing it would orphan every existing save
 export const SAVE_KEY = 'claudle-of-exile-save';
@@ -410,6 +411,8 @@ const MIGRATIONS: Record<number, Migration> = {
     if (skills?.combat) skills.combat = charXpFromPreviousCurve(skills.combat);
   },
   46: (raw) => { settleProfessionProgress(raw as unknown as GameState, true); },
+  // Main-story conversations start unclaimed. Existing combat/travel progress is preserved.
+  47: (raw) => { raw.campaignQuests ??= newCampaignQuestState(); },
 };
 
 /**
@@ -480,6 +483,7 @@ export function deserialize(json: string): GameState {
     while (s.flaskSlots.length < FLASK_SLOTS) s.flaskSlots.push(null);
   }
   unlockReachedZones(s);
+  settleCampaignQuests(s);
   settleGems(s);
   settleMaps(s);
   settleHeist(s);

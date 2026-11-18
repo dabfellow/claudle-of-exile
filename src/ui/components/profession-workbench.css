@@ -102,7 +102,7 @@ html .profession-station .minigame { margin: 16px 0 0; padding: 14px; background
 .profession-smelting .profession-group-head { border-bottom: 1px solid #453c31; }
 .profession-smelting .profession-workspace { grid-template-columns: minmax(0, 1fr); }
 .profession-smelting .profession-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
-.profession-smelting .profession-group.selected { grid-column: span 2; }
+.profession-smelting .profession-group.selected { grid-column: 1 / -1; }
 .profession-smelting .profession-station-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 24px; }
 .profession-smelting .profession-workpiece, .profession-smelting .profession-readout { grid-column: 1 / -1; }
 .profession-smelting .profession-station .minigame { align-self: start; margin-top: 0; }
@@ -141,7 +141,7 @@ html .profession-station .minigame { margin: 16px 0 0; padding: 14px; background
 /* Rune-carving: stone tablets arranged above a slate with inset borders. */
 .profession-runecarving .profession-workspace { grid-template-columns: minmax(0, 1fr); }
 .profession-runecarving .profession-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.profession-runecarving .profession-group.selected { grid-column: span 2; }
+.profession-runecarving .profession-group.selected { grid-column: 1 / -1; }
 .profession-runecarving .profession-station { border-radius: 2px; border: 3px double #52677d; }
 .profession-runecarving .profession-station-rail { background: #29323f; }
 .profession-runecarving .profession-station-body { box-shadow: inset 0 0 0 5px #202a32; }
@@ -161,7 +161,7 @@ html .profession-station .minigame { margin: 16px 0 0; padding: 14px; background
 .profession-cartography .profession-station-rail { background: #34313e; border-color: #625977; }
 .profession-cartography .profession-workspace { grid-template-columns: minmax(0, 1fr); }
 .profession-cartography .profession-groups { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
-.profession-cartography .profession-group.selected { grid-column: span 2; }
+.profession-cartography .profession-group.selected { grid-column: 1 / -1; }
 .profession-cartography .mc-tiles .mc-tile { background-image: none; min-height: 75px; }
 .motif-compass > i { border-radius: 50%; }
 .motif-compass > i:nth-child(2) { border-radius: 0; transform: rotate(45deg); }

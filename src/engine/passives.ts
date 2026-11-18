@@ -1,7 +1,6 @@
 import { perkTotals } from '../data/achievements';
 import { classDef } from '../data/classes';
 import { PASSIVE_BY_ID, PASSIVE_NODES, type MasteryOption, type PassiveNode } from '../data/passiveTree';
-import { ZONES } from '../data/zones';
 import { characterLevel } from './character';
 import type { Ctx } from './context';
 import { MAX_FORBIDDEN_ALLOWANCE, forbiddenAllowance } from './pinnacles';
@@ -77,9 +76,12 @@ export function spentPoints(s: Pick<GameState, 'passives'>): Record<PassivePoint
   return spent;
 }
 
-/** Passive points from beating act bosses, plus those achievements grant. */
+/** Keep the six earned boss awards stable when story chapters are split or rearranged. */
+export const CAMPAIGN_PASSIVE_MILESTONES = ['sanctum', 'burningthrone', 'highaltar', 'giantsthrone', 'maelstrom', 'shatteredthrone'] as const;
+
+/** Passive points from the established campaign milestones, plus those achievements grant. */
 function actQuestPoints(s: Pick<GameState, 'bossesDefeated' | 'achievements'>): number {
-  return ZONES.filter((zone) => zone.actBoss && s.bossesDefeated.includes(zone.id)).length + perkTotals(s.achievements ?? []).passivePoints;
+  return CAMPAIGN_PASSIVE_MILESTONES.filter((id) => s.bossesDefeated.includes(id)).length + perkTotals(s.achievements ?? []).passivePoints;
 }
 
 /** Credit level and Act-boss awards. Missing checkpoints identify a pre-economy save. */

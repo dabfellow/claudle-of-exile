@@ -45,7 +45,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.15,
     rarity: { normal: 74, magic: 25.75, rare: 0.25 },
     flaskChance: 0.01,
-    uniqueChance: 0.0005,
+    uniqueChance: 0.01,
   },
   2: {
     currencyChance: 0.09,
@@ -53,7 +53,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.15,
     rarity: { normal: 72, magic: 27.5, rare: 0.5 },
     flaskChance: 0.01,
-    uniqueChance: 0.0006,
+    uniqueChance: 0.01,
   },
   3: {
     currencyChance: 0.05,
@@ -61,7 +61,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.16,
     rarity: { normal: 62, magic: 30, rare: 8 },
     flaskChance: 0.011,
-    uniqueChance: 0.0007,
+    uniqueChance: 0.01,
   },
   4: {
     currencyChance: 0.05,
@@ -69,7 +69,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.16,
     rarity: { normal: 58, magic: 32, rare: 10 },
     flaskChance: 0.012,
-    uniqueChance: 0.0008,
+    uniqueChance: 0.01,
   },
   5: {
     currencyChance: 0.055,
@@ -77,7 +77,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.17,
     rarity: { normal: 55, magic: 33, rare: 12 },
     flaskChance: 0.012,
-    uniqueChance: 0.001,
+    uniqueChance: 0.01,
   },
   // Act 2 (zones.ts: 5, 5, 6, 6, 6, 7, 7, 7)
   6: {
@@ -86,7 +86,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.17,
     rarity: { normal: 52, magic: 34, rare: 14 },
     flaskChance: 0.013,
-    uniqueChance: 0.0011,
+    uniqueChance: 0.01,
   },
   7: {
     currencyChance: 0.06,
@@ -94,7 +94,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.18,
     rarity: { normal: 50, magic: 34, rare: 16 },
     flaskChance: 0.013,
-    uniqueChance: 0.0012,
+    uniqueChance: 0.01,
   },
   // Act 3 (zones.ts: 7, 8, 8, 8, 8, 9, 9, 9, 9, 9)
   8: {
@@ -103,7 +103,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.18,
     rarity: { normal: 48, magic: 35, rare: 17 },
     flaskChance: 0.014,
-    uniqueChance: 0.0013,
+    uniqueChance: 0.01,
   },
   9: {
     currencyChance: 0.065,
@@ -111,7 +111,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.19,
     rarity: { normal: 46, magic: 35, rare: 19 },
     flaskChance: 0.014,
-    uniqueChance: 0.0014,
+    uniqueChance: 0.01,
   },
   // Act 4 (zones.ts: 9, 10 ×5, 11 ×6): fewer, bigger monsters, each worth a little more
   10: {
@@ -120,7 +120,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.2,
     rarity: { normal: 44, magic: 35, rare: 21 },
     flaskChance: 0.015,
-    uniqueChance: 0.0016,
+    uniqueChance: 0.01,
   },
   11: {
     currencyChance: 0.075,
@@ -128,7 +128,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.21,
     rarity: { normal: 42, magic: 35, rare: 23 },
     flaskChance: 0.015,
-    uniqueChance: 0.0018,
+    uniqueChance: 0.01,
   },
   // Act 5 (zones.ts: 12 × 4, 13 × 4, 14 × 6). Tiers 10 and 11 are Act 4's
   12: {
@@ -137,7 +137,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.205,
     rarity: { normal: 40, magic: 36, rare: 24 },
     flaskChance: 0.015,
-    uniqueChance: 0.0017,
+    uniqueChance: 0.01,
   },
   13: {
     currencyChance: 0.08,
@@ -145,7 +145,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.21,
     rarity: { normal: 38, magic: 36, rare: 26 },
     flaskChance: 0.015,
-    uniqueChance: 0.0018,
+    uniqueChance: 0.01,
   },
   14: {
     currencyChance: 0.085,
@@ -153,7 +153,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.215,
     rarity: { normal: 36, magic: 36, rare: 28 },
     flaskChance: 0.016,
-    uniqueChance: 0.0019,
+    uniqueChance: 0.01,
   },
   // Act 6 (zones.ts: 15 × 6, 16 × 6, 17 × 6)
   15: {
@@ -162,7 +162,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.22,
     rarity: { normal: 34, magic: 36, rare: 30 },
     flaskChance: 0.016,
-    uniqueChance: 0.002,
+    uniqueChance: 0.01,
   },
   16: {
     currencyChance: 0.095,
@@ -170,7 +170,7 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.225,
     rarity: { normal: 32, magic: 36, rare: 32 },
     flaskChance: 0.016,
-    uniqueChance: 0.0021,
+    uniqueChance: 0.01,
   },
   17: {
     currencyChance: 0.1,
@@ -178,8 +178,9 @@ export const DROP_TABLES: Record<number, DropTable> = {
     itemChance: 0.23,
     rarity: { normal: 30, magic: 36, rare: 34 },
     flaskChance: 0.017,
-    uniqueChance: 0.0022,
+    uniqueChance: 0.01,
   },
+
 };
 
 /**

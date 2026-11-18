@@ -35,10 +35,10 @@ export function materialSources(id: string): Source[] {
   for (const w of WARES) {
     if (w.item === id) out.push({ label: `Expedition: ${cultureDef(w.culture).merchant}`, detail: `standing ${w.standing}`, page: 'archaeology' });
   }
-  if (id === WHETSTONE) out.push({ label: 'Monster drops', detail: 'rare, from Act 4 on', page: 'campaign' });
+  if (id === WHETSTONE) out.push({ label: 'Monster drops', detail: 'rare, from Act 5 on', page: 'campaign' });
   if (id === SEAL || id === WAX) out.push({ label: 'Monster drops', detail: 'rare, from Act 2 on', page: 'campaign' });
   const rune = runeDef(id);
-  if (rune && rune.grade.grade <= RUNE_DROP.maxGrade) out.push({ label: 'Monster drops', detail: 'rare, from Act 3 on', page: 'campaign' });
+  if (rune && rune.grade.grade <= RUNE_DROP.maxGrade) out.push({ label: 'Monster drops', detail: 'rare, from Act 4 on', page: 'campaign' });
   if (id === 'gold') out.push({ label: 'Monster drops', page: 'campaign' }, { label: 'Selling in Town', page: 'vendor' });
   if (id === 'arcane_dust') out.push({ label: 'Salvaging gear', detail: 'Stash or Equipment', page: 'stash' });
   if (['marrow_shard', 'choir_glass', 'black_pearl', 'throne_ash', 'crownless_sigil'].includes(id)) {

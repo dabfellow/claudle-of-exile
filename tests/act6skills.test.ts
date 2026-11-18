@@ -82,11 +82,11 @@ const hold = (s: GameState) => {
 describe('the last empire batch', () => {
   it('arrives with Act 6, in its level range, and its signatures with it', () => {
     for (const id of [...BATCH, ...SUPPORTS]) {
-      expect(gemAct(id), id).toBe(6);
+      expect(gemAct(id), id).toBe(7);
       expect(gemReqLevel(id), id).toBeGreaterThanOrEqual(58);
       expect(gemReqLevel(id), id).toBeLessThanOrEqual(65);
     }
-    for (const id of BATCH) expect(gemAct(SUPPORT_GEMS.find((x) => x.signatureFor === id)!.id), id).toBe(6);
+    for (const id of BATCH) expect(gemAct(SUPPORT_GEMS.find((x) => x.signatureFor === id)!.id), id).toBe(7);
   });
 
   it('is two skills per attribute, each asking a committed build, each with a signature that fits only it', () => {
@@ -104,7 +104,7 @@ describe('the last empire batch', () => {
     const s = veteran(newGame(1), 70);
     s.unlockedZones = ['mudflats', 'cinderroad'];
     for (const id of [...BATCH, ...SUPPORTS]) expect(gemArrived(s, id), id).toBe(false);
-    const act6 = { ...ZONES[0], id: 'test_act6', act: 6 };
+    const act6 = { ...ZONES[0], id: 'test_act6', act: 7 };
     ZONES.push(act6);
     s.unlockedZones = [...s.unlockedZones, act6.id];
     for (const id of [...BATCH, ...SUPPORTS]) expect(gemArrived(s, id), id).toBe(true);
