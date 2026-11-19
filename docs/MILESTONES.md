@@ -766,7 +766,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-- [x] Astrology profession: 14 constellation studies for Stardust, a Star Chart of 5 stars each (profession speed + small combat stat per star), mastery and a shooting-star Focus game. Left out of Skilling tree points, achievements and The Sum of All Things on purpose. — done 2026-11-19 (unreleased)
+- [x] Astrology profession: 14 constellation studies for Stardust, a Star Chart of 5 stars each (profession speed + small combat stat per star), mastery and a shooting-star Focus game. Left out of Skilling tree points, achievements and The Sum of All Things on purpose. — done 2026-11-19 (live in 0.5.4)
 - [x] Agility profession: 10 courses, 13 shortcuts (Heist rooms, close-in, four hidden gathering spots). — done 2026-11-19 (live in 0.5.3)
 - [x] Thieving Heist and Rogue Crew tabs redone as ledger + dossier; Focus moved onto the running mark/heist card. — done 2026-11-18 (live in 0.5.2)
 
