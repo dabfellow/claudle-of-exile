@@ -27,6 +27,7 @@ import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/c
 import { ExpeditionBoard } from '../components/ExpeditionBoard';
 import { HeistBoard } from '../components/HeistBoard';
 import { MapCaseBoard } from '../components/MapCaseBoard';
+import { StarChart } from '../components/StarChart';
 import { PantryBoard } from '../components/PantryBoard';
 import { RuneBoard } from '../components/RuneBoard';
 import { SkillMinigame } from '../components/SkillMinigame';
@@ -67,6 +68,7 @@ const START_LABEL: Record<SkillId, string> = {
   runecarving: 'Carve',
   cooking: 'Cook',
   cartography: 'Draw',
+  astrology: 'Study',
   fishing: 'Fish',
 };
 
@@ -552,6 +554,7 @@ function getSkillTabs(skill: SkillId): { id: string; label: string }[] | null {
   else if (skill === 'harvesting') baseTabs = HARVESTING_TABS;
   else if (skill === 'cartography') baseTabs = [{ id: 'charts', label: 'Map Case' }];
   else if (skill === 'mining') baseTabs = [{ id: 'all', label: 'Mining' }];
+  else if (skill === 'astrology') baseTabs = [{ id: 'study', label: 'Observatory' }, { id: 'chart', label: 'Star Chart' }];
   else if (skill === 'woodcutting') baseTabs = [{ id: 'trees', label: 'Woodcutting' }, { id: 'planks', label: 'Planks' }];
 
   const hasProjects = PROFESSION_PROJECTS.some((p) => p.skill === skill && p.category !== 'masteryBatch');
@@ -572,6 +575,7 @@ function defaultSkillTab(skill: SkillId): string {
   if (skill === 'harvesting') return 'forage';
   if (skill === 'cartography') return 'charts';
   if (skill === 'woodcutting') return 'trees';
+  if (skill === 'astrology') return 'study';
   return 'all';
 }
 
@@ -609,6 +613,14 @@ function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
     if (sifting.length > 0) groups.push({ key: 'sifting', label: 'Sifting', actions: sifting });
     if (restorations.length > 0) groups.push({ key: 'restorations', label: 'Relic Restorations', actions: restorations });
     if (groups.length > 0) return groups;
+  }
+  if (skill === 'astrology') {
+    const groups: Tier[] = [
+      { key: 'near', label: 'Near Sky (Lv 1–30)', actions: actions.filter((a) => a.level <= 30) },
+      { key: 'deep', label: 'Deep Sky (Lv 34–60)', actions: actions.filter((a) => a.level > 30 && a.level <= 60) },
+      { key: 'far', label: 'Far Sky (Lv 68+)', actions: actions.filter((a) => a.level > 60) },
+    ];
+    return groups.filter((g) => g.actions.length > 0);
   }
   if (skill === 'thieving') {
     const groups: Tier[] = [
@@ -916,7 +928,8 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
     (skill !== 'archaeology' || tab === 'restoration') &&
     skill !== 'thieving' &&
     skill !== 'fishing' &&
-    !(skill === 'harvesting' && tab === 'greenhouse');
+    !(skill === 'harvesting' && tab === 'greenhouse') &&
+    !(skill === 'astrology' && tab === 'chart');
 
   return (
     <div className={`page ${skill === 'thieving' ? 'thieving-page' : `profession-page profession-${skill}`}`} style={{ ['--profession' as string]: SKILLS[skill].color }}>
@@ -996,6 +1009,12 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
       )}
 
       {skill === 'harvesting' && tab === 'greenhouse' && <GreenhousePanel s={s} />}
+      {skill === 'astrology' && tab === 'chart' && <StarChart />}
+      {skill === 'astrology' && tab === 'study' && (
+        <div className="callout skill-note">
+          Study a constellation for Stardust, with a rare chance of Gilded Stardust. Spend both on the <b>Star Chart</b> to light stars: each one makes a profession faster and gives your character a small bonus.
+        </div>
+      )}
 
       {(skill === 'smithing' || skill === 'woodcrafting') && (
         <div className="callout skill-note">

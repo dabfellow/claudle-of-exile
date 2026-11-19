@@ -258,6 +258,15 @@ function generateMilestones(skill: string, taskId: string, _taskName: string, _o
     ];
   }
 
+  if (skill === 'astrology') {
+    return [
+      { level: 25, id: mid(25, 'glint'), name: 'Falling Star', desc: '8% chance for an extra Stardust', scope: 'task', kind: 'vein_strike', value: 0.08 },
+      { level: 50, id: mid(50, 'gilt'), name: 'Gilded Glint', desc: '1% chance for an extra Gilded Stardust', scope: 'task', kind: 'rare_find', value: 0.01, outputId: 'gilded_stardust' },
+      { level: 75, id: mid(75, 'speed'), name: 'Steady Gaze', desc: '+2% global Astrology speed', scope: 'global', kind: 'global_speed', value: 2 },
+      { level: 100, id: mid(100, 'night'), name: 'Long Night', desc: '+2% global Astrology speed', scope: 'global', kind: 'global_speed', value: 2 },
+    ];
+  }
+
   return [
     { level: 25, id: mid(25, 'prac'), name: 'Apprentice Practice', desc: '+5% action efficiency', scope: 'task', kind: 'vein_strike', value: 0.05 },
     { level: 50, id: mid(50, 'jour'), name: 'Journeyman Craft', desc: '+10% action efficiency', scope: 'task', kind: 'vein_strike', value: 0.10 },
@@ -298,7 +307,8 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
   if (['cut_exceptional', 'prepare_return_inscription', 'prepare_choir_inscription', 'prepare_circuit_inscription', 'inscribe_convergence', 'polish_exceptional', 'recycle_gem'].includes(a.id)) return undefined;
   if (a.id.startsWith('cut_family_') || a.id.startsWith('cut_exact_')) return undefined;
   if (a.id === 'chart_endgame_atlas' || a.id.startsWith('forge_uber_key')) return undefined;
-  if (a.skill === 'combat' || a.skill === 'fishing' || a.soon) return undefined;
+  // Astrology arrived after the band-based saves, so it has nothing to migrate.
+  if (a.skill === 'combat' || a.skill === 'fishing' || a.skill === 'astrology' || a.soon) return undefined;
   const out = outputOf(a);
 
   if (a.skill === 'mining') {
@@ -401,7 +411,7 @@ export function masteryForAction(a: SkillAction): MasterySpec | undefined {
   const name = a.batchOf ? a.name.replace(/\s+×\d+$/u, '') : a.name;
   if (a.protectedOutputs) return spec(`task.${id}`, name, a.skill, 'project', {}, a);
   const out = outputOf(a);
-  if (a.skill === 'mining' || a.skill === 'harvesting' || a.skill === 'thieving' || a.skill === 'archaeology' || (a.skill === 'woodcutting' && !a.inputs)) {
+  if (a.skill === 'mining' || a.skill === 'harvesting' || a.skill === 'thieving' || a.skill === 'archaeology' || a.skill === 'astrology' || (a.skill === 'woodcutting' && !a.inputs)) {
     return gathering(`task.${id}`, name, a.skill, a.skill === 'thieving' ? 'gold' : out, a);
   }
   return production(`task.${id}`, name, a.skill, a);

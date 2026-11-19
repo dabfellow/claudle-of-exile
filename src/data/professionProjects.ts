@@ -513,6 +513,11 @@ export const PROFESSION_THEMES: Record<SkillId, ProfessionTheme> = {
     singular: 'restoration',
     startLabel: 'Restore relic',
   },
+  astrology: {
+    title: 'Star Readings',
+    singular: 'reading',
+    startLabel: 'Begin reading',
+  },
   fishing: {
     title: 'Deep Expeditions',
     singular: 'expedition',

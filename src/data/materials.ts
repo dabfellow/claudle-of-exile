@@ -1,4 +1,5 @@
 import { CHART_MATERIALS } from './cartography';
+import { ASTROLOGY_MATERIALS } from './astrology';
 import { COOKING_MATERIALS } from './cooking';
 import { CRAFT_MATERIALS } from './craftMats';
 import { EXPEDITION_MATERIALS } from './expedition';
@@ -95,6 +96,7 @@ export const MATERIALS: MaterialDef[] = [
   ...EXPEDITION_MATERIALS,
   ...COOKING_MATERIALS,
   ...CHART_MATERIALS,
+  ...ASTROLOGY_MATERIALS,
 ];
 
 export interface CurrencyDef extends MaterialDef {

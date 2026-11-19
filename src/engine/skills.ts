@@ -32,6 +32,7 @@ import { foragingDone } from './foraging';
 import { weaponComponentProgress } from './weaponProjects';
 import { gemFamilyPool, gemcuttingAccessHint, isGemEquipped, recycleGemExecution } from './gemcutting';
 import { runecarvingAccessHint, runecarvingDone } from './runes';
+import { astrologySpeed } from './astrology';
 
 export function skillLevel(s: GameState, skill: SkillId): number {
   return levelOf(skill, s.skills[skill]);
@@ -62,14 +63,14 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
   return 1;
 }
 
-const GATHERING_SET = new Set<SkillId>(['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology']);
+const GATHERING_SET = new Set<SkillId>(['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'astrology']);
 const PRODUCTION_SET = new Set<SkillId>(['smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography']);
 
 export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): number {
   const t = skillTreeStats(s);
   const mealGathering = GATHERING_SET.has(a.skill) ? (d.gatheringSpeed ?? 0) : 0;
   const mealProduction = PRODUCTION_SET.has(a.skill) ? (d.productionSpeed ?? 0) : 0;
-  let speed = d.skillSpeed + mealGathering + mealProduction + (t.skillSpeed ?? 0) + (t[`${a.skill}Speed` as keyof TreeStats] ?? 0) + masterySpeed(s, a.mastery);
+  let speed = d.skillSpeed + mealGathering + mealProduction + (t.skillSpeed ?? 0) + (t[`${a.skill}Speed` as keyof TreeStats] ?? 0) + masterySpeed(s, a.mastery) + astrologySpeed(s, a.skill);
   return (a.intervalMs / (1 + speed / 100)) * keystoneSlow(a.skill, t);
 }
 

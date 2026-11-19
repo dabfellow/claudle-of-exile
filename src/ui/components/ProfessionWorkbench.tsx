@@ -23,6 +23,7 @@ export const PROFESSION_THEMES: Partial<Record<SkillId, { title: string; catalog
   cooking: { title: 'The Hearth', catalogue: 'Recipe book', station: 'Hearth & chopping board', motif: 'hearth' },
   cartography: { title: 'The Chartmaker’s Table', catalogue: 'Chart index', station: 'Chart in progress', motif: 'compass' },
   archaeology: { title: 'The Excavator’s Fieldbook', catalogue: 'Restoration catalogue', station: 'Restoration tray', motif: 'find' },
+  astrology: { title: 'The Observatory', catalogue: 'Constellations', station: 'Telescope', motif: 'compass' },
 };
 
 export interface WorkbenchGroup { key: string; label: string; actions: SkillAction[] }

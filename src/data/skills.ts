@@ -16,6 +16,7 @@ import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX }
 import { RUNE_FAMILIES, RUNES } from './runes';
 import { masteryForAction, type MasterySpec } from './skillingMastery';
 import { masteryBatches } from './masteryBatches';
+import { CONSTELLATIONS, GILDED_STARDUST, STARDUST } from './astrology';
 
 export interface SkillDef {
   id: SkillId;
@@ -44,6 +45,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   runecarving: { id: 'runecarving', name: 'Rune-carving', group: 'production', color: '#6fa8ff', verb: 'Carving', desc: 'Carve old materials into runes, then inscribe them in the rune slot on your gear.' },
   cooking: { id: 'cooking', name: 'Cooking', group: 'production', color: '#e08a4a', verb: 'Cooking', desc: 'Cook gathered plants into meals, and into the strongest flask ingredients for Alchemy.' },
   cartography: { id: 'cartography', name: 'Cartography', group: 'production', color: '#8a7ad8', verb: 'Drawing', desc: 'Draw maps and upgrade them to higher tiers, ready for the Map Device.' },
+  astrology: { id: 'astrology', name: 'Astrology', group: 'gathering', color: '#a9b8ff', verb: 'Stargazing', desc: 'Study the constellations for Stardust, then light their stars on the Star Chart for lasting bonuses to your professions and your character.' },
   fishing: { id: 'fishing', name: 'Fishing', group: 'gathering', color: '#4fa3d9', verb: 'Fishing', desc: 'Cast a line into the waters of Wraeclast.', soon: true },
 };
 
@@ -196,6 +198,19 @@ const ARCHAEOLOGY: SkillAction[] = SITES.map((x) => ({
   outputChance: digChance(x),
   color: x.color,
   gate: EXPEDITION_GATE,
+}));
+
+/** Stargazing: no inputs, level-only. Stardust is spent on the Star Chart (engine/astrology.ts). */
+const ASTROLOGY: SkillAction[] = CONSTELLATIONS.map((x) => ({
+  id: `study_${x.id}`,
+  skill: 'astrology' as const,
+  name: `Study ${x.name}`,
+  level: x.level,
+  intervalMs: x.intervalMs,
+  xp: x.xp,
+  outputs: { [STARDUST]: x.dust },
+  bonus: [{ id: GILDED_STARDUST, chance: x.gilded, qty: 1 }],
+  color: x.color,
 }));
 
 /** Fishing is coming soon. It has always been coming soon. */
@@ -489,7 +504,7 @@ export const BOSS_KEY_CRAFTS: SkillAction[] = [
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...MILLING, ...THIEVING, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
+const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...MILLING, ...THIEVING, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...ASTROLOGY, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
 /** Historical access evidence used only by save migration. */
 const ALL_AUTHORED_ACTIONS = [...AUTHORED_ACTIONS, ...WEAPON_COMPONENT_ACTIONS.filter((extra) => !AUTHORED_ACTIONS.some((a) => a.id === extra.id))];
 export const LEGACY_ACTION_PLACES = Object.fromEntries(ALL_AUTHORED_ACTIONS.map((a) => [a.id, { area: a.area, gate: a.gate }]));

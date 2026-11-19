@@ -738,6 +738,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Ideas / later
 
+- Astrology follow-ups (2026-11-19), owner call: whether it should count toward Skilling tree points, get a "level 50" achievement, a Skilling tree branch, a profession tool or Masterworks. All left out so nothing else moved.
+
 - Offline summary wording follow-up (noticed in Phase03 playtest, 2026-11-14): the generic Items Found tile says equipment is waiting on Combat even when a completed profession tool has safely arrived in the inventory. Consider destination-aware wording in a later shared UI pass; reward delivery itself was verified.
 
 - Tree web follow-ups (2026-11-08): the tree is 1,573 nodes (71% of 2,208); the 50% target would mean cutting about 30 clusters and their notables, which needs a call on which. Paths now run through clusters, so keystones sit 26–49 nodes from a class start (was 14–20) and some routes must take a notable on the way; check if that feels too slow. The two point pools were audited and changed to 2 Travel / 3 Passive per level; playtest whether the calculated split feels right.
@@ -759,6 +761,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Astrology profession: 14 constellation studies for Stardust, a Star Chart of 5 stars each (profession speed + small combat stat per star), mastery and a shooting-star Focus game. Left out of Skilling tree points, achievements and The Sum of All Things on purpose. — done 2026-11-19 (unreleased)
 
 - [x] Thieving Heist and Rogue Crew tabs redone as ledger + dossier; Focus moved onto the running mark/heist card. — done 2026-11-18 (live in 0.5.2)
 
