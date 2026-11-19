@@ -602,6 +602,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [ ] Agility profession: courses for xp; levels open shortcuts (Heist rooms up to 20% faster, close-in up to 50% faster in fights, four hidden gathering spots). Owner chose "shortcut unlocks" over stat perks (2026-11-19). Data in `src/data/agility.ts`.
+  - Built and tested 2026-11-19, unreleased. Left out of skilling-tree points, total-level achievements and the skilling passive tree for now, so nothing else shifts; owner call whether to add them.
+
 - [x] Implement and ship the approved Woodcutting design and the remaining profession redesigns. — done 2026-11-17
   - Existing recipes, locks, mastery, Focus, batches, secondary systems and Masterworks connected; desktop and phone checks pass. Live in 0.4.49.
 
@@ -737,6 +740,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - [x] Passive tree route planning: clicking a node lines up the shortest route to it (`passiveRoute` in `src/engine/passives.ts`), shown in blue with its cost and stat changes; more clicks extend it, clicking a planned node cuts it back, Confirm buys it all and Cancel drops it. Routes never pass through keystones, masteries or Doomed Gates. Masteries, refunds and owned nodes keep the single-node preview. Skilling tree unchanged. — done 2026-11-11, live in 0.4.32 on 2026-11-11
 
 ## Ideas / later
+
+- Agility follow-ups (2026-11-19): world-map travel has no travel time, so there was no "faster travel" for Agility to shorten; Agility is not counted toward total skill level (skilling-tree points, achievements) and has no level-50 achievement or skilling-tree branch yet.
 
 - Offline summary wording follow-up (noticed in Phase03 playtest, 2026-11-14): the generic Items Found tile says equipment is waiting on Combat even when a completed profession tool has safely arrived in the inventory. Consider destination-aware wording in a later shared UI pass; reward delivery itself was verified.
 

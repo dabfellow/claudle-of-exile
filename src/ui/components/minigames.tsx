@@ -699,6 +699,8 @@ export function SkillGame({ skill, matId, onSwing }: { skill: SkillId; matId?: s
       return <ForagingGame matId={matId} onSwing={onSwing} />;
     case 'thieving':
       return <ThievingGame onSwing={onSwing} />;
+    case 'agility':
+      return <WoodcuttingGame onSwing={onSwing} />;
     case 'archaeology':
       return <ArchaeologyGame onSwing={onSwing} />;
     case 'smelting':

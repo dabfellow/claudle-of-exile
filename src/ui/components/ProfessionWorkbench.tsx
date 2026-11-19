@@ -22,6 +22,7 @@ export const PROFESSION_THEMES: Partial<Record<SkillId, { title: string; catalog
   runecarving: { title: 'The Inscriber’s Slate', catalogue: 'Inscription tablets', station: 'Carving slate', motif: 'rune' },
   cooking: { title: 'The Hearth', catalogue: 'Recipe book', station: 'Hearth & chopping board', motif: 'hearth' },
   cartography: { title: 'The Chartmaker’s Table', catalogue: 'Chart index', station: 'Chart in progress', motif: 'compass' },
+  agility: { title: 'The Runner’s Route Book', catalogue: 'Courses', station: 'On the course', motif: 'compass' },
   archaeology: { title: 'The Excavator’s Fieldbook', catalogue: 'Restoration catalogue', station: 'Restoration tray', motif: 'find' },
 };
 

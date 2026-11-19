@@ -62,7 +62,7 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
   return 1;
 }
 
-const GATHERING_SET = new Set<SkillId>(['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology']);
+const GATHERING_SET = new Set<SkillId>(['mining', 'woodcutting', 'harvesting', 'thieving', 'agility', 'archaeology']);
 const PRODUCTION_SET = new Set<SkillId>(['smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography']);
 
 export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): number {
@@ -117,6 +117,11 @@ export function stationLevelFor(a: SkillAction): { station: 'forge' | 'smelter' 
 }
 
 /** Where you still have to get to before this action opens, or null if you're there. */
+/** A hidden gathering spot waits for its Agility level. */
+export function agilityBlocker(s: GameState, a: SkillAction): string | null {
+  return a.agility && skillLevel(s, 'agility') < a.agility ? `Requires Agility level ${a.agility}` : null;
+}
+
 export function actionPlaceNeeded(_s: GameState, _a: SkillAction): string | null {
   return null;
 }
@@ -133,6 +138,8 @@ export function actionBlocker(s: GameState, a: SkillAction): string | null {
   const place = actionPlaceNeeded(s, a);
   if (place) return `Reach ${place} to unlock`;
   if (skillLevel(s, a.skill) < a.level) return `Requires ${SKILLS[a.skill].name} level ${a.level}`;
+  const agility = agilityBlocker(s, a);
+  if (agility) return agility;
   if (a.batchMastery && masteryLevel(s, `task.${a.batchOf}`) < a.batchMastery) {
     return `Requires ${actionDef(a.batchOf!).name} mastery ${a.batchMastery}`;
   }

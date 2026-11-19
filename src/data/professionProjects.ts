@@ -508,6 +508,11 @@ export const PROFESSION_THEMES: Record<SkillId, ProfessionTheme> = {
     singular: 'scheme',
     startLabel: 'Execute scheme',
   },
+  agility: {
+    title: 'Grand Courses',
+    singular: 'course',
+    startLabel: 'Begin course',
+  },
   archaeology: {
     title: 'Relic Restorations',
     singular: 'restoration',

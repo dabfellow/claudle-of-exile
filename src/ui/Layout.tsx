@@ -93,6 +93,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
       { page: 'woodcutting', label: 'Woodcutting', icon: 'woodcutting', skill: 'woodcutting' },
       { page: 'harvesting', label: 'Foraging', icon: 'harvesting', skill: 'harvesting' },
       { page: 'thieving', label: 'Thieving', icon: 'thieving', skill: 'thieving' },
+      { page: 'agility', label: 'Agility', icon: 'agility', skill: 'agility' },
       { page: 'archaeology', label: 'Archaeology', icon: 'archaeology', skill: 'archaeology' },
       { page: 'fishing', label: 'Fishing', icon: 'fishing', skill: 'fishing' },
     ],
