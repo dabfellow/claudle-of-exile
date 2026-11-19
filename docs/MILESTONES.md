@@ -1,6 +1,6 @@
 # Roadmap and decisions
 
-Last updated 2026-11-17. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-18. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
@@ -610,6 +610,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 - [x] Implement Thieving Overhaul (Rogue Classes, Progression, Talent Trees, Tactical Loop). — done 2026-11-17
 
+- [x] Restyle Thieving Heist Operations and Rogue Crew as ledger + dossier like Street Marks; Focus only on the running mark or heist dossier, none on Crew or Masterworks. — done 2026-11-18
+  - Masterworks keeps its current look; a separate Masterworks minigame is planned later.
+
 - [ ] Add Sir Broden as an NPC with a quest chain awarding a unique item (requested 2026-11-16).
   - Accepted background and aliases are in Decisions. Design the quest chain and unique reward before implementation; current request is to record the future work.
 
@@ -756,6 +759,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Thieving Heist and Rogue Crew tabs redone as ledger + dossier; Focus moved onto the running mark/heist card. — done 2026-11-18
 
 - [x] Merged Travel Points into Passive Points (2 per level) and set every ordinary tree node to cost 1; Gateways (4), Doomed Gates (5) and Forbidden keystones (15) unchanged. Save migration 48 recounts existing characters without removing allocations. — done 2026-11-18 (live in 0.5.1)
 

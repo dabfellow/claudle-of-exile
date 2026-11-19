@@ -68,7 +68,6 @@ export function ThievingLedger() {
   const xpFor = (mark: SkillAction) => +(mark.xp * (1 + (d.skillXp + (tree.skillXp ?? 0)) / 100)).toFixed(1);
   const blocker = actionBlocker(s, a);
   const running = activeId === a.id;
-  const anyThieving = !!activeId || s.action?.kind === 'heist';
   const completions = s.professionProgress.counters['thieving.markers'] ?? 0;
   const untilMarker = 10 - completions % 10;
   const selectedGroup = GROUPS.find((g) => g.actions.includes(a))!;
@@ -133,7 +132,7 @@ export function ThievingLedger() {
           return <Tooltip content={<MasteryTip s={s} mastery={mastery} />}><span className="thief-next-perk">{next ? `Next: ${next.name} · Mastery ${next.level}` : 'All mastery milestones unlocked'}</span></Tooltip>;
         })()}
       </div>
-      {anyThieving && <div className="thief-focus">{!running && <p className="small">Focus applies to {activeId ? MARKS.find((mark) => mark.id === activeId)!.name : 'your active Heist'}.</p>}<SkillMinigame skill="thieving" /></div>}
+      {running && <div className="thief-focus"><SkillMinigame skill="thieving" /></div>}
     </section>
   </div>;
 }

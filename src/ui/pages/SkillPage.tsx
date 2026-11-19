@@ -1055,7 +1055,6 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
 
       {skill === 'thieving' && tab === 'heists' && <HeistBoard view="jobs" />}
       {skill === 'thieving' && tab === 'crew' && <HeistBoard view="crew" />}
-      {skill === 'thieving' && tab !== 'marks' && <SkillMinigame skill={skill} />}
 
       {skill === 'archaeology' && (tab === 'sites' || tab === 'merchants') && <ExpeditionBoard view={tab as 'sites' | 'merchants'} />}
       {skill === 'fishing' && (

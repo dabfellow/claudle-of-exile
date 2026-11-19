@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  "Thieving: Heist Operations and Rogue Crew now use the same ledger and dossier layout as Street Marks, and Focus sits inside the card of the mark or heist you are running.",
+];
 
 export const NEWS: NewsEntry[] = [
   {
