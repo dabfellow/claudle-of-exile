@@ -249,6 +249,15 @@ function generateMilestones(skill: string, taskId: string, _taskName: string, _o
     ];
   }
 
+  if (skill === 'agility') {
+    return [
+      { level: 25, id: mid(25, 'stride'), name: 'Long Stride', desc: '+3% speed on this course', scope: 'task', kind: 'action_speed', value: 3 },
+      { level: 50, id: mid(50, 'flow'), name: 'Course Flow', desc: '+5% speed on this course', scope: 'task', kind: 'action_speed', value: 5 },
+      { level: 75, id: mid(75, 'speed'), name: 'Light Footed', desc: '+2% global Agility speed', scope: 'global', kind: 'global_speed', value: 2 },
+      { level: 100, id: mid(100, 'master'), name: 'Rooftop Master', desc: '+3% global Agility speed', scope: 'global', kind: 'global_speed', value: 3 },
+    ];
+  }
+
   if (skill === 'archaeology') {
     return [
       { level: 25, id: mid(25, 'brush'), name: 'Careful Brush', desc: '8% chance for instant stratum dig', scope: 'task', kind: 'vein_strike', value: 0.08 },
@@ -330,6 +339,7 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
     const label = band === 'road' ? 'Road Marks' : band === 'khanate' ? 'Khanate Marks' : 'Court Marks';
     return gathering(`thieving.${band}`, label, a.skill, 'gold', a);
   }
+  if (a.skill === 'agility') return undefined; // Added after the band-based saves.
   if (a.skill === 'archaeology') {
     const culture = siteOf(a.id)?.culture;
     if (!culture) return undefined; // These recipes did not exist in the old band-based saves.
@@ -411,7 +421,7 @@ export function masteryForAction(a: SkillAction): MasterySpec | undefined {
   const name = a.batchOf ? a.name.replace(/\s+×\d+$/u, '') : a.name;
   if (a.protectedOutputs) return spec(`task.${id}`, name, a.skill, 'project', {}, a);
   const out = outputOf(a);
-  if (a.skill === 'mining' || a.skill === 'harvesting' || a.skill === 'thieving' || a.skill === 'archaeology' || a.skill === 'astrology' || (a.skill === 'woodcutting' && !a.inputs)) {
+  if (a.skill === 'mining' || a.skill === 'harvesting' || a.skill === 'thieving' || a.skill === 'agility' || a.skill === 'archaeology' || a.skill === 'astrology' || (a.skill === 'woodcutting' && !a.inputs)) {
     return gathering(`task.${id}`, name, a.skill, a.skill === 'thieving' ? 'gold' : out, a);
   }
   return production(`task.${id}`, name, a.skill, a);

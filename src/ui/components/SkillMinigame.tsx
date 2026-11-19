@@ -11,6 +11,7 @@ const HOW_TO: Partial<Record<SkillId, string>> = {
   woodcutting: 'Swing while the marker is in the bright band, or its gold middle for a double.',
   harvesting: 'Tap herbs as they pop up, before they wilt. Pick one while it glows gold for a double.',
   thieving: 'Watch the pins light up, then tap them back in the same order. Finish while the timer is in the gold for a double.',
+  agility: 'Jump while the marker is in the bright band, or its gold middle for a double.',
   archaeology: 'Brush the soil off the find, and keep the brush away from cracked stones. Clear it while the timer is in the gold for a double.',
   smelting: 'Hold to heat the crucible and release to cool. Keep the marker in the bright band for a double.',
   smithing: 'Strike the anvil just as the ring lands on it. Dead on is a double.',

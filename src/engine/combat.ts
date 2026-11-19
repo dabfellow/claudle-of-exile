@@ -1,5 +1,7 @@
 import { ACTIVE_GEMS, activeGemDef, DEFAULT_ATTACK, gemReqLevel, SKILL_BAR_SLOTS, supportGemDef, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
 import { isHardcore } from './challenge';
+import { agilityCut } from '../data/agility';
+import { levelOf } from './xp';
 import { groundAtRisk, groundOnDeath } from './storage';
 import {
   actOpen,
@@ -1407,7 +1409,7 @@ function closeIn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance): void
   pullCloser(c.monsters, mon, army(c));
   c.using = null;
   c.closingUid = c.targetUid = mon.uid;
-  const time = CLOSE_IN_MS / (1 + d.raw.moveSpeedPct / 100);
+  const time = (CLOSE_IN_MS * (1 - agilityCut('closeIn', levelOf('agility', s.skills.agility)))) / (1 + d.raw.moveSpeedPct / 100);
   c.actionTotal = time;
   c.actionMs = Math.max(c.actionMs + time, time * 0.5);
   ctx.emit({ t: 'closeIn', monsterUid: mon.uid });

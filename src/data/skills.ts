@@ -4,6 +4,7 @@ import { WEAPON_COMPONENT_ACTIONS } from './weaponProjects';
 import { ARCHAEOLOGY_RECIPES, SITE_DISCOVERY } from './archaeology';
 import { MINING_ACTIONS, type MiningDeposit } from './mining';
 import { WOODCUTTING_ACTIONS, type WoodcuttingSource } from './woodcutting';
+import { AGILITY_ACTIONS, AGILITY_SPOT_LEVEL } from './agility';
 import { FORAGING_ACTIONS, foragingSource, type ForagingSource } from './foraging';
 import { ALCHEMY_EXPANSION_ACTIONS } from './alchemy';
 import { purposeRecipes, SMITH_COMPONENTS, type SmithPurpose } from './smithing';
@@ -36,6 +37,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   // id kept as `harvesting` so saves, tree nodes and the Greenhouse don't need migrating
   harvesting: { id: 'harvesting', name: 'Foraging', group: 'gathering', color: '#d9b84a', verb: 'Foraging', desc: 'Pick herbs off the ground for Alchemy.' },
   thieving: { id: 'thieving', name: 'Thieving', group: 'gathering', color: '#c9a35a', verb: 'Thieving', desc: "Lift purses for gold and Rogue's Markers, then spend them on Heists against the Khanate." },
+  agility: { id: 'agility', name: 'Agility', group: 'gathering', color: '#5fc4b0', verb: 'Running', desc: 'Run courses across Veyrath. Levels open shortcuts: faster Heist rooms, quicker footwork in fights and hidden gathering spots.' },
   archaeology: { id: 'archaeology', name: 'Archaeology', group: 'gathering', color: '#b0784a', verb: 'Digging', desc: 'Dig sites in the Hollow Peaks for Artifacts, then trade them with the merchants of the Expedition for currency.' },
   smelting: { id: 'smelting', name: 'Smelting', group: 'production', color: '#d07a3a', verb: 'Smelting', desc: 'Smelt mined ores into pure metal bars and blend defensive alloys in the crucible.' },
   smithing: { id: 'smithing', name: 'Forging', group: 'production', color: '#b8b8c8', verb: 'Forging', desc: 'Hammer refined metal bars into martial weapons, shields, plate armour, and jewellery.' },
@@ -100,6 +102,8 @@ export interface SkillAction {
   accomplishments?: string[];
   mining?: MiningDeposit;
   woodcutting?: WoodcuttingSource;
+  /** Hidden gathering spot: also needs this Agility level (data/agility.ts) */
+  agility?: number;
 }
 
 const gather = (
@@ -125,11 +129,14 @@ const GATHERING: SkillAction[] = [
   { ...gather('mining', 'mine_jagged', 'Jagged Vein', 19, 4000, 22, 'iron_ore', '#c9c9d3', [{ id: 'serrated_fossil', chance: 0.08, qty: 1 }]), outputChance: ALT_YIELD, area: 'ashwood' },
   { ...gather('mining', 'mine_gem', 'Glimmering Geode', 22, 5000, 30, 'rough_gem', '#d0569b'), area: 'crypt' },
   { ...gather('mining', 'mine_mithril', 'Mithril Vein', 30, 4000, 38, 'mithril_ore', '#6fc3d8', [{ id: 'rough_gem', chance: 0.05, qty: 1 }, { id: 'mineral_fragment', chance: 0.025, qty: 1 }]), area: 'shipgrave' },
+  { ...gather('mining', 'mine_cliffside', 'Cliffside Vein', 15, 3500, 20, 'iron_ore', '#b0b8c4', [{ id: 'rough_gem', chance: 0.06, qty: 1 }, { id: 'dense_fossil', chance: 0.05, qty: 1 }]), agility: AGILITY_SPOT_LEVEL.mine_cliffside },
+  { ...gather('mining', 'mine_grotto', 'Falls Grotto', 30, 4000, 40, 'mithril_ore', '#5fd8e0', [{ id: 'rough_gem', chance: 0.08, qty: 1 }, { id: 'mineral_fragment', chance: 0.04, qty: 1 }]), agility: AGILITY_SPOT_LEVEL.mine_grotto },
 
   gather('woodcutting', 'cut_ash', 'Ash Tree', 1, 3000, 7, 'ash_log', '#b89a72', [{ id: 'ash_resin', chance: 0.03, qty: 1 }]),
   { ...gather('woodcutting', 'cut_ley', 'Ley-touched Ash', 8, 3500, 10, 'ash_log', '#b9a7ff', [{ id: 'arcane_dust', chance: 1, qty: 1 }, { id: 'ash_resin', chance: 0.04, qty: 1 }]), outputChance: ALT_YIELD },
   { ...gather('woodcutting', 'cut_oak', 'Oak Tree', 15, 3500, 18, 'oak_log', '#8a6338', [{ id: 'oak_resin', chance: 0.03, qty: 1 }]), area: 'ashwood' },
   { ...gather('woodcutting', 'cut_weeping', 'Weeping Oak', 18, 4000, 21, 'oak_log', '#b07a2c', [{ id: 'oak_resin', chance: 0.1, qty: 1 }]), outputChance: ALT_YIELD, area: 'ashwood' },
+  { ...gather('woodcutting', 'cut_crag_oak', 'Crag Oak', 15, 3500, 20, 'oak_log', '#9a7040', [{ id: 'oak_resin', chance: 0.08, qty: 1 }]), agility: AGILITY_SPOT_LEVEL.cut_crag_oak },
   { ...gather('woodcutting', 'cut_yew', 'Yew Tree', 30, 4000, 38, 'yew_log', '#6b3d2c'), area: 'shipgrave' },
 
   gather('harvesting', 'herb_sun', 'Sunpetal Patch', 1, 3000, 7, 'sunpetal', '#f2c94c', [{ id: 'essence_vitality_1', chance: 0.06, qty: 1 }]),
@@ -157,6 +164,13 @@ const GATHERING: SkillAction[] = [
     area: 'ashwood',
   },
   { ...gather('harvesting', 'herb_ember', 'Emberroot Bed', 25, 4000, 32, 'emberroot', '#e2603f'), area: 'crypt' },
+  {
+    ...gather('harvesting', 'herb_ledge', 'Ledge Garden', 25, 4000, 34, 'emberroot', '#e88a5a', [
+      { id: 'essence_embers_2', chance: 0.05, qty: 1 },
+      { id: 'essence_haste_2', chance: 0.04, qty: 1 },
+    ]),
+    agility: AGILITY_SPOT_LEVEL.herb_ledge,
+  },
   { ...gather('harvesting', 'herb_void', 'Voidbloom Grove', 40, 5000, 55, 'voidbloom', '#9b6dde'), area: 'stormcliffs' },
 ].map((a) => ({ ...a, bonus: [...(a.bonus ?? []), { id: SHARD_FOR[a.skill]!, chance: SHARD_CHANCE, qty: 1 }] }));
 
@@ -504,7 +518,7 @@ export const BOSS_KEY_CRAFTS: SkillAction[] = [
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...MILLING, ...THIEVING, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...ASTROLOGY, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
+const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...MILLING, ...THIEVING, ...AGILITY_ACTIONS, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...ASTROLOGY, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
 /** Historical access evidence used only by save migration. */
 const ALL_AUTHORED_ACTIONS = [...AUTHORED_ACTIONS, ...WEAPON_COMPONENT_ACTIONS.filter((extra) => !AUTHORED_ACTIONS.some((a) => a.id === extra.id))];
 export const LEGACY_ACTION_PLACES = Object.fromEntries(ALL_AUTHORED_ACTIONS.map((a) => [a.id, { area: a.area, gate: a.gate }]));

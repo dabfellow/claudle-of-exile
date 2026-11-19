@@ -13,7 +13,8 @@ import { cartographyPreview, upgradeCost } from '../../engine/cartography';
 import { mapsHeld } from '../../engine/maps';
 import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
 import { crewSlots, jobBlocker, jobCost } from '../../engine/heist';
-import { actionBlocker, actionIntervalMs, actionPlaceNeeded, gemCutPool, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
+import { AGILITY_SHORTCUTS } from '../../data/agility';
+import { actionBlocker, actionIntervalMs, actionPlaceNeeded, agilityBlocker, gemCutPool, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
 import { ProjectBoard } from '../components/ProjectBoard';
@@ -59,6 +60,7 @@ const START_LABEL: Record<SkillId, string> = {
   woodcutting: 'Chop',
   harvesting: 'Forage',
   thieving: 'Lift',
+  agility: 'Run',
   archaeology: 'Dig',
   smelting: 'Smelt',
   smithing: 'Forge',
@@ -297,10 +299,14 @@ function ActionCard({ a, level, open, onToggle, workbench = false }: { a: SkillA
               {!a.soon && !areaLocked && <span>(you're {level})</span>}
             </div>
           )}
-          <div className="action-section">
-            <div className="io-label">Produces</div>
-            <OutputRows s={s} a={a} />
-          </div>
+          {a.skill === 'agility' ? (
+            <p className="dim small" style={{ margin: 0 }}>Courses give Agility XP. Levels open the shortcuts listed above.</p>
+          ) : (
+            <div className="action-section">
+              <div className="io-label">Produces</div>
+              <OutputRows s={s} a={a} />
+            </div>
+          )}
           {a.inputs && (
             <div className="action-section">
               <div className="io-label">Requires</div>
@@ -635,6 +641,7 @@ function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
     }
     return groups.filter((g) => g.actions.length > 0);
   }
+  if (skill === 'agility') return actions.length ? [{ key: 'courses', label: 'Courses', actions }] : [];
   if (skill === 'alchemy') {
     for (const cat of ALCHEMY_CATEGORIES) {
       const catActions = actions.filter((a) => alchemyCategory(a) === cat.id);
@@ -683,6 +690,38 @@ function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
     t.actions.push(a);
   }
   return tiers;
+}
+
+const SHORTCUT_WHERE: Record<string, string> = { closeIn: 'Combat', heist: 'Heists', spot: 'Gathering' };
+
+/** What each Agility level opens elsewhere, reached or not. */
+function AgilityShortcuts({ level }: { level: number }) {
+  const next = AGILITY_SHORTCUTS.find((x) => x.level > level);
+  return (
+    <details className="profession-supplies agility-shortcuts" open>
+      <summary>
+        Shortcuts <span className="dim num">{AGILITY_SHORTCUTS.filter((x) => x.level <= level).length}/{AGILITY_SHORTCUTS.length}</span>
+        {next && <span className="dim small"> · next at Lv {next.level}: {next.name}</span>}
+      </summary>
+      <ul className="agility-shortcut-list">
+        {AGILITY_SHORTCUTS.map((x) => {
+          const open = x.level <= level;
+          return (
+            <li key={x.name} className={open ? 'open' : 'locked'}>
+              <span className="num agility-shortcut-level">Lv {x.level}</span>
+              <span>
+                <b>{x.name}</b> <Badge tone={open ? 'success' : 'locked'}>{SHORTCUT_WHERE[x.kind]}</Badge>
+                <br />
+                <span className="muted small">{x.desc}</span>
+              </span>
+              {!open && <GameIcon name="lock" size={12} color="var(--dim)" />}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="dim small" style={{ margin: '6px 0 0' }}>Only the best Combat and Heist step you have reached applies. They don't add together.</p>
+    </details>
+  );
 }
 
 /** A life skill you can't use yet: what it does and how to open it, in place of its activities. */
@@ -880,6 +919,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
     a.level <= level &&
     (!a.batchMastery || (!!a.mastery && masteryLevel(s, a.mastery.id) >= a.batchMastery)) &&
     !actionPlaceNeeded(s, a) &&
+    !agilityBlocker(s, a) &&
     (!!s.professionProgress.legacyAccess[a.id] ||
       ((!a.accomplishments || a.accomplishments.every((id) => hasAccomplishment(s, id))) &&
         !miningAccessHint(s, a) &&
@@ -1015,6 +1055,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
           Study a constellation for Stardust, with a rare chance of Gilded Stardust. Spend both on the <b>Star Chart</b> to light stars: each one makes a profession faster and gives your character a small bonus.
         </div>
       )}
+      {skill === 'agility' && <AgilityShortcuts level={level} />}
 
       {(skill === 'smithing' || skill === 'woodcrafting') && (
         <div className="callout skill-note">

@@ -16,6 +16,14 @@ export const UPCOMING: string[] = [
 
 export const NEWS: NewsEntry[] = [
   {
+    version: "0.5.3",
+    date: "19 Nov 2026",
+    title: "Agility",
+    items: [
+      "New profession, Agility: run courses across Veyrath to level it. Levels open shortcuts: faster Heist rooms, reaching monsters sooner in fights, and four hidden gathering spots in Mining, Woodcutting and Foraging.",
+    ],
+  },
+  {
     version: "0.5.2",
     date: "19 Nov 2026",
     title: "Heist Dossiers",

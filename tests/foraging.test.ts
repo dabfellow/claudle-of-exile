@@ -38,7 +38,8 @@ function greenhouse(s: GameState) {
 describe('Phase 06 Foraging and Greenhouse', () => {
   it('opens every patch and the existing keystone without combat, seeds or new stations', () => {
     const s = advanced();
-    for (const a of actionsFor('harvesting')) expect(actionBlocker(s, a)).toBeNull();
+    // Agility's hidden spots are the one exception: they also need an Agility level.
+    for (const a of actionsFor('harvesting')) expect(actionBlocker(s, a)).toBe(a.agility ? `Requires Agility level ${a.agility}` : null);
     cycles(s, 'herb_sun', 100);
     greenhouse(s);
     expect(plantGreenhouse(s, 'herb_sun')).toBeNull();

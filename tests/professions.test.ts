@@ -369,7 +369,7 @@ describe('pre-overhaul serialized compatibility', () => {
     s.account = structuredClone(fixture.account) as AccountState;
     settleCharacter(s, s.account);
     const again = reload(reload(s));
-    expect(again.skills).toEqual({ astrology: 0, ...raw.skills, smelting: raw.skills.smithing, woodcrafting: raw.skills.smithing });
+    expect(again.skills).toEqual({ astrology: 0, ...raw.skills, smelting: raw.skills.smithing, woodcrafting: raw.skills.smithing, agility: 0 });
     expect(again.skillingMastery).toEqual(raw.skillingMastery);
     expect(again.action).toMatchObject(raw.action);
     expect(again.action).toEqual(s.action);
