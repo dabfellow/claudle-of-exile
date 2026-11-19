@@ -1,5 +1,6 @@
 import { CREW_SLOT_LEVELS, ALARM_KEEPS, GEAR, GETAWAY_COST_MULT, hasHeistJob, HEIST_JOBS, heistJob, MAX_ALARM, MAX_ROGUE_RANK, rogueDef, rogueRankCost, STEALTH_FLOOR, STEALTH_PER_LEVEL, type HeistDrop, type HeistJob, type RogueSkill } from '../data/heist';
 import { MARKER } from '../data/craftMats';
+import { agilityCut } from '../data/agility';
 import { actionsFor, type SkillAction } from '../data/skills';
 import type { BaseDef } from '../data/bases';
 import { seeUnique } from './account';
@@ -129,7 +130,7 @@ export function cleanChance(s: GameState, job: HeistJob, rooms: number): number 
 export function roomMs(s: GameState, job: HeistJob, d: Derived): number {
   const t = skillTreeStats(s);
   const speed = s.heist.roster ? Math.min(0.6, crewBonus(s, 'Move Speed') + crewBonus(s, 'Pathfinding') + crewBonus(s, 'Trap Bypass') + crewBonus(s, 'Obstacle Evasion')) : crewEffect(s, 'locksmith');
-  return (job.roomMs * (1 - speed)) / (1 + (d.skillSpeed + (d.gatheringSpeed ?? 0) + (t.skillSpeed ?? 0) + (t.thievingSpeed ?? 0) + masterySpeed(s, job.mastery)) / 100);
+  return (job.roomMs * (1 - speed) * (1 - agilityCut('heist', skillLevel(s, 'agility')))) / (1 + (d.skillSpeed + (d.gatheringSpeed ?? 0) + (t.skillSpeed ?? 0) + (t.thievingSpeed ?? 0) + masterySpeed(s, job.mastery)) / 100);
 }
 
 /** Share of the take you keep when an alarm goes off. */

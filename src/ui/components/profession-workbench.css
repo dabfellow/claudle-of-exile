@@ -217,3 +217,10 @@ html .profession-station .minigame { margin: 16px 0 0; padding: 14px; background
   .profession-smelting .profession-groups, .profession-cartography .profession-groups { grid-template-columns: minmax(0, 1fr); }
   .profession-smelting .profession-group.selected, .profession-cartography .profession-group.selected { grid-column: auto; }
 }
+
+/* Agility: what each level opens elsewhere */
+.agility-shortcuts { margin-top: 8px; }
+.agility-shortcut-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 6px 14px; }
+.agility-shortcut-list li { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 6px 0; border-bottom: 1px solid #2c3231; }
+.agility-shortcut-list li.locked { opacity: 0.6; }
+.agility-shortcut-level { color: var(--profession, #5fc4b0); font-size: 12px; padding-top: 2px; }

@@ -413,6 +413,13 @@ const MIGRATIONS: Record<number, Migration> = {
   46: (raw) => { settleProfessionProgress(raw as unknown as GameState, true); },
   // Main-story conversations start unclaimed. Existing combat/travel progress is preserved.
   47: (raw) => { raw.campaignQuests ??= newCampaignQuestState(); },
+  48: (raw) => {
+    // Travel Points merged into Passive Points and ordinary nodes all cost 1. Recount the one pool from level
+    // and current spending on load; allocations stay put.
+    delete raw.travelPoints;
+    raw.passivePointLevel = null;
+    raw.passiveQuestPoints = null;
+  },
 };
 
 /**

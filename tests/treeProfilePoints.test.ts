@@ -15,7 +15,6 @@ function fresh(): GameState {
   s.action = null;
   s.characterTreeOverhaul = 2 as never;
   settlePassivePoints(s);
-  s.travelPoints = 100;
   s.passivePoints = 100;
   return s;
 }
@@ -37,7 +36,7 @@ function road(s: GameState, length: number): string[] {
 
 const owned = (s: GameState) => {
   const spent = spentPoints(s);
-  return s.travelPoints + spent.travelPoints + s.passivePoints + spent.passivePoints + s.masteryPoints + spent.masteryPoints;
+  return s.passivePoints + spent.passivePoints + s.masteryPoints + spent.masteryPoints;
 };
 
 describe('passive profiles keep the same points', () => {
@@ -53,7 +52,7 @@ describe('passive profiles keep the same points', () => {
     expect(s.passives).toEqual([]);
     expect(owned(s)).toBe(total);
     // everything spent in profile 1 is spendable again here
-    expect(s.travelPoints + s.passivePoints + s.masteryPoints).toBe(total);
+    expect(s.passivePoints + s.masteryPoints).toBe(total);
 
     expect(allocate(s, ctx, path[0])).toBeNull();
     expect(owned(s)).toBe(total);
@@ -61,7 +60,7 @@ describe('passive profiles keep the same points', () => {
     expect(switchPassiveProfile(s, ctx, 'profile_1')).toBeNull();
     expect(s.passives).toEqual(path);
     expect(owned(s)).toBe(total);
-    expect(s.travelPoints + s.passivePoints + s.masteryPoints).toBeLessThan(total);
+    expect(s.passivePoints + s.masteryPoints).toBeLessThan(total);
 
     expect(switchPassiveProfile(s, ctx, 'profile_2')).toBeNull();
     expect(s.passives).toEqual([path[0]]);

@@ -25,10 +25,42 @@ export const UPCOMING: string[] = [
   'Campaign is now World Map: choose acts directly on the full atlas, and return to the last act and area you viewed.',
   'The seven-act campaign now spreads its 70 areas across fuller chapters, with revised level ranges, matching enemy and loot progression, and more stops along the missing-supplies investigation.',
   'Explore Veyrath through seven story acts, a new world atlas and regional maps, renamed areas, and a saved campaign journal following Winnie, the missing supplies and the First Exile.',
-  'Rogue Roster overhaul: 12-rogue crew selection, talent trees, and tactical heist loop.',
 ];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: "0.5.4",
+    date: "19 Nov 2026",
+    title: "Astrology",
+    items: [
+      "New gathering profession, Astrology: study 14 constellations for Stardust, then light their stars on the Star Chart for faster professions and small character bonuses. Catch shooting stars for Focus.",
+    ],
+  },
+  {
+    version: "0.5.3",
+    date: "19 Nov 2026",
+    title: "Agility",
+    items: [
+      "New profession, Agility: run courses across Veyrath to level it. Levels open shortcuts: faster Heist rooms, reaching monsters sooner in fights, and four hidden gathering spots in Mining, Woodcutting and Foraging.",
+    ],
+  },
+  {
+    version: "0.5.2",
+    date: "19 Nov 2026",
+    title: "Heist Dossiers",
+    items: [
+      "Thieving: Heist Operations and Rogue Crew now use the same ledger and dossier layout as Street Marks, and Focus sits inside the card of the mark or heist you are running.",
+    ],
+  },
+  {
+    version: "0.5.1",
+    date: "18 Nov 2026",
+    title: "One Tree, One Currency",
+    items: [
+      'Travel Points are gone: everything on the passive tree now uses Passive Points (2 per level), and every ordinary node costs 1. Doomed Gates and Forbidden keystones keep their price. Existing characters keep every node they have taken; unspent points are recounted.',
+      'Rogue Roster overhaul: 12-rogue crew selection, talent trees, and tactical heist loop.',
+    ],
+  },
   {
     version: "0.5.0",
     date: "18 Nov 2026",

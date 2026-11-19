@@ -81,7 +81,34 @@ html .thieving-page .thief-portrait img { filter: grayscale(1) sepia(.2); }
 .thief-focus .mini-pin.set { background: #657b55; border-color: #a8b38b; }
 .thief-focus .minigame-foot { flex-wrap: wrap; }
 .thief-focus .minigame-bars { min-width: 80px; }
-.thief-target:focus-visible, .thief-group-heading:focus-visible, .thief-return:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+/* Heist and crew ledgers share the mark ledger; these are their extra pieces. */
+.thief-ledger-title > .dim { margin-left: auto; }
+.thief-columns.crew, .thief-target.crew { grid-template-columns: minmax(0, 2.9fr) repeat(3, minmax(0, .7fr)); }
+.thief-sub { display: block; font-size: 10px; color: #9c9585; margin-top: 3px; }
+div.thief-group-heading { cursor: default; }
+.thief-dossier-desc { font-size: 12px; line-height: 1.55; color: #4c3f2c; margin: 14px 0 0; font-style: italic; }
+.thief-dossier-section { padding: 14px 0; border-bottom: 1px solid #8d785b70; }
+.thief-dossier-section h3, .thief-rewards h3 { margin: 0 0 12px; color: #4d3e2b; font: 12px Georgia, serif; letter-spacing: .13em; text-transform: uppercase; }
+.thief-plan { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; margin: 4px 0 8px; }
+.thief-plan > b { min-width: 18px; text-align: center; font-size: 15px; }
+.thief-plan .num { font-size: 11px; }
+.thief-plan select { background: #e8dabb; color: #342d24; border: 1px solid #9c8256; border-radius: 3px; padding: 4px 6px; font-size: 12px; max-width: 60%; }
+.thief-dossier .btn.sm { background: #e3d3b0; color: #3f3122; border: 1px solid #9c8256; box-shadow: none; }
+.thief-dossier .btn.sm:hover:not(:disabled) { background: #eee1c3; border-color: #6e552f; }
+.thief-dossier .btn.sm.ghost { background: transparent; }
+.thief-dossier .btn.sm.selected { background: #64502f; color: #edddba; border-color: #4b3a20; }
+.thief-dossier .btn.sm.danger, .thief-dossier .btn.sm.danger:hover:not(:disabled) { background: #713f39; color: #ecdcba; border-color: #512c29; }
+.thief-dossier .btn.sm.danger:hover:not(:disabled) { background: #804b40; }
+.thief-dossier .btn.sm:disabled { opacity: .45; cursor: not-allowed; }
+.thief-room { margin: 12px 0; padding: 10px 12px; border: 1px dashed #8d785b; border-radius: 4px; background: #e6d7b640; font-size: 12px; }
+.thief-room p { margin: 8px 0 0; line-height: 1.5; color: #554532; font-size: 11px; }
+.thief-tactic { gap: 6px; margin-top: 6px; }
+.thief-talent { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px dotted #8d785b70; font-size: 12px; }
+.thief-talent small { display: block; color: #65553d; font-size: 10px; margin-top: 2px; }
+.thief-talent > .num { color: #7a6443; text-align: center; }
+.thief-talent.learned b { color: #3c5a35; }
+.thief-dossier .thief-focus { margin-top: 12px; }
+.thief-target:focus-visible,.thief-group-heading:focus-visible, .thief-return:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 @container (max-width: 1000px) {
   .thief-header { flex-wrap: wrap; gap: 16px; }
   .thief-xp { flex: 1 1 230px; }

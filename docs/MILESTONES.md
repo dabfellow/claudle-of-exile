@@ -6,7 +6,7 @@ Last updated 2026-11-19. Current implementation: [GAME.md](GAME.md). Engineering
 
 Veyrath campaign: the 70 zones are redistributed into seven fuller chapters, with retuned level bands, matching rewards/gem access and an expanded saved journal. Arrow-free world atlas and all seven approved placeholder regional paintings are integrated. All 109 test files / 1,780 tests, typecheck, production build and desktop/390px phone browser checks pass (2026-11-18). Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
-Latest confirmed live release: **0.4.49, Profession Workspaces**, deployed 2026-11-17. Approved Thieving ledger/dossier, Woodcutting with a separate Planks tab, and distinct compact workspaces for all other implemented professions. Desktop/phone browser checks, all 106 release-source test files / 1,748 tests, typecheck and production build pass; live version and login confirmed at https://dabfellow.party/path-of-idle/. See [SKILLING_UI.md](SKILLING_UI.md). Previous: **0.4.48, Dedicated Masterwork Tabs and Mastery Batches**, **0.4.47, Ashen Codex World Map**, **0.4.46, Mastery Tooltips and Action Card Polish**.
+Latest confirmed live release: **0.5.3, Agility**, deployed 2026-11-19. New Agility profession (courses for xp; levels open Heist, combat close-in and hidden gathering-spot shortcuts). Live version and login confirmed at https://dabfellow.party/path-of-idle/. Previous: **0.5.2, Heist Dossiers**: approved Thieving ledger/dossier, Woodcutting with a separate Planks tab, and distinct compact workspaces for all other implemented professions. Desktop/phone browser checks, all 106 release-source test files / 1,748 tests, typecheck and production build pass; live version and login confirmed at https://dabfellow.party/path-of-idle/. See [SKILLING_UI.md](SKILLING_UI.md). Previous: **0.4.48, Dedicated Masterwork Tabs and Mastery Batches**, **0.4.47, Ashen Codex World Map**, **0.4.46, Mastery Tooltips and Action Card Polish**.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
@@ -642,6 +642,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 - [x] Finish browser acceptance for the integrated Veyrath campaign atlas and journal. — done 2026-11-18
   - In-app browser reached the local game. Fresh level-1 Ranger accepted Winnie's offer and entered real coastal combat, earning XP and level-appropriate loot. A disposable level-70 campaign veteran opened the world atlas, selected the expanded Act 2/3 locations and navigated every chapter through the First Seal. At 390×844, the final-act map scrolls horizontally inside its container and the document remains 390px wide. No browser console errors. Evidence: `output/playtest/seven-act-world-desktop.png`, `seven-act-roads-desktop.png`, `seven-act-finale-phone.png`. This checks navigation/presentation and opening combat, not a full journey pacing audit.
+- [x] Agility profession: courses for xp; levels open shortcuts (Heist rooms up to 20% faster, close-in up to 50% faster in fights, four hidden gathering spots). Owner chose "shortcut unlocks" over stat perks (2026-11-19). Data in `src/data/agility.ts`. — done 2026-11-19 (live in 0.5.3)
+  - Left out of skilling-tree points, total-level achievements and the skilling passive tree for now, so nothing else shifts; owner call whether to add them.
 
 - [x] Implement and ship the approved Woodcutting design and the remaining profession redesigns. — done 2026-11-17
   - Existing recipes, locks, mastery, Focus, batches, secondary systems and Masterworks connected; desktop and phone checks pass. Live in 0.4.49.
@@ -650,6 +652,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - Targets, live rewards/progress, mastery, guaranteed Markers and Focus connected; Heists, crew and Masterworks retained. Starter/veteran desktop and phone browser checks verified.
 
 - [x] Implement Thieving Overhaul (Rogue Classes, Progression, Talent Trees, Tactical Loop). — done 2026-11-17
+
+- [x] Restyle Thieving Heist Operations and Rogue Crew as ledger + dossier like Street Marks; Focus only on the running mark or heist dossier, none on Crew or Masterworks. — done 2026-11-18
+  - Masterworks keeps its current look; a separate Masterworks minigame is planned later.
 
 - [ ] Add Sir Broden as an NPC with a quest chain awarding a unique item (requested 2026-11-16).
   - Accepted background and aliases are in Decisions. Design the quest chain and unique reward before implementation; current request is to record the future work.
@@ -776,6 +781,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Ideas / later
 
+- Astrology follow-ups (2026-11-19), owner call: whether it should count toward Skilling tree points, get a "level 50" achievement, a Skilling tree branch, a profession tool or Masterworks. All left out so nothing else moved.
+- Agility follow-ups (2026-11-19): world-map travel has no travel time, so there was no "faster travel" for Agility to shorten; Agility is not counted toward total skill level (skilling-tree points, achievements) and has no level-50 achievement or skilling-tree branch yet.
+
 - Offline summary wording follow-up (noticed in Phase03 playtest, 2026-11-14): the generic Items Found tile says equipment is waiting on Combat even when a completed profession tool has safely arrived in the inventory. Consider destination-aware wording in a later shared UI pass; reward delivery itself was verified.
 
 - Tree web follow-ups (2026-11-08): the tree is 1,573 nodes (71% of 2,208); the 50% target would mean cutting about 30 clusters and their notables, which needs a call on which. Paths now run through clusters, so keystones sit 26–49 nodes from a class start (was 14–20) and some routes must take a notable on the way; check if that feels too slow. The two point pools were audited and changed to 2 Travel / 3 Passive per level; playtest whether the calculated split feels right.
@@ -827,6 +835,11 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - [x] Redistributed the 70-zone Veyrath campaign into seven fuller acts; integrated world/regional markers, new investigation stops, level-appropriate encounters/rewards and gem availability. All 1,780 tests, typecheck and production build pass; fresh/veteran desktop and 390px phone navigation/playtests pass with no console errors. Pacing over the complete journey remains a separate audit. Unreleased. — done 2026-11-18
 
 - [x] Implemented the seven-act Veyrath campaign structure, saved narrative quest interactions, arrow-free world atlas and individual act paintings. Stable zone IDs and earned progress retained, country/region map markers realigned, and combat/save/quest compatibility checks updated. Production build passes; browser acceptance remains open above. Artwork generated with the built-in image tool; source PNGs/prompts under `output/imagegen/`. — done 2026-11-18
+- [x] Astrology profession: 14 constellation studies for Stardust, a Star Chart of 5 stars each (profession speed + small combat stat per star), mastery and a shooting-star Focus game. Left out of Skilling tree points, achievements and The Sum of All Things on purpose. — done 2026-11-19 (live in 0.5.4)
+- [x] Agility profession: 10 courses, 13 shortcuts (Heist rooms, close-in, four hidden gathering spots). — done 2026-11-19 (live in 0.5.3)
+- [x] Thieving Heist and Rogue Crew tabs redone as ledger + dossier; Focus moved onto the running mark/heist card. — done 2026-11-18 (live in 0.5.2)
+
+- [x] Merged Travel Points into Passive Points (2 per level) and set every ordinary tree node to cost 1; Gateways (4), Doomed Gates (5) and Forbidden keystones (15) unchanged. Save migration 48 recounts existing characters without removing allocations. — done 2026-11-18 (live in 0.5.1)
 
 - All profession workspaces implemented, browser-verified on desktop/phone and deployed as 0.4.49 with live login confirmation. — done 2026-11-17
 

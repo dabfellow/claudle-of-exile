@@ -1,5 +1,6 @@
 import { affixDef } from '../data/affixes';
 import { perkTotals } from '../data/achievements';
+import { astrologyStats } from './astrology';
 import { classDef } from '../data/classes';
 import { BASE_ATTACK_MS } from '../data/gems';
 import { baseDef, type WeaponFamily } from '../data/bases';
@@ -236,6 +237,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
     st.lifeRegenPct += 3;
   }
   addStats(st, perkTotals(s.achievements).stats);
+  addStats(st, astrologyStats(s));
   st.itemRarity += MAP_RARITY[(s.account.hideout.map_device ?? 1) - 1] ?? 0;
   const altarLvl = s.account.hideout.trophy_altar ?? 1;
   if (altarLvl >= 1) {

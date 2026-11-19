@@ -938,7 +938,7 @@ function passiveCostsBlock(): string {
   for (const node of PASSIVE_NODES.filter((n) => n.kind !== 'start')) {
     const price = passiveNodeCost(node);
     const key = `${node.kind}:${price.pool}:${price.cost}`;
-    const row = groups.get(key) ?? { kind: title(node.kind), pool: price.pool === 'travelPoints' ? 'Travel' : price.pool === 'masteryPoints' ? 'Mastery' : 'Passive', cost: price.cost, count: 0 };
+    const row = groups.get(key) ?? { kind: title(node.kind), pool: price.pool === 'masteryPoints' ? 'Mastery' : 'Passive', cost: price.cost, count: 0 };
     row.count += 1;
     groups.set(key, row);
   }

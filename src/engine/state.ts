@@ -30,7 +30,7 @@ export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 48;
+export const SAVE_VERSION = 49;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -65,7 +65,8 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     tutorial: { step: 0, progress: 0, done: false, skipped: false },
     campaignQuests: newCampaignQuestState(),
     nextUid: 1,
-    skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, thieving: 0, archaeology: 0, smelting: 0, smithing: 0, woodcrafting: 0, alchemy: 0, gemcutting: 0, runecarving: 0, cooking: 0, cartography: 0, fishing: 0 },
+    skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, thieving: 0, agility: 0, archaeology: 0, smelting: 0, smithing: 0, woodcrafting: 0, alchemy: 0, gemcutting: 0, runecarving: 0, cooking: 0, cartography: 0, astrology: 0, fishing: 0 },
+    astrology: { stars: {} },
     skillingMastery: {},
     professionProgress: newProfessionProgress(),
     inventory: [],
@@ -84,8 +85,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     combat: null,
     zoneKills: {},
     unlockedZones: ['mudflats'],
-    travelPoints: 2,
-    passivePoints: 1,
+    passivePoints: 2,
     masteryPoints: 0,
     passivePointLevel: 1,
     passiveQuestPoints: 0,

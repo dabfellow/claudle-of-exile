@@ -249,12 +249,30 @@ function generateMilestones(skill: string, taskId: string, _taskName: string, _o
     ];
   }
 
+  if (skill === 'agility') {
+    return [
+      { level: 25, id: mid(25, 'stride'), name: 'Long Stride', desc: '+3% speed on this course', scope: 'task', kind: 'action_speed', value: 3 },
+      { level: 50, id: mid(50, 'flow'), name: 'Course Flow', desc: '+5% speed on this course', scope: 'task', kind: 'action_speed', value: 5 },
+      { level: 75, id: mid(75, 'speed'), name: 'Light Footed', desc: '+2% global Agility speed', scope: 'global', kind: 'global_speed', value: 2 },
+      { level: 100, id: mid(100, 'master'), name: 'Rooftop Master', desc: '+3% global Agility speed', scope: 'global', kind: 'global_speed', value: 3 },
+    ];
+  }
+
   if (skill === 'archaeology') {
     return [
       { level: 25, id: mid(25, 'brush'), name: 'Careful Brush', desc: '8% chance for instant stratum dig', scope: 'task', kind: 'vein_strike', value: 0.08 },
       { level: 50, id: mid(50, 'relic'), name: 'Relic Unearthing', desc: '12% double dig, plus bonus relic scrap', scope: 'task', kind: 'vein_strike', value: 0.12 },
       { level: 75, id: mid(75, 'speed'), name: "Antiquarian's Eye", desc: '+2% global Archaeology speed', scope: 'global', kind: 'global_speed', value: 2 },
       { level: 100, id: mid(100, 'favor'), name: "Curator's Favor", desc: '+5% bonus faction standing on trade-ins', scope: 'global', kind: 'global_find', value: 0.05 },
+    ];
+  }
+
+  if (skill === 'astrology') {
+    return [
+      { level: 25, id: mid(25, 'glint'), name: 'Falling Star', desc: '8% chance for an extra Stardust', scope: 'task', kind: 'vein_strike', value: 0.08 },
+      { level: 50, id: mid(50, 'gilt'), name: 'Gilded Glint', desc: '1% chance for an extra Gilded Stardust', scope: 'task', kind: 'rare_find', value: 0.01, outputId: 'gilded_stardust' },
+      { level: 75, id: mid(75, 'speed'), name: 'Steady Gaze', desc: '+2% global Astrology speed', scope: 'global', kind: 'global_speed', value: 2 },
+      { level: 100, id: mid(100, 'night'), name: 'Long Night', desc: '+2% global Astrology speed', scope: 'global', kind: 'global_speed', value: 2 },
     ];
   }
 
@@ -298,7 +316,8 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
   if (['cut_exceptional', 'prepare_return_inscription', 'prepare_choir_inscription', 'prepare_circuit_inscription', 'inscribe_convergence', 'polish_exceptional', 'recycle_gem'].includes(a.id)) return undefined;
   if (a.id.startsWith('cut_family_') || a.id.startsWith('cut_exact_')) return undefined;
   if (a.id === 'chart_endgame_atlas' || a.id.startsWith('forge_uber_key')) return undefined;
-  if (a.skill === 'combat' || a.skill === 'fishing' || a.soon) return undefined;
+  // Astrology arrived after the band-based saves, so it has nothing to migrate.
+  if (a.skill === 'combat' || a.skill === 'fishing' || a.skill === 'astrology' || a.soon) return undefined;
   const out = outputOf(a);
 
   if (a.skill === 'mining') {
@@ -320,6 +339,7 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
     const label = band === 'road' ? 'Road Marks' : band === 'khanate' ? 'Khanate Marks' : 'Court Marks';
     return gathering(`thieving.${band}`, label, a.skill, 'gold', a);
   }
+  if (a.skill === 'agility') return undefined; // Added after the band-based saves.
   if (a.skill === 'archaeology') {
     const culture = siteOf(a.id)?.culture;
     if (!culture) return undefined; // These recipes did not exist in the old band-based saves.
@@ -401,7 +421,7 @@ export function masteryForAction(a: SkillAction): MasterySpec | undefined {
   const name = a.batchOf ? a.name.replace(/\s+×\d+$/u, '') : a.name;
   if (a.protectedOutputs) return spec(`task.${id}`, name, a.skill, 'project', {}, a);
   const out = outputOf(a);
-  if (a.skill === 'mining' || a.skill === 'harvesting' || a.skill === 'thieving' || a.skill === 'archaeology' || (a.skill === 'woodcutting' && !a.inputs)) {
+  if (a.skill === 'mining' || a.skill === 'harvesting' || a.skill === 'thieving' || a.skill === 'agility' || a.skill === 'archaeology' || a.skill === 'astrology' || (a.skill === 'woodcutting' && !a.inputs)) {
     return gathering(`task.${id}`, name, a.skill, a.skill === 'thieving' ? 'gold' : out, a);
   }
   return production(`task.${id}`, name, a.skill, a);

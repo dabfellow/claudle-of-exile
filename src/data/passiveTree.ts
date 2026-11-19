@@ -795,7 +795,7 @@ function build(): PassiveNode[] {
   for (const gw of GATEWAYS) {
     add({
       id: gw.id, name: gw.name, kind: 'gateway', region: 'center', ...at(gw.id), stats: { [gw.stat]: 1 }, gatewayPair: gw.pairId,
-      desc: `Cosmic Gateway linked to ${gw.pairId}. Spend 3 travel points to activate conduit.`,
+      desc: `Cosmic Gateway linked to ${gw.pairId}. Spend 4 Passive Points to activate conduit.`,
     });
   }
   for (const f of FORBIDDEN) add({ id: f.id, name: f.name, kind: 'keystone', region: 'forbidden', ...at(f.id), stats: f.stats, desc: f.desc });

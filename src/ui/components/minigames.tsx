@@ -27,6 +27,12 @@ const HERB_LIFE_MS = 3400;
 const HERB_BLOOM_FROM = 0.3;
 const HERB_BLOOM_TO = 0.55;
 const HERBS_MAX = 3;
+/** Astrology: shooting stars cross the sky, flaring gold for part of the way. Matches .mini-star in styles.css. */
+const STAR_EVERY_MS = 1200;
+const STAR_LIFE_MS = 3000;
+const STAR_FLARE_FROM = 0.35;
+const STAR_FLARE_TO = 0.6;
+const STARS_MAX = 3;
 const PINS = 4;
 const LOCK_LENGTH = 3;
 const PIN_SHOW_MS = 380;
@@ -261,6 +267,58 @@ function ForagingGame({ matId, onSwing }: { matId?: string; onSwing: OnSwing }) 
         >
           {matId && <MatIcon id={matId} size={26} />}
         </button>
+      ))}
+    </div>
+  );
+}
+
+interface FallingStar {
+  id: number;
+  x: number;
+  y: number;
+  born: number;
+}
+
+/** Shooting stars cross the night sky: catch one, and catch it while it flares gold for a double. */
+function AstrologyGame({ onSwing }: { onSwing: OnSwing }) {
+  const [stars, setStars] = useState<FallingStar[]>([]);
+  const nextId = useRef(0);
+
+  useEffect(() => {
+    const timers = new Set<ReturnType<typeof setTimeout>>();
+    const fall = () => {
+      const id = nextId.current++;
+      setStars((list) => (list.length >= STARS_MAX ? list : [...list, { id, x: random(0, 28), y: random(0, 35), born: performance.now() }]));
+      const gone = setTimeout(() => {
+        timers.delete(gone);
+        setStars((list) => list.filter((h) => h.id !== id));
+      }, STAR_LIFE_MS);
+      timers.add(gone);
+    };
+    fall();
+    const sky = setInterval(fall, STAR_EVERY_MS);
+    return () => {
+      clearInterval(sky);
+      timers.forEach(clearTimeout);
+    };
+  }, []);
+
+  const catchStar = (h: FallingStar) => {
+    setStars((list) => list.filter((x) => x.id !== h.id));
+    const age = (performance.now() - h.born) / STAR_LIFE_MS;
+    onSwing(age >= STAR_FLARE_FROM && age <= STAR_FLARE_TO ? 'double' : 'hit');
+  };
+
+  return (
+    <div className="mini-patch mini-sky">
+      {stars.map((h) => (
+        <button
+          key={h.id}
+          className="mini-star"
+          aria-label="Catch shooting star"
+          style={{ left: `${h.x}%`, top: `${h.y}%`, animationDuration: `${STAR_LIFE_MS}ms` }}
+          onPointerDown={() => catchStar(h)}
+        />
       ))}
     </div>
   );
@@ -699,6 +757,8 @@ export function SkillGame({ skill, matId, onSwing }: { skill: SkillId; matId?: s
       return <ForagingGame matId={matId} onSwing={onSwing} />;
     case 'thieving':
       return <ThievingGame onSwing={onSwing} />;
+    case 'agility':
+      return <WoodcuttingGame onSwing={onSwing} />;
     case 'archaeology':
       return <ArchaeologyGame onSwing={onSwing} />;
     case 'smelting':
@@ -717,6 +777,8 @@ export function SkillGame({ skill, matId, onSwing }: { skill: SkillId; matId?: s
       return <CookingGame onSwing={onSwing} />;
     case 'cartography':
       return <CartographyGame onSwing={onSwing} />;
+    case 'astrology':
+      return <AstrologyGame onSwing={onSwing} />;
     default:
       return null;
   }

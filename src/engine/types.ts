@@ -7,8 +7,8 @@ import type { CultureId } from '../data/expedition';
 import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
 
-export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'archaeology' | 'smelting' | 'smithing' | 'woodcrafting' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'fishing';
-export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'fishing'];
+export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'agility' | 'archaeology' | 'smelting' | 'smithing' | 'woodcrafting' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'astrology' | 'fishing';
+export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'agility', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology', 'fishing'];
 
 export type Rarity = 'normal' | 'magic' | 'rare' | 'unique';
 
@@ -1180,6 +1180,8 @@ export interface GameState {
   maps: MapState;
   heist: HeistState;
   expedition: ExpeditionState;
+  /** Astrology's Star Chart: stars lit per constellation id (engine/astrology.ts) */
+  astrology: { stars: Record<string, number> };
   skillBar: (SkillGemInstance | null)[];
   loadouts: Loadouts;
   action: Action;
@@ -1194,9 +1196,7 @@ export interface GameState {
   combat: CombatRuntime | null;
   zoneKills: Record<string, number>;
   unlockedZones: string[];
-  /** Unspent character-tree currency for roads and Cosmic Gateways. */
-  travelPoints: number;
-  /** Unspent character-tree currency for combat passives and keystones. */
+  /** Unspent character-tree currency for every node except masteries. */
   passivePoints: number;
   /** Unspent character-tree currency for mastery choices. */
   masteryPoints: number;

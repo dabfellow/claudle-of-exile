@@ -38,6 +38,8 @@ function getSkillIcon(skill: SkillId): string {
       return 'heart';
     case 'fishing':
       return 'fishing';
+    case 'astrology':
+      return 'astrology';
     case 'cartography':
       return 'map';
     case 'thieving':
