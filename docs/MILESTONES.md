@@ -4,9 +4,9 @@ Last updated 2026-11-19. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Veyrath campaign: the 70 zones are redistributed into seven fuller chapters, with retuned level bands, matching rewards/gem access and an expanded saved journal. Arrow-free world atlas and all seven approved placeholder regional paintings are integrated. All 109 test files / 1,780 tests, typecheck, production build and desktop/390px phone browser checks pass (2026-11-18). Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
+Veyrath campaign is live in **0.5.5** (2026-11-19): 70 zones across seven fuller chapters, revised level bands, matching rewards/gem access, saved journal, world/regional paintings, territory navigation, readable banners, character-specific unlock fog and the harsh surrounding ocean. All 113 test files / 1,795 tests, typecheck and production build pass. Earlier desktop/390px campaign navigation checks passed 2026-11-18; the latest artwork/fog was inspected through native previews because the local browser stayed blank, so live hover/desktop acceptance remains open. Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
-Latest confirmed live release: **0.5.3, Agility**, deployed 2026-11-19. New Agility profession (courses for xp; levels open Heist, combat close-in and hidden gathering-spot shortcuts). Live version and login confirmed at https://dabfellow.party/path-of-idle/. Previous: **0.5.2, Heist Dossiers**: approved Thieving ledger/dossier, Woodcutting with a separate Planks tab, and distinct compact workspaces for all other implemented professions. Desktop/phone browser checks, all 106 release-source test files / 1,748 tests, typecheck and production build pass; live version and login confirmed at https://dabfellow.party/path-of-idle/. See [SKILLING_UI.md](SKILLING_UI.md). Previous: **0.4.48, Dedicated Masterwork Tabs and Mastery Batches**, **0.4.47, Ashen Codex World Map**, **0.4.46, Mastery Tooltips and Action Card Polish**.
+Latest confirmed live release: **0.5.5, Veyrath World Map**, deployed 2026-11-19. Seven-act campaign and regional maps, saved act selection, readable navigation banners, territory highlighting, exploration fog and dark ocean artwork. All 1,795 tests and production build pass; deploy confirmed the live version and login configuration at https://dabfellow.party/path-of-idle/. Preserved preceding releases **0.5.4, Astrology**, **0.5.3, Agility**, **0.5.2, Heist Dossiers**, and **0.5.1, One Tree, One Currency** (including Rogue Roster). Latest live UI interaction check remains outstanding as described above.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
@@ -52,7 +52,7 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 4 | Act 2 and content recipe | Released; cold-check/art follow-ups remain parked |
 | 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18 |
 | 6 | Act 3 / ascendancies | Released; four trials and 2/2/3/2 points replace original structure |
-| 7 | Campaign expansion / seven-act Veyrath integration | Earlier Acts 4–6 released; seven-act story, atlas, journal and redistributed 70-zone campaign implemented, unreleased. New chapter bands preserve the level-66 finale and Maps handoff |
+| 7 | Campaign expansion / seven-act Veyrath integration | Live in 0.5.5 (2026-11-19): seven-act story, atlas, journal and redistributed 70-zone campaign, territory banners/highlights, character exploration fog and dark ocean. New chapter bands preserve the level-66 finale and Maps handoff. Latest live UI interaction acceptance remains open |
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
@@ -805,6 +805,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- Shipped **0.5.5, Veyrath World Map** — done 2026-11-19. Committed this session's campaign/map work, merged and preserved releases through 0.5.4, regenerated UNIQUES, passed all 113 files / 1,795 tests, and deployed with the guarded project command. Live version and login configuration confirmed. Latest ocean/fog native previews inspected; live UI hover acceptance remains outstanding. No additional version bump for this release record.
 
 - Replaced the World Map's pale seas with a harsh dark ocean and returning-current/ship-wake motifs — done 2026-11-19. Updated runtime artwork and native previews; recorded the owner's psychological escape-boundary lore without fixing unresolved memory effects or adding sailing mechanics. Prior paintings retained. No release.
 
