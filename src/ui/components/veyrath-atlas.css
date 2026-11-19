@@ -1,22 +1,47 @@
 .veyrath-atlas { display: grid; gap: 10px; }
+.page.wide.world-map-page { width: 100%; max-width: none; gap: 12px; }
+.world-map-page .page-head { margin: 0; }
 .veyrath-atlas-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .veyrath-atlas-toolbar h2, .veyrath-atlas-toolbar p { margin: 0; }
 .veyrath-atlas-toolbar p { margin-top: 5px; }
 .veyrath-atlas .cmap-world { min-width: 0; }
 .veyrath-atlas .cmap-card { max-width: none; margin: 0; padding: 0; overflow: hidden; }
-.veyrath-regions { transition: opacity 180ms ease; }
-.veyrath-regions.is-hidden { opacity: 0; }
-.veyrath-regions polygon { fill: var(--region); fill-opacity: .09; stroke: var(--region); stroke-width: 1.2; stroke-opacity: .8; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
-.veyrath-regions polygon.is-current { fill-opacity: .19; stroke-width: 2; stroke-dasharray: none; }
-.cmap-world .veyrath-act-pin { width: 38px; min-width: 38px; height: 44px; min-height: 44px; padding: 3px; gap: 0; background: #28241ded; border: 1px solid #d2b77b; box-shadow: 0 2px 7px #0006; border-radius: 5px; }
-.veyrath-act-pin small { font: 8px var(--font); letter-spacing: .12em; }
-.veyrath-act-pin b { font-size: 19px; line-height: 1; }
-.veyrath-act-pin.current { outline: 2px solid var(--success); outline-offset: 2px; }
-.veyrath-pin-done { position: absolute; right: -6px; top: -7px; background: #253a24; border-radius: 50%; color: #cbe3ab; width: 18px; height: 18px; text-shadow: none; font: 12px var(--font); }
-.veyrath-act-pin:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 3px; }
+.veyrath-frontiers { pointer-events: none; }
+.veyrath-frontiers path { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+.veyrath-frontiers .frontier-ink { stroke: #69513b; stroke-width: 1.15; stroke-dasharray: 3.2 2.3 .65 2.3; stroke-opacity: .8; transition: stroke-width 120ms ease, stroke-opacity 120ms ease; }
+.veyrath-frontiers .is-current .frontier-ink { stroke: #493826; stroke-width: 1.7; stroke-opacity: 1; }
+.veyrath-territory { pointer-events: all; cursor: pointer; fill: transparent; stroke: none; outline: none; }
+.veyrath-territory.is-locked { cursor: default; }
+.veyrath-fog, .veyrath-region-highlight { pointer-events: none; }
+.veyrath-fog path { fill: #414844; opacity: .96; transition: opacity 900ms ease; }
+.veyrath-fog path.is-revealed { opacity: 0; }
+.veyrath-region-highlight path { fill: #f3d68a; fill-opacity: 0; stroke: #5e4729; stroke-opacity: 0; stroke-width: 1.5; vector-effect: non-scaling-stroke; transition: fill-opacity 160ms ease, stroke-opacity 160ms ease; }
+.veyrath-region-highlight path.is-hovered { fill-opacity: .13; stroke-opacity: .85; }
+.veyrath-ribbon { position: absolute; z-index: 2; width: max-content; min-width: 154px; height: 54px; padding: 0 24px 17px; box-sizing: border-box; border: 0; background: none; color: #392913; cursor: pointer; transform: translate(-50%, -50%) rotate(var(--ribbon-turn)); text-align: center; -webkit-tap-highlight-color: transparent; }
+.veyrath-ribbon > small { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); padding: 0; white-space: nowrap; background: none; border: 0; color: #483822; font: 600 12px/15px Georgia, 'Times New Roman', serif; letter-spacing: .05em; }
+.veyrath-ribbon-paper { position: absolute; inset: 0 0 auto; width: 100%; height: 38px; overflow: visible; filter: none; }
+.veyrath-ribbon-paper path { stroke: #786044; stroke-width: .85; stroke-linecap: round; stroke-linejoin: round; }
+.ribbon-tails { fill: #cdb582; fill-opacity: .95; stroke-opacity: .85; }
+.ribbon-face { fill: #ead7a9; fill-opacity: .96; stroke-opacity: .9; }
+.veyrath-ribbon-paper .ribbon-folds { fill: none; stroke: #9a805a; stroke-width: .65; stroke-opacity: .5; }
+.veyrath-ribbon-name { position: relative; display: block; white-space: nowrap; font: 600 16px/34px Georgia, 'Times New Roman', serif; }
+.veyrath-ribbon.is-hovered .ribbon-face, .veyrath-ribbon:focus-visible .ribbon-face { fill: #f3e6c5; fill-opacity: 1; stroke: #4e3921; stroke-opacity: 1; stroke-width: 1.5; }
+.veyrath-ribbon:focus-visible { outline: none; box-shadow: none; }
+.veyrath-ribbon.is-locked { cursor: default; }
+.veyrath-ribbon.is-locked > small { color: #eadcba; }
+.veyrath-ribbon.is-sea > small { color: #eadcba; }
+.veyrath-ribbon, .veyrath-ribbon > small, .veyrath-ribbon-name { text-shadow: none; filter: none; }
+.cmap-act .cmap-node:not(.selected):not(:hover):not(:focus-visible) .cmap-node-name { opacity: 0; pointer-events: none; }
+.cmap-act .cmap-node-name { transition: opacity 120ms ease; }
+.cmap-act .cmap-node .cmap-node-name { color: #62513e; background: none; border: 0; font: italic 400 13px/1.08 Georgia, 'Times New Roman', serif; letter-spacing: .01em; text-shadow: none; filter: none; box-shadow: none; }
 @media (max-width: 600px) {
   .veyrath-atlas-toolbar { align-items: flex-start; }
   .veyrath-atlas-toolbar p { max-width: 24ch; }
-  .veyrath-atlas .cmap-world { min-width: 560px; }
+  .veyrath-atlas .cmap-world { min-width: 800px; }
   .veyrath-atlas .cmap-world-scroll { overflow-x: auto; }
+  .veyrath-ribbon { min-width: 132px; padding-inline: 18px; }
+  .veyrath-ribbon-name { font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .veyrath-fog path, .veyrath-region-highlight path { transition: none; }
 }

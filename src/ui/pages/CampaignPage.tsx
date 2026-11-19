@@ -2,8 +2,8 @@ import { trialAt } from '../../engine/ascendancy';
 import { uniqueDef } from '../../data/bases';
 import { areaCurrency, bossGatherMats, bossTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { ACT_MAPS, smoothPath, VEYRATH_REGIONS, WORLD_MAP, type MapPoint } from '../../data/campaignMap';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { ACT_MAPS, smoothPath, VEYRATH_FRONTIERS, VEYRATH_REGIONS, WORLD_MAP, type MapPoint } from '../../data/campaignMap';
 import { LABEL_SIDE, labelLines } from '../../data/continent';
 import { actBossZone, actOpen, ACTS, bossesNeeded, isSideArea, MECHANIC_INFO, roadsInto, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
 import { FINAL_ACT } from '../../engine/hideout';
@@ -18,6 +18,7 @@ import type { Page } from '../Layout';
 import '../round2-session2.css';
 import '../components/veyrath-atlas.css';
 import { CampaignJournal } from '../components/CampaignJournal';
+import { actRevealed } from '../campaignExploration';
 
 /** How risky an area looks for your current level. */
 function danger(s: GameState, z: ZoneDef): { label: string; cls: string } {
@@ -195,68 +196,81 @@ const at = ([x, y]: MapPoint): CSSProperties => ({ left: `${x}%`, top: `${y}%` }
 
 // ---------- level 1: the world ----------
 
-/** Every act on one atlas, with roads traced on the artwork and joined at shared forks. */
-function WorldMap({ s, onOpen }: { s: GameState; onOpen: (act: number) => void }) {
+/** The atlas itself is the act picker: each outlined geographic region is a keyboard-accessible target. */
+export function WorldMap({ s, onOpen }: { s: GameState; onOpen: (act: number) => void }) {
   const cur = currentAct(s);
-  const [showRegions, setShowRegions] = useState(true);
+  const fogId = useId().replace(/:/g, '');
+  const [hovered, setHovered] = useState<number | null>(null);
   return (
     <section className="veyrath-atlas" aria-label="Veyrath world map">
       <div className="veyrath-atlas-toolbar">
-        <div><h2>Veyrath</h2><p className="dim small">Seven acts across the exile kingdom. Select a numbered region to explore its roads.</p></div>
-        <button className="btn sm" aria-pressed={showRegions} onClick={() => setShowRegions((value) => !value)}>{showRegions ? 'Hide act regions' : 'Show act regions'}</button>
+        <div><h2>Veyrath</h2><p className="dim small">Choose an act to explore. New territories emerge as you unlock them.</p></div>
       </div>
     <div className="card cmap-card cmap-world-scroll">
       <div className="cmap-world" style={{ aspectRatio: WORLD_MAP.aspect }}>
         {WORLD_MAP.image ? <img className="ct-svg" src={WORLD_MAP.image} alt="Veyrath atlas showing Brinewick, Greyford, Harrowgate, Cairnwatch and Caer Veyr" /> : <WorldTerrain isOpen={actOpen} selected={cur} onPick={onOpen} />}
-        <svg className={`cmap-overlay veyrath-regions ${showRegions ? '' : 'is-hidden'}`} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-          {VEYRATH_REGIONS.map((region) => <polygon key={region.act} points={region.points} className={region.act === cur ? 'is-current' : ''} style={{ ['--region' as string]: region.color }} />)}
+        <svg className="cmap-overlay veyrath-regions" viewBox="0 0 100 100" preserveAspectRatio="none" role="group" aria-label="World map regions">
+          <defs>
+            <filter id={fogId} x="-5%" y="-5%" width="110%" height="110%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation=".3" result="fogEdge" />
+              <feTurbulence type="fractalNoise" baseFrequency=".28 .38" numOctaves="3" seed="12" result="clouds" />
+              <feColorMatrix in="clouds" type="matrix" values=".06 .06 .06 0 .19  .06 .06 .06 0 .21  .06 .06 .06 0 .21  0 0 0 0 1" />
+              <feComposite in2="fogEdge" operator="in" />
+            </filter>
+          </defs>
+          <g className="veyrath-fog" aria-hidden="true">
+            {VEYRATH_REGIONS.map((region) => <path key={region.act} d={region.d}
+              className={actRevealed(s, region.act) ? 'is-revealed' : ''}
+              filter={`url(#${fogId})`} />)}
+          </g>
+          <g className="veyrath-region-highlight" aria-hidden="true">
+            {VEYRATH_REGIONS.map((region) => <path key={region.act} d={region.d}
+              className={hovered === region.act ? 'is-hovered' : ''} />)}
+          </g>
+          <g className="veyrath-frontiers" aria-hidden="true">
+            {VEYRATH_FRONTIERS.map((border, index) => <g key={index} className={border.acts.includes(hovered ?? cur) ? 'is-current' : ''}>
+              <path className="frontier-ink" d={border.d} />
+            </g>)}
+          </g>
+          {VEYRATH_REGIONS.map((region) => {
+            const chapter = ACTS.find((a) => a.n === region.act)!;
+            const open = actRevealed(s, region.act);
+            return <path key={region.act} d={region.d}
+              className={`veyrath-territory ${open ? '' : 'is-locked'}`}
+              role="button" tabIndex={0} aria-label={`Act ${region.act}: ${chapter.name}${open ? '' : ' — unexplored, finish the previous act'}`} aria-disabled={!open}
+              onMouseEnter={() => setHovered(region.act)} onMouseLeave={() => setHovered(null)}
+              onFocus={() => setHovered(region.act)} onBlur={() => setHovered(null)}
+              onClick={() => { if (open) onOpen(region.act); }}
+              onKeyDown={(event) => {
+                if (open && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); onOpen(region.act); }
+              }}>
+              <title>{`${chapter.name} — ${region.place}${open ? '' : ' — finish the previous act to reveal'}`}</title>
+            </path>;
+          })}
         </svg>
-        {ACTS.map((a) => {
-          const pos = WORLD_MAP.labels[a.n];
+        {ACTS.map((chapter) => {
+          const pos = WORLD_MAP.labels[chapter.n];
           if (!pos) return null;
-          const open = actOpen(a.n);
-          const pr = actProgress(s, a.n);
-          return (
-            <button key={a.n} className={`cmap-act-label veyrath-act-pin ${open ? '' : 'locked'} ${a.n === cur ? 'current' : ''} ${pr.done ? 'done' : ''}`} style={at(pos)} disabled={!open} onClick={() => onOpen(a.n)} aria-label={`Act ${a.n}: ${a.name}`} title={open ? `Act ${a.n}: ${a.name}${a.n === 7 ? ' — beneath Caer Veyr' : ''}` : `Act ${a.n} isn't open yet`}>
-              <small>ACT</small><b>{a.n}</b>{pr.done && <span className="veyrath-pin-done">✓</span>}
-            </button>
-          );
+          const open = actRevealed(s, chapter.n);
+          return <button key={chapter.n} className={`veyrath-ribbon ${chapter.n === cur ? 'is-current' : ''} ${chapter.n === 7 ? 'is-sea' : ''} ${hovered === chapter.n ? 'is-hovered' : ''} ${open ? '' : 'is-locked'}`}
+            style={{ ...at(pos), ['--ribbon-turn' as string]: `${chapter.n % 2 ? -1 : 1}deg` }}
+            aria-disabled={!open} aria-label={`Act ${chapter.n}: ${chapter.name}${open ? '' : ' — unexplored'}`}
+            title={open ? `Explore Act ${chapter.n}` : `Finish Act ${chapter.n - 1} to reveal this region`}
+            onClick={() => { if (open) onOpen(chapter.n); }}
+            onMouseEnter={() => setHovered(chapter.n)} onMouseLeave={() => setHovered(null)}
+            onFocus={() => setHovered(chapter.n)} onBlur={() => setHovered(null)}>
+            <svg className="veyrath-ribbon-paper" viewBox="0 0 200 76" preserveAspectRatio="none" aria-hidden="true">
+              <path className="ribbon-tails" d="M23 18 L3 15 L10 35 L2 55 L24 58 Z M177 18 L197 15 L190 35 L198 55 L176 58 Z" />
+              <path className="ribbon-face" d="M18 10 Q100 5 183 11 L180 64 Q101 59 20 65 Z" />
+              <path className="ribbon-folds" d="M18 10 L23 18 L20 65 L24 58 M183 11 L177 18 L180 64 L176 58 M27 15 Q100 11 174 16 M29 59 Q100 54 171 59" />
+            </svg>
+            <span className="veyrath-ribbon-name">{chapter.name}</span>
+            <small>Act {chapter.n}{open ? '' : ' · Unexplored'}</small>
+          </button>;
         })}
       </div>
     </div>
     </section>
-  );
-}
-
-/** The same acts as a list: big tap targets, with progress and where you are. */
-function ActList({ s, onOpen }: { s: GameState; onOpen: (act: number) => void }) {
-  const cur = currentAct(s);
-  return (
-    <div className="cmap-acts">
-      {ACTS.map((a) => {
-        const open = actOpen(a.n);
-        const pr = actProgress(s, a.n);
-        const reached = zonesInAct(a.n).some((z) => s.unlockedZones.includes(z.id));
-        return (
-          <button key={a.n} className={`card cmap-act-card ${open ? '' : 'locked'} ${a.n === cur ? 'current' : ''}`} disabled={!open} onClick={() => onOpen(a.n)}>
-            <span className="cmap-act-num num">{a.n}</span>
-            <span className="cmap-act-body">
-              <b>{open ? a.name : 'Coming soon'}</b>
-              {open && pr.total > 0 && <ProgressBar value={pr.cleared / pr.total} color={pr.done ? 'var(--success)' : undefined} />}
-              <span className="dim small">
-                {!open ? 'Not open yet' : pr.done ? 'Complete' : reached ? `${pr.cleared} of ${pr.total} bosses beaten` : 'Not reached yet'}
-                {open && !a.open && ' · preview'}
-              </span>
-            </span>
-            {a.n === cur && s.combat && (
-              <Badge tone="success" live>
-                Here
-              </Badge>
-            )}
-          </button>
-        );
-      })}
-    </div>
   );
 }
 
@@ -292,7 +306,7 @@ function ActCloseUp({ s, act, selected, onSelect }: { s: GameState; act: number;
     .filter((e) => data.zones[e.to])
     .map((e) => ({ key: `${e.from}>${e.to}`, d: smoothPath([e.at, data.zones[e.to]]), walked: unlocked(e.to), side: false }));
   // dense acts get a wider map that scrolls sideways on narrow screens
-  const minWidth = zones.length > 12 ? 620 : zones.length > 9 ? 520 : 0;
+  const minWidth = zones.length > 12 ? 620 : zones.length > 9 ? 520 : zones.length > 6 ? 480 : 360;
   return (
     <div className="cmap-act-scroll" ref={scroller}>
       <div className="cmap-act" style={{ aspectRatio: data.aspect, minWidth: minWidth || undefined, ['--aspect' as string]: data.aspect }}>
@@ -368,22 +382,32 @@ function ActLegend() {
 
 export function CampaignPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
-  // nothing to choose between until a second act opens, so a new character goes straight into Act 1
-  const reachedActs = new Set(ZONES.filter((z) => s.unlockedZones.includes(z.id) && actOpen(z.act)).map((z) => z.act)).size;
-  const [act, setAct] = useState<number | null>(() => (reachedActs <= 1 ? currentAct(s) : null));
-  const [zoneId, setZoneId] = useState(() => defaultZone(s, currentAct(s)));
+  const storageKey = `coe-world-map:${s.character.id}`;
+  const [selection, setSelection] = useState<{ act: number | null; zoneId: string }>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) ?? 'null');
+      if (saved && (saved.act === null || ACTS.some((a) => a.n === saved.act && actRevealed(s, a.n)))) {
+        const zone = ZONES.find((z) => z.id === saved.zoneId && (saved.act === null || z.act === saved.act));
+        return { act: saved.act, zoneId: zone?.id ?? defaultZone(s, saved.act ?? currentAct(s)) };
+      }
+    } catch { /* Map preferences must never prevent a character from loading. */ }
+    return { act: null, zoneId: defaultZone(s, currentAct(s)) };
+  });
+  const { act, zoneId } = selection;
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, JSON.stringify(selection)); } catch { /* Storage may be unavailable or full. */ }
+  }, [storageKey, selection]);
+  const setZoneId = (id: string) => setSelection((previous) => ({ ...previous, zoneId: id }));
   const openAct = (n: number) => {
-    setAct(n);
-    setZoneId(defaultZone(s, n));
+    if (!actRevealed(s, n)) return;
+    setSelection({ act: n, zoneId: defaultZone(s, n) });
   };
 
   if (act === null) {
     return (
-      <div className="page">
-      <PageHeader title="Campaign">Find your place in Veyrath, follow the missing supplies and uncover what lies beneath the capital.</PageHeader>
+      <div className="page wide world-map-page">
+      <PageHeader title="World Map" />
         <WorldMap s={s} onOpen={openAct} />
-        <ActList s={s} onOpen={openAct} />
-        <CampaignJournal onSelectZone={(id) => { openAct(zoneDef(id).act); setZoneId(id); }} />
       </div>
     );
   }
@@ -396,9 +420,9 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
   const zone = zones.find((z) => z.id === zoneId);
   return (
     <div className="page">
-      <PageHeader title="Campaign">Each boss opens the roads ahead. Later routes branch, letting you choose which dangers to face before the act's final encounter.</PageHeader>
+      <PageHeader title="World Map" />
       <div className="cmap-act-head">
-        <button className="btn sm" onClick={() => setAct(null)}>
+        <button className="btn sm" onClick={() => setSelection((previous) => ({ ...previous, act: null }))}>
           ← World map
         </button>
         <h2>

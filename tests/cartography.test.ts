@@ -71,7 +71,7 @@ describe('the skill', () => {
 
   it('leaves Coming soon while keeping existing achievement sources', () => {
     expect(UPCOMING_SKILLS.find((u) => u.name === 'Cartography')).toBeUndefined();
-    expect(ACHIEVEMENT_BY_ID.maps_drawn_25.act).toBe(6);
+    expect(ACHIEVEMENT_BY_ID.maps_drawn_25.act).toBe(7);
     expect(ACHIEVEMENTS.some((a) => a.id === 'maps_drawn_25')).toBe(actOpen(6));
   });
 

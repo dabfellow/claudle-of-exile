@@ -1,4 +1,5 @@
 import type { DamageType, GroundKind } from '../engine/types';
+import { buildCampaign } from './campaignLayout';
 
 /**
  * Boss mechanics. Every boss slams; later bosses stack more so a single guard skill isn't enough.
@@ -139,7 +140,7 @@ export const ACTS: ActDef[] = [
     outro: 'Harrowgate still has witnesses. Their surviving records tie the lost city to research continuing at Cairnwatch Institute in the mountains.',
   },
   {
-    n: 5, name: 'The Mountain Research Facility', open: true,
+    n: 5, name: 'Cairnwatch Institute', open: true,
     outro: 'The laboratory connects damaged containment, stolen knowledge and experiments authorized in Caer Veyr. The capital owes more than an explanation.',
   },
   {
@@ -194,10 +195,10 @@ const boss = (def: MonsterDef, mechanics: BossMechanic[], casts: BossCasts): Mon
 });
 
 /**
- * Areas in campaign order, with each act's boss last. Acts 1–3 run straight, each boss opening the next area. From
- * Act 4 on the roads fork: `requires` sets them, and a side area is one no road leads on from (isSideArea).
+ * Encounter templates retain their original level/reward calibration. buildCampaign below assigns the live
+ * seven-chapter order, rethemes relocated areas and scales levels/rewards to the authored chapter bands.
  */
-export const ZONES: ZoneDef[] = [
+const ZONE_TEMPLATES: ZoneDef[] = [
   // ---------------- Act 1: The Wreck Coast ----------------
   {
     id: 'mudflats', name: "Brinewick Shore", act: 1, tier: 1, levelRange: [1, 4], color: '#7a8c5a',
@@ -612,7 +613,7 @@ export const ZONES: ZoneDef[] = [
   uniques: [],
   },
 
-  // ---------- Act 5: The Mountain Research Facility ----------------
+  // ---------- Act 5: Cairnwatch Institute ----------------
   // The giants' range: monsters are large and few, a change from the swarms. Cold is the check, on trash and in the
   // bosses' novas and ground. Most bosses bring Frostbite. Items roll seven levels above the monster, so the act's last
   // kills reach bases of about level 57, a third of the way from Act 4's 45 to the 80 that Act 7 ends on.
@@ -1330,6 +1331,8 @@ export const ZONES: ZoneDef[] = [
   },
 ];
 
+/** Live campaign: Acts 1–3 are linear, followed by branching chapters with stable story finales. */
+export const ZONES: ZoneDef[] = buildCampaign(ZONE_TEMPLATES);
 /** Areas off the campaign road (data/maps.ts): they can be fought in, but nothing that walks ZONES sees them. */
 export const EXTRA_ZONES: ZoneDef[] = [];
 

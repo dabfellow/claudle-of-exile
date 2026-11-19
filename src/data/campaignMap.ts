@@ -41,15 +41,15 @@ export interface ActMapData {
 
 export const WORLD_MAP: WorldMapData = {
   aspect: 1536 / 1024,
-  image: new URL('../assets/maps/veyrath-world.webp', import.meta.url).href,
+  image: new URL('../assets/maps/veyrath-world-bound-sea.webp', import.meta.url).href,
   labels: {
-    1: [12, 64],
-    2: [25, 55],
-    3: [34, 43],
-    4: [56, 61],
-    5: [54, 18],
-    6: [86, 29],
-    7: [88, 44],
+    1: [16, 63],
+    2: [15, 47],
+    3: [35, 44],
+    4: [51, 86],
+    5: [43, 20],
+    6: [77, 21],
+    7: [87, 39],
   },
 };
 
@@ -253,17 +253,37 @@ const LEGACY_ACT_MAPS: Record<number, ActMapData> = {
   },
 };
 
-/** Country-map regions: geographic scopes, not new travel prerequisites. The final chapter is below Caer Veyr. */
+/** Invisible geographic hit areas. The artwork's coastline and the shared ink frontiers below define the visible territories. */
 export const VEYRATH_REGIONS = [
-  { act: 1, color: '#477f8c', place: 'Brinewick and the Wreck Coast', points: '7,60 19,55 25,61 26,74 16,82 6,73' },
-  { act: 2, color: '#aa7c3e', place: 'The supply roads and Wayfarer’s Post', points: '18,54 24,46 34,48 36,58 26,65 20,62' },
-  { act: 3, color: '#8b794a', place: 'Greyford and the expedition depots', points: '27,42 36,39 43,44 43,53 34,56 26,49' },
-  { act: 4, color: '#718a48', place: 'Harrowgate and the road to Eastmere', points: '42,46 57,43 60,52 58,63 70,69 72,78 57,79 45,64 42,55' },
-  { act: 5, color: '#687c9a', place: 'The northern passes and Cairnwatch Institute', points: '34,14 53,8 67,20 66,34 53,39 42,36 37,26' },
-  { act: 6, color: '#b49642', place: 'Caer Veyr, its growing grounds and harbour', points: '69,20 83,18 91,25 91,34 81,37 72,32' },
-  { act: 7, color: '#8e668c', place: 'The First Seal beneath Caer Veyr', points: '83,39 93,39 94,49 84,49' },
+  { act: 1, place: 'Brinewick and the Wreck Coast', d: 'M7 59 Q12 58 16 57 Q20 57 23 59 Q27 59 30 61 C32 65 27 66 27 68 C26 70 21 70 22 73 C20 76 20 78 23 79 C26 81 24 83 27 86 L28 89 L25 88 23 90 20 87 18 86 15 85 12 82 10 78 7 76 5 71 3 67 6 64 Z' },
+  { act: 2, place: 'The supply roads and Wayfarer’s Post', d: 'M9 42 C15 43 18 40 22 39 C23 42 21 45 22 48 C24 50 29 49 30 52 Q32 56 30 61 Q27 59 23 59 Q20 57 16 57 Q12 58 7 59 L8 56 6 53 7 50 5 48 Z' },
+  { act: 3, place: 'Greyford and the expedition depots', d: 'M22 39 Q30 38 35 40 Q40 39 44 41 C43 44 47 46 45 49 C44 52 46 54 44 56 C39 57 35 59 30 61 Q32 56 30 52 C29 49 24 50 22 48 C21 45 23 42 22 39 Z' },
+  { act: 4, place: 'Harrowgate and the road to Eastmere', d: 'M44 41 Q51 45 59 41 L60 44 57 47 59 50 60 53 62 57 61 62 62 65 60 68 58 70 60 73 65 71 69 65 75 63 80 63 83 65 88 65 94 62 97 63 97 67 95 70 94 74 90 75 86 79 80 81 76 84 69 87 65 90 58 92 51 95 45 93 39 95 33 92 28 89 27 86 C24 83 26 81 23 79 C20 78 20 76 22 73 C21 70 26 70 27 68 C27 66 32 65 30 61 C35 59 39 57 44 56 C46 54 44 52 45 49 C47 46 43 44 44 41 Z' },
+  { act: 5, place: 'The northern passes and Cairnwatch Institute', d: 'M3 30 L8 23 14 17 20 13 27 7 35 4 43 5 48 9 56 9 62 13 66 16 C65 20 68 22 66 25 C64 28 68 31 65 33 Q63 36 64 38 L61 41 59 41 Q51 45 44 41 Q40 39 35 40 Q30 38 22 39 C18 40 15 43 9 42 L6 40 8 37 4 35 Z' },
+  { act: 6, place: 'Caer Veyr, its growing grounds and harbour', d: 'M66 16 L72 15 78 16 83 17 88 20 86 23 84 25 89 25 91 28 94 28 93 32 88 34 86 36 82 35 78 37 74 35 71 37 68 35 64 38 Q63 36 65 33 C68 31 64 28 66 25 C68 22 65 20 66 16 Z' },
+  // Below the capital, not an offshore province: use the painting's existing underground callout.
+  { act: 7, place: 'The First Seal beneath Caer Veyr', d: 'M85 36 Q89 35 97 36 L97 42 Q90 43 85 41 Z' },
 ];
 
+/** Shared inland borders and coastal closures form enclosed territories in the atlas's ink palette. */
+export const VEYRATH_FRONTIERS = [
+  { acts: [1, 2], d: 'M7 59 Q9 58.7 11 58 Q14 57.8 16 57 Q18 56.8 20 57.8 L21.5 58.1 Q22 59 23 59 Q26 58.8 28 60 L30 61' },
+  { acts: [1, 4], d: 'M30 61 C32 65 27 66 27 68 C26 70 21 70 22 73 C20 76 20 78 23 79 C26 81 24 83 27 86 L28 89' },
+  { acts: [2, 3], d: 'M22 39 C23 42 21 45 22 48 C24 50 29 49 30 52 Q32 56 30 61' },
+  { acts: [3, 4], d: 'M44 41 C43 44 47 46 45 49 C44 52 46 54 44 56 C39 57 35 59 30 61' },
+  { acts: [2, 3, 4, 5], d: 'M9 42 C15 43 18 40 22 39 Q25 38.2 28 39.1 L30 38.7 Q33 40.2 35 40 Q38 39.2 40 40 L44 41 Q47 43.5 50 43 Q53 42 55 42.4 L59 41' },
+  { acts: [5, 6], d: 'M66 16 C65 20 68 22 66 25 C64 28 68 31 65 33 Q63 36 64 38' },
+  // Trace the coastal edge back to each inland junction so no claim ends in an open line.
+  { acts: [1], d: 'M28 89 L27.2 88.2 26 88.5 25.4 87.5 24.3 87.7 23.7 86.9 22.4 87.2 21.8 86.1 20.4 86.2 19.8 85.3 18.5 85.5 17.8 84.4 16.5 84.6 15.5 83.5 14.1 83.2 14.7 82.3 13.4 81.6 12.7 80.3 11.4 80.1 10.7 78.8 9.5 78.2 9.9 77.2 8.7 76.7 8.4 75.4 7.3 74.6 7.8 73.3 6.5 72.3 7.1 71.2 6 70.4 5.4 69.1 6.1 68.5 5 67.8 5.8 66.7 4.7 65.9 5.7 64.6 5.2 63.8 6.4 62.7 6 61.5 7.1 60.4 7 59' },
+  { acts: [2], d: 'M7 59 L7.5 57.8 8.8 57.3 8.2 56.4 9.2 55.5 8.2 54.9 8.8 53.7 7.6 52.8 8.5 51.6 7.1 51.1 7.5 49.7 6.5 49 7.3 47.8 6.7 46.8 8 46.2 7.6 45 8.7 44.3 8.2 43.1 9 42' },
+  { acts: [4], d: 'M59 41 L59.7 42.2 58.7 43.2 60 44 58.8 45.1 59.2 46.2 57.5 47.2 58.4 48.5 57.9 49.4 59 50.2 58.6 51.5 60 53 59.3 54.1 60.4 55.2 60 56.4 61.5 57.2 60.7 58.5 61.5 60.1 60.5 61.5 61.4 62.3 60.6 63.7 61.6 65 60.5 66.2 60.8 67.1 59.6 68.1 59.8 69.2 58 70 58.4 71.5 59.7 72.2 60 73 61.5 72 63.4 72.4 65 71 66.2 71.2 67.5 68.9 69 65 71 64.4 72.5 65 75 63 77 63.6 80 63 81.6 64.1 83 65 85 64.4 86.7 65.5 88 65 90 63.9 92 64.2 94 62 95.3 63 97 63 96.2 64.6 97 65.7 96 67.3 95.2 67.1 95 70 93.8 70.3 94 72 92.8 72.8 92 74.2 90 75 88.3 75.4 87.5 77 86 79 84.2 78.9 83.6 80.3 80 81 78.4 82.7 76 84 74.3 84.5 73 86 69 87 68.1 88.2 66.8 88.1 65 90 63.2 90 62 91.3 60 91.2 58 92 55.8 93.6 54 93.2 51 95 49.5 94 47.5 94.5 45 93 43.8 94.1 42.2 93.8 39 95 37.6 94 35.9 94.2 33 92 31.5 91.4 30.5 90.2 28 89' },
+  { acts: [5], d: 'M59 41 L60.5 40.8 61.4 40 62.6 40.1 62.2 39.3 64 38 M66 16 L64.8 14.9 63.5 15.1 62 13 60.3 13.4 59.1 12 57.4 12.1 56 9 54.4 9.7 52.7 9 50.7 9.8 48 9 46.5 7.5 45.2 7.8 43 5 41.7 5.7 39.6 4.6 37.8 5 35 4 33.5 5.1 31.6 5.2 30.3 6.6 28.8 6.3 27 7 25.7 9 24.4 8.7 23 10.8 21.1 11.2 20 13 18.7 13.1 17.2 15 15.4 15.3 14 17 12.3 17.5 11.7 19.2 10.4 19.3 10.1 21.2 8 23 8.5 24.1 6.7 25 7 26.8 5.5 27.4 5.9 28.6 3 30 4.5 31.4 4 33 5.5 33.8 4 35 5.8 35.7 5.7 37 8 37 7 38.3 6 40 7.6 40.6 9 42' },
+  { acts: [6], d: 'M64 38 L65.4 37 66.6 37.4 68 35 69.4 35.7 71 37 72.5 35.4 74 35 76 36.6 78 37 80 35.5 82 35 83.4 35.8 84.7 35.1 86 36 87.2 34.5 88 34 89.5 34.2 90.5 33 91.7 33.4 93 32 92 31.3 93.5 30.2 93 29.4 94 28 92 28.3 91 28 89.6 26.6 89 25 87.2 25.5 86 24.7 84 25 84.8 23.8 86 23 85.4 21.5 88 20 86.1 19.6 85 18.4 83 17 81.7 17.6 80 16.3 78 16 76.4 16.5 74.8 15.4 72 15 70.8 16.1 69 15.6 67.4 16.5 66 16' },
+  // An engraved enclosure around the underground entrance, not a surface claim in the sea.
+  { acts: [7], d: 'M85.8 39.1 C85.8 37.8 86.5 37.1 87.4 37.2 C88.4 37.1 89 38 89 39.1 C89 40.4 88.3 41 87.4 41 C86.4 41 85.8 40.3 85.8 39.1 Z' },
+];
+
+/** Owner-approved placeholder paintings; keep the structural redraw pilot separate. */
 const ACT_IMAGES: Record<number, string> = {
   1: new URL('../assets/maps/veyrath-act-1.webp', import.meta.url).href,
   2: new URL('../assets/maps/veyrath-act-2.webp', import.meta.url).href,
@@ -296,12 +316,28 @@ export const ACT_MAPS: Record<number, ActMapData> = {
   6: chapterMap(6, 5),
   7: chapterMap(7, 6),
 };
-ACT_MAPS[2].zones = { cinderroad: [19, 78], saltflats: [39, 58], blackgrass: [63, 43], caravan: [78, 25] };
+ACT_MAPS[1].zones = { mudflats: [57, 88], brinecaves: [17, 88], ashwood: [47, 55], blackreed: [27, 27], crypt: [79, 50], shipgrave: [16, 18], stormcliffs: [88, 36], sanctum: [85, 16] };
+ACT_MAPS[1].roads = {
+  'mudflats>brinecaves': [[43, 78], [28, 79]],
+  'brinecaves>ashwood': [[24, 73], [39, 68]],
+  'ashwood>blackreed': [[32, 51], [30, 38]],
+  'blackreed>crypt': [[44, 32], [66, 40]],
+  'crypt>shipgrave': [[65, 41], [44, 31], [28, 22]],
+  'shipgrave>stormcliffs': [[29, 19], [55, 24], [76, 32]],
+  'stormcliffs>sanctum': [[87, 27]],
+};
+ACT_MAPS[2].zones = { cinderroad: [12, 83], saltflats: [25, 70], tithefields: [17, 46], fortobedience: [35, 48], blackgrass: [49, 62], bannerfield: [58, 39], assizes: [74, 45], caravan: [85, 20] };
 ACT_MAPS[2].roads = {};
 ACT_MAPS[2].entries = [{ from: 'sanctum', to: 'cinderroad', at: [4, 92] }];
-ACT_MAPS[3].zones = { kurgans: [22, 75], plateau: [30, 34], pyretemple: [69, 28], burningthrone: [77, 71] };
+ACT_MAPS[3].zones = { kurgans: [12, 83], lowercity: [31, 77], dryaqueduct: [47, 64], plateau: [20, 28], wreckline: [40, 33], cinderkey: [57, 48], pyretemple: [74, 22], burningthrone: [82, 64] };
 ACT_MAPS[3].roads = {};
 ACT_MAPS[3].entries = [{ from: 'caravan', to: 'kurgans', at: [4, 83] }];
+ACT_MAPS[4].zones = { pilgrimgate: [16, 79], almsquarter: [24, 30], scourgeyard: [31, 69], reliquary: [49, 19], bellfoundry: [53, 48], inquisition: [65, 25], penitentstair: [60, 69], choirloft: [81, 77], saintswalk: [79, 44], highaltar: [81, 24] };
+ACT_MAPS[5].zones = { hollowpass: [18, 77], screefields: [31, 62], howlingfells: [29, 85], glasslake: [43, 19], bonequarry: [46, 74], icevault: [20, 34], mammothroad: [62, 62], hangingglacier: [28, 16], steading: [72, 54], longhall: [69, 34], kingsstair: [65, 20], giantsthrone: [81, 22] };
+ACT_MAPS[6].zones = { blackharbor: [20, 71], squallbanks: [43, 51], lampgulf: [31, 25], drownedfleet: [53, 58], brimstone: [70, 54], hollowreef: [52, 78], thunderhead: [70, 37], leviathanrib: [84, 40], blackcurrent: [59, 26], voicetrench: [60, 13], lightless: [78, 17], maelstrom: [82, 66] };
+ACT_MAPS[7].zones = { exilesgate: [12, 86], kingsroad: [20, 77], kingsmint: [61, 67], hanginggardens: [44, 42], burnedarchive: [16, 40], longfracture: [51, 29], driftingquarter: [35, 16], kingsreach: [65, 37], sunderedhall: [67, 54], hallofcrowns: [81, 58], ninthstair: [72, 17], shatteredthrone: [86, 25] };
+// Old illustration bends belong to the previous paintings, not the new regional plates.
+for (const act of [4, 5, 6, 7]) ACT_MAPS[act].roads = {};
 
 /** A smooth SVG path through points (in the same units as the points), passing through every one of them. */
 export function smoothPath(pts: MapPoint[]): string {

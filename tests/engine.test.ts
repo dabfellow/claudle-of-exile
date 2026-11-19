@@ -350,13 +350,13 @@ describe('hideout', () => {
     expect(stashPagePrice(s)).toBe(Math.round(price * 0.9));
   });
 
-  it('the Map Device stays locked until Act 6, and production stations gate recipe tiers', () => {
+  it('the Map Device stays locked until Act 7, and production stations gate recipe tiers', () => {
     const s = newGame(1);
     const c = ctx();
-    expect(stationLockReason(s, 'map_device')).toMatch(/Act 6/);
+    expect(stationLockReason(s, 'map_device')).toMatch(/Act 7/);
     s.account.bank.gold = 1e6;
     s.account.bank.rough_gem = 1e3;
-    expect(upgradeStation(s, c, 'map_device')).toMatch(/Act 6/);
+    expect(upgradeStation(s, c, 'map_device')).toMatch(/Act 7/);
     s.skills.smithing = 1e9;
     const ironBase = actionsFor('smithing').find((a) => a.baseId && baseDef(a.baseId).reqLevel >= 10 && baseDef(a.baseId).reqLevel < 22)!;
     for (const id of Object.keys(ironBase.inputs!)) s.account.bank[id] = 1e4;

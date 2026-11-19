@@ -40,8 +40,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'visit_combat',
     title: 'Washed Ashore',
-    npc: "Still breathing? Good. The tide spits out more corpses than exiles. Let's see if you can swing that thing — open the Campaign.",
-    objective: 'Open the Campaign tab',
+    npc: "Still breathing? Good. The tide spits out more corpses than exiles. Let's see if you can swing that thing — open the World Map.",
+    objective: 'Open the World Map tab',
     target: 1,
     visitPage: 'campaign',
     highlight: ['nav-campaign'],

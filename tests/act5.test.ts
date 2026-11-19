@@ -3,6 +3,7 @@ import { UNIQUES, uniqueDef } from '../src/data/bases';
 import { ZONE_POS, actRegion } from '../src/data/continent';
 import { BOSS_TABLES, DROP_TABLES, bossTable, dropTable } from '../src/data/drops';
 import { RULE_LABELS, type TacticRule } from '../src/data/gems';
+import { uniqueDropLevel, worldDropUniques } from '../src/data/uniqueDrops';
 import { ACT_PREVIEW, ACTS, actBossZone, actOpen, BOSS_CHANNEL_EVERY_MS, BOSS_CHANNEL_LAND_MULT, nextZones, roadsInto, zoneDef, zonesInAct } from '../src/data/zones';
 import { bossLeftToRules, GROUND_IN_PLAY, rulesBreakChannels, unlockEverything } from '../src/engine/automation';
 import { CHILLED_GROUND_SLOW, GROUND, PLAYER_SPOT, STORMWATER_COOLDOWN } from '../src/engine/battlefield';
@@ -19,13 +20,14 @@ import type { GameState, MonsterInstance } from '../src/engine/types';
 import { charXpForLevel } from '../src/engine/xp';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
-const act = () => zonesInAct(5);
-const ZONE = 'wreckline';
+const CHAPTER = 6;
+const act = () => zonesInAct(CHAPTER);
+const ZONE = 'squallbanks';
 const ON_CHANNEL: TacticRule = { when: 'enemyChannels' };
 const ON_WINDUP: TacticRule = { when: 'enemyCasting' };
 const PLAIN: TacticRule = { when: 'always' };
 
-/** A level 55 fighter with every unlock, standing in an Act 5 area. Each gem names its rule. */
+/** A level 55 fighter with every unlock, standing in a capital area. Each gem names its rule. */
 function fighter(gems: [string, TacticRule][]): GameState {
   const s = newGame(1, { name: 'T', classId: 'warrior' });
   s.tutorial.done = true;
@@ -63,31 +65,31 @@ function run(s: GameState, c: ReturnType<typeof ctx>, ms: number): void {
 
 const passes = (s: GameState, rule: TacticRule) => ruleAllows(rule, ruleContext(s, deriveStats(s)), false);
 
-describe('Act 5: The Sunless Sea', () => {
+describe('Act 6: The Capital’s Promise', () => {
   afterEach(() => {
     ACT_PREVIEW.enabled = true;
   });
 
-  it('has 14 stages at monster levels 49 to 57, with boss levels climbing to 58', () => {
-    expect(act()).toHaveLength(14);
+  it('has 12 stages at monster levels 47 to 57, with boss levels climbing to 57', () => {
+    expect(act()).toHaveLength(12);
     expect(act()[0].id).toBe('blackharbor');
     for (const z of act()) {
       for (const m of z.monsters) {
-        expect(m.level).toBeGreaterThanOrEqual(49);
+        expect(m.level).toBeGreaterThanOrEqual(47);
         expect(m.level).toBeLessThanOrEqual(57);
       }
     }
     const bosses = act().map((z) => z.boss.level);
     expect(bosses).toEqual([...bosses].sort((a, b) => a - b));
-    expect(bosses[0]).toBe(50);
-    expect(bosses.at(-1)).toBe(58);
-    expect(actBossZone(5)?.id).toBe('maelstrom');
+    expect(bosses[0]).toBe(49);
+    expect(bosses.at(-1)).toBe(57);
+    expect(actBossZone(CHAPTER)?.id).toBe('maelstrom');
   });
 
-  it("follows Act 4's last area with one entry, and every area sits on the map inside the act's region", () => {
+  it("follows Act 5's last area with one entry, and every area sits on the map inside the act's region", () => {
     expect(roadsInto(act()[0])).toEqual(['giantsthrone']);
     expect(nextZones('highaltar').map((z) => z.id)).not.toContain('blackharbor');
-    const region = actRegion(5)!.points;
+    const region = actRegion(CHAPTER)!.points;
     const inside = ([x, y]: [number, number]) => {
       let hit = false;
       for (let i = 0, j = region.length - 1; i < region.length; j = i++) {
@@ -105,9 +107,9 @@ describe('Act 5: The Sunless Sea', () => {
   });
 
   it('is open to players', () => {
-    expect(ACTS.find((a) => a.n === 5)!.open).toBe(true);
+    expect(ACTS.find((a) => a.n === CHAPTER)!.open).toBe(true);
     ACT_PREVIEW.enabled = false;
-    expect(actOpen(5)).toBe(true);
+    expect(actOpen(CHAPTER)).toBe(true);
     expect(nextZones('giantsthrone').map((z) => z.id)).toContain('blackharbor');
   });
 
@@ -126,19 +128,24 @@ describe('Act 5: The Sunless Sea', () => {
 
   it('channels from the second stage on, on most bosses, and the act boss has every mechanic', () => {
     expect(zoneDef('blackharbor').boss.mechanics).not.toContain('channel');
-    expect(zoneDef('wreckline').boss.mechanics).toContain('channel');
-    expect(act().filter((z) => z.boss.mechanics!.includes('channel')).length).toBeGreaterThanOrEqual(11);
-    expect([...actBossZone(5)!.boss.mechanics!].sort()).toEqual(['channel', 'enrage', 'martyrs', 'nova', 'scorch', 'slam', 'summon', 'ward']);
+    expect(zoneDef(ZONE).boss.mechanics).toContain('channel');
+    expect(act().filter((z) => z.boss.mechanics!.includes('channel')).length).toBeGreaterThanOrEqual(9);
+    expect([...actBossZone(CHAPTER)!.boss.mechanics!].sort()).toEqual(['channel', 'enrage', 'martyrs', 'nova', 'scorch', 'slam', 'summon', 'ward']);
     // a channel is long: longer than any slam or nova in the act
     for (const z of act()) if (z.boss.channel) expect(z.boss.channel.ms).toBeGreaterThan(Math.max(z.boss.slam?.ms ?? 0, z.boss.nova?.ms ?? 0));
   });
 
-  it('every unique it drops exists, and the six new ones have a home and both resistances', () => {
+  it('declared uniques exist, and the six elemental uniques have level-gated world-drop sources and both resistances', () => {
     const drops = new Set(act().flatMap((z) => z.uniques));
     for (const id of drops) expect(uniqueDef(id)).toBeTruthy();
+    const world = new Set(worldDropUniques(100).map((u) => u.id));
     for (const id of ['leviathan_hide', 'deckwalkers', 'bosuns_oath', 'tide_crown', 'corposant', 'harpoons_answer']) {
-      expect(drops).toContain(id);
-      const mods = UNIQUES.find((u) => u.id === id)!.mods.map((m) => m.affixId);
+      expect(world).toContain(id);
+      const unique = UNIQUES.find((u) => u.id === id)!;
+      const level = uniqueDropLevel(unique);
+      expect(worldDropUniques(level).some((u) => u.id === id)).toBe(true);
+      expect(worldDropUniques(level - 1).some((u) => u.id === id)).toBe(false);
+      const mods = unique.mods.map((m) => m.affixId);
       expect(mods).toEqual(expect.arrayContaining(['fire_res', 'light_res']));
     }
   });
@@ -153,12 +160,12 @@ describe('Act 5: The Sunless Sea', () => {
     expect(bossTable(14).guaranteed.find((g) => g.id === 'divine')!.qty).toBeGreaterThan(bossTable(9).guaranteed.find((g) => g.id === 'divine')!.qty);
   });
 
-  it('reaches bases of about level 68 by the act boss, and none past it', () => {
-    const z = actBossZone(5)!;
+  it('reaches bases of level 67 by the act boss, and none past it', () => {
+    const z = actBossZone(CHAPTER)!;
     const top = z.boss.level + z.ilvlBonus!;
-    expect(top).toBe(68);
+    expect(top).toBe(67);
     const levels = droppableBases(top).map((b) => b.reqLevel);
-    expect(Math.max(...levels)).toBe(68);
+    expect(Math.max(...levels)).toBe(67);
     expect(droppableBases(act()[0].monsters[0].level + act()[0].ilvlBonus!).some((b) => b.reqLevel >= 54)).toBe(true);
   });
 });

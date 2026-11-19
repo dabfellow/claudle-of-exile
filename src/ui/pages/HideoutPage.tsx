@@ -362,7 +362,7 @@ function GoToBar({ go }: { go: (p: Page) => void }) {
   const loot = s.ground.length + s.offlineHaul.length;
   const links: { page: Page; label: string; short: string; icon: string; badge?: ReactNode }[] = [
     { page: 'combat', label: 'Combat', short: 'Combat', icon: 'combat', badge: loot > 0 ? <span className="nav-badge loot">{loot}</span> : undefined },
-    { page: 'campaign', label: 'Campaign', short: 'Acts', icon: 'campaign' },
+    { page: 'campaign', label: 'World Map', short: 'World Map', icon: 'campaign' },
     { page: 'stash', label: 'Stash', short: 'Stash', icon: 'stash', badge: s.inventory.length > 0 ? <span className="nav-badge">{s.inventory.length}</span> : undefined },
     { page: 'equipment', label: 'Equipment', short: 'Gear', icon: 'equipment' },
     { page: 'skills', label: 'Skills', short: 'Skills', icon: 'gems' },

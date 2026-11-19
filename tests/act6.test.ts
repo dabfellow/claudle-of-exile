@@ -6,6 +6,7 @@ import { ZONE_POS, actRegion } from '../src/data/continent';
 import { BOSS_TABLES, DROP_TABLES, bossTable, dropTable } from '../src/data/drops';
 import type { TacticRule } from '../src/data/gems';
 import { MAP_DROPS } from '../src/data/maps';
+import { uniqueDropLevel, worldDropUniques } from '../src/data/uniqueDrops';
 import { ACT_PREVIEW, ACTS, actBossZone, actOpen, echoMechanics, echoTips, nextZones, zoneDef, zonesInAct, type BossMechanic, type ZoneDef } from '../src/data/zones';
 import { absorbAccount } from '../src/engine/account';
 import { checkAchievements } from '../src/engine/achievements';
@@ -26,7 +27,8 @@ import { charXpForLevel } from '../src/engine/xp';
 import { trainingDummy } from './helpers';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
-const act = () => zonesInAct(6);
+const CHAPTER = 7;
+const act = () => zonesInAct(CHAPTER);
 const PLAIN: TacticRule = { when: 'always' };
 const AIM: TacticRule = { when: 'always', aim: 'martyrs' };
 const ON_CHANNEL: TacticRule = { when: 'enemyChannels' };
@@ -34,7 +36,7 @@ const ON_FROSTBITE: TacticRule = { when: 'frostbite', value: 5 };
 const ELEMENTS = ['fire', 'cold', 'light'];
 const SIGNATURE: BossMechanic[] = ['scorch', 'martyrs', 'frostbite', 'channel'];
 
-/** A level 60 fighter with every unlock, standing in Act 6. Each gem names its rule. */
+/** A level 60 fighter with every unlock, standing beneath the capital. Each gem names its rule. */
 function fighter(gems: [string, TacticRule][]): GameState {
   const s = newGame(1, { name: 'T', classId: 'warrior' });
   s.tutorial.done = true;
@@ -85,13 +87,13 @@ function answers(z: ZoneDef): [string, TacticRule][] {
   ];
 }
 
-describe('Act 6: The Shattered Throne', () => {
+describe('Act 7: The Guardian Beneath', () => {
   afterEach(() => {
     ACT_PREVIEW.enabled = true;
   });
 
-  it('has 18 stages at monster levels 57 to 65, with boss levels climbing to 66', () => {
-    expect(act()).toHaveLength(18);
+  it('has 12 stages at monster levels 57 to 65, with boss levels climbing to 66', () => {
+    expect(act()).toHaveLength(12);
     expect(act()[0].id).toBe('exilesgate');
     for (const z of act()) {
       for (const m of z.monsters) {
@@ -101,15 +103,15 @@ describe('Act 6: The Shattered Throne', () => {
     }
     const bosses = act().map((z) => z.boss.level);
     expect(bosses).toEqual([...bosses].sort((a, b) => a - b));
-    expect(bosses[0]).toBe(58);
+    expect(bosses[0]).toBe(59);
     expect(bosses.at(-1)).toBe(66);
-    expect(actBossZone(6)?.id).toBe('shatteredthrone');
+    expect(actBossZone(CHAPTER)?.id).toBe('shatteredthrone');
   });
 
-  it("follows Act 5's last area, and every area sits on the map inside the act's region", () => {
+  it("follows Act 6's last area, and every area sits on the map inside the act's region", () => {
     expect(zoneDef('exilesgate').requires?.after).toEqual(['maelstrom']);
     expect(nextZones('maelstrom').map((z) => z.id)).toContain('exilesgate');
-    const region = actRegion(6)!.points;
+    const region = actRegion(CHAPTER)!.points;
     const inside = ([x, y]: [number, number]) => {
       let hit = false;
       for (let i = 0, j = region.length - 1; i < region.length; j = i++) {
@@ -123,15 +125,15 @@ describe('Act 6: The Shattered Throne', () => {
   });
 
   it('is open to players', () => {
-    expect(ACTS.find((a) => a.n === 6)!.open).toBe(true);
+    expect(ACTS.find((a) => a.n === CHAPTER)!.open).toBe(true);
     ACT_PREVIEW.enabled = false;
-    expect(actOpen(6)).toBe(true);
+    expect(actOpen(CHAPTER)).toBe(true);
     expect(nextZones('maelstrom').map((z) => z.id)).toContain('exilesgate');
   });
 
   it('needs all three resistances, on trash and in each boss', () => {
     const count = (t: string) => act().flatMap((z) => z.monsters).filter((m) => m.dmgType === t).length;
-    for (const t of ELEMENTS) expect(count(t)).toBeGreaterThanOrEqual(20);
+    for (const t of ELEMENTS) expect(count(t)).toBeGreaterThanOrEqual(14);
     expect(count('phys')).toBeLessThan(10);
     for (const z of act()) {
       expect([z.boss.dmgType, z.boss.slamType, z.boss.novaType].sort(), z.id).toEqual([...ELEMENTS].sort());
@@ -158,8 +160,8 @@ describe('Act 6: The Shattered Throne', () => {
     expect(BOSS_TABLES[17].guaranteed.length).toBeGreaterThan(0);
   });
 
-  it('reaches bases of level 80 by the act boss, starting past where Act 5 stops', () => {
-    const z = actBossZone(6)!;
+  it('reaches bases of level 80 by the act boss, starting past where Act 6 stops', () => {
+    const z = actBossZone(CHAPTER)!;
     const top = z.boss.level + z.ilvlBonus!;
     expect(top).toBe(80);
     expect(Math.max(...droppableBases(top).map((b) => b.reqLevel))).toBe(80);
@@ -167,25 +169,33 @@ describe('Act 6: The Shattered Throne', () => {
     expect(first.monsters[0].level + first.ilvlBonus!).toBeGreaterThan(68);
   });
 
-  it('its uniques exist, and the six new ones have a home, all three resistances and a wearable base', () => {
+  it('declared uniques exist, and the six late uniques have level-gated world sources and all three resistances', () => {
     for (const z of act()) for (const id of z.uniques) expect(uniqueDef(id)).toBeDefined();
     const fresh = ['oathbreaker', 'kingsmarch', 'last_decree', 'crownbreaker_mask', 'hand_of_the_regent', 'regents_mantle'];
     expect(fresh.filter((id) => !UNIQUES.some((u) => u.id === id))).toEqual([]);
-    expect(fresh.filter((id) => !act().some((z) => z.uniques.includes(id)))).toEqual([]);
-    for (const id of fresh) expect(uniqueDef(id).mods.some((m) => m.affixId === 'all_res')).toBe(true);
-    expect(fresh.every((id) => actBossZone(6)!.uniques.includes(id))).toBe(true);
+    const world = new Set(worldDropUniques(100).map((u) => u.id));
+    expect(fresh.filter((id) => !world.has(id))).toEqual([]);
+    for (const id of fresh) {
+      const unique = uniqueDef(id);
+      expect(unique.mods.some((m) => m.affixId === 'all_res')).toBe(true);
+      const level = uniqueDropLevel(unique);
+      expect(worldDropUniques(level).some((u) => u.id === id)).toBe(true);
+      expect(worldDropUniques(level - 1).some((u) => u.id === id)).toBe(false);
+    }
   });
 
   it('has its achievements', () => {
-    expect(ACHIEVEMENT_BY_ID.act_6.act).toBe(6);
-    expect(ACHIEVEMENT_BY_ID.conqueror_6.target).toBe(18);
+    expect(ACHIEVEMENT_BY_ID.act_6.act).toBe(CHAPTER);
+    expect(ACHIEVEMENT_BY_ID.conqueror_6.target).toBe(12);
     const s = fighter([]);
     s.bossesDefeated.push('shatteredthrone');
     expect(ACHIEVEMENT_BY_ID.act_6.progress(s)).toBe(1);
   });
 
-  it('has an outro that leaves something on the throne', () => {
-    expect(ACTS.find((a) => a.n === 6)!.outro).toMatch(/never wore a crown/);
+  it('has an outro that halts growth without undoing the infestation', () => {
+    const outro = ACTS.find((a) => a.n === CHAPTER)!.outro;
+    expect(outro).toMatch(/Creep stops advancing/);
+    expect(outro).toMatch(/roots do not withdraw/);
   });
 });
 
@@ -217,7 +227,7 @@ describe('Echoes', () => {
     expect(echoMechanics(zoneDef('blackharbor').boss, 0)).toEqual(zoneDef('blackharbor').boss.mechanics);
   });
 
-  it('the last king moves on as his life falls, and his chains return in the last phase', () => {
+  it('the First Exile moves on as their life falls, and the chains return in the last phase', () => {
     const s = fighter([]);
     const { boss, c } = bossFight(s, 'shatteredthrone', 1e6);
     boss.mechanics = boss.mechanics.filter((k) => k !== 'slam' && k !== 'nova' && k !== 'summon');
@@ -306,7 +316,7 @@ describe('Echoes', () => {
 
   it('warns where a pairing changes the answer', () => {
     expect(echoTips(zoneDef('burnedarchive').boss).join()).toMatch(/interrupt/);
-    expect(echoTips(zoneDef('dryaqueduct').boss).join()).toMatch(/Frostbite/);
+    expect(echoTips(zoneDef('kingsreach').boss).join()).toMatch(/Frostbite/);
     expect(echoTips(zoneDef('shatteredthrone').boss).length).toBe(2);
     expect(echoTips(zoneDef('kingsroad').boss)).toEqual([]);
   });
@@ -406,7 +416,7 @@ describe('the third trial', () => {
     expect(c.events.some((e) => e.t === 'trialPassed' && e.n === 3)).toBe(true);
   });
 
-  it('other Act 6 bosses give nothing', () => {
+  it('other Act 7 bosses give nothing', () => {
     const { s, c } = ascended();
     onBossFirstKill(s, c, 'kingsroad');
     expect(s.ascendancy.points).toBe(4);
@@ -416,8 +426,8 @@ describe('the third trial', () => {
 
 describe('the ending', () => {
   afterEach(() => {
-    ACTS[5].open = true;
-    ACTS[5].preview = false;
+    ACTS.find((a) => a.n === FINAL_ACT)!.open = true;
+    ACTS.find((a) => a.n === FINAL_ACT)!.preview = false;
     ACT_PREVIEW.enabled = true;
     MAPS_PREVIEW.enabled = true;
   });
@@ -427,13 +437,13 @@ describe('the ending', () => {
     return s;
   };
   const closed = () => {
-    ACTS[5].open = false;
-    ACTS[5].preview = true;
+    ACTS.find((a) => a.n === FINAL_ACT)!.open = false;
+    ACTS.find((a) => a.n === FINAL_ACT)!.preview = true;
     ACT_PREVIEW.enabled = false;
     MAPS_PREVIEW.enabled = false;
   };
 
-  it('beating the Last King opens the Map Device and the Exile for the account', () => {
+  it('beating the First Exile opens the Map Device and the Exile for the account', () => {
     const s = beaten();
     expect(s.account.exileUnlocked).toBe(false);
     MAPS_PREVIEW.enabled = false;
@@ -461,7 +471,7 @@ describe('the ending', () => {
     expect(campaignComplete(s)).toBe(false);
     expect(s.account.exileUnlocked).toBe(false);
     expect(s.account.campaignDone).toBeFalsy();
-    expect(stationLockReason(s, 'map_device')).toMatch(/Act 6/);
+    expect(stationLockReason(s, 'map_device')).toMatch(/Act 7/);
     expect(mapsOpen(s)).toBe(false);
   });
 
@@ -512,8 +522,8 @@ describe('the ending', () => {
   });
 });
 
-describe('Unbroken: all six acts without ever dying', () => {
-  /** Fell the Last King, having died this many times on the way. */
+describe('Unbroken: all seven acts without ever dying', () => {
+  /** Fell the First Exile, having died this many times on the way. */
   function kingFalls(deaths: number): GameState {
     const s = fighter([['heavy_strike', PLAIN]]);
     s.lifetime.deaths = deaths;
@@ -529,7 +539,7 @@ describe('Unbroken: all six acts without ever dying', () => {
     return s;
   }
 
-  it('hands over The Unbroken Temper when the king falls to a character that has never died', () => {
+  it('hands over The Unbroken Temper when the First Exile falls to a character that has never died', () => {
     const s = kingFalls(0);
     expect(s.achievements).toContain('act_6_deathless');
     expect(s.inventory.some((i) => i.uniqueId === 'unbroken_temper')).toBe(true);
@@ -543,7 +553,7 @@ describe('Unbroken: all six acts without ever dying', () => {
   });
 });
 
-describe('Unbroken for characters already past Act 6', () => {
+describe('Unbroken for characters already past the campaign finale', () => {
   it('a character that beat the Last King before 0.3.19 and has never died earns it on load', () => {
     const s = fighter([]);
     s.bossesDefeated.push('shatteredthrone');

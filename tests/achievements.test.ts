@@ -79,7 +79,7 @@ describe('earning rewards', () => {
     const s = atLevel(20);
     settlePassivePoints(s);
     const before = s.passivePoints;
-    s.bossesDefeated.push(...ZONES.filter((z) => z.act === 2).map((z) => z.id));
+    s.bossesDefeated.push(...ZONES.filter((z) => z.act === 2 || z.act === 3).map((z) => z.id));
     checkAchievements(s, ctx());
     settlePassivePoints(s);
     settlePassivePoints(s);

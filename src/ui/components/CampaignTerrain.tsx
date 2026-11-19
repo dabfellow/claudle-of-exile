@@ -18,10 +18,11 @@ interface Theme {
 const THEMES: Record<number, Theme> = {
   1: { land: '#3c4232', glyphs: [['pine', 0.45], ['reeds', 0.4], ['rock', 0.15]] },
   2: { land: '#4f3e25', glyphs: [['grass', 0.45], ['dune', 0.4], ['ember', 0.15]] },
-  3: { land: '#48423a', glyphs: [['house', 0.55], ['spire', 0.25], ['grass', 0.2]] },
-  4: { land: '#3a4049', glyphs: [['peak', 0.75], ['pine', 0.25]] },
-  5: { land: '#1d3340', glyphs: [['wave', 0.75], ['isle', 0.25]] },
-  6: { land: '#3c3041', glyphs: [['ruin', 0.55], ['crack', 0.3], ['spire', 0.15]] },
+  3: { land: '#48423a', glyphs: [['house', 0.55], ['grass', 0.45]] },
+  4: { land: '#3b4738', glyphs: [['ruin', 0.55], ['spire', 0.25], ['grass', 0.2]] },
+  5: { land: '#3a4049', glyphs: [['peak', 0.75], ['pine', 0.25]] },
+  6: { land: '#51482e', glyphs: [['house', 0.55], ['spire', 0.3], ['grass', 0.15]] },
+  7: { land: '#3c3041', glyphs: [['ruin', 0.55], ['crack', 0.3], ['spire', 0.15]] },
 };
 
 function inside([x, y]: Pt, poly: Pt[]): boolean {

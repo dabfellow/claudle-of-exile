@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ASCENDANCY_BY_ID, ASCENDANCY_MAX_POINTS, TRIALS } from '../src/data/ascendancies';
 import { droppableBases } from '../src/engine/items';
 import { UNIQUES } from '../src/data/bases';
+import { uniqueDropLevel, worldDropUniques } from '../src/data/uniqueDrops';
 import { ZONE_POS } from '../src/data/continent';
 import { BOSS_TABLES, DROP_TABLES } from '../src/data/drops';
 import { RULE_LABELS, type TacticRule } from '../src/data/gems';
@@ -36,13 +37,13 @@ import type { GameState, MonsterInstance } from '../src/engine/types';
 import { charXpForLevel } from '../src/engine/xp';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
-const act = () => zonesInAct(4);
+const act = () => zonesInAct(5);
 const ZONE = 'screefields';
 const AT_SIX: TacticRule = { when: 'frostbite', value: 6 };
 const ALWAYS: TacticRule = { when: 'always' };
 const MANUAL: TacticRule = { when: 'manual' };
 
-/** A fighter with every unlock, standing in an Act 4 area. Each gem brings its own rules. */
+/** A fighter with every unlock, standing in a mountain area. Each gem brings its own rules. */
 function fighter(gems: [string, TacticRule[]][], level = 48): GameState {
   const s = newGame(1, { name: 'T', classId: 'warrior' });
   s.tutorial.done = true;
@@ -105,16 +106,16 @@ afterEach(() => {
   ACT_PREVIEW.enabled = true;
 });
 
-describe('Act 4 layout', () => {
-  it('has twelve areas at monster levels 41 to 49, ending in its act boss', () => {
+describe('Act 5 mountain layout', () => {
+  it('has twelve areas at monster levels 38 to 47, ending in its act boss', () => {
     const zones = act();
     expect(zones).toHaveLength(12);
-    expect(zones.at(-1)).toBe(actBossZone(4));
+    expect(zones.at(-1)).toBe(actBossZone(5));
     expect(zones[0].id).toBe('hollowpass');
     expect(zones.at(-1)!.id).toBe('giantsthrone');
     const levels = zones.flatMap((z) => z.monsters.map((m) => m.level));
-    expect(Math.min(...levels)).toBe(41);
-    expect(Math.max(...levels)).toBe(49);
+    expect(Math.min(...levels)).toBe(38);
+    expect(Math.max(...levels)).toBe(47);
     for (let i = 1; i < zones.length; i++) {
       expect(zones[i].levelRange[0]).toBeGreaterThanOrEqual(zones[i - 1].levelRange[0]);
       expect(zones[i].boss.level).toBeGreaterThanOrEqual(zones[i - 1].boss.level);
@@ -126,7 +127,7 @@ describe('Act 4 layout', () => {
     }
   });
 
-  it('follows the High Altar, and every area sits on the map inside the northern range', () => {
+  it('follows the Overgrown Forum, and every area sits on the map inside the northern range', () => {
     expect(nextZones('highaltar')[0]?.id).toBe('hollowpass');
     const zones = act();
     for (const z of zones) {
@@ -148,7 +149,7 @@ describe('Act 4 layout', () => {
       const list = zonesInAct(acts).flatMap((z) => z.monsters);
       return list.reduce((a, m) => a + (m.lifeMult ?? 1), 0) / list.length;
     };
-    expect(lifeOf(4)).toBeGreaterThan(lifeOf(3) + 0.3);
+    expect(lifeOf(5)).toBeGreaterThan(lifeOf(4) + 0.3);
     expect(zones.flatMap((z) => z.monsters).some((m) => m.moveMs === 600)).toBe(true);
     expect(zones.reduce((a, z) => a + z.monsters.filter((m) => m.moveMs === 1800).length, 0)).toBeGreaterThanOrEqual(14);
   });
@@ -161,10 +162,10 @@ describe('Act 4 layout', () => {
     expect(act().at(-1)!.tier).toBe(11);
   });
 
-  it('bases reach the mid-50s by the act boss, on the way to 80 at the end of Act 6', () => {
+  it('bases reach the mid-50s by the act boss, on the way to 80 at the end of Act 7', () => {
     const z = zoneDef('giantsthrone');
     const ilvl = z.boss.level + (z.ilvlBonus ?? 0);
-    expect(ilvl).toBe(57);
+    expect(ilvl).toBe(54);
     expect(Math.max(...droppableBases(ilvl).map((b) => b.reqLevel))).toBeGreaterThan(50);
     expect(Math.max(...droppableBases(ilvl).map((b) => b.reqLevel))).toBeLessThan(60);
     const first = zoneDef('hollowpass');
@@ -189,16 +190,18 @@ describe('cold is the check', () => {
   });
 });
 
-describe('the Act 4 uniques', () => {
+describe('the Act 5 mountain uniques', () => {
   const NEW = ['giants_knuckle', 'rimewalkers', 'heart_of_winter', 'frostgrip', 'crown_of_the_hollow', 'wolfmother_pelt'];
 
-  it('are six, each with cold resistance, all dropping in the act', () => {
-    const drops = new Set(act().flatMap((z) => z.uniques));
+  it('are six, each with cold resistance, entering world drops at their base levels', () => {
+    const world = new Set(worldDropUniques(100).map((unique) => unique.id));
     for (const id of NEW) {
       const u = UNIQUES.find((x) => x.id === id);
       expect(u, id).toBeTruthy();
       expect(u!.mods.some((m) => m.affixId === 'cold_res'), id).toBe(true);
-      expect(drops.has(id), id).toBe(true);
+      expect(world.has(id), id).toBe(true);
+      expect(worldDropUniques(uniqueDropLevel(u!)).some((candidate) => candidate.id === id), id).toBe(true);
+      expect(worldDropUniques(uniqueDropLevel(u!) - 1).some((candidate) => candidate.id === id), id).toBe(false);
     }
     for (const z of act()) for (const id of z.uniques) expect(UNIQUES.some((u) => u.id === id), id).toBe(true);
   });
@@ -206,14 +209,14 @@ describe('the Act 4 uniques', () => {
 
 describe('staying closed', () => {
   it('is open to players', () => {
-    expect(ACTS[3].open).toBe(true);
+    expect(ACTS[4].open).toBe(true);
     ACT_PREVIEW.enabled = false;
-    expect(actOpen(4)).toBe(true);
+    expect(actOpen(5)).toBe(true);
     expect(nextZones('highaltar').map((z) => z.id)).toContain('hollowpass');
   });
 
-  it("the Frostbite rule's act stays out of the list until Act 4 opens", () => {
-    expect(RULE_LABELS.frostbite.act).toBe(4);
+  it("the Frostbite rule's act stays out of the list until Act 5 opens", () => {
+    expect(RULE_LABELS.frostbite.act).toBe(5);
   });
 });
 
@@ -460,7 +463,7 @@ describe('the second trial', () => {
     expect(TRIALS.find((t) => t.n === 2)).toMatchObject({ zoneId: 'giantsthrone', points: 2 });
   });
 
-  it('other Act 4 bosses give nothing', () => {
+  it('other Act 5 bosses give nothing', () => {
     const { s, c } = ascended();
     expect(s.ascendancy.points).toBe(2);
     onBossFirstKill(s, c, 'hollowpass');
@@ -468,7 +471,7 @@ describe('the second trial', () => {
     expect(s.ascendancy.trials).toBe(1);
   });
 
-  it('adds points on the Giants’ Throne without gating any nodes', () => {
+  it('adds points at the Containment Laboratory without gating any nodes', () => {
     const { s, c } = ascended();
     s.ascendancy.points = ASCENDANCY_MAX_POINTS;
     const a = ASCENDANCY_BY_ID.ravager;

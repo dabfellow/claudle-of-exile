@@ -1,0 +1,35 @@
+# Veyrath act-map generation prompts
+
+Generated with the built-in image-generation tool on 2026-11-17. Each call used `veyrath-detailed-story-map-v7-capital.png` as its style/geography reference, with an opaque background. Source PNGs are `veyrath-act-1.png` through `veyrath-act-7.png`; runtime WebP copies are in `src/assets/maps/`. Each prompt consists of the common text below followed by `Regional subject: ` and its corresponding regional text.
+
+## Common prompt
+
+Create a landscape 3:2 regional ACT MAP illustration for Path of Idle, a close-up part of the supplied Veyrath country atlas. Reference is ONLY visual style and coherent world geography. Fine hand-inked sepia lines, soft muted olive/ochre watercolor on ivory rag paper, pale blue-gray water, authentic uneven nib marks/pigment pooling, selective mountain hatching and varied natural detail. A useful top-down geographic map with modest traditional miniature settlement drawings, not perspective concept art. Full living-in detail, old roads/ruins and branching tracks, but no repetitive crop grids or stamped trees. Region fills canvas with comfortable quiet margins. Settlements small relative to terrain, clear masonry foundations, human variety. No text whatsoever, no labels, no title, no letters/numerals, no compass, no legends, no arrows, no route overlays, no act markers: the game adds readable labels and roads separately. No torn or heavily distressed paper. Light thin border optional. Rivers drain coherently and roads stay on land with tiny bridges/passes.
+
+## Act 1 — Wreck Coast
+
+Southwestern Veyrath coast. Sea on left/bottom, rising inland to upper/right. Poor salvage settlement Brinewick in lower-left sheltered bay; an inn courtyard among its huts; rock pools and muddy landing in lower center; sea caves southwest cliff, old wood inland center, reed marsh upper left inland, small derelict burial enclosure at center-right, big scattered beached ship ribs along coast upper-left, wind-beaten cliffs at top-right, abandoned coastal watch enclosure near top-right. Wrecks and dangerous reefs; thin road twists through woodland and wetlands. No grand cities. Clear physical variety rather than rows of repeated assets.
+
+## Act 2 — Broken Roads
+
+Lowland inland supply road northeast of Brinewick. A damaged southern road entering bottom-left, abandoned salt-worn paddocks and disused irrigation, overgrown scrub verge on right, modest fortified Wayfarer's Post outpost at upper-right junction. A bridged river crossing central, ruined cart shelter, several branching trails ending at a quarry track and tiny roadside hamlet. Main readable journey bottom-left to upper-right. Broad open countryside, broken hedges and reclaimed orchards. No lava/fire landscape, no major city, no large mountains.
+
+## Act 3 — In the Capital's Wake
+
+Greyford and its approaches, a river crossing market town inland from western Veyrath. Old burial fields bottom-left beyond town, low raised limestone terraces at left upper, a walled expedition supply yard with crates at upper-right, modest official dispatch/guest compound at lower-right. Greyford compact central market town around tiny stone bridge; irregular roofs and streets, nearby ruined farm boundaries and unsettling patches of vigorous growth. Main roads enter left and leave east toward larger ruined city, with back lanes and footpaths. Maintain countryside and town scale, not a huge metropolis. No volcanic desert.
+
+## Act 4 — The City That Stayed
+
+Harrowgate, a much larger historic Veyrath city overtaken by the Creep, still occupied. Top-down connected urban area with recognizable districts and lanes. Old western gate bottom-left, shelter quarter upper-left, overgrown courtyards lower-left, civic vault upper-center-left, bell foundry central, records hall upper-right, rootbound steps lower-center, occupied survivors' loft near lower-right, old processional road right-center, overgrown forum upper-right near east wall. Ruined walls, vine-choked canals, roofs engulfed by roots, but small patches of occupied houses, makeshift courtyard markets and repaired footbridges. City on inland western shore of eastern bay with modest blue water at right edge. No buildings fused into earth; clear roof/wall foundations and ruined outlines.
+
+## Act 5 — Mountain Research Facility
+
+Northern Veyrath research mountain region. High connected ridges framing a long inhabited service valley, Whitecrown snow and glacier upper-left, an icy lake upper-center, old stone quarry lower-middle, winding transport road through lower valleys, small workers' service yard center-right, specimen hall cluster upper-right, engineered switchback ascent toward walled Cairnwatch Institute at top-center-right. Institute compact group of laboratories/storage halls, pens and containment courtyards with traces of runaway plant growth; no futuristic sci-fi machines. Crumbling ancient masonry fragments reused in buildings. Mountain road branches but follows passes, no bridge across giant unsupported chasm. Varied rock relief, small buildings and researched specimens under glass at miniature scale.
+
+## Act 6 — The Capital's Promise
+
+Caer Veyr's surface capital region on northeastern Veyrath coast. Dense but believable compact city districts and grand protected harbor. View as top-down district map: working waterfront lower-left, warehouses and experimental storeyards left-center, maintained ration terraces upper-left, fine civic boulevards center, wealthy walled citadel/council district upper-right, formal small gardens, customs offices and guarded research courtyards lower-right. Prominent but small gilded roofs and intact pale stone urban blocks, visibly more prosperous than outlying lands. Tiny worker barracks near ration fields. Eastern sea right/bottom. Beneath respectable surfaces, subtle roots breaking a few service courtyards and blocked drains. Main road enters west, splits through multiple wards toward central authority and sealed underground entrance. No giant palaces filling whole canvas, no lava islands.
+
+## Act 7 — The Guardian Beneath
+
+The buried containment beneath Caer Veyr. Hand-drawn top-down UNDERGROUND architectural/cavern atlas in matching fine sepia ink and muted olive/ochre washes on ivory paper, not a surface continent. Entry stair lower-left; branching buried aqueduct/service passages and sealed archive left; ancient halls, collapsed vaults, damaged containment pylons and root-filled fissures through center; a central deeper descent, large final circular First Seal chamber at upper-right with a tiny entombed humanoid guardian amid immense tangled roots. Broken old engineered masonry still distinguishable from natural bedrock. Clear walkable linked passageways, some side chambers sealed/abandoned, no illegible maze spaghetti. Water only narrow old channels. No text, no drawn monsters in foreground, no gratuitous gore, no new kingdoms. Architectural drawing remains organic and antique, functional clear rooms/pillars, no fused terrain/buildings.

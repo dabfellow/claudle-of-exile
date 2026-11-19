@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { actMapPoint, actRegion, LABEL_LINE_HEIGHT, LABEL_SIDE, labelAnchor, labelLines, ZONE_POS } from '../src/data/continent';
+import { ZONE_POS } from '../src/data/continent';
+import { ACT_MAPS } from '../src/data/campaignMap';
 import { actBossZone, bossesNeeded, isSideArea, nextZones, roadsInto, ZONES, zonesInAct, type ZoneDef } from '../src/data/zones';
 import { openReachedZones } from '../src/engine/progress';
 import { newGame } from '../src/engine/state';
 import type { GameState } from '../src/engine/types';
 
-const BRANCHING = [3, 4, 5, 6];
+const BRANCHING = [4, 5, 6, 7];
 
 /** A character from before the roads forked, with the first `upTo` bosses beaten in campaign order. */
 function linearSave(upTo: number): GameState {
@@ -25,9 +26,9 @@ function walk(s: GameState, skip: (z: ZoneDef) => boolean = () => false): void {
   }
 }
 
-describe('the roads through Acts 3 to 6', () => {
-  it('leaves Acts 1 and 2 straight', () => {
-    for (const act of [1, 2]) for (const z of zonesInAct(act)) expect(nextZones(z.id)).toHaveLength(1);
+describe('the roads through the seven acts', () => {
+  it('leaves the first three acts straight', () => {
+    for (const act of [1, 2, 3]) for (const z of zonesInAct(act)) expect(nextZones(z.id)).toHaveLength(1);
   });
 
   it.each(BRANCHING)('Act %i forks, rejoins and has side areas', (act) => {
@@ -61,47 +62,18 @@ describe('the roads through Acts 3 to 6', () => {
 });
 
 describe('the act maps', () => {
-  const CHAR = 5.2; // of a 9px semi-bold label, a little over the widest it runs
-  interface Box { l: number; r: number; t: number; b: number }
-
-  const nodeRadius = (z: ZoneDef) => (z.actBoss ? 13 : isSideArea(z) ? 9 : 11);
-  const placed = (act: number) => {
-    const region = actRegion(act)!;
-    return zonesInAct(act).map((z) => {
-      const [x, y] = actMapPoint(region, ZONE_POS[z.id]);
-      const lines = labelLines(z.name);
-      const a = labelAnchor(LABEL_SIDE[z.id] ?? 'below', nodeRadius(z), lines.length);
-      const w = Math.max(...lines.map((l) => l.length)) * CHAR;
-      const l = x + a.x - (a.anchor === 'middle' ? w / 2 : a.anchor === 'end' ? w : 0);
-      const t = y + a.y - 8;
-      return { z, x, y, label: { l, r: l + w, t, b: t + lines.length * LABEL_LINE_HEIGHT } as Box };
-    });
-  };
-  const hit = (a: Box, b: Box) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
-  const crosses = (x1: number, y1: number, x2: number, y2: number, b: Box) => {
-    for (let i = 0; i <= 40; i++) {
-      const x = x1 + ((x2 - x1) * i) / 40;
-      const y = y1 + ((y2 - y1) * i) / 40;
-      if (x > b.l && x < b.r && y > b.t && y < b.b) return true;
+  it.each([1, 2, 3, 4, 5, 6, 7])('Act %i has separated selectable markers on its painted plate', (act) => {
+    // Only the selected/hovered marker's label is shown. Measure actual painted-map
+    // positions rather than the obsolete procedural terrain's label geometry.
+    const zones = zonesInAct(act);
+    const width = zones.length > 12 ? 620 : zones.length > 9 ? 520 : 480;
+    const height = width / ACT_MAPS[act].aspect;
+    for (const a of zones) for (const b of zones) {
+      if (a.id >= b.id) continue;
+      const [ax, ay] = ACT_MAPS[act].zones[a.id];
+      const [bx, by] = ACT_MAPS[act].zones[b.id];
+      expect(Math.hypot((ax - bx) * width / 100, (ay - by) * height / 100), `${a.id} overlaps ${b.id}`).toBeGreaterThan(30);
     }
-    return false;
-  };
-
-  it.each(BRANCHING)('Act %i labels miss each other, every point and every road', (act) => {
-    const all = placed(act);
-    const problems: string[] = [];
-    for (const a of all) {
-      for (const b of all) {
-        if (a.z.id < b.z.id && hit(a.label, b.label)) problems.push(`${a.z.id} on ${b.z.id}`);
-        const r = nodeRadius(b.z);
-        if (a !== b && hit(a.label, { l: b.x - r, r: b.x + r, t: b.y - r, b: b.y + r })) problems.push(`${a.z.id} on point ${b.z.id}`);
-        for (const from of roadsInto(b.z)) {
-          const start = all.find((c) => c.z.id === from);
-          if (start && crosses(start.x, start.y, b.x, b.y, a.label)) problems.push(`${from}-${b.z.id} through ${a.z.id}`);
-        }
-      }
-    }
-    expect(problems).toEqual([]);
   });
 
   it('roads do not cross each other', () => {

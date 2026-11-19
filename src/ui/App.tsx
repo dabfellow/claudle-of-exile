@@ -34,7 +34,7 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
     case 'combat':
       return <CombatPage go={go} />;
     case 'campaign':
-      return <CampaignPage go={go} />;
+      return <CampaignPage key={game.state.character.id} go={go} />;
     case 'maps':
       return <MapDevicePage go={go} />;
     case 'upcoming':

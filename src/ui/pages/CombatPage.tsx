@@ -1058,10 +1058,10 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         <div className="card">
           <EmptyState
             icon={<GameIcon name="map" size={36} color="var(--accent)" />}
-            title="Pick an area in the Campaign"
+            title="Pick an area on the World Map"
             action={
               <button className="btn primary" data-tut="open-campaign" onClick={() => go('campaign')}>
-                Open Campaign
+                Open World Map
               </button>
             }
           >

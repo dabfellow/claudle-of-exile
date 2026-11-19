@@ -1171,7 +1171,7 @@ export function MapDevicePage({ go }: { go: (p: Page) => void }) {
           </EmptyState>
           <div className="row" style={{ justifyContent: 'center' }}>
             <button className="btn" onClick={() => go('campaign')}>
-              Back to the Campaign
+              Back to the World Map
             </button>
           </div>
         </div>

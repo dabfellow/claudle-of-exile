@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
 import { BASES, uniqueDef } from '../src/data/bases';
+import { uniqueDropLevel, worldDropUniques } from '../src/data/uniqueDrops';
 import { ZONE_POS } from '../src/data/continent';
 import { BOSS_TABLES, bossTable, DROP_TABLES, dropTable } from '../src/data/drops';
 import type { TacticRule } from '../src/data/gems';
@@ -22,12 +23,12 @@ import type { GameState, MonsterInstance } from '../src/engine/types';
 import { charXpForLevel } from '../src/engine/xp';
 
 const ctx = (seed = 1) => makeCtx(seeded(seed));
-const act = () => zonesInAct(3);
+const act = () => zonesInAct(4);
 const AIM: TacticRule = { when: 'always', aim: 'martyrs' };
 const PLAIN: TacticRule = { when: 'always' };
 const ZONE = 'almsquarter';
 
-/** A level 45 fighter with every unlock, standing in an Act 3 area with its boss ready. */
+/** A level 45 fighter with every unlock, standing in a Harrowgate area with its boss ready. */
 function fighter(gems: string[], rules: TacticRule[] = [PLAIN]): GameState {
   const s = newGame(1, { name: 'T', classId: 'warrior' });
   s.tutorial.done = true;
@@ -89,27 +90,27 @@ function bossFight(s: GameState, zone = ZONE, minutes = 30) {
   });
 }
 
-/** Back to how Act 3 was before release, for the tests about opening it. */
-function closeAct3() {
-  ACTS[2].open = false;
-  ACTS[2].preview = true;
+/** Simulate closing Harrowgate's chapter, for the tests about release gates. */
+function closeHarrowgate() {
+  ACTS[3].open = false;
+  ACTS[3].preview = true;
 }
 
 afterEach(() => {
-  ACTS[2].open = true;
-  ACTS[2].preview = false;
+  ACTS[3].open = true;
+  ACTS[3].preview = false;
   ACT_PREVIEW.enabled = true;
 });
 
-describe('Act 3 layout', () => {
-  it('has ten areas at monster levels 33 to 41, ending in its act boss', () => {
+describe('Act 4 Harrowgate layout', () => {
+  it('has ten areas at monster levels 28 to 38, ending in its act boss', () => {
     const zones = act();
     expect(zones).toHaveLength(10);
-    expect(zones.at(-1)).toBe(actBossZone(3));
+    expect(zones.at(-1)).toBe(actBossZone(4));
     expect(zones[0].id).toBe('pilgrimgate');
     const levels = zones.flatMap((z) => z.monsters.map((m) => m.level));
-    expect(Math.min(...levels)).toBe(33);
-    expect(Math.max(...levels)).toBe(41);
+    expect(Math.min(...levels)).toBe(28);
+    expect(Math.max(...levels)).toBe(38);
     for (let i = 1; i < zones.length; i++) {
       expect(zones[i].levelRange[0]).toBeGreaterThanOrEqual(zones[i - 1].levelRange[0]);
       expect(zones[i].boss.level).toBeGreaterThanOrEqual(zones[i - 1].boss.level);
@@ -122,17 +123,17 @@ describe('Act 3 layout', () => {
     expect(zones.at(-1)!.boss.level).toBeGreaterThan(zoneDef('burningthrone').boss.level);
   });
 
-  it('follows the Burning Throne and every area sits on the map', () => {
+  it('follows the Delegation Chambers and every area sits on the map', () => {
     expect(nextZones('burningthrone')[0]?.id).toBe('pilgrimgate');
     const zones = act();
     expect(nextZones(zones.at(-1)!.id)[0]?.id).toBe('hollowpass');
     for (const z of zones) expect(ZONE_POS[z.id]).toBeTruthy();
   });
 
-  it('the Pilgrim Gate has a plain boss, and martyrs hold most of the rest', () => {
+  it('Harrowgate Gates has a plain boss, and martyrs hold most of the rest', () => {
     expect(zoneDef('pilgrimgate').boss.mechanics).not.toContain('martyrs');
     expect(act().filter((z) => z.boss.mechanics!.includes('martyrs')).length).toBeGreaterThanOrEqual(8);
-    expect(actBossZone(3)!.boss.mechanics).toHaveLength(7);
+    expect(actBossZone(4)!.boss.mechanics).toHaveLength(7);
   });
 
   it('lightning leads, on trash and in the bosses', () => {
@@ -146,10 +147,16 @@ describe('Act 3 layout', () => {
     expect(GROUND_IN_PLAY.has('shocked')).toBe(true);
   });
 
-  it('every unique it drops exists, and the six new ones have a home', () => {
+  it('every declared unique exists, and its six themed uniques enter world drops at their base levels', () => {
     const drops = new Set(act().flatMap((z) => z.uniques));
     for (const id of drops) expect(uniqueDef(id)).toBeTruthy();
-    for (const id of ['martyrs_shroud', 'pilgrims_road', 'saints_shard', 'confession_hood', 'halo_of_wrath', 'chainbreaker']) expect(drops).toContain(id);
+    const world = new Set(worldDropUniques(100).map((unique) => unique.id));
+    for (const id of ['martyrs_shroud', 'pilgrims_road', 'saints_shard', 'confession_hood', 'halo_of_wrath', 'chainbreaker']) {
+      const unique = uniqueDef(id);
+      expect(world.has(id), id).toBe(true);
+      expect(worldDropUniques(uniqueDropLevel(unique)).some((candidate) => candidate.id === id), id).toBe(true);
+      expect(worldDropUniques(uniqueDropLevel(unique) - 1).some((candidate) => candidate.id === id), id).toBe(false);
+    }
   });
 
   it('has drop tables for its deeper tiers', () => {
@@ -161,15 +168,15 @@ describe('Act 3 layout', () => {
     expect(bossTable(9).guaranteed.map((g) => g.id)).toContain('divine');
   });
 
-  it('reaches bases of about level 45 by the act boss, and none past it', () => {
-    const z = actBossZone(3)!;
+  it('reaches item level 41 by the act boss, and no bases past it', () => {
+    const z = actBossZone(4)!;
     const top = z.boss.level + z.ilvlBonus!;
-    expect(top).toBe(45);
+    expect(top).toBe(41);
     const levels = droppableBases(top).map((b) => b.reqLevel);
-    expect(Math.max(...levels)).toBeGreaterThanOrEqual(44);
-    expect(Math.max(...levels)).toBeLessThanOrEqual(45);
+    expect(Math.max(...levels)).toBeGreaterThanOrEqual(40);
+    expect(Math.max(...levels)).toBeLessThanOrEqual(41);
     expect(BASES.some((b) => b.reqLevel > 45)).toBe(true);
-    // Act 2 is left alone
+    // The preceding Greyford finale keeps its original item-level bonus.
     expect(zoneDef('burningthrone').ilvlBonus).toBeUndefined();
   });
 
@@ -180,30 +187,30 @@ describe('Act 3 layout', () => {
     rollLoot(s, ctx(), mon, z, deriveStats(s));
     const items = [...s.ground, ...s.inventory];
     expect(items.length).toBeGreaterThan(0);
-    for (const i of items) expect(i.ilvl).toBe(45);
+    for (const i of items) expect(i.ilvl).toBe(41);
   });
 });
 
-describe('opening Act 3', () => {
-  const beatAct2 = () => {
+describe('opening Act 4 Harrowgate', () => {
+  const beatTownChapters = () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
-    s.unlockedZones = zonesInAct(2).map((z) => z.id);
-    s.bossesDefeated = zonesInAct(2).map((z) => z.id);
+    s.unlockedZones = [...zonesInAct(2), ...zonesInAct(3)].map((z) => z.id);
+    s.bossesDefeated = [...zonesInAct(2), ...zonesInAct(3)].map((z) => z.id);
     return s;
   };
 
   it('before release, stays closed to players, and plays in dev builds, tests and the sim', () => {
-    closeAct3();
-    expect(actOpen(3)).toBe(true);
+    closeHarrowgate();
+    expect(actOpen(4)).toBe(true);
     ACT_PREVIEW.enabled = false;
-    expect(actOpen(3)).toBe(false);
+    expect(actOpen(4)).toBe(false);
     expect(nextZones('burningthrone')).toEqual([]);
   });
 
   it("won't reach a player's save, or let a preview save travel there", () => {
-    closeAct3();
+    closeHarrowgate();
     ACT_PREVIEW.enabled = false;
-    const s = beatAct2();
+    const s = beatTownChapters();
     openReachedZones(s);
     expect(s.unlockedZones).not.toContain('pilgrimgate');
     s.unlockedZones.push('pilgrimgate');
@@ -211,11 +218,11 @@ describe('opening Act 3', () => {
   });
 
   it('opens the gate on load once it is out', () => {
-    expect(deserialize(serialize(beatAct2())).unlockedZones).toContain('pilgrimgate');
+    expect(deserialize(serialize(beatTownChapters())).unlockedZones).toContain('pilgrimgate');
   });
 
-  it('counts its achievements only for Act 3', () => {
-    const s = beatAct2();
+  it('keeps the legacy achievement IDs attached to Harrowgate', () => {
+    const s = beatTownChapters();
     expect(ACHIEVEMENT_BY_ID.act_3.progress(s)).toBe(0);
     s.bossesDefeated.push(...act().map((z) => z.id));
     expect(ACHIEVEMENT_BY_ID.act_3.progress(s)).toBe(1);
@@ -422,7 +429,7 @@ describe('a martyr boss, by rule alone', { timeout: 60_000 }, () => {
     expect(bossFight(fighter(['heavy_strike'])).won).toBe(true);
   });
 
-  it('the Pilgrim Gate needs no aim at all', () => {
+  it('Harrowgate Gates needs no aim at all', () => {
     expect(bossFight(fighter(['heavy_strike']), 'pilgrimgate').won).toBe(true);
   });
 

@@ -15,7 +15,7 @@ export interface ActRegion {
   stretch?: number;
 }
 
-export const ACT_REGIONS: ActRegion[] = [
+const LEGACY_ACT_REGIONS: ActRegion[] = [
   {
     act: 1, // the Drowned Coast: the west shore
     points: [[120, 140], [260, 120], [300, 250], [290, 400], [330, 560], [220, 580], [130, 520], [70, 420], [100, 330], [80, 230]],
@@ -51,7 +51,15 @@ export const ACT_REGIONS: ActRegion[] = [
   },
 ];
 
-/** Each area's spot on the continent. */
+/** Fallback terrain frames retain stable area coordinates after the seven-chapter regrouping. */
+export const ACT_REGIONS: ActRegion[] = [
+  LEGACY_ACT_REGIONS[0],
+  { act: 2, points: [[320, 260], [560, 260], [560, 400], [320, 400]], label: [440, 325] },
+  { act: 3, points: [[350, 360], [560, 360], [560, 520], [350, 520]], label: [455, 445] },
+  ...LEGACY_ACT_REGIONS.slice(2).map((region) => ({ ...region, act: region.act + 1 })),
+];
+
+/** Each area's spot on the fallback continent (painted act plates have their own precise coordinates). */
 export const ZONE_POS: Record<string, [number, number]> = {
   // Act 1 climbs the coast from the mud flats to the Drowned Sanctum by the steppe road
   mudflats: [190, 530],
@@ -97,8 +105,8 @@ export const ZONE_POS: Record<string, [number, number]> = {
   giantsthrone: [505, 62],
   // Act 5 sails island to island round the sea, then spirals in to the eye of the maelstrom
   blackharbor: [600, 240],
-  wreckline: [665, 225],
-  cinderkey: [655, 275],
+  wreckline: [440, 455],
+  cinderkey: [460, 475],
   squallbanks: [730, 260],
   lampgulf: [785, 240],
   drownedfleet: [810, 295],
@@ -113,12 +121,12 @@ export const ZONE_POS: Record<string, [number, number]> = {
   // Act 6 comes in by the gate you were driven out of, along the south of the empire, back through the capital, then up to the throne
   exilesgate: [655, 172],
   kingsroad: [705, 190],
-  tithefields: [755, 175],
-  fortobedience: [760, 210],
-  bannerfield: [815, 195],
-  assizes: [872, 175],
-  lowercity: [820, 140],
-  dryaqueduct: [765, 112],
+  tithefields: [435, 290],
+  fortobedience: [460, 315],
+  bannerfield: [495, 335],
+  assizes: [520, 360],
+  lowercity: [390, 390],
+  dryaqueduct: [410, 415],
   kingsmint: [765, 145],
   hanginggardens: [705, 130],
   burnedarchive: [650, 130],

@@ -287,7 +287,8 @@ export const INSTILL_FIRST_ACT = 2;
 /** The orbs an area's monsters and bosses roll from. */
 export function areaCurrency(zone: { tier: number; act: number }): Record<string, number> {
   const cur = dropTable(zone.tier).currency;
-  return zone.act >= INSTILL_FIRST_ACT ? cur : Object.fromEntries(Object.entries(cur).filter(([id]) => id !== 'instill'));
+  // The shorter opening chapter reaches Act 2 before the old tier-5 table. Keep flask automation available there.
+  return zone.act >= INSTILL_FIRST_ACT ? { ...cur, instill: cur.instill ?? 1.2 } : Object.fromEntries(Object.entries(cur).filter(([id]) => id !== 'instill'));
 }
 
 /** Bosses drop station upgrade & crafting materials so boss farming can sustain hideout upgrades without mandatory life-skilling. */

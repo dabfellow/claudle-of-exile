@@ -54,14 +54,15 @@ function run(s: GameState, ctx: ReturnType<typeof makeCtx>, ms: number, until?: 
 const used = (ctx: ReturnType<typeof makeCtx>) => ctx.events.some((e) => e.t === 'skill');
 
 describe('gems tied to acts', () => {
-  it('splits the pool: Act 1 keeps skills up to level 12, the level 16 skills join Act 2, level 32 and up waits for Act 3, level 40 and up for Act 4, level 50 and up for Act 5, level 58 and up for Act 6', () => {
+  it('spreads campaign skills over seven level bands while keeping Maps separate', () => {
     for (const g of ACTIVE_GEMS) {
       if (gemAct(g.id) === 8) expect(gemReqLevel(g.id), g.id).toBeGreaterThanOrEqual(66);
-      else if (gemReqLevel(g.id) <= 12) expect(gemAct(g.id), g.id).toBe(1);
-      else if (gemReqLevel(g.id) < 32) expect(gemAct(g.id), g.id).toBe(gemReqLevel(g.id) <= 29 ? 2 : 3);
-      else if (gemReqLevel(g.id) >= 58) expect(gemAct(g.id), g.id).toBe(7);
-      else if (gemReqLevel(g.id) >= 50) expect(gemAct(g.id), g.id).toBe(6);
-      else if (gemReqLevel(g.id) >= 40) expect(gemAct(g.id), g.id).toBe(5);
+      else if (gemReqLevel(g.id) <= 10) expect(gemAct(g.id), g.id).toBe(1);
+      else if (gemReqLevel(g.id) <= 19) expect(gemAct(g.id), g.id).toBe(2);
+      else if (gemReqLevel(g.id) <= 28) expect(gemAct(g.id), g.id).toBe(3);
+      else if (gemReqLevel(g.id) > 57) expect(gemAct(g.id), g.id).toBe(7);
+      else if (gemReqLevel(g.id) > 47) expect(gemAct(g.id), g.id).toBe(6);
+      else if (gemReqLevel(g.id) > 38) expect(gemAct(g.id), g.id).toBe(5);
       else expect(gemAct(g.id), g.id).toBe(4);
     }
   });

@@ -1,4 +1,5 @@
 import { RINGS, type AreaShape } from '../engine/battlefield';
+import { CAMPAIGN_CHAPTERS } from './campaignLayout';
 import type { WeaponFamily } from './bases';
 import type { DamageType, GroundKind, StatKey } from '../engine/types';
 
@@ -1605,9 +1606,8 @@ export function gemAct(id: string): number {
   const base = sig ?? id;
   const original = GEM_ACTS[base] ?? 1;
   if (original === 7) return MAPS_GEM_ACT;
-  // The old inland chapter is now Broken Roads followed by Greyford. Later batches follow their story locations.
-  if (original === 2) return gemReqLevel(base) <= 29 ? 2 : 3;
-  return original >= 3 ? original + 1 : original;
+  // Keep skill power/level requirements intact and put each campaign gem in its new level band.
+  return CAMPAIGN_CHAPTERS.find((chapter) => gemReqLevel(base) <= chapter.levels[1])?.act ?? 7;
 }
 
 /**

@@ -59,7 +59,7 @@ describe('Phase 13 charts and encounters', () => {
     const s = make(); addUniqueMaps(s, 'umap_artisans_reliquary', 2);
     const preview = MAPS_PREVIEW.enabled; MAPS_PREVIEW.enabled = false;
     try {
-      expect(startUniqueMap(s, ctx(), 'umap_artisans_reliquary')).toMatch(/Act 6/);
+      expect(startUniqueMap(s, ctx(), 'umap_artisans_reliquary')).toMatch(/Act 7/);
       expect(uniqueMapHeld(s, 'umap_artisans_reliquary')).toBe(2);
       s.account.campaignDone = true;
       expect(startUniqueMap(s, ctx(), 'umap_artisans_reliquary')).toBeNull();

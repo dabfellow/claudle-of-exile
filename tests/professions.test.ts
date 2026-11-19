@@ -51,7 +51,7 @@ describe('independent profession foundations', () => {
       expect(actionBlocker(s, a) ?? '').not.toMatch(/Reach|Act/);
     }
     expect(ACTIONS.every((a) => !a.area && !a.gate)).toBe(true);
-    expect(stationLockReason(s, 'map_device')).toMatch(/Act 6/);
+    expect(stationLockReason(s, 'map_device')).toMatch(/Act 7/);
     expect(stationLockReason(s, 'rune_board')).toBeNull();
   });
 

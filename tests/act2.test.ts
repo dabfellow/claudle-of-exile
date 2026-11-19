@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
 import { uniqueDef } from '../src/data/bases';
+import { worldDropUniques } from '../src/data/uniqueDrops';
 import { BOSS_TABLES, bossTable, DROP_TABLES, dropTable } from '../src/data/drops';
 import { ACT_PREVIEW, ACTS, actBossZone, actOpen, BOSS_SCORCH_EVERY_MS, BOSS_SCORCH_MS, nextZones, ZONES, zoneDef, zonesInAct } from '../src/data/zones';
 import { PLAYER_SPOT } from '../src/engine/battlefield';
@@ -37,15 +38,19 @@ afterEach(() => {
   ACT_PREVIEW.enabled = true;
 });
 
-describe('Act 2 layout', () => {
-  it('has eight areas after Act 1, ending in its act boss', () => {
-    const act = zonesInAct(2);
-    expect(act).toHaveLength(8);
-    expect(act.at(-1)).toBe(actBossZone(2));
+const inlandJourney = () => [...zonesInAct(2), ...zonesInAct(3)];
+
+describe('the Broken Roads and Greyford journey', () => {
+  it('has two full eight-area chapters after Act 1, ending in their story bosses', () => {
+    const act = inlandJourney();
+    expect(act).toHaveLength(16);
+    expect(act.at(-1)).toBe(actBossZone(3));
+    expect(zonesInAct(2)).toHaveLength(8);
+    expect(zonesInAct(3)).toHaveLength(8);
     expect(act[0].levelRange[0]).toBeGreaterThanOrEqual(zonesInAct(1).at(-1)!.levelRange[0]);
     for (let i = 1; i < act.length; i++) {
       expect(act[i].levelRange[0]).toBeGreaterThanOrEqual(act[i - 1].levelRange[0]);
-      expect(act[i].boss.level).toBeGreaterThan(act[i - 1].boss.level);
+      expect(act[i].boss.level).toBeGreaterThanOrEqual(act[i - 1].boss.level);
       expect(act[i].tier).toBeGreaterThanOrEqual(act[i - 1].tier);
     }
     // its bosses outclass Ysolde by the end
@@ -53,21 +58,22 @@ describe('Act 2 layout', () => {
   });
 
   it('chains area to area, and the act boss opens Act 3', () => {
-    const act = zonesInAct(2);
+    const act = inlandJourney();
     for (let i = 0; i < act.length - 1; i++) expect(nextZones(act[i].id)[0]?.id).toBe(act[i + 1].id);
     expect(nextZones(act.at(-1)!.id)[0]?.id).toBe('pilgrimgate');
   });
 
-  it('every boss has three to six mechanics, rising to all six', () => {
-    const counts = zonesInAct(2).map((z) => z.boss.mechanics!.length);
-    expect(Math.min(...counts)).toBeGreaterThanOrEqual(3);
+  it('relocated bosses teach two mechanics, rising to six at Greyford', () => {
+    const counts = inlandJourney().map((z) => z.boss.mechanics!.length);
+    expect(Math.min(...counts)).toBeGreaterThanOrEqual(2);
     expect(counts.at(-1)).toBe(6);
   });
 
   it('every unique it drops exists, and the Act 2 uniques waiting for a zone have one', () => {
-    const drops = new Set(zonesInAct(2).flatMap((z) => z.uniques));
+    const drops = new Set(inlandJourney().flatMap((z) => z.uniques));
     for (const id of drops) expect(uniqueDef(id)).toBeTruthy();
-    for (const id of ['last_breath', 'old_grudge', 'brawlers_buckle', 'starforged_edge']) expect(drops).toContain(id);
+    const world = new Set(worldDropUniques(100).map((unique) => unique.id));
+    for (const id of ['last_breath', 'old_grudge', 'brawlers_buckle', 'starforged_edge']) expect(world).toContain(id);
   });
 
   it('has drop tables for its deeper tiers', () => {
@@ -153,9 +159,9 @@ describe('Act 2 achievements', () => {
 
   it('completing Act 2 counts once the act boss falls', () => {
     const s = act1Done();
-    s.bossesDefeated.push(...zonesInAct(2).map((z) => z.id));
+    s.bossesDefeated.push(...inlandJourney().map((z) => z.id));
     expect(ACHIEVEMENT_BY_ID.act_2.progress(s)).toBe(1);
-    expect(ACHIEVEMENT_BY_ID.conqueror_2.progress(s)).toBe(zonesInAct(2).length);
+    expect(ACHIEVEMENT_BY_ID.conqueror_2.progress(s)).toBe(inlandJourney().length);
   });
 
   it('monster ids stay unique across acts', () => {

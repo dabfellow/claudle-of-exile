@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
 import { gemAct, MAPS_GEM_ACT } from '../src/data/gems';
-import { ZONES } from '../src/data/zones';
+import { ACTS, roadsInto, ZONES, zonesInAct } from '../src/data/zones';
+import { CAMPAIGN_QUESTS } from '../src/data/campaignQuests';
+import { ACT_MAPS } from '../src/data/campaignMap';
 import { campaignComplete, FINAL_ACT } from '../src/engine/hideout';
 import { CAMPAIGN_PASSIVE_MILESTONES, settlePassivePoints } from '../src/engine/passives';
 import { gemInShop } from '../src/engine/progress';
@@ -9,6 +11,44 @@ import { deserialize, serialize } from '../src/engine/save';
 import { newGame } from '../src/engine/state';
 
 describe('seven-act progression compatibility', () => {
+  it('makes seven substantial chapters with complete map and journal coverage', () => {
+    expect(ZONES).toHaveLength(70);
+    expect(new Set(ZONES.map((z) => z.id)).size).toBe(70);
+    expect(ACTS.map((a) => zonesInAct(a.n).length)).toEqual([8, 8, 8, 10, 12, 12, 12]);
+    for (const a of ACTS) {
+      const zones = zonesInAct(a.n);
+      expect(zones.filter((z) => z.actBoss)).toHaveLength(1);
+      expect(zones.at(-1)!.actBoss).toBe(true);
+      expect(Object.keys(ACT_MAPS[a.n].zones).sort()).toEqual(zones.map((z) => z.id).sort());
+      for (const z of zones) {
+        expect(z.monsters.every((m) => m.level >= z.levelRange[0] && m.level <= z.levelRange[1]), z.id).toBe(true);
+        for (const from of roadsInto(z)) expect(ZONES.find((entry) => entry.id === from)!.act).toBeLessThanOrEqual(a.n);
+      }
+    }
+    for (const chapter of CAMPAIGN_QUESTS) for (const step of chapter.steps) {
+      expect(ZONES.find((z) => z.id === step.zoneId)!.act, step.id).toBe(chapter.act);
+    }
+  });
+
+  it('gives relocated roadside areas early gear levels and removes their underground Echoes', () => {
+    for (const id of ['tithefields', 'fortobedience', 'bannerfield', 'assizes']) {
+      const z = ZONES.find((entry) => entry.id === id)!;
+      expect(z.act).toBe(2);
+      expect(z.boss.level + (z.ilvlBonus ?? 0)).toBeLessThanOrEqual(19);
+      expect(z.boss.echoes).toBeUndefined();
+      expect(z.boss.mechanics).not.toContain('channel');
+    }
+  });
+
+  it('retains cleared and open relocated areas when an older late-campaign save loads', () => {
+    const s = newGame(12);
+    s.unlockedZones = ['mudflats', 'exilesgate', 'tithefields', 'fortobedience', 'bannerfield', 'assizes', 'lowercity', 'dryaqueduct'];
+    s.bossesDefeated = ['tithefields', 'fortobedience', 'lowercity'];
+    const loaded = deserialize(serialize(s));
+    expect(loaded.unlockedZones).toEqual(expect.arrayContaining(s.unlockedZones));
+    expect(loaded.bossesDefeated).toEqual(s.bossesDefeated);
+  });
+
   it('keeps campaign Act 7 gems separate from the Maps shelf until the finale', () => {
     const s = newGame(1);
     s.unlockedZones = ZONES.map((z) => z.id);

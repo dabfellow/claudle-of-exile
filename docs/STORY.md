@@ -1,6 +1,6 @@
 # Veyrath: main story working outline
 
-Last updated 2026-11-17. Background lore and narrative planning only; no campaign, map, quest or balance changes are implemented by this document. The owner's main-story direction below supersedes the earlier unresolved Topic 60 options in MILESTONES. Connective details are a proposed treatment, not additional settled design decisions.
+Last updated 2026-11-19. The owner subsequently authorized seven-act game integration and progression redesign. The seven chapter groups, renamed zones, world/act paintings and saved narrative journal are implemented; see `Veyrath-zone-conversion.md` for the stable-area mapping. This document retains the narrative treatment and unresolved wider-world decisions. Connective details not represented by implemented quests remain proposals.
 
 ## Premise
 
@@ -10,9 +10,17 @@ Across the land, the Creep offers abundance before destroying the systems people
 
 The player's first concern is finding a place in that world. Helping the people who take them in gradually exposes the connection between diverted supplies, Kroten's research and the buried founder whose sacrifice has become a nightmare.
 
-## Proposed campaign structure: seven acts and mapping
+## The sea that turns people home
 
-Requested 2026-11-17. This is a narrative breakdown, independent of the currently implemented six acts. Act names and connective events are working proposals. No levels, mandatory bosses, exact lengths or replacements for existing content are assigned.
+Owner direction, 2026-11-19: Veyrath is surrounded by a harsh ocean and an uncanny offshore limit that prevents ordinary escape. Beyond some distance from the coast, travellers begin to feel compelled to return. The intended horror is psychological: a crew can come back believing its changed intentions were always its own. Memory loss or altered recollection may erase the wish to leave and the experience of turning back. The precise effect, distance and reliability of testimony remain unresolved; these are not yet fixed rules for every voyage.
+
+Ships have been sent out and failed to return. Other attempted departures may end in an unremembered homecoming. Those outcomes should remain distinct, leaving uncertainty about missing crews instead of declaring every ship destroyed. Exceptional vessels can make crossings and return. This fits the existing Kroten shipboard-device secret: their supposed superior seamanship conceals a means of passing the boundary. Exactly what the devices protect, and who understands that protection, remains to be designed.
+
+Visual direction: beautiful inhabited land enclosed by cold, rough water, with sparse, unnatural returning currents or looping ship wakes hinting at an unseen limit. The world atlas suggests the boundary without revealing its mechanism or drawing a literal wall. The force's relationship to the First Exile's possessive idea of home remains a story connection to develop. Defeating the First Exile does not yet establish that the sea opens. This is recorded lore direction and map artwork, not a newly implemented sailing or memory-loss mechanic.
+
+## Campaign structure: seven acts and mapping
+
+Requested 2026-11-17 and integrated as seven acts. On 2026-11-18 the owner chose to redistribute the existing 70 zones into fuller chapters, with area levels 1–10, 10–19, 19–28, 28–38, 38–47, 47–57 and 57–65, followed by the level-66 First Exile. The stable zone mapping and implemented routes are in `Veyrath-zone-conversion.md`. Narrative details beyond the saved journal interactions below remain working proposals.
 
 ### Act 1 — The Wreck Coast
 
@@ -42,7 +50,7 @@ Requested 2026-11-17. This is a narrative breakdown, independent of the currentl
 - Main movement: survivors and residents refusing to leave sustain several local stories. Their homes, accounts and surviving records show what Veyrath once built and how the capital became involved in the city's fate. The Creep's effect on an established society becomes tangible.
 - Story turn: evidence points toward the mountain research facility as the place to find answers. The exact delivery destination and route from it into the mountain investigation remain open.
 
-### Act 5 — The Mountain Research Facility
+### Act 5 — Cairnwatch Institute
 
 - Setting: mountain approaches and the research complex.
 - Player purpose: establish what is being studied and why district supplies support it.

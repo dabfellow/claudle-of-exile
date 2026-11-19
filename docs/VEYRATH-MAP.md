@@ -1,6 +1,20 @@
 # Veyrath detailed story-map proposal
 
-Last updated 2026-11-17. Working names and geographic placements created for the owner's request for a detailed Veyrath map. No game locations, travel rules, levels or quests are changed. Reference coastline: `output/imagegen/veyrath-standalone-atlas-v1.png`.
+Ocean revision (2026-11-19): `src/assets/maps/veyrath-world-bound-sea.webp` is the current runtime atlas. The built-in image edit replaces pale cloud-like seas with deep slate water, engraved rough waves and looping offshore currents. Sparse ships with returning wakes suggest the psychological limit without exposing its mechanism. Existing map geometry, land-label positions, act navigation and unlock fog are retained. Source and exact prompt: `output/imagegen/veyrath-world-bound-sea.png` and `veyrath-world-bound-sea-prompt.md`; prior paintings remain available. Updated native fogged/explored previews inspected; no live browser acceptance claimed.
+
+Navigation revision (2026-11-19): larger readable parchment act banners sit within their regions, and the atlas fills the desktop center column. Shared territory paths drive subtle warm hover/focus highlighting and textured fog over unreached acts. Existing per-character zone unlocks/boss defeats reveal acts automatically and persist through ordinary saves; legacy finale progress is recognized. Native fogged/explored previews are under `output/playtest/world-map-{fog,explored}-preview.png`. Browser visual acceptance remains pending due to a blank local page.
+
+Latest runtime revision (2026-11-19): `src/assets/maps/veyrath-world-flat-ink.webp` removes the remaining baked-in pale clearings behind place captions. Terrain detail now continues beneath the ink lettering. This supersedes the earlier tiny-clearing instruction. Earlier paintings are retained. Built-in image edit source and exact prompt: `output/imagegen/veyrath-world-flat-ink.png` and `veyrath-world-flat-ink-prompt.md`. Updated native map preview inspected; live browser acceptance remains outstanding.
+
+Latest runtime lettering (2026-11-18): `src/assets/maps/veyrath-world-subtle.webp` supersedes the more prominent handwriting revision below. Owner wants place names almost unnoticeable until examined, with no bloom/backing and only a tiny clearing of terrain immediately around the words. Act labels retain a distinct readable navigation role away from settlements; Act 4's ribbon moved into the southern territory. Source and exact edit prompt: `output/imagegen/veyrath-world-subtle-lettering.png` and `veyrath-world-subtle-lettering-prompt.md`. Desktop/390px phone checks confirm working regional navigation and no console errors; selectable act-map labels have no shadow/filter/background.
+
+Last updated 2026-11-18. Working names and geographic placements created for the owner's detailed Veyrath map, subsequently authorized for game integration. Reference coastline: `output/imagegen/veyrath-standalone-atlas-v1.png`.
+
+Game integration: arrow-free country atlas `src/assets/maps/veyrath-world.webp`, with seven chapter scopes and numbered navigation. Regional art `src/assets/maps/veyrath-act-1.webp` through `veyrath-act-7.webp` is connected to the redistributed 70 zones (8/8/8/10/12/12/12). Source artwork and generation prompts are under `output/imagegen/`; the regional batch uses `veyrath-act-maps-prompts.md`. Settlements not required by the campaign remain background geography. Desktop and 390px phone browser acceptance passed 2026-11-18: opening journal/combat, all seven chapter navigation, expanded road/Greyford markers, world atlas and final-act phone scrolling. Screenshots under `output/playtest/seven-act-*`; detailed verification is tracked in MILESTONES. A full campaign pacing audit remains separate.
+
+Current art decision (2026-11-18): owner explicitly approved the earlier seven-image batch for use as **placeholder act maps** and stopped the Act 1 redraw experiment. All seven runtime paintings above remain assigned to their respective act close-ups. Structural flaws remain future art work, not a reason to withhold the placeholders. `wreck-coast-pilot-layout.svg`, its PNG and `wreck-coast-pilot-ink-proof.png` remain review experiments only and are not used by the game.
+
+World-map lettering revision (2026-11-18): owner requested that city/settlement names look more written onto the map, and asked for thin one-line act banners and a better research-act name. Edited the world painting with the built-in image tool for quill-style place lettering, preserving the working geography and label placements on visual inspection. Current runtime artwork is `src/assets/maps/veyrath-world-lettered.webp`; the previous `veyrath-world.webp` is retained. Source and exact prompt: `output/imagegen/veyrath-world-handlettered.png` and `veyrath-world-handlettered-prompt.md`. Act 5 is now **Cairnwatch Institute**. All seven ribbons use one-line titles; selectable act-map names use sepia italic ink styling.
 
 Rendered artwork: `output/imagegen/veyrath-detailed-story-map-v1.png`. Exact built-in image-generation prompt saved alongside as `veyrath-detailed-story-map-v1-prompt.md`. Visually inspected for named sites, route connections, major terrain and readable labels. Features use illustrative cartographic symbols rather than literal building scale.
 
@@ -50,6 +64,30 @@ These add a wider inhabited geography without assigning new campaign obligations
 | The Inner Reach | Working geographic name for the large east-facing bay. |
 
 ## Cartographic direction
+
+### Structural correction after rejected AI-looking act art — 2026-11-18
+
+Owner reports widespread melded forms and logically nonsensical objects in the generated maps. Earlier material/style revisions did not solve those construction problems. Do not treat the existing paintings as visually accepted, or interpret the passing game tests as art approval. No runtime artwork is replaced by this research note.
+
+Research-based working method:
+
+1. Establish a plain layout first: coast, ridge/valley structure, drainage, settlement footprints, gates and connected routes. A usable line drawing must work before texture or colour. Keep the known Veyrath silhouette and story relationships; do not silently redesign them to accommodate generation errors.
+2. Trace water through valleys to an outlet; distinguish ordinary tributaries from deliberate distributaries, canals or magical exceptions. Check bridge landings, road approaches and passes individually.
+3. Plan architecture as separate footprints and street space before drawing roofs, walls and ornament. Use one consistent projection within each map. A building must have readable walls, openings and a foundation; a wall, road or roof may not become rock or vegetation without a deliberate depicted transition.
+4. Underground maps require an explicit connection graph and ground plan: each passage has a destination or an intentional dead end, stairs connect known elevations, masonry and natural rock are visually distinct, and aqueducts have a readable channel/support relationship. Atmospheric arches do not substitute for traversable geometry.
+5. Preserve the requested fullness through meaningful detail and distinct places. Do not solve this by returning to the rejected sparse geometric town symbols. Variation in density and quiet spaces help important features remain readable.
+6. Treat regional settlement vignettes as consistent cartographic representations. Their relative size must distinguish hamlet, town and capital without making structures physically gigantic. Do not claim literal surveyed scale where there is no established geographic scale.
+7. Separate layout, architecture, terrain linework, colour, texture and labels where the workflow allows. Use controlled shapes/paths for the parts that must stay exact; a single generated raster should not be trusted to invent all geography, architecture and route logic at once.
+8. Work on one representative region before replacing the other six. Inspect the whole composition and close details, recording specific defects. Use local corrections for local failures. Reject unresolved fusions rather than adding grain, aging, watercolour or more prompt adjectives to hide them. Image generation is fallible; these steps are review controls, not a guarantee that prompting eliminates defects.
+
+Primary sources studied (references for principles, not permission to copy artwork/assets):
+
+- Josh Stolarz, [Where to Place Rivers](https://www.mapeffects.co/tutorials/placing-rivers): valley structure and downhill drainage inform river placement.
+- Josh Stolarz, [How to Draw a City Block](https://www.mapeffects.co/tutorials/city-block): staged block sketch, varied building shapes, linework, roof detail and separate colour/shadow passes.
+- Jonathan Roberts, [Top Down Mountains](https://www.fantasticmaps.com/2015/12/how-to-draw-top-down-mountains-on-a-map/): connected primary ridges, secondary spurs and valley structure precede surface detail.
+- Jonathan Roberts, [Aged Paper Handout](https://www.fantasticmaps.com/2016/01/creating-an-aged-paper-handout/): a useful base drawing comes before parchment treatment.
+- Mike Schley, [Mapping Narratives](https://rpgmaps.profantasy.com/mapping-narratives-by-mike-schley/): meaningful relationships, physical logic and selective detail serve the story.
+- USGS, [Topographic Map Symbols](https://www.usgs.gov/educational-resources/topographic-map-symbols): feature representation depends on map scale and extent; dense areas need selective depiction.
 
 Owner's further direction (2026-11-17): requested touchups informed by the Interconnectd article "How to Fix the Plastic AI Look: Prompting for Authentic Human Images" (https://interconnectd.com/blog/85/how-to-fix-the-plastic-ai-look-prompting-for-authentic-human-images/), then explicitly requested towns at the map's geographic scale. Apply the article's material-specific approach to ink, paper and pigment, plus varied marks and localized wear, rather than portrait-specific camera effects. Reduce oversized settlement architecture while retaining miniature hand-drawn character, readable labels and a full geographic composition. City symbols are cartographic representations, not surveyed street plans or measured geographic footprints.
 

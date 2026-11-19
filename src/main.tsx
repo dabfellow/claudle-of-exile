@@ -23,6 +23,7 @@ if (import.meta.env.DEV) {
     });
   void import('./dev/scenarios').then(({ scenario }) => {
     (window as unknown as { scenario: typeof scenario }).scenario = scenario;
+    if (initialSearch.includes('campaignPlaytest')) void import('./dev/campaignPlaytest').then(({ mountCampaignPlaytest }) => mountCampaignPlaytest(scenario));
     if (initialSearch.includes('professionPlaytest')) void import('./dev/professionPlaytest').then(({ mountProfessionPlaytest }) => mountProfessionPlaytest(scenario));
     if (initialSearch.includes('thievingPlaytest')) void import('./dev/thievingPlaytest').then(({ mountThievingPlaytest }) => mountThievingPlaytest(scenario));
     if (initialSearch.includes('roguePlaytest')) void import('./dev/roguePlaytest').then(({ mountRoguePlaytest }) => mountRoguePlaytest(scenario));

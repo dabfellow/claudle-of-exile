@@ -69,7 +69,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
     label: 'Adventure',
     items: [
       { page: 'combat', label: 'Combat', icon: 'combat', skill: 'combat' },
-      { page: 'campaign', label: 'Campaign', icon: 'campaign' },
+      { page: 'campaign', label: 'World Map', icon: 'campaign' },
       { page: 'maps', label: 'Map Device', icon: 'map' },
       { page: 'vendor', label: 'Town', icon: 'vendor' },
       // closed for 1.0: listed only while you still have something on it (see marketWindDown)

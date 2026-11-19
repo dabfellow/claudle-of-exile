@@ -11,6 +11,20 @@ export interface NewsEntry {
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
 export const UPCOMING: string[] = [
+  'Veyrath is now surrounded by a dark, rough ocean, with strange returning currents hinting at the force that prevents escape.',
+  'World Map fills the desktop view with clearer act banners, subtle territory hover highlights, and fog that lifts as each act unlocks.',
+  'Removed the pale clearings beneath World Map place names so lettering sits directly on the terrain.',
+  'World Map act names now use small, thin banners with plain act numbers underneath.',
+  'Removed the pale halo behind World Map territory borders; map lettering uses no glow or shadow.',
+  'Place names now blend into the World Map as small, fine ink captions without glow or backing; act labels stay readable away from settlements.',
+  'Act ribbons are now slim, single-line labels, Act 5 is named Cairnwatch Institute, and map place names use an ink-lettered style.',
+  'Each World Map territory now has a subtle parchment ribbon showing its act number and title; click the ribbon or territory to enter.',
+  'World Map territory borders now close along the coast, fully enclosing each act’s region.',
+  'World Map territories now use shared ink borders along the landscape, leaving the atlas artwork clear of colored shapes.',
+  'World Map acts are now selected by clicking their bold region outlines, with no numbered markers covering the artwork.',
+  'Campaign is now World Map: choose acts directly on the full atlas, and return to the last act and area you viewed.',
+  'The seven-act campaign now spreads its 70 areas across fuller chapters, with revised level ranges, matching enemy and loot progression, and more stops along the missing-supplies investigation.',
+  'Explore Veyrath through seven story acts, a new world atlas and regional maps, renamed areas, and a saved campaign journal following Winnie, the missing supplies and the First Exile.',
   'Rogue Roster overhaul: 12-rogue crew selection, talent trees, and tactical heist loop.',
 ];
 

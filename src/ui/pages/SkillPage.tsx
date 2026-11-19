@@ -697,7 +697,7 @@ function LockedSkill({ skill, place }: { skill: SkillId; place: string }) {
             {def.name} unlocks when you reach {place}.
           </b>
           <p className="muted small" style={{ margin: '4px 0 0' }}>
-            Carry on through the campaign from the Campaign page. Once {place} is open, {def.name} is ready to train here.
+            Carry on through the campaign from the World Map. Once {place} is open, {def.name} is ready to train here.
           </p>
         </div>
       </div>

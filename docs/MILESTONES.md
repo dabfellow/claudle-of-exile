@@ -1,10 +1,10 @@
 # Roadmap and decisions
 
-Last updated 2026-11-17. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-19. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
-Lore planning: the owner's main campaign and ongoing mapping direction are developed in [STORY.md](STORY.md), now with a proposed seven-act campaign and mapping endgame; review the narrative structure before assigning quests or changing existing acts.
+Veyrath campaign: the 70 zones are redistributed into seven fuller chapters, with retuned level bands, matching rewards/gem access and an expanded saved journal. Arrow-free world atlas and all seven approved placeholder regional paintings are integrated. All 109 test files / 1,780 tests, typecheck, production build and desktop/390px phone browser checks pass (2026-11-18). Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
 Latest confirmed live release: **0.4.49, Profession Workspaces**, deployed 2026-11-17. Approved Thieving ledger/dossier, Woodcutting with a separate Planks tab, and distinct compact workspaces for all other implemented professions. Desktop/phone browser checks, all 106 release-source test files / 1,748 tests, typecheck and production build pass; live version and login confirmed at https://dabfellow.party/path-of-idle/. See [SKILLING_UI.md](SKILLING_UI.md). Previous: **0.4.48, Dedicated Masterwork Tabs and Mastery Batches**, **0.4.47, Ashen Codex World Map**, **0.4.46, Mastery Tooltips and Action Card Polish**.
 
@@ -52,7 +52,7 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 4 | Act 2 and content recipe | Released; cold-check/art follow-ups remain parked |
 | 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18 |
 | 6 | Act 3 / ascendancies | Released; four trials and 2/2/3/2 points replace original structure |
-| 7 | Acts 4–6 | Released with branching roads and side skills |
+| 7 | Campaign expansion / seven-act Veyrath integration | Earlier Acts 4–6 released; seven-act story, atlas, journal and redistributed 70-zone campaign implemented, unreleased. New chapter bands preserve the level-66 finale and Maps handoff |
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
@@ -60,6 +60,26 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Veyrath's surrounding ocean (2026-11-19): owner wants harsh, threatening water instead of pale cloud-like seas, with a restrained visual hint of an offshore force. Ordinary escape attempts fail; ships can disappear, while some crews may turn home under compulsion and lose or revise their memory of wanting to leave. Exceptional ships cross and return, consistent with Kroten's concealed devices. Precise memory effects, range, missing-crew fates and the boundary's response to the finale remain open. Preserve the approved land, navigation, fog and act banners; no sailing mechanic or campaign rebalance requested.
+
+- World Map exploration (2026-11-19): owner requested noticeable readable act banners, subtle region hover highlights, unlock-driven fog of war, and a map that fills the desktop center. Banners remain visible over fog; unknown acts cannot be entered until reached. Use character area unlocks/boss defeats, including the legacy finale, as saved exploration. Account-wide completion does not reveal fresh characters. Prior requests for extremely small act banners are superseded; place lettering remains unchanged.
+
+- Place names versus act navigation (2026-11-18): Owner clarified that actual place names should be "small blend in almost non noticable till you look", while the act labels should stay out of the way but show players which area is Act 1 and so on. Kept act-title ribbons as readable regional navigation, softened their parchment/edges and moved Act 4 away from city artwork. Actual place captions use fine muted ink with no glow, backing or shadow; only a tiny amount of nearby terrain detail is cleared. Current painting: `veyrath-world-subtle.webp`; earlier versions retained.
+
+- Thin ribbons and written map names (2026-11-18): Owner asked for city/settlement names to look written onto the map, one-line thin act banners, and a better name for the research act. Chose **Cairnwatch Institute**, matching the established place name without changing its story or progression. World-map place lettering was edited with the built-in image tool; original artwork retained. Selectable act-map names now use sepia italic ink styling. All seven parchment ribbons keep the "Act X" tab above a single-line name and remain directly clickable.
+
+- Enclosed territorial borders (2026-11-18): Owner requested that the territorial claims enclose their areas. Complete the sepia borders along the coastline and join all inland endpoints; retain shared boundaries and no colored fills. The First Seal receives a small engraved enclosure around its existing underground entrance symbol.
+
+- Territorial atlas treatment (2026-11-18): Owner rejected the colored geometric act outlines as looking unlike a real map. Replace them with shared sepia ink frontiers following the landscape; use the painted coastline as the outside border, with no colored territorial fills or closed polygon strokes. The First Seal is below Caer Veyr and uses the painting's existing underground callout, not a rectangular sea claim. Keep direct territory selection and remembered act/area navigation.
+
+- Seven-act redistribution (2026-11-18): Owner selected "Redistribute zones across seven fuller acts" over keeping the uneven chapter groups. Reuse all 70 stable IDs, with 8/8/8/10/12/12/12 zones and area bands 1–10 / 10–19 / 19–28 / 28–38 / 38–47 / 47–57 / 57–65, followed by the level-66 First Exile. Eight areas move into the road/Greyford investigation; retain seven story finales and the six existing passive awards. Level-based reward calibration and gem chapter availability follow the new bands; skill power/requirements, XP curve and endgame tiers stay intact. Relocated bosses lose late-game Echoes/channels and teach early mechanics. Instilling remains available from Act 2. Detailed mapping and tuning reasons: [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md). No release requested.
+
+- Act-map placeholders accepted (2026-11-18): Owner stopped the Wreck Coast pilot and approved the earlier seven-image batch as placeholder act maps. Verified all seven WebP assets exist and are connected through `ACT_MAPS` to the Campaign act close-ups. Kept the structural redraw experiment separate from runtime assets; no further image generation or release requested.
+
+- Veyrath art rejection/research (2026-11-18): Owner finds the generated maps visibly AI-made, with fused structures and nonsensical geometry. Studied primary cartographer tutorials and map-symbol guidance; recorded a construction-first, staged layout/architecture/terrain workflow and close-detail acceptance requirements in `docs/VEYRATH-MAP.md`. Style adjectives, paper texture and passing code tests are not art acceptance. Existing paintings remain rejected for structural quality; no further image generation or runtime replacement performed in this research pass.
+
+- Seven-act implementation authorization (2026-11-18): Owner requested removing map arrows, integrating the atlas with act regions, rearranging/renaming zones, considering quests and creating individual-act art. When asked about progression, owner explicitly chose "Redesign progression for the seven-act story". Implemented seven chapter groups across all 70 stable area IDs, rethemed names/descriptions, a new Wayfarer's Post chapter checkpoint and campaign First Exile finale. Campaign ends at level 66 with ordinary Maps following; existing earned milestones and area clears are retained, Maps gems are separated from campaign Act 7, and the new story journal uses save version 48 with explicit saved interactions. Full route and mechanics tests cover the changed chapter references. No release requested in this chat.
 
 - Capital prosperity/map revision (2026-11-17): Owner wants Caer Veyr grander and more lavish, noting people live relatively well there. Created and visually inspected `output/imagegen/veyrath-detailed-story-map-v7-capital.png` with a compact citadel, intact city walls, prosperous districts, formal grounds and modest gold accents. Relative capital prosperity does not remove compulsory field labour or outlying deprivation. Exact built-in edit prompt saved alongside; no runtime changes.
 
@@ -602,6 +622,27 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Replace the World Map's cloudy sea with a harsh ocean and a subtle offshore-boundary motif — done 2026-11-19.
+  - Integrated `veyrath-world-bound-sea.webp`, preserving prior artwork and the map's 1536×1024 registration. Deep slate water, engraved waves, returning currents and sparse ship wakes suggest confinement. Psychological compulsion, uncertain memory effects, missing ships and exceptional crossings recorded in STORY. Existing banners, regions, hover and unlock fog retained. Native previews inspected; live browser acceptance remains outstanding. No release.
+
+- [x] Expand the desktop World Map, improve act banners, and reveal territories through campaign fog — done 2026-11-19.
+  - Full-width desktop atlas, larger parchment titles, shared banner/territory hover and keyboard-focus highlight, textured region fog with unlock fade/reduced-motion support, and locked navigation. Eight focused checks and typecheck pass. Save roundtrip and character-specific legacy progress covered; no account-wide exploration leak. Native fogged/explored previews inspected under `output/playtest/world-map-{fog,explored}-preview.png`. Browser preview remained blank with no logged errors, so live hover/navigation/desktop acceptance remains open below. Temporary preview generator removed. No release.
+
+- [ ] Visually confirm the latest World Map halo removal and act-label layout (2026-11-19).
+  - Removed the cream `frontier-paper` under-stroke entirely and disabled text shadows/filters. Latest labels use 28px-high banner artwork, single-line 12px act names, and plain 10px "Act X" text underneath with no backing/border/glow. Five map checks passed for halo removal; current label change passes typecheck. The in-app browser remained blank before the game rendered, including a fresh plain Vite preview on port 4183, so no visual acceptance is claimed for these latest changes. No release.
+
+- [x] Make map place names plain, subtle ink with no bloom/backing and a tiny clearing in the terrain immediately around the lettering. — done 2026-11-18
+  - Owner clarified the visual hierarchy: actual places blend in until examined; act labels remain readable regional navigation away from settlements. Integrated `veyrath-world-subtle.webp`, reduced native place-label weight/size and removed shadows, filters and backgrounds. Softened act ribbons and moved Act 4 into clear southern terrain. Desktop and 390px phone checks, Act 4 navigation, five map tests, typecheck/wiki generation and production build pass. Earlier paintings retained. No release.
+
+- [x] Rename Campaign navigation to World Map, simplify the overview to the full clickable atlas, and remember the viewed act/area per character. — done 2026-11-18
+  - Updated sidebar, hideout shortcut, tutorial and referring buttons. First visit opens the full atlas with clickable act pins; duplicate act cards/overview journal removed. Viewed act/area persist per character in browser storage; returning explicitly to the atlas remembers that overview. Typecheck and 19 campaign checks pass. Fresh-character browser verification confirmed atlas-first entry, Act 2/Roadwatch Fort selection, restoration after visiting Skills, return to the full atlas, and no console errors. Screenshot: `output/playtest/world-map-navigation.png`. No release.
+
+- [x] Redistribute the 70 existing zones into seven substantial Veyrath chapters and retune the campaign level ranges. — done 2026-11-18
+  - Owner-approved redistribution implemented: 8/8/8/10/12/12/12 areas, seven level bands, eight rethemed relocated areas, revised roads and late-chapter boss gates, matching enemy/reward levels, gem chapter access and four new journal steps. Stable IDs, clears, earned rewards and the level-66 finale/Maps handoff retained. All 109 test files / 1,780 tests pass cleanly with two workers, plus typecheck, production build and browser acceptance. Default-worker run passed every assertion but reported a worker RPC timeout, so it was rerun with bounded concurrency. No version change or deployment.
+
+- [x] Finish browser acceptance for the integrated Veyrath campaign atlas and journal. — done 2026-11-18
+  - In-app browser reached the local game. Fresh level-1 Ranger accepted Winnie's offer and entered real coastal combat, earning XP and level-appropriate loot. A disposable level-70 campaign veteran opened the world atlas, selected the expanded Act 2/3 locations and navigated every chapter through the First Seal. At 390×844, the final-act map scrolls horizontally inside its container and the document remains 390px wide. No browser console errors. Evidence: `output/playtest/seven-act-world-desktop.png`, `seven-act-roads-desktop.png`, `seven-act-finale-phone.png`. This checks navigation/presentation and opening combat, not a full journey pacing audit.
+
 - [x] Implement and ship the approved Woodcutting design and the remaining profession redesigns. — done 2026-11-17
   - Existing recipes, locks, mastery, Focus, batches, secondary systems and Masterworks connected; desktop and phone checks pass. Live in 0.4.49.
 
@@ -756,6 +797,36 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- Replaced the World Map's pale seas with a harsh dark ocean and returning-current/ship-wake motifs — done 2026-11-19. Updated runtime artwork and native previews; recorded the owner's psychological escape-boundary lore without fixing unresolved memory effects or adding sailing mechanics. Prior paintings retained. No release.
+
+- Added readable act banners, regional hover/focus highlights, character-specific unlock fog and a full-width desktop World Map — done 2026-11-19. Eight focused checks and typecheck pass; native previews inspected. Live browser acceptance remains outstanding because the local page stayed blank. No version change or release.
+
+- Removed the remaining baked-in pale clearings beneath World Map place names — done 2026-11-19. Integrated `veyrath-world-flat-ink.webp`, retained prior paintings, and refreshed the native preview with existing act banners and territory borders. Terrain now continues beneath lettering; the earlier tiny-clearing direction is superseded. Native preview inspected; live-browser visual acceptance remains open. No release.
+
+- [x] Prepared a direct visual preview of the current World Map after the live browser preview stalled. Generated a self-contained HTML render from the actual WorldMap component and a local SVG/PNG presentation using the same artwork, territory paths, label positions and current thin-banner/plain-number styling. Temporary render harness removed. This is a visual export, not a successful live-browser playtest. Files: `output/playtest/world-map-current-preview.html`, `.svg`, `.png`. — done 2026-11-19
+
+- [x] Made World Map act-name banners smaller and thinner, moving the act number underneath as simple unbacked text. Preserved direct act selection, subdued place captions and no-halo styling. Typecheck passes; visual acceptance remains pending above because the browser preview stayed blank. Unreleased. — done 2026-11-19
+
+- [x] Removed the pale under-stroke behind World Map borders and explicitly disabled label shadows/filters. Five map checks pass; visual confirmation is pending above because the local browser preview did not render. Unreleased. — done 2026-11-19
+
+- [x] Subdued actual place captions into small, fine, muted map ink with minimal terrain clearing and no bloom/backing. Kept act navigation distinct, quieter and away from settlements. Desktop/phone browser checks found no errors or page-width overflow; Act 4 selection and native place-label styling verified. Five map checks and production build pass. Screenshots: `output/playtest/world-map-subtle-names-desktop.jpg`, `world-map-subtle-names-phone.jpg`. Source/prompt retained under `output/imagegen/veyrath-world-subtle-lettering*`. Unreleased. — done 2026-11-18
+
+- [x] Made all seven act ribbons thin and single-line, renamed Act 5 to Cairnwatch Institute, and gave map place names an ink-lettered appearance. Integrated `veyrath-world-lettered.webp` from the built-in lettering edit, retaining the original painting and exact edit prompt/source. Selectable act-map labels now use sepia italic styling. Desktop and 390×844 phone checks confirm seven non-overlapping, single-line ribbons, no page-width overflow, renamed-act keyboard navigation and no console errors. Typecheck, 19 campaign checks, wiki generation and production build pass. Screenshots: `output/playtest/world-map-thin-ribbons-desktop.jpg`, `world-map-thin-ribbons-phone.jpg`, `cairnwatch-ink-labels.jpg`. Unreleased. — done 2026-11-18
+
+- [x] Added subtle parchment title ribbons to all seven World Map territories, with "Act X" above the full act name, folded tails, sepia lettering and gently irregular ink outlines. Ribbons and territories both remain clickable; keyboard activation works. Adjusted coastal placement to preserve settlement labels and widened the mountain title to fit on phones. Desktop and 390×844 browser checks found seven non-overlapping ribbons, no page-width overflow and no console errors. Screenshots: `output/playtest/world-map-ribbons-desktop.jpg`, `world-map-ribbons-phone.jpg`. Unreleased. — done 2026-11-18
+
+- [x] Closed the World Map territorial borders with detailed coastal traces joined to the inland frontiers, enclosing all six surface chapters and the underground entrance callout. Retained sepia ink, clear artwork and shared internal boundaries. Typecheck and five map tests pass; visually checked the enclosed territories in the running game and verified Act 1 selection with no console errors. Screenshot: `output/playtest/world-map-enclosed-territories.jpg`. Unreleased. — done 2026-11-18
+
+- [x] Reworked World Map act regions after the owner rejected the colored geometric outlines. Geographic hit areas now sit invisibly over the painting; shared sepia dash-dot ink borders follow inland terrain and the coastline defines the outside edges. Removed the Act 7 sea box and use the painted First Seal callout. Hover/focus strengthens ink without tinting territory. Visually inspected in the real game; mouse selection opened Acts 1 and 7, keyboard selection opened Act 2, with no console errors. Typecheck and five map checks pass. Screenshot: `output/playtest/world-map-territory-borders.jpg`. Unreleased. — done 2026-11-18
+
+- [x] Replaced numbered World Map act pins with bold, solid geographic boundaries that select their act when clicked. Hover/focus highlights the region; tooltips name it, with Enter/Space keyboard activation. Removed the outline-hide switch because regions are now the navigation targets. Typecheck, five map checks and real-browser mouse/keyboard selection pass with no console errors. Screenshot: `output/playtest/world-map-region-outlines.png`. Unreleased. — done 2026-11-18
+
+- [x] Renamed Campaign to World Map, reduced the overview to the clickable full atlas and remembered act/area selection per character in this browser. Updated related navigation/tutorial wording; typecheck, 19 campaign checks and real-browser navigation/restoration checks pass. Unreleased. — done 2026-11-18
+
+- [x] Redistributed the 70-zone Veyrath campaign into seven fuller acts; integrated world/regional markers, new investigation stops, level-appropriate encounters/rewards and gem availability. All 1,780 tests, typecheck and production build pass; fresh/veteran desktop and 390px phone navigation/playtests pass with no console errors. Pacing over the complete journey remains a separate audit. Unreleased. — done 2026-11-18
+
+- [x] Implemented the seven-act Veyrath campaign structure, saved narrative quest interactions, arrow-free world atlas and individual act paintings. Stable zone IDs and earned progress retained, country/region map markers realigned, and combat/save/quest compatibility checks updated. Production build passes; browser acceptance remains open above. Artwork generated with the built-in image tool; source PNGs/prompts under `output/imagegen/`. — done 2026-11-18
 
 - All profession workspaces implemented, browser-verified on desktop/phone and deployed as 0.4.49 with live login confirmation. — done 2026-11-17
 
