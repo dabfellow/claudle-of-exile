@@ -10,7 +10,14 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
+export const UPCOMING: string[] = [];
+
+export const NEWS: NewsEntry[] = [
+  {
+    version: '0.5.5',
+    date: '19 Nov 2026',
+    title: 'Veyrath World Map',
+    items: [
   'Veyrath is now surrounded by a dark, rough ocean, with strange returning currents hinting at the force that prevents escape.',
   'World Map fills the desktop view with clearer act banners, subtle territory hover highlights, and fog that lifts as each act unlocks.',
   'Removed the pale clearings beneath World Map place names so lettering sits directly on the terrain.',
@@ -25,9 +32,8 @@ export const UPCOMING: string[] = [
   'Campaign is now World Map: choose acts directly on the full atlas, and return to the last act and area you viewed.',
   'The seven-act campaign now spreads its 70 areas across fuller chapters, with revised level ranges, matching enemy and loot progression, and more stops along the missing-supplies investigation.',
   'Explore Veyrath through seven story acts, a new world atlas and regional maps, renamed areas, and a saved campaign journal following Winnie, the missing supplies and the First Exile.',
-];
-
-export const NEWS: NewsEntry[] = [
+    ],
+  },
   {
     version: "0.5.4",
     date: "19 Nov 2026",
