@@ -48,9 +48,8 @@
   background: var(--panel-2);
 }
 
-/* title, login and character screens: the ornate frame */
-.screen .card,
-.screen .modal {
+/* the login panel and account windows only: the ornate frame (news, character and class cards stay plain dark) */
+.screen .title-card {
   border-width: 18px;
   border-image: var(--frame-ornate) 24 fill / 48px round;
   padding: calc(var(--s-4) - 6px);
@@ -74,8 +73,7 @@
 
 /* phones: the ornate frame at half size */
 @media (max-width: 680px) {
-  .screen .card,
-  .screen .modal {
+  .screen .title-card {
     border-width: 10px;
     border-image: var(--frame-ornate) 24 fill / 24px round;
     padding: var(--s-3);

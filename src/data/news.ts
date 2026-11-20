@@ -10,13 +10,19 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'New item art: every weapon, armour piece, piece of jewellery, flask and gathered material now shares one pixel-art style, and each armour tier has its own matching set.',
-  'Currency orbs, runes, fossils, essences, resins and shards now have their own pictures instead of plain coloured dots.',
-  'Menus, tooltips and pop-ups now sit in quiet pixel-art frames, with an ornate gold frame on the title screen; buttons, tabs, skill tiles and item slots have slim bronze edges to match.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.5.7',
+    date: '20 Nov 2026',
+    title: 'New Item Art and Menu Frames',
+    items: [
+  'New item art: every weapon, armour piece, piece of jewellery, flask and gathered material now shares one pixel-art style, and each armour tier has its own matching set.',
+  'Currency orbs, runes, fossils, essences, resins and shards now have their own pictures instead of plain coloured dots.',
+  'Menus, tooltips and pop-ups now sit in quiet pixel-art frames, with an ornate gold frame on the login panel; buttons, tabs, skill tiles and item slots have slim bronze edges to match.',
+    ],
+  },
   {
     version: '0.5.6',
     date: '19 Nov 2026',
