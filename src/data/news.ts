@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Every class now has a painted portrait on the character creator, character list and combat screen, including Duelist, Templar, Shadow and Exile, which had none.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.5.8',
+    date: '20 Nov 2026',
+    title: 'Class Portraits',
+    items: [
+      'Every class now has a painted portrait on the character creator, character list and combat screen, including Duelist, Templar, Shadow and Exile, which had none.',
+    ],
+  },
   {
     version: '0.5.7',
     date: '20 Nov 2026',
