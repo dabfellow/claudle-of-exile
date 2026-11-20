@@ -5,11 +5,11 @@ Last updated 2026-11-17. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Character inventories and the Guild Stash are implemented locally (2026-11-20). Apply the [Guild Stash database update](ops/guild-stash.sql) before publishing and verify signed-in transfers after it is installed.
+Character inventories and the Guild Stash are live in **0.5.9**. The database update is installed. A signed-in transfer in the live game remains to be checked.
 
 Veyrath campaign is live in **0.5.5** (2026-11-19): 70 zones across seven fuller chapters, revised level bands, matching rewards/gem access, saved journal, world/regional paintings, territory navigation, readable banners, character-specific unlock fog and the harsh surrounding ocean. All 113 test files / 1,795 tests, typecheck and production build pass. Earlier desktop/390px campaign navigation checks passed 2026-11-18; the latest artwork/fog was inspected through native previews because the local browser stayed blank, so live hover/desktop acceptance remains open. Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
-Latest confirmed live release: **0.5.8, Class Portraits**, deployed 2026-11-20: painted Craftpix portraits for all seven classes. Preceded by **0.5.7, New Item Art and Menu Frames**, deployed 2026-11-20: unified pixel item art, orb/rune/fossil/essence pictures, quiet Dark Ages UI frames. 1,861 tests and production build pass; deploy confirmed live version and login. Before it: **0.5.5, Veyrath World Map**, deployed 2026-11-19. Seven-act campaign and regional maps, saved act selection, readable navigation banners, territory highlighting, exploration fog and dark ocean artwork. All 1,795 tests and production build pass; deploy confirmed the live version and login configuration at https://dabfellow.party/path-of-idle/. Preserved preceding releases **0.5.4, Astrology**, **0.5.3, Agility**, **0.5.2, Heist Dossiers**, and **0.5.1, One Tree, One Currency** (including Rogue Roster). Latest live UI interaction check remains outstanding as described above.
+Latest confirmed live release: **0.5.9, Personal Supplies and the Guild Stash**, deployed 2026-11-20. Characters gather and craft from personal supplies, and old shared holdings are available through manual Guild Stash transfers. All 1,865 tests and the production build passed. The database update succeeded and the deploy confirmed the live version and login configuration. Previous release: **0.5.8, Class Portraits**, deployed 2026-11-20: painted Craftpix portraits for all seven classes. Preceded by **0.5.7, New Item Art and Menu Frames**, deployed 2026-11-20: unified pixel item art, orb/rune/fossil/essence pictures, quiet Dark Ages UI frames. 1,861 tests and production build pass; deploy confirmed live version and login. Before it: **0.5.5, Veyrath World Map**, deployed 2026-11-19. Seven-act campaign and regional maps, saved act selection, readable navigation banners, territory highlighting, exploration fog and dark ocean artwork. All 1,795 tests and production build pass; deploy confirmed the live version and login configuration at https://dabfellow.party/path-of-idle/. Preserved preceding releases **0.5.4, Astrology**, **0.5.3, Agility**, **0.5.2, Heist Dossiers**, and **0.5.1, One Tree, One Currency** (including Rogue Roster). Latest live UI interaction check remains outstanding as described above.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
@@ -54,7 +54,7 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 |---|---|---|
 | 1 | Automation/offline | Released; survival rules and two conditions baseline; flask-default removal verified (strictly requires Instilling) |
 | 2 | Pacing | Live-source desktop simulator/API released in 0.4.34; pacing audit remains open. Whole-journey audit on 0.4.4 found large Ranger seed variance and a common Mage Act 4 stall |
-| 3 | Account layer | Released; Admin overhaul, service SQL, OAuth secret revocation and signed-in checks confirmed by owner 2026-11-08; save-rollback fixes unreleased |
+| 3 | Account layer | Personal Stashes and Guild Stash live in 0.5.9 (2026-11-20). Admin overhaul, service SQL, OAuth secret revocation and signed-in checks confirmed by owner 2026-11-08. Save-rollback fixes remain unreleased |
 | 4 | Act 2 and content recipe | Released; cold-check/art follow-ups remain parked |
 | 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18 |
 | 6 | Act 3 / ascendancies | Released; four trials and 2/2/3/2 points replace original structure |
@@ -645,8 +645,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
-- [ ] Apply the Guild Stash database update and verify signed-in transfers before release.
-  - Local browser and throwaway database checks pass. The live database has yet to receive the update.
+- [ ] Verify a signed-in Guild Stash transfer in the live game.
+  - The database update succeeded on 2026-11-20. The live endpoint rejects anonymous requests. Local browser and throwaway database transfer tests passed.
 
 - [x] Free painted portraits for all 7 classes (character creator, character list, combat and hideout crest) — done 2026-11-20.
   - Craftpix *Free RPG Fantasy Avatars* (owner wants free art only): Warrior 19, Ranger 28, Mage 23, Duelist 20, Templar 50, Shadow 21, Exile 32. The title and creator backdrop was already GegX's forest at night. Checked on desktop and 390px; tests and typecheck pass.
