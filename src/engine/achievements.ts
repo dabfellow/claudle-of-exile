@@ -20,8 +20,8 @@ export function settleRealmRewards(s: GameState): AchievementDef[] {
   if (!added.length) return [];
   a.achievementRewards = [...had, ...added.map((d) => d.id)];
   ensureStashPages(a);
-  return added;
   ensurePersonalStashPages(s.storage, a);
+  return added;
 }
 
 /** Complete any achievements whose goal has been reached, granting their rewards once. */

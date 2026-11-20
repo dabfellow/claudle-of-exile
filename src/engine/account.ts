@@ -30,7 +30,6 @@ export function freshAtlas(): AtlasState {
   return { cleared: [], slotted: [], deathless: [], doomedCleared: [], hardBossesCleared: [], uberBossesCleared: [], nodes: [] };
 }
 
-/** Normalize any themed (`map_barrows_t1`) or plain map keys into plain `map_t1`..`map_t10` and `doomed_t1`..`doomed_t5`. */
 export function freshCharacterStorage(): CharacterStorage {
   return {
     stash: Array.from({ length: STASH_START_PAGES }, () => []),
@@ -42,17 +41,18 @@ export function ensurePersonalStashPages(storage: CharacterStorage, account: Acc
   while (storage.stash.length < freeStashPages(account)) storage.stash.push([]);
 }
 
+/** Normalize any themed (`map_barrows_t1`) or plain map keys into plain `map_t1`..`map_t10` and `doomed_t1`..`doomed_t5`. */
 export function normalizeMapStock(stock: Record<string, number> | undefined): Record<string, number> {
   const out: Record<string, number> = {};
   if (!stock) return out;
   for (const [k, raw] of Object.entries(stock)) {
     const n = Math.max(0, Math.floor(raw || 0));
     if (!n) continue;
-    const dTier = parseDoomedTier(k);
     if (UNIQUE_MAPS.some((map) => map.id === k)) {
       out[k] = n;
       continue;
     }
+    const dTier = parseDoomedTier(k);
     if (dTier) {
       const id = doomedId(dTier);
       out[id] = (out[id] ?? 0) + n;
@@ -337,8 +337,8 @@ function settlePool(s: GameState, a: AccountState): boolean {
 export function settleCharacter(s: GameState, a: AccountState): boolean {
   const pooled = settlePool(s, a);
   const finish = (changed: boolean) => {
-    settleProfessionRealmEvidence(s, a);
     ensurePersonalStashPages(s.storage, a);
+    settleProfessionRealmEvidence(s, a);
     return changed;
   };
   const from = s.unmerged;
@@ -401,15 +401,15 @@ export function mergeAccounts(mine: AccountState, base: AccountState, theirs: Ac
   mine.absorbed = [...new Set([...mine.absorbed, ...theirs.absorbed])];
   mine.uniquesSeen = [...new Set([...mine.uniquesSeen, ...theirs.uniquesSeen])];
   mine.nextUid = Math.max(mine.nextUid, theirs.nextUid);
-  const bank: Record<string, number> = { ...theirs.bank };
-  for (const id of new Set([...Object.keys(mine.bank), ...Object.keys(base.bank)])) {
-    bank[id] = Math.max(0, (theirs.bank[id] ?? 0) + (mine.bank[id] ?? 0) - (base.bank[id] ?? 0));
   if (theirs.guildTransfers) {
     mine.guildTransfers ??= {};
     for (const [id, rev] of Object.entries(theirs.guildTransfers)) {
       mine.guildTransfers[id] = Math.max(mine.guildTransfers[id] ?? 0, rev);
     }
   }
+  const bank: Record<string, number> = { ...theirs.bank };
+  for (const id of new Set([...Object.keys(mine.bank), ...Object.keys(base.bank)])) {
+    bank[id] = Math.max(0, (theirs.bank[id] ?? 0) + (mine.bank[id] ?? 0) - (base.bank[id] ?? 0));
   }
   mine.bank = bank;
   const mineMaps = normalizeMapStock(mine.maps);

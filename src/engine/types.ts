@@ -941,14 +941,14 @@ export interface AccountState {
   realm: Realm;
   /** goes up with every save, so the newest copy can be told from an older one */
   rev: number;
-  hideout: Record<string, number>;
-  automation: AutomationUnlocks;
-  /** from before the War Table sold auto flee and auto challenge: keeps both without the upgrades */
-  autosKept?: boolean;
   /** Advances whenever stock moves between a character and the Guild Stash. */
   guildRev?: number;
   /** The latest Guild Stash transfer for each character, used to reject old exported saves. */
   guildTransfers?: Record<string, number>;
+  hideout: Record<string, number>;
+  automation: AutomationUnlocks;
+  /** from before the War Table sold auto flee and auto challenge: keeps both without the upgrades */
+  autosKept?: boolean;
   /** stash pages of gear, STASH_PAGE_SIZE each */
   stash: Item[][];
   /** items that didn't fit when stashes were merged: they can only be taken out */
@@ -1000,15 +1000,15 @@ export interface MapSettings {
   rollNormalMaps?: boolean;
 }
 
+export type CharacterStorage = Pick<AccountState,
+  'bank' | 'stash' | 'overflow' | 'uniqueStash' | 'gems' | 'supportGems' | 'flaskStash' | 'stashAffinities'>;
+
 export type StashAffinity = 'currency' | 'maps' | 'gems' | 'flasks' | 'gear' | 'contraband';
 
 export interface SextantSlot {
   modId: string;
   tier: 'apprentice' | 'journeyman' | 'master';
   charges: number;
-export type CharacterStorage = Pick<AccountState,
-  'bank' | 'stash' | 'overflow' | 'uniqueStash' | 'gems' | 'supportGems' | 'flaskStash' | 'stashAffinities'>;
-
 }
 
 export interface AtlasState {
@@ -1032,13 +1032,13 @@ export interface AtlasState {
 export interface MarketHold {
   /** names the step on the server, so a lost reply can be checked */
   op: string;
+  characterId?: string;
   item?: Item;
   currency?: string;
   amount?: number;
 }
 
 /** Account data arriving from elsewhere: a pre-account save, a demo, an import. */
-  characterId?: string;
 export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'uniqueStash' | 'uniquesSeen' | 'exileUnlocked' | 'campaignDone' | 'maps' | 'sextants' | 'atlas' | 'mapSettings' | 'achievementRewards'>> & Partial<AccountPool>;
 
 /** The Stash tabs that hold more than gear. */
@@ -1179,15 +1179,15 @@ export interface GameState {
   version: number;
   /** the shared account block; a running game holds the live one, and saves leave it out */
   account: AccountState;
+  /** The character's spendable supplies and personal stash, saved with this character. */
+  storage: CharacterStorage;
+  guildTransferRev?: number;
   /** account data this character still has to hand over (see settleCharacter) */
   unmerged?: AccountTransfer;
   /** currency, materials, gems and flasks this character still has to hand over (see settleCharacter) */
   unpooled?: Partial<AccountPool>;
   /** from before the skill reform: The Old Covenant waits to be handed over */
   keepsakeDue?: boolean;
-  /** The character's spendable supplies and personal stash, saved with this character. */
-  storage: CharacterStorage;
-  guildTransferRev?: number;
   character: CharacterInfo;
   /** a Hardcore character has died here: nothing runs again, and the game deletes it */
   fallen?: { zoneId: string | null; offline: boolean };
