@@ -529,7 +529,6 @@ export const MATERIAL_ART: Record<string, string> = {
   sextant_apprentice: new URL('../assets/items/currency/sn-aether-comet.png', import.meta.url).href,
   sextant_journeyman: new URL('../assets/items/currency/sn-blessed-orb.png', import.meta.url).href,
   sextant_master: new URL('../assets/items/currency/sn-void-lance.png', import.meta.url).href,
-  fractured_orb: new URL('../assets/items/currency/sn-holy-flare.png', import.meta.url).href,
   marrow_key: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
   bell_key: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,
   abyssal_key: new URL('../assets/items/materials/icons32-30.png', import.meta.url).href,

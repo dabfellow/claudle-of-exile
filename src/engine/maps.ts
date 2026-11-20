@@ -863,8 +863,8 @@ function doomedVictorySupply(s: GameState, ctx: Ctx): void {
   counters[ORB_DROUGHT] = (counters[ORB_DROUGHT] ?? 0) + 1;
   if (counters[ORB_DROUGHT] >= DROUGHT_RUNS) {
     counters[ORB_DROUGHT] = 0;
-    addBank(s, 'fractured_orb', 1);
-    ctx.emit({ t: 'loot', currencyId: 'fractured_orb', qty: 1 });
+    addBank(s, 'fractured', 1);
+    ctx.emit({ t: 'loot', currencyId: 'fractured', qty: 1 });
     ctx.emit({ t: 'info', text: 'Ten Doomed victories without a Fractured Orb: one is guaranteed', tone: 'good' });
   }
 }
@@ -1082,10 +1082,11 @@ export function rollMapDrops(s: GameState, ctx: Ctx, mon: MonsterInstance): void
   if (run.doomedTier) {
     const fracChance = mon.isBoss ? MAP_DROPS.fracturedBoss : MAP_DROPS.fracturedKill;
     if (chance(ctx.rng, fracChance)) {
-      addBank(s, 'fractured_orb', 1);
+      // the same Fractured Orb the Crafting Bench spends
+      addBank(s, 'fractured', 1);
       // a real drop ends the drought; the guarantee counts victories since the last one
       s.professionProgress.counters[ORB_DROUGHT] = -1;
-      ctx.emit({ t: 'loot', currencyId: 'fractured_orb', qty: 1 });
+      ctx.emit({ t: 'loot', currencyId: 'fractured', qty: 1 });
       s.maps.tally.favoured += 1;
     }
     if (mon.isBoss) {

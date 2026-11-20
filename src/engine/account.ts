@@ -3,7 +3,7 @@ import { MAP_DEVICE_ATLAS_LEVEL, STASH_FREE_PAGES, STASH_PAGE_SIZE, STASH_START_
 import { doomedId, mapId, parseDoomedTier, parseMapTier } from '../data/maps';
 import { STANDARD_REALM } from './challenge';
 import { trimFlaskStash } from './flasks';
-import { createUnique } from './items';
+import { createUnique, settleItemMarks } from './items';
 import type { AccountPool, AccountState, AccountTransfer, AtlasState, AutomationUnlocks, EquipSlot, GameState, Item, Realm, SkillGemInstance } from './types';
 import { settleProfessionRealmEvidence } from './professions';
 
@@ -102,6 +102,18 @@ export function fillAccount(a: AccountState): AccountState {
   a.automation.ruleSlots = Math.max(baseline.ruleSlots, a.automation.ruleSlots);
   a.automation.offlineHours = Math.max(baseline.offlineHours, a.automation.offlineHours);
   a.bank ??= {};
+  // Doomed Maps used to drop a second "Fractured Orb" the Bench couldn't spend: those become the real one.
+  if (a.bank.fractured_orb !== undefined) {
+    a.bank.fractured = (a.bank.fractured ?? 0) + Math.max(0, a.bank.fractured_orb || 0);
+    delete a.bank.fractured_orb;
+  }
+  // The Map Device's bonus maps used to land in the bank, where they couldn't be run: they join the map supply.
+  for (const id of Object.keys(a.bank)) {
+    if (!/^map_t\d+$/.test(id)) continue;
+    a.maps ??= {};
+    a.maps[id] = (a.maps[id] ?? 0) + Math.max(0, a.bank[id] || 0);
+    delete a.bank[id];
+  }
   a.maps = normalizeMapStock(a.maps);
   a.sextants ??= [null, null, null, null];
   while (a.sextants.length < 4) a.sextants.push(null);
@@ -120,6 +132,7 @@ export function fillAccount(a: AccountState): AccountState {
   a.achievementRewards = [...new Set(a.achievementRewards ?? [])];
   fileUniques(a);
   ensureStashPages(a);
+  for (const item of [...a.stash.flat(), ...a.overflow]) settleItemMarks(item);
   return a;
 }
 

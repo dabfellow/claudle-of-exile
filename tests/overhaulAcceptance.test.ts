@@ -119,7 +119,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
     obtainable.add('reliquary_fragment');
     obtainable.add('atlas_survey_record');
     obtainable.add('doom_key_fragment');
-    obtainable.add('fractured_orb');
+    obtainable.add('fractured');
     obtainable.add('sextant_apprentice');
     obtainable.add('sextant_journeyman');
     obtainable.add('sextant_master');

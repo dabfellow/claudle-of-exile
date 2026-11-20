@@ -247,7 +247,7 @@ PROFESSION_PROJECTS.push({
   station: { id: 'rune_board', level: 1 }, accomplishments: ['runecarving_work_100'], repeatable: true,
   durationMs: 7_200_000, xp: 3000,
   inputs: {
-    completed_atlas_chart: 1, reliquary_fragment: 1, fractured_orb: 1,
+    completed_atlas_chart: 1, reliquary_fragment: 1, fractured: 1,
     marrow_shard: 1, choir_glass: 1, black_pearl: 1, throne_ash: 1, crownless_sigil: 1,
     exile_doom_sigil: 1, architect_doom_sigil: 1, void_sigil: 1,
     stolen_oath_seal: 1, convergence_relic: 1, convergence_frame: 1, star_distillate: 1,

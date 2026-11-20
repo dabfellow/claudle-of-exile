@@ -149,7 +149,7 @@ export function itemName(item: Item): string {
 }
 
 /** Replace all mods on an item for its current rarity. `keep` stays and counts as one of the new rolls (a Forger's Seal). Fractured mods and meta-locks always stay. */
-export function rerollMods(item: Item, rng: Rng, bias?: ModBias, keep?: RolledMod): void {
+export function rerollMods(item: Item, rng: Rng, bias?: ModBias, keep?: RolledMod, fresh = false): void {
   const prefixLock = item.suffixes.some((m) => m.affixId === 'meta_prefixes_cannot_be_changed');
   const suffixLock = item.prefixes.some((m) => m.affixId === 'meta_suffixes_cannot_be_changed');
   const frac = allMods(item).find((m) => m.fractured);
@@ -202,10 +202,12 @@ export function rerollMods(item: Item, rng: Rng, bias?: ModBias, keep?: RolledMo
       const mod: RolledMod = { affixId: affix.id, tier: chosen.i, values: rollValues(affix, chosen.i, rng, item.itemTier) };
       (kind === 'prefix' ? item.prefixes : item.suffixes).push(mod);
     }
-    if (item.itemTier === 5 && item.rarity === 'rare' && rng.next() < 0.35) {
+    // a natural fracture comes with the drop (`fresh`), never from rerolling it, and locks the modifier like a Fractured Orb does
+    if (fresh && item.itemTier === 5 && item.rarity === 'rare' && rng.next() < 0.35) {
       const all = [...item.prefixes, ...item.suffixes];
       if (all.length > 0 && !item.fractured) {
         const picked = pick(rng, all);
+        picked.fractured = true;
         item.fractured = picked.affixId;
       }
     }
@@ -217,8 +219,28 @@ export function createItem(s: GameState, baseId: string, ilvl: number, rarity: R
   // random uniques are created via createUnique; a bare 'unique' request rolls a rare instead
   const r: Rarity = rarity === 'unique' ? 'rare' : rarity;
   const item: Item = { uid: newUid(s), baseId, ilvl, rarity: r, name: null, prefixes: [], suffixes: [], itemTier: itemTier ?? 1 };
-  rerollMods(item, rng, bias);
+  rerollMods(item, rng, bias, undefined, true);
   return item;
+}
+
+/**
+ * An item's fractured and Doom Tier marks name a modifier, and only mean something while that modifier is on the item
+ * and carries the mark itself. Tier 5 drops from before the fix were marked fractured without locking the modifier:
+ * if it's still there it gets its lock, otherwise the mark goes. Safe on any item, any number of times.
+ */
+export function settleItemMarks(item: Item | undefined | null): void {
+  if (!item || !Array.isArray(item.prefixes) || !Array.isArray(item.suffixes)) return;
+  const mods = allMods(item);
+  if (item.fractured && !mods.some((m) => m.fractured)) {
+    const named = mods.find((m) => m.affixId === item.fractured && !m.crafted);
+    if (named) named.fractured = true;
+  }
+  const fractured = mods.find((m) => m.fractured)?.affixId;
+  if (fractured) item.fractured = fractured;
+  else delete item.fractured;
+  const elevated = mods.find((m) => m.elevated)?.affixId;
+  if (elevated) item.elevated = elevated;
+  else delete item.elevated;
 }
 
 export function rollUnwrittenNotableIndex(classId: string | undefined, rng: Rng): number {
