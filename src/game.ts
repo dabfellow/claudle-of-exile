@@ -1068,7 +1068,7 @@ class GameStore {
         break;
       case 'loot':
         if (e.filterSound) playLootFilterSound();
-        if (e.item || e.currencyId || e.gemId || e.supportId) {
+        if ((e.item && !e.hidden) || e.currencyId || e.gemId || e.supportId) {
           this.lootLog = [
             { id: this.nextId++, at: Date.now(), item: e.item, currencyId: e.currencyId, gemId: e.gemId, supportId: e.supportId, salvaged: e.salvaged },
             ...this.lootLog,
@@ -1084,7 +1084,7 @@ class GameStore {
         this.pushToast(`${SKILLS[e.skill].name} level ${e.level}!`, 'level');
         break;
       case 'loot':
-        if (e.item && !e.salvaged && e.item.rarity !== 'normal' && e.item.rarity !== 'magic') {
+        if (e.item && !e.salvaged && !e.hidden && e.item.rarity !== 'normal' && e.item.rarity !== 'magic') {
           this.addFeed(`Found ${itemName(e.item)}`, e.item.rarity);
         }
         if (e.currencyId && ['chaos', 'exalted', 'divine', 'annul', 'instill', 'regal', 'alchemy'].includes(e.currencyId)) {

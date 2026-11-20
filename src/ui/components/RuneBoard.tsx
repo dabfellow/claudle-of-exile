@@ -56,7 +56,7 @@ export function RuneBoard() {
   return (
     <>
       <div className="callout skill-note">
-        Inscribe runes at the Crafting Bench. Every piece of gear has one rune slot, uniques too. No orb touches it. Each other piece wearing the same family makes a rune <b>{resPct}%</b> stronger (Rune Board Level {runeBoardLvl}{bonusPct > 0 ? ` · +${bonusPct}% rune potency` : ''}).
+        Inscribe runes from the Inventory crafting panel. Every piece of gear has one rune slot, uniques too. No orb touches it. Each other piece wearing the same family makes a rune <b>{resPct}%</b> stronger (Rune Board Level {runeBoardLvl}{bonusPct > 0 ? ` · +${bonusPct}% rune potency` : ''}).
       </div>
       <div className="card">
         <div className="card-title">

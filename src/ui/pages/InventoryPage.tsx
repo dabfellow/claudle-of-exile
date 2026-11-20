@@ -1,22 +1,33 @@
 import { monsterDamage } from '../../data/zones';
 import { FLASK_SLOT_TYPES } from '../../data/flasks';
-import { flaskStats } from '../../engine/flasks';
+import { findFlask, flaskStats } from '../../engine/flasks';
 import { equipFlask, unequipFlask } from '../../engine/combat';
-import { useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
+import { findItem } from '../../engine/crafting';
 import { equip, equipReason, slotsFor } from '../../engine/equipment';
+import { inventoryFilterAction, runFilterOnInventory } from '../../engine/lootRouting';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, RES_CAP, type Derived } from '../../engine/stats';
+import { stashItems } from '../../engine/storage';
 import type { EquipSlot, GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { fmt, GameIcon, PageHeader, ProgressBar } from '../components/common';
+import { CurrencyAmount, fmt, GameIcon, PageHeader, ProgressBar } from '../components/common';
+import { CraftPanel } from '../components/CraftPanel';
+import { Fold } from '../components/Fold';
 import { Icon } from '../components/Icon';
 import { FlaskShelf } from '../components/FlaskView';
 import { GearSets } from '../components/Loadouts';
 import { ItemCell } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
 import { PaperDoll, SLOT_LABEL } from '../components/PaperDoll';
-import { openItemMenu } from '../components/ItemMenu';
+import { StashPanel, type StashTabId } from '../components/StashPanel';
+import type { Page } from '../Layout';
+import '../inventory-screen.css';
 
-const DMG_NAME = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning', chaos: 'Chaos' } as const;
+/** below this page width the item panel stops sitting beside the grids and opens as a sheet */
+const NARROW_PX = 1000;
+
+const DMG_NAME ={ phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning', chaos: 'Chaos' } as const;
 
 function Row({ label, value, hint, color }: { label: string; value: string; hint?: string; color?: string }) {
   return (
@@ -196,18 +207,20 @@ function FlaskPicker({ s, slot, onDone }: { s: GameState; slot: number; onDone: 
   );
 }
 
-function CenterColumn({ s, d }: { s: GameState; d: Derived }) {
+/** Worn gear: click a piece or a flask to pick it, an empty slot to fill it. */
+function CharacterColumn({ s, d, selected, onPick, onPickFlask }: { s: GameState; d: Derived; selected: number | null; onPick: (uid: number) => void; onPickFlask: (uid: number) => void }) {
   const [picking, setPicking] = useState<EquipSlot | null>(null);
   const [flaskSlot, setFlaskSlot] = useState<number | null>(null);
-  const pickFlask = (i: number) => (setPicking(null), setFlaskSlot(flaskSlot === i ? null : i));
+  const pickEmptyFlask = (i: number) => (setPicking(null), setFlaskSlot(flaskSlot === i ? null : i));
   return (
     <div className="card doll-card">
       <PaperDoll
         s={s}
-        onItem={(_, it) => openItemMenu(it.uid)}
+        selected={selected}
+        onItem={(_, it) => onPick(it.uid)}
         onEmpty={(slot) => (setFlaskSlot(null), setPicking(picking === slot ? null : slot))}
-        onFlask={pickFlask}
-        onEmptyFlask={pickFlask}
+        onFlask={(_, f) => onPickFlask(f.uid)}
+        onEmptyFlask={pickEmptyFlask}
         emptyFlaskTitle="Click to choose a flask"
       />
       {picking && !s.equipment[picking] && <SlotPicker s={s} slot={picking} onDone={() => setPicking(null)} />}
@@ -248,22 +261,113 @@ function CenterColumn({ s, d }: { s: GameState; d: Derived }) {
   );
 }
 
-export function EquipmentPage() {
+/**
+ * Inventory, stash and crafting on one screen (docs/MILESTONES.md, "Inventory, stash and crafting merge").
+ * Click any item, worn, carried or stashed, and the side panel moves, salvages or crafts it.
+ */
+export function InventoryPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const d = deriveStats(s, []);
+  const [pick, setPick] = useState<{ uid: number; flask: boolean } | null>(null);
+  const [stashTab, setStashTab] = useState<StashTabId>('gear');
+  const [stashPage, setStashPage] = useState(0);
+  const here = Math.min(stashPage, s.account.stash.length - 1);
+  const pickItem = (uid: number) => setPick(pick?.uid === uid && !pick.flask ? null : { uid, flask: false });
+  const pickFlask = (uid: number) => setPick(pick?.uid === uid && pick.flask ? null : { uid, flask: true });
+  // a salvaged or sold item leaves nothing to show, so the panel (a sheet on phones) closes
+  const live = pick && (pick.flask ? findFlask(s, pick.uid) : findItem(s, pick.uid)) ? pick : null;
+  const selected = live?.uid ?? null;
+  const filterable = s.inventory.filter((i) => inventoryFilterAction(s, i) !== null).length;
+  const pageRef = useRef<HTMLDivElement>(null);
+  const narrow = useNarrow(pageRef, NARROW_PX);
+  const doll = <CharacterColumn s={s} d={d} selected={selected} onPick={pickItem} onPickFlask={pickFlask} />;
+  const panel = (
+    <CraftPanel key={live ? `${live.flask ? 'f' : 'i'}${live.uid}` : 'none'} s={s} uid={live && !live.flask ? live.uid : null} flaskUid={live?.flask ? live.uid : null} onClear={() => setPick(null)} />
+  );
   return (
-    <div className="page wide">
-      <PageHeader title="Equipment">
-        Click gear for its menu, a flask slot to swap or take off a flask, or an empty slot to fill it from your bag (that's how you dual wield). Hover inventory items to compare; right-click
-        any item to pin it.
+    <div className="page inv-page" ref={pageRef}>
+      <PageHeader title="Inventory" actions={<CurrencyAmount id="gold" amount={s.account.bank.gold ?? 0} label="gold" />}>
+        Click any item, worn, carried or stashed, to move, salvage or craft it. Hover to compare; right-click to pin.
       </PageHeader>
-      <div className="equip-layout">
-        <Offense d={d} />
-        <CenterColumn s={s} d={d} />
-        <Defense d={d} />
+      <div className={`inv-layout ${narrow ? 'narrow' : ''}`}>
+        <div className="inv-main">
+          {narrow && doll}
+          <div className="inv-split">
+            <Inventory
+              s={s}
+              compact
+              stashSorts
+              selected={selected}
+              onPick={(it) => pickItem(it.uid)}
+              hint={`Stash all fills stash page ${here + 1}.`}
+              actions={
+                <>
+                  <button
+                    className="btn sm"
+                    disabled={!filterable}
+                    title="Apply your loot filter's Send to stash and auto-salvage rules to what you're carrying"
+                    onClick={() => game.act((st, ctx) => void runFilterOnInventory(st, ctx))}
+                  >
+                    Run filter{filterable ? ` (${filterable})` : ''}
+                  </button>
+                  <button className="btn sm" disabled={!s.inventory.length} onClick={() => game.act((st, ctx) => void stashItems(st, ctx, st.inventory.map((i) => i.uid), here))}>
+                    Stash all
+                  </button>
+                </>
+              }
+            />
+            <StashPanel
+              s={s}
+              go={go}
+              tab={stashTab}
+              setTab={setStashTab}
+              page={here}
+              setPage={setStashPage}
+              selected={selected}
+              onPick={(it) => pickItem(it.uid)}
+              onPickFlask={(f) => pickFlask(f.uid)}
+            />
+          </div>
+          <Fold id="inv-stats" title="Character stats" defaultOpen={false}>
+            <div className="inv-stats">
+              <Offense d={d} />
+              <Defense d={d} />
+            </div>
+          </Fold>
+          <GearSets s={s} />
+        </div>
+        {!narrow && (
+          <aside className={`inv-side ${live ? 'picked' : ''}`}>
+            {doll}
+            <div className="inv-panel-dock">{panel}</div>
+          </aside>
+        )}
       </div>
-      <GearSets s={s} />
-      <Inventory s={s} />
+      {/* on a narrow screen the panel is a sheet over everything, opened by picking an item */}
+      {narrow &&
+        live &&
+        createPortal(
+          <div className="inv-sheet" role="dialog" aria-label="Item">
+            <div className="inv-sheet-backdrop" onClick={() => setPick(null)} />
+            <div className="inv-sheet-body">{panel}</div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
+}
+
+/** True while the element is narrower than `px`: the Inventory screen's own width, not the window's. */
+function useNarrow(ref: RefObject<HTMLElement | null>, px: number): boolean {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setNarrow(el.clientWidth < px);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref, px]);
+  return narrow;
 }

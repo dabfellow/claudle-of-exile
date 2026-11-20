@@ -3,7 +3,7 @@
  * (`npm run sim -- --scenario act3Boss`). The browser side, and presets that need it, are in scenarios.ts.
  */
 import type { ClassId } from '../data/classes';
-import { BAG_SIZE } from '../data/hideout';
+import { bagCap } from '../engine/storage';
 import { BASES, baseDef } from '../data/bases';
 import { CURRENCIES, MATERIALS } from '../data/materials';
 import { ZONES, type ZoneDef } from '../data/zones';
@@ -47,7 +47,7 @@ export const PRESETS: Record<string, Setup> = {
     prepare: (s) => {
       const rng = seeded(1);
       const bases = BASES.filter((b) => b.reqLevel <= 30);
-      for (let i = s.inventory.length; i < BAG_SIZE; i++) {
+      for (let i = s.inventory.length; i < bagCap(s); i++) {
         s.inventory.push(createItem(s, bases[i % bases.length].id, 30, 'rare', rng));
       }
     },

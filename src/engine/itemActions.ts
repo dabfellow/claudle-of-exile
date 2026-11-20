@@ -1,9 +1,8 @@
-import { BAG_SIZE } from '../data/hideout';
 import { claimOwned } from './account';
 import type { Ctx } from './context';
 import { BENCH_UNBUILT, benchBuilt, isCraftLocked, salvage } from './crafting';
 import { equip, equipReason, unequip } from './equipment';
-import { bagFull, pickUp, shelveUnique, stashItems, stashPageRoom, takeFromStash } from './storage';
+import { bagCap, bagFull, pickUp, shelveUnique, stashItems, stashPageRoom, takeFromStash } from './storage';
 import type { EquipSlot, GameState, Item } from './types';
 
 /**
@@ -86,7 +85,7 @@ export function equipFrom(s: GameState, ctx: Ctx, uid: number, slot?: EquipSlot)
     return err;
   }
   // equip() puts what it replaced at the end of the bag; past the bag's size, that goes where the new item came from
-  while (p.at !== 'bag' && s.inventory.length > BAG_SIZE) {
+  while (p.at !== 'bag' && s.inventory.length > bagCap(s)) {
     putBack(s, p, s.inventory.pop()!);
   }
   return null;

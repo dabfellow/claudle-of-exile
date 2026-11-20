@@ -61,6 +61,15 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 
 ## Decisions
 
+- Inventory, stash and crafting merge, design pass (2026-11-19). Owner: stash, inventory and Bench are "some of my least favorite screens"; players should be the loot filter; "the fact that all of our crafting is locked to the crafting bench sucks".
+  - Decided for the owner: the Equipment page is renamed **Inventory**. Inventory holds 100 slots + 20 per Stash level (260 at Stash 9). The loot filter gains a **Send to stash** action; anything not caught by a rule goes to the inventory, never the stash. A **Run filter on inventory** button applies salvage/stash rules to carried items. Uniques are still never auto-salvaged.
+  - Q1 loot destination: owner chose A. Drops that pass the filter go straight into the inventory; the ground pile is no longer the normal place for loot, and time-away loot also goes to the inventory.
+  - Q1 full inventory: owner chose A. Extra drops spill onto a small ground pile that works like today's (a death marks it, a second death loses it).
+  - Q2 layout: owner wants the current Inventory, Stash and Bench screens scrapped and **one new combined screen built from scratch** that shows everything: "go to their inventory, do crafting if they want, move stuff to their stash, and not have to click through 3 different side menus". Read as A for both parts: worn gear, inventory and stash side by side (stash stacks below on phones), and clicking any item opens a side panel with its details and all crafting and salvage. Stash and Bench pages leave the sidebar.
+  - Q3 Bench: owner chose A. The Crafting Bench stays a Hideout upgrade you never visit; its unlocks appear in the item's crafting panel, and locked tools show greyed out with "Needs Bench N".
+  - Q3 gates: owner chose B. Salvage still needs Bench 2, and auto-salvage by rarity still needs War Table 5/6/7.
+  - Loot filter hide (owner, replaces the 2026-11-09 "hidden drops remain in the pile" call): hidden items are simply not shown and don't count toward the ground limit, so players can "pre-filter out" junk, but hidden items give no salvage. Auto-salvage stays behind its upgrades. The filter should become a full filter (bases, item level, which mods a rare must show, etc.). The ground-items display "also needs a whole rework" later.
+
 - Capital prosperity/map revision (2026-11-17): Owner wants Caer Veyr grander and more lavish, noting people live relatively well there. Created and visually inspected `output/imagegen/veyrath-detailed-story-map-v7-capital.png` with a compact citadel, intact city walls, prosperous districts, formal grounds and modest gold accents. Relative capital prosperity does not remove compulsory field labour or outlying deprivation. Exact built-in edit prompt saved alongside; no runtime changes.
 
 - Veyrath scale and material touchups (2026-11-17): Owner requested reading the Interconnectd article on the "plastic AI look" and touching up the map, then added that towns should fit the map's scale. Read the article and adapted its physical-material/imperfection suggestions to cartography. Generated and visually inspected `output/imagegen/veyrath-detailed-story-map-v6-atlas.png`: substantially smaller settlement/harbor drawings, retained geographic detail and labels, varied ink/watercolor/paper treatment. Exact built-in edit prompt and source link saved alongside. Illustrative cartography, not measured street-scale geography; no runtime changes.
@@ -602,6 +611,13 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Inventory, stash and crafting merge (design pass 2026-11-19, see Decisions "Inventory, stash and crafting merge"). Unreleased. — done 2026-11-19
+  - [x] Full loot filter: base types, item/required level, tier, "must have" mod groups (any/all/at least N, min tier), mod counts, fractured/crafted/Doom flags, plain-words rule summaries; hidden drops are thrown away (no pile space, no dust). `tests/lootFilterConditions.test.ts`. — done 2026-11-19
+  - [x] Loot routing: kept drops go straight into the inventory (time-away loot too); new **Send to stash** filter action; **Run filter** button on the inventory; full inventory spills onto the ground/time-away pile. `src/engine/lootRouting.ts`, `tests/inventoryMerge.test.ts`. — done 2026-11-19
+  - [x] Inventory size 100 + 20 per Stash level (replaces the 60-slot bag; no save change needed, it only grows). — done 2026-11-19
+  - [x] New combined Inventory screen (replaces Equipment, Stash and Crafting Bench pages): inventory and stash side by side, worn gear and the item panel on the right (a bottom sheet on phones), all crafting and salvage in the panel, locked Bench tools greyed with "Needs Bench N". Browser-checked at desktop and phone sizes. — done 2026-11-19
+  - [ ] Later: rework how ground items are displayed.
+
 - [x] Agility profession: courses for xp; levels open shortcuts (Heist rooms up to 20% faster, close-in up to 50% faster in fights, four hidden gathering spots). Owner chose "shortcut unlocks" over stat perks (2026-11-19). Data in `src/data/agility.ts`. — done 2026-11-19 (live in 0.5.3)
   - Left out of skilling-tree points, total-level achievements and the skilling passive tree for now, so nothing else shifts; owner call whether to add them.
 
@@ -741,6 +757,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Ideas / later
 
+- Inventory merge follow-ups (2026-11-19): 107 campaign/act tests (act2–act6, actRoads, cartography, a few "Act 6" wording checks) already fail on the last commit, before this work; they look like they expect six acts while the game now has seven. `docs/GAME.md` line 53 still says auto-salvage needs War Table 5/6/7; the game uses Quartermaster 2/3/4. Gear hidden under the old filter rules that is still on the ground will show again once (nothing is deleted).
+
 - Agility follow-ups (2026-11-19): world-map travel has no travel time, so there was no "faster travel" for Agility to shorten; Agility is not counted toward total skill level (skilling-tree points, achievements) and has no level-50 achievement or skilling-tree branch yet.
 
 - Offline summary wording follow-up (noticed in Phase03 playtest, 2026-11-14): the generic Items Found tile says equipment is waiting on Combat even when a completed profession tool has safely arrived in the inventory. Consider destination-aware wording in a later shared UI pass; reward delivery itself was verified.
@@ -764,6 +782,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] One Inventory screen replaces Equipment, Stash and Crafting Bench; loot goes straight to the inventory (100 + 20 per Stash level), Send to stash and Run filter, full item loot filter. — done 2026-11-19 (unreleased)
 
 - [x] Agility profession: 10 courses, 13 shortcuts (Heist rooms, close-in, four hidden gathering spots). — done 2026-11-19 (live in 0.5.3)
 - [x] Thieving Heist and Rogue Crew tabs redone as ledger + dossier; Focus moved onto the running mark/heist card. — done 2026-11-18 (live in 0.5.2)

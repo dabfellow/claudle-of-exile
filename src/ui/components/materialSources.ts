@@ -40,7 +40,7 @@ export function materialSources(id: string): Source[] {
   const rune = runeDef(id);
   if (rune && rune.grade.grade <= RUNE_DROP.maxGrade) out.push({ label: 'Monster drops', detail: 'rare, from Act 4 on', page: 'campaign' });
   if (id === 'gold') out.push({ label: 'Monster drops', page: 'campaign' }, { label: 'Selling in Town', page: 'vendor' });
-  if (id === 'arcane_dust') out.push({ label: 'Salvaging gear', detail: 'Stash or Equipment', page: 'stash' });
+  if (id === 'arcane_dust') out.push({ label: 'Salvaging gear', detail: 'Inventory', page: 'equipment' });
   if (['marrow_shard', 'choir_glass', 'black_pearl', 'throne_ash', 'crownless_sigil'].includes(id)) {
     out.push({ label: 'Hard Boss drops', detail: 'Map Device keyed fights', page: 'maps' });
   }

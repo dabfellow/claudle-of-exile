@@ -1,11 +1,12 @@
 import { SKILL_BAR_SLOTS } from '../data/gems';
-import { BAG_SIZE, GEAR_SWITCH_BENCH_LEVEL } from '../data/hideout';
+import { GEAR_SWITCH_BENCH_LEVEL } from '../data/hideout';
 import { actionDef } from '../data/skills';
 import { characterLevel } from './character';
 import type { Ctx } from './context';
 import { gemUseReason, socketSupport, unsocketSupport } from './gems';
 import { stationLevel } from './hideout';
 import { equipFrom, equipFromReason, moveToStash } from './itemActions';
+import { bagCap } from './storage';
 import { newUid } from './items';
 import { deriveStats } from './stats';
 import { unequip } from './equipment';
@@ -108,7 +109,7 @@ function swapGear(s: GameState, ctx: Ctx, set: GearSet): string | null {
     const item = s.equipment[slot];
     if (item && !set.items[slot] && unequip(s, slot)) moveToStash(s, ctx, item.uid);
   }
-  while (s.inventory.length > BAG_SIZE) {
+  while (s.inventory.length > bagCap(s)) {
     if (moveToStash(s, ctx, s.inventory.at(-1)!.uid)) break;
   }
   if (!pending.length) return null;

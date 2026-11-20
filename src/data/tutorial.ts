@@ -119,11 +119,11 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'transmute',
     title: 'A Touch of Magic',
-    npc: "Plain steel is boring. At the Crafting Bench, pick your new weapon from the bag and rub a Transmutation orb on it. It comes out blue, with a modifier or two. Don't ask me how that works.",
-    classicNpc: "Plain steel is boring. At the Crafting Bench, pick the weapon you're holding and rub a Transmutation orb on it. It comes out blue, with a modifier or two. Don't ask me how that works.",
+    npc: "Plain steel is boring. In your Inventory, click your new weapon and rub a Transmutation orb on it. It comes out blue, with a modifier or two. Don't ask me how that works.",
+    classicNpc: "Plain steel is boring. In your Inventory, click the weapon you're holding and rub a Transmutation orb on it. It comes out blue, with a modifier or two. Don't ask me how that works.",
     objective: 'Transmute a weapon',
     target: 1,
-    highlight: ['nav-bench', 'orb-transmute'],
+    highlight: ['nav-equipment', 'orb-transmute'],
     match: (e, s) => {
       if (e.t !== 'craft' || e.orbId !== 'transmute') return 0;
       const item = findItem(s, e.uid);
@@ -136,7 +136,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'equip',
     title: 'Dress for the Grave',
-    npc: 'Now put that blue blade in your hand: click it in your bag on the Equipment page. Those Augmentation orbs can add another modifier first, if it has room.',
+    npc: 'Now put that blue blade in your hand: click it in your Inventory and choose Equip. Those Augmentation orbs can add another modifier first, if it has room.',
     objective: 'Equip your blue weapon',
     target: 1,
     highlight: ['nav-equipment'],
@@ -174,11 +174,11 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'salvage',
     title: 'Nothing Wasted',
-    npc: "Your old weapon's still in your bag, and it's no use to anyone in one piece. Pick it at the Crafting Bench and salvage it. Arcane Dust is what orbs are made of — Alchemy turns one into the other.",
-    classicNpc: "Pick up something you don't need, pick it at the Crafting Bench and salvage it. Arcane Dust pays for the bench's better crafts.",
+    npc: "Your old weapon's still in your inventory, and it's no use to anyone in one piece. Click it in your Inventory and salvage it. Arcane Dust is what orbs are made of — Alchemy turns one into the other.",
+    classicNpc: "Find something you don't need in your Inventory, click it and salvage it. Arcane Dust pays for the bench's better crafts.",
     objective: 'Salvage an item',
     target: 1,
-    highlight: ['nav-bench', 'salvage-item'],
+    highlight: ['nav-equipment', 'salvage-item'],
     match: (e) => (e.t === 'salvage' ? 1 : 0),
     reward: { arcane_dust: 12 },
     rewardText: '12 Arcane Dust',

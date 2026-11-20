@@ -155,7 +155,7 @@ export function ItemTip({
           </>
         )}
         {cmp && <Comparison cmp={cmp} />}
-        {item.impression && <div className="dim small">Wax impression taken: can be restored at the Crafting Bench</div>}
+        {item.impression && <div className="dim small">Wax impression taken: can be restored from the Inventory crafting panel</div>}
         {!pinned && (
           <div className="tip-hint">
             {item.rarity !== 'normal' && !alt ? 'Alt: ranges & keep open · ' : alt ? 'Alt held: staying open · ' : ''}Right-click: pin

@@ -863,6 +863,8 @@ export interface Lifetime {
   itemsLooted: number;
   orbsUsed: number;
   salvaged: number;
+  /** drops the loot filter hid (discarded without salvage) */
+  hiddenByFilter?: number;
   flasksDrunk: number;
   flasksBrewed: number;
   mealsEaten: number;
@@ -1271,7 +1273,7 @@ export type GameEvent =
   | { t: 'kill'; name: string; boss: boolean }
   | { t: 'spawn'; name: string; boss: boolean }
   | { t: 'death'; xpLost: number }
-  | { t: 'loot'; item?: Item; currencyId?: string; qty?: number; salvaged?: boolean; gemId?: string; supportId?: string; flask?: FlaskInstance; filterSound?: boolean }
+  | { t: 'loot'; item?: Item; currencyId?: string; qty?: number; salvaged?: boolean; gemId?: string; supportId?: string; flask?: FlaskInstance; filterSound?: boolean; /** the loot filter hid it: discarded, never placed */ hidden?: boolean }
   | { t: 'levelup'; skill: SkillId; level: number }
   | { t: 'xp'; skill: SkillId; amount: number }
   | { t: 'produce'; skill: SkillId; outputs: Record<string, number>; baseId?: string }

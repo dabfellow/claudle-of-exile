@@ -22,7 +22,7 @@ const SLOT_LABEL: Record<EquipSlot, string> = {
   ring4: 'Ring',
 };
 
-/** Worn gear plus the five flask slots under it. Shared by the Equipment page and the Crafting Bench. */
+/** Worn gear plus the five flask slots under it. Shared by the Inventory screen and the Hideout. */
 export { SLOT_LABEL };
 
 export function PaperDoll({

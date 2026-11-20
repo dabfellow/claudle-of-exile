@@ -6847,11 +6847,33 @@ img.art.mat-art {
 .loot-share { display: grid; gap: 8px; border-top: 1px solid var(--border); padding-top: 10px; }
 .loot-share h4, .loot-share p { margin: 0; }
 .loot-share textarea { width: 100%; resize: vertical; font-family: monospace; font-size: 10px; }
+.loot-rule-head { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.loot-rule-summary { color: var(--text); opacity: .8; line-height: 1.35; overflow-wrap: anywhere; }
+.loot-swatch { width: 14px; height: 14px; border-radius: 3px; flex: none; border: 1px solid var(--border); }
+.loot-section { display: grid; gap: 10px; margin: 0; padding: 8px 10px 10px; border: 1px solid var(--border); border-radius: 7px; min-width: 0; }
+.loot-section > legend { padding: 0 4px; color: var(--accent); font-size: 12px; font-weight: 700; }
+.loot-note { margin: 0; }
+.loot-rule-body .chip.active { border-color: var(--accent); }
+.loot-rule-body .chip.loot-inline { justify-self: start; }
+.loot-range { display: grid; gap: 4px; color: var(--dim); font-size: 11px; min-width: 0; }
+.loot-range .row { gap: 4px; flex-wrap: nowrap; }
+.loot-range input { width: 100%; min-width: 0; }
+.loot-num { width: 56px; }
+.loot-mod-group { display: grid; gap: 7px; padding: 8px; border: 1px dashed var(--border); border-radius: 7px; }
+.loot-picker { display: grid; gap: 6px; min-width: 0; }
+.loot-picker > input { width: 100%; }
+.loot-picker-results { display: grid; gap: 2px; max-height: 240px; overflow-y: auto; padding: 4px; border: 1px solid var(--border); border-radius: 6px; background: rgba(0,0,0,.2); }
+.loot-picker-option { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 7px 8px; text-align: left; color: var(--text); background: none; border: 0; border-radius: 4px; cursor: pointer; font: inherit; font-size: 12px; }
+.loot-picker-option:hover, .loot-picker-option:focus-visible { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.loot-picker-option .dim { flex: none; }
 
 @media (max-width: 760px) {
   .loot-preset-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .loot-preset:last-child { grid-column: 1 / -1; }
   .loot-condition-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .loot-rule-body { padding: 0 6px 8px; }
+  .loot-section { padding: 6px 7px 8px; }
+  .loot-picker-option { flex-direction: column; gap: 1px; padding: 9px 8px; }
   .quartermaster-station .loot-filter-manager { margin-left: -4px; margin-right: -4px; }
 }
 .item-tiles {

@@ -5,27 +5,24 @@ import { allMods, describeMod, itemName } from '../../engine/items';
 import { MATERIALS, materialDef } from '../../data/materials';
 import { STASH_PAGE_SIZE } from '../../data/hideout';
 import { challengeName, isSolo } from '../../engine/challenge';
-import { wearFlask } from '../../engine/combat';
 import { salvage } from '../../engine/crafting';
 import { clearableGems, clearLevelOneGems } from '../../engine/gems';
 import { sortFigure, sortItems, type SortKey } from '../../engine/itemSort';
-import { buyStashPage, setStashAffinity, settleOverflow, stashedItems, stashItems, stashPagePrice, stashPageRoom, takeFromStash } from '../../engine/storage';
+import { buyStashPage, setStashAffinity, settleOverflow, stashedItems, stashPagePrice, stashPageRoom, takeFromStash } from '../../engine/storage';
 import { game } from '../../game';
-import type { GameState, Item, Rarity, StashAffinity } from '../../engine/types';
+import type { FlaskInstance, GameState, Item, Rarity, StashAffinity } from '../../engine/types';
 import '../round2-session3.css';
-import { useGame } from '../../game';
-import { Art, CurrencyAmount, EmptyState, fmt, MatIcon, PageHeader, Tabs, Tooltip, type TabDef } from '../components/common';
-import { FlaskShelf } from '../components/FlaskView';
-import { GemIcon, GemTip, SupportTip } from '../components/GemView';
-import { Swatch } from '../components/Icon';
-import { Inventory, ItemTiles, SalvageByRarity, StashSort } from '../components/Inventory';
-import { PaperDoll } from '../components/PaperDoll';
-import { UniqueShelf } from '../components/UniqueShelf';
+import { Art, EmptyState, fmt, MatIcon, Tabs, Tooltip, type TabDef } from './common';
+import { FlaskShelf } from './FlaskView';
+import { GemIcon, GemTip, SupportTip } from './GemView';
+import { Swatch } from './Icon';
+import { ItemTiles, SalvageByRarity, StashSort } from './Inventory';
+import { UniqueShelf } from './UniqueShelf';
 import type { Page } from '../Layout';
-import { openItemMenu } from '../components/ItemMenu';
-import { CurrencyPinHint, CurrencySlot } from '../components/CurrencyPins';
+import { CurrencyPinHint, CurrencySlot } from './CurrencyPins';
 
-type Tab = 'gear' | 'uniques' | 'currency' | 'materials' | 'gems' | 'flasks';
+export type StashTabId = 'gear' | 'uniques' | 'currency' | 'materials' | 'gems' | 'flasks';
+type Tab = StashTabId;
 
 /** The currency tab has a fixed place for every orb, like a real stash tab. Gold sits there too, so it can be pinned to the top bar. */
 const CURRENCY_LAYOUT: { label: string; ids: string[] }[] = [
@@ -74,10 +71,32 @@ function MaterialTile({ s, id }: { s: GameState; id: string }) {
   );
 }
 
-export function StashPage({ go }: { go: (p: Page) => void }) {
-  const s = useGame();
-  const [tab, setTab] = useState<Tab>('gear');
-  const [page, setPage] = useState(0);
+/**
+ * The stash, as one card beside the inventory on the Inventory screen. Clicking gear or a flask picks it
+ * (the screen's item panel then moves, salvages or crafts it). `page`/`setPage` live with the screen so
+ * the inventory's "Stash all" fills the page you're looking at.
+ */
+export function StashPanel({
+  s,
+  go,
+  tab,
+  setTab,
+  page,
+  setPage,
+  selected,
+  onPick,
+  onPickFlask,
+}: {
+  s: GameState;
+  go: (p: Page) => void;
+  tab: Tab;
+  setTab: (t: Tab) => void;
+  page: number;
+  setPage: (n: number) => void;
+  selected: number | null;
+  onPick: (item: Item) => void;
+  onPickFlask: (f: FlaskInstance) => void;
+}) {
   const [gemSearch, setGemSearch] = useState('');
   const gemHit = (name: string) => name.toLowerCase().includes(gemSearch.trim().toLowerCase());
   const here = Math.min(page, s.account.stash.length - 1);
@@ -92,36 +111,24 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
   const isChallenge = !!challengeName(s.character.challenge);
   const clearable = clearableGems(s).length;
   return (
-    <div className="page">
-      <PageHeader title="Stash" actions={<CurrencyAmount id="gold" amount={s.account.bank.gold ?? 0} label="gold" />}>
-        {isSolo(s) ? 'Every tab here, and your gold, belongs to this character alone.' : `Every tab here, and your gold, is shared by all your ${isChallenge ? `${challengeName(s.character.challenge)} ` : ''}characters.`} Your skill bar and belt stay with this character.
-      </PageHeader>
-      <div className="stash-top">
-        <div className="card doll-card">
-          <PaperDoll s={s} onItem={(_, it) => openItemMenu(it.uid)} onFlask={() => setTab('flasks')} onEmptyFlask={() => setTab('flasks')} emptyFlaskTitle="Click to pick from your spare flasks" />
-        </div>
-        <Inventory
-          s={s}
-          stashSorts
-          hint="Click an item for Equip, Stash, Salvage. Stash all fills the page below."
-          actions={
-            <button className="btn sm" disabled={!s.inventory.length} onClick={() => game.act((st, ctx) => void stashItems(st, ctx, st.inventory.map((i) => i.uid), here))}>
-              Stash all
-            </button>
-          }
-        />
+    <div className="card stash-card">
+      <div className="card-title">
+        Stash
+        <span className="card-hint">
+          {isSolo(s) ? 'This character only' : `Shared by all your ${isChallenge ? `${challengeName(s.character.challenge)} ` : ''}characters`}
+        </span>
       </div>
       <Tabs tabs={tabs} value={tab} onChange={setTab} />
 
       {/* every tab sits in the same cell, so the panel is always as tall as the tallest and switching never jumps */}
       <div className="stash-views">
         <StashTab on={tab === 'gear'}>
-          <Overflow s={s} />
-          <GearPages s={s} page={here} setPage={setPage} />
+          <Overflow s={s} onPick={onPick} />
+          <GearPages s={s} page={here} setPage={setPage} selected={selected} onPick={onPick} />
         </StashTab>
 
         <StashTab on={tab === 'uniques'}>
-          <UniqueShelf s={s} />
+          <UniqueShelf s={s} onPick={onPick} />
         </StashTab>
 
         <StashTab on={tab === 'currency'}>
@@ -215,14 +222,10 @@ export function StashPage({ go }: { go: (p: Page) => void }) {
         <StashTab on={tab === 'flasks'}>
           <div className="card stash-panel">
             <div className="row">
-              <span className="dim small">Spare flasks. Click one to put it on your belt; craft and enchant them at the Crafting Bench.</span>
-              <span className="spacer" />
-              <button className="btn sm" onClick={() => go('bench')}>
-                Open Crafting Bench
-              </button>
+              <span className="dim small">Spare flasks. Click one to craft, enchant or put it on your belt.</span>
             </div>
             {s.account.flaskStash.length === 0 && <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>}
-            <FlaskShelf flasks={s.account.flaskStash} onPick={(f) => game.act((st) => wearFlask(st, f.uid))} />
+            <FlaskShelf flasks={s.account.flaskStash} selected={selected} onPick={onPickFlask} />
           </div>
         </StashTab>
       </div>
@@ -285,7 +288,7 @@ function StashTab({ on, children }: { on: boolean; children: ReactNode }) {
 const salvageGear = (uids: number[]) => game.act((st, ctx) => void salvage(st, ctx, uids));
 
 /** Items that didn't fit when characters' stashes were merged. Nothing here is lost: take it out or move it in as room appears. */
-function Overflow({ s }: { s: GameState }) {
+function Overflow({ s, onPick }: { s: GameState; onPick: (item: Item) => void }) {
   const items = s.account.overflow;
   if (!items.length) return null;
   const room = s.account.stash.some((_, i) => stashPageRoom(s, i) > 0);
@@ -302,7 +305,7 @@ function Overflow({ s }: { s: GameState }) {
           Move to stash pages
         </button>
       </div>
-      <ItemTiles s={s} items={items} slots={items.length} onClick={(i) => openItemMenu(i.uid)} />
+      <ItemTiles s={s} items={items} slots={items.length} compact onClick={onPick} />
     </div>
   );
 }
@@ -343,7 +346,7 @@ function itemText(item: Item): string {
 }
 
 /** The stash's gear pages: pick a page, click an item to take it back to the bag. */
-function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: (n: number) => void }) {
+function GearPages({ s, page, setPage, selected, onPick }: { s: GameState; page: number; setPage: (n: number) => void; selected: number | null; onPick: (item: Item) => void }) {
   const [sort, setSort] = useState<SortKey>('recent');
   const [search, setSearch] = useState('');
   const [slot, setSlot] = useState('');
@@ -470,7 +473,7 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
           <span className="num">
             {items.length}/{STASH_PAGE_SIZE}
           </span>{' '}
-          · click an item for Equip, To bag, Salvage
+          · click an item to pick it
         </span>
         <span className="spacer" />
         <SalvageByRarity s={s} items={items} onSalvage={salvageGear} />
@@ -498,10 +501,10 @@ function GearPages({ s, page, setPage }: { s: GameState; page: number; setPage: 
           empty="Nothing in your stash matches."
           // across pages, each tile says which page it sits on
           figure={(i) => (everyPage ? `p${(pageOf.get(i.uid) ?? 0) + 1}` : sortFigure(i, sort))}
-          onClick={(i) => openItemMenu(i.uid)}
+          compact selected={(i) => i.uid === selected} onClick={onPick}
         />
       ) : (
-        <ItemTiles s={s} items={sortItems(items, sort, s)} slots={STASH_PAGE_SIZE} figure={(i) => sortFigure(i, sort)} onClick={(i) => openItemMenu(i.uid)} />
+        <ItemTiles s={s} items={sortItems(items, sort, s)} slots={STASH_PAGE_SIZE} figure={(i) => sortFigure(i, sort)} compact selected={(i) => i.uid === selected} onClick={onPick} />
       )}
     </div>
   );

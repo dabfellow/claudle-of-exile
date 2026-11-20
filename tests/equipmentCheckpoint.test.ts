@@ -406,24 +406,24 @@ describe('Phase 05 Equipment Checkpoint', () => {
       expect(s.expedition).toEqual(previous.expedition);
     });
 
-    it('blocks purpose equipment crafting when inventory is full (60/60) without consuming materials', () => {
+    it('blocks purpose equipment crafting when inventory is full (100/100) without consuming materials', () => {
       const s = newGame(1);
       s.skills.smithing = xpForLevel(20);
       s.account.hideout.forge = 2;
       const a = actionDef('purpose_physical_war_axe');
       s.account.bank = { ...a.inputs! };
 
-      // Fill bag to 60/60
-      s.inventory = Array.from({ length: 60 }, (_, i) => createItem(s, 'driftwood_wand', 1, 'normal', seeded(i)));
-      expect(s.inventory).toHaveLength(60);
+      // Fill bag to 100/100
+      s.inventory = Array.from({ length: 100 }, (_, i) => createItem(s, 'driftwood_wand', 1, 'normal', seeded(i)));
+      expect(s.inventory).toHaveLength(100);
 
       const c = ctx();
       expect(actionBlocker(s, a)).toBe('Inventory full');
       expect(startSkillAction(s, c, a.id)).toBe('Inventory full');
 
-      // Bank materials not touched, bag still 60
+      // Bank materials not touched, bag still 100
       expect(s.account.bank).toEqual(a.inputs);
-      expect(s.inventory).toHaveLength(60);
+      expect(s.inventory).toHaveLength(100);
     });
 
     it('holds completed equipment project in ready state when inventory is full and delivers once space is cleared', () => {
@@ -441,7 +441,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
       expect(startProject(s, c, p.id)).toBeNull();
 
       // Fill bag completely while project is working
-      s.inventory = Array.from({ length: 60 }, (_, i) => createItem(s, 'driftwood_wand', 1, 'normal', seeded(i)));
+      s.inventory = Array.from({ length: 100 }, (_, i) => createItem(s, 'driftwood_wand', 1, 'normal', seeded(i)));
 
       // Advance project to finish
       advanceProject(s, c, p.durationMs);
@@ -458,11 +458,11 @@ describe('Phase 05 Equipment Checkpoint', () => {
 
       // Make space in inventory
       reloaded.inventory.pop();
-      expect(reloaded.inventory).toHaveLength(59);
+      expect(reloaded.inventory).toHaveLength(99);
 
       // Now completes safely
       expect(completeProject(reloaded, c, runId)).toBeNull();
-      expect(reloaded.inventory).toHaveLength(60);
+      expect(reloaded.inventory).toHaveLength(100);
       expect(reloaded.inventory.at(-1)!.name).toBe("Wayfarer's Hammer");
 
       // Cannot complete again (duplicate protection)

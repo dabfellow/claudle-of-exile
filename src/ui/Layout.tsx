@@ -79,9 +79,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
   {
     label: 'Character',
     items: [
-      { page: 'equipment', label: 'Equipment', icon: 'equipment' },
-      { page: 'stash', label: 'Stash', icon: 'stash' },
-      { page: 'bench', label: 'Crafting Bench', icon: 'bench' },
+      { page: 'equipment', label: 'Inventory', icon: 'stash' },
       { page: 'skills', label: 'Skills', icon: 'gems' },
       { page: 'tree', label: 'Passive Tree', icon: 'tree' },
     ],
@@ -176,7 +174,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
                   lvl !== null && <span className="nav-badge">{lvl}</span>
                 )}
                 {it.page === 'tree' && points > 0 && <span className="nav-badge hot">+{points}</span>}
-                {it.page === 'stash' && <span className="nav-badge" title="Items in your bag">{s.inventory.length}</span>}
+                {it.page === 'equipment' && <span className="nav-badge" title="Items in your inventory">{s.inventory.length}</span>}
                 {it.page === 'combat' && s.ground.length + s.offlineHaul.length > 0 && <span className="nav-badge loot" title="Loot waiting to be picked up">{s.ground.length + s.offlineHaul.length}</span>}
                 {it.page === 'achievements' && <span className="nav-badge">{s.achievements.length}</span>}
               </button>
@@ -559,7 +557,7 @@ export function OfflineModal() {
     .filter(([, n]) => n > 0)
     .sort(([a], [b]) => (a === 'gold' ? -1 : b === 'gold' ? 1 : 0));
   const fought = sum.kills > 0 || sum.died;
-  const spoils = mats.length > 0 || sum.items > 0 || sum.gems > 0;
+  const spoils = mats.length > 0 || sum.items > 0 || sum.gems > 0 || (sum.hiddenItems ?? 0) > 0;
   return (
     <div className="modal-backdrop" onClick={() => game.dismissOffline()}>
       <div className="card modal away" onClick={(e) => e.stopPropagation()}>
@@ -629,6 +627,14 @@ export function OfflineModal() {
                   <b className="num">{sum.items}</b>
                   <span>Items Found</span>
                   <span className="dim small">in your bag or waiting on the Combat page</span>
+                </div>
+              )}
+              {(sum.hiddenItems ?? 0) > 0 && (
+                <div className="away-spoil">
+                  <GameIcon name="stash" size={20} color="var(--dim)" />
+                  <b className="num">{sum.hiddenItems}</b>
+                  <span>Hidden</span>
+                  <span className="dim small">by your loot filter, not kept</span>
                 </div>
               )}
               {sum.gems > 0 && (

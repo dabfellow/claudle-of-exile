@@ -58,7 +58,7 @@ describe('Phase 14 crafted weapons', () => {
     const s = newGame(1), c = context(), p = professionProject('woundmaker')!;
     s.skills.smithing = xpForLevel(90); s.professionProgress.work.smithing = 100; s.account.hideout.forge = 3;
     s.account.bank = { ...p.inputs };
-    for (let i = 0; i < 60; i++) s.inventory.push(createItem(s, 'rusted_sword', 1, 'normal', c.rng));
+    for (let i = 0; i < 100; i++) s.inventory.push(createItem(s, 'rusted_sword', 1, 'normal', c.rng));
     expect(startProject(s, c, p.id)).toBeNull(); advanceProject(s, c, p.durationMs);
     expect(s.professionProgress.activeProject!.status).toBe('ready');
     expect(s.inventory.some((i) => i.uniqueId === p.id)).toBe(false);

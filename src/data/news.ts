@@ -10,7 +10,11 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  "The loot filter is now a full item filter: custom rules can pick exact base types, required level, item tier and \"must have\" mods (any, all or at least N, at a minimum tier), mod counts and fractured or crafted mods, with searchable pickers and a plain-words summary of each rule. Hidden drops are now left behind, so they no longer fill your ground or time-away pile (and give no dust).",
+  "Equipment, Stash and the Crafting Bench are now one Inventory screen: your gear, inventory and stash side by side, and clicking any item opens a panel to equip, stash, salvage or craft it. Bench tools you haven't unlocked show what Bench level they need.",
+  "Loot now goes straight into your inventory, which holds 100 items plus 20 per Stash level. Only when it's full do drops spill onto the ground. New loot filter action: Send to stash, plus a Run filter button to sort what you're already carrying.",
+];
 
 export const NEWS: NewsEntry[] = [
   {

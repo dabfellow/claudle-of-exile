@@ -1,4 +1,4 @@
-import { BAG_SIZE, groundCap, offlineHaulCap, STASH_PAGE_GROWTH, STASH_PAGE_PRICE, STASH_PAGE_SIZE } from '../data/hideout';
+import { bagSize, groundCap, offlineHaulCap, STASH_PAGE_GROWTH, STASH_PAGE_PRICE, STASH_PAGE_SIZE } from '../data/hideout';
 import { claimOwned, freeStashPages, seeUnique } from './account';
 import { addBank, canAfford, payCost } from './bank';
 import type { Ctx } from './context';
@@ -8,8 +8,13 @@ import type { GameState, Item, StashAffinity } from './types';
 
 // Gear lives in four places: the ground, the bag (`inventory`), the account's stash pages and equipment. See docs/GAME.md.
 
+/** How many items the inventory holds: grows with the Stash station. */
+export function bagCap(s: GameState): number {
+  return bagSize(s.account.hideout.stash ?? 1);
+}
+
 export function bagFull(s: GameState): boolean {
-  return s.inventory.length >= BAG_SIZE;
+  return s.inventory.length >= bagCap(s);
 }
 
 /** A drop lands on the ground, or in the offline haul while you're away; the oldest falls off past the cap. */

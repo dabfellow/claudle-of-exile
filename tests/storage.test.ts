@@ -130,7 +130,7 @@ describe('gear storage', () => {
     delete raw.offlineHaul;
     const loaded = deserialize(JSON.stringify(raw));
     settleCharacter(loaded, loaded.account);
-    expect(loaded.inventory).toHaveLength(BAG_SIZE);
+    expect(loaded.inventory).toHaveLength(60);
     expect(loaded.account.stash[0]).toHaveLength(40);
     expect(loaded.account.stash).toHaveLength(3);
   });
