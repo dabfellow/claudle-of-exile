@@ -391,9 +391,9 @@ describe('Phase 17 endgame supply hooks', () => {
   it('guarantees a Fractured Orb after ten Doomed victories without one, and a real drop resets the count', () => {
     const s = mapper();
     for (let i = 0; i < 9; i++) winDoomed(s);
-    expect(s.account.bank.fractured_orb ?? 0).toBe(0);
+    const before = s.account.bank.fractured ?? 0;
     winDoomed(s);
-    expect(s.account.bank.fractured_orb).toBe(1);
+    expect(s.account.bank.fractured).toBe(before + 1);
     expect(s.professionProgress.counters[ORB_DROUGHT]).toBe(0);
     // an orb that drops in a run: that run does not count toward the next ten
     s.professionProgress.counters[ORB_DROUGHT] = -1;

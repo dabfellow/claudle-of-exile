@@ -860,6 +860,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 ## Done
 
 - Manual skill gem upgrades with a greyed-out button when an upgrade would disable the skill — done 2026-11-19.
+- Release 0.5.6 gathered every session's unshipped work (2026-11-19): skill upgrades, hand-traced act map routes, combat-only tutorial, one Inventory screen and loot filter rework, the Archaeology overhaul, and the security review fixes (single Fractured Orb, second-device lockout, Hardcore and gift fixes). Left out as superseded: the 17 Nov skilling-area visual polish (the live 19 Nov skill page redesign replaced it) and the 10 Nov sim-rates tooling (the simulator and pacing targets changed since). Both are still on their own branches.
 - Extended the Act 1 route cleanup to all six remaining acts — done 2026-11-19. Hand-traced shared roads, streets, switchbacks and underground passages with authored journey itineraries and sensible entrances. Native previews inspected; automated checks verify all links, no crossing strokes and no duplicate sections. Progression and positions unchanged; live-browser interaction remains unverified. Unreleased.
 
 - Replaced Act 1's crisscrossing map links with hand-traced shared road sections — done 2026-11-19. Preserved progression, area coordinates and all other acts. Six map checks and typecheck pass; native preview inspected, live-browser acceptance outstanding. Unreleased.

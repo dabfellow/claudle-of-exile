@@ -10,7 +10,14 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
+export const UPCOMING: string[] = [];
+
+export const NEWS: NewsEntry[] = [
+  {
+    version: '0.5.6',
+    date: '19 Nov 2026',
+    title: 'One Inventory, the Expedition Trail and Skill Upgrades',
+    items: [
   'Skill gems no longer level up by themselves. When one has the XP, an Upgrade button appears on the Skills page; it greys out and says why if the new level needs more character level or attribute than you have, so an upgrade can never switch a skill off.',
   'All act maps now use hand-traced shared roads and passages, with sensible entrances and no duplicated cross-map links.',
   'Act 1 map routes now follow shared coastal, village and woodland paths instead of crisscrossing the artwork.',
@@ -31,9 +38,8 @@ export const UPCOMING: string[] = [
   "The Map Device's Pinnacle Conduit bonus map now goes into your map supply (maps it gave before are moved there), and it can no longer blank the screen.",
   "A Divine Orb no longer undoes an Exile's Doom Sigil: a Doom Tier modifier rerolls within its raised range.",
   'On phones, the Combat screen drops the top bar\'s activity and life bars, since the fight strip at the bottom already shows them.',
-];
-
-export const NEWS: NewsEntry[] = [
+    ],
+  },
   {
     version: '0.5.5',
     date: '19 Nov 2026',
