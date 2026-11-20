@@ -5,7 +5,7 @@ import { activeGemDef, type GemTag } from '../data/gems';
 import { PLAYER_SPOT } from '../engine/battlefield';
 import { type StationId } from '../data/hideout';
 import { PASSIVE_NODES } from '../data/passiveTree';
-import { actionsFor, type SkillAction } from '../data/skills';
+import { actionDef, actionsFor, type SkillAction } from '../data/skills';
 import { BOSS_FROSTBITE_MAX, monsterDamage, ZONES, zoneDef, type ZoneDef } from '../data/zones';
 import { characterLevel } from '../engine/character';
 import { canSpendLife, equipFlask, flaskRecoveryAmount, lockTarget, queueSkill, skillArea, useFlask } from '../engine/combat';
@@ -481,7 +481,7 @@ export function expeditionNight(s: GameState, ctx: Ctx): boolean {
     const best = shelvesFor(s, c.id).open.sort((a, b) => b.cost - a.cost)[0];
     if (best && s.expedition.orders[c.id] !== best.id) setOrder(s, best.id);
   }
-  const open = SITES.filter((x) => skillLevel(s, 'archaeology') >= x.level);
+  const open = SITES.filter((x) => !actionBlocker(s, actionDef(x.id)));
   const site = [...open].reverse().sort((a, b) => siteStratum(s, a) - siteStratum(s, b))[0];
   return !!site && !startSkillAction(s, ctx, site.id);
 }

@@ -19,6 +19,10 @@ export const UPCOMING: string[] = [
   "The loot filter is now a full item filter: custom rules can pick exact base types, required level, item tier and \"must have\" mods (any, all or at least N, at a minimum tier), mod counts and fractured or crafted mods, with searchable pickers and a plain-words summary of each rule. Hidden drops are now left behind, so they no longer fill your ground or time-away pile (and give no dust).",
   "Equipment, Stash and the Crafting Bench are now one Inventory screen: your gear, inventory and stash side by side, and clicking any item opens a panel to equip, stash, salvage or craft it. Bench tools you haven't unlocked show what Bench level they need.",
   "Loot now goes straight into your inventory, which holds 100 items plus 20 per Stash level. Only when it's full do drops spill onto the ground. New loot filter action: Send to stash, plus a Run filter button to sort what you're already carrying.",
+  'Archaeology overhaul: the dig sites are now one Expedition Trail. Digging finds Clue Fragments, and three of them stamp your Expedition Passport for the next site. Hazard rises along the way. Any site you could already dig stays open.',
+  'Every site now has three layers you choose between. Surface is quick and gives the most Artifacts, Buried turns up rare components, and Bedrock is slow but gives Relic Fragments and Ancient Data. Staying on one layer builds Commitment, up to ×3 Ancient Data, and cave-ins knock some of it off.',
+  'New Relic Site at the end of the trail: The Sealed Reliquary (Archaeology 80). Its Bedrock holds Sealed Relics, and its first find guarantees one.',
+  'New Relic Forge tab: break a Sealed Relic\'s seal into one of seven legendary forms, spend Ancient Data to pick every modifier and its tier, and restore it as a named relic at item level 84.',
 ];
 
 export const NEWS: NewsEntry[] = [

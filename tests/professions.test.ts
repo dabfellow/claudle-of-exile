@@ -377,7 +377,8 @@ describe('pre-overhaul serialized compatibility', () => {
     expect(again.heist).toMatchObject({ rogues: raw.heist.rogues, exits: raw.heist.exits, auto: raw.heist.auto, tally: raw.heist.tally });
     expect(again.heist).toEqual(s.heist);
     expect(again.heist.roster?.lookout.level).toBe(4);
-    expect(again.expedition).toEqual(raw.expedition);
+    // the Regional Trail fills in its own fields on load; everything that was there is untouched
+    expect(again.expedition).toMatchObject(raw.expedition);
     expect(again.inventory).toEqual(raw.inventory);
     expect(again.account.bank).toEqual(fixture.account.bank);
     expect(again.account.hideout).toEqual(fixture.account.hideout);

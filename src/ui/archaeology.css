@@ -1,0 +1,715 @@
+/* ==========================================================================
+   Archaeology: the Expedition Trail, the strata and the Relic Forge.
+   Built on the Ashen Codex tokens; --site is the site's (or relic's) colour.
+   ========================================================================== */
+
+.expedition {
+  --site: var(--accent);
+  --data: #7fd6c2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.dig-kicker {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------- banner ---------- */
+
+.expedition-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 14px 18px;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(209, 173, 114, 0.14), transparent 55%),
+    linear-gradient(180deg, var(--panel-2), var(--panel));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.expedition-banner.forge {
+  background:
+    radial-gradient(120% 160% at 100% 0%, rgba(127, 214, 194, 0.12), transparent 55%),
+    radial-gradient(120% 160% at 0% 100%, rgba(224, 178, 92, 0.12), transparent 55%),
+    linear-gradient(180deg, var(--panel-2), var(--panel));
+}
+.expedition-title {
+  margin: 2px 0 0;
+  font-family: Spectral, Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--accent-2);
+}
+.expedition-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.exp-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 92px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg-2);
+}
+.exp-stat-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.exp-stat b {
+  font-size: 15px;
+  color: var(--text);
+}
+
+/* ---------- trail map ---------- */
+
+.trail-map {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  padding: 4px 2px 8px;
+  scrollbar-width: thin;
+}
+.trail-step {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.trail-step:first-child {
+  flex: 0.8 1 0;
+}
+@media (max-width: 720px) {
+  .trail-step,
+  .trail-step:first-child {
+    flex: none;
+  }
+  .trail-node {
+    width: 96px;
+  }
+}
+.trail-link {
+  flex: 1 1 18px;
+  min-width: 14px;
+  height: 0;
+  border-top: 2px dashed var(--line-2);
+}
+.trail-link.done {
+  border-top-style: solid;
+  border-color: var(--accent-line);
+}
+.trail-node {
+  --site: var(--accent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 84px;
+  max-width: 132px;
+  padding: 8px 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.trail-node:hover {
+  border-color: color-mix(in srgb, var(--site) 60%, var(--line-2));
+  transform: translateY(-1px);
+}
+.trail-node:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.trail-node.selected {
+  border-color: var(--site);
+  background: color-mix(in srgb, var(--site) 12%, var(--panel));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--site) 35%, transparent), 0 6px 18px -10px var(--site);
+}
+.trail-node.locked {
+  opacity: 0.55;
+}
+.trail-node.locked .trail-pin {
+  background: var(--bg-2);
+  color: var(--dim);
+  border-color: var(--line-2);
+}
+.trail-pin {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--site);
+  background: color-mix(in srgb, var(--site) 22%, var(--bg-2));
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+}
+.trail-node.relic .trail-pin {
+  border-radius: 6px;
+  transform: rotate(45deg);
+}
+.trail-node.relic .trail-pin {
+  font-size: 14px;
+}
+.trail-node.relic:not(.locked) .trail-pin {
+  box-shadow: 0 0 12px -2px var(--site);
+}
+.trail-node.active .trail-pin {
+  animation: dig-pulse 1.6s ease-in-out infinite;
+}
+.trail-name {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+.trail-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--dim);
+}
+.trail-finds {
+  display: inline-flex;
+  gap: 2px;
+}
+.trail-finds i {
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--line-2);
+  transform: rotate(45deg);
+}
+.trail-finds i.on {
+  background: var(--site);
+}
+
+@keyframes dig-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 60%, transparent); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* ---------- the dig panel ---------- */
+
+.dig-panel {
+  border: 1px solid color-mix(in srgb, var(--site) 35%, var(--line-2));
+  border-radius: 8px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--site) 7%, var(--panel)), var(--panel) 160px);
+  padding: 16px;
+}
+.dig-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dig-title {
+  margin: 2px 0 4px;
+  font-family: Spectral, Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--site);
+}
+.dig-desc {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--muted);
+  font-style: italic;
+  line-height: 1.5;
+}
+.dig-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.dig-hazard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hazard-pips {
+  display: inline-flex;
+  gap: 3px;
+}
+.hazard-pips i {
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--line-2);
+  transform: skewX(-14deg);
+}
+.hazard-pips i.on {
+  background: linear-gradient(180deg, var(--warn), var(--danger));
+}
+.dig-btn {
+  min-width: 150px;
+  font-weight: 600;
+}
+.dig-progress {
+  margin-top: 10px;
+}
+
+.dig-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr);
+  gap: 14px;
+  margin-top: 14px;
+}
+@media (max-width: 860px) {
+  .dig-body { grid-template-columns: 1fr; }
+  .dig-side { align-items: flex-start; }
+}
+
+/* ---------- strata ---------- */
+
+.strata {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+}
+.strata-sky {
+  height: 10px;
+  background: linear-gradient(180deg, rgba(160, 190, 210, 0.18), transparent);
+  border-bottom: 2px solid #6b5a3e;
+}
+.stratum {
+  --layer: #7f6a55;
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  color: var(--text);
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 18% 30%, rgba(0, 0, 0, 0.18) 0 2px, transparent 3px) 0 0 / 46px 38px,
+    radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.05) 0 1.5px, transparent 2.5px) 0 0 / 34px 30px,
+    linear-gradient(180deg, color-mix(in srgb, var(--layer) 34%, var(--bg-2)), color-mix(in srgb, var(--layer) 22%, var(--bg-2)));
+  transition: filter 0.15s, border-color 0.15s;
+}
+.stratum + .stratum {
+  border-top: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.stratum.layer-surface { --layer: #b98d5a; }
+.stratum.layer-buried { --layer: #7f6a55; }
+.stratum.layer-bedrock { --layer: #4f5866; }
+.stratum:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+.stratum:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.stratum.chosen {
+  border-left-color: var(--site);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--site) 45%, transparent);
+}
+.stratum.digging::after {
+  content: '⛏';
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  font-size: 16px;
+  animation: dig-swing 0.9s ease-in-out infinite;
+  transform-origin: 80% 80%;
+}
+@keyframes dig-swing {
+  0%, 100% { transform: rotate(-18deg); }
+  50% { transform: rotate(14deg); }
+}
+.stratum.locked {
+  cursor: default;
+  filter: grayscale(0.7) brightness(0.65);
+}
+.stratum-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.stratum-head b {
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+.stratum-glyph {
+  color: var(--site);
+  font-size: 14px;
+}
+.stratum-state {
+  font-size: 11px;
+  color: var(--muted);
+}
+.stratum-state.good {
+  color: var(--good);
+}
+.stratum-blurb {
+  margin: 4px 0 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.stratum-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 12px;
+  color: var(--text);
+}
+.stratum-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.stratum-stats .data {
+  color: var(--data, #7fd6c2);
+}
+.stratum-stats .hz {
+  color: var(--warn);
+}
+.stratum-depth {
+  margin-top: 8px;
+}
+.strata-floor {
+  padding: 8px 14px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--good);
+  background: #1a1c20;
+  border-top: 2px solid #2c2f35;
+}
+
+/* ---------- side cards ---------- */
+
+.dig-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dig-card {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-2);
+}
+.dig-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.dig-card-head .small {
+  text-align: right;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.dig-note {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--dim);
+}
+.commit-mult {
+  font-size: 18px;
+  letter-spacing: 0;
+  color: var(--data, #7fd6c2);
+}
+.commit-meter {
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 4px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+.commit-meter span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #3c8f80, #7fd6c2);
+  box-shadow: 0 0 8px rgba(127, 214, 194, 0.5);
+  transition: width 0.4s ease;
+}
+
+.clue-slots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.clue {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px dashed var(--line-2);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--site);
+  font-size: 16px;
+  overflow: hidden;
+}
+.clue.found {
+  border-style: solid;
+  border-color: var(--site);
+  background: color-mix(in srgb, var(--site) 18%, var(--panel));
+  box-shadow: 0 0 10px -4px var(--site);
+}
+.clue-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--site) 25%, transparent);
+}
+.stamp {
+  margin-left: auto;
+  padding: 3px 8px;
+  border: 2px solid var(--line-2);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  transform: rotate(-6deg);
+}
+.stamp.on {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.logbook {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.logbook li {
+  display: flex;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--dim);
+}
+.logbook li.found {
+  color: var(--text);
+}
+.log-layer {
+  width: 58px;
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding-top: 2px;
+}
+
+/* ---------- Relic Forge ---------- */
+
+.forge-intro {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.forge-intro p {
+  margin: 0;
+}
+.forge-intro p + p {
+  margin-top: 8px;
+}
+.relic-forms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+}
+.relic-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--site) 35%, var(--line));
+  border-top: 3px solid var(--site);
+  border-radius: 8px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--site) 9%, var(--panel)), var(--panel));
+}
+.relic-form-kicker {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.relic-form-name {
+  font-family: Spectral, Georgia, serif;
+  font-size: 16px;
+  color: var(--site);
+}
+.relic-form-lore {
+  flex: 1;
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+}
+.relic-form .btn {
+  align-self: flex-start;
+}
+
+.forge-bench {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr);
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--site) 40%, var(--line-2));
+  border-radius: 8px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--site) 8%, var(--panel)), var(--panel) 180px);
+}
+@media (max-width: 860px) {
+  .forge-bench { grid-template-columns: 1fr; }
+}
+.forge-group {
+  margin-top: 12px;
+}
+.forge-group-head {
+  margin-bottom: 6px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.forge-slot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  min-height: 38px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  background: var(--bg-2);
+}
+.forge-slot.empty {
+  border-style: dashed;
+}
+.forge-slot.empty.dim {
+  min-height: 24px;
+  padding: 2px 10px;
+  opacity: 0.45;
+  justify-content: center;
+}
+.forge-slot select {
+  width: 100%;
+  max-width: 100%;
+}
+.forge-line {
+  color: var(--magic);
+  font-size: 13px;
+}
+.forge-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.forge-tier {
+  min-width: 26px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--accent-2);
+}
+.forge-cost {
+  min-width: 52px;
+  text-align: right;
+  color: var(--data, #7fd6c2);
+}
+.forge-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.forge-preview .item-tip {
+  position: static;
+  max-width: none;
+}
+.forge-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.forge-total b {
+  font-size: 15px;
+  letter-spacing: 0;
+  color: var(--data, #7fd6c2);
+}
+.forge-total b.bad {
+  color: var(--bad);
+}
+.forge-go {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+}
+
+/* the relic line on its tooltip */
+.relic-tag {
+  margin-top: 2px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #e0b25c;
+}
+.relic-lore {
+  margin-top: 6px;
+  font-size: 12px;
+  font-style: italic;
+  color: #c9a35a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trail-node.active .trail-pin,
+  .stratum.digging::after {
+    animation: none;
+  }
+}

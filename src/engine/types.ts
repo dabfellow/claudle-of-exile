@@ -194,6 +194,8 @@ export interface Item {
   voidSlot?: boolean;
   /** Tiered loot (1–5): higher tiers feature better mod rolls, higher affix tiers, and natural fractured mods / rare bases at T5 */
   itemTier?: 1 | 2 | 3 | 4 | 5;
+  /** restored at the Relic Forge: the relic form id */
+  relic?: string;
 }
 
 export type InstillCondition = 'lowLife' | 'lowMana' | 'fullCharges' | 'bossCast' | 'savageHit' | 'elemHit' | 'chaosHit' | 'frostbite' | 'enemyRanged' | 'packStart';
@@ -1087,6 +1089,23 @@ export interface ExpeditionState {
   /** one standing order per people, as a ware id */
   orders: Partial<Record<CultureId, string>>;
   tally: { finds: number; traded: number };
+  /** the layer chosen at each site, 0 Surface to 2 Bedrock; no entry digs the deepest one reached */
+  layer?: Record<string, number>;
+  /** Clue Fragments found at each site towards the next site's Passport */
+  clues?: Record<string, number>;
+  /** base ms of digging towards each site's next Clue Fragment */
+  clueMs?: Record<string, number>;
+  /** sites whose Expedition Passport is stamped */
+  passports?: Record<string, true>;
+  /** uninterrupted digging on one layer of one site, in base ms; it feeds Ancient Data */
+  commit?: { key: string; ms: number };
+  /** a Sealed Relic opened at the Relic Forge and waiting to be programmed */
+  forge?: { formId: string } | null;
+  /** totals for the Logbook */
+  caveIns?: number;
+  relicsRestored?: number;
+  /** settle has turned old site access into Passports */
+  trailSchema?: number;
 }
 
 /** Thieving's Heist board (engine/heist.ts). The job under way lives on `action`, so anything else you start ends it. */

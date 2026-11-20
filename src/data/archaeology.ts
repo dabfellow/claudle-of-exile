@@ -1,10 +1,6 @@
 import type { SkillAction } from './skills';
 import { CULTURES } from './expedition';
 
-export const SITE_DISCOVERY: Record<string, string | undefined> = {
-  dig_cutting: 'dig_cairn', dig_colossus: 'dig_cairn', dig_barrow: 'dig_cutting',
-  dig_adit: 'dig_cutting', dig_heart: 'dig_barrow',
-};
 export const relicFragment = (culture: string) => `${culture === 'surveyor' ? 'survey' : culture}_relic_fragment`;
 export const ARCHAEOLOGY_RECIPES: SkillAction[] = [
   ...CULTURES.map((c): SkillAction => ({

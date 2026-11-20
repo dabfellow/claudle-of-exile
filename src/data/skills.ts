@@ -1,7 +1,7 @@
 import type { SkillId } from '../engine/types';
 import { GEMCUTTING_EXPANSION_ACTIONS, type GemFamily } from './gemcutting';
 import { WEAPON_COMPONENT_ACTIONS } from './weaponProjects';
-import { ARCHAEOLOGY_RECIPES, SITE_DISCOVERY } from './archaeology';
+import { ARCHAEOLOGY_RECIPES } from './archaeology';
 import { MINING_ACTIONS, type MiningDeposit } from './mining';
 import { WOODCUTTING_ACTIONS, type WoodcuttingSource } from './woodcutting';
 import { AGILITY_ACTIONS, AGILITY_SPOT_LEVEL } from './agility';
@@ -11,7 +11,7 @@ import { purposeRecipes, SMITH_COMPONENTS, type SmithPurpose } from './smithing'
 import { BASES, type BaseDef } from './bases';
 import { CARTOGRAPHY_GATE, CHART_TIERS, FOLIO_COST, FOLIO_LEVEL, FOLIO_SIZE, SEXTANT_RECIPES } from './cartography';
 import { COOKING_GATE } from './cooking';
-import { CULTURES, digChance, EXPEDITION_GATE, SITES } from './expedition';
+import { CULTURES, digChance, EXPEDITION_GATE, SITES, TRAIL } from './expedition';
 import { MAP_TIERS } from './maps';
 import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
 import { RUNE_FAMILIES, RUNES } from './runes';
@@ -199,17 +199,17 @@ const THIEVING: SkillAction[] = [
   mark('mark_steward', "Khan's Steward", 52, 5000, 46, 110, 0.28, '#e0702a', [{ id: SEAL, chance: 0.004, qty: 1 }, { id: WAX, chance: 0.003, qty: 1 }]),
 ];
 
-/** Digs: no inputs and nothing to go wrong. Most of a dig is dirt, so `outputChance` is how often it turns up an Artifact. */
+/** Digs: no inputs. Most of a dig is dirt, so `outputChance` is how often it turns up an Artifact; the Reliquary's come from every people, in digDone. */
 const ARCHAEOLOGY: SkillAction[] = SITES.map((x) => ({
-  accomplishments: SITE_DISCOVERY[x.id] ? [`expedition.${SITE_DISCOVERY[x.id]}.0`] : [],
+  accomplishments: TRAIL.indexOf(x.id) > 0 ? [`passport.${x.id}`] : [],
   id: x.id,
   skill: 'archaeology' as const,
   name: x.name,
   level: x.level,
   intervalMs: x.intervalMs,
   xp: x.xp,
-  outputs: { [CULTURES.find((c) => c.id === x.culture)!.artifact]: 1 },
-  outputChance: digChance(x),
+  outputs: x.relic ? {} : { [CULTURES.find((c) => c.id === x.culture)!.artifact]: 1 },
+  outputChance: x.relic ? 0 : digChance(x),
   color: x.color,
   gate: EXPEDITION_GATE,
 }));

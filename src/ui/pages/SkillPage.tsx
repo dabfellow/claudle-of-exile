@@ -6,7 +6,8 @@ import { ACTIVE_GEMS, activeGemDef, SUPPORT_GEMS, supportGemDef } from '../../da
 import { HEIST_JOBS, heistJob } from '../../data/heist';
 import { materialDef } from '../../data/materials';
 import { isMapId } from '../../data/maps';
-import { CULTURES, SITES } from '../../data/expedition';
+import { CULTURES, SEALED_RELIC, TRAIL } from '../../data/expedition';
+import { hasPassport } from '../../engine/expedition';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { zoneDef } from '../../data/zones';
 import { cartographyPreview, upgradeCost } from '../../engine/cartography';
@@ -516,7 +517,8 @@ const THIEVING_TABS: { id: string; label: string }[] = [
 ];
 
 const ARCHAEOLOGY_TABS: { id: string; label: string }[] = [
-  { id: 'sites', label: 'Excavation Sites' },
+  { id: 'sites', label: 'Expedition Trail' },
+  { id: 'forge', label: 'Relic Forge' },
   { id: 'restoration', label: 'Restoration & Sifting' },
   { id: 'merchants', label: 'Culture Merchants' },
 ];
@@ -1000,7 +1002,8 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
               const list = selectedActions.filter((a) => smeltingTab(a) === x.id);
               countText = `${list.filter(isUnlocked).length}/${list.length}`;
             } else if (skill === 'archaeology') {
-              if (x.id === 'sites') countText = `${SITES.filter((site) => site.level <= level).length}/${SITES.length}`;
+              if (x.id === 'sites') countText = `${TRAIL.filter((id) => hasPassport(s, id)).length}/${TRAIL.length}`;
+              else if (x.id === 'forge') countText = s.expedition.forge ? '1 open' : `${s.account.bank[SEALED_RELIC] ?? 0}`;
               else if (x.id === 'restoration') {
                 const list = selectedActions.filter((a) => a.id.startsWith('sift_') || a.id.startsWith('restore_'));
                 countText = `${list.filter(isUnlocked).length}/${list.length}`;
@@ -1116,7 +1119,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
       {skill === 'thieving' && tab === 'heists' && <HeistBoard view="jobs" />}
       {skill === 'thieving' && tab === 'crew' && <HeistBoard view="crew" />}
 
-      {skill === 'archaeology' && (tab === 'sites' || tab === 'merchants') && <ExpeditionBoard view={tab as 'sites' | 'merchants'} />}
+      {skill === 'archaeology' && (tab === 'sites' || tab === 'forge' || tab === 'merchants') && <ExpeditionBoard view={tab as 'sites' | 'forge' | 'merchants'} />}
       {skill === 'fishing' && (
         <div className="callout skill-note">
           Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.
