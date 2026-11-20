@@ -11,6 +11,7 @@ Files are named after their pack: `catalone-`, `woshi-`, `codespree-`, `sn-`, `c
 - **woshi-\*.png**: Woshi Studio, Free 30 Pixel Item Icons (64px set). Personal and commercial use, may be modified, not resold as an icon pack.
 - **codespree-\*.png**: rpg-items-all and rpg-beings-all (attributed to CodeSpree), 64×64. No licence file in the download; check before release.
 - **craftpix-\*.png**: Free Fantasy Character Avatar Icons (Pixel Art), Craftpix. Craftpix file licence (https://craftpix.net/file-licenses/).
+- **portraits/craftpix-avatar-NN.webp**: Free RPG Fantasy Avatars, Craftpix (free-game-assets.itch.io/free-rpg-fantasy-avatar-icons), painted 512px, resized to 384px webp. Named after the pack's `PNG/background/NN.png`. Craftpix file licence, commercial use allowed.
 - **freesample-\*.jpg**: free_sample pack, painted 64/128px portraits. Author and licence not recorded; check before release.
 - **sn-\*.png**: Fantasy Pixel Icons, Skills (v002) and Elements (v004) free tiers, attributed to SanguineNite. No licence file in the download; check before release.
 - **craft32-\*.png**: 32 Medieval Crafting Icons (free). No licence file in the download; check before release.

@@ -641,6 +641,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Free painted portraits for all 7 classes (character creator, character list, combat and hideout crest) — done 2026-11-20.
+  - Craftpix *Free RPG Fantasy Avatars* (owner wants free art only): Warrior 19, Ranger 28, Mage 23, Duelist 20, Templar 50, Shadow 21, Exile 32. The title and creator backdrop was already GegX's forest at night. Checked on desktop and 390px; tests and typecheck pass.
+
 - [x] Manual skill gem upgrades: no auto level-up, an Upgrade button on the Skills page, greyed out with the reason when the new level's character level or attribute isn't met — done 2026-11-19.
   - XP banks as before (capped at the next level only while that level is out of reach), one press per level. The sim player presses Upgrade itself. Playtested with a level 20 Warrior.
 - [ ] Design and build the seven-act zone naming and enemy identity pass.

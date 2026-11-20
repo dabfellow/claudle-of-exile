@@ -1151,11 +1151,15 @@ export const MONSTER_ART: Record<string, string> = {
   aurelane: new URL('../assets/monsters/tint-aurelane.jpg', import.meta.url).href,
 };
 
-/** Class, guide and trader portraits (Craftpix avatars, one free_sample painting). */
+/** Class portraits (Craftpix Free RPG Fantasy Avatars, painted), guide and trader (Craftpix pixel avatar, one free_sample painting). */
 export const PORTRAIT_ART: Record<string, string> = {
-  class_warrior: new URL('../assets/portraits/craftpix-con1.png', import.meta.url).href,
-  class_ranger: new URL('../assets/portraits/craftpix-con6.png', import.meta.url).href,
-  class_mage: new URL('../assets/portraits/craftpix-con12.png', import.meta.url).href,
+  class_warrior: new URL('../assets/portraits/craftpix-avatar-19.webp', import.meta.url).href,
+  class_ranger: new URL('../assets/portraits/craftpix-avatar-28.webp', import.meta.url).href,
+  class_mage: new URL('../assets/portraits/craftpix-avatar-23.webp', import.meta.url).href,
+  class_duelist: new URL('../assets/portraits/craftpix-avatar-20.webp', import.meta.url).href,
+  class_templar: new URL('../assets/portraits/craftpix-avatar-50.webp', import.meta.url).href,
+  class_shadow: new URL('../assets/portraits/craftpix-avatar-21.webp', import.meta.url).href,
+  class_exile: new URL('../assets/portraits/craftpix-avatar-32.webp', import.meta.url).href,
   trader: new URL('../assets/portraits/craftpix-con33.png', import.meta.url).href,
   brannoc: new URL('../assets/portraits/freesample-a32.jpg', import.meta.url).href,
 };
@@ -1273,7 +1277,7 @@ const PACK_ART: Record<string, Record<string, string>> = {
 export function packArtIsPixel(key: string): boolean {
   const group = key.split('/')[0];
   const url = packArtUrl(key);
-  return (group === 'monsters' || group === 'portraits' || group === 'stations') && !!url && !/\.jpe?g($|\?)/.test(url);
+  return (group === 'monsters' || group === 'portraits' || group === 'stations') && !!url && !/\.(jpe?g|webp)($|\?)/.test(url);
 }
 
 /** Pack art for an art key (`items/iron_hat`), or undefined. */
