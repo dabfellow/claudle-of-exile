@@ -30,6 +30,7 @@ export const UPCOMING: string[] = [
   'Tier 5 gear that drops with a fractured modifier now truly keeps it through Chaos Orbs, and rerolling no longer adds a fake fractured mark. Older items are corrected when you load.',
   "The Map Device's Pinnacle Conduit bonus map now goes into your map supply (maps it gave before are moved there), and it can no longer blank the screen.",
   "A Divine Orb no longer undoes an Exile's Doom Sigil: a Doom Tier modifier rerolls within its raised range.",
+  'On phones, the Combat screen drops the top bar\'s activity and life bars, since the fight strip at the bottom already shows them.',
 ];
 
 export const NEWS: NewsEntry[] = [

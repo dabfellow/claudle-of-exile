@@ -236,6 +236,11 @@ html .matchup {
   html .combat-page .action-bar {
     display: none;
   }
+  /* the dock has your life, shield and mana too: the top bar keeps only the name plate while you fight */
+  html .app:has(.combat-page) .topbar .activity,
+  html .app:has(.combat-page) .topbar-life {
+    display: none;
+  }
   .dock-row {
     display: flex;
     align-items: center;
