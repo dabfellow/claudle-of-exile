@@ -4,7 +4,7 @@ import { newAscendancyRuntime, newAscendancyState } from './ascendancy';
 import { TRIALS } from '../data/ascendancies';
 import { SKILL_BAR_SLOTS } from '../data/gems';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
-import { BAG_SIZE, STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
+import { STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
 import { ACTIONS, hasAction } from '../data/skills';
 import { HEIST_JOBS } from '../data/heist';
 import { legacyMasteryForAction, legacyMasteryForHeist } from '../data/skillingMastery';
@@ -157,10 +157,11 @@ const MIGRATIONS: Record<number, Migration> = {
     // gear split into ground, bag (60) and stash pages (3 × 80): overflow from the old big inventory moves to the stash
     const s = raw as unknown as OldSave;
     const items = s.inventory ?? [];
-    s.inventory = items.slice(0, BAG_SIZE);
+    const OLD_BAG = 60;
+    s.inventory = items.slice(0, OLD_BAG);
     s.stash = Array.from({ length: STASH_START_PAGES }, () => []);
     let page = 0;
-    for (const item of items.slice(BAG_SIZE)) {
+    for (const item of items.slice(OLD_BAG)) {
       while (page < s.stash.length && s.stash[page].length >= STASH_PAGE_SIZE) page++;
       if (page < s.stash.length) s.stash[page].push(item);
       else s.inventory.push(item); // over capacity, but nothing is lost

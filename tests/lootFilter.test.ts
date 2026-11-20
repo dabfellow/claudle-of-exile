@@ -89,10 +89,10 @@ describe('custom loot filter engine', () => {
     s.settings.activeLootFilterId = 'salvage_all';
     s.settings.customLootFilters = [aggressiveFilter];
     s.account.bank.arcane_dust = 0;
-    s.ground = [];
+    s.inventory = [];
 
     placeItem(s, c, uniqueItem);
-    expect(s.ground).toContain(uniqueItem);
+    expect(s.inventory).toContain(uniqueItem);
     expect(s.account.bank.arcane_dust).toBe(0);
   });
 
@@ -160,17 +160,17 @@ describe('custom loot filter engine', () => {
     setActiveLootFilter(s, 'keep_rare_only');
 
     s.account.bank.arcane_dust = 0;
-    s.ground = [];
+    s.inventory = [];
 
     const magicItem = createItem(s, 'rusted_sword', 1, 'magic', c.rng);
     placeItem(s, c, magicItem);
 
-    expect(s.ground).toHaveLength(0);
+    expect(s.inventory).toHaveLength(0);
     expect(s.account.bank.arcane_dust).toBeGreaterThan(0);
 
     const rareItem = createItem(s, 'rusted_sword', 1, 'rare', c.rng);
     placeItem(s, c, rareItem);
 
-    expect(s.ground).toContain(rareItem);
+    expect(s.inventory).toContain(rareItem);
   });
 });

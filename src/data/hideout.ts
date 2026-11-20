@@ -46,7 +46,7 @@ export const STATIONS: StationDef[] = [
   },
   {
     id: 'stash', name: 'Stash', page: 'stash', color: '#c9a227',
-    desc: 'Your hoard. Each upgrade carves out free stash pages and makes bought tabs cheaper.',
+    desc: 'Your hoard. Each upgrade carves out free stash pages, makes bought tabs cheaper and adds 20 inventory slots.',
     levels: [
       { cost: {}, effect: '3 stash pages' },
       { cost: { gold: 1500, ash_plank: 40, copper_bar: 25 }, effect: '+1 free stash page' },
@@ -204,7 +204,14 @@ export function stationDef(id: StationId): StationDef {
 }
 
 /** Gear storage: see docs/GAME.md. */
-export const BAG_SIZE = 60;
+export const BAG_SIZE = 100;
+/** inventory slots each Stash level past the first adds */
+export const BAG_PER_STASH_LEVEL = 20;
+
+/** Inventory slots at a Stash level: 100 at level 1, +20 a level (260 at level 9). */
+export function bagSize(stashLvl: number): number {
+  return BAG_SIZE + BAG_PER_STASH_LEVEL * Math.max(0, stashLvl - 1);
+}
 export const GROUND_CAP = 50;
 export const OFFLINE_HAUL_CAP = 200;
 export const STASH_PAGE_SIZE = 80;

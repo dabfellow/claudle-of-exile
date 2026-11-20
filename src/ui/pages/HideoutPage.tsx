@@ -228,7 +228,7 @@ function StatsCard({ go }: { go: (p: Page) => void }) {
 
 // ---------- gear ----------
 
-/** The same paper doll as the Equipment page; a worn item opens its menu, empty slots and flasks open that page. */
+/** The same paper doll as the Inventory screen; a worn item opens its menu, empty slots and flasks open that screen. */
 function GearCard({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   return (
@@ -363,11 +363,9 @@ function GoToBar({ go }: { go: (p: Page) => void }) {
   const links: { page: Page; label: string; short: string; icon: string; badge?: ReactNode }[] = [
     { page: 'combat', label: 'Combat', short: 'Combat', icon: 'combat', badge: loot > 0 ? <span className="nav-badge loot">{loot}</span> : undefined },
     { page: 'campaign', label: 'World Map', short: 'World Map', icon: 'campaign' },
-    { page: 'stash', label: 'Stash', short: 'Stash', icon: 'stash', badge: s.inventory.length > 0 ? <span className="nav-badge">{s.inventory.length}</span> : undefined },
-    { page: 'equipment', label: 'Equipment', short: 'Gear', icon: 'equipment' },
+    { page: 'equipment', label: 'Inventory', short: 'Items', icon: 'stash', badge: s.inventory.length > 0 ? <span className="nav-badge">{s.inventory.length}</span> : undefined },
     { page: 'skills', label: 'Skills', short: 'Skills', icon: 'gems' },
     { page: 'tree', label: 'Passive Tree', short: 'Tree', icon: 'tree', badge: points > 0 ? <span className="nav-badge hot">+{points}</span> : undefined },
-    { page: 'bench', label: 'Crafting Bench', short: 'Bench', icon: 'bench' },
     { page: 'vendor', label: 'Town', short: 'Town', icon: 'vendor' },
   ];
   return (

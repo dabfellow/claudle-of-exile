@@ -21,7 +21,7 @@ import { newGame, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameState } from '../src/engine/types';
 import { xpForLevel } from '../src/engine/xp';
-import { bagFull } from '../src/engine/storage';
+import { bagCap, bagFull } from '../src/engine/storage';
 
 const ctx = (seed = 1): Ctx => ({ rng: seeded(seed), now: 0, emit: () => {} });
 const fixed = (v: number): Ctx => ({ rng: { next: () => v } as Rng, now: 0, emit: () => {} });
@@ -238,8 +238,8 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       const safe = fixed(0.999);
       clearRoom(s, safe);
 
-      expect(s.ground).toHaveLength(1);
-      const dropped = s.ground[0];
+      expect(s.inventory).toHaveLength(1);
+      const dropped = s.inventory[0];
       const base = baseDef(dropped.baseId);
       expect(['ring', 'amulet', 'belt']).toContain(base.slot);
       expect(dropped.rarity).toBe('rare');
@@ -314,8 +314,8 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       const s = makeThief(65, 200);
       s.professionProgress.discoveries['heist_clean_khans_tribute'] = true;
 
-      // Fill bag completely (BAG_SIZE = 60)
-      for (let i = 0; i < 60; i++) {
+      // Fill bag completely
+      for (let i = 0; i < bagCap(s); i++) {
         s.inventory.push({ uid: 1000 + i, baseId: 'iron_ring', rarity: 'normal', prefixes: [], suffixes: [], quality: 0, ilvl: 1 } as any);
       }
       expect(bagFull(s)).toBe(true);
@@ -341,7 +341,7 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       clearRoom(s, jackpotCtx);
 
       // Inventory was full, so Borrowed Tomorrow went safely into overflow
-      expect(s.inventory).toHaveLength(60);
+      expect(s.inventory).toHaveLength(bagCap(s));
       expect(s.account.overflow.some((i) => i.uniqueId === 'borrowed_tomorrow')).toBe(true);
       expect(s.lifetime.uniquesFound).toBeGreaterThanOrEqual(1);
     });

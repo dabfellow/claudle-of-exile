@@ -1080,7 +1080,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
           <option value="resource">Resource · mana, spells or energy shield</option>
         </select>
       </label>}
-      {skill === 'alchemy' && <div className="callout skill-note">Salvage unwanted items at the Crafting Bench for Arcane Dust, then transmute it into orbs here.</div>}
+      {skill === 'alchemy' && <div className="callout skill-note">Salvage unwanted items in your Inventory for Arcane Dust, then transmute it into orbs here.</div>}
       {skill === 'gemcutting' && (
         <div className="callout skill-note">
           Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b>{fmt(s.account.bank.rough_gem ?? 0)}</b> Rough Gems.

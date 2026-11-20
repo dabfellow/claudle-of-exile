@@ -16,6 +16,9 @@ export const UPCOMING: string[] = [
   'Act 1 map routes now follow shared coastal, village and woodland paths instead of crisscrossing the artwork.',
   'The World Map overview now shows just the atlas, without extra headings or instruction text.',
   "Old Brannoc's tutorial now teaches combat basics only: using skills, both flasks, setting a skill to fire on its own, picking up and wearing gear you find, the passive tree and the first boss. The mining, smithing and Crafting Bench steps are gone while skilling is reworked. Characters partway through pick up at the matching step.",
+  "The loot filter is now a full item filter: custom rules can pick exact base types, required level, item tier and \"must have\" mods (any, all or at least N, at a minimum tier), mod counts and fractured or crafted mods, with searchable pickers and a plain-words summary of each rule. Hidden drops are now left behind, so they no longer fill your ground or time-away pile (and give no dust).",
+  "Equipment, Stash and the Crafting Bench are now one Inventory screen: your gear, inventory and stash side by side, and clicking any item opens a panel to equip, stash, salvage or craft it. Bench tools you haven't unlocked show what Bench level they need.",
+  "Loot now goes straight into your inventory, which holds 100 items plus 20 per Stash level. Only when it's full do drops spill onto the ground. New loot filter action: Send to stash, plus a Run filter button to sort what you're already carrying.",
 ];
 
 export const NEWS: NewsEntry[] = [

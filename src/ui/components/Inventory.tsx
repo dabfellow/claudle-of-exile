@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { baseDef } from '../../data/bases';
-import { BAG_SIZE } from '../../data/hideout';
+import { bagCap } from '../../engine/storage';
 import { BENCH_UNBUILT, benchBuilt, salvage } from '../../engine/crafting';
 import { equipReason } from '../../engine/equipment';
 import { itemName } from '../../engine/items';
@@ -26,6 +26,7 @@ export function ItemTile({
   selected,
   marked,
   figure,
+  compact,
 }: {
   item: Item;
   s: GameState;
@@ -33,14 +34,18 @@ export function ItemTile({
   selected?: boolean;
   marked?: boolean;
   figure?: string | null;
+  /** icon-only square, for the Inventory screen's dense grids */
+  compact?: boolean;
 }) {
   const locked = equipReason(s, item) !== null;
   const filtered = evaluateLootFilter(s, item);
+  const name = item.rarity === 'unique' || baseDef(item.baseId).projectOnly ? itemName(item) : baseDef(item.baseId).name;
   return (
     <Tooltip content={<ItemTip item={item} state={s} />}>
       <button
-        className={`item-tile rar-${item.rarity} ${filtered.highlightColor ? 'loot-highlight' : ''} ${selected ? 'selected' : ''} ${marked ? 'marked' : ''} ${locked ? 'cant-equip' : ''}`}
+        className={`item-tile rar-${item.rarity} ${compact ? 'compact' : ''} ${filtered.highlightColor ? 'loot-highlight' : ''} ${selected ? 'selected' : ''} ${marked ? 'marked' : ''} ${locked ? 'cant-equip' : ''}`}
         style={filtered.highlightColor ? { ['--loot-highlight' as string]: filtered.highlightColor } : undefined}
+        aria-label={compact ? `${name}, ${slotLabel(item)}, item level ${item.ilvl}` : undefined}
         onClick={onClick}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -48,15 +53,19 @@ export function ItemTile({
         }}
       >
         <span className="item-tile-icon">
-          <ItemIcon item={item} size={34} />
+          <ItemIcon item={item} size={compact ? 30 : 34} />
         </span>
         {inGearSet(s, item.uid) && <span className="item-tile-set" title="In a gear set: bulk salvage skips it">Set</span>}
-        <span className={`item-tile-name rarity-${item.rarity}`}>
-          {item.rarity === 'unique' || baseDef(item.baseId).projectOnly ? itemName(item) : baseDef(item.baseId).name}
-        </span>
-        <span className="item-tile-meta">
-          {slotLabel(item)} · {figure ?? `i${item.ilvl}`}
-        </span>
+        {compact ? (
+          <span className="item-tile-corner num">{figure ?? item.ilvl}</span>
+        ) : (
+          <>
+            <span className={`item-tile-name rarity-${item.rarity}`}>{name}</span>
+            <span className="item-tile-meta">
+              {slotLabel(item)} · {figure ?? `i${item.ilvl}`}
+            </span>
+          </>
+        )}
       </button>
     </Tooltip>
   );
@@ -75,6 +84,7 @@ export function ItemTiles({
   empty,
   slots,
   figure,
+  compact,
 }: {
   s: GameState;
   items: Item[];
@@ -84,16 +94,17 @@ export function ItemTiles({
   empty?: ReactNode;
   slots?: number;
   figure?: (item: Item) => string | null;
+  compact?: boolean;
 }) {
   if (!items.length && !slots) return <div className="item-tiles-empty dim small">{empty ?? 'Nothing here.'}</div>;
   const pad = slots ? Math.max(0, slots - items.length) : 0;
   return (
-    <div className={`item-tiles ${slots ? `fixed slots-${slots}` : ''}`}>
+    <div className={`item-tiles ${compact ? 'compact' : ''} ${slots ? `fixed slots-${slots}` : ''}`}>
       {items.map((item) => (
-        <ItemTile key={item.uid} item={item} s={s} selected={selected?.(item)} marked={marked?.(item)} figure={figure?.(item)} onClick={() => onClick?.(item)} />
+        <ItemTile key={item.uid} item={item} s={s} compact={compact} selected={selected?.(item)} marked={marked?.(item)} figure={figure?.(item)} onClick={() => onClick?.(item)} />
       ))}
       {Array.from({ length: pad }, (_, i) => (
-        <span key={`empty-${i}`} className="item-tile empty" />
+        <span key={`empty-${i}`} className={`item-tile empty ${compact ? 'compact' : ''}`} />
       ))}
     </div>
   );
@@ -194,10 +205,11 @@ export function Inventory({
   selected,
   title = 'Inventory',
   items = s.inventory,
-  cap = BAG_SIZE,
+  cap = bagCap(s),
   hint,
   actions,
   stashSorts,
+  compact,
 }: {
   s: GameState;
   onPick?: (item: Item) => void;
@@ -208,6 +220,8 @@ export function Inventory({
   hint?: string;
   actions?: ReactNode;
   stashSorts?: boolean;
+  /** the Inventory screen: icon tiles, every slot on one scrolling grid instead of pages */
+  compact?: boolean;
 }) {
   const [sort, setSort] = useState<SortKey>('recent');
   const [page, setPage] = useState(0);
@@ -216,9 +230,9 @@ export function Inventory({
   /** clicks so far on a rarity button: 1 selects them all, the next salvages (uniques ask once more) */
   const [armed, setArmed] = useState<{ rarity: Rarity; clicks: number } | null>(null);
   const sorted = sortItems(items, sort, s);
-  const pages = Math.max(1, Math.ceil((cap ?? 0) / BAG_PAGE), Math.ceil(items.length / BAG_PAGE));
+  const pages = compact ? 1 : Math.max(1, Math.ceil((cap ?? 0) / BAG_PAGE), Math.ceil(items.length / BAG_PAGE));
   const shownPage = Math.min(page, pages - 1);
-  const pageItems = sorted.slice(shownPage * BAG_PAGE, (shownPage + 1) * BAG_PAGE);
+  const pageItems = compact ? sorted : sorted.slice(shownPage * BAG_PAGE, (shownPage + 1) * BAG_PAGE);
   const markedUniques = items.some((i) => marked.has(i.uid) && i.rarity === 'unique');
   const [confirmMarked, setConfirmMarked] = useState(false);
 
@@ -265,7 +279,7 @@ export function Inventory({
   };
 
   return (
-    <div className="card">
+    <div className={`card ${compact ? 'inv-card' : ''}`}>
       <div className="card-title">
         {title}
         {cap != null && (
@@ -329,12 +343,13 @@ export function Inventory({
       <ItemTiles
         s={s}
         items={pageItems}
-        slots={BAG_PAGE}
+        slots={compact ? Math.max(cap ?? 0, items.length) : BAG_PAGE}
+        compact={compact}
         figure={(item) => sortFigure(item, sort)}
         selected={(item) => selected === item.uid || (salvageMode && marked.has(item.uid))}
         onClick={click}
       />
-      {!items.length && <div className="dim small item-tiles-note">Your bag is empty. Pick up loot from the ground in combat.</div>}
+      {!items.length && <div className="dim small item-tiles-note">Your inventory is empty. Loot lands here as you fight.</div>}
     </div>
   );
 }

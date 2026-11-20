@@ -1,0 +1,250 @@
+/* The Inventory screen: worn gear, inventory and stash side by side, with the item/crafting panel beside them.
+   .main is an inline-size container, so these respond to the space the page actually gets. */
+
+.page.inv-page {
+  max-width: 1760px;
+}
+
+.inv-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+  gap: var(--s-4);
+  align-items: start;
+}
+
+.inv-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+  container: inv-main / inline-size;
+}
+
+/* inventory · stash side by side, stacked when the column gets too thin for both */
+.inv-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: start;
+}
+
+@container inv-main (max-width: 600px) {
+  .inv-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.inv-split > .card {
+  min-width: 0;
+}
+
+.inv-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--s-4);
+}
+
+.inv-stats > .card {
+  margin: 0;
+}
+
+/* compact tiles: icon-only squares, every slot on one scrolling grid */
+.item-tiles.compact,
+.item-tiles.compact.fixed {
+  grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+  grid-auto-rows: 50px;
+  gap: 5px;
+}
+
+.inv-card .item-tiles.compact,
+.stash-card .item-tiles.compact {
+  max-height: min(62vh, 640px);
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.item-tile.compact {
+  padding: 4px;
+  gap: 0;
+  align-content: center;
+}
+
+.item-tile-corner {
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.stash-card .stash-panel {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.stash-card .stash-views {
+  margin-top: var(--s-3);
+}
+
+/* right column on wide screens: worn gear, then the item panel, which stays in view while you scroll */
+.inv-side {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+.inv-panel-dock {
+  position: sticky;
+  top: 8px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  border-radius: var(--r);
+}
+
+.craft-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.craft-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.craft-capacity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  font-size: var(--fs-xs);
+}
+
+.craft-item .tip,
+.craft-item > * {
+  max-width: none;
+}
+
+.craft-moves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.craft-moves .btn {
+  flex: 1 1 auto;
+}
+
+.craft-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.craft-section .section-label {
+  margin: 4px 0 0;
+}
+
+.craft-orbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 6px;
+}
+
+.craft-orbs .orb-btn {
+  padding: 6px 8px;
+  gap: 6px;
+}
+
+.craft-bench-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.craft-bench-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg-2);
+}
+
+.craft-bench-row.locked {
+  opacity: 0.55;
+}
+
+.craft-bench-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.needs-bench {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  align-self: flex-start;
+  padding: 2px 8px;
+  border: 1px dashed var(--line-2);
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* narrow page (set from the page's own width): one column, and the item panel opens as a sheet */
+.inv-layout.narrow {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.inv-layout.narrow .inv-card .item-tiles.compact,
+.inv-layout.narrow .stash-card .item-tiles.compact {
+  max-height: none;
+}
+
+
+/* the sheet lives on <body>, outside the page's container */
+.inv-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.inv-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.55);
+}
+
+.inv-sheet-body {
+  position: relative;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 0 8px;
+}
+
+.inv-sheet-body .craft-panel {
+  border-radius: var(--r) var(--r) 0 0;
+  box-shadow: 0 -8px 30px rgb(0 0 0 / 0.5);
+}
+
+/* once an item is picked its panel comes first in the right column, above the worn gear */
+.inv-side.picked .inv-panel-dock {
+  order: -1;
+}

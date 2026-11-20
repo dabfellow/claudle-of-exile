@@ -20,6 +20,8 @@ export interface OfflineSummary {
   projects?: Record<string, number>;
   projectWork?: Record<string, number>;
   items: number;
+  /** drops the loot filter hid (discarded, not in the time-away pile) */
+  hiddenItems?: number;
   gems: number;
   kills: number;
   died: boolean;
@@ -88,6 +90,7 @@ export function mergeOffline(into: OfflineSummary, more: OfflineSummary): Offlin
     projects: add(into.projects ?? {}, more.projects ?? {}) as Record<string, number>,
     projectWork: add(into.projectWork ?? {}, more.projectWork ?? {}) as Record<string, number>,
     items: into.items + more.items,
+    hiddenItems: (into.hiddenItems ?? 0) + (more.hiddenItems ?? 0),
     gems: into.gems + more.gems,
     kills: into.kills + more.kills,
     died: into.died || more.died,
@@ -143,6 +146,7 @@ export function startOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offline
       }
       if (e.t === 'xp') sum.xp[e.skill] = (sum.xp[e.skill] ?? 0) + e.amount;
       else if (e.t === 'levelup') sum.levels[e.skill] = e.level;
+      else if (e.t === 'loot' && e.item && e.hidden) sum.hiddenItems = (sum.hiddenItems ?? 0) + 1;
       else if (e.t === 'loot' && e.item && !e.salvaged) sum.items++;
       else if (e.t === 'loot' && (e.gemId || e.supportId)) sum.gems++;
       else if (e.t === 'kill') sum.kills++;

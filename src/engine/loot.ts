@@ -1,7 +1,7 @@
 import { BOSS_CRAFT_MAT, CONTRABAND_DROP, ESSENCES, FOSSILS, SEAL, WAX } from '../data/craftMats';
 import { WHETSTONE, WHETSTONE_DROP } from '../data/expedition';
 import { areaCurrency, BOSS_GATHER_DROP, bossGatherMats, bossTable, dropTable, STARTER_DROPS, type RarityWeights } from '../data/drops';
-import { AUTO_SALVAGE_QUARTERMASTER_LEVEL, MAP_ILVL } from '../data/hideout';
+import { MAP_ILVL } from '../data/hideout';
 import { RUNE_DROP, RUNES } from '../data/runes';
 import { CURRENCIES } from '../data/materials';
 import { rollFlask, rollUniqueFlask, stashFlask } from './flasks';
@@ -9,11 +9,10 @@ import type { ZoneDef } from '../data/zones';
 import { seeUnique } from './account';
 import { addBank } from './bank';
 import type { Ctx } from './context';
-import { benchBuilt } from './crafting';
 import { stationLevel } from './hideout';
-import { dropItem } from './storage';
-import { createItem, createUnique, droppableBases, salvageValue, itemMatchesClass } from './items';
-import { evaluateLootFilter, shouldSalvageByFilter } from './lootFilter';
+import { createItem, createUnique, droppableBases, salvageValue } from './items';
+import { evaluateLootFilter } from './lootFilter';
+import { autoSalvages, routeDrop } from './lootRouting';
 import { HARD_BOSSES, UBER_BOSSES, uniqueMapDef } from '../data/maps';
 import { encounterWorldDropUniques } from '../data/uniqueDrops';
 import { runModifiers } from './maps';
@@ -41,22 +40,22 @@ export function placeItem(s: GameState, ctx: Ctx, item: Item): void {
     s.lifetime.uniquesFound += 1;
     seeUnique(s.account, item);
   }
-  const autoLevel = item.rarity === 'unique' ? Infinity : AUTO_SALVAGE_QUARTERMASTER_LEVEL[item.rarity];
-  const autoByRarity = item.rarity !== 'unique' && s.settings.autoSalvage[item.rarity] && benchBuilt(s) && stationLevel(s, 'quartermaster') >= autoLevel;
-  const autoByClassFilter = item.rarity !== 'unique' && s.settings.filterOffClassLoot && !itemMatchesClass(s.character.classId, item);
-  
   const filterResult = evaluateLootFilter(s, item);
-  const activeLegacy = s.settings.customLootFilters?.find((filter) => filter.id === s.settings.activeLootFilterId);
-  const legacySalvage = !!activeLegacy && shouldSalvageByFilter(activeLegacy, item, s.character.classId);
-  const autoByCustomFilter = legacySalvage || (filterResult.autoSalvage && (filterResult.salvageWithoutUnlock || (benchBuilt(s) && stationLevel(s, 'quartermaster') >= autoLevel)));
-
-  if (autoByRarity || autoByClassFilter || autoByCustomFilter) {
+  if (autoSalvages(s, item, filterResult)) {
     addBank(s, 'arcane_dust', salvageValue(item));
     s.lifetime.salvaged += 1;
     ctx.emit({ t: 'loot', item, salvaged: true });
     return;
   }
-  dropItem(s, ctx, item);
+  // A hidden drop is discarded: it never reaches the ground or time-away pile, so it takes no room there, and gives no dust.
+  // An auto-salvage rule that isn't unlocked yet keeps the drop rather than throwing it away.
+  if (!filterResult.visible && !filterResult.autoSalvage) {
+    s.lifetime.hiddenByFilter = (s.lifetime.hiddenByFilter ?? 0) + 1;
+    ctx.emit({ t: 'loot', item, hidden: true });
+    return;
+  }
+  // kept: into the inventory (or the stash, by a Send to stash rule); only a full inventory spills onto the ground
+  routeDrop(s, ctx, item, filterResult);
   s.lifetime.itemsLooted += 1;
   ctx.emit({ t: 'loot', item, filterSound: filterResult.sound && !ctx.offline });
 }

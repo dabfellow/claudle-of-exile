@@ -5,17 +5,15 @@ import { ItemMenuHost } from './components/ItemMenu';
 import { QuestTracker } from './components/QuestTracker';
 import { Feed, OfflineModal, Sidebar, Toasts, TopBar, useFlaskHotkeys, usePage, XpBar, type Page } from './Layout';
 import { AchievementsPage } from './pages/AchievementsPage';
-import { BenchPage } from './pages/BenchPage';
 import { CampaignPage } from './pages/CampaignPage';
 import { CombatPage } from './pages/CombatPage';
 import { SkillGemsPage } from './pages/SkillGemsPage';
-import { EquipmentPage } from './pages/EquipmentPage';
+import { InventoryPage } from './pages/InventoryPage';
 import { HideoutPage } from './pages/HideoutPage';
 import { MapDevicePage } from './pages/MapDevicePage';
 import { UpcomingSkillsPage } from './pages/UpcomingSkillsPage';
 import { SkillPage } from './pages/SkillPage';
 import { SettingsPage } from './pages/SettingsPage';
-import { StashPage } from './pages/StashPage';
 import { MarketPage } from './pages/MarketPage';
 import { TraderPage } from './pages/TraderPage';
 import { TreePage } from './pages/TreePage';
@@ -43,12 +41,11 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
       return <SkillGemsPage />;
     case 'tree':
       return <TreePage />;
+    // Stash and the Crafting Bench are part of the Inventory screen now; old links to them land there
     case 'equipment':
-      return <EquipmentPage />;
     case 'bench':
-      return <BenchPage />;
     case 'stash':
-      return <StashPage go={go} />;
+      return <InventoryPage go={go} />;
     case 'vendor':
       return <TraderPage />;
     case 'market':
@@ -66,7 +63,9 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
 
 function GameScreen() {
   const s = useGame();
-  const [page, go] = usePage();
+  const [page, setPage] = usePage();
+  // the Stash and Crafting Bench pages became the Inventory screen: send old links there so the sidebar lights up
+  const go = (p: Page) => setPage(p === 'stash' || p === 'bench' ? 'equipment' : p);
   useFlaskHotkeys();
   const mainRef = useRef<HTMLElement>(null);
   useEffect(() => {

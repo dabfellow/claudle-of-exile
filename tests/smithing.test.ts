@@ -161,7 +161,7 @@ describe('Phase 04 Smithing', () => {
     const s = smith(), a = actionDef('purpose_physical_yew_recurve');
     s.account.bank = { ...a.inputs! }; const paid = { ...s.account.bank };
     expect(startSkillAction(s, ctx(), a.id)).toBeNull();
-    s.inventory = Array.from({ length: 60 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
+    s.inventory = Array.from({ length: 100 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
     s.smithCatalyst.salvageAll = true; s.smithCatalyst.salvageFull = true;
     const uid = s.nextUid;
     skillStep(s, ctx(), 200_000, deriveStats(s));
@@ -169,20 +169,20 @@ describe('Phase 04 Smithing', () => {
     s.inventory.pop(); expect(startSkillAction(s, ctx(), a.id)).toBeNull();
     s.account.bank.mithril_bar = 1;
     skillStep(s, ctx(), 200_000, deriveStats(s));
-    expect(s.inventory).toHaveLength(59); expect(s.account.bank.mithril_ore).toBe(paid.mithril_ore); expect(s.action).toBeNull();
+    expect(s.inventory).toHaveLength(99); expect(s.account.bank.mithril_ore).toBe(paid.mithril_ore); expect(s.action).toBeNull();
   });
 
   it.each(SMITH_COMPONENTS.filter((a) => a.protectedOutputs))('pays full protected costs for $id despite conservation/doubles and safely stops on exhaustion', (raw) => {
     let s = smith(), a = actionDef(raw.id);
     s.account.bank = { ...a.inputs! }; s.skillPassives.push('core_steady'); s.skillingMastery[`task.${a.id}`] = 432000;
-    s.inventory = Array.from({ length: 60 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
+    s.inventory = Array.from({ length: 100 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
     expect(startSkillAction(s, ctx(), a.id)).toBeNull(); s = reload(s);
     if (s.action?.kind === 'skill') s.action.double = true;
     skillStep(s, makeCtx({ next: () => 0 }), actionIntervalMs(s, a, deriveStats(s)) + 0.001, deriveStats(s));
     for (const id of Object.keys(a.inputs!)) expect(s.account.bank[id]).toBe(0);
     const output = Object.keys(a.protectedOutputs!)[0]; expect(s.account.bank[output]).toBe(1);
     skillStep(s, ctx(), 200_000, deriveStats(s)); expect(s.action).toBeNull();
-    expect(s.inventory).toHaveLength(60); expect(a.mastery?.profile).toBe('project');
+    expect(s.inventory).toHaveLength(100); expect(a.mastery?.profile).toBe('project');
     const locked = smith(a.level, raw.forge! - 1); locked.account.bank = { ...a.inputs! };
     expect(actionBlocker(locked, a)).toMatch(/Forge|Smelter|Woodcrafting Bench/);
   });
@@ -211,7 +211,7 @@ describe('Phase 04 Smithing', () => {
     s.professionProgress.work.smithing = 20; s.account.bank = { ...p.inputs };
     expect(startProject(s, ctx(), p.id)).toBeNull(); expect(cancelProject(s)).toBeNull(); expect(s.account.bank).toEqual(p.inputs);
     expect(startProject(s, ctx(), p.id)).toBeNull();
-    s.inventory = Array.from({ length: 60 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
+    s.inventory = Array.from({ length: 100 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
     advanceProject(s, ctx(), 600_000); expect(s.professionProgress.activeProject?.status).toBe('ready');
     s = reload(s); s.inventory.pop(); expect(resumeProject(s)).toBeNull();
     const runId = s.professionProgress.activeProject!.runId;
