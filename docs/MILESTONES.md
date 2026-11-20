@@ -622,6 +622,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Manual skill gem upgrades: no auto level-up, an Upgrade button on the Skills page, greyed out with the reason when the new level's character level or attribute isn't met — done 2026-11-19.
+  - XP banks as before (capped at the next level only while that level is out of reach), one press per level. The sim player presses Upgrade itself. Playtested with a level 20 Warrior.
 - [x] Replace the World Map's cloudy sea with a harsh ocean and a subtle offshore-boundary motif — done 2026-11-19.
   - Integrated `veyrath-world-bound-sea.webp`, preserving prior artwork and the map's 1536×1024 registration. Deep slate water, engraved waves, returning currents and sparse ship wakes suggest confinement. Psychological compulsion, uncertain memory effects, missing ships and exceptional crossings recorded in STORY. Existing banners, regions, hover and unlock fog retained. Native previews inspected; live browser acceptance remains outstanding. No release.
 
@@ -806,6 +808,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
+- Manual skill gem upgrades with a greyed-out button when an upgrade would disable the skill — done 2026-11-19.
 - Shipped **0.5.5, Veyrath World Map** — done 2026-11-19. Committed this session's campaign/map work, merged and preserved releases through 0.5.4, regenerated UNIQUES, passed all 113 files / 1,795 tests, and deployed with the guarded project command. Live version and login configuration confirmed. Latest ocean/fog native previews inspected; live UI hover acceptance remains outstanding. No additional version bump for this release record.
 
 - Replaced the World Map's pale seas with a harsh dark ocean and returning-current/ship-wake motifs — done 2026-11-19. Updated runtime artwork and native previews; recorded the owner's psychological escape-boundary lore without fixing unresolved memory effects or adding sailing mechanics. Prior paintings retained. No release.

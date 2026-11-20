@@ -19,8 +19,11 @@ import { GROUND } from '../../engine/battlefield';
 import type { GroundKind } from '../../engine/types';
 import {
   expandSockets,
+  gemUpgradeBlock,
+  gemUpgradeReady,
   gemUseReason,
   gemProgress,
+  upgradeGem,
   skillNumbers,
   placeOnBar,
   removeFromBar,
@@ -455,8 +458,39 @@ function SupportsForSkill({ s, gem, socket }: { s: GameState; gem: SkillGemInsta
   );
 }
 
+/**
+ * Shows once a gem has the xp for its next level. Greyed out, with the reason, when that level would need more
+ * character level or attribute than you have, since the skill would stop working.
+ */
+function UpgradeButton({ s, gem }: { s: GameState; gem: SkillGemInstance }) {
+  if (!gemUpgradeReady(gem)) return null;
+  const d = deriveStats(s, []);
+  const block = gemUpgradeBlock(d.combatLevel, d.attributes, gem);
+  return (
+    <button
+      className="btn sm primary gem-upgrade"
+      disabled={!!block}
+      title={block ?? `Take ${activeGemDef(gem.gemId).name} to level ${gem.level + 1}`}
+      onClick={() => game.act((st, ctx) => upgradeGem(st, ctx, gem.uid))}
+    >
+      Upgrade to Lv {gem.level + 1}
+      {block && <span className="gem-upgrade-why">{block}</span>}
+    </button>
+  );
+}
+
 /** One slot of the bar, drawn like the combat skill bar: click to set it up, or to drop a picked gem in. */
-function SlotTile({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; slot: number; pickedGem: number | null; onOpen: () => void; onPlaced: () => void }) {
+function SlotTile(props: { s: GameState; slot: number; pickedGem: number | null; onOpen: () => void; onPlaced: () => void }) {
+  const gem = props.s.skillBar[props.slot];
+  return (
+    <div className="slot-wrap">
+      <SlotButton {...props} />
+      {gem && <UpgradeButton s={props.s} gem={gem} />}
+    </div>
+  );
+}
+
+function SlotButton({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; slot: number; pickedGem: number | null; onOpen: () => void; onPlaced: () => void }) {
   const gem = s.skillBar[slot];
   const click = () => {
     if (pickedGem === null) return onOpen();
@@ -599,6 +633,7 @@ function SlotModal({
           </button>
         </div>
         {gem && <ProgressBar value={gemProgress(gem)} color="var(--gem)" className="thin" />}
+        {gem && <UpgradeButton s={s} gem={gem} />}
 
         {gem && !choosing && (
           <>

@@ -1270,6 +1270,7 @@ export type GameEvent =
   | { t: 'area'; gemId: string; cells: number[] }
   | { t: 'closeIn'; monsterUid: number }
   | { t: 'gemLevel'; gemId: string; level: number }
+  | { t: 'gemReady'; gemId: string; level: number }
   | { t: 'kill'; name: string; boss: boolean }
   | { t: 'spawn'; name: string; boss: boolean }
   | { t: 'death'; xpLost: number }

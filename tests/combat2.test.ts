@@ -13,7 +13,10 @@ import {
   gemLevelReq,
   gemXpForLevel,
   MIN_COOLDOWN_MS,
+  gemUpgradeBlock,
+  gemUpgradeReady,
   grantGemXp,
+  upgradeGem,
   placeOnBar,
   removeFromBar,
   skillNumbers,
@@ -68,25 +71,46 @@ describe('skill gems', () => {
     expect(newGame(1, { name: 'a', classId: 'mage' }).skillBar[0]?.gemId).toBe('frost_needle');
   });
 
-  it('gem levels follow character level and unlock support sockets', () => {
+  it('gems never level by themselves: xp banks one level and waits for Upgrade', () => {
     const s = newGame(1);
     const gem = s.skillBar[0]!;
     grantGemXp(s, ctx(), gemXpForLevel(10));
-    // a level 1 character can't level a gem past level 1, and xp stops banking at the next level
     expect(gem.level).toBe(1);
     expect(gem.xp).toBe(gemXpForLevel(2));
+    expect(gemUpgradeReady(gem)).toBe(true);
+    // a level 1 character can't use a level 2 gem, so the upgrade is refused
+    expect(upgradeGem(s, ctx(), gem.uid)).toMatch(/needs character level/);
+    expect(gem.level).toBe(1);
     s.skills.combat = charXpForLevel(gemLevelReq('heavy_strike', 10));
-    grantGemXp(s, ctx(), gemXpForLevel(10), { str: 999, dex: 999, int: 999 });
-    expect(gem.level).toBe(10);
+    expect(upgradeGem(s, ctx(), gem.uid)).toBeNull();
+    expect(gem.level).toBe(2);
+    expect(upgradeGem(s, ctx(), gem.uid)).toMatch(/xp/);
+    // with the next level in reach, xp keeps banking past it, one press per level
+    grantGemXp(s, ctx(), gemXpForLevel(5) - gem.xp, { str: 999, dex: 999, int: 999 });
+    expect(gem.level).toBe(2);
+    expect(gem.xp).toBe(gemXpForLevel(5));
+    // this character lacks the Strength for level 3, so the button stays greyed out
+    expect(upgradeGem(s, ctx(), gem.uid)).toMatch(/Strength/);
+    expect(gem.level).toBe(2);
+  });
+
+  it('upgrades unlock support sockets', () => {
+    const s = newGame(1);
+    const gem = s.skillBar[0]!;
+    gem.level = 9;
+    gem.xp = gemXpForLevel(10);
+    expect(supportSlots(gem)).toBe(2);
+    gem.level = 10; // what upgradeGem does once the requirements are met
     expect(supportSlots(gem)).toBe(3);
   });
 
-  it('skill gems need their attribute: they stop levelling short of it and stay off the bar', () => {
+  it('skill gems need their attribute: an upgrade short of it is refused, and they stay off the bar', () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
     const strike = s.skillBar[0]!; // Heavy Strike, a Strength gem
-    s.skills.combat = charXpForLevel(gemLevelReq('heavy_strike', 10));
-    grantGemXp(s, ctx(), gemXpForLevel(10), { str: gemAttrReq('heavy_strike', 4), dex: 0, int: 0 });
-    expect(strike.level).toBe(4);
+    strike.level = 4;
+    strike.xp = gemXpForLevel(5);
+    expect(gemUpgradeBlock(80, { str: gemAttrReq('heavy_strike', 4), dex: 0, int: 0 }, strike)).toMatch(/Strength/);
+    expect(gemUpgradeBlock(80, { str: gemAttrReq('heavy_strike', 5), dex: 0, int: 0 }, strike)).toBeNull();
     expect(gemAttrReq('heavy_strike', 1)).toBeLessThanOrEqual(8); // every class can use any level-1 gem
     veteran(s, 60); // past a level 10 Lacerate's level requirement, so only its Dexterity stops it
     const lacerate = createSkillGem(s, 'lacerate', 10);

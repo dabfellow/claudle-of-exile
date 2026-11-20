@@ -95,7 +95,7 @@ function GemRequirement({ have, def, level }: { have: number; def: ActiveGemDef;
       <span className={have >= need ? 'muted' : 'bad'}>
         Requires {need} {GEM_ATTR_NAME[attr]} (you have {have})
       </span>
-      {have >= need && have < next && <div className="warn">Stops levelling: level {level + 1} needs {next}</div>}
+      {have >= need && have < next && <div className="warn">Can't upgrade: level {level + 1} needs {next}</div>}
       {have < need && <div className="bad">Can't be used until you have {need}</div>}
     </div>
   );
@@ -204,6 +204,7 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
             <div style={{ marginTop: 6 }}>
               <ProgressBar value={gemProgress(gem)} color="var(--gem)" />
               <div className="dim" style={{ fontSize: 'var(--fs-xs)', marginTop: 2 }}>
+                {gemProgress(gem) >= 1 ? 'Ready to upgrade on the Skill Gems page · ' : ''}
                 Next level needs character level {gemLevelReq(gem.gemId, gem.level + 1)}
               </div>
             </div>

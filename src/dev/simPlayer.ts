@@ -12,7 +12,7 @@ import { canSpendLife, equipFlask, flaskRecoveryAmount, lockTarget, queueSkill, 
 import type { Ctx } from '../engine/context';
 import { applyOrb, benchBuilt, orbReason, salvage } from '../engine/crafting';
 import { equip, equipReason, slotsFor } from '../engine/equipment';
-import { chainFalloff, gemChains, gemUseReason, placeOnBar, removeFromBar, skillNumbers, skillSummary, socketSupport, supportReason, syncSockets, unsocketSupport, type SkillNumbers } from '../engine/gems';
+import { chainFalloff, gemChains, gemUpgradeBlock, gemUpgradeReady, gemUseReason,placeOnBar, removeFromBar, skillNumbers, skillSummary, socketSupport, supportReason, syncSockets, unsocketSupport, type SkillNumbers } from '../engine/gems';
 import { flaskDef } from '../data/flasks';
 import { enchantFlask, flaskStats } from '../engine/flasks';
 import { buyGem, buyOffer, gemShopOffers, nextUpgradeCost, rerollCost, rerollVendor, sellItems, stationLevel } from '../engine/hideout';
@@ -227,6 +227,13 @@ export const frostbiteZone = (zoneId: string | undefined) => !!zoneId && !!zoneD
  */
 export function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const d = deriveStats(s, []);
+  // presses Upgrade on every gem that has the xp, unless the new level would switch it off
+  for (const g of s.skillBar) {
+    while (g && gemUpgradeReady(g) && !gemUpgradeBlock(d.combatLevel, d.attributes, g)) {
+      g.level += 1;
+      syncSockets(g);
+    }
+  }
   // the best copy of each gem it owns and meets the attribute for: highest level wins
   const owned = new Map<string, SkillGemInstance>();
   for (const g of [...s.skillBar.filter((x): x is SkillGemInstance => !!x), ...s.account.gems]) {

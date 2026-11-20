@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Skill gems no longer level up by themselves. When one has the XP, an Upgrade button appears on the Skills page; it greys out and says why if the new level needs more character level or attribute than you have, so an upgrade can never switch a skill off.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

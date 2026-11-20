@@ -124,27 +124,54 @@ export function supportSlots(gem: SkillGemInstance): number {
   return Math.min(MAX_SUPPORT_SLOTS, Math.min(4, 1 + Math.floor(gem.level / 5)) + gem.extraSlots);
 }
 
-/** Gems on the skill bar share the character's xp. Levels stall until the character catches up. */
+/**
+ * Gems on the skill bar share the character's xp. They never level by themselves: xp waits for you to press
+ * Upgrade (`upgradeGem`), so a level can't switch a skill off behind your back. While the next level is out of
+ * reach (character level or attribute) the xp banks only up to it, as it always has.
+ */
 export function grantGemXp(s: GameState, ctx: Ctx, amount: number, attrs: Attributes = deriveStats(s, []).attributes): void {
   amount *= Math.max(ctx.event?.xp ?? 1, ctx.event?.combatXp ?? 1);
   const charLvl = characterLevel(s);
-  // a level waits for both the character level and the attribute it needs
-  const canReach = (gem: SkillGemInstance, level: number) => charLvl >= gemLevelReq(gem.gemId, level) && !gemAttrReason(attrs, gem, level);
   for (const gem of s.skillBar) {
     if (!gem || gem.level >= MAX_GEM_LEVEL) continue;
-    const next = gem.level + 1;
-    const cap = gemXpForLevel(next);
-    if (!canReach(gem, next)) {
-      // banks up to the next level, but never takes away xp a gem already has (settleGems keeps it)
+    const cap = gemXpForLevel(gem.level + 1);
+    const wasReady = gem.xp >= cap;
+    if (gemUpgradeBlock(charLvl, attrs, gem)) {
+      // never takes away xp a gem already has (settleGems keeps it)
       gem.xp = Math.max(gem.xp, Math.min(cap, gem.xp + amount));
-      continue;
+    } else {
+      gem.xp += amount;
     }
-    gem.xp += amount;
-    while (gem.level < MAX_GEM_LEVEL && gem.xp >= gemXpForLevel(gem.level + 1) && canReach(gem, gem.level + 1)) {
-      gem.level += 1;
-      ctx.emit({ t: 'gemLevel', gemId: gem.gemId, level: gem.level });
-    }
+    if (!wasReady && gem.xp >= cap) ctx.emit({ t: 'gemReady', gemId: gem.gemId, level: gem.level + 1 });
   }
+}
+
+/** The gem has the xp for its next level. */
+export function gemUpgradeReady(gem: SkillGemInstance): boolean {
+  return gem.level < MAX_GEM_LEVEL && gem.xp >= gemXpForLevel(gem.level + 1);
+}
+
+/** Why taking this gem to its next level would leave it unusable (character level or attribute), or null. */
+export function gemUpgradeBlock(charLevel: number, attrs: Attributes, gem: SkillGemInstance): string | null {
+  const next = gem.level + 1;
+  const need = gemLevelReq(gem.gemId, next);
+  if (charLevel < need) return `Level ${next} needs character level ${need}`;
+  const attr = activeGemDef(gem.gemId).attr;
+  const attrNeed = gemAttrReq(gem.gemId, next);
+  return attrs[attr] < attrNeed ? `Level ${next} needs ${attrNeed} ${GEM_ATTR_NAME[attr]} (you have ${attrs[attr]})` : null;
+}
+
+/** Take a gem with enough xp up one level, if the character can still use it there. */
+export function upgradeGem(s: GameState, ctx: Ctx, gemUid: number): string | null {
+  const gem = findSkillGem(s, gemUid);
+  if (!gem) return 'Gem not found';
+  if (!gemUpgradeReady(gem)) return 'Not enough gem xp yet';
+  const block = gemUpgradeBlock(characterLevel(s), deriveStats(s, []).attributes, gem);
+  if (block) return block;
+  gem.level += 1;
+  syncSockets(gem);
+  ctx.emit({ t: 'gemLevel', gemId: gem.gemId, level: gem.level });
+  return null;
 }
 
 export function gemProgress(gem: SkillGemInstance): number {

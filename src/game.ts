@@ -1066,6 +1066,9 @@ class GameStore {
       case 'gemLevel':
         this.addFeed(`${activeGemDef(e.gemId).name} reached gem level ${e.level}`, 'level');
         break;
+      case 'gemReady':
+        this.addFeed(`${activeGemDef(e.gemId).name} can be upgraded to level ${e.level} (Skill Gems)`, 'level');
+        break;
       case 'loot':
         if (e.filterSound) playLootFilterSound();
         if (e.item || e.currencyId || e.gemId || e.supportId) {

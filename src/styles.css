@@ -5964,6 +5964,43 @@ g.tut-hint circle.body {
   min-height: 150px;
 }
 
+.slot-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.slot-wrap > .skill-btn {
+  flex: 1;
+}
+
+.gem-upgrade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.slot-wrap > .gem-upgrade {
+  margin-top: 0;
+}
+
+.gem-upgrade:disabled {
+  filter: grayscale(1);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.gem-upgrade-why {
+  font-size: var(--fs-xs);
+  font-weight: normal;
+  white-space: normal;
+  line-height: 1.2;
+}
+
 .skill-btn.setup.empty {
   opacity: 0.6;
 }
