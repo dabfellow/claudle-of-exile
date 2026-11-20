@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Each character gathers and crafts from their own supplies. Use the Guild Stash to move items between characters and collect your old shared stock. Gathering continues for XP and other drops when a material reaches 5,000.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.5.9',
+    date: '20 Nov 2026',
+    title: 'Personal Supplies and the Guild Stash',
+    items: [
+    'Each character gathers and crafts from their own supplies. Use the Guild Stash to move items between characters and collect your old shared stock. Gathering continues for XP and other drops when a material reaches 5,000.',
+    ],
+  },
   {
     version: '0.5.8',
     date: '20 Nov 2026',
