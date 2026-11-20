@@ -12,6 +12,9 @@ export interface NewsEntry {
  */
 export const UPCOMING: string[] = [
   'Skill gems no longer level up by themselves. When one has the XP, an Upgrade button appears on the Skills page; it greys out and says why if the new level needs more character level or attribute than you have, so an upgrade can never switch a skill off.',
+  'All act maps now use hand-traced shared roads and passages, with sensible entrances and no duplicated cross-map links.',
+  'Act 1 map routes now follow shared coastal, village and woodland paths instead of crisscrossing the artwork.',
+  'The World Map overview now shows just the atlas, without extra headings or instruction text.',
 ];
 
 export const NEWS: NewsEntry[] = [

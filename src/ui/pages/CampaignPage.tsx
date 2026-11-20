@@ -203,9 +203,6 @@ export function WorldMap({ s, onOpen }: { s: GameState; onOpen: (act: number) =>
   const [hovered, setHovered] = useState<number | null>(null);
   return (
     <section className="veyrath-atlas" aria-label="Veyrath world map">
-      <div className="veyrath-atlas-toolbar">
-        <div><h2>Veyrath</h2><p className="dim small">Choose an act to explore. New territories emerge as you unlock them.</p></div>
-      </div>
     <div className="card cmap-card cmap-world-scroll">
       <div className="cmap-world" style={{ aspectRatio: WORLD_MAP.aspect }}>
         {WORLD_MAP.image ? <img className="ct-svg" src={WORLD_MAP.image} alt="Veyrath atlas showing Brinewick, Greyford, Harrowgate, Cairnwatch and Caer Veyr" /> : <WorldTerrain isOpen={actOpen} selected={cur} onPick={onOpen} />}
@@ -292,7 +289,7 @@ function ActCloseUp({ s, act, selected, onSelect }: { s: GameState; act: number;
   if (!data) return null;
   const zones = zonesInAct(act).filter((z) => data.zones[z.id]);
   const unlocked = (id: string) => s.unlockedZones.includes(id);
-  const roads = zones.flatMap((z) =>
+  const roads = data.traces ? [] : zones.flatMap((z) =>
     roadsInto(z)
       .filter((from) => data.zones[from])
       .map((from) => ({
@@ -305,6 +302,13 @@ function ActCloseUp({ s, act, selected, onSelect }: { s: GameState; act: number;
   const entries = data.entries
     .filter((e) => data.zones[e.to])
     .map((e) => ({ key: `${e.from}>${e.to}`, d: smoothPath([e.at, data.zones[e.to]]), walked: unlocked(e.to), side: false }));
+  const tracedRoads = data.traces?.map((trace, index) => ({
+    key: `trace-${index}`, d: trace.d, side: false,
+    walked: trace.routes.some((route) => {
+      const [from, to] = route.split('>');
+      return unlocked(to) && s.bossesDefeated.includes(from);
+    }),
+  }));
   // dense acts get a wider map that scrolls sideways on narrow screens
   const minWidth = zones.length > 12 ? 620 : zones.length > 9 ? 520 : zones.length > 6 ? 480 : 360;
   return (
@@ -312,7 +316,7 @@ function ActCloseUp({ s, act, selected, onSelect }: { s: GameState; act: number;
       <div className="cmap-act" style={{ aspectRatio: data.aspect, minWidth: minWidth || undefined, ['--aspect' as string]: data.aspect }}>
         {data.image ? <img className="ct-svg" src={data.image} alt="" /> : <ActTerrain act={act} keepClear={keepClear} />}
         <svg className="cmap-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-          {[...entries, ...roads].map((r) => (
+          {(tracedRoads ?? [...entries, ...roads]).map((r) => (
             <g key={r.key} className={`cmap-road ${r.walked ? 'walked' : ''} ${r.side ? 'side' : ''}`}>
               <path className="cmap-road-under" d={r.d} />
               <path className="cmap-road-line" d={r.d} />
@@ -406,7 +410,6 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
   if (act === null) {
     return (
       <div className="page wide world-map-page">
-      <PageHeader title="World Map" />
         <WorldMap s={s} onOpen={openAct} />
       </div>
     );

@@ -15,6 +15,8 @@
  *   image: new URL('../assets/maps/act1.webp', import.meta.url).href,
  */
 
+import { CHAPTER_ENTRIES, CHAPTER_TRACES } from './campaignRoutes';
+
 export type MapPoint = [number, number];
 
 export interface WorldMapData {
@@ -35,6 +37,8 @@ export interface ActMapData {
   zones: Record<string, MapPoint>;
   /** extra bends in the road between two areas, keyed 'from>to'; a road with none is drawn straight */
   roads: Record<string, MapPoint[]>;
+  /** Hand-traced shared road sections. Several progression links may travel the same stretch. */
+  traces?: { d: string; routes: string[] }[];
   /** roads coming in from the act before: drawn from `at` (usually an edge) to the area `to` */
   entries: { from: string; to: string; at: MapPoint }[];
 }
@@ -317,15 +321,71 @@ export const ACT_MAPS: Record<number, ActMapData> = {
   7: chapterMap(7, 6),
 };
 ACT_MAPS[1].zones = { mudflats: [57, 88], brinecaves: [17, 88], ashwood: [47, 55], blackreed: [27, 27], crypt: [79, 50], shipgrave: [16, 18], stormcliffs: [88, 36], sanctum: [85, 16] };
-ACT_MAPS[1].roads = {
-  'mudflats>brinecaves': [[43, 78], [28, 79]],
-  'brinecaves>ashwood': [[24, 73], [39, 68]],
-  'ashwood>blackreed': [[32, 51], [30, 38]],
-  'blackreed>crypt': [[44, 32], [66, 40]],
-  'crypt>shipgrave': [[65, 41], [44, 31], [28, 22]],
-  'shipgrave>stormcliffs': [[29, 19], [55, 24], [76, 32]],
-  'stormcliffs>sanctum': [[87, 27]],
-};
+ACT_MAPS[1].roads = {};
+// Act 1: trace the painted shoreline, village approach, bridge and ridge paths explicitly.
+// Journeys that return along the same road share its stroke, rather than making parallel shortcuts.
+ACT_MAPS[1].traces = [
+  { // Brinewick Shore to the cliff-path junction above the caves.
+    d: 'M57 88 L55 86.5 L52 85 L49.5 82.5 L47 80.5 L44 79 L41 77.5 L38 76.5 L34 75.5 L30 75 L27 76',
+    routes: ['mudflats>brinecaves'],
+  },
+  { // Cave approach stays on the cliff shelf, outside the harbour.
+    d: 'M27 76 L29 77 L31 78 L32 80 L30 81.5 L27 82.5 L24 83 L21 84.5 L19 86 L17 88',
+    routes: ['mudflats>brinecaves', 'brinecaves>ashwood'],
+  },
+  { // The village's eastern approach joins the coast to its northern road.
+    d: 'M27 76 L29 73 L31 70.5 L32 68 L32 65.5 L30 63 L28.5 61',
+    routes: ['brinecaves>ashwood'],
+  },
+  { // Follow the river-side track north to the woodland-road junction.
+    d: 'M28.5 61 L28.5 58 L30 55.5 L33 53 L35 51 L37 50',
+    routes: ['brinecaves>ashwood'],
+  },
+  { // One bridge crossing and one woodland road, reused by the later trips.
+    d: 'M30 47 L32 47.5 L35 49 L37 50',
+    routes: ['ashwood>blackreed', 'blackreed>crypt', 'crypt>shipgrave', 'shipgrave>stormcliffs'],
+  },
+  {
+    d: 'M37 50 L40 49.5 L43 48 L46 47',
+    routes: ['brinecaves>ashwood', 'ashwood>blackreed', 'blackreed>crypt', 'crypt>shipgrave', 'shipgrave>stormcliffs'],
+  },
+  { // Short footpath under the trees to the Ashwood clearing.
+    d: 'M46 47 L45 49 L44.5 51 L45.5 53 L47 55',
+    routes: ['brinecaves>ashwood', 'ashwood>blackreed'],
+  },
+  { // West of the bridge the track skirts the marsh, avoiding the river.
+    d: 'M30 47 L27 47.5 L25 47 L23 45.5 L23 43.5 L21.5 41 L20 39 L18 37 L16.5 34 L17 31',
+    routes: ['ashwood>blackreed', 'blackreed>crypt', 'crypt>shipgrave', 'shipgrave>stormcliffs'],
+  },
+  { // Reeds reached from their dry western edge.
+    d: 'M17 31 L19.5 30 L22 29.5 L24.5 28 L27 27',
+    routes: ['ashwood>blackreed', 'blackreed>crypt'],
+  },
+  { // The wreck beach branches from that same coastal track.
+    d: 'M17 31 L15.5 29 L15 27 L16 25 L18 23 L19 21 L18 19.5 L16 18',
+    routes: ['crypt>shipgrave', 'shipgrave>stormcliffs'],
+  },
+  { // Woodland road bends around the large trees toward the eastern ridge.
+    d: 'M46 47 L48 45 L49 43 L52 41.5 L55 41 L58 41.5 L61 41 L63 40',
+    routes: ['blackreed>crypt', 'crypt>shipgrave', 'shipgrave>stormcliffs'],
+  },
+  { // Descend the existing switchback to the burial ground entrance.
+    d: 'M63 40 L63.5 42 L62.5 44 L61.5 46 L61.5 48 L63 50 L66 51 L70 51.5 L74 52 L77 52 L79 50',
+    routes: ['blackreed>crypt', 'crypt>shipgrave'],
+  },
+  { // Climb the ridge track, meeting the cliff spur at a single junction.
+    d: 'M63 40 L66 39 L68.5 37.5 L69.5 35 L71 33 L73.5 32 L75 30.5 L77 30',
+    routes: ['shipgrave>stormcliffs'],
+  },
+  {
+    d: 'M77 30 L79 31 L81 32.5 L83 33 L85 34 L88 36',
+    routes: ['shipgrave>stormcliffs', 'stormcliffs>sanctum'],
+  },
+  { // Final climb follows the tower approach rather than cutting across the cliff.
+    d: 'M77 30 L76 28 L76.5 26.5 L78.5 25 L80 23 L80.5 21 L82 19 L84 18 L85 16',
+    routes: ['stormcliffs>sanctum'],
+  },
+];
 ACT_MAPS[2].zones = { cinderroad: [12, 83], saltflats: [25, 70], tithefields: [17, 46], fortobedience: [35, 48], blackgrass: [49, 62], bannerfield: [58, 39], assizes: [74, 45], caravan: [85, 20] };
 ACT_MAPS[2].roads = {};
 ACT_MAPS[2].entries = [{ from: 'sanctum', to: 'cinderroad', at: [4, 92] }];
@@ -338,6 +398,10 @@ ACT_MAPS[6].zones = { blackharbor: [20, 71], squallbanks: [43, 51], lampgulf: [3
 ACT_MAPS[7].zones = { exilesgate: [12, 86], kingsroad: [20, 77], kingsmint: [61, 67], hanginggardens: [44, 42], burnedarchive: [16, 40], longfracture: [51, 29], driftingquarter: [35, 16], kingsreach: [65, 37], sunderedhall: [67, 54], hallofcrowns: [81, 58], ninthstair: [72, 17], shatteredthrone: [86, 25] };
 // Old illustration bends belong to the previous paintings, not the new regional plates.
 for (const act of [4, 5, 6, 7]) ACT_MAPS[act].roads = {};
+for (const act of [2, 3, 4, 5, 6, 7]) {
+  ACT_MAPS[act].traces = CHAPTER_TRACES[act];
+  ACT_MAPS[act].entries = CHAPTER_ENTRIES[act];
+}
 
 /** A smooth SVG path through points (in the same units as the points), passing through every one of them. */
 export function smoothPath(pts: MapPoint[]): string {
