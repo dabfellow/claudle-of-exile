@@ -46,6 +46,14 @@ export interface SaveStore {
   /** The account as another device left it, where there can be one. */
   pullAccount(realm?: Realm): Promise<AccountState | null>;
   removeAccount(realm?: Realm): Promise<void>;
+  /** Save both sides of a Guild Stash move only if the shared save is still current. */
+  saveGuildTransfer(s: GameState, account: AccountState, expected: AccountState): Promise<GuildSaveResult>;
+}
+
+type GuildSaveResult = 'saved' | 'changed';
+
+function sameGuildSave(current: AccountState, expected: AccountState): boolean {
+  return current.id === expected.id && current.rev === expected.rev && (current.guildRev ?? 0) === (expected.guildRev ?? 0);
 }
 
 export function summarize(s: GameState): CharacterSummary {
@@ -126,6 +134,7 @@ export class LocalSaveStore implements SaveStore {
   }
 
   async load(id: string): Promise<GameState | null> {
+    this.recoverGuildPair();
     const raw = this.storage.getItem(this.charKey(id));
     return raw ? deserialize(raw) : null;
   }
@@ -136,6 +145,7 @@ export class LocalSaveStore implements SaveStore {
    */
   save(s: GameState): Promise<void> {
     try {
+      this.recoverGuildPair();
       this.writeSync(s);
       return Promise.resolve();
     } catch (err) {
@@ -180,6 +190,7 @@ export class LocalSaveStore implements SaveStore {
   }
 
   peekAccount(realm: Realm = STANDARD_REALM): AccountState | null {
+    this.recoverGuildPair();
     const raw = this.storage.getItem(this.accountKey(realm));
     return raw ? fillAccount(JSON.parse(raw) as AccountState) : null;
   }
@@ -191,6 +202,7 @@ export class LocalSaveStore implements SaveStore {
   /** Synchronous like save(), so an item never leaves the stash without reaching the bag. Rejects, like save(), if storage is full. */
   saveAccount(a: AccountState): Promise<void> {
     try {
+      this.recoverGuildPair();
       this.storage.setItem(this.accountKey(a.realm), JSON.stringify(a));
       return Promise.resolve();
     } catch (err) {
@@ -200,6 +212,55 @@ export class LocalSaveStore implements SaveStore {
 
   async removeAccount(realm: Realm = STANDARD_REALM): Promise<void> {
     this.storage.removeItem(this.accountKey(realm));
+  }
+
+  /** Both writes happen synchronously, with rollback if the browser rejects one. */
+  saveGuildTransfer(s: GameState, account: AccountState, expected: AccountState): Promise<GuildSaveResult> {
+    const commit = (): GuildSaveResult => {
+      const latest = this.peekAccount(account.realm);
+      if (latest && !sameGuildSave(latest, expected)) return 'changed';
+      this.writeGuildPair(s, account);
+      return 'saved';
+    };
+    return typeof navigator !== 'undefined' && navigator.locks
+      ? navigator.locks.request(this.accountKey(account.realm), commit)
+      : Promise.resolve().then(commit);
+  }
+
+  writeGuildPair(s: GameState, account: AccountState): void {
+    this.recoverGuildPair();
+    const key = this.charKey(s.character.id);
+    const accountKey = this.accountKey(account.realm);
+    const previous = this.storage.getItem(key);
+    const previousIndex = this.storage.getItem(this.indexKey);
+    const accountSave = JSON.stringify(account);
+    this.storage.setItem(this.guildPairKey, JSON.stringify([key, serialize(s), accountKey, accountSave]));
+    try {
+      this.writeSync(s);
+      this.storage.setItem(accountKey, accountSave);
+    } catch (err) {
+      if (previous === null) this.storage.removeItem(key);
+      else this.storage.setItem(key, previous);
+      if (previousIndex === null) this.storage.removeItem(this.indexKey);
+      else this.storage.setItem(this.indexKey, previousIndex);
+      this.storage.removeItem(this.guildPairKey);
+      throw err;
+    }
+    this.storage.removeItem(this.guildPairKey);
+  }
+
+  private get guildPairKey() {
+    return `coe-${this.accountId}-guild-transfer`;
+  }
+
+  /** Finish both writes if the browser closed between them. Values are snapshots, so replay is idempotent. */
+  private recoverGuildPair() {
+    const pending = this.storage.getItem(this.guildPairKey);
+    if (!pending) return;
+    const [characterKey, characterSave, accountKey, accountSave] = JSON.parse(pending) as [string, string, string, string];
+    this.storage.setItem(characterKey, characterSave);
+    this.storage.setItem(accountKey, accountSave);
+    this.storage.removeItem(this.guildPairKey);
   }
 }
 
@@ -251,6 +312,14 @@ export class MemorySaveStore implements SaveStore {
   async removeAccount(realm: Realm = STANDARD_REALM): Promise<void> {
     this.accounts.delete(realm);
   }
+
+  async saveGuildTransfer(s: GameState, account: AccountState, expected: AccountState): Promise<GuildSaveResult> {
+    const latest = this.peekAccount(account.realm);
+    if (latest && !sameGuildSave(latest, expected)) return 'changed';
+    this.chars.set(s.character.id, { summary: summarize(s), raw: serialize(s) });
+    this.accounts.set(account.realm, JSON.stringify(account));
+    return 'saved';
+  }
 }
 
 // ---------- cloud ----------
@@ -285,6 +354,8 @@ export interface CharacterTable {
   upsert(row: CharacterRow): Promise<string>;
   /** Writes over the row only if it is still at version `stamp`. Returns the new version, or null if it has moved on or is gone. */
   replace(row: CharacterRow, stamp: string): Promise<string | null>;
+  /** Compare both rows and write their new contents in one database transaction. */
+  saveGuildTransfer?(character: CharacterRow, characterStamp: string, account: CharacterRow, accountStamp: string | null): Promise<string | null>;
   remove(id: string): Promise<void>;
 }
 
@@ -434,16 +505,43 @@ export class CloudSaveStore implements SaveStore {
     this.cache.save(s).catch(this.localFailed);
     return this.upload(
       s.character.id,
-      () => ({
-        id: s.character.id,
-        name: s.character.name,
-        class_id: s.character.classId,
-        summary: { ...summarize(s), savedBy: this.session },
-        save: JSON.parse(serialize(s)),
-        updated_at: new Date(s.lastSaved).toISOString(),
-      }),
+      () => this.characterRow(s),
       (row) => this.writeCharacter(row),
     );
+  }
+
+  private characterRow(s: GameState): CharacterRow {
+    return { id: s.character.id, name: s.character.name, class_id: s.character.classId,
+      summary: { ...summarize(s), savedBy: this.session }, save: JSON.parse(serialize(s)), updated_at: new Date(s.lastSaved).toISOString() };
+  }
+
+  private realmRow(a: AccountState): CharacterRow {
+    const id = this.accountRow(a.realm);
+    return { id, name: 'Account', class_id: ACCOUNT_CLASS,
+      summary: { id, name: 'Account', classId: 'warrior', combatLevel: 0, totalLevel: 0, createdAt: 0, lastPlayed: 0 },
+      save: JSON.parse(JSON.stringify(a)), updated_at: new Date().toISOString() };
+  }
+
+  async saveGuildTransfer(s: GameState, account: AccountState, expected: AccountState): Promise<GuildSaveResult> {
+    if (!this.table.saveGuildTransfer) throw new Error('Guild Stash transfers are unavailable');
+    const id = s.character.id;
+    const realmId = this.accountRow(account.realm);
+    await Promise.all([this.inFlight.get(id), this.inFlight.get(realmId)]);
+    const base = this.base(id);
+    if (!base || this.isConflicted(id)) return 'changed';
+    const remote = await this.table.get(realmId);
+    if (remote) {
+      const current = remote.save as AccountState;
+      if (!remote.updated_at || !sameGuildSave(current, expected)) return 'changed';
+    }
+    const row = this.characterRow(s);
+    // A lost reply must not be mistaken for an ordinary save by this session and overwritten.
+    row.summary.savedBy = sessionId();
+    const stamp = await this.table.saveGuildTransfer(row, base.stamp, this.realmRow(account), remote?.updated_at ?? null);
+    if (!stamp) return 'changed';
+    this.setBase(id, { stamp, savedAt: s.lastSaved });
+    try { this.cache.writeGuildPair(s, account); } catch (err) { this.localFailed(err); }
+    return 'saved';
   }
 
   /** Replaces the cloud copy only if it is still the version this session last saw. Returns false if refused. */
@@ -524,7 +622,9 @@ export class CloudSaveStore implements SaveStore {
     } catch {
       this.setStatus('offline');
     }
-    if (remote && (!local || remote.rev >= local.rev)) {
+    const remoteGuildRev = remote?.guildRev ?? 0;
+    const localGuildRev = local?.guildRev ?? 0;
+    if (remote && (!local || remoteGuildRev > localGuildRev || (remoteGuildRev === localGuildRev && remote.rev >= local.rev))) {
       const merged = local ? reconcileAccounts(remote, local) : remote;
       await this.cache.saveAccount(merged).catch(this.localFailed);
       return merged;
@@ -554,14 +654,7 @@ export class CloudSaveStore implements SaveStore {
     const id = this.accountRow(a.realm);
     return this.upload(
       id,
-      () => ({
-        id,
-        name: 'Account',
-        class_id: ACCOUNT_CLASS,
-        summary: { id, name: 'Account', classId: 'warrior', combatLevel: 0, totalLevel: 0, createdAt: 0, lastPlayed: 0 },
-        save: JSON.parse(JSON.stringify(a)),
-        updated_at: new Date().toISOString(),
-      }),
+      () => this.realmRow(a),
       (row) => this.table.upsert(row),
     );
   }

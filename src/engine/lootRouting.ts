@@ -30,9 +30,9 @@ export function autoSalvages(s: GameState, item: Item, filter: LootFilterResult 
 /** The stash page a new item would go to: an affinity page with room, else the first page with room. -1 when full. */
 function stashPageFor(s: GameState, item: Item): number {
   const aff = itemAffinity(item);
-  const affinityPage = Object.entries(s.account.stashAffinities ?? {}).find(([p, a]) => a === aff && stashPageRoom(s, Number(p)) > 0);
+  const affinityPage = Object.entries(s.storage.stashAffinities ?? {}).find(([p, a]) => a === aff && stashPageRoom(s, Number(p)) > 0);
   if (affinityPage) return Number(affinityPage[0]);
-  return s.account.stash.findIndex((_, p) => stashPageRoom(s, p) > 0);
+  return s.storage.stash.findIndex((_, p) => stashPageRoom(s, p) > 0);
 }
 
 /** Put a fresh drop straight into the stash. False when there's no room (uniques always fit). */
@@ -43,7 +43,7 @@ function stashDrop(s: GameState, item: Item): boolean {
   }
   const page = stashPageFor(s, item);
   if (page < 0) return false;
-  s.account.stash[page].push(claimOwned(s, item));
+  s.storage.stash[page].push(claimOwned(s, item));
   return true;
 }
 

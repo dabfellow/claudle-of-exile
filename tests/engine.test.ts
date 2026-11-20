@@ -123,7 +123,7 @@ describe('currency', () => {
     const s = newGame(1);
     const item = createItem(s, 'iron_blade', 30, rarity, seeded(3));
     s.inventory.push(item);
-    s.account.bank = { transmute: 5, augment: 5, alteration: 5, regal: 5, alchemy: 5, chaos: 5, exalted: 5, annul: 5, scour: 5, divine: 5 };
+    s.storage.bank = { transmute: 5, augment: 5, alteration: 5, regal: 5, alchemy: 5, chaos: 5, exalted: 5, annul: 5, scour: 5, divine: 5 };
     return { s, item };
   };
 
@@ -160,7 +160,7 @@ describe('currency', () => {
     expect(n).toBeGreaterThanOrEqual(4);
     expect(applyOrb(s, ctx(), 'annul', item.uid)).toBeNull();
     expect(allMods(item).length).toBe(n - 1);
-    expect(s.account.bank.annul).toBe(4);
+    expect(s.storage.bank.annul).toBe(4);
   });
 
   it('bench crafts one crafted mod at most', () => {
@@ -168,8 +168,8 @@ describe('currency', () => {
     item.prefixes = [];
     item.suffixes = [];
     s.account.hideout.bench = 2;
-    s.account.bank.gold = 1000;
-    s.account.bank.arcane_dust = 100;
+    s.storage.bank.gold = 1000;
+    s.storage.bank.arcane_dust = 100;
     expect(benchCraft(s, ctx(), 'bc_life', item.uid)).toMatch(/Cannot be crafted|room/);
     const ring = createItem(s, 'iron_ring', 10, 'magic', seeded(5));
     ring.prefixes = [];
@@ -190,20 +190,20 @@ describe('ticking', () => {
     startSkillAction(b, cb, 'mine_copper');
     for (let i = 0; i < 1200; i++) tick(a, ca, 50);
     tick(b, cb, 60_000);
-    expect(a.account.bank.copper_ore).toBe(b.account.bank.copper_ore);
+    expect(a.storage.bank.copper_ore).toBe(b.storage.bank.copper_ore);
     expect(a.skills.mining).toBe(b.skills.mining);
-    expect(a.account.bank.copper_ore).toBe(20);
+    expect(a.storage.bank.copper_ore).toBe(20);
   });
 
   it('production stops when inputs run out', () => {
     const s = newGame(1);
-    s.account.bank.sunpetal = 5;
-    s.account.bank.ash_log = 2;
+    s.storage.bank.sunpetal = 5;
+    s.storage.bank.ash_log = 2;
     const c = ctx();
     expect(startSkillAction(s, c, 'brew_life_small')).toBeNull();
     tick(s, c, 20_000);
     expect(s.action).toBeNull();
-    expect(s.account.flaskStash).toHaveLength(1);
+    expect(s.storage.flaskStash).toHaveLength(1);
   });
 });
 
@@ -265,7 +265,7 @@ describe('combat', () => {
   it('instilled flasks only trigger on their condition', () => {
     const s = newGame(1);
     const c = ctx();
-    s.account.bank.instill = 1;
+    s.storage.bank.instill = 1;
     expect(enchantFlask(s, c, s.flaskSlots[0]!.uid, 'lowLife')).toBeNull();
     startCombat(s, c, 'mudflats');
     const d = deriveStats(s);
@@ -318,7 +318,7 @@ describe('passive tree', () => {
     expect(allocateReason(s, next)).toMatch(/connect/);
     expect(allocate(s, ctx(), 'str_hub')).toBeNull();
     expect(allocate(s, ctx(), next)).toBeNull();
-    s.account.bank.regret = 1;
+    s.storage.bank.regret = 1;
     expect(refundReason(s, 'str_hub')).toMatch(/disconnect/);
     expect(refundReason(s, next)).toBeNull();
   });
@@ -340,13 +340,13 @@ describe('hideout', () => {
     const c = ctx();
     expect(upgradeStation(s, c, 'stash')).toMatch(/materials/);
     const price = stashPagePrice(s);
-    const pages = s.account.stash.length;
-    s.account.bank.gold = 2500;
-    s.account.bank.ash_plank = 40;
-    s.account.bank.copper_bar = 25;
+    const pages = s.storage.stash.length;
+    s.storage.bank.gold = 2500;
+    s.storage.bank.ash_plank = 40;
+    s.storage.bank.copper_bar = 25;
     expect(upgradeStation(s, c, 'stash')).toBeNull();
-    expect(s.account.bank.ash_plank).toBe(0);
-    expect(s.account.stash.length).toBe(pages + 1);
+    expect(s.storage.bank.ash_plank).toBe(0);
+    expect(s.storage.stash.length).toBe(pages + 1);
     expect(stashPagePrice(s)).toBe(Math.round(price * 0.9));
   });
 
@@ -354,12 +354,12 @@ describe('hideout', () => {
     const s = newGame(1);
     const c = ctx();
     expect(stationLockReason(s, 'map_device')).toMatch(/Act 7/);
-    s.account.bank.gold = 1e6;
-    s.account.bank.rough_gem = 1e3;
+    s.storage.bank.gold = 1e6;
+    s.storage.bank.rough_gem = 1e3;
     expect(upgradeStation(s, c, 'map_device')).toMatch(/Act 7/);
     s.skills.smithing = 1e9;
     const ironBase = actionsFor('smithing').find((a) => a.baseId && baseDef(a.baseId).reqLevel >= 10 && baseDef(a.baseId).reqLevel < 22)!;
-    for (const id of Object.keys(ironBase.inputs!)) s.account.bank[id] = 1e4;
+    for (const id of Object.keys(ironBase.inputs!)) s.storage.bank[id] = 1e4;
     expect(actionBlocker(s, ironBase)).toMatch(/Forge level 2/);
     s.account.hideout.forge = 2;
     expect(actionBlocker(s, ironBase)).toBeNull();
@@ -385,7 +385,7 @@ describe('town and gems', () => {
   it('gems have level requirements: too low and they stay off the bar', () => {
     const s = newGame(1);
     const lace = createSkillGem(s, 'lacerate');
-    s.account.gems.push(lace);
+    s.storage.gems.push(lace);
     expect(gemReqLevel('lacerate')).toBeGreaterThan(1);
     expect(placeOnBar(s, lace.uid, 2)).toMatch(/Requires level/);
   });
@@ -398,7 +398,7 @@ describe('town and gems', () => {
     s.inventory.push(item);
     expect(salvage(s, c, [item.uid])).toBe(0);
     expect(s.inventory).toContain(item);
-    s.account.bank.transmute = 1;
+    s.storage.bank.transmute = 1;
     expect(applyOrb(s, c, 'transmute', item.uid)).toBeNull();
   });
 
@@ -412,7 +412,7 @@ describe('town and gems', () => {
     const loaded = deserialize(JSON.stringify(old));
     expect(loaded.vendor.stock).toEqual([]);
     settleCharacter(loaded, loaded.account);
-    expect(loaded.account.stash.length).toBe(s.account.stash.length + 2);
+    expect(loaded.storage.stash.length).toBe(s.storage.stash.length + 2);
     expect(loaded.account.hideout.bench).toBe(2);
   });
 });
@@ -443,7 +443,7 @@ describe('equipment', () => {
 describe('save', () => {
   it('round-trips and survives export/import', () => {
     const s = newGame(1);
-    s.account.bank.chaos = 3;
+    s.storage.bank.chaos = 3;
     // the account travels separately in a save, and folded in with an export
     const { account: _, ...character } = s;
     expect(deserialize(serialize(s))).toMatchObject(character);

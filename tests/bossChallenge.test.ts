@@ -150,7 +150,7 @@ describe('boss gathering drops', () => {
     const mats = bossGatherMats(boss.level);
     const kills = 200;
     for (let i = 0; i < kills; i++) rollLoot(s, c, boss, zone, deriveStats(s));
-    const got = mats.reduce((n, id) => n + (s.account.bank[id] ?? 0), 0);
+    const got = mats.reduce((n, id) => n + (s.storage.bank[id] ?? 0), 0);
     expect(got).toBeGreaterThan(kills * 0.6);
     expect(got).toBeLessThan(kills * 1.5);
   });
@@ -171,7 +171,7 @@ describe('starter drops', () => {
     startCombat(s, c, 'mudflats');
     const zone = zoneDef('mudflats');
     const d = deriveStats(s);
-    const orbs = { transmute: s.account.bank.transmute ?? 0, alteration: s.account.bank.alteration ?? 0 };
+    const orbs = { transmute: s.storage.bank.transmute ?? 0, alteration: s.storage.bank.alteration ?? 0 };
     const drop = makeMonster(zone.monsters[0], false, 1);
     for (let kill = 1; kill < zone.bossEvery; kill++) {
       s.lifetime.kills = kill;
@@ -179,8 +179,8 @@ describe('starter drops', () => {
     }
     const slots = new Set(s.inventory.map((i) => baseDef(i.baseId).slot));
     for (const slot of ['weapon', 'gloves', 'boots', 'body', 'helmet']) expect(slots).toContain(slot);
-    expect((s.account.bank.transmute ?? 0) - orbs.transmute).toBeGreaterThanOrEqual(2);
-    expect((s.account.bank.alteration ?? 0) - orbs.alteration).toBeGreaterThanOrEqual(2);
+    expect((s.storage.bank.transmute ?? 0) - orbs.transmute).toBeGreaterThanOrEqual(2);
+    expect((s.storage.bank.alteration ?? 0) - orbs.alteration).toBeGreaterThanOrEqual(2);
   });
 
   it('are all over before the first boss can come', () => {

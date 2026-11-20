@@ -3202,7 +3202,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   gainCharges(s, mon.isBoss ? 8 : 1, d);
   const deathsDoorBonus = d.raw.deathsDoor > 0 && (mon.isBoss || (mon.lootMult ?? 1) > 1);
   const prevLootMult = mon.lootMult;
-  const goldBefore = s.account?.bank?.gold ?? 0;
+  const goldBefore = s.storage.bank.gold ?? 0;
   let lootCtx = ctx;
   if (deathsDoorBonus) {
     mon.lootMult = (mon.lootMult ?? 1) * 1.5;
@@ -3211,13 +3211,13 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
     }
   }
   rollLoot(s, lootCtx, mon, zone, d);
-  if (deathsDoorBonus && s.account?.bank) {
+  if (deathsDoorBonus) {
     mon.lootMult = prevLootMult;
-    const goldGained = (s.account.bank.gold ?? 0) - goldBefore;
+    const goldGained = (s.storage.bank.gold ?? 0) - goldBefore;
     if (goldGained > 0) {
       const baseGold = Math.round(goldGained / 1.5);
       const extraGold = baseGold * 2 - goldGained;
-      if (extraGold > 0) s.account.bank.gold = (s.account.bank.gold ?? 0) + extraGold;
+      if (extraGold > 0) s.storage.bank.gold = (s.storage.bank.gold ?? 0) + extraGold;
     }
   }
   rollMapDrops(s, ctx, mon);
@@ -5135,9 +5135,9 @@ function classMechanicsStep(s: GameState, ctx: Ctx, d: Derived, dt: number): boo
 // ---------- flask management ----------
 
 export function equipFlask(s: GameState, uid: number, slot: number): void {
-  const idx = s.account.flaskStash.findIndex((f) => f.uid === uid);
+  const idx = s.storage.flaskStash.findIndex((f) => f.uid === uid);
   if (idx < 0) return;
-  const f = s.account.flaskStash[idx];
+  const f = s.storage.flaskStash[idx];
   const kind = flaskStats(f).def.kind;
   if (FLASK_SLOT_TYPES[slot] && FLASK_SLOT_TYPES[slot] !== kind) {
     const matching = FLASK_SLOT_TYPES.findIndex((k, i) => k === kind && !s.flaskSlots[i]);
@@ -5147,15 +5147,15 @@ export function equipFlask(s: GameState, uid: number, slot: number): void {
       if (firstOfType >= 0) slot = firstOfType;
     }
   }
-  s.account.flaskStash.splice(idx, 1);
+  s.storage.flaskStash.splice(idx, 1);
   const prev = s.flaskSlots[slot];
-  if (prev) s.account.flaskStash.push(prev);
+  if (prev) s.storage.flaskStash.push(prev);
   s.flaskSlots[slot] = f;
 }
 
 /** Put a spare flask in the first empty belt slot matching its kind (1 Life, 1 Mana, 2 Utility). Returns why it couldn't, or null. */
 export function wearFlask(s: GameState, uid: number): string | null {
-  const f = s.account.flaskStash.find((x) => x.uid === uid);
+  const f = s.storage.flaskStash.find((x) => x.uid === uid);
   if (!f) return 'Flask not found';
   const kind = flaskStats(f).def.kind;
   const slot = s.flaskSlots.findIndex((curr, idx) => !curr && FLASK_SLOT_TYPES[idx] === kind);
@@ -5171,6 +5171,6 @@ export function wearFlask(s: GameState, uid: number): string | null {
 export function unequipFlask(s: GameState, slot: number): void {
   const f = s.flaskSlots[slot];
   if (!f) return;
-  s.account.flaskStash.push(f);
+  s.storage.flaskStash.push(f);
   s.flaskSlots[slot] = null;
 }

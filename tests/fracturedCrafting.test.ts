@@ -12,16 +12,16 @@ const ctx = (seed = 42): Ctx => ({ rng: seeded(seed), now: 0, emit: () => {} });
 
 function makeState(): { s: GameState; c: Ctx } {
   const s = newGame(1, { name: 'Crafter', classId: 'warrior' });
-  s.account.bank.fractured = 10;
-  s.account.bank.chaos = 50;
-  s.account.bank.scour = 50;
-  s.account.bank.annul = 50;
-  s.account.bank.alteration = 50;
-  s.account.bank.augment = 50;
-  s.account.bank.regal = 50;
-  s.account.bank[WAX] = 10;
-  s.account.bank[WHETSTONE] = 10;
-  s.account.bank.essence_haste_2 = 10;
+  s.storage.bank.fractured = 10;
+  s.storage.bank.chaos = 50;
+  s.storage.bank.scour = 50;
+  s.storage.bank.annul = 50;
+  s.storage.bank.alteration = 50;
+  s.storage.bank.augment = 50;
+  s.storage.bank.regal = 50;
+  s.storage.bank[WAX] = 10;
+  s.storage.bank[WHETSTONE] = 10;
+  s.storage.bank.essence_haste_2 = 10;
   return { s, c: ctx() };
 }
 
@@ -56,11 +56,11 @@ describe('Fractured crafting (Milestone 10A)', () => {
     const { s, c } = makeState();
     const item = makeRareWith4Mods(s, c);
     const originalCount = modCount(item);
-    const initialOrbs = s.account.bank.fractured!;
+    const initialOrbs = s.storage.bank.fractured!;
 
     const err = applyOrb(s, c, 'fractured', item.uid);
     expect(err).toBeNull();
-    expect(s.account.bank.fractured).toBe(initialOrbs - 1);
+    expect(s.storage.bank.fractured).toBe(initialOrbs - 1);
 
     expect(item.fractured).toBeDefined();
     const fracturedMods = allMods(item).filter((m) => m.fractured);

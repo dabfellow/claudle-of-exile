@@ -57,14 +57,14 @@ describe('where loot goes', () => {
     s.settings.lootFilter!.rules = [{ id: 'rares', name: 'Rares to stash', enabled: true, rarities: ['rare'], action: 'send_to_stash' }];
     placeItem(s, ctx(), sword(s, 'rare'));
     placeItem(s, ctx(), sword(s, 'normal'));
-    expect(s.account.stash.flat().map((i) => i.rarity)).toEqual(['rare']);
+    expect(s.storage.stash.flat().map((i) => i.rarity)).toEqual(['rare']);
     expect(s.inventory.map((i) => i.rarity)).toEqual(['normal']);
   });
 
   it('a Send to stash drop falls back to the inventory when the stash is full', () => {
     const s = newGame(1);
     s.settings.lootFilter!.rules = [{ id: 'all', name: 'All to stash', enabled: true, action: 'send_to_stash' }];
-    for (const page of s.account.stash) while (page.length < 80) page.push(sword(s));
+    for (const page of s.storage.stash) while (page.length < 80) page.push(sword(s));
     placeItem(s, ctx(), sword(s));
     expect(s.inventory).toHaveLength(1);
   });
@@ -78,7 +78,7 @@ describe('where loot goes', () => {
     s.account.hideout.quartermaster = 4;
     placeItem(s, ctx(), sword(s));
     expect(s.inventory).toHaveLength(1);
-    expect(s.account.bank.arcane_dust).toBeGreaterThan(0);
+    expect(s.storage.bank.arcane_dust).toBeGreaterThan(0);
   });
 });
 
@@ -100,7 +100,7 @@ describe('Run filter on the inventory', () => {
     expect(inventoryFilterAction(s, magic)).toBeNull();
     expect(runFilterOnInventory(s, ctx())).toEqual({ stashed: 1, salvaged: 1 });
     expect(s.inventory).toEqual([magic]);
-    expect(s.account.stash.flat()).toHaveLength(1);
+    expect(s.storage.stash.flat()).toHaveLength(1);
   });
 
   it('never salvages uniques or runed gear', () => {

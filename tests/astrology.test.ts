@@ -23,7 +23,7 @@ describe('astrology', () => {
     const s = make();
     expect(startSkillAction(s, ctx(), 'study_lantern')).toBeNull();
     skillStep(s, ctx(), 30_000, deriveStats(s));
-    expect(s.account.bank[STARDUST]).toBeGreaterThanOrEqual(10);
+    expect(s.storage.bank[STARDUST]).toBeGreaterThanOrEqual(10);
     expect(s.skills.astrology).toBeGreaterThan(0);
   });
 
@@ -34,9 +34,9 @@ describe('astrology', () => {
     const slow = actionIntervalMs(s, mine, deriveStats(s));
     const lifeBefore = deriveStats(s).maxLife;
     expect(lightStarReason(s, lantern)).toBe('Not enough Stardust');
-    s.account.bank[STARDUST] = starCost(lantern, 1)[STARDUST];
+    s.storage.bank[STARDUST] = starCost(lantern, 1)[STARDUST];
     expect(lightStar(s, ctx(), 'lantern')).toBeNull();
-    expect(s.account.bank[STARDUST]).toBe(0);
+    expect(s.storage.bank[STARDUST]).toBe(0);
     expect(starsLit(s, 'lantern')).toBe(1);
     expect(astrologySpeed(s, 'mining')).toBe(2);
     expect(astrologySpeed(s, 'woodcutting')).toBe(0);
@@ -46,10 +46,10 @@ describe('astrology', () => {
 
   it('needs Gilded Stardust for the last stars and the level for later constellations', () => {
     const s = make();
-    s.account.bank[STARDUST] = 1e6;
+    s.storage.bank[STARDUST] = 1e6;
     for (let i = 0; i < 3; i++) expect(lightStar(s, ctx(), 'lantern')).toBeNull();
     expect(lightStar(s, ctx(), 'lantern')).toBe('Not enough Stardust');
-    s.account.bank[GILDED_STARDUST] = 4;
+    s.storage.bank[GILDED_STARDUST] = 4;
     expect(lightStar(s, ctx(), 'lantern')).toBeNull();
     expect(lightStar(s, ctx(), 'lantern')).toBeNull();
     expect(lightStar(s, ctx(), 'lantern')).toBe('Every star is lit');

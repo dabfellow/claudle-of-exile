@@ -14,7 +14,7 @@ export function mountRoguePlaytest(load: typeof scenario) {
     ['Load rogue demo', () => load('rogueRoster')],
     ['Inspect rogue demo', () => {
       const s = game.state;
-      output.textContent = JSON.stringify({ crew: s.heist.crew, bruiser: s.heist.roster?.bruiser, gold: s.account.bank.gold, action: s.action, errors });
+      output.textContent = JSON.stringify({ crew: s.heist.crew, bruiser: s.heist.roster?.bruiser, gold: s.storage.bank.gold, action: s.action, errors });
     }],
   ] as const) {
     const button = document.createElement('button');

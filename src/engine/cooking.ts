@@ -35,7 +35,7 @@ export function mealLength(s: GameState, id?: string): number {
 
 /** Total duration supported by the player's current bank supply of this dish plus remaining active time. */
 export function mealSupplySupportedMs(s: GameState, id: string): number {
-  const inBank = s.account.bank[id] ?? 0;
+  const inBank = s.storage.bank[id] ?? 0;
   const currentLeft = s.meal?.id === id ? Math.max(0, s.meal.remainingMs) : 0;
   return currentLeft + inBank * mealLength(s, id);
 }
@@ -97,13 +97,13 @@ export function mealEffectText(s: GameState, id: string): string {
 }
 
 export function mealReason(s: GameState, id: string): string | null {
-  if ((s.account.bank[id] ?? 0) < 1) return `You have no ${mealDef(id).name}`;
+  if ((s.storage.bank[id] ?? 0) < 1) return `You have no ${mealDef(id).name}`;
   if (s.meal?.id === id) return 'You are already full of that';
   return null;
 }
 
 function serve(s: GameState, id: string, leftover = 0): void {
-  s.account.bank[id] -= 1;
+  s.storage.bank[id] -= 1;
   s.lifetime.mealsEaten += 1;
   s.meal = { id, remainingMs: mealLength(s, id) + leftover };
 }
@@ -123,7 +123,7 @@ export function mealStep(s: GameState, ctx: Ctx, dt: number): void {
   s.meal.remainingMs -= dt;
   if (s.meal.remainingMs > 0) return;
   const { id, remainingMs } = s.meal;
-  if (s.keepEating && (s.account.bank[id] ?? 0) > 0) {
+  if (s.keepEating && (s.storage.bank[id] ?? 0) > 0) {
     serve(s, id, remainingMs);
     return;
   }
@@ -157,7 +157,7 @@ export function cookingPreview(s: GameState, a: SkillAction): string[] {
   if (outId === 'binding_stock') {
     lines.push('Special reagent: project material for future assemblies; not edible.');
     lines.push('Protected output: 1:1 guaranteed yield; cannot be conserved, refunded or duplicated.');
-    const inBank = s.account.bank[outId] ?? 0;
+    const inBank = s.storage.bank[outId] ?? 0;
     if (inBank > 0) lines.push(`Stock: ${inBank} in bank.`);
     return lines;
   }
@@ -165,7 +165,7 @@ export function cookingPreview(s: GameState, a: SkillAction): string[] {
   const ing = INGREDIENTS.find((i) => i.id === outId);
   if (ing) {
     lines.push(`Flask ingredient: ${ing.desc}`);
-    const inBank = s.account.bank[outId] ?? 0;
+    const inBank = s.storage.bank[outId] ?? 0;
     if (inBank > 0) lines.push(`Stock: ${inBank} in bank.`);
     return lines;
   }
@@ -180,7 +180,7 @@ export function cookingPreview(s: GameState, a: SkillAction): string[] {
     : 'time spent fighting';
   const durMs = mealLength(s, meal.id);
   const supplyMs = mealSupplySupportedMs(s, meal.id);
-  const inBank = s.account.bank[meal.id] ?? 0;
+  const inBank = s.storage.bank[meal.id] ?? 0;
   const catLabel = meal.category ? meal.category[0].toUpperCase() + meal.category.slice(1) : 'Consumable';
 
   lines.push(`[${catLabel}] Effect: ${mealEffectText(s, meal.id)}.`);

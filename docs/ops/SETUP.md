@@ -103,8 +103,10 @@ create index characters_user_id_idx on public.characters (user_id);
 
 ---
 
-The shared account (hideout, unlocks, stash) needs no extra table: each player has one reserved row in `characters`, with
+The shared account (hideout, unlocks, Guild Stash) needs no extra table: each player has one reserved row in `characters` per realm, with
 an id starting `account:` and `class_id = 'account'`. Admin stats that count `characters` should leave those rows out.
+
+Apply [guild-stash.sql](guild-stash.sql) in the Supabase SQL Editor after `admin.sql` and before publishing the Guild Stash client. It saves the character and realm sides of each transfer together and protects shared stock from old browser tabs. It is safe to reapply.
 
 ### 6. Give the game its keys
 

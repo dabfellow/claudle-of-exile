@@ -2,7 +2,7 @@ import { getSupabase } from './supabase';
 import type { FeedbackRow } from './feedback';
 import type { CharacterSummary } from './saves';
 import type { GameState, Item } from '../engine/types';
-import { freshAccount } from '../engine/account';
+import { freshAccount, freshCharacterStorage } from '../engine/account';
 import { deserialize, serialize } from '../engine/save';
 
 export async function adminCall<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
@@ -75,9 +75,10 @@ export interface FeedbackSnapshot { state?: GameState; log: string[]; truncated?
 /** A detached game-only snapshot: no auth client, cookies, browser storage, stash or email. */
 export function feedbackSnapshot(s: GameState, log: string[] = []): FeedbackSnapshot {
   const state = JSON.parse(serialize(s)) as GameState;
-  state.account = { ...freshAccount(), hideout: structuredClone(s.account.hideout), automation: structuredClone(s.account.automation), bank: structuredClone(s.account.bank),
+  state.account = { ...freshAccount(), hideout: structuredClone(s.account.hideout), automation: structuredClone(s.account.automation),
     campaignDone: s.account.campaignDone, exileUnlocked: s.account.exileUnlocked };
   state.inventory = []; state.ground = []; state.offlineHaul = [];
+  state.storage = { ...freshCharacterStorage(), bank: state.storage.bank };
   const snapshot: FeedbackSnapshot = { state, log: log.slice(0, 10).map((line) => line.slice(0, 500)) };
   if (new TextEncoder().encode(JSON.stringify(snapshot)).length > 196608) {
     state.combat = null; state.vendor.stock = []; state.loadouts = structuredClone(s.loadouts);

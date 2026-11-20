@@ -54,7 +54,7 @@ describe('layered loot filters', () => {
     const item = createItem(s, 'rusted_sword', 12, 'normal', seeded(3));
     placeItem(s, ctx(true), item);
     expect(s.offlineHaul).toHaveLength(0);
-    expect(s.account.bank.arcane_dust).toBeGreaterThan(0);
+    expect(s.storage.bank.arcane_dust).toBeGreaterThan(0);
   });
 
   it('round-trips share codes and rejects malformed or hostile input clearly', () => {

@@ -6,7 +6,7 @@ import { isCraftLocked } from './crafting';
 import { salvageValue } from './items';
 import type { GameState, Item, StashAffinity } from './types';
 
-// Gear lives in four places: the ground, the bag (`inventory`), the account's stash pages and equipment. See docs/GAME.md.
+// Character gear lives on the ground, in the bag (`inventory`), in the personal Stash or in equipment. See docs/GAME.md.
 
 /** How many items the inventory holds: grows with the Stash station. */
 export function bagCap(s: GameState): number {
@@ -58,12 +58,12 @@ export function pickUp(s: GameState, ctx: Ctx, pile: Pile, uids: number[]): numb
 }
 
 export function stashPageRoom(s: GameState, page: number): number {
-  return Math.max(0, STASH_PAGE_SIZE - (s.account.stash[page]?.length ?? STASH_PAGE_SIZE));
+  return Math.max(0, STASH_PAGE_SIZE - (s.storage.stash[page]?.length ?? STASH_PAGE_SIZE));
 }
 
 /** Put a unique in the Uniques tab, which always has room. */
 export function shelveUnique(s: GameState, item: Item): void {
-  s.account.uniqueStash.push(claimOwned(s, item));
+  s.storage.uniqueStash.push(claimOwned(s, item));
   seeUnique(s.account, item);
 }
 
@@ -74,18 +74,18 @@ export function itemAffinity(item: Item): StashAffinity {
 }
 
 export function setStashAffinity(s: GameState, page: number, affinity: StashAffinity | null): void {
-  s.account.stashAffinities ??= {};
+  s.storage.stashAffinities ??= {};
   if (!affinity) {
-    delete s.account.stashAffinities[page];
+    delete s.storage.stashAffinities[page];
   } else {
-    s.account.stashAffinities[page] = affinity;
+    s.storage.stashAffinities[page] = affinity;
   }
 }
 
 /** Move bag items into a stash page (affinity page first, then the given one, then any with room); uniques go to the Uniques tab. Returns how many moved. */
 export function stashItems(s: GameState, ctx: Ctx, uids: number[], page = 0): number {
   const want = new Set(uids);
-  const order = [page, ...s.account.stash.map((_, i) => i).filter((i) => i !== page)];
+  const order = [page, ...s.storage.stash.map((_, i) => i).filter((i) => i !== page)];
   let n = 0;
   s.inventory = s.inventory.filter((i) => {
     if (!want.has(i.uid) || isCraftLocked(s, i.uid)) return true;
@@ -95,10 +95,10 @@ export function stashItems(s: GameState, ctx: Ctx, uids: number[], page = 0): nu
       return false;
     }
     const aff = itemAffinity(i);
-    const affinityPage = Object.entries(s.account.stashAffinities ?? {}).find(([p, a]) => a === aff && stashPageRoom(s, Number(p)) > 0);
+    const affinityPage = Object.entries(s.storage.stashAffinities ?? {}).find(([p, a]) => a === aff && stashPageRoom(s, Number(p)) > 0);
     const target = affinityPage !== undefined ? Number(affinityPage[0]) : order.find((p) => stashPageRoom(s, p) > 0);
     if (target === undefined) return true;
-    s.account.stash[target].push(claimOwned(s, i));
+    s.storage.stash[target].push(claimOwned(s, i));
     n++;
     return false;
   });
@@ -116,21 +116,21 @@ export function takeFromStash(s: GameState, ctx: Ctx, uids: number[]): number {
     n++;
     return false;
   };
-  s.account.stash = s.account.stash.map((page) => page.filter(keep));
-  s.account.overflow = s.account.overflow.filter(keep);
-  s.account.uniqueStash = s.account.uniqueStash.filter(keep);
+  s.storage.stash = s.storage.stash.map((page) => page.filter(keep));
+  s.storage.overflow = s.storage.overflow.filter(keep);
+  s.storage.uniqueStash = s.storage.uniqueStash.filter(keep);
   if (n < want.size) ctx.emit({ t: 'info', text: 'Inventory full', tone: 'warn' });
   return n;
 }
 
 /** Everything in the stash: gear pages, the overflow and the Uniques tab. */
 export function stashedItems(s: GameState): Item[] {
-  return [...s.account.stash.flat(), ...s.account.overflow, ...s.account.uniqueStash];
+  return [...s.storage.stash.flat(), ...s.storage.overflow, ...s.storage.uniqueStash];
 }
 
 /** Move overflow into stash pages with room. Returns how many moved. */
 export function settleOverflow(s: GameState): number {
-  const a = s.account;
+  const a = s.storage;
   const before = a.overflow.length;
   a.overflow = a.overflow.filter((i) => {
     if (i.rarity === 'unique') {
@@ -146,7 +146,7 @@ export function settleOverflow(s: GameState): number {
 
 /** Gold for the next stash page. Pages the Stash station or achievements gave you don't count toward the price. Stash station levels reduce price by 10% each. */
 export function stashPagePrice(s: GameState): number {
-  const bought = Math.max(0, s.account.stash.length - freeStashPages(s.account));
+  const bought = Math.max(0, s.storage.stash.length - freeStashPages(s.account));
   const basePrice = Math.round(STASH_PAGE_PRICE * STASH_PAGE_GROWTH ** bought);
   const stashLvl = s.account.hideout.stash ?? 1;
   const discount = Math.min(0.8, (stashLvl - 1) * 0.1);
@@ -157,8 +157,8 @@ export function buyStashPage(s: GameState, ctx: Ctx): string | null {
   const price = stashPagePrice(s);
   if (!canAfford(s, { gold: price })) return 'Not enough gold';
   payCost(s, { gold: price });
-  s.account.stash.push([]);
-  ctx.emit({ t: 'info', text: `Stash page ${s.account.stash.length} bought`, tone: 'good' });
+  s.storage.stash.push([]);
+  ctx.emit({ t: 'info', text: `Stash page ${s.storage.stash.length} bought`, tone: 'good' });
   return null;
 }
 
@@ -172,9 +172,9 @@ export function takeOwned(s: GameState, uids: number[]): Item[] {
     return false;
   };
   s.inventory = s.inventory.filter(keep);
-  s.account.stash = s.account.stash.map((page) => page.filter(keep));
-  s.account.overflow = s.account.overflow.filter(keep);
-  s.account.uniqueStash = s.account.uniqueStash.filter(keep);
+  s.storage.stash = s.storage.stash.map((page) => page.filter(keep));
+  s.storage.overflow = s.storage.overflow.filter(keep);
+  s.storage.uniqueStash = s.storage.uniqueStash.filter(keep);
   return out;
 }
 

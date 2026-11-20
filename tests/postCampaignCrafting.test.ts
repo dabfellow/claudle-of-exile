@@ -22,21 +22,21 @@ function makeState(): { s: GameState; c: ReturnType<typeof makeCtx> } {
   // Fill bank with materials for testing
   for (const st of STATIONS) {
     for (const lvl of st.levels) {
-      for (const id of Object.keys(lvl.cost)) s.account.bank[id] = 1e7;
+      for (const id of Object.keys(lvl.cost)) s.storage.bank[id] = 1e7;
     }
   }
-  s.account.bank.alchemy = 100;
-  s.account.bank.divine = 100;
-  s.account.bank.exalted = 100;
-  s.account.bank.chaos = 100;
-  s.account.bank.scour = 100;
-  s.account.bank.arcane_dust = 10000;
-  s.account.bank.exile_doom_sigil = 10;
-  s.account.bank.architect_doom_sigil = 10;
-  s.account.bank.void_sigil = 10;
-  s.account.bank.uber_key_1 = 5;
-  s.account.bank.uber_key_2 = 5;
-  s.account.bank.uber_key_3 = 5;
+  s.storage.bank.alchemy = 100;
+  s.storage.bank.divine = 100;
+  s.storage.bank.exalted = 100;
+  s.storage.bank.chaos = 100;
+  s.storage.bank.scour = 100;
+  s.storage.bank.arcane_dust = 10000;
+  s.storage.bank.exile_doom_sigil = 10;
+  s.storage.bank.architect_doom_sigil = 10;
+  s.storage.bank.void_sigil = 10;
+  s.storage.bank.uber_key_1 = 5;
+  s.storage.bank.uber_key_2 = 5;
+  s.storage.bank.uber_key_3 = 5;
   return { s, c };
 }
 
@@ -75,7 +75,7 @@ describe('Phase 3: Endgame Hideout Station Upgrades', () => {
   it('Stash upgrades to Level 5 and Level 6 granting Dedicated Map Tab and +2 free pages', () => {
     const { s, c } = makeState();
     s.account.hideout.stash = 4;
-    const pagesBefore = s.account.stash.length;
+    const pagesBefore = s.storage.stash.length;
 
     // Upgrade to L5
     expect(upgradeStation(s, c, 'stash')).toBeNull();
@@ -85,7 +85,7 @@ describe('Phase 3: Endgame Hideout Station Upgrades', () => {
     // Upgrade to L6
     expect(upgradeStation(s, c, 'stash')).toBeNull();
     expect(stationLevel(s, 'stash')).toBe(6);
-    expect(s.account.stash.length).toBe(pagesBefore + 5);
+    expect(s.storage.stash.length).toBe(pagesBefore + 5);
   });
 
   it('Forge upgrades to Level 5 unlocking Pinnacle Metallurgy (ilvl 84 cap and +8 ilvl bonus)', () => {
@@ -136,7 +136,7 @@ describe('Phase 3: Endgame Hideout Station Upgrades', () => {
 
   it('Stash Affinities routes items to specifically tagged tabs', () => {
     const { s, c } = makeState();
-    while (s.account.stash.length < 3) s.account.stash.push([]);
+    while (s.storage.stash.length < 3) s.storage.stash.push([]);
 
     // Tag page 1 for maps, page 2 for gear
     setStashAffinity(s, 1, 'maps');
@@ -150,9 +150,9 @@ describe('Phase 3: Endgame Hideout Station Upgrades', () => {
     stashItems(s, c, [sword.uid, map.uid]);
 
     // Sword should be routed to page 2 (gear affinity)
-    expect(s.account.stash[2].some((i) => i.uid === sword.uid)).toBe(true);
+    expect(s.storage.stash[2].some((i) => i.uid === sword.uid)).toBe(true);
     // Map should be routed to page 1 (maps affinity)
-    expect(s.account.stash[1].some((i) => i.uid === map.uid)).toBe(true);
+    expect(s.storage.stash[1].some((i) => i.uid === map.uid)).toBe(true);
   });
 });
 
@@ -244,9 +244,9 @@ describe('Phase 4: Pinnacle Crafting & Doom Sigils', () => {
     expect(canStartUberBoss(s, 3)).toBeNull();
 
     // Start fight 1
-    const keysBefore = s.account.bank.uber_key_1;
+    const keysBefore = s.storage.bank.uber_key_1;
     expect(startUberBoss(s, c, 1)).toBeNull();
-    expect(s.account.bank.uber_key_1).toBe(keysBefore - 1);
+    expect(s.storage.bank.uber_key_1).toBe(keysBefore - 1);
     expect(s.combat?.zoneId).toBe('uber_first_exile');
   });
 });

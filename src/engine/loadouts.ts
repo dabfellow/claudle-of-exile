@@ -128,7 +128,7 @@ export function applyGearSet(s: GameState, ctx: Ctx, id: number): string | null 
 
 /** A support back to the loose pile from a gem in the bag, so a set can claim it. */
 function freeSupport(s: GameState, uid: number): void {
-  for (const gem of s.account.gems) {
+  for (const gem of s.storage.gems) {
     const socket = gem.supports.findIndex((x) => x?.uid === uid);
     if (socket >= 0) unsocketSupport(s, gem.uid, socket);
   }
@@ -142,16 +142,16 @@ export function applySkillSet(s: GameState, id: number): string | null {
   const level = characterLevel(s);
   const attrs = deriveStats(s, []).attributes;
   let left = 0;
-  s.account.gems.push(...s.skillBar.filter((g) => !!g));
+  s.storage.gems.push(...s.skillBar.filter((g) => !!g));
   s.skillBar = Array(SKILL_BAR_SLOTS).fill(null);
   set.slots.forEach((want, slot) => {
     if (!want) return;
-    const idx = s.account.gems.findIndex((g) => g.uid === want.gem);
-    if (idx < 0 || gemUseReason(level, attrs, s.account.gems[idx])) {
+    const idx = s.storage.gems.findIndex((g) => g.uid === want.gem);
+    if (idx < 0 || gemUseReason(level, attrs, s.storage.gems[idx])) {
       left++;
       return;
     }
-    const [gem] = s.account.gems.splice(idx, 1);
+    const [gem] = s.storage.gems.splice(idx, 1);
     gem.rules = want.rules.map((r) => ({ ...r }));
     gem.priority = want.priority;
     s.skillBar[slot] = gem;

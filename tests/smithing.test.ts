@@ -103,7 +103,7 @@ describe('Phase 04 Smithing', () => {
     addFixedMod(amulet, 'strength', 1, c.rng); s.equipment.amulet = amulet;
     s.equipment.helmet = createItem(s, 'blackened_sallet', 8, 'normal', c.rng);
     const before = deriveStats(s), a = actionDef('purpose_protection_soldier_helm');
-    s.account.bank = { ...a.inputs! }; finish(s, a.id);
+    s.storage.bank = { ...a.inputs! }; finish(s, a.id);
     expect(equip(s, c, s.inventory.at(-1)!.uid)).toBeNull();
     expect(deriveStats(s).maxLife).toBeGreaterThan(before.maxLife);
     expect(deriveStats(s).armour).toBeGreaterThan(before.armour);
@@ -134,7 +134,7 @@ describe('Phase 04 Smithing', () => {
     expect(smithIlvl(s, 6)).toBe(21);
     s.account.hideout.forge = 2; expect(smithIlvl(s, 6)).toBe(45);
     s.account.hideout.forge = 3; s.account.hideout.woodcrafting_bench = 3; expect(smithIlvl(s, 6)).toBe(90);
-    s.account.bank = { ...actionDef('purpose_physical_yew_recurve').inputs };
+    s.storage.bank = { ...actionDef('purpose_physical_yew_recurve').inputs };
     finish(s, 'purpose_physical_yew_recurve');
     expect(s.inventory.at(-1)!.ilvl).toBe(90);
     expect(equipReason(s, s.inventory.at(-1)!)).toBe('Requires level 30');
@@ -146,70 +146,70 @@ describe('Phase 04 Smithing', () => {
 
   it('ignores catalysts, salvage and manual doubles, pays once, then stops after one kept result', () => {
     const s = smith(15, 2), a = actionDef('purpose_resource_coral_wand');
-    s.account.bank = { ...a.inputs!, oak_resin: 1, frigid_fossil: 1 };
+    s.storage.bank = { ...a.inputs!, oak_resin: 1, frigid_fossil: 1 };
     s.smithCatalyst = { ...s.smithCatalyst, resin: 'oak_resin', fossil: 'frigid_fossil', salvageAll: true, salvageFull: true, salvageMisses: true, until: true };
     finish(s, a.id, true);
     expect(s.inventory).toHaveLength(1);
     expect(s.inventory[0].ilvl).toBe(15);
-    expect(s.account.bank.oak_resin).toBe(1); expect(s.account.bank.frigid_fossil).toBe(1);
-    for (const id of Object.keys(a.inputs!)) expect(s.account.bank[id]).toBe(0);
+    expect(s.storage.bank.oak_resin).toBe(1); expect(s.storage.bank.frigid_fossil).toBe(1);
+    for (const id of Object.keys(a.inputs!)) expect(s.storage.bank[id]).toBe(0);
     expect(s.action).toBeNull();
     expect(s.lifetime.itemsSmithed).toBe(1);
   });
 
   it('stops before payment/UID allocation when storage fills or nominal inputs disappear during work', () => {
     const s = smith(), a = actionDef('purpose_physical_yew_recurve');
-    s.account.bank = { ...a.inputs! }; const paid = { ...s.account.bank };
+    s.storage.bank = { ...a.inputs! }; const paid = { ...s.storage.bank };
     expect(startSkillAction(s, ctx(), a.id)).toBeNull();
     s.inventory = Array.from({ length: 100 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
     s.smithCatalyst.salvageAll = true; s.smithCatalyst.salvageFull = true;
     const uid = s.nextUid;
     skillStep(s, ctx(), 200_000, deriveStats(s));
-    expect(s.account.bank).toEqual(paid); expect(s.nextUid).toBe(uid); expect(s.action).toBeNull();
+    expect(s.storage.bank).toEqual(paid); expect(s.nextUid).toBe(uid); expect(s.action).toBeNull();
     s.inventory.pop(); expect(startSkillAction(s, ctx(), a.id)).toBeNull();
-    s.account.bank.mithril_bar = 1;
+    s.storage.bank.mithril_bar = 1;
     skillStep(s, ctx(), 200_000, deriveStats(s));
-    expect(s.inventory).toHaveLength(99); expect(s.account.bank.mithril_ore).toBe(paid.mithril_ore); expect(s.action).toBeNull();
+    expect(s.inventory).toHaveLength(99); expect(s.storage.bank.mithril_ore).toBe(paid.mithril_ore); expect(s.action).toBeNull();
   });
 
   it.each(SMITH_COMPONENTS.filter((a) => a.protectedOutputs))('pays full protected costs for $id despite conservation/doubles and safely stops on exhaustion', (raw) => {
     let s = smith(), a = actionDef(raw.id);
-    s.account.bank = { ...a.inputs! }; s.skillPassives.push('core_steady'); s.skillingMastery[`task.${a.id}`] = 432000;
+    s.storage.bank = { ...a.inputs! }; s.skillPassives.push('core_steady'); s.skillingMastery[`task.${a.id}`] = 432000;
     s.inventory = Array.from({ length: 100 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
     expect(startSkillAction(s, ctx(), a.id)).toBeNull(); s = reload(s);
     if (s.action?.kind === 'skill') s.action.double = true;
     skillStep(s, makeCtx({ next: () => 0 }), actionIntervalMs(s, a, deriveStats(s)) + 0.001, deriveStats(s));
-    for (const id of Object.keys(a.inputs!)) expect(s.account.bank[id]).toBe(0);
-    const output = Object.keys(a.protectedOutputs!)[0]; expect(s.account.bank[output]).toBe(1);
+    for (const id of Object.keys(a.inputs!)) expect(s.storage.bank[id]).toBe(0);
+    const output = Object.keys(a.protectedOutputs!)[0]; expect(s.storage.bank[output]).toBe(1);
     skillStep(s, ctx(), 200_000, deriveStats(s)); expect(s.action).toBeNull();
     expect(s.inventory).toHaveLength(100); expect(a.mastery?.profile).toBe('project');
-    const locked = smith(a.level, raw.forge! - 1); locked.account.bank = { ...a.inputs! };
+    const locked = smith(a.level, raw.forge! - 1); locked.storage.bank = { ...a.inputs! };
     expect(actionBlocker(locked, a)).toMatch(/Forge|Smelter|Woodcrafting Bench/);
   });
 
   it('offers all four advanced smelts at Forge 1 with exact ladder XP/costs', () => {
     for (const [i, metal] of ['adamant', 'star', 'void', 'world'].entries()) {
       const s = smith(45 + i * 15, 1), a = actionDef(`smelt_${metal}`);
-      s.account.bank = { [`${metal}_ore`]: 5 }; finish(s, a.id);
-      expect(s.account.bank[`${metal}_bar`]).toBe(1); expect(s.account.bank[`${metal}_ore`]).toBe(0);
+      s.storage.bank = { [`${metal}_ore`]: 5 }; finish(s, a.id);
+      expect(s.storage.bank[`${metal}_bar`]).toBe(1); expect(s.storage.bank[`${metal}_ore`]).toBe(0);
       expect(a.xp).toBeCloseTo([8, 12, 16, 20][i]);
     }
   });
 
   it('matches live/offline gear, costs, XP and a one-item return summary after reload', () => {
-    const live = smith(30), a = actionDef('purpose_physical_yew_recurve'); live.account.bank = { ...a.inputs! };
+    const live = smith(30), a = actionDef('purpose_physical_yew_recurve'); live.storage.bank = { ...a.inputs! };
     startSkillAction(live, ctx(), a.id); const away = reload(live);
     const c = makeCtx(seeded(42)); for (let i = 0; i < 2400; i++) tick(live, c, 50);
     const summary = simulateOffline(away, makeCtx(seeded(42)), 120_000);
-    expect(away.inventory).toEqual(live.inventory); expect(away.account.bank).toEqual(live.account.bank);
+    expect(away.inventory).toEqual(live.inventory); expect(away.storage.bank).toEqual(live.storage.bank);
     expect(away.skills).toEqual(live.skills); expect(away.professionProgress).toEqual(live.professionProgress);
     expect(summary.items).toBe(1); expect(away.action).toBeNull(); expect(summary.xp[a.skill]).toBeCloseTo(a.xp);
   });
 
   it('completes the actual early hammer with cancel/refund, full-bag ready/reload and duplicate protection', () => {
     let s = smith(15, 2); const p = PROFESSION_PROJECTS.find((p) => p.id === 'tool_wayfarer_hammer')!;
-    s.professionProgress.work.smithing = 20; s.account.bank = { ...p.inputs };
-    expect(startProject(s, ctx(), p.id)).toBeNull(); expect(cancelProject(s)).toBeNull(); expect(s.account.bank).toEqual(p.inputs);
+    s.professionProgress.work.smithing = 20; s.storage.bank = { ...p.inputs };
+    expect(startProject(s, ctx(), p.id)).toBeNull(); expect(cancelProject(s)).toBeNull(); expect(s.storage.bank).toEqual(p.inputs);
     expect(startProject(s, ctx(), p.id)).toBeNull();
     s.inventory = Array.from({ length: 100 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
     advanceProject(s, ctx(), 600_000); expect(s.professionProgress.activeProject?.status).toBe('ready');
@@ -222,17 +222,17 @@ describe('Phase 04 Smithing', () => {
     expect(equip(s, ctx(), tool.uid)).toBeNull();
     expect(actionIntervalMs(s, actionDef('smith_rusted_sword'), deriveStats(s))).toBeCloseTo(interval / 1.08);
     expect(s.skills.combat).toBe(0); expect(s.professionProgress.projects[p.id].completed).toBe(1);
-    for (const id of Object.keys(p.inputs)) expect(s.account.bank[id]).toBe(0);
+    for (const id of Object.keys(p.inputs)) expect(s.storage.bank[id]).toBe(0);
   });
 
   it('preserves a busy old full-bag save with mastery and existing material balances across two loads', () => {
     const fixture = JSON.parse(readFileSync(new URL('./fixtures/profession-v46.json', import.meta.url), 'utf8'));
     let s = deserialize(JSON.stringify(fixture.ordinary));
     s.account = fixture.account;
-    const previous = { action: structuredClone(s.action), mastery: structuredClone(s.skillingMastery), bank: structuredClone(s.account.bank), inventory: structuredClone(s.inventory) };
+    const previous = { action: structuredClone(s.action), mastery: structuredClone(s.skillingMastery), bank: structuredClone(s.storage.bank), inventory: structuredClone(s.inventory) };
     s = reload(reload(s));
     expect(s.action).toEqual(previous.action); expect(s.skillingMastery).toEqual(previous.mastery);
-    expect(s.account.bank).toEqual(previous.bank); expect(s.inventory).toEqual(previous.inventory);
+    expect(s.storage.bank).toEqual(previous.bank); expect(s.inventory).toEqual(previous.inventory);
     expect(ACTIONS.some((a) => a.id.includes('woundmaker'))).toBe(false);
     expect(PROFESSION_PROJECTS.some((p) => p.id === 'woundmaker')).toBe(true); // Finished exclusive project added in Phase14, never a cheap base action.
   });

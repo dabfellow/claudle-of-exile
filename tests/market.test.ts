@@ -18,23 +18,23 @@ function withItem() {
 describe('holding things for the market', () => {
   it('rejects invalid payments without changing the balance or creating a hold', () => {
     const s = newGame(1);
-    s.account.bank.gold = 100;
+    s.storage.bank.gold = 100;
     for (const amount of [-10, 0, 0.5, NaN, Infinity, 1e12 + 1]) {
       expect(holdPayment(s, 'bad', 'gold', amount)).toBeTruthy();
     }
     expect(holdPayment(s, 'bad', 'constructor', 1)).toBeTruthy();
     expect(holdPayment(s, '', 'gold', 1)).toBeTruthy();
-    expect(s.account.bank.gold).toBe(100);
+    expect(s.storage.bank.gold).toBe(100);
     expect(s.account.marketHolds ?? []).toEqual([]);
   });
 
   it('cannot hold a second payment or item under an already pending operation', () => {
     const { s, it } = withItem();
-    s.account.bank.gold = 100;
+    s.storage.bank.gold = 100;
     expect(holdPayment(s, 'same', 'gold', 10)).toBeNull();
     expect(holdPayment(s, 'same', 'gold', 10)).toBeTruthy();
     expect(holdItem(s, 'same', it.uid)).toBeTruthy();
-    expect(s.account.bank.gold).toBe(90);
+    expect(s.storage.bank.gold).toBe(90);
     expect(s.inventory).toContainEqual(it);
     expect(s.account.marketHolds).toHaveLength(1);
   });
@@ -50,40 +50,40 @@ describe('holding things for the market', () => {
     const { s, it } = withItem();
     holdItem(s, 'a', it.uid);
     releaseHold(s, 'a', true);
-    expect(s.account.stash.flat().map((i) => i.baseId)).toEqual([it.baseId]);
+    expect(s.storage.stash.flat().map((i) => i.baseId)).toEqual([it.baseId]);
     expect(s.account.marketHolds).toEqual([]);
 
     const again = item(s);
     s.inventory.push(again);
     holdItem(s, 'b', again.uid);
     releaseHold(s, 'b', false);
-    expect(s.account.stash.flat()).toHaveLength(1);
+    expect(s.storage.stash.flat()).toHaveLength(1);
   });
 
   it('never gives a hold back twice', () => {
     const s = newGame(1);
-    s.account.bank.gold = 100;
+    s.storage.bank.gold = 100;
     holdPayment(s, 'a', 'gold', 60);
     releaseHold(s, 'a', true);
     releaseHold(s, 'a', true);
-    expect(s.account.bank.gold).toBe(100);
+    expect(s.storage.bank.gold).toBe(100);
   });
 
   it('refuses a price you cannot pay and takes nothing', () => {
     const s = newGame(1);
-    s.account.bank.gold = 10;
+    s.storage.bank.gold = 10;
     expect(holdPayment(s, 'a', 'gold', 60)).toBeTruthy();
-    expect(s.account.bank.gold).toBe(10);
+    expect(s.storage.bank.gold).toBe(10);
     expect(s.account.marketHolds ?? []).toEqual([]);
   });
 
   it('can pay in orbs', () => {
     const s = newGame(1);
-    s.account.bank.chaos = 5;
+    s.storage.bank.chaos = 5;
     holdPayment(s, 'a', 'chaos', 3);
-    expect(s.account.bank.chaos).toBe(2);
+    expect(s.storage.bank.chaos).toBe(2);
     releaseHold(s, 'a', true);
-    expect(s.account.bank.chaos).toBe(5);
+    expect(s.storage.bank.chaos).toBe(5);
   });
 
   it('keeps holds from two tabs apart', () => {
@@ -110,22 +110,22 @@ describe('holding things for the market', () => {
 describe('collecting from the market', () => {
   it('adds money and shelves items with a fresh id', () => {
     const s = newGame(1);
-    s.account.bank.gold = 0;
+    s.storage.bank.gold = 0;
     const { uid: _, ...sold } = item(s);
     const before = s.account.nextUid;
     receiveDeliveries(s, [
       { currency: 'gold', amount: 900, item: null, note: 'Sold' },
       { currency: null, amount: null, item: sold as Item, note: 'Bought' },
     ]);
-    expect(s.account.bank.gold).toBe(900);
-    expect(s.account.stash.flat()[0].uid).toBe(before);
+    expect(s.storage.bank.gold).toBe(900);
+    expect(s.storage.stash.flat()[0].uid).toBe(before);
   });
 
   it('never loses an item to a full stash', () => {
     const s = newGame(1);
-    s.account.stash = s.account.stash.map(() => Array.from({ length: STASH_PAGE_SIZE }, () => item(s)));
+    s.storage.stash = s.storage.stash.map(() => Array.from({ length: STASH_PAGE_SIZE }, () => item(s)));
     receiveDeliveries(s, [{ currency: null, amount: null, item: item(s), note: 'Bought' }]);
-    expect(s.account.overflow).toHaveLength(1);
+    expect(s.storage.overflow).toHaveLength(1);
   });
 });
 

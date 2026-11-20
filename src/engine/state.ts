@@ -1,7 +1,7 @@
 import { classDef, startClass, type ClassId } from '../data/classes';
 import { flaskDef, FLASK_SLOTS } from '../data/flasks';
 import { EXILE_START } from '../data/passiveTree';
-import { freshAccount } from './account';
+import { ensurePersonalStashPages, freshAccount, freshCharacterStorage } from './account';
 import { addBank } from './bank';
 import { newAscendancyState } from './ascendancy';
 import { SKILL_BAR_SLOTS } from '../data/gems';
@@ -30,7 +30,7 @@ export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 50;
+export const SAVE_VERSION = 51;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -54,6 +54,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
   const s: GameState = {
     version: SAVE_VERSION,
     account,
+    storage: freshCharacterStorage(),
     character: {
       id: who.id ?? newCharacterId(),
       name: who.name,
@@ -107,7 +108,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     meal: null,
     keepEating: true,
     smithCatalyst: { fossil: null, resin: null, until: false, salvageMisses: false, salvageFull: false, salvageAll: false },
-    maps: newMapState((account.maps ??= {})),
+    maps: newMapState(),
     heist: newHeistState(),
     expedition: newExpeditionState(),
     vendor: { stock: [], refreshAt: 0 },
@@ -132,7 +133,8 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     clock: 0,
     lastSaved: Date.now(),
   };
-  // every new character adds its starting kit to the shared tabs
+  ensurePersonalStashPages(s.storage, account);
+  // A new character gets their own starting supplies.
   for (const [id, n] of Object.entries(STARTING_BANK)) addBank(s, id, n);
   const rng = seeded(seed);
   const exileWeapon = who.classId === 'exile' ? startClass('exile', who.startNode).exileWeapon : undefined;

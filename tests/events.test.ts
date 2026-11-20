@@ -37,25 +37,25 @@ describe('limited-time events', () => {
     startSkillAction(plain,a,'mine_copper');startSkillAction(fast,b,'mine_copper');
     const deadline=plain.vendor.refreshAt;
     tick(plain,a,30000);tick(fast,b,30000);
-    expect(fast.clock).toBe(plain.clock);expect(fast.account.bank.copper_ore).toBe(plain.account.bank.copper_ore*2);
+    expect(fast.clock).toBe(plain.clock);expect(fast.storage.bank.copper_ore).toBe(plain.storage.bank.copper_ore*2);
     expect(fast.vendor.refreshAt).toBe(deadline-30000);
   });
   it('conserves whole crafting materials at fractional cost without fractional balances',()=>{
-    const s=player();s.account.bank.alteration=100;
+    const s=player();s.storage.bank.alteration=100;
     payCraftCost(s,ctx({xp:1,loot:1,craftingCost:0.5}),{alteration:100});
-    expect(s.account.bank.alteration).toBe(50);
+    expect(s.storage.bank.alteration).toBe(50);
     const c=ctx({xp:1,loot:1,craftingCost:0.5});
     for(let i=0;i<20;i++)payCraftCost(s,c,{alteration:1});
-    expect(Number.isInteger(s.account.bank.alteration)).toBe(true);expect(s.account.bank.alteration).toBeGreaterThan(30);
+    expect(Number.isInteger(s.storage.bank.alteration)).toBe(true);expect(s.storage.bank.alteration).toBeGreaterThan(30);
   });
   it('samples fractional loot rolls rather than rounding a 25% bonus up to double loot',()=>{
     const z=zoneDef('mudflats');
-    const gold=(mult:number)=>{const s=player();s.account.bank.gold=0;const c=ctx({xp:1,loot:mult});const d=deriveStats(s);for(let i=0;i<1000;i++)rollLoot(s,c,makeMonster(z.monsters[0],false),z,d);return s.account.bank.gold;};
+    const gold=(mult:number)=>{const s=player();s.storage.bank.gold=0;const c=ctx({xp:1,loot:mult});const d=deriveStats(s);for(let i=0;i<1000;i++)rollLoot(s,c,makeMonster(z.monsters[0],false),z,d);return s.storage.bank.gold;};
     const ratio=gold(1.25)/gold(1);expect(ratio).toBeGreaterThan(1.15);expect(ratio).toBeLessThan(1.4);
   });
   it('boosts currency orbs without also multiplying Gold or item drops',()=>{
     const z=zoneDef('mudflats');
-    const drops=(mult:number)=>{const s=player();s.account.bank.gold=0;for(const currency of CURRENCIES)s.account.bank[currency.id]=0;const c=ctx({xp:1,loot:1,currencyDrops:mult});const d=deriveStats(s);for(let i=0;i<500;i++)rollLoot(s,c,makeMonster(z.monsters[0],false),z,d);return {gold:s.account.bank.gold,orbs:CURRENCIES.reduce((sum,currency)=>sum+(s.account.bank[currency.id]??0),0),items:c.events.filter((e)=>e.t==='loot'&&e.item).length};};
+    const drops=(mult:number)=>{const s=player();s.storage.bank.gold=0;for(const currency of CURRENCIES)s.storage.bank[currency.id]=0;const c=ctx({xp:1,loot:1,currencyDrops:mult});const d=deriveStats(s);for(let i=0;i<500;i++)rollLoot(s,c,makeMonster(z.monsters[0],false),z,d);return {gold:s.storage.bank.gold,orbs:CURRENCIES.reduce((sum,currency)=>sum+(s.storage.bank[currency.id]??0),0),items:c.events.filter((e)=>e.t==='loot'&&e.item).length};};
     const plain=drops(1),boost=drops(3);
     expect(plain.orbs).toBeGreaterThan(0);expect(boost.orbs).toBe(plain.orbs*3);expect(boost.gold).toBe(plain.gold);expect(boost.items).toBe(plain.items);
   });
@@ -68,7 +68,7 @@ describe('limited-time events', () => {
     simulateOffline(plain,a,60000);simulateOffline(scheduled,b,60000);
     expect(scheduled.skills.mining).toBeGreaterThan(plain.skills.mining);
     expect(scheduled.skills.mining).toBeLessThan(plain.skills.mining*2);
-    expect(scheduled.account.bank.copper_ore).toBe(plain.account.bank.copper_ore);
+    expect(scheduled.storage.bank.copper_ore).toBe(plain.storage.bank.copper_ore);
   });
   it('double XP, for skills and gems alike', () => {
     const s = player();
@@ -84,10 +84,10 @@ describe('limited-time events', () => {
     const z = zoneDef('mudflats');
     const gold = (event: EventBoost | null) => {
       const s = player();
-      s.account.bank.gold = 0;
+      s.storage.bank.gold = 0;
       const c = ctx(event);
       for (let i = 0; i < 500; i++) rollLoot(s, c, makeMonster(z.monsters[0], false, i), z, deriveStats(s));
-      return s.account.bank.gold;
+      return s.storage.bank.gold;
     };
     expect(gold(halloween)).toBeGreaterThan(gold(null) * 1.7);
   });

@@ -195,7 +195,7 @@ export function startHeist(s: GameState, ctx: Ctx, jobId: string): string | null
   if (s.heist.roster && activeCrew(s).length !== 3) return 'Select three available rogues first';
   s.combat = null;
   s.heist.auto = job.id;
-  if ((s.account.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job);
+  if ((s.storage.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job);
   else if (!goCasing(s)) return 'No mark to case the job on';
   return null;
 }
@@ -265,7 +265,7 @@ function endJob(s: GameState, ctx: Ctx, job: HeistJob, take: Record<string, numb
         if (!bagFull(s)) {
           s.inventory.push(item);
         } else {
-          s.account.overflow.push(item);
+          s.storage.overflow.push(item);
         }
         ctx.emit({ t: 'loot', item });
         ctx.emit({ t: 'info', text: 'Occult Treasury jackpot! Borrowed Tomorrow recovered.', tone: 'good' });
@@ -280,7 +280,7 @@ function endJob(s: GameState, ctx: Ctx, job: HeistJob, take: Record<string, numb
   s.action = null;
   const next = s.heist.auto;
   if (!next) return;
-  if ((s.account.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job, focus);
+  if ((s.storage.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job, focus);
   else if (!goCasing(s, focus)) s.heist.auto = null;
 }
 
@@ -354,7 +354,7 @@ export function heistAutoStep(s: GameState): void {
     s.heist.auto = null;
     return;
   }
-  if ((s.account.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job, s.action?.kind === 'skill' ? s.action.focus : undefined);
+  if ((s.storage.bank[MARKER] ?? 0) >= jobCost(s, job)) beginJob(s, job, s.action?.kind === 'skill' ? s.action.focus : undefined);
 }
 
 /** A save on a job or rogue that has since been removed stops instead of crashing the load. */

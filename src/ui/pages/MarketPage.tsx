@@ -36,7 +36,7 @@ function ListingCard({ s, l, access, onDone }: { s: GameState; l: MarketListing;
   const [bid, setBid] = useState(String(lowest));
   const [busy, setBusy] = useState(false);
   const left = new Date(l.ends_at).getTime() - Date.now();
-  const have = s.account.bank[l.currency] ?? 0;
+  const have = s.storage.bank[l.currency] ?? 0;
   const amount = l.mode === 'buy' ? l.price : Math.floor(Number(bid));
 
   const run = async (step: () => Promise<string | null>) => {
@@ -255,10 +255,10 @@ function MarketClosing({ s }: { s: GameState }) {
   const collect = async () => {
     setBusy(true);
     // a delivery adds to the bank or gives an item a new id, so either moving means something arrived
-    const before = JSON.stringify(s.account.bank) + s.account.nextUid;
+    const before = JSON.stringify(s.storage.bank) + s.account.nextUid;
     await game.marketSync();
     setBusy(false);
-    if (JSON.stringify(game.state.account.bank) + game.state.account.nextUid === before) game.pushToast('Nothing is waiting for you right now', 'info');
+    if (JSON.stringify(game.state.storage.bank) + game.state.account.nextUid === before) game.pushToast('Nothing is waiting for you right now', 'info');
     void refreshMarketLeftovers();
   };
   return (
@@ -313,7 +313,7 @@ export function MarketPage() {
         kicker="Trade gear with other exiles"
         actions={
           <span className="gold-amount">
-            <MatIcon id="gold" size={18} /> {fmt(s.account.bank.gold ?? 0)}
+            <MatIcon id="gold" size={18} /> {fmt(s.storage.bank.gold ?? 0)}
           </span>
         }
       />

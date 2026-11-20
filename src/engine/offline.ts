@@ -121,7 +121,7 @@ export function startOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offline
   const heistsBefore = { ...s.heist.tally };
   const masteryBefore = { ...s.skillingMastery };
   const expeditionBefore = { ...s.expedition.tally };
-  const bankBefore = { ...s.account.bank };
+  const bankBefore = { ...s.storage.bank };
   sum.ordinaryOutput = {};
   sum.discoveries = [];
   sum.protectedProgress = {};
@@ -222,7 +222,7 @@ export function startOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offline
     }
     sum.finds = s.expedition.tally.finds - expeditionBefore.finds;
     sum.traded = s.expedition.tally.traded - expeditionBefore.traded;
-    for (const [id, n] of Object.entries(s.account.bank)) {
+    for (const [id, n] of Object.entries(s.storage.bank)) {
       const delta = n - (bankBefore[id] ?? 0);
       if (delta !== 0) sum.materials[id] = delta;
     }

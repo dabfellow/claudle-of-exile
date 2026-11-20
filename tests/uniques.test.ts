@@ -59,14 +59,14 @@ describe('unique roll ranges and Divine Orbs', () => {
 
   it('allows Divine Orb on uniques with rollable ranges and rerolls values', () => {
     const s = newGame(1);
-    s.account.bank = { divine: 10 };
+    s.storage.bank = { divine: 10 };
     const item = createUnique(s, 'last_breath', 50, seeded(10));
     s.inventory.push(item);
 
     const ctx = makeCtx(seeded(99));
     const err = applyOrb(s, ctx, 'divine', item.uid);
     expect(err).toBeNull();
-    expect(s.account.bank.divine).toBe(9);
+    expect(s.storage.bank.divine).toBe(9);
 
     const maliceMod = item.prefixes.find((m) => m.affixId === 'u_malice_on_hit');
     expect(maliceMod!.values[0]).toBeGreaterThanOrEqual(1);
@@ -75,7 +75,7 @@ describe('unique roll ranges and Divine Orbs', () => {
 
   it('refuses Divine Orb on uniques where all modifiers are fixed', () => {
     const s = newGame(1);
-    s.account.bank = { divine: 10 };
+    s.storage.bank = { divine: 10 };
     const item = createUnique(s, 'miners_lament', 20, seeded(1));
     s.inventory.push(item);
 
@@ -85,7 +85,7 @@ describe('unique roll ranges and Divine Orbs', () => {
     const ctx = makeCtx(seeded(1));
     const err = applyOrb(s, ctx, 'divine', item.uid);
     expect(err).toBe('All modifiers on this unique are fixed');
-    expect(s.account.bank.divine).toBe(10);
+    expect(s.storage.bank.divine).toBe(10);
   });
 });
 
@@ -95,12 +95,12 @@ describe('overhauled and expanded uniques, flasks, and maps', () => {
     const baseCritMulti = deriveStats(s).critMulti;
     const ring = createUnique(s, 'khans_tithe', 40, seeded(1));
     s.equipment.ring1 = ring;
-    s.account.bank.gold = 250_000;
+    s.storage.bank.gold = 250_000;
     const d25 = deriveStats(s);
     expect(d25.raw.goldFind).toBe(-50);
     expect(d25.critMulti).toBe(baseCritMulti + 25);
 
-    s.account.bank.gold = 900_000;
+    s.storage.bank.gold = 900_000;
     const dCap = deriveStats(s);
     expect(dCap.critMulti).toBe(baseCritMulti + 50);
   });
@@ -130,7 +130,7 @@ describe('overhauled and expanded uniques, flasks, and maps', () => {
 
   it('rolls an off-class Ascendancy Notable on The Unwritten and rerolls it with a Divine Orb', () => {
     const s = newGame(1, { name: 'W', classId: 'warrior' });
-    s.account.bank = { divine: 5 };
+    s.storage.bank = { divine: 5 };
     const body = createUnique(s, 'the_unwritten', 80, seeded(7));
     s.equipment.body = body;
     const node1 = unwrittenNodeOf(s);

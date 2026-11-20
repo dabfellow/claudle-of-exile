@@ -289,7 +289,7 @@ function ActionCard({ a, level, open, onToggle, workbench = false }: { a: SkillA
               </select>
             </div>
           )}
-          {a.purpose && <p className="muted">Supplies cover {Math.floor(Math.min(...Object.entries(a.inputs!).map(([id, n]) => (s.account.bank[id] ?? 0) / n)))} craft(s). This start makes one item and stops. Needs one free inventory slot; full storage stops before payment.</p>}
+          {a.purpose && <p className="muted">Supplies cover {Math.floor(Math.min(...Object.entries(a.inputs!).map(([id, n]) => (s.storage.bank[id] ?? 0) / n)))} craft(s). This start makes one item and stops. Needs one free inventory slot; full storage stops before payment.</p>}
           {blocker && blocker !== 'Missing materials' && <p className="muted">{blocker}</p>}
           {prospect && <p className="muted">{prospect}</p>}
           {locked && (
@@ -311,7 +311,7 @@ function ActionCard({ a, level, open, onToggle, workbench = false }: { a: SkillA
           {a.inputs && (
             <div className="action-section">
               <div className="io-label">Requires</div>
-              <Ingredients cost={a.inputs} have={s.account.bank} />
+              <Ingredients cost={a.inputs} have={s.storage.bank} />
               {a.chart?.upgrade && <MapInput s={s} a={a} />}
             </div>
           )}
@@ -326,7 +326,7 @@ function CatalystPanel() {
   const s = useGame();
   const cat = s.smithCatalyst;
   const set = (patch: Partial<typeof cat>) => game.act((st) => setSmithCatalyst(st, patch));
-  const owned = (id: string) => fmt(s.account.bank[id] ?? 0);
+  const owned = (id: string) => fmt(s.storage.bank[id] ?? 0);
   return (
     <div className="card catalyst-panel">
       <div className="card-title">
@@ -340,7 +340,7 @@ function CatalystPanel() {
           <select className="input" value={cat.fossil ?? ''} onChange={(e) => set({ fossil: e.target.value || null })}>
             <option value="">None</option>
             {FOSSILS.map((f) => (
-              <option key={f.id} value={f.id} disabled={!s.account.bank[f.id]}>
+              <option key={f.id} value={f.id} disabled={!s.storage.bank[f.id]}>
                 {f.name} ({owned(f.id)}) — {f.desc}
               </option>
             ))}
@@ -351,7 +351,7 @@ function CatalystPanel() {
           <select className="input" value={cat.resin ?? ''} onChange={(e) => set({ resin: e.target.value || null })}>
             <option value="">None</option>
             {RESINS.map((r) => (
-              <option key={r.id} value={r.id} disabled={!s.account.bank[r.id]}>
+              <option key={r.id} value={r.id} disabled={!s.storage.bank[r.id]}>
                 {r.name} +{r.ilvl} ({owned(r.id)})
               </option>
             ))}
@@ -1003,7 +1003,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
               countText = `${list.filter(isUnlocked).length}/${list.length}`;
             } else if (skill === 'archaeology') {
               if (x.id === 'sites') countText = `${TRAIL.filter((id) => hasPassport(s, id)).length}/${TRAIL.length}`;
-              else if (x.id === 'forge') countText = s.expedition.forge ? '1 open' : `${s.account.bank[SEALED_RELIC] ?? 0}`;
+              else if (x.id === 'forge') countText = s.expedition.forge ? '1 open' : `${s.storage.bank[SEALED_RELIC] ?? 0}`;
               else if (x.id === 'restoration') {
                 const list = selectedActions.filter((a) => a.id.startsWith('sift_') || a.id.startsWith('restore_'));
                 countText = `${list.filter(isUnlocked).length}/${list.length}`;
@@ -1086,7 +1086,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
       {skill === 'alchemy' && <div className="callout skill-note">Salvage unwanted items in your Inventory for Arcane Dust, then transmute it into orbs here.</div>}
       {skill === 'gemcutting' && (
         <div className="callout skill-note">
-          Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b>{fmt(s.account.bank.rough_gem ?? 0)}</b> Rough Gems.
+          Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b>{fmt(s.storage.bank.rough_gem ?? 0)}</b> Rough Gems.
         </div>
       )}
 

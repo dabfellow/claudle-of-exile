@@ -88,12 +88,12 @@ describe('custom loot filter engine', () => {
     // Also in placeItem
     s.settings.activeLootFilterId = 'salvage_all';
     s.settings.customLootFilters = [aggressiveFilter];
-    s.account.bank.arcane_dust = 0;
+    s.storage.bank.arcane_dust = 0;
     s.inventory = [];
 
     placeItem(s, c, uniqueItem);
     expect(s.inventory).toContain(uniqueItem);
-    expect(s.account.bank.arcane_dust).toBe(0);
+    expect(s.storage.bank.arcane_dust).toBe(0);
   });
 
   it('filters by item tier and min item level', () => {
@@ -159,14 +159,14 @@ describe('custom loot filter engine', () => {
     saveLootFilter(s, filter);
     setActiveLootFilter(s, 'keep_rare_only');
 
-    s.account.bank.arcane_dust = 0;
+    s.storage.bank.arcane_dust = 0;
     s.inventory = [];
 
     const magicItem = createItem(s, 'rusted_sword', 1, 'magic', c.rng);
     placeItem(s, c, magicItem);
 
     expect(s.inventory).toHaveLength(0);
-    expect(s.account.bank.arcane_dust).toBeGreaterThan(0);
+    expect(s.storage.bank.arcane_dust).toBeGreaterThan(0);
 
     const rareItem = createItem(s, 'rusted_sword', 1, 'rare', c.rng);
     placeItem(s, c, rareItem);

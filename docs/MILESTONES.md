@@ -5,6 +5,8 @@ Last updated 2026-11-17. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
+Character inventories and the Guild Stash are implemented locally (2026-11-20). Apply the [Guild Stash database update](ops/guild-stash.sql) before publishing and verify signed-in transfers after it is installed.
+
 Veyrath campaign is live in **0.5.5** (2026-11-19): 70 zones across seven fuller chapters, revised level bands, matching rewards/gem access, saved journal, world/regional paintings, territory navigation, readable banners, character-specific unlock fog and the harsh surrounding ocean. All 113 test files / 1,795 tests, typecheck and production build pass. Earlier desktop/390px campaign navigation checks passed 2026-11-18; the latest artwork/fog was inspected through native previews because the local browser stayed blank, so live hover/desktop acceptance remains open. Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
 Latest confirmed live release: **0.5.5, Veyrath World Map**, deployed 2026-11-19. Seven-act campaign and regional maps, saved act selection, readable navigation banners, territory highlighting, exploration fog and dark ocean artwork. All 1,795 tests and production build pass; deploy confirmed the live version and login configuration at https://dabfellow.party/path-of-idle/. Preserved preceding releases **0.5.4, Astrology**, **0.5.3, Agility**, **0.5.2, Heist Dossiers**, and **0.5.1, One Tree, One Currency** (including Rogue Roster). Latest live UI interaction check remains outstanding as described above.
@@ -64,6 +66,8 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Character materials and Guild Stash (2026-11-20): Owner saw players run three or four characters as a production line, for example one mining, one chopping wood and another crafting daggers continuously from the shared supply. Owner chose to let alts work in parallel with manual transfers. Each character gathers into their own inventory, crafts from their own stock and has a personal Stash. Players can move spare gear, gems, flasks, currency and materials between characters through a separate Guild Stash, with manual bulk deposits and withdrawals for materials. Owner chose to keep gathering for XP and rare drops at the cap, discarding extra units of whichever material is full. Apply the same rule while online and offline. Use 5,000 per material type per character as the starting cap so ordinary skilling can run for extended stretches. On upgrade, carry each realm's existing shared contents into its Guild Stash so every character that previously had access can still withdraw them.
 
 - Campaign enemy families (2026-11-19): Owner chose "mostly local enemies, with a few recognizable families returning where their presence tells part of the story." Draw each area's roster from its wildlife, inhabitants, work and exposure to the Creep. Where a family returns, keep a recognizable trait and give its local group a different way to fight. The Kroten expedition was the example discussed.
 
@@ -641,6 +645,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [ ] Apply the Guild Stash database update and verify signed-in transfers before release.
+  - Local browser and throwaway database checks pass. The live database has yet to receive the update.
+
 - [x] Manual skill gem upgrades: no auto level-up, an Upgrade button on the Skills page, greyed out with the reason when the new level's character level or attribute isn't met — done 2026-11-19.
   - XP banks as before (capped at the next level only while that level is out of reach), one press per level. The sim player presses Upgrade itself. Playtested with a level 20 Warrior.
 - [ ] Design and build the seven-act zone naming and enemy identity pass.
@@ -858,6 +865,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Build character material inventories, personal Stashes and the Guild Stash — done 2026-11-20.
+  - Checked live copper gathering and manual cross-character transfer in the desktop browser. Automated checks cover a miner and woodcutter supplying a dagger crafter, offline crafting stopping when personal inputs run out, a full material stack, old shared balances and cloud transfer save conflicts.
 
 - Manual skill gem upgrades with a greyed-out button when an upgrade would disable the skill — done 2026-11-19.
 - Shipped **0.5.6** live 2026-11-19 (deploy confirmed version and login). Release 0.5.6 gathered every session's unshipped work (2026-11-19): skill upgrades, hand-traced act map routes, combat-only tutorial, one Inventory screen and loot filter rework, the Archaeology overhaul, and the security review fixes (single Fractured Orb, second-device lockout, Hardcore and gift fixes). Left out as superseded: the 17 Nov skilling-area visual polish (the live 19 Nov skill page redesign replaced it) and the 10 Nov sim-rates tooling (the simulator and pacing targets changed since). Both are still on their own branches.

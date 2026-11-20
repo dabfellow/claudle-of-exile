@@ -57,7 +57,7 @@ describe('Phase 14 crafted weapons', () => {
   it('keeps a finished unique reserved through full storage and reload, then delivers once', () => {
     const s = newGame(1), c = context(), p = professionProject('woundmaker')!;
     s.skills.smithing = xpForLevel(90); s.professionProgress.work.smithing = 100; s.account.hideout.forge = 3;
-    s.account.bank = { ...p.inputs };
+    s.storage.bank = { ...p.inputs };
     for (let i = 0; i < 100; i++) s.inventory.push(createItem(s, 'rusted_sword', 1, 'normal', c.rng));
     expect(startProject(s, c, p.id)).toBeNull(); advanceProject(s, c, p.durationMs);
     expect(s.professionProgress.activeProject!.status).toBe('ready');
@@ -67,14 +67,14 @@ describe('Phase 14 crafted weapons', () => {
     expect(back.inventory.filter((i) => i.uniqueId === p.id)).toHaveLength(1);
     expect(back.account.uniquesSeen.filter((id) => id === p.id)).toHaveLength(1);
     expect(back.professionProgress.activeProject).toBeUndefined();
-    expect(back.account.bank.wound_alloy).toBe(0);
+    expect(back.storage.bank.wound_alloy).toBe(0);
   });
   it.each(['woundmaker', 'winters_pyre', 'the_homecoming'])('uses actually crafted %s in a legal build with matching live/offline combat', (id) => {
     const s = newGame(9, { name: 'Realistic project build', classId: id === 'winters_pyre' ? 'mage' : id === 'the_homecoming' ? 'ranger' : 'duelist' });
     const c = makeCtx(seeded(9)), p = professionProject(id)!;
     prepareWeaponBuild(s, c, id);
     s.skills.smithing = xpForLevel(90); s.professionProgress.work.smithing = 100; s.account.hideout.forge = 3;
-    s.account.bank = { ...p.inputs };
+    s.storage.bank = { ...p.inputs };
     expect(startProject(s, c, id)).toBeNull(); advanceProject(s, c, p.durationMs);
     expect(equip(s, c, s.inventory.at(-1)!.uid, 'weapon')).toBeNull();
     s.unlockedZones.push('shatteredthrone'); expect(startCombat(s, c, 'shatteredthrone')).toBeNull();
@@ -92,14 +92,14 @@ describe('Phase 14 crafted weapons', () => {
     for (const offline of [false, true]) {
       const s = newGame(1), c = context(), p = professionProject(id)!;
       s.skills.smithing = xpForLevel(90); s.professionProgress.work.smithing = 100; s.account.hideout.forge = 3;
-      s.account.bank = { ...p.inputs, divine: 1 };
+      s.storage.bank = { ...p.inputs, divine: 1 };
       expect(startProject(s, c, id)).toBeNull();
       const run = s.professionProgress.activeProject!.runId;
       if (offline) simulateOffline(s, c, p.durationMs); else advanceProject(s, c, p.durationMs);
       const item = s.inventory.at(-1)!;
       expect(item.uniqueId).toBe(id); expect(item.ilvl).toBe(80);
       expect(baseDef(item.baseId).reqLevel).toBe(60);
-      for (const key of Object.keys(p.inputs)) expect(s.account.bank[key]).toBe(0);
+      for (const key of Object.keys(p.inputs)) expect(s.storage.bank[key]).toBe(0);
       expect(completeProject(s, c, run)).toMatch(/settled/);
       expect(orbReason(s, 'divine', item.uid)).toMatch(/fixed/);
       expect(worldDropUniques(100).some((u) => u.id === id)).toBe(false);
@@ -112,18 +112,18 @@ describe('Phase 14 crafted weapons', () => {
     const s = newGame(1), c = context();
     s.skills.gemcutting = s.skills.runecarving = xpForLevel(90);
     settleProfessionProgress(s, true);
-    s.account.bank = { crystal_shard: 10, rough_gem: 5 };
+    s.storage.bank = { crystal_shard: 10, rough_gem: 5 };
     expect(startSkillAction(s, c, 'cut_exceptional')).toBeNull();
-    skillStep(s, c, 120_000, deriveStats(s)); expect(s.account.bank.exceptional_crystal).toBe(1);
+    skillStep(s, c, 120_000, deriveStats(s)); expect(s.storage.bank.exceptional_crystal).toBe(1);
     const rune = actionDef('carve_rune_keen_2');
-    s.account.bank = Object.fromEntries(Object.entries(rune.inputs!).map(([id, n]) => [id, n * 200]));
+    s.storage.bank = Object.fromEntries(Object.entries(rune.inputs!).map(([id, n]) => [id, n * 200]));
     expect(startSkillAction(s, c, rune.id)).toBeNull();
     for (let i = 0; i < 200; i++) skillStep(s, c, actionIntervalMs(s, rune, deriveStats(s)), deriveStats(s));
-    expect(s.account.bank.inscription_fragment).toBe(10);
-    const keen3 = actionDef('carve_rune_keen_3'); Object.assign(s.account.bank, keen3.inputs);
+    expect(s.storage.bank.inscription_fragment).toBe(10);
+    const keen3 = actionDef('carve_rune_keen_3'); Object.assign(s.storage.bank, keen3.inputs);
     expect(startSkillAction(s, c, keen3.id)).toBeNull(); skillStep(s, c, keen3.intervalMs, deriveStats(s));
     expect(startSkillAction(s, c, 'prepare_return_inscription')).toBeNull(); skillStep(s, c, 120_000, deriveStats(s));
-    expect(s.account.bank.return_inscription).toBe(1); expect(s.account.bank.inscription_fragment).toBe(0);
+    expect(s.storage.bank.return_inscription).toBe(1); expect(s.storage.bank.inscription_fragment).toBe(0);
   });
 
   it('Woundmaker preserves pre-penalty bleed damage, suppresses forced/mega critical strikes and applies one bleed per hit', () => {

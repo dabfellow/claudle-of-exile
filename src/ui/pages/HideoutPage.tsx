@@ -486,7 +486,7 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
   const affordable = !locked && !!cost && canAfford(s, cost);
   const hasPage = !locked && st.page !== 'hideout';
   const next = st.levels[lvl];
-  const short = cost ? shortBy(cost, s.account.bank) : 0;
+  const short = cost ? shortBy(cost, s.storage.bank) : 0;
   return (
     <div className={`card hx-station ${affordable ? 'ready' : ''} ${locked ? 'locked' : ''} ${!cost && !locked ? 'maxed' : ''}`} style={{ ['--station' as string]: st.color }}>
       <div className="hx-station-head" title={st.desc}>
@@ -539,7 +539,7 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
           </div>
           <div className="hx-next-effect">{next.effect}</div>
           <div className="hx-next-buy">
-            <HaveNeed cost={cost} have={s.account.bank} go={go} />
+            <HaveNeed cost={cost} have={s.storage.bank} go={go} />
             <button data-tut={`upgrade-${st.id}`} className={`btn sm ${affordable ? 'primary' : ''}`} disabled={!affordable} title={affordable ? `Upgrade to level ${lvl + 1}` : 'Not enough materials'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id))}>
               Upgrade
             </button>
@@ -549,7 +549,7 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
         {route && <div className="hx-next">
           <div className="io-label">Profession route · alternative payment</div>
           <p className="small">{route.requirement}. Gold comes from Thieving; bars from Smithing; planks from Woodcutting.</p>
-          <HaveNeed cost={route.cost} have={s.account.bank} go={go} />
+          <HaveNeed cost={route.cost} have={s.storage.bank} go={go} />
           <button className="btn sm" disabled={!!route.reason || !canAfford(s, route.cost)} title={route.reason ?? 'Pay this cost instead of the original upgrade cost'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id, 'profession'))}>Upgrade through profession</button>
           {route.reason && <p className="small muted">{route.reason}</p>}
         </div>}
@@ -560,7 +560,7 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
         <ol className="hx-tiers">
           {st.levels.map((tier, i) => {
             const state: TierState = locked || i > lvl ? 'later' : i < lvl ? 'done' : 'next';
-            return <Tier key={i} n={i + 1} effect={tier.effect} cost={hideoutCost(s, tier.cost)} state={state} have={s.account.bank} />;
+            return <Tier key={i} n={i + 1} effect={tier.effect} cost={hideoutCost(s, tier.cost)} state={state} have={s.storage.bank} />;
           })}
         </ol>
       </details>

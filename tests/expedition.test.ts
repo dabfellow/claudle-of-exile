@@ -92,7 +92,7 @@ describe('sites', () => {
     const s = digger();
     startSkillAction(s, ctx(), 'dig_cairn');
     dig(s, fixed(0));
-    expect(s.account.bank[TALLY]).toBeGreaterThanOrEqual(1);
+    expect(s.storage.bank[TALLY]).toBeGreaterThanOrEqual(1);
     expect(s.expedition.dug.dig_cairn).toBe(0.8) // a Surface dig is quicker, so it goes less deep;
     expect(s.skills.archaeology).toBeGreaterThan(xpForLevel(1));
   });
@@ -101,7 +101,7 @@ describe('sites', () => {
     const s = digger();
     startSkillAction(s, ctx(), 'dig_cairn');
     for (let i = 0; i < 50; i++) dig(s, fixed(0.99));
-    expect(s.account.bank[TALLY] ?? 0).toBe(0);
+    expect(s.storage.bank[TALLY] ?? 0).toBe(0);
     expect(s.expedition.dug.dig_cairn).toBe(40);
     expect(s.action?.kind).toBe('skill');
   });
@@ -173,7 +173,7 @@ describe('standing', () => {
     expect(setOrder(s, 'giant_chaos')).toMatch(/standing 2/);
     expect(shelvesFor(s, 'giant').next?.item).toBe('alchemy');
     s.expedition.dug.dig_cairn = findDigs(CAIRN)[1];
-    s.account.bank[TALLY] = 1000;
+    s.storage.bank[TALLY] = 1000;
     expect(wareReason(s, 'giant_chaos')).toBeNull();
     for (const w of WARES) expect(w.standing).toBeLessThan(MAX_STANDING);
     for (const c of CULTURES) expect(WARES.some((w) => w.culture === c.id && w.standing === 0)).toBe(true);
@@ -189,16 +189,16 @@ describe('merchants', () => {
 
   it('takes the Artifacts and gives the goods', () => {
     const s = digger();
-    s.account.bank[TALLY] = w.cost;
+    s.storage.bank[TALLY] = w.cost;
     expect(buyWare(s, ctx(), w.id)).toBeNull();
-    expect(s.account.bank[TALLY]).toBe(0);
-    expect(s.account.bank.regal).toBe(1);
+    expect(s.storage.bank[TALLY]).toBe(0);
+    expect(s.storage.bank.regal).toBe(1);
     expect(buyWare(s, ctx(), w.id)).toMatch(/Not enough/);
   });
 
   it('dearer as a shelf empties, up to double', () => {
     const s = digger();
-    s.account.bank[TALLY] = 1e6;
+    s.storage.bank[TALLY] = 1e6;
     expect(warePrice(s, w)).toBe(w.cost);
     for (let i = 0; i < w.shelf - 1; i++) buyWare(s, ctx(), w.id);
     expect(warePrice(s, w)).toBeGreaterThan(w.cost);
@@ -210,7 +210,7 @@ describe('merchants', () => {
 
   it('restocks by the clock, away or not, and stops at a full shelf', () => {
     const s = digger();
-    s.account.bank[TALLY] = 1e6;
+    s.storage.bank[TALLY] = 1e6;
     for (let i = 0; i < w.shelf; i++) buyWare(s, ctx(), w.id);
     s.clock += w.restockMs * 3;
     expect(wareLeft(s, w)).toBe(3);
@@ -233,13 +233,13 @@ describe('merchants', () => {
     expect(setOrder(s, 'giant_alteration')).toBeNull();
     expect(s.expedition.orders.giant).toBeUndefined();
     setOrder(s, 'giant_regal');
-    s.account.bank[TALLY] = 1e6;
+    s.storage.bank[TALLY] = 1e6;
     tick(s, ctx(), 100);
-    expect(s.account.bank.regal).toBe(w.shelf);
+    expect(s.storage.bank.regal).toBe(w.shelf);
     expect(s.expedition.tally.traded).toBe(w.shelf);
-    const left = s.account.bank[TALLY];
+    const left = s.storage.bank[TALLY];
     fillOrders(s, ctx());
-    expect(s.account.bank[TALLY]).toBe(left);
+    expect(s.storage.bank[TALLY]).toBe(left);
   });
 
   it('one order per people: three can run at once', () => {
@@ -259,7 +259,7 @@ describe('Ancient Whetstone', () => {
   function bench(item: Item): GameState {
     const s = digger();
     s.inventory.push(item);
-    s.account.bank[WHETSTONE] = 1;
+    s.storage.bank[WHETSTONE] = 1;
     return s;
   }
 
@@ -276,7 +276,7 @@ describe('Ancient Whetstone', () => {
       expect(after.values[i]).toBeGreaterThanOrEqual(lo);
       expect(after.values[i]).toBeLessThanOrEqual(hi);
     });
-    expect(s.account.bank[WHETSTONE]).toBe(0);
+    expect(s.storage.bank[WHETSTONE]).toBe(0);
   });
 
   it('leaves every other mod alone', () => {
@@ -310,7 +310,7 @@ describe('Ancient Whetstone', () => {
   it('honed once per item, until that modifier leaves', () => {
     const item = rare();
     const s = bench(item);
-    s.account.bank[WHETSTONE] = 3;
+    s.storage.bank[WHETSTONE] = 3;
     const [mod, other] = allMods(item);
     mod.tier = other.tier = 0;
     expect(applyWhetstone(s, ctx(), item.uid, mod.affixId)).toBeNull();
@@ -324,7 +324,7 @@ describe('Ancient Whetstone', () => {
   it('Wax puts the item back to before it was honed', () => {
     const item = rare();
     const s = bench(item);
-    s.account.bank.locksmiths_wax = 1;
+    s.storage.bank.locksmiths_wax = 1;
     const mod = allMods(item)[0];
     mod.tier = 0;
     takeImpression(s, ctx(), item.uid);
@@ -338,7 +338,7 @@ describe('Ancient Whetstone', () => {
   it('needs a Whetstone', () => {
     const item = rare();
     const s = bench(item);
-    s.account.bank[WHETSTONE] = 0;
+    s.storage.bank[WHETSTONE] = 0;
     expect(whetstoneReason(s, item.uid, allMods(item)[0].affixId)).toMatch(/no Ancient Whetstone/);
   });
 });
@@ -354,7 +354,7 @@ describe('Expedition offline', () => {
     expect(sum.xp.archaeology).toBeGreaterThan(0);
     expect(sum.finds).toBe(1);
     expect(sum.traded).toBeGreaterThan(0);
-    expect(s.account.bank.alteration).toBeGreaterThanOrEqual(100);
+    expect(s.storage.bank.alteration).toBeGreaterThanOrEqual(100);
     expect(s.expedition.dug.dig_cairn).toBeGreaterThan(8000);
   }, 20_000);
 
@@ -362,8 +362,8 @@ describe('Expedition offline', () => {
     const s = digger();
     startSkillAction(s, ctx(), 'dig_cairn');
     simulateOffline(s, ctx(), 8 * 3_600_000);
-    expect(s.account.bank[TALLY]).toBeGreaterThan(CAIRN.rate * 8 * 0.9);
-    expect(s.account.bank[TALLY]).toBeLessThan(CAIRN.rate * 8 * 1.5);
+    expect(s.storage.bank[TALLY]).toBeGreaterThan(CAIRN.rate * 8 * 0.9);
+    expect(s.storage.bank[TALLY]).toBeLessThan(CAIRN.rate * 8 * 1.5);
   }, 20_000);
 
   it('Overtime speeds a dig as it does any skilling', () => {
@@ -393,7 +393,7 @@ describe('Expedition saves', () => {
 
   it('keeps depth, shelves and orders, and carries on digging', () => {
     const s = digger();
-    s.account.bank[TALLY] = 100;
+    s.storage.bank[TALLY] = 100;
     buyWare(s, ctx(), 'giant_regal');
     setOrder(s, 'rime_scour');
     startSkillAction(s, ctx(), 'dig_cairn');

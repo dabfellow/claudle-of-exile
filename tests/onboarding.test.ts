@@ -73,18 +73,18 @@ describe('tutorial', () => {
     expect(s.tutorial.step).toBe(1);
     run(s, [{ t: 'combatStart', zoneId: 'mudflats' }]);
     expect(currentStep(s)?.id).toBe('slay');
-    const gold = s.account.bank.gold;
+    const gold = s.storage.bank.gold;
     run(s, [
       { t: 'kill', name: 'a', boss: false },
       { t: 'kill', name: 'b', boss: false },
     ]);
     expect(s.tutorial.progress).toBe(2);
-    expect(s.account.bank.gold).toBe(gold);
+    expect(s.storage.bank.gold).toBe(gold);
     const evs = run(s, [
       { t: 'kill', name: 'c', boss: false },
       { t: 'kill', name: 'd', boss: false },
     ]);
-    expect(s.account.bank.gold).toBe(gold + 20);
+    expect(s.storage.bank.gold).toBe(gold + 20);
     expect(currentStep(s)?.id).toBe('use_skill');
     expect(evs.filter((e) => e.t === 'tutorialStep')).toHaveLength(1);
     // the Default Attack isn't a skill from the bar
@@ -107,20 +107,20 @@ describe('tutorial', () => {
     s.tutorial.step = TUTORIAL_STEPS.length - 1;
     run(s, [{ t: 'kill', name: 'Bloated Gorger', boss: true }]);
     expect(s.tutorial.done).toBe(true);
-    expect(s.account.bank.regal).toBe(1);
+    expect(s.storage.bank.regal).toBe(1);
   });
 
   it('giving a skill a rule finishes the Automate step, paid', () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
     s.tutorial.step = TUTORIAL_STEPS.findIndex((x) => x.id === 'automate');
     const ctx = withTutorial(makeCtx(seeded(1)), () => s);
-    const augs = s.account.bank.augment ?? 0;
+    const augs = s.storage.bank.augment ?? 0;
     tutorialCheck(s, ctx);
     expect(currentStep(s)?.id).toBe('automate'); // every skill still waits for a click
     expect(setRule(s, 0, 0, { when: 'always' })).toBeNull();
     tutorialCheck(s, ctx);
     expect(currentStep(s)?.id).toBe('pickup');
-    expect(s.account.bank.augment).toBe(augs + 2);
+    expect(s.storage.bank.augment).toBe(augs + 2);
   });
 
   it('picking loot up off the ground finishes the Pick Up step', () => {
@@ -141,10 +141,10 @@ describe('tutorial', () => {
     s.tutorial.step = TUTORIAL_STEPS.findIndex((x) => x.id === 'equip');
     const boots = createItem(s, 'leather_boots', 1, 'normal', seeded(2));
     s.inventory.push(boots);
-    const gold = s.account.bank.gold ?? 0;
+    const gold = s.storage.bank.gold ?? 0;
     equip(s, withTutorial(makeCtx(seeded(1)), () => s), boots.uid);
     expect(currentStep(s)?.id).toBe('passive');
-    expect(s.account.bank.gold).toBe(gold + 50);
+    expect(s.storage.bank.gold).toBe(gold + 50);
   });
 
   it('life flask, then mana flask: each step wants its own kind', () => {

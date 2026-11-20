@@ -102,7 +102,7 @@ describe('Layers of History', () => {
     skillStep(s, { ...ctx(), rng: seeded(7) }, 2 * HOUR, deriveStats(s));
     expect(commitMult(s, CAIRN)).toBeGreaterThan(2.5);
     expect(dataPerDig(s, CAIRN)).toBeGreaterThan(fresh * 2.4);
-    expect(s.account.bank[ANCIENT_DATA]).toBeGreaterThan(0);
+    expect(s.storage.bank[ANCIENT_DATA]).toBeGreaterThan(0);
     setLayer(s, 'dig_cairn', 1);
     expect(commitMult(s, CAIRN)).toBe(1);
   });
@@ -126,7 +126,7 @@ describe('Layers of History', () => {
     s.expedition.dug.dig_reliquary = findDigs(site)[0] - 0.8;
     startSkillAction(s, ctx(), 'dig_reliquary');
     work(s, actionIntervalMs(s, actionDef('dig_reliquary'), deriveStats(s)));
-    expect(s.account.bank[SEALED_RELIC]).toBe(1);
+    expect(s.storage.bank[SEALED_RELIC]).toBe(1);
     expect(standing(s, 'giant')).toBe(0);
   });
 });
@@ -136,8 +136,8 @@ describe('the Relic Forge', () => {
 
   function forge(): GameState {
     const s = digger();
-    s.account.bank[SEALED_RELIC] = 1;
-    s.account.bank[ANCIENT_DATA] = 2000;
+    s.storage.bank[SEALED_RELIC] = 1;
+    s.storage.bank[ANCIENT_DATA] = 2000;
     expect(unsealRelic(s, ctx(), form.id)).toBeNull();
     return s;
   }
@@ -153,7 +153,7 @@ describe('the Relic Forge', () => {
     const s = digger();
     expect(unsealRelic(s, ctx(), form.id)).toMatch(/Sealed Relic/);
     const t = forge();
-    t.account.bank[SEALED_RELIC] = 1;
+    t.storage.bank[SEALED_RELIC] = 1;
     expect(unsealRelic(t, ctx(), form.id)).toMatch(/already/);
   });
 
@@ -174,7 +174,7 @@ describe('the Relic Forge', () => {
     expect(item.ilvl).toBe(RELIC_ILVL);
     expect(item.prefixes.map((m) => m.affixId)).toEqual([pre.id]);
     expect(item.suffixes.map((m) => m.affixId)).toEqual([suf.id]);
-    expect(s.account.bank[ANCIENT_DATA]).toBe(2000 - cost);
+    expect(s.storage.bank[ANCIENT_DATA]).toBe(2000 - cost);
     expect(s.expedition.forge).toBeNull();
     expect(s.expedition.relicsRestored).toBe(1);
   });
@@ -191,7 +191,7 @@ describe('the Relic Forge', () => {
       if (relicChoices(form.id, four, 'prefix').some((x) => x.id === a.id)) four.push(top(a.id));
     }
     expect(relicReason(s, four)).toMatch(/At most 3/);
-    s.account.bank[ANCIENT_DATA] = 1;
+    s.storage.bank[ANCIENT_DATA] = 1;
     expect(relicReason(s, [top(pres[0].id)])).toMatch(/Ancient Data/);
   });
 

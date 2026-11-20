@@ -30,7 +30,7 @@ function act6(level = 60): GameState {
 }
 
 function give(s: GameState, inputs: Record<string, number>, times = 1): void {
-  for (const [id, n] of Object.entries(inputs)) s.account.bank[id] = (s.account.bank[id] ?? 0) + n * times;
+  for (const [id, n] of Object.entries(inputs)) s.storage.bank[id] = (s.storage.bank[id] ?? 0) + n * times;
 }
 
 function run(s: GameState, id: string, times = 1): void {
@@ -105,7 +105,7 @@ describe('recipes', () => {
     const s = act6();
     run(s, DRAW);
     expect(mapsHeld(s, 1)).toBe(1);
-    expect(s.account.bank.vellum).toBe(0);
+    expect(s.storage.bank.vellum).toBe(0);
     expect(s.skills.cartography).toBeGreaterThan(xpForLevel(60));
     expect(s.lifetime.mapsDrawn).toBe(1);
     expect(startMap(s, ctx(), 1)).toBeNull();
@@ -118,9 +118,9 @@ describe('recipes', () => {
     run(s, 'chart_vellum');
     run(s, 'chart_gall_ink');
     run(s, 'chart_sextant_apprentice');
-    expect(s.account.bank.vellum).toBe(1);
-    expect(s.account.bank.gall_ink).toBe(1);
-    expect(s.account.bank.sextant_apprentice).toBe(1);
+    expect(s.storage.bank.vellum).toBe(1);
+    expect(s.storage.bank.gall_ink).toBe(1);
+    expect(s.storage.bank.sextant_apprentice).toBe(1);
   });
 
   it('upgrades three maps into one of the next tier, and needs all three', () => {
@@ -131,7 +131,7 @@ describe('recipes', () => {
     expect(actionBlocker(s, a)).toBe('Missing materials');
     addMaps(s, 1, 1);
     expect(actionBlocker(s, a)).toBeNull();
-    s.account.bank = {};
+    s.storage.bank = {};
     run(s, UPGRADE);
     expect(s.maps.stock[T1]).toBe(0);
     expect(s.maps.stock[T2]).toBe(1);

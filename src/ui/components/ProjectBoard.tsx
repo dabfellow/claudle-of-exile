@@ -217,7 +217,7 @@ function ProjectCard({
   const reason = preview.reason;
 
   const supply = Math.min(
-    ...Object.entries(p.inputs).map(([id, n]) => Math.floor((s.account.bank[id] ?? 0) / n)),
+    ...Object.entries(p.inputs).map(([id, n]) => Math.floor((s.storage.bank[id] ?? 0) / n)),
   );
   const maxRuns = Math.min(100, Math.max(1, supply));
 
@@ -346,7 +346,7 @@ function ProjectCard({
           <div className="project-inputs-list">
             {Object.entries(p.inputs).map(([id, costPerRun]) => {
               const totalCost = costPerRun * repeats;
-              const bankCount = s.account.bank[id] ?? 0;
+              const bankCount = s.storage.bank[id] ?? 0;
               const isMissing = bankCount < totalCost;
               const source = resolveMaterialSource(id, p.sources);
               if (source) mappedSourceLabels.add(source.label);

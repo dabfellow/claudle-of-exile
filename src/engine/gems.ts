@@ -215,7 +215,7 @@ export function supportReason(gem: SkillGemInstance, supportId: string): string 
 
 /** Find a skill gem wherever it is (bar or bag). */
 export function findSkillGem(s: GameState, uid: number): SkillGemInstance | undefined {
-  return s.skillBar.find((g) => g?.uid === uid) ?? s.account.gems.find((g) => g.uid === uid);
+  return s.skillBar.find((g) => g?.uid === uid) ?? s.storage.gems.find((g) => g.uid === uid);
 }
 
 export function placeOnBar(s: GameState, gemUid: number, slot: number): string | null {
@@ -228,13 +228,13 @@ export function placeOnBar(s: GameState, gemUid: number, slot: number): string |
     s.skillBar[fromBar] = other;
     return null;
   }
-  const fromBag = s.account.gems.findIndex((g) => g.uid === gemUid);
+  const fromBag = s.storage.gems.findIndex((g) => g.uid === gemUid);
   if (fromBag < 0) return 'Gem not found';
-  const reason = gemUseReason(characterLevel(s), deriveStats(s, []).attributes, s.account.gems[fromBag]);
+  const reason = gemUseReason(characterLevel(s), deriveStats(s, []).attributes, s.storage.gems[fromBag]);
   if (reason) return reason;
-  const [gem] = s.account.gems.splice(fromBag, 1);
+  const [gem] = s.storage.gems.splice(fromBag, 1);
   const current = s.skillBar[slot];
-  if (current) s.account.gems.push(current);
+  if (current) s.storage.gems.push(current);
   s.skillBar[slot] = gem;
   return null;
 }
@@ -243,20 +243,20 @@ export function removeFromBar(s: GameState, slot: number): void {
   const gem = s.skillBar[slot];
   if (!gem) return;
   s.skillBar[slot] = null;
-  s.account.gems.push(gem);
+  s.storage.gems.push(gem);
 }
 
 /** Spare level 1 skill gems the stash can clear: none with Expansion sockets or in a saved skill set. */
 export function clearableGems(s: GameState): SkillGemInstance[] {
   const saved = new Set(s.loadouts.skills.flatMap((set) => set.slots.map((x) => x?.gem)));
-  return s.account.gems.filter((g) => g.level === 1 && !g.extraSlots && !saved.has(g.uid));
+  return s.storage.gems.filter((g) => g.level === 1 && !g.extraSlots && !saved.has(g.uid));
 }
 
 /** Throw away spare level 1 skill gems (the Gem shop sells them all). Their supports go back to the loose pile. */
 export function clearLevelOneGems(s: GameState): number {
   const gone = clearableGems(s);
   for (const gem of gone) gem.supports.forEach((_, socket) => unsocketSupport(s, gem.uid, socket));
-  s.account.gems = s.account.gems.filter((g) => !gone.includes(g));
+  s.storage.gems = s.storage.gems.filter((g) => !gone.includes(g));
   return gone.length;
 }
 
@@ -265,15 +265,15 @@ export function socketSupport(s: GameState, gemUid: number, supportUid: number, 
   if (!gem) return 'Gem not found';
   syncSockets(gem);
   if (socket < 0 || socket >= supportSlots(gem)) return 'No such socket';
-  const idx = s.account.supportGems.findIndex((x) => x.uid === supportUid);
+  const idx = s.storage.supportGems.findIndex((x) => x.uid === supportUid);
   if (idx < 0) return 'Support not found';
-  const reason = supportReason(gem, s.account.supportGems[idx].supportId);
+  const reason = supportReason(gem, s.storage.supportGems[idx].supportId);
   if (reason) return reason;
-  const need = gemReqLevel(s.account.supportGems[idx].supportId);
+  const need = gemReqLevel(s.storage.supportGems[idx].supportId);
   if (characterLevel(s) < need) return `Requires level ${need}`;
-  const [sup] = s.account.supportGems.splice(idx, 1);
+  const [sup] = s.storage.supportGems.splice(idx, 1);
   const prev = gem.supports[socket];
-  if (prev) s.account.supportGems.push(prev);
+  if (prev) s.storage.supportGems.push(prev);
   gem.supports[socket] = sup;
   return null;
 }
@@ -283,7 +283,7 @@ export function unsocketSupport(s: GameState, gemUid: number, socket: number): v
   const sup = gem?.supports[socket];
   if (!gem || !sup) return;
   gem.supports[socket] = null;
-  s.account.supportGems.push(sup);
+  s.storage.supportGems.push(sup);
 }
 
 /** Set one of a skill's rules. Manual only stands alone, and a locked rule can't be picked. */
@@ -322,9 +322,9 @@ export function setPriority(s: GameState, slot: number, priority: SkillPriority)
 export function expandSockets(s: GameState, ctx: Ctx, gemUid: number): string | null {
   const gem = findSkillGem(s, gemUid);
   if (!gem) return 'Gem not found';
-  if ((s.account.bank.expansion ?? 0) < 1) return 'Requires an Orb of Expansion';
+  if ((s.storage.bank.expansion ?? 0) < 1) return 'Requires an Orb of Expansion';
   if (gem.extraSlots >= 1 || supportSlots(gem) >= MAX_SUPPORT_SLOTS) return 'No more sockets can be added';
-  s.account.bank.expansion -= 1;
+  s.storage.bank.expansion -= 1;
   gem.extraSlots += 1;
   syncSockets(gem);
   ctx.emit({ t: 'info', text: `${activeGemDef(gem.gemId).name} gained a support socket`, tone: 'good' });

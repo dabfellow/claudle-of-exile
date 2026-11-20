@@ -163,7 +163,7 @@ export function actionBlocker(s: GameState, a: SkillAction): string | null {
   if (a.baseId && bagFull(s) && (a.purpose || !salvagesBases(s))) return 'Inventory full';
   if (a.id === 'recycle_gem') {
     if (s.selectedGemRecycleUid == null) return 'Select a gem to recycle';
-    const gem = [...s.account.gems, ...s.account.supportGems].find((g) => g.uid === s.selectedGemRecycleUid);
+    const gem = [...s.storage.gems, ...s.storage.supportGems].find((g) => g.uid === s.selectedGemRecycleUid);
     if (!gem) return 'Gem not found';
     if (isGemEquipped(s, s.selectedGemRecycleUid)) return 'Cannot recycle equipped gem';
   }
@@ -198,8 +198,8 @@ export function stopAction(s: GameState): void {
 }
 
 function give(s: GameState, outputs: Record<string, number>, id: string, n: number): void {
-  addBank(s, id, n);
-  outputs[id] = (outputs[id] ?? 0) + n;
+  const added = addBank(s, id, n);
+  if (added > 0) outputs[id] = (outputs[id] ?? 0) + added;
 }
 
 /** Bulk Brewer: batch recipes cost this many times the single recipe instead of BATCH_INPUT_MULT. */
@@ -301,7 +301,7 @@ function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats): void {
   const catSave = unlockedMilestones(s, a.mastery).find((m) => m.kind === 'catalyst_save');
   const savedResin = catSave && chance(ctx.rng, catSave.value);
   if (savedResin) ctx.emit({ t: 'masteryProc', proc: catSave.name, text: `✦ ${catSave.name}! Conserved resin`, taskName: a.name });
-  if (cat.resin && !savedResin) s.account.bank[cat.resin] -= 1;
+  if (cat.resin && !savedResin) s.storage.bank[cat.resin] -= 1;
   const magic = t.grandmaster || (t.smithMagic && chance(ctx.rng, t.smithMagic / 100));
   // the Fossil only matters (and is only used up) when the base comes out Magic
   const fossil = magic ? cat.fossil : null;
@@ -326,7 +326,7 @@ function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats): void {
       (kind === 'prefix' ? item.prefixes : item.suffixes).push(mod);
     }
   }
-  if (fossil && !savedFossil && !(t.steadyTemper && chance(ctx.rng, t.steadyTemper / 100))) s.account.bank[fossil] -= 1;
+  if (fossil && !savedFossil && !(t.steadyTemper && chance(ctx.rng, t.steadyTemper / 100))) s.storage.bank[fossil] -= 1;
   s.lifetime.itemsSmithed += 1;
 
   const repeating = cat.until && !!cat.fossil;
@@ -362,7 +362,7 @@ export function gemCutPool(s: GameState, kind: 'skill' | 'support' | 'signature'
   if (kind === 'skill') return ACTIVE_GEMS.filter((g) => findable(g.id));
   let pool = SUPPORT_GEMS.filter((g) => (kind === 'signature' ? !!g.signatureFor : !g.signatureFor) && findable(g.id));
   if (kind === 'signature') {
-    const owned = new Set([...s.skillBar, ...s.account.gems].filter(Boolean).map((g) => g!.gemId));
+    const owned = new Set([...s.skillBar, ...s.storage.gems].filter(Boolean).map((g) => g!.gemId));
     const mine = pool.filter((g) => owned.has(g.signatureFor!));
     if (mine.length) pool = mine;
   }
@@ -374,12 +374,12 @@ function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, 
   if (kind === 'exact' && exactId) {
     const isAct = ACTIVE_GEMS.some((g) => g.id === exactId);
     if (isAct) {
-      s.account.gems.push(createSkillGem(s, exactId));
+      s.storage.gems.push(createSkillGem(s, exactId));
       outputs[exactId] = (outputs[exactId] ?? 0) + 1;
       ctx.emit({ t: 'loot', gemId: exactId });
       return;
     }
-    s.account.supportGems.push(createSupportGem(s, exactId));
+    s.storage.supportGems.push(createSupportGem(s, exactId));
     outputs[exactId] = (outputs[exactId] ?? 0) + 1;
     ctx.emit({ t: 'loot', supportId: exactId });
     return;
@@ -396,12 +396,12 @@ function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, 
 
   const isSkill = ACTIVE_GEMS.some((g) => g.id === def!.id);
   if (isSkill) {
-    s.account.gems.push(createSkillGem(s, def.id));
+    s.storage.gems.push(createSkillGem(s, def.id));
     outputs[def.id] = (outputs[def.id] ?? 0) + 1;
     ctx.emit({ t: 'loot', gemId: def.id });
     return;
   }
-  s.account.supportGems.push(createSupportGem(s, def.id));
+  s.storage.supportGems.push(createSupportGem(s, def.id));
   outputs[def.id] = (outputs[def.id] ?? 0) + 1;
   ctx.emit({ t: 'loot', supportId: def.id });
 }

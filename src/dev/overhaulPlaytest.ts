@@ -21,7 +21,7 @@ export function mountOverhaulPlaytest(load: typeof scenario) {
   async function workshop(id: string) {
     weapon = id;
     await load({ classId: id === 'winters_pyre' ? 'mage' : id === 'the_homecoming' ? 'ranger' : 'duelist', level: 80,
-      prepare: (s) => { s.skills.smithing = xpForLevel(90); s.professionProgress.work.smithing = 100; s.account.hideout.forge = 3; s.account.bank = { ...professionProject(id)!.inputs }; } });
+      prepare: (s) => { s.skills.smithing = xpForLevel(90); s.professionProgress.work.smithing = 100; s.account.hideout.forge = 3; s.storage.bank = { ...professionProject(id)!.inputs }; } });
     game.act((s, ctx) => prepareWeaponBuild(s, ctx, id));
   }
   for (const [label, fn] of [
@@ -37,13 +37,13 @@ export function mountOverhaulPlaytest(load: typeof scenario) {
     })],
     ['Cartographer', async () => { MAPS_PREVIEW.enabled = false; await load({ classId: 'mage', level: 1, prepare: (s) => {
       s.skills.cartography = xpForLevel(50); s.professionProgress.work.cartography = 600;
-      s.account.campaignDone = false; s.bossesDefeated = []; s.account.bank = { chart_survey_fragment: 20, fine_vellum: 10, sepia_ink: 5, sextant_journeyman: 1 };
+      s.account.campaignDone = false; s.bossesDefeated = []; s.storage.bank = { chart_survey_fragment: 20, fine_vellum: 10, sepia_ink: 5, sextant_journeyman: 1 };
     } }); MAPS_PREVIEW.enabled = false; }],
     ['Eligible mapper', async () => { await load('maps'); game.act(prepareReliquaryMapper); }],
     ['Try Reliquary', () => game.act((s, ctx) => { const reason = startUniqueMap(s, ctx, 'umap_artisans_reliquary'); if (reason) info.textContent = reason; })],
     ['Restorer starter', () => load({ classId: 'warrior', level: 1, zone: 'mudflats', prepare: (s) => {
       s.skills.combat = 0; s.skills.archaeology = 0; s.unlockedZones = ['mudflats']; s.bossesDefeated = [];
-      s.account.bank = {}; s.inventory = []; s.action = null; s.combat = null;
+      s.storage.bank = {}; s.inventory = []; s.action = null; s.combat = null;
     } })],
     ['Skiller missing support', async () => { await load({ classId: 'warrior', level: 25 }); game.act(prepareGemcuttingSkiller); }],
     ['Runic gear customization', async () => { await load({ classId: 'duelist', level: 50 }); game.act(prepareRunecarverKit); }],
@@ -60,7 +60,7 @@ export function mountOverhaulPlaytest(load: typeof scenario) {
     ['Away 4 hours', () => game.simulateAway(14_400_000)],
     ['Away 20 minutes', () => game.simulateAway(1_200_000)],
     ['Away 1 minute', () => game.simulateAway(60_000)],
-    ['Inspect journey', () => { const s = game.state; info.textContent = JSON.stringify({ bank: s.account.bank, maps: s.account.maps, run: s.maps.run, deaths: s.lifetime.deaths, dug: s.expedition.dug, discoveries: s.professionProgress.discoveries, counters: s.professionProgress.counters, inventory: s.inventory, weapon: s.equipment.weapon, monsters: s.combat?.monsters.map((m) => ({ uid: m.uid, life: m.life, dots: m.dots, chill: m.chillMs, frozen: m.frozenMs })), pending: s.combat?.pendingArrows?.length, errors }); }],
+    ['Inspect journey', () => { const s = game.state; info.textContent = JSON.stringify({ bank: s.storage.bank, maps: s.maps.stock, run: s.maps.run, deaths: s.lifetime.deaths, dug: s.expedition.dug, discoveries: s.professionProgress.discoveries, counters: s.professionProgress.counters, inventory: s.inventory, weapon: s.equipment.weapon, monsters: s.combat?.monsters.map((m) => ({ uid: m.uid, life: m.life, dots: m.dots, chill: m.chillMs, frozen: m.frozenMs })), pending: s.combat?.pendingArrows?.length, errors }); }],
   ] as const) {
     const b = document.createElement('button'); b.textContent = label; b.onclick = () => { void fn(); }; panel.append(b);
   }

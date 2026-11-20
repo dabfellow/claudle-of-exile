@@ -39,7 +39,7 @@ if (import.meta.env.DEV) {
         ['Greenhouse test', () => scenario('foragingGreenhouse')],
         ['Away 10 min', () => game.simulateAway(600_000)],
         ['Away 8 hours', () => game.simulateAway(28_800_000)],
-        ['Inspect', () => { const s = game.state; info.textContent = JSON.stringify({ bank: s.account.bank, greenhouse: s.greenhouse, discoveries: s.professionProgress.discoveries, counters: s.professionProgress.counters, errors }); }],
+        ['Inspect', () => { const s = game.state; info.textContent = JSON.stringify({ bank: s.storage.bank, greenhouse: s.greenhouse, discoveries: s.professionProgress.discoveries, counters: s.professionProgress.counters, errors }); }],
       ] as const) { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { void fn(); }; panel.append(b); }
       const info = document.createElement('pre'); info.style.cssText = 'white-space:pre-wrap;max-height:180px;overflow:auto;font-size:12px'; panel.append(info); document.body.append(panel);
     }

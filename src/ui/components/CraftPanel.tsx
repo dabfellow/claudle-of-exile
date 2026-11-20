@@ -66,7 +66,7 @@ function NeedsBench({ level }: { level: number }) {
 /** Orbs, enchanting and belt slots for the selected flask. */
 function FlaskCraft({ s, f, onCraft }: { s: GameState; f: FlaskInstance; onCraft: () => void }) {
   const slotIndex = s.flaskSlots.findIndex((x) => x?.uid === f.uid);
-  const instills = s.account.bank.instill ?? 0;
+  const instills = s.storage.bank.instill ?? 0;
   const run = (err: string | null) => {
     if (!err) onCraft();
   };
@@ -78,7 +78,7 @@ function FlaskCraft({ s, f, onCraft }: { s: GameState; f: FlaskInstance; onCraft
           const reason = flaskOrbReason(s, orb, f);
           return (
             <button key={orb} className="btn sm" disabled={!!reason} title={reason ?? currencyDef(orb).desc} onClick={() => run(game.act((st, ctx) => applyFlaskOrb(st, ctx, orb, f.uid)))}>
-              <MatIcon id={orb} size={13} /> {currencyDef(orb).short} <span className="dim">×{s.account.bank[orb] ?? 0}</span>
+              <MatIcon id={orb} size={13} /> {currencyDef(orb).short} <span className="dim">×{s.storage.bank[orb] ?? 0}</span>
             </button>
           );
         })}
@@ -218,7 +218,7 @@ export function CraftPanel({ s, uid, flaskUid, onClear }: { s: GameState; uid: n
     if (!err) {
       // the Doom Sigils are trophies, not currencies, so name them from the material list
       record([materialDef(orbId).name, f && fossilDef(f)!.name, kept && "Forger's Seal"].filter(Boolean).join(' + '));
-      if (f && (s.account.bank[f] ?? 0) <= 1) setFossil(null);
+      if (f && (s.storage.bank[f] ?? 0) <= 1) setFossil(null);
       if (kept) setSeal(null);
     }
   };
@@ -254,14 +254,14 @@ export function CraftPanel({ s, uid, flaskUid, onClear }: { s: GameState; uid: n
   }
 
   const it = item!;
-  const essences = ESSENCES.filter((e) => s.account.bank[e.id]);
-  const fossils = FOSSILS.filter((f) => s.account.bank[f.id]);
-  const runes = ALL_RUNES.filter((r) => s.account.bank[r.id]);
-  const seals = s.account.bank[SEAL] ?? 0;
-  const waxes = s.account.bank[WAX] ?? 0;
+  const essences = ESSENCES.filter((e) => s.storage.bank[e.id]);
+  const fossils = FOSSILS.filter((f) => s.storage.bank[f.id]);
+  const runes = ALL_RUNES.filter((r) => s.storage.bank[r.id]);
+  const seals = s.storage.bank[SEAL] ?? 0;
+  const waxes = s.storage.bank[WAX] ?? 0;
   const contraband = seals > 0 || waxes > 0 || !!it.impression;
-  const whetstones = s.account.bank[WHETSTONE] ?? 0;
-  const ownedPinnacleSigils = PINNACLE_SIGILS.filter((id) => (s.account.bank[id] ?? 0) > 0);
+  const whetstones = s.storage.bank[WHETSTONE] ?? 0;
+  const ownedPinnacleSigils = PINNACLE_SIGILS.filter((id) => (s.storage.bank[id] ?? 0) > 0);
   const hasCrafted = allMods(it).some((m) => m.crafted);
 
   const benchCrafts = BENCH_CRAFTS.filter((b) => {
@@ -302,7 +302,7 @@ export function CraftPanel({ s, uid, flaskUid, onClear }: { s: GameState; uid: n
           <div className="craft-orbs">
             {ORB_ORDER.map((id) => {
               const c = currencyDef(id);
-              const n = s.account.bank[id] ?? 0;
+              const n = s.storage.bank[id] ?? 0;
               const f = fossilFor(id);
               const kept = sealFor(id);
               const tinkering = n === 0 && it.ilvl <= FIELD_TINKER_ILVL && !!TINKER_DUST_COST[id];
@@ -327,7 +327,7 @@ export function CraftPanel({ s, uid, flaskUid, onClear }: { s: GameState; uid: n
                     <MatIcon id={id} size={22} />
                     <span>
                       <div className="name">{c.short}</div>
-                      <div className="count num">{tinkering ? `${fmt(s.account.bank.arcane_dust ?? 0)} dust` : `×${fmt(n)}`}</div>
+                      <div className="count num">{tinkering ? `${fmt(s.storage.bank.arcane_dust ?? 0)} dust` : `×${fmt(n)}`}</div>
                     </span>
                   </button>
                 </Tooltip>
@@ -357,8 +357,8 @@ export function CraftPanel({ s, uid, flaskUid, onClear }: { s: GameState; uid: n
           <div className="row wrap" style={{ gap: 8 }}>
             <Badge tone="gold">Bench level {benchLvl}</Badge>
             <span className="r2-cost-item">
-              <MatIcon id="arcane_dust" size={12} /> <b className="num">{fmt(s.account.bank.arcane_dust ?? 0)}</b> <span className="dim">dust</span>
-              <MatIcon id="gold" size={12} /> <b className="num">{fmt(s.account.bank.gold ?? 0)}</b>
+              <MatIcon id="arcane_dust" size={12} /> <b className="num">{fmt(s.storage.bank.arcane_dust ?? 0)}</b> <span className="dim">dust</span>
+              <MatIcon id="gold" size={12} /> <b className="num">{fmt(s.storage.bank.gold ?? 0)}</b>
             </span>
           </div>
           <div className="dim small">{allMods(it).some((m) => m.affixId === 'meta_multicraft') ? 'Up to 3 crafted modifiers (Multicraft)' : 'One crafted modifier per item'}. Upgrade the Crafting Bench in your Hideout for more.</div>
@@ -386,7 +386,7 @@ export function CraftPanel({ s, uid, flaskUid, onClear }: { s: GameState; uid: n
                 <div key={b.id} className={`craft-bench-row ${locked ? 'locked' : ''}`}>
                   <div className="craft-bench-text">
                     <span className="mod crafted small">{affixRangeText(a.id, b.tier)}</span>
-                    <CostHave cost={benchCraftCost(s, b)} have={s.account.bank} />
+                    <CostHave cost={benchCraftCost(s, b)} have={s.storage.bank} />
                   </div>
                   {locked ? (
                     <NeedsBench level={b.benchLevel} />
@@ -530,7 +530,7 @@ export function CraftPanel({ s, uid, flaskUid, onClear }: { s: GameState; uid: n
                   const reason = orbReason(s, sigilId, it.uid);
                   return (
                     <button key={sigilId} className="btn sm" disabled={!!reason} title={reason ?? materialDef(sigilId).desc ?? ''} onClick={() => use(sigilId)}>
-                      <MatIcon id={sigilId} size={12} /> {materialDef(sigilId).name} <span className="dim">×{s.account.bank[sigilId] ?? 0}</span>
+                      <MatIcon id={sigilId} size={12} /> {materialDef(sigilId).name} <span className="dim">×{s.storage.bank[sigilId] ?? 0}</span>
                     </button>
                   );
                 })}

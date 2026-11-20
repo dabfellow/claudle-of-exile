@@ -112,12 +112,12 @@ describe('gems tied to acts', () => {
 
   it('buying from the Gem shop never sells out, and waits for the gem’s level', () => {
     const s = veteran(newGame(1), 1);
-    s.account.bank.gold = 1e6;
+    s.storage.bank.gold = 1e6;
     s.unlockedZones = ['mudflats'];
     const ctx = makeCtx(seeded(1));
     expect(buyGem(s, ctx, 'heavy_strike')).toBeNull();
     expect(buyGem(s, ctx, 'heavy_strike')).toBeNull();
-    expect(s.account.gems.filter((g) => g.gemId === 'heavy_strike').length).toBeGreaterThanOrEqual(2);
+    expect(s.storage.gems.filter((g) => g.gemId === 'heavy_strike').length).toBeGreaterThanOrEqual(2);
     expect(buyGem(s, ctx, 'quick_slash')).toMatch(/level 2/);
     expect(buyGem(s, ctx, 'backstab')).toMatch(/Not on sale/);
   });
@@ -141,8 +141,8 @@ describe('gems tied to acts', () => {
     lace.supports[0] = createSupportGem(s, 'hemorrhage');
     s.skillBar[1] = lace;
     const backstab = createSkillGem(s, 'backstab');
-    s.account.gems.push(backstab);
-    s.account.supportGems.push(createSupportGem(s, 'verdict'));
+    s.storage.gems.push(backstab);
+    s.storage.supportGems.push(createSupportGem(s, 'verdict'));
     expect(reachedAct(s)).toBe(1);
 
     const loaded = deserialize(serialize(s));

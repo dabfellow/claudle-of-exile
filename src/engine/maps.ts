@@ -84,16 +84,10 @@ export function newMapState(stock: Record<string, number> = {}): MapState {
 }
 
 /**
- * Keep `s.maps.stock` and `s.account.maps` pointing at the same normalized map supply, and migrate any legacy
- * themed map keys (`map_barrows_t1`) into plain tier keys (`map_t1`).
+ * Normalize the character's map supply, including legacy themed keys (`map_barrows_t1`).
  */
 export function syncMapStock(s: GameState): Record<string, number> {
-  if (!s.account.maps) s.account.maps = {};
-  if (s.maps.stock !== s.account.maps) {
-    // If a test or caller replaced `s.maps.stock` directly, adopt that object as the shared map supply.
-    s.account.maps = s.maps.stock;
-  }
-  const stock = s.account.maps;
+  const stock = s.maps.stock;
   for (const key of Object.keys(stock)) {
     const n = stock[key];
     if (typeof n !== 'number' || n < 0) {
@@ -402,7 +396,7 @@ export function applySextant(s: GameState, ctx: Ctx, slotIndex: number, sextantI
   if (slotIndex < 0 || slotIndex >= slots) return 'Sextant slot is locked';
   const def = SEXTANTS.find((x) => x.id === sextantId || x.tier === sextantId);
   if (!def) return 'Unknown Sextant';
-  if ((s.account.bank[def.id] ?? 0) <= 0) return `No ${def.name} in stash`;
+  if ((s.storage.bank[def.id] ?? 0) <= 0) return `No ${def.name} in stash`;
   const pool = SEXTANT_MODS.filter((m) => m.tier === def.tier);
   const mod = pick(ctx.rng, pool);
   const charges = sextantCharges(s);
@@ -588,7 +582,7 @@ export function rollDoomedModifiers(s: GameState, ctx: Ctx, dTierNum: number): {
   if (cfg.autoRerollChaos && cfg.blockedMods.length > 0) {
     let attempts = 0;
     while (attempts < 5 && rolled.some((m) => cfg.blockedMods.includes(m))) {
-      if ((s.account.bank.chaos ?? 0) <= 0) break;
+      if ((s.storage.bank.chaos ?? 0) <= 0) break;
       addBank(s, 'chaos', -1);
       chaosSpent += 1;
       attempts += 1;
@@ -622,7 +616,7 @@ export function rollNormalModifiers(s: GameState, ctx: Ctx): { mods: string[]; c
   if (cfg.autoRerollChaos && cfg.blockedMods.length > 0) {
     let attempts = 0;
     while (attempts < 5 && rolled.some((m) => cfg.blockedMods.includes(m))) {
-      if ((s.account.bank.chaos ?? 0) <= 0) break;
+      if ((s.storage.bank.chaos ?? 0) <= 0) break;
       addBank(s, 'chaos', -1);
       chaosSpent += 1;
       attempts += 1;
@@ -1183,7 +1177,7 @@ export function devToggleWindups(s: GameState): void {
 export function canStartHardBoss(s: GameState, bossId: HardBossId): string | null {
   const def = HARD_BOSSES.find((b) => b.id === bossId);
   if (!def) return 'Unknown boss';
-  if ((s.account.bank[def.keyId] ?? 0) < 1) return `Requires 1 ${def.keyName}`;
+  if ((s.storage.bank[def.keyId] ?? 0) < 1) return `Requires 1 ${def.keyName}`;
   if (s.combat) return 'Already in combat';
   return null;
 }
@@ -1192,7 +1186,7 @@ export function startHardBoss(s: GameState, ctx: Ctx, bossId: HardBossId): strin
   const reason = canStartHardBoss(s, bossId);
   if (reason) return reason;
   const def = HARD_BOSSES.find((b) => b.id === bossId)!;
-  s.account.bank[def.keyId] -= 1;
+  s.storage.bank[def.keyId] -= 1;
   enterZone(s, ctx, def.zoneId);
   const d = deriveStats(s);
   s.life = d.maxLife;
@@ -1207,7 +1201,7 @@ export function startHardBoss(s: GameState, ctx: Ctx, bossId: HardBossId): strin
 export function canStartUberBoss(s: GameState, tierOrId: 1 | 2 | 3 | UberBossDef['zoneId'] | string): string | null {
   const def = typeof tierOrId === 'number' ? UBER_BOSSES[tierOrId - 1] : UBER_BOSSES.find((b) => b.zoneId === tierOrId);
   if (!def) return 'Unknown Uber boss';
-  if ((s.account.bank[def.keyId] ?? 0) < 1) return `Requires 1 ${def.keyName}`;
+  if ((s.storage.bank[def.keyId] ?? 0) < 1) return `Requires 1 ${def.keyName}`;
   if (s.combat) return 'Already in combat';
   return null;
 }
@@ -1216,7 +1210,7 @@ export function startUberBoss(s: GameState, ctx: Ctx, tierOrId: 1 | 2 | 3 | Uber
   const reason = canStartUberBoss(s, tierOrId);
   if (reason) return reason;
   const def = (typeof tierOrId === 'number' ? UBER_BOSSES[tierOrId - 1] : UBER_BOSSES.find((b) => b.zoneId === tierOrId))!;
-  s.account.bank[def.keyId] -= 1;
+  s.storage.bank[def.keyId] -= 1;
   enterZone(s, ctx, def.zoneId);
   const d = deriveStats(s);
   s.life = d.maxLife;

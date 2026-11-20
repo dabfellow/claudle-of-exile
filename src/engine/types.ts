@@ -945,6 +945,10 @@ export interface AccountState {
   automation: AutomationUnlocks;
   /** from before the War Table sold auto flee and auto challenge: keeps both without the upgrades */
   autosKept?: boolean;
+  /** Advances whenever stock moves between a character and the Guild Stash. */
+  guildRev?: number;
+  /** The latest Guild Stash transfer for each character, used to reject old exported saves. */
+  guildTransfers?: Record<string, number>;
   /** stash pages of gear, STASH_PAGE_SIZE each */
   stash: Item[][];
   /** items that didn't fit when stashes were merged: they can only be taken out */
@@ -966,7 +970,7 @@ export interface AccountState {
   exileUnlocked: boolean;
   /** some character on the account has beaten the last act, so the Map Device stays awake for all of them */
   campaignDone?: boolean;
-  /** realm-shared map supply (`map_t1`..`map_t10`, `doomed_t1`..`doomed_t5`) */
+  /** maps deposited in the realm's Guild Stash */
   maps?: Record<string, number>;
   /** realm-shared Sextant slots on the Map Device */
   sextants?: (SextantSlot | null)[];
@@ -1002,6 +1006,9 @@ export interface SextantSlot {
   modId: string;
   tier: 'apprentice' | 'journeyman' | 'master';
   charges: number;
+export type CharacterStorage = Pick<AccountState,
+  'bank' | 'stash' | 'overflow' | 'uniqueStash' | 'gems' | 'supportGems' | 'flaskStash' | 'stashAffinities'>;
+
 }
 
 export interface AtlasState {
@@ -1031,6 +1038,7 @@ export interface MarketHold {
 }
 
 /** Account data arriving from elsewhere: a pre-account save, a demo, an import. */
+  characterId?: string;
 export type AccountTransfer = Partial<Pick<AccountState, 'id' | 'hideout' | 'automation' | 'stash' | 'overflow' | 'uniqueStash' | 'uniquesSeen' | 'exileUnlocked' | 'campaignDone' | 'maps' | 'sextants' | 'atlas' | 'mapSettings' | 'achievementRewards'>> & Partial<AccountPool>;
 
 /** The Stash tabs that hold more than gear. */
@@ -1069,7 +1077,7 @@ export interface MapRun {
 }
 
 export interface MapState {
-  /** maps held, synced with the realm's `s.account.maps` */
+  /** maps held by this character */
   stock: Record<string, number>;
   run: MapRun | null;
   /** what auto-run keeps opening */
@@ -1177,6 +1185,9 @@ export interface GameState {
   unpooled?: Partial<AccountPool>;
   /** from before the skill reform: The Old Covenant waits to be handed over */
   keepsakeDue?: boolean;
+  /** The character's spendable supplies and personal stash, saved with this character. */
+  storage: CharacterStorage;
+  guildTransferRev?: number;
   character: CharacterInfo;
   /** a Hardcore character has died here: nothing runs again, and the game deletes it */
   fallen?: { zoneId: string | null; offline: boolean };

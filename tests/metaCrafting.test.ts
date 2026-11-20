@@ -15,15 +15,15 @@ function makeState(): { s: GameState; c: Ctx } {
   const s = newGame(1, { name: 'MetaCrafter', classId: 'warrior' });
   s.account.hideout.bench = META_CRAFT_BENCH_LEVEL;
   s.achievements = ['boss_10', 'slayer_1000', 'crafter_250'];
-  s.account.bank.divine = 20;
-  s.account.bank.exalted = 20;
-  s.account.bank.chaos = 50;
-  s.account.bank.scour = 50;
-  s.account.bank.annul = 50;
-  s.account.bank.alteration = 50;
-  s.account.bank.arcane_dust = 5000;
-  s.account.bank.gold = 100000;
-  s.account.bank[SEAL] = 20;
+  s.storage.bank.divine = 20;
+  s.storage.bank.exalted = 20;
+  s.storage.bank.chaos = 50;
+  s.storage.bank.scour = 50;
+  s.storage.bank.annul = 50;
+  s.storage.bank.alteration = 50;
+  s.storage.bank.arcane_dust = 5000;
+  s.storage.bank.gold = 100000;
+  s.storage.bank[SEAL] = 20;
   return { s, c: ctx() };
 }
 
@@ -165,10 +165,10 @@ describe('Meta-crafting (Milestone 10B)', () => {
     benchCraft(s, c, 'bc_speed', item.uid);
     expect(modCount(item)).toBe(naturalCount + 1);
 
-    const initialScours = s.account.bank.scour!;
+    const initialScours = s.storage.bank.scour!;
     const err = removeCrafted(s, c, item.uid);
     expect(err).toBeNull();
-    expect(s.account.bank.scour).toBe(initialScours - 1);
+    expect(s.storage.bank.scour).toBe(initialScours - 1);
     expect(modCount(item)).toBe(naturalCount);
     expect(allMods(item).some((m) => m.crafted)).toBe(false);
 

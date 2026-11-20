@@ -12,7 +12,8 @@ import { createItem } from '../src/engine/items';
 import { seeded } from '../src/engine/rng';
 import { deserialize, exportSave, importSave, serialize } from '../src/engine/save';
 import { newGame, SAVE_VERSION, tick } from '../src/engine/state';
-import { settleOverflow, stashItems, takeFromStash, takeOwned } from '../src/engine/storage';
+import { stashItems, takeFromStash } from '../src/engine/storage';
+import { transferGuild } from '../src/engine/guildStash';
 import type { AccountState, GameState } from '../src/engine/types';
 import { actBossZone } from '../src/data/zones';
 import { LocalSaveStore, MemorySaveStore, moveCharacters, summarize } from '../src/platform/saves';
@@ -53,7 +54,7 @@ function v20(s: GameState, parts: { hideout?: Record<string, number>; rules?: st
 }
 
 describe('sharing', () => {
-  it('a second character starts with the account unlocks, its own skills and the shared stash', () => {
+  it('shares account unlocks while keeping skills and stashes personal', () => {
     const first = newGame(1, { name: 'Ann', classId: 'warrior' });
     first.skills.mining = 5000;
     first.account.hideout.war_table = 4;
@@ -68,6 +69,9 @@ describe('sharing', () => {
     expect(offlineCapMs(second)).toBe(12 * 3_600_000);
     expect(second.skills.mining).toBe(0);
     expect(second.bossesDefeated).toEqual([]);
+    expect(takeFromStash(second, ctx(), [blade.uid])).toBe(0);
+    expect(transferGuild(first, { direction: 'deposit', kind: 'gear', uid: blade.uid })).toBeNull();
+    expect(transferGuild(second, { direction: 'withdraw', kind: 'gear', uid: blade.uid })).toBeNull();
     expect(takeFromStash(second, ctx(), [blade.uid])).toBe(1);
     expect(second.inventory.some((i) => i.uid === blade.uid)).toBe(true);
     expect(first.account.stash.flat()).toHaveLength(0);
@@ -92,13 +96,13 @@ describe('sharing', () => {
     stashItems(a, ctx(), [mine.uid]);
     expect(mine.uid).toBeGreaterThanOrEqual(ACCOUNT_UID_BASE);
     expect(locateItem(b, theirs.uid)?.at).toBe('bag');
-    expect(locateItem(b, mine.uid)?.at).toBe('stash');
+    expect(locateItem(b, mine.uid)).toBeNull();
     moveToStash(b, ctx(), theirs.uid);
     expect(theirs.uid).not.toBe(mine.uid);
     // taking it out and putting it back doesn't need a new uid
     const kept = mine.uid;
-    moveToBag(b, ctx(), kept);
-    moveToStash(b, ctx(), kept);
+    moveToBag(a, ctx(), kept);
+    moveToStash(a, ctx(), kept);
     expect(mine.uid).toBe(kept);
   });
 });
@@ -110,7 +114,7 @@ describe('migrating to the account', () => {
   };
 
   it('is the current version, and leaves a lone character exactly as it was', () => {
-    expect(SAVE_VERSION).toBe(50);
+    expect(SAVE_VERSION).toBe(51);
     const s = newGame(1);
     const item = sword(s);
     const { a, s: loaded } = settle(v20(s, { hideout: { stash: 2, bench: 3 }, rules: ['vitals'], slots: 2, hours: 12, stash: [[], [item], [], []] }));
@@ -149,15 +153,13 @@ describe('migrating to the account', () => {
     expect(a.stash.flat()).toHaveLength(6 * STASH_PAGE_SIZE);
     expect(a.overflow).toHaveLength(2 * STASH_PAGE_SIZE);
 
-    // overflow can be taken out, salvaged, and moved in once there's room, but nothing is lost
+    // Merged overflow stays available for withdrawal by a character with room.
     const s = newGame(3, { name: 'Cy', classId: 'mage' }, a);
     const spilled = a.overflow[0];
-    expect(locateItem(s, spilled.uid)?.at).toBe('overflow');
-    expect(takeFromStash(s, ctx(), [spilled.uid])).toBe(1);
-    expect(takeOwned(s, [a.overflow[0].uid])).toHaveLength(1);
-    a.stash[0].splice(0, 3);
-    expect(settleOverflow(s)).toBe(3);
-    expect(a.overflow).toHaveLength(2 * STASH_PAGE_SIZE - 5);
+    expect(locateItem(s, spilled.uid)).toBeNull();
+    expect(transferGuild(s, { direction: 'withdraw', kind: 'gear', uid: spilled.uid })).toBeNull();
+    expect(locateItem(s, spilled.uid)?.at).toBe('stash');
+    expect(a.overflow).toHaveLength(2 * STASH_PAGE_SIZE - 1);
   });
 
   it('counts a character once, even when the merge is cut short and runs again', () => {
@@ -215,6 +217,7 @@ describe('exports', () => {
     const item = sword(s);
     s.inventory.push(item);
     stashItems(s, ctx(), [item.uid]);
+    expect(transferGuild(s, { direction: 'deposit', kind: 'gear', uid: item.uid })).toBeNull();
     s.account.hideout.forge = 3;
     const text = exportSave(s);
 
@@ -310,7 +313,7 @@ describe('shared Stash tabs', () => {
     const one = newGame(1, { name: 'One', classId: 'mage' }, a);
     const two = newGame(1, { name: 'Two', classId: 'mage' }, a);
     removeFromBar(one, 0);
-    const uids = [...two.skillBar.flatMap((g) => (g ? [g.uid] : [])), ...a.gems.map((g) => g.uid)];
+    const uids = [...two.skillBar.flatMap((g) => (g ? [g.uid] : [])), ...one.storage.gems.map((g) => g.uid)];
     expect(new Set(uids).size).toBe(uids.length);
     expect(uids.every((u) => u >= ACCOUNT_UID_BASE)).toBe(true);
   });

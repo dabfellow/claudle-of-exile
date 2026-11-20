@@ -1,5 +1,14 @@
 import type { GameState } from './types';
 import type { Ctx } from './context';
+import { isCurrency, isMaterial } from '../data/materials';
+
+export const MATERIAL_CAP = 5_000;
+
+export function materialRoom(s: GameState, id: string): number {
+  return id !== 'gold' && isMaterial(id) && !isCurrency(id)
+    ? Math.max(0, MATERIAL_CAP - (s.storage.bank[id] ?? 0))
+    : Infinity;
+}
 
 /** Integer material conservation realizes fractional event costs without creating fractional orbs. */
 export function payCraftCost(s: GameState, ctx: Ctx, cost: Record<string, number>): void {
@@ -7,12 +16,12 @@ export function payCraftCost(s: GameState, ctx: Ctx, cost: Record<string, number
   for (const [id, qty] of Object.entries(cost)) {
     const expected = qty * mult;
     const used = Math.floor(expected) + (expected % 1 > 0 && ctx.rng.next() < expected % 1 ? 1 : 0);
-    s.account.bank[id] = (s.account.bank[id] ?? 0) - used;
+    s.storage.bank[id] = (s.storage.bank[id] ?? 0) - used;
   }
 }
 
 export function hasItem(s: GameState, id: string, qty: number): boolean {
-  return (s.account.bank[id] ?? 0) >= qty;
+  return (s.storage.bank[id] ?? 0) >= qty;
 }
 
 export function canAfford(s: GameState, cost: Record<string, number>): boolean {
@@ -20,9 +29,11 @@ export function canAfford(s: GameState, cost: Record<string, number>): boolean {
 }
 
 export function payCost(s: GameState, cost: Record<string, number>): void {
-  for (const [id, n] of Object.entries(cost)) s.account.bank[id] = (s.account.bank[id] ?? 0) - n;
+  for (const [id, n] of Object.entries(cost)) s.storage.bank[id] = (s.storage.bank[id] ?? 0) - n;
 }
 
-export function addBank(s: GameState, id: string, qty: number): void {
-  s.account.bank[id] = (s.account.bank[id] ?? 0) + qty;
+export function addBank(s: GameState, id: string, qty: number): number {
+  const added = Math.min(qty, materialRoom(s, id));
+  if (added) s.storage.bank[id] = (s.storage.bank[id] ?? 0) + added;
+  return added;
 }

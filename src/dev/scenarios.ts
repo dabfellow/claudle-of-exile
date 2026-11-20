@@ -41,8 +41,8 @@ const PRESETS: Record<string, Setup> = {
     prepare: (s) => {
       s.combat = null; s.action = null;
       s.skills.thieving = 0;
-      s.account.bank.gold = 0;
-      s.account.bank.rogues_marker = 13;
+      s.storage.bank.gold = 0;
+      s.storage.bank.rogues_marker = 13;
       s.professionProgress.counters['thieving.markers'] = 3;
     },
   },
@@ -51,21 +51,21 @@ const PRESETS: Record<string, Setup> = {
     prepare: (s) => {
       s.combat = null; s.action = null;
       s.skills.thieving = xpForLevel(60);
-      s.account.bank.gold = 100000;
-      s.account.bank.rogues_marker = 1000;
+      s.storage.bank.gold = 100000;
+      s.storage.bank.rogues_marker = 1000;
       s.heist.crew = ['bruiser', 'locksmith', 'lookout'];
       for (const rogue of Object.values(s.heist.roster!)) rogue.level = 60;
     },
   },
   foragingStarter: {
     classId: 'ranger', level: 1, zone: 'mudflats',
-    prepare: (s) => { s.skills.combat = 0; s.skills.harvesting = 0; s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.account.bank = {}; },
+    prepare: (s) => { s.skills.combat = 0; s.skills.harvesting = 0; s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.storage.bank = {}; },
   },
   foragingGreenhouse: {
     classId: 'ranger', level: 1, zone: 'mudflats',
     prepare: (s) => {
       s.skills.combat = 0; s.skills.harvesting = xpForLevel(90); s.skills.alchemy = xpForLevel(30); s.skills.cooking = xpForLevel(30);
-      s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.account.bank = {}; s.account.hideout.alchemy_table = 3;
+      s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.storage.bank = {}; s.account.hideout.alchemy_table = 3;
       s.skillPassives = ['skill_core', 'core_2', 'harvesting_s0', 'harvesting_s1', 'harvesting_s2', 'harvesting_n0', 'harvesting_ks'];
       s.professionProgress.work.harvesting = 100;
       s.professionProgress.counters['foraging.seed.moon_bloom'] = 99;
@@ -77,10 +77,10 @@ const PRESETS: Record<string, Setup> = {
     prepare: (s) => {
       s.combat = null; s.action = null; s.skills.smithing = xpForLevel(18);
       s.skills.mining = xpForLevel(15); s.skills.woodcutting = xpForLevel(15);
-      s.account.hideout.forge = 2; s.account.bank = {}; s.inventory = [];
+      s.account.hideout.forge = 2; s.storage.bank = {}; s.inventory = [];
       s.equipment.weapon = createItem(s, 'felling_axe', 10, 'normal', seeded(3));
       smithingAttributes(s);
-      s.account.bank = { iron_ore: 42, oak_log: 18, iron_bar: 2, oak_plank: 1 };
+      s.storage.bank = { iron_ore: 42, oak_log: 18, iron_bar: 2, oak_plank: 1 };
     },
   },
   smithingBow: {
@@ -88,10 +88,10 @@ const PRESETS: Record<string, Setup> = {
     prepare: (s) => {
       s.combat = null; s.action = null; s.skills.smithing = xpForLevel(16);
       s.skills.mining = xpForLevel(15); s.skills.woodcutting = xpForLevel(15);
-      s.account.hideout.forge = 2; s.account.bank = {}; s.inventory = [];
+      s.account.hideout.forge = 2; s.storage.bank = {}; s.inventory = [];
       s.equipment.weapon = createItem(s, 'hunting_bow', 8, 'normal', seeded(3));
       smithingAttributes(s);
-      s.account.bank = { iron_ore: 42, oak_log: 18, iron_bar: 2, oak_plank: 1 };
+      s.storage.bank = { iron_ore: 42, oak_log: 18, iron_bar: 2, oak_plank: 1 };
     },
   },
   smithingCaster: {
@@ -99,10 +99,10 @@ const PRESETS: Record<string, Setup> = {
     prepare: (s) => {
       s.combat = null; s.action = null; s.skills.smithing = xpForLevel(15);
       s.skills.mining = xpForLevel(15); s.skills.woodcutting = xpForLevel(15);
-      s.account.hideout.forge = 2; s.account.bank = {}; s.inventory = [];
+      s.account.hideout.forge = 2; s.storage.bank = {}; s.inventory = [];
       s.equipment.weapon = createItem(s, 'bone_wand', 7, 'normal', seeded(3));
       smithingAttributes(s);
-      s.account.bank = { iron_ore: 42, oak_log: 18, iron_bar: 2, oak_plank: 1 };
+      s.storage.bank = { iron_ore: 42, oak_log: 18, iron_bar: 2, oak_plank: 1 };
     },
   },
   smithingNoncombat: {
@@ -112,13 +112,13 @@ const PRESETS: Record<string, Setup> = {
       s.skills.smithing = xpForLevel(90); s.skills.mining = xpForLevel(90); s.skills.woodcutting = xpForLevel(90);
       s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.account.hideout.forge = 3;
       s.professionProgress.work.smithing = 60; s.professionProgress.work.woodcutting = 100;
-      s.account.bank = { copper_bar: 10, iron_bar: 10, ash_plank: 5, oak_plank: 5 };
+      s.storage.bank = { copper_bar: 10, iron_bar: 10, ash_plank: 5, oak_plank: 5 };
       s.inventory = [];
     },
   },
   woodcuttingStarter: {
     level: 1,
-    prepare: (s) => { s.skills.combat = 0; s.skills.woodcutting = 0; s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.account.bank = {}; },
+    prepare: (s) => { s.skills.combat = 0; s.skills.woodcutting = 0; s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.storage.bank = {}; },
   },
   woodcuttingAdvanced: {
     level: 1,
@@ -126,14 +126,14 @@ const PRESETS: Record<string, Setup> = {
       s.skills.combat = 0; s.skills.woodcutting = xpForLevel(90); s.skills.smithing = xpForLevel(15);
       s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.professionProgress.work.woodcutting = 100;
       for (const wood of ['ironwood', 'ancient', 'spirit', 'worldwood']) s.professionProgress.discoveries[`wood_${wood}_survey`] = true;
-      s.account.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
+      s.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
       s.professionProgress.counters['wood.heartwood.survey'] = 29;
       s.professionProgress.counters['wood.cycles.cut_resin_oak'] = 4;
     },
   },
   miningStarter: {
     level: 1,
-    prepare: (s) => { s.skills.combat = 0; s.skills.mining = 0; s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.account.bank = {}; },
+    prepare: (s) => { s.skills.combat = 0; s.skills.mining = 0; s.unlockedZones = ['mudflats']; s.bossesDefeated = []; s.storage.bank = {}; },
   },
   miningAdvanced: {
     level: 1,
@@ -142,7 +142,7 @@ const PRESETS: Record<string, Setup> = {
       s.unlockedZones = ['mudflats']; s.bossesDefeated = [];
       s.professionProgress.work.mining = 100;
       for (const metal of ['iron', 'mithril', 'adamant', 'star', 'void', 'world']) s.professionProgress.discoveries[`prospect_${metal}`] = true;
-      s.account.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
+      s.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
       s.professionProgress.counters['mining.fossils'] = 11;
       s.professionProgress.counters['mining.crystal_shard'] = 29;
       s.professionProgress.counters['mining.mineral_fragment'] = 59;
@@ -171,20 +171,20 @@ const PRESETS: Record<string, Setup> = {
     level: 45,
     prepare: (s) => {
       const rng = seeded(7);
-      for (const g of ACTIVE_GEMS.slice(0, 18)) s.account.gems.push(createSkillGem(s, g.id, 1 + Math.floor(rng.next() * 12)));
-      for (const g of SUPPORT_GEMS.filter((x) => !x.signatureFor).slice(0, 24)) s.account.supportGems.push(createSupportGem(s, g.id));
+      for (const g of ACTIVE_GEMS.slice(0, 18)) s.storage.gems.push(createSkillGem(s, g.id, 1 + Math.floor(rng.next() * 12)));
+      for (const g of SUPPORT_GEMS.filter((x) => !x.signatureFor).slice(0, 24)) s.storage.supportGems.push(createSupportGem(s, g.id));
       const bases = BASES.filter((b) => b.reqLevel <= 45 && !b.retired);
       const rarities = ['normal', 'magic', 'rare', 'rare'] as const;
-      if (!s.account.stash.length) s.account.stash.push([]);
+      if (!s.storage.stash.length) s.storage.stash.push([]);
       for (let i = 0; i < 40; i++) {
         const item = createItem(s, bases[(i * 7) % bases.length].id, 20 + (i % 25), rarities[i % 4], rng);
         item.uid = s.account.nextUid++;
-        s.account.stash[0].push(item);
+        s.storage.stash[0].push(item);
       }
       for (let i = 0; i < 12; i++) s.inventory.push(createItem(s, bases[(i * 11) % bases.length].id, 40, rarities[(i + 1) % 4], rng));
-      for (const c of CURRENCIES) s.account.bank[c.id] = 3 + Math.floor(rng.next() * 40);
-      for (const m of MATERIALS.slice(0, 30)) s.account.bank[m.id] = Math.floor(rng.next() * 200);
-      s.account.bank.gold = 25_000;
+      for (const c of CURRENCIES) s.storage.bank[c.id] = 3 + Math.floor(rng.next() * 40);
+      for (const m of MATERIALS.slice(0, 30)) s.storage.bank[m.id] = Math.floor(rng.next() * 200);
+      s.storage.bank.gold = 25_000;
     },
   },
   /** signed in as far as the Player Market can tell, against a pretend server */
@@ -194,8 +194,8 @@ const PRESETS: Record<string, Setup> = {
       const rng = seeded(2);
       const bases = BASES.filter((b) => b.reqLevel <= 30);
       for (let i = 0; i < 6; i++) s.inventory.push(createItem(s, bases[i * 5].id, 30, 'rare', rng));
-      s.account.bank.gold = 50_000;
-      s.account.bank.chaos = 50;
+      s.storage.bank.gold = 50_000;
+      s.storage.bank.chaos = 50;
       s.bossesDefeated.push(MARKET_UNLOCK_BOSS);
       const others = bases.slice(0, 8).map((b) => createItem(s, b.id, 30, 'rare', rng));
       const fake = fakeMarket(others);

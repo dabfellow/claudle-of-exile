@@ -36,6 +36,13 @@ export function supabaseCharacters(client: SupabaseClient): CharacterTable {
       if (error) throw error;
       return (data as { updated_at: string }[] | null)?.[0]?.updated_at ?? null;
     },
+    async saveGuildTransfer(character, characterStamp, account, accountStamp) {
+      const { data, error } = await client.rpc('save_guild_stash_transfer', {
+        p_character: character, p_character_stamp: characterStamp, p_account: account, p_account_stamp: accountStamp,
+      });
+      if (error) throw error;
+      return data as string | null;
+    },
     async remove(id) {
       const { error } = await table().delete().eq('id', id);
       if (error) throw error;

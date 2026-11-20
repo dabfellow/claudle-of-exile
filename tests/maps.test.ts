@@ -4,6 +4,7 @@ import { zoneDef } from '../src/data/zones';
 import { onMapBossKill, passTrial } from '../src/engine/ascendancy';
 import { bossIsNext, damageMonster, makeMonster } from '../src/engine/combat';
 import { makeCtx, type Ctx } from '../src/engine/context';
+import { transferGuild } from '../src/engine/guildStash';
 import type { ClassId } from '../src/data/classes';
 import {
   addDoomedMaps,
@@ -75,17 +76,19 @@ describe('maps', () => {
     expect(startMap(s, ctx(), 1)).toBeTruthy();
     s.maps.stock = { map_barrows_t1: 1, map_stormvault_t1: 1 };
     expect(mapsHeld(s, 1)).toBe(2);
-    expect(s.account.maps?.[mapId(1)]).toBe(2);
+    expect(s.maps.stock[mapId(1)]).toBe(2);
     expect(startMap(s, ctx(), 1, 'mudflats')).toBeNull();
     expect(mapsHeld(s, 1)).toBe(1);
     expect(s.combat?.zoneId).toBe(mapZoneId(1, 'mudflats'));
   });
 
-  it('shares map supply across characters on the same realm account', () => {
+  it('moves maps across characters through the Guild Stash', () => {
     const first = newGame(1, { name: 'A', classId: 'warrior' });
     addMaps(first, 3, 4);
     const second = newGame(2, { name: 'B', classId: 'mage' }, first.account);
-    expect(mapsHeld(second, 3)).toBe(4);
+    expect(mapsHeld(second, 3)).toBe(0);
+    expect(transferGuild(first, { direction: 'deposit', kind: 'maps', id: mapId(3), quantity: 1 })).toBeNull();
+    expect(transferGuild(second, { direction: 'withdraw', kind: 'maps', id: mapId(3), quantity: 1 })).toBeNull();
     expect(startMap(second, ctx(), 3)).toBeNull();
     expect(mapsHeld(first, 3)).toBe(3);
   });
@@ -209,7 +212,7 @@ describe('maps', () => {
     const s = newGame(1);
     const c = ctx();
     expect(sextantSlots(s)).toBe(1);
-    s.account.bank.sextant_apprentice = 2;
+    s.storage.bank.sextant_apprentice = 2;
     expect(applySextant(s, c, 0, 'sextant_apprentice')).toBeNull();
     expect(s.account.sextants?.[0]?.charges).toBe(6);
 
@@ -260,11 +263,11 @@ describe('maps', () => {
     for (let i = 1; i <= 100; i++) {
       rollMapDrops(s, ctx(i), boss);
     }
-    keys = (s.account.bank.uber_key_1 ?? 0) + (s.account.bank.uber_key_2 ?? 0) + (s.account.bank.uber_key_3 ?? 0);
+    keys = (s.storage.bank.uber_key_1 ?? 0) + (s.storage.bank.uber_key_2 ?? 0) + (s.storage.bank.uber_key_3 ?? 0);
     expect(keys).toBeGreaterThan(10);
     // the orb the Crafting Bench spends, not a look-alike
-    expect(s.account.bank.fractured ?? 0).toBeGreaterThan(5);
-    expect(s.account.bank.fractured_orb).toBeUndefined();
+    expect(s.storage.bank.fractured ?? 0).toBeGreaterThan(5);
+    expect(s.storage.bank.fractured_orb).toBeUndefined();
 
     s.maps.run!.bossDown = true;
     mapStep(s, c);
@@ -315,7 +318,7 @@ describe('maps', () => {
   it('rerolls avoided map modifiers using Chaos Orbs', () => {
     const s = newGame(1);
     const c = ctx();
-    s.account.bank.chaos = 5;
+    s.storage.bank.chaos = 5;
     ensureMapSettings(s);
     toggleBlockedMod(s, 'drained_belts');
     toggleBlockedMod(s, 'revenant_packs');

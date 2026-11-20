@@ -393,7 +393,7 @@ describe('Maps gems availability', () => {
     s.bossesDefeated = [...s.unlockedZones];
     s.account.campaignDone = true;
     s.account.hideout.vendor = 2;
-    s.account.bank.gold = 1e7;
+    s.storage.bank.gold = 1e7;
     const loaded = deserialize(serialize(s));
     loaded.account = s.account; // Accounts are saved separately and reattached when entering a character.
     return loaded;

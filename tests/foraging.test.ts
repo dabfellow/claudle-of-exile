@@ -115,11 +115,11 @@ describe('Phase 06 Foraging and Greenhouse', () => {
     const online = setup(), offline = reload(setup()), c = makeSeeded();
     for (let i = 0; i < 28800; i++) tick(online, c, 1000);
     const summary = simulateOffline(offline, makeSeeded(), 28_800_000);
-    expect(offline.account.bank).toEqual(online.account.bank);
+    expect(offline.storage.bank).toEqual(online.storage.bank);
     expect(offline.skills).toEqual(online.skills); expect(offline.professionProgress).toEqual(online.professionProgress);
     expect(offline.greenhouse).toEqual(online.greenhouse);
-    expect(offline.account.bank.moon_bloom).toBeGreaterThanOrEqual(background ? 16 : 80);
-    expect(summary.ordinaryOutput?.moon_bloom).toBe(offline.account.bank.moon_bloom);
+    expect(offline.storage.bank.moon_bloom).toBeGreaterThanOrEqual(background ? 16 : 80);
+    expect(summary.ordinaryOutput?.moon_bloom).toBe(offline.storage.bank.moon_bloom);
     expect(summary.discoveries ?? []).toEqual(background ? [] : ['seed_moon_bloom']);
     const second = simulateOffline(offline, makeSeeded(), 60_000); expect(second.discoveries ?? []).toEqual([]);
   }, 30_000);
@@ -141,14 +141,14 @@ describe('Phase 06 Foraging and Greenhouse', () => {
 
   it('uses grown and foraged herbs interchangeably in existing brewing and delivers the fixed Sickle once', () => {
     const s = advanced(); greenhouse(s); cycles(s, 'herb_sun', 100); stopAction(s);
-    const before = s.account.bank.sunpetal;
+    const before = s.storage.bank.sunpetal;
     greenhouseStep(s, ctx(), actionIntervalMs(s, actionDef('herb_sun'), deriveStats(s)) * 5 + 1, deriveStats(s));
-    expect(s.account.bank.sunpetal).toBe(before + 1);
+    expect(s.storage.bank.sunpetal).toBe(before + 1);
     const brew = actionsFor('alchemy').find((a) => a.level === 1 && a.flaskId)!;
     expect(brew.inputs?.sunpetal).toBeGreaterThan(0);
-    Object.assign(s.account.bank, Object.fromEntries(Object.entries(brew.inputs!).filter(([id]) => id !== 'sunpetal')));
-    cycles(s, brew.id, 1); expect(s.account.bank.sunpetal).toBe(before + 1 - brew.inputs!.sunpetal);
-    Object.assign(s.account.bank, { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 });
+    Object.assign(s.storage.bank, Object.fromEntries(Object.entries(brew.inputs!).filter(([id]) => id !== 'sunpetal')));
+    cycles(s, brew.id, 1); expect(s.storage.bank.sunpetal).toBe(before + 1 - brew.inputs!.sunpetal);
+    Object.assign(s.storage.bank, { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 });
     expect(startProject(s, ctx(), 'tool_harvesting')).toBeNull(); advanceProject(s, ctx(), 1_200_000);
     const tool = s.inventory.find((i) => i.name === "Seedkeeper's Sickle")!;
     expect(tool.suffixes).toEqual([{ affixId: 'profession_speed_harvesting', tier: 0, values: [8] }]);

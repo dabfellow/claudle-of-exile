@@ -68,8 +68,8 @@ export function prepareWeaponBuild(s: GameState, ctx: Ctx, id: string) {
 export function prepareGemcuttingSkiller(s: GameState, _ctx: Ctx) {
   s.skills.gemcutting = 10000;
   s.professionProgress.work.gemcutting = 30;
-  s.account.bank.rough_gem = 50;
-  s.account.bank.arcane_dust = 300;
+  s.storage.bank.rough_gem = 50;
+  s.storage.bank.arcane_dust = 300;
   s.skillBar[0] = createSkillGem(s, 'heavy_strike');
   s.skillBar[0]!.rules = [{ when: 'always' }];
   s.skillBar[0]!.supports = [];
@@ -79,14 +79,14 @@ export function prepareRunecarverKit(s: GameState, ctx: Ctx) {
   s.skills.runecarving = 100000;
   s.professionProgress.counters['rune.stone.3'] = 10;
   s.professionProgress.counters['rune.storm.3'] = 10;
-  s.account.bank.inscription_fragment = 50;
-  s.account.bank.rune_stone_3 = 5;
-  s.account.bank.rune_storm_3 = 5;
-  s.account.bank.heartwood_fragment = 20;
-  s.account.bank.exceptional_crystal = 5;
-  s.account.bank.rune_keen_3 = 5;
-  s.account.bank.rune_blood_3 = 5;
-  s.account.bank.rune_stone_4 = 5;
+  s.storage.bank.inscription_fragment = 50;
+  s.storage.bank.rune_stone_3 = 5;
+  s.storage.bank.rune_storm_3 = 5;
+  s.storage.bank.heartwood_fragment = 20;
+  s.storage.bank.exceptional_crystal = 5;
+  s.storage.bank.rune_keen_3 = 5;
+  s.storage.bank.rune_blood_3 = 5;
+  s.storage.bank.rune_stone_4 = 5;
   const weapon = createItem(s, 'corsair_cutlass', 50, 'rare', ctx.rng);
   const body = createItem(s, 'plate_vest', 50, 'rare', ctx.rng);
   const ring = createItem(s, 'iron_ring', 50, 'rare', ctx.rng);
@@ -100,9 +100,9 @@ export function prepareThiefKit(s: GameState, _ctx: Ctx) {
   s.professionProgress.discoveries['heist_clean_last_wagon'] = true;
   s.professionProgress.discoveries['heist_clean_pyre_vault'] = true;
   s.professionProgress.discoveries['heist_clean_khans_tribute'] = true;
-  s.account.bank.marker = 500;
-  s.account.bank.treasury_fragment = 120;
-  s.account.bank.oath_fragment = 5;
+  s.storage.bank.marker = 500;
+  s.storage.bank.treasury_fragment = 120;
+  s.storage.bank.oath_fragment = 5;
 }
 
 export function prepareDefenceBuild(s: GameState, ctx: Ctx, id: string) {

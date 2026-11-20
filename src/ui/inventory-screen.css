@@ -90,6 +90,13 @@
   margin-top: var(--s-3);
 }
 
+.stash-card .stash-views[hidden] { display: none; }
+
+.guild-stash { display: grid; gap: var(--s-2); margin-top: var(--s-3); }
+.guild-stash-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; }
+.guild-stash-row > span:first-child { flex: 1 1 9rem; }
+.guild-stash-row input { width: 5rem; }
+
 /* right column on wide screens: worn gear, then the item panel, which stays in view while you scroll */
 .inv-side {
   align-self: stretch;

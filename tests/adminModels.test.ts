@@ -20,12 +20,12 @@ describe('admin diagnostics and reproduction',()=>{
   it('captures a detached build snapshot with ten log lines and no shared stash or browser credentials',()=>{
     const s=newGame(1,{name:'Report character',classId:'templar'});
     s.settings.posture='kiter';s.passives=['test-node'];
-    s.account.bank.gold=123;
-    s.account.stash[0].push({uid:123,baseId:'rusted_sword',ilvl:1,rarity:'normal',name:'Private stash item',prefixes:[],suffixes:[]});
+    s.storage.bank.gold=123;
+    s.storage.stash[0].push({uid:123,baseId:'rusted_sword',ilvl:1,rarity:'normal',name:'Private stash item',prefixes:[],suffixes:[]});
     const before=serialize(s);
     const context=feedbackContext(s,'settings',Array.from({length:20},(_,i)=>`Log ${i}`));
     expect(context.characterName).toBe('Report character');
-    expect(context.snapshot?.state).toMatchObject({settings:{posture:'kiter'},passives:['test-node'],account:{bank:{gold:123}}});
+    expect(context.snapshot?.state).toMatchObject({settings:{posture:'kiter'},passives:['test-node'],storage:{bank:{gold:123}}});
     expect(context.snapshot?.log).toHaveLength(10);
     expect(JSON.stringify(context)).not.toContain('Private stash item');
     expect(serialize(s)).toBe(before);

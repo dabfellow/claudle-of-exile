@@ -9,7 +9,7 @@ import { Orb } from './Icon';
 export function CurrencySlot({ s, id }: { s: GameState; id: string }) {
   const def = materialDef(id);
   const cur = id === 'gold' ? null : currencyDef(id);
-  const n = s.account.bank[id] ?? 0;
+  const n = s.storage.bank[id] ?? 0;
   const pinned = pinnedCurrencies(s).includes(id);
   return (
     <Tooltip
@@ -67,7 +67,7 @@ export function PinnedCurrencies({ s }: { s: GameState }) {
   return (
     <div className="currency-strip">
       {pins.map((id) => (
-        <CurrencyAmount key={id} id={id} amount={s.account.bank[id] ?? 0} label={id === 'gold' ? 'gold' : currencyDef(id).short} />
+        <CurrencyAmount key={id} id={id} amount={s.storage.bank[id] ?? 0} label={id === 'gold' ? 'gold' : currencyDef(id).short} />
       ))}
     </div>
   );

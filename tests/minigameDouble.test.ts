@@ -29,10 +29,10 @@ function mineOnce(double: boolean, c: Ctx = ctx()): { s: GameState; ore: number 
   const s = miner();
   expect(startSkillAction(s, c, ORE.id)).toBeNull();
   if (double) minigameSwing(s, 'double');
-  const before = s.account.bank[oreId] ?? 0;
+  const before = s.storage.bank[oreId] ?? 0;
   const d = deriveStats(s);
   skillStep(s, c, actionIntervalMs(s, actionDef(ORE.id), d) + 1, d);
-  return { s, ore: (s.account.bank[oreId] ?? 0) - before };
+  return { s, ore: (s.storage.bank[oreId] ?? 0) - before };
 }
 
 describe('double zones', () => {
@@ -69,7 +69,7 @@ describe('double zones', () => {
     for (let i = 0; i < 4; i++) minigameSwing(s, 'double');
     const d = deriveStats(s);
     skillStep(s, c, actionIntervalMs(s, actionDef(ORE.id), d) * 2 + 1, d);
-    expect(s.account.bank[oreId]).toBe(mineOnce(false).ore * 3);
+    expect(s.storage.bank[oreId]).toBe(mineOnce(false).ore * 3);
   });
 
   it('never pay out offline', () => {
@@ -84,7 +84,7 @@ describe('double zones', () => {
       const s = newGame(1, { name: 'T', classId: 'warrior' });
       s.unlockedZones.push('cinderroad', 'saltflats', 'blackgrass', 'caravan', 'kurgans', 'plateau', 'pyretemple', 'burningthrone');
       s.skills.thieving = xpForLevel(job.level);
-      s.account.bank[MARKER] = 100;
+      s.storage.bank[MARKER] = 100;
       // never sounds the alarm
       const c: Ctx = { rng: { next: () => 0.999 } as Rng, now: 0, emit: () => {} };
       expect(startHeist(s, c, job.id)).toBeNull();
@@ -92,7 +92,7 @@ describe('double zones', () => {
       if (s.action?.kind !== 'heist') throw new Error('no job');
       s.action.progress = 1e9;
       heistStep(s, c, 1, deriveStats(s));
-      return s.action?.kind === 'heist' ? s.action.take.gold : s.account.bank.gold;
+      return s.action?.kind === 'heist' ? s.action.take.gold : s.storage.bank.gold;
     };
     expect(room(true)).toBe(room(false) * 2);
   });

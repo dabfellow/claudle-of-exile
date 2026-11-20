@@ -1,5 +1,5 @@
 import { ACHIEVEMENTS, ACHIEVEMENT_BY_ID, hasRealmPerk, perkTotals, type AchievementDef } from '../data/achievements';
-import { ensureStashPages } from './account';
+import { ensurePersonalStashPages, ensureStashPages } from './account';
 import { addBank } from './bank';
 import { characterLevel } from './character';
 import { createUnique } from './items';
@@ -21,6 +21,7 @@ export function settleRealmRewards(s: GameState): AchievementDef[] {
   a.achievementRewards = [...had, ...added.map((d) => d.id)];
   ensureStashPages(a);
   return added;
+  ensurePersonalStashPages(s.storage, a);
 }
 
 /** Complete any achievements whose goal has been reached, granting their rewards once. */

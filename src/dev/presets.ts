@@ -56,7 +56,7 @@ export const PRESETS: Record<string, Setup> = {
   rich: {
     level: 40,
     prepare: (s) => {
-      for (const { id } of [...CURRENCIES, ...MATERIALS]) s.account.bank[id] = 9999;
+      for (const { id } of [...CURRENCIES, ...MATERIALS]) s.storage.bank[id] = 9999;
     },
   },
 };

@@ -15,7 +15,7 @@ const SECTION_LABEL: Record<string, string> = { 'Maps only': 'Maps', 'Achievemen
  */
 export function UniqueShelf({ s, onPick }: { s: GameState; onPick?: (item: Item) => void }) {
   const shelved = new Map<string, Item[]>();
-  for (const i of s.account.uniqueStash) if (i.uniqueId) shelved.set(i.uniqueId, [...(shelved.get(i.uniqueId) ?? []), i]);
+  for (const i of s.storage.uniqueStash) if (i.uniqueId) shelved.set(i.uniqueId, [...(shelved.get(i.uniqueId) ?? []), i]);
   const carried = new Map<string, string>();
   for (const i of s.inventory) if (i.uniqueId) carried.set(i.uniqueId, 'In your inventory');
   for (const i of Object.values(s.equipment)) if (i?.uniqueId) carried.set(i.uniqueId, 'Worn by this character');

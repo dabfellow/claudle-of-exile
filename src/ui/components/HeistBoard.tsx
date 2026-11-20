@@ -92,7 +92,7 @@ function JobDossier({ s, job }: { s: GameState; job: HeistJob }) {
   const casing = s.heist.auto === job.id && s.action?.kind === 'skill';
   const repeating = onJob || s.heist.auto === job.id;
   const cost = jobCost(s, job);
-  const short = (s.account.bank[MARKER] ?? 0) < cost;
+  const short = (s.storage.bank[MARKER] ?? 0) < cost;
   const profile = vaultProfile(job);
   const crewReady = s.heist.crew.length === 3;
   const gearPool = job.drops.some((d) => d.id === GEAR) || job.vault.some((d) => d.id === GEAR) ? heistGearTargetPool(s, job) : null;
@@ -138,7 +138,7 @@ function JobDossier({ s, job }: { s: GameState; job: HeistJob }) {
               {(['all', 'weapon', 'armour', 'jewellery'] as const).map((cat) => <button key={cat} className={`btn sm ${gearPool.category === cat ? 'selected' : 'ghost'}`} onClick={() => setGearTarget(cat)}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</button>)}
               <span className="num">{gearPool.bases.length} bases · ilvl {gearPool.ilvl}</span>
             </div>}
-            <div className="thief-attempt"><span><MatIcon id={MARKER} size={14} /> {cost} Markers to set up</span><span className="num">you have {fmt(s.account.bank[MARKER] ?? 0)}</span></div>
+            <div className="thief-attempt"><span><MatIcon id={MARKER} size={14} /> {cost} Markers to set up</span><span className="num">you have {fmt(s.storage.bank[MARKER] ?? 0)}</span></div>
             {repeating ? <button className="btn thief-pickpocket" onClick={() => game.act((st) => stopAction(st))}>Stop</button>
               : <button className="btn thief-pickpocket" disabled={!crewReady} title={!crewReady ? 'Pick three rogues on the Rogue Crew tab' : short ? 'You will lift purses until you can pay' : ''} onClick={() => game.act((st, ctx) => startHeist(st, ctx, job.id))}>
                 <GameIcon name="thieving" size={17} /> {!crewReady ? 'Pick a crew of 3 first' : short ? 'Case the job' : 'Run on repeat'}
@@ -182,9 +182,9 @@ function HeistLedger() {
         {!shown.length && <p className="dim small">No unlocked heists yet.</p>}
       </div>
       <div className="thief-marker-note">
-        <div className="row"><MatIcon id={MARKER} size={18} /><b>Rogue’s Markers</b><span className="spacer" /><span className="num">{fmt(s.account.bank[MARKER] ?? 0)}</span></div>
+        <div className="row"><MatIcon id={MARKER} size={18} /><b>Rogue’s Markers</b><span className="spacer" /><span className="num">{fmt(s.storage.bank[MARKER] ?? 0)}</span></div>
         <p>Marks pay Markers, and Markers set up Heists. Each room is richer and riskier than the last, and the vault is in the final room. Short on Markers, a repeating job cases itself on your best mark until it is funded.</p>
-        {((s.account.bank.treasury_fragment ?? 0) > 0 || (s.account.bank.oath_fragment ?? 0) > 0) && <p>Treasury Fragments: {fmt(s.account.bank.treasury_fragment ?? 0)} · Oath Fragments: {fmt(s.account.bank.oath_fragment ?? 0)}</p>}
+        {((s.storage.bank.treasury_fragment ?? 0) > 0 || (s.storage.bank.oath_fragment ?? 0) > 0) && <p>Treasury Fragments: {fmt(s.storage.bank.treasury_fragment ?? 0)} · Oath Fragments: {fmt(s.storage.bank.oath_fragment ?? 0)}</p>}
       </div>
     </section>
     <JobDossier s={s} job={job} />

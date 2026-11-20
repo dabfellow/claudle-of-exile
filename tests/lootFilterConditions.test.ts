@@ -113,13 +113,13 @@ describe('hidden drops are left behind', () => {
     s.inventory = Array.from({ length: bagCap(s) }, (_, i) => createItem(s, 'rusted_sword', 10, 'magic', seeded(500 + i)));
     s.ground = Array.from({ length: GROUND_CAP }, (_, i) => ({ ...createItem(s, 'rusted_sword', 10, 'magic', seeded(i)) }));
     const oldest = s.ground[0].uid;
-    const dust = s.account.bank.arcane_dust ?? 0;
+    const dust = s.storage.bank.arcane_dust ?? 0;
     const events: GameEvent[] = [];
     const ctx = makeCtx(seeded(1), 0, events);
     placeItem(s, ctx, createItem(s, 'rusted_sword', 10, 'normal', seeded(99)));
     expect(s.ground).toHaveLength(GROUND_CAP);
     expect(s.ground[0].uid).toBe(oldest); // nothing pushed off the full pile
-    expect(s.account.bank.arcane_dust ?? 0).toBe(dust);
+    expect(s.storage.bank.arcane_dust ?? 0).toBe(dust);
     expect(s.lifetime.hiddenByFilter).toBe(1);
     expect(events).toContainEqual(expect.objectContaining({ t: 'loot', hidden: true }));
 
@@ -131,11 +131,11 @@ describe('hidden drops are left behind', () => {
     const s = newGame(1);
     hideNormals(s);
     const ctx = { ...makeCtx(seeded(2)), offline: true };
-    const dust = s.account.bank.arcane_dust ?? 0;
+    const dust = s.storage.bank.arcane_dust ?? 0;
     placeItem(s, ctx, createItem(s, 'rusted_sword', 10, 'normal', seeded(3)));
     expect(s.offlineHaul).toHaveLength(0);
     expect(s.ground).toHaveLength(0);
-    expect(s.account.bank.arcane_dust ?? 0).toBe(dust);
+    expect(s.storage.bank.arcane_dust ?? 0).toBe(dust);
     expect(ctx.events).toContainEqual(expect.objectContaining({ t: 'loot', hidden: true }));
   });
 
@@ -164,10 +164,10 @@ describe('hidden drops are left behind', () => {
   it('keeps drops an auto-salvage rule matches until salvage is unlocked', () => {
     const s = newGame(1);
     s.settings.lootFilter!.rules = [{ id: 'sal', name: 'Salvage rares', enabled: true, rarities: ['rare'], action: 'auto_salvage' }];
-    const dust = s.account.bank.arcane_dust ?? 0;
+    const dust = s.storage.bank.arcane_dust ?? 0;
     placeItem(s, makeCtx(seeded(8)), createItem(s, 'rusted_sword', 10, 'rare', seeded(9)));
     expect(s.inventory).toHaveLength(1);
-    expect(s.account.bank.arcane_dust ?? 0).toBe(dust);
+    expect(s.storage.bank.arcane_dust ?? 0).toBe(dust);
   });
 });
 

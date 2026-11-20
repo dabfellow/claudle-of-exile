@@ -18,7 +18,7 @@ export const BENCH_MATERIAL_GROUPS: { id: string; label: string; source: string;
   { id: 'shards', label: 'Orb shards', source: 'Gathering skills; Alchemy fuses them into orbs', ids: ['trans_shard', 'aug_shard', 'alt_shard'] },
 ];
 
-const owned = (s: GameState, id: string) => s.account.bank[id] ?? 0;
+const owned = (s: GameState, id: string) => s.storage.bank[id] ?? 0;
 
 /** One line per material family: what you hold in total, and where more comes from. Click to jump to them. */
 export function BenchMaterialSummary({ s, onOpen }: { s: GameState; onOpen?: (group: string) => void }) {

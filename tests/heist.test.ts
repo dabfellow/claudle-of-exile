@@ -32,7 +32,7 @@ function thief(level = 1, markers = 0): GameState {
   s.heist.crew = [];
   s.unlockedZones.push(...ACT2);
   s.skills.thieving = xpForLevel(level);
-  s.account.bank[MARKER] = markers;
+  s.storage.bank[MARKER] = markers;
   settleProfessionProgress(s, true);
   return s;
 }
@@ -136,14 +136,14 @@ describe('Heist', () => {
     setJobExit(s, 'cinder_toll', 2);
     expect(startHeist(s, c, 'cinder_toll')).toBeNull();
     stopHeistRepeat(s);
-    expect(s.account.bank[MARKER]).toBe(0);
-    const gold = s.account.bank.gold;
+    expect(s.storage.bank[MARKER]).toBe(0);
+    const gold = s.storage.bank.gold;
     clearRoom(s, c);
     expect(s.action?.kind === 'heist' && s.action.room).toBe(2);
-    expect(s.account.bank.gold).toBe(gold);
+    expect(s.storage.bank.gold).toBe(gold);
     clearRoom(s, c);
     expect(s.action).toBeNull();
-    expect(s.account.bank.gold).toBe(gold + 15 + 30);
+    expect(s.storage.bank.gold).toBe(gold + 15 + 30);
     expect(s.heist.tally).toEqual({ jobs: 1, alarms: 0 });
   });
 
@@ -152,10 +152,10 @@ describe('Heist', () => {
     const c = fixed(0.99);
     startHeist(s, c, 'cinder_toll');
     stopHeistRepeat(s);
-    const gold = s.account.bank.gold;
+    const gold = s.storage.bank.gold;
     for (let i = 0; i < 3; i++) clearRoom(s, c);
     // vault chance is 1, and a roll of 0.99 still lands it; the marker roll (0.12 × room) never does
-    expect(s.account.bank.gold).toBe(gold + 15 + 30 + 45 + 150);
+    expect(s.storage.bank.gold).toBe(gold + 15 + 30 + 45 + 150);
   });
 
   it('gets riskier room by room, and stealth and the crew bring it down', () => {
@@ -175,11 +175,11 @@ describe('Heist', () => {
     const s = thief(1, 16);
     startHeist(s, fixed(0.99), 'cinder_toll');
     clearRoom(s, fixed(0.99));
-    const gold = s.account.bank.gold;
+    const gold = s.storage.bank.gold;
     const xp = s.skills.thieving;
     clearRoom(s, fixed(0.0001));
     expect(s.heist.tally).toEqual({ jobs: 1, alarms: 1 });
-    expect(s.account.bank.gold).toBe(gold + Math.round(15 * alarmKeeps(s)));
+    expect(s.storage.bank.gold).toBe(gold + Math.round(15 * alarmKeeps(s)));
     expect(s.skills.thieving).toBeGreaterThan(xp);
     expect(s.action?.kind).toBe('heist');
   });
@@ -190,7 +190,7 @@ describe('Heist', () => {
     startHeist(s, c, 'cinder_toll');
     expect(s.action?.kind).toBe('skill');
     expect(s.heist.auto).toBe('cinder_toll');
-    s.account.bank[MARKER] = 8;
+    s.storage.bank[MARKER] = 8;
     tick(s, c, 100);
     expect(s.action?.kind).toBe('heist');
   });
@@ -262,11 +262,11 @@ describe('Heist', () => {
 describe('the crew', () => {
   it('costs Markers and gold, and only helps on the crew', () => {
     const s = thief(10, 100);
-    s.account.bank.gold = 50000;
+    s.storage.bank.gold = 50000;
     expect(rogueReason(s, 'cutpurse')).toMatch(/level 20/);
     expect(rankUpRogue(s, ctx(), 'fence')).toBeNull();
     expect(s.heist.crew).toEqual(['fence']);
-    expect(s.account.bank[MARKER]).toBe(75);
+    expect(s.storage.bank[MARKER]).toBe(75);
     expect(alarmKeeps(s)).toBeCloseTo(0.58);
     toggleCrew(s, 'fence');
     expect(alarmKeeps(s)).toBe(0.5);
@@ -274,7 +274,7 @@ describe('the crew', () => {
 
   it('holds one rogue, then more as Thieving rises', () => {
     const s = thief(10, 1000);
-    s.account.bank.gold = 1e6;
+    s.storage.bank.gold = 1e6;
     rankUpRogue(s, ctx(), 'lookout');
     rankUpRogue(s, ctx(), 'locksmith');
     expect(crewSlots(s)).toBe(1);
@@ -298,8 +298,8 @@ describe('the crew', () => {
 describe('Contraband at the bench', () => {
   it("a Forger's Seal keeps the chosen modifier through a Chaos Orb", () => {
     const s = thief();
-    s.account.bank.chaos = 40;
-    s.account.bank[SEAL] = 40;
+    s.storage.bank.chaos = 40;
+    s.storage.bank[SEAL] = 40;
     const item = rareItem(s);
     const kept = allMods(item)[0];
     for (let i = 0; i < 40; i++) {
@@ -308,15 +308,15 @@ describe('Contraband at the bench', () => {
       expect(modCount(item)).toBeGreaterThanOrEqual(3);
       expect(modCount(item)).toBeLessThanOrEqual(6);
     }
-    expect(s.account.bank[SEAL]).toBe(0);
+    expect(s.storage.bank[SEAL]).toBe(0);
   });
 
   it('keeps it through Annulment and Divine too, and is refused where it means nothing', () => {
     const s = thief();
-    s.account.bank.annul = 10;
-    s.account.bank.divine = 10;
-    s.account.bank.exalted = 1;
-    s.account.bank[SEAL] = 20;
+    s.storage.bank.annul = 10;
+    s.storage.bank.divine = 10;
+    s.storage.bank.exalted = 1;
+    s.storage.bank[SEAL] = 20;
     const item = rareItem(s);
     const kept = allMods(item)[0];
     const values = [...kept.values];
@@ -330,26 +330,26 @@ describe('Contraband at the bench', () => {
 
   it('needs a Seal to be spent, and works alongside a Fossil', () => {
     const s = thief();
-    s.account.bank.chaos = 2;
+    s.storage.bank.chaos = 2;
     const item = rareItem(s);
     const kept = allMods(item)[0].affixId;
     expect(orbReason(s, 'chaos', item.uid, null, kept)).toMatch(/Seals/);
-    s.account.bank[SEAL] = 1;
-    s.account.bank.scorched_fossil = 1;
+    s.storage.bank[SEAL] = 1;
+    s.storage.bank.scorched_fossil = 1;
     expect(applyOrb(s, ctx(), 'chaos', item.uid, 'scorched_fossil', kept)).toBeNull();
-    expect(s.account.bank[SEAL]).toBe(0);
-    expect(s.account.bank.scorched_fossil).toBe(0);
+    expect(s.storage.bank[SEAL]).toBe(0);
+    expect(s.storage.bank.scorched_fossil).toBe(0);
   });
 
   it("Locksmith's Wax puts an item back exactly, once", () => {
     const s = thief();
-    s.account.bank.chaos = 1;
-    s.account.bank[WAX] = 1;
+    s.storage.bank.chaos = 1;
+    s.storage.bank[WAX] = 1;
     const item = rareItem(s);
     const before = structuredClone({ rarity: item.rarity, name: item.name, prefixes: item.prefixes, suffixes: item.suffixes });
     expect(restoreReason(s, item.uid)).toBeTruthy();
     expect(takeImpression(s, ctx(), item.uid)).toBeNull();
-    expect(s.account.bank[WAX]).toBe(0);
+    expect(s.storage.bank[WAX]).toBe(0);
     applyOrb(s, ctx(), 'chaos', item.uid);
     expect(restoreImpression(s, ctx(), item.uid)).toBeNull();
     expect({ rarity: item.rarity, name: item.name, prefixes: item.prefixes, suffixes: item.suffixes }).toEqual(before);
@@ -359,7 +359,7 @@ describe('Contraband at the bench', () => {
 
   it('an impression travels with the item, through saves and into the stash', () => {
     const s = thief();
-    s.account.bank[WAX] = 1;
+    s.storage.bank[WAX] = 1;
     const item = rareItem(s);
     takeImpression(s, ctx(), item.uid);
     const back = deserialize(serialize(s));

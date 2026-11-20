@@ -173,14 +173,14 @@ describe('item menu actions', () => {
     // worn gear straight into the stash
     expect(moveToStash(s, c, ring.uid)).toBeNull();
     expect(s.equipment.ring1).toBeUndefined();
-    expect(s.account.stash[0].some((i) => i.uid === ring.uid)).toBe(true);
+    expect(s.storage.stash[0].some((i) => i.uid === ring.uid)).toBe(true);
     // salvage from the floor
     const junk = createItem(s, 'iron_ring', 1, 'normal', seeded(99));
     s.ground.push(junk);
-    const dust = s.account.bank.arcane_dust ?? 0;
+    const dust = s.storage.bank.arcane_dust ?? 0;
     expect(salvageAny(s, c, junk.uid)).toBeNull();
     expect(s.ground).toHaveLength(0);
-    expect(s.account.bank.arcane_dust).toBeGreaterThan(dust);
+    expect(s.storage.bank.arcane_dust).toBeGreaterThan(dust);
   });
 });
 

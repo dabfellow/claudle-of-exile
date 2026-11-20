@@ -178,7 +178,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
         const isCur = CURRENCIES.some((cur) => cur.id === matId);
         expect(isMat || isCur, `Unknown material/currency ${matId}`).toBe(true);
         if (isCur) {
-          s.account.bank[matId] = 10;
+          s.storage.bank[matId] = 10;
           expect(holdPayment(s, `test_${matId}`, matId, 1)).toBeNull();
           releaseHold(s, `test_${matId}`, true);
         }
@@ -193,12 +193,12 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
       s.inventory = s.inventory.filter((i) => i.uid !== item.uid);
       receiveDeliveries(s, [{ item, currency: null, amount: 0, note: 'test' }]);
       const delivered = s.inventory.some((i) => i.uniqueId === uid)
-        || s.account.overflow.some((i) => i.uniqueId === uid)
-        || s.account.uniqueStash.some((i) => i.uniqueId === uid);
+        || s.storage.overflow.some((i) => i.uniqueId === uid)
+        || s.storage.uniqueStash.some((i) => i.uniqueId === uid);
       expect(delivered, `Delivery failed for ${uid}`).toBe(true);
       s.inventory = [];
-      s.account.overflow = [];
-      s.account.uniqueStash = [];
+      s.storage.overflow = [];
+      s.storage.uniqueStash = [];
     }
     for (const f of FLASK_2_UNIQUES) {
       expect(FLASKS.some((fl) => fl.id === f.flaskId)).toBe(true);
@@ -267,7 +267,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
         s.professionProgress.discoveries[acc] = true;
         if (acc.endsWith('_work_100')) s.professionProgress.work[p.skill] = 200;
       }
-      for (const [k, v] of Object.entries(p.inputs)) s.account.bank[k] = v;
+      for (const [k, v] of Object.entries(p.inputs)) s.storage.bank[k] = v;
       const reqBaseId = p.baseId ?? p.baseIds?.[0];
       let baseUid: number | undefined;
       if (reqBaseId) {
@@ -278,7 +278,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
 
       const err = startProject(s, c, p.id, 1, baseUid);
       expect(err, `Failed to start ${p.id}: ${err}`).toBeNull();
-      for (const k of Object.keys(p.inputs)) expect(s.account.bank[k] ?? 0).toBe(0);
+      for (const k of Object.keys(p.inputs)) expect(s.storage.bank[k] ?? 0).toBe(0);
 
       const runId = s.professionProgress.activeProject!.runId;
       advanceProject(s, c, p.durationMs);
@@ -286,7 +286,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
         expect(s.inventory.some((i) => i.uniqueId === uid), `${uid} missing from inventory`).toBe(true);
       } else if (p.reward.category === 'flask') {
         const flaskId = p.reward.flaskId;
-        const hasFlask = s.account.flaskStash.some((f) => f.flaskId === flaskId)
+        const hasFlask = s.storage.flaskStash.some((f) => f.flaskId === flaskId)
           || s.flaskSlots.some((f) => f?.flaskId === flaskId);
         expect(hasFlask, `${uid} missing from flaskStash/flaskSlots`).toBe(true);
       }
@@ -319,7 +319,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
       const off = newGame(1);
       for (const s of [live, off]) {
         tc.setup?.(s);
-        if (tc.bank) Object.assign(s.account.bank, tc.bank);
+        if (tc.bank) Object.assign(s.storage.bank, tc.bank);
       }
       expect(startSkillAction(live, ctx(5), tc.actionId), `live start failed for ${tc.actionId}`).toBeNull();
       expect(startSkillAction(off, ctx(5), tc.actionId), `off start failed for ${tc.actionId}`).toBeNull();

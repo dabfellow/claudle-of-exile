@@ -182,7 +182,7 @@ function SlotPicker({ s, slot, onDone }: { s: GameState; slot: EquipSlot; onDone
 function FlaskPicker({ s, slot, onDone }: { s: GameState; slot: number; onDone: () => void }) {
   const worn = s.flaskSlots[slot];
   const targetKind = FLASK_SLOT_TYPES[slot] ?? 'utility';
-  const matching = s.account.flaskStash.filter((f) => flaskStats(f).def.kind === targetKind);
+  const matching = s.storage.flaskStash.filter((f) => flaskStats(f).def.kind === targetKind);
   return (
     <div className="slot-picker">
       <div className="row" style={{ gap: 8 }}>
@@ -271,7 +271,7 @@ export function InventoryPage({ go }: { go: (p: Page) => void }) {
   const [pick, setPick] = useState<{ uid: number; flask: boolean } | null>(null);
   const [stashTab, setStashTab] = useState<StashTabId>('gear');
   const [stashPage, setStashPage] = useState(0);
-  const here = Math.min(stashPage, s.account.stash.length - 1);
+  const here = Math.min(stashPage, s.storage.stash.length - 1);
   const pickItem = (uid: number) => setPick(pick?.uid === uid && !pick.flask ? null : { uid, flask: false });
   const pickFlask = (uid: number) => setPick(pick?.uid === uid && pick.flask ? null : { uid, flask: true });
   // a salvaged or sold item leaves nothing to show, so the panel (a sheet on phones) closes
@@ -286,7 +286,7 @@ export function InventoryPage({ go }: { go: (p: Page) => void }) {
   );
   return (
     <div className="page inv-page" ref={pageRef}>
-      <PageHeader title="Inventory" actions={<CurrencyAmount id="gold" amount={s.account.bank.gold ?? 0} label="gold" />}>
+      <PageHeader title="Inventory" actions={<CurrencyAmount id="gold" amount={s.storage.bank.gold ?? 0} label="gold" />}>
         Click any item, worn, carried or stashed, to move, salvage or craft it. Hover to compare; right-click to pin.
       </PageHeader>
       <div className={`inv-layout ${narrow ? 'narrow' : ''}`}>

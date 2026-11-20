@@ -76,10 +76,10 @@ function craftOnce(s: GameState, ctx: Ctx): void {
     return;
   }
   const refund = 'orb' in method && chance(ctx.rng, (skillTreeStats(s).patientCrafter ?? 0) / 100);
-  const before = 'orb' in method ? s.account.bank[method.orb] ?? 0 : 0;
+  const before = 'orb' in method ? s.storage.bank[method.orb] ?? 0 : 0;
   if ('essence' in method) applyEssence(s, ctx, method.essence, uid);
   else applyOrb(s, ctx, method.orb, uid, method.fossil, method.sealed);
-  if (refund && 'orb' in method) s.account.bank[method.orb] += Math.max(0, before - (s.account.bank[method.orb] ?? 0));
+  if (refund && 'orb' in method) s.storage.bank[method.orb] += Math.max(0, before - (s.storage.bank[method.orb] ?? 0));
   s.action.steps += 1;
   if (ruleMet(item!, rule)) {
     const steps = s.action.steps;

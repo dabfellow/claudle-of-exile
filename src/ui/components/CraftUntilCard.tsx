@@ -84,8 +84,8 @@ export function CraftUntilCard({ s, item }: { s: GameState; item: Item | undefin
         <label>
           <span className="dim small">Spend</span>
           <select className="input" value={method} onChange={(e) => setMethod(e.target.value as typeof method)}>
-            <option value="alteration">Orb of Alteration ({fmt(s.account.bank.alteration ?? 0)}) — Magic items</option>
-            <option value="chaos">Chaos Orb ({fmt(s.account.bank.chaos ?? 0)}) — Rare items</option>
+            <option value="alteration">Orb of Alteration ({fmt(s.storage.bank.alteration ?? 0)}) — Magic items</option>
+            <option value="chaos">Chaos Orb ({fmt(s.storage.bank.chaos ?? 0)}) — Rare items</option>
             <option value="essence">Essence — Normal or Magic items</option>
           </select>
         </label>
@@ -95,8 +95,8 @@ export function CraftUntilCard({ s, item }: { s: GameState; item: Item | undefin
             <select className="input" value={essence} onChange={(e) => setEssence(e.target.value)}>
               <option value="">Pick one</option>
               {ESSENCES.map((x) => (
-                <option key={x.id} value={x.id} disabled={!s.account.bank[x.id]}>
-                  {x.name} ({fmt(s.account.bank[x.id] ?? 0)})
+                <option key={x.id} value={x.id} disabled={!s.storage.bank[x.id]}>
+                  {x.name} ({fmt(s.storage.bank[x.id] ?? 0)})
                 </option>
               ))}
             </select>
@@ -108,8 +108,8 @@ export function CraftUntilCard({ s, item }: { s: GameState; item: Item | undefin
               <select className="input" value={fossil} onChange={(e) => setFossil(e.target.value)}>
                 <option value="">None</option>
                 {FOSSILS.map((f) => (
-                  <option key={f.id} value={f.id} disabled={!s.account.bank[f.id]}>
-                    {f.name} ({fmt(s.account.bank[f.id] ?? 0)})
+                  <option key={f.id} value={f.id} disabled={!s.storage.bank[f.id]}>
+                    {f.name} ({fmt(s.storage.bank[f.id] ?? 0)})
                   </option>
                 ))}
               </select>
@@ -120,8 +120,8 @@ export function CraftUntilCard({ s, item }: { s: GameState; item: Item | undefin
                 <select className="input" value={sealed} onChange={(e) => setSealed(e.target.value)}>
                   <option value="">None</option>
                   {allMods(item).map((m) => (
-                    <option key={m.affixId} value={m.affixId} disabled={!s.account.bank[SEAL]}>
-                      {describeMod(m)} ({fmt(s.account.bank[SEAL] ?? 0)})
+                    <option key={m.affixId} value={m.affixId} disabled={!s.storage.bank[SEAL]}>
+                      {describeMod(m)} ({fmt(s.storage.bank[SEAL] ?? 0)})
                     </option>
                   ))}
                 </select>

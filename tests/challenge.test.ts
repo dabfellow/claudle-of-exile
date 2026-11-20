@@ -143,9 +143,9 @@ describe('Classic', () => {
     const s = classic();
     // endgame tiers also want boss drops (sigils, Divine Orbs), which Classic can't convert; the rest is gold
     for (const st of STATIONS) for (const l of st.levels.slice(0, 5)) expect(Object.keys(classicCost(l.cost)).every((id) => id === 'gold' || id === 'arcane_dust' || id === 'marrow_shard')).toBe(true);
-    s.account.bank.gold = 1e7;
-    s.account.bank.copper_ore = 0;
-    s.account.bank.ash_log = 0;
+    s.storage.bank.gold = 1e7;
+    s.storage.bank.copper_ore = 0;
+    s.storage.bank.ash_log = 0;
     expect(nextUpgradeCost(s, 'bench')).toEqual({ gold: 4500 });
     expect(upgradeStation(s, ctxFor(), 'bench')).toBeNull();
     expect(s.account.hideout.bench).toBe(2);

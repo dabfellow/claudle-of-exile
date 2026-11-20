@@ -133,7 +133,7 @@ describe('Phase 16 Rune-carved Uniques: Hands of the Forgotten Choir & Hollow Ci
       s.skills.runecarving = xpForLevel(70);
       s.professionProgress.work.runecarving = 100;
       s.account.hideout.rune_board = 1;
-      s.account.bank = { choir_inscription: 2, exceptional_crystal: 1 };
+      s.storage.bank = { choir_inscription: 2, exceptional_crystal: 1 };
 
       const glove = createItem(s, 'hierophant_gloves', 60, 'rare', ctx.rng);
       const oldUid = glove.uid;
@@ -143,7 +143,7 @@ describe('Phase 16 Rune-carved Uniques: Hands of the Forgotten Choir & Hollow Ci
       expect(startProject(s, ctx, 'hands_forgotten_choir', 1, oldUid)).toBeNull();
       expect(s.inventory.find((i) => i.uid === oldUid)).toBeUndefined();
       expect(s.professionProgress.activeProject?.item?.uid).toBe(oldUid);
-      expect(s.account.bank.choir_inscription).toBe(0);
+      expect(s.storage.bank.choir_inscription).toBe(0);
 
       // Cancel returns the base item with its exact properties intact
       expect(cancelProject(s)).toBeNull();
@@ -151,7 +151,7 @@ describe('Phase 16 Rune-carved Uniques: Hands of the Forgotten Choir & Hollow Ci
       expect(returned).toBeDefined();
       expect(returned!.baseId).toBe('hierophant_gloves');
       expect(returned!.rarity).toBe('rare');
-      expect(s.account.bank.choir_inscription).toBe(2);
+      expect(s.storage.bank.choir_inscription).toBe(2);
 
       // Re-start and complete
       expect(startProject(s, ctx, 'hands_forgotten_choir', 1, oldUid)).toBeNull();
@@ -171,7 +171,7 @@ describe('Phase 16 Rune-carved Uniques: Hands of the Forgotten Choir & Hollow Ci
       s.skills.runecarving = xpForLevel(70);
       s.professionProgress.work.runecarving = 100;
       s.account.hideout.rune_board = 1;
-      s.account.bank = { circuit_inscription: 2, exceptional_crystal: 2 };
+      s.storage.bank = { circuit_inscription: 2, exceptional_crystal: 2 };
 
       const ring = createItem(s, 'diamond_ring', 55, 'magic', ctx.rng);
       const oldUid = ring.uid;

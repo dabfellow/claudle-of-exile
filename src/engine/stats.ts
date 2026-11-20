@@ -230,7 +230,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
   addStats(st, cls.bonus);
   addStats(st, mechanicStats(s, st));
   if (st.critGoldScale > 0) {
-    const bankGold = s.account?.bank?.gold ?? 0;
+    const bankGold = s.storage.bank.gold ?? 0;
     st.critMulti += Math.min(50, Math.floor(bankGold / 10000)) * st.critGoldScale;
   }
   if (st.leviathanMend > 0 && mechanicOf(s) === 'rage' && (s.combat?.mech ?? 0) >= 10 + st.rageMax) {
