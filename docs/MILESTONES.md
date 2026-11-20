@@ -641,6 +641,12 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Consistent item art: replaced the ~14-pack mix of item icons with one 32×32 pixel style — done 2026-11-19.
+  - Owner picked Anvil's RPG Icons with 7Soul's 496 RPG Icons filling gaps (7Soul given Anvil's outline), plus a Shikashi belt. 604 files in `src/assets/items/pixel/`, mapped in `src/ui/itemArt.ts`; every armour tier wears one Anvil set, recoloured per tier. Licences in `src/assets/CREDITS.md`.
+  - Orb follow-up (same day): currency, runes, fossils, essences, resins, shards, contraband and artifacts now have pictures, shown everywhere `MatIcon` is used plus currency pins, the Trader and Market prices.
+- [x] Themed menu frames: Hypnobius' Dark Ages UI 9-slice frames in `src/ui/theme-frames.css` — done 2026-11-19.
+  - Owner found the ornate frame everywhere too gaudy and too samey: ornate only on title/login screens; in game, plain dark frames at 1x on panels, a second dark frame on tooltips and toasts, nested panels plain. Small elements (buttons, tabs, item slots, skill tiles) keep their original slim borders; the pack's small grey frames looked like thick grey bands.
+
 - [x] Manual skill gem upgrades: no auto level-up, an Upgrade button on the Skills page, greyed out with the reason when the new level's character level or attribute isn't met — done 2026-11-19.
   - XP banks as before (capped at the next level only while that level is out of reach), one press per level. The sim player presses Upgrade itself. Playtested with a level 20 Warrior.
 - [ ] Design and build the seven-act zone naming and enemy identity pass.
