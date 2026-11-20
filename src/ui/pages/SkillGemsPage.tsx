@@ -369,7 +369,7 @@ function RuleEditor({ s, slot, gem }: { s: GameState; slot: number; gem: SkillGe
           </button>
         )}
         {manual && suggested.when !== 'manual' && (
-          <button className="btn sm ghost" title="Automate this skill with its suggested rule" onClick={() => game.act((st) => setRule(st, slot, 0, suggested))}>
+          <button className="btn sm ghost" data-tut="suggested-rule" title="Automate this skill with its suggested rule" onClick={() => game.act((st) => setRule(st, slot, 0, suggested))}>
             Suggested: {ruleText(suggested)}
           </button>
         )}

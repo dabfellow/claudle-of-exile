@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  "Old Brannoc's tutorial now teaches combat basics only: using skills, both flasks, setting a skill to fire on its own, picking up and wearing gear you find, the passive tree and the first boss. The mining, smithing and Crafting Bench steps are gone while skilling is reworked. Characters partway through pick up at the matching step.",
+];
 
 export const NEWS: NewsEntry[] = [
   {

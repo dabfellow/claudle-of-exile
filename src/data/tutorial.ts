@@ -1,20 +1,17 @@
 import { isClassic } from '../engine/challenge';
-import { benchBuilt, findItem } from '../engine/crafting';
 import type { GameEvent, GameState } from '../engine/types';
-import { baseDef } from './bases';
 import { flaskDef } from './flasks';
-import { BENCH_BUILT_LEVEL, stationDef } from './hideout';
 
 const drank = (e: GameEvent, kind: 'life' | 'mana') => (e.t === 'flask' && !e.auto && flaskDef(e.flaskId).kind === kind ? 1 : 0);
-const isWeapon = (baseId: string) => baseDef(baseId).slot === 'weapon';
-const wieldsBlue = (s: GameState) => (s.equipment.weapon?.rarity ?? 'normal') !== 'normal';
+/** a skill on the bar that fires by a rule rather than waiting for a click */
+const automated = (s: GameState) => s.skillBar.some((g) => g && g.rules[0] && g.rules[0].when !== 'manual');
 
 export interface TutorialStep {
   id: string;
   title: string;
   /** what the guide says */
   npc: string;
-  /** said instead to a Classic character, who skips the mining and smithing steps */
+  /** said instead to a Classic character, where that character's game differs */
   classicNpc?: string;
   objective: string;
   target: number;
@@ -24,8 +21,10 @@ export interface TutorialStep {
   highlight: string[];
   /** how much progress an event is worth (0 = ignore) */
   match?: (e: GameEvent, s: GameState) => number;
-  /** already settled, so the step passes by unpaid: a blue weapon in hand, or a bench the account built on another character */
+  /** already settled, so the step passes by unpaid */
   done?: (s: GameState) => boolean;
+  /** finished by how things stand rather than by an event (a skill given a rule, say): paid as usual */
+  met?: (s: GameState) => boolean;
   reward: Record<string, number>;
   rewardText: string;
   /** the same, where a Classic character is paid in gold instead */
@@ -51,10 +50,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'enter_zone',
     title: 'Into the Shallows',
-    npc: 'The Mud Flats are crawling with drowned things. Weak ones. Mostly. Travel there.',
-    objective: 'Enter The Mud Flats',
+    npc: 'Brinewick Shore is crawling with drowned things. Weak ones. Mostly. Open Act 1 on the map and travel there.',
+    objective: 'Enter Brinewick Shore',
     target: 1,
-    highlight: ['zone-mudflats'],
+    highlight: ['zone-mudflats', 'act-1'],
     match: (e) => (e.t === 'combatStart' && e.zoneId === 'mudflats' ? 1 : 0),
     reward: {},
     rewardText: '',
@@ -62,13 +61,24 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'slay',
     title: 'Blood in the Water',
-    npc: "Your Default Attack swings on its own. Your skills wait for you: click one or press Q–Y, or give it a rule on the Skills page and it'll fire by itself. Kill a few.",
+    npc: "See that? Your Default Attack swings by itself, so you can stand there and let it work. Kill a few.",
     objective: 'Slay monsters',
     target: 3,
     highlight: [],
     match: (e) => (e.t === 'kill' ? 1 : 0),
     reward: { gold: 20 },
     rewardText: '20 gold',
+  },
+  {
+    id: 'use_skill',
+    title: 'Steel and Sorcery',
+    npc: "Your skills don't fire on their own yet. They sit on the bar under the fight, waiting for you. Click one, or press Q.",
+    objective: 'Use a skill from your skill bar',
+    target: 1,
+    highlight: ['skill-0', 'nav-combat'],
+    match: (e) => (e.t === 'skill' && e.slot >= 0 ? 1 : 0),
+    reward: { transmute: 1 },
+    rewardText: 'Orb of Transmutation',
   },
   {
     id: 'flask',
@@ -93,95 +103,37 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     rewardText: '30 gold',
   },
   {
-    id: 'mine',
-    title: 'Honest Work',
-    npc: "Fighting's not the only way to get strong. There's copper in the cliffs, and the anvil is hungry. Bring me fifteen ore — I'll throw in the wood.",
-    objective: 'Mine Copper Ore',
-    target: 15,
-    highlight: ['nav-mining', 'action-mine_copper'],
-    match: (e) => (e.t === 'produce' && e.skill === 'mining' ? (e.outputs.copper_ore ?? 0) : 0),
-    done: isClassic,
-    reward: { ash_log: 6 },
-    rewardText: '6 Ash Logs',
-  },
-  {
-    id: 'smith',
-    title: 'Forge a Weapon',
-    npc: "Ore and wood make gear. Open the Weapons tab on the Smithing page and hammer out the same kind you're holding — 15 ore, 6 logs, about ten seconds at the anvil. The better your Smithing, the better the item level.",
-    objective: 'Smith a weapon',
+    id: 'automate',
+    title: 'Let It Fight',
+    npc: "Clicking every swing gets old. On the Skills page, click a skill and give it a rule, and it fires by itself whenever the rule says. The suggested rule is a fine start.",
+    objective: 'Give a skill an automatic rule',
     target: 1,
-    highlight: ['nav-smithing', 'smith-tab-weapon'],
-    match: (e) => (e.t === 'produce' && e.baseId && isWeapon(e.baseId) ? 1 : 0),
-    done: isClassic,
-    reward: { transmute: 1 },
-    rewardText: 'Orb of Transmutation',
-  },
-  {
-    id: 'transmute',
-    title: 'A Touch of Magic',
-    npc: "Plain steel is boring. At the Crafting Bench, pick your new weapon from the bag and rub a Transmutation orb on it. It comes out blue, with a modifier or two. Don't ask me how that works.",
-    classicNpc: "Plain steel is boring. At the Crafting Bench, pick the weapon you're holding and rub a Transmutation orb on it. It comes out blue, with a modifier or two. Don't ask me how that works.",
-    objective: 'Transmute a weapon',
-    target: 1,
-    highlight: ['nav-bench', 'orb-transmute'],
-    match: (e, s) => {
-      if (e.t !== 'craft' || e.orbId !== 'transmute') return 0;
-      const item = findItem(s, e.uid);
-      return item && isWeapon(item.baseId) ? 1 : 0;
-    },
-    done: wieldsBlue,
+    highlight: ['nav-skills', 'suggested-rule'],
+    met: automated,
     reward: { augment: 2 },
     rewardText: '2 Orbs of Augmentation',
   },
   {
-    id: 'equip',
-    title: 'Dress for the Grave',
-    npc: 'Now put that blue blade in your hand: click it in your bag on the Equipment page. Those Augmentation orbs can add another modifier first, if it has room.',
-    objective: 'Equip your blue weapon',
+    id: 'pickup',
+    title: 'Spoils of the Shore',
+    npc: "The drowned drop what they carried, and it lies on the ground under the fight until you pick it up. Die once and it's at risk; die again and the tide takes it.",
+    objective: 'Pick up an item from the ground',
     target: 1,
-    highlight: ['nav-equipment'],
-    match: (e, s) => (e.t === 'equip' && wieldsBlue(s) ? 1 : 0),
-    done: wieldsBlue,
-    reward: { gold: 50 },
-    rewardText: '50 gold',
-  },
-  {
-    id: 'hideout',
-    title: 'A Proper Workshop',
-    npc: "Orbs work anywhere, but that bench of yours is barely a plank. Come back to your Hideout. I've left you what it takes to build it properly.",
-    objective: 'Open your Hideout',
-    target: 1,
-    visitPage: 'hideout',
-    highlight: ['nav-hideout'],
-    done: benchBuilt,
-    reward: stationDef('bench').levels[BENCH_BUILT_LEVEL - 1].cost,
-    rewardText: '1,500 gold, 200 Ash Logs, 200 Copper Ore',
-    classicRewardText: '5,500 gold',
-  },
-  {
-    id: 'build_bench',
-    title: 'Raise the Bench',
-    npc: 'Gold, logs, ore: all there. Scroll down to your stations and upgrade the Crafting Bench, and you can break down gear you no longer need.',
-    classicNpc: 'The gold is all there. Scroll down to your stations and upgrade the Crafting Bench, and you can break down gear you no longer need.',
-    objective: 'Build the Crafting Bench',
-    target: 1,
-    highlight: ['upgrade-bench'],
-    match: (e) => (e.t === 'stationUpgraded' && e.id === 'bench' && e.level >= BENCH_BUILT_LEVEL ? 1 : 0),
-    done: benchBuilt,
+    highlight: ['nav-combat', 'pick-up'],
+    met: (s) => s.inventory.length > 0,
     reward: {},
     rewardText: '',
   },
   {
-    id: 'salvage',
-    title: 'Nothing Wasted',
-    npc: "Your old weapon's still in your bag, and it's no use to anyone in one piece. Pick it at the Crafting Bench and salvage it. Arcane Dust is what orbs are made of — Alchemy turns one into the other.",
-    classicNpc: "Pick up something you don't need, pick it at the Crafting Bench and salvage it. Arcane Dust pays for the bench's better crafts.",
-    objective: 'Salvage an item',
+    id: 'equip',
+    title: 'Dress for the Grave',
+    npc: "Now wear it. Open the Equipment page, click the item in your bag and choose Equip. Hover over it first to compare it with what you have on.",
+    objective: 'Equip an item you found',
     target: 1,
-    highlight: ['nav-bench', 'salvage-item'],
-    match: (e) => (e.t === 'salvage' ? 1 : 0),
-    reward: { arcane_dust: 12 },
-    rewardText: '12 Arcane Dust',
+    highlight: ['nav-equipment'],
+    match: (e) => (e.t === 'equip' ? 1 : 0),
+    reward: { gold: 50 },
+    rewardText: '50 gold',
   },
   {
     id: 'passive',
@@ -197,7 +149,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'boss',
     title: 'The Bloated Gorger',
-    npc: "Something big lurks in the flats. Kill enough of its brood, then challenge it from the top of the Combat page. When it winds up, your guard skill should answer — or drink.",
+    npc: "Something big lurks on the shore. Kill enough of its brood, then challenge it from the top of the Combat page. When it winds up, your guard skill should answer — or drink.",
     objective: 'Defeat the Bloated Gorger',
     target: 1,
     highlight: ['nav-campaign', 'zone-mudflats'],

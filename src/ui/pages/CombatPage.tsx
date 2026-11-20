@@ -754,6 +754,7 @@ export function SkillBar({ s, d, fx }: { s: GameState; d: Derived; fx?: Fx }) {
         return (
           <Tooltip key={i} content={<GemTip gem={gem} state={s} />}>
             <button
+              data-tut={`skill-${i}`}
               className={`skill-btn ${noMana ? 'nomana' : ''} ${unusable ? 'unusable' : ''} ${c?.queued === i ? 'queued' : ''} ${flashed ? (flashed % 2 ? 'used-a' : 'used-b') : ''}`}
               style={{ ['--cd' as string]: `${cdPct * 360}deg` }}
               disabled={!c}

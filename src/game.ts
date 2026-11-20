@@ -18,7 +18,7 @@ import type { ClassId } from './data/classes';
 import { rewardText, TUTORIAL_STEPS } from './data/tutorial';
 import { NewerSaveError, serializeBundle } from './engine/save';
 import { newCharacterId, newGame, tick } from './engine/state';
-import { tutorialPage, withTutorial } from './engine/tutorial';
+import { tutorialCheck, tutorialPage, withTutorial } from './engine/tutorial';
 import { AppAccounts, isCloudAccount, type Account, type AuthProviderId } from './platform/accounts';
 import { reportError, setErrorUser } from './platform/errors';
 import { MAPS_PREVIEW } from './engine/maps';
@@ -998,6 +998,8 @@ class GameStore {
     // nothing changes mid catch-up (hotkeys, say), or the result would differ from one unbroken run
     if (this.catchUp) return undefined as T;
     const result = fn(this.state, this.ctx);
+    // some tutorial steps are finished by a change rather than an event (a skill given a rule)
+    if (this.screen === 'game') tutorialCheck(this.state, this.ctx);
     if (typeof result === 'string' && result) this.pushToast(result, 'warn');
     // the stash and the bag have to be written together, or a crash could lose or copy an item
     if (this.screen === 'game' && this.shelvesJson() !== this.savedShelves) this.save();
@@ -1136,7 +1138,7 @@ class GameStore {
       case 'tutorialStep': {
         const step = TUTORIAL_STEPS[e.step];
         this.addFeed(`Quest complete: ${step.title}${step.rewardText ? ` — ${rewardText(this.state, step)}` : ''}`, 'good');
-        this.pushToast(e.done ? 'Tutorial complete! Follow the coast — the Drowned Queen waits at its end.' : `Quest complete: ${step.title}`, 'good');
+        this.pushToast(e.done ? 'Tutorial complete! Follow the coast — the Drowned Storehouse waits at its end.' : `Quest complete: ${step.title}`, 'good');
         break;
       }
       case 'achievement': {

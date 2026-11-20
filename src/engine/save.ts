@@ -420,6 +420,16 @@ const MIGRATIONS: Record<number, Migration> = {
     raw.passivePointLevel = null;
     raw.passiveQuestPoints = null;
   },
+  49: (raw) => {
+    // the tutorial became combat basics only: the skilling and bench steps went, and Use a Skill, Automate and Pick Up
+    // came in. A character mid-tutorial moves to the new step that covers the same ground, or the next one after it.
+    const tut = raw.tutorial as { step: number; progress?: number; done?: boolean } | undefined;
+    if (!tut || tut.done) return;
+    const NEW_INDEX = [0, 1, 2, 4, 5, 6, 6, 6, 8, 9, 9, 9, 9, 10];
+    const moved = NEW_INDEX[tut.step] ?? tut.step;
+    if (moved !== tut.step || tut.step >= 3) tut.progress = 0;
+    tut.step = moved;
+  },
 };
 
 /**

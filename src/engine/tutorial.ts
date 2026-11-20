@@ -36,12 +36,18 @@ function advance(s: GameState, ctx: Ctx, amount: number): void {
 
 export function tutorialEvent(s: GameState, ctx: Ctx, e: GameEvent): void {
   const step = currentStep(s);
-  if (!step?.match) return;
-  advance(s, ctx, step.match(e, s));
+  if (step?.match) advance(s, ctx, step.match(e, s));
+}
+
+/** Finish a step the player has already done by how things stand, such as a skill they gave a rule. */
+export function tutorialCheck(s: GameState, ctx: Ctx): void {
+  passSettled(s);
+  const step = currentStep(s);
+  if (step?.met?.(s)) complete(s, ctx, step);
 }
 
 export function tutorialPage(s: GameState, ctx: Ctx, page: string): void {
-  passSettled(s); // the account may have built the bench on another character since this one last played
+  tutorialCheck(s, ctx);
   const step = currentStep(s);
   if (step?.visitPage === page) advance(s, ctx, 1);
 }
