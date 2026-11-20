@@ -108,6 +108,11 @@ export function materialDef(id: string): MaterialDef {
   return d;
 }
 
+/** Whether an id names a material at all (a save or an older build can hold one that's gone). */
+export function isMaterial(id: string): boolean {
+  return !!BY_ID[id];
+}
+
 export function isCurrency(id: string): boolean {
   return BY_ID[id]?.kind === 'currency';
 }

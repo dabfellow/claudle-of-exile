@@ -466,6 +466,16 @@ export function CharacterSelect() {
               {isCloudAccount(game.account) ? 'Sign out' : 'Title'}
             </button>
           </div>
+          {game.notice && (
+            <div className="card" role="alert" style={{ borderColor: 'var(--warn, #d9a441)' }}>
+              <div className="row wrap">
+                <span style={{ flex: 1 }}>{game.notice}</span>
+                <button className="btn sm" onClick={() => game.dismissNotice()}>
+                  OK
+                </button>
+              </div>
+            </div>
+          )}
           {game.guestCharacters.length > 0 && (
             <div className="card guest-banner">
               <div>

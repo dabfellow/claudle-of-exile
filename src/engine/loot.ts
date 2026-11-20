@@ -15,7 +15,7 @@ import { dropItem } from './storage';
 import { createItem, createUnique, droppableBases, salvageValue, itemMatchesClass } from './items';
 import { evaluateLootFilter, shouldSalvageByFilter } from './lootFilter';
 import { HARD_BOSSES, UBER_BOSSES, uniqueMapDef } from '../data/maps';
-import { runModifiers } from './maps';
+import { addMaps, runModifiers } from './maps';
 import { chance, pick, pickWeighted, rInt } from './rng';
 import type { Derived } from './stats';
 import type { GameState, Item, MonsterInstance, Rarity } from './types';
@@ -159,7 +159,10 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
 
     if (s.maps.run && (s.account.hideout.map_device ?? 1) >= 6 && chance(rng, 0.15)) {
       if (chance(rng, 0.5)) {
-        giveCurrency(`map_t${s.maps.run.tier}`, 1);
+        // into the map supply, where it can be run (it used to go to the bank under a name nothing knew)
+        addMaps(s, s.maps.run.tier, 1);
+        s.maps.tally.mapsFound += 1;
+        ctx.emit({ t: 'info', text: 'Pinnacle Conduit: the Map Boss dropped an extra Map', tone: 'good' });
       } else {
         giveCurrency(pick(rng, ['uber_key_1', 'uber_key_2', 'uber_key_3']), 1);
       }

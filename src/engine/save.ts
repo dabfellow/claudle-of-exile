@@ -12,6 +12,7 @@ import { FLASK_SLOTS } from '../data/flasks';
 import { UNIQUE_MAPS } from '../data/maps';
 import { ZONES } from '../data/zones';
 import { settleGems } from './gems';
+import { settleItemMarks } from './items';
 import { newExpeditionState, settleExpedition } from './expedition';
 import { newHeistState, settleHeist } from './heist';
 import { settleMaps } from './maps';
@@ -458,6 +459,7 @@ export function deserialize(json: string): GameState {
     }
     while (s.flaskSlots.length < FLASK_SLOTS) s.flaskSlots.push(null);
   }
+  for (const item of [...(s.inventory ?? []), ...(s.ground ?? []), ...(s.offlineHaul ?? []), ...Object.values(s.equipment ?? {})]) settleItemMarks(item);
   unlockReachedZones(s);
   settleGems(s);
   settleMaps(s);

@@ -355,6 +355,11 @@ export class CloudSaveStore implements SaveStore {
     this.onConflict?.(id);
   }
 
+  /** This session's uploads of the character are being refused: another device's copy is the real one. */
+  isConflicted(id: string): boolean {
+    return this.conflicted.has(id);
+  }
+
   private accountRow(realm: Realm) {
     return `${ACCOUNT_ROW_PREFIX}${realm}:${this.userId}`;
   }

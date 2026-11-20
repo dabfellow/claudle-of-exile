@@ -5,7 +5,7 @@ import { essenceDef, fossilDef, modBias, SEAL, WAX } from '../data/craftMats';
 import { WHETSTONE } from '../data/expedition';
 import { BENCH_BUILT_LEVEL, BENCH_CRAFTS, type BenchCraft } from '../data/hideout';
 import type { Ctx } from './context';
-import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, rollUnwrittenNotableIndex, salvageValue, spawnWeight, type ModBias } from './items';
+import { addFixedMod, addRandomMod, allMods, itemName, maxAffixes, modCount, openKinds, rareName, rerollMods, rollUnwrittenNotableIndex, salvageValue, settleItemMarks, spawnWeight, type ModBias } from './items';
 import { pick, rInt, type Rng } from './rng';
 import { canAfford, hasItem, payCraftCost } from './bank';
 import type { GameState, Item, RolledMod } from './types';
@@ -15,6 +15,9 @@ export interface OrbDef {
   /** `bias` comes from a Fossil; only orbs that roll new modifiers use it (FOSSIL_ORBS). `keep` comes from a Forger's Seal (SEAL_ORBS) */
   apply(item: Item, rng: Rng, bias?: ModBias, keep?: RolledMod): void;
 }
+
+/** Exile's Doom Sigil: a Doom Tier value is 30% above what the top tier rolled. */
+const elevateValue = (v: number) => Math.max(1, Math.round(v * 1.3));
 
 const notUnique = (item: Item) => (item.rarity === 'unique' ? 'Cannot modify unique items' : null);
 
@@ -180,6 +183,8 @@ export const ORBS: Record<string, OrbDef> = {
         const a = affixDef(m.affixId);
         if (a.tiers[m.tier]?.ranges?.length) {
           m.values = a.tiers[m.tier].ranges.map(([lo, hi]) => rInt(rng, lo, hi));
+          // a Doom Tier modifier rerolls inside its raised range, or a Divine would undo the Sigil
+          if (m.elevated) m.values = m.values.map(elevateValue);
         }
       }
     },
@@ -224,7 +229,7 @@ export const ORBS: Record<string, OrbDef> = {
       const target = t1Mods[rInt(rng, 0, t1Mods.length - 1)];
       target.elevated = true;
       i.elevated = target.affixId;
-      target.values = target.values.map((v) => Math.max(1, Math.round(v * 1.3)));
+      target.values = target.values.map(elevateValue);
     },
   },
   architect_doom_sigil: {
@@ -308,6 +313,8 @@ export function applyOrb(s: GameState, ctx: Ctx, orbId: string, uid: number, fos
   const item = findItem(s, uid)!;
   const dust = tinkerDustCost(s, orbId, item);
   ORBS[orbId].apply(item, ctx.rng, fossilId ? modBias(fossilId) : undefined, sealed ? allMods(item).find((m) => m.affixId === sealed) : undefined);
+  // a marked modifier that an orb removed takes its mark with it, so the item can be fractured or elevated again
+  settleItemMarks(item);
   if (orbId === 'divine' && item.rarity === 'unique') {
     for (const m of allMods(item)) {
       if (m.affixId === 'u_unwritten_notable' && m.affixId !== sealed) {

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { classDef } from '../data/classes';
 import { CRAFT_STEP_MS } from '../data/hideout';
 import { heistJob } from '../data/heist';
-import { materialDef } from '../data/materials';
+import { isMaterial, materialDef } from '../data/materials';
 import { actionDef, SKILLS } from '../data/skills';
 import { zoneDef } from '../data/zones';
 import { queueSkill, retreat, useFlask } from '../engine/combat';
@@ -423,6 +423,8 @@ function LootRow({ l }: { l: LootLine }) {
       </li>
     );
   }
+  // a drop this build has no name for must not take the whole game down with it
+  if (!isMaterial(l.currencyId!)) return <li className="feed-item loot">{l.currencyId}</li>;
   return (
     <li className="feed-item loot">
       <MatIcon id={l.currencyId!} size={13} /> <span style={{ color: 'var(--currency)' }}>{materialDef(l.currencyId!).name}</span>

@@ -262,7 +262,9 @@ describe('maps', () => {
     }
     keys = (s.account.bank.uber_key_1 ?? 0) + (s.account.bank.uber_key_2 ?? 0) + (s.account.bank.uber_key_3 ?? 0);
     expect(keys).toBeGreaterThan(10);
-    expect(s.account.bank.fractured_orb ?? 0).toBeGreaterThan(5);
+    // the orb the Crafting Bench spends, not a look-alike
+    expect(s.account.bank.fractured ?? 0).toBeGreaterThan(5);
+    expect(s.account.bank.fractured_orb).toBeUndefined();
 
     s.maps.run!.bossDown = true;
     mapStep(s, c);

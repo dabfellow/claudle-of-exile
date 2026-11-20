@@ -10,7 +10,15 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'If you play the same character on a second device, the first device now stops and tells you, instead of carrying on with progress it could never save.',
+  'A Hardcore death on a device that was out of date no longer deletes the character.',
+  'Admin gifts and returned market items that arrived while the game was catching up on time away are no longer lost.',
+  'Fractured Orbs from Doomed Maps can now be used at the Crafting Bench. Any you already found have been converted.',
+  'Tier 5 gear that drops with a fractured modifier now truly keeps it through Chaos Orbs, and rerolling no longer adds a fake fractured mark. Older items are corrected when you load.',
+  "The Map Device's Pinnacle Conduit bonus map now goes into your map supply (maps it gave before are moved there), and it can no longer blank the screen.",
+  "A Divine Orb no longer undoes an Exile's Doom Sigil: a Doom Tier modifier rerolls within its raised range.",
+];
 
 export const NEWS: NewsEntry[] = [
   {

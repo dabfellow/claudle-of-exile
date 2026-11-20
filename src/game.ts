@@ -167,6 +167,8 @@ class GameStore {
   private tabs = new TabClaims((id, stale) => this.releaseCharacter(id, stale));
   /** the Hardcore character that just died */
   fallen: FallenCharacter | null = null;
+  /** why the player was sent back to character select; stays on that screen until dismissed */
+  notice: string | null = null;
   /** the shared hideout, Stash tabs and unlocks: the character's own realm in play, the standard one on every other screen */
   realm: AccountState = freshAccount();
   /** the account as last written, to tell when it has changed */
@@ -376,6 +378,7 @@ class GameStore {
         this.sync = st;
         this.notify();
       };
+      this.watchCloud(cloud);
       this.sync = cloud.status;
       this.saves = cloud;
       const guest = this.accounts.guestAccount();
@@ -394,6 +397,27 @@ class GameStore {
     await this.openRealm();
     // a signed-in player sees their account and presses Play; a demo has no account to show
     this.setScreen(account.provider === 'demo' ? (this.characters.length ? 'select' : 'create') : 'menu');
+  }
+
+  /** A device whose uploads are refused stops playing, so nothing more is played onto a copy that can't be saved. */
+  private watchCloud(cloud: CloudSaveStore) {
+    cloud.onConflict = (id) => this.onSaveConflict(id);
+  }
+
+  /** Another device saved this character after this one last loaded it: its copy is the real one now. */
+  private onSaveConflict(id: string) {
+    if (this.sandbox || this.screen !== 'game' || this.state.character.id !== id) return;
+    this.stopLoop();
+    this.catchUp = null;
+    this.catchUpListeners.forEach((l) => l());
+    this.notice = `${this.state.character.name} was played on another device after this one last loaded it, so this device stopped. Open the character again to carry on from the newest save.`;
+    this.setScreen('select');
+    void this.switchRealm(STANDARD_REALM).then(() => this.refreshCharacters());
+  }
+
+  dismissNotice() {
+    this.notice = null;
+    this.notify();
   }
 
   /** From the account screen: on to the characters, or straight to making one. */
@@ -582,16 +606,19 @@ class GameStore {
   }
 
   /** Hardcore: the character is gone, with its bag and gear. A Solo Self-Found one takes its stash and hideout too. */
-  private async forget(s: GameState) {
+  private async forget(s: GameState): Promise<boolean> {
     const realm = realmOf(s.character);
     try {
       // the fallen mark first: if the delete fails, the next attempt to play it finishes the job
       await this.saves?.save(s);
+      // this device's copy was out of date: it died on a copy the cloud had already refused, so the real one lives
+      if (this.saves instanceof CloudSaveStore && this.saves.isConflicted(s.character.id)) return false;
       await this.saves?.remove(s.character.id);
       if (soloRealm(realm)) await this.saves?.removeAccount(realm);
     } catch (err) {
       reportError(err, { where: 'forget' });
     }
+    return true;
   }
 
   private mourn(s: GameState) {
@@ -612,9 +639,14 @@ class GameStore {
     s.lastSaved = Date.now();
     this.saveRealm();
     this.mourn(s);
-    await this.forget(s);
+    const gone = await this.forget(s);
     await this.switchRealm(STANDARD_REALM);
     await this.refreshCharacters();
+    if (!gone) {
+      this.fallen = null;
+      this.notice = `${s.character.name} was played on another device after this one last loaded it, so the death here doesn't count. The character is safe at its newest save.`;
+      this.setScreen('select');
+    }
   }
 
   dismissFallen() {
@@ -681,6 +713,8 @@ class GameStore {
     this.offline = null;
     // a catch-up still running for the character being left is dropped (its save was kept as it was)
     this.catchUp = null;
+    this.catchUpListeners.forEach((l) => l());
+    this.notice = null;
     this.screen = 'game';
     this.startLoop();
     this.notify();
@@ -707,17 +741,38 @@ class GameStore {
   /** Steps waiting on the server, in this tab: marketSync leaves these alone. */
   private marketInFlight = new Set<string>();
 
+  /** Resolves once no catch-up on time away is running. */
+  private caughtUp(): Promise<void> {
+    if (!this.catchUp) return Promise.resolve();
+    return new Promise((resolve) => {
+      const off = this.subscribeCatchUp(() => {
+        if (this.catchUp) return;
+        off();
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * A change the server has already made its side of (a delivery handed over, a hold settled). act() drops changes
+   * during a catch-up, which would lose it for good, so this waits for the catch-up to finish first.
+   */
+  private async actWhenCaughtUp(fn: (s: GameState, ctx: Ctx) => void): Promise<void> {
+    await this.caughtUp();
+    this.act(fn);
+  }
+
   /** Send a step that has already taken something from the player. Returns why it failed, if it did. */
   private async marketSend(op: string, send: () => Promise<void>): Promise<string | null> {
     this.marketInFlight.add(op);
     try {
       await send();
-      this.act((s) => releaseHold(s, op, false));
+      await this.actWhenCaughtUp((s) => releaseHold(s, op, false));
       await this.marketCollect();
       return null;
     } catch (err) {
       if (isRefusal(err)) {
-        this.act((s) => releaseHold(s, op, true));
+        await this.actWhenCaughtUp((s) => releaseHold(s, op, true));
         return errorText(err);
       }
       return `Couldn't reach the market. What you sent is safe and will be sorted out when it's back.`;
@@ -771,9 +826,13 @@ class GameStore {
   private async marketCollect() {
     const api = this.marketTrader();
     if (!api) return;
+    // the server marks everything collected as it answers, so don't ask while a catch-up would drop the answer
+    await this.caughtUp();
     const rows = await api.collect();
     if (!rows.length) return;
-    this.act((s) => receiveDeliveries(s, rows));
+    await this.actWhenCaughtUp((s) => receiveDeliveries(s, rows));
+    // straight away: the server won't hand these out again
+    this.save();
     for (const row of rows.slice(0, 3)) this.addFeed(`Market: ${row.note}`, 'good');
     this.pushToast(rows.length === 1 ? `Market: ${rows[0].note}` : `Market: ${rows.length} things collected`, 'good');
   }
@@ -781,9 +840,10 @@ class GameStore {
   /** Compensation is also available before Act 1 and in SSF; the RPC only returns this account's realm. */
   async collectAdminCompensation(): Promise<void> {
     if (this.sandbox || !isCloudAccount(this.account)) return;
+    await this.caughtUp();
     const rows = await marketApi(this.realm.realm)?.collect();
     if (rows?.length) {
-      this.act((s) => receiveDeliveries(s, rows));
+      await this.actWhenCaughtUp((s) => receiveDeliveries(s, rows));
       this.save();
       this.pushToast(`${rows.length} deliveries collected`, 'good');
     } else this.pushToast('No deliveries waiting in this realm', 'info');
@@ -824,7 +884,7 @@ class GameStore {
       for (const hold of [...(this.realm.marketHolds ?? [])]) {
         if (this.marketInFlight.has(hold.op)) continue;
         const done = await api.opDone(hold.op);
-        this.act((s) => releaseHold(s, hold.op, !done));
+        await this.actWhenCaughtUp((s) => releaseHold(s, hold.op, !done));
       }
       await this.marketCollect();
     } catch {

@@ -107,7 +107,6 @@ export const CRAFT_MATERIALS: MaterialDef[] = [
   { id: MARKER, name: "Rogue's Marker", kind: 'contraband', color: '#c9a35a', value: 1, desc: 'Pays for Heist jobs and rogues. Earned by Thieving.' },
   { id: SEAL, name: "Forger's Seal", kind: 'contraband', color: '#b5473c', value: 60, desc: 'Spent with an Alteration, Chaos, Annulment or Divine: one modifier you pick is left alone.' },
   { id: WAX, name: "Locksmith's Wax", kind: 'contraband', color: '#d9c48a', value: 90, desc: 'Takes an impression of an item. Restore it any time to put the item back as it was.' },
-  { id: 'fractured_orb', name: 'Fractured Orb', kind: 'trophy', color: '#c08bff', value: 600, desc: 'Dropped in Doomed Maps. Used for top-end fracturing crafts.' },
   { id: 'marrow_key', name: 'Marrow Key', kind: 'trophy', color: '#b8a890', value: 400, desc: 'Opens the Map Device portal to Ossuar.' },
   { id: 'bell_key', name: 'Bell Key', kind: 'trophy', color: '#f2d14c', value: 400, desc: 'Opens the Map Device portal to Mother Vael.' },
   { id: 'abyssal_key', name: 'Abyssal Key', kind: 'trophy', color: '#5f8f9e', value: 400, desc: 'Opens the Map Device portal to The Undertow.' },

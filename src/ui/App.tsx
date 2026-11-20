@@ -88,7 +88,9 @@ function GameScreen() {
           <Content page={page} go={go} />
         </PageErrorBoundary>
       </main>
-      <Feed />
+      <PageErrorBoundary where="feed">
+        <Feed />
+      </PageErrorBoundary>
       <XpBar />
       <PinDock />
       <ItemMenuHost />
