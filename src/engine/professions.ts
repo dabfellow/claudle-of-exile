@@ -1,5 +1,6 @@
 import { ACTIONS, LEGACY_ACTION_PLACES } from '../data/skills';
 import { SITES, findDigs } from '../data/expedition';
+import { hasPassport, passportReason } from './expedition';
 import { HEIST_JOBS } from '../data/heist';
 import { RUNE_FAMILIES, RUNE_GRADES, runeDef } from '../data/runes';
 import { professionProject, type ProfessionProject, type ProfessionRequirement } from '../data/professionProjects';
@@ -60,6 +61,8 @@ export function settleProfessionProgress(s: GameState, legacy = false): void {
     if (a.batchMastery) continue; // These unlock through real mastery, never legacy access evidence.
     // New Woodcutting surveys did not exist in legacy saves; do not invent their access evidence.
     if ((a.skill === 'woodcutting' || a.skill === 'harvesting') && a.accomplishments?.length) continue;
+    // The Relic Site came with the Regional Trail: it opens by Passport only.
+    if (a.id === 'dig_reliquary') continue;
     const place = LEGACY_ACTION_PLACES[a.id];
     if (levelOf(a.skill, s.skills[a.skill]) >= a.level && (!place.area || s.unlockedZones.includes(place.area)) && (!place.gate || s.unlockedZones.includes(place.gate.zone))) p.legacyAccess[a.id] = true;
   }
@@ -101,6 +104,8 @@ export function settleProfessionRealmEvidence(s: GameState, account: AccountStat
 export function hasAccomplishment(s: GameState, id: string): boolean {
   const p = s.professionProgress;
   if (p.discoveries[id] || p.legacyAccess[id]) return true;
+  const passport = /^passport\.(dig_\w+)$/.exec(id);
+  if (passport) return hasPassport(s, passport[1]);
   const find = /^expedition\.(dig_\w+)\.(\d+)$/.exec(id);
   if (find) {
     const site = SITES.find((x) => x.id === find[1]);
@@ -129,6 +134,7 @@ export function professionAccessReason(s: GameState, req: ProfessionRequirement)
   if (missing) {
     const site = SITES.find((x) => missing === `expedition.${x.id}.0`);
     if (site) return `Requires the first discovery at ${site.name}`;
+    if (missing.startsWith('passport.')) return passportReason(missing.slice('passport.'.length));
     const runeMatch = /^rune_(\w+)_grade_(\d+)_practice$/.exec(missing);
     if (runeMatch) {
       const [, family, gradeStr] = runeMatch;

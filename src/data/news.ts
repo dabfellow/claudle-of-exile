@@ -10,7 +10,12 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Archaeology overhaul: the dig sites are now one Expedition Trail. Digging finds Clue Fragments, and three of them stamp your Expedition Passport for the next site. Hazard rises along the way. Any site you could already dig stays open.',
+  'Every site now has three layers you choose between. Surface is quick and gives the most Artifacts, Buried turns up rare components, and Bedrock is slow but gives Relic Fragments and Ancient Data. Staying on one layer builds Commitment, up to ×3 Ancient Data, and cave-ins knock some of it off.',
+  'New Relic Site at the end of the trail: The Sealed Reliquary (Archaeology 80). Its Bedrock holds Sealed Relics, and its first find guarantees one.',
+  'New Relic Forge tab: break a Sealed Relic\'s seal into one of seven legendary forms, spend Ancient Data to pick every modifier and its tier, and restore it as a named relic at item level 84.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

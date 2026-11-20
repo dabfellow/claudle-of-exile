@@ -23,7 +23,7 @@ describe('Phase 12 restoration', () => {
     expect(s.professionProgress.discoveries['expedition.dig_cairn.0']).toBe(true);
     expect(standing(s, 'giant')).toBe(1);
     expect(startSkillAction(s, ctx(), 'dig_cutting')).toBeNull();
-    work(s, 300 * 3500);
+    work(s, 300 * 3500 * 0.8); // 300 Surface digs
     expect(s.account.bank.survey_relic_fragment).toBe(5);
     startSkillAction(s, ctx(), 'sift_giant'); work(s, 50 * 10_000);
     // Independently produce the only supporting profession input.
@@ -48,7 +48,8 @@ describe('Phase 12 restoration', () => {
   it('keeps duplicate progress at bedrock, exchanges without standing, and cannot repeat free payment', () => {
     let s = make();
     s.expedition.dug.dig_cairn = findDigs(siteOf('dig_cairn')!)[2];
-    startSkillAction(s, ctx(), 'dig_cairn'); work(s, 300 * 3000);
+    // Bedrock digs take 1.5× as long and count three towards a fragment
+    startSkillAction(s, ctx(), 'dig_cairn'); work(s, 100 * 4500);
     expect(s.account.bank.giant_relic_fragment).toBe(5);
     const oldStanding = standing(s, 'giant');
     s = reload(s);

@@ -44,38 +44,47 @@ export interface SiteDef {
   color: string;
   /** one thing at the bottom of each stratum, in digging order */
   finds: [string, string, string];
+  /** 1 (safe) to 7: how often a trench caves in, and what that costs your Commitment */
+  hazard: number;
+  /** the Relic Site at the end of the trail: Artifacts of every people, Sealed Relics at Bedrock, no standing */
+  relic?: boolean;
 }
 
 export const SITES: SiteDef[] = [
   {
-    id: 'dig_cairn', name: "Giant's Cairn", culture: 'giant', level: 1, intervalMs: 3000, xp: 7, rate: 300, color: '#c9b58a',
+    id: 'dig_cairn', name: "Giant's Cairn", culture: 'giant', level: 1, intervalMs: 3000, xp: 7, rate: 300, color: '#c9b58a', hazard: 1,
     desc: 'A heap of stones as tall as a chapel. It was a small grave, to the people who built it.',
     finds: ['A Thumb Bone', 'The Tally of Kills', 'A Child-sized Crown'],
   },
   {
-    id: 'dig_cutting', name: "Surveyors' Cutting", culture: 'surveyor', level: 12, intervalMs: 3500, xp: 15, rate: 350, color: '#d0a040',
+    id: 'dig_cutting', name: "Surveyors' Cutting", culture: 'surveyor', level: 12, intervalMs: 3500, xp: 15, rate: 350, color: '#d0a040', hazard: 2,
     desc: 'A straight trench through a glacier, cut by an empire that wanted to know what the mountains were worth.',
     finds: ['A Brass Sighting Rod', 'The Field Ledger', 'An Order to Withdraw'],
   },
   {
-    id: 'dig_barrow', name: 'Rime Barrow', culture: 'rime', level: 24, intervalMs: 4000, xp: 25, rate: 400, color: '#8fd0e8',
+    id: 'dig_barrow', name: 'Rime Barrow', culture: 'rime', level: 24, intervalMs: 4000, xp: 25, rate: 400, color: '#8fd0e8', hazard: 3,
     desc: 'The Rimebound gave their dead to the ice and took small idols in trade. The ice has kept its side of it.',
     finds: ['A Frozen Offering', 'The Unmelting Knife', 'A Face in the Ice'],
   },
   {
-    id: 'dig_colossus', name: 'The Fallen Colossus', culture: 'giant', level: 40, intervalMs: 4500, xp: 36, rate: 500, color: '#a89878',
+    id: 'dig_colossus', name: 'The Fallen Colossus', culture: 'giant', level: 40, intervalMs: 4500, xp: 36, rate: 500, color: '#a89878', hazard: 4,
     desc: 'What everyone took for a ridge has a ribcage. You dig in through the side.',
     finds: ['A Rib Tally', 'The Spear in the Spine', 'The Heart-Stone'],
   },
   {
-    id: 'dig_adit', name: 'The Imperial Adit', culture: 'surveyor', level: 55, intervalMs: 5000, xp: 46, rate: 600, color: '#b88a3a',
+    id: 'dig_adit', name: 'The Imperial Adit', culture: 'surveyor', level: 55, intervalMs: 5000, xp: 46, rate: 600, color: '#b88a3a', hazard: 5,
     desc: 'The Survey went deeper than its orders said. The last ledger entries are in a different hand.',
     finds: ['A Sealed Dispatch', 'The Deep Ledger', "The Last King's Writ"],
   },
   {
-    id: 'dig_heart', name: 'The Hollow Heart', culture: 'rime', level: 70, intervalMs: 5000, xp: 52, rate: 700, color: '#a8c8f8',
+    id: 'dig_heart', name: 'The Hollow Heart', culture: 'rime', level: 70, intervalMs: 5000, xp: 52, rate: 700, color: '#a8c8f8', hazard: 6,
     desc: 'The peaks are called hollow because something was taken out of them. This is where it was.',
     finds: ['A Shard of Old Winter', 'The Rimebound Oath', 'What the Ice Was For'],
+  },
+  {
+    id: 'dig_reliquary', name: 'The Sealed Reliquary', culture: 'giant', level: 80, intervalMs: 5500, xp: 57, rate: 800, color: '#e0b25c', hazard: 7, relic: true,
+    desc: 'All three peoples feared the same thing enough to bury it together. Each sealed one lock in their own hand.',
+    finds: ['A Door With Three Locks', 'The Shared Oath', 'The Thing They Buried Together'],
   },
 ];
 
@@ -83,11 +92,85 @@ export const SITES: SiteDef[] = [
 export const FIND_HOURS = [4, 16, 48];
 /** Each find you've passed at a site makes it pay this much more. */
 export const STRATUM_YIELD = 0.25;
-export const STRATA = ['Topsoil', 'Packed Scree', 'Old Ice', 'Bedrock'];
+/** Named by finds reached: the layer you've broken into, then a site worked out to the bottom. */
+export const STRATA = ['Surface', 'Buried', 'Bedrock', 'Fully excavated'];
 /** Standing with a people is one per find on their sites. */
 export const MAX_STANDING = FIND_HOURS.length * 2;
 
 const HOUR = 3_600_000;
+
+// ---------- the Regional Trail ----------
+
+/** Sites in trail order. Each one's Expedition Passport comes from Clue Fragments found at the one before. */
+export const TRAIL: string[] = ['dig_cairn', 'dig_cutting', 'dig_barrow', 'dig_colossus', 'dig_adit', 'dig_heart', 'dig_reliquary'];
+/** Clue Fragments that stamp the next site's Passport. */
+export const CLUES_PER_PASSPORT = 3;
+/** Base hours of digging at a site for each Clue Fragment, so three of them take as long as the first find. */
+export const CLUE_HOURS = FIND_HOURS[0] / CLUES_PER_PASSPORT;
+
+export function trailIndex(id: string): number {
+  return TRAIL.indexOf(id);
+}
+
+/** The site whose Clue Fragments stamp this one's Passport; none for the first site. */
+export function previousSite(id: string): SiteDef | undefined {
+  const i = trailIndex(id);
+  return i > 0 ? siteOf(TRAIL[i - 1]) : undefined;
+}
+
+export function nextSite(id: string): SiteDef | undefined {
+  const i = trailIndex(id);
+  return i >= 0 ? siteOf(TRAIL[i + 1]) : undefined;
+}
+
+// ---------- Layers of History ----------
+
+export interface LayerDef {
+  id: 'surface' | 'buried' | 'bedrock';
+  name: string;
+  blurb: string;
+  /** dig time, against the site's base interval */
+  speed: number;
+  /** Artifacts a dig turns up, against the site's base chance */
+  artifacts: number;
+  /** each dig counts this many towards the next Relic Fragment */
+  fragments: number;
+  /** Ancient Data an hour at full speed, before Commitment and the trail add to it */
+  dataPerHour: number;
+  /** rare components an hour */
+  componentsPerHour: number;
+  /** how much of the site's hazard reaches this deep */
+  hazard: number;
+  color: string;
+}
+
+export const LAYERS: LayerDef[] = [
+  { id: 'surface', name: 'Surface', blurb: 'Quick, shallow digging. The most Artifacts an hour.', speed: 0.8, artifacts: 1, fragments: 1, dataPerHour: 1.5, componentsPerHour: 0, hazard: 0.25, color: '#b98d5a' },
+  { id: 'buried', name: 'Buried', blurb: 'Steady work in packed earth. Turns up rare components.', speed: 1, artifacts: 1, fragments: 1, dataPerHour: 4, componentsPerHour: 1.5, hazard: 1, color: '#7f6a55' },
+  { id: 'bedrock', name: 'Bedrock', blurb: 'Slow, dangerous and deep. Relic Fragments and Ancient Data.', speed: 1.5, artifacts: 1.2, fragments: 3, dataPerHour: 10, componentsPerHour: 0, hazard: 2, color: '#4f5866' },
+];
+
+/** Ancient Data grows by this much for each hour spent on one layer without a break, up to the cap. */
+export const COMMIT_PER_HOUR = 1;
+export const COMMIT_MAX = 3;
+/** Cave-in chance a dig for each point of hazard, before the layer scales it. */
+export const CAVE_IN_PER_HAZARD = 0.0004;
+/** A cave-in costs this much of your Commitment, and turns up nothing. */
+export const CAVE_IN_LOSS = 0.25;
+/** Each step along the trail makes Ancient Data this much richer. */
+export const TRAIL_DATA_BONUS = 0.1;
+
+/** Rare components Buried digs turn up, by the people who left them. */
+export const BURIED_COMPONENTS: Record<CultureId, string[]> = {
+  giant: ['regal', 'alchemy'],
+  surveyor: ['scorched_fossil', 'frigid_fossil', 'metallic_fossil'],
+  rime: ['scour', 'regret'],
+};
+
+export const ANCIENT_DATA = 'ancient_data';
+export const SEALED_RELIC = 'sealed_relic';
+/** Base hours of Bedrock digging at the Relic Site for each Sealed Relic, beyond the one its first find guarantees. */
+export const SEALED_RELIC_HOURS = 12;
 
 /** Total digs at this site to reach each find. */
 export function findDigs(site: SiteDef): number[] {
@@ -173,5 +256,7 @@ export const EXPEDITION_MATERIALS: MaterialDef[] = [
   { id: 'restored_taboo_tablet', name: 'Restored Taboo Tablet', kind: 'component', color: '#d0a040', value: 0, desc: 'Restored after the first Adit discovery; component for the later Second Heresy project.' },
   { id: 'convergence_relic', name: 'Convergence Relic', kind: 'component', color: '#a8c8f8', value: 0, desc: 'Restored after the first Heart discovery; component for the later Sum of All Things project.' },
   ...CULTURES.map((c): MaterialDef => ({ id: c.artifact, name: c.artifactName, kind: 'artifact', color: c.color, value: 1, desc: `${c.merchant} trades these for goods. Dug up by Archaeology.` })),
+  { id: ANCIENT_DATA, name: 'Ancient Data', kind: 'component', color: '#7fd6c2', value: 0, desc: 'Records of the old peoples, pieced together from the dig. Spent at the Relic Forge to program a restored relic. Deeper layers and longer Commitment find more.' },
+  { id: SEALED_RELIC, name: 'Sealed Relic', kind: 'component', color: '#e0b25c', value: 0, desc: 'A legendary relic, corrupted and unidentified. Found at Bedrock in the Sealed Reliquary. Restore it at the Relic Forge.' },
   { id: WHETSTONE, name: 'Ancient Whetstone', kind: 'artifact', color: '#a8c8f8', value: 150, desc: 'Raises one modifier you pick by one tier, as far as the item level allows. One per item.' },
 ];

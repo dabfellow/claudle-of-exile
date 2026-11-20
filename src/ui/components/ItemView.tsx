@@ -1,3 +1,4 @@
+import { relicForm } from '../../data/relics';
 import { Fragment } from 'react';
 import { affixDef } from '../../data/affixes';
 import { attributeReq, baseDef, uniqueDef, WEAPON_FAMILIES, type UniqueDef } from '../../data/bases';
@@ -73,6 +74,7 @@ export function ItemTip({
       <div className="item-tip-head">
         <div>{name}</div>
         {(item.rarity === 'rare' || item.rarity === 'unique') && <div>{base.name}</div>}
+        {item.relic && <div className="relic-tag">✦ Restored Relic ✦</div>}
       </div>
       <div className="item-tip-body">
         <div className="muted small row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -154,6 +156,7 @@ export function ItemTip({
             <div className="unique-flavour">{unique.flavour}</div>
           </>
         )}
+        {item.relic && relicForm(item.relic) && <div className="relic-lore">{relicForm(item.relic)!.lore}</div>}
         {cmp && <Comparison cmp={cmp} />}
         {item.impression && <div className="dim small">Wax impression taken: can be restored at the Crafting Bench</div>}
         {!pinned && (

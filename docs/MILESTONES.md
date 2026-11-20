@@ -1,6 +1,6 @@
 # Roadmap and decisions
 
-Last updated 2026-11-16. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-17. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
@@ -31,6 +31,7 @@ Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 20. Thematic UI Dropdowns & Selectors: completed (2026-11-16); styled standard select menus across the entire game with dark fantasy styling, slate stone gradients, and glowing gold chevrons; moved Skill Combat Rules out of native dropdowns into categorized trigger pickers, tactile ailment chips, ground chips, and stepper controls; replaced Combat page targeting dropdowns with a compact interactive targeting popover; and redesigned the Greenhouse in Foraging into an interactive conservatory plot and crop cards with live cycle progress, seed discovery states, and direct planting buttons. All tests pass.
 21. In-line Mastery Batches: completed (2026-11-16); kept 5× and 50× mastery batch crafts directly in line with ordinary activities and hidden until unlocked by their required mastery level, removing the separate bottom card and ensuring Cartography production activities remain accessible. All tests and typecheck pass.
 22. Production Skill Separation (Smelting, Forging, Woodcrafting): completed (2026-11-16); split the monolithic Smithing discipline into three dedicated 1–100 production disciplines: Smelting (bars & alloys at the Smelter), Forging (martial weapons, shields, plate armour, jewellery at the Forge), and Woodcrafting (staves, wands, bows, bucklers, robes, leather armour at the Woodcrafting Bench). Updated refining pipelines with bars and planks, added dedicated Lv 15 profession tools (Smelter's Tongs, Wayfarer's Hammer, Carver's Drawknife) and a Lv 60 Master Artisan hybrid upgrade, integrated distinct hideout stations, established mastery milestones, and implemented full backward-compatible save migration parity. All 106 test files / 1,748 tests pass.
+23. Archaeology Overhaul (Regional Trail, Layers of History, Relic Forge): built 2026-11-17, unreleased. One ordered trail of seven sites with Clue Fragments and Expedition Passports, hazard 1–7 and cave-ins; Surface/Buried/Bedrock layers chosen per site with Commitment feeding Ancient Data; new Relic Site (The Sealed Reliquary, Lv 80) with Sealed Relics; Relic Forge tab to program seven legendary relic forms. Old saves keep every site they could dig. Tests, build and a desktop/phone playtest pass. Rules in [GAME.md](GAME.md) Archaeology row.
 
 ## Milestones
 
@@ -552,6 +553,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Ideas / later
 
+- Archaeology overhaul follow-ups (2026-11-17): the six Archaeology skill-tree nodes predate layers and could add hazard or Commitment effects; relic forms could gain one signature implicit each; achievements for Passports, the Reliquary and restored relics; a wiki guide for the trail, layers and forge. Buried components and Surface's +25% Artifacts an hour slightly raise Expedition income, so watch merchant pacing.
 - Offline summary wording follow-up (noticed in Phase03 playtest, 2026-11-14): the generic Items Found tile says equipment is waiting on Combat even when a completed profession tool has safely arrived in the inventory. Consider destination-aware wording in a later shared UI pass; reward delivery itself was verified.
 
 - Tree web follow-ups (2026-11-08): the tree is 1,573 nodes (71% of 2,208); the 50% target would mean cutting about 30 clusters and their notables, which needs a call on which. Paths now run through clusters, so keystones sit 26–49 nodes from a class start (was 14–20) and some routes must take a notable on the way; check if that feels too slow. The two point pools were audited and changed to 2 Travel / 3 Passive per level; playtest whether the calculated split feels right.
