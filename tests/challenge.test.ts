@@ -151,16 +151,13 @@ describe('Classic', () => {
     expect(s.account.hideout.bench).toBe(2);
   });
 
-  it('skips the tutorial steps that need skilling and pays the bench step in gold', () => {
+  it('plays the combat-only tutorial without skipping a step', () => {
     const s = classic();
     const ctx = ctxFor();
-    s.tutorial.step = TUTORIAL_STEPS.findIndex((t) => t.id === 'mine');
-    tutorialPage(s, ctx, 'nowhere');
-    expect(currentStep(s)?.id).toBe('transmute');
-    s.tutorial.step = TUTORIAL_STEPS.findIndex((t) => t.id === 'hideout');
-    const gold = s.account.bank.gold;
-    tutorialPage(s, ctx, 'hideout');
-    expect(s.account.bank.gold).toBe(gold + 4500);
-    expect(s.account.bank.copper_ore ?? 0).toBe(0);
+    for (const step of TUTORIAL_STEPS) {
+      s.tutorial.step = TUTORIAL_STEPS.indexOf(step);
+      tutorialPage(s, ctx, 'nowhere');
+      expect(currentStep(s)?.id).toBe(step.id);
+    }
   });
 });

@@ -10,6 +10,8 @@ Latest confirmed live release: **0.5.5, Veyrath World Map**, deployed 2026-11-19
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
+Intro tutorial reworked to combat basics only (2026-11-19, unreleased). Tests and typecheck pass. Open question for the owner: the old Hideout step gave the materials to build the Crafting Bench (1,500 gold, 200 Ash Logs, 200 Copper Ore), and that gift is gone for now.
+
 1. Finish the remaining Launch Guide Round 2 builds. Per-task mastery, mini-games, events and layered loot filters are released; the other Build items remain below.
 2. Pre-1.0 cleanup (2026-11-08, three parallel sessions). Part 1 fixed both known save-rollback paths (unreleased) and tidied this file. Owner service checks are confirmed done.
 3. Finish the Maps skill batch: all support effects now run (2026-11-08, unreleased); boss, offline and whole-build checks remain (see that section).
@@ -66,6 +68,7 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 - Campaign zone names (2026-11-19): Owner chose "A for most places, with B where a disaster became part of local memory." Most zones should have names locals would recognize from the place's geography, trade, history or everyday use. Use names that describe a disaster where the event plausibly became part of what locals call the place. The example names discussed are drafts.
 
 - Campaign zone and enemy design pass (2026-11-19): Review the names of all 70 zones across all seven acts against local geography and Veyrath lore. Give each recurring enemy group a distinct way to fight that fits its role and surroundings. Spread a handful of tougher packs through each act, using varied pressures such as critical hits, poison, ignite and elemental damage or resistance. The ice caster was an example of a coherent enemy identity. Owner chose "A for most packs, with one B-style encounter late in each act": most dangerous packs have several viable answers, including gear, flask or skill setup, and target priority where it fits. Each act has one late encounter on the main route where a typical underprepared character is likely to need better gear or flask setup.
+- Combat-only tutorial (2026-11-19): owner asked for the intro tutorial to teach only combat basics, since skilling is being overhauled and new systems need explaining. Eleven steps: World Map, Brinewick Shore, slay, use a skill, Life Flask, Mana Flask, give a skill an automatic rule, pick up loot from the ground, equip it, passive point, Bloated Gorger. Orb and gold rewards kept on combat steps. The skilling materials (6 Ash Logs, 12 Arcane Dust) and the Crafting Bench kit went with their steps.
 
 - Veyrath's surrounding ocean (2026-11-19): owner wants harsh, threatening water instead of pale cloud-like seas, with a restrained visual hint of an offshore force. Ordinary escape attempts fail; ships can disappear, while some crews may turn home under compulsion and lose or revise their memory of wanting to leave. Exceptional ships cross and return, consistent with Kroten's concealed devices. Precise memory effects, range, missing-crew fates and the boundary's response to the finale remain open. Preserve the approved land, navigation, fog and act banners; no sailing mechanic or campaign rebalance requested.
 
@@ -833,6 +836,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - Replaced Act 1's crisscrossing map links with hand-traced shared road sections — done 2026-11-19. Preserved progression, area coordinates and all other acts. Six map checks and typecheck pass; native preview inspected, live-browser acceptance outstanding. Unreleased.
 
 - Removed the World Map overview's page title, duplicate Veyrath heading and exploration instruction — done 2026-11-19. Overview now starts directly with the atlas; act close-up headers remain unchanged. Existing map view check passes; live browser visual acceptance remains unavailable. Unreleased.
+- Reworked the intro tutorial to combat basics only — done 2026-11-19. Removed the mining, smithing, transmute, Hideout, bench and salvage steps. Added Use a Skill, Let It Fight (automate a skill) and Spoils of the Shore (pick up ground loot). Equip now accepts any found gear. Tutorial text uses the Veyrath name Brinewick Shore, and "Show me" now points at the Act 1 banner. Saves mid-tutorial move to the matching step (save version 50).
 
 - Shipped **0.5.5, Veyrath World Map** — done 2026-11-19. Committed this session's campaign/map work, merged and preserved releases through 0.5.4, regenerated UNIQUES, passed all 113 files / 1,795 tests, and deployed with the guarded project command. Live version and login configuration confirmed. Latest ocean/fog native previews inspected; live UI hover acceptance remains outstanding. No additional version bump for this release record.
 

@@ -15,6 +15,7 @@ export const UPCOMING: string[] = [
   'All act maps now use hand-traced shared roads and passages, with sensible entrances and no duplicated cross-map links.',
   'Act 1 map routes now follow shared coastal, village and woodland paths instead of crisscrossing the artwork.',
   'The World Map overview now shows just the atlas, without extra headings or instruction text.',
+  "Old Brannoc's tutorial now teaches combat basics only: using skills, both flasks, setting a skill to fire on its own, picking up and wearing gear you find, the passive tree and the first boss. The mining, smithing and Crafting Bench steps are gone while skilling is reworked. Characters partway through pick up at the matching step.",
 ];
 
 export const NEWS: NewsEntry[] = [

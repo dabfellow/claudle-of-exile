@@ -57,7 +57,7 @@ export function LootPile({ s, pile }: { s: GameState; pile: Pile }) {
         {hidden > 0 && <span className="dim small">{hidden} hidden by your Quartermaster filter</span>}
         {atRisk > 0 && <span className="bad small">{atRisk} lost if you die again</span>}
         <span className="spacer" />
-        <button className="btn sm primary" disabled={!items.length || bagFull} onClick={() => take(items.map((i) => i.uid))}>
+        <button className="btn sm primary" data-tut={pile === 'ground' ? 'pick-up' : undefined} disabled={!items.length || bagFull} onClick={() => take(items.map((i) => i.uid))}>
           Pick up all
         </button>
         <button

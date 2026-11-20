@@ -251,6 +251,7 @@ export function WorldMap({ s, onOpen }: { s: GameState; onOpen: (act: number) =>
           const open = actRevealed(s, chapter.n);
           return <button key={chapter.n} className={`veyrath-ribbon ${chapter.n === cur ? 'is-current' : ''} ${chapter.n === 7 ? 'is-sea' : ''} ${hovered === chapter.n ? 'is-hovered' : ''} ${open ? '' : 'is-locked'}`}
             style={{ ...at(pos), ['--ribbon-turn' as string]: `${chapter.n % 2 ? -1 : 1}deg` }}
+            data-tut={`act-${chapter.n}`}
             aria-disabled={!open} aria-label={`Act ${chapter.n}: ${chapter.name}${open ? '' : ' — unexplored'}`}
             title={open ? `Explore Act ${chapter.n}` : `Finish Act ${chapter.n - 1} to reveal this region`}
             onClick={() => { if (open) onOpen(chapter.n); }}

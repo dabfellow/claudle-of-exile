@@ -65,7 +65,7 @@ describe('campaign story interactions', () => {
     old.version = 47;
     old.unlockedZones = ZONES.map((zone) => zone.id);
     old.bossesDefeated = ZONES.map((zone) => zone.id);
-    old.tutorial = { step: 4, progress: 1, done: false, skipped: false };
+    old.tutorial = { step: 2, progress: 1, done: false, skipped: false }; // a step the combat-tutorial migration leaves in place
     const raw = JSON.parse(serialize(old));
     delete raw.campaignQuests;
     const s = deserialize(JSON.stringify(raw));
