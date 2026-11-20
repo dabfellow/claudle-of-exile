@@ -61,6 +61,12 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 
 ## Decisions
 
+- Campaign enemy families (2026-11-19): Owner chose "mostly local enemies, with a few recognizable families returning where their presence tells part of the story." Draw each area's roster from its wildlife, inhabitants, work and exposure to the Creep. Where a family returns, keep a recognizable trait and give its local group a different way to fight. The Kroten expedition was the example discussed.
+
+- Campaign zone names (2026-11-19): Owner chose "A for most places, with B where a disaster became part of local memory." Most zones should have names locals would recognize from the place's geography, trade, history or everyday use. Use names that describe a disaster where the event plausibly became part of what locals call the place. The example names discussed are drafts.
+
+- Campaign zone and enemy design pass (2026-11-19): Review the names of all 70 zones across all seven acts against local geography and Veyrath lore. Give each recurring enemy group a distinct way to fight that fits its role and surroundings. Spread a handful of tougher packs through each act, using varied pressures such as critical hits, poison, ignite and elemental damage or resistance. The ice caster was an example of a coherent enemy identity. Owner chose "A for most packs, with one B-style encounter late in each act": most dangerous packs have several viable answers, including gear, flask or skill setup, and target priority where it fits. Each act has one late encounter on the main route where a typical underprepared character is likely to need better gear or flask setup.
+
 - Veyrath's surrounding ocean (2026-11-19): owner wants harsh, threatening water instead of pale cloud-like seas, with a restrained visual hint of an offshore force. Ordinary escape attempts fail; ships can disappear, while some crews may turn home under compulsion and lose or revise their memory of wanting to leave. Exceptional ships cross and return, consistent with Kroten's concealed devices. Precise memory effects, range, missing-crew fates and the boundary's response to the finale remain open. Preserve the approved land, navigation, fog and act banners; no sailing mechanic or campaign rebalance requested.
 
 - World Map exploration (2026-11-19): owner requested noticeable readable act banners, subtle region hover highlights, unlock-driven fog of war, and a map that fills the desktop center. Banners remain visible over fog; unknown acts cannot be entered until reached. Use character area unlocks/boss defeats, including the legacy finale, as saved exploration. Account-wide completion does not reveal fresh characters. Prior requests for extremely small act banners are superseded; place lettering remains unchanged.
@@ -622,6 +628,19 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [ ] Design and build the seven-act zone naming and enemy identity pass.
+  - Design direction settled 2026-11-19. The zone-by-zone roster and gameplay changes are pending.
+  - [ ] Review all 70 zone names in travel order against the story, regional map and journal. Keep names that fit, and update player-facing references when a name changes. Preserve stable zone and enemy IDs so existing saves keep their progress.
+  - [ ] Give each regular group a signature behavior tied to its origin. Make the behavior and the danger of tougher packs readable from enemy names, actions and combat feedback. Check campaign enemy changes for unintended effects on Maps or summons that borrow the same definitions.
+  - [ ] Place several dangerous packs per act. Put one stronger gear check late on each act's main route and make sure players have suitable gear, flask or skill options before reaching it. Draft pressures in act order: bleeding, critical hits, ignite, poison, cold spell pressure, lightning and shock, then sustained chaos damage. Confirm the mix against the authored roster and available counters.
+  - [ ] Playtest representative characters at the intended levels, including prepared and underprepared setups, and verify live and offline outcomes. Check that each late gear check is noticeable and that the other dangerous packs can be solved in several ways.
+
+- [x] Hand-trace sensible shared route links for Acts 2–7, matching the Act 1 cleanup — done 2026-11-19.
+  - Authored each road/passage section and each journey itinerary in `campaignRoutes.ts`; no curve fitting or automatic route choice. Includes previous-act entrances. Existing area positions, unlocks, branches and boss gates retained; shared sections draw once. Inspected native previews, with all journey connectivity, duplicate-stroke and strict-crossing checks plus typecheck passing. Live browser interaction remains unverified because the local preview is unavailable. Evidence: `output/playtest/act2-routes-preview.png` through `act7-routes-preview.png` and `acts-2-to-7-routes-preview.jpg`. Unreleased.
+
+- [x] Clean up Act 1 map links by tracing plausible paths in the painting by hand — done 2026-11-19.
+  - Retained area positions/progression. Replaced interpolated crossing links with explicit hand-placed paths along the coastal shelf, village approach, stone bridge, woodland road and ridge climb. Return journeys reuse shared sections drawn once; the cave approach skirts the harbour. Six map checks, including connectivity for every Act 1 journey, and typecheck pass. Native route preview inspected at `output/playtest/act1-routes-preview.png`; live browser interaction remains unverified because the local browser preview is unavailable. Temporary preview script removed. Unreleased.
+
 - [x] Replace the World Map's cloudy sea with a harsh ocean and a subtle offshore-boundary motif — done 2026-11-19.
   - Integrated `veyrath-world-bound-sea.webp`, preserving prior artwork and the map's 1536×1024 registration. Deep slate water, engraved waves, returning currents and sparse ship wakes suggest confinement. Psychological compulsion, uncertain memory effects, missing ships and exceptional crossings recorded in STORY. Existing banners, regions, hover and unlock fog retained. Native previews inspected; live browser acceptance remains outstanding. No release.
 
@@ -805,6 +824,12 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- Extended the Act 1 route cleanup to all six remaining acts — done 2026-11-19. Hand-traced shared roads, streets, switchbacks and underground passages with authored journey itineraries and sensible entrances. Native previews inspected; automated checks verify all links, no crossing strokes and no duplicate sections. Progression and positions unchanged; live-browser interaction remains unverified. Unreleased.
+
+- Replaced Act 1's crisscrossing map links with hand-traced shared road sections — done 2026-11-19. Preserved progression, area coordinates and all other acts. Six map checks and typecheck pass; native preview inspected, live-browser acceptance outstanding. Unreleased.
+
+- Removed the World Map overview's page title, duplicate Veyrath heading and exploration instruction — done 2026-11-19. Overview now starts directly with the atlas; act close-up headers remain unchanged. Existing map view check passes; live browser visual acceptance remains unavailable. Unreleased.
 
 - Shipped **0.5.5, Veyrath World Map** — done 2026-11-19. Committed this session's campaign/map work, merged and preserved releases through 0.5.4, regenerated UNIQUES, passed all 113 files / 1,795 tests, and deployed with the guarded project command. Live version and login configuration confirmed. Latest ocean/fog native previews inspected; live UI hover acceptance remains outstanding. No additional version bump for this release record.
 

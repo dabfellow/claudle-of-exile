@@ -10,7 +10,11 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'All act maps now use hand-traced shared roads and passages, with sensible entrances and no duplicated cross-map links.',
+  'Act 1 map routes now follow shared coastal, village and woodland paths instead of crisscrossing the artwork.',
+  'The World Map overview now shows just the atlas, without extra headings or instruction text.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

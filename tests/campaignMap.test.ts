@@ -75,4 +75,56 @@ describe('campaign map data', () => {
     expect(d).toContain(' 50 20');
     expect(d.endsWith('100 0')).toBe(true);
   });
+
+  it.each(ACTS.map((act) => act.n))('connects every Act %i journey through its shared hand-traced network', (act) => {
+    const map = ACT_MAPS[act];
+    const traces = map.traces!;
+    const realRoutes = zonesInAct(act).flatMap((zone) => roadsInto(zone).map((from) => `${from}>${zone.id}`));
+    for (const trace of traces) {
+      expect(trace.routes.length).toBeGreaterThan(0);
+      expect(trace.routes.every((route) => realRoutes.includes(route))).toBe(true);
+      expect(trace.d).not.toMatch(/[CQ]/);
+    }
+    for (const route of realRoutes) {
+      const neighbours = new Map<string, Set<string>>();
+      for (const trace of traces.filter((trace) => trace.routes.includes(route))) {
+        const points = [...trace.d.matchAll(/[ML]([\d.]+) ([\d.]+)/g)].map((match) => `${match[1]},${match[2]}`);
+        for (let i = 1; i < points.length; i++) {
+          for (const [a, b] of [[points[i - 1], points[i]], [points[i], points[i - 1]]]) {
+            if (!neighbours.has(a)) neighbours.set(a, new Set());
+            neighbours.get(a)!.add(b);
+          }
+        }
+      }
+      const [from, to] = route.split('>');
+      const visited = new Set<string>();
+      const start = map.zones[from] ?? map.entries.find((entry) => entry.from === from && entry.to === to)?.at;
+      expect(start, route).toBeDefined();
+      const pending = [start!.join(',')];
+      while (pending.length) {
+        const at = pending.pop()!;
+        if (visited.has(at)) continue;
+        visited.add(at);
+        pending.push(...neighbours.get(at) ?? []);
+      }
+      expect(visited.has(map.zones[to].join(',')), route).toBe(true);
+    }
+  });
+
+  it.each(ACTS.map((act) => act.n))('keeps Act %i road sections free of crossings and duplicate strokes', (act) => {
+    const segments = ACT_MAPS[act].traces!.flatMap((trace) => {
+      const points = [...trace.d.matchAll(/[ML]([\d.]+) ([\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+      return points.slice(1).map((end, i) => ({ a: points[i], b: end }));
+    });
+    const strokes = segments.map(({ a, b }) => [a.join(','), b.join(',')].sort().join(':'));
+    expect(new Set(strokes).size).toBe(strokes.length);
+    // Check strict intersections; intentional junctions at common endpoints are allowed.
+    const side = (a: number[], b: number[], c: number[]) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    for (let i = 0; i < segments.length; i++) for (let j = i + 1; j < segments.length; j++) {
+      const p = segments[i], q = segments[j];
+      const crosses = side(p.a, p.b, q.a) * side(p.a, p.b, q.b) < -1e-8 &&
+        side(q.a, q.b, p.a) * side(q.a, q.b, p.b) < -1e-8;
+      expect(crosses, `Act ${act}: ${JSON.stringify([p, q])}`).toBe(false);
+    }
+  });
 });
