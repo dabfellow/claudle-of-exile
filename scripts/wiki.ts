@@ -76,14 +76,14 @@ const TOOLS = 'Tools';
 const UPDATES = 'Updates';
 const SECTIONS: Section[] = [
   { slug: 'classes', name: 'Classes and ascendancies', blurb: 'The seven classes and twelve ascendancies.', group: CHARACTERS, icon: '♜', art: 'portraits/craftpix-con1.png' },
-  { slug: 'skills', name: 'Skill gems', blurb: 'Active skills: cost, cooldown, level and what they do.', group: CHARACTERS, icon: '✦', art: 'items/weapons/quintino-q34.png' },
-  { slug: 'supports', name: 'Support gems', blurb: 'Supports and which skills they fit.', group: CHARACTERS, icon: '◇', art: 'items/materials/woshi-gem.png' },
-  { slug: 'damage', name: 'Damage and ailments', blurb: 'Damage types, how a hit is worked out, and every ailment formula.', group: CHARACTERS, icon: '✹', art: 'items/weapons/weapons30-1.png' },
-  { slug: 'items', name: 'Item bases', blurb: 'Every weapon and armour base by slot.', group: EQUIPMENT, icon: '⛨', art: 'items/armor/set-30-helmet.png' },
-  { slug: 'uniques', name: 'Unique items', blurb: 'Unique items, their mods and where they drop.', group: EQUIPMENT, icon: '♛', art: 'items/weapons/pack3-bloodthirst.png' },
-  { slug: 'modifiers', name: 'Modifiers', blurb: 'Every rollable modifier and its tiers.', group: EQUIPMENT, icon: '⚒', art: 'items/currency/sn-blessed-orb.png' },
-  { slug: 'currency', name: 'Currency and materials', blurb: 'Orbs, crafting materials and gathered goods.', group: EQUIPMENT, icon: '◈', art: 'items/currency/codespree-copper-disk.png' },
-  { slug: 'acts', name: 'Acts and areas', blurb: 'Every act, area, monster and boss.', group: WORLD, icon: '⚔', art: 'items/weapons/quintino-q1.png' },
+  { slug: 'skills', name: 'Skill gems', blurb: 'Active skills: cost, cooldown, level and what they do.', group: CHARACTERS, icon: '✦', art: 'items/pixel/s-w-staff06-azure.png' },
+  { slug: 'supports', name: 'Support gems', blurb: 'Supports and which skills they fit.', group: CHARACTERS, icon: '◇', art: 'items/pixel/a-372.png' },
+  { slug: 'damage', name: 'Damage and ailments', blurb: 'Damage types, how a hit is worked out, and every ailment formula.', group: CHARACTERS, icon: '✹', art: 'items/pixel/a-20.png' },
+  { slug: 'items', name: 'Item bases', blurb: 'Every weapon and armour base by slot.', group: EQUIPMENT, icon: '⛨', art: 'items/pixel/a-175.png' },
+  { slug: 'uniques', name: 'Unique items', blurb: 'Unique items, their mods and where they drop.', group: EQUIPMENT, icon: '♛', art: 'items/pixel/a-1-crimson.png' },
+  { slug: 'modifiers', name: 'Modifiers', blurb: 'Every rollable modifier and its tiers.', group: EQUIPMENT, icon: '⚒', art: 'items/pixel/s-s-water07-cfadc5a-glow.png' },
+  { slug: 'currency', name: 'Currency and materials', blurb: 'Orbs, crafting materials and gathered goods.', group: EQUIPMENT, icon: '◈', art: 'items/pixel/s-s-water07-cd23c1e.png' },
+  { slug: 'acts', name: 'Acts and areas', blurb: 'Every act, area, monster and boss.', group: WORLD, icon: '⚔', art: 'items/pixel/a-4.png' },
   { slug: 'monsters', name: 'Monsters and bosses', blurb: 'Every monster and boss, with level, life and damage.', group: WORLD, icon: '☠', art: 'portraits/craftpix-con6.png' },
 ];
 /**
@@ -126,7 +126,7 @@ const PLANNED: Omit<Section, 'art'>[] = [
 ];
 const NAV_GROUPS = [CHARACTERS, EQUIPMENT, WORLD, IDLE, TOOLS, UPDATES];
 /** Game art the home page shows, copied next to the wiki pages. */
-const GUIDE_ART = 'items/armor/pack3-unblinking_tome.png';
+const GUIDE_ART = 'items/pixel/a-151-gold.png';
 const HERO_ART = 'zones/gegx-forest-night.webp';
 const usedArt = new Set<string>();
 const artUrl = (rel: string) => {

@@ -1,6 +1,6 @@
 # Roadmap and decisions
 
-Last updated 2026-11-19. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-20. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 Last updated 2026-11-17. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
@@ -9,7 +9,7 @@ Character inventories and the Guild Stash are implemented locally (2026-11-20). 
 
 Veyrath campaign is live in **0.5.5** (2026-11-19): 70 zones across seven fuller chapters, revised level bands, matching rewards/gem access, saved journal, world/regional paintings, territory navigation, readable banners, character-specific unlock fog and the harsh surrounding ocean. All 113 test files / 1,795 tests, typecheck and production build pass. Earlier desktop/390px campaign navigation checks passed 2026-11-18; the latest artwork/fog was inspected through native previews because the local browser stayed blank, so live hover/desktop acceptance remains open. Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
-Latest confirmed live release: **0.5.5, Veyrath World Map**, deployed 2026-11-19. Seven-act campaign and regional maps, saved act selection, readable navigation banners, territory highlighting, exploration fog and dark ocean artwork. All 1,795 tests and production build pass; deploy confirmed the live version and login configuration at https://dabfellow.party/path-of-idle/. Preserved preceding releases **0.5.4, Astrology**, **0.5.3, Agility**, **0.5.2, Heist Dossiers**, and **0.5.1, One Tree, One Currency** (including Rogue Roster). Latest live UI interaction check remains outstanding as described above.
+Latest confirmed live release: **0.5.8, Class Portraits**, deployed 2026-11-20: painted Craftpix portraits for all seven classes. Preceded by **0.5.7, New Item Art and Menu Frames**, deployed 2026-11-20: unified pixel item art, orb/rune/fossil/essence pictures, quiet Dark Ages UI frames. 1,861 tests and production build pass; deploy confirmed live version and login. Before it: **0.5.5, Veyrath World Map**, deployed 2026-11-19. Seven-act campaign and regional maps, saved act selection, readable navigation banners, territory highlighting, exploration fog and dark ocean artwork. All 1,795 tests and production build pass; deploy confirmed the live version and login configuration at https://dabfellow.party/path-of-idle/. Preserved preceding releases **0.5.4, Astrology**, **0.5.3, Agility**, **0.5.2, Heist Dossiers**, and **0.5.1, One Tree, One Currency** (including Rogue Roster). Latest live UI interaction check remains outstanding as described above.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
@@ -648,6 +648,14 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - [ ] Apply the Guild Stash database update and verify signed-in transfers before release.
   - Local browser and throwaway database checks pass. The live database has yet to receive the update.
 
+- [x] Free painted portraits for all 7 classes (character creator, character list, combat and hideout crest) — done 2026-11-20.
+  - Craftpix *Free RPG Fantasy Avatars* (owner wants free art only): Warrior 19, Ranger 28, Mage 23, Duelist 20, Templar 50, Shadow 21, Exile 32. The title and creator backdrop was already GegX's forest at night. Checked on desktop and 390px; tests and typecheck pass.
+- [x] Consistent item art: replaced the ~14-pack mix of item icons with one 32×32 pixel style — done 2026-11-19.
+  - Owner picked Anvil's RPG Icons with 7Soul's 496 RPG Icons filling gaps (7Soul given Anvil's outline), plus a Shikashi belt. 604 files in `src/assets/items/pixel/`, mapped in `src/ui/itemArt.ts`; every armour tier wears one Anvil set, recoloured per tier. Licences in `src/assets/CREDITS.md`.
+  - Orb follow-up (same day): currency, runes, fossils, essences, resins, shards, contraband and artifacts now have pictures, shown everywhere `MatIcon` is used plus currency pins, the Trader and Market prices.
+- [x] Themed menu frames: Hypnobius' Dark Ages UI 9-slice frames in `src/ui/theme-frames.css` — done 2026-11-19.
+  - Owner found the ornate frame everywhere too gaudy and too samey: ornate only on the login panel and account windows (`.title-card`; news, character and class cards plain); in game, plain dark frames at 1x on panels, a second dark frame on tooltips and toasts, nested panels plain. Small elements (buttons, tabs, item slots, skill tiles) keep their original slim borders; the pack's small grey frames looked like thick grey bands.
+
 - [x] Manual skill gem upgrades: no auto level-up, an Upgrade button on the Skills page, greyed out with the reason when the new level's character level or attribute isn't met — done 2026-11-19.
   - XP banks as before (capped at the next level only while that level is out of reach), one press per level. The sim player presses Upgrade itself. Playtested with a level 20 Warrior.
 - [ ] Design and build the seven-act zone naming and enemy identity pass.
@@ -870,6 +878,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - Checked live copper gathering and manual cross-character transfer in the desktop browser. Automated checks cover a miner and woodcutter supplying a dagger crafter, offline crafting stopping when personal inputs run out, a full material stack, old shared balances and cloud transfer save conflicts.
 
 - Manual skill gem upgrades with a greyed-out button when an upgrade would disable the skill — done 2026-11-19.
+- Cleanup (2026-11-19): removed every finished working folder and branch (local and GitHub), the scrapped skilling-polish and sim-rates work, playtest screenshots, old generated map drafts and five unused world-map images. Kept the full-size originals of the in-game map art in `output/imagegen/` (seven act maps and the bound-sea world map) for future edits. Older entries here and in VEYRATH-MAP.md that point at deleted drafts are history only.
 - Shipped **0.5.6** live 2026-11-19 (deploy confirmed version and login). Release 0.5.6 gathered every session's unshipped work (2026-11-19): skill upgrades, hand-traced act map routes, combat-only tutorial, one Inventory screen and loot filter rework, the Archaeology overhaul, and the security review fixes (single Fractured Orb, second-device lockout, Hardcore and gift fixes). Left out as superseded: the 17 Nov skilling-area visual polish (the live 19 Nov skill page redesign replaced it) and the 10 Nov sim-rates tooling (the simulator and pacing targets changed since). Both are still on their own branches.
 - Extended the Act 1 route cleanup to all six remaining acts — done 2026-11-19. Hand-traced shared roads, streets, switchbacks and underground passages with authored journey itineraries and sensible entrances. Native previews inspected; automated checks verify all links, no crossing strokes and no duplicate sections. Progression and positions unchanged; live-browser interaction remains unverified. Unreleased.
 
