@@ -9,7 +9,6 @@ import { errorText } from '../../platform/feedback';
 import { MARKET_OPEN, marketApi, type MarketFilters, type MarketListing, type MarketMode, type MarketScope } from '../../platform/market';
 import { refreshMarketLeftovers } from '../marketWindDown';
 import { Badge, EmptyState, fmt, fmtTime, MatIcon, PageHeader, Tabs, Tooltip } from '../components/common';
-import { Orb } from '../components/Icon';
 import { ItemTiles } from '../components/Inventory';
 import { ItemIcon, ItemTip } from '../components/ItemView';
 
@@ -25,7 +24,7 @@ const known = (l: MarketListing) => BASES.some((b) => b.id === l.item.baseId);
 function Price({ currency, amount }: { currency: string; amount: number }) {
   return (
     <span className="price-tag" title={money(currency)}>
-      {currency === 'gold' ? <MatIcon id="gold" size={14} /> : <Orb color={currencyDef(currency).color} size={14} />} {fmt(amount)}
+      <MatIcon id={currency} size={14} /> {fmt(amount)}
       {currency !== 'gold' && ` ${currencyDef(currency).short}`}
     </span>
   );
