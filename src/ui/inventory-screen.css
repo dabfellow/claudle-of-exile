@@ -156,6 +156,8 @@
   gap: var(--s-3);
 }
 
+.inventory-guild-stock { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+
 .guild-stash-detail {
   position: sticky;
   top: var(--s-3);

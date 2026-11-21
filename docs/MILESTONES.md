@@ -915,6 +915,10 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
+- [x] Tidy the Inventory layout — done 2026-11-20. The Stash sits under Inventory and keeps the same height across tabs. Gear sets live with worn gear, and item actions open below gear.
+
+- [x] Make shared Uniques and maps easier to find — done 2026-11-20. Inventory links to the corresponding Guild Stash lists, the personal Stash has a Maps tab, and the Map Device points to maps held by the Guild Stash. The session tested withdrawals from legacy shared stock and added regression coverage.
+
 - [x] Dedicated Guild Stash page with click-to-send actions in Inventory — done 2026-11-20. Desktop and phone browser checks covered local transfers, including withdrawals on a second demo character.
 
 - [x] Update combat pacing, spawn countdown and matchup — done 2026-11-20. Walking, Sprinting and Fleeing change pack arrival speed and crowd size. Entry countdowns are on the hexes. Targeting is by skills, automation is by flasks, and the matchup shows current Life and measured DPS. Verified on desktop and phone.

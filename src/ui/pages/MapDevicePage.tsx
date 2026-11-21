@@ -1017,7 +1017,7 @@ function defaultLoaded(s: GameState, tab: DeviceTab): Loaded | null {
 
 const TAB_KINDS: Record<DeviceTab, Loaded['kind'][]> = { maps: ['tier', 'unique'], doomed: ['doomed'], bosses: ['hard', 'uber'], atlas: [] };
 
-function MapDeviceContent({ go }: { go: (p: Page) => void }) {
+function MapDeviceContent({ go, openGuildMaps }: { go: (p: Page) => void; openGuildMaps: () => void }) {
   const s = useGame();
   const [tab, setTab] = useState<DeviceTab>('maps');
   const [loaded, setLoaded] = useState<Loaded | null>(() => defaultLoaded(s, 'maps'));
@@ -1031,6 +1031,7 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
   const earned = atlasPointsEarned(s);
   const left = atlasPointsLeft(s);
   const totalHeld = totalMapsHeld(s);
+  const guildMaps = Object.values(s.account.maps ?? {}).reduce((sum, count) => sum + count, 0);
   const totalDoomed = DOOMED_TIERS.reduce((sum, d) => sum + doomedHeld(s, d.tier), 0);
   const totalKeys = HARD_BOSSES.reduce((sum, hb) => sum + (s.storage.bank[hb.keyId] ?? 0), 0) + UBER_BOSSES.reduce((sum, ub) => sum + (s.storage.bank[ub.keyId] ?? 0), 0);
   const pickTab = (t: DeviceTab) => {
@@ -1051,9 +1052,15 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
   return (
     <div className="page md-page">
       <PageHeader title="Map Device" actions={MAPS_PREVIEW.enabled ? <Badge tone="neutral">Dev preview</Badge> : undefined}>
-        Load a map into the device and open a portal. Maps are shared across your realm. Each run borrows a campaign zone’s visuals, monsters and boss mechanics at random, and adds its tier’s permanent danger and reward identity.
+        Load a map from this character’s supply and open a portal. Each run borrows a campaign zone’s visuals, monsters and boss mechanics and adds its tier’s dangers and rewards.
       </PageHeader>
 
+      {guildMaps > 0 && (
+        <div className="card inventory-guild-stock">
+          <span>You have {fmt(guildMaps)} maps in the Guild Stash. Withdraw them to run them here.</span>
+          <button className="btn sm" onClick={openGuildMaps}>Open Guild Maps</button>
+        </div>
+      )}
       {tab !== 'atlas' && <DeviceStage loaded={loaded} picked={picked} onOpened={() => setPicked(false)} go={go} />}
 
       <div className="md-tabs" role="tablist">
@@ -1069,8 +1076,8 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
         <>
           {totalHeld <= 0 && !run && (
             <div className="card">
-              <EmptyState icon={<GameIcon name="map" size={32} color="var(--dim)" />} title="No maps held">
-                Tier 1 maps drop in level {MAP_DROPS.campaignMinLevel}+ campaign zones, can be drawn with Cartography, and the Last King tops your realm up to {MAP_DROPS.kingTopUp} maps when beaten.
+              <EmptyState icon={<GameIcon name="map" size={32} color="var(--dim)" />} title="No tier maps held">
+                Tier 1 maps drop in level {MAP_DROPS.campaignMinLevel}+ campaign zones and can be drawn with Cartography. Your realm’s first campaign clear grants a starter supply to the character who beats it.
               </EmptyState>
             </div>
           )}
@@ -1150,9 +1157,9 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
 }
 
 /** Maps: endgame areas opened at the Map Device once the campaign is complete. */
-export function MapDevicePage({ go }: { go: (p: Page) => void }) {
+export function MapDevicePage({ go, openGuildMaps }: { go: (p: Page) => void; openGuildMaps: () => void }) {
   const s = useGame();
-  if (!stationLockReason(s, 'map_device')) return <MapDeviceContent go={go} />;
+  if (!stationLockReason(s, 'map_device')) return <MapDeviceContent go={go} openGuildMaps={openGuildMaps} />;
   const device = stationDef('map_device');
   return (
     <div className="page">

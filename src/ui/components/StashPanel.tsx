@@ -107,6 +107,7 @@ export function StashPanel({
   const [gemSearch, setGemSearch] = useState('');
   const gemHit = (name: string) => name.toLowerCase().includes(gemSearch.trim().toLowerCase());
   const here = Math.min(page, s.storage.stash.length - 1);
+  const maps = Object.entries(s.maps.stock).filter(([, count]) => count > 0);
   const tabs: TabDef<Tab>[] = [
     { id: 'gear', label: 'Gear', count: stashedItems(s).length - s.storage.uniqueStash.length },
     { id: 'uniques', label: 'Uniques', count: s.storage.uniqueStash.length },
@@ -114,9 +115,8 @@ export function StashPanel({
     { id: 'materials', label: 'Materials' },
     { id: 'gems', label: 'Gems', count: s.storage.gems.length + s.storage.supportGems.length },
     { id: 'flasks', label: 'Flasks', count: s.storage.flaskStash.length },
-    { id: 'maps', label: 'Maps' },
+    { id: 'maps', label: 'Maps', count: maps.reduce((total, [, count]) => total + count, 0) },
   ];
-  const maps = Object.entries(s.maps.stock).filter(([, count]) => count > 0);
   const clearable = clearableGems(s).length;
   return (
     <div className="card stash-card">

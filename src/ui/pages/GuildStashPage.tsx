@@ -17,10 +17,10 @@ import type { Page } from '../Layout';
 import '../inventory-screen.css';
 
 const CATEGORIES = [
-  { id: 'gear', label: 'Gear' }, { id: 'bank', label: 'Materials & currency' },
+  { id: 'gear', label: 'Gear' }, { id: 'uniques', label: 'Uniques' }, { id: 'bank', label: 'Materials & currency' },
   { id: 'gems', label: 'Gems' }, { id: 'flaskStash', label: 'Flasks' }, { id: 'maps', label: 'Maps' },
 ] as const;
-type Category = typeof CATEGORIES[number]['id'];
+export type GuildStashCategory = typeof CATEGORIES[number]['id'];
 type Entry = {
   name: string;
   icon: ReactNode;
@@ -36,16 +36,17 @@ function entryKey(entry: Entry): string {
   return `${entry.kind}:${'uid' in entry ? entry.uid : entry.id}`;
 }
 
-export function GuildStashPage({ go }: { go: (page: Page) => void }) {
+export function GuildStashPage({ go, initialCategory }: { go: (page: Page) => void; initialCategory: GuildStashCategory }) {
   const s = useGame();
-  const [category, setCategory] = useState<Category>('gear');
+  const [category, setCategory] = useState(initialCategory);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const { bank, maps, gems, supportGems, flaskStash } = s.account;
   let entries: Entry[];
   switch (category) {
     case 'gear':
-      entries = guildGear(s).map((item) => ({
+    case 'uniques':
+      entries = guildGear(s).filter((item) => (item.rarity === 'unique') === (category === 'uniques')).map((item) => ({
         kind: 'gear', uid: item.uid, name: itemName(item), icon: <ItemIcon item={item} size={34} />,
         detail: <ItemTip item={item} state={s} pinned />,
       }));

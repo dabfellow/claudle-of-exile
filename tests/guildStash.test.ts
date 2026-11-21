@@ -5,6 +5,8 @@ import { fillAccount, freshAccount } from '../src/engine/account';
 import { MATERIAL_CAP } from '../src/engine/bank';
 import { makeCtx } from '../src/engine/context';
 import { transferGuild } from '../src/engine/guildStash';
+import { createUnique } from '../src/engine/items';
+import { doomedHeld, mapsHeld, uniqueMapHeld } from '../src/engine/maps';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -78,6 +80,36 @@ describe('personal supplies and Guild Stash', () => {
     expect(realm.bank.ash_log).toBe(3_000);
     expect(deserialize(serialize(loaded)).storage.bank.ash_log).toBe(5_000);
     expect(realm.maps).toEqual({ map_t1: 7 });
+  });
+
+  it('keeps both copies of shared Unique gear and makes all three kinds of old maps usable after withdrawal', () => {
+    const veteran = newGame(1);
+    const first = createUnique(veteran, 'old_covenant', 30);
+    const second = createUnique(veteran, 'old_covenant', 35);
+    const stock = { map_t8: 12, doomed_t1: 3, umap_cowards_trial: 2 };
+    const realm = fillAccount({ ...veteran.account, uniqueStash: [first, second], maps: stock });
+    const old = JSON.parse(serialize(veteran));
+    old.version = 50;
+    delete old.storage;
+    old.maps.stock = stock;
+    const loaded = deserialize(JSON.stringify(old));
+    loaded.account = realm;
+
+    expect(loaded.maps.stock).toEqual({});
+    expect(loaded.storage.uniqueStash).toEqual([]);
+    expect(realm.uniqueStash).toEqual([first, second]);
+    expect(transferGuild(loaded, { direction: 'withdraw', kind: 'gear', uid: second.uid })).toBeNull();
+    for (const id of Object.keys(stock)) {
+      expect(transferGuild(loaded, { direction: 'withdraw', kind: 'maps', id, quantity: 1 })).toBeNull();
+    }
+
+    const reloaded = deserialize(serialize(loaded));
+    expect(reloaded.storage.uniqueStash).toEqual([second]);
+    expect(realm.uniqueStash).toEqual([first]);
+    expect(mapsHeld(reloaded, 8)).toBe(1);
+    expect(doomedHeld(reloaded, 1)).toBe(1);
+    expect(uniqueMapHeld(reloaded, 'umap_cowards_trial')).toBe(1);
+    expect(realm.maps).toEqual({ map_t8: 11, doomed_t1: 2, umap_cowards_trial: 1 });
   });
 });
 

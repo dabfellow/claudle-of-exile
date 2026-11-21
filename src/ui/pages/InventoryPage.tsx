@@ -22,6 +22,8 @@ import { FlaskShelf } from '../components/FlaskView';
 import { GemTip, SupportTip } from '../components/GemView';
 import { GuildItemTransfer, GuildStackTransfer } from '../components/GuildTransferActions';
 import { GearSets } from '../components/Loadouts';
+import { guildGear } from '../../engine/guildStash';
+import type { GuildStashCategory } from './GuildStashPage';
 import { ItemCell } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
 import { PaperDoll, SLOT_LABEL } from '../components/PaperDoll';
@@ -333,7 +335,7 @@ function CharacterColumn({ s, d, selected, onPick, onPickFlask }: { s: GameState
  * Inventory, stash and crafting on one screen (docs/MILESTONES.md, "Inventory, stash and crafting merge").
  * Click any item, worn, carried or stashed, and the side panel moves, salvages or crafts it.
  */
-export function InventoryPage({ go }: { go: (p: Page) => void }) {
+export function InventoryPage({ go, openGuildStash }: { go: (p: Page) => void; openGuildStash: (category: GuildStashCategory) => void }) {
   const s = useGame();
   const d = deriveStats(s, []);
   const [pick, setPick] = useState<Selection | null>(null);
@@ -348,6 +350,8 @@ export function InventoryPage({ go }: { go: (p: Page) => void }) {
   const selected = live?.kind === 'gear' || live?.kind === 'flaskStash' ? live.uid : null;
   const filterable = s.inventory.filter((i) => inventoryFilterAction(s, i) !== null).length;
   const pageRef = useRef<HTMLDivElement>(null);
+  const guildUniques = guildGear(s).filter((item) => item.rarity === 'unique').length;
+  const guildMaps = Object.values(s.account.maps ?? {}).reduce((total, count) => total + count, 0);
   const narrow = useNarrow(pageRef, NARROW_PX);
   const doll = <CharacterColumn s={s} d={d} selected={selected} onPick={pickItem} onPickFlask={pickFlask} />;
   const clear = () => setPick(null);
@@ -359,6 +363,13 @@ export function InventoryPage({ go }: { go: (p: Page) => void }) {
       <PageHeader title="Inventory" actions={<CurrencyAmount id="gold" amount={s.storage.bank.gold ?? 0} label="gold" />}>
         Click an item to see its actions, including sending spare items to the Guild Stash.
       </PageHeader>
+      {(guildUniques > 0 || guildMaps > 0) && (
+        <div className="card inventory-guild-stock">
+          <span>Withdraw shared stock from the Guild Stash to use it on this character.</span>
+          {guildUniques > 0 && <button className="btn sm" onClick={() => openGuildStash('uniques')}>Guild Uniques ({fmt(guildUniques)})</button>}
+          {guildMaps > 0 && <button className="btn sm" onClick={() => openGuildStash('maps')}>Guild Maps ({fmt(guildMaps)})</button>}
+        </div>
+      )}
       <div className={`inv-layout ${narrow ? 'narrow' : ''}`}>
         <div className="inv-main">
           {narrow && doll}

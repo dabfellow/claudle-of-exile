@@ -11,6 +11,8 @@ export interface NewsEntry {
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
 export const UPCOMING: string[] = [
+  'Inventory shows how many Uniques and maps are in the Guild Stash and opens their withdrawal lists in one click. Your character’s own map supply has a Maps tab, and the Map Device points you to any shared maps.',
+  'Inventory screen tidied: the stash sits under your inventory and stays one size on every tab, gear sets live with your worn gear, the item panel always opens below your gear, and inventory, stash and gear each have their own frame.',
   'Combat scenery is dimmer behind the battlefield so enemies and hexes are easier to see.',
   'Combat and World Map zone cards now use illustrated scenery.',
   'Choose Walking, Sprinting or Fleeing to control monster arrivals, see the next spawn count down on its hex, and compare your Life and live DPS with your target. Targeting is next to skills, and automation is on the flask belt.',

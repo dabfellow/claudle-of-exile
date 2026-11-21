@@ -10,7 +10,7 @@ import { CampaignPage } from './pages/CampaignPage';
 import { CombatPage } from './pages/CombatPage';
 import { SkillGemsPage } from './pages/SkillGemsPage';
 import { InventoryPage } from './pages/InventoryPage';
-import { GuildStashPage } from './pages/GuildStashPage';
+import { GuildStashPage, type GuildStashCategory } from './pages/GuildStashPage';
 import { HideoutPage } from './pages/HideoutPage';
 import { MapDevicePage } from './pages/MapDevicePage';
 import { UpcomingSkillsPage } from './pages/UpcomingSkillsPage';
@@ -28,7 +28,14 @@ import { AdminPage } from './pages/AdminPage';
 // Admin is in the main bundle on purpose. As a separate lazy chunk it went black whenever a release landed while the
 // game was open: the old chunk file was gone, and the failed load took the whole app down. It's a few kB.
 
-function Content({ page, go, questMapZone, showQuestOnMap }: { page: Page; go: (p: Page) => void; questMapZone: string | null; showQuestOnMap: (zoneId: string) => void }) {
+function Content({ page, go, questMapZone, showQuestOnMap, guildCategory, openGuildStash }: {
+  page: Page;
+  go: (p: Page) => void;
+  questMapZone: string | null;
+  showQuestOnMap: (zoneId: string) => void;
+  guildCategory: GuildStashCategory;
+  openGuildStash: (category: GuildStashCategory) => void;
+}) {
   switch (page) {
     case 'hideout':
       return <HideoutPage go={go} />;
@@ -39,7 +46,7 @@ function Content({ page, go, questMapZone, showQuestOnMap }: { page: Page; go: (
     case 'quests':
       return <CampaignJournal showRewards onSelectZone={showQuestOnMap} />;
     case 'maps':
-      return <MapDevicePage go={go} />;
+      return <MapDevicePage go={go} openGuildMaps={() => openGuildStash('maps')} />;
     case 'upcoming':
       return <UpcomingSkillsPage />;
     case 'skills':
@@ -50,9 +57,9 @@ function Content({ page, go, questMapZone, showQuestOnMap }: { page: Page; go: (
     case 'equipment':
     case 'bench':
     case 'stash':
-      return <InventoryPage go={go} />;
+      return <InventoryPage go={go} openGuildStash={openGuildStash} />;
     case 'guild-stash':
-      return <GuildStashPage go={go} />;
+      return <GuildStashPage go={go} initialCategory={guildCategory} />;
     case 'vendor':
       return <TraderPage />;
     case 'market':
@@ -74,10 +81,15 @@ function GameScreen() {
   const s = useGame();
   const [page, setPage] = usePage();
   const [questMapZone, setQuestMapZone] = useState<string | null>(null);
+  const [guildCategory, setGuildCategory] = useState<GuildStashCategory>('gear');
   // the Stash and Crafting Bench pages became the Inventory screen: send old links there so the sidebar lights up
   const go = (p: Page) => {
     setQuestMapZone(null);
     setPage(p === 'stash' || p === 'bench' ? 'equipment' : p);
+  };
+  const openGuildStash = (category: GuildStashCategory) => {
+    setGuildCategory(category);
+    go('guild-stash');
   };
   const showQuestOnMap = (zoneId: string) => {
     setQuestMapZone(zoneId);
@@ -105,7 +117,7 @@ function GameScreen() {
           <EventBanner />
           {page !== 'settings' && <AdminMailNotice open={() => go('settings')} />}
           <PageErrorBoundary key={page} where={`page:${page}`} onLeave={() => go('hideout')}>
-            <Content page={page} go={go} questMapZone={questMapZone} showQuestOnMap={showQuestOnMap} />
+            <Content page={page} go={go} questMapZone={questMapZone} showQuestOnMap={showQuestOnMap} guildCategory={guildCategory} openGuildStash={openGuildStash} />
           </PageErrorBoundary>
         </main>
       </div>
