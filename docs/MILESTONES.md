@@ -1,31 +1,32 @@
 # Roadmap and decisions
 
 Last updated 2026-11-20. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
-Last updated 2026-11-17. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
-Act-map readability and the Quests sidebar page are implemented and playtested locally (2026-11-20).
+Act-map readability, quest highlighting and the Quests sidebar page are live in **0.5.10**.
 
-The combat HUD pace controls, entry countdown and matchup are implemented locally (2026-11-20).
+Combat pace controls, entry countdowns, matchup and dimmed terrain art are live in **0.5.10**.
 
-Illustrated terrain backdrops and the zone terminology update are implemented locally across the seven-act campaign (2026-11-20).
+Illustrated terrain backdrops and the zone terminology update are live across the seven-act campaign in **0.5.10**.
 
 The level 1–99 profession design pass has an initial audit of all 15 main-game skills. Mastery rewards now have an agreed profession-level schedule. The scope of global buffs and the individual profession designs are next. See [Skilling Progression](SKILLING_PROGRESSION.md).
 
-The panel frame cleanup and Hideout layout fixes are implemented and playtested locally (2026-11-20).
+Panel frames, Hideout layout fixes and the stacked Inventory layout are live in **0.5.10**.
 
 Saltmere’s five-water prototype is implemented locally behind a closed gate. The next Fishing milestone is the standalone RPG described in [Fishing RPG Design](FISHING_RPG.md).
 
-Character inventories and the Guild Stash are live in **0.5.9**. The database update is installed. A signed-in transfer in the live game remains to be checked. The dedicated Guild Stash page and Inventory transfers are implemented locally.
+Character inventories went live in **0.5.9**. The dedicated Guild Stash page, Inventory transfers and shared Uniques and maps shortcuts are live in **0.5.10**. A signed-in transfer in the live game remains to be checked.
 
-The first batch of eleven build-specific gear modifiers is implemented locally (2026-11-19). The new rolls start at item level 30 and compete across overlapping gear slots.
+The first batch of eleven build-specific gear modifiers is live in **0.5.10**. The new rolls start at item level 30 and compete across overlapping gear slots.
 
-The seven-act zone naming and gear-check pack passes are implemented locally (2026-11-19). The next campaign content step is to give the remaining regular enemy groups signature behaviors and judge the harder packs in full campaign play.
+The seven-act zone naming and gear-check pack passes are live in **0.5.10**. The next campaign content step is to give the remaining regular enemy groups signature behaviors and judge the harder packs in full campaign play.
 
 Veyrath campaign is live in **0.5.5** (2026-11-19): 70 zones across seven fuller chapters, revised level bands, matching rewards/gem access, saved journal, world/regional paintings, territory navigation, readable banners, character-specific unlock fog and the harsh surrounding ocean. All 113 test files / 1,795 tests, typecheck and production build pass. Earlier desktop/390px campaign navigation checks passed 2026-11-18; the latest artwork/fog was inspected through native previews because the local browser stayed blank, so live hover/desktop acceptance remains open. Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
-Latest confirmed live release: **0.5.9, Personal Supplies and the Guild Stash**, deployed 2026-11-20. Characters gather and craft from personal supplies, and old shared holdings are available through manual Guild Stash transfers. All 1,865 tests and the production build passed. The database update succeeded and the deploy confirmed the live version and login configuration. Previous release: **0.5.8, Class Portraits**, deployed 2026-11-20: painted Craftpix portraits for all seven classes. Preceded by **0.5.7, New Item Art and Menu Frames**, deployed 2026-11-20: unified pixel item art, orb/rune/fossil/essence pictures, quiet Dark Ages UI frames. 1,861 tests and production build pass; deploy confirmed live version and login. Before it: **0.5.5, Veyrath World Map**, deployed 2026-11-19. Seven-act campaign and regional maps, saved act selection, readable navigation banners, territory highlighting, exploration fog and dark ocean artwork. All 1,795 tests and production build pass; deploy confirmed the live version and login configuration at https://dabfellow.party/path-of-idle/. Preserved preceding releases **0.5.4, Astrology**, **0.5.3, Agility**, **0.5.2, Heist Dossiers**, and **0.5.1, One Tree, One Currency** (including Rogue Roster). Latest live UI interaction check remains outstanding as described above.
+Latest confirmed live release: **0.5.10, Illustrated Battlefields and Easier Stashes**, deployed 2026-11-20. Includes illustrated and dimmed combat scenery, combat pace and matchup, clearer act maps and quests, campaign gear checks, build-specific modifiers, Inventory and Hideout refinements, and direct Guild Stash shortcuts. All 1,893 tests, typecheck and production build passed. Local browser checks covered the combat backdrop, Inventory shortcuts and the Map Device link. The deploy confirmed the live version and login configuration.
+
+Previous release: **0.5.9, Personal Supplies and the Guild Stash**, deployed 2026-11-20. Characters gather and craft from personal supplies, and old shared holdings are available through manual Guild Stash transfers. All 1,865 tests and the production build passed. The database update succeeded and the deploy confirmed the live version and login configuration. Previous release: **0.5.8, Class Portraits**, deployed 2026-11-20: painted Craftpix portraits for all seven classes. Preceded by **0.5.7, New Item Art and Menu Frames**, deployed 2026-11-20: unified pixel item art, orb/rune/fossil/essence pictures, quiet Dark Ages UI frames. 1,861 tests and production build pass; deploy confirmed live version and login. Before it: **0.5.5, Veyrath World Map**, deployed 2026-11-19. Seven-act campaign and regional maps, saved act selection, readable navigation banners, territory highlighting, exploration fog and dark ocean artwork. All 1,795 tests and production build pass; deploy confirmed the live version and login configuration at https://dabfellow.party/path-of-idle/. Preserved preceding releases **0.5.4, Astrology**, **0.5.3, Agility**, **0.5.2, Heist Dossiers**, and **0.5.1, One Tree, One Currency** (including Rogue Roster). Latest live UI interaction check remains outstanding as described above.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
@@ -70,11 +71,11 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 |---|---|---|
 | 1 | Automation/offline | Released; survival rules and two conditions baseline; flask-default removal verified (strictly requires Instilling) |
 | 2 | Pacing | Live-source desktop simulator/API released in 0.4.34; pacing audit remains open. Whole-journey audit on 0.4.4 found large Ranger seed variance and a common Mage Act 4 stall |
-| 3 | Account layer | Personal Stashes and Guild Stash live in 0.5.9 (2026-11-20). Admin overhaul, service SQL, OAuth secret revocation and signed-in checks confirmed by owner 2026-11-08. The dedicated Guild Stash page and Inventory transfers are implemented locally |
+| 3 | Account layer | Personal supplies and Guild Stash live in 0.5.9. Dedicated Guild Stash page, Inventory transfers and shared stock shortcuts live in 0.5.10 (2026-11-20). Signed-in live transfer verification remains open |
 | 4 | Act 2 and content recipe | Released; cold-check/art follow-ups remain parked |
-| 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18. Act 7 sidebar lock playtested locally (2026-11-20) |
+| 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18. Act 7 sidebar lock, personal Maps tab and Guild Maps shortcut live in 0.5.10 |
 | 6 | Act 3 / ascendancies | Released; four trials and 2/2/3/2 points replace original structure |
-| 7 | Campaign expansion / seven-act Veyrath integration | Live in 0.5.5 (2026-11-19): seven-act story, atlas, journal and redistributed 70-zone campaign, territory banners/highlights, character exploration fog and dark ocean. New chapter bands preserve the level-66 finale and Maps handoff. Terrain backdrops and zone terminology are implemented locally (2026-11-20). Brighter act-map labels, quest destination markers and the Quests sidebar page are verified locally (2026-11-20). Latest live UI interaction acceptance remains open |
+| 7 | Campaign expansion / seven-act Veyrath integration | Seven-act story, atlas, journal and 70-zone campaign live since 0.5.5. Illustrated backdrops, zone terminology, brighter act-map labels, quest destination markers and local gear checks live in 0.5.10. Full campaign pacing remains open |
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
