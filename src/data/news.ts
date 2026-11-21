@@ -10,28 +10,33 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Inventory shows how many Uniques and maps are in the Guild Stash and opens their withdrawal lists in one click. Your character’s own map supply has a Maps tab, and the Map Device points you to any shared maps.',
-  'Inventory screen tidied: the stash sits under your inventory and stays one size on every tab, gear sets live with your worn gear, the item panel always opens below your gear, and inventory, stash and gear each have their own frame.',
-  'Combat scenery is dimmer behind the battlefield so enemies and hexes are easier to see.',
-  'Combat and World Map zone cards now use illustrated scenery.',
-  'Choose Walking, Sprinting or Fleeing to control monster arrivals, see the next spawn count down on its hex, and compare your Life and live DPS with your target. Targeting is next to skills, and automation is on the flask belt.',
-  'Zone names appear above their map markers with brighter text and a dark hover background. The quest journal sits below the act map, Show highlights the destination with a gold pulse, and the Quests menu lists your current objective and reward.',
-  'The Map Device shows a lock in the sidebar until you beat the final boss of Act 7.',
-  'Combat backgrounds now match the terrain, from stormy shores and misty forests to open plains and buried vaults. Areas are now called zones.',
-  'The Hideout has distinct panel frames, more compact Character and Equipment panels, gear slots that fit, and shortcuts only on mobile. The top bar scrolls away while you browse.',
-  'Each character gathers and crafts from their own supplies. Use the Guild Stash to move items between characters and collect your old shared stock. Gathering continues for XP and other drops when a material reaches 5,000.',
-  'Guild Stash has its own sidebar page. Click a spare item or stack in Inventory to send it there.',
-  'Fishing is still coming soon.',
-  'Campaign areas across all seven acts have new names drawn from Veyrath’s local trades, landmarks and history.',
-  'All seven acts now have dangerous local enemy packs, including one late gear check per act, with preparation tips on the World Map.',
-  'Skills can now trigger while a dangerous pack leader is present, and area tips list gear, flask and skill counters available by that point.',
-  'Gear at item level 30 and up can roll eleven new build-specific modifiers, including maximum Rage, more hit damage against bleeding enemies, and faster Fervor.',
-  'The Hideout has more compact Character and Equipment panels, gear slots that fit, framed Upgrades, and shortcuts only on mobile. The top bar scrolls away while you browse.',
-  'Ordinary panels and pop-ups use thin borders across the game. The Woodcutting workbench has a timber frame.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.5.10',
+    date: '20 Nov 2026',
+    title: 'Illustrated Battlefields and Easier Stashes',
+    items: [
+      'Inventory shows how many Uniques and maps are in the Guild Stash and opens their withdrawal lists in one click. Your character’s own map supply has a Maps tab, and the Map Device points you to any shared maps.',
+      'Inventory screen tidied: the stash sits under your inventory and stays one size on every tab, gear sets live with your worn gear, the item panel always opens below your gear, and inventory, stash and gear each have their own frame.',
+      'Combat scenery is dimmer behind the battlefield so enemies and hexes are easier to see.',
+      'Combat and World Map zone cards now use illustrated scenery.',
+      'Choose Walking, Sprinting or Fleeing to control monster arrivals, see the next spawn count down on its hex, and compare your Life and live DPS with your target. Targeting is next to skills, and automation is on the flask belt.',
+      'Zone names appear above their map markers with brighter text and a dark hover background. The quest journal sits below the act map, Show highlights the destination with a gold pulse, and the Quests menu lists your current objective and reward.',
+      'The Map Device shows a lock in the sidebar until you beat the final boss of Act 7.',
+      'Combat backgrounds now match the terrain, from stormy shores and misty forests to open plains and buried vaults. Areas are now called zones.',
+      'The Hideout has distinct panel frames, more compact Character and Equipment panels, gear slots that fit, and shortcuts only on mobile. The top bar scrolls away while you browse.',
+      'Guild Stash has its own sidebar page. Click a spare item or stack in Inventory to send it there.',
+      'Fishing is still coming soon.',
+      'Campaign areas across all seven acts have new names drawn from Veyrath’s local trades, landmarks and history.',
+      'All seven acts now have dangerous local enemy packs, including one late gear check per act, with preparation tips on the World Map.',
+      'Skills can now trigger while a dangerous pack leader is present, and area tips list gear, flask and skill counters available by that point.',
+      'Gear at item level 30 and up can roll eleven new build-specific modifiers, including maximum Rage, more hit damage against bleeding enemies, and faster Fervor.',
+      'The Hideout has more compact Character and Equipment panels, gear slots that fit, framed Upgrades, and shortcuts only on mobile. The top bar scrolls away while you browse.',
+      'Ordinary panels and pop-ups use thin borders across the game. The Woodcutting workbench has a timber frame.',
+    ],
+  },
   {
     version: '0.5.9',
     date: '20 Nov 2026',
