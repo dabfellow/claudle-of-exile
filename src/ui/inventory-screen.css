@@ -20,22 +20,75 @@
   container: inv-main / inline-size;
 }
 
-/* inventory · stash side by side, stacked when the column gets too thin for both */
-.inv-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+/* inventory on top, stash underneath */
+.inv-stack {
+  display: flex;
+  flex-direction: column;
   gap: var(--s-4);
-  align-items: start;
 }
 
-@container inv-main (max-width: 600px) {
-  .inv-split {
-    grid-template-columns: minmax(0, 1fr);
+.inv-stack > .card {
+  min-width: 0;
+}
+
+/* The stash is always the size of one gear page, whatever tab is open (tabs used to stretch it to the
+   tallest, Materials). The gear tab sets the height; every other tab fills that box and scrolls inside it. */
+.inv-page .stash-card .stash-views {
+  position: relative;
+}
+.inv-page .stash-card .stash-view:not(:first-child) {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: start;
+  padding-right: 4px;
+}
+/* a gear page is 80 slots: always the same 16 × 5 grid (10 × 8 on a narrower column) */
+.inv-page .stash-card .item-tiles.compact.fixed {
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  max-height: none;
+  overflow: visible;
+}
+@container inv-main (max-width: 760px) {
+  .inv-page .stash-card .item-tiles.compact.fixed {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
   }
 }
 
-.inv-split > .card {
-  min-width: 0;
+/* each section has its own frame: wood for the bag, stone for the stash, iron-bolted for worn gear;
+   the crafting panel keeps the plain dark one */
+.inv-page .inv-card,
+.inv-page .stash-card,
+.inv-page .doll-card {
+  border-width: 16px;
+  background: var(--panel);
+  background-clip: padding-box;
+  padding: var(--s-3);
+}
+.inv-page .inv-card {
+  border-image: url('../assets/ui/frames/frame-wood.png') 8 / 16px round;
+}
+.inv-page .stash-card {
+  border-image: url('../assets/ui/frames/frame-stone.png') 8 / 16px round;
+}
+.inv-page .doll-card {
+  border-width: 18px;
+  border-image: url('../assets/ui/frames/frame-corners.png') 9 / 18px round;
+}
+/* the worn-gear doll shrinks its slots to fit inside the card instead of spilling past the frame */
+.inv-page .doll-card {
+  container: doll-card / inline-size;
+}
+.inv-page .doll-card .doll {
+  --u: min(56px, calc((100cqi - 5 * var(--doll-gap)) / 6));
+}
+.inv-page .doll-card .doll-flasks {
+  width: calc(6 * min(56px, calc((100cqi - 5 * 10px) / 6)) + 5 * 10px);
+}
+.inv-page .doll-card > .card {
+  align-self: stretch;
+  margin: 0;
 }
 
 .inv-stats {
@@ -56,9 +109,8 @@
   gap: 5px;
 }
 
-.inv-card .item-tiles.compact,
-.stash-card .item-tiles.compact {
-  max-height: min(62vh, 640px);
+.inv-card .item-tiles.compact {
+  max-height: min(40vh, 340px);
   overflow-y: auto;
   padding: 2px;
 }
@@ -162,21 +214,24 @@ button.material-tile[aria-pressed='true'],
   }
 }
 
-/* right column on wide screens: worn gear, then the item panel, which stays in view while you scroll */
+/* right column on wide screens: worn gear and gear sets, then the item panel below them, always in
+   that order. The whole column stays in view and scrolls on its own, so nothing slides over the gear. */
 .inv-side {
-  align-self: stretch;
+  position: sticky;
+  top: 8px;
+  /* the game's top and bottom bars take about 110px of the window */
+  max-height: calc(100dvh - 124px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
   min-width: 0;
+  padding-right: 2px;
 }
 
-.inv-panel-dock {
-  position: sticky;
-  top: 8px;
-  max-height: calc(100vh - 140px);
-  overflow-y: auto;
-  border-radius: var(--r);
+.inv-side > * {
+  flex: none;
 }
 
 .craft-panel {
@@ -282,8 +337,7 @@ button.material-tile[aria-pressed='true'],
   grid-template-columns: minmax(0, 1fr);
 }
 
-.inv-layout.narrow .inv-card .item-tiles.compact,
-.inv-layout.narrow .stash-card .item-tiles.compact {
+.inv-layout.narrow .inv-card .item-tiles.compact {
   max-height: none;
 }
 
@@ -314,9 +368,4 @@ button.material-tile[aria-pressed='true'],
 .inv-sheet-body .craft-panel {
   border-radius: var(--r) var(--r) 0 0;
   box-shadow: 0 -8px 30px rgb(0 0 0 / 0.5);
-}
-
-/* once an item is picked its panel comes first in the right column, above the worn gear */
-.inv-side.picked .inv-panel-dock {
-  order: -1;
 }

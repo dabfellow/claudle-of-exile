@@ -324,6 +324,7 @@ function CharacterColumn({ s, d, selected, onPick, onPickFlask }: { s: GameState
           </span>
         )}
       </div>
+      <GearSets s={s} />
     </div>
   );
 }
@@ -361,7 +362,7 @@ export function InventoryPage({ go }: { go: (p: Page) => void }) {
       <div className={`inv-layout ${narrow ? 'narrow' : ''}`}>
         <div className="inv-main">
           {narrow && doll}
-          <div className="inv-split">
+          <div className="inv-stack">
             <Inventory
               s={s}
               compact
@@ -406,10 +407,9 @@ export function InventoryPage({ go }: { go: (p: Page) => void }) {
               <Defense d={d} />
             </div>
           </Fold>
-          <GearSets s={s} />
         </div>
         {!narrow && (
-          <aside className={`inv-side ${live ? 'picked' : ''}`}>
+          <aside className="inv-side">
             {doll}
             <div className="inv-panel-dock">{panel}</div>
           </aside>
