@@ -48,8 +48,8 @@ export const WORLD_MAP: WorldMapData = {
   image: new URL('../assets/maps/veyrath-world-bound-sea.webp', import.meta.url).href,
   labels: {
     1: [16, 63],
-    2: [15, 47],
-    3: [35, 44],
+    2: [14, 49],
+    3: [37, 42],
     4: [51, 86],
     5: [43, 20],
     6: [77, 21],

@@ -1808,16 +1808,24 @@ function shielded(mon: MonsterInstance): boolean {
   return !!mon.chained || !!mon.weakPoint || (mon.immuneMs ?? 0) > 0;
 }
 
-/** The DPS meter shows the average over one window, and holds it until the next window ends. */
+/** The DPS meter updates once per window, and holds its number until the next window ends. */
 export const DPS_WINDOW_MS = 2000;
+/** How many finished windows the meter averages, so a slow attack or cast doesn't read as 0 between hits. */
+export const DPS_WINDOWS = 3;
 
-/** Damage per second actually dealt in the last finished window: hits, skills, ailments, ground and the rest. */
+/** Average of the finished windows kept (the fight's first windows count only those that exist). */
+function windowAverage(finished: number[]): number {
+  if (!finished.length) return 0;
+  return (finished.reduce((a, n) => a + n, 0) * 1000) / (finished.length * DPS_WINDOW_MS);
+}
+
+/** Damage per second actually dealt over the last few finished windows: hits, skills, ailments, ground and the rest. */
 export function liveDps(c: CombatRuntime): number {
-  return ((c.dealt.at(-2) ?? 0) * 1000) / DPS_WINDOW_MS;
+  return windowAverage(c.dealt.slice(0, -1).slice(-DPS_WINDOWS));
 }
 
 export function monsterDps(mon: MonsterInstance): number {
-  return ((mon.lastDealtToPlayer ?? 0) * 1000) / DPS_WINDOW_MS;
+  return windowAverage(mon.recentDealtToPlayer ?? (mon.lastDealtToPlayer !== undefined ? [mon.lastDealtToPlayer] : []));
 }
 
 function tickDpsMeter(c: CombatRuntime, dt: number): void {
@@ -1826,11 +1834,15 @@ function tickDpsMeter(c: CombatRuntime, dt: number): void {
     c.dealtMs -= DPS_WINDOW_MS;
     c.dealt.push(0);
     for (const m of c.monsters) {
-      m.lastDealtToPlayer = m.dealtToPlayer;
+      const recent = m.recentDealtToPlayer ?? (m.lastDealtToPlayer !== undefined ? [m.lastDealtToPlayer] : []);
+      recent.push(m.dealtToPlayer ?? 0);
+      if (recent.length > DPS_WINDOWS) recent.splice(0, recent.length - DPS_WINDOWS);
+      m.recentDealtToPlayer = recent;
+      m.lastDealtToPlayer = undefined;
       m.dealtToPlayer = undefined;
     }
   }
-  if (c.dealt.length > 2) c.dealt.splice(0, c.dealt.length - 2);
+  if (c.dealt.length > DPS_WINDOWS + 1) c.dealt.splice(0, c.dealt.length - DPS_WINDOWS - 1);
 }
 
 /** Auxiliary hits share Woundmaker's delivery penalty; ongoing ailments keep their seed. */

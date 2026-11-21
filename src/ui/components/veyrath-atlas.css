@@ -31,6 +31,8 @@
 .veyrath-ribbon.is-locked > small { color: #eadcba; }
 .veyrath-ribbon.is-sea > small { color: #eadcba; }
 .veyrath-ribbon, .veyrath-ribbon > small, .veyrath-ribbon-name { text-shadow: none; filter: none; }
+/* the "Act N" caption sits below the paper, on the painting itself: light ink with a dark edge reads on land, sea and fog alike */
+.veyrath-ribbon > small, .veyrath-ribbon.is-locked > small, .veyrath-ribbon.is-sea > small { color: #f3e6c5; text-shadow: 0 0 2px #1d150b, 0 0 4px rgba(29, 21, 11, .85), 0 1px 2px rgba(0, 0, 0, .7); }
 .cmap-act .cmap-node:not(.selected):not(:hover):not(:focus-visible) .cmap-node-name { opacity: 0; pointer-events: none; }
 .cmap-act .cmap-node.selected { z-index: 2; }
 .cmap-act .cmap-node.quest-target { z-index: 3; }

@@ -28,13 +28,15 @@ import { AdminPage } from './pages/AdminPage';
 // Admin is in the main bundle on purpose. As a separate lazy chunk it went black whenever a release landed while the
 // game was open: the old chunk file was gone, and the failed load took the whole app down. It's a few kB.
 
-function Content({ page, go, questMapZone, showQuestOnMap, guildCategory, openGuildStash }: {
+function Content({ page, go, questMapZone, showQuestOnMap, guildCategory, openGuildStash, focusStash }: {
   page: Page;
   go: (p: Page) => void;
   questMapZone: string | null;
   showQuestOnMap: (zoneId: string) => void;
   guildCategory: GuildStashCategory;
   openGuildStash: (category: GuildStashCategory) => void;
+  /** a Stash link was followed: Inventory opens scrolled to the stash */
+  focusStash: boolean;
 }) {
   switch (page) {
     case 'hideout':
@@ -57,7 +59,7 @@ function Content({ page, go, questMapZone, showQuestOnMap, guildCategory, openGu
     case 'equipment':
     case 'bench':
     case 'stash':
-      return <InventoryPage go={go} openGuildStash={openGuildStash} />;
+      return <InventoryPage go={go} openGuildStash={openGuildStash} focusStash={focusStash} />;
     case 'guild-stash':
       return <GuildStashPage go={go} initialCategory={guildCategory} />;
     case 'vendor':
@@ -82,9 +84,11 @@ function GameScreen() {
   const [page, setPage] = usePage();
   const [questMapZone, setQuestMapZone] = useState<string | null>(null);
   const [guildCategory, setGuildCategory] = useState<GuildStashCategory>('gear');
+  const [focusStash, setFocusStash] = useState(false);
   // the Stash and Crafting Bench pages became the Inventory screen: send old links there so the sidebar lights up
   const go = (p: Page) => {
     setQuestMapZone(null);
+    setFocusStash(p === 'stash');
     setPage(p === 'stash' || p === 'bench' ? 'equipment' : p);
   };
   const openGuildStash = (category: GuildStashCategory) => {
@@ -117,7 +121,7 @@ function GameScreen() {
           <EventBanner />
           {page !== 'settings' && <AdminMailNotice open={() => go('settings')} />}
           <PageErrorBoundary key={page} where={`page:${page}`} onLeave={() => go('hideout')}>
-            <Content page={page} go={go} questMapZone={questMapZone} showQuestOnMap={showQuestOnMap} guildCategory={guildCategory} openGuildStash={openGuildStash} />
+            <Content page={page} go={go} questMapZone={questMapZone} showQuestOnMap={showQuestOnMap} guildCategory={guildCategory} openGuildStash={openGuildStash} focusStash={focusStash} />
           </PageErrorBoundary>
         </main>
       </div>

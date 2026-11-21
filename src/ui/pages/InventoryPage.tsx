@@ -335,7 +335,7 @@ function CharacterColumn({ s, d, selected, onPick, onPickFlask }: { s: GameState
  * Inventory, stash and crafting on one screen (docs/MILESTONES.md, "Inventory, stash and crafting merge").
  * Click any item, worn, carried or stashed, and the side panel moves, salvages or crafts it.
  */
-export function InventoryPage({ go, openGuildStash }: { go: (p: Page) => void; openGuildStash: (category: GuildStashCategory) => void }) {
+export function InventoryPage({ go, openGuildStash, focusStash = false }: { go: (p: Page) => void; openGuildStash: (category: GuildStashCategory) => void; focusStash?: boolean }) {
   const s = useGame();
   const d = deriveStats(s, []);
   const [pick, setPick] = useState<Selection | null>(null);
@@ -350,6 +350,11 @@ export function InventoryPage({ go, openGuildStash }: { go: (p: Page) => void; o
   const selected = live?.kind === 'gear' || live?.kind === 'flaskStash' ? live.uid : null;
   const filterable = s.inventory.filter((i) => inventoryFilterAction(s, i) !== null).length;
   const pageRef = useRef<HTMLDivElement>(null);
+  const stashRef = useRef<HTMLDivElement>(null);
+  // the Hideout's Stash card (and other old Stash links) open this screen at the stash rather than the paper doll
+  useEffect(() => {
+    if (focusStash) stashRef.current?.scrollIntoView({ block: 'start' });
+  }, [focusStash]);
   const guildUniques = guildGear(s).filter((item) => item.rarity === 'unique').length;
   const guildMaps = Object.values(s.account.maps ?? {}).reduce((total, count) => total + count, 0);
   const narrow = useNarrow(pageRef, NARROW_PX);
@@ -397,6 +402,7 @@ export function InventoryPage({ go, openGuildStash }: { go: (p: Page) => void; o
                 </>
               }
             />
+            <div ref={stashRef} className="inv-stash-anchor" />
             <StashPanel
               s={s}
               go={go}

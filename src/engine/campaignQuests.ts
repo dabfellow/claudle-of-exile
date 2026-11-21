@@ -27,12 +27,18 @@ export interface CampaignQuestStepView {
   available: boolean;
 }
 
-/** Combat history is evidence only for clear objectives; interactions require their own saved IDs. */
+/**
+ * Combat history is evidence for clear objectives. Interactions need their own saved IDs, except that everything
+ * before the furthest objective a character has cleared counts as done: characters that fought past areas before the
+ * story journal existed pick the story up where they are, not at Act 1's first conversation. Nothing is written to
+ * the save, and the conversation after the furthest clear still waits for the player.
+ */
 export function campaignQuestSteps(s: GameState): CampaignQuestStepView[] {
   const completed = new Set(s.campaignQuests?.completed ?? []);
+  const furthestClear = STEPS.reduce((at, step, i) => step.kind === 'clear' && s.bossesDefeated.includes(step.zoneId) ? i : at, -1);
   let previousComplete = true;
-  return STEPS.map((step) => {
-    const evidence = step.kind === 'clear' ? s.bossesDefeated.includes(step.zoneId) : completed.has(step.id);
+  return STEPS.map((step, i) => {
+    const evidence = i < furthestClear || (step.kind === 'clear' ? s.bossesDefeated.includes(step.zoneId) : completed.has(step.id));
     const complete = previousComplete && evidence;
     const current = previousComplete && !complete;
     previousComplete = complete;

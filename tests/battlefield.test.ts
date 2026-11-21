@@ -177,7 +177,11 @@ describe('battlefield', () => {
     expect(liveDps(field)).toBe(2);
     expect(monsterDps(source)).toBe(1);
     expect(monsterDps(bystander)).toBe(0);
+    // a quiet window halves the average rather than dropping it to 0
     run(s, c, DPS_WINDOW_MS);
+    expect(liveDps(field)).toBe(1);
+    expect(monsterDps(source)).toBe(0.5);
+    run(s, c, 2 * DPS_WINDOW_MS);
     expect(liveDps(field)).toBe(0);
     expect(monsterDps(source)).toBe(0);
   });

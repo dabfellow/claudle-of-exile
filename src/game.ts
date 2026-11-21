@@ -138,6 +138,13 @@ function playLootFilterSound(): void {
   }
 }
 
+/** Says where a withdrawal landed, since it isn't the bag: materials, the map supply or the character's own stash. */
+function withdrawnToast(move: GuildTransfer): string {
+  if (move.kind === 'bank') return 'Withdrawn to your materials';
+  if (move.kind === 'maps') return 'Withdrawn to your map supply';
+  return 'Withdrawn to your stash';
+}
+
 class GameStore {
   state: GameState;
   sandbox = false;
@@ -1114,7 +1121,7 @@ class GameStore {
       this.state = candidate;
       this.adoptRealm(candidate.account);
       this.lastSave = performance.now();
-      this.pushToast(move.direction === 'deposit' ? 'Sent to Guild Stash' : 'Withdrawn from Guild Stash', 'good');
+      this.pushToast(move.direction === 'deposit' ? 'Sent to Guild Stash' : withdrawnToast(move), 'good');
     } catch (err) {
       reportError(err, { where: 'guildStashTransfer' });
       this.pushToast('The transfer could not be confirmed. Reopen this character before trying again.', 'warn');

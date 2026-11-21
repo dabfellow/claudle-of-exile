@@ -74,8 +74,26 @@ describe('campaign story interactions', () => {
     expect(s.tutorial).toEqual(old.tutorial);
     expect(s.unlockedZones).toEqual(expect.arrayContaining(old.unlockedZones));
     expect(s.bossesDefeated).toEqual(old.bossesDefeated);
-    expect(campaignQuestView(s).chapter.act).toBe(1);
-    expect(campaignQuestView(s, 7).locked).toBe(true);
+    // a character that beat the campaign before the journal picks the story up at its last step, which still waits for them
+    expect(campaignQuestView(s).chapter.act).toBe(7);
+    expect(campaignQuestView(s, 1).complete).toBe(true);
+    expect(campaignQuestSteps(s).find((entry) => entry.current)?.step.id).toBe('unfinished_maps');
+  });
+
+  it('counts story steps before the furthest cleared objective as done, and leaves the next conversation to the player', () => {
+    const s = newGame(7);
+    // an older character: Act 1 and the start of Act 2 fought through, no conversations ever saved
+    s.unlockedZones.push('mudflats', 'shipgrave', 'sanctum', 'cinderroad', 'fortobedience', 'assizes');
+    s.bossesDefeated.push('shipgrave', 'sanctum', 'fortobedience');
+    expect(s.campaignQuests.completed).toEqual([]);
+    expect(campaignQuestView(s, 1).complete).toBe(true);
+    expect(campaignQuestView(s).chapter.act).toBe(2);
+    const current = campaignQuestSteps(s).find((entry) => entry.current)!;
+    expect(current.step.id).toBe('tollhouse_manifest');
+    expect(current.available).toBe(true);
+    expect(campaignQuestAction(s, 'winnie_sponsorship')).toMatch(/already/);
+    expect(campaignQuestAction(s, 'tollhouse_manifest')).toBeNull();
+    expect(s.campaignQuests.completed).toEqual(['tollhouse_manifest']);
   });
 
   it('roundtrips stable interaction IDs and normalizes invalid saved entries', () => {

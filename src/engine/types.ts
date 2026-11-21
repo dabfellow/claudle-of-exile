@@ -248,8 +248,10 @@ export interface Dot {
 
 export interface MonsterInstance {
   uid: number;
-  /** Damage to the player in the current and last completed DPS windows. */
+  /** Damage to the player in the current DPS window, and in the last few completed ones (oldest first). */
   dealtToPlayer?: number;
+  recentDealtToPlayer?: number[];
+  /** older saves: the one last completed window, read once and then replaced by recentDealtToPlayer */
   lastDealtToPlayer?: number;
   defId: string;
   name: string;

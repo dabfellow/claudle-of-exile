@@ -215,7 +215,7 @@ describe('DPS meter', () => {
     let dealt = 0;
     for (let i = 0; i < 5; i++) {
       run(s, c, DPS_WINDOW_MS);
-      dealt += s.combat!.dealt[0];
+      dealt += s.combat!.dealt.at(-2)!;
     }
     const dead = 6 - aliveMonsters(s.combat!).length;
     expect(dead).toBeGreaterThan(0);
@@ -232,7 +232,7 @@ describe('DPS meter', () => {
     expect(s.combat!.dealt.reduce((a, n) => a + n, 0)).toBeCloseTo(200, 0);
   });
 
-  it('holds a 2 second average until the next window ends', () => {
+  it('averages the last three 2 second windows, holding the number until the next window ends', () => {
     const { s, c } = arena([], [dummy(1e9)]);
     s.combat!.dealt = [5000];
     s.combat!.actionMs = 1e9;
@@ -243,8 +243,12 @@ describe('DPS meter', () => {
     run(s, c, 1950);
     expect(liveDps(s.combat!)).toBe(2500);
     run(s, c, 50);
+    expect(liveDps(s.combat!)).toBe(1250);
+    run(s, c, 2000);
+    expect(liveDps(s.combat!)).toBeCloseTo(5000 / 6);
+    run(s, c, 2000);
     expect(liveDps(s.combat!)).toBe(0);
-    expect(s.combat!.dealt).toHaveLength(2);
+    expect(s.combat!.dealt).toHaveLength(4);
   });
 
   it('starts from nothing for a fight saved before it', () => {

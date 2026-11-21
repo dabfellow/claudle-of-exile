@@ -673,6 +673,10 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] 0.5.10 polish sweep: desktop and 390px playtest of combat, act maps, Quests, Inventory, Hideout and Guild Stash; fixed the flickering DPS readout, unreadable World Map act captions, the Act 2/3 banner overlap, the Hideout Stash link and the withdraw message — done 2026-11-20 (unreleased).
+  - Open owner calls from the sweep are under Ideas / later.
+- [x] Story journal catch-up: every story step before the furthest objective a character has cleared counts as done, so characters from before the journal resume where they are; the next conversation still waits for the player and nothing is written to the save — done 2026-11-20 (unreleased). Owner chose this over keeping Act 1 as the starting point.
+
 - [x] Rework combat pacing, entry countdowns, controls and matchup — done 2026-11-20.
 
 - [ ] Rebalance campaign Unique drops around the agreed completion and farming targets.
@@ -880,6 +884,10 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - [x] Passive tree route planning: clicking a node lines up the shortest route to it (`passiveRoute` in `src/engine/passives.ts`), shown in blue with its cost and stat changes; more clicks extend it, clicking a planned node cuts it back, Confirm buys it all and Cancel drops it. Routes never pass through keystones, masteries or Doomed Gates. Masteries, refunds and owned nodes keep the single-node preview. Skilling tree unchanged. — done 2026-11-11, live in 0.4.32 on 2026-11-11
 
 ## Ideas / later
+
+- 0.5.10 polish sweep follow-ups (2026-11-20), owner calls:
+  - The Delegation Chambers (end of Act 3, level 27–28) killed a level 34 Mage and a level 45 Ranger in scenario gear within about 20 seconds (16 enemies on the field). Belongs to the open "judge difficulty in full campaign play" item; not changed.
+  - Phone: several achievement toasts at once cover the top tabs until they fade.
 
 - Astrology follow-ups (2026-11-19), owner call: whether it should count toward Skilling tree points, get a "level 50" achievement, a Skilling tree branch, a profession tool or Masterworks. All left out so nothing else moved.
 - Inventory merge follow-ups (2026-11-19): 107 campaign/act tests (act2–act6, actRoads, cartography, a few "Act 6" wording checks) already fail on the last commit, before this work; they look like they expect six acts while the game now has seven. `docs/GAME.md` line 53 still says auto-salvage needs War Table 5/6/7; the game uses Quartermaster 2/3/4. Gear hidden under the old filter rules that is still on the ground will show again once (nothing is deleted).

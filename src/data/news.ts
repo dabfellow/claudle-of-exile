@@ -10,7 +10,12 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Combat DPS readouts average the last six seconds, so slow attacks and casts no longer flicker to 0 between hits.',
+  'World Map act captions are readable on explored land, and the Act 2 and Act 3 banners no longer overlap.',
+  'The Hideout’s Stash link opens Inventory at your stash, and Guild Stash withdrawals say where the item went.',
+  'Characters who fought through the campaign before the story journal arrived now pick up the story where they are, instead of at Act 1’s first conversation.',
+];
 
 export const NEWS: NewsEntry[] = [
   {
