@@ -1,21 +1,21 @@
 # Asset credits
 
-Files are named after their pack: `catalone-`, `woshi-`, `codespree-`, `sn-`, `craftpix-`, `freesample-`, `craft32-`, `remedies-`, `softline-`, `gegx-`, `set-NN-`, `snoopeth-pN-`, `quintino-`, `weapons30-`, `icons32-`. Unprefixed PNGs are Kibyra.
+Files are named after their pack: `codespree-`, `sn-`, `craftpix-`, `freesample-`, `gegx-`. Item art lives in `items/pixel/` (below). Unprefixed PNGs are Kibyra.
 
+- **items/pixel/\*.png**: every item, flask, currency and material picture, in one 32px pixel style, scaled 4× with hard edges. Each file is named after its source and any recolour: `a-190-gold.png` is Anvil icon 190 tinted gold, `s-w-staff04-bronze.png` is 7Soul's `W_Staff04.png` tinted bronze, `h150`/`st150` rotate the hue of the whole icon or only its blue stone. Mapping is in `src/ui/itemArt.ts`.
+  - `a-*`: [Anvil's RPG icons](https://ponkpixels.itch.io/anvil-icons) by Ponk. Free for commercial and non-commercial use, may be modified, may not be redistributed or resold, credit appreciated. The page excludes "projects related to NFT, Blockchain or AI generation"; the game uses no AI-generated art, but its code is written with an AI assistant, so it may be worth asking the author.
+  - `s-*`: [496 pixel art icons for medieval/fantasy RPG](https://opengameart.org/node/39455) by Henrique Lazarini (7Soul1), public domain (CC0). A 1px dark outline was added to match Anvil.
+  - `k-belt*`: the belt from [Shikashi's Fantasy Icons Pack](https://shikashipx.itch.io/shikashis-fantasy-icons-pack). Commercial use allowed; credit "Matt Firth (shikashipx)" and "game-icons.net".
+  - Currency orbs are 7Soul's `S_Water07.png` sphere recoloured per orb; runes are Anvil's runestones (tiers dimmed, brightened or given a gold halo); fossils are 7Soul's snail shell recoloured.
+- **ui/frames/\*.png** (frame-ornate, frame-dark, frame-dark-2): cut from [Dark Ages UI](https://hypnobius.itch.io/dark-ages-ui) by Hypnobius. Commercial and personal use allowed, may be modified; may not be resold or redistributed as a pack, or used in NFTs, blockchain games or AI training. Credit optional. Used as 9-slice frames by `src/ui/theme-frames.css`. The older `frame-*`/`panel-*` files in that folder are Kibyra and unused.
 - **icons/\*\*.svg**: [game-icons.net](https://game-icons.net), CC BY 3.0 (a few CC0). Attribution required; authors are listed in `icons/LICENSE-game-icons.txt`. White on transparent, renamed to match game ids (`skills/mining.svg` was lorc's `mining.svg`).
-- **Unprefixed PNGs in icons/, ui/ and items/** (for example `items/weapons/dagger.png`, `items/currency/gem-red.png`): Free Medieval Fantasy UI Pack by Kibyra. Free for personal and commercial use; credit appreciated. The pack itself may not be redistributed or resold as-is.
-- **items/armor/set-NN-\*.png**: "gear sets" pack (89 four-piece sets, 64×64). Source and license not recorded yet. Slots are helmet, gloves, body and legs (sets 07 and 63 have a belt in place of a helmet; set 75's "helmet" file is also a belt).
-- **items/\*/tint-\*.png**: recoloured copies of pack pieces, made in-repo as stand-ins until real art exists. Same licence as their source: `mace.png` (also the oak club), `bow.png`, `spear.png` (Kibyra), `codespree-stick.png` (CodeSpree), `catalone-s10-004.png` and `catalone-s9-005.png` (Catalone). `items/weapons/rusty-hatchet.png` is a copy of Kibyra's `ui/decorations/axe.png`.
+- **Unprefixed PNGs in icons/, ui/ and items/** (for example `items/currency/money-bag.png`, `ui/decorations/axe.png`): Free Medieval Fantasy UI Pack by Kibyra. Free for personal and commercial use; credit appreciated. The pack itself may not be redistributed or resold as-is.
 - **monsters/tint-\***: recoloured Act 2, Act 3, Act 5 and Act 6 copies of CodeSpree, Craftpix and free_sample pieces, same licence as their source (the recolour provenance table below lists the recorded sources).
-- **catalone-\*.png**: Dark fantasy Asset Pack 2 (weapons and shields) by Catalone, 64×64. No licence file in the download; check the store page before release. Named after the split file (`catalone-w3-015` = `weapon_split/3_part_015.png`, `s` = `shield_split`).
-- **woshi-\*.png**: Woshi Studio, Free 30 Pixel Item Icons (64px set). Personal and commercial use, may be modified, not resold as an icon pack.
 - **codespree-\*.png**: rpg-items-all and rpg-beings-all (attributed to CodeSpree), 64×64. No licence file in the download; check before release.
 - **craftpix-\*.png**: Free Fantasy Character Avatar Icons (Pixel Art), Craftpix. Craftpix file licence (https://craftpix.net/file-licenses/).
+- **portraits/craftpix-avatar-NN.webp**: Free RPG Fantasy Avatars, Craftpix (free-game-assets.itch.io/free-rpg-fantasy-avatar-icons), painted 512px, resized to 384px webp. Named after the pack's `PNG/background/NN.png`. Craftpix file licence, commercial use allowed.
 - **freesample-\*.jpg**: free_sample pack, painted 64/128px portraits. Author and licence not recorded; check before release.
 - **sn-\*.png**: Fantasy Pixel Icons, Skills (v002) and Elements (v004) free tiers, attributed to SanguineNite. No licence file in the download; check before release.
-- **craft32-\*.png**: 32 Medieval Crafting Icons (free). No licence file in the download; check before release.
-- **remedies-\*.png**: Grounded Medieval Remedies by Eldrion Team. Free for personal and commercial products; not to be redistributed as an asset pack. Credit appreciated: "Eldrion Team".
-- **softline-\*.png**: Softline RPG Icons FREE 100 by The Cooked Works (see the pack's LICENSE.pdf).
 - **zones/gegx-\*.webp, scenes/gegx-\*.webp**: Painterly Backgrounds free sample by GegX (gegx.itch.io), AI-generated and hand-curated, resized to 1600px webp. Free for commercial and non-commercial projects; may not be redistributed as an asset pack or used to train image models.
 
 ## Combat terrain backdrops
@@ -38,13 +38,6 @@ The `zones/terrain-*.webp` images are existing illustrations, paintings and prin
 | Workshop | Jean-Alphonse Duplessy, [Cobbler's Quarters](https://www.clevelandart.org/art/1980.257) | CC0 |
 | Forge | Charles-Émile Jacque, [The Blacksmith Shop](https://www.clevelandart.org/art/1921.1444) | CC0 |
 | Underworks | Giovanni Battista Piranesi, [The Prisons: An Immense Interior with a Drawbridge](https://www.clevelandart.org/art/1941.26.5) | CC0 |
-
-- **Packs added 2026-10-31:** the owner says all four below were free itch.io files, and to assume free public use is allowed while the game isn't sold. That assumption applies for now; recheck each one before any paid release.
-- **armor/snoopeth-p1-\*.png, snoopeth-p2-\*.png**: shield packs 1 and 2 by SnoopethDuckDuck (snoopethduckduck.itch.io). CC0, per the licence file in each pack.
-- **armor/snoopeth-p3-\*.png**: shield pack 3 by SnoopethDuckDuck (snoopethduckduck.itch.io). CC BY 4.0, per the pack's licence file. Credit required: by SnoopethDuckDuck. The pieces are enlarged 3×.
-- **quintino-\*.png**: RPG Weapons by quintino_pixels, exported from `RPG_Weapons.aseprite`. Free itch.io file, under the owner's assumption above; no licence file in the download. `armor/tint-tower-shield.png` is a recolour of `quintino-q23.png`.
-- **weapons30-\*.png**: a pasted 30-sword sheet, enlarged 2×. Free itch.io file, under the owner's assumption above; pack name and author not recorded.
-- **icons32-\*.png** and the ring, flask and frostleaf `tint-*.png` recolours made from them: a set of 32 pixel icons, enlarged 2×. Free itch.io file, under the owner's assumption above; pack name and author not recorded.
 - **music/\*.ogg**: 10 Medieval Tracks by AlkaKrab (itch.io), free pack, the looping versions of Silverbrook, Emberlight, Elven Dawn and Throne of Storms, re-encoded to 96 kbps Opus. Assumed free for public use while the game isn't sold. The pack's licence PDF goes further: royalty-free, commercial use allowed, credit appreciated, edits for timing, volume or EQ allowed. The files may not be redistributed as-is, and open-source games need the author's permission (alkakrab04@gmail.com), so ask before making this repo public.
 
 Current game-id mappings are in `src/ui/assets.ts`; custom overrides are in `src/assets/art`. Historical recolour recipes are retained below; they are provenance, not a current art coverage report.
@@ -206,12 +199,6 @@ Consolidated from the retired asset mapping report. Confirm current usage agains
 | `monsters/ashofcourt` | `Craftpix con22` | close | `src/assets/monsters/tint-ashofcourt.png` | hooded ash, fire within. Recolour: saturation .1, tint 235,170,120 |
 | `monsters/unanointed` | `Craftpix con30` | close | `src/assets/monsters/tint-unanointed.png` | burning skull, unholy violet fire. Recolour: hue 280, saturation .9, brightness .9 |
 | `monsters/aurelane` | `free_sample ik52` | placeholder | `src/assets/monsters/tint-aurelane.jpg` | pale ruined face, violet-lit; no crown. Recolour: hue 290, saturation .6, brightness .8 |
-| `uniques/oathbreaker` | `Kibyra mace.png` | close | `src/assets/items/weapons/tint-oathbreaker.png` | two-handed mace, void violet. Recolour: saturation .3, brightness .9, tint 200,150,235 |
-| `uniques/kingsmarch` | `gear sets/set-10-legs.png` | close | `src/assets/items/armor/tint-kingsmarch.png` | gold boots, dulled. Recolour: saturation .4, tint 240,210,130 |
-| `uniques/last_decree` | `pasted sheet 1, cell 26` | close | `src/assets/items/weapons/tint-last_decree.png` | wand, sealing-wax gold. Recolour: saturation .6, tint 240,210,130 |
-| `uniques/crownbreaker_mask` | `gear sets/set-35-helmet.png` | close | `src/assets/items/armor/tint-crownbreaker_mask.png` | dark mask, violet. Recolour: saturation .4, tint 200,170,240 |
-| `uniques/hand_of_the_regent` | `gear sets/set-85-gloves.png` | close | `src/assets/items/armor/tint-hand_of_the_regent.png` | plated gauntlets, old gold. Recolour: saturation .4, tint 245,205,120 |
-| `uniques/regents_mantle` | `gear sets/set-56-body.png` | close | `src/assets/items/armor/tint-regents_mantle.png` | heavy plate, ceremonial gold. Recolour: saturation .5, tint 235,215,160 |
 | `monsters/pressganger` | `Craftpix con33` | close | `src/assets/monsters/tint-pressganger.png` | bearded hooded docker, sea-grey. Recolour: saturation .5, brightness .8, tint 150,165,175 |
 | `monsters/dockrat` | `rpg-beings Mouse` | close | `src/assets/monsters/tint-dockrat.png` | tar-black rat, ember tint. Recolour: saturation .4, brightness .55, tint 215,130,70 |
 | `monsters/harbourwatch` | `Craftpix con1` | close | `src/assets/monsters/tint-harbourwatch.png` | helmed watchman, harbour teal. Recolour: tint 150,190,200 |
@@ -282,7 +269,6 @@ Consolidated from the retired asset mapping report. Confirm current usage agains
 | `monsters/eyepriest` | `Craftpix con24` | close | `src/assets/monsters/tint-eyepriest.png` | pale high-collared priest, fire-lit. Recolour: tint 235,160,120 |
 | `monsters/eyestorm` | `Craftpix con10` | close | `src/assets/monsters/tint-eyestorm.png` | horned skull mask, storm blue. Recolour: hue 200, tint 170,190,240 |
 | `monsters/caller` | `free_sample szary kleszcz` | placeholder | `src/assets/monsters/tint-caller.jpg` | pincered grey horror in abyssal blue; the nearest thing to something vast. Recolour: hue 150, saturation 1, brightness .75 |
-| `uniques/corposant` | `gear sets/set-30-helmet.png` | close | `src/assets/items/armor/tint-corposant.png` | Recolour: tint 150,200,245 |
 | `monsters/martyr` | `free_sample/a61.jpg` | close | `src/assets/monsters/tint-martyr.jpg` | gaunt bald figure, bleached; no chains in frame. Recolour: saturation 0.15, brightness 0.95 |
 | `monsters/gatewarden` | `Craftpix avatars Transperent/con1.png` | close | `src/assets/monsters/tint-gatewarden.png` | helmeted guard in pale gold; no halberd. Recolour: saturation 0.8, tint 215,205,170 |
 | `monsters/pilgrimzealot` | `Craftpix avatars Transperent/con3.png` | close | `src/assets/monsters/tint-pilgrimzealot.png` | hooded, wrapped face in dusty cloth. Recolour: tint 205,190,160 |
@@ -364,14 +350,3 @@ Consolidated from the retired asset mapping report. Confirm current usage agains
 | `monsters/ashseer` | `free_sample/op36.jpg` | placeholder | `src/assets/monsters/tint-ashseer.jpg` | grey hooded figure, mouth wrapped rather than eyes. Recolour: saturation 0.25, brightness 1.15 |
 | `monsters/sunpriest` | `free_sample/moooob27.jpg` | placeholder | `src/assets/monsters/tint-sunpriest.jpg` | gold wash over a stern face; no sun disc. Recolour: tint 235,175,60 |
 | `monsters/azhar` | `Craftpix avatars Transperent/con32.png` | close | `src/assets/monsters/tint-azhar.png` | fiery orange raptor's head; no full wings, same base as `vulture`. Recolour: linear 1.6/50, saturation 1.1, tint 255,120,30 |
-| `materials/frostleaf` | `32 icons pack/icon21.png` | close | `src/assets/items/materials/tint-frostleaf.png` | pale blue leaf. Recolour: hue 80, saturation 0.6, brightness 1.15 |
-| `flasks/life_medium` | `32 icons pack/icon1.png` | close | `src/assets/items/flasks/tint-life_medium.png` | round red flask with a cork. Recolour: hue 15 |
-| `flasks/life_grand` | `32 icons pack/icon2.png` | close | `src/assets/items/flasks/tint-life_grand.png` | large red jar, not tall. Recolour: hue 15 |
-| `flasks/diamond` | `32 icons pack/icon6.png` | close | `src/assets/items/flasks/tint-diamond.png` | clear faceted crystal bottle. Recolour: saturation 0.08, brightness 1.35 |
-| `flasks/ruby` | `32 icons pack/icon6.png` | close | `src/assets/items/flasks/tint-ruby.png` | red faceted crystal bottle. Recolour: hue 40, saturation 1 |
-| `items/tower_shield` | `RPG_Weapons.aseprite, Itens layer, q23` | close | `src/assets/items/armor/tint-tower-shield.png` | tall silver-blue tower shield. Recolour: hue 180, saturation 0.7 |
-| `items/iron_ring` | `32 icons pack/icon27.png` | close | `src/assets/items/jewelry/tint-iron_ring.png` | plain dark band with a dull stone. Recolour: saturation 0.2 |
-| `items/ruby_ring` | `32 icons pack/icon26.png` | close | `src/assets/items/jewelry/tint-ruby_ring.png` | dark band, red stone. Recolour: hue 15, saturation 1.1 |
-| `items/sapphire_ring` | `32 icons pack/icon26.png` | close | `src/assets/items/jewelry/tint-sapphire_ring.png` | dark band, blue stone. Recolour: hue 240, saturation 1 |
-| `items/topaz_ring` | `32 icons pack/icon26.png` | close | `src/assets/items/jewelry/tint-topaz_ring.png` | dark band, yellow stone. Recolour: hue 70, saturation 1 |
-| `items/diamond_ring` | `32 icons pack/icon26.png` | close | `src/assets/items/jewelry/tint-diamond_ring.png` | pale band and clear stone. Recolour: saturation 0.08, brightness 1.35 |

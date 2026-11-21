@@ -1,8 +1,7 @@
 import { currencyDef, materialDef } from '../../data/materials';
 import { MAX_PINNED_CURRENCIES, pinnedCurrencies } from '../../engine/currencyPins';
 import type { GameState } from '../../engine/types';
-import { CurrencyAmount, fmt, Tooltip } from './common';
-import { Orb } from './Icon';
+import { CurrencyAmount, fmt, MatIcon, Tooltip } from './common';
 
 /** One orb (or gold) in the Stash's Currency tab. */
 export function CurrencySlot({ s, id, onPick }: { s: GameState; id: string; onPick: (id: string) => void }) {
@@ -39,7 +38,7 @@ export function CurrencySlot({ s, id, onPick }: { s: GameState; id: string; onPi
         style={{ ['--orb' as string]: def.color }}
         onClick={() => onPick(id)}
       >
-        <Orb color={def.color} size={40} glow={n > 0} />
+        <MatIcon id={id} size={36} />
         <span className="currency-count num">{fmt(n)}</span>
         <span className="currency-name">{cur ? cur.short : def.name}</span>
         {pinned && <span className="currency-pin">Pinned</span>}

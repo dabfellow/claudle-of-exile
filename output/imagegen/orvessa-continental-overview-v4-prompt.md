@@ -1,9 +1,0 @@
-# Orvessa continental overview — v4
-
-Built-in image-generation edit, 2026-11-17. Reference: owner's circled v3 map. Enlarge Veyrath locally while retaining the regional framing.
-
-## Exact prompt
-
-Targeted edit of the attached annotated Orvessa regional atlas. The user says "same zoom level just blow up Veyrath" and circles Veyrath in red. Enlarge the actual Veyrath landmass locally within this full regional composition, keeping the camera zoom, full-map framing, mainland and Kroten unchanged. Do NOT crop to Veyrath or make a separate inset. Do NOT zoom the whole map.
-The red circle is ONLY an edit-area guide and must vanish entirely. Scale Veyrath's recognizable coastline and its internal geographic features up by approximately 20-25 percent around its current center, so the island occupies more of the circled southwestern sea area. It should extend roughly from x1.5% to x28% of image width, and y61% to y94% of image height, remaining fully inside the border and separated from the mainland by clear open water. Preserve the recognizable large east-facing inlet and southern arm, northern mountain chain, same drainage and forest wash relationships, and offshore islets scaled coherently. Do not turn the red circle into a new coastline: enlarge the original irregular Veyrath silhouette naturally. Keep the VEYRATH label legible and centered on its enlarged landmass.
-Everywhere outside the southwestern edit region, faithfully preserve the source: enlarged KROTEN territorial boundary and subtle ochre wash, its widely spaced label, all mainland coastlines, terrain and rivers, other islands, ORVESSA cartouche, compass, thin border, pale blue-gray sea, clean ivory nineteenth-century atlas style and fine linework. Retain continental scale terrain generalization. No buildings, no new names, no altered mainland borders, no extra legends or routes, no remaining red marks. The ONLY geographic change is Veyrath growing to better fill the marked area.

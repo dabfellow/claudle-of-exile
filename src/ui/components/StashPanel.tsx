@@ -13,10 +13,9 @@ import { buyStashPage, setStashAffinity, settleOverflow, stashedItems, stashPage
 import { game } from '../../game';
 import type { FlaskInstance, GameState, Item, Rarity, StashAffinity } from '../../engine/types';
 import '../round2-session3.css';
-import { Art, EmptyState, fmt, GameIcon, MatIcon, Tabs, Tooltip, type TabDef } from './common';
+import { EmptyState, fmt, GameIcon, MatIcon, Tabs, Tooltip, type TabDef } from './common';
 import { FlaskShelf } from './FlaskView';
 import { GemIcon, GemTip, SupportTip } from './GemView';
-import { Swatch } from './Icon';
 import { ItemTiles, SalvageByRarity, StashSort } from './Inventory';
 import { UniqueShelf } from './UniqueShelf';
 import type { Page } from '../Layout';
@@ -54,7 +53,7 @@ function MaterialTile({ s, id, onPick }: { s: GameState; id: string; onPick: (id
   const def = materialDef(id);
   const n = s.storage.bank[id] ?? 0;
   const contents = <>
-    <Art src={`materials/${id}.png`} alt="" size={44} fallback={<Swatch color={def.color} size={26} />} />
+    <MatIcon id={id} size={44} />
     <span className="material-name">{def.name}</span>
     <b className="num">{fmt(n)}</b>
   </>;

@@ -17,7 +17,7 @@ The Hideout layout fixes are implemented and playtested locally (2026-11-20).
 
 Saltmere’s five-water prototype is implemented locally behind a closed gate. The next Fishing milestone is the standalone RPG described in [Fishing RPG Design](FISHING_RPG.md).
 
-Character inventories and the Guild Stash are implemented locally (2026-11-20). The Guild Stash has its own sidebar page, and items can be sent from Inventory. Apply the [Guild Stash database update](ops/guild-stash.sql) before publishing and verify signed-in transfers after it is installed.
+Character inventories and the Guild Stash are live in **0.5.9**. The database update is installed. A signed-in transfer in the live game remains to be checked. The dedicated Guild Stash page and Inventory transfers are implemented locally.
 
 The first batch of eleven build-specific gear modifiers is implemented locally (2026-11-19). The new rolls start at item level 30 and compete across overlapping gear slots.
 
@@ -25,7 +25,7 @@ The seven-act zone naming and gear-check pack passes are implemented locally (20
 
 Veyrath campaign is live in **0.5.5** (2026-11-19): 70 zones across seven fuller chapters, revised level bands, matching rewards/gem access, saved journal, world/regional paintings, territory navigation, readable banners, character-specific unlock fog and the harsh surrounding ocean. All 113 test files / 1,795 tests, typecheck and production build pass. Earlier desktop/390px campaign navigation checks passed 2026-11-18; the latest artwork/fog was inspected through native previews because the local browser stayed blank, so live hover/desktop acceptance remains open. Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
-Latest confirmed live release: **0.5.5, Veyrath World Map**, deployed 2026-11-19. Seven-act campaign and regional maps, saved act selection, readable navigation banners, territory highlighting, exploration fog and dark ocean artwork. All 1,795 tests and production build pass; deploy confirmed the live version and login configuration at https://dabfellow.party/path-of-idle/. Preserved preceding releases **0.5.4, Astrology**, **0.5.3, Agility**, **0.5.2, Heist Dossiers**, and **0.5.1, One Tree, One Currency** (including Rogue Roster). Latest live UI interaction check remains outstanding as described above.
+Latest confirmed live release: **0.5.9, Personal Supplies and the Guild Stash**, deployed 2026-11-20. Characters gather and craft from personal supplies, and old shared holdings are available through manual Guild Stash transfers. All 1,865 tests and the production build passed. The database update succeeded and the deploy confirmed the live version and login configuration. Previous release: **0.5.8, Class Portraits**, deployed 2026-11-20: painted Craftpix portraits for all seven classes. Preceded by **0.5.7, New Item Art and Menu Frames**, deployed 2026-11-20: unified pixel item art, orb/rune/fossil/essence pictures, quiet Dark Ages UI frames. 1,861 tests and production build pass; deploy confirmed live version and login. Before it: **0.5.5, Veyrath World Map**, deployed 2026-11-19. Seven-act campaign and regional maps, saved act selection, readable navigation banners, territory highlighting, exploration fog and dark ocean artwork. All 1,795 tests and production build pass; deploy confirmed the live version and login configuration at https://dabfellow.party/path-of-idle/. Preserved preceding releases **0.5.4, Astrology**, **0.5.3, Agility**, **0.5.2, Heist Dossiers**, and **0.5.1, One Tree, One Currency** (including Rogue Roster). Latest live UI interaction check remains outstanding as described above.
 
 Skilling overhaul Phases 00–14 are live in 0.4.39 (2026-11-15).
 
@@ -70,7 +70,7 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 |---|---|---|
 | 1 | Automation/offline | Released; survival rules and two conditions baseline; flask-default removal verified (strictly requires Instilling) |
 | 2 | Pacing | Live-source desktop simulator/API released in 0.4.34; pacing audit remains open. Whole-journey audit on 0.4.4 found large Ranger seed variance and a common Mage Act 4 stall |
-| 3 | Account layer | Released. Admin overhaul, service SQL, OAuth secret revocation and signed-in checks confirmed by owner 2026-11-08. Save-rollback fixes remain unreleased. Personal Stashes, the dedicated Guild Stash page and transfers from Inventory are implemented locally 2026-11-20 |
+| 3 | Account layer | Personal Stashes and Guild Stash live in 0.5.9 (2026-11-20). Admin overhaul, service SQL, OAuth secret revocation and signed-in checks confirmed by owner 2026-11-08. The dedicated Guild Stash page and Inventory transfers are implemented locally |
 | 4 | Act 2 and content recipe | Released; cold-check/art follow-ups remain parked |
 | 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18. Act 7 sidebar lock playtested locally (2026-11-20) |
 | 6 | Act 3 / ascendancies | Released; four trials and 2/2/3/2 points replace original structure |
@@ -94,7 +94,6 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 - Character materials and Guild Stash (2026-11-20): Owner saw players run three or four characters as a production line, for example one mining, one chopping wood and another crafting daggers continuously from the shared supply. Owner chose to let alts work in parallel with manual transfers. Each character gathers into their own inventory, crafts from their own stock and has a personal Stash. Players can move spare gear, gems, flasks, currency and materials between characters through a separate Guild Stash, with manual bulk deposits and withdrawals for materials. Owner chose to keep gathering for XP and rare drops at the cap, discarding extra units of whichever material is full. Apply the same rule while online and offline. Use 5,000 per material type per character as the starting cap so ordinary skilling can run for extended stretches. On upgrade, carry each realm's existing shared contents into its Guild Stash so every character that previously had access can still withdraw them.
 
 - Build-specific gear affixes (2026-11-19): Owner wants good gear to take longer to craft by adding ordinary modifiers worth chasing for particular builds or situations. A useful modifier should still have weak rolls for the build that wants it. Owner chose A, "Spread across relevant slots," so multiple specialties compete on the same bases. The first batch covers Rage, Riposte, Momentum, Mana is Power, Fervor, Coup de Grâce and combat conditions involving bleeding, stun, poison and low-Life enemies. Owner removed the elemental hit modifier for staying above 80% Life and set the minimum item level to 30. Five tiers unlock at item levels 30, 35, 45, 68 and 80 so the weakest rolls can still appear on endgame gear. Maximum Rage rolls +1 to +10, with +7 to +10 at T1. On an unmodified item-level-80 Coral Amulet, the new mods make up about 13% of the first prefix roll and 13% of the first suffix roll.
-
 - Campaign enemy families (2026-11-19): Owner chose "mostly local enemies, with a few recognizable families returning where their presence tells part of the story." Draw each area's roster from its wildlife, inhabitants, work and exposure to the Creep. Where a family returns, keep a recognizable trait and give its local group a different way to fight. The Kroten expedition was the example discussed.
 
 - Campaign zone names (2026-11-19): Owner chose "A for most places, with B where a disaster became part of local memory." Most zones should have names locals would recognize from the place's geography, trade, history or everyday use. Use names that describe a disaster where the event plausibly became part of what locals call the place. The example names discussed are drafts.
@@ -685,11 +684,18 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - First milestone is a playable shore and harbor with real gear, a logbook and working traps. Nearshore boats and crew, the boundary and offshore voyages, and the full 500-plus-species catalog follow.
 - [ ] Choose and wire the hidden achievement that opens Saltmere. Playtest the real unlock after deciding its requirements. Until then, Fishing keeps its existing “coming soon” page in the live game.
 
-- [ ] Apply the Guild Stash database update and verify signed-in transfers before release.
-  - Local browser and throwaway database checks pass. The live database has yet to receive the update.
-
 - [x] Move Guild Stash to its own page and add send actions to Inventory — done 2026-11-20.
 
+- [ ] Verify a signed-in Guild Stash transfer in the live game.
+  - The database update succeeded on 2026-11-20. The live endpoint rejects anonymous requests. Local browser and throwaway database transfer tests passed.
+
+- [x] Free painted portraits for all 7 classes (character creator, character list, combat and hideout crest) — done 2026-11-20.
+  - Craftpix *Free RPG Fantasy Avatars* (owner wants free art only): Warrior 19, Ranger 28, Mage 23, Duelist 20, Templar 50, Shadow 21, Exile 32. The title and creator backdrop was already GegX's forest at night. Checked on desktop and 390px; tests and typecheck pass.
+- [x] Consistent item art: replaced the ~14-pack mix of item icons with one 32×32 pixel style — done 2026-11-19.
+  - Owner picked Anvil's RPG Icons with 7Soul's 496 RPG Icons filling gaps (7Soul given Anvil's outline), plus a Shikashi belt. 604 files in `src/assets/items/pixel/`, mapped in `src/ui/itemArt.ts`; every armour tier wears one Anvil set, recoloured per tier. Licences in `src/assets/CREDITS.md`.
+  - Orb follow-up (same day): currency, runes, fossils, essences, resins, shards, contraband and artifacts now have pictures, shown everywhere `MatIcon` is used plus currency pins, the Trader and Market prices.
+- [x] Themed menu frames: Hypnobius' Dark Ages UI 9-slice frames in `src/ui/theme-frames.css` — done 2026-11-19.
+  - Owner found the ornate frame everywhere too gaudy and too samey: ornate only on the login panel and account windows (`.title-card`; news, character and class cards plain); in game, plain dark frames at 1x on panels, a second dark frame on tooltips and toasts, nested panels plain. Small elements (buttons, tabs, item slots, skill tiles) keep their original slim borders; the pack's small grey frames looked like thick grey bands.
 
 - [x] Manual skill gem upgrades: no auto level-up, an Upgrade button on the Skills page, greyed out with the reason when the new level's character level or attribute isn't met — done 2026-11-19.
   - XP banks as before (capped at the next level only while that level is out of reach), one press per level. The sim player presses Upgrade itself. Playtested with a level 20 Warrior.
@@ -935,8 +941,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 - [x] Review all 70 campaign zone names against Veyrath's lore and geography — done 2026-11-19.
   - Renamed 32 areas and updated the journal and area guide. Stable IDs, routes, encounters and rewards were preserved. All 1,861 tests and the production build passed. Desktop playtest checked all 70 map labels, selected the Cloth Courts and travelled into the Warden Galleries. Screenshot: `output/playtest/zone-names-harrowgate.png`. Unreleased.
-
 - Manual skill gem upgrades with a greyed-out button when an upgrade would disable the skill — done 2026-11-19.
+- Cleanup (2026-11-19): removed every finished working folder and branch (local and GitHub), the scrapped skilling-polish and sim-rates work, playtest screenshots, old generated map drafts and five unused world-map images. Kept the full-size originals of the in-game map art in `output/imagegen/` (seven act maps and the bound-sea world map) for future edits. Older entries here and in VEYRATH-MAP.md that point at deleted drafts are history only.
 - Shipped **0.5.6** live 2026-11-19 (deploy confirmed version and login). Release 0.5.6 gathered every session's unshipped work (2026-11-19): skill upgrades, hand-traced act map routes, combat-only tutorial, one Inventory screen and loot filter rework, the Archaeology overhaul, and the security review fixes (single Fractured Orb, second-device lockout, Hardcore and gift fixes). Left out as superseded: the 17 Nov skilling-area visual polish (the live 19 Nov skill page redesign replaced it) and the 10 Nov sim-rates tooling (the simulator and pacing targets changed since). Both are still on their own branches.
 - Extended the Act 1 route cleanup to all six remaining acts — done 2026-11-19. Hand-traced shared roads, streets, switchbacks and underground passages with authored journey itineraries and sensible entrances. Native previews inspected; automated checks verify all links, no crossing strokes and no duplicate sections. Progression and positions unchanged; live-browser interaction remains unverified. Unreleased.
 

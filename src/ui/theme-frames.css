@@ -1,0 +1,110 @@
+/*
+ * Pixel-art frames for menus, from Hypnobius' Dark Ages UI (src/assets/CREDITS.md).
+ * Loaded after styles.css. Frames are 9-sliced with border-image and drawn at 1x with hard edges.
+ * Keep it quiet: the ornate gold frame is only for the title and login screens; in the game, panels
+ * get one dark frame and tooltips and pop-ups another. Panels inside panels stay plain, and small
+ * things (buttons, tabs, item slots, skill tiles) keep their own slim borders: the pack's small grey
+ * frames read as thick grey bands at that size.
+ */
+
+:root {
+  --frame-ornate: url('../assets/ui/frames/frame-ornate.png');
+  --frame-dark: url('../assets/ui/frames/frame-dark.png');
+  --frame-dark-2: url('../assets/ui/frames/frame-dark-2.png');
+}
+
+.card,
+.modal,
+.tip,
+.toast {
+  image-rendering: pixelated;
+}
+.card > *,
+.modal > *,
+.tip > *,
+.toast > * {
+  image-rendering: auto;
+}
+
+/* in-game panels: plain dark frame */
+.card,
+.modal {
+  border-style: solid;
+  border-width: 9px;
+  border-radius: 0;
+  border-image: var(--frame-dark) 12 fill / 12px round;
+  background: none;
+  padding: calc(var(--s-4) - 4px);
+}
+/* panels inside panels stay as they were */
+.card .card {
+  border: 1px solid var(--line);
+  border-image: none;
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  padding: var(--s-4);
+}
+.card .card.raised {
+  background: var(--panel-2);
+}
+
+/* the login panel and account windows only: the ornate frame (news, character and class cards stay plain dark) */
+.screen .title-card {
+  border-width: 18px;
+  border-image: var(--frame-ornate) 24 fill / 48px round;
+  padding: calc(var(--s-4) - 6px);
+}
+
+/* tooltips and pop-ups: the other dark frame */
+.tip,
+.toast {
+  border-style: solid;
+  border-width: 9px;
+  border-radius: 0;
+  border-image: var(--frame-dark-2) 12 fill / 12px round;
+  background: none;
+}
+.tip {
+  padding: 4px 6px;
+}
+.toast {
+  padding: 4px 12px;
+}
+
+/* phones: the ornate frame at half size */
+@media (max-width: 680px) {
+  .screen .title-card {
+    border-width: 10px;
+    border-image: var(--frame-ornate) 24 fill / 24px round;
+    padding: var(--s-3);
+  }
+}
+
+/* small things keep their slim borders, in dark bronze to match the frames */
+:root {
+  --bronze-line: #4a3f2c;
+  --bronze-line-2: #6b5836;
+  --bronze-hi: #94784a;
+}
+.btn:not(.primary):not(.ghost),
+.skill-btn,
+.cell.rar-normal,
+.cell.empty-slot,
+.tabs.compact {
+  border-color: var(--bronze-line-2);
+}
+.btn:not(.primary):not(.ghost):hover:not(:disabled),
+.skill-btn:hover:not(:disabled),
+.cell.rar-normal:hover {
+  border-color: var(--bronze-hi);
+}
+.cell.rar-normal {
+  box-shadow: inset 0 -2px 0 var(--bronze-line);
+}
+.tabs,
+.stash-tabs {
+  border-bottom-color: var(--bronze-line);
+}
+.tabs.compact {
+  border-bottom-color: var(--bronze-line-2);
+}

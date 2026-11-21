@@ -15,7 +15,6 @@ import { game, useGame } from '../../game';
 import { Art, EmptyState, fmt, fmtTime, GameIcon, MatIcon, PixelArt, Tabs, Tooltip } from '../components/common';
 import { FlaskIcon, FlaskTip } from '../components/FlaskView';
 import { GemIcon, GemTip, SupportTip } from '../components/GemView';
-import { Orb } from '../components/Icon';
 import { ItemTiles } from '../components/Inventory';
 import { bagFull, stashedItems } from '../../engine/storage';
 import { ItemIcon, ItemTip } from '../components/ItemView';
@@ -98,8 +97,7 @@ function OfferIcon({ o }: { o: VendorOffer }) {
   if (o.flask) return <FlaskIcon f={o.flask} size={40} />;
   if (o.gemId) return <GemIcon def={activeGemDef(o.gemId)} size={40} />;
   if (o.supportId) return <GemIcon def={supportGemDef(o.supportId)} size={36} support />;
-  const def = currencyDef(o.currencyId!);
-  return <Orb color={def.color} size={34} glow />;
+  return <MatIcon id={o.currencyId!} size={34} />;
 }
 
 function offerTip(s: GameState, o: VendorOffer) {

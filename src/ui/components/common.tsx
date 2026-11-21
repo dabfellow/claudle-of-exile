@@ -143,11 +143,11 @@ const ORB_KINDS = new Set(['fossil', 'essence', 'resin', 'shard', 'contraband', 
 
 export function MatIcon({ id, size = 14 }: { id: string; size?: number }) {
   const def = materialDef(id);
-  // orbs and crafting materials are flat coloured orbs; only gathered materials get pictures
-  if (isCurrency(id) || id === 'gold' || ORB_KINDS.has(def.kind)) return <Orb color={def.color} size={size} />;
-  const key = `materials/${id}`;
+  const key = `${isCurrency(id) ? 'currency' : 'materials'}/${id}`;
   const art = artUrl(key) ?? packArtUrl(key);
   if (art) return <img className="art mat-art" src={art} alt={def.name} width={size + 4} height={size + 4} draggable={false} />;
+  // anything without a picture yet: orbs and crafting materials are flat coloured orbs, the rest a swatch
+  if (isCurrency(id) || id === 'gold' || ORB_KINDS.has(def.kind)) return <Orb color={def.color} size={size} />;
   return <Swatch color={def.color} size={size * 0.8} />;
 }
 

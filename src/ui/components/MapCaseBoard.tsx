@@ -53,7 +53,7 @@ export function MapCaseBoard() {
           {SEXTANTS.map((sex) => (
             <span key={sex.id} title={sex.desc}>
               <MatIcon id={sex.id} size={14} />
-              {sex.name} <b className="num">{fmt(s.account.bank[sex.id] ?? 0)}</b>
+              {sex.name} <b className="num">{fmt(s.storage.bank[sex.id] ?? 0)}</b>
             </span>
           ))}
         </div>
