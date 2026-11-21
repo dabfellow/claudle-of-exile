@@ -32,8 +32,44 @@
 .veyrath-ribbon.is-sea > small { color: #eadcba; }
 .veyrath-ribbon, .veyrath-ribbon > small, .veyrath-ribbon-name { text-shadow: none; filter: none; }
 .cmap-act .cmap-node:not(.selected):not(:hover):not(:focus-visible) .cmap-node-name { opacity: 0; pointer-events: none; }
-.cmap-act .cmap-node-name { transition: opacity 120ms ease; }
-.cmap-act .cmap-node .cmap-node-name { color: #62513e; background: none; border: 0; font: italic 400 13px/1.08 Georgia, 'Times New Roman', serif; letter-spacing: .01em; text-shadow: none; filter: none; box-shadow: none; }
+.cmap-act .cmap-node.selected { z-index: 2; }
+.cmap-act .cmap-node.quest-target { z-index: 3; }
+.cmap-act .cmap-node:hover, .cmap-act .cmap-node:focus-visible { z-index: 4; }
+.cmap-act .cmap-node .cmap-node-name {
+  color: #fff0ce;
+  padding: 1px 7px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font: 700 13px/1 Georgia, 'Times New Roman', serif;
+  text-shadow: 0 1px 2px #120b05, 0 0 4px #120b05, 0 0 6px #120b05;
+  transition: opacity 120ms ease;
+}
+.cmap-act .cmap-node.is-boss .cmap-node-name { bottom: calc(50% + 21px); }
+.cmap-act .cmap-node:hover .cmap-node-name,
+.cmap-act .cmap-node:focus-visible .cmap-node-name,
+.cmap-act .cmap-node.quest-target .cmap-node-name {
+  background: #241a12;
+  border-color: #bd9358;
+  text-shadow: none;
+}
+.cmap-node.quest-target .cmap-node-dot { outline: none; }
+.cmap-quest-marker, .cmap-quest-marker::after {
+  position: absolute;
+  inset: 0;
+  border: 3px solid #ffdb68;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.cmap-quest-marker { box-shadow: 0 0 0 2px #2e1b08, inset 0 0 0 1px #2e1b08, 0 0 10px #ffaa34; }
+.cmap-quest-marker::after {
+  content: '';
+  inset: -3px;
+  animation: cmap-quest-pulse 1.35s ease-out infinite;
+}
+@keyframes cmap-quest-pulse {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(1.55); opacity: 0; }
+}
 @media (max-width: 600px) {
   .veyrath-atlas-toolbar { align-items: flex-start; }
   .veyrath-atlas-toolbar p { max-width: 24ch; }

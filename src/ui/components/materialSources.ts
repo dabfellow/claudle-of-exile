@@ -47,7 +47,7 @@ export function materialSources(id: string): Source[] {
   if (['exile_doom_sigil', 'architect_doom_sigil', 'void_sigil', 'uber_key_1', 'uber_key_2', 'uber_key_3'].includes(id)) {
     out.push({ label: 'Uber Boss drops', detail: 'Map Device pinnacle fights', page: 'maps' });
   }
-  if (FOSSIL_IDS.has(id) || ESSENCE_IDS.has(id)) out.push({ label: 'Area bosses', detail: 'about half of boss kills', page: 'campaign' });
+  if (FOSSIL_IDS.has(id) || ESSENCE_IDS.has(id)) out.push({ label: 'Zone bosses', detail: 'about half of boss kills', page: 'campaign' });
   const kind = materialDef(id).kind;
   if (kind === 'currency') out.push({ label: 'Monster drops', page: 'campaign' }, { label: 'Magic shop in Town', page: 'vendor' });
   if (!out.length) out.push({ label: 'Monster drops', page: 'campaign' });

@@ -32,7 +32,7 @@ export function marketHold(s: GameState, op: string): MarketHold | undefined {
 }
 
 function addHold(s: GameState, hold: MarketHold): void {
-  (s.account.marketHolds ??= []).push(hold);
+  (s.account.marketHolds ??= []).push({ ...hold, characterId: s.character.id });
 }
 
 /** Take an item out of the bag or stash to list it. Returns why it can't be, if it can't. */
@@ -53,31 +53,35 @@ export function holdPayment(s: GameState, op: string, currency: string, amount: 
   if (!op || marketHold(s, op)) return 'That market request is already pending or invalid';
   if (!Number.isSafeInteger(amount) || amount < 1 || amount > MARKET_MAX_PRICE) return 'That price is invalid';
   if (currency !== 'gold' && !CURRENCIES.some((c) => c.id === currency)) return 'That currency cannot be traded';
-  if (!Number.isFinite(s.account.bank[currency] ?? 0)) return 'That balance is invalid';
-  if ((s.account.bank[currency] ?? 0) < amount) return `You can't afford that`;
-  s.account.bank[currency] -= amount;
+  if (!Number.isFinite(s.storage.bank[currency] ?? 0)) return 'That balance is invalid';
+  if ((s.storage.bank[currency] ?? 0) < amount) return `You can't afford that`;
+  s.storage.bank[currency] -= amount;
   addHold(s, { op, currency, amount });
   return null;
 }
 
 /** Put an item in the Uniques tab, or the first stash page with room, or the overflow, so a market item is never lost to a full stash. */
-function shelve(s: GameState, item: Item): void {
+function shelve(s: GameState, item: Item, shared = false): void {
   const a = s.account;
+  const dest = shared ? a : s.storage;
   item.uid = a.nextUid++;
   if (item.rarity === 'unique') {
-    a.uniqueStash.push(item);
+    dest.uniqueStash.push(item);
     seeUnique(a, item);
-  } else (a.stash.find((p) => p.length < STASH_PAGE_SIZE) ?? a.overflow).push(item);
+  } else (dest.stash.find((p) => p.length < STASH_PAGE_SIZE) ?? dest.overflow).push(item);
 }
 
 /** The server answered. A step it refused gives back what was held. */
 export function releaseHold(s: GameState, op: string, refund: boolean): void {
   const hold = marketHold(s, op);
-  if (!hold) return;
+  if (!hold || (hold.characterId && hold.characterId !== s.character.id)) return;
   s.account.marketHolds = s.account.marketHolds!.filter((h) => h !== hold);
   if (!refund) return;
-  if (hold.item) shelve(s, hold.item);
-  if (hold.currency) addBank(s, hold.currency, hold.amount!);
+  if (hold.item) shelve(s, hold.item, !hold.characterId);
+  if (hold.currency) {
+    if (hold.characterId) addBank(s, hold.currency, hold.amount!);
+    else s.account.bank[hold.currency] = (s.account.bank[hold.currency] ?? 0) + hold.amount!;
+  }
 }
 
 export interface MarketDelivery {

@@ -1,4 +1,5 @@
 import { MONSTER_PROFILES, monsterArchetype } from '../data/monsterProfiles';
+import { gearCheckAdvice, type CampaignGearCheck } from '../data/campaignGearChecks';
 import { monsterLife, type MonsterDef } from '../data/zones';
 import { armourReduction, ES_RECHARGE_DELAY_MS, ES_RECHARGE_PCT, hitChance, monsterEvasion } from './stats';
 import type { DamageType, MonsterInstance } from './types';
@@ -106,6 +107,27 @@ export function scaleMonsterPools(mon: MonsterInstance, life: number, damage = 1
     mon.budget.damage *= damage;
   }
   calibrateMonsterDamage(mon);
+}
+
+/** Only campaign pack leaders receive these overrides. The base creature can still appear in Maps and summons. */
+export function applyCampaignGearCheck(mon: MonsterInstance, check: CampaignGearCheck): void {
+  mon.name = check.name;
+  mon.attackName = check.skill;
+  mon.gearCheckWarning = gearCheckAdvice(check);
+  mon.dmgType = check.damageType ?? mon.dmgType;
+  mon.attackMs = Math.round(mon.attackMs * (check.interval ?? 1));
+  mon.attackGround = check.ground ?? mon.attackGround;
+  mon.blockChance = check.block ?? mon.blockChance;
+  Object.assign(mon.res, check.resist);
+  if (check.dot !== undefined) {
+    mon.attackAilment = check.dot ? check.dot.kind : undefined;
+    mon.dotShare = check.dot ? check.dot.share : 0;
+  }
+  if (check.crit) {
+    mon.critChance = check.crit.chance;
+    mon.critMulti = check.crit.multiplier;
+  }
+  scaleMonsterPools(mon, 1, check.pressure ?? 1);
 }
 
 export function rechargeMonsterEs(mon: MonsterInstance, dt: number): void {

@@ -236,6 +236,7 @@ export type RuleCondition =
   | 'manaAbove'
   | 'manaBelow'
   | 'enemiesAtLeast'
+  | 'dangerousPack'
   | 'targetLifeAbove'
   | 'notActive'
   | 'bossOnly'
@@ -302,6 +303,7 @@ export const RULE_LABELS: Record<RuleCondition, { label: string; unit?: string; 
   manaAbove: { label: 'When mana above', unit: '%', defaultValue: 40 },
   manaBelow: { label: 'When mana below', unit: '%', defaultValue: 30, unlock: 'vitals' },
   enemiesAtLeast: { label: 'When enemies at least', unit: '', defaultValue: 3 },
+  dangerousPack: { label: 'While a dangerous pack leader is present' },
   targetLifeAbove: { label: 'When target life above', unit: '%', defaultValue: 50 },
   notActive: { label: 'When its effect is not active' },
   bossOnly: { label: 'Only against bosses' },

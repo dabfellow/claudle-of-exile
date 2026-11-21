@@ -1,4 +1,4 @@
-import type { BossMechanic, MonsterDef, ZoneDef } from './zones';
+import type { BossMechanic, MonsterDef, ZoneDef, ZoneTerrain } from './zones';
 
 /** Authored travel order. IDs survive the move so existing clears and equipped items remain valid. */
 export const CAMPAIGN_CHAPTERS = [
@@ -11,14 +11,54 @@ export const CAMPAIGN_CHAPTERS = [
   { act: 7, levels: [57, 65], zones: ['exilesgate', 'kingsroad', 'kingsmint', 'hanginggardens', 'burnedarchive', 'longfracture', 'driftingquarter', 'kingsreach', 'sunderedhall', 'hallofcrowns', 'ninthstair', 'shatteredthrone'] },
 ] as const;
 
+/** Backdrops follow the live campaign geography, including zones that moved acts. */
+const TERRAIN: Record<(typeof CAMPAIGN_CHAPTERS)[number]['zones'][number], ZoneTerrain> = {
+  // The Wreck Coast
+  mudflats: 'coast', brinecaves: 'cave', ashwood: 'forest', blackreed: 'marsh',
+  crypt: 'underworks', shipgrave: 'coast', stormcliffs: 'coast', sanctum: 'ruins',
+  // The Broken Roads
+  cinderroad: 'plains', saltflats: 'plains', tithefields: 'plains', fortobedience: 'town',
+  blackgrass: 'plains', bannerfield: 'plains', assizes: 'town', caravan: 'town',
+  // Greyford
+  kurgans: 'plains', lowercity: 'town', dryaqueduct: 'marsh', plateau: 'plains',
+  wreckline: 'town', cinderkey: 'workshop', pyretemple: 'workshop', burningthrone: 'town',
+  // Harrowgate
+  pilgrimgate: 'ruins', almsquarter: 'ruins', scourgeyard: 'ruins', reliquary: 'underworks',
+  bellfoundry: 'workshop', inquisition: 'ruins', penitentstair: 'ruins', choirloft: 'town',
+  saintswalk: 'ruins', highaltar: 'ruins',
+  // Cairnwatch Institute
+  hollowpass: 'mountains', screefields: 'mountains', howlingfells: 'mountains', glasslake: 'mountains',
+  bonequarry: 'mountains', icevault: 'cave', mammothroad: 'mountains', hangingglacier: 'mountains',
+  steading: 'workshop', longhall: 'workshop', kingsstair: 'underworks', giantsthrone: 'workshop',
+  // Caer Veyr
+  blackharbor: 'town', squallbanks: 'town', lampgulf: 'town', drownedfleet: 'coast',
+  brimstone: 'workshop', hollowreef: 'underworks', thunderhead: 'town', leviathanrib: 'forest',
+  blackcurrent: 'town', voicetrench: 'town', lightless: 'workshop', maelstrom: 'underworks',
+  // The First Seal
+  exilesgate: 'underworks', kingsroad: 'underworks', kingsmint: 'workshop', hanginggardens: 'underworks',
+  burnedarchive: 'underworks', longfracture: 'cave', driftingquarter: 'underworks', kingsreach: 'underworks',
+  sunderedhall: 'underworks', hallofcrowns: 'underworks', ninthstair: 'cave', shatteredthrone: 'underworks',
+};
+
+const TERRAIN_VARIANTS: Partial<Record<keyof typeof TERRAIN, string>> = {
+  brinecaves: 'bandits',
+  ashwood: 'night',
+  stormcliffs: 'storm',
+  cinderkey: 'forge',
+  bellfoundry: 'forge',
+  howlingfells: 'bears',
+  icevault: 'spiders',
+  kingsmint: 'forge',
+};
+
 const MOVED: Record<string, { name: string; desc: string }> = {
-  tithefields: { name: 'The Withered Allotments', desc: 'The road settlements once grew food here. Swollen roots choke the channels while the promised district supplies travel elsewhere.' },
+  tithefields: { name: 'The Commons Allotments', desc: 'The road settlements once grew food here. Swollen roots choke the channels while the promised district supplies travel elsewhere.' },
   fortobedience: { name: 'The Roadwatch Fort', desc: 'A neglected road fort still demands papers and provisions from travellers it can no longer protect.' },
-  bannerfield: { name: 'The Abandoned Muster', desc: 'Broken wagons and militia standards mark a supply camp abandoned when the road became too dangerous.' },
+  bannerfield: { name: 'Muster Green', desc: 'Broken wagons and militia standards mark a supply camp abandoned when the road became too dangerous.' },
   assizes: { name: 'The Tollhouse Court', desc: 'Seized manifests and disputed cargo fill a roadside court. Its surviving records trace the missing food toward Wayfarer’s Post.' },
   lowercity: { name: 'Greyford Market Quarter', desc: 'Greyford’s crowded market survives on irregular deliveries, local bargains and work nobody else will take.' },
-  dryaqueduct: { name: 'The Rootbound Millrace', desc: 'Roots have blocked the water feeding Greyford’s mills. Clearing it earns the trust of people who remember the capital’s delegation.' },
-  wreckline: { name: 'The Expedition Warehouses', desc: 'Bonded stores on Greyford’s outskirts hold supplies diverted from the coast to the research expedition.' },
+  dryaqueduct: { name: 'Greyford Millrace', desc: 'Roots have blocked the water feeding Greyford’s mills. Clearing it earns the trust of people who remember the capital’s delegation.' },
+  wreckline: { name: 'Greyford Bonded Stores', desc: 'Bonded stores on Greyford’s outskirts hold supplies diverted from the coast to the research expedition.' },
   cinderkey: { name: 'The Greyford Kilns', desc: 'Brick kilns and guarded work yards supply the expedition while neighbouring farms fail beneath unnatural growth.' },
 };
 
@@ -54,6 +94,7 @@ export function buildCampaign(templates: ZoneDef[]): ZoneDef[] {
     const name = (text: string) => moved ? text.replace(/Founding |Buried |Root-Cellar /g, '').replace('Cellar Reaper', 'Field Reaper') : text;
     return {
       ...source, ...moved, act: chapter.act, levelRange: [low, high] as [number, number],
+      terrain: TERRAIN[id], terrainVariant: TERRAIN_VARIANTS[id],
       tier: reward.tier, ilvlBonus: reward.ilvlBonus, requires, actBoss: finale,
       monsters: source.monsters.map((m) => ({ ...m, name: name(m.name), level: level(m.level) })),
       boss: { ...boss, name: name(boss.name) },

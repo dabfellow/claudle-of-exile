@@ -1,5 +1,5 @@
 import type { Rng } from './rng';
-import type { DamageType, Ground, GroundKind, Minion, MonsterInstance, Movement, Posture } from './types';
+import type { DamageType, Ground, GroundKind, Minion, MonsterInstance, Movement } from './types';
 
 /**
  * The battlefield (docs/GAME.md): a half-ring of pointy-top hexes around the player, who stands on the
@@ -52,26 +52,18 @@ export const MONSTER_STEP_MS = 1100;
 
 /** How the player moves through an area: how fast the gates send monsters, and how crowded the field may get before they stop. */
 export const MOVEMENT: Record<Movement, { name: string; spawnRate: number; maxField: number; desc: string }> = {
-  flee: { name: 'Flee', spawnRate: 0, maxField: 0, desc: 'No new monsters arrive, and every few seconds you lose the one furthest away. Bosses keep up.' },
-  slow: { name: 'Creep', spawnRate: 0.5, maxField: 3, desc: 'Monsters arrive at half speed, and stop while 3 are on the field.' },
-  walk: { name: 'Walk', spawnRate: 1, maxField: 6, desc: 'The normal pace. Monsters keep walking in while you fight, up to 6 at once.' },
-  run: { name: 'Run', spawnRate: 1.5, maxField: 10, desc: 'Monsters arrive 50% faster and up to 10 crowd the field. More kills, if you can take it.' },
+  flee: { name: 'Fleeing', spawnRate: 0.5, maxField: 3, desc: 'Half-speed arrivals. Up to 3 enemies.' },
+  walk: { name: 'Walking', spawnRate: 1, maxField: Math.floor(CELLS.length / 2), desc: 'Normal arrivals. Up to half the field.' },
+  run: { name: 'Sprinting', spawnRate: 1.5, maxField: CELLS.length, desc: '50% faster arrivals. Every hex can fill.' },
 };
-/** fleeing loses the furthest monster this often */
+/** Emergency flee loses the furthest monster this often. */
 export const FLEE_SHAKE_MS = 1500;
 /** auto-flee kicks in below this fraction of life and walks on again above the second */
 export const AUTO_FLEE_AT = 0.35;
 export const AUTO_FLEE_RESUME = 0.9;
 /** fraction of max life and mana recovered per second once fleeing has shaken off every monster */
 export const FLEE_BREATHER_REGEN = 0.1;
-export const MOVEMENT_ORDER: Movement[] = ['flee', 'slow', 'walk', 'run'];
-
-export const POSTURES: Record<Posture, { name: string; desc: string }> = {
-  brawler: { name: 'Brawler', desc: 'Walks into a fight and runs when every target is still at the far edge.' },
-  kiter: { name: 'Kiter', desc: 'Creeps at range, runs out of hazards and pushes adjacent normal enemies back.' },
-  cautious: { name: 'Cautious', desc: 'Creeps into small packs and flees below 35% Life once recovery flasks are empty.' },
-};
-export const POSTURE_ORDER: Posture[] = ['brawler', 'kiter', 'cautious'];
+export const MOVEMENT_ORDER: Movement[] = ['walk', 'run', 'flee'];
 
 export const cellRing = (i: number): number => CELLS[i]?.ring ?? 1;
 
@@ -183,15 +175,18 @@ export const UNHOLY_RECOVERY = 0.5;
 export const CHILLED_GROUND_SLOW = 0.75;
 /** standing on frozen ground: the same, harder */
 export const FROZEN_GROUND_SLOW = 0.6;
-/** a hazard under the player burns out this much faster while running or fleeing out of it */
+/** A hazard under the player burns out this much faster during emergency flee or certain skills. */
 export const STEP_OUT_RATE = 2;
 
 /** Lay ground on a cell: one patch per kind per cell, keeping the stronger burn and the longer timer. */
-export function layGround(ground: Ground[], cell: number, kind: GroundKind, dps: number, durationMs: number): void {
+export function layGround(ground: Ground[], cell: number, kind: GroundKind, dps: number, durationMs: number, sourceUid?: number): void {
   const same = ground.find((g) => g.cell === cell && g.kind === kind);
-  if (!same) ground.push({ cell, kind, dps, remainingMs: durationMs, durationMs });
+  if (!same) ground.push({ cell, kind, dps, remainingMs: durationMs, durationMs, sourceUid });
   else {
-    same.dps = Math.max(same.dps, dps);
+    if (dps >= same.dps) {
+      same.dps = dps;
+      same.sourceUid = sourceUid;
+    }
     if (durationMs > same.remainingMs) same.remainingMs = same.durationMs = durationMs;
   }
 }
@@ -260,8 +255,8 @@ function engaged(m: MonsterInstance, minions: Minion[]): boolean {
 }
 
 /** Free edge cells (gates), and free cells nearest a spot, for monsters arriving or being called in. */
-export function freeEdge(monsters: MonsterInstance[]): number[] {
-  const taken = occupied(monsters);
+export function freeEdge(bodies: Body[]): number[] {
+  const taken = occupied(bodies);
   return EDGE_CELLS.filter((i) => !taken.has(i));
 }
 
@@ -327,7 +322,7 @@ export function pullCloser(monsters: MonsterInstance[], m: MonsterInstance, mini
 
 // ---------- minions (docs/GAME.md) ----------
 
-/** The most minions on the field at once, from every gem together: as many as a Walk pace sends monsters. */
+/** The most minions on the field at once, from every gem together. */
 export const MINION_CAP = 6;
 /** Minions walk no further out than this, so they don't stand on a gate. */
 export const MINION_LEASH = 3;

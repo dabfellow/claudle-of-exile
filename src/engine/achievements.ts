@@ -1,9 +1,10 @@
 import { ACHIEVEMENTS, ACHIEVEMENT_BY_ID, hasRealmPerk, perkTotals, type AchievementDef } from '../data/achievements';
-import { ensureStashPages } from './account';
+import { ensurePersonalStashPages, ensureStashPages } from './account';
 import { addBank } from './bank';
 import { characterLevel } from './character';
 import { createUnique } from './items';
 import { makeCtx, type Ctx } from './context';
+import { settleFishingUnlock } from './fishing';
 import { settlePassivePoints } from './passives';
 import { seeded } from './rng';
 import type { GameState } from './types';
@@ -20,6 +21,7 @@ export function settleRealmRewards(s: GameState): AchievementDef[] {
   if (!added.length) return [];
   a.achievementRewards = [...had, ...added.map((d) => d.id)];
   ensureStashPages(a);
+  ensurePersonalStashPages(s.storage, a);
   return added;
 }
 
@@ -42,6 +44,7 @@ export function checkAchievements(s: GameState, ctx: Ctx): string[] {
     }
     if (fresh.some((id) => ACHIEVEMENT_BY_ID[id].perks?.passivePoints)) settlePassivePoints(s);
   }
+  settleFishingUnlock(s, fresh);
   return fresh;
 }
 

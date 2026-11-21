@@ -1,18 +1,19 @@
 import { useState, type ReactNode } from 'react';
 import { baseDef } from '../../data/bases';
 import { activeGemDef, supportGemDef } from '../../data/gems';
+import { mapStockName } from '../../data/maps';
 import { allMods, describeMod, itemName } from '../../engine/items';
 import { MATERIALS, materialDef } from '../../data/materials';
 import { STASH_PAGE_SIZE } from '../../data/hideout';
-import { challengeName, isSolo } from '../../engine/challenge';
 import { salvage } from '../../engine/crafting';
+import { MATERIAL_CAP } from '../../engine/bank';
 import { clearableGems, clearLevelOneGems } from '../../engine/gems';
 import { sortFigure, sortItems, type SortKey } from '../../engine/itemSort';
 import { buyStashPage, setStashAffinity, settleOverflow, stashedItems, stashPagePrice, stashPageRoom, takeFromStash } from '../../engine/storage';
 import { game } from '../../game';
 import type { FlaskInstance, GameState, Item, Rarity, StashAffinity } from '../../engine/types';
 import '../round2-session3.css';
-import { Art, EmptyState, fmt, MatIcon, Tabs, Tooltip, type TabDef } from './common';
+import { Art, EmptyState, fmt, GameIcon, MatIcon, Tabs, Tooltip, type TabDef } from './common';
 import { FlaskShelf } from './FlaskView';
 import { GemIcon, GemTip, SupportTip } from './GemView';
 import { Swatch } from './Icon';
@@ -21,7 +22,7 @@ import { UniqueShelf } from './UniqueShelf';
 import type { Page } from '../Layout';
 import { CurrencyPinHint, CurrencySlot } from './CurrencyPins';
 
-export type StashTabId = 'gear' | 'uniques' | 'currency' | 'materials' | 'gems' | 'flasks';
+export type StashTabId = 'gear' | 'uniques' | 'currency' | 'materials' | 'gems' | 'flasks' | 'maps';
 type Tab = StashTabId;
 
 /** The currency tab has a fixed place for every orb, like a real stash tab. Gold sits there too, so it can be pinned to the top bar. */
@@ -49,9 +50,14 @@ const MATERIAL_GROUPS: { label: string; kinds: string[] }[] = [
   { label: 'Other', kinds: ['dust'] },
 ];
 
-function MaterialTile({ s, id }: { s: GameState; id: string }) {
+function MaterialTile({ s, id, onPick }: { s: GameState; id: string; onPick: (id: string) => void }) {
   const def = materialDef(id);
-  const n = s.account.bank[id] ?? 0;
+  const n = s.storage.bank[id] ?? 0;
+  const contents = <>
+    <Art src={`materials/${id}.png`} alt="" size={44} fallback={<Swatch color={def.color} size={26} />} />
+    <span className="material-name">{def.name}</span>
+    <b className="num">{fmt(n)}</b>
+  </>;
   return (
     <Tooltip
       content={
@@ -62,11 +68,7 @@ function MaterialTile({ s, id }: { s: GameState; id: string }) {
         </div>
       }
     >
-      <div className={`material-tile ${n > 0 ? '' : 'none'}`}>
-        <Art src={`materials/${id}.png`} alt={def.name} size={44} fallback={<Swatch color={def.color} size={26} />} />
-        <span className="material-name">{def.name}</span>
-        <b className="num">{fmt(n)}</b>
-      </div>
+      {n > 0 ? <button type="button" className="material-tile" onClick={() => onPick(id)}>{contents}</button> : <div className="material-tile none">{contents}</div>}
     </Tooltip>
   );
 }
@@ -86,6 +88,9 @@ export function StashPanel({
   selected,
   onPick,
   onPickFlask,
+  onPickStack,
+  onPickMap,
+  onPickGem,
 }: {
   s: GameState;
   go: (p: Page) => void;
@@ -96,27 +101,29 @@ export function StashPanel({
   selected: number | null;
   onPick: (item: Item) => void;
   onPickFlask: (f: FlaskInstance) => void;
+  onPickStack: (id: string) => void;
+  onPickMap: (id: string) => void;
+  onPickGem: (kind: 'gems' | 'supportGems', uid: number) => void;
 }) {
   const [gemSearch, setGemSearch] = useState('');
   const gemHit = (name: string) => name.toLowerCase().includes(gemSearch.trim().toLowerCase());
-  const here = Math.min(page, s.account.stash.length - 1);
+  const here = Math.min(page, s.storage.stash.length - 1);
   const tabs: TabDef<Tab>[] = [
-    { id: 'gear', label: 'Gear', count: stashedItems(s).length - s.account.uniqueStash.length },
-    { id: 'uniques', label: 'Uniques', count: s.account.uniqueStash.length },
+    { id: 'gear', label: 'Gear', count: stashedItems(s).length - s.storage.uniqueStash.length },
+    { id: 'uniques', label: 'Uniques', count: s.storage.uniqueStash.length },
     { id: 'currency', label: 'Currency' },
     { id: 'materials', label: 'Materials' },
-    { id: 'gems', label: 'Gems', count: s.account.gems.length + s.account.supportGems.length },
-    { id: 'flasks', label: 'Flasks', count: s.account.flaskStash.length },
+    { id: 'gems', label: 'Gems', count: s.storage.gems.length + s.storage.supportGems.length },
+    { id: 'flasks', label: 'Flasks', count: s.storage.flaskStash.length },
+    { id: 'maps', label: 'Maps' },
   ];
-  const isChallenge = !!challengeName(s.character.challenge);
+  const maps = Object.entries(s.maps.stock).filter(([, count]) => count > 0);
   const clearable = clearableGems(s).length;
   return (
     <div className="card stash-card">
       <div className="card-title">
         Stash
-        <span className="card-hint">
-          {isSolo(s) ? 'This character only' : `Shared by all your ${isChallenge ? `${challengeName(s.character.challenge)} ` : ''}characters`}
-        </span>
+        <span className="card-hint">This character only</span>
       </div>
       <Tabs tabs={tabs} value={tab} onChange={setTab} />
 
@@ -139,7 +146,7 @@ export function StashPanel({
                 <div className="section-label">{g.label}</div>
                 <div className="currency-row">
                   {g.ids.map((id) => (
-                    <CurrencySlot key={id} s={s} id={id} />
+                    <CurrencySlot key={id} s={s} id={id} onPick={onPickStack} />
                   ))}
                 </div>
               </div>
@@ -148,7 +155,7 @@ export function StashPanel({
         </StashTab>
 
         <StashTab on={tab === 'materials'}>
-          <MaterialsPanel s={s} />
+          <MaterialsPanel s={s} onPick={onPickStack} />
         </StashTab>
 
         <StashTab on={tab === 'gems'}>
@@ -177,7 +184,7 @@ export function StashPanel({
             </div>
             <div className="row">
               <div className="section-label" style={{ margin: 0 }}>
-                Spare skill gems ({s.account.gems.length})
+                Spare skill gems ({s.storage.gems.length})
               </div>
               <span className="spacer" />
               <button
@@ -191,28 +198,28 @@ export function StashPanel({
                 Clear all Lv 1 ({clearable})
               </button>
             </div>
-            {s.account.gems.length === 0 && <EmptyState small>No spare skill gems. Buy them at the Gem shop.</EmptyState>}
+            {s.storage.gems.length === 0 && <EmptyState small>No spare skill gems. Buy them at the Gem shop.</EmptyState>}
             <div className="gem-bag">
-              {s.account.gems.filter((g) => gemHit(activeGemDef(g.gemId).name)).map((g) => (
+              {s.storage.gems.filter((g) => gemHit(activeGemDef(g.gemId).name)).map((g) => (
                 <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
-                  <div className="gem-card">
+                  <button type="button" className="gem-card" onClick={() => onPickGem('gems', g.uid)}>
                     <GemIcon def={activeGemDef(g.gemId)} size={30} />
                     <span>
                       <b>{activeGemDef(g.gemId).name}</b> <span className="dim">Lv {g.level}</span>
                     </span>
-                  </div>
+                  </button>
                 </Tooltip>
               ))}
             </div>
-            <div className="section-label">Support gems ({s.account.supportGems.length})</div>
-            {s.account.supportGems.length === 0 && <EmptyState small>No loose support gems. Buy them at the Gem shop or cut them with Gemcutting.</EmptyState>}
+            <div className="section-label">Support gems ({s.storage.supportGems.length})</div>
+            {s.storage.supportGems.length === 0 && <EmptyState small>No loose support gems. Buy them at the Gem shop or cut them with Gemcutting.</EmptyState>}
             <div className="gem-bag">
-              {s.account.supportGems.filter((g) => gemHit(supportGemDef(g.supportId).name)).map((g) => (
+              {s.storage.supportGems.filter((g) => gemHit(supportGemDef(g.supportId).name)).map((g) => (
                 <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
-                  <div className="gem-card">
+                  <button type="button" className="gem-card" onClick={() => onPickGem('supportGems', g.uid)}>
                     <GemIcon def={supportGemDef(g.supportId)} size={26} support />
                     <b>{supportGemDef(g.supportId).name}</b>
-                  </div>
+                  </button>
                 </Tooltip>
               ))}
             </div>
@@ -224,9 +231,23 @@ export function StashPanel({
             <div className="row">
               <span className="dim small">Spare flasks. Click one to craft, enchant or put it on your belt.</span>
             </div>
-            {s.account.flaskStash.length === 0 && <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>}
-            <FlaskShelf flasks={s.account.flaskStash} selected={selected} onPick={onPickFlask} />
+            {s.storage.flaskStash.length === 0 && <EmptyState small>No spare flasks. Brew them with Alchemy or loot them.</EmptyState>}
+            <FlaskShelf flasks={s.storage.flaskStash} selected={selected} onPick={onPickFlask} />
           </div>
+        </StashTab>
+
+        <StashTab on={tab === 'maps'}>
+          {maps.length ? (
+            <div className="material-grid">
+              {maps.map(([id, count]) => (
+                <button type="button" key={id} className="material-tile" onClick={() => onPickMap(id)}>
+                  <GameIcon name="map" size={28} />
+                  <span className="material-name">{mapStockName(id)}</span>
+                  <b className="num">{fmt(count)}</b>
+                </button>
+              ))}
+            </div>
+          ) : <EmptyState small>No maps in your stash.</EmptyState>}
         </StashTab>
       </div>
     </div>
@@ -234,7 +255,7 @@ export function StashPanel({
 }
 
 /** Every material by family, with a search and a switch to hide the ones you have none of. */
-function MaterialsPanel({ s }: { s: GameState }) {
+function MaterialsPanel({ s, onPick }: { s: GameState; onPick: (id: string) => void }) {
   const [search, setSearch] = useState('');
   const [ownedOnly, setOwnedOnly] = useState(false);
   const [group, setGroup] = useState('');
@@ -242,11 +263,12 @@ function MaterialsPanel({ s }: { s: GameState }) {
   const groups = MATERIAL_GROUPS.filter((g) => !group || g.label === group)
     .map((g) => ({
       ...g,
-      list: MATERIALS.filter((m) => g.kinds.includes(m.kind) && (!ownedOnly || (s.account.bank[m.id] ?? 0) > 0) && (!q || m.name.toLowerCase().includes(q))),
+      list: MATERIALS.filter((m) => g.kinds.includes(m.kind) && (!ownedOnly || (s.storage.bank[m.id] ?? 0) > 0) && (!q || m.name.toLowerCase().includes(q))),
     }))
     .filter((g) => g.list.length);
   return (
     <div className="card stash-panel">
+      <div className="muted small">Up to {fmt(MATERIAL_CAP)} of each material. Gathering continues when a stack is full.</div>
       <div className="r2-stash-filters">
         <input className="input" type="search" placeholder="Search materials" aria-label="Search materials" value={search} onChange={(e) => setSearch(e.target.value)} />
         <select className="input sm" aria-label="Kind" value={group} onChange={(e) => setGroup(e.target.value)}>
@@ -267,7 +289,7 @@ function MaterialsPanel({ s }: { s: GameState }) {
           <div className="section-label">{g.label}</div>
           <div className="material-grid">
             {g.list.map((m) => (
-              <MaterialTile key={m.id} s={s} id={m.id} />
+              <MaterialTile key={m.id} s={s} id={m.id} onPick={onPick} />
             ))}
           </div>
         </div>
@@ -289,9 +311,9 @@ const salvageGear = (uids: number[]) => game.act((st, ctx) => void salvage(st, c
 
 /** Items that didn't fit when characters' stashes were merged. Nothing here is lost: take it out or move it in as room appears. */
 function Overflow({ s, onPick }: { s: GameState; onPick: (item: Item) => void }) {
-  const items = s.account.overflow;
+  const items = s.storage.overflow;
   if (!items.length) return null;
-  const room = s.account.stash.some((_, i) => stashPageRoom(s, i) > 0);
+  const room = s.storage.stash.some((_, i) => stashPageRoom(s, i) > 0);
   return (
     <div className="card stash-panel" style={{ marginBottom: 12 }}>
       <div className="row wrap" style={{ marginBottom: 10 }}>
@@ -353,9 +375,9 @@ function GearPages({ s, page, setPage, selected, onPick }: { s: GameState; page:
   const [rarity, setRarity] = useState<Rarity | null>(null);
   const [everyPage, setEveryPage] = useState(true);
   const price = stashPagePrice(s);
-  const pages = s.account.stash;
+  const pages = s.storage.stash;
   const items = pages[page] ?? [];
-  const currentAffinity = s.account.stashAffinities?.[page] ?? '';
+  const currentAffinity = s.storage.stashAffinities?.[page] ?? '';
   const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const filtering = words.length > 0 || !!slot || !!rarity;
   const matches = (i: Item) => {
@@ -380,7 +402,7 @@ function GearPages({ s, page, setPage, selected, onPick }: { s: GameState; page:
       <div className="card-title">
         <div className="stash-pages">
           {pages.map((p, i) => {
-            const aff = s.account.stashAffinities?.[i];
+            const aff = s.storage.stashAffinities?.[i];
             return (
               <button key={i} className={`stash-page-tab ${i === page ? 'active' : ''}`} onClick={() => setPage(i)} title={`${p.length}/${STASH_PAGE_SIZE}${aff ? ` · Affinity: ${aff}` : ''}`}>
                 {i + 1}
@@ -389,7 +411,7 @@ function GearPages({ s, page, setPage, selected, onPick }: { s: GameState; page:
               </button>
             );
           })}
-          <button className="stash-page-tab buy" disabled={(s.account.bank.gold ?? 0) < price} title={`Buy stash page ${pages.length + 1}`} onClick={() => game.act((st, ctx) => buyStashPage(st, ctx))}>
+          <button className="stash-page-tab buy" disabled={(s.storage.bank.gold ?? 0) < price} title={`Buy stash page ${pages.length + 1}`} onClick={() => game.act((st, ctx) => buyStashPage(st, ctx))}>
             + <MatIcon id="gold" size={12} /> {fmt(price)}
           </button>
         </div>
@@ -486,7 +508,7 @@ function GearPages({ s, page, setPage, selected, onPick }: { s: GameState; page:
                 void takeFromStash(
                   st,
                   ctx,
-                  (st.account.stash[page] ?? []).map((i) => i.uid),
+                  (st.storage.stash[page] ?? []).map((i) => i.uid),
                 ),
             )
           }

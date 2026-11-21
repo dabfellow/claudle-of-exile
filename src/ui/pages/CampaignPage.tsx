@@ -4,16 +4,18 @@ import { areaCurrency, bossGatherMats, bossTable } from '../../data/drops';
 import { materialDef } from '../../data/materials';
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ACT_MAPS, smoothPath, VEYRATH_FRONTIERS, VEYRATH_REGIONS, WORLD_MAP, type MapPoint } from '../../data/campaignMap';
-import { LABEL_SIDE, labelLines } from '../../data/continent';
+import { CAMPAIGN_GEAR_CHECKS } from '../../data/campaignGearChecks';
+import { labelLines } from '../../data/continent';
 import { actBossZone, actOpen, ACTS, bossesNeeded, isSideArea, MECHANIC_INFO, roadsInto, ZONES, zoneDef, zonesInAct, type ZoneDef } from '../../data/zones';
 import { FINAL_ACT } from '../../engine/hideout';
+import { campaignQuestView } from '../../engine/campaignQuests';
 import { bossesBeatenInAct, zoneLockText } from '../../engine/progress';
 import { areaXpLabel, characterLevel } from '../../engine/character';
 import { BOSS_RESPAWN_MS, bossIsNext, canBossFarm, startCombat, toggleBossFarm } from '../../engine/combat';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { ActTerrain, WorldTerrain } from '../components/CampaignTerrain';
-import { anyArtUrl, Badge, EmptyState, GameIcon, MatIcon, PageHeader, ProgressBar, sceneStyle } from '../components/common';
+import { Badge, EmptyState, GameIcon, MatIcon, PageHeader, ProgressBar, zoneBackdrop } from '../components/common';
 import type { Page } from '../Layout';
 import '../round2-session2.css';
 import '../components/veyrath-atlas.css';
@@ -74,6 +76,7 @@ function BossMechanics({ z }: { z: ZoneDef }) {
 }
 
 function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => void }) {
+  const backdrop = zoneBackdrop(z);
   const unlocked = s.unlockedZones.includes(z.id);
   const here = s.combat?.zoneId === z.id;
   const kills = s.zoneKills[z.id] ?? 0;
@@ -83,10 +86,11 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
   const beaten = s.bossesDefeated.includes(z.id);
   const farming = here && !!s.combat?.bossFarm;
   const trial = trialAt(s, z.id);
+  const pack = CAMPAIGN_GEAR_CHECKS[z.id];
   return (
     <div className={`card area ${here ? 'current' : ''} ${unlocked ? '' : 'locked'} ${z.actBoss ? 'act-boss' : ''}`} style={{ ['--zone' as string]: z.color }}>
-      <div className={`area-banner ${anyArtUrl(`zones/${z.id}`) ? 'has-art' : ''}`} style={sceneStyle(`zones/${z.id}`)}>
-        <span className="area-tier">{z.actBoss ? 'Act boss' : isSideArea(z) ? 'Side area' : `Area ${n}`}</span>
+      <div className={`area-banner${backdrop ? ' has-art' : ''}`} style={backdrop ? { ['--scene-art' as string]: `url(${backdrop})` } : undefined}>
+        <span className="area-tier">{z.actBoss ? 'Act boss' : isSideArea(z) ? 'Side zone' : `Zone ${n}`}</span>
         {here && (
           <Badge tone="success" live>
             You are here
@@ -123,6 +127,15 @@ function AreaCard({ s, z, go }: { s: GameState; z: ZoneDef; go: (p: Page) => voi
             </span>
             {areaXp && <span>{areaXp} at your level</span>}
           </div>
+          {pack && (
+            <div className="small">
+              <b className={pack.major ? 'bad' : undefined}>{pack.major ? 'Gear check' : 'Dangerous pack'} · {pack.name}</b>
+              <div className="muted">{pack.warning}</div>
+              <ul className="muted" style={{ margin: 0, paddingInlineStart: '1em' }}>
+                {pack.counters.map((counter) => <li key={counter.tip}>{counter.tip}</li>)}
+              </ul>
+            </div>
+          )}
           <BossMechanics z={z} />
           {trial && (
             <div className="small">
@@ -277,9 +290,10 @@ export function WorldMap({ s, onOpen }: { s: GameState; onOpen: (act: number) =>
 const nodeKind = (z: ZoneDef) => (z.actBoss ? 'is-boss' : isSideArea(z) ? 'is-side' : 'is-main');
 
 /** One act up close: its landscape, the roads its bosses open (with their bends), and every area on them. */
-function ActCloseUp({ s, act, selected, onSelect }: { s: GameState; act: number; selected: string; onSelect: (id: string) => void }) {
+function ActCloseUp({ s, act, selected, questTarget, onSelect }: { s: GameState; act: number; selected: string; questTarget: { zoneId: string } | null; onSelect: (id: string) => void }) {
   const data = ACT_MAPS[act];
   const scroller = useRef<HTMLDivElement>(null);
+  const questNode = useRef<HTMLButtonElement>(null);
   const keepClear = useMemo(() => (data ? [...Object.values(data.zones), ...Object.values(data.roads).flat(), ...data.entries.map((e) => e.at)] : []), [data]);
   // on a phone, the map is wider than the screen: start with the chosen area in view
   useEffect(() => {
@@ -287,6 +301,13 @@ function ActCloseUp({ s, act, selected, onSelect }: { s: GameState; act: number;
     const node = box?.querySelector<HTMLElement>('.cmap-node.selected');
     if (box && node && box.scrollWidth > box.clientWidth) box.scrollLeft = node.offsetLeft - box.clientWidth / 2;
   }, [act]);
+  useEffect(() => {
+    if (!questTarget) return;
+    const frame = requestAnimationFrame(() => {
+      questNode.current?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [questTarget]);
   if (!data) return null;
   const zones = zonesInAct(act).filter((z) => data.zones[z.id]);
   const unlocked = (id: string) => s.unlockedZones.includes(id);
@@ -329,15 +350,19 @@ function ActCloseUp({ s, act, selected, onSelect }: { s: GameState; act: number;
           const need = bossesNeeded(z) - bossesBeatenInAct(s, act);
           const trial = trialAt(s, z.id);
           const trialOpen = !!trial && s.ascendancy.trials < trial.n;
+          const isQuestTarget = questTarget?.zoneId === z.id;
           return (
             <button
               key={z.id}
-              className={`cmap-node ${state} ${nodeKind(z)} ${z.id === selected ? 'selected' : ''}`}
+              ref={isQuestTarget ? questNode : undefined}
+              className={`cmap-node ${state} ${nodeKind(z)} ${z.id === selected ? 'selected' : ''}${isQuestTarget ? ' quest-target' : ''}`}
               style={{ ...at(data.zones[z.id]), ['--zone' as string]: z.color }}
               onClick={() => onSelect(z.id)}
               title={unlocked(z.id) ? z.name : `${z.name}: ${zoneLockText(s, z)}`}
               aria-label={z.name}
+              aria-description={isQuestTarget ? 'Current quest objective' : undefined}
             >
+              {isQuestTarget && <span className="cmap-quest-marker" aria-hidden="true" />}
               <span className="cmap-node-dot">
                 {need > 0 ? <b className="num">{need}</b> : z.actBoss ? <GameIcon name="skull" size={13} /> : state === 'cleared' ? '✓' : null}
               </span>
@@ -346,7 +371,7 @@ function ActCloseUp({ s, act, selected, onSelect }: { s: GameState; act: number;
                   <GameIcon name="trophy" size={10} />
                 </span>
               )}
-              <span className={`cmap-node-name ${LABEL_SIDE[z.id] ?? 'below'}`}>
+              <span className="cmap-node-name above">
                 {labelLines(z.name).map((line) => (
                   <span key={line}>{line}</span>
                 ))}
@@ -385,10 +410,12 @@ function ActLegend() {
   );
 }
 
-export function CampaignPage({ go }: { go: (p: Page) => void }) {
+export function CampaignPage({ go, initialQuestZone }: { go: (p: Page) => void; initialQuestZone: string | null }) {
   const s = useGame();
   const storageKey = `coe-world-map:${s.character.id}`;
+  const [questTarget, setQuestTarget] = useState(() => initialQuestZone ? { zoneId: initialQuestZone } : null);
   const [selection, setSelection] = useState<{ act: number | null; zoneId: string }>(() => {
+    if (initialQuestZone) return { act: zoneDef(initialQuestZone).act, zoneId: initialQuestZone };
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey) ?? 'null');
       if (saved && (saved.act === null || ACTS.some((a) => a.n === saved.act && actRevealed(s, a.n)))) {
@@ -402,10 +429,20 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
   useEffect(() => {
     try { localStorage.setItem(storageKey, JSON.stringify(selection)); } catch { /* Storage may be unavailable or full. */ }
   }, [storageKey, selection]);
-  const setZoneId = (id: string) => setSelection((previous) => ({ ...previous, zoneId: id }));
+  const setZoneId = (id: string) => {
+    setQuestTarget((target) => target?.zoneId === id ? target : null);
+    setSelection((previous) => ({ ...previous, zoneId: id }));
+  };
   const openAct = (n: number) => {
     if (!actRevealed(s, n)) return;
+    setQuestTarget(null);
     setSelection({ act: n, zoneId: defaultZone(s, n) });
+  };
+  const showQuestZone = (id: string) => {
+    const questAct = zoneDef(id).act;
+    if (!actRevealed(s, questAct)) return;
+    setSelection({ act: questAct, zoneId: id });
+    setQuestTarget({ zoneId: id });
   };
 
   if (act === null) {
@@ -422,11 +459,13 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
   const { cleared, done } = actProgress(s, act);
   const next = ACTS.find((a) => a.n === act + 1);
   const zone = zones.find((z) => z.id === zoneId);
+  const activeQuestTarget = questTarget && campaignQuestView(s).steps.some(({ current, step }) => current && step.zoneId === questTarget.zoneId)
+    ? questTarget : null;
   return (
     <div className="page">
       <PageHeader title="World Map" />
       <div className="cmap-act-head">
-        <button className="btn sm" onClick={() => setSelection((previous) => ({ ...previous, act: null }))}>
+        <button className="btn sm" onClick={() => { setQuestTarget(null); setSelection((previous) => ({ ...previous, act: null })); }}>
           ← World map
         </button>
         <h2>
@@ -443,7 +482,6 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
           </span>
         )}
       </div>
-      <CampaignJournal chapter={act} onSelectZone={(id) => { openAct(zoneDef(id).act); setZoneId(id); }} />
       {done && (
         <div className="card act-complete">
           <h3>Act {current.n} complete</h3>
@@ -453,7 +491,7 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
               ? 'The campaign is over: the Map Device is open, and the Exile can be created.'
               : next && actOpen(next.n)
                 ? `Act ${next.n}, ${next.name}, is open.`
-                : `Act ${current.n + 1} arrives in a future update — until then, farm these areas for better gear, push your skills and fill your stash.`}
+                : `Act ${current.n + 1} arrives in a future update — until then, farm these zones for better gear, push your skills and fill your stash.`}
           </p>
           {next && actOpen(next.n) && (
             <button className="btn primary" style={{ alignSelf: 'flex-start' }} onClick={() => openAct(next.n)}>
@@ -471,12 +509,13 @@ export function CampaignPage({ go }: { go: (p: Page) => void }) {
       ) : (
         <div className="act-layout">
           <div className="card cmap-card">
-            <ActCloseUp s={s} act={act} selected={zoneId} onSelect={setZoneId} />
+            <ActCloseUp s={s} act={act} selected={zoneId} questTarget={activeQuestTarget} onSelect={setZoneId} />
             <ActLegend />
           </div>
           {zone && <AreaCard s={s} z={zone} go={go} />}
         </div>
       )}
+      <CampaignJournal chapter={act} onSelectZone={showQuestZone} />
     </div>
   );
 }

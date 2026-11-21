@@ -15,7 +15,7 @@ export function mountThievingPlaytest(load: typeof scenario) {
     ['Load veteran thief', () => load('rogueRoster')],
     ['Inspect thief', () => {
       const s = game.state;
-      output.textContent = JSON.stringify({ gold: s.account.bank.gold, markers: s.account.bank.rogues_marker, lifts: s.professionProgress.counters['thieving.markers'], xp: s.skills.thieving, action: s.action, errors });
+      output.textContent = JSON.stringify({ gold: s.storage.bank.gold, markers: s.storage.bank.rogues_marker, lifts: s.professionProgress.counters['thieving.markers'], xp: s.skills.thieving, action: s.action, errors });
     }],
     ['Hide test controls', () => panel.remove()],
   ] as const) {

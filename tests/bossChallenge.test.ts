@@ -3,7 +3,7 @@ import { BOSS_GATHER_DROP, bossGatherMats, STARTER_DROPS } from '../src/data/dro
 import { materialDef } from '../src/data/materials';
 import { zoneDef } from '../src/data/zones';
 import { baseDef } from '../src/data/bases';
-import { aliveMonsters, BOSS_RESPAWN_MS, challengeBoss, combatStep, makeMonster, setMovement, startCombat, toggleBossFarm } from '../src/engine/combat';
+import { aliveMonsters, BOSS_RESPAWN_MS, challengeBoss, combatStep, makeMonster, startCombat, toggleBossFarm } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createItem } from '../src/engine/items';
 import { rollLoot } from '../src/engine/loot';
@@ -117,10 +117,14 @@ describe('boss farm', () => {
     expect(gap).toBeLessThanOrEqual(BOSS_RESPAWN_MS + 50);
   });
 
-  it('holds the timer while fleeing', () => {
+  it('holds the timer during emergency flee until recovery', () => {
     const { s, c } = farming();
-    setMovement(s, 'flee');
-    step(s, c, BOSS_RESPAWN_MS * 2);
+    s.settings.autoFlee = true;
+    s.account.hideout.war_table = 8;
+    s.combat!.fleeing = true;
+    s.life = deriveStats(s).maxLife / 2;
+    step(s, c, 300);
+    expect(s.combat!.bossRespawnMs).toBe(BOSS_RESPAWN_MS);
     expect(s.combat!.monsters).toHaveLength(0);
   });
 
@@ -150,7 +154,7 @@ describe('boss gathering drops', () => {
     const mats = bossGatherMats(boss.level);
     const kills = 200;
     for (let i = 0; i < kills; i++) rollLoot(s, c, boss, zone, deriveStats(s));
-    const got = mats.reduce((n, id) => n + (s.account.bank[id] ?? 0), 0);
+    const got = mats.reduce((n, id) => n + (s.storage.bank[id] ?? 0), 0);
     expect(got).toBeGreaterThan(kills * 0.6);
     expect(got).toBeLessThan(kills * 1.5);
   });
@@ -171,7 +175,7 @@ describe('starter drops', () => {
     startCombat(s, c, 'mudflats');
     const zone = zoneDef('mudflats');
     const d = deriveStats(s);
-    const orbs = { transmute: s.account.bank.transmute ?? 0, alteration: s.account.bank.alteration ?? 0 };
+    const orbs = { transmute: s.storage.bank.transmute ?? 0, alteration: s.storage.bank.alteration ?? 0 };
     const drop = makeMonster(zone.monsters[0], false, 1);
     for (let kill = 1; kill < zone.bossEvery; kill++) {
       s.lifetime.kills = kill;
@@ -179,8 +183,8 @@ describe('starter drops', () => {
     }
     const slots = new Set(s.inventory.map((i) => baseDef(i.baseId).slot));
     for (const slot of ['weapon', 'gloves', 'boots', 'body', 'helmet']) expect(slots).toContain(slot);
-    expect((s.account.bank.transmute ?? 0) - orbs.transmute).toBeGreaterThanOrEqual(2);
-    expect((s.account.bank.alteration ?? 0) - orbs.alteration).toBeGreaterThanOrEqual(2);
+    expect((s.storage.bank.transmute ?? 0) - orbs.transmute).toBeGreaterThanOrEqual(2);
+    expect((s.storage.bank.alteration ?? 0) - orbs.alteration).toBeGreaterThanOrEqual(2);
   });
 
   it('are all over before the first boss can come', () => {

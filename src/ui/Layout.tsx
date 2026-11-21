@@ -32,16 +32,20 @@ import { isClassic } from '../engine/challenge';
 import { MARKET_OPEN } from '../platform/market';
 import { marketInNav } from './marketWindDown';
 import { skillLock } from './skillLock';
+import { fishingOpen } from '../engine/fishing';
+import { stationLockReason } from '../engine/hideout';
 import { professionProgressLabel } from '../engine/professions';
 
 export type Page =
   | 'hideout'
   | 'combat'
   | 'campaign'
+  | 'quests'
   | 'maps'
   | 'skills'
   | 'tree'
   | 'equipment'
+  | 'guild-stash'
   | 'bench'
   | 'stash'
   | 'vendor'
@@ -70,6 +74,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
     items: [
       { page: 'combat', label: 'Combat', icon: 'combat', skill: 'combat' },
       { page: 'campaign', label: 'World Map', icon: 'campaign' },
+      { page: 'quests', label: 'Quests', icon: 'target' },
       { page: 'maps', label: 'Map Device', icon: 'map' },
       { page: 'vendor', label: 'Town', icon: 'vendor' },
       // closed for 1.0: listed only while you still have something on it (see marketWindDown)
@@ -80,6 +85,7 @@ const NAV: { label: string; items: NavEntry[] }[] = [
     label: 'Character',
     items: [
       { page: 'equipment', label: 'Inventory', icon: 'stash' },
+      { page: 'guild-stash', label: 'Guild Stash', icon: 'stash' },
       { page: 'skills', label: 'Skills', icon: 'gems' },
       { page: 'tree', label: 'Passive Tree', icon: 'tree' },
     ],
@@ -153,8 +159,10 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
           {g.label && <div className="nav-label">{g.label}</div>}
           {g.items.filter((it) => it.page !== 'market' || marketInNav(s)).map((it) => {
             const lvl = it.skill ? levelOf(it.skill, s.skills[it.skill]) : null;
-            // life skills you can't use yet are still listed, with a lock, and open on a page saying how to unlock them
-            const locked = it.skill && it.skill !== 'combat' ? skillLock(s, it.skill) : null;
+            const skillRequirement = it.skill && it.skill !== 'combat' ? skillLock(s, it.skill) : null;
+            const lockReason = it.page === 'maps'
+              ? stationLockReason(s, 'map_device')
+              : skillRequirement && `Unlocks at ${skillRequirement}`;
             const isActive = it.skill && it.skill === active;
             const color = it.skill ? SKILLS[it.skill].color : 'var(--muted)';
             return (
@@ -165,10 +173,10 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
                 </span>
                 <span className="nav-name">{it.label}</span>
                 {isActive && <span className="nav-active-dot" />}
-                {it.skill && SKILLS[it.skill].soon ? (
+                {it.skill === 'fishing' && fishingOpen(s) ? null : it.skill && SKILLS[it.skill].soon ? (
                   <span className="nav-badge">Soon</span>
-                ) : locked ? (
-                  <span className="nav-badge" title={`Unlocks at ${locked}`}>
+                ) : lockReason ? (
+                  <span className="nav-badge" title={lockReason} aria-label={lockReason}>
                     <GameIcon name="lock" size={10} />
                   </span>
                 ) : (

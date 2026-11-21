@@ -392,15 +392,52 @@ h3 {
 
 /* ============ app layout ============ */
 .app {
+  --topbar-height: 64px;
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr) 300px;
-  grid-template-rows: 64px minmax(0, 1fr) 40px;
+  grid-template-rows: var(--topbar-height) minmax(0, 1fr) 40px;
   grid-template-areas:
     'side top top'
     'side main feed'
     'xp xp xp';
   height: 100vh;
   height: 100dvh;
+}
+
+.game-content {
+  display: contents;
+}
+
+@media (min-width: 861px) {
+  .app.hideout-app {
+    grid-template-areas:
+      'side content feed'
+      'side content feed'
+      'xp xp xp';
+  }
+
+  .hideout-app .game-content {
+    display: block;
+    grid-area: content;
+    overflow-y: auto;
+  }
+
+  .hideout-app .topbar {
+    min-height: var(--topbar-height);
+  }
+
+  .hideout-app .main {
+    overflow: visible;
+  }
+}
+
+@media (861px <= width <= 1280px) {
+  .app.hideout-app {
+    grid-template-areas:
+      'side content'
+      'side content'
+      'xp xp';
+  }
 }
 
 .sidebar {
@@ -5111,6 +5148,8 @@ g.tut-hint circle.body {
   border-radius: var(--r-sm);
   font-size: var(--fs-xs);
   cursor: pointer;
+  text-transform: none;
+  letter-spacing: normal;
   transition: all 0.15s ease;
 }
 
@@ -5123,7 +5162,7 @@ g.tut-hint circle.body {
 
 .bf-target-popover {
   position: absolute;
-  top: calc(100% + 4px);
+  bottom: calc(100% + 6px);
   left: 0;
   z-index: 50;
   min-width: 280px;
@@ -5132,6 +5171,52 @@ g.tut-hint circle.body {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
   border-radius: var(--r);
   padding: 10px 12px;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.combat-automation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.combat-auto-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.combat-auto-toggle:hover:enabled,
+.combat-auto-toggle.active {
+  border-color: var(--accent-line);
+  color: var(--accent-2);
+}
+
+.combat-auto-toggle:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.combat-auto-light {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dim);
+}
+
+.combat-auto-toggle.active .combat-auto-light {
+  background: var(--accent-2);
+  box-shadow: 0 0 7px var(--accent);
 }
 
 /* Greenhouse Conservatory */
@@ -5336,27 +5421,6 @@ g.tut-hint circle.body {
 }
 .chained-notice b { color: var(--text); }
 
-/* a fixed share of the bar, so the changing text never rewraps the controls and moves the field */
-.bf-status {
-  flex: 1 1 100px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-}
-
-.bf-auto,
-.bf-target {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--fs-sm);
-  color: var(--muted);
-  cursor: pointer;
-}
-
 .input.sm {
   padding: 3px 6px;
   font-size: var(--fs-sm);
@@ -5393,6 +5457,20 @@ g.tut-hint circle.body {
 .bf-cell.ring-2::before { background: rgba(0, 0, 0, 0.32); }
 .bf-cell.ring-3::before { background: rgba(0, 0, 0, 0.28); }
 .bf-cell.ring-4::before { background: rgba(0, 0, 0, 0.42); }
+
+.bf-cell.incoming::before {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 36%, #181108), #181108);
+}
+
+.bf-arrival-timer {
+  z-index: 1;
+  color: var(--accent-2);
+  font-size: clamp(10px, 1.3vw, 16px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px #000;
+  pointer-events: none;
+}
 
 .bf-cell.occupied::before {
   background: color-mix(in srgb, var(--danger) 18%, rgba(0, 0, 0, 0.42));
@@ -5612,15 +5690,6 @@ g.tut-hint circle.body {
   border-radius: 50%;
 }
 
-.bf-empty {
-  position: absolute;
-  inset: 0 0 30% 0;
-  display: grid;
-  place-items: center;
-  color: var(--dim);
-  font-size: var(--fs-sm);
-}
-
 /* the field needs the width: below this the player card and matchup sit side by side under it */
 @media (max-width: 1700px) {
   .arena2 {
@@ -5632,9 +5701,6 @@ g.tut-hint circle.body {
   .arena-side {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  }
-  .matchup-card {
-    height: 300px;
   }
   /* room for the area line to wrap, so it can't push the field down when it does */
   .combat-page .page-head p {
@@ -5649,17 +5715,40 @@ g.tut-hint circle.body {
   gap: 8px;
   font-size: var(--fs-sm);
 }
-.bf-summary-target {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
 @media (max-width: 700px) {
   .battlefield {
     display: none;
   }
   .bf-summary {
     display: flex;
+  }
+  .combat-page .matchup-card {
+    order: -1;
+  }
+  .bf-mini {
+    position: relative;
+    width: min(100%, 300px);
+    align-self: center;
+  }
+  .bf-mini button.bf-cell {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+  .bf-mini button:focus-visible {
+    z-index: 1;
+  }
+  .bf-mini-enemy {
+    z-index: 1;
+    width: 7px;
+    height: 7px;
+    background: currentColor;
+    border-radius: 50%;
+  }
+  .combat-dock .dock-controls {
+    flex-wrap: wrap;
+    gap: 4px;
   }
   /* no field to float over here, and the summary's Strike buttons sit right under it */
   .chained-anchor {
@@ -5689,18 +5778,62 @@ g.tut-hint circle.body {
   border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
 }
 
-/* how you stack up against the monster you're hitting; a set size that scrolls, so nothing around it moves */
 .matchup-card {
   flex: 1 1 0;
-  min-height: 220px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-content: start;
-  gap: 8px;
+  gap: 7px;
   padding: 12px;
-  overflow-y: auto;
   border-radius: var(--r);
   border: 1px solid var(--line);
   background: color-mix(in srgb, var(--bg-2) 85%, transparent);
+}
+
+.matchup-fighter {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  min-width: 0;
+  gap: 6px;
+  text-align: center;
+}
+
+.matchup-fighter h3,
+.matchup-no-target {
+  margin: 0;
+  min-height: 2.4em;
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-sm);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.matchup-fighter .bar {
+  width: 100%;
+}
+
+.matchup-versus {
+  align-self: start;
+  padding-top: 8px;
+  color: var(--dim);
+  font-size: var(--fs-xs);
+}
+
+.matchup-dps {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.matchup-traits {
+  font-size: var(--fs-xs);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.matchup-no-target {
+  margin-top: 26px;
 }
 
 /* skills and flasks on one bar right under the field */
@@ -5793,14 +5926,6 @@ g.tut-hint circle.body {
     padding-left: 0;
     border-left: 0;
   }
-}
-
-.target-label {
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--accent);
 }
 
 .fighter.searching,
@@ -6141,40 +6266,6 @@ g.tut-hint circle.body {
   line-height: 1.2;
 }
 
-.matchup {
-  display: grid;
-  grid-template-columns: auto 1fr 1fr;
-  gap: 5px 14px;
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-}
-
-.matchup-head {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 700;
-  color: var(--accent-2);
-  font-family: var(--font);
-}
-
-.matchup-section {
-  grid-column: 1 / -1;
-  margin-top: 8px;
-}
-
-.matchup-note {
-  grid-column: 1 / -1;
-  margin-top: 2px;
-  padding: 8px 10px;
-  border-radius: var(--r-sm);
-  border: 1px solid color-mix(in srgb, var(--danger) 55%, transparent);
-  background: color-mix(in srgb, var(--danger) 8%, transparent);
-  font-size: var(--fs-xs);
-  color: var(--muted);
-}
-
 /* ============ campaign ============ */
 .area-grid {
   display: grid;
@@ -6496,9 +6587,12 @@ img.art.mat-art {
   overflow: hidden;
 }
 .arena2.has-art {
-  background-image: linear-gradient(180deg, color-mix(in srgb, var(--bg) 55%, transparent), color-mix(in srgb, var(--bg) 88%, transparent)), var(--zone-art);
-  background-size: cover;
-  background-position: center;
+  --zone-art-height: clamp(340px, 48vw, 580px);
+  background-color: var(--panel);
+  background-image: linear-gradient(180deg, rgb(10 12 15 / 50%) 55%, var(--panel)), var(--zone-art);
+  background-repeat: no-repeat;
+  background-size: 100% var(--zone-art-height), max(100%, calc(var(--zone-art-height) * 16 / 9)) var(--zone-art-height);
+  background-position: top center;
 }
 .hideout-scene[style*='--scene-art'] {
   /* full-width hero at the top, fading into the stations below */
@@ -7885,7 +7979,8 @@ img.art.mat-art {
 
 @media (max-height: 760px) and (min-width: 861px) {
   .app {
-    grid-template-rows: 56px minmax(0, 1fr) 34px;
+    --topbar-height: 56px;
+    grid-template-rows: var(--topbar-height) minmax(0, 1fr) 34px;
   }
   .topbar {
     padding: 0 var(--s-4);
@@ -9473,18 +9568,12 @@ button.star {
   backdrop-filter: blur(4px);
 }
 
-/* character stats · worn gear · where to go, side by side */
+/* Character and equipment have independent heights, with life skills beneath them. */
 .home-top {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
   gap: var(--s-4);
-  align-items: stretch;
-}
-
-.home-card {
-  display: grid;
-  align-content: start;
-  gap: 4px;
+  align-items: start;
 }
 
 .home-stats {
@@ -9509,11 +9598,6 @@ button.star {
   display: inline-flex;
   gap: 4px;
   align-items: baseline;
-}
-
-/* worn gear: the Equipment page's paper doll, centred */
-.home-doll {
-  justify-items: center;
 }
 
 /* quick buttons to every page you use from home */
@@ -9565,9 +9649,6 @@ button.hx-mat:hover {
 }
 
 @container (max-width: 1100px) {
-  .home-top {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
   .home-nav-card {
     grid-column: 1 / -1;
   }
@@ -9576,10 +9657,13 @@ button.hx-mat:hover {
   }
 }
 
-@container (max-width: 640px) {
+@container (max-width: 560px) {
   .home-top {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+@container (max-width: 640px) {
   .home-nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

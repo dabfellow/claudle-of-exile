@@ -30,21 +30,21 @@ describe('Hard Boss trophies', () => {
     const s = newGame(1, { name: 'Crafter', classId: 'warrior' });
     const c = ctx();
     s.account.hideout.bench = 6;
-    s.account.bank.gold = 100_000;
-    s.account.bank.arcane_dust = 5000;
+    s.storage.bank.gold = 100_000;
+    s.storage.bank.arcane_dust = 5000;
     const item = sword(s, c);
     expect(benchCraftReason(s, 'bc_boss_phys', item.uid)).toBe('Not enough materials');
-    s.account.bank.marrow_shard = 1;
+    s.storage.bank.marrow_shard = 1;
     expect(benchCraft(s, c, 'bc_boss_phys', item.uid)).toBeNull();
     expect(allMods(item).find((m) => m.crafted)).toMatchObject({ affixId: 'added_phys', tier: 5 });
-    expect(s.account.bank.marrow_shard ?? 0).toBe(0);
+    expect(s.storage.bank.marrow_shard ?? 0).toBe(0);
   });
 
   it('the Crownless Sigil craft needs Bench level 7', () => {
     const s = newGame(1, { name: 'Crafter', classId: 'warrior' });
     const c = ctx();
     s.account.hideout.bench = 6;
-    s.account.bank.crownless_sigil = 1;
+    s.storage.bank.crownless_sigil = 1;
     const item = sword(s, c);
     expect(benchCraftReason(s, 'bc_boss_crit_multi', item.uid)).toMatch(/level 7/);
   });

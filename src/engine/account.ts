@@ -1,14 +1,15 @@
 import { perkTotals } from '../data/achievements';
 import { MAP_DEVICE_ATLAS_LEVEL, STASH_FREE_PAGES, STASH_PAGE_SIZE, STASH_START_PAGES, stationDef } from '../data/hideout';
-import { doomedId, mapId, parseDoomedTier, parseMapTier } from '../data/maps';
+import { doomedId, mapId, parseDoomedTier, parseMapTier, UNIQUE_MAPS } from '../data/maps';
 import { STANDARD_REALM } from './challenge';
+import { mergeFishingPort } from './fishing';
 import { trimFlaskStash } from './flasks';
 import { createUnique, settleItemMarks } from './items';
-import type { AccountPool, AccountState, AccountTransfer, AtlasState, AutomationUnlocks, EquipSlot, GameState, Item, Realm, SkillGemInstance } from './types';
+import type { AccountPool, AccountState, AccountTransfer, AtlasState, AutomationUnlocks, CharacterStorage, EquipSlot, GameState, Item, Realm, SkillGemInstance } from './types';
 import { settleProfessionRealmEvidence } from './professions';
 
 /**
- * What every character in a realm shares: the hideout, automation unlocks, every Stash tab and the Exile unlock.
+ * What every character in a realm shares: the hideout, automation unlocks, Guild Stash and the Exile unlock.
  * Stored apart from the characters, and attached to a running game as `s.account`.
  * See docs/GAME.md.
  */
@@ -30,6 +31,17 @@ export function freshAtlas(): AtlasState {
   return { cleared: [], slotted: [], deathless: [], doomedCleared: [], hardBossesCleared: [], uberBossesCleared: [], nodes: [] };
 }
 
+export function freshCharacterStorage(): CharacterStorage {
+  return {
+    stash: Array.from({ length: STASH_START_PAGES }, () => []),
+    overflow: [], uniqueStash: [], bank: {}, gems: [], supportGems: [], flaskStash: [],
+  };
+}
+
+export function ensurePersonalStashPages(storage: CharacterStorage, account: AccountState): void {
+  while (storage.stash.length < freeStashPages(account)) storage.stash.push([]);
+}
+
 /** Normalize any themed (`map_barrows_t1`) or plain map keys into plain `map_t1`..`map_t10` and `doomed_t1`..`doomed_t5`. */
 export function normalizeMapStock(stock: Record<string, number> | undefined): Record<string, number> {
   const out: Record<string, number> = {};
@@ -37,6 +49,10 @@ export function normalizeMapStock(stock: Record<string, number> | undefined): Re
   for (const [k, raw] of Object.entries(stock)) {
     const n = Math.max(0, Math.floor(raw || 0));
     if (!n) continue;
+    if (UNIQUE_MAPS.some((map) => map.id === k)) {
+      out[k] = n;
+      continue;
+    }
     const dTier = parseDoomedTier(k);
     if (dTier) {
       const id = doomedId(dTier);
@@ -59,18 +75,12 @@ export function freshAccount(realm: Realm = STANDARD_REALM): AccountState {
     rev: 0,
     hideout: { map_device: 1, stash: 1, forge: 1, alchemy_table: 1, bench: 1, vendor: 1, war_table: 1, war_table_tiers: 1, quartermaster: 1, watchtower: 1, trophy_altar: 1, rune_board: 1 },
     automation: freshAutomation(),
-    stash: Array.from({ length: STASH_START_PAGES }, () => []),
-    overflow: [],
-    uniqueStash: [],
+    ...freshCharacterStorage(),
     uniquesSeen: [],
-    bank: {},
     maps: {},
     sextants: [null, null, null, null],
     atlas: freshAtlas(),
     mapSettings: { blockedMods: [], autoRerollChaos: true, rollNormalMaps: false },
-    gems: [],
-    supportGems: [],
-    flaskStash: [],
     nextUid: ACCOUNT_UID_BASE + Math.floor(Math.random() * 4096) * ACCOUNT_UID_SPREAD,
     exileUnlocked: false,
     absorbed: [],
@@ -321,38 +331,21 @@ function settlePool(s: GameState, a: AccountState): boolean {
   return true;
 }
 
-/** Fold a character's local map stock (including old themed maps) into the realm's shared map supply once. */
-export function settleCharacterMaps(s: GameState, a: AccountState): boolean {
-  a.maps ??= {};
-  const key = `maps:${s.character.id}`;
-  let changed = false;
-  if (s.maps?.stock && s.maps.stock !== a.maps && !a.absorbed.includes(key)) {
-    const folded = normalizeMapStock(s.maps.stock);
-    if (Object.keys(folded).length > 0) {
-      for (const [id, n] of Object.entries(folded)) a.maps[id] = (a.maps[id] ?? 0) + n;
-      a.absorbed.push(key);
-      changed = true;
-    }
-  }
-  if (s.maps) s.maps.stock = a.maps;
-  return changed;
-}
-
 /**
  * Fold in what a character still carries from before the account layer (or from a demo or an import). Each source
  * counts once, so a merge cut short can simply run again. Returns true if the account changed.
  */
 export function settleCharacter(s: GameState, a: AccountState): boolean {
   const pooled = settlePool(s, a);
-  const mapped = settleCharacterMaps(s, a);
   const finish = (changed: boolean) => {
+    ensurePersonalStashPages(s.storage, a);
     settleProfessionRealmEvidence(s, a);
     return changed;
   };
   const from = s.unmerged;
-  if (!from) return finish(pooled || mapped);
+  if (!from) return finish(pooled);
   delete s.unmerged;
-  if (a.absorbed.includes(s.character.id) || from.id === a.id) return finish(pooled || mapped);
+  if (a.absorbed.includes(s.character.id) || from.id === a.id) return finish(pooled);
   // an auto-craft running on a stashed item follows it to its new uid
   const job = s.action?.kind === 'craft' ? s.action : null;
   const target = job && [...(from.stash ?? []).flat(), ...(from.overflow ?? []), ...(from.uniqueStash ?? [])].find((i) => i.uid === job.uid);
@@ -372,6 +365,7 @@ export function giveKeepsake(s: GameState): boolean {
 
 /** Two copies of the account (two devices): the newer stash stands, and no unlock is ever lost. */
 export function reconcileAccounts(newer: AccountState, older: AccountState): AccountState {
+  mergeFishingPort(newer, older);
   mergeUnlocks(newer, older);
   newer.absorbed = [...new Set([...newer.absorbed, ...older.absorbed])];
   fileUniques(newer);
@@ -403,12 +397,19 @@ function mergeList<T extends { uid: number }>(a: AccountState, mine: T[], base: 
  * top of their copy, so two characters playing at once both keep what they earn. Changes `mine` in place.
  */
 export function mergeAccounts(mine: AccountState, base: AccountState, theirs: AccountState): void {
+  mergeFishingPort(mine, theirs);
   // all three copies file their uniques the same way first, so a unique isn't read as taken off a page and added twice
   for (const a of [mine, base, theirs]) fileUniques(a);
   mergeUnlocks(mine, theirs);
   mine.absorbed = [...new Set([...mine.absorbed, ...theirs.absorbed])];
   mine.uniquesSeen = [...new Set([...mine.uniquesSeen, ...theirs.uniquesSeen])];
   mine.nextUid = Math.max(mine.nextUid, theirs.nextUid);
+  if (theirs.guildTransfers) {
+    mine.guildTransfers ??= {};
+    for (const [id, rev] of Object.entries(theirs.guildTransfers)) {
+      mine.guildTransfers[id] = Math.max(mine.guildTransfers[id] ?? 0, rev);
+    }
+  }
   const bank: Record<string, number> = { ...theirs.bank };
   for (const id of new Set([...Object.keys(mine.bank), ...Object.keys(base.bank)])) {
     bank[id] = Math.max(0, (theirs.bank[id] ?? 0) + (mine.bank[id] ?? 0) - (base.bank[id] ?? 0));

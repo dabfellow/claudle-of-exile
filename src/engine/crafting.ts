@@ -538,7 +538,7 @@ export function salvage(s: GameState, ctx: Ctx, uids: number[]): number {
   const dust = gone.reduce((a, i) => a + salvageValue(i), 0);
   const n = gone.length;
   if (dust > 0) {
-    s.account.bank.arcane_dust = (s.account.bank.arcane_dust ?? 0) + dust;
+    s.storage.bank.arcane_dust = (s.storage.bank.arcane_dust ?? 0) + dust;
     s.lifetime.salvaged += n;
     ctx.emit({ t: 'info', text: `Salvaged ${n} item(s) for ${dust} Arcane Dust`, tone: 'good' });
     ctx.emit({ t: 'salvage', count: n });

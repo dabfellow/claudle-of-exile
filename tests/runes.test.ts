@@ -7,6 +7,7 @@ import { describeStat } from '../src/data/statText';
 import { freshAccount } from '../src/engine/account';
 import type { Ctx } from '../src/engine/context';
 import { applyOrb, restoreImpression, takeImpression } from '../src/engine/crafting';
+import { transferGuild } from '../src/engine/guildStash';
 import { createItem, createUnique } from '../src/engine/items';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
@@ -42,7 +43,7 @@ function wear(s: GameState, slot: EquipSlot, item: Item): Item {
 }
 
 function give(s: GameState, id: string, n = 1): void {
-  s.account.bank[id] = (s.account.bank[id] ?? 0) + n;
+  s.storage.bank[id] = (s.storage.bank[id] ?? 0) + n;
 }
 
 describe('the skill', () => {
@@ -91,13 +92,13 @@ describe('the skill', () => {
     for (const [id, n] of Object.entries(a.inputs!)) give(s, id, n * 5);
     expect(startSkillAction(s, ctx(), a.id)).toBeNull();
     skillStep(s, ctx(), a.intervalMs + 1, deriveStats(s));
-    expect(s.account.bank[Object.keys(a.outputs!)[0]]).toBe(1);
+    expect(s.storage.bank[Object.keys(a.outputs!)[0]]).toBe(1);
     expect(s.skills.runecarving).toBeGreaterThan(0);
 
     const rune = Object.keys(a.outputs!)[0];
-    const before = s.account.bank[rune];
+    const before = s.storage.bank[rune];
     simulateOffline(s, ctx(), a.intervalMs * 3.5);
-    expect(s.account.bank[rune]).toBe(before + 3);
+    expect(s.storage.bank[rune]).toBe(before + 3);
   });
 
   it('stops when the materials run out, offline too', () => {
@@ -106,7 +107,7 @@ describe('the skill', () => {
     for (const [id, n] of Object.entries(a.inputs!)) give(s, id, n);
     startSkillAction(s, ctx(), a.id);
     simulateOffline(s, ctx(), a.intervalMs * 10);
-    expect(s.account.bank[Object.keys(a.outputs!)[0]]).toBe(1);
+    expect(s.storage.bank[Object.keys(a.outputs!)[0]]).toBe(1);
     expect(s.action).toBeNull();
   });
 
@@ -118,7 +119,7 @@ describe('the skill', () => {
     for (const [id, n] of Object.entries(a.inputs!)) give(s, id, n * 200);
     startSkillAction(s, ctx(), a.id);
     skillStep(s, ctx(), a.intervalMs * 200 + 1, deriveStats(s));
-    expect(s.account.bank[rune]).toBeGreaterThan(200);
+    expect(s.storage.bank[rune]).toBeGreaterThan(200);
   });
 });
 
@@ -138,7 +139,7 @@ describe('the rune slot', () => {
     give(s, 'rune_ember_3');
     s.inventory.push(body);
     expect(inscribeRune(s, ctx(), 'rune_ember_3', body.uid)).toBeNull();
-    expect(s.account.bank.rune_ember_3).toBe(0);
+    expect(s.storage.bank.rune_ember_3).toBe(0);
     const before = rawStats(s).fireRes;
     s.inventory = [];
     wear(s, 'body', body);
@@ -174,7 +175,7 @@ describe('the rune slot', () => {
     expect(runeReason(s, 'rune_keen_1', low.uid)).toBe('Already inscribed');
     inscribeRune(s, ctx(), 'rune_rime_1', low.uid);
     expect(low.rune).toBe('rune_rime_1');
-    expect(s.account.bank.rune_keen_1).toBe(1);
+    expect(s.storage.bank.rune_keen_1).toBe(1);
   });
 
   it('stays through every orb and the wax, and costs no affix room', () => {
@@ -225,12 +226,16 @@ describe('saves and the shared stash', () => {
     item.rune = 'rune_keen_4';
     s.inventory.push(item);
     expect(stashItems(s, ctx(), [item.uid])).toBe(1);
-    const stored = s.account.stash[0][0];
+    const stored = s.storage.stash[0][0];
     expect(stored.rune).toBe('rune_keen_4');
 
-    const account = JSON.parse(JSON.stringify(s.account));
+    const reloaded = deserialize(serialize(s));
+    reloaded.account = s.account;
+    expect(transferGuild(reloaded, { direction: 'deposit', kind: 'gear', uid: stored.uid })).toBeNull();
+    const account = JSON.parse(JSON.stringify(reloaded.account));
     const other = newGame(2);
     other.account = account;
+    expect(transferGuild(other, { direction: 'withdraw', kind: 'gear', uid: stored.uid })).toBeNull();
     expect(takeFromStash(other, ctx(), [stored.uid])).toBe(1);
     expect(other.inventory[0].rune).toBe('rune_keen_4');
     expect(itemRune(other.inventory[0])).toBe(runeDef('rune_keen_4'));

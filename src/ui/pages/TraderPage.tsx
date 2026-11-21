@@ -52,7 +52,7 @@ const SHOPS: { id: ShopId; name: string; keeper: string; blurb: string; portrait
     id: 'gems',
     name: 'Gem shop',
     keeper: 'The Gemwright',
-    blurb: 'Every skill and support gem from the areas you’ve opened, and it never sells out. Each new area brings a few more; completing the campaign adds the Maps gems.',
+    blurb: 'Every skill and support gem from the zones you’ve opened, and it never sells out. Each new zone brings a few more. Completing the campaign adds the Maps gems.',
     icon: 'gemcutting',
     shelves: [
       { label: 'Skill gems', match: (o) => o.kind === 'gem' },
@@ -163,10 +163,10 @@ function WornNow({ s, item }: { s: GameState; item: Item }) {
 /** For a gem: how many you already have, and for a support, which skills on your bar it would fit. */
 function GemOwned({ s, o }: { s: GameState; o: VendorOffer }) {
   if (o.gemId) {
-    const n = s.account.gems.filter((g) => g.gemId === o.gemId).length + s.skillBar.filter((g) => g?.gemId === o.gemId).length;
+    const n = s.storage.gems.filter((g) => g.gemId === o.gemId).length + s.skillBar.filter((g) => g?.gemId === o.gemId).length;
     return <span className="r2-offer-worn">{n ? `You have ${n}` : <span className="r2-offer-good">New to you</span>}</span>;
   }
-  const n = s.account.supportGems.filter((g) => g.supportId === o.supportId).length + s.skillBar.reduce((a, g) => a + (g?.supports.filter((x) => x?.supportId === o.supportId).length ?? 0), 0);
+  const n = s.storage.supportGems.filter((g) => g.supportId === o.supportId).length + s.skillBar.reduce((a, g) => a + (g?.supports.filter((x) => x?.supportId === o.supportId).length ?? 0), 0);
   const fits = s.skillBar.flatMap((b, i) => (b && !supportReason(b, o.supportId!) ? [i] : []));
   return (
     <span className="r2-offer-worn">
@@ -219,7 +219,7 @@ function shopWares(s: GameState, shop: ShopId): VendorOffer[] {
 }
 
 function ShopTab({ s, shop }: { s: GameState; shop: (typeof SHOPS)[number] }) {
-  const gold = s.account.bank.gold ?? 0;
+  const gold = s.storage.bank.gold ?? 0;
   const cost = rerollCost(s);
   const wares = shopWares(s, shop.id);
   const next = shop.id === 'gems' ? nextGemShopArea(s) : null;
@@ -342,9 +342,9 @@ function SellTab({ s }: { s: GameState }) {
     apply(n);
   };
   const pickedGold = pool.filter((i) => picked.has(i.uid)).reduce((a, i) => a + sellValue(i), 0);
-  const flaskGold = s.account.flaskStash.filter((f) => flasks.has(f.uid)).reduce((a, f) => a + flaskValue(f), 0);
+  const flaskGold = s.storage.flaskStash.filter((f) => flasks.has(f.uid)).reduce((a, f) => a + flaskValue(f), 0);
   const byRarity = (r: Rarity) => pool.filter((i) => i.rarity === r);
-  const mats = MATERIALS.filter((m) => m.kind !== 'gold' && (s.account.bank[m.id] ?? 0) > 0);
+  const mats = MATERIALS.filter((m) => m.kind !== 'gold' && (s.storage.bank[m.id] ?? 0) > 0);
 
   return (
     <>
@@ -402,7 +402,7 @@ function SellTab({ s }: { s: GameState }) {
         </div>
       </div>
 
-      {s.account.flaskStash.length > 0 && (
+      {s.storage.flaskStash.length > 0 && (
         <div className="card">
           <div className="card-title">
             Spare flasks
@@ -419,7 +419,7 @@ function SellTab({ s }: { s: GameState }) {
             </button>
           </div>
           <div className="gem-bag">
-            {s.account.flaskStash.map((f) => (
+            {s.storage.flaskStash.map((f) => (
               <Tooltip key={f.uid} content={<FlaskTip f={f} />}>
                 <button className={`gem-card ${flasks.has(f.uid) ? 'selected' : ''}`} onClick={() => toggle(flasks, f.uid, setFlasks)}>
                   <FlaskIcon f={f} size={28} />
@@ -451,12 +451,12 @@ function SellTab({ s }: { s: GameState }) {
                   {m.value}g
                 </span>
               </span>
-              <b className="num">{fmt(s.account.bank[m.id] ?? 0)}</b>
+              <b className="num">{fmt(s.storage.bank[m.id] ?? 0)}</b>
               <div className="row" style={{ gridColumn: '1 / -1', justifyContent: 'flex-end' }}>
                 <button className="btn sm" onClick={() => game.act((st, ctx) => sellMaterial(st, ctx, m.id, 10, m.value))}>
                   Sell 10
                 </button>
-                <button className="btn sm ghost" onClick={() => game.act((st, ctx) => sellMaterial(st, ctx, m.id, st.account.bank[m.id] ?? 0, m.value))}>
+                <button className="btn sm ghost" onClick={() => game.act((st, ctx) => sellMaterial(st, ctx, m.id, st.storage.bank[m.id] ?? 0, m.value))}>
                   All
                 </button>
               </div>
@@ -493,7 +493,7 @@ export function TraderPage() {
         <div className="npc-aside">
           <span className="label">Your gold</span>
           <span className="gold-amount">
-            <MatIcon id="gold" size={22} /> {fmt(s.account.bank.gold ?? 0)}
+            <MatIcon id="gold" size={22} /> {fmt(s.storage.bank.gold ?? 0)}
           </span>
         </div>
       </div>

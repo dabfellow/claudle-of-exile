@@ -48,7 +48,7 @@ function act5(): GameState {
 }
 
 function give(s: GameState, inputs: Record<string, number>, times = 1): void {
-  for (const [id, n] of Object.entries(inputs)) s.account.bank[id] = (s.account.bank[id] ?? 0) + n * times;
+  for (const [id, n] of Object.entries(inputs)) s.storage.bank[id] = (s.storage.bank[id] ?? 0) + n * times;
 }
 
 const PORRIDGE = 'meal_porridge';
@@ -100,8 +100,8 @@ describe('recipes', () => {
     give(s, a.inputs!);
     expect(startSkillAction(s, ctx(), a.id)).toBeNull();
     skillStep(s, ctx(), actionIntervalMs(s, a, deriveStats(s)), deriveStats(s));
-    expect(s.account.bank[PORRIDGE]).toBe(1);
-    expect(s.account.bank.sunpetal).toBe(0);
+    expect(s.storage.bank[PORRIDGE]).toBe(1);
+    expect(s.storage.bank.sunpetal).toBe(0);
     expect(s.skills.cooking).toBeGreaterThan(0);
   });
 
@@ -114,7 +114,7 @@ describe('recipes', () => {
     const c = ctx();
     const d = deriveStats(s);
     skillStep(s, c, actionIntervalMs(s, a, d) * 200, d);
-    expect(s.account.bank[PORRIDGE]).toBeGreaterThan(200);
+    expect(s.storage.bank[PORRIDGE]).toBeGreaterThan(200);
   });
 
   it('Head Chef slows Cooking and strengthens meals', () => {
@@ -122,7 +122,7 @@ describe('recipes', () => {
     const a = actionDef(`cook_${PORRIDGE}`);
     const d = deriveStats(s);
     const slow = actionIntervalMs(s, a, d);
-    s.account.bank[PORRIDGE] = 1;
+    s.storage.bank[PORRIDGE] = 1;
     eatMeal(s, ctx(), PORRIDGE);
     const plain = mealStats(s).lifePct!;
     s.skillPassives.push('cooking_ks');
@@ -144,7 +144,7 @@ describe('recipes', () => {
       startSkillAction(s, ctx(), a.id);
       const d = deriveStats(s);
       skillStep(s, ctx(), actionIntervalMs(s, a, d), d);
-      expect(s.account.flaskStash.some((f) => f.flaskId === flaskId)).toBe(true);
+      expect(s.storage.flaskStash.some((f) => f.flaskId === flaskId)).toBe(true);
     }
     expect(flaskDef('life_sacred').heal).toBeGreaterThan(flaskDef('life_grand').heal!);
     const rng = seeded(3);
@@ -157,21 +157,21 @@ describe('meals', () => {
   it('gives its stats from the moment you eat, in or out of a fight', () => {
     const s = act5();
     const before = deriveStats(s).maxLife;
-    s.account.bank[PORRIDGE] = 1;
+    s.storage.bank[PORRIDGE] = 1;
     expect(eatMeal(s, ctx(), PORRIDGE)).toBeNull();
-    expect(s.account.bank[PORRIDGE]).toBe(0);
+    expect(s.storage.bank[PORRIDGE]).toBe(0);
     expect(s.lifetime.mealsEaten).toBe(1);
     expect(deriveStats(s).maxLife).toBeGreaterThan(before);
   });
 
   it('only one meal at a time: a new dish replaces it, and the same dish is refused', () => {
     const s = act5();
-    s.account.bank[PORRIDGE] = 2;
-    s.account.bank.meal_broth = 1;
+    s.storage.bank[PORRIDGE] = 2;
+    s.storage.bank.meal_broth = 1;
     eatMeal(s, ctx(), PORRIDGE);
     expect(mealReason(s, PORRIDGE)).toBe('You are already full of that');
     expect(eatMeal(s, ctx(), PORRIDGE)).not.toBeNull();
-    expect(s.account.bank[PORRIDGE]).toBe(1);
+    expect(s.storage.bank[PORRIDGE]).toBe(1);
     eatMeal(s, ctx(), 'meal_broth');
     expect(s.meal?.id).toBe('meal_broth');
     expect(mealStats(s).lifePct).toBeUndefined();
@@ -179,7 +179,7 @@ describe('meals', () => {
 
   it('waits while you do anything but fight', () => {
     const s = act5();
-    s.account.bank[PORRIDGE] = 1;
+    s.storage.bank[PORRIDGE] = 1;
     eatMeal(s, ctx(), PORRIDGE);
     tick(s, ctx(), 60_000);
     expect(s.meal?.remainingMs).toBe(MEAL_MS);
@@ -190,23 +190,23 @@ describe('meals', () => {
   it('runs down in a fight and wears off', () => {
     const s = act5();
     s.keepEating = false;
-    s.account.bank[PORRIDGE] = 3;
+    s.storage.bank[PORRIDGE] = 3;
     eatMeal(s, ctx(), PORRIDGE);
     startCombat(s, ctx(), 'mudflats');
     tick(s, ctx(), 1000);
     expect(s.meal!.remainingMs).toBe(MEAL_MS - 1000);
     mealStep(s, ctx(), MEAL_MS);
     expect(s.meal).toBeNull();
-    expect(s.account.bank[PORRIDGE]).toBe(2);
+    expect(s.storage.bank[PORRIDGE]).toBe(2);
   });
 
   it('Keep eating serves the next one, with no time lost, until the bank is empty', () => {
     const s = act5();
-    s.account.bank[PORRIDGE] = 2;
+    s.storage.bank[PORRIDGE] = 2;
     eatMeal(s, ctx(), PORRIDGE);
     mealStep(s, ctx(), MEAL_MS + 500);
     expect(s.meal).toEqual({ id: PORRIDGE, remainingMs: MEAL_MS - 500 });
-    expect(s.account.bank[PORRIDGE]).toBe(0);
+    expect(s.storage.bank[PORRIDGE]).toBe(0);
     expect(s.lifetime.mealsEaten).toBe(2);
     mealStep(s, ctx(), MEAL_MS);
     expect(s.meal).toBeNull();
@@ -214,12 +214,12 @@ describe('meals', () => {
 
   it('a night of fighting is fed the same as a day online', () => {
     const s = act5();
-    s.account.bank[PORRIDGE] = 4;
+    s.storage.bank[PORRIDGE] = 4;
     eatMeal(s, ctx(), PORRIDGE);
     startCombat(s, ctx(), 'mudflats');
     const sum = simulateOffline(s, ctx(), 45 * 60 * 1000);
     expect(sum.died).toBe(false);
-    expect(s.account.bank[PORRIDGE]).toBe(2);
+    expect(s.storage.bank[PORRIDGE]).toBe(2);
     expect(sum.materials[PORRIDGE]).toBe(-1);
     expect(s.meal?.id).toBe(PORRIDGE);
   }, 20_000);
@@ -247,7 +247,7 @@ describe('saves', () => {
 
   it('keeps your meal', () => {
     const s = act5();
-    s.account.bank[PORRIDGE] = 1;
+    s.storage.bank[PORRIDGE] = 1;
     eatMeal(s, ctx(), PORRIDGE);
     expect(deserialize(serialize(s)).meal).toEqual(s.meal);
   });
@@ -268,15 +268,15 @@ describe('Phase 08 Cooking', () => {
 
     const porridge = actionDef('cook_meal_porridge');
     expect(actionBlocker(fresh, porridge)).toBe('Missing materials');
-    fresh.account.bank.sunpetal = 3;
+    fresh.storage.bank.sunpetal = 3;
     expect(actionBlocker(fresh, porridge)).toBeNull();
 
     expect(startSkillAction(fresh, ctx(), porridge.id)).toBeNull();
     const d = deriveStats(fresh);
     skillStep(fresh, ctx(), actionIntervalMs(fresh, porridge, d), d);
 
-    expect(fresh.account.bank.meal_porridge).toBe(1);
-    expect(fresh.account.bank.sunpetal).toBe(0);
+    expect(fresh.storage.bank.meal_porridge).toBe(1);
+    expect(fresh.storage.bank.sunpetal).toBe(0);
     expect(fresh.skills.cooking).toBeGreaterThan(0);
   });
 
@@ -311,8 +311,8 @@ describe('Phase 08 Cooking', () => {
 
   it('proves skilling meals speed up relevant gathering, heist and production while clock ticks only during relevant work', () => {
     const s = veteran(newGame(1));
-    s.account.bank.meal_gatherer = 2;
-    s.account.bank.meal_artisan = 2;
+    s.storage.bank.meal_gatherer = 2;
+    s.storage.bank.meal_artisan = 2;
 
     // Test Gatherer's Ration (Mining, Woodcutting, Foraging, Thieving, Archaeology)
     expect(eatMeal(s, ctx(), 'meal_gatherer')).toBeNull();
@@ -377,7 +377,7 @@ describe('Phase 08 Cooking', () => {
     // Clock check: while smelting/smithing, artisan meal clock ticks
     s.skills.smithing = xpForLevel(20);
     s.skills.smelting = xpForLevel(20);
-    s.account.bank.iron_ore = 100;
+    s.storage.bank.iron_ore = 100;
     expect(startSkillAction(s, ctx(), 'smelt_iron')).toBeNull();
     expect(isMealClockRunning(s)).toBe(true);
     tick(s, ctx(), 5000);
@@ -397,49 +397,49 @@ describe('Phase 08 Cooking', () => {
     // Moon Signature Dish
     const moon = actionDef('cook_meal_moon_signature');
     expect(moon.protectedOutputs).toEqual({ meal_moon_signature: 1 });
-    s.account.bank = { moon_bloom: 1, frostleaf: 10 };
+    s.storage.bank = { moon_bloom: 1, frostleaf: 10 };
     expect(startSkillAction(s, ctx(), moon.id)).toBeNull();
     const d = deriveStats(s);
     skillStep(s, ctx(), actionIntervalMs(s, moon, d), d);
-    expect(s.account.bank.meal_moon_signature).toBe(1);
-    expect(s.account.bank.moon_bloom).toBe(0);
-    expect(s.account.bank.frostleaf).toBe(0);
+    expect(s.storage.bank.meal_moon_signature).toBe(1);
+    expect(s.storage.bank.moon_bloom).toBe(0);
+    expect(s.storage.bank.frostleaf).toBe(0);
 
     // Star Signature Dish
     const star = actionDef('cook_meal_star_signature');
     expect(star.protectedOutputs).toEqual({ meal_star_signature: 1 });
-    s.account.bank = { star_bloom: 1, voidbloom: 10 };
+    s.storage.bank = { star_bloom: 1, voidbloom: 10 };
     expect(startSkillAction(s, ctx(), star.id)).toBeNull();
     skillStep(s, ctx(), actionIntervalMs(s, star, d), d);
-    expect(s.account.bank.meal_star_signature).toBe(1);
-    expect(s.account.bank.star_bloom).toBe(0);
-    expect(s.account.bank.voidbloom).toBe(0);
+    expect(s.storage.bank.meal_star_signature).toBe(1);
+    expect(s.storage.bank.star_bloom).toBe(0);
+    expect(s.storage.bank.voidbloom).toBe(0);
 
     // Binding Stock: non-edible project material
     const stock = actionDef('cook_binding_stock');
     expect(stock.protectedOutputs).toEqual({ binding_stock: 1 });
-    s.account.bank = { moon_bloom: 1, emberroot: 10, sunpetal: 10 };
+    s.storage.bank = { moon_bloom: 1, emberroot: 10, sunpetal: 10 };
     expect(startSkillAction(s, ctx(), stock.id)).toBeNull();
     skillStep(s, ctx(), actionIntervalMs(s, stock, d), d);
-    expect(s.account.bank.binding_stock).toBe(1);
+    expect(s.storage.bank.binding_stock).toBe(1);
     expect(() => mealDef('binding_stock')).toThrow();
   });
 
   it('delivers 5-count feast projects and proves 60-min buffs', () => {
     const s = veteran(newGame(1));
     s.skills.cooking = xpForLevel(60);
-    s.account.bank = { star_bloom: 4, moon_bloom: 4, meal_artisan: 10, meal_porridge: 10 };
+    s.storage.bank = { star_bloom: 4, moon_bloom: 4, meal_artisan: 10, meal_porridge: 10 };
 
     // Grand Artisan's Feast project
     expect(startProject(s, ctx(), 'project_feast_artisans')).toBeNull();
     advanceProject(s, ctx(), 1_800_000);
-    expect(s.account.bank.feast_artisans).toBe(5);
+    expect(s.storage.bank.feast_artisans).toBe(5);
     expect(s.professionProgress.projects.project_feast_artisans?.completed).toBe(1);
 
     // Wayfarer's Feast project
     expect(startProject(s, ctx(), 'project_feast_wayfarers')).toBeNull();
     advanceProject(s, ctx(), 1_800_000);
-    expect(s.account.bank.feast_wayfarers).toBe(5);
+    expect(s.storage.bank.feast_wayfarers).toBe(5);
     expect(s.professionProgress.projects.project_feast_wayfarers?.completed).toBe(1);
 
     // Eat Grand Artisan's Feast
@@ -460,7 +460,7 @@ describe('Phase 08 Cooking', () => {
     const s = veteran(newGame(1));
     s.skills.cooking = xpForLevel(30);
     s.professionProgress.work.cooking = 100;
-    s.account.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
+    s.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
 
     expect(startProject(s, ctx(), 'tool_cooking')).toBeNull();
     advanceProject(s, ctx(), 1_200_000);
@@ -481,12 +481,12 @@ describe('Phase 08 Cooking', () => {
 
   it('proves supply-supported duration and safe re-eating stops on empty bank', () => {
     const s = veteran(newGame(1));
-    s.account.bank.meal_porridge = 3;
+    s.storage.bank.meal_porridge = 3;
     expect(mealSupplySupportedMs(s, 'meal_porridge')).toBe(3 * 30 * 60 * 1000);
     expect(formatDurationMs(mealSupplySupportedMs(s, 'meal_porridge'))).toBe('1h 30m');
 
     eatMeal(s, ctx(), 'meal_porridge');
-    expect(s.account.bank.meal_porridge).toBe(2);
+    expect(s.storage.bank.meal_porridge).toBe(2);
     expect(mealSupplySupportedMs(s, 'meal_porridge')).toBe(3 * 30 * 60 * 1000);
 
     // Keep eating is true: run down 3 full meals in combat
@@ -494,18 +494,18 @@ describe('Phase 08 Cooking', () => {
     startCombat(s, ctx(), 'mudflats');
     // Meal 1 expires -> serves Meal 2
     mealStep(s, ctx(), 30 * 60 * 1000);
-    expect(s.account.bank.meal_porridge).toBe(1);
+    expect(s.storage.bank.meal_porridge).toBe(1);
     expect(s.meal?.id).toBe('meal_porridge');
 
     // Meal 2 expires -> serves Meal 3
     mealStep(s, ctx(), 30 * 60 * 1000);
-    expect(s.account.bank.meal_porridge).toBe(0);
+    expect(s.storage.bank.meal_porridge).toBe(0);
     expect(s.meal?.id).toBe('meal_porridge');
 
     // Meal 3 expires -> bank empty -> meal is null and stopped
     mealStep(s, ctx(), 30 * 60 * 1000);
     expect(s.meal).toBeNull();
-    expect(s.account.bank.meal_porridge).toBe(0);
+    expect(s.storage.bank.meal_porridge).toBe(0);
     // Further steps do nothing and do not start gathering/cooking
     mealStep(s, ctx(), 60_000);
     expect(s.meal).toBeNull();
@@ -515,7 +515,7 @@ describe('Phase 08 Cooking', () => {
     const setup = () => {
       const s = veteran(newGame(1));
       s.skills.mining = xpForLevel(50);
-      s.account.bank = { meal_gatherer: 20 };
+      s.storage.bank = { meal_gatherer: 20 };
       s.keepEating = true;
       expect(eatMeal(s, ctx(), 'meal_gatherer')).toBeNull();
       expect(startSkillAction(s, ctx(), 'mine_copper')).toBeNull();
@@ -529,9 +529,9 @@ describe('Phase 08 Cooking', () => {
     for (let i = 0; i < 28800; i++) tick(online, c, 1000);
     const summary = simulateOffline(offline, ctx(), 28_800_000);
 
-    expect(offline.account.bank.copper_ore).toBe(online.account.bank.copper_ore);
+    expect(offline.storage.bank.copper_ore).toBe(online.storage.bank.copper_ore);
     expect(offline.skills.mining).toBe(online.skills.mining);
-    expect(offline.account.bank.meal_gatherer).toBe(online.account.bank.meal_gatherer);
+    expect(offline.storage.bank.meal_gatherer).toBe(online.storage.bank.meal_gatherer);
     expect(summary.ordinaryOutput?.copper_ore).toBeGreaterThan(0);
   }, 30_000);
 
@@ -542,13 +542,13 @@ describe('Phase 08 Cooking', () => {
 
     const initialMeal = structuredClone(s.meal);
     const initialSkills = { ...s.skills };
-    const initialBank = structuredClone(s.account.bank);
+    const initialBank = structuredClone(s.storage.bank);
 
     s = reload(reload(s));
 
     expect(s.meal).toEqual(initialMeal);
     expect(s.skills).toEqual(initialSkills);
-    expect(s.account.bank.sunpetal).toBe(initialBank.sunpetal);
+    expect(s.storage.bank.sunpetal).toBe(initialBank.sunpetal);
     expect(s.inventory.length).toBe(60);
   });
 });

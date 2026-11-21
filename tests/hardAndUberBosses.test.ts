@@ -39,10 +39,10 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
     const ctx = makeCtx(42);
     expect(canStartHardBoss(s, 'ossuar')).toMatch(/Requires 1/);
 
-    s.account.bank.marrow_key = 1;
+    s.storage.bank.marrow_key = 1;
     expect(canStartHardBoss(s, 'ossuar')).toBeNull();
     expect(startHardBoss(s, ctx, 'ossuar')).toBeNull();
-    expect(s.account.bank.marrow_key ?? 0).toBe(0);
+    expect(s.storage.bank.marrow_key ?? 0).toBe(0);
     expect(s.combat?.zoneId).toBe('hard_ossuar');
 
     const d = deriveStats(s);
@@ -60,7 +60,7 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
     combatStep(s, ctx, 50, d);
     expect(s.combat).toBeNull();
     expect(s.bossesDefeated).toContain('hard_ossuar');
-    expect(s.account.bank.marrow_shard).toBe(1);
+    expect(s.storage.bank.marrow_shard).toBe(1);
     expect(atlasPointsEarned(s)).toBe(3);
     const allItems = [...s.inventory, ...(s.ground ?? [])];
     expect(allItems.some((it) => it.uniqueId === 'faultline')).toBe(true);
@@ -69,7 +69,7 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
   it('handles Ossuar bone plating and Cracked Fault weak point mechanics', () => {
     const s = unlockEndgame();
     const ctx = makeCtx(7);
-    s.account.bank.marrow_key = 1;
+    s.storage.bank.marrow_key = 1;
     startHardBoss(s, ctx, 'ossuar');
     const d = deriveStats(s);
     for (let i = 0; i < 20 && !s.combat?.monsters.some((m) => m.isBoss); i++) {
@@ -102,7 +102,7 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
   it('handles Mother Vael Choir of Vael wave spawning, priority targeting, and scattering', () => {
     const s = unlockEndgame();
     const ctx = makeCtx(11);
-    s.account.bank.bell_key = 1;
+    s.storage.bank.bell_key = 1;
     startHardBoss(s, ctx, 'mother_vael');
     const d = deriveStats(s);
     for (let i = 0; i < 20 && !s.combat?.monsters.some((m) => m.isBoss); i++) {
@@ -130,7 +130,7 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
   it('handles Twin Regents dual-boss spawning, Royal Guard target switching, and completion only after both die', () => {
     const s = unlockEndgame();
     const ctx = makeCtx(19);
-    s.account.bank.regent_key = 1;
+    s.storage.bank.regent_key = 1;
     startHardBoss(s, ctx, 'twin_regents');
     const d = deriveStats(s);
     for (let i = 0; i < 20 && !s.combat?.monsters.some((m) => m.isBoss); i++) {
@@ -152,13 +152,13 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
     solis.life = 0;
     combatStep(s, ctx, 50, d);
     expect(s.combat).not.toBeNull();
-    expect(s.account.bank.throne_ash ?? 0).toBe(0);
+    expect(s.storage.bank.throne_ash ?? 0).toBe(0);
 
     // Kill Luna: arena completes and drops Throne Ash + Twinned Crown
     luna.life = 0;
     combatStep(s, ctx, 50, d);
     expect(s.combat).toBeNull();
-    expect(s.account.bank.throne_ash).toBe(1);
+    expect(s.storage.bank.throne_ash).toBe(1);
     const allItems = [...s.inventory, ...(s.ground ?? [])];
     expect(allItems.some((it) => it.uniqueId === 'twinned_crown')).toBe(true);
   });
@@ -166,7 +166,7 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
   it('keeps shared-life map twins together when an execution kills either one', () => {
     const s = unlockEndgame();
     const ctx = makeCtx(20);
-    s.account.bank.regent_key = 1;
+    s.storage.bank.regent_key = 1;
     startHardBoss(s, ctx, 'twin_regents');
     const d = deriveStats(s);
     for (let i = 0; i < 20 && (s.combat?.monsters.filter((m) => m.isBoss).length ?? 0) < 2; i++) {
@@ -201,7 +201,7 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
   it('handles The Crownless 3-phase transitions', () => {
     const s = unlockEndgame();
     const ctx = makeCtx(23);
-    s.account.bank.crownless_key = 1;
+    s.storage.bank.crownless_key = 1;
     startHardBoss(s, ctx, 'crownless');
     const d = deriveStats(s);
     for (let i = 0; i < 20 && !s.combat?.monsters.some((m) => m.isBoss); i++) {
@@ -229,10 +229,14 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
 
   it('runs Crownless phase mechanics only in their intended phases', () => {
     const s = unlockEndgame();
+    s.settings.autoFlee = false;
     const ctx = makeCtx(24);
-    s.account.bank.crownless_key = 1;
+    s.storage.bank.crownless_key = 1;
     startHardBoss(s, ctx, 'crownless');
     const d = deriveStats(s);
+    // Keep the character alive through the full timer independently of the dev kit's random gear.
+    d.maxLife = 100_000;
+    s.life = d.maxLife;
     for (let i = 0; i < 20 && !s.combat?.monsters.some((m) => m.isBoss); i++) {
       combatStep(s, ctx, 100, d);
     }
@@ -272,9 +276,9 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
     const ctx = makeCtx(99);
     expect(canStartUberBoss(s, 'uber_void_sovereign')).toMatch(/Requires 1/);
 
-    s.account.bank.uber_key_3 = 1;
+    s.storage.bank.uber_key_3 = 1;
     expect(startUberBoss(s, ctx, 'uber_void_sovereign')).toBeNull();
-    expect(s.account.bank.uber_key_3 ?? 0).toBe(0);
+    expect(s.storage.bank.uber_key_3 ?? 0).toBe(0);
 
     const d = deriveStats(s);
     for (let i = 0; i < 20 && !s.combat?.monsters.some((m) => m.isBoss); i++) {
@@ -288,7 +292,7 @@ describe('Milestone 9: Hard Bosses & Uber Layer', () => {
     boss.life = 0;
     combatStep(s, ctx, 50, d);
     expect(s.combat).toBeNull();
-    expect(s.account.bank.void_sigil).toBe(1);
+    expect(s.storage.bank.void_sigil).toBe(1);
     expect(atlasPointsEarned(s)).toBe(5);
     const allItems = [...s.inventory, ...(s.ground ?? [])];
     expect(allItems.some((it) => it.uniqueId === 'void_crown' || it.uniqueId === 'sovereigns_grasp')).toBe(true);

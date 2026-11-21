@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { existsSync } from 'node:fs';
 import { UNIQUES } from '../src/data/bases';
-import { MARTYR, ZONES, zonesInAct } from '../src/data/zones';
-import { packArtUrl } from '../src/ui/assets';
+import { MARTYR, ZONES, zoneDef, zonesInAct } from '../src/data/zones';
+import { packArtUrl, terrainArt } from '../src/ui/assets';
 
 describe('pack art', () => {
   it('every monster and boss has art, so none falls back to the skull', () => {
@@ -21,18 +22,27 @@ describe('pack art', () => {
     expect(new Set(urls).size).toBe(urls.length);
   });
 
-  it('every Act 3 area has a banner, until the landscape pack replaces it', () => {
-    expect(zonesInAct(3).filter((z) => !packArtUrl(`zones/${z.id}`)).map((z) => z.id)).toEqual([]);
+  it('every campaign zone has a terrain backdrop on disk', () => {
+    const missing = ZONES.filter((zone) => {
+      const backdrop = packArtUrl(`zones/${zone.id}`);
+      return !backdrop || !existsSync(new URL(backdrop));
+    });
+    expect(missing.map((zone) => zone.id)).toEqual([]);
+  });
+
+  it('uses a cave variant when available and falls back to the base cave', () => {
+    const cave = zoneDef('brinecaves');
+    const caveBackdrop = terrainArt({ ...cave, terrainVariant: undefined });
+    expect(caveBackdrop).toContain('terrain-cave.webp');
+    expect(terrainArt(cave)).toContain('terrain-cave-bandits.webp');
+    expect(terrainArt(zoneDef('icevault'))).toContain('terrain-cave-spiders.webp');
+    expect(terrainArt({ ...cave, terrainVariant: 'unillustrated' })).toBe(caveBackdrop);
   });
 
   it('no two Act 4 monsters share a picture', () => {
     const urls = zonesInAct(4).flatMap((z) => [...z.monsters, z.boss]).map((m) => packArtUrl(`monsters/${m.id}`));
     expect(urls.filter((u) => !u)).toEqual([]);
     expect(new Set(urls).size).toBe(urls.length);
-  });
-
-  it('every Act 4 area has a banner, until the landscape pack replaces it', () => {
-    expect(zonesInAct(4).filter((z) => !packArtUrl(`zones/${z.id}`)).map((z) => z.id)).toEqual([]);
   });
 
   it('the Act 4 uniques have their own art', () => {
@@ -47,22 +57,20 @@ describe('pack art', () => {
     expect(ids.filter((id) => !packArtUrl(`uniques/${id}`))).toEqual([]);
   });
 
-  it('no two Act 6 monsters share a picture, and its areas and uniques have art', () => {
+  it('no two Act 6 monsters share a picture, and its uniques have art', () => {
     const ids = zonesInAct(6).flatMap((z) => [...z.monsters, z.boss]).map((m) => m.id);
     const urls = ids.map((id) => packArtUrl(`monsters/${id}`));
     expect(urls.filter((u) => !u)).toEqual([]);
     expect(new Set(urls).size).toBe(urls.length);
-    expect(zonesInAct(6).filter((z) => !packArtUrl(`zones/${z.id}`)).map((z) => z.id)).toEqual([]);
     const uniques = ['oathbreaker', 'kingsmarch', 'last_decree', 'crownbreaker_mask', 'hand_of_the_regent', 'regents_mantle'];
     expect(uniques.filter((id) => !packArtUrl(`uniques/${id}`))).toEqual([]);
   });
 
-  it('no two Act 5 monsters share a picture, and its areas and uniques have art', () => {
+  it('no two Act 5 monsters share a picture, and its uniques have art', () => {
     const ids = zonesInAct(5).flatMap((z) => [...z.monsters, z.boss]).map((m) => m.id);
     const urls = ids.map((id) => packArtUrl(`monsters/${id}`));
     expect(urls.filter((u) => !u)).toEqual([]);
     expect(new Set(urls).size).toBe(urls.length);
-    expect(zonesInAct(5).filter((z) => !packArtUrl(`zones/${z.id}`)).map((z) => z.id)).toEqual([]);
     const uniques = ['leviathan_hide', 'deckwalkers', 'bosuns_oath', 'tide_crown', 'corposant', 'harpoons_answer'];
     expect(uniques.filter((id) => !packArtUrl(`uniques/${id}`))).toEqual([]);
   });

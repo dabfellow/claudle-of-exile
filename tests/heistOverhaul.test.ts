@@ -29,7 +29,7 @@ const fixed = (v: number): Ctx => ({ rng: { next: () => v } as Rng, now: 0, emit
 function makeThief(level = 1, markers = 0): GameState {
   const s = newGame(1, { name: 'Thief', classId: 'shadow' });
   s.skills.thieving = xpForLevel(level);
-  s.account.bank[MARKER] = markers;
+  s.storage.bank[MARKER] = markers;
   settleProfessionProgress(s);
   return s;
 }
@@ -61,7 +61,7 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       startSkillAction(s, ctx(), 'mark_peddler');
       const action = actionsFor('thieving').find((a) => a.id === 'mark_peddler')!;
       // Zero initial markers and zero counter
-      expect(s.account.bank[MARKER] ?? 0).toBe(0);
+      expect(s.storage.bank[MARKER] ?? 0).toBe(0);
       expect(s.professionProgress.counters['thieving.markers'] ?? 0).toBe(0);
 
       // Complete 9 cycles with zero luck rng (no random bonus marker)
@@ -70,13 +70,13 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
         skillStep(s, fixed(0.999), 1, deriveStats(s));
       }
       expect(s.professionProgress.counters['thieving.markers']).toBe(9);
-      expect(s.account.bank[MARKER] ?? 0).toBe(0);
+      expect(s.storage.bank[MARKER] ?? 0).toBe(0);
 
       // 10th completion triggers deterministic Marker
       if (s.action?.kind === 'skill') s.action.progress = action.intervalMs;
       skillStep(s, fixed(0.999), 1, deriveStats(s));
       expect(s.professionProgress.counters['thieving.markers']).toBe(10);
-      expect(s.account.bank[MARKER] ?? 0).toBe(1);
+      expect(s.storage.bank[MARKER] ?? 0).toBe(1);
 
       // Verify that starter Heist funding is bound: 80 completions yield at least 8 markers
       for (let i = 10; i < 80; i++) {
@@ -84,7 +84,7 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
         skillStep(s, fixed(0.999), 1, deriveStats(s));
       }
       expect(s.professionProgress.counters['thieving.markers']).toBe(80);
-      expect(s.account.bank[MARKER] ?? 0).toBeGreaterThanOrEqual(8);
+      expect(s.storage.bank[MARKER] ?? 0).toBeGreaterThanOrEqual(8);
     });
   });
 
@@ -271,7 +271,7 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       expect(s.action).toBeNull();
       expect(s.heist.tally.alarms).toBe(1);
       // Even on alarm in room 1, the completed room awards 1 Treasury Fragment
-      expect(s.account.bank.treasury_fragment).toBe(1);
+      expect(s.storage.bank.treasury_fragment).toBe(1);
       expect(s.professionProgress.counters['thieving.treasury_rooms']).toBe(1);
     });
 
@@ -287,9 +287,9 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       for (let r = 0; r < 6; r++) clearRoom(s, safe);
 
       // 6 rooms = 6 fragments from rooms, + 4 extra from clean vault = 10 total
-      expect(s.account.bank.treasury_fragment).toBe(10);
+      expect(s.storage.bank.treasury_fragment).toBe(10);
       // 1 Oath Fragment from clean vault
-      expect(s.account.bank.oath_fragment).toBe(1);
+      expect(s.storage.bank.oath_fragment).toBe(1);
       expect(s.professionProgress.discoveries['heist_clean_occult_treasury']).toBe(true);
     });
 
@@ -307,7 +307,7 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       }
       expect(s.professionProgress.counters['thieving.treasury_rooms']).toBe(12);
       // Clean vault gives 1 each run (2 total), plus the 12-room milestone gives 1 = 3 total
-      expect(s.account.bank.oath_fragment).toBe(3);
+      expect(s.storage.bank.oath_fragment).toBe(3);
     });
 
     it('delivers 0.5% Borrowed Tomorrow jackpot safely into overflow if bag is full', () => {
@@ -342,7 +342,7 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
 
       // Inventory was full, so Borrowed Tomorrow went safely into overflow
       expect(s.inventory).toHaveLength(bagCap(s));
-      expect(s.account.overflow.some((i) => i.uniqueId === 'borrowed_tomorrow')).toBe(true);
+      expect(s.storage.overflow.some((i) => i.uniqueId === 'borrowed_tomorrow')).toBe(true);
       expect(s.lifetime.uniquesFound).toBeGreaterThanOrEqual(1);
     });
   });
@@ -350,7 +350,7 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
   describe('Thieving Profession Projects', () => {
     it('claims Borrowed Tomorrow amulet at Thieving 65 for 120 Treasury Fragments', () => {
       const s = makeThief(65, 100);
-      s.account.bank.treasury_fragment = 120;
+      s.storage.bank.treasury_fragment = 120;
       const proj = professionProject('borrowed_tomorrow');
       expect(proj).toBeDefined();
       expect(proj!.skill).toBe('thieving');
@@ -359,7 +359,7 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       expect(proj!.xp).toBe(120);
 
       expect(startProject(s, ctx(), 'borrowed_tomorrow')).toBeNull();
-      expect(s.account.bank.treasury_fragment).toBe(0);
+      expect(s.storage.bank.treasury_fragment).toBe(0);
 
       s.professionProgress.activeProject!.elapsedMs = 60_000;
       const err = completeProject(s, ctx(), s.professionProgress.activeProject!.runId);
@@ -374,7 +374,7 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
 
     it('assembles Stolen Oath Seal at Thieving 75 for 5 Oath Fragments', () => {
       const s = makeThief(75, 100);
-      s.account.bank.oath_fragment = 5;
+      s.storage.bank.oath_fragment = 5;
       const proj = professionProject('assemble_oath');
       expect(proj).toBeDefined();
       expect(proj!.skill).toBe('thieving');
@@ -383,13 +383,13 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       expect(proj!.xp).toBe(150);
 
       expect(startProject(s, ctx(), 'assemble_oath')).toBeNull();
-      expect(s.account.bank.oath_fragment).toBe(0);
+      expect(s.storage.bank.oath_fragment).toBe(0);
 
       s.professionProgress.activeProject!.elapsedMs = 60_000;
       const err = completeProject(s, ctx(), s.professionProgress.activeProject!.runId);
       expect(err).toBeNull();
 
-      expect(s.account.bank.stolen_oath_seal).toBe(1);
+      expect(s.storage.bank.stolen_oath_seal).toBe(1);
     });
   });
 
@@ -415,8 +415,8 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       // Parity check: both have progressed through jobs, awarded treasury fragments, and banked loot
       expect(sLive.heist.tally.jobs).toBeGreaterThan(0);
       expect(sOffline.heist.tally.jobs).toBe(sLive.heist.tally.jobs);
-      expect(sOffline.account.bank.treasury_fragment).toBe(sLive.account.bank.treasury_fragment);
-      expect(sOffline.account.bank.oath_fragment).toBe(sLive.account.bank.oath_fragment);
+      expect(sOffline.storage.bank.treasury_fragment).toBe(sLive.storage.bank.treasury_fragment);
+      expect(sOffline.storage.bank.oath_fragment).toBe(sLive.storage.bank.oath_fragment);
     });
   });
 });

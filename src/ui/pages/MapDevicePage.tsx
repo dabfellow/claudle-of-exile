@@ -54,7 +54,6 @@ import {
   grantMaps,
   hasAtlasNode,
   mapsHeld,
-  mapsOpen,
   MAPS_PREVIEW,
   refundAtlas,
   sextantSlots,
@@ -415,7 +414,7 @@ function LoadedInfo({ loaded, onOpen }: { loaded: Loaded; onOpen: (open: () => b
   } else if (loaded.kind === 'hard') {
     const hb = HARD_BOSSES.find((b) => b.id === loaded.id)!;
     const uniq = uniqueDef(hb.uniqueId);
-    const held = s.account.bank[hb.keyId] ?? 0;
+    const held = s.storage.bank[hb.keyId] ?? 0;
     const defeated = s.bossesDefeated.includes(hb.zoneId);
     const blocker = canStartHardBoss(s, hb.id);
     facts = (
@@ -463,7 +462,7 @@ function LoadedInfo({ loaded, onOpen }: { loaded: Loaded; onOpen: (open: () => b
   } else {
     const ub = UBER_BOSSES.find((b) => b.tier === loaded.tier)!;
     const uniqs = ub.uniques.map((id) => uniqueDef(id));
-    const held = s.account.bank[ub.keyId] ?? 0;
+    const held = s.storage.bank[ub.keyId] ?? 0;
     const defeated = s.bossesDefeated.includes(ub.zoneId);
     const blocker = canStartUberBoss(s, ub.tier);
     facts = (
@@ -555,7 +554,7 @@ function SextantSlotPanel({ idx, onClose }: { idx: number; onClose: () => void }
           )}
           <div className="row wrap" style={{ gap: 6 }}>
             {SEXTANTS.map((sex) => {
-              const have = s.account.bank[sex.id] ?? 0;
+              const have = s.storage.bank[sex.id] ?? 0;
               return (
                 <button key={sex.id} className="btn sm" disabled={have <= 0} title={sex.desc} onClick={() => game.act((st, ctx) => applySextant(st, ctx, idx, sex.id))}>
                   <MatIcon id={sex.id} size={13} /> Roll {sex.tier[0].toUpperCase() + sex.tier.slice(1)} ({have})
@@ -582,7 +581,7 @@ function AstrolabeSummary() {
       {SEXTANTS.map((sex) => (
         <span key={sex.id} className="md-astro-stock" title={`${sex.name}: ${sex.desc}`}>
           <MatIcon id={sex.id} size={14} />
-          <b className="num">{fmt(s.account.bank[sex.id] ?? 0)}</b>
+          <b className="num">{fmt(s.storage.bank[sex.id] ?? 0)}</b>
           <span className="dim">T{sex.minMapTier}+</span>
         </span>
       ))}
@@ -734,7 +733,7 @@ function UniqueCards({ loaded, onLoad }: { loaded: Loaded | null; onLoad: (l: Lo
 function MapSafetyPanel({ isDoomed }: { isDoomed: boolean }) {
   const s = useGame();
   const cfg = ensureMapSettings(s);
-  const chaos = s.account.bank.chaos ?? 0;
+  const chaos = s.storage.bank.chaos ?? 0;
   const mods = isDoomed ? DOOMED_MODS : NORMAL_MAP_MODS;
   const avoided = mods.filter((m) => cfg.blockedMods.includes(m.id)).length;
 
@@ -838,7 +837,7 @@ function BossesPanel({ loaded, onLoad }: { loaded: Loaded | null; onLoad: (l: Lo
               mark="☠"
               title={hb.name}
               sub={`${hb.arenaName} · Lv ${hb.level}`}
-              held={s.account.bank[hb.keyId] ?? 0}
+              held={s.storage.bank[hb.keyId] ?? 0}
               badge={s.bossesDefeated.includes(hb.zoneId) ? <span className="md-card-mod good">✓ Defeated</span> : <span className="md-card-mod">Guaranteed unique</span>}
               selected={!!loaded && sameLoaded(loaded, l)}
               running={s.combat?.zoneId === hb.zoneId}
@@ -860,7 +859,7 @@ function BossesPanel({ loaded, onLoad }: { loaded: Loaded | null; onLoad: (l: Lo
               mark={ROMAN[ub.tier]}
               title={ub.name}
               sub={`${ub.arenaName} · Lv ${ub.level}`}
-              held={s.account.bank[ub.keyId] ?? 0}
+              held={s.storage.bank[ub.keyId] ?? 0}
               badge={s.bossesDefeated.includes(ub.zoneId) ? <span className="md-card-mod good">✓ Defeated</span> : <span className="md-card-mod">Guaranteed unique</span>}
               selected={!!loaded && sameLoaded(loaded, l)}
               running={s.combat?.zoneId === ub.zoneId}
@@ -1010,7 +1009,7 @@ function defaultLoaded(s: GameState, tab: DeviceTab): Loaded | null {
     return { kind: 'doomed', tier: held?.tier ?? 1 };
   }
   if (tab === 'bosses') {
-    const hb = HARD_BOSSES.find((b) => (s.account.bank[b.keyId] ?? 0) > 0) ?? HARD_BOSSES[0];
+    const hb = HARD_BOSSES.find((b) => (s.storage.bank[b.keyId] ?? 0) > 0) ?? HARD_BOSSES[0];
     return { kind: 'hard', id: hb.id };
   }
   return null;
@@ -1033,7 +1032,7 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
   const left = atlasPointsLeft(s);
   const totalHeld = totalMapsHeld(s);
   const totalDoomed = DOOMED_TIERS.reduce((sum, d) => sum + doomedHeld(s, d.tier), 0);
-  const totalKeys = HARD_BOSSES.reduce((sum, hb) => sum + (s.account.bank[hb.keyId] ?? 0), 0) + UBER_BOSSES.reduce((sum, ub) => sum + (s.account.bank[ub.keyId] ?? 0), 0);
+  const totalKeys = HARD_BOSSES.reduce((sum, hb) => sum + (s.storage.bank[hb.keyId] ?? 0), 0) + UBER_BOSSES.reduce((sum, ub) => sum + (s.storage.bank[ub.keyId] ?? 0), 0);
   const pickTab = (t: DeviceTab) => {
     setTab(t);
     if (!loaded || !TAB_KINDS[t].includes(loaded.kind)) {
@@ -1052,7 +1051,7 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
   return (
     <div className="page md-page">
       <PageHeader title="Map Device" actions={MAPS_PREVIEW.enabled ? <Badge tone="neutral">Dev preview</Badge> : undefined}>
-        Load a map into the device and open a portal. Maps are shared across your realm. Each run borrows a campaign area’s visuals, monsters and boss mechanics at random, and adds its tier’s permanent danger and reward identity.
+        Load a map into the device and open a portal. Maps are shared across your realm. Each run borrows a campaign zone’s visuals, monsters and boss mechanics at random, and adds its tier’s permanent danger and reward identity.
       </PageHeader>
 
       {tab !== 'atlas' && <DeviceStage loaded={loaded} picked={picked} onOpened={() => setPicked(false)} go={go} />}
@@ -1071,7 +1070,7 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
           {totalHeld <= 0 && !run && (
             <div className="card">
               <EmptyState icon={<GameIcon name="map" size={32} color="var(--dim)" />} title="No maps held">
-                Tier 1 maps drop in level {MAP_DROPS.campaignMinLevel}+ campaign areas, can be drawn with Cartography, and the Last King tops your realm up to {MAP_DROPS.kingTopUp} maps when beaten.
+                Tier 1 maps drop in level {MAP_DROPS.campaignMinLevel}+ campaign zones, can be drawn with Cartography, and the Last King tops your realm up to {MAP_DROPS.kingTopUp} maps when beaten.
               </EmptyState>
             </div>
           )}
@@ -1150,15 +1149,14 @@ function MapDeviceContent({ go }: { go: (p: Page) => void }) {
   );
 }
 
-/** Maps: endgame areas opened at the Map Device once the campaign (Act 6) is done. */
+/** Maps: endgame areas opened at the Map Device once the campaign is complete. */
 export function MapDevicePage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
-  if (mapsOpen(s)) return <MapDeviceContent go={go} />;
+  if (!stationLockReason(s, 'map_device')) return <MapDeviceContent go={go} />;
   const device = stationDef('map_device');
-  const locked = stationLockReason(s, 'map_device');
   return (
     <div className="page">
-      <PageHeader title="Map Device" actions={locked ? <Badge tone="locked">Locked</Badge> : undefined}>
+      <PageHeader title="Map Device" actions={<Badge tone="locked">Locked</Badge>}>
         {device.desc}
       </PageHeader>
       <div className="card md-stage sealed">

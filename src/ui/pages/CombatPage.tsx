@@ -5,8 +5,8 @@ import { flaskDef } from '../../data/flasks';
 import { activeGemDef, DEFAULT_ATTACK } from '../../data/gems';
 import { monsterMod } from '../../data/monsterMods';
 import { MONSTER_PROFILES } from '../../data/monsterProfiles';
-import { BOSS_FROSTBITE_MAX, BOSS_FROSTBITE_SLOW_PCT, BOSS_NOVA_MULT, BOSS_SLAM_MULT, echoTips, MECHANIC_INFO, nextZones, zoneDef, type MonsterDef } from '../../data/zones';
-import { CELLS, cellRing, GROUND, inReach, minionInWay, monsterGround, PLAYER_SPOT, POSTURES, POSTURE_ORDER, RINGS } from '../../engine/battlefield';
+import { BOSS_FROSTBITE_MAX, BOSS_FROSTBITE_SLOW_PCT, MECHANIC_INFO, nextZones, zoneDef } from '../../data/zones';
+import { CELLS, cellRing, GROUND, inReach, minionInWay, MOVEMENT, MOVEMENT_ORDER, PLAYER_SPOT, RINGS } from '../../engine/battlefield';
 import {
   aliveMonsters,
   army,
@@ -15,19 +15,17 @@ import {
   canBossFarm,
   challengeBoss,
   toggleBossFarm,
-  currentMovement,
   focusTarget,
   liveDps,
   lockTarget,
-  makeMonster,
-  mitigate,
-  nextArrivalMs,
+  monsterDps,
+  nextArrival,
   canSpendLife,
   staggerMax,
   queueSkill,
   releaseNovas,
   retreat,
-  setPosture,
+  setMovement,
   startCombat,
   useFlask,
   ailmentThreshold,
@@ -45,10 +43,10 @@ import { classDef } from '../../data/classes';
 import { mealTimeLeft } from '../components/PantryBoard';
 import { DOOMED_MODS, doomedTier, mapTier, normalMapModDef, sextantMod } from '../../data/maps';
 import { stopAutoRun } from '../../engine/maps';
-import { deriveStats, evadeChance, hitChance, type Derived } from '../../engine/stats';
-import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, Minion, MonsterInstance, Posture, TargetOrder, TargetPriority } from '../../engine/types';
+import { deriveStats, type Derived } from '../../engine/stats';
+import type { CombatRuntime, DamageType, GameEvent, GameState, GroundKind, Minion, MonsterInstance, Movement, TargetOrder, TargetPriority } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
-import { anyArtUrl, Art, Badge, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
+import { Art, Badge, EmptyState, fmt, GameIcon, PageHeader, ProgressBar, Tabs, Tooltip, zoneBackdrop } from '../components/common';
 import { FlaskTip, pinFlask } from '../components/FlaskView';
 import { GemIcon, GemTip, rulesLabel } from '../components/GemView';
 import { LootPile } from '../components/GroundLoot';
@@ -375,6 +373,7 @@ function MonsterCard({ m, target, fx }: { m: MonsterInstance; target: boolean; f
         </div>
       )}
       <MonsterMods m={m} />
+      {m.gearCheckWarning && <div className="cast-warning">{m.gearCheckWarning}</div>}
       <div className="status-row">
         {m.chained && <span className="status bad">Chained: can't be hurt</span>}
         {m.martyr && <span className="status">Area and chain skills strike it. Click it to aim anything else</span>}
@@ -502,7 +501,11 @@ const hexBox = (x: number, y: number) => ({
  * keyed by monster, so a step is a slide from one hex to the next and an arrival walks in from beyond the edge.
  * Click a monster to make it your target.
  */
-function Battlefield({ s, c, fx }: { s: GameState; c: CombatRuntime; fx: Fx }) {
+function ArrivalTimer({ ms }: { ms: number }) {
+  return <span className="bf-arrival-timer" aria-label={`Arrival in ${(ms / 1000).toFixed(1)} seconds`}>{(ms / 1000).toFixed(1)}s</span>;
+}
+
+function Battlefield({ s, c, fx, arrival }: { s: GameState; c: CombatRuntime; fx: Fx; arrival: ReturnType<typeof nextArrival> }) {
   const alive = aliveMonsters(c);
   const byCell = new Map(alive.map((m) => [m.cell, m]));
   const focus = focusTarget(s);
@@ -515,13 +518,16 @@ function Battlefield({ s, c, fx }: { s: GameState; c: CombatRuntime; fx: Fx }) {
         const flash = fx.area?.cells.includes(i) ? (fx.area.n % 2 ? 'flash-a' : 'flash-b') : '';
         const storm = stormOn(i);
         const stormDef = storm && activeGemDef(storm.gemId);
+        const arriving = arrival?.cell === i;
         return (
           <div
             key={i}
-            className={`bf-cell ring-${cell.ring} ${m ? 'occupied' : ''} ${m && m === focus ? 'target' : ''} ${m?.isBoss ? 'boss' : ''} ${ground ? `ground-${ground.kind}` : ''} ${storm ? `storm storm-${stormDef!.effect.type ?? 'phys'}` : ''} ${flash}`}
+            className={`bf-cell ring-${cell.ring} ${m ? 'occupied' : ''} ${m && m === focus ? 'target' : ''} ${m?.isBoss ? 'boss' : ''} ${ground ? `ground-${ground.kind}` : ''} ${storm ? `storm storm-${stormDef!.effect.type ?? 'phys'}` : ''} ${flash} ${arriving ? 'incoming' : ''}`}
             style={hexBox(cell.x, cell.y)}
             title={storm ? `${stormDef!.name} (${(storm.remainingMs / 1000).toFixed(1)}s)` : ground ? `${GROUND[ground.kind].name} (${(ground.remainingMs / 1000).toFixed(1)}s): ${GROUND[ground.kind].desc}` : undefined}
-          />
+          >
+            {arriving && <ArrivalTimer ms={arrival.ms} />}
+          </div>
         );
       })}
       <div className={`bf-cell bf-player-cell ${shakeClass(fx.shakes.player)} ${fx.lunge ? (fx.lunge % 2 ? 'lunge-a' : 'lunge-b') : ''}`} style={hexBox(0, 0)}>
@@ -559,15 +565,13 @@ function Battlefield({ s, c, fx }: { s: GameState; c: CombatRuntime; fx: Fx }) {
           </div>
         );
       })}
-      {!alive.length && <div className="bf-empty">Searching for monsters…</div>}
     </div>
   );
 }
 
 /** Narrow screens: the field doesn't fit, so sum it up instead. */
-function FieldSummary({ s, c }: { s: GameState; c: CombatRuntime }) {
+function FieldSummary({ c, arrival, focus }: { c: CombatRuntime; arrival: ReturnType<typeof nextArrival>; focus?: MonsterInstance }) {
   const alive = aliveMonsters(c);
-  const focus = focusTarget(s);
   const close = alive.filter((m) => cellRing(m.cell) === 1).length;
   const priorities = alive.filter((m) => m.martyr || m.weakPoint || m.choir);
   return (
@@ -585,16 +589,22 @@ function FieldSummary({ s, c }: { s: GameState; c: CombatRuntime }) {
           Strike {m.name} ({fmt(Math.max(0, m.life))})
         </button>
       ))}
-      {focus && (
-        <div className="bf-summary-target">
-          <span>
-            <span className={`rarity-${rarityOf(focus)}`}>{focus.name}</span> <span className="dim">· {RARITY_LABEL[rarityOf(focus)]} · ring {cellRing(focus.cell)}</span>
-          </span>
-          <MonsterMods m={focus} />
-          <ProgressBar value={Math.max(0, focus.life) / focus.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(Math.max(0, focus.life))} / ${fmt(focus.maxLife)}`} />
-          {(focus.maxEs ?? 0) > 0 && <ProgressBar value={(focus.es ?? 0) / focus.maxEs!} color="var(--es)" label={`ES ${fmt(focus.es ?? 0)} / ${fmt(focus.maxEs!)}`} />}
-        </div>
-      )}
+      <div className="bf-mini" style={{ aspectRatio: `${FIELD_W} / ${FIELD_H}` }}>
+        {CELLS.map((cell, i) => {
+          const enemy = alive.find((m) => m.cell === i);
+          const arriving = arrival?.cell === i;
+          const classes = `bf-cell ring-${cell.ring} ${arriving ? 'incoming' : ''}`;
+          return enemy ? (
+            <button key={i} type="button" className={`${classes} occupied ${enemy === focus ? 'target' : ''}`} style={hexBox(cell.x, cell.y)} aria-label={`Target ${enemy.name}`} aria-pressed={enemy.uid === c.lockedUid} onClick={() => game.act((st) => lockTarget(st, enemy.uid))}>
+              <span className={`bf-mini-enemy rarity-${rarityOf(enemy)}`} />
+            </button>
+          ) : (
+            <div key={i} className={classes} style={hexBox(cell.x, cell.y)}>
+              {arriving && <ArrivalTimer ms={arrival.ms} />}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -629,6 +639,10 @@ function TargetingSelector({ targeting }: { targeting: { priority: TargetPriorit
   const [open, setOpen] = useState(false);
   const prio = PRIORITIES.find((p) => p.id === targeting.priority) ?? PRIORITIES[0];
   const ord = ORDERS.find((o) => o.id === targeting.order) ?? ORDERS[0];
+  const update = (choice: Partial<typeof targeting>) => game.act((st) => {
+    st.settings.targeting = { ...st.settings.targeting, ...choice };
+    if (st.combat) st.combat.targetUid = undefined;
+  });
 
   return (
     <div className="bf-target-container">
@@ -636,11 +650,11 @@ function TargetingSelector({ targeting }: { targeting: { priority: TargetPriorit
         type="button"
         className={`bf-target-toggle ${open ? 'active' : ''}`}
         onClick={() => setOpen(!open)}
-        title="Who your skills target. Click to configure priorities and order."
+        aria-expanded={open}
+        title={`${prio.label} · ${ord.label}`}
       >
-        <span className="dim">Target:</span>
-        <b>{prio.label}</b> · {ord.label}
-        <span className="dim small">▾</span>
+        <span aria-hidden="true">◎</span>
+        Targeting
       </button>
       {open && (
         <div className="bf-target-popover" onClick={(e) => e.stopPropagation()}>
@@ -652,7 +666,8 @@ function TargetingSelector({ targeting }: { targeting: { priority: TargetPriorit
                   key={p.id}
                   type="button"
                   className={`chip sm ${targeting.priority === p.id ? 'active' : ''}`}
-                  onClick={() => game.act((st) => void (st.settings.targeting = { ...st.settings.targeting, priority: p.id }))}
+                  aria-pressed={targeting.priority === p.id}
+                  onClick={() => update({ priority: p.id })}
                 >
                   {p.label}
                 </button>
@@ -667,7 +682,8 @@ function TargetingSelector({ targeting }: { targeting: { priority: TargetPriorit
                   key={o.id}
                   type="button"
                   className={`chip sm ${targeting.order === o.id ? 'active' : ''}`}
-                  onClick={() => game.act((st) => void (st.settings.targeting = { ...st.settings.targeting, order: o.id }))}
+                  aria-pressed={targeting.order === o.id}
+                  onClick={() => update({ order: o.id })}
                 >
                   {o.label}
                 </button>
@@ -683,51 +699,45 @@ function TargetingSelector({ targeting }: { targeting: { priority: TargetPriorit
   );
 }
 
-/** Automatic range posture, what the field will do next, and who your skills go for. */
 function MovementBar({ s }: { s: GameState }) {
-  const c = s.combat!;
-  const zone = zoneDef(c.zoneId);
-  const mv = currentMovement(s);
-  const next = nextArrivalMs(s);
-  const status = c.monsters.some((m) => m.chained)
-    ? 'The boss is chained: kill its martyrs'
-    : c.monsters.some((m) => m.isBoss)
-    ? 'Boss fight: nothing else arrives'
-    : mv === 'flee'
-      ? aliveMonsters(c).length
-        ? 'Shaking them off…'
-        : 'Holding back: nothing arrives'
-      : c.bossFarm
-        ? c.bossRespawnMs
-          ? `${zone.boss.name} respawns in ${(c.bossRespawnMs / 1000).toFixed(1)}s`
-          : `${zone.boss.name} waits for the field to clear`
-      : bossCalled(s, zone.id)
-        ? `${zone.boss.name} waits for the field to clear`
-        : next === null
-          ? 'Field full: the next monster waits'
-          : `Next monster in ${(next / 1000).toFixed(1)}s`;
-  const targeting = s.settings.targeting;
   return (
     <div className="bf-bar">
       <Tabs
         compact
-        value={s.settings.posture ?? 'brawler'}
-        onChange={(id) => game.act((st) => setPosture(st, id as Posture))}
-        tabs={POSTURE_ORDER.map((id) => ({ id, label: POSTURES[id].name, title: POSTURES[id].desc }))}
+        value={s.settings.movement}
+        onChange={(id) => game.act((st) => setMovement(st, id as Movement))}
+        tabs={MOVEMENT_ORDER.map((id) => ({ id, label: MOVEMENT[id].name, title: MOVEMENT[id].desc }))}
       />
-      <span className="dim bf-status" title={status}>
-        {c.fleeing ? <span className="status bad">Auto-fleeing</span> : status}
-      </span>
-      <TargetingSelector targeting={targeting} />
-      <label className={`bf-auto${autoFleeUnlocked(s) ? '' : ' locked'}`} title={autoFleeUnlocked(s) ? "Emergency fallback: below 35% Life, flee until you're back above 90%. Cautious posture also waits for Life flasks to empty." : 'Unlocked by the first War Table upgrade'}>
-        <input type="checkbox" disabled={!autoFleeUnlocked(s)} checked={autoFleeUnlocked(s) && s.settings.autoFlee} onChange={(e) => game.act((st) => void (st.settings.autoFlee = e.target.checked))} /> Emergency flee
-      </label>
-      <label className={`bf-auto${autoChallengeUnlocked(s) ? '' : ' locked'}`} title={autoChallengeUnlocked(s) ? 'A ready boss comes on its own, instead of waiting for you to challenge it' : 'Unlocked by a War Table upgrade'}>
-        <input type="checkbox" disabled={!autoChallengeUnlocked(s)} checked={autoChallengeUnlocked(s) && s.settings.autoBoss} onChange={(e) => game.act((st) => void (st.settings.autoBoss = e.target.checked))} /> Auto-challenge
-      </label>
-      <label className={`bf-auto${autoNextZoneUnlocked(s) ? '' : ' locked'}`} title={autoNextZoneUnlocked(s) ? "Once this area's boss is down and the next area is open, travel there. Emergency flee still pulls you back." : 'Unlocked by a War Table upgrade'}>
-        <input type="checkbox" disabled={!autoNextZoneUnlocked(s)} checked={autoNextZoneUnlocked(s) && !!s.settings.autoNextZone} onChange={(e) => game.act((st) => void (st.settings.autoNextZone = e.target.checked))} /> Auto next zone
-      </label>
+      {s.combat?.fleeing && <span className="status bad">Emergency flee</span>}
+    </div>
+  );
+}
+
+function CombatAutomation({ s }: { s: GameState }) {
+  const options = [
+    { key: 'autoFlee', label: 'Emergency flee', unlocked: autoFleeUnlocked(s), hint: 'Below 35% Life, flee until you recover to 90%.' },
+    { key: 'autoBoss', label: 'Auto-challenge', unlocked: autoChallengeUnlocked(s), hint: 'Challenge a ready boss automatically.' },
+    { key: 'autoNextZone', label: 'Auto next zone', unlocked: autoNextZoneUnlocked(s), hint: 'Travel onward once the zone boss is defeated and the way is open.' },
+  ] as const;
+  return (
+    <div className="combat-automation" role="group" aria-label="Combat automation">
+      {options.map(({ key, label, unlocked, hint }) => {
+        const enabled = unlocked && !!s.settings[key];
+        return (
+          <button
+            key={key}
+            type="button"
+            className={`combat-auto-toggle ${enabled ? 'active' : ''}`}
+            aria-pressed={enabled}
+            disabled={!unlocked}
+            title={unlocked ? hint : 'Unlocked by a War Table upgrade'}
+            onClick={() => game.act((st) => void (st.settings[key] = !st.settings[key]))}
+          >
+            <span className="combat-auto-light" aria-hidden="true" />
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -820,111 +830,41 @@ function FlaskBelt({ s }: { s: GameState }) {
   );
 }
 
-function StatRow({ label, you, them, good }: { label: string; you: React.ReactNode; them: React.ReactNode; good?: boolean | null }) {
-  return (
-    <>
-      <span className="muted">{label}</span>
-      <span className={good === true ? 'good' : good === false ? 'bad' : ''}>{you}</span>
-      <span>{them}</span>
-    </>
-  );
-}
+function Matchup({ s, d, target }: { s: GameState; d: Derived; target?: MonsterInstance }) {
+  const rarity = target && rarityOf(target);
+  const mods = target?.mods?.map((id) => monsterMod(id)?.name).filter(Boolean) ?? [];
+  if (target?.hulking) mods.push('Hulking');
+  if (target?.elite) mods.push('Elite');
+  if (target?.enraged) mods.push('Enraged');
+  if (target?.revenant) mods.push('Revenant');
 
-/**
- * Side-by-side numbers against your current target, then what this area's boss can do. The rows are always there, so
- * the panel reads the same with no target, and the boss section doesn't wait for the boss to arrive or be targeted.
- */
-function Matchup({ s, d, bossDef }: { s: GameState; d: Derived; bossDef: MonsterDef }) {
-  const target = focusTarget(s);
-  const boss = makeMonster(bossDef, true);
-  const hit = target ? hitChance(d.accuracy, target.level) : 0;
-  const evade = target ? evadeChance(d.evasion, target.level) : 0;
-  const perHit = target ? mitigate(d, target.damage, target.dmgType) : 0;
-  const slam = mitigate(d, boss.damage * BOSS_SLAM_MULT, boss.slamType ?? boss.dmgType);
-  const nova = mitigate(d, boss.damage * BOSS_NOVA_MULT, boss.novaType);
-  const theirDps = target ? (perHit * (1 - evade)) / (target.attackMs / 1000) : 0;
-  const dps = s.combat ? liveDps(s.combat) : 0;
-  const yourDefence = !target ? '–' : target.dmgType === 'phys' ? `${fmt(d.armour)} armour` : `${d.res[target.dmgType]}% resist`;
   return (
-    <div className="matchup">
-      <span />
-      <span className="matchup-head">You</span>
-      <span className={`matchup-head ${target ? `rarity-${rarityOf(target)}` : ''}`} title={target?.name}>
-        {target ? `${target.name} (${RARITY_LABEL[rarityOf(target)]})` : 'No target'}
-      </span>
-      <StatRow
-        label="Rarity"
-        you=""
-        them={
-          target ? (
-            <b className={`rarity-${rarityOf(target)}`}>
-              {target.isBoss ? 'Unique (boss)' : RARITY_LABEL[rarityOf(target)]}
-            </b>
-          ) : (
-            '–'
-          )
-        }
-      />
-      {target && (target.mods?.length || target.hulking || (target.isBoss && target.mechanics?.length)) ? (
-        <>
-          <span className="muted">Modifiers</span>
-          {/* the two value columns together: in one narrow column each word sat on its own line */}
-          <div className="matchup-mods">
-            <MonsterMods m={target} />
-          </div>
-        </>
-      ) : null}
-      <StatRow
-        label="Level"
-        you={String(d.combatLevel)}
-        them={target ? String(target.level) : '–'}
-        good={!target ? null : d.combatLevel >= target.level ? true : target.level - d.combatLevel > 3 ? false : null}
-      />
-      <StatRow label="Life" you={d.maxEs ? `${fmt(d.maxLife)} + ${fmt(d.maxEs)} ES` : fmt(d.maxLife)} them={target ? `${fmt(Math.max(0, target.life))} / ${fmt(target.maxLife)}` : '–'} />
-      <StatRow label="Damage / sec" you={fmt(dps)} them={target ? theirDps.toFixed(1) : '–'} good={target && dps ? dps > theirDps * 1.5 : null} />
-      <StatRow label="Chance to hit" you={target ? `${Math.round(hit * 100)}%` : '–'} them={target ? `${Math.round((1 - evade) * 100)}%` : '–'} />
-      <StatRow label="Their hit on you" you={yourDefence} them={target ? `${fmt(perHit)} ${DMG_NAME[target.dmgType].toLowerCase()}` : '–'} good={target ? perHit < (d.maxLife + d.maxEs) * 0.1 : null} />
-      <StatRow label="Their resistances" you="" them={target ? `${target.res.fire}/${target.res.cold}/${target.res.light}/${target.res.chaos}% F/C/L/Ch` : '–'} />
-      <StatRow
-        label="Attack / cast time"
-        you={`Default Attack ${(d.attackMs / 1000).toFixed(2)}s`}
-        them={target ? `${target.attackName} ${(target.attackMs / 1000).toFixed(2)}s ${target.attackKind === 'spell' ? 'cast' : 'attack'}` : '–'}
-      />
-      <div className="target-label matchup-section">Boss: {boss.name}</div>
-      <div className="matchup-note">
-        <b>{boss.casts.slam.name}:</b> a heavy blow that winds up for {(boss.casts.slam.ms / 1000).toFixed(1)}s, then hits for about{' '}
-        <b className={slam >= s.life ? 'bad' : ''}>{fmt(slam)}</b>{boss.slamType ? ` ${DMG_NAME[boss.slamType].toLowerCase()}` : ''}. Evasion Rating can't dodge it — use a guard skill, War Cry or a flask.
+    <section className="matchup-card" aria-label="Combat matchup">
+      <div className="matchup-fighter">
+        <div className="portrait tiny">
+          <Art src={`portraits/class_${s.character.classId}`} alt="" cover fallback={<GameIcon name="combat" size={18} />} />
+        </div>
+        <h3>You</h3>
+        <ProgressBar value={s.life / d.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(s.life)} / ${fmt(d.maxLife)} Life`} />
+        <span className="matchup-dps">{fmt(s.combat ? liveDps(s.combat) : 0)} DPS</span>
       </div>
-      {bossDef.mechanics?.includes('nova') && (
-        <div className="matchup-note">
-          <b>{boss.casts.nova.name}:</b> a {DMG_NAME[boss.novaType].toLowerCase()} nova that winds up for{' '}
-          {(boss.casts.nova.ms / 1000).toFixed(1)}s, then hits for about{' '}
-          <b className={nova >= s.life ? 'bad' : ''}>{fmt(nova)}</b>. Blocks don't stop it — resistances, shields, evades or an interrupt do.
-        </div>
-      )}
-      {bossDef.echoes && (
-        <div className="matchup-note">
-          <b>Echoes:</b> {bossDef.echoes.map(([a, b]) => `${MECHANIC_INFO[a].name} and ${MECHANIC_INFO[b].name}`).join(', then ')}{bossDef.echoes.length > 1 ? ', a pair at a time as its life falls' : ', together'}.
-        </div>
-      )}
-      {echoTips(bossDef).map((tip) => (
-        <div key={tip} className="matchup-note">
-          <b>Together:</b> {tip}
-        </div>
-      ))}
-      {(bossDef.mechanics ?? ['slam'])
-        .filter((k) => k !== 'slam' && k !== 'nova')
-        .map((k) => (
-          <div key={k} className="matchup-note">
-            <b>{MECHANIC_INFO[k].name}:</b> {MECHANIC_INFO[k].tip}
-          </div>
-        ))}
-      {target?.attackGround && (
-        <div className="matchup-note">
-          <b>{target.attackName}:</b> leaves {GROUND[monsterGround(target, target.dmgType)].name.toLowerCase()} under you for a few seconds. Run or Flee to step out of it faster.
-        </div>
-      )}
-    </div>
+      <span className="matchup-versus" aria-hidden="true">vs</span>
+      <div className="matchup-fighter">
+        {target && rarity ? (
+          <>
+            <div className="portrait tiny">
+              <Art src={`monsters/${target.defId}`} alt="" cover fallback={<GameIcon name="skull" size={18} />} />
+            </div>
+            <h3 className={`rarity-${rarity}`}>{target.name}</h3>
+            <ProgressBar value={Math.max(0, target.life) / target.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" label={`${fmt(Math.max(0, target.life))} / ${fmt(target.maxLife)} Life`} />
+            <span className="matchup-dps">{fmt(monsterDps(target))} DPS</span>
+            <span className={`matchup-traits rarity-${rarity}`}>{[RARITY_LABEL[rarity], ...mods].join(' · ')}</span>
+          </>
+        ) : (
+          <span className="dim matchup-no-target">No enemy</span>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -978,6 +918,10 @@ function CombatDock({ s, d, fx }: { s: GameState; d: Derived; fx: Fx }) {
         </span>
       </div>
       <SkillBar s={s} d={d} fx={fx} />
+      <div className="dock-row dock-controls">
+        <TargetingSelector targeting={s.settings.targeting} />
+        <CombatAutomation s={s} />
+      </div>
       <FlaskBelt s={s} />
     </div>
   );
@@ -1059,7 +1003,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         <div className="card">
           <EmptyState
             icon={<GameIcon name="map" size={36} color="var(--accent)" />}
-            title="Pick an area on the World Map"
+            title="Pick a zone on the World Map"
             action={
               <button className="btn primary" data-tut="open-campaign" onClick={() => go('campaign')}>
                 Open World Map
@@ -1076,8 +1020,8 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
   }
 
   const zone = zoneDef(c.zoneId);
-  const zoneArt = anyArtUrl(`zones/${zone.art ?? zone.id}`);
-  // once this area's boss is down, offer the areas it opened
+  const zoneArt = zoneBackdrop(zone);
+  // Once this zone's boss is down, offer the zones it opened.
   const nexts = s.bossesDefeated.includes(zone.id) ? nextZones(zone.id).filter((z) => s.unlockedZones.includes(z.id)) : [];
   const kills = s.zoneKills[zone.id] ?? 0;
   const bossReady = bossIsNext(s, zone.id);
@@ -1085,6 +1029,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
   const areaXp = areaXpLabel(characterLevel(s), zone.levelRange);
   const bossHere = c.monsters.some((m) => m.isBoss);
   const focus = focusTarget(s);
+  const arrival = nextArrival(s);
   return (
     <div className="page combat-page">
       <PageHeader
@@ -1093,8 +1038,8 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
         actions={
           <>
             {nexts.map((z) => (
-              <button key={z.id} className="btn primary" title={`Area level ${z.levelRange[0]}–${z.levelRange[1]}`} onClick={() => game.act((st, ctx) => startCombat(st, ctx, z.id))}>
-                Next area: {z.name} →
+              <button key={z.id} className="btn primary" title={`Zone level ${z.levelRange[0]}–${z.levelRange[1]}`} onClick={() => game.act((st, ctx) => startCombat(st, ctx, z.id))}>
+                Next zone: {z.name} →
               </button>
             ))}
             {canBossFarm(s, zone.id) && (
@@ -1114,7 +1059,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
               </button>
             )}
             <button className="btn" onClick={() => go('campaign')}>
-              Change area
+              Change zone
             </button>
             <button className="btn danger" onClick={() => game.act((st) => retreat(st))}>
               Retreat to Hideout
@@ -1122,7 +1067,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
           </>
         }
       >
-        Area level {zone.levelRange[0]}–{zone.levelRange[1]} · {areaXp && `${areaXp} · `}{s.maps.run ? `${s.maps.run.packsLeft}/${s.maps.run.packsTotal} packs left before ${zone.boss.name}` : c.bossFarm ? `Boss farm: ${zone.boss.name}` : bossReady ? `${zone.boss.name} is ready to fight` : `${kills}/${zone.bossEvery} until ${zone.boss.name}`}
+        Zone level {zone.levelRange[0]}–{zone.levelRange[1]} · {areaXp && `${areaXp} · `}{s.maps.run ? `${s.maps.run.packsLeft}/${s.maps.run.packsTotal} packs left before ${zone.boss.name}` : c.bossFarm ? `Boss farm: ${zone.boss.name}` : bossReady ? `${zone.boss.name} is ready to fight` : `${kills}/${zone.bossEvery} until ${zone.boss.name}`}
       </PageHeader>
 
       <MapCombatBanner />
@@ -1130,24 +1075,18 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
       <div className={`card arena2 ${zoneArt ? 'has-art' : ''}`} style={{ ['--zone' as string]: zone.color, ['--zone-art' as string]: zoneArt ? `url(${zoneArt})` : undefined }}>
         <div className="arena-side">
           <PlayerCard s={s} d={d} fx={fx} />
-          <div className="matchup-card">
-            <div className="target-label">
-              Active Target {focus ? (
-                <>· <span className={`rarity-${rarityOf(focus)}`}>{focus.name} ({focus.isBoss ? 'Unique' : RARITY_LABEL[rarityOf(focus)]})</span></>
-              ) : '· No target'}
-            </div>
-            <Matchup s={s} d={d} bossDef={zone.boss} />
-          </div>
+          <Matchup s={s} d={d} target={focus} />
         </div>
         <div className="bf-wrap">
           <MovementBar s={s} />
           <ChainedNotice c={c} />
-          <Battlefield s={s} c={c} fx={fx} />
-          <FieldSummary s={s} c={c} />
+          <Battlefield s={s} c={c} fx={fx} arrival={arrival} />
+          <FieldSummary c={c} arrival={arrival} focus={focus} />
           <div className="action-bar">
             <div className="action-bar-group">
               <div className="action-bar-label">
                 Skills
+                <TargetingSelector targeting={s.settings.targeting} />
                 <button className="btn sm ghost" onClick={() => go('skills')}>
                   Edit skills & rules
                 </button>
@@ -1159,6 +1098,7 @@ export function CombatPage({ go }: { go: (p: Page) => void }) {
                 Flasks <span className="card-hint">keys 1–5</span>
               </div>
               <FlaskBelt s={s} />
+              <CombatAutomation s={s} />
             </div>
           </div>
         </div>

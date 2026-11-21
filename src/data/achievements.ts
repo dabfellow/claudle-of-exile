@@ -39,6 +39,8 @@ export interface AchievementDef {
   perks?: AchievementPerks;
   /** belongs to this act: hidden until the act is open */
   act?: number;
+  /** Omit from the achievement list and totals until earned. */
+  hidden?: boolean;
 }
 
 const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as const;
@@ -98,7 +100,7 @@ const ALL: AchievementDef[] = [
     target: 1, progress: (s) => actDone(s, 1), reward: { divine: 1, regal: 2 },
   },
   {
-    id: 'conqueror', name: 'Conqueror of the Coast', desc: "Defeat every Act 1 area's boss", category: 'campaign',
+    id: 'conqueror', name: 'Conqueror of the Coast', desc: 'Defeat every zone boss in Act 1', category: 'campaign',
     target: milestoneZones(1).length, progress: (s) => bossesBeatenIn(s, 1), reward: { exalted: 1 },
   },
   {
@@ -106,7 +108,7 @@ const ALL: AchievementDef[] = [
     target: 1, progress: (s) => actDone(s, 2), reward: { divine: 2, exalted: 1 },
   },
   {
-    id: 'conqueror_2', name: 'Lord of the Steppe', desc: "Defeat every Act 2 area's boss", category: 'campaign', act: 2,
+    id: 'conqueror_2', name: 'Lord of the Steppe', desc: 'Defeat every zone boss in Act 2', category: 'campaign', act: 2,
     target: milestoneZones(2).length, progress: (s) => bossesBeatenIn(s, 2), reward: { exalted: 1 }, perks: { passivePoints: 1 },
   },
   {
@@ -114,7 +116,7 @@ const ALL: AchievementDef[] = [
     target: 1, progress: (s) => actDone(s, 3), reward: { divine: 2, exalted: 2 },
   },
   {
-    id: 'conqueror_3', name: 'Heretic of the City', desc: "Defeat every Act 3 area's boss", category: 'campaign', act: 3,
+    id: 'conqueror_3', name: 'Heretic of the City', desc: 'Defeat every zone boss in Act 3', category: 'campaign', act: 3,
     target: milestoneZones(3).length, progress: (s) => bossesBeatenIn(s, 3), reward: { exalted: 1 },
   },
   {
@@ -126,7 +128,7 @@ const ALL: AchievementDef[] = [
     target: 1, progress: (s) => actDone(s, 4), reward: { divine: 2, exalted: 2 },
   },
   {
-    id: 'conqueror_4', name: 'Giantsbane', desc: "Defeat every Act 4 area's boss", category: 'campaign', act: 4,
+    id: 'conqueror_4', name: 'Giantsbane', desc: 'Defeat every zone boss in Act 4', category: 'campaign', act: 4,
     target: milestoneZones(4).length, progress: (s) => bossesBeatenIn(s, 4), reward: { exalted: 1 }, perks: { passivePoints: 1 },
   },
   {
@@ -134,7 +136,7 @@ const ALL: AchievementDef[] = [
     target: 1, progress: (s) => actDone(s, 5), reward: { divine: 3, exalted: 3 },
   },
   {
-    id: 'conqueror_5', name: 'Master of the Sunless Sea', desc: "Defeat every Act 5 area's boss", category: 'campaign', act: 5,
+    id: 'conqueror_5', name: 'Master of the Sunless Sea', desc: 'Defeat every zone boss in Act 5', category: 'campaign', act: 5,
     target: milestoneZones(5).length, progress: (s) => bossesBeatenIn(s, 5), reward: { exalted: 2 },
   },
   {
@@ -142,7 +144,7 @@ const ALL: AchievementDef[] = [
     target: 1, progress: (s) => actDone(s, 6), reward: { divine: 4, exalted: 4 },
   },
   {
-    id: 'conqueror_6', name: 'Long Live No One', desc: "Defeat every Act 6 area's boss", category: 'campaign', act: 6,
+    id: 'conqueror_6', name: 'Long Live No One', desc: 'Defeat every zone boss in Act 6', category: 'campaign', act: 6,
     target: milestoneZones(6).length, progress: (s) => bossesBeatenIn(s, 6), reward: { exalted: 3 }, perks: { passivePoints: 1 },
   },
   {
@@ -359,7 +361,7 @@ for (let i = 0; i < ACT_BOSS.length; i++) {
   const zone = zoneDef(ACT_BOSS[i]);
   achievement.desc = `Defeat ${zone.boss.name} and complete Act ${zone.act}`;
 }
-Object.assign(ALL.find((a) => a.id === 'conqueror_2')!, { name: 'Keeper of the Inland Roads', desc: 'Defeat every area boss in Acts 2 and 3' });
+Object.assign(ALL.find((a) => a.id === 'conqueror_2')!, { name: 'Keeper of the Inland Roads', desc: 'Defeat every zone boss in Acts 2 and 3' });
 Object.assign(ALL.find((a) => a.id === 'conqueror_3')!, { name: 'Witness of Harrowgate' });
 Object.assign(ALL.find((a) => a.id === 'conqueror_4')!, { name: 'Through Cairnwatch' });
 Object.assign(ALL.find((a) => a.id === 'conqueror_5')!, { name: 'Behind the Capital Walls' });

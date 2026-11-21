@@ -9,7 +9,7 @@ const fresh = () => {
   const s = newGame(1);
   for (const station of STATIONS) {
     for (const level of station.levels) {
-      for (const id of Object.keys(level.cost)) s.account.bank[id] = 1e7;
+      for (const id of Object.keys(level.cost)) s.storage.bank[id] = 1e7;
     }
   }
   return s;
@@ -20,7 +20,7 @@ describe('stationPerks', () => {
     const s = fresh();
     upgradeStation(s, makeCtx(seeded(1)), 'stash');
     expect(stationPerks(s, 'stash')).toEqual(['4 stash pages', 'Stash tabs 10% cheaper']);
-    s.account.stash.push([]);
+    s.storage.stash.push([]);
     expect(stationPerks(s, 'stash')).toEqual(['5 stash pages (1 bought)', 'Stash tabs 10% cheaper']);
   });
 

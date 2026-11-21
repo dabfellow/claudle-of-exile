@@ -21,10 +21,10 @@ describe('Agility', () => {
     const c = ctx();
     const a = courses[0];
     expect(startSkillAction(s, c, a.id)).toBeNull();
-    const bankBefore = JSON.stringify(s.account.bank);
+    const bankBefore = JSON.stringify(s.storage.bank);
     skillStep(s, c, actionIntervalMs(s, a, deriveStats(s)) + 1, deriveStats(s));
     expect(s.skills.agility).toBeGreaterThan(0);
-    expect(JSON.stringify(s.account.bank)).toBe(bankBefore);
+    expect(JSON.stringify(s.storage.bank)).toBe(bankBefore);
   });
 
   it('locks each course behind its Agility level only', () => {

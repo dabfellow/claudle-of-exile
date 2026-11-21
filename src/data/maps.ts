@@ -576,7 +576,7 @@ export interface DoomedModDef {
 }
 
 export const DOOMED_MODS: DoomedModDef[] = [
-  { id: 'preassembled_adds', name: 'Pre-assembled adds', desc: 'The area boss arrives with 3 extra adds already summoned.' },
+  { id: 'preassembled_adds', name: 'Pre-assembled adds', desc: 'The zone boss arrives with 3 extra adds already summoned.' },
   { id: 'revenant_packs', name: 'Revenant packs', desc: 'Monsters in every third pack revive once at 30% Life when killed.' },
   { id: 'drained_belts', name: 'Drained belts', desc: 'Flasks are not refilled at the start of the run.' },
   { id: 'unending_enrage', name: 'Unending enrage', desc: 'The boss enrages permanently at 75% Life.' },
@@ -663,6 +663,15 @@ export function parseDoomedTier(id: string): number | null {
   if (!m) return null;
   const tier = Number(m[1]);
   return DOOMED_TIERS.some((t) => t.tier === tier) ? tier : null;
+}
+
+export function mapStockName(id: string): string {
+  const unique = UNIQUE_MAPS.find((map) => map.id === id);
+  if (unique) return unique.name;
+  const doomed = parseDoomedTier(id);
+  if (doomed !== null) return DOOMED_TIERS[doomed - 1].name;
+  const tier = parseMapTier(id);
+  return tier === null ? id : `Tier ${tier} Map`;
 }
 
 export function mapTier(tier: number): MapTier {

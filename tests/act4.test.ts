@@ -127,7 +127,7 @@ describe('Act 5 mountain layout', () => {
     }
   });
 
-  it('follows the Overgrown Forum, and every area sits on the map inside the northern range', () => {
+  it('follows the Forum That Bloomed, and every area sits on the map inside the northern range', () => {
     expect(nextZones('highaltar')[0]?.id).toBe('hollowpass');
     const zones = act();
     for (const z of zones) {

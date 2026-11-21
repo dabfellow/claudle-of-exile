@@ -21,7 +21,7 @@ export function locateItem(s: GameState, uid: number): ItemPlace | null {
   }
   const bag = s.inventory.find((i) => i.uid === uid);
   if (bag) return { at: 'bag', item: bag };
-  const { stash, overflow, uniqueStash } = s.account;
+  const { stash, overflow, uniqueStash } = s.storage;
   for (let page = 0; page < stash.length; page++) {
     const item = stash[page].find((i) => i.uid === uid);
     if (item) return { at: 'stash', page, item };
@@ -41,21 +41,21 @@ function lift(s: GameState, p: ItemPlace): void {
   const uid = p.item.uid;
   if (p.at === 'ground' || p.at === 'offlineHaul') s[p.at] = s[p.at].filter((i) => i.uid !== uid);
   else if (p.at === 'bag') s.inventory = s.inventory.filter((i) => i.uid !== uid);
-  else if (p.at === 'stash') s.account.stash[p.page] = s.account.stash[p.page].filter((i) => i.uid !== uid);
-  else if (p.at === 'overflow') s.account.overflow = s.account.overflow.filter((i) => i.uid !== uid);
-  else if (p.at === 'uniques') s.account.uniqueStash = s.account.uniqueStash.filter((i) => i.uid !== uid);
+  else if (p.at === 'stash') s.storage.stash[p.page] = s.storage.stash[p.page].filter((i) => i.uid !== uid);
+  else if (p.at === 'overflow') s.storage.overflow = s.storage.overflow.filter((i) => i.uid !== uid);
+  else if (p.at === 'uniques') s.storage.uniqueStash = s.storage.uniqueStash.filter((i) => i.uid !== uid);
 }
 
 /** Put an item back where another one came from. */
 function putBack(s: GameState, p: ItemPlace, item: Item): void {
-  if (p.at === 'stash') s.account.stash[p.page].push(claimOwned(s, item));
-  else if (p.at === 'overflow') s.account.overflow.push(claimOwned(s, item));
-  else if (p.at === 'uniques') s.account.uniqueStash.push(claimOwned(s, item));
+  if (p.at === 'stash') s.storage.stash[p.page].push(claimOwned(s, item));
+  else if (p.at === 'overflow') s.storage.overflow.push(claimOwned(s, item));
+  else if (p.at === 'uniques') s.storage.uniqueStash.push(claimOwned(s, item));
   else if (p.at === 'ground' || p.at === 'offlineHaul') s[p.at].push(item);
 }
 
 function firstStashPageWithRoom(s: GameState): number {
-  return s.account.stash.findIndex((_, i) => stashPageRoom(s, i) > 0);
+  return s.storage.stash.findIndex((_, i) => stashPageRoom(s, i) > 0);
 }
 
 export function equipFromReason(s: GameState, uid: number): string | null {
@@ -128,7 +128,7 @@ export function moveToStash(s: GameState, ctx: Ctx, uid: number, page = 0): stri
   if (p.at === 'equipped') delete s.equipment[p.slot];
   else lift(s, p);
   if (p.item.rarity === 'unique') shelveUnique(s, p.item);
-  else s.account.stash[stashPageRoom(s, page) > 0 ? page : firstStashPageWithRoom(s)].push(claimOwned(s, p.item));
+  else s.storage.stash[stashPageRoom(s, page) > 0 ? page : firstStashPageWithRoom(s)].push(claimOwned(s, p.item));
   return null;
 }
 

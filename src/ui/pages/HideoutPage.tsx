@@ -87,8 +87,7 @@ function lifeSkills(s: GameState, group: 'gathering' | 'production'): SkillId[] 
 }
 
 /**
- * The Hideout is home: who you are up top (with your vitals), your stats, gear and life skills side by side,
- * then the station upgrades, with a bar of shortcuts pinned along the bottom.
+ * The Hideout shows character stats and gear, life skills, station upgrades and mobile shortcuts.
  */
 export function HideoutPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
@@ -100,7 +99,7 @@ export function HideoutPage({ go }: { go: (p: Page) => void }) {
         <Embers />
         <CharacterBanner training={training === 'combat'} onClick={() => go('combat')} />
       </div>
-      <div className={`home-top ${classic ? 'no-skills' : ''}`}>
+      <div className="home-top">
         <StatsCard go={go} />
         <GearCard go={go} />
         {!classic && <LifeSkillsCard go={go} training={training} />}
@@ -199,7 +198,7 @@ function StatsCard({ go }: { go: (p: Page) => void }) {
     ['Crit chance', `${d.critChance.toFixed(1)}%`],
   ];
   return (
-    <Fold id="home-character" title="Character" className="home-card" actions={<OpenButton onClick={() => go('equipment')} />}>
+    <Fold id="home-character" title="Character" className="home-character" actions={<OpenButton onClick={() => go('equipment')} />}>
       <div className="home-stats">
         {rows.map(([label, value]) => (
           <div key={label} className="home-stat">
@@ -232,7 +231,7 @@ function StatsCard({ go }: { go: (p: Page) => void }) {
 function GearCard({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   return (
-    <Fold id="home-equipment" title="Equipment" className="home-card home-doll" actions={<OpenButton onClick={() => go('equipment')} />}>
+    <Fold id="home-equipment" title="Equipment" className="home-doll" actions={<OpenButton onClick={() => go('equipment')} />}>
       <PaperDoll s={s} onItem={(_, it) => openItemMenu(it.uid)} onEmpty={() => go('equipment')} onFlask={() => go('equipment')} />
     </Fold>
   );
@@ -337,7 +336,7 @@ function SkillRow({ id, s, running, go }: { id: SkillId; s: GameState; running: 
 function LifeSkillsCard({ go, training }: { go: (p: Page) => void; training: SkillId | null }) {
   const s = useGame();
   return (
-    <Fold id="home-skills" title="Life skills" className="home-card home-skills">
+    <Fold id="home-skills" title="Life skills" className="home-skills">
       <NowRunning go={go} />
       {(['gathering', 'production'] as const).map((group) => (
         <div key={group} className="hl-group">
@@ -355,29 +354,28 @@ function LifeSkillsCard({ go, training }: { go: (p: Page) => void; training: Ski
 
 // ---------- where to go ----------
 
-/** Shortcuts to every page you use from home, pinned along the bottom of the page. */
+/** Shortcuts when the sidebar is a horizontal strip. */
 function GoToBar({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const points = pointsLeft(s);
   const loot = s.ground.length + s.offlineHaul.length;
-  const links: { page: Page; label: string; short: string; icon: string; badge?: ReactNode }[] = [
-    { page: 'combat', label: 'Combat', short: 'Combat', icon: 'combat', badge: loot > 0 ? <span className="nav-badge loot">{loot}</span> : undefined },
-    { page: 'campaign', label: 'World Map', short: 'World Map', icon: 'campaign' },
+  const links: { page: Page; label: string; short?: string; icon: string; badge?: ReactNode }[] = [
+    { page: 'combat', label: 'Combat', icon: 'combat', badge: loot > 0 ? <span className="nav-badge loot">{loot}</span> : undefined },
+    { page: 'campaign', label: 'World Map', icon: 'campaign' },
     { page: 'equipment', label: 'Inventory', short: 'Items', icon: 'stash', badge: s.inventory.length > 0 ? <span className="nav-badge">{s.inventory.length}</span> : undefined },
-    { page: 'skills', label: 'Skills', short: 'Skills', icon: 'gems' },
+    { page: 'skills', label: 'Skills', icon: 'gems' },
     { page: 'tree', label: 'Passive Tree', short: 'Tree', icon: 'tree', badge: points > 0 ? <span className="nav-badge hot">+{points}</span> : undefined },
-    { page: 'vendor', label: 'Town', short: 'Town', icon: 'vendor' },
+    { page: 'vendor', label: 'Town', icon: 'vendor' },
   ];
   return (
     <nav className="home-goto" aria-label="Go to">
       {links.map((l) => (
-        <button key={l.page} className="home-goto-btn" onClick={() => go(l.page)} title={l.label}>
+        <button key={l.page} className="home-goto-btn" onClick={() => go(l.page)} aria-label={l.label}>
           <span className="home-goto-icon">
             <GameIcon name={l.icon} size={18} />
             {l.badge}
           </span>
-          <span className="home-goto-label long">{l.label}</span>
-          <span className="home-goto-label short">{l.short}</span>
+          <span className="home-goto-label">{l.short ?? l.label}</span>
         </button>
       ))}
     </nav>
@@ -486,7 +484,7 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
   const affordable = !locked && !!cost && canAfford(s, cost);
   const hasPage = !locked && st.page !== 'hideout';
   const next = st.levels[lvl];
-  const short = cost ? shortBy(cost, s.account.bank) : 0;
+  const short = cost ? shortBy(cost, s.storage.bank) : 0;
   return (
     <div className={`card hx-station ${affordable ? 'ready' : ''} ${locked ? 'locked' : ''} ${!cost && !locked ? 'maxed' : ''}`} style={{ ['--station' as string]: st.color }}>
       <div className="hx-station-head" title={st.desc}>
@@ -539,7 +537,7 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
           </div>
           <div className="hx-next-effect">{next.effect}</div>
           <div className="hx-next-buy">
-            <HaveNeed cost={cost} have={s.account.bank} go={go} />
+            <HaveNeed cost={cost} have={s.storage.bank} go={go} />
             <button data-tut={`upgrade-${st.id}`} className={`btn sm ${affordable ? 'primary' : ''}`} disabled={!affordable} title={affordable ? `Upgrade to level ${lvl + 1}` : 'Not enough materials'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id))}>
               Upgrade
             </button>
@@ -549,7 +547,7 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
         {route && <div className="hx-next">
           <div className="io-label">Profession route · alternative payment</div>
           <p className="small">{route.requirement}. Gold comes from Thieving; bars from Smithing; planks from Woodcutting.</p>
-          <HaveNeed cost={route.cost} have={s.account.bank} go={go} />
+          <HaveNeed cost={route.cost} have={s.storage.bank} go={go} />
           <button className="btn sm" disabled={!!route.reason || !canAfford(s, route.cost)} title={route.reason ?? 'Pay this cost instead of the original upgrade cost'} onClick={() => game.act((g, ctx) => upgradeStation(g, ctx, st.id, 'profession'))}>Upgrade through profession</button>
           {route.reason && <p className="small muted">{route.reason}</p>}
         </div>}
@@ -560,7 +558,7 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
         <ol className="hx-tiers">
           {st.levels.map((tier, i) => {
             const state: TierState = locked || i > lvl ? 'later' : i < lvl ? 'done' : 'next';
-            return <Tier key={i} n={i + 1} effect={tier.effect} cost={hideoutCost(s, tier.cost)} state={state} have={s.account.bank} />;
+            return <Tier key={i} n={i + 1} effect={tier.effect} cost={hideoutCost(s, tier.cost)} state={state} have={s.storage.bank} />;
           })}
         </ol>
       </details>

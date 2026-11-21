@@ -1,15 +1,14 @@
 import { currencyDef, materialDef } from '../../data/materials';
-import { MAX_PINNED_CURRENCIES, pinnedCurrencies, toggleCurrencyPin } from '../../engine/currencyPins';
+import { MAX_PINNED_CURRENCIES, pinnedCurrencies } from '../../engine/currencyPins';
 import type { GameState } from '../../engine/types';
-import { game } from '../../game';
 import { CurrencyAmount, fmt, Tooltip } from './common';
 import { Orb } from './Icon';
 
-/** One orb (or gold) in the Stash's Currency tab. Click it to pin it to the top bar, or to unpin it. */
-export function CurrencySlot({ s, id }: { s: GameState; id: string }) {
+/** One orb (or gold) in the Stash's Currency tab. */
+export function CurrencySlot({ s, id, onPick }: { s: GameState; id: string; onPick: (id: string) => void }) {
   const def = materialDef(id);
   const cur = id === 'gold' ? null : currencyDef(id);
-  const n = s.account.bank[id] ?? 0;
+  const n = s.storage.bank[id] ?? 0;
   const pinned = pinnedCurrencies(s).includes(id);
   return (
     <Tooltip
@@ -29,7 +28,7 @@ export function CurrencySlot({ s, id }: { s: GameState; id: string }) {
             <div>Spent at the trader, on hideout upgrades and stash pages.</div>
           )}
           <div className="dim small" style={{ marginTop: 4 }}>
-            {pinned ? 'Pinned to the top bar. Click to unpin.' : `Click to pin it to the top bar (up to ${MAX_PINNED_CURRENCIES}).`}
+            {pinned ? 'Pinned to the top bar.' : 'Click to see currency actions.'}
           </div>
         </div>
       }
@@ -38,8 +37,7 @@ export function CurrencySlot({ s, id }: { s: GameState; id: string }) {
         type="button"
         className={`currency-slot ${n > 0 ? '' : 'none'} ${pinned ? 'pinned' : ''}`}
         style={{ ['--orb' as string]: def.color }}
-        aria-pressed={pinned}
-        onClick={() => game.act((st) => toggleCurrencyPin(st, id))}
+        onClick={() => onPick(id)}
       >
         <Orb color={def.color} size={40} glow={n > 0} />
         <span className="currency-count num">{fmt(n)}</span>
@@ -55,7 +53,7 @@ export function CurrencyPinHint({ s }: { s: GameState }) {
   const n = pinnedCurrencies(s).length;
   return (
     <div className="dim small currency-pin-hint">
-      Click a currency to pin it to the top bar ({n}/{MAX_PINNED_CURRENCIES} pinned).
+      Select a currency to send it or pin it to the top bar ({n}/{MAX_PINNED_CURRENCIES} pinned).
     </div>
   );
 }
@@ -67,7 +65,7 @@ export function PinnedCurrencies({ s }: { s: GameState }) {
   return (
     <div className="currency-strip">
       {pins.map((id) => (
-        <CurrencyAmount key={id} id={id} amount={s.account.bank[id] ?? 0} label={id === 'gold' ? 'gold' : currencyDef(id).short} />
+        <CurrencyAmount key={id} id={id} amount={s.storage.bank[id] ?? 0} label={id === 'gold' ? 'gold' : currencyDef(id).short} />
       ))}
     </div>
   );

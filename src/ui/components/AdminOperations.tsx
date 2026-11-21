@@ -102,7 +102,7 @@ export function AdminMessage({ user, realm, feedback, onSent }: { user: string; 
 function SaveSummary({ detail }: { detail: Inspection }) {
   const save = (detail.character.save ?? {}) as Partial<GameState>;
   const sum = detail.character.summary ?? ({} as Inspection['character']['summary']);
-  const bank = (detail.account?.bank ?? save.account?.bank ?? {}) as Record<string, number>;
+  const bank = (save.storage?.bank ?? detail.account?.bank ?? save.account?.bank ?? {}) as Record<string, number>;
   const life = (save.lifetime ?? {}) as Partial<GameState['lifetime']>;
   const bosses = Array.isArray(save.bossesDefeated) ? save.bossesDefeated : [];
   const acts = ['sanctum', 'burningthrone', 'highaltar', 'giantsthrone', 'maelstrom', 'shatteredthrone'].filter((b) => bosses.includes(b)).length;

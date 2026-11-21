@@ -49,7 +49,7 @@ export function RuneBoard() {
   if (!runesOpen(s)) return <div className="callout skill-note">The old rite of carving awaits beyond Harrowgate's walls.</div>;
   const worn = Object.values(s.equipment).filter((i): i is Item => !!i);
   const inscribed = worn.filter((i) => itemRune(i));
-  const best = Math.max(1, ...RUNES.filter((r) => s.account.bank[r.id] || inscribed.some((i) => itemRune(i) === r)).map((r) => r.grade.grade));
+  const best = Math.max(1, ...RUNES.filter((r) => s.storage.bank[r.id] || inscribed.some((i) => itemRune(i) === r)).map((r) => r.grade.grade));
   const runeBoardLvl = s.account.hideout.rune_board ?? 1;
   const resPct = Math.round((runeBoardLvl >= 5 ? 0.15 : runeBoardLvl >= 3 ? 0.1 : runeBoardLvl >= 2 ? 0.07 : RESONANCE_PER_PIECE) * 100);
   const bonusPct = runeBoardLvl >= 6 ? 60 : runeBoardLvl >= 5 ? 40 : runeBoardLvl >= 4 ? 25 : runeBoardLvl >= 3 ? 15 : 0;

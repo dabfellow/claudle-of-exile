@@ -11,7 +11,7 @@ import { openItemMenu } from './ItemMenu';
 const PILES: Record<Pile, { title: string; hint: (cap: number) => string; empty: string }> = {
   ground: {
     title: 'On the ground',
-    hint: (cap) => `Newest first. Past ${cap}, the oldest drop is lost. Stays when you leave an area; die twice without picking it up and it is lost.`,
+    hint: (cap) => `Newest first. Past ${cap}, the oldest drop is lost. Stays when you leave a zone; die twice without picking it up and it is lost.`,
     empty: 'Gear that drops shows up here for you to pick up.',
   },
   offlineHaul: {

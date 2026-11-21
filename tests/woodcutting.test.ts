@@ -55,20 +55,20 @@ describe('Phase 03 Woodcutting', () => {
 
     // With zero luck, chance rolls do not trigger
     cycles(s, `cut_resin_${w.id}`, 4);
-    expect(s.account.bank[`${w.id}_resin`] ?? 0).toBe(0);
-    expect(s.account.bank[`${w.id}_log`] ?? 0).toBe(0);
+    expect(s.storage.bank[`${w.id}_resin`] ?? 0).toBe(0);
+    expect(s.storage.bank[`${w.id}_log`] ?? 0).toBe(0);
 
     // With lucky roll, both drop
     s = reload(s);
     s.action = null;
     cyclesWith(s, makeCtx({ next: () => 0.1 }), a.id, 1);
-    expect(s.account.bank[`${w.id}_resin`]).toBe(1);
-    expect(s.account.bank[`${w.id}_log`]).toBe(1);
+    expect(s.storage.bank[`${w.id}_resin`]).toBe(1);
+    expect(s.storage.bank[`${w.id}_log`]).toBe(1);
 
-    s.account.bank[`${w.id}_log`] = 5;
+    s.storage.bank[`${w.id}_log`] = 5;
     cycles(s, `mill_${w.id}`, 1);
-    expect(s.account.bank[`${w.id}_plank`]).toBe(1);
-    expect(s.account.bank[`${w.id}_log`]).toBe(0);
+    expect(s.storage.bank[`${w.id}_plank`]).toBe(1);
+    expect(s.storage.bank[`${w.id}_log`]).toBe(0);
     skillStep(s, zeroLuck(), 30_000, deriveStats(s));
     expect(s.action).toBeNull();
   });
@@ -81,22 +81,22 @@ describe('Phase 03 Woodcutting', () => {
     expect(a.outputChance).toBe(0.5);
     expect(a.bonus).toEqual([{ id: 'heartwood_fragment', chance: 0.04, qty: 1 }]);
 
-    s.account.bank.heartwood_fragment = 20;
+    s.storage.bank.heartwood_fragment = 20;
     // Even maximum ordinary conservation/manual output must not create free protected refinements.
     s.skillingMastery['task.mill_heartwood'] = 432000;
     s.skillPassives.push('core_steady');
     expect(actionDef('mill_heartwood').mastery?.profile).toBe('project');
     cycles(s, 'mill_heartwood', 1, true);
-    expect(s.account.bank.ancient_heartwood).toBe(1);
-    expect(s.account.bank.heartwood_fragment).toBe(0);
+    expect(s.storage.bank.ancient_heartwood).toBe(1);
+    expect(s.storage.bank.heartwood_fragment).toBe(0);
     skillStep(s, zeroLuck(), 30_000, deriveStats(s));
     expect(s.action).toBeNull();
     expect(actionBlocker(s, actionDef('mill_heartwood'))).toBe('Missing materials');
-    s.account.bank.heartwood_fragment = 20;
+    s.storage.bank.heartwood_fragment = 20;
     expect(startSkillAction(s, makeCtx({ next: () => 0 }), 'mill_heartwood')).toBeNull();
     skillStep(s, makeCtx({ next: () => 0 }), 25001, deriveStats(s));
-    expect(s.account.bank.heartwood_fragment).toBe(0); // Steady Hands would conserve ordinary inputs with this RNG
-    expect(s.account.bank.ancient_heartwood).toBe(2);
+    expect(s.storage.bank.heartwood_fragment).toBe(0); // Steady Hands would conserve ordinary inputs with this RNG
+    expect(s.storage.bank.ancient_heartwood).toBe(2);
   });
 
   it('drops heartwood fragments from survey and high tier timber', () => {
@@ -113,11 +113,11 @@ describe('Phase 03 Woodcutting', () => {
     const cLucky = maxLuck();
     startSkillAction(s, cLucky, 'cut_heartwood');
     skillStep(s, cLucky, 8001, deriveStats(s));
-    expect(s.account.bank.heartwood_fragment).toBe(1);
+    expect(s.storage.bank.heartwood_fragment).toBe(1);
 
     startSkillAction(s, cLucky, 'cut_ancient');
     skillStep(s, cLucky, 6001, deriveStats(s));
-    expect(s.account.bank.heartwood_fragment).toBe(2);
+    expect(s.storage.bank.heartwood_fragment).toBe(2);
   });
 
   it.each([
@@ -138,7 +138,7 @@ describe('Phase 03 Woodcutting', () => {
     const c = makeCtx({ next: seeded(42).next });
     for (let i = 0; i < 28800; i++) tick(online, c, 1000);
     const summary = simulateOffline(offline, makeCtx({ next: seeded(42).next }), 28_800_000);
-    expect(offline.account.bank).toEqual(online.account.bank);
+    expect(offline.storage.bank).toEqual(online.storage.bank);
     expect(offline.skills).toEqual(online.skills);
     expect(offline.professionProgress).toEqual(online.professionProgress);
     expect(summary.stoppedReason).toBeNull();
@@ -158,18 +158,18 @@ describe('Phase 03 Woodcutting', () => {
     s.unlockedZones = ['mudflats'];
     expect(actionBlocker(s, actionDef('cut_yew'))).toBeNull();
     expect(actionBlocker(s, actionDef('cut_ironwood'))).toBeNull();
-    expect(s.account.bank.heartwood_fragment ?? 0).toBe(0);
+    expect(s.storage.bank.heartwood_fragment ?? 0).toBe(0);
     const c = maxLuck();
     startSkillAction(s, c, 'cut_heartwood');
     skillStep(s, c, 8001, deriveStats(s));
-    expect(s.account.bank.heartwood_fragment).toBe(1);
+    expect(s.storage.bank.heartwood_fragment).toBe(1);
   });
 
   it('refines identical protected live/offline output and spending, then stops on exhausted nominal inputs', () => {
     const setup = () => {
       const s = newGame(1);
       s.skills.woodcutting = xpForLevel(30);
-      s.account.bank.heartwood_fragment = 40;
+      s.storage.bank.heartwood_fragment = 40;
       s.skillPassives.push('core_steady');
       s.skillingMastery['task.mill_heartwood'] = 432000;
       expect(startSkillAction(s, zeroLuck(), 'mill_heartwood')).toBeNull();
@@ -179,11 +179,11 @@ describe('Phase 03 Woodcutting', () => {
     const c = makeCtx({ next: () => 0 });
     for (let i = 0; i < 90; i++) tick(online, c, 1000);
     const summary = simulateOffline(offline, makeCtx({ next: () => 0 }), 28_800_000);
-    expect(offline.account.bank).toEqual(online.account.bank);
+    expect(offline.storage.bank).toEqual(online.storage.bank);
     expect(offline.skills).toEqual(online.skills);
     expect(offline.professionProgress).toEqual(online.professionProgress);
-    expect(offline.account.bank.ancient_heartwood).toBe(2);
-    expect(offline.account.bank.heartwood_fragment).toBe(0);
+    expect(offline.storage.bank.ancient_heartwood).toBe(2);
+    expect(offline.storage.bank.heartwood_fragment).toBe(0);
     expect(summary.protectedProgress).toEqual({ ancient_heartwood: 2 });
     expect(summary.materials.heartwood_fragment).toBe(-40);
     expect(summary.stoppedReason).toMatch(/Missing materials/);
@@ -197,21 +197,21 @@ describe('Phase 03 Woodcutting', () => {
     s.skills.woodcrafting = xpForLevel(15);
     for (const w of WOODS) s.professionProgress.discoveries[`wood_${w.id}_survey`] = true;
     for (const r of RESINS) {
-      s.account.bank[r.id] = 1;
-      s.account.bank.copper_ore = 100;
-      s.account.bank.copper_bar = 100;
-      s.account.bank.ash_log = 100;
-      s.account.bank.ash_plank = 100;
+      s.storage.bank[r.id] = 1;
+      s.storage.bank.copper_ore = 100;
+      s.storage.bank.copper_bar = 100;
+      s.storage.bank.ash_log = 100;
+      s.storage.bank.ash_plank = 100;
       setSmithCatalyst(s, { resin: r.id });
       expect(resinBonus(s)).toBe(r.ilvl);
       const ilvl = smithIlvl(s, resinBonus(s));
       cycles(s, 'smith_driftwood_wand', 1);
       expect(s.inventory.at(-1)?.ilvl).toBe(ilvl);
-      expect(s.account.bank[r.id]).toBe(0);
+      expect(s.storage.bank[r.id]).toBe(0);
     }
     s.skills.smithing = xpForLevel(90);
     expect(smithIlvl(s, 6)).toBe(21);
-    s.account.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
+    s.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
     s.professionProgress.work.woodcutting = 100;
     expect(startProject(s, c, 'tool_woodcutting')).toBeNull();
     advanceProject(s, c, 1_200_000);

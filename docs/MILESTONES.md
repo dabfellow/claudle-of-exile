@@ -1,9 +1,27 @@
 # Roadmap and decisions
 
-Last updated 2026-11-19. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-20. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 Last updated 2026-11-17. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
+
+Act-map readability and the Quests sidebar page are implemented and playtested locally (2026-11-20).
+
+The combat HUD pace controls, entry countdown and matchup are implemented locally (2026-11-20).
+
+Illustrated terrain backdrops and the zone terminology update are implemented locally across the seven-act campaign (2026-11-20).
+
+The level 1–99 profession design pass has an initial audit of all 15 main-game skills. Mastery rewards now have an agreed profession-level schedule. The scope of global buffs and the individual profession designs are next. See [Skilling Progression](SKILLING_PROGRESSION.md).
+
+The Hideout layout fixes are implemented and playtested locally (2026-11-20).
+
+Saltmere’s five-water prototype is implemented locally behind a closed gate. The next Fishing milestone is the standalone RPG described in [Fishing RPG Design](FISHING_RPG.md).
+
+Character inventories and the Guild Stash are implemented locally (2026-11-20). The Guild Stash has its own sidebar page, and items can be sent from Inventory. Apply the [Guild Stash database update](ops/guild-stash.sql) before publishing and verify signed-in transfers after it is installed.
+
+The first batch of eleven build-specific gear modifiers is implemented locally (2026-11-19). The new rolls start at item level 30 and compete across overlapping gear slots.
+
+The seven-act zone naming and gear-check pack passes are implemented locally (2026-11-19). The next campaign content step is to give the remaining regular enemy groups signature behaviors and judge the harder packs in full campaign play.
 
 Veyrath campaign is live in **0.5.5** (2026-11-19): 70 zones across seven fuller chapters, revised level bands, matching rewards/gem access, saved journal, world/regional paintings, territory navigation, readable banners, character-specific unlock fog and the harsh surrounding ocean. All 113 test files / 1,795 tests, typecheck and production build pass. Earlier desktop/390px campaign navigation checks passed 2026-11-18; the latest artwork/fog was inspected through native previews because the local browser stayed blank, so live hover/desktop acceptance remains open. Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
@@ -52,18 +70,30 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 |---|---|---|
 | 1 | Automation/offline | Released; survival rules and two conditions baseline; flask-default removal verified (strictly requires Instilling) |
 | 2 | Pacing | Live-source desktop simulator/API released in 0.4.34; pacing audit remains open. Whole-journey audit on 0.4.4 found large Ranger seed variance and a common Mage Act 4 stall |
-| 3 | Account layer | Released; Admin overhaul, service SQL, OAuth secret revocation and signed-in checks confirmed by owner 2026-11-08; save-rollback fixes unreleased |
+| 3 | Account layer | Released. Admin overhaul, service SQL, OAuth secret revocation and signed-in checks confirmed by owner 2026-11-08. Save-rollback fixes remain unreleased. Personal Stashes, the dedicated Guild Stash page and transfers from Inventory are implemented locally 2026-11-20 |
 | 4 | Act 2 and content recipe | Released; cold-check/art follow-ups remain parked |
-| 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18 |
+| 5 | Released Maps system | T1–T10, levels 66–84, Map Device and auto-run released in 0.3.18. Act 7 sidebar lock playtested locally (2026-11-20) |
 | 6 | Act 3 / ascendancies | Released; four trials and 2/2/3/2 points replace original structure |
-| 7 | Campaign expansion / seven-act Veyrath integration | Live in 0.5.5 (2026-11-19): seven-act story, atlas, journal and redistributed 70-zone campaign, territory banners/highlights, character exploration fog and dark ocean. New chapter bands preserve the level-66 finale and Maps handoff. Latest live UI interaction acceptance remains open |
+| 7 | Campaign expansion / seven-act Veyrath integration | Live in 0.5.5 (2026-11-19): seven-act story, atlas, journal and redistributed 70-zone campaign, territory banners/highlights, character exploration fog and dark ocean. New chapter bands preserve the level-66 finale and Maps handoff. Terrain backdrops and zone terminology are implemented locally (2026-11-20). Brighter act-map labels, quest destination markers and the Quests sidebar page are verified locally (2026-11-20). Latest live UI interaction acceptance remains open |
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–18 live in 0.4.42; production mastery batches live in 0.4.48; all profession UI redesigns live in 0.4.49 (2026-11-17). Additional rogue roster/tactical Heist changes remain unreleased |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–18 live in 0.4.42; production mastery batches live in 0.4.48; all profession UI redesigns live in 0.4.49 (2026-11-17). Additional rogue roster/tactical Heist changes remain unreleased. Level 1–99 profession progression audit started 2026-11-20 |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Combat pace (2026-11-20): Walking allows ordinary enemies to occupy half the field, Sprinting allows the whole field, and Fleeing allows three. Pace affects arrivals and existing enemies stay on the field when pace changes. The separate Emergency flee automation keeps its recovery behavior.
+
+- Campaign Unique pacing (2026-11-20): Aim for about ten Uniques by the end of a rushed campaign. Over several hours of ordinary campaign farming, aim for one or two finds. Over a similar stretch of dedicated campaign boss farming, aim for three or four. Count randomly dropped Unique gear and flasks toward these targets. Tune first clears and repeat farming separately so a boss that respawns quickly can still be rewarding to beat for the first time.
+
+- Zone scenery (2026-11-20): Use “zone” for combat destinations. Each zone can share a terrain backdrop and optionally choose a variant, such as a night forest or a cave with crystal spiders. Maps inherit the borrowed campaign zone’s scenery. Use existing illustrated backdrops licensed for free use in the game and record their sources in the asset credits. Generate art only when the owner explicitly asks for it.
+
+- Profession progression (2026-11-20): Give every skill varied content across levels 1–99, a reward earned through sustained work, a separate rare drop chase, and a distinct reason to train it. Each skilling zone gets exactly one hidden collectible with no gameplay effect. Gathering professions are self-contained. Early production uses outputs from one or two other professions. Late production ramps up to recipes that can draw on as many as five other professions or crafting outputs. Space meaningful unlocks out. The owner chose profession level for mastery rewards, so any eligible activity advances them. Levels 10, 30, 50, 70 and 90 grant global buffs. Levels 20, 40, 60 and 80 grant buffs to that profession. Level 99 grants a large global buff. See [Skilling Progression](SKILLING_PROGRESSION.md) for the audit and open decisions.
+
+- Character materials and Guild Stash (2026-11-20): Owner saw players run three or four characters as a production line, for example one mining, one chopping wood and another crafting daggers continuously from the shared supply. Owner chose to let alts work in parallel with manual transfers. Each character gathers into their own inventory, crafts from their own stock and has a personal Stash. Players can move spare gear, gems, flasks, currency and materials between characters through a separate Guild Stash, with manual bulk deposits and withdrawals for materials. Owner chose to keep gathering for XP and rare drops at the cap, discarding extra units of whichever material is full. Apply the same rule while online and offline. Use 5,000 per material type per character as the starting cap so ordinary skilling can run for extended stretches. On upgrade, carry each realm's existing shared contents into its Guild Stash so every character that previously had access can still withdraw them.
+
+- Build-specific gear affixes (2026-11-19): Owner wants good gear to take longer to craft by adding ordinary modifiers worth chasing for particular builds or situations. A useful modifier should still have weak rolls for the build that wants it. Owner chose A, "Spread across relevant slots," so multiple specialties compete on the same bases. The first batch covers Rage, Riposte, Momentum, Mana is Power, Fervor, Coup de Grâce and combat conditions involving bleeding, stun, poison and low-Life enemies. Owner removed the elemental hit modifier for staying above 80% Life and set the minimum item level to 30. Five tiers unlock at item levels 30, 35, 45, 68 and 80 so the weakest rolls can still appear on endgame gear. Maximum Rage rolls +1 to +10, with +7 to +10 at T1. On an unmodified item-level-80 Coral Amulet, the new mods make up about 13% of the first prefix roll and 13% of the first suffix roll.
 
 - Campaign enemy families (2026-11-19): Owner chose "mostly local enemies, with a few recognizable families returning where their presence tells part of the story." Draw each area's roster from its wildlife, inhabitants, work and exposure to the Creep. Where a family returns, keep a recognizable trait and give its local group a different way to fight. The Kroten expedition was the example discussed.
 
@@ -414,8 +444,8 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 - Momentum keeping is flat (2026-11-06): each source (uniques, Sure-Footed, Steady Aim, tree node) saves 1 stack per landed hit, minimum loss 1. Old % values on already-found uniques are read as 1. The "Mana within X% of full" unique text was stale; it now says what the code already did (recent spending counts X% more).
 - The whole character curve, including levels 1–80 and the campaign, is 3.4 times longer than the former curve. Level 100 should take roughly two to three months for a dedicated player fighting about 20 hours a day, and 99 remains halfway in XP. Exact class parity is not a substitute for meaningful builds.
 - Combat XP has a two-level grace band outside an area's level range. Harder enemies give +5% at three levels and +20% at five, interpolating between. Easier enemies use a rounded quadratic penalty of 10/11/15/21/30/41/54/70% at three through ten levels, with increasing losses each level. Hold both caps thereafter. This supersedes both the old falloff to zero and the initial piecewise penalty milestones.
-- Fishing is a permanent placeholder/joke. It is not scheduled work.
-- The skilling tree represents specialisation (2026-11-06): one point per ten total levels, capped at 36. It must never become fully completable through ordinary levels; Fishing has no spendable branch, and every implemented life skill has one.
+- Fishing opens a secret RPG at Saltmere (2026-11-20). One character earns entry for their realm by completing a hidden achievement aimed at nearly maxed characters. The requirement is open. Owner direction for the full game includes ponds, lakes and ocean waters, a logbook of 500-plus catchable species, low-rate specials, equipable gear, boatbuilding and crew, offline traps that catch fish, and multi-day voyages beyond a boundary that turns early vessels back. Harbor growth, tournaments and mysteries extend that progression. See [Fishing RPG Design](FISHING_RPG.md).
+- The skilling tree represents specialisation (2026-11-06): one point per ten total levels, capped at 36. It must never become fully completable through ordinary levels. Saltmere has its own progression and Fishing adds no tree points.
 - Non-combat mastery is a bonus-only, character-owned progression track (2026-11-06; implemented 2026-11-07; superseded per task 2026-11-09). Every timed action, recipe and Heist job now has its own track, with bulk recipes sharing their single version. It never unlocks or blocks recipes, resources, stations, areas, items or other content; existing skill-level, campaign and station requirements remain responsible for access.
 - Player Market remains browser-simulated with server-validated transactions, not a server-authoritative economy. Keep validation uploads and item/Gold recovery protocols.
 - Offline-earned items/currency remain tradable by explicit owner choice (2026-11-05). Harden market inputs, request limits and permissions, and document residual forging/rollback risks. Do not replace offline trading or claim item provenance from client-owned saves. Public-source review does not authorize destructive history rewrites or branch-policy changes.
@@ -641,14 +671,32 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Rework combat pacing, entry countdowns, controls and matchup — done 2026-11-20.
+
+- [ ] Rebalance campaign Unique drops around the agreed completion and farming targets.
+  - Baseline from the current campaign zone tables: about 2,539 monster kills and 70 boss kills for one clear of every zone. The base rolls average about 25 Unique gear drops from ordinary monsters and 10 from bosses, before Item Rarity, extra kills, or Unique flasks. Measure actual rush routes and repeat kills per hour before setting the rates.
+
+- [x] Improve act-map labels and quest highlighting, move the journal below the map, and add objectives and rewards to a Quests page — done 2026-11-20.
+
+- [ ] Finish the level 1–99 profession design pass and build the approved progression, chases, zone collectibles and mastery perks.
+  - Initial audit covers all 15 trainable main-game skills and records Saltmere's separate progression. Global buff scope, zone list, and per-skill designs are open in [Skilling Progression](SKILLING_PROGRESSION.md).
+
+- [ ] Build the Saltmere Fishing RPG from [Fishing RPG Design](FISHING_RPG.md).
+  - First milestone is a playable shore and harbor with real gear, a logbook and working traps. Nearshore boats and crew, the boundary and offshore voyages, and the full 500-plus-species catalog follow.
+- [ ] Choose and wire the hidden achievement that opens Saltmere. Playtest the real unlock after deciding its requirements. Until then, Fishing keeps its existing “coming soon” page in the live game.
+
+- [ ] Apply the Guild Stash database update and verify signed-in transfers before release.
+  - Local browser and throwaway database checks pass. The live database has yet to receive the update.
+
+- [x] Move Guild Stash to its own page and add send actions to Inventory — done 2026-11-20.
+
+
 - [x] Manual skill gem upgrades: no auto level-up, an Upgrade button on the Skills page, greyed out with the reason when the new level's character level or attribute isn't met — done 2026-11-19.
   - XP banks as before (capped at the next level only while that level is out of reach), one press per level. The sim player presses Upgrade itself. Playtested with a level 20 Warrior.
 - [ ] Design and build the seven-act zone naming and enemy identity pass.
-  - Design direction settled 2026-11-19. The zone-by-zone roster and gameplay changes are pending.
-  - [ ] Review all 70 zone names in travel order against the story, regional map and journal. Keep names that fit, and update player-facing references when a name changes. Preserve stable zone and enemy IDs so existing saves keep their progress.
-  - [ ] Give each regular group a signature behavior tied to its origin. Make the behavior and the danger of tougher packs readable from enemy names, actions and combat feedback. Check campaign enemy changes for unintended effects on Maps or summons that borrow the same definitions.
-  - [ ] Place several dangerous packs per act. Put one stronger gear check late on each act's main route and make sure players have suitable gear, flask or skill options before reaching it. Draft pressures in act order: bleeding, critical hits, ignite, poison, cold spell pressure, lightning and shock, then sustained chaos damage. Confirm the mix against the authored roster and available counters.
-  - [ ] Playtest representative characters at the intended levels, including prepared and underprepared setups, and verify live and offline outcomes. Check that each late gear check is noticeable and that the other dangerous packs can be solved in several ways.
+  - Design direction settled 2026-11-19. Zone names and 21 dangerous packs are complete locally. The remaining regular enemy roster is pending.
+  - [ ] Give each remaining regular group a signature behavior tied to its origin. Make it readable from enemy names, actions and combat feedback. Check campaign enemy changes for unintended effects on Maps or summons that borrow the same definitions.
+  - [ ] Judge overall difficulty across builds in full campaign play. The targeted pack tests cover spawning, saving, offline cadence and the suggested defenses for all seven late checks. The Act 3 warning and inflicted Ignite were verified in the running game.
 
 - [x] Hand-trace sensible shared route links for Acts 2–7, matching the Act 1 cleanup — done 2026-11-19.
   - Authored each road/passage section and each journey itinerary in `campaignRoutes.ts`; no curve fitting or automatic route choice. Includes previous-act entrances. Existing area positions, unlocks, branches and boss gates retained; shared sections draw once. Inspected native previews, with all journey connectivity, duplicate-stroke and strict-crossing checks plus typecheck passing. Live browser interaction remains unverified because the local preview is unavailable. Evidence: `output/playtest/act2-routes-preview.png` through `act7-routes-preview.png` and `acts-2-to-7-routes-preview.jpg`. Unreleased.
@@ -858,6 +906,35 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Dedicated Guild Stash page with click-to-send actions in Inventory — done 2026-11-20. Desktop and phone browser checks covered local transfers, including withdrawals on a second demo character.
+
+- [x] Update combat pacing, spawn countdown and matchup — done 2026-11-20. Walking, Sprinting and Fleeing change pack arrival speed and crowd size. Entry countdowns are on the hexes. Targeting is by skills, automation is by flasks, and the matchup shows current Life and measured DPS. Verified on desktop and phone.
+
+- [x] Improve act-map labels and quest highlighting, move the journal below the map, and add objectives and rewards to a Quests page — done 2026-11-20. Verified Wreck Claims highlighting from both entry points, zone label hover and phone-width navigation in the local game. All 29 focused campaign and map tests pass.
+
+- [x] Restore combat backgrounds using reusable terrain and variants, and call combat destinations zones — done 2026-11-20. Added sourced backgrounds to all 70 campaign zones and their World Map cards, including variants for the Salvage Caves, Charred Copse and Cold Vault. Verified desktop zone changes, the Cold Vault at phone width, and a Map borrowing the Charred Copse backdrop. The isolated build and 41 focused tests pass.
+
+- [x] Replace all 16 terrain images with existing illustrations, paintings and prints under CC0 or in the public domain — done 2026-11-20. Sources are recorded in the asset credits.
+
+- [x] Hideout layout: distinct frames, compact Character and Equipment panels, gear contained at narrow widths, framed station upgrades, phone-only shortcuts, and a top bar that scrolls away. Verified from 320px through 1920px, including an upgrade purchase and mobile navigation. — done 2026-11-20
+
+- [x] Build character material inventories, personal Stashes and the Guild Stash — done 2026-11-20.
+  - Checked live copper gathering and manual cross-character transfer in the desktop browser. Automated checks cover a miner and woodcutter supplying a dagger crafter, offline crafting stopping when personal inputs run out, a full material stack, old shared balances and cloud transfer save conflicts.
+
+- [x] Build Saltmere behind a closed achievement gate — done 2026-11-20. Landed all five legends with both desktop keyboard and 390px touch controls. Checked the feast and combat flask, including the flask's charge recovery in a fight. Automated checks cover haul loss, workshop jobs, fight resumption, realm access and duplicate docking. The hidden achievement is tracked separately above.
+
+- [x] Expand the ordinary gear affix pool with eleven tiered, build-specific modifiers — done 2026-11-19.
+  - Desktop playtest verified +1 and T1 +7 maximum Rage on item-level-80 amulets, an equipped Rage cap increase from 24 to 31 in combat, and a T5 Rage decay roll on an item-level-30 amulet via a Chaos Orb. Tests cover the item-level cutoff, weak and strong Rage rolls, conditional Bleed hit damage, and existing crafting rules. Unreleased.
+
+- [x] Verify the gear and skill counters for the campaign packs and add a dangerous-pack skill trigger — done 2026-11-19.
+  - Every pack lists two or three available counters, and each of the 14 general checks has both a gear mod and a skill-rule option. Tests verify eligible gear bases and item levels, flask drop levels, Gem Shop unlocks and ground triggers. The new trigger is available from Act 1. Desktop playtest selected it for Iron Guard on a level 4 Warrior and verified it cast automatically against the Cinder-Keeper. Existing drop weights support the counters. Unreleased.
+
+- [x] Add two dangerous packs and one stronger late gear check per act — done 2026-11-19.
+  - Added 21 local pack leaders with warnings in the World Map and combat details. The stronger checks pressure Bleed at Brinewick Lookout, critical strikes at Wayfarer's Post, Ignite at the Expedition Depot, Poison at the Forum That Bloomed, cold spells at the Laboratory Stair, Shock at the Ward Breach, and chaos damage at the Ninth Descent. Named variants appear on the first pack and every third pack thereafter through the shared live/offline combat path. Base enemies are shared with Maps and summons as before. Unreleased.
+
+- [x] Review all 70 campaign zone names against Veyrath's lore and geography — done 2026-11-19.
+  - Renamed 32 areas and updated the journal and area guide. Stable IDs, routes, encounters and rewards were preserved. All 1,861 tests and the production build passed. Desktop playtest checked all 70 map labels, selected the Cloth Courts and travelled into the Warden Galleries. Screenshot: `output/playtest/zone-names-harrowgate.png`. Unreleased.
 
 - Manual skill gem upgrades with a greyed-out button when an upgrade would disable the skill — done 2026-11-19.
 - Shipped **0.5.6** live 2026-11-19 (deploy confirmed version and login). Release 0.5.6 gathered every session's unshipped work (2026-11-19): skill upgrades, hand-traced act map routes, combat-only tutorial, one Inventory screen and loot filter rework, the Archaeology overhaul, and the security review fixes (single Fractured Orb, second-device lockout, Hardcore and gift fixes). Left out as superseded: the 17 Nov skilling-area visual polish (the live 19 Nov skill page redesign replaced it) and the 10 Nov sim-rates tooling (the simulator and pacing targets changed since). Both are still on their own branches.

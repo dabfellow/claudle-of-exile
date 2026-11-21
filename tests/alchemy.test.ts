@@ -46,19 +46,19 @@ describe('Phase 07 Alchemy', () => {
   it('allows starting Alchemy and upgrading Table 2/3 without combat', () => {
     const s = newGame(1);
     expect(actionBlocker(s, actionDef('brew_life_small'))).toBe('Missing materials');
-    s.account.bank = { sunpetal: 10, ash_log: 4 };
+    s.storage.bank = { sunpetal: 10, ash_log: 4 };
     expect(actionBlocker(s, actionDef('brew_life_small'))).toBeNull();
 
     // Table 2 requirement on Medium Mana Flask
     s.skills.alchemy = xpForLevel(15);
-    s.account.bank = { frostleaf: 10, oak_log: 10 };
+    s.storage.bank = { frostleaf: 10, oak_log: 10 };
     expect(actionBlocker(s, actionDef('brew_mana_medium'))).toBe('Needs Alchemy Table level 2');
 
     // Noncombat purchase of Table 2
     s.professionProgress.work.alchemy = 20;
-    s.account.bank.gold = 300;
-    s.account.bank.sunpetal = 40;
-    s.account.bank.ash_plank = 5;
+    s.storage.bank.gold = 300;
+    s.storage.bank.sunpetal = 40;
+    s.storage.bank.ash_plank = 5;
     expect(upgradeStation(s, ctx(), 'alchemy_table', 'profession')).toBeNull();
     expect(s.account.hideout.alchemy_table).toBe(2);
     expect(actionBlocker(s, actionDef('brew_mana_medium'))).toBeNull();
@@ -66,9 +66,9 @@ describe('Phase 07 Alchemy', () => {
     // Noncombat purchase of Table 3
     s.skills.alchemy = xpForLevel(18);
     s.professionProgress.work.alchemy = 60;
-    s.account.bank.gold = 1200;
-    s.account.bank.frostleaf = 60;
-    s.account.bank.iron_bar = 10;
+    s.storage.bank.gold = 1200;
+    s.storage.bank.frostleaf = 60;
+    s.storage.bank.iron_bar = 10;
     expect(upgradeStation(s, ctx(), 'alchemy_table', 'profession')).toBeNull();
     expect(s.account.hideout.alchemy_table).toBe(3);
 
@@ -79,21 +79,21 @@ describe('Phase 07 Alchemy', () => {
 
   it('brews Medium Mana Flask and delivers to flask stash with correct stats', () => {
     const s = advancedAlchemist();
-    s.account.bank = { frostleaf: 12, oak_log: 6 };
-    const beforeStash = s.account.flaskStash.length;
+    s.storage.bank = { frostleaf: 12, oak_log: 6 };
+    const beforeStash = s.storage.flaskStash.length;
 
     cycles(s, 'brew_mana_medium', 1);
 
-    expect(s.account.flaskStash.length).toBe(beforeStash + 1);
-    const flask = s.account.flaskStash[s.account.flaskStash.length - 1];
+    expect(s.storage.flaskStash.length).toBe(beforeStash + 1);
+    const flask = s.storage.flaskStash[s.storage.flaskStash.length - 1];
     expect(flask.flaskId).toBe('mana_medium');
     const def = flaskDef(flask.flaskId);
     expect(def.heal).toBe(140);
     expect(def.durationMs).toBe(3000);
     expect(def.maxCharges).toBe(30);
     expect(def.chargesPerUse).toBe(6);
-    expect(s.account.bank.frostleaf).toBe(6);
-    expect(s.account.bank.oak_log).toBe(3);
+    expect(s.storage.bank.frostleaf).toBe(6);
+    expect(s.storage.bank.oak_log).toBe(3);
   });
 
   it('categorizes recipes into Life, Mana, Defence, Utility, Special Reagents, and Currency', () => {
@@ -137,7 +137,7 @@ describe('Phase 07 Alchemy', () => {
     const s = advancedAlchemist();
     // Enable 100% input conservation and manual doubles to verify protected bypass
     s.skillPassives = ['skill_core'];
-    s.account.bank = {
+    s.storage.bank = {
       rough_gem: 6,
       sunpetal: 20,
       moon_bloom: 4,
@@ -148,26 +148,26 @@ describe('Phase 07 Alchemy', () => {
 
     // prepare_glass
     cycles(s, 'prepare_glass', 1, true);
-    expect(s.account.bank.prepared_glass).toBe(1);
-    expect(s.account.bank.rough_gem).toBe(3);
-    expect(s.account.bank.sunpetal).toBe(10);
+    expect(s.storage.bank.prepared_glass).toBe(1);
+    expect(s.storage.bank.rough_gem).toBe(3);
+    expect(s.storage.bank.sunpetal).toBe(10);
 
     // distill_moon
     cycles(s, 'distill_moon', 1, true);
-    expect(s.account.bank.moon_distillate).toBe(1);
-    expect(s.account.bank.moon_bloom).toBe(2);
-    expect(s.account.bank.frostleaf).toBe(10);
+    expect(s.storage.bank.moon_distillate).toBe(1);
+    expect(s.storage.bank.moon_bloom).toBe(2);
+    expect(s.storage.bank.frostleaf).toBe(10);
 
     // distill_star
     cycles(s, 'distill_star', 1, true);
-    expect(s.account.bank.star_distillate).toBe(1);
-    expect(s.account.bank.star_bloom).toBe(2);
-    expect(s.account.bank.voidbloom).toBe(10);
+    expect(s.storage.bank.star_distillate).toBe(1);
+    expect(s.storage.bank.star_bloom).toBe(2);
+    expect(s.storage.bank.voidbloom).toBe(10);
   });
 
   it('crafts and equips Distiller’s Stirrer providing +8% Alchemy speed', () => {
     const s = advancedAlchemist();
-    s.account.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
+    s.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
 
     expect(startProject(s, ctx(), 'tool_alchemy')).toBeNull();
     advanceProject(s, ctx(), 1_200_000);
@@ -191,7 +191,7 @@ describe('Phase 07 Alchemy', () => {
   it('preserves 8-hour live vs offline catch-up parity for Alchemy', () => {
     const setup = () => {
       const s = advancedAlchemist();
-      s.account.bank = { arcane_dust: 50_000, sunpetal: 50_000 };
+      s.storage.bank = { arcane_dust: 50_000, sunpetal: 50_000 };
       expect(startSkillAction(s, ctx(), 'orb_transmute')).toBeNull();
       return s;
     };
@@ -203,7 +203,7 @@ describe('Phase 07 Alchemy', () => {
     for (let i = 0; i < 28800; i++) tick(online, c, 1000);
     const summary = simulateOffline(offline, ctx(), 28_800_000);
 
-    expect(offline.account.bank).toEqual(online.account.bank);
+    expect(offline.storage.bank).toEqual(online.storage.bank);
     expect(offline.skills.alchemy).toEqual(online.skills.alchemy);
     expect(offline.professionProgress.work.alchemy).toBe(online.professionProgress.work.alchemy);
     expect(summary.ordinaryOutput?.transmute).toBeGreaterThan(0);
@@ -214,13 +214,13 @@ describe('Phase 07 Alchemy', () => {
     let s = deserialize(JSON.stringify(fixture.ordinary));
     s.account = structuredClone(fixture.account);
 
-    const initialStash = structuredClone(s.account.flaskStash);
+    const initialStash = structuredClone(s.storage.flaskStash);
     const initialSkills = { ...s.skills };
     const initialHideout = { ...s.account.hideout };
 
     s = reload(reload(s));
 
-    expect(s.account.flaskStash).toEqual(initialStash);
+    expect(s.storage.flaskStash).toEqual(initialStash);
     expect(s.skills).toEqual(initialSkills);
     expect(s.account.hideout.alchemy_table).toBe(initialHideout.alchemy_table);
     expect(s.inventory.length).toBe(60);

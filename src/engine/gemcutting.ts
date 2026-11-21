@@ -31,7 +31,7 @@ export function isGemEquipped(s: GameState, uid: number): boolean {
       if (sup && sup.uid === uid) return true;
     }
   }
-  for (const g of s.account.gems) {
+  for (const g of s.storage.gems) {
     for (const sup of g.supports) {
       if (sup && sup.uid === uid) return true;
     }
@@ -58,12 +58,12 @@ export interface UnequippedGem {
 /** Enumerate all unequipped and unlocked gems available for recycling. */
 export function getUnequippedGems(s: GameState): UnequippedGem[] {
   const out: UnequippedGem[] = [];
-  for (const g of s.account.gems) {
+  for (const g of s.storage.gems) {
     if (!isGemEquipped(s, g.uid)) {
       out.push({ uid: g.uid, gemId: g.gemId, name: activeGemDef(g.gemId).name, kind: 'skill', level: g.level });
     }
   }
-  for (const sup of s.account.supportGems) {
+  for (const sup of s.storage.supportGems) {
     if (!isGemEquipped(s, sup.uid)) {
       out.push({ uid: sup.uid, gemId: sup.supportId, name: supportGemDef(sup.supportId).name, kind: 'support' });
     }
@@ -82,19 +82,19 @@ export function recycleGem(s: GameState, ctx: Ctx, gemUid: number): string | nul
   if (s.fallen) return 'This character has fallen';
   if (isGemEquipped(s, gemUid)) return 'Cannot recycle an equipped or socketed gem';
 
-  const skillIdx = s.account.gems.findIndex((g) => g.uid === gemUid);
-  const supIdx = s.account.supportGems.findIndex((g) => g.uid === gemUid);
+  const skillIdx = s.storage.gems.findIndex((g) => g.uid === gemUid);
+  const supIdx = s.storage.supportGems.findIndex((g) => g.uid === gemUid);
 
   let gemName = 'Gem';
   if (skillIdx !== -1) {
-    const [gem] = s.account.gems.splice(skillIdx, 1);
+    const [gem] = s.storage.gems.splice(skillIdx, 1);
     gemName = activeGemDef(gem.gemId).name;
     // Return any socketed supports inside the unequipped skill gem to the loose pile
     for (const sup of gem.supports) {
-      if (sup) s.account.supportGems.push(sup);
+      if (sup) s.storage.supportGems.push(sup);
     }
   } else if (supIdx !== -1) {
-    const [sup] = s.account.supportGems.splice(supIdx, 1);
+    const [sup] = s.storage.supportGems.splice(supIdx, 1);
     gemName = supportGemDef(sup.supportId).name;
   } else {
     return 'Gem not found in gem bag';
@@ -126,8 +126,8 @@ export function recycleGemExecution(s: GameState, ctx: Ctx, outputs: Record<stri
 export function gemcuttingPreview(s: GameState, a: SkillAction): string[] {
   if (a.skill !== 'gemcutting') return [];
   const lines: string[] = [];
-  const dust = s.account.bank.arcane_dust ?? 0;
-  const rough = s.account.bank.rough_gem ?? 0;
+  const dust = s.storage.bank.arcane_dust ?? 0;
+  const rough = s.storage.bank.rough_gem ?? 0;
 
   if (a.gem?.kind === 'family' && a.gem.family) {
     const pool = gemFamilyPool(s, a.gem.family);
@@ -194,14 +194,14 @@ export function gemcuttingPreview(s: GameState, a: SkillAction): string[] {
   }
 
   if (a.id === 'cut_support') {
-    const supply = Math.min(Math.floor(rough / 4), Math.floor(dust / 40), Math.floor((s.account.bank.frostleaf ?? 0) / 4));
+    const supply = Math.min(Math.floor(rough / 4), Math.floor(dust / 40), Math.floor((s.storage.bank.frostleaf ?? 0) / 4));
     lines.push(`Random general support gem with level requirement ≤ Gemcutting level ${skillLevel(s, 'gemcutting')}.`);
     lines.push(`Supplies cover ${supply} cut(s).`);
     return lines;
   }
 
   if (a.id === 'cut_signature') {
-    const supply = Math.min(Math.floor(rough / 6), Math.floor(dust / 60), Math.floor((s.account.bank.emberroot ?? 0) / 5));
+    const supply = Math.min(Math.floor(rough / 6), Math.floor(dust / 60), Math.floor((s.storage.bank.emberroot ?? 0) / 5));
     lines.push(`Random signature support gem with level requirement ≤ Gemcutting level ${skillLevel(s, 'gemcutting')}.`);
     lines.push(`Favours signatures matching skills you own. Supplies cover ${supply} cut(s).`);
     return lines;
@@ -210,7 +210,7 @@ export function gemcuttingPreview(s: GameState, a: SkillAction): string[] {
   if (a.id === 'recycle_gem') {
     const uid = s.selectedGemRecycleUid;
     if (uid != null) {
-      const gem = [...s.account.gems, ...s.account.supportGems].find((g) => g.uid === uid);
+      const gem = [...s.storage.gems, ...s.storage.supportGems].find((g) => g.uid === uid);
       const name = gem ? ('gemId' in gem ? activeGemDef(gem.gemId).name : supportGemDef(gem.supportId).name) : 'Selected gem';
       lines.push(`Selected: ${name} (UID ${uid}). Consumes this gem to produce 5 Arcane Dust.`);
       lines.push('Bypasses input conservation, yield multipliers, and manual doubles. Stops after one gem.');

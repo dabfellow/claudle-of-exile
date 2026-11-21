@@ -67,7 +67,7 @@ const RULE_CATEGORIES: { id: string; label: string; icon: string; conditions: Ru
     id: 'enemies',
     label: 'Enemies & Bosses',
     icon: '👹',
-    conditions: ['bossOnly', 'enemyCasting', 'enemyChannels', 'enemiesAtLeast', 'targetLifeAbove'],
+    conditions: ['bossOnly', 'enemyCasting', 'enemyChannels', 'enemiesAtLeast', 'dangerousPack', 'targetLifeAbove'],
   },
   {
     id: 'conditions',
@@ -407,11 +407,11 @@ function CastOrder({ s }: { s: GameState }) {
  */
 function SupportsForSkill({ s, gem, socket }: { s: GameState; gem: SkillGemInstance; socket: number | null }) {
   const act = activeGemDef(gem.gemId);
-  const owned = s.account.supportGems.filter((g) => !supportReason(gem, g.supportId));
+  const owned = s.storage.supportGems.filter((g) => !supportReason(gem, g.supportId));
   // one entry per kind, even when several copies are in the bag
   const ownedKinds = [...new Map(owned.map((g) => [g.supportId, g])).values()].sort((a, b) => supportGemDef(a.supportId).name.localeCompare(supportGemDef(b.supportId).name));
-  const copies = (id: string) => s.account.supportGems.filter((g) => g.supportId === id).length;
-  const missing = SUPPORT_GEMS.filter((d) => supportFits(d, act) && gemArrived(s, d.id) && !s.account.supportGems.some((g) => g.supportId === d.id) && !gem.supports.some((x) => x?.supportId === d.id));
+  const copies = (id: string) => s.storage.supportGems.filter((g) => g.supportId === id).length;
+  const missing = SUPPORT_GEMS.filter((d) => supportFits(d, act) && gemArrived(s, d.id) && !s.storage.supportGems.some((g) => g.supportId === d.id) && !gem.supports.some((x) => x?.supportId === d.id));
   const slots = supportSlots(gem);
   const firstEmpty = Array.from({ length: slots }, (_, i) => i).find((i) => !gem.supports[i]);
   const target = socket !== null && !gem.supports[socket] ? socket : firstEmpty;
@@ -541,7 +541,7 @@ function SlotButton({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; sl
 function Sockets({ s, gem, pickedSupport, onPlaced }: { s: GameState; gem: SkillGemInstance; pickedSupport: number | null; onPlaced: () => void }) {
   const [openSocket, setOpenSocket] = useState<number | null>(null);
   const sockets = supportSlots(gem);
-  const pickedDef = pickedSupport !== null ? s.account.supportGems.find((x) => x.uid === pickedSupport) : null;
+  const pickedDef = pickedSupport !== null ? s.storage.supportGems.find((x) => x.uid === pickedSupport) : null;
   const fitReason = pickedDef ? supportReason(gem, pickedDef.supportId) : null;
   const canDrop = !!pickedDef && !fitReason;
   const drop = (i: number) => {
@@ -577,7 +577,7 @@ function Sockets({ s, gem, pickedSupport, onPlaced }: { s: GameState; gem: Skill
             </button>
           );
         })}
-        {(s.account.bank.expansion ?? 0) > 0 && gem.extraSlots < 1 && (
+        {(s.storage.bank.expansion ?? 0) > 0 && gem.extraSlots < 1 && (
           <button className="btn sm" onClick={() => game.act((st, ctx) => expandSockets(st, ctx, gem.uid))}>
             + Socket (Orb of Expansion)
           </button>
@@ -607,7 +607,7 @@ function SlotModal({
   const gem = s.skillBar[slot];
   const d = deriveStats(s, []);
   const [choosing, setChoosing] = useState(!gem);
-  const usable = [...s.account.gems].sort((a, b) => b.level - a.level || activeGemDef(a.gemId).name.localeCompare(activeGemDef(b.gemId).name));
+  const usable = [...s.storage.gems].sort((a, b) => b.level - a.level || activeGemDef(a.gemId).name.localeCompare(activeGemDef(b.gemId).name));
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="card modal slot-modal" onClick={(e) => e.stopPropagation()}>
@@ -748,7 +748,7 @@ export function SkillGemsPage() {
   const d = deriveStats(s, []);
   const has = (name: string, search: string) => name.toLowerCase().includes(search.trim().toLowerCase());
   const byName = (a: string, b: string) => activeGemDef(a).name.localeCompare(activeGemDef(b).name);
-  const gems = s.account.gems
+  const gems = s.storage.gems
     .filter((g) => {
       const def = activeGemDef(g.gemId);
       return kindMatches(def, gemKind) && (!gemAttr || def.attr === gemAttr) && has(def.name, gemSearch);
@@ -757,7 +757,7 @@ export function SkillGemsPage() {
   /** the bar slots a loose support would fit */
   const fitKeys = (supportId: string) => s.skillBar.flatMap((b, i) => (b && !supportReason(b, supportId) ? [i] : []));
   const fitSlot = supFit === '' || !s.skillBar[Number(supFit)] ? null : Number(supFit);
-  const supports = s.account.supportGems
+  const supports = s.storage.supportGems
     .filter((g) => {
       const def = supportGemDef(g.supportId);
       return (!supAttr || def.attr === supAttr) && (fitSlot === null || fitKeys(g.supportId).includes(fitSlot)) && has(def.name, supSearch);
@@ -814,15 +814,15 @@ export function SkillGemsPage() {
         </div>
         <Tabs
           tabs={[
-            { id: 'skills', label: 'Skill gems', count: s.account.gems.length },
-            { id: 'supports', label: 'Support gems', count: s.account.supportGems.length },
+            { id: 'skills', label: 'Skill gems', count: s.storage.gems.length },
+            { id: 'supports', label: 'Support gems', count: s.storage.supportGems.length },
           ]}
           value={bagTab}
           onChange={setBagTab}
         />
         {bagTab === 'skills' && (
           <>
-            {s.account.gems.length > 0 && (
+            {s.storage.gems.length > 0 && (
               <GemFilters search={gemSearch} setSearch={setGemSearch} attr={gemAttr} setAttr={setGemAttr}>
                 <select className="input r2-gem-select" aria-label="Skill type" value={gemKind} onChange={(e) => setGemKind(e.target.value as GemKind)}>
                   {GEM_KINDS.map((k) => (
@@ -837,8 +837,8 @@ export function SkillGemsPage() {
                 </select>
               </GemFilters>
             )}
-            {s.account.gems.length === 0 && <EmptyState small>No spare skill gems. Buy them at the Town's Gem shop.</EmptyState>}
-            {s.account.gems.length > 0 && gems.length === 0 && <div className="dim small">No gems match these filters.</div>}
+            {s.storage.gems.length === 0 && <EmptyState small>No spare skill gems. Buy them at the Town's Gem shop.</EmptyState>}
+            {s.storage.gems.length > 0 && gems.length === 0 && <div className="dim small">No gems match these filters.</div>}
             {GEM_GROUPS.map((group) => {
               const list = gems.filter((g) => gemGroup(activeGemDef(g.gemId)) === group.id);
               if (!list.length) return null;
@@ -873,7 +873,7 @@ export function SkillGemsPage() {
         )}
         {bagTab === 'supports' && (
           <>
-            {s.account.supportGems.length > 0 && (
+            {s.storage.supportGems.length > 0 && (
               <GemFilters search={supSearch} setSearch={setSupSearch} attr={supAttr} setAttr={setSupAttr}>
                 <select className="input r2-gem-select" aria-label="Fits" value={supFit} onChange={(e) => setSupFit(e.target.value)}>
                   <option value="">Any skill</option>
@@ -887,8 +887,8 @@ export function SkillGemsPage() {
                 </select>
               </GemFilters>
             )}
-            {s.account.supportGems.length === 0 && <EmptyState small>No loose support gems yet. Gemcutting and the Town's Gem shop make them.</EmptyState>}
-            {s.account.supportGems.length > 0 && supports.length === 0 && <div className="dim small">No supports match these filters.</div>}
+            {s.storage.supportGems.length === 0 && <EmptyState small>No loose support gems yet. Gemcutting and the Town's Gem shop make them.</EmptyState>}
+            {s.storage.supportGems.length > 0 && supports.length === 0 && <div className="dim small">No supports match these filters.</div>}
             {[
               { id: 'fit', label: 'Fit a skill on your bar', list: supports.filter((g) => fitKeys(g.supportId).length > 0) },
               { id: 'nofit', label: "Don't fit anything on your bar", list: supports.filter((g) => fitKeys(g.supportId).length === 0) },

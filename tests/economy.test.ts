@@ -52,9 +52,9 @@ describe('drop tables', () => {
   it('bosses always drop their guaranteed reward', () => {
     const s = fresh();
     const z = zoneDef('mudflats');
-    const before = s.account.bank.transmute ?? 0;
+    const before = s.storage.bank.transmute ?? 0;
     rollLoot(s, ctx(), makeMonster(z.boss, true, 1), z, deriveStats(s));
-    expect((s.account.bank.transmute ?? 0) - before).toBeGreaterThanOrEqual(bossTable(1).guaranteed[0].qty);
+    expect((s.storage.bank.transmute ?? 0) - before).toBeGreaterThanOrEqual(bossTable(1).guaranteed[0].qty);
   });
 
   it('monsters and bosses never drop gems', () => {
@@ -77,12 +77,12 @@ describe('clearing level 1 gems', () => {
     const socketed = createSkillGem(s, 'heavy_strike');
     const sup = createSupportGem(s, SUPPORT_GEMS[0].id);
     socketed.supports[0] = sup;
-    s.account.gems = [plain, levelled, expanded, saved, socketed];
-    s.account.supportGems = [];
+    s.storage.gems = [plain, levelled, expanded, saved, socketed];
+    s.storage.supportGems = [];
     s.loadouts.skills = [{ id: 1, name: 'x', slots: [{ gem: saved.uid, supports: [], rules: [], priority: 'normal' }] } as never];
     expect(clearLevelOneGems(s)).toBe(2);
-    expect(s.account.gems).toEqual([levelled, expanded, saved]);
-    expect(s.account.supportGems).toEqual([sup]);
+    expect(s.storage.gems).toEqual([levelled, expanded, saved]);
+    expect(s.storage.supportGems).toEqual([sup]);
   });
 });
 
@@ -102,19 +102,19 @@ describe('achievements', () => {
     const c = makeCtx(seeded(1));
     const events: GameEvent[] = c.events;
     s.lifetime.kills = 100;
-    const gold = s.account.bank.gold ?? 0;
+    const gold = s.storage.bank.gold ?? 0;
     expect(checkAchievements(s, c)).toContain('slayer_100');
-    expect(s.account.bank.gold).toBe(gold + 100);
+    expect(s.storage.bank.gold).toBe(gold + 100);
     expect(events.some((e) => e.t === 'achievement' && e.id === 'slayer_100')).toBe(true);
     expect(checkAchievements(s, c)).not.toContain('slayer_100');
-    expect(s.account.bank.gold).toBe(gold + 100);
+    expect(s.storage.bank.gold).toBe(gold + 100);
   });
 
   it('bench recipes need only the bench level, no achievement', () => {
     const s = fresh();
     s.account.hideout.bench = 2;
-    s.account.bank.gold = 1e6;
-    s.account.bank.arcane_dust = 1e6;
+    s.storage.bank.gold = 1e6;
+    s.storage.bank.arcane_dust = 1e6;
     const item = createItem(s, 'rusted_sword', 30, 'magic', seeded(3));
     s.inventory.push(item);
     expect(s.achievements).not.toContain('slayer_1000');
@@ -134,14 +134,14 @@ describe('achievements', () => {
   it('field-tinkers low-level gear with salvage dust when basic orbs run out', () => {
     const s = fresh();
     s.account.hideout.bench = 2;
-    s.account.bank.transmute = 0;
-    s.account.bank.arcane_dust = 10;
+    s.storage.bank.transmute = 0;
+    s.storage.bank.arcane_dust = 10;
     const item = createItem(s, 'rusted_sword', FIELD_TINKER_ILVL, 'normal', seeded(3));
     s.inventory.push(item);
     expect(applyOrb(s, ctx(), 'transmute', item.uid)).toBeNull();
     expect(item.rarity).toBe('magic');
-    expect(s.account.bank.arcane_dust).toBe(10 - TINKER_DUST_COST.transmute);
-    expect(s.account.bank.transmute).toBe(0);
+    expect(s.storage.bank.arcane_dust).toBe(10 - TINKER_DUST_COST.transmute);
+    expect(s.storage.bank.transmute).toBe(0);
   });
 });
 

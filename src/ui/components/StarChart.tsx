@@ -64,8 +64,8 @@ export function StarChart() {
   return (
     <div className="star-chart">
       <div className="callout skill-note star-summary">
-        <span><MatIcon id={STARDUST} size={18} /> <b className="num">{fmt(s.account.bank[STARDUST] ?? 0)}</b> Stardust</span>
-        <span><MatIcon id={GILDED_STARDUST} size={18} /> <b className="num">{fmt(s.account.bank[GILDED_STARDUST] ?? 0)}</b> Gilded</span>
+        <span><MatIcon id={STARDUST} size={18} /> <b className="num">{fmt(s.storage.bank[STARDUST] ?? 0)}</b> Stardust</span>
+        <span><MatIcon id={GILDED_STARDUST} size={18} /> <b className="num">{fmt(s.storage.bank[GILDED_STARDUST] ?? 0)}</b> Gilded</span>
         <span>Stars lit <b className="num">{total}/{CONSTELLATIONS.length * STARS_PER_CONSTELLATION}</b></span>
         {total > 0 && <span className="dim">{describeStats(astrologyStats(s)).join(' · ')}</span>}
       </div>

@@ -34,7 +34,7 @@ function funded(level = 90): GameState {
   s.account.hideout.bench = 5;
   s.account.hideout.rune_board = 2;
   // Stock abundant materials
-  s.account.bank = {
+  s.storage.bank = {
     copper_ore: 1000,
     iron_ore: 1000,
     mithril_ore: 1000,
@@ -73,7 +73,7 @@ function funded(level = 90): GameState {
 describe('Phase 10 — Rune-carving accomplishment progression', () => {
   it('opens Grade 1 runes at base level + family index * 2 without prior practice', () => {
     const s = newGame(1);
-    s.account.bank = { copper_ore: 50, ash_log: 50, essence_embers_1: 10 };
+    s.storage.bank = { copper_ore: 50, ash_log: 50, essence_embers_1: 10 };
     // Ember family is index 0 -> level 1
     const ember1 = actionDef('carve_rune_ember_1');
     expect(ember1.level).toBe(1);
@@ -143,7 +143,7 @@ describe('Phase 10 — Rune-carving accomplishment progression', () => {
     skillStep(s, ctx(), 15001, deriveStats(s));
 
     // Player got 2 runes from manual double, but counter incremented by exactly 1
-    expect(s.account.bank.rune_blood_1).toBe(2);
+    expect(s.storage.bank.rune_blood_1).toBe(2);
     expect(s.professionProgress.counters['rune.blood.1']).toBe(1);
   });
 
@@ -165,7 +165,7 @@ describe('Phase 10 — Inscription fragment generation', () => {
   it('does not generate inscription fragments from Grade 1 carves', () => {
     const s = funded(20);
     s.professionProgress.counters['runes.inscription'] = 0;
-    s.account.bank.inscription_fragment = 0;
+    s.storage.bank.inscription_fragment = 0;
 
     for (let i = 0; i < 25; i++) {
       startSkillAction(s, ctx(), 'carve_rune_ember_1');
@@ -173,14 +173,14 @@ describe('Phase 10 — Inscription fragment generation', () => {
     }
 
     expect(s.professionProgress.counters['runes.inscription'] ?? 0).toBe(0);
-    expect(s.account.bank.inscription_fragment ?? 0).toBe(0);
+    expect(s.storage.bank.inscription_fragment ?? 0).toBe(0);
   });
 
   it('generates an Inscription Fragment every 20 completed Grade 2+ ordinary carves', () => {
     const s = funded(50);
     s.professionProgress.counters['rune.stone.1'] = 10;
     s.professionProgress.counters['runes.inscription'] = 0;
-    s.account.bank.inscription_fragment = 0;
+    s.storage.bank.inscription_fragment = 0;
 
     // Run 19 Grade 2 carves
     for (let i = 0; i < 19; i++) {
@@ -188,13 +188,13 @@ describe('Phase 10 — Inscription fragment generation', () => {
       skillStep(s, ctx(), 20001, deriveStats(s));
     }
     expect(s.professionProgress.counters['runes.inscription']).toBe(19);
-    const fragmentsAfter19 = s.account.bank.inscription_fragment ?? 0;
+    const fragmentsAfter19 = s.storage.bank.inscription_fragment ?? 0;
 
     // 20th carve guarantees 1 fragment
     startSkillAction(s, ctx(), 'carve_rune_stone_2');
     skillStep(s, ctx(), 20001, deriveStats(s));
     expect(s.professionProgress.counters['runes.inscription']).toBe(20);
-    expect((s.account.bank.inscription_fragment ?? 0) - fragmentsAfter19).toBeGreaterThanOrEqual(1);
+    expect((s.storage.bank.inscription_fragment ?? 0) - fragmentsAfter19).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -233,16 +233,16 @@ describe('Phase 10 — Future inscription components', () => {
     const s = funded(90);
     // Tree conservation and doubling modifiers
     s.skillPassives.push('runecarving_n0'); // Second Stroke
-    s.account.bank.return_inscription = 0;
-    const initialFrag = s.account.bank.inscription_fragment!;
-    const initialRune = s.account.bank.rune_keen_3!;
+    s.storage.bank.return_inscription = 0;
+    const initialFrag = s.storage.bank.inscription_fragment!;
+    const initialRune = s.storage.bank.rune_keen_3!;
 
     startSkillAction(s, ctx(), 'prepare_return_inscription');
     skillStep(s, ctx(), 60001, deriveStats(s));
 
-    expect(s.account.bank.return_inscription).toBe(1);
-    expect(s.account.bank.inscription_fragment).toBe(initialFrag - 10);
-    expect(s.account.bank.rune_keen_3).toBe(initialRune - 1);
+    expect(s.storage.bank.return_inscription).toBe(1);
+    expect(s.storage.bank.inscription_fragment).toBe(initialFrag - 10);
+    expect(s.storage.bank.rune_keen_3).toBe(initialRune - 1);
   });
 });
 
@@ -279,13 +279,13 @@ describe('Phase 10 — Signature rune projects and resonance', () => {
     const c = ctx();
     for (let i = 0; i < 1800; i++) tick(s, c, 1000);
 
-    expect(s.account.bank.rune_signature_wayfarer).toBe(1);
+    expect(s.storage.bank.rune_signature_wayfarer).toBe(1);
     expect(s.professionProgress.projects.signature_wayfarer?.completed).toBe(1);
 
     expect(startProject(s, ctx(), 'signature_channel')).toBeNull();
     for (let i = 0; i < 1800; i++) tick(s, c, 1000);
 
-    expect(s.account.bank.rune_signature_channel).toBe(1);
+    expect(s.storage.bank.rune_signature_channel).toBe(1);
     expect(s.professionProgress.projects.signature_channel?.completed).toBe(1);
   });
 
@@ -315,8 +315,8 @@ describe('Phase 10 — Signature rune projects and resonance', () => {
     const ring = createItem(s, 'iron_ring', 50, 'rare', seeded(3));
 
     s.inventory.push(weapon, chest, ring);
-    s.account.bank.rune_signature_wayfarer = 1;
-    s.account.bank.rune_stone_1 = 2;
+    s.storage.bank.rune_signature_wayfarer = 1;
+    s.storage.bank.rune_stone_1 = 2;
 
     expect(inscribeRune(s, ctx(), 'rune_signature_wayfarer', weapon.uid)).toBeNull();
     expect(inscribeRune(s, ctx(), 'rune_stone_1', chest.uid)).toBeNull();
@@ -341,7 +341,7 @@ describe('Phase 10 — One rune slot, replacements, and item level checks', () =
     const lowGear = createItem(s, 'short_bow', 40, 'rare', seeded(1)); // ilvl 40 < 45
     const highGear = createItem(s, 'short_bow', 50, 'rare', seeded(2)); // ilvl 50 >= 45
     s.inventory.push(lowGear, highGear);
-    s.account.bank.rune_signature_wayfarer = 2;
+    s.storage.bank.rune_signature_wayfarer = 2;
 
     expect(runeReason(s, 'rune_signature_wayfarer', lowGear.uid)).toBe('Requires item level 45');
     expect(runeReason(s, 'rune_signature_wayfarer', highGear.uid)).toBeNull();
@@ -355,8 +355,8 @@ describe('Phase 10 — One rune slot, replacements, and item level checks', () =
     const s = funded(70);
     const item = createItem(s, 'plate_vest', 50, 'rare', seeded(1));
     s.inventory.push(item);
-    s.account.bank.rune_stone_1 = 1;
-    s.account.bank.rune_signature_wayfarer = 1;
+    s.storage.bank.rune_stone_1 = 1;
+    s.storage.bank.rune_signature_wayfarer = 1;
 
     inscribeRune(s, ctx(), 'rune_stone_1', item.uid);
     expect(item.rune).toBe('rune_stone_1');
@@ -371,7 +371,7 @@ describe('Phase 10 — One rune slot, replacements, and item level checks', () =
     expect(item.prefixes).toEqual(prefixesBefore);
     expect(item.suffixes).toEqual(suffixesBefore);
     // Destroyed rune_stone_1 is not refunded
-    expect(s.account.bank.rune_stone_1 ?? 0).toBe(0);
+    expect(s.storage.bank.rune_stone_1 ?? 0).toBe(0);
   });
 });
 
@@ -423,8 +423,8 @@ describe('Phase 10 — 8-hour live vs offline catch-up parity', () => {
       tick(live, liveCtx, 1000);
     }
 
-    expect(away.account.bank.rune_stone_2).toBe(live.account.bank.rune_stone_2);
-    expect(away.account.bank.inscription_fragment).toBe(live.account.bank.inscription_fragment);
+    expect(away.storage.bank.rune_stone_2).toBe(live.storage.bank.rune_stone_2);
+    expect(away.storage.bank.inscription_fragment).toBe(live.storage.bank.inscription_fragment);
     expect(Math.abs(away.skills.runecarving - live.skills.runecarving)).toBeLessThanOrEqual(actionDef('carve_rune_stone_2').xp + 0.1);
     expect(away.professionProgress.counters['rune.stone.2']).toBe(live.professionProgress.counters['rune.stone.2']);
     expect(away.professionProgress.counters['runes.inscription']).toBe(live.professionProgress.counters['runes.inscription']);

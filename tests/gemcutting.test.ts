@@ -29,7 +29,7 @@ const ctx = (): Ctx => ({ rng: seeded(42), emit: () => {}, now: 0 });
 
 function give(s: GameState, inputs: Record<string, number>, times = 1): void {
   for (const [id, n] of Object.entries(inputs)) {
-    s.account.bank[id] = (s.account.bank[id] ?? 0) + n * times;
+    s.storage.bank[id] = (s.storage.bank[id] ?? 0) + n * times;
   }
 }
 
@@ -121,19 +121,19 @@ describe('Gemcutting: targeted family pools', () => {
     expect(attackAction.inputs).toEqual({ rough_gem: 6, arcane_dust: 50 });
 
     give(s, { rough_gem: 6, arcane_dust: 50 });
-    const initialGems = s.account.gems.length;
+    const initialGems = s.storage.gems.length;
     startSkillAction(s, ctx(), 'cut_family_attack');
     expect(s.action && s.action.kind === 'skill' ? s.action.actionId : null).toBe('cut_family_attack');
 
     const d = deriveStats(s);
     skillStep(s, ctx(), 30000, d);
 
-    expect(s.account.gems.length).toBe(initialGems + 1);
-    expect(s.account.bank.rough_gem ?? 0).toBe(0);
+    expect(s.storage.gems.length).toBe(initialGems + 1);
+    expect(s.storage.bank.rough_gem ?? 0).toBe(0);
     // Started with 6 arcane_dust, gave 50, spent 50 -> remaining 6
-    expect(s.account.bank.arcane_dust ?? 0).toBe(6);
+    expect(s.storage.bank.arcane_dust ?? 0).toBe(6);
 
-    const cut = s.account.gems[s.account.gems.length - 1];
+    const cut = s.storage.gems[s.storage.gems.length - 1];
     expect(gemReqLevel(cut.gemId)).toBeLessThanOrEqual(15);
   });
 });
@@ -170,10 +170,10 @@ describe('Gemcutting: exact gem cutting', () => {
     const d = deriveStats(s);
     skillStep(s, ctx(), 60000, d);
 
-    expect(s.account.gems.some((g) => g.gemId === 'heavy_strike')).toBe(true);
-    expect(s.account.bank.rough_gem ?? 0).toBe(0);
+    expect(s.storage.gems.some((g) => g.gemId === 'heavy_strike')).toBe(true);
+    expect(s.storage.bank.rough_gem ?? 0).toBe(0);
     // Started with 6 arcane_dust, gave 100, spent 100 -> remaining 6
-    expect(s.account.bank.arcane_dust ?? 0).toBe(6);
+    expect(s.storage.bank.arcane_dust ?? 0).toBe(6);
   });
 
   it('cuts exact signature support with level + 5 requirement', () => {
@@ -191,7 +191,7 @@ describe('Gemcutting: exact gem cutting', () => {
     const d = deriveStats(s);
     skillStep(s, ctx(), 60000, d);
 
-    expect(s.account.supportGems.some((g) => g.supportId === 'shattering_blow')).toBe(true);
+    expect(s.storage.supportGems.some((g) => g.supportId === 'shattering_blow')).toBe(true);
   });
 });
 
@@ -199,7 +199,7 @@ describe('Gemcutting: safe recycling & cost floor', () => {
   it('recycles an unequipped gem for 5 Arcane Dust and stops', () => {
     const s = newGame(1);
     const gem = createSkillGem(s, 'heavy_strike');
-    s.account.gems.push(gem);
+    s.storage.gems.push(gem);
 
     expect(getUnequippedGems(s).some((g) => g.uid === gem.uid)).toBe(true);
     expect(isGemEquipped(s, gem.uid)).toBe(false);
@@ -215,9 +215,9 @@ describe('Gemcutting: safe recycling & cost floor', () => {
     skillStep(s, ctx(), 5000, d);
 
     // Gem is consumed
-    expect(s.account.gems.some((g) => g.uid === gem.uid)).toBe(false);
+    expect(s.storage.gems.some((g) => g.uid === gem.uid)).toBe(false);
     // Started with 6, added 5 Arcane Dust = 11
-    expect(s.account.bank.arcane_dust).toBe(11);
+    expect(s.storage.bank.arcane_dust).toBe(11);
     // Selection reset and action stopped
     expect(s.selectedGemRecycleUid).toBeNull();
     expect(s.action).toBeNull();
@@ -226,7 +226,7 @@ describe('Gemcutting: safe recycling & cost floor', () => {
   it('rejects recycling equipped gems', () => {
     const s = newGame(1);
     const gem = createSkillGem(s, 'heavy_strike');
-    s.account.gems.push(gem);
+    s.storage.gems.push(gem);
     s.skillBar[0] = gem; // equip to bar
 
     expect(isGemEquipped(s, gem.uid)).toBe(true);
@@ -238,7 +238,7 @@ describe('Gemcutting: safe recycling & cost floor', () => {
     const res = recycleGem(s, ctx(), gem.uid);
     expect(res).toBe('Cannot recycle an equipped or socketed gem');
     // Starting bank had 6 arcane_dust, unchanged
-    expect(s.account.bank.arcane_dust ?? 0).toBe(6);
+    expect(s.storage.bank.arcane_dust ?? 0).toBe(6);
   });
 
   it('enforces minimum net cut cost floor of 1 rough gem and 6 arcane dust', () => {
@@ -256,9 +256,9 @@ describe('Gemcutting: safe recycling & cost floor', () => {
     skillStep(s, ctx(), 20000, d);
 
     // Despite maximum discounts/input saving, paid at least 1 rough gem and 6 arcane dust!
-    expect(s.account.bank.rough_gem).toBeLessThanOrEqual(9);
+    expect(s.storage.bank.rough_gem).toBeLessThanOrEqual(9);
     // Started with 6 + 100 = 106, paid at least 6 -> <= 100
-    expect(s.account.bank.arcane_dust).toBeLessThanOrEqual(100);
+    expect(s.storage.bank.arcane_dust).toBeLessThanOrEqual(100);
     // This strictly prevents an infinite recycling loop (5 dust returned < 6 dust floor).
   });
 });
@@ -278,7 +278,7 @@ describe('Gemcutting: exceptional crystals and Lapidary’s Chisel', () => {
     const d = deriveStats(s);
     skillStep(s, ctx(), 60000, d);
 
-    expect(s.account.bank.exceptional_crystal).toBe(1);
+    expect(s.storage.bank.exceptional_crystal).toBe(1);
 
     const polishAction = actionDef('polish_exceptional');
     expect(polishAction.level).toBe(85);
@@ -289,8 +289,8 @@ describe('Gemcutting: exceptional crystals and Lapidary’s Chisel', () => {
     startSkillAction(s, ctx(), 'polish_exceptional');
     skillStep(s, ctx(), 120000, d);
 
-    expect(s.account.bank.exceptional_crystal).toBe(0);
-    expect(s.account.bank.convergence_crystal).toBe(1);
+    expect(s.storage.bank.exceptional_crystal).toBe(0);
+    expect(s.storage.bank.convergence_crystal).toBe(1);
   });
 
   it('crafts Lapidary’s Chisel and verifies +8% Gemcutting speed', () => {
@@ -350,9 +350,9 @@ describe('Gemcutting: 8-hour live vs offline catch-up parity', () => {
         }
       }
       return {
-        gems: s.account.gems.length,
-        rough: s.account.bank.rough_gem ?? 0,
-        dust: s.account.bank.arcane_dust ?? 0,
+        gems: s.storage.gems.length,
+        rough: s.storage.bank.rough_gem ?? 0,
+        dust: s.storage.bank.arcane_dust ?? 0,
         xp: s.skills.gemcutting,
       };
     }
@@ -388,7 +388,7 @@ describe('Gemcutting: 8-hour live vs offline catch-up parity', () => {
     skillStep(s, ctx(), 60000, d);
 
     // Shattering blow is now in account support gems
-    const support = s.account.supportGems.find((g) => g.supportId === 'shattering_blow');
+    const support = s.storage.supportGems.find((g) => g.supportId === 'shattering_blow');
     expect(support).toBeDefined();
 
     // Step 2: Socket support into Heavy Strike
@@ -397,15 +397,15 @@ describe('Gemcutting: 8-hour live vs offline catch-up parity', () => {
 
     // Step 3: Check recycling: create an unwanted gem, recycle it to recover arcane dust
     const unwanted = createSupportGem(s, 'mana_leech');
-    s.account.supportGems.push(unwanted);
+    s.storage.supportGems.push(unwanted);
     expect(isGemEquipped(s, unwanted.uid)).toBe(false);
 
-    const dustBefore = s.account.bank.arcane_dust ?? 0;
+    const dustBefore = s.storage.bank.arcane_dust ?? 0;
     selectGemForRecycle(s, unwanted.uid);
     startSkillAction(s, ctx(), 'recycle_gem');
     skillStep(s, ctx(), 5000, d);
 
-    expect(s.account.bank.arcane_dust).toBe(dustBefore + 5);
-    expect(s.account.supportGems.some((g) => g.uid === unwanted.uid)).toBe(false);
+    expect(s.storage.bank.arcane_dust).toBe(dustBefore + 5);
+    expect(s.storage.supportGems.some((g) => g.uid === unwanted.uid)).toBe(false);
   });
 });

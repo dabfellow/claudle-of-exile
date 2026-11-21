@@ -4,6 +4,8 @@ import { zoneDef } from '../src/data/zones';
 import { onMapBossKill, passTrial } from '../src/engine/ascendancy';
 import { bossIsNext, damageMonster, makeMonster } from '../src/engine/combat';
 import { makeCtx, type Ctx } from '../src/engine/context';
+import { addFixedMod } from '../src/engine/items';
+import { transferGuild } from '../src/engine/guildStash';
 import type { ClassId } from '../src/data/classes';
 import {
   addDoomedMaps,
@@ -36,6 +38,7 @@ import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { newGame, tick } from '../src/engine/state';
+import { deriveStats } from '../src/engine/stats';
 import type { GameState } from '../src/engine/types';
 
 const ctx = (seed = 1): Ctx => ({ rng: seeded(seed), now: 0, emit: () => {} });
@@ -75,17 +78,19 @@ describe('maps', () => {
     expect(startMap(s, ctx(), 1)).toBeTruthy();
     s.maps.stock = { map_barrows_t1: 1, map_stormvault_t1: 1 };
     expect(mapsHeld(s, 1)).toBe(2);
-    expect(s.account.maps?.[mapId(1)]).toBe(2);
+    expect(s.maps.stock[mapId(1)]).toBe(2);
     expect(startMap(s, ctx(), 1, 'mudflats')).toBeNull();
     expect(mapsHeld(s, 1)).toBe(1);
     expect(s.combat?.zoneId).toBe(mapZoneId(1, 'mudflats'));
   });
 
-  it('shares map supply across characters on the same realm account', () => {
+  it('moves maps across characters through the Guild Stash', () => {
     const first = newGame(1, { name: 'A', classId: 'warrior' });
     addMaps(first, 3, 4);
     const second = newGame(2, { name: 'B', classId: 'mage' }, first.account);
-    expect(mapsHeld(second, 3)).toBe(4);
+    expect(mapsHeld(second, 3)).toBe(0);
+    expect(transferGuild(first, { direction: 'deposit', kind: 'maps', id: mapId(3), quantity: 1 })).toBeNull();
+    expect(transferGuild(second, { direction: 'withdraw', kind: 'maps', id: mapId(3), quantity: 1 })).toBeNull();
     expect(startMap(second, ctx(), 3)).toBeNull();
     expect(mapsHeld(first, 3)).toBe(3);
   });
@@ -209,7 +214,7 @@ describe('maps', () => {
     const s = newGame(1);
     const c = ctx();
     expect(sextantSlots(s)).toBe(1);
-    s.account.bank.sextant_apprentice = 2;
+    s.storage.bank.sextant_apprentice = 2;
     expect(applySextant(s, c, 0, 'sextant_apprentice')).toBeNull();
     expect(s.account.sextants?.[0]?.charges).toBe(6);
 
@@ -260,11 +265,11 @@ describe('maps', () => {
     for (let i = 1; i <= 100; i++) {
       rollMapDrops(s, ctx(i), boss);
     }
-    keys = (s.account.bank.uber_key_1 ?? 0) + (s.account.bank.uber_key_2 ?? 0) + (s.account.bank.uber_key_3 ?? 0);
+    keys = (s.storage.bank.uber_key_1 ?? 0) + (s.storage.bank.uber_key_2 ?? 0) + (s.storage.bank.uber_key_3 ?? 0);
     expect(keys).toBeGreaterThan(10);
     // the orb the Crafting Bench spends, not a look-alike
-    expect(s.account.bank.fractured ?? 0).toBeGreaterThan(5);
-    expect(s.account.bank.fractured_orb).toBeUndefined();
+    expect(s.storage.bank.fractured ?? 0).toBeGreaterThan(5);
+    expect(s.storage.bank.fractured_orb).toBeUndefined();
 
     s.maps.run!.bossDown = true;
     mapStep(s, c);
@@ -315,7 +320,7 @@ describe('maps', () => {
   it('rerolls avoided map modifiers using Chaos Orbs', () => {
     const s = newGame(1);
     const c = ctx();
-    s.account.bank.chaos = 5;
+    s.storage.bank.chaos = 5;
     ensureMapSettings(s);
     toggleBlockedMod(s, 'drained_belts');
     toggleBlockedMod(s, 'revenant_packs');
@@ -393,11 +398,46 @@ describe('maps offline', { timeout: 60_000 }, () => {
     expect(mapsHeld(s, 1)).toBe(2);
   });
 
-  it('is playable: a kitted character clears most maps', { timeout: 120_000 }, () => {
+  it('a kitted character can clear most maps at the Fleeing pace', { timeout: 120_000 }, () => {
     let wins = 0;
     for (const classId of ['warrior', 'mage', 'ranger'] as ClassId[]) {
       for (let seed = 1; seed <= 4; seed++) {
         const s = kitted(classId, seed);
+        s.settings.movement = 'flee';
+        // Give each build suitable gear so this checks map playability independently of the affix pool.
+        const rng = seeded(seed);
+        for (const [slot, item] of Object.entries(s.equipment)) {
+          if (!item) continue;
+          item.prefixes = [];
+          item.suffixes = [];
+          if (slot === 'weapon') {
+            if (classId === 'mage') {
+              addFixedMod(item, 'spell_damage', 6, rng);
+              addFixedMod(item, 'spell_fire', 6, rng);
+              addFixedMod(item, 'cast_speed', 6, rng);
+            } else {
+              addFixedMod(item, 'added_phys', 6, rng);
+              addFixedMod(item, 'inc_phys', 6, rng);
+              addFixedMod(item, 'attack_speed', 6, rng);
+              addFixedMod(item, 'accuracy', 6, rng);
+            }
+          } else if (slot !== 'offhand') {
+            addFixedMod(item, 'flat_life', 6, rng);
+            if (slot === 'amulet' || slot.startsWith('ring')) {
+              addFixedMod(item, 'all_res', 6, rng);
+              addFixedMod(item, 'flat_mana', 6, rng);
+            } else {
+              addFixedMod(item, 'life_regen', 6, rng);
+              if (slot === 'belt') continue;
+              const defence = classId === 'mage' ? 'flat_es' : classId === 'ranger' ? 'flat_evasion' : 'flat_armour';
+              addFixedMod(item, defence, 6, rng);
+            }
+          }
+        }
+        const stats = deriveStats(s);
+        s.life = stats.maxLife;
+        s.mana = stats.maxMana;
+        s.es = stats.maxEs;
         s.account.automation.rules.push('windups');
         const c = makeCtx(seeded(seed + 10));
         s.maps.stock = { [mapId(1)]: 1 };

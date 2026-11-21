@@ -15,10 +15,9 @@ import {
   MOVEMENT,
   neighbors,
   PLAYER_SPOT,
-  POSTURES,
   RINGS,
 } from '../src/engine/battlefield';
-import { aliveMonsters, combatStep, currentMovement, lockTarget, makeMonster, setMovement, setPosture, skillBlockedReason, skillRange, startCombat } from '../src/engine/combat';
+import { aliveMonsters, combatStep, currentMovement, damageMonster, DPS_WINDOW_MS, focusTarget, liveDps, lockTarget, makeMonster, monsterDps, nextArrival, setMovement, skillBlockedReason, skillRange, startCombat } from '../src/engine/combat';
 import { activeGemDef, DEFAULT_ATTACK } from '../src/data/gems';
 import { createSkillGem, createSupportGem, gemUseReason } from '../src/engine/gems';
 import { createItem } from '../src/engine/items';
@@ -91,42 +90,96 @@ describe('battlefield', () => {
     expect([...seen.values()].every((cell) => cellRing(cell) === RINGS)).toBe(true);
   });
 
-  it('running fills the field faster than creeping', () => {
+  it('sprinting fills the field faster than fleeing', () => {
     const count = (mv: Movement) => {
       const { s, c } = idler(mv);
       run(s, c, 30_000);
       return aliveMonsters(s.combat!).length;
     };
-    expect(count('run')).toBeGreaterThan(count('slow'));
+    expect(count('run')).toBeGreaterThan(count('flee'));
   });
 
-  it('fleeing stops new monsters and sheds the ones furthest away', () => {
-    const { s, c } = idler('run');
-    run(s, c, 40_000);
-    const before = aliveMonsters(s.combat!).length;
-    expect(before).toBeGreaterThan(2);
+  it('caps ordinary arrivals at three while fleeing without shedding existing enemies', () => {
+    const { s, c } = idler('flee');
+    run(s, c, 60_000);
+    expect(aliveMonsters(s.combat!)).toHaveLength(3);
+    expect(nextArrival(s)).toBeNull();
+    const def = zoneDef('mudflats').monsters[0];
+    const field = s.combat!;
+    const fillInner = (n: number) => {
+      field.monsters = CELLS.slice(0, n).map((_, cell) => Object.assign(makeMonster(def, false, 100 + cell), { cell, stepMs: 1e9 }));
+      field.gates!.fill(0);
+    };
+    setMovement(s, 'walk');
+    fillInner(15);
+    run(s, c, 50);
+    expect(aliveMonsters(s.combat!)).toHaveLength(CELLS.length / 2);
     setMovement(s, 'flee');
     run(s, c, FLEE_SHAKE_MS * 2 + 100);
-    expect(aliveMonsters(s.combat!).length).toBe(before - 2);
-    run(s, c, 60_000);
-    expect(aliveMonsters(s.combat!)).toHaveLength(0);
+    expect(aliveMonsters(s.combat!)).toHaveLength(CELLS.length / 2);
+    setMovement(s, 'run');
+    fillInner(21);
+    run(s, c, 50);
+    expect(aliveMonsters(s.combat!)).toHaveLength(CELLS.length);
   });
 
-  it('postures turn range intent into the underlying movement pace', () => {
+  it('shows the vacant entry hex that will receive the next pack', () => {
     const { s, c } = idler();
-    const far = makeMonster(zoneDef('mudflats').monsters[0], false, 1);
+    run(s, c, 50);
+    const opening = nextArrival(s)!;
+    run(s, c, opening.ms);
+    expect(s.combat!.monsters.some((m) => m.cell === opening.cell)).toBe(true);
+    const field = s.combat!;
+    const occupied = field.monsters[0].cell;
+    field.gates!.fill(9000);
+    field.gates![EDGE_CELLS.indexOf(occupied)] = 0;
+    const vacant = EDGE_CELLS.find((cell) => field.monsters.every((m) => m.cell !== cell))!;
+    field.gates![EDGE_CELLS.indexOf(vacant)] = 100;
+    expect(nextArrival(s)).toEqual({ cell: vacant, ms: 100 });
+    run(s, c, 100);
+    expect(field.monsters.some((m) => m.cell === vacant)).toBe(true);
+  });
+
+  it('loads an old cautious save at the slower pace and honors a new selection', () => {
+    const { s } = idler();
+    s.settings.posture = 'cautious';
+    const loaded = deserialize(serialize(s));
+    expect(currentMovement(loaded)).toBe('flee');
+    setMovement(loaded, 'run');
+    expect(currentMovement(loaded)).toBe('run');
+  });
+
+  it('shows a clicked target immediately even when the last skill hit someone else', () => {
+    const { s } = idler();
+    const def = zoneDef('mudflats').monsters[0];
+    const closest = makeMonster(def, false, 100);
+    const far = makeMonster(def, false, 101);
     far.cell = EDGE_CELLS[0];
-    s.combat!.monsters = [far];
-    setPosture(s, 'brawler');
-    expect(currentMovement(s)).toBe('run');
-    far.cell = CELLS.findIndex((cell) => cell.ring === 1);
-    expect(currentMovement(s)).toBe('walk');
-    setPosture(s, 'kiter');
-    combatStep(s, c, 50, deriveStats(s));
-    expect(cellRing(far.cell)).toBe(2);
-    setPosture(s, 'cautious');
-    expect(currentMovement(s)).toBe('slow');
-    expect(POSTURES.cautious.desc).toContain('flasks');
+    s.combat!.monsters = [closest, far];
+    s.combat!.targetUid = closest.uid;
+    lockTarget(s, far.uid);
+    expect(focusTarget(s)).toBe(far);
+    lockTarget(s, far.uid);
+    expect(focusTarget(s)).toBe(closest);
+  });
+
+  it('shows damage dealt in the same window for the player and each individual enemy', () => {
+    const { s, c } = idler();
+    const field = s.combat!;
+    const def = zoneDef('mudflats').monsters[0];
+    const [source, bystander] = EDGE_CELLS.slice(0, 2).map((cell, i) =>
+      Object.assign(makeMonster(def, false, 100 + i), { cell, stepMs: 1e9 }));
+    field.monsters = [source, bystander];
+    field.spawnMs = 1e9;
+    field.ground = [{ cell: PLAYER_SPOT, kind: 'caustic', dps: 20, remainingMs: 100, durationMs: 100, sourceUid: source.uid }];
+    damageMonster(s, bystander, 4);
+    run(s, c, DPS_WINDOW_MS);
+    expect(liveDps(field)).toBe(2);
+    expect(monsterDps(source)).toBe(1);
+    expect(monsterDps(bystander)).toBe(0);
+    run(s, c, DPS_WINDOW_MS);
+    expect(liveDps(field)).toBe(0);
+    expect(monsterDps(source)).toBe(0);
   });
 
   it('melee monsters walk to ring 1 before they can hit; casters stop at their range', () => {
@@ -156,6 +209,12 @@ describe('battlefield', () => {
     s.life = 1;
     combatStep(s, c, 50, deriveStats(s));
     expect(s.combat!.fleeing).toBe(true);
+    expect(nextArrival(s)).toBeNull();
+    const before = aliveMonsters(s.combat!).length;
+    s.life = deriveStats(s).maxLife / 2;
+    s.combat!.shakeMs = 1;
+    combatStep(s, c, 50, deriveStats(s));
+    expect(aliveMonsters(s.combat!)).toHaveLength(before - 1);
     s.life = deriveStats(s).maxLife;
     combatStep(s, c, 50, deriveStats(s));
     expect(s.combat!.fleeing).toBe(false);
@@ -268,7 +327,7 @@ describe('skills on the battlefield', () => {
     expect(cellRing(mons[0].cell)).toBe(2);
   });
 
-  it('caster spells leave ground under the player; running steps out of it faster', () => {
+  it('caster spells leave ground under the player for the same duration at every manual pace', () => {
     const burn = (mv: Movement) => {
       const { s, c } = idler(mv);
       const shaman = makeMonster(zoneDef('ashwood').monsters.find((m) => m.id === 'emberkin')!, false, 1);
@@ -287,7 +346,10 @@ describe('skills on the battlefield', () => {
       }
       return t;
     };
-    expect(burn('run')).toBeLessThan(burn('walk'));
+    const walking = burn('walk');
+    expect(walking).toBeGreaterThan(0);
+    expect(burn('run')).toBe(walking);
+    expect(burn('flee')).toBe(walking);
   });
 
   it('melee monsters step around hazardous ground when they can', () => {

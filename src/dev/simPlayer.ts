@@ -45,7 +45,7 @@ export function bestSkillDps(s: GameState, d: Derived): number {
   const pack = packOf(s);
   return Math.max(
     d.dps,
-    ...[...s.skillBar, ...s.account.gems].map((g) => {
+    ...[...s.skillBar, ...s.storage.gems].map((g) => {
       // a skill the weapon can't use is worth nothing (and the bot keeps to its class's weapon type, see offWeapon)
       if (!g || gemUseReason(d.combatLevel, d.attributes, g, d.weaponFamily)) return 0;
       return gemValue(d, g, pack, s);
@@ -120,12 +120,12 @@ export function scoreWith(s: GameState, item: Item): number {
  */
 export function shop(s: GameState, ctx: Ctx) {
   let bought = false;
-  const spare = () => (s.account.bank.gold ?? 0) - (nextUpgrade(s)?.cost.gold ?? 0);
-  const owned = new Set([...s.skillBar, ...s.account.gems].filter(Boolean).map((g) => g!.gemId));
-  const ownedSupports = new Set(s.account.supportGems.map((g) => g.supportId));
+  const spare = () => (s.storage.bank.gold ?? 0) - (nextUpgrade(s)?.cost.gold ?? 0);
+  const owned = new Set([...s.skillBar, ...s.storage.gems].filter(Boolean).map((g) => g!.gemId));
+  const ownedSupports = new Set(s.storage.supportGems.map((g) => g.supportId));
   for (const offer of gemShopOffers(s)) {
     const newGem = (offer.gemId && !owned.has(offer.gemId)) || (offer.supportId && !ownedSupports.has(offer.supportId));
-    if (newGem && offer.price * 2 <= (s.account.bank.gold ?? 0) && !buyGem(s, ctx, (offer.gemId ?? offer.supportId)!)) bought = true;
+    if (newGem && offer.price * 2 <= (s.storage.bank.gold ?? 0) && !buyGem(s, ctx, (offer.gemId ?? offer.supportId)!)) bought = true;
   }
   for (const offer of [...s.vendor.stock]) {
     if (offer.kind !== 'item' || !offer.item || ignoredArmour(offer.item) || offer.price > spare() || equipReason(s, offer.item) || offWeapon(s, offer.item)) continue;
@@ -236,7 +236,7 @@ export function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   }
   // the best copy of each gem it owns and meets the attribute for: highest level wins
   const owned = new Map<string, SkillGemInstance>();
-  for (const g of [...s.skillBar.filter((x): x is SkillGemInstance => !!x), ...s.account.gems]) {
+  for (const g of [...s.skillBar.filter((x): x is SkillGemInstance => !!x), ...s.storage.gems]) {
     if (gemUseReason(d.combatLevel, d.attributes, g, d.weaponFamily)) continue;
     const have = owned.get(g.gemId);
     if (!have || g.level > have.level) owned.set(g.gemId, g);
@@ -301,7 +301,7 @@ export function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
   const order = [...bar].sort((a, b) => Number(DAMAGE_ROLES.has(role(b))) - Number(DAMAGE_ROLES.has(role(a))));
   for (const g of order) {
     for (let k = 0; k < g.supports.length; k++) {
-      const fits = s.account.supportGems.filter((x) => !supportReason(g, x.supportId));
+      const fits = s.storage.supportGems.filter((x) => !supportReason(g, x.supportId));
       if (!fits.length) break;
       let best = fits[0];
       if (DAMAGE_ROLES.has(role(g))) {
@@ -323,7 +323,7 @@ export function manageSkills(s: GameState, zoneId = s.combat?.zoneId) {
 /** Belt: the strongest life and mana flask in slots 1–2, then Granite, Ruby and Quicksilver (attackers) or Diamond. */
 export function manageFlasks(s: GameState) {
   const d = deriveStats(s, []);
-  const pool = () => [...s.flaskSlots.filter((f): f is FlaskInstance => !!f), ...s.account.flaskStash];
+  const pool = () => [...s.flaskSlots.filter((f): f is FlaskInstance => !!f), ...s.storage.flaskStash];
   const strongest = (kind: 'life' | 'mana') =>
     pool()
       .filter((f) => flaskDef(f.flaskId).kind === kind)
@@ -337,7 +337,7 @@ export function manageFlasks(s: GameState) {
     if (f && !want.some((w) => w?.flaskId === id)) want.push(f);
   }
   want.forEach((f, i) => {
-    if (f && s.flaskSlots[i]?.uid !== f.uid && s.account.flaskStash.includes(f)) equipFlask(s, f.uid, i);
+    if (f && s.flaskSlots[i]?.uid !== f.uid && s.storage.flaskStash.includes(f)) equipFlask(s, f.uid, i);
   });
 }
 
@@ -386,7 +386,7 @@ export const INSTILL_FOR: Record<string, InstillCondition> = { life: 'lowLife', 
 export function instillFlasks(s: GameState, ctx: Ctx) {
   if (!INSTILL) return;
   for (const f of s.flaskSlots) {
-    if (!f || !s.account.bank.instill) continue;
+    if (!f || !s.storage.bank.instill) continue;
     const kind = flaskDef(f.flaskId).kind;
     const want = kind === 'utility' && frostbiteZone(s.combat?.zoneId) ? 'frostbite' : INSTILL_FOR[kind];
     if (!f.instill || (f.instill === 'bossCast' && want === 'frostbite')) enchantFlask(s, ctx, f.uid, want);
@@ -399,8 +399,8 @@ export function nextUpgrade(s: GameState): { id: StationId; cost: Record<string,
   if (!next) return null;
   const cost = nextUpgradeCost(s, next[0])!;
   const short = Object.entries(cost)
-    .filter(([id, n]) => id !== 'gold' && (s.account.bank[id] ?? 0) < n)
-    .map(([id, n]): [string, number] => [id, n - (s.account.bank[id] ?? 0)]);
+    .filter(([id, n]) => id !== 'gold' && (s.storage.bank[id] ?? 0) < n)
+    .map(([id, n]): [string, number] => [id, n - (s.storage.bank[id] ?? 0)]);
   return { id: next[0], cost, short };
 }
 
@@ -469,7 +469,7 @@ export function recipeNight(s: GameState, ctx: Ctx, actions: SkillAction[]): boo
   const recipes = actions.filter((a) => skillLevel(s, a.skill) >= a.level);
   const ready = recipes.filter((a) => !actionBlocker(s, a)).at(-1);
   if (ready) return !startSkillAction(s, ctx, ready.id);
-  const short = Object.entries(recipes.at(-1)!.inputs!).find(([id, n]) => (s.account.bank[id] ?? 0) < n);
+  const short = Object.entries(recipes.at(-1)!.inputs!).find(([id, n]) => (s.storage.bank[id] ?? 0) < n);
   const node = short && nodeFor(s, short[0]);
   return !!node && !startSkillAction(s, ctx, node.id);
 }
@@ -489,7 +489,7 @@ export function expeditionNight(s: GameState, ctx: Ctx): boolean {
 /** The night's cooking: meals only, as the bot brews no flasks. It eats the best dish in the bank and keeps eating. */
 export function cookNight(s: GameState, ctx: Ctx): boolean {
   if (!cookingOpen(s)) return false;
-  const dish = MEALS.filter((m) => s.account.bank[m.id]).at(-1);
+  const dish = MEALS.filter((m) => s.storage.bank[m.id]).at(-1);
   if (dish) eatMeal(s, ctx, dish.id);
   return recipeNight(s, ctx, actionsFor('cooking').filter((a) => a.outputs && Object.keys(a.outputs)[0].startsWith('meal_')));
 }

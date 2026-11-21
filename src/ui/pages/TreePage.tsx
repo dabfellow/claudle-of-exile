@@ -1176,7 +1176,7 @@ function StatDeltas({ before, after }: { before: Derived; after: Derived }) {
 function MasteryPicker({ s, n, onClose }: { s: GameState; n: PassiveNode; onClose: () => void }) {
   const allocated = s.passives.includes(n.id);
   const chosen = s.masteries[n.id];
-  const regret = s.account.bank.regret ?? 0;
+  const regret = s.storage.bank.regret ?? 0;
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="card modal mastery-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
@@ -1612,7 +1612,7 @@ function CharacterTree({ s }: { s: GameState }) {
             Mastery Points: {s.masteryPoints} / {totalMastery}
           </span>
 
-          <span className="chip chip-regret">{s.account.bank.regret ?? 0} Orbs of Regret</span>
+          <span className="chip chip-regret">{s.storage.bank.regret ?? 0} Orbs of Regret</span>
 
           <button
             className={`btn sm ${refundMode ? 'danger active btn-refund-toggle' : 'ghost btn-refund-toggle'}`}
@@ -1790,7 +1790,7 @@ function SkillingTree({ s }: { s: GameState }) {
         <span className={`chip ${skillPointsLeft(s) > 0 ? 'good' : ''}`} style={{ fontSize: 14 }}>
           {skillPointsLeft(s)} / {skillTreePoints(s)} points left
         </span>
-        <span className="chip">{s.account.bank.regret ?? 0} Orbs of Regret</span>
+        <span className="chip">{s.storage.bank.regret ?? 0} Orbs of Regret</span>
         <span className="dim" style={{ fontSize: 12 }}>
           1 point per 10 total levels across all 11 life skills, up to 36 points. Specialise: the whole tree cannot be filled.
         </span>
@@ -1998,8 +1998,8 @@ function AscendancyTree({ s, a }: { s: GameState; a: AscendancyDef }) {
         <span className={`chip ${ascendancyPointsLeft(s) > 0 ? 'good' : ''}`} style={{ fontSize: 14 }}>
           {ascendancyPointsLeft(s)} / {s.ascendancy.points} ascendancy points left
         </span>
-        <span className="chip">{s.account.bank.regret ?? 0} Orbs of Regret</span>
-        <span className="chip">{s.account.bank.divine ?? 0} Divine Orbs</span>
+        <span className="chip">{s.storage.bank.regret ?? 0} Orbs of Regret</span>
+        <span className="chip">{s.storage.bank.divine ?? 0} Divine Orbs</span>
         <span className="spacer" />
         <AscendancySettings s={s} a={a} />
       </div>

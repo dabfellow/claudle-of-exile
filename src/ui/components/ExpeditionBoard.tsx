@@ -275,8 +275,8 @@ function TrailView({ s }: { s: GameState }) {
         <div className="expedition-stats">
           <Stat label="Passports" value={`${stamped}/${TRAIL.length}`} />
           <Stat label="Finds" value={`${found}/${SITES.length * FIND_HOURS.length}`} />
-          <Stat label="Ancient Data" value={fmt(s.account.bank[ANCIENT_DATA] ?? 0)} icon={ANCIENT_DATA} />
-          <Stat label="Sealed Relics" value={fmt(s.account.bank[SEALED_RELIC] ?? 0)} icon={SEALED_RELIC} />
+          <Stat label="Ancient Data" value={fmt(s.storage.bank[ANCIENT_DATA] ?? 0)} icon={ANCIENT_DATA} />
+          <Stat label="Sealed Relics" value={fmt(s.storage.bank[SEALED_RELIC] ?? 0)} icon={SEALED_RELIC} />
         </div>
       </div>
       <TrailMap s={s} selected={selected} onSelect={setPicked} />
@@ -355,7 +355,7 @@ function ForgeSlot({ formId, lines, index, kind, onChange }: { formId: string; l
 
 function ForgeBench({ s, form }: { s: GameState; form: RelicForm }) {
   const [lines, setLines] = useState<RelicLine[]>([]);
-  const have = s.account.bank[ANCIENT_DATA] ?? 0;
+  const have = s.storage.bank[ANCIENT_DATA] ?? 0;
   const cost = relicCost(lines);
   const reason = relicReason(s, lines);
   const change = (kind: 'prefix' | 'suffix', index: number) => (l: RelicLine | null) => {
@@ -404,7 +404,7 @@ function ForgeBench({ s, form }: { s: GameState; form: RelicForm }) {
 
 function ForgeView({ s }: { s: GameState }) {
   const job = s.expedition.forge;
-  const sealed = s.account.bank[SEALED_RELIC] ?? 0;
+  const sealed = s.storage.bank[SEALED_RELIC] ?? 0;
   const form = job ? relicForm(job.formId) : undefined;
   return (
     <section className="expedition">
@@ -415,7 +415,7 @@ function ForgeView({ s }: { s: GameState }) {
         </div>
         <div className="expedition-stats">
           <Stat label="Sealed Relics" value={fmt(sealed)} icon={SEALED_RELIC} />
-          <Stat label="Ancient Data" value={fmt(s.account.bank[ANCIENT_DATA] ?? 0)} icon={ANCIENT_DATA} />
+          <Stat label="Ancient Data" value={fmt(s.storage.bank[ANCIENT_DATA] ?? 0)} icon={ANCIENT_DATA} />
           <Stat label="Restored" value={fmt(s.expedition.relicsRestored ?? 0)} />
         </div>
       </div>
@@ -493,10 +493,10 @@ function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
         </Badge>
       </div>
       <p className="dim small">
-        {culture.deals}, for <MatIcon id={culture.artifact} size={12} /> {culture.artifactName}. You have <b className="num">{fmt(s.account.bank[culture.artifact] ?? 0)}</b>.
+        {culture.deals}, for <MatIcon id={culture.artifact} size={12} /> {culture.artifactName}. You have <b className="num">{fmt(s.storage.bank[culture.artifact] ?? 0)}</b>.
       </p>
-      <p className="small">Relic fragments: {s.account.bank[relicFragment(culture.id)] ?? 0}. One every 60 matching digs (Bedrock digs count three); {60 - (s.professionProgress.counters[`archaeology.fragments.${culture.id}`] ?? 0) % 60} to the next.</p>
-      <button className="btn sm" disabled={(s.account.bank[relicFragment(culture.id)] ?? 0) < 5} onClick={() => game.act((st, ctx) => exchangeFragments(st, ctx, culture.id))}>Exchange 5 fragments for 25 artifacts</button>
+      <p className="small">Relic fragments: {s.storage.bank[relicFragment(culture.id)] ?? 0}. One every 60 matching digs (Bedrock digs count three); {60 - (s.professionProgress.counters[`archaeology.fragments.${culture.id}`] ?? 0) % 60} to the next.</p>
+      <button className="btn sm" disabled={(s.storage.bank[relicFragment(culture.id)] ?? 0) < 5} onClick={() => game.act((st, ctx) => exchangeFragments(st, ctx, culture.id))}>Exchange 5 fragments for 25 artifacts</button>
       {open.map((w) => (
         <WareRow key={w.id} s={s} culture={culture} w={w} />
       ))}

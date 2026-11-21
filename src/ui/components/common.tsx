@@ -3,7 +3,8 @@ import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, typ
 import '../round2-session1.css';
 import { createPortal } from 'react-dom';
 import { isCurrency, materialDef } from '../../data/materials';
-import { GAME_ICONS, KIBYRA, packArtIsPixel, packArtUrl } from '../assets';
+import type { ZoneDef } from '../../data/zones';
+import { GAME_ICONS, KIBYRA, packArtIsPixel, packArtUrl, terrainArt } from '../assets';
 import { Icon, Orb, Swatch } from './Icon';
 
 export function ProgressBar({
@@ -479,6 +480,12 @@ export function artUrl(key: string): string | undefined {
 /** Generated art if it exists, otherwise asset-pack art (src/ui/assets.ts). */
 export function anyArtUrl(key: string): string | undefined {
   return artUrl(key) ?? packArtUrl(key);
+}
+
+/** Maps and boss arenas can borrow the base terrain or variant of a campaign zone. */
+export function zoneBackdrop(zone: ZoneDef): string | undefined {
+  const key = `zones/${zone.art ?? zone.id}`;
+  return artUrl(key) ?? terrainArt(zone) ?? packArtUrl(key);
 }
 
 /** Background style for a scene/backdrop, or nothing when the art isn't there yet. */

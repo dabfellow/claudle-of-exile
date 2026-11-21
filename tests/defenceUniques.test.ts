@@ -133,12 +133,12 @@ describe('Phase 15 Defence Uniques', () => {
       s.skills.archaeology = xpForLevel(70);
       s.professionProgress.work.archaeology = 100;
       s.professionProgress.discoveries['expedition.dig_colossus.0'] = true;
-      s.account.bank = { ...p.inputs };
+      s.storage.bank = { ...p.inputs };
       expect(startProject(s, c, p.id)).toBeNull();
       advanceProject(s, c, p.durationMs);
       expect(s.inventory.some((i) => i.uniqueId === 'the_buried_grudge')).toBe(true);
       expect(s.account.uniquesSeen).toContain('the_buried_grudge');
-      expect(s.account.bank.stone_alloy ?? 0).toBe(0);
+      expect(s.storage.bank.stone_alloy ?? 0).toBe(0);
     });
 
     it('completes Debt of Stone smithing project cleanly', () => {
@@ -146,12 +146,12 @@ describe('Phase 15 Defence Uniques', () => {
       s.skills.smithing = xpForLevel(75);
       s.professionProgress.work.smithing = 100;
       s.account.hideout.forge = 3;
-      s.account.bank = { ...p.inputs };
+      s.storage.bank = { ...p.inputs };
       expect(startProject(s, c, p.id)).toBeNull();
       advanceProject(s, c, p.durationMs);
       expect(s.inventory.some((i) => i.uniqueId === 'debt_of_stone')).toBe(true);
       expect(s.account.uniquesSeen).toContain('debt_of_stone');
-      expect(s.account.bank.stone_alloy ?? 0).toBe(0);
+      expect(s.storage.bank.stone_alloy ?? 0).toBe(0);
     });
 
     it('completes Witchglass alchemy project into flaskStash', () => {
@@ -159,12 +159,12 @@ describe('Phase 15 Defence Uniques', () => {
       s.skills.alchemy = xpForLevel(70);
       s.professionProgress.work.alchemy = 100;
       s.account.hideout.alchemy_table = 3;
-      s.account.bank = { ...p.inputs };
+      s.storage.bank = { ...p.inputs };
       expect(startProject(s, c, p.id)).toBeNull();
       advanceProject(s, c, p.durationMs);
-      expect(s.account.flaskStash.some((f) => f.flaskId === 'u_flask_witchglass')).toBe(true);
+      expect(s.storage.flaskStash.some((f) => f.flaskId === 'u_flask_witchglass')).toBe(true);
       expect(s.account.uniquesSeen).toContain('witchglass');
-      expect(s.account.bank.prepared_glass ?? 0).toBe(0);
+      expect(s.storage.bank.prepared_glass ?? 0).toBe(0);
     });
 
     it('completes The Still Heart alchemy project into flaskStash', () => {
@@ -172,12 +172,12 @@ describe('Phase 15 Defence Uniques', () => {
       s.skills.alchemy = xpForLevel(70);
       s.professionProgress.work.alchemy = 100;
       s.account.hideout.alchemy_table = 3;
-      s.account.bank = { ...p.inputs };
+      s.storage.bank = { ...p.inputs };
       expect(startProject(s, c, p.id)).toBeNull();
       advanceProject(s, c, p.durationMs);
-      expect(s.account.flaskStash.some((f) => f.flaskId === 'u_flask_still_heart')).toBe(true);
+      expect(s.storage.flaskStash.some((f) => f.flaskId === 'u_flask_still_heart')).toBe(true);
       expect(s.account.uniquesSeen).toContain('the_still_heart');
-      expect(s.account.bank.prepared_glass ?? 0).toBe(0);
+      expect(s.storage.bank.prepared_glass ?? 0).toBe(0);
     });
   });
 

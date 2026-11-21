@@ -1,5 +1,6 @@
 import type { StatKey } from '../engine/types';
 import type { MaterialDef } from './materials';
+import { FISHING_MEAL } from './fishing';
 
 /**
  * Cooking, Act 5's skill (docs/GAME.md): gathered plants become flask ingredients for Alchemy's strongest
@@ -45,7 +46,14 @@ export const MEALS: MealDef[] = [
 
 const MEAL_BY_ID: Record<string, MealDef> = Object.fromEntries(MEALS.map((m) => [m.id, m]));
 
+const CROWNFIRE_FEAST: MealDef = {
+  id: FISHING_MEAL, name: 'Crownfire Feast', color: '#f3bd72', value: 0, durationMs: 900_000, protected: true,
+  stats: { lifePct: 50, physPct: 100, elemPct: 100, chaosPct: 100, attackSpeedPct: 35, castSpeedPct: 35 },
+  desc: 'For 15 minutes in combat, 50% increased maximum Life, 100% increased damage and 35% increased Attack and Cast Speed.',
+};
+
 export function mealDef(id: string): MealDef {
+  if (id === FISHING_MEAL) return CROWNFIRE_FEAST;
   const m = MEAL_BY_ID[id];
   if (!m) throw new Error(`Unknown meal ${id}`);
   return m;

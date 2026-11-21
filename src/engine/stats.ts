@@ -5,6 +5,7 @@ import { classDef } from '../data/classes';
 import { BASE_ATTACK_MS } from '../data/gems';
 import { baseDef, type WeaponFamily } from '../data/bases';
 import { flaskDef } from '../data/flasks';
+import { FISHING_FLASK } from '../data/fishing';
 import { MAP_RARITY } from '../data/hideout';
 import { ASCENDANCY_BY_ID, ASCENDANCY_NODE_BY_ID } from '../data/ascendancies';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
@@ -12,6 +13,7 @@ import { STAT_KEYS, type Buff, type DamageType, type GameState, type Item, type 
 import { ascendancyOf, unwrittenNodeOf } from './ascendancy';
 import { characterLevel } from './character';
 import { mealStats } from './cooking';
+import { hasFishingPrize } from './fishing';
 import { MEGA_CRIT_MULTI, mechanicOf, mechanicStats } from './mechanics';
 import { runeStats } from './runes';
 
@@ -230,7 +232,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
   addStats(st, cls.bonus);
   addStats(st, mechanicStats(s, st));
   if (st.critGoldScale > 0) {
-    const bankGold = s.account?.bank?.gold ?? 0;
+    const bankGold = s.storage.bank.gold ?? 0;
     st.critMulti += Math.min(50, Math.floor(bankGold / 10000)) * st.critGoldScale;
   }
   if (st.leviathanMend > 0 && mechanicOf(s) === 'rage' && (s.combat?.mech ?? 0) >= 10 + st.rageMax) {
@@ -266,6 +268,7 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
   const flaskMult = 1 + st.flaskEffect / 100;
   for (const b of buffs) {
     if (b.source === 'flask') {
+      if (b.id === FISHING_FLASK && !hasFishingPrize(s, 4)) continue;
       const def = flaskDef(b.id);
       if (def.buff) addStats(st, def.buff, flaskMult * (b.mult ?? 1));
     } else if (b.stats) addStats(st, b.stats);

@@ -1,5 +1,5 @@
 import { classDef } from '../data/classes';
-import { bundleCharacter, fillAccount, freshAccount } from './account';
+import { bundleCharacter, fillAccount, freshAccount, freshCharacterStorage } from './account';
 import { newAscendancyRuntime, newAscendancyState } from './ascendancy';
 import { TRIALS } from '../data/ascendancies';
 import { SKILL_BAR_SLOTS } from '../data/gems';
@@ -478,8 +478,11 @@ export class NewerSaveError extends Error {
 export function deserialize(json: string): GameState {
   const raw = JSON.parse(json) as Record<string, unknown>;
   raw.account ??= freshAccount();
+  raw.storage ??= freshCharacterStorage();
   let v = typeof raw.version === 'number' ? raw.version : 0;
   if (v > SAVE_VERSION) throw new NewerSaveError(v);
+  // These versions saved a copy of the realm's maps in each character. The realm copy is now the Guild Stash.
+  if (v >= 37 && v < 51 && raw.maps) (raw.maps as GameState['maps']).stock = {};
   while (v < SAVE_VERSION) {
     MIGRATIONS[v]?.(raw);
     v++;
@@ -493,15 +496,21 @@ export function deserialize(json: string): GameState {
   }
   const s = raw as unknown as GameState;
   fillAccount(s.account);
+  const movement = raw.settings as { movement?: string };
+  if (s.settings.posture === 'kiter' || s.settings.posture === 'cautious' || movement.movement === 'slow') {
+    s.settings.movement = 'flee';
+  }
+  delete s.settings.posture;
   if (s.flaskSlots) {
     if (s.flaskSlots.length > FLASK_SLOTS) {
       const extra = s.flaskSlots.slice(FLASK_SLOTS);
       s.flaskSlots = s.flaskSlots.slice(0, FLASK_SLOTS);
-      for (const f of extra) if (f) s.account.flaskStash.push(f);
+      for (const f of extra) if (f) s.storage.flaskStash.push(f);
     }
     while (s.flaskSlots.length < FLASK_SLOTS) s.flaskSlots.push(null);
   }
-  for (const item of [...(s.inventory ?? []), ...(s.ground ?? []), ...(s.offlineHaul ?? []), ...Object.values(s.equipment ?? {})]) settleItemMarks(item);
+  for (const item of [...(s.inventory ?? []), ...(s.ground ?? []), ...(s.offlineHaul ?? []), ...Object.values(s.equipment ?? {}),
+    ...s.storage.stash.flat(), ...s.storage.uniqueStash, ...s.storage.overflow]) settleItemMarks(item);
   unlockReachedZones(s);
   settleCampaignQuests(s);
   settleGems(s);

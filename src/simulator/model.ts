@@ -68,7 +68,7 @@ export function prepareCharacter(c: SimConfig): GameState {
     if (reason) throw new Error(`${slot}: ${reason}`);
   }
   if (c.skillBar) {
-    s.account.gems.push(...s.skillBar.filter((g): g is SkillGemInstance => !!g));
+    s.storage.gems.push(...s.skillBar.filter((g): g is SkillGemInstance => !!g));
     s.skillBar = structuredClone(c.skillBar).map(g => g ? { ...g, uid: s.account.nextUid++, supports: g.supports.map(sup => sup ? { ...sup, uid: s.account.nextUid++ } : null) } : null);
   }
   const d = deriveStats(s);

@@ -60,7 +60,7 @@ describe('Phase 02 Mining', () => {
     const c = makeCtx({ next: () => 0.01 });
     startSkillAction(s, c, 'mine_mithril');
     skillStep(s, c, 4001, deriveStats(s));
-    expect(s.account.bank.mineral_fragment).toBe(1);
+    expect(s.storage.bank.mineral_fragment).toBe(1);
   });
 
   it('offers all five fossils via drop chances on fossil deposits', () => {
@@ -80,8 +80,8 @@ describe('Phase 02 Mining', () => {
     const c = makeCtx({ next: () => 0.01 });
     startSkillAction(s, c, aIron.id);
     skillStep(s, c, actionIntervalMs(s, aIron, deriveStats(s)) + 1, deriveStats(s));
-    expect(s.account.bank.iron_ore).toBe(1);
-    expect(MINING_FOSSILS.some((f) => (s.account.bank[f] ?? 0) > 0)).toBe(true);
+    expect(s.storage.bank.iron_ore).toBe(1);
+    expect(MINING_FOSSILS.some((f) => (s.storage.bank[f] ?? 0) > 0)).toBe(true);
   });
 
   it('drops project fragments on eligible deposits while rich mining grants none', () => {
@@ -96,9 +96,9 @@ describe('Phase 02 Mining', () => {
     expect(actionDef('mine_crystal_star').bonus?.some((b) => b.id === 'crystal_shard')).toBe(true);
 
     cycles(s, 'mine_rich_star', 10);
-    expect(s.account.bank.star_ore).toBe(20);
-    expect(s.account.bank.mineral_fragment ?? 0).toBe(0);
-    expect(s.account.bank.stone_fragment ?? 0).toBe(0);
+    expect(s.storage.bank.star_ore).toBe(20);
+    expect(s.storage.bank.mineral_fragment ?? 0).toBe(0);
+    expect(s.storage.bank.stone_fragment ?? 0).toBe(0);
   });
 
   it.each([
@@ -117,7 +117,7 @@ describe('Phase 02 Mining', () => {
     const c = makeCtx({ next: seeded(42).next });
     for (let i = 0; i < 28800; i++) tick(online, c, 1000);
     const summary = simulateOffline(offline, makeCtx({ next: seeded(42).next }), 28_800_000);
-    expect(offline.account.bank).toEqual(online.account.bank);
+    expect(offline.storage.bank).toEqual(online.storage.bank);
     expect(offline.professionProgress).toEqual(online.professionProgress);
     expect(offline.skills).toEqual(online.skills);
     expect(summary.stoppedReason).toBeNull();
@@ -127,7 +127,7 @@ describe('Phase 02 Mining', () => {
     const s = newGame(1);
     s.skills.mining = xpForLevel(30);
     s.professionProgress.work.mining = 100;
-    s.account.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
+    s.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
     const c = makeCtx(seeded(5));
     expect(startProject(s, c, 'tool_mining')).toBeNull();
     advanceProject(s, c, 1_200_000);

@@ -175,8 +175,8 @@ describe('older characters', () => {
     s.achievements.push('looter_10000');
     settleAchievements(s);
     expect(s.account.achievementRewards).toContain('looter_10000');
-    expect(s.account.stash.length).toBe(STASH_START_PAGES + 1);
+    expect(s.storage.stash.length).toBe(STASH_START_PAGES + 1);
     settleAchievements(s);
-    expect(s.account.stash.length).toBe(STASH_START_PAGES + 1);
+    expect(s.storage.stash.length).toBe(STASH_START_PAGES + 1);
   });
 });

@@ -8,6 +8,7 @@
  *
  * Art generated into src/assets/art (`artUrl` in components/common.tsx) always wins over these.
  */
+import { ZONES, type ZoneDef, type ZoneTerrain } from '../data/zones';
 
 /** Item bases → gear-set pieces. Matched on look as well as slot: starter bases get plain,
  * worn pieces, mithril bases get bright plate. Bases with no fitting piece are left out
@@ -1172,84 +1173,49 @@ export const STATION_ART: Record<string, string> = {
   watchtower: new URL('../assets/icons/navigation/castle.png', import.meta.url).href,
 };
 
-/** Area banners: the only painted landscapes on hand are GegX's forest and tavern, reused as first-pass mood pieces. */
-export const ZONE_ART: Record<string, string> = {
-  mudflats: new URL('../assets/zones/gegx-forest-day.webp', import.meta.url).href,
-  brinecaves: new URL('../assets/scenes/gegx-tavern-night.webp', import.meta.url).href,
-  ashwood: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  blackreed: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  crypt: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  shipgrave: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
-  stormcliffs: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  sanctum: new URL('../assets/zones/gegx-tavern-day.webp', import.meta.url).href,
-  // Act 2: the same few landscapes again until it gets its own art
-  cinderroad: new URL('../assets/zones/gegx-forest-day.webp', import.meta.url).href,
-  saltflats: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  blackgrass: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  caravan: new URL('../assets/zones/gegx-tavern-day.webp', import.meta.url).href,
-  kurgans: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
-  plateau: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  pyretemple: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  burningthrone: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  // Act 3: reused too, until the landscape pack arrives
-  pilgrimgate: new URL('../assets/zones/gegx-tavern-day.webp', import.meta.url).href,
-  almsquarter: new URL('../assets/zones/gegx-forest-day.webp', import.meta.url).href,
-  scourgeyard: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  reliquary: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  bellfoundry: new URL('../assets/zones/gegx-tavern-day.webp', import.meta.url).href,
-  inquisition: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  penitentstair: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
-  choirloft: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  saintswalk: new URL('../assets/zones/gegx-forest-day.webp', import.meta.url).href,
-  highaltar: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  // Act 4: reused too, until the landscape pack arrives
-  hollowpass: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  screefields: new URL('../assets/zones/gegx-forest-day.webp', import.meta.url).href,
-  howlingfells: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  glasslake: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
-  bonequarry: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  icevault: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  mammothroad: new URL('../assets/zones/gegx-forest-day.webp', import.meta.url).href,
-  hangingglacier: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
-  steading: new URL('../assets/zones/gegx-tavern-day.webp', import.meta.url).href,
-  longhall: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  kingsstair: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  giantsthrone: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  // Act 5: reused too, until the landscape pack arrives
-  blackharbor: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  wreckline: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  cinderkey: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  squallbanks: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  lampgulf: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  drownedfleet: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
-  brimstone: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  hollowreef: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
-  thunderhead: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  leviathanrib: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  blackcurrent: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  voicetrench: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  lightless: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  maelstrom: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  // Act 6: reused too, until the landscape pack arrives
-  exilesgate: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  kingsroad: new URL('../assets/zones/gegx-forest-day.webp', import.meta.url).href,
-  tithefields: new URL('../assets/zones/gegx-forest-day.webp', import.meta.url).href,
-  fortobedience: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  bannerfield: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
-  assizes: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  lowercity: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  dryaqueduct: new URL('../assets/zones/gegx-forest-fog.webp', import.meta.url).href,
-  kingsmint: new URL('../assets/zones/gegx-tavern-day.webp', import.meta.url).href,
-  hanginggardens: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
-  burnedarchive: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  longfracture: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  driftingquarter: new URL('../assets/zones/gegx-forest-parallax.webp', import.meta.url).href,
-  kingsreach: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  sunderedhall: new URL('../assets/zones/gegx-tavern-fog.webp', import.meta.url).href,
-  hallofcrowns: new URL('../assets/zones/gegx-tavern-day.webp', import.meta.url).href,
-  ninthstair: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
-  shatteredthrone: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,
+const TERRAIN_ART: Record<ZoneTerrain, string> = {
+  coast: new URL('../assets/zones/terrain-coast.webp', import.meta.url).href,
+  cave: new URL('../assets/zones/terrain-cave.webp', import.meta.url).href,
+  forest: new URL('../assets/zones/terrain-forest.webp', import.meta.url).href,
+  marsh: new URL('../assets/zones/terrain-marsh.webp', import.meta.url).href,
+  plains: new URL('../assets/zones/terrain-plains.webp', import.meta.url).href,
+  town: new URL('../assets/zones/terrain-town.webp', import.meta.url).href,
+  ruins: new URL('../assets/zones/terrain-ruins.webp', import.meta.url).href,
+  mountains: new URL('../assets/zones/terrain-mountains.webp', import.meta.url).href,
+  workshop: new URL('../assets/zones/terrain-workshop.webp', import.meta.url).href,
+  underworks: new URL('../assets/zones/terrain-underworks.webp', import.meta.url).href,
 };
+
+const TERRAIN_VARIANTS: Partial<Record<ZoneTerrain, Record<string, string>>> = {
+  coast: {
+    storm: new URL('../assets/zones/terrain-coast-storm.webp', import.meta.url).href,
+  },
+  cave: {
+    bandits: new URL('../assets/zones/terrain-cave-bandits.webp', import.meta.url).href,
+    spiders: new URL('../assets/zones/terrain-cave-spiders.webp', import.meta.url).href,
+  },
+  forest: {
+    night: new URL('../assets/zones/terrain-forest-night.webp', import.meta.url).href,
+  },
+  mountains: {
+    bears: new URL('../assets/zones/terrain-mountains-bears.webp', import.meta.url).href,
+  },
+  workshop: {
+    forge: new URL('../assets/zones/terrain-workshop-forge.webp', import.meta.url).href,
+  },
+};
+
+export function terrainArt(zone: ZoneDef): string | undefined {
+  if (!zone.terrain) return undefined;
+  const variant = zone.terrainVariant && TERRAIN_VARIANTS[zone.terrain]?.[zone.terrainVariant];
+  return variant || TERRAIN_ART[zone.terrain];
+}
+
+export const ZONE_ART: Record<string, string> = {};
+for (const zone of ZONES) {
+  const art = terrainArt(zone);
+  if (art) ZONE_ART[zone.id] = art;
+}
 
 export const SCENE_ART: Record<string, string> = {
   title: new URL('../assets/zones/gegx-forest-night.webp', import.meta.url).href,

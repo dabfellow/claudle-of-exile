@@ -36,12 +36,12 @@ describe('gear storage', () => {
   it('salvages the whole ground pile into dust', () => {
     const s = newGame(1);
     s.ground.push(sword(s), sword(s));
-    s.account.bank.arcane_dust = 0;
+    s.storage.bank.arcane_dust = 0;
     expect(salvagePile(s, ctx(), 'ground')).toBeGreaterThan(0);
     expect(s.ground).toHaveLength(0);
     expect(groundAtRisk(s)).toBe(0);
     expect(s.lifetime.salvaged).toBe(2);
-    expect(s.account.bank.arcane_dust).toBeGreaterThan(0);
+    expect(s.storage.bank.arcane_dust).toBeGreaterThan(0);
   });
 
   it('salvages only the given items from a pile', () => {
@@ -92,11 +92,11 @@ describe('gear storage', () => {
 
   it('moves gear between bag and stash pages, spilling to the next page', () => {
     const s = newGame(1);
-    for (let i = 0; i < STASH_PAGE_SIZE; i++) s.account.stash[0].push(sword(s));
+    for (let i = 0; i < STASH_PAGE_SIZE; i++) s.storage.stash[0].push(sword(s));
     const a = sword(s);
     s.inventory.push(a);
     expect(stashItems(s, ctx(), [a.uid], 0)).toBe(1);
-    expect(s.account.stash[1]).toContain(a);
+    expect(s.storage.stash[1]).toContain(a);
     expect(takeFromStash(s, ctx(), [a.uid])).toBe(1);
     expect(s.inventory).toContain(a);
   });
@@ -105,18 +105,18 @@ describe('gear storage', () => {
     const s = veteran(newGame(1));
     const a = sword(s);
     const b = sword(s);
-    s.account.stash[2].push(a, b);
+    s.storage.stash[2].push(a, b);
     expect(sellItems(s, ctx(), [a.uid])).toBeGreaterThan(0);
     expect(salvage(s, ctx(), [b.uid])).toBeGreaterThan(0);
-    expect(s.account.stash[2]).toHaveLength(0);
+    expect(s.storage.stash[2]).toHaveLength(0);
   });
 
   it('stash pages cost more each time', () => {
     const s = newGame(1);
-    s.account.bank.gold = 10_000;
+    s.storage.bank.gold = 10_000;
     expect(stashPagePrice(s)).toBe(1000);
     expect(buyStashPage(s, ctx())).toBeNull();
-    expect(s.account.stash).toHaveLength(4);
+    expect(s.storage.stash).toHaveLength(4);
     expect(stashPagePrice(s)).toBe(2500);
   });
 

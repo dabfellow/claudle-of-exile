@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FLASKS, flaskDef, INSTILL_CONDITIONS } from '../../data/flasks';
+import { FISHING_FLASK } from '../../data/fishing';
 import { describeFlaskMod, flaskEffectText, flaskName, flaskStats } from '../../engine/flasks';
 import type { FlaskInstance } from '../../engine/types';
 import { game } from '../../game';
@@ -74,7 +75,7 @@ export function FlaskTip({ f, pinned = false }: { f: FlaskInstance; pinned?: boo
 }
 
 export function pinFlask(f: FlaskInstance): void {
-  togglePin({ key: `flask-${f.uid}`, title: flaskName(f), render: () => <FlaskTip f={game.state.flaskSlots.find((x) => x?.uid === f.uid) ?? game.state.account.flaskStash.find((x) => x.uid === f.uid) ?? f} pinned /> });
+  togglePin({ key: `flask-${f.uid}`, title: flaskName(f), render: () => <FlaskTip f={game.state.flaskSlots.find((x) => x?.uid === f.uid) ?? game.state.storage.flaskStash.find((x) => x.uid === f.uid) ?? f} pinned /> });
 }
 
 /** Life and Mana flasks group by kind; each utility flask (Granite, Ruby, …) is its own group. */
@@ -87,6 +88,7 @@ const SHELF_ORDER: { id: string; label: string }[] = [
   { id: 'life', label: 'Life' },
   { id: 'mana', label: 'Mana' },
   ...FLASKS.filter((d) => d.kind === 'utility').map((d) => ({ id: d.id, label: d.name.replace(' Flask', '') })),
+  { id: FISHING_FLASK, label: flaskDef(FISHING_FLASK).name },
 ];
 
 /** Spare flasks behind one tab per kind, so a full rack isn't one long jumble. */

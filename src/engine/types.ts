@@ -6,6 +6,7 @@ import type { ClassId } from '../data/classes';
 import type { CultureId } from '../data/expedition';
 import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
+import type { FishingPort } from './fishing';
 
 export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'agility' | 'archaeology' | 'smelting' | 'smithing' | 'woodcrafting' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'astrology' | 'fishing';
 export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'agility', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology', 'fishing'];
@@ -223,6 +224,8 @@ export interface FlaskInstance {
 }
 
 export interface Dot {
+  /** Share of a player's ailment damage attributable to each monster. */
+  sources?: Record<number, number>;
   /** Winter's Pyre exception: this ignite was seeded by cold, never generic fire. */
   coldSource?: boolean;
   /** Player ailment damage already emitted to the combat log. */
@@ -245,6 +248,9 @@ export interface Dot {
 
 export interface MonsterInstance {
   uid: number;
+  /** Damage to the player in the current and last completed DPS windows. */
+  dealtToPlayer?: number;
+  lastDealtToPlayer?: number;
   defId: string;
   name: string;
   level: number;
@@ -266,7 +272,8 @@ export interface MonsterInstance {
   critChance?: number;
   critMulti?: number;
   dotShare?: number;
-  attackAilment?: 'poison' | 'bleed' | 'burn';
+  attackAilment?: 'poison' | 'bleed' | 'burn' | 'ignite';
+  gearCheckWarning?: string;
   /** Original stats used for calibration and subsequent pool scaling. */
   budget?: { life: number; damage: number; attackMs: number; damageType: DamageType };
   dmgType: DamageType;
@@ -449,6 +456,7 @@ export type GroundKind = 'burning' | 'chilled' | 'frozen' | 'shocked' | 'caustic
 /** A hazard on a battlefield cell (the player's, hurting monsters) or under the player (cell -1, a monster's). */
 export interface Ground {
   cell: number;
+  sourceUid?: number;
   kind: GroundKind;
   dps: number;
   remainingMs: number;
@@ -584,8 +592,12 @@ export interface CombatRuntime {
   bossRespawnMs?: number;
   /** ms before the gates open: the pause while you search for monsters (tests hold it high to stop spawns) */
   spawnMs: number;
+  /** The randomly chosen entry hex for the next opening pack. */
+  spawnCell?: number;
   /** ms until each edge gate (battlefield EDGE_CELLS) sends its next monster */
   gates?: number[];
+  /** Number of normal packs spawned in a campaign area that has an authored pack. */
+  campaignPacks?: number;
   /** the monster the player clicked to focus, the one the last skill went for, and the one being closed in on */
   lockedUid?: number;
   targetUid?: number;
@@ -688,8 +700,6 @@ export interface CombatRuntime {
   manaSpent?: { amount: number; remainingMs: number }[];
   /** Momentum: landed hits can only strip stacks once during this grace window. */
   momentumHitGraceMs?: number;
-  /** Range posture movement pulse. */
-  postureMs?: number;
   /** Overclock: time spent running hot, and time left locked up */
   heatMs: number;
   overheatMs: number;
@@ -804,7 +814,7 @@ export interface VendorOffer {
 }
 
 /** how fast the player pushes through an area: sets how often new monsters arrive */
-export type Movement = 'flee' | 'slow' | 'walk' | 'run';
+export type Movement = 'flee' | 'walk' | 'run';
 export type Posture = 'brawler' | 'kiter' | 'cautious';
 
 /** Which monster skills go for: a priority group first, then an order inside it (nearest breaks ties). */
@@ -827,7 +837,7 @@ export interface Settings {
   lootFilter?: import('./lootFilter').LayeredLootFilter;
   reducedMotion: boolean;
   movement: Movement;
-  /** Automatic combat spacing; legacy movement remains the low-level pace used by old saves and tests. */
+  /** Legacy posture carried in old saves and feedback snapshots. */
   posture?: Posture;
   /** flee on low life, then resume the chosen pace once healed */
   autoFlee: boolean;
@@ -941,6 +951,10 @@ export interface AccountState {
   realm: Realm;
   /** goes up with every save, so the newest copy can be told from an older one */
   rev: number;
+  /** Advances whenever stock moves between a character and the Guild Stash. */
+  guildRev?: number;
+  /** The latest Guild Stash transfer for each character, used to reject old exported saves. */
+  guildTransfers?: Record<string, number>;
   hideout: Record<string, number>;
   automation: AutomationUnlocks;
   /** from before the War Table sold auto flee and auto challenge: keeps both without the upgrades */
@@ -966,7 +980,7 @@ export interface AccountState {
   exileUnlocked: boolean;
   /** some character on the account has beaten the last act, so the Map Device stays awake for all of them */
   campaignDone?: boolean;
-  /** realm-shared map supply (`map_t1`..`map_t10`, `doomed_t1`..`doomed_t5`) */
+  /** maps deposited in the realm's Guild Stash */
   maps?: Record<string, number>;
   /** realm-shared Sextant slots on the Map Device */
   sextants?: (SextantSlot | null)[];
@@ -985,6 +999,8 @@ export interface AccountState {
    * but these rewards are shared, so each is added once, the first time any character in the realm earns it.
    */
   achievementRewards?: string[];
+  fishingUnlocked?: boolean;
+  fishing?: FishingPort;
 }
 
 export interface MapSettings {
@@ -995,6 +1011,9 @@ export interface MapSettings {
   /** whether to roll normal maps with random danger & reward affixes */
   rollNormalMaps?: boolean;
 }
+
+export type CharacterStorage = Pick<AccountState,
+  'bank' | 'stash' | 'overflow' | 'uniqueStash' | 'gems' | 'supportGems' | 'flaskStash' | 'stashAffinities'>;
 
 export type StashAffinity = 'currency' | 'maps' | 'gems' | 'flasks' | 'gear' | 'contraband';
 
@@ -1025,6 +1044,7 @@ export interface AtlasState {
 export interface MarketHold {
   /** names the step on the server, so a lost reply can be checked */
   op: string;
+  characterId?: string;
   item?: Item;
   currency?: string;
   amount?: number;
@@ -1069,7 +1089,7 @@ export interface MapRun {
 }
 
 export interface MapState {
-  /** maps held, synced with the realm's `s.account.maps` */
+  /** maps held by this character */
   stock: Record<string, number>;
   run: MapRun | null;
   /** what auto-run keeps opening */
@@ -1171,6 +1191,9 @@ export interface GameState {
   version: number;
   /** the shared account block; a running game holds the live one, and saves leave it out */
   account: AccountState;
+  /** The character's spendable supplies and personal stash, saved with this character. */
+  storage: CharacterStorage;
+  guildTransferRev?: number;
   /** account data this character still has to hand over (see settleCharacter) */
   unmerged?: AccountTransfer;
   /** currency, materials, gems and flasks this character still has to hand over (see settleCharacter) */
@@ -1252,6 +1275,7 @@ export interface GameState {
   greenhouse: { actionId: string; progress: number } | null;
   /** what you've eaten: its clock only runs while you fight */
   meal: { id: string; remainingMs: number } | null;
+  fishingFlaskClaimed?: boolean;
   /** when a meal runs out, eat another of the same from the bank */
   keepEating: boolean;
   selectedGemRecycleUid?: number | null;

@@ -1,4 +1,5 @@
 import type { InstillCondition, StatKey } from '../engine/types';
+import { FISHING_FLASK } from './fishing';
 
 export interface FlaskDef {
   id: string;
@@ -129,7 +130,15 @@ export const FLASKS: FlaskDef[] = [
 
 export const UNIQUE_FLASKS: FlaskDef[] = FLASKS.filter((f) => f.unique && !f.projectOnly);
 
+const BOTTOMLESS_TIDE: FlaskDef = {
+  id: FISHING_FLASK, name: 'Bottomless Tide', kind: 'utility', color: '#5aefdc', unique: true,
+  projectOnly: true, dropLevel: Infinity, price: 0, maxCharges: 60, chargesPerUse: 20, durationMs: 8000,
+  buff: { attackSpeedPct: 50, castSpeedPct: 50, lifeRegenPct: 8 },
+  desc: 'Restores 10 charges per second in combat. 50% increased Attack and Cast Speed and regenerates 8% Life per second for 8s.',
+};
+
 export function flaskDef(id: string): FlaskDef {
+  if (id === FISHING_FLASK) return BOTTOMLESS_TIDE;
   const f = FLASKS.find((x) => x.id === id);
   if (!f) throw new Error(`Unknown flask ${id}`);
   return f;

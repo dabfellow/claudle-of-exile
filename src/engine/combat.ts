@@ -1,6 +1,7 @@
 import { ACTIVE_GEMS, activeGemDef, DEFAULT_ATTACK, gemReqLevel, SKILL_BAR_SLOTS, supportGemDef, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
 import { isHardcore } from './challenge';
 import { agilityCut } from '../data/agility';
+import { CAMPAIGN_GEAR_CHECKS } from '../data/campaignGearChecks';
 import { levelOf } from './xp';
 import { groundAtRisk, groundOnDeath } from './storage';
 import {
@@ -54,7 +55,7 @@ import {
   MECHANIC_INFO,
 } from '../data/zones';
 import { MONSTER_MODS, monsterMod, type MonsterModId } from '../data/monsterMods';
-import { absorbMonsterEs, applyMonsterProfile, calibrateMonsterDamage, calibrateMonsterPool, monsterMitigation, rechargeMonsterEs, witherTaken, scaleMonsterPools } from './monsters';
+import { absorbMonsterEs, applyCampaignGearCheck, applyMonsterProfile, calibrateMonsterDamage, calibrateMonsterPool, monsterMitigation, rechargeMonsterEs, witherTaken, scaleMonsterPools } from './monsters';
 import {
   advanceMinions,
   advanceMonsters,
@@ -95,7 +96,6 @@ import {
   minionTarget,
   neighbors,
   PLAYER_SPOT,
-  POSTURES,
   SHOCKED_GROUND_TAKEN,
   STEP_OUT_RATE,
   stepOutOfGround,
@@ -106,6 +106,8 @@ import { applyDeathPenalty, areaXpMultiplier, characterLevel } from './character
 import { bossLeftToRules, castOrder, ruleLockReason, rulesPass, skillAim } from './automation';
 import type { Ctx } from './context';
 import { flaskStats } from './flasks';
+import { FISHING_FLASK } from '../data/fishing';
+import { hasFishingPrize } from './fishing';
 import { FLASK_SLOT_TYPES } from '../data/flasks';
 import { ailmentNumbers, BURN_MS, BURN_SHARE, chainFalloff, gemChains, gemUseReason, IGNITE_MS, IGNITE_SHARE, grantGemXp, LIFE_RESERVE_PCT, MIN_COOLDOWN_MS, minionStats, skillNumbers, stormStats, SPELL_ADDED_EFFECTIVENESS, spellBaseAt, weaponPctAt, type SkillNumbers } from './gems';
 import { newUid } from './items';
@@ -177,7 +179,7 @@ import {
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, type Derived } from './stats';
 import { autoChallengeUnlocked, autoFleeUnlocked, autoNextZoneUnlocked, gemsArrivingAt } from './hideout';
 import { openReachedZones } from './progress';
-import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, Minion, MonsterInstance, Movement, Posture, SkillGemInstance, Storm, TargetPriority, Targeting } from './types';
+import type { CombatRuntime, DamageType, Dot, FlaskInstance, GameState, Ground, GroundKind, InstillCondition, Minion, MonsterInstance, Movement, SkillGemInstance, Storm, TargetPriority, Targeting } from './types';
 import { sumOfAllMultiplier, WORLDHEART_TAKEN } from './pinnacles';
 
 export const SPAWN_DELAY_MS = 900;
@@ -268,7 +270,6 @@ function newRuntime(zoneId: string): CombatRuntime {
     manaFrac: 1,
     manaSpent: [],
     momentumHitGraceMs: 0,
-    postureMs: 0,
     heatMs: 0,
     overheatMs: 0,
     hungerMs: HUNGER_MS,
@@ -322,25 +323,13 @@ export function retreat(s: GameState): void {
 /** Picking a pace by hand also takes back control from auto-flee. */
 export function setMovement(s: GameState, movement: Movement): void {
   s.settings.movement = movement;
-  // Low-level callers can still take direct control; the player HUD uses setPosture instead.
   s.settings.posture = undefined;
   if (s.combat) s.combat.fleeing = false;
 }
 
-export function setPosture(s: GameState, posture: Posture): void {
-  s.settings.posture = posture;
-  if (s.combat) s.combat.fleeing = false;
-}
-
-/** The pace in effect: the player's choice, unless auto-flee has taken over. */
+/** The selected pace. Emergency flee pauses arrivals separately. */
 export function currentMovement(s: GameState): Movement {
-  const c = s.combat;
-  if (c?.fleeing) return 'flee';
-  if (!c || !s.settings.posture) return s.settings.movement ?? 'walk';
-  const living = aliveMonsters(c);
-  if (s.settings.posture === 'cautious') return 'slow';
-  if (s.settings.posture === 'kiter') return living.some((m) => cellRing(m.cell) <= 1) || c.ground.some((g) => g.cell === PLAYER_SPOT) ? 'run' : 'slow';
-  return living.length > 0 && living.every((m) => cellRing(m.cell) > 3) ? 'run' : 'walk';
+  return s.settings.movement ?? 'walk';
 }
 
 // ---------- monsters ----------
@@ -573,10 +562,14 @@ function spawnPack(s: GameState, ctx: Ctx, gate: number): void {
   const n = rInt(ctx.rng, lo, hi);
   const scale = n > 1 ? PACK_LIFE_SCALE : 1;
   const room = MOVEMENT[currentMovement(s)].maxField - aliveMonsters(c).length;
-  const others = freeEdge(c.monsters)
+  const others = freeEdge(bodies(c))
     .filter((i) => i !== gate)
     .sort((a, b) => cellDistance(a, gate) - cellDistance(b, gate));
   const cells = [gate, ...others].slice(0, Math.min(n, room));
+  const gearCheck = !s.maps.run && cells.length ? CAMPAIGN_GEAR_CHECKS[zone.id] : undefined;
+  const campaignPack = c.campaignPacks ?? 0;
+  const checkLeader = gearCheck && campaignPack % 3 === 0 ? zone.monsters.find((m) => m.id === gearCheck.monsterId) : undefined;
+  if (gearCheck) c.campaignPacks = campaignPack + 1;
   const packNum = cells.length ? onMapPack(s) : 0;
   const mapMods = s.maps.run ? runModifiers(s) : null;
   const isElitePack = !!(s.maps.run?.elitePacks && packNum > 0 && s.maps.run.elitePacks.includes(packNum));
@@ -588,10 +581,15 @@ function spawnPack(s: GameState, ctx: Ctx, gate: number): void {
   const sharedMagicMod = magic ? [pick(ctx.rng, MONSTER_MODS.filter((m) => (m.minLevel ?? 1) <= zone.levelRange[1])).id] : [];
   const hulk = isHulkingSurge ? 0 : !magic && rare < 0 && zone.act >= HULKING.fromAct && ctx.rng.next() < HULKING.chance ? 0 : -1;
   cells.forEach((cell, i) => {
-    const m = makeMonster(pick(ctx.rng, zone.monsters), false, newUid(s), scale);
-    if (magic) makeMonsterRarity(m, 'magic', ctx.rng, sharedMagicMod);
-    else if (i === rare) makeMonsterRarity(m, 'rare', ctx.rng);
-    if (i === hulk) makeHulking(m);
+    const regular = pick(ctx.rng, zone.monsters);
+    const leader = checkLeader && i < (gearCheck?.major && cells.length >= 4 ? 2 : 1) ? checkLeader : undefined;
+    const m = makeMonster(leader ?? regular, false, newUid(s), scale);
+    if (gearCheck && leader) applyCampaignGearCheck(m, gearCheck);
+    else {
+      if (magic) makeMonsterRarity(m, 'magic', ctx.rng, sharedMagicMod);
+      else if (i === rare) makeMonsterRarity(m, 'rare', ctx.rng);
+      if (i === hulk) makeHulking(m);
+    }
     if (mapMods) {
       if (mapMods.monsterLifeMult !== 1 || mapMods.monsterDmgMult !== 1) {
         scaleMonsterPools(m, mapMods.monsterLifeMult, mapMods.monsterDmgMult);
@@ -616,7 +614,9 @@ function spawnPack(s: GameState, ctx: Ctx, gate: number): void {
     c.monsters.push(m);
   });
   if (cells.length) {
-    ctx.emit({ t: 'spawn', name: cells.length > 1 ? `${cells.length} monsters` : c.monsters[c.monsters.length - 1].name, boss: false });
+    const name = checkLeader && gearCheck && cells.length > 1 ? `${gearCheck.name} pack`
+      : cells.length > 1 ? `${cells.length} monsters` : c.monsters[c.monsters.length - 1].name;
+    ctx.emit({ t: 'spawn', name, boss: false });
     triggerInstilled(s, ctx, 'packStart');
   }
 }
@@ -706,18 +706,18 @@ function spawnBoss(s: GameState, ctx: Ctx): void {
 /**
  * Every edge hex is a gate with its own timer, sped up by how fast the player is moving -- even mid-fight, so a slow
  * kill means more monsters walking in. A gate that's due waits while it's blocked or the field is as full as the pace
- * allows. An empty field fills after a short search unless the player is fleeing. The boss waits for the field to
- * clear, and nothing else arrives while it's alive. A farmed boss is all that comes: fleeing holds its timer, and
+ * allows. An empty field fills after a short search. The boss waits for the field to clear, and nothing else arrives
+ * while it's alive. A farmed boss is all that comes. Emergency flee pauses arrivals, and
  * offline without wind-up rules it stays in hiding like any other boss.
  */
 function advanceSpawns(s: GameState, ctx: Ctx, dt: number): void {
   const c = s.combat!;
   const zone = zoneDef(c.zoneId);
+  if (c.fleeing) return;
   // a boss on 0 life still counts until it's reaped, or a farmed one would come back in the same tick
   if (c.monsters.some((m) => m.isBoss && !m.dead)) return;
   const alive = aliveMonsters(c).length;
   if (c.bossFarm && (!ctx.offline || bossLeftToRules(s, zone))) {
-    if (!MOVEMENT[currentMovement(s)].spawnRate) return;
     c.bossRespawnMs = Math.max(0, (c.bossRespawnMs ?? 0) - dt);
     if (!c.bossRespawnMs && !alive) spawnBoss(s, ctx);
     return;
@@ -732,38 +732,64 @@ function advanceSpawns(s: GameState, ctx: Ctx, dt: number): void {
   const pace = MOVEMENT[currentMovement(s)];
   if (!alive && c.spawnMs <= 0) c.spawnMs = SPAWN_DELAY_MS;
   if (c.spawnMs > 0) {
+    if (!alive && !boss) {
+      const field = bodies(c);
+      if (c.spawnCell === undefined || field.some((m) => m.cell === c.spawnCell && m.life > 0)) {
+        const free = freeEdge(field);
+        c.spawnCell = free.length ? pick(ctx.rng, free) : undefined;
+      }
+    }
     c.spawnMs = Math.max(0, c.spawnMs - dt * pace.spawnRate);
     if (c.spawnMs > 0 || alive) return;
     // the search is over: the first monsters walk in straight away
     if (boss) spawnBoss(s, ctx);
-    else spawnPack(s, ctx, pick(ctx.rng, freeEdge(c.monsters)));
+    else if (c.spawnCell !== undefined) spawnPack(s, ctx, c.spawnCell);
+    c.spawnCell = undefined;
     return;
   }
   c.gates ??= EDGE_CELLS.map(() => gateTimer(ctx, zone.id) * ctx.rng.next());
   const gates = c.gates;
-  EDGE_CELLS.forEach((cell, k) => {
-    gates[k] = Math.max(0, gates[k] - dt * pace.spawnRate);
-    if (gates[k] > 0 || aliveMonsters(c).length >= pace.maxField) return;
-    if (c.monsters.some((m) => m.cell === cell && m.life > 0)) return;
-    gates[k] = gateTimer(ctx, zone.id);
-    spawnPack(s, ctx, cell);
-  });
+  const elapsed = dt * pace.spawnRate;
+  for (let k = 0; k < gates.length; k++) gates[k] -= elapsed;
+  while (gates.some((ms) => ms <= 0) && aliveMonsters(c).length < pace.maxField && mapPackLeft(s)) {
+    const entry = nextFreeGate(c);
+    if (!entry || entry.ms > 0) break;
+    gates[entry.index] = gateTimer(ctx, zone.id);
+    spawnPack(s, ctx, entry.cell);
+  }
+  for (let k = 0; k < gates.length; k++) gates[k] = Math.max(0, gates[k]);
 }
 
-/** Ms until the next monster walks in, for the movement bar (null while nothing can arrive). */
-export function nextArrivalMs(s: GameState): number | null {
+function nextFreeGate(c: CombatRuntime): { cell: number; ms: number; index: number } | undefined {
+  const free = new Set(freeEdge(bodies(c)));
+  let next: ReturnType<typeof nextFreeGate>;
+  EDGE_CELLS.forEach((cell, index) => {
+    const ms = c.gates?.[index] ?? 0;
+    if (free.has(cell) && (!next || ms < next.ms)) next = { cell, ms, index };
+  });
+  return next;
+}
+
+/** The next arrival visible to a player in live combat, on the hex that will receive it. */
+export function nextArrival(s: GameState): { cell: number; ms: number } | null {
   const c = s.combat;
-  if (!c) return null;
+  if (!c || c.fleeing || c.monsters.some((m) => m.isBoss && !m.dead)) return null;
+  const alive = aliveMonsters(c).length;
+  if (c.bossFarm) return alive ? null : { cell: BOSS_ENTRY, ms: c.bossRespawnMs ?? 0 };
   const pace = MOVEMENT[currentMovement(s)];
-  if (!pace.spawnRate || aliveMonsters(c).length >= pace.maxField) return null;
-  if (c.spawnMs > 0 || !c.gates) return c.spawnMs / pace.spawnRate;
-  return Math.min(...c.gates) / pace.spawnRate;
+  const searchMs = (c.spawnMs > 0 || alive ? c.spawnMs : SPAWN_DELAY_MS) / pace.spawnRate;
+  if (bossCalled(s, c.zoneId)) return alive ? null : { cell: BOSS_ENTRY, ms: searchMs };
+  if (alive >= pace.maxField || !mapPackLeft(s)) return null;
+  if (!alive) return c.spawnCell === undefined ? null : { cell: c.spawnCell, ms: searchMs };
+  const entry = nextFreeGate(c);
+  if (!entry || c.spawnMs > 0) return null;
+  return { cell: entry.cell, ms: entry.ms / pace.spawnRate };
 }
 
 /** Fleeing outpaces the field: every so often the monster furthest behind loses track of you. Bosses keep up. */
 function shakeOff(s: GameState, ctx: Ctx, dt: number): void {
   const c = s.combat!;
-  if (currentMovement(s) !== 'flee') {
+  if (!c.fleeing) {
     c.shakeMs = FLEE_SHAKE_MS;
     return;
   }
@@ -793,30 +819,15 @@ export function autoNextZoneStep(s: GameState, ctx: Ctx): void {
 /** Auto-flee: on low life, back off until healed, then go back to the chosen pace. */
 function autoFlee(s: GameState, ctx: Ctx, d: Derived): void {
   const c = s.combat!;
-  const cautious = s.settings.posture === 'cautious';
-  const lifeFlasksEmpty = s.flaskSlots
-    .filter((f) => f && flaskStats(f).def.kind === 'life')
-    .every((f) => f!.charges < flaskStats(f!).chargesPerUse);
-  const enabled = (s.settings.autoFlee && autoFleeUnlocked(s)) || (cautious && lifeFlasksEmpty);
+  const enabled = s.settings.autoFlee && autoFleeUnlocked(s);
   if (!enabled) c.fleeing = false;
-  else if (!c.fleeing && s.life < d.maxLife * AUTO_FLEE_AT && c.monsters.length && (!cautious || lifeFlasksEmpty)) {
+  else if (!c.fleeing && s.life < d.maxLife * AUTO_FLEE_AT && c.monsters.length) {
     c.fleeing = true;
     ctx.emit({ t: 'info', text: 'Badly hurt: fleeing until you recover' });
   } else if (c.fleeing && s.life >= d.maxLife * AUTO_FLEE_RESUME) {
     c.fleeing = false;
-    ctx.emit({ t: 'info', text: `Recovered: ${POSTURES[s.settings.posture ?? 'brawler'].name} posture resumed` });
+    ctx.emit({ t: 'info', text: `Recovered: ${MOVEMENT[currentMovement(s)].name.toLowerCase()} resumed` });
   }
-}
-
-/** Kiter posture creates real spacing on the fixed-player hex field without deleting the whole pack. */
-function postureStep(s: GameState, ctx: Ctx, dt: number): void {
-  const c = s.combat!;
-  if (s.settings.posture !== 'kiter' || c.fleeing) return;
-  c.postureMs = Math.max(0, (c.postureMs ?? 0) - dt);
-  if (c.postureMs > 0 || !aliveMonsters(c).some((m) => !m.isBoss && cellRing(m.cell) === 1)) return;
-  c.postureMs = 1000;
-  const moved = knockBack(c.monsters, army(c));
-  if (moved) ctx.emit({ t: 'info', text: `Kiter posture opens space from ${moved} ${moved === 1 ? 'enemy' : 'enemies'}` });
 }
 
 /** Damage a monster hit does to the player after mitigation. */
@@ -855,6 +866,7 @@ export function flaskRecoveryAmount(d: Derived, f: FlaskInstance): number {
 export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): string | null {
   const f = s.flaskSlots[slot];
   if (!f) return 'Empty slot';
+  if (f.flaskId === FISHING_FLASK && !hasFishingPrize(s, 4)) return 'This flask belongs to Saltmere’s champions.';
   if (!s.combat) return 'Only usable in combat';
   const st = flaskStats(f);
   if (f.charges < st.chargesPerUse) return 'Not enough charges';
@@ -1009,13 +1021,16 @@ export function targetOrder(s: GameState, aim?: SkillAim): MonsterInstance[] {
 export function focusTarget(s: GameState): MonsterInstance | undefined {
   const c = s.combat;
   if (!c) return undefined;
-  return c.monsters.find((m) => m.uid === c.targetUid && m.life > 0) ?? targetOrder(s)[0];
+  return c.monsters.find((m) => m.uid === c.lockedUid && m.life > 0 && !m.dead)
+    ?? c.monsters.find((m) => m.uid === c.targetUid && m.life > 0 && !m.dead)
+    ?? targetOrder(s)[0];
 }
 
 /** Click a monster to focus it until it dies; click it again to let the targeting setting choose. */
 export function lockTarget(s: GameState, uid: number): void {
   if (!s.combat) return;
   s.combat.lockedUid = s.combat.lockedUid === uid ? undefined : uid;
+  s.combat.targetUid = undefined;
 }
 
 /** How many rings out a skill reaches: its own range, else melee attacks 1 (bows and a wand's basic attack shoot) and the rest the whole field. */
@@ -1092,6 +1107,7 @@ export interface RuleContext {
   lifePct: number;
   manaPct: number;
   enemies: number;
+  dangerousPack: boolean;
   targetLifePct: number;
   /** a slam or nova winding up */
   casting: boolean;
@@ -1130,6 +1146,7 @@ export function ruleContext(s: GameState, d: Derived): RuleContext {
     lifePct: (s.life / d.maxLife) * 100,
     manaPct: d.maxMana ? (s.mana / d.maxMana) * 100 : 0,
     enemies: alive.length,
+    dangerousPack: alive.some((m) => !!m.gearCheckWarning),
     targetLifePct: target ? (target.life / target.maxLife) * 100 : 0,
     casting: alive.some((m) => m.casting >= 0 && !channeling(m)),
     channeling: alive.some(channeling),
@@ -1193,6 +1210,8 @@ export function ruleAllows(rule: TacticRule, rc: RuleContext, active: boolean): 
       return rc.manaPct < v;
     case 'enemiesAtLeast':
       return rc.enemies >= v;
+    case 'dangerousPack':
+      return rc.dangerousPack;
     case 'targetLifeAbove':
       return rc.targetLifePct > v;
     case 'notActive':
@@ -1774,7 +1793,8 @@ function applyDot(mon: Pick<MonsterInstance, 'dots'>, dot: Dot, cap = 1): void {
   const burning = dot.kind === 'burn' && mon.dots.find((x) => x.kind === 'burn');
   if (burning) {
     const left = (burning.dps * burning.remainingMs) / 1000 + (dot.dps * dot.remainingMs) / 1000;
-    Object.assign(burning, dot, { dps: (left * 1000) / dot.remainingMs });
+    const sources = burning.sources || dot.sources ? ailmentSources([burning, dot], left) : undefined;
+    Object.assign(burning, dot, { dps: (left * 1000) / dot.remainingMs, sources });
     return;
   }
   // bleed / ignite: only the strongest of each kind applies
@@ -1796,11 +1816,19 @@ export function liveDps(c: CombatRuntime): number {
   return ((c.dealt.at(-2) ?? 0) * 1000) / DPS_WINDOW_MS;
 }
 
+export function monsterDps(mon: MonsterInstance): number {
+  return ((mon.lastDealtToPlayer ?? 0) * 1000) / DPS_WINDOW_MS;
+}
+
 function tickDpsMeter(c: CombatRuntime, dt: number): void {
   c.dealtMs += dt;
   while (c.dealtMs >= DPS_WINDOW_MS) {
     c.dealtMs -= DPS_WINDOW_MS;
     c.dealt.push(0);
+    for (const m of c.monsters) {
+      m.lastDealtToPlayer = m.dealtToPlayer;
+      m.dealtToPlayer = undefined;
+    }
   }
   if (c.dealt.length > 2) c.dealt.splice(0, c.dealt.length - 2);
 }
@@ -3202,7 +3230,7 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   gainCharges(s, mon.isBoss ? 8 : 1, d);
   const deathsDoorBonus = d.raw.deathsDoor > 0 && (mon.isBoss || (mon.lootMult ?? 1) > 1);
   const prevLootMult = mon.lootMult;
-  const goldBefore = s.account?.bank?.gold ?? 0;
+  const goldBefore = s.storage.bank.gold ?? 0;
   let lootCtx = ctx;
   if (deathsDoorBonus) {
     mon.lootMult = (mon.lootMult ?? 1) * 1.5;
@@ -3211,20 +3239,20 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
     }
   }
   rollLoot(s, lootCtx, mon, zone, d);
-  if (deathsDoorBonus && s.account?.bank) {
+  if (deathsDoorBonus) {
     mon.lootMult = prevLootMult;
-    const goldGained = (s.account.bank.gold ?? 0) - goldBefore;
+    const goldGained = (s.storage.bank.gold ?? 0) - goldBefore;
     if (goldGained > 0) {
       const baseGold = Math.round(goldGained / 1.5);
       const extraGold = baseGold * 2 - goldGained;
-      if (extraGold > 0) s.account.bank.gold = (s.account.bank.gold ?? 0) + extraGold;
+      if (extraGold > 0) s.storage.bank.gold = (s.storage.bank.gold ?? 0) + extraGold;
     }
   }
   rollMapDrops(s, ctx, mon);
 
   // Doomed Map Searing Aftermath: packs leave Burning Ground for 4s on death
   if (!mon.isBoss && s.maps.run?.doomedMods?.includes('searing_aftermath') && !aliveMonsters(c).some((m) => !m.isBoss && m !== mon)) {
-    layGround(c.ground, PLAYER_SPOT, 'burning', mon.damage * MONSTER_GROUND_DPS * 1.5, 4000);
+    layGround(c.ground, PLAYER_SPOT, 'burning', mon.damage * MONSTER_GROUND_DPS * 1.5, 4000, mon.uid);
   }
 
   // Virulence: poisons jump to another enemy
@@ -3837,6 +3865,7 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     dmg = Math.round(dmg - fromMana);
   }
   s.life -= dmg;
+  mon.dealtToPlayer = (mon.dealtToPlayer ?? 0) + dmg + toEs + absorbed;
   if ((mon.leechPct ?? 0) > 0 && dmg > 0) mon.life = Math.min(mon.maxLife, mon.life + (dmg * mon.leechPct) / 100);
   ctx.emit({ t: 'hit', target: 'player', amount: dmg, dmgType: type, crit: critical || undefined, absorbed: absorbed || undefined, es: Math.round(toEs) || undefined, monsterUid: mon.uid });
   const totalTaken = dmg + Math.round(toEs) + absorbed;
@@ -3910,6 +3939,7 @@ function onBlock(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     }
     dmg = Math.round(dmg);
     s.life -= dmg;
+    mon.dealtToPlayer = (mon.dealtToPlayer ?? 0) + dmg + toEs + absorbed;
     blockedDmg = dmg;
     const totalTaken = dmg + Math.round(toEs) + absorbed;
     if (r.soulTether > 0 && totalTaken > 0 && mon.life > 0 && r.handsForgottenChoir <= 0) {
@@ -3988,12 +4018,12 @@ function thaw(c: CombatRuntime): void {
 /**
  * Hazards burn whatever stands on them. The player's ground hurts monsters on its cells (through their
  * resistances; chilled ground chills, shocked ground breaks armour). Monster ground sits under the player,
- * hurting through resistances and energy shield; running or fleeing steps out of it faster.
+ * hurting through resistances and energy shield. Emergency flee and certain skills leave it behind faster.
  */
 function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
   const c = s.combat!;
   if (!c.ground.length) return;
-  const outPace = currentMovement(s) === 'run' || currentMovement(s) === 'flee' || c.buffs.some((b) => b.outpace) ? STEP_OUT_RATE : 1;
+  const outPace = c.fleeing || c.buffs.some((b) => b.outpace) ? STEP_OUT_RATE : 1;
   for (const g of c.ground) {
     const t = Math.min(dt, g.remainingMs);
     const type = groundElement(d, g.kind);
@@ -4004,6 +4034,8 @@ function tickGround(s: GameState, ctx: Ctx, d: Derived, dt: number): void {
       const toEs = Math.min(s.es, dmg);
       s.es -= toEs;
       s.life -= dmg - toEs;
+      const source = g.sourceUid === undefined ? undefined : c.monsters.find((m) => m.uid === g.sourceUid);
+      if (source) source.dealtToPlayer = (source.dealtToPlayer ?? 0) + dmg;
       c.groundAcc += dmg;
       g.remainingMs -= dt * outPace;
       continue;
@@ -4294,7 +4326,20 @@ function playerShockPct(c: CombatRuntime, d: Derived): number {
   return SHOCK_MIN_PCT + (SHOCK_MAX_PCT - SHOCK_MIN_PCT) * Math.min(1, (c.playerBuild?.shock ?? 0) / (d.maxLife * AILMENT_THRESHOLD_PCT / 100));
 }
 
-/** Ailment damage is paid out of a monster's basic-hit budget, never added on top of its old DPS. */
+function ailmentSources(dots: Dot[], total: number): Record<number, number> {
+  const shares: Record<number, number> = {};
+  if (total <= 0) return shares;
+  for (const dot of dots) {
+    const weight = dot.dps * dot.remainingMs / 1000 / total;
+    for (const [uid, share] of Object.entries(dot.sources ?? {})) {
+      const source = Number(uid);
+      shares[source] = (shares[source] ?? 0) + share * weight;
+    }
+  }
+  return shares;
+}
+
+/** Ailment damage is paid out of a monster's basic-hit budget. */
 export function monsterAilments(s: GameState, d: Derived, mon: MonsterInstance, hit: number, type: DamageType): void {
   if (hit <= 0) return;
   const c = s.combat!;
@@ -4302,17 +4347,18 @@ export function monsterAilments(s: GameState, d: Derived, mon: MonsterInstance, 
   const threshold = d.maxLife * AILMENT_THRESHOLD_PCT / 100;
   if (mon.attackAilment && mon.dotShare) {
     const kind = mon.attackAilment;
-    const duration = kind === 'bleed' ? Math.min(4000, mon.attackMs) : 4000;
+    const duration = kind === 'bleed' ? Math.min(4000, mon.attackMs) : kind === 'ignite' ? IGNITE_MS : 4000;
     const amount = hit * mon.dotShare / (1 - mon.dotShare);
     const dots = (c.playerDots ??= []);
-    applyDot({ dots }, { kind, dps: amount * 1000 / duration, durationMs: duration, remainingMs: duration, dealt: 0, reported: 0, gemId: mon.defId });
+    applyDot({ dots }, { kind, dps: amount * 1000 / duration, durationMs: duration, remainingMs: duration, dealt: 0, reported: 0, gemId: mon.defId, sources: { [mon.uid]: 1 } });
     if (kind === 'burn') {
       build.burn += amount;
       if (build.burn >= threshold) {
         // Transfer the remaining burn budget into an ignite instead of granting extra free damage.
-        const remaining = dots.filter((x) => x.kind === 'burn' || x.kind === 'ignite').reduce((sum, x) => sum + x.dps * x.remainingMs / 1000, 0);
+        const fuel = dots.filter((x) => x.kind === 'burn' || x.kind === 'ignite');
+        const remaining = fuel.reduce((sum, x) => sum + x.dps * x.remainingMs / 1000, 0);
         c.playerDots = dots.filter((x) => x.kind !== 'burn' && x.kind !== 'ignite');
-        applyDot({ dots: c.playerDots }, { kind: 'ignite', dps: remaining * 1000 / IGNITE_MS, durationMs: IGNITE_MS, remainingMs: IGNITE_MS, dealt: 0, reported: 0, gemId: mon.defId });
+        applyDot({ dots: c.playerDots }, { kind: 'ignite', dps: remaining * 1000 / IGNITE_MS, durationMs: IGNITE_MS, remainingMs: IGNITE_MS, dealt: 0, reported: 0, gemId: mon.defId, sources: ailmentSources(fuel, remaining) });
         build.burn = 0;
       }
     }
@@ -4350,6 +4396,12 @@ function tickPlayerAilments(s: GameState, ctx: Ctx, d: Derived, dt: number): voi
     const es = type === 'chaos' ? 0 : Math.min(s.es, amount);
     s.es -= es;
     s.life -= amount - es;
+    if (dot.sources) {
+      for (const m of c.monsters) {
+        const share = dot.sources[m.uid];
+        if (share) m.dealtToPlayer = (m.dealtToPlayer ?? 0) + amount * share;
+      }
+    }
     if (amount > 0) c.esDelayMs = ES_RECHARGE_DELAY_MS;
     const before = dot.dealt;
     dot.dealt += amount;
@@ -4468,7 +4520,7 @@ function monsterTurn(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, d
     if (minion) return hurtMinion(ctx, d, mon, minion, raw / (1 - (mon.dotShare ?? 0)), mon.dmgType);
     takeHit(s, ctx, d, mon, raw, mon.dmgType, 'hit', critical);
     // some casters' spells splash hazardous ground at the player's feet
-    if (mon.attackGround) layGround(s.combat!.ground, PLAYER_SPOT, monsterGround(mon, mon.dmgType), mon.damage * MONSTER_GROUND_DPS, MONSTER_GROUND_MS);
+    if (mon.attackGround) layGround(s.combat!.ground, PLAYER_SPOT, monsterGround(mon, mon.dmgType), mon.damage * MONSTER_GROUND_DPS, MONSTER_GROUND_MS, mon.uid);
   }
 }
 
@@ -4519,7 +4571,7 @@ function bossPhases(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt
     if (s.maps.run.groundMs <= 0) {
       s.maps.run.groundMs = TIER_MOD_RULES.bossGroundEveryMs;
       const kind: GroundKind = mapMods.arenaGround ?? pick(ctx.rng, ['unholy', 'burning', 'frozen'] as const);
-      layGround(s.combat!.ground, PLAYER_SPOT, kind, bossDamage(mon, s.combat ?? undefined) * TIER_MOD_RULES.bossGroundDps, TIER_MOD_RULES.bossGroundDurationMs);
+      layGround(s.combat!.ground, PLAYER_SPOT, kind, bossDamage(mon, s.combat ?? undefined) * TIER_MOD_RULES.bossGroundDps, TIER_MOD_RULES.bossGroundDurationMs, mon.uid);
       ctx.emit({ t: 'bossPhase', name: mon.name, text: `floods the arena: ${GROUND[kind].name.toLowerCase()} under you!` });
     }
   }
@@ -4578,7 +4630,7 @@ function bossPhases(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt
     if (mon.timers.scorch <= 0) {
       mon.timers.scorch = BOSS_SCORCH_EVERY_MS;
       const kind = monsterGround(mon, mon.novaType);
-      layGround(s.combat!.ground, PLAYER_SPOT, kind, bossDamage(mon, s.combat ?? undefined) * BOSS_SCORCH_DPS, BOSS_SCORCH_MS);
+      layGround(s.combat!.ground, PLAYER_SPOT, kind, bossDamage(mon, s.combat ?? undefined) * BOSS_SCORCH_DPS, BOSS_SCORCH_MS, mon.uid);
       ctx.emit({ t: 'bossPhase', name: mon.name, text: `scorches the earth: ${GROUND[kind].name.toLowerCase()} under you!` });
     }
   }
@@ -4754,13 +4806,13 @@ function ruinCycleStep(s: GameState, ctx: Ctx, mon: MonsterInstance): void {
   if (phase === 1) {
     mon.ward = mon.wardMax = mon.maxLife * BOSS_WARD_PCT;
     mon.wardMs = BOSS_WARD_MS;
-    layGround(c.ground, PLAYER_SPOT, 'burning', bossDamage(mon, c) * BOSS_SCORCH_DPS, BOSS_SCORCH_MS);
+    layGround(c.ground, PLAYER_SPOT, 'burning', bossDamage(mon, c) * BOSS_SCORCH_DPS, BOSS_SCORCH_MS, mon.uid);
     ctx.emit({ t: 'bossPhase', name: mon.name, text: 'Phase II: raises an Architect Ward and scorches the arena!' });
   } else if (phase === 2) {
     chainMartyrs(s, ctx, mon);
   } else if (phase === 3) {
     c.frostbite = Math.min(BOSS_FROSTBITE_MAX - 1, (c.frostbite ?? 0) + 4);
-    layGround(c.ground, PLAYER_SPOT, 'frozen', bossDamage(mon, c) * BOSS_SCORCH_DPS, BOSS_SCORCH_MS);
+    layGround(c.ground, PLAYER_SPOT, 'frozen', bossDamage(mon, c) * BOSS_SCORCH_DPS, BOSS_SCORCH_MS, mon.uid);
     ctx.emit({ t: 'bossPhase', name: mon.name, text: 'Phase IV: freezes the floor and chills your bones!' });
   } else if (phase === 4) {
     mon.timers.channel = 0;
@@ -4768,7 +4820,7 @@ function ruinCycleStep(s: GameState, ctx: Ctx, mon: MonsterInstance): void {
   } else if (phase === 5) {
     mon.enraged = true;
     mon.permEnrage = true;
-    layGround(c.ground, PLAYER_SPOT, 'unholy', bossDamage(mon, c) * BOSS_SCORCH_DPS, BOSS_SCORCH_MS);
+    layGround(c.ground, PLAYER_SPOT, 'unholy', bossDamage(mon, c) * BOSS_SCORCH_DPS, BOSS_SCORCH_MS, mon.uid);
     ctx.emit({ t: 'bossPhase', name: mon.name, text: 'Final Phase: enters unending ruin and floods Unholy Ground!' });
   }
 }
@@ -4860,7 +4912,7 @@ function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt:
         // a nova catches everything on the field, so a boss fight wears minions down
         for (const x of army(s.combat!)) hurtMinion(ctx, d, mon, x, bossDamage(mon, s.combat ?? undefined) * BOSS_NOVA_MULT, mon.novaType);
         // the blast leaves the ground under the player burning, frozen or charged
-        layGround(s.combat!.ground, PLAYER_SPOT, monsterGround(mon, mon.novaType), bossDamage(mon, s.combat ?? undefined) * BOSS_NOVA_GROUND_DPS, BOSS_NOVA_GROUND_MS);
+        layGround(s.combat!.ground, PLAYER_SPOT, monsterGround(mon, mon.novaType), bossDamage(mon, s.combat ?? undefined) * BOSS_NOVA_GROUND_DPS, BOSS_NOVA_GROUND_MS, mon.uid);
       } else {
         mon.timers.slam = BOSS_SLAM_EVERY_MS;
         takeHit(s, ctx, d, mon, bossDamage(mon, s.combat ?? undefined) * BOSS_SLAM_MULT, mon.slamType ?? mon.dmgType, 'slam');
@@ -4889,6 +4941,11 @@ function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt:
 export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): boolean {
   const c = s.combat;
   if (!c) return false;
+  for (const flask of s.flaskSlots) {
+    if (flask?.flaskId === FISHING_FLASK && hasFishingPrize(s, 4)) {
+      flask.charges = Math.min(flaskCapacity(s, flask), flask.charges + dt / 100);
+    }
+  }
   if (isKeyedBossZone(c.zoneId) && c.monsters.some((m) => m.isBoss && m.life > 0)) {
     c.fightElapsedMs = (c.fightElapsedMs ?? 0) + dt;
   }
@@ -4968,7 +5025,6 @@ export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): bool
   }
 
   autoFlee(s, ctx, d);
-  postureStep(s, ctx, dt);
   advanceSpawns(s, ctx, dt);
   shakeOff(s, ctx, dt);
   stormStep(s, ctx, d, dt);
@@ -5135,9 +5191,9 @@ function classMechanicsStep(s: GameState, ctx: Ctx, d: Derived, dt: number): boo
 // ---------- flask management ----------
 
 export function equipFlask(s: GameState, uid: number, slot: number): void {
-  const idx = s.account.flaskStash.findIndex((f) => f.uid === uid);
+  const idx = s.storage.flaskStash.findIndex((f) => f.uid === uid);
   if (idx < 0) return;
-  const f = s.account.flaskStash[idx];
+  const f = s.storage.flaskStash[idx];
   const kind = flaskStats(f).def.kind;
   if (FLASK_SLOT_TYPES[slot] && FLASK_SLOT_TYPES[slot] !== kind) {
     const matching = FLASK_SLOT_TYPES.findIndex((k, i) => k === kind && !s.flaskSlots[i]);
@@ -5147,15 +5203,15 @@ export function equipFlask(s: GameState, uid: number, slot: number): void {
       if (firstOfType >= 0) slot = firstOfType;
     }
   }
-  s.account.flaskStash.splice(idx, 1);
+  s.storage.flaskStash.splice(idx, 1);
   const prev = s.flaskSlots[slot];
-  if (prev) s.account.flaskStash.push(prev);
+  if (prev) s.storage.flaskStash.push(prev);
   s.flaskSlots[slot] = f;
 }
 
 /** Put a spare flask in the first empty belt slot matching its kind (1 Life, 1 Mana, 2 Utility). Returns why it couldn't, or null. */
 export function wearFlask(s: GameState, uid: number): string | null {
-  const f = s.account.flaskStash.find((x) => x.uid === uid);
+  const f = s.storage.flaskStash.find((x) => x.uid === uid);
   if (!f) return 'Flask not found';
   const kind = flaskStats(f).def.kind;
   const slot = s.flaskSlots.findIndex((curr, idx) => !curr && FLASK_SLOT_TYPES[idx] === kind);
@@ -5171,6 +5227,6 @@ export function wearFlask(s: GameState, uid: number): string | null {
 export function unequipFlask(s: GameState, slot: number): void {
   const f = s.flaskSlots[slot];
   if (!f) return;
-  s.account.flaskStash.push(f);
+  s.storage.flaskStash.push(f);
   s.flaskSlots[slot] = null;
 }

@@ -1,0 +1,119 @@
+.saltmere {
+  --salt-light: #a9e6df;
+  --salt-line: #38585d;
+}
+
+.saltmere-card {
+  margin: 0 0 1rem;
+  padding: clamp(.8rem, 2.5vw, 1.5rem);
+  border: 1px solid var(--salt-line);
+  border-radius: .55rem;
+  background: linear-gradient(145deg, #182a2d, #141b22 60%);
+}
+
+.saltmere h2, .saltmere h3 {
+  margin: 0 0 .65rem;
+  color: var(--salt-light);
+}
+
+.saltmere h3 { margin-top: 1.2rem; }
+.saltmere p { margin: .5rem 0 .9rem; }
+.saltmere-report { min-height: 1.5em; color: var(--salt-light); }
+
+.saltmere button {
+  min-height: 2.6rem;
+  padding: .45rem .7rem;
+  border: 1px solid var(--salt-line);
+  border-radius: .3rem;
+  color: #e3eeeb;
+  background: #203338;
+  cursor: pointer;
+}
+
+.saltmere button:hover:not(:disabled), .saltmere button[aria-pressed=true] {
+  border-color: #8ad1c8;
+  background: #2a464b;
+}
+
+.saltmere button:focus-visible, .saltmere select:focus-visible { outline: 2px solid #e9bf74; outline-offset: 2px; }
+.saltmere button:disabled { opacity: .55; cursor: default; }
+
+.saltmere-actions, .saltmere-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .55rem;
+}
+
+.saltmere-heading { justify-content: space-between; }
+.saltmere-tabs { margin-bottom: .85rem; }
+.saltmere-heading h2 { margin: 0; }
+
+.saltmere-loadout { gap: .85rem; }
+.saltmere-loadout label { display: grid; gap: .25rem; }
+.saltmere select {
+  min-height: 2.6rem;
+  padding: .35rem .6rem;
+  border: 1px solid var(--salt-line);
+  border-radius: .3rem;
+  background: #17252b;
+  color: #e3eeeb;
+}
+
+.saltmere-waters, .saltmere-buildings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: .65rem;
+}
+
+.saltmere-waters button { text-align: left; min-height: 4rem; }
+.saltmere-waters small { display: block; margin-top: .25rem; }
+.saltmere-buildings > div {
+  padding: .8rem;
+  border: 1px solid var(--salt-line);
+  border-radius: .3rem;
+}
+
+.saltmere-fight {
+  margin: .85rem 0;
+  padding: clamp(.65rem, 2vw, 1.25rem);
+  background: #101b22;
+  border: 1px solid var(--salt-line);
+  border-radius: .35rem;
+}
+
+.saltmere-meter { display: block; margin: .75rem 0; }
+.saltmere-meter span { float: right; }
+.saltmere-meter meter, .saltmere-meter progress {
+  display: block;
+  width: 100%;
+  height: 1.35rem;
+  margin-top: .2rem;
+  accent-color: #78d6c9;
+}
+
+.saltmere-tell {
+  min-height: 3.2rem;
+  font-weight: 650;
+  color: #f8d898;
+}
+
+.saltmere-tell span { display: block; font-size: .85em; font-weight: normal; color: #b7d0d2; }
+.saltmere-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .45rem;
+  margin-bottom: .55rem;
+}
+
+.saltmere-controls button {
+  min-height: 3.2rem;
+  touch-action: none;
+  user-select: none;
+}
+
+.saltmere-controls button:active { background: #376767; }
+.saltmere-controls .saltmere-pause { grid-column: 1 / -1; min-height: 2.6rem; touch-action: manipulation; }
+.saltmere-haul { margin: .4rem 0 0; padding: 0; list-style: none; }
+.saltmere-haul li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem; padding: .4rem 0; border-bottom: 1px solid var(--salt-line); }
+.saltmere-log article + article { margin-top: 1.3rem; }

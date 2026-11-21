@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fillAccount, mergeAccounts, reconcileAccounts } from '../src/engine/account';
 import { makeCtx } from '../src/engine/context';
+import { transferGuild } from '../src/engine/guildStash';
 import { locateItem, moveToBag, moveToStash } from '../src/engine/itemActions';
 import { createItem, createUnique } from '../src/engine/items';
 import { seeded } from '../src/engine/rng';
@@ -18,8 +19,8 @@ describe('the Uniques tab', () => {
     const sword = createItem(s, 'rusted_sword', 1, 'normal', seeded(2));
     s.inventory.push(u, sword);
     expect(stashItems(s, ctx(), [u.uid, sword.uid])).toBe(2);
-    expect(s.account.uniqueStash.map((i) => i.uniqueId)).toEqual(['miners_lament']);
-    expect(s.account.stash.flat()).toHaveLength(1);
+    expect(s.storage.uniqueStash.map((i) => i.uniqueId)).toEqual(['miners_lament']);
+    expect(s.storage.stash.flat()).toHaveLength(1);
     expect(s.account.uniquesSeen).toContain('miners_lament');
     expect(locateItem(s, u.uid)?.at).toBe('uniques');
     expect(stashedItems(s)).toHaveLength(2);
@@ -27,14 +28,14 @@ describe('the Uniques tab', () => {
 
   it('a unique goes to the tab even when every gear page is full, and comes back to the bag', () => {
     const s = newGame(1);
-    for (const page of s.account.stash) while (page.length < 80) page.push(createItem(s, 'rusted_sword', 1, 'normal', seeded(page.length)));
+    for (const page of s.storage.stash) while (page.length < 80) page.push(createItem(s, 'rusted_sword', 1, 'normal', seeded(page.length)));
     const u = createUnique(s, 'miners_lament', 5);
     s.equipment.helmet = u;
     expect(moveToStash(s, ctx(), u.uid)).toBeNull();
     expect(s.equipment.helmet).toBeUndefined();
-    expect(s.account.uniqueStash).toHaveLength(1);
-    expect(moveToBag(s, ctx(), s.account.uniqueStash[0].uid)).toBeNull();
-    expect(s.account.uniqueStash).toHaveLength(0);
+    expect(s.storage.uniqueStash).toHaveLength(1);
+    expect(moveToBag(s, ctx(), s.storage.uniqueStash[0].uid)).toBeNull();
+    expect(s.storage.uniqueStash).toHaveLength(0);
     expect(s.inventory.some((i) => i.uniqueId === 'miners_lament')).toBe(true);
   });
 
@@ -43,9 +44,9 @@ describe('the Uniques tab', () => {
     const u = createUnique(s, 'miners_lament', 5);
     s.inventory.push(u);
     stashItems(s, ctx(), [u.uid]);
-    const uid = s.account.uniqueStash[0].uid;
+    const uid = s.storage.uniqueStash[0].uid;
     expect(takeOwned(s, [uid])).toHaveLength(1);
-    expect(s.account.uniqueStash).toHaveLength(0);
+    expect(s.storage.uniqueStash).toHaveLength(0);
     expect(s.account.uniquesSeen).toContain('miners_lament');
   });
 
@@ -83,6 +84,7 @@ describe('the Uniques tab', () => {
     const u = createUnique(s, 'miners_lament', 5);
     s.inventory.push(u);
     stashItems(s, ctx(), [u.uid]);
+    expect(transferGuild(s, { direction: 'deposit', kind: 'gear', uid: u.uid })).toBeNull();
     const sword = createItem(s, 'rusted_sword', 1, 'normal', seeded(2));
     sword.uid = s.account.nextUid++;
     // the old version saves its own copy: it never heard of the tab, but did stash a sword

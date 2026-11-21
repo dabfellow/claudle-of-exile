@@ -97,7 +97,6 @@ export function ensureMechanicFields(c: CombatRuntime): void {
   c.manaFrac ??= 1;
   c.manaSpent ??= [];
   c.momentumHitGraceMs ??= 0;
-  c.postureMs ??= 0;
   c.heatMs ??= 0;
   c.overheatMs ??= 0;
   c.hungerMs ??= HUNGER_MS;

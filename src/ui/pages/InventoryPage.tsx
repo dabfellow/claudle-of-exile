@@ -1,21 +1,26 @@
 import { monsterDamage } from '../../data/zones';
 import { FLASK_SLOT_TYPES } from '../../data/flasks';
+import { mapStockName } from '../../data/maps';
+import { isCurrency, materialDef } from '../../data/materials';
 import { findFlask, flaskStats } from '../../engine/flasks';
 import { equipFlask, unequipFlask } from '../../engine/combat';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { findItem } from '../../engine/crafting';
 import { equip, equipReason, slotsFor } from '../../engine/equipment';
+import { MAX_PINNED_CURRENCIES, pinnedCurrencies, toggleCurrencyPin } from '../../engine/currencyPins';
 import { inventoryFilterAction, runFilterOnInventory } from '../../engine/lootRouting';
 import { armourReduction, deriveStats, ES_RECHARGE_DELAY_MS, evadeChance, hitChance, RES_CAP, type Derived } from '../../engine/stats';
 import { stashItems } from '../../engine/storage';
 import type { EquipSlot, GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { CurrencyAmount, fmt, GameIcon, PageHeader, ProgressBar } from '../components/common';
+import { CurrencyAmount, fmt, GameIcon, MatIcon, PageHeader, ProgressBar } from '../components/common';
 import { CraftPanel } from '../components/CraftPanel';
 import { Fold } from '../components/Fold';
 import { Icon } from '../components/Icon';
 import { FlaskShelf } from '../components/FlaskView';
+import { GemTip, SupportTip } from '../components/GemView';
+import { GuildItemTransfer, GuildStackTransfer } from '../components/GuildTransferActions';
 import { GearSets } from '../components/Loadouts';
 import { ItemCell } from '../components/ItemView';
 import { Inventory } from '../components/Inventory';
@@ -26,6 +31,68 @@ import '../inventory-screen.css';
 
 /** below this page width the item panel stops sitting beside the grids and opens as a sheet */
 const NARROW_PX = 1000;
+
+type Selection =
+  | { kind: 'gear' | 'flaskStash' | 'gems' | 'supportGems'; uid: number }
+  | { kind: 'bank' | 'maps'; id: string };
+
+function selectionKey(pick: Selection) {
+  return `${pick.kind}:${'uid' in pick ? pick.uid : pick.id}`;
+}
+
+function isHeld(s: GameState, pick: Selection): boolean {
+  switch (pick.kind) {
+    case 'gear': return !!findItem(s, pick.uid);
+    case 'flaskStash': return !!findFlask(s, pick.uid);
+    case 'gems': return s.storage.gems.some((gem) => gem.uid === pick.uid);
+    case 'supportGems': return s.storage.supportGems.some((gem) => gem.uid === pick.uid);
+    case 'maps': return (s.maps.stock[pick.id] ?? 0) > 0;
+    case 'bank':
+      // Keep the panel available for pinning even when a currency stack is empty.
+      return pick.id === 'gold' || isCurrency(pick.id) || (s.storage.bank[pick.id] ?? 0) > 0;
+  }
+}
+
+function StashItemActions({ s, pick, onClear }: { s: GameState; pick: Selection; onClear: () => void }) {
+  if (pick.kind === 'gear' || pick.kind === 'flaskStash') {
+    return <CraftPanel s={s} uid={pick.kind === 'gear' ? pick.uid : null} flaskUid={pick.kind === 'flaskStash' ? pick.uid : null} onClear={onClear} />;
+  }
+  const stack = 'id' in pick ? pick : null;
+  const id = stack?.id ?? null;
+  const pins = pinnedCurrencies(s);
+  const pinned = id !== null && pins.includes(id);
+  const canPin = id !== null && stack?.kind === 'bank' && (id === 'gold' || isCurrency(id));
+  const count = stack ? (stack.kind === 'bank' ? s.storage.bank : s.maps.stock)[stack.id] ?? 0 : 0;
+  const gem = pick.kind === 'gems' ? s.storage.gems.find((gem) => gem.uid === pick.uid) : undefined;
+  const support = pick.kind === 'supportGems' ? s.storage.supportGems.find((gem) => gem.uid === pick.uid) : undefined;
+
+  return (
+    <div className="card craft-panel">
+      <div className="craft-head">
+        {stack && (
+          <b className="row">
+            {stack.kind === 'bank' ? <><MatIcon id={stack.id} size={22} /> {materialDef(stack.id).name}</> : <><GameIcon name="map" size={22} /> {mapStockName(stack.id)}</>}
+            · {fmt(count)}
+          </b>
+        )}
+        <span className="grow" />
+        <button className="btn sm ghost" aria-label="Close" onClick={onClear}><Icon name="close" size={12} /></button>
+      </div>
+      {gem && <GemTip gem={gem} state={s} />}
+      {support && <SupportTip supportId={support.supportId} />}
+      {'id' in pick ? count > 0 && <GuildStackTransfer direction="deposit" kind={pick.kind} id={pick.id} max={count} /> : (
+        <GuildItemTransfer move={{ direction: 'deposit', kind: pick.kind, uid: pick.uid }} />
+      )}
+      {canPin && (
+        <div className="craft-moves">
+          <button className="btn sm" disabled={!pinned && pins.length >= MAX_PINNED_CURRENCIES} onClick={() => game.act((st) => toggleCurrencyPin(st, id))}>
+            {pinned ? 'Unpin from top bar' : 'Pin to top bar'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const DMG_NAME ={ phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning', chaos: 'Chaos' } as const;
 
@@ -182,7 +249,7 @@ function SlotPicker({ s, slot, onDone }: { s: GameState; slot: EquipSlot; onDone
 function FlaskPicker({ s, slot, onDone }: { s: GameState; slot: number; onDone: () => void }) {
   const worn = s.flaskSlots[slot];
   const targetKind = FLASK_SLOT_TYPES[slot] ?? 'utility';
-  const matching = s.account.flaskStash.filter((f) => flaskStats(f).def.kind === targetKind);
+  const matching = s.storage.flaskStash.filter((f) => flaskStats(f).def.kind === targetKind);
   return (
     <div className="slot-picker">
       <div className="row" style={{ gap: 8 }}>
@@ -268,26 +335,28 @@ function CharacterColumn({ s, d, selected, onPick, onPickFlask }: { s: GameState
 export function InventoryPage({ go }: { go: (p: Page) => void }) {
   const s = useGame();
   const d = deriveStats(s, []);
-  const [pick, setPick] = useState<{ uid: number; flask: boolean } | null>(null);
+  const [pick, setPick] = useState<Selection | null>(null);
   const [stashTab, setStashTab] = useState<StashTabId>('gear');
   const [stashPage, setStashPage] = useState(0);
-  const here = Math.min(stashPage, s.account.stash.length - 1);
-  const pickItem = (uid: number) => setPick(pick?.uid === uid && !pick.flask ? null : { uid, flask: false });
-  const pickFlask = (uid: number) => setPick(pick?.uid === uid && pick.flask ? null : { uid, flask: true });
+  const here = Math.min(stashPage, s.storage.stash.length - 1);
+  const togglePick = (next: Selection) => setPick((prev) => prev && selectionKey(prev) === selectionKey(next) ? null : next);
+  const pickItem = (uid: number) => togglePick({ kind: 'gear', uid });
+  const pickFlask = (uid: number) => togglePick({ kind: 'flaskStash', uid });
   // a salvaged or sold item leaves nothing to show, so the panel (a sheet on phones) closes
-  const live = pick && (pick.flask ? findFlask(s, pick.uid) : findItem(s, pick.uid)) ? pick : null;
-  const selected = live?.uid ?? null;
+  const live = pick && isHeld(s, pick) ? pick : null;
+  const selected = live?.kind === 'gear' || live?.kind === 'flaskStash' ? live.uid : null;
   const filterable = s.inventory.filter((i) => inventoryFilterAction(s, i) !== null).length;
   const pageRef = useRef<HTMLDivElement>(null);
   const narrow = useNarrow(pageRef, NARROW_PX);
   const doll = <CharacterColumn s={s} d={d} selected={selected} onPick={pickItem} onPickFlask={pickFlask} />;
-  const panel = (
-    <CraftPanel key={live ? `${live.flask ? 'f' : 'i'}${live.uid}` : 'none'} s={s} uid={live && !live.flask ? live.uid : null} flaskUid={live?.flask ? live.uid : null} onClear={() => setPick(null)} />
-  );
+  const clear = () => setPick(null);
+  const panel = live
+    ? <StashItemActions key={selectionKey(live)} s={s} pick={live} onClear={clear} />
+    : <CraftPanel s={s} uid={null} flaskUid={null} onClear={clear} />;
   return (
     <div className="page inv-page" ref={pageRef}>
-      <PageHeader title="Inventory" actions={<CurrencyAmount id="gold" amount={s.account.bank.gold ?? 0} label="gold" />}>
-        Click any item, worn, carried or stashed, to move, salvage or craft it. Hover to compare; right-click to pin.
+      <PageHeader title="Inventory" actions={<CurrencyAmount id="gold" amount={s.storage.bank.gold ?? 0} label="gold" />}>
+        Click an item to see its actions, including sending spare items to the Guild Stash.
       </PageHeader>
       <div className={`inv-layout ${narrow ? 'narrow' : ''}`}>
         <div className="inv-main">
@@ -326,6 +395,9 @@ export function InventoryPage({ go }: { go: (p: Page) => void }) {
               selected={selected}
               onPick={(it) => pickItem(it.uid)}
               onPickFlask={(f) => pickFlask(f.uid)}
+              onPickStack={(id) => togglePick({ kind: 'bank', id })}
+              onPickMap={(id) => togglePick({ kind: 'maps', id })}
+              onPickGem={(kind, uid) => togglePick({ kind, uid })}
             />
           </div>
           <Fold id="inv-stats" title="Character stats" defaultOpen={false}>

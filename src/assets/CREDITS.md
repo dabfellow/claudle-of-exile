@@ -17,6 +17,28 @@ Files are named after their pack: `catalone-`, `woshi-`, `codespree-`, `sn-`, `c
 - **remedies-\*.png**: Grounded Medieval Remedies by Eldrion Team. Free for personal and commercial products; not to be redistributed as an asset pack. Credit appreciated: "Eldrion Team".
 - **softline-\*.png**: Softline RPG Icons FREE 100 by The Cooked Works (see the pack's LICENSE.pdf).
 - **zones/gegx-\*.webp, scenes/gegx-\*.webp**: Painterly Backgrounds free sample by GegX (gegx.itch.io), AI-generated and hand-curated, resized to 1600px webp. Free for commercial and non-commercial projects; may not be redistributed as an asset pack or used to train image models.
+
+## Combat terrain backdrops
+
+The `zones/terrain-*.webp` images are existing illustrations, paintings and prints. They were cropped, color-adjusted and converted to WebP for the game. Cleveland Museum of Art images come from its [CC0 Open Access collection](https://www.clevelandart.org/open-access).
+
+| Backdrop | Source | License |
+|---|---|---|
+| Coast | Maxime Maufra, [The Cliffs at Beg-ar-Fry, Saint-Jean-du-Doigt](https://www.clevelandart.org/art/1966.382) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Stormy coast | Winslow Homer, [Early Morning After a Storm at Sea](https://www.clevelandart.org/art/1924.195) | CC0 |
+| Cave | Écrivain, [Fossil Cave](https://opengameart.org/content/fossil-cave) | CC0 |
+| Bandit cave, spider cave | Blarumyrran, `cave_brownsmall.png` and `cave_bluelarge.png` from [Cave pictures/icons](https://opengameart.org/content/cave-picturesicons) | CC0 |
+| Forest | Asher B. Durand, [Trees on a Rocky Hillside](https://www.clevelandart.org/art/1968.21) | CC0 |
+| Night forest | Caspar David Friedrich, [Forest Interior by Moonlight](https://commons.wikimedia.org/wiki/File:Caspar_David_Friedrich_-_Waldinneres_bei_Mondschein.jpg) | Public domain |
+| Marsh, mountains | JAP, `sunsetintheswamp.png` and `coldmountain.png` from [Oil painting landscapes](https://opengameart.org/content/oil-painting-landscapes) | CC0 |
+| Plains | John Constable, [Hampstead Heath, Looking Toward Harrow](https://www.clevelandart.org/art/1916.1027) | CC0 |
+| Town | Jan Wijnants, [Herengracht, Amsterdam](https://www.clevelandart.org/art/1964.419) | CC0 |
+| Ruins | Hubert Robert, [Roman Ruins, Villa Pamfili](https://www.clevelandart.org/art/1951.485) | CC0 |
+| Mountain bear territory | Albert Bierstadt, [Mount Starr King, Yosemite](https://www.clevelandart.org/art/1922.684) | CC0 |
+| Workshop | Jean-Alphonse Duplessy, [Cobbler's Quarters](https://www.clevelandart.org/art/1980.257) | CC0 |
+| Forge | Charles-Émile Jacque, [The Blacksmith Shop](https://www.clevelandart.org/art/1921.1444) | CC0 |
+| Underworks | Giovanni Battista Piranesi, [The Prisons: An Immense Interior with a Drawbridge](https://www.clevelandart.org/art/1941.26.5) | CC0 |
+
 - **Packs added 2026-10-31:** the owner says all four below were free itch.io files, and to assume free public use is allowed while the game isn't sold. That assumption applies for now; recheck each one before any paid release.
 - **armor/snoopeth-p1-\*.png, snoopeth-p2-\*.png**: shield packs 1 and 2 by SnoopethDuckDuck (snoopethduckduck.itch.io). CC0, per the licence file in each pack.
 - **armor/snoopeth-p3-\*.png**: shield pack 3 by SnoopethDuckDuck (snoopethduckduck.itch.io). CC BY 4.0, per the pack's licence file. Credit required: by SnoopethDuckDuck. The pieces are enlarged 3×.

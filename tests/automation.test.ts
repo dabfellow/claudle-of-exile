@@ -24,7 +24,7 @@ const ctx = (seed = 1) => makeCtx(seeded(seed));
 /** Enough of everything for a station's next levels, paid for the real way. */
 function upgradeTo(s: GameState, id: 'war_table' | 'watchtower', level: number) {
   for (const l of stationDef(id).levels.slice(s.account.hideout[id], level)) {
-    for (const [mat, n] of Object.entries(l.cost)) s.account.bank[mat] = (s.account.bank[mat] ?? 0) + n;
+    for (const [mat, n] of Object.entries(l.cost)) s.storage.bank[mat] = (s.storage.bank[mat] ?? 0) + n;
     expect(upgradeStation(s, ctx(), id)).toBeNull();
   }
 }
@@ -170,7 +170,7 @@ describe('offline rules', { timeout: 30_000 }, () => {
     const hours = [8];
     for (let lvl = 2; lvl <= stationDef('watchtower').levels.length; lvl++) {
       const cost = stationDef('watchtower').levels[lvl - 1].cost;
-      for (const [mat, n] of Object.entries(cost)) s.account.bank[mat] = n;
+      for (const [mat, n] of Object.entries(cost)) s.storage.bank[mat] = n;
       upgradeStation(s, ctx(), 'watchtower');
       hours.push(s.account.automation.offlineHours);
     }
@@ -183,7 +183,9 @@ describe('offline rules', { timeout: 30_000 }, () => {
     const c = ctx();
     startSkillAction(s, c, 'cut_ash');
     // The full offline window is simulated: earned mastery gradually increases its output.
-    expect(simulateOffline(s, c, 8 * 3_600_000).materials.ash_log).toBe(10043);
+    const summary = simulateOffline(s, c, 8 * 3_600_000);
+    expect(summary.materials.ash_log).toBe(5_000);
+    expect(summary.xp.woodcutting).toBeGreaterThan(0);
   });
 
   const strong = () => {
@@ -270,17 +272,17 @@ describe('offline rules', { timeout: 30_000 }, () => {
     const fast = grower(true);
     simulateOffline(plain, ctx(), 60 * 60_000);
     simulateOffline(fast, ctx(), 60 * 60_000);
-    expect(fast.account.bank.sunpetal).toBeGreaterThan(plain.account.bank.sunpetal);
+    expect(fast.storage.bank.sunpetal).toBeGreaterThan(plain.storage.bank.sunpetal);
   });
 });
 
 describe('save migration', () => {
   it('a v19 save keeps its rules, starts locked and loses nothing', () => {
     const s = newGame(1);
-    s.account.gems.push(createSkillGem(s, 'spark'));
+    s.storage.gems.push(createSkillGem(s, 'spark'));
     const old = JSON.parse(serialize(s));
     old.version = 19;
-    Object.assign(old, { bank: {}, gems: s.account.gems, supportGems: [], flaskStash: [] });
+    Object.assign(old, { bank: {}, gems: s.storage.gems, supportGems: [], flaskStash: [] });
     const { war_table: _w, watchtower: _t, ...hideout } = s.account.hideout;
     old.hideout = hideout;
     for (const g of [...old.skillBar, ...old.gems]) {

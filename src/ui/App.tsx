@@ -1,18 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { game, useGame } from '../game';
 import { PinDock } from './components/common';
 import { ItemMenuHost } from './components/ItemMenu';
 import { QuestTracker } from './components/QuestTracker';
+import { CampaignJournal } from './components/CampaignJournal';
 import { Feed, OfflineModal, Sidebar, Toasts, TopBar, useFlaskHotkeys, usePage, XpBar, type Page } from './Layout';
 import { AchievementsPage } from './pages/AchievementsPage';
 import { CampaignPage } from './pages/CampaignPage';
 import { CombatPage } from './pages/CombatPage';
 import { SkillGemsPage } from './pages/SkillGemsPage';
 import { InventoryPage } from './pages/InventoryPage';
+import { GuildStashPage } from './pages/GuildStashPage';
 import { HideoutPage } from './pages/HideoutPage';
 import { MapDevicePage } from './pages/MapDevicePage';
 import { UpcomingSkillsPage } from './pages/UpcomingSkillsPage';
 import { SkillPage } from './pages/SkillPage';
+import { FishingPage } from './pages/FishingPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { MarketPage } from './pages/MarketPage';
 import { TraderPage } from './pages/TraderPage';
@@ -25,14 +28,16 @@ import { AdminPage } from './pages/AdminPage';
 // Admin is in the main bundle on purpose. As a separate lazy chunk it went black whenever a release landed while the
 // game was open: the old chunk file was gone, and the failed load took the whole app down. It's a few kB.
 
-function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
+function Content({ page, go, questMapZone, showQuestOnMap }: { page: Page; go: (p: Page) => void; questMapZone: string | null; showQuestOnMap: (zoneId: string) => void }) {
   switch (page) {
     case 'hideout':
       return <HideoutPage go={go} />;
     case 'combat':
       return <CombatPage go={go} />;
     case 'campaign':
-      return <CampaignPage key={game.state.character.id} go={go} />;
+      return <CampaignPage key={game.state.character.id} go={go} initialQuestZone={questMapZone} />;
+    case 'quests':
+      return <CampaignJournal showRewards onSelectZone={showQuestOnMap} />;
     case 'maps':
       return <MapDevicePage go={go} />;
     case 'upcoming':
@@ -46,6 +51,8 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
     case 'bench':
     case 'stash':
       return <InventoryPage go={go} />;
+    case 'guild-stash':
+      return <GuildStashPage go={go} />;
     case 'vendor':
       return <TraderPage />;
     case 'market':
@@ -56,6 +63,8 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
       return <SettingsPage />;
     case 'admin':
       return game.isAdmin ? <AdminPage /> : <SettingsPage />;
+    case 'fishing':
+      return <FishingPage go={go} />;
     default:
       return <SkillPage key={page} skill={page} go={go} />;
   }
@@ -64,31 +73,42 @@ function Content({ page, go }: { page: Page; go: (p: Page) => void }) {
 function GameScreen() {
   const s = useGame();
   const [page, setPage] = usePage();
+  const [questMapZone, setQuestMapZone] = useState<string | null>(null);
   // the Stash and Crafting Bench pages became the Inventory screen: send old links there so the sidebar lights up
-  const go = (p: Page) => setPage(p === 'stash' || p === 'bench' ? 'equipment' : p);
+  const go = (p: Page) => {
+    setQuestMapZone(null);
+    setPage(p === 'stash' || p === 'bench' ? 'equipment' : p);
+  };
+  const showQuestOnMap = (zoneId: string) => {
+    setQuestMapZone(zoneId);
+    setPage('campaign');
+  };
   useFlaskHotkeys();
   const mainRef = useRef<HTMLElement>(null);
   useEffect(() => {
     // On phones the whole shell scrolls, including navigation and vitals.
     mainRef.current?.closest('.app')?.scrollTo({ top: 0 });
+    mainRef.current?.parentElement?.scrollTo({ top: 0 });
     mainRef.current?.scrollTo({ top: 0 });
     game.visitPage(page);
   }, [page]);
   // a quest can ask for the page you're already on
   useEffect(() => game.visitPage(page), [s.tutorial.step]);
   return (
-    <div className={`app ${s.settings.reducedMotion ? 'reduced-motion' : ''}`}>
+    <div className={`app ${page === 'hideout' ? 'hideout-app' : ''} ${s.settings.reducedMotion ? 'reduced-motion' : ''}`}>
       <Sidebar page={page} go={go} />
-      <TopBar go={go} />
-      <main className="main" ref={mainRef}>
-        <QuestTracker floating />
-        <DemoBanner />
-        <EventBanner />
-        {page !== 'settings' && <AdminMailNotice open={() => go('settings')} />}
-        <PageErrorBoundary key={page} where={`page:${page}`} onLeave={() => go('hideout')}>
-          <Content page={page} go={go} />
-        </PageErrorBoundary>
-      </main>
+      <div className="game-content">
+        <TopBar go={go} />
+        <main className="main" ref={mainRef}>
+          <QuestTracker floating />
+          <DemoBanner />
+          <EventBanner />
+          {page !== 'settings' && <AdminMailNotice open={() => go('settings')} />}
+          <PageErrorBoundary key={page} where={`page:${page}`} onLeave={() => go('hideout')}>
+            <Content page={page} go={go} questMapZone={questMapZone} showQuestOnMap={showQuestOnMap} />
+          </PageErrorBoundary>
+        </main>
+      </div>
       <PageErrorBoundary where="feed">
         <Feed />
       </PageErrorBoundary>

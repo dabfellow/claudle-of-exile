@@ -32,7 +32,7 @@ function start(id: string, amount = 1_000_000) {
   s.unlockedZones = ZONES.map((z) => z.id);
   s.account.hideout.forge = 7;
   s.account.hideout.alchemy_table = 5;
-  for (const material of Object.keys(a.inputs ?? {})) s.account.bank[material] = amount;
+  for (const material of Object.keys(a.inputs ?? {})) s.storage.bank[material] = amount;
   const ctx = makeCtx(seeded(1));
   expect(startSkillAction(s, ctx, id)).toBeNull();
   return { s, ctx, a };
@@ -68,7 +68,7 @@ describe('non-combat action mastery', () => {
     const { s, a } = start('mine_scorched');
     const ctx = makeCtx({ next: () => 0.99 }); // misses the ordinary output and all bonuses
     skillStep(s, ctx, actionIntervalMs(s, a, deriveStats(s)), deriveStats(s));
-    expect(s.account.bank.copper_ore ?? 0).toBe(0);
+    expect(s.storage.bank.copper_ore ?? 0).toBe(0);
     expect(s.skillingMastery[a.mastery!.id]).toBe(a.intervalMs / 1000);
     stopAction(s);
     expect(s.skillingMastery[a.mastery!.id]).toBe(a.intervalMs / 1000);
@@ -86,7 +86,7 @@ describe('non-combat action mastery', () => {
     const right = start('mine_copper');
     skillStep(left.s, left.ctx, base, deriveStats(left.s));
     skillStep(right.s, right.ctx, base, deriveStats(right.s));
-    expect(left.s.account.bank).toEqual(right.s.account.bank);
+    expect(left.s.storage.bank).toEqual(right.s.storage.bank);
   });
 
   it('only adds stochastic ordinary gathering yield and never duplicates rare rolls', () => {
@@ -95,16 +95,16 @@ describe('non-combat action mastery', () => {
     sub.s.skillingMastery[sub.a.mastery!.id] = masteryThreshold(20);
     const subCtx = makeCtx(zero);
     skillStep(sub.s, subCtx, actionIntervalMs(sub.s, sub.a, deriveStats(sub.s)), deriveStats(sub.s));
-    expect(sub.s.account.bank.copper_ore).toBe(2); // one base, one stochastic extra
-    expect(sub.s.account.bank.rough_gem).toBe(1); // rare roll is exactly one
+    expect(sub.s.storage.bank.copper_ore).toBe(2); // one base, one stochastic extra
+    expect(sub.s.storage.bank.rough_gem).toBe(1); // rare roll is exactly one
 
     // At MASTERY_CAP (level 100), unlocked Vein Strike and Dense Seam milestone procs activate
     const { s, a } = start('mine_copper');
     s.skillingMastery[a.mastery!.id] = MASTERY_CAP;
     const ctx = makeCtx(zero);
     skillStep(s, ctx, actionIntervalMs(s, a, deriveStats(s)), deriveStats(s));
-    expect(s.account.bank.copper_ore).toBe(4); // base + stochastic + Vein Strike proc + Dense Seam proc
-    expect(s.account.bank.rough_gem).toBe(1); // the rare roll is still exactly one
+    expect(s.storage.bank.copper_ore).toBe(4); // base + stochastic + Vein Strike proc + Dense Seam proc
+    expect(s.storage.bank.rough_gem).toBe(1); // the rare roll is still exactly one
   });
 
   it('conserves only paid ordinary production inputs after existing rules', () => {
@@ -112,18 +112,18 @@ describe('non-combat action mastery', () => {
     s.skillingMastery[a.mastery!.id] = MASTERY_CAP;
     const ctx = makeCtx(zero);
     skillStep(s, ctx, actionIntervalMs(s, a, deriveStats(s)), deriveStats(s));
-    expect(s.account.bank.copper_ore).toBe(1); // stochastic save of one from the five paid
-    expect(s.account.bank.copper_bar).toBe(2); // Lv 50 Pure Slag milestone procs double bar output
+    expect(s.storage.bank.copper_ore).toBe(1); // stochastic save of one from the five paid
+    expect(s.storage.bank.copper_bar).toBe(2); // Lv 50 Pure Slag milestone procs double bar output
 
     const key = start('smith_marrow_key', 8);
-    key.s.account.bank.dense_fossil = 2;
-    key.s.account.bank.serrated_fossil = 2;
+    key.s.storage.bank.dense_fossil = 2;
+    key.s.storage.bank.serrated_fossil = 2;
     key.s.skillingMastery[key.a.mastery!.id] = MASTERY_CAP;
     const keyCtx = makeCtx(zero);
     skillStep(key.s, keyCtx, actionIntervalMs(key.s, key.a, deriveStats(key.s)), deriveStats(key.s));
-    expect(key.s.account.bank.mithril_bar).toBe(1); // 12% conservation of 8 bars saves 1 bar
-    expect(key.s.account.bank.dense_fossil).toBe(0);
-    expect(key.s.account.bank.serrated_fossil).toBe(0);
+    expect(key.s.storage.bank.mithril_bar).toBe(1); // 12% conservation of 8 bars saves 1 bar
+    expect(key.s.storage.bank.dense_fossil).toBe(0);
+    expect(key.s.storage.bank.serrated_fossil).toBe(0);
   });
 
   it('shares bulk recipe tracks but keeps every other action and recipe separate', () => {
@@ -170,7 +170,7 @@ describe('non-combat action mastery', () => {
     const s = newGame(1);
     const a = actionDef('smelt_copper');
     s.skillingMastery[a.mastery!.id] = MASTERY_CAP;
-    s.account.bank.copper_ore = 4;
+    s.storage.bank.copper_ore = 4;
     expect(actionBlocker(s, a)).toBe('Missing materials');
   });
 
@@ -273,7 +273,7 @@ describe('non-combat action mastery', () => {
     const { s: brewState, ctx, a } = start('brew_life_small', 100);
     brewState.skillingMastery[life.mastery!.id] = masteryThreshold(25);
     skillStep(brewState, ctx, actionIntervalMs(brewState, a, deriveStats(brewState)), deriveStats(brewState));
-    const crafted = brewState.account.flaskStash.find((f) => f.flaskId === 'life_small');
+    const crafted = brewState.storage.flaskStash.find((f) => f.flaskId === 'life_small');
     expect(crafted).toBeDefined();
     expect(crafted!.extraCharges).toBe(1);
   });

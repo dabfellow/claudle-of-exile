@@ -9,7 +9,8 @@ import { ACTS, actOpen, ZONES } from './data/zones';
 import { FINAL_ACT } from './engine/hideout';
 import type { Ctx } from './engine/context';
 import { itemName } from './engine/items';
-import { alignWarTable, fillAccount, freshAccount, giveKeepsake, mergeAccounts, settleCharacter } from './engine/account';
+import { alignWarTable, ensurePersonalStashPages, fillAccount, freshAccount, giveKeepsake, mergeAccounts, settleCharacter } from './engine/account';
+import { transferGuild, type GuildTransfer } from './engine/guildStash';
 import { realmFor, realmOf, soloRealm, STANDARD_REALM } from './engine/challenge';
 import { characterLevel } from './engine/character';
 import { mergeOffline, MIN_OFFLINE_MS, startOffline, type OfflineRun, type OfflineSummary } from './engine/offline';
@@ -158,6 +159,7 @@ class GameStore {
   offline: OfflineSummary | null = null;
   /** a long catch-up on time away, running in slices */
   private catchUp: OfflineRun | null = null;
+  private guildMovePending = false;
   private catchUpListeners = new Set<() => void>();
   /** recent xp gains, for the xp/hour readout */
   xpLog: { at: number; skill: SkillId; amount: number }[] = [];
@@ -458,7 +460,7 @@ class GameStore {
     await this.refreshCharacters();
     if (merged) {
       const spilled = this.realm.overflow.length;
-      this.pushToast(spilled ? `Your characters now share a stash: ${spilled} item${spilled === 1 ? '' : 's'} waiting in its overflow` : 'Your characters now share a hideout and stash', 'good');
+      this.pushToast(spilled ? `Your Guild Stash has ${spilled} item${spilled === 1 ? '' : 's'} in overflow` : 'Your old shared items are in the Guild Stash', 'good');
     }
   }
 
@@ -498,9 +500,11 @@ class GameStore {
 
   /** Another copy of the account is ahead of this one: take it, keeping what changed here since the last save. */
   private mergeRealm(theirs: AccountState | null) {
-    if (!theirs || theirs.id !== this.realm.id || theirs.rev <= this.realm.rev) return;
+    if (!theirs || theirs.id !== this.realm.id || (theirs.guildRev ?? 0) < (this.realm.guildRev ?? 0)) return;
+    if (theirs.rev <= this.realm.rev && (theirs.guildRev ?? 0) === (this.realm.guildRev ?? 0)) return;
     mergeAccounts(this.realm, JSON.parse(this.savedRealm) as AccountState, theirs);
     this.realm.rev = theirs.rev;
+    this.realm.guildRev = theirs.guildRev;
     this.markRealmSaved(theirs);
   }
 
@@ -605,7 +609,8 @@ class GameStore {
     await this.switchRealm(realmOf(s.character));
     // another device may have changed the account since it was opened
     const latest = await this.saves?.loadAccount(this.realm.realm);
-    if (latest && latest.rev > this.realm.rev) this.adoptRealm(latest);
+    if (latest?.id === this.realm.id) this.mergeRealm(latest);
+    else if (latest && latest.rev > this.realm.rev) this.adoptRealm(latest);
     this.attach(s);
     this.begin(s);
     const away = Date.now() - s.lastSaved;
@@ -674,6 +679,7 @@ class GameStore {
 
   private attach(s: GameState) {
     s.account = this.realm;
+    ensurePersonalStashPages(s.storage, this.realm);
     settleCharacter(s, this.realm);
     if (giveKeepsake(s)) this.pushToast('Skill gems were re-sorted, so early leech moved. The Old Covenant is in your bag to make up for it.', 'good');
     // achievements added since this character last played, which it already meets, come with their rewards now
@@ -684,6 +690,7 @@ class GameStore {
 
   /** Save and leave the current character for the select screen. */
   async exit() {
+    if (this.guildMovePending) return;
     if (this.sandboxReturn) {
       this.stopLoop();
       const original = this.sandboxReturn;
@@ -761,10 +768,10 @@ class GameStore {
 
   /** Resolves once no catch-up on time away is running. */
   private caughtUp(): Promise<void> {
-    if (!this.catchUp) return Promise.resolve();
+    if (!this.catchUp && !this.guildMovePending) return Promise.resolve();
     return new Promise((resolve) => {
       const off = this.subscribeCatchUp(() => {
-        if (this.catchUp) return;
+        if (this.catchUp || this.guildMovePending) return;
         off();
         resolve();
       });
@@ -800,6 +807,7 @@ class GameStore {
   }
 
   async marketList(uid: number, mode: MarketMode, currency: string, price: number): Promise<string | null> {
+    await this.caughtUp();
     const api = this.marketTrader();
     if (!api) return 'Sign in to use the market';
     const op = crypto.randomUUID();
@@ -811,6 +819,7 @@ class GameStore {
   }
 
   private async marketPay(currency: string, amount: number, send: (api: MarketApi, op: string) => Promise<void>): Promise<string | null> {
+    await this.caughtUp();
     const api = this.marketTrader();
     if (!api) return 'Sign in to use the market';
     const op = crypto.randomUUID();
@@ -900,6 +909,7 @@ class GameStore {
     if (!api) return;
     try {
       for (const hold of [...(this.realm.marketHolds ?? [])]) {
+        if (hold.characterId && hold.characterId !== this.state.character.id) continue;
         if (this.marketInFlight.has(hold.op)) continue;
         const done = await api.opDone(hold.op);
         await this.actWhenCaughtUp((s) => releaseHold(s, hold.op, !done));
@@ -916,7 +926,7 @@ class GameStore {
     this.lastSave = performance.now();
     const step = () => {
       // a catch-up is running in slices; the time it takes is played once it's done
-      if (this.catchUp) return;
+      if (this.catchUp || this.guildMovePending) return;
       const now = performance.now();
       const dt = now - this.lastFrame;
       this.lastFrame = now;
@@ -946,7 +956,7 @@ class GameStore {
    * behind a progress screen (catchUpProgress) instead of freezing the page. The result is the same either way.
    */
   private runOffline(ms: number) {
-    if (this.catchUp) return;
+    if (this.catchUp || this.guildMovePending) return;
     this.baseCtx.now = Date.now();
     const hadAction = !!this.state.action;
     const state = this.state;
@@ -990,7 +1000,7 @@ class GameStore {
   save() {
     if (this.screen !== 'game' || !this.saves) return;
     // half caught up: keep the last save, so leaving now catches up on the whole absence next time
-    if (this.catchUp) return;
+    if (this.catchUp || this.guildMovePending) return;
     this.lastSave = performance.now();
     this.state.lastSaved = Date.now();
     this.saves.save(this.state).catch((err) => {
@@ -1008,10 +1018,19 @@ class GameStore {
 
   /** Swap in a different state for the current session (import / reset). */
   async replace(s: GameState) {
-    await this.switchRealm(realmOf(s.character));
+    if (this.guildMovePending) return 'Wait for the Guild Stash transfer to finish.';
+    const realm = realmOf(s.character);
+    if (s.unmerged && this.saves) {
+      const saved = await this.saves.loadAccount(realm);
+      const local = this.realm.realm === realm ? this.realm.guildTransfers?.[s.character.id] ?? 0 : 0;
+      const required = Math.max(local, saved?.guildTransfers?.[s.character.id] ?? 0);
+      if ((s.guildTransferRev ?? 0) < required) return 'This export predates a Guild Stash transfer. Use a save made after the transfer.';
+    }
+    await this.switchRealm(realm);
     this.attach(s);
     this.begin(s);
     this.save();
+    return null;
   }
 
   /** XP per hour for a skill over the last 10 minutes of play this session. */
@@ -1056,7 +1075,7 @@ class GameStore {
   /** Run a state change; a returned string is shown as an error toast. */
   act<T>(fn: (s: GameState, ctx: Ctx) => T): T {
     // nothing changes mid catch-up (hotkeys, say), or the result would differ from one unbroken run
-    if (this.catchUp) return undefined as T;
+    if (this.catchUp || this.guildMovePending) return undefined as T;
     const result = fn(this.state, this.ctx);
     // some tutorial steps are finished by a change rather than an event (a skill given a rule)
     if (this.screen === 'game') tutorialCheck(this.state, this.ctx);
@@ -1065,6 +1084,45 @@ class GameStore {
     if (this.screen === 'game' && this.shelvesJson() !== this.savedShelves) this.save();
     this.notify();
     return result;
+  }
+
+  async moveGuildStock(move: GuildTransfer) {
+    const saves = this.saves;
+    if (this.screen !== 'game' || !saves || this.catchUp || this.guildMovePending) return;
+    this.mergeRealm(saves.peekAccount(this.realm.realm));
+    const expected = structuredClone(this.realm);
+    const original = this.state;
+    const candidate = structuredClone(original);
+    const error = transferGuild(candidate, move);
+    if (error) { this.pushToast(error, 'warn'); return; }
+
+    candidate.account.rev += 1;
+    candidate.account.guildRev = (candidate.account.guildRev ?? 0) + 1;
+    candidate.guildTransferRev = candidate.account.guildRev;
+    (candidate.account.guildTransfers ??= {})[candidate.character.id] = candidate.guildTransferRev;
+    candidate.lastSaved = Math.max(Date.now(), original.lastSaved + 1);
+    this.guildMovePending = true;
+    try {
+      const result = await saves.saveGuildTransfer(candidate, candidate.account, expected);
+      if (this.state !== original || this.screen !== 'game') return;
+      if (result === 'changed') {
+        this.mergeRealm(saves.peekAccount(expected.realm));
+        this.mergeRealm(await saves.pullAccount(expected.realm));
+        this.pushToast('The stash or character save changed. Check the amount and try again.', 'warn');
+        return;
+      }
+      this.state = candidate;
+      this.adoptRealm(candidate.account);
+      this.lastSave = performance.now();
+      this.pushToast(move.direction === 'deposit' ? 'Sent to Guild Stash' : 'Withdrawn from Guild Stash', 'good');
+    } catch (err) {
+      reportError(err, { where: 'guildStashTransfer' });
+      this.pushToast('The transfer could not be confirmed. Reopen this character before trying again.', 'warn');
+    } finally {
+      this.guildMovePending = false;
+      this.catchUpListeners.forEach((listener) => listener());
+      this.notify();
+    }
   }
 
   pushToast(text: string, tone: Toast['tone'] = 'info') {

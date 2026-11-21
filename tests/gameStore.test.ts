@@ -208,13 +208,13 @@ describe('deliveries collected while catching up on time away', () => {
     game.account = { id: 'u1', provider: 'google', displayName: 'Tester' };
     game.realm = (await saves.loadAccount())!;
     await game.refreshCharacters();
-    const before = game.realm.bank.chaos ?? 0;
+    const before = game.state.storage.bank.chaos ?? 0;
 
     await game.enter(s.character.id);
     for (let i = 0; i < 2000 && game.catchUpProgress() !== null; i++) await settle(10);
     await settle(100);
 
     expect(repliedMidCatchUp).toBe(true);
-    expect(game.state.account.bank.chaos ?? 0).toBe(before + 5);
+    expect(game.state.storage.bank.chaos ?? 0).toBe(before + 5);
   }, 60_000);
 });

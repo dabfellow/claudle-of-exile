@@ -110,8 +110,13 @@ function GameTab() {
               className="btn danger"
               onClick={() => {
                 const c = s.character;
-                if (confirm(`Reset ${c.name} back to level 1? The Hideout and shared stash stay. This cannot be undone.`))
-                  void game.replace(newGame(Date.now(), { id: c.id, name: c.name, classId: c.classId, startNode: c.startNode, challenge: c.challenge }, s.account));
+                if (confirm(`Reset ${c.name} back to level 1? This keeps their Stash, the Guild Stash and Hideout. This cannot be undone.`)) {
+                  const reset = newGame(Date.now(), { id: c.id, name: c.name, classId: c.classId, startNode: c.startNode, challenge: c.challenge }, s.account);
+                  reset.storage = s.storage;
+                  reset.maps.stock = s.maps.stock;
+                  reset.guildTransferRev = s.guildTransferRev;
+                  void game.replace(reset);
+                }
               }}
             >
               Reset character
@@ -128,9 +133,11 @@ function GameTab() {
             style={{ marginTop: 8 }}
             onClick={() => {
               try {
-                void game.replace(importSave(text));
-                setText('');
-                game.pushToast('Save imported', 'good');
+                void game.replace(importSave(text)).then((error) => {
+                  if (error) { game.pushToast(error, 'bad'); return; }
+                  setText('');
+                  game.pushToast('Save imported', 'good');
+                }).catch(() => game.pushToast('The save could not be imported', 'bad'));
               } catch {
                 game.pushToast('That save string is invalid', 'bad');
               }

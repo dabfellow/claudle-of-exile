@@ -23,7 +23,7 @@ export function cartographyDone(s: GameState, ctx: Ctx, a: SkillAction): void {
 export function cartographyPreview(s: GameState, a: SkillAction): string[] {
   if (a.skill !== 'cartography') return [];
   const sex = SEXTANTS.find((x) => a.outputs?.[x.id]);
-  const supply = a.inputs ? Math.min(...Object.entries(a.inputs).map(([id, n]) => Math.floor((s.account.bank[id] ?? 0) / n)), a.chart?.upgrade ? Math.floor(mapsHeld(s, a.chart.tier - 1) / upgradeCost(s, a)) : Infinity) : 0;
+  const supply = a.inputs ? Math.min(...Object.entries(a.inputs).map(([id, n]) => Math.floor((s.storage.bank[id] ?? 0) / n)), a.chart?.upgrade ? Math.floor(mapsHeld(s, a.chart.tier - 1) / upgradeCost(s, a)) : Infinity) : 0;
   return [`Supplies cover ${supply} completion(s)${a.chart ? ` and ${supply * a.chart.qty} maps before yield bonuses` : ''}.`,
     ...(a.chart?.upgrade ? [`Uses ${upgradeCost(s, a)} Tier ${a.chart.tier - 1} maps per completion. Full map cost is never conserved.`] : []),
     ...(sex ? [sex.desc, `Six base charges; your current Map Device and Atlas give ${sextantCharges(s)} charges. Roll pool:`, ...SEXTANT_MODS.filter((m) => m.tier === sex.tier).map((m) => `${m.name}: ${m.desc}`)] : []),

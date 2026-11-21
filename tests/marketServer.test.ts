@@ -296,8 +296,8 @@ describe('the sanity check', () => {
     const miner = newGame(1);
     miner.skills[skill] = xpForLevel(30);
     miner.professionProgress.work[skill] = 100;
-    miner.account.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
-    if (skill === 'smithing') { miner.account.hideout.forge = 2; miner.account.bank = { copper_bar: 10, iron_bar: 10, ash_plank: 5, oak_plank: 5 }; }
+    miner.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
+    if (skill === 'smithing') { miner.account.hideout.forge = 2; miner.storage.bank = { copper_bar: 10, iron_bar: 10, ash_plank: 5, oak_plank: 5 }; }
     const c = makeCtx(seeded(5));
     expect(startProject(miner, c, skill === 'smithing' ? 'tool_wayfarer_hammer' : `tool_${skill}`)).toBeNull();
     advanceProject(miner, c, 1_200_000);

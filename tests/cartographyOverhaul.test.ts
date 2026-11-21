@@ -33,21 +33,21 @@ describe('Phase 13 charts and encounters', () => {
     simulateOffline(s, c, 1_200_000);
     expect(s.lifetime.deaths).toBe(0);
     expect(s.maps.tally.runs).toBe(1);
-    expect(s.account.bank.reliquary_fragment).toBe(1);
+    expect(s.storage.bank.reliquary_fragment).toBe(1);
   });
   it('produces dependable chart progress without combat, protects folio counters, and crafts one chart offline', () => {
-    const s = make(); s.account.bank.ash_log = 2400;
+    const s = make(); s.storage.bank.ash_log = 2400;
     expect(startSkillAction(s, ctx(), 'chart_vellum')).toBeNull();
     skillStep(s, ctx(), 600 * 3500, deriveStats(s));
-    expect(s.account.bank.chart_survey_fragment).toBe(20);
+    expect(s.storage.bank.chart_survey_fragment).toBe(20);
     const p = professionProject('chart_reliquary')!;
-    Object.assign(s.account.bank, p.inputs);
+    Object.assign(s.storage.bank, p.inputs);
     expect(startProject(s, ctx(), p.id)).toBeNull();
     simulateOffline(s, ctx(), p.durationMs);
     expect(uniqueMapHeld(s, 'umap_artisans_reliquary')).toBe(1);
     expect(s.professionProgress.projects.chart_reliquary.completed).toBe(1);
     expect(completeProject(s, ctx(), 1)).toMatch(/settled/);
-    s.account.bank.vellum = 100; s.account.bank.gall_ink = 100;
+    s.storage.bank.vellum = 100; s.storage.bank.gall_ink = 100;
     const before = s.professionProgress.work.cartography!;
     startSkillAction(s, ctx(), 'chart_folio_t1'); skillStep(s, ctx(), 60_000, deriveStats(s));
     expect(s.professionProgress.work.cartography! - before).toBe(5);
@@ -66,14 +66,14 @@ describe('Phase 13 charts and encounters', () => {
       expect(uniqueMapHeld(s, 'umap_artisans_reliquary')).toBe(1);
       expect(s.maps.run!.packsTotal).toBe(20);
       expect(uniqueMapDef('umap_artisans_reliquary').uniques).toEqual([]);
-      const allocated = [...s.account.atlas!.nodes], dust = s.account.bank.arcane_dust ?? 0;
+      const allocated = [...s.account.atlas!.nodes], dust = s.storage.bank.arcane_dust ?? 0;
       s.maps.run!.bossDown = true; mapStep(s, ctx()); mapStep(s, ctx());
-      expect(s.account.bank.reliquary_fragment).toBe(1);
-      expect(s.account.bank.rough_gem).toBe(10); expect(s.account.bank.arcane_dust).toBe(dust + 100);
+      expect(s.storage.bank.reliquary_fragment).toBe(1);
+      expect(s.storage.bank.rough_gem).toBe(10); expect(s.storage.bank.arcane_dust).toBe(dust + 100);
       expect(s.account.atlas!.nodes).toEqual(allocated);
       expect(startUniqueMap(s, ctx(), 'umap_artisans_reliquary')).toBeNull();
       s.combat = null; mapStep(s, ctx());
-      expect(s.account.bank.reliquary_fragment).toBe(1);
+      expect(s.storage.bank.reliquary_fragment).toBe(1);
       expect(uniqueMapHeld(s, 'umap_artisans_reliquary')).toBe(0);
     } finally { MAPS_PREVIEW.enabled = preview; }
   });
@@ -82,11 +82,11 @@ describe('Phase 13 charts and encounters', () => {
     const s = make(); s.account.campaignDone = true;
     for (let i = 0; i < 10; i++) {
       addMaps(s, 10, 1); expect(startMap(s, ctx(), 10)).toBeNull(); s.maps.run!.bossDown = true; mapStep(s, ctx());
-      expect(s.account.bank.atlas_survey_record ?? 0).toBe(i === 9 ? 1 : 0);
+      expect(s.storage.bank.atlas_survey_record ?? 0).toBe(i === 9 ? 1 : 0);
     }
-    Object.assign(s.account.bank, { fine_vellum: 10, sepia_ink: 5, sextant_master: 1 });
+    Object.assign(s.storage.bank, { fine_vellum: 10, sepia_ink: 5, sextant_master: 1 });
     startSkillAction(s, ctx(), 'chart_endgame_atlas'); simulateOffline(s, ctx(), 240_000);
-    expect(s.account.bank.completed_atlas_chart).toBe(1);
-    expect(s.account.bank.atlas_survey_record).toBe(0);
+    expect(s.storage.bank.completed_atlas_chart).toBe(1);
+    expect(s.storage.bank.atlas_survey_record).toBe(0);
   });
 });

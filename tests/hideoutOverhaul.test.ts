@@ -45,10 +45,10 @@ describe('hideout overhaul', () => {
     s.account.hideout.quartermaster = 1;
     placeItem(s, c, createItem(s, 'rusted_sword', 1, 'normal', c.rng));
     expect(s.inventory).toHaveLength(1);
-    const dust = s.account.bank.arcane_dust ?? 0;
+    const dust = s.storage.bank.arcane_dust ?? 0;
     s.account.hideout.quartermaster = 2;
     placeItem(s, c, createItem(s, 'rusted_sword', 1, 'normal', c.rng));
     expect(s.inventory).toHaveLength(1);
-    expect(s.account.bank.arcane_dust).toBeGreaterThan(dust);
+    expect(s.storage.bank.arcane_dust).toBeGreaterThan(dust);
   });
 });

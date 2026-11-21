@@ -49,7 +49,7 @@ export function ThievingHeader() {
       <ProgressBar value={maxed ? 1 : progressOf('thieving', xp)} color="var(--gold)" smooth />
       <div className="row small"><span>{maxed ? 'Max level' : `${fmt(xpToReach('thieving', level + 1) - xp)} to level ${level + 1}`}</span><span className="spacer" /><span className="num">{fmt(rate)} XP/h</span></div>
     </div>
-    <div className="thief-marker-total"><MatIcon id={MARKER} size={26} /><div><b className="num">{fmt(s.account.bank[MARKER] ?? 0)}</b><span>Rogue’s Markers</span></div></div>
+    <div className="thief-marker-total"><MatIcon id={MARKER} size={26} /><div><b className="num">{fmt(s.storage.bank[MARKER] ?? 0)}</b><span>Rogue’s Markers</span></div></div>
   </header>;
 }
 
@@ -105,7 +105,7 @@ export function ThievingLedger() {
         <div className="row"><MatIcon id={MARKER} size={18} /><b>Guaranteed Marker</b><span className="spacer" /><span className="num">{untilMarker} {untilMarker === 1 ? 'lift' : 'lifts'} away</span></div>
         <ProgressBar value={(completions % 10) / 10} color="var(--gold)" />
         <p>Every mark pays gold and can yield Markers. Every 10 lifts guarantees an extra Marker for Heists.</p>
-        {((s.account.bank.treasury_fragment ?? 0) > 0 || (s.account.bank.oath_fragment ?? 0) > 0) && <p>Treasury Fragments: {fmt(s.account.bank.treasury_fragment ?? 0)} · Oath Fragments: {fmt(s.account.bank.oath_fragment ?? 0)}</p>}
+        {((s.storage.bank.treasury_fragment ?? 0) > 0 || (s.storage.bank.oath_fragment ?? 0) > 0) && <p>Treasury Fragments: {fmt(s.storage.bank.treasury_fragment ?? 0)} · Oath Fragments: {fmt(s.storage.bank.oath_fragment ?? 0)}</p>}
       </div>
     </section>
 

@@ -88,8 +88,8 @@ export function settleProfessionProgress(s: GameState, legacy = false): void {
 }
 
 function carryRuneAccess(s: GameState, account: AccountState): void {
-  const ownedRunes = [...Object.entries(account.bank).filter(([, n]) => n > 0).map(([id]) => runeDef(id)?.grade.grade ?? 0),
-    ...[...s.inventory, ...Object.values(s.equipment), ...account.stash.flat()].map((i) => i?.rune ? runeDef(i.rune)?.grade.grade ?? 0 : 0)];
+  const ownedRunes = [...Object.entries({ ...account.bank, ...s.storage.bank }).filter(([, n]) => n > 0).map(([id]) => runeDef(id)?.grade.grade ?? 0),
+    ...[...s.inventory, ...Object.values(s.equipment), ...s.storage.stash.flat(), ...account.stash.flat()].map((i) => i?.rune ? runeDef(i.rune)?.grade.grade ?? 0 : 0)];
   const highestGrade = Math.max(0, ...ownedRunes);
   for (const grade of RUNE_GRADES) if (grade.grade <= highestGrade || levelOf('runecarving', s.skills.runecarving) >= grade.level) s.professionProgress.legacyAccess[`runecarving_grade_${grade.grade}`] = true;
 }

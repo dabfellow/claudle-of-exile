@@ -20,7 +20,7 @@ export function mountProfessionPlaytest(load: typeof scenario) {
     ['Stocked professions', () => load({ classId: 'ranger', level: 60, zone: 'shatteredthrone', prepare: (s) => {
       s.action = null; s.combat = null;
       for (const id of Object.keys(SKILLS) as (keyof typeof SKILLS)[]) if (id !== 'combat') s.skills[id] = xpForLevel(90);
-      for (const m of [...MATERIALS, ...CURRENCIES]) s.account.bank[m.id] = 99999;
+      for (const m of [...MATERIALS, ...CURRENCIES]) s.storage.bank[m.id] = 99999;
       for (const station of STATIONS) s.account.hideout[station.id] = station.levels.length;
       for (const a of ACTIONS) {
         s.professionProgress.legacyAccess[a.id] = true;

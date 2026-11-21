@@ -36,7 +36,7 @@ function crafter(id: string): GameState {
   s.professionProgress.work[p.skill] = 100;
   s.account.hideout.forge = 3;
   s.account.hideout.rune_board = 1;
-  s.account.bank = { ...p.inputs };
+  s.storage.bank = { ...p.inputs };
   return s;
 }
 
@@ -45,7 +45,7 @@ describe('Phase 17 pinnacle projects', () => {
     const s = crafter(id), c = fixed(.5), p = professionProject(id)!;
     expect(startProject(s, c, id)).toBeNull();
     // inputs are paid in full up front
-    for (const input of Object.keys(p.inputs)) expect(s.account.bank[input]).toBe(0);
+    for (const input of Object.keys(p.inputs)) expect(s.storage.bank[input]).toBe(0);
     advanceProject(s, c, p.durationMs);
     const item = s.inventory.find((i) => i.uniqueId === id)!;
     expect(item).toBeTruthy();
@@ -101,14 +101,14 @@ describe('Phase 17 currency rules', () => {
     advanceProject(s, c, professionProject('the_sum_of_all_things')!.durationMs);
     const item = s.inventory.find((i) => i.uniqueId === 'the_sum_of_all_things')!;
     expect(allMods(item)[0].values).toEqual([1]);
-    expect(Object.values(s.account.bank).every((n) => !n)).toBe(true);
+    expect(Object.values(s.storage.bank).every((n) => !n)).toBe(true);
   });
 
   it('Sum takes one ordinary Divine per reroll, uniform over the range, and the same number may return', () => {
     const s = newGame(1);
     const sum = createUnique(s, 'the_sum_of_all_things', 90, { next: () => .5 });
     s.inventory.push(sum);
-    s.account.bank.divine = 3;
+    s.storage.bank.divine = 3;
     const roll = () => allMods(sum)[0].values[0];
     const before = roll();
     expect(applyOrb(s, fixed(.5), 'divine', sum.uid)).toBeNull();
@@ -117,7 +117,7 @@ describe('Phase 17 currency rules', () => {
     expect(roll()).toBe(1);
     expect(applyOrb(s, fixed(.99999), 'divine', sum.uid)).toBeNull();
     expect(roll()).toBe(200);
-    expect(s.account.bank.divine).toBe(0);
+    expect(s.storage.bank.divine).toBe(0);
     // no Divine left: nothing else can pay for it, and no recipe is required
     expect(orbReason(s, 'divine', sum.uid)).toBe('You have none');
   });
@@ -126,27 +126,27 @@ describe('Phase 17 currency rules', () => {
     const s = newGame(1);
     const sum = createUnique(s, 'the_sum_of_all_things', 90, { next: () => .5 });
     s.inventory.push(sum);
-    s.account.bank.divine = 1;
-    s.account.bank.forgers_seal = 1;
+    s.storage.bank.divine = 1;
+    s.storage.bank.forgers_seal = 1;
     const value = allMods(sum)[0].values[0];
     expect(applyOrb(s, fixed(0), 'divine', sum.uid, null, 'u_sum_of_all')).toBe('The Seal leaves nothing to reroll');
-    expect([s.account.bank.divine, s.account.bank.forgers_seal, allMods(sum)[0].values[0]]).toEqual([1, 1, value]);
+    expect([s.storage.bank.divine, s.storage.bank.forgers_seal, allMods(sum)[0].values[0]]).toEqual([1, 1, value]);
   });
 
   it.each(['the_second_heresy', 'worldheart', 'woundmaker', 'borrowed_tomorrow'])('%s is fixed: a Divine is refused and not charged', (id) => {
     const s = newGame(1);
     const item = createUnique(s, id, 90, { next: () => .5 });
     s.inventory.push(item);
-    s.account.bank.divine = 1;
+    s.storage.bank.divine = 1;
     expect(applyOrb(s, fixed(.1), 'divine', item.uid)).toBe('All modifiers on this unique are fixed');
-    expect(s.account.bank.divine).toBe(1);
+    expect(s.storage.bank.divine).toBe(1);
   });
 
   it.each(PINNACLES)("%s refuses Locksmith's Wax impressions", (id) => {
     const s = newGame(1);
     const item = createUnique(s, id, 90, { next: () => .5 });
     s.inventory.push(item);
-    s.account.bank.locksmiths_wax = 1;
+    s.storage.bank.locksmiths_wax = 1;
     expect(impressionReason(s, item.uid)).toBe('Cannot take an impression of a unique');
   });
 });
@@ -379,21 +379,21 @@ describe('Phase 17 endgame supply hooks', () => {
     const s = mapper();
     for (let i = 0; i < 10; i++) winDoomed(s);
     mapStep(s, ctx());
-    expect(s.account.bank.world_core_fragment).toBe(10);
-    expect(s.account.bank.doom_key_fragment).toBe(10);
-    const before = s.account.bank.uber_key_2 ?? 0;
+    expect(s.storage.bank.world_core_fragment).toBe(10);
+    expect(s.storage.bank.doom_key_fragment).toBe(10);
+    const before = s.storage.bank.uber_key_2 ?? 0;
     expect(startSkillAction(s, ctx(), 'forge_uber_key_2')).toBeNull();
     simulateOffline(s, ctx(), 120_000);
-    expect(s.account.bank.uber_key_2).toBe(before + 1);
-    expect(s.account.bank.doom_key_fragment).toBe(0);
+    expect(s.storage.bank.uber_key_2).toBe(before + 1);
+    expect(s.storage.bank.doom_key_fragment).toBe(0);
   });
 
   it('guarantees a Fractured Orb after ten Doomed victories without one, and a real drop resets the count', () => {
     const s = mapper();
     for (let i = 0; i < 9; i++) winDoomed(s);
-    const before = s.account.bank.fractured ?? 0;
+    const before = s.storage.bank.fractured ?? 0;
     winDoomed(s);
-    expect(s.account.bank.fractured).toBe(before + 1);
+    expect(s.storage.bank.fractured).toBe(before + 1);
     expect(s.professionProgress.counters[ORB_DROUGHT]).toBe(0);
     // an orb that drops in a run: that run does not count toward the next ten
     s.professionProgress.counters[ORB_DROUGHT] = -1;

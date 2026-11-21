@@ -240,7 +240,7 @@ describe('masteries', () => {
     expect(allocate(s, ctx(), 'brute_force_m', 0)).toBeNull();
     expect(deriveStats(s, []).raw.armourPct).toBe(before + 15);
     expect(changeMastery(s, ctx(), 'brute_force_m', 2)).toMatch(/Regret/);
-    s.account.bank.regret = 2;
+    s.storage.bank.regret = 2;
     expect(changeMastery(s, ctx(), 'brute_force_m', 2)).toBeNull();
     expect(deriveStats(s, []).raw.slamReduction).toBe(10);
     // the notable can't be refunded while its mastery depends on it
@@ -275,7 +275,7 @@ describe('character tree point economy', () => {
     const s = newGame(1);
     expect(allocate(s, ctx(), 'str_hub')).toBeNull();
     expect(s.passivePoints).toBe(1);
-    s.account.bank.regret = 1;
+    s.storage.bank.regret = 1;
     expect(refund(s, ctx(), 'str_hub')).toBeNull();
     expect(s.passivePoints).toBe(2);
     s.bossesDefeated.push('sanctum');
@@ -534,7 +534,7 @@ describe('skilling tree', () => {
     startSkillAction(s, c, 'mine_copper');
     tick(s, c, 60_000);
     const actions = Math.floor(60_000 / actionIntervalMs(s, a, d));
-    expect(s.account.bank.copper_ore ?? 0).toBeGreaterThanOrEqual(actions * 2);
+    expect(s.storage.bank.copper_ore ?? 0).toBeGreaterThanOrEqual(actions * 2);
   });
 
   it('Greenhouse keeps the last harvest growing in the background', () => {
@@ -547,6 +547,6 @@ describe('skilling tree', () => {
     startSkillAction(s, c, 'herb_sun');
     startSkillAction(s, c, 'mine_copper');
     tick(s, c, 120_000);
-    expect(s.account.bank.sunpetal ?? 0).toBeGreaterThan(0);
+    expect(s.storage.bank.sunpetal ?? 0).toBeGreaterThan(0);
   });
 });

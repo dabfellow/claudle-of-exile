@@ -140,7 +140,7 @@ function EarnedBonuses({ s }: { s: GameState }) {
 export function AchievementsPage() {
   const s = useGame();
   const [show, setShow] = useState<Show>('all');
-  const inPlay = ACHIEVEMENTS.filter((a) => a.category !== 'skilling' || !isClassic(s));
+  const inPlay = ACHIEVEMENTS.filter((a) => (!a.hidden || s.achievements.includes(a.id)) && (a.category !== 'skilling' || !isClassic(s)));
   const done = inPlay.filter((a) => s.achievements.includes(a.id)).length;
   const wanted = (a: AchievementDef) => show === 'all' || (show === 'done') === s.achievements.includes(a.id);
   return (

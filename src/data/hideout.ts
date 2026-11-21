@@ -143,7 +143,7 @@ export const STATIONS: StationDef[] = [
       { cost: { gold: 750, ash_plank: 20, copper_bar: 20 }, effect: 'Status rules: trigger skills on status conditions', grants: { rules: ['status'] } },
       { cost: { gold: 2000, oak_plank: 25, iron_bar: 25 }, effect: 'Auto-challenge: a ready boss enters combat automatically' },
       { cost: { gold: 4000, oak_plank: 40, iron_bar: 40, rough_gem: 4 }, effect: 'Aim rules: send skills at priority targets (martyrs, weak points, choir adds)', grants: { rules: ['aim'] } },
-      { cost: { gold: 8000, oak_plank: 60, iron_bar: 60, rough_gem: 6, boss_trophy: 2 }, effect: 'Auto next zone: travel to the next area once the boss is defeated' },
+      { cost: { gold: 8000, oak_plank: 60, iron_bar: 60, rough_gem: 6, boss_trophy: 2 }, effect: 'Auto next zone: travel to the next zone once the boss is defeated' },
       { cost: { gold: 16000, yew_plank: 80, mithril_bar: 80, rough_gem: 12, boss_trophy: 5 }, effect: 'A 3rd rule slot per skill', grants: { ruleSlots: 3 } },
       { cost: { gold: 50000, yew_plank: 150, mithril_bar: 150, rough_gem: 25, boss_trophy: 10, marrow_shard: 3, choir_glass: 3 }, effect: 'Pinnacle Tactics: A 4th rule slot per skill', grants: { ruleSlots: 4 } },
     ],

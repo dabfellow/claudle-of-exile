@@ -1,6 +1,8 @@
 import type { DamageType, GroundKind } from '../engine/types';
 import { buildCampaign } from './campaignLayout';
 
+export type ZoneTerrain = 'coast' | 'cave' | 'forest' | 'marsh' | 'plains' | 'town' | 'ruins' | 'mountains' | 'workshop' | 'underworks';
+
 /**
  * Boss mechanics. Every boss slams; later bosses stack more so a single guard skill isn't enough.
  * - slam: heavy telegraphed hit — guard, interrupt or drink (Evasion Rating can't dodge it)
@@ -92,7 +94,11 @@ export interface ZoneDef {
   boss: MonsterDef;
   /** the act's final boss: beating it completes the act */
   actBoss?: boolean;
-  /** the id its art is filed under, when it borrows another area's */
+  /** Shared backdrop for this zone's terrain. */
+  terrain?: ZoneTerrain;
+  /** Optional subtype within the terrain, with the base backdrop as its fallback. */
+  terrainVariant?: string;
+  /** The art source ID when this zone borrows another zone's scenery. */
   art?: string;
   /** kills needed before the boss appears */
   bossEvery: number;
@@ -292,7 +298,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'stormcliffs', name: "The Lookout Cliffs", act: 1, tier: 4, levelRange: [19, 22], color: '#6a7fa8',
+    id: 'stormcliffs', name: "Brinewick Lookout", act: 1, tier: 4, levelRange: [19, 22], color: '#6a7fa8',
     desc: "The community needs this storm-lashed coastal path cleared before its next supplies can pass.",
     monsters: [
       m('ravager', 'Cliff Ravager', 19, 'phys', atk('Rend', 2700), 1, 1.05),
@@ -326,7 +332,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   // ---------------- Act 2: The Broken Roads ----------------
   // Existing combat bands are retained while the supply-road and Greyford chapters divide this stretch.
   {
-    id: 'cinderroad', name: "The Broken Supply Road", act: 2, tier: 5, levelRange: [24, 26], color: '#a0603a',
+    id: 'cinderroad', name: "The Ration Road", act: 2, tier: 5, levelRange: [24, 26], color: '#a0603a',
     desc: "Burned wagons and abandoned checkpoints mark the road taken by district food shipments.",
     monsters: [
       fast(m('ashjackal', 'Ash Jackal', 24, 'phys', atk('Snapping Bite', 2200), 0.75, 0.85)),
@@ -356,7 +362,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'blackgrass', name: "The Rootbound Verge", act: 2, tier: 6, levelRange: [26, 28], color: '#5a5a3a',
+    id: 'blackgrass', name: "Blackgrass Verge", act: 2, tier: 6, levelRange: [26, 28], color: '#5a5a3a',
     desc: "A brief season of abundance left the roadside fields strangled by vigorous black growth.",
     monsters: [
       fast(m('grasscat', 'Blackgrass Stalker', 26, 'phys', atk('Pounce', 2300), 0.85, 1)),
@@ -468,7 +474,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'almsquarter', name: "The Shelter Quarter", act: 4, tier: 8, levelRange: [33, 35], color: '#a89a8a', ilvlBonus: 3,
+    id: 'almsquarter', name: "The Alms Ward", act: 4, tier: 8, levelRange: [33, 35], color: '#a89a8a', ilvlBonus: 3,
     desc: "Families occupy the buildings that still stand and trade favours for food, repairs and safe passage.",
     requires: { after: ['pilgrimgate'] },
     monsters: [
@@ -484,8 +490,8 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'scourgeyard', name: "The Rootbound Courtyards", act: 4, tier: 8, levelRange: [34, 36], color: '#8a5a50', ilvlBonus: 3,
-    desc: "The Creep has split the paving of the old courts; people who refuse to leave still defend their claims.",
+    id: 'scourgeyard', name: "The Cloth Courts", act: 4, tier: 8, levelRange: [34, 36], color: '#8a5a50', ilvlBonus: 3,
+    desc: "Cloth merchants once filled these courts. Roots have split the paving, and people who refuse to leave still defend their claims.",
     requires: { after: ['pilgrimgate'] },
     monsters: [
       fast(m('flagellant', 'Flagellant', 34, 'phys', atk('Barbed Scourge', 2200), 0.8, 0.95)),
@@ -532,7 +538,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'inquisition', name: "The Records Hall", act: 4, tier: 9, levelRange: [36, 38], color: '#6a5a7a', ilvlBonus: 3,
+    id: 'inquisition', name: "Harrowgate Registry", act: 4, tier: 9, levelRange: [36, 38], color: '#6a5a7a', ilvlBonus: 3,
     desc: "Altered ledgers and locked rooms preserve the decisions made while Harrowgate was being lost.",
     requires: { after: ['bellfoundry'] },
     monsters: [
@@ -548,7 +554,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'penitentstair', name: "The Rootbound Steps", act: 4, tier: 9, levelRange: [37, 39], color: '#8a8a7a', ilvlBonus: 3,
+    id: 'penitentstair', name: "The Upper Steps", act: 4, tier: 9, levelRange: [37, 39], color: '#8a8a7a', ilvlBonus: 3,
     desc: "A broken ascent through the upper districts remains one of the few routes between survivor enclaves.",
     requires: { after: ['bellfoundry'] },
     monsters: [
@@ -580,7 +586,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'saintswalk', name: "The Old Processional", act: 4, tier: 9, levelRange: [39, 41], color: '#c0b080', ilvlBonus: 3,
+    id: 'saintswalk', name: "Monument Walk", act: 4, tier: 9, levelRange: [39, 41], color: '#c0b080', ilvlBonus: 3,
     desc: "Public monuments overlook an avenue reclaimed by growth and the people still guarding it.",
     requires: { after: ['inquisition', 'penitentstair'] },
     monsters: [
@@ -596,8 +602,8 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'highaltar', name: "The Overgrown Forum", act: 4, tier: 9, levelRange: [40, 41], color: '#e0d8a0', ilvlBonus: 3,
-    desc: "At the old civic heart, evidence ties the abandoned city to work continuing in the northern mountains.",
+    id: 'highaltar', name: "The Forum That Bloomed", act: 4, tier: 9, levelRange: [40, 41], color: '#e0d8a0', ilvlBonus: 3,
+    desc: "People still remember the day flowers split the forum paving. Papers left behind tie Harrowgate to work continuing in the northern mountains.",
     requires: { after: ['saintswalk'], bosses: 7 },
     monsters: [
       m('altarguard', 'Altar Guard', 40, 'light', atk('Consecrated Glaive', 3400), 1.3, 1.15),
@@ -618,7 +624,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   // bosses' novas and ground. Most bosses bring Frostbite. Items roll seven levels above the monster, so the act's last
   // kills reach bases of about level 57, a third of the way from Act 4's 45 to the 80 that Act 7 ends on.
   {
-    id: 'hollowpass', name: "The Cairnwatch Approach", act: 5, tier: 9, levelRange: [41, 42], color: '#8fa6b8', ilvlBonus: 7,
+    id: 'hollowpass', name: "Cairnwatch Road", act: 5, tier: 9, levelRange: [41, 42], color: '#8fa6b8', ilvlBonus: 7,
     desc: "A service road climbs toward the mountain institute named in the surviving city records.",
     monsters: [
       fast(m('snowwolf', 'Pass Wolf', 41, 'phys', atk('Hamstring', 2500), 1.1, 1.05)),
@@ -681,7 +687,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'bonequarry', name: "The Containment Quarry", act: 5, tier: 10, levelRange: [43, 45], color: '#c8bfa8', ilvlBonus: 7,
+    id: 'bonequarry', name: "Sealstone Quarry", act: 5, tier: 10, levelRange: [43, 45], color: '#c8bfa8', ilvlBonus: 7,
     desc: "Salvaged stone and fresh excavation lie beside records of structures dismantled during the war.",
     requires: { after: ['howlingfells'] },
     monsters: [
@@ -697,7 +703,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'icevault', name: "The Cold Specimen Vault", act: 5, tier: 10, levelRange: [44, 46], color: '#6a9ac8', ilvlBonus: 7,
+    id: 'icevault', name: "The Cold Vault", act: 5, tier: 10, levelRange: [44, 46], color: '#6a9ac8', ilvlBonus: 7,
     desc: "The institute keeps unstable specimens behind frozen seals whose maintenance has begun to fail.",
     requires: { after: ['glasslake'] },
     monsters: [
@@ -713,7 +719,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'mammothroad', name: "The Heavy Haul Road", act: 5, tier: 11, levelRange: [44, 46], color: '#a08a70', ilvlBonus: 7,
+    id: 'mammothroad', name: "The Haul Road", act: 5, tier: 11, levelRange: [44, 46], color: '#a08a70', ilvlBonus: 7,
     desc: "Oversized test stock and abandoned transport rigs obstruct the road into the service compound.",
     requires: { after: ['bonequarry'] },
     monsters: [
@@ -777,7 +783,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'kingsstair', name: "The Institute Ascent", act: 5, tier: 11, levelRange: [48, 49], color: '#a0b0c0', ilvlBonus: 7,
+    id: 'kingsstair', name: "The Laboratory Stair", act: 5, tier: 11, levelRange: [48, 49], color: '#a0b0c0', ilvlBonus: 7,
     desc: "The final secured approach leads to research authorized far beyond the mountain compound.",
     requires: { after: ['hangingglacier', 'steading'] },
     monsters: [
@@ -814,7 +820,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   // Harbour, canals and research wards retain the existing fire/lightning checks and channel mechanics.
   // Items roll ten levels above monsters; the first area follows Cairnwatch's laboratory.
   {
-    id: 'blackharbor', name: "The Restricted Quays", act: 6, tier: 12, levelRange: [49, 50], color: '#39424e', ilvlBonus: 10,
+    id: 'blackharbor', name: "Customs Quay", act: 6, tier: 12, levelRange: [49, 50], color: '#39424e', ilvlBonus: 10,
     requires: { after: ['giantsthrone'] }, // The mountain laboratory opens the capital approach.
     desc: "Kroten vessels unload behind guarded barriers while officials praise their superior crews and charts.",
     monsters: [
@@ -862,7 +868,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'squallbanks', name: "The Canal Locks", act: 6, tier: 12, levelRange: [51, 53], color: '#4f6f8f', ilvlBonus: 10,
+    id: 'squallbanks', name: "The Harbour Locks", act: 6, tier: 12, levelRange: [51, 53], color: '#4f6f8f', ilvlBonus: 10,
     desc: "Controlled waterways connect the working harbour to the capital districts and their research stores.",
     requires: { after: ['wreckline', 'cinderkey'] },
     monsters: [
@@ -910,7 +916,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'brimstone', name: "The Refining Annex", act: 6, tier: 13, levelRange: [52, 54], color: '#b0702a', ilvlBonus: 10,
+    id: 'brimstone', name: "The Refinery Workshops", act: 6, tier: 13, levelRange: [52, 54], color: '#b0702a', ilvlBonus: 10,
     desc: "The by-products of useful abundance accumulate in guarded workshops beyond the wealthy streets.",
     requires: { after: ['drownedfleet'] },
     monsters: [
@@ -926,7 +932,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'hollowreef', name: "The Submerged Works", act: 6, tier: 13, levelRange: [53, 55], color: '#8a5a6a', ilvlBonus: 10,
+    id: 'hollowreef', name: "The Lower Waterworks", act: 6, tier: 13, levelRange: [53, 55], color: '#8a5a6a', ilvlBonus: 10,
     desc: "Growth has invaded the foundations and channels beneath the capital research wards.",
     requires: { after: ['drownedfleet'] },
     monsters: [
@@ -942,7 +948,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'thunderhead', name: "The Guarded Causeway", act: 6, tier: 14, levelRange: [54, 56], color: '#46506f', ilvlBonus: 10,
+    id: 'thunderhead', name: "Citadel Causeway", act: 6, tier: 14, levelRange: [54, 56], color: '#46506f', ilvlBonus: 10,
     desc: "Officials hold the approach to the protected inner districts as containment incidents grow harder to conceal.",
     requires: { after: ['brimstone', 'hollowreef'] },
     monsters: [
@@ -990,7 +996,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'voicetrench', name: "The Research Hearings", act: 6, tier: 14, levelRange: [55, 57], color: '#3a3a5a', ilvlBonus: 10,
+    id: 'voicetrench', name: "The Council Hearing Hall", act: 6, tier: 14, levelRange: [55, 57], color: '#3a3a5a', ilvlBonus: 10,
     desc: "Conflicting testimony exposes what the rulers were promised and what the expeditions actually pursued.",
     requires: { after: ['blackcurrent'] },
     monsters: [
@@ -1022,7 +1028,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'maelstrom', name: "The Failing Containment", act: 6, tier: 14, levelRange: [56, 57], color: '#1e2a3f', ilvlBonus: 10,
+    id: 'maelstrom', name: "The Ward Breach", act: 6, tier: 14, levelRange: [56, 57], color: '#1e2a3f', ilvlBonus: 10,
     desc: "A failing ward reveals the route toward an older source buried beneath the capital.",
     requires: { after: ['voicetrench', 'lightless'], bosses: 10 },
     monsters: [
@@ -1041,7 +1047,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
 
   // ---------------- Act 7: The Guardian Beneath ----------------
   {
-    id: 'exilesgate', name: "The Sealed Underworks", act: 7, tier: 15, levelRange: [57, 58], color: '#6a5a4a', ilvlBonus: 14,
+    id: 'exilesgate', name: "The Underworks Gate", act: 7, tier: 15, levelRange: [57, 58], color: '#6a5a4a', ilvlBonus: 14,
     requires: { after: ['maelstrom'] }, // The failing capital containment opens the underworks.
     desc: "Below the prosperous streets, sealed infrastructure descends into the history the kingdom forgot.",
     monsters: [
@@ -1057,7 +1063,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'kingsroad', name: "The Buried Processional", act: 7, tier: 15, levelRange: [57, 59], color: '#8a7a5a', ilvlBonus: 14,
+    id: 'kingsroad', name: "The Founders’ Processional", act: 7, tier: 15, levelRange: [57, 59], color: '#8a7a5a', ilvlBonus: 14,
     desc: "An older ceremonial road survives beneath later foundations, its guardians still enforcing forgotten obligations.",
     requires: { after: ['exilesgate'] },
     monsters: [
@@ -1185,7 +1191,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'hanginggardens', name: "The Unchecked Garden", act: 7, tier: 16, levelRange: [61, 63], color: '#3f7a4a', ilvlBonus: 14,
+    id: 'hanginggardens', name: "The First Garden", act: 7, tier: 16, levelRange: [61, 63], color: '#3f7a4a', ilvlBonus: 14,
     desc: "The first promise of abundance persists underground, growing through its keepers and their abandoned tools.",
     requires: { after: ['dryaqueduct', 'kingsmint'] },
     monsters: [
@@ -1217,7 +1223,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'longfracture', name: "The Broken Seal", act: 7, tier: 16, levelRange: [62, 64], color: '#2f3f5f', ilvlBonus: 14,
+    id: 'longfracture', name: "The Sundering", act: 7, tier: 16, levelRange: [62, 64], color: '#2f3f5f', ilvlBonus: 14,
     desc: "A long breach exposes the pressure beneath the continent and the damage that reopened it.",
     requires: { after: ['hanginggardens'] },
     monsters: [
@@ -1233,7 +1239,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'driftingquarter', name: "The Preserved Refuge", act: 7, tier: 17, levelRange: [63, 65], color: '#6f6a8f', ilvlBonus: 14,
+    id: 'driftingquarter', name: "The Old Refuge", act: 7, tier: 17, levelRange: [63, 65], color: '#6f6a8f', ilvlBonus: 14,
     desc: "An early shelter continues its routines beneath roots that will neither release nor let its inhabitants die.",
     requires: { after: ['longfracture'] },
     monsters: [
@@ -1249,7 +1255,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'kingsreach', name: "The Guardian's Reach", act: 7, tier: 17, levelRange: [63, 65], color: '#3f3050', ilvlBonus: 14,
+    id: 'kingsreach', name: "The Warden Galleries", act: 7, tier: 17, levelRange: [63, 65], color: '#3f3050', ilvlBonus: 14,
     desc: "Containment galleries carry the influence of a protector whose idea of belonging has become possession.",
     requires: { after: ['longfracture'] },
     monsters: [
@@ -1281,7 +1287,7 @@ const ZONE_TEMPLATES: ZoneDef[] = [
   uniques: [],
   },
   {
-    id: 'hallofcrowns', name: "The Founders Tombs", act: 7, tier: 17, levelRange: [64, 65], color: '#8a7a2a', ilvlBonus: 14,
+    id: 'hallofcrowns', name: "The Founders’ Tombs", act: 7, tier: 17, levelRange: [64, 65], color: '#8a7a2a', ilvlBonus: 14,
     desc: "The people who built the original containment lie near the guardian they could not save from its power.",
     requires: { after: ['sunderedhall'] },
     monsters: [

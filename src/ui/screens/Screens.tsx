@@ -402,7 +402,7 @@ function AccountSummary() {
   const items = a.stash.flat().length;
   return (
     <div className="dim small" style={{ textAlign: 'center' }}>
-      Shared by your normal characters: Hideout, {a.automation.offlineHours} hour offline cap, {a.stash.length} stash pages ({items} items)
+      Shared by your normal characters: Hideout, {a.automation.offlineHours} hour offline cap, {a.stash.length} Guild Stash pages ({items} items)
       {a.overflow.length > 0 && <span className="warn"> · {a.overflow.length} in stash overflow</span>}
     </div>
   );

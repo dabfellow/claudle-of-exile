@@ -1,6 +1,6 @@
 # Veyrath zone conversion
 
-Last updated 2026-11-18. The owner chose to redistribute and retheme the existing 70 zones into seven substantial chapters. `src/data/campaignLayout.ts` authors their travel order and level bands; `zones.ts` supplies their encounter templates. Stable zone/monster IDs and earned progress survive. Enemy levels, reward tiers, item-level bonuses and boss appearance counts follow the new progression. The original six passive reward milestones remain separate to avoid adding or removing permanent points.
+Last updated 2026-11-19. The owner chose to redistribute and retheme the existing 70 zones into seven substantial chapters. `src/data/campaignLayout.ts` authors their travel order and level bands; `zones.ts` supplies their encounter templates. Stable zone/monster IDs and earned progress survive. Enemy levels, reward tiers, item-level bonuses and boss appearance counts follow the new progression. The original six passive reward milestones remain separate to avoid adding or removing permanent points. The display names below include the subsequent zone naming pass.
 
 ## Campaign grouping
 
@@ -30,19 +30,19 @@ Tuning choices: spread the first three chapters over roughly nine levels each so
 | `blackreed` | Blackfen Reaches |
 | `crypt` | The Tidebound Vault |
 | `shipgrave` | The Wreck Claims |
-| `stormcliffs` | The Lookout Cliffs |
+| `stormcliffs` | Brinewick Lookout |
 | `sanctum` | The Drowned Storehouse |
 
 ### Act 2: The Broken Roads
 
 | Stable zone ID | Display name |
 |---|---|
-| `cinderroad` | The Broken Supply Road |
+| `cinderroad` | The Ration Road |
 | `saltflats` | The Saltpan Crossing |
-| `tithefields` | The Withered Allotments |
+| `tithefields` | The Commons Allotments |
 | `fortobedience` | The Roadwatch Fort |
-| `blackgrass` | The Rootbound Verge |
-| `bannerfield` | The Abandoned Muster |
+| `blackgrass` | Blackgrass Verge |
+| `bannerfield` | Muster Green |
 | `assizes` | The Tollhouse Court |
 | `caravan` | Wayfarer's Post |
 
@@ -52,9 +52,9 @@ Tuning choices: spread the first three chapters over roughly nine levels each so
 |---|---|
 | `kurgans` | Greyford Burial Fields |
 | `lowercity` | Greyford Market Quarter |
-| `dryaqueduct` | The Rootbound Millrace |
+| `dryaqueduct` | Greyford Millrace |
 | `plateau` | Greyford Heights |
-| `wreckline` | The Expedition Warehouses |
+| `wreckline` | Greyford Bonded Stores |
 | `cinderkey` | The Greyford Kilns |
 | `pyretemple` | The Expedition Depot |
 | `burningthrone` | The Delegation Chambers |
@@ -64,76 +64,76 @@ Tuning choices: spread the first three chapters over roughly nine levels each so
 | Stable zone ID | Display name |
 |---|---|
 | `pilgrimgate` | Harrowgate Gates |
-| `almsquarter` | The Shelter Quarter |
-| `scourgeyard` | The Rootbound Courtyards |
+| `almsquarter` | The Alms Ward |
+| `scourgeyard` | The Cloth Courts |
 | `reliquary` | The Civic Vaults |
 | `bellfoundry` | The Bell Foundry |
-| `inquisition` | The Records Hall |
-| `penitentstair` | The Rootbound Steps |
+| `inquisition` | Harrowgate Registry |
+| `penitentstair` | The Upper Steps |
 | `choirloft` | Eastmere Landing |
-| `saintswalk` | The Old Processional |
-| `highaltar` | The Overgrown Forum |
+| `saintswalk` | Monument Walk |
+| `highaltar` | The Forum That Bloomed |
 
 ### Act 5: Cairnwatch Institute
 
 | Stable zone ID | Display name |
 |---|---|
-| `hollowpass` | The Cairnwatch Approach |
+| `hollowpass` | Cairnwatch Road |
 | `screefields` | The Scree Workings |
 | `howlingfells` | The Howling Fells |
 | `glasslake` | The Glass Reservoir |
-| `bonequarry` | The Containment Quarry |
-| `icevault` | The Cold Specimen Vault |
-| `mammothroad` | The Heavy Haul Road |
+| `bonequarry` | Sealstone Quarry |
+| `icevault` | The Cold Vault |
+| `mammothroad` | The Haul Road |
 | `hangingglacier` | The Hanging Glacier |
 | `steading` | Cairnwatch Service Yard |
 | `longhall` | The Specimen Hall |
-| `kingsstair` | The Institute Ascent |
+| `kingsstair` | The Laboratory Stair |
 | `giantsthrone` | The Containment Laboratory |
 
 ### Act 6: The Capital's Promise
 
 | Stable zone ID | Display name |
 |---|---|
-| `blackharbor` | The Restricted Quays |
-| `squallbanks` | The Canal Locks |
+| `blackharbor` | Customs Quay |
+| `squallbanks` | The Harbour Locks |
 | `lampgulf` | The Lantern Canal |
 | `drownedfleet` | The Kroten Anchorage |
-| `brimstone` | The Refining Annex |
-| `hollowreef` | The Submerged Works |
-| `thunderhead` | The Guarded Causeway |
+| `brimstone` | The Refinery Workshops |
+| `hollowreef` | The Lower Waterworks |
+| `thunderhead` | Citadel Causeway |
 | `leviathanrib` | The Great Conservatory |
 | `blackcurrent` | The Processional Canal |
-| `voicetrench` | The Research Hearings |
+| `voicetrench` | The Council Hearing Hall |
 | `lightless` | The Sealed Research Ward |
-| `maelstrom` | The Failing Containment |
+| `maelstrom` | The Ward Breach |
 
 ### Act 7: The Guardian Beneath
 
 | Stable zone ID | Display name |
 |---|---|
-| `exilesgate` | The Sealed Underworks |
-| `kingsroad` | The Buried Processional |
+| `exilesgate` | The Underworks Gate |
+| `kingsroad` | The Founders’ Processional |
 | `kingsmint` | The Seal Foundry |
-| `hanginggardens` | The Unchecked Garden |
+| `hanginggardens` | The First Garden |
 | `burnedarchive` | The Founding Archive |
-| `longfracture` | The Broken Seal |
-| `driftingquarter` | The Preserved Refuge |
-| `kingsreach` | The Guardian's Reach |
+| `longfracture` | The Sundering |
+| `driftingquarter` | The Old Refuge |
+| `kingsreach` | The Warden Galleries |
 | `sunderedhall` | The Hall of Sacrifice |
-| `hallofcrowns` | The Founders Tombs |
+| `hallofcrowns` | The Founders’ Tombs |
 | `ninthstair` | The Ninth Descent |
 | `shatteredthrone` | The First Seal |
 
 ## Story anchors and compatibility
 
 - `caravan` records the supply-road chapter conclusion; Tamsin is now the Keeper of the Post. `burningthrone` is the Greyford delegation/expedition finale, with Azhar rethemed as the expedition's altered lion.
-- `choirloft` is **Eastmere Landing**, the onward delivery destination reached after `penitentstair` (The Rootbound Steps). It is an Act 4 branch through/beyond Harrowgate. This does not move the zone in the level sequence or change its combat.
-- `highaltar` is **The Overgrown Forum**, providing the mountain research lead.
+- `choirloft` is **Eastmere Landing**, the onward delivery destination reached after `penitentstair` (The Upper Steps). It is an Act 4 branch through/beyond Harrowgate. This does not move the zone in the level sequence or change its combat.
+- `highaltar` is **The Forum That Bloomed**, providing the mountain research lead.
 - `giantsthrone` is **The Containment Laboratory**, with Director Ymir Vane as its altered custodian.
-- `maelstrom` is **The Failing Containment**, beneath the capital's failing research ward; it opens `exilesgate` (The Sealed Underworks).
+- `maelstrom` is **The Ward Breach**, beneath the capital's failing research ward; it opens `exilesgate` (The Underworks Gate).
 - `shatteredthrone` is **The First Seal**, with **The First Exile** replacing the Last King's display identity. The stable boss ID `aurelane` is retained for compatibility; combat mechanics are unchanged.
-- Acts 1–3 run linearly; the later chapters retain branching routes. Caer Veyr now goes directly from its restricted quays to the canal locks, and the underworks proceed from the buried processional to the seal foundry. Both shortened late chapters require eight prior boss clears for their finale. All seven story finale IDs remain stable.
+- Acts 1–3 run linearly; the later chapters retain branching routes. Caer Veyr goes directly from Customs Quay to the Harbour Locks, and the underworks proceed from the Founders’ Processional to the Seal Foundry. Both shortened late chapters require eight prior boss clears for their finale. All seven story finale IDs remain stable.
 - Monster profile inference depends on display text as well as IDs. All 350 monster/boss definitions were compared against the original inference rules; names were adjusted to preserve original inferred archetypes. Existing explicit profile overrides are unchanged.
 - Existing art keys are stable zone IDs. Old scene artwork can therefore remain technically loadable while new act artwork is integrated. This conversion does not generate new monster portraits or promise that old art matches every renamed location.
 - Unique-item IDs and their world-drop level rules are unchanged. Enemy levels, loot tiers and item-level bonuses follow campaign depth. Moved zones also receive appropriate pack pacing and simplified boss mechanics. Other encounters retain their authored damage types, attack intervals and mechanics. Some legacy attack names retain their mechanical/flavour identities.

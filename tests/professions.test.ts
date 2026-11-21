@@ -31,7 +31,7 @@ const reload = (s: ReturnType<typeof newGame>) => {
   settleCharacter(loaded, loaded.account);
   return loaded;
 };
-const funded = () => { const s = newGame(1); s.account.bank.copper_ore = 100; s.skillingMastery['task.smelt_copper'] = masteryThreshold(15); return s; };
+const funded = () => { const s = newGame(1); s.storage.bank.copper_ore = 100; s.skillingMastery['task.smelt_copper'] = masteryThreshold(15); return s; };
 const equipmentProject: ProfessionProject = {
   id: 'test_equipment', version: 1, name: 'Test equipment', skill: 'smithing', level: 1,
   inputs: { copper_ore: 25 }, durationMs: 1000, xp: 12,
@@ -75,14 +75,14 @@ describe('independent profession foundations', () => {
       for (let i = 0; i < 2; i++) {
         const route = professionStationRoute(s, id)!;
         expect(route.reason).toBeNull();
-        for (const [mat, n] of Object.entries(route.cost)) s.account.bank[mat] = n;
+        for (const [mat, n] of Object.entries(route.cost)) s.storage.bank[mat] = n;
         expect(upgradeStation(s, ctx(), id, 'profession')).toBeNull();
       }
       expect(professionStationRoute(s, id)).toBeNull();
     }
     expect(upgradeStation(s, ctx(), 'bench', 'profession')).toMatch(/No profession/);
     const old = newGame(1);
-    old.account.bank = { gold: 1e9, copper_bar: 1e9, ash_plank: 1e9, iron_bar: 1e9, oak_plank: 1e9, mithril_bar: 1e9, yew_plank: 1e9 };
+    old.storage.bank = { gold: 1e9, copper_bar: 1e9, ash_plank: 1e9, iron_bar: 1e9, oak_plank: 1e9, mithril_bar: 1e9, yew_plank: 1e9 };
     expect(upgradeStation(old, ctx(), 'forge')).toBeNull();
   });
 
@@ -106,23 +106,23 @@ describe('atomic paid project lifecycle', () => {
     s.skillingMastery['task.smelt_iron'] = masteryThreshold(100);
     s.skillingMastery['task.smelt_copper'] = masteryThreshold(15) - 1;
     expect(startProject(s, ctx(), 'copper_supply')).toBe('Requires Smelt Copper Bars mastery 15');
-    expect(s.account.bank.copper_ore).toBe(100);
+    expect(s.storage.bank.copper_ore).toBe(100);
     s.skillingMastery['task.smelt_copper'] = masteryThreshold(15);
     s.skills.smithing = 0;
     expect(startProject(s, ctx(), 'copper_supply')).toBeNull();
     expect(s.professionProgress.activeProject?.project.category).toBe('masteryBatch');
     expect(s.professionProgress.activeProject?.escrow).toEqual({ copper_ore: 25 });
     advanceProject(s, ctx(), 15_000);
-    expect(s.account.bank.copper_bar).toBe(5);
+    expect(s.storage.bank.copper_bar).toBe(5);
   });
 
   it('reserves the full nominal cost before work and rejects a second start', () => {
     const s = funded();
     const c = ctx();
     expect(startProject(s, c, 'copper_supply')).toBeNull();
-    expect(s.account.bank.copper_ore).toBe(75);
+    expect(s.storage.bank.copper_ore).toBe(75);
     expect(startProject(s, c, 'copper_supply')).toMatch(/current project/);
-    expect(s.account.bank.copper_ore).toBe(75);
+    expect(s.storage.bank.copper_ore).toBe(75);
     expect(s.professionProgress.activeProject?.escrow).toEqual({ copper_ore: 25 });
     expect(completeProject(s, c, 1)).toBe('Project still in progress');
   });
@@ -134,7 +134,7 @@ describe('atomic paid project lifecycle', () => {
     const liveCtx = ctx();
     for (let i = 0; i < 40; i++) tick(live, liveCtx, 1000);
     const sum = simulateOffline(away, ctx(), 40_000);
-    expect(away.account.bank).toEqual(live.account.bank);
+    expect(away.storage.bank).toEqual(live.storage.bank);
     expect(away.skills).toEqual(live.skills);
     expect(away.skillingMastery).toEqual(live.skillingMastery);
     expect(live.skillingMastery['task.project_copper_supply']).toBeUndefined();
@@ -145,7 +145,7 @@ describe('atomic paid project lifecycle', () => {
     expect(sum.ordinaryOutput).toEqual({});
     expect(sum.projectWork!.copper_supply).toBeCloseTo(30_000);
     expect(completeProject(away, ctx(), 2)).toBe('Project already settled');
-    expect(away.account.bank.copper_bar).toBe(10);
+    expect(away.storage.bank.copper_bar).toBe(10);
     expect(liveCtx.events.filter((e) => e.t === 'profession' && e.category === 'discovery')).toHaveLength(1);
   });
 
@@ -158,14 +158,14 @@ describe('atomic paid project lifecycle', () => {
     tick(s, ctx(), 1000);
     expect(s.professionProgress.activeProject!.elapsedMs).toBe(before);
     s = reload(reload(s));
-    const ore = s.account.bank.copper_ore;
+    const ore = s.storage.bank.copper_ore;
     expect(resumeProject(s)).toBeNull();
-    expect(s.account.bank.copper_ore).toBe(ore);
+    expect(s.storage.bank.copper_ore).toBe(ore);
     stopAction(s);
     tick(s, ctx(), 1000);
     expect(s.professionProgress.activeProject!.elapsedMs).toBe(before);
     expect(cancelProject(s)).toBeNull();
-    expect(s.account.bank.copper_ore).toBe(ore + 25);
+    expect(s.storage.bank.copper_ore).toBe(ore + 25);
     expect(cancelProject(s)).toBe('No project');
     expect(s.skills.smithing).toBe(0);
     expect(s.skillingMastery['task.project_copper_supply']).toBeUndefined();
@@ -207,10 +207,10 @@ describe('atomic paid project lifecycle', () => {
     expect(equip(s, ctx(), item.uid)).toBeTruthy();
     while (s.inventory.length < BAG_SIZE) s.inventory.push(createItem(s, 'iron_ring', 1, 'normal', seeded(1)));
     expect(cancelProject(s)).toMatch(/original base/);
-    expect(s.account.bank.copper_ore).toBe(100);
+    expect(s.storage.bank.copper_ore).toBe(100);
     s = reload(s);
     expect(cancelProject(s)).toMatch(/original base/);
-    expect(s.account.bank.copper_ore).toBe(100);
+    expect(s.storage.bank.copper_ore).toBe(100);
     s.inventory.pop();
     expect(cancelProject(s)).toBeNull();
     expect(s.inventory.at(-1)).toEqual(item);
@@ -223,8 +223,8 @@ describe('atomic paid project lifecycle', () => {
     s.professionProgress.activeProject!.project.inputs.copper_ore = 30; // snapshot is independent of live definition
     s = reload(s);
     tick(s, ctx(), 16_000);
-    expect(s.account.bank.copper_bar).toBe(5);
-    expect(s.account.bank.copper_ore).toBe(75);
+    expect(s.storage.bank.copper_bar).toBe(5);
+    expect(s.storage.bank.copper_ore).toBe(75);
     startProject(s, ctx(), 'copper_supply');
     s.professionProgress.activeProject!.project.version = 999;
     s = reload(s);
@@ -236,11 +236,11 @@ describe('atomic paid project lifecycle', () => {
 
   it('stops selected repeats on input exhaustion, never chooses suppliers or overclaims', () => {
     const s = funded();
-    s.account.bank.copper_ore = 25;
+    s.storage.bank.copper_ore = 25;
     startProject(s, ctx(), 'copper_supply', 3);
     const sum = simulateOffline(s, ctx(), 60_000);
     expect(sum.stoppedReason).toMatch(/Missing materials/);
-    expect(s.account.bank.copper_bar).toBe(5);
+    expect(s.storage.bank.copper_bar).toBe(5);
     expect(s.action).toBeNull();
     expect(s.professionProgress.nextRun).toBe(2);
   });
@@ -271,7 +271,7 @@ describe('ordinary completion boundaries and return summaries', () => {
     const c = ctx();
     c.emit = () => { expect(completeProject(s, ctx(), 1)).toBe('Project already settled'); };
     advanceProject(s, { ...c, emit: (e) => { if (e.t !== 'profession' || e.category !== 'work') c.emit(e); } }, 16_000);
-    expect(s.account.bank.copper_bar).toBe(5);
+    expect(s.storage.bank.copper_bar).toBe(5);
   });
   it('manual doubles preserve ordinary bonuses but never duplicate work, discoveries or protected progress', () => {
     const a = actionDef('smelt_copper');
@@ -283,7 +283,7 @@ describe('ordinary completion boundaries and return summaries', () => {
     if (s.action?.kind === 'skill') s.action.double = true;
     const d = deriveStats(s);
     skillStep(s, c, actionIntervalMs(s, a, d) + 1, d);
-    expect(s.account.bank.copper_bar).toBe(4); // doubled ordinary one + exact protected two
+    expect(s.storage.bank.copper_bar).toBe(4); // doubled ordinary one + exact protected two
     expect(s.professionProgress.work.smithing).toBe(1);
     expect(c.events.filter((e) => e.t === 'profession' && e.category === 'discovery')).toHaveLength(1);
     const saved = reload(s);
@@ -292,10 +292,10 @@ describe('ordinary completion boundaries and return summaries', () => {
 
   it('checks nominal inputs even at max conservation and stops ordinary work after inputs run out', () => {
     const s = funded();
-    s.account.bank.copper_ore = 4;
+    s.storage.bank.copper_ore = 4;
     s.skillingMastery['task.smelt_copper'] = 432000;
     expect(startSkillAction(s, ctx(), 'smelt_copper')).toBe('Missing materials');
-    s.account.bank.copper_ore = 5;
+    s.storage.bank.copper_ore = 5;
     startSkillAction(s, ctx(), 'smelt_copper');
     const sum = simulateOffline(s, ctx(), 60_000);
     expect(sum.ordinaryOutput!.copper_bar).toBe(1);
@@ -305,10 +305,10 @@ describe('ordinary completion boundaries and return summaries', () => {
 
   it('suppresses a doubled extra base with one slot left and stops before paying for a full bag', () => {
     const s = funded();
-    s.account.bank.copper_bar = 100;
-    s.account.bank.ash_plank = 100;
+    s.storage.bank.copper_bar = 100;
+    s.storage.bank.ash_plank = 100;
     const a = actionDef('smith_iron_ring');
-    for (const [id, n] of Object.entries(a.inputs!)) s.account.bank[id] = n * 3;
+    for (const [id, n] of Object.entries(a.inputs!)) s.storage.bank[id] = n * 3;
     while (s.inventory.length < BAG_SIZE - 1) s.inventory.push(createItem(s, 'iron_ring', 1, 'normal', seeded(1)));
     const c = ctx();
     startSkillAction(s, c, a.id);
@@ -317,9 +317,9 @@ describe('ordinary completion boundaries and return summaries', () => {
     skillStep(s, c, actionIntervalMs(s, a, d) + 1, d);
     expect(s.inventory).toHaveLength(BAG_SIZE);
     expect(c.events.some((e) => e.t === 'info' && e.text.includes('extra equipment suppressed'))).toBe(true);
-    const before = { ...s.account.bank };
+    const before = { ...s.storage.bank };
     skillStep(s, c, actionIntervalMs(s, a, d) + 1, d);
-    expect(s.account.bank).toEqual(before);
+    expect(s.storage.bank).toEqual(before);
     expect(s.action).toBeNull();
   });
 
@@ -331,7 +331,7 @@ describe('ordinary completion boundaries and return summaries', () => {
     const second = simulateOffline(s, ctx(), 16_000);
     expect(mergeOffline(first, second).projects).toEqual({ copper_supply: 2 });
     expect(mergeOffline(first, second).discoveries).toEqual(['smithing_copper_supply']);
-    expect(s.account.bank.copper_bar).toBe(10);
+    expect(s.storage.bank.copper_bar).toBe(10);
   });
 
   it('validates all profession project rewards can be resolved without crashing', () => {
@@ -380,6 +380,7 @@ describe('pre-overhaul serialized compatibility', () => {
     // the Regional Trail fills in its own fields on load; everything that was there is untouched
     expect(again.expedition).toMatchObject(raw.expedition);
     expect(again.inventory).toEqual(raw.inventory);
+    expect(again.storage.bank).toEqual({});
     expect(again.account.bank).toEqual(fixture.account.bank);
     expect(again.account.hideout).toEqual(fixture.account.hideout);
     expect(again.professionProgress.work).toEqual({});

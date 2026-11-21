@@ -40,7 +40,7 @@ export function allocateSkillNode(s: GameState, ctx: Ctx, id: string): string | 
 
 export function refundSkillNodeReason(s: GameState, id: string): string | null {
   if (!s.skillPassives.includes(id)) return 'Not allocated';
-  if ((s.account.bank.regret ?? 0) < 1) return 'Requires an Orb of Regret';
+  if ((s.storage.bank.regret ?? 0) < 1) return 'Requires an Orb of Regret';
   if (!connectedWithout(s.skillPassives, id, SKILL_TREE_START, SKILL_TREE_BY_ID)) return 'Would disconnect other nodes';
   return null;
 }
@@ -48,7 +48,7 @@ export function refundSkillNodeReason(s: GameState, id: string): string | null {
 export function refundSkillNode(s: GameState, ctx: Ctx, id: string): string | null {
   const reason = refundSkillNodeReason(s, id);
   if (reason) return reason;
-  s.account.bank.regret -= 1;
+  s.storage.bank.regret -= 1;
   s.skillPassives = s.skillPassives.filter((x) => x !== id);
   ctx.emit({ t: 'info', text: `Refunded ${SKILL_TREE_BY_ID[id].name}` });
   return null;

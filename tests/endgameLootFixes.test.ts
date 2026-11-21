@@ -6,6 +6,7 @@ import { ZONES } from '../src/data/zones';
 import { fillAccount } from '../src/engine/account';
 import { makeCtx } from '../src/engine/context';
 import { applyOrb, orbReason, ORBS } from '../src/engine/crafting';
+import { transferGuild } from '../src/engine/guildStash';
 import { addRandomMod, allMods, createItem, modCount, settleItemMarks } from '../src/engine/items';
 import { rollLoot } from '../src/engine/loot';
 import { mapsHeld } from '../src/engine/maps';
@@ -36,13 +37,14 @@ describe('Fractured Orbs', () => {
     fillAccount(s.account);
     expect(s.account.bank.fractured).toBe(6);
     expect(s.account.bank.fractured_orb).toBeUndefined();
+    expect(transferGuild(s, { direction: 'withdraw', kind: 'bank', id: 'fractured', quantity: 6 })).toBeNull();
 
     const item = createItem(s, ring.id, 84, 'rare', seeded(3));
     while (modCount(item) < 4) addRandomMod(item, seeded(9));
     s.inventory.push(item);
     expect(orbReason(s, 'fractured', item.uid)).toBeNull();
     expect(applyOrb(s, makeCtx(seeded(1)), 'fractured', item.uid)).toBeNull();
-    expect(s.account.bank.fractured).toBe(5);
+    expect(s.storage.bank.fractured).toBe(5);
     expect(allMods(item).filter((m) => m.fractured)).toHaveLength(1);
   });
 });
@@ -56,7 +58,7 @@ describe('natural fractured tier 5 drops', () => {
     expect(locked[0].affixId).toBe(item.fractured);
 
     s.inventory.push(item);
-    s.account.bank.chaos = 30;
+    s.storage.bank.chaos = 30;
     const ctx = makeCtx(seeded(7));
     for (let i = 0; i < 30; i++) {
       expect(applyOrb(s, ctx, 'chaos', item.uid)).toBeNull();
@@ -72,7 +74,7 @@ describe('natural fractured tier 5 drops', () => {
       if (!made.fractured) item = made;
     }
     s.inventory.push(item!);
-    s.account.bank.chaos = 60;
+    s.storage.bank.chaos = 60;
     const ctx = makeCtx(seeded(11));
     for (let i = 0; i < 60; i++) applyOrb(s, ctx, 'chaos', item!.uid);
     expect(item!.fractured).toBeUndefined();
@@ -106,7 +108,7 @@ describe("Exile's Doom Sigil", () => {
     mod.values = affix.tiers[mod.tier].ranges.map(([, hi]) => hi);
     for (const other of allMods(item).slice(1)) other.tier = 0;
     s.inventory.push(item);
-    s.account.bank.exile_doom_sigil = 2;
+    s.storage.bank.exile_doom_sigil = 2;
     expect(applyOrb(s, makeCtx(seeded(11)), 'exile_doom_sigil', item.uid)).toBeNull();
     return { item, mod: allMods(item).find((m) => m.elevated)! };
   }
@@ -115,7 +117,7 @@ describe("Exile's Doom Sigil", () => {
     const s = game();
     const { item, mod } = elevated(s);
     const ranges = affixDef(mod.affixId).tiers[mod.tier].ranges;
-    s.account.bank.divine = 20;
+    s.storage.bank.divine = 20;
     const ctx = makeCtx(seeded(13));
     for (let i = 0; i < 20; i++) {
       expect(applyOrb(s, ctx, 'divine', item.uid)).toBeNull();
@@ -152,7 +154,7 @@ describe("the Map Device's bonus map (level 6)", () => {
       rollLoot(s, makeCtx(seeded(seed), 0, events), { level: 75, isBoss: true, scale: 1, life: 0 } as unknown as MonsterInstance, zone, d);
     }
     expect(mapsHeld(s, 5)).toBeGreaterThan(0);
-    expect(Object.keys(s.account.bank).filter((id) => id.startsWith('map_'))).toEqual([]);
+    expect(Object.keys(s.storage.bank).filter((id) => id.startsWith('map_'))).toEqual([]);
     const unknown = events.filter((e) => e.t === 'loot' && e.currencyId && !isMaterial(e.currencyId));
     expect(unknown).toEqual([]);
   });

@@ -24,12 +24,12 @@ describe('Phase 12 restoration', () => {
     expect(standing(s, 'giant')).toBe(1);
     expect(startSkillAction(s, ctx(), 'dig_cutting')).toBeNull();
     work(s, 300 * 3500 * 0.8); // 300 Surface digs
-    expect(s.account.bank.survey_relic_fragment).toBe(5);
+    expect(s.storage.bank.survey_relic_fragment).toBe(5);
     startSkillAction(s, ctx(), 'sift_giant'); work(s, 50 * 10_000);
     // Independently produce the only supporting profession input.
     startSkillAction(s, ctx(), 'mine_copper'); work(s, 25 * 3000);
     startSkillAction(s, ctx(), 'smelt_copper'); work(s, 30_000);
-    const before = { ...s.account.bank };
+    const before = { ...s.storage.bank };
     expect(startSkillAction(s, ctx(), 'restore_surveyors_guard_cold')).toBeNull();
     work(s, 600_000);
     const item = s.inventory.at(-1)!;
@@ -38,9 +38,9 @@ describe('Phase 12 restoration', () => {
     expect(item.prefixes.concat(item.suffixes)).toHaveLength(4);
     expect(item.suffixes.some((x) => x.affixId === 'cold_res')).toBe(true);
     expect(item.prefixes.some((x) => x.affixId === 'flat_life')).toBe(true);
-    expect(s.account.bank.survey_relic_fragment).toBe(0);
-    expect(s.account.bank.giant_tally).toBe(before.giant_tally - 50);
-    expect(s.account.bank.copper_bar).toBe(before.copper_bar - 5);
+    expect(s.storage.bank.survey_relic_fragment).toBe(0);
+    expect(s.storage.bank.giant_tally).toBe(before.giant_tally - 50);
+    expect(s.storage.bank.copper_bar).toBe(before.copper_bar - 5);
     expect(s.action).toBeNull();
     expect(s.skills.combat).toBe(0);
   });
@@ -50,12 +50,12 @@ describe('Phase 12 restoration', () => {
     s.expedition.dug.dig_cairn = findDigs(siteOf('dig_cairn')!)[2];
     // Bedrock digs take 1.5× as long and count three towards a fragment
     startSkillAction(s, ctx(), 'dig_cairn'); work(s, 100 * 4500);
-    expect(s.account.bank.giant_relic_fragment).toBe(5);
+    expect(s.storage.bank.giant_relic_fragment).toBe(5);
     const oldStanding = standing(s, 'giant');
     s = reload(s);
-    const before = s.account.bank.giant_tally ?? 0;
+    const before = s.storage.bank.giant_tally ?? 0;
     expect(exchangeFragments(s, ctx(), 'giant')).toBeNull();
-    expect(s.account.bank.giant_tally).toBe(before + 25);
+    expect(s.storage.bank.giant_tally).toBe(before + 25);
     expect(exchangeFragments(s, ctx(), 'giant')).toMatch(/Needs/);
     expect(standing(s, 'giant')).toBe(oldStanding);
     expect(s.professionProgress.discoveries['expedition.dig_cairn.2']).toBe(true);
@@ -70,7 +70,7 @@ describe('Phase 12 restoration', () => {
     simulateOffline(b, ctx(), 180_000);
     expect(b.expedition.dug).toEqual(a.expedition.dug);
     expect(b.professionProgress.discoveries).toEqual(a.professionProgress.discoveries);
-    expect(b.account.bank.giant_relic_fragment).toBe(a.account.bank.giant_relic_fragment);
+    expect(b.storage.bank.giant_relic_fragment).toBe(a.storage.bank.giant_relic_fragment);
     b.skills.archaeology = xpForLevel(85);
     b.expedition.dug.dig_heart = 1;
     const old = reload(b);

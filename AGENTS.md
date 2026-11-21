@@ -40,6 +40,7 @@ The plan, decisions, task list and history live in `docs/MILESTONES.md`.
 ## Working with the user
 
 - Change only what was asked. If it would move or rebalance anything else, ask first.
+- Generate art only when the user explicitly asks for generated art. For sourced art, verify that its license permits free use in the game.
 - The user isn't technical about git, hosting or tooling. Explain things plainly, by what they do for the players.
 - The user often dictates, so odd words are probably transcription errors. Work out what was meant, or ask.
 - Commit, push and deploy are one step to the user. If asked for any of them, do the whole release below.

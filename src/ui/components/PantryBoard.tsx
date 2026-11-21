@@ -1,7 +1,9 @@
 import { INGREDIENTS, mealDef, MEALS } from '../../data/cooking';
+import { FISHING_MEAL } from '../../data/fishing';
 import { cookingOpen, eatMeal, formatDurationMs, mealEffectText, mealLength, mealReason, mealSupplySupportedMs } from '../../engine/cooking';
 import { game, useGame } from '../../game';
 import { fmt, MatIcon } from './common';
+import { Swatch } from './Icon';
 
 /** "24m left", or seconds for the last minute. */
 export function mealTimeLeft(ms: number): string {
@@ -12,8 +14,8 @@ export function mealTimeLeft(ms: number): string {
 export function PantryBoard() {
   const s = useGame();
   if (!cookingOpen(s)) return null;
-  const dishes = MEALS.filter((m) => s.account.bank[m.id]);
-  const ingredients = INGREDIENTS.filter((m) => s.account.bank[m.id]);
+  const dishes = MEALS.filter((m) => s.storage.bank[m.id]);
+  const ingredients = INGREDIENTS.filter((m) => s.storage.bank[m.id]);
   const activeDef = s.meal ? mealDef(s.meal.id) : null;
   const activeSupportedMs = s.meal ? mealSupplySupportedMs(s, s.meal.id) : 0;
   return (
@@ -33,7 +35,7 @@ export function PantryBoard() {
         <div className="row wrap" style={{ gap: 6 }}>
           {s.meal && activeDef ? (
             <>
-              <MatIcon id={s.meal.id} size={16} />
+              {s.meal.id === FISHING_MEAL ? <Swatch color={activeDef.color} size={16} /> : <MatIcon id={s.meal.id} size={16} />}
               <b style={{ color: activeDef.color }}>{activeDef.name}</b>
               <span className="dim small">({mealTimeLeft(s.meal.remainingMs)} left{s.keepEating && activeSupportedMs > s.meal.remainingMs ? ` · ${formatDurationMs(activeSupportedMs)} total supply` : ''})</span>
               <span className="small">{mealEffectText(s, s.meal.id)}</span>
@@ -53,7 +55,7 @@ export function PantryBoard() {
             <div key={m.id} className="row wrap" style={{ gap: 6, marginTop: 6, alignItems: 'center' }}>
               <MatIcon id={m.id} size={16} />
               <span>
-                {m.name} <span className="dim num">×{fmt(s.account.bank[m.id])}</span>
+                {m.name} <span className="dim num">×{fmt(s.storage.bank[m.id])}</span>
               </span>
               <span className="dim small">[{targetBadge} · {formatDurationMs(mealLength(s, m.id))}{supplyMs > 0 ? ` · ${formatDurationMs(supplyMs)} supply` : ''}]</span>
               <span className="small">{mealEffectText(s, m.id)}</span>
@@ -68,7 +70,7 @@ export function PantryBoard() {
           <div className="row wrap dim small" style={{ gap: 8, marginTop: 8 }}>
             {ingredients.map((m) => (
               <span key={m.id} title={m.desc}>
-                <MatIcon id={m.id} size={12} /> {m.name} ×{fmt(s.account.bank[m.id])}
+                <MatIcon id={m.id} size={12} /> {m.name} ×{fmt(s.storage.bank[m.id])}
               </span>
             ))}
           </div>

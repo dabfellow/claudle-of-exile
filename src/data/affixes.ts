@@ -76,6 +76,67 @@ const CRIT_MULTI: [number, number][] = [[8, 12], [13, 17], [18, 22], [23, 28], [
 const SMALL_PCT: [number, number][] = [[2, 3], [4, 5], [6, 7], [8, 9], [10, 11], [12, 13], [14, 15], [16, 17], [18, 20]];
 const THIRTY: [number, number][] = [[3, 5], [6, 8], [9, 11], [12, 14], [15, 17], [18, 20], [21, 23], [24, 26], [27, 30]];
 
+/** Five tiers keep the weakest specialty rolls possible even on endgame gear. */
+function specialty(ranges: [number, number][]): AffixTier[] {
+  const levels = [30, 35, 45, 68, 80];
+  return ranges.map((range, i) => ({ ilvl: levels[i], ranges: [range] }));
+}
+
+const CONDITIONAL_DAMAGE = specialty([[1, 2], [3, 4], [5, 6], [7, 9], [10, 13]]);
+const CLASS_EFFECT = specialty([[2, 4], [5, 7], [8, 11], [12, 16], [17, 22]]);
+
+const SPECIALTY_AFFIXES: AffixDef[] = [
+  // ---------- build-specific prefixes ----------
+  {
+    id: 'maximum_rage', kind: 'prefix', group: 'maximum_rage', label: 'Furious', text: '+{0} to maximum Rage',
+    stats: ['rageMax'], weights: { attack_weapon: 35, gloves: 50, amulet: 55, belt: 70 },
+    tiers: specialty([[1, 1], [2, 2], [3, 4], [5, 6], [7, 10]]),
+  },
+  {
+    id: 'damage_vs_bleeding', kind: 'prefix', group: 'damage_vs_bleeding', label: 'Bloodhunting', text: '{0}% more Hit Damage against Bleeding enemies',
+    stats: ['bleedVuln'], weights: { attack_weapon: 40, gloves: 55, ring: 50, amulet: 55 }, tiers: CONDITIONAL_DAMAGE,
+  },
+  {
+    id: 'damage_vs_stunned', kind: 'prefix', group: 'damage_vs_stunned', label: 'Crushing', text: '{0}% more Hit Damage against Stunned enemies',
+    stats: ['stunnedVuln'], weights: { attack_weapon: 35, shield: 55, gloves: 50, belt: 50 }, tiers: CONDITIONAL_DAMAGE,
+  },
+  {
+    id: 'damage_vs_low_life', kind: 'prefix', group: 'damage_vs_low_life', label: 'Merciless', text: '{0}% more Hit Damage against enemies below 30% Life',
+    stats: ['lowLifeDamage'], weights: { weapon: 30, gloves: 45, amulet: 50, ring: 50 }, tiers: CONDITIONAL_DAMAGE,
+  },
+  {
+    id: 'riposte_damage', kind: 'prefix', group: 'riposte_damage', label: 'Reprisal', text: '{0}% increased Riposte Damage',
+    stats: ['ripostePct'], weights: { attack_weapon: 35, shield: 75, gloves: 50, amulet: 50 },
+    tiers: specialty([[3, 6], [7, 11], [12, 17], [18, 25], [26, 36]]),
+  },
+  // ---------- build-specific suffixes ----------
+  {
+    id: 'rage_decay', kind: 'suffix', group: 'rage_decay', label: 'of Lingering Wrath', text: 'Rage decays {0}% slower',
+    stats: ['rageDecay'], weights: { helmet: 50, gloves: 55, belt: 65, amulet: 50 }, tiers: CLASS_EFFECT,
+  },
+  {
+    id: 'momentum_effect', kind: 'suffix', group: 'momentum_effect', label: 'of Pursuit', text: '{0}% increased effect of Momentum',
+    stats: ['momentumEffect'], weights: { gloves: 55, boots: 70, belt: 50, ring: 50 }, tiers: CLASS_EFFECT,
+  },
+  {
+    id: 'mana_power_spending', kind: 'suffix', group: 'mana_power_spending', label: 'of Arcane Flow', text: 'Recent Mana spending counts {0}% more toward Mana is Power',
+    stats: ['manaPowerFull'], weights: { caster_weapon: 65, helmet: 50, ring: 55, amulet: 55 }, tiers: CLASS_EFFECT,
+  },
+  {
+    id: 'fervor_gain', kind: 'suffix', group: 'fervor_gain', label: 'of Devotion', text: '{0}% faster Fervor',
+    stats: ['fervorPct'], weights: { body: 55, shield: 60, belt: 55, amulet: 50 }, tiers: CLASS_EFFECT,
+  },
+  {
+    id: 'coup_damage', kind: 'suffix', group: 'coup_damage', label: 'of the Final Blade', text: '{0}% increased Coup de Grâce Damage',
+    stats: ['coupPct'], weights: { attack_weapon: 55, gloves: 55, ring: 50, amulet: 50 }, tiers: CLASS_EFFECT,
+  },
+  {
+    id: 'poison_weaken', kind: 'suffix', group: 'poison_weaken', label: 'of Debilitation', text: 'Poisoned enemies deal {0}% less Damage with Hits',
+    stats: ['poisonWeaken'], weights: { gloves: 55, belt: 50, ring: 50, amulet: 50 },
+    tiers: specialty([[1, 1], [1, 2], [2, 3], [3, 4], [4, 6]]),
+  },
+];
+
 export const AFFIXES: AffixDef[] = [
   { id: 'profession_speed_smithing', kind: 'suffix', group: 'profession_speed', label: 'of Smithing', text: '{0}% increased Smithing speed', stats: ['smithingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
   { id: 'profession_speed_smelting', kind: 'suffix', group: 'profession_speed', label: 'of Smelting', text: '{0}% increased Smelting speed', stats: ['smeltingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
@@ -519,6 +580,7 @@ export const AFFIXES: AffixDef[] = [
     stats: ['flaskCharges'], weights: { belt: 100 },
     tiers: single([[10, 15], [16, 22], [23, 30], [31, 38], [39, 46], [47, 55], [56, 63], [64, 71], [72, 80]]),
   },
+  ...SPECIALTY_AFFIXES,
 
   // ---------- unique-only ----------
   {

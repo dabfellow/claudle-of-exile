@@ -12,8 +12,8 @@ const safe: Ctx = { rng: { next: () => 0.999 }, now: 0, emit: () => {} };
 const job = heistJob('cinder_toll');
 function setup() {
   const s = newGame(1, { name: 'Rogue test', classId: 'ranger' });
-  s.account.bank.rogues_marker = 1000;
-  s.account.bank.gold = 20000;
+  s.storage.bank.rogues_marker = 1000;
+  s.storage.bank.gold = 20000;
   s.heist.crew = ['bruiser', 'locksmith', 'lookout'];
   return s;
 }
@@ -73,7 +73,7 @@ describe('tactical rogue roster', () => {
   it('charges once and teaches an unmastered specialty after two finished heists', () => {
     const s = setup();
     expect(trainRogue(s, 'bruiser', 'Vault Access')).toBeNull();
-    expect(s.account.bank.gold).toBe(15000);
+    expect(s.storage.bank.gold).toBe(15000);
     expect(s.heist.crew).not.toContain('bruiser');
     expect(toggleCrew(s, 'bruiser')).toMatch(/Unavailable/);
     expect(trainRogue(s, 'bruiser', 'Threat Reveal')).toMatch(/Already/);
@@ -91,9 +91,9 @@ describe('tactical rogue roster', () => {
   it('rejects unaffordable training and the primary specialty without spending gold', () => {
     const s = setup();
     expect(trainRogue(s, 'bruiser', 'Guard Distraction')).toMatch(/mastered/);
-    s.account.bank.gold = 4999;
+    s.storage.bank.gold = 4999;
     expect(trainRogue(s, 'bruiser', 'Vault Access')).toMatch(/5,000/);
-    expect(s.account.bank.gold).toBe(4999);
+    expect(s.storage.bank.gold).toBe(4999);
   });
   it('scouts once and spends a matching ability to safely bypass without ordinary loot', () => {
     const s = run();
