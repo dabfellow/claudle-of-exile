@@ -25,6 +25,8 @@ export const UPCOMING: string[] = [
   'All seven acts now have dangerous local enemy packs, including one late gear check per act, with preparation tips on the World Map.',
   'Skills can now trigger while a dangerous pack leader is present, and area tips list gear, flask and skill counters available by that point.',
   'Gear at item level 30 and up can roll eleven new build-specific modifiers, including maximum Rage, more hit damage against bleeding enemies, and faster Fervor.',
+  'The Hideout has more compact Character and Equipment panels, gear slots that fit, framed Upgrades, and shortcuts only on mobile. The top bar scrolls away while you browse.',
+  'Ordinary panels and pop-ups use thin borders across the game. The Woodcutting workbench has a timber frame.',
 ];
 
 export const NEWS: NewsEntry[] = [

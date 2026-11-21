@@ -171,12 +171,10 @@
 /* ============ Hideout: character, equipment and life skills ============ */
 .fold.home-character {
   background: linear-gradient(155deg, var(--accent-soft), transparent 55%), var(--panel);
-  border-color: var(--accent-line);
 }
 
 .fold.home-doll {
   background: var(--bg-2);
-  border-color: var(--line-2);
 }
 
 .home-doll > .fold-body {
@@ -211,9 +209,6 @@
 
 .fold.home-skills {
   grid-column: 1 / -1;
-  background: var(--panel);
-  border-inline-color: transparent;
-  border-radius: var(--r-sm);
 }
 
 .home-skills > .fold-body {
@@ -465,14 +460,13 @@
 .fold.hx-stations-wrap {
   display: grid;
   gap: var(--s-3);
-  border-color: var(--accent-line);
   background: var(--bg-2);
 }
 
 .fold.hx-stations-wrap > .fold-head {
   margin-bottom: 0;
   padding-bottom: var(--s-2);
-  border-bottom: 1px solid var(--accent-line);
+  border-bottom: 1px solid var(--line);
   font-family: var(--font-display);
   font-size: var(--fs-lg);
 }
@@ -487,14 +481,8 @@
 }
 
 .hx-stations .hx-station {
-  border-top-color: color-mix(in srgb, var(--station) 50%, var(--line));
   border-radius: var(--r-sm);
 }
-
-.hx-stations .hx-station.maxed {
-  border-top-color: var(--accent);
-}
-
 @container (max-width: 640px) {
   .fold.hx-stations-wrap.closed > .fold-body {
     display: none;

@@ -13,7 +13,7 @@ Illustrated terrain backdrops and the zone terminology update are implemented lo
 
 The level 1–99 profession design pass has an initial audit of all 15 main-game skills. Mastery rewards now have an agreed profession-level schedule. The scope of global buffs and the individual profession designs are next. See [Skilling Progression](SKILLING_PROGRESSION.md).
 
-The Hideout layout fixes are implemented and playtested locally (2026-11-20).
+The panel frame cleanup and Hideout layout fixes are implemented and playtested locally (2026-11-20).
 
 Saltmere’s five-water prototype is implemented locally behind a closed gate. The next Fishing milestone is the standalone RPG described in [Fishing RPG Design](FISHING_RPG.md).
 
@@ -90,6 +90,8 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 - Zone scenery (2026-11-20): Use “zone” for combat destinations. Each zone can share a terrain backdrop and optionally choose a variant, such as a night forest or a cave with crystal spiders. Maps inherit the borrowed campaign zone’s scenery. Use existing illustrated backdrops licensed for free use in the game and record their sources in the asset credits. Generate art only when the owner explicitly asks for it.
 
 - Profession progression (2026-11-20): Give every skill varied content across levels 1–99, a reward earned through sustained work, a separate rare drop chase, and a distinct reason to train it. Each skilling zone gets exactly one hidden collectible with no gameplay effect. Gathering professions are self-contained. Early production uses outputs from one or two other professions. Late production ramps up to recipes that can draw on as many as five other professions or crafting outputs. Space meaningful unlocks out. The owner chose profession level for mastery rewards, so any eligible activity advances them. Levels 10, 30, 50, 70 and 90 grant global buffs. Levels 20, 40, 60 and 80 grant buffs to that profession. Level 99 grants a large global buff. See [Skilling Progression](SKILLING_PROGRESSION.md) for the audit and open decisions.
+
+- Panel frames (2026-11-20): Use a thin gray border for ordinary panels. Illustrated frames are reserved for a surface they fit, such as timber around the Woodcutting workbench.
 
 - Character materials and Guild Stash (2026-11-20): Owner saw players run three or four characters as a production line, for example one mining, one chopping wood and another crafting daggers continuously from the shared supply. Owner chose to let alts work in parallel with manual transfers. Each character gathers into their own inventory, crafts from their own stock and has a personal Stash. Players can move spare gear, gems, flasks, currency and materials between characters through a separate Guild Stash, with manual bulk deposits and withdrawals for materials. Owner chose to keep gathering for XP and rare drops at the cap, discarding extra units of whichever material is full. Apply the same rule while online and offline. Use 5,000 per material type per character as the starting cap so ordinary skilling can run for extended stretches. On upgrade, carry each realm's existing shared contents into its Guild Stash so every character that previously had access can still withdraw them.
 
@@ -924,6 +926,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - [x] Replace all 16 terrain images with existing illustrations, paintings and prints under CC0 or in the public domain — done 2026-11-20. Sources are recorded in the asset credits.
 
 - [x] Hideout layout: distinct frames, compact Character and Equipment panels, gear contained at narrow widths, framed station upgrades, phone-only shortcuts, and a top bar that scrolls away. Verified from 320px through 1920px, including an upgrade purchase and mobile navigation. — done 2026-11-20
+
+- [x] Removed the shared picture frame from game panels, dialogs, tooltips and notifications. Added a timber border to the Woodcutting and Planks workbench. Retested the compact Hideout equipment layout, framed Upgrades, mobile-only shortcuts and scrolling top bar on the current release source. — done 2026-11-20
 
 - [x] Build character material inventories, personal Stashes and the Guild Stash — done 2026-11-20.
   - Checked live copper gathering and manual cross-character transfer in the desktop browser. Automated checks cover a miner and woodcutter supplying a dagger crafter, offline crafting stopping when personal inputs run out, a full material stack, old shared balances and cloud transfer save conflicts.
