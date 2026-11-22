@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { actionDef } from '../src/data/skills';
+import { recipeStock } from '../src/data/smelting';
 import { findDigs, siteOf } from '../src/data/expedition';
 import { exchangeFragments, standing } from '../src/engine/expedition';
 import { newGame } from '../src/engine/state';
@@ -41,7 +42,7 @@ describe('Phase 12 restoration', () => {
     expect(item.prefixes.some((x) => x.affixId === 'flat_life')).toBe(true);
     expect(s.storage.bank.survey_relic_fragment).toBe(0);
     expect(s.storage.bank.giant_tally).toBe(before.giant_tally - 50);
-    expect(s.storage.bank.copper_bar).toBe(before.copper_bar - 5);
+    expect(recipeStock(s.storage.bank, 'copper_bar')).toBe(recipeStock(before, 'copper_bar') - 5);
     expect(s.action).toBeNull();
     expect(s.skills.combat).toBe(0);
   });

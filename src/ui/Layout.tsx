@@ -26,6 +26,11 @@ import { SKILL_KEYS } from './pages/SkillGemsPage';
 import { fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tooltip } from './components/common';
 import { PinnedCurrencies } from './components/CurrencyPins';
 import { RubbingsCard } from './components/ScholarsDesk';
+import { DelveReplay } from './components/DelveView';
+import { IngotRack } from './components/FurnaceView';
+import { ForgeRack } from './components/AnvilView';
+import { WoodRack } from './components/WoodBench';
+import { GemTray } from './components/LapidaryBench';
 import { clearArrivals } from '../engine/deciphering';
 import { QuestTracker } from './components/QuestTracker';
 import { ChallengeTag, Crest } from './screens/Screens';
@@ -579,6 +584,12 @@ export function OfflineModal({ onOpenDesk }: { onOpenDesk?: () => void }) {
           <h2>While You Were Away</h2>
           <div className="muted">{awayLabel(sum.ms)} of adventure</div>
         </div>
+
+        <DelveReplay />
+        <IngotRack outputs={sum.smeltingOutputs ?? {}} />
+        <ForgeRack />
+        <WoodRack />
+        <GemTray />
 
         {xp.map(([sk, gained]) => {
           const total = game.state.skills[sk] ?? 0;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { actionDef } from '../src/data/skills';
+import { recipeStock } from '../src/data/smelting';
 import { baseDef } from '../src/data/bases';
 import { PROFESSION_PROJECTS } from '../src/data/professionProjects';
 import { makeCtx } from '../src/engine/context';
@@ -166,7 +167,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
       // 3. Smelt bars
       if (barsToSmelt > 0) {
         totalElapsedMs += doActionCycles(s, `smelt_${metal}`, barsToSmelt, c);
-        expect(s.storage.bank[`${metal}_bar`]).toBeGreaterThanOrEqual(barsToSmelt);
+        expect(recipeStock(s.storage.bank, `${metal}_bar`)).toBeGreaterThanOrEqual(barsToSmelt);
       }
 
       // 4. Mill planks
@@ -243,7 +244,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
       expect(s.professionProgress.work.smithing).toBeGreaterThanOrEqual(20);
       expect(s.skills.smithing).toBeGreaterThanOrEqual(xpForLevel(10));
       expect(s.storage.bank.gold).toBeGreaterThanOrEqual(300);
-      expect(s.storage.bank.copper_bar).toBeGreaterThanOrEqual(10);
+      expect(recipeStock(s.storage.bank, 'copper_bar')).toBeGreaterThanOrEqual(10);
       expect(s.storage.bank.ash_plank).toBeGreaterThanOrEqual(5);
 
       // 4. Purchase Forge 2 via profession purchase route
@@ -503,13 +504,13 @@ describe('Phase 05 Equipment Checkpoint', () => {
       // First cycle finishes and uses 5 ore -> 1 bar, leaving 2 ore
       const duration = actionIntervalMs(s, a, deriveStats(s));
       skillStep(s, c, duration + 0.0001, deriveStats(s));
-      expect(s.storage.bank.iron_bar).toBe(1);
+      expect(recipeStock(s.storage.bank, 'iron_bar')).toBe(1);
       expect(s.storage.bank.iron_ore).toBe(2);
 
       // Second cycle attempts to complete, cannot afford 5 ore -> stops
       skillStep(s, c, duration + 0.0001, deriveStats(s));
       expect(s.action).toBeNull();
-      expect(s.storage.bank.iron_bar).toBe(1);
+      expect(recipeStock(s.storage.bank, 'iron_bar')).toBe(1);
       expect(s.storage.bank.iron_ore).toBe(2); // Not negative!
     });
   });

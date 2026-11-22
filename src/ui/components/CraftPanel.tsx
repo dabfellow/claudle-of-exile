@@ -16,6 +16,7 @@ import {
   benchCraft,
   benchCraftCost,
   benchCraftReason,
+  craftedModifierLimit,
   essenceReason,
   FIELD_TINKER_ILVL,
   findItem,
@@ -37,7 +38,7 @@ import { equipFrom, equipFromReason, locateItem, moveToBag, moveToStash, salvage
 import { affixRangeText, allMods, describeMod, itemName, maxAffixes, salvageValue } from '../../engine/items';
 import { inscribeRune, runeInscriptionPreview, runeReason } from '../../engine/runes';
 import type { FlaskInstance, GameState, Item } from '../../engine/types';
-import { game } from '../../game';
+import { game, useGame } from '../../game';
 import { Badge, EmptyState, fmt, GameIcon, MatIcon, Tabs, Tooltip, type TabDef } from './common';
 import { BENCH_MATERIAL_GROUPS, CostHave, MaterialChoices } from './BenchMaterials';
 import '../round2-session3.css';
@@ -122,14 +123,14 @@ function FlaskCraft({ s, f, onCraft }: { s: GameState; f: FlaskInstance; onCraft
 
 /** Prefix, suffix and crafted-modifier room, plus the special states an item can be in. */
 function ItemAffixCapacityBar({ item }: { item: Item }) {
+  const s = useGame();
   const pCount = item.prefixes.length;
   const sCount = item.suffixes.length;
   const max = maxAffixes(item.rarity);
   const pMax = item.voidSlot ? 4 : max;
   const sMax = item.voidSlot ? 4 : max;
   const craftedMods = allMods(item).filter((m) => m.crafted);
-  const hasMulticraft = allMods(item).some((m) => m.affixId === 'meta_multicraft');
-  const craftedMax = hasMulticraft ? 3 : 1;
+  const craftedMax = craftedModifierLimit(s, item);
   return (
     <div className="craft-capacity">
       <span>

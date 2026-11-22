@@ -39,13 +39,11 @@ export interface AgilityShortcut {
 export const AGILITY_SHORTCUTS: AgilityShortcut[] = [
   { level: 5, kind: 'closeIn', name: 'Quick Feet', desc: 'Reach monsters out of range 10% sooner in fights', cut: 0.1 },
   { level: 12, kind: 'heist', name: 'Rooftop Entry', desc: 'Heist rooms take 5% less time', cut: 0.05 },
-  { level: 18, kind: 'spot', name: 'Cliffside Vein', desc: 'Opens a hidden iron seam in Mining', actionId: 'mine_cliffside' },
   { level: 25, kind: 'closeIn', name: 'Vaulting', desc: 'Reach monsters out of range 20% sooner in fights', cut: 0.2 },
   { level: 35, kind: 'heist', name: 'Drainpipe Routes', desc: 'Heist rooms take 10% less time', cut: 0.1 },
   { level: 38, kind: 'spot', name: 'Ledge Garden', desc: 'Opens a hidden herb ledge in Foraging', actionId: 'herb_ledge' },
   { level: 45, kind: 'closeIn', name: 'Wall Run', desc: 'Reach monsters out of range 30% sooner in fights', cut: 0.3 },
   { level: 55, kind: 'heist', name: 'Skylight Drop', desc: 'Heist rooms take 15% less time', cut: 0.15 },
-  { level: 58, kind: 'spot', name: 'Falls Grotto', desc: 'Opens a hidden mithril grotto in Mining', actionId: 'mine_grotto' },
   { level: 65, kind: 'closeIn', name: 'Free Running', desc: 'Reach monsters out of range 40% sooner in fights', cut: 0.4 },
   { level: 75, kind: 'heist', name: 'Ghost Route', desc: 'Heist rooms take 20% less time', cut: 0.2 },
   { level: 85, kind: 'closeIn', name: 'Windstep', desc: 'Reach monsters out of range 50% sooner in fights', cut: 0.5 },

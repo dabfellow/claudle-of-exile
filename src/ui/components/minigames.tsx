@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
+  angleResult,
+  gemTurnMs,
+  curveResult,
   BRUSH_COLS,
   BRUSH_ROWS,
   brushChips,
@@ -19,7 +22,6 @@ import {
   logProfile,
   massShare,
   splitResult,
-  strikeResult,
   surveyDistance,
   surveyResult,
   SURVEY_COLS,
@@ -32,14 +34,13 @@ import {
 import type { GiantPart, SkillId } from '../../engine/types';
 import { brushCrackCut } from '../../engine/deciphering';
 import { useGame } from '../../game';
+import { levelOf } from '../../engine/xp';
 import { MatIcon } from './common';
 import './star-chart.css';
 import '../archaeology.css';
 import './giants.css';
 
-const CHARGE_MS = 1100;
 const SWEEP_MS = 1200;
-const LANDED_MS = 400;
 const WOOD_ZONE = 0.18;
 /** Foraging: herbs grow a little faster than they wilt, and are in bloom (gold) for part of their life. */
 const HERB_EVERY_MS = 1300;
@@ -55,14 +56,10 @@ const LOCK_LENGTH = 3;
 const PIN_SHOW_MS = 380;
 const LOCK_PATIENCE_MS = 3000;
 const LOCK_NEXT_MS = 250;
-const RING_MS = 1250;
-const RING_LATE_MS = 300;
 const HEAT_RISE_PER_SEC = 0.7;
 const HEAT_FALL_PER_SEC = 0.55;
 const HEAT_BAND = 0.26;
 const HEAT_HOLD_MS = 1250;
-const FACETS = 3;
-const STONE_SETTLES_MS = 5200;
 const STROKE_W = 300;
 const STROKE_H = 120;
 const STROKE_STEP = 5;
@@ -145,58 +142,6 @@ function Patience({ ms }: { ms: number }) {
 
 /** Finished soon enough after `since` for a double? */
 const quick = (since: number, ms: number) => performance.now() - since <= ms * QUICK_SHARE;
-
-/** Hold to charge, release in the band. */
-function MiningGame({ onSwing }: { onSwing: OnSwing }) {
-  const newZone = () => random(0.68, 0.84);
-  const [zone, setZone] = useState(newZone);
-  const fill = useRef<HTMLDivElement>(null);
-  const swing = useRef({ charging: false, charge: 0, shownUntil: 0 });
-
-  const start = () => {
-    swing.current.charging = true;
-    swing.current.charge = 0;
-  };
-  const release = () => {
-    const sw = swing.current;
-    if (!sw.charging) return;
-    sw.charging = false;
-    const result = chargeResult(sw.charge, zone);
-    if (!result) {
-      sw.charge = 0;
-      return;
-    }
-    sw.shownUntil = performance.now() + LANDED_MS;
-    setZone(newZone());
-    onSwing(result);
-  };
-
-  useFrame((dt) => {
-    const sw = swing.current;
-    if (sw.charging) {
-      sw.charge = Math.min(1, sw.charge + dt / CHARGE_MS);
-      if (sw.charge >= 1) release();
-    } else if (performance.now() >= sw.shownUntil) sw.charge = 0;
-    if (fill.current) fill.current.style.width = `${sw.charge * 100}%`;
-  });
-  useSpace(start, release);
-
-  return (
-    <button
-      className="mini-bar"
-      aria-label="Hold to charge your pick"
-      onPointerDown={(e) => {
-        e.currentTarget.setPointerCapture(e.pointerId);
-        start();
-      }}
-      onPointerUp={release}
-      onPointerCancel={release}
-    >
-      <Zone at={zone} width={CHARGE_ZONE_WIDTH} />
-      <div className="mini-fill" ref={fill} />
-    </button>
-  );
-}
 
 /** A marker sweeps the bar: swing while it's in the band. */
 function WoodcuttingGame({ onSwing }: { onSwing: OnSwing }) {
@@ -725,32 +670,6 @@ function ArchaeologyGame({ onSwing }: { onSwing: OnSwing }) {
   );
 }
 
-/** A ring closes on the anvil: strike as it lands. Dead on is a double. */
-function SmithingGame({ onSwing }: { onSwing: OnSwing }) {
-  const ring = useRef<HTMLSpanElement>(null);
-  const beat = useRef(0);
-
-  const strike = () => {
-    onSwing(strikeResult(beat.current - RING_MS));
-    beat.current = 0;
-  };
-
-  useFrame((dt) => {
-    beat.current += dt;
-    if (beat.current > RING_MS + RING_LATE_MS) beat.current = 0;
-    if (ring.current) ring.current.style.transform = `scale(${1 + 2.2 * Math.max(0, 1 - beat.current / RING_MS)})`;
-  });
-  useSpace(strike);
-
-  return (
-    <button className="mini-anvil" aria-label="Strike the anvil" onPointerDown={strike}>
-      <span className="mini-strike" />
-      <span className="mini-strike-double" />
-      <span className="mini-ring" ref={ring} />
-    </button>
-  );
-}
-
 /** Hold to heat, let go to cool, and keep the needle in a band that drifts along the bar. Mostly in its gold middle is a double. */
 function AlchemyGame({ onSwing }: { onSwing: OnSwing }) {
   const needle = useRef<HTMLSpanElement>(null);
@@ -820,45 +739,20 @@ function AlchemyGame({ onSwing }: { onSwing: OnSwing }) {
   );
 }
 
-/** Three numbered facets: cut them in order before the stone settles. Quick cuts count double. */
+/** Tap as the spinning facet line meets the fixed guide. */
 function GemcuttingGame({ onSwing }: { onSwing: OnSwing }) {
-  const newStone = () => {
-    const spots = [...Array(FACETS).keys()].map((i) => ({ x: 4 + (i * 80) / FACETS + random(0, 12), y: random(6, 44) }));
-    const shuffled = [...spots].sort(() => Math.random() - 0.5);
-    return { id: Math.random(), at: performance.now(), facets: shuffled };
-  };
-  const [stone, setStone] = useState(newStone);
-  const [cut, setCut] = useState(0);
-
-  useEffect(() => {
-    setCut(0);
-    const settle = setTimeout(() => setStone(newStone()), STONE_SETTLES_MS);
-    return () => clearTimeout(settle);
-  }, [stone]);
-
-  const choose = (facet: number) => {
-    if (facet !== cut) {
-      onSwing('miss');
-      setStone(newStone());
-    } else if (facet + 1 < FACETS) setCut(facet + 1);
-    else {
-      onSwing(quick(stone.at, STONE_SETTLES_MS) ? 'double' : 'hit');
-      setStone(newStone());
-    }
-  };
-
-  return (
-    <div className="mini-timed">
-      <div className="mini-stone">
-        {stone.facets.map((f, i) => (
-          <button key={i} className={`mini-facet ${i < cut ? 'cut' : ''}`} style={{ left: `${f.x}%`, top: `${f.y}%` }} disabled={i < cut} onPointerDown={() => choose(i)}>
-            {i + 1}
-          </button>
-        ))}
-      </div>
-      <Patience key={stone.id} ms={STONE_SETTLES_MS} />
-    </div>
-  );
+  const s = useGame();
+  const turn = gemTurnMs(levelOf('gemcutting', s.skills.gemcutting));
+  const start = useRef(performance.now());
+  const face = useRef<HTMLSpanElement>(null);
+  const angle = () => ((performance.now() - start.current) % turn) * 360 / turn;
+  useFrame(() => { if (face.current) face.current.style.transform = `rotate(${angle()}deg)`; });
+  const cut = () => onSwing(angleResult(angle()));
+  return <button className="lapidary-dop" type="button" onClick={cut} aria-label="Cut at the guide">
+    <span className="lapidary-guide" aria-hidden="true" />
+    <span className="lapidary-rotor" ref={face} aria-hidden="true"><span /></span>
+    <span>Cut at the guide</span>
+  </button>;
 }
 
 type Point = [number, number];
@@ -944,11 +838,80 @@ function RuneGame({ onSwing }: { onSwing: OnSwing }) {
   );
 }
 
+const CURVE_POINTS = [0.51, 0.63, 0.62, 0.48, 0.35, 0.43, 0.58, 0.62, 0.51] as const;
+const CURVE_TIME = 4000;
+
+function curveY(x: number): number {
+  const point = Math.max(0, Math.min(1, x)) * (CURVE_POINTS.length - 1);
+  const index = Math.min(CURVE_POINTS.length - 2, Math.floor(point));
+  return CURVE_POINTS[index] + (CURVE_POINTS[index + 1] - CURVE_POINTS[index]) * (point - index);
+}
+
+function CurveGame({ onSwing }: { onSwing: OnSwing }) {
+  const drag = useRef<{ pointer: number; start: number; x: number; y: number; distance: number } | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [remaining, setRemaining] = useState(4);
+  const finish = (complete: boolean) => {
+    const current = drag.current;
+    if (!current) return;
+    drag.current = null;
+    onSwing(curveResult(current.distance / Math.max(0.01, current.x), complete && performance.now() - current.start <= CURVE_TIME));
+    setProgress(0);
+    setRemaining(4);
+  };
+  useFrame(() => {
+    if (!drag.current) return;
+    const left = CURVE_TIME - (performance.now() - drag.current.start);
+    if (left <= 0) finish(false);
+    else setRemaining(Math.ceil(left / 100) / 10);
+  });
+  const locate = (event: React.PointerEvent<SVGSVGElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    return { x: Math.max(0, Math.min(1, ((event.clientX - rect.left) / rect.width - 0.08) / 0.84)), y: (event.clientY - rect.top) / rect.height };
+  };
+  const points = CURVE_POINTS.map((y, index) => `${8 + 84 * index / (CURVE_POINTS.length - 1)},${y * 40}`).join(' ');
+  return <div className="wood-curve">
+    <svg viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label="Drawknife path. Drag the marked line from the left circle to the right circle."
+      style={{ width: '100%', height: 128, touchAction: 'none' }}
+      onPointerDown={(event) => {
+        const point = locate(event);
+        if (drag.current || point.x > 0.05 || Math.abs(point.y - curveY(0)) > 0.14) return;
+        event.currentTarget.setPointerCapture(event.pointerId);
+        drag.current = { pointer: event.pointerId, start: performance.now(), x: 0, y: point.y, distance: 0 };
+      }}
+      onPointerMove={(event) => {
+        const current = drag.current;
+        if (!current || event.pointerId !== current.pointer) return;
+        const { x, y } = locate(event);
+        const dx = x - current.x;
+        if (dx <= 0) return;
+        const samples = Math.max(1, Math.ceil(dx * 100));
+        for (let sample = 1; sample <= samples; sample++) {
+          const fraction = sample / samples;
+          current.distance += Math.abs(current.y + (y - current.y) * fraction - curveY(current.x + dx * fraction)) * dx / samples;
+        }
+        current.x = x;
+        current.y = y;
+        setProgress(x);
+      }}
+      onPointerUp={(event) => {
+        if (event.pointerId === drag.current?.pointer) finish(drag.current.x >= 0.94 && Math.abs(locate(event).y - curveY(1)) <= 0.14);
+      }}
+      onPointerCancel={() => finish(false)}
+      onLostPointerCapture={() => finish(false)}
+    >
+      <polyline points={points} fill="none" stroke="var(--accent)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
+      <circle cx="8" cy={curveY(0) * 40} r="2.4" fill="var(--accent)" />
+      <circle cx="92" cy={curveY(1) * 40} r="2.4" fill="none" stroke="var(--accent)" />
+      {progress > 0 && <circle cx={8 + 84 * progress} cy={40 * curveY(progress)} r="1.4" fill="white" />}
+    </svg>
+    <div className="row small"><span>Start</span><span className="spacer" /><span>{remaining.toFixed(1)}s</span><span className="spacer" /><span>Finish</span></div>
+  </div>;
+}
+
 /** The game for a skill. `matId` is what the running action gathers. */
 export function SkillGame({ skill, matId, markLevel, onSwing }: { skill: SkillId; matId?: string; /** set while a Thieving mark (not a Heist room) runs */ markLevel?: number; onSwing: OnSwing }) {
   switch (skill) {
-    case 'mining':
-      return <MiningGame onSwing={onSwing} />;
     case 'woodcutting':
       return <SplitGame onSwing={onSwing} />;
     case 'harvesting':
@@ -959,12 +922,8 @@ export function SkillGame({ skill, matId, markLevel, onSwing }: { skill: SkillId
       return <WoodcuttingGame onSwing={onSwing} />;
     case 'archaeology':
       return <ArchaeologyGame onSwing={onSwing} />;
-    case 'smelting':
-      return <AlchemyGame onSwing={onSwing} />;
-    case 'smithing':
-      return <SmithingGame onSwing={onSwing} />;
     case 'woodcrafting':
-      return <WoodcuttingGame onSwing={onSwing} />;
+      return <CurveGame onSwing={onSwing} />;
     case 'alchemy':
       return <AlchemyGame onSwing={onSwing} />;
     case 'gemcutting':

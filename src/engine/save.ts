@@ -33,6 +33,11 @@ import { settleProfessionProgress } from './professions';
 import { settleForagingSeeds } from './foraging';
 import { newCampaignQuestState, settleCampaignQuests } from './campaignQuests';
 import { newAstrologyState } from './astrology';
+import { migrateDelve } from './delve';
+import { initialSmelting } from './smelting';
+import { migrateForging, settleForging } from './forging';
+import { freshWoodcrafting } from './woodcrafting';
+import { freshGemcutting } from './gemFacets';
 
 // kept from the game's old name: changing it would orphan every existing save
 export const SAVE_KEY = 'claudle-of-exile-save';
@@ -485,6 +490,11 @@ const MIGRATIONS: Record<number, Migration> = {
   52: migrateAstrologyConstellations,
   53: migrateArchaeologyToDeciphering,
   54: convertWoodcuttingToGiants,
+  55: migrateDelve,
+  56: (raw) => { raw.smelting ??= initialSmelting(); },
+  57: (raw) => migrateForging(raw as unknown as GameState),
+  58: (raw) => { raw.woodcrafting ??= freshWoodcrafting(); },
+  59: (raw) => { raw.gemcutting ??= freshGemcutting(); },
 };
 
 /**
@@ -639,6 +649,7 @@ export function deserialize(json: string): GameState {
   settleHeist(s);
   settleExpedition(s);
   settleProductionSkills(s);
+  settleForging(s);
   settleSkillingMastery(s);
   settleProfessionProgress(s);
   settleForagingSeeds(s);

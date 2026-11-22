@@ -3,6 +3,7 @@ import { BAG_SIZE } from '../src/data/hideout';
 import { flaskDef } from '../src/data/flasks';
 import { PROFESSION_PROJECTS, type ProfessionProject } from '../src/data/professionProjects';
 import { ACTIONS, actionDef, actionsFor } from '../src/data/skills';
+import { recipeStock } from '../src/data/smelting';
 import { newGame, tick } from '../src/engine/state';
 import { makeCtx } from '../src/engine/context';
 import { seeded } from '../src/engine/rng';
@@ -298,7 +299,7 @@ describe('ordinary completion boundaries and return summaries', () => {
     s.storage.bank.copper_ore = 5;
     startSkillAction(s, ctx(), 'smelt_copper');
     const sum = simulateOffline(s, ctx(), 60_000);
-    expect(sum.ordinaryOutput!.copper_bar).toBe(1);
+    expect(recipeStock(sum.ordinaryOutput!, 'copper_bar')).toBe(1);
     expect(sum.stoppedReason).toMatch(/Missing materials/);
     expect(s.professionProgress.work.smithing).toBe(1);
   });

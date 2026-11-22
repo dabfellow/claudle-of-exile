@@ -80,6 +80,7 @@ import {
   MONSTER_STEP_MS,
   MOVEMENT,
   areaCells,
+  CELLS,
   chainFrom,
   CHILLED_GROUND_SLOW,
   FROZEN_GROUND_SLOW,
@@ -1089,7 +1090,7 @@ export function skillTarget(s: GameState, d: Derived, nums: SkillNumbers, ruleAi
   const t = s.settings.targeting ?? DEFAULT_TARGETING;
   const same = order.filter((m) => fits(m) && inPriority(t.priority, m) === inPriority(t.priority, first));
   const under = (m: MonsterInstance) => {
-    const cells = new Set(areaCells(shape, m.cell, nums.def.effect.radius));
+    const cells = new Set(facetedAreaCells(nums, shape, m.cell, nums.def.effect.radius));
     return order.filter((o) => cells.has(o.cell)).length;
   };
   let best = first;
@@ -1627,6 +1628,7 @@ function rollHit(
   if (mods.noElemental || r.noElemDamage) byType.fire = byType.cold = byType.light = 0;
   const total = DAMAGE_TYPES.reduce((a, t) => a + byType[t], 0);
   for (const x of mods.extras) byType[x.type] += (total * x.pct) / 100;
+  if (r.damageAsChaos) byType.chaos += (total * r.damageAsChaos) / 100;
   if (r.physAsLight && !r.noElemDamage) byType.light += (byType.phys * r.physAsLight) / 100;
   if (r.physAsFire && !r.noElemDamage) byType.fire += (byType.phys * r.physAsFire) / 100;
   if (r.permafrostConvert > 0 && !r.noElemDamage) {
@@ -2110,7 +2112,8 @@ function landHit(
   const glance = spreads(d, nums) ? (mon.hulking ? HULKING.areaTaken : 1) * (mon.areaTaken ?? 1) : 1;
   for (const t of DAMAGE_TYPES) {
     let amt = byType[t] * factor * glance;
-    amt = monsterMitigation(mon, amt, t, t === 'phys' ? 0 : mon.curse?.resPen ?? 0);
+    const penetration = t === 'fire' || t === 'cold' || t === 'light' ? nums.facets?.penetration ?? 0 : 0;
+    amt = monsterMitigation(mon, amt, t, t === 'phys' ? 0 : (mon.curse?.resPen ?? 0) + penetration);
     if (t === 'phys') amt *= 1 + ((mon.curse?.physTaken ?? 0) + (mon.rend ? mon.rend.stacks * mon.rend.pctPerStack : 0)) / 100;
     dealtBy[t] = amt;
     dealt += amt;
@@ -2805,7 +2808,8 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
     // a stacking buff gains a stack with each use, up to its most, and every stack's duration starts over
     const prev = c.buffs.find((b) => b.source === 'skill' && b.id === def.id);
     const stacks = e.buff.maxStacks ? Math.min(e.buff.maxStacks, (prev?.stacks ?? 0) + 1) : undefined;
-    const own = Object.fromEntries(Object.entries(e.buff.stats ?? {}).map(([k, v]) => [k, v * (stacks ?? 1)]));
+    const facetEffect = 1 + (nums.facets?.defence ?? 0) / 100;
+    const own = Object.fromEntries(Object.entries(e.buff.stats ?? {}).map(([k, v]) => [k, v * (stacks ?? 1) * facetEffect]));
     c.buffs = c.buffs.filter((b) => !(b.source === 'skill' && b.id === def.id));
     c.buffs.push({
       id: def.id,
@@ -2828,8 +2832,8 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       poisonChance: mods.specials.has('void_voice') ? 20 : undefined,
       carnage: mods.specials.has('carnage') || undefined,
       outpace: e.buff.outpace,
-      moreDamage: e.buff.moreDamage ? (e.buff.moreDamage + (level - 1)) * (stacks ?? 1) * warcryScale : undefined,
-      regenPct: (e.buff.regenPct ?? 0) + (mods.specials.has('rally') ? 2 : 0) || undefined,
+      moreDamage: e.buff.moreDamage ? (e.buff.moreDamage + (level - 1)) * (stacks ?? 1) * warcryScale * facetEffect : undefined,
+      regenPct: (e.buff.regenPct ?? 0) * facetEffect + (mods.specials.has('rally') ? 2 : 0) || undefined,
       esRegenPct: mods.specials.has('holyground') ? 1 : undefined,
       extendMaxMs: mods.specials.has('bloodfrenzy') ? 12000 : undefined,
     });
@@ -2966,7 +2970,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
       let targets: MonsterInstance[];
       let chained = false;
       if (shape !== 'target') {
-        const cells = new Set(areaCells(shape, target.cell, radius));
+        const cells = new Set(facetedAreaCells(nums, shape, target.cell, radius));
         targets = [target, ...alive.filter((m) => m !== target && cells.has(m.cell))];
         if (pass === 0 && h === 0) ctx.emit({ t: 'area', gemId: def.id, cells: [...cells] });
       } else {
@@ -3018,7 +3022,7 @@ function performSkill(s: GameState, ctx: Ctx, d: Derived, slot: number, nums: Sk
         if (ground && !grounded && m === aim && !(r.wintersPyre && (ground.kind === 'burning' || ground.kind === 'shocked'))) {
           grounded = true;
           const dps = (dealt * ground.pctPerSec) / 100;
-          for (const cell of areaCells(ground.area ?? 'target', aim.cell)) layGround(c.ground, cell, ground.kind, dps, ground.durationMs * nums.durationMult);
+          for (const cell of facetedAreaCells(nums, ground.area ?? 'target', aim.cell)) layGround(c.ground, cell, ground.kind, dps, ground.durationMs * nums.durationMult);
         }
         if (m === aim && m.life < 0 && mods.specials.has('followthrough')) carryOverkill(s, ctx, m);
       });
@@ -3097,10 +3101,10 @@ function curseEnemies(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, ai
   const curse = def.effect.curse!;
   const target = aimed ?? aliveMonsters(c)[0];
   if (!target) return;
-  const cells = new Set(areaCells(mods.specials.has('widehex') ? 'field' : skillArea(nums), target.cell, def.effect.radius));
+  const cells = new Set(facetedAreaCells(nums, mods.specials.has('widehex') ? 'field' : skillArea(nums), target.cell, def.effect.radius));
   ctx.emit({ t: 'area', gemId: def.id, cells: [...cells] });
   const durationMs = curse.durationMs * nums.durationMult;
-  const effect = (1 + (CURSE_PCT_PER_LEVEL / 100) * (level - 1)) * (1 + mods.curseEffect / 100);
+  const effect = (1 + (CURSE_PCT_PER_LEVEL / 100) * (level - 1)) * (1 + (mods.curseEffect + (nums.facets?.defence ?? 0)) / 100);
   for (const m of aliveMonsters(c)) {
     if (!cells.has(m.cell)) continue;
     // Twin Hexes: a different curse already on it keeps its effect alongside the new one
@@ -3171,6 +3175,20 @@ export function skillArea(nums: SkillNumbers): AreaShape {
   if (nums.mods.specials.has('reach')) return 'field';
   if (nums.mods.specials.has('pierce')) return 'beam';
   return e.area ?? (e.targets === 'all' ? 'field' : 'target');
+}
+
+/** Round fractional coverage to the nearest outer tile on the battlefield. */
+export function facetedAreaCells(nums: SkillNumbers, shape: AreaShape, center: number, radius?: number): number[] {
+  const cells = areaCells(shape, center, radius);
+  const pct = nums.facets?.area ?? 0;
+  if (!pct || shape === 'target' || shape === 'field') return cells;
+  const used = new Set(cells);
+  const outer = CELLS.map((_, index) => index).filter((index) => !used.has(index));
+  outer.sort((a, b) => {
+    if (shape === 'nova') return cellRing(a) - cellRing(b);
+    return cellDistance(a, center) - cellDistance(b, center);
+  });
+  return [...cells, ...outer.slice(0, Math.max(1, Math.round(cells.length * pct / 100)))];
 }
 
 // ---------- kills & death ----------
@@ -3770,8 +3788,9 @@ function takeHit(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, raw: 
     damageMonster(s, mon, thorns);
     ctx.emit({ t: 'hit', target: 'monster', amount: thorns, dmgType: 'phys', monsterUid: mon.uid });
   }
-  if (r.ironReflexes > 0 && mon.life > 0 && r.handsForgottenChoir <= 0) {
-    const thorns = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(mon, raw * 0.5, 'phys'))));
+  const reflected = (r.ironReflexes > 0 ? raw * 0.5 : 0) + (type === 'phys' ? raw * r.forgeThorns / 100 : 0);
+  if (reflected > 0 && mon.life > 0 && r.handsForgottenChoir <= 0) {
+    const thorns = secondaryHitDamage(d, Math.max(1, Math.round(monsterMitigation(mon, reflected, 'phys'))));
     damageMonster(s, mon, thorns);
     ctx.emit({ t: 'hit', target: 'monster', amount: thorns, dmgType: 'phys', monsterUid: mon.uid });
   }
@@ -4180,12 +4199,12 @@ function minionStrike(s: GameState, ctx: Ctx, d: Derived, nums: SkillNumbers, x:
   const alive = aliveMonsters(c).filter((m) => !m.martyr);
   let targets = [target];
   if (shape !== 'target') {
-    const cells = new Set(areaCells(shape, target.cell, nums.def.effect.radius));
+    const cells = new Set(facetedAreaCells(nums, shape, target.cell, nums.def.effect.radius));
     targets = [target, ...alive.filter((m) => m !== target && cells.has(m.cell))];
     ctx.emit({ t: 'area', gemId: nums.def.id, cells: [...cells] });
   } else if (nums.mods.chains) targets = chainFrom(target, alive, nums.mods.chains);
   const before = targets.filter((m) => m.life > 0).length;
-  proxyStrike(s, ctx, d, nums, targets, (1 + d.raw.minionPct / 100) * (1 + d.raw.moreMinion / 100), false);
+  proxyStrike(s, ctx, d, nums, targets, (1 + (d.raw.minionPct + (nums.facets?.minionDamage ?? 0)) / 100) * (1 + d.raw.moreMinion / 100), false);
   const kills = before - targets.filter((m) => m.life > 0).length;
   if (!kills) return;
   if (nums.mods.specials.has('pressgang')) for (const y of army(c)) if (y.gemId === x.gemId) y.life = Math.min(y.maxLife, y.life + y.maxLife * PRESS_GANG_HEAL * kills);
@@ -4271,8 +4290,8 @@ function stormAround(nums: SkillNumbers): boolean {
 /** The cells a storm covers with its centre on `center`. */
 function stormCells(nums: SkillNumbers, center: number): number[] {
   const radius = nums.def.effect.radius;
-  if (!stormAround(nums)) return areaCells(skillArea(nums), center, radius);
-  return areaCells('nova', center, nums.mods.specials.has('crowned') ? Math.max(radius ?? 0, CROWNED_RINGS) : radius);
+  if (!stormAround(nums)) return facetedAreaCells(nums, skillArea(nums), center, radius);
+  return facetedAreaCells(nums, 'nova', center, nums.mods.specials.has('crowned') ? Math.max(radius ?? 0, CROWNED_RINGS) : radius);
 }
 
 /** Lay a storm where the skill lands: past what the gem keeps up, the oldest blows out. */

@@ -287,6 +287,8 @@ const TEXT: Partial<Record<StatKey, (v: number) => string>> = {
   totemActivePct: pct('increased Damage while you have a Totem'),
   exertedPct: pct('increased Damage with Exerted skills'),
   physAsFire: (v) => `Gain ${v}% of Physical Damage as extra Fire Damage`,
+  damageAsChaos: (v) => `Gain ${v}% of Damage as extra Chaos Damage`,
+  forgeThorns: (v) => `Reflect ${v}% of incoming Physical Damage`,
   curseEffect: pct('increased Effect of your Curses'),
   curseDuration: pct('increased Curse Duration'),
   minionMax: flat('to maximum number of Minions'),

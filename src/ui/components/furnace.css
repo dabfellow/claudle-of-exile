@@ -1,0 +1,190 @@
+.furnace-view,
+.furnace-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.furnace-station,
+.furnace-grid,
+.furnace-slot-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.furnace-station { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+.furnace-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr)); }
+.furnace-slot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.furnace-chamber,
+.furnace-controls > .card,
+.furnace-recipe {
+  min-width: 0;
+  padding: 12px;
+}
+
+.furnace-chamber,
+.furnace-recipe {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.furnace-chamber > button { align-self: start; }
+
+.furnace-cutaway {
+  position: relative;
+  min-height: 126px;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    linear-gradient(#08070672, #0b0808a0),
+    repeating-linear-gradient(0deg, transparent 0 19px, #0f0c0b 19px 21px),
+    repeating-linear-gradient(90deg, #332b23 0 46px, #1b1512 46px 48px, #3f3228 48px 96px);
+  border: 1px solid #6b4c33;
+  border-radius: 6px;
+}
+
+.furnace-door {
+  position: relative;
+  width: min(62%, 215px);
+  height: 105px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #120b0a 35%, #3d210f);
+  border: 9px solid #69513e;
+  border-bottom: 0;
+  border-radius: 80px 80px 0 0;
+  box-shadow: 0 0 0 3px #26221c, inset 0 0 16px #110907;
+}
+
+.furnace-coals {
+  position: absolute;
+  inset: auto 0 0;
+  height: 64px;
+  background:
+    radial-gradient(ellipse at 18% 97%, #5b3a2b 6%, transparent 28%),
+    radial-gradient(ellipse at 84% 100%, #6b3e2a 7%, transparent 30%),
+    radial-gradient(ellipse at 50% 100%, #513121 11%, transparent 58%);
+}
+
+.furnace-lit .furnace-door { box-shadow: 0 0 24px #e9894070, inset 0 0 16px #2d1609; }
+.furnace-lit .furnace-coals {
+  background:
+    radial-gradient(ellipse at 20% 99%, #f99c43 7%, #943722 23%, transparent 39%),
+    radial-gradient(ellipse at 80% 100%, #dc692c 8%, #813424 31%, transparent 43%),
+    radial-gradient(ellipse at 50% 105%, #ffca74 10%, #df7139 30%, transparent 65%);
+}
+
+.furnace-hint,
+.furnace-focus,
+.furnace-recipe-title { flex-wrap: wrap; }
+.furnace-hint p,
+.furnace-recipe p,
+.furnace-controls p { margin: 0; }
+.furnace-focus { margin-top: 9px; font-size: 0.82rem; }
+.furnace-focus .bar { min-width: 46px; }
+.furnace-running { border-color: var(--accent); }
+
+.furnace-select {
+  display: flex;
+  min-width: 0;
+  width: max-content;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.furnace-slot-grid .furnace-select { width: 100%; }
+.furnace-select select { width: 100%; min-height: 34px; }
+.furnace-costs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.83rem;
+}
+.furnace-costs li { display: inline-flex; align-items: center; gap: 5px; }
+
+.furnace-odds {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 9px 0 0;
+}
+.furnace-odds > div {
+  background: #47321e4d;
+  border: 1px solid #7353377a;
+  border-radius: 4px;
+  padding: 7px 2px;
+  text-align: center;
+}
+.furnace-odds dt { color: var(--muted); font-size: 0.75rem; }
+.furnace-odds dd { margin: 0; font-variant-numeric: tabular-nums; }
+.furnace-odds [data-grade="flawless"],
+.furnace-rack [data-grade="flawless"],
+.furnace-rack [data-grade="living"] {
+  color: #ffe1a6;
+  border-color: #c58d48;
+  text-shadow: 0 0 9px #ffbd5866;
+}
+
+.furnace-bellows { display: flex; flex-direction: column; gap: 9px; }
+.furnace-heat {
+  position: relative;
+  height: 27px;
+  margin: 0 3px;
+  border: 1px solid #7e5e43;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #333741, #623d2d 62%, #7d2d30);
+}
+.furnace-heat-band {
+  position: absolute;
+  inset-block: 0;
+  display: flex;
+  justify-content: center;
+  background: #e4a45a85;
+  box-shadow: inset 1px 0 #ebc294, inset -1px 0 #ebc294;
+}
+.furnace-heat-centre { width: 33.33%; background: #f4cd73; }
+.furnace-needle {
+  position: absolute;
+  inset-block: -4px;
+  width: 3px;
+  transform: translateX(-50%);
+  background: #fff6db;
+  box-shadow: 0 0 0 1px #302419;
+}
+.furnace-pump { min-height: 40px; user-select: none; touch-action: none; }
+
+.furnace-rack { margin: 14px 0; }
+.furnace-rack h3 { margin: 0 0 8px; }
+.furnace-rack-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px solid #7353377a;
+}
+.furnace-rack-row strong { min-width: 58px; }
+.furnace-rack-ingot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border: 1px solid #7353377a;
+  border-radius: 3px;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 660px) {
+  .furnace-station { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 360px) {
+  .furnace-slot-grid { grid-template-columns: 1fr; }
+}

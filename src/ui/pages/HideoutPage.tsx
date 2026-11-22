@@ -6,7 +6,7 @@ import { STATIONS, type StationDef, type StationId } from '../../data/hideout';
 import { materialDef } from '../../data/materials';
 import { actionDef, actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { zoneDef } from '../../data/zones';
-import { canAfford } from '../../engine/bank';
+import { canAfford, recipeMaterialCount } from '../../engine/bank';
 import { hideoutCost, isClassic, isSolo } from '../../engine/challenge';
 import { skillSummary } from '../../engine/gems';
 import { nextUpgradeCost, professionStationRoute, stationLevel, stationLockReason, stationPerks, upgradeStation } from '../../engine/hideout';
@@ -68,7 +68,9 @@ export function Embers() {
 function nextUnlock(skill: SkillId, lvl: number): SkillAction | null {
   return (
     actionsFor(skill)
-      .filter((a) => !a.soon && !a.batchOf && a.level > lvl)
+      .filter((a) => !a.soon && !a.batchOf && a.level > lvl
+        && (skill !== 'mining' || a.id.startsWith('delve_'))
+        && (skill !== 'smithing' || !a.purpose))
       .sort((a, b) => a.level - b.level)[0] ?? null
   );
 }
@@ -399,7 +401,7 @@ function HaveNeed({ cost, have, go }: { cost: Record<string, number>; have: Reco
   return (
     <span className="hx-haveneed">
       {Object.entries(cost).map(([id, n]) => {
-        const got = have[id] ?? 0;
+        const got = recipeMaterialCount(have, id);
         const sources = materialSources(id);
         return (
           <Tooltip
@@ -468,7 +470,7 @@ function Tier({ n, effect, cost, state, have }: { n: number; effect: string; cos
 
 /** How many of a cost's materials you're still short of. */
 function shortBy(cost: Record<string, number>, have: Record<string, number>): number {
-  return Object.entries(cost).filter(([id, n]) => (have[id] ?? 0) < n).length;
+  return Object.entries(cost).filter(([id, n]) => recipeMaterialCount(have, id) < n).length;
 }
 
 /**

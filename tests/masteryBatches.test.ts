@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ACTIONS, actionDef } from '../src/data/skills';
+import { recipeStock } from '../src/data/smelting';
 import { MASTERY_BATCH_TIERS, supportsMasteryBatch } from '../src/data/masteryBatches';
 import { makeCtx } from '../src/engine/context';
 import { newGame, tick } from '../src/engine/state';
@@ -55,7 +56,7 @@ describe('production mastery batches', () => {
     const d = deriveStats(s);
     expect(actionIntervalMs(s, a, d)).toBeCloseTo(actionIntervalMs(s, actionDef('smelt_copper'), d) * tier.time);
     skillStep(s, ctx, actionIntervalMs(s, a, d), d);
-    expect(s.storage.bank.copper_bar).toBe(tier.size);
+    expect(recipeStock(s.storage.bank, 'copper_bar')).toBe(tier.size);
     expect(s.storage.bank.copper_ore).toBe(a.inputs!.copper_ore * 99 + Math.floor(a.inputs!.copper_ore * masteryConservation(s, a.mastery)));
     expect(s.skillingMastery[a.mastery!.id] - before).toBeCloseTo(a.intervalMs / 1000);
     expect(s.professionProgress.work.smithing).toBe(tier.size);

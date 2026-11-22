@@ -69,7 +69,8 @@ describe('Phase 13 charts and encounters', () => {
       const allocated = [...s.account.atlas!.nodes], dust = s.storage.bank.arcane_dust ?? 0;
       s.maps.run!.bossDown = true; mapStep(s, ctx()); mapStep(s, ctx());
       expect(s.storage.bank.reliquary_fragment).toBe(1);
-      expect(s.storage.bank.rough_gem).toBe(10); expect(s.storage.bank.arcane_dust).toBe(dust + 100);
+      const roughTotal = Object.entries(s.storage.bank).filter(([k]) => k === 'rough_gem' || k.startsWith('rough_gem_')).reduce((a, [, n]) => a + n, 0);
+      expect(roughTotal).toBe(10); expect(s.storage.bank.arcane_dust).toBe(dust + 100);
       expect(s.account.atlas!.nodes).toEqual(allocated);
       expect(startUniqueMap(s, ctx(), 'umap_artisans_reliquary')).toBeNull();
       s.combat = null; mapStep(s, ctx());

@@ -116,6 +116,35 @@ const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thievi
 
 export type SwingResult = 'double' | 'hit' | 'weak' | 'miss';
 
+export function angleResult(errorDeg: number): SwingResult {
+  if (!Number.isFinite(errorDeg)) return 'miss';
+  const error = Math.abs(((errorDeg + 180) % 360 + 360) % 360 - 180);
+  return error <= 3 ? 'double' : error <= 9 ? 'hit' : error <= 18 ? 'weak' : 'miss';
+}
+
+export function gemTurnMs(level: number): number {
+  return 2400 - 800 * (Math.max(1, Math.min(99, level)) - 1) / 98;
+}
+
+export function curveResult(avgDeviation: number, completed: boolean): SwingResult {
+  if (!completed || !Number.isFinite(avgDeviation)) return 'miss';
+  if (avgDeviation <= 0.03) return 'double';
+  if (avgDeviation <= 0.09) return 'hit';
+  return avgDeviation <= 0.15 ? 'weak' : 'miss';
+}
+
+export function braceResult(correct: boolean, answeredMs: number, timerMs: number): SwingResult {
+  if (!correct || answeredMs < 0 || answeredMs > timerMs + 1000) return 'miss';
+  if (answeredMs <= timerMs / 3) return 'double';
+  return answeredMs <= timerMs ? 'hit' : 'weak';
+}
+
+export function bellowsResult(goldShare: number, bandShare: number): SwingResult {
+  if (goldShare >= 0.5) return 'double';
+  if (bandShare >= 0.6) return 'hit';
+  return bandShare >= 0.3 ? 'weak' : 'miss';
+}
+
 export function hasMinigame(skill: SkillId): boolean {
   return MANUAL_SKILLS.includes(skill);
 }

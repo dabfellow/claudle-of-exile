@@ -29,11 +29,16 @@ import { challengeName } from './challenge';
 import { newCampaignQuestState } from './campaignQuests';
 import { newAstrologyState } from './astrology';
 import { initGiant, newGiantState } from './woodcutting';
+import { newDelveState } from './delve';
+import { initialSmelting } from './smelting';
+import { freshForging } from './forging';
+import { freshWoodcrafting, woodGrowthStep } from './woodcrafting';
+import { freshGemcutting } from './gemFacets';
 export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 55;
+export const SAVE_VERSION = 60;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -73,6 +78,11 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     astrology: newAstrologyState(),
     giant: newGiantState(),
     collectibles: [],
+    delve: newDelveState(seed),
+    smelting: initialSmelting(),
+    forging: freshForging(),
+    woodcrafting: freshWoodcrafting(),
+    gemcutting: freshGemcutting(),
     skillingMastery: {},
     professionProgress: newProfessionProgress(),
     inventory: [],
@@ -170,6 +180,7 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
   // any gear change (sets, linked profiles, swaps) settles The Second Heresy's allowance before stats are read
   settleForbiddenAllowance(s, ctx);
   let d = deriveStats(s);
+  const hasLivingEquipment = Object.values(s.equipment).some((item) => item?.living && item.living.growth < 10);
   let remaining = dtMs;
   while (remaining > 0) {
     const step = Math.min(STEP_MS, remaining);
@@ -183,6 +194,7 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
     greenhouseStep(s, ctx, step, d);
     if (isMealClockRunning(s)) mealStep(s, ctx, step);
     if (s.combat) {
+      if (hasLivingEquipment && s.combat.monsters.some((mon) => mon.life > 0) && woodGrowthStep(s, step)) d = deriveStats(s);
       if (combatStep(s, ctx, step, d)) d = deriveStats(s);
       autoNextZoneStep(s, ctx);
       if (s.fallen) return;

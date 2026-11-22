@@ -9,13 +9,15 @@ import { FISHING_FLASK } from '../data/fishing';
 import { MAP_RARITY } from '../data/hideout';
 import { ASCENDANCY_BY_ID, ASCENDANCY_NODE_BY_ID } from '../data/ascendancies';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
-import { STAT_KEYS, type Buff, type DamageType, type GameState, type Item, type StatKey, type Stats } from './types';
+import { STAT_KEYS, type Buff, type DamageType, type GameState, type Item, type RolledMod, type StatKey, type Stats } from './types';
 import { ascendancyOf, unwrittenNodeOf } from './ascendancy';
 import { characterLevel } from './character';
 import { mealStats } from './cooking';
 import { hasFishingPrize } from './fishing';
 import { MEGA_CRIT_MULTI, mechanicOf, mechanicStats } from './mechanics';
 import { runeStats } from './runes';
+import { forgeImplicits } from '../data/forging';
+import { woodImplicits } from './woodcrafting';
 
 // built once: deriveStats runs every tick, and rebuilding this took most of a sim run
 let zeroStats: Stats | null = null;
@@ -29,17 +31,28 @@ export function addStats(into: Stats, from: Partial<Record<StatKey, number>>, mu
   for (const k in from) into[k as StatKey] += (from[k as StatKey] ?? 0) * mult;
 }
 
+export function accessoryMod(item: Item, mod: RolledMod): RolledMod {
+  if (!item.quality || mod.crafted) return mod;
+  const slot = baseDef(item.baseId).slot;
+  if (slot !== 'ring' && slot !== 'amulet' && slot !== 'belt') return mod;
+  const multiplier = 1 + item.quality / 100;
+  return { ...mod, values: mod.values.map((value) => Math.round(value * multiplier)) };
+}
+
 /** Stat contributions of one item's implicits and mods (not base defences). */
 export function itemStats(item: Item): Partial<Record<StatKey, number>> {
   const out: Partial<Record<StatKey, number>> = {};
   const add = (k: StatKey, v: number) => (out[k] = (out[k] ?? 0) + v);
   const base = baseDef(item.baseId);
   for (const imp of base.implicits ?? []) add(imp.stat, imp.value);
+  for (const imp of forgeImplicits(item)) add(imp.stat, imp.value);
+  for (const imp of woodImplicits(item)) add(imp.stat, imp.value);
   for (const m of [...item.prefixes, ...item.suffixes]) {
     const a = affixDef(m.affixId);
     // Momentum keeping became a flat 1 stack (it was a %): uniques found before then still hold the old % value
     if (m.affixId === 'u_momentum_retain') { add('momentumRetain', 1); continue; }
-    a.stats.forEach((k, i) => add(k, m.values[a.linked ? 0 : i] ?? 0));
+    const { values } = accessoryMod(item, m);
+    a.stats.forEach((k, i) => add(k, values[a.linked ? 0 : i] ?? 0));
   }
   if (item.doomImplicit) {
     if (item.doomImplicit === 'doom_all_res') add('allRes', 16);
@@ -62,7 +75,7 @@ const LOCAL_WEAPON_KEYS: StatKey[] = ['physMin', 'physMax', 'localPhysPct'];
 export function itemDefences(item: Item): { armour: number; evasion: number; energyShield: number } {
   const base = baseDef(item.baseId);
   const st = itemStats(item);
-  const local = (b: number | undefined, flat: StatKey, pct: StatKey) => Math.round(((b ?? 0) + (st[flat] ?? 0)) * (1 + (st[pct] ?? 0) / 100));
+  const local = (b: number | undefined, flat: StatKey, pct: StatKey) => Math.round(((b ?? 0) + (st[flat] ?? 0)) * (1 + ((st[pct] ?? 0) + (item.quality ?? 0)) / 100));
   return {
     armour: local(base.armour, 'armour', 'localArmourPct'),
     evasion: local(base.evasion, 'evasion', 'localEvasionPct'),
@@ -75,7 +88,7 @@ export function weaponPhys(item: Item): [number, number] {
   const base = baseDef(item.baseId);
   const st = itemStats(item);
   const [lo, hi] = base.phys ?? [2, 5];
-  const mult = 1 + (st.localPhysPct ?? 0) / 100;
+  const mult = 1 + ((st.localPhysPct ?? 0) + (item.quality ?? 0)) / 100;
   return [Math.round((lo + (st.physMin ?? 0)) * mult), Math.round((hi + (st.physMax ?? 0)) * mult)];
 }
 
@@ -422,7 +435,7 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
   if (raw.handsForgottenChoir > 0) {
     raw.totemMax += 2;
   }
-  const accuracy = Math.round(2 * combatLevel + raw.accuracy + attributes.dex * A.dex.accuracyPer);
+  const accuracy = Math.round((2 * combatLevel + raw.accuracy + attributes.dex * A.dex.accuracyPer) * (1 + raw.woodAccuracyPct / 100));
 
   const mainPhys = weaponItem ? weaponPhys(weaponItem) : null;
   const offPhys = offItem ? weaponPhys(offItem) : null;

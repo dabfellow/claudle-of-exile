@@ -11,6 +11,7 @@ import { placeItem } from './loot';
 import { focusMult, focusStep, takeDouble } from './minigame';
 import { awardProtectedProgress, recordDiscovery } from './professions';
 import { chance, pick } from './rng';
+import { roughDropBundle } from './roughGems';
 import { actionBlocker, grantXp, skillLevel } from './skills';
 import { skillTreeStats } from './skillTree';
 import type { Derived } from './stats';
@@ -312,8 +313,11 @@ function addTake(take: Record<string, number>, id: string, n: number): void {
   take[id] = (take[id] ?? 0) + n;
 }
 
-function rollDrops(ctx: Ctx, take: Record<string, number>, drops: HeistDrop[], mult: number): void {
-  for (const d of drops) if (chance(ctx.rng, Math.min(1, d.chance * mult))) addTake(take, d.id, d.qty);
+function rollDrops(s: GameState, ctx: Ctx, take: Record<string, number>, drops: HeistDrop[], mult: number): void {
+  for (const d of drops) {
+    if (!chance(ctx.rng, Math.min(1, d.chance * mult))) continue;
+    for (const [id, count] of Object.entries(d.id === 'rough_gem' ? roughDropBundle(s, ctx, d.qty) : { [d.id]: d.qty })) addTake(take, id, count);
+  }
 }
 
 export function heistGearTargetPool(s: GameState, job: HeistJob): { bases: BaseDef[]; ilvl: number; category: HeistGearCategory } {
@@ -422,10 +426,10 @@ function finishRoom(s: GameState, ctx: Ctx, job: HeistJob, d: Derived): void {
       const greed = a.tactic === 'greed' ? 1.5 + pockets : 1;
       const plan = prep.includes('plan') ? PLAN_MULT : 1;
       addTake(a.take, 'gold', Math.round(job.gold * scale * quantity * critical * greed * plan));
-      rollDrops(ctx, a.take, job.drops, scale * quality * (a.tactic === 'greed' ? 1.5 : 1));
+      rollDrops(s, ctx, a.take, job.drops, scale * quality * (a.tactic === 'greed' ? 1.5 : 1));
     }
-    if (vault) rollDrops(ctx, a.take, job.vault, 1 + crewBonus(s, 'Vault Access') + crewBonus(s, 'Loot Quality'));
-    else if (hidden) rollDrops(ctx, a.take, job.vault, LEDGER_VAULT_ROLL * (1 + crewBonus(s, 'Vault Access') + crewBonus(s, 'Loot Quality')));
+    if (vault) rollDrops(s, ctx, a.take, job.vault, 1 + crewBonus(s, 'Vault Access') + crewBonus(s, 'Loot Quality'));
+    else if (hidden) rollDrops(s, ctx, a.take, job.vault, LEDGER_VAULT_ROLL * (1 + crewBonus(s, 'Vault Access') + crewBonus(s, 'Loot Quality')));
   }
   if (a.room >= a.lastRoom) endJob(s, ctx, job, a.take, false);
   else {

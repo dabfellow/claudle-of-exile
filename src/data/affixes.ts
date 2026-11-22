@@ -138,6 +138,13 @@ const SPECIALTY_AFFIXES: AffixDef[] = [
 ];
 
 export const AFFIXES: AffixDef[] = [
+  // These modifiers only spawn through the matching Anvil choices.
+  { id: 'forge_thorns', kind: 'suffix', group: 'forge_thorns', label: 'of Barbs', text: 'Reflect {0}% of incoming Physical Hit Damage', stats: ['forgeThorns'], weights: { armour: 30, shield: 45 }, benchOnly: true, tiers: [
+    { ilvl: 30, ranges: [[3, 5]] }, { ilvl: 50, ranges: [[6, 9]] }, { ilvl: 70, ranges: [[10, 15]] },
+  ] },
+  { id: 'forge_gold', kind: 'suffix', group: 'forge_gold', label: 'of Fortune', text: '{0}% increased Gold found from Monsters', stats: ['goldFind'], weights: { jewellery: 45 }, benchOnly: true, tiers: [
+    { ilvl: 30, ranges: [[5, 8]] }, { ilvl: 50, ranges: [[9, 12]] }, { ilvl: 70, ranges: [[13, 18]] },
+  ] },
   { id: 'profession_speed_smithing', kind: 'suffix', group: 'profession_speed', label: 'of Smithing', text: '{0}% increased Smithing speed', stats: ['smithingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
   { id: 'profession_speed_smelting', kind: 'suffix', group: 'profession_speed', label: 'of Smelting', text: '{0}% increased Smelting speed', stats: ['smeltingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },
   { id: 'profession_speed_woodcrafting', kind: 'suffix', group: 'profession_speed', label: 'of Woodcrafting', text: '{0}% increased Woodcrafting speed', stats: ['woodcraftingSpeed'], weights: { weapon: 1 }, benchOnly: true, tiers: [{ ilvl: 1, ranges: [[8, 8]] }] },

@@ -1,4 +1,5 @@
 import { activeGemDef, ACTIVE_GEMS, DEFAULT_ATTACK, gemReqLevel, gemWeapons, RULE_LABELS, SKILL_AIMS, supportGemDef, TARGET_STATUSES, type ActiveGemDef, type TacticRule } from '../../data/gems';
+import { facetLabel } from '../../data/gemFacets';
 import { WEAPON_FAMILIES } from '../../data/bases';
 import { actOpen } from '../../data/zones';
 import { GROUND, RINGS } from '../../engine/battlefield';
@@ -200,6 +201,11 @@ export function GemTip({ gem, state, def: given }: { gem?: SkillGemInstance | nu
             Supports: {gem.supports.filter(Boolean).length}/{supportSlots(gem)}
             {gem.supports.filter(Boolean).map((x) => ` · ${supportGemDef(x!.supportId).name}`)}
           </div>
+          {!!gem.facets?.length && (
+            <div className="small" style={{ color: 'var(--accent-2)', marginTop: 4 }}>
+              Facets: {gem.facets.map((f) => facetLabel(f)?.name ?? f).join(' · ')}
+            </div>
+          )}
           {gem.level < 20 && (
             <div style={{ marginTop: 6 }}>
               <ProgressBar value={gemProgress(gem)} color="var(--gem)" />

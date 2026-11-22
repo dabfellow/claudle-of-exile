@@ -63,6 +63,7 @@ import { createItem, createUnique } from './items';
 import { placeItem } from './loot';
 import { flaskCapacity } from './mechanics';
 import { chance, pick, pickWeighted, rInt } from './rng';
+import { roughDropBundle } from './roughGems';
 import { skillTreeStats } from './skillTree';
 import { deriveStats } from './stats';
 import { astrologyMapDrops } from './astrology';
@@ -900,7 +901,7 @@ export function mapStep(s: GameState, ctx: Ctx): void {
   if (run.uniqueMapId) {
     awardProtectedProgress(s, ctx, 'reliquary_fragment', 1);
     if (run.uniqueMapId === 'umap_artisans_reliquary') {
-      for (const [id, n] of Object.entries({ rough_gem: 10, arcane_dust: 100 })) {
+      for (const [id, n] of Object.entries({ ...roughDropBundle(s, ctx, 10), arcane_dust: 100 })) {
         addBank(s, id, n); ctx.emit({ t: 'loot', currencyId: id, qty: n });
       }
     }

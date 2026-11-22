@@ -47,6 +47,7 @@ export interface OfflineSummary {
   masteryProcs?: Record<string, number>;
   /** Astrology's observation log: research, rank-ups and fallen stars while you were away */
   observations?: ObservationLine[];
+  smeltingOutputs?: Record<string, number>;
   /** Logbook finds made while you were away, and standing orders filled */
   finds: number;
   traded: number;
@@ -109,6 +110,7 @@ export function mergeOffline(into: OfflineSummary, more: OfflineSummary): Offlin
     mastery: add(into.mastery, more.mastery) as Record<string, number>,
     masteryProcs: add(into.masteryProcs ?? {}, more.masteryProcs ?? {}) as Record<string, number>,
     observations: [...(into.observations ?? []), ...(more.observations ?? [])],
+    smeltingOutputs: add(into.smeltingOutputs ?? {}, more.smeltingOutputs ?? {}) as Record<string, number>,
     finds: into.finds + more.finds,
     traded: into.traded + more.traded,
   };
@@ -143,6 +145,10 @@ export function startOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offline
       }
       if (e.t === 'produce') {
         for (const [id, n] of Object.entries(e.outputs)) sum.ordinaryOutput![id] = (sum.ordinaryOutput![id] ?? 0) + n;
+        if (e.skill === 'smelting') {
+          const bars = sum.smeltingOutputs ??= {};
+          for (const [id, count] of Object.entries(e.outputs)) bars[id] = (bars[id] ?? 0) + count;
+        }
       }
       if (e.t === 'profession') {
         if (e.category === 'discovery' && !sum.discoveries!.includes(e.id)) sum.discoveries!.push(e.id);

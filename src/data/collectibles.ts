@@ -64,6 +64,11 @@ export const COLLECTIBLES: CollectibleDef[] = [
   ...WOODCUTTING_COLLECTIBLES,
   ...ARCHAEOLOGY_COLLECTIBLES,
   ...ASTROLOGY_COLLECTIBLES,
+  row('mining', 'delve', 'The Delve', "A lost miner's lantern", 'The wick is dry, and the handle is polished smooth.'),
+  row('smelting', 'furnace', 'The Furnace', "An old smith's maker's mark", 'An unfamiliar stamp baked into a loose firebrick.'),
+  row('smithing', 'forge', 'The Forge', "A master smith's broken hammerhead", 'Someone kept it behind the quench barrel. The striking face still shines.'),
+  row('woodcrafting', 'workbench', 'The Woodcrafting Bench', 'A carved toy hare', 'One ear has been worn smooth. It was carried much further than this bench.'),
+  row('gemcutting', 'wheel', 'The Cutting Wheel', 'A jeweller’s lost loupe', 'Tiny initials are etched where only a jeweller would look.'),
 ];
 
 export function collectibleDef(id: string): CollectibleDef | undefined {

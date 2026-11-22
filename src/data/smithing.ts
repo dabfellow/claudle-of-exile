@@ -45,8 +45,8 @@ export const SMITH_COMPONENTS: SkillAction[] = [
   })),
   ...([
     ['alloy_tempered', 'Tempered Alloy', 15, 2, 15, 18, { iron_bar: 2, copper_bar: 1 }, 'tempered_alloy', 'smelting' as const],
-    ['alloy_wound', 'Wound Alloy', 60, 3, 60, 120, { mithril_bar: 5, copper_bar: 2, mineral_fragment: 10 }, 'wound_alloy', 'smelting' as const],
-    ['alloy_stone', 'Stone Alloy', 70, 3, 60, 150, { adamant_bar: 5, iron_bar: 2, stone_fragment: 10 }, 'stone_alloy', 'smelting' as const],
+    ['alloy_wound', 'Wound Alloy', 60, 3, 60, 120, { mithril_bar: 5, copper_bar: 2, mineral_fragment: 10, heartstone: 1 }, 'wound_alloy', 'smelting' as const],
+    ['alloy_stone', 'Stone Alloy', 70, 3, 60, 150, { adamant_bar: 5, iron_bar: 2, stone_fragment: 10, heartstone: 1 }, 'stone_alloy', 'smelting' as const],
     ['frame_heartwood', 'Heartwood Frame', 45, 3, 60, 90, { ancient_heartwood: 1, yew_plank: 5 }, 'heartwood_frame', 'woodcrafting' as const],
     ['frame_convergence', 'Convergence Frame', 85, 3, 120, 300, { wound_alloy: 1, stone_alloy: 1, ancient_heartwood: 1 }, 'convergence_frame', 'woodcrafting' as const],
   ] as [string, string, number, number, number, number, Record<string, number>, string, 'smelting' | 'woodcrafting'][]).map(([id, name, level, forge, seconds, xp, inputs, output, skill]): SkillAction => ({

@@ -258,6 +258,7 @@ const ALL: AchievementDef[] = [
     target: 50, progress: skillLevel(k), reward: { chaos: 3 }, perks: { stats: { skillXp: 1 } },
   })),
   { id: 'gatherer_1000', name: 'Stockpile', desc: 'Gather 1,000 resources', category: 'skilling', target: 1000, progress: (s) => L(s).gathered, reward: { gold: 300 } },
+  { id: 'delve_worldroot', name: 'Worldroot Chamber', desc: 'Reach layer 300 of the Delve', category: 'skilling', target: 300, progress: (s) => s.delve.deepest, reward: {} },
   { id: 'gatherer_25000', name: 'Warehouse', desc: 'Gather 25,000 resources', category: 'skilling', target: 25000, progress: (s) => L(s).gathered, reward: { exalted: 1 }, perks: { stats: { skillSpeed: 2 } } },
   { id: 'smith_100', name: 'Anvil Rhythm', desc: 'Smith 100 items', category: 'skilling', target: 100, progress: (s) => L(s).itemsSmithed, reward: { gold: 500 } },
   { id: 'smith_1000', name: 'Thousand Hammers', desc: 'Smith 1,000 items', category: 'skilling', target: 1000, progress: (s) => L(s).itemsSmithed, reward: { exalted: 1 } },

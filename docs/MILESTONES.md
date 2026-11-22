@@ -4,6 +4,8 @@ Last updated 2026-11-21. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
+Mining, Smelting, Forging, Woodcrafting and Gemcutting are built locally on the skilling overhaul checkout (2026-11-21). Continue the remaining skills, removals and skilling tree revamp before releasing the overhaul.
+
 Act-map readability, quest highlighting and the Quests sidebar page are live in **0.5.10**.
 
 Combat pace controls, entry countdowns, matchup and dimmed terrain art are live in **0.5.10**.
@@ -81,7 +83,7 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented; collection expansion remains open. Skilling overhaul Phases 00–18 live in 0.4.42; production mastery batches live in 0.4.48; all profession UI redesigns live in 0.4.49 (2026-11-17). Additional rogue roster/tactical Heist changes remain unreleased. Level 1–99 profession progression audit started 2026-11-20 |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented. Level 1–99 skilling rework underway. Mining, Smelting, Forging and Woodcrafting built and playtested locally on 2026-11-21. Remaining skills, removals and skilling tree work are still open. |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
@@ -702,7 +704,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - Initial audit covers all 15 trainable main-game skills and records Saltmere's separate progression. Global buff scope, zone list, and per-skill designs are open in [Skilling Progression](SKILLING_PROGRESSION.md).
   - Mining design settled 2026-11-21 as [the Delve](MINING_DELVE.md). Woodcutting settled 2026-11-21 as [Felling giants](WOODCUTTING_GIANTS.md). Foraging settled 2026-11-21 as [Wild variants and cross-breeding](FORAGING_BREEDING.md). Thieving reviewed 2026-11-21 as [Casing the job](THIEVING_CASING.md). Archaeology settled 2026-11-21 as [Deciphering the lost peoples](ARCHAEOLOGY_DECIPHERING.md). Astrology settled 2026-11-21 as [Chart your own constellation](ASTROLOGY_CONSTELLATIONS.md). Agility is being scrapped (2026-11-21). Smelting settled 2026-11-21 as [Running the furnace](SMELTING_FURNACE.md); Forging, Woodcrafting and Gemcutting settled 2026-11-21; Alchemy settled as [your own flasks](ALCHEMY.md) and Cartography as [special maps from scraps](CARTOGRAPHY.md); Cooking and Rune-carving are being scrapped. The per-skill review and the skilling tree revamp design are finished (2026-11-21); everything is ready to build. Every design doc has an Implementation spec; builders start with [the skilling build guide](SKILLING_BUILD_GUIDE.md). Design docs pushed 2026-11-21 alongside live 0.5.11 (no game change).
 
-- [ ] Build Mining as the Delve, from [Mining: the Delve](MINING_DELVE.md).
+- [x] Build Mining as the Delve, from [Mining: the Delve](MINING_DELVE.md) — done 2026-11-21.
   - Mine engine: permanent depth, rolled layer traits, every reached layer workable, no bottom, landmark near level 99, level limits on depth.
   - Supports from rubble, push/work modes, the three hazards with their own effects, caverns from Unstable layers.
   - Brace minigame (matched fixes on push; rarer creaks on worked layers) and slow layer securing.
@@ -752,11 +754,11 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - One charted constellation with slots and links that feed each other; recharting costs Stardust.
   - Focus-the-telescope minigame; deep-sky wonders and the Great Chart for 80–99; fallen stars and Gilded Stardust rank push.
   - Night-sky screen, observation-log return, one hidden collectible per region; count Astrology toward total level, achievements and a skilling-tree branch.
-- [ ] Build Smelting as Running the furnace, from [Smelting: Running the furnace](SMELTING_FURNACE.md).
+- [x] Build Smelting as Running the furnace, from [Smelting: Running the furnace](SMELTING_FURNACE.md) — done 2026-11-21.
   - Purity grades, fuel and flux loadout, bellows minigame, furnace parts, master alloys, living metal, ingot-rack return.
 - [ ] Build the remaining production twists (all approved by the owner 2026-11-21):
-  - Forging: stage-by-stage shaping, rhythm hammer, saved patterns, master forms, pattern book, singing blades ([FORGING_STAGES.md](FORGING_STAGES.md)).
-  - Woodcrafting: tuning dials per wood, follow-the-curve, saved tunings, living woods, jigs, perfectly balanced pieces ([WOODCRAFTING_TUNING.md](WOODCRAFTING_TUNING.md)).
+  - [x] Forging: stage-by-stage shaping, rhythm hammer, saved patterns, master forms, pattern book, singing blades ([FORGING_STAGES.md](FORGING_STAGES.md)) — done 2026-11-21.
+  - [x] Woodcrafting: tuning dials per wood, follow-the-curve, saved tunings, living woods, jigs, perfectly balanced pieces ([WOODCRAFTING_TUNING.md](WOODCRAFTING_TUNING.md)) — done 2026-11-21.
   - Gemcutting: carat-based facets, line-up-the-angle, saved cut plans, named cuts, cut catalogue, star stones ([GEMCUTTING_FACETS.md](GEMCUTTING_FACETS.md)).
   - Alchemy (owner chose 2026-11-21): your own flasks with two infusions, pour-to-the-line, infusion ranks, grand flasks, giga-rare infusions ([ALCHEMY.md](ALCHEMY.md)).
   - Cartography (owner chose 2026-11-21): special maps from scraps (boss, vault, guardian and pinnacle maps), sighting minigame, atlas of special maps, lost charts; plain maps come from drops ([CARTOGRAPHY.md](CARTOGRAPHY.md)).
@@ -1000,6 +1002,10 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Build Woodcrafting — done 2026-11-21. Verified a jig upgrade, a saved bow tuning, drawknife doubles and tuned gear on the return rack at desktop and phone widths. Save migration 58→59 starts with neutral tuning and preserves the active recipe. Living growth, retuning, balanced gear and purpose guarantees have targeted tests.
+
+- [x] Build Mining, Smelting and Forging — done 2026-11-21. Desktop and phone checks covered Delve navigation and replay, furnace supplies and the ingot rack, and saved forge patterns and the weapon rack. Save migrations 55→58 carry existing Mining mastery and Forging presets forward and preserve Refined bars. Delve rough sizes can still be used in existing rough-gem recipes. Forged jewellery quality improves its rolled modifiers. The changes are local.
 
 - [x] Tidy the Inventory layout — done 2026-11-20. The Stash sits under Inventory and keeps the same height across tabs. Gear sets live with worn gear, and item actions open below gear.
 

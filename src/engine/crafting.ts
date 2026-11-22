@@ -10,6 +10,7 @@ import { pick, rInt, type Rng } from './rng';
 import { canAfford, hasItem, payCraftCost } from './bank';
 import type { GameState, Item, RolledMod } from './types';
 import { SUM_OF_ALL } from './pinnacles';
+import { hasKingsbronze } from '../data/forging';
 
 export interface OrbDef {
   canApply(item: Item): string | null;
@@ -457,6 +458,12 @@ export function benchCraftCost(s: GameState, craft: BenchCraft): Record<string, 
   return out;
 }
 
+export function craftedModifierLimit(s: GameState, item: Item, addingMulticraft = false): number {
+  const multicraft = addingMulticraft || allMods(item).some((m) => m.affixId === 'meta_multicraft');
+  const base = multicraft ? 3 : (s.account.hideout.bench ?? 1) >= 9 ? 2 : 1;
+  return base + Number(hasKingsbronze(item));
+}
+
 export function benchCraftReason(s: GameState, craftId: string, uid: number): string | null {
   const craft = BENCH_CRAFTS.find((c) => c.id === craftId)!;
   const item = findItem(s, uid);
@@ -467,11 +474,10 @@ export function benchCraftReason(s: GameState, craftId: string, uid: number): st
   if (item.rarity === 'normal') return 'Item must be Magic or Rare';
 
   // Multicraft allows up to 3 crafted modifiers; Bench level 9 allows 2
-  const hasMulticraft = allMods(item).some((m) => m.affixId === 'meta_multicraft');
-  const maxCrafted = hasMulticraft || craft.affixId === 'meta_multicraft' ? 3 : (s.account.hideout.bench ?? 1) >= 9 ? 2 : 1;
+  const maxCrafted = craftedModifierLimit(s, item, craft.affixId === 'meta_multicraft');
   const craftedCount = allMods(item).filter((m) => m.crafted).length;
   if (craftedCount >= maxCrafted) {
-    return hasMulticraft ? 'Item already has 3 crafted modifiers' : maxCrafted > 1 ? `Item already has ${maxCrafted} crafted modifiers` : 'Item already has a crafted modifier';
+    return maxCrafted > 1 ? `Item already has ${maxCrafted} crafted modifiers` : 'Item already has a crafted modifier';
   }
 
   const affix = affixDef(craft.affixId);

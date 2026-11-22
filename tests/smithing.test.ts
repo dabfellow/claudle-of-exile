@@ -5,6 +5,7 @@ import { BASES, baseDef, obtainable } from '../src/data/bases';
 import { affixDef } from '../src/data/affixes';
 import { PROFESSION_PROJECTS } from '../src/data/professionProjects';
 import { SMITH_COMPONENTS } from '../src/data/smithing';
+import { recipeStock } from '../src/data/smelting';
 import { makeCtx } from '../src/engine/context';
 import { newGame, tick } from '../src/engine/state';
 import { actionBlocker, actionIntervalMs, skillStep, smithIlvl, startSkillAction } from '../src/engine/skills';
@@ -192,7 +193,7 @@ describe('Phase 04 Smithing', () => {
     for (const [i, metal] of ['adamant', 'star', 'void', 'world'].entries()) {
       const s = smith(45 + i * 15, 1), a = actionDef(`smelt_${metal}`);
       s.storage.bank = { [`${metal}_ore`]: 5 }; finish(s, a.id);
-      expect(s.storage.bank[`${metal}_bar`]).toBe(1); expect(s.storage.bank[`${metal}_ore`]).toBe(0);
+      expect(recipeStock(s.storage.bank, `${metal}_bar`)).toBe(1); expect(s.storage.bank[`${metal}_ore`]).toBe(0);
       expect(a.xp).toBeCloseTo([8, 12, 16, 20][i]);
     }
   });

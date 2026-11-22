@@ -6,6 +6,8 @@ import { EXPEDITION_MATERIALS } from './expedition';
 import { RUNE_MATERIALS } from './runes';
 import { MINING_METALS } from './mining';
 import { WOODS } from './woodcutting';
+import { FURNACE_MATERIALS } from './smelting';
+import { DELVE_ROUGH_SIZES } from './delve';
 
 export type MaterialKind = 'ore' | 'log' | 'component' | 'trophy' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'rune' | 'artifact' | 'ingredient' | 'food' | 'chart' | 'currency' | 'gold' | 'fish';
 
@@ -37,6 +39,14 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'iron_ore', name: 'Iron Ore', kind: 'ore', color: '#9aa3ad', value: 5 },
   { id: 'mithril_ore', name: 'Mithril Ore', kind: 'ore', color: '#6fc3d8', value: 12 },
   { id: 'rough_gem', name: 'Rough Gem', kind: 'gem', color: '#d0569b', value: 25 },
+  { id: 'rough_gem_star', name: 'Star Stone', kind: 'gem', color: '#f1ce83', value: 25, desc: 'Three carats and one wild facet. Used at the Gemcutting wheel.' },
+  ...DELVE_ROUGH_SIZES.filter(({ id }) => id !== 'rough_gem').map(({ id, name, carats }): MaterialDef => ({
+    id, name, kind: 'gem', color: '#d0569b', value: 25, desc: `${carats} carat${carats === 1 ? '' : 's'}. Can be used in recipes that call for rough gems.`,
+  })),
+  { id: 'rubble', name: 'Rubble', kind: 'ore', color: '#927b69', value: 0, desc: 'Gathered in the Delve. Used for mine supports, installations and furnace supplies.' },
+  { id: 'mine_support', name: 'Mine Support', kind: 'component', color: '#a88a62', value: 0, desc: 'Made from rubble to brace the shaft as you push deeper into the Delve.' },
+  { id: 'heartstone', name: 'Heartstone', kind: 'ore', color: '#e97575', value: 0, desc: 'Rarely found in deep Delve caverns. Used in Wound Alloy and Stone Alloy.' },
+  ...FURNACE_MATERIALS,
   ...MINING_METALS.slice(3).map((m): MaterialDef => ({ id: `${m.id}_ore`, name: `${m.name} Ore`, kind: 'ore', color: m.color, value: 0, desc: `Smelt 5 into one ${m.name} Bar in Smithing at level ${m.level}; select refining separately.` })),
   ...MINING_METALS.slice(3).map((m): MaterialDef => ({ id: `${m.id}_bar`, name: `${m.name} Bar`, kind: 'component', color: m.color, value: 0, desc: `${m.name} Ore refined in Smithing. Adamant feeds Stone Alloy; other advanced bars are stock for later projects. Finished uniques remain unavailable.` })),
   ...([

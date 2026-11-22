@@ -18,6 +18,9 @@ import { RUNE_FAMILIES, RUNES } from './runes';
 import { masteryForAction, type MasterySpec } from './skillingMastery';
 import { masteryBatches } from './masteryBatches';
 import { GILDED_STARDUST, REGIONS, starDef, STARDUST, WATCH_INTERVAL_MS } from './astrology';
+import { DELVE_ACTIONS } from './delve';
+import { FURNACE_ACTIONS } from './smelting';
+import { stagedForgeActions } from './forging';
 
 export interface SkillDef {
   id: SkillId;
@@ -32,16 +35,16 @@ export interface SkillDef {
 
 export const SKILLS: Record<SkillId, SkillDef> = {
   combat: { id: 'combat', name: 'Character', group: 'combat', color: '#e0a640', verb: 'Fighting', desc: 'Your character level: raises Life and Mana and grants passive points.' },
-  mining: { id: 'mining', name: 'Mining', group: 'gathering', color: '#c8743f', verb: 'Mining', desc: 'Prospect deeper metals. Choose ordinary ore, rich metal, crystal or fossil deposits; save dependable fragments for future projects.' },
+  mining: { id: 'mining', name: 'Mining', group: 'gathering', color: '#c8743f', verb: 'Mining', desc: 'Push deeper into the Delve, shore up the shaft, and return to your richest layers.' },
   woodcutting: { id: 'woodcutting', name: 'Woodcutting', group: 'gathering', color: '#6fae4a', verb: 'Chopping', desc: 'Fell giant trees part by part: resin from the crown, logs from limbs and trunk, heartwood from the heart. Build a lodge from your own timber.' },
   // id kept as `harvesting` so saves, tree nodes and the Greenhouse don't need migrating
   harvesting: { id: 'harvesting', name: 'Foraging', group: 'gathering', color: '#d9b84a', verb: 'Foraging', desc: 'Pick herbs off the ground for Alchemy.' },
   thieving: { id: 'thieving', name: 'Thieving', group: 'gathering', color: '#c9a35a', verb: 'Thieving', desc: "Lift purses for gold and Rogue's Markers, then spend them on Heists against the Khanate." },
   agility: { id: 'agility', name: 'Agility', group: 'gathering', color: '#5fc4b0', verb: 'Running', desc: 'Run courses across Veyrath. Levels open shortcuts: faster Heist rooms, quicker footwork in fights and hidden gathering spots.' },
   archaeology: { id: 'archaeology', name: 'Archaeology', group: 'gathering', color: '#b0784a', verb: 'Digging', desc: "Dig sites in the Hollow Peaks for Artifacts and inscriptions. Decipher the lost peoples' scripts at the Scholar's desk, and trade Artifacts with the merchants of the Expedition for currency." },
-  smelting: { id: 'smelting', name: 'Smelting', group: 'production', color: '#d07a3a', verb: 'Smelting', desc: 'Smelt mined ores into pure metal bars and blend defensive alloys in the crucible.' },
-  smithing: { id: 'smithing', name: 'Forging', group: 'production', color: '#b8b8c8', verb: 'Forging', desc: 'Hammer refined metal bars into martial weapons, shields, plate armour, and jewellery.' },
-  woodcrafting: { id: 'woodcrafting', name: 'Woodcrafting', group: 'production', color: '#9c7a4c', verb: 'Woodcrafting', desc: 'Carve harvested logs and refined timber into staves, wands, bows, cloth robes, and leather gear.' },
+  smelting: { id: 'smelting', name: 'Smelting', group: 'production', color: '#d07a3a', verb: 'Smelting', desc: 'Load fuel and flux, improve your furnace, and smelt metal from Crude bars to master alloys.' },
+  smithing: { id: 'smithing', name: 'Forging', group: 'production', color: '#b8b8c8', verb: 'Forging', desc: 'Shape and finish rare gear at the anvil, then save your favourite paths as patterns.' },
+  woodcrafting: { id: 'woodcrafting', name: 'Woodcrafting', group: 'production', color: '#9c7a4c', verb: 'Woodcrafting', desc: 'Tune bows, staves, wands and light armour for the way you fight, or carve legendary timber that grows with use.' },
   alchemy: { id: 'alchemy', name: 'Alchemy', group: 'production', color: '#9b6dde', verb: 'Brewing', desc: 'Brew flasks and transmute dust into orbs.' },
   gemcutting: { id: 'gemcutting', name: 'Gemcutting', group: 'production', color: '#4fc1a6', verb: 'Cutting', desc: 'Cut rough gems into skill and support gems.' },
   runecarving: { id: 'runecarving', name: 'Rune-carving', group: 'production', color: '#6fa8ff', verb: 'Carving', desc: 'Carve old materials into runes, then inscribe them in the rune slot on your gear.' },
@@ -129,8 +132,6 @@ const GATHERING: SkillAction[] = [
   { ...gather('mining', 'mine_jagged', 'Jagged Vein', 19, 4000, 22, 'iron_ore', '#c9c9d3', [{ id: 'serrated_fossil', chance: 0.08, qty: 1 }]), outputChance: ALT_YIELD, area: 'ashwood' },
   { ...gather('mining', 'mine_gem', 'Glimmering Geode', 22, 5000, 30, 'rough_gem', '#d0569b'), area: 'crypt' },
   { ...gather('mining', 'mine_mithril', 'Mithril Vein', 30, 4000, 38, 'mithril_ore', '#6fc3d8', [{ id: 'rough_gem', chance: 0.05, qty: 1 }, { id: 'mineral_fragment', chance: 0.025, qty: 1 }]), area: 'shipgrave' },
-  { ...gather('mining', 'mine_cliffside', 'Cliffside Vein', 15, 3500, 20, 'iron_ore', '#b0b8c4', [{ id: 'rough_gem', chance: 0.06, qty: 1 }, { id: 'dense_fossil', chance: 0.05, qty: 1 }]), agility: AGILITY_SPOT_LEVEL.mine_cliffside },
-  { ...gather('mining', 'mine_grotto', 'Falls Grotto', 30, 4000, 40, 'mithril_ore', '#5fd8e0', [{ id: 'rough_gem', chance: 0.08, qty: 1 }, { id: 'mineral_fragment', chance: 0.04, qty: 1 }]), agility: AGILITY_SPOT_LEVEL.mine_grotto },
 
 
   gather('harvesting', 'herb_sun', 'Sunpetal Patch', 1, 3000, 7, 'sunpetal', '#f2c94c', [{ id: 'essence_vitality_1', chance: 0.06, qty: 1 }]),
@@ -523,7 +524,13 @@ export const SKILL_XP_SCALE = 0.3;
 
 const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...THIEVING, ...AGILITY_ACTIONS, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...ASTROLOGY, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
 /** Historical access evidence used only by save migration. */
-const ALL_AUTHORED_ACTIONS = [...AUTHORED_ACTIONS, ...WEAPON_COMPONENT_ACTIONS.filter((extra) => !AUTHORED_ACTIONS.some((a) => a.id === extra.id))];
+const ALL_AUTHORED_ACTIONS = [
+  ...AUTHORED_ACTIONS,
+  ...DELVE_ACTIONS,
+  ...FURNACE_ACTIONS,
+  ...stagedForgeActions(EQUIPMENT_ACTIONS.filter((a) => a.skill === 'smithing')),
+  ...WEAPON_COMPONENT_ACTIONS.filter((extra) => !AUTHORED_ACTIONS.some((a) => a.id === extra.id)),
+];
 export const LEGACY_ACTION_PLACES = Object.fromEntries(ALL_AUTHORED_ACTIONS.map((a) => [a.id, { area: a.area, gate: a.gate }]));
 export const ACTIONS: SkillAction[] = ALL_AUTHORED_ACTIONS.map(({ area: _area, gate: _gate, ...a }) => ({
   ...a,

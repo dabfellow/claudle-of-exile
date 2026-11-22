@@ -38,7 +38,7 @@ describe('Agility', () => {
   });
 
   it('hidden gathering spots need both their own skill and an Agility level', () => {
-    expect(Object.keys(AGILITY_SPOT_LEVEL).length).toBe(3); // Crag Oak went with the Felling giants rebuild
+    expect(Object.keys(AGILITY_SPOT_LEVEL)).toEqual(['herb_ledge']);
     for (const [id, agility] of Object.entries(AGILITY_SPOT_LEVEL)) {
       const a = actionDef(id);
       expect(a.agility).toBe(agility);

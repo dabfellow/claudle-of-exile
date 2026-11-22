@@ -93,6 +93,7 @@ Three jigs, each with three tiers, built from planks:
 ### What stays
 
 - Purpose recipes keep their two guaranteed stats, with dials on top. Bar purity applies through `barPurityBonus`.
+- Each purpose recipe finishes one piece and stops. Drawknife play earns Focus during these recipes.
 - Heartwood and Convergence Frames, the drawknife and projects are unchanged.
 
 ### State
@@ -138,5 +139,7 @@ Item instances gain `dials?: number[]`, `living?: { growth: number }` and `balan
 - Purpose guarantees surviving.
 
 ## Build work
+
+The game resolves projectile hits during the skill action, so projectile speed changes the timing of projectile actions. At jig tier 2, the extra range applies to the second dial. A draft affects the next piece carved while present. Saved tunings govern repeats and time away. Living recipes accept either Legend Heartwood or a World Tree Heart.
 
 Tracked in [MILESTONES.md](MILESTONES.md) under "Build the remaining production twists".

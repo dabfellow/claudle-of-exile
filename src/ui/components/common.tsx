@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, typ
 import '../round2-session1.css';
 import { createPortal } from 'react-dom';
 import { isCurrency, materialDef } from '../../data/materials';
+import { recipeMaterialCount } from '../../engine/bank';
 import type { ZoneDef } from '../../data/zones';
 import { GAME_ICONS, KIBYRA, packArtIsPixel, packArtUrl, terrainArt } from '../assets';
 import { Icon, Orb, Swatch } from './Icon';
@@ -155,7 +156,7 @@ export function Cost({ cost, have }: { cost: Record<string, number>; have: Recor
   return (
     <div className="io">
       {Object.entries(cost).map(([id, n]) => (
-        <span key={id} className={`io-item ${(have[id] ?? 0) < n ? 'missing' : ''}`} title={materialDef(id).name}>
+        <span key={id} className={`io-item ${recipeMaterialCount(have, id) < n ? 'missing' : ''}`} title={materialDef(id).name}>
           <MatIcon id={id} size={12} />
           <span className="num">
             {fmt(n)} {materialDef(id).name}

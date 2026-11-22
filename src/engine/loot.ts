@@ -1,6 +1,7 @@
 import { BOSS_CRAFT_MAT, CONTRABAND_DROP, ESSENCES, FOSSILS, SEAL, WAX } from '../data/craftMats';
 import { WHETSTONE, WHETSTONE_DROP } from '../data/expedition';
 import { areaCurrency, BOSS_GATHER_DROP, bossGatherMats, bossTable, dropTable, STARTER_DROPS, type RarityWeights } from '../data/drops';
+import { roughDropBundle } from './roughGems';
 import { MAP_ILVL } from '../data/hideout';
 import { RUNE_DROP, RUNES } from '../data/runes';
 import { CURRENCIES } from '../data/materials';
@@ -105,6 +106,13 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
   const currencyMult = 1 + (mapMods?.currencyPct ?? 0) / 100;
   const ilvl = mon.level + (zone.ilvlBonus ?? 0) + MAP_ILVL[stationLevel(s, 'map_device') - 1];
   const giveCurrency = (id: string, qty = 1) => {
+    if (id === 'rough_gem') {
+      for (const [rough, count] of Object.entries(roughDropBundle(s, ctx, qty))) {
+        const added = addBank(s, rough, count);
+        if (added) ctx.emit({ t: 'loot', currencyId: rough, qty: added });
+      }
+      return;
+    }
     if (CURRENCY_ORBS.has(id)) {
       const amount = qty * Math.max(ctx.event?.loot ?? 1, ctx.event?.currencyDrops ?? 1) / (ctx.event?.loot ?? 1) * (ctx.simulation?.currencyDrops ?? 1) * (1 + astrologyCurrency(s) / 100);
       qty = Math.floor(amount) + (amount % 1 > 0 && rng.next() < amount % 1 ? 1 : 0);

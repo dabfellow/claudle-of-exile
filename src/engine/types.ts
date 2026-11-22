@@ -8,6 +8,13 @@ import type { ScriptId } from '../data/deciphering';
 import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
 import type { FishingPort } from './fishing';
+import type { DelveState } from './delve';
+import type { SmeltingState } from './smelting';
+import type { ForgingState } from './forging';
+import type { ForgeSignature } from '../data/forging';
+import type { WoodcraftingState, WoodPlan } from './woodcrafting';
+import type { CutSetup, GemcuttingState } from './gemFacets';
+import type { RoughGem } from './roughGems';
 
 export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'agility' | 'archaeology' | 'smelting' | 'smithing' | 'woodcrafting' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'astrology' | 'fishing';
 export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'agility', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology', 'fishing'];
@@ -113,7 +120,7 @@ export const STAT_KEYS = [
   // passive tree archetypes (docs/PASSIVE_NOTABLES.md): conditional damage
   'bossDamagePct', 'cursedDamagePct', 'markedDamagePct', 'chilledDamagePct', 'shockedDamagePct', 'areaPct',
   'elemAttackPct', 'chaosDotPct', 'twoHandPct', 'oneHandPct', 'shieldDamagePct', 'dualWieldSpeed',
-  'warcryActivePct', 'totemActivePct', 'exertedPct', 'physAsFire',
+  'warcryActivePct', 'totemActivePct', 'exertedPct', 'physAsFire', 'damageAsChaos', 'forgeThorns', 'woodAccuracyPct', 'woodProjectileSpeed',
   // ...archetype scaling
   'curseEffect', 'curseDuration', 'minionMax', 'minionTaken', 'totemPct', 'totemLifePct', 'totemSpeedPct',
   'totemDuration', 'totemMax', 'markPct', 'markDuration', 'warcryEffect', 'warcryCooldown', 'exertionRate',
@@ -198,6 +205,13 @@ export interface Item {
   itemTier?: 1 | 2 | 3 | 4 | 5;
   /** restored at the Relic Forge: the relic form id */
   relic?: string;
+  /** Local physical and defence quality earned at the forge. */
+  quality?: number;
+  forgeSignatures?: ForgeSignature[];
+  forgeSinging?: true;
+  dials?: number[];
+  living?: { growth: number; ms?: number };
+  balanced?: number;
 }
 
 export type InstillCondition = 'lowLife' | 'lowMana' | 'fullCharges' | 'bossCast' | 'savageHit' | 'elemHit' | 'chaosHit' | 'frostbite' | 'enemyRanged' | 'packStart';
@@ -542,6 +556,8 @@ export interface Buff {
 export interface SupportGemInstance {
   uid: number;
   supportId: string;
+  facets?: string[];
+  rough?: RoughGem;
 }
 
 export interface SkillGemInstance {
@@ -549,6 +565,8 @@ export interface SkillGemInstance {
   gemId: string;
   level: number;
   xp: number;
+  facets?: string[];
+  rough?: RoughGem;
   supports: (SupportGemInstance | null)[];
   /** extra support sockets from Orbs of Expansion */
   extraSlots: number;
@@ -836,7 +854,7 @@ export type StopRule = { kind: 'has'; affixId: string; minTier?: number } | { ki
 export type Action =
   | { kind: 'project'; runId: number }
   /** `double`: a mini-game hit in its double zone, so the next finish pays out twice */
-  | { kind: 'skill'; actionId: string; progress: number; focus?: number; double?: boolean; /** Woodcutting: the giant part being cut */ part?: GiantPart }
+  | { kind: 'skill'; actionId: string; progress: number; focus?: number; double?: boolean; /** Woodcutting: the giant part being cut */ part?: GiantPart; delveLayer?: number; woodPlan?: WoodPlan; cut?: CutSetup }
   | { kind: 'combat'; zoneId: string }
   | { kind: 'craft'; uid: number; method: CraftMethod; rule: StopRule; progress: number; steps: number }
   | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number>; focus?: number; double?: boolean; crew?: string[]; spent?: string[]; tactic?: 'bypass' | 'greed'; tacticRogue?: string; scouted?: number; prep?: string[] }
@@ -1348,6 +1366,11 @@ export interface GameState {
   giant: GiantState;
   /** ids of hidden skilling collectibles found (data/collectibles.ts) */
   collectibles: string[];
+  delve: DelveState;
+  smelting: SmeltingState;
+  forging: ForgingState;
+  woodcrafting: WoodcraftingState;
+  gemcutting: GemcuttingState;
   skillBar: (SkillGemInstance | null)[];
   loadouts: Loadouts;
   action: Action;

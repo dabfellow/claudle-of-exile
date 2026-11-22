@@ -1,0 +1,242 @@
+.forge-anvil {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.anvil-workspace,
+.anvil-book,
+.anvil-patterns,
+.anvil-rack {
+  background: #151515;
+  border: 1px solid #41372c;
+  border-radius: .5rem;
+  padding: clamp(.7rem, 2vw, 1.1rem);
+}
+
+.anvil-heading,
+.anvil-actions,
+.anvil-fields,
+.anvil-cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .55rem .9rem;
+}
+
+.anvil-heading {
+  justify-content: space-between;
+  margin-bottom: .75rem;
+}
+
+.anvil-heading h3,
+.anvil-heading p {
+  margin: 0;
+}
+
+.anvil-work-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(10rem, 1fr);
+  gap: 1rem;
+}
+
+.anvil-plan,
+.anvil-side {
+  display: grid;
+  align-content: start;
+  gap: .7rem;
+  min-width: 0;
+}
+
+.anvil-stage-track {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(4.35rem, 100%), 1fr));
+  gap: .25rem;
+}
+
+.anvil-stage-track button,
+.anvil-choice {
+  color: var(--text, #e0d8ca);
+  background: #211e1b;
+  border: 1px solid #493a2d;
+  border-radius: .3rem;
+  min-height: 2.75rem;
+  padding: .4rem .55rem;
+}
+
+.anvil-stage-track button small,
+.anvil-choice span,
+.anvil-choice small {
+  display: block;
+  color: var(--muted, #b5a793);
+}
+
+.anvil-stage-track button.active,
+.anvil-choice.active {
+  border-color: #cb9564;
+  box-shadow: inset 0 -2px #a3724d;
+}
+
+.anvil-piece {
+  min-height: 9rem;
+  display: grid;
+  isolation: isolate;
+  justify-items: center;
+  align-content: end;
+  background:
+    radial-gradient(ellipse at 50% 70%, #57311d66 0%, transparent 62%),
+    repeating-linear-gradient(0deg, #1e1a19 0 22px, #151313 23px 25px);
+  border: 1px solid #36302b;
+  border-radius: .35rem;
+  padding: .25rem .25rem .5rem;
+}
+
+.anvil-piece > :first-child {
+  z-index: 1;
+  margin-bottom: -.7rem;
+  filter: drop-shadow(0 0 8px #ee98585a);
+}
+
+.anvil-block {
+  width: 8.25rem;
+  height: 1.9rem;
+  background: linear-gradient(#8c8581 0 14%, #4b4747 16% 39%, #303034 40% 100%);
+  clip-path: polygon(0 1%, 100% 1%, 89% 24%, 70% 40%, 67% 76%, 80% 83%, 82% 100%, 20% 100%, 22% 84%, 34% 76%, 31% 38%, 9% 26%);
+}
+
+.anvil-piece > b {
+  margin-top: .3rem;
+}
+
+.anvil-select {
+  display: grid;
+  gap: .2rem;
+  max-width: 100%;
+  min-width: 0;
+  font-size: .8rem;
+  color: var(--muted, #b5a793);
+}
+
+.anvil-select select,
+.anvil-select input {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  padding: .35rem;
+  color: var(--text, #e0d8ca);
+  background: #201d1b;
+  border: 1px solid #4f4135;
+  border-radius: .25rem;
+}
+
+.anvil-choices,
+.anvil-book-grid,
+.anvil-rack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+  gap: .45rem;
+}
+
+.anvil-choice {
+  display: grid;
+  gap: .2rem;
+  align-content: start;
+  text-align: left;
+}
+
+.anvil-choice small,
+.anvil-choice span,
+.anvil-cost {
+  font-size: .78rem;
+}
+
+.anvil-cost span {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+}
+
+.anvil-guarantee {
+  margin: 0;
+  color: #e1bc83;
+}
+
+.anvil-hammer,
+.anvil-active,
+.anvil-book-card,
+.anvil-rack-item {
+  display: grid;
+  gap: .45rem;
+  padding: .65rem;
+  border: 1px solid #40352c;
+  border-radius: .35rem;
+  min-width: 0;
+  background: #1d1a19;
+}
+
+.anvil-strike {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 8rem;
+  overflow: hidden;
+  border: 1px solid #665044;
+  border-radius: .35rem;
+  color: #f5e5d2;
+  background: radial-gradient(ellipse at center, #372620, #151515);
+  touch-action: manipulation;
+}
+
+.anvil-target,
+.anvil-beat {
+  position: absolute;
+  width: 3.1rem;
+  aspect-ratio: 1;
+  border: 1px dashed #ecbe80;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.anvil-beat {
+  border: 2px solid #b57b58;
+  transform: scale(2.45);
+}
+
+.anvil-beat.on-beat {
+  border-width: 4px;
+  border-color: #ffd488;
+  box-shadow: 0 0 .8rem #de924877;
+}
+
+.anvil-pattern {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem 0;
+  border-top: 1px solid #3a2e27;
+}
+
+.anvil-pattern > :first-child {
+  flex: 1 1 10rem;
+}
+
+.anvil-rack-item .row {
+  gap: .4rem;
+}
+
+.anvil-rack-item.singing {
+  border-color: #d3a064;
+  box-shadow: inset 0 0 .85rem #b46e2633;
+}
+
+.anvil-song-choices {
+  display: grid;
+  gap: .3rem;
+}
+
+@media (max-width: 720px) {
+  .anvil-work-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

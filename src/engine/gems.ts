@@ -23,6 +23,7 @@ import type { Ctx } from './context';
 import { accountUid } from './items';
 import { deriveStats, hitChance, type Attributes, type Derived } from './stats';
 import type { GameState, SkillGemInstance, SupportGemInstance } from './types';
+import { countFacet, facetedSupportMods, facetLevels, gemXpMultiplier, manaFacets } from './facetEffects';
 
 // ---------- levels ----------
 
@@ -89,6 +90,12 @@ export function gemAttrReason(attrs: Attributes, gem: SkillGemInstance, level = 
  * sockets that are gone, and supports that no longer fit go back to the bag.
  */
 export function settleGems(s: GameState): void {
+  for (const gem of [...s.skillBar, ...s.storage.gems, ...(s.unpooled?.gems ?? [])]) {
+    if (!gem) continue;
+    gem.facets ??= [];
+    for (const support of gem.supports) if (support) support.facets ??= [];
+  }
+  for (const support of [...s.storage.supportGems, ...(s.unpooled?.supportGems ?? [])]) support.facets ??= [];
   const charLvl = characterLevel(s);
   for (const gem of [...s.skillBar, ...(s.unpooled?.gems ?? [])]) {
     if (!gem) continue;
@@ -134,13 +141,14 @@ export function grantGemXp(s: GameState, ctx: Ctx, amount: number, attrs: Attrib
   const charLvl = characterLevel(s);
   for (const gem of s.skillBar) {
     if (!gem || gem.level >= MAX_GEM_LEVEL) continue;
+    const gain = amount * gemXpMultiplier(gem);
     const cap = gemXpForLevel(gem.level + 1);
     const wasReady = gem.xp >= cap;
     if (gemUpgradeBlock(charLvl, attrs, gem)) {
       // never takes away xp a gem already has (settleGems keeps it)
-      gem.xp = Math.max(gem.xp, Math.min(cap, gem.xp + amount));
+      gem.xp = Math.max(gem.xp, Math.min(cap, gem.xp + gain));
     } else {
-      gem.xp += amount;
+      gem.xp += gain;
     }
     if (!wasReady && gem.xp >= cap) ctx.emit({ t: 'gemReady', gemId: gem.gemId, level: gem.level + 1 });
   }
@@ -185,12 +193,12 @@ export function gemProgress(gem: SkillGemInstance): number {
 
 /** New gems are Manual only: nothing casts itself until you give it a rule (its suggested one is a click away). */
 export function createSkillGem(s: GameState, gemId: string, level = 1): SkillGemInstance {
-  return { uid: accountUid(s), gemId, level, xp: gemXpForLevel(level), supports: [null], extraSlots: 0, rules: [{ when: 'manual' }], priority: 'normal' };
+  return { uid: accountUid(s), gemId, level, xp: gemXpForLevel(level), facets: [], supports: [null], extraSlots: 0, rules: [{ when: 'manual' }], priority: 'normal' };
 }
 
 export function createSupportGem(s: GameState, supportId: string): SupportGemInstance {
   supportGemDef(supportId);
-  return { uid: accountUid(s), supportId };
+  return { uid: accountUid(s), supportId, facets: [] };
 }
 
 /** Keep the supports array length in step with the number of sockets. */
@@ -416,23 +424,35 @@ export interface SkillNumbers {
   cooldownMs: number;
   actionMs: number;
   durationMult: number;
+  facets?: { area: number; penetration: number; minionSpeed: number; minionDamage: number; defence: number };
 }
 
 /** Everything the combat engine needs to know about one skill on the bar. */
 export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNumbers {
   const def = gem ? activeGemDef(gem.gemId) : DEFAULT_ATTACK;
-  const level = gem?.level ?? 1;
-  const mods = combineMods(
-    (gem?.supports ?? [])
-      .filter((x) => x && gemReqLevel(x.supportId) <= d.combatLevel)
-      .map((x) => supportGemDef(x!.supportId).mods),
-  );
+  const supports = (gem?.supports ?? []).filter((x): x is SupportGemInstance => !!x && gemReqLevel(x.supportId) <= d.combatLevel);
+  const level = (gem?.level ?? 1) + facetLevels(gem) + supports.reduce((sum, sup) => sum + facetLevels(sup), 0);
+  const mods = combineMods(supports.map((sup) => facetedSupportMods(supportGemDef(sup.supportId).mods, sup)));
   const isAttack = def.tags.includes('attack');
+  const count = (id: string) => countFacet(gem, id) + supports.reduce((sum, sup) => sum + countFacet(sup, id), 0);
+  const facets = { area: count('wide') * 12, penetration: count('conduit') * 4, minionSpeed: count('pace') * 5,
+    minionDamage: count('fury') * 8, defence: countFacet(gem, 'bulwark') * 8 };
+  if (isAttack) mods.moreDamage += count('edge') * 8;
+  if (def.tags.includes('spell')) mods.moreDamage += count('brilliance') * 8;
+  mods.moreDamage += countFacet(gem, 'heartfire') * 15;
+  mods.attackSpeed += count('swift') * 5;
+  mods.castSpeed += countFacet(gem, 'quickcast') * 8;
+  mods.minionLife += count('kinship') * 10;
+  mods.durationPct += countFacet(gem, 'lasting') * 15;
+  mods.shieldMore += facets.defence;
+  mods.manaMult *= manaFacets(gem);
   // each skill has its own base attack or cast time; attack speed or cast speed shortens it
   const dexSkill = def.id === 'twin_strike' || def.id === 'lacerate' ? d.raw.dexSkillSpeed : 0;
   const speed = isAttack ? d.attackSpeed * (1 + (mods.attackSpeed + dexSkill) / 100) : d.castSpeed * (1 + mods.castSpeed / 100);
+  const projectile = def.tags.includes('projectile') || (isAttack && d.ranged && !def.tags.includes('melee'));
+  const projectileSpeed = projectile ? Math.max(0.1, 1 + (d.raw.woodProjectileSpeed + count('pierce') * 10) / 100) : 1;
   // instant skills take no time; Overclock cuts cooldowns to the minimum, so there they take half a second instead
-  const actionMs = def.timeMs ? (def.timeMs / speed) * (1 + mods.windupPct / 100) : d.raw.overclock ? OVERCLOCK_INSTANT_MS : 0;
+  const actionMs = def.timeMs ? (def.timeMs / speed / projectileSpeed) * (1 + mods.windupPct / 100) : d.raw.overclock ? OVERCLOCK_INSTANT_MS : 0;
   // mana cost grows a little with gem level, like PoE
   const r = d.raw;
   // passive tree archetype stats (docs/PASSIVE_NOTABLES.md) join the supports' modifiers for skills with that tag
@@ -457,6 +477,7 @@ export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNum
     def,
     level,
     mods,
+    facets,
     manaCost: bloodPrice ? 0 : Math.max(0, paidInMana),
     lifeCost,
     // nothing — stats, keystones, resets — ever takes a cooldown below the minimum
@@ -477,7 +498,7 @@ export function minionStats(d: Derived, nums: SkillNumbers): { count: number; li
   return {
     count: m.count + mods.minionCount,
     life: Math.round(((d.maxLife * m.lifePct) / 100) * (1 + (MINION_LIFE_PER_LEVEL / 100) * (level - 1)) * (1 + r.minionLifePct / 100) * (1 + mods.minionLife / 100)),
-    attackMs: m.attackMs / ((1 + r.minionSpeedPct / 100) * (1 + (mods.attackSpeed + mods.castSpeed) / 100)),
+    attackMs: m.attackMs / ((1 + (r.minionSpeedPct + (nums.facets?.minionSpeed ?? 0)) / 100) * (1 + (mods.attackSpeed + mods.castSpeed) / 100)),
   };
 }
 
@@ -611,11 +632,12 @@ export function skillSummary(d: Derived, gem: SkillGemInstance | null): { perUse
   elem *= inc;
   if (mods.noElemental) elem = 0;
   const extra = mods.extras.filter((x) => !r.wintersPyre || (x.type !== 'fire' && x.type !== 'light')).reduce((a, x) => a + x.pct, 0) / 100;
+  const extraChaos = (phys + elem) * r.damageAsChaos / 100;
   elem += (phys + elem) * extra;
-  if (!r.wintersPyre) elem += (phys * r.physAsLight) / 100;
+  if (!r.wintersPyre) elem += (phys * (r.physAsLight + r.physAsFire)) / 100;
   phys *= 1 + mods.morePhys / 100;
   elem *= 1 + mods.moreElem / 100;
-  let hit = (phys + elem) * (1 + mods.moreDamage / 100);
+  let hit = (phys + elem + extraChaos) * (1 + mods.moreDamage / 100);
   const critChance = isAttack
     ? d.critChance * (1 + mods.critChance / 100)
     : (e.crit ?? 5) * (1 + (r.critChancePct + r.spellCritPct + (e.type === 'light' ? r.lightCrit : 0) + mods.critChance) / 100);

@@ -4,13 +4,15 @@ import { affixDef } from '../../data/affixes';
 import { attributeReq, baseDef, uniqueDef, WEAPON_FAMILIES, type UniqueDef } from '../../data/bases';
 import { MECHANIC_INFO } from '../../data/passiveTree';
 import { BASE_ATTACK_MS } from '../../data/gems';
+import { forgeImplicits, hasKingsbronze } from '../../data/forging';
+import { woodImplicits } from '../../engine/woodcrafting';
 import { characterLevel } from '../../engine/character';
 import { compareItem, type CompareRow, type CompareSkill, type GearComparison } from '../../engine/compare';
 import { describeMod, itemName, tierLabel, tierRangeText } from '../../engine/items';
 import { mechanicOf, STAT_MECHANIC } from '../../engine/mechanics';
 import { itemRune, runeMult, runesOpen, runeText } from '../../engine/runes';
 import { game } from '../../game';
-import { deriveStats, itemDefences, weaponPhys } from '../../engine/stats';
+import { accessoryMod, deriveStats, itemDefences, weaponPhys } from '../../engine/stats';
 import type { EquipSlot, GameState, Item, RolledMod } from '../../engine/types';
 import { Icon } from './Icon';
 import { togglePin, Tooltip, useAltKey, Art, artUrl } from './common';
@@ -64,7 +66,8 @@ export function ItemTip({
   const unique = item.uniqueId ? uniqueDef(item.uniqueId) : null;
   const name = itemName(item);
   const cmp = state && compare ? compareItem(state, item, into) : null;
-  const implicits = (base.implicits ?? []).filter((i) => i.text);
+  const implicits = [...(base.implicits ?? []), ...forgeImplicits(item), ...woodImplicits(item)].filter((i) => i.text);
+  const extraCraft = hasKingsbronze(item);
   // shown after local mods; magic-coloured when a mod changed them, as in PoE
   const phys = base.phys ? weaponPhys(item) : null;
   const def = itemDefences(item);
@@ -75,6 +78,9 @@ export function ItemTip({
         <div>{name}</div>
         {(item.rarity === 'rare' || item.rarity === 'unique') && <div>{base.name}</div>}
         {item.relic && <div className="relic-tag">✦ Restored Relic ✦</div>}
+        {item.forgeSinging && <div className="relic-tag">Singing · choose an effect at the Forge</div>}
+        {item.living && <div className="relic-tag">Living · Growth {item.living.growth}/10</div>}
+        {item.balanced !== undefined && <div className="relic-tag">Perfectly balanced</div>}
       </div>
       <div className="item-tip-body">
         <div className="muted small row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -126,13 +132,15 @@ export function ItemTip({
             Energy Shield: <b className={aug(def.energyShield, base.energyShield)}>{def.energyShield}</b>
           </div>
         ) : null}
+        {!!item.quality && <div>Quality: <b>+{Number(item.quality.toFixed(1))}%</b></div>}
         <Requirements item={item} state={state} />
-        {(implicits.length > 0 || item.doomImplicit) && <div className="sep" />}
+        {(implicits.length > 0 || item.doomImplicit || extraCraft) && <div className="sep" />}
         {implicits.map((i) => (
           <div key={i.text} className="mod">
             {i.text}
           </div>
         ))}
+        {extraCraft && <div className="mod">Can have one additional crafted modifier</div>}
         {item.doomImplicit && (
           <div className="mod mod-doom" style={{ color: '#e85a4f', fontWeight: 'bold' }}>
             {item.doomImplicit === 'doom_all_res' ? '+16% to all Elemental Resistances (Doom)'
@@ -143,10 +151,10 @@ export function ItemTip({
         )}
         {(item.prefixes.length > 0 || item.suffixes.length > 0) && <div className="sep" />}
         {item.prefixes.map((m, i) => (
-          <ModLine key={`p${i}`} mod={m} detail={alt} state={state} uniqueItem={unique} />
+          <ModLine key={`p${i}`} mod={accessoryMod(item, m)} detail={alt} state={state} uniqueItem={unique} />
         ))}
         {item.suffixes.map((m, i) => (
-          <ModLine key={`s${i}`} mod={m} detail={alt} state={state} uniqueItem={unique} />
+          <ModLine key={`s${i}`} mod={accessoryMod(item, m)} detail={alt} state={state} uniqueItem={unique} />
         ))}
         {item.voidSlot && <div className="dim small" style={{ color: '#9b6dde', marginTop: 4 }}>Void Slot: holds up to 7 modifiers</div>}
         <RuneLine item={item} state={state} />

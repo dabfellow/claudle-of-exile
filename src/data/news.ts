@@ -15,6 +15,11 @@ export const UPCOMING: string[] = [
   'Astrology is rebuilt around charting your own constellation: research the sky to unlock stars, watch them to rank them up, and link them in one constellation for a small buff to everything you do. Focus the telescope for bonus speed, and watch for fallen stars.',
   "Archaeology is now about deciphering the lost peoples: digs turn up inscriptions in each culture's own script, you match the glyphs to picture hints at the new Scholar's desk, and every translated chapter opens the next site, hidden chambers and relic forms. Surface, Buried and Bedrock layers, Commitment and cave-ins are gone; everything you had unlocked stays.",
   'Woodcutting is rebuilt as Felling giants: scout a giant, work its crown, limbs, trunk and heart, split logs evenly for Focus, build a lodge from your own timber, and hunt legendary trees. Hidden finds now wait in every forest region (see Skills > Collection).',
+  'Mining opens the Delve, a permanent mine with layers you can revisit, hazards you can brace against, and hidden caverns that can hold Heartstone.',
+  'Smelting now grades each bar. Load fuel and flux, upgrade furnace parts, work the bellows for Focus, and turn Flawless bars into master alloys.',
+  'Forging lets you choose how to shape rare equipment, repeat saved patterns, and craft master forms with alloy signatures. Rare singing pieces let you choose a final bonus.',
+  'Woodcrafting lets you trade stats with tuning dials, save your settings for time away, upgrade jigs, and carve Living pieces that grow while equipped in combat.',
+  'Gemcutting now cuts gems facet by facet based on rough gem carats, with family facets, Star Stones, named cuts from level 80, saved cut plans for time away, a cut catalogue with perks, recutting, and a dop-stick angle minigame.',
 ];
 
 export const NEWS: NewsEntry[] = [

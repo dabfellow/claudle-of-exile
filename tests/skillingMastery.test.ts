@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SITES, siteOfAction } from '../src/data/expedition';
 import { HEIST_JOBS } from '../src/data/heist';
 import { ACTIONS, actionDef } from '../src/data/skills';
+import { isDelveAction } from '../src/engine/delve';
 import { ZONES } from '../src/data/zones';
 import { makeCtx } from '../src/engine/context';
 import { alarmChance, heistStep, roomMs } from '../src/engine/heist';
@@ -40,13 +41,13 @@ function start(id: string, amount = 1_000_000) {
 
 describe('non-combat action mastery', () => {
   it('has one track per eligible task, with only bulk recipes sharing', () => {
-    const eligible = ACTIONS.filter((a) => a.skill !== 'fishing' && !a.soon && !siteOfAction(a.id));
+    const eligible = ACTIONS.filter((a) => a.skill !== 'fishing' && !a.soon && !siteOfAction(a.id) && !isDelveAction(a.id));
     expect(eligible.every((a) => !!a.mastery)).toBe(true);
     expect(HEIST_JOBS.every((j) => !!j.mastery)).toBe(true);
     const ids = new Set([...eligible.map((a) => a.mastery!.id), ...HEIST_JOBS.map((j) => j.mastery!.id)]);
     const tasks = new Set([...eligible.map((a) => a.batchOf ?? a.id), ...HEIST_JOBS.map((j) => `heist.${j.id}`)]);
     expect(ids.size).toBe(tasks.size);
-    expect(ACTIONS.filter((a) => a.skill === 'combat' || a.skill === 'fishing' || !!siteOfAction(a.id)).every((a) => !a.mastery)).toBe(true);
+    expect(ACTIONS.filter((a) => a.skill === 'combat' || a.skill === 'fishing' || !!siteOfAction(a.id) || isDelveAction(a.id)).every((a) => !a.mastery)).toBe(true);
     expect(SITES.every((site) => !actionDef(site.id).mastery)).toBe(true);
   });
 
@@ -96,7 +97,8 @@ describe('non-combat action mastery', () => {
     const subCtx = makeCtx(zero);
     skillStep(sub.s, subCtx, actionIntervalMs(sub.s, sub.a, deriveStats(sub.s)), deriveStats(sub.s));
     expect(sub.s.storage.bank.copper_ore).toBe(2); // one base, one stochastic extra
-    expect(sub.s.storage.bank.rough_gem).toBe(1); // rare roll is exactly one
+    const subRough = Object.entries(sub.s.storage.bank).filter(([k]) => k === 'rough_gem' || k.startsWith('rough_gem_')).reduce((a, [, n]) => a + n, 0);
+    expect(subRough).toBe(1); // rare roll is exactly one
 
     // At MASTERY_CAP (level 100), unlocked Vein Strike and Dense Seam milestone procs activate
     const { s, a } = start('mine_copper');
@@ -104,7 +106,8 @@ describe('non-combat action mastery', () => {
     const ctx = makeCtx(zero);
     skillStep(s, ctx, actionIntervalMs(s, a, deriveStats(s)), deriveStats(s));
     expect(s.storage.bank.copper_ore).toBe(4); // base + stochastic + Vein Strike proc + Dense Seam proc
-    expect(s.storage.bank.rough_gem).toBe(1); // the rare roll is still exactly one
+    const fullRough = Object.entries(s.storage.bank).filter(([k]) => k === 'rough_gem' || k.startsWith('rough_gem_')).reduce((a, [, n]) => a + n, 0);
+    expect(fullRough).toBe(1); // the rare roll is still exactly one
   });
 
   it('conserves only paid ordinary production inputs after existing rules', () => {
@@ -113,7 +116,7 @@ describe('non-combat action mastery', () => {
     const ctx = makeCtx(zero);
     skillStep(s, ctx, actionIntervalMs(s, a, deriveStats(s)), deriveStats(s));
     expect(s.storage.bank.copper_ore).toBe(1); // stochastic save of one from the five paid
-    expect(s.storage.bank.copper_bar).toBe(2); // Lv 50 Pure Slag milestone procs double bar output
+    expect(s.storage.bank.copper_bar_crude).toBe(2); // Lv 50 Pure Slag copies the bar's rolled grade
 
     const key = start('smith_marrow_key', 8);
     key.s.storage.bank.dense_fossil = 2;
@@ -194,9 +197,8 @@ describe('non-combat action mastery', () => {
       'heist.street': 36_000,
     };
     const loaded = deserialize(JSON.stringify(raw));
-    expect(loaded.skillingMastery[actionDef('mine_copper').mastery!.id]).toBe(MASTERY_CAP / 2);
-    expect(loaded.skillingMastery[actionDef('mine_scorched').mastery!.id]).toBe(MASTERY_CAP / 2);
-    expect(loaded.skillingMastery[actionDef('mine_iron').mastery!.id]).toBeUndefined();
+    expect(loaded.skillingMastery[actionDef('delve_copper').mastery!.id]).toBe(MASTERY_CAP / 2);
+    expect(loaded.skillingMastery[actionDef('delve_iron').mastery!.id]).toBeUndefined();
     expect(loaded.skillingMastery[actionDef('orb_transmute').mastery!.id]).toBe(MASTERY_CAP / 4);
     expect(actionDef('orb_transmute_x10').mastery!.id).toBe(actionDef('orb_transmute').mastery!.id);
     expect(loaded.skillingMastery[HEIST_JOBS[0].mastery!.id]).toBe(MASTERY_CAP);

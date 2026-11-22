@@ -1,5 +1,50 @@
 import { describe, expect, it } from 'vitest';
-import { liftResult, liftWindowMs } from '../src/engine/minigame';
+import { angleResult, bellowsResult, braceResult, gemTurnMs, liftResult, liftWindowMs } from '../src/engine/minigame';
+
+describe('Gemcutting dop-stick angle', () => {
+  it('scores double, hit, weak and miss across wrap-around angles', () => {
+    expect(angleResult(0)).toBe('double');
+    expect(angleResult(3)).toBe('double');
+    expect(angleResult(357)).toBe('double');
+    expect(angleResult(3.1)).toBe('hit');
+    expect(angleResult(9)).toBe('hit');
+    expect(angleResult(351)).toBe('hit');
+    expect(angleResult(9.1)).toBe('weak');
+    expect(angleResult(18)).toBe('weak');
+    expect(angleResult(342)).toBe('weak');
+    expect(angleResult(18.1)).toBe('miss');
+    expect(angleResult(180)).toBe('miss');
+    expect(angleResult(Number.NaN)).toBe('miss');
+  });
+
+  it('turns faster from level 1 to level 99', () => {
+    expect(gemTurnMs(1)).toBe(2400);
+    expect(gemTurnMs(50)).toBe(2000);
+    expect(gemTurnMs(99)).toBe(1600);
+  });
+});
+
+describe('Delve bracing', () => {
+  it('scores the double, warning and late windows, and rejects a wrong fix', () => {
+    expect(braceResult(true, 1_000, 3_000)).toBe('double');
+    expect(braceResult(true, 1_001, 3_000)).toBe('hit');
+    expect(braceResult(true, 3_000, 3_000)).toBe('hit');
+    expect(braceResult(true, 3_001, 3_000)).toBe('weak');
+    expect(braceResult(true, 4_000, 3_000)).toBe('weak');
+    expect(braceResult(true, 4_001, 3_000)).toBe('miss');
+    expect(braceResult(false, 100, 3_000)).toBe('miss');
+  });
+});
+
+describe('Furnace bellows', () => {
+  it('scores by time spent in the gold and outer bands', () => {
+    expect(bellowsResult(0.5, 0.5)).toBe('double');
+    expect(bellowsResult(0.49, 0.6)).toBe('hit');
+    expect(bellowsResult(0.3, 0.59)).toBe('weak');
+    expect(bellowsResult(0, 0.3)).toBe('weak');
+    expect(bellowsResult(0, 0.29)).toBe('miss');
+  });
+});
 
 describe('liftResult', () => {
   // window 1000..2200 (1200 ms): middle third is 1400..1800

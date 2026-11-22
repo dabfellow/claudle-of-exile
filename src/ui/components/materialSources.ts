@@ -4,6 +4,7 @@ import { HEIST_JOBS } from '../../data/heist';
 import { materialDef } from '../../data/materials';
 import { RUNE_DROP, runeDef } from '../../data/runes';
 import { ACTIONS, SKILLS } from '../../data/skills';
+import { barGradeOf, barId } from '../../data/smelting';
 import type { Page } from '../Layout';
 
 export interface Source {
@@ -18,9 +19,11 @@ const ESSENCE_IDS = new Set(ESSENCES.map((e) => e.id));
 /** Where a material can be got, each with the page that gets it. */
 export function materialSources(id: string): Source[] {
   const out: Source[] = [];
+  const bar = barGradeOf(id);
+  const smelted = bar ? barId(bar.metal, 'refined') : id;
   for (const a of ACTIONS) {
-    if (a.soon || a.batchOf) continue;
-    const made = a.outputs?.[id] || a.protectedOutputs?.[id];
+    if (a.soon || a.batchOf || a.id.startsWith('mine_')) continue;
+    const made = a.outputs?.[smelted] || a.protectedOutputs?.[id];
     const bonus = a.bonus?.find((b) => b.id === id);
     if (!made && !bonus) continue;
     out.push({
@@ -29,6 +32,13 @@ export function materialSources(id: string): Source[] {
       page: a.skill,
     });
   }
+  if (id === 'rubble' || id === 'mine_support') out.push({ label: 'Mining: work a layer', page: 'mining' });
+  if (id === 'heartstone') out.push({ label: 'Mining: deep Delve caverns', page: 'mining' });
+  if (id.startsWith('rough_gem') || id === 'crystal_shard') out.push({ label: 'Mining: Crystal-bearing layers and caverns', page: 'mining' });
+  if (FOSSIL_IDS.has(id)) out.push({ label: 'Mining: Fossil beds', page: 'mining' });
+  if (id === 'mineral_fragment') out.push({ label: 'Mining: Mithril layers and deeper', page: 'mining' });
+  if (id === 'stone_fragment') out.push({ label: 'Mining: Adamant layers and deeper', page: 'mining' });
+  if (id === 'living_metal') out.push({ label: 'Smelting: furnace at purity 8+', page: 'smelting' });
   for (const job of HEIST_JOBS) {
     if ([...job.drops, ...job.vault].some((d) => d.id === id)) out.push({ label: `Heist: ${job.name}`, detail: `Thieving ${job.level}`, page: 'thieving' });
   }

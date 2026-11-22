@@ -469,7 +469,7 @@ describe('Felling giants: coming back and migration', () => {
     expect(s.skillingMastery['task.giant_yew']).toBe(900);
     expect(s.skillingMastery['task.cut_ash']).toBeUndefined();
     expect(s.skillingMastery['task.mill_ash']).toBe(300);
-    expect(s.skillingMastery['task.mine_copper']).toBe(40);
+    expect(s.skillingMastery['task.delve_copper']).toBe(40);
     // items, XP and the heartwood counter carry over; the running cut moves to the giant
     expect(s.storage.bank).toMatchObject({ ash_log: 12, oak_plank: 3, heartwood_fragment: 7, ancient_heartwood: 1, ash_resin: 4 });
     expect(s.skills.woodcutting).toBe(base.skills.woodcutting);

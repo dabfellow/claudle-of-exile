@@ -3,7 +3,7 @@ import { GEM_ATTR_NAME, gemAttrReq } from './gems';
 import { staticFamilyPool, GEM_FAMILY_NAMES, type GemFamily } from '../data/gemcutting';
 import { WEAPON_FAMILIES } from '../data/bases';
 import type { SkillAction } from '../data/skills';
-import { addBank } from './bank';
+import { addBank, recipeMaterialCount } from './bank';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
 import { characterLevel } from './character';
 import type { Ctx } from './context';
@@ -127,7 +127,7 @@ export function gemcuttingPreview(s: GameState, a: SkillAction): string[] {
   if (a.skill !== 'gemcutting') return [];
   const lines: string[] = [];
   const dust = s.storage.bank.arcane_dust ?? 0;
-  const rough = s.storage.bank.rough_gem ?? 0;
+  const rough = recipeMaterialCount(s.storage.bank, 'rough_gem');
 
   if (a.gem?.kind === 'family' && a.gem.family) {
     const pool = gemFamilyPool(s, a.gem.family);

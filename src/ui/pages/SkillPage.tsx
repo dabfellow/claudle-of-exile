@@ -5,6 +5,7 @@ import { flaskDef } from '../../data/flasks';
 import { ACTIVE_GEMS, activeGemDef, SUPPORT_GEMS, supportGemDef } from '../../data/gems';
 import { HEIST_JOBS, heistJob } from '../../data/heist';
 import { materialDef } from '../../data/materials';
+import { recipeMaterialCount } from '../../engine/bank';
 import { isMapId } from '../../data/maps';
 import { CULTURES, SEALED_RELIC, TRAIL } from '../../data/expedition';
 import { hasPassport } from '../../engine/expedition';
@@ -17,7 +18,7 @@ import { mapsHeld } from '../../engine/maps';
 import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
 import { crewSlots, jobBlocker } from '../../engine/heist';
 import { AGILITY_SHORTCUTS } from '../../data/agility';
-import { actionBlocker, actionIntervalMs, actionPlaceNeeded, agilityBlocker, gemCutPool, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
+import { actionBlocker, actionIntervalMs, actionPlaceNeeded, agilityBlocker, gemCutPool, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
 import { ProjectBoard } from '../components/ProjectBoard';
@@ -36,7 +37,11 @@ import { PantryBoard } from '../components/PantryBoard';
 import { RuneBoard } from '../components/RuneBoard';
 import { SkillMinigame } from '../components/SkillMinigame';
 import { ThievingHeader, ThievingLedger } from '../components/ThievingLedger';
-import { SmeltingCrucible } from '../components/SmeltingCrucible';
+import { FurnaceView } from '../components/FurnaceView';
+import { DelveView } from '../components/DelveView';
+import { AnvilView } from '../components/AnvilView';
+import { WoodBench } from '../components/WoodBench';
+import { LapidaryBench } from '../components/LapidaryBench';
 import { ProfessionWorkbench, PROFESSION_THEMES } from '../components/ProfessionWorkbench';
 import { Icon, Orb, Swatch } from '../components/Icon';
 import { MasteryProgress } from '../components/MasteryProgress';
@@ -391,7 +396,7 @@ function Ingredients({ cost, have }: { cost: Record<string, number>; have: Recor
   return (
     <ul className="ingredients">
       {Object.entries(cost).map(([id, n]) => {
-        const owned = have[id] ?? 0;
+        const owned = recipeMaterialCount(have, id);
         return (
           <li key={id} className={owned >= n ? 'ok' : 'short'}>
             <MatIcon id={id} size={12} />
@@ -476,36 +481,10 @@ const FORGE_TABS: { id: string; label: string; slots: string[] }[] = [
   { id: 'keys', label: 'Boss Keys', slots: [] },
 ];
 
-const SMITH_TABS = FORGE_TABS;
-
 function forgeTab(a: SkillAction): string {
   if (a.id.includes('key')) return 'keys';
   const slot = a.baseId ? baseDef(a.baseId).slot : '';
   return FORGE_TABS.find((x) => x.slots.includes(slot))?.id ?? 'weapon';
-}
-
-const smithTab = forgeTab;
-
-const WOODCRAFT_TABS: { id: string; label: string; slots: string[] }[] = [
-  { id: 'weapon', label: 'Staves & Bows', slots: ['weapon'] },
-  { id: 'offhand', label: 'Quivers & Bucklers', slots: ['offhand'] },
-  { id: 'garments', label: 'Robes & Leather', slots: ['helmet', 'body', 'gloves', 'boots'] },
-  { id: 'frames', label: 'Frames', slots: [] },
-];
-
-function woodcraftTab(a: SkillAction): string {
-  if (a.id.includes('frame')) return 'frames';
-  const slot = a.baseId ? baseDef(a.baseId).slot : '';
-  return WOODCRAFT_TABS.find((x) => x.slots.includes(slot))?.id ?? 'weapon';
-}
-
-const SMELTING_TABS: { id: string; label: string }[] = [
-  { id: 'bars', label: 'Metal Bars' },
-  { id: 'alloys', label: 'Protective Alloys' },
-];
-
-function smeltingTab(a: SkillAction): string {
-  return a.id.includes('alloy') ? 'alloys' : 'bars';
 }
 
 interface Tier {
@@ -557,10 +536,7 @@ const HARVESTING_TABS: { id: string; label: string }[] = [
 
 function getSkillTabs(skill: SkillId): { id: string; label: string }[] | null {
   let baseTabs: { id: string; label: string }[] | null = null;
-  if (skill === 'smithing') baseTabs = SMITH_TABS;
-  else if (skill === 'woodcrafting') baseTabs = WOODCRAFT_TABS;
-  else if (skill === 'smelting') baseTabs = SMELTING_TABS;
-  else if (skill === 'thieving') baseTabs = THIEVING_TABS;
+  if (skill === 'thieving') baseTabs = THIEVING_TABS;
   else if (skill === 'archaeology') baseTabs = ARCHAEOLOGY_TABS;
   else if (skill === 'alchemy') baseTabs = ALCHEMY_TABS;
   else if (skill === 'cooking') baseTabs = COOKING_TABS;
@@ -568,7 +544,6 @@ function getSkillTabs(skill: SkillId): { id: string; label: string }[] | null {
   else if (skill === 'runecarving') baseTabs = RUNECARVING_TABS;
   else if (skill === 'harvesting') baseTabs = HARVESTING_TABS;
   else if (skill === 'cartography') baseTabs = [{ id: 'charts', label: 'Map Case' }];
-  else if (skill === 'mining') baseTabs = [{ id: 'all', label: 'Mining' }];
   else if (skill === 'astrology') baseTabs = [{ id: 'chart', label: 'Chart' }, { id: 'research', label: 'Research' }, { id: 'watch', label: 'Watch' }, { id: 'fallen', label: 'Fallen' }];
   else if (skill === 'woodcutting') baseTabs = [...GIANT_TABS, { id: 'planks', label: 'Sawmill' }];
 
@@ -582,9 +557,6 @@ function getSkillTabs(skill: SkillId): { id: string; label: string }[] | null {
 }
 
 function defaultSkillTab(skill: SkillId): string {
-  if (skill === 'smithing') return SMITH_TABS[0].id;
-  if (skill === 'woodcrafting') return WOODCRAFT_TABS[0].id;
-  if (skill === 'smelting') return SMELTING_TABS[0].id;
   if (skill === 'thieving') return 'marks';
   if (skill === 'archaeology') return 'desk';
   if (skill === 'harvesting') return 'forage';
@@ -909,7 +881,38 @@ export function SkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId)
   const s = useGame();
   const lockedAt = skillLock(s, skill);
   if (lockedAt) return <LockedSkill skill={skill} place={lockedAt} />;
+  if (skill === 'mining' || skill === 'smelting' || skill === 'smithing' || skill === 'woodcrafting' || skill === 'gemcutting') return <WorkshopPage key={skill} skill={skill} go={go} />;
   return <OpenSkillPage skill={skill} go={go} />;
+}
+
+function QuickForgeRecipes() {
+  const s = useGame();
+  const [tab, setTab] = useState('weapon');
+  const level = skillLevel(s, 'smithing');
+  const recipes = actionsFor('smithing').filter((a) => !a.purpose && !a.id.startsWith('staged_forge_') && forgeTab(a) === tab);
+  return <>
+    <div className="smith-tabs">
+      {FORGE_TABS.map(({ id, label }) => <button key={id} className={`gem-chip ${tab === id ? 'active' : ''}`} onClick={() => setTab(id)}>{label}</button>)}
+    </div>
+    <ProfessionWorkbench key={tab} skill="smithing" groups={tiersOf('smithing', recipes)} isUnlocked={(a) => a.level <= level}
+      renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />
+  </>;
+}
+
+function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'gemcutting'; go?: (skill: SkillId) => void }) {
+  const s = useGame();
+  const activeProject = s.professionProgress.activeProject?.project.skill === skill;
+  const projects = <ProjectBoard skill={skill} go={go} />;
+  const catalysts = <details className="profession-supplies"><summary>Catalysts & salvage settings</summary><CatalystPanel /></details>;
+  return <div className={`page profession-page profession-${skill}`} style={{ ['--profession' as string]: SKILLS[skill].color }}>
+    <SkillHeader skill={skill} />
+    {skill === 'mining' && <DelveView />}
+    {skill === 'smelting' && <FurnaceView projects={projects} />}
+    {skill === 'smithing' && <AnvilView quickRecipes={<QuickForgeRecipes />} catalysts={catalysts} masterworks={projects} />}
+    {skill === 'woodcrafting' && <WoodBench catalysts={catalysts} masterworks={projects} />}
+    {skill === 'gemcutting' && <LapidaryBench masterworks={projects} />}
+    {skill === 'mining' && <details className="profession-supplies" open={activeProject}><summary>Masterworks</summary>{projects}</details>}
+  </div>;
 }
 
 function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) => void }) {
@@ -934,20 +937,11 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
   const activeSkillProject = s.professionProgress.activeProject?.project.skill === skill && s.professionProgress.activeProject?.project.category !== 'masteryBatch';
   const tab = skillTabs[skill] ?? (activeSkillProject ? 'masterworks' : defaultSkillTab(skill));
   const setTab = (t: string) => setSkillTabs((prev) => ({ ...prev, [skill]: t }));
-  const [purpose, setPurpose] = useState('bases');
-
   const tabs = getSkillTabs(skill);
-  const tabbed = skill === 'smithing' || skill === 'woodcrafting';
-  const selectedActions = tabbed ? actions.filter((a) => !a.baseId || (purpose === 'bases' ? !a.purpose : a.purpose?.id === purpose)) : actions;
+  const selectedActions = actions;
 
   let inTab = selectedActions;
-  if (skill === 'smithing') {
-    inTab = selectedActions.filter((a) => smithTab(a) === tab);
-  } else if (skill === 'woodcrafting') {
-    inTab = selectedActions.filter((a) => woodcraftTab(a) === tab);
-  } else if (skill === 'smelting') {
-    inTab = selectedActions.filter((a) => smeltingTab(a) === tab);
-  } else if (skill === 'alchemy' && tab !== 'all') {
+  if (skill === 'alchemy' && tab !== 'all') {
     inTab = selectedActions.filter((a) => alchemyCategory(a) === tab);
   } else if (skill === 'cooking' && tab !== 'all') {
     inTab = selectedActions.filter((a) => cookingCategory(a) === tab);
@@ -992,15 +986,6 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
               if (x.id === 'marks') countText = `${selectedActions.filter(isUnlocked).length}/${selectedActions.length}`;
               else if (x.id === 'heists') countText = `${HEIST_JOBS.filter((j) => !jobBlocker(s, j)).length}/${HEIST_JOBS.length}`;
               else if (x.id === 'crew') countText = `${s.heist.crew.length}/${crewSlots(s)}`;
-            } else if (skill === 'smithing') {
-              const list = selectedActions.filter((a) => smithTab(a) === x.id);
-              countText = `${list.filter(isUnlocked).length}/${list.length}`;
-            } else if (skill === 'woodcrafting') {
-              const list = selectedActions.filter((a) => woodcraftTab(a) === x.id);
-              countText = `${list.filter(isUnlocked).length}/${list.length}`;
-            } else if (skill === 'smelting') {
-              const list = selectedActions.filter((a) => smeltingTab(a) === x.id);
-              countText = `${list.filter(isUnlocked).length}/${list.length}`;
             } else if (skill === 'archaeology') {
               if (x.id === 'desk') countText = `${s.archaeology.inscriptions.length}`;
               else if (x.id === 'codex') countText = `${SCRIPT_IDS.reduce((n, id) => n + crackedCount(s.archaeology, id), 0)}/${SCRIPTS.reduce((n, x) => n + x.glyphs, 0)}`;
@@ -1026,8 +1011,8 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
               } else if (x.id === 'regions') countText = `${unlockedRegions(level).length}/${WOODS.length}`;
               else if (x.id === 'scouting' && s.giant.options.length) countText = `${s.giant.options.length}`;
               else if (x.id === 'trophies') countText = `${s.giant.legends.length}/${LEGENDS.length}`;
-            } else if (skill === 'mining' || skill === 'cartography') {
-              if (x.id === 'all' || x.id === 'charts') {
+            } else if (skill === 'cartography') {
+              if (x.id === 'charts') {
                 countText = `${selectedActions.filter(isUnlocked).length}/${selectedActions.length}`;
               }
             }
@@ -1070,33 +1055,10 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
         </div>
       )}
 
-      {(skill === 'smithing' || skill === 'woodcrafting') && (
-        <div className="callout skill-note">
-          Crafted bases are item level <b>{smithIlvl(s, resinBonus(s))}</b> — higher item level unlocks better modifier tiers when crafting.
-          {' '}Purpose gear uses item level <b>{smithIlvl(s)}</b> without catalysts. Strength follows {SKILLS[skill].name} and station level (caps 21 / 45 / 90), independently of combat; equip requirements remain.
-        </div>
-      )}
-      {skill === 'smelting' && (
-        <div className="callout skill-note">
-          Smelt raw ores mined from the earth into pure metal bars and blend defensive alloys in the crucible.
-        </div>
-      )}
-      {(skill === 'smithing' || skill === 'woodcrafting') && <details className="profession-supplies"><summary>Catalysts & salvage settings</summary><CatalystPanel /></details>}
-      {(skill === 'smithing' || skill === 'woodcrafting') && <label>Equipment purpose{' '}
-        <select value={purpose} onChange={(e) => setPurpose(e.target.value)}>
-          <option value="bases">Cheap bases · existing catalysts</option>
-          <option value="physical">Physical · added and increased physical damage</option>
-          <option value="protection">Protection · life and local defence</option>
-          <option value="resistance_fire">Fire resistance · life and fire resistance</option>
-          <option value="resistance_cold">Cold resistance · life and cold resistance</option>
-          <option value="resistance_light">Lightning resistance · life and lightning resistance</option>
-          <option value="resource">Resource · mana, spells or energy shield</option>
-        </select>
-      </label>}
       {skill === 'alchemy' && <div className="callout skill-note">Salvage unwanted items in your Inventory for Arcane Dust, then transmute it into orbs here.</div>}
       {skill === 'gemcutting' && (
         <div className="callout skill-note">
-          Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b>{fmt(s.storage.bank.rough_gem ?? 0)}</b> Rough Gems.
+          Rough Gems come from Mining (and the Glimmering Geode). Cut gems go to your gem bag on the Skills page. You have <b>{fmt(recipeMaterialCount(s.storage.bank, 'rough_gem'))}</b> Rough Gems.
         </div>
       )}
 
@@ -1136,11 +1098,9 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
         </div>
       )}
 
-      {showActivities && (skill === 'smelting' ? (
-        <SmeltingCrucible groups={tiers} isUnlocked={isUnlocked} renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />
-      ) : (
-        <ProfessionWorkbench key={`${skill}:${tab}:${purpose}`} skill={skill} groups={tiers} isUnlocked={isUnlocked} renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />
-      ))}
+      {showActivities && (
+        <ProfessionWorkbench key={`${skill}:${tab}`} skill={skill} groups={tiers} isUnlocked={isUnlocked} renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />
+      )}
 
       {skill === 'runecarving' && tab !== 'masterworks' && <details className="profession-supplies"><summary>Equipped runes & resonance reference</summary><RuneBoard /></details>}
       {skill === 'cooking' && tab !== 'masterworks' && <details className="profession-supplies"><summary>Pantry & active meal</summary><PantryBoard /></details>}

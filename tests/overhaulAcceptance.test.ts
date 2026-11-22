@@ -134,6 +134,11 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
     obtainable.add('arcane_dust');
     obtainable.add('rough_gem');
     obtainable.add('crystal_shard');
+    obtainable.add('rubble');
+    obtainable.add('splinters');
+    obtainable.add('heartstone');
+    obtainable.add('living_metal');
+    for (const material of MATERIALS) if (material.id.endsWith('_bar_flawless')) obtainable.add(material.id);
     obtainable.add('mineral_fragment');
     obtainable.add('stone_fragment');
     obtainable.add('heartwood_fragment');
@@ -227,6 +232,9 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
 
     const raw = JSON.parse(serialize(base));
     delete raw.professionProgress;
+    delete raw.delve;
+    delete raw.smelting;
+    delete raw.forging;
     raw.version = 45;
     const loaded1 = deserialize(JSON.stringify(raw));
     loaded1.account = structuredClone(base.account);
@@ -237,12 +245,13 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
     settleCharacter(loaded2, loaded2.account);
 
     expect(loaded2.skills.mining).toBe(base.skills.mining);
-    expect(loaded2.skillingMastery['task.mine_copper']).toBe(12000);
+    expect(loaded2.skillingMastery['task.delve_copper']).toBe(12000);
     expect(loaded2.expedition.dug.cairn).toBe(120);
     expect(loaded2.greenhouse?.actionId).toBe('herb_sun');
     expect(loaded2.action?.kind).toBe('skill');
     if (loaded2.action?.kind === 'skill') {
-      expect(loaded2.action.actionId).toBe('mine_iron');
+      expect(loaded2.action.actionId).toBe('delve_work');
+      expect(loaded2.action.delveLayer).toBe(45);
       expect(loaded2.action.progress).toBe(1100);
     }
     expect(loaded2.professionProgress.discoveries['seed_sunpetal']).toBe(true);

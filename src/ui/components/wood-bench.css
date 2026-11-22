@@ -1,0 +1,19 @@
+.wood-bench-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; }
+.wood-bench .wood-card { display: grid; align-content: start; gap: 10px; padding: 14px; margin: 0; }
+.wood-card h2, .wood-card h3, .wood-card p, .wood-return p { margin: 0; }
+.wood-piece-art { display: grid; justify-items: center; gap: 8px; padding: 14px; background: #3b2a1d66; border-radius: 6px; }
+.wood-card label, .wood-save { display: grid; gap: 5px; }
+.wood-card select, .wood-card input { min-width: 0; max-width: 100%; }
+.wood-dials { display: grid; gap: 8px; }
+.wood-dial { padding: 8px; border: 1px solid var(--line); border-radius: 5px; }
+.wood-dial > span { display: flex; justify-content: space-between; gap: 8px; }
+.wood-dial input { width: 100%; accent-color: var(--accent); }
+.wood-implicits { margin: 0; padding-left: 18px; }
+.wood-costs { display: flex; flex-wrap: wrap; gap: 8px 12px; }
+.wood-costs > span { display: inline-flex; align-items: center; gap: 4px; }
+.wood-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 10px; }
+.wood-tuning { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.wood-recipe { text-align: left; white-space: normal; }
+.wood-curve svg { display: block; background: linear-gradient(135deg, #35271e, #231a16); border: 1px solid #6d5039; border-radius: 6px; cursor: crosshair; }
+.wood-return { display: grid; gap: 8px; }
+@media (max-width: 720px) { .wood-bench-layout { grid-template-columns: minmax(0, 1fr); } }

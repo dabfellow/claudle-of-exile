@@ -79,6 +79,8 @@ The guarantees use the same `SmithPurpose` rules (both mods must be able to roll
 
 **Bar purity** adds its bonus through `barPurityBonus` from the Smelting spec.
 
+Quality increases a weapon's local physical damage or an armour piece's local defences. On jewellery it increases rolled modifier values and leaves crafted modifiers and alloy signatures fixed.
+
 ### Saved patterns (idle and offline)
 
 - A pattern is `{ id, name, baseId, choices }`. You can save 3 patterns at level 1, +1 at levels 25, 50 and 75, and +1 per pattern-book perk.
