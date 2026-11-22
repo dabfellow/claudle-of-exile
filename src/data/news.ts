@@ -24,6 +24,7 @@ export const UPCOMING: string[] = [
   'Alchemy is rebuilt around making your five flasks your own: brew ranked infusions from herbs or mutated Foraging strains, pour them into your belt flasks, unlock Grand flasks (3 slots) and Grand infusions at level 80–85, discover giga-rare infusions, and play a pour-to-the-line Focus minigame. Sacred and Sulphur flasks now brew straight from herbs.',
   'Cartography now assembles special Boss, Vault, Guardian, Pinnacle and Lost Chart maps from scraps and trophies dropped in Maps, with an Atlas of special maps, a two-axis sighting Focus minigame, and a drafting-table collectible. Plain Tier 1 maps now come from monster drops.',
   'Agility, Cooking and Rune-carving have been retired: close-in and Heist room speeds run at normal pace, meal buffs and rune slots are removed, cooking extracts convert to herbs (3:1), and active feast projects are refunded.',
+  'The skilling passive tree has been rebuilt as a 12-skill ring of partners (186 allocatable nodes, up to 118 points including Astrology): every branch forks into two specialisations with 12 bridge keystones between neighbouring skills, and all spent skilling points have been refunded.',
 ];
 
 export const NEWS: NewsEntry[] = [

@@ -175,6 +175,20 @@ function migrateRemovedSkills(raw: Record<string, unknown>): void {
   }
 }
 
+function migrateSkillingTreeRevamp(raw: Record<string, unknown>): void {
+  const prev = (raw.skillPassives as string[] | undefined) ?? [];
+  raw.skillPassives = [];
+  const profiles = raw.skillingProfiles as { passives?: string[] }[] | undefined;
+  if (profiles) {
+    for (const p of profiles) p.passives = [];
+  }
+  if (prev.length > 0) {
+    const notices = (raw.migrationNotices as string[] | undefined) ?? [];
+    notices.push('The skilling tree has been rebuilt. All your points are back to spend.');
+    raw.migrationNotices = notices;
+  }
+}
+
 const MIGRATIONS: Record<number, Migration> = {
   0: (raw) => {
     // pre-release saves had no lifetime stats
@@ -574,6 +588,7 @@ const MIGRATIONS: Record<number, Migration> = {
   61: migrateAlchemyInfusions,
   62: migrateCartographyScraps,
   63: migrateRemovedSkills,
+  64: migrateSkillingTreeRevamp,
 };
 
 /**

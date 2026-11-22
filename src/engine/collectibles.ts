@@ -1,14 +1,12 @@
 import { COLLECTIBLE_ODDS, collectibleFor } from '../data/collectibles';
 import { chance } from './rng';
+import { skillTreeStats } from './skillTree';
 import type { Ctx } from './context';
 import type { GameState, SkillId } from './types';
 
-/**
- * How much the skilling tree's Curious core node multiplies the find chance. The Skilling tree revamp reads its stat
- * here; until that node exists this is 1.
- */
-export function collectibleChanceMult(_s: GameState): number {
-  return 1;
+/** How much the skilling tree's Curious core node multiplies the collectible find chance. */
+export function collectibleChanceMult(s: GameState): number {
+  return 1 + (skillTreeStats(s).curious ?? 0) / 100;
 }
 
 /**

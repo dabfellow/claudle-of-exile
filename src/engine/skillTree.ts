@@ -1,19 +1,16 @@
 import { affixDef } from '../data/affixes';
 import { SKILLS } from '../data/skills';
-import { SKILL_TREE_BY_ID, SKILL_TREE_START, type SkillTreeStat } from '../data/skillTree';
+import { SKILL_TREE_BY_ID, SKILL_TREE_START, SKILLING_RING, type SkillTreeStat, type TreeSkillId } from '../data/skillTree';
 import type { Ctx } from './context';
 import { connectedWithout, treeAllocateReason } from './passives';
 import type { GameState } from './types';
 import { levelOf } from './xp';
 
-// Fishing is left out: it is always level 1 and would only nudge the point count
-const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology'] as const;
+export const MAX_SKILL_TREE_POINTS = 118;
 
-export const MAX_SKILL_TREE_POINTS = 36;
-
-/** One point per 10 total gathering/production levels, capped so the tree remains a specialisation. */
+/** One point per 10 total levels across the 12 reworked skilling professions (max 118). */
 export function skillTreePoints(s: GameState): number {
-  const total = SKILLING.reduce((a, k) => a + levelOf(k, s.skills[k]), 0);
+  const total = SKILLING_RING.reduce((a, k) => a + levelOf(k, s.skills[k]), 0);
   return Math.min(MAX_SKILL_TREE_POINTS, Math.floor(total / 10));
 }
 
@@ -21,11 +18,21 @@ export function skillPointsLeft(s: GameState): number {
   return skillTreePoints(s) - s.skillPassives.length;
 }
 
+function hasForkNodeIn(s: GameState, skill: TreeSkillId): boolean {
+  return s.skillPassives.some((id) => id.startsWith(`${skill}_f`));
+}
+
 export function skillNodeReason(s: GameState, id: string): string | null {
   const node = SKILL_TREE_BY_ID[id];
   if (!node) return 'Invalid node';
   if (node.req && levelOf(node.req.skill, s.skills[node.req.skill]) < node.req.level) {
     return `Requires ${SKILLS[node.req.skill].name} level ${node.req.level}`;
+  }
+  if (node.bridgeReq) {
+    const [left, right] = node.bridgeReq;
+    if (!hasForkNodeIn(s, left) || !hasForkNodeIn(s, right)) {
+      return `Requires a fork node in both ${SKILLS[left].name} and ${SKILLS[right].name}`;
+    }
   }
   return treeAllocateReason(SKILL_TREE_BY_ID, s.skillPassives, SKILL_TREE_START, id, skillPointsLeft(s));
 }
@@ -57,7 +64,7 @@ export function refundSkillNode(s: GameState, ctx: Ctx, id: string): string | nu
 export type TreeStats = Partial<Record<SkillTreeStat, number>>;
 
 const SKILL_TREE_STAT_SET = new Set<string>([
-  'inputSave', 'offlineSpeed', 'patientCrafter',
+  'inputSave', 'offlineSpeed', 'patientCrafter', 'sharpFocus', 'curious', 'skillXp', 'skillSpeed',
   'miningSpeed', 'gemChance', 'fossilChance', 'motherlode', 'miningYield', 'miningRare', 'miningDouble',
   'woodcuttingSpeed', 'birdsNest', 'resinChance', 'resinIlvl', 'heartwood', 'woodcuttingYield', 'woodcuttingRare', 'woodcuttingDouble',
   'harvestingSpeed', 'distiller', 'rareBlooms', 'greenhouse', 'harvestingYield', 'harvestingRare', 'harvestingDouble',
@@ -66,8 +73,6 @@ const SKILL_TREE_STAT_SET = new Set<string>([
   'smithingSpeed', 'smeltingSpeed', 'woodcraftingSpeed', 'steadyTemper', 'smithMagic', 'grandmaster', 'smithingQuality', 'smithingSave', 'smithingExtra',
   'alchemySpeed', 'bulkBrewer', 'qualityBrews', 'transmuter', 'alchemyQuality', 'alchemySave', 'alchemyExtra',
   'gemcuttingSpeed', 'gemcuttingXp', 'gemDustSave', 'masterCutter', 'gemcuttingQuality', 'gemcuttingSave', 'gemcuttingExtra',
-  'runecarvingSpeed', 'secondStroke', 'deepCuts', 'livingScript', 'runecarvingQuality', 'runecarvingSave', 'runecarvingExtra',
-  'cookingSpeed', 'secondHelping', 'slowSimmer', 'headChef', 'cookingQuality', 'cookingSave', 'cookingExtra',
   'cartographySpeed', 'secondCopy', 'mapFind', 'masterCartographer', 'cartographyQuality', 'cartographySave', 'cartographyExtra',
   'allSpeed', 'allYield', 'allRare', 'allDouble', 'allQuality', 'allSave', 'allExtra',
 ]);

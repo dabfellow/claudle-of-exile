@@ -79,9 +79,9 @@ const BRANCH_COLOR: Record<string, string> = {
   smithing: '#b8b8c8',
   woodcrafting: '#9c7a4c',
   alchemy: '#9b6dde',
-  runecarving: '#6fa8ff',
-  cooking: '#e08a4a',
+  astrology: '#a9b8ff',
   cartography: '#8a7ad8',
+  bridge: '#e2c078',
 };
 
 // ---------- a pannable, zoomable tree canvas shared by both trees ----------
@@ -1756,13 +1756,18 @@ function SkillNodeTip({ s, n }: { s: GameState; n: SkillTreeNode }) {
       <div className="tip-title" style={{ color: n.kind === 'keystone' ? 'var(--unique)' : n.kind === 'notable' ? 'var(--accent-2)' : 'var(--text)' }}>
         {n.name}
         <span className="dim" style={{ fontWeight: 400, marginLeft: 6, fontSize: 'var(--fs-xs)' }}>
-          {n.kind} · {n.branch === 'core' ? 'Core' : SKILLS[n.branch].name}
+          {n.kind} · {n.branch === 'core' ? 'Core' : n.branch === 'bridge' ? 'Bridge' : SKILLS[n.branch].name}
         </span>
       </div>
       <div className="mod">{n.desc}</div>
       {n.req && (
         <div className="dim small">
           Requires {SKILLS[n.req.skill].name} level {n.req.level}
+        </div>
+      )}
+      {n.bridgeReq && (
+        <div className="dim small">
+          Bridge: {SKILLS[n.bridgeReq[0]].name} ↔ {SKILLS[n.bridgeReq[1]].name}
         </div>
       )}
       <div className={reason ? 'warn' : 'good'} style={{ marginTop: 6, fontSize: 'var(--fs-xs)' }}>
@@ -1772,13 +1777,20 @@ function SkillNodeTip({ s, n }: { s: GameState; n: SkillTreeNode }) {
   );
 }
 
-/** Branch names just past each keystone. */
-const SKILL_LABELS = SKILL_TREE_NODES.filter((n) => n.kind === 'keystone' && n.branch !== 'core').map((n) => ({
-  text: (SKILLS[n.branch as SkillId].name + (SKILLS[n.branch as SkillId].soon ? ' (soon)' : '')).toUpperCase(),
-  x: Math.round(n.x * 1.16),
-  y: Math.round(n.y * 1.16),
-  color: BRANCH_COLOR[n.branch],
-}));
+/** Branch names placed just outside each branch's two forks. */
+const SKILL_LABELS = Array.from(
+  new Map(
+    SKILL_TREE_NODES.filter((n) => n.id.endsWith('_t1') && n.branch !== 'core' && n.branch !== 'bridge').map((n) => [
+      n.branch,
+      {
+        text: SKILLS[n.branch as SkillId].name.toUpperCase(),
+        x: Math.round(n.x * 2.75),
+        y: Math.round(n.y * 2.75),
+        color: BRANCH_COLOR[n.branch] ?? '#d2a659',
+      },
+    ]),
+  ).values(),
+);
 
 function SkillingTree({ s }: { s: GameState }) {
   const allocated = new Set(s.skillPassives);
