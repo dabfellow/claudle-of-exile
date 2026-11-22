@@ -374,7 +374,7 @@ describe('pre-overhaul serialized compatibility', () => {
     expect(again.skillingMastery).toEqual(raw.skillingMastery);
     expect(again.action).toMatchObject(raw.action);
     expect(again.action).toEqual(s.action);
-    expect(again.greenhouse).toEqual(raw.greenhouse);
+    expect(again.foraging.plots[0]?.parents).toEqual(['frostleaf']);
     expect(again.heist).toMatchObject({ rogues: raw.heist.rogues, exits: raw.heist.exits, auto: raw.heist.auto, tally: raw.heist.tally });
     expect(again.heist).toEqual(s.heist);
     expect(again.heist.roster?.lookout.level).toBe(4);
@@ -385,9 +385,8 @@ describe('pre-overhaul serialized compatibility', () => {
     expect(again.account.bank).toEqual(fixture.account.bank);
     expect(again.account.hideout).toEqual(fixture.account.hideout);
     expect(again.professionProgress.work).toEqual({});
-    expect(again.professionProgress.counters).toEqual({ 'foraging.seedsMigrated': 1 });
     expect(again.professionProgress.projects).toEqual({});
-    expect(again.professionProgress.discoveries.seed_frostleaf).toBe(true);
+    expect(again.foraging.strains.frostleaf).toBeDefined();
     expect(again.professionProgress.legacyAccess.smithing_work_60).toBe(true);
     expect(again.professionProgress).toEqual(s.professionProgress);
   });

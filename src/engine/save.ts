@@ -30,7 +30,7 @@ import { MASTERY_CAP, settleSkillingMastery } from './skillingMastery';
 import { migrateLegacyLootFilters, settleLootFilters } from './lootFilter';
 import { migrateSettingsProfiles, settleTreeProfiles } from './treeProfiles';
 import { settleProfessionProgress } from './professions';
-import { settleForagingSeeds } from './foraging';
+import { migrateForagingToBreeding, settleForaging } from './foraging';
 import { newCampaignQuestState, settleCampaignQuests } from './campaignQuests';
 import { newAstrologyState } from './astrology';
 import { migrateDelve } from './delve';
@@ -495,6 +495,7 @@ const MIGRATIONS: Record<number, Migration> = {
   57: (raw) => migrateForging(raw as unknown as GameState),
   58: (raw) => { raw.woodcrafting ??= freshWoodcrafting(); },
   59: (raw) => { raw.gemcutting ??= freshGemcutting(); },
+  60: migrateForagingToBreeding,
 };
 
 /**
@@ -652,7 +653,7 @@ export function deserialize(json: string): GameState {
   settleForging(s);
   settleSkillingMastery(s);
   settleProfessionProgress(s);
-  settleForagingSeeds(s);
+  settleForaging(s);
   migrateSettingsProfiles(s);
   settleTreeLayout(s);
   settlePassivePoints(s);
@@ -690,7 +691,6 @@ export function unlockReachedZones(s: GameState): void {
 /** A skilling recipe that was removed or renamed (e.g. the per-attribute gem cuts) stops instead of crashing the load. */
 export function dropRemovedActions(s: GameState): void {
   if (s.action?.kind === 'skill' && !hasAction(s.action.actionId)) s.action = null;
-  if (s.greenhouse && !hasAction(s.greenhouse.actionId)) s.greenhouse = null;
 }
 
 export function exportSave(s: GameState): string {

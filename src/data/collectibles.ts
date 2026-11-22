@@ -69,6 +69,15 @@ export const COLLECTIBLES: CollectibleDef[] = [
   row('smithing', 'forge', 'The Forge', "A master smith's broken hammerhead", 'Someone kept it behind the quench barrel. The striking face still shines.'),
   row('woodcrafting', 'workbench', 'The Woodcrafting Bench', 'A carved toy hare', 'One ear has been worn smooth. It was carried much further than this bench.'),
   row('gemcutting', 'wheel', 'The Cutting Wheel', 'A jeweller’s lost loupe', 'Tiny initials are etched where only a jeweller would look.'),
+  row('harvesting', 'sunpetal', 'Sunpetal Patch', 'A pressed golden petal', 'Tucked between two torn pages of an old field guide.'),
+  row('harvesting', 'frostleaf', 'Frostleaf Patch', 'A frost-rimmed fern', 'It stays cold to the touch even in a warm pocket.'),
+  row('harvesting', 'emberroot', 'Emberroot Patch', 'A charred seed pod', 'Still faintly warm, smelling of hearth smoke.'),
+  row('harvesting', 'voidbloom', 'Voidbloom Patch', 'A velvet calyx', 'So dark it swallows lantern light at the edges.'),
+  row('harvesting', 'moon_bloom', 'Moon Bloom Patch', 'A silver-veined leaf', 'Only catches the eye when held sideways to the moon.'),
+  row('harvesting', 'thornvine', 'Thornvine Patch', 'A braided bramble ring', 'Woven tight by someone who knew which thorns bend.'),
+  row('harvesting', 'star_bloom', 'Star Bloom Patch', 'A dry star-pod', 'Rattles softly like glass beads when shaken.'),
+  row('harvesting', 'glimmermoss', 'Glimmermoss Patch', 'A bottled tuft of moss', 'Glows pale green in the dark long after picking.'),
+  row('harvesting', 'wraithlily', 'Wraithlily Patch', 'A translucent petal', 'Clear as oiled paper, with veins like frost.'),
 ];
 
 export function collectibleDef(id: string): CollectibleDef | undefined {

@@ -227,10 +227,10 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
     base.account.hideout.forge = 2;
     base.account.hideout.alchemy_table = 2;
     base.expedition.dug = { cairn: 120 };
-    base.greenhouse = { actionId: 'herb_sun', progress: 1200 };
     base.action = { kind: 'skill', actionId: 'mine_iron', progress: 1100 };
 
     const raw = JSON.parse(serialize(base));
+    raw.greenhouse = { actionId: 'herb_sun', progress: 1200 };
     delete raw.professionProgress;
     delete raw.delve;
     delete raw.smelting;
@@ -247,7 +247,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
     expect(loaded2.skills.mining).toBe(base.skills.mining);
     expect(loaded2.skillingMastery['task.delve_copper']).toBe(12000);
     expect(loaded2.expedition.dug.cairn).toBe(120);
-    expect(loaded2.greenhouse?.actionId).toBe('herb_sun');
+    expect(loaded2.foraging.plots[0]?.parents).toEqual(['sunpetal']);
     expect(loaded2.action?.kind).toBe('skill');
     if (loaded2.action?.kind === 'skill') {
       expect(loaded2.action.actionId).toBe('delve_work');
@@ -313,7 +313,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
       { skill: 'mining', actionId: 'mine_copper' },
       { skill: 'woodcutting', actionId: 'giant_ash' },
       { skill: 'smelting', actionId: 'smelt_copper', bank: { copper_ore: 50000 } },
-      { skill: 'harvesting', actionId: 'herb_sun' },
+      { skill: 'harvesting', actionId: 'forage_sunpetal' },
       { skill: 'alchemy', actionId: 'brew_life_small', bank: { sunpetal: 50000, ash_log: 50000 } },
       { skill: 'cooking', actionId: cookStarter.id, bank: { sunpetal: 50000, ash_log: 50000, frostleaf: 50000, copper_ore: 50000 } },
       { skill: 'gemcutting', actionId: gemTargeted.id, bank: { rough_gem: 5000, arcane_dust: 50000 }, setup: (s) => { s.skills.gemcutting = xpForLevel(20); } },

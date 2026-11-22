@@ -21,7 +21,7 @@ import { settleForbiddenAllowance } from './passives';
 import { mapStep, newMapState } from './maps';
 import { seeded } from './rng';
 import { craftStep } from './craftUntil';
-import { greenhouseStep, skillStep } from './skills';
+import { skillStep } from './skills';
 import { advanceProject, newProfessionProgress } from './professions';
 import { deriveStats } from './stats';
 import { defaultLayeredLootFilter, defaultLootFilters } from './lootFilter';
@@ -34,11 +34,12 @@ import { initialSmelting } from './smelting';
 import { freshForging } from './forging';
 import { freshWoodcrafting, woodGrowthStep } from './woodcrafting';
 import { freshGemcutting } from './gemFacets';
+import { freshForaging } from './foraging';
 export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 60;
+export const SAVE_VERSION = 61;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -83,6 +84,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     forging: freshForging(),
     woodcrafting: freshWoodcrafting(),
     gemcutting: freshGemcutting(),
+    foraging: freshForaging(),
     skillingMastery: {},
     professionProgress: newProfessionProgress(),
     inventory: [],
@@ -119,7 +121,6 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     campaign: { act: 1 },
     achievements: [],
     bossesDefeated: [],
-    greenhouse: null,
     meal: null,
     keepEating: true,
     smithCatalyst: { fossil: null, resin: null, until: false, salvageMisses: false, salvageFull: false, salvageAll: false },
@@ -191,7 +192,6 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
     if (s.action?.kind === 'craft') craftStep(s, ctx, step);
     if (s.action?.kind === 'heist') heistStep(s, ctx, step, d);
     heistAutoStep(s);
-    greenhouseStep(s, ctx, step, d);
     if (isMealClockRunning(s)) mealStep(s, ctx, step);
     if (s.combat) {
       if (hasLivingEquipment && s.combat.monsters.some((mon) => mon.life > 0) && woodGrowthStep(s, step)) d = deriveStats(s);

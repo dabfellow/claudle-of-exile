@@ -90,8 +90,11 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'frostleaf', name: 'Frostleaf', kind: 'herb', color: '#7fc8f8', value: 5 },
   { id: 'emberroot', name: 'Emberroot', kind: 'herb', color: '#e2603f', value: 10 },
   { id: 'voidbloom', name: 'Voidbloom', kind: 'herb', color: '#9b6dde', value: 20 },
-  { id: 'moon_bloom', name: 'Moon Bloom', kind: 'herb', color: '#b3d7fa', value: 0, desc: 'Gathered from Moon Bloom Patches or grown in the Greenhouse. Stock for later distillates, signature meals and binding stock.' },
-  { id: 'star_bloom', name: 'Star Bloom', kind: 'herb', color: '#d4a9ff', value: 0, desc: 'Gathered from Star Bloom Patches or grown in the Greenhouse. Stock for later distillates, signature meals and feasts.' },
+  { id: 'moon_bloom', name: 'Moon Bloom', kind: 'herb', color: '#b3d7fa', value: 25, desc: 'Gathered from Moon Bloom Patches or grown in the Greenhouse.' },
+  { id: 'thornvine', name: 'Thornvine', kind: 'herb', color: '#8f5a4a', value: 30, desc: 'Prickly wild vine gathered by Foraging or bred in the Greenhouse.' },
+  { id: 'star_bloom', name: 'Star Bloom', kind: 'herb', color: '#d4a9ff', value: 40, desc: 'Gathered from Star Bloom Patches or grown in the Greenhouse.' },
+  { id: 'glimmermoss', name: 'Glimmermoss', kind: 'herb', color: '#64d8b4', value: 55, desc: 'Luminous moss gathered by Foraging or bred in the Greenhouse.' },
+  { id: 'wraithlily', name: 'Wraithlily', kind: 'herb', color: '#c4b8e8', value: 80, desc: 'Pale late-tier bloom gathered by Foraging or bred in the Greenhouse.' },
 
   // Fishing is coming soon: nothing can catch these yet
   { id: 'mudskipper', name: 'Mudskipper', kind: 'fish', color: '#8a7b5a', value: 2 },

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { activeGemDef } from '../src/data/gems';
 import { STATIONS, stationDef } from '../src/data/hideout';
-import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { zoneDef } from '../src/data/zones';
 import { settleCharacter } from '../src/engine/account';
 import { bossesOffline, castOrder, offlineCapMs, ruleLockReason, ruleSlots, ruleUnlockLevel, suggestedRule, unlockEverything } from '../src/engine/automation';
@@ -242,15 +241,12 @@ describe('offline rules', { timeout: 30_000 }, () => {
     expect(won).toBe(true);
   });
 
-  it('dying stops combat until you return, while a greenhouse keeps growing', () => {
+  it('dying stops combat until you return', () => {
     const s = newGame(1, { name: 'T', classId: 'warrior' });
     s.tutorial.done = true;
     s.settings.autoFlee = false;
     s.equipment = {};
     s.flaskSlots = s.flaskSlots.map(() => null);
-    const keystone = SKILL_TREE_NODES.find((n) => n.stats?.greenhouse)!;
-    s.skillPassives = [keystone.id];
-    s.greenhouse = { actionId: 'herb_sun', progress: 0 };
     s.unlockedZones.push('sanctum');
     const c = ctx();
     expect(startCombat(s, c, 'sanctum')).toBeNull();
@@ -260,21 +256,6 @@ describe('offline rules', { timeout: 30_000 }, () => {
     expect(s.lifetime.deaths).toBe(1);
     expect(s.action).toBeNull();
     expect(s.combat).toBeNull();
-    expect(sum.materials.sunpetal).toBeGreaterThan(10);
-  });
-
-  it('Overtime speeds the Greenhouse while offline', () => {
-    const grower = (overtime: boolean) => {
-      const s = newGame(1, { name: 'T', classId: 'warrior' });
-      s.skillPassives = ['harvesting_ks', ...(overtime ? ['core_3'] : [])];
-      s.greenhouse = { actionId: 'herb_sun', progress: 0 };
-      return s;
-    };
-    const plain = grower(false);
-    const fast = grower(true);
-    simulateOffline(plain, ctx(), 60 * 60_000);
-    simulateOffline(fast, ctx(), 60 * 60_000);
-    expect(fast.storage.bank.sunpetal).toBeGreaterThan(plain.storage.bank.sunpetal);
   });
 });
 

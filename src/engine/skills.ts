@@ -221,8 +221,6 @@ export function startSkillAction(s: GameState, ctx: Ctx, actionId: string, cut?:
     s.forging.active = null;
   }
   s.action = { kind: 'skill', actionId, progress: 0, ...(a.skill === 'gemcutting' && cut && { cut: { ...cut, draft: cut.draft?.slice(0, 5) } }) };
-  // Greenhouse remembers the last Foraging spot so it can keep growing in the background
-  if (a.skill === 'harvesting') s.greenhouse = { actionId, progress: 0 };
   return null;
 }
 
@@ -694,22 +692,5 @@ export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
       a = forgeAction(s, s.action.actionId) ?? actionDef(s.action.actionId);
       interval = actionIntervalMs(s, a, d);
     }
-  }
-}
-
-/** Greenhouse keystone: the last Foraging spot keeps growing slowly while you do anything else. */
-export function greenhouseStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void {
-  const g = s.greenhouse;
-  const pct = skillTreeStats(s).greenhouse ?? 0;
-  if (!g || !pct) return;
-  if (s.action?.kind === 'skill' && actionDef(s.action.actionId).skill === 'harvesting') return;
-  const a = actionDef(g.actionId);
-  if (skillLevel(s, 'harvesting') < a.level) return;
-  const offlineBoost = ctx.offline ? 1 + (skillTreeStats(s).offlineSpeed ?? 0) / 100 : 1;
-  g.progress += dt * (pct / 100) * offlineBoost * (ctx.event?.gatheringSpeed ?? 1);
-  const interval = actionIntervalMs(s, a, d);
-  while (g.progress >= interval) {
-    g.progress -= interval;
-    complete(s, ctx, a, d, false, false);
   }
 }

@@ -385,7 +385,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
         inventory: structuredClone(s.inventory),
         skills: structuredClone(s.skills),
         hideout: structuredClone(s.account.hideout),
-        greenhouse: structuredClone(s.greenhouse),
+        foraging: structuredClone(s.foraging),
         expedition: structuredClone(s.expedition),
       };
 
@@ -398,7 +398,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
       expect(s.inventory).toEqual(previous.inventory);
       expect(s.skills).toEqual(previous.skills);
       expect(s.account.hideout).toEqual(previous.hideout);
-      expect(s.greenhouse).toEqual(previous.greenhouse);
+      expect(s.foraging).toEqual(previous.foraging);
       expect(s.expedition).toEqual(previous.expedition);
     });
 

@@ -147,7 +147,7 @@ describe('non-combat action mastery', () => {
     expect(s.heist.tally.alarms).toBe(1);
   });
 
-  it('earns equal practice for equal completed work live, offline and in the Greenhouse path', () => {
+  it('earns equal practice for equal completed work live and offline', () => {
     const live = start('mine_copper');
     const away = start('mine_copper');
     tick(live.s, live.ctx, 60_000);
@@ -155,18 +155,6 @@ describe('non-combat action mastery', () => {
     const id = live.a.mastery!.id;
     expect(away.s.skillingMastery[id]).toBe(live.s.skillingMastery[id]);
     expect(summary.mastery[id]).toBe(away.s.skillingMastery[id]);
-
-    const dormant = newGame(1);
-    dormant.greenhouse = { actionId: 'herb_sun', progress: 0 };
-    dormant.skillPassives = []; // no Greenhouse allocation means no background completions or practice
-    tick(dormant, makeCtx(seeded(2)), 60_000);
-    expect(dormant.skillingMastery).toEqual({});
-
-    const greenhouse = newGame(1);
-    greenhouse.greenhouse = { actionId: 'herb_sun', progress: 0 };
-    greenhouse.skillPassives = ['harvesting_ks'];
-    tick(greenhouse, makeCtx(seeded(2)), 60_000);
-    expect(greenhouse.skillingMastery[actionDef('herb_sun').mastery!.id]).toBeGreaterThan(0);
   });
 
   it('never lets future conservation finance a start or mastery gate content', () => {

@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { angleResult, bellowsResult, braceResult, gemTurnMs, liftResult, liftWindowMs } from '../src/engine/minigame';
+import { angleResult, bellowsResult, braceResult, fertiliseResult, fertiliseWindowMs, gemTurnMs, liftResult, liftWindowMs } from '../src/engine/minigame';
+
+describe('Foraging whack-a-mole fertilising', () => {
+  it('scores double, hit, weak and miss and tightens window for deeper species', () => {
+    expect(fertiliseWindowMs(0)).toBe(1600);
+    expect(fertiliseWindowMs(4)).toBe(1200);
+    expect(fertiliseWindowMs(8)).toBe(900);
+    expect(fertiliseResult(300, 1000, false)).toBe('double');
+    expect(fertiliseResult(301, 1000, false)).toBe('hit');
+    expect(fertiliseResult(1000, 1000, false)).toBe('hit');
+    expect(fertiliseResult(1001, 1000, false)).toBe('weak');
+    expect(fertiliseResult(1300, 1000, false)).toBe('weak');
+    expect(fertiliseResult(1301, 1000, false)).toBe('miss');
+    expect(fertiliseResult(100, 1000, true)).toBe('miss');
+    expect(fertiliseResult(null, 1000, false)).toBe('miss');
+  });
+});
 
 describe('Gemcutting dop-stick angle', () => {
   it('scores double, hit, weak and miss across wrap-around angles', () => {

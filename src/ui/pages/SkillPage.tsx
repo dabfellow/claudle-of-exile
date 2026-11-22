@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+﻿import { useCallback, useState } from 'react';
 import { baseDef } from '../../data/bases';
 import { FOSSILS, fossilDef, RESINS } from '../../data/craftMats';
 import { flaskDef } from '../../data/flasks';
@@ -42,6 +42,7 @@ import { DelveView } from '../components/DelveView';
 import { AnvilView } from '../components/AnvilView';
 import { WoodBench } from '../components/WoodBench';
 import { LapidaryBench } from '../components/LapidaryBench';
+import { ForagingBench } from '../components/ForagingBench';
 import { ProfessionWorkbench, PROFESSION_THEMES } from '../components/ProfessionWorkbench';
 import { Icon, Orb, Swatch } from '../components/Icon';
 import { MasteryProgress } from '../components/MasteryProgress';
@@ -50,12 +51,10 @@ import { masteryLevel } from '../../engine/skillingMastery';
 import { miningAccessHint, miningPreview } from '../../engine/mining';
 import { woodcuttingAccessHint, woodcuttingPreview } from '../../engine/woodcutting';
 import { smithingPreview } from '../../engine/smithing';
-import { foragingAccessHint, foragingPreview, greenhousePlantReason, plantGreenhouse } from '../../engine/foraging';
-import { foragingSource } from '../../data/foraging';
+import { foragingAccessHint, foragingPreview } from '../../engine/foraging';
 import { LEGENDS, WOODS } from '../../data/woodcutting';
 import { unlockedRegions } from '../../engine/woodcutting';
 import { GIANT_TABS, GiantView, isGiantTab } from '../components/GiantView';
-import { skillTreeStats } from '../../engine/skillTree';
 import { alchemyPreview } from '../../engine/alchemy';
 import { alchemyCategory, ALCHEMY_CATEGORIES } from '../../data/alchemy';
 import { COOKING_CATEGORIES, cookingCategory, cookingPreview } from '../../engine/cooking';
@@ -117,40 +116,40 @@ function gemOutputText(s: GameState, gem: NonNullable<SkillAction['gem']>): stri
 function OutputRows({ s, a }: { s: GameState; a: SkillAction }) {
   return (
     <ul className="ingredients outputs">
-      {Object.entries(a.protectedOutputs ?? {}).map(([id, n]) => <li key={id}><MatIcon id={id} size={12} /><span className="ing-name">{materialDef(id).name}</span><span className="ing-qty num">×{n} · protected</span></li>)}
+      {Object.entries(a.protectedOutputs ?? {}).map(([id, n]) => <li key={id}><MatIcon id={id} size={12} /><span className="ing-name">{materialDef(id).name}</span><span className="ing-qty num">Ã—{n} Â· protected</span></li>)}
       {Object.entries(a.outputs ?? {}).map(([id, n]) => (
         <li key={id}>
           <MatIcon id={id} size={12} />
           <span className="ing-name">{materialDef(id).name}</span>
-          <span className="ing-qty num">{a.outputChance !== undefined ? `${Math.round(a.outputChance * 100)}% chance` : `×${n}`}</span>
+          <span className="ing-qty num">{a.outputChance !== undefined ? `${Math.round(a.outputChance * 100)}% chance` : `Ã—${n}`}</span>
         </li>
       ))}
       {a.baseId && (
         <li>
           <Icon name={baseDef(a.baseId).slot} size={13} />
           <span className="ing-name">{baseDef(a.baseId).name}</span>
-          <span className="ing-qty num">×1</span>
+          <span className="ing-qty num">Ã—1</span>
         </li>
       )}
       {a.flaskId && (
         <li>
           <Orb color={flaskDef(a.flaskId).color} size={11} />
           <span className="ing-name">{flaskDef(a.flaskId).name}</span>
-          <span className="ing-qty num">×{a.batchMastery ? a.batch : 1}</span>
+          <span className="ing-qty num">Ã—{a.batchMastery ? a.batch : 1}</span>
         </li>
       )}
       {a.gem && (
         <li>
           <GameIcon name="gemcutting" size={13} color={a.color} />
           <span className="ing-name">{gemOutputText(s, a.gem)}</span>
-          <span className="ing-qty num">×{a.batchMastery ? a.batch : 1}</span>
+          <span className="ing-qty num">Ã—{a.batchMastery ? a.batch : 1}</span>
         </li>
       )}
       {a.chart && (
         <li>
           <GameIcon name="map" size={13} color={a.color} />
           <span className="ing-name">Map Tier {a.chart.tier}</span>
-          <span className="ing-qty num">×{a.chart.qty}</span>
+          <span className="ing-qty num">Ã—{a.chart.qty}</span>
         </li>
       )}
       {a.bonus?.map((b) => {
@@ -179,7 +178,7 @@ function ActionArt({ a, locked, running }: { a: SkillAction; locked: boolean; ru
 }
 
 /**
- * One activity, Melvor-style: a compact row (art, name, level · time · XP, start button) that
+ * One activity, Melvor-style: a compact row (art, name, level Â· time Â· XP, start button) that
  * expands on click to show what it drops and what it needs.
  */
 function ActionCard({ a, level, open, onToggle, workbench = false }: { a: SkillAction; level: number; open: boolean; onToggle: () => void; workbench?: boolean }) {
@@ -219,7 +218,7 @@ function ActionCard({ a, level, open, onToggle, workbench = false }: { a: SkillA
     >
       {pops.map((p) => (
         <span key={p.id} className="pop">
-          {p.text} · +{Math.round(a.xp * (1 + d.skillXp / 100))}xp
+          {p.text} Â· +{Math.round(a.xp * (1 + d.skillXp / 100))}xp
         </span>
       ))}
       <div className="action-head">
@@ -242,7 +241,7 @@ function ActionCard({ a, level, open, onToggle, workbench = false }: { a: SkillA
             </span>
           </span>
           <span className="action-chevron" aria-hidden>
-            ▸
+            â–¸
           </span>
         </button>
         {locked ? null : running ? (
@@ -350,7 +349,7 @@ function CatalystPanel() {
             <option value="">None</option>
             {FOSSILS.map((f) => (
               <option key={f.id} value={f.id} disabled={!s.storage.bank[f.id]}>
-                {f.name} ({owned(f.id)}) — {f.desc}
+                {f.name} ({owned(f.id)}) â€” {f.desc}
               </option>
             ))}
           </select>
@@ -567,7 +566,7 @@ function defaultSkillTab(skill: SkillId): string {
 }
 
 /**
- * Activities split into tiers: gathering by the material a node mainly gives (Copper, Iron, …),
+ * Activities split into tiers: gathering by the material a node mainly gives (Copper, Iron, â€¦),
  * production by bands of ten levels.
  */
 function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
@@ -603,8 +602,8 @@ function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
   }
   if (skill === 'thieving') {
     const groups: Tier[] = [
-      { key: 'street', label: 'Street Targets (Lv 1–16)', actions: [] },
-      { key: 'civic', label: 'Civic & Wealthy (Lv 24–40)', actions: [] },
+      { key: 'street', label: 'Street Targets (Lv 1â€“16)', actions: [] },
+      { key: 'civic', label: 'Civic & Wealthy (Lv 24â€“40)', actions: [] },
       { key: 'underworld', label: 'Underworld Figures (Lv 48+)', actions: [] },
     ];
     for (const a of actions) {
@@ -674,7 +673,7 @@ function AgilityShortcuts({ level }: { level: number }) {
     <details className="profession-supplies agility-shortcuts" open>
       <summary>
         Shortcuts <span className="dim num">{AGILITY_SHORTCUTS.filter((x) => x.level <= level).length}/{AGILITY_SHORTCUTS.length}</span>
-        {next && <span className="dim small"> · next at Lv {next.level}: {next.name}</span>}
+        {next && <span className="dim small"> Â· next at Lv {next.level}: {next.name}</span>}
       </summary>
       <ul className="agility-shortcut-list">
         {AGILITY_SHORTCUTS.map((x) => {
@@ -729,159 +728,11 @@ function LockedSkill({ skill, place }: { skill: SkillId; place: string }) {
   );
 }
 
-function GreenhousePanel({ s }: { s: GameState }) {
-  const [filter, setFilter] = useState<'all' | 'ordinary' | 'abundant' | 'concentrated' | 'bloom'>('all');
-  const d = deriveStats(s);
-  const hasKeystone = !!skillTreeStats(s).greenhouse;
-  const harvestingActions = actionsFor('harvesting');
-  const activePlant = s.greenhouse ? harvestingActions.find((a) => a.id === s.greenhouse!.actionId) : null;
-  const currentSkillActionId = s.action?.kind === 'skill' ? s.action.actionId : null;
-  const isForaging = currentSkillActionId ? harvestingActions.some((a) => a.id === currentSkillActionId) : false;
-
-  const filteredActions = filter === 'all'
-    ? harvestingActions
-    : harvestingActions.filter((a) => {
-        const source = foragingSource(a);
-        return source?.mode === filter;
-      });
-
-  const activeIntervalMs = activePlant ? actionIntervalMs(s, activePlant, d) : 3000;
-  const progressPct = s.greenhouse && activeIntervalMs > 0
-    ? Math.min(100, Math.floor((s.greenhouse.progress / activeIntervalMs) * 100))
-    : 0;
-
-  return (
-    <div className="greenhouse-conservatory">
-      <div className={`card ${s.greenhouse ? 'greenhouse-plot-card' : 'greenhouse-plot-empty'}`}>
-        <div className="card-title">
-          <span>🌿 Active Greenhouse Plot</span>
-          <span className="grow" />
-          {s.greenhouse && (
-            <button
-              type="button"
-              className="btn sm ghost"
-              onClick={() => game.act((st) => { st.greenhouse = null; })}
-              title="Clear plot and reset stored cycle"
-            >
-              Uproot / Empty Plot
-            </button>
-          )}
-        </div>
-
-        {!hasKeystone && (
-          <div className="callout warn" style={{ marginBottom: 12 }}>
-            <b>Greenhouse Keystone Required:</b> Allocate the Greenhouse keystone in the Foraging skill passive tree to enable background growth.
-          </div>
-        )}
-
-        {activePlant ? (
-          <div>
-            <div className="row wrap" style={{ alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: '50%', background: activePlant.color }} />
-              <b style={{ fontSize: 'var(--fs-md)' }}>{activePlant.name}</b>
-              <span className="chip xs">Lv {activePlant.level}</span>
-              <span className={`chip xs ${isForaging ? 'warn' : 'good'}`}>
-                {isForaging ? '⏸️ Paused (Foreground Foraging)' : '🌱 Growing in background (20% speed)'}
-              </span>
-            </div>
-
-            <div style={{ marginBottom: 6 }}>
-              <div className="row" style={{ justifyContent: 'space-between', fontSize: 'var(--fs-xs)', marginBottom: 3 }}>
-                <span className="dim">Cycle Progress</span>
-                <span className="num">{((s.greenhouse?.progress ?? 0) / 1000).toFixed(1)}s / {(activeIntervalMs / 1000).toFixed(1)}s ({progressPct}%)</span>
-              </div>
-              <ProgressBar value={progressPct} color="var(--success)" className="thin" />
-            </div>
-
-            <p className="dim small" style={{ margin: '6px 0 0 0' }}>
-              Produces: {Object.entries(activePlant.outputs || ({} as Record<string, number>)).map(([k, qty]) => `${qty}x ${materialDef(k)?.name ?? k}`).join(', ')}
-              {activePlant.bonus && activePlant.bonus.length > 0 && ` · Bonus: ${activePlant.bonus.map((b) => `${(b.chance * 100).toFixed(1)}% ${materialDef(b.id)?.name ?? b.id}`).join(', ')}`}
-            </p>
-          </div>
-        ) : (
-          <div className="dim small" style={{ padding: '8px 0' }}>
-            No plant currently growing. Allocate the Greenhouse keystone and select a discovered seed below to begin passive herb cultivation.
-          </div>
-        )}
-
-        <p className="muted small" style={{ marginTop: 10, marginBottom: 0 }}>
-          Your plant grows at 20% speed while you do anything else (combat, crafting, or offline), pauses during active Foraging, and preserves its progress while paused. Switching plants resets partial cycle progress.
-        </p>
-      </div>
-
-      <div className="card">
-        <div className="card-title">
-          <span>Discovered Herb Cultivations</span>
-          <span className="grow" />
-          <div className="row wrap" style={{ gap: 4 }}>
-            {(['all', 'ordinary', 'abundant', 'concentrated', 'bloom'] as const).map((k) => (
-              <button
-                key={k}
-                type="button"
-                className={`chip sm ${filter === k ? 'active' : ''}`}
-                onClick={() => setFilter(k)}
-              >
-                {k === 'all' ? 'All' : k === 'bloom' ? 'Rare Blooms' : k.charAt(0).toUpperCase() + k.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="greenhouse-grid" style={{ marginTop: 12 }}>
-          {filteredActions.map((a) => {
-            const isPlanted = s.greenhouse?.actionId === a.id;
-            const reason = greenhousePlantReason(s, a);
-            const intervalSec = (actionIntervalMs(s, a, d) / 1000).toFixed(1);
-
-            return (
-              <div key={a.id} className={`greenhouse-crop-card ${isPlanted ? 'active' : ''}`}>
-                <div className="greenhouse-crop-head">
-                  <div className="row" style={{ alignItems: 'center', gap: 6 }}>
-                    <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: a.color }} />
-                    <b>{a.name}</b>
-                  </div>
-                  <span className="chip xs">Lv {a.level}</span>
-                </div>
-
-                <div className="greenhouse-crop-body">
-                  <span className="dim">Yield: {Object.entries(a.outputs || ({} as Record<string, number>)).map(([k, qty]) => `${qty}x ${materialDef(k)?.name ?? k}`).join(', ')}</span>
-                  {a.bonus && a.bonus.length > 0 && (
-                    <span className="dim">Bonus: {a.bonus.map((b) => `${(b.chance * 100).toFixed(1)}% ${materialDef(b.id)?.name ?? b.id}`).join(', ')}</span>
-                  )}
-                  <span className="dim num">Base Cycle: {intervalSec}s</span>
-                </div>
-
-                <div className="greenhouse-crop-foot">
-                  {isPlanted ? (
-                    <span className="chip good sm" style={{ fontWeight: 600 }}>Currently Growing</span>
-                  ) : reason ? (
-                    <button type="button" className="btn sm" disabled title={reason}>
-                      🔒 {reason.length > 28 ? reason.slice(0, 26) + '…' : reason}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn sm primary"
-                      onClick={() => game.act((st) => plantGreenhouse(st, a.id))}
-                    >
-                      Plant in Plot
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function SkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) => void }) {
   const s = useGame();
   const lockedAt = skillLock(s, skill);
   if (lockedAt) return <LockedSkill skill={skill} place={lockedAt} />;
-  if (skill === 'mining' || skill === 'smelting' || skill === 'smithing' || skill === 'woodcrafting' || skill === 'gemcutting') return <WorkshopPage key={skill} skill={skill} go={go} />;
+  if (skill === 'mining' || skill === 'smelting' || skill === 'smithing' || skill === 'woodcrafting' || skill === 'gemcutting' || skill === 'harvesting') return <WorkshopPage key={skill} skill={skill} go={go} />;
   return <OpenSkillPage skill={skill} go={go} />;
 }
 
@@ -899,7 +750,7 @@ function QuickForgeRecipes() {
   </>;
 }
 
-function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'gemcutting'; go?: (skill: SkillId) => void }) {
+function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'gemcutting' | 'harvesting'; go?: (skill: SkillId) => void }) {
   const s = useGame();
   const activeProject = s.professionProgress.activeProject?.project.skill === skill;
   const projects = <ProjectBoard skill={skill} go={go} />;
@@ -911,6 +762,7 @@ function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing'
     {skill === 'smithing' && <AnvilView quickRecipes={<QuickForgeRecipes />} catalysts={catalysts} masterworks={projects} />}
     {skill === 'woodcrafting' && <WoodBench catalysts={catalysts} masterworks={projects} />}
     {skill === 'gemcutting' && <LapidaryBench masterworks={projects} />}
+    {skill === 'harvesting' && <ForagingBench masterworks={projects} />}
     {skill === 'mining' && <details className="profession-supplies" open={activeProject}><summary>Masterworks</summary>{projects}</details>}
   </div>;
 }
@@ -1045,7 +897,6 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
         </div>
       )}
 
-      {skill === 'harvesting' && tab === 'greenhouse' && <GreenhousePanel s={s} />}
       {skill === 'astrology' && tab !== 'masterworks' && <Observatory tab={tab} />}
       {skill === 'agility' && <AgilityShortcuts level={level} />}
       {skill === 'woodcutting' && isGiantTab(tab) && <GiantView tab={tab} go={setTab} />}
@@ -1067,7 +918,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
           {s.action?.kind === 'heist' && (
             <div className="callout" style={{ borderColor: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span>
-                <b>Heist in progress:</b> {heistJob(s.action.jobId).name} · Room {s.action.room} of {s.action.lastRoom}
+                <b>Heist in progress:</b> {heistJob(s.action.jobId).name} Â· Room {s.action.room} of {s.action.lastRoom}
               </span>
               <button className="btn sm" onClick={() => setTab('heists')}>
                 View Heist

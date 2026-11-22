@@ -4,7 +4,7 @@ Last updated 2026-11-21. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Mining, Smelting, Forging, Woodcrafting and Gemcutting are built locally on the skilling overhaul checkout (2026-11-21). Continue the remaining skills, removals and skilling tree revamp before releasing the overhaul.
+Mining, Smelting, Forging, Woodcrafting, Gemcutting and Foraging are built locally on the skilling overhaul checkout (2026-11-21). Continue Alchemy, Cartography, skill removals and the skilling tree revamp before releasing the overhaul.
 
 Act-map readability, quest highlighting and the Quests sidebar page are live in **0.5.10**.
 

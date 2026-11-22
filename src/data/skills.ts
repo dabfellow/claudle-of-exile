@@ -4,7 +4,7 @@ import { WEAPON_COMPONENT_ACTIONS } from './weaponProjects';
 import { ARCHAEOLOGY_RECIPES } from './archaeology';
 import { MINING_ACTIONS, type MiningDeposit } from './mining';
 import { WOODCUTTING_ACTIONS, type WoodcuttingSource } from './woodcutting';
-import { AGILITY_ACTIONS, AGILITY_SPOT_LEVEL } from './agility';
+import { AGILITY_ACTIONS } from './agility';
 import { FORAGING_ACTIONS, foragingSource, type ForagingSource } from './foraging';
 import { ALCHEMY_EXPANSION_ACTIONS } from './alchemy';
 import { purposeRecipes, SMITH_COMPONENTS, type SmithPurpose } from './smithing';
@@ -132,41 +132,6 @@ const GATHERING: SkillAction[] = [
   { ...gather('mining', 'mine_jagged', 'Jagged Vein', 19, 4000, 22, 'iron_ore', '#c9c9d3', [{ id: 'serrated_fossil', chance: 0.08, qty: 1 }]), outputChance: ALT_YIELD, area: 'ashwood' },
   { ...gather('mining', 'mine_gem', 'Glimmering Geode', 22, 5000, 30, 'rough_gem', '#d0569b'), area: 'crypt' },
   { ...gather('mining', 'mine_mithril', 'Mithril Vein', 30, 4000, 38, 'mithril_ore', '#6fc3d8', [{ id: 'rough_gem', chance: 0.05, qty: 1 }, { id: 'mineral_fragment', chance: 0.025, qty: 1 }]), area: 'shipgrave' },
-
-
-  gather('harvesting', 'herb_sun', 'Sunpetal Patch', 1, 3000, 7, 'sunpetal', '#f2c94c', [{ id: 'essence_vitality_1', chance: 0.06, qty: 1 }]),
-  {
-    ...gather('harvesting', 'herb_emberbloom', 'Emberbloom Bed', 6, 3500, 9, 'sunpetal', '#ff8a4a', [
-      { id: 'essence_embers_1', chance: 0.06, qty: 1 },
-      { id: 'essence_storm_1', chance: 0.06, qty: 1 },
-    ]),
-    outputChance: ALT_YIELD,
-  },
-  {
-    ...gather('harvesting', 'herb_frost', 'Frostleaf Thicket', 12, 3500, 16, 'frostleaf', '#7fc8f8', [
-      { id: 'essence_frost_2', chance: 0.05, qty: 1 },
-      { id: 'essence_vitality_2', chance: 0.02, qty: 1 },
-    ]),
-    area: 'ashwood',
-  },
-  {
-    ...gather('harvesting', 'herb_windreed', 'Windreed Marsh', 16, 4000, 19, 'frostleaf', '#a8d8b0', [
-      { id: 'essence_embers_2', chance: 0.05, qty: 1 },
-      { id: 'essence_storm_2', chance: 0.05, qty: 1 },
-      { id: 'essence_haste_2', chance: 0.02, qty: 1 },
-    ]),
-    outputChance: ALT_YIELD,
-    area: 'ashwood',
-  },
-  { ...gather('harvesting', 'herb_ember', 'Emberroot Bed', 25, 4000, 32, 'emberroot', '#e2603f'), area: 'crypt' },
-  {
-    ...gather('harvesting', 'herb_ledge', 'Ledge Garden', 25, 4000, 34, 'emberroot', '#e88a5a', [
-      { id: 'essence_embers_2', chance: 0.05, qty: 1 },
-      { id: 'essence_haste_2', chance: 0.04, qty: 1 },
-    ]),
-    agility: AGILITY_SPOT_LEVEL.herb_ledge,
-  },
-  { ...gather('harvesting', 'herb_void', 'Voidbloom Grove', 40, 5000, 55, 'voidbloom', '#9b6dde'), area: 'stormcliffs' },
 ].map((a) => ({ ...a, bonus: [...(a.bonus ?? []), { id: SHARD_FOR[a.skill]!, chance: SHARD_CHANCE, qty: 1 }] }));
 
 const mark = (id: string, name: string, level: number, intervalMs: number, xp: number, gold: number, color: string, extra: SkillAction['bonus'] = []): SkillAction => ({

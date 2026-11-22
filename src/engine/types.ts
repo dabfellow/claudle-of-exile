@@ -14,6 +14,7 @@ import type { ForgingState } from './forging';
 import type { ForgeSignature } from '../data/forging';
 import type { WoodcraftingState, WoodPlan } from './woodcrafting';
 import type { CutSetup, GemcuttingState } from './gemFacets';
+import type { ForagingState } from './foraging';
 import type { RoughGem } from './roughGems';
 
 export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'agility' | 'archaeology' | 'smelting' | 'smithing' | 'woodcrafting' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'astrology' | 'fishing';
@@ -1371,6 +1372,7 @@ export interface GameState {
   forging: ForgingState;
   woodcrafting: WoodcraftingState;
   gemcutting: GemcuttingState;
+  foraging: ForagingState;
   skillBar: (SkillGemInstance | null)[];
   loadouts: Loadouts;
   action: Action;
@@ -1416,8 +1418,6 @@ export interface GameState {
   achievements: string[];
   /** areas whose boss has been killed at least once */
   bossesDefeated: string[];
-  /** Greenhouse keystone: the Foraging action that keeps ticking in the background */
-  greenhouse: { actionId: string; progress: number } | null;
   /** what you've eaten: its clock only runs while you fight */
   meal: { id: string; remainingMs: number } | null;
   fishingFlaskClaimed?: boolean;

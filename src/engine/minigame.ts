@@ -126,6 +126,17 @@ export function gemTurnMs(level: number): number {
   return 2400 - 800 * (Math.max(1, Math.min(99, level)) - 1) / 98;
 }
 
+export function fertiliseWindowMs(speciesIndex: number): number {
+  return Math.max(900, 1600 - 100 * Math.max(0, speciesIndex));
+}
+
+export function fertiliseResult(tapMs: number | null, windowMs: number, wrongPlant: boolean): SwingResult {
+  if (wrongPlant || tapMs === null || !Number.isFinite(tapMs) || tapMs < 0) return 'miss';
+  if (tapMs <= windowMs * 0.3) return 'double';
+  if (tapMs <= windowMs) return 'hit';
+  return tapMs <= windowMs + 300 ? 'weak' : 'miss';
+}
+
 export function curveResult(avgDeviation: number, completed: boolean): SwingResult {
   if (!completed || !Number.isFinite(avgDeviation)) return 'miss';
   if (avgDeviation <= 0.03) return 'double';

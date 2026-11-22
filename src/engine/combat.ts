@@ -3396,7 +3396,6 @@ export function die(s: GameState, ctx: Ctx, d: Derived): void {
   if (deathZone) (s.lifetime.deathZones ??= {})[deathZone] = (s.lifetime.deathZones?.[deathZone] ?? 0) + 1;
   if (isHardcore(s)) {
     s.fallen = { zoneId: s.combat?.zoneId ?? null, offline: !!ctx.offline };
-    s.greenhouse = null;
     ctx.emit({ t: 'death', xpLost: 0 });
     leaveCombat(s);
     return;

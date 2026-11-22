@@ -196,8 +196,7 @@ export function startOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offline
   /** One tick of the catch-up; false when there's nothing left to tick. */
   const tickOnce = (): boolean => {
     if (phase === 'active') {
-      // a greenhouse keeps growing after combat stops or a job runs out
-      if (left > 0 && (s.action || s.greenhouse)) {
+      if (left > 0 && s.action) {
         const chunk = nextChunk(1000);
         tick(s, quiet, chunk);
         left -= chunk;

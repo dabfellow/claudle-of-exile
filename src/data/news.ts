@@ -20,6 +20,7 @@ export const UPCOMING: string[] = [
   'Forging lets you choose how to shape rare equipment, repeat saved patterns, and craft master forms with alloy signatures. Rare singing pieces let you choose a final bonus.',
   'Woodcrafting lets you trade stats with tuning dials, save your settings for time away, upgrade jigs, and carve Living pieces that grow while equipped in combat.',
   'Gemcutting now cuts gems facet by facet based on rough gem carats, with family facets, Star Stones, named cuts from level 80, saved cut plans for time away, a cut catalogue with perks, recutting, and a dop-stick angle minigame.',
+  'Foraging is rebuilt around wild plant variants and Greenhouse cross-breeding: forage nine wild species patches with a whack-a-mole fertilising minigame, breed up to three stacked mutations (common, rare, and giga-rare), discover six hidden hybrids from level 80, stabilise strains, fill the Herbarium, and open sealed seed packets on return.',
 ];
 
 export const NEWS: NewsEntry[] = [

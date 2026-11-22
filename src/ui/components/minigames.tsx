@@ -3,6 +3,8 @@ import {
   angleResult,
   gemTurnMs,
   curveResult,
+  fertiliseResult,
+  fertiliseWindowMs,
   BRUSH_COLS,
   BRUSH_ROWS,
   brushChips,
@@ -35,19 +37,12 @@ import type { GiantPart, SkillId } from '../../engine/types';
 import { brushCrackCut } from '../../engine/deciphering';
 import { useGame } from '../../game';
 import { levelOf } from '../../engine/xp';
-import { MatIcon } from './common';
 import './star-chart.css';
 import '../archaeology.css';
 import './giants.css';
 
 const SWEEP_MS = 1200;
 const WOOD_ZONE = 0.18;
-/** Foraging: herbs grow a little faster than they wilt, and are in bloom (gold) for part of their life. */
-const HERB_EVERY_MS = 1300;
-const HERB_LIFE_MS = 3400;
-const HERB_BLOOM_FROM = 0.3;
-const HERB_BLOOM_TO = 0.55;
-const HERBS_MAX = 3;
 /** Astrology: the telescope. The blur grows by this many pixels per 1.0 of focus ring away from the sharpest point; holding an arrow turns the ring this fast. */
 const TELESCOPE_BLUR_PX = 80;
 const TELESCOPE_TURN_PER_SEC = 0.5;
@@ -279,56 +274,77 @@ function SplitGame({ onSwing }: { onSwing: OnSwing }) {
   );
 }
 
-interface Herb {
-  id: number;
-  x: number;
-  y: number;
-  born: number;
-}
+import { BASE_SPECIES_INDEX } from '../../data/foraging';
 
-/** Herbs pop up around the patch and wilt if you leave them. Picked in bloom, they count double. */
-function ForagingGame({ matId, onSwing }: { matId?: string; onSwing: OnSwing }) {
-  const [herbs, setHerbs] = useState<Herb[]>([]);
-  const nextId = useRef(0);
+/** 3×3 whack-a-mole fertilising: tap the lit plant before it fades; quick tap doubles. */
+function ForagingGame({ onSwing }: { matId?: string; onSwing: OnSwing }) {
+  const s = useGame();
+  const speciesId = s.action?.kind === 'skill' && s.action.actionId.startsWith('forage_') ? s.action.actionId.slice(7) : 'sunpetal';
+  const spIndex = BASE_SPECIES_INDEX.get(speciesId) ?? 0;
+  const windowMs = fertiliseWindowMs(spIndex);
+  const [lit, setLit] = useState<{ cell: number; born: number }[]>([]);
+  const timers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   useEffect(() => {
-    const timers = new Set<ReturnType<typeof setTimeout>>();
-    const grow = () => {
-      const id = nextId.current++;
-      setHerbs((list) => (list.length >= HERBS_MAX ? list : [...list, { id, x: random(2, 78), y: random(5, 52), born: performance.now() }]));
-      const wilt = setTimeout(() => {
-        timers.delete(wilt);
-        setHerbs((list) => list.filter((h) => h.id !== id));
-      }, HERB_LIFE_MS);
-      timers.add(wilt);
+    let alive = true;
+    const clearAll = () => {
+      timers.current.forEach(clearTimeout);
+      timers.current.clear();
     };
-    grow();
-    const growth = setInterval(grow, HERB_EVERY_MS);
-    return () => {
-      clearInterval(growth);
-      timers.forEach(clearTimeout);
+    const spawn = () => {
+      if (!alive) return;
+      const count = spIndex >= 6 && Math.random() < 0.2 ? 2 : 1;
+      const cells: number[] = [];
+      while (cells.length < count) {
+        const c = Math.floor(Math.random() * 9);
+        if (!cells.includes(c)) cells.push(c);
+      }
+      const born = performance.now();
+      setLit(cells.map((cell) => ({ cell, born })));
+      const fade = setTimeout(() => {
+        timers.current.delete(fade);
+        setLit((prev) => {
+          if (prev.length) onSwing('miss');
+          return [];
+        });
+        const next = setTimeout(() => {
+          timers.current.delete(next);
+          spawn();
+        }, 400);
+        timers.current.add(next);
+      }, windowMs + 300);
+      timers.current.add(fade);
     };
-  }, []);
+    spawn();
+    return () => { alive = false; clearAll(); };
+  }, [spIndex, windowMs]);
 
-  const pick = (h: Herb) => {
-    setHerbs((list) => list.filter((x) => x.id !== h.id));
-    const age = (performance.now() - h.born) / HERB_LIFE_MS;
-    onSwing(age >= HERB_BLOOM_FROM && age <= HERB_BLOOM_TO ? 'double' : 'hit');
+  const tap = (cell: number) => {
+    const hit = lit.find((x) => x.cell === cell);
+    if (!hit) {
+      onSwing(fertiliseResult(null, windowMs, true));
+      return;
+    }
+    const elapsed = performance.now() - hit.born;
+    onSwing(fertiliseResult(elapsed, windowMs, false));
+    setLit((prev) => prev.filter((x) => x.cell !== cell));
   };
 
   return (
-    <div className="mini-patch">
-      {herbs.map((h) => (
-        <button
-          key={h.id}
-          className="mini-herb"
-          aria-label="Pick herb"
-          style={{ left: `${h.x}%`, top: `${h.y}%`, animationDuration: `${HERB_LIFE_MS}ms` }}
-          onPointerDown={() => pick(h)}
-        >
-          {matId && <MatIcon id={matId} size={26} />}
-        </button>
-      ))}
+    <div className="foraging-mole-grid" role="group" aria-label="Fertilise lit plants">
+      {Array.from({ length: 9 }, (_, cell) => {
+        const active = lit.some((x) => x.cell === cell);
+        return (
+          <button
+            key={cell}
+            type="button"
+            className={`foraging-mole-cell ${active ? 'lit' : ''}`}
+            onPointerDown={() => tap(cell)}
+          >
+            {active ? 'Fertilise!' : '·'}
+          </button>
+        );
+      })}
     </div>
   );
 }

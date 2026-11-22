@@ -78,11 +78,6 @@ export function settleProfessionProgress(s: GameState, legacy = false): void {
     if (dug > 0) p.legacyAccess[site.id] = true;
     findDigs(site).forEach((n, i) => { if (dug >= n) p.discoveries[`expedition.${site.id}.${i}`] = true; });
   }
-  if (s.greenhouse) {
-    const plant = ACTIONS.find((a) => a.id === s.greenhouse!.actionId);
-    const herb = Object.keys(plant?.outputs ?? {})[0];
-    if (herb) p.discoveries[`seed_${herb}`] = true;
-  }
   p.legacyRealmEvidence = true;
   carryRuneAccess(s, s.account);
 }
