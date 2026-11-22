@@ -9,7 +9,7 @@ import { FORAGING_ACTIONS, foragingSource, type ForagingSource } from './foragin
 import { ALCHEMY_EXPANSION_ACTIONS } from './alchemy';
 import { purposeRecipes, SMITH_COMPONENTS, type SmithPurpose } from './smithing';
 import { BASES, type BaseDef } from './bases';
-import { CARTOGRAPHY_GATE, CHART_TIERS, FOLIO_COST, FOLIO_LEVEL, FOLIO_SIZE, SEXTANT_RECIPES } from './cartography';
+import { CARTOGRAPHY_GATE, CHART_TIERS, FOLIO_COST, FOLIO_LEVEL, FOLIO_SIZE, SEXTANT_RECIPES, SPECIAL_MAP_ACTIONS, type SpecialMapKind } from './cartography';
 import { chamberActionId, CULTURES, digChance, EXPEDITION_GATE, SITES, TRAIL } from './expedition';
 import { MAP_TIERS } from './maps';
 import { SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
@@ -94,6 +94,8 @@ export interface SkillAction {
   batchMastery?: number;
   /** cartography: makes `qty` maps, into the shared map supply. An upgrade also uses up maps of the tier below */
   chart?: { tier: number; qty: number; upgrade?: boolean };
+  /** cartography: assembles a special map (Boss, Vault, Guardian, Pinnacle, Lost Chart) */
+  specialMap?: { kind: SpecialMapKind; tier: number; needsPlainTier?: number };
   /** listed but can never be started (every Fishing spot) */
   soon?: boolean;
   /** Stable per-task non-combat practice track and its explicitly allowed bonuses. */
@@ -423,16 +425,16 @@ function scaleInputs(inputs: Record<string, number>, mult = 1): Record<string, n
   return Object.fromEntries(Object.entries(inputs).map(([id, n]) => [id, n * mult]));
 }
 
-/** One plain map recipe per tier: drawn at tier 1, upgraded from the tier below after that. */
-const CHARTS: SkillAction[] = CHART_TIERS.map((c): SkillAction => ({
+/** Plain map upgrades from tier 2 to tier 10 (plain T1 maps come from monster drops). */
+const CHARTS: SkillAction[] = CHART_TIERS.filter((c) => c.tier > 1).map((c): SkillAction => ({
   id: `chart_t${c.tier}`,
   skill: 'cartography',
-  name: `${c.tier === 1 ? 'Draw' : 'Upgrade'}: Map Tier ${c.tier}`,
+  name: `Upgrade: Map Tier ${c.tier}`,
   level: c.level,
   intervalMs: c.intervalMs,
   xp: c.xp,
   inputs: scaleInputs(c.inputs),
-  chart: { tier: c.tier, qty: 1, upgrade: c.tier > 1 },
+  chart: { tier: c.tier, qty: 1, upgrade: true },
   color: '#8a7ad8',
   gate: CARTOGRAPHY_GATE,
 }));
@@ -471,6 +473,7 @@ const CARTOGRAPHY: SkillAction[] = [
   sheet('fine_vellum', 'Fine Vellum', 15, 5000, 40, { oak_log: 5, vellum: 2 }, '#f0e4c4'),
   sheet('sepia_ink', 'Sepia Ink', 20, 5500, 55, { emberroot: 3, gall_ink: 1, arcane_dust: 4 }, '#8a5a34'),
   ...SEXTANT_CHARTS,
+  ...SPECIAL_MAP_ACTIONS,
   ...CHARTS,
   ...FOLIOS,
 ];

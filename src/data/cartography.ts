@@ -1,21 +1,43 @@
 import type { MaterialDef } from './materials';
+import type { SkillAction } from './skills';
 import { zonesInAct } from './zones';
 
 /**
- * Cartography, Act 6's skill (docs/GAME.md): the second route to maps and Sextants. Drops give you whatever turns up;
- * Cartography draws Tier 1 plain maps, binds folios for a long offline grind, upgrades maps 3-into-1 up to Tier 10,
- * and crafts Apprentice, Journeyman and Master Sextants. Drawn maps go straight into the realm's shared map supply.
+ * Cartography (docs/CARTOGRAPHY.md): special maps from scraps.
+ * Plain maps drop from monsters; Cartography upgrades maps 3:1 / 2:1, crafts Sextants and folios,
+ * and assembles Boss, Vault, Guardian, Pinnacle and Lost Chart special maps from scraps and trophies.
  */
 export const CARTOGRAPHY_GATE = { zone: zonesInAct(6)[0]?.id ?? 'act6_not_built', label: 'Act 6' };
 
-/** How many maps of the tier below one upgrade uses, and with Master Cartographer. */
 export const UPGRADE_MAPS = 3;
 export const MASTER_UPGRADE_MAPS = 2;
 
-/** A folio: this many tier 1 maps at once, for FOLIO_COST times the materials. */
 export const FOLIO_SIZE = 5;
 export const FOLIO_COST = 4;
 export const FOLIO_LEVEL = 32;
+
+export type SpecialMapKind = 'boss' | 'vault' | 'guardian' | 'pinnacle' | 'lost';
+
+export interface LostPlaceDef {
+  id: string;
+  name: string;
+  bossName: string;
+}
+
+export const LOST_PLACES: readonly LostPlaceDef[] = [
+  { id: 'drowned_library', name: 'The Drowned Library', bossName: 'Archivist of the Deep' },
+  { id: 'ember_throne', name: 'The Ember Throne Vault', bossName: 'Cinder Regent' },
+  { id: 'glass_ossuary', name: 'The Glass Ossuary', bossName: 'Shattered Cantor' },
+  { id: 'sunken_observatory', name: 'The Sunken Observatory', bossName: 'Blind Astronomer' },
+  { id: 'salt_cathedral', name: 'The Salt Cathedral', bossName: 'Tidebound Prelate' },
+];
+
+export const ATLAS_SPECIAL_PERKS = [
+  { entries: 5, label: 'Boss scrap drops +20%' },
+  { entries: 15, label: 'Vault chest rolls +25%' },
+  { entries: 25, label: 'Guardian scrap drops +20%' },
+  { entries: 35, label: 'Lost chart chance ×1.5' },
+] as const;
 
 export interface ChartTier {
   tier: number;
@@ -25,7 +47,7 @@ export interface ChartTier {
   inputs: Record<string, number>;
 }
 
-/** Tier 1 is drawn from vellum and ink; every tier above upgrades maps of the tier below. */
+/** Upgrades from tier 2 to tier 10 (tier 1 is kept here for folio cost scaling only). */
 export const CHART_TIERS: ChartTier[] = [
   { tier: 1, level: 10, intervalMs: 12000, xp: 60, inputs: { vellum: 4, gall_ink: 2 } },
   { tier: 2, level: 22, intervalMs: 15000, xp: 120, inputs: { fine_vellum: 3, gall_ink: 2 } },
@@ -55,11 +77,80 @@ export const SEXTANT_RECIPES: SextantRecipe[] = [
   { id: 'sextant_master', name: 'Master Sextant', level: 66, intervalMs: 28000, xp: 520, inputs: { fine_vellum: 8, sepia_ink: 6, voidbloom: 4, arcane_dust: 15, rough_gem: 3 }, color: '#c868e8' },
 ];
 
+export const SPECIAL_MAP_ACTIONS: SkillAction[] = [
+  ...Array.from({ length: 10 }, (_, idx): SkillAction => {
+    const tier = idx + 1;
+    return {
+      id: `special_boss_t${tier}`,
+      skill: 'cartography',
+      name: `Boss Map (T${tier})`,
+      level: 40,
+      intervalMs: 60_000,
+      xp: 300,
+      inputs: { boss_scrap: 3, gall_ink: 2 },
+      specialMap: { kind: 'boss', tier, needsPlainTier: tier },
+      color: '#e07a5f',
+    };
+  }),
+  ...Array.from({ length: 10 }, (_, idx): SkillAction => {
+    const tier = idx + 1;
+    return {
+      id: `special_vault_t${tier}`,
+      skill: 'cartography',
+      name: `Vault Map (T${tier})`,
+      level: 55,
+      intervalMs: 60_000,
+      xp: 400,
+      inputs: { vault_scrap: 3, sepia_ink: 2 },
+      specialMap: { kind: 'vault', tier, needsPlainTier: tier },
+      color: '#f2cc8f',
+    };
+  }),
+  {
+    id: 'special_guardian_t10',
+    skill: 'cartography',
+    name: 'Guardian Map (T10)',
+    level: 70,
+    intervalMs: 120_000,
+    xp: 750,
+    inputs: { guardian_scrap: 5, sepia_ink: 5 },
+    specialMap: { kind: 'guardian', tier: 10, needsPlainTier: 10 },
+    color: '#c868e8',
+  },
+  {
+    id: 'special_pinnacle_t10',
+    skill: 'cartography',
+    name: 'Pinnacle Map (T10)',
+    level: 85,
+    intervalMs: 300_000,
+    xp: 1500,
+    inputs: { guardian_trophy: 4 },
+    specialMap: { kind: 'pinnacle', tier: 10, needsPlainTier: 10 },
+    color: '#e85a4f',
+  },
+  {
+    id: 'special_lost_chart',
+    skill: 'cartography',
+    name: 'Lost Chart',
+    level: 75,
+    intervalMs: 180_000,
+    xp: 1000,
+    inputs: { lost_chart: 1 },
+    specialMap: { kind: 'lost', tier: 10 },
+    color: '#64d8b4',
+  },
+];
+
 export const CHART_MATERIALS: MaterialDef[] = [
   ...([
-    ['chart_survey_fragment', 'Chart Survey Fragment', 'One per 30 ordinary Cartography completions plus 1% extra. Twenty make an Artisans’ Reliquary chart.'],
-    ['reliquary_fragment', 'Reliquary Fragment', 'One per victorious Unique Map final boss. One goes into Worldheart and one into The Sum of All Things.'],
-    ['atlas_survey_record', 'Atlas Survey Record', 'One per ten successful normal T10 Map final bosses. No allocated Atlas points are consumed.'],
+    ['boss_scrap', 'Boss Scrap', 'Torn map scrap dropped by map bosses (1–2) and rare monsters in maps (3%). Pieces together Boss maps.'],
+    ['vault_scrap', 'Vault Scrap', 'Rumour scrap dropped by rare monsters in maps (2%) and Vault chests (1–3). Pieces together Vault maps.'],
+    ['guardian_scrap', 'Guardian Scrap', 'Dropped by T8+ Boss map bosses (30%). Five assemble a Guardian map.'],
+    ['guardian_trophy', 'Guardian Trophy', 'Dropped by Guardian map bosses. Four assemble a Pinnacle map.'],
+    ['lost_chart', 'Lost Chart', 'A 1-in-500 find from Boss map bosses. Opens a one-off map to a unique lost place.'],
+    ['chart_survey_fragment', 'Chart Survey Fragment', 'Earned from crafting special maps (1 per 30 completions plus 1% extra). Twenty make an Artisans’ Reliquary chart.'],
+    ['reliquary_fragment', 'Reliquary Fragment', 'One per victorious Unique Map final boss or Pinnacle map. One goes into Worldheart and one into The Sum of All Things.'],
+    ['atlas_survey_record', 'Atlas Survey Record', 'One per ten successful normal T10 Map final bosses, or from Pinnacle and Lost Chart maps.'],
     ['completed_atlas_chart', 'Completed Atlas Chart', 'Assembled from an Atlas Survey Record, Fine Vellum, Sepia Ink and a Master Sextant. One goes into The Sum of All Things.'],
     ['world_core_fragment', 'World Core Fragment', 'One per victorious Doomed Map final boss, any tier. Three go into Worldheart.'],
     ['doom_key_fragment', 'Doom Key Fragment', 'One per victorious Doomed Map final boss. Ten forge an Uber Key of your choice at Cartography 85.'],

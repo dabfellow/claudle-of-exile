@@ -16,6 +16,8 @@ import type { WoodcraftingState, WoodPlan } from './woodcrafting';
 import type { CutSetup, GemcuttingState } from './gemFacets';
 import type { ForagingState } from './foraging';
 import type { AlchemyState } from './alchemy';
+import type { CartographyState } from './cartography';
+import type { SpecialMapKind } from '../data/cartography';
 import type { RoughGem } from './roughGems';
 
 export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'agility' | 'archaeology' | 'smelting' | 'smithing' | 'woodcrafting' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'astrology' | 'fishing';
@@ -1157,6 +1159,9 @@ export interface MapRun {
   doomedMods?: import('../data/maps').DoomedModId[];
   /** Unique Map id when running a Unique Map */
   uniqueMapId?: string;
+  /** Cartography special map kind and lost place id */
+  specialKind?: SpecialMapKind;
+  specialLostId?: string;
   /** Rolled normal map modifiers */
   normalMods?: string[];
   packsLeft: number;
@@ -1384,6 +1389,7 @@ export interface GameState {
   gemcutting: GemcuttingState;
   foraging: ForagingState;
   alchemy: AlchemyState;
+  cartography: CartographyState;
   skillBar: (SkillGemInstance | null)[];
   loadouts: Loadouts;
   action: Action;

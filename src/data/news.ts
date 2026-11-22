@@ -22,6 +22,7 @@ export const UPCOMING: string[] = [
   'Gemcutting now cuts gems facet by facet based on rough gem carats, with family facets, Star Stones, named cuts from level 80, saved cut plans for time away, a cut catalogue with perks, recutting, and a dop-stick angle minigame.',
   'Foraging is rebuilt around wild plant variants and Greenhouse cross-breeding: forage nine wild species patches with a whack-a-mole fertilising minigame, breed up to three stacked mutations (common, rare, and giga-rare), discover six hidden hybrids from level 80, stabilise strains, fill the Herbarium, and open sealed seed packets on return.',
   'Alchemy is rebuilt around making your five flasks your own: brew ranked infusions from herbs or mutated Foraging strains, pour them into your belt flasks, unlock Grand flasks (3 slots) and Grand infusions at level 80–85, discover giga-rare infusions, and play a pour-to-the-line Focus minigame. Sacred and Sulphur flasks now brew straight from herbs.',
+  'Cartography now assembles special Boss, Vault, Guardian, Pinnacle and Lost Chart maps from scraps and trophies dropped in Maps, with an Atlas of special maps, a two-axis sighting Focus minigame, and a drafting-table collectible. Plain Tier 1 maps now come from monster drops.',
 ];
 
 export const NEWS: NewsEntry[] = [

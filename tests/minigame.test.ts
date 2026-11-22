@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { angleResult, bellowsResult, braceResult, fertiliseResult, fertiliseWindowMs, gemTurnMs, liftResult, liftWindowMs, pourResult } from '../src/engine/minigame';
+import { angleResult, bellowsResult, braceResult, fertiliseResult, fertiliseWindowMs, gemTurnMs, liftResult, liftWindowMs, pourResult, sightingResult } from '../src/engine/minigame';
+
+describe('Cartography take a sighting', () => {
+  it('scores using the larger of the two axis errors', () => {
+    expect(sightingResult(0.01, -0.02)).toBe('double');
+    expect(sightingResult(0.021, 0.01)).toBe('hit');
+    expect(sightingResult(0.06, 0.05)).toBe('hit');
+    expect(sightingResult(0.01, 0.061)).toBe('weak');
+    expect(sightingResult(0.12, 0.12)).toBe('weak');
+    expect(sightingResult(0.121, 0)).toBe('miss');
+    expect(sightingResult(Number.NaN, 0)).toBe('miss');
+  });
+});
 
 describe('Alchemy pour to the line', () => {
   it('scores double, hit, weak, miss and spills accurately', () => {

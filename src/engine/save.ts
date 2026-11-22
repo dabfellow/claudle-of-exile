@@ -32,6 +32,7 @@ import { migrateSettingsProfiles, settleTreeProfiles } from './treeProfiles';
 import { settleProfessionProgress } from './professions';
 import { migrateForagingToBreeding, settleForaging } from './foraging';
 import { migrateAlchemyInfusions, settleAlchemy } from './alchemy';
+import { migrateCartographyScraps, settleCartography } from './cartography';
 import { newCampaignQuestState, settleCampaignQuests } from './campaignQuests';
 import { newAstrologyState } from './astrology';
 import { migrateDelve } from './delve';
@@ -498,6 +499,7 @@ const MIGRATIONS: Record<number, Migration> = {
   59: (raw) => { raw.gemcutting ??= freshGemcutting(); },
   60: migrateForagingToBreeding,
   61: migrateAlchemyInfusions,
+  62: migrateCartographyScraps,
 };
 
 /**
@@ -657,6 +659,7 @@ export function deserialize(json: string): GameState {
   settleProfessionProgress(s);
   settleForaging(s);
   settleAlchemy(s);
+  settleCartography(s);
   migrateSettingsProfiles(s);
   settleTreeLayout(s);
   settlePassivePoints(s);

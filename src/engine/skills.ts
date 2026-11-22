@@ -15,7 +15,7 @@ import { createSkillGem, createSupportGem } from './gems';
 import { digDone } from './expedition';
 import { codexDigSpeed } from './deciphering';
 import { rollPrep } from './heist';
-import { cartographyDone, chartDone, hasChartMaps } from './cartography';
+import { cartographyDone, chartDone, hasChartMaps, specialMapDone } from './cartography';
 import { focusMult, focusStep, takeDouble } from './minigame';
 import { bagFull, dropItem } from './storage';
 import { allMods, createItem, eligibleAffixes, salvageValue, spawnWeight } from './items';
@@ -592,6 +592,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
 
   if (a.skill === 'archaeology') digDone(s, ctx, a, outputs);
   if (a.chart) chartDone(s, a, mult, Object.keys(cost).length > 0, outputs);
+  if (a.specialMap) specialMapDone(s, ctx, a, mult);
   if (a.skill === 'thieving') {
     s.professionProgress.counters['thieving.markers'] = (s.professionProgress.counters['thieving.markers'] ?? 0) + 1;
     rollPrep(s, ctx, a);
@@ -664,6 +665,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   if (a.skill === 'woodcrafting') rollCollectible(s, ctx, 'woodcrafting', 'workbench');
   if (a.skill === 'gemcutting') rollCollectible(s, ctx, 'gemcutting', 'wheel');
   if (a.skill === 'alchemy') rollCollectible(s, ctx, 'alchemy', 'bench');
+  if (a.skill === 'cartography') rollCollectible(s, ctx, 'cartography', 'table');
   if (a.id === 'brew_infusion') finishQueuedInfusion(s, ctx);
   if (a.grandFlask) {
     const barId = flawlessBarStack(s, GRAND_FLAWLESS_BARS);

@@ -143,6 +143,12 @@ export function pourResult(error: number, spilled: boolean): SwingResult {
   return e <= 0.02 ? 'double' : e <= 0.06 ? 'hit' : e <= 0.12 ? 'weak' : 'miss';
 }
 
+export function sightingResult(errX: number, errY: number): SwingResult {
+  if (!Number.isFinite(errX) || !Number.isFinite(errY)) return 'miss';
+  const e = Math.max(Math.abs(errX), Math.abs(errY));
+  return e <= 0.02 ? 'double' : e <= 0.06 ? 'hit' : e <= 0.12 ? 'weak' : 'miss';
+}
+
 export function curveResult(avgDeviation: number, completed: boolean): SwingResult {
   if (!completed || !Number.isFinite(avgDeviation)) return 'miss';
   if (avgDeviation <= 0.03) return 'double';

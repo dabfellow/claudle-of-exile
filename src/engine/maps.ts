@@ -67,6 +67,7 @@ import { roughDropBundle } from './roughGems';
 import { skillTreeStats } from './skillTree';
 import { deriveStats } from './stats';
 import { astrologyMapDrops } from './astrology';
+import { atlasSpecialPerks, rollMapBossScraps } from './cartography';
 import type { AtlasState, EquipSlot, GameState, GroundKind, MapSettings, MapState, MonsterInstance, SextantSlot } from './types';
 import { charXpForLevel } from './xp';
 
@@ -697,6 +698,40 @@ export function startMap(s: GameState, ctx: Ctx, tier: number, areaOrTheme?: str
   return null;
 }
 
+/** Run a Cartography special map (Boss, Vault, Guardian, Pinnacle, or Lost Chart). */
+export function startSpecialMap(s: GameState, ctx: Ctx, uid: number): string | null {
+  if (!mapsOpen(s)) return `Complete Act ${FINAL_ACT} to use the Map Device`;
+  if (s.maps.run) return 'Already in a map';
+  const idx = s.cartography.specialMaps.findIndex((m) => m.uid === uid);
+  if (idx < 0) return 'Special map not found';
+  const item = s.cartography.specialMaps[idx];
+  s.cartography.specialMaps.splice(idx, 1);
+
+  const tier = Math.max(1, Math.min(10, item.tier));
+  const areaId = pick(ctx.rng, ZONES.map((z) => z.id));
+  const zoneId = mapZoneId(tier, areaId);
+  const basePacks = mapTier(tier).packs;
+  const packsTotal = item.kind === 'boss' ? 10 : item.kind === 'vault' ? Math.max(4, Math.floor(basePacks / 2)) : item.kind === 'pinnacle' ? 1 : basePacks;
+  s.maps.run = {
+    zoneId,
+    tier,
+    areaId,
+    theme: areaId,
+    specialKind: item.kind,
+    ...(item.lostId ? { specialLostId: item.lostId } : {}),
+    packsLeft: packsTotal,
+    packsTotal,
+    startedAt: s.clock,
+    deaths: s.lifetime.deaths,
+    bossDown: false,
+  };
+  enterZone(s, ctx, zoneId);
+  const d = deriveStats(s);
+  s.life = d.maxLife;
+  s.mana = d.maxMana;
+  return null;
+}
+
 /** Open a Doomed Map (I–V) with 2–4 rolled Doomed modifiers. */
 export function startDoomedMap(s: GameState, ctx: Ctx, dTierNum: number): string | null {
   if (s.maps.run) return 'Already in a map';
@@ -898,7 +933,43 @@ export function mapStep(s: GameState, ctx: Ctx): void {
     return;
   }
   if (!run.bossDown) return;
-  if (run.uniqueMapId) {
+  if (run.specialKind) {
+    const perks = atlasSpecialPerks(s);
+    if (run.specialKind === 'boss') {
+      rollMapBossScraps(s, ctx);
+      if (run.tier >= 5 && chance(ctx.rng, 0.25)) awardProtectedProgress(s, ctx, 'inscription_fragment', 1);
+      if (run.tier >= 8 && chance(ctx.rng, 0.30 * perks.guardianScrapMult)) {
+        addBank(s, 'guardian_scrap', 1);
+        ctx.emit({ t: 'loot', currencyId: 'guardian_scrap', qty: 1 });
+      }
+      if (chance(ctx.rng, (1 / 500) * perks.lostChartMult)) {
+        addBank(s, 'lost_chart', 1);
+        ctx.emit({ t: 'loot', currencyId: 'lost_chart', qty: 1 });
+      }
+    } else if (run.specialKind === 'vault') {
+      const vaultScraps = rInt(ctx.rng, 1, 3);
+      addBank(s, 'vault_scrap', vaultScraps);
+      ctx.emit({ t: 'loot', currencyId: 'vault_scrap', qty: vaultScraps });
+      const rolls = Math.round(10 * perks.vaultRollsMult);
+      const currencyTable = ['transmute', 'augment', 'alteration', 'alchemy', 'chaos', 'scour', 'regal'];
+      for (let i = 0; i < rolls; i++) {
+        const cur = pick(ctx.rng, currencyTable);
+        addBank(s, cur, 1);
+      }
+    } else if (run.specialKind === 'guardian') {
+      addBank(s, 'guardian_trophy', 1);
+      ctx.emit({ t: 'loot', currencyId: 'guardian_trophy', qty: 1 });
+    } else if (run.specialKind === 'pinnacle') {
+      awardProtectedProgress(s, ctx, chance(ctx.rng, 0.5) ? 'atlas_survey_record' : 'reliquary_fragment', 1);
+    } else if (run.specialKind === 'lost') {
+      awardProtectedProgress(s, ctx, 'atlas_survey_record', 1);
+      const pool = worldDropUniques(84);
+      for (let i = 0; i < 2 && pool.length; i++) {
+        const u = pick(ctx.rng, pool);
+        placeItem(s, ctx, createUnique(s, u.id, 84, ctx.rng));
+      }
+    }
+  } else if (run.uniqueMapId) {
     awardProtectedProgress(s, ctx, 'reliquary_fragment', 1);
     if (run.uniqueMapId === 'umap_artisans_reliquary') {
       for (const [id, n] of Object.entries({ ...roughDropBundle(s, ctx, 10), arcane_dust: 100 })) {
@@ -908,6 +979,7 @@ export function mapStep(s: GameState, ctx: Ctx): void {
   } else if (run.doomedTier) {
     doomedVictorySupply(s, ctx);
   } else {
+    rollMapBossScraps(s, ctx);
     if (run.tier === 10) {
       const n = (s.professionProgress.counters['cartography.t10Wins'] ?? 0) + 1;
       s.professionProgress.counters['cartography.t10Wins'] = n;

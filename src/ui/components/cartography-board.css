@@ -1,0 +1,9 @@
+.carto-board { display: grid; gap: 14px; }
+.carto-tray { display: flex; flex-wrap: wrap; gap: 10px; }
+.carto-scrap { padding: 6px 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--panel-2, rgba(22, 22, 32, 0.7)); font-size: 13px; }
+.carto-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.carto-card { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2, rgba(22, 22, 32, 0.6)); }
+.carto-sighting { position: relative; width: 220px; height: 150px; border: 1px solid var(--border); border-radius: 6px; background: radial-gradient(circle at 50% 60%, rgba(120, 110, 180, 0.2), rgba(14, 14, 22, 0.92)); overflow: hidden; cursor: pointer; }
+.carto-landmark { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; border: 2px solid #f2d28a; background: rgba(242, 210, 138, 0.35); }
+.carto-line-v { position: absolute; top: 0; bottom: 0; width: 2px; background: #9fd2ff; }
+.carto-line-h { position: absolute; left: 0; right: 0; height: 2px; background: #f2cc8f; }

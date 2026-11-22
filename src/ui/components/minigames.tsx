@@ -6,6 +6,7 @@ import {
   fertiliseResult,
   fertiliseWindowMs,
   pourResult,
+  sightingResult,
   BRUSH_COLS,
   BRUSH_ROWS,
   brushChips,
@@ -25,12 +26,6 @@ import {
   logProfile,
   massShare,
   splitResult,
-  surveyDistance,
-  surveyResult,
-  SURVEY_COLS,
-  SURVEY_DOUBLE,
-  SURVEY_ROWS,
-  SURVEY_SOUNDINGS,
   type LogKind,
   type SwingResult,
 } from '../../engine/minigame';
@@ -62,7 +57,6 @@ const STROKE_CORE = 6;
 const STROKE_CORE_SHARE = 2 / 3;
 const POTS = 3;
 const POT_ZONE = 0.76;
-const SURVEY_PATIENCE_MS = 15000;
 /** The sequence games (lock, gem, dig): finishing within this share of the time allowed is a double. */
 const QUICK_SHARE = 0.4;
 
@@ -464,52 +458,43 @@ function CookingGame({ onSwing }: { onSwing: OnSwing }) {
   );
 }
 
-/** Sound the fog for a hidden landmark: every sounding shows how many steps off it is. Found within three is a double. */
+/** Take a sighting: tap when the vertical line crosses the landmark, then when the horizontal line crosses it. */
 function CartographyGame({ onSwing }: { onSwing: OnSwing }) {
-  const tiles = SURVEY_COLS * SURVEY_ROWS;
-  const newSurvey = () => ({ id: Math.random(), landmark: Math.floor(Math.random() * tiles) });
-  const [survey, setSurvey] = useState(newSurvey);
-  const [soundings, setSoundings] = useState<number[]>([]);
+  const newTarget = () => ({ x: 0.2 + Math.random() * 0.6, y: 0.2 + Math.random() * 0.6 });
+  const [target, setTarget] = useState(newTarget);
+  const [phase, setPhase] = useState<'x' | 'y'>('x');
+  const [pos, setPos] = useState(0.5);
+  const [errX, setErrX] = useState(0);
+  const tRef = useRef(0);
+  const posRef = useRef(0.5);
 
-  const next = () => {
-    setSurvey(newSurvey());
-    setSoundings([]);
-  };
+  useFrame((dt) => {
+    tRef.current += dt;
+    const p = 0.5 + 0.48 * Math.sin(tRef.current / 520);
+    posRef.current = p;
+    setPos(p);
+  });
 
-  useEffect(() => {
-    const giveUp = setTimeout(next, SURVEY_PATIENCE_MS);
-    return () => clearTimeout(giveUp);
-  }, [survey]);
-
-  const sound = (tile: number) => {
-    if (soundings.includes(tile)) return;
-    const taken = [...soundings, tile];
-    const result = surveyResult(tile === survey.landmark, taken.length);
-    if (!result) {
-      setSoundings(taken);
-      return;
+  const tap = () => {
+    if (phase === 'x') {
+      setErrX(posRef.current - target.x);
+      setPhase('y');
+      tRef.current = 0;
+    } else {
+      onSwing(sightingResult(errX, posRef.current - target.y));
+      setTarget(newTarget());
+      setPhase('x');
+      tRef.current = 0;
     }
-    onSwing(result);
-    // a survey takes a few seconds of thought, so a clean one is worth two swings
-    if (result === 'hit' || result === 'double') onSwing('hit');
-    next();
   };
 
   return (
-    <div className="mini-survey-wrap">
-      <div className="mini-survey" style={{ gridTemplateColumns: `repeat(${SURVEY_COLS}, minmax(0, 1fr))` }}>
-        {[...Array(tiles).keys()].map((tile) => (
-          <button key={tile} className={`mini-sounding ${soundings.includes(tile) ? 'sounded' : ''}`} aria-label={`Sound tile ${tile + 1}`} onPointerDown={() => sound(tile)}>
-            {soundings.includes(tile) ? surveyDistance(tile, survey.landmark) : ''}
-          </button>
-        ))}
-      </div>
-      <div className="mini-soundings" aria-label={`${soundings.length} of ${SURVEY_SOUNDINGS} soundings used`}>
-        {[...Array(SURVEY_SOUNDINGS).keys()].map((i) => (
-          <span key={i} className={`mini-sounding-pip ${i < SURVEY_DOUBLE ? 'double' : ''} ${i < soundings.length ? 'used' : ''}`} />
-        ))}
-      </div>
-    </div>
+    <button type="button" className="carto-sighting" onPointerDown={tap} aria-label={phase === 'x' ? 'Lock vertical sighting' : 'Lock horizontal sighting'}>
+      <span className="carto-landmark" style={{ left: `${target.x * 100}%`, top: `${target.y * 100}%` }} />
+      {phase === 'x'
+        ? <span className="carto-line-v" style={{ left: `${pos * 100}%` }} />
+        : <span className="carto-line-h" style={{ top: `${pos * 100}%` }} />}
+    </button>
   );
 }
 

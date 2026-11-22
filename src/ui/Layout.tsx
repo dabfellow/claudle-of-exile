@@ -33,6 +33,7 @@ import { WoodRack } from './components/WoodBench';
 import { GemTray } from './components/LapidaryBench';
 import { SeedPackets } from './components/ForagingBench';
 import { AwayVials } from './components/AlchemyBench';
+import { AwayMaps } from './components/CartographyBoard';
 import { clearArrivals } from '../engine/deciphering';
 import { QuestTracker } from './components/QuestTracker';
 import { ChallengeTag, Crest } from './screens/Screens';
@@ -594,6 +595,7 @@ export function OfflineModal({ onOpenDesk }: { onOpenDesk?: () => void }) {
         <GemTray />
         <SeedPackets />
         <AwayVials />
+        <AwayMaps />
 
         {xp.map(([sk, gained]) => {
           const total = game.state.skills[sk] ?? 0;
