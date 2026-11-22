@@ -13,7 +13,7 @@ import { zoneDef } from '../../data/zones';
 import { cartographyPreview, upgradeCost } from '../../engine/cartography';
 import { mapsHeld } from '../../engine/maps';
 import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
-import { crewSlots, jobBlocker, jobCost } from '../../engine/heist';
+import { crewSlots, jobBlocker } from '../../engine/heist';
 import { AGILITY_SHORTCUTS } from '../../data/agility';
 import { actionBlocker, actionIntervalMs, actionPlaceNeeded, agilityBlocker, gemCutPool, resinBonus, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
@@ -1105,7 +1105,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
           {s.heist.auto && s.action?.kind === 'skill' && (
             <div className="callout" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span>
-                <b>Casing {heistJob(s.heist.auto).name}:</b> lifting purses until you have <b className="num">{jobCost(s, heistJob(s.heist.auto))}</b> Markers
+                <b>Casing {heistJob(s.heist.auto).name}:</b> working street marks for prep
               </span>
               <button className="btn sm ghost" onClick={() => setTab('heists')}>
                 View Heist

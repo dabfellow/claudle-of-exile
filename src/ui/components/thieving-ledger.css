@@ -142,3 +142,10 @@ div.thief-group-heading { cursor: default; }
   .thief-dossier-heading h2 { font-size: 22px; }
   .thief-portrait.large { width: 52px; height: 64px; }
 }
+.thief-prep-head{display:flex;align-items:center;gap:8px}
+.thief-prep-head h3{margin:0}
+.thief-prep-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid rgba(80,60,30,.25)}
+.thief-prep-text{flex:1;min-width:0;display:flex;flex-direction:column}
+.thief-prep-text small{font-size:11px;opacity:.8}
+.thief-prep-held{min-width:30px;text-align:right}
+.thief-prep-badge{display:block;color:#7a5a1c;font-size:10px}
