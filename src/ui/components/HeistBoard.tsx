@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { MARKER } from '../../data/craftMats';
-import { GEAR, HEIST_JOBS, type HeistJob } from '../../data/heist';
+import { GEAR, HEIST_JOBS, PREP_CAP, prepBoard, prepDef, type HeistJob } from '../../data/heist';
+import { actionsFor } from '../../data/skills';
 import { ROGUES, SPECIALTIES, rogueLevelXp, talentPoints, type Rogue } from '../../data/rogues';
 import { materialDef } from '../../data/materials';
 import { activeCrew, chooseTactic, learnTalent, matchesRoom, roomRevealed, roomSpecialty, scoutRoom, tacticReason, trainReason, trainRogue, vaultProfile } from '../../engine/rogues';
-import { alarmChance, alarmKeeps, cleanChance, crewSlots, heistGearTargetPool, jobBlocker, jobCost, jobExit, roomMs, setJobExit, setJobGearTarget, startHeist, stopHeistRepeat, toggleCrew, type HeistGearCategory } from '../../engine/heist';
+import { alarmChance, alarmKeeps, canStartJob, cleanChance, crewSlots, heistGearTargetPool, jobBlocker, jobExit, prepHeld, prepKindsHeld, roomMs, setJobExit, setJobGearTarget, setPlannedJob, startHeist, stopHeistRepeat, toggleCrew, type HeistGearCategory } from '../../engine/heist';
 import { masteryLevel } from '../../engine/skillingMastery';
-import { stopAction } from '../../engine/skills';
+import { startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
@@ -91,10 +91,12 @@ function JobDossier({ s, job }: { s: GameState; job: HeistJob }) {
   const onJob = s.action?.kind === 'heist' && s.action.jobId === job.id;
   const casing = s.heist.auto === job.id && s.action?.kind === 'skill';
   const repeating = onJob || s.heist.auto === job.id;
-  const cost = jobCost(s, job);
-  const short = (s.storage.bank[MARKER] ?? 0) < cost;
+  const startBlock = canStartJob(s, job.id);
+  const board = prepBoard(job.id);
+  const held = prepHeld(s, job.id);
+  const planned = s.heist.planned === job.id;
+  const workingMark = s.action?.kind === 'skill' ? s.action.actionId : null;
   const profile = vaultProfile(job);
-  const crewReady = s.heist.crew.length === 3;
   const gearPool = job.drops.some((d) => d.id === GEAR) || job.vault.some((d) => d.id === GEAR) ? heistGearTargetPool(s, job) : null;
   const setExit = (room: number) => game.act((st) => setJobExit(st, job.id, room));
   const setGearTarget = (cat: HeistGearCategory) => game.act((st) => setJobGearTarget(st, job.id, cat));
@@ -121,6 +123,26 @@ function JobDossier({ s, job }: { s: GameState; job: HeistJob }) {
         {job.id === 'occult_treasury' && <p className="thief-reward-note">Treasury Fragments: 1 per completed room (+4 on a clean vault). Oath Fragments: 1 on a clean vault, 1 every 12 rooms ({(s.professionProgress?.counters?.['thieving.treasury_rooms'] ?? 0) % 12}/12). A clean vault rolls a 0.5% Borrowed Tomorrow jackpot.</p>}
       </div>
 
+      {!blocker && board.items.length > 0 && <div className="thief-rewards thief-prep" aria-label="Prep board">
+        <div className="thief-prep-head">
+          <h3>Prep board</h3>
+          <span className="spacer" />
+          <button className={`btn sm ${planned ? 'selected' : 'ghost'}`} aria-pressed={planned} title="Marks that can give prep for this job get a badge" onClick={() => game.act((st) => { setPlannedJob(st, planned ? null : job.id); })}>{planned ? 'Planned job' : 'Plan this job'}</button>
+        </div>
+        <p className="thief-reward-note">Hold {board.min} different items to start. Each run uses one of each you hold, up to {PREP_CAP} stored.</p>
+        {board.items.map((e) => {
+          const def = prepDef(e.kind);
+          const mark = actionsFor('thieving').find((a) => a.id === e.mark);
+          const n = held[e.kind] ?? 0;
+          const working = workingMark === e.mark;
+          return <div className="thief-prep-item" key={e.kind}>
+            <div className="thief-prep-text"><b>{def.name}</b><small>{def.effect}</small><small>From {mark?.name ?? e.mark}</small></div>
+            <span className="num thief-prep-held" title="Held">{n}/{PREP_CAP}</span>
+            <button className="btn sm" disabled={!mark || working} onClick={() => game.act((st, ctx) => { startSkillAction(st, ctx, e.mark); })}>{working ? 'Working' : 'Work this mark'}</button>
+          </div>;
+        })}
+      </div>}
+
       {onJob ? <JobRunning s={s} job={job} /> : (
         <div className="thief-dossier-action">
           {blocker ? <p className="thief-blocker"><GameIcon name="lock" size={14} /> {blocker}</p> : <>
@@ -138,12 +160,11 @@ function JobDossier({ s, job }: { s: GameState; job: HeistJob }) {
               {(['all', 'weapon', 'armour', 'jewellery'] as const).map((cat) => <button key={cat} className={`btn sm ${gearPool.category === cat ? 'selected' : 'ghost'}`} onClick={() => setGearTarget(cat)}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</button>)}
               <span className="num">{gearPool.bases.length} bases · ilvl {gearPool.ilvl}</span>
             </div>}
-            <div className="thief-attempt"><span><MatIcon id={MARKER} size={14} /> {cost} Markers to set up</span><span className="num">you have {fmt(s.storage.bank[MARKER] ?? 0)}</span></div>
             {repeating ? <button className="btn thief-pickpocket" onClick={() => game.act((st) => stopAction(st))}>Stop</button>
-              : <button className="btn thief-pickpocket" disabled={!crewReady} title={!crewReady ? 'Pick three rogues on the Rogue Crew tab' : short ? 'You will lift purses until you can pay' : ''} onClick={() => game.act((st, ctx) => startHeist(st, ctx, job.id))}>
-                <GameIcon name="thieving" size={17} /> {!crewReady ? 'Pick a crew of 3 first' : short ? 'Case the job' : 'Run on repeat'}
+              : <button className="btn thief-pickpocket" disabled={!!startBlock} title={startBlock ?? ''} onClick={() => game.act((st, ctx) => startHeist(st, ctx, job.id))}>
+                <GameIcon name="thieving" size={17} /> {startBlock ?? 'Start job'}
               </button>}
-            {casing && <p className="thief-reward-note">Casing: lifting purses until you have {cost} Markers, then the job starts on its own.</p>}
+            {casing && <p className="thief-reward-note">Casing: working street marks for prep, then the job starts on its own.</p>}
           </>}
         </div>
       )}
@@ -168,22 +189,21 @@ function HeistLedger() {
     <section className="card thief-ledger" aria-label="Heist ledger">
       <div className="thief-ledger-title"><h2>Heist Operations</h2><span className="dim small num">{tally.jobs} done · {tally.alarms} alarms</span><button className="btn sm ghost" onClick={() => setOnlyUnlocked((v) => !v)}>{onlyUnlocked ? 'Show all' : 'Unlocked only'}</button></div>
       <div className="thief-group">
-        <div className="thief-columns" aria-hidden><span>Job</span><span>Level</span><span>Rooms</span><span>Cost</span><span>Mastery</span></div>
+        <div className="thief-columns" aria-hidden><span>Job</span><span>Level</span><span>Rooms</span><span>Prep</span><span>Mastery</span></div>
         {shown.map((j) => {
           const reason = jobBlocker(s, j);
           return <button key={j.id} className={`thief-target ${job.id === j.id ? 'selected' : ''} ${reason ? 'locked' : ''}`} aria-pressed={job.id === j.id} title={reason ?? `View ${j.name}`} onClick={() => setSelectedId(j.id)}>
             <span className="thief-target-name"><JobPortrait job={j} /><span><b>{j.name}</b>{runningId === j.id ? <small className="thief-working">{s.action?.kind === 'heist' ? `On the job · room ${s.action.room}` : 'Casing the job'}</small> : <small className="thief-sub">{j.favours}</small>}</span>{reason && <GameIcon name="lock" size={12} />}</span>
             <span className="num thief-cell" data-label="Level">{j.level}</span>
             <span className="num thief-cell" data-label="Rooms">{j.rooms}</span>
-            <span className="num thief-cell" data-label="Cost">{jobCost(s, j)}</span>
+            <span className="num thief-cell" data-label="Prep">{prepKindsHeld(s, j.id)}/{prepBoard(j.id).min}</span>
             <span className="num thief-cell thief-mastery-number" data-label="Mastery">{j.mastery ? masteryLevel(s, j.mastery.id) : '—'}</span>
           </button>;
         })}
         {!shown.length && <p className="dim small">No unlocked heists yet.</p>}
       </div>
       <div className="thief-marker-note">
-        <div className="row"><MatIcon id={MARKER} size={18} /><b>Rogue’s Markers</b><span className="spacer" /><span className="num">{fmt(s.storage.bank[MARKER] ?? 0)}</span></div>
-        <p>Marks pay Markers, and Markers set up Heists. Each room is richer and riskier than the last, and the vault is in the final room. Short on Markers, a repeating job cases itself on your best mark until it is funded.</p>
+        <p>Street marks sometimes turn up prep, and prep sets up Heists. Each room is richer and riskier than the last, and the vault is in the final room. Short on prep, a repeating job works the marks that supply it until you can start.</p>
         {((s.storage.bank.treasury_fragment ?? 0) > 0 || (s.storage.bank.oath_fragment ?? 0) > 0) && <p>Treasury Fragments: {fmt(s.storage.bank.treasury_fragment ?? 0)} · Oath Fragments: {fmt(s.storage.bank.oath_fragment ?? 0)}</p>}
       </div>
     </section>

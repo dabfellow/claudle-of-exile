@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { MARKER } from '../../data/craftMats';
+import { useEffect, useState } from 'react';
+import { HEIST_JOBS, prepBoard, prepDef } from '../../data/heist';
 import { materialDef } from '../../data/materials';
 import { actionsFor, type SkillAction } from '../../data/skills';
-import { markerBoost } from '../../engine/heist';
+import { jobBlocker } from '../../engine/heist';
 import { actionBlocker, actionIntervalMs, skillLevel, startSkillAction, stopAction } from '../../engine/skills';
 import { masteryLevel } from '../../engine/skillingMastery';
 import { skillTreeStats } from '../../engine/skillTree';
@@ -41,6 +41,12 @@ export function ThievingHeader() {
   const maxed = level >= maxLevelOf('thieving');
   const xp = s.skills.thieving;
   const rate = game.xpPerHour('thieving');
+  const notice = s.heist.notice;
+  useEffect(() => {
+    if (!notice) return;
+    game.pushToast(notice, 'good');
+    game.act((st) => { delete st.heist.notice; });
+  }, [notice]);
   return <header className="card thief-header">
     <span className="thief-emblem"><GameIcon name="thieving" size={28} color="var(--gold)" /></span>
     <div className="thief-heading"><h1>Thieving</h1><span>The Underworld Ledger</span></div>
@@ -49,7 +55,6 @@ export function ThievingHeader() {
       <ProgressBar value={maxed ? 1 : progressOf('thieving', xp)} color="var(--gold)" smooth />
       <div className="row small"><span>{maxed ? 'Max level' : `${fmt(xpToReach('thieving', level + 1) - xp)} to level ${level + 1}`}</span><span className="spacer" /><span className="num">{fmt(rate)} XP/h</span></div>
     </div>
-    <div className="thief-marker-total"><MatIcon id={MARKER} size={26} /><div><b className="num">{fmt(s.storage.bank[MARKER] ?? 0)}</b><span>Rogue’s Markers</span></div></div>
   </header>;
 }
 
@@ -68,9 +73,9 @@ export function ThievingLedger() {
   const xpFor = (mark: SkillAction) => +(mark.xp * (1 + (d.skillXp + (tree.skillXp ?? 0)) / 100)).toFixed(1);
   const blocker = actionBlocker(s, a);
   const running = activeId === a.id;
-  const completions = s.professionProgress.counters['thieving.markers'] ?? 0;
-  const untilMarker = 10 - completions % 10;
   const selectedGroup = GROUPS.find((g) => g.actions.includes(a))!;
+  const planned = s.heist.planned ? HEIST_JOBS.find((j) => j.id === s.heist.planned && !jobBlocker(s, j)) : undefined;
+  const prepGiven = (markId: string) => planned ? prepBoard(planned.id).items.filter((e) => e.mark === markId).map((e) => prepDef(e.kind).name) : [];
 
   return <div className="thief-workspace">
     <section className="card thief-ledger" aria-label="Street mark ledger">
@@ -90,7 +95,7 @@ export function ThievingLedger() {
                 const reason = actionBlocker(s, mark);
                 const active = activeId === mark.id;
                 return <button key={mark.id} data-tut={`action-${mark.id}`} className={`thief-target ${a.id === mark.id ? 'selected' : ''} ${reason ? 'locked' : ''}`} aria-pressed={a.id === mark.id} title={reason ?? `View ${mark.name}`} onClick={() => setSelectedId(mark.id)}>
-                  <span className="thief-target-name"><TargetPortrait a={mark} /><span><b>{mark.name}</b>{active && <small className="thief-working">Working the mark</small>}</span>{reason && <GameIcon name="lock" size={12} />}</span>
+                  <span className="thief-target-name"><TargetPortrait a={mark} /><span><b>{mark.name}</b>{active && <small className="thief-working">Working the mark</small>}{prepGiven(mark.id).length > 0 && <small className="thief-prep-badge" title={`Can give prep for ${planned!.name}: ${prepGiven(mark.id).join(', ')}`}>Prep: {prepGiven(mark.id).join(', ')}</small>}</span>{reason && <GameIcon name="lock" size={12} />}</span>
                   <span className="num thief-cell" data-label="Level">{mark.level}</span>
                   <span className="num thief-cell" data-label="Time">{(actionIntervalMs(s, mark, d) / 1000).toFixed(1)}s</span>
                   <span className="num thief-cell" data-label="XP">{xpFor(mark)}</span>
@@ -102,9 +107,7 @@ export function ThievingLedger() {
         </div>;
       })}
       <div className="thief-marker-note">
-        <div className="row"><MatIcon id={MARKER} size={18} /><b>Guaranteed Marker</b><span className="spacer" /><span className="num">{untilMarker} {untilMarker === 1 ? 'lift' : 'lifts'} away</span></div>
-        <ProgressBar value={(completions % 10) / 10} color="var(--gold)" />
-        <p>Every mark pays gold and can yield Markers. Every 10 lifts guarantees an extra Marker for Heists.</p>
+        <p>Every mark pays gold, and can turn up prep items (keys, ledgers, schedules) for the Heists. Plan a job on the Heists tab to see which marks help.</p>
         {((s.storage.bank.treasury_fragment ?? 0) > 0 || (s.storage.bank.oath_fragment ?? 0) > 0) && <p>Treasury Fragments: {fmt(s.storage.bank.treasury_fragment ?? 0)} · Oath Fragments: {fmt(s.storage.bank.oath_fragment ?? 0)}</p>}
       </div>
     </section>
@@ -114,7 +117,7 @@ export function ThievingLedger() {
       <div className="thief-dossier-heading"><TargetPortrait a={a} large /><div><span className="thief-dossier-kicker">Street mark · Lv {a.level}</span><h2>{a.name}</h2><span className="num">{(interval / 1000).toFixed(1)}s per attempt · {xpFor(a)} XP</span></div></div>
       <div className="thief-rewards"><h3>Rewards per lift</h3>
         {Object.entries(a.outputs ?? {}).map(([id, n]) => <div className="thief-reward" key={id}><MatIcon id={id} size={20} /><b>{materialDef(id).name}</b><span className="spacer" /><span className="num">{n} base{a.outputChance !== undefined && ` · ${a.outputChance * 100}% chance`}</span></div>)}
-        {a.bonus?.map((bonus) => <div className="thief-reward" key={bonus.id}><MatIcon id={bonus.id} size={20} /><b>{materialDef(bonus.id).name}</b><span className="spacer" /><span className="num">×{bonus.qty} · {+(Math.min(1, bonus.chance * (bonus.id === MARKER ? 1 + markerBoost(s) / 100 : 1)) * 100).toFixed(2)}%</span></div>)}
+        {a.bonus?.map((bonus) => <div className="thief-reward" key={bonus.id}><MatIcon id={bonus.id} size={20} /><b>{materialDef(bonus.id).name}</b><span className="spacer" /><span className="num">×{bonus.qty} · {+(Math.min(1, bonus.chance) * 100).toFixed(2)}%</span></div>)}
         <p className="thief-reward-note">Base gold before mastery and Focus bonuses. Guaranteed Markers are additional.</p>
       </div>
       <div className="thief-dossier-action">
