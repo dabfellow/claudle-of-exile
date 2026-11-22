@@ -4,7 +4,6 @@ import { WEAPON_COMPONENT_ACTIONS } from './weaponProjects';
 import { ARCHAEOLOGY_RECIPES } from './archaeology';
 import { MINING_ACTIONS, type MiningDeposit } from './mining';
 import { WOODCUTTING_ACTIONS, type WoodcuttingSource } from './woodcutting';
-import { AGILITY_ACTIONS } from './agility';
 import { FORAGING_ACTIONS, foragingSource, type ForagingSource } from './foraging';
 import { ALCHEMY_EXPANSION_ACTIONS } from './alchemy';
 import { purposeRecipes, SMITH_COMPONENTS, type SmithPurpose } from './smithing';
@@ -13,7 +12,6 @@ import { CARTOGRAPHY_GATE, CHART_TIERS, FOLIO_COST, FOLIO_LEVEL, FOLIO_SIZE, SEX
 import { chamberActionId, CULTURES, digChance, EXPEDITION_GATE, SITES, TRAIL } from './expedition';
 import { MAP_TIERS } from './maps';
 import { SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
-import { RUNE_FAMILIES, RUNES } from './runes';
 import { masteryForAction, type MasterySpec } from './skillingMastery';
 import { masteryBatches } from './masteryBatches';
 import { GILDED_STARDUST, REGIONS, starDef, STARDUST, WATCH_INTERVAL_MS } from './astrology';
@@ -326,97 +324,6 @@ const GEMCUTTING: SkillAction[] = [
   ...GEMCUTTING_EXPANSION_ACTIONS,
 ];
 
-/** One recipe per rune. Later families in a grade open two levels apart, so there's always a next one to reach. */
-const RUNECARVING: SkillAction[] = [
-  ...RUNES.map((r) => {
-    const flavour = r.grade.grade <= 2 ? r.family.flavour.low : r.family.flavour.high;
-    return {
-      id: `carve_${r.id}`,
-      skill: 'runecarving' as const,
-      name: r.name,
-      level: r.grade.level + RUNE_FAMILIES.indexOf(r.family) * 2,
-      intervalMs: r.grade.intervalMs,
-      xp: r.grade.xp,
-      inputs: { ...r.grade.inputs, [flavour]: r.grade.flavour },
-      outputs: { [r.id]: 1 },
-      accomplishments: r.grade.grade >= 2 ? [`rune_${r.family.id}_grade_${r.grade.grade - 1}_practice`] : undefined,
-      color: r.family.color,
-    };
-  }),
-  {
-    id: 'prepare_return_inscription',
-    skill: 'runecarving',
-    name: 'Prepare Return Inscription',
-    level: 65,
-    intervalMs: 60000,
-    xp: 120,
-    inputs: { inscription_fragment: 10, rune_keen_3: 1 },
-    protectedOutputs: { return_inscription: 1 },
-    color: '#6fa8ff',
-  },
-  {
-    id: 'prepare_choir_inscription',
-    skill: 'runecarving',
-    name: 'Prepare Choir Inscription',
-    level: 70,
-    intervalMs: 60000,
-    xp: 150,
-    inputs: { inscription_fragment: 10, rune_blood_3: 1 },
-    protectedOutputs: { choir_inscription: 1 },
-    color: '#d6453d',
-  },
-  {
-    id: 'prepare_circuit_inscription',
-    skill: 'runecarving',
-    name: 'Prepare Circuit Inscription',
-    level: 70,
-    intervalMs: 60000,
-    xp: 150,
-    inputs: { inscription_fragment: 10, rune_storm_3: 1 },
-    protectedOutputs: { circuit_inscription: 1 },
-    color: '#f2d14c',
-  },
-  {
-    id: 'inscribe_convergence',
-    skill: 'runecarving',
-    name: 'Inscribe Convergence',
-    level: 90,
-    intervalMs: 120000,
-    xp: 300,
-    inputs: { inscription_fragment: 5, rune_stone_4: 1 },
-    protectedOutputs: { convergence_inscription: 1 },
-    color: '#9b8e7e',
-  },
-];
-
-const cook = (id: string, name: string, level: number, intervalMs: number, xp: number, inputs: Record<string, number>, color: string): SkillAction => ({
-  id: `cook_${id}`, skill: 'cooking', name, level, intervalMs, xp, inputs, outputs: { [id]: 1 }, color,
-});
-
-const cookProtected = (id: string, name: string, level: number, intervalMs: number, xp: number, inputs: Record<string, number>, color: string): SkillAction => ({
-  id: `cook_${id}`, skill: 'cooking', name, level, intervalMs, xp, inputs, protectedOutputs: { [id]: 1 }, color,
-});
-
-/** Plants in, a meal or a flask ingredient out. Never fish: the fish have not been told. */
-const COOKING: SkillAction[] = [
-  cook('meal_porridge', 'Sunpetal Porridge', 1, 4000, 12, { sunpetal: 3 }, '#f2c94c'),
-  cook('meal_broth', 'Frostleaf Broth', 6, 4000, 18, { frostleaf: 2, sunpetal: 2 }, '#7fc8f8'),
-  cook('meal_hash', "Forager's Hash", 10, 4500, 26, { frostleaf: 3, sunpetal: 3 }, '#a8b860'),
-  cook('meal_gatherer', "Gatherer's Ration", 10, 5000, 30, { sunpetal: 4, frostleaf: 2 }, '#68b04d'),
-  cook('frost_extract', 'Frostleaf Extract', 15, 5000, 34, { frostleaf: 12, essence_frost_2: 1 }, '#7fc8f8'),
-  cook('meal_chilli', 'Emberroot Chilli', 20, 5000, 42, { emberroot: 3, frostleaf: 2 }, '#e2603f'),
-  cook('meal_artisan', "Artisan's Lunch", 20, 6000, 50, { frostleaf: 3, emberroot: 3 }, '#c28546'),
-  cook('meal_chowder', 'Stormwatch Chowder', 26, 5500, 55, { emberroot: 4, frostleaf: 2 }, '#d8c070'),
-  cook('ember_reduction', 'Emberroot Reduction', 30, 6000, 70, { emberroot: 14, essence_vitality_2: 1 }, '#e2603f'),
-  cook('meal_roast', 'Slow Root Roast', 35, 6000, 80, { emberroot: 5, yew_log: 1 }, '#b0603a'),
-  cook('meal_curry', 'Voidbloom Curry', 40, 7000, 100, { voidbloom: 3, emberroot: 2 }, '#9b6dde'),
-  cook('void_distillate', 'Voidbloom Distillate', 45, 8000, 125, { voidbloom: 12, essence_haste_2: 1 }, '#9b6dde'),
-  cook('meal_table', "Captain's Table", 50, 10000, 170, { voidbloom: 5, emberroot: 3, sunpetal: 3, yew_log: 1 }, '#e0a640'),
-  cookProtected('meal_moon_signature', 'Moonfall Consommé', 50, 60000, 300, { moon_bloom: 1, frostleaf: 10 }, '#82aaff'),
-  cookProtected('binding_stock', 'Binding Stock', 55, 30000, 250, { moon_bloom: 1, emberroot: 10, sunpetal: 10 }, '#c29d62'),
-  cookProtected('meal_star_signature', 'Starlight Banquet', 65, 60000, 400, { star_bloom: 1, voidbloom: 10 }, '#ffd700'),
-];
-
 const sheet = (id: string, name: string, level: number, intervalMs: number, xp: number, inputs: Record<string, number>, color: string): SkillAction => ({
   id: `chart_${id}`, skill: 'cartography', name, level, intervalMs, xp, inputs, outputs: { [id]: 1 }, color, gate: CARTOGRAPHY_GATE,
 });
@@ -482,8 +389,8 @@ const CARTOGRAPHY: SkillAction[] = [
 export const BOSS_KEY_CRAFTS: SkillAction[] = [
   { id: 'smith_marrow_key', skill: 'smithing', name: 'Marrow Key', level: 60, intervalMs: 25000, xp: 350, inputs: { mithril_bar: 8, dense_fossil: 2, serrated_fossil: 2 }, outputs: { marrow_key: 1 }, color: '#b8a890', gate: CARTOGRAPHY_GATE },
   { id: 'cut_bell_key', skill: 'gemcutting', name: 'Bell Key', level: 60, intervalMs: 25000, xp: 350, inputs: { rough_gem: 6, arcane_dust: 80, metallic_fossil: 2 }, outputs: { bell_key: 1 }, color: '#f2d14c', gate: CARTOGRAPHY_GATE },
-  { id: 'brew_abyssal_key', skill: 'alchemy', name: 'Abyssal Key', level: 60, intervalMs: 25000, xp: 350, inputs: { void_distillate: 2, frigid_fossil: 2, arcane_dust: 60 }, outputs: { abyssal_key: 1 }, color: '#5f8f9e', gate: CARTOGRAPHY_GATE },
-  { id: 'carve_regent_key', skill: 'runecarving', name: 'Joined Regent Key', level: 60, intervalMs: 25000, xp: 350, inputs: { scorched_fossil: 2, frigid_fossil: 2, arcane_dust: 80 }, outputs: { regent_key: 1 }, color: '#e2603f', gate: CARTOGRAPHY_GATE },
+  { id: 'brew_abyssal_key', skill: 'alchemy', name: 'Abyssal Key', level: 60, intervalMs: 25000, xp: 350, inputs: { voidbloom: 6, frigid_fossil: 2, arcane_dust: 60 }, outputs: { abyssal_key: 1 }, color: '#5f8f9e', gate: CARTOGRAPHY_GATE },
+  { id: 'carve_regent_key', skill: 'cartography', name: 'Joined Regent Key', level: 60, intervalMs: 25000, xp: 350, inputs: { scorched_fossil: 2, frigid_fossil: 2, arcane_dust: 80 }, outputs: { regent_key: 1 }, color: '#e2603f', gate: CARTOGRAPHY_GATE },
   { id: 'smith_crownless_key', skill: 'smithing', name: 'Crownless Key (Keys)', level: 70, intervalMs: 30000, xp: 500, inputs: { marrow_key: 1, bell_key: 1, abyssal_key: 1, regent_key: 1 }, outputs: { crownless_key: 1 }, color: '#d8c070', gate: CARTOGRAPHY_GATE },
   { id: 'smith_crownless_key_shards', skill: 'smithing', name: 'Crownless Key (Trophies)', level: 70, intervalMs: 30000, xp: 500, inputs: { marrow_shard: 2, choir_glass: 2, black_pearl: 2, throne_ash: 2 }, outputs: { crownless_key: 1 }, color: '#d8c070', gate: CARTOGRAPHY_GATE },
 ];
@@ -491,7 +398,7 @@ export const BOSS_KEY_CRAFTS: SkillAction[] = [
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...THIEVING, ...AGILITY_ACTIONS, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...ASTROLOGY, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
+const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...THIEVING, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...ASTROLOGY, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
 /** Historical access evidence used only by save migration. */
 const ALL_AUTHORED_ACTIONS = [
   ...AUTHORED_ACTIONS,

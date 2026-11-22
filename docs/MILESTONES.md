@@ -4,7 +4,7 @@ Last updated 2026-11-21. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Mining, Smelting, Forging, Woodcrafting, Gemcutting, Foraging, Alchemy and Cartography are built locally on the skilling overhaul checkout (2026-11-21). Continue skill removals (Agility, Cooking, Rune-carving) and the skilling tree revamp before releasing the overhaul.
+All 12 reworked skills (Thieving, Astrology, Archaeology, Woodcutting, Mining, Smelting, Forging, Woodcrafting, Gemcutting, Foraging, Alchemy, Cartography) and the Agility/Cooking/Rune-carving removals are built locally on the skilling overhaul checkout (2026-11-21). The skilling tree revamp is next before releasing the overhaul.
 
 Act-map readability, quest highlighting and the Quests sidebar page are live in **0.5.10**.
 

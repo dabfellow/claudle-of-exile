@@ -12,10 +12,8 @@ import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { STAT_KEYS, type Buff, type DamageType, type GameState, type Item, type RolledMod, type StatKey, type Stats } from './types';
 import { ascendancyOf, unwrittenNodeOf } from './ascendancy';
 import { characterLevel } from './character';
-import { mealStats } from './cooking';
 import { hasFishingPrize } from './fishing';
 import { MEGA_CRIT_MULTI, mechanicOf, mechanicStats } from './mechanics';
-import { runeStats } from './runes';
 import { forgeImplicits } from '../data/forging';
 import { woodImplicits } from './woodcrafting';
 
@@ -230,8 +228,6 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
     }
     addStats(st, mods);
   }
-  addStats(st, runeStats(s));
-  addStats(st, mealStats(s));
   addStats(st, passiveTotals(s.passives, s.masteries));
   const ascendancy = ascendancyOf(s);
   if (ascendancy) {

@@ -113,21 +113,7 @@ export const PROFESSION_PROJECTS: ProfessionProject[] = [{
   inputs: { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 },
   reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Lapidary's Chisel", fixedSuffixes: [{ affixId: 'profession_speed_gemcutting', tier: 0, values: [8] }] },
   sources: [{ label: 'Mine Copper/Mithril and Rough Gems', skill: 'mining' }, { label: 'Smelt Copper/Mithril Bars', skill: 'smithing' }, { label: 'Cut and refine Oak Planks', skill: 'woodcutting' }],
-  use: 'One fixed magic main-hand tool: 8% increased Gemcutting speed only. Level 1 to equip; one normal rune slot. Other professions may supply inputs. No automatic task switching.',
-}, {
-  id: 'project_feast_artisans', version: 1, name: "Grand Artisan's Feast", skill: 'cooking', level: 60,
-  durationMs: 1_800_000, xp: 600, repeatable: true,
-  inputs: { star_bloom: 2, moon_bloom: 2, meal_artisan: 10 },
-  reward: { category: 'progress', materials: { feast_artisans: 5 } },
-  sources: [{ label: 'Grow or forage Moon and Star Blooms', skill: 'harvesting' }, { label: "Cook Artisan's Lunches", skill: 'cooking' }],
-  use: 'Five Grand Artisan’s Feasts: each grants 8% production speed for 60 min of relevant active work. Fixed 5-count award; protected consumables.',
-}, {
-  id: 'project_feast_wayfarers', version: 1, name: "Wayfarer's Feast", skill: 'cooking', level: 60,
-  durationMs: 1_800_000, xp: 600, repeatable: true,
-  inputs: { star_bloom: 2, moon_bloom: 2, meal_porridge: 10 },
-  reward: { category: 'progress', materials: { feast_wayfarers: 5 } },
-  sources: [{ label: 'Grow or forage Moon and Star Blooms', skill: 'harvesting' }, { label: 'Cook Sunpetal Porridge', skill: 'cooking' }],
-  use: 'Five Wayfarer’s Feasts: each grants 12% maximum Life and 8% all elemental resistances for 60 min of combat. Fixed 5-count award; protected consumables.',
+  use: 'One fixed magic main-hand tool: 8% increased Gemcutting speed only. Level 1 to equip. Other professions may supply inputs. No automatic task switching.',
 }];
 
 PROFESSION_PROJECTS.push({ id: 'chart_reliquary', version: 1, name: "Chart Artisans' Reliquary", skill: 'cartography', level: 50,

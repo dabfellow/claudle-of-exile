@@ -102,6 +102,79 @@ export function convertWoodcuttingToGiants(raw: Record<string, unknown>): void {
   if (act?.kind === 'skill' && typeof act.actionId === 'string' && act.actionId in RETIRED_CUT_WOODS) act.actionId = `giant_${probe.giant.current!.region}`;
 }
 
+function migrateRemovedSkills(raw: Record<string, unknown>): void {
+  const skills = raw.skills as Record<string, number> | undefined;
+  const hadRemoved = !!skills && ((skills.agility ?? 0) > 0 || (skills.cooking ?? 0) > 0 || (skills.runecarving ?? 0) > 0);
+  if (skills) {
+    skills.agility = 0;
+    skills.cooking = 0;
+    skills.runecarving = 0;
+  }
+  raw.meal = null;
+
+  // Convert cooking extracts to herbs at 3:1 and delete stored rune items
+  const storage = raw.storage as { bank?: Record<string, number>; stash?: ({ rune?: string } | null)[][] } | undefined;
+  const bank = storage?.bank;
+  if (bank) {
+    const conversions: [string, string][] = [
+      ['frost_extract', 'frostleaf'],
+      ['ember_reduction', 'emberroot'],
+      ['void_distillate', 'voidbloom'],
+    ];
+    for (const [oldId, herb] of conversions) {
+      if (bank[oldId]) {
+        bank[herb] = (bank[herb] ?? 0) + bank[oldId] * 3;
+        delete bank[oldId];
+      }
+    }
+    for (const key of Object.keys(bank)) {
+      if (key.startsWith('rune_')) delete bank[key];
+    }
+  }
+
+  // Strip socketed runes from inventory, equipment, and stashes
+  const stripRune = (item: { rune?: string } | null | undefined) => {
+    if (item && 'rune' in item) delete item.rune;
+  };
+  for (const item of (raw.inventory as ({ rune?: string } | null)[] | undefined) ?? []) stripRune(item);
+  for (const item of Object.values((raw.equipment as Record<string, { rune?: string } | null> | undefined) ?? {})) stripRune(item);
+  for (const page of storage?.stash ?? []) for (const item of page ?? []) stripRune(item);
+
+  // Clear mastery for removed skills
+  const mastery = raw.skillingMastery as Record<string, number> | undefined;
+  if (mastery) {
+    for (const key of Object.keys(mastery)) {
+      if (key.startsWith('task.agil_') || key.startsWith('task.cook_') || key.startsWith('task.rune_') || key.startsWith('task.carve_')) {
+        delete mastery[key];
+      }
+    }
+  }
+
+  // Refund active feast project if any
+  const prog = raw.professionProgress as { activeProject?: { project?: { id?: string; inputs?: Record<string, number> } } | null } | undefined;
+  const activeId = prog?.activeProject?.project?.id;
+  if (activeId === 'project_feast_artisans' || activeId === 'project_feast_wayfarers') {
+    if (bank && prog?.activeProject?.project?.inputs) {
+      for (const [id, n] of Object.entries(prog.activeProject.project.inputs)) {
+        bank[id] = (bank[id] ?? 0) + n;
+      }
+    }
+    if (prog) prog.activeProject = null;
+  }
+
+  // Cancel running action if it belonged to a removed skill
+  const act = raw.action as { kind?: string; actionId?: string } | null | undefined;
+  if (act?.kind === 'skill' && act.actionId && (act.actionId.startsWith('agil_') || act.actionId.startsWith('cook_') || act.actionId.startsWith('rune_'))) {
+    raw.action = null;
+  }
+
+  if (hadRemoved) {
+    const notices = (raw.migrationNotices as string[] | undefined) ?? [];
+    notices.push('Agility, Cooking and Rune-carving have been retired. Cooking extracts converted to herbs, socketed and stored runes removed, and any active feast project refunded.');
+    raw.migrationNotices = notices;
+  }
+}
+
 const MIGRATIONS: Record<number, Migration> = {
   0: (raw) => {
     // pre-release saves had no lifetime stats
@@ -500,6 +573,7 @@ const MIGRATIONS: Record<number, Migration> = {
   60: migrateForagingToBreeding,
   61: migrateAlchemyInfusions,
   62: migrateCartographyScraps,
+  63: migrateRemovedSkills,
 };
 
 /**

@@ -1,5 +1,4 @@
 import { CREW_SLOT_LEVELS, ALARM_KEEPS, GEAR, hasHeistJob, HEIST_JOBS, heistJob, LEDGER_VAULT_ROLL, MAX_ALARM, MAX_ROGUE_RANK, PATROL_MULT, PLAN_MULT, PREP_CAP, PREP_DOUBLE_MARKS, PREP_DROP_CHANCE, prepBoard, prepDef, prepId, rogueDef, rogueRankCost, STEALTH_FLOOR, STEALTH_PER_LEVEL, UNIFORM_MULT, type HeistDrop, type HeistJob, type PrepEntry, type PrepKind, type RogueSkill } from '../data/heist';
-import { agilityCut } from '../data/agility';
 import { actionsFor, type SkillAction } from '../data/skills';
 import type { BaseDef } from '../data/bases';
 import { seeUnique } from './account';
@@ -235,7 +234,7 @@ export function roomMs(s: GameState, job: HeistJob, d: Derived): number {
   const t = skillTreeStats(s);
   const speed = s.heist.roster ? Math.min(0.6, crewBonus(s, 'Move Speed') + crewBonus(s, 'Pathfinding') + crewBonus(s, 'Trap Bypass') + crewBonus(s, 'Obstacle Evasion')) : crewEffect(s, 'locksmith');
   const uniform = runPrep(s, job).includes('uniform') ? UNIFORM_MULT : 1;
-  return (job.roomMs * (1 - speed) * (1 - agilityCut('heist', skillLevel(s, 'agility'))) * uniform) / (1 + (d.skillSpeed + (d.gatheringSpeed ?? 0) + (t.skillSpeed ?? 0) + (t.thievingSpeed ?? 0) + masterySpeed(s, job.mastery)) / 100);
+  return (job.roomMs * (1 - speed) * uniform) / (1 + (d.skillSpeed + (d.gatheringSpeed ?? 0) + (t.skillSpeed ?? 0) + (t.thievingSpeed ?? 0) + masterySpeed(s, job.mastery)) / 100);
 }
 
 /** Share of the take you keep when an alarm goes off. */

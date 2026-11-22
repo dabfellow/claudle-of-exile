@@ -9,7 +9,6 @@ import { newFlask } from './flasks';
 import { createSkillGem } from './gems';
 import type { Ctx } from './context';
 import { checkAchievements } from './achievements';
-import { isMealClockRunning, mealStep } from './cooking';
 import { autoNextZoneStep, combatStep, tickDebt } from './combat';
 import { fillOrders, newExpeditionState } from './expedition';
 import { newArchaeologyState } from './deciphering';
@@ -41,7 +40,7 @@ export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 63;
+export const SAVE_VERSION = 64;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -196,7 +195,6 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
     if (s.action?.kind === 'craft') craftStep(s, ctx, step);
     if (s.action?.kind === 'heist') heistStep(s, ctx, step, d);
     heistAutoStep(s);
-    if (isMealClockRunning(s)) mealStep(s, ctx, step);
     if (s.combat) {
       if (hasLivingEquipment && s.combat.monsters.some((mon) => mon.life > 0) && woodGrowthStep(s, step)) d = deriveStats(s);
       if (combatStep(s, ctx, step, d)) d = deriveStats(s);
