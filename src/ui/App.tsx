@@ -22,6 +22,7 @@ import { TraderPage } from './pages/TraderPage';
 import { TreePage } from './pages/TreePage';
 import { AccountModal, AccountScreen, CharacterCreate, CharacterSelect, DemoBanner, EventBanner, FallenScreen, IntroModal, NewPasswordModal, TitleScreen } from './screens/Screens';
 import { AdminMailNotice } from './components/AdminInbox';
+import { FellingCards } from './components/FellingCards';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { AdminPage } from './pages/AdminPage';
 
@@ -132,6 +133,7 @@ function GameScreen() {
       <PinDock />
       <ItemMenuHost />
       <OfflineModal onOpenDesk={() => setPage('archaeology')} />
+      <FellingCards />
       <IntroModal />
       <AccountModal />
     </div>

@@ -177,6 +177,66 @@ export function focusResult(offset: number): SwingResult {
   return off <= FOCUS_DOUBLE_OFFSET ? 'double' : off <= FOCUS_HIT_OFFSET ? 'hit' : off <= FOCUS_WEAK_OFFSET ? 'weak' : 'miss';
 }
 
+/**
+ * Woodcutting, split the log: how far off the middle the two halves are, in percentage points of the log's mass.
+ * This game's own bands replace the middle-third double rule (owner's call, docs/WOODCUTTING_GIANTS.md).
+ */
+export const SPLIT_DOUBLE_OFF = 3;
+export const SPLIT_HIT_OFF = 7;
+export const SPLIT_WEAK_OFF = 15;
+/** Samples along a log's length in its mass profile. */
+export const LOG_SAMPLES = 60;
+
+/** `leftShare` is the left half's share of the log's mass, 0 to 100. */
+export function splitResult(leftShare: number): SwingResult {
+  const off = Math.abs(leftShare - 50);
+  return off <= SPLIT_DOUBLE_OFF ? 'double' : off <= SPLIT_HIT_OFF ? 'hit' : off <= SPLIT_WEAK_OFF ? 'weak' : 'miss';
+}
+
+export type LogKind = 'trunk' | 'limb' | 'heart';
+
+/**
+ * A log's mass along its length, as `LOG_SAMPLES` thicknesses. A trunk round is plain with a slight taper, a limb log
+ * has one branch knob, a heart log two irregular knobs; `extraKnobs` (Twisted grain) adds more. `rand` is any 0-1 source.
+ */
+export function logProfile(kind: LogKind, rand: () => number, extraKnobs = 0): number[] {
+  const base = 10;
+  const taper = (rand() - 0.5) * 3;
+  const profile = Array.from({ length: LOG_SAMPLES }, (_, i) => base + taper * (i / (LOG_SAMPLES - 1) - 0.5));
+  const knobs = (kind === 'limb' ? 1 : kind === 'heart' ? 2 : 0) + extraKnobs;
+  for (let k = 0; k < knobs; k++) {
+    const at = 4 + rand() * (LOG_SAMPLES - 8);
+    const width = 2.5 + rand() * 3.5;
+    const height = (kind === 'heart' ? 4 : 5) + rand() * 7;
+    for (let i = 0; i < LOG_SAMPLES; i++) profile[i] += height * Math.exp(-((i - at) ** 2) / (2 * width * width));
+  }
+  return profile;
+}
+
+/** The left share of a log's mass, 0 to 100, when it is cut `at` of the way along it (0 to 1). */
+export function massShare(profile: number[], at: number): number {
+  const total = profile.reduce((a, b) => a + b, 0);
+  if (total <= 0) return 50;
+  const cut = Math.min(1, Math.max(0, at)) * profile.length;
+  const whole = Math.floor(cut);
+  let left = 0;
+  for (let i = 0; i < whole && i < profile.length; i++) left += profile[i];
+  if (whole < profile.length) left += profile[whole] * (cut - whole);
+  return (left / total) * 100;
+}
+
+/** The point along the log, 0 to 1, where the two halves weigh the same. */
+export function balancePoint(profile: number[]): number {
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    if (massShare(profile, mid) < 50) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
 /** Steps between two tiles of the survey grid: what a sounding shows. */
 export function surveyDistance(a: number, b: number): number {
   return Math.abs((a % SURVEY_COLS) - (b % SURVEY_COLS)) + Math.abs(Math.floor(a / SURVEY_COLS) - Math.floor(b / SURVEY_COLS));

@@ -5,6 +5,7 @@ import {
 } from '../data/astrology';
 import type { SkillAction } from '../data/skills';
 import { canAfford, payCost } from './bank';
+import { rollCollectible } from './collectibles';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
 import type { Ctx } from './context';
 import { chance, pick } from './rng';
@@ -111,7 +112,7 @@ export function astrologyDone(s: GameState, ctx: Ctx, a: SkillAction, times = 1)
     if (!r) return;
     const row = (st.regions[r.id] ??= { research: 0 });
     row.research += times;
-    // TODO collectibles: one per sky region
+    for (let i = 0; i < times; i++) rollCollectible(s, ctx, 'astrology', r.id);
     r.stars.forEach((starId, i) => {
       if (st.stars[starId] || row.research < researchNeeded(r, i)) return;
       st.stars[starId] = { rank: 1, xp: 0 };

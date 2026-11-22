@@ -67,6 +67,10 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'heartwood_fragment', name: 'Heartwood Fragment', kind: 'component', color: '#c49b60', value: 0, desc: 'Found from Ancient Heartwood Surveys and ancient timber. Refine 20 into Ancient Heartwood; future signature runes also use fragments.' },
   { id: 'ancient_heartwood', name: 'Ancient Heartwood', kind: 'component', color: '#c49b60', value: 0, desc: 'Refined from 20 Heartwood Fragments. Smithing makes Heartwood Frames at level 45/Forge 3, or Convergence Frames at level 85/Forge 3. Finished unique recipes remain unavailable.' },
 
+  { id: 'splinters', name: 'Splinters', kind: 'component', color: '#a88a62', value: 0, desc: 'What is left on a giant when it falls before its crown and limbs are cut. Burns well: Smelting uses them as charcoal fuel.' },
+  { id: 'legend_heartwood', name: 'Legend Heartwood', kind: 'component', color: '#f2d28a', value: 0, desc: 'The heart of a named legendary giant. Stock for Woodcrafting living woods.' },
+  { id: 'world_tree_seed', name: 'World Tree Seed', kind: 'component', color: '#6ed5a9', value: 0, desc: 'A very rare seed from a legendary giant. Plant it at the lodge (needs the Trophy Wall): it grows for 120 days into your own World Tree.' },
+  { id: 'world_tree_heart', name: 'World Tree Heart', kind: 'component', color: '#9ff0c8', value: 0, desc: 'The heart of your own World Tree. Kept for future uniques.' },
   { id: 'ash_plank', name: 'Ash Plank', kind: 'component', color: '#b89a72', value: 10, desc: 'Cut from Ash Logs for hideout construction.' },
   { id: 'oak_plank', name: 'Oak Plank', kind: 'component', color: '#8a6338', value: 25, desc: 'Cut from Oak Logs for hideout construction.' },
   { id: 'yew_plank', name: 'Yew Plank', kind: 'component', color: '#6b3d2c', value: 60, desc: 'Cut from Yew Logs for advanced hideout construction.' },

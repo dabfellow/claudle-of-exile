@@ -8,6 +8,7 @@ import { materialDef } from '../data/materials';
 import { affixDef } from '../data/affixes';
 import { RELIC_FORMS, RELIC_ILVL, RELIC_SLOTS, relicForm, relicLineCost, type RelicForm } from '../data/relics';
 import { addBank, hasItem } from './bank';
+import { rollCollectible } from './collectibles';
 import type { Ctx } from './context';
 import { chance, pick } from './rng';
 import { skillTreeStats } from './skillTree';
@@ -107,7 +108,7 @@ export function digDone(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<
     give(ROSETTA_STONE, 1);
     ctx.emit({ t: 'info', text: `${site.name}: a Rosetta Stone, the same text in several scripts`, tone: 'good' });
   }
-  // TODO collectibles: one per dig site
+  rollCollectible(s, ctx, 'archaeology', site.id);
 
   // Relic Fragments
   const fragKey = `archaeology.fragments.${site.culture}`;

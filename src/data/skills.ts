@@ -33,7 +33,7 @@ export interface SkillDef {
 export const SKILLS: Record<SkillId, SkillDef> = {
   combat: { id: 'combat', name: 'Character', group: 'combat', color: '#e0a640', verb: 'Fighting', desc: 'Your character level: raises Life and Mana and grants passive points.' },
   mining: { id: 'mining', name: 'Mining', group: 'gathering', color: '#c8743f', verb: 'Mining', desc: 'Prospect deeper metals. Choose ordinary ore, rich metal, crystal or fossil deposits; save dependable fragments for future projects.' },
-  woodcutting: { id: 'woodcutting', name: 'Woodcutting', group: 'gathering', color: '#6fae4a', verb: 'Chopping', desc: 'Choose timber, guaranteed resin or ancient heartwood. Refine materials for Smithing, construction and future equipment frames.' },
+  woodcutting: { id: 'woodcutting', name: 'Woodcutting', group: 'gathering', color: '#6fae4a', verb: 'Chopping', desc: 'Fell giant trees part by part: resin from the crown, logs from limbs and trunk, heartwood from the heart. Build a lodge from your own timber.' },
   // id kept as `harvesting` so saves, tree nodes and the Greenhouse don't need migrating
   harvesting: { id: 'harvesting', name: 'Foraging', group: 'gathering', color: '#d9b84a', verb: 'Foraging', desc: 'Pick herbs off the ground for Alchemy.' },
   thieving: { id: 'thieving', name: 'Thieving', group: 'gathering', color: '#c9a35a', verb: 'Thieving', desc: "Lift purses for gold and Rogue's Markers, then spend them on Heists against the Khanate." },
@@ -132,12 +132,6 @@ const GATHERING: SkillAction[] = [
   { ...gather('mining', 'mine_cliffside', 'Cliffside Vein', 15, 3500, 20, 'iron_ore', '#b0b8c4', [{ id: 'rough_gem', chance: 0.06, qty: 1 }, { id: 'dense_fossil', chance: 0.05, qty: 1 }]), agility: AGILITY_SPOT_LEVEL.mine_cliffside },
   { ...gather('mining', 'mine_grotto', 'Falls Grotto', 30, 4000, 40, 'mithril_ore', '#5fd8e0', [{ id: 'rough_gem', chance: 0.08, qty: 1 }, { id: 'mineral_fragment', chance: 0.04, qty: 1 }]), agility: AGILITY_SPOT_LEVEL.mine_grotto },
 
-  gather('woodcutting', 'cut_ash', 'Ash Tree', 1, 3000, 7, 'ash_log', '#b89a72', [{ id: 'ash_resin', chance: 0.03, qty: 1 }]),
-  { ...gather('woodcutting', 'cut_ley', 'Ley-touched Ash', 8, 3500, 10, 'ash_log', '#b9a7ff', [{ id: 'arcane_dust', chance: 1, qty: 1 }, { id: 'ash_resin', chance: 0.04, qty: 1 }]), outputChance: ALT_YIELD },
-  { ...gather('woodcutting', 'cut_oak', 'Oak Tree', 15, 3500, 18, 'oak_log', '#8a6338', [{ id: 'oak_resin', chance: 0.03, qty: 1 }]), area: 'ashwood' },
-  { ...gather('woodcutting', 'cut_weeping', 'Weeping Oak', 18, 4000, 21, 'oak_log', '#b07a2c', [{ id: 'oak_resin', chance: 0.1, qty: 1 }]), outputChance: ALT_YIELD, area: 'ashwood' },
-  { ...gather('woodcutting', 'cut_crag_oak', 'Crag Oak', 15, 3500, 20, 'oak_log', '#9a7040', [{ id: 'oak_resin', chance: 0.08, qty: 1 }]), agility: AGILITY_SPOT_LEVEL.cut_crag_oak },
-  { ...gather('woodcutting', 'cut_yew', 'Yew Tree', 30, 4000, 38, 'yew_log', '#6b3d2c'), area: 'shipgrave' },
 
   gather('harvesting', 'herb_sun', 'Sunpetal Patch', 1, 3000, 7, 'sunpetal', '#f2c94c', [{ id: 'essence_vitality_1', chance: 0.06, qty: 1 }]),
   {
@@ -173,13 +167,6 @@ const GATHERING: SkillAction[] = [
   },
   { ...gather('harvesting', 'herb_void', 'Voidbloom Grove', 40, 5000, 55, 'voidbloom', '#9b6dde'), area: 'stormcliffs' },
 ].map((a) => ({ ...a, bonus: [...(a.bonus ?? []), { id: SHARD_FOR[a.skill]!, chance: SHARD_CHANCE, qty: 1 }] }));
-
-/** Turn gathered logs into compact construction materials instead of asking station upgrades for thousands of logs. */
-const MILLING: SkillAction[] = [
-  { id: 'mill_ash', skill: 'woodcutting', name: 'Cut Ash Planks', level: 1, intervalMs: 3000, xp: 8, inputs: { ash_log: 5 }, outputs: { ash_plank: 1 }, color: '#b89a72' },
-  { id: 'mill_oak', skill: 'woodcutting', name: 'Cut Oak Planks', level: 15, intervalMs: 3500, xp: 20, inputs: { oak_log: 5 }, outputs: { oak_plank: 1 }, color: '#8a6338', area: 'ashwood' },
-  { id: 'mill_yew', skill: 'woodcutting', name: 'Cut Yew Planks', level: 30, intervalMs: 4000, xp: 42, inputs: { yew_log: 5 }, outputs: { yew_plank: 1 }, color: '#6b3d2c', area: 'shipgrave' },
-];
 
 const mark = (id: string, name: string, level: number, intervalMs: number, xp: number, gold: number, color: string, extra: SkillAction['bonus'] = []): SkillAction => ({
   id, skill: 'thieving', name, level, intervalMs, xp, outputs: { gold }, bonus: extra, color,
@@ -534,14 +521,13 @@ export const BOSS_KEY_CRAFTS: SkillAction[] = [
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...MILLING, ...THIEVING, ...AGILITY_ACTIONS, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...ASTROLOGY, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
+const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...THIEVING, ...AGILITY_ACTIONS, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...ASTROLOGY, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...RUNECARVING, ...COOKING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
 /** Historical access evidence used only by save migration. */
 const ALL_AUTHORED_ACTIONS = [...AUTHORED_ACTIONS, ...WEAPON_COMPONENT_ACTIONS.filter((extra) => !AUTHORED_ACTIONS.some((a) => a.id === extra.id))];
 export const LEGACY_ACTION_PLACES = Object.fromEntries(ALL_AUTHORED_ACTIONS.map((a) => [a.id, { area: a.area, gate: a.gate }]));
 export const ACTIONS: SkillAction[] = ALL_AUTHORED_ACTIONS.map(({ area: _area, gate: _gate, ...a }) => ({
   ...a,
   mining: a.mining ?? (['mine_copper', 'mine_iron', 'mine_mithril'].includes(a.id) ? { metal: a.id.slice(5), mode: 'ordinary' as const } : undefined),
-  woodcutting: a.woodcutting ?? (['cut_ash', 'cut_oak', 'cut_yew'].includes(a.id) ? { wood: a.id.slice(4), mode: 'ordinary' as const } : undefined),
   foraging: a.foraging ?? foragingSource(a),
   xp: Math.round(a.xp * SKILL_XP_SCALE * 10) / 10,
 })).map((a) => ({ ...a, mastery: masteryForAction(a) })).flatMap((a) => [a, ...masteryBatches(a)]);

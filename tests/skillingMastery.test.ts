@@ -290,7 +290,7 @@ describe('non-combat action mastery', () => {
     const s = newGame(1);
     const copper = actionDef('mine_copper').mastery!;
     const iron = actionDef('mine_iron').mastery!;
-    const ash = actionDef('cut_ash').mastery!;
+    const ash = actionDef('giant_ash').mastery!;
 
     // Initial state: no practice -> max focus speed is baseline 45% (0.45)
     expect(totalMasteryLevels(s, 'mining')).toBe(0);

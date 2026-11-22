@@ -15,6 +15,7 @@ import { advanceProject, cancelProject, completeProject, resumeProject, startPro
 import { equip } from '../src/engine/equipment';
 import { upgradeStation } from '../src/engine/hideout';
 import { seeded } from '../src/engine/rng';
+import { giantCuts } from './helpers';
 import type { GameState } from '../src/engine/types';
 
 const ctx = (seed = 42) => makeCtx({ next: seeded(seed).next });
@@ -26,6 +27,8 @@ const reload = (s: GameState) => {
 };
 
 function doActionCycles(s: GameState, actionId: string, count: number, c = ctx()): number {
+  // logs now come from felling giants: cut a giant's limbs, one log a cut
+  if (actionId.startsWith('cut_')) return giantCuts(s, c, actionId.slice(4), count);
   const a = actionDef(actionId);
   expect(startSkillAction(s, c, actionId)).toBeNull();
   let elapsed = 0;
@@ -319,20 +322,12 @@ describe('Phase 05 Equipment Checkpoint', () => {
         minFragments: 120,
       },
       {
-        id: 'cut_ash',
+        // scouts follow the highest unlocked region as levels come, so the ash haul is smaller than the old 9,600
+        id: 'giant_ash',
         skill: 'woodcutting' as const,
         outputMat: 'ash_log',
-        minYield: 9600,
+        minYield: 1200,
         minXp: 20160,
-      },
-      {
-        id: 'cut_heartwood',
-        skill: 'woodcutting' as const,
-        outputMat: 'yew_log',
-        minYield: 1800,
-        minXp: 27000,
-        fragmentId: 'heartwood_fragment',
-        minFragments: 120,
       },
     ])('inspects an actual 8-hour gathering haul for $id meeting §9 minimums and live/offline parity', { timeout: 60_000 }, ({ id, skill, outputMat, minYield, minXp, fragmentId, minFragments }) => {
       const live = newGame(1);
