@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { actionDef, SKILLS } from '../../data/skills';
 import { doubleReady, focusMult, focusOf, hasMinigame, maxFocusSpeed, minigameSwing, overflowOf, type SwingResult } from '../../engine/minigame';
+import { splitSwing } from '../../engine/woodcutting';
 import type { GameState, SkillId } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { ProgressBar } from './common';
@@ -8,7 +9,7 @@ import { SkillGame } from './minigames';
 
 const HOW_TO: Partial<Record<SkillId, string>> = {
   mining: 'Hold to charge your pick, then release in the bright band, or its gold middle for a double. Too long and it overcharges.',
-  woodcutting: 'Swing while the marker is in the bright band, or its gold middle for a double.',
+  woodcutting: 'Split the log: tap where the axe lands. Within 3% of an even split is a double, within 7% a hit, within 15% weak.',
   harvesting: 'Tap herbs as they pop up, before they wilt. Pick one while it glows gold for a double.',
   thieving: 'Watch the pins light up, then tap them back in the same order. Finish while the timer is in the gold for a double.',
   agility: 'Jump while the marker is in the bright band, or its gold middle for a double.',
@@ -41,7 +42,7 @@ export function SkillMinigame({ skill }: { skill: SkillId }) {
   if (runningSkill(s) !== skill) return null;
 
   const onSwing = (r: SwingResult) => {
-    game.act((st) => minigameSwing(st, r));
+    game.act((st, ctx) => (skill === 'woodcutting' ? splitSwing(st, ctx, r) : minigameSwing(st, r)));
     setResult({ id: Math.random(), r });
   };
   const color = SKILLS[skill].color;

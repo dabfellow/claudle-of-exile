@@ -45,7 +45,9 @@ import { woodcuttingAccessHint, woodcuttingPreview } from '../../engine/woodcutt
 import { smithingPreview } from '../../engine/smithing';
 import { foragingAccessHint, foragingPreview, greenhousePlantReason, plantGreenhouse } from '../../engine/foraging';
 import { foragingSource } from '../../data/foraging';
-import { WOODS } from '../../data/woodcutting';
+import { LEGENDS, WOODS } from '../../data/woodcutting';
+import { unlockedRegions } from '../../engine/woodcutting';
+import { GIANT_TABS, GiantView, isGiantTab } from '../components/GiantView';
 import { skillTreeStats } from '../../engine/skillTree';
 import { alchemyPreview } from '../../engine/alchemy';
 import { alchemyCategory, ALCHEMY_CATEGORIES } from '../../data/alchemy';
@@ -563,7 +565,7 @@ function getSkillTabs(skill: SkillId): { id: string; label: string }[] | null {
   else if (skill === 'cartography') baseTabs = [{ id: 'charts', label: 'Map Case' }];
   else if (skill === 'mining') baseTabs = [{ id: 'all', label: 'Mining' }];
   else if (skill === 'astrology') baseTabs = [{ id: 'study', label: 'Observatory' }, { id: 'chart', label: 'Star Chart' }];
-  else if (skill === 'woodcutting') baseTabs = [{ id: 'trees', label: 'Woodcutting' }, { id: 'planks', label: 'Planks' }];
+  else if (skill === 'woodcutting') baseTabs = [...GIANT_TABS, { id: 'planks', label: 'Sawmill' }];
 
   const hasProjects = PROFESSION_PROJECTS.some((p) => p.skill === skill && p.category !== 'masteryBatch');
   if (!baseTabs && !hasProjects) return null;
@@ -582,7 +584,7 @@ function defaultSkillTab(skill: SkillId): string {
   if (skill === 'archaeology') return 'sites';
   if (skill === 'harvesting') return 'forage';
   if (skill === 'cartography') return 'charts';
-  if (skill === 'woodcutting') return 'trees';
+  if (skill === 'woodcutting') return 'giant';
   if (skill === 'astrology') return 'study';
   return 'all';
 }
@@ -605,7 +607,7 @@ function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
   }
   if (skill === 'woodcutting') {
     for (const a of actions) {
-      const heartwood = a.id === 'cut_heartwood' || a.id === 'mill_heartwood';
+      const heartwood = a.id === 'mill_heartwood';
       const wood = WOODS.find((w) => a.woodcutting?.wood === w.id || a.outputs?.[`${w.id}_log`] || a.outputs?.[`${w.id}_plank`]);
       const key = heartwood ? 'heartwood' : wood?.id ?? a.id;
       let group = tiers.find((t) => t.key === key);
@@ -681,7 +683,7 @@ function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
     return tiers;
   }
   for (const a of actions) {
-    const out = a.mining ? `${a.mining.metal}_ore` : a.id === 'mill_heartwood' || a.woodcutting?.mode === 'heartwood' ? 'ancient_heartwood' : a.woodcutting ? `${a.woodcutting.wood}_log` : a.foraging ? a.foraging.plant : a.outputs ? Object.keys(a.outputs)[0] : undefined;
+    const out = a.mining ? `${a.mining.metal}_ore` : a.id === 'mill_heartwood' ? 'ancient_heartwood' : a.woodcutting ? `${a.woodcutting.wood}_log` : a.foraging ? a.foraging.plant : a.outputs ? Object.keys(a.outputs)[0] : undefined;
     const band = Math.floor(a.level / 10) * 10;
     const key = SKILLS[skill].group === 'gathering' && out ? out : `band-${band}`;
     let t = tiers.find((x) => x.key === key);
@@ -959,8 +961,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
   } else if (skill === 'archaeology' && tab === 'restoration') {
     inTab = selectedActions.filter((a) => a.id.startsWith('sift_') || a.id.startsWith('restore_'));
   } else if (skill === 'woodcutting') {
-    const planks = (a: SkillAction) => Object.keys(a.outputs ?? {}).some((id) => id.endsWith('_plank'));
-    inTab = selectedActions.filter((a) => tab === 'planks' ? planks(a) : !planks(a));
+    inTab = selectedActions.filter((a) => a.woodcutting?.mode === 'sawmill');
   }
 
   const tiers = tiersOf(skill, inTab);
@@ -971,12 +972,14 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
     skill !== 'thieving' &&
     skill !== 'fishing' &&
     !(skill === 'harvesting' && tab === 'greenhouse') &&
-    !(skill === 'astrology' && tab === 'chart');
+    !(skill === 'astrology' && tab === 'chart') &&
+    !(skill === 'woodcutting' && tab !== 'planks');
 
   return (
     <div className={`page ${skill === 'thieving' ? 'thieving-page' : `profession-page profession-${skill}`}`} style={{ ['--profession' as string]: SKILLS[skill].color }}>
       {skill === 'thieving' ? <ThievingHeader /> : <SkillHeader skill={skill} />}
-      {skill !== 'thieving' && !showActivities && <SkillMinigame skill={skill} />}
+      {skill !== 'thieving' && skill !== 'woodcutting' && !showActivities && <SkillMinigame skill={skill} />}
+      {skill === 'woodcutting' && tab === 'planks' && <SkillMinigame skill={skill} />}
 
       {tabs && (
         <div className="smith-tabs" style={{ marginTop: 8 }}>
@@ -1016,10 +1019,16 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
                   : selectedActions.filter((a) => runecarvingCategory(a) === x.id);
                 countText = `${list.filter(isUnlocked).length}/${list.length}`;
               }
-            } else if (skill === 'mining' || skill === 'woodcutting' || skill === 'cartography') {
-              if (x.id === 'all' || x.id === 'charts' || x.id === 'trees' || x.id === 'planks') {
-                const list = skill === 'woodcutting' ? selectedActions.filter((a) => Object.keys(a.outputs ?? {}).some((id) => id.endsWith('_plank')) === (x.id === 'planks')) : selectedActions;
+            } else if (skill === 'woodcutting') {
+              if (x.id === 'planks') {
+                const list = selectedActions.filter((a) => a.woodcutting?.mode === 'sawmill');
                 countText = `${list.filter(isUnlocked).length}/${list.length}`;
+              } else if (x.id === 'regions') countText = `${unlockedRegions(level).length}/${WOODS.length}`;
+              else if (x.id === 'scouting' && s.giant.options.length) countText = `${s.giant.options.length}`;
+              else if (x.id === 'trophies') countText = `${s.giant.legends.length}/${LEGENDS.length}`;
+            } else if (skill === 'mining' || skill === 'cartography') {
+              if (x.id === 'all' || x.id === 'charts') {
+                countText = `${selectedActions.filter(isUnlocked).length}/${selectedActions.length}`;
               }
             }
             return (
@@ -1059,6 +1068,12 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
         </div>
       )}
       {skill === 'agility' && <AgilityShortcuts level={level} />}
+      {skill === 'woodcutting' && isGiantTab(tab) && <GiantView tab={tab} go={setTab} />}
+      {skill === 'woodcutting' && tab === 'planks' && (
+        <div className="callout skill-note">
+          The Sawmill saws logs into planks and refines Ancient Heartwood. Ash, Oak and Yew planks are open to everyone; Ironwood and deeper planks and heartwood refining need the Sawmill built in the Lodge{s.giant.lodge.sawmill >= 1 ? ' (built)' : ''}.
+        </div>
+      )}
 
       {(skill === 'smithing' || skill === 'woodcrafting') && (
         <div className="callout skill-note">

@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Woodcutting is rebuilt as Felling giants: scout a giant, work its crown, limbs, trunk and heart, split logs evenly for Focus, build a lodge from your own timber, and hunt legendary trees. Hidden finds now wait in every forest region (see Skills > Collection).',
+];
 
 export const NEWS: NewsEntry[] = [
   {

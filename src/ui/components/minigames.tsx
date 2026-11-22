@@ -5,6 +5,9 @@ import {
   DOUBLE_SHARE,
   doubleZoneStart,
   inDoubleZone,
+  logProfile,
+  massShare,
+  splitResult,
   strikeResult,
   surveyDistance,
   surveyResult,
@@ -12,10 +15,13 @@ import {
   SURVEY_DOUBLE,
   SURVEY_ROWS,
   SURVEY_SOUNDINGS,
+  type LogKind,
   type SwingResult,
 } from '../../engine/minigame';
-import type { SkillId } from '../../engine/types';
+import type { GiantPart, SkillId } from '../../engine/types';
+import { useGame } from '../../game';
 import { MatIcon } from './common';
+import './giants.css';
 
 const CHARGE_MS = 1100;
 const SWEEP_MS = 1200;
@@ -215,6 +221,108 @@ function WoodcuttingGame({ onSwing }: { onSwing: OnSwing }) {
         </button>
         <button className="btn mini-swing" onPointerDown={chop} onKeyDown={(e) => { if (e.key === 'Enter' && !e.repeat) { e.preventDefault(); chop(); } }}>Swing</button>
       </div>
+  );
+}
+
+const SPLIT_W = 300;
+const SPLIT_H = 112;
+const SPLIT_X0 = 14;
+const SPLIT_LEN = 272;
+const SPLIT_BASE = 96;
+const SPLIT_SCALE = 3.4;
+const SPLIT_NEXT_MS = 600;
+
+const splitKind = (part?: GiantPart): LogKind => (part === 'heart' ? 'heart' : part === 'limbs' || part === 'crown' ? 'limb' : 'trunk');
+
+/** Top edge of the log at a point `at` (0 to 1) along it, interpolated between samples. */
+function logTop(profile: number[], at: number): number {
+  const f = Math.min(1, Math.max(0, at)) * (profile.length - 1);
+  const i = Math.floor(f);
+  const t = profile[i] + ((profile[Math.min(profile.length - 1, i + 1)] - profile[i]) * (f - i));
+  return SPLIT_BASE - t * SPLIT_SCALE;
+}
+
+/** The outline of the part of a log between two points along it, shifted sideways by `dx`. */
+function logPath(profile: number[], from: number, to: number, dx = 0): string {
+  const pts: string[] = [];
+  const n = profile.length - 1;
+  const x = (at: number) => (SPLIT_X0 + at * SPLIT_LEN + dx).toFixed(1);
+  pts.push(`${x(from)},${SPLIT_BASE}`, `${x(from)},${logTop(profile, from).toFixed(1)}`);
+  for (let i = Math.ceil(from * n); i <= Math.floor(to * n); i++) pts.push(`${x(i / n)},${logTop(profile, i / n).toFixed(1)}`);
+  pts.push(`${x(to)},${logTop(profile, to).toFixed(1)}`, `${x(to)},${SPLIT_BASE}`);
+  return pts.join(' ');
+}
+
+/**
+ * Woodcutting: split the log. A log lies on the block with its branches left on; tap where the axe lands. The
+ * halves are weighed by their real size, branches included, and judged by `splitResult`. No timer.
+ */
+function SplitGame({ onSwing }: { onSwing: OnSwing }) {
+  const s = useGame();
+  const part = s.action?.kind === 'skill' ? s.action.part : undefined;
+  const kind = splitKind(part);
+  const extra = s.giant.current?.quirks.includes('twisted') ? 1 : 0;
+  const [profile, setProfile] = useState(() => logProfile(kind, Math.random, extra));
+  const [cut, setCut] = useState<{ at: number; left: number } | null>(null);
+  const [aim, setAim] = useState(0.5);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setProfile(logProfile(kind, Math.random, extra));
+    setCut(null);
+  }, [kind, extra]);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const chop = (at: number) => {
+    if (cut) return;
+    const left = massShare(profile, at);
+    setCut({ at, left });
+    onSwing(splitResult(left));
+    timer.current = setTimeout(() => {
+      setCut(null);
+      setProfile(logProfile(kind, Math.random, extra));
+    }, SPLIT_NEXT_MS);
+  };
+  const along = (e: ReactPointerEvent<SVGSVGElement>) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    return Math.min(1, Math.max(0, ((e.clientX - box.left) / box.width * SPLIT_W - SPLIT_X0) / SPLIT_LEN));
+  };
+  const gap = cut ? 7 : 0;
+
+  return (
+    <div className="mini-split">
+      <svg
+        className="mini-split-log"
+        viewBox={`0 0 ${SPLIT_W} ${SPLIT_H}`}
+        role="button"
+        tabIndex={0}
+        aria-label="Split the log: tap where the axe lands, or use the arrow keys and Enter"
+        onPointerMove={(e) => { if (!cut) setAim(along(e)); }}
+        onPointerDown={(e) => { const at = along(e); setAim(at); chop(at); }}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowLeft') { e.preventDefault(); setAim((a) => Math.max(0, a - 0.02)); }
+          else if (e.key === 'ArrowRight') { e.preventDefault(); setAim((a) => Math.min(1, a + 0.02)); }
+          else if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); chop(aim); }
+        }}
+      >
+        <rect className="mini-split-block" x="4" y={SPLIT_BASE} width={SPLIT_W - 8} height={SPLIT_H - SPLIT_BASE - 4} rx="3" />
+        {cut ? (
+          <>
+            <polygon className="mini-split-wood" points={logPath(profile, 0, cut.at, -gap)} />
+            <polygon className="mini-split-wood" points={logPath(profile, cut.at, 1, gap)} />
+            <text className="mini-split-pct" x={SPLIT_X0 + (cut.at * SPLIT_LEN) / 2 - gap} y="18" textAnchor="middle">{Math.round(cut.left)}%</text>
+            <text className="mini-split-pct" x={SPLIT_X0 + SPLIT_LEN * (1 + cut.at) / 2 + gap} y="18" textAnchor="middle">{Math.round(100 - cut.left)}%</text>
+          </>
+        ) : (
+          <>
+            <polygon className="mini-split-wood" points={logPath(profile, 0, 1)} />
+            <line className="mini-split-aim" x1={SPLIT_X0 + aim * SPLIT_LEN} x2={SPLIT_X0 + aim * SPLIT_LEN} y1="6" y2={SPLIT_BASE} />
+            <polygon className="mini-split-axe" points={`${SPLIT_X0 + aim * SPLIT_LEN - 5},4 ${SPLIT_X0 + aim * SPLIT_LEN + 5},4 ${SPLIT_X0 + aim * SPLIT_LEN},13`} />
+          </>
+        )}
+      </svg>
+      <div className="mini-split-foot dim small">{cut ? 'Halves weighed' : 'Tap where the axe lands. Branches count toward their side.'}</div>
+    </div>
   );
 }
 
@@ -752,7 +860,7 @@ export function SkillGame({ skill, matId, onSwing }: { skill: SkillId; matId?: s
     case 'mining':
       return <MiningGame onSwing={onSwing} />;
     case 'woodcutting':
-      return <WoodcuttingGame onSwing={onSwing} />;
+      return <SplitGame onSwing={onSwing} />;
     case 'harvesting':
       return <ForagingGame matId={matId} onSwing={onSwing} />;
     case 'thieving':

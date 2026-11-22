@@ -2,8 +2,33 @@ import { BASES, baseDef } from '../src/data/bases';
 import { activeGemDef, gemWeapons } from '../src/data/gems';
 import { createItem } from '../src/engine/items';
 import { seeded } from '../src/engine/rng';
-import type { GameState, MonsterInstance } from '../src/engine/types';
+import type { GameState, GiantPart, MonsterInstance } from '../src/engine/types';
 import { charXpForLevel } from '../src/engine/xp';
+import { actionDef } from '../src/data/skills';
+import type { Ctx } from '../src/engine/context';
+import { actionIntervalMs, skillStep, startSkillAction } from '../src/engine/skills';
+import { deriveStats } from '../src/engine/stats';
+import { makeGiant, setGiantPart } from '../src/engine/woodcutting';
+
+/**
+ * Woodcutting gathers by felling a giant now: put a huge giant of `wood` in front of the character and cut its limbs,
+ * which give exactly one log a cut. Returns the time the cuts took, in ms.
+ */
+export function giantCuts(s: GameState, c: Ctx, wood: string, cuts: number, part: GiantPart = 'limbs'): number {
+  s.giant.current = makeGiant(s, wood, 'legend', []);
+  const id = `giant_${wood}`;
+  if (startSkillAction(s, c, id)) throw new Error(`cannot cut ${id}`);
+  setGiantPart(s, part);
+  const a = actionDef(id);
+  let elapsed = 0;
+  for (let i = 0; i < cuts; i++) {
+    const d = deriveStats(s);
+    const duration = actionIntervalMs(s, a, d);
+    elapsed += duration;
+    skillStep(s, c, duration + 0.0001, d);
+  }
+  return elapsed;
+}
 
 /**
  * A character far enough along to use any gem (they have level requirements) and with the Crafting Bench

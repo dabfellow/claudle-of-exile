@@ -181,10 +181,12 @@ describe('offline rules', { timeout: 30_000 }, () => {
   it('offline skilling stays at full speed for the whole cap', () => {
     const s = newGame(1);
     const c = ctx();
-    startSkillAction(s, c, 'cut_ash');
+    startSkillAction(s, c, 'giant_ash');
     // The full offline window is simulated: earned mastery gradually increases its output.
     const summary = simulateOffline(s, c, 8 * 3_600_000);
-    expect(summary.materials.ash_log).toBe(5_000);
+    // scouts head for the highest unlocked region as levels come, so the haul spreads over several woods
+    const logs = Object.entries(summary.materials).filter(([id]) => id.endsWith('_log')).reduce((a, [, n]) => a + n, 0);
+    expect(logs).toBeGreaterThan(5_000);
     expect(summary.xp.woodcutting).toBeGreaterThan(0);
   });
 

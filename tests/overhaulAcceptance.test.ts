@@ -302,7 +302,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
     const cartographyStarter = actionsFor('cartography').find((a) => a.level === 1)!;
     const cases: { skill: SkillId; actionId: string; bank?: Record<string, number>; setup?: (s: ReturnType<typeof newGame>) => void }[] = [
       { skill: 'mining', actionId: 'mine_copper' },
-      { skill: 'woodcutting', actionId: 'cut_ash' },
+      { skill: 'woodcutting', actionId: 'giant_ash' },
       { skill: 'smelting', actionId: 'smelt_copper', bank: { copper_ore: 50000 } },
       { skill: 'harvesting', actionId: 'herb_sun' },
       { skill: 'alchemy', actionId: 'brew_life_small', bank: { sunpetal: 50000, ash_log: 50000 } },

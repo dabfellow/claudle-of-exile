@@ -1276,6 +1276,10 @@ class GameStore {
         this.pushToast(`Achievement unlocked: ${a.name}`, 'good');
         break;
       }
+      case 'collectible':
+        this.addFeed(`Found a hidden collectible: ${e.name} (see Skills > Collection)`, 'good');
+        this.pushToast(`Hidden find: ${e.name}`, 'good');
+        break;
       case 'info':
         this.addFeed(e.text, e.tone ?? 'info');
         if (e.tone === 'warn') this.pushToast(e.text, 'warn');

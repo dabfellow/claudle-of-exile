@@ -719,6 +719,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - Woodcutter's lodge buildings (scout tower, drying shed, sawmill, trophy wall) and the World Tree seed.
   - Giant-up-close screen with tabs, and felling cards on return.
   - Move existing saves, logs, resin, planks, heartwood progress and the hatchet over without losses; keep offline and live results matching.
+  - Where it stands (2026-11-21): everything above is built on a worktree branch (engine, data, GiantView with tabs, split-the-log game, lodge, World Tree, felling cards, migration 51 to 52, tests) along with the shared hidden collectibles system (`data/collectibles.ts`, `engine/collectibles.ts`, Collection tab on Skills). `npm test` and `npm run build` pass. Not yet checked in the running game with the playtest skill at desktop and phone width, so left unchecked.
+  - Small calls made in the build: ash, oak and yew planks stay open to everyone (early hideout upgrades need them; only Ironwood and deeper planks and heartwood refining need the Sawmill). Giant cutting actions are one per region (`giant_<wood>`), not a single `giant_cut`. Scouts follow the highest unlocked region by default, so an overnight run moves up the woods as levels come.
 
 - [ ] Build Foraging as Wild variants and cross-breeding, from [Foraging: Wild variants and cross-breeding](FORAGING_BREEDING.md).
   - Strains with up to three weighted mutations (common, rare, giga rare), found in the wild including offline.

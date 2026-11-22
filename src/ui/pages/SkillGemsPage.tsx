@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   activeGemDef,
   RULE_LABELS,
@@ -47,6 +47,7 @@ import '../round2-session3.css';
 import { GemIcon, GemTip, rulesLabel, ruleText, SupportTip } from '../components/GemView';
 import { Icon } from '../components/Icon';
 import { SkillSets } from '../components/Loadouts';
+import { CollectionPanel } from '../components/CollectionPanel';
 
 export const SKILL_KEYS = ['Q', 'W', 'E', 'R', 'T', 'Y'];
 
@@ -727,7 +728,7 @@ function SlotModal({
   );
 }
 
-export function SkillGemsPage() {
+function SkillGemsBody({ tabs }: { tabs: ReactNode }) {
   const s = useGame();
   const [pickedGem, setPickedGem] = useState<number | null>(null);
   const [pickedSupport, setPickedSupport] = useState<number | null>(null);
@@ -779,6 +780,7 @@ export function SkillGemsPage() {
         Your bar runs in cast order: the first skill whose rules all pass and that you can pay for (rules keep 40% of your Life back), otherwise a free Default Attack. Reactive rules are
         taught at the Hideout's War Table. Press <b>Q–Y</b> in combat to cast a slot manually.
       </PageHeader>
+      {tabs}
 
       <div className="card">
         <div className="card-title">
@@ -933,6 +935,26 @@ export function SkillGemsPage() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/** The Skills screen: your gems and skill bar, and the Collection of hidden skilling finds. */
+export function SkillGemsPage() {
+  const [tab, setTab] = useState<'gems' | 'collection'>('gems');
+  const tabs = (
+    <Tabs
+      tabs={[{ id: 'gems', label: 'Skill gems' }, { id: 'collection', label: 'Collection' }]}
+      value={tab}
+      onChange={setTab}
+    />
+  );
+  if (tab === 'gems') return <SkillGemsBody tabs={tabs} />;
+  return (
+    <div className="page">
+      <PageHeader title="Skills">Hidden finds from every skilling zone.</PageHeader>
+      {tabs}
+      <CollectionPanel />
     </div>
   );
 }

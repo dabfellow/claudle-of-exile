@@ -773,13 +773,69 @@ export interface AscendancyState {
 /** What a Craft until… activity spends each step: an orb (optionally with a Fossil or Forger's Seal) or an Essence. */
 export type CraftMethod = { orb: string; fossil?: string | null; sealed?: string | null } | { essence: string };
 
+/** Woodcutting: Felling giants (docs/WOODCUTTING_GIANTS.md, engine/woodcutting.ts). */
+export type GiantPart = 'crown' | 'limbs' | 'trunk' | 'heart';
+export type GiantSize = 'small' | 'medium' | 'large' | 'legend' | 'worldtree';
+export interface Giant {
+  id: string;
+  /** the region's wood id (ash, oak, ...) */
+  region: string;
+  size: GiantSize;
+  quirks: string[];
+  legendId?: string;
+  /** the player's own grown World Tree */
+  worldTree?: boolean;
+  parts: Record<GiantPart, { hp: number; max: number }>;
+  fallen: boolean;
+  /** what each part has given so far */
+  yields: Record<GiantPart, Record<string, number>>;
+  /** splinters the fall made */
+  splinters: number;
+}
+export interface FellingCard {
+  id: string;
+  region: string;
+  size: GiantSize;
+  quirks: string[];
+  legendId?: string;
+  worldTree?: boolean;
+  yields: Record<GiantPart, Record<string, number>>;
+  splinters: number;
+  /** the heart was skipped with Move on */
+  movedOn?: boolean;
+  at: number;
+}
+export type GiantPref = 'resin' | 'heart' | 'fast' | 'region';
+export type LodgeId = 'scoutTower' | 'dryingShed' | 'sawmill' | 'trophyWall';
+export interface GiantState {
+  current: Giant | null;
+  options: Giant[];
+  order: {
+    pref: GiantPref;
+    partOrder: 'full' | 'rush';
+    /** the region scouts are sent to; 'auto' is the highest unlocked */
+    region: string;
+    alwaysLegend: boolean;
+    /** pick the next giant by the standing order as soon as one falls (offline always does) */
+    auto: boolean;
+  };
+  lodge: Record<LodgeId, number>;
+  legends: string[];
+  /** when and what each legend gave, for the Trophy Wall */
+  legendLog: Record<string, { at: number; yields: Record<string, number> }>;
+  worldTree?: { plantedAt: number };
+  pendingCards: FellingCard[];
+  /** counter for giant ids */
+  seq: number;
+}
+
 /** When a Craft until… activity stops. `minTier` is an affix tier index (higher is better). */
 export type StopRule = { kind: 'has'; affixId: string; minTier?: number } | { kind: 'twoOf'; affixIds: string[] };
 
 export type Action =
   | { kind: 'project'; runId: number }
   /** `double`: a mini-game hit in its double zone, so the next finish pays out twice */
-  | { kind: 'skill'; actionId: string; progress: number; focus?: number; double?: boolean }
+  | { kind: 'skill'; actionId: string; progress: number; focus?: number; double?: boolean; /** Woodcutting: the giant part being cut */ part?: GiantPart }
   | { kind: 'combat'; zoneId: string }
   | { kind: 'craft'; uid: number; method: CraftMethod; rule: StopRule; progress: number; steps: number }
   | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number>; focus?: number; double?: boolean; crew?: string[]; spent?: string[]; tactic?: 'bypass' | 'greed'; tacticRogue?: string; scouted?: number }
@@ -1228,6 +1284,10 @@ export interface GameState {
   expedition: ExpeditionState;
   /** Astrology's Star Chart: stars lit per constellation id (engine/astrology.ts) */
   astrology: { stars: Record<string, number> };
+  /** Woodcutting: the giant being felled, scouted options, standing order and lodge */
+  giant: GiantState;
+  /** ids of hidden skilling collectibles found (data/collectibles.ts) */
+  collectibles: string[];
   skillBar: (SkillGemInstance | null)[];
   loadouts: Loadouts;
   action: Action;
@@ -1341,4 +1401,5 @@ export type GameEvent =
   | { t: 'trialPassed'; n: number }
   | { t: 'bossWaiting'; name: string }
   | { t: 'zoneUnlocked'; zoneId: string }
+  | { t: 'collectible'; id: string; name: string }
   | { t: 'info'; text: string; tone?: 'warn' | 'good' };

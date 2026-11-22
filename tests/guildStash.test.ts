@@ -23,7 +23,7 @@ describe('personal supplies and Guild Stash', () => {
     const crafter = newGame(3, { name: 'Crafter', classId: 'shadow' }, realm);
     const c = ctx();
     expect(startSkillAction(miner, c, 'mine_copper')).toBeNull();
-    expect(startSkillAction(cutter, c, 'cut_ash')).toBeNull();
+    expect(startSkillAction(cutter, c, 'giant_ash')).toBeNull();
     expect(startSkillAction(crafter, c, 'smith_whittled_dagger')).toBeTruthy();
     tick(miner, c, 120_000);
     simulateOffline(cutter, c, 120_000);

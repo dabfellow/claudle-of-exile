@@ -41,7 +41,6 @@ export const AGILITY_SHORTCUTS: AgilityShortcut[] = [
   { level: 12, kind: 'heist', name: 'Rooftop Entry', desc: 'Heist rooms take 5% less time', cut: 0.05 },
   { level: 18, kind: 'spot', name: 'Cliffside Vein', desc: 'Opens a hidden iron seam in Mining', actionId: 'mine_cliffside' },
   { level: 25, kind: 'closeIn', name: 'Vaulting', desc: 'Reach monsters out of range 20% sooner in fights', cut: 0.2 },
-  { level: 28, kind: 'spot', name: 'Crag Oak', desc: 'Opens a hidden oak stand in Woodcutting', actionId: 'cut_crag_oak' },
   { level: 35, kind: 'heist', name: 'Drainpipe Routes', desc: 'Heist rooms take 10% less time', cut: 0.1 },
   { level: 38, kind: 'spot', name: 'Ledge Garden', desc: 'Opens a hidden herb ledge in Foraging', actionId: 'herb_ledge' },
   { level: 45, kind: 'closeIn', name: 'Wall Run', desc: 'Reach monsters out of range 30% sooner in fights', cut: 0.3 },

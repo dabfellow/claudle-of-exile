@@ -26,11 +26,12 @@ import { deriveStats } from './stats';
 import { defaultLayeredLootFilter, defaultLootFilters } from './lootFilter';
 import { challengeName } from './challenge';
 import { newCampaignQuestState } from './campaignQuests';
+import { initGiant, newGiantState } from './woodcutting';
 export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 51;
+export const SAVE_VERSION = 52;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -68,6 +69,8 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     nextUid: 1,
     skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, thieving: 0, agility: 0, archaeology: 0, smelting: 0, smithing: 0, woodcrafting: 0, alchemy: 0, gemcutting: 0, runecarving: 0, cooking: 0, cartography: 0, astrology: 0, fishing: 0 },
     astrology: { stars: {} },
+    giant: newGiantState(),
+    collectibles: [],
     skillingMastery: {},
     professionProgress: newProfessionProgress(),
     inventory: [],
@@ -136,6 +139,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
   // A new character gets their own starting supplies.
   for (const [id, n] of Object.entries(STARTING_BANK)) addBank(s, id, n);
   const rng = seeded(seed);
+  initGiant(s, seeded((seed ^ 0x5bd1e995) >>> 0));
   const exileWeapon = who.classId === 'exile' ? startClass('exile', who.startNode).exileWeapon : undefined;
   for (const [slot, baseId] of Object.entries({ ...classDef(who.classId).kit, ...(exileWeapon && { weapon: exileWeapon }) })) {
     s.equipment[slot as EquipSlot] = createItem(s, baseId, 1, 'normal', rng);

@@ -1,5 +1,5 @@
 import { affixDef } from '../data/affixes';
-import { essenceDef, fossilDef, MARKER, modBias, resinDef } from '../data/craftMats';
+import { essenceDef, fossilDef, MARKER, modBias, resinDef, SHARD_CHANCE, SHARD_FOR } from '../data/craftMats';
 import { ACTIVE_GEMS, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
 import { ALCH_DOUBLE, FORGE_ILVL } from '../data/hideout';
 import { baseDef } from '../data/bases';
@@ -26,7 +26,7 @@ import { levelOf } from './xp';
 import { globalMasteryBonuses, grantMasteryPractice, masteryConservation, masteryLevel, masterySpeed, masteryYield, stochasticRound, unlockedMilestones } from './skillingMastery';
 import { settlePassivePoints } from './passives';
 import { miningAccessHint, miningDone } from './mining';
-import { woodcuttingAccessHint, woodcuttingDone } from './woodcutting';
+import { giantCut, woodcuttingAccessHint } from './woodcutting';
 import { createPurposeItem } from './smithing';
 import { foragingDone } from './foraging';
 import { weaponComponentProgress } from './weaponProjects';
@@ -145,11 +145,12 @@ export function actionBlocker(s: GameState, a: SkillAction): string | null {
   if (a.batchMastery && masteryLevel(s, `task.${a.batchOf}`) < a.batchMastery) {
     return `Requires ${actionDef(a.batchOf!).name} mastery ${a.batchMastery}`;
   }
+  // giants and the Sawmill depend on the lodge and the giant, not on accomplishments
+  const wood = woodcuttingAccessHint(s, a);
+  if (wood) return wood;
   if (a.accomplishments && !s.professionProgress.legacyAccess[a.id]) {
     const mining = miningAccessHint(s, a);
     if (mining) return mining;
-    const wood = woodcuttingAccessHint(s, a);
-    if (wood) return wood;
     const gem = gemcuttingAccessHint(s, a);
     if (gem) return gem;
     const rune = runecarvingAccessHint(s, a);
@@ -406,9 +407,36 @@ function cutGem(s: GameState, ctx: Ctx, a: SkillAction, outputs: Record<string, 
   ctx.emit({ t: 'loot', supportId: def.id });
 }
 
+/** A cut on the current giant (Woodcutting, docs/WOODCUTTING_GIANTS.md): the giant decides what it makes. */
+function completeGiantCut(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, t: TreeStats, focusDouble: boolean): void {
+  const cut = giantCut(s, ctx, focusDouble, t.resinChance ?? 0);
+  const outputs: Record<string, number> = {};
+  for (const [id, n] of Object.entries(cut.drops)) {
+    give(s, outputs, id, n);
+    if (id.endsWith('_log')) {
+      s.lifetime.gathered += n;
+      if (t.heartwood) give(s, outputs, 'arcane_dust', n);
+    }
+  }
+  if (chance(ctx.rng, SHARD_CHANCE)) give(s, outputs, SHARD_FOR.woodcutting!, focusDouble ? 2 : 1);
+  if (t.birdsNest && chance(ctx.rng, t.birdsNest / 100)) give(s, outputs, pick(ctx.rng, HERB_TIERS.slice(0, 2)), 1);
+  for (const m of unlockedMilestones(s, a.mastery)) {
+    if (m.kind === 'vein_strike' && cut.log && chance(ctx.rng, m.value)) {
+      give(s, outputs, cut.log, 1);
+      ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Instant extra log`, taskName: a.name });
+    }
+  }
+  ctx.emit({ t: 'produce', skill: a.skill, outputs });
+  const heartwoodXp = t.heartwood ? 0.8 : 1;
+  grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0)) / 100) * heartwoodXp * cut.xpUnits);
+  grantMasteryPractice(s, a.mastery, a.intervalMs / 1000);
+  awardProfessionProgress(s, a.skill, 1);
+}
+
 /** `focusDouble`: a mini-game double-zone hit, so everything this finish makes comes twice. */
 function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDouble = false, foreground = true): void {
   const t = skillTreeStats(s);
+  if (a.woodcutting?.mode === 'giant') return completeGiantCut(s, ctx, a, d, t, focusDouble);
   const cost = inputsToPay(s, a, t, ctx);
   payCost(s, cost);
   const outputs: Record<string, number> = {};
@@ -422,7 +450,6 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   const focusMultiple = focusDouble ? 2 : 1;
   const mult = (double ? 2 : 1) * focusMultiple;
   const miningOutput = foreground ? miningDone(s, ctx, a) : {};
-  const woodOutput = foreground ? woodcuttingDone(s, ctx, a) : {};
   foragingDone(s, ctx, a, foreground);
   if (foreground) cartographyDone(s, ctx, a);
   if (foreground) weaponComponentProgress(s, ctx, a);
@@ -437,7 +464,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
 
   // alternate nodes trade some of their base material for a better secondary
   const yields = a.outputChance === undefined || chance(ctx.rng, a.outputChance);
-  for (const [id, n] of Object.entries(yields ? { ...a.outputs, ...miningOutput, ...woodOutput } : {})) {
+  for (const [id, n] of Object.entries(yields ? { ...a.outputs, ...miningOutput } : {})) {
     let qty = n * mult;
     if (a.skill === 'mining' && id.endsWith('_ore') && t.motherlode) qty *= 2;
     if (id === a.mastery?.primaryOutput) qty += stochasticRound(ctx.rng, n * masteryYield(s, a.mastery));
@@ -567,7 +594,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
 
 export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void {
   if (s.action?.kind !== 'skill') return;
-  const a = actionDef(s.action.actionId);
+  let a = actionDef(s.action.actionId);
   let interval = actionIntervalMs(s, a, d);
   // Overtime: skilling is faster while you're away
   const offlineBoost = ctx.offline ? 1 + (skillTreeStats(s).offlineSpeed ?? 0) / 100 : 1;
@@ -584,6 +611,11 @@ export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
     complete(s, ctx, a, d, takeDouble(s, ctx));
     // breaking into a new layer changes how long the next dig takes, however the time was chunked
     if (a.skill === 'archaeology') interval = actionIntervalMs(s, a, d);
+    // the next giant can stand in another region, with its own wood and pace
+    if (s.action?.kind === 'skill' && s.action.actionId !== a.id) {
+      a = actionDef(s.action.actionId);
+      interval = actionIntervalMs(s, a, d);
+    }
   }
 }
 

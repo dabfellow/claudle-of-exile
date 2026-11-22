@@ -17,6 +17,7 @@ import { simulateOffline } from '../src/engine/offline';
 import { advanceProject, cancelProject, completeProject, resumeProject, startProject } from '../src/engine/professions';
 import { equip, equipReason } from '../src/engine/equipment';
 import { seeded } from '../src/engine/rng';
+import { giantCuts } from './helpers';
 import type { GameState } from '../src/engine/types';
 
 const ctx = () => makeCtx({ next: () => 0.999999 });
@@ -67,7 +68,7 @@ describe('Phase 04 Smithing', () => {
     const oreNeeded = (a.inputs![`${metal}_ore`] ?? 0) + barsNeeded * 5;
     const logsNeeded = (a.inputs![`${wood}_log`] ?? 0) + planksNeeded * 5;
     doCycles(`mine_${metal}`, oreNeeded + 10);
-    doCycles(`cut_${wood}`, logsNeeded + 5);
+    elapsed += giantCuts(s, c, wood, logsNeeded + 5);
     if (barsNeeded > 0) doCycles(`smelt_${metal}`, barsNeeded);
     if (planksNeeded > 0) doCycles(`mill_${wood}`, planksNeeded);
     doCycles(id, 1);
