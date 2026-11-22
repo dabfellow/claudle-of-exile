@@ -19,6 +19,18 @@ Design pass started 2026-11-21. Part of the per-skill review in [Skilling Progre
 - **Question 6a, main view (2026-11-21): A — The giant up close.** The current giant fills the screen, drawn simply from the side, with crown, limbs, trunk and heart outlined and each showing its own progress; tap a part to work it. The splitting block sits beside it. Scouted giants, the lodge and forest regions are in tabs alongside.
 - **Question 6b, coming back (2026-11-21): A — Felling cards.** One card per giant that came down while away, with its picture, quirks and what each part gave ("Resin-weeping Yew: crown 52 resin, trunk 140 logs, heart 3 heartwood"). New legends get a special card.
 
+### Look-and-feel pass (2026-11-22)
+
+The owner reviewed the built page and changed these. They replace Questions 2b, 3b and parts of 5a and 6a above.
+
+- **No scouting (replaces 2b and 3b).** Owner: "Why can't we just unlock a region and then choose to cut wood from that region?" You pick a woods on the Forest tab and cut there. When a giant is done, the next one stands in the same woods straight away. Moving to another woods leaves your part-cut giant waiting there for when you come back. There is no standing order and no Scouting tab.
+- **Special giants come from familiarity.** Quirks (Resin-weeping, Burled and so on) are the "random bonuses" the owner asked for. Each giant felled in a woods makes its special giants and legends 2% more common there, up to double after 50 giants.
+- **The Scout Tower becomes the Lookout Tower.** Tier 1 makes special giants 1.5 times as common; tier 2 still makes legends 1.5 times as common. Same costs and levels.
+- **Planks move to Woodcrafting (owner's choice).** Sawing planks and refining Ancient Heartwood are Woodcrafting recipes on the bench's new Sawmill tab, give Woodcrafting XP and need only Woodcrafting level. The Lodge's Sawmill building is gone, and with it the free Sawmill on migration.
+- **No part-order toggle.** "Crown to heart" and "Rush the heart" confused the owner. Work always moves crown, limbs, trunk, heart; to rush, tap the Trunk.
+- **The chopping block is an axe and a log (replaces the 3a drawing).** Owner: "you're swinging an axe down onto a log and you're splitting the log." A round stands on end on a stump, seen from the front; you aim the axe across it, it swings down, and the halves fall apart. The scoring is unchanged: the log's mass across its width, branches included, judged by `splitResult`.
+- **First look.** The Forest tab is the whole screen: the woods to pick from along the top, the giant large in its clearing with each part pinned where it grows, and the chopping block with a tally of this giant's drops beside it. Tabs are Forest, Lodge, Trophies and Masterworks.
+
 ## Decided on the owner's behalf
 
 - Log splitting: tap where the axe lands, no timer; judged on the two halves' actual size; 7–15% off is a weak strike; log shapes come from the part being worked; replaces the timing swing.

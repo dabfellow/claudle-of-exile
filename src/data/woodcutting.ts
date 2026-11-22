@@ -34,7 +34,7 @@ export const BASE_HP: Record<GiantPart, number> = { crown: 10, limbs: 20, trunk:
 /** Size multiplies every part's HP. */
 export const SIZE_MULT: Record<GiantSize, number> = { small: 3, medium: 8, large: 20, legend: 200, worldtree: 400 };
 export const SIZE_NAMES: Record<GiantSize, string> = { small: 'Small', medium: 'Medium', large: 'Large', legend: 'Legendary', worldtree: 'World Tree' };
-/** Scouted size weights (legends and the World Tree are never rolled this way). */
+/** Size weights for a new giant (legends and the World Tree are never rolled this way). */
 export const SIZE_WEIGHTS: { size: GiantSize; weight: number }[] = [{ size: 'small', weight: 40 }, { size: 'medium', weight: 40 }, { size: 'large', weight: 20 }];
 
 /** Yield per cut. */
@@ -48,6 +48,12 @@ export const LEGEND_FALL_XP_MULT = 100;
 
 export const QUIRK_CHANCE = 0.15;
 export const MAX_QUIRKS = 2;
+/**
+ * Region familiarity: every giant felled in a region makes its special giants (quirks and legends) a little more
+ * common there, up to double after FAMILIARITY_CAP giants.
+ */
+export const FAMILIARITY_STEP = 0.02;
+export const FAMILIARITY_CAP = 50;
 export interface QuirkDef { id: string; name: string; adjective: string; desc: string }
 export const QUIRKS: QuirkDef[] = [
   { id: 'resin', name: 'Resin-weeping', adjective: 'Resin-weeping', desc: 'Crown resin chance x3.' },
@@ -85,9 +91,9 @@ export interface LodgeTier { level: number; cost: Record<string, number>; effect
 export interface LodgeDef { id: LodgeId; name: string; desc: string; tiers: LodgeTier[] }
 export const LODGE: LodgeDef[] = [
   {
-    id: 'scoutTower', name: 'Scout Tower', desc: 'Sends scouts further into the forest.',
+    id: 'scoutTower', name: 'Lookout Tower', desc: 'Spots the unusual giants in whichever woods you are working.',
     tiers: [
-      { level: 20, cost: { oak_log: 200 }, effect: 'One more scouted giant on offer.' },
+      { level: 20, cost: { oak_log: 200 }, effect: 'Special giants (Resin-weeping, Burled and the rest) turn up 1.5 times as often.' },
       { level: 70, cost: { ancient_log: 500 }, effect: 'Legendary giants turn up 1.5 times as often.' },
     ],
   },
@@ -99,10 +105,6 @@ export const LODGE: LodgeDef[] = [
     ],
   },
   {
-    id: 'sawmill', name: 'Sawmill', desc: 'Saws planks and refines heartwood.',
-    tiers: [{ level: 45, cost: { ironwood_log: 400 }, effect: 'Unlocks Ironwood and deeper planks and Ancient Heartwood refining.' }],
-  },
-  {
     id: 'trophyWall', name: 'Trophy Wall', desc: 'Shows the legends you have felled. Needed to plant a World Tree seed.',
     tiers: [{ level: 1, cost: {}, effect: 'Displays felled legends with date and yields.' }],
   },
@@ -112,8 +114,12 @@ export function lodgeDef(id: LodgeId): LodgeDef {
 }
 export const TROPHY_WALL_PLANKS = 100;
 
+/**
+ * Sawmill recipes. They belong to Woodcrafting (owner's call, 2026-11-22): sawing gives Woodcrafting XP and is done at
+ * the Woodcrafting bench's Sawmill tab; the ids stay `mill_*` so mastery and saves carry over.
+ */
 const sawmillAction = (id: string, name: string, wood: string, level: number, intervalMs: number, xp: number, color: string, extra: Partial<SkillAction>): SkillAction => ({
-  id, skill: 'woodcutting', name, level, intervalMs, xp, color, woodcutting: { wood, mode: 'sawmill' }, ...extra,
+  id, skill: 'woodcrafting', name, level, intervalMs, xp, color, woodcutting: { wood, mode: 'sawmill' }, ...extra,
 });
 
 /** Raw XP; the action registry applies its existing 0.3 scale once. */
@@ -123,7 +129,6 @@ export const WOODCUTTING_ACTIONS: SkillAction[] = [
     id: `giant_${w.id}`, skill: 'woodcutting', name: `${w.region}`, level: w.level, intervalMs: w.ms, xp: w.xp,
     outputs: { [`${w.id}_log`]: 1 }, color: w.color, woodcutting: { wood: w.id, mode: 'giant' },
   })),
-  // the Sawmill: ash, oak and yew planks stay open to everyone (hideout upgrades need them from the start)
   sawmillAction('mill_ash', 'Cut Ash Planks', 'ash', 1, 3000, 8, '#b89a72', { inputs: { ash_log: 5 }, outputs: { ash_plank: 1 } }),
   sawmillAction('mill_oak', 'Cut Oak Planks', 'oak', 15, 3500, 20, '#8a6338', { inputs: { oak_log: 5 }, outputs: { oak_plank: 1 }, area: 'ashwood' }),
   sawmillAction('mill_yew', 'Cut Yew Planks', 'yew', 30, 4000, 42, '#6b3d2c', { inputs: { yew_log: 5 }, outputs: { yew_plank: 1 }, area: 'shipgrave' }),

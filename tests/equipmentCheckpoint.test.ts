@@ -254,6 +254,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
       // 5. Level Smithing and Smelting to 15
       s.skills.smithing = xpForLevel(15);
       s.skills.smelting = xpForLevel(15);
+      s.skills.woodcrafting = xpForLevel(15); // oak planks are sawn at Woodcrafting
 
       // 6. Gather materials for Wayfarer's Hammer:
       // Costs: copper_bar 10, iron_bar 10, ash_plank 5, oak_plank 5

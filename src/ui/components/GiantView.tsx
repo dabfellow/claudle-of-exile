@@ -1,36 +1,28 @@
-import { useState } from 'react';
 import { collectibleFor } from '../../data/collectibles';
 import { materialDef } from '../../data/materials';
-import { actionsFor, type SkillAction } from '../../data/skills';
 import {
-  LEGENDS, LODGE, PART_HINT, PART_NAMES, quirkDef, SIZE_NAMES, WOODS, WORLD_TREE_GROWTH_MS, woodDef, type LodgeDef,
+  GIANT_PARTS, LEGENDS, LODGE, PART_NAMES, quirkDef, SIZE_NAMES, WOODS, WORLD_TREE_GROWTH_MS, woodDef, type LodgeDef,
 } from '../../data/woodcutting';
-import { recipeMaterialCount } from '../../engine/bank';
-import { masteryLevel } from '../../engine/skillingMastery';
-import { actionBlocker, actionIntervalMs, startSkillAction, stopAction } from '../../engine/skills';
-import { deriveStats } from '../../engine/stats';
+import { startSkillAction, stopAction } from '../../engine/skills';
 import {
-  autoPick, buildLodge, chooseByOrder, fellingTime, giantName, isGiantActionId, isLegend, lodgeBlocker, lodgeTierOf, moveOn,
-  nextLodgeTier, nextPart, offerWorldTree, partWorkable, pickGiant, plantBlocker, plantWorldTree, scoutCount, scoutRegion,
-  setGiantOrder, setGiantPart, totalHp, totalMaxHp, unlockedRegions, woodcuttingAccessHint, woodcuttingLevel, worldTreeGrowth,
-  worldTreeReady,
+  buildLodge, chooseRegion, familiarityMult, felledIn, fellingTime, fellWorldTree, giantName, isGiantActionId, isLegend,
+  lodgeBlocker, lodgeTierOf, moveOn, nextLodgeTier, nextPart, partWorkable, plantBlocker, plantWorldTree, quirkChanceMult,
+  setGiantPart, targetRegion, totalHp, totalMaxHp, woodcuttingLevel, worldTreeGrowth, worldTreeReady,
 } from '../../engine/woodcutting';
-import type { Giant, GiantPart, GiantPref, GameState, LodgeId } from '../../engine/types';
+import type { Giant, GiantPart, GameState, LodgeId } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { TREE_ART } from '../assets';
-import { Badge, Cost, fmt, MatIcon, ProgressBar } from './common';
-import { MasteryProgress } from './MasteryProgress';
-import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
+import { Badge, fmt, MatIcon, ProgressBar } from './common';
+import { LockedBadge, SkillIntro } from './SkillHelp';
 import { SkillMinigame } from './SkillMinigame';
+import { SplitIdle } from './minigames';
 import './giants.css';
 
-export type GiantTab = 'giant' | 'scouting' | 'lodge' | 'regions' | 'trophies';
+export type GiantTab = 'giant' | 'lodge' | 'trophies';
 
 export const GIANT_TABS: { id: GiantTab; label: string }[] = [
-  { id: 'giant', label: 'Giant' },
-  { id: 'scouting', label: 'Scouting' },
+  { id: 'giant', label: 'Forest' },
   { id: 'lodge', label: 'Lodge' },
-  { id: 'regions', label: 'Regions' },
   { id: 'trophies', label: 'Trophies' },
 ];
 
@@ -45,18 +37,12 @@ function duration(ms: number): string {
   return h < 48 ? `${h.toFixed(1)} h` : `${(h / 24).toFixed(1)} days`;
 }
 
-const PREF_LABEL: Record<GiantPref, string> = {
-  resin: 'Most resin (Resin-weeping, then Large)',
-  heart: 'Biggest heart (Burled, then Large)',
-  fast: 'Fastest (Small, Hollow heart)',
-  region: 'Largest from the chosen region',
-};
-
-const PART_DROPS: Record<GiantPart, { drops: string; purpose: string }> = {
-  crown: { drops: 'Drops: Resin', purpose: '+ilvl on Forged & Woodcrafted gear' },
-  limbs: { drops: 'Drops: Logs', purpose: 'Saw into Planks for Woodcrafting' },
-  trunk: { drops: 'Drops: Bulk Logs + Fells Giant', purpose: 'Brings down the giant & exposes Heart' },
-  heart: { drops: 'Drops: Ancient Heartwood', purpose: 'Lodge upgrades & Masterworks' },
+/** What each part gives, as the material it drops and what that is for. */
+const PART_INFO: Record<GiantPart, { mat: (wood: string) => string; drops: string; use: string }> = {
+  crown: { mat: (w) => `${w}_resin`, drops: 'Resin, some logs', use: 'Resin raises item level at the forge and bench' },
+  limbs: { mat: (w) => `${w}_log`, drops: 'Logs', use: 'Logs become planks at Woodcrafting' },
+  trunk: { mat: (w) => `${w}_log`, drops: 'Lots of logs', use: 'Cut through it and the giant falls' },
+  heart: { mat: () => 'heartwood_fragment', drops: 'Heartwood', use: 'Opens once the giant is down' },
 };
 
 /** Short names for what a part gave: "52 resin", "140 logs", "3 heartwood". */
@@ -78,17 +64,6 @@ export function QuirkChips({ g }: { g: Pick<Giant, 'quirks'> }) {
   );
 }
 
-function GiantChips({ g }: { g: Giant }) {
-  return (
-    <div className="giant-chips">
-      <Badge>{SIZE_NAMES[g.size]}</Badge>
-      <Badge tone="neutral">{woodDef(g.region).region}</Badge>
-      {isLegend(g) && <Badge tone="gold">Legend</Badge>}
-      <QuirkChips g={g} />
-    </div>
-  );
-}
-
 /** The running giant action, if one is going. */
 function runningPart(s: GameState): GiantPart | null | undefined {
   const a = s.action;
@@ -99,9 +74,8 @@ function runningPart(s: GameState): GiantPart | null | undefined {
 function fell(part?: GiantPart) {
   game.act((st, ctx) => {
     const g = st.giant.current;
-    if (!g) return 'No giant to fell';
-    const running = runningPart(st) !== undefined;
-    if (!running) {
+    if (!g) return 'No giant standing';
+    if (runningPart(st) === undefined) {
       const err = startSkillAction(st, ctx, `giant_${g.region}`);
       if (err) return err;
     }
@@ -110,265 +84,195 @@ function fell(part?: GiantPart) {
   });
 }
 
-/** Forest clearing backdrop with real CC0 tree sprite and interactive Crown/Limbs/Trunk/Heart hotspots. */
-function GiantScene({ g, active, locked }: { g: Giant; active: GiantPart | null | undefined; locked: boolean }) {
-  const w = woodDef(g.region);
-  const treeArt = TREE_ART[g.region] ?? TREE_ART.ash;
-  const partHotspot = (p: GiantPart) => {
-    const part = g.parts[p];
-    if (part.max === 0) {
-      return (
-        <div key={p} className={`giant-hotspot ${p} missing-part`}>
-          <div className="giant-hotspot-head">
-            <b>{PART_NAMES[p]}</b>
-            <Badge tone="warn">Struck off</Badge>
-          </div>
-          <span className="dim small">Lightning took this tree&apos;s crown.</span>
-        </div>
-      );
-    }
-    const blocked = p === 'heart' && !g.fallen;
-    const done = part.hp <= 0;
-    const isCurrent = active === p;
-    const gave = yieldWords(g.yields[p]);
-    const info = PART_DROPS[p];
-    const cls = ['giant-hotspot', p, isCurrent ? 'active' : '', done ? 'done' : '', blocked ? 'locked' : '']
-      .filter(Boolean)
-      .join(' ');
-    return (
-      <button
-        key={p}
-        type="button"
-        className={cls}
-        disabled={!partWorkable(g, p) || locked}
-        onClick={() => fell(p)}
-        title={PART_HINT[p]}
-        aria-label={`${PART_NAMES[p]}: ${blocked ? 'Outer parts first' : `${part.hp} of ${part.max}`}. ${info.drops}. ${info.purpose}`}
-      >
-        <div className="giant-hotspot-head">
-          <b>{PART_NAMES[p]}</b>
-          {isCurrent ? (
-            <Badge tone="gold" live>Chopping</Badge>
-          ) : done ? (
-            <Badge tone="success">Cleared</Badge>
-          ) : blocked ? (
-            <LockedBadge reason="Outer parts first" />
-          ) : (
-            <span className="num small">{fmt(part.hp)} / {fmt(part.max)}</span>
-          )}
-        </div>
-        <ProgressBar value={part.max > 0 ? part.hp / part.max : 0} color={w.color} />
-        <div className="giant-hotspot-drop">{info.drops}</div>
-        <div className="giant-hotspot-use">{blocked ? 'Fell the Trunk to expose the Heart' : info.purpose}</div>
-        {gave && <div className="giant-hotspot-yield">Collected: {gave}</div>}
-      </button>
-    );
-  };
+/** Every woods, with the one you are cutting in lit. Tap another to go cut there. */
+function RegionStrip({ s }: { s: GameState }) {
+  const level = woodcuttingLevel(s);
+  const here = s.giant.current?.worldTree ? null : targetRegion(s);
+  return (
+    <nav className="forest-regions" aria-label="Choose which woods to cut in">
+      {WOODS.map((w) => {
+        const open = level >= w.level;
+        const active = here === w.id;
+        const felled = felledIn(s, w.id);
+        const bonus = Math.round((familiarityMult(s, w.id) - 1) * 100);
+        const waiting = s.giant.waiting?.[w.id];
+        const find = collectibleFor('woodcutting', w.id);
+        const found = !!find && s.collectibles.includes(find.id);
+        return (
+          <button
+            key={w.id}
+            type="button"
+            className={`forest-region ${active ? 'active' : ''} ${open ? '' : 'locked'}`}
+            style={{ ['--wood-c' as string]: w.color }}
+            disabled={!open || active}
+            aria-pressed={active}
+            title={open
+              ? `${w.region}: ${w.name} logs and resin. ${felled} giants felled here, so special giants are ${bonus}% more common.${found ? ` Found here: ${find!.name}.` : ''}`
+              : `Unlocks at Woodcutting level ${w.level}`}
+            onClick={() => game.act((st, ctx) => chooseRegion(st, ctx, w.id))}
+          >
+            <img src={TREE_ART[w.id] ?? TREE_ART.ash} alt="" className="forest-region-art" draggable={false} />
+            <span className="forest-region-text">
+              <b>{w.region}</b>
+              {!open ? (
+                <span className="dim small">Level {w.level}</span>
+              ) : active ? (
+                <span className="small forest-region-here">Cutting here</span>
+              ) : waiting ? (
+                <span className="small">{giantName(waiting)} waiting</span>
+              ) : (
+                <span className="dim small">{felled ? `${fmt(felled)} felled` : 'Not cut yet'}</span>
+              )}
+              {open && bonus > 0 && <span className="small forest-region-bonus">Special +{bonus}%</span>}
+            </span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
 
+/** A part of the giant, pinned on the tree where it is: tap to chop it. */
+function PartPin({ g, p, active, locked }: { g: Giant; p: GiantPart; active: boolean; locked: boolean }) {
+  const part = g.parts[p];
+  const info = PART_INFO[p];
+  if (part.max === 0) {
+    return (
+      <div className={`giant-pin ${p} gone`}>
+        <div className="giant-pin-head"><b>{PART_NAMES[p]}</b><span className="dim small">Struck off</span></div>
+        <span className="dim small">Lightning took this tree&apos;s crown.</span>
+      </div>
+    );
+  }
+  const shut = p === 'heart' && !g.fallen;
+  const done = part.hp <= 0;
+  const gave = yieldWords(g.yields[p]);
+  const cls = ['giant-pin', p, active ? 'active' : '', done ? 'done' : '', shut ? 'shut' : ''].filter(Boolean).join(' ');
+  return (
+    <button
+      type="button"
+      className={cls}
+      disabled={!partWorkable(g, p) || locked}
+      onClick={() => fell(p)}
+      aria-label={`${PART_NAMES[p]}: ${shut ? 'opens when the giant falls' : `${part.hp} of ${part.max} cuts left`}. Drops ${info.drops}.`}
+    >
+      <div className="giant-pin-head">
+        <MatIcon id={info.mat(g.region)} size={14} />
+        <b>{PART_NAMES[p]}</b>
+        <span className="grow" />
+        {active ? <Badge tone="gold" live>Chopping</Badge>
+          : done ? <Badge tone="success">Done</Badge>
+          : shut ? <span className="dim small">After the fall</span>
+          : <span className="num small dim">{fmt(part.hp)} left</span>}
+      </div>
+      <ProgressBar value={part.max > 0 ? part.hp / part.max : 0} color={p === 'heart' ? 'var(--accent-2)' : woodDef(g.region).color} />
+      <div className="giant-pin-drop">{info.drops}</div>
+      <div className="giant-pin-use">{shut ? 'Opens once the giant is down' : gave ? `Got ${gave}` : info.use}</div>
+    </button>
+  );
+}
+
+/** The giant up close: the tree in its clearing with each part pinned where it grows. */
+function GiantStage({ g, active, locked }: { g: Giant; active: GiantPart | null | undefined; locked: boolean }) {
+  const w = woodDef(g.region);
   return (
     <div
-      className={`giant-clearing ${g.fallen ? 'fallen' : ''} ${isLegend(g) ? 'legend' : ''}`}
-      role="group"
-      aria-label={`${giantName(g)}, ${g.fallen ? 'fallen' : 'standing'}`}
+      className={`giant-stage ${g.fallen ? 'fallen' : ''} ${isLegend(g) ? 'legend' : ''}`}
       style={{ ['--giant' as string]: w.color }}
+      role="group"
+      aria-label={`${giantName(g)}, ${g.fallen ? 'down' : 'standing'}`}
     >
-      <div className="giant-clearing-col">
-        {partHotspot('crown')}
-        {partHotspot('trunk')}
-      </div>
-      <div className="giant-tree-stage">
-        <div className="giant-tree-halo" aria-hidden="true" />
-        <img
-          src={treeArt}
-          alt={`${giantName(g)} (${w.region})`}
-          className={`giant-tree-art pack-art crisp ${g.fallen ? 'fallen' : ''}`}
-          draggable={false}
-        />
-        {g.fallen && (
-          <div className="giant-heart-ember">
-            <span>Heart Exposed!</span>
-          </div>
-        )}
-        <div className="giant-clearing-floor" aria-hidden="true" />
-      </div>
-      <div className="giant-clearing-col">
-        {partHotspot('limbs')}
-        {partHotspot('heart')}
+      <div className="giant-stage-sky" aria-hidden="true" />
+      <img src={TREE_ART[g.region] ?? TREE_ART.ash} alt="" className={`giant-stage-tree ${g.fallen ? 'fallen' : ''}`} draggable={false} />
+      {GIANT_PARTS.map((p) => <span key={p} className={`giant-mark ${p} ${active === p ? 'active' : ''}`} aria-hidden="true" />)}
+      <div className="giant-stage-ground" aria-hidden="true" />
+      {g.fallen && <div className="giant-stage-banner">Timber! The heart is open</div>}
+      <div className="giant-pins">
+        {GIANT_PARTS.map((p) => <PartPin key={p} g={g} p={p} active={active === p} locked={locked} />)}
       </div>
     </div>
   );
 }
 
-function GiantTab({ s, go }: { s: GameState; go: (tab: GiantTab) => void }) {
+/** Everything this giant has given so far. */
+function Tally({ g }: { g: Giant }) {
+  const total: Record<string, number> = {};
+  for (const p of GIANT_PARTS) for (const [id, n] of Object.entries(g.yields[p])) total[id] = (total[id] ?? 0) + n;
+  if (g.splinters) total.splinters = g.splinters;
+  const rows = Object.entries(total).filter(([, n]) => n > 0);
+  return (
+    <div className="card forest-tally">
+      <div className="card-title">From this giant</div>
+      {rows.length ? (
+        <ul className="forest-tally-list">
+          {rows.map(([id, n]) => (
+            <li key={id}><MatIcon id={id} size={16} /><span>{materialDef(id).name}</span><b className="num">{fmt(n)}</b></li>
+          ))}
+        </ul>
+      ) : <p className="dim small">Nothing yet. Every cut drops something from the part you are chopping.</p>}
+    </div>
+  );
+}
+
+function ForestTab({ s }: { s: GameState }) {
   const g = s.giant.current;
   const running = runningPart(s);
-  const intro = (
-    <SkillIntro step="Chop a Giant">
-      Fell ancient Giant trees part-by-part: chop the <b>Crown</b> for Resin, <b>Limbs</b> &amp; <b>Trunk</b> for Logs, then expose the <b>Heart</b> for Heartwood.
-    </SkillIntro>
-  );
-  if (!g) {
-    return (
-      <div className="grid" style={{ gap: 10 }}>
-        {intro}
-        <div className="card">
-          <div className="card-title">No giant standing</div>
-          <p className="muted">
-            {s.giant.options.length ? 'The scouts found some giants. Pick one to fell.' : 'The scouts are out. A giant will be offered in a moment.'}
-          </p>
-          <div className="giant-actions">
-            <button className="btn primary" onClick={() => go('scouting')}>Open Scouting</button>
-            {s.giant.options.length > 0 && <button className="btn" onClick={() => game.act((st) => autoPick(st))}>Auto-pick</button>}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!g) return <RegionStrip s={s} />;
   const left = totalHp(g);
   const max = totalMaxHp(g);
   const w = woodDef(g.region);
   const locked = woodcuttingLevel(s) < w.level;
+  const special = Math.round((quirkChanceMult(s, g.region) - 1) * 100);
   return (
-    <div className="grid" style={{ gap: 10 }}>
-      {intro}
-      <div className="giant-layout">
-        <div className="card">
-          <div className="giant-head">
-            <h2>{giantName(g)}</h2>
-            <GiantChips g={g} />
-            <span className="grow" />
-            <span className="dim small num">{duration(fellingTime(g))} left</span>
-          </div>
-          <GiantScene g={g} active={running ?? undefined} locked={locked} />
-          <div style={{ marginTop: 8 }}>
-            <ProgressBar value={max > 0 ? 1 - left / max : 1} color={w.color} label={`${fmt(max - left)} / ${fmt(max)} cuts`} />
-          </div>
-          <div className="giant-actions">
-            {running === undefined ? (
-              <button className="btn primary" disabled={locked} onClick={() => fell()}>Start felling</button>
-            ) : (
-              <button className="btn" onClick={() => game.act((st) => stopAction(st))}>Stop</button>
-            )}
-            <div className="giant-seg" role="group" aria-label="Part order">
-              <button className={`gem-chip ${s.giant.order.partOrder === 'full' ? 'active' : ''}`} onClick={() => game.act((st) => setGiantOrder(st, { partOrder: 'full' }))} title="Crown, then limbs, then trunk, then heart">Crown to heart</button>
-              <button className={`gem-chip ${s.giant.order.partOrder === 'rush' ? 'active' : ''}`} onClick={() => game.act((st) => setGiantOrder(st, { partOrder: 'rush' }))} title="Skip the crown and limbs: trunk, then heart">Rush the heart</button>
+    <div className="forest">
+      <RegionStrip s={s} />
+      <div className="forest-main">
+        <section className="card forest-scene">
+          <header className="forest-head">
+            <div className="forest-title">
+              <h2>{giantName(g)}</h2>
+              <div className="giant-chips">
+                <Badge>{SIZE_NAMES[g.size]}</Badge>
+                {isLegend(g) && <Badge tone="gold">Legend</Badge>}
+                <QuirkChips g={g} />
+              </div>
             </div>
-            <HelpTip
-              label="Part order"
-              tip="Crown to heart harvests every drop before felling. Rush the heart cuts straight through the Trunk — leftover Crown & Limbs shatter into Splinters for Smelting charcoal."
-            />
-            {g.fallen && <button className="btn" onClick={() => game.act((st, ctx) => moveOn(st, ctx))} title="Leave the rest of the heart and take the next giant">Move on</button>}
+            <span className="grow" />
+            <span className="dim small num">about {duration(fellingTime(g))} to go</span>
+            {running === undefined ? (
+              <button className="btn primary forest-go" disabled={locked} onClick={() => fell()}>Start felling</button>
+            ) : (
+              <button className="btn forest-go" onClick={() => game.act((st) => stopAction(st))}>Stop</button>
+            )}
+          </header>
+          <GiantStage g={g} active={running ?? undefined} locked={locked} />
+          <ProgressBar value={max > 0 ? 1 - left / max : 1} color={w.color} label={`${fmt(max - left)} / ${fmt(max)} cuts`} />
+          <div className="forest-foot">
+            <p className="muted small">
+              {g.fallen
+                ? `The giant is down${g.splinters ? `, and ${fmt(g.splinters)} splinters came off what was left on it` : ''}. Chop the Heart for heartwood, or move on to the next giant.`
+                : 'Tap a part to chop it. Cutting through the Trunk brings the giant down: anything left on the Crown and Limbs breaks into splinters, and the Heart opens.'}
+            </p>
+            {g.fallen && <button className="btn" onClick={() => game.act((st, ctx) => moveOn(st, ctx))}>Next giant</button>}
           </div>
-          <p className="muted giant-note small">
-            {g.fallen
-              ? `The giant is down${g.splinters ? `: ${fmt(g.splinters)} splinters from what was left on it` : ''}. Work the Heart for Ancient Heartwood, or Move on.`
-              : 'Crown and Limbs can be chopped any time. When the Trunk falls, any leftover Crown/Limbs become Splinters and the Heart opens up.'}
-          </p>
           {locked && <p className="bad small">Requires Woodcutting level {w.level}.</p>}
-        </div>
-        <div>
+        </section>
+        <aside className="forest-side">
           {running !== undefined ? (
             <SkillMinigame skill="woodcutting" />
           ) : (
-            <div className="card">
-              <div className="card-title">The splitting block</div>
-              <p className="muted small">Start felling to open the block. Splitting logs evenly builds Focus, which speeds felling up and charges ×2 cuts. Nothing here has a timer.</p>
+            <div className="card forest-block-idle">
+              <div className="card-title">Chopping block</div>
+              <SplitIdle />
+              <p className="muted small">Split logs while you fell: an even split builds Focus, which speeds the felling up and can double a cut.</p>
+              <button className="btn primary" disabled={locked} onClick={() => fell()}>Start felling</button>
             </div>
           )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function OptionCard({ s, g, index }: { s: GameState; g: Giant; index: number }) {
-  const reqLevel = woodDef(g.region).level;
-  const levelLocked = woodcuttingLevel(s) < reqLevel;
-  const blocker = s.giant.current ? 'Finish the current giant first' : levelLocked ? `Requires level ${reqLevel}` : null;
-  return (
-    <div className={`giant-card ${isLegend(g) ? 'legend' : ''} ${levelLocked ? 'locked' : ''}`}>
-      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3>{giantName(g)}</h3>
-        {levelLocked && <LockedBadge level={reqLevel} />}
-      </div>
-      <GiantChips g={g} />
-      <span className="dim small">{fmt(totalMaxHp(g))} cuts, about {duration(fellingTime(g))}</span>
-      <button
-        className="btn sm primary"
-        disabled={!!blocker}
-        title={blocker ?? undefined}
-        onClick={() => game.act((st) => {
-          const err = pickGiant(st, index);
-          if (!err && st.action === null) fell();
-          return err;
-        })}
-      >
-        Fell this one
-      </button>
-    </div>
-  );
-}
-
-function ScoutingTab({ s }: { s: GameState }) {
-  const o = s.giant.order;
-  const level = woodcuttingLevel(s);
-  const region = scoutRegion(s);
-  const pick = chooseByOrder(s.giant.options, o);
-  return (
-    <div className="grid" style={{ gap: 12 }}>
-      <SkillIntro step="Pick next Giant">
-        Choose which newly spotted Giant to fell next, or set a <b>Standing Order</b> so Woodcutting auto-picks giants while you&apos;re away.
-      </SkillIntro>
-      <div className="card">
-        <div className="card-title">Scouted giants</div>
-        {s.giant.options.length === 0 ? (
-          <p className="muted">
-            {s.giant.current
-              ? `The scouts are out in the ${woodDef(region).region}. When ${giantName(s.giant.current)} is down, ${scoutCount(s)} giants are offered here.`
-              : 'The scouts are out. Giants are offered here when one is ready.'}
+          <Tally g={g} />
+          <p className="dim small forest-special">
+            Special giants{special > 0 ? ` are ${special}% more common here` : ' turn up now and then'}: the more you fell in one woods, the more often they appear.
           </p>
-        ) : (
-          <div className="giant-grid">
-            {s.giant.options.map((g, i) => <OptionCard key={g.id} s={s} g={g} index={i} />)}
-          </div>
-        )}
-        {s.giant.options.length > 0 && (
-          <div className="giant-actions">
-            <button
-              className="btn"
-              disabled={!!s.giant.current}
-              onClick={() => game.act((st) => {
-                const err = autoPick(st);
-                if (!err && st.action === null) fell();
-                return err;
-              })}
-            >
-              Auto-pick{pick >= 0 ? `: ${giantName(s.giant.options[pick])}` : ''}
-            </button>
-          </div>
-        )}
-      </div>
-      <div className="card">
-        <div className="card-title">Scouting target and standing order</div>
-        <div className="giant-form">
-          <label>Send scouts to
-            <select className="input" value={o.region} onChange={(e) => game.act((st) => setGiantOrder(st, { region: e.target.value }))}>
-              <option value="auto">Highest unlocked ({woodDef(region).region})</option>
-              {unlockedRegions(level).map((w) => <option key={w.id} value={w.id}>{w.region}</option>)}
-            </select>
-          </label>
-          <label>When a giant falls, take
-            <select className="input" value={o.pref} onChange={(e) => game.act((st) => setGiantOrder(st, { pref: e.target.value as GiantPref }))}>
-              {(Object.keys(PREF_LABEL) as GiantPref[]).map((p) => <option key={p} value={p}>{PREF_LABEL[p]}</option>)}
-            </select>
-          </label>
-          <label><input type="checkbox" checked={o.alwaysLegend} onChange={(e) => game.act((st) => setGiantOrder(st, { alwaysLegend: e.target.checked }))} /> Always take a legend</label>
-          <label><input type="checkbox" checked={o.auto} onChange={(e) => game.act((st) => setGiantOrder(st, { auto: e.target.checked }))} /> Pick for me when a giant falls</label>
-        </div>
-        <p className="muted small giant-note">
-          The standing order is used whenever a giant comes down while you are away, and whenever it comes down while you are here if the last box is ticked. The return screen lists which giants were picked.
-          {level >= 80 ? ' Legendary giants can turn up in the Ancient, Spirit and Worldwood regions.' : ' From Woodcutting level 80, legendary giants can turn up deep in the forest.'}
-        </p>
+        </aside>
       </div>
     </div>
   );
@@ -443,10 +347,10 @@ function WorldTreeCard({ s }: { s: GameState }) {
           <ProgressBar value={growth} color="var(--success)" label={ready ? 'Fully grown' : `${Math.floor(growth * 100)}%, about ${daysLeft} days to go`} />
           {ready && (
             <div className="giant-actions">
-              <button className="btn primary" onClick={() => game.act((st, ctx) => offerWorldTree(st, ctx))}>Offer it to the scouts</button>
+              <button className="btn primary" disabled={!!s.giant.current?.worldTree} onClick={() => game.act((st, ctx) => fellWorldTree(st, ctx))}>Fell your World Tree</button>
             </div>
           )}
-          <p className="muted small giant-note">It grows for 120 real days, offline included. Grown, it is a personal legend with the best parts in the game.</p>
+          <p className="muted small giant-note">It grows for 120 real days, offline included. Grown, it is a personal legend with the best parts in the game. The giant you were on waits for you.</p>
         </>
       ) : (
         <>
@@ -462,11 +366,11 @@ function LodgeTab({ s }: { s: GameState }) {
   return (
     <div className="grid" style={{ gap: 12 }}>
       <SkillIntro step="Woodcutter's Lodge">
-        Build permanent Woodcutting upgrades from felled timber: extra scouts, Drying Shed bonus logs, the advanced <b>Sawmill</b>, and the <b>Trophy Wall</b>.
+        Build lasting Woodcutting upgrades from your own timber: a <b>Lookout Tower</b> for more special giants, a <b>Drying Shed</b> for bonus logs, and the <b>Trophy Wall</b> for your legends.
       </SkillIntro>
       <div className="card">
         <div className="card-title">The woodcutter&apos;s lodge</div>
-        <p className="muted small">A camp at the forest&apos;s edge, built from your own timber. Bigger buildings need wood from deeper regions.</p>
+        <p className="muted small">A camp at the forest&apos;s edge, built from your own timber. Bigger buildings need wood from deeper woods.</p>
         <div className="giant-grid">
           {LODGE.map((def) => <LodgeCard key={def.id} s={s} def={def} />)}
         </div>
@@ -476,60 +380,12 @@ function LodgeTab({ s }: { s: GameState }) {
   );
 }
 
-function RegionsTab({ s }: { s: GameState }) {
-  const level = woodcuttingLevel(s);
-  const target = scoutRegion(s);
-  return (
-    <div className="grid" style={{ gap: 12 }}>
-      <SkillIntro step="Forest Regions">
-        Forest tiers unlocked by Woodcutting level. Each holds a different wood species, Legendary Giants, and a Collectible.
-      </SkillIntro>
-      <div className="card">
-        <div className="card-title">Forest regions</div>
-        <div className="giant-grid">
-          {WOODS.map((w) => {
-            const open = level >= w.level;
-            const find = collectibleFor('woodcutting', w.id);
-            const found = !!find && s.collectibles.includes(find.id);
-            return (
-              <div key={w.id} className={`giant-card giant-region-card ${open ? '' : 'locked'}`}>
-                <div className="giant-region-head">
-                  <img
-                    src={TREE_ART[w.id] ?? TREE_ART.ash}
-                    alt={w.region}
-                    className="giant-region-thumb pack-art crisp"
-                    draggable={false}
-                  />
-                  <div className="grow">
-                    <h3 style={{ color: open ? w.color : undefined }}>{w.region}</h3>
-                    <span className="small">{w.name} logs &amp; resin</span>
-                  </div>
-                  {!open && <LockedBadge level={w.level} reason={`Requires Woodcutting level ${w.level}`} />}
-                </div>
-                <span className="dim small num">Level {w.level} · {(w.ms / 1000).toFixed(1)}s per cut · {w.xp} xp (raw)</span>
-                <span className="dim small">Collectible: {found ? find!.name : '???'}</span>
-                {open ? (
-                  target === w.id
-                    ? <Badge tone="success">Scouts sent here</Badge>
-                    : <button className="btn sm" onClick={() => game.act((st) => setGiantOrder(st, { region: w.id }))}>Send scouts here</button>
-                ) : (
-                  <span className="dim small">Unlocks at Woodcutting Lv {w.level}</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function TrophiesTab({ s }: { s: GameState }) {
   const wall = s.giant.lodge.trophyWall >= 1;
   return (
     <div className="grid" style={{ gap: 12 }}>
       <SkillIntro step="Legendary Trophies">
-        Rare drops from named Legendary Giants across each forest — each trophy grants a permanent Woodcutting perk, and collecting all 4 unlocks the World Tree Seed.
+        Named legendary giants stand in the deepest woods from Woodcutting level 80. Fell one and it goes up on your Trophy Wall.
       </SkillIntro>
       <div className="card">
         <div className="card-title">
@@ -539,7 +395,7 @@ function TrophiesTab({ s }: { s: GameState }) {
         </div>
         {!wall && (
           <p className="muted small">
-            {s.giant.legends.length ? 'Build the Trophy Wall in the Lodge to display your felled legends.' : 'Fell a legendary giant (Lv 80+ in deep forests) to unlock the Trophy Wall in the Lodge.'}
+            {s.giant.legends.length ? 'Build the Trophy Wall in the Lodge to display your felled legends.' : 'Fell a legendary giant (level 80+, in the deep woods) to unlock the Trophy Wall in the Lodge.'}
           </p>
         )}
         <div className="giant-grid">
@@ -559,7 +415,7 @@ function TrophiesTab({ s }: { s: GameState }) {
                     {log && <span className="small">Felled {new Date(log.at).toLocaleDateString()}: {yieldWords(log.yields)}</span>}
                   </>
                 ) : (
-                  <span className="muted small">{felled ? 'Hidden until the Trophy Wall is built in the Lodge.' : 'Spot and fell this Legendary Giant to claim its trophy.'}</span>
+                  <span className="muted small">{felled ? 'Hidden until the Trophy Wall is built in the Lodge.' : `Cut in the ${woodDef(l.region).region} and this legend may turn up.`}</span>
                 )}
               </div>
             );
@@ -570,156 +426,12 @@ function TrophiesTab({ s }: { s: GameState }) {
   );
 }
 
-/** Modernized Sawmill view: saw logs into Planks for Woodcrafting and refine Ancient Heartwood. */
-export function SawmillView({ go }: { go?: (tab: GiantTab) => void } = {}) {
-  const s = useGame();
-  const [showLocked, setShowLocked] = useState(false);
-  const level = woodcuttingLevel(s);
-  const d = deriveStats(s);
-  const hasMill = s.giant.lodge.sawmill >= 1;
-  const runningAction = s.action?.kind === 'skill' ? s.action : null;
-
-  const allRecipes = actionsFor('woodcutting').filter(
-    (a) => a.woodcutting?.mode === 'sawmill' && (!a.batchMastery || masteryLevel(s, `task.${a.batchOf}`) >= a.batchMastery),
-  );
-
-  const isLocked = (a: SkillAction) => level < a.level || !!woodcuttingAccessHint(s, a);
-  const openRecipes = allRecipes.filter((a) => !isLocked(a));
-  const lockedRecipes = allRecipes.filter((a) => isLocked(a));
-  const visibleLocked = showLocked ? lockedRecipes : lockedRecipes.slice(0, 2);
-  const hiddenLockedCount = Math.max(0, lockedRecipes.length - visibleLocked.length);
-  const shownRecipes = [...openRecipes, ...visibleLocked];
-
-  return (
-    <div className="sawmill-view">
-      <SkillIntro step="Saw logs into Planks">
-        Turn felled logs into <b>Planks</b> for Woodcrafting weapons &amp; armour, and refine Heartwood Fragments into <b>Ancient Heartwood</b> for the Woodcutter&apos;s Lodge and Masterworks.
-      </SkillIntro>
-
-      <div className="card sawmill-status">
-        <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
-          <div>
-            <b>Lodge Sawmill Status</b>
-            <p className="muted small" style={{ margin: '2px 0 0' }}>
-              Ash (Lv 1), Oak (Lv 15), and Yew (Lv 30) planks are open immediately. Ironwood+ planks and Ancient Heartwood refining unlock after building the Sawmill in the Lodge.
-            </p>
-          </div>
-          <span className="grow" />
-          {hasMill ? (
-            <Badge tone="success">Sawmill built</Badge>
-          ) : (
-            <div className="row" style={{ gap: 6 }}>
-              <LockedBadge level={45} reason="Build Sawmill in the Lodge (Lv 45, 400 Ironwood Logs)" />
-              {go && (
-                <button type="button" className="btn sm" onClick={() => go('lodge')}>
-                  Open Lodge
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <SkillMinigame skill="woodcutting" />
-
-      <div className="sawmill-head">
-        <span className="muted small">
-          Showing {openRecipes.length} unlocked{visibleLocked.length > 0 ? ` + ${visibleLocked.length} upcoming` : ''} recipes
-        </span>
-        {lockedRecipes.length > 2 && (
-          <button
-            type="button"
-            className="btn sm ghost"
-            onClick={() => setShowLocked((v) => !v)}
-          >
-            {showLocked ? 'Hide locked' : `Show locked (${hiddenLockedCount} more)`}
-          </button>
-        )}
-      </div>
-
-      <div className="sawmill-grid">
-        {shownRecipes.map((a) => {
-          const outEntries = Object.entries(a.outputs ?? a.protectedOutputs ?? {});
-          const [outputId, outputQty] = outEntries[0] ?? ['ash_plank', 1];
-          const accessHint = woodcuttingAccessHint(s, a);
-          const levelLocked = level < a.level;
-          const locked = levelLocked || !!accessHint;
-          const blocker = actionBlocker(s, a);
-          const active = runningAction?.actionId === a.id;
-          const interval = actionIntervalMs(s, a, d);
-
-          return (
-            <article key={a.id} className={`card sawmill-card ${active ? 'running' : ''} ${locked ? 'locked' : ''}`} data-tut={`action-${a.id}`}>
-              <div className="sawmill-card-head">
-                <div className="sawmill-card-icon">
-                  <MatIcon id={outputId} size={22} />
-                </div>
-                <div className="sawmill-card-title">
-                  <b>{a.name}</b>
-                  <span className="dim small num">
-                    Makes ×{fmt(outputQty)} {materialDef(outputId).name}
-                    {a.protectedOutputs ? ' · protected' : ''}
-                  </span>
-                </div>
-                {locked ? (
-                  <LockedBadge
-                    level={levelLocked ? a.level : undefined}
-                    reason={accessHint ?? `Requires Woodcutting level ${a.level}`}
-                  />
-                ) : active ? (
-                  <button type="button" className="btn sm" onClick={() => game.act(stopAction)}>
-                    Stop
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={`btn sm ${blocker ? '' : 'primary'}`}
-                    disabled={!!blocker}
-                    title={blocker ?? undefined}
-                    onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, a.id))}
-                  >
-                    {blocker === 'Missing materials' ? 'Missing' : blocker ? 'Locked' : 'Saw'}
-                  </button>
-                )}
-              </div>
-
-              <div className="sawmill-card-meta num small muted">
-                <span>Lv {a.level}</span>
-                <span>{(interval / 1000).toFixed(1)}s</span>
-                <span>{a.xp} XP</span>
-              </div>
-
-              {a.inputs && (
-                <div className="sawmill-inputs">
-                  <Cost cost={a.inputs} have={s.storage.bank} />
-                  <span className="dim small num">
-                    Owned:{' '}
-                    {Object.entries(a.inputs)
-                      .map(([id]) => `${fmt(recipeMaterialCount(s.storage.bank, id))} ${materialDef(id).name}`)
-                      .join(' · ')}
-                  </span>
-                </div>
-              )}
-
-              {locked && accessHint && <p className="muted small" style={{ margin: 0 }}>{accessHint}</p>}
-              {active && runningAction && <ProgressBar value={runningAction.progress / interval} color={a.color} />}
-              {!locked && <MasteryProgress s={s} mastery={a.mastery} compact />}
-            </article>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 /** The Woodcutting screen's content for one of its tabs. */
-export function GiantView({ tab, go }: { tab: GiantTab; go: (tab: GiantTab) => void }) {
+export function GiantView({ tab }: { tab: GiantTab; go?: (tab: GiantTab) => void }) {
   const s = useGame();
   switch (tab) {
-    case 'scouting': return <ScoutingTab s={s} />;
     case 'lodge': return <LodgeTab s={s} />;
-    case 'regions': return <RegionsTab s={s} />;
     case 'trophies': return <TrophiesTab s={s} />;
-    default: return <GiantTab s={s} go={go} />;
+    default: return <ForestTab s={s} />;
   }
 }

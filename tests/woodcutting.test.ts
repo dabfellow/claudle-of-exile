@@ -19,9 +19,9 @@ import { equip } from '../src/engine/equipment';
 import { seeded } from '../src/engine/rng';
 import { rollCollectible } from '../src/engine/collectibles';
 import {
-  autoPick, buildLodge, chooseByOrder, giantCut, lodgeBlocker, makeGiant, moveOn, nextPart, partWorkable, plantBlocker, plantWorldTree,
-  rollOption, scoutCount, scoutOptions, setGiantPart, splitSwing, woodcuttingAccessHint, worldTreeGrowth, worldTreeReady, legendChanceMult,
-  offerWorldTree,
+  buildLodge, chooseRegion, familiarityMult, fellWorldTree, giantCut, legendChance, lodgeBlocker, makeGiant, moveOn, nextPart, partWorkable,
+  plantBlocker, plantWorldTree, quirkChance, quirkChanceMult, rollGiant, setGiantPart, splitSwing, targetRegion, woodcuttingAccessHint,
+  worldTreeGrowth, worldTreeReady, legendChanceMult,
 } from '../src/engine/woodcutting';
 import type { Giant, GameState } from '../src/engine/types';
 
@@ -159,105 +159,118 @@ describe('Felling giants: regions and giants', () => {
     expect(giantCut(s, fixed(0.99)).xpUnits).toBe(1.5);
   });
 
-  it('works the part order: full by default, trunk then heart when rushing', () => {
+  it('works crown, limbs, trunk, heart in order, and a tapped part first', () => {
     const s = newGame(1);
     const g = makeGiant(s, 'ash', 'small', []);
     expect(nextPart(s, g)).toBe('crown');
     g.parts.crown.hp = 0;
     expect(nextPart(s, g)).toBe('limbs');
-    s.giant.order.partOrder = 'rush';
     g.parts.crown.hp = 5;
-    expect(nextPart(s, g)).toBe('trunk');
-    expect(nextPart(s, g, 'crown')).toBe('crown');
+    expect(nextPart(s, g, 'trunk')).toBe('trunk');
+    expect(nextPart(s, g, 'heart')).toBe('crown'); // the heart is shut until the fall
     g.parts.trunk.hp = 0;
     g.fallen = true;
+    g.parts.crown.hp = 0;
+    g.parts.limbs.hp = 0;
     expect(nextPart(s, g)).toBe('heart');
   });
 });
 
-describe('Felling giants: scouting, legends and the standing order', () => {
-  it('offers two giants, three with the Scout Tower, from the chosen region (default the highest unlocked)', () => {
+describe('Felling giants: regions, special giants and legends', () => {
+  it('cuts in the chosen region, falling back to the highest unlocked', () => {
     const s = newGame(1);
     s.skills.woodcutting = xpForLevel(50);
-    expect(scoutOptions(s, fixed(0.5)).map((g) => g.region)).toEqual(['ironwood', 'ironwood']);
+    expect(targetRegion(s)).toBe('ironwood');
     s.giant.order.region = 'oak';
-    expect(scoutOptions(s, fixed(0.5)).map((g) => g.region)).toEqual(['oak', 'oak']);
-    s.giant.order.region = 'worldwood'; // not open yet: falls back to the highest unlocked
-    expect(scoutOptions(s, fixed(0.5)).map((g) => g.region)).toEqual(['ironwood', 'ironwood']);
-    s.giant.lodge.scoutTower = 1;
-    expect(scoutCount(s)).toBe(3);
-    expect(scoutOptions(s, fixed(0.5))).toHaveLength(3);
+    expect(targetRegion(s)).toBe('oak');
+    s.giant.order.region = 'worldwood'; // not open yet
+    expect(targetRegion(s)).toBe('ironwood');
+  });
+
+  it('moves to another region, leaving the part-cut giant waiting there for your return', () => {
+    const s = newGame(1);
+    s.skills.woodcutting = xpForLevel(20);
+    const ash = s.giant.current!;
+    ash.parts.crown.hp -= 3;
+    s.action = { kind: 'skill', actionId: 'giant_ash', progress: 0, part: 'crown' };
+    expect(chooseRegion(s, fixed(0.5), 'yew')).toMatch(/level 30/);
+    expect(chooseRegion(s, fixed(0.5), 'oak')).toBeNull();
+    expect(s.giant.current?.region).toBe('oak');
+    expect(s.giant.waiting.ash?.id).toBe(ash.id);
+    expect(s.action?.kind === 'skill' && s.action.actionId).toBe('giant_oak');
+    expect(chooseRegion(s, fixed(0.5), 'ash')).toBeNull();
+    expect(s.giant.current?.id).toBe(ash.id);
+    expect(s.giant.current?.parts.crown.hp).toBe(ash.parts.crown.max - 3);
+    expect(s.giant.waiting.oak?.region).toBe('oak');
+    expect(s.giant.waiting.ash).toBeUndefined();
   });
 
   it('rolls sizes 40/40/20 and quirks at 15% each, up to two', () => {
     const s = newGame(1);
-    const sizes = (roll: number) => rollOption(s, { next: () => roll }, 'ash').size;
+    const sizes = (roll: number) => rollGiant(s, { next: () => roll }, 'ash').size;
     expect(sizes(0.1)).toBe('small');
     expect(sizes(0.5)).toBe('medium');
     expect(sizes(0.95)).toBe('large');
-    expect(rollOption(s, { next: () => 0.99 }, 'ash').quirks).toEqual([]);
-    expect(rollOption(s, { next: () => 0.001 }, 'ash').quirks).toHaveLength(2);
+    expect(rollGiant(s, { next: () => 0.99 }, 'ash').quirks).toEqual([]);
+    expect(rollGiant(s, { next: () => 0.001 }, 'ash').quirks).toHaveLength(2);
+    expect(quirkChance(s, 'ash')).toBeCloseTo(0.15);
+  });
+
+  it('makes special giants more common the more you fell in a region, up to double, and with the Lookout Tower', () => {
+    const s = newGame(1);
+    expect(familiarityMult(s, 'ash')).toBe(1);
+    s.giant.felled.ash = 10;
+    expect(familiarityMult(s, 'ash')).toBeCloseTo(1.2);
+    expect(quirkChance(s, 'ash')).toBeCloseTo(0.18);
+    expect(familiarityMult(s, 'oak')).toBe(1); // each woods on its own
+    s.giant.felled.ash = 500;
+    expect(familiarityMult(s, 'ash')).toBeCloseTo(2);
+    s.giant.lodge.scoutTower = 1;
+    expect(quirkChanceMult(s, 'ash')).toBeCloseTo(3);
+    expect(quirkChance(s, 'ash')).toBeCloseTo(0.45);
+  });
+
+  it('counts each giant felled in its region', () => {
+    const s = newGame(1);
+    s.giant.current = tinyGiant(s, 'ash', 1);
+    s.action = { kind: 'skill', actionId: 'giant_ash', progress: 0, part: 'crown' };
+    for (let i = 0; i < 4; i++) giantCut(s, fixed(0.5));
+    expect(s.giant.felled.ash).toBe(1);
   });
 
   it('only turns up a legend from level 80, in the Ancient, Spirit or Worldwood regions', () => {
     const s = newGame(1);
     const always = () => ({ next: () => 0.001 });
     s.skills.woodcutting = xpForLevel(79);
-    expect(rollOption(s, always(), 'ancient').legendId).toBeUndefined();
+    expect(rollGiant(s, always(), 'ancient').legendId).toBeUndefined();
     s.skills.woodcutting = xpForLevel(80);
-    expect(rollOption(s, always(), 'oak').legendId).toBeUndefined();
-    expect(rollOption(s, always(), 'ironwood').legendId).toBeUndefined();
+    expect(rollGiant(s, always(), 'oak').legendId).toBeUndefined();
+    expect(rollGiant(s, always(), 'ironwood').legendId).toBeUndefined();
     for (const [region, ids] of [['ancient', ['grandmother_oak', 'stormcrowned_yew']], ['spirit', ['elder_spirit_willow']], ['worldwood', ['worldwood_sentinel']]] as const) {
-      const g = rollOption(s, always(), region);
+      const g = rollGiant(s, always(), region);
       expect(g.size).toBe('legend');
       expect(ids).toContain(g.legendId);
     }
     expect(LEGENDS).toHaveLength(4);
     // a normal roll is not a legend
-    expect(rollOption(s, { next: () => 0.5 }, 'ancient').legendId).toBeUndefined();
+    expect(rollGiant(s, { next: () => 0.5 }, 'ancient').legendId).toBeUndefined();
+    expect(legendChance(s, 'ancient')).toBeCloseTo(0.02);
     s.giant.lodge.scoutTower = 2;
     expect(legendChanceMult(s)).toBe(1.5);
+    s.giant.felled.ancient = 50;
+    expect(legendChance(s, 'ancient')).toBeCloseTo(0.06);
   });
 
-  it('picks by the standing order: resin, heart, fast, region, and legends first', () => {
-    const s = newGame(1);
-    const mk = (size: Giant['size'], quirks: string[] = []) => makeGiant(s, 'oak', size, quirks);
-    const options = [mk('small', ['hollow']), mk('large'), mk('medium', ['resin']), mk('medium', ['burled'])];
-    const order = s.giant.order;
-    expect(chooseByOrder(options, { ...order, pref: 'resin' })).toBe(2);
-    expect(chooseByOrder(options, { ...order, pref: 'heart' })).toBe(3);
-    expect(chooseByOrder(options, { ...order, pref: 'fast' })).toBe(0);
-    expect(chooseByOrder(options, { ...order, pref: 'region' })).toBe(1);
-    expect(chooseByOrder([], order)).toBe(-1);
-    const withLegend = [...options, makeGiant(s, 'ancient', 'legend', [], { legendId: 'grandmother_oak' })];
-    expect(chooseByOrder(withLegend, { ...order, pref: 'fast', alwaysLegend: true })).toBe(4);
-    expect(chooseByOrder(withLegend, { ...order, pref: 'fast', alwaysLegend: false })).toBe(0);
-  });
-
-  it('takes the next giant by the standing order when one falls, switching region and action', () => {
+  it('sets up the next giant in your chosen woods when one is done, and the action follows it', () => {
     const s = newGame(1);
     s.skills.woodcutting = xpForLevel(15); // about to unlock oak
     s.giant.current = tinyGiant(s, 'ash', 1);
     s.action = { kind: 'skill', actionId: 'giant_ash', progress: 0, part: 'crown' };
     const c = fixed(0.5);
     for (let i = 0; i < 4; i++) giantCut(s, c);
-    expect(s.giant.current?.id).not.toBeUndefined();
     expect(s.giant.current?.region).toBe('oak');
-    expect(s.giant.options).toEqual([]);
     expect(s.action?.kind === 'skill' && s.action.actionId).toBe('giant_oak');
-  });
-
-  it('stops for a pick when the standing order is off, and Auto-pick takes the preferred one', () => {
-    const s = newGame(1);
-    s.giant.order.auto = false;
-    s.giant.current = tinyGiant(s, 'ash', 1);
-    s.action = { kind: 'skill', actionId: 'giant_ash', progress: 0, part: 'crown' };
-    for (let i = 0; i < 4; i++) giantCut(s, fixed(0.5));
-    expect(s.giant.current).toBeNull();
-    expect(s.giant.options).toHaveLength(2);
-    expect(s.action).toBeNull();
-    expect(autoPick(s)).toBeNull();
-    expect(s.giant.current).not.toBeNull();
+    expect(s.action?.kind === 'skill' && s.action.part).toBe('crown');
   });
 
   it('moves on after the fall without finishing the heart', () => {
@@ -310,9 +323,9 @@ describe('Felling giants: the lodge and the World Tree', () => {
     expect(buildLodge(s, fixed(0.5), 'scoutTower')).toBeNull();
     expect(s.storage.bank.oak_log).toBe(50);
     expect(s.giant.lodge.scoutTower).toBe(1);
-    expect(scoutCount(s)).toBe(3);
+    expect(quirkChanceMult(s, 'ash')).toBe(1.5);
     expect(lodgeBlocker(s, 'scoutTower')).toMatch(/level 70/);
-    expect(LODGE.find((l) => l.id === 'sawmill')!.tiers[0].cost).toEqual({ ironwood_log: 400 });
+    expect(LODGE.map((l) => l.id)).toEqual(['scoutTower', 'dryingShed', 'trophyWall']);
     expect(lodgeBlocker(s, 'trophyWall')).toBe('Fell a legend first');
   });
 
@@ -342,16 +355,16 @@ describe('Felling giants: the lodge and the World Tree', () => {
     expect(s.storage.bank.ash_log).toBe(2);
   });
 
-  it('needs the Sawmill for Ironwood and deeper planks and heartwood, but not for ash, oak or yew planks', () => {
+  it('saws planks and refines heartwood at Woodcrafting, gated only by Woodcrafting level', () => {
     const s = newGame(1);
-    s.skills.woodcutting = xpForLevel(60);
     s.storage.bank.ironwood_log = 5;
     s.storage.bank.heartwood_fragment = 20;
-    expect(woodcuttingAccessHint(s, actionDef('mill_ironwood'))).toBe('Build the Sawmill in your lodge');
-    expect(actionBlocker(s, actionDef('mill_heartwood'))).toBe('Build the Sawmill in your lodge');
-    expect(woodcuttingAccessHint(s, actionDef('mill_ash'))).toBeNull();
-    expect(woodcuttingAccessHint(s, actionDef('mill_yew'))).toBeNull();
-    s.giant.lodge.sawmill = 1;
+    for (const id of ['mill_ash', 'mill_ironwood', 'mill_heartwood']) {
+      expect(actionDef(id).skill).toBe('woodcrafting');
+      expect(woodcuttingAccessHint(s, actionDef(id))).toBeNull();
+    }
+    expect(actionBlocker(s, actionDef('mill_ironwood'))).toMatch(/Woodcrafting level 45/);
+    s.skills.woodcrafting = xpForLevel(45);
     expect(actionBlocker(s, actionDef('mill_ironwood'))).toBeNull();
     expect(actionBlocker(s, actionDef('mill_heartwood'))).toBeNull();
   });
@@ -371,12 +384,15 @@ describe('Felling giants: the lodge and the World Tree', () => {
     expect(worldTreeGrowth(s, t0 + WORLD_TREE_GROWTH_MS / 2)).toBeCloseTo(0.5);
     expect(worldTreeReady(s, t0 + WORLD_TREE_GROWTH_MS - 1)).toBe(false);
     expect(worldTreeReady(s, t0 + WORLD_TREE_GROWTH_MS)).toBe(true);
-    // it survives a save, and shows up among the scouted giants once grown
+    // it survives a save, and once grown you can fell it while your giant waits
     const back = reload(s);
     expect(back.giant.worldTree).toEqual({ plantedAt: t0 });
-    expect(scoutOptions(s, fixed(0.5, t0 + WORLD_TREE_GROWTH_MS)).some((g) => g.worldTree)).toBe(true);
-    expect(offerWorldTree(s, fixed(0.5, t0 + 10))).toMatch(/growing/);
-    expect(offerWorldTree(s, fixed(0.5, t0 + WORLD_TREE_GROWTH_MS))).toBeNull();
+    const before = s.giant.current!;
+    expect(fellWorldTree(s, fixed(0.5, t0 + 10))).toMatch(/growing/);
+    expect(fellWorldTree(s, fixed(0.5, t0 + WORLD_TREE_GROWTH_MS))).toBeNull();
+    expect(s.giant.current?.worldTree).toBe(true);
+    expect(s.giant.waiting[before.region]?.id).toBe(before.id);
+    expect(fellWorldTree(s, fixed(0.5, t0 + WORLD_TREE_GROWTH_MS))).toMatch(/already/);
   });
 
   it('fells the World Tree for 400x HP, 10 legend heartwood and a World Tree heart, then lets you plant another', () => {
@@ -459,10 +475,10 @@ describe('Felling giants: coming back and migration', () => {
     const s = deserialize(JSON.stringify(old));
     expect(s.version).toBe(SAVE_VERSION);
     expect(s.collectibles).toEqual([]);
-    // one fresh Medium giant in the highest region, and the Sawmill free at level 45+
+    // one fresh Medium giant in the highest region
     expect(s.giant.current).toMatchObject({ region: 'ironwood', size: 'medium', fallen: false });
-    expect(s.giant.lodge).toEqual({ scoutTower: 0, dryingShed: 0, sawmill: 1, trophyWall: 0 });
-    expect(s.giant.order).toMatchObject({ partOrder: 'full', region: 'auto', alwaysLegend: true });
+    expect(s.giant.lodge).toEqual({ scoutTower: 0, dryingShed: 0, sawmill: 0, trophyWall: 0 });
+    expect(s.giant.order).toEqual({ region: 'auto' });
     // the highest of each wood's old tracks; plank and other tracks keep their ids
     expect(s.skillingMastery['task.giant_ash']).toBe(500);
     expect(s.skillingMastery['task.giant_oak']).toBe(70);
@@ -475,10 +491,9 @@ describe('Felling giants: coming back and migration', () => {
     expect(s.skills.woodcutting).toBe(base.skills.woodcutting);
     expect(s.professionProgress.counters['wood.heartwood.survey']).toBe(17);
     expect(s.action).toMatchObject({ kind: 'skill', actionId: 'giant_ironwood' });
-    // a lower level gets no free Sawmill
+    // a lower level starts in shallower woods
     old.skills.woodcutting = xpForLevel(44);
     const low = deserialize(JSON.stringify(old));
-    expect(low.giant.lodge.sawmill).toBe(0);
     expect(low.giant.current?.region).toBe('yew');
   });
 
@@ -534,8 +549,7 @@ describe('Hidden collectibles', () => {
 describe('Sawmill and the old crafting links', () => {
   it('keeps refining heartwood bounded with protected full costs', () => {
     const s = newGame(1);
-    s.skills.woodcutting = xpForLevel(30);
-    s.giant.lodge.sawmill = 1;
+    s.skills.woodcrafting = xpForLevel(30);
     s.storage.bank.heartwood_fragment = 20;
     s.skillingMastery['task.mill_heartwood'] = 432000;
     s.skillPassives.push('core_steady');
@@ -554,8 +568,7 @@ describe('Sawmill and the old crafting links', () => {
   it('refines identical protected live/offline output and spending, then stops on exhausted nominal inputs', () => {
     const setup = () => {
       const s = newGame(1);
-      s.skills.woodcutting = xpForLevel(30);
-      s.giant.lodge.sawmill = 1;
+      s.skills.woodcrafting = xpForLevel(30);
       s.storage.bank.heartwood_fragment = 40;
       s.skillPassives.push('core_steady');
       s.skillingMastery['task.mill_heartwood'] = 432000;
@@ -578,8 +591,7 @@ describe('Sawmill and the old crafting links', () => {
 
   it('saws every plank from five logs', () => {
     const s = newGame(1);
-    s.skills.woodcutting = xpForLevel(90);
-    s.giant.lodge.sawmill = 1;
+    s.skills.woodcrafting = xpForLevel(90);
     for (const w of WOODS) {
       s.storage.bank[`${w.id}_log`] = 5;
       expect(actionDef(`mill_${w.id}`)).toMatchObject({ inputs: { [`${w.id}_log`]: 5 }, outputs: { [`${w.id}_plank`]: 1 } });

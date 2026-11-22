@@ -1,5 +1,5 @@
 import {
-  BASE_HP, CROWN_LOG_CHANCE, CROWN_RESIN_CHANCE, FALL_XP_MULT, GIANT_PARTS, HEART_FRAGMENT_CHANCE, LEGEND_CHANCE, LEGEND_FALL_XP_MULT,
+  BASE_HP, CROWN_LOG_CHANCE, CROWN_RESIN_CHANCE, FALL_XP_MULT, FAMILIARITY_CAP, FAMILIARITY_STEP, GIANT_PARTS, HEART_FRAGMENT_CHANCE, LEGEND_CHANCE, LEGEND_FALL_XP_MULT,
   LEGEND_HEART_MAX, LEGEND_HEART_MIN, LEGEND_MIN_LEVEL, LEGENDS, LODGE, lodgeDef, MAX_QUIRKS, QUIRK_CHANCE, QUIRKS, SIZE_MULT, SIZE_WEIGHTS,
   TRUNK_BONUS_LOG_CHANCE, TROPHY_WALL_PLANKS, WOODS, WORLD_TREE_GROWTH_MS, WORLD_TREE_HEARTWOOD, WORLD_TREE_SEED_CHANCE, legendDef, woodDef,
   type LodgeTier,
@@ -11,7 +11,7 @@ import { minigameSwing, type SwingResult } from './minigame';
 import { rollCollectible } from './collectibles';
 import { chance, pick, pickWeighted, rInt, type Rng } from './rng';
 import { stochasticRound } from './skillingMastery';
-import type { FellingCard, Giant, GiantPart, GiantPref, GiantSize, GiantState, GameState, LodgeId } from './types';
+import type { FellingCard, Giant, GiantPart, GiantSize, GiantState, GameState, LodgeId } from './types';
 import { levelOf } from './xp';
 
 /** How many felling cards are kept for the return screen. */
@@ -22,8 +22,9 @@ export const woodcuttingLevel = (s: GameState): number => levelOf('woodcutting',
 export function newGiantState(): GiantState {
   return {
     current: null,
-    options: [],
-    order: { pref: 'resin', partOrder: 'full', region: 'auto', alwaysLegend: true, auto: true },
+    waiting: {},
+    felled: {},
+    order: { region: 'auto' },
     lodge: { scoutTower: 0, dryingShed: 0, sawmill: 0, trophyWall: 0 },
     legends: [],
     legendLog: {},
@@ -46,11 +47,35 @@ export function unlockedRegions(level: number) {
   return WOODS.filter((w) => w.level <= level);
 }
 
-/** The region scouts are sent to: the chosen one if it is open, otherwise the highest unlocked. */
-export function scoutRegion(s: GameState): string {
+/** The region you are cutting in: the chosen one if it is open, otherwise the highest unlocked. */
+export function targetRegion(s: GameState): string {
   const lvl = woodcuttingLevel(s);
   const chosen = WOODS.find((w) => w.id === s.giant.order.region);
   return chosen && chosen.level <= lvl ? chosen.id : highestRegion(lvl);
+}
+
+/** Giants felled in a region so far. */
+export const felledIn = (s: GameState, region: string): number => s.giant.felled?.[region] ?? 0;
+
+/** How much more common a region's special giants are from familiarity: 1 (new) up to 2. */
+export function familiarityMult(s: GameState, region: string): number {
+  return 1 + Math.min(FAMILIARITY_CAP, felledIn(s, region)) * FAMILIARITY_STEP;
+}
+
+/** Everything that makes special (quirked) giants more common in a region. */
+export function quirkChanceMult(s: GameState, region: string): number {
+  return familiarityMult(s, region) * (s.giant.lodge.scoutTower >= 1 ? 1.5 : 1);
+}
+
+/** The chance per roll that a giant gets a quirk in this region, after familiarity and the Lookout Tower. */
+export function quirkChance(s: GameState, region: string): number {
+  return Math.min(0.9, QUIRK_CHANCE * quirkChanceMult(s, region));
+}
+
+/** The chance the next giant in a region is a legend; 0 where legends never stand or below the level. */
+export function legendChance(s: GameState, region: string): number {
+  if (woodcuttingLevel(s) < LEGEND_MIN_LEVEL || !LEGENDS.some((l) => l.region === region)) return 0;
+  return LEGEND_CHANCE * legendChanceMult(s) * familiarityMult(s, region);
 }
 
 // ---- giants
@@ -77,10 +102,10 @@ export function makeGiant(s: GameState, region: string, size: GiantSize, quirks:
   };
 }
 
-export function rollQuirks(rng: Rng): string[] {
+export function rollQuirks(rng: Rng, quirkOdds = QUIRK_CHANCE): string[] {
   const out: string[] = [];
   for (let i = 0; i < MAX_QUIRKS; i++) {
-    if (!chance(rng, QUIRK_CHANCE)) continue;
+    if (!chance(rng, quirkOdds)) continue;
     const q = pick(rng, QUIRKS.filter((x) => !out.includes(x.id)));
     out.push(q.id);
   }
@@ -89,29 +114,73 @@ export function rollQuirks(rng: Rng): string[] {
 
 export const legendChanceMult = (s: GameState): number => (s.giant.lodge.scoutTower >= 2 ? 1.5 : 1);
 
-/** One scouted giant from a region. From level 80, deep regions can turn up a named legend. */
-export function rollOption(s: GameState, rng: Rng, region: string): Giant {
+/** The next giant in a region. From level 80, deep regions can turn up a named legend. */
+export function rollGiant(s: GameState, rng: Rng, region: string): Giant {
   const legends = LEGENDS.filter((l) => l.region === region);
-  if (woodcuttingLevel(s) >= LEGEND_MIN_LEVEL && legends.length && chance(rng, LEGEND_CHANCE * legendChanceMult(s))) {
+  if (chance(rng, legendChance(s, region))) {
     return makeGiant(s, region, 'legend', [], { legendId: pick(rng, legends).id });
   }
   const size = pickWeighted(rng, SIZE_WEIGHTS, (x) => x.weight)!.size;
-  return makeGiant(s, region, size, rollQuirks(rng));
-}
-
-export const scoutCount = (s: GameState): number => 2 + (s.giant.lodge.scoutTower >= 1 ? 1 : 0);
-
-export function scoutOptions(s: GameState, ctx: Ctx): Giant[] {
-  const region = scoutRegion(s);
-  const options = Array.from({ length: scoutCount(s) }, () => rollOption(s, ctx.rng, region));
-  if (worldTreeReady(s, ctx.now)) options.push(makeWorldTree(s));
-  return options;
+  return makeGiant(s, region, size, rollQuirks(rng, quirkChance(s, region)));
 }
 
 /** A new character, or a migrated one, starts on a fresh Medium giant in their highest region. */
 export function initGiant(s: GameState, rng: Rng): void {
   s.giant.current = makeGiant(s, highestRegion(woodcuttingLevel(s)), 'medium', rollQuirks(rng));
-  s.giant.options = [];
+}
+
+/** Older saves of this build: fill the fields added since, and make sure a giant is standing. */
+export function settleGiant(s: GameState, rng: Rng): void {
+  const st = s.giant;
+  if (!st) return;
+  st.waiting ??= {};
+  st.felled ??= {};
+  st.order = { region: typeof st.order?.region === 'string' ? st.order.region : 'auto' };
+  delete (st as unknown as { options?: unknown }).options;
+  if (!st.current) st.current = takeGiant(s, rng, targetRegion(s));
+}
+
+/** The giant to work in a region: the one you left part-cut there, or a fresh one. */
+function takeGiant(s: GameState, rng: Rng, region: string): Giant {
+  const waiting = s.giant.waiting[region];
+  if (waiting) {
+    delete s.giant.waiting[region];
+    return waiting;
+  }
+  return rollGiant(s, rng, region);
+}
+
+/** Point the running felling action at the current giant. */
+function followGiant(s: GameState): void {
+  const g = s.giant.current;
+  const a = s.action;
+  if (!g || a?.kind !== 'skill' || !isGiantActionId(a.actionId)) return;
+  a.actionId = `giant_${g.region}`;
+  a.part = nextPart(s, g) ?? undefined;
+}
+
+/** Leave the current giant standing (to come back to) and set another in its place. */
+function swapGiant(s: GameState, next: Giant): void {
+  const cur = s.giant.current;
+  if (cur && cur.id !== next.id && !cur.worldTree) s.giant.waiting[cur.region] = cur;
+  s.giant.current = next;
+  followGiant(s);
+}
+
+/**
+ * Cut in another region. The giant you were on waits there, part-cut, until you come back; the region's own waiting
+ * giant (or a fresh one) takes its place, and a running felling action follows.
+ */
+export function chooseRegion(s: GameState, ctx: Ctx, region: string): string | null {
+  const w = WOODS.find((x) => x.id === region);
+  if (!w) return 'No such woods';
+  if (woodcuttingLevel(s) < w.level) return `Requires Woodcutting level ${w.level}`;
+  s.giant.order.region = region;
+  const cur = s.giant.current;
+  if (cur?.region === region && !cur.worldTree) return null;
+  if (cur?.worldTree) return null; // finish your World Tree first; the next giant comes from the new region
+  swapGiant(s, takeGiant(s, ctx.rng, region));
+  return null;
 }
 
 export function giantName(g: Pick<Giant, 'region' | 'quirks' | 'legendId' | 'worldTree'>): string {
@@ -135,10 +204,14 @@ export function fellingTime(g: Giant): number {
   return totalHp(g) * woodDef(g.region).ms;
 }
 
-// ---- the standing order
+// ---- which part next
 
-export function partOrderList(s: GameState): GiantPart[] {
-  return s.giant.order.partOrder === 'rush' ? ['trunk', 'heart'] : ['crown', 'limbs', 'trunk', 'heart'];
+/**
+ * When a part runs out, work moves on crown, limbs, trunk, heart. To rush the heart, tap the Trunk: it is worked until
+ * it falls, and anything left on the crown and limbs becomes splinters.
+ */
+export function partOrderList(_s: GameState): GiantPart[] {
+  return ['crown', 'limbs', 'trunk', 'heart'];
 }
 
 export function partWorkable(g: Giant, p: GiantPart): boolean {
@@ -149,56 +222,6 @@ export function partWorkable(g: Giant, p: GiantPart): boolean {
 export function nextPart(s: GameState, g: Giant, prefer?: GiantPart): GiantPart | null {
   if (prefer && partWorkable(g, prefer)) return prefer;
   return partOrderList(s).find((p) => partWorkable(g, p)) ?? null;
-}
-
-const SIZE_RANK: Record<GiantSize, number> = { small: 0, medium: 1, large: 2, legend: 3, worldtree: 4 };
-
-function orderScore(g: Giant, pref: GiantPref): number {
-  switch (pref) {
-    case 'resin': return (hasQuirk(g, 'resin') ? 100 : 0) + (hasQuirk(g, 'lightning') ? -50 : 0) + SIZE_RANK[g.size] * 10;
-    case 'heart': return (hasQuirk(g, 'burled') ? 100 : 0) + SIZE_RANK[g.size] * 10;
-    case 'fast': return -totalMaxHp(g);
-    default: return totalMaxHp(g);
-  }
-}
-
-/** The index of the giant the standing order would take, or -1 with nothing on offer. */
-export function chooseByOrder(options: Giant[], order: GiantState['order']): number {
-  if (!options.length) return -1;
-  if (order.alwaysLegend) {
-    const legend = options.findIndex(isLegend);
-    if (legend >= 0) return legend;
-  }
-  let best = 0;
-  options.forEach((g, i) => { if (orderScore(g, order.pref) > orderScore(options[best], order.pref)) best = i; });
-  return best;
-}
-
-export function setGiantOrder(s: GameState, patch: Partial<GiantState['order']>): void {
-  s.giant.order = { ...s.giant.order, ...patch };
-}
-
-/** Make a scouted giant the current one. The running action follows it into its region. */
-export function pickGiant(s: GameState, index: number): string | null {
-  const st = s.giant;
-  const g = st.options[index];
-  if (!g) return 'That giant is gone';
-  if (st.current) return 'Finish the giant you are on first';
-  if (woodcuttingLevel(s) < woodDef(g.region).level) return `Requires Woodcutting level ${woodDef(g.region).level}`;
-  st.current = g;
-  st.options = [];
-  const a = s.action;
-  if (a?.kind === 'skill' && isGiantActionId(a.actionId)) {
-    a.actionId = `giant_${g.region}`;
-    a.part = nextPart(s, g) ?? undefined;
-  }
-  return null;
-}
-
-/** Take the giant the standing order would pick; used on demand and whenever one falls while idle. */
-export function autoPick(s: GameState): string | null {
-  const i = chooseByOrder(s.giant.options, s.giant.order);
-  return i < 0 ? 'No giants on offer' : pickGiant(s, i);
 }
 
 export function isGiantActionId(id: string): boolean {
@@ -316,9 +339,10 @@ export function giantCut(s: GameState, ctx: Ctx, focusDouble = false, resinBoost
   return res;
 }
 
-/** A giant is done: record it, make a card if you were away, scout the next and let the standing order take one. */
+/** A giant is done: record it, make a card if you were away, and set up the next giant in your chosen woods. */
 function completeGiant(s: GameState, ctx: Ctx, g: Giant, drops: Record<string, number>, movedOn: boolean): void {
   const st = s.giant;
+  if (!g.worldTree) st.felled[g.region] = (st.felled[g.region] ?? 0) + 1;
   if (g.legendId && !g.worldTree) {
     if (!st.legends.includes(g.legendId)) st.legends.push(g.legendId);
     const total: Record<string, number> = {};
@@ -338,14 +362,9 @@ function completeGiant(s: GameState, ctx: Ctx, g: Giant, drops: Record<string, n
   };
   if (ctx.offline) st.pendingCards = [...st.pendingCards, card].slice(-MAX_CARDS);
   else if (!isLegend(g)) ctx.emit({ t: 'info', text: `${giantName(g)} is down`, tone: 'good' });
-  st.current = null;
-  st.options = scoutOptions(s, ctx);
-  if (ctx.offline || st.order.auto) {
-    autoPick(s);
-  } else {
-    s.action = null;
-    ctx.emit({ t: 'info', text: 'The giant is down. Pick the next one in the Scouting tab.', tone: 'good' });
-  }
+  st.current = takeGiant(s, ctx.rng, targetRegion(s));
+  followGiant(s);
+  if (!ctx.offline && isLegend(st.current)) ctx.emit({ t: 'info', text: `A legend stands in the ${woodDef(st.current.region).region}: ${giantName(st.current)}!`, tone: 'good' });
 }
 
 export function dismissCards(s: GameState): void {
@@ -422,11 +441,11 @@ export function makeWorldTree(s: GameState): Giant {
   return makeGiant(s, 'worldwood', 'worldtree', [], { worldTree: true });
 }
 
-/** Offer a grown World Tree among the scouted giants. */
-export function offerWorldTree(s: GameState, ctx: Ctx): string | null {
+/** Start on your grown World Tree. The giant you were on waits in its woods until you come back. */
+export function fellWorldTree(s: GameState, ctx: Ctx): string | null {
   if (!worldTreeReady(s, ctx.now)) return 'It is still growing';
-  if (s.giant.options.some((g) => g.worldTree) || s.giant.current?.worldTree) return 'It is already on offer';
-  s.giant.options.push(makeWorldTree(s));
+  if (s.giant.current?.worldTree) return 'You are already felling it';
+  swapGiant(s, makeWorldTree(s));
   return null;
 }
 
@@ -440,9 +459,7 @@ export function woodcuttingAccessHint(s: GameState, a: SkillAction): string | nu
     if (!g) return 'Pick a giant to fell';
     return g.region === w.wood ? null : 'That giant stands in another region';
   }
-  // ash, oak and yew planks stay open: early hideout upgrades need them. Ironwood and deeper, and heartwood, need the Sawmill
-  const needsMill = a.id === 'mill_heartwood' || woodDef(w.wood).level >= 45;
-  return needsMill && s.giant.lodge.sawmill < 1 ? 'Build the Sawmill in your lodge' : null;
+  return null; // sawmill recipes are Woodcrafting's now, gated only by Woodcrafting level
 }
 
 export function woodcuttingPreview(_s: { professionProgress: { counters: Record<string, number> } }, _a: SkillAction): string[] {

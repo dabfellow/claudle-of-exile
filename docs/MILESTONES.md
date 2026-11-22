@@ -725,6 +725,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - Move existing saves, logs, resin, planks, heartwood progress and the hatchet over without losses; keep offline and live results matching.
   - Where it stands (2026-11-21): everything above is built on a worktree branch (engine, data, GiantView with tabs, split-the-log game, lodge, World Tree, felling cards, migration 51 to 52, tests) along with the shared hidden collectibles system (`data/collectibles.ts`, `engine/collectibles.ts`, Collection tab on Skills). `npm test` and `npm run build` pass. Not yet checked in the running game with the playtest skill at desktop and phone width, so left unchecked.
   - Small calls made in the build: ash, oak and yew planks stay open to everyone (early hideout upgrades need them; only Ironwood and deeper planks and heartwood refining need the Sawmill). Giant cutting actions are one per region (`giant_<wood>`), not a single `giant_cut`. Scouts follow the highest unlocked region by default, so an overnight run moves up the woods as levels come.
+  - [x] Look-and-feel pass on the Woodcutting page, from the owner's review — done 2026-11-22. Scouting and the standing order removed: pick a woods and cut there, part-cut giants wait in their woods, special giants get more common with each giant felled in a woods, Scout Tower became the Lookout Tower. Planks and heartwood refining moved to Woodcrafting's new Sawmill tab; the Lodge Sawmill is gone. Part-order toggle removed. Forest tab redrawn as one full screen (woods picker, big giant with parts pinned on it, chopping block and tally). Splitting game redrawn as an axe coming down on a round standing on a stump. Decisions in [Woodcutting: Felling giants](WOODCUTTING_GIANTS.md#look-and-feel-pass-2026-11-22). Checked in the running game at desktop and phone width; tests and typecheck pass.
 
 - [ ] Build Foraging as Wild variants and cross-breeding, from [Foraging: Wild variants and cross-breeding](FORAGING_BREEDING.md).
   - Strains with up to three weighted mutations (common, rare, giga rare), found in the wild including offline.
@@ -1004,6 +1005,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Woodcutting look-and-feel pass — done 2026-11-22. No more scouting: choose a woods and cut there, with special giants more common the more you fell in it. Planks moved to Woodcrafting's Sawmill tab. The page is one full Forest screen, and the chopping block is now an axe splitting a standing log.
 
 - [x] Build Woodcrafting — done 2026-11-21. Verified a jig upgrade, a saved bow tuning, drawknife doubles and tuned gear on the return rack at desktop and phone widths. Save migration 58→59 starts with neutral tuning and preserves the active recipe. Living growth, retuning, balanced gear and purpose guarantees have targeted tests.
 

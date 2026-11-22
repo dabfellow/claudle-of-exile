@@ -24,9 +24,9 @@ import { connectedWithout, settleForbiddenAllowance, settlePassivePoints, settle
 import { openReachedZones } from './progress';
 import { giveStarterGems, newGame, SAVE_VERSION } from './state';
 import type { AccountPool, AccountTransfer, FlaskInstance, GameState, Item } from './types';
-import { charXpFromOldCurveV24, charXpFromPreviousCurve, levelOf } from './xp';
+import { charXpFromOldCurveV24, charXpFromPreviousCurve } from './xp';
 import { seeded } from './rng';
-import { initGiant, newGiantState } from './woodcutting';
+import { initGiant, newGiantState, settleGiant } from './woodcutting';
 import { MASTERY_CAP, settleSkillingMastery } from './skillingMastery';
 import { migrateLegacyLootFilters, settleLootFilters } from './lootFilter';
 import { migrateSettingsProfiles, settleTreeProfiles } from './treeProfiles';
@@ -77,8 +77,8 @@ const RETIRED_CUT_WOODS: Record<string, string> = {
 
 /**
  * Version 51 to 52, Woodcutting became Felling giants (docs/WOODCUTTING_GIANTS.md). All `cut_*` actions are retired:
- * each region's task mastery takes the highest of that wood's old tracks (plank tracks keep their ids), a player at
- * level 45 or more gets the Sawmill for free, and everyone starts on a fresh Medium giant in their highest region.
+ * each region's task mastery takes the highest of that wood's old tracks (plank tracks keep their ids),
+ * and everyone starts on a fresh Medium giant in their highest region.
  * Also starts the hidden collectibles list. Items, the heartwood fragment counter and the Heartwood Hatchet are untouched.
  */
 export function convertWoodcuttingToGiants(raw: Record<string, unknown>): void {
@@ -97,7 +97,6 @@ export function convertWoodcuttingToGiants(raw: Record<string, unknown>): void {
   raw.skillingMastery = mastery;
   const probe = { skills: { woodcutting: xp }, giant: newGiantState() } as unknown as GameState;
   initGiant(probe, seeded((Date.now() ^ 0x2f6b) >>> 0));
-  if (levelOf('woodcutting', xp) >= 45) probe.giant.lodge.sawmill = 1;
   raw.giant = probe.giant;
   const act = raw.action as { kind?: string; actionId?: string } | null | undefined;
   if (act?.kind === 'skill' && typeof act.actionId === 'string' && act.actionId in RETIRED_CUT_WOODS) act.actionId = `giant_${probe.giant.current!.region}`;
@@ -777,6 +776,7 @@ export function deserialize(json: string): GameState {
   settleForaging(s);
   settleAlchemy(s);
   settleCartography(s);
+  settleGiant(s, seeded((Date.now() ^ 0x2f6b) >>> 0));
   migrateSettingsProfiles(s);
   settleTreeLayout(s);
   settlePassivePoints(s);

@@ -837,19 +837,17 @@ export interface FellingCard {
   movedOn?: boolean;
   at: number;
 }
-export type GiantPref = 'resin' | 'heart' | 'fast' | 'region';
+/** `sawmill` is kept only so old saves load: planks moved to Woodcrafting (2026-11-22). */
 export type LodgeId = 'scoutTower' | 'dryingShed' | 'sawmill' | 'trophyWall';
 export interface GiantState {
   current: Giant | null;
-  options: Giant[];
+  /** giants left part-cut when you moved to another region, by region; you pick them back up when you return */
+  waiting: Record<string, Giant>;
+  /** giants felled per region: familiarity makes that region's special giants more common */
+  felled: Record<string, number>;
   order: {
-    pref: GiantPref;
-    partOrder: 'full' | 'rush';
-    /** the region scouts are sent to; 'auto' is the highest unlocked */
+    /** the region you are cutting in; 'auto' is the highest unlocked */
     region: string;
-    alwaysLegend: boolean;
-    /** pick the next giant by the standing order as soon as one falls (offline always does) */
-    auto: boolean;
   };
   lodge: Record<LodgeId, number>;
   legends: string[];
@@ -1380,7 +1378,7 @@ export interface GameState {
   archaeology: ArchaeologyState;
   /** Astrology: researched sky regions, unlocked stars, fallen stars and the charted constellation (engine/astrology.ts) */
   astrology: AstrologyState;
-  /** Woodcutting: the giant being felled, scouted options, standing order and lodge */
+  /** Woodcutting: the giant being felled, giants waiting in other woods, the chosen woods and the lodge */
   giant: GiantState;
   /** ids of hidden skilling collectibles found (data/collectibles.ts) */
   collectibles: string[];

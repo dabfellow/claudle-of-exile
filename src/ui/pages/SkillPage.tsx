@@ -55,7 +55,7 @@ import { smithingPreview } from '../../engine/smithing';
 import { foragingAccessHint, foragingPreview } from '../../engine/foraging';
 import { LEGENDS, WOODS } from '../../data/woodcutting';
 import { unlockedRegions } from '../../engine/woodcutting';
-import { GIANT_TABS, GiantView, isGiantTab, SawmillView } from '../components/GiantView';
+import { GIANT_TABS, GiantView, isGiantTab } from '../components/GiantView';
 import { alchemyPreview } from '../../engine/alchemy';
 import { alchemyCategory, ALCHEMY_CATEGORIES } from '../../data/alchemy';
 import { COOKING_CATEGORIES, cookingCategory, cookingPreview } from '../../engine/cooking';
@@ -544,7 +544,7 @@ function getSkillTabs(skill: SkillId): { id: string; label: string }[] | null {
   else if (skill === 'harvesting') baseTabs = HARVESTING_TABS;
   else if (skill === 'cartography') baseTabs = [{ id: 'charts', label: 'Map Case' }];
   else if (skill === 'astrology') baseTabs = [{ id: 'chart', label: 'Chart' }, { id: 'research', label: 'Research' }, { id: 'watch', label: 'Watch' }, { id: 'fallen', label: 'Fallen' }];
-  else if (skill === 'woodcutting') baseTabs = [...GIANT_TABS, { id: 'planks', label: 'Sawmill' }];
+  else if (skill === 'woodcutting') baseTabs = [...GIANT_TABS];
 
   const hasProjects = PROFESSION_PROJECTS.some((p) => p.skill === skill && p.category !== 'masteryBatch');
   if (!baseTabs && !hasProjects) return null;
@@ -855,11 +855,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
                 countText = `${list.filter(isUnlocked).length}/${list.length}`;
               }
             } else if (skill === 'woodcutting') {
-              if (x.id === 'planks') {
-                const list = selectedActions.filter((a) => a.woodcutting?.mode === 'sawmill');
-                countText = `${list.filter(isUnlocked).length}/${list.length}`;
-              } else if (x.id === 'regions') countText = `${unlockedRegions(level).length}/${WOODS.length}`;
-              else if (x.id === 'scouting' && s.giant.options.length) countText = `${s.giant.options.length}`;
+              if (x.id === 'giant') countText = `${unlockedRegions(level).length}/${WOODS.length}`;
               else if (x.id === 'trophies') countText = `${s.giant.legends.length}/${LEGENDS.length}`;
             } else if (skill === 'cartography') {
               if (x.id === 'charts') {
@@ -898,7 +894,6 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
       {skill === 'astrology' && tab !== 'masterworks' && <Observatory tab={tab} onTab={setTab} />}
       {skill === 'agility' && <AgilityShortcuts level={level} />}
       {skill === 'woodcutting' && isGiantTab(tab) && <GiantView tab={tab} go={setTab} />}
-      {skill === 'woodcutting' && tab === 'planks' && <SawmillView />}
 
       {skill === 'alchemy' && <div className="callout skill-note">Salvage unwanted items in your Inventory for Arcane Dust, then transmute it into orbs here.</div>}
       {skill === 'gemcutting' && (

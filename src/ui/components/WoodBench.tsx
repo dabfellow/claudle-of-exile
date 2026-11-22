@@ -19,13 +19,14 @@ import { UseBarGrade } from './FurnaceView';
 import { SkillMinigame } from './SkillMinigame';
 import { MasteryProgress } from './MasteryProgress';
 import { Icon } from './Icon';
+import { Sawmill } from './Sawmill';
 import './wood-bench.css';
 
 const families = Object.keys(WOOD_FAMILIES) as WoodFamily[];
-const recipes = actionsFor('woodcrafting').filter((a) => !a.purpose && (!a.baseId || obtainable(baseDef(a.baseId))));
+const recipes = actionsFor('woodcrafting').filter((a) => !a.purpose && !a.woodcutting && (!a.baseId || obtainable(baseDef(a.baseId))));
 const livingMaterials = ['legend_heartwood', 'world_tree_heart'] as const;
 const tabs = [
-  { id: 'bench', label: 'Workbench' }, { id: 'recipes', label: 'Recipes' }, { id: 'jigs', label: 'Jigs' },
+  { id: 'bench', label: 'Workbench' }, { id: 'sawmill', label: 'Sawmill' }, { id: 'recipes', label: 'Recipes' }, { id: 'jigs', label: 'Jigs' },
   { id: 'tunings', label: 'Tunings' }, { id: 'masterworks', label: 'Masterworks' },
 ] as const;
 type WoodTab = (typeof tabs)[number]['id'];
@@ -508,6 +509,7 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
         </div>
       )}
 
+      {tab === 'sawmill' && <Sawmill />}
       {tab === 'jigs' && <JigsView s={s} level={level} notify={setNotice} />}
 
       {tab === 'tunings' && (
