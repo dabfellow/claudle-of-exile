@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ROGUES, talentPoints } from '../src/data/rogues';
-import { heistJob } from '../src/data/heist';
+import { heistJob, prepBoard, prepId } from '../src/data/heist';
 import { newGame } from '../src/engine/state';
 import { alarmChance, heistStep, settleHeist, startHeist, stopHeistRepeat, toggleCrew } from '../src/engine/heist';
 import { chooseTactic, finishTraining, grantRogueXp, learnTalent, roomRevealed, roomSpecialty, scoutRoom, trainRogue, vaultProfile } from '../src/engine/rogues';
@@ -12,7 +12,7 @@ const safe: Ctx = { rng: { next: () => 0.999 }, now: 0, emit: () => {} };
 const job = heistJob('cinder_toll');
 function setup() {
   const s = newGame(1, { name: 'Rogue test', classId: 'ranger' });
-  s.storage.bank.rogues_marker = 1000;
+  for (const e of prepBoard(job.id).items.filter((x) => x.kind !== 'ledger').slice(0, 2)) s.heist.prep[prepId(job.id, e.kind)] = 3;
   s.storage.bank.gold = 20000;
   s.heist.crew = ['bruiser', 'locksmith', 'lookout'];
   return s;

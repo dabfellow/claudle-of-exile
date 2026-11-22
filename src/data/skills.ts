@@ -13,7 +13,7 @@ import { CARTOGRAPHY_GATE, CHART_TIERS, FOLIO_COST, FOLIO_LEVEL, FOLIO_SIZE, SEX
 import { COOKING_GATE } from './cooking';
 import { CULTURES, digChance, EXPEDITION_GATE, SITES, TRAIL } from './expedition';
 import { MAP_TIERS } from './maps';
-import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
+import { SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
 import { RUNE_FAMILIES, RUNES } from './runes';
 import { masteryForAction, type MasterySpec } from './skillingMastery';
 import { masteryBatches } from './masteryBatches';
@@ -181,22 +181,22 @@ const MILLING: SkillAction[] = [
   { id: 'mill_yew', skill: 'woodcutting', name: 'Cut Yew Planks', level: 30, intervalMs: 4000, xp: 42, inputs: { yew_log: 5 }, outputs: { yew_plank: 1 }, color: '#6b3d2c', area: 'shipgrave' },
 ];
 
-const mark = (id: string, name: string, level: number, intervalMs: number, xp: number, gold: number, marker: number, color: string, extra: SkillAction['bonus'] = []): SkillAction => ({
-  id, skill: 'thieving', name, level, intervalMs, xp, outputs: { gold }, bonus: [{ id: MARKER, chance: marker, qty: 1 }, ...extra], color,
+const mark = (id: string, name: string, level: number, intervalMs: number, xp: number, gold: number, color: string, extra: SkillAction['bonus'] = []): SkillAction => ({
+  id, skill: 'thieving', name, level, intervalMs, xp, outputs: { gold }, bonus: extra, color,
 });
 
-/** Marks: no inputs, level-only gathering. A fence's mark trades its purse for Markers. */
+/** Marks: no inputs, level-only gathering. Each one also rolls prep items for the jobs (see PREP_BOARDS); a fence's mark trades its purse for double prep chance. */
 const THIEVING: SkillAction[] = [
-  mark('mark_peddler', 'Road Peddler', 1, 3000, 7, 3, 0.12, '#a0603a'),
-  mark('mark_hauler', 'Salt Hauler', 6, 3500, 11, 6, 0.14, '#b8b09a'),
-  { ...mark('mark_runner', "Fence's Runner", 9, 3500, 12, 6, 0.3, '#c9a35a'), outputChance: ALT_YIELD },
-  mark('mark_outrider', 'Khanate Outrider', 13, 3500, 16, 10, 0.16, '#7a7a4a'),
-  mark('mark_factor', 'Caravan Factor', 19, 4000, 22, 18, 0.18, '#b08a5a', [{ id: SEAL, chance: 0.002, qty: 1 }]),
-  { ...mark('mark_quartermaster', 'Khanate Quartermaster', 23, 4000, 24, 18, 0.4, '#d0a860'), outputChance: ALT_YIELD },
-  mark('mark_warden', 'Barrow Warden', 28, 4000, 28, 30, 0.2, '#6f7a8a', [{ id: WAX, chance: 0.002, qty: 1 }]),
-  mark('mark_collector', 'Tax Collector', 35, 4500, 34, 48, 0.22, '#6a78a0'),
-  mark('mark_acolyte', 'Pyre Acolyte', 42, 5000, 41, 75, 0.25, '#c0502a', [{ id: SEAL, chance: 0.003, qty: 1 }, { id: WAX, chance: 0.002, qty: 1 }]),
-  mark('mark_steward', "Khan's Steward", 52, 5000, 46, 110, 0.28, '#e0702a', [{ id: SEAL, chance: 0.004, qty: 1 }, { id: WAX, chance: 0.003, qty: 1 }]),
+  mark('mark_peddler', 'Road Peddler', 1, 3000, 7, 3, '#a0603a'),
+  mark('mark_hauler', 'Salt Hauler', 6, 3500, 11, 6, '#b8b09a'),
+  { ...mark('mark_runner', "Fence's Runner", 9, 3500, 12, 6, '#c9a35a'), outputChance: ALT_YIELD },
+  mark('mark_outrider', 'Khanate Outrider', 13, 3500, 16, 10, '#7a7a4a'),
+  mark('mark_factor', 'Caravan Factor', 19, 4000, 22, 18, '#b08a5a', [{ id: SEAL, chance: 0.002, qty: 1 }]),
+  { ...mark('mark_quartermaster', 'Khanate Quartermaster', 23, 4000, 24, 18, '#d0a860'), outputChance: ALT_YIELD },
+  mark('mark_warden', 'Barrow Warden', 28, 4000, 28, 30, '#6f7a8a', [{ id: WAX, chance: 0.002, qty: 1 }]),
+  mark('mark_collector', 'Tax Collector', 35, 4500, 34, 48, '#6a78a0'),
+  mark('mark_acolyte', 'Pyre Acolyte', 42, 5000, 41, 75, '#c0502a', [{ id: SEAL, chance: 0.003, qty: 1 }, { id: WAX, chance: 0.002, qty: 1 }]),
+  mark('mark_steward', "Khan's Steward", 52, 5000, 46, 110, '#e0702a', [{ id: SEAL, chance: 0.004, qty: 1 }, { id: WAX, chance: 0.003, qty: 1 }]),
 ];
 
 /** Digs: no inputs. Most of a dig is dirt, so `outputChance` is how often it turns up an Artifact; the Reliquary's come from every people, in digDone. */

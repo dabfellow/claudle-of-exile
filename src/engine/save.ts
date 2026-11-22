@@ -6,7 +6,8 @@ import { SKILL_BAR_SLOTS } from '../data/gems';
 import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
 import { ACTIONS, hasAction } from '../data/skills';
-import { HEIST_JOBS } from '../data/heist';
+import { HEIST_JOBS, PREP_CAP, prepBoard, prepId } from '../data/heist';
+import { skillLevel } from './skills';
 import { legacyMasteryForAction, legacyMasteryForHeist } from '../data/skillingMastery';
 import { FLASK_SLOTS } from '../data/flasks';
 import { UNIQUE_MAPS } from '../data/maps';
@@ -432,7 +433,43 @@ const MIGRATIONS: Record<number, Migration> = {
     if (moved !== tut.step || tut.step >= 3) tut.progress = 0;
     tut.step = moved;
   },
+  51: (raw) => { retireMarkers(raw); },
 };
+
+/**
+ * Rogue's Markers are retired. Every 10 become one prep item for the highest job the character has unlocked
+ * (filling its board in order, up to 3 each); what is left becomes 15 gold each. `heist.planned` and `heist.prep` are added.
+ */
+export function retireMarkers(raw: Record<string, unknown>): void {
+  const heist = (raw.heist ??= {}) as Record<string, unknown>;
+  if (heist.prep) return;
+  heist.prep = {};
+  heist.planned = typeof heist.auto === 'string' ? heist.auto : null;
+  const bank = (raw.storage as { bank?: Record<string, number> } | undefined)?.bank;
+  const markers = Math.max(0, Math.floor(bank?.rogues_marker ?? 0));
+  if (!bank || markers <= 0) return;
+  const level = skillLevel(raw as unknown as GameState, 'thieving');
+  const progress = raw.professionProgress as { discoveries?: Record<string, unknown>; legacyAccess?: Record<string, unknown> } | undefined;
+  const unlocked = HEIST_JOBS.filter((j) => level >= j.level && (!j.requires || progress?.discoveries?.[j.requires] || progress?.legacyAccess?.[`heist.${j.id}`]));
+  const top = unlocked[unlocked.length - 1] ?? HEIST_JOBS[0];
+  const items = prepBoard(top.id).items;
+  let want = Math.floor(markers / 10);
+  let given = 0;
+  const prep = heist.prep as Record<string, number>;
+  for (let round = 0; round < PREP_CAP && want > 0; round++) {
+    for (const e of items) {
+      if (want <= 0) break;
+      const id = prepId(top.id, e.kind);
+      prep[id] = (prep[id] ?? 0) + 1;
+      want--;
+      given++;
+    }
+  }
+  const gold = (markers - given * 10) * 15;
+  delete bank.rogues_marker;
+  if (gold > 0) bank.gold = (bank.gold ?? 0) + gold;
+  heist.notice = `Rogue's Markers are retired. Your ${markers} Markers became ${given} prep and ${gold} gold.`;
+}
 
 /**
  * 100+ achievements arrived, with new counters. A Doomed or Unique Map boss this character has beaten is already in

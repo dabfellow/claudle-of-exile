@@ -782,7 +782,7 @@ export type Action =
   | { kind: 'skill'; actionId: string; progress: number; focus?: number; double?: boolean }
   | { kind: 'combat'; zoneId: string }
   | { kind: 'craft'; uid: number; method: CraftMethod; rule: StopRule; progress: number; steps: number }
-  | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number>; focus?: number; double?: boolean; crew?: string[]; spent?: string[]; tactic?: 'bypass' | 'greed'; tacticRogue?: string; scouted?: number }
+  | { kind: 'heist'; jobId: string; room: number; lastRoom: number; progress: number; take: Record<string, number>; focus?: number; double?: boolean; crew?: string[]; spent?: string[]; tactic?: 'bypass' | 'greed'; tacticRogue?: string; scouted?: number; prep?: string[] }
   | null;
 
 /** Smithing catalyst slot: a Fossil biases the roll of a Magic base, Resin raises item level. */
@@ -1139,8 +1139,14 @@ export interface HeistState {
   crew: string[];
   /** the room each job walks out after, where it isn't the vault */
   exits: Record<string, number>;
-  /** the job that repeats, casing for Markers between runs */
+  /** the job that repeats, casing for prep between runs */
   auto: string | null;
+  /** the job being prepped for: auto-run starts it once its minimum prep is held */
+  planned: string | null;
+  /** prep items held, by `prep_<jobId>_<kind>`, up to 3 of each */
+  prep: Record<string, number>;
+  /** one-time message from a save migration, for the UI to show and clear */
+  notice?: string;
   /** running totals: jobs finished, and how many of those ended in an alarm */
   tally: { jobs: number; alarms: number };
   /** equipment target category per job ('all' | 'weapon' | 'armour' | 'jewellery') */
