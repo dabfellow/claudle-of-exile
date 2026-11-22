@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MARKER } from '../src/data/craftMats';
-import { GEAR, HEIST_JOBS, heistJob } from '../src/data/heist';
+import { GEAR, HEIST_JOBS, heistJob, prepBoard, prepId } from '../src/data/heist';
 import { actionsFor } from '../src/data/skills';
 import type { Ctx } from '../src/engine/context';
 import {
@@ -29,7 +28,7 @@ const fixed = (v: number): Ctx => ({ rng: { next: () => v } as Rng, now: 0, emit
 function makeThief(level = 1, markers = 0): GameState {
   const s = newGame(1, { name: 'Thief', classId: 'shadow' });
   s.skills.thieving = xpForLevel(level);
-  s.storage.bank[MARKER] = markers;
+  if (markers > 0) for (const j of HEIST_JOBS) for (const e of prepBoard(j.id).items.filter((e) => e.kind !== 'ledger').slice(0, prepBoard(j.id).min)) s.heist.prep[prepId(j.id, e.kind)] = 3;
   settleProfessionProgress(s);
   return s;
 }
@@ -56,35 +55,18 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       expect(s.action && 'actionId' in s.action ? s.action.actionId : '').toBe('mark_peddler');
     });
 
-    it('awards 1 deterministic Marker every 10 mark completions on a shared persisted counter without double-advancing', () => {
+    it('counts mark completions on a persisted counter and no longer awards Markers', () => {
       const s = makeThief(1, 0);
       startSkillAction(s, ctx(), 'mark_peddler');
       const action = actionsFor('thieving').find((a) => a.id === 'mark_peddler')!;
-      // Zero initial markers and zero counter
-      expect(s.storage.bank[MARKER] ?? 0).toBe(0);
       expect(s.professionProgress.counters['thieving.markers'] ?? 0).toBe(0);
-
-      // Complete 9 cycles with zero luck rng (no random bonus marker)
-      for (let i = 0; i < 9; i++) {
+      for (let i = 0; i < 20; i++) {
         if (s.action?.kind === 'skill') s.action.progress = action.intervalMs;
         skillStep(s, fixed(0.999), 1, deriveStats(s));
       }
-      expect(s.professionProgress.counters['thieving.markers']).toBe(9);
-      expect(s.storage.bank[MARKER] ?? 0).toBe(0);
-
-      // 10th completion triggers deterministic Marker
-      if (s.action?.kind === 'skill') s.action.progress = action.intervalMs;
-      skillStep(s, fixed(0.999), 1, deriveStats(s));
-      expect(s.professionProgress.counters['thieving.markers']).toBe(10);
-      expect(s.storage.bank[MARKER] ?? 0).toBe(1);
-
-      // Verify that starter Heist funding is bound: 80 completions yield at least 8 markers
-      for (let i = 10; i < 80; i++) {
-        if (s.action?.kind === 'skill') s.action.progress = action.intervalMs;
-        skillStep(s, fixed(0.999), 1, deriveStats(s));
-      }
-      expect(s.professionProgress.counters['thieving.markers']).toBe(80);
-      expect(s.storage.bank[MARKER] ?? 0).toBeGreaterThanOrEqual(8);
+      expect(s.professionProgress.counters['thieving.markers']).toBe(20);
+      expect(s.storage.bank.rogues_marker ?? 0).toBe(0);
+      expect(Object.values(s.heist.prep).reduce((a, b) => a + b, 0)).toBe(0);
     });
   });
 
@@ -248,12 +230,11 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
   });
 
   describe('The Occult Treasury Job', () => {
-    it('has exact 6 rooms, 60s room timer, 80 Marker cost, alert 8, and 75 final XP per room', () => {
+    it('has exact 6 rooms, 60s room timer, alert 8, and 75 final XP per room', () => {
       const job = heistJob('occult_treasury');
       expect(job.level).toBe(65);
       expect(job.rooms).toBe(6);
       expect(job.roomMs).toBe(60_000);
-      expect(job.cost).toBe(80);
       expect(job.alert).toBe(8);
       expect(job.xp).toBe(75); // 75 final XP per room (450 total for 6 rooms)
       expect(job.gold).toBe(250);

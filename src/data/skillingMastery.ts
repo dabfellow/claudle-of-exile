@@ -139,7 +139,7 @@ function generateMilestones(skill: string, taskId: string, _taskName: string, _o
     }
     return [
       { level: 25, id: mid(25, 'sleight'), name: 'Sleight of Hand', desc: '8% chance for instant pickpocket & double gold', scope: 'task', kind: 'sleight_of_hand', value: 0.08 },
-      { level: 50, id: mid(50, 'stash'), name: 'Smuggled Stash', desc: '12% Sleight of Hand chance plus extra Rogue\'s Marker', scope: 'task', kind: 'smuggled_stash', value: 0.12 },
+      { level: 50, id: mid(50, 'stash'), name: 'Smuggled Stash', desc: '12% chance for an extra roll of prep items', scope: 'task', kind: 'smuggled_stash', value: 0.12 },
       { level: 75, id: mid(75, 'speed'), name: 'Shadow Step', desc: '+2% global Thieving speed', scope: 'global', kind: 'global_speed', value: 2 },
       { level: 100, id: mid(100, 'fence'), name: 'Fence Network', desc: '+5% global gold from all street marks', scope: 'global', kind: 'global_find', value: 0.05 },
     ];

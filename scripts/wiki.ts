@@ -21,7 +21,7 @@ import { MONSTER_MODS } from '../src/data/monsterMods';
 import { MONSTER_PROFILES } from '../src/data/monsterProfiles';
 import { MEALS, MEAL_MS } from '../src/data/cooking';
 import { CULTURES, FIND_HOURS, SITES, STRATA } from '../src/data/expedition';
-import { ALARM_KEEPS, HEIST_JOBS, STEALTH_FLOOR } from '../src/data/heist';
+import { ALARM_KEEPS, HEIST_JOBS, prepBoard, STEALTH_FLOOR } from '../src/data/heist';
 import { ROGUES } from '../src/data/rogues';
 import { ATLAS_NODES, ATLAS_POINT_CAP, DOOMED_MODS, DOOMED_TIERS, MAP_TIERS, NORMAL_MAP_MODS, SEXTANTS, SEXTANT_BASE_CHARGES, SEXTANT_MODS } from '../src/data/maps';
 import { NEWS } from '../src/data/news';
@@ -982,7 +982,7 @@ function skillBranchesBlock(): string {
 }
 
 function heistsBlock(): string {
-  return table(['Job', 'Level', 'Rooms', 'Room time', 'Markers', 'Alarm per room', 'Favours'], HEIST_JOBS.map((j) => [esc(j.name), String(j.level), String(j.rooms), secs(j.roomMs), String(j.cost), `${j.alert}% x room`, esc(j.favours)]));
+  return table(['Job', 'Level', 'Rooms', 'Room time', 'Prep needed', 'Alarm per room', 'Favours'], HEIST_JOBS.map((j) => [esc(j.name), String(j.level), String(j.rooms), secs(j.roomMs), `${prepBoard(j.id).min} of ${prepBoard(j.id).items.length}`, `${j.alert}% x room`, esc(j.favours)]));
 }
 
 function roguesBlock(): string {

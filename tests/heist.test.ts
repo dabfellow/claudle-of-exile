@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { MARKER, SEAL, WAX } from '../src/data/craftMats';
-import { GEAR, HEIST_JOBS, heistJob } from '../src/data/heist';
+import { SEAL, WAX } from '../src/data/craftMats';
+import { GEAR, HEIST_JOBS, heistJob, prepBoard, prepId } from '../src/data/heist';
 import { actionsFor, SKILLS } from '../src/data/skills';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { makeCtx, type Ctx } from '../src/engine/context';
 import { applyOrb, impressionReason, orbReason, restoreImpression, restoreReason, takeImpression } from '../src/engine/crafting';
-import { alarmChance, alarmKeeps, bestMark, cleanChance, crewSlots, heistStep, jobBlocker, jobCost, jobExit, rankUpRogue, rogueReason, setJobExit, startHeist, stopHeistRepeat, toggleCrew } from '../src/engine/heist';
+import { alarmChance, alarmKeeps, cleanChance, crewSlots, heistStep, jobBlocker, jobExit, prepMark, rankUpRogue, rogueReason, setJobExit, startHeist, stopHeistRepeat, toggleCrew } from '../src/engine/heist';
 import { allMods, createItem, modCount } from '../src/engine/items';
 import { focusOf, minigameSwing } from '../src/engine/minigame';
 import { simulateOffline } from '../src/engine/offline';
@@ -32,9 +32,15 @@ function thief(level = 1, markers = 0): GameState {
   s.heist.crew = [];
   s.unlockedZones.push(...ACT2);
   s.skills.thieving = xpForLevel(level);
-  s.storage.bank[MARKER] = markers;
+  // `markers` used to be the Markers needed to start; now any positive number means the minimum prep for every job
+  if (markers > 0) for (const j of HEIST_JOBS) givePrep(s, j.id);
   settleProfessionProgress(s, true);
   return s;
+}
+
+/** The minimum prep to start a job, taking the board's items in order. */
+function givePrep(s: GameState, jobId: string, count = prepBoard(jobId).min): void {
+  for (const e of prepBoard(jobId).items.filter((x) => x.kind !== 'ledger').slice(0, count)) s.heist.prep[prepId(jobId, e.kind)] = 3;
 }
 
 /** Walk the job under way forward a whole room. */
@@ -114,9 +120,9 @@ describe('Thieving', () => {
     const s = thief();
     startSkillAction(s, ctx(), 'mark_peddler');
     const sum = simulateOffline(s, ctx(), 60 * 60 * 1000);
-    // 1,200 lifts at 3 s, 3 gold each and a 12% Marker chance
+    // 1,200 lifts at 3 s, 3 gold each; 5% for each of the Peddler's two prep items fills both to the cap of 3
     expect(sum.materials.gold).toBeGreaterThan(3000);
-    expect(sum.materials[MARKER]).toBeGreaterThan(100);
+    expect(Object.values(s.heist.prep).reduce((a, b) => a + b, 0)).toBe(6);
     expect(sum.xp.thieving).toBeGreaterThan(0);
   });
 
@@ -136,7 +142,7 @@ describe('Heist', () => {
     setJobExit(s, 'cinder_toll', 2);
     expect(startHeist(s, c, 'cinder_toll')).toBeNull();
     stopHeistRepeat(s);
-    expect(s.storage.bank[MARKER]).toBe(0);
+    expect(s.heist.prep[prepId('cinder_toll', 'key')]).toBe(2);
     const gold = s.storage.bank.gold;
     clearRoom(s, c);
     expect(s.action?.kind === 'heist' && s.action.room).toBe(2);
@@ -184,13 +190,14 @@ describe('Heist', () => {
     expect(s.action?.kind).toBe('heist');
   });
 
-  it('cases the job when short of Markers, then starts it on its own', () => {
+  it('cases the job when short of prep, then starts it on its own', () => {
     const s = thief(1, 0);
     const c = ctx();
     startHeist(s, c, 'cinder_toll');
     expect(s.action?.kind).toBe('skill');
     expect(s.heist.auto).toBe('cinder_toll');
-    s.storage.bank[MARKER] = 8;
+    expect(s.heist.planned).toBe('cinder_toll');
+    givePrep(s, 'cinder_toll');
     tick(s, c, 100);
     expect(s.action?.kind).toBe('heist');
   });
@@ -207,9 +214,13 @@ describe('Heist', () => {
     expect(s.action).toBeNull();
   });
 
-  it('casing picks the mark with the most Markers an hour, not the richest purse', () => {
-    expect(bestMark(thief(9))?.id).toBe('mark_runner');
-    expect(bestMark(thief(23))?.id).toBe('mark_quartermaster');
+  it('casing picks the cheapest mark that supplies something the job is missing', () => {
+    const s = thief(20);
+    expect(prepMark(s, 'forgers_den')?.id).toBe('mark_hauler');
+    s.heist.prep[prepId('forgers_den', 'plan')] = 1;
+    expect(prepMark(s, 'forgers_den')?.id).toBe('mark_runner');
+    s.heist.prep[prepId('forgers_den', 'ledger')] = 1;
+    expect(prepMark(s, 'forgers_den')?.id).toBe('mark_outrider');
   });
 
   it('runs for a whole night offline with no stops, and pays Seals on the job that favours them', () => {
@@ -260,13 +271,13 @@ describe('Heist', () => {
 });
 
 describe('the crew', () => {
-  it('costs Markers and gold, and only helps on the crew', () => {
+  it('costs gold, and only helps on the crew', () => {
     const s = thief(10, 100);
     s.storage.bank.gold = 50000;
     expect(rogueReason(s, 'cutpurse')).toMatch(/level 20/);
     expect(rankUpRogue(s, ctx(), 'fence')).toBeNull();
     expect(s.heist.crew).toEqual(['fence']);
-    expect(s.storage.bank[MARKER]).toBe(75);
+    expect(s.storage.bank.gold).toBe(50000 - 1375);
     expect(alarmKeeps(s)).toBeCloseTo(0.58);
     toggleCrew(s, 'fence');
     expect(alarmKeeps(s)).toBe(0.5);
@@ -287,11 +298,10 @@ describe('the crew', () => {
     expect(s.heist.crew).toEqual(['locksmith', 'lookout']);
   });
 
-  it('Clean Getaway keeps the whole take and costs half as much again', () => {
+  it('Clean Getaway keeps the whole take', () => {
     const s = thief(50);
     s.skillPassives = ['thieving_ks'];
     expect(alarmKeeps(s)).toBe(1);
-    expect(jobCost(s, heistJob('last_wagon'))).toBe(45);
   });
 });
 

@@ -1,5 +1,5 @@
 import { affixDef } from '../data/affixes';
-import { essenceDef, fossilDef, MARKER, modBias, resinDef } from '../data/craftMats';
+import { essenceDef, fossilDef, modBias, resinDef } from '../data/craftMats';
 import { ACTIVE_GEMS, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
 import { ALCH_DOUBLE, FORGE_ILVL } from '../data/hideout';
 import { baseDef } from '../data/bases';
@@ -12,7 +12,7 @@ import { benchBuilt } from './crafting';
 import { flaskStats, newFlask, rerollMagic, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
 import { digDone, digSpeedMult } from './expedition';
-import { markerBoost } from './heist';
+import { rollPrep } from './heist';
 import { cartographyDone, chartDone, hasChartMaps } from './cartography';
 import { focusMult, focusStep, takeDouble } from './minigame';
 import { bagFull, dropItem } from './storage';
@@ -452,7 +452,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
     if (herb >= 0 && herb < HERB_TIERS.length - 1 && t.rareBlooms && chance(ctx.rng, t.rareBlooms / 100)) give(s, outputs, HERB_TIERS[herb + 1], 1);
   }
   for (const b of a.bonus ?? []) {
-    const boost = b.id === 'rough_gem' ? t.gemChance : fossilDef(b.id) ? t.fossilChance : resinDef(b.id) ? t.resinChance : b.id === MARKER ? markerBoost(s) : 0;
+    const boost = b.id === 'rough_gem' ? t.gemChance : fossilDef(b.id) ? t.fossilChance : resinDef(b.id) ? t.resinChance : 0;
     if (!chance(ctx.rng, b.chance * (1 + (boost ?? 0) / 100))) continue;
     const upgrade = essenceDef(b.id)?.upgrade;
     give(s, outputs, upgrade && t.distiller && chance(ctx.rng, t.distiller / 100) ? upgrade : b.id, b.qty * focusMultiple);
@@ -478,8 +478,8 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
         ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Pickpocket jackpot`, taskName: a.name });
       }
     } else if (m.kind === 'smuggled_stash' && chance(ctx.rng, m.value)) {
-      give(s, outputs, MARKER, 1);
-      ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Smuggled markers`, taskName: a.name });
+      rollPrep(s, ctx, a);
+      ctx.emit({ t: 'masteryProc', proc: m.name, text: `✦ ${m.name}! Extra prep chance`, taskName: a.name });
     } else if (m.kind === 'feast_bounty' && chance(ctx.rng, m.value)) {
       for (const [outId, outCount] of Object.entries(a.outputs ?? {})) {
         give(s, outputs, outId, outCount);
@@ -510,10 +510,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   if (a.chart) chartDone(s, a, mult, Object.keys(cost).length > 0, outputs);
   if (a.skill === 'thieving') {
     s.professionProgress.counters['thieving.markers'] = (s.professionProgress.counters['thieving.markers'] ?? 0) + 1;
-    if ((s.professionProgress.counters['thieving.markers'] % 10) === 0) {
-      awardProtectedProgress(s, ctx, MARKER, 1);
-      outputs[MARKER] = (outputs[MARKER] ?? 0) + 1;
-    }
+    rollPrep(s, ctx, a);
   }
 
   // a doubled base is a second full base, catalysts and all; a Craft-until stop on the first ends it there

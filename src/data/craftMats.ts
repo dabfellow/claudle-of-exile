@@ -109,7 +109,7 @@ export const CRAFT_MATERIALS: MaterialDef[] = [
   { id: 'aug_shard', name: 'Augmentation Shard', kind: 'shard', color: '#5f8de0', value: 0, desc: `${SHARDS_PER_ORB} fuse into an Orb of Augmentation.` },
   { id: 'trans_shard', name: 'Transmutation Shard', kind: 'shard', color: '#7fb2ff', value: 0, desc: `${SHARDS_PER_ORB} fuse into an Orb of Transmutation.` },
   { id: 'alt_shard', name: 'Alteration Shard', kind: 'shard', color: '#9fd2ff', value: 0, desc: `${SHARDS_PER_ORB} fuse into an Orb of Alteration.` },
-  { id: MARKER, name: "Rogue's Marker", kind: 'contraband', color: '#c9a35a', value: 1, desc: 'Pays for Heist jobs and rogues. Earned by Thieving.' },
+  { id: MARKER, name: "Rogue's Marker", kind: 'contraband', color: '#c9a35a', value: 1, desc: 'Retired. Markers became prep items and gold; any left over can be sold.' },
   { id: SEAL, name: "Forger's Seal", kind: 'contraband', color: '#b5473c', value: 60, desc: 'Spent with an Alteration, Chaos, Annulment or Divine: one modifier you pick is left alone.' },
   { id: WAX, name: "Locksmith's Wax", kind: 'contraband', color: '#d9c48a', value: 90, desc: 'Takes an impression of an item. Restore it any time to put the item back as it was.' },
   { id: 'marrow_key', name: 'Marrow Key', kind: 'trophy', color: '#b8a890', value: 400, desc: 'Opens the Map Device portal to Ossuar.' },
