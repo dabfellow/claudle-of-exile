@@ -60,7 +60,7 @@ export const HEIST_JOBS: HeistJob[] = [
   job({
     id: 'salt_tithe', name: 'The Salt Tithe', level: 8, area: 'saltflats', requires: 'heist_clean_cinder_toll', rooms: 4, roomMs: 35000, alert: 6, xp: 110, gold: 30, ilvl: 25,
     desc: 'Every salt wagon pays the Khan a tenth. The tally house keeps it, and the names of who owes what.',
-    favours: "Rogue's Markers",
+    favours: 'Gold',
     drops: [{ id: 'gold', chance: 0.4, qty: 15 }],
     vault: [{ id: 'gold', chance: 1, qty: 180 }],
   }),

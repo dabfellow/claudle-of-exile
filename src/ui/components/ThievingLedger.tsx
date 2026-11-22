@@ -44,8 +44,10 @@ export function ThievingHeader() {
   const notice = s.heist.notice;
   useEffect(() => {
     if (!notice) return;
-    game.pushToast(notice, 'good');
-    game.act((st) => { delete st.heist.notice; });
+    // read and clear in one step, so a second run of this effect can't show it again
+    let text: string | undefined;
+    game.act((st) => { text = st.heist.notice; delete st.heist.notice; });
+    if (text) game.pushToast(text, 'good');
   }, [notice]);
   return <header className="card thief-header">
     <span className="thief-emblem"><GameIcon name="thieving" size={28} color="var(--gold)" /></span>
@@ -118,7 +120,7 @@ export function ThievingLedger() {
       <div className="thief-rewards"><h3>Rewards per lift</h3>
         {Object.entries(a.outputs ?? {}).map(([id, n]) => <div className="thief-reward" key={id}><MatIcon id={id} size={20} /><b>{materialDef(id).name}</b><span className="spacer" /><span className="num">{n} base{a.outputChance !== undefined && ` · ${a.outputChance * 100}% chance`}</span></div>)}
         {a.bonus?.map((bonus) => <div className="thief-reward" key={bonus.id}><MatIcon id={bonus.id} size={20} /><b>{materialDef(bonus.id).name}</b><span className="spacer" /><span className="num">×{bonus.qty} · {+(Math.min(1, bonus.chance) * 100).toFixed(2)}%</span></div>)}
-        <p className="thief-reward-note">Base gold before mastery and Focus bonuses. Guaranteed Markers are additional.</p>
+        <p className="thief-reward-note">Base gold before mastery and Focus bonuses. Prep for planned Heists can drop too.</p>
       </div>
       <div className="thief-dossier-action">
         {blocker && <p className="thief-blocker"><GameIcon name="lock" size={14} /> {blocker}</p>}
