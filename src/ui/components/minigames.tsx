@@ -5,6 +5,10 @@ import {
   DOUBLE_SHARE,
   doubleZoneStart,
   inDoubleZone,
+  LIFT_CYCLE_MAX_MS,
+  LIFT_CYCLE_MIN_MS,
+  liftResult,
+  liftWindowMs,
   strikeResult,
   surveyDistance,
   surveyResult,
@@ -466,6 +470,61 @@ function ThievingGame({ onSwing }: { onSwing: OnSwing }) {
   );
 }
 
+const LIFT_LABEL = { watching: 'Watching you', turning: 'Turning away', back: 'Back turned: lift!', glance: 'Glancing back' } as const;
+const RESULT_WORD: Record<SwingResult, string> = { double: 'Double!', hit: 'Hit', weak: 'Weak', miss: 'Miss' };
+
+/** A target's attention swings away and back. Tap while their back is turned: the middle of it is a double. */
+function LiftGame({ markLevel, onSwing }: { markLevel: number; onSwing: OnSwing }) {
+  const win = liftWindowMs(markLevel);
+  const makeCycle = () => {
+    const len = random(LIFT_CYCLE_MIN_MS, LIFT_CYCLE_MAX_MS);
+    const rest = len - win;
+    const start = rest * 0.5 + rest * 0.2; // watching, then turning away
+    return { len, start, end: start + win, turnFrom: rest * 0.5, t0: performance.now(), used: false };
+  };
+  const cycle = useRef(makeCycle());
+  const [view, setView] = useState({ phase: 'watching' as keyof typeof LIFT_LABEL, angle: 0 });
+  const [last, setLast] = useState<{ id: number; r: SwingResult } | null>(null);
+
+  useFrame(() => {
+    let c = cycle.current;
+    let t = performance.now() - c.t0;
+    if (t >= c.len) {
+      c = cycle.current = makeCycle();
+      t = 0;
+    }
+    const phase = t < c.turnFrom ? 'watching' : t < c.start ? 'turning' : t <= c.end ? 'back' : 'glance';
+    const angle = t < c.turnFrom ? 0 : t < c.start ? ((t - c.turnFrom) / (c.start - c.turnFrom)) * 180 : t <= c.end ? 180 : Math.max(0, 180 - ((t - c.end) / (c.len - c.end)) * 360);
+    setView((v) => (v.phase === phase && Math.abs(v.angle - angle) < 1 ? v : { phase, angle }));
+  });
+
+  const tap = () => {
+    const c = cycle.current;
+    if (c.used) return;
+    c.used = true;
+    const r = liftResult(performance.now() - c.t0, c.start, c.end);
+    onSwing(r);
+    setLast({ id: Math.random(), r });
+  };
+  useSpace(tap);
+
+  // facing down = at you; turning swings the gaze round to the top of the circle
+  const rad = ((90 + view.angle) * Math.PI) / 180;
+  const arc = (a: number) => `${50 + 38 * Math.cos(a)},${50 + 38 * Math.sin(a)}`;
+  const open = (view.phase === 'back' ? 'var(--accent)' : 'var(--text-dim)');
+  return (
+    <div className="mini-timed" role="button" tabIndex={0} aria-label="Lift: tap while their back is turned" onPointerDown={tap} onKeyDown={(e) => { if (e.key === 'Enter' && !e.repeat) { e.preventDefault(); tap(); } }} style={{ cursor: 'pointer', touchAction: 'manipulation', textAlign: 'center' }}>
+      <svg viewBox="0 0 100 100" width="120" height="120" aria-hidden>
+        <circle cx="50" cy="50" r="16" fill="none" stroke={open} strokeWidth="4" />
+        <path d={`M50,50 L${arc(rad - 0.5)} A38,38 0 0 1 ${arc(rad + 0.5)} Z`} fill={open} opacity="0.35" />
+        <line x1="50" y1="50" x2={50 + 38 * Math.cos(rad)} y2={50 + 38 * Math.sin(rad)} stroke={open} strokeWidth="3" />
+      </svg>
+      <div className="num">{LIFT_LABEL[view.phase]}</div>
+      <div className="small" aria-live="polite">{last ? <span key={last.id}>{RESULT_WORD[last.r]}</span> : 'Tap anywhere to lift'}</div>
+    </div>
+  );
+}
+
 /** Drag across the plot to brush the soil away. Clearing it finds the piece; touching a cracked stone breaks it. */
 function ArchaeologyGame({ onSwing }: { onSwing: OnSwing }) {
   const newPlot = () => ({ id: Math.random(), at: performance.now(), cracked: new Set([...Array(PLOT_TILES).keys()].sort(() => Math.random() - 0.5).slice(0, PLOT_CRACKS)) });
@@ -747,7 +806,7 @@ function RuneGame({ onSwing }: { onSwing: OnSwing }) {
 }
 
 /** The game for a skill. `matId` is what the running action gathers. */
-export function SkillGame({ skill, matId, onSwing }: { skill: SkillId; matId?: string; onSwing: OnSwing }) {
+export function SkillGame({ skill, matId, markLevel, onSwing }: { skill: SkillId; matId?: string; /** set while a Thieving mark (not a Heist room) runs */ markLevel?: number; onSwing: OnSwing }) {
   switch (skill) {
     case 'mining':
       return <MiningGame onSwing={onSwing} />;
@@ -756,7 +815,7 @@ export function SkillGame({ skill, matId, onSwing }: { skill: SkillId; matId?: s
     case 'harvesting':
       return <ForagingGame matId={matId} onSwing={onSwing} />;
     case 'thieving':
-      return <ThievingGame onSwing={onSwing} />;
+      return markLevel !== undefined ? <LiftGame markLevel={markLevel} onSwing={onSwing} /> : <ThievingGame onSwing={onSwing} />;
     case 'agility':
       return <WoodcuttingGame onSwing={onSwing} />;
     case 'archaeology':

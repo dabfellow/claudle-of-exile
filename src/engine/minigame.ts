@@ -69,6 +69,33 @@ export function strikeResult(offMs: number): SwingResult {
   return off <= STRIKE_DOUBLE_MS ? 'double' : off <= STRIKE_HIT_MS ? 'hit' : off <= STRIKE_WEAK_MS ? 'weak' : 'miss';
 }
 
+/** The lift (Thieving marks): window the target's back is turned, shrinking with mark level. */
+export const LIFT_WINDOW_BASE_MS = 1400;
+export const LIFT_WINDOW_STEP_MS = 50;
+export const LIFT_WINDOW_MIN_MS = 800;
+/** A tap this long after the window ends, as they turn back, is weak. */
+export const LIFT_WEAK_GRACE_MS = 250;
+/** Each attention cycle runs a random length in this range. */
+export const LIFT_CYCLE_MIN_MS = 2500;
+export const LIFT_CYCLE_MAX_MS = 4000;
+
+/** How long the back is turned for a mark of this level. */
+export function liftWindowMs(markLevel: number): number {
+  return Math.max(LIFT_WINDOW_MIN_MS, LIFT_WINDOW_BASE_MS - LIFT_WINDOW_STEP_MS * Math.floor(markLevel / 10));
+}
+
+/** How a lift landed against the window the target's back was turned. */
+export function liftResult(tapMs: number, windowStartMs: number, windowEndMs: number): SwingResult {
+  if (tapMs < windowStartMs) return 'miss';
+  if (tapMs <= windowEndMs) {
+    const len = windowEndMs - windowStartMs;
+    const third = len * DOUBLE_SHARE;
+    const dStart = windowStartMs + (len - third) / 2;
+    return tapMs >= dStart && tapMs <= dStart + third ? 'double' : 'hit';
+  }
+  return tapMs <= windowEndMs + LIFT_WEAK_GRACE_MS ? 'weak' : 'miss';
+}
+
 /** Steps between two tiles of the survey grid: what a sounding shows. */
 export function surveyDistance(a: number, b: number): number {
   return Math.abs((a % SURVEY_COLS) - (b % SURVEY_COLS)) + Math.abs(Math.floor(a / SURVEY_COLS) - Math.floor(b / SURVEY_COLS));
