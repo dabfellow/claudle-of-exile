@@ -17,7 +17,7 @@ import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX }
 import { RUNE_FAMILIES, RUNES } from './runes';
 import { masteryForAction, type MasterySpec } from './skillingMastery';
 import { masteryBatches } from './masteryBatches';
-import { CONSTELLATIONS, GILDED_STARDUST, STARDUST } from './astrology';
+import { GILDED_STARDUST, REGIONS, starDef, STARDUST, WATCH_INTERVAL_MS } from './astrology';
 
 export interface SkillDef {
   id: SkillId;
@@ -47,7 +47,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   runecarving: { id: 'runecarving', name: 'Rune-carving', group: 'production', color: '#6fa8ff', verb: 'Carving', desc: 'Carve old materials into runes, then inscribe them in the rune slot on your gear.' },
   cooking: { id: 'cooking', name: 'Cooking', group: 'production', color: '#e08a4a', verb: 'Cooking', desc: 'Cook gathered plants into meals, and into the strongest flask ingredients for Alchemy.' },
   cartography: { id: 'cartography', name: 'Cartography', group: 'production', color: '#8a7ad8', verb: 'Drawing', desc: 'Draw maps and upgrade them to higher tiers, ready for the Map Device.' },
-  astrology: { id: 'astrology', name: 'Astrology', group: 'gathering', color: '#a9b8ff', verb: 'Stargazing', desc: 'Study the constellations for Stardust, then light their stars on the Star Chart for lasting bonuses to your professions and your character.' },
+  astrology: { id: 'astrology', name: 'Astrology', group: 'gathering', color: '#a9b8ff', verb: 'Stargazing', desc: 'Research the sky for Stardust and new stars, watch stars to rank them up, and chart your own constellation for a small buff to everything you do.' },
   fishing: { id: 'fishing', name: 'Fishing', group: 'gathering', color: '#4fa3d9', verb: 'Fishing', desc: 'Cast a line into the waters of Wraeclast.', soon: true },
 };
 
@@ -214,18 +214,29 @@ const ARCHAEOLOGY: SkillAction[] = SITES.map((x) => ({
   gate: EXPEDITION_GATE,
 }));
 
-/** Stargazing: no inputs, level-only. Stardust is spent on the Star Chart (engine/astrology.ts). */
-const ASTROLOGY: SkillAction[] = CONSTELLATIONS.map((x) => ({
-  id: `study_${x.id}`,
-  skill: 'astrology' as const,
-  name: `Study ${x.name}`,
-  level: x.level,
-  intervalMs: x.intervalMs,
-  xp: x.xp,
-  outputs: { [STARDUST]: x.dust },
-  bonus: [{ id: GILDED_STARDUST, chance: x.gilded, qty: 1 }],
-  color: x.color,
-}));
+/** Research a sky region for Stardust and research points, or watch an unlocked star to rank it up (engine/astrology.ts). */
+const ASTROLOGY: SkillAction[] = REGIONS.flatMap((r) => [
+  {
+    id: `research_${r.id}`,
+    skill: 'astrology' as const,
+    name: `Research ${r.name}`,
+    level: r.level,
+    intervalMs: r.intervalMs,
+    xp: r.xp,
+    outputs: { [STARDUST]: r.dust },
+    bonus: [{ id: GILDED_STARDUST, chance: r.gilded, qty: 1 }],
+    color: r.color,
+  },
+  ...r.stars.map((id) => ({
+    id: `watch_${id}`,
+    skill: 'astrology' as const,
+    name: `Watch ${starDef(id)!.name}`,
+    level: r.level,
+    intervalMs: WATCH_INTERVAL_MS,
+    xp: Math.max(4, Math.round(r.xp * 0.4)),
+    color: r.color,
+  })),
+]);
 
 /** Fishing is coming soon. It has always been coming soon. */
 const FISHING: SkillAction[] = [

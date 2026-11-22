@@ -1,4 +1,5 @@
 import { offlineCapMs } from './automation';
+import { astrologySnapshot, observationLines, type ObservationLine } from './astrology';
 import { activeEvents, eventBoost, eventChangeTimes } from '../data/events';
 import { clearBossFight } from './combat';
 import type { Ctx } from './context';
@@ -44,6 +45,8 @@ export interface OfflineSummary {
   mastery: Record<string, number>;
   /** Thematic mastery milestone procs triggered while away. */
   masteryProcs?: Record<string, number>;
+  /** Astrology's observation log: research, rank-ups and fallen stars while you were away */
+  observations?: ObservationLine[];
   /** Logbook finds made while you were away, and standing orders filled */
   finds: number;
   traded: number;
@@ -105,6 +108,7 @@ export function mergeOffline(into: OfflineSummary, more: OfflineSummary): Offlin
     heistAlarms: into.heistAlarms + more.heistAlarms,
     mastery: add(into.mastery, more.mastery) as Record<string, number>,
     masteryProcs: add(into.masteryProcs ?? {}, more.masteryProcs ?? {}) as Record<string, number>,
+    observations: [...(into.observations ?? []), ...(more.observations ?? [])],
     finds: into.finds + more.finds,
     traded: into.traded + more.traded,
   };
@@ -122,6 +126,7 @@ export function startOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offline
   const masteryBefore = { ...s.skillingMastery };
   const expeditionBefore = { ...s.expedition.tally };
   const bankBefore = { ...s.storage.bank };
+  const astrologyBefore = astrologySnapshot(s);
   sum.ordinaryOutput = {};
   sum.discoveries = [];
   sum.protectedProgress = {};
@@ -226,6 +231,8 @@ export function startOffline(s: GameState, ctx: Ctx, elapsedMs: number): Offline
       const delta = n - (bankBefore[id] ?? 0);
       if (delta !== 0) sum.materials[id] = delta;
     }
+    const observations = observationLines(s, astrologyBefore, sum.ordinaryOutput);
+    if (observations.length > 0) sum.observations = observations;
   };
 
   return {

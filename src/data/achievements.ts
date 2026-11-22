@@ -43,7 +43,7 @@ export interface AchievementDef {
   hidden?: boolean;
 }
 
-const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as const;
+const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology'] as const;
 const totalSkillLevel = (s: GameState) => SKILLING.reduce((a, k) => a + levelOf(k, s.skills[k]), 0);
 const skillLevel = (k: SkillId) => (s: GameState) => levelOf(k, s.skills[k]);
 const topSkillLevel = (s: GameState) => Math.max(...SKILLING.map((k) => levelOf(k, s.skills[k])));
@@ -76,6 +76,7 @@ const SKILL_FIFTY: [SkillId, string, number?][] = [
   ['runecarving', 'Runewright', 3],
   ['cooking', 'Head Cook', 5],
   ['cartography', 'Mapmaker', 6],
+  ['astrology', 'Star-Reader'],
 ];
 /** Achievement titles for the Hard and Uber bosses, by achievement id. */
 const BOSS_TITLES: Record<string, string> = {
@@ -90,7 +91,7 @@ const BOSS_TITLES: Record<string, string> = {
 };
 const SKILL_NAME: Record<string, string> = {
   mining: 'Mining', woodcutting: 'Woodcutting', harvesting: 'Foraging', thieving: 'Thieving', archaeology: 'Archaeology',
-  smelting: 'Smelting', smithing: 'Forging', woodcrafting: 'Woodcrafting', alchemy: 'Alchemy', gemcutting: 'Gemcutting', runecarving: 'Rune-carving', cooking: 'Cooking', cartography: 'Cartography',
+  smelting: 'Smelting', smithing: 'Forging', woodcrafting: 'Woodcrafting', alchemy: 'Alchemy', gemcutting: 'Gemcutting', runecarving: 'Rune-carving', cooking: 'Cooking', cartography: 'Cartography', astrology: 'Astrology',
 };
 
 const ALL: AchievementDef[] = [
@@ -251,6 +252,7 @@ const ALL: AchievementDef[] = [
   { id: 'total_500', name: 'Polymath', desc: 'Reach a total life skill level of 500', category: 'skilling', target: 500, progress: totalSkillLevel, reward: { divine: 2 }, perks: { offlineHours: 1, stats: { skillSpeed: 3 } } },
   { id: 'total_800', name: 'Master of Every Craft', desc: 'Reach a total life skill level of 800', category: 'skilling', target: 800, progress: totalSkillLevel, unique: 'journeymans_satchel' },
   { id: 'skill_99', name: 'Ninety-Nine', desc: 'Reach level 99 in any life skill', category: 'skilling', target: 99, progress: topSkillLevel, reward: { divine: 2 }, perks: { stats: { skillXp: 5 } } },
+  { id: 'skill_99_astrology', name: 'Chart-Maker', desc: 'Reach Astrology level 99', category: 'skilling', target: 99, progress: skillLevel('astrology'), reward: { divine: 1 }, perks: { stats: { skillXp: 1 } } },
   ...SKILL_FIFTY.map(([k, name, act]): AchievementDef => ({
     id: `skill_50_${k}`, name, desc: `Reach ${SKILL_NAME[k]} level 50`, category: 'skilling', act,
     target: 50, progress: skillLevel(k), reward: { chaos: 3 }, perks: { stats: { skillXp: 1 } },

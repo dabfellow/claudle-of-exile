@@ -1103,6 +1103,22 @@ export interface MapState {
 }
 
 /** Archaeology's Expedition (engine/expedition.ts). A dig is a plain skill action: this is what outlasts it. */
+/** Astrology (docs/ASTROLOGY_CONSTELLATIONS.md). */
+export interface AstrologyState {
+  /** research points per sky region id */
+  regions: Record<string, { research: number }>;
+  /** unlocked stars only: rank from 1, and star XP towards the next rank */
+  stars: Record<string, { rank: number; xp: number }>;
+  /** one-of-a-kind stars found while watching; `effect` is a FALLEN_TABLE id, `value` the rolled percent */
+  fallen: { uid: string; effect: string; value: number }[];
+  /** the charted constellation: star ids or fallen uids, null when empty. Length is the slot count at the character's level */
+  chart: { slots: (string | null)[] };
+  /** noteworthy sightings, newest last (last 200) */
+  log: string[];
+  /** set by the save migration: shows the one-time "chart your constellation" notice until dismissed */
+  chartNotice?: boolean;
+}
+
 export interface ExpeditionState {
   /** digs done at each site: its stratum and finds are worked out from this */
   dug: Record<string, number>;
@@ -1226,8 +1242,8 @@ export interface GameState {
   maps: MapState;
   heist: HeistState;
   expedition: ExpeditionState;
-  /** Astrology's Star Chart: stars lit per constellation id (engine/astrology.ts) */
-  astrology: { stars: Record<string, number> };
+  /** Astrology: researched sky regions, unlocked stars, fallen stars and the charted constellation (engine/astrology.ts) */
+  astrology: AstrologyState;
   skillBar: (SkillGemInstance | null)[];
   loadouts: Loadouts;
   action: Action;

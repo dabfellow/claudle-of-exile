@@ -32,7 +32,7 @@ import { foragingDone } from './foraging';
 import { weaponComponentProgress } from './weaponProjects';
 import { gemFamilyPool, gemcuttingAccessHint, isGemEquipped, recycleGemExecution } from './gemcutting';
 import { runecarvingAccessHint, runecarvingDone } from './runes';
-import { astrologySpeed } from './astrology';
+import { astrologyBlocker, astrologyDone, astrologyOffline, astrologySpeed, astrologyXp, astrologyYield } from './astrology';
 
 export function skillLevel(s: GameState, skill: SkillId): number {
   return levelOf(skill, s.skills[skill]);
@@ -142,6 +142,8 @@ export function actionBlocker(s: GameState, a: SkillAction): string | null {
   if (skillLevel(s, a.skill) < a.level) return `Requires ${SKILLS[a.skill].name} level ${a.level}`;
   const agility = agilityBlocker(s, a);
   if (agility) return agility;
+  const astrology = astrologyBlocker(s, a);
+  if (astrology) return astrology;
   if (a.batchMastery && masteryLevel(s, `task.${a.batchOf}`) < a.batchMastery) {
     return `Requires ${actionDef(a.batchOf!).name} mastery ${a.batchMastery}`;
   }
@@ -424,6 +426,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   const miningOutput = foreground ? miningDone(s, ctx, a) : {};
   const woodOutput = foreground ? woodcuttingDone(s, ctx, a) : {};
   foragingDone(s, ctx, a, foreground);
+  astrologyDone(s, ctx, a, focusMultiple);
   if (foreground) cartographyDone(s, ctx, a);
   if (foreground) weaponComponentProgress(s, ctx, a);
   if (foreground) runecarvingDone(s, ctx, a);
@@ -439,6 +442,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   const yields = a.outputChance === undefined || chance(ctx.rng, a.outputChance);
   for (const [id, n] of Object.entries(yields ? { ...a.outputs, ...miningOutput, ...woodOutput } : {})) {
     let qty = n * mult;
+    qty += stochasticRound(ctx.rng, (qty * astrologyYield(s, a.skill)) / 100);
     if (a.skill === 'mining' && id.endsWith('_ore') && t.motherlode) qty *= 2;
     if (id === a.mastery?.primaryOutput) qty += stochasticRound(ctx.rng, n * masteryYield(s, a.mastery));
     // Transmuter / Alchemy table L8: crafted orbs sometimes come out one tier higher
@@ -556,7 +560,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   ctx.emit({ t: 'produce', skill: a.skill, outputs, baseId: a.baseId });
   const heartwoodXp = a.skill === 'woodcutting' && t.heartwood ? 0.8 : 1;
   const branchXp = a.skill === 'gemcutting' ? (t.gemcuttingXp ?? 0) : 0;
-  grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0) + branchXp) / 100) * heartwoodXp * digXp);
+  grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0) + branchXp + astrologyXp(s)) / 100) * heartwoodXp * digXp);
   grantMasteryPractice(s, a.mastery, a.intervalMs / 1000);
   if (foreground) {
     awardProfessionProgress(s, a.skill, a.batch ?? (a.chart?.qty ?? 1));
@@ -570,7 +574,7 @@ export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
   const a = actionDef(s.action.actionId);
   let interval = actionIntervalMs(s, a, d);
   // Overtime: skilling is faster while you're away
-  const offlineBoost = ctx.offline ? 1 + (skillTreeStats(s).offlineSpeed ?? 0) / 100 : 1;
+  const offlineBoost = ctx.offline ? 1 + ((skillTreeStats(s).offlineSpeed ?? 0) + astrologyOffline(s)) / 100 : 1;
   focusStep(s, ctx, dt);
   s.action.progress += dt * offlineBoost * focusMult(s) * (ctx.event?.gatheringSpeed ?? 1);
   while (s.action && s.action.kind === 'skill' && s.action.progress >= interval) {

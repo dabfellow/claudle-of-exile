@@ -26,11 +26,12 @@ import { deriveStats } from './stats';
 import { defaultLayeredLootFilter, defaultLootFilters } from './lootFilter';
 import { challengeName } from './challenge';
 import { newCampaignQuestState } from './campaignQuests';
+import { newAstrologyState } from './astrology';
 export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 51;
+export const SAVE_VERSION = 52;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -67,7 +68,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     campaignQuests: newCampaignQuestState(),
     nextUid: 1,
     skills: { combat: 0, mining: 0, woodcutting: 0, harvesting: 0, thieving: 0, agility: 0, archaeology: 0, smelting: 0, smithing: 0, woodcrafting: 0, alchemy: 0, gemcutting: 0, runecarving: 0, cooking: 0, cartography: 0, astrology: 0, fishing: 0 },
-    astrology: { stars: {} },
+    astrology: newAstrologyState(),
     skillingMastery: {},
     professionProgress: newProfessionProgress(),
     inventory: [],

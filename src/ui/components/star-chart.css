@@ -5,29 +5,30 @@
   align-items: center;
 }
 
+.star-chart > * + * {
+  margin-top: 10px;
+}
+
 .star-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 10px;
   margin-top: 10px;
 }
 
-.star-card {
+.star-region {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 10px;
-  background: var(--bg-2);
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius, 6px);
 }
 
-.star-card.done {
+.star-region.running {
   border-color: var(--cst);
   box-shadow: 0 0 10px color-mix(in srgb, var(--cst) 30%, transparent);
 }
 
-.star-card.locked {
+.star-region.locked {
   opacity: 0.55;
 }
 
@@ -44,9 +45,60 @@
   border-radius: 4px;
 }
 
+.star-night-sky {
+  max-height: 440px;
+  background:
+    radial-gradient(0.6px 0.6px at 8% 12%, #fff9 50%, transparent),
+    radial-gradient(0.6px 0.6px at 22% 52%, #fff7 50%, transparent),
+    radial-gradient(0.6px 0.6px at 41% 8%, #fff8 50%, transparent),
+    radial-gradient(0.6px 0.6px at 63% 30%, #fff6 50%, transparent),
+    radial-gradient(0.6px 0.6px at 78% 56%, #fff7 50%, transparent),
+    radial-gradient(0.6px 0.6px at 93% 20%, #fff6 50%, transparent),
+    linear-gradient(180deg, #080c1c, #1a1840);
+}
+
 .star-line {
-  stroke-width: 0.8;
-  opacity: 0.7;
+  stroke-width: 0.5;
+}
+
+.star-line.possible {
+  stroke: #6a7099;
+  stroke-dasharray: 1.2 1.6;
+  opacity: 0.45;
+}
+
+.star-line.active {
+  stroke: #a9b8ff;
+  opacity: 0.75;
+}
+
+.star-line.matching {
+  stroke: var(--double, #f2d27a);
+  stroke-width: 0.9;
+  opacity: 1;
+}
+
+.star-slot {
+  cursor: pointer;
+  outline: none;
+}
+
+.star-hit {
+  fill: transparent;
+  stroke: transparent;
+}
+
+.star-slot:focus-visible .star-hit,
+.star-slot.live .star-hit {
+  stroke: var(--accent);
+  stroke-width: 0.6;
+}
+
+.star-slot.open .star-hit,
+.star-slot.near .star-hit {
+  stroke: var(--double, #f2d27a);
+  stroke-width: 0.5;
+  stroke-dasharray: 1 1;
 }
 
 .star-dim {
@@ -54,7 +106,65 @@
 }
 
 .star-lit {
-  filter: drop-shadow(0 0 2px currentColor);
+  filter: drop-shadow(0 0 1.6px currentColor);
+}
+
+.star-label {
+  font-size: 2.6px;
+  fill: #cdd3f5;
+  pointer-events: none;
+}
+
+.star-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.star-hint {
+  margin: 8px 0 0;
+  font-size: 0.85em;
+}
+
+.star-tray {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 6px;
+}
+
+.star-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  padding: 6px 8px;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius, 6px);
+}
+
+.star-chip.picked {
+  border-color: var(--double, #f2d27a);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--double, #f2d27a) 35%, transparent);
+}
+
+.star-chip.placed {
+  opacity: 0.7;
+}
+
+.star-chip-sub {
+  font-size: 0.82em;
+  color: var(--dim);
+}
+
+.star-chip-tag {
+  font-size: 0.75em;
+  color: var(--accent);
 }
 
 .star-lore {
@@ -63,12 +173,104 @@
   font-style: italic;
 }
 
-.star-bonus {
+.star-bonus,
+.star-entries {
   margin: 0;
   padding-left: 16px;
   font-size: 0.9em;
 }
 
-.star-card .btn {
-  margin-top: auto;
+.star-entries li.idle {
+  opacity: 0.6;
+}
+
+.star-watch-group > .card-title {
+  margin-top: 6px;
+}
+
+.star-watch {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.2fr) minmax(160px, 2fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  margin-top: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-left: 3px solid var(--cst);
+  border-radius: var(--radius, 6px);
+}
+
+.star-watch.locked {
+  opacity: 0.5;
+}
+
+.star-watch-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.star-watch-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.star-wait {
+  max-width: 160px;
+}
+
+@media (max-width: 640px) {
+  .star-watch {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+/* Astrology's telescope minigame (components/minigames.tsx) */
+.mini-telescope {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 140px;
+}
+
+.telescope-view {
+  display: grid;
+  place-items: center;
+  height: 96px;
+}
+
+.telescope-star {
+  width: 44px;
+  height: 44px;
+  background: radial-gradient(circle, #fff 0 22%, #cfd8ff 38%, #a9b8ff66 55%, transparent 70%);
+  border-radius: 50%;
+}
+
+.telescope-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px 8px;
+}
+
+.telescope-ring {
+  position: relative;
+  flex: 1;
+  height: 28px;
+  touch-action: none;
+  cursor: ew-resize;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+}
+
+.telescope-knob {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 14px;
+  margin-left: -7px;
+  background: var(--accent);
+  border-radius: 7px;
 }
